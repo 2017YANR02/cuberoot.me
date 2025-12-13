@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="manifest" href="manifest.json">
+	<title>Documentation</title>
+	<meta name="description" content="RubiksSolverDemo Documentation">
+	<script async src="https://www.googletagmanager.com/gtag/js?id=G-MXJH30352W"></script>
+	<script>
+		window.dataLayer = window.dataLayer || [];
+		function gtag() { dataLayer.push(arguments); }
+		gtag('js', new Date());
+		gtag('config', 'G-MXJH30352W');
+	</script>
+	<style>
+		body {
+			background: #121212;
+			color: #fff;
+			font-family: Arial, sans-serif;
+			margin: 20px;
+			padding: 0;
+			font-size: 18px;
+		}
+
+		header {
+			padding: 2px;
+			text-align: center;
+			cursor: pointer;
+			background-color: #121212;
+		}
+
+		h1 {
+			font-family: Arial, sans-serif;
+			font-size: 24px;
+			text-align: center;
+			color: #ffffff;
+		}
+
+		h2,
+		h3 {
+			color: #fff;
+		}
+
+		a {
+			color: #8a8ac8;
+		}
+
+		table {
+			border-collapse: collapse;
+			margin-top: 1em;
+		}
+
+		th,
+		td {
+			border: 1px solid #41417f;
+			padding: 6px 12px;
+		}
+
+		th {
+			background: #1e1e1e;
+		}
+
+		ul,
+		ol {
+			margin-bottom: 1em;
+		}
+
+		.section {
+			margin-bottom: 2em;
+		}
+
+		.drawer-overlay {
+			position: fixed;
+			inset: 0;
+			background-color: rgba(0, 0, 0, 0.5);
+			z-index: 1000;
+		}
+
+		.drawer-overlay.hidden {
+			display: none;
+		}
+
+		.drawer {
+			position: fixed;
+			top: 0;
+			left: 0;
+			height: 100vh;
+			height: 100dvh;
+			width: 280px;
+			background: #1e1e1e;
+			border-right: 1px solid #41417f;
+			box-shadow: 0 4px 16px #000a;
+			padding: 16px;
+			transform: translateX(-100%);
+			transition: transform 0.2s ease-in-out;
+			z-index: 1003;
+			overflow: hidden;
+			display: flex;
+			flex-direction: column;
+		}
+
+		.drawer.open {
+			transform: translateX(0);
+		}
+
+		#hamburger-menu a {
+			display: block;
+			margin-bottom: 8px;
+			white-space: nowrap;
+			color: #fff;
+			text-decoration: none;
+		}
+
+		.drawer-header {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 8px;
+			padding-bottom: 8px;
+			margin-bottom: 12px;
+			border-bottom: 1px solid #41417f;
+		}
+
+		.drawer-title {
+			margin: 0;
+			font-size: 20px;
+			color: #ffffff;
+		}
+
+		.drawer-close-btn {
+			background: none;
+			border: none;
+			color: #aaa;
+			cursor: pointer;
+			font-size: 1.8rem;
+			line-height: 1;
+			padding: 0 6px;
+		}
+
+		.drawer-close-btn:hover {
+			color: #fff;
+		}
+
+		.drawer-content {
+			flex: 1 1 auto;
+			min-height: 0;
+			overflow-y: auto;
+			-webkit-overflow-scrolling: touch;
+			padding-right: 4px;
+			padding-bottom: 24px;
+			padding-bottom: calc(24px + env(safe-area-inset-bottom));
+			overscroll-behavior: contain;
+			touch-action: pan-y;
+		}
+	</style>
+</head>
+
+<body>
+	<header id="header" style="margin-left:48px;margin-top:10px;position:relative;z-index:10;">
+		<h1>RubiksSolverDemo</h1>
+	</header>
+	<div id="hamburger-menu-container">
+		<button id="hamburger-menu-btn" aria-label="Open menu"
+			style="background:none;border:none;cursor:pointer;font-size:2.2rem;position:absolute;top:10px;left:10px;z-index:1002;color:#fff;">
+			&#9776;
+		</button>
+		<div id="drawer-overlay" class="drawer-overlay hidden"></div>
+		<nav id="hamburger-menu" class="drawer" aria-label="Main navigation">
+			<div class="drawer-header">
+				<h2 class="drawer-title">Menu</h2>
+				<button id="drawer-close-btn" class="drawer-close-btn" aria-label="Close menu">&times;</button>
+			</div>
+			<div class="drawer-content">
+				<a href="https://github.com/or18/RubiksSolverDemo" rel="noopener noreferrer" translate="no">Source</a>
+				<a href="index.html">Main Solver</a>
+				<a href="2x2x2.html" rel="noopener noreferrer" translate="no">2x2x2 Solver</a>
+				<a href="documentation.html" translate="no">Documentation</a>
+				<span style="font-weight:bold;margin-top:12px;display:block;color:#fff;">Trainers:</span>
+				<a href="cross_trainer.html" rel="noopener noreferrer" translate="no">Cross</a>
+				<a href="xcross_trainer.html" rel="noopener noreferrer" translate="no">XCross</a>
+				<a href="pairing_trainer.html" rel="noopener noreferrer" translate="no">Free Pair</a>
+				<a href="pseudo_xcross_trainer.html" rel="noopener noreferrer" translate="no">Pseudo XCross</a>
+				<a href="pseudo_pairing_trainer.html" rel="noopener noreferrer" translate="no">Pseudo Free Pair</a>
+				<a href="eocross_trainer.html" rel="noopener noreferrer" translate="no">EOCross</a>
+				<a href="algTrainer.html" rel="noopener noreferrer" translate="no">Alg Trainer</a>
+				<a href="jsonEditor.html" rel="noopener noreferrer" translate="no">JSON Editor</a>
+				<span style="font-weight:bold;margin-top:12px;display:block;color:#fff;">External tools:</span>
+				<a href="https://trangium.github.io/MovecountCoefficient/" target="_blank" rel="noopener noreferrer"
+					translate="no">MCC by trangium</a>
+				<a href="https://speedcubedb.com/a/3x3/" target="_blank" rel="noopener noreferrer"
+					translate="no">speedcubedb.com</a>
+				<a href="https://cstimer.net/" target="_blank" rel="noopener noreferrer" translate="no">cstimer.net</a>
+			</div>
+		</nav>
+	</div>
+	<script>
+		const hamburgerBtn = document.getElementById('hamburger-menu-btn');
+		const drawer = document.getElementById('hamburger-menu');
+		const overlay = document.getElementById('drawer-overlay');
+		const drawerCloseBtn = document.getElementById('drawer-close-btn');
+
+		function openDrawer() {
+			drawer.classList.add('open');
+			overlay.classList.remove('hidden');
+			document.body.style.overflow = 'hidden';
+		}
+
+		function closeDrawer() {
+			drawer.classList.remove('open');
+			overlay.classList.add('hidden');
+			document.body.style.overflow = '';
+		}
+
+		hamburgerBtn.addEventListener('click', (e) => {
+			e.stopPropagation();
+			if (drawer.classList.contains('open')) {
+				closeDrawer();
+			} else {
+				openDrawer();
+			}
+		});
+
+		overlay.addEventListener('click', closeDrawer);
+		if (drawerCloseBtn) drawerCloseBtn.addEventListener('click', closeDrawer);
+		document.addEventListener('keydown', (e) => {
+			if (e.key === 'Escape' && drawer.classList.contains('open')) closeDrawer();
+		});
+		drawer.addEventListener('click', (e) => {
+			const target = e.target;
+			if (target.tagName === 'A') {
+				closeDrawer();
+			}
+		});
+	</script>
+	<div class="section">
+		<p>Solvers for 3x3x3 Rubik's cube: cross, xcross, free pair, pseudo F2L, EOCross, and last layer. 2x2x2 cube
+			solver is also available. Each solver comes with a Visual Cube State Editor.</p>
+		<p>
+			<a href="index.html">3x3x3 Solver</a><br>
+			<a href="2x2x2.html">2x2x2 Solver</a><br>
+			<a href="https://or18.github.io/Rubiks-cube-xcross-solver/">Old version</a>
+		</p>
+	</div>
+	<div class="section">
+		<h2>Trainers</h2>
+		<p>Also, the following trainers are available.</p>
+		<ul>
+			<li><a href="cross_trainer.html">Cross trainer</a></li>
+			<li><a href="xcross_trainer.html">XCross trainer</a></li>
+			<li><a href="pairing_trainer.html">Free Pair trainer</a></li>
+			<li><a href="pseudo_xcross_trainer.html">Pseudo XCross trainer</a></li>
+			<li><a href="pseudo_pairing_trainer.html">Pseudo Free Pair trainer</a></li>
+			<li><a href="eocross_trainer.html">EOCross trainer</a></li>
+		</ul>
+	</div>
+	<div>
+		<p>PWA (Progressive Web App) support is available for this solver. You can install it from your browser on your
+			device. Solvers and trainers can be used offline after installation.</p>
+	</div>
+	<div class="section">
+		<h2>Solver Overview</h2>
+		<p>This is an solver for speedcubers that uses specific methods such as CFOP and ZZ. It is designed to
+			perform solution searches for techniques like cross, XCross, and EOCross. Additionally, it supports the
+			search for some algorithms for the last layer.</p>
+	</div>
+	<div class="section">
+		<h2>Basic Functions and Notes</h2>
+		<ul>
+			<li>The following 14 solvers are currently available:
+				<ul>
+					<li><b>F2L Lite</b>: Lite solver for cross, XCross, XXCross, XXXCross, and XXXXCross. Analyzer
+						available.</li>
+					<li><b>Pairing</b>: Lite solver for a free pair. Analyzer available.</li>
+					<li><b>Pseudo F2L Lite</b>: Lite solver for pseudo cross, XCross, XXCross, and XXXCross. Analyzer
+						available.</li>
+					<li><b>Pseudo Pairing</b>: Lite solver for a pseudo free pair. Analyzer available.</li>
+					<li><b>EOCross</b>: Lite solver for EOCross, XEOCross, XXEOCross, XXXEOCross, and XXXXEOCross.
+						Analyzer available.</li>
+					<li><b>LL Substeps Lite</b>: Lite solver for last layer <b>CP</b>, <b>CO</b>, <b>EP</b>, and
+						<b>EO</b>
+					</li>
+					<li><b>LL Lite</b>: Lite solver for last layer</li>
+					<li><b>LL AUF Lite</b>: Lite solver for last layer and AUF</li>
+					<li><b>Two Phase</b>: Two Phase solver using <a
+							href="https://github.com/cs0x7f/min2phase.js">min2phase.js</a></li>
+					<li><b>F2L</b>: Solver for cross, XCross, XXCross, XXXCross, and XXXXCross. <b>Recommended for use
+							with PC</b>. Analyzer available.</li>
+					<li><b>LL Substeps</b>: Solver for last layer <b>CP</b>, <b>CO</b>, <b>EP</b>, and <b>EO</b>.
+						<b>Recommended for use with PC</b>.
+					</li>
+					<li><b>LL</b>: Solver for last layer. <b>Recommended for use with PC</b>.</li>
+					<li><b>LL AUF</b>: Solver for last layer and AUF. <b>Recommended for use with PC</b>.</li>
+					<li><b>2x2x2</b>: Solver for 2x2x2 cube. <b>Note that this is on a separate page.</b></li>
+				</ul>
+			</li>
+			<li><b>F2L, LL Substeps, LL, LL AUF</b> solver can search much faster than their
+				corresponding lite solver, but they require more
+				memory and take longer to set up.</li>
+			<li>Some solvers come with an analyzer that solves for each pattern one at a time and displays the shortest
+				number of moves in HTM in a table. The numbered cells in this table act as buttons to start the search
+				with that condition. You can click the header to sort the table by its columns. Also, you can select the
+				faces to analyze from <b>U</b>, <b>D</b>, <b>L</b>, <b>R</b>, <b>F</b>, and <b>B</b>.</li>
+		</ul>
+		<h3>Memory Requirements Table</h3>
+		<p>This table summarizes the memory requirements for each solver. If memory is insufficient, the page may crash.
+		</p>
+		<table>
+			<tr>
+				<th>Solver</th>
+				<th>Single Search</th>
+				<th>Analyzer</th>
+			</tr>
+			<tr>
+				<td>F2L Lite</td>
+				<td>50 MB</td>
+				<td>50 MB</td>
+			</tr>
+			<tr>
+				<td>Pairing</td>
+				<td>50 MB</td>
+				<td>100 MB</td>
+			</tr>
+			<tr>
+				<td>Pseudo F2L Lite</td>
+				<td>50 MB</td>
+				<td>50 MB</td>
+			</tr>
+			<tr>
+				<td>Pseudo Pairing</td>
+				<td>50 MB</td>
+				<td>200 MB</td>
+			</tr>
+			<tr>
+				<td>EOCross</td>
+				<td>100 MB</td>
+				<td>100 MB</td>
+			</tr>
+			<tr>
+				<td>LL Substeps Lite</td>
+				<td>50 MB</td>
+				<td>-</td>
+			</tr>
+			<tr>
+				<td>LL Lite</td>
+				<td>50 MB</td>
+				<td>-</td>
+			</tr>
+			<tr>
+				<td>LL AUF Lite</td>
+				<td>50 MB</td>
+				<td>-</td>
+			</tr>
+			<tr>
+				<td>F2L</td>
+				<td>800 MB</td>
+				<td>50 MB</td>
+			</tr>
+			<tr>
+				<td>LL Substeps</td>
+				<td>800 MB</td>
+				<td>-</td>
+			</tr>
+			<tr>
+				<td>LL</td>
+				<td>800 MB</td>
+				<td>-</td>
+			</tr>
+			<tr>
+				<td>LL AUF</td>
+				<td>800 MB</td>
+				<td>-</td>
+			</tr>
+			<tr>
+				<td>2x2x2</td>
+				<td>150 MB</td>
+				<td>-</td>
+			</tr>
+		</table>
+	</div>
+	<div class="section">
+		<h2>Usage and Features</h2>
+		<ul>
+			<li>Scramble history navigation with [⬅️] and [➡️] buttons.</li>
+			<li>[Clear] button clears the Scramble.</li>
+			<li>[Reverse] button reverses the alg of each row.</li>
+			<li>[Mirror] button mirrors the alg of each row.</li>
+			<li>[Random] button generates a random scramble using min2phase.js.</li>
+			<li>[Start] button begins the search; [End] stops it.</li>
+			<li>Solutions are shown in real time, with Twisty Player and links.</li>
+			<li>Query parameters update automatically with input changes.</li>
+			<li>Functions exported by Emscripten may require manual reload if not initialized.</li>
+		</ul>
+	</div>
+	<div class="section">
+		<h2>Input Description</h2>
+		<ul>
+			<li><b>Cube Editor</b>: Visual cube-state editor.
+				<ul>
+					<li>In <b>Swap</b> mode, you can swap two pieces by clicking
+						them; their orientations will be rotated so the selected stickers exchange positions. </li>
+					<li>In <b>Flip</b>
+						mode, clicking a piece will rotate its orientation. </li>
+					<li>The <b>Get Scramble</b> button generates a
+						scramble
+						for the shown state (rotations are not included; edit if needed). If the state is unsolvable, an
+						alert
+						will be shown.</li>
+					<li>Pre-Rotations can be selected. For 2x2x2 solver, this can be selected automatically if <b>Auto
+							Set</b> is checked.</li>
+					<li>Color of each face can be selected from White, Yellow, Blue, Green, Red, and Orange. Custom
+						colors can also be defined.</li>
+				</ul>
+			</li>
+			<li><b>Scramble</b>: Describes the state of a Rubik's Cube using standard notations. You can add comments
+				using "//". The following notations are available:<br>
+				<ul style="margin-top:8px;margin-bottom:8px;">
+					<li>The following Rubik's Cube notations are available:
+						<ul>
+							<li>Face Turns:
+								<ul>
+									<li>U U2 U2' U'</li>
+									<li>D D2 D2' D'</li>
+									<li>L L2 L2' L'</li>
+									<li>R R2 R2' R'</li>
+									<li>F F2 F2' F'</li>
+									<li>B B2 B2' B'</li>
+								</ul>
+							</li>
+							<li>Wide Moves:
+								<ul>
+									<li>u u2 u2' u' Uw Uw2 Uw2' Uw'</li>
+									<li>d d2 d2' d' Dw Dw2 Dw2' Dw'</li>
+									<li>l l2 l2' l' Lw Lw2 Lw2' Lw'</li>
+									<li>r r2 r2' r' Rw Rw2 Rw2' Rw'</li>
+									<li>f f2 f2' f' Fw Fw2 Fw2' Fw'</li>
+									<li>b b2 b2' b' Bw Bw2 Bw2' Bw'</li>
+								</ul>
+							</li>
+							<li>Slice Moves:
+								<ul>
+									<li>M M2 M2' M'</li>
+									<li>E E2 E2' E'</li>
+									<li>S S2 S2' S'</li>
+								</ul>
+							</li>
+							<li>Rotations:
+								<ul>
+									<li>x x2 x2' x'</li>
+									<li>y y2 y2' y'</li>
+									<li>z z2 z2' z'</li>
+								</ul>
+							</li>
+						</ul>
+					</li>
+				</ul>
+				<span style="display:block;margin-top:8px;">Comments can be written using "//". It is recommended to
+					place "// setup" comments on the appropriate line. When viewing on alg.cubing.net or cubedb.net, the
+					line with "// setup" and above will be included in the Setup or Scramble section, while the lines
+					below will be included in the Moves section.</span>
+			</li>
+			<li><b>Rotation</b>: Select a rotation algorithm before starting the search. Instead of selecting here,
+				you can directly include them in <b>Scrambles</b>.
+			</li>
+			<li><b>Slot</b>: Select F2L slots (BL, BR, FR, FL) or None for cross solver.</li>
+			<li><b>Free Pair</b>: Select a slot for solving the free pair.</li>
+			<li><b>Pseudo Slot Edge/Corner</b>: Select pseudo slots for pseudo cross/slotting.</li>
+			<li><b>Last Layer Option</b>: CP, CO, EP, EO, or None for XXXXCross solver.</li>
+			<li><b>Max Length/Count</b>: Set max moves and solutions.</li>
+			<li><b>Move restrict</b>: Restricts the moves used in the search. For example, if U, R, F is
+				selected, only
+				U, U2, U', R, R2, R', F, F2, F' are allowed. <br>
+				Note: <b>Advanced settings</b> allow more detailed configuration.
+				If you
+				select rotations (x, y, z), set <b>Center Restrict</b> and <b>Max Rotation Count</b> in the <b>Advanced
+					settings</b>.
+			</li>
+		</ul>
+	</div>
+	<div class="section">
+		<h2>Advanced Settings</h2>
+		<ul>
+			<li><b>Pre Move</b>: A preliminary algorithm executed before search. This enables the search to solutions
+				beginning with the algorithm set here. If you set algorithm here that rotate the center, such as wide,
+				slice, or rotation, you must also configure Center Restrict accordingly.</li>
+			<li><b>Move Available Table</b>: A table of checkboxes that lets you decide whether a particular ordering of
+				moves—e.g., allowing the order A→B—is permitted in the solution. The rows represent preceding rotations,
+				and the columns represent subsequent rotations. The bottom row (A=empty) corresponds to the first move
+				setting. This table is normally generated automatically based on the configured Move Restrict. If you
+				would like to set custom rules (such as requiring the first move to be a rotation), you must configure
+				this table appropriately.</li>
+			<li><b>Center Restrict</b>: Center rotation settings. By default only Empty-Empty is checked, which means
+				the center must return to the initial state—the state of the center after the user-defined
+				<b>Scramble</b> and
+				<b>Rotation.</b>
+			</li>
+			<li><b>Max Rotation Count</b>: The maximum number of times rotations (x, y, z) are used, excluding
+				user-defined <b>Rotation</b> and <b>Pre Move</b>. The default value is 0. If rotations (x, y, z)
+				are permitted in Move
+				Restrict, this must be set to 1 or higher.</li>
+			<li><b>Max Move Count</b>: A table of maximum move counts allowed by the Move Restrict. Note that the
+				algorithm specified in <b>Pre Move</b> is not counted.</li>
+		</ul>
+	</div>
+	<div class="section">
+		<h2>Stickering Settings</h2>
+		<p>Configure the stickering options for the solution preview in Twisty Player. You can choose from below.</p>
+		<ul>
+			<li><b>Regular</b>: Show all stickers of the parts.</li>
+			<li><b>Oriented</b>: Show only one sticker of the parts.</li>
+			<li><b>Dim</b>: Show dimmed stickers of the parts.</li>
+			<li><b>Disable</b>: Show no stickers of the parts.</li>
+		</ul>
+		<p>You can check how the stickering options affect the solution preview in Twisty Player. If <b>Auto Stickering
+				Setting</b> was checked, the stickering options will be applied automatically based on the solver
+			settings.</p>
+	</div>
+	<div class="section">
+		<h2>Solver Descriptions and Examples</h2>
+		<h3>F2L Lite</h3>
+		<p>A set of solvers for Rubik's Cube cross, XCross, XXCross, XXXCross, and XXXXCross. It is used to search
+			solutions for cross, XCross, F2L, multi-slotting, and more. The <b>F2L</b> solver can perform the same
+			search. Here are some examples. </p>
+		<ul>
+			<li>Yellow cross. <a
+					href="index.html?scramble=U-_B_R-_L-_F_U-_F2_D_R2_D2_B_L2_F2_U2_D2_F_D2_F-_U2_R2_%252F%252F_setup%250A&index=1&sol=B2_U-_L_F-_D2_L_">Example</a>
+			</li>
+			<li>White cross (<b>Rotation</b> selected). <a
+					href="index.html?scramble=D2_F_L2_D_B2_L2_F2_R2_D2_B2_D2_U_F2_U2_B-_L_R_D_R-_F-_U_%252F%252F_setup%250A&index=1&sol=z2_D_R_D2_L2_R-_B-_&rot=z2">Example</a>
+			</li>
+			<li>White cross (<b>Rotation</b> in <b>Scramble</b>). <a
+					href="index.html?scramble=D2_F_L2_D_B2_L2_F2_R2_D2_B2_D2_U_F2_U2_B-_L_R_D_R-_F-_U_%252F%252F_setup%250A%250Az2_%252F%252F_inspection&index=1&sol=D_R_D2_L2_R-_B-_">Example</a>
+			</li>
+			<li>White XCross. <a
+					href="index.html?scramble=D-_L-_U2_B_L_B2_R-_D_B2_R_D_R2_D2_F2_R2_L2_F2_D-_F2_D_L2_%252F%252F_setup%250A&index=1&sol=z2_L_R2_B2_U-_L_B-_R_F2_D-_&rot=z2&slot=BL">Example</a>
+			</li>
+			<li>1st F2L (<b>Move Restrict</b>: U, R, F). <a
+					href="index.html?scramble=F-_B-_U-_D2_F2_B_U-_R2_F-_R2_B2_D2_L2_U2_L_B2_L-_U2_B2_L2_F2_%252F%252F_setup%250A&index=1&sol=F2_R-_F-_U-_R_F-_&slot=BR&res=URF">Example</a>
+			</li>
+			<li>White XXCross. <a
+					href="index.html?scramble=F2_U2_F-_R2_F_L2_F2_R2_U2_L2_F-_R2_U_F2_R_B2_F-_U2_F_R-_F2_%252F%252F_setup%250A&index=1&sol=z2_U_B2_U_B-_U_B2_R-_U-_F2_L2_D-_&slot=BL_FL&rot=z2">Example</a>
+			</li>
+			<li>White XXXCross. <a
+					href="index.html?scramble=R_F-_L-_U-_F-_U2_D_R_U2_F2_R2_U_L2_D-_F2_R2_D-_L2_D-_F2_B-_%252F%252F_setup%250A&index=1&sol=z2_D-_L_R-_U-_L2_D_F_L_R2_F_R2_D2_&slot=BL_BR_FL&rot=z2">Example</a>
+			</li>
+			<li>White XXXXCross (F2L skip). <a
+					href="index.html?scramble=D-_B-_R_F2_D-_L-_F-_U-_L_U2_L2_D-_R2_F2_R2_F2_U2_B2_U_R2_%252F%252F_setup%250A&index=1&sol=z2_D_B_U_B-_U-_R-_F_L_F2_D_L2_F2_R-_&slot=BL_BR_FR_FL&rot=z2">Example</a>
+			</li>
+			<li>Last two F2L slots (<b>Move Restrict</b>: U, R, F). <a
+					href="index.html?scramble=B-_U-_L2_D-_R_F_U_F_B_D2_F_D2_R2_F2_D2_B-_L2_U2_F2_D-_%252F%252F_setup&index=1&sol=U_F-_U-_R-_F_R-_F-_R2_U_F_&slot=BL_BR_FR_FL&res=UDRF">Example</a>
+			</li>
+		</ul>
+		<h3>Pairing</h3>
+		<p>A set of solvers for a free pair. It is used to search solutions for cross with a free pair, advanced F2L
+			setup, and more. Here are some examples. </p>
+		<ul>
+			<li>Cross with a free pair. <a
+					href="index.html?scramble=L2_D_R_F_L2_F2_D2_L-_F-_B2_U-_L2_D_B2_L2_D_L2_B2_U2_B2_R-_%252F%252F_setup%250A&index=1&sol=B2_U2_L2_R_F_D_&solver=F2L_pair">Example</a>
+			</li>
+			<li>3rd F2L and last pair (<b>Move Restrict</b>: U, R, F). <a
+					href="index.html?scramble=R_D-_R_U_D2_L-_B_L2_U2_D2_R_F2_R-_D2_R_B2_R-_D2_R-_D_%252F%252F_setup%250A&index=1&sol=U2_R-_F-_U-_F2_R-_F-_R2_&solver=F2L_pair&slot2=BL_BR_FL&res=URF">Example</a>
+			</li>
+		</ul>
+		<h3>Pseudo F2L Lite</h3>
+		<p>A set of solvers for pseudo cross, XCross, XXCross, and XXXCross. It is used to search solutions for pseudo
+			XCross, pseudo slotting, and more. Here are some examples.</p>
+		<ul>
+			<li>Pseudo XCross. <a
+					href="index.html?scramble=L2_F_L-_F_R2_D-_L_U2_B_L-_D2_B2_R2_L_D2_R_U2_D2_F2_U2_R_%252F%252F_setup%250A&index=1&sol=U-_F2_L_U_R_B2_D2_B_&solver=PF2L&pse=BL">Example</a>
+			</li>
+			<li>Adjecent pseudo XXCross. <a
+					href="index.html?scramble=F_R2_L_U_L2_U2_D_L_U_B_U2_B_R2_B_L2_U2_F-_R2_L2_U2_R2_%252F%252F_setup%250A&index=1&sol=B-_D-_L_R2_B-_L2_R-_D-_R_&solver=PF2L&pse=BL_BR&psc=BL_FL">Example</a>
+			</li>
+			<li>Diagonal pseudo XXCross. <a
+					href="index.html?scramble=U-_D2_B2_R_F-_D_R_B2_U_R2_U_L2_D-_R2_U-_L2_U-_L2_B2_R-_%252F%252F_setup%250A&index=1&sol=z2_U2_L-_U-_F2_U2_B-_D2_F_L2_&solver=PF2L&pse=BL_FR&rot=z2&psc=BR_FL">Example</a>
+			</li>
+		</ul>
+		<h3>Pseudo Pairing</h3>
+		<p>A set of solvers for a pseudo free pair. It is used to search solutions for pseudo cross with a pseudo free
+			pair, some advanced pseudo slotting, and more. Here are some examples. </p>
+		<ul>
+			<li>Pseudo cross with a pseudo free pair. <a
+					href="index.html?scramble=L_U2_L_B_D2_R_F-_B2_U2_L2_D-_B2_U_B2_R2_U-_R2_F2_R2_B_U2_%252F%252F_setup%250A&index=1&sol=D_B_L-_B2_D_R_&solver=PF2L_pair&apsc=BR">Example</a>
+			</li>
+			<li>3rd pseudo slot and last pseudo pair (<b>Move Restrict</b>: U, D, R). <a
+					href="index.html?scramble=U-_F_U-_B2_U_F-_B2_D_F2_U-_F2_D_R2_D-_L2_U-_L2_U_%252F%252F_setup%250A&index=1&sol=D_R2_U-_R2_U_R-_U2_R-_&solver=PF2L_pair&pse2=BL_BR_FL&res=UDR">Example</a>
+			</li>
+		</ul>
+		<h3>EOCross</h3>
+		<p>A set of solvers for EOcross, XEOcross, XXEOcross, XXXEOcross, and XXXXEOCross. Here are some examples.</p>
+		<ul>
+			<li>EOCross (LR). <a
+					href="index.html?scramble=R-_F_D-_B_D2_L2_B2_D-_L-_D2_B_U2_L2_F-_L2_F-_R2_F_L2_U2_B_%252F%252F_setup%250A&index=1&sol=z2_F-_D-_B-_D2_L-_B_L2_&solver=EOCross&rot=z2">Example</a>
+			</li>
+			<li>EOCross (FB). <a
+					href="index.html?scramble=F-_D-_B2_D_B_D_R_U_F2_R-_F2_R_L2_F2_U2_R2_U2_R_B2_R-_U_%252F%252F_setup%250A&index=1&sol=z2_y-_U_L-_D_F_R_B2_&solver=EOCross&rot=z2_y-">Example</a>
+			</li>
+			<li>XEOCross (LR). <a
+					href="index.html?scramble=F-_D-_F_R2_D-_B_L-_F_U_L2_D_R2_D2_L2_D_B2_R2_U_L2_D2_R-_%252F%252F_setup%250A&index=1&sol=U2_B2_D_R-_U2_F_D_L-_B-_D-_&solver=EOCross&slot3=BL">Example</a>
+			</li>
+			<li>XXEOCross (FB). <a
+					href="index.html?scramble=U2_D-_F-_U_R2_L_U-_R_U2_R-_B2_L-_F2_L-_D2_R_F2_B2_D_%252F%252F_setup%250A&index=1&sol=y_L2_F2_R2_U2_L-_U-_F_L2_U-_L_F2_&solver=EOCross&slot3=BL_FL&rot=y">Example</a>
+			</li>
+		</ul>
+		<h3>LL Substeps Lite</h3>
+		<p>A solver for last layer CP, CO, EP, and EO. It is used to search solutions for OLL, COLL, ZBLS, and more. The
+			<b>LL Substeps</b> solver can perform the same search.
+		</p>
+		<ul>
+			<li>OLL (<b>Move Restrict</b>: U, R, F). <a
+					href="index.html?scramble=R_F_R2_F-_R_U_R2_U_F2_L2_B2_D-_B2_L2_F2_U_R2_%252F%252F_setup%250A&index=1&sol=R-_F_U_F2_U_F2_U2_F-_U_R_&solver=LS&ll=CO_EO&res=URF">Example</a>
+			</li>
+			<li>ZBLS (<b>Move Restrict</b>: U, R, F). <a
+					href="index.html?scramble=F-_U_L-_U2_L_F-_R2_U2_F2_U_F2_L2_U_R2_U-_L2_U_F2_%252F%252F_setup%250A&index=1&sol=F_U2_F2_U-_F2_U-_R-_F-_R_&solver=LS&ll=EO&res=URF">Example</a>
+			</li>
+			<li>COLL (<b>Move Restrict</b>: U, R, F). <a
+					href="index.html?scramble=U2_R_U2_R2_F2_D2_L2_D_L2_D_F2_R_%252F%252F_setup%250A&index=1&sol=U2_F_U2_F-_R-_U_F_U_F-_U-_R_&solver=LS&ll=CP_CO_EO&res=URF">Example</a>
+			</li>
+			<li>VLS UF (<b>Move Restrict</b>: U, R, F; Custom Move Available Table and Move Count Limit). <a
+					href="index.html?scramble=x2_%252F%252F_Pre_Rotations%250AR2_U-_F2_U-_B2_L2_D-_L2_B2_F2_U-_F-_R_F-_U2_F2_R-_U2_R-_%252F%252F_setup%250A&solver=LS&ll=CO_EO&res=URF&rest=U_U2_U-_R_R2_R-_F_F2_F-&mav=U2%7EF2%7CF2%7EU2%7CEMPTY%7EF2&mcv=U2%3A1_R2%3A2_F%3A1_F2%3A1_F-%3A1&index=1&sol=U_R_U-_R-_U2_F_R_U_R-_U-_F-_">Example</a>
+			</li>
+			<li>OLLCP (<b>Move Restrict</b>: U, R, F, y; Rotation Start Setup; Custom Move Available Table and Move
+				Count Limit). <a
+					href="index.html?scramble=z2_%252F%252F_Pre_Rotations%250AF2_R2_F2_R2_F2_U-_F2_U2_R2_F2_R2_U_R-_F_U2_F_U2_F-_R_F2_%252F%252F_setup%250A&solver=LS&ll=CP_CO_EO&res=URFy&rest=U_U2_U-_R_R2_R-_F_F2_F-_y_y2_y-&mav=U%7Ey%7CU%7Ey2%7CU%7Ey-%7CU2%7EF2%7CU2%7Ey%7CU2%7Ey2%7CU2%7Ey-%7CU-%7Ey%7CU-%7Ey2%7CU-%7Ey-%7CR%7Ey%7CR%7Ey2%7CR%7Ey-%7CR2%7Ey%7CR2%7Ey2%7CR2%7Ey-%7CR-%7Ey%7CR-%7Ey2%7CR-%7Ey-%7CF%7Ey%7CF%7Ey2%7CF%7Ey-%7CF2%7EU2%7CF2%7Ey%7CF2%7Ey2%7CF2%7Ey-%7CF-%7Ey%7CF-%7Ey2%7CF-%7Ey-%7Cy%7EF2%7Cy2%7EF2%7Cy-%7EF2%7CEMPTY%7EU%7CEMPTY%7EU2%7CEMPTY%7EU-%7CEMPTY%7EF2&mcv=U2%3A1_R2%3A2_F%3A1_F2%3A1_F-%3A1_y%3A1_y2%3A1_y-%3A1&index=1&sol=y2_R-_U_R_U-_R-_U_R_U_R-_U_F-_U2_F_R_&rc=1&crest=EMPTY_EMPTY%7CEMPTY_y%7CEMPTY_y2%7CEMPTY_y-">Example</a>
+		</ul>
+		<h3>LL Lite</h3>
+		<p>A solver for last layer. Note that AUF can remain. It is used to search solutions for PLL, 2GLL, ZBLL, 1LLL,
+			and more Here are some examples. The <b>LL</b> solver can perform the same search.</p>
+		<ul>
+			<li>PLL (<b>Move Restrict</b>: U, R, F). <a
+					href="index.html?scramble=F2_D_B2_D-_L2_U_B2_D_B2_U-_F2_U_L_R-_U2_L-_R-_%252F%252F_setup%250A&index=1&sol=U_R2_U-_R2_U-_R2_U_F_U_F-_R2_F_U-_F-_&solver=LL&res=URF">Example</a>
+			</li>
+			<li>2GLL (<b>Move Restrict</b>: U, R). <a
+					href="index.html?scramble=L2_D-_F2_L2_D_F2_R2_B2_U2_F2_U-_L-_B2_R_U2_L-_D2_R_%252F%252F_setup%250A&index=1&sol=U-_R_U2_R-_U-_R_U-_R2_U2_R_U_R-_U_R_&solver=LL&res=UR">Example</a>
+			</li>
+			<li>PLL-Aa (<b>Move Restrict</b>: U, D, R; <b>Pre Move</b>: x). <a
+					href="index.html?scramble=x_R2-_D2-_R_U_R-_D2-_R_U-_R_x-_%252F%252F_setup&rest=R_R2_R-_U_U2_U-_D_D2_D-&index=1&sol=x_R-_U_R-_D2_R_U-_R-_D2_R2_&solver=LL&res=UDR&premove=x&crest=x_EMPTY">Example</a>
+			</li>
+			<li>PLL-Na (<b>Move Restrict</b>: U, D, R, z<b>; Pre Move</b>: x; Custom Move Available table). <a
+					href="index.html?scramble=R_U_R-_U2-_R_U_R2-_F-_R_U_R_U-_R-_F_R_U-_R-_U-_R_U-_R-_%252F%252F_setup&rest=U_U2_U-_D_D2_D-_R_R2_R-_z&index=1&sol=z_U_R-_D_R2_U-_R_U_D-_R-_D_R2_U-_R_D-_&solver=LL&res=UDRz&crest=z_EMPTY&mav=U~D2%7CU2~D%7CU2~D2%7CU2~D-%7CU2~z%7CU-~D2%7CU-~z%7CD~z%7CD2~z%7CD-~z%7CR~z%7CR2~z%7CR-~z%7CEMPTY~U2%7CEMPTY~U-%7CEMPTY~D%7CEMPTY~D2%7CEMPTY~D-%7CEMPTY~R%7CEMPTY~R2%7CEMPTY~R-&rc=1">Example</a>
+			</li>
+			<li>PLL-Na (<b>Move Restrict</b>: U, R, F; Remove F2; Custom Move Available table and Move Count Limit). <a
+					href="index.html?scramble=_%252F%252F_Pre_Rotations%250AB2_U2_B_U2_R2_B2_R2_F-_U2_F2_R2_F-_L_R-_U2_L-_R-_%252F%252F_setup%250A&solver=LL2&res=URF&rest=U_U2_U-_R_R2_R-_F_F-&num=200&mav=U2%7EF%7CU2%7EF-%7CF%7EU2%7CF-%7EU2%7CEMPTY%7EU2%7CEMPTY%7EU-&mcv=U2%3A1_R2%3A2_F%3A1_F-%3A1&index=2&sol=R_U_R-_U_R_U_R-_F-_R_U_R-_U-_R-_F_R2_U-_R-_U2_R_U-_R-_&len=22">Example</a>
+			</li>
+			<li>1LLL (<b>Move Restrict</b>: U, R, F; Custom Move Available Table and Move Count Limit). <a
+					href="index.html?scramble=R-_F-_R-_U-_R_F_R-_U2_F2_L2_B2_D-_B2_L2_F2_U2_R2_%252F%252F_setup&solver=LL&res=URF&rest=U_U2_U-_R_R2_R-_F_F2_F-&index=1&sol=R-_F-_U2_F_R_U-_R-_F-_U-_F_U-_R_&mcv=U2%3A2_R2%3A1_F%3A2_F2%3A1_F-%3A2&mav=U2%7EF2%7CF2%7EU2%7CEMPTY%7EF2">Example</a>
+		</ul>
+		<h3>LL AUF Lite</h3>
+		<p>Last layer and AUF. Recommended to use <b>LL Lite</b> or <b>LL</b> solver.</p>
+		<h3>2x2x2</h3>
+		<p>A solver for 2x2x2 cube. It is used to search 2x2x2 algorithms such as CLL and EG.</p>
+		<ul>
+			<li>CLL (<b>Move Restrict</b>: U, R, F; Remove F2; Custom Move Available table; Custom Move Count Limit).
+				<a
+					href="2x2x2.html?scramble=_%252F%252F_Pre_Rotations%250AF2_U_R-_U-_F2_U-_R-_U2_R_U-_%252F%252F_setup%250A&mcv=U2%3A1_R2%3A1_F%3A1_F2%3A1_F-%3A1&index=1&sol=R_U-_R_F_R_F-_U_R_U2_R2_U_">Example</a>
+			</li>
+			<li>EG1 (<b>Move Restrict</b>: U, R, F, y; Rotation start setup; Custom Move Available table; Custom Move
+				Count Limit).<a
+					href="2x2x2.html?res=URFy&rest=U_U2_U-_R_R2_R-_F_F2_F-_y_y2_y-&scramble=_%252F%252F_Pre_Rotations%250AR_U_R2_F-_U_F2_R2_F-_U-_%252F%252F_setup%250A&mav=U%7EF2%7CU%7Ey%7CU%7Ey2%7CU%7Ey-%7CU2%7EF%7CU2%7EF2%7CU2%7EF-%7CU2%7Ey%7CU2%7Ey2%7CU2%7Ey-%7CU-%7EF2%7CU-%7Ey%7CU-%7Ey2%7CU-%7Ey-%7CR%7Ey%7CR%7Ey2%7CR%7Ey-%7CR2%7Ey%7CR2%7Ey2%7CR2%7Ey-%7CR-%7Ey%7CR-%7Ey2%7CR-%7Ey-%7CF%7EU2%7CF%7Ey%7CF%7Ey2%7CF%7Ey-%7CF2%7EU%7CF2%7EU2%7CF2%7EU-%7CF2%7Ey%7CF2%7Ey2%7CF2%7Ey-%7CF-%7EU2%7CF-%7Ey%7CF-%7Ey2%7CF-%7Ey-%7Cy%7EU%7Cy%7EU2%7Cy%7EU-%7Cy2%7EU%7Cy2%7EU2%7Cy2%7EU-%7Cy-%7EU%7Cy-%7EU2%7Cy-%7EU-&mcv=U2%3A1_R2%3A1_F%3A1_F2%3A1_F-%3A1_y%3A1_y2%3A1_y-%3A1&index=1&sol=R_F2_R-_U_R2_U_R_U2_R_F-_R-_">Example</a>
+			</li>
+			<li>Full solution search (<b>Move Restrict</b>: U, R, F, x, y, z; Remove x2; Rotation start setup; Custom
+				Move Count Limit). <a
+					href="2x2x2.html?scramble=U-_F-_U2_R_F-_R-_F_U_R-_U2_%252F%252F_setup%250A&res=URFxyz&rest=U_U2_U-_R_R2_R-_F_F2_F-_x_x-_y_y2_y-_z_z2_z-&mav=U%7Ex%7CU%7Ex-%7CU%7Ey%7CU%7Ey2%7CU%7Ey-%7CU%7Ez%7CU%7Ez2%7CU%7Ez-%7CU2%7Ex%7CU2%7Ex-%7CU2%7Ey%7CU2%7Ey2%7CU2%7Ey-%7CU2%7Ez%7CU2%7Ez2%7CU2%7Ez-%7CU-%7Ex%7CU-%7Ex-%7CU-%7Ey%7CU-%7Ey2%7CU-%7Ey-%7CU-%7Ez%7CU-%7Ez2%7CU-%7Ez-%7CR%7Ex%7CR%7Ex-%7CR%7Ey%7CR%7Ey2%7CR%7Ey-%7CR%7Ez%7CR%7Ez2%7CR%7Ez-%7CR2%7Ex%7CR2%7Ex-%7CR2%7Ey%7CR2%7Ey2%7CR2%7Ey-%7CR2%7Ez%7CR2%7Ez2%7CR2%7Ez-%7CR-%7Ex%7CR-%7Ex-%7CR-%7Ey%7CR-%7Ey2%7CR-%7Ey-%7CR-%7Ez%7CR-%7Ez2%7CR-%7Ez-%7CF%7Ex%7CF%7Ex-%7CF%7Ey%7CF%7Ey2%7CF%7Ey-%7CF%7Ez%7CF%7Ez2%7CF%7Ez-%7CF2%7Ex%7CF2%7Ex-%7CF2%7Ey%7CF2%7Ey2%7CF2%7Ey-%7CF2%7Ez%7CF2%7Ez2%7CF2%7Ez-%7CF-%7Ex%7CF-%7Ex-%7CF-%7Ey%7CF-%7Ey2%7CF-%7Ey-%7CF-%7Ez%7CF-%7Ez2%7CF-%7Ez-%7Cx%7ER%7Cx%7ER2%7Cx%7ER-%7Cx%7Ez%7Cx%7Ez2%7Cx%7Ez-%7Cx-%7ER%7Cx-%7ER2%7Cx-%7ER-%7Cx-%7Ez%7Cx-%7Ez2%7Cx-%7Ez-%7Cy%7EU%7Cy%7EU2%7Cy%7EU-%7Cy%7Ex%7Cy%7Ex-%7Cy%7Ez%7Cy%7Ez2%7Cy%7Ez-%7Cy2%7EU%7Cy2%7EU2%7Cy2%7EU-%7Cy2%7Ex%7Cy2%7Ex-%7Cy2%7Ez%7Cy2%7Ez2%7Cy2%7Ez-%7Cy-%7EU%7Cy-%7EU2%7Cy-%7EU-%7Cy-%7Ex%7Cy-%7Ex-%7Cy-%7Ez%7Cy-%7Ez2%7Cy-%7Ez-%7Cz%7EF%7Cz%7EF2%7Cz%7EF-%7Cz%7Ex%7Cz%7Ex-%7Cz2%7EF%7Cz2%7EF2%7Cz2%7EF-%7Cz2%7Ex%7Cz2%7Ex-%7Cz-%7EF%7Cz-%7EF2%7Cz-%7EF-%7Cz-%7Ex%7Cz-%7Ex-&mcv=x%3A1_x-%3A1_y%3A1_y2%3A1_y-%3A1_z%3A1_z2%3A1_z-%3A1&index=1&sol=U2_R_U-_F-_R_F_R-_U2_F_U_&num=200">Example</a>
+			</li>
+		</ul>
+
+	</div>
+	<div class="section">
+		<h2>Trainers Overview</h2>
+		<p>Random pattern generator based on min2phase.js and a full pruning table. Six trainers are available.
+			Scrambles can be generated with parameters, and solutions can be checked instantly.</p>
+		<ul>
+			<li>Cross trainer</li>
+			<li>XCross trainer</li>
+			<li>Free Pair trainer</li>
+			<li>Pseudo XCross trainer</li>
+			<li>Pseudo Free Pair trainer</li>
+			<li>EOCross trainer</li>
+		</ul>
+		<p>Each trainer comes with a corresponding solver. <b>[Next]</b> generates the next scramble, and <b>[Solve]</b>
+			checks the solution.</p>
+		<h3>Pattern Statistics</h3>
+		<h4>Cross</h4>
+		<table>
+			<tr>
+				<th>HTM</th>
+				<th>Number of Patterns</th>
+				<th>Percentage</th>
+			</tr>
+			<tr>
+				<td>0</td>
+				<td>1</td>
+				<td>0.00</td>
+			</tr>
+			<tr>
+				<td>1</td>
+				<td>15</td>
+				<td>0.01</td>
+			</tr>
+			<tr>
+				<td>2</td>
+				<td>158</td>
+				<td>0.08</td>
+			</tr>
+			<tr>
+				<td>3</td>
+				<td>1394</td>
+				<td>0.73</td>
+			</tr>
+			<tr>
+				<td>4</td>
+				<td>9809</td>
+				<td>5.16</td>
+			</tr>
+			<tr>
+				<td>5</td>
+				<td>46381</td>
+				<td>24.40</td>
+			</tr>
+			<tr>
+				<td>6</td>
+				<td>97254</td>
+				<td>51.16</td>
+			</tr>
+			<tr>
+				<td>7</td>
+				<td>34966</td>
+				<td>18.40</td>
+			</tr>
+			<tr>
+				<td>8</td>
+				<td>102</td>
+				<td>0.05</td>
+			</tr>
+		</table>
+		<h4>XCross</h4>
+		<table>
+			<tr>
+				<th>HTM</th>
+				<th>Number of Patterns</th>
+				<th>Percentage</th>
+			</tr>
+			<tr>
+				<td>0</td>
+				<td>1</td>
+				<td>0.00</td>
+			</tr>
+			<tr>
+				<td>1</td>
+				<td>15</td>
+				<td>0.00</td>
+			</tr>
+			<tr>
+				<td>2</td>
+				<td>172</td>
+				<td>0.00</td>
+			</tr>
+			<tr>
+				<td>3</td>
+				<td>1950</td>
+				<td>0.00</td>
+			</tr>
+			<tr>
+				<td>4</td>
+				<td>21535</td>
+				<td>0.03</td>
+			</tr>
+			<tr>
+				<td>5</td>
+				<td>220368</td>
+				<td>0.30</td>
+			</tr>
+			<tr>
+				<td>6</td>
+				<td>1989591</td>
+				<td>2.73</td>
+			</tr>
+			<tr>
+				<td>7</td>
+				<td>13431990</td>
+				<td>18.40</td>
+			</tr>
+			<tr>
+				<td>8</td>
+				<td>40963892</td>
+				<td>56.12</td>
+			</tr>
+			<tr>
+				<td>9</td>
+				<td>16325184</td>
+				<td>22.37</td>
+			</tr>
+			<tr>
+				<td>10</td>
+				<td>36022</td>
+				<td>0.05</td>
+			</tr>
+		</table>
+		<h4>Free Pair</h4>
+		<table>
+			<tr>
+				<th>HTM</th>
+				<th>Number of Patterns</th>
+				<th>Percentage</th>
+			</tr>
+			<tr>
+				<td>0</td>
+				<td>17</td>
+				<td>0.00</td>
+			</tr>
+			<tr>
+				<td>1</td>
+				<td>255</td>
+				<td>0.00</td>
+			</tr>
+			<tr>
+				<td>2</td>
+				<td>3102</td>
+				<td>0.00</td>
+			</tr>
+			<tr>
+				<td>3</td>
+				<td>35217</td>
+				<td>0.05</td>
+			</tr>
+			<tr>
+				<td>4</td>
+				<td>367070</td>
+				<td>0.50</td>
+			</tr>
+			<tr>
+				<td>5</td>
+				<td>3184390</td>
+				<td>4.36</td>
+			</tr>
+			<tr>
+				<td>6</td>
+				<td>18621816</td>
+				<td>25.51</td>
+			</tr>
+			<tr>
+				<td>7</td>
+				<td>41028188</td>
+				<td>56.21</td>
+			</tr>
+			<tr>
+				<td>8</td>
+				<td>9746797</td>
+				<td>13.35</td>
+			</tr>
+			<tr>
+				<td>9</td>
+				<td>3868</td>
+				<td>0.01</td>
+			</tr>
+		</table>
+		<h4>Pseudo XCross</h4>
+		<table>
+			<tr>
+				<th>HTM</th>
+				<th>Number of Patterns</th>
+				<th>Percentage</th>
+			</tr>
+			<tr>
+				<td>0</td>
+				<td>4</td>
+				<td>0.00</td>
+			</tr>
+			<tr>
+				<td>1</td>
+				<td>48</td>
+				<td>0.00</td>
+			</tr>
+			<tr>
+				<td>2</td>
+				<td>568</td>
+				<td>0.00</td>
+			</tr>
+			<tr>
+				<td>3</td>
+				<td>6556</td>
+				<td>0.01</td>
+			</tr>
+			<tr>
+				<td>4</td>
+				<td>70495</td>
+				<td>0.10</td>
+			</tr>
+			<tr>
+				<td>5</td>
+				<td>693185</td>
+				<td>0.95</td>
+			</tr>
+			<tr>
+				<td>6</td>
+				<td>5618257</td>
+				<td>7.70</td>
+			</tr>
+			<tr>
+				<td>7</td>
+				<td>27845257</td>
+				<td>38.15</td>
+			</tr>
+			<tr>
+				<td>8</td>
+				<td>36570024</td>
+				<td>50.10</td>
+			</tr>
+			<tr>
+				<td>9</td>
+				<td>2186315</td>
+				<td>3.00</td>
+			</tr>
+			<tr>
+				<td>10</td>
+				<td>11</td>
+				<td>0.00</td>
+			</tr>
+		</table>
+		<h4>Pseudo Free Pair</h4>
+		<table>
+			<tr>
+				<th>HTM</th>
+				<th>Number of Patterns</th>
+				<th>Percentage</th>
+			</tr>
+			<tr>
+				<td>0</td>
+				<td>68</td>
+				<td>0.00</td>
+			</tr>
+			<tr>
+				<td>1</td>
+				<td>816</td>
+				<td>0.00</td>
+			</tr>
+			<tr>
+				<td>2</td>
+				<td>9256</td>
+				<td>0.01</td>
+			</tr>
+			<tr>
+				<td>3</td>
+				<td>103681</td>
+				<td>0.14</td>
+			</tr>
+			<tr>
+				<td>4</td>
+				<td>1012687</td>
+				<td>1.39</td>
+			</tr>
+			<tr>
+				<td>5</td>
+				<td>7689281</td>
+				<td>10.53</td>
+			</tr>
+			<tr>
+				<td>6</td>
+				<td>32089788</td>
+				<td>43.96</td>
+			</tr>
+			<tr>
+				<td>7</td>
+				<td>30868369</td>
+				<td>42.29</td>
+			</tr>
+			<tr>
+				<td>8</td>
+				<td>1216774</td>
+				<td>1.67</td>
+			</tr>
+		</table>
+		<h4>EOCross</h4>
+		<table>
+			<tr>
+				<th>HTM</th>
+				<th>Number of Patterns</th>
+				<th>Percentage</th>
+			</tr>
+			<tr>
+				<td>0</td>
+				<td>1</td>
+				<td>0.00</td>
+			</tr>
+			<tr>
+				<td>1</td>
+				<td>15</td>
+				<td>0.00</td>
+			</tr>
+			<tr>
+				<td>2</td>
+				<td>178</td>
+				<td>0.00</td>
+			</tr>
+			<tr>
+				<td>3</td>
+				<td>1982</td>
+				<td>0.01</td>
+			</tr>
+			<tr>
+				<td>4</td>
+				<td>21041</td>
+				<td>0.09</td>
+			</tr>
+			<tr>
+				<td>5</td>
+				<td>204732</td>
+				<td>0.84</td>
+			</tr>
+			<tr>
+				<td>6</td>
+				<td>1645039</td>
+				<td>6.76</td>
+			</tr>
+			<tr>
+				<td>7</td>
+				<td>8477633</td>
+				<td>34.84</td>
+			</tr>
+			<tr>
+				<td>8</td>
+				<td>12917628</td>
+				<td>53.09</td>
+			</tr>
+			<tr>
+				<td>9</td>
+				<td>1061851</td>
+				<td>4.36</td>
+			</tr>
+			<tr>
+				<td>10</td>
+				<td>140</td>
+				<td>0.00</td>
+			</tr>
+		</table>
+	</div>
+	<script src="sw-register.js" defer></script>
+</body>
+
+</html>

@@ -1,0 +1,2669 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="manifest.json">
+    <title>2x2x2 Rubik's Cube Solver</title>
+    <meta name="description" content="Solver for 2x2x2 Rubik's Cube">
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-MXJH30352W"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-MXJH30352W');
+    </script>
+    <style>
+        header {
+            padding: 2px;
+            text-align: center;
+            cursor: pointer;
+            background-color: #121212;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+            background-color: #121212;
+        }
+
+        h1 {
+            font-family: Arial, sans-serif;
+            font-size: 24px;
+            text-align: center;
+            color: #ffffff;
+        }
+
+        h2,
+        label {
+            font-family: Arial, sans-serif;
+            font-size: 20px;
+            text-align: left;
+            color: #ffffff;
+        }
+
+        textarea {
+            font-family: Arial, sans-serif;
+            width: 100%;
+            max-width: 700px;
+            height: 200px;
+            font-size: 20px;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #41417f;
+            border-radius: 4px;
+            box-sizing: border-box;
+            background-color: #1e1e1e;
+            color: #ffffff;
+        }
+
+        input {
+            font-family: Arial, sans-serif;
+            width: 100%;
+            max-width: 100px;
+            height: 40px;
+            font-size: 20px;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #41417f;
+            border-radius: 4px;
+            box-sizing: border-box;
+            background-color: #1e1e1e;
+            color: #ffffff;
+        }
+
+        select {
+            font-family: Arial, sans-serif;
+            max-width: 200px;
+            font-size: 20px;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ffffff;
+            border-radius: 4px;
+            box-sizing: border-box;
+            background-color: #1e1e1e;
+            color: #ffffff;
+            cursor: pointer;
+        }
+
+        .button {
+            font-family: Arial, sans-serif;
+            width: 100%;
+            font-size: 20px;
+            padding: 10px;
+            background-color: #56567c;
+            color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 4px;
+        }
+
+        .medium {
+            max-width: 90px;
+        }
+
+        .small {
+            max-width: 40px;
+        }
+
+        button:hover {
+            background-color: #4a4a6d;
+        }
+
+        summary {
+            box-sizing: border-box;
+            display: block;
+            font-family: Arial, sans-serif;
+            padding: 10px;
+            font-size: 20px;
+            color: #ffffff;
+            width: 100%;
+            max-width: 750px;
+            cursor: pointer;
+        }
+
+        details {
+            border: 1px solid #41417f;
+            padding: 5px;
+            margin: 10px 0;
+        }
+
+        .table-res_table_wrapper {
+            max-height: 400px;
+            overflow: auto;
+        }
+
+        #move_available_table_wrapper {
+            overflow-x: auto;
+            max-width: 100%;
+            position: relative;
+            max-height: 400px;
+        }
+
+        #move_available_table {
+            max-height: 400px;
+            overflow: auto;
+        }
+
+        #move_available_table tbody th {
+            position: -webkit-sticky;
+            position: sticky;
+            left: 0;
+            background: #1e1e1e;
+            z-index: 1;
+        }
+
+        #move_available_table thead th:first-child {
+            position: -webkit-sticky;
+            position: sticky;
+            left: 0;
+            background: #1e1e1e;
+            z-index: 2;
+        }
+
+        th,
+        td {
+            text-align: left;
+            white-space: nowrap;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            font-size: 20px;
+            min-width: 40px;
+            min-height: 40px;
+        }
+
+        thead th {
+            position: sticky;
+            top: 0;
+            background: #1e1e1e;
+            z-index: 2;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .hidden_small {
+            display: none;
+        }
+
+        a,
+        pre {
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            font-size: 20px;
+        }
+
+        twisty-player {
+            margin: 0;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .custom-checkbox {
+            display: none;
+        }
+
+        .custom-checkbox+label {
+            position: relative;
+            padding-left: 33px;
+            cursor: pointer;
+            font-size: 20px;
+            color: #ffffff;
+            user-select: none;
+        }
+
+        .custom-checkbox+label:before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            border: 2px solid #41417f;
+            background-color: #1e1e1e;
+        }
+
+        .custom-checkbox:checked+label:before {
+            background-color: #41417f;
+            border-color: #41417f;
+        }
+
+        .custom-checkbox:checked+label:after {
+            content: '';
+            position: absolute;
+            left: 9px;
+            top: 5px;
+            width: 5px;
+            height: 10px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.75);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            z-index: 50;
+        }
+
+        .modal-overlay.hidden {
+            display: none;
+        }
+
+        .modal-panel {
+            background-color: #1e1e1e;
+            border: 1px solid #41417f;
+            border-radius: 4px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 42rem;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid #41417f;
+        }
+
+        .modal-header h2 {
+            font-size: 20px;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .modal-header .header-left-group {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .modal-header .button-group {
+            display: flex;
+            align-items: center;
+        }
+
+        .modal-header .copy-btn {
+            padding: 5px 15px;
+            font-size: 18px;
+        }
+
+        .modal-header .close-btn {
+            font-size: 2.5rem;
+            line-height: 1;
+            background: none;
+            border: none;
+            color: #aaa;
+            cursor: pointer;
+            padding: 0 10px;
+        }
+
+        .modal-content {
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .modal-content pre {
+            font-family: Arial, sans-serif;
+            white-space: pre-wrap;
+            font-size: 18px;
+            color: #e0e0e0;
+        }
+
+        body.modal-open {
+            overflow: hidden;
+        }
+
+        th,
+        td {
+            text-align: left;
+            white-space: nowrap;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            font-size: 20px;
+            min-width: 40px;
+            min-height: 40px;
+        }
+
+        .checkbox-table {
+            width: 100%;
+            max-width: 410px;
+            margin-top: 10px;
+            border-collapse: collapse;
+            border: 1px solid #41417f;
+        }
+
+        .checkbox-table td {
+            border: 1px solid #41417f;
+            padding: 10px;
+            background-color: #1e1e1e;
+            text-align: center;
+        }
+
+        .move-count-input {
+            font-family: Arial, sans-serif;
+            width: 60px;
+            max-width: 100px;
+            height: 40px;
+            font-size: 20px;
+            border: 1px solid #41417f;
+            box-sizing: border-box;
+            background-color: #1e1e1e;
+            color: #ffffff;
+            text-align: center;
+            margin: 0;
+        }
+
+        .move-count-input:disabled {
+            background-color: #333;
+            color: #777;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 20px;
+            width: 100%;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-start;
+            align-items: flex-start;
+            gap: 20px;
+            padding: 15px;
+            background-color: #1e1e1e;
+            border-radius: 8px;
+            border: 1px solid #41417f;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .mode-button,
+        .action-button {
+            font-size: 16px;
+            padding: 8px 16px;
+            background-color: #56567c;
+            color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            text-align: center;
+        }
+
+        .mode-button.active {
+            background-color: #8a8ac8;
+            box-shadow: 0 0 10px #8a8ac8;
+        }
+
+        .action-button:hover,
+        .mode-button:hover {
+            background-color: #7171a8;
+        }
+
+        .color-setting-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .color-setting-row label {
+            width: 25px;
+            text-align: right;
+            font-weight: bold;
+        }
+
+        .color-selector {
+            font-size: 16px;
+            padding: 5px;
+            background-color: #1e1e1e;
+            color: #ffffff;
+            border: 1px solid #41417f;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .custom-color-picker {
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            border: none;
+            background: none;
+            cursor: pointer;
+            vertical-align: middle;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .cube-scroll-container {
+            width: 100%;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+
+        .unfolded-cube {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            grid-template-rows: repeat(9, 1fr);
+            width: 300px;
+            height: 225px;
+            margin: 0;
+        }
+
+        .face {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 4px;
+            padding: 4px;
+            background-color: #111;
+            border-radius: 5px;
+        }
+
+        #face-U {
+            grid-area: 1 / 4 / 4 / 7;
+        }
+
+        #face-L {
+            grid-area: 4 / 1 / 7 / 4;
+        }
+
+        #face-F {
+            grid-area: 4 / 4 / 7 / 7;
+        }
+
+        #face-R {
+            grid-area: 4 / 7 / 7 / 10;
+        }
+
+        #face-B {
+            grid-area: 4 / 10 / 7 / 13;
+        }
+
+        #face-D {
+            grid-area: 7 / 4 / 10 / 7;
+        }
+
+        .sticker {
+            border-radius: 3px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .sticker.selected {
+            transform: scale(0.9);
+            box-shadow: 0 0 15px 3px yellow;
+            border: 2px solid yellow;
+        }
+
+
+        .drawer-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .drawer-overlay.hidden {
+            display: none;
+        }
+
+        .drawer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            height: 100dvh;
+            width: 280px;
+            background: #1e1e1e;
+            border-right: 1px solid #41417f;
+            box-shadow: 0 4px 16px #000a;
+            padding: 16px;
+            transform: translateX(-100%);
+            transition: transform 0.2s ease-in-out;
+            z-index: 1003;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .drawer.open {
+            transform: translateX(0);
+        }
+
+        #hamburger-menu a {
+            display: block;
+            margin-bottom: 8px;
+            white-space: nowrap;
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .drawer-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+            border-bottom: 1px solid #41417f;
+        }
+
+        .drawer-title {
+            margin: 0;
+            font-size: 20px;
+            color: #ffffff;
+        }
+
+        .drawer-close-btn {
+            background: none;
+            border: none;
+            color: #aaa;
+            cursor: pointer;
+            font-size: 1.8rem;
+            line-height: 1;
+            padding: 0 6px;
+        }
+
+        .drawer-close-btn:hover {
+            color: #fff;
+        }
+
+        .drawer-content {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-right: 4px;
+            padding-bottom: 24px;
+            padding-bottom: calc(24px + env(safe-area-inset-bottom));
+            overscroll-behavior: contain;
+            touch-action: pan-y;
+        }
+
+
+        .drawer-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .drawer-overlay.hidden {
+            display: none;
+        }
+
+        .drawer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            height: 100dvh;
+            width: 280px;
+            background: #1e1e1e;
+            border-right: 1px solid #41417f;
+            box-shadow: 0 4px 16px #000a;
+            padding: 16px;
+            transform: translateX(-100%);
+            transition: transform 0.2s ease-in-out;
+            z-index: 1003;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .drawer.open {
+            transform: translateX(0);
+        }
+
+        #hamburger-menu a {
+            display: block;
+            margin-bottom: 8px;
+            white-space: nowrap;
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .drawer-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+            border-bottom: 1px solid #41417f;
+        }
+
+        .drawer-title {
+            margin: 0;
+            font-size: 20px;
+            color: #ffffff;
+        }
+
+        .drawer-close-btn {
+            background: none;
+            border: none;
+            color: #aaa;
+            cursor: pointer;
+            font-size: 1.8rem;
+            line-height: 1;
+            padding: 0 6px;
+        }
+
+        .drawer-close-btn:hover {
+            color: #fff;
+        }
+
+        .drawer-content {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-right: 4px;
+            padding-bottom: 24px;
+            padding-bottom: calc(24px + env(safe-area-inset-bottom));
+            overscroll-behavior: contain;
+            touch-action: pan-y;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="hamburger-menu-container">
+        <button id="hamburger-menu-btn" aria-label="Open menu"
+            style="background:none;border:none;cursor:pointer;font-size:2.2rem;position:absolute;top:10px;left:10px;z-index:1002;color:#fff;">
+            &#9776;
+        </button>
+        <div id="drawer-overlay" class="drawer-overlay hidden"></div>
+        <nav id="hamburger-menu" class="drawer" aria-label="Main navigation">
+            <div class="drawer-header">
+                <h2 class="drawer-title">Menu</h2>
+                <button id="drawer-close-btn" class="drawer-close-btn" aria-label="Close menu">&times;</button>
+            </div>
+            <div class="drawer-content">
+                <a href="https://github.com/or18/RubiksSolverDemo" rel="noopener noreferrer" translate="no">Source</a>
+                <a href="index.html">Main Solver</a>
+                <a href="2x2x2.html" rel="noopener noreferrer" translate="no">2x2x2 Solver</a>
+                <a href="documentation.html" translate="no">Documentation</a>
+                <span style="font-weight:bold;margin-top:12px;display:block;color:#fff;">Trainers:</span>
+                <a href="cross_trainer.html" rel="noopener noreferrer" translate="no">Cross</a>
+                <a href="xcross_trainer.html" rel="noopener noreferrer" translate="no">XCross</a>
+                <a href="pairing_trainer.html" rel="noopener noreferrer" translate="no">Free Pair</a>
+                <a href="pseudo_xcross_trainer.html" rel="noopener noreferrer" translate="no">Pseudo XCross</a>
+                <a href="pseudo_pairing_trainer.html" rel="noopener noreferrer" translate="no">Pseudo Free Pair</a>
+                <a href="eocross_trainer.html" rel="noopener noreferrer" translate="no">EOCross</a>
+                <a href="algTrainer.html" rel="noopener noreferrer" translate="no">Alg Trainer</a>
+                <a href="jsonEditor.html" rel="noopener noreferrer" translate="no">JSON Editor</a>
+                <span style="font-weight:bold;margin-top:12px;display:block;color:#fff;">External tools:</span>
+                <a href="https://trangium.github.io/MovecountCoefficient/" target="_blank" rel="noopener noreferrer"
+                    translate="no">MCC by trangium</a>
+                <a href="https://speedcubedb.com/a/2x2/" target="_blank" rel="noopener noreferrer"
+                    translate="no">speedcubedb.com</a>
+                <a href="https://cstimer.net/" target="_blank" rel="noopener noreferrer" translate="no">cstimer.net</a>
+            </div>
+        </nav>
+    </div>
+    <header id="header" style="margin-left:48px;margin-top:10px;position:relative;z-index:10;">
+        <h1>2x2x2 Rubik's Cube Solver</h1>
+    </header>
+    <script>
+        const hamburgerBtn = document.getElementById('hamburger-menu-btn');
+        const drawer = document.getElementById('hamburger-menu');
+        const overlay = document.getElementById('drawer-overlay');
+        const drawerCloseBtn = document.getElementById('drawer-close-btn');
+
+        function openDrawer() {
+            drawer.classList.add('open');
+            overlay.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeDrawer() {
+            drawer.classList.remove('open');
+            overlay.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        hamburgerBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (drawer.classList.contains('open')) {
+                closeDrawer();
+            } else {
+                openDrawer();
+            }
+        });
+
+        overlay.addEventListener('click', closeDrawer);
+        if (drawerCloseBtn) drawerCloseBtn.addEventListener('click', closeDrawer);
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && drawer.classList.contains('open')) closeDrawer();
+        });
+        drawer.addEventListener('click', (e) => {
+            const target = e.target;
+            if (target.tagName === 'A') {
+                closeDrawer();
+            }
+        });
+    </script>
+    <details id="details_cubeUI">
+        <summary id="summary_cubeUI">Show Cube Editor</summary>
+        <div class="main-container">
+            <div class="controls">
+                <div class="control-group">
+                    <div class="color-setting-row">
+                        <label for="color-selector-U">U:</label>
+                        <select id="color-selector-U" class="color-selector" data-face="U">
+                            <option value="white" selected>White</option>
+                            <option value="red">Red</option>
+                            <option value="green">Green</option>
+                            <option value="yellow">Yellow</option>
+                            <option value="orange">Orange</option>
+                            <option value="blue">Blue</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                        <input type="color" id="custom-color-picker-U" class="custom-color-picker hidden" data-face="U"
+                            value="#ffffff">
+                    </div>
+                    <div class="color-setting-row">
+                        <label for="color-selector-R">R:</label>
+                        <select id="color-selector-R" class="color-selector" data-face="R">
+                            <option value="red" selected>Red</option>
+                            <option value="white">White</option>
+                            <option value="green">Green</option>
+                            <option value="yellow">Yellow</option>
+                            <option value="orange">Orange</option>
+                            <option value="blue">Blue</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                        <input type="color" id="custom-color-picker-R" class="custom-color-picker hidden" data-face="R"
+                            value="#ff0000">
+                    </div>
+                    <div class="color-setting-row">
+                        <label for="color-selector-F">F:</label>
+                        <select id="color-selector-F" class="color-selector" data-face="F">
+                            <option value="green" selected>Green</option>
+                            <option value="white">White</option>
+                            <option value="red">Red</option>
+                            <option value="yellow">Yellow</option>
+                            <option value="orange">Orange</option>
+                            <option value="blue">Blue</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                        <input type="color" id="custom-color-picker-F" class="custom-color-picker hidden" data-face="F"
+                            value="#00ff00">
+                    </div>
+                    <div class="color-setting-row">
+                        <label for="color-selector-D">D:</label>
+                        <select id="color-selector-D" class="color-selector" data-face="D">
+                            <option value="yellow" selected>Yellow</option>
+                            <option value="white">White</option>
+                            <option value="red">Red</option>
+                            <option value="green">Green</option>
+                            <option value="orange">Orange</option>
+                            <option value="blue">Blue</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                        <input type="color" id="custom-color-picker-D" class="custom-color-picker hidden" data-face="D"
+                            value="#ffff00">
+                    </div>
+                    <div class="color-setting-row">
+                        <label for="color-selector-L">L:</label>
+                        <select id="color-selector-L" class="color-selector" data-face="L">
+                            <option value="orange" selected>Orange</option>
+                            <option value="white">White</option>
+                            <option value="red">Red</option>
+                            <option value="green">Green</option>
+                            <option value="yellow">Yellow</option>
+                            <option value="blue">Blue</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                        <input type="color" id="custom-color-picker-L" class="custom-color-picker hidden" data-face="L"
+                            value="#ffa500">
+                    </div>
+                    <div class="color-setting-row">
+                        <label for="color-selector-B">B:</label>
+                        <select id="color-selector-B" class="color-selector" data-face="B">
+                            <option value="blue" selected>Blue</option>
+                            <option value="white">White</option>
+                            <option value="red">Red</option>
+                            <option value="green">Green</option>
+                            <option value="yellow">Yellow</option>
+                            <option value="orange">Orange</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                        <input type="color" id="custom-color-picker-B" class="custom-color-picker hidden" data-face="B"
+                            value="#0000ff">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <button id="swap-mode-btn" class="mode-button active">Swap</button>
+                    <button id="flip-mode-btn" class="mode-button">Flip</button>
+                    <button id="get-string-btn" class="action-button">Get<br>Scramble</button>
+                    <button id="reset-cube-btn" class="action-button">Reset</button>
+                    <label for="pre_rot">Rotation: </label>
+                    <select translate="no" id="pre_rot">
+                        <option translate="no" value="">None</option>
+                        <option translate="no" value="y">y</option>
+                        <option translate="no" value="y2">y2</option>
+                        <option translate="no" value="y'">y'</option>
+                        <option translate="no" value="z2">z2</option>
+                        <option translate="no" value="z2 y">z2 y</option>
+                        <option translate="no" value="z2 y2">z2 y2</option>
+                        <option translate="no" value="z2 y'">z2 y'</option>
+                        <option translate="no" value="z'">z'</option>
+                        <option translate="no" value="z' y">z' y</option>
+                        <option translate="no" value="z' y2">z' y2</option>
+                        <option translate="no" value="z' y'">z' y'</option>
+                        <option translate="no" value="z">z</option>
+                        <option translate="no" value="z y">z y</option>
+                        <option translate="no" value="z y2">z y2</option>
+                        <option translate="no" value="z y'">z y'</option>
+                        <option translate="no" value="x'">x'</option>
+                        <option translate="no" value="x' y">x' y</option>
+                        <option translate="no" value="x' y2">x' y2</option>
+                        <option translate="no" value="x' y'">x' y'</option>
+                        <option translate="no" value="x2">x2</option>
+                        <option translate="no" value="x2 y">x2 y</option>
+                        <option translate="no" value="x2 y2">x2 y2</option>
+                        <option translate="no" value="x2 y'">x2 y'</option>
+                        <option translate="no" value="x">x</option>
+                        <option translate="no" value="x y">x y</option>
+                        <option translate="no" value="x y2">x y2</option>
+                        <option translate="no" value="x y'">x y'</option>
+                    </select>
+                    <input type="checkbox" id="CheckboxAutoPrerotSetting" class="custom-checkbox" checked>
+                    <label for="CheckboxAutoPrerotSetting">Auto Set</label>
+                </div>
+            </div>
+            <div class="cube-scroll-container">
+                <div id="cube-container" class="unfolded-cube">
+                </div>
+            </div>
+    </details>
+    <label for="scr">Scramble: </label><br>
+    <textarea id="scr" rows="10" cols="10" placeholder="Use // to write comments, as in algs // comment. 
+Write the //setup comment in the appropriate position when viewing on alg.cubing.net or cubedb.net."
+        onchange="save()"></textarea><br>
+    <button id="gen" class="button medium">Random</button>
+    <button id="reverse" class="button medium" onclick="reverseScramble()">Reverse</button>
+    <button id="mirror" class="button medium" onclick="mirrorScramble()">Mirror</button>
+    <button id="clear" class="button medium">Clear</button>
+    <button id="undo" class="button small hidden_small" onclick="undo()">←</button>
+    <button id="redo" class="button small hidden_small" onclick="redo()">→</button><br>
+    <details id="details_preview">
+        <summary id="summary_preview">Show Preview</summary>
+        <div id="show"></div>
+        <pre id="links"
+            class="hidden"><a translate="no" id="link_alg_cubing" href="https://alg.cubing.net/&puzzle=2x2x2" target="_blank" rel="noopener noreferrer">alg.cubing.net</a>  <a translate="no" id="link_cubedb" href="https://cubedb.net/?puzzle=2x2" target="_blank" rel="noopener noreferrer">cubedb.net</a></pre>
+    </details>
+
+    <label for="rot">Rotation: </label>
+    <select translate="no" id="rot" onchange="updateUrlParams()">
+        <option translate="no" value="">None</option>
+        <option translate="no" value="y">y</option>
+        <option translate="no" value="y2">y2</option>
+        <option translate="no" value="y'">y'</option>
+        <option translate="no" value="z2">z2</option>
+        <option translate="no" value="z2 y">z2 y</option>
+        <option translate="no" value="z2 y2">z2 y2</option>
+        <option translate="no" value="z2 y'">z2 y'</option>
+        <option translate="no" value="z'">z'</option>
+        <option translate="no" value="z' y">z' y</option>
+        <option translate="no" value="z' y2">z' y2</option>
+        <option translate="no" value="z' y'">z' y'</option>
+        <option translate="no" value="z">z</option>
+        <option translate="no" value="z y">z y</option>
+        <option translate="no" value="z y2">z y2</option>
+        <option translate="no" value="z y'">z y'</option>
+        <option translate="no" value="x'">x'</option>
+        <option translate="no" value="x' y">x' y</option>
+        <option translate="no" value="x' y2">x' y2</option>
+        <option translate="no" value="x' y'">x' y'</option>
+        <option translate="no" value="x2">x2</option>
+        <option translate="no" value="x2 y">x2 y</option>
+        <option translate="no" value="x2 y2">x2 y2</option>
+        <option translate="no" value="x2 y'">x2 y'</option>
+        <option translate="no" value="x">x</option>
+        <option translate="no" value="x y">x y</option>
+        <option translate="no" value="x y2">x y2</option>
+        <option translate="no" value="x y'">x y'</option>
+    </select><br>
+    <div id="basic input">
+        <label for="len">Max Length: </label>
+        <input type="number" id="len" value="20" min="1" required onchange="updateUrlParams()"><br>
+        <label for="num">Max Count: </label>
+        <input type="number" id="num" value="20" min=1 required onchange="updateUrlParams()"><br>
+        <label for="res">Move Restrict: </label>
+        <div translate="no" id="res" onchange="updateUrlParams()">
+
+            <table class="checkbox-table">
+                <tbody>
+                    <tr>
+                        <td>
+                            <input type="checkbox" id="checkboxU_restrict" class="custom-checkbox restrict" value="U"
+                                checked>
+                            <label translate="no" for="checkboxU_restrict">U</label>
+                        </td>
+                        <td>
+                            <input type="checkbox" id="checkboxD_restrict" class="custom-checkbox restrict" value="D"
+                                checked>
+                            <label translate="no" for="checkboxD_restrict">D</label>
+                        </td>
+                        <td>
+                            <input type="checkbox" id="checkboxL_restrict" class="custom-checkbox restrict" value="L"
+                                checked>
+                            <label translate="no" for="checkboxL_restrict">L</label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="checkbox" id="checkboxR_restrict" class="custom-checkbox restrict" value="R"
+                                checked>
+                            <label translate="no" for="checkboxR_restrict">R</label>
+                        </td>
+                        <td>
+                            <input type="checkbox" id="checkboxF_restrict" class="custom-checkbox restrict" value="F"
+                                checked>
+                            <label translate="no" for="checkboxF_restrict">F</label>
+                        </td>
+                        <td>
+                            <input type="checkbox" id="checkboxB_restrict" class="custom-checkbox restrict" value="B"
+                                checked>
+                            <label translate="no" for="checkboxB_restrict">B</label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="checkbox" id="checkboxx_restrict" class="custom-checkbox restrict" value="x">
+                            <label translate="no" for="checkboxx_restrict">x</label>
+                        </td>
+                        <td>
+                            <input type="checkbox" id="checkboxy_restrict" class="custom-checkbox restrict" value="y">
+                            <label translate="no" for="checkboxy_restrict">y</label>
+                        </td>
+                        <td>
+                            <input type="checkbox" id="checkboxz_restrict" class="custom-checkbox restrict" value="z">
+                            <label translate="no" for="checkboxz_restrict">z</label>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div><br>
+        <label for="prune">Prune depth: </label>
+        <select translate="no" id="prune">
+            <option translate="no" value="1">1</option>
+            <option translate="no" value="2">2</option>
+            <option translate="no" value="3">3</option>
+            <option translate="no" value="4">4</option>
+            <option translate="no" value="5">5</option>
+            <option translate="no" value="6">6</option>
+            <option translate="no" value="7">7</option>
+            <option translate="no" value="8" selected>8</option>
+            <option translate="no" value="9">9</option>
+            <option translate="no" value="10">10</option>
+            <option translate="no" value="11">11</option>
+        </select><br>
+        <details id="advancedSettings">
+            <summary id="summaryAdvancedSettings">Show Advanced Settings</summary><br>
+            <label for="premove">Pre Move: </label>
+            <input type="text" id="premove" onchange="updateUrlParams()"><br>
+            <label for="res_table">Move Restrict:</label>
+            <div id="res_table_wrapper" onchange="updateUrlParams()">
+                <table id="res_table" border="2" translate="no">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>* </th>
+                            <th>* 2 </th>
+                            <th>* ' </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div><br>
+            <label for="move_available_table">Move Available Table:</label>
+            <div id="move_available_table_wrapper" onchange="updateUrlParams()">
+                <table id="move_available_table" border="2" translate="no">
+                    <thead></thead>
+                    <tbody></tbody>
+                </table>
+            </div><br>
+            <label for="count_table">Max Move Count:</label>
+            <div id="count_table_wrapper">
+                <table id="count_table" border="2" translate="no">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>* </th>
+                            <th>* 2 </th>
+                            <th>* ' </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div><br>
+        </details>
+        <br>
+        <button id="solveButton" class="button medium" onclick="startWorker()">Start</button>&nbsp;&nbsp;
+        <button onclick="showModalWithCustomText()" class="button medium">Export</button><br>
+        <div id="modal-overlay" class="modal-overlay hidden">
+            <div id="modal-panel" class="modal-panel">
+                <div class="modal-header">
+                    <div class="header-left-group">
+                        <h2>Output</h2>
+                        <button id="modal-copy-btn" class="button copy-btn">Copy</button>
+                    </div>
+                    <button id="modal-close-btn" class="close-btn">&times;</button>
+                </div>
+                <div class="modal-content">
+                    <pre id="modal-text-content" translate="no"></pre>
+                </div>
+            </div>
+        </div>
+        <label for="countLine">Number of solutions: </label>
+        <input type="text" id="countLine" value="0" readonly><br>
+        <label for="currentDepth">Current Depth: </label>
+        <input type="text" id="currentDepth" value="-1" readonly>
+        <div id="result"></div>
+
+        <script type="module">
+            let twistyPromise = null;
+            function ensureTwisty() {
+                if (!twistyPromise) {
+                    twistyPromise = import('https://cdn.cubing.net/v0/js/cubing/twisty')
+                        .then(mod => {
+                            console.log('Twisty module loaded exports:', Object.keys(mod || {}));
+                            const Ctor = mod.TwistyPlayer || mod.default || (mod.default && mod.default.TwistyPlayer) || window.TwistyPlayer || null;
+                            console.log('Resolved TwistyPlayer constructor:', Ctor);
+                            window.__TwistyModule = mod;
+                            window.__TwistyPlayerCtor = Ctor;
+                            return mod;
+                        })
+                        .catch(err => {
+                            console.error('Twisty import failed:', err);
+                            window.__TwistyLoadError = err;
+                            throw err;
+                        });
+                }
+                return twistyPromise;
+            }
+            async function createPlayerLazy(setup, alg) {
+                const mod = await ensureTwisty();
+                const Ctor = mod.TwistyPlayer || mod.default || (mod.default && mod.default.TwistyPlayer) || window.__TwistyPlayerCtor || window.TwistyPlayer;
+                if (!Ctor) throw new Error('TwistyPlayer constructor not found in module');
+                return new Ctor({ puzzle: '2x2x2', experimentalSetupAlg: setup, alg, background: 'none' });
+            }
+            window.createPlayerLazy = createPlayerLazy;
+            function createPlayer(setup, alg) {
+                if (window.__TwistyLoadError) throw window.__TwistyLoadError;
+                const Ctor = window.__TwistyPlayerCtor || window.TwistyPlayer;
+                if (!Ctor) {
+                    ensureTwisty().catch(e => console.error('ensureTwisty error:', e));
+                    throw new Error('TwistyPlayer not available');
+                }
+                return new Ctor({ puzzle: '2x2x2', experimentalSetupAlg: setup, alg, background: 'none' });
+            }
+            window.createPlayer = createPlayer;
+            window.ensureTwisty = ensureTwisty;
+            try { ensureTwisty().catch(() => { }); } catch (e) { }
+        </script>
+
+        <script>
+            function loadScriptAsync(src) {
+                return new Promise((resolve, reject) => {
+                    if (document.querySelector('script[src="' + src + '"]')) return resolve();
+                    const s = document.createElement('script');
+                    s.src = src;
+                    s.async = true;
+                    s.onload = () => resolve();
+                    s.onerror = (e) => reject(new Error('Failed to load ' + src));
+                    document.head.appendChild(s);
+                });
+            }
+            window.loadFunctionsJs = function () {
+                if (window.__functionsLoading) return window.__functionsLoading;
+                window.__functionsLoading = new Promise((resolve, reject) => {
+                    window.Module = {
+                        onRuntimeInitialized: () => resolve(window.Module)
+                    };
+                    loadScriptAsync('src/functions/functions.js').catch(err => {
+                        window.__functionsLoading = null;
+                        reject(err);
+                    });
+                });
+                return window.__functionsLoading;
+            };
+        </script>
+
+        <script>
+            let reverse;
+            let mirror;
+            let convert;
+            let isFunctionsReady = false;
+
+            async function InitializeFunctions() {
+                const Module = await window.loadFunctionsJs();
+                reverse = function (scr) {
+                    const scr_fixed = scr_fix2(scr);
+                    if (scr_fixed === "") {
+                        return;
+                    }
+                    const lines = scr_fixed.split('\n');
+                    const processedLines = [];
+                    for (let i = lines.length - 1; i >= 0; i--) {
+                        const line = lines[i];
+                        const [alg, comment] = line.split('//');
+                        const alg_revresed = Module.scr_reverse(alg.trim());
+                        if (comment) {
+                            processedLines.push(`${alg_revresed} // ${comment.trim()}`);
+                        } else {
+                            processedLines.push(alg_revresed);
+                        }
+                    }
+                    const result = processedLines.join('\n');
+                    return result.trim() + "\n";
+                };
+                mirror = function (scr) {
+                    const scr_fixed = scr_fix2(scr);
+                    if (scr_fixed === "") {
+                        return;
+                    }
+                    const lines = scr_fixed.split('\n');
+                    const processedLines = [];
+                    for (let i = 0; i < lines.length; i++) {
+                        const line = lines[i];
+                        const [alg, comment] = line.split('//');
+                        const alg_mirrored = Module.scr_mirror(alg.trim());
+                        if (comment) {
+                            processedLines.push(`${alg_mirrored} // ${comment.trim()}`);
+                        } else {
+                            processedLines.push(alg_mirrored);
+                        }
+                    }
+                    const result = processedLines.join('\n');
+                    return result.trim() + "\n";
+                };
+                convert = function (scramble) {
+                    const result = Module.scr_converter(scramble);
+                    const resultArray = result.split(',');
+                    return resultArray.map(part => part.trim());
+                };
+                isFunctionsReady = true;
+            }
+
+            if ('requestIdleCallback' in window) {
+                requestIdleCallback(() => { InitializeFunctions(); }, { timeout: 2000 });
+            } else {
+                setTimeout(() => { InitializeFunctions(); }, 2000);
+            }
+
+            let worker;
+            let worker2;
+            let messageCount = 0;
+            let sol_input = false;
+            let body = "";
+
+            function scr_fix(scr) {
+                const fixed_scr = scr_fix2(scr);
+                const output = fixed_scr.split('\n')
+                    .map(line => line.split('//')[0].trim())
+                    .filter(line => line.length > 0)
+                    .join('\n');
+                return output;
+            }
+
+            function scr_fix2(scr) {
+                const outputString = scr.split('\n').map(line => {
+                    const commentIndex = line.indexOf('//');
+                    if (commentIndex !== -1) {
+                        const beforeComment = insertSpaces(line.slice(0, commentIndex));
+                        const comment = line.slice(commentIndex);
+                        return beforeComment + ' ' + comment.trim();
+                    } else {
+                        return insertSpaces(line);
+                    }
+                }).join('\n');
+                return outputString;
+            }
+
+            function insertSpaces(input) {
+                const keys = ["U", "U2", "U2'", "U'", "D", "D2", "D2'", "D'", "L", "L2", "L2'", "L'", "R", "R2", "R2'", "R'", "F", "F2", "F2'", "F'", "B", "B2", "B2'", "B'", "u", "u2", "u2'", "u'", "d", "d2", "d2'", "d'", "l", "l2", "l2'", "l'", "r", "r2", "r2'", "r'", "f", "f2", "f2'", "f'", "b", "b2", "b2'", "b'", "Uw", "Uw2", "Uw2'", "Uw'", "Dw", "Dw2", "Dw2'", "Dw'", "Lw", "Lw2", "Lw2'", "Lw'", "Rw", "Rw2", "Rw2'", "Rw'", "Fw", "Fw2", "Fw2'", "Fw'", "Bw", "Bw2", "Bw2'", "Bw'", "M", "M2", "M2'", "M'", "S", "S2", "S2'", "S'", "E", "E2", "E2'", "E'", "x", "x2", "x2'", "x'", "y", "y2", "y2'", "y'", "z", "z2", "z2'", "z'"];
+                const regex = new RegExp(`(${keys.join('|')})`, 'g');
+                return input.replace(regex, ' $1').trim()
+                    .replace(/\s+/g, ' ');
+            }
+
+            function replaceCharacters(input) {
+                return input
+                    .replace(/'/g, '-')
+                    .replace(/\n/g, '%0A')
+                    .replace(/\//g, '%2F')
+                    .replace(/ /g, '_');
+            }
+
+            function splitAtLastScramble(input) {
+                const scrambleRegex = /\/\/\s*setup/g;
+                const index = input.search(scrambleRegex);
+                if (index !== -1) {
+                    const scrambleLineEnd = input.indexOf('\n', index);
+                    const scrambleLine = input.slice(index, scrambleLineEnd !== -1 ? scrambleLineEnd : undefined).trim();
+                    const aboveScramble = input.slice(0, scrambleLineEnd !== -1 ? scrambleLineEnd : input.length).trim();
+                    const belowScramble = input.slice(index + scrambleLine.length).trim();
+                    return { aboveScramble, belowScramble };
+                } else {
+                    return { aboveScramble: input.trim(), belowScramble: '' };
+                }
+            }
+
+            function getLink(scr) {
+                const fixed_scr = scr_fix2(scr);
+                const { aboveScramble, belowScramble } = splitAtLastScramble(fixed_scr);
+                const transformedAbove = replaceCharacters(aboveScramble);
+                const transformedBelow = replaceCharacters(belowScramble);
+                const URL1 = "https://alg.cubing.net/?setup=" + transformedAbove + "&alg=" + transformedBelow + "%0A&puzzle=2x2x2";
+                const URL2 = "https://cubedb.net/?puzzle=2x2&scramble=" + transformedAbove + "&alg=" + transformedBelow + "%0A";
+                return { URL1, URL2 };
+            }
+
+            const idToKeyMap = {
+                'scr': 'scramble',
+                'rot': 'rot',
+                'len': 'len',
+                'num': 'num',
+                'res': 'res',
+                'rest': 'rest',
+                'mav': 'mav',
+                'premove': 'premove',
+                'mcv': 'mcv'
+            };
+
+            const defaultValues = {
+                '2x2x2': {
+                    'scr': '',
+                    'rot': '',
+                    'slot': '',
+                    'len': '20',
+                    'num': '20',
+                    'res': 'URF',
+                    'rest': 'U_U2_U-_R_R2_R-_F_F2_F-',
+                    'mav': '',
+                    'premove': '',
+                    'mcv': ''
+                }
+            };
+
+            const idList = [
+                'scr',
+                'rot',
+                'len',
+                'num',
+                'res',
+                'rest',
+                'mav',
+                'premove',
+                'mcv'
+            ];
+
+            document.addEventListener('DOMContentLoaded', () => {
+                const restrictFieldset = document.getElementById('res');
+                const tableWrapper = document.getElementById('res_table_wrapper');
+                const tableBody = document.querySelector('#res_table tbody');
+                const moveAvailableTable = document.getElementById('move_available_table');
+                const moveCountTableWrapper = document.getElementById('count_table_wrapper');
+                const moveCountTableBody = document.querySelector('#count_table tbody');
+
+                const moveDisplayNames = {
+                    x: "x", y: "y", z: "z"
+                };
+
+                function createMoveRow(move) {
+                    const displayName = moveDisplayNames[move] || move.toUpperCase();
+                    const newRow = document.createElement('tr');
+                    newRow.dataset.move = move;
+                    let rowHTML = `<th>${displayName}</th>`;
+                    for (let i = 1; i <= 3; i++) {
+                        rowHTML += `<td>
+                <input type="checkbox" id="checkbox_restrict${move}${i}" class="custom-checkbox restrict" value="${move}" checked>
+                <label for="checkbox_restrict${move}${i}"></label>
+            </td>`;
+                    }
+                    newRow.innerHTML = rowHTML;
+                    return newRow;
+                }
+
+                function updateRestrictTable() {
+                    const restrictCheckboxes = restrictFieldset.querySelectorAll('input[type="checkbox"]');
+                    restrictCheckboxes.forEach(checkbox => {
+                        const move = checkbox.value;
+                        const existingRow = tableBody.querySelector(`tr[data-move="${move}"]`);
+                        if (checkbox.checked) {
+                            if (!existingRow) {
+                                tableBody.appendChild(createMoveRow(move));
+                            }
+                        } else {
+                            if (existingRow) {
+                                existingRow.remove();
+                            }
+                        }
+                    });
+                }
+
+                function getIdsFromCheckboxes() {
+                    const resChecked = restrictFieldset.querySelectorAll('input[type="checkbox"]:checked');
+                    const resId = Array.from(resChecked).map(cb => cb.value).join('');
+
+                    const restChecked = tableBody.querySelectorAll('input[type="checkbox"]:checked');
+                    const restId = Array.from(restChecked).map(cb => {
+                        const move = cb.value;
+                        const suffix = cb.id.slice(-1);
+                        if (suffix === '1') return move;
+                        if (suffix === '2') return move + '2';
+                        if (suffix === '3') return move + '-';
+                    }).join('_');
+
+                    return [resId, restId];
+                }
+
+                function setCheckboxesFromIds([resId, restId]) {
+                    restrictFieldset.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+
+                    const resMoves = resId.split('');
+                    resMoves.forEach(move => {
+                        const cb = restrictFieldset.querySelector(`input[value="${move}"]`);
+                        if (cb) cb.checked = true;
+                    });
+
+                    updateRestrictTable();
+                    updateMoveCountTable();
+
+                    tableBody.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+
+                    const restMoves = restId.split('_');
+                    restMoves.forEach(restMove => {
+                        if (!restMove) return;
+
+                        const move = restMove.charAt(0);
+                        const suffix = restMove.slice(1);
+                        let idSuffix;
+
+                        if (suffix === '') idSuffix = '1';
+                        else if (suffix === '2') idSuffix = '2';
+                        else if (suffix === '-') idSuffix = '3';
+                        else return;
+
+                        const cb = tableBody.querySelector(`#checkbox_restrict${move}${idSuffix}`);
+                        if (cb) cb.checked = true;
+                    });
+                    updateMoveAvailableTable();
+                }
+
+                function sanitizeMoveForId(moveStr) {
+                    if (moveStr === '') return 'EMPTY';
+                    return moveStr.replace(/'/g, '-');
+                }
+
+                function updateMoveAvailableTable() {
+                    const thead = moveAvailableTable.querySelector('thead');
+                    const tbody = moveAvailableTable.querySelector('tbody');
+
+                    const previousStates = new Map();
+                    moveAvailableTable.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                        previousStates.set(cb.id, cb.checked);
+                    });
+
+                    const restChecked = tableWrapper.querySelectorAll('input[type="checkbox"]:checked');
+                    const headers = Array.from(restChecked).map(cb => {
+                        const move = cb.value;
+                        const suffix = cb.id.slice(-1);
+                        if (suffix === '1') return move;
+                        if (suffix === '2') return move + '2';
+                        if (suffix === '3') return move + "'";
+                        return '';
+                    }).filter(Boolean);
+
+                    const colHeaders = headers;
+                    const rowHeaders = [...headers, ""];
+
+                    thead.innerHTML = '';
+                    tbody.innerHTML = '';
+
+                    const headerRow = document.createElement('tr');
+                    headerRow.appendChild(document.createElement('th'));
+                    colHeaders.forEach(headerText => {
+                        const th = document.createElement('th');
+                        th.textContent = headerText;
+                        headerRow.appendChild(th);
+                    });
+                    thead.appendChild(headerRow);
+
+                    rowHeaders.forEach(rowHeaderText => {
+                        const bodyRow = document.createElement('tr');
+                        const rowTh = document.createElement('th');
+                        rowTh.textContent = rowHeaderText;
+                        bodyRow.appendChild(rowTh);
+
+                        const sanitizedRow = sanitizeMoveForId(rowHeaderText);
+
+                        colHeaders.forEach(colHeaderText => {
+                            const td = document.createElement('td');
+                            const checkbox = document.createElement('input');
+                            checkbox.type = 'checkbox';
+                            checkbox.className = 'custom-checkbox restrict';
+
+                            const sanitizedCol = sanitizeMoveForId(colHeaderText);
+                            checkbox.id = `checkbox_move_available_${sanitizedRow}_${sanitizedCol}`;
+
+                            const label = document.createElement('label');
+                            label.htmlFor = checkbox.id;
+
+                            if (previousStates.has(checkbox.id)) {
+                                checkbox.checked = previousStates.get(checkbox.id);
+                            } else {
+                                checkbox.checked = shouldBeCheckedByDefault(rowHeaderText, colHeaderText);
+                            }
+
+                            td.appendChild(checkbox);
+                            td.appendChild(label);
+                            bodyRow.appendChild(td);
+                        });
+                        tbody.appendChild(bodyRow);
+                    });
+                }
+
+
+                function updateMoveCountTable() {
+                    const checkedMoves = Array.from(restrictFieldset.querySelectorAll('input:checked'), cb => cb.value);
+                    const existingRows = new Set(Array.from(moveCountTableBody.querySelectorAll('tr'), tr => tr.dataset.move));
+
+                    existingRows.forEach(move => {
+                        if (!checkedMoves.includes(move)) {
+                            moveCountTableBody.querySelector(`tr[data-move="${move}"]`)?.remove();
+                        }
+                    });
+
+                    checkedMoves.forEach(move => {
+                        if (!existingRows.has(move)) {
+                            const newRow = moveCountTableBody.insertRow();
+                            newRow.dataset.move = move;
+                            newRow.innerHTML = `
+                            <th>${move}</th>
+                            <td><input type="number" min="0" class="move-count-input" data-move="${move}" value="20"></td>
+                            <td><input type="number" min="0" class="move-count-input" data-move="${move}2" value="20"></td>
+                            <td><input type="number" min="0" class="move-count-input" data-move="${move}-" value="20"></td>
+                        `;
+                        }
+                    });
+                }
+
+                function syncAllTables() {
+                    const checkedResMoves = new Set(Array.from(restrictFieldset.querySelectorAll('input:checked'), cb => cb.value));
+                    const allCountTableRows = moveCountTableBody.querySelectorAll('tr');
+
+                    allCountTableRows.forEach(row => {
+                        const move = row.dataset.move;
+                        row.style.display = checkedResMoves.has(move) ? '' : 'none';
+                    });
+
+                    moveCountTableBody.querySelectorAll('.move-count-input').forEach(countInput => {
+                        const moveStr = countInput.dataset.move;
+                        const moveBase = moveStr.charAt(0);
+
+                        const resCheckbox = restrictFieldset.querySelector(`input[value="${moveBase}"]`);
+                        if (!resCheckbox || !resCheckbox.checked) {
+                            return;
+                        }
+
+                        let restCheckboxId;
+                        const suffix = moveStr.slice(1);
+                        if (suffix === '') restCheckboxId = `checkbox_restrict${moveBase}1`;
+                        else if (suffix === '2') restCheckboxId = `checkbox_restrict${moveBase}2`;
+                        else if (suffix === '-') restCheckboxId = `checkbox_restrict${moveBase}3`;
+
+                        const restCheckbox = tableBody.querySelector(`#${restCheckboxId}`);
+
+                        if (restCheckbox && restCheckbox.checked) {
+                            if ((countInput.disabled && countInput.value === '0') || countInput.value === '') {
+                                countInput.value = '20';
+                            }
+                            countInput.disabled = false;
+                        } else {
+                            countInput.disabled = true;
+                            countInput.value = '0';
+                        }
+                    });
+                }
+
+                function getMavString() {
+                    const overrides = [];
+                    const table = document.getElementById('move_available_table');
+                    const rows = table.querySelectorAll('tbody tr');
+
+                    rows.forEach(row => {
+                        const rowHeaderText = row.querySelector('th').textContent;
+                        const checkboxes = row.querySelectorAll('input[type="checkbox"]');
+
+                        checkboxes.forEach((checkbox, colIndex) => {
+                            const colHeaderText = table.querySelector(`thead th:nth-child(${colIndex + 2})`).textContent;
+
+                            const isActuallyChecked = checkbox.checked;
+                            const isDefaultChecked = shouldBeCheckedByDefault(rowHeaderText, colHeaderText);
+
+                            if (isActuallyChecked !== isDefaultChecked) {
+                                const sanitizedRow = sanitizeMoveForId(rowHeaderText);
+                                const sanitizedCol = sanitizeMoveForId(colHeaderText);
+                                overrides.push(`${sanitizedRow}~${sanitizedCol}`);
+                            }
+                        });
+                    });
+
+                    return overrides.join('|');
+                }
+
+                function setMavFromString(mavString) {
+                    if (!mavString) return;
+
+                    const overrides = mavString.split('|');
+                    overrides.forEach(override => {
+                        const parts = override.split('~');
+                        if (parts.length !== 2) return;
+
+                        const [sanitizedRow, sanitizedCol] = parts;
+                        const checkboxId = `checkbox_move_available_${sanitizedRow}_${sanitizedCol}`;
+                        const checkbox = document.getElementById(checkboxId);
+
+                        if (checkbox) {
+                            checkbox.checked = !checkbox.checked;
+                        }
+                    });
+                }
+
+                function getMoveCountString() {
+                    const params = [];
+                    document.querySelectorAll('#count_table .move-count-input').forEach(input => {
+                        const row = input.closest('tr');
+                        if (row.style.display !== 'none' && !input.disabled && input.value && input.value !== "20") {
+                            params.push(`${input.dataset.move}:${input.value}`);
+                        }
+                    });
+                    return params.join('_');
+                }
+
+                function setMoveCountFromString(paramString, restId) {
+                    const activeRestMoves = new Set(restId ? restId.split('_') : []);
+
+                    document.querySelectorAll('#count_table .move-count-input').forEach(input => {
+                        const move = input.dataset.move;
+                        if (activeRestMoves.has(move)) {
+                            input.disabled = false;
+                            input.value = '20';
+                        } else {
+                            input.value = '0';
+                        }
+                    });
+
+                    if (paramString) {
+                        paramString.split('_').forEach(part => {
+                            const [moveStr, value] = part.split(':');
+                            if (moveStr && value) {
+                                const input = moveCountTableBody.querySelector(`.move-count-input[data-move="${moveStr}"]`);
+                                if (input) input.value = value;
+                            }
+                        });
+                    }
+                }
+
+                function initializePage() {
+
+                    const allPossibleMoves = Array.from(restrictFieldset.querySelectorAll('input.restrict'), cb => cb.value);
+                    allPossibleMoves.forEach(move => {
+                        const newRow = moveCountTableBody.insertRow();
+                        newRow.dataset.move = move;
+                        newRow.innerHTML = `
+                <th>${move}</th>
+                <td><input type="number" min="0" class="move-count-input" data-move="${move}"></td>
+                <td><input type="number" min="0" class="move-count-input" data-move="${move}2"></td>
+                <td><input type="number" min="0" class="move-count-input" data-move="${move}-"></td>
+            `;
+                    });
+
+                    function handleCheckboxChange() {
+                        updateRestrictTable();
+                        updateMoveCountTable();
+                        syncAllTables();
+                        updateMoveAvailableTable();
+                        updateUrlParams();
+                    }
+
+                    restrictFieldset.addEventListener('change', handleCheckboxChange);
+                    tableWrapper.addEventListener('change', () => {
+                        syncAllTables();
+                        updateMoveAvailableTable();
+                        updateUrlParams();
+                    });
+
+                    if (moveCountTableWrapper) {
+                        moveCountTableWrapper.addEventListener('input', () => { updateUrlParams(); });
+                    }
+                }
+
+                initializePage();
+
+                const faces = ['U', 'L', 'F', 'R', 'B', 'D'];
+                const cubeContainer = document.getElementById('cube-container');
+
+                faces.forEach(faceLetter => {
+                    const faceDiv = document.createElement('div');
+                    faceDiv.id = `face-${faceLetter}`;
+                    faceDiv.className = 'face';
+                    for (let i = 1; i <= 4; i++) {
+                        const stickerDiv = document.createElement('div');
+                        stickerDiv.id = `sticker-${faceLetter}${i}`;
+                        stickerDiv.className = 'sticker';
+                        faceDiv.appendChild(stickerDiv);
+                    }
+                    cubeContainer.appendChild(faceDiv);
+                });
+
+                let state = {
+                    colors: { U: 'white', R: 'red', F: 'green', D: 'yellow', L: 'orange', B: 'blue' },
+                    pieces: {},
+                    mode: 'swap',
+                    firstSelection: null
+                };
+
+                function getInitialPieces() {
+                    return {
+                        ULB: { pos: 'ULB', type: 'corner', faces: ['U1', 'L1', 'B2'] },
+                        UBR: { pos: 'UBR', type: 'corner', faces: ['U2', 'B1', 'R2'] },
+                        URF: { pos: 'URF', type: 'corner', faces: ['U4', 'R1', 'F2'] },
+                        UFL: { pos: 'UFL', type: 'corner', faces: ['U3', 'F1', 'L2'] },
+                        DBL: { pos: 'DBL', type: 'corner', faces: ['D3', 'B4', 'L3'] },
+                        DRB: { pos: 'DRB', type: 'corner', faces: ['D4', 'R4', 'B3'] },
+                        DFR: { pos: 'DFR', type: 'corner', faces: ['D2', 'F4', 'R3'] },
+                        DLF: { pos: 'DLF', type: 'corner', faces: ['D1', 'L4', 'F3'] },
+                    };
+                }
+
+                function initializePieces() {
+                    state.pieces = {
+                        ULB: { pos: 'ULB', orientation: ['U', 'L', 'B'] },
+                        UBR: { pos: 'UBR', orientation: ['U', 'B', 'R'] },
+                        URF: { pos: 'URF', orientation: ['U', 'R', 'F'] },
+                        UFL: { pos: 'UFL', orientation: ['U', 'F', 'L'] },
+                        DBL: { pos: 'DBL', orientation: ['D', 'B', 'L'] },
+                        DRB: { pos: 'DRB', orientation: ['D', 'R', 'B'] },
+                        DFR: { pos: 'DFR', orientation: ['D', 'F', 'R'] },
+                        DLF: { pos: 'DLF', orientation: ['D', 'L', 'F'] },
+                    };
+                    for (const pieceId in state.pieces) {
+                        state.pieces[pieceId].type = 'corner';
+                    }
+                }
+
+                function render() {
+                    const initialPieces = getInitialPieces();
+                    for (const pieceId in state.pieces) {
+                        const piece = state.pieces[pieceId];
+                        const originalPieceDef = initialPieces[piece.pos];
+                        originalPieceDef.faces.forEach((stickerId, index) => {
+                            const stickerEl = document.getElementById(`sticker-${stickerId}`);
+                            const faceInitial = piece.orientation[index];
+                            const colorName = state.colors[faceInitial];
+                            stickerEl.style.backgroundColor = colorName;
+                        });
+                    }
+                }
+
+                function getPieceByStickerId(stickerId) {
+                    const initialPieces = getInitialPieces();
+                    for (const piecePos in initialPieces) {
+                        const pieceDef = initialPieces[piecePos];
+                        if (pieceDef.faces.includes(stickerId)) {
+                            for (const currentPieceId in state.pieces) {
+                                if (state.pieces[currentPieceId].pos === piecePos) {
+                                    return state.pieces[currentPieceId];
+                                }
+                            }
+                        }
+                    }
+                    return null;
+                }
+
+                function adjustOrientation(piece, targetColor, targetIndex) {
+                    const o = piece.orientation;
+                    const currentIdx = o.indexOf(targetColor);
+                    if (currentIdx === -1) return;
+                    const diff = (targetIndex - currentIdx + 3) % 3;
+
+                    if (diff === 1) {
+                        o.unshift(o.pop());
+                    } else if (diff === 2) {
+                        o.push(o.shift());
+                    }
+                }
+
+                function handleIntelligentSwap(selection1, selection2) {
+                    const piece1 = selection1.piece;
+                    const piece2 = selection2.piece;
+                    const stickerId1 = selection1.stickerId;
+                    const stickerId2 = selection2.stickerId;
+                    const initialPieces = getInitialPieces();
+                    const posDef1 = initialPieces[piece1.pos];
+                    const posDef2 = initialPieces[piece2.pos];
+                    const index1 = posDef1.faces.indexOf(stickerId1);
+                    const index2 = posDef2.faces.indexOf(stickerId2);
+                    const color1 = piece1.orientation[index1];
+                    const color2 = piece2.orientation[index2];
+                    [piece1.pos, piece2.pos] = [piece2.pos, piece1.pos];
+                    adjustOrientation(piece1, color1, index2);
+                    adjustOrientation(piece2, color2, index1);
+
+                    render();
+                }
+
+                function clearSelection() {
+                    const selected = document.querySelector('.sticker.selected');
+                    if (selected) selected.classList.remove('selected');
+                    state.firstSelection = null;
+                }
+
+                function getDefinitionAndRotation() {
+                    let pieceInDblPosition = null;
+                    for (const pieceId in state.pieces) {
+                        if (state.pieces[pieceId].pos === 'DBL') {
+                            pieceInDblPosition = state.pieces[pieceId];
+                            break;
+                        }
+                    }
+
+                    const orientation = pieceInDblPosition.orientation;
+                    const faceOnDSticker = orientation[0];
+                    const faceOnBSticker = orientation[1];
+
+                    const R_axis_map = { D: "", U: "z2", F: "x'", B: "x", R: "z", L: "z'" };
+                    const R_axis = R_axis_map[faceOnDSticker];
+
+                    const axisRotMaps = {
+                        "z2": (f) => ({ U: 'D', D: 'U', F: 'F', B: 'B', R: 'L', L: 'R' }[f]),
+                        "z'": (f) => ({ U: 'L', L: 'D', D: 'R', R: 'U', F: 'F', B: 'B' }[f]),
+                        "z": (f) => ({ U: 'R', R: 'D', D: 'L', L: 'U', F: 'F', B: 'B' }[f]),
+                        "x'": (f) => ({ U: 'F', F: 'D', D: 'B', B: 'U', R: 'R', L: 'L' }[f]),
+                        "x": (f) => ({ U: 'B', B: 'D', D: 'F', F: 'U', R: 'R', L: 'L' }[f]),
+                    };
+
+                    let faceOnBStickerAfterAxisRot = faceOnBSticker;
+                    if (axisRotMaps[R_axis]) {
+                        faceOnBStickerAfterAxisRot = axisRotMaps[R_axis](faceOnBSticker);
+                    }
+
+                    const R_y_map = { B: "", R: "y'", F: "y2", L: "y" };
+                    const R_y = R_y_map[faceOnBStickerAfterAxisRot] || "";
+
+                    const preRotation = (R_axis + " " + R_y).trim();
+
+                    const rotationEffectMaps = {
+                        "y'": (f) => ({ U: 'U', D: 'D', F: 'R', R: 'B', B: 'L', L: 'F' }[f]),
+                        "y2": (f) => ({ U: 'U', D: 'D', F: 'B', B: 'F', L: 'R', R: 'L' }[f]),
+                        "y": (f) => ({ U: 'U', D: 'D', F: 'L', L: 'B', B: 'R', R: 'F' }[f]),
+                        "x'": (f) => ({ U: 'F', F: 'D', D: 'B', B: 'U', L: 'L', R: 'R' }[f]),
+                        "x2": (f) => ({ U: 'D', D: 'U', F: 'B', B: 'F', L: 'L', R: 'R' }[f]),
+                        "x": (f) => ({ U: 'B', B: 'D', D: 'F', F: 'U', L: 'L', R: 'R' }[f]),
+                        "z'": (f) => ({ U: 'L', L: 'D', D: 'R', R: 'U', F: 'F', B: 'B' }[f]),
+                        "z2": (f) => ({ U: 'D', D: 'U', L: 'R', R: 'L', F: 'F', B: 'B' }[f]),
+                        "z": (f) => ({ U: 'R', R: 'D', D: 'L', L: 'U', F: 'F', B: 'B' }[f]),
+                    };
+
+                    const getSolverViewFace = (face) => {
+
+                        const parts = preRotation.split(" ");
+                        let currentFace = face;
+                        for (const part of parts) {
+                            if (rotationEffectMaps[part]) {
+                                currentFace = rotationEffectMaps[part](currentFace);
+                            }
+                        }
+                        return currentFace;
+                    };
+
+                    const stickerToFaceMap = {};
+                    const initialPieces = getInitialPieces();
+                    for (const pieceName in state.pieces) {
+                        const piece = state.pieces[pieceName];
+                        const currentPositionInfo = initialPieces[piece.pos];
+                        currentPositionInfo.faces.forEach((stickerId, index) => {
+                            stickerToFaceMap[stickerId] = piece.orientation[index];
+                        });
+                    }
+
+                    const stickerOrder = [
+                        'U1', 'U2', 'U3', 'U4', 'R1', 'R2', 'R3', 'R4',
+                        'F1', 'F2', 'F3', 'F4', 'D1', 'D2', 'D3', 'D4',
+                        'L1', 'L2', 'L3', 'L4', 'B1', 'B2', 'B3', 'B4'
+                    ];
+
+                    const finalString = stickerOrder.map(stickerId => {
+                        const originalFace = stickerToFaceMap[stickerId];
+                        return getSolverViewFace(originalFace);
+                    }).join('');
+
+                    return { defString: finalString, preRotation: preRotation };
+                }
+
+                function handleColorChange(e) {
+                    const changedFace = e.target.dataset.face;
+                    const newColor = e.target.value;
+                    const customPicker = document.getElementById(`custom-color-picker-${changedFace}`);
+
+                    if (newColor === 'custom') {
+                        customPicker.classList.remove('hidden');
+                        state.colors[changedFace] = customPicker.value;
+                    } else {
+                        customPicker.classList.add('hidden');
+                        state.colors[changedFace] = newColor;
+                    }
+                    render();
+                }
+
+                let worker2 = new Worker('src/2x2solverLite/worker.js');
+                worker2.onmessage = function (event) {
+                    const solution = event.data;
+                    if (solution === undefined || solution === null) {
+                        return;
+                    } else if (solution === "Solved") {
+                        alert("Already solved");
+                        return;
+                    } else if (solution === "Error") {
+                        alert("Corner Orientation Error.");
+                        return;
+                    } else if (solution !== "") {
+                        const reversedSolution = reverse(solution);
+                        const prerot = document.getElementById('pre_rot').value;
+                        document.getElementById('scr').value = prerot + " // Pre Rotations\n" + reversedSolution.replace(/2'/g, '2').replace(/[\r\n]+$/, '') + " // setup\n";
+                        save();
+                    }
+                };
+
+                let worker3 = new Worker('src/2x2solverLite/worker_scrambler.js');
+                worker3.onmessage = function (event) {
+                    const scramble = event.data;
+                    if (scramble === undefined || scramble === null) {
+                        return;
+                    } else if (scramble !== "") {
+                        document.getElementById('scr').value = reverse(scramble).replace(/2'/g, '2').replace(/[\r\n]+$/, '') + " // setup\n";
+                        save();
+                    }
+                };
+
+                function getscr() {
+                    if (!isFunctionsReady) {
+                        alert("The module is still initializing. Please try again in a moment.");
+                        return "";
+                    }
+                    if (typeof reverse !== "function") {
+                        alert("Error: The required function is not initialized. Please reload the page manually.");
+                        return "";
+                    }
+                    const { defString, preRotation } = getDefinitionAndRotation();
+                    const userDefinedPrerot = document.getElementById('pre_rot').value;
+                    if (CheckboxAutoPrerotSetting.checked) {
+                        document.getElementById('pre_rot').value = preRotation;
+                    }
+                    var args = { defString: defString };
+                    worker2.postMessage(args);
+                }
+
+                function genscr() {
+                    if (!isFunctionsReady) {
+                        alert("The module is still initializing. Please try again in a moment.");
+                        return "";
+                    }
+                    if (typeof reverse !== "function") {
+                        alert("Error: The required function is not initialized. Please reload the page manually.");
+                        return "";
+                    }
+                    worker3.postMessage(null);
+                }
+
+                function resetCubeState() {
+                    initializePieces();
+                    render();
+                    clearSelection();
+                }
+
+                document.querySelectorAll('.color-selector').forEach(selector => {
+                    selector.addEventListener('change', (e) => {
+                        const changedFace = e.target.dataset.face;
+                        const newColor = e.target.value;
+                        const customPicker = document.getElementById(`custom-color-picker-${changedFace}`);
+                        state.colors[changedFace] = newColor === 'custom' ? customPicker.value : newColor;
+                        customPicker.classList.toggle('hidden', newColor !== 'custom');
+                        render();
+                    });
+                });
+
+                document.querySelectorAll('.custom-color-picker').forEach(picker => {
+                    picker.addEventListener('input', (e) => {
+                        const face = e.target.dataset.face;
+                        state.colors[face] = e.target.value;
+                        render();
+                    });
+                });
+
+                document.getElementById('swap-mode-btn').addEventListener('click', () => {
+                    state.mode = 'swap';
+                    document.getElementById('swap-mode-btn').classList.add('active');
+                    document.getElementById('flip-mode-btn').classList.remove('active');
+                    clearSelection();
+                });
+
+                document.getElementById('flip-mode-btn').addEventListener('click', () => {
+                    state.mode = 'flip';
+                    document.getElementById('flip-mode-btn').classList.add('active');
+                    document.getElementById('swap-mode-btn').classList.remove('active');
+                    clearSelection();
+                });
+
+                document.getElementById('reset-cube-btn').addEventListener('click', resetCubeState);
+
+                document.getElementById('get-string-btn').addEventListener('click', () => {
+                    getscr();
+                });
+
+                document.getElementById('gen').addEventListener('click', () => {
+                    genscr();
+                });
+
+                cubeContainer.addEventListener('click', (e) => {
+                    if (!e.target.classList.contains('sticker')) return;
+
+                    const stickerId = e.target.id.replace('sticker-', '');
+                    const piece = getPieceByStickerId(stickerId);
+                    if (!piece) return;
+
+                    if (state.mode === 'swap') {
+                        if (!state.firstSelection) {
+                            state.firstSelection = { piece, element: e.target, stickerId };
+                            e.target.classList.add('selected');
+                        } else {
+                            if (state.firstSelection.piece === piece) {
+                                clearSelection();
+                                return;
+                            }
+                            handleIntelligentSwap(state.firstSelection, { piece, stickerId });
+                            clearSelection();
+                        }
+                    } else if (state.mode === 'flip') {
+                        const o = piece.orientation;
+                        o.unshift(o.pop());
+                        render();
+                    }
+                });
+
+                initializePieces();
+                render();
+
+                window.getIds = getIdsFromCheckboxes;
+                window.setIds = setCheckboxesFromIds;
+                window.getMavString = getMavString;
+                window.setMavFromString = setMavFromString;
+                window.getMoveCountString = getMoveCountString;
+                window.setMoveCountFromString = setMoveCountFromString;
+                window.initializeDynamicTables = () => {
+                    updateRestrictTable();
+                    syncAllTables();
+                    updateMoveAvailableTable();
+                };
+
+            });
+
+            const AXIS_Y = ['U', 'D', 'y'];
+            const AXIS_X = ['L', 'R', 'x'];
+            const AXIS_Z = ['F', 'B', 'z'];
+            const ALL_AXES = [AXIS_Y, AXIS_X, AXIS_Z];
+
+            function getMoveBase(move) {
+                if (!move) return '';
+                return move.charAt(0);
+            }
+
+            function shouldBeCheckedByDefault(prevMove, nextMove) {
+                if (!prevMove || !nextMove) {
+                    return true;
+                }
+
+                const prevBase = getMoveBase(prevMove);
+                const nextBase = getMoveBase(nextMove);
+
+                if (prevBase === nextBase) {
+                    return false;
+                }
+
+                const axis = ALL_AXES.find(ax => ax.includes(prevBase));
+                if (axis && axis.includes(nextBase)) {
+                    const prevIndex = axis.indexOf(prevBase);
+                    const nextIndex = axis.indexOf(nextBase);
+                    if (prevIndex > nextIndex) {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+
+            function updateUrlParams() {
+                const solver = "2x2x2";
+                const url = new URL(window.location.href);
+                const defaultValueTmp = defaultValues[solver];
+                const [resId, restId] = getIds();
+                const mavId = getMavString();
+                const mcString = getMoveCountString();
+                idList.forEach(id => {
+                    const key = idToKeyMap[id];
+                    var newValue = document.getElementById(id)?.value;
+                    if (typeof key !== "undefined" && typeof defaultValueTmp[id] !== "undefined") {
+                        if (id === 'scr') {
+                            if (newValue !== '') {
+                                newValue = encodeURIComponent(scr_fix2(newValue).replace(/ /g, '_').replace(/'/g, '-'));
+                                url.searchParams.set(key, newValue);
+                            } else {
+                                url.searchParams.delete(key);
+                            }
+                        } else if (id === 'res') {
+                            const rot_string = resId;
+                            if (resId !== defaultValueTmp[id]) {
+                                url.searchParams.set(key, rot_string);
+                            } else {
+                                url.searchParams.delete(key);
+                            }
+                        } else if (id === 'rest') {
+                            const rot_string = restId;
+                            if (restId !== defaultValueTmp[id]) {
+                                url.searchParams.set(key, rot_string);
+                            } else {
+                                url.searchParams.delete(key);
+                            }
+                        } else if (id === 'mav') {
+                            if (mavId) {
+                                url.searchParams.set(key, mavId);
+                            } else {
+                                url.searchParams.delete(key);
+                            }
+                        } else if (id === 'mcv') {
+                            if (mcString !== defaultValueTmp[id]) {
+                                url.searchParams.set(key, mcString)
+                            } else {
+                                url.searchParams.delete(key);
+                            }
+                        } else {
+                            if ((document.getElementById(id).tagName === 'SELECT' && document.getElementById(id).selectedIndex > 0) || (document.getElementById(id).tagName === "INPUT" && newValue !== defaultValueTmp[id])) {
+                                newValue = newValue.replace(/ /g, '_').replace(/'/g, '-');
+                                url.searchParams.set(key, newValue);
+                            } else {
+                                url.searchParams.delete(key);
+                            }
+                        }
+                    } else {
+                        url.searchParams.delete(key);
+                    }
+                });
+                try {
+                    window.history.replaceState({}, '', url);
+                } catch (e) {
+                    console.log(e.message);
+                }
+            }
+
+            function setParamsFromUrl(urlParams) {
+                const solver = "2x2x2";
+                document.getElementById('rot').value = urlParams.get(idToKeyMap['rot']) ? urlParams.get(idToKeyMap['rot']).replace(/_/g, ' ').replace(/-/g, '\'') : defaultValues[solver]['rot'];
+                document.getElementById('len').value = urlParams.get(idToKeyMap['len']) ? urlParams.get(idToKeyMap['len']) : defaultValues[solver]['len'];
+                document.getElementById('num').value = urlParams.get(idToKeyMap['num']) ? urlParams.get(idToKeyMap['num']) : defaultValues[solver]['num'];
+                const premoveParam = urlParams.get(idToKeyMap['premove']);
+                if (premoveParam) {
+                    document.getElementById('premove').value = decodeURIComponent(premoveParam.replace(/_/g, ' ').replace(/-/g, "'"));
+                } else {
+                    document.getElementById('premove').value = '';
+                }
+                const resParam = urlParams.get(idToKeyMap['res']);
+                const restParam = urlParams.get(idToKeyMap['rest']);
+                const defaultRes = defaultValues[solver]['res'];
+                const defaultRest = defaultValues[solver]['rest'];
+                const finalResId = resParam || defaultRes;
+                let finalRestId;
+
+                if (restParam) {
+                    finalRestId = restParam;
+                } else if (resParam) {
+                    finalRestId = finalResId.split('').flatMap(move => [move, move + '2', move + '-']).join('_');
+                } else {
+                    finalRestId = defaultRest;
+                }
+                setIds([finalResId, finalRestId]);
+                const mavString = urlParams.get(idToKeyMap['mav']);
+                if (mavString) {
+                    setMavFromString(mavString);
+                }
+
+                const mcvKey = idToKeyMap['mcv'];
+                const defaultMcv = '';
+                const mcvParam = urlParams.get(mcvKey);
+                setMoveCountFromString(mcvParam ?? defaultMcv, finalRestId);
+                if (typeof window.initializeDynamicTables === 'function') {
+                    window.initializeDynamicTables();
+                }
+            }
+
+            function startWorker() {
+                try {
+                    if (worker) {
+                        worker.terminate();
+                        worker = null;
+                        const element = document.getElementById('result');
+                        const content = document.createElement('a');
+                        content.innerHTML = "Search terminated.<br>";
+                        element.appendChild(content);
+                        document.getElementById("solveButton").textContent = "Start";
+                        return;
+                    }
+
+                    if (!isFunctionsReady) {
+                        alert("The module is still initializing. Please try again in a moment.");
+                        document.getElementById("solveButton").textContent = "Start";
+                        return;
+                    }
+                    if (typeof convert !== "function") {
+                        alert("Error: The required function is not initialized. Please reload the page manually.");
+                        const element = document.getElementById('result');
+                        const content = document.createElement('a');
+                        content.innerHTML = "Error: Search terminated due an error.<br>";
+                        element.appendChild(content);
+                        document.getElementById("solveButton").textContent = "Start";
+                        return;
+                    }
+                    document.getElementById("countLine").value = 0;
+                    document.getElementById("currentDepth").value = -1;
+                    document.getElementById("result").innerHTML = "";
+                    messageCount = 0;
+                    const scr_val = document.getElementById("scr").value;
+                    const scr = scr_fix(scr_val);
+                    const scr2 = scr_fix2(scr_val);
+                    if (scr === "") {
+                        const element = document.getElementById('result');
+                        const content = document.createElement('a');
+                        content.innerHTML = "Input scramble.<br>";
+                        element.appendChild(content);
+                        return;
+                    }
+                    body = "";
+                    const rot = document.getElementById('rot').value;
+                    const num = document.getElementById('num').value;
+                    const len = document.getElementById('len').value;
+                    const restrict = getIds()[1];
+                    const premove = scr_fix(document.getElementById('premove').value);
+                    const ma = getMavString();
+                    const mc = getMoveCountString();
+                    const prune = document.getElementById('prune').value;
+                    document.getElementById("solveButton").textContent = "End";
+                    const convertResult = convert(scr);
+                    const result_moves = convertResult[0];
+                    const result_rotation = convertResult[1] + " " + rot;
+                    const args = { scr: result_moves, rot: rot, num: parseInt(num, 10), len: parseInt(len, 10), prune: parseInt(prune, 10), move_restrict: restrict, post_alg: premove, ma2: ma, mcString: mc };
+                    worker = new Worker('src/2x2solver/worker.js');
+                    worker.postMessage(args);
+                    if (worker) {
+                        worker.onmessage = function (event) {
+                            appendSol(scr2, event.data);
+                        };
+                    }
+                } catch (e) {
+                    console.log(e.message);
+                    if (worker) {
+                        worker.terminate();
+                    }
+                    worker = null;
+                    const element = document.getElementById('result');
+                    const content = document.createElement('a');
+                    content.innerHTML = "Error: Search terminated due an error.<br>";
+                    element.appendChild(content);
+                    document.getElementById("solveButton").textContent = "Start";
+                    return;
+                }
+            }
+
+            function appendSol(scr, sol) {
+                const regex = /^depth\s*=\s*(\d+)/;
+                const match = sol.trim().match(regex);
+                const element = document.getElementById('result');
+                if (sol == "Search finished." || sol == "Already solved." || sol == "Error" || sol == "Unsolvable.") {
+                    if (worker) {
+                        worker.terminate();
+                    }
+                    worker = null;
+                    const element = document.getElementById('result');
+                    const content = document.createElement('a');
+                    if (sol == "Error") {
+                        content.innerHTML = "Error: Search terminated due to an error.<br>";
+                    } else if (sol === "Already solved.") {
+                        content.innerHTML = "Already solved.<br>";
+                    } else if (sol === "Search finished.") {
+                        content.innerHTML = "Search finished.<br>";
+                    } else {
+                        content.innerHTML = "Unsolvable.<br>";
+                    }
+                    element.appendChild(content);
+                    document.getElementById("solveButton").textContent = "Start";
+                    return;
+                } else if (match && match[1]) {
+                    const depthNumber = match[1];
+                    document.getElementById('currentDepth').value = depthNumber;
+                    return;
+                } else {
+                    messageCount++;
+                    const details = document.createElement('details');
+                    body += messageCount + ": " + sol + "\n";
+                    const summary = document.createElement('summary');
+                    summary.textContent = messageCount + ": " + sol;
+                    summary.setAttribute('translate', 'no');
+                    const textNode = document.createTextNode(messageCount + ": " + sol);
+                    const button = document.createElement('button');
+                    button.classList.add('button', 'medium');
+                    button.textContent = 'Add';
+                    button.onclick = function () {
+                        add(sol);
+                    };
+                    details.appendChild(button);
+                    var spaceElement3 = document.createElement('a');
+                    spaceElement3.innerHTML = "&nbsp;";
+                    details.appendChild(spaceElement3);
+                    const button2 = document.createElement('button');
+                    button2.classList.add('button', 'medium');
+                    button2.textContent = 'Copy';
+                    button2.onclick = function () {
+                        navigator.clipboard.writeText(sol);
+                    };
+                    details.appendChild(button2);
+                    details.appendChild(summary);
+                    try {
+                        const sim = createPlayer(scr, sol);
+                        details.appendChild(sim);
+                    } catch (e) {
+                        if (messageCount === 1) {
+                            const lineBreak = document.createElement('br');
+                            details.appendChild(lineBreak);
+                            const content = document.createElement('a');
+                            content.innerHTML = "Warning: Failed to create TwistyPlayer.<br>";
+                            details.appendChild(content);
+                        }
+                    }
+                    const gap = document.createElement('div');
+                    gap.style.height = '12px';
+                    details.appendChild(gap);
+                    const { URL1: link1, URL2: link2 } = getLink(scr + "\n" + sol);
+                    var link_element1 = document.createElement('a');
+                    link_element1.href = link1;
+                    link_element1.target = '_blank';
+                    link_element1.rel = 'noopener noreferrer';
+                    link_element1.textContent = 'alg.cubing.net';
+                    link_element1.setAttribute('translate', 'no');
+                    details.appendChild(link_element1);
+                    var spaceElement = document.createElement('a');
+                    spaceElement.innerHTML = "&nbsp;";
+                    details.appendChild(spaceElement);
+                    var link_element2 = document.createElement('a');
+                    link_element2.href = link2;
+                    link_element2.target = '_blank';
+                    link_element2.rel = 'noopener noreferrer';
+                    link_element2.textContent = 'cubedb.net';
+                    link_element2.setAttribute('translate', 'no');
+                    details.appendChild(link_element2);
+                    var spaceElement2 = document.createElement('a');
+                    spaceElement2.innerHTML = "&nbsp;";
+                    details.appendChild(spaceElement2);
+                    const currentUrl = new URL(window.location.href);
+                    currentUrl.searchParams.set('index', `${messageCount}`);
+                    currentUrl.searchParams.set('sol', sol.replace(/ /g, '_').replace(/'/g, '-'));
+                    var link_element3 = document.createElement('a');
+                    link_element3.href = currentUrl;
+                    link_element3.target = '_blank';
+                    link_element3.rel = 'noopener noreferrer';
+                    link_element3.textContent = 'or18.github.io';
+                    link_element3.setAttribute('translate', 'no');
+                    details.appendChild(link_element3);
+                    element.appendChild(details);
+                    document.getElementById("countLine").value = messageCount;
+                    if (messageCount === 1) {
+                        try {
+                            window.history.replaceState({}, '', currentUrl);
+                        } catch (e) {
+                            console.log(e.message);
+                        }
+                    }
+                }
+            }
+
+            const textarea = document.getElementById('scr');
+            const undoButton = document.getElementById('undo');
+            const redoButton = document.getElementById('redo');
+            let history_input = [];
+            let currentIndex = -1;
+
+            async function save() {
+                if (currentIndex < history_input.length - 1) {
+                    history_input = history_input.slice(0, currentIndex + 1);
+                }
+                history_input.push(textarea.value);
+                currentIndex++;
+                updateButtons();
+                const show = document.getElementById('show');
+                show.innerHTML = '';
+                const scrValue = scr_fix2(textarea.value);
+                try {
+                    const sim = createPlayer(scrValue, '');
+                    sim.controlPanel = "none";
+                    show.appendChild(sim);
+                    return;
+                } catch (syncErr) {
+                    console.warn('save: sync createPlayer failed, falling back to async', syncErr);
+                }
+                const placeholder = document.createElement('div');
+                placeholder.className = 'twisty-placeholder';
+                placeholder.textContent = 'Loading preview...';
+                show.appendChild(placeholder);
+                try {
+                    const real = await createPlayerLazy(scrValue, '');
+                    real.controlPanel = "none";
+                    placeholder.replaceWith(real);
+                } catch (asyncErr) {
+                    console.error('save: async createPlayer failed', asyncErr);
+                    placeholder.textContent = 'Warning: Failed to create TwistyPlayer.';
+                }
+            }
+
+            function reverseScramble() {
+                if (!isFunctionsReady) {
+                    alert("The module is still initializing. Please try again in a moment.");
+                    return;
+                }
+                if (typeof reverse !== "function") {
+                    alert("Error: The required function is not initialized. Please reload the page manually.");
+                    return;
+                }
+                const scr_val = document.getElementById("scr").value;
+                const scr = scr_fix2(scr_val);
+                if (scr === "") {
+                    return;
+                }
+                document.getElementById("scr").value = reverse(scr);
+                save();
+            }
+
+            function mirrorScramble() {
+                if (!isFunctionsReady) {
+                    alert("The module is still initializing. Please try again in a moment.");
+                    return;
+                }
+                if (typeof mirror !== "function") {
+                    alert("Error: The required function is not initialized. Please reload the page manually.");
+                    return;
+                }
+                const scr_val = document.getElementById("scr").value;
+                const scr = scr_fix2(scr_val);
+                if (scr === "") {
+                    return;
+                }
+                document.getElementById("scr").value = mirror(scr);
+                save();
+            }
+
+            function undo() {
+                if (currentIndex > 0) {
+                    currentIndex--;
+                    textarea.value = history_input[currentIndex];
+                    updateButtons();
+                    try {
+                        document.getElementById('show').innerHTML = '';
+                        const sim = createPlayer(scr_fix2(textarea.value), '');
+                        sim.controlPanel = "none";
+                        document.getElementById('show').appendChild(sim);
+                    } catch (e) {
+                        const content = document.createElement('a');
+                        content.innerHTML = "Warning: Failed to create TwistyPlayer.<br>";
+                        document.getElementById('show').appendChild(content);
+                    }
+                }
+            }
+
+            function redo() {
+                if (currentIndex < history_input.length - 1) {
+                    currentIndex++;
+                    textarea.value = history_input[currentIndex];
+                    updateButtons();
+                    try {
+                        document.getElementById('show').innerHTML = '';
+                        const sim = createPlayer(scr_fix2(textarea.value), '');
+                        sim.controlPanel = "none";
+                        document.getElementById('show').appendChild(sim);
+                    } catch (e) {
+                        const content = document.createElement('a');
+                        content.innerHTML = "Warning: Failed to create TwistyPlayer.<br>";
+                        document.getElementById('show').appendChild(content);
+                    }
+                }
+            }
+
+            function updateButtons() {
+                undoButton.disabled = currentIndex <= 0;
+                redoButton.disabled = currentIndex >= history_input.length - 1;
+                const currentScr = document.getElementById("scr").value;
+                if (currentScr === "") {
+                    document.getElementById("reverse").classList.add("hidden");
+                    document.getElementById("mirror").classList.add("hidden");
+                } else {
+                    document.getElementById("reverse").classList.remove("hidden");
+                    document.getElementById("mirror").classList.remove("hidden");
+                }
+                updateUrlParams();
+                if (currentIndex <= 0) {
+                    undoButton.classList.add("hidden_small");
+                } else {
+                    undoButton.classList.remove("hidden_small");
+                }
+                if (currentIndex >= history_input.length - 1) {
+                    redoButton.classList.add("hidden_small")
+                } else {
+                    redoButton.classList.remove("hidden_small");
+                }
+                if (currentIndex >= 0) {
+                    const { URL1: link1, URL2: link2 } = getLink(currentScr);
+                    document.getElementById("link_alg_cubing").href = link1;
+                    document.getElementById("link_cubedb").href = link2;
+                    document.getElementById("links").classList.remove("hidden");
+                }
+            }
+
+            function add(s) {
+                document.getElementById('scr').value += "\n" + s;
+                save();
+            }
+
+            const details_preview = document.getElementById("details_preview");
+            const summary_preview = document.getElementById("summary_preview");
+
+            details_preview.addEventListener('toggle', () => {
+                if (details_preview.open) {
+                    summary_preview.textContent = "Hide Preview";
+                } else {
+                    summary_preview.textContent = "Show Preview";
+                }
+            });
+
+            const modalOverlay = document.getElementById('modal-overlay');
+            const modalPanel = document.getElementById('modal-panel');
+            const modalTextContent = document.getElementById('modal-text-content');
+            const modalCloseBtn = document.getElementById('modal-close-btn');
+            const modalCopyBtn = document.getElementById('modal-copy-btn');
+
+            function showModalWithText(text) {
+                modalTextContent.textContent = text;
+                modalOverlay.classList.remove('hidden');
+                document.body.classList.add('modal-open');
+            }
+
+            function hideModal() {
+                modalOverlay.classList.add('hidden');
+                document.body.classList.remove('modal-open');
+            }
+
+            function copyModalText() {
+                const textToCopy = modalTextContent.textContent;
+                const tempTextArea = document.createElement('textarea');
+                tempTextArea.value = textToCopy;
+                tempTextArea.style.position = 'absolute';
+                tempTextArea.style.left = '-9999px';
+                document.body.appendChild(tempTextArea);
+
+                tempTextArea.select();
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    modalCopyBtn.textContent = 'Success!';
+                    setTimeout(() => { modalCopyBtn.textContent = 'Copy'; }, 2000);
+                }).catch(() => {
+                    modalCopyBtn.textContent = 'Failed';
+                    setTimeout(() => { modalCopyBtn.textContent = 'Copy'; }, 2000);
+                }).finally(() => {
+                    document.body.removeChild(tempTextArea);
+                });
+            }
+
+            function showModalWithCustomText() {
+                showModalWithText(body);
+            }
+
+            modalCopyBtn.addEventListener('click', copyModalText);
+            modalCloseBtn.addEventListener('click', hideModal);
+            modalOverlay.addEventListener('click', (event) => {
+                if (event.target === modalOverlay) {
+                    hideModal();
+                }
+            });
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && !modalOverlay.classList.contains('hidden')) {
+                    hideModal();
+                }
+            });
+
+            document.getElementById('clear').addEventListener('click', function () {
+                document.getElementById('scr').value = '';
+                save();
+            });
+
+
+            const details_advanced_settings = document.getElementById("advancedSettings");
+            const summary_advanced_settings = document.getElementById("summaryAdvancedSettings");
+
+            details_advanced_settings.addEventListener('toggle', () => {
+                if (details_advanced_settings.open) {
+                    summary_advanced_settings.textContent = "Hide Advanced Settings";
+                } else {
+                    summary_advanced_settings.textContent = "Show Advanced Settings";
+                }
+            });
+
+
+            const details_cubeUI = document.getElementById("details_cubeUI");
+            const summary_cubeUI = document.getElementById("summary_cubeUI");
+            details_cubeUI.addEventListener('toggle', () => {
+                if (details_cubeUI.open) {
+                    summary_cubeUI.textContent = "Hide Cube Editor";
+                } else {
+                    summary_cubeUI.textContent = "Show Cube Editor";
+                }
+            });
+
+            window.onload = function () {
+                const urlParams = new URLSearchParams(window.location.search);
+                const scrambleParam = urlParams.get(idToKeyMap['scr']);
+                document.getElementById("result").innerHTML = "";
+                let deferredAppend = null;
+                if (scrambleParam) {
+                    const scr = decodeURIComponent(scrambleParam.replace(/_/g, ' ').replace(/-/g, '\''));
+                    document.getElementById('scr').value = scr;
+                    const sol_num = urlParams.get('index');
+                    const sol = urlParams.get('sol');
+                    if (sol_num && sol) {
+                        messageCount = Number(sol_num) - 1;
+                        const sol_fixed = sol.replace(/_/g, ' ').replace(/-/g, '\'');
+                        sol_input = true;
+                        deferredAppend = { scr, sol: sol_fixed };
+                        sol_input = false;
+                        document.getElementById("countLine").value = 1;
+                    } else {
+                        document.getElementById("countLine").value = 0;
+                    }
+                }
+                document.getElementById('scr').value = scrambleParam ? decodeURIComponent(scrambleParam.replace(/_/g, ' ').replace(/-/g, '\'')) : '';
+                if (scrambleParam === '') {
+                    document.getElementById("reverse").classList.add("hidden");
+                    document.getElementById("mirror").classList.add("hidden");
+                }
+                undoButton.classList.add("hidden_small");
+                redoButton.classList.add("hidden_small");
+                setParamsFromUrl(urlParams);
+                const startInit = () => {
+                    const initPromise = InitializeFunctions();
+                    const twistyPromise = (typeof window.ensureTwisty === 'function') ? window.ensureTwisty() : Promise.resolve();
+                    Promise.allSettled([initPromise, twistyPromise]).then(() => {
+                        if (deferredAppend) {
+                            try {
+                                sol_input = true;
+                                appendSol(deferredAppend.scr, deferredAppend.sol);
+                            } catch (e) {
+                                console.error('Deferred appendSol failed:', e);
+                            } finally {
+                                sol_input = false;
+                            }
+                        }
+                    });
+                };
+                if ('requestIdleCallback' in window) {
+                    requestIdleCallback(startInit, { timeout: 2000 });
+                } else {
+                    setTimeout(startInit, 50);
+                }
+                try {
+                    save();
+                } catch (e) {
+                    console.warn('Initial save() failed (ignored):', e);
+                }
+            };
+        </script>
+        <script src="sw-register.js" defer></script>
+</body>
+
+</html>

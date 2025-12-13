@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="manifest" href="manifest.json">
+	<title>Alg Trainer</title>
+	<meta name="description" content="Trainer for 3x3 and 2x2 algorithms.">
+	<script async src="https://www.googletagmanager.com/gtag/js?id=G-MXJH30352W"></script>
+	<script>
+		window.dataLayer = window.dataLayer || [];
+		function gtag() { dataLayer.push(arguments); }
+		gtag('js', new Date());
+		gtag('config', 'G-MXJH30352W');
+	</script>
+	<style>
+		header {
+			padding: 2px;
+			text-align: center;
+			cursor: pointer;
+			background-color: #121212;
+		}
+
+		h1 {
+			font-family: Arial, sans-serif;
+			font-size: 24px;
+			text-align: center;
+			color: #ffffff;
+		}
+
+		body {
+			font-family: Arial, sans-serif;
+			margin: 20px;
+			padding: 0;
+			background-color: #121212;
+			color: #ffffff;
+		}
+
+		label {
+			font-family: Arial, sans-serif;
+			font-size: 20px;
+			text-align: left;
+			color: #ffffff;
+		}
+
+		select {
+			font-family: Arial, sans-serif;
+			max-width: 200px;
+			font-size: 20px;
+			padding: 10px;
+			margin-bottom: 10px;
+			border: 1px solid #ffffff;
+			border-radius: 4px;
+			box-sizing: border-box;
+			background-color: #1e1e1e;
+			color: #ffffff;
+			cursor: pointer;
+		}
+
+		twisty-player {
+			margin: 0;
+			width: 100%;
+			max-width: 600px;
+		}
+
+		.custom-checkbox {
+			display: none;
+		}
+
+		.custom-checkbox+label {
+			position: relative;
+			padding-left: 33px;
+			cursor: pointer;
+			font-size: 20px;
+			color: #ffffff;
+			user-select: none;
+		}
+
+		.custom-checkbox+label:before {
+			content: '';
+			position: absolute;
+			left: 0;
+			top: 50%;
+			transform: translateY(-50%);
+			width: 20px;
+			height: 20px;
+			border: 2px solid #41417f;
+			background-color: #1e1e1e;
+		}
+
+		.custom-checkbox:checked+label:before {
+			background-color: #41417f;
+			border-color: #41417f;
+		}
+
+		.custom-checkbox:checked+label:after {
+			content: '';
+			position: absolute;
+			left: 9px;
+			top: 5px;
+			width: 5px;
+			height: 10px;
+			border: solid white;
+			border-width: 0 2px 2px 0;
+			transform: rotate(45deg);
+		}
+
+		.button {
+			font-family: Arial, sans-serif;
+			width: 100%;
+			font-size: 20px;
+			padding: 10px;
+			background-color: #56567c;
+			color: #ffffff;
+			border: none;
+			border-radius: 4px;
+			cursor: pointer;
+			margin-bottom: 4px;
+			max-width: 90px;
+		}
+
+		a,
+		pre {
+			color: #ffffff;
+			font-family: Arial, sans-serif;
+			font-size: 20px;
+		}
+
+		summary {
+			box-sizing: border-box;
+			display: block;
+			font-family: Arial, sans-serif;
+			padding: 10px;
+			font-size: 20px;
+			color: #ffffff;
+			cursor: pointer;
+		}
+
+		details {
+			border: 1px solid #41417f;
+			border-radius: 8px;
+			padding: 5px;
+			margin: 10px 0;
+			width: 100%;
+		}
+
+		.drawer-overlay {
+			position: fixed;
+			inset: 0;
+			background-color: rgba(0, 0, 0, 0.5);
+			z-index: 1000;
+		}
+
+		.drawer-overlay.hidden {
+			display: none;
+		}
+
+		.drawer {
+			position: fixed;
+			top: 0;
+			left: 0;
+			height: 100vh;
+			height: 100dvh;
+			width: 280px;
+			background: #1e1e1e;
+			border-right: 1px solid #41417f;
+			box-shadow: 0 4px 16px #000a;
+			padding: 16px;
+			transform: translateX(-100%);
+			transition: transform 0.2s ease-in-out;
+			z-index: 1003;
+			overflow: hidden;
+			display: flex;
+			flex-direction: column;
+		}
+
+		.drawer.open {
+			transform: translateX(0);
+		}
+
+		#hamburger-menu a {
+			display: block;
+			margin-bottom: 8px;
+			white-space: nowrap;
+			color: #fff;
+			text-decoration: none;
+		}
+
+		.drawer-header {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 8px;
+			padding-bottom: 8px;
+			margin-bottom: 12px;
+			border-bottom: 1px solid #41417f;
+		}
+
+		.drawer-title {
+			margin: 0;
+			font-size: 20px;
+			color: #ffffff;
+		}
+
+		.drawer-close-btn {
+			background: none;
+			border: none;
+			color: #aaa;
+			cursor: pointer;
+			font-size: 1.8rem;
+			line-height: 1;
+			padding: 0 6px;
+		}
+
+		.drawer-close-btn:hover {
+			color: #fff;
+		}
+
+		.drawer-content {
+			flex: 1 1 auto;
+			min-height: 0;
+			overflow-y: auto;
+			-webkit-overflow-scrolling: touch;
+			padding-right: 4px;
+			padding-bottom: 24px;
+			padding-bottom: calc(24px + env(safe-area-inset-bottom));
+			overscroll-behavior: contain;
+			touch-action: pan-y;
+		}
+
+		details pre.setup-pre {
+			white-space: pre-wrap;
+			word-break: break-word;
+			overflow-wrap: anywhere;
+			max-width: 100%;
+			max-height: 8rem;
+			overflow: auto;
+			margin: 6px 0;
+			background: transparent;
+			color: #ffffff;
+			padding: 6px 8px;
+			border-radius: 6px;
+		}
+	</style>
+</head>
+
+<body>
+	<header id="header" style="margin-left:48px;margin-top:10px;position:relative;z-index:10;">
+		<h1>JSON Algorithm Trainer</h1>
+	</header>
+	<div id="hamburger-menu-container">
+		<button id="hamburger-menu-btn" aria-label="Open menu"
+			style="background:none;border:none;cursor:pointer;font-size:2.2rem;position:absolute;top:10px;left:10px;z-index:1002;color:#fff;">
+			&#9776;
+		</button>
+		<div id="drawer-overlay" class="drawer-overlay hidden"></div>
+		<nav id="hamburger-menu" class="drawer" aria-label="Main navigation">
+			<div class="drawer-header">
+				<h2 class="drawer-title">Menu</h2>
+				<button id="drawer-close-btn" class="drawer-close-btn" aria-label="Close menu">&times;</button>
+			</div>
+			<div class="drawer-content">
+				<a href="https://github.com/or18/RubiksSolverDemo" rel="noopener noreferrer" translate="no">Source</a>
+				<a href="index.html">Main Solver</a>
+				<a href="2x2x2.html" rel="noopener noreferrer" translate="no">2x2x2 Solver</a>
+				<a href="documentation.html" translate="no">Documentation</a>
+				<span style="font-weight:bold;margin-top:12px;display:block;color:#fff;">Trainers:</span>
+				<a href="cross_trainer.html" rel="noopener noreferrer" translate="no">Cross</a>
+				<a href="xcross_trainer.html" rel="noopener noreferrer" translate="no">XCross</a>
+				<a href="pairing_trainer.html" rel="noopener noreferrer" translate="no">Free Pair</a>
+				<a href="pseudo_xcross_trainer.html" rel="noopener noreferrer" translate="no">Pseudo XCross</a>
+				<a href="pseudo_pairing_trainer.html" rel="noopener noreferrer" translate="no">Pseudo Free Pair</a>
+				<a href="eocross_trainer.html" rel="noopener noreferrer" translate="no">EOCross</a>
+				<a href="algTrainer.html" rel="noopener noreferrer" translate="no">Alg Trainer</a>
+				<a href="jsonEditor.html" rel="noopener noreferrer" translate="no">JSON Editor</a>
+				<span style="font-weight:bold;margin-top:12px;display:block;color:#fff;">External tools:</span>
+				<a href="https://trangium.github.io/MovecountCoefficient/" target="_blank" rel="noopener noreferrer"
+					translate="no">MCC by trangium</a>
+				<a href="https://speedcubedb.com/a/3x3/" target="_blank" rel="noopener noreferrer"
+					translate="no">speedcubedb.com</a>
+				<a href="https://cstimer.net/" target="_blank" rel="noopener noreferrer" translate="no">cstimer.net</a>
+			</div>
+		</nav>
+	</div>
+	<script>
+		const hamburgerBtn = document.getElementById('hamburger-menu-btn');
+		const drawer = document.getElementById('hamburger-menu');
+		const overlay = document.getElementById('drawer-overlay');
+		const drawerCloseBtn = document.getElementById('drawer-close-btn');
+
+		function openDrawer() {
+			drawer.classList.add('open');
+			overlay.classList.remove('hidden');
+			document.body.style.overflow = 'hidden';
+		}
+
+		function closeDrawer() {
+			drawer.classList.remove('open');
+			overlay.classList.add('hidden');
+			document.body.style.overflow = '';
+		}
+
+		hamburgerBtn.addEventListener('click', (e) => {
+			e.stopPropagation();
+			if (drawer.classList.contains('open')) {
+				closeDrawer();
+			} else {
+				openDrawer();
+			}
+		});
+
+		overlay.addEventListener('click', closeDrawer);
+		if (drawerCloseBtn) drawerCloseBtn.addEventListener('click', closeDrawer);
+		document.addEventListener('keydown', (e) => {
+			if (e.key === 'Escape' && drawer.classList.contains('open')) closeDrawer();
+		});
+		drawer.addEventListener('click', (e) => {
+			const target = e.target;
+			if (target.tagName === 'A') {
+				closeDrawer();
+			}
+		});
+	</script>
+	<label for="algJsonFile">Select JSON File: </label>
+	<input type="file" id="algJsonFile" accept=".json" /><br><br>
+	<label for="selectPuzzle">Puzzle: </label>
+	<select translate="no" id="selectPuzzle">
+		<option translate="no" value="2x2x2">2x2x2</option>
+		<option translate="no" value="3x3x3">3x3x3</option>
+		<option translate="no" value="4x4x4">4x4x4</option>
+		<option translate="no" value="5x5x5">5x5x5</option>
+		<option translate="no" value="skewb">skewb</option>
+		<option translate="no" value="pyraminx">pyraminx</option>
+		<option translate="no" value="megaminx">megaminx</option>
+		<option translate="no" value="square1">square1</option>
+		<option translate="no" value="fto">fto</option>
+	</select><br>
+	<div id="categoryChecks"></div><br>
+	<button id="next" class="button">Next</button><br>
+	<div id="preview"></div>
+	<button id="show" class="button">Show Ans</button>
+	<div id="ans"></div>
+
+	<script type="module">
+		import { TwistyPlayer } from "https://cdn.cubing.net/v0/js/cubing/twisty";
+		import { Alg } from "https://cdn.cubing.net/v0/js/cubing/alg"
+		function createPlayer(setup, sol, puzzle) {
+			const player = new TwistyPlayer({
+				puzzle: puzzle,
+				experimentalSetupAlg: setup,
+				alg: sol,
+				background: "none"
+			});
+			return player;
+		}
+		function invertAlg(algstr) {
+			const alg = new Alg(algstr);
+			const algInv = alg.invert();
+			return algInv.toString();
+		}
+
+		window.createPlayer = createPlayer;
+		window.invertAlg = invertAlg;
+	</script>
+
+	<script>
+		let algData = {};
+		const jsonFileInput = document.getElementById('algJsonFile');
+		const categoryChecks = document.getElementById('categoryChecks');
+
+		function sanitizeId(name) {
+			return 'cat_' + String(name).replace(/[^a-zA-Z0-9_-]/g, '_');
+		}
+
+		function buildCategoryChecks() {
+			if (!categoryChecks) return;
+			categoryChecks.innerHTML = '';
+			const categories = Object.keys(algData || {});
+			categories.forEach((cat) => {
+				const id = sanitizeId(cat);
+				const wrapper = document.createElement('div');
+				const cb = document.createElement('input');
+				cb.type = 'checkbox';
+				cb.className = 'custom-checkbox';
+				cb.id = id;
+				cb.checked = true;
+				const label = document.createElement('label');
+				label.setAttribute('for', id);
+				label.textContent = cat;
+				wrapper.appendChild(cb);
+				wrapper.appendChild(label);
+				categoryChecks.appendChild(wrapper);
+			});
+		}
+
+		function getRandomAlgFromCheckedCategories() {
+			if (!algData || typeof algData !== 'object') return null;
+			if (!categoryChecks) return null;
+			const checkedInputs = Array.from(categoryChecks.querySelectorAll('input.custom-checkbox:checked'));
+			if (checkedInputs.length === 0) return null;
+			const checkedCategories = checkedInputs.map((cb) => {
+				const lbl = categoryChecks.querySelector(`label[for="${cb.id}"]`);
+				return lbl ? lbl.textContent : null;
+			}).filter(Boolean);
+			if (checkedCategories.length === 0) return null;
+			const randCat = checkedCategories[Math.floor(Math.random() * checkedCategories.length)];
+			const catObj = algData[randCat];
+			if (!catObj || typeof catObj !== 'object') return null;
+			const names = Object.keys(catObj);
+			if (names.length === 0) return null;
+			const randName = names[Math.floor(Math.random() * names.length)];
+			currentRandCategory = randCat;
+			currentRandName = randName;
+			currentRandComment = null;
+			try {
+				const entry = catObj[randName];
+				if (entry && typeof entry === 'object' && Object.prototype.hasOwnProperty.call(entry, 'comment')) {
+					if (typeof entry.comment === 'string') {
+						currentRandComment = entry.comment;
+					} else if (Array.isArray(entry.comment)) {
+						currentRandComment = entry.comment.join('\n');
+					} else if (entry.comment != null) {
+						currentRandComment = String(entry.comment);
+					}
+				}
+			} catch (e) {
+				currentRandComment = null;
+			}
+			let algVal = catObj[randName];
+			let chosenAlgText = null;
+			if (Array.isArray(algVal)) {
+				const onlyStrings = algVal.filter(v => typeof v === 'string' && v.trim().length > 0);
+				if (onlyStrings.length > 0) {
+					chosenAlgText = onlyStrings[Math.floor(Math.random() * onlyStrings.length)];
+				}
+			} else if (typeof algVal === 'string') {
+				chosenAlgText = algVal;
+			} else if (algVal && typeof algVal === 'object') {
+				if (typeof algVal.alg === 'string') {
+					chosenAlgText = algVal.alg;
+				} else if (Array.isArray(algVal.alg)) {
+					const onlyStrings = algVal.alg.filter(v => typeof v === 'string' && v.trim().length > 0);
+					if (onlyStrings.length > 0) {
+						chosenAlgText = onlyStrings[Math.floor(Math.random() * onlyStrings.length)];
+					}
+				}
+			}
+			if (typeof chosenAlgText !== 'string') return null;
+			const lines = chosenAlgText.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+			return lines.length > 0 ? lines : null;
+		}
+
+		window.getRandomAlgFromCheckedCategories = getRandomAlgFromCheckedCategories;
+		jsonFileInput.addEventListener('change', (event) => {
+			const files = event.target.files;
+			if (!files || !files.length) return;
+			const file = files[0];
+			const reader = new FileReader();
+			reader.onload = (e) => {
+				try {
+					const parsed = JSON.parse(e.target.result);
+					if (!parsed || typeof parsed !== 'object') throw new Error('Invalid JSON root');
+					algData = parsed;
+					window.algData = algData;
+					buildCategoryChecks();
+					window.dispatchEvent(new CustomEvent('algDataLoaded', {
+						detail: { categories: Object.keys(algData || {}).length }
+					}));
+				} catch (err) {
+					console.error('Invalid JSON file.', err);
+					algData = {};
+					window.algData = algData;
+					if (categoryChecks) categoryChecks.innerHTML = '';
+				}
+			};
+			reader.readAsText(file);
+		});
+
+		const nextBtn = document.getElementById('next');
+		const previewDiv = document.getElementById('preview');
+		const selectPuzzle = document.getElementById('selectPuzzle');
+		const showBtn = document.getElementById('show');
+		const ansDiv = document.getElementById('ans');
+		let currentAlgLines = null;
+		let currentRevTopAlg = null;
+		let currentSetup = null;
+		let currentRandCategory = null;
+		let currentRandName = null;
+		let currentRandComment = null;
+
+		if (nextBtn && previewDiv) {
+			nextBtn.addEventListener('click', async () => {
+				try {
+					const lines = getRandomAlgFromCheckedCategories();
+					if (!lines || lines.length === 0) {
+						previewDiv.innerHTML = '';
+						const msgEl = document.createElement('pre');
+						msgEl.textContent = 'No alg available. Please load JSON and select categories.';
+						previewDiv.appendChild(msgEl);
+						return;
+					}
+					const topAlg = lines[0];
+					let rev_topAlg = invertAlg(topAlg);
+					rev_topAlg = rev_topAlg.trim();
+					currentAlgLines = lines;
+					currentRevTopAlg = rev_topAlg;
+					const setup = rev_topAlg;
+					currentSetup = setup;
+					if (ansDiv) ansDiv.innerHTML = '';
+					const puzzle = selectPuzzle ? selectPuzzle.value : '2x2x2';
+					const player = window.createPlayer(setup, "", puzzle);
+					player.controlPanel = "none";
+					previewDiv.innerHTML = '';
+					previewDiv.appendChild(player);
+				} catch (e) {
+					console.error(e);
+					if (previewDiv) {
+						previewDiv.innerHTML = '';
+						const errEl = document.createElement('pre');
+						errEl.textContent = 'Failed to generate preview.';
+						previewDiv.appendChild(errEl);
+					}
+				}
+			});
+		}
+
+		if (showBtn && ansDiv) {
+			showBtn.addEventListener('click', () => {
+				ansDiv.innerHTML = '';
+				if (!currentAlgLines || !currentRevTopAlg) {
+					ansDiv.innerHTML = '';
+					const noSelEl = document.createElement('pre');
+					noSelEl.textContent = 'No selection yet. Please press Next first.';
+					ansDiv.appendChild(noSelEl);
+					return;
+				}
+				const infoEl = document.createElement('pre');
+				const setText = currentRandCategory ? String(currentRandCategory) : '(unknown)';
+				const nameText = currentRandName ? String(currentRandName) : '(unknown)';
+				let infoText = `Set: ${setText}\nName: ${nameText}`;
+				const commentText = (currentRandComment != null) ? String(currentRandComment) : '';
+				infoText += `\nComment: ${commentText}`;
+				infoEl.textContent = infoText;
+				ansDiv.appendChild(infoEl);
+				const puzzle = selectPuzzle ? selectPuzzle.value : '2x2x2';
+				currentAlgLines.forEach((alg) => {
+					const detailsEl = document.createElement('details');
+					const summaryEl = document.createElement('summary');
+					const setup = currentSetup || currentRevTopAlg || '';
+					summaryEl.textContent = alg;
+					detailsEl.appendChild(summaryEl);
+					const setupEl = document.createElement('pre');
+					setupEl.className = 'setup-pre';
+					setupEl.textContent = `setup: ${setup}`;
+					detailsEl.appendChild(setupEl);
+					const player = window.createPlayer(setup, alg, puzzle);
+					detailsEl.appendChild(player);
+					ansDiv.appendChild(detailsEl);
+				});
+			});
+		}
+	</script>
+	<script src="sw-register.js" defer></script>
+
+</body>
+
+</html>

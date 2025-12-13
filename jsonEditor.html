@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="manifest" href="manifest.json">
+	<title>JSON Editor</title>
+	<meta name="description" content="Tool to edit algorithm sets in JSON format.">
+	<script async src="https://www.googletagmanager.com/gtag/js?id=G-MXJH30352W"></script>
+	<script>
+		window.dataLayer = window.dataLayer || [];
+		function gtag() { dataLayer.push(arguments); }
+		gtag('js', new Date());
+		gtag('config', 'G-MXJH30352W');
+	</script>
+	<style>
+		header {
+			padding: 2px;
+			text-align: center;
+			cursor: pointer;
+			background-color: #121212;
+		}
+
+		h1 {
+			font-family: Arial, sans-serif;
+			font-size: 24px;
+			text-align: center;
+			color: #ffffff;
+		}
+
+		body {
+			font-family: Arial, sans-serif;
+			margin: 18px;
+			padding: 0;
+			background-color: #121212;
+			color: #ffffff;
+		}
+
+		label {
+			font-family: Arial, sans-serif;
+			font-size: 18px;
+			text-align: left;
+			color: #ffffff;
+		}
+
+		.button {
+			font-family: Arial, sans-serif;
+			font-size: 18px;
+			padding: 8px 10px;
+			background-color: #56567c;
+			color: #ffffff;
+			border: none;
+			border-radius: 4px;
+			cursor: pointer;
+			margin: 4px;
+		}
+
+		textarea {
+			font-family: monospace;
+			width: 100%;
+			max-width: 800px;
+			height: 100px;
+			font-size: 18px;
+			padding: 8px;
+			margin: 4px 0;
+			border: 1px solid #41417f;
+			border-radius: 4px;
+			background-color: #1e1e1e;
+			color: #ffffff;
+			box-sizing: border-box;
+		}
+
+		input[type="text"] {
+			font-family: Arial, sans-serif;
+			width: 100%;
+			max-width: 300px;
+			height: 36px;
+			font-size: 18px;
+			padding: 8px;
+			margin: 4px 0 8px 0;
+			border: 1px solid #41417f;
+			border-radius: 4px;
+			box-sizing: border-box;
+			background-color: #1e1e1e;
+			color: #ffffff;
+		}
+
+		div.category {
+			border-bottom: 3px solid #444;
+			padding: 10px 0 14px 0;
+		}
+
+
+		select {
+			font-family: Arial, sans-serif;
+			max-width: 200px;
+			font-size: 18px;
+			padding: 10px;
+			margin-bottom: 10px;
+			border: 1px solid #ffffff;
+			border-radius: 4px;
+			box-sizing: border-box;
+			background-color: #1e1e1e;
+			color: #ffffff;
+			cursor: pointer;
+		}
+
+
+		.drawer-overlay {
+			position: fixed;
+			inset: 0;
+			background-color: rgba(0, 0, 0, 0.5);
+			z-index: 1000;
+		}
+
+		.drawer-overlay.hidden {
+			display: none;
+		}
+
+		.drawer {
+			position: fixed;
+			top: 0;
+			left: 0;
+			height: 100vh;
+			height: 100dvh;
+			width: 280px;
+			background: #1e1e1e;
+			border-right: 1px solid #41417f;
+			box-shadow: 0 4px 16px #000a;
+			padding: 16px;
+			transform: translateX(-100%);
+			transition: transform 0.2s ease-in-out;
+			z-index: 1003;
+			overflow: hidden;
+			display: flex;
+			flex-direction: column;
+		}
+
+		.drawer.open {
+			transform: translateX(0);
+		}
+
+		#hamburger-menu a {
+			display: block;
+			margin-bottom: 8px;
+			white-space: nowrap;
+			color: #fff;
+			text-decoration: none;
+			font-family: Arial, sans-serif;
+			font-size: 20px;
+		}
+
+		.drawer-header {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 8px;
+			padding-bottom: 8px;
+			margin-bottom: 12px;
+			border-bottom: 1px solid #41417f;
+		}
+
+		.drawer-title {
+			margin: 0;
+			font-size: 20px;
+			color: #ffffff;
+		}
+
+		.drawer-close-btn {
+			background: none;
+			border: none;
+			color: #aaa;
+			cursor: pointer;
+			font-size: 1.8rem;
+			line-height: 1;
+			padding: 0 6px;
+		}
+
+		.drawer-close-btn:hover {
+			color: #fff;
+		}
+
+		.drawer-content {
+			flex: 1 1 auto;
+			min-height: 0;
+			overflow-y: auto;
+			-webkit-overflow-scrolling: touch;
+			padding-right: 4px;
+			padding-bottom: 24px;
+			padding-bottom: calc(24px + env(safe-area-inset-bottom));
+			overscroll-behavior: contain;
+			touch-action: pan-y;
+		}
+	</style>
+</head>
+
+<body>
+	<header id="header" style="margin-left:48px;margin-top:10px;position:relative;z-index:10;">
+		<h1>JSON Algorithm Editor</h1>
+	</header>
+	<div id="hamburger-menu-container">
+		<button id="hamburger-menu-btn" aria-label="Open menu"
+			style="background:none;border:none;cursor:pointer;font-size:2.2rem;position:absolute;top:10px;left:10px;z-index:1002;color:#fff;">
+			&#9776;
+		</button>
+		<div id="drawer-overlay" class="drawer-overlay hidden"></div>
+		<nav id="hamburger-menu" class="drawer" aria-label="Main navigation">
+			<div class="drawer-header">
+				<h2 class="drawer-title">Menu</h2>
+				<button id="drawer-close-btn" class="drawer-close-btn" aria-label="Close menu">&times;</button>
+			</div>
+			<div class="drawer-content">
+				<a href="https://github.com/or18/RubiksSolverDemo" rel="noopener noreferrer" translate="no">Source</a>
+				<a href="index.html">Main Solver</a>
+				<a href="2x2x2.html" rel="noopener noreferrer" translate="no">2x2x2 Solver</a>
+				<a href="documentation.html" translate="no">Documentation</a>
+				<span style="font-weight:bold;margin-top:12px;display:block;color:#fff;">Trainers:</span>
+				<a href="cross_trainer.html" rel="noopener noreferrer" translate="no">Cross</a>
+				<a href="xcross_trainer.html" rel="noopener noreferrer" translate="no">XCross</a>
+				<a href="pairing_trainer.html" rel="noopener noreferrer" translate="no">Free Pair</a>
+				<a href="pseudo_xcross_trainer.html" rel="noopener noreferrer" translate="no">Pseudo XCross</a>
+				<a href="pseudo_pairing_trainer.html" rel="noopener noreferrer" translate="no">Pseudo Free Pair</a>
+				<a href="eocross_trainer.html" rel="noopener noreferrer" translate="no">EOCross</a>
+				<a href="algTrainer.html" rel="noopener noreferrer" translate="no">Alg Trainer</a>
+				<a href="jsonEditor.html" rel="noopener noreferrer" translate="no">JSON Editor</a>
+				<span style="font-weight:bold;margin-top:12px;display:block;color:#fff;">External tools:</span>
+				<a href="https://trangium.github.io/MovecountCoefficient/" target="_blank" rel="noopener noreferrer"
+					translate="no">MCC by trangium</a>
+				<a href="https://speedcubedb.com/a/3x3/" target="_blank" rel="noopener noreferrer"
+					translate="no">speedcubedb.com</a>
+				<a href="https://cstimer.net/" target="_blank" rel="noopener noreferrer" translate="no">cstimer.net</a>
+			</div>
+		</nav>
+	</div>
+	<script>
+		const hamburgerBtn = document.getElementById('hamburger-menu-btn');
+		const drawer = document.getElementById('hamburger-menu');
+		const overlay = document.getElementById('drawer-overlay');
+		const drawerCloseBtn = document.getElementById('drawer-close-btn');
+
+		function openDrawer() {
+			drawer.classList.add('open');
+			overlay.classList.remove('hidden');
+			document.body.style.overflow = 'hidden';
+		}
+
+		function closeDrawer() {
+			drawer.classList.remove('open');
+			overlay.classList.add('hidden');
+			document.body.style.overflow = '';
+		}
+
+		hamburgerBtn.addEventListener('click', (e) => {
+			e.stopPropagation();
+			if (drawer.classList.contains('open')) {
+				closeDrawer();
+			} else {
+				openDrawer();
+			}
+		});
+
+		overlay.addEventListener('click', closeDrawer);
+		if (drawerCloseBtn) drawerCloseBtn.addEventListener('click', closeDrawer);
+		document.addEventListener('keydown', (e) => {
+			if (e.key === 'Escape' && drawer.classList.contains('open')) closeDrawer();
+		});
+		drawer.addEventListener('click', (e) => {
+			const target = e.target;
+			if (target.tagName === 'A') {
+				closeDrawer();
+			}
+		});
+	</script>
+	<label for="fileInput">Select JSON File: </label>
+	<input type="file" id="fileInput" accept=".json" /><br><br>
+	<input type="text" id="downloadFileName" placeholder="Enter file name" />
+	<label for="downloadFileName">.json</label><br>
+	<button id="downloadJson" class="button">Download JSON</button>
+	<button id="resetData" class="button">Reset</button><br><br>
+	<label for="setSelector" style="margin-left:8px;">Select Set: </label>
+	<select id="setSelector"></select><br>
+	<button id="addCategory" class="button">Add Set</button>
+	<button id="deleteCategoryTop" class="button" style="margin-left:8px">Delete Set</button><br>
+
+	<div id="categoryContainer"></div>
+
+	<script>
+		let algData = {};
+		let selectedSetName = null;
+
+		const IDB_DB_NAME = 'RubiksSolverDemo';
+		const IDB_STORE = 'algEditor';
+		const IDB_KEY = 'autosave';
+		let saveTimer = null;
+
+		function openDB() {
+			return new Promise((resolve, reject) => {
+				const req = indexedDB.open(IDB_DB_NAME, 1);
+				req.onupgradeneeded = (e) => {
+					const db = req.result;
+					if (!db.objectStoreNames.contains(IDB_STORE)) {
+						db.createObjectStore(IDB_STORE, { keyPath: 'id' });
+					}
+				};
+				req.onsuccess = () => resolve(req.result);
+				req.onerror = () => reject(req.error);
+			});
+		}
+
+		async function saveAlgDataToIDB() {
+			try {
+				const db = await openDB();
+				await new Promise((resolve, reject) => {
+					const tx = db.transaction(IDB_STORE, 'readwrite');
+					const store = tx.objectStore(IDB_STORE);
+					store.put({ id: IDB_KEY, data: algData, updatedAt: Date.now() });
+					tx.oncomplete = () => resolve();
+					tx.onerror = () => reject(tx.error);
+				});
+			} catch (e) {
+				console.warn('Failed to save to IndexedDB:', e);
+			}
+		}
+
+		function saveAlgDataDebounced(delay = 300) {
+			if (saveTimer) clearTimeout(saveTimer);
+			saveTimer = setTimeout(saveAlgDataToIDB, delay);
+		}
+
+		async function loadAlgDataFromIDB() {
+			try {
+				const db = await openDB();
+				const data = await new Promise((resolve, reject) => {
+					const tx = db.transaction(IDB_STORE, 'readonly');
+					const store = tx.objectStore(IDB_STORE);
+					const req = store.get(IDB_KEY);
+					req.onsuccess = () => resolve(req.result ? req.result.data : null);
+					req.onerror = () => reject(req.error);
+				});
+				if (data && typeof data === 'object') {
+					algData = data;
+					populateCategoryList();
+				}
+			} catch (e) {
+				console.warn('Failed to load from IndexedDB:', e);
+			}
+		}
+
+		async function clearAlgDataFromIDB() {
+			try {
+				const db = await openDB();
+				await new Promise((resolve, reject) => {
+					const tx = db.transaction(IDB_STORE, 'readwrite');
+					const store = tx.objectStore(IDB_STORE);
+					store.delete(IDB_KEY);
+					tx.oncomplete = () => resolve();
+					tx.onerror = () => reject(tx.error);
+				});
+			} catch (e) {
+				console.warn('Failed to clear IndexedDB:', e);
+			}
+		}
+
+		document.getElementById('fileInput').addEventListener('change', (event) => {
+			const files = event.target.files;
+			if (files.length > 0) {
+				const file = files[0];
+				const reader = new FileReader();
+				reader.onload = (e) => {
+					try {
+						algData = JSON.parse(e.target.result);
+						selectedSetName = null;
+						populateCategoryList();
+						saveAlgDataDebounced();
+					} catch (error) {
+						alert('Invalid JSON file.');
+					}
+				};
+				reader.readAsText(file);
+			}
+		});
+
+		function updateSetSelectorOptions() {
+			const selector = document.getElementById('setSelector');
+			if (!selector) return;
+			const prev = selectedSetName;
+			selector.innerHTML = '';
+			const categories = Object.keys(algData);
+			if (categories.length === 0) {
+				const opt = document.createElement('option');
+				opt.value = '';
+				opt.textContent = '(no sets)';
+				selector.appendChild(opt);
+				selector.disabled = true;
+				selectedSetName = null;
+				return;
+			}
+			selector.disabled = false;
+			for (const cat of categories) {
+				const opt = document.createElement('option');
+				opt.value = cat;
+				opt.textContent = cat;
+				selector.appendChild(opt);
+			}
+			if (prev && categories.includes(prev)) {
+				selectedSetName = prev;
+			} else if (!selectedSetName || !categories.includes(selectedSetName)) {
+				selectedSetName = categories[0];
+			}
+			selector.value = selectedSetName || '';
+		}
+
+		function renameKeyPreserveOrder(obj, oldKey, newKey) {
+			if (oldKey === newKey) return obj;
+			if (Object.prototype.hasOwnProperty.call(obj, newKey)) return null;
+			const orderedKeys = Object.keys(obj);
+			const newObj = {};
+			for (const k of orderedKeys) {
+				if (k === oldKey) {
+					newObj[newKey] = obj[oldKey];
+				} else {
+					newObj[k] = obj[k];
+				}
+			}
+			return newObj;
+		}
+
+		function moveKeyPreserveOrder(obj, key, delta) {
+			const keys = Object.keys(obj);
+			const i = keys.indexOf(key);
+			if (i === -1) return obj;
+			const j = i + delta;
+			if (j < 0 || j >= keys.length) return obj;
+			const newKeys = keys.slice();
+			newKeys.splice(i, 1);
+			newKeys.splice(j, 0, key);
+			const newObj = {};
+			for (const k of newKeys) newObj[k] = obj[k];
+			return newObj;
+		}
+
+		function getOrderForCategory(catObj) {
+			if (!catObj || typeof catObj !== 'object') return [];
+			let ord = catObj.__order;
+			if (!Array.isArray(ord)) {
+				ord = Object.keys(catObj).filter(k => !k.startsWith('__'));
+				catObj.__order = ord;
+			}
+			const seen = new Set();
+			const ordUnique = [];
+			for (const k of ord) {
+				if (!seen.has(k)) {
+					seen.add(k);
+					ordUnique.push(k);
+				}
+			}
+			const existing = new Set(Object.keys(catObj).filter(k => !k.startsWith('__')));
+			const filtered = ordUnique.filter(k => existing.has(k));
+			for (const k of existing) if (!filtered.includes(k)) filtered.push(k);
+			catObj.__order = filtered;
+			return filtered;
+		}
+
+		function moveIndexInOrder(catObj, key, delta) {
+			const ord = getOrderForCategory(catObj).slice();
+			const i = ord.indexOf(key);
+			if (i === -1) return;
+			const j = i + delta;
+			if (j < 0 || j >= ord.length) return;
+			ord.splice(i, 1);
+			ord.splice(j, 0, key);
+			catObj.__order = ord;
+		}
+
+		function renameIndexInOrder(catObj, oldKey, newKey) {
+			const ord = getOrderForCategory(catObj).slice();
+			const i = ord.indexOf(oldKey);
+			if (i !== -1) {
+				ord[i] = newKey;
+				catObj.__order = ord;
+			}
+		}
+
+		function deleteIndexFromOrder(catObj, key) {
+			const ord = getOrderForCategory(catObj).slice();
+			const i = ord.indexOf(key);
+			if (i !== -1) {
+				ord.splice(i, 1);
+				catObj.__order = ord;
+			}
+		}
+
+		function populateCategoryList() {
+			const categoryContainer = document.getElementById('categoryContainer');
+			categoryContainer.innerHTML = '';
+
+			updateSetSelectorOptions();
+			const categories = Object.keys(algData);
+			if (categories.length === 0 || !selectedSetName) {
+				return;
+			}
+
+			const category = selectedSetName;
+			const div = document.createElement('div');
+			div.className = 'category';
+			const label = document.createElement('label');
+			label.textContent = "Set: ";
+			label.style.display = 'inline-block';
+			label.style.marginRight = '8px';
+			label.style.verticalAlign = 'middle';
+			const categoryInput = document.createElement('input');
+			categoryInput.style.display = 'block';
+			categoryInput.style.verticalAlign = 'middle';
+			categoryInput.style.width = '100%';
+			categoryInput.style.maxWidth = '800px';
+			categoryInput.type = 'text';
+			categoryInput.value = category;
+			categoryInput.onchange = () => {
+				const newCategoryName = categoryInput.value;
+				if (newCategoryName === category) return;
+				const renamed = renameKeyPreserveOrder(algData, category, newCategoryName);
+				if (renamed) {
+					algData = renamed;
+					if (selectedSetName === category) selectedSetName = newCategoryName;
+					populateCategoryList();
+					updateSetSelectorOptions();
+					saveAlgDataDebounced();
+				} else {
+					alert('Set name already exists.');
+					categoryInput.value = category;
+				}
+			};
+
+			const table = document.createElement('table');
+			table.style.width = '100%';
+			table.style.maxWidth = '800px';
+			table.style.boxSizing = 'border-box';
+			const tbody = document.createElement('tbody');
+
+			const orderedKeys = getOrderForCategory(algData[category]);
+			orderedKeys.forEach((index, idx) => {
+				const trName = document.createElement('tr');
+				const tdName = document.createElement('td');
+				tdName.style.width = '100%';
+
+				const nameLabel = document.createElement('label');
+				nameLabel.textContent = 'Name: ';
+				nameLabel.style.display = 'inline-block';
+				nameLabel.style.marginRight = '8px';
+				const indexInput = document.createElement('input');
+				indexInput.type = 'text';
+				indexInput.value = index;
+				indexInput.style.display = 'block';
+				indexInput.style.verticalAlign = 'middle';
+				indexInput.style.width = '100%';
+				indexInput.style.maxWidth = '800px';
+				indexInput.style.boxSizing = 'border-box';
+				indexInput.onchange = () => {
+					const newIndexName = indexInput.value;
+					if (newIndexName === index) return;
+					const inner = algData[category];
+					if (Object.prototype.hasOwnProperty.call(inner, newIndexName)) {
+						alert('Alg name already exists.');
+						indexInput.value = index;
+						return;
+					}
+					const origOrder = Array.isArray(inner.__order)
+						? inner.__order.slice()
+						: Object.keys(inner).filter(k => !k.startsWith('__'));
+					const renamedInner = renameKeyPreserveOrder(inner, index, newIndexName);
+					if (renamedInner) {
+						const updatedOrder = origOrder.map(k => (k === index ? newIndexName : k)).filter((v, i, a) => a.indexOf(v) === i);
+						renamedInner.__order = updatedOrder;
+						algData[category] = renamedInner;
+						populateCategoryList();
+						saveAlgDataDebounced();
+					} else {
+						alert('Alg name already exists.');
+						indexInput.value = index;
+					}
+				};
+
+				tdName.appendChild(nameLabel);
+				tdName.appendChild(indexInput);
+				trName.appendChild(tdName);
+
+				const trAlg = document.createElement('tr');
+				const tdAlg = document.createElement('td');
+				tdAlg.style.width = '100%';
+				const algLabel = document.createElement('label');
+				algLabel.textContent = 'Algs:';
+				algLabel.style.display = 'block';
+				algLabel.style.marginBottom = '4px';
+				tdAlg.appendChild(algLabel);
+
+				let entry = algData[category][index];
+				if (typeof entry === 'string') {
+					entry = { alg: entry };
+					algData[category][index] = entry;
+				} else if (Array.isArray(entry)) {
+					entry = { alg: entry.join('\n') };
+					algData[category][index] = entry;
+				} else if (!entry || typeof entry !== 'object') {
+					entry = { alg: '' };
+					algData[category][index] = entry;
+				}
+
+				const algTextarea = document.createElement('textarea');
+				algTextarea.value = entry.alg || '';
+				algTextarea.style.width = '100%';
+				algTextarea.style.maxWidth = '800px';
+				algTextarea.style.boxSizing = 'border-box';
+				algTextarea.oninput = (e) => {
+					entry.alg = e.target.value;
+					saveAlgDataDebounced();
+				};
+				tdAlg.appendChild(algTextarea);
+
+				const commentLabel = document.createElement('label');
+				commentLabel.textContent = 'Comment:';
+				commentLabel.style.display = 'block';
+				commentLabel.style.marginTop = '6px';
+				tdAlg.appendChild(commentLabel);
+				const commentTextarea = document.createElement('textarea');
+				commentTextarea.style.height = '60px';
+				commentTextarea.style.width = '100%';
+				commentTextarea.style.maxWidth = '800px';
+				commentTextarea.style.boxSizing = 'border-box';
+				commentTextarea.value = entry.comment || '';
+				commentTextarea.oninput = (e) => {
+					entry.comment = e.target.value;
+					saveAlgDataDebounced();
+				};
+				tdAlg.appendChild(commentTextarea);
+				trAlg.appendChild(tdAlg);
+
+				const trBtns = document.createElement('tr');
+				const tdBtns = document.createElement('td');
+
+				const moveIndexUpBtn = document.createElement('button');
+				moveIndexUpBtn.className = 'button';
+				moveIndexUpBtn.style.display = 'inline-block';
+				moveIndexUpBtn.style.marginRight = '4px';
+				moveIndexUpBtn.textContent = '↑';
+				moveIndexUpBtn.onclick = () => {
+					const inner = algData[category];
+					moveIndexInOrder(inner, index, -1);
+					populateCategoryList();
+					saveAlgDataDebounced();
+				};
+
+				const moveIndexDownBtn = document.createElement('button');
+				moveIndexDownBtn.className = 'button';
+				moveIndexDownBtn.style.display = 'inline-block';
+				moveIndexDownBtn.style.marginRight = '8px';
+				moveIndexDownBtn.textContent = '↓';
+				moveIndexDownBtn.onclick = () => {
+					const inner = algData[category];
+					moveIndexInOrder(inner, index, +1);
+					populateCategoryList();
+					saveAlgDataDebounced();
+				};
+
+				if (idx === 0) {
+					moveIndexUpBtn.style.display = 'none';
+				}
+				if (idx === orderedKeys.length - 1) {
+					moveIndexDownBtn.style.display = 'none';
+				}
+
+				const deleteIndexBtn = document.createElement('button');
+				deleteIndexBtn.className = 'button';
+				deleteIndexBtn.style.display = 'inline-block';
+				deleteIndexBtn.textContent = 'Delete Alg';
+				deleteIndexBtn.onclick = () => {
+					if (confirm(`Delete Alg "${index}" from "${category}"?`)) {
+						delete algData[category][index];
+						deleteIndexFromOrder(algData[category], index);
+						populateCategoryList();
+						saveAlgDataDebounced();
+					}
+				};
+
+				tdBtns.appendChild(moveIndexUpBtn);
+				tdBtns.appendChild(moveIndexDownBtn);
+				tdBtns.appendChild(deleteIndexBtn);
+				trBtns.appendChild(tdBtns);
+
+				tbody.appendChild(trName);
+				tbody.appendChild(trAlg);
+				tbody.appendChild(trBtns);
+			});
+
+			table.appendChild(tbody);
+			div.appendChild(label);
+			div.appendChild(categoryInput);
+			div.appendChild(table);
+
+			const addIndexButton = document.createElement('button');
+			addIndexButton.className = 'button';
+			addIndexButton.textContent = "Add Alg";
+			addIndexButton.onclick = () => {
+				const newIndex = prompt("Enter new alg name:");
+				if (newIndex && !algData[category][newIndex]) {
+					algData[category][newIndex] = { alg: "", comment: "" };
+					getOrderForCategory(algData[category]);
+					populateCategoryList();
+					saveAlgDataDebounced();
+				} else {
+					alert('Invalid name or alg already exists.');
+				}
+			};
+
+			div.appendChild(addIndexButton);
+
+			categoryContainer.appendChild(div);
+		}
+
+		document.getElementById('addCategory').addEventListener('click', () => {
+			const newCategory = prompt("Enter new set name:");
+			if (newCategory && !algData[newCategory]) {
+				algData[newCategory] = {};
+				selectedSetName = newCategory;
+				updateSetSelectorOptions();
+				populateCategoryList();
+				saveAlgDataDebounced();
+			} else {
+				alert('Invalid set name or set already exists.');
+			}
+		});
+
+		const deleteCategoryTopBtn = document.getElementById('deleteCategoryTop');
+		if (deleteCategoryTopBtn) {
+			deleteCategoryTopBtn.addEventListener('click', () => {
+				if (!selectedSetName) {
+					alert('No set selected to delete.');
+					return;
+				}
+				if (!confirm(`Delete set "${selectedSetName}" and all its algs?`)) return;
+				delete algData[selectedSetName];
+				const keys = Object.keys(algData);
+				selectedSetName = keys.length ? keys[0] : null;
+				updateSetSelectorOptions();
+				populateCategoryList();
+				saveAlgDataDebounced();
+			});
+		}
+
+		const setSelectorEl = document.getElementById('setSelector');
+		setSelectorEl.addEventListener('change', (e) => {
+			selectedSetName = e.target.value || null;
+			populateCategoryList();
+		});
+
+		function stripMeta(obj) {
+			if (Array.isArray(obj)) {
+				return obj.map(stripMeta);
+			}
+			if (obj && typeof obj === 'object') {
+				const out = {};
+				for (const k of Object.keys(obj)) {
+					if (k.startsWith('__')) continue;
+					out[k] = stripMeta(obj[k]);
+				}
+				return out;
+			}
+			return obj;
+		}
+
+		document.getElementById('downloadJson').addEventListener('click', () => {
+			const active = document.activeElement;
+			if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) {
+				active.blur();
+			}
+			setTimeout(() => {
+				const cleaned = stripMeta(algData);
+				const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cleaned, null, 2));
+				const downloadAnchor = document.createElement('a');
+				downloadAnchor.setAttribute("href", dataStr);
+				const base = (document.getElementById('downloadFileName').value || '').trim() || 'alg_data';
+				const fileName = base.toLowerCase().endsWith('.json') ? base : `${base}.json`;
+				downloadAnchor.setAttribute("download", fileName);
+				document.body.appendChild(downloadAnchor);
+				downloadAnchor.click();
+				document.body.removeChild(downloadAnchor);
+			}, 0);
+		});
+
+		document.getElementById('resetData').addEventListener('click', async () => {
+			const proceed = confirm('This will clear all sets and algs from the editor.\nThis action cannot be undone. Do you want to proceed?');
+			if (!proceed) return;
+			algData = {};
+			try {
+				const fileInput = document.getElementById('fileInput');
+				if (fileInput) fileInput.value = '';
+				const nameInput = document.getElementById('downloadFileName');
+				if (nameInput) nameInput.value = '';
+			} catch (_) { }
+			populateCategoryList();
+			await clearAlgDataFromIDB();
+		});
+
+		loadAlgDataFromIDB();
+	</script>
+	<script src="sw-register.js" defer></script>
+
+</body>
+
+</html>
