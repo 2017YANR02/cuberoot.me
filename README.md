@@ -1,5 +1,6 @@
 # RubiksSolverDemo
 Website https://ruiminyan.github.io/
+
 forked from [or18/RubiksSolverDemo](https://github.com/or18/RubiksSolverDemo)
 Solvers for 3x3x3 Rubik's cube: cross, xcross, free pair, pseudo F2L, EOCross, and last layer. 2x2x2 cube solver is also available.<br><br>
 [**3x3x3 Solver**](https://or18.github.io/RubiksSolverDemo/) 
@@ -21,4 +22,5 @@ Detailed explanations and example searches are available in the [**documentation
 
 
 This site supports **PWA** (Progressive Web App) installation from your browser, allowing offline searches.
+
 
