@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title></title>
+    <script type="text/javascript" src="../min2phase.js"></script>
+    <script type="text/javascript">
+    var start = performance.now();
+    var search = new min2phase.Search();
+    start = performance.now();
+    console.log('Randomly solve a cube without initialization...');
+    console.log(min2phase.solve(min2phase.randomCube()));
+    console.log('Done in ', performance.now() - start, 'ms');
+
+    var start = performance.now();
+    var search = new min2phase.Search();
+    start = performance.now();
+    min2phase.initFull(); // can be ignored
+    console.log('Initialization Time: ', (performance.now() - start), 'ms');
+    console.log('Randomly Solving 1000 Cubes: ');
+    start = performance.now();
+    var ntest = 1000;
+    for (var i = 0; i < ntest; i++) {
+        var cube = min2phase.randomCube();
+        var ret = search.solution(cube, 21);
+    }
+    console.log('Done. Average: ', (performance.now() - start) / ntest, 'ms');
+    </script>
+</head>
+
+<body>
+</body>
+
+</html>

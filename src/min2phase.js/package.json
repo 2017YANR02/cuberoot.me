@@ -1,0 +1,23 @@
+{
+  "name": "min2phase.js",
+  "version": "0.0.4",
+  "description": "A fast rubiks cube solver",
+  "main": "min2phase.js",
+  "scripts": {
+    "test": "node test/randSolv.js && echo && node test/fastInit.js && echo && node test/selectedStateTest.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cs0x7f/min2phase.js.git"
+  },
+  "keywords": [
+    "min2phase",
+    "rubik's cube"
+  ],
+  "author": "cs0x7f",
+  "license": "(MIT or GPL-3.0)",
+  "bugs": {
+    "url": "https://github.com/cs0x7f/min2phase.js/issues"
+  },
+  "homepage": "https://github.com/cs0x7f/min2phase.js#readme"
+}

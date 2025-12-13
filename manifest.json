@@ -1,0 +1,36 @@
+{
+	"name": "Rubik's Cube Solver",
+	"short_name": "Solver",
+	"description": "Fast solver for Rubik's Cube cross, XCross, EOCross, free pair, pseudo F2L, and last layer. ",
+	"icons": [
+		{
+			"src": "icons/icon-192x192.png",
+			"sizes": "192x192",
+			"type": "image/png"
+		},
+		{
+			"src": "icons/icon-512x512.png",
+			"sizes": "512x512",
+			"type": "image/png"
+		}
+	],
+	"start_url": "/RubiksSolverDemo/index.html",
+	"display": "standalone",
+	"background_color": "#121212",
+	"theme_color": "#121212",
+	"scope": "/RubiksSolverDemo/",
+	"lang": "en",
+	"screenshots": [
+		{
+			"src": "screenshots/desktop-wide-1280x720.png",
+			"sizes": "1280x720",
+			"type": "image/png",
+			"form_factor": "wide"
+		},
+		{
+			"src": "screenshots/mobile-1284x2778.png",
+			"sizes": "1284x2778",
+			"type": "image/png"
+		}
+	]
+}
