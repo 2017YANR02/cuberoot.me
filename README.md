@@ -1,6 +1,4 @@
-# RubiksSolverDemo
-
-# https://ruiminyan.github.io/
+# RubiksSolverDemo https://ruiminyan.github.io/
 
 forked from [or18/RubiksSolverDemo](https://github.com/or18/RubiksSolverDemo)
 
@@ -24,6 +22,7 @@ Detailed explanations and example searches are available in the [**documentation
 
 
 This site supports **PWA** (Progressive Web App) installation from your browser, allowing offline searches.
+
 
 
 
