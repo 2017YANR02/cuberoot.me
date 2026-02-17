@@ -1,2 +1,9 @@
 plugins:
   - jekyll-sitemap
+
+# stats 子目录的 Markdown 由 GitHub Actions 自动生成
+defaults:
+  - scope:
+      path: "stats"
+    values:
+      layout: "default"
