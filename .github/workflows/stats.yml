@@ -30,17 +30,17 @@ jobs:
       - name: Setup database
         working-directory: _stats_build
         run: |
-          bin/init.rb
+          ruby bin/init.rb
           printf 'database: "wca_statistics"\nusername: "root"\npassword: "root"' > database.yml
-          bin/update_database.rb
+          ruby bin/update_database.rb
 
       - name: Compute all statistics
         working-directory: _stats_build
-        run: bin/compute_all.rb
+        run: ruby bin/compute_all.rb
 
       - name: Compute index
         working-directory: _stats_build
-        run: bin/compute_index.rb
+        run: ruby bin/compute_index.rb
 
       - name: Add GitHub corner
         run: |
