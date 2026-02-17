@@ -1,0 +1,65 @@
+name: Update Stats
+
+on:
+  schedule:
+    # 每日 UTC 0:00 自动执行
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['_stats_build/**']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Activate MySQL
+        run: sudo systemctl start mysql.service
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '2.7'
+          bundler-cache: true
+          working-directory: _stats_build
+
+      - name: Create stats output directory
+        run: mkdir -p stats
+
+      - name: Setup database
+        working-directory: _stats_build
+        run: |
+          bin/init.rb
+          printf 'database: "wca_statistics"\nusername: "root"\npassword: "root"' > database.yml
+          bin/update_database.rb
+
+      - name: Compute all statistics
+        working-directory: _stats_build
+        run: bin/compute_all.rb
+
+      - name: Compute index
+        working-directory: _stats_build
+        run: bin/compute_index.rb
+
+      - name: Add GitHub corner
+        run: |
+          github_corner_html=$(cat _stats_build/bin/templates/github_corner.html)
+          github_corner_html="${github_corner_html/<<<GITHUB_REPO_SLUG>>>/RuiminYan/ruiminyan.github.io}"
+          for file in stats/*.md; do
+            if ! grep -q "github-corner" "$file"; then
+              printf "\n\n%s" "$github_corner_html" >> "$file"
+            fi
+          done
+
+      - name: Commit and push
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add stats/
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: update WCA statistics [skip ci]"
+            git push
+          fi
