@@ -12,7 +12,23 @@ on:
       - '.github/workflows/stats.yml'
 
 jobs:
+  # 推送代码时只做语法检查（~30秒），快速发现错误
+  syntax-check:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '2.7'
+
+      - name: Check Ruby syntax
+        run: find _stats_build -name '*.rb' -exec ruby -c {} +
+
+  # 定时/手动触发时才跑完整计算（~47分钟）
   build:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       contents: write
