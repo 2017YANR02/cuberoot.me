@@ -2,8 +2,8 @@ name: Update Stats
 
 on:
   schedule:
-    # 每日 UTC 0:00 自动执行
-    - cron: '0 0 * * *'
+    # 每周一早上 3:00（北京时间）= UTC 周日 19:00
+    - cron: '0 19 * * 0'
   workflow_dispatch:
   push:
     branches: [main]
