@@ -21,7 +21,7 @@ jobs:
 
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '2.7'
+          ruby-version: '3.4'
 
       - name: Check Ruby syntax
         run: find _stats_build -name '*.rb' -exec ruby -c {} +
@@ -40,7 +40,7 @@ jobs:
 
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '2.7'
+          ruby-version: '3.4'
           bundler-cache: true
           working-directory: _stats_build
 
