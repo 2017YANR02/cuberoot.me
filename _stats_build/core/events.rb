@@ -93,7 +93,7 @@ module Events
     "First name" => "名",
     "Last name" => "姓",
     "Months" => "月数",
-    "Podiums" => "登台",
+    "Podiums" => "登上领奖台",
     "Wins" => "冠军",
   }.freeze
 
