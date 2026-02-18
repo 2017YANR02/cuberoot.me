@@ -45,13 +45,25 @@ const I18n = {
     },
     _headerEn: {},
 
-    // NOTE: Solver 页面 JS 会动态设置 textContent 的元素
+    // NOTE: Solver/2x2x2 页面 JS 会动态设置 textContent 的元素
     // 用 element ID → { en文本: zh文本 } 映射，MutationObserver 监听变化后自动翻译
     _dynamicTextZh: {
-        "solveButton": { "Start": "开始", "Stop": "停止" },
+        "solveButton": { "Start": "开始", "Stop": "停止", "End": "结束" },
         "summaryMaskOptions": {
             "Show Stickering Settings": "显示贴纸设置",
             "Hide Stickering Settings": "隐藏贴纸设置"
+        },
+        "summary_cubeUI": {
+            "Show Cube Editor": "显示魔方编辑器",
+            "Hide Cube Editor": "隐藏魔方编辑器"
+        },
+        "summary_preview": {
+            "Show Preview": "显示预览",
+            "Hide Preview": "隐藏预览"
+        },
+        "summaryAdvancedSettings": {
+            "Show Advanced Settings": "显示高级设置",
+            "Hide Advanced Settings": "隐藏高级设置"
         }
     },
     _dynamicTextEn: {},   // 初始化时从 _dynamicTextZh 自动生成反向映射
