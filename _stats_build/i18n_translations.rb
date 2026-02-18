@@ -282,6 +282,10 @@ STAT_TRANSLATIONS = {
     title_zh: "世界纪录 BPA（最佳可能平均）历史",
     note_zh: "BPA：一轮中前 4 次成绩取最好的 3 次计算平均。"
   },
+  "wr_dominance" => {
+    title_zh: "排行榜霸榜（单人霸占前 N 席）",
+    note_zh: "选手在全历史成绩排行榜上完全霸占前 N 席。并列成绩不计入。"
+  },
   "wr_current" => {
     title_zh: "当前世界纪录",
     note_zh: "显示各官方项目当前的世界纪录单次和平均。"
