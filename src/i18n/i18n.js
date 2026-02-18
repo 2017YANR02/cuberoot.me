@@ -174,6 +174,7 @@ const I18n = {
         "Note: In other words it's the number of weeks when the given person got the fastest single in the given event.": "注：即该选手在某项目中获得当周最快单次的周数。",
         "Note: This is a list of the best results from all World Championships. It corresponds to Olympic records for Olympic sports.": "注：这是历届世锦赛最佳成绩列表，类似于奥运会项目的奥运纪录。",
         "Note: Only finals are taken into account. Results where the main statistic is DNF are ignored.": "注：仅统计决赛。主成绩为 DNF 的结果不计入。",
+        "Note: You may think of it as \"how well the given person has been doing recently\".": "注：可理解为「该选手近期表现如何」。",
         "Note: By definition these rankings include only results from the current year.": "注：按定义，此排名仅包含当年的成绩。",
     },
     _statsDescEn: {},
