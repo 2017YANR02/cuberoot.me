@@ -5,9 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="manifest" href="manifest.json">
-    <title>Rubik's Cube Toolkit</title>
-    <meta name="description"
-        content="Rubik's Cube solvers, trainers, and WCA statistics — all in one place.">
+    <title data-i18n="index.title">Rubik's Cube Toolkit</title>
+    <meta name="description" content="Rubik's Cube solvers, trainers, and WCA statistics — all in one place.">
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-MXJH30352W"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
@@ -163,6 +162,10 @@
             font-size: 0.75rem;
             color: #555;
             text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
         }
 
         .footer a {
@@ -174,31 +177,66 @@
         .footer a:hover {
             color: #aaa;
         }
+
+        /* NOTE: 语言切换按钮样式 */
+        .lang-toggle {
+            display: inline-flex;
+            gap: 0;
+            border-radius: 4px;
+            overflow: hidden;
+            border: 1px solid #444;
+        }
+
+        .lang-toggle button {
+            background: transparent;
+            border: none;
+            color: #777;
+            padding: 3px 8px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .lang-toggle button.active {
+            background: rgba(100, 100, 180, 0.3);
+            color: #fff;
+        }
+
+        .lang-toggle button:hover:not(.active) {
+            color: #aaa;
+        }
     </style>
 </head>
 
 <body>
-    <h1 class="landing-title">Rubik's Cube Toolkit</h1>
-    <p class="landing-subtitle">Solvers, trainers, and statistics</p>
+    <h1 class="landing-title" data-i18n="index.title">Rubik's Cube Toolkit</h1>
+    <p class="landing-subtitle" data-i18n="index.subtitle">Solvers, trainers, and statistics</p>
 
     <div class="cards-container">
         <a href="solver.html" class="card card-solver" id="card-solver">
             <div class="card-icon">🧩</div>
-            <div class="card-name">Solver</div>
-            <div class="card-desc">Cross, XCross, EOCross, Free Pair, Pseudo F2L, Last Layer, and trainers</div>
+            <div class="card-name" data-i18n="index.solver">Solver</div>
+            <div class="card-desc" data-i18n="index.solver_desc">Cross, XCross, EOCross, Free Pair, Pseudo F2L, Last
+                Layer, and trainers</div>
         </a>
 
         <a href="stats/" class="card card-stats" id="card-stats">
             <div class="card-icon">📊</div>
-            <div class="card-name">WCA Stats</div>
-            <div class="card-desc">60+ statistics from the WCA database, updated weekly</div>
+            <div class="card-name" data-i18n="index.wca_stats">WCA Stats</div>
+            <div class="card-desc" data-i18n="index.stats_desc">60+ statistics from the WCA database, updated weekly
+            </div>
         </a>
     </div>
 
     <div class="footer">
         <a href="https://github.com/RuiminYan/ruiminyan.github.io" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <div class="lang-toggle">
+            <button data-i18n-toggle="en" onclick="I18n.setLocale('en')">EN</button>
+            <button data-i18n-toggle="zh" onclick="I18n.setLocale('zh')">中文</button>
+        </div>
     </div>
 
+    <script src="src/i18n/i18n.js" defer></script>
     <script src="sw-register.js" defer></script>
 </body>
 
