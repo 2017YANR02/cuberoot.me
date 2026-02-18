@@ -4,7 +4,7 @@ class WrMo5 < WrRoundHistory
   def initialize
     @title = "World record Mo5 (Mean of 5) history"
     @note = "Mean of 5: average of all 5 solves in a round (no trimming)."
-    @table_header = { "Result" => :right, "Gain" => :right, "Days" => :right, "Person" => :left, "Competition" => :left, "Date" => :left, "Details" => :left }
+    @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right, "Person" => :left, "Competition" => :left, "Date" => :left, "Details" => :left }
   end
 
   # NOTE: Mo5 = 5次全部求均值，需要全部有效

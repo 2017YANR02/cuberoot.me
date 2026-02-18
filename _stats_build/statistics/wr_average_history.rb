@@ -6,7 +6,7 @@ class WrAverageHistory < GroupedStatistic
   def initialize
     @title = "World record average history"
     @note = "Shows how world record averages have progressed over time for each event."
-    @table_header = { "Result" => :right, "Gain" => :right, "Days" => :right, "Person" => :left, "Competition" => :left, "Date" => :left, "Details" => :left }
+    @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right, "Person" => :left, "Competition" => :left, "Date" => :left, "Details" => :left }
   end
 
   def query
