@@ -21,6 +21,74 @@ $LOADED_FEATURES << "bundler/setup"
 
 require_relative "statistics/index"
 
+# NOTE: 简单的 Markdown → HTML 转换器
+# 处理管道表格（| ... | ... |）、链接 [text](url)、粗体 **text**
+def convert_markdown_to_html(markdown)
+  lines = markdown.lines
+  result = []
+  i = 0
+
+  while i < lines.length
+    line = lines[i].rstrip
+
+    # NOTE: 检测 Markdown 管道表格（至少两行连续的 | 开头 | 结尾）
+    if line.match?(/^\s*\|.*\|\s*$/) && i + 1 < lines.length && lines[i + 1].rstrip.match?(/^\s*\|[\s:|-]+\|\s*$/)
+      # 表头行
+      headers = line.split('|').map(&:strip).reject(&:empty?)
+      # 跳过分隔行
+      align_line = lines[i + 1].rstrip
+      aligns = align_line.split('|').map(&:strip).reject(&:empty?)
+      alignments = aligns.map do |a|
+        if a.start_with?(':') && a.end_with?(':')
+          'center'
+        elsif a.end_with?(':')
+          'right'
+        else
+          'left'
+        end
+      end
+      i += 2
+
+      table_html = "<table>\n<thead><tr>"
+      headers.each_with_index do |h, idx|
+        align = alignments[idx] || 'left'
+        table_html += "<th style=\"text-align:#{align}\">#{convert_inline(h)}</th>"
+      end
+      table_html += "</tr></thead>\n<tbody>\n"
+
+      # 数据行
+      while i < lines.length && lines[i].rstrip.match?(/^\s*\|.*\|\s*$/)
+        cells = lines[i].rstrip.split('|').map(&:strip).reject(&:empty?)
+        table_html += "<tr>"
+        cells.each_with_index do |c, idx|
+          align = alignments[idx] || 'left'
+          table_html += "<td style=\"text-align:#{align}\">#{convert_inline(c)}</td>"
+        end
+        table_html += "</tr>\n"
+        i += 1
+      end
+
+      table_html += "</tbody></table>\n"
+      result << table_html
+    else
+      # NOTE: 非表格行，只做行内转换（链接、粗体）
+      result << convert_inline(line) + "\n"
+      i += 1
+    end
+  end
+
+  result.join
+end
+
+# NOTE: 行内 Markdown 转换：[text](url) → <a>，**text** → <strong>
+def convert_inline(text)
+  # 链接
+  text = text.gsub(/\[([^\]]*)\]\(([^)]*)\)/) { "<a href=\"#{$2}\">#{$1}</a>" }
+  # 粗体
+  text = text.gsub(/\*\*([^*]+)\*\*/) { "<strong>#{$1}</strong>" }
+  text
+end
+
 stat_name = ARGV[0]
 unless stat_name
   puts "用法: ruby test_html.rb <statistic_name>"
@@ -42,6 +110,9 @@ begin
   lines = output.lines
   puts "Markdown 输出: #{lines.count} 行"
 
+  # NOTE: 简单的 Markdown → HTML 转换，处理表格、链接和粗体
+  html_output = convert_markdown_to_html(output)
+
   html = <<~HTML
     <!DOCTYPE html>
     <html lang="en">
@@ -60,7 +131,7 @@ begin
       </style>
     </head>
     <body>
-    #{output}
+    #{html_output}
     </body>
     </html>
   HTML
