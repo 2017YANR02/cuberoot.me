@@ -32,6 +32,7 @@
         "mirror": "Mirror",
         "clear": "Clear",
         "show_cube_editor": "Show Cube Editor",
+        "hide_cube_editor": "Hide Cube Editor",
         "show_preview": "Show Preview",
         "show_analyzer": "Show Analyzer",
         "rotation": "Rotation: ",
