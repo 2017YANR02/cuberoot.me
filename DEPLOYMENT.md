@@ -38,40 +38,46 @@ GitHub Pages（Jekyll）
 
 ## 重要文件
 
+> 🔄 = 由 `sync_upstream.ps1` 从上游同步（勿手动修改，下次同步会覆盖）
+> 📌 = 本地维护（不会被同步覆盖）
+
 ```
 ruiminyan.github.io/
+│
+│── 🔄 上游同步目录（sync_upstream.ps1 管理）
+├── solver/                    # 3x3x3 Solver（主求解器页面）
+├── 2x2x2/                     # 2x2x2 求解器
+├── cross_trainer/              # Cross 训练器
+├── xcross_trainer/             # XCross 训练器
+├── xxcross_trainer/            # XXCross 训练器
+├── xcross_pairing_trainer/     # XCross Free Pair 训练器
+├── eocross_trainer/            # EOCross 训练器
+├── pairing_trainer/            # Free Pair 训练器
+├── pseudo_xcross_trainer/      # Pseudo XCross 训练器
+├── pseudo_pairing_trainer/     # Pseudo Free Pair 训练器
+├── algTrainer/                 # JSON 公式训练器
+├── jsonEditor/                 # JSON 编辑器
+├── documentation/              # 文档页面
+├── src/                        # 运行时模块（WASM、Worker、Solver 等）
+├── url_params_compressor_simple.js  # URL 压缩工具
+├── sw-register.js              # Service Worker 注册
+│
+│── 📌 本地维护目录（不受同步影响）
 ├── index.html                 # 落地页（Solver / WCA Stats 入口）
-├── solver/index.html          # 3x3x3 Solver（主求解器页面）
-├── 2x2x2/index.html           # 2x2x2 求解器
-├── cross_trainer/index.html   # Cross 训练器
-├── xcross_trainer/index.html  # XCross 训练器
-├── eocross_trainer/index.html # EOCross 训练器
-├── pairing_trainer/index.html # Free Pair 训练器
-├── pseudo_xcross_trainer/     # Pseudo XCross 训练器
-├── pseudo_pairing_trainer/    # Pseudo Free Pair 训练器
-├── algTrainer/index.html      # JSON 公式训练器
-├── jsonEditor/index.html      # JSON 编辑器
-├── documentation/index.html   # 文档页面
-├── src/i18n/                  # 多语言支持（i18n 引擎 + 字典）
-│   ├── i18n.js                # 语言切换引擎 + MutationObserver + Stats 运行时翻译
-│   ├── en.json                # 英文字典（solver/trainer 页面）
-│   └── zh.json                # 中文字典（solver/trainer 页面）
-├── _layouts/
-│   └── default.html           # Stats 页面深色主题布局
-├── .github/workflows/
-│   └── stats.yml              # CI 配置
-├── _stats_build/              # 构建脚本（不部署）
-│   ├── bin/                   # Ruby 脚本
-│   ├── core/                  # 核心逻辑
-│   │   ├── tab_ui.rb          # Tab 双视图 mixin
-│   │   └── ...                # 数据库、事件定义等
-│   ├── statistics/            # 60+ 统计定义
-│   │   └── abstract/          # 抽象基类（wr_round_history, ao_rounds 等）
-│   ├── Gemfile                # Ruby 依赖
-│   └── LICENSE                # GPL 许可证（原项目）
-├── stats/                     # 生成的输出（部署到线上）
-│   ├── README.md              # 索引页
-│   └── *.md                   # 各项统计页面
+├── src/i18n/                  # 多语言支持（同步时排除）
+│   ├── i18n.js                # 语言切换引擎 + MutationObserver
+│   ├── en.json                # 英文字典
+│   └── zh.json                # 中文字典
+├── .sync/                     # 同步配置和模板
+│   ├── page_config.json       # 页面映射表
+│   └── menu_template.html     # 汉堡菜单模板
+├── _layouts/                  # Jekyll 布局
+├── _stats_build/              # WCA 统计构建脚本
+├── stats/                     # CI 生成的统计页面
+├── .github/workflows/         # CI 配置
+├── icons/                     # 图标资源
+├── documents/                 # 文档资源
+├── screenshots/               # 截图资源
 └── _config.yml                # Jekyll 配置
 ```
 
