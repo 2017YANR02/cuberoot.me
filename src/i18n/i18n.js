@@ -464,15 +464,16 @@ const I18n = {
         }
 
         // NOTE: Stats 页面描述翻译（em 元素内的斜体文本）
+        // Markdown 跨行 *...* 渲染后 textContent 含换行+多余空格，需归一化后匹配
         if (this.locale === 'zh') {
             document.querySelectorAll('em').forEach(em => {
-                const text = em.textContent.trim();
+                const text = em.textContent.trim().replace(/\s+/g, ' ');
                 const zh = this._statsDescZh[text];
                 if (zh) em.textContent = zh;
             });
         } else {
             document.querySelectorAll('em').forEach(em => {
-                const text = em.textContent.trim();
+                const text = em.textContent.trim().replace(/\s+/g, ' ');
                 const en = this._statsDescEn[text];
                 if (en) em.textContent = en;
             });
@@ -482,7 +483,7 @@ const I18n = {
         if (this.locale === 'zh') {
             const _months = { January: '1', February: '2', March: '3', April: '4', May: '5', June: '6', July: '7', August: '8', September: '9', October: '10', November: '11', December: '12' };
             document.querySelectorAll('em').forEach(em => {
-                const text = em.textContent.trim();
+                const text = em.textContent.trim().replace(/\s+/g, ' ');
                 const m = text.match(/^Updated on (\d+) (\w+) (\d+)$/);
                 if (m) em.textContent = `更新于 ${m[3]} 年 ${_months[m[2]] || m[2]} 月 ${m[1]} 日`;
             });
