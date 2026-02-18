@@ -38,7 +38,7 @@ const I18n = {
         "Events": "项目数", "Competitions count": "比赛数",
         "List on WCA": "WCA 页面",
         "Year": "年份", "Years": "年数", "Week": "周",
-        "Delegated": "代理数", "Delegated per year": "年均代理",
+        "Delegated": "WCA代表次数", "Delegated per year": "年均WCA代表",
         "Streak": "连续", "Name": "姓名",
         "Parts": "词数", "First name": "名", "Last name": "姓",
         "Months": "月数", "Podiums": "登上领奖台", "Wins": "冠军",
@@ -104,7 +104,7 @@ const I18n = {
         "Competitions per year by person": "个人年均比赛数",
         "Complete competition winners": "全项目冠军",
         "Current world records count by country": "各国现有世界纪录数",
-        "Delegated competitions per year": "年均代理比赛数",
+        "Delegated competitions per year": "年均WCA代表比赛数",
         "Fewest competitors contest": "参赛人数最少的比赛",
         "Longest competitions path": "最长比赛路径",
         "Longest standing records": "保持时间最长的纪录",
@@ -119,7 +119,7 @@ const I18n = {
         "Most competitions abroad": "海外参赛最多",
         "Most competitions before winning": "夺冠前参赛最多",
         "Most completed solves": "完成还原次数最多",
-        "Most delegated competitions": "代理比赛最多",
+        "Most delegated competitions": "担任WCA代表比赛最多",
         "Most distinct dates competed on": "不同参赛日期最多",
         "Most finals": "最多决赛", "Most frequent results": "最常见成绩",
         "Most podiums at a single competition": "单场比赛登台最多",
@@ -161,7 +161,8 @@ const I18n = {
         "Note: Only finals are taken into account.": "注：仅统计决赛成绩。",
         "Note: Week is considered to start on Monday and end on Sunday.": "注：每周从周一开始，周日结束。",
         "Note: A complete win means taking the first place in every event on the given competition.": "注：完全获胜指在比赛的每个项目中均获得第一名。",
-        "Note: Only delegates with at least 5 competitions are taken into account.": "注：仅统计至少代理过 5 场比赛的代表。",
+        "Note: Only delegates with at least 5 competitions are taken into account.": "注：仅统计至少担任过 5 场比赛WCA代表的人员。",
+        "Note: Only delegates with at least 5 competitions are taken into account. Delegate period is calculated as the difference between first and last delegated competition.": "注：仅统计至少担任过 5 场比赛WCA代表的人员。WCA代表任期按首次和末次担任WCA代表的比赛之间的时间差计算。",
         "Note: Calculated as the sum of direct distance between subsequent competitions.": "注：计算方式为相邻比赛之间直线距离的总和。",
         "Note: The streak ends whenever the person doesn't participate in a competition in own country.": "注：选手未在本国参加比赛时，连续记录终止。",
         "Note: All competitions that did not hold the given event are ignored. Results without any completed attempt are not eligible for podium. Only finals are taken into account.": "注：未举办该项目的比赛不计入。没有完成的尝试不具备登台资格。仅统计决赛。",
@@ -175,6 +176,7 @@ const I18n = {
         "Note: This is a list of the best results from all World Championships. It corresponds to Olympic records for Olympic sports.": "注：这是历届世锦赛最佳成绩列表，类似于奥运会项目的奥运纪录。",
         "Note: Only finals are taken into account. Results where the main statistic is DNF are ignored.": "注：仅统计决赛。主成绩为 DNF 的结果不计入。",
         "Note: You may think of it as \"how well the given person has been doing recently\".": "注：可理解为「该选手近期表现如何」。",
+        "Note: You may think of it as \"how well the given person has been doing recently\". This computes exponentially moving average (EMA) of competitor averages. EMA is a weighted average, with weights decreasing exponentially, meaning that more recent values contribute more to the computed average. Here we use \u03b1 = 0.8, meaning that the average emphasizes last ~5 results (weight of results older than 5 is around 1/3 in total and decreases quickly for particular results). People with less than 5 averages are ignored (as there's not much data to base on).": "注：可理解为「该选手近期表现如何」。此处使用指数移动平均（EMA）计算，权重随时间指数递减，近期成绩权重更高。参数 \u03b1 = 0.8，即主要反映最近约 5 次成绩。少于 5 次平均的选手不纳入统计。",
         "Note: By definition these rankings include only results from the current year.": "注：按定义，此排名仅包含当年的成绩。",
     },
     _statsDescEn: {},
@@ -478,7 +480,7 @@ const I18n = {
 
         // NOTE: Stats 页面 "Updated on" 日期翻译
         if (this.locale === 'zh') {
-            const _months = {January:'1',February:'2',March:'3',April:'4',May:'5',June:'6',July:'7',August:'8',September:'9',October:'10',November:'11',December:'12'};
+            const _months = { January: '1', February: '2', March: '3', April: '4', May: '5', June: '6', July: '7', August: '8', September: '9', October: '10', November: '11', December: '12' };
             document.querySelectorAll('em').forEach(em => {
                 const text = em.textContent.trim();
                 const m = text.match(/^Updated on (\d+) (\w+) (\d+)$/);

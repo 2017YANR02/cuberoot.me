@@ -53,9 +53,9 @@ ruiminyan.github.io/
 ├── jsonEditor/index.html      # JSON 编辑器
 ├── documentation/index.html   # 文档页面
 ├── src/i18n/                  # 多语言支持（i18n 引擎 + 字典）
-│   ├── i18n.js                # 语言切换引擎 + MutationObserver
-│   ├── en.json                # 英文字典
-│   └── zh.json                # 中文字典
+│   ├── i18n.js                # 语言切换引擎 + MutationObserver + Stats 运行时翻译
+│   ├── en.json                # 英文字典（solver/trainer 页面）
+│   └── zh.json                # 中文字典（solver/trainer 页面）
 ├── _layouts/
 │   └── default.html           # Stats 页面深色主题布局
 ├── .github/workflows/
@@ -120,6 +120,10 @@ ruiminyan.github.io/
 2. 推送到 `main` → 语法检查运行（约 30 秒）
 3. 等待下周一凌晨 3 点，或手动触发 workflow
 4. 新页面出现在 `ruiminyan.github.io/stats/my_new_stat`
+5. **翻译维护**：在 `src/i18n/i18n.js` 中更新以下映射：
+   - `_statsTitleZh`：添加页面标题的中文翻译
+   - `_statsDescZh`：添加 Note 描述的中文翻译（如有）
+   - `_headerZh`：添加新表头列名的中文翻译（如有新列名）
 
 ## 常见问题排查
 
