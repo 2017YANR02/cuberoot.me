@@ -14,11 +14,11 @@
 			"type": "image/png"
 		}
 	],
-	"start_url": "/",
+	"start_url": "/RubiksSolverDemo/index.html",
 	"display": "standalone",
 	"background_color": "#121212",
 	"theme_color": "#121212",
-	"scope": "/",
+	"scope": "/RubiksSolverDemo/",
 	"lang": "en",
 	"screenshots": [
 		{

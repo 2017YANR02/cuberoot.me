@@ -25,7 +25,7 @@ $config = Get-Content (Join-Path $syncDir "page_config.json") -Raw | ConvertFrom
 $menuTemplate = [System.IO.File]::ReadAllText((Join-Path $syncDir "menu_template.html"))
 
 # ===== 统计计数器 =====
-$stats = @{ srcFiles = 0; rootFiles = 0; pages = 0 }
+$stats = @{ srcFiles = 0; rootFiles = 0; rootDirs = 0; pages = 0 }
 
 Write-Host "`n========================================" -ForegroundColor Cyan
 Write-Host "  Upstream Sync Script" -ForegroundColor Cyan
@@ -112,6 +112,31 @@ foreach ($file in $config.rootFiles)
         }
         $stats.rootFiles++
         Write-Host "  [SYNC] $file" -ForegroundColor DarkGray
+    }
+}
+
+# ===== Step 2b: 同步根目录子目录（整体覆盖） =====
+if ($config.rootDirs)
+{
+    foreach ($dir in $config.rootDirs)
+    {
+        $srcDir = Join-Path $UpstreamDir $dir
+        $destDir = Join-Path $LocalDir $dir
+
+        if (-not (Test-Path $srcDir))
+        {
+            Write-Host "  [WARN] Dir not found in upstream: $dir" -ForegroundColor Yellow
+            continue
+        }
+
+        if (-not $DryRun)
+        {
+            # NOTE: 整体覆盖目标目录，确保与上游完全一致
+            if (Test-Path $destDir) { Remove-Item $destDir -Recurse -Force }
+            Copy-Item $srcDir $destDir -Recurse -Force
+        }
+        $stats.rootDirs++
+        Write-Host "  [SYNC] $dir/" -ForegroundColor DarkGray
     }
 }
 
@@ -233,6 +258,7 @@ Write-Host "  Sync Complete!" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "  src/ files synced:   $($stats.srcFiles)"
 Write-Host "  Root files synced:   $($stats.rootFiles)"
+Write-Host "  Root dirs synced:    $($stats.rootDirs)"
 Write-Host "  Pages converted:     $($stats.pages)"
 if ($DryRun)
 {

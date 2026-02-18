@@ -1,32 +1,35 @@
-const CACHE_NAME = 'pwa-cache_v50';
+const CACHE_NAME = 'pwa-cache_v63';
 
 const urlsToPrecache = [
 	'index.html',
-	'solver/index.html',
 	'manifest.json',
 	'icons/icon-512x512.png',
 	'icons/icon-192x192.png',
 	'sw-register.js',
+	'analytics.js',
+	'url_params_compressor_simple.js'
 ];
 
 const urlsToCache = [
 	'index.html',
-	'solver/index.html',
-	'2x2x2/index.html',
-	'cross_trainer/index.html',
-	'documentation/index.html',
-	'eocross_trainer/index.html',
-	'pairing_trainer/index.html',
-	'pseudo_pairing_trainer/index.html',
-	'pseudo_xcross_trainer/index.html',
-	'xcross_trainer/index.html',
-	'xxcross_trainer/index.html',
-	'jsonEditor/index.html',
-	'algTrainer/index.html',
+	'2x2x2.html',
+	'cross_trainer.html',
+	'documentation.html',
+	'eocross_trainer.html',
+	'pairing_trainer.html',
+	'xcross_pairing_trainer.html',
+	'pseudo_pairing_trainer.html',
+	'pseudo_xcross_trainer.html',
+	'xcross_trainer.html',
+	'xxcross_trainer.html',
+	'jsonEditor.html',
+	'algTrainer.html',
 	'manifest.json',
 	'icons/icon-512x512.png',
 	'icons/icon-192x192.png',
 	'sw-register.js',
+	'analytics.js',
+	'url_params_compressor_simple.js',
 	'src/2x2solver/solver.js',
 	'src/2x2solver/solver.wasm',
 	'src/2x2solver/worker.js',
@@ -92,6 +95,9 @@ const urlsToCache = [
 	'src/xxcrossTrainer/production/solver_prod.js',
 	'src/xxcrossTrainer/production/solver_prod.wasm',
 	'src/xxcrossTrainer/production/worker_prod.js',
+	'src/xcross_free_pair_trainer/production/solver_prod.js',
+	'src/xcross_free_pair_trainer/production/solver_prod.js',
+	'src/xcross_free_pair_trainer/production/worker_prod.js'
 ];
 
 let precacheDone = false;
@@ -245,8 +251,8 @@ self.addEventListener('fetch', (event) => {
 			} catch (err) {
 				const pageSpecific = await caches.match(req.url);
 				if (pageSpecific) return pageSpecific;
-				const solverPage = await caches.match('solver/index.html');
-				if (solverPage) return solverPage;
+				const idx = await caches.match('index.html');
+				if (idx) return idx;
 			}
 		})());
 		return;
