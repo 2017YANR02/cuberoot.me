@@ -99,18 +99,27 @@
     "trainer": {
         "cross_title": "魔方 Cross 训练器",
         "xcross_title": "魔方 XCross 训练器",
+        "xxcross_title": "魔方 XXCross 训练器",
         "pairing_title": "Free Pair 训练器",
         "pseudo_xcross_title": "Pseudo XCross 训练器",
         "pseudo_pairing_title": "Pseudo Free Pair 训练器",
         "eocross_title": "EOCross 训练器",
         "length": "长度：",
         "next": "下一个",
+        "back": "后退",
         "pre_move": "预转动：",
         "solve": "求解",
         "num_solutions": "解法数量：",
         "rotation": "旋转：",
         "warning_700mb": "警告：此打乱器首次运行会在本地生成约 700 MB 数据；初始打乱生成可能需要数秒到数十秒。",
-        "warning_150mb": "警告：此打乱器首次运行会在本地生成约 150 MB 数据；初始打乱生成可能需要数秒到数十秒。"
+        "warning_600mb": "警告：此打乱器首次运行会在本地生成约 600 MB 数据；初始打乱生成可能需要数十秒到几分钟。注意：bucket 模型会自动选择最低配置。",
+        "warning_150mb": "警告：此打乱器首次运行会在本地生成约 150 MB 数据；初始打乱生成可能需要数秒到数十秒。",
+        "note_different_search": "注意：相邻对和对角对会启动不同的搜索实例。每种配置的初始生成都需要时间。",
+        "current_depth": "当前深度：",
+        "show_advanced": "显示高级设置",
+        "hide_advanced": "隐藏高级设置",
+        "move_restrict": "步法限制：",
+        "ignore_premove_center": "忽略预步骤中心"
     },
     "alg_trainer": {
         "title": "JSON 公式训练器",
