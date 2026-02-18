@@ -5,6 +5,7 @@ const I18n = {
     dictionaries: {},       // { en: {...}, zh: {...} }
     _ready: false,
     _basePath: '',           // JSON 文件的基础路径，由 init 自动计算
+    _observer: null,         // MutationObserver 实例
 
     // NOTE: WCA 项目名中英映射，用于 stats 表格数据的运行时翻译
     _eventZh: {
@@ -44,6 +45,17 @@ const I18n = {
     },
     _headerEn: {},
 
+    // NOTE: Solver 页面 JS 会动态设置 textContent 的元素
+    // 用 element ID → { en文本: zh文本 } 映射，MutationObserver 监听变化后自动翻译
+    _dynamicTextZh: {
+        "solveButton": { "Start": "开始", "Stop": "停止" },
+        "summaryMaskOptions": {
+            "Show Stickering Settings": "显示贴纸设置",
+            "Hide Stickering Settings": "隐藏贴纸设置"
+        }
+    },
+    _dynamicTextEn: {},   // 初始化时从 _dynamicTextZh 自动生成反向映射
+
     // NOTE: 初始化入口 — 自动检测语言、加载字典、应用翻译
     async init() {
         this._basePath = this._detectBasePath();
@@ -63,9 +75,17 @@ const I18n = {
         for (const [en, zh] of Object.entries(this._headerZh)) {
             this._headerEn[zh] = en;
         }
+        // 构建动态文本反向映射 { zh → en }
+        for (const [id, map] of Object.entries(this._dynamicTextZh)) {
+            this._dynamicTextEn[id] = {};
+            for (const [en, zh] of Object.entries(map)) {
+                this._dynamicTextEn[id][zh] = en;
+            }
+        }
         this._ready = true;
         this.apply();
         this._updateToggle();
+        this._startObserver();
     },
 
     // NOTE: 根据当前脚本的路径推断 JSON 文件所在目录
@@ -171,10 +191,64 @@ const I18n = {
             });
         }
 
+        // NOTE: 翻译 JS 动态设置 textContent 的元素（如 Start/Stop 按钮）
+        this._applyDynamicText();
+
         // HTML title 标签
         const titleEl = document.querySelector('title[data-i18n]');
         if (titleEl) {
             document.title = this.t(titleEl.getAttribute('data-i18n'));
+        }
+    },
+
+    // NOTE: 对 _dynamicTextZh 中注册的元素进行翻译
+    _applyDynamicText() {
+        const map = this.locale === 'zh' ? this._dynamicTextZh : this._dynamicTextEn;
+        for (const [id, textMap] of Object.entries(map)) {
+            const el = document.getElementById(id);
+            if (!el) continue;
+            const text = el.textContent.trim();
+            if (textMap[text]) {
+                el.textContent = textMap[text];
+            }
+        }
+    },
+
+    // NOTE: MutationObserver — 监听 _dynamicTextZh 注册的元素的 textContent 变化
+    // 当 JS 代码（如 solver.html）动态修改文本时，自动翻译为当前语言
+    _startObserver() {
+        if (this._observer) return;  // 防止重复注册
+        this._observer = new MutationObserver(mutations => {
+            if (!this._ready || this.locale === 'en') return;
+            for (const m of mutations) {
+                // 只处理 characterData（文本节点变化）或 childList（子节点替换）
+                const el = m.target.nodeType === Node.TEXT_NODE ? m.target.parentElement : m.target;
+                if (!el || !el.id) continue;
+                const textMap = this._dynamicTextZh[el.id];
+                if (!textMap) continue;
+                const text = el.textContent.trim();
+                if (textMap[text]) {
+                    // HACK: 暂时断开 observer 避免无限递归
+                    this._observer.disconnect();
+                    el.textContent = textMap[text];
+                    this._observeTargets();
+                }
+            }
+        });
+        this._observeTargets();
+    },
+
+    // NOTE: 对所有动态翻译目标元素注册 observer
+    _observeTargets() {
+        for (const id of Object.keys(this._dynamicTextZh)) {
+            const el = document.getElementById(id);
+            if (el) {
+                this._observer.observe(el, {
+                    childList: true,
+                    characterData: true,
+                    subtree: true
+                });
+            }
         }
     },
 
