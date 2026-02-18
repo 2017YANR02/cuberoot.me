@@ -82,6 +82,8 @@ const I18n = {
                 this._dynamicTextEn[id][zh] = en;
             }
         }
+        // NOTE: 自动注入语言切换按钮（如果页面中还没有）
+        this._injectToggle();
         this._ready = true;
         this.apply();
         this._updateToggle();
@@ -268,6 +270,62 @@ const I18n = {
                 });
             }
         }
+    },
+
+    // NOTE: 自动注入固定在右下角的语言切换按钮
+    // 如果页面中已有 .lang-toggle（如 index.html），则跳过
+    _injectToggle() {
+        if (document.querySelector('.lang-toggle')) return;
+
+        // 注入样式
+        const style = document.createElement('style');
+        style.textContent = `
+            .lang-toggle-fixed {
+                position: fixed;
+                bottom: 16px;
+                right: 16px;
+                z-index: 9999;
+                display: inline-flex;
+                border-radius: 4px;
+                overflow: hidden;
+                border: 1px solid #444;
+                background: rgba(20, 20, 30, 0.85);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+            }
+            .lang-toggle-fixed button {
+                background: transparent;
+                border: none;
+                color: #777;
+                padding: 5px 10px;
+                font-size: 0.8rem;
+                cursor: pointer;
+                transition: background 0.2s, color 0.2s;
+            }
+            .lang-toggle-fixed button.active {
+                background: rgba(100, 100, 180, 0.3);
+                color: #fff;
+            }
+            .lang-toggle-fixed button:hover:not(.active) {
+                color: #aaa;
+            }
+        `;
+        document.head.appendChild(style);
+
+        // 注入按钮
+        const container = document.createElement('div');
+        container.className = 'lang-toggle-fixed';
+        const btnEn = document.createElement('button');
+        btnEn.setAttribute('data-i18n-toggle', 'en');
+        btnEn.textContent = 'EN';
+        btnEn.onclick = () => this.setLocale('en');
+        const btnZh = document.createElement('button');
+        btnZh.setAttribute('data-i18n-toggle', 'zh');
+        btnZh.textContent = '中文';
+        btnZh.onclick = () => this.setLocale('zh');
+        container.appendChild(btnEn);
+        container.appendChild(btnZh);
+        document.body.appendChild(container);
     },
 
     // NOTE: 更新语言切换按钮的高亮状态
