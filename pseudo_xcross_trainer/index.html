@@ -4,7 +4,7 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<link rel="manifest" href="manifest.json">
+	<link rel="manifest" href="../manifest.json">
 	<title data-i18n="trainer.pseudo_xcross_title">Rubik's Cube Pseudo XCross Trainer</title>
 	<meta name="description" content="Simple Rubik's Cube Pseudo XCross Trainer.">
 	<script async src="https://www.googletagmanager.com/gtag/js?id=G-MXJH30352W"></script>
@@ -288,18 +288,18 @@
 			</div>
 			<div class="drawer-content">
 				<a href="https://github.com/or18/RubiksSolverDemo" rel="noopener noreferrer" translate="no">Source</a>
-				<a href="solver/">Main Solver</a>
-				<a href="2x2x2.html" rel="noopener noreferrer" translate="no">2x2x2 Solver</a>
-				<a href="documentation.html" translate="no">Documentation</a>
+				<a href="/solver/">Main Solver</a>
+				<a href="/2x2x2/" rel="noopener noreferrer" translate="no">2x2x2 Solver</a>
+				<a href="/documentation/" translate="no">Documentation</a>
 				<span style="font-weight:bold;margin-top:12px;display:block;color:#fff;" data-i18n="common.trainers">Trainers:</span>
-				<a href="cross_trainer.html" rel="noopener noreferrer" translate="no">Cross</a>
-				<a href="xcross_trainer.html" rel="noopener noreferrer" translate="no">XCross</a>
-				<a href="pairing_trainer.html" rel="noopener noreferrer" translate="no">Free Pair</a>
-				<a href="pseudo_xcross_trainer.html" rel="noopener noreferrer" translate="no">Pseudo XCross</a>
-				<a href="pseudo_pairing_trainer.html" rel="noopener noreferrer" translate="no">Pseudo Free Pair</a>
-				<a href="eocross_trainer.html" rel="noopener noreferrer" translate="no">EOCross</a>
-				<a href="algTrainer.html" rel="noopener noreferrer" translate="no">Alg Trainer</a>
-				<a href="jsonEditor.html" rel="noopener noreferrer" translate="no">JSON Editor</a>
+				<a href="/cross_trainer/" rel="noopener noreferrer" translate="no">Cross</a>
+				<a href="/xcross_trainer/" rel="noopener noreferrer" translate="no">XCross</a>
+				<a href="/pairing_trainer/" rel="noopener noreferrer" translate="no">Free Pair</a>
+				<a href="/pseudo_xcross_trainer/" rel="noopener noreferrer" translate="no">Pseudo XCross</a>
+				<a href="/pseudo_pairing_trainer/" rel="noopener noreferrer" translate="no">Pseudo Free Pair</a>
+				<a href="/eocross_trainer/" rel="noopener noreferrer" translate="no">EOCross</a>
+				<a href="/algTrainer/" rel="noopener noreferrer" translate="no">Alg Trainer</a>
+				<a href="/jsonEditor/" rel="noopener noreferrer" translate="no">JSON Editor</a>
 				<a href="stats/" rel="noopener noreferrer" translate="no">WCA Statistics</a>
                 <span style="font-weight:bold;margin-top:12px;display:block;color:#fff;" data-i18n="common.external_tools">External tools:</span>
 				<a href="https://trangium.github.io/MovecountCoefficient/" target="_blank" rel="noopener noreferrer"
@@ -475,7 +475,7 @@
 			});
 		}
 		window.loadMin2phase = function () {
-			return window.__min2phaseLoading || (window.__min2phaseLoading = loadScriptAsync('src/min2phase.js/min2phase.js').then(() => window.min2phase));
+			return window.__min2phaseLoading || (window.__min2phaseLoading = loadScriptAsync('../src/min2phase.js/min2phase.js').then(() => window.min2phase));
 		};
 		window.loadFunctionsJs = function () {
 			if (window.__functionsLoading) return window.__functionsLoading;
@@ -483,7 +483,7 @@
 				window.Module = {
 					onRuntimeInitialized: () => resolve(window.Module)
 				};
-				loadScriptAsync('src/functions/functions.js').catch(err => {
+				loadScriptAsync('../src/functions/functions.js').catch(err => {
 					window.__functionsLoading = null;
 					reject(err);
 				});
@@ -764,7 +764,7 @@
 				const convertedMask = convertMask(mask_input.maskInputCenter, mask_input.maskInputEdges, mask_input.maskInputCorners, result_rotation);
 				setMask(convertedMask);
 				const args = { scr: result_moves, rot: "", slot: pslot_e, pslot: pslot_c, num: parseInt(num, 10), len: parseInt(len, 10), move_restrict: 'U_U2_U-_D_D2_D-_L_L2_L-_R_R2_R-_F_F2_F-_B_B2_B-', post_alg: premove, center_offset: center_offset, max_rot_count: parseInt('0', 10), ma2: '', mcString: '' };
-				worker = new Worker('src/pseudoCrossSolver/worker3.js');
+				worker = new Worker('../src/pseudoCrossSolver/worker3.js');
 				worker.postMessage(args);
 				if (worker) {
 					worker.onmessage = function (event) {
@@ -853,7 +853,7 @@
 				var spaceElement2 = document.createElement('a');
 				spaceElement2.innerHTML = "&nbsp;";
 				details.appendChild(spaceElement2);
-				const currentUrl = new URL("solver/", window.location.href);
+				const currentUrl = new URL("/solver/", window.location.href);
 				currentUrl.searchParams.set('solver', `PF2L`);
 				currentUrl.searchParams.set('scramble', (scr + " // setup\n").replace(/ /g, '_').replace(/'/g, '-'));
 				if (premove !== "") {
@@ -969,7 +969,7 @@
 				return;
 			}
 			if (!worker2) {
-				worker2 = new Worker('src/pseudoXcrossTrainer/worker.js');
+				worker2 = new Worker('../src/pseudoXcrossTrainer/worker.js');
 			}
 			var args = { scr: solution, len: sol_len };
 			const show = document.getElementById('show');
@@ -1010,7 +1010,7 @@
 		}
 
 	</script>
-	<script src="src/i18n/i18n.js" defer></script>
+	<script src="../src/i18n/i18n.js" defer></script>
 	<script src="sw-register.js" defer></script>
 
 </body>

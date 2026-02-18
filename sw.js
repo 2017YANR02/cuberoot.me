@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pwa-cache_v43';
+const CACHE_NAME = 'pwa-cache_v44';
 
 const urlsToPrecache = [
 	'index.html',
@@ -12,16 +12,16 @@ const urlsToPrecache = [
 const urlsToCache = [
 	'index.html',
 	'solver/index.html',
-	'2x2x2.html',
-	'cross_trainer.html',
-	'documentation.html',
-	'eocross_trainer.html',
-	'pairing_trainer.html',
-	'pseudo_pairing_trainer.html',
-	'pseudo_xcross_trainer.html',
-	'xcross_trainer.html',
-	'jsonEditor.html',
-	'algTrainer.html',
+	'2x2x2/index.html',
+	'cross_trainer/index.html',
+	'documentation/index.html',
+	'eocross_trainer/index.html',
+	'pairing_trainer/index.html',
+	'pseudo_pairing_trainer/index.html',
+	'pseudo_xcross_trainer/index.html',
+	'xcross_trainer/index.html',
+	'jsonEditor/index.html',
+	'algTrainer/index.html',
 	'manifest.json',
 	'icons/icon-512x512.png',
 	'icons/icon-192x192.png',
