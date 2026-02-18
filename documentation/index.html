@@ -5,9 +5,8 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="manifest" href="../manifest.json">
-	<title data-i18n="common.documentation">Documentation</title>
-	<meta name="description" content="RubiksSolverDemo Documentation">
-	<script async src="https://www.googletagmanager.com/gtag/js?id=G-MXJH30352W"></script>
+	<title>Rubik's Cube Solver Documentation - Input Guide & Usage Examples </title>
+	<meta name="description" content="Guide for 3x3x3 & 2x2x2 solver. Explains input notation, advanced settings, and usage examples for each solver. Includes memory requirements.">	<script async src="https://www.googletagmanager.com/gtag/js?id=G-MXJH30352W"></script>
 	<script>
 		window.dataLayer = window.dataLayer || [];
 		function gtag() { dataLayer.push(arguments); }
@@ -16,10 +15,7 @@
 	</script>
 	<style>
 		body {
-			background: #0a0a0f;
-			background-image:
-				radial-gradient(ellipse at 20% 50%, rgba(90, 90, 200, 0.08) 0%, transparent 50%),
-				radial-gradient(ellipse at 80% 50%, rgba(200, 90, 90, 0.06) 0%, transparent 50%);
+			background: #121212;
 			color: #fff;
 			font-family: Arial, sans-serif;
 			margin: 20px;
@@ -31,7 +27,10 @@
 			padding: 2px;
 			text-align: center;
 			cursor: pointer;
-			background-color: #121212;
+			background-color: #0a0a0f;
+				background-image:
+					radial-gradient(ellipse at 20% 50%, rgba(90, 90, 200, 0.08) 0%, transparent 50%),
+					radial-gradient(ellipse at 80% 50%, rgba(200, 90, 90, 0.06) 0%, transparent 50%);
 		}
 
 		h1 {
@@ -162,7 +161,7 @@
 
 <body>
 	<header id="header" style="margin-left:48px;margin-top:10px;position:relative;z-index:10;">
-		<h1>RubiksSolverDemo</h1>
+		<h1>Rubik's Cube Solver Documentation</h1>
 	</header>
 	<div id="hamburger-menu-container">
 		<button id="hamburger-menu-btn" aria-label="Open menu"
@@ -176,31 +175,29 @@
 				<button id="drawer-close-btn" class="drawer-close-btn" aria-label="Close menu">&times;</button>
 			</div>
 			<div class="drawer-content">
-				<a href="https://github.com/or18/RubiksSolverDemo" rel="noopener noreferrer" translate="no">Source</a>
-				<a href="/solver/">Main Solver</a>
-				<a href="/2x2x2/" rel="noopener noreferrer" translate="no">2x2x2 Solver</a>
-				<a href="/documentation/" translate="no">Documentation</a>
-				<span style="font-weight:bold;margin-top:12px;display:block;color:#fff;"
-					data-i18n="common.trainers">Trainers:</span>
-				<a href="/cross_trainer/" rel="noopener noreferrer" translate="no">Cross</a>
-				<a href="/xcross_trainer/" rel="noopener noreferrer" translate="no">XCross</a>
-				<a href="/xxcross_trainer/" rel="noopener noreferrer" translate="no">XXCross</a>
-				<a href="/pairing_trainer/" rel="noopener noreferrer" translate="no">Free Pair</a>
-				<a href="/pseudo_xcross_trainer/" rel="noopener noreferrer" translate="no">Pseudo XCross</a>
-				<a href="/pseudo_pairing_trainer/" rel="noopener noreferrer" translate="no">Pseudo Free Pair</a>
-				<a href="/eocross_trainer/" rel="noopener noreferrer" translate="no">EOCross</a>
-				<a href="/algTrainer/" rel="noopener noreferrer" translate="no">Alg Trainer</a>
-				<a href="/jsonEditor/" rel="noopener noreferrer" translate="no">JSON Editor</a>
-				<a href="stats/" rel="noopener noreferrer" translate="no">WCA Statistics</a>
-				<span style="font-weight:bold;margin-top:12px;display:block;color:#fff;"
-					data-i18n="common.external_tools">External tools:</span>
-				<a href="https://trangium.github.io/MovecountCoefficient/" target="_blank" rel="noopener noreferrer"
-					translate="no">MCC by trangium</a>
-				<a href="https://speedcubedb.com/a/3x3/" target="_blank" rel="noopener noreferrer"
-					translate="no">speedcubedb.com</a>
-				<a href="https://cstimer.net/" target="_blank" rel="noopener noreferrer" translate="no">cstimer.net</a>
-			</div>
-		</nav>
+<a href="https://github.com/or18/RubiksSolverDemo" rel="noopener noreferrer" translate="no">Source</a>
+<a href="/solver/">Main Solver</a>
+<a href="/2x2x2/" rel="noopener noreferrer" translate="no">2x2x2 Solver</a>
+<a href="/documentation/" translate="no">Documentation</a>
+<span style="font-weight:bold;margin-top:12px;display:block;color:#fff;" data-i18n="common.trainers">Trainers:</span>
+<a href="/cross_trainer/" rel="noopener noreferrer" translate="no">Cross</a>
+<a href="/xcross_trainer/" rel="noopener noreferrer" translate="no">XCross</a>
+<a href="/xxcross_trainer/" rel="noopener noreferrer" translate="no">XXCross</a>
+<a href="/pairing_trainer/" rel="noopener noreferrer" translate="no">Free Pair</a>
+<a href="/xcross_pairing_trainer/" rel="noopener noreferrer" translate="no">XCross Free Pair</a>
+<a href="/pseudo_xcross_trainer/" rel="noopener noreferrer" translate="no">Pseudo XCross</a>
+<a href="/pseudo_pairing_trainer/" rel="noopener noreferrer" translate="no">Pseudo Free Pair</a>
+<a href="/eocross_trainer/" rel="noopener noreferrer" translate="no">EOCross</a>
+<a href="/algTrainer/" rel="noopener noreferrer" translate="no">Alg Trainer</a>
+<a href="/jsonEditor/" rel="noopener noreferrer" translate="no">JSON Editor</a>
+<a href="/stats/" rel="noopener noreferrer" translate="no">WCA Statistics</a>
+<span style="font-weight:bold;margin-top:12px;display:block;color:#fff;" data-i18n="common.external_tools">External
+    tools:</span>
+<a href="https://trangium.github.io/MovecountCoefficient/" target="_blank" rel="noopener noreferrer" translate="no">MCC
+    by trangium</a>
+<a href="https://speedcubedb.com/a/3x3/" target="_blank" rel="noopener noreferrer" translate="no">speedcubedb.com</a>
+<a href="https://cstimer.net/" target="_blank" rel="noopener noreferrer" translate="no">cstimer.net</a>
+			
 	</div>
 	<script>
 		const hamburgerBtn = document.getElementById('hamburger-menu-btn');
@@ -245,8 +242,8 @@
 		<p>Solvers for 3x3x3 Rubik's cube: cross, xcross, free pair, pseudo F2L, EOCross, and last layer. 2x2x2 cube
 			solver is also available. Each solver comes with a Visual Cube State Editor.</p>
 		<p>
-			<a href="/solver/">3x3x3 Solver</a><br>
-			<a href="/2x2x2/">2x2x2 Solver</a><br>
+			<a href="index.html">3x3x3 Solver</a><br>
+			<a href="2x2x2.html">2x2x2 Solver</a><br>
 			<a href="https://or18.github.io/Rubiks-cube-xcross-solver/">Old version</a>
 		</p>
 	</div>
@@ -254,12 +251,14 @@
 		<h2>Trainers</h2>
 		<p>Also, the following trainers are available.</p>
 		<ul>
-			<li><a href="/cross_trainer/">Cross trainer</a></li>
-			<li><a href="/xcross_trainer/">XCross trainer</a></li>
-			<li><a href="/pairing_trainer/">Free Pair trainer</a></li>
-			<li><a href="/pseudo_xcross_trainer/">Pseudo XCross trainer</a></li>
-			<li><a href="/pseudo_pairing_trainer/">Pseudo Free Pair trainer</a></li>
-			<li><a href="/eocross_trainer/">EOCross trainer</a></li>
+			<li><a href="cross_trainer.html">Cross trainer</a></li>
+			<li><a href="xcross_trainer.html">XCross trainer</a></li>
+			<li><a href="xxcross_trainer.html">XXCross trainer</a></li>
+			<li><a href="pairing_trainer.html">Free Pair trainer</a></li>
+			<li><a href="xcross_pairing_trainer.html">XCross Free Pair trainer</a></li>
+			<li><a href="pseudo_xcross_trainer.html">Pseudo XCross trainer</a></li>
+			<li><a href="pseudo_pairing_trainer.html">Pseudo Free Pair trainer</a></li>
+			<li><a href="eocross_trainer.html">EOCross trainer</a></li>
 		</ul>
 	</div>
 	<div>
@@ -531,31 +530,31 @@
 			search. Here are some examples. </p>
 		<ul>
 			<li>Yellow cross. <a
-					href="solver/?scramble=U-_B_R-_L-_F_U-_F2_D_R2_D2_B_L2_F2_U2_D2_F_D2_F-_U2_R2_%252F%252F_setup%250A&index=1&sol=B2_U-_L_F-_D2_L_">Example</a>
+					href="index.html?scramble=U-_B_R-_L-_F_U-_F2_D_R2_D2_B_L2_F2_U2_D2_F_D2_F-_U2_R2_%252F%252F_setup%250A&index=1&sol=B2_U-_L_F-_D2_L_">Example</a>
 			</li>
 			<li>White cross (<b>Rotation</b> selected). <a
-					href="solver/?scramble=D2_F_L2_D_B2_L2_F2_R2_D2_B2_D2_U_F2_U2_B-_L_R_D_R-_F-_U_%252F%252F_setup%250A&index=1&sol=z2_D_R_D2_L2_R-_B-_&rot=z2">Example</a>
+					href="index.html?scramble=D2_F_L2_D_B2_L2_F2_R2_D2_B2_D2_U_F2_U2_B-_L_R_D_R-_F-_U_%252F%252F_setup%250A&index=1&sol=z2_D_R_D2_L2_R-_B-_&rot=z2">Example</a>
 			</li>
 			<li>White cross (<b>Rotation</b> in <b>Scramble</b>). <a
-					href="solver/?scramble=D2_F_L2_D_B2_L2_F2_R2_D2_B2_D2_U_F2_U2_B-_L_R_D_R-_F-_U_%252F%252F_setup%250A%250Az2_%252F%252F_inspection&index=1&sol=D_R_D2_L2_R-_B-_">Example</a>
+					href="index.html?scramble=D2_F_L2_D_B2_L2_F2_R2_D2_B2_D2_U_F2_U2_B-_L_R_D_R-_F-_U_%252F%252F_setup%250A%250Az2_%252F%252F_inspection&index=1&sol=D_R_D2_L2_R-_B-_">Example</a>
 			</li>
 			<li>White XCross. <a
-					href="solver/?scramble=D-_L-_U2_B_L_B2_R-_D_B2_R_D_R2_D2_F2_R2_L2_F2_D-_F2_D_L2_%252F%252F_setup%250A&index=1&sol=z2_L_R2_B2_U-_L_B-_R_F2_D-_&rot=z2&slot=BL">Example</a>
+					href="index.html?scramble=D-_L-_U2_B_L_B2_R-_D_B2_R_D_R2_D2_F2_R2_L2_F2_D-_F2_D_L2_%252F%252F_setup%250A&index=1&sol=z2_L_R2_B2_U-_L_B-_R_F2_D-_&rot=z2&slot=BL">Example</a>
 			</li>
 			<li>1st F2L (<b>Move Restrict</b>: U, R, F). <a
-					href="solver/?scramble=F-_B-_U-_D2_F2_B_U-_R2_F-_R2_B2_D2_L2_U2_L_B2_L-_U2_B2_L2_F2_%252F%252F_setup%250A&index=1&sol=F2_R-_F-_U-_R_F-_&slot=BR&res=URF">Example</a>
+					href="index.html?scramble=F-_B-_U-_D2_F2_B_U-_R2_F-_R2_B2_D2_L2_U2_L_B2_L-_U2_B2_L2_F2_%252F%252F_setup%250A&index=1&sol=F2_R-_F-_U-_R_F-_&slot=BR&res=URF">Example</a>
 			</li>
 			<li>White XXCross. <a
-					href="solver/?scramble=F2_U2_F-_R2_F_L2_F2_R2_U2_L2_F-_R2_U_F2_R_B2_F-_U2_F_R-_F2_%252F%252F_setup%250A&index=1&sol=z2_U_B2_U_B-_U_B2_R-_U-_F2_L2_D-_&slot=BL_FL&rot=z2">Example</a>
+					href="index.html?scramble=F2_U2_F-_R2_F_L2_F2_R2_U2_L2_F-_R2_U_F2_R_B2_F-_U2_F_R-_F2_%252F%252F_setup%250A&index=1&sol=z2_U_B2_U_B-_U_B2_R-_U-_F2_L2_D-_&slot=BL_FL&rot=z2">Example</a>
 			</li>
 			<li>White XXXCross. <a
-					href="solver/?scramble=R_F-_L-_U-_F-_U2_D_R_U2_F2_R2_U_L2_D-_F2_R2_D-_L2_D-_F2_B-_%252F%252F_setup%250A&index=1&sol=z2_D-_L_R-_U-_L2_D_F_L_R2_F_R2_D2_&slot=BL_BR_FL&rot=z2">Example</a>
+					href="index.html?scramble=R_F-_L-_U-_F-_U2_D_R_U2_F2_R2_U_L2_D-_F2_R2_D-_L2_D-_F2_B-_%252F%252F_setup%250A&index=1&sol=z2_D-_L_R-_U-_L2_D_F_L_R2_F_R2_D2_&slot=BL_BR_FL&rot=z2">Example</a>
 			</li>
 			<li>White XXXXCross (F2L skip). <a
-					href="solver/?scramble=D-_B-_R_F2_D-_L-_F-_U-_L_U2_L2_D-_R2_F2_R2_F2_U2_B2_U_R2_%252F%252F_setup%250A&index=1&sol=z2_D_B_U_B-_U-_R-_F_L_F2_D_L2_F2_R-_&slot=BL_BR_FR_FL&rot=z2">Example</a>
+					href="index.html?scramble=D-_B-_R_F2_D-_L-_F-_U-_L_U2_L2_D-_R2_F2_R2_F2_U2_B2_U_R2_%252F%252F_setup%250A&index=1&sol=z2_D_B_U_B-_U-_R-_F_L_F2_D_L2_F2_R-_&slot=BL_BR_FR_FL&rot=z2">Example</a>
 			</li>
 			<li>Last two F2L slots (<b>Move Restrict</b>: U, R, F). <a
-					href="solver/?scramble=B-_U-_L2_D-_R_F_U_F_B_D2_F_D2_R2_F2_D2_B-_L2_U2_F2_D-_%252F%252F_setup&index=1&sol=U_F-_U-_R-_F_R-_F-_R2_U_F_&slot=BL_BR_FR_FL&res=UDRF">Example</a>
+					href="index.html?scramble=B-_U-_L2_D-_R_F_U_F_B_D2_F_D2_R2_F2_D2_B-_L2_U2_F2_D-_%252F%252F_setup&index=1&sol=U_F-_U-_R-_F_R-_F-_R2_U_F_&slot=BL_BR_FR_FL&res=UDRF">Example</a>
 			</li>
 		</ul>
 		<h3>Pairing</h3>
@@ -563,10 +562,10 @@
 			setup, and more. Here are some examples. </p>
 		<ul>
 			<li>Cross with a free pair. <a
-					href="solver/?scramble=L2_D_R_F_L2_F2_D2_L-_F-_B2_U-_L2_D_B2_L2_D_L2_B2_U2_B2_R-_%252F%252F_setup%250A&index=1&sol=B2_U2_L2_R_F_D_&solver=F2L_pair">Example</a>
+					href="index.html?scramble=L2_D_R_F_L2_F2_D2_L-_F-_B2_U-_L2_D_B2_L2_D_L2_B2_U2_B2_R-_%252F%252F_setup%250A&index=1&sol=B2_U2_L2_R_F_D_&solver=F2L_pair">Example</a>
 			</li>
 			<li>3rd F2L and last pair (<b>Move Restrict</b>: U, R, F). <a
-					href="solver/?scramble=R_D-_R_U_D2_L-_B_L2_U2_D2_R_F2_R-_D2_R_B2_R-_D2_R-_D_%252F%252F_setup%250A&index=1&sol=U2_R-_F-_U-_F2_R-_F-_R2_&solver=F2L_pair&slot2=BL_BR_FL&res=URF">Example</a>
+					href="index.html?scramble=R_D-_R_U_D2_L-_B_L2_U2_D2_R_F2_R-_D2_R_B2_R-_D2_R-_D_%252F%252F_setup%250A&index=1&sol=U2_R-_F-_U-_F2_R-_F-_R2_&solver=F2L_pair&slot2=BL_BR_FL&res=URF">Example</a>
 			</li>
 		</ul>
 		<h3>Pseudo F2L Lite</h3>
@@ -574,13 +573,13 @@
 			XCross, pseudo slotting, and more. Here are some examples.</p>
 		<ul>
 			<li>Pseudo XCross. <a
-					href="solver/?scramble=L2_F_L-_F_R2_D-_L_U2_B_L-_D2_B2_R2_L_D2_R_U2_D2_F2_U2_R_%252F%252F_setup%250A&index=1&sol=U-_F2_L_U_R_B2_D2_B_&solver=PF2L&pse=BL">Example</a>
+					href="index.html?scramble=L2_F_L-_F_R2_D-_L_U2_B_L-_D2_B2_R2_L_D2_R_U2_D2_F2_U2_R_%252F%252F_setup%250A&index=1&sol=U-_F2_L_U_R_B2_D2_B_&solver=PF2L&pse=BL">Example</a>
 			</li>
 			<li>Adjecent pseudo XXCross. <a
-					href="solver/?scramble=F_R2_L_U_L2_U2_D_L_U_B_U2_B_R2_B_L2_U2_F-_R2_L2_U2_R2_%252F%252F_setup%250A&index=1&sol=B-_D-_L_R2_B-_L2_R-_D-_R_&solver=PF2L&pse=BL_BR&psc=BL_FL">Example</a>
+					href="index.html?scramble=F_R2_L_U_L2_U2_D_L_U_B_U2_B_R2_B_L2_U2_F-_R2_L2_U2_R2_%252F%252F_setup%250A&index=1&sol=B-_D-_L_R2_B-_L2_R-_D-_R_&solver=PF2L&pse=BL_BR&psc=BL_FL">Example</a>
 			</li>
 			<li>Diagonal pseudo XXCross. <a
-					href="solver/?scramble=U-_D2_B2_R_F-_D_R_B2_U_R2_U_L2_D-_R2_U-_L2_U-_L2_B2_R-_%252F%252F_setup%250A&index=1&sol=z2_U2_L-_U-_F2_U2_B-_D2_F_L2_&solver=PF2L&pse=BL_FR&rot=z2&psc=BR_FL">Example</a>
+					href="index.html?scramble=U-_D2_B2_R_F-_D_R_B2_U_R2_U_L2_D-_R2_U-_L2_U-_L2_B2_R-_%252F%252F_setup%250A&index=1&sol=z2_U2_L-_U-_F2_U2_B-_D2_F_L2_&solver=PF2L&pse=BL_FR&rot=z2&psc=BR_FL">Example</a>
 			</li>
 		</ul>
 		<h3>Pseudo Pairing</h3>
@@ -588,26 +587,26 @@
 			pair, some advanced pseudo slotting, and more. Here are some examples. </p>
 		<ul>
 			<li>Pseudo cross with a pseudo free pair. <a
-					href="solver/?scramble=L_U2_L_B_D2_R_F-_B2_U2_L2_D-_B2_U_B2_R2_U-_R2_F2_R2_B_U2_%252F%252F_setup%250A&index=1&sol=D_B_L-_B2_D_R_&solver=PF2L_pair&apsc=BR">Example</a>
+					href="index.html?scramble=L_U2_L_B_D2_R_F-_B2_U2_L2_D-_B2_U_B2_R2_U-_R2_F2_R2_B_U2_%252F%252F_setup%250A&index=1&sol=D_B_L-_B2_D_R_&solver=PF2L_pair&apsc=BR">Example</a>
 			</li>
 			<li>3rd pseudo slot and last pseudo pair (<b>Move Restrict</b>: U, D, R). <a
-					href="solver/?scramble=U-_F_U-_B2_U_F-_B2_D_F2_U-_F2_D_R2_D-_L2_U-_L2_U_%252F%252F_setup%250A&index=1&sol=D_R2_U-_R2_U_R-_U2_R-_&solver=PF2L_pair&pse2=BL_BR_FL&res=UDR">Example</a>
+					href="index.html?scramble=U-_F_U-_B2_U_F-_B2_D_F2_U-_F2_D_R2_D-_L2_U-_L2_U_%252F%252F_setup%250A&index=1&sol=D_R2_U-_R2_U_R-_U2_R-_&solver=PF2L_pair&pse2=BL_BR_FL&res=UDR">Example</a>
 			</li>
 		</ul>
 		<h3>EOCross</h3>
 		<p>A set of solvers for EOcross, XEOcross, XXEOcross, XXXEOcross, and XXXXEOCross. Here are some examples.</p>
 		<ul>
 			<li>EOCross (LR). <a
-					href="solver/?scramble=R-_F_D-_B_D2_L2_B2_D-_L-_D2_B_U2_L2_F-_L2_F-_R2_F_L2_U2_B_%252F%252F_setup%250A&index=1&sol=z2_F-_D-_B-_D2_L-_B_L2_&solver=EOCross&rot=z2">Example</a>
+					href="index.html?scramble=R-_F_D-_B_D2_L2_B2_D-_L-_D2_B_U2_L2_F-_L2_F-_R2_F_L2_U2_B_%252F%252F_setup%250A&index=1&sol=z2_F-_D-_B-_D2_L-_B_L2_&solver=EOCross&rot=z2">Example</a>
 			</li>
 			<li>EOCross (FB). <a
-					href="solver/?scramble=F-_D-_B2_D_B_D_R_U_F2_R-_F2_R_L2_F2_U2_R2_U2_R_B2_R-_U_%252F%252F_setup%250A&index=1&sol=z2_y-_U_L-_D_F_R_B2_&solver=EOCross&rot=z2_y-">Example</a>
+					href="index.html?scramble=F-_D-_B2_D_B_D_R_U_F2_R-_F2_R_L2_F2_U2_R2_U2_R_B2_R-_U_%252F%252F_setup%250A&index=1&sol=z2_y-_U_L-_D_F_R_B2_&solver=EOCross&rot=z2_y-">Example</a>
 			</li>
 			<li>XEOCross (LR). <a
-					href="solver/?scramble=F-_D-_F_R2_D-_B_L-_F_U_L2_D_R2_D2_L2_D_B2_R2_U_L2_D2_R-_%252F%252F_setup%250A&index=1&sol=U2_B2_D_R-_U2_F_D_L-_B-_D-_&solver=EOCross&slot3=BL">Example</a>
+					href="index.html?scramble=F-_D-_F_R2_D-_B_L-_F_U_L2_D_R2_D2_L2_D_B2_R2_U_L2_D2_R-_%252F%252F_setup%250A&index=1&sol=U2_B2_D_R-_U2_F_D_L-_B-_D-_&solver=EOCross&slot3=BL">Example</a>
 			</li>
 			<li>XXEOCross (FB). <a
-					href="solver/?scramble=U2_D-_F-_U_R2_L_U-_R_U2_R-_B2_L-_F2_L-_D2_R_F2_B2_D_%252F%252F_setup%250A&index=1&sol=y_L2_F2_R2_U2_L-_U-_F_L2_U-_L_F2_&solver=EOCross&slot3=BL_FL&rot=y">Example</a>
+					href="index.html?scramble=U2_D-_F-_U_R2_L_U-_R_U2_R-_B2_L-_F2_L-_D2_R_F2_B2_D_%252F%252F_setup%250A&index=1&sol=y_L2_F2_R2_U2_L-_U-_F_L2_U-_L_F2_&solver=EOCross&slot3=BL_FL&rot=y">Example</a>
 			</li>
 		</ul>
 		<h3>LL Substeps Lite</h3>
@@ -616,42 +615,42 @@
 		</p>
 		<ul>
 			<li>OLL (<b>Move Restrict</b>: U, R, F). <a
-					href="solver/?scramble=R_F_R2_F-_R_U_R2_U_F2_L2_B2_D-_B2_L2_F2_U_R2_%252F%252F_setup%250A&index=1&sol=R-_F_U_F2_U_F2_U2_F-_U_R_&solver=LS&ll=CO_EO&res=URF">Example</a>
+					href="index.html?scramble=R_F_R2_F-_R_U_R2_U_F2_L2_B2_D-_B2_L2_F2_U_R2_%252F%252F_setup%250A&index=1&sol=R-_F_U_F2_U_F2_U2_F-_U_R_&solver=LS&ll=CO_EO&res=URF">Example</a>
 			</li>
 			<li>ZBLS (<b>Move Restrict</b>: U, R, F). <a
-					href="solver/?scramble=F-_U_L-_U2_L_F-_R2_U2_F2_U_F2_L2_U_R2_U-_L2_U_F2_%252F%252F_setup%250A&index=1&sol=F_U2_F2_U-_F2_U-_R-_F-_R_&solver=LS&ll=EO&res=URF">Example</a>
+					href="index.html?scramble=F-_U_L-_U2_L_F-_R2_U2_F2_U_F2_L2_U_R2_U-_L2_U_F2_%252F%252F_setup%250A&index=1&sol=F_U2_F2_U-_F2_U-_R-_F-_R_&solver=LS&ll=EO&res=URF">Example</a>
 			</li>
 			<li>COLL (<b>Move Restrict</b>: U, R, F). <a
-					href="solver/?scramble=U2_R_U2_R2_F2_D2_L2_D_L2_D_F2_R_%252F%252F_setup%250A&index=1&sol=U2_F_U2_F-_R-_U_F_U_F-_U-_R_&solver=LS&ll=CP_CO_EO&res=URF">Example</a>
+					href="index.html?scramble=U2_R_U2_R2_F2_D2_L2_D_L2_D_F2_R_%252F%252F_setup%250A&index=1&sol=U2_F_U2_F-_R-_U_F_U_F-_U-_R_&solver=LS&ll=CP_CO_EO&res=URF">Example</a>
 			</li>
 			<li>VLS UF (<b>Move Restrict</b>: U, R, F; Custom Move Available Table and Move Count Limit). <a
-					href="solver/?scramble=x2_%252F%252F_Pre_Rotations%250AR2_U-_F2_U-_B2_L2_D-_L2_B2_F2_U-_F-_R_F-_U2_F2_R-_U2_R-_%252F%252F_setup%250A&solver=LS&ll=CO_EO&res=URF&rest=U_U2_U-_R_R2_R-_F_F2_F-&mav=U2%7EF2%7CF2%7EU2%7CEMPTY%7EF2&mcv=U2%3A1_R2%3A2_F%3A1_F2%3A1_F-%3A1&index=1&sol=U_R_U-_R-_U2_F_R_U_R-_U-_F-_">Example</a>
+					href="index.html?scramble=x2_%252F%252F_Pre_Rotations%250AR2_U-_F2_U-_B2_L2_D-_L2_B2_F2_U-_F-_R_F-_U2_F2_R-_U2_R-_%252F%252F_setup%250A&solver=LS&ll=CO_EO&res=URF&rest=U_U2_U-_R_R2_R-_F_F2_F-&mav=U2%7EF2%7CF2%7EU2%7CEMPTY%7EF2&mcv=U2%3A1_R2%3A2_F%3A1_F2%3A1_F-%3A1&index=1&sol=U_R_U-_R-_U2_F_R_U_R-_U-_F-_">Example</a>
 			</li>
 			<li>OLLCP (<b>Move Restrict</b>: U, R, F, y; Rotation Start Setup; Custom Move Available Table and Move
 				Count Limit). <a
-					href="solver/?scramble=z2_%252F%252F_Pre_Rotations%250AF2_R2_F2_R2_F2_U-_F2_U2_R2_F2_R2_U_R-_F_U2_F_U2_F-_R_F2_%252F%252F_setup%250A&solver=LS&ll=CP_CO_EO&res=URFy&rest=U_U2_U-_R_R2_R-_F_F2_F-_y_y2_y-&mav=U%7Ey%7CU%7Ey2%7CU%7Ey-%7CU2%7EF2%7CU2%7Ey%7CU2%7Ey2%7CU2%7Ey-%7CU-%7Ey%7CU-%7Ey2%7CU-%7Ey-%7CR%7Ey%7CR%7Ey2%7CR%7Ey-%7CR2%7Ey%7CR2%7Ey2%7CR2%7Ey-%7CR-%7Ey%7CR-%7Ey2%7CR-%7Ey-%7CF%7Ey%7CF%7Ey2%7CF%7Ey-%7CF2%7EU2%7CF2%7Ey%7CF2%7Ey2%7CF2%7Ey-%7CF-%7Ey%7CF-%7Ey2%7CF-%7Ey-%7Cy%7EF2%7Cy2%7EF2%7Cy-%7EF2%7CEMPTY%7EU%7CEMPTY%7EU2%7CEMPTY%7EU-%7CEMPTY%7EF2&mcv=U2%3A1_R2%3A2_F%3A1_F2%3A1_F-%3A1_y%3A1_y2%3A1_y-%3A1&index=1&sol=y2_R-_U_R_U-_R-_U_R_U_R-_U_F-_U2_F_R_&rc=1&crest=EMPTY_EMPTY%7CEMPTY_y%7CEMPTY_y2%7CEMPTY_y-">Example</a>
+					href="index.html?scramble=z2_%252F%252F_Pre_Rotations%250AF2_R2_F2_R2_F2_U-_F2_U2_R2_F2_R2_U_R-_F_U2_F_U2_F-_R_F2_%252F%252F_setup%250A&solver=LS&ll=CP_CO_EO&res=URFy&rest=U_U2_U-_R_R2_R-_F_F2_F-_y_y2_y-&mav=U%7Ey%7CU%7Ey2%7CU%7Ey-%7CU2%7EF2%7CU2%7Ey%7CU2%7Ey2%7CU2%7Ey-%7CU-%7Ey%7CU-%7Ey2%7CU-%7Ey-%7CR%7Ey%7CR%7Ey2%7CR%7Ey-%7CR2%7Ey%7CR2%7Ey2%7CR2%7Ey-%7CR-%7Ey%7CR-%7Ey2%7CR-%7Ey-%7CF%7Ey%7CF%7Ey2%7CF%7Ey-%7CF2%7EU2%7CF2%7Ey%7CF2%7Ey2%7CF2%7Ey-%7CF-%7Ey%7CF-%7Ey2%7CF-%7Ey-%7Cy%7EF2%7Cy2%7EF2%7Cy-%7EF2%7CEMPTY%7EU%7CEMPTY%7EU2%7CEMPTY%7EU-%7CEMPTY%7EF2&mcv=U2%3A1_R2%3A2_F%3A1_F2%3A1_F-%3A1_y%3A1_y2%3A1_y-%3A1&index=1&sol=y2_R-_U_R_U-_R-_U_R_U_R-_U_F-_U2_F_R_&rc=1&crest=EMPTY_EMPTY%7CEMPTY_y%7CEMPTY_y2%7CEMPTY_y-">Example</a>
 		</ul>
 		<h3>LL Lite</h3>
 		<p>A solver for last layer. Note that AUF can remain. It is used to search solutions for PLL, 2GLL, ZBLL, 1LLL,
 			and more Here are some examples. The <b>LL</b> solver can perform the same search.</p>
 		<ul>
 			<li>PLL (<b>Move Restrict</b>: U, R, F). <a
-					href="solver/?scramble=F2_D_B2_D-_L2_U_B2_D_B2_U-_F2_U_L_R-_U2_L-_R-_%252F%252F_setup%250A&index=1&sol=U_R2_U-_R2_U-_R2_U_F_U_F-_R2_F_U-_F-_&solver=LL&res=URF">Example</a>
+					href="index.html?scramble=F2_D_B2_D-_L2_U_B2_D_B2_U-_F2_U_L_R-_U2_L-_R-_%252F%252F_setup%250A&index=1&sol=U_R2_U-_R2_U-_R2_U_F_U_F-_R2_F_U-_F-_&solver=LL&res=URF">Example</a>
 			</li>
 			<li>2GLL (<b>Move Restrict</b>: U, R). <a
-					href="solver/?scramble=L2_D-_F2_L2_D_F2_R2_B2_U2_F2_U-_L-_B2_R_U2_L-_D2_R_%252F%252F_setup%250A&index=1&sol=U-_R_U2_R-_U-_R_U-_R2_U2_R_U_R-_U_R_&solver=LL&res=UR">Example</a>
+					href="index.html?scramble=L2_D-_F2_L2_D_F2_R2_B2_U2_F2_U-_L-_B2_R_U2_L-_D2_R_%252F%252F_setup%250A&index=1&sol=U-_R_U2_R-_U-_R_U-_R2_U2_R_U_R-_U_R_&solver=LL&res=UR">Example</a>
 			</li>
 			<li>PLL-Aa (<b>Move Restrict</b>: U, D, R; <b>Pre Move</b>: x). <a
-					href="solver/?scramble=x_R2-_D2-_R_U_R-_D2-_R_U-_R_x-_%252F%252F_setup&rest=R_R2_R-_U_U2_U-_D_D2_D-&index=1&sol=x_R-_U_R-_D2_R_U-_R-_D2_R2_&solver=LL&res=UDR&premove=x&crest=x_EMPTY">Example</a>
+					href="index.html?scramble=x_R2-_D2-_R_U_R-_D2-_R_U-_R_x-_%252F%252F_setup&rest=R_R2_R-_U_U2_U-_D_D2_D-&index=1&sol=x_R-_U_R-_D2_R_U-_R-_D2_R2_&solver=LL&res=UDR&premove=x&crest=x_EMPTY">Example</a>
 			</li>
 			<li>PLL-Na (<b>Move Restrict</b>: U, D, R, z<b>; Pre Move</b>: x; Custom Move Available table). <a
-					href="solver/?scramble=R_U_R-_U2-_R_U_R2-_F-_R_U_R_U-_R-_F_R_U-_R-_U-_R_U-_R-_%252F%252F_setup&rest=U_U2_U-_D_D2_D-_R_R2_R-_z&index=1&sol=z_U_R-_D_R2_U-_R_U_D-_R-_D_R2_U-_R_D-_&solver=LL&res=UDRz&crest=z_EMPTY&mav=U~D2%7CU2~D%7CU2~D2%7CU2~D-%7CU2~z%7CU-~D2%7CU-~z%7CD~z%7CD2~z%7CD-~z%7CR~z%7CR2~z%7CR-~z%7CEMPTY~U2%7CEMPTY~U-%7CEMPTY~D%7CEMPTY~D2%7CEMPTY~D-%7CEMPTY~R%7CEMPTY~R2%7CEMPTY~R-&rc=1">Example</a>
+					href="index.html?scramble=R_U_R-_U2-_R_U_R2-_F-_R_U_R_U-_R-_F_R_U-_R-_U-_R_U-_R-_%252F%252F_setup&rest=U_U2_U-_D_D2_D-_R_R2_R-_z&index=1&sol=z_U_R-_D_R2_U-_R_U_D-_R-_D_R2_U-_R_D-_&solver=LL&res=UDRz&crest=z_EMPTY&mav=U~D2%7CU2~D%7CU2~D2%7CU2~D-%7CU2~z%7CU-~D2%7CU-~z%7CD~z%7CD2~z%7CD-~z%7CR~z%7CR2~z%7CR-~z%7CEMPTY~U2%7CEMPTY~U-%7CEMPTY~D%7CEMPTY~D2%7CEMPTY~D-%7CEMPTY~R%7CEMPTY~R2%7CEMPTY~R-&rc=1">Example</a>
 			</li>
 			<li>PLL-Na (<b>Move Restrict</b>: U, R, F; Remove F2; Custom Move Available table and Move Count Limit). <a
-					href="solver/?scramble=_%252F%252F_Pre_Rotations%250AB2_U2_B_U2_R2_B2_R2_F-_U2_F2_R2_F-_L_R-_U2_L-_R-_%252F%252F_setup%250A&solver=LL2&res=URF&rest=U_U2_U-_R_R2_R-_F_F-&num=200&mav=U2%7EF%7CU2%7EF-%7CF%7EU2%7CF-%7EU2%7CEMPTY%7EU2%7CEMPTY%7EU-&mcv=U2%3A1_R2%3A2_F%3A1_F-%3A1&index=2&sol=R_U_R-_U_R_U_R-_F-_R_U_R-_U-_R-_F_R2_U-_R-_U2_R_U-_R-_&len=22">Example</a>
+					href="index.html?scramble=_%252F%252F_Pre_Rotations%250AB2_U2_B_U2_R2_B2_R2_F-_U2_F2_R2_F-_L_R-_U2_L-_R-_%252F%252F_setup%250A&solver=LL2&res=URF&rest=U_U2_U-_R_R2_R-_F_F-&num=200&mav=U2%7EF%7CU2%7EF-%7CF%7EU2%7CF-%7EU2%7CEMPTY%7EU2%7CEMPTY%7EU-&mcv=U2%3A1_R2%3A2_F%3A1_F-%3A1&index=2&sol=R_U_R-_U_R_U_R-_F-_R_U_R-_U-_R-_F_R2_U-_R-_U2_R_U-_R-_&len=22">Example</a>
 			</li>
 			<li>1LLL (<b>Move Restrict</b>: U, R, F; Custom Move Available Table and Move Count Limit). <a
-					href="solver/?scramble=R-_F-_R-_U-_R_F_R-_U2_F2_L2_B2_D-_B2_L2_F2_U2_R2_%252F%252F_setup&solver=LL&res=URF&rest=U_U2_U-_R_R2_R-_F_F2_F-&index=1&sol=R-_F-_U2_F_R_U-_R-_F-_U-_F_U-_R_&mcv=U2%3A2_R2%3A1_F%3A2_F2%3A1_F-%3A2&mav=U2%7EF2%7CF2%7EU2%7CEMPTY%7EF2">Example</a>
+					href="index.html?scramble=R-_F-_R-_U-_R_F_R-_U2_F2_L2_B2_D-_B2_L2_F2_U2_R2_%252F%252F_setup&solver=LL&res=URF&rest=U_U2_U-_R_R2_R-_F_F2_F-&index=1&sol=R-_F-_U2_F_R_U-_R-_F-_U-_F_U-_R_&mcv=U2%3A2_R2%3A1_F%3A2_F2%3A1_F-%3A2&mav=U2%7EF2%7CF2%7EU2%7CEMPTY%7EF2">Example</a>
 		</ul>
 		<h3>LL AUF Lite</h3>
 		<p>Last layer and AUF. Recommended to use <b>LL Lite</b> or <b>LL</b> solver.</p>
@@ -660,15 +659,15 @@
 		<ul>
 			<li>CLL (<b>Move Restrict</b>: U, R, F; Remove F2; Custom Move Available table; Custom Move Count Limit).
 				<a
-					href="/2x2x2/?scramble=_%252F%252F_Pre_Rotations%250AF2_U_R-_U-_F2_U-_R-_U2_R_U-_%252F%252F_setup%250A&mcv=U2%3A1_R2%3A1_F%3A1_F2%3A1_F-%3A1&index=1&sol=R_U-_R_F_R_F-_U_R_U2_R2_U_">Example</a>
+					href="2x2x2.html?scramble=_%252F%252F_Pre_Rotations%250AF2_U_R-_U-_F2_U-_R-_U2_R_U-_%252F%252F_setup%250A&mcv=U2%3A1_R2%3A1_F%3A1_F2%3A1_F-%3A1&index=1&sol=R_U-_R_F_R_F-_U_R_U2_R2_U_">Example</a>
 			</li>
 			<li>EG1 (<b>Move Restrict</b>: U, R, F, y; Rotation start setup; Custom Move Available table; Custom Move
 				Count Limit).<a
-					href="/2x2x2/?res=URFy&rest=U_U2_U-_R_R2_R-_F_F2_F-_y_y2_y-&scramble=_%252F%252F_Pre_Rotations%250AR_U_R2_F-_U_F2_R2_F-_U-_%252F%252F_setup%250A&mav=U%7EF2%7CU%7Ey%7CU%7Ey2%7CU%7Ey-%7CU2%7EF%7CU2%7EF2%7CU2%7EF-%7CU2%7Ey%7CU2%7Ey2%7CU2%7Ey-%7CU-%7EF2%7CU-%7Ey%7CU-%7Ey2%7CU-%7Ey-%7CR%7Ey%7CR%7Ey2%7CR%7Ey-%7CR2%7Ey%7CR2%7Ey2%7CR2%7Ey-%7CR-%7Ey%7CR-%7Ey2%7CR-%7Ey-%7CF%7EU2%7CF%7Ey%7CF%7Ey2%7CF%7Ey-%7CF2%7EU%7CF2%7EU2%7CF2%7EU-%7CF2%7Ey%7CF2%7Ey2%7CF2%7Ey-%7CF-%7EU2%7CF-%7Ey%7CF-%7Ey2%7CF-%7Ey-%7Cy%7EU%7Cy%7EU2%7Cy%7EU-%7Cy2%7EU%7Cy2%7EU2%7Cy2%7EU-%7Cy-%7EU%7Cy-%7EU2%7Cy-%7EU-&mcv=U2%3A1_R2%3A1_F%3A1_F2%3A1_F-%3A1_y%3A1_y2%3A1_y-%3A1&index=1&sol=R_F2_R-_U_R2_U_R_U2_R_F-_R-_">Example</a>
+					href="2x2x2.html?res=URFy&rest=U_U2_U-_R_R2_R-_F_F2_F-_y_y2_y-&scramble=_%252F%252F_Pre_Rotations%250AR_U_R2_F-_U_F2_R2_F-_U-_%252F%252F_setup%250A&mav=U%7EF2%7CU%7Ey%7CU%7Ey2%7CU%7Ey-%7CU2%7EF%7CU2%7EF2%7CU2%7EF-%7CU2%7Ey%7CU2%7Ey2%7CU2%7Ey-%7CU-%7EF2%7CU-%7Ey%7CU-%7Ey2%7CU-%7Ey-%7CR%7Ey%7CR%7Ey2%7CR%7Ey-%7CR2%7Ey%7CR2%7Ey2%7CR2%7Ey-%7CR-%7Ey%7CR-%7Ey2%7CR-%7Ey-%7CF%7EU2%7CF%7Ey%7CF%7Ey2%7CF%7Ey-%7CF2%7EU%7CF2%7EU2%7CF2%7EU-%7CF2%7Ey%7CF2%7Ey2%7CF2%7Ey-%7CF-%7EU2%7CF-%7Ey%7CF-%7Ey2%7CF-%7Ey-%7Cy%7EU%7Cy%7EU2%7Cy%7EU-%7Cy2%7EU%7Cy2%7EU2%7Cy2%7EU-%7Cy-%7EU%7Cy-%7EU2%7Cy-%7EU-&mcv=U2%3A1_R2%3A1_F%3A1_F2%3A1_F-%3A1_y%3A1_y2%3A1_y-%3A1&index=1&sol=R_F2_R-_U_R2_U_R_U2_R_F-_R-_">Example</a>
 			</li>
 			<li>Full solution search (<b>Move Restrict</b>: U, R, F, x, y, z; Remove x2; Rotation start setup; Custom
 				Move Count Limit). <a
-					href="/2x2x2/?scramble=U-_F-_U2_R_F-_R-_F_U_R-_U2_%252F%252F_setup%250A&res=URFxyz&rest=U_U2_U-_R_R2_R-_F_F2_F-_x_x-_y_y2_y-_z_z2_z-&mav=U%7Ex%7CU%7Ex-%7CU%7Ey%7CU%7Ey2%7CU%7Ey-%7CU%7Ez%7CU%7Ez2%7CU%7Ez-%7CU2%7Ex%7CU2%7Ex-%7CU2%7Ey%7CU2%7Ey2%7CU2%7Ey-%7CU2%7Ez%7CU2%7Ez2%7CU2%7Ez-%7CU-%7Ex%7CU-%7Ex-%7CU-%7Ey%7CU-%7Ey2%7CU-%7Ey-%7CU-%7Ez%7CU-%7Ez2%7CU-%7Ez-%7CR%7Ex%7CR%7Ex-%7CR%7Ey%7CR%7Ey2%7CR%7Ey-%7CR%7Ez%7CR%7Ez2%7CR%7Ez-%7CR2%7Ex%7CR2%7Ex-%7CR2%7Ey%7CR2%7Ey2%7CR2%7Ey-%7CR2%7Ez%7CR2%7Ez2%7CR2%7Ez-%7CR-%7Ex%7CR-%7Ex-%7CR-%7Ey%7CR-%7Ey2%7CR-%7Ey-%7CR-%7Ez%7CR-%7Ez2%7CR-%7Ez-%7CF%7Ex%7CF%7Ex-%7CF%7Ey%7CF%7Ey2%7CF%7Ey-%7CF%7Ez%7CF%7Ez2%7CF%7Ez-%7CF2%7Ex%7CF2%7Ex-%7CF2%7Ey%7CF2%7Ey2%7CF2%7Ey-%7CF2%7Ez%7CF2%7Ez2%7CF2%7Ez-%7CF-%7Ex%7CF-%7Ex-%7CF-%7Ey%7CF-%7Ey2%7CF-%7Ey-%7CF-%7Ez%7CF-%7Ez2%7CF-%7Ez-%7Cx%7ER%7Cx%7ER2%7Cx%7ER-%7Cx%7Ez%7Cx%7Ez2%7Cx%7Ez-%7Cx-%7ER%7Cx-%7ER2%7Cx-%7ER-%7Cx-%7Ez%7Cx-%7Ez2%7Cx-%7Ez-%7Cy%7EU%7Cy%7EU2%7Cy%7EU-%7Cy%7Ex%7Cy%7Ex-%7Cy%7Ez%7Cy%7Ez2%7Cy%7Ez-%7Cy2%7EU%7Cy2%7EU2%7Cy2%7EU-%7Cy2%7Ex%7Cy2%7Ex-%7Cy2%7Ez%7Cy2%7Ez2%7Cy2%7Ez-%7Cy-%7EU%7Cy-%7EU2%7Cy-%7EU-%7Cy-%7Ex%7Cy-%7Ex-%7Cy-%7Ez%7Cy-%7Ez2%7Cy-%7Ez-%7Cz%7EF%7Cz%7EF2%7Cz%7EF-%7Cz%7Ex%7Cz%7Ex-%7Cz2%7EF%7Cz2%7EF2%7Cz2%7EF-%7Cz2%7Ex%7Cz2%7Ex-%7Cz-%7EF%7Cz-%7EF2%7Cz-%7EF-%7Cz-%7Ex%7Cz-%7Ex-&mcv=x%3A1_x-%3A1_y%3A1_y2%3A1_y-%3A1_z%3A1_z2%3A1_z-%3A1&index=1&sol=U2_R_U-_F-_R_F_R-_U2_F_U_&num=200">Example</a>
+					href="2x2x2.html?scramble=U-_F-_U2_R_F-_R-_F_U_R-_U2_%252F%252F_setup%250A&res=URFxyz&rest=U_U2_U-_R_R2_R-_F_F2_F-_x_x-_y_y2_y-_z_z2_z-&mav=U%7Ex%7CU%7Ex-%7CU%7Ey%7CU%7Ey2%7CU%7Ey-%7CU%7Ez%7CU%7Ez2%7CU%7Ez-%7CU2%7Ex%7CU2%7Ex-%7CU2%7Ey%7CU2%7Ey2%7CU2%7Ey-%7CU2%7Ez%7CU2%7Ez2%7CU2%7Ez-%7CU-%7Ex%7CU-%7Ex-%7CU-%7Ey%7CU-%7Ey2%7CU-%7Ey-%7CU-%7Ez%7CU-%7Ez2%7CU-%7Ez-%7CR%7Ex%7CR%7Ex-%7CR%7Ey%7CR%7Ey2%7CR%7Ey-%7CR%7Ez%7CR%7Ez2%7CR%7Ez-%7CR2%7Ex%7CR2%7Ex-%7CR2%7Ey%7CR2%7Ey2%7CR2%7Ey-%7CR2%7Ez%7CR2%7Ez2%7CR2%7Ez-%7CR-%7Ex%7CR-%7Ex-%7CR-%7Ey%7CR-%7Ey2%7CR-%7Ey-%7CR-%7Ez%7CR-%7Ez2%7CR-%7Ez-%7CF%7Ex%7CF%7Ex-%7CF%7Ey%7CF%7Ey2%7CF%7Ey-%7CF%7Ez%7CF%7Ez2%7CF%7Ez-%7CF2%7Ex%7CF2%7Ex-%7CF2%7Ey%7CF2%7Ey2%7CF2%7Ey-%7CF2%7Ez%7CF2%7Ez2%7CF2%7Ez-%7CF-%7Ex%7CF-%7Ex-%7CF-%7Ey%7CF-%7Ey2%7CF-%7Ey-%7CF-%7Ez%7CF-%7Ez2%7CF-%7Ez-%7Cx%7ER%7Cx%7ER2%7Cx%7ER-%7Cx%7Ez%7Cx%7Ez2%7Cx%7Ez-%7Cx-%7ER%7Cx-%7ER2%7Cx-%7ER-%7Cx-%7Ez%7Cx-%7Ez2%7Cx-%7Ez-%7Cy%7EU%7Cy%7EU2%7Cy%7EU-%7Cy%7Ex%7Cy%7Ex-%7Cy%7Ez%7Cy%7Ez2%7Cy%7Ez-%7Cy2%7EU%7Cy2%7EU2%7Cy2%7EU-%7Cy2%7Ex%7Cy2%7Ex-%7Cy2%7Ez%7Cy2%7Ez2%7Cy2%7Ez-%7Cy-%7EU%7Cy-%7EU2%7Cy-%7EU-%7Cy-%7Ex%7Cy-%7Ex-%7Cy-%7Ez%7Cy-%7Ez2%7Cy-%7Ez-%7Cz%7EF%7Cz%7EF2%7Cz%7EF-%7Cz%7Ex%7Cz%7Ex-%7Cz2%7EF%7Cz2%7EF2%7Cz2%7EF-%7Cz2%7Ex%7Cz2%7Ex-%7Cz-%7EF%7Cz-%7EF2%7Cz-%7EF-%7Cz-%7Ex%7Cz-%7Ex-&mcv=x%3A1_x-%3A1_y%3A1_y2%3A1_y-%3A1_z%3A1_z2%3A1_z-%3A1&index=1&sol=U2_R_U-_F-_R_F_R-_U2_F_U_&num=200">Example</a>
 			</li>
 		</ul>
 
@@ -680,7 +679,9 @@
 		<ul>
 			<li>Cross trainer</li>
 			<li>XCross trainer</li>
+			<li>XXCross trainer</li>
 			<li>Free Pair trainer</li>
+			<li>XCross Free Pair trainer</li>
 			<li>Pseudo XCross trainer</li>
 			<li>Pseudo Free Pair trainer</li>
 			<li>EOCross trainer</li>
@@ -1042,8 +1043,8 @@
 			</tr>
 		</table>
 	</div>
-	<script src="../src/i18n/i18n.js" defer></script>
-	<script src="sw-register.js" defer></script>
+	<script src="../sw-register.js" defer></script>
+<script src="../src/i18n/i18n.js" defer></script>
 </body>
 
 </html>

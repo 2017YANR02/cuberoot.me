@@ -5,34 +5,31 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="manifest" href="../manifest.json">
-	<title data-i18n="trainer.xxcross_title">Rubik's Cube XXCross Trainer - Customizable Scrambler & Advanced Solver
-	</title>
-	<meta name="description"
-		content="Generate random XXCross scrambles with specific conditions (length, faces, slots). Includes built-in advanced 3x3 solver. ">
-	<script async src="https://www.googletagmanager.com/gtag/js?id=G-MXJH30352W"></script>
+	<title data-i18n="trainer.xxcross_title">Rubik's Cube XXCross Trainer - Customizable Scrambler & Advanced Solver</title>
+	<meta name="description" content="Generate random XXCross scrambles with specific conditions (length, faces, slots). Includes built-in advanced 3x3 solver. ">	<script async src="https://www.googletagmanager.com/gtag/js?id=G-MXJH30352W"></script>
 	<script>
 		window.dataLayer = window.dataLayer || [];
 		function gtag() { dataLayer.push(arguments); }
 		gtag('js', new Date());
 		gtag('config', 'G-MXJH30352W');
 	</script>
-	<script src="../url_params_compressor_simple.js" defer></script>
+    <script src="../url_params_compressor_simple.js" defer></script>
 	<style>
 		header {
 			padding: 2px;
 			text-align: center;
 			cursor: pointer;
-			background-color: #121212;
+			background-color: #0a0a0f;
+				background-image:
+					radial-gradient(ellipse at 20% 50%, rgba(90, 90, 200, 0.08) 0%, transparent 50%),
+					radial-gradient(ellipse at 80% 50%, rgba(200, 90, 90, 0.06) 0%, transparent 50%);
 		}
 
 		body {
 			font-family: Arial, sans-serif;
 			margin: 20px;
 			padding: 0;
-			background-color: #0a0a0f;
-			background-image:
-				radial-gradient(ellipse at 20% 50%, rgba(90, 90, 200, 0.08) 0%, transparent 50%),
-				radial-gradient(ellipse at 80% 50%, rgba(200, 90, 90, 0.06) 0%, transparent 50%);
+			background-color: #121212;
 		}
 
 		h1 {
@@ -341,31 +338,29 @@
 				<button id="drawer-close-btn" class="drawer-close-btn" aria-label="Close menu">&times;</button>
 			</div>
 			<div class="drawer-content">
-				<a href="https://github.com/or18/RubiksSolverDemo" rel="noopener noreferrer" translate="no">Source</a>
-				<a href="/solver/">Main Solver</a>
-				<a href="/2x2x2/" rel="noopener noreferrer" translate="no">2x2x2 Solver</a>
-				<a href="/documentation/" translate="no">Documentation</a>
-				<span style="font-weight:bold;margin-top:12px;display:block;color:#fff;"
-					data-i18n="common.trainers">Trainers:</span>
-				<a href="/cross_trainer/" rel="noopener noreferrer" translate="no">Cross</a>
-				<a href="/xcross_trainer/" rel="noopener noreferrer" translate="no">XCross</a>
-				<a href="/xxcross_trainer/" rel="noopener noreferrer" translate="no">XXCross</a>
-				<a href="/pairing_trainer/" rel="noopener noreferrer" translate="no">Free Pair</a>
-				<a href="/pseudo_xcross_trainer/" rel="noopener noreferrer" translate="no">Pseudo XCross</a>
-				<a href="/pseudo_pairing_trainer/" rel="noopener noreferrer" translate="no">Pseudo Free Pair</a>
-				<a href="/eocross_trainer/" rel="noopener noreferrer" translate="no">EOCross</a>
-				<a href="/algTrainer/" rel="noopener noreferrer" translate="no">Alg Trainer</a>
-				<a href="/jsonEditor/" rel="noopener noreferrer" translate="no">JSON Editor</a>
-				<a href="/stats/" rel="noopener noreferrer" translate="no">WCA Statistics</a>
-				<span style="font-weight:bold;margin-top:12px;display:block;color:#fff;"
-					data-i18n="common.external_tools">External tools:</span>
-				<a href="https://trangium.github.io/MovecountCoefficient/" target="_blank" rel="noopener noreferrer"
-					translate="no">MCC by trangium</a>
-				<a href="https://speedcubedb.com/a/3x3/" target="_blank" rel="noopener noreferrer"
-					translate="no">speedcubedb.com</a>
-				<a href="https://cstimer.net/" target="_blank" rel="noopener noreferrer" translate="no">cstimer.net</a>
-			</div>
-		</nav>
+<a href="https://github.com/or18/RubiksSolverDemo" rel="noopener noreferrer" translate="no">Source</a>
+<a href="/solver/">Main Solver</a>
+<a href="/2x2x2/" rel="noopener noreferrer" translate="no">2x2x2 Solver</a>
+<a href="/documentation/" translate="no">Documentation</a>
+<span style="font-weight:bold;margin-top:12px;display:block;color:#fff;" data-i18n="common.trainers">Trainers:</span>
+<a href="/cross_trainer/" rel="noopener noreferrer" translate="no">Cross</a>
+<a href="/xcross_trainer/" rel="noopener noreferrer" translate="no">XCross</a>
+<a href="/xxcross_trainer/" rel="noopener noreferrer" translate="no">XXCross</a>
+<a href="/pairing_trainer/" rel="noopener noreferrer" translate="no">Free Pair</a>
+<a href="/xcross_pairing_trainer/" rel="noopener noreferrer" translate="no">XCross Free Pair</a>
+<a href="/pseudo_xcross_trainer/" rel="noopener noreferrer" translate="no">Pseudo XCross</a>
+<a href="/pseudo_pairing_trainer/" rel="noopener noreferrer" translate="no">Pseudo Free Pair</a>
+<a href="/eocross_trainer/" rel="noopener noreferrer" translate="no">EOCross</a>
+<a href="/algTrainer/" rel="noopener noreferrer" translate="no">Alg Trainer</a>
+<a href="/jsonEditor/" rel="noopener noreferrer" translate="no">JSON Editor</a>
+<a href="/stats/" rel="noopener noreferrer" translate="no">WCA Statistics</a>
+<span style="font-weight:bold;margin-top:12px;display:block;color:#fff;" data-i18n="common.external_tools">External
+    tools:</span>
+<a href="https://trangium.github.io/MovecountCoefficient/" target="_blank" rel="noopener noreferrer" translate="no">MCC
+    by trangium</a>
+<a href="https://speedcubedb.com/a/3x3/" target="_blank" rel="noopener noreferrer" translate="no">speedcubedb.com</a>
+<a href="https://cstimer.net/" target="_blank" rel="noopener noreferrer" translate="no">cstimer.net</a>
+			
 	</div>
 	<script>
 		const hamburgerBtn = document.getElementById('hamburger-menu-btn');
@@ -472,98 +467,98 @@
 	<div id="show"></div>
 	<details id="advancedSettings">
 		<summary id="summaryAdvancedSettings">Show Advanced Settings</summary><br>
-		<label for="res">Move Restrict: </label>
-		<div translate="no" id="res">
+		        <label for="res">Move Restrict: </label>
+        <div translate="no" id="res">
 
-			<table class="checkbox-table">
-				<tbody>
-					<tr>
-						<td>
-							<input type="checkbox" id="checkboxU_restrict" class="custom-checkbox restrict" value="U"
-								checked>
-							<label translate="no" for="checkboxU_restrict">U</label>
-						</td>
-						<td>
-							<input type="checkbox" id="checkboxD_restrict" class="custom-checkbox restrict" value="D"
-								checked>
-							<label translate="no" for="checkboxD_restrict">D</label>
-						</td>
-						<td>
-							<input type="checkbox" id="checkboxL_restrict" class="custom-checkbox restrict" value="L"
-								checked>
-							<label translate="no" for="checkboxL_restrict">L</label>
-						</td>
-						<td>
-							<input type="checkbox" id="checkboxR_restrict" class="custom-checkbox restrict" value="R"
-								checked>
-							<label translate="no" for="checkboxR_restrict">R</label>
-						</td>
-						<td>
-							<input type="checkbox" id="checkboxF_restrict" class="custom-checkbox restrict" value="F"
-								checked>
-							<label translate="no" for="checkboxF_restrict">F</label>
-						</td>
-						<td>
-							<input type="checkbox" id="checkboxB_restrict" class="custom-checkbox restrict" value="B"
-								checked>
-							<label translate="no" for="checkboxB_restrict">B</label>
-						</td>
-					</tr>
-					<tr>
-						<td>
-							<input type="checkbox" id="checkboxu_restrict" class="custom-checkbox restrict" value="u">
-							<label translate="no" for="checkboxu_restrict">u</label>
-						</td>
-						<td>
-							<input type="checkbox" id="checkboxd_restrict" class="custom-checkbox restrict" value="d">
-							<label translate="no" for="checkboxd_restrict">d</label>
-						</td>
-						<td>
-							<input type="checkbox" id="checkboxl_restrict" class="custom-checkbox restrict" value="l">
-							<label translate="no" for="checkboxl_restrict">l</label>
-						</td>
-						<td>
-							<input type="checkbox" id="checkboxr_restrict" class="custom-checkbox restrict" value="r">
-							<label translate="no" for="checkboxr_restrict">r</label>
-						</td>
-						<td>
-							<input type="checkbox" id="checkboxf_restrict" class="custom-checkbox restrict" value="f">
-							<label translate="no" for="checkboxf_restrict">f</label>
-						</td>
-						<td>
-							<input type="checkbox" id="checkboxb_restrict" class="custom-checkbox restrict" value="b">
-							<label translate="no" for="checkboxb_restrict">b</label>
-						</td>
-					</tr>
-					<tr>
-						<td>
-							<input type="checkbox" id="checkboxM_restrict" class="custom-checkbox restrict" value="M">
-							<label translate="no" for="checkboxM_restrict">M</label>
-						</td>
-						<td>
-							<input type="checkbox" id="checkboxE_restrict" class="custom-checkbox restrict" value="E">
-							<label translate="no" for="checkboxE_restrict">E</label>
-						</td>
-						<td>
-							<input type="checkbox" id="checkboxS_restrict" class="custom-checkbox restrict" value="S">
-							<label translate="no" for="checkboxS_restrict">S</label>
-						</td>
-						<td>
-							<input type="checkbox" id="checkboxx_restrict" class="custom-checkbox restrict" value="x">
-							<label translate="no" for="checkboxx_restrict">x</label>
-						</td>
-						<td>
-							<input type="checkbox" id="checkboxy_restrict" class="custom-checkbox restrict" value="y">
-							<label translate="no" for="checkboxy_restrict">y</label>
-						</td>
-						<td>
-							<input type="checkbox" id="checkboxz_restrict" class="custom-checkbox restrict" value="z">
-							<label translate="no" for="checkboxz_restrict">z</label>
-						</td>
-					</tr>
-				</tbody>
-			</table>
-		</div><br>
+            <table class="checkbox-table">
+                <tbody>
+                    <tr>
+                        <td>
+                            <input type="checkbox" id="checkboxU_restrict" class="custom-checkbox restrict" value="U"
+                                checked>
+                            <label translate="no" for="checkboxU_restrict">U</label>
+                        </td>
+                        <td>
+                            <input type="checkbox" id="checkboxD_restrict" class="custom-checkbox restrict" value="D"
+                                checked>
+                            <label translate="no" for="checkboxD_restrict">D</label>
+                        </td>
+                        <td>
+                            <input type="checkbox" id="checkboxL_restrict" class="custom-checkbox restrict" value="L"
+                                checked>
+                            <label translate="no" for="checkboxL_restrict">L</label>
+                        </td>
+                        <td>
+                            <input type="checkbox" id="checkboxR_restrict" class="custom-checkbox restrict" value="R"
+                                checked>
+                            <label translate="no" for="checkboxR_restrict">R</label>
+                        </td>
+                        <td>
+                            <input type="checkbox" id="checkboxF_restrict" class="custom-checkbox restrict" value="F"
+                                checked>
+                            <label translate="no" for="checkboxF_restrict">F</label>
+                        </td>
+                        <td>
+                            <input type="checkbox" id="checkboxB_restrict" class="custom-checkbox restrict" value="B"
+                                checked>
+                            <label translate="no" for="checkboxB_restrict">B</label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="checkbox" id="checkboxu_restrict" class="custom-checkbox restrict" value="u">
+                            <label translate="no" for="checkboxu_restrict">u</label>
+                        </td>
+                        <td>
+                            <input type="checkbox" id="checkboxd_restrict" class="custom-checkbox restrict" value="d">
+                            <label translate="no" for="checkboxd_restrict">d</label>
+                        </td>
+                        <td>
+                            <input type="checkbox" id="checkboxl_restrict" class="custom-checkbox restrict" value="l">
+                            <label translate="no" for="checkboxl_restrict">l</label>
+                        </td>
+                        <td>
+                            <input type="checkbox" id="checkboxr_restrict" class="custom-checkbox restrict" value="r">
+                            <label translate="no" for="checkboxr_restrict">r</label>
+                        </td>
+                        <td>
+                            <input type="checkbox" id="checkboxf_restrict" class="custom-checkbox restrict" value="f">
+                            <label translate="no" for="checkboxf_restrict">f</label>
+                        </td>
+                        <td>
+                            <input type="checkbox" id="checkboxb_restrict" class="custom-checkbox restrict" value="b">
+                            <label translate="no" for="checkboxb_restrict">b</label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="checkbox" id="checkboxM_restrict" class="custom-checkbox restrict" value="M">
+                            <label translate="no" for="checkboxM_restrict">M</label>
+                        </td>
+                        <td>
+                            <input type="checkbox" id="checkboxE_restrict" class="custom-checkbox restrict" value="E">
+                            <label translate="no" for="checkboxE_restrict">E</label>
+                        </td>
+                        <td>
+                            <input type="checkbox" id="checkboxS_restrict" class="custom-checkbox restrict" value="S">
+                            <label translate="no" for="checkboxS_restrict">S</label>
+                        </td>
+                        <td>
+                            <input type="checkbox" id="checkboxx_restrict" class="custom-checkbox restrict" value="x">
+                            <label translate="no" for="checkboxx_restrict">x</label>
+                        </td>
+                        <td>
+                            <input type="checkbox" id="checkboxy_restrict" class="custom-checkbox restrict" value="y">
+                            <label translate="no" for="checkboxy_restrict">y</label>
+                        </td>
+                        <td>
+                            <input type="checkbox" id="checkboxz_restrict" class="custom-checkbox restrict" value="z">
+                            <label translate="no" for="checkboxz_restrict">z</label>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div><br>
 		<label for="premove">Pre Move: </label>
 		<input type="text" id="premove"><br>
 		<input type="checkbox" id="ignorePremoveCenter" class="custom-checkbox">
@@ -573,8 +568,8 @@
 	<button id="solveButton" class="button medium" onclick="startWorker()">Solve</button><br>
 	<label for="countLine">Number of solutions: </label>
 	<input type="text" id="countLine" value="0" readonly><br>
-	<label for="currentDepth">Current Depth: </label>
-	<input type="text" id="currentDepth" value="-1" readonly>
+    <label for="currentDepth">Current Depth: </label>
+    <input type="text" id="currentDepth" value="-1" readonly>
 	<div id="result"></div>
 
 	<script type="module">
@@ -885,7 +880,7 @@
 		}
 
 		function getRestrictString() {
-			const restrictFieldset = document.getElementById('res');
+            const restrictFieldset = document.getElementById('res');
 			const basicMoves = ['U', 'D', 'L', 'R', 'F', 'B'];
 			let restString = "U_U2_U-_D_D2_D-_L_L2_L-_R_R2_R-_F_F2_F-_B_B2_B-";
 			const resChecked = restrictFieldset.querySelectorAll('input[type="checkbox"]:checked');
@@ -914,46 +909,46 @@
 			return mcString;
 		}
 
-		function getMavString() {
-			const restrictFieldset = document.getElementById('res');
-			const basicMoves = ['U', 'D', 'L', 'R', 'F', 'B'];
+        function getMavString() {
+            const restrictFieldset = document.getElementById('res');
+            const basicMoves = ['U', 'D', 'L', 'R', 'F', 'B'];
 			const AXIS_Y = ['U', 'D', 'E', 'u', 'd', 'y'];
-			const AXIS_X = ['L', 'R', 'M', 'l', 'r', 'x'];
-			const AXIS_Z = ['F', 'B', 'S', 'f', 'b', 'z'];
-			const activeMoves = new Set(basicMoves);
-			const resChecked = restrictFieldset.querySelectorAll('input[type="checkbox"]:checked');
-			resChecked.forEach(cb => activeMoves.add(cb.value));
-			const changes = [];
-			const rotations = ['x', 'y', 'z'];
+            const AXIS_X = ['L', 'R', 'M', 'l', 'r', 'x'];
+            const AXIS_Z = ['F', 'B', 'S', 'f', 'b', 'z'];
+            const activeMoves = new Set(basicMoves);
+            const resChecked = restrictFieldset.querySelectorAll('input[type="checkbox"]:checked');
+            resChecked.forEach(cb => activeMoves.add(cb.value));
+            const changes = [];
+            const rotations = ['x', 'y', 'z'];
 
 			const getAxis = (move) => {
-				if (AXIS_X.includes(move)) return 'x';
-				if (AXIS_Y.includes(move)) return 'y';
-				if (AXIS_Z.includes(move)) return 'z';
-				return null;
-			};
+                if (AXIS_X.includes(move)) return 'x';
+                if (AXIS_Y.includes(move)) return 'y';
+                if (AXIS_Z.includes(move)) return 'z';
+                return null;
+            };
 
-			rotations.forEach(rotMove => {
-				if (!activeMoves.has(rotMove)) return;
+            rotations.forEach(rotMove => {
+                if (!activeMoves.has(rotMove)) return;
 				const rotAxis = getAxis(rotMove);
 
-				activeMoves.forEach(move => {
-					if (move == rotMove) return;
-					if (rotations.includes(move)) return;
-					changes.push(`${move}~${rotMove}|${move}2~${rotMove}|${move}-~${rotMove}`);
-					changes.push(`${move}~${rotMove}2|${move}2~${rotMove}2|${move}-~${rotMove}2`);
-					changes.push(`${move}~${rotMove}-|${move}2~${rotMove}-|${move}-~${rotMove}-`);
+                activeMoves.forEach(move => {
+                    if (move == rotMove) return;
+                    if (rotations.includes(move)) return;
+                    changes.push(`${move}~${rotMove}|${move}2~${rotMove}|${move}-~${rotMove}`);
+                    changes.push(`${move}~${rotMove}2|${move}2~${rotMove}2|${move}-~${rotMove}2`);
+                    changes.push(`${move}~${rotMove}-|${move}2~${rotMove}-|${move}-~${rotMove}-`);
 
 					const moveAxis = getAxis(move);
-					const isSameAxis = (rotAxis && moveAxis && rotAxis === moveAxis);
+                    const isSameAxis = (rotAxis && moveAxis && rotAxis === moveAxis);
 					if (!isSameAxis) return;
-					changes.push(`${rotMove}~${move}|${rotMove}2~${move}|${rotMove}-~${move}`);
-					changes.push(`${rotMove}~${move}2|${rotMove}2~${move}2|${rotMove}-~${move}2`);
-					changes.push(`${rotMove}~${move}-|${rotMove}2~${move}-|${rotMove}-~${move}-`);
-				});
-			});
-			return changes.join('|');
-		}
+                    changes.push(`${rotMove}~${move}|${rotMove}2~${move}|${rotMove}-~${move}`);
+                    changes.push(`${rotMove}~${move}2|${rotMove}2~${move}2|${rotMove}-~${move}2`);
+                    changes.push(`${rotMove}~${move}-|${rotMove}2~${move}-|${rotMove}-~${move}-`);
+                });
+            });
+            return changes.join('|');
+        }
 
 		function startWorker() {
 			try {
@@ -964,13 +959,13 @@
 					const content = document.createElement('a');
 					content.innerHTML = "Search terminated.<br>";
 					element.appendChild(content);
-					document.getElementById("solveButton").textContent = "Start";
+                    document.getElementById("solveButton").textContent = "Start";
 					return;
 				}
 
 				if (!isFunctionsReady) {
 					alert("The module is still initializing. Please try again in a moment.");
-					document.getElementById("solveButton").textContent = "Start";
+                    document.getElementById("solveButton").textContent = "Start";
 					return;
 				}
 				if (typeof convert !== "function" || typeof generateTwoPhaseInput !== "function" || typeof convertMask !== "function") {
@@ -979,12 +974,12 @@
 					const content = document.createElement('a');
 					content.innerHTML = "Error: Search terminated due an error.<br>";
 					element.appendChild(content);
-					document.getElementById("solveButton").textContent = "Start";
+                    document.getElementById("solveButton").textContent = "Start";
 					return;
 				}
 				document.getElementById("countLine").value = 0;
 				document.getElementById("currentDepth").value = -1;
-				document.getElementById("result").innerHTML = "";
+                document.getElementById("result").innerHTML = "";
 				messageCount = 0;
 				const scr = scr_fix(document.getElementById("scr").innerHTML);
 				const premove = scr_fix(document.getElementById('premove').value);
@@ -1002,7 +997,7 @@
 				const [resID, restrict] = getRestrictString();
 				const ma = getMavString();
 				const mcString = getMoveCountString();
-				document.getElementById("solveButton").textContent = "End";
+                document.getElementById("solveButton").textContent = "End";
 				const convertResult = convert(scr);
 				const result_moves = convertResult[0];
 				const result_rotation = convertResult[1];
@@ -1053,11 +1048,11 @@
 					content.innerHTML = "Unsolvable.<br>";
 				}
 				element.appendChild(content);
-				document.getElementById("solveButton").textContent = "Start";
+                document.getElementById("solveButton").textContent = "Start";
 				return;
 			} else if (match && match[1]) {
-				const depthNumber = match[1];
-				document.getElementById('currentDepth').value = depthNumber;
+                const depthNumber = match[1];
+                document.getElementById('currentDepth').value = depthNumber;
 				return;
 			} else {
 				messageCount++;
@@ -1129,17 +1124,17 @@
 				currentUrl.searchParams.set('slot', `${slot}`);
 				currentUrl.searchParams.set('index', `${messageCount}`);
 				currentUrl.searchParams.set('sol', sol.replace(/ /g, '_').replace(/'/g, '-'));
-
-				// Compress the link for sharing (v3: query parameters)
-				let finalLinkUrl = currentUrl.href;
-				if (typeof window.urlParamsCompressor !== 'undefined') {
-					try {
-						finalLinkUrl = window.urlParamsCompressor.createCompressedQueryUrl(currentUrl.href);
+				
+// Compress the link for sharing (v3: query parameters)
+			let finalLinkUrl = currentUrl.href;
+			if (typeof window.urlParamsCompressor !== 'undefined') {
+				try {
+					finalLinkUrl = window.urlParamsCompressor.createCompressedQueryUrl(currentUrl.href);
 					} catch (error) {
 						console.error('Link compression error:', error);
 					}
 				}
-
+				
 				var link_element3 = document.createElement('a');
 				link_element3.href = finalLinkUrl;
 				link_element3.target = '_blank';
@@ -1273,13 +1268,13 @@
 						const ret = (event.data).split(",");
 						var scramble = min2phase.solve(generateTwoPhaseInputWrapper(convert(ret[1] + reverse(ret[0]) + slotToRotDouble[slot])[0]));
 						scramble = scr_fix(rot + scramble);
-						const prev = document.getElementById('scr').innerHTML;
-						if (prev && prev.trim() !== "") {
-							scr_old = prev;
-							document.getElementById('back').disabled = false;
-						} else {
-							scr_old = null;
-						}
+					const prev = document.getElementById('scr').innerHTML;
+					if (prev && prev.trim() !== "") {
+						scr_old = prev;
+						document.getElementById('back').disabled = false;
+					} else {
+						scr_old = null;
+					}
 						document.getElementById('scr').innerHTML = scramble;
 						try {
 							show.innerHTML = '';
@@ -1325,13 +1320,13 @@
 						const ret = (event.data).split(",");
 						var scramble = min2phase.solve(generateTwoPhaseInputWrapper(convert(ret[1] + reverse(ret[0]) + slotToRotDouble[slot])[0]));
 						scramble = scr_fix(rot + scramble);
-						const prev = document.getElementById('scr').innerHTML;
-						if (prev && prev.trim() !== "") {
-							scr_old = prev;
-							document.getElementById('back').disabled = false;
-						} else {
-							scr_old = null;
-						}
+					const prev = document.getElementById('scr').innerHTML;
+					if (prev && prev.trim() !== "") {
+						scr_old = prev;
+						document.getElementById('back').disabled = false;
+					} else {
+						scr_old = null;
+					}
 						document.getElementById('scr').innerHTML = scramble;
 						try {
 							show.innerHTML = '';
@@ -1364,20 +1359,20 @@
 			}
 		}
 
-		const details_advanced_settings = document.getElementById("advancedSettings");
-		const summary_advanced_settings = document.getElementById("summaryAdvancedSettings");
+        const details_advanced_settings = document.getElementById("advancedSettings");
+        const summary_advanced_settings = document.getElementById("summaryAdvancedSettings");
 		details_advanced_settings.addEventListener('toggle', () => {
-			if (details_advanced_settings.open) {
-				summary_advanced_settings.textContent = "Hide Advanced Settings";
-			} else {
-				summary_advanced_settings.textContent = "Show Advanced Settings";
-			}
-		});
+            if (details_advanced_settings.open) {
+                summary_advanced_settings.textContent = "Hide Advanced Settings";
+            } else {
+                summary_advanced_settings.textContent = "Show Advanced Settings";
+            }
+        });
 
 	</script>
-	<script src="../src/i18n/i18n.js" defer></script>
 	<script src="../sw-register.js" defer></script>
 
+<script src="../src/i18n/i18n.js" defer></script>
 </body>
 
 </html>

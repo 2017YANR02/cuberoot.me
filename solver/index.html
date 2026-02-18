@@ -2,37 +2,35 @@
 <html lang="en">
 
 <head>
-    <!-- NOTE: base 标签让所有相对路径基于项目根解析，因为此文件已从根目录移入 solver/ 子目录 -->
-    <base href="../">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="manifest" href="manifest.json">
-    <title data-i18n="solver.title">Rubik's Cube Solver</title>
+    <link rel="manifest" href="../manifest.json">
+    <title data-i18n="solver.title">3x3x3 Rubik's Cube Solver - Cross, XCross, Pseudo F2L, EOCross & Last Layer</title>
     <meta name="description"
-        content="Fast solver for Rubik's Cube cross, XCross, EOCross, free pair, pseudo F2L, and last layer. ">
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-MXJH30352W"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag() { dataLayer.push(arguments); }
-        gtag('js', new Date());
-        gtag('config', 'G-MXJH30352W');
-    </script>
+        content="Advanced and Fast 3x3x3 solver. Supports Cross, XCross, Pseudo F2L, EOCross, and Last Layer. Offline PWA supported.">	<script async src="https://www.googletagmanager.com/gtag/js?id=G-MXJH30352W"></script>
+	<script>
+		window.dataLayer = window.dataLayer || [];
+		function gtag() { dataLayer.push(arguments); }
+		gtag('js', new Date());
+		gtag('config', 'G-MXJH30352W');
+	</script>
+    <script src="../url_params_compressor_simple.js" defer></script>
     <style>
         header {
             padding: 2px;
             text-align: center;
             cursor: pointer;
-            background-color: #121212;
+            background-color: #0a0a0f;
+				background-image:
+					radial-gradient(ellipse at 20% 50%, rgba(90, 90, 200, 0.08) 0%, transparent 50%),
+					radial-gradient(ellipse at 80% 50%, rgba(200, 90, 90, 0.06) 0%, transparent 50%);
         }
 
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
             padding: 0;
-            background-color: #0a0a0f;
-            background-image:
-                radial-gradient(ellipse at 20% 50%, rgba(90, 90, 200, 0.08) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 50%, rgba(200, 90, 90, 0.06) 0%, transparent 50%);
+            background-color: #121212;
         }
 
         h1 {
@@ -105,6 +103,10 @@
             border-radius: 4px;
             cursor: pointer;
             margin-bottom: 4px;
+        }
+
+        .large {
+            max-width: 250px;
         }
 
         .medium {
@@ -271,17 +273,21 @@
         .table-res_table_wrapper {
             max-height: 400px;
             overflow: auto;
+            contain: layout style;
         }
 
         #move_available_table_wrapper {
             overflow-x: auto;
             max-width: 100%;
             position: relative;
+            contain: layout style paint;
+            will-change: auto;
         }
 
         #move_available_table {
             max-height: 400px;
             overflow: auto;
+            contain: layout style;
         }
 
         #move_available_table tbody th {
@@ -326,6 +332,8 @@
             margin: 0;
             width: 100%;
             max-width: 600px;
+            margin-bottom: 10px;
+            background-color: #000000;
         }
 
         .custom-checkbox {
@@ -660,31 +668,29 @@
                 <button id="drawer-close-btn" class="drawer-close-btn" aria-label="Close menu">&times;</button>
             </div>
             <div class="drawer-content">
-                <a href="https://github.com/or18/RubiksSolverDemo" rel="noopener noreferrer" translate="no">Source</a>
-                <a href="solver/">Main Solver</a>
-                <a href="/2x2x2/" rel="noopener noreferrer" translate="no">2x2x2 Solver</a>
-                <a href="/documentation/" translate="no">Documentation</a>
-                <span style="font-weight:bold;margin-top:12px;display:block;color:#fff;"
-                    data-i18n="common.trainers">Trainers:</span>
-                <a href="/cross_trainer/" rel="noopener noreferrer" translate="no">Cross</a>
-                <a href="/xcross_trainer/" rel="noopener noreferrer" translate="no">XCross</a>
-				<a href="/xxcross_trainer/" rel="noopener noreferrer" translate="no">XXCross</a>
-                <a href="/pairing_trainer/" rel="noopener noreferrer" translate="no">Free Pair</a>
-                <a href="/pseudo_xcross_trainer/" rel="noopener noreferrer" translate="no">Pseudo XCross</a>
-                <a href="/pseudo_pairing_trainer/" rel="noopener noreferrer" translate="no">Pseudo Free Pair</a>
-                <a href="/eocross_trainer/" rel="noopener noreferrer" translate="no">EOCross</a>
-                <a href="/algTrainer/" rel="noopener noreferrer" translate="no">Alg Trainer</a>
-                <a href="/jsonEditor/" rel="noopener noreferrer" translate="no">JSON Editor</a>
-                <a href="stats/" rel="noopener noreferrer" translate="no">WCA Statistics</a>
-                <span style="font-weight:bold;margin-top:12px;display:block;color:#fff;"
-                    data-i18n="common.external_tools">External tools:</span>
-                <a href="https://trangium.github.io/MovecountCoefficient/" target="_blank" rel="noopener noreferrer"
-                    translate="no">MCC by trangium</a>
-                <a href="https://speedcubedb.com/a/3x3/" target="_blank" rel="noopener noreferrer"
-                    translate="no">speedcubedb.com</a>
-                <a href="https://cstimer.net/" target="_blank" rel="noopener noreferrer" translate="no">cstimer.net</a>
-            </div>
-        </nav>
+<a href="https://github.com/or18/RubiksSolverDemo" rel="noopener noreferrer" translate="no">Source</a>
+<a href="/solver/">Main Solver</a>
+<a href="/2x2x2/" rel="noopener noreferrer" translate="no">2x2x2 Solver</a>
+<a href="/documentation/" translate="no">Documentation</a>
+<span style="font-weight:bold;margin-top:12px;display:block;color:#fff;" data-i18n="common.trainers">Trainers:</span>
+<a href="/cross_trainer/" rel="noopener noreferrer" translate="no">Cross</a>
+<a href="/xcross_trainer/" rel="noopener noreferrer" translate="no">XCross</a>
+<a href="/xxcross_trainer/" rel="noopener noreferrer" translate="no">XXCross</a>
+<a href="/pairing_trainer/" rel="noopener noreferrer" translate="no">Free Pair</a>
+<a href="/xcross_pairing_trainer/" rel="noopener noreferrer" translate="no">XCross Free Pair</a>
+<a href="/pseudo_xcross_trainer/" rel="noopener noreferrer" translate="no">Pseudo XCross</a>
+<a href="/pseudo_pairing_trainer/" rel="noopener noreferrer" translate="no">Pseudo Free Pair</a>
+<a href="/eocross_trainer/" rel="noopener noreferrer" translate="no">EOCross</a>
+<a href="/algTrainer/" rel="noopener noreferrer" translate="no">Alg Trainer</a>
+<a href="/jsonEditor/" rel="noopener noreferrer" translate="no">JSON Editor</a>
+<a href="/stats/" rel="noopener noreferrer" translate="no">WCA Statistics</a>
+<span style="font-weight:bold;margin-top:12px;display:block;color:#fff;" data-i18n="common.external_tools">External
+    tools:</span>
+<a href="https://trangium.github.io/MovecountCoefficient/" target="_blank" rel="noopener noreferrer" translate="no">MCC
+    by trangium</a>
+<a href="https://speedcubedb.com/a/3x3/" target="_blank" rel="noopener noreferrer" translate="no">speedcubedb.com</a>
+<a href="https://cstimer.net/" target="_blank" rel="noopener noreferrer" translate="no">cstimer.net</a>
+			
     </div>
     <script>
         const hamburgerBtn = document.getElementById('hamburger-menu-btn');
@@ -726,7 +732,7 @@
         });
     </script>
     <details id="details_cubeUI">
-        <summary id="summary_cubeUI" data-i18n="solver.show_cube_editor">Show Cube Editor</summary>
+        <summary id="summary_cubeUI">Show Cube Editor</summary>
         <div class="main-container">
             <div class="controls">
                 <div class="control-group">
@@ -817,12 +823,11 @@
                 </div>
 
                 <div class="control-group">
-                    <button id="swap-mode-btn" class="mode-button active" data-i18n="solver.swap">Swap</button>
-                    <button id="flip-mode-btn" class="mode-button" data-i18n="solver.flip">Flip</button>
-                    <button id="ui_solve_btn" class="action-button"
-                        data-i18n="solver.get_scramble">Get<br>Scramble</button>
-                    <button id="reset-cube-btn" class="action-button" data-i18n="solver.reset">Reset</button>
-                    <label for="pre_rot" data-i18n="solver.rotation">Rotation: </label>
+                    <button id="swap-mode-btn" class="mode-button active">Swap</button>
+                    <button id="flip-mode-btn" class="mode-button">Flip</button>
+                    <button id="ui_solve_btn" class="action-button">Get<br>Scramble</button>
+                    <button id="reset-cube-btn" class="action-button">Reset</button>
+                    <label for="pre_rot">Rotation: </label>
                     <select translate="no" id="pre_rot">
                         <option translate="no" value="">None</option>
                         <option translate="no" value="y">y</option>
@@ -861,7 +866,7 @@
             </div>
         </div>
     </details>
-    <label for="solver" data-i18n="solver.solver_label">Solver: </label><br>
+    <label for="solver">Solver: </label><br>
     <select translate="no" id="solver" onchange="change(); updateUrlParams();">
         <option translate="no" value="F2L" selected>F2L Lite</option>
         <option translate="no" value="F2L_pair">Pairing</option>
@@ -877,25 +882,25 @@
         <option translate="no" value="LL2">LL</option>
         <option translate="no" value="LU2">LL AUF</option>
     </select><br>
-    <label for="scr" data-i18n="solver.scramble_label">Scramble: </label><br>
+    <label for="scr">Scramble: </label><br>
     <textarea id="scr" rows="10" cols="10" placeholder="Use // to write comments, as in algs // comment. 
 Write the //setup comment in the appropriate position when viewing on alg.cubing.net or cubedb.net."
-        data-i18n-placeholder="solver.scramble_placeholder" onchange="save()"></textarea><br>
-    <button id="gen" class="button medium" onclick="genscr()" data-i18n="solver.random">Random</button>
-    <button id="reverse" class="button medium" onclick="reverseScramble()" data-i18n="solver.reverse">Reverse</button>
-    <button id="mirror" class="button medium" onclick="mirrorScramble()" data-i18n="solver.mirror">Mirror</button>
-    <button id="clear" class="button medium" data-i18n="solver.clear">Clear</button>
+        onchange="save()"></textarea><br>
+    <button id="gen" class="button medium" onclick="genscr()">Random</button>
+    <button id="reverse" class="button medium" onclick="reverseScramble()">Reverse</button>
+    <button id="mirror" class="button medium" onclick="mirrorScramble()">Mirror</button>
+    <button id="clear" class="button medium">Clear</button>
     <button id="undo" class="button small hidden_small" onclick="undo()">←</button>
     <button id="redo" class="button small hidden_small" onclick="redo()">→</button><br>
     <details id="details_preview">
-        <summary id="summary_preview" data-i18n="solver.show_preview">Show Preview</summary>
+        <summary id="summary_preview">Show Preview</summary>
         <div id="show"></div>
         <pre id="links"
             class="hidden"><a translate="no" id="link_alg_cubing" href="https://alg.cubing.net/" target="_blank" rel="noopener noreferrer">alg.cubing.net</a>  <a translate="no" id="link_cubedb" href="https://cubedb.net/?puzzle=3x3" target="_blank" rel="noopener noreferrer">cubedb.net</a></pre>
     </details>
     <details id="analyze">
-        <summary id="summary_analyzer" data-i18n="solver.show_analyzer">Show Analyzer</summary><br>
-        <label for="analyzer_rotation_option" data-i18n="solver.face_option">Face Option: </label>
+        <summary id="summary_analyzer">Show Analyzer</summary><br>
+        <label for="analyzer_rotation_option">Face Option: </label>
         <fieldset id="analyzer_rotation_option">
             <input type="checkbox" id="checkboxD_analyzer" class="custom-checkbox analyzer" value="D" checked>
             <label translate="no" for="checkboxD_analyzer">D</label>
@@ -910,7 +915,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             <input type="checkbox" id="checkboxB_analyzer" class="custom-checkbox analyzer" value="B">
             <label translate="no" for="checkboxB_analyzer">B</label>
         </fieldset>
-        <label for="analyzer_option" data-i18n="solver.solver_option">Solver Option: </label>
+        <label for="analyzer_option">Solver Option: </label>
         <select translate="no" id="analyzer_option">
             <option translate="no" value="cross">cross</option>
             <option translate="no" value="xcross">xcross</option>
@@ -919,17 +924,16 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             <option translate="no" value="2x">cross, x</option>
             <option translate="no" value="3x">cross, x, xx</option>
             <option translate="no" value="4x">cross, x, xx, xxx</option>
-            <option translate="no" value="5x">cross, x, xx, xxx, xxxx</option>
         </select><br>
-        <label for="analyzer_num" data-i18n="solver.count">Count: </label>
+        <label for="analyzer_num">Count: </label>
         <input type="number" id="analyzer_num" value="1" min="1" required><br>
-        <button id="analyzer" class="button medium" onclick="analyze()" data-i18n="solver.analyze">Analyze</button><br>
+        <button id="analyzer" class="button medium" onclick="analyze()">Analyze</button><br>
         <div id="table"></div>
     </details>
 
     <details id="eo_analyze">
-        <summary id="summary_eo_analyzer" data-i18n="solver.show_analyzer">Show Analyzer</summary><br>
-        <label for="eo_analyzer_rotation_option" data-i18n="solver.face_option">Face Option: </label>
+        <summary id="summary_eo_analyzer">Show Analyzer</summary><br>
+        <label for="eo_analyzer_rotation_option">Face Option: </label>
         <fieldset id="eo_analyzer_rotation_option">
             <input type="checkbox" id="checkboxD_eo_analyzer" class="custom-checkbox eo_analyzer" value="D" checked>
             <label translate="no" for="checkboxD_eo_analyzer">D</label>
@@ -944,7 +948,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             <input type="checkbox" id="checkboxB_eo_analyzer" class="custom-checkbox eo_analyzer" value="B">
             <label translate="no" for="checkboxB_eo_analyzer">B</label>
         </fieldset>
-        <label for="eo_analyzer_option" data-i18n="solver.solver_option">Solver Option: </label>
+        <label for="eo_analyzer_option">Solver Option: </label>
         <select translate="no" id="eo_analyzer_option">
             <option translate="no" value="cross">cross</option>
             <option translate="no" value="xcross">xcross</option>
@@ -954,16 +958,15 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             <option translate="no" value="3x">cross, x, xx</option>
             <option translate="no" value="4x">cross, x, xx, xxx</option>
         </select><br>
-        <label for="eo_analyzer_num" data-i18n="solver.count">Count: </label>
+        <label for="eo_analyzer_num">Count: </label>
         <input type="number" id="eo_analyzer_num" value="1" min="1" required><br>
-        <button id="eo_analyzer" class="button medium" onclick="eo_analyze()"
-            data-i18n="solver.analyze">Analyze</button>
+        <button id="eo_analyzer" class="button medium" onclick="eo_analyze()">Analyze</button>
         <div id="eo_table"></div>
     </details>
 
     <details id="panalyze">
-        <summary id="summary_panalyzer" data-i18n="solver.show_analyzer">Show Analyzer</summary><br>
-        <label for="panalyzer_rotation_option" data-i18n="solver.face_option">Face Option: </label>
+        <summary id="summary_panalyzer">Show Analyzer</summary><br>
+        <label for="panalyzer_rotation_option">Face Option: </label>
         <fieldset id="panalyzer_rotation_option">
             <input type="checkbox" id="checkboxD_panalyzer" class="custom-checkbox panalyzer" value="D" checked>
             <label translate="no" for="checkboxD_panalyzer">D</label>
@@ -978,7 +981,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             <input type="checkbox" id="checkboxB_panalyzer" class="custom-checkbox panalyzer" value="B">
             <label translate="no" for="checkboxB_panalyzer">B</label>
         </fieldset>
-        <label for="panalyzer_option" data-i18n="solver.solver_option">Solver Option: </label>
+        <label for="panalyzer_option">Solver Option: </label>
         <select translate="no" id="panalyzer_option">
             <option translate="no" value="cross">cross</option>
             <option translate="no" value="xcross">xcross</option>
@@ -988,15 +991,15 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             <option translate="no" value="3x">cross, x, xx</option>
             <option translate="no" value="4x">cross, x, xx, xxx</option>
         </select><br>
-        <label for="panalyzer_num" data-i18n="solver.count">Count: </label>
+        <label for="panalyzer_num">Count: </label>
         <input type="number" id="panalyzer_num" value="1" min="1" required><br>
-        <button id="panalyzer" class="button medium" onclick="panalyze()" data-i18n="solver.analyze">Analyze</button>
+        <button id="panalyzer" class="button medium" onclick="panalyze()">Analyze</button>
         <div id="ptable"></div>
     </details>
 
     <details id="pair_analyze">
-        <summary id="summary_pair_analyzer" data-i18n="solver.show_analyzer">Show Analyzer</summary><br>
-        <label for="pair_analyzer_rotation_option" data-i18n="solver.face_option">Face Option: </label>
+        <summary id="summary_pair_analyzer">Show Analyzer</summary><br>
+        <label for="pair_analyzer_rotation_option">Face Option: </label>
         <fieldset id="pair_analyzer_rotation_option">
             <input type="checkbox" id="checkboxD_pair_analyzer" class="custom-checkbox pair_analyzer" value="D" checked>
             <label translate="no" for="checkboxD_pair_analyzer">D</label>
@@ -1011,7 +1014,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             <input type="checkbox" id="checkboxB_pair_analyzer" class="custom-checkbox pair_analyzer" value="B">
             <label translate="no" for="checkboxB_pair_analyzer">B</label>
         </fieldset>
-        <label for="pair_analyzer_option" data-i18n="solver.solver_option">Solver Option: </label>
+        <label for="pair_analyzer_option">Solver Option: </label>
         <select translate="no" id="pair_analyzer_option">
             <option translate="no" value="cross">cross</option>
             <option translate="no" value="xcross">xcross</option>
@@ -1021,16 +1024,15 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             <option translate="no" value="3x">cross, x, xx</option>
             <option translate="no" value="4x">cross, x, xx, xxx</option>
         </select><br>
-        <label for="pair_analyzer_num" data-i18n="solver.count">Count: </label>
+        <label for="pair_analyzer_num">Count: </label>
         <input type="number" id="pair_analyzer_num" value="1" min="1" required><br>
-        <button id="pair_analyzer" class="button medium" onclick="pair_analyze()"
-            data-i18n="solver.analyze">Analyze</button>
+        <button id="pair_analyzer" class="button medium" onclick="pair_analyze()">Analyze</button>
         <div id="pair_table"></div>
     </details>
 
     <details id="pair_panalyze">
-        <summary id="summary_pair_panalyzer" data-i18n="solver.show_analyzer">Show Analyzer</summary><br>
-        <label for="pair_panalyzer_rotation_option" data-i18n="solver.face_option">Face Option: </label>
+        <summary id="summary_pair_panalyzer">Show Analyzer</summary><br>
+        <label for="pair_panalyzer_rotation_option">Face Option: </label>
         <fieldset id="pair_panalyzer_rotation_option">
             <input type="checkbox" id="checkboxD_pair_panalyzer" class="custom-checkbox pair_panalyzer" value="D"
                 checked>
@@ -1046,7 +1048,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             <input type="checkbox" id="checkboxB_pair_panalyzer" class="custom-checkbox pair_panalyzer" value="B">
             <label translate="no" for="checkboxB_pair_panalyzer">B</label>
         </fieldset>
-        <label for="pair_panalyzer_option" data-i18n="solver.solver_option">Solver Option: </label>
+        <label for="pair_panalyzer_option">Solver Option: </label>
         <select translate="no" id="pair_panalyzer_option">
             <option translate="no" value="cross">cross</option>
             <option translate="no" value="xcross">xcross</option>
@@ -1056,14 +1058,13 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             <option translate="no" value="3x">cross, x, xx</option>
             <option translate="no" value="4x">cross, x, xx, xxx</option>
         </select><br>
-        <label for="pair_panalyzer_num" data-i18n="solver.count">Count: </label>
+        <label for="pair_panalyzer_num">Count: </label>
         <input type="number" id="pair_panalyzer_num" value="1" min="1" required><br>
-        <button id="pair_panalyzer" class="button medium" onclick="pair_panalyze()"
-            data-i18n="solver.analyze">Analyze</button>
+        <button id="pair_panalyzer" class="button medium" onclick="pair_panalyze()">Analyze</button>
         <div id="pair_ptable"></div>
     </details><br>
 
-    <label for="rot" data-i18n="solver.rotation">Rotation: </label>
+    <label for="rot">Rotation: </label>
     <select translate="no" id="rot" onchange="updateUrlParams()">
         <option translate="no" value="">None</option>
         <option translate="no" value="y">y</option>
@@ -1095,7 +1096,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
         <option translate="no" value="x y'">x y'</option>
     </select><br>
     <div id="option_for_F2L" class="hidden">
-        <label for="slot" data-i18n="solver.slot">Slot: </label>
+        <label for="slot">Slot: </label>
         <select translate="no" id="slot" onchange="updateUrlParams()">
             <option translate="no" value="">None</option>
             <option translate="no" value="BL">BL</option>
@@ -1117,7 +1118,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
     </div>
     <div id="option_for_PF2L" class="hidden">
         <div id="option_for_PF2LE">
-            <label for="pslot_edge" data-i18n="solver.pseudo_slot_edge">Pseudo Slot Edge: </label>
+            <label for="pslot_edge">Pseudo Slot Edge: </label>
             <select translate="no" id="pslot_edge" onchange="updateDropdown(); updateUrlParams();">
                 <option translate="no" value="">None</option>
                 <option translate="no" value="BL">BL</option>
@@ -1137,14 +1138,14 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             </select>
         </div>
         <div id="option_for_PF2LC" class="hidden">
-            <label for="pslot_corner" data-i18n="solver.pseudo_slot_corner">Pseudo Slot Corner: </label>
+            <label for="pslot_corner">Pseudo Slot Corner: </label>
             <select translate="no" id="pslot_corner" onchange="updateUrlParams()">
             </select>
         </div>
     </div>
 
     <div id="option_for_F2L2" class="hidden">
-        <label for="slot2" data-i18n="solver.slot">Slot: </label>
+        <label for="slot2">Slot: </label>
         <select translate="no" id="slot2" onchange="updateDropdown2(); updateUrlParams()">
             <option translate="no" value="">None</option>
             <option translate="no" value="BL">BL</option>
@@ -1164,7 +1165,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
         </select>
     </div>
     <div id="option_for_pair_F2L" class="hidden">
-        <label for="pair_slot" data-i18n="solver.free_pair">Free Pair: </label>
+        <label for="pair_slot">Free Pair: </label>
         <select translate="no" id="pair_slot" onchange="updateUrlParams()">
             <option translate="no" value="BL">BL</option>
             <option translate="no" value="BR">BR</option>
@@ -1174,7 +1175,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
     </div>
     <div id="option_for_PF2L2" class="hidden">
         <div id="option_for_PF2LE2">
-            <label for="pslot_edge2" data-i18n="solver.pseudo_slot_edge">Pseudo Slot Edge: </label>
+            <label for="pslot_edge2">Pseudo Slot Edge: </label>
             <select translate="no" id="pslot_edge2" onchange="updateDropdown3(); updateUrlParams()">
                 <option translate="no" value="">None</option>
                 <option translate="no" value="BL">BL</option>
@@ -1194,13 +1195,13 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             </select>
         </div>
         <div id="option_for_PF2LC2" class="hidden">
-            <label for="pslot_corner2" data-i18n="solver.pseudo_slot_corner">Pseudo Slot Corner: </label>
+            <label for="pslot_corner2">Pseudo Slot Corner: </label>
             <select translate="no" id="pslot_corner2" onchange="updateDropdown4(); updateUrlParams()">
             </select>
         </div>
         <div id="option_for_pair_PF2L" class="hidden">
             <div id="option_for_pair_PF2LE">
-                <label for="pair_pslot_edge" data-i18n="solver.free_pair_edge">Free Pair Edge: </label>
+                <label for="pair_pslot_edge">Free Pair Edge: </label>
                 <select translate="no" id="pair_pslot_edge" onchange="updateUrlParams()">
                     <option translate="no" value="BL">BL</option>
                     <option translate="no" value="BR">BR</option>
@@ -1209,7 +1210,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                 </select>
             </div>
             <div id="option_for_pair_PF2LC">
-                <label for="pair_pslot_corner" data-i18n="solver.free_pair_corner">Free Pair Corner: </label>
+                <label for="pair_pslot_corner">Free Pair Corner: </label>
                 <select translate="no" id="pair_pslot_corner" onchange="updateUrlParams()">
                     <option translate="no" value="BL">BL</option>
                     <option translate="no" value="BR">BR</option>
@@ -1220,7 +1221,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
         </div>
     </div>
     <div id="option_for_eocross" class="hidden">
-        <label for="slot_eo" data-i18n="solver.slot">Slot: </label>
+        <label for="slot_eo">Slot: </label>
         <select translate="no" id="slot_eo" onchange="updateUrlParams()">
             <option translate="no" value="">None</option>
             <option translate="no" value="BL">BL</option>
@@ -1242,7 +1243,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
     </div>
 
     <div id="option_for_LS" class="hidden">
-        <label for="ll" data-i18n="solver.last_layer_option">Last Layer Option: </label>
+        <label for="ll">Last Layer Option: </label>
         <select translate="no" id="ll" onchange="updateUrlParams()">
             <option translate="no" value="">None</option>
             <option translate="no" value="CP">CP</option>
@@ -1263,11 +1264,11 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
         </select>
     </div>
     <div id="basic input">
-        <label for="len" data-i18n="solver.max_length">Max Length: </label>
+        <label for="len">Max Length: </label>
         <input type="number" id="len" value="20" min="1" required onchange="updateUrlParams()"><br>
-        <label for="num" data-i18n="solver.max_count">Max Count: </label>
+        <label for="num">Max Count: </label>
         <input type="number" id="num" value="20" min=1 required onchange="updateUrlParams()"><br>
-        <label for="res" data-i18n="solver.move_restrict">Move Restrict: </label>
+        <label for="res">Move Restrict: </label>
         <div translate="no" id="res" onchange="updateUrlParams()">
 
             <table class="checkbox-table">
@@ -1361,10 +1362,10 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
         </div><br>
 
         <details id="advancedSettings">
-            <summary id="summaryAdvancedSettings" data-i18n="solver.show_advanced">Show Advanced Settings</summary><br>
-            <label for="premove" data-i18n="solver.pre_move">Pre Move: </label>
+            <summary id="summaryAdvancedSettings">Show Advanced Settings</summary><br>
+            <label for="premove">Pre Move: </label>
             <input type="text" id="premove" onchange="updateUrlParams()"><br>
-            <label for="res_table" data-i18n="solver.move_restrict">Move Restrict:</label>
+            <label for="res_table">Move Restrict:</label>
             <div id="res_table_wrapper" onchange="updateUrlParams()">
                 <table id="res_table" border="2" translate="no">
                     <thead>
@@ -1379,14 +1380,18 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                     </tbody>
                 </table>
             </div><br>
-            <label for="move_available_table" data-i18n="solver.move_available_table">Move Available Table:</label>
+            <label for="move_available_table">Move Available Table:</label>
             <div id="move_available_table_wrapper" onchange="updateUrlParams()">
                 <table id="move_available_table" border="2" translate="no">
                     <thead></thead>
                     <tbody></tbody>
                 </table>
             </div><br>
-            <label for="center_restrict" data-i18n="solver.center_restrict">Center Restrict:</label>
+            <button id="uncheckMoveRotationOrder" class="button large" onclick="uncheckMoveRotationOrder()">Disable Move
+                → Rotation</button><br>
+            <button id="checkRotationMoveOrder" class="button large" onclick="checkRotationMoveOrder()">Enable Rotation
+                → Move</button><br><br>
+            <label for="center_restrict">Center Restrict:</label>
             <div id="center_restrict_wrapper" onchange="updateUrlParams()">
                 <table id="center_restrict" border="2" translate="no">
                     <thead>
@@ -1540,9 +1545,9 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                     </tbody>
                 </table>
             </div><br>
-            <label for="rot_count" data-i18n="solver.max_rot_count">Max Rotation Count: </label>
+            <label for="rot_count">Max Rotation Count: </label>
             <input type="number" id="rot_count" value=0 min=0 required onchange="updateUrlParams()"><br>
-            <label for="count_table" data-i18n="solver.max_move_count">Max Move Count:</label>
+            <label for="count_table">Max Move Count:</label>
             <div id="count_table_wrapper">
                 <table id="count_table" border="2" translate="no">
                     <thead>
@@ -1560,62 +1565,60 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
         </details>
         <br>
         <input type="checkbox" id="CheckboxAutoMaskSetting" class="custom-checkbox" checked>
-        <label for="CheckboxAutoMaskSetting" data-i18n="solver.auto_stickering">Auto Stickering Setting </label>
+        <label for="CheckboxAutoMaskSetting">Auto Stickering Setting </label>
 
         <details id="maskOptions">
-            <summary id="summaryMaskOptions" data-i18n="solver.show_stickering">Show Stickering Settings</summary>
+            <summary id="summaryMaskOptions">Show Stickering Settings</summary>
             <div id="preview"></div><br>
             <div id="preview_solved"></div><br>
-            <button id="autoSetMask" class="button medium" onclick="setStickeringOptionAuto()"
-                data-i18n="solver.auto">Auto</button>
-            <button id="resetMask" class="button medium" onclick="resetStickeringOptions('-')"
-                data-i18n="solver.reset">Reset</button><br><br>
+            <button id="autoSetMask" class="button medium" onclick="setStickeringOptionAuto()">Auto</button>
+            <button id="resetMask" class="button medium" onclick="resetStickeringOptions('-')">Reset</button><br><br>
             <div id="maskOptionsCenterDiv">
-                <label for="maskOptionCenter" data-i18n="solver.centers">Centers: </label>
+                <label for="maskOptionCenter">Centers: </label>
                 <select id="maskOptionCenter">
                     <option value="-">Regular</option>
                     <option value="D">Dim</option>
                     <option value="I">Ignored</option>
                 </select>
             </div>
-            <label for="maskOptionsEdge" data-i18n="solver.edges_options">Edges Options</label><br>
+            <label for="maskOptionsEdge">Edges Options</label><br>
             <div id="maskOptionsEdge">
-                <label for="maskOptionDE" data-i18n="solver.cross">Cross: </label>
+                <label for="maskOptionDE">Cross: </label>
                 <select id="maskOptionDE">
                     <option value="-">Regular</option>
                     <option value="D">Dim</option>
                     <option value="?">Oriented</option>
                     <option value="I">Ignored</option>
                 </select><br>
-                <label for="maskOptionBLE" data-i18n="solver.bl_slot">BL Slot: </label>
+                <label for="maskOptionBLE">BL Slot: </label>
                 <select id="maskOptionBLE">
                     <option value="-">Regular</option>
                     <option value="D">Dim</option>
                     <option value="?">Oriented</option>
                     <option value="I">Ignored</option>
                 </select><br>
-                <label for="maskOptionBRE" data-i18n="solver.br_slot">BR Slot: </label>
+                <label for="maskOptionBRE">BR Slot: </label>
                 <select id="maskOptionBRE">
                     <option value="-">Regular</option>
                     <option value="D">Dim</option>
                     <option value="?">Oriented</option>
                     <option value="I">Ignored</option>
                 </select><br>
-                <label for="maskOptionFRE" data-i18n="solver.fr_slot">FR Slot: </label>
+                <label for="maskOptionFRE">FR Slot: </label>
                 <select id="maskOptionFRE">
                     <option value="-">Regular</option>
                     <option value="D">Dim</option>
                     <option value="?">Oriented</option>
                     <option value="I">Ignored</option>
                 </select><br>
-                <label for="maskOptionFLE" data-i18n="solver.fl_slot">FL Slot: </label>
+                <label for="maskOptionFLE">FL Slot: </label>
                 <select id="maskOptionFLE">
                     <option value="-">Regular</option>
                     <option value="D">Dim</option>
                     <option value="?">Oriented</option>
                     <option value="I">Ignored</option>
                 </select><br>
-                <label for="maskOptionLLE" data-i18n="solver.last_layer">Last Layer: </label>
+                <label for="maskOptionLLE">Last Layer: </label>
                 <select id="maskOptionLLE">
                     <option value="-">Regular</option>
                     <option value="D">Dim</option>
@@ -1623,37 +1626,37 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                     <option value="I">Ignored</option>
                 </select>
             </div>
-            <label for="maskOptionsCorner" data-i18n="solver.corners_options">Corners Options</label><br>
+            <label for="maskOptionsCorner">Corners Options</label><br>
             <div id="maskOptionsCorner">
-                <label for="maskOptionBLC" data-i18n="solver.bl_slot">BL Slot: </label>
+                <label for="maskOptionBLC">BL Slot: </label>
                 <select id="maskOptionBLC">
                     <option value="-">Regular</option>
                     <option value="D">Dim</option>
                     <option value="?">Oriented</option>
                     <option value="I">Ignored</option>
                 </select><br>
-                <label for="maskOptionBRC" data-i18n="solver.br_slot">BR Slot: </label>
+                <label for="maskOptionBRC">BR Slot: </label>
                 <select id="maskOptionBRC">
                     <option value="-">Regular</option>
                     <option value="D">Dim</option>
                     <option value="?">Oriented</option>
                     <option value="I">Ignored</option>
                 </select><br>
-                <label for="maskOptionFRC" data-i18n="solver.fr_slot">FR Slot: </label>
+                <label for="maskOptionFRC">FR Slot: </label>
                 <select id="maskOptionFRC">
                     <option value="-">Regular</option>
                     <option value="D">Dim</option>
                     <option value="?">Oriented</option>
                     <option value="I">Ignored</option>
                 </select><br>
-                <label for="maskOptionFLC" data-i18n="solver.fl_slot">FL Slot: </label>
+                <label for="maskOptionFLC">FL Slot: </label>
                 <select id="maskOptionFLC">
                     <option value="-">Regular</option>
                     <option value="D">Dim</option>
                     <option value="?">Oriented</option>
                     <option value="I">Ignored</option>
                 </select><br>
-                <label for="maskOptionLLC" data-i18n="solver.last_layer">Last Layer: </label>
+                <label for="maskOptionLLC">Last Layer: </label>
                 <select id="maskOptionLLC">
                     <option value="-">Regular</option>
                     <option value="D">Dim</option>
@@ -1663,16 +1666,15 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             </div>
         </details>
     </div>
-    <a class="hidden" id="tp_alert" data-i18n="solver.tp_alert">Two Phase Solver output 1 solution.</a><br>
-    <button id="solveButton" class="button medium" onclick="startWorker()"
-        data-i18n="solver.start">Start</button>&nbsp;&nbsp;
-    <button onclick="showModalWithCustomText()" class="button medium" data-i18n="solver.export">Export</button><br>
+    <a class="hidden" id="tp_alert">Two Phase Solver output 1 solution.</a><br>
+    <button id="solveButton" class="button medium" onclick="startWorker()">Start</button>&nbsp;&nbsp;
+    <button onclick="showModalWithCustomText()" class="button medium">Export</button><br>
     <div id="modal-overlay" class="modal-overlay hidden">
         <div id="modal-panel" class="modal-panel">
             <div class="modal-header">
                 <div class="header-left-group">
-                    <h2 data-i18n="solver.output">Output</h2>
-                    <button id="modal-copy-btn" class="button copy-btn" data-i18n="solver.copy">Copy</button>
+                    <h2>Output</h2>
+                    <button id="modal-copy-btn" class="button copy-btn">Copy</button>
                 </div>
                 <button id="modal-close-btn" class="close-btn">&times;</button>
             </div>
@@ -1681,9 +1683,9 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             </div>
         </div>
     </div>
-    <label for="countLine" data-i18n="solver.num_of_solutions">Number of solutions: </label>
+    <label for="countLine">Number of solutions: </label>
     <input type="text" id="countLine" value="0" readonly><br>
-    <label for="currentDepth" data-i18n="solver.current_depth">Current Depth: </label>
+    <label for="currentDepth">Current Depth: </label>
     <input type="text" id="currentDepth" value="-1" readonly>
     <div id="result"></div>
 
@@ -1742,10 +1744,10 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             });
         }
         window.loadMin2phase = function () {
-            return window.__min2phaseLoading || (window.__min2phaseLoading = loadScriptAsync('src/min2phase.js/min2phase.js').then(() => window.min2phase));
+            return window.__min2phaseLoading || (window.__min2phaseLoading = loadScriptAsync('../src/min2phase.js/min2phase.js').then(() => window.min2phase));
         };
         window.loadListJs = function () {
-            return window.__listLoading || (window.__listLoading = loadScriptAsync('src/functions/list.js'));
+            return window.__listLoading || (window.__listLoading = loadScriptAsync('../src/functions/list.js'));
         };
         window.loadFunctionsJs = function () {
             if (window.__functionsLoading) return window.__functionsLoading;
@@ -1753,7 +1755,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                 window.Module = {
                     onRuntimeInitialized: () => resolve(window.Module)
                 };
-                loadScriptAsync('src/functions/functions.js').catch(err => {
+                loadScriptAsync('../src/functions/functions.js').catch(err => {
                     window.__functionsLoading = null;
                     reject(err);
                 });
@@ -2083,7 +2085,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                 case 'D':
                     return 'dim';
                 case 'I':
-                    return 'ignored';
+                    return { mask: 'ignored', hintMask: 'invisible' };
                 case '?':
                     return 'oriented';
             }
@@ -2483,40 +2485,110 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             const moveCountTableWrapper = document.getElementById('count_table_wrapper');
             const moveCountTableBody = document.querySelector('#count_table tbody');
 
+            let advancedSettingsInitialized = false;
+            let updateDebounceTimer = null;
+            let handleCheckboxChangeTimer = null;
+            let tableWrapperChangeTimer = null;
+            const advancedSettings = document.getElementById('advancedSettings');
+
+            let lastResId = '';
+            let lastRestId = '';
+
             const moveDisplayNames = {
                 u: "u", d: "d", l: "l", r: "r", f: "f", b: "b", x: "x", y: "y", z: "z"
             };
+
+            function createCheckboxCell(id, value, checked = true) {
+                const td = document.createElement('td');
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = id;
+                checkbox.className = 'custom-checkbox restrict';
+                checkbox.value = value;
+                checkbox.checked = checked;
+
+                const label = document.createElement('label');
+                label.htmlFor = id;
+
+                td.appendChild(checkbox);
+                td.appendChild(label);
+                return td;
+            }
+
+            function createNumberInputCell(dataMove, defaultValue = '20') {
+                const td = document.createElement('td');
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.min = '0';
+                input.className = 'move-count-input';
+                input.dataset.move = dataMove;
+                input.value = defaultValue;
+                td.appendChild(input);
+                return td;
+            }
 
             function createMoveRow(move) {
                 const displayName = moveDisplayNames[move] || move.toUpperCase();
                 const newRow = document.createElement('tr');
                 newRow.dataset.move = move;
-                let rowHTML = `<th>${displayName}</th>`;
+
+                const th = document.createElement('th');
+                th.textContent = displayName;
+                newRow.appendChild(th);
+
                 for (let i = 1; i <= 3; i++) {
-                    rowHTML += `<td>
-                <input type="checkbox" id="checkbox_restrict${move}${i}" class="custom-checkbox restrict" value="${move}" checked>
-                <label for="checkbox_restrict${move}${i}"></label>
-            </td>`;
+                    newRow.appendChild(createCheckboxCell(`checkbox_restrict${move}${i}`, move, true));
                 }
-                newRow.innerHTML = rowHTML;
+
                 return newRow;
             }
 
             function updateRestrictTable() {
                 const restrictCheckboxes = restrictFieldset.querySelectorAll('input[type="checkbox"]');
+
+                const checkedMoves = new Set();
+                const checkedMovesArray = [];
                 restrictCheckboxes.forEach(checkbox => {
-                    const move = checkbox.value;
-                    const existingRow = tableBody.querySelector(`tr[data-move="${move}"]`);
                     if (checkbox.checked) {
-                        if (!existingRow) {
-                            tableBody.appendChild(createMoveRow(move));
-                        }
-                    } else {
-                        if (existingRow) {
-                            existingRow.remove();
-                        }
+                        checkedMoves.add(checkbox.value);
+                        checkedMovesArray.push(checkbox.value);
                     }
                 });
+
+                const currentResId = checkedMovesArray.join('');
+                if (currentResId === lastResId && tableBody.querySelectorAll('tr').length === checkedMoves.size) {
+                    return;
+                }
+                lastResId = currentResId;
+
+                const existingRows = tableBody.querySelectorAll('tr');
+                const rowsToRemove = [];
+                const existingMoves = new Set();
+
+                existingRows.forEach(row => {
+                    const move = row.dataset.move;
+                    existingMoves.add(move);
+                    if (!checkedMoves.has(move)) {
+                        rowsToRemove.push(row);
+                    }
+                });
+
+                const fragment = document.createDocumentFragment();
+                let hasNewRows = false;
+
+                checkedMovesArray.forEach(move => {
+                    if (!existingMoves.has(move)) {
+                        fragment.appendChild(createMoveRow(move));
+                        hasNewRows = true;
+                    }
+                });
+
+                if (rowsToRemove.length > 0 || hasNewRows) {
+                    rowsToRemove.forEach(row => row.remove());
+                    if (hasNewRows) {
+                        tableBody.appendChild(fragment);
+                    }
+                }
             }
 
             function getIdsFromCheckboxes() {
@@ -2565,6 +2637,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                     const cb = tableBody.querySelector(`#checkbox_restrict${move}${idSuffix}`);
                     if (cb) cb.checked = true;
                 });
+
                 updateMoveAvailableTable();
             }
 
@@ -2573,49 +2646,14 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                 return moveStr.replace(/'/g, '-');
             }
 
-            function updateMoveAvailableTable() {
-                const thead = moveAvailableTable.querySelector('thead');
-                const tbody = moveAvailableTable.querySelector('tbody');
-
-                const previousStates = new Map();
-                moveAvailableTable.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-                    previousStates.set(cb.id, cb.checked);
-                });
-
-                const restChecked = tableWrapper.querySelectorAll('input[type="checkbox"]:checked');
-                const headers = Array.from(restChecked).map(cb => {
-                    const move = cb.value;
-                    const suffix = cb.id.slice(-1);
-                    if (suffix === '1') return move;
-                    if (suffix === '2') return move + '2';
-                    if (suffix === '3') return move + "'";
-                    return '';
-                }).filter(Boolean);
-
-                const colHeaders = headers;
-                const rowHeaders = [...headers, ""];
-
-                thead.innerHTML = '';
-                tbody.innerHTML = '';
-
-                const headerRow = document.createElement('tr');
-                headerRow.appendChild(document.createElement('th'));
-                colHeaders.forEach(headerText => {
-                    const th = document.createElement('th');
-                    th.textContent = headerText;
-                    headerRow.appendChild(th);
-                });
-                thead.appendChild(headerRow);
-
-                rowHeaders.forEach(rowHeaderText => {
+            function createRowBatch(rowBatch, newColHeaders, previousStates) {
+                return rowBatch.map(({ rowHeaderText, sanitizedRow }) => {
                     const bodyRow = document.createElement('tr');
                     const rowTh = document.createElement('th');
                     rowTh.textContent = rowHeaderText;
                     bodyRow.appendChild(rowTh);
 
-                    const sanitizedRow = sanitizeMoveForId(rowHeaderText);
-
-                    colHeaders.forEach(colHeaderText => {
+                    newColHeaders.forEach(colHeaderText => {
                         const td = document.createElement('td');
                         const checkbox = document.createElement('input');
                         checkbox.type = 'checkbox';
@@ -2637,33 +2675,216 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                         td.appendChild(label);
                         bodyRow.appendChild(td);
                     });
-                    tbody.appendChild(bodyRow);
+
+                    return bodyRow;
                 });
+            }
+
+            function updateMoveAvailableTable() {
+                const thead = moveAvailableTable.querySelector('thead');
+                const tbody = moveAvailableTable.querySelector('tbody');
+
+                const previousStates = new Map();
+                moveAvailableTable.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                    previousStates.set(cb.id, cb.checked);
+                });
+
+                const restChecked = tableWrapper.querySelectorAll('input[type="checkbox"]:checked');
+                const newHeaders = Array.from(restChecked).map(cb => {
+                    const move = cb.value;
+                    const suffix = cb.id.slice(-1);
+                    if (suffix === '1') return move;
+                    if (suffix === '2') return move + '2';
+                    if (suffix === '3') return move + "'";
+                    return '';
+                }).filter(Boolean);
+
+                const newColHeaders = newHeaders;
+                const newRowHeaders = [...newHeaders, ""];
+
+                const existingColHeaders = Array.from(thead.querySelectorAll('th')).slice(1).map(th => th.textContent);
+                const existingRowHeaders = Array.from(tbody.querySelectorAll('tr')).map(tr => tr.querySelector('th').textContent);
+
+                const colHeadersChanged = !arraysEqual(existingColHeaders, newColHeaders);
+                const rowHeadersChanged = !arraysEqual(existingRowHeaders, newRowHeaders);
+
+                if (!colHeadersChanged && !rowHeadersChanged) {
+                    return;
+                }
+
+                if (colHeadersChanged) {
+                    const headerRow = document.createElement('tr');
+                    headerRow.appendChild(document.createElement('th'));
+                    newColHeaders.forEach(headerText => {
+                        const th = document.createElement('th');
+                        th.textContent = headerText;
+                        headerRow.appendChild(th);
+                    });
+                    thead.innerHTML = '';
+                    thead.appendChild(headerRow);
+                }
+
+                if (colHeadersChanged || rowHeadersChanged) {
+                    const existingRowsMap = new Map();
+                    const existingRowElements = Array.from(tbody.querySelectorAll('tr'));
+                    existingRowElements.forEach(row => {
+                        const rowHeader = row.querySelector('th').textContent;
+                        existingRowsMap.set(rowHeader, row);
+                    });
+
+                    const newRowsInOrder = [];
+                    const rowsToCreate = [];
+
+                    newRowHeaders.forEach(rowHeaderText => {
+                        const sanitizedRow = sanitizeMoveForId(rowHeaderText);
+
+                        if (existingRowsMap.has(rowHeaderText) && !colHeadersChanged) {
+                            const existingRow = existingRowsMap.get(rowHeaderText);
+                            newRowsInOrder.push(existingRow);
+                            existingRowsMap.delete(rowHeaderText);
+                        } else {
+                            rowsToCreate.push({ rowHeaderText, sanitizedRow });
+                            newRowsInOrder.push(null);
+                        }
+                    });
+
+                    existingRowsMap.forEach(row => row.remove());
+
+                    const CHUNK_SIZE = 8;
+                    if (rowsToCreate.length > CHUNK_SIZE) {
+                        const newRowElements = [];
+                        let currentIndex = 0;
+
+                        const processChunk = () => {
+                            const endIndex = Math.min(currentIndex + CHUNK_SIZE, rowsToCreate.length);
+                            const chunk = rowsToCreate.slice(currentIndex, endIndex);
+                            const batchResults = createRowBatch(chunk, newColHeaders, previousStates);
+                            newRowElements.push(...batchResults);
+                            currentIndex = endIndex;
+
+                            if (currentIndex < rowsToCreate.length) {
+                                requestAnimationFrame(processChunk);
+                            } else {
+                                let newRowIndex = 0;
+                                for (let i = 0; i < newRowsInOrder.length; i++) {
+                                    if (newRowsInOrder[i] === null) {
+                                        newRowsInOrder[i] = newRowElements[newRowIndex++];
+                                    }
+                                }
+
+                                const currentOrder = Array.from(tbody.querySelectorAll('tr'));
+                                let needsReorder = currentOrder.length !== newRowsInOrder.length;
+                                if (!needsReorder) {
+                                    for (let i = 0; i < currentOrder.length; i++) {
+                                        if (currentOrder[i] !== newRowsInOrder[i]) {
+                                            needsReorder = true;
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                if (needsReorder) {
+                                    const fragment = document.createDocumentFragment();
+                                    newRowsInOrder.forEach(row => fragment.appendChild(row));
+                                    tbody.innerHTML = '';
+                                    tbody.appendChild(fragment);
+                                }
+                            }
+                        };
+
+                        requestAnimationFrame(processChunk);
+                    } else {
+                        const newRowElements = createRowBatch(rowsToCreate, newColHeaders, previousStates);
+
+                        let newRowIndex = 0;
+                        for (let i = 0; i < newRowsInOrder.length; i++) {
+                            if (newRowsInOrder[i] === null) {
+                                newRowsInOrder[i] = newRowElements[newRowIndex++];
+                            }
+                        }
+
+                        const currentOrder = Array.from(tbody.querySelectorAll('tr'));
+                        let needsReorder = currentOrder.length !== newRowsInOrder.length;
+                        if (!needsReorder) {
+                            for (let i = 0; i < currentOrder.length; i++) {
+                                if (currentOrder[i] !== newRowsInOrder[i]) {
+                                    needsReorder = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (needsReorder) {
+                            const fragment = document.createDocumentFragment();
+                            newRowsInOrder.forEach(row => fragment.appendChild(row));
+                            tbody.innerHTML = '';
+                            tbody.appendChild(fragment);
+                        }
+                    }
+                }
+            }
+
+            function arraysEqual(arr1, arr2) {
+                if (arr1.length !== arr2.length) return false;
+                for (let i = 0; i < arr1.length; i++) {
+                    if (arr1[i] !== arr2[i]) return false;
+                }
+                return true;
             }
 
 
             function updateMoveCountTable() {
                 const checkedMoves = Array.from(restrictFieldset.querySelectorAll('input:checked'), cb => cb.value);
-                const existingRows = new Set(Array.from(moveCountTableBody.querySelectorAll('tr'), tr => tr.dataset.move));
+                const checkedMovesSet = new Set(checkedMoves);
+                const existingRows = moveCountTableBody.querySelectorAll('tr');
 
-                existingRows.forEach(move => {
-                    if (!checkedMoves.includes(move)) {
-                        moveCountTableBody.querySelector(`tr[data-move="${move}"]`)?.remove();
+                if (existingRows.length === checkedMoves.length) {
+                    let allMatch = true;
+                    existingRows.forEach(row => {
+                        if (!checkedMovesSet.has(row.dataset.move)) {
+                            allMatch = false;
+                        }
+                    });
+                    if (allMatch) return;
+                }
+
+                const existingMoves = new Set();
+                const rowsToRemove = [];
+
+                existingRows.forEach(row => {
+                    const move = row.dataset.move;
+                    existingMoves.add(move);
+                    if (!checkedMovesSet.has(move)) {
+                        rowsToRemove.push(row);
                     }
                 });
+
+                const fragment = document.createDocumentFragment();
+                let hasNewRows = false;
 
                 checkedMoves.forEach(move => {
-                    if (!existingRows.has(move)) {
-                        const newRow = moveCountTableBody.insertRow();
+                    if (!existingMoves.has(move)) {
+                        const newRow = document.createElement('tr');
                         newRow.dataset.move = move;
-                        newRow.innerHTML = `
-                            <th>${move}</th>
-                            <td><input type="number" min="0" class="move-count-input" data-move="${move}" value="20"></td>
-                            <td><input type="number" min="0" class="move-count-input" data-move="${move}2" value="20"></td>
-                            <td><input type="number" min="0" class="move-count-input" data-move="${move}-" value="20"></td>
-                        `;
+
+                        const th = document.createElement('th');
+                        th.textContent = move;
+                        newRow.appendChild(th);
+                        newRow.appendChild(createNumberInputCell(move, '20'));
+                        newRow.appendChild(createNumberInputCell(move + '2', '20'));
+                        newRow.appendChild(createNumberInputCell(move + '-', '20'));
+
+                        fragment.appendChild(newRow);
+                        hasNewRows = true;
                     }
                 });
+
+                if (rowsToRemove.length > 0 || hasNewRows) {
+                    rowsToRemove.forEach(row => row.remove());
+                    if (hasNewRows) {
+                        moveCountTableBody.appendChild(fragment);
+                    }
+                }
             }
 
             function syncAllTables() {
@@ -2675,22 +2896,37 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                     row.style.display = checkedResMoves.has(move) ? '' : 'none';
                 });
 
-                moveCountTableBody.querySelectorAll('.move-count-input').forEach(countInput => {
+                const countInputs = moveCountTableBody.querySelectorAll('.move-count-input');
+                const resCheckboxCache = new Map();
+                const restCheckboxCache = new Map();
+
+                countInputs.forEach(countInput => {
                     const moveStr = countInput.dataset.move;
                     const moveBase = moveStr.charAt(0);
 
-                    const resCheckbox = restrictFieldset.querySelector(`input[value="${moveBase}"]`);
+                    let resCheckbox = resCheckboxCache.get(moveBase);
+                    if (resCheckbox === undefined) {
+                        resCheckbox = restrictFieldset.querySelector(`input[value="${moveBase}"]`);
+                        resCheckboxCache.set(moveBase, resCheckbox);
+                    }
+
                     if (!resCheckbox || !resCheckbox.checked) {
+                        countInput.disabled = true;
+                        countInput.value = '0';
                         return;
                     }
 
-                    let restCheckboxId;
                     const suffix = moveStr.slice(1);
+                    let restCheckboxId;
                     if (suffix === '') restCheckboxId = `checkbox_restrict${moveBase}1`;
                     else if (suffix === '2') restCheckboxId = `checkbox_restrict${moveBase}2`;
                     else if (suffix === '-') restCheckboxId = `checkbox_restrict${moveBase}3`;
 
-                    const restCheckbox = tableBody.querySelector(`#${restCheckboxId}`);
+                    let restCheckbox = restCheckboxCache.get(restCheckboxId);
+                    if (restCheckbox === undefined) {
+                        restCheckbox = tableBody.querySelector(`#${restCheckboxId}`);
+                        restCheckboxCache.set(restCheckboxId, restCheckbox);
+                    }
 
                     if (restCheckbox && restCheckbox.checked) {
                         if ((countInput.disabled && countInput.value === '0') || countInput.value === '') {
@@ -2818,38 +3054,135 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             function initializePage() {
 
                 const allPossibleMoves = Array.from(restrictFieldset.querySelectorAll('input.restrict'), cb => cb.value);
+                const fragment = document.createDocumentFragment();
+
                 allPossibleMoves.forEach(move => {
-                    const newRow = moveCountTableBody.insertRow();
+                    const newRow = document.createElement('tr');
                     newRow.dataset.move = move;
-                    newRow.innerHTML = `
-                <th>${move}</th>
-                <td><input type="number" min="0" class="move-count-input" data-move="${move}"></td>
-                <td><input type="number" min="0" class="move-count-input" data-move="${move}2"></td>
-                <td><input type="number" min="0" class="move-count-input" data-move="${move}-"></td>
-            `;
+
+                    const th = document.createElement('th');
+                    th.textContent = move;
+                    newRow.appendChild(th);
+                    newRow.appendChild(createNumberInputCell(move));
+                    newRow.appendChild(createNumberInputCell(move + '2'));
+                    newRow.appendChild(createNumberInputCell(move + '-'));
+
+                    fragment.appendChild(newRow);
                 });
 
+                moveCountTableBody.appendChild(fragment);
+
+                let isUpdatingMoveAvailableTable = false;
+
                 function handleCheckboxChange() {
-                    updateRestrictTable();
-                    updateMoveCountTable();
-                    syncAllTables();
-                    updateMoveAvailableTable();
-                    updateUrlParams();
+                    if (handleCheckboxChangeTimer) {
+                        clearTimeout(handleCheckboxChangeTimer);
+                    }
+
+                    handleCheckboxChangeTimer = setTimeout(() => {
+                        requestAnimationFrame(() => {
+                            updateRestrictTable();
+
+                            requestAnimationFrame(() => {
+                                updateMoveCountTable();
+
+                                requestAnimationFrame(() => {
+                                    syncAllTables();
+
+                                    if (!isUpdatingMoveAvailableTable) {
+                                        if (updateDebounceTimer) {
+                                            clearTimeout(updateDebounceTimer);
+                                        }
+                                        updateDebounceTimer = setTimeout(() => {
+                                            if (!isUpdatingMoveAvailableTable) {
+                                                isUpdatingMoveAvailableTable = true;
+                                                requestAnimationFrame(() => {
+                                                    updateMoveAvailableTable();
+                                                    setTimeout(() => {
+                                                        isUpdatingMoveAvailableTable = false;
+                                                    }, 100);
+                                                });
+                                            }
+                                        }, 300);
+                                    }
+
+                                    requestAnimationFrame(() => {
+                                        updateUrlParams();
+                                    });
+                                });
+                            });
+                        });
+                    }, 200);
                 }
 
                 restrictFieldset.addEventListener('change', handleCheckboxChange);
                 tableWrapper.addEventListener('change', () => {
-                    syncAllTables();
-                    updateMoveAvailableTable();
-                    updateUrlParams();
+                    if (tableWrapperChangeTimer) {
+                        clearTimeout(tableWrapperChangeTimer);
+                    }
+
+                    tableWrapperChangeTimer = setTimeout(() => {
+                        requestAnimationFrame(() => {
+                            syncAllTables();
+
+                            if (!isUpdatingMoveAvailableTable) {
+                                if (updateDebounceTimer) {
+                                    clearTimeout(updateDebounceTimer);
+                                }
+                                updateDebounceTimer = setTimeout(() => {
+                                    if (!isUpdatingMoveAvailableTable) {
+                                        isUpdatingMoveAvailableTable = true;
+                                        requestAnimationFrame(() => {
+                                            updateMoveAvailableTable();
+                                            setTimeout(() => {
+                                                isUpdatingMoveAvailableTable = false;
+                                            }, 100);
+                                        });
+                                    }
+                                }, 300);
+                            }
+
+                            requestAnimationFrame(() => {
+                                updateUrlParams();
+                            });
+                        });
+                    }, 200);
                 });
 
                 if (moveCountTableWrapper) {
                     moveCountTableWrapper.addEventListener('input', () => { updateUrlParams(); });
                 }
+
+                const moveAvailableTableWrapper = document.getElementById('move_available_table_wrapper');
+                if (moveAvailableTableWrapper) {
+                    moveAvailableTableWrapper.addEventListener('change', () => {
+                        setTimeout(() => {
+                            updateUrlParams();
+                        }, 50);
+                    });
+                }
             }
 
             initializePage();
+
+            if (advancedSettings) {
+                advancedSettings.addEventListener('toggle', function () {
+                    if (this.open && !advancedSettingsInitialized) {
+                        const tableBody = document.querySelector('#res_table tbody');
+                        const moveAvailableTableBody = moveAvailableTable.querySelector('tbody');
+
+                        if (!tableBody || tableBody.querySelectorAll('tr').length === 0) {
+                            updateRestrictTable();
+                        }
+
+                        if (!moveAvailableTableBody || moveAvailableTableBody.querySelectorAll('tr').length === 0) {
+                            updateMoveAvailableTable();
+                        }
+
+                        advancedSettingsInitialized = true;
+                    }
+                });
+            }
 
 
             const faces = ['U', 'L', 'F', 'R', 'B', 'D'];
@@ -3156,6 +3489,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             window.initializeDynamicTables = () => {
                 updateRestrictTable();
                 syncAllTables();
+
                 updateMoveAvailableTable();
             };
 
@@ -3193,6 +3527,103 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             }
 
             return true;
+        }
+
+        function uncheckMoveRotationOrder() {
+            const table = document.getElementById('move_available_table');
+            if (!table) return;
+
+            const thead = table.querySelector('thead tr');
+            const tbody = table.querySelector('tbody');
+            if (!thead || !tbody) return;
+
+            const headers = Array.from(thead.querySelectorAll('th'));
+            const rotationMoves = ['x', 'x2', "x'", 'y', 'y2', "y'", 'z', 'z2', "z'"];
+            const rotationColIndices = [];
+
+            headers.forEach((th, index) => {
+                if (index === 0) return;
+                const moveText = th.textContent.trim();
+                if (rotationMoves.includes(moveText)) {
+                    rotationColIndices.push(index);
+                }
+            });
+
+            if (rotationColIndices.length === 0) return;
+
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            rows.forEach(row => {
+                const rowHeader = row.querySelector('th');
+                if (!rowHeader) return;
+
+                const rowMoveText = rowHeader.textContent.trim();
+
+                if (rowMoveText !== '' && !rotationMoves.includes(rowMoveText)) {
+                    const cells = Array.from(row.querySelectorAll('td'));
+
+                    rotationColIndices.forEach(colIndex => {
+                        const cellIndex = colIndex - 1;
+                        if (cellIndex >= 0 && cellIndex < cells.length) {
+                            const checkbox = cells[cellIndex].querySelector('input[type="checkbox"]');
+                            if (checkbox) {
+                                checkbox.checked = false;
+                            }
+                        }
+                    });
+                }
+            });
+            requestAnimationFrame(() => {
+                updateUrlParams();
+            });
+        }
+
+        function checkRotationMoveOrder() {
+            const table = document.getElementById('move_available_table');
+            if (!table) return;
+
+            const thead = table.querySelector('thead tr');
+            const tbody = table.querySelector('tbody');
+            if (!thead || !tbody) return;
+
+            const headers = Array.from(thead.querySelectorAll('th'));
+            const rotationMoves = ['x', 'x2', "x'", 'y', 'y2', "y'", 'z', 'z2', "z'"];
+            const moveColIndices = [];
+
+            headers.forEach((th, index) => {
+                if (index === 0) return;
+                const moveText = th.textContent.trim();
+                if (moveText !== '' && !rotationMoves.includes(moveText)) {
+                    moveColIndices.push(index);
+                }
+            });
+
+            if (moveColIndices.length === 0) return;
+
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            rows.forEach(row => {
+                const rowHeader = row.querySelector('th');
+                if (!rowHeader) return;
+
+                const rowMoveText = rowHeader.textContent.trim();
+
+                if (rotationMoves.includes(rowMoveText)) {
+                    const cells = Array.from(row.querySelectorAll('td'));
+
+                    moveColIndices.forEach(colIndex => {
+                        const cellIndex = colIndex - 1;
+                        if (cellIndex >= 0 && cellIndex < cells.length) {
+                            const checkbox = cells[cellIndex].querySelector('input[type="checkbox"]');
+                            if (checkbox) {
+                                checkbox.checked = true;
+                            }
+                        }
+                    });
+                }
+            });
+
+            requestAnimationFrame(() => {
+                updateUrlParams();
+            });
         }
 
         function updateUrlParams() {
@@ -3259,7 +3690,18 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                 }
             });
             try {
-                window.history.replaceState({}, '', url);
+                // Use compressed query parameters (v3 format)
+                if (typeof window.urlParamsCompressor !== 'undefined') {
+                    try {
+                        const compressed = window.urlParamsCompressor.createCompressedQueryUrl(url.href);
+                        window.history.replaceState({}, '', compressed);
+                    } catch (error) {
+                        console.error('URL compression error:', error);
+                        window.history.replaceState({}, '', url);
+                    }
+                } else {
+                    window.history.replaceState({}, '', url);
+                }
             } catch (e) {
                 console.log(e.message);
             }
@@ -3270,6 +3712,10 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             document.getElementById('solver').value = solver;
             change();
             document.getElementById('rot').value = urlParams.get(idToKeyMap['rot']) ? urlParams.get(idToKeyMap['rot']).replace(/_/g, ' ').replace(/-/g, '\'') : defaultValues[solver]['rot'];
+
+            let mavString = null;
+            let finalRestId = ''; // Declare in function scope for MAV processing
+
             if (solver !== "twophase") {
                 const premoveParam = urlParams.get(idToKeyMap['premove']);
                 if (premoveParam) {
@@ -3285,7 +3731,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                 const defaultRes = defaultValues[solver]['res'];
                 const defaultRest = defaultValues[solver]['rest'];
                 const finalResId = resParam || defaultRes;
-                let finalRestId;
+                // finalRestId is declared at function scope for MAV processing
 
                 if (restParam) {
                     finalRestId = restParam;
@@ -3295,10 +3741,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                     finalRestId = defaultRest;
                 }
                 setIds([finalResId, finalRestId]);
-                const mavString = urlParams.get(idToKeyMap['mav']);
-                if (mavString) {
-                    setMavFromString(mavString);
-                }
+
                 const crestKey = idToKeyMap['center_restrict'];
                 const defaultCrest = 'EMPTY_EMPTY';
                 const crestParam = urlParams.get(crestKey);
@@ -3310,6 +3753,8 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                 const defaultMcv = '';
                 const mcvParam = urlParams.get(mcvKey);
                 setMoveCountFromString(mcvParam ?? defaultMcv, finalRestId);
+
+                mavString = urlParams.get(idToKeyMap['mav']);
             }
             if (solver === "F2L" || solver === "F2L2") {
                 document.getElementById('slot').value = urlParams.get(idToKeyMap['slot']) ? urlParams.get(idToKeyMap['slot']).replace(/_/g, ' ') : defaultValues[solver]['slot'];
@@ -3353,8 +3798,116 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             } else if (solver === "EOCross") {
                 document.getElementById('slot_eo').value = urlParams.get(idToKeyMap['slot_eo']) ? urlParams.get(idToKeyMap['slot_eo']).replace(/_/g, ' ') : defaultValues[solver]['slot_eo'];
             }
-            if (typeof window.initializeDynamicTables === 'function') {
-                window.initializeDynamicTables();
+
+            // Sync all tables after parameter updates
+            // This ensures Move Count Table rows are properly shown/hidden and enabled/disabled
+            if (typeof syncAllTables === 'function') {
+                syncAllTables();
+            }
+
+            if (mavString) {
+                const existingIndicator = document.getElementById('mav-loading-indicator');
+                if (existingIndicator) {
+                    existingIndicator.remove();
+                }
+
+                const loadingIndicator = document.createElement('div');
+                loadingIndicator.id = 'mav-loading-indicator';
+                loadingIndicator.style.cssText = 'position:fixed;top:30%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.85);color:white;padding:20px 30px;border-radius:8px;z-index:10000;font-size:18px;box-shadow:0 4px 12px rgba(0,0,0,0.3);';
+                loadingIndicator.textContent = 'Loading Move Available Table...';
+                document.body.appendChild(loadingIndicator);
+
+                // Use the finalRestId already calculated above (no need to recalculate)
+                const restMoves = finalRestId ? finalRestId.split('_').filter(m => m) : [];
+                const n = restMoves.length;
+                const expectedCheckboxCount = (n + 1) * n;
+
+                console.log(`[MAV] Expected checkboxes: ${expectedCheckboxCount} (${n} moves from rest parameter)`);
+
+                const table = document.getElementById('move_available_table');
+                if (!table) {
+                    console.error('[MAV] move_available_table not found');
+                    if (loadingIndicator.parentNode) {
+                        loadingIndicator.remove();
+                    }
+                    return;
+                }
+
+                const tbody = table.querySelector('tbody');
+                if (!tbody) {
+                    console.error('[MAV] tbody not found');
+                    if (loadingIndicator.parentNode) {
+                        loadingIndicator.remove();
+                    }
+                    return;
+                }
+
+                let observerTimeout = null;
+
+                const applyMavAndCleanup = () => {
+                    try {
+                        setMavFromString(mavString);
+
+                        requestAnimationFrame(() => {
+                            try {
+                                updateUrlParams();
+                            } catch (e) {
+                                console.error('updateUrlParams failed:', e);
+                            } finally {
+                                if (loadingIndicator.parentNode) {
+                                    loadingIndicator.remove();
+                                }
+                            }
+                        });
+                    } catch (e) {
+                        console.error('setMavFromString failed:', e);
+                        if (loadingIndicator.parentNode) {
+                            loadingIndicator.remove();
+                        }
+                    }
+                };
+
+                const initialCheckboxes = table.querySelectorAll('input[type="checkbox"]');
+                const initialCount = initialCheckboxes.length;
+
+                if (initialCount >= expectedCheckboxCount) {
+                    console.log(`[MAV] Table already complete (${initialCount} checkboxes), applying mav immediately`);
+                    applyMavAndCleanup();
+                } else {
+                    console.log(`[MAV] Initial checkboxes: ${initialCount} / ${expectedCheckboxCount}, waiting for completion`);
+
+                    const observer = new MutationObserver(() => {
+                        const currentCheckboxes = table.querySelectorAll('input[type="checkbox"]');
+                        const currentCount = currentCheckboxes.length;
+
+                        console.log(`[MAV] Current checkboxes: ${currentCount} / ${expectedCheckboxCount}`);
+
+                        if (currentCount >= expectedCheckboxCount) {
+                            console.log('[MAV] Table generation complete, applying mav...');
+                            observer.disconnect();
+                            if (observerTimeout) {
+                                clearTimeout(observerTimeout);
+                            }
+
+                            setTimeout(() => {
+                                applyMavAndCleanup();
+                            }, 50);
+                        }
+                    });
+
+                    observer.observe(tbody, {
+                        childList: true,
+                        subtree: true
+                    });
+
+                    observerTimeout = setTimeout(() => {
+                        const currentCheckboxes = table.querySelectorAll('input[type="checkbox"]');
+                        const currentCount = currentCheckboxes.length;
+                        console.warn(`[MAV] Timeout - expected ${expectedCheckboxCount}, got ${currentCount}`);
+                        observer.disconnect();
+                        applyMavAndCleanup();
+                    }, 10000);
+                }
             }
         }
 
@@ -3436,23 +3989,23 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
 
                 if (solver === "F2L" || solver === "LS" || solver === "LL" || solver == "LU") {
                     const args = { solver: solver, scr: result_moves, rot: rot, slot: slot, ll: ll, num: parseInt(num, 10), len: parseInt(len, 10), move_restrict: restrict, post_alg: premove, center_offset: center_offset, max_rot_count: parseInt(max_rot_count, 10), ma2: ma, mcString: mc };
-                    worker = new Worker('src/crossSolver/worker.js');
+                    worker = new Worker('../src/crossSolver/worker.js');
                     worker.postMessage(args);
                 } else if (solver === "F2L2" || solver === "LS2" || solver === "LL2" || solver == "LU2") {
                     const args = { solver: solver, scr: result_moves, rot: rot, slot: slot, ll: ll, num: parseInt(num, 10), len: parseInt(len, 10), move_restrict: restrict, post_alg: premove, center_offset: center_offset, max_rot_count: parseInt(max_rot_count, 10), ma2: ma, mcString: mc };
-                    worker = new Worker('src/highMemorySolver/worker2.js');
+                    worker = new Worker('../src/highMemorySolver/worker2.js');
                     worker.postMessage(args);
                 } else if (solver === "PF2L") {
                     const args = { scr: result_moves, rot: rot, slot: pslot_e, pslot: pslot_c, num: parseInt(num, 10), len: parseInt(len, 10), move_restrict: restrict, post_alg: premove, center_offset: center_offset, max_rot_count: parseInt(max_rot_count, 10), ma2: ma, mcString: mc };
-                    worker = new Worker('src/pseudoCrossSolver/worker3.js');
+                    worker = new Worker('../src/pseudoCrossSolver/worker3.js');
                     worker.postMessage(args);
                 } else if (solver === "F2L_pair") {
                     const args = { scr: result_moves, rot: rot, slot: slot2, pslot: pair_slot, num: parseInt(num, 10), len: parseInt(len, 10), move_restrict: restrict, post_alg: premove, center_offset: center_offset, max_rot_count: parseInt(max_rot_count, 10), ma2: ma, mcString: mc };
-                    worker = new Worker('src/F2L_PairingSolver/worker_pairing.js');
+                    worker = new Worker('../src/F2L_PairingSolver/worker_pairing.js');
                     worker.postMessage(args);
                 } else if (solver === "PF2L_pair") {
                     const args = { scr: result_moves, rot: rot, slot: pslot_e2, pslot: pslot_c2, a_slot: pair_pslot_e, a_pslot: pair_pslot_c, num: parseInt(num, 10), len: parseInt(len, 10), move_restrict: restrict, post_alg: premove, center_offset: center_offset, max_rot_count: parseInt(max_rot_count, 10), ma2: ma, mcString: mc };
-                    worker = new Worker('src/pseudoPairingSolver/workerPseudoPairing.js');
+                    worker = new Worker('../src/pseudoPairingSolver/workerPseudoPairing.js');
                     worker.postMessage(args);
                 } else if (solver === "twophase") {
                     try {
@@ -3497,7 +4050,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                     document.getElementById("solveButton").textContent = "Start";
                 } else if (solver === "EOCross") {
                     const args = { scr: result_moves, rot: rot, slot: slot3, num: parseInt(num, 10), len: parseInt(len, 10), move_restrict: restrict, post_alg: premove, center_offset: center_offset, max_rot_count: parseInt(max_rot_count, 10), ma2: ma, mcString: mc };
-                    worker = new Worker("src/EOCrossSolver/worker.js");
+                    worker = new Worker("../src/EOCrossSolver/worker.js");
                     worker.postMessage(args);
                 }
                 if (worker) {
@@ -3610,11 +4163,35 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                 var spaceElement2 = document.createElement('a');
                 spaceElement2.innerHTML = "&nbsp;";
                 details.appendChild(spaceElement2);
-                const currentUrl = new URL(window.location.href);
-                currentUrl.searchParams.set('index', `${messageCount}`);
-                currentUrl.searchParams.set('sol', sol.replace(/ /g, '_').replace(/'/g, '-'));
+                
+                // Create link with current parameters
+                // Use cached normalized URL if available (to avoid timing issues after history.replaceState)
+                const sourceUrl = cachedNormalizedUrl || window.location.href;
+                const currentUrl = new URL(sourceUrl);
+                
+                // Normalize URL if not using cached version (cached is already normalized)
+                const normalizedHref = cachedNormalizedUrl || window.urlParamsCompressor.normalizeUrl(currentUrl.href);
+                const normalizedUrl = new URL(normalizedHref);
+                
+                const linkParams = new URLSearchParams(normalizedUrl.search);
+                linkParams.set('index', `${messageCount}`);
+                linkParams.set('sol', sol.replace(/ /g, '_').replace(/'/g, '-'));
+                
+                const baseUrl = currentUrl.origin + currentUrl.pathname;
+                const legacyUrl = baseUrl + '?' + linkParams.toString();
+                
+                // Use compressed query parameters (v3 format)
+                let finalLinkUrl = legacyUrl;
+                if (typeof window.urlParamsCompressor !== 'undefined') {
+                    try {
+                        finalLinkUrl = window.urlParamsCompressor.createCompressedQueryUrl(legacyUrl);
+                    } catch (error) {
+                        console.error('Link compression error:', error);
+                    }
+                }
+                
                 var link_element3 = document.createElement('a');
-                link_element3.href = currentUrl;
+                link_element3.href = finalLinkUrl;
                 link_element3.target = '_blank';
                 link_element3.rel = 'noopener noreferrer';
                 link_element3.textContent = 'or18.github.io';
@@ -3624,7 +4201,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                 document.getElementById("countLine").value = messageCount;
                 if (messageCount === 1) {
                     try {
-                        window.history.replaceState({}, '', currentUrl);
+                        window.history.replaceState({}, '', finalLinkUrl);
                     } catch (e) {
                         console.log(e.message);
                     }
@@ -3822,7 +4399,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                 document.getElementById('table').appendChild(input);
                 document.getElementById('table').innerHTML += "<a>/</a>";
                 document.getElementById('table').appendChild(input2);
-                worker2 = new Worker('src/crossAnalyzer/worker_analyzer.js');
+                worker2 = new Worker('../src/crossAnalyzer/worker_analyzer.js');
                 document.getElementById("analyzer").textContent = "End";
                 worker2.onmessage = function (event) {
                     if (event.data == "Error") {
@@ -4254,7 +4831,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                 document.getElementById('ptable').appendChild(input);
                 document.getElementById('ptable').innerHTML += "<a>/</a>";
                 document.getElementById('ptable').appendChild(input2);
-                worker3 = new Worker('src/pseudoCrossAnalyzer/worker_panalyzer.js');
+                worker3 = new Worker('../src/pseudoCrossAnalyzer/worker_panalyzer.js');
                 document.getElementById("panalyzer").textContent = "End";
                 worker3.onmessage = function (event) {
                     if (event.data == "Error") {
@@ -4427,7 +5004,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                 document.getElementById('pair_table').appendChild(input);
                 document.getElementById('pair_table').innerHTML += "<a>/</a>";
                 document.getElementById('pair_table').appendChild(input2);
-                worker4 = new Worker('src/pairAnalyzer/worker_analyzer.js');
+                worker4 = new Worker('../src/pairAnalyzer/worker_analyzer.js');
                 document.getElementById("pair_analyzer").textContent = "End";
                 worker4.onmessage = function (event) {
                     if (event.data == "Error") {
@@ -4602,7 +5179,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                 document.getElementById('pair_ptable').appendChild(input);
                 document.getElementById('pair_ptable').innerHTML += "<a>/</a>";
                 document.getElementById('pair_ptable').appendChild(input2);
-                worker5 = new Worker('src/pseudoPairAnalyzer/worker_analyzer.js');
+                worker5 = new Worker('../src/pseudoPairAnalyzer/worker_analyzer.js');
                 document.getElementById("pair_panalyzer").textContent = "End";
                 worker5.onmessage = function (event) {
                     if (event.data == "Error") {
@@ -4779,7 +5356,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                 document.getElementById('eo_table').appendChild(input);
                 document.getElementById('eo_table').innerHTML += "<a>/</a>";
                 document.getElementById('eo_table').appendChild(input2);
-                worker6 = new Worker('src/EOCrossAnalyzer/worker_analyzer.js');
+                worker6 = new Worker('../src/EOCrossAnalyzer/worker_analyzer.js');
                 document.getElementById("eo_analyzer").textContent = "End";
                 worker6.onmessage = function (event) {
                     if (event.data == "Error") {
@@ -4980,16 +5557,11 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
         });
 
         details_cubeUI.addEventListener('toggle', () => {
-            // NOTE: 需要同步更新 data-i18n 属性，否则 i18n 引擎会覆盖回旧文本
             if (details_cubeUI.open) {
-                summary_cubeUI.setAttribute('data-i18n', 'solver.hide_cube_editor');
                 summary_cubeUI.textContent = "Hide Cube Editor";
             } else {
-                summary_cubeUI.setAttribute('data-i18n', 'solver.show_cube_editor');
                 summary_cubeUI.textContent = "Show Cube Editor";
             }
-            // 如果 i18n 已就绪，立即翻译
-            if (window.I18n && window.I18n._ready) window.I18n.apply();
         });
 
         const selectsMaskOptions = details_mask_options.querySelectorAll('select');
@@ -5058,13 +5630,67 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             }
         });
 
+        // Internal URLSearchParams (normalized from compressed URL)
+        let internalUrlParams = null;
+        
+        // Cache normalized URL for appendSol to avoid timing issues with history.replaceState
+        let cachedNormalizedUrl = null;
+
         document.getElementById('clear').addEventListener('click', function () {
             document.getElementById('scr').value = '';
             save();
         });
 
         window.onload = function () {
-            const urlParams = new URLSearchParams(window.location.search);
+            // Normalize URL: compressed format -> internal params (keep display URL as compressed)
+            
+            // Detect if URL has compressed parameters (v1/v2 hash or v3 query)
+            const hasHashParams = window.location.hash.includes('#hrest=') || window.location.hash.includes('#hmav=');
+            const searchParams = new URLSearchParams(window.location.search);
+            const restParam = searchParams.get('rest');
+            const mavParam = searchParams.get('mav');
+            
+            // Check if query parameters are compressed (v3 format)
+            // v3: alphanumeric+hyphens, v0: contains underscores/tildes/pipes
+            const hasCompressedRest = restParam && !restParam.includes('_');
+            const hasCompressedMav = mavParam && !mavParam.includes('~') && !mavParam.includes('|');
+            const hasCompressedQueryParams = hasCompressedRest || hasCompressedMav;
+            
+            if (hasHashParams || hasCompressedQueryParams) {
+                try {
+                    const normalizedUrl = window.urlParamsCompressor.normalizeUrl(window.location.href);
+                    
+                    // Cache normalized URL for appendSol (before index/sol deletion)
+                    cachedNormalizedUrl = normalizedUrl;
+                    
+                    const normalized = new URL(normalizedUrl, window.location.href);
+                    internalUrlParams = new URLSearchParams(normalized.search);
+                    
+                    // Update browser URL immediately (but remove index/sol for clean state)
+                    try {
+                        // Create clean URL without index/sol for appendSol to work correctly
+                        const cleanUrl = new URL(normalizedUrl);
+                        cleanUrl.searchParams.delete('index');
+                        cleanUrl.searchParams.delete('sol');
+                        
+                        const compressedUrl = window.urlParamsCompressor.createCompressedQueryUrl(cleanUrl.href);
+                        window.history.replaceState({}, '', compressedUrl);
+                    } catch (e) {
+                        console.error('URL compression error on load:', e);
+                    }
+                } catch (error) {
+                    console.error('URL normalization error:', error);
+                    internalUrlParams = new URLSearchParams(window.location.search);
+                    cachedNormalizedUrl = window.location.href;
+                }
+            } else {
+                internalUrlParams = new URLSearchParams(window.location.search);
+                cachedNormalizedUrl = window.location.href;
+            }
+            initializePageWithParams(internalUrlParams);
+        };
+
+        function initializePageWithParams(urlParams) {
             const scrambleParam = urlParams.get(idToKeyMap['scr']);
             document.getElementById("result").innerHTML = "";
             let deferredAppend = null;
@@ -5118,11 +5744,10 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             } catch (e) {
                 console.warn('Initial save() failed (ignored):', e);
             }
-        };
+        }
     </script>
-    <script src="src/i18n/i18n.js" defer></script>
-    <script src="sw-register.js" defer></script>
+    <script src="../sw-register.js" defer></script>
+<script src="../src/i18n/i18n.js" defer></script>
 </body>
-
 
 </html>
