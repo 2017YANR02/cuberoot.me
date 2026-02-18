@@ -198,6 +198,20 @@ const I18n = {
             });
         }
 
+        // NOTE: 翻译 select option 中的 "None" 文本
+        // 这些 option 带有 translate="no" 且 value=""，是各下拉框的默认选项
+        const noneZh = this.t('solver.none');
+        if (noneZh !== 'solver.none') {
+            document.querySelectorAll('select option[value=""]').forEach(opt => {
+                const text = opt.textContent.trim();
+                if (this.locale === 'zh' && text === 'None') {
+                    opt.textContent = noneZh;
+                } else if (this.locale === 'en' && text === noneZh) {
+                    opt.textContent = 'None';
+                }
+            });
+        }
+
         // NOTE: 翻译 JS 动态设置 textContent 的元素（如 Start/Stop 按钮）
         this._applyDynamicText();
 
