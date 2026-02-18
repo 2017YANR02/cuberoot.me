@@ -1,5 +1,6 @@
 require "time"
 require_relative "database"
+require_relative "events"
 
 class Statistic
   attr_reader :title, :title_zh, :note, :note_zh
@@ -29,7 +30,10 @@ class Statistic
       nzh = @note_zh || @note
       markdown += "<p><em data-i18n-en=\"#{@note}\" data-i18n-zh=\"#{nzh}\">#{@note}</em></p>\n"
     end
-    markdown += timestamp.strftime("*Updated on %e %B %Y*\n\n")
+    # NOTE: 日期也用双语输出
+    date_en = timestamp.strftime("Updated on %e %B %Y").strip
+    date_zh = timestamp.strftime("更新于 %Y 年 %-m 月 %-d 日")
+    markdown += "<p><em data-i18n-en=\"#{date_en}\" data-i18n-zh=\"#{date_zh}\">#{date_en}</em></p>\n\n"
     # NOTE: 注入 i18n 脚本和语言切换按钮，stats 页面在 /stats/ 子目录
     markdown += <<~HTML
       <div style="position:fixed;bottom:16px;right:16px;z-index:9999;display:flex;gap:0;border-radius:6px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.15)">
