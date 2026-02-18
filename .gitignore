@@ -7,3 +7,6 @@ _stats_build/WCA-Statistics/
 _stats_build/database.yml
 # 本地测试脚本
 _stats_build/test_stat.rb
+
+_site/
+.jekyll-cache/
