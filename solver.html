@@ -662,7 +662,8 @@
                 <a href="solver.html">Main Solver</a>
                 <a href="2x2x2.html" rel="noopener noreferrer" translate="no">2x2x2 Solver</a>
                 <a href="documentation.html" translate="no">Documentation</a>
-                <span style="font-weight:bold;margin-top:12px;display:block;color:#fff;" data-i18n="common.trainers">Trainers:</span>
+                <span style="font-weight:bold;margin-top:12px;display:block;color:#fff;"
+                    data-i18n="common.trainers">Trainers:</span>
                 <a href="cross_trainer.html" rel="noopener noreferrer" translate="no">Cross</a>
                 <a href="xcross_trainer.html" rel="noopener noreferrer" translate="no">XCross</a>
                 <a href="pairing_trainer.html" rel="noopener noreferrer" translate="no">Free Pair</a>
@@ -672,7 +673,8 @@
                 <a href="algTrainer.html" rel="noopener noreferrer" translate="no">Alg Trainer</a>
                 <a href="jsonEditor.html" rel="noopener noreferrer" translate="no">JSON Editor</a>
                 <a href="stats/" rel="noopener noreferrer" translate="no">WCA Statistics</a>
-                <span style="font-weight:bold;margin-top:12px;display:block;color:#fff;" data-i18n="common.external_tools">External tools:</span>
+                <span style="font-weight:bold;margin-top:12px;display:block;color:#fff;"
+                    data-i18n="common.external_tools">External tools:</span>
                 <a href="https://trangium.github.io/MovecountCoefficient/" target="_blank" rel="noopener noreferrer"
                     translate="no">MCC by trangium</a>
                 <a href="https://speedcubedb.com/a/3x3/" target="_blank" rel="noopener noreferrer"
@@ -950,7 +952,8 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
         </select><br>
         <label for="eo_analyzer_num" data-i18n="solver.count">Count: </label>
         <input type="number" id="eo_analyzer_num" value="1" min="1" required><br>
-        <button id="eo_analyzer" class="button medium" onclick="eo_analyze()" data-i18n="solver.analyze">Analyze</button>
+        <button id="eo_analyzer" class="button medium" onclick="eo_analyze()"
+            data-i18n="solver.analyze">Analyze</button>
         <div id="eo_table"></div>
     </details>
 
@@ -1016,7 +1019,8 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
         </select><br>
         <label for="pair_analyzer_num" data-i18n="solver.count">Count: </label>
         <input type="number" id="pair_analyzer_num" value="1" min="1" required><br>
-        <button id="pair_analyzer" class="button medium" onclick="pair_analyze()" data-i18n="solver.analyze">Analyze</button>
+        <button id="pair_analyzer" class="button medium" onclick="pair_analyze()"
+            data-i18n="solver.analyze">Analyze</button>
         <div id="pair_table"></div>
     </details>
 
@@ -1050,7 +1054,8 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
         </select><br>
         <label for="pair_panalyzer_num" data-i18n="solver.count">Count: </label>
         <input type="number" id="pair_panalyzer_num" value="1" min="1" required><br>
-        <button id="pair_panalyzer" class="button medium" onclick="pair_panalyze()" data-i18n="solver.analyze">Analyze</button>
+        <button id="pair_panalyzer" class="button medium" onclick="pair_panalyze()"
+            data-i18n="solver.analyze">Analyze</button>
         <div id="pair_ptable"></div>
     </details><br>
 
@@ -1551,23 +1556,25 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
         </details>
         <br>
         <input type="checkbox" id="CheckboxAutoMaskSetting" class="custom-checkbox" checked>
-        <label for="CheckboxAutoMaskSetting">Auto Stickering Setting </label>
+        <label for="CheckboxAutoMaskSetting" data-i18n="solver.auto_stickering">Auto Stickering Setting </label>
 
         <details id="maskOptions">
-            <summary id="summaryMaskOptions">Show Stickering Settings</summary>
+            <summary id="summaryMaskOptions" data-i18n="solver.show_stickering">Show Stickering Settings</summary>
             <div id="preview"></div><br>
             <div id="preview_solved"></div><br>
-            <button id="autoSetMask" class="button medium" onclick="setStickeringOptionAuto()">Auto</button>
-            <button id="resetMask" class="button medium" onclick="resetStickeringOptions('-')">Reset</button><br><br>
+            <button id="autoSetMask" class="button medium" onclick="setStickeringOptionAuto()"
+                data-i18n="solver.auto">Auto</button>
+            <button id="resetMask" class="button medium" onclick="resetStickeringOptions('-')"
+                data-i18n="solver.reset">Reset</button><br><br>
             <div id="maskOptionsCenterDiv">
-                <label for="maskOptionCenter">Centers: </label>
+                <label for="maskOptionCenter" data-i18n="solver.centers">Centers: </label>
                 <select id="maskOptionCenter">
                     <option value="-">Regular</option>
                     <option value="D">Dim</option>
                     <option value="I">Ignored</option>
                 </select>
             </div>
-            <label for="maskOptionsEdge">Edges Options</label><br>
+            <label for="maskOptionsEdge" data-i18n="solver.edges_options">Edges Options</label><br>
             <div id="maskOptionsEdge">
                 <label for="maskOptionDE">Cross: </label>
                 <select id="maskOptionDE">
@@ -1612,7 +1619,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                     <option value="I">Ignored</option>
                 </select>
             </div>
-            <label for="maskOptionsCorner">Corners Options</label><br>
+            <label for="maskOptionsCorner" data-i18n="solver.corners_options">Corners Options</label><br>
             <div id="maskOptionsCorner">
                 <label for="maskOptionBLC">BL Slot: </label>
                 <select id="maskOptionBLC">
@@ -1652,15 +1659,16 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             </div>
         </details>
     </div>
-    <a class="hidden" id="tp_alert">Two Phase Solver output 1 solution.</a><br>
-    <button id="solveButton" class="button medium" onclick="startWorker()">Start</button>&nbsp;&nbsp;
-    <button onclick="showModalWithCustomText()" class="button medium">Export</button><br>
+    <a class="hidden" id="tp_alert" data-i18n="solver.tp_alert">Two Phase Solver output 1 solution.</a><br>
+    <button id="solveButton" class="button medium" onclick="startWorker()"
+        data-i18n="solver.start">Start</button>&nbsp;&nbsp;
+    <button onclick="showModalWithCustomText()" class="button medium" data-i18n="solver.export">Export</button><br>
     <div id="modal-overlay" class="modal-overlay hidden">
         <div id="modal-panel" class="modal-panel">
             <div class="modal-header">
                 <div class="header-left-group">
-                    <h2>Output</h2>
-                    <button id="modal-copy-btn" class="button copy-btn">Copy</button>
+                    <h2 data-i18n="solver.output">Output</h2>
+                    <button id="modal-copy-btn" class="button copy-btn" data-i18n="solver.copy">Copy</button>
                 </div>
                 <button id="modal-close-btn" class="close-btn">&times;</button>
             </div>
@@ -1669,9 +1677,9 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             </div>
         </div>
     </div>
-    <label for="countLine">Number of solutions: </label>
+    <label for="countLine" data-i18n="solver.num_of_solutions">Number of solutions: </label>
     <input type="text" id="countLine" value="0" readonly><br>
-    <label for="currentDepth">Current Depth: </label>
+    <label for="currentDepth" data-i18n="solver.current_depth">Current Depth: </label>
     <input type="text" id="currentDepth" value="-1" readonly>
     <div id="result"></div>
 
