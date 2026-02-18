@@ -8,7 +8,8 @@ A collection of Rubik's Cube solvers, trainers, and statistics tools — all run
 
 ```
 ruiminyan.github.io/
-├── index.html                 # 3x3x3 Solver (main page)
+├── index.html                 # Landing page (Solver / WCA Stats)
+├── solver.html                # 3x3x3 Solver (main solver page)
 ├── 2x2x2.html                # 2x2x2 Solver
 ├── documentation.html         # Documentation & examples
 ├── cross_trainer.html         # Cross trainer
@@ -31,7 +32,7 @@ ruiminyan.github.io/
 
 | Solver | Description |
 |--------|-------------|
-| [3x3x3 Solver](https://ruiminyan.github.io/) | Cross, XCross, Free Pair, Pseudo F2L, EOCross, and Last Layer |
+| [3x3x3 Solver](https://ruiminyan.github.io/solver.html) | Cross, XCross, Free Pair, Pseudo F2L, EOCross, and Last Layer |
 | [2x2x2 Solver](https://ruiminyan.github.io/2x2x2.html) | Pocket cube solver |
 
 ### Trainers

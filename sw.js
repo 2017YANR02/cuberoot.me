@@ -1,7 +1,8 @@
-const CACHE_NAME = 'pwa-cache_v40';
+const CACHE_NAME = 'pwa-cache_v41';
 
 const urlsToPrecache = [
 	'index.html',
+	'solver.html',
 	'manifest.json',
 	'icons/icon-512x512.png',
 	'icons/icon-192x192.png',
@@ -10,6 +11,7 @@ const urlsToPrecache = [
 
 const urlsToCache = [
 	'index.html',
+	'solver.html',
 	'2x2x2.html',
 	'cross_trainer.html',
 	'documentation.html',
@@ -239,8 +241,8 @@ self.addEventListener('fetch', (event) => {
 			} catch (err) {
 				const pageSpecific = await caches.match(req.url);
 				if (pageSpecific) return pageSpecific;
-				const idx = await caches.match('index.html');
-				if (idx) return idx;
+				const solverPage = await caches.match('solver.html');
+				if (solverPage) return solverPage;
 			}
 		})());
 		return;
