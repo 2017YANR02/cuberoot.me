@@ -1,0 +1,76 @@
+{
+    "pages": [
+        {
+            "upstream": "index.html",
+            "subdir": "solver",
+            "i18nTitle": "solver.title"
+        },
+        {
+            "upstream": "2x2x2.html",
+            "subdir": "2x2x2",
+            "i18nTitle": "solver.2x2_title"
+        },
+        {
+            "upstream": "documentation.html",
+            "subdir": "documentation",
+            "i18nTitle": ""
+        },
+        {
+            "upstream": "cross_trainer.html",
+            "subdir": "cross_trainer",
+            "i18nTitle": "trainer.cross_title"
+        },
+        {
+            "upstream": "xcross_trainer.html",
+            "subdir": "xcross_trainer",
+            "i18nTitle": "trainer.xcross_title"
+        },
+        {
+            "upstream": "xxcross_trainer.html",
+            "subdir": "xxcross_trainer",
+            "i18nTitle": "trainer.xxcross_title"
+        },
+        {
+            "upstream": "xcross_pairing_trainer.html",
+            "subdir": "xcross_pairing_trainer",
+            "i18nTitle": "trainer.xcross_pairing_title"
+        },
+        {
+            "upstream": "pairing_trainer.html",
+            "subdir": "pairing_trainer",
+            "i18nTitle": "trainer.pairing_title"
+        },
+        {
+            "upstream": "pseudo_xcross_trainer.html",
+            "subdir": "pseudo_xcross_trainer",
+            "i18nTitle": "trainer.pseudo_xcross_title"
+        },
+        {
+            "upstream": "pseudo_pairing_trainer.html",
+            "subdir": "pseudo_pairing_trainer",
+            "i18nTitle": "trainer.pseudo_pairing_title"
+        },
+        {
+            "upstream": "eocross_trainer.html",
+            "subdir": "eocross_trainer",
+            "i18nTitle": "trainer.eocross_title"
+        },
+        {
+            "upstream": "algTrainer.html",
+            "subdir": "algTrainer",
+            "i18nTitle": "trainer.alg_title"
+        },
+        {
+            "upstream": "jsonEditor.html",
+            "subdir": "jsonEditor",
+            "i18nTitle": ""
+        }
+    ],
+    "rootFiles": [
+        "url_params_compressor_simple.js",
+        "sw-register.js"
+    ],
+    "analytics": {
+        "trackingId": "G-MXJH30352W"
+    }
+}

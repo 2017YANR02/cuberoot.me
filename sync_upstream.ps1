@@ -1,0 +1,254 @@
+<#
+.SYNOPSIS
+    一键同步上游 RubiksSolverDemo 到本地项目
+.DESCRIPTION
+    将上游仓库的 src/ 目录、根目录依赖和 HTML 页面同步到本地项目，
+    自动应用背景色、汉化、菜单链接等定制化修改。
+.PARAMETER UpstreamDir
+    上游仓库路径（默认 D:\cube\RubiksSolverDemo）
+.PARAMETER LocalDir
+    本地项目路径（默认 D:\cube\ruiminyan.github.io）
+.PARAMETER DryRun
+    只预览变更，不实际写入文件
+#>
+param(
+    [string]$UpstreamDir = "D:\cube\RubiksSolverDemo",
+    [string]$LocalDir = "D:\cube\ruiminyan.github.io",
+    [switch]$DryRun
+)
+
+$ErrorActionPreference = "Stop"
+$syncDir = Join-Path $LocalDir ".sync"
+
+# ===== 加载配置 =====
+$config = Get-Content (Join-Path $syncDir "page_config.json") -Raw | ConvertFrom-Json
+$menuTemplate = [System.IO.File]::ReadAllText((Join-Path $syncDir "menu_template.html"))
+
+# ===== 统计计数器 =====
+$stats = @{ srcFiles = 0; rootFiles = 0; pages = 0 }
+
+Write-Host "`n========================================" -ForegroundColor Cyan
+Write-Host "  Upstream Sync Script" -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "Upstream: $UpstreamDir"
+Write-Host "Local:    $LocalDir"
+if ($DryRun) { Write-Host "[DRY RUN MODE]" -ForegroundColor Yellow }
+Write-Host ""
+
+# ===== Step 1: 同步 src/ 目录 =====
+Write-Host "Step 1: Syncing src/ directory..." -ForegroundColor Green
+
+$upstreamSrc = Join-Path $UpstreamDir "src"
+$localSrc = Join-Path $LocalDir "src"
+
+# NOTE: 排除 i18n/（用户自维护的翻译文件）和开发文件
+$excludePatterns = @('\.cpp$', '\.h$', '\.sh$', '\.txt$', '\.gitignore', 'README', 'PRODUCTION_GUIDE', 'CHANGELOG', 'build_', 'test_', 'docs', 'tools', 'tsl')
+
+Get-ChildItem -Path $upstreamSrc -Recurse -File | Where-Object {
+    $rel = $_.FullName.Substring($upstreamSrc.Length)
+    $skip = $false
+    # 排除 i18n 目录
+    if ($rel -match '\\i18n\\') { $skip = $true }
+    # 排除开发文件
+    foreach ($pat in $excludePatterns)
+    {
+        if ($rel -match $pat) { $skip = $true; break }
+    }
+    -not $skip
+} | ForEach-Object {
+    $rel = $_.FullName.Substring($upstreamSrc.Length)
+    $dest = Join-Path $localSrc $rel
+    $destDir = Split-Path $dest -Parent
+
+    # 检查是否有变化
+    $needCopy = $true
+    if (Test-Path $dest)
+    {
+        $needCopy = (Get-FileHash $_.FullName -Algorithm MD5).Hash -ne (Get-FileHash $dest -Algorithm MD5).Hash
+    }
+
+    if ($needCopy)
+    {
+        if (-not $DryRun)
+        {
+            if (-not (Test-Path $destDir))
+            {
+                New-Item -ItemType Directory -Path $destDir -Force | Out-Null
+            }
+            Copy-Item $_.FullName $dest -Force
+        }
+        $stats.srcFiles++
+        Write-Host "  [SYNC] src$rel" -ForegroundColor DarkGray
+    }
+}
+
+
+
+# ===== Step 2: 同步根目录依赖 =====
+Write-Host "`nStep 2: Syncing root-level dependencies..." -ForegroundColor Green
+
+foreach ($file in $config.rootFiles)
+{
+    $src = Join-Path $UpstreamDir $file
+    $dest = Join-Path $LocalDir $file
+
+    if (-not (Test-Path $src))
+    {
+        Write-Host "  [WARN] Not found in upstream: $file" -ForegroundColor Yellow
+        continue
+    }
+
+    $needCopy = $true
+    if (Test-Path $dest)
+    {
+        $needCopy = (Get-FileHash $src -Algorithm MD5).Hash -ne (Get-FileHash $dest -Algorithm MD5).Hash
+    }
+
+    if ($needCopy)
+    {
+        if (-not $DryRun)
+        {
+            Copy-Item $src $dest -Force
+        }
+        $stats.rootFiles++
+        Write-Host "  [SYNC] $file" -ForegroundColor DarkGray
+    }
+}
+
+# ===== Step 3: 逐页面转换 =====
+Write-Host "`nStep 3: Converting HTML pages..." -ForegroundColor Green
+
+# NOTE: 内联 Google Analytics 代码块，替换上游的 analytics.js 引用
+$gaCode = @"
+	<script async src="https://www.googletagmanager.com/gtag/js?id=$($config.analytics.trackingId)"></script>
+	<script>
+		window.dataLayer = window.dataLayer || [];
+		function gtag() { dataLayer.push(arguments); }
+		gtag('js', new Date());
+		gtag('config', '$($config.analytics.trackingId)');
+	</script>
+"@
+
+# NOTE: body 背景样式替换
+$bgOld = "background-color: #121212;"
+$bgNew = @"
+background-color: #0a0a0f;
+				background-image:
+					radial-gradient(ellipse at 20% 50%, rgba(90, 90, 200, 0.08) 0%, transparent 50%),
+					radial-gradient(ellipse at 80% 50%, rgba(200, 90, 90, 0.06) 0%, transparent 50%);
+"@
+
+foreach ($page in $config.pages)
+{
+    $srcFile = Join-Path $UpstreamDir $page.upstream
+    $destDir2 = Join-Path $LocalDir $page.subdir
+    $destFile = Join-Path $destDir2 "index.html"
+
+    if (-not (Test-Path $srcFile))
+    {
+        Write-Host "  [SKIP] $($page.upstream) (not found in upstream)" -ForegroundColor Yellow
+        continue
+    }
+
+    Write-Host "  [CONV] $($page.upstream) -> $($page.subdir)/index.html" -ForegroundColor DarkCyan
+
+    # 使用字节级操作，避免编码问题
+    $bytes = [System.IO.File]::ReadAllBytes($srcFile)
+    $content = [System.Text.Encoding]::UTF8.GetString($bytes)
+
+    # --- 3a. 资源路径替换 ---
+    # NOTE: 只替换 JS/HTML 中的路径引用，不替换 URL 中的（如 GitHub 链接）
+    # 替换引号内的 src/ 路径（JS 字符串和 HTML 属性）
+    $content = $content -replace "'src/", "'../src/"
+    $content = $content -replace '"src/', '"../src/'
+
+    # --- 3b. 替换 analytics.js 引用为内联 GA 代码 ---
+    $content = $content -replace '(?m)\s*<script\s+src="analytics\.js"\s+defer>\s*</script>', $gaCode
+
+    # --- 3b2. 根目录文件路径添加 ../ 前缀 ---
+    # NOTE: 这些文件在项目根目录，子目录页面需要 ../ 前缀才能正确引用
+    $content = $content -replace '"manifest\.json"', '"../manifest.json"'
+    $content = $content -replace '"url_params_compressor_simple\.js"', '"../url_params_compressor_simple.js"'
+    $content = $content -replace "'url_params_compressor_simple\.js'", "'../url_params_compressor_simple.js'"
+
+    # --- 3c. 注入 manifest.json link ---
+    if ($content -notmatch 'manifest\.json')
+    {
+        $content = $content -replace '(<meta\s+charset="UTF-8">)', "`$1`n`t<link rel=""manifest"" href=""../manifest.json"">"
+    }
+
+    # --- 3d. 替换 body 背景色（仅第一个 body 规则中的） ---
+    # 找到第一个 body { ... background-color: #121212 } 并替换
+    # HACK: 只替换第一个出现的（body 规则中的），其他保留
+    $bodyBgReplaced = $false
+    $content = [regex]::Replace($content, 'background-color:\s*#121212;', {
+            param($m)
+            if (-not $script:bodyBgReplaced)
+            {
+                $script:bodyBgReplaced = $true
+                return $bgNew
+            }
+            return $m.Value
+        })
+
+    # --- 3e. 替换 drawer-content 块 ---
+    # 匹配从 <div class="drawer-content"> 的下一行到 </div> 之间的所有链接
+    $drawerPattern = '(?s)(<div\s+class="drawer-content">)\s*\n.*?(</div>\s*</nav>)'
+    $drawerReplacement = "`$1`n$menuTemplate`n`t`t`t$2"
+    $content = [regex]::Replace($content, $drawerPattern, $drawerReplacement)
+
+    # --- 3f. 注入 data-i18n 属性 ---
+    # title 标签
+    if ($page.i18nTitle -and $page.i18nTitle -ne "")
+    {
+        $content = [regex]::Replace($content, '<title>', "<title data-i18n=""$($page.i18nTitle)"">")
+    }
+
+    # h1 标签（页面主标题）
+    if ($page.i18nTitle -and $page.i18nTitle -ne "")
+    {
+        $content = [regex]::Replace($content, '(<h1)(>)', "`$1 data-i18n=""$($page.i18nTitle)""`$2")
+    }
+
+    # Menu 标题
+    $content = [regex]::Replace($content, '(<h2\s+class="drawer-title")(>)', '$1 data-i18n="common.menu"$2')
+
+    # --- 3g. 在 </body> 前注入 i18n.js 和修正 sw-register.js 路径 ---
+    # 先修正 sw-register.js 路径
+    $content = $content -replace '"sw-register\.js"', '"../sw-register.js"'
+
+    # 注入 i18n.js（如果还没有）
+    if ($content -notmatch 'i18n\.js')
+    {
+        $content = $content -replace '(</body>)', "<script src=""../src/i18n/i18n.js"" defer></script>`n`$1"
+    }
+
+    # --- 写入文件 ---
+    if (-not $DryRun)
+    {
+        if (-not (Test-Path $destDir2))
+        {
+            New-Item -ItemType Directory -Path $destDir2 -Force | Out-Null
+        }
+        $outBytes = [System.Text.Encoding]::UTF8.GetBytes($content)
+        [System.IO.File]::WriteAllBytes($destFile, $outBytes)
+    }
+    $stats.pages++
+}
+
+# ===== Step 4: 输出变更摘要 =====
+Write-Host "`n========================================" -ForegroundColor Cyan
+Write-Host "  Sync Complete!" -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "  src/ files synced:   $($stats.srcFiles)"
+Write-Host "  Root files synced:   $($stats.rootFiles)"
+Write-Host "  Pages converted:     $($stats.pages)"
+if ($DryRun)
+{
+    Write-Host "`n[DRY RUN] No files were modified." -ForegroundColor Yellow
+}
+else
+{
+    Write-Host "`nRun 'git diff' to review changes." -ForegroundColor Green
+    Write-Host "Then test with: python -m http.server 8080" -ForegroundColor Green
+}

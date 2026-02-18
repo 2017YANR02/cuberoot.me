@@ -5,31 +5,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="manifest" href="../manifest.json">
-    <title data-i18n="common.2x2_solver">2x2x2 Rubik's Cube Solver</title>
-    <meta name="description" content="Solver for 2x2x2 Rubik's Cube">
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-MXJH30352W"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag() { dataLayer.push(arguments); }
-        gtag('js', new Date());
-        gtag('config', 'G-MXJH30352W');
-    </script>
+    <title data-i18n="solver.2x2_title">2x2x2 Rubik's Cube Solver - Algorithm Search</title>
+    <meta name="description"
+        content="Advanced and Fast 2x2x2 solver. Generate algorithms with customizable search settings. Offline PWA supported.">	<script async src="https://www.googletagmanager.com/gtag/js?id=G-MXJH30352W"></script>
+	<script>
+		window.dataLayer = window.dataLayer || [];
+		function gtag() { dataLayer.push(arguments); }
+		gtag('js', new Date());
+		gtag('config', 'G-MXJH30352W');
+	</script>
+    <script src="../url_params_compressor_simple.js" defer></script>
     <style>
         header {
             padding: 2px;
             text-align: center;
             cursor: pointer;
-            background-color: #121212;
+            background-color: #0a0a0f;
+				background-image:
+					radial-gradient(ellipse at 20% 50%, rgba(90, 90, 200, 0.08) 0%, transparent 50%),
+					radial-gradient(ellipse at 80% 50%, rgba(200, 90, 90, 0.06) 0%, transparent 50%);
         }
 
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
             padding: 0;
-            background-color: #0a0a0f;
-            background-image:
-                radial-gradient(ellipse at 20% 50%, rgba(90, 90, 200, 0.08) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 50%, rgba(200, 90, 90, 0.06) 0%, transparent 50%);
+            background-color: #121212;
         }
 
         h1 {
@@ -104,6 +105,10 @@
             margin-bottom: 4px;
         }
 
+        .large {
+            max-width: 250px;
+        }
+
         .medium {
             max-width: 90px;
         }
@@ -137,6 +142,7 @@
         .table-res_table_wrapper {
             max-height: 400px;
             overflow: auto;
+            contain: layout style;
         }
 
         #move_available_table_wrapper {
@@ -144,11 +150,14 @@
             max-width: 100%;
             position: relative;
             max-height: 400px;
+            contain: layout style paint;
+            will-change: auto;
         }
 
         #move_available_table {
             max-height: 400px;
             overflow: auto;
+            contain: layout style;
         }
 
         #move_available_table tbody th {
@@ -204,6 +213,8 @@
             margin: 0;
             width: 100%;
             max-width: 600px;
+            margin-bottom: 10px;
+            background-color: #000000;
         }
 
         .custom-checkbox {
@@ -709,32 +720,32 @@
                 <button id="drawer-close-btn" class="drawer-close-btn" aria-label="Close menu">&times;</button>
             </div>
             <div class="drawer-content">
-                <a href="https://github.com/or18/RubiksSolverDemo" rel="noopener noreferrer" translate="no">Source</a>
-                <a href="/solver/">Main Solver</a>
-                <a href="/2x2x2/" rel="noopener noreferrer" translate="no">2x2x2 Solver</a>
-                <a href="/documentation/" translate="no">Documentation</a>
-                <span style="font-weight:bold;margin-top:12px;display:block;color:#fff;" data-i18n="common.trainers">Trainers:</span>
-                <a href="/cross_trainer/" rel="noopener noreferrer" translate="no">Cross</a>
-                <a href="/xcross_trainer/" rel="noopener noreferrer" translate="no">XCross</a>
-				<a href="/xxcross_trainer/" rel="noopener noreferrer" translate="no">XXCross</a>
-                <a href="/pairing_trainer/" rel="noopener noreferrer" translate="no">Free Pair</a>
-                <a href="/pseudo_xcross_trainer/" rel="noopener noreferrer" translate="no">Pseudo XCross</a>
-                <a href="/pseudo_pairing_trainer/" rel="noopener noreferrer" translate="no">Pseudo Free Pair</a>
-                <a href="/eocross_trainer/" rel="noopener noreferrer" translate="no">EOCross</a>
-                <a href="/algTrainer/" rel="noopener noreferrer" translate="no">Alg Trainer</a>
-                <a href="/jsonEditor/" rel="noopener noreferrer" translate="no">JSON Editor</a>
-                <a href="stats/" rel="noopener noreferrer" translate="no">WCA Statistics</a>
-                <span style="font-weight:bold;margin-top:12px;display:block;color:#fff;" data-i18n="common.external_tools">External tools:</span>
-                <a href="https://trangium.github.io/MovecountCoefficient/" target="_blank" rel="noopener noreferrer"
-                    translate="no">MCC by trangium</a>
-                <a href="https://speedcubedb.com/a/2x2/" target="_blank" rel="noopener noreferrer"
-                    translate="no">speedcubedb.com</a>
-                <a href="https://cstimer.net/" target="_blank" rel="noopener noreferrer" translate="no">cstimer.net</a>
-            </div>
-        </nav>
+<a href="https://github.com/or18/RubiksSolverDemo" rel="noopener noreferrer" translate="no">Source</a>
+<a href="/solver/">Main Solver</a>
+<a href="/2x2x2/" rel="noopener noreferrer" translate="no">2x2x2 Solver</a>
+<a href="/documentation/" translate="no">Documentation</a>
+<span style="font-weight:bold;margin-top:12px;display:block;color:#fff;" data-i18n="common.trainers">Trainers:</span>
+<a href="/cross_trainer/" rel="noopener noreferrer" translate="no">Cross</a>
+<a href="/xcross_trainer/" rel="noopener noreferrer" translate="no">XCross</a>
+<a href="/xxcross_trainer/" rel="noopener noreferrer" translate="no">XXCross</a>
+<a href="/pairing_trainer/" rel="noopener noreferrer" translate="no">Free Pair</a>
+<a href="/xcross_pairing_trainer/" rel="noopener noreferrer" translate="no">XCross Free Pair</a>
+<a href="/pseudo_xcross_trainer/" rel="noopener noreferrer" translate="no">Pseudo XCross</a>
+<a href="/pseudo_pairing_trainer/" rel="noopener noreferrer" translate="no">Pseudo Free Pair</a>
+<a href="/eocross_trainer/" rel="noopener noreferrer" translate="no">EOCross</a>
+<a href="/algTrainer/" rel="noopener noreferrer" translate="no">Alg Trainer</a>
+<a href="/jsonEditor/" rel="noopener noreferrer" translate="no">JSON Editor</a>
+<a href="/stats/" rel="noopener noreferrer" translate="no">WCA Statistics</a>
+<span style="font-weight:bold;margin-top:12px;display:block;color:#fff;" data-i18n="common.external_tools">External
+    tools:</span>
+<a href="https://trangium.github.io/MovecountCoefficient/" target="_blank" rel="noopener noreferrer" translate="no">MCC
+    by trangium</a>
+<a href="https://speedcubedb.com/a/3x3/" target="_blank" rel="noopener noreferrer" translate="no">speedcubedb.com</a>
+<a href="https://cstimer.net/" target="_blank" rel="noopener noreferrer" translate="no">cstimer.net</a>
+			
     </div>
     <header id="header" style="margin-left:48px;margin-top:10px;position:relative;z-index:10;">
-        <h1 data-i18n="common.2x2_solver">2x2x2 Rubik's Cube Solver</h1>
+        <h1 data-i18n="solver.2x2_title">2x2x2 Rubik's Cube Solver</h1>
     </header>
     <script>
         const hamburgerBtn = document.getElementById('hamburger-menu-btn');
@@ -776,7 +787,7 @@
         });
     </script>
     <details id="details_cubeUI">
-        <summary id="summary_cubeUI" data-i18n="solver.show_cube_editor">Show Cube Editor</summary>
+        <summary id="summary_cubeUI">Show Cube Editor</summary>
         <div class="main-container">
             <div class="controls">
                 <div class="control-group">
@@ -866,11 +877,11 @@
                     </div>
                 </div>
                 <div class="control-group">
-                    <button id="swap-mode-btn" class="mode-button active" data-i18n="solver.swap">Swap</button>
-                    <button id="flip-mode-btn" class="mode-button" data-i18n="solver.flip">Flip</button>
+                    <button id="swap-mode-btn" class="mode-button active">Swap</button>
+                    <button id="flip-mode-btn" class="mode-button">Flip</button>
                     <button id="get-string-btn" class="action-button">Get<br>Scramble</button>
-                    <button id="reset-cube-btn" class="action-button" data-i18n="solver.reset">Reset</button>
-                    <label for="pre_rot" data-i18n="solver.rotation">Rotation: </label>
+                    <button id="reset-cube-btn" class="action-button">Reset</button>
+                    <label for="pre_rot">Rotation: </label>
                     <select translate="no" id="pre_rot">
                         <option translate="no" value="">None</option>
                         <option translate="no" value="y">y</option>
@@ -902,7 +913,7 @@
                         <option translate="no" value="x y'">x y'</option>
                     </select>
                     <input type="checkbox" id="CheckboxAutoPrerotSetting" class="custom-checkbox" checked>
-                    <label for="CheckboxAutoPrerotSetting" data-i18n="solver.auto_set">Auto Set</label>
+                    <label for="CheckboxAutoPrerotSetting">Auto Set</label>
                 </div>
             </div>
             <div class="cube-scroll-container">
@@ -910,24 +921,24 @@
                 </div>
             </div>
     </details>
-    <label for="scr" data-i18n="solver.scramble_label">Scramble: </label><br>
-    <textarea id="scr" rows="10" cols="10" data-i18n-placeholder="solver.placeholder" placeholder="Use // to write comments, as in algs // comment. 
+    <label for="scr">Scramble: </label><br>
+    <textarea id="scr" rows="10" cols="10" placeholder="Use // to write comments, as in algs // comment. 
 Write the //setup comment in the appropriate position when viewing on alg.cubing.net or cubedb.net."
         onchange="save()"></textarea><br>
-    <button id="gen" class="button medium" data-i18n="solver.random">Random</button>
-    <button id="reverse" class="button medium" onclick="reverseScramble()" data-i18n="solver.reverse">Reverse</button>
-    <button id="mirror" class="button medium" onclick="mirrorScramble()" data-i18n="solver.mirror">Mirror</button>
-    <button id="clear" class="button medium" data-i18n="solver.clear">Clear</button>
+    <button id="gen" class="button medium">Random</button>
+    <button id="reverse" class="button medium" onclick="reverseScramble()">Reverse</button>
+    <button id="mirror" class="button medium" onclick="mirrorScramble()">Mirror</button>
+    <button id="clear" class="button medium">Clear</button>
     <button id="undo" class="button small hidden_small" onclick="undo()">←</button>
     <button id="redo" class="button small hidden_small" onclick="redo()">→</button><br>
     <details id="details_preview">
-        <summary id="summary_preview" data-i18n="solver.show_preview">Show Preview</summary>
+        <summary id="summary_preview">Show Preview</summary>
         <div id="show"></div>
         <pre id="links"
             class="hidden"><a translate="no" id="link_alg_cubing" href="https://alg.cubing.net/&puzzle=2x2x2" target="_blank" rel="noopener noreferrer">alg.cubing.net</a>  <a translate="no" id="link_cubedb" href="https://cubedb.net/?puzzle=2x2" target="_blank" rel="noopener noreferrer">cubedb.net</a></pre>
     </details>
 
-    <label for="rot" data-i18n="solver.rotation">Rotation: </label>
+    <label for="rot">Rotation: </label>
     <select translate="no" id="rot" onchange="updateUrlParams()">
         <option translate="no" value="">None</option>
         <option translate="no" value="y">y</option>
@@ -959,11 +970,11 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
         <option translate="no" value="x y'">x y'</option>
     </select><br>
     <div id="basic input">
-        <label for="len" data-i18n="solver.max_length">Max Length: </label>
+        <label for="len">Max Length: </label>
         <input type="number" id="len" value="20" min="1" required onchange="updateUrlParams()"><br>
-        <label for="num" data-i18n="solver.max_count">Max Count: </label>
+        <label for="num">Max Count: </label>
         <input type="number" id="num" value="20" min=1 required onchange="updateUrlParams()"><br>
-        <label for="res" data-i18n="solver.move_restrict">Move Restrict: </label>
+        <label for="res">Move Restrict: </label>
         <div translate="no" id="res" onchange="updateUrlParams()">
 
             <table class="checkbox-table">
@@ -1019,7 +1030,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                 </tbody>
             </table>
         </div><br>
-        <label for="prune" data-i18n="solver.prune_depth">Prune depth: </label>
+        <label for="prune">Prune depth: </label>
         <select translate="no" id="prune">
             <option translate="no" value="1">1</option>
             <option translate="no" value="2">2</option>
@@ -1034,10 +1045,10 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             <option translate="no" value="11">11</option>
         </select><br>
         <details id="advancedSettings">
-            <summary id="summaryAdvancedSettings" data-i18n="solver.show_advanced">Show Advanced Settings</summary><br>
-            <label for="premove" data-i18n="solver.pre_move">Pre Move: </label>
+            <summary id="summaryAdvancedSettings">Show Advanced Settings</summary><br>
+            <label for="premove">Pre Move: </label>
             <input type="text" id="premove" onchange="updateUrlParams()"><br>
-            <label for="res_table" data-i18n="solver.move_restrict">Move Restrict:</label>
+            <label for="res_table">Move Restrict:</label>
             <div id="res_table_wrapper" onchange="updateUrlParams()">
                 <table id="res_table" border="2" translate="no">
                     <thead>
@@ -1052,14 +1063,18 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                     </tbody>
                 </table>
             </div><br>
-            <label for="move_available_table" data-i18n="solver.move_available_table">Move Available Table:</label>
+            <label for="move_available_table">Move Available Table:</label>
             <div id="move_available_table_wrapper" onchange="updateUrlParams()">
                 <table id="move_available_table" border="2" translate="no">
                     <thead></thead>
                     <tbody></tbody>
                 </table>
             </div><br>
-            <label for="count_table" data-i18n="solver.max_move_count">Max Move Count:</label>
+            <button id="uncheckMoveRotationOrder" class="button large" onclick="uncheckMoveRotationOrder()">Disable Move
+                → Rotation</button><br>
+            <button id="checkRotationMoveOrder" class="button large" onclick="checkRotationMoveOrder()">Enable Rotation
+                → Move</button><br><br>
+            <label for="count_table">Max Move Count:</label>
             <div id="count_table_wrapper">
                 <table id="count_table" border="2" translate="no">
                     <thead>
@@ -1076,14 +1091,14 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             </div><br>
         </details>
         <br>
-        <button id="solveButton" class="button medium" onclick="startWorker()" data-i18n="solver.start">Start</button>&nbsp;&nbsp;
-        <button onclick="showModalWithCustomText()" class="button medium" data-i18n="solver.export">Export</button><br>
+        <button id="solveButton" class="button medium" onclick="startWorker()">Start</button>&nbsp;&nbsp;
+        <button onclick="showModalWithCustomText()" class="button medium">Export</button><br>
         <div id="modal-overlay" class="modal-overlay hidden">
             <div id="modal-panel" class="modal-panel">
                 <div class="modal-header">
                     <div class="header-left-group">
                         <h2>Output</h2>
-                        <button id="modal-copy-btn" class="button copy-btn" data-i18n="solver.copy">Copy</button>
+                        <button id="modal-copy-btn" class="button copy-btn">Copy</button>
                     </div>
                     <button id="modal-close-btn" class="close-btn">&times;</button>
                 </div>
@@ -1092,9 +1107,9 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                 </div>
             </div>
         </div>
-        <label for="countLine" data-i18n="solver.num_solutions">Number of solutions: </label>
+        <label for="countLine">Number of solutions: </label>
         <input type="text" id="countLine" value="0" readonly><br>
-        <label for="currentDepth" data-i18n="solver.current_depth">Current Depth: </label>
+        <label for="currentDepth">Current Depth: </label>
         <input type="text" id="currentDepth" value="-1" readonly>
         <div id="result"></div>
 
@@ -1434,6 +1449,67 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                     return moveStr.replace(/'/g, '-');
                 }
 
+                function arraysEqual(arr1, arr2) {
+                    if (arr1.length !== arr2.length) return false;
+                    for (let i = 0; i < arr1.length; i++) {
+                        if (arr1[i] !== arr2[i]) return false;
+                    }
+                    return true;
+                }
+
+                function createCheckboxCell(checkboxId, isChecked) {
+                    const td = document.createElement('td');
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.className = 'custom-checkbox restrict';
+                    checkbox.id = checkboxId;
+                    checkbox.checked = isChecked;
+                    
+                    const label = document.createElement('label');
+                    label.htmlFor = checkboxId;
+                    
+                    td.appendChild(checkbox);
+                    td.appendChild(label);
+                    return td;
+                }
+
+                function createNumberInputCell(moveStr, value) {
+                    const td = document.createElement('td');
+                    const input = document.createElement('input');
+                    input.type = 'number';
+                    input.min = '0';
+                    input.className = 'move-count-input';
+                    input.dataset.move = moveStr;
+                    input.value = value;
+                    td.appendChild(input);
+                    return td;
+                }
+
+                function createRowBatch(rowBatch, newColHeaders, previousStates) {
+                    return rowBatch.map(({ rowHeaderText, sanitizedRow }) => {
+                        const bodyRow = document.createElement('tr');
+                        const rowTh = document.createElement('th');
+                        rowTh.textContent = rowHeaderText;
+                        bodyRow.appendChild(rowTh);
+
+                        newColHeaders.forEach(colHeaderText => {
+                            const sanitizedCol = sanitizeMoveForId(colHeaderText);
+                            const checkboxId = `checkbox_move_available_${sanitizedRow}_${sanitizedCol}`;
+                            
+                            let isChecked;
+                            if (previousStates.has(checkboxId)) {
+                                isChecked = previousStates.get(checkboxId);
+                            } else {
+                                isChecked = shouldBeCheckedByDefault(rowHeaderText, colHeaderText);
+                            }
+                            
+                            bodyRow.appendChild(createCheckboxCell(checkboxId, isChecked));
+                        });
+
+                        return bodyRow;
+                    });
+                }
+
                 function updateMoveAvailableTable() {
                     const thead = moveAvailableTable.querySelector('thead');
                     const tbody = moveAvailableTable.querySelector('tbody');
@@ -1444,7 +1520,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                     });
 
                     const restChecked = tableWrapper.querySelectorAll('input[type="checkbox"]:checked');
-                    const headers = Array.from(restChecked).map(cb => {
+                    const newHeaders = Array.from(restChecked).map(cb => {
                         const move = cb.value;
                         const suffix = cb.id.slice(-1);
                         if (suffix === '1') return move;
@@ -1453,78 +1529,183 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                         return '';
                     }).filter(Boolean);
 
-                    const colHeaders = headers;
-                    const rowHeaders = [...headers, ""];
+                    const newColHeaders = newHeaders;
+                    const newRowHeaders = [...newHeaders, ""];
 
-                    thead.innerHTML = '';
-                    tbody.innerHTML = '';
+                    const existingColHeaders = Array.from(thead.querySelectorAll('th')).slice(1).map(th => th.textContent);
+                    const existingRowHeaders = Array.from(tbody.querySelectorAll('tr')).map(tr => tr.querySelector('th').textContent);
 
-                    const headerRow = document.createElement('tr');
-                    headerRow.appendChild(document.createElement('th'));
-                    colHeaders.forEach(headerText => {
-                        const th = document.createElement('th');
-                        th.textContent = headerText;
-                        headerRow.appendChild(th);
-                    });
-                    thead.appendChild(headerRow);
+                    const colHeadersChanged = !arraysEqual(existingColHeaders, newColHeaders);
+                    const rowHeadersChanged = !arraysEqual(existingRowHeaders, newRowHeaders);
 
-                    rowHeaders.forEach(rowHeaderText => {
-                        const bodyRow = document.createElement('tr');
-                        const rowTh = document.createElement('th');
-                        rowTh.textContent = rowHeaderText;
-                        bodyRow.appendChild(rowTh);
+                    if (!colHeadersChanged && !rowHeadersChanged) {
+                        return;
+                    }
 
-                        const sanitizedRow = sanitizeMoveForId(rowHeaderText);
+                    if (colHeadersChanged) {
+                        const headerRow = document.createElement('tr');
+                        headerRow.appendChild(document.createElement('th'));
+                        newColHeaders.forEach(headerText => {
+                            const th = document.createElement('th');
+                            th.textContent = headerText;
+                            headerRow.appendChild(th);
+                        });
+                        thead.innerHTML = '';
+                        thead.appendChild(headerRow);
+                    }
 
-                        colHeaders.forEach(colHeaderText => {
-                            const td = document.createElement('td');
-                            const checkbox = document.createElement('input');
-                            checkbox.type = 'checkbox';
-                            checkbox.className = 'custom-checkbox restrict';
+                    if (colHeadersChanged || rowHeadersChanged) {
+                        const existingRowsMap = new Map();
+                        const existingRowElements = Array.from(tbody.querySelectorAll('tr'));
+                        existingRowElements.forEach(row => {
+                            const rowHeader = row.querySelector('th').textContent;
+                            existingRowsMap.set(rowHeader, row);
+                        });
 
-                            const sanitizedCol = sanitizeMoveForId(colHeaderText);
-                            checkbox.id = `checkbox_move_available_${sanitizedRow}_${sanitizedCol}`;
+                        const newRowsInOrder = [];
+                        const rowsToCreate = [];
 
-                            const label = document.createElement('label');
-                            label.htmlFor = checkbox.id;
+                        newRowHeaders.forEach(rowHeaderText => {
+                            const sanitizedRow = sanitizeMoveForId(rowHeaderText);
 
-                            if (previousStates.has(checkbox.id)) {
-                                checkbox.checked = previousStates.get(checkbox.id);
+                            if (existingRowsMap.has(rowHeaderText) && !colHeadersChanged) {
+                                const existingRow = existingRowsMap.get(rowHeaderText);
+                                newRowsInOrder.push(existingRow);
+                                existingRowsMap.delete(rowHeaderText);
                             } else {
-                                checkbox.checked = shouldBeCheckedByDefault(rowHeaderText, colHeaderText);
+                                rowsToCreate.push({ rowHeaderText, sanitizedRow });
+                                newRowsInOrder.push(null);
+                            }
+                        });
+
+                        existingRowsMap.forEach(row => row.remove());
+
+                        const CHUNK_SIZE = 8;
+                        if (rowsToCreate.length > CHUNK_SIZE) {
+                            const newRowElements = [];
+                            let currentIndex = 0;
+
+                            const processChunk = () => {
+                                const endIndex = Math.min(currentIndex + CHUNK_SIZE, rowsToCreate.length);
+                                const chunk = rowsToCreate.slice(currentIndex, endIndex);
+                                const batchResults = createRowBatch(chunk, newColHeaders, previousStates);
+                                newRowElements.push(...batchResults);
+                                currentIndex = endIndex;
+
+                                if (currentIndex < rowsToCreate.length) {
+                                    requestAnimationFrame(processChunk);
+                                } else {
+                                    let newRowIndex = 0;
+                                    for (let i = 0; i < newRowsInOrder.length; i++) {
+                                        if (newRowsInOrder[i] === null) {
+                                            newRowsInOrder[i] = newRowElements[newRowIndex++];
+                                        }
+                                    }
+
+                                    const currentOrder = Array.from(tbody.querySelectorAll('tr'));
+                                    let needsReorder = currentOrder.length !== newRowsInOrder.length;
+                                    if (!needsReorder) {
+                                        for (let i = 0; i < currentOrder.length; i++) {
+                                            if (currentOrder[i] !== newRowsInOrder[i]) {
+                                                needsReorder = true;
+                                                break;
+                                            }
+                                        }
+                                    }
+
+                                    if (needsReorder) {
+                                        const fragment = document.createDocumentFragment();
+                                        newRowsInOrder.forEach(row => fragment.appendChild(row));
+                                        tbody.innerHTML = '';
+                                        tbody.appendChild(fragment);
+                                    }
+                                }
+                            };
+
+                            requestAnimationFrame(processChunk);
+                        } else {
+                            const newRowElements = createRowBatch(rowsToCreate, newColHeaders, previousStates);
+
+                            let newRowIndex = 0;
+                            for (let i = 0; i < newRowsInOrder.length; i++) {
+                                if (newRowsInOrder[i] === null) {
+                                    newRowsInOrder[i] = newRowElements[newRowIndex++];
+                                }
                             }
 
-                            td.appendChild(checkbox);
-                            td.appendChild(label);
-                            bodyRow.appendChild(td);
-                        });
-                        tbody.appendChild(bodyRow);
-                    });
+                            const currentOrder = Array.from(tbody.querySelectorAll('tr'));
+                            let needsReorder = currentOrder.length !== newRowsInOrder.length;
+                            if (!needsReorder) {
+                                for (let i = 0; i < currentOrder.length; i++) {
+                                    if (currentOrder[i] !== newRowsInOrder[i]) {
+                                        needsReorder = true;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if (needsReorder) {
+                                const fragment = document.createDocumentFragment();
+                                newRowsInOrder.forEach(row => fragment.appendChild(row));
+                                tbody.innerHTML = '';
+                                tbody.appendChild(fragment);
+                            }
+                        }
+                    }
                 }
 
 
                 function updateMoveCountTable() {
                     const checkedMoves = Array.from(restrictFieldset.querySelectorAll('input:checked'), cb => cb.value);
-                    const existingRows = new Set(Array.from(moveCountTableBody.querySelectorAll('tr'), tr => tr.dataset.move));
-
-                    existingRows.forEach(move => {
-                        if (!checkedMoves.includes(move)) {
-                            moveCountTableBody.querySelector(`tr[data-move="${move}"]`)?.remove();
+                    const checkedMovesSet = new Set(checkedMoves);
+                    const existingRows = moveCountTableBody.querySelectorAll('tr');
+                    
+                    if (existingRows.length === checkedMoves.length) {
+                        let allMatch = true;
+                        existingRows.forEach(row => {
+                            if (!checkedMovesSet.has(row.dataset.move)) {
+                                allMatch = false;
+                            }
+                        });
+                        if (allMatch) return;
+                    }
+                    
+                    const existingMoves = new Set();
+                    const rowsToRemove = [];
+                    
+                    existingRows.forEach(row => {
+                        const move = row.dataset.move;
+                        existingMoves.add(move);
+                        if (!checkedMovesSet.has(move)) {
+                            rowsToRemove.push(row);
                         }
                     });
 
+                    rowsToRemove.forEach(row => row.remove());
+
+                    const fragment = document.createDocumentFragment();
+                    let hasNewRows = false;
+                    
                     checkedMoves.forEach(move => {
-                        if (!existingRows.has(move)) {
-                            const newRow = moveCountTableBody.insertRow();
+                        if (!existingMoves.has(move)) {
+                            const newRow = document.createElement('tr');
                             newRow.dataset.move = move;
-                            newRow.innerHTML = `
-                            <th>${move}</th>
-                            <td><input type="number" min="0" class="move-count-input" data-move="${move}" value="20"></td>
-                            <td><input type="number" min="0" class="move-count-input" data-move="${move}2" value="20"></td>
-                            <td><input type="number" min="0" class="move-count-input" data-move="${move}-" value="20"></td>
-                        `;
+                            
+                            const th = document.createElement('th');
+                            th.textContent = move;
+                            newRow.appendChild(th);
+                            newRow.appendChild(createNumberInputCell(move, '20'));
+                            newRow.appendChild(createNumberInputCell(move + '2', '20'));
+                            newRow.appendChild(createNumberInputCell(move + '-', '20'));
+                            
+                            fragment.appendChild(newRow);
+                            hasNewRows = true;
                         }
                     });
+                    
+                    if (hasNewRows) {
+                        moveCountTableBody.appendChild(fragment);
+                    }
                 }
 
                 function syncAllTables() {
@@ -1536,11 +1717,18 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                         row.style.display = checkedResMoves.has(move) ? '' : 'none';
                     });
 
+                    const resCheckboxCache = new Map();
+                    const restCheckboxCache = new Map();
+
                     moveCountTableBody.querySelectorAll('.move-count-input').forEach(countInput => {
                         const moveStr = countInput.dataset.move;
                         const moveBase = moveStr.charAt(0);
 
-                        const resCheckbox = restrictFieldset.querySelector(`input[value="${moveBase}"]`);
+                        if (!resCheckboxCache.has(moveBase)) {
+                            resCheckboxCache.set(moveBase, restrictFieldset.querySelector(`input[value="${moveBase}"]`));
+                        }
+                        const resCheckbox = resCheckboxCache.get(moveBase);
+                        
                         if (!resCheckbox || !resCheckbox.checked) {
                             return;
                         }
@@ -1551,7 +1739,10 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                         else if (suffix === '2') restCheckboxId = `checkbox_restrict${moveBase}2`;
                         else if (suffix === '-') restCheckboxId = `checkbox_restrict${moveBase}3`;
 
-                        const restCheckbox = tableBody.querySelector(`#${restCheckboxId}`);
+                        if (!restCheckboxCache.has(restCheckboxId)) {
+                            restCheckboxCache.set(restCheckboxId, tableBody.querySelector(`#${restCheckboxId}`));
+                        }
+                        const restCheckbox = restCheckboxCache.get(restCheckboxId);
 
                         if (restCheckbox && restCheckbox.checked) {
                             if ((countInput.disabled && countInput.value === '0') || countInput.value === '') {
@@ -1647,34 +1838,115 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                 function initializePage() {
 
                     const allPossibleMoves = Array.from(restrictFieldset.querySelectorAll('input.restrict'), cb => cb.value);
+                    const fragment = document.createDocumentFragment();
+                    
                     allPossibleMoves.forEach(move => {
-                        const newRow = moveCountTableBody.insertRow();
+                        const newRow = document.createElement('tr');
                         newRow.dataset.move = move;
-                        newRow.innerHTML = `
-                <th>${move}</th>
-                <td><input type="number" min="0" class="move-count-input" data-move="${move}"></td>
-                <td><input type="number" min="0" class="move-count-input" data-move="${move}2"></td>
-                <td><input type="number" min="0" class="move-count-input" data-move="${move}-"></td>
-            `;
+                        
+                        const th = document.createElement('th');
+                        th.textContent = move;
+                        newRow.appendChild(th);
+                        newRow.appendChild(createNumberInputCell(move, ''));
+                        newRow.appendChild(createNumberInputCell(move + '2', ''));
+                        newRow.appendChild(createNumberInputCell(move + '-', ''));
+                        
+                        fragment.appendChild(newRow);
                     });
+                    
+                    moveCountTableBody.appendChild(fragment);
+
+                    let handleCheckboxChangeTimer = null;
+                    let updateDebounceTimer = null;
+                    let tableWrapperChangeTimer = null;
+                    let isUpdatingMoveAvailableTable = false;
 
                     function handleCheckboxChange() {
-                        updateRestrictTable();
-                        updateMoveCountTable();
-                        syncAllTables();
-                        updateMoveAvailableTable();
-                        updateUrlParams();
+                        if (handleCheckboxChangeTimer) {
+                            clearTimeout(handleCheckboxChangeTimer);
+                        }
+                        
+                        handleCheckboxChangeTimer = setTimeout(() => {
+                            requestAnimationFrame(() => {
+                                updateRestrictTable();
+                                
+                                requestAnimationFrame(() => {
+                                    updateMoveCountTable();
+                                    
+                                    requestAnimationFrame(() => {
+                                        syncAllTables();
+                                        
+                                        if (!isUpdatingMoveAvailableTable) {
+                                            if (updateDebounceTimer) {
+                                                clearTimeout(updateDebounceTimer);
+                                            }
+                                            updateDebounceTimer = setTimeout(() => {
+                                                if (!isUpdatingMoveAvailableTable) {
+                                                    isUpdatingMoveAvailableTable = true;
+                                                    requestAnimationFrame(() => {
+                                                        updateMoveAvailableTable();
+                                                        setTimeout(() => {
+                                                            isUpdatingMoveAvailableTable = false;
+                                                        }, 100);
+                                                    });
+                                                }
+                                            }, 300);
+                                        }
+                                        
+                                        requestAnimationFrame(() => {
+                                            updateUrlParams();
+                                        });
+                                    });
+                                });
+                            });
+                        }, 200);
                     }
 
                     restrictFieldset.addEventListener('change', handleCheckboxChange);
                     tableWrapper.addEventListener('change', () => {
-                        syncAllTables();
-                        updateMoveAvailableTable();
-                        updateUrlParams();
+                        if (tableWrapperChangeTimer) {
+                            clearTimeout(tableWrapperChangeTimer);
+                        }
+                        
+                        tableWrapperChangeTimer = setTimeout(() => {
+                            requestAnimationFrame(() => {
+                                syncAllTables();
+                                
+                                if (!isUpdatingMoveAvailableTable) {
+                                    if (updateDebounceTimer) {
+                                        clearTimeout(updateDebounceTimer);
+                                    }
+                                    updateDebounceTimer = setTimeout(() => {
+                                        if (!isUpdatingMoveAvailableTable) {
+                                            isUpdatingMoveAvailableTable = true;
+                                            requestAnimationFrame(() => {
+                                                updateMoveAvailableTable();
+                                                setTimeout(() => {
+                                                    isUpdatingMoveAvailableTable = false;
+                                                }, 100);
+                                            });
+                                        }
+                                    }, 300);
+                                }
+                                
+                                requestAnimationFrame(() => {
+                                    updateUrlParams();
+                                });
+                            });
+                        }, 200);
                     });
 
                     if (moveCountTableWrapper) {
                         moveCountTableWrapper.addEventListener('input', () => { updateUrlParams(); });
+                    }
+                    
+                    const moveAvailableTableWrapper = document.getElementById('move_available_table_wrapper');
+                    if (moveAvailableTableWrapper) {
+                        moveAvailableTableWrapper.addEventListener('change', () => {
+                            setTimeout(() => {
+                                updateUrlParams();
+                            }, 50);
+                        });
                     }
                 }
 
@@ -2082,6 +2354,103 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                 return true;
             }
 
+            function uncheckMoveRotationOrder() {
+                const table = document.getElementById('move_available_table');
+                if (!table) return;
+
+                const thead = table.querySelector('thead tr');
+                const tbody = table.querySelector('tbody');
+                if (!thead || !tbody) return;
+
+                const headers = Array.from(thead.querySelectorAll('th'));
+                const rotationMoves = ['x', 'x2', "x'", 'y', 'y2', "y'", 'z', 'z2', "z'"];
+                const rotationColIndices = [];
+
+                headers.forEach((th, index) => {
+                    if (index === 0) return;
+                    const moveText = th.textContent.trim();
+                    if (rotationMoves.includes(moveText)) {
+                        rotationColIndices.push(index);
+                    }
+                });
+
+                if (rotationColIndices.length === 0) return;
+
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+                rows.forEach(row => {
+                    const rowHeader = row.querySelector('th');
+                    if (!rowHeader) return;
+
+                    const rowMoveText = rowHeader.textContent.trim();
+
+                    if (rowMoveText !== '' && !rotationMoves.includes(rowMoveText)) {
+                        const cells = Array.from(row.querySelectorAll('td'));
+
+                        rotationColIndices.forEach(colIndex => {
+                            const cellIndex = colIndex - 1;
+                            if (cellIndex >= 0 && cellIndex < cells.length) {
+                                const checkbox = cells[cellIndex].querySelector('input[type="checkbox"]');
+                                if (checkbox) {
+                                    checkbox.checked = false;
+                                }
+                            }
+                        });
+                    }
+                });
+                requestAnimationFrame(() => {
+                    updateUrlParams();
+                });
+            }
+
+            function checkRotationMoveOrder() {
+                const table = document.getElementById('move_available_table');
+                if (!table) return;
+
+                const thead = table.querySelector('thead tr');
+                const tbody = table.querySelector('tbody');
+                if (!thead || !tbody) return;
+
+                const headers = Array.from(thead.querySelectorAll('th'));
+                const rotationMoves = ['x', 'x2', "x'", 'y', 'y2', "y'", 'z', 'z2', "z'"];
+                const moveColIndices = [];
+
+                headers.forEach((th, index) => {
+                    if (index === 0) return;
+                    const moveText = th.textContent.trim();
+                    if (moveText !== '' && !rotationMoves.includes(moveText)) {
+                        moveColIndices.push(index);
+                    }
+                });
+
+                if (moveColIndices.length === 0) return;
+
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+                rows.forEach(row => {
+                    const rowHeader = row.querySelector('th');
+                    if (!rowHeader) return;
+
+                    const rowMoveText = rowHeader.textContent.trim();
+
+                    if (rotationMoves.includes(rowMoveText)) {
+                        const cells = Array.from(row.querySelectorAll('td'));
+
+                        moveColIndices.forEach(colIndex => {
+                            const cellIndex = colIndex - 1;
+                            if (cellIndex >= 0 && cellIndex < cells.length) {
+                                const checkbox = cells[cellIndex].querySelector('input[type="checkbox"]');
+                                if (checkbox) {
+                                    checkbox.checked = true;
+                                }
+                            }
+                        });
+                    }
+                });
+
+                requestAnimationFrame(() => {
+                    updateUrlParams();
+                });
+            }
+
             function updateUrlParams() {
                 const solver = "2x2x2";
                 const url = new URL(window.location.href);
@@ -2139,7 +2508,18 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                     }
                 });
                 try {
-                    window.history.replaceState({}, '', url);
+                    // Compress URL for display (v3: query parameters)
+                    if (typeof window.urlParamsCompressor !== 'undefined') {
+                        try {
+                            const compressed = window.urlParamsCompressor.createCompressedQueryUrl(url.href);
+                            window.history.replaceState({}, '', compressed);
+                        } catch (error) {
+                            console.error('URL compression error:', error);
+                            window.history.replaceState({}, '', url);
+                        }
+                    } else {
+                        window.history.replaceState({}, '', url);
+                    }
                 } catch (e) {
                     console.log(e.message);
                 }
@@ -2171,17 +2551,112 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                     finalRestId = defaultRest;
                 }
                 setIds([finalResId, finalRestId]);
-                const mavString = urlParams.get(idToKeyMap['mav']);
-                if (mavString) {
-                    setMavFromString(mavString);
-                }
-
+                
                 const mcvKey = idToKeyMap['mcv'];
                 const defaultMcv = '';
                 const mcvParam = urlParams.get(mcvKey);
                 setMoveCountFromString(mcvParam ?? defaultMcv, finalRestId);
+                
+                const mavString = urlParams.get(idToKeyMap['mav']);
+                
                 if (typeof window.initializeDynamicTables === 'function') {
                     window.initializeDynamicTables();
+                }
+                
+                if (mavString) {
+                    const existingIndicator = document.getElementById('mav-loading-indicator');
+                    if (existingIndicator) {
+                        existingIndicator.remove();
+                    }
+                    
+                    const loadingIndicator = document.createElement('div');
+                    loadingIndicator.id = 'mav-loading-indicator';
+                    loadingIndicator.style.cssText = 'position:fixed;top:30%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.85);color:white;padding:20px 30px;border-radius:8px;z-index:10000;font-size:18px;box-shadow:0 4px 12px rgba(0,0,0,0.3);';
+                    loadingIndicator.textContent = 'Loading Move Available Table...';
+                    document.body.appendChild(loadingIndicator);
+                    
+                    const restMoves = finalRestId ? finalRestId.split('_').filter(m => m) : [];
+                    const n = restMoves.length;
+                    const expectedCheckboxCount = (n + 1) * n;
+                    
+                    const table = document.getElementById('move_available_table');
+                    if (!table) {
+                        console.error('[MAV] move_available_table not found');
+                        if (loadingIndicator.parentNode) {
+                            loadingIndicator.remove();
+                        }
+                        return;
+                    }
+                    
+                    const tbody = table.querySelector('tbody');
+                    if (!tbody) {
+                        console.error('[MAV] tbody not found');
+                        if (loadingIndicator.parentNode) {
+                            loadingIndicator.remove();
+                        }
+                        return;
+                    }
+                    
+                    let observerTimeout = null;
+                    
+                    const applyMavAndCleanup = () => {
+                        try {
+                            setMavFromString(mavString);
+                            
+                            requestAnimationFrame(() => {
+                                try {
+                                    updateUrlParams();
+                                } catch (e) {
+                                    console.error('updateUrlParams failed:', e);
+                                } finally {
+                                    if (loadingIndicator.parentNode) {
+                                        loadingIndicator.remove();
+                                    }
+                                }
+                            });
+                        } catch (e) {
+                            console.error('setMavFromString failed:', e);
+                            if (loadingIndicator.parentNode) {
+                                loadingIndicator.remove();
+                            }
+                        }
+                    };
+                    
+                    const initialCheckboxes = table.querySelectorAll('input[type="checkbox"]');
+                    const initialCount = initialCheckboxes.length;
+                    
+                    if (initialCount >= expectedCheckboxCount) {
+                        applyMavAndCleanup();
+                    } else {
+                        const observer = new MutationObserver(() => {
+                            const currentCheckboxes = table.querySelectorAll('input[type="checkbox"]');
+                            const currentCount = currentCheckboxes.length;
+                            
+                            if (currentCount >= expectedCheckboxCount) {
+                                observer.disconnect();
+                                if (observerTimeout) {
+                                    clearTimeout(observerTimeout);
+                                }
+                                
+                                setTimeout(() => {
+                                    applyMavAndCleanup();
+                                }, 50);
+                            }
+                        });
+                        
+                        observer.observe(tbody, {
+                            childList: true,
+                            subtree: true
+                        });
+                        
+                        observerTimeout = setTimeout(() => {
+                            const currentCheckboxes = table.querySelectorAll('input[type="checkbox"]');
+                            const currentCount = currentCheckboxes.length;
+                            console.warn(`[MAV] Timeout - expected ${expectedCheckboxCount}, got ${currentCount}`);
+                            observer.disconnect();
+                            applyMavAndCleanup();
+                        }, 10000);
+                    }
                 }
             }
 
@@ -2351,11 +2826,32 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                     var spaceElement2 = document.createElement('a');
                     spaceElement2.innerHTML = "&nbsp;";
                     details.appendChild(spaceElement2);
-                    const currentUrl = new URL(window.location.href);
-                    currentUrl.searchParams.set('index', `${messageCount}`);
-                    currentUrl.searchParams.set('sol', sol.replace(/ /g, '_').replace(/'/g, '-'));
+                    
+                    // Use cached normalized URL if available (to avoid timing issues after history.replaceState)
+                    const sourceUrl = cachedNormalizedUrl || window.location.href;
+                    const currentUrl = new URL(sourceUrl);
+                    
+                    // Normalize URL if not using cached version (cached is already normalized)
+                    const normalizedHref = cachedNormalizedUrl || window.urlParamsCompressor.normalizeUrl(currentUrl.href);
+                    const normalizedUrl = new URL(normalizedHref);
+                    const linkParams = new URLSearchParams(normalizedUrl.search);
+                    linkParams.set('index', `${messageCount}`);
+                    linkParams.set('sol', sol.replace(/ /g, '_').replace(/'/g, '-'));
+                    const baseUrl = currentUrl.origin + currentUrl.pathname;
+                    const legacyUrl = baseUrl + '?' + linkParams.toString();
+                    
+                    // Compress the link for sharing (v3: query parameters)
+                    let finalLinkUrl = legacyUrl;
+                    if (typeof window.urlParamsCompressor !== 'undefined') {
+                        try {
+                            finalLinkUrl = window.urlParamsCompressor.createCompressedQueryUrl(legacyUrl);
+                        } catch (error) {
+                            console.error('Link compression error:', error);
+                        }
+                    }
+                    
                     var link_element3 = document.createElement('a');
-                    link_element3.href = currentUrl;
+                    link_element3.href = finalLinkUrl;
                     link_element3.target = '_blank';
                     link_element3.rel = 'noopener noreferrer';
                     link_element3.textContent = 'or18.github.io';
@@ -2365,7 +2861,16 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                     document.getElementById("countLine").value = messageCount;
                     if (messageCount === 1) {
                         try {
-                            window.history.replaceState({}, '', currentUrl);
+                            // Compress URL for history (v3: query parameters)
+                            let historyUrl = legacyUrl;
+                            if (typeof window.urlParamsCompressor !== 'undefined') {
+                                try {
+                                    historyUrl = window.urlParamsCompressor.createCompressedQueryUrl(legacyUrl);
+                                } catch (error) {
+                                    console.error('History URL compression error:', error);
+                                }
+                            }
+                            window.history.replaceState({}, '', historyUrl);
                         } catch (e) {
                             console.log(e.message);
                         }
@@ -2611,8 +3116,54 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                 }
             });
 
+            // Cache normalized URL for appendSol to avoid timing issues with history.replaceState
+            let cachedNormalizedUrl = null;
+
             window.onload = function () {
-                const urlParams = new URLSearchParams(window.location.search);
+                // Normalize URL: compressed format -> internal params (keep display URL as compressed)
+                let urlParams;
+                
+                // Detect if URL has compressed parameters (v1/v2 hash or v3 query)
+                const hasHashParams = window.location.hash.includes('#hrest=') || window.location.hash.includes('#hmav=');
+                const searchParams = new URLSearchParams(window.location.search);
+                const restParam = searchParams.get('rest');
+                const mavParam = searchParams.get('mav');
+                
+                // Check if query parameters are compressed (v3 format)
+                const hasCompressedRest = restParam && !restParam.includes('_');
+                const hasCompressedMav = mavParam && !mavParam.includes('~') && !mavParam.includes('|');
+                const hasCompressedQueryParams = hasCompressedRest || hasCompressedMav;
+                
+                if (hasHashParams || hasCompressedQueryParams) {
+                    try {
+                        const normalizedUrl = window.urlParamsCompressor.normalizeUrl(window.location.href);
+                        
+                        // Cache normalized URL for appendSol (before index/sol deletion)
+                        cachedNormalizedUrl = normalizedUrl;
+                        
+                        const normalized = new URL(normalizedUrl, window.location.href);
+                        urlParams = new URLSearchParams(normalized.search);
+                        
+                        // Update browser URL immediately (but remove index/sol for clean state)
+                        try {
+                            // Create clean URL without index/sol for appendSol to work correctly
+                            const cleanUrl = new URL(normalizedUrl);
+                            cleanUrl.searchParams.delete('index');
+                            cleanUrl.searchParams.delete('sol');
+                            const compressedUrl = window.urlParamsCompressor.createCompressedQueryUrl(cleanUrl.href);
+                            window.history.replaceState({}, '', compressedUrl);
+                        } catch (e) {
+                            console.error('URL compression error on load:', e);
+                        }
+                    } catch (error) {
+                        console.error('URL normalization error:', error);
+                        urlParams = new URLSearchParams(window.location.search);
+                        cachedNormalizedUrl = window.location.href;
+                    }
+                } else {
+                    urlParams = new URLSearchParams(window.location.search);
+                    cachedNormalizedUrl = window.location.href;
+                }
                 const scrambleParam = urlParams.get(idToKeyMap['scr']);
                 document.getElementById("result").innerHTML = "";
                 let deferredAppend = null;
@@ -2668,8 +3219,8 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                 }
             };
         </script>
-        <script src="../src/i18n/i18n.js" defer></script>
-    <script src="sw-register.js" defer></script>
+        <script src="../sw-register.js" defer></script>
+<script src="../src/i18n/i18n.js" defer></script>
 </body>
 
 </html>
