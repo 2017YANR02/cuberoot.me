@@ -37,6 +37,7 @@
   <li><a href="best_medal_collection_from_abroad_by_person" data-i18n-en="Best medal collection from abroad by person" data-i18n-zh="个人海外最佳奖牌收藏">Best medal collection from abroad by person</a></li>
   <li><a href="best_potential_fmc_mean" data-i18n-en="Best potential FMC mean" data-i18n-zh="最佳潜在 FMC 平均">Best potential FMC mean</a></li>
   <li><a href="best_result_off_podium" data-i18n-en="Best result not providing a podium" data-i18n-zh="未登台的最佳成绩">Best result not providing a podium</a></li>
+  <li><a href="best_round" data-i18n-en="Best round" data-i18n-zh="最佳轮次">Best round</a></li>
   <li><a href="best_single_counting_into_average" data-i18n-en="Best single counting into an average of 5" data-i18n-zh="计入 Ao5 的最佳单次">Best single counting into an average of 5</a></li>
   <li><a href="competition_days_count_by_region" data-i18n-en="Competition days count by region" data-i18n-zh="各地区比赛天数">Competition days count by region</a></li>
   <li><a href="competitions_count_by_week" data-i18n-en="Competitions count by week" data-i18n-zh="每周比赛数">Competitions count by week</a></li>
