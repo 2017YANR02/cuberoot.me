@@ -1,0 +1,19 @@
+require_relative "abstract/wr_round_history"
+
+class WrWpa < WrRoundHistory
+  def initialize
+    @title = "World record WPA (Worst Possible Average) history"
+    @note = "Worst Possible Average: average of the worst 3 out of the first 4 solves in a round."
+    @table_header = { "Result" => :right, "Gain" => :right, "Days" => :right, "Person" => :left, "Competition" => :left, "Date" => :left, "Details" => :left }
+  end
+
+  # NOTE: WPA = 前4次中取最差的3次求均值
+  # 需要全部4次都有效（> 0）
+  def compute_metric(values, r)
+    first4 = values[0..3]
+    return nil unless first4.all? { |v| v > 0 }
+    # 取最差的3个（最大值）
+    worst3 = first4.sort.last(3)
+    worst3.sum.to_f / 3
+  end
+end
