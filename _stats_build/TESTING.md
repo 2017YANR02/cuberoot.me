@@ -5,6 +5,8 @@
 1. **Ruby 3.x**（推荐 3.4）
    - Windows 下载: https://rubyinstaller.org/
    - 安装时勾选 DevKit（`mysql2` gem 编译需要）
+   - 如果 `ruby` 不在 PATH 中，需要使用完整路径，例如 `C:\Ruby34-x64\bin\ruby.exe`
+   - 检查方法：`Get-Command ruby` 若报错则说明不在 PATH 中
 
 2. **MySQL** 中已导入 WCA 数据库
    - 下载 WCA Developer Database Export: https://www.worldcubeassociation.org/export/results
