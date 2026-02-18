@@ -1,13 +1,16 @@
 GEM
   remote: https://rubygems.org/
   specs:
-    mysql2 (0.5.5)
+    bigdecimal (4.0.1)
+    mysql2 (0.5.7)
 
 PLATFORMS
   ruby
+  x64-mingw-ucrt
 
 DEPENDENCIES
+  bigdecimal
   mysql2
 
 BUNDLED WITH
-   2.1.4
+   2.6.9
