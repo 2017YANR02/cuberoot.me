@@ -3,6 +3,7 @@ require_relative "../core/statistic"
 class LongestStreakOfWorldRecords < Statistic
   def initialize
     @title = "Longest streak of world records of the same type in the given event"
+    @title_zh = "同一项目连续世界纪录最长纪录"
     @table_header = { "Records" => :right, "Event" => :left, "Type" => :left, "Person" => :left, "Started at" => :left, "Ended at" => :left, "Years" => :right }
   end
 

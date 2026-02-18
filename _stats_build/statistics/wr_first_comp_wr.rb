@@ -7,7 +7,9 @@ require_relative "../core/solve_time"
 class WrFirstCompWr < Statistic
   def initialize
     @title = "World records set in a person's first competition"
+    @title_zh = "首次参赛即创世界纪录"
     @note = "People who set a 3x3 World Record in their very first WCA competition."
+    @note_zh = "在首次 WCA 比赛中就创造了三阶世界纪录的选手。"
     @table_header = { "#" => :right, "Single" => :right, "Person" => :left, "Competition" => :left, "Date" => :left }
   end
 

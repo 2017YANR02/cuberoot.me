@@ -2,7 +2,7 @@ require "time"
 require_relative "database"
 
 class Statistic
-  attr_reader :title, :note
+  attr_reader :title, :title_zh, :note, :note_zh
 
   def query
     raise "Must implement #query"
@@ -20,12 +20,25 @@ class Statistic
     @data ||= transform(query_results)
   end
 
+  # NOTE: 用 HTML data-i18n 属性实现双语切换，前端 i18n.js 据此替换文本
   def top
     timestamp = Time.parse(Database.metadata["export_timestamp"])
-
-    markdown = "## #{@title}\n\n"
-    markdown += "*Note: #{@note}*\n" if @note
-    markdown + timestamp.strftime("*Updated on %e %B %Y*\n\n")
+    zh = @title_zh || @title
+    markdown = "<h2 data-i18n-en=\"#{@title}\" data-i18n-zh=\"#{zh}\">#{@title}</h2>\n\n"
+    if @note
+      nzh = @note_zh || @note
+      markdown += "<p><em data-i18n-en=\"#{@note}\" data-i18n-zh=\"#{nzh}\">#{@note}</em></p>\n"
+    end
+    markdown += timestamp.strftime("*Updated on %e %B %Y*\n\n")
+    # NOTE: 注入 i18n 脚本和语言切换按钮，stats 页面在 /stats/ 子目录
+    markdown += <<~HTML
+      <div style="position:fixed;bottom:16px;right:16px;z-index:9999;display:flex;gap:0;border-radius:6px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.15)">
+        <button data-i18n-toggle="en" onclick="I18n.setLocale('en')" style="padding:6px 14px;border:none;cursor:pointer;font-size:14px;font-weight:600;background:#e0e0e0;color:#333">EN</button>
+        <button data-i18n-toggle="zh" onclick="I18n.setLocale('zh')" style="padding:6px 14px;border:none;cursor:pointer;font-size:14px;font-weight:600;background:#e0e0e0;color:#333">中文</button>
+      </div>
+      <script src="../src/i18n/i18n.js" defer></script>
+    HTML
+    markdown
   end
 
   def markdown

@@ -4,7 +4,9 @@ require_relative "../core/events"
 class ShortestTimeToGetAllSinglesAndAverages < Statistic
   def initialize
     @title = "Shortest time to get all singles and averages"
+    @title_zh = "最快集齐所有单次和平均成绩"
     @note = "Only current official events are taken into account."
+    @note_zh = "仅考虑当前官方项目。"
     @table_header = { "Days" => :right, "Person" => :left }
   end
 

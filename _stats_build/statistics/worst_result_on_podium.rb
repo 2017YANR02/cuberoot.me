@@ -5,7 +5,9 @@ require_relative "../core/solve_time"
 class WorstResultOnPodium < GroupedStatistic
   def initialize
     @title = "Worst result providing a podium"
+    @title_zh = "登上领奖台的最差成绩"
     @note = "Only finals are taken into account. Results where the main statistic is DNF are ignored."
+    @note_zh = "仅统计决赛。主要成绩为 DNF 的结果不计入。"
     @table_header = { "Person" => :left, "Single" => :right, "Average" => :right, "Competition" => :left, "Place" => :center }
   end
 

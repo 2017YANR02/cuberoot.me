@@ -3,7 +3,9 @@ require_relative "abstract/wr_round_history"
 class WrVariance < WrRoundHistory
   def initialize
     @title = "World record variance history"
+    @title_zh = "世界纪录方差历史"
     @note = "Variance: sample variance of all 5 solves in a round (lower = more consistent)."
+    @note_zh = "方差：一轮中 5 次成绩的样本方差（越低越稳定）。"
     @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right, "Person" => :left, "Competition" => :left, "Date" => :left, "Details" => :left }
   end
 

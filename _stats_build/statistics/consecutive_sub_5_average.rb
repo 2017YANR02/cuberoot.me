@@ -4,7 +4,9 @@ require_relative "../core/solve_time"
 class ConsecutiveSub5Average < Statistic
   def initialize
     @title = "Most consecutive sub-5 averages in 3x3x3"
+    @title_zh = "最多连续 sub-5 三阶平均"
     @note = "Only official 3x3x3 averages are considered. Computed across all rounds in chronological order."
+    @note_zh = "仅考虑官方 3x3x3 平均成绩。按时间顺序统计所有轮次。"
     @table_header = {} # NOTE: 不使用基类的 markdown_table，自定义 HTML 输出
   end
 

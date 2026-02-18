@@ -8,7 +8,9 @@ class WrAverageHistory < GroupedStatistic
 
   def initialize
     @title = "World record average history"
+    @title_zh = "世界纪录平均历史"
     @note = "Shows how world record averages have progressed over time for each event."
+    @note_zh = "展示各项目世界纪录平均成绩随时间的变化。"
     @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right, "Person" => :left, "Competition" => :left, "Date" => :left, "Details" => :left }
   end
 

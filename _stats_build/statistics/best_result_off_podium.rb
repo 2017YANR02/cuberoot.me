@@ -5,7 +5,9 @@ require_relative "../core/solve_time"
 class BestResultOffPodium < GroupedStatistic
   def initialize
     @title = "Best result not providing a podium"
+    @title_zh = "未登领奖台的最佳成绩"
     @note = "Only finals are taken into account."
+    @note_zh = "仅统计决赛。"
     @table_header = { "Person" => :left, "Single" => :right, "Average" => :right, "Competition" => :left, "Place" => :center }
   end
 

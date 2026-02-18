@@ -3,8 +3,10 @@ require_relative "../core/statistic"
 class DelegatedCompetitionPerYear < Statistic
   def initialize
     @title = "Delegated competitions per year"
-    @note = "Only delegates with at least 5 competitions are taken into account.
-             Delegate period is calculated as the difference between first and last delegated competition."
+    @title_zh = "每年代理比赛数量"
+    @note = "Only delegates with at least 5 competitions are taken into account. "\
+             "Delegate period is calculated as the difference between first and last delegated competition."
+    @note_zh = "仅统计至少代理过 5 场比赛的代表。代理时间按首次和最后一次代理比赛之间的差值计算。"
     @table_header = { "Delegated per year" => :right, "Delegated" => :right, "Years" => :right, "Person" => :left, "List on WCA" => :center }
   end
 

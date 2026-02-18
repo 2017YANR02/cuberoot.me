@@ -3,6 +3,7 @@ require_relative "../core/statistic"
 class FewestCompetitorsContest < Statistic
   def initialize
     @title = "Fewest competitors contest"
+    @title_zh = "参赛人数最少的比赛"
     @table_header = { "Competitors" => :right, "Competition" => :left }
   end
 
