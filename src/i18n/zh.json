@@ -96,7 +96,9 @@
         "pre_move": "预转动：",
         "solve": "求解",
         "num_solutions": "解法数量：",
-        "rotation": "旋转："
+        "rotation": "旋转：",
+        "warning_700mb": "警告：此打乱器首次运行会在本地生成约 700 MB 数据；初始打乱生成可能需要数秒到数十秒。",
+        "warning_150mb": "警告：此打乱器首次运行会在本地生成约 150 MB 数据；初始打乱生成可能需要数秒到数十秒。"
     },
     "alg_trainer": {
         "title": "JSON 公式训练器",
