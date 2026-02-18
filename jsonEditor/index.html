@@ -5,9 +5,8 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="manifest" href="../manifest.json">
-	<title data-i18n="common.json_editor">JSON Editor</title>
-	<meta name="description" content="Tool to edit algorithm sets in JSON format.">
-	<script async src="https://www.googletagmanager.com/gtag/js?id=G-MXJH30352W"></script>
+	<title>JSON Editor</title>
+	<meta name="description" content="Tool to edit algorithm sets in JSON format for AlgTrainer.html.">	<script async src="https://www.googletagmanager.com/gtag/js?id=G-MXJH30352W"></script>
 	<script>
 		window.dataLayer = window.dataLayer || [];
 		function gtag() { dataLayer.push(arguments); }
@@ -19,7 +18,10 @@
 			padding: 2px;
 			text-align: center;
 			cursor: pointer;
-			background-color: #121212;
+			background-color: #0a0a0f;
+				background-image:
+					radial-gradient(ellipse at 20% 50%, rgba(90, 90, 200, 0.08) 0%, transparent 50%),
+					radial-gradient(ellipse at 80% 50%, rgba(200, 90, 90, 0.06) 0%, transparent 50%);
 		}
 
 		h1 {
@@ -33,10 +35,7 @@
 			font-family: Arial, sans-serif;
 			margin: 18px;
 			padding: 0;
-			background-color: #0a0a0f;
-            background-image:
-                radial-gradient(ellipse at 20% 50%, rgba(90, 90, 200, 0.08) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 50%, rgba(200, 90, 90, 0.06) 0%, transparent 50%);
+			background-color: #121212;
 			color: #ffffff;
 		}
 
@@ -200,7 +199,7 @@
 
 <body>
 	<header id="header" style="margin-left:48px;margin-top:10px;position:relative;z-index:10;">
-		<h1 data-i18n="common.json_editor">JSON Algorithm Editor</h1>
+		<h1>JSON Algorithm Editor</h1>
 	</header>
 	<div id="hamburger-menu-container">
 		<button id="hamburger-menu-btn" aria-label="Open menu"
@@ -214,29 +213,29 @@
 				<button id="drawer-close-btn" class="drawer-close-btn" aria-label="Close menu">&times;</button>
 			</div>
 			<div class="drawer-content">
-				<a href="https://github.com/or18/RubiksSolverDemo" rel="noopener noreferrer" translate="no">Source</a>
-				<a href="/solver/">Main Solver</a>
-				<a href="/2x2x2/" rel="noopener noreferrer" translate="no">2x2x2 Solver</a>
-				<a href="/documentation/" translate="no">Documentation</a>
-				<span style="font-weight:bold;margin-top:12px;display:block;color:#fff;" data-i18n="common.trainers">Trainers:</span>
-				<a href="/cross_trainer/" rel="noopener noreferrer" translate="no">Cross</a>
-				<a href="/xcross_trainer/" rel="noopener noreferrer" translate="no">XCross</a>
-				<a href="/xxcross_trainer/" rel="noopener noreferrer" translate="no">XXCross</a>
-				<a href="/pairing_trainer/" rel="noopener noreferrer" translate="no">Free Pair</a>
-				<a href="/pseudo_xcross_trainer/" rel="noopener noreferrer" translate="no">Pseudo XCross</a>
-				<a href="/pseudo_pairing_trainer/" rel="noopener noreferrer" translate="no">Pseudo Free Pair</a>
-				<a href="/eocross_trainer/" rel="noopener noreferrer" translate="no">EOCross</a>
-				<a href="/algTrainer/" rel="noopener noreferrer" translate="no">Alg Trainer</a>
-				<a href="/jsonEditor/" rel="noopener noreferrer" translate="no">JSON Editor</a>
-				<a href="stats/" rel="noopener noreferrer" translate="no">WCA Statistics</a>
-                <span style="font-weight:bold;margin-top:12px;display:block;color:#fff;" data-i18n="common.external_tools">External tools:</span>
-				<a href="https://trangium.github.io/MovecountCoefficient/" target="_blank" rel="noopener noreferrer"
-					translate="no">MCC by trangium</a>
-				<a href="https://speedcubedb.com/a/3x3/" target="_blank" rel="noopener noreferrer"
-					translate="no">speedcubedb.com</a>
-				<a href="https://cstimer.net/" target="_blank" rel="noopener noreferrer" translate="no">cstimer.net</a>
-			</div>
-		</nav>
+<a href="https://github.com/or18/RubiksSolverDemo" rel="noopener noreferrer" translate="no">Source</a>
+<a href="/solver/">Main Solver</a>
+<a href="/2x2x2/" rel="noopener noreferrer" translate="no">2x2x2 Solver</a>
+<a href="/documentation/" translate="no">Documentation</a>
+<span style="font-weight:bold;margin-top:12px;display:block;color:#fff;" data-i18n="common.trainers">Trainers:</span>
+<a href="/cross_trainer/" rel="noopener noreferrer" translate="no">Cross</a>
+<a href="/xcross_trainer/" rel="noopener noreferrer" translate="no">XCross</a>
+<a href="/xxcross_trainer/" rel="noopener noreferrer" translate="no">XXCross</a>
+<a href="/pairing_trainer/" rel="noopener noreferrer" translate="no">Free Pair</a>
+<a href="/xcross_pairing_trainer/" rel="noopener noreferrer" translate="no">XCross Free Pair</a>
+<a href="/pseudo_xcross_trainer/" rel="noopener noreferrer" translate="no">Pseudo XCross</a>
+<a href="/pseudo_pairing_trainer/" rel="noopener noreferrer" translate="no">Pseudo Free Pair</a>
+<a href="/eocross_trainer/" rel="noopener noreferrer" translate="no">EOCross</a>
+<a href="/algTrainer/" rel="noopener noreferrer" translate="no">Alg Trainer</a>
+<a href="/jsonEditor/" rel="noopener noreferrer" translate="no">JSON Editor</a>
+<a href="/stats/" rel="noopener noreferrer" translate="no">WCA Statistics</a>
+<span style="font-weight:bold;margin-top:12px;display:block;color:#fff;" data-i18n="common.external_tools">External
+    tools:</span>
+<a href="https://trangium.github.io/MovecountCoefficient/" target="_blank" rel="noopener noreferrer" translate="no">MCC
+    by trangium</a>
+<a href="https://speedcubedb.com/a/3x3/" target="_blank" rel="noopener noreferrer" translate="no">speedcubedb.com</a>
+<a href="https://cstimer.net/" target="_blank" rel="noopener noreferrer" translate="no">cstimer.net</a>
+			
 	</div>
 	<script>
 		const hamburgerBtn = document.getElementById('hamburger-menu-btn');
@@ -277,16 +276,16 @@
 			}
 		});
 	</script>
-	<label for="fileInput" data-i18n="alg_trainer.select_json">Select JSON File: </label>
+	<label for="fileInput">Select JSON File: </label>
 	<input type="file" id="fileInput" accept=".json" /><br><br>
 	<input type="text" id="downloadFileName" placeholder="Enter file name" />
 	<label for="downloadFileName">.json</label><br>
-	<button id="downloadJson" class="button" data-i18n="common.download_json">Download JSON</button>
-	<button id="resetData" class="button" data-i18n="common.reset">Reset</button><br><br>
-	<label for="setSelector" style="margin-left:8px;" data-i18n="common.select_set">Select Set: </label>
+	<button id="downloadJson" class="button">Download JSON</button>
+	<button id="resetData" class="button">Reset</button><br><br>
+	<label for="setSelector" style="margin-left:8px;">Select Set: </label>
 	<select id="setSelector"></select><br>
-	<button id="addCategory" class="button" data-i18n="common.add_set">Add Set</button>
-	<button id="deleteCategoryTop" class="button" style="margin-left:8px" data-i18n="common.delete_set">Delete Set</button><br>
+	<button id="addCategory" class="button">Add Set</button>
+	<button id="deleteCategoryTop" class="button" style="margin-left:8px">Delete Set</button><br>
 
 	<div id="categoryContainer"></div>
 
@@ -808,9 +807,9 @@
 
 		loadAlgDataFromIDB();
 	</script>
-	<script src="../src/i18n/i18n.js" defer></script>
-	<script src="sw-register.js" defer></script>
+	<script src="../sw-register.js" defer></script>
 
+<script src="../src/i18n/i18n.js" defer></script>
 </body>
 
 </html>
