@@ -1,12 +1,14 @@
 # 大型数据文件
+# 大型数据文件
 _stats_build/WCADB.xlsx
 _stats_build/WCADB_preview.txt
 # 参考 SQL 文件（不需要版本控制）
 _stats_build/WCA-Statistics/
 # 本地数据库配置（含密码）
 _stats_build/database.yml
-# 本地测试脚本
+# 本地测试脚本和输出
 _stats_build/test_stat.rb
+_stats_build/test_output.html
 
 _site/
 .jekyll-cache/

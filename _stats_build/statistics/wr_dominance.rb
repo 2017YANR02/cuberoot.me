@@ -1,7 +1,27 @@
-# NOTE: Dominance = 选手在某项目全历史成绩排行榜上完全霸占前 N 席
-# 例如某人有 12 个 result 比任何其他人的最佳 result 都好，则 dominance = 12
-# 并列成绩排除（只算严格优于 others_best 的）
-# 仅 WR 历史（屠榜是历史现象，当前排名无意义）
+# NOTE: Dominance（屠榜）= 选手在某项目全历史成绩排行榜上完全霸占前 N 席
+#
+# 概念说明:
+#   将某项目所有历史 results（每轮的 best 或 average）按成绩值升序排列，
+#   如果排行榜前 N 名全部属于同一个人，则该人的 dominance = N。
+#   并列成绩排除——只算严格优于他人最佳的部分。
+#
+# 算法:
+#   1. 找到全局成绩最好的选手 P（best_by_person 的最小值）
+#   2. 找到非 P 选手中的最佳成绩 others_best（second_best）
+#   3. dominance = P 的成绩中严格 < others_best 的数量
+#
+# WR 历史:
+#   按比赛日期正序处理所有 results，每场比赛结束后重新计算 dominance。
+#   只记录 dominance 刷新历史最高的时刻，最终倒序输出。
+#
+# 性能优化:
+#   - 每人的成绩用有序数组存储（二分插入 O(log n)）
+#   - dominance 计数用 binary search（O(log n)），避免遍历全量
+#   - 维护 best_by_person hash 快速找 top/second（O(p)，p=选手数）
+#
+# 设计决策:
+#   - 仅做 WR 历史，不做当前排名 tab（屠榜是早期历史现象，如今意义不大）
+#   - Single 覆盖所有官方项目，Average 排除 BLD 类
 require_relative "../core/statistic"
 require_relative "../core/events"
 require_relative "../core/solve_time"
