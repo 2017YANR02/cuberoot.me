@@ -40,6 +40,8 @@ GitHub Pages（Jekyll）
 
 ```
 ruiminyan.github.io/
+├── index.html                 # 落地页（Solver / WCA Stats 入口）
+├── solver.html                # 3x3x3 Solver（主解算器页面）
 ├── .github/workflows/
 │   └── stats.yml              # CI 配置
 ├── _stats_build/              # 构建脚本（不部署）
