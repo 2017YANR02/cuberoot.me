@@ -3,6 +3,7 @@ GEM
   specs:
     bigdecimal (4.0.1)
     mysql2 (0.5.7)
+      bigdecimal
 
 PLATFORMS
   ruby
