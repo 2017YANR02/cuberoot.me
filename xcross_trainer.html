@@ -284,7 +284,7 @@
 			</div>
 			<div class="drawer-content">
 				<a href="https://github.com/or18/RubiksSolverDemo" rel="noopener noreferrer" translate="no">Source</a>
-				<a href="index.html">Main Solver</a>
+				<a href="solver.html">Main Solver</a>
 				<a href="2x2x2.html" rel="noopener noreferrer" translate="no">2x2x2 Solver</a>
 				<a href="documentation.html" translate="no">Documentation</a>
 				<span style="font-weight:bold;margin-top:12px;display:block;color:#fff;">Trainers:</span>
@@ -840,7 +840,7 @@
 				var spaceElement2 = document.createElement('a');
 				spaceElement2.innerHTML = "&nbsp;";
 				details.appendChild(spaceElement2);
-				const currentUrl = new URL("index.html", window.location.href);
+				const currentUrl = new URL("solver.html", window.location.href);
 				currentUrl.searchParams.set('scramble', (scr + " // setup\n").replace(/ /g, '_').replace(/'/g, '-'));
 				if (premove !== "") {
 					currentUrl.searchParams.set('premove', pm.replace(/ /g, '_').replace(/'/g, '-'));
