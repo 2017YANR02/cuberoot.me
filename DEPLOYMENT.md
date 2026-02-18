@@ -40,11 +40,12 @@ GitHub Pages（Jekyll）
 
 > 🔄 = 由 `sync_upstream.ps1` 从上游同步（勿手动修改，下次同步会覆盖）
 > 📌 = 本地维护（不会被同步覆盖）
+> ❌ = 上游有但不同步（有替代方案或不需要）
 
 ```
 ruiminyan.github.io/
 │
-│── 🔄 上游同步目录（sync_upstream.ps1 管理）
+│── 🔄 上游同步（sync_upstream.ps1 管理，勿手动改）
 ├── solver/                    # 3x3x3 Solver（主求解器页面）
 ├── 2x2x2/                     # 2x2x2 求解器
 ├── cross_trainer/              # Cross 训练器
@@ -58,11 +59,16 @@ ruiminyan.github.io/
 ├── algTrainer/                 # JSON 公式训练器
 ├── jsonEditor/                 # JSON 编辑器
 ├── documentation/              # 文档页面
-├── src/                        # 运行时模块（WASM、Worker、Solver 等）
+├── src/                        # 运行时模块（WASM、Worker、Solver 等，排除 i18n/）
+├── icons/                     # PWA 图标
+├── documents/                 # 文档资源
+├── screenshots/               # 截图资源
 ├── url_params_compressor_simple.js  # URL 压缩工具
 ├── sw-register.js              # Service Worker 注册
+├── sw.js                       # Service Worker 主文件
+├── manifest.json               # PWA 清单
 │
-│── 📌 本地维护目录（不受同步影响）
+│── 📌 本地维护（不受同步影响）
 ├── index.html                 # 落地页（Solver / WCA Stats 入口）
 ├── src/i18n/                  # 多语言支持（同步时排除）
 │   ├── i18n.js                # 语言切换引擎 + MutationObserver
@@ -75,10 +81,14 @@ ruiminyan.github.io/
 ├── _stats_build/              # WCA 统计构建脚本
 ├── stats/                     # CI 生成的统计页面
 ├── .github/workflows/         # CI 配置
-├── icons/                     # 图标资源
-├── documents/                 # 文档资源
-├── screenshots/               # 截图资源
-└── _config.yml                # Jekyll 配置
+├── _config.yml                # Jekyll 配置
+│
+│── ❌ 上游有但不同步
+│   analytics.js               # 已用内联 GA 替代（上游硬编码 or18.github.io 域名）
+│   dist/                      # 开发/构建工具，非运行时依赖
+│   _config.yml                # 上游的 Jekyll 配置，与本地不同
+│   README.md                  # 上游的 README，与本地不同
+└── LICENSE                    # 上游的许可证，与本地不同
 ```
 
 ## 经验教训
