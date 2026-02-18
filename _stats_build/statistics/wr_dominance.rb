@@ -21,7 +21,7 @@
 #
 # 设计决策:
 #   - 仅做 WR 历史，不做当前排名 tab（屠榜是早期历史现象，如今意义不大）
-#   - Single 覆盖所有官方项目，Average 排除 BLD 类
+#   - Single 和 Average/Mean 均覆盖所有项目（含退役项目如脚拧、八板等）
 require_relative "../core/statistic"
 require_relative "../core/events"
 require_relative "../core/solve_time"
@@ -88,10 +88,10 @@ class WrDominance < Statistic
   def compute_all
     results = []
 
-    # Single: 所有官方项目
+    # Single: 所有项目（含退役项目）
     puts "  Dominance: querying singles..."
     single_rows = fetch_results(:single)
-    Events::OFFICIAL.each do |event_id, event_name|
+    Events::ALL.each do |event_id, event_name|
       group = "#{event_name} Single"
       rows = single_rows.select { |r| r["event_id"] == event_id }
       next if rows.empty?
@@ -99,11 +99,10 @@ class WrDominance < Statistic
       results << [group, hist] unless hist.empty?
     end
 
-    # Average: 排除 BLD 类（它们用 mean，数据太少且意义不大）
+    # Average/Mean: 所有项目（BLD 类用 mean，也存储在 average 列）
     puts "  Dominance: querying averages..."
     avg_rows = fetch_results(:average)
-    avg_events = Events::OFFICIAL.reject { |id, _| Events::BLD.key?(id) }
-    avg_events.each do |event_id, event_name|
+    Events::ALL.each do |event_id, event_name|
       group = "#{event_name} Average"
       rows = avg_rows.select { |r| r["event_id"] == event_id }
       next if rows.empty?
