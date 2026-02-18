@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page.title | default: site.title }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', Arial, sans-serif;
+            background-color: #0a0a0f;
+            color: #e0e0e0;
+            line-height: 1.6;
+            padding: 2rem;
+            /* NOTE: 粒子渐变背景，与首页一致 */
+            background-image:
+                radial-gradient(ellipse at 20% 50%, rgba(90, 90, 200, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 50%, rgba(200, 90, 90, 0.06) 0%, transparent 50%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        /* 标题 */
+        h1,
+        h2,
+        h3,
+        h4 {
+            color: #ffffff;
+            margin: 1.2em 0 0.5em;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 0.3em;
+        }
+
+        h3 {
+            font-size: 1.2rem;
+        }
+
+        /* 段落和强调 */
+        p {
+            margin: 0.5em 0;
+        }
+
+        em {
+            color: #aaa;
+        }
+
+        /* 链接 */
+        a {
+            color: #8888cc;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+            color: #aaaaee;
+        }
+
+        /* 表格 — 暗紫色调 */
+        table {
+            border-collapse: collapse;
+            margin: 1em 0;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background: #1a1a2e;
+            color: #ccc;
+            font-weight: 600;
+            padding: 8px 12px;
+            border: 1px solid #2a2a3e;
+            text-align: left;
+        }
+
+        td {
+            padding: 6px 12px;
+            border: 1px solid #1e1e30;
+        }
+
+        /* 交替行 */
+        tr:nth-child(even) {
+            background: #12121f;
+        }
+
+        tr:nth-child(odd) {
+            background: #0e0e18;
+        }
+
+        tr:hover {
+            background: #1e1e35;
+        }
+
+        /* Tab 切换面板（ao_rounds / wr_round_history 使用） */
+        .tab-btn {
+            background: rgba(255, 255, 255, 0.08);
+            color: #ccc;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 6px 16px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            border-radius: 4px 4px 0 0;
+        }
+
+        .tab-btn.active,
+        .tab-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        {{ content }}
+    </div>
+</body>
+
+</html>
