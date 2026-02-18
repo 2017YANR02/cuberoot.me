@@ -1,9 +1,14 @@
-## Most completed solves
+<h2 data-i18n-en="Most completed solves" data-i18n-zh="完成还原次数最多">Most completed solves</h2>
 
-*Updated on 16 February 2026*
+<p><em data-i18n-en="Updated on 16 February 2026" data-i18n-zh="更新于 2026 年 2 月 16 日">Updated on 16 February 2026</em></p>
 
+<div style="position:fixed;bottom:16px;right:16px;z-index:9999;display:flex;gap:0;border-radius:6px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.15)">
+  <button data-i18n-toggle="en" onclick="I18n.setLocale('en')" style="padding:6px 14px;border:none;cursor:pointer;font-size:14px;font-weight:600;background:rgba(255,255,255,0.1);color:#ccc;backdrop-filter:blur(8px)">EN</button>
+  <button data-i18n-toggle="zh" onclick="I18n.setLocale('zh')" style="padding:6px 14px;border:none;cursor:pointer;font-size:14px;font-weight:600;background:rgba(255,255,255,0.1);color:#ccc;backdrop-filter:blur(8px)">中文</button>
+</div>
+<script src="../src/i18n/i18n.js" defer></script>
 
-### Competition
+<h3 data-i18n-en="Competition" data-i18n-zh="Competition">Competition</h3>
 
 |  | Solves | Attempts |
 | :--- | ---: | ---: |
@@ -28,7 +33,7 @@
 | [NAC 2022](https://www.worldcubeassociation.org/competitions/NAC2022) | **17795** | 18586 |
 | [World Championship 2013](https://www.worldcubeassociation.org/competitions/WC2013) | **17664** | 18907 |
 
-### Person
+<h3 data-i18n-en="Person" data-i18n-zh="Person">Person</h3>
 
 |  | Solves | Attempts |
 | :--- | ---: | ---: |
@@ -53,7 +58,7 @@
 | [Fabio Bini Graciose](https://www.worldcubeassociation.org/persons/2010GRAC02) | **14112** | 14299 |
 | [Paul Mahvi](https://www.worldcubeassociation.org/persons/2012MAHV01) | **14034** | 14474 |
 
-### Country
+<h3 data-i18n-en="Country" data-i18n-zh="Country">Country</h3>
 
 |  | Solves | Attempts |
 | :--- | ---: | ---: |
@@ -78,7 +83,7 @@
 | Chinese Taipei | **371145** | 382605 |
 | Peru | **328121** | 342480 |
 
-### Continent
+<h3 data-i18n-en="Continent" data-i18n-zh="Continent">Continent</h3>
 
 |  | Solves | Attempts |
 | :--- | ---: | ---: |
@@ -90,7 +95,7 @@
 | Africa | **204748** | 213783 |
 | Multiple Continents | **6215** | 8051 |
 
-### Year
+<h3 data-i18n-en="Year" data-i18n-zh="Year">Year</h3>
 
 |  | Solves | Attempts |
 | :--- | ---: | ---: |
@@ -115,7 +120,7 @@
 | 2008 | **86491** | 92666 |
 | 2007 | **34623** | 36794 |
 
-### Event
+<h3 data-i18n-en="Event" data-i18n-zh="Event">Event</h3>
 
 |  | Solves | Attempts |
 | :--- | ---: | ---: |

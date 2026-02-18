@@ -1,10 +1,15 @@
-## World Championship records
+<h2 data-i18n-en="World Championship records" data-i18n-zh="世锦赛纪录">World Championship records</h2>
 
-*Note: This is a list of the best results from all World Championships. It corresponds to Olympic records for Olympic sports.*
-*Updated on 16 February 2026*
+<p><em data-i18n-en="This is a list of the best results from all World Championships. It corresponds to Olympic records for Olympic sports." data-i18n-zh="此列表包含历届世界锦标赛的最佳成绩，相当于奥运项目中的奥运纪录。">This is a list of the best results from all World Championships. It corresponds to Olympic records for Olympic sports.</em></p>
+<p><em data-i18n-en="Updated on 16 February 2026" data-i18n-zh="更新于 2026 年 2 月 16 日">Updated on 16 February 2026</em></p>
 
+<div style="position:fixed;bottom:16px;right:16px;z-index:9999;display:flex;gap:0;border-radius:6px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.15)">
+  <button data-i18n-toggle="en" onclick="I18n.setLocale('en')" style="padding:6px 14px;border:none;cursor:pointer;font-size:14px;font-weight:600;background:rgba(255,255,255,0.1);color:#ccc;backdrop-filter:blur(8px)">EN</button>
+  <button data-i18n-toggle="zh" onclick="I18n.setLocale('zh')" style="padding:6px 14px;border:none;cursor:pointer;font-size:14px;font-weight:600;background:rgba(255,255,255,0.1);color:#ccc;backdrop-filter:blur(8px)">中文</button>
+</div>
+<script src="../src/i18n/i18n.js" defer></script>
 
-### Single
+<h3 data-i18n-en="Single" data-i18n-zh="Single">Single</h3>
 
 | Event | Result | Person | Citizen of | Competition |
 | :--- | ---: | :--- | :--- | :--- |
@@ -26,7 +31,7 @@
 | 5x5x5 Blindfolded | 2:13.74 | [Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04) | United States | [WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025) |
 | 3x3x3 Multi-Blind | 52/55 59:52 | [Andrew Tao](https://www.worldcubeassociation.org/persons/2022TAOA01) | United States | [WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025) |
 
-### Average
+<h3 data-i18n-en="Average" data-i18n-zh="Average">Average</h3>
 
 | Event | Result | Person | Citizen of | Competition |
 | :--- | ---: | :--- | :--- | :--- |

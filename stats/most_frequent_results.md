@@ -1,9 +1,14 @@
-## Most frequent results
+<h2 data-i18n-en="Most frequent results" data-i18n-zh="出现频率最高的成绩">Most frequent results</h2>
 
-*Updated on 16 February 2026*
+<p><em data-i18n-en="Updated on 16 February 2026" data-i18n-zh="更新于 2026 年 2 月 16 日">Updated on 16 February 2026</em></p>
 
+<div style="position:fixed;bottom:16px;right:16px;z-index:9999;display:flex;gap:0;border-radius:6px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.15)">
+  <button data-i18n-toggle="en" onclick="I18n.setLocale('en')" style="padding:6px 14px;border:none;cursor:pointer;font-size:14px;font-weight:600;background:rgba(255,255,255,0.1);color:#ccc;backdrop-filter:blur(8px)">EN</button>
+  <button data-i18n-toggle="zh" onclick="I18n.setLocale('zh')" style="padding:6px 14px;border:none;cursor:pointer;font-size:14px;font-weight:600;background:rgba(255,255,255,0.1);color:#ccc;backdrop-filter:blur(8px)">中文</button>
+</div>
+<script src="../src/i18n/i18n.js" defer></script>
 
-### Rubik's Cube
+<h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 
 | Count | Result |
 | ---: | ---: |
@@ -18,7 +23,7 @@
 | 6233 | 12.28 |
 | 6214 | 11.40 |
 
-### 2x2x2 Cube
+<h3 data-i18n-en="2x2x2 Cube" data-i18n-zh="二阶魔方">2x2x2 Cube</h3>
 
 | Count | Result |
 | ---: | ---: |
@@ -33,7 +38,7 @@
 | 8097 | 4.52 |
 | 8097 | 4.84 |
 
-### 4x4x4 Cube
+<h3 data-i18n-en="4x4x4 Cube" data-i18n-zh="四阶魔方">4x4x4 Cube</h3>
 
 | Count | Result |
 | ---: | ---: |
@@ -43,12 +48,12 @@
 | 648 | 43.33 |
 | 646 | 43.44 |
 | 646 | 45.80 |
-| 642 | 45.72 |
 | 642 | 41.36 |
+| 642 | 45.72 |
 | 640 | 39.72 |
 | 633 | 40.52 |
 
-### 5x5x5 Cube
+<h3 data-i18n-en="5x5x5 Cube" data-i18n-zh="五阶魔方">5x5x5 Cube</h3>
 
 | Count | Result |
 | ---: | ---: |
@@ -60,55 +65,55 @@
 | 209 | 1:21.36 |
 | 209 | 1:13.16 |
 | 207 | 1:19.44 |
-| 205 | 1:22.68 |
 | 205 | 1:21.72 |
+| 205 | 1:22.68 |
 
-### 6x6x6 Cube
+<h3 data-i18n-en="6x6x6 Cube" data-i18n-zh="六阶魔方">6x6x6 Cube</h3>
 
 | Count | Result |
 | ---: | ---: |
 | 43 | 2:22.22 |
-| 42 | 2:14.28 |
 | 42 | 2:21.76 |
+| 42 | 2:14.28 |
 | 41 | 2:33.44 |
 | 41 | 2:14.92 |
 | 40 | 2:01.89 |
 | 39 | 2:08.79 |
-| 38 | 2:43.84 |
-| 38 | 2:24.02 |
-| 38 | 2:17.08 |
+| 38 | 2:20.34 |
+| 38 | 2:33.96 |
+| 38 | 2:25.40 |
 
-### 7x7x7 Cube
+<h3 data-i18n-en="7x7x7 Cube" data-i18n-zh="七阶魔方">7x7x7 Cube</h3>
 
 | Count | Result |
 | ---: | ---: |
 | 33 | 3:22.83 |
 | 29 | 3:47.84 |
 | 26 | 3:14.21 |
-| 26 | 3:58.77 |
 | 26 | 3:46.43 |
-| 25 | 3:49.72 |
-| 25 | 3:49.70 |
+| 26 | 3:58.77 |
 | 25 | 4:06.92 |
-| 25 | 3:12.72 |
+| 25 | 3:49.70 |
 | 25 | 3:29.32 |
+| 25 | 4:04.16 |
+| 25 | 3:12.72 |
 
-### 3x3x3 Blindfolded
+<h3 data-i18n-en="3x3x3 Blindfolded" data-i18n-zh="三阶盲拧">3x3x3 Blindfolded</h3>
 
 | Count | Result |
 | ---: | ---: |
 | 28 | 22.88 |
 | 27 | 24.12 |
 | 27 | 22.68 |
-| 25 | 21.83 |
 | 25 | 26.93 |
 | 25 | 23.04 |
 | 25 | 21.81 |
+| 25 | 21.83 |
 | 24 | 25.92 |
 | 24 | 24.99 |
 | 24 | 20.98 |
 
-### 3x3x3 Fewest Moves
+<h3 data-i18n-en="3x3x3 Fewest Moves" data-i18n-zh="三阶最少步">3x3x3 Fewest Moves</h3>
 
 | Count | Result |
 | ---: | ---: |
@@ -123,37 +128,37 @@
 | 4170 | 41 |
 | 4160 | 32 |
 
-### 3x3x3 One-Handed
+<h3 data-i18n-en="3x3x3 One-Handed" data-i18n-zh="三阶单手">3x3x3 One-Handed</h3>
 
 | Count | Result |
 | ---: | ---: |
 | 1070 | 19.80 |
-| 1062 | 19.40 |
 | 1062 | 19.08 |
+| 1062 | 19.40 |
 | 1058 | 19.88 |
 | 1050 | 18.56 |
 | 1049 | 18.80 |
-| 1046 | 19.52 |
 | 1046 | 18.36 |
+| 1046 | 19.52 |
 | 1045 | 19.59 |
 | 1040 | 17.80 |
 
-### Megaminx
+<h3 data-i18n-en="Megaminx" data-i18n-zh="五魔方">Megaminx</h3>
 
 | Count | Result |
 | ---: | ---: |
 | 155 | 59.34 |
 | 152 | 1:03.46 |
-| 150 | 1:03.44 |
 | 150 | 1:03.72 |
+| 150 | 1:03.44 |
 | 146 | 1:04.40 |
 | 146 | 1:03.40 |
 | 145 | 1:01.24 |
 | 144 | 56.16 |
 | 142 | 1:02.84 |
-| 141 | 1:06.52 |
+| 141 | 55.12 |
 
-### Pyraminx
+<h3 data-i18n-en="Pyraminx" data-i18n-zh="金字塔">Pyraminx</h3>
 
 | Count | Result |
 | ---: | ---: |
@@ -168,22 +173,22 @@
 | 2708 | 6.84 |
 | 2702 | 6.96 |
 
-### Rubik's Clock
+<h3 data-i18n-en="Rubik's Clock" data-i18n-zh="魔表">Rubik's Clock</h3>
 
 | Count | Result |
 | ---: | ---: |
 | 793 | 9.08 |
 | 784 | 8.36 |
 | 781 | 8.52 |
-| 778 | 8.28 |
 | 778 | 7.72 |
+| 778 | 8.28 |
 | 776 | 9.40 |
 | 773 | 8.20 |
-| 770 | 8.88 |
 | 770 | 8.48 |
+| 770 | 8.88 |
 | 763 | 8.56 |
 
-### Skewb
+<h3 data-i18n-en="Skewb" data-i18n-zh="斜转魔方">Skewb</h3>
 
 | Count | Result |
 | ---: | ---: |
@@ -198,52 +203,52 @@
 | 2017 | 6.08 |
 | 2008 | 5.96 |
 
-### Square-1
+<h3 data-i18n-en="Square-1" data-i18n-zh="SQ1">Square-1</h3>
 
 | Count | Result |
 | ---: | ---: |
 | 326 | 12.80 |
 | 320 | 14.88 |
-| 318 | 13.56 |
 | 318 | 13.36 |
-| 317 | 15.16 |
+| 318 | 13.56 |
 | 317 | 14.16 |
+| 317 | 15.16 |
 | 313 | 15.96 |
 | 311 | 15.31 |
 | 310 | 14.03 |
-| 309 | 17.08 |
+| 309 | 16.69 |
 
-### 4x4x4 Blindfolded
+<h3 data-i18n-en="4x4x4 Blindfolded" data-i18n-zh="四阶盲拧">4x4x4 Blindfolded</h3>
 
 | Count | Result |
 | ---: | ---: |
 | 24 | 10:05.00 |
-| 23 | 11:11.00 |
 | 23 | 10:30.00 |
-| 22 | 10:19.00 |
+| 23 | 11:11.00 |
 | 22 | 11:09.00 |
+| 22 | 10:19.00 |
 | 20 | 10:53.00 |
 | 20 | 10:57.00 |
 | 19 | 10:36.00 |
 | 19 | 12:33.00 |
-| 18 | 11:32.00 |
+| 18 | 14:36.00 |
 
-### 5x5x5 Blindfolded
+<h3 data-i18n-en="5x5x5 Blindfolded" data-i18n-zh="五阶盲拧">5x5x5 Blindfolded</h3>
 
 | Count | Result |
 | ---: | ---: |
 | 13 | 15:02.00 |
 | 12 | 11:45.00 |
-| 11 | 14:22.00 |
-| 11 | 18:31.00 |
 | 11 | 15:10.00 |
-| 10 | 16:15.00 |
+| 11 | 18:31.00 |
+| 11 | 14:22.00 |
+| 10 | 16:28.00 |
+| 10 | 14:07.00 |
 | 10 | 10:25.00 |
 | 10 | 18:22.00 |
-| 10 | 13:55.00 |
-| 10 | 16:42.00 |
+| 10 | 15:57.00 |
 
-### 3x3x3 Multi-Blind
+<h3 data-i18n-en="3x3x3 Multi-Blind" data-i18n-zh="三阶多盲">3x3x3 Multi-Blind</h3>
 
 | Count | Result |
 | ---: | ---: |
@@ -253,27 +258,27 @@
 | 46 | 11/17 1:00:00 |
 | 43 | 6/10 1:00:00 |
 | 42 | 7/13 1:00:00 |
-| 37 | 5/10 1:00:00 |
 | 37 | 4/8 1:00:00 |
+| 37 | 5/10 1:00:00 |
 | 37 | 8/13 1:00:00 |
-| 32 | 6/9 1:00:00 |
+| 32 | 5/9 1:00:00 |
 
-### 3x3x3 With Feet
+<h3 data-i18n-en="3x3x3 With Feet" data-i18n-zh="三阶脚拧">3x3x3 With Feet</h3>
 
 | Count | Result |
 | ---: | ---: |
 | 13 | 51.83 |
 | 13 | 40.90 |
-| 12 | 55.69 |
-| 12 | 1:02.16 |
-| 12 | 57.52 |
-| 12 | 1:40.05 |
-| 12 | 57.96 |
-| 12 | 44.69 |
 | 12 | 41.32 |
-| 12 | 1:17.61 |
+| 12 | 46.95 |
+| 12 | 55.69 |
+| 12 | 1:12.08 |
+| 12 | 44.69 |
+| 12 | 1:40.05 |
+| 12 | 57.52 |
+| 12 | 1:02.16 |
 
-### Rubik's Magic
+<h3 data-i18n-en="Rubik's Magic" data-i18n-zh="八板">Rubik's Magic</h3>
 
 | Count | Result |
 | ---: | ---: |
@@ -288,7 +293,7 @@
 | 613 | 1.52 |
 | 609 | 1.58 |
 
-### Master Magic
+<h3 data-i18n-en="Master Magic" data-i18n-zh="十二板">Master Magic</h3>
 
 | Count | Result |
 | ---: | ---: |
@@ -297,8 +302,8 @@
 | 166 | 3.83 |
 | 165 | 4.58 |
 | 161 | 4.30 |
-| 159 | 4.44 |
 | 159 | 4.05 |
+| 159 | 4.44 |
 | 158 | 4.59 |
 | 158 | 4.56 |
 | 158 | 4.22 |

@@ -1,8 +1,13 @@
-## Best potential FMC mean
+<h2 data-i18n-en="Best potential FMC mean" data-i18n-zh="最佳潜在 FMC 平均">Best potential FMC mean</h2>
 
-*Note: The means are computed by taking the best result for each attempt in the given round.*
-*Updated on 16 February 2026*
+<p><em data-i18n-en="The means are computed by taking the best result for each attempt in the given round." data-i18n-zh="取该轮每次尝试的最佳成绩计算平均。">The means are computed by taking the best result for each attempt in the given round.</em></p>
+<p><em data-i18n-en="Updated on 16 February 2026" data-i18n-zh="更新于 2026 年 2 月 16 日">Updated on 16 February 2026</em></p>
 
+<div style="position:fixed;bottom:16px;right:16px;z-index:9999;display:flex;gap:0;border-radius:6px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.15)">
+  <button data-i18n-toggle="en" onclick="I18n.setLocale('en')" style="padding:6px 14px;border:none;cursor:pointer;font-size:14px;font-weight:600;background:rgba(255,255,255,0.1);color:#ccc;backdrop-filter:blur(8px)">EN</button>
+  <button data-i18n-toggle="zh" onclick="I18n.setLocale('zh')" style="padding:6px 14px;border:none;cursor:pointer;font-size:14px;font-weight:600;background:rgba(255,255,255,0.1);color:#ccc;backdrop-filter:blur(8px)">中文</button>
+</div>
+<script src="../src/i18n/i18n.js" defer></script>
 | Mean | Attempt 1 | Attempt 2 | Attempt 3 | Competition |
 | :--: | :--: | :--: | :--: | :--- |
 | 19.33 | 18 | 21 | 19 | [WCA European Championship 2024](https://www.worldcubeassociation.org/competitions/Euro2024/results/all#e333fm_f) |

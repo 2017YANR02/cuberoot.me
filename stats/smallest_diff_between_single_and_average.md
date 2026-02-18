@@ -1,10 +1,15 @@
-## Smallest difference between a single and an average
+<h2 data-i18n-en="Smallest difference between a single and an average" data-i18n-zh="单次与平均最小差距">Smallest difference between a single and an average</h2>
 
-*Note: FMC is ignored because values are integers, thus it's likely to get the same single and average.*
-*Updated on 16 February 2026*
+<p><em data-i18n-en="FMC is ignored because values are integers, thus it's likely to get the same single and average." data-i18n-zh="FMC 不计入，因为其数值为整数。">FMC is ignored because values are integers, thus it's likely to get the same single and average.</em></p>
+<p><em data-i18n-en="Updated on 16 February 2026" data-i18n-zh="更新于 2026 年 2 月 16 日">Updated on 16 February 2026</em></p>
 
+<div style="position:fixed;bottom:16px;right:16px;z-index:9999;display:flex;gap:0;border-radius:6px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.15)">
+  <button data-i18n-toggle="en" onclick="I18n.setLocale('en')" style="padding:6px 14px;border:none;cursor:pointer;font-size:14px;font-weight:600;background:rgba(255,255,255,0.1);color:#ccc;backdrop-filter:blur(8px)">EN</button>
+  <button data-i18n-toggle="zh" onclick="I18n.setLocale('zh')" style="padding:6px 14px;border:none;cursor:pointer;font-size:14px;font-weight:600;background:rgba(255,255,255,0.1);color:#ccc;backdrop-filter:blur(8px)">中文</button>
+</div>
+<script src="../src/i18n/i18n.js" defer></script>
 
-### Rubik's Cube
+<h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 
 | Diff | Person | Single | Average | Results |
 | ---: | :--- | ---: | ---: | :--- |
@@ -19,7 +24,7 @@
 | 0.02 | [Yongting You (尤永庭)](https://www.worldcubeassociation.org/persons/2010YOUY01) | 9.40 | 9.42 | [China Championship 2017](https://www.worldcubeassociation.org/competitions/ChinaChampionship2017/results/by_person#2010YOUY01) |
 | 0.02 | [Shenye Zhang (张沈业)](https://www.worldcubeassociation.org/persons/2024ZHAN60) | 9.45 | 9.47 | [Hangzhou Winter 2025](https://www.worldcubeassociation.org/competitions/HangzhouWinter2025/results/by_person#2024ZHAN60) |
 
-### 2x2x2 Cube
+<h3 data-i18n-en="2x2x2 Cube" data-i18n-zh="二阶魔方">2x2x2 Cube</h3>
 
 | Diff | Person | Single | Average | Results |
 | ---: | :--- | ---: | ---: | :--- |
@@ -34,7 +39,7 @@
 | 0.02 | [Luigi Soriano](https://www.worldcubeassociation.org/persons/2016SORI04) | 1.73 | 1.75 | [UIUC Fall 2023](https://www.worldcubeassociation.org/competitions/UIUCFall2023/results/by_person#2016SORI04) |
 | 0.02 | [Ben Stokes](https://www.worldcubeassociation.org/persons/2018STOK01) | 1.85 | 1.87 | [Rubik's Irish Championship 2025](https://www.worldcubeassociation.org/competitions/RubiksIrishChampionship2025/results/by_person#2018STOK01) |
 
-### 4x4x4 Cube
+<h3 data-i18n-en="4x4x4 Cube" data-i18n-zh="四阶魔方">4x4x4 Cube</h3>
 
 | Diff | Person | Single | Average | Results |
 | ---: | :--- | ---: | ---: | :--- |
@@ -49,7 +54,7 @@
 | 0.09 | [Daniel Rush](https://www.worldcubeassociation.org/persons/2018RUSH01) | 26.18 | 26.27 | [Menlo Cubing Open 2025](https://www.worldcubeassociation.org/competitions/MenloCubingOpen2025/results/by_person#2018RUSH01) |
 | 0.09 | [Geovanny Cueva](https://www.worldcubeassociation.org/persons/2018CUEV01) | 44.94 | 45.03 | [Guayaquil Championship 2018](https://www.worldcubeassociation.org/competitions/GuayaquilChampionship2018/results/by_person#2018CUEV01) |
 
-### 5x5x5 Cube
+<h3 data-i18n-en="5x5x5 Cube" data-i18n-zh="五阶魔方">5x5x5 Cube</h3>
 
 | Diff | Person | Single | Average | Results |
 | ---: | :--- | ---: | ---: | :--- |
@@ -64,7 +69,7 @@
 | 0.13 | [Declan Wilhelm](https://www.worldcubeassociation.org/persons/2016WILH03) | 1:20.85 | 1:20.98 | [Pennsylvania Championship 2024](https://www.worldcubeassociation.org/competitions/PennsylvaniaChampionship2024/results/by_person#2016WILH03) |
 | 0.13 | [Andy Liu](https://www.worldcubeassociation.org/persons/2022LIUA05) | 2:15.73 | 2:15.86 | [Virginia Championship 2023](https://www.worldcubeassociation.org/competitions/VirginiaChampionship2023/results/by_person#2022LIUA05) |
 
-### 6x6x6 Cube
+<h3 data-i18n-en="6x6x6 Cube" data-i18n-zh="六阶魔方">6x6x6 Cube</h3>
 
 | Diff | Person | Single | Average | Results |
 | ---: | :--- | ---: | ---: | :--- |
@@ -79,7 +84,7 @@
 | 0.05 | [Pedro Santos Guimarães](https://www.worldcubeassociation.org/persons/2007GUIM01) | 4:48.06 | 4:48.11 | [Santiago Open 2009](https://www.worldcubeassociation.org/competitions/SantiagoOpen2009/results/by_person#2007GUIM01) |
 | 0.06 | [Adam Black](https://www.worldcubeassociation.org/persons/2022BLAC01) | 2:02.67 | 2:02.73 | [Rubik's Irish Championship 2025](https://www.worldcubeassociation.org/competitions/RubiksIrishChampionship2025/results/by_person#2022BLAC01) |
 
-### 7x7x7 Cube
+<h3 data-i18n-en="7x7x7 Cube" data-i18n-zh="七阶魔方">7x7x7 Cube</h3>
 
 | Diff | Person | Single | Average | Results |
 | ---: | :--- | ---: | ---: | :--- |
@@ -94,7 +99,7 @@
 | 0.10 | [Shane Grogan](https://www.worldcubeassociation.org/persons/2011GROG02) | 3:23.59 | 3:23.69 | [UCSD Fall 2024](https://www.worldcubeassociation.org/competitions/UCSDFall2024/results/by_person#2011GROG02) |
 | 0.10 | [Riley Woo](https://www.worldcubeassociation.org/persons/2007WOOR01) | 6:25.15 | 6:25.25 | [Oregon 2016](https://www.worldcubeassociation.org/competitions/Oregon2016/results/by_person#2007WOOR01) |
 
-### 3x3x3 Blindfolded
+<h3 data-i18n-en="3x3x3 Blindfolded" data-i18n-zh="三阶盲拧">3x3x3 Blindfolded</h3>
 
 | Diff | Person | Single | Average | Results |
 | ---: | :--- | ---: | ---: | :--- |
@@ -109,7 +114,7 @@
 | 0.13 | [Tianyu Zhao (赵天愉)](https://www.worldcubeassociation.org/persons/2014ZHAO12) | 36.81 | 36.94 | [Wuhan NxN Open 2017](https://www.worldcubeassociation.org/competitions/WuhanNxNOpen2017/results/by_person#2014ZHAO12) |
 | 0.14 | [Theodore Chan](https://www.worldcubeassociation.org/persons/2016CHAN25) | 20.46 | 20.60 | [Spark Melbourne July 2025](https://www.worldcubeassociation.org/competitions/SparkMelbourneJuly2025/results/by_person#2016CHAN25) |
 
-### 3x3x3 One-Handed
+<h3 data-i18n-en="3x3x3 One-Handed" data-i18n-zh="三阶单手">3x3x3 One-Handed</h3>
 
 | Diff | Person | Single | Average | Results |
 | ---: | :--- | ---: | ---: | :--- |
@@ -124,7 +129,7 @@
 | 0.05 | [Naman Jain](https://www.worldcubeassociation.org/persons/2016JAIN04) | 21.24 | 21.29 | [Guwahati Summer Open 2019](https://www.worldcubeassociation.org/competitions/GuwahatiSummerOpen2019/results/by_person#2016JAIN04) |
 | 0.05 | [Trần Hữu Phổ](https://www.worldcubeassociation.org/persons/2018PHTR01) | 29.51 | 29.56 | [Da Nang Open 2018](https://www.worldcubeassociation.org/competitions/DaNangOpen2018/results/by_person#2018PHTR01) |
 
-### Megaminx
+<h3 data-i18n-en="Megaminx" data-i18n-zh="五魔方">Megaminx</h3>
 
 | Diff | Person | Single | Average | Results |
 | ---: | :--- | ---: | ---: | :--- |
@@ -139,7 +144,7 @@
 | 0.14 | [Junqi Feng (冯骏骐)](https://www.worldcubeassociation.org/persons/2015FENG12) | 1:26.82 | 1:26.96 | [Altona Algorithms Attempt 2 2021](https://www.worldcubeassociation.org/competitions/AltonaAlgorithmsAttempt22021/results/by_person#2015FENG12) |
 | 0.16 | [Prabhav Rajaram Nayak](https://www.worldcubeassociation.org/persons/2019NAYA01) | 30.59 | 30.75 | [Cubing with the KK Cats 2025](https://www.worldcubeassociation.org/competitions/CubingwiththeKKCats2025/results/by_person#2019NAYA01) |
 
-### Pyraminx
+<h3 data-i18n-en="Pyraminx" data-i18n-zh="金字塔">Pyraminx</h3>
 
 | Diff | Person | Single | Average | Results |
 | ---: | :--- | ---: | ---: | :--- |
@@ -154,7 +159,7 @@
 | 0.03 | [Mario Armando Takahashi Martins Dias](https://www.worldcubeassociation.org/persons/2019DIAS02) | 2.73 | 2.76 | [Osório Guri Cubing 2024](https://www.worldcubeassociation.org/competitions/OsorioGuriCubing2024/results/by_person#2019DIAS02) |
 | 0.03 | [Carter Thomas](https://www.worldcubeassociation.org/persons/2018THOM29) | 3.43 | 3.46 | [DuPage Fall 2024](https://www.worldcubeassociation.org/competitions/DuPageFall2024/results/by_person#2018THOM29) |
 
-### Rubik's Clock
+<h3 data-i18n-en="Rubik's Clock" data-i18n-zh="魔表">Rubik's Clock</h3>
 
 | Diff | Person | Single | Average | Results |
 | ---: | :--- | ---: | ---: | :--- |
@@ -169,7 +174,7 @@
 | 0.04 | [Matteo Dummar](https://www.worldcubeassociation.org/persons/2017DUMM01) | 5.05 | 5.09 | [Sonvico Spring 2025](https://www.worldcubeassociation.org/competitions/SonvicoSpring2025/results/by_person#2017DUMM01) |
 | 0.04 | [Vinicius Shaw](https://www.worldcubeassociation.org/persons/2021SHAW02) | 5.24 | 5.28 | [La La Land 2024](https://www.worldcubeassociation.org/competitions/LaLaLand2024/results/by_person#2021SHAW02) |
 
-### Skewb
+<h3 data-i18n-en="Skewb" data-i18n-zh="斜转魔方">Skewb</h3>
 
 | Diff | Person | Single | Average | Results |
 | ---: | :--- | ---: | ---: | :--- |
@@ -184,7 +189,7 @@
 | 0.04 | [Antoni Stojek](https://www.worldcubeassociation.org/persons/2022STOJ03) | 3.57 | 3.61 | [Energy Cube Tomaszów 2023](https://www.worldcubeassociation.org/competitions/EnergyCubeTomaszowMazowiecki2023/results/by_person#2022STOJ03) |
 | 0.04 | [Rasmus Händén](https://www.worldcubeassociation.org/persons/2016HAND04) | 3.80 | 3.84 | [Cuboss Open 2024](https://www.worldcubeassociation.org/competitions/CubossOpen2024/results/by_person#2016HAND04) |
 
-### Square-1
+<h3 data-i18n-en="Square-1" data-i18n-zh="SQ1">Square-1</h3>
 
 | Diff | Person | Single | Average | Results |
 | ---: | :--- | ---: | ---: | :--- |
@@ -199,7 +204,7 @@
 | 0.09 | [Lukas Hörbach](https://www.worldcubeassociation.org/persons/2022HORB01) | 12.62 | 12.71 | [UBC Side Events 2023](https://www.worldcubeassociation.org/competitions/UBCSideEvents2023/results/by_person#2022HORB01) |
 | 0.09 | [Jan Zych](https://www.worldcubeassociation.org/persons/2014ZYCH01) | 14.42 | 14.51 | [K:nummen Kuutionvääntelyt 2022](https://www.worldcubeassociation.org/competitions/KnummenKuutionvaantelyt2022/results/by_person#2014ZYCH01) |
 
-### 4x4x4 Blindfolded
+<h3 data-i18n-en="4x4x4 Blindfolded" data-i18n-zh="四阶盲拧">4x4x4 Blindfolded</h3>
 
 | Diff | Person | Single | Average | Results |
 | ---: | :--- | ---: | ---: | :--- |
@@ -214,7 +219,7 @@
 | 2.56 | [Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04) | 59.76 | 1:02.32 | [WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/by_person#2016CHAP04) |
 | 2.68 | [Mengfei Shen (沈梦非)](https://www.worldcubeassociation.org/persons/2018SHEN07) | 3:01.00 | 3:03.68 | [Stevenage January 2024](https://www.worldcubeassociation.org/competitions/StevenageJanuary2024/results/by_person#2018SHEN07) |
 
-### 5x5x5 Blindfolded
+<h3 data-i18n-en="5x5x5 Blindfolded" data-i18n-zh="五阶盲拧">5x5x5 Blindfolded</h3>
 
 | Diff | Person | Single | Average | Results |
 | ---: | :--- | ---: | ---: | :--- |
@@ -229,7 +234,7 @@
 | 8.15 | [Kaijun Lin (林恺俊)](https://www.worldcubeassociation.org/persons/2013LINK01) | 3:46.56 | 3:54.71 | [Singapore Championship 2018](https://www.worldcubeassociation.org/competitions/SingaporeChampionship2018/results/by_person#2013LINK01) |
 | 8.35 | [Manuel Gutman](https://www.worldcubeassociation.org/persons/2017GUTM01) | 4:28.31 | 4:36.66 | [10th Anniversary Cervantes 2024](https://www.worldcubeassociation.org/competitions/10thAnniversaryCervantes2024/results/by_person#2017GUTM01) |
 
-### 3x3x3 With Feet
+<h3 data-i18n-en="3x3x3 With Feet" data-i18n-zh="三阶脚拧">3x3x3 With Feet</h3>
 
 | Diff | Person | Single | Average | Results |
 | ---: | :--- | ---: | ---: | :--- |
@@ -244,7 +249,7 @@
 | 0.36 | [Ben MacGregor](https://www.worldcubeassociation.org/persons/2015MACG02) | 55.16 | 55.52 | [McDonogh Worlds Qualifier 2017](https://www.worldcubeassociation.org/competitions/McDonoghWorldsQualifier2017/results/by_person#2015MACG02) |
 | 0.40 | [Evan Liu](https://www.worldcubeassociation.org/persons/2009LIUE01) | 56.94 | 57.34 | [UK Championship 2017](https://www.worldcubeassociation.org/competitions/UKChampionship2017/results/by_person#2009LIUE01) |
 
-### Rubik's Magic
+<h3 data-i18n-en="Rubik's Magic" data-i18n-zh="八板">Rubik's Magic</h3>
 
 | Diff | Person | Single | Average | Results |
 | ---: | :--- | ---: | ---: | :--- |
@@ -259,7 +264,7 @@
 | 0.01 | [Justin Badua](https://www.worldcubeassociation.org/persons/2010BADU01) | 1.16 | 1.17 | [Dixon Open 2012](https://www.worldcubeassociation.org/competitions/DixonOpen2012/results/by_person#2010BADU01) |
 | 0.01 | [Takao Hashimoto (橋本貴夫)](https://www.worldcubeassociation.org/persons/2007HASH01) | 1.19 | 1.20 | [Princeton Fall 2012](https://www.worldcubeassociation.org/competitions/PrincetonFall2012/results/by_person#2007HASH01) |
 
-### Master Magic
+<h3 data-i18n-en="Master Magic" data-i18n-zh="十二板">Master Magic</h3>
 
 | Diff | Person | Single | Average | Results |
 | ---: | :--- | ---: | ---: | :--- |
