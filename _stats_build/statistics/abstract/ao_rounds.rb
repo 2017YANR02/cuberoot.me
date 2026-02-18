@@ -76,7 +76,8 @@ class AoRounds < GroupedStatistic
       nzh = @note_zh || @note
       md += "<p><em data-i18n-en=\"#{@note}\" data-i18n-zh=\"#{nzh}\">#{@note}</em></p>\n"
     end
-    md += "*Updated on #{updated}*\n\n"
+    date_zh = timestamp.strftime("更新于 %Y 年 %-m 月 %-d 日")
+    md += "<p><em data-i18n-en=""Updated on #{updated}"" data-i18n-zh=""#{date_zh}"">Updated on #{updated}</em></p>\n\n"
 
     md += tab_styles
     md += tab_buttons("当前排名", "ranking", "WR 历史", "history")
@@ -85,8 +86,9 @@ class AoRounds < GroupedStatistic
     md += "<div id=\"ranking\" class=\"stat-panel active\">\n"
     @ranking_by_event.each do |event_name, rows|
       next if rows.empty?
-      md += "<h3>#{event_name}</h3>\n"
-      md += "<table>\n<tr><th>Person</th><th style=\"text-align:right\">Result</th><th>Details</th></tr>\n"
+      ezh = Events.zh(event_name)
+      md += "<h3 data-i18n-en=""#{event_name}"" data-i18n-zh=""#{ezh}"">#{event_name}</h3>\n"
+      md += "<table>\n<tr><th data-i18n-en=\"Person\" data-i18n-zh=\"选手\">Person</th><th style=\"text-align:right\" data-i18n-en=\"Result\" data-i18n-zh=\"成绩\">Result</th><th>Details</th></tr>\n"
       rows.each do |row|
         md += "<tr><td>#{md_link_to_html(row[:person_link])}</td>"
         md += "<td style=\"text-align:right\">#{row[:metric_str]}</td>"
@@ -100,7 +102,8 @@ class AoRounds < GroupedStatistic
     md += "<div id=\"history\" class=\"stat-panel\">\n"
     wr_data.each do |event_name, rows|
       next if rows.empty?
-      md += "<h3>#{event_name}</h3>\n"
+      ezh = Events.zh(event_name)
+      md += "<h3 data-i18n-en=""#{event_name}"" data-i18n-zh=""#{ezh}"">#{event_name}</h3>\n"
       md += "<table>\n"
       md += html_table_header(@table_header)
       rows.each do |row|

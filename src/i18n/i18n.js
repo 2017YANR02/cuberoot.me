@@ -6,6 +6,44 @@ const I18n = {
     _ready: false,
     _basePath: '',           // JSON 文件的基础路径，由 init 自动计算
 
+    // NOTE: WCA 项目名中英映射，用于 stats 表格数据的运行时翻译
+    _eventZh: {
+        "Rubik's Cube": "三阶魔方", "2x2x2 Cube": "二阶魔方",
+        "4x4x4 Cube": "四阶魔方", "5x5x5 Cube": "五阶魔方",
+        "6x6x6 Cube": "六阶魔方", "7x7x7 Cube": "七阶魔方",
+        "3x3x3 Blindfolded": "三阶盲拧", "3x3x3 Fewest Moves": "三阶最少步",
+        "3x3x3 One-Handed": "三阶单手", "Megaminx": "五魔方",
+        "Pyraminx": "金字塔", "Rubik's Clock": "魔表",
+        "Skewb": "斜转魔方", "Square-1": "SQ1",
+        "4x4x4 Blindfolded": "四阶盲拧", "5x5x5 Blindfolded": "五阶盲拧",
+        "3x3x3 Multi-Blind": "三阶多盲", "3x3x3 With Feet": "三阶脚拧",
+        "Rubik's Magic": "八板", "Master Magic": "十二板",
+        "Rubik's Cube: Multiple blind old style": "旧多盲",
+    },
+    // NOTE: 反向映射，用于切回英文时恢复原文
+    _eventEn: {},
+
+    // NOTE: 统计表头中英映射，用于 stats 表格 <th> 的运行时翻译
+    _headerZh: {
+        "Person": "选手", "Event": "项目", "Count": "次数",
+        "Competition": "比赛", "Competitions": "比赛",
+        "Date": "日期", "Single": "单次", "Average": "平均",
+        "Rank": "排名", "Result": "成绩", "Details": "详情",
+        "Started at": "开始于", "Ended at": "结束于",
+        "DNF rate": "DNF 率", "DNFs": "DNF 次数", "Attempts": "尝试次数",
+        "Gain": "提升", "Days": "天数",
+        "Country": "国家", "Continent": "大洲", "Records": "纪录数",
+        "Gold": "金牌", "Silver": "银牌", "Bronze": "铜牌", "Total": "总计",
+        "Events": "项目数", "Competitions count": "比赛数",
+        "List on WCA": "WCA 页面",
+        "Year": "年份", "Years": "年数", "Week": "周",
+        "Delegated": "代理数", "Delegated per year": "年均代理",
+        "Streak": "连续", "Name": "姓名",
+        "Parts": "词数", "First name": "名", "Last name": "姓",
+        "Months": "月数", "Podiums": "登台", "Wins": "冠军",
+    },
+    _headerEn: {},
+
     // NOTE: 初始化入口 — 自动检测语言、加载字典、应用翻译
     async init() {
         this._basePath = this._detectBasePath();
@@ -18,6 +56,13 @@ const I18n = {
         }
         // 并行加载两种语言的字典
         await Promise.all([this._loadDict('en'), this._loadDict('zh')]);
+        // 构建反向映射（中文 → 英文）
+        for (const [en, zh] of Object.entries(this._eventZh)) {
+            this._eventEn[zh] = en;
+        }
+        for (const [en, zh] of Object.entries(this._headerZh)) {
+            this._headerEn[zh] = en;
+        }
         this._ready = true;
         this.apply();
         this._updateToggle();
@@ -103,6 +148,28 @@ const I18n = {
             const text = el.getAttribute(`data-i18n-${this.locale}`);
             if (text) el.textContent = text;
         });
+
+        // NOTE: Stats 页面表格中的表头和 WCA 项目名运行时翻译
+        if (this.locale === 'zh') {
+            document.querySelectorAll('th').forEach(th => {
+                const zh = this._headerZh[th.textContent.trim()];
+                if (zh) th.textContent = zh;
+            });
+            document.querySelectorAll('td').forEach(td => {
+                const zh = this._eventZh[td.textContent.trim()];
+                if (zh) td.textContent = zh;
+            });
+        } else {
+            // 切回英文时恢复原文——用反向映射
+            document.querySelectorAll('th').forEach(th => {
+                const en = this._headerEn[th.textContent.trim()];
+                if (en) th.textContent = en;
+            });
+            document.querySelectorAll('td').forEach(td => {
+                const en = this._eventEn[td.textContent.trim()];
+                if (en) td.textContent = en;
+            });
+        }
 
         // HTML title 标签
         const titleEl = document.querySelector('title[data-i18n]');
