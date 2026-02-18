@@ -69,19 +69,19 @@ ruiminyan.github.io/
 ├── manifest.json               # PWA 清单
 │
 │── 📌 本地维护（不受同步影响）
-├── index.html                 # 落地页（Solver / WCA Stats 入口）
+├── index.html                 # 落地页（Solver / WCA Stats 入口卡片）
 ├── i18n/                      # 多语言支持（独立于 src/，不受同步影响）
-│   ├── i18n.js                # 语言切换引擎 + MutationObserver
-│   ├── en.json                # 英文字典
-│   └── zh.json                # 中文字典
-├── .sync/                     # 同步配置和模板
-│   ├── page_config.json       # 页面映射表
-│   └── menu_template.html     # 汉堡菜单模板
-├── _layouts/                  # Jekyll 布局
-├── _stats_build/              # WCA 统计构建脚本
-├── stats/                     # CI 生成的统计页面
-├── .github/workflows/         # CI 配置
-├── _config.yml                # Jekyll 配置
+│   ├── i18n.js                # 语言切换引擎：扫描 data-i18n 属性、MutationObserver 动态翻译、Stats 页面运行时翻译
+│   ├── en.json                # 英文字典（solver/trainer 页面所有 key）
+│   └── zh.json                # 中文字典（solver/trainer 页面所有 key）
+├── .sync/                     # 同步脚本的配置和模板（修改这里来定制同步行为）
+│   ├── page_config.json       # 页面映射表：上游 HTML → 本地子目录，含 i18n title key 和需同步的根文件/目录列表
+│   └── menu_template.html     # 汉堡菜单模板：同步时替换上游菜单，加入 WCA Statistics 链接和 data-i18n 属性
+├── _layouts/                  # Jekyll 布局（Stats 页面深色主题 HTML 框架）
+├── _stats_build/              # WCA 统计构建脚本（Ruby，CI 每日运行生成 stats/）
+├── stats/                     # CI 生成的统计 Markdown 页面（勿手动修改）
+├── .github/workflows/         # CI 配置（stats.yml：每日定时构建 + push）
+├── _config.yml                # Jekyll 配置（排除 _stats_build/、配置 permalink 等）
 │
 │── ❌ 上游有但不同步
 │   analytics.js               # 已用内联 GA 替代（上游硬编码 or18.github.io 域名）
