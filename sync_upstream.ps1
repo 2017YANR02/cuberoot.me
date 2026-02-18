@@ -129,15 +129,6 @@ $gaCode = @"
 	</script>
 "@
 
-# NOTE: body 背景样式替换
-$bgOld = "background-color: #121212;"
-$bgNew = @"
-background-color: #0a0a0f;
-				background-image:
-					radial-gradient(ellipse at 20% 50%, rgba(90, 90, 200, 0.08) 0%, transparent 50%),
-					radial-gradient(ellipse at 80% 50%, rgba(200, 90, 90, 0.06) 0%, transparent 50%);
-"@
-
 foreach ($page in $config.pages)
 {
     $srcFile = Join-Path $UpstreamDir $page.upstream
@@ -177,19 +168,18 @@ foreach ($page in $config.pages)
         $content = $content -replace '(<meta\s+charset="UTF-8">)', "`$1`n`t<link rel=""manifest"" href=""../manifest.json"">"
     }
 
-    # --- 3d. 替换 body 背景色（仅第一个 body 规则中的） ---
-    # 找到第一个 body { ... background-color: #121212 } 并替换
-    # HACK: 只替换第一个出现的（body 规则中的），其他保留
-    $bodyBgReplaced = $false
-    $content = [regex]::Replace($content, 'background-color:\s*#121212;', {
-            param($m)
-            if (-not $script:bodyBgReplaced)
-            {
-                $script:bodyBgReplaced = $true
-                return $bgNew
-            }
-            return $m.Value
-        })
+    # --- 3d. 替换背景色 ---
+    # NOTE: 所有 #121212 统一替换为 #0a0a0f（深黑色统一风格）
+    $content = $content -replace '#121212', '#0a0a0f'
+    # 在 body 的 background-color 后面注入渐变背景
+    $bgGradient = @"
+background-color: #0a0a0f;
+            background-image:
+                radial-gradient(ellipse at 20% 50%, rgba(90, 90, 200, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 50%, rgba(200, 90, 90, 0.06) 0%, transparent 50%);
+"@
+    # 匹配 body { ... background-color: #0a0a0f; } 并替换为带 gradient 的版本
+    $content = [regex]::Replace($content, '(?<=body\s*\{[^}]*?)background-color:\s*#0a0a0f;', $bgGradient)
 
     # --- 3e. 替换 drawer-content 块中的菜单链接 ---
     # NOTE: 只替换 <div class="drawer-content"> 和 </div> 之间的链接内容
