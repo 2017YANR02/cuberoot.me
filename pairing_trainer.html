@@ -279,7 +279,7 @@
 		<div id="drawer-overlay" class="drawer-overlay hidden"></div>
 		<nav id="hamburger-menu" class="drawer" aria-label="Main navigation">
 			<div class="drawer-header">
-				<h2 class="drawer-title">Menu</h2>
+				<h2 class="drawer-title" data-i18n="common.menu">Menu</h2>
 				<button id="drawer-close-btn" class="drawer-close-btn" aria-label="Close menu">&times;</button>
 			</div>
 			<div class="drawer-content">
@@ -287,7 +287,7 @@
 				<a href="solver.html">Main Solver</a>
 				<a href="2x2x2.html" rel="noopener noreferrer" translate="no">2x2x2 Solver</a>
 				<a href="documentation.html" translate="no">Documentation</a>
-				<span style="font-weight:bold;margin-top:12px;display:block;color:#fff;">Trainers:</span>
+				<span style="font-weight:bold;margin-top:12px;display:block;color:#fff;" data-i18n="common.trainers">Trainers:</span>
 				<a href="cross_trainer.html" rel="noopener noreferrer" translate="no">Cross</a>
 				<a href="xcross_trainer.html" rel="noopener noreferrer" translate="no">XCross</a>
 				<a href="pairing_trainer.html" rel="noopener noreferrer" translate="no">Free Pair</a>
@@ -297,7 +297,7 @@
 				<a href="algTrainer.html" rel="noopener noreferrer" translate="no">Alg Trainer</a>
 				<a href="jsonEditor.html" rel="noopener noreferrer" translate="no">JSON Editor</a>
 				<a href="stats/" rel="noopener noreferrer" translate="no">WCA Statistics</a>
-                <span style="font-weight:bold;margin-top:12px;display:block;color:#fff;">External tools:</span>
+                <span style="font-weight:bold;margin-top:12px;display:block;color:#fff;" data-i18n="common.external_tools">External tools:</span>
 				<a href="https://trangium.github.io/MovecountCoefficient/" target="_blank" rel="noopener noreferrer"
 					translate="no">MCC by trangium</a>
 				<a href="https://speedcubedb.com/a/3x3/" target="_blank" rel="noopener noreferrer"
@@ -348,7 +348,7 @@
 	<a>Warning: This scrambler generates about 700 MB locally on first run; initial scramble generation may take several
 		seconds to tens of seconds. </a><br><br>
 
-	<label for="rot">Rotation: </label>
+	<label for="rot" data-i18n="trainer.rotation">Rotation: </label>
 	<select translate="no" id="rot">
 		<option translate="no" value="">None</option>
 		<option translate="no" value="y">y</option>
@@ -386,7 +386,7 @@
 		<option translate="no" value="FR">FR</option>
 		<option translate="no" value="FL">FL</option>
 	</select><br>
-	<label for="len">Length: </label>
+	<label for="len" data-i18n="trainer.length">Length: </label>
 	<select translate="no" id="len">
 		<option translate="no" value="1">1</option>
 		<option translate="no" value="2">2</option>
@@ -398,13 +398,13 @@
 		<option translate="no" value="8">8</option>
 		<option translate="no" value="9">9</option>
 	</select><br>
-	<button id="next" class="button medium" onclick="genscr()">Next</button><br>
+	<button id="next" class="button medium" onclick="genscr()" data-i18n="trainer.next">Next</button><br>
 	<h2 id="scr"></h2>
 	<div id="show"></div>
-	<label for="premove">Pre Move: </label>
+	<label for="premove" data-i18n="trainer.pre_move">Pre Move: </label>
 	<input type="text" id="premove"><br>
-	<button id="solveButton" class="button medium" onclick="startWorker()">Solve</button><br>
-	<label for="countLine">Number of solutions: </label>
+	<button id="solveButton" class="button medium" onclick="startWorker()" data-i18n="trainer.solve">Solve</button><br>
+	<label for="countLine" data-i18n="trainer.num_solutions">Number of solutions: </label>
 	<input type="text" id="countLine" value="0" readonly>
 	<div id="result"></div>
 
@@ -966,6 +966,7 @@
 		}
 
 	</script>
+	<script src="src/i18n/i18n.js" defer></script>
 	<script src="sw-register.js" defer></script>
 
 </body>
