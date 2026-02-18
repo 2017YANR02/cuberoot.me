@@ -21,7 +21,6 @@
   <li><a href="wr_first_comp_wr" data-i18n-en="World records set in a person's first competition" data-i18n-zh="首次参赛即创世界纪录">World records set in a person's first competition</a></li>
 </ul>
 
----
 
 <h2 data-i18n-en="General Statistics" data-i18n-zh="通用统计">General Statistics</h2>
 
