@@ -7,7 +7,13 @@
         "documentation": "Documentation",
         "trainers": "Trainers:",
         "external_tools": "External tools:",
-        "github": "GitHub"
+        "github": "GitHub",
+        "json_editor": "JSON Algorithm Editor",
+        "select_set": "Select Set: ",
+        "download_json": "Download JSON",
+        "reset": "Reset",
+        "add_set": "Add Set",
+        "delete_set": "Delete Set"
     },
     "index": {
         "title": "Rubik's Cube Toolkit",
