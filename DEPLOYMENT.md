@@ -59,7 +59,7 @@ ruiminyan.github.io/
 ├── algTrainer/                 # JSON 公式训练器
 ├── jsonEditor/                 # JSON 编辑器
 ├── documentation/              # 文档页面
-├── src/                        # 运行时模块（WASM、Worker、Solver 等，排除 i18n/）
+├── src/                        # 运行时模块（WASM、Worker、Solver 等，100% 上游）
 ├── icons/                     # PWA 图标
 ├── documents/                 # 文档资源
 ├── screenshots/               # 截图资源
@@ -70,7 +70,7 @@ ruiminyan.github.io/
 │
 │── 📌 本地维护（不受同步影响）
 ├── index.html                 # 落地页（Solver / WCA Stats 入口）
-├── src/i18n/                  # 多语言支持（同步时排除）
+├── i18n/                      # 多语言支持（独立于 src/，不受同步影响）
 │   ├── i18n.js                # 语言切换引擎 + MutationObserver
 │   ├── en.json                # 英文字典
 │   └── zh.json                # 中文字典

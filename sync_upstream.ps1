@@ -40,26 +40,13 @@ Write-Host "Step 1: Syncing src/ directory..." -ForegroundColor Green
 
 $upstreamSrc = Join-Path $UpstreamDir "src"
 $localSrc = Join-Path $LocalDir "src"
-$i18nDir = Join-Path $localSrc "i18n"
 
-# IMPORTANT: 备份 i18n/ 目录，防止任何意外导致丢失
-$i18nBackup = $null
-if (Test-Path $i18nDir)
-{
-    $i18nBackup = Join-Path $env:TEMP "i18n_backup_$(Get-Date -Format 'yyyyMMdd_HHmmss')"
-    Copy-Item $i18nDir $i18nBackup -Recurse -Force
-    Write-Host "  [SAFE] i18n/ backed up to $i18nBackup" -ForegroundColor DarkYellow
-}
-
-# NOTE: 排除 i18n/（用户自维护的翻译文件）和开发文件
+# NOTE: i18n/ 已移至根目录，src/ 可以安全整体同步
 $excludePatterns = @('\.cpp$', '\.h$', '\.sh$', '\.txt$', '\.gitignore', 'README', 'PRODUCTION_GUIDE', 'CHANGELOG', 'build_', 'test_', 'docs', 'tools', 'tsl')
 
 Get-ChildItem -Path $upstreamSrc -Recurse -File | Where-Object {
     $rel = $_.FullName.Substring($upstreamSrc.Length)
     $skip = $false
-    # 排除 i18n 目录
-    if ($rel -match '\\i18n\\') { $skip = $true }
-    # 排除开发文件
     foreach ($pat in $excludePatterns)
     {
         if ($rel -match $pat) { $skip = $true; break }
@@ -70,7 +57,6 @@ Get-ChildItem -Path $upstreamSrc -Recurse -File | Where-Object {
     $dest = Join-Path $localSrc $rel
     $destDir = Split-Path $dest -Parent
 
-    # 检查是否有变化
     $needCopy = $true
     if (Test-Path $dest)
     {
@@ -90,13 +76,6 @@ Get-ChildItem -Path $upstreamSrc -Recurse -File | Where-Object {
         $stats.srcFiles++
         Write-Host "  [SYNC] src$rel" -ForegroundColor DarkGray
     }
-}
-
-# IMPORTANT: 确保 i18n/ 始终存在——如果被意外删除则从备份还原
-if ($i18nBackup -and -not (Test-Path $i18nDir))
-{
-    Copy-Item $i18nBackup $i18nDir -Recurse -Force
-    Write-Host "  [RESTORE] i18n/ restored from backup!" -ForegroundColor Red
 }
 
 
@@ -252,7 +231,7 @@ background-color: #0a0a0f;
     # 注入 i18n.js（如果还没有）
     if ($content -notmatch 'i18n\.js')
     {
-        $content = $content -replace '(</body>)', "<script src=""../src/i18n/i18n.js"" defer></script>`n`$1"
+        $content = $content -replace '(</body>)', "<script src=""../i18n/i18n.js"" defer></script>`n`$1"
     }
 
     # --- 写入文件 ---
