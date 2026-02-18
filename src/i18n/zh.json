@@ -83,7 +83,18 @@
         "oriented": "朝向",
         "ignored": "忽略",
         "none": "无",
-        "tp_alert": "Two Phase 求解器输出了 1 个解法。"
+        "tp_alert": "Two Phase 求解器输出了 1 个解法。",
+        "prune_depth": "剪枝深度：",
+        "max_move_count": "最大步数限制：",
+        "hide_preview": "隐藏预览",
+        "hide_advanced": "隐藏高级设置",
+        "2x2x2_title": "2x2x2 求解器",
+        "auto_set": "自动设置",
+        "bl_slot": "BL 槽位：",
+        "br_slot": "BR 槽位：",
+        "fr_slot": "FR 槽位：",
+        "fl_slot": "FL 槽位：",
+        "placeholder": "使用 // 添加注释，如 algs // comment。\n在 alg.cubing.net 或 cubedb.net 上查看时，请在合适位置添加 //setup 注释。"
     },
     "trainer": {
         "cross_title": "魔方 Cross 训练器",

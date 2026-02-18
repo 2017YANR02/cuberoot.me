@@ -865,11 +865,11 @@
                     </div>
                 </div>
                 <div class="control-group">
-                    <button id="swap-mode-btn" class="mode-button active">Swap</button>
-                    <button id="flip-mode-btn" class="mode-button">Flip</button>
+                    <button id="swap-mode-btn" class="mode-button active" data-i18n="solver.swap">Swap</button>
+                    <button id="flip-mode-btn" class="mode-button" data-i18n="solver.flip">Flip</button>
                     <button id="get-string-btn" class="action-button">Get<br>Scramble</button>
-                    <button id="reset-cube-btn" class="action-button">Reset</button>
-                    <label for="pre_rot">Rotation: </label>
+                    <button id="reset-cube-btn" class="action-button" data-i18n="solver.reset">Reset</button>
+                    <label for="pre_rot" data-i18n="solver.rotation">Rotation: </label>
                     <select translate="no" id="pre_rot">
                         <option translate="no" value="">None</option>
                         <option translate="no" value="y">y</option>
@@ -901,7 +901,7 @@
                         <option translate="no" value="x y'">x y'</option>
                     </select>
                     <input type="checkbox" id="CheckboxAutoPrerotSetting" class="custom-checkbox" checked>
-                    <label for="CheckboxAutoPrerotSetting">Auto Set</label>
+                    <label for="CheckboxAutoPrerotSetting" data-i18n="solver.auto_set">Auto Set</label>
                 </div>
             </div>
             <div class="cube-scroll-container">
@@ -910,10 +910,10 @@
             </div>
     </details>
     <label for="scr" data-i18n="solver.scramble_label">Scramble: </label><br>
-    <textarea id="scr" rows="10" cols="10" placeholder="Use // to write comments, as in algs // comment. 
+    <textarea id="scr" rows="10" cols="10" data-i18n-placeholder="solver.placeholder" placeholder="Use // to write comments, as in algs // comment. 
 Write the //setup comment in the appropriate position when viewing on alg.cubing.net or cubedb.net."
         onchange="save()"></textarea><br>
-    <button id="gen" class="button medium">Random</button>
+    <button id="gen" class="button medium" data-i18n="solver.random">Random</button>
     <button id="reverse" class="button medium" onclick="reverseScramble()" data-i18n="solver.reverse">Reverse</button>
     <button id="mirror" class="button medium" onclick="mirrorScramble()" data-i18n="solver.mirror">Mirror</button>
     <button id="clear" class="button medium" data-i18n="solver.clear">Clear</button>
@@ -926,7 +926,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             class="hidden"><a translate="no" id="link_alg_cubing" href="https://alg.cubing.net/&puzzle=2x2x2" target="_blank" rel="noopener noreferrer">alg.cubing.net</a>  <a translate="no" id="link_cubedb" href="https://cubedb.net/?puzzle=2x2" target="_blank" rel="noopener noreferrer">cubedb.net</a></pre>
     </details>
 
-    <label for="rot">Rotation: </label>
+    <label for="rot" data-i18n="solver.rotation">Rotation: </label>
     <select translate="no" id="rot" onchange="updateUrlParams()">
         <option translate="no" value="">None</option>
         <option translate="no" value="y">y</option>
@@ -1018,7 +1018,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                 </tbody>
             </table>
         </div><br>
-        <label for="prune">Prune depth: </label>
+        <label for="prune" data-i18n="solver.prune_depth">Prune depth: </label>
         <select translate="no" id="prune">
             <option translate="no" value="1">1</option>
             <option translate="no" value="2">2</option>
@@ -1058,7 +1058,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                     <tbody></tbody>
                 </table>
             </div><br>
-            <label for="count_table">Max Move Count:</label>
+            <label for="count_table" data-i18n="solver.max_move_count">Max Move Count:</label>
             <div id="count_table_wrapper">
                 <table id="count_table" border="2" translate="no">
                     <thead>
@@ -1075,14 +1075,14 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             </div><br>
         </details>
         <br>
-        <button id="solveButton" class="button medium" onclick="startWorker()">Start</button>&nbsp;&nbsp;
-        <button onclick="showModalWithCustomText()" class="button medium">Export</button><br>
+        <button id="solveButton" class="button medium" onclick="startWorker()" data-i18n="solver.start">Start</button>&nbsp;&nbsp;
+        <button onclick="showModalWithCustomText()" class="button medium" data-i18n="solver.export">Export</button><br>
         <div id="modal-overlay" class="modal-overlay hidden">
             <div id="modal-panel" class="modal-panel">
                 <div class="modal-header">
                     <div class="header-left-group">
                         <h2>Output</h2>
-                        <button id="modal-copy-btn" class="button copy-btn">Copy</button>
+                        <button id="modal-copy-btn" class="button copy-btn" data-i18n="solver.copy">Copy</button>
                     </div>
                     <button id="modal-close-btn" class="close-btn">&times;</button>
                 </div>
@@ -1091,9 +1091,9 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                 </div>
             </div>
         </div>
-        <label for="countLine">Number of solutions: </label>
+        <label for="countLine" data-i18n="solver.num_solutions">Number of solutions: </label>
         <input type="text" id="countLine" value="0" readonly><br>
-        <label for="currentDepth">Current Depth: </label>
+        <label for="currentDepth" data-i18n="solver.current_depth">Current Depth: </label>
         <input type="text" id="currentDepth" value="-1" readonly>
         <div id="result"></div>
 
