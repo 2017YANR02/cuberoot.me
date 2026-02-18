@@ -1,23 +1,21 @@
 ## World Record Analysis
 
-*Custom statistics analyzing world records from various perspectives.*
-
-- [Best first competition results (Newcomer World Records)](wr_newcomer) — *Shows the best single achieved by a person in their very first 3x3 competition.*
-- [Current world records](wr_current) — *Shows the current world record single and average for each official event.*
-- [World record BAo5 (Best Average of 5) history](wr_bao5) — *Best Average of 5: average of the best 3 out of all 5 solves in a round.*
-- [World record BPA (Best Possible Average) history](wr_bpa) — *Best Possible Average: average of the best 3 out of the first 4 solves in a round.*
-- [World record Mo5 (Mean of 5) history](wr_mo5) — *Mean of 5: average of all 5 solves in a round (no trimming).*
-- [World record WAo5 (Worst Average of 5) history](wr_wao5) — *Worst Average of 5: average of the worst 3 out of all 5 solves in a round.*
-- [World record WPA (Worst Possible Average) history](wr_wpa) — *Worst Possible Average: average of the worst 3 out of the first 4 solves in a round.*
-- [World record average history](wr_average_history) — *Shows how world record averages have progressed over time for each event.*
-- [World record best counting solve history](wr_best_counting) — *Best counting solve: the best single that counts into the Ao5 (excluding the dropped best and worst).*
-- [World record best/average ratio history](wr_best_average_ratio) — *Best/Average Ratio: ratio of the best single to the average in a round (lower = more dominant best solve).*
-- [World record median history](wr_median) — *Median: the middle value of all solves in a round. With DNFs, the median shifts to a higher-ranked valid solve.*
-- [World record single history](wr_single_history) — *Shows how world record singles have progressed over time for each event.*
-- [World record variance history](wr_variance) — *Variance: sample variance of all 5 solves in a round (lower = more consistent).*
-- [World record worst counting solve history](wr_worst_counting) — *Worst counting solve: the worst single that counts into the Ao5 (excluding the dropped best and worst).*
-- [World record worst solve in round history](wr_worst) — *Worst solve: the worst (highest) single in a round where all 5 solves are valid.*
-- [World records set in a person's first competition](wr_first_comp_wr) — *People who set a 3x3 World Record in their very first WCA competition.*
+- [Best first competition results (Newcomer World Records)](wr_newcomer)
+- [Current world records](wr_current)
+- [World record BAo5 (Best Average of 5) history](wr_bao5)
+- [World record BPA (Best Possible Average) history](wr_bpa)
+- [World record Mo5 (Mean of 5) history](wr_mo5)
+- [World record WAo5 (Worst Average of 5) history](wr_wao5)
+- [World record WPA (Worst Possible Average) history](wr_wpa)
+- [World record average history](wr_average_history)
+- [World record best counting solve history](wr_best_counting)
+- [World record best/average ratio history](wr_best_average_ratio)
+- [World record median history](wr_median)
+- [World record single history](wr_single_history)
+- [World record variance history](wr_variance)
+- [World record worst counting solve history](wr_worst_counting)
+- [World record worst solve in round history](wr_worst)
+- [World records set in a person's first competition](wr_first_comp_wr)
 
 ---
 
