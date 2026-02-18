@@ -275,7 +275,7 @@ const I18n = {
     // NOTE: 自动注入固定在右下角的语言切换按钮
     // 如果页面中已有 .lang-toggle（如 index.html），则跳过
     _injectToggle() {
-        if (document.querySelector('.lang-toggle')) return;
+        if (document.querySelector('[data-i18n-toggle]')) return;
 
         // 注入样式
         const style = document.createElement('style');
