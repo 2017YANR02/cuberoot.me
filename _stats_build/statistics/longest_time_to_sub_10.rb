@@ -12,9 +12,10 @@ class LongestTimeToSub10 < Statistic
         CONCAT('[', person.name, '](https://www.worldcubeassociation.org/persons/', person.wca_id, ')') person_link,
         (DATEDIFF(first_sub_10_competition.start_date, first_competition.start_date) / 365.25) years
       FROM (
-        SELECT person_id
-        FROM ranks_average
-        WHERE event_id = '333' AND best < 1000
+        -- NOTE: ranks_average 表为空，改从 results 表直接筛选 sub-10 选手
+        SELECT DISTINCT person_id
+        FROM results
+        WHERE event_id = '333' AND average > 0 AND average < 1000
       ) AS sub_10_person
       JOIN (
         SELECT person_id, MIN(start_date) start_date
