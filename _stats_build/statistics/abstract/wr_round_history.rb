@@ -71,7 +71,8 @@ class WrRoundHistory < GroupedStatistic
 
         if i > 0
           prev = wr_records[i - 1]
-          gain = ((prev["_metric"] - r["_metric"]) / prev["_metric"] * 100).round(1)
+          # NOTE: .to_f 防止 compute_metric 返回整数时的整数除法问题
+          gain = ((prev["_metric"] - r["_metric"]).to_f / prev["_metric"] * 100).round(1)
           gain_str = "-#{gain}%"
           duration = (r["start_date"] - prev["start_date"]).to_i
           days_str = duration.to_s
