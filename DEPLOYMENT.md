@@ -79,7 +79,7 @@ ruiminyan.github.io/
 │   └── menu_template.html     # 汉堡菜单模板：同步时替换上游菜单，加入 WCA Statistics 链接和 data-i18n 属性
 ├── _layouts/                  # Jekyll 布局（Stats 页面深色主题 HTML 框架）
 ├── _stats_build/              # WCA 统计构建脚本（Ruby，CI 每日运行生成 stats/）
-├── stats/                     # CI 生成的统计 Markdown 页面（勿手动修改）
+├── stats/                     # ⚠️ CI 自动生成的统计 Markdown 页面（每日由 GitHub Actions 覆盖写入，手动修改会在下次 CI 运行时被覆盖）
 ├── .github/workflows/         # CI 配置（stats.yml：每日定时构建 + push）
 ├── _config.yml                # Jekyll 配置（排除 _stats_build/、配置 permalink 等）
 │
