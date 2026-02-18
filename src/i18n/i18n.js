@@ -222,7 +222,7 @@ const I18n = {
     },
 
     // NOTE: MutationObserver — 监听 _dynamicTextZh 注册的元素的 textContent 变化
-    // 当 JS 代码（如 solver.html）动态修改文本时，自动翻译为当前语言
+    // 当 JS 代码（如 solver 页面）动态修改文本时，自动翻译为当前语言
     _startObserver() {
         if (this._observer) return;  // 防止重复注册
         this._observer = new MutationObserver(mutations => {
