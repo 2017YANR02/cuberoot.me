@@ -7,7 +7,13 @@
         "documentation": "文档",
         "trainers": "训练器:",
         "external_tools": "外部工具:",
-        "github": "GitHub"
+        "github": "GitHub",
+        "json_editor": "JSON 公式编辑器",
+        "select_set": "选择集合：",
+        "download_json": "下载 JSON",
+        "reset": "重置",
+        "add_set": "添加集合",
+        "delete_set": "删除集合"
     },
     "index": {
         "title": "魔方工具箱",

@@ -5,7 +5,7 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="manifest" href="manifest.json">
-	<title>Alg Trainer</title>
+	<title data-i18n="alg_trainer.title">Alg Trainer</title>
 	<meta name="description" content="Trainer for 3x3 and 2x2 algorithms.">
 	<script async src="https://www.googletagmanager.com/gtag/js?id=G-MXJH30352W"></script>
 	<script>
@@ -247,7 +247,7 @@
 
 <body>
 	<header id="header" style="margin-left:48px;margin-top:10px;position:relative;z-index:10;">
-		<h1>JSON Algorithm Trainer</h1>
+		<h1 data-i18n="alg_trainer.title">JSON Algorithm Trainer</h1>
 	</header>
 	<div id="hamburger-menu-container">
 		<button id="hamburger-menu-btn" aria-label="Open menu"
@@ -257,7 +257,7 @@
 		<div id="drawer-overlay" class="drawer-overlay hidden"></div>
 		<nav id="hamburger-menu" class="drawer" aria-label="Main navigation">
 			<div class="drawer-header">
-				<h2 class="drawer-title">Menu</h2>
+				<h2 class="drawer-title" data-i18n="common.menu">Menu</h2>
 				<button id="drawer-close-btn" class="drawer-close-btn" aria-label="Close menu">&times;</button>
 			</div>
 			<div class="drawer-content">
@@ -265,7 +265,7 @@
 				<a href="solver.html">Main Solver</a>
 				<a href="2x2x2.html" rel="noopener noreferrer" translate="no">2x2x2 Solver</a>
 				<a href="documentation.html" translate="no">Documentation</a>
-				<span style="font-weight:bold;margin-top:12px;display:block;color:#fff;">Trainers:</span>
+				<span style="font-weight:bold;margin-top:12px;display:block;color:#fff;" data-i18n="common.trainers">Trainers:</span>
 				<a href="cross_trainer.html" rel="noopener noreferrer" translate="no">Cross</a>
 				<a href="xcross_trainer.html" rel="noopener noreferrer" translate="no">XCross</a>
 				<a href="pairing_trainer.html" rel="noopener noreferrer" translate="no">Free Pair</a>
@@ -275,7 +275,7 @@
 				<a href="algTrainer.html" rel="noopener noreferrer" translate="no">Alg Trainer</a>
 				<a href="jsonEditor.html" rel="noopener noreferrer" translate="no">JSON Editor</a>
 				<a href="stats/" rel="noopener noreferrer" translate="no">WCA Statistics</a>
-                <span style="font-weight:bold;margin-top:12px;display:block;color:#fff;">External tools:</span>
+                <span style="font-weight:bold;margin-top:12px;display:block;color:#fff;" data-i18n="common.external_tools">External tools:</span>
 				<a href="https://trangium.github.io/MovecountCoefficient/" target="_blank" rel="noopener noreferrer"
 					translate="no">MCC by trangium</a>
 				<a href="https://speedcubedb.com/a/3x3/" target="_blank" rel="noopener noreferrer"
@@ -323,9 +323,9 @@
 			}
 		});
 	</script>
-	<label for="algJsonFile">Select JSON File: </label>
+	<label for="algJsonFile" data-i18n="alg_trainer.select_json">Select JSON File: </label>
 	<input type="file" id="algJsonFile" accept=".json" /><br><br>
-	<label for="selectPuzzle">Puzzle: </label>
+	<label for="selectPuzzle" data-i18n="alg_trainer.puzzle">Puzzle: </label>
 	<select translate="no" id="selectPuzzle">
 		<option translate="no" value="2x2x2">2x2x2</option>
 		<option translate="no" value="3x3x3">3x3x3</option>
@@ -338,9 +338,9 @@
 		<option translate="no" value="fto">fto</option>
 	</select><br>
 	<div id="categoryChecks"></div><br>
-	<button id="next" class="button">Next</button><br>
+	<button id="next" class="button" data-i18n="alg_trainer.next">Next</button><br>
 	<div id="preview"></div>
-	<button id="show" class="button">Show Ans</button>
+	<button id="show" class="button" data-i18n="alg_trainer.show_ans">Show Ans</button>
 	<div id="ans"></div>
 
 	<script type="module">
@@ -562,6 +562,7 @@
 			});
 		}
 	</script>
+	<script src="src/i18n/i18n.js" defer></script>
 	<script src="sw-register.js" defer></script>
 
 </body>

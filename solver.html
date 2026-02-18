@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="manifest" href="manifest.json">
-    <title>Rubik's Cube Solver</title>
+    <title data-i18n="solver.title">Rubik's Cube Solver</title>
     <meta name="description"
         content="Fast solver for Rubik's Cube cross, XCross, EOCross, free pair, pseudo F2L, and last layer. ">
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-MXJH30352W"></script>
@@ -641,7 +641,7 @@
 
 <body>
     <header id="header">
-        <h1>Rubik's Cube Solver</h1>
+        <h1 data-i18n="solver.title">Rubik's Cube Solver</h1>
     </header>
     <div id="hamburger-menu-container">
         <button id="hamburger-menu-btn" aria-label="Open menu"
@@ -651,7 +651,7 @@
         <div id="drawer-overlay" class="drawer-overlay hidden"></div>
         <nav id="hamburger-menu" class="drawer" aria-label="Main navigation">
             <div class="drawer-header">
-                <h2 class="drawer-title">Menu</h2>
+                <h2 class="drawer-title" data-i18n="common.menu">Menu</h2>
                 <button id="drawer-close-btn" class="drawer-close-btn" aria-label="Close menu">&times;</button>
             </div>
             <div class="drawer-content">
@@ -659,7 +659,7 @@
                 <a href="solver.html">Main Solver</a>
                 <a href="2x2x2.html" rel="noopener noreferrer" translate="no">2x2x2 Solver</a>
                 <a href="documentation.html" translate="no">Documentation</a>
-                <span style="font-weight:bold;margin-top:12px;display:block;color:#fff;">Trainers:</span>
+                <span style="font-weight:bold;margin-top:12px;display:block;color:#fff;" data-i18n="common.trainers">Trainers:</span>
                 <a href="cross_trainer.html" rel="noopener noreferrer" translate="no">Cross</a>
                 <a href="xcross_trainer.html" rel="noopener noreferrer" translate="no">XCross</a>
                 <a href="pairing_trainer.html" rel="noopener noreferrer" translate="no">Free Pair</a>
@@ -669,7 +669,7 @@
                 <a href="algTrainer.html" rel="noopener noreferrer" translate="no">Alg Trainer</a>
                 <a href="jsonEditor.html" rel="noopener noreferrer" translate="no">JSON Editor</a>
                 <a href="stats/" rel="noopener noreferrer" translate="no">WCA Statistics</a>
-                <span style="font-weight:bold;margin-top:12px;display:block;color:#fff;">External tools:</span>
+                <span style="font-weight:bold;margin-top:12px;display:block;color:#fff;" data-i18n="common.external_tools">External tools:</span>
                 <a href="https://trangium.github.io/MovecountCoefficient/" target="_blank" rel="noopener noreferrer"
                     translate="no">MCC by trangium</a>
                 <a href="https://speedcubedb.com/a/3x3/" target="_blank" rel="noopener noreferrer"
@@ -718,7 +718,7 @@
         });
     </script>
     <details id="details_cubeUI">
-        <summary id="summary_cubeUI">Show Cube Editor</summary>
+        <summary id="summary_cubeUI" data-i18n="solver.show_cube_editor">Show Cube Editor</summary>
         <div class="main-container">
             <div class="controls">
                 <div class="control-group">
@@ -852,7 +852,7 @@
             </div>
         </div>
     </details>
-    <label for="solver">Solver: </label><br>
+    <label for="solver" data-i18n="solver.solver_label">Solver: </label><br>
     <select translate="no" id="solver" onchange="change(); updateUrlParams();">
         <option translate="no" value="F2L" selected>F2L Lite</option>
         <option translate="no" value="F2L_pair">Pairing</option>
@@ -868,25 +868,25 @@
         <option translate="no" value="LL2">LL</option>
         <option translate="no" value="LU2">LL AUF</option>
     </select><br>
-    <label for="scr">Scramble: </label><br>
+    <label for="scr" data-i18n="solver.scramble_label">Scramble: </label><br>
     <textarea id="scr" rows="10" cols="10" placeholder="Use // to write comments, as in algs // comment. 
 Write the //setup comment in the appropriate position when viewing on alg.cubing.net or cubedb.net."
         onchange="save()"></textarea><br>
-    <button id="gen" class="button medium" onclick="genscr()">Random</button>
-    <button id="reverse" class="button medium" onclick="reverseScramble()">Reverse</button>
-    <button id="mirror" class="button medium" onclick="mirrorScramble()">Mirror</button>
-    <button id="clear" class="button medium">Clear</button>
+    <button id="gen" class="button medium" onclick="genscr()" data-i18n="solver.random">Random</button>
+    <button id="reverse" class="button medium" onclick="reverseScramble()" data-i18n="solver.reverse">Reverse</button>
+    <button id="mirror" class="button medium" onclick="mirrorScramble()" data-i18n="solver.mirror">Mirror</button>
+    <button id="clear" class="button medium" data-i18n="solver.clear">Clear</button>
     <button id="undo" class="button small hidden_small" onclick="undo()">←</button>
     <button id="redo" class="button small hidden_small" onclick="redo()">→</button><br>
     <details id="details_preview">
-        <summary id="summary_preview">Show Preview</summary>
+        <summary id="summary_preview" data-i18n="solver.show_preview">Show Preview</summary>
         <div id="show"></div>
         <pre id="links"
             class="hidden"><a translate="no" id="link_alg_cubing" href="https://alg.cubing.net/" target="_blank" rel="noopener noreferrer">alg.cubing.net</a>  <a translate="no" id="link_cubedb" href="https://cubedb.net/?puzzle=3x3" target="_blank" rel="noopener noreferrer">cubedb.net</a></pre>
     </details>
     <details id="analyze">
-        <summary id="summary_analyzer">Show Analyzer</summary><br>
-        <label for="analyzer_rotation_option">Face Option: </label>
+        <summary id="summary_analyzer" data-i18n="solver.show_analyzer">Show Analyzer</summary><br>
+        <label for="analyzer_rotation_option" data-i18n="solver.face_option">Face Option: </label>
         <fieldset id="analyzer_rotation_option">
             <input type="checkbox" id="checkboxD_analyzer" class="custom-checkbox analyzer" value="D" checked>
             <label translate="no" for="checkboxD_analyzer">D</label>
@@ -901,7 +901,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             <input type="checkbox" id="checkboxB_analyzer" class="custom-checkbox analyzer" value="B">
             <label translate="no" for="checkboxB_analyzer">B</label>
         </fieldset>
-        <label for="analyzer_option">Solver Option: </label>
+        <label for="analyzer_option" data-i18n="solver.solver_option">Solver Option: </label>
         <select translate="no" id="analyzer_option">
             <option translate="no" value="cross">cross</option>
             <option translate="no" value="xcross">xcross</option>
@@ -912,15 +912,15 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             <option translate="no" value="4x">cross, x, xx, xxx</option>
             <option translate="no" value="5x">cross, x, xx, xxx, xxxx</option>
         </select><br>
-        <label for="analyzer_num">Count: </label>
+        <label for="analyzer_num" data-i18n="solver.count">Count: </label>
         <input type="number" id="analyzer_num" value="1" min="1" required><br>
-        <button id="analyzer" class="button medium" onclick="analyze()">Analyze</button><br>
+        <button id="analyzer" class="button medium" onclick="analyze()" data-i18n="solver.analyze">Analyze</button><br>
         <div id="table"></div>
     </details>
 
     <details id="eo_analyze">
-        <summary id="summary_eo_analyzer">Show Analyzer</summary><br>
-        <label for="eo_analyzer_rotation_option">Face Option: </label>
+        <summary id="summary_eo_analyzer" data-i18n="solver.show_analyzer">Show Analyzer</summary><br>
+        <label for="eo_analyzer_rotation_option" data-i18n="solver.face_option">Face Option: </label>
         <fieldset id="eo_analyzer_rotation_option">
             <input type="checkbox" id="checkboxD_eo_analyzer" class="custom-checkbox eo_analyzer" value="D" checked>
             <label translate="no" for="checkboxD_eo_analyzer">D</label>
@@ -935,7 +935,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             <input type="checkbox" id="checkboxB_eo_analyzer" class="custom-checkbox eo_analyzer" value="B">
             <label translate="no" for="checkboxB_eo_analyzer">B</label>
         </fieldset>
-        <label for="eo_analyzer_option">Solver Option: </label>
+        <label for="eo_analyzer_option" data-i18n="solver.solver_option">Solver Option: </label>
         <select translate="no" id="eo_analyzer_option">
             <option translate="no" value="cross">cross</option>
             <option translate="no" value="xcross">xcross</option>
@@ -945,15 +945,15 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             <option translate="no" value="3x">cross, x, xx</option>
             <option translate="no" value="4x">cross, x, xx, xxx</option>
         </select><br>
-        <label for="eo_analyzer_num">Count: </label>
+        <label for="eo_analyzer_num" data-i18n="solver.count">Count: </label>
         <input type="number" id="eo_analyzer_num" value="1" min="1" required><br>
-        <button id="eo_analyzer" class="button medium" onclick="eo_analyze()">Analyze</button>
+        <button id="eo_analyzer" class="button medium" onclick="eo_analyze()" data-i18n="solver.analyze">Analyze</button>
         <div id="eo_table"></div>
     </details>
 
     <details id="panalyze">
-        <summary id="summary_panalyzer">Show Analyzer</summary><br>
-        <label for="panalyzer_rotation_option">Face Option: </label>
+        <summary id="summary_panalyzer" data-i18n="solver.show_analyzer">Show Analyzer</summary><br>
+        <label for="panalyzer_rotation_option" data-i18n="solver.face_option">Face Option: </label>
         <fieldset id="panalyzer_rotation_option">
             <input type="checkbox" id="checkboxD_panalyzer" class="custom-checkbox panalyzer" value="D" checked>
             <label translate="no" for="checkboxD_panalyzer">D</label>
@@ -968,7 +968,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             <input type="checkbox" id="checkboxB_panalyzer" class="custom-checkbox panalyzer" value="B">
             <label translate="no" for="checkboxB_panalyzer">B</label>
         </fieldset>
-        <label for="panalyzer_option">Solver Option: </label>
+        <label for="panalyzer_option" data-i18n="solver.solver_option">Solver Option: </label>
         <select translate="no" id="panalyzer_option">
             <option translate="no" value="cross">cross</option>
             <option translate="no" value="xcross">xcross</option>
@@ -978,15 +978,15 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             <option translate="no" value="3x">cross, x, xx</option>
             <option translate="no" value="4x">cross, x, xx, xxx</option>
         </select><br>
-        <label for="panalyzer_num">Count: </label>
+        <label for="panalyzer_num" data-i18n="solver.count">Count: </label>
         <input type="number" id="panalyzer_num" value="1" min="1" required><br>
-        <button id="panalyzer" class="button medium" onclick="panalyze()">Analyze</button>
+        <button id="panalyzer" class="button medium" onclick="panalyze()" data-i18n="solver.analyze">Analyze</button>
         <div id="ptable"></div>
     </details>
 
     <details id="pair_analyze">
-        <summary id="summary_pair_analyzer">Show Analyzer</summary><br>
-        <label for="pair_analyzer_rotation_option">Face Option: </label>
+        <summary id="summary_pair_analyzer" data-i18n="solver.show_analyzer">Show Analyzer</summary><br>
+        <label for="pair_analyzer_rotation_option" data-i18n="solver.face_option">Face Option: </label>
         <fieldset id="pair_analyzer_rotation_option">
             <input type="checkbox" id="checkboxD_pair_analyzer" class="custom-checkbox pair_analyzer" value="D" checked>
             <label translate="no" for="checkboxD_pair_analyzer">D</label>
@@ -1001,7 +1001,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             <input type="checkbox" id="checkboxB_pair_analyzer" class="custom-checkbox pair_analyzer" value="B">
             <label translate="no" for="checkboxB_pair_analyzer">B</label>
         </fieldset>
-        <label for="pair_analyzer_option">Solver Option: </label>
+        <label for="pair_analyzer_option" data-i18n="solver.solver_option">Solver Option: </label>
         <select translate="no" id="pair_analyzer_option">
             <option translate="no" value="cross">cross</option>
             <option translate="no" value="xcross">xcross</option>
@@ -1011,15 +1011,15 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             <option translate="no" value="3x">cross, x, xx</option>
             <option translate="no" value="4x">cross, x, xx, xxx</option>
         </select><br>
-        <label for="pair_analyzer_num">Count: </label>
+        <label for="pair_analyzer_num" data-i18n="solver.count">Count: </label>
         <input type="number" id="pair_analyzer_num" value="1" min="1" required><br>
-        <button id="pair_analyzer" class="button medium" onclick="pair_analyze()">Analyze</button>
+        <button id="pair_analyzer" class="button medium" onclick="pair_analyze()" data-i18n="solver.analyze">Analyze</button>
         <div id="pair_table"></div>
     </details>
 
     <details id="pair_panalyze">
-        <summary id="summary_pair_panalyzer">Show Analyzer</summary><br>
-        <label for="pair_panalyzer_rotation_option">Face Option: </label>
+        <summary id="summary_pair_panalyzer" data-i18n="solver.show_analyzer">Show Analyzer</summary><br>
+        <label for="pair_panalyzer_rotation_option" data-i18n="solver.face_option">Face Option: </label>
         <fieldset id="pair_panalyzer_rotation_option">
             <input type="checkbox" id="checkboxD_pair_panalyzer" class="custom-checkbox pair_panalyzer" value="D"
                 checked>
@@ -1035,7 +1035,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             <input type="checkbox" id="checkboxB_pair_panalyzer" class="custom-checkbox pair_panalyzer" value="B">
             <label translate="no" for="checkboxB_pair_panalyzer">B</label>
         </fieldset>
-        <label for="pair_panalyzer_option">Solver Option: </label>
+        <label for="pair_panalyzer_option" data-i18n="solver.solver_option">Solver Option: </label>
         <select translate="no" id="pair_panalyzer_option">
             <option translate="no" value="cross">cross</option>
             <option translate="no" value="xcross">xcross</option>
@@ -1045,13 +1045,13 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             <option translate="no" value="3x">cross, x, xx</option>
             <option translate="no" value="4x">cross, x, xx, xxx</option>
         </select><br>
-        <label for="pair_panalyzer_num">Count: </label>
+        <label for="pair_panalyzer_num" data-i18n="solver.count">Count: </label>
         <input type="number" id="pair_panalyzer_num" value="1" min="1" required><br>
-        <button id="pair_panalyzer" class="button medium" onclick="pair_panalyze()">Analyze</button>
+        <button id="pair_panalyzer" class="button medium" onclick="pair_panalyze()" data-i18n="solver.analyze">Analyze</button>
         <div id="pair_ptable"></div>
     </details><br>
 
-    <label for="rot">Rotation: </label>
+    <label for="rot" data-i18n="solver.rotation">Rotation: </label>
     <select translate="no" id="rot" onchange="updateUrlParams()">
         <option translate="no" value="">None</option>
         <option translate="no" value="y">y</option>
@@ -1083,7 +1083,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
         <option translate="no" value="x y'">x y'</option>
     </select><br>
     <div id="option_for_F2L" class="hidden">
-        <label for="slot">Slot: </label>
+        <label for="slot" data-i18n="solver.slot">Slot: </label>
         <select translate="no" id="slot" onchange="updateUrlParams()">
             <option translate="no" value="">None</option>
             <option translate="no" value="BL">BL</option>
@@ -1105,7 +1105,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
     </div>
     <div id="option_for_PF2L" class="hidden">
         <div id="option_for_PF2LE">
-            <label for="pslot_edge">Pseudo Slot Edge: </label>
+            <label for="pslot_edge" data-i18n="solver.pseudo_slot_edge">Pseudo Slot Edge: </label>
             <select translate="no" id="pslot_edge" onchange="updateDropdown(); updateUrlParams();">
                 <option translate="no" value="">None</option>
                 <option translate="no" value="BL">BL</option>
@@ -1125,14 +1125,14 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             </select>
         </div>
         <div id="option_for_PF2LC" class="hidden">
-            <label for="pslot_corner">Pseudo Slot Corner: </label>
+            <label for="pslot_corner" data-i18n="solver.pseudo_slot_corner">Pseudo Slot Corner: </label>
             <select translate="no" id="pslot_corner" onchange="updateUrlParams()">
             </select>
         </div>
     </div>
 
     <div id="option_for_F2L2" class="hidden">
-        <label for="slot2">Slot: </label>
+        <label for="slot2" data-i18n="solver.slot">Slot: </label>
         <select translate="no" id="slot2" onchange="updateDropdown2(); updateUrlParams()">
             <option translate="no" value="">None</option>
             <option translate="no" value="BL">BL</option>
@@ -1152,7 +1152,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
         </select>
     </div>
     <div id="option_for_pair_F2L" class="hidden">
-        <label for="pair_slot">Free Pair: </label>
+        <label for="pair_slot" data-i18n="solver.free_pair">Free Pair: </label>
         <select translate="no" id="pair_slot" onchange="updateUrlParams()">
             <option translate="no" value="BL">BL</option>
             <option translate="no" value="BR">BR</option>
@@ -1162,7 +1162,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
     </div>
     <div id="option_for_PF2L2" class="hidden">
         <div id="option_for_PF2LE2">
-            <label for="pslot_edge2">Pseudo Slot Edge: </label>
+            <label for="pslot_edge2" data-i18n="solver.pseudo_slot_edge">Pseudo Slot Edge: </label>
             <select translate="no" id="pslot_edge2" onchange="updateDropdown3(); updateUrlParams()">
                 <option translate="no" value="">None</option>
                 <option translate="no" value="BL">BL</option>
@@ -1182,13 +1182,13 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             </select>
         </div>
         <div id="option_for_PF2LC2" class="hidden">
-            <label for="pslot_corner2">Pseudo Slot Corner: </label>
+            <label for="pslot_corner2" data-i18n="solver.pseudo_slot_corner">Pseudo Slot Corner: </label>
             <select translate="no" id="pslot_corner2" onchange="updateDropdown4(); updateUrlParams()">
             </select>
         </div>
         <div id="option_for_pair_PF2L" class="hidden">
             <div id="option_for_pair_PF2LE">
-                <label for="pair_pslot_edge">Free Pair Edge: </label>
+                <label for="pair_pslot_edge" data-i18n="solver.free_pair_edge">Free Pair Edge: </label>
                 <select translate="no" id="pair_pslot_edge" onchange="updateUrlParams()">
                     <option translate="no" value="BL">BL</option>
                     <option translate="no" value="BR">BR</option>
@@ -1197,7 +1197,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                 </select>
             </div>
             <div id="option_for_pair_PF2LC">
-                <label for="pair_pslot_corner">Free Pair Corner: </label>
+                <label for="pair_pslot_corner" data-i18n="solver.free_pair_corner">Free Pair Corner: </label>
                 <select translate="no" id="pair_pslot_corner" onchange="updateUrlParams()">
                     <option translate="no" value="BL">BL</option>
                     <option translate="no" value="BR">BR</option>
@@ -1208,7 +1208,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
         </div>
     </div>
     <div id="option_for_eocross" class="hidden">
-        <label for="slot_eo">Slot: </label>
+        <label for="slot_eo" data-i18n="solver.slot">Slot: </label>
         <select translate="no" id="slot_eo" onchange="updateUrlParams()">
             <option translate="no" value="">None</option>
             <option translate="no" value="BL">BL</option>
@@ -1230,7 +1230,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
     </div>
 
     <div id="option_for_LS" class="hidden">
-        <label for="ll">Last Layer Option: </label>
+        <label for="ll" data-i18n="solver.last_layer_option">Last Layer Option: </label>
         <select translate="no" id="ll" onchange="updateUrlParams()">
             <option translate="no" value="">None</option>
             <option translate="no" value="CP">CP</option>
@@ -1251,11 +1251,11 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
         </select>
     </div>
     <div id="basic input">
-        <label for="len">Max Length: </label>
+        <label for="len" data-i18n="solver.max_length">Max Length: </label>
         <input type="number" id="len" value="20" min="1" required onchange="updateUrlParams()"><br>
-        <label for="num">Max Count: </label>
+        <label for="num" data-i18n="solver.max_count">Max Count: </label>
         <input type="number" id="num" value="20" min=1 required onchange="updateUrlParams()"><br>
-        <label for="res">Move Restrict: </label>
+        <label for="res" data-i18n="solver.move_restrict">Move Restrict: </label>
         <div translate="no" id="res" onchange="updateUrlParams()">
 
             <table class="checkbox-table">
@@ -1349,10 +1349,10 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
         </div><br>
 
         <details id="advancedSettings">
-            <summary id="summaryAdvancedSettings">Show Advanced Settings</summary><br>
-            <label for="premove">Pre Move: </label>
+            <summary id="summaryAdvancedSettings" data-i18n="solver.show_advanced">Show Advanced Settings</summary><br>
+            <label for="premove" data-i18n="solver.pre_move">Pre Move: </label>
             <input type="text" id="premove" onchange="updateUrlParams()"><br>
-            <label for="res_table">Move Restrict:</label>
+            <label for="res_table" data-i18n="solver.move_restrict">Move Restrict:</label>
             <div id="res_table_wrapper" onchange="updateUrlParams()">
                 <table id="res_table" border="2" translate="no">
                     <thead>
@@ -1367,14 +1367,14 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                     </tbody>
                 </table>
             </div><br>
-            <label for="move_available_table">Move Available Table:</label>
+            <label for="move_available_table" data-i18n="solver.move_available_table">Move Available Table:</label>
             <div id="move_available_table_wrapper" onchange="updateUrlParams()">
                 <table id="move_available_table" border="2" translate="no">
                     <thead></thead>
                     <tbody></tbody>
                 </table>
             </div><br>
-            <label for="center_restrict">Center Restrict:</label>
+            <label for="center_restrict" data-i18n="solver.center_restrict">Center Restrict:</label>
             <div id="center_restrict_wrapper" onchange="updateUrlParams()">
                 <table id="center_restrict" border="2" translate="no">
                     <thead>
@@ -5100,6 +5100,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             }
         };
     </script>
+    <script src="src/i18n/i18n.js" defer></script>
     <script src="sw-register.js" defer></script>
 </body>
 
