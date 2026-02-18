@@ -42,6 +42,24 @@ const I18n = {
         "Streak": "连续", "Name": "姓名",
         "Parts": "词数", "First name": "名", "Last name": "姓",
         "Months": "月数", "Podiums": "登上领奖台", "Wins": "冠军",
+        "First single": "首次单次", "First average": "首次平均",
+        "Attempt 1": "尝试 1", "Attempt 2": "尝试 2", "Attempt 3": "尝试 3",
+        "Counting": "有效次数", "Diff": "差值",
+        "Start date": "开始日期", "End date": "结束日期",
+        "Competitors": "参赛人数", "Solves": "完成次数",
+        "People": "人数", "Place": "名次",
+        "Competitions per year": "年均比赛", "Average event count": "平均项目数",
+        "Events count": "项目数", "Finals": "决赛次数",
+        "Continents": "大洲数", "Countries": "国家数",
+        "Dates": "日期数", "Distance": "距离",
+        "4th places": "第四名次数", "Moving average": "移动平均",
+        "Mean": "平均", "Month": "月份", "Missed": "错过",
+        "Results": "成绩数", "List": "列表",
+        "Week start": "周起始", "Week end": "周结束",
+        "Winned weeks": "获胜周数", "WRs": "世界纪录",
+        "Type": "类型", "First win": "首次夺冠",
+        "Countries of origin": "来源国家", "Citizen of": "国籍",
+        "Region": "地区",
     },
     _headerEn: {},
 
@@ -68,6 +86,98 @@ const I18n = {
     },
     _dynamicTextEn: {},   // 初始化时从 _dynamicTextZh 自动生成反向映射
 
+    // NOTE: Stats 页面标题映射（h2），用于运行时翻译
+    _statsTitleZh: {
+        "Average event count by competition": "每场比赛平均项目数",
+        "Average of 100": "100 次平均", "Average of 12": "12 次平均",
+        "Average of 25": "25 次平均", "Average of 5": "5 次平均",
+        "Average of 50": "50 次平均",
+        "Best first average": "最佳首次平均", "Best first single": "最佳首次单次",
+        "Best medal collection from abroad by country": "各国海外奖牌最佳收藏",
+        "Best medal collection from abroad by person": "个人海外奖牌最佳收藏",
+        "Best potential FMC mean": "最佳潜在 FMC 平均",
+        "Best result not providing a podium": "未登上领奖台的最佳成绩",
+        "Best single counting into an average of 5": "计入 Ao5 的最佳单次",
+        "Competition days count by region": "各地区比赛天数",
+        "Competitions count by week": "每周比赛数",
+        "Competitions per year by country": "各国年均比赛数",
+        "Competitions per year by person": "个人年均比赛数",
+        "Complete competition winners": "全项目冠军",
+        "Current world records count by country": "各国现有世界纪录数",
+        "Delegated competitions per year": "年均代理比赛数",
+        "Fewest competitors contest": "参赛人数最少的比赛",
+        "Longest competitions path": "最长比赛路径",
+        "Longest standing records": "保持时间最长的纪录",
+        "Longest streak of competitions in own country": "本国连续参赛最长纪录",
+        "Longest streak of competitions with a personal record done": "连续刷新个人纪录最长纪录",
+        "Longest streak of podiums": "连续登上领奖台最长纪录",
+        "Longest streak of world records of the same type in the given event": "同一项目同类型连续世界纪录",
+        "Longest time to achieve sub 10 3x3x3 average": "达成三阶 Sub10 平均耗时最长",
+        "Most 4th places": "最多第四名",
+        "Most attended competitions in a single month": "单月参赛最多",
+        "Most attended competitions in a single week": "单周参赛最多",
+        "Most competitions abroad": "海外参赛最多",
+        "Most competitions before winning": "夺冠前参赛最多",
+        "Most completed solves": "完成还原次数最多",
+        "Most delegated competitions": "代理比赛最多",
+        "Most distinct dates competed on": "不同参赛日期最多",
+        "Most finals": "最多决赛", "Most frequent results": "最常见成绩",
+        "Most podiums at a single competition": "单场比赛登台最多",
+        "Most podiums together": "共同登台最多",
+        "Most records at a single competition": "单场比赛破纪录最多",
+        "Most solves before getting a successful BLD attempt": "盲拧首次成功前尝试次数最多",
+        "Most visited continents": "到访大洲最多",
+        "Most visited countries": "到访国家最多",
+        "Moving average": "移动平均", "Name parts count": "名字词数",
+        "Potentially seen world records": "可能见证的世界纪录",
+        "Records in the highest number of events": "破纪录涉及项目最多",
+        "Shortest amount of time to reach a milestone in competitions count": "达到比赛数里程碑最短时间",
+        "Shortest time to get all singles": "获得所有单次最短时间",
+        "Shortest time to get all singles and averages": "获得所有单次和平均最短时间",
+        "Smallest difference between a single and an average": "单次与平均最小差值",
+        "Winned week count": "周冠军次数",
+        "World Championship podiums by country": "世锦赛各国登台统计",
+        "World Championship podiums by person": "世锦赛个人登台统计",
+        "World Championship records": "世锦赛纪录",
+        "World records count by country": "各国世界纪录总数",
+        "World records count by person": "个人世界纪录总数",
+        "Worst result providing a podium": "登上领奖台的最差成绩",
+        "Yearly rankings": "年度排名",
+    },
+    _statsTitleEn: {},
+
+    // NOTE: Stats 页面描述映射（em/斜体文本），用于运行时翻译
+    _statsDescZh: {
+        "Note: In other words, average number of events competitors participated in.": "注：即选手平均参加了多少个项目。",
+        "Note: 100 consecutive official attempts are considered. Only people from top 200 single are taken into account.": "注：取连续 100 次官方尝试的平均。仅考虑单次排名前 200 的选手。",
+        "Note: 12 consecutive official attempts are considered. Only people from top 200 single are taken into account.": "注：取连续 12 次官方尝试的平均。仅考虑单次排名前 200 的选手。",
+        "Note: 25 consecutive official attempts are considered. Only people from top 200 single are taken into account.": "注：取连续 25 次官方尝试的平均。仅考虑单次排名前 200 的选手。",
+        "Note: 5 consecutive official attempts are considered. Only people from top 200 single are taken into account.": "注：取连续 5 次官方尝试的平均。仅考虑单次排名前 200 的选手。",
+        "Note: 50 consecutive official attempts are considered. Only people from top 200 single are taken into account.": "注：取连续 50 次官方尝试的平均。仅考虑单次排名前 200 的选手。",
+        "Note: In other words, it's the best average done when participating for the first time in the given event.": "注：即选手首次参加该项目时做出的最佳平均成绩。",
+        "Note: In other words, it's the best first time done when participating for the first time in the given event.": "注：即选手首次参加该项目时做出的最佳单次成绩。",
+        "Note: Only medals got abroad are taken into account.": "注：仅统计在海外获得的奖牌。",
+        "Note: The means are computed by taking the best result for each attempt in the given round.": "注：平均值由每轮中每次尝试的最佳成绩计算得出。",
+        "Note: Only finals are taken into account.": "注：仅统计决赛成绩。",
+        "Note: Week is considered to start on Monday and end on Sunday.": "注：每周从周一开始，周日结束。",
+        "Note: A complete win means taking the first place in every event on the given competition.": "注：完全获胜指在比赛的每个项目中均获得第一名。",
+        "Note: Only delegates with at least 5 competitions are taken into account.": "注：仅统计至少代理过 5 场比赛的代表。",
+        "Note: Calculated as the sum of direct distance between subsequent competitions.": "注：计算方式为相邻比赛之间直线距离的总和。",
+        "Note: The streak ends whenever the person doesn't participate in a competition in own country.": "注：选手未在本国参加比赛时，连续记录终止。",
+        "Note: All competitions that did not hold the given event are ignored. Results without any completed attempt are not eligible for podium. Only finals are taken into account.": "注：未举办该项目的比赛不计入。没有完成的尝试不具备登台资格。仅统计决赛。",
+        "Note: Only those competitions count, which held the given event.": "注：仅统计举办了该项目的比赛。",
+        "Note: Local names within parentheses are ignored.": "注：括号内的本地姓名不计入。",
+        "Note: Potentially means that a person was on a competition and could see a world record being set.": "注：「可能见证」指该选手在比赛现场，有可能亲眼看到世界纪录的诞生。",
+        "Note: All historical records are taken into account (i.e. not only the current ones).": "注：统计所有历史纪录（不仅限于当前纪录）。",
+        "Note: Only current official events are taken into account.": "注：仅统计当前官方项目。",
+        "Note: FMC is ignored because values are integers, thus it's likely to get the same single and average.": "注：FMC 不计入，因为其成绩为整数，单次和平均很可能相同。",
+        "Note: In other words it's the number of weeks when the given person got the fastest single in the given event.": "注：即该选手在某项目中获得当周最快单次的周数。",
+        "Note: This is a list of the best results from all World Championships. It corresponds to Olympic records for Olympic sports.": "注：这是历届世锦赛最佳成绩列表，类似于奥运会项目的奥运纪录。",
+        "Note: Only finals are taken into account. Results where the main statistic is DNF are ignored.": "注：仅统计决赛。主成绩为 DNF 的结果不计入。",
+        "Note: By definition these rankings include only results from the current year.": "注：按定义，此排名仅包含当年的成绩。",
+    },
+    _statsDescEn: {},
+
     // NOTE: 初始化入口 — 自动检测语言、加载字典、应用翻译
     async init() {
         this._basePath = this._detectBasePath();
@@ -86,6 +196,13 @@ const I18n = {
         }
         for (const [en, zh] of Object.entries(this._headerZh)) {
             this._headerEn[zh] = en;
+        }
+        // 构建 stats 标题和描述的反向映射
+        for (const [en, zh] of Object.entries(this._statsTitleZh)) {
+            this._statsTitleEn[zh] = en;
+        }
+        for (const [en, zh] of Object.entries(this._statsDescZh)) {
+            this._statsDescEn[zh] = en;
         }
         // 构建动态文本反向映射 { zh → en }
         for (const [id, map] of Object.entries(this._dynamicTextZh)) {
@@ -222,6 +339,57 @@ const I18n = {
                 opt.textContent = 'None';
             }
         });
+
+        // NOTE: Stats 页面 h2 标题翻译
+        if (this.locale === 'zh') {
+            document.querySelectorAll('h2').forEach(h2 => {
+                const zh = this._statsTitleZh[h2.textContent.trim()];
+                if (zh) h2.textContent = zh;
+            });
+        } else {
+            document.querySelectorAll('h2').forEach(h2 => {
+                const en = this._statsTitleEn[h2.textContent.trim()];
+                if (en) h2.textContent = en;
+            });
+        }
+
+        // NOTE: Stats 页面 h3 项目名翻译（复用 _eventZh 映射）
+        if (this.locale === 'zh') {
+            document.querySelectorAll('h3').forEach(h3 => {
+                const zh = this._eventZh[h3.textContent.trim()];
+                if (zh) h3.textContent = zh;
+            });
+        } else {
+            document.querySelectorAll('h3').forEach(h3 => {
+                const en = this._eventEn[h3.textContent.trim()];
+                if (en) h3.textContent = en;
+            });
+        }
+
+        // NOTE: Stats 页面描述翻译（em 元素内的斜体文本）
+        if (this.locale === 'zh') {
+            document.querySelectorAll('em').forEach(em => {
+                const text = em.textContent.trim();
+                const zh = this._statsDescZh[text];
+                if (zh) em.textContent = zh;
+            });
+        } else {
+            document.querySelectorAll('em').forEach(em => {
+                const text = em.textContent.trim();
+                const en = this._statsDescEn[text];
+                if (en) em.textContent = en;
+            });
+        }
+
+        // NOTE: Stats 页面 "Updated on" 日期翻译
+        if (this.locale === 'zh') {
+            const _months = {January:'1',February:'2',March:'3',April:'4',May:'5',June:'6',July:'7',August:'8',September:'9',October:'10',November:'11',December:'12'};
+            document.querySelectorAll('em').forEach(em => {
+                const text = em.textContent.trim();
+                const m = text.match(/^Updated on (\d+) (\w+) (\d+)$/);
+                if (m) em.textContent = `更新于 ${m[3]} 年 ${_months[m[2]] || m[2]} 月 ${m[1]} 日`;
+            });
+        }
 
         // NOTE: 翻译 JS 动态设置 textContent 的元素（如 Start/Stop 按钮）
         this._applyDynamicText();
