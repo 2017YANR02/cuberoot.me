@@ -4979,11 +4979,16 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
         });
 
         details_cubeUI.addEventListener('toggle', () => {
+            // NOTE: 需要同步更新 data-i18n 属性，否则 i18n 引擎会覆盖回旧文本
             if (details_cubeUI.open) {
+                summary_cubeUI.setAttribute('data-i18n', 'solver.hide_cube_editor');
                 summary_cubeUI.textContent = "Hide Cube Editor";
             } else {
+                summary_cubeUI.setAttribute('data-i18n', 'solver.show_cube_editor');
                 summary_cubeUI.textContent = "Show Cube Editor";
             }
+            // 如果 i18n 已就绪，立即翻译
+            if (window.I18n && window.I18n._ready) window.I18n.apply();
         });
 
         const selectsMaskOptions = details_mask_options.querySelectorAll('select');

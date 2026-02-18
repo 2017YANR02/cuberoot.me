@@ -32,6 +32,7 @@
         "mirror": "镜像",
         "clear": "清空",
         "show_cube_editor": "显示魔方编辑器",
+        "hide_cube_editor": "隐藏魔方编辑器",
         "show_preview": "显示预览",
         "show_analyzer": "显示分析器",
         "rotation": "旋转：",
