@@ -40,6 +40,16 @@ Write-Host "Step 1: Syncing src/ directory..." -ForegroundColor Green
 
 $upstreamSrc = Join-Path $UpstreamDir "src"
 $localSrc = Join-Path $LocalDir "src"
+$i18nDir = Join-Path $localSrc "i18n"
+
+# IMPORTANT: 备份 i18n/ 目录，防止任何意外导致丢失
+$i18nBackup = $null
+if (Test-Path $i18nDir)
+{
+    $i18nBackup = Join-Path $env:TEMP "i18n_backup_$(Get-Date -Format 'yyyyMMdd_HHmmss')"
+    Copy-Item $i18nDir $i18nBackup -Recurse -Force
+    Write-Host "  [SAFE] i18n/ backed up to $i18nBackup" -ForegroundColor DarkYellow
+}
 
 # NOTE: 排除 i18n/（用户自维护的翻译文件）和开发文件
 $excludePatterns = @('\.cpp$', '\.h$', '\.sh$', '\.txt$', '\.gitignore', 'README', 'PRODUCTION_GUIDE', 'CHANGELOG', 'build_', 'test_', 'docs', 'tools', 'tsl')
@@ -82,6 +92,12 @@ Get-ChildItem -Path $upstreamSrc -Recurse -File | Where-Object {
     }
 }
 
+# IMPORTANT: 确保 i18n/ 始终存在——如果被意外删除则从备份还原
+if ($i18nBackup -and -not (Test-Path $i18nDir))
+{
+    Copy-Item $i18nBackup $i18nDir -Recurse -Force
+    Write-Host "  [RESTORE] i18n/ restored from backup!" -ForegroundColor Red
+}
 
 
 # ===== Step 2: 同步根目录依赖 =====
