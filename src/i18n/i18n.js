@@ -147,19 +147,26 @@ const I18n = {
         // textContent 替换
         document.querySelectorAll('[data-i18n]').forEach(el => {
             const key = el.getAttribute('data-i18n');
-            if (key) el.textContent = this.t(key);
+            if (!key) return;
+            const translated = this.t(key);
+            // NOTE: 翻译结果等于 key 本身说明字典中没有对应翻译，保留原文
+            if (translated !== key) el.textContent = translated;
         });
 
         // placeholder 替换
         document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
             const key = el.getAttribute('data-i18n-placeholder');
-            if (key) el.placeholder = this.t(key);
+            if (!key) return;
+            const translated = this.t(key);
+            if (translated !== key) el.placeholder = translated;
         });
 
         // title 属性替换
         document.querySelectorAll('[data-i18n-title]').forEach(el => {
             const key = el.getAttribute('data-i18n-title');
-            if (key) el.title = this.t(key);
+            if (!key) return;
+            const translated = this.t(key);
+            if (translated !== key) el.title = translated;
         });
 
         // NOTE: Stats 页面使用 data-i18n-en/zh 属性存储双语文本（由 Ruby 引擎生成）
