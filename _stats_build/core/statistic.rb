@@ -2,7 +2,7 @@ require "time"
 require_relative "database"
 
 class Statistic
-  attr_reader :title
+  attr_reader :title, :note
 
   def query
     raise "Must implement #query"
