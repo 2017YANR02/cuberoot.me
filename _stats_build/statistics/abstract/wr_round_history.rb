@@ -154,8 +154,12 @@ class WrRoundHistory < GroupedStatistic
     wr_data = data  # WR 历史
     rank_data = ranking_data  # 当前排名
 
-    md = "## #{@title}\n\n"
-    md += "*Note: #{@note}*\n" if @note
+    zh = @title_zh || @title
+    md = "<h2 data-i18n-en=\"#{@title}\" data-i18n-zh=\"#{zh}\">#{@title}</h2>\n\n"
+    if @note
+      nzh = @note_zh || @note
+      md += "<p><em data-i18n-en=\"#{@note}\" data-i18n-zh=\"#{nzh}\">#{@note}</em></p>\n"
+    end
     md += "*Updated on #{updated}*\n\n"
 
     # Tab CSS + JS

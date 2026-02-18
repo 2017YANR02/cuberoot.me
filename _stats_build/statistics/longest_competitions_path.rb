@@ -3,7 +3,9 @@ require_relative "../core/statistic"
 class LongestCompetitionsPath < Statistic
   def initialize
     @title = "Longest competitions path"
+    @title_zh = "最长比赛路径"
     @note = "Calculated as the sum of direct distance between subsequent competitions."
+    @note_zh = "按相邻比赛之间的直线距离之和计算。"
     @table_header = { "Person" => :left, "Distance" => :right }
   end
 

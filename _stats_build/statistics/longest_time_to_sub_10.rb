@@ -3,6 +3,7 @@ require_relative "../core/statistic"
 class LongestTimeToSub10 < Statistic
   def initialize
     @title = "Longest time to achieve sub 10 3x3x3 average"
+    @title_zh = "达到 sub-10 三阶平均所用最长时间"
     @table_header = { "Person" => :left, "Years" => :right }
   end
 

@@ -3,7 +3,9 @@ require_relative "../core/grouped_statistic"
 class RecordsInMostEvents < GroupedStatistic
   def initialize
     @title = "Records in the highest number of events"
+    @title_zh = "在最多项目中创造纪录"
     @note = "All historical records are taken into account (i.e. not only the current ones)."
+    @note_zh = "统计所有历史纪录（不仅是当前纪录）。"
     @table_header = { "Events" => :right, "Person" => :left, "List" => :left }
   end
 

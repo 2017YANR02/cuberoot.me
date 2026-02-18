@@ -97,6 +97,13 @@ const I18n = {
             if (key) el.title = this.t(key);
         });
 
+        // NOTE: Stats 页面使用 data-i18n-en/zh 属性存储双语文本（由 Ruby 引擎生成）
+        // 根据当前语言选择对应属性值进行替换，无需查字典
+        document.querySelectorAll('[data-i18n-en][data-i18n-zh]').forEach(el => {
+            const text = el.getAttribute(`data-i18n-${this.locale}`);
+            if (text) el.textContent = text;
+        });
+
         // HTML title 标签
         const titleEl = document.querySelector('title[data-i18n]');
         if (titleEl) {

@@ -4,6 +4,7 @@ require_relative "../core/events"
 class DnfRateByEvent < Statistic
   def initialize
     @title = "DNF rate by event"
+    @title_zh = "各项目 DNF 率"
     @table_header = { "DNF rate" => :right, "Event" => :left, "DNFs" => :right, "Attempts" => :right }
   end
 

@@ -3,7 +3,9 @@ require_relative "abstract/wr_round_history"
 class WrWpa < WrRoundHistory
   def initialize
     @title = "World record WPA (Worst Possible Average) history"
+    @title_zh = "世界纪录 WPA（最差可能平均）历史"
     @note = "Worst Possible Average: average of the worst 3 out of the first 4 solves in a round."
+    @note_zh = "WPA：一轮中前 4 次成绩取最差的 3 次计算平均。"
     @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right, "Person" => :left, "Competition" => :left, "Date" => :left, "Details" => :left }
   end
 

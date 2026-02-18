@@ -3,7 +3,9 @@ require_relative "../core/statistic"
 class NamePartsCount < Statistic
   def initialize
     @title = "Name parts count"
+    @title_zh = "姓名词数统计"
     @note = "Local names within parentheses are ignored."
+    @note_zh = "括号中的本地名称不计入。"
     @table_header = { "Parts" => :center, "People" => :right, "Countries of origin" => :left }
   end
 

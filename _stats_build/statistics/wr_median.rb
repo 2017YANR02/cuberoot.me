@@ -3,7 +3,9 @@ require_relative "abstract/wr_round_history"
 class WrMedian < WrRoundHistory
   def initialize
     @title = "World record median history"
+    @title_zh = "世界纪录中位数历史"
     @note = "Median: the middle value of all solves in a round. With DNFs, the median shifts to a higher-ranked valid solve."
+    @note_zh = "中位数：一轮中所有成绩的中间值。若有 DNF，中位数会偏向排名更高的有效成绩。"
     @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right, "Person" => :left, "Competition" => :left, "Date" => :left, "Details" => :left }
   end
 
