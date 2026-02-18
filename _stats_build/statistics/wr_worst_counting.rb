@@ -2,8 +2,8 @@ require_relative "abstract/wr_round_history"
 
 class WrWorstCounting < WrRoundHistory
   def initialize
-    @title = "World record worst counting solve history"
-    @title_zh = "世界纪录最差有效单次历史"
+    @title = "Worst counting solve"
+    @title_zh = "最差有效单次"
     @note = "Worst counting solve: the worst single that counts into the Ao5 (excluding the dropped best and worst)."
     @note_zh = "最差有效单次：计入 Ao5 的最差单次（排除去掉的最好和最差成绩）。"
     @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right, "Person" => :left, "Competition" => :left, "Date" => :left, "Details" => :left }
