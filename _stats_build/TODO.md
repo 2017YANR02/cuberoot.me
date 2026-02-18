@@ -19,3 +19,10 @@
 ### 不适用（数据会变）
 
 - `wr_current`、`best_round`、`wr_dominance` 等排名类
+
+---
+
+## 参考资料
+
+- **WCA 官方统计 Python 源码**（新统计的查询逻辑参考来源）：
+  https://github.com/thewca/statistics/tree/main/misc/python/statistics
