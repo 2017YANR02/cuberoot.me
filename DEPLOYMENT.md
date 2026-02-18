@@ -1,84 +1,84 @@
-# Deployment Guide
+# 部署指南
 
-## Current Status
+## 当前状态
 
-✅ **WCA Statistics Auto-Update is LIVE**
+✅ **WCA 统计自动更新已上线**
 
-- **URL**: [ruiminyan.github.io/stats/](https://ruiminyan.github.io/stats/)
-- **Update Schedule**: Every Monday 3:00 AM (Beijing Time) = Sunday 19:00 UTC
-- **CI Workflow**: `.github/workflows/stats.yml`
+- **地址**：[ruiminyan.github.io/stats/](https://ruiminyan.github.io/stats/)
+- **更新时间**：每周一凌晨 3:00（北京时间）= 周日 19:00 UTC
+- **CI 配置**：`.github/workflows/stats.yml`
 
-## How It Works
+## 工作流程
 
 ```
-Weekly Trigger (cron)
+定时触发（cron）
   ↓
-GitHub Actions (ubuntu-latest, 2-core, 7GB RAM)
+GitHub Actions（ubuntu-latest, 2 核, 7GB 内存）
   ↓
-1. Download WCA database (~2GB)
-2. Import into MySQL (~9 min)
-3. Compute 60+ statistics (~37 min)
-4. Generate Markdown files
-5. Commit & push to main branch
+1. 下载 WCA 数据库（约 2GB）
+2. 导入 MySQL（约 9 分钟）
+3. 计算 60+ 项统计（约 37 分钟）
+4. 生成 Markdown 文件
+5. 提交并推送到 main 分支
   ↓
-GitHub Pages (Jekyll)
+GitHub Pages（Jekyll）
   ↓
-Live at ruiminyan.github.io/stats/
+上线：ruiminyan.github.io/stats/
 ```
 
-## CI Strategy
+## CI 策略
 
-| Trigger | Action | Duration |
-|---------|--------|----------|
-| **Push to `main`** (code changes) | Syntax check only | ~30 seconds |
-| **Schedule** (weekly) | Full database download + compute | ~47 minutes |
-| **Manual** (`workflow_dispatch`) | Full build | ~47 minutes |
+| 触发条件 | 执行内容 | 耗时 |
+|----------|----------|------|
+| **推送到 `main`**（代码变更） | 仅语法检查 | 约 30 秒 |
+| **定时任务**（每周） | 完整数据库下载 + 计算 | 约 47 分钟 |
+| **手动触发**（`workflow_dispatch`） | 完整构建 | 约 47 分钟 |
 
-This split strategy avoids wasting 47 minutes on every code change.
+此分离策略避免每次代码变更都浪费 47 分钟。
 
-## Important Files
+## 重要文件
 
 ```
 ruiminyan.github.io/
 ├── .github/workflows/
-│   └── stats.yml              # CI configuration
-├── _stats_build/              # Build scripts (not deployed)
-│   ├── bin/                   # Ruby scripts
-│   ├── core/                  # Core logic
-│   ├── statistics/            # 60+ statistic definitions
-│   ├── Gemfile                # Ruby dependencies
-│   └── LICENSE                # GPL license (original project)
-├── stats/                     # Generated output (deployed)
-│   ├── README.md              # Index page
-│   └── *.md                   # Individual statistics
-└── _config.yml                # Jekyll config for stats/
+│   └── stats.yml              # CI 配置
+├── _stats_build/              # 构建脚本（不部署）
+│   ├── bin/                   # Ruby 脚本
+│   ├── core/                  # 核心逻辑
+│   ├── statistics/            # 60+ 统计定义
+│   ├── Gemfile                # Ruby 依赖
+│   └── LICENSE                # GPL 许可证（原项目）
+├── stats/                     # 生成的输出（部署到线上）
+│   ├── README.md              # 索引页
+│   └── *.md                   # 各项统计页面
+└── _config.yml                # Jekyll 配置
 ```
 
-## Lessons Learned
+## 经验教训
 
-### 1. Windows → Linux Permission Issues
-**Problem**: Scripts copied from Windows lose executable permissions on Linux.  
-**Solution**: Use `ruby script.rb` instead of `./script.rb` in workflow.
+### 1. Windows → Linux 权限问题
+**问题**：从 Windows 复制的脚本在 Linux 上丢失可执行权限。
+**解决**：在 workflow 中用 `ruby script.rb` 而非 `./script.rb`。
 
-### 2. GitHub Actions Default Permissions
-**Problem**: `GITHUB_TOKEN` is read-only by default (post-2023 repos).  
-**Solution**: Explicitly declare `permissions: contents: write` in workflow.
+### 2. GitHub Actions 默认权限
+**问题**：`GITHUB_TOKEN` 默认只读（2023 年后的新仓库）。
+**解决**：在 workflow 中显式声明 `permissions: contents: write`。
 
-### 3. Long CI Optimization
-**Problem**: Every code push triggers 47-minute full build.  
-**Solution**: Split into syntax-check (push) and full-build (schedule).
+### 3. 长时间 CI 优化
+**问题**：每次推送代码都触发 47 分钟的完整构建。
+**解决**：拆分为语法检查（push 触发）和完整构建（定时触发）。
 
-## Manual Trigger
+## 手动触发
 
-If you need to update stats immediately:
+如需立即更新统计：
 
-1. Go to [Actions tab](https://github.com/RuiminYan/ruiminyan.github.io/actions)
-2. Select "Update Stats" workflow
-3. Click "Run workflow" → "Run workflow"
+1. 前往 [Actions 页面](https://github.com/RuiminYan/ruiminyan.github.io/actions)
+2. 选择 "Update Stats" workflow
+3. 点击 "Run workflow" → "Run workflow"
 
-## Adding a New Statistic
+## 添加新统计
 
-1. Create `_stats_build/statistics/my_new_stat.rb`:
+1. 创建 `_stats_build/statistics/my_new_stat.rb`：
    ```ruby
    require_relative "../core/statistic"
 
@@ -96,32 +96,71 @@ If you need to update stats immediately:
    end
    ```
 
-2. Push to `main` → Syntax check runs (~30s)
-3. Wait for next Monday 3AM, or manually trigger workflow
-4. New page appears at `ruiminyan.github.io/stats/my_new_stat.html`
+2. 推送到 `main` → 语法检查运行（约 30 秒）
+3. 等待下周一凌晨 3 点，或手动触发 workflow
+4. 新页面出现在 `ruiminyan.github.io/stats/my_new_stat.html`
 
-## Troubleshooting
+## 常见问题排查
 
-### Stats not updating?
-- Check [Actions tab](https://github.com/RuiminYan/ruiminyan.github.io/actions) for errors
-- Verify `permissions: contents: write` is set in `stats.yml`
-- Ensure `[skip ci]` is in commit message to avoid recursive triggers
+### 统计未更新？
+- 检查 [Actions 页面](https://github.com/RuiminYan/ruiminyan.github.io/actions) 是否有错误
+- 确认 `stats.yml` 中设置了 `permissions: contents: write`
+- 确保提交信息包含 `[skip ci]` 以避免递归触发
 
-### Syntax check failing?
-- Run `ruby -c _stats_build/statistics/*.rb` locally
-- Check Ruby 2.7 compatibility
+### 语法检查失败？
+- 本地运行 `ruby -c _stats_build/statistics/*.rb`
+- 检查 Ruby 2.7 兼容性
 
-### Out of memory?
-- GitHub Actions has 7GB RAM limit
-- Current usage is well within limits (~2GB for MySQL + tables)
+### 内存不足？
+- GitHub Actions 内存上限 7GB
+- 当前用量在限制范围内（MySQL + 表约 2GB）
 
-## Credits
+## 致谢
 
-- **Original WCA Statistics**: [jonatanklosko/wca_statistics](https://github.com/jonatanklosko/wca_statistics)
-- **Solvers & Trainers**: [or18/RubiksSolverDemo](https://github.com/or18/RubiksSolverDemo)
+- **原始 WCA 统计项目**：[jonatanklosko/wca_statistics](https://github.com/jonatanklosko/wca_statistics)
+- **解算器与训练器**：[or18/RubiksSolverDemo](https://github.com/or18/RubiksSolverDemo)
 
-## Next Steps
+---
 
-- [ ] Monitor first successful weekly run
-- [ ] Consider adding visualization (charts/graphs)
-- [ ] Unify styling with main site theme
+## 待完成：WCADB 统计迁移
+
+WCADB.xlsx 包含 27 个 sheet 的 WCA 世界纪录统计数据，目标是迁移到 `_stats_build` 框架实现自动化更新。
+
+### 待开发：`wr_single_history.rb`（首个统计脚本）
+
+- 继承 `GroupedStatistic`
+- SQL：查 `results` 表中 `regional_single_record = 'WR'` 的记录
+- transform：按 event_id 分组 → 组内按日期排序 → 计算 gain 和 duration → 倒序输出
+- 表头：`| Result | Gain | Days | Person | Competition | Date | Details |`
+
+### 验证步骤
+
+1. `ruby -c _stats_build/statistics/wr_single_history.rb` 语法检查
+2. 推送到 main → CI 语法检查通过
+3. 手动触发完整构建（约 47 分钟）
+4. 访问 `https://ruiminyan.github.io/stats/wr_single_history.html` 查看结果
+5. 与 WCADB.xlsx "Best" sheet 数据抽查对比
+
+### 批量迁移计划（约 15-18 个脚本）
+
+**第一批**（与 Best 结构相同，改 SQL 条件即可）：
+- Avg（WR average 历史）、Current（当前 WR 总览）
+
+**第二批**（需更复杂的 transform）：
+- BPA、WPA、BAo5、WAo5、Median、Mo5
+- Best Counting、Worst Counting、Worst
+
+**第三批**（特殊分析类）：
+- Non-PR WR、NWR、1stWR、Dominance
+- Variance、Best Average Ratio
+
+### 本地 MySQL 环境
+
+| 配置 | 值 |
+|------|-----|
+| MySQL 版本 | 8.0.37 |
+| 服务名 | MySQL80 |
+| 数据目录 | `E:\mysql_data\` |
+| 临时目录 | `E:/mysql_tmp` |
+| 数据库 | `wca_statistics`（121 张表）、`wca_export`（15 张表） |
+| 导入命令 | `mysql -u root -p --default-character-set=utf8mb4 wca_statistics -e "source D:/path/to/dump.sql"` |
