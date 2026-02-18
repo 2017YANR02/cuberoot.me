@@ -191,10 +191,11 @@ foreach ($page in $config.pages)
             return $m.Value
         })
 
-    # --- 3e. 替换 drawer-content 块 ---
-    # 匹配从 <div class="drawer-content"> 的下一行到 </div> 之间的所有链接
-    $drawerPattern = '(?s)(<div\s+class="drawer-content">)\s*\n.*?(</div>\s*</nav>)'
-    $drawerReplacement = "`$1`n$menuTemplate`n`t`t`t$2"
+    # --- 3e. 替换 drawer-content 块中的菜单链接 ---
+    # NOTE: 只替换 <div class="drawer-content"> 和 </div> 之间的链接内容
+    # 不碰外层的 </nav></div> 闭合标签，避免破坏 HTML 结构
+    $drawerPattern = '(?s)(<div\s+class="drawer-content">)\s*\n.*?(\s*</div>\s*\n\s*</nav>)'
+    $drawerReplacement = "`$1`n$menuTemplate`n`$2"
     $content = [regex]::Replace($content, $drawerPattern, $drawerReplacement)
 
     # --- 3f. 注入 data-i18n 属性 ---
