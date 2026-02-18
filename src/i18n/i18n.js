@@ -41,7 +41,7 @@ const I18n = {
         "Delegated": "代理数", "Delegated per year": "年均代理",
         "Streak": "连续", "Name": "姓名",
         "Parts": "词数", "First name": "名", "Last name": "姓",
-        "Months": "月数", "Podiums": "登台", "Wins": "冠军",
+        "Months": "月数", "Podiums": "登上领奖台", "Wins": "冠军",
     },
     _headerEn: {},
 
