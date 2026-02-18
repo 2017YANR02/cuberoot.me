@@ -2,8 +2,8 @@ require_relative "abstract/wr_round_history"
 
 class WrBpa < WrRoundHistory
   def initialize
-    @title = "World record BPA (Best Possible Average) history"
-    @title_zh = "世界纪录 BPA（最佳可能平均）历史"
+    @title = "BPA (Best Possible Average)"
+    @title_zh = "BPA（最佳可能平均）"
     @note = "Best Possible Average: average of the best 3 out of the first 4 solves in a round."
     @note_zh = "BPA：一轮中前 4 次成绩取最好的 3 次计算平均。"
     @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right, "Person" => :left, "Competition" => :left, "Date" => :left, "Details" => :left }

@@ -7,8 +7,8 @@ class WrSingleHistory < GroupedStatistic
   include TabUi
 
   def initialize
-    @title = "World record single history"
-    @title_zh = "世界纪录单次历史"
+    @title = "Single"
+    @title_zh = "单次"
     @note = "Shows how world record singles have progressed over time for each event."
     @note_zh = "展示各项目世界纪录单次成绩随时间的变化。"
     @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right, "Person" => :left, "Competition" => :left, "Date" => :left, "Details" => :left }
