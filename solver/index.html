@@ -816,11 +816,12 @@
                 </div>
 
                 <div class="control-group">
-                    <button id="swap-mode-btn" class="mode-button active">Swap</button>
-                    <button id="flip-mode-btn" class="mode-button">Flip</button>
-                    <button id="ui_solve_btn" class="action-button">Get<br>Scramble</button>
-                    <button id="reset-cube-btn" class="action-button">Reset</button>
-                    <label for="pre_rot">Rotation: </label>
+                    <button id="swap-mode-btn" class="mode-button active" data-i18n="solver.swap">Swap</button>
+                    <button id="flip-mode-btn" class="mode-button" data-i18n="solver.flip">Flip</button>
+                    <button id="ui_solve_btn" class="action-button"
+                        data-i18n="solver.get_scramble">Get<br>Scramble</button>
+                    <button id="reset-cube-btn" class="action-button" data-i18n="solver.reset">Reset</button>
+                    <label for="pre_rot" data-i18n="solver.rotation">Rotation: </label>
                     <select translate="no" id="pre_rot">
                         <option translate="no" value="">None</option>
                         <option translate="no" value="y">y</option>
@@ -878,7 +879,7 @@
     <label for="scr" data-i18n="solver.scramble_label">Scramble: </label><br>
     <textarea id="scr" rows="10" cols="10" placeholder="Use // to write comments, as in algs // comment. 
 Write the //setup comment in the appropriate position when viewing on alg.cubing.net or cubedb.net."
-        onchange="save()"></textarea><br>
+        data-i18n-placeholder="solver.scramble_placeholder" onchange="save()"></textarea><br>
     <button id="gen" class="button medium" onclick="genscr()" data-i18n="solver.random">Random</button>
     <button id="reverse" class="button medium" onclick="reverseScramble()" data-i18n="solver.reverse">Reverse</button>
     <button id="mirror" class="button medium" onclick="mirrorScramble()" data-i18n="solver.mirror">Mirror</button>
