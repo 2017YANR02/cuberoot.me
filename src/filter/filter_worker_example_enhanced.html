@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Filter.js Parameter Tuning Tool</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1400px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+        }
+        h1 {
+            color: #4ec9b0;
+            border-bottom: 2px solid #4ec9b0;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #569cd6;
+            margin-top: 25px;
+        }
+        h3 {
+            color: #dcdcaa;
+            font-size: 16px;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #252526;
+            border-radius: 8px;
+            border: 1px solid #3e3e42;
+        }
+        .param-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .param-item {
+            background: #2d2d30;
+            padding: 12px;
+            border-radius: 5px;
+            border-left: 3px solid #569cd6;
+        }
+        .param-label {
+            color: #dcdcaa;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        .param-description {
+            color: #858585;
+            font-size: 11px;
+            margin-top: 4px;
+            line-height: 1.4;
+        }
+        input[type="number"], input[type="range"] {
+            background: #3c3c3c;
+            color: #d4d4d4;
+            border: 1px solid #555;
+            padding: 6px;
+            border-radius: 3px;
+            width: 80px;
+            font-size: 14px;
+        }
+        input[type="range"] {
+            width: 200px;
+        }
+        .range-value {
+            display: inline-block;
+            min-width: 50px;
+            text-align: right;
+            color: #4ec9b0;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        button {
+            background: #0e639c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #1177bb;
+        }
+        button.success {
+            background: #107c10;
+        }
+        button.success:hover {
+            background: #0e6a0e;
+        }
+        button.warning {
+            background: #ca5010;
+        }
+        button.warning:hover {
+            background: #b4460e;
+        }
+        .preset-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin: 20px 0;
+        }
+        .stat-box {
+            background: #2d2d30;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #4ec9b0;
+            text-align: center;
+        }
+        .stat-label {
+            color: #858585;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #4ec9b0;
+            margin-top: 5px;
+        }
+        .results {
+            margin-top: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+            overflow-x: auto;
+            background: #1e1e1e;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .results-container {
+            min-width: 1200px;
+        }
+        .result-item {
+            padding: 10px;
+            margin: 5px 0;
+            background: #2d2d30;
+            border-radius: 4px;
+            display: grid;
+            grid-template-columns: 50px 60px 100px 180px 80px 80px 90px minmax(300px, 1fr);
+            gap: 12px;
+            font-size: 13px;
+            align-items: center;
+        }
+        .result-item.rank1 {
+            border-left: 4px solid #4ec9b0;
+        }
+        .result-item.rank2-5 {
+            border-left: 4px solid #569cd6;
+        }
+        .result-item.unlabeled {
+            opacity: 0.3;
+        }
+        .school {
+            color: #dcdcaa;
+            font-weight: bold;
+        }
+        .label-representative {
+            color: #4ec9b0;
+            font-weight: bold;
+        }
+        .label-shortest {
+            color: #569cd6;
+        }
+        .label-alternative {
+            color: #ce9178;
+        }
+        .label-member {
+            color: #b5cea8;
+        }
+        .label-unlabeled {
+            color: #6a737d;
+        }
+        textarea {
+            width: 100%;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border: 1px solid #555;
+            padding: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            resize: vertical;
+            border-radius: 4px;
+        }
+        .info-box {
+            background: #264f78;
+            border-left: 4px solid #569cd6;
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 4px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .warning-box {
+            background: #442726;
+            border-left: 4px solid #d16969;
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        #processingTime {
+            color: #4ec9b0;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎲 Filter.js Parameter Tuning Tool</h1>
+    
+    <div class="info-box">
+        <strong>Parameter tuning tool for developers</strong><br>
+        You can use this tool to adjust various parameters of filter.js to find the optimal settings.
+        Please reflect the changed parameters in the actual code. 
+        Refer to the <a href="docs/PARAMETERS.md" style="color: #4ec9b0; text-decoration: underline;">PARAMETERS.md</a> document for details on each parameter.
+    </div>
+    
+    <div class="warning-box" style="display: block;">
+        <strong>⚠️ About parameter control</strong><br>
+        All parameters are now adjustable from the UI.<br>
+        You can freely change threshold, minClusterSize, maxClusterSize, subgroupThreshold, minSubgroupSize, various weight distributions, etc.<br>
+        After making changes, check the results using the "Run Test" button.
+    </div>
+
+    <!-- Parameter Configuration Section -->
+    <div class="section">
+        <h2>📊 Parameter settings</h2>
+        
+        <div class="preset-buttons">
+            <button class="success" onclick="loadPreset('default')">Default settings</button>
+            <button onclick="loadPreset('strict')">Strict mode (subdividing schools)</button>
+            <button onclick="loadPreset('loose')">Relaxation mode (integrate schools)</button>
+            <button onclick="loadPreset('quality')">Focus on quality</button>
+            <button onclick="loadPreset('qtm')">QTM attaches great importance to</button>
+            <button class="warning" onclick="exportParameters()">export parameters</button>
+            <button onclick="loadSampleData()">Load sample data</button>
+        </div>
+
+        <h3>1. School classification parameters</h3>
+        <div class="param-grid">
+            <div class="param-item">
+                <label class="param-label">
+                    Threshold (School distance threshold)
+                    <input type="range" id="threshold" min="2" max="10" step="0.5" value="4" oninput="updateRangeDisplay('threshold')">
+                    <span class="range-value" id="threshold-value">4.0</span>
+                </label>
+                <div class="param-description">
+                    Distance threshold for classifying schools. The smaller the school, the more subdivided the school is.<br>
+                    Recommended: 100 solutions=4, 500 solutions=5, 1000 solutions=6
+                </div>
+            </div>
+            
+            <div class="param-item">
+                <label class="param-label">
+                    Min Cluster Size (Minimum school size)
+                    <input type="number" id="minClusterSize" min="2" max="15" value="5">
+                </label>
+                <div class="param-description">
+                    Minimum number of members to be recognized as a school.<br>
+                    Small: More schools, Large: Selected schools.
+                </div>
+            </div>
+            
+            <div class="param-item">
+                <label class="param-label">
+                    Max Cluster Size (Maximum style size)
+                    <input type="number" id="maxClusterSize" min="10" max="100" value="15">
+                </label>
+                <div class="param-description">
+                    Maximum number of members in one school.<br>
+                    Split when exceeded (for large samples)
+                </div>
+            </div>
+        </div>
+
+        <h3>2. Subgroup division parameters</h3>
+        <div class="param-grid">
+            <div class="param-item">
+                <label class="param-label">
+                    Subgroup Threshold (Subgroup threshold)
+                    <input type="range" id="subgroupThreshold" min="1.5" max="4.0" step="0.1" value="2.5" oninput="updateRangeDisplay('subgroupThreshold')">
+                    <span class="range-value" id="subgroupThreshold-value">2.5</span>
+                </label>
+                <div class="param-description">
+                    Subgroup division threshold within a school.<br>
+                    Small: subgroup subdivision, large: subgroup integration
+                </div>
+            </div>
+            
+            <div class="param-item">
+                <label class="param-label">
+                    Min Subgroup Size (Minimum subgroup size)
+                    <input type="number" id="minSubgroupSize" min="2" max="5" value="3">
+                </label>
+                <div class="param-description">
+                    Minimum subgroup size required for labeling.<br>
+                    Recommended: 3 (emphasis on stability), 2 (emphasis on diversity)
+                </div>
+            </div>
+        </div>
+
+        <h3>3. Scoring weight distribution (%)</h3>
+        <div class="param-grid">
+            <div class="param-item">
+                <label class="param-label">
+                    Rank Weight (School rank weight)
+                    <input type="range" id="rankWeight" min="0" max="3.0" step="0.1" value="1.0" oninput="updateRangeDisplay('rankWeight')">
+                    <span class="range-value" id="rankWeight-value">1.0</span>
+                </label>
+                <div class="param-description">
+                    School rank weight multiplier (normalized). At 1.0, gives ~40 point impact for School_1.<br>
+                    Higher values strongly favor high-ranked schools (School_1 > School_2 > ...).<br>
+                    Recommended: 0.5-2.0
+                </div>
+            </div>
+            
+            <div class="param-item">
+                <label class="param-label">
+                    Size Weight (School size weight)
+                    <input type="range" id="sizeWeight" min="0" max="3.0" step="0.1" value="1.0" oninput="updateRangeDisplay('sizeWeight')">
+                    <span class="range-value" id="sizeWeight-value">1.0</span>
+                </label>
+                <div class="param-description">
+                    School size weight multiplier (normalized). At 1.0, gives ~30 point impact for largest schools.<br>
+                    Higher values favor larger schools more strongly.<br>
+                    Recommended: 0.5-2.0
+                </div>
+            </div>
+            
+            <div class="param-item">
+                <label class="param-label">
+                    Focus Moves (School classification focus)
+                    <input type="number" id="focusMoves" min="3" max="10" value="5" step="1">
+                </label>
+                <div class="param-description">
+                    Number of moves to focus on from the end for school classification.<br>
+                    Recommended: 5 (standard), 3 (shorter solutions), 7 (longer solutions)<br>
+                    For solutions shorter than this value, the entire solution is used.
+                </div>
+            </div>
+        </div>
+
+        <h3>4. QTM Penalty Settings</h3>
+        <div class="param-grid">
+            <div class="param-item">
+                <label class="param-label">
+                    Subgroup QTM Penalty Multiplier (When selecting subgroups)
+                    <input type="range" id="qtmSubgroup" min="0" max="3.0" step="0.1" value="1.0" oninput="updateRangeDisplay('qtmSubgroup')">
+                    <span class="range-value" id="qtmSubgroup-value">1.0</span>
+                </label>
+                <div class="param-description">
+                    QTM penalty multiplier (normalized). At 1.0, gives ~10 point penalty for typical solutions.<br>
+                    Higher values increase QTM penalty. Set to 0 to disable.<br>
+                    Recommended: 0.5-2.0
+                </div>
+            </div>
+            
+            <div class="param-item">
+                <label class="param-label">
+                    HTM Penalty Multiplier (Move count penalty)
+                    <input type="range" id="htmPenalty" min="0" max="3.0" step="0.1" value="1.0" oninput="updateRangeDisplay('htmPenalty')">
+                    <span class="range-value" id="htmPenalty-value">1.0</span>
+                </label>
+                <div class="param-description">
+                    HTM penalty multiplier (normalized). At 1.0, gives ~10 point penalty for typical solutions.<br>
+                    Set to 0 to disable HTM penalty (QTM-only mode).<br>
+                    Note: NOT used in Case 1 (subgroup formation failure) where HTM doesn't differentiate.<br>
+                    Recommended: 0.5-2.0
+                </div>
+            </div>
+            
+            <div class="param-item">
+                <label class="param-label">
+                    Case1 QTM Penalty Multiplier (When subgroup formation fails)
+                    <input type="range" id="qtmCase1" min="0" max="5.0" step="0.1" value="1.5" oninput="updateRangeDisplay('qtmCase1')">
+                    <span class="range-value" id="qtmCase1-value">1.5</span>
+                </label>
+                <div class="param-description">
+                    QTM penalty multiplier when subgroup formation fails (normalized).<br>
+                    Higher penalty emphasizes QTM efficiency. HTM is NOT used in Case 1.<br>
+                    Recommended: 1.0-3.0
+                </div>
+            </div>
+            
+            <div class="param-item">
+                <label class="param-label">
+                    Final Ranking QTM Penalty Multiplier (Final ranking adjustment)
+                    <input type="range" id="qtmFinal" min="0" max="2.0" step="0.1" value="0.5" oninput="updateRangeDisplay('qtmFinal')">
+                    <span class="range-value" id="qtmFinal-value">0.5</span>
+                </label>
+                <div class="param-description">
+                    QTM penalty multiplier during final ranking (normalized).<br>
+                    Usually set lower than other QTM penalties to avoid dominating ranking.<br>
+                    Recommended: 0.2-1.0
+                </div>
+            </div>
+            
+            <div class="param-item">
+                <label class="param-label">
+                    Rotation Efficiency Bonus Multiplier (HTM/QTM ratio bonus)
+                    <input type="range" id="rotationEfficiencyBonus" min="0" max="3.0" step="0.1" value="1.0" oninput="updateRangeDisplay('rotationEfficiencyBonus')">
+                    <span class="range-value" id="rotationEfficiencyBonus-value">1.0</span>
+                </label>
+                <div class="param-description">
+                    Rotation efficiency bonus multiplier (normalized). At 1.0, gives ~10 point bonus for typical efficient solutions.<br>
+                    Higher efficiency (fewer 180° turns) = higher bonus.<br>
+                    Promotes efficient, short solutions with good rotation patterns.<br>
+                    Recommended: 0.5-2.0
+                </div>
+            </div>
+        </div>
+
+        <h3>5. Similarity Calculation Weight Distribution</h3>
+        <div class="param-grid">
+            <div class="param-item">
+                <label class="param-label">
+                    End Similarity - Face Weight (End - Face Similarity)
+                    <input type="range" id="endFaceWeight" min="20" max="60" step="5" value="40" oninput="updateRangeDisplay('endFaceWeight')">
+                    <span class="range-value" id="endFaceWeight-value">40%</span>
+                </label>
+                <div class="param-description">
+                    Weight of face similarity during style classification.<br>
+                    For detecting "same face used but order differs"
+                </div>
+            </div>
+            
+            <div class="param-item">
+                <label class="param-label">
+                    Chunk Similarity - Jaccard Weight (First Half - Set Similarity)
+                    <input type="range" id="chunkJaccardWeight" min="20" max="60" step="5" value="40" oninput="updateRangeDisplay('chunkJaccardWeight')">
+                    <span class="range-value" id="chunkJaccardWeight-value">40%</span>
+                </label>
+                <div class="param-description">
+                    Weight of Jaccard similarity during subgroup division.
+                </div>
+            </div>
+        </div>
+
+        <div class="warning-box" id="paramWarning" style="display: none;">
+            ⚠️ Parameters have been changed. Please click the "Run Test" button to check the results.
+        </div>
+    </div>
+
+    <!-- Controls Section -->
+    <div class="section">
+        <h2>🎮 Test run</h2>
+        <button class="success" id="runTestBtn" onclick="runTest()">Run Test with Current Parameters</button>
+        <button onclick="document.getElementById('fileInput').click()">Load from File</button>
+        <input type="file" id="fileInput" accept=".txt" style="display:none" onchange="loadFromFile(event)">
+        <button onclick="processFromTextArea()">Process from Text Area</button>
+        <button class="warning" onclick="clearResults()">Clear</button>
+        
+        <div style="margin-top: 20px;">
+            <h3>Solution List Input (One solution per line)</h3>
+            <textarea id="solutionsInput" rows="10" placeholder="Please enter solutions (one per line). Example:
+R U R' U'
+F R U' R' F'
+R U2 R' U'
+
+Or with numbering:
+1: R U R' U'
+2: F R U' R' F'"></textarea>
+        </div>
+    </div>
+
+    <!-- Statistics Section -->
+    <div class="section">
+        <h2>📈 Statistics</h2>
+        <div class="stats">
+            <div class="stat-box">
+                <div class="stat-label">Total</div>
+                <div class="stat-value" id="statTotal">-</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Labeled</div>
+                <div class="stat-value" id="statLabeled">-</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Schools</div>
+                <div class="stat-value" id="statSchools">-</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Representatives</div>
+                <div class="stat-value" id="statRep">-</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Alternatives</div>
+                <div class="stat-value" id="statAlt">-</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">100 point score</div>
+                <div class="stat-value" id="stat100">-</div>
+            </div>
+        </div>
+        <div id="processingTime"></div>
+    </div>
+
+    <!-- Results Section -->
+    <div class="section">
+        <h2>📋 Filtering Results</h2>
+        <div style="margin-bottom: 15px;">
+            <label style="color: #858585;">
+                Sort by:
+                <select id="sortBy" onchange="displayResults()" style="background: #3c3c3c; color: #d4d4d4; border: 1px solid #555; padding: 8px; margin-left: 5px; border-radius: 3px;">
+                    <option value="rank" selected>Rank</option>
+                    <option value="school">School</option>
+                    <option value="index">Original Order</option>
+                    <option value="qtm">QTM Order</option>
+                </select>
+            </label><br><br>
+            
+            <label style="color: #858585; margin-left: 20px;">
+                Filter:
+                <select id="filterLabel" onchange="displayResults()" style="background: #3c3c3c; color: #d4d4d4; border: 1px solid #555; padding: 8px; margin-left: 5px; border-radius: 3px;">
+                    <option value="all">All</option>
+                    <option value="labeled" selected>Labeled Only</option>
+                    <option value="representative">Representative Only</option>
+                    <option value="top15">Top 15</option>
+                </select>
+            </label>
+        </div>
+        
+        <div class="results" id="results"></div>
+    </div>
+
+    <!-- Load filter.js as Web Worker -->
+    <script>
+        let worker = null;
+        let startTime = null;
+        let currentResults = null;
+        let currentSolutions = null;
+
+        // Initialize worker
+        function initWorker() {
+            if (worker) {
+                worker.terminate();
+            }
+            
+            worker = new Worker('filter.js');
+            
+            worker.onmessage = function(event) {
+                const processingTime = ((Date.now() - startTime) / 1000).toFixed(2);
+                
+                if (event.data.error) {
+                    alert('error: ' + event.data.error);
+                    document.getElementById('processingTime').textContent = 'error: ' + event.data.error;
+                    document.getElementById('runTestBtn').disabled = false;
+                    return;
+                }
+                
+                const { results, stats } = event.data;
+                
+                // Store full results
+                currentResults = results;
+                
+                // Update statistics
+                document.getElementById('statTotal').textContent = stats.total;
+                document.getElementById('statLabeled').textContent = stats.labeled;
+                document.getElementById('statSchools').textContent = stats.schools;
+                document.getElementById('statRep').textContent = stats.representative;
+                document.getElementById('statAlt').textContent = stats.alternative;
+                document.getElementById('stat100').textContent = stats.score100;
+                document.getElementById('processingTime').textContent = 
+                    `processing time: ${processingTime}Second | Solution: ${stats.total} | school: ${stats.schools} | with label: ${stats.labeled}`;
+
+                // Display results
+                displayResults();
+
+                // Hide warning
+                document.getElementById('paramWarning').style.display = 'none';
+                document.getElementById('runTestBtn').disabled = false;
+            };
+            
+            worker.onerror = function(error) {
+                alert('Worker Error: ' + error.message);
+                document.getElementById('processingTime').textContent = 'Worker Error: ' + error.message;
+                document.getElementById('runTestBtn').disabled = false;
+            };
+        }
+
+        // Update range display
+        function updateRangeDisplay(id) {
+            const input = document.getElementById(id);
+            const display = document.getElementById(id + '-value');
+            let value = parseFloat(input.value);
+            
+            // Only endFaceWeight and chunkJaccardWeight use % (not normalized)
+            if (id === 'endFaceWeight' || id === 'chunkJaccardWeight') {
+                display.textContent = value + '%';
+            } else {
+                display.textContent = value.toFixed(1);
+            }
+            
+            document.getElementById('paramWarning').style.display = 'block';
+        }
+
+        // Load preset configurations
+        function loadPreset(preset) {
+            const presets = {
+                default: {
+                    threshold: 4, minClusterSize: 5, maxClusterSize: 15,
+                    subgroupThreshold: 2.5, minSubgroupSize: 3,
+                    rankWeight: 1.0, sizeWeight: 1.0, focusMoves: 5,
+                    qtmSubgroup: 1.0, htmPenalty: 1.0, qtmCase1: 1.5, qtmFinal: 0.5,
+                    rotationEfficiencyBonus: 1.0,
+                    endFaceWeight: 40, chunkJaccardWeight: 40
+                },
+                strict: {
+                    threshold: 3, minClusterSize: 3, maxClusterSize: 10,
+                    subgroupThreshold: 2.0, minSubgroupSize: 2,
+                    rankWeight: 0.8, sizeWeight: 0.8, focusMoves: 4,
+                    qtmSubgroup: 0.7, htmPenalty: 0.7, qtmCase1: 1.0, qtmFinal: 0.3,
+                    rotationEfficiencyBonus: 0.8,
+                    endFaceWeight: 35, chunkJaccardWeight: 45
+                },
+                loose: {
+                    threshold: 6, minClusterSize: 7, maxClusterSize: 25,
+                    subgroupThreshold: 3.5, minSubgroupSize: 4,
+                    rankWeight: 1.2, sizeWeight: 1.0, focusMoves: 6,
+                    qtmSubgroup: 1.3, htmPenalty: 1.3, qtmCase1: 2.0, qtmFinal: 0.7,
+                    rotationEfficiencyBonus: 1.2,
+                    endFaceWeight: 45, chunkJaccardWeight: 35
+                },
+                quality: {
+                    threshold: 4, minClusterSize: 5, maxClusterSize: 15,
+                    subgroupThreshold: 2.5, minSubgroupSize: 3,
+                    rankWeight: 1.0, sizeWeight: 1.0, focusMoves: 5,
+                    qtmSubgroup: 0.7, htmPenalty: 0.8, qtmCase1: 1.0, qtmFinal: 0.3,
+                    rotationEfficiencyBonus: 1.0,
+                    endFaceWeight: 30, chunkJaccardWeight: 40
+                },
+                qtm: {
+                    threshold: 4, minClusterSize: 5, maxClusterSize: 15,
+                    subgroupThreshold: 2.5, minSubgroupSize: 3,
+                    rankWeight: 0.9, sizeWeight: 0.8, focusMoves: 5,
+                    qtmSubgroup: 1.5, htmPenalty: 0, qtmCase1: 2.5, qtmFinal: 0.8,
+                    rotationEfficiencyBonus: 1.4,
+                    endFaceWeight: 40, chunkJaccardWeight: 40
+                }
+            };
+
+            const config = presets[preset];
+            if (!config) return;
+
+            for (const [key, value] of Object.entries(config)) {
+                const elem = document.getElementById(key);
+                if (elem) {
+                    elem.value = value;
+                    if (elem.type === 'range') {
+                        updateRangeDisplay(key);
+                    }
+                }
+            }
+
+            document.getElementById('paramWarning').style.display = 'block';
+        }
+
+        // Export parameters
+        function exportParameters() {
+            const params = {
+                threshold: parseFloat(document.getElementById('threshold').value),
+                minClusterSize: parseInt(document.getElementById('minClusterSize').value),
+                maxClusterSize: parseInt(document.getElementById('maxClusterSize').value),
+                subgroupThreshold: parseFloat(document.getElementById('subgroupThreshold').value),
+                minSubgroupSize: parseInt(document.getElementById('minSubgroupSize').value),
+                rankWeight: parseFloat(document.getElementById('rankWeight').value),
+                sizeWeight: parseFloat(document.getElementById('sizeWeight').value),
+                focusMoves: parseInt(document.getElementById('focusMoves').value),
+                qtmSubgroup: parseFloat(document.getElementById('qtmSubgroup').value),
+                htmPenalty: parseFloat(document.getElementById('htmPenalty').value),
+                qtmCase1: parseFloat(document.getElementById('qtmCase1').value),
+                qtmFinal: parseFloat(document.getElementById('qtmFinal').value),
+                rotationEfficiencyBonus: parseFloat(document.getElementById('rotationEfficiencyBonus').value),
+                endFaceWeight: parseInt(document.getElementById('endFaceWeight').value),
+                chunkJaccardWeight: parseInt(document.getElementById('chunkJaccardWeight').value)
+            };
+
+            const json = JSON.stringify(params, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'filter_parameters.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Run test with current parameters
+        async function runTest() {
+            const text = document.getElementById('solutionsInput').value;
+            if (!text.trim()) {
+                alert('Solution list is empty. Please enter solutions in the text area.');
+                return;
+            }
+
+            // Parse solutions
+            const lines = text.split('\n').filter(line => line.trim());
+            const solutions = lines.map(line => {
+                const match = line.match(/^\d+:\s*(.+)$/);
+                return match ? match[1].trim() : line.trim();
+            }).filter(s => s);
+
+            if (solutions.length === 0) {
+                alert('No valid solutions found.');
+                return;
+            }
+
+            // Store solutions for display
+            currentSolutions = solutions;
+
+            // Get ALL parameters from UI and create config object
+            const config = {
+                threshold: parseFloat(document.getElementById('threshold').value),
+                prefixLen: 4,  // Fixed for now
+                minClusterSize: parseInt(document.getElementById('minClusterSize').value),
+                maxClusterSize: parseInt(document.getElementById('maxClusterSize').value),
+                minSchoolSize: 3,  // Could be made configurable
+                subgroupThreshold: parseFloat(document.getElementById('subgroupThreshold').value),
+                minSubgroupSize: parseInt(document.getElementById('minSubgroupSize').value),
+                outlierThreshold: 3.5,  // Could be made configurable
+                rankWeight: parseFloat(document.getElementById('rankWeight').value),
+                sizeWeight: parseFloat(document.getElementById('sizeWeight').value),
+                focusMoves: parseInt(document.getElementById('focusMoves').value),
+                qtmSubgroup: parseFloat(document.getElementById('qtmSubgroup').value),
+                htmPenalty: parseFloat(document.getElementById('htmPenalty').value),
+                qtmCase1: parseFloat(document.getElementById('qtmCase1').value),
+                qtmFinal: parseFloat(document.getElementById('qtmFinal').value),
+                rotationEfficiencyBonus: parseFloat(document.getElementById('rotationEfficiencyBonus').value),
+                endFaceWeight: parseInt(document.getElementById('endFaceWeight').value),
+                endSequenceWeight: parseInt(document.getElementById('chunkJaccardWeight').value)
+            };
+
+            try {
+                // Show processing message
+                document.getElementById('processingTime').textContent = 'Processing...';
+                document.getElementById('runTestBtn').disabled = true;
+
+                // Initialize and run worker
+                initWorker();
+                startTime = Date.now();
+                
+                // Send config to worker
+                worker.postMessage({
+                    solutions: solutions,
+                    config: config
+                });
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred: ' + error.message);
+                document.getElementById('processingTime').textContent = 'Error: ' + error.message;
+                document.getElementById('runTestBtn').disabled = false;
+            }
+        }
+
+        // Display results
+        function displayResults() {
+            if (!currentResults) return;
+
+            const sortBy = document.getElementById('sortBy').value;
+            const filterLabel = document.getElementById('filterLabel').value;
+
+            let filtered = [...currentResults]; // No need to add originalIdx, already in results
+
+            // Filter
+            if (filterLabel === 'labeled') {
+                filtered = filtered.filter(r => r && r.label !== 'Unlabeled');
+            } else if (filterLabel === 'representative') {
+                filtered = filtered.filter(r => r && r.label === 'Representative');
+            } else if (filterLabel === 'top15') {
+                filtered = filtered.filter(r => r && r.recommendationRank && r.recommendationRank <= 15);
+            }
+
+            // Sort
+            if (sortBy === 'rank') {
+                filtered.sort((a, b) => (a.recommendationRank || 999) - (b.recommendationRank || 999));
+            } else if (sortBy === 'school') {
+                // Extract numeric part for proper sorting (School_1, School_2, ..., School_11)
+                const getSchoolNum = (school) => {
+                    if (!school) return 999;
+                    const match = school.match(/School_(\d+)/);
+                    return match ? parseInt(match[1], 10) : 999;
+                };
+                filtered.sort((a, b) => getSchoolNum(a.school) - getSchoolNum(b.school));
+            } else if (sortBy === 'qtm') {
+                filtered.sort((a, b) => (a.qtm || 999) - (b.qtm || 999));
+            }
+
+            // Display
+            const container = document.getElementById('results');
+            const resultsHtml = filtered.map(item => {
+                if (!item) return '';
+                
+                const isUnlabeled = item.label === 'Unlabeled';
+                const rankClass = item.recommendationRank === 1 ? 'rank1' : 
+                                 (item.recommendationRank <= 5 ? 'rank2-5' : '');
+                const unlabeledClass = isUnlabeled ? 'unlabeled' : '';
+                
+                const labelClass = item.label.toLowerCase().replace(/ /g, '-');
+                
+                // Calculate HTM/QTM ratio (rotation efficiency)
+                // Ratio close to 1 means fewer 180-degree rotations and more efficient
+                // Smaller ratio means more 180-degree rotations (QTM increases)
+                const efficiency = item.htm && item.qtm ? (item.htm / item.qtm) : 1.0;
+                const efficiencyColor = efficiency > 0.85 ? '#4ec9b0' : (efficiency > 0.7 ? '#b5cea8' : '#858585');
+                
+                // Subgroup info display
+                // Show subgroup info for all solutions that have it
+                // Distinguish between:
+                // 1. Solutions selected FROM a valid subgroup (size >= minSubgroupSize)
+                // 2. Solutions in a small subgroup but selected as supplemental Alternative
+                // 3. Solutions in a small subgroup and not labeled
+                let subgroupInfo = '';
+                if (item.subgroupIndex !== null && item.subgroupIndex !== undefined) {
+                    const minSubgroupSize = 3; // Should match config, but hardcoded for display
+                    const isTooSmall = item.subgroupSize < minSubgroupSize;
+                    const isLabeled = item.label !== 'Unlabeled';
+                    
+                    if (isTooSmall && isLabeled) {
+                        // Small subgroup but this solution was selected as supplemental Alternative
+                        subgroupInfo = `Sub Group ${item.subgroupIndex + 1}/${item.totalSubgroups} (Size ${item.subgroupSize}, selected from school-wide candidates)`;
+                    } else if (isTooSmall) {
+                        // Small subgroup and not selected
+                        subgroupInfo = `Sub Group ${item.subgroupIndex + 1}/${item.totalSubgroups} (Size ${item.subgroupSize}, too small)`;
+                    } else {
+                        // Valid subgroup (size >= minSubgroupSize)
+                        subgroupInfo = `Sub Group ${item.subgroupIndex + 1}/${item.totalSubgroups} (Size ${item.subgroupSize})`;
+                    }
+                } else if (item.totalSubgroups > 0) {
+                    subgroupInfo = `Not in subgroup (${item.totalSubgroups} formed)`;
+                }
+                
+                return `
+                    <div class="result-item ${rankClass} ${unlabeledClass}">
+                        <div style="color: #858585;">#${item.originalIdx}</div>
+                        <div><strong>${item.recommendationRank || '-'}</strong></div>
+                        <div class="school">${item.school}</div>
+                        <div class="label-${labelClass}">${item.label}</div>
+                        <div>Score: ${item.score.toFixed(1)}</div>
+                        <div>Adj: ${(item.adjustedScore || 0).toFixed(1)}</div>
+                        <div style="color: ${efficiencyColor};" title="Rotation Efficiency: ${efficiency.toFixed(2)} (Closer to 1 is more efficient)">HTM/QTM: ${item.htm || 0}/${item.qtm}</div>
+                        <div style="font-family: 'Courier New', monospace; font-size: 11px; display: flex; flex-direction: column; gap: 2px;">
+                            <div>${currentSolutions[item.originalIdx]}</div>
+                            ${subgroupInfo ? `<div style="color: #858585; font-size: 10px;">${subgroupInfo}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            container.innerHTML = `<div class="results-container">${resultsHtml}</div>`;
+        }
+
+        // Process from text area (same as runTest)
+        function processFromTextArea() {
+            runTest();
+        }
+
+        // Clear results
+        function clearResults() {
+            currentResults = null;
+            currentSolutions = null;
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('statTotal').textContent = '-';
+            document.getElementById('statLabeled').textContent = '-';
+            document.getElementById('statSchools').textContent = '-';
+            document.getElementById('statRep').textContent = '-';
+            document.getElementById('statAlt').textContent = '-';
+            document.getElementById('stat100').textContent = '-';
+            document.getElementById('processingTime').textContent = '';
+        }
+
+        // Load from file
+        function loadFromFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('solutionsInput').value = e.target.result;
+            };
+            reader.readAsText(file);
+        }
+
+        // Load sample data
+        async function loadSampleData() {
+            try {
+                const response = await fetch('sol.txt');
+                const text = await response.text();
+                document.getElementById('solutionsInput').value = text;
+                alert('Sample data loaded (sol.txt)');
+            } catch (error) {
+                // If fetch fails, use inline sample data
+                const sampleData = `1: R U R' U'
+2: F R U' R' F'
+3: R U2 R' U'
+4: F' U' F U
+5: R U R' U R U2 R'
+6: F R U R' U' F'
+7: R U R' U' R' F R F'
+8: F' U' F U R U R'
+9: R U R' F' U' F
+10: F U R U' R' F'`;
+                document.getElementById('solutionsInput').value = sampleData;
+                alert('Sample data loaded (built-in sample)');
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize all range displays
+            ['threshold', 'subgroupThreshold', 'rankWeight', 'sizeWeight',
+             'qtmSubgroup', 'qtmCase1', 'qtmFinal', 'endFaceWeight', 'chunkJaccardWeight'].forEach(id => {
+                updateRangeDisplay(id);
+            });
+        });
+    </script>
+</body>
+</html>
