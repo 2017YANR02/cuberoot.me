@@ -4,7 +4,7 @@ class WrWao5 < WrRoundHistory
   def initialize
     @title = "World record WAo5 (Worst Average of 5) history"
     @note = "Worst Average of 5: average of the worst 3 out of all 5 solves in a round."
-    @table_header = { "Result" => :right, "Gain" => :right, "Days" => :right, "Person" => :left, "Competition" => :left, "Date" => :left, "Details" => :left }
+    @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right, "Person" => :left, "Competition" => :left, "Date" => :left, "Details" => :left }
   end
 
   # NOTE: WAo5 = 5次中取最差的3次求均值

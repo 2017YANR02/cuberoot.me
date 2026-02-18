@@ -4,7 +4,7 @@ class WrBpa < WrRoundHistory
   def initialize
     @title = "World record BPA (Best Possible Average) history"
     @note = "Best Possible Average: average of the best 3 out of the first 4 solves in a round."
-    @table_header = { "Result" => :right, "Gain" => :right, "Days" => :right, "Person" => :left, "Competition" => :left, "Date" => :left, "Details" => :left }
+    @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right, "Person" => :left, "Competition" => :left, "Date" => :left, "Details" => :left }
   end
 
   # NOTE: BPA = 前4次中取最好的3次求均值
