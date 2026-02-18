@@ -20,22 +20,22 @@ class ShortestTimeToGetAllSinglesAndAverages < Statistic
         best,
         average
       FROM (
-        -- People who have single for every official event.
+        -- NOTE: ranks_single 表为空，改从 results 表直接筛选
         SELECT person_id
-        FROM ranks_single
+        FROM results
         JOIN events event ON event.id = event_id
-        WHERE event.rank < 900
+        WHERE event.rank < 900 AND best > 0
         GROUP BY person_id
-        HAVING COUNT(event_id) = #{Events::OFFICIAL.length}
+        HAVING COUNT(DISTINCT event_id) = #{Events::OFFICIAL.length}
       ) AS all_events_people
       JOIN (
-        -- People who have average for every official event.
+        -- NOTE: ranks_average 表为空，改从 results 表直接筛选
         SELECT person_id
-        FROM ranks_average
+        FROM results
         JOIN events event ON event.id = event_id
-        WHERE event.rank < 900
+        WHERE event.rank < 900 AND average > 0
         GROUP BY person_id
-        HAVING COUNT(event_id) = #{NUM_EVENTS_WITH_AVERAGES}
+        HAVING COUNT(DISTINCT event_id) = #{NUM_EVENTS_WITH_AVERAGES}
       ) AS all_average_people ON all_average_people.person_id = all_events_people.person_id
       JOIN results result ON result.person_id = all_events_people.person_id
       JOIN persons person ON person.wca_id = result.person_id and person.sub_id = 1

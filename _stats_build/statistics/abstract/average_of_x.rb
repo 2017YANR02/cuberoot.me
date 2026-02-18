@@ -17,6 +17,8 @@ class AverageOfX < GroupedStatistic
   end
 
   def query
+    # NOTE: WCA Developer Dump 不含 ranks_single 数据行，
+    # 改用子查询从 results 表直接计算每个国家的 top-200 single 排名
     <<-SQL
       SELECT
         CONCAT('[', person.name, '](https://www.worldcubeassociation.org/persons/', person.wca_id, ')') person_link,
@@ -26,9 +28,19 @@ class AverageOfX < GroupedStatistic
       JOIN persons person ON person.wca_id = person_id AND person.sub_id = 1
       JOIN competitions competition ON competition.id = competition_id
       JOIN round_types round_type ON round_type.id = round_type_id
-      JOIN ranks_single ON ranks_single.event_id = result.event_id AND ranks_single.person_id = result.person_id
-      -- Take people from top 200 single for optimization reasons.
-      WHERE ranks_single.country_rank <= 200 AND result.event_id NOT IN ('333mbf', '333mbo')
+      JOIN (
+        SELECT event_id, person_id
+        FROM (
+          SELECT r.event_id, r.person_id,
+            RANK() OVER (PARTITION BY r.event_id, p.country_id ORDER BY MIN(r.best)) AS country_rank
+          FROM results r
+          JOIN persons p ON p.wca_id = r.person_id AND p.sub_id = 1
+          WHERE r.best > 0
+          GROUP BY r.event_id, r.person_id, p.country_id
+        ) ranked
+        WHERE country_rank <= 200
+      ) top_single ON top_single.event_id = result.event_id AND top_single.person_id = result.person_id
+      WHERE result.event_id NOT IN ('333mbf', '333mbo')
       ORDER BY competition.start_date, round_type.rank
     SQL
   end

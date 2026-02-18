@@ -7,6 +7,8 @@ class CurrentWorldRecordsByCountry < Statistic
   end
 
   def query
+    # NOTE: WCA Developer Dump 不含 ranks_single/ranks_average 数据行，
+    # 改从 results 表直接计算每个项目的 WR 持有者
     <<-SQL
       SELECT
         wrs_count,
@@ -22,9 +24,29 @@ class CurrentWorldRecordsByCountry < Statistic
             SEPARATOR ', '
           ) people
         FROM (
-          SELECT person_id FROM ranks_single WHERE world_rank = 1
+          -- 当前 single WR 持有者：个人最佳 = 该项目全局最佳
+          SELECT DISTINCT ps.person_id
+          FROM (
+            SELECT person_id, event_id, MIN(best) AS pb
+            FROM results WHERE best > 0 GROUP BY person_id, event_id
+          ) ps
+          JOIN (
+            SELECT event_id, MIN(best) AS wr
+            FROM results WHERE best > 0 GROUP BY event_id
+          ) wr ON ps.event_id = wr.event_id AND ps.pb = wr.wr
+          JOIN events e ON e.id = ps.event_id AND e.rank < 900
           UNION ALL
-          SELECT person_id FROM ranks_average WHERE world_rank = 1
+          -- 当前 average WR 持有者
+          SELECT DISTINCT pa.person_id
+          FROM (
+            SELECT person_id, event_id, MIN(average) AS pb
+            FROM results WHERE average > 0 GROUP BY person_id, event_id
+          ) pa
+          JOIN (
+            SELECT event_id, MIN(average) AS wr
+            FROM results WHERE average > 0 GROUP BY event_id
+          ) wr ON pa.event_id = wr.event_id AND pa.pb = wr.wr
+          JOIN events e ON e.id = pa.event_id AND e.rank < 900
         ) AS ranks
         JOIN persons person ON person.wca_id = person_id AND person.sub_id = 1
         GROUP BY country_id
