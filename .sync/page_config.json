@@ -68,7 +68,14 @@
     ],
     "rootFiles": [
         "url_params_compressor_simple.js",
-        "sw-register.js"
+        "sw-register.js",
+        "sw.js",
+        "manifest.json"
+    ],
+    "rootDirs": [
+        "icons",
+        "documents",
+        "screenshots"
     ],
     "analytics": {
         "trackingId": "G-MXJH30352W"
