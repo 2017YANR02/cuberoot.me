@@ -140,6 +140,25 @@ ruiminyan.github.io/
 - GitHub Actions 内存上限 7GB
 - 当前用量在限制范围内（MySQL + 表约 2GB）
 
+## 同步上游 Solver
+
+当上游 [or18/RubiksSolverDemo](https://github.com/or18/RubiksSolverDemo) 有更新时，运行以下命令一键同步：
+
+```powershell
+# 1. 拉取上游最新代码
+git -C D:\cube\RubiksSolverDemo pull
+
+# 2. 运行同步脚本
+cd D:\cube\ruiminyan.github.io
+.\sync_upstream.ps1
+```
+
+脚本会自动：同步 `src/` 运行时模块、复制根目录依赖、转换 13 个 HTML 页面（应用背景色、汉化、菜单链接等定制化）。
+
+**模板文件**（定制化集中管理）：
+- `.sync/page_config.json`：页面映射表和 i18n key 配置
+- `.sync/menu_template.html`：汉堡菜单链接模板
+
 ## 致谢
 
 - **原始 WCA 统计项目**：[jonatanklosko/wca_statistics](https://github.com/jonatanklosko/wca_statistics)
