@@ -1,10 +1,15 @@
-## Worst result providing a podium
+<h2 data-i18n-en="Worst result providing a podium" data-i18n-zh="登上领奖台的最差成绩">Worst result providing a podium</h2>
 
-*Note: Only finals are taken into account. Results where the main statistic is DNF are ignored.*
-*Updated on 16 February 2026*
+<p><em data-i18n-en="Only finals are taken into account. Results where the main statistic is DNF are ignored." data-i18n-zh="仅统计决赛。主要成绩为 DNF 的结果不计入。">Only finals are taken into account. Results where the main statistic is DNF are ignored.</em></p>
+<p><em data-i18n-en="Updated on 16 February 2026" data-i18n-zh="更新于 2026 年 2 月 16 日">Updated on 16 February 2026</em></p>
 
+<div style="position:fixed;bottom:16px;right:16px;z-index:9999;display:flex;gap:0;border-radius:6px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.15)">
+  <button data-i18n-toggle="en" onclick="I18n.setLocale('en')" style="padding:6px 14px;border:none;cursor:pointer;font-size:14px;font-weight:600;background:rgba(255,255,255,0.1);color:#ccc;backdrop-filter:blur(8px)">EN</button>
+  <button data-i18n-toggle="zh" onclick="I18n.setLocale('zh')" style="padding:6px 14px;border:none;cursor:pointer;font-size:14px;font-weight:600;background:rgba(255,255,255,0.1);color:#ccc;backdrop-filter:blur(8px)">中文</button>
+</div>
+<script src="../src/i18n/i18n.js" defer></script>
 
-### Rubik's Cube
+<h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 
 | Person | Single | Average | Competition | Place |
 | :--- | ---: | ---: | :--- | :--: |
@@ -19,7 +24,7 @@
 | [Maxsud Qarayev](https://www.worldcubeassociation.org/persons/2018QARA01) | 55.04 | **1:07.81** | [Lagom är Bäst 2018](https://www.worldcubeassociation.org/competitions/LagomarBast2018/results/podiums#e333) | 2 |
 | [Mohammad Forootani (محمد فروتنی)](https://www.worldcubeassociation.org/persons/2009FORO01) | 1:02.86 | **1:06.43** | [Dubai Open 2009](https://www.worldcubeassociation.org/competitions/DubaiOpen2009/results/podiums#e333) | 2 |
 
-### 2x2x2 Cube
+<h3 data-i18n-en="2x2x2 Cube" data-i18n-zh="二阶魔方">2x2x2 Cube</h3>
 
 | Person | Single | Average | Competition | Place |
 | :--- | ---: | ---: | :--- | :--: |
@@ -34,7 +39,7 @@
 | [Sahil Mirchandani](https://www.worldcubeassociation.org/persons/2022MIRC02) | 20.38 | **25.52** | [Curaçao Open 2022](https://www.worldcubeassociation.org/competitions/CuracaoOpen2022/results/podiums#e222) | 3 |
 | [Abdesalam Derdour](https://www.worldcubeassociation.org/persons/2014DERD01) | 16.02 | **24.35** | [Tunisia Open 2014](https://www.worldcubeassociation.org/competitions/TunisiaOpen2014/results/podiums#e222) | 3 |
 
-### 4x4x4 Cube
+<h3 data-i18n-en="4x4x4 Cube" data-i18n-zh="四阶魔方">4x4x4 Cube</h3>
 
 | Person | Single | Average | Competition | Place |
 | :--- | ---: | ---: | :--- | :--: |
@@ -49,7 +54,7 @@
 | [Bill McGaugh](https://www.worldcubeassociation.org/persons/2004MCGA01) | 2:40.73 | **3:24.53** | [Caltech Spring 2004](https://www.worldcubeassociation.org/competitions/CaltechSpring2004/results/podiums#e444) | 3 |
 | [Elnathan Ayi Nsa Ayi](https://www.worldcubeassociation.org/persons/2023AYIE01) | 2:29.82 | **3:21.47** | [Nigerian Championship 2023](https://www.worldcubeassociation.org/competitions/NigerianChampionship2023/results/podiums#e444) | 3 |
 
-### 5x5x5 Cube
+<h3 data-i18n-en="5x5x5 Cube" data-i18n-zh="五阶魔方">5x5x5 Cube</h3>
 
 | Person | Single | Average | Competition | Place |
 | :--- | ---: | ---: | :--- | :--: |
@@ -64,7 +69,7 @@
 | [Christy Morris](https://www.worldcubeassociation.org/persons/2004COCK01) | 5:32.18 | **6:43.39** | [Idaho Open 2005](https://www.worldcubeassociation.org/competitions/IdahoOpen2005/results/podiums#e555) | 3 |
 | [Carl-Johan Kjellander](https://www.worldcubeassociation.org/persons/2005KJEL01) | 5:35.88 | **6:22.55** | [Chalmers Open 2005](https://www.worldcubeassociation.org/competitions/ChalmersOpen2005/results/podiums#e555) | 3 |
 
-### 6x6x6 Cube
+<h3 data-i18n-en="6x6x6 Cube" data-i18n-zh="六阶魔方">6x6x6 Cube</h3>
 
 | Person | Single | Average | Competition | Place |
 | :--- | ---: | ---: | :--- | :--: |
@@ -79,7 +84,7 @@
 | [Javier Espinosa García](https://www.worldcubeassociation.org/persons/2010ESPI01) | 7:36.40 | **8:58.71** | [Basauri Open 2010](https://www.worldcubeassociation.org/competitions/BasauriOpen2010/results/podiums#e666) | 2 |
 | [Clarke Hawkinson](https://www.worldcubeassociation.org/persons/2009HAWK01) | 8:03.36 | **8:54.37** | [Yellowstone 2018](https://www.worldcubeassociation.org/competitions/Yellowstone2018/results/podiums#e666) | 3 |
 
-### 7x7x7 Cube
+<h3 data-i18n-en="7x7x7 Cube" data-i18n-zh="七阶魔方">7x7x7 Cube</h3>
 
 | Person | Single | Average | Competition | Place |
 | :--- | ---: | ---: | :--- | :--: |
@@ -94,7 +99,7 @@
 | [Uku Kruusamägi](https://www.worldcubeassociation.org/persons/2009KRUU01) | 8:47.43 | **10:02.00** | [Estonian Open 2010](https://www.worldcubeassociation.org/competitions/EstonianOpen2010/results/podiums#e777) | 3 |
 | [David Champagne](https://www.worldcubeassociation.org/persons/2009CHAM02) | 9:29.15 | **9:55.49** | [Cube Canada Day 2011](https://www.worldcubeassociation.org/competitions/CubeCanadaDay2011/results/podiums#e777) | 2 |
 
-### 3x3x3 Blindfolded
+<h3 data-i18n-en="3x3x3 Blindfolded" data-i18n-zh="三阶盲拧">3x3x3 Blindfolded</h3>
 
 | Person | Single | Average | Competition | Place |
 | :--- | ---: | ---: | :--- | :--: |
@@ -109,7 +114,7 @@
 | [Danila Rogozhnikov (Данила Рогожников)](https://www.worldcubeassociation.org/persons/2018ROGO03) | **17:06.00** | DNF | [Almet Open 2018](https://www.worldcubeassociation.org/competitions/AlmetOpen2018/results/podiums#e333bf) | 2 |
 | [John Louis](https://www.worldcubeassociation.org/persons/2006LOUI01) | **16:07.00** |  | [Delhi Open 2011](https://www.worldcubeassociation.org/competitions/DelhiOpen2011/results/podiums#e333bf) | 1 |
 
-### 3x3x3 Fewest Moves
+<h3 data-i18n-en="3x3x3 Fewest Moves" data-i18n-zh="三阶最少步">3x3x3 Fewest Moves</h3>
 
 | Person | Single | Average | Competition | Place |
 | :--- | ---: | ---: | :--- | :--: |
@@ -124,7 +129,7 @@
 | [Niko Ronkainen](https://www.worldcubeassociation.org/persons/2010RONK01) | 67 | **69.00** | [FMC in the Gulf of Finland 2024](https://www.worldcubeassociation.org/competitions/FewestMovesintheGulfofFinlan2024/results/podiums#e333fm) | 2 |
 | [Tomi Ronkainen](https://www.worldcubeassociation.org/persons/2012RONK01) | 59 | **68.67** | [Finnish FMC Series VI 2025](https://www.worldcubeassociation.org/competitions/FinnishFMCSeriesVI2025/results/podiums#e333fm) | 1 |
 
-### 3x3x3 One-Handed
+<h3 data-i18n-en="3x3x3 One-Handed" data-i18n-zh="三阶单手">3x3x3 One-Handed</h3>
 
 | Person | Single | Average | Competition | Place |
 | :--- | ---: | ---: | :--- | :--: |
@@ -139,7 +144,7 @@
 | [Anders Larsson](https://www.worldcubeassociation.org/persons/2003LARS01) | 1:59.81 | **2:13.31** | [Svekub 2005](https://www.worldcubeassociation.org/competitions/Svekub2005/results/podiums#e333oh) | 3 |
 | [Sirac Niyazov](https://www.worldcubeassociation.org/persons/2018NIYA01) | 1:40.28 | **1:58.25** | [Northern Decathlon 2018](https://www.worldcubeassociation.org/competitions/NorthernAzerbaijanDecathlon2018/results/podiums#e333oh) | 2 |
 
-### Megaminx
+<h3 data-i18n-en="Megaminx" data-i18n-zh="五魔方">Megaminx</h3>
 
 | Person | Single | Average | Competition | Place |
 | :--- | ---: | ---: | :--- | :--: |
@@ -154,7 +159,7 @@
 | [Tony Adrian Razafindragolo](https://www.worldcubeassociation.org/persons/2024RAZA05) | 4:53.60 | **5:41.08** | [Cubing Mada 2024](https://www.worldcubeassociation.org/competitions/CubingMada2024/results/podiums#eminx) | 3 |
 | [William Azevedo da Silva](https://www.worldcubeassociation.org/persons/2014SILV12) | 5:13.75 | **5:38.89** | [Manaus Open 2014](https://www.worldcubeassociation.org/competitions/ManausOpen2014/results/podiums#eminx) | 3 |
 
-### Pyraminx
+<h3 data-i18n-en="Pyraminx" data-i18n-zh="金字塔">Pyraminx</h3>
 
 | Person | Single | Average | Competition | Place |
 | :--- | ---: | ---: | :--- | :--: |
@@ -169,7 +174,7 @@
 | [Shane Rowland](https://www.worldcubeassociation.org/persons/2010ROWL01) | 24.06 | **40.88** | [Drexel Winter 2010](https://www.worldcubeassociation.org/competitions/DrexelWinter2010/results/podiums#epyram) | 3 |
 | [Mayumi Hori (堀真由美)](https://www.worldcubeassociation.org/persons/2006HORI02) | 32.33 | **38.93** | [OGU Open 2006](https://www.worldcubeassociation.org/competitions/OGU2006/results/podiums#epyram) | 3 |
 
-### Rubik's Clock
+<h3 data-i18n-en="Rubik's Clock" data-i18n-zh="魔表">Rubik's Clock</h3>
 
 | Person | Single | Average | Competition | Place |
 | :--- | ---: | ---: | :--- | :--: |
@@ -184,7 +189,7 @@
 | [Renan Mondini Cerpe](https://www.worldcubeassociation.org/persons/2007CERP02) | 1:03.66 | **1:17.55** | [UNESP Open 2009](https://www.worldcubeassociation.org/competitions/UNESPOpen2009/results/podiums#eclock) | 3 |
 | [Justin Sinel](https://www.worldcubeassociation.org/persons/2009SINE01) | 57.06 | **1:17.06** | [Rizal Open 2009](https://www.worldcubeassociation.org/competitions/RizalOpen2009/results/podiums#eclock) | 2 |
 
-### Skewb
+<h3 data-i18n-en="Skewb" data-i18n-zh="斜转魔方">Skewb</h3>
 
 | Person | Single | Average | Competition | Place |
 | :--- | ---: | ---: | :--- | :--: |
@@ -199,7 +204,7 @@
 | [Vibhav Jha](https://www.worldcubeassociation.org/persons/2020JHAV01) | 29.57 | **43.55** | [Jharkhand Cube Open 2020](https://www.worldcubeassociation.org/competitions/JharkhandCubeOpen2020/results/podiums#eskewb) | 3 |
 | [Babatunde Iteoluwakishi](https://www.worldcubeassociation.org/persons/2019ITEO01) | 34.50 | **43.17** | [Nigeria Open 2019](https://www.worldcubeassociation.org/competitions/NigeriaOpen2019/results/podiums#eskewb) | 3 |
 
-### Square-1
+<h3 data-i18n-en="Square-1" data-i18n-zh="SQ1">Square-1</h3>
 
 | Person | Single | Average | Competition | Place |
 | :--- | ---: | ---: | :--- | :--: |
@@ -214,7 +219,7 @@
 | [Karel Doorman](https://www.worldcubeassociation.org/persons/2010DOOR01) | 2:12.78 | **3:11.29** | [New Zealand Champs 2010](https://www.worldcubeassociation.org/competitions/NewZealand2010/results/podiums#esq1) | 3 |
 | [Hanneke Rijks](https://www.worldcubeassociation.org/persons/2008RIJK01) | 2:11.19 | **3:05.77** | [Finnish Open 2008](https://www.worldcubeassociation.org/competitions/FinnishOpen2008/results/podiums#esq1) | 3 |
 
-### 4x4x4 Blindfolded
+<h3 data-i18n-en="4x4x4 Blindfolded" data-i18n-zh="四阶盲拧">4x4x4 Blindfolded</h3>
 
 | Person | Single | Average | Competition | Place |
 | :--- | ---: | ---: | :--- | :--: |
@@ -229,7 +234,7 @@
 | [Saoud Abdulaziz Almutawa](https://www.worldcubeassociation.org/persons/2018ALMU03) | **39:50.00** | DNF | [Kuwaiti Nationals 2024](https://www.worldcubeassociation.org/competitions/KuwaitiNationals2024/results/podiums#e444bf) | 3 |
 | [Teruki Miyazaki (宮崎輝樹)](https://www.worldcubeassociation.org/persons/2006MIYA01) | **38:58.00** |  | [Japan Open 2007](https://www.worldcubeassociation.org/competitions/JapanOpen2007/results/podiums#e444bf) | 1 |
 
-### 5x5x5 Blindfolded
+<h3 data-i18n-en="5x5x5 Blindfolded" data-i18n-zh="五阶盲拧">5x5x5 Blindfolded</h3>
 
 | Person | Single | Average | Competition | Place |
 | :--- | ---: | ---: | :--- | :--: |
@@ -244,7 +249,7 @@
 | [Tomoaki Okayama (岡山友昭)](https://www.worldcubeassociation.org/persons/2009OKAY01) | **58:47.00** |  | [Osaka 2011](https://www.worldcubeassociation.org/competitions/Osaka2011/results/podiums#e555bf) | 2 |
 | [Riadi Arsandi](https://www.worldcubeassociation.org/persons/2009ARSA01) | **58:30.00** | DNF | [Fun Fasting Day 2011](https://www.worldcubeassociation.org/competitions/FunFastingDay2011/results/podiums#e555bf) | 2 |
 
-### 3x3x3 Multi-Blind
+<h3 data-i18n-en="3x3x3 Multi-Blind" data-i18n-zh="三阶多盲">3x3x3 Multi-Blind</h3>
 
 | Person | Single | Average | Competition | Place |
 | :--- | ---: | ---: | :--- | :--: |
