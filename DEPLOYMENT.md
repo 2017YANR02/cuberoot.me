@@ -122,37 +122,52 @@ ruiminyan.github.io/
 
 ---
 
-## 待完成：WCADB 统计迁移
+## WCADB 统计迁移（进行中）
 
 WCADB.xlsx 包含 27 个 sheet 的 WCA 世界纪录统计数据，目标是迁移到 `_stats_build` 框架实现自动化更新。
 
-### 待开发：`wr_single_history.rb`（首个统计脚本）
+### 架构设计
 
-- 继承 `GroupedStatistic`
-- SQL：查 `results` 表中 `regional_single_record = 'WR'` 的记录
-- transform：按 event_id 分组 → 组内按日期排序 → 计算 gain 和 duration → 倒序输出
-- 表头：`| Result | Gain | Days | Person | Competition | Date | Details |`
+- 抽象基类 `statistics/abstract/wr_round_history.rb`：封装 WR 轮次衍生指标的通用模式
+  - SQL 统一查询 `regional_average_record = 'WR'` 的 value1-5 数据
+  - 子类只需实现 `compute_metric(values, r)` 即可
+  - 自动处理 WR 历史构建（日期排序、递减过滤、gain 计算、格式化）
+
+### 已完成脚本
+
+| 脚本 | 类名 | 说明 | 状态 |
+|------|------|------|------|
+| `wr_single_history.rb` | WrSingleHistory | WR 单次历史 | ✅ 已提交 |
+| `wr_average_history.rb` | WrAverageHistory | WR 平均历史 | ✅ 已创建 |
+| `wr_current.rb` | WrCurrent | 当前 WR 总览 | ✅ 已创建 |
+| `wr_bpa.rb` | WrBpa | BPA (前4次最佳3次均值) | ✅ 已创建 |
+| `wr_wpa.rb` | WrWpa | WPA (前4次最差3次均值) | ✅ 已创建 |
+| `wr_bao5.rb` | WrBao5 | BAo5 (5次中最佳3次均值) | ✅ 已创建 |
+| `wr_wao5.rb` | WrWao5 | WAo5 (5次中最差3次均值) | ✅ 已创建 |
+| `wr_mo5.rb` | WrMo5 | Mo5 (5次全部均值) | ✅ 已创建 |
+| `wr_median.rb` | WrMedian | 中位数 | ✅ 已创建 |
+| `wr_best_counting.rb` | WrBestCounting | Ao5计入的最佳成绩 | ✅ 已创建 |
+| `wr_worst_counting.rb` | WrWorstCounting | Ao5计入的最差成绩 | ✅ 已创建 |
+| `wr_worst.rb` | WrWorst | 整轮最差成绩 | ✅ 已创建 |
+| `wr_variance.rb` | WrVariance | 5次方差 | ✅ 已创建 |
+| `wr_best_average_ratio.rb` | WrBestAverageRatio | best/average 比值 | ✅ 已创建 |
+| `wr_newcomer.rb` | WrNewcomer | NWR 首场比赛最佳成绩 | ✅ 已创建 |
+| `wr_first_comp_wr.rb` | WrFirstCompWr | 首场就破 WR 的选手 | ✅ 已创建 |
+
+### 待完成
+
+- [ ] SQL 验证（通过本地 MySQL 测试关键查询）
+- [ ] Git commit + push 全部新脚本
+- [ ] CI 语法检查通过
+- [ ] 手动触发完整构建
+- [ ] 对比输出与 WCADB.xlsx 数据
 
 ### 验证步骤
 
-1. `ruby -c _stats_build/statistics/wr_single_history.rb` 语法检查
-2. 推送到 main → CI 语法检查通过
-3. 手动触发完整构建（约 47 分钟）
-4. 访问 `https://ruiminyan.github.io/stats/wr_single_history.html` 查看结果
-5. 与 WCADB.xlsx "Best" sheet 数据抽查对比
-
-### 批量迁移计划（约 15-18 个脚本）
-
-**第一批**（与 Best 结构相同，改 SQL 条件即可）：
-- Avg（WR average 历史）、Current（当前 WR 总览）
-
-**第二批**（需更复杂的 transform）：
-- BPA、WPA、BAo5、WAo5、Median、Mo5
-- Best Counting、Worst Counting、Worst
-
-**第三批**（特殊分析类）：
-- Non-PR WR、NWR、1stWR、Dominance
-- Variance、Best Average Ratio
+1. 推送到 main → CI 语法检查通过
+2. 手动触发完整构建（约 47 分钟）
+3. 访问 `https://ruiminyan.github.io/stats/wr_XXX.html` 查看各统计页面
+4. 与 WCADB.xlsx 对应 sheet 数据抽查对比
 
 ### 本地 MySQL 环境
 

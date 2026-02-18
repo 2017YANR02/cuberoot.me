@@ -1,3 +1,5 @@
 # 大型数据文件
 _stats_build/WCADB.xlsx
 _stats_build/WCADB_preview.txt
+# 参考 SQL 文件（不需要版本控制）
+_stats_build/WCA-Statistics/
