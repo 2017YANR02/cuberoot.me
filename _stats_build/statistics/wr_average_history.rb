@@ -99,31 +99,31 @@ class WrAverageHistory < GroupedStatistic
     md += tab_buttons("当前排名", "ranking", "WR 历史", "history")
 
     # 当前排名面板
-    md += "<div id=\"ranking\" class=\"stat-panel active\">\n\n"
+    md += "<div id=\"ranking\" class=\"stat-panel active\">\n"
     @ranking_by_event.each do |event_name, rows|
       next if rows.empty?
-      md += "<h3>#{event_name}</h3>\n\n"
+      md += "<h3>#{event_name}</h3>\n"
       md += "<table>\n<tr><th style=\"text-align:right\">#</th><th>Person</th><th style=\"text-align:right\">Average</th></tr>\n"
       rows.each_with_index do |row, i|
         md += "<tr><td style=\"text-align:right\">#{i + 1}</td>"
         md += "<td>#{md_link_to_html(row[:person_link])}</td>"
         md += "<td style=\"text-align:right\">#{row[:result_str]}</td></tr>\n"
       end
-      md += "</table>\n\n"
+      md += "</table>\n"
     end
-    md += "</div>\n\n"
+    md += "</div>\n"
 
     # WR 历史面板
-    md += "<div id=\"history\" class=\"stat-panel\">\n\n"
+    md += "<div id=\"history\" class=\"stat-panel\">\n"
     wr_data.each do |event_name, rows|
       next if rows.empty?
-      md += "<h3>#{event_name}</h3>\n\n"
+      md += "<h3>#{event_name}</h3>\n"
       md += "<table>\n"
       md += html_table_header(@table_header)
       rows.each { |row| md += html_table_row(row, @table_header) }
-      md += "</table>\n\n"
+      md += "</table>\n"
     end
-    md += "</div>\n\n"
+    md += "</div>\n"
 
     md += tab_script
     md
