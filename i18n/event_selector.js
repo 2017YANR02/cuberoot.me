@@ -204,9 +204,9 @@
         gap: 6px;
         padding: 12px;
         margin: 12px 0;
-        background: rgba(255, 255, 255, 0.05);
+        background: rgba(255, 255, 255, 0.03);
         border-radius: 8px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.06);
       }
       .event-btn {
         width: 40px;
@@ -216,7 +216,7 @@
         justify-content: center;
         border: 2px solid transparent;
         border-radius: 8px;
-        background: rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.05);
         cursor: pointer;
         transition: all 0.2s ease;
         padding: 0;
@@ -227,8 +227,8 @@
         transition: color 0.2s ease;
       }
       .event-btn:hover {
-        background: rgba(255, 255, 255, 0.15);
-        border-color: rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.10);
+        border-color: rgba(255, 255, 255, 0.12);
       }
       .event-btn:hover .cubing-icon {
         color: #ddd;
