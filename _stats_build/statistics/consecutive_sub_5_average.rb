@@ -1,7 +1,10 @@
 require_relative "../core/statistic"
 require_relative "../core/solve_time"
+require_relative "../core/tab_ui"
 
 class ConsecutiveSub5Average < Statistic
+  include TabUi
+
   def initialize
     @title = "Most consecutive sub-5 averages in 3x3x3"
     @title_zh = "最多连续 sub-5 三阶平均"
@@ -125,52 +128,17 @@ class ConsecutiveSub5Average < Statistic
   end
 
   def build_tabbed_page(ranking, wr_history)
-    timestamp = Time.parse(Database.metadata["export_timestamp"])
-    updated = timestamp.strftime("%e %B %Y").strip
-
-    <<~HTML
-      ## #{@title}
-
-      *Note: #{@note}*
-      *Updated on #{updated}*
-
-      <style>
-      .stat-tabs{display:flex;gap:0;margin:16px 0 0}
-      .stat-tab{flex:1;padding:10px 20px;border:none;cursor:pointer;font-size:15px;font-weight:600;color:#fff;background:#4a6785;transition:background .2s}
-      .stat-tab:first-child{border-radius:6px 0 0 6px}
-      .stat-tab:last-child{border-radius:0 6px 6px 0}
-      .stat-tab.active{background:#2c4a6e}
-      .stat-tab:hover:not(.active){background:#3b5975}
-      .stat-panel{display:none;margin-top:12px}
-      .stat-panel.active{display:block}
-      .stat-panel table{border-collapse:collapse}
-      .stat-panel th,.stat-panel td{padding:6px 12px;border-bottom:1px solid #ddd;text-align:left}
-      .stat-panel th{background:#f6f8fa;font-weight:600}
-      .stat-panel td:first-child{text-align:right}
-      </style>
-
-      <div class="stat-tabs">
-        <button class="stat-tab active" onclick="switchTab(event,'ranking')">当前排名</button>
-        <button class="stat-tab" onclick="switchTab(event,'history')">WR 历史</button>
-      </div>
-
-      <div id="ranking" class="stat-panel active">
-      #{ranking_table(ranking)}
-      </div>
-
-      <div id="history" class="stat-panel">
-      #{history_table(wr_history)}
-      </div>
-
-      <script>
-      function switchTab(e,id){
-        document.querySelectorAll('.stat-tab').forEach(t=>t.classList.remove('active'));
-        document.querySelectorAll('.stat-panel').forEach(p=>p.classList.remove('active'));
-        e.target.classList.add('active');
-        document.getElementById(id).classList.add('active');
-      }
-      </script>
-    HTML
+    md = top
+    md += tab_styles
+    md += tab_buttons("Current Ranking", "当前排名", "ranking", "WR History", "WR 历史", "history")
+    md += "<div id=\"ranking\" class=\"stat-panel active\">\n"
+    md += ranking_table(ranking)
+    md += "</div>\n"
+    md += "<div id=\"history\" class=\"stat-panel\">\n"
+    md += history_table(wr_history)
+    md += "</div>\n"
+    md += tab_script
+    md
   end
 
   def ranking_table(data)

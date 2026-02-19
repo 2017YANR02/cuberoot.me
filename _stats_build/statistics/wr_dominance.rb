@@ -57,9 +57,10 @@ class WrDominance < Statistic
     date_zh = timestamp.strftime("更新于 %Y 年 %-m 月 %-d 日")
     md += "<p><em data-i18n-en=\"Updated on #{updated}\" data-i18n-zh=\"#{date_zh}\">Updated on #{updated}</em></p>\n\n"
 
-    data.each do |group_name, rows|
+    data.each do |event_name, group_name, rows|
       next if rows.empty?
-      md += "<h3>#{group_name}</h3>\n"
+      # NOTE: data-i18n-en 用纯项目名，供 event_selector.js 识别；显示文本含 Single/Average 后缀
+      md += "<h3 data-i18n-en=\"#{event_name}\" data-i18n-zh=\"#{Events.zh(event_name)}\">#{group_name}</h3>\n"
       md += "<table>\n"
       md += "<tr>"
       md += "<th style=\"text-align:right\">Count</th>"
@@ -96,7 +97,7 @@ class WrDominance < Statistic
       rows = single_rows.select { |r| r["event_id"] == event_id }
       next if rows.empty?
       hist = compute_wr_history(rows)
-      results << [group, hist] unless hist.empty?
+      results << [event_name, group, hist] unless hist.empty?
     end
 
     # Average/Mean: 所有项目（BLD 类用 mean，也存储在 average 列）
@@ -107,7 +108,7 @@ class WrDominance < Statistic
       rows = avg_rows.select { |r| r["event_id"] == event_id }
       next if rows.empty?
       hist = compute_wr_history(rows)
-      results << [group, hist] unless hist.empty?
+      results << [event_name, group, hist] unless hist.empty?
     end
 
     results
