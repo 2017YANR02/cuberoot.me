@@ -6,7 +6,7 @@
   <button data-i18n-toggle="en" onclick="I18n.setLocale('en')" style="padding:6px 14px;border:none;cursor:pointer;font-size:14px;font-weight:600;background:rgba(255,255,255,0.1);color:#ccc;backdrop-filter:blur(8px)">EN</button>
   <button data-i18n-toggle="zh" onclick="I18n.setLocale('zh')" style="padding:6px 14px;border:none;cursor:pointer;font-size:14px;font-weight:600;background:rgba(255,255,255,0.1);color:#ccc;backdrop-filter:blur(8px)">中文</button>
 </div>
-<script src="../src/i18n/i18n.js" defer></script>
+<script src="../i18n/i18n.js" defer></script>
 | Competitions per year | Competitions | Years | Person |
 | ---: | ---: | ---: | :--- |
 | 76.47 | 237 | 3.10 | [Filip Åström](https://www.worldcubeassociation.org/persons/2023ASTR01) |
