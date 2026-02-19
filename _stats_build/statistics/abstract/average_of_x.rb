@@ -8,7 +8,7 @@ class AverageOfX < GroupedStatistic
 
     @title = "Average of #{@solve_count}"
 
-    @title_zh = "{@solve_count} 次平均"
+    @title_zh = "#{@solve_count} 次平均"
     @note = "#{@solve_count} consecutive official attempts are considered. Only people from top 200 single are taken into account."
     @note_zh = "取连续 #{@solve_count} 次官方成绩计算。仅考虑单次前 200 名的选手。"
     @table_header = { "Ao#{@solve_count}" => :right, "Person" => :left, "Times" => :left }
