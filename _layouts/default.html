@@ -65,18 +65,18 @@
             color: #aaa;
         }
 
-        /* 链接 */
+        /* 链接 — blue-400 */
         a {
-            color: #8888cc;
+            color: #60a5fa;
             text-decoration: none;
         }
 
         a:hover {
             text-decoration: underline;
-            color: #aaaaee;
+            color: #93bbfc;
         }
 
-        /* 表格 — 暗紫色调 */
+        /* 表格 — Glassmorphism 半透明 */
         table {
             border-collapse: collapse;
             margin: 1em 0;
@@ -84,46 +84,47 @@
         }
 
         th {
-            background: #1a1a2e;
-            color: #ccc;
+            background: rgba(255, 255, 255, 0.06) !important;
+            color: #8892a0 !important;
             font-weight: 600;
             padding: 8px 12px;
-            border: 1px solid #2a2a3e;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
             text-align: left;
         }
 
         td {
             padding: 6px 12px;
-            border: 1px solid #1e1e30;
+            border: 1px solid rgba(255, 255, 255, 0.04) !important;
         }
 
-        /* 交替行 */
+        /* 交替行 — 半透明层叠 */
         tr:nth-child(even) {
-            background: #12121f;
+            background: rgba(255, 255, 255, 0.03) !important;
         }
 
         tr:nth-child(odd) {
-            background: #0e0e18;
+            background: transparent !important;
         }
 
         tr:hover {
-            background: #1e1e35;
+            background: rgba(255, 255, 255, 0.07) !important;
         }
 
-        /* Tab 切换面板（ao_rounds / wr_round_history 使用） */
+        /* Tab — Glassmorphism 毛玻璃 */
         .tab-btn {
-            background: rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.06);
             color: #ccc;
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             padding: 6px 16px;
             cursor: pointer;
             font-size: 0.9rem;
             border-radius: 4px 4px 0 0;
+            transition: all 0.2s ease;
         }
 
         .tab-btn.active,
         .tab-btn:hover {
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.12);
             color: #fff;
         }
     </style>
