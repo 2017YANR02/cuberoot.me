@@ -1,6 +1,6 @@
-require_relative "abstract/wr_round_history"
+require_relative "abstract/round_metric"
 
-class WrMo5 < WrRoundHistory
+class WrMo5 < RoundMetric
   def initialize
     @title = "Mo5 (Mean of 5)"
     @title_zh = "Mo5（5 次均值）"

@@ -1,3 +1,13 @@
+# NOTE: AverageOfX -- "Ao100" / "Ao1000" etc.
+# Computes: a person's best trimmed-mean of @solve_count consecutive official solves.
+#
+# Algorithm: sliding window.
+# 1. For each person, line up ALL their value1-5 in chronological order.
+# 2. Slide a window of length @solve_count across this sequence.
+# 3. At every position compute the trimmed mean (5% trimmed each side).
+# 4. Keep the best (lowest) one as the person's result.
+#
+# Data scope: only top-200 single per country (SQL subquery filter).
 require_relative "../../core/grouped_statistic"
 require_relative "../../core/events"
 require_relative "../../core/solve_time"
@@ -14,7 +24,7 @@ class AverageOfX < GroupedStatistic
     @table_header = { "Ao#{@solve_count}" => :right, "Person" => :left, "Times" => :left }
   end
 
-  # Cache result of the query as it's the same for each subclass
+  # NOTE: class-level cache -- all subclasses (Ao100, Ao1000 ...) share one query result
   def query_results
     @@query_results ||= super
   end
@@ -48,25 +58,37 @@ class AverageOfX < GroupedStatistic
     SQL
   end
 
+  # NOTE: sliding window -- find each person's best AoX across their career
+  #
+  # For each person:
+  #   flatten all value1..5 into a 1-D timeline
+  #   slide a window of @solve_count across it
+  #   at each full window: compute trimmed mean, keep best
+  #   result: one best_aox per person, then take top 10
   def transform(query_results)
     Events::ALL.map do |event_id, event_name|
       results = query_results
         .select { |result| result["event_id"] == event_id }
         .group_by { |result| result["person_link"] }
         .map do |person_link, results|
+          # last_x_solves: sliding window buffer
+          # best_aox: best average found so far for this person
           data = { last_x_solves: [], best_aox: SolveTime::DNF, best_aox_solves: [] }
           results
             .flat_map { |result| (1..5).map { |n| result["value#{n}"] } }
             .each do |value|
               next if value == SolveTime::SKIPPED_VALUE
-              # Here we use raw values instead of SolveTime to improve the performance.
+              # NOTE: raw integers instead of SolveTime objects for performance
+              # DNF/DNS (<= 0) mapped to Infinity so they sort last
               data[:last_x_solves] << (value > 0 ? value : Float::INFINITY)
               if data[:last_x_solves].length == @solve_count
+                # NOTE: window is full -- compute average and check if it's a new best
                 current_aox = average(data[:last_x_solves], event_id)
                 if current_aox < data[:best_aox]
                   data[:best_aox] = current_aox
                   data[:best_aox_solves] = data[:last_x_solves].dup
                 end
+                # slide: pop left end, next iteration pushes right end
                 data[:last_x_solves].shift
               end
             end
@@ -85,13 +107,18 @@ class AverageOfX < GroupedStatistic
     end
   end
 
+  # NOTE: Trimmed Mean (generalized WCA average)
+  # WCA Ao5:   trim 1 per side (ceil(5*0.05) = 1)
+  # Ao100:     trim 5 per side (ceil(100*0.05) = 5)
+  # If any remaining solve is DNF (Infinity), the whole average is DNF.
   def average(solves, event_id)
     trimmed_per_side = (solves.length * 0.05).ceil
     untrimmed_solves = solves.sort.slice!(trimmed_per_side...-trimmed_per_side)
     return SolveTime::DNF if untrimmed_solves.last == Float::INFINITY
     values = untrimmed_solves
     mean_value = values.reduce(:+) / values.count.to_f
-    mean_value *= 100 if event_id == "333fm" # Unify values for FMC to fit others
+    # NOTE: FMC scores are in "moves" (integer); multiply by 100 to unify with centiseconds
+    mean_value *= 100 if event_id == "333fm"
     SolveTime.new(event_id, :average, mean_value.round)
   end
 end

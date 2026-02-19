@@ -1,6 +1,6 @@
-require_relative "abstract/wr_round_history"
+require_relative "abstract/round_metric"
 
-class WrBestAverageRatio < WrRoundHistory
+class WrBestAverageRatio < RoundMetric
   def initialize
     @title = "Best/average ratio"
     @title_zh = "最佳/平均比"

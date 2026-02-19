@@ -1,6 +1,6 @@
-require_relative "abstract/wr_round_history"
+require_relative "abstract/round_metric"
 
-class WrMedian < WrRoundHistory
+class WrMedian < RoundMetric
   def initialize
     @title = "Median"
     @title_zh = "中位数"
