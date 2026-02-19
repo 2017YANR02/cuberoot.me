@@ -68,6 +68,8 @@ class AoRounds < GroupedStatistic
   # 将 @ranking_by_event 中的 hash rows 归一化为数组供基类渲染
   def markdown
     ranking_header = { "Person" => :left, "Result" => :right, "Details" => :left }
+    # NOTE: 必须先调 data 触发 transform，才能填充 @ranking_by_event
+    history_data = data
     # NOTE: build_ranking 返回 [{person_link:, metric_str:, details:}]，需转为数组格式
     ranking_data = @ranking_by_event.transform_values do |rows|
       rows.map { |r| [r[:person_link], r[:metric_str], r[:details]] }
@@ -75,7 +77,7 @@ class AoRounds < GroupedStatistic
     top + tabbed_grouped_markdown(
       ranking_data: ranking_data,
       ranking_header: ranking_header,
-      history_data: data,
+      history_data: history_data,
       history_header: @table_header
     )
   end
