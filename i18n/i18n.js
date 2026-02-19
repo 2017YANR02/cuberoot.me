@@ -312,6 +312,7 @@ const I18n = {
         "Chad": "乍得", "Chile": "智利", "China": "中国",
         "Chinese Taipei": "中国台湾", "Colombia": "哥伦比亚",
         "Costa Rica": "哥斯达黎加", "Croatia": "克罗地亚", "Cuba": "古巴",
+        "Côte d'Ivoire": "科特迪瓦",
         "Cyprus": "塞浦路斯", "Czech Republic": "捷克",
         "Democratic Republic of the Congo": "刚果(金)",
         "Denmark": "丹麦", "Dominica": "多米尼克",
@@ -331,6 +332,7 @@ const I18n = {
         "Kuwait": "科威特", "Kyrgyzstan": "吉尔吉斯斯坦",
         "Laos": "老挝", "Latvia": "拉脱维亚", "Lebanon": "黎巴嫩",
         "Lesotho": "莱索托", "Liberia": "利比里亚", "Libya": "利比亚",
+        "Liechtenstein": "列支敦士登",
         "Lithuania": "立陶宛", "Luxembourg": "卢森堡",
         "Macau, China": "中国澳门", "Madagascar": "马达加斯加",
         "Malawi": "马拉维", "Malaysia": "马来西亚", "Mali": "马里",
@@ -349,6 +351,7 @@ const I18n = {
         "Romania": "罗马尼亚", "Russia": "俄罗斯", "Rwanda": "卢旺达",
         "Saint Kitts and Nevis": "圣基茨和尼维斯",
         "Saint Lucia": "圣卢西亚", "Samoa": "萨摩亚",
+        "San Marino": "圣马力诺",
         "Saudi Arabia": "沙特阿拉伯", "Senegal": "塞内加尔",
         "Serbia": "塞尔维亚", "Sierra Leone": "塞拉利昂",
         "Singapore": "新加坡", "Slovakia": "斯洛伐克", "Slovenia": "斯洛文尼亚",
@@ -365,7 +368,7 @@ const I18n = {
         "United States": "美国", "Uruguay": "乌拉圭",
         "Uzbekistan": "乌兹别克斯坦", "Vanuatu": "瓦努阿图",
         "Venezuela": "委内瑞拉", "Vietnam": "越南", "Yemen": "也门",
-        "Zimbabwe": "津巴布韦",
+        "Zambia": "赞比亚", "Zimbabwe": "津巴布韦",
         "Africa": "非洲", "Asia": "亚洲", "Europe": "欧洲",
         "North America": "北美洲", "South America": "南美洲",
         "Oceania": "大洋洲", "World": "世界",
@@ -564,15 +567,20 @@ const I18n = {
             });
         }
 
-        // NOTE: Stats 页面 h3 项目名翻译（复用 _eventZh 映射）
+        // NOTE: Stats 页面 h3 项目名翻译（复用 _eventZh 和 _countryZh 映射）
+        // h3 可能是项目名（如 "3x3x3 Cube"）或地区分类（如 "World"、"Continents"、"Countries"）
+        const _h3ExtraZh = { "Continents": "各大洲", "Countries": "各国家/地区" };
+        const _h3ExtraEn = { "各大洲": "Continents", "各国家/地区": "Countries" };
         if (this.locale === 'zh') {
             document.querySelectorAll('h3').forEach(h3 => {
-                const zh = this._eventZh[h3.textContent.trim()];
+                const t = h3.textContent.trim();
+                const zh = this._eventZh[t] || this._countryZh[t] || _h3ExtraZh[t];
                 if (zh) h3.textContent = zh;
             });
         } else {
             document.querySelectorAll('h3').forEach(h3 => {
-                const en = this._eventEn[h3.textContent.trim()];
+                const t = h3.textContent.trim();
+                const en = this._eventEn[t] || this._countryEn[t] || _h3ExtraEn[t];
                 if (en) h3.textContent = en;
             });
         }
