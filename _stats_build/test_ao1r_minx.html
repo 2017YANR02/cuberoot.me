@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<title>wr_ao1r (minx test)</title>
+<style>body { background: #1a1a2e; color: #e0e0e0; font-family: sans-serif; padding: 2em; }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', Arial, sans-serif;
+            background-color: #0a0a0f;
+            color: #e0e0e0;
+            line-height: 1.6;
+            padding: 2rem;
+            /* NOTE: 粒子渐变背景，与首页一致 */
+            background-image:
+                radial-gradient(ellipse at 20% 50%, rgba(90, 90, 200, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 50%, rgba(200, 90, 90, 0.06) 0%, transparent 50%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        /* 标题 */
+        h1,
+        h2,
+        h3,
+        h4 {
+            color: #ffffff;
+            margin: 1.2em 0 0.5em;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 0.3em;
+        }
+
+        h3 {
+            font-size: 1.2rem;
+        }
+
+        /* 段落和强调 */
+        p {
+            margin: 0.5em 0;
+        }
+
+        em {
+            color: #aaa;
+        }
+
+        /* 链接 */
+        a {
+            color: #8888cc;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+            color: #aaaaee;
+        }
+
+        /* 表格 — 暗紫色调 */
+        table {
+            border-collapse: collapse;
+            margin: 1em 0;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background: #1a1a2e;
+            color: #ccc;
+            font-weight: 600;
+            padding: 8px 12px;
+            border: 1px solid #2a2a3e;
+            text-align: left;
+        }
+
+        td {
+            padding: 6px 12px;
+            border: 1px solid #1e1e30;
+        }
+
+        /* 交替行 */
+        tr:nth-child(even) {
+            background: #12121f;
+        }
+
+        tr:nth-child(odd) {
+            background: #0e0e18;
+        }
+
+        tr:hover {
+            background: #1e1e35;
+        }
+
+        /* Tab 切换面板（ao_rounds / wr_round_history 使用） */
+        .tab-btn {
+            background: rgba(255, 255, 255, 0.08);
+            color: #ccc;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 6px 16px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            border-radius: 4px 4px 0 0;
+        }
+
+        .tab-btn.active,
+        .tab-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+        }
+    
+</style></head><body><h2 data-i18n-en="World record Ao1R (Average of 1 Round) history" data-i18n-zh="世界纪录 Ao1R（单轮平均）历史">World record Ao1R (Average of 1 Round) history</h2>
+
+<p><em data-i18n-en="Ao1R: the average from the only round in a competition (single-round events)." data-i18n-zh="Ao1R：在只有一轮的比赛中，该轮的平均成绩。">Ao1R: the average from the only round in a competition (single-round events).</em></p>
+<p><em data-i18n-en="Updated on 18 February 2026" data-i18n-zh="更新于 2026 年 2 月 18 日">Updated on 18 February 2026</em></p>
+
+<div style="position:fixed;bottom:16px;right:16px;z-index:9999;display:flex;gap:0;border-radius:6px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.15)">
+  <button data-i18n-toggle="en" onclick="I18n.setLocale('en')" style="padding:6px 14px;border:none;cursor:pointer;font-size:14px;font-weight:600;background:rgba(255,255,255,0.1);color:#ccc;backdrop-filter:blur(8px)">EN</button>
+  <button data-i18n-toggle="zh" onclick="I18n.setLocale('zh')" style="padding:6px 14px;border:none;cursor:pointer;font-size:14px;font-weight:600;background:rgba(255,255,255,0.1);color:#ccc;backdrop-filter:blur(8px)">中文</button>
+</div>
+<script src="../src/i18n/i18n.js" defer=""></script>
+
+<style>
+.stat-tabs{display:flex;gap:0;margin:16px 0 0}
+.stat-tab{flex:1;padding:10px 20px;border:none;cursor:pointer;font-size:15px;font-weight:600;color:#fff;background:#4a6785;transition:background .2s}
+.stat-tab:first-child{border-radius:6px 0 0 6px}
+.stat-tab:last-child{border-radius:0 6px 6px 0}
+.stat-tab.active{background:#2c4a6e}
+.stat-tab:hover:not(.active){background:#3b5975}
+.stat-panel{display:none;margin-top:12px}
+.stat-panel.active{display:block}
+.stat-panel table{border-collapse:collapse;width:100%}
+.stat-panel th,.stat-panel td{padding:6px 12px;border-bottom:1px solid #ddd;text-align:left}
+.stat-panel th{background:#f6f8fa;font-weight:600}
+</style>
+
+<div class="stat-tabs">
+  <button class="stat-tab active" onclick="switchTab(event,'ranking')">当前排名</button>
+  <button class="stat-tab" onclick="switchTab(event,'history')">WR 历史</button>
+</div>
+<div id="ranking" class="stat-panel active">
+<h3 data-i18n-en="Megaminx" data-i18n-zh="五魔方">Megaminx</h3>
+<table>
+<tr><th>Person</th><th style="text-align:right">Result</th><th>Details</th></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2018LOPE22">Leandro Martín López</a></td><td style="text-align:right">25.67</td><td>25.67</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2023MARA10">Stephanie Rose Martin</a></td><td style="text-align:right">27.40</td><td>27.40</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2016YONG02">Tristan Chua Yong</a></td><td style="text-align:right">27.49</td><td>27.49</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2018GRAI01">Aidan Grainger</a></td><td style="text-align:right">27.58</td><td>27.58</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2016WUZI04">Ziyu Wu (吴子钰)</a></td><td style="text-align:right">28.64</td><td>28.64</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2016SINY01">Alexei Sinyavin</a></td><td style="text-align:right">29.56</td><td>29.56</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2015NAIN01">Nicolas Naing</a></td><td style="text-align:right">30.01</td><td>30.01</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2017WONP01">Park Ji Won (박지원)</a></td><td style="text-align:right">30.17</td><td>30.17</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2017SEOH01">Heewon Seo</a></td><td style="text-align:right">30.37</td><td>30.37</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2017CHOI07">Kyeongmin Choi (최경민)</a></td><td style="text-align:right">30.39</td><td>30.39</td></tr>
+</table>
+</div>
+<div id="history" class="stat-panel">
+<h3 data-i18n-en="Megaminx" data-i18n-zh="五魔方">Megaminx</h3>
+<table>
+<tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th><th>Details</th></tr>
+<tr><td style="text-align:right">25.67</td><td style="text-align:right">2.6%</td><td style="text-align:right">13</td><td><a href="https://www.worldcubeassociation.org/persons/2018LOPE22">Leandro Martín López</a></td><td><a href="https://www.worldcubeassociation.org/competitions/ChimehuinalCubo2025">Chimehuin al Cubo 2025</a></td><td>2025-05-03</td><td>25.67</td></tr>
+<tr><td style="text-align:right">26.36</td><td style="text-align:right">0.9%</td><td style="text-align:right">110</td><td><a href="https://www.worldcubeassociation.org/persons/2018LOPE22">Leandro Martín López</a></td><td><a href="https://www.worldcubeassociation.org/competitions/QuilmesAleatorio2025">Quilmes Aleatorio 2025</a></td><td>2025-04-20</td><td>26.36</td></tr>
+<tr><td style="text-align:right">26.60</td><td style="text-align:right">3.2%</td><td style="text-align:right">409</td><td><a href="https://www.worldcubeassociation.org/persons/2018LOPE22">Leandro Martín López</a></td><td><a href="https://www.worldcubeassociation.org/competitions/BuenosAiresFindeAno2024">Buenos Aires Fin de Año 2024</a></td><td>2024-12-31</td><td>26.60</td></tr>
+<tr><td style="text-align:right">27.49</td><td style="text-align:right">3.8%</td><td style="text-align:right">14</td><td><a href="https://www.worldcubeassociation.org/persons/2016YONG02">Tristan Chua Yong</a></td><td><a href="https://www.worldcubeassociation.org/competitions/PenangCubeMasters2023">Penang Cube Masters 2023</a></td><td>2023-11-18</td><td>27.49</td></tr>
+<tr><td style="text-align:right">28.57</td><td style="text-align:right">9.0%</td><td style="text-align:right">1498</td><td><a href="https://www.worldcubeassociation.org/persons/2018LOPE22">Leandro Martín López</a></td><td><a href="https://www.worldcubeassociation.org/competitions/JaquecaDiTellaV22023">Jaqueca Di Tella V2 2023</a></td><td>2023-11-04</td><td>28.57</td></tr>
+<tr><td style="text-align:right">31.38</td><td style="text-align:right">2.0%</td><td style="text-align:right">581</td><td><a href="https://www.worldcubeassociation.org/persons/2013HUAN30">Juan Pablo Huanqui</a></td><td><a href="https://www.worldcubeassociation.org/competitions/ComasSpeedsolving2019">Comas Speedsolving 2019</a></td><td>2019-09-28</td><td>31.38</td></tr>
+<tr><td style="text-align:right">32.03</td><td style="text-align:right">12.3%</td><td style="text-align:right">119</td><td><a href="https://www.worldcubeassociation.org/persons/2008YUDA01">Yu Da-Hyun (유다현)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/CWRWinter2018">CWR Winter 2018</a></td><td>2018-02-24</td><td>32.03</td></tr>
+<tr><td style="text-align:right">36.52</td><td style="text-align:right">2.0%</td><td style="text-align:right">321</td><td><a href="https://www.worldcubeassociation.org/persons/2008YUDA01">Yu Da-Hyun (유다현)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/CWRFall2017">CWR Fall 2017</a></td><td>2017-10-28</td><td>36.52</td></tr>
+<tr><td style="text-align:right">37.25</td><td style="text-align:right">5.5%</td><td style="text-align:right">43</td><td><a href="https://www.worldcubeassociation.org/persons/2008YUDA01">Yu Da-Hyun (유다현)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/BusanWinter2016">Busan Winter 2016</a></td><td>2016-12-11</td><td>37.25</td></tr>
+<tr><td style="text-align:right">39.43</td><td style="text-align:right">8.0%</td><td style="text-align:right">78</td><td><a href="https://www.worldcubeassociation.org/persons/2013HUAN30">Juan Pablo Huanqui</a></td><td><a href="https://www.worldcubeassociation.org/competitions/TorneodeSpeedcubers2016">Torneo de Speedcubers 2016</a></td><td>2016-10-29</td><td>39.43</td></tr>
+<tr><td style="text-align:right">42.87</td><td style="text-align:right">0.5%</td><td style="text-align:right">83</td><td><a href="https://www.worldcubeassociation.org/persons/2008YUDA01">Yu Da-Hyun (유다현)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/KoreanChampionship2016">Korean Championship 2016</a></td><td>2016-08-12</td><td>42.87</td></tr>
+<tr><td style="text-align:right">43.07</td><td style="text-align:right">0.5%</td><td style="text-align:right">406</td><td><a href="https://www.worldcubeassociation.org/persons/2015NAIN01">Nicolas Naing</a></td><td><a href="https://www.worldcubeassociation.org/competitions/BigAppleSpring2016">Big Apple Spring 2016</a></td><td>2016-05-21</td><td>43.07</td></tr>
+<tr><td style="text-align:right">43.29</td><td style="text-align:right">9.5%</td><td style="text-align:right">945</td><td><a href="https://www.worldcubeassociation.org/persons/2008YUDA01">Yu Da-Hyun (유다현)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/SpringComes2015">Spring Comes 2015</a></td><td>2015-04-11</td><td>43.29</td></tr>
+<tr><td style="text-align:right">47.82</td><td style="text-align:right">2.0%</td><td style="text-align:right">203</td><td><a href="https://www.worldcubeassociation.org/persons/2008BODO01">Bálint Bodor</a></td><td><a href="https://www.worldcubeassociation.org/competitions/HungarianOpen2012">Hungarian Open 2012</a></td><td>2012-09-08</td><td>47.82</td></tr>
+<tr><td style="text-align:right">48.80</td><td style="text-align:right">5.3%</td><td style="text-align:right">84</td><td><a href="https://www.worldcubeassociation.org/persons/2008WEST02">Simon Westlund</a></td><td><a href="https://www.worldcubeassociation.org/competitions/NorwegianChampionship2012">Norwegian Championship 2012</a></td><td>2012-02-18</td><td>48.80</td></tr>
+<tr><td style="text-align:right">51.53</td><td style="text-align:right">0.9%</td><td style="text-align:right">84</td><td><a href="https://www.worldcubeassociation.org/persons/2008WEST02">Simon Westlund</a></td><td><a href="https://www.worldcubeassociation.org/competitions/SwedishCubedays2011">Swedish Cubedays 2011</a></td><td>2011-11-26</td><td>51.53</td></tr>
+<tr><td style="text-align:right">51.99</td><td style="text-align:right">8.2%</td><td style="text-align:right">280</td><td><a href="https://www.worldcubeassociation.org/persons/2008BODO01">Bálint Bodor</a></td><td><a href="https://www.worldcubeassociation.org/competitions/HungarianOpen2011">Hungarian Open 2011</a></td><td>2011-09-03</td><td>51.99</td></tr>
+<tr><td style="text-align:right">56.61</td><td style="text-align:right">0.0%</td><td style="text-align:right">217</td><td><a href="https://www.worldcubeassociation.org/persons/2008WEST02">Simon Westlund</a></td><td><a href="https://www.worldcubeassociation.org/competitions/SwedishCubedays2010">Swedish Cubedays 2010</a></td><td>2010-11-27</td><td>56.61</td></tr>
+<tr><td style="text-align:right">56.62</td><td style="text-align:right">10.1%</td><td style="text-align:right">0</td><td><a href="https://www.worldcubeassociation.org/persons/2008BODO01">Bálint Bodor</a></td><td><a href="https://www.worldcubeassociation.org/competitions/SlovenianOpen2010">Slovenian Open 2010</a></td><td>2010-04-24</td><td>56.62</td></tr>
+<tr><td style="text-align:right">1:03.01</td><td style="text-align:right">2.1%</td><td style="text-align:right">385</td><td><a href="https://www.worldcubeassociation.org/persons/2009GUGL01">David Gugl</a></td><td><a href="https://www.worldcubeassociation.org/competitions/SlovenianOpen2010">Slovenian Open 2010</a></td><td>2010-04-24</td><td>1:03.01</td></tr>
+<tr><td style="text-align:right">1:04.34</td><td style="text-align:right">5.0%</td><td style="text-align:right">427</td><td><a href="https://www.worldcubeassociation.org/persons/2005AKKE01">Erik Akkersdijk</a></td><td><a href="https://www.worldcubeassociation.org/competitions/DanishOpen2009">Danish Open 2009</a></td><td>2009-04-04</td><td>1:04.34</td></tr>
+<tr><td style="text-align:right">1:07.70</td><td style="text-align:right">8.5%</td><td style="text-align:right">49</td><td><a href="https://www.worldcubeassociation.org/persons/2005AKKE01">Erik Akkersdijk</a></td><td><a href="https://www.worldcubeassociation.org/competitions/BelgianOpen2008">Belgian Open 2008</a></td><td>2008-02-02</td><td>1:07.70</td></tr>
+<tr><td style="text-align:right">1:14.02</td><td style="text-align:right">6.1%</td><td style="text-align:right">63</td><td><a href="https://www.worldcubeassociation.org/persons/2005AKKE01">Erik Akkersdijk</a></td><td><a href="https://www.worldcubeassociation.org/competitions/SwedishCubeDay2007">Swedish Cube Day 2007</a></td><td>2007-12-15</td><td>1:14.02</td></tr>
+<tr><td style="text-align:right">1:18.86</td><td style="text-align:right">0.4%</td><td style="text-align:right">8</td><td><a href="https://www.worldcubeassociation.org/persons/2005AKKE01">Erik Akkersdijk</a></td><td><a href="https://www.worldcubeassociation.org/competitions/DutchOpen2007">Dutch Open 2007</a></td><td>2007-10-13</td><td>1:18.86</td></tr>
+<tr><td style="text-align:right">1:19.16</td><td style="text-align:right">10.1%</td><td style="text-align:right">356</td><td><a href="https://www.worldcubeassociation.org/persons/2005AKKE01">Erik Akkersdijk</a></td><td><a href="https://www.worldcubeassociation.org/competitions/WC2007">World Championship 2007</a></td><td>2007-10-05</td><td>1:19.16</td></tr>
+<tr><td style="text-align:right">1:28.06</td><td style="text-align:right">6.1%</td><td style="text-align:right">176</td><td><a href="https://www.worldcubeassociation.org/persons/2003POCH01">Stefan Pochmann</a></td><td><a href="https://www.worldcubeassociation.org/competitions/DutchOpen2006">Dutch Open 2006</a></td><td>2006-10-14</td><td>1:28.06</td></tr>
+<tr><td style="text-align:right">1:33.76</td><td style="text-align:right">41.2%</td><td style="text-align:right">0</td><td><a href="https://www.worldcubeassociation.org/persons/2003POCH01">Stefan Pochmann</a></td><td><a href="https://www.worldcubeassociation.org/competitions/GermanOpen2006">German Open 2006</a></td><td>2006-04-21</td><td>1:33.76</td></tr>
+<tr><td style="text-align:right">2:39.45</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2004NOOR01">Joël van Noort</a></td><td><a href="https://www.worldcubeassociation.org/competitions/GermanOpen2006">German Open 2006</a></td><td>2006-04-21</td><td>2:39.45</td></tr>
+</table>
+</div>
+<script>
+function switchTab(e,id){
+  document.querySelectorAll('.stat-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.stat-panel').forEach(p=>p.classList.remove('active'));
+  e.target.classList.add('active');
+  document.getElementById(id).classList.add('active');
+}
+</script>
+
+</body></html>

@@ -51,7 +51,7 @@
   <li><a href="complete_competition_winners" data-i18n-en="Complete competition winners" data-i18n-zh="完全比赛冠军">Complete competition winners</a></li>
   <li><a href="current_world_records_by_country" data-i18n-en="Current world records count by country" data-i18n-zh="各国当前世界纪录数量">Current world records count by country</a></li>
   <li><a href="dnf_rate_by_event" data-i18n-en="DNF rate by event" data-i18n-zh="各项目 DNF 率">DNF rate by event</a></li>
-  <li><a href="delegated_competition_per_year" data-i18n-en="Delegated competitions per year" data-i18n-zh="每年代理比赛数量">Delegated competitions per year</a></li>
+  <li><a href="delegated_competition_per_year" data-i18n-en="Delegated competitions per year" data-i18n-zh="每年代表比赛数量">Delegated competitions per year</a></li>
   <li><a href="fewest_competitors_contest" data-i18n-en="Fewest competitors contest" data-i18n-zh="参赛人数最少的比赛">Fewest competitors contest</a></li>
   <li><a href="longest_competitions_path" data-i18n-en="Longest competitions path" data-i18n-zh="最长比赛路径">Longest competitions path</a></li>
   <li><a href="longest_standing_records" data-i18n-en="Longest standing records" data-i18n-zh="保持时间最长的纪录">Longest standing records</a></li>
@@ -67,7 +67,7 @@
   <li><a href="most_competitions_before_winning" data-i18n-en="Most competitions before winning" data-i18n-zh="夺冠前参赛最多">Most competitions before winning</a></li>
   <li><a href="most_completed_solves" data-i18n-en="Most completed solves" data-i18n-zh="完成还原次数最多">Most completed solves</a></li>
   <li><a href="consecutive_sub_5_average" data-i18n-en="Most consecutive sub-5 averages in 3x3x3" data-i18n-zh="最多连续 sub-5 三阶平均">Most consecutive sub-5 averages in 3x3x3</a></li>
-  <li><a href="most_delegated_competitions" data-i18n-en="Most delegated competitions" data-i18n-zh="代理比赛最多">Most delegated competitions</a></li>
+  <li><a href="most_delegated_competitions" data-i18n-en="Most delegated competitions" data-i18n-zh="代表比赛最多">Most delegated competitions</a></li>
   <li><a href="most_distinct_dates_competed_on" data-i18n-en="Most distinct dates competed on" data-i18n-zh="参赛日期最多">Most distinct dates competed on</a></li>
   <li><a href="most_finals" data-i18n-en="Most finals" data-i18n-zh="进入决赛最多">Most finals</a></li>
   <li><a href="most_frequent_results" data-i18n-en="Most frequent results" data-i18n-zh="出现频率最高的成绩">Most frequent results</a></li>
@@ -92,7 +92,7 @@
   <li><a href="world_records_by_country" data-i18n-en="World records count by country" data-i18n-zh="各国世界纪录数量">World records count by country</a></li>
   <li><a href="world_records_by_person" data-i18n-en="World records count by person" data-i18n-zh="个人世界纪录数量">World records count by person</a></li>
   <li><a href="worst_result_on_podium" data-i18n-en="Worst result providing a podium" data-i18n-zh="登上领奖台的最差成绩">Worst result providing a podium</a></li>
-  <li><a href="yearly_rankings" data-i18n-en="Yearly rankings" data-i18n-zh="Yearly rankings">Yearly rankings</a></li>
+  <li><a href="yearly_rankings" data-i18n-en="Yearly rankings" data-i18n-zh="年度排名">Yearly rankings</a></li>
 </ul>
 
 
