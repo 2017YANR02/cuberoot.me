@@ -30,11 +30,10 @@ GitHub Pages（Jekyll）
 
 | 触发条件 | 执行内容 | 耗时 |
 |----------|----------|------|
-| **推送到 `main`**（代码变更） | 仅语法检查 | 约 50 秒 |
 | **定时任务**（每周） | 完整数据库下载 + 计算 | 约 47 分钟 |
 | **手动触发**（`workflow_dispatch`） | 完整构建 | 约 47 分钟 |
 
-此分离策略避免每次代码变更都浪费 47 分钟。
+> Push 代码不再触发 CI。统计页面可本地生成后直接 push（见下方「本地发布」）。
 
 ## 重要文件
 
@@ -79,7 +78,7 @@ ruiminyan.github.io/
 │   └── menu_template.html     # 汉堡菜单模板：同步时替换上游菜单，加入 WCA Statistics 链接和 data-i18n 属性
 ├── _layouts/                  # Jekyll 布局（Stats 页面深色主题 HTML 框架）
 ├── _stats_build/              # WCA 统计构建脚本（Ruby，CI 每日运行生成 stats/）
-├── stats/                     # ⚠️ CI 自动生成的统计 Markdown 页面（每日由 GitHub Actions 覆盖写入，手动修改会在下次 CI 运行时被覆盖）
+├── stats/                     # 统计 Markdown 页面。由 CI 每周覆盖写入，也可本地生成后直接 push
 ├── .github/workflows/         # CI 配置（stats.yml：每日定时构建 + push）
 ├── _config.yml                # Jekyll 配置（排除 _stats_build/、配置 permalink 等）
 │
@@ -105,9 +104,31 @@ ruiminyan.github.io/
 **问题**：每次推送代码都触发 47 分钟的完整构建。
 **解决**：拆分为语法检查（push 触发）和完整构建（定时触发）。
 
-## 手动触发
+## 本地发布统计（无需等待 CI）
 
-如需立即更新统计：
+本地有 MySQL 数据库，可直接生成 `.md` 文件后 push，线上立刻生效。
+
+```powershell
+cd _stats_build
+
+# Step 1：首次 / 数据有更新时——正常跑（约 1-5 分钟），同时写入磁盘缓存
+ruby bin/compute.rb wr_bao5
+
+# Step 2：只改了 UI 代码时——用缓存跳过 MySQL（约 0.1 秒）
+$env:STATS_USE_CACHE="1"; ruby bin/compute.rb wr_bao5
+
+# Step 3：提交并 push，GitHub Pages 1-2 分钟内上线
+git add ../stats/wr_bao5.md
+git commit -m "chore: update wr_bao5"
+git push
+```
+
+> 缓存文件存于 `.data_cache/`（已加入 `.gitignore`，不提交）。
+> 周 CI 运行时不设 `STATS_USE_CACHE`，始终从 MySQL 全量刷新，数据始终最新。
+
+## 手动触发 CI
+
+如需立即全量更新所有统计：
 
 1. 前往 [Actions 页面](https://github.com/RuiminYan/ruiminyan.github.io/actions)
 2. 选择 "Update Stats" workflow
@@ -133,8 +154,8 @@ ruiminyan.github.io/
    end
    ```
 
-2. 推送到 `main` → 语法检查运行（约 30 秒）
-3. 等待下周一凌晨 3 点，或手动触发 workflow
+2. 用本地发布流程生成并 push 新统计（见上方「本地发布统计」）
+3. 等待 GitHub Pages 构建（约 1 分钟）
 4. 新页面出现在 `ruiminyan.github.io/stats/my_new_stat`
 5. **翻译维护**：在 `src/i18n/i18n.js` 中更新以下映射：
    - `_statsTitleZh`：添加页面标题的中文翻译
