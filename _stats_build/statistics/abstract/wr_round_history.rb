@@ -1,6 +1,10 @@
 # NOTE: 抽象基类，用于基于 WR average 轮次 value1-5 计算衍生指标的 WR 历史
 # 子类只需实现 compute_metric(values, event_id) 方法即可
 # 支持双视图 Tab：WR 历史 + 当前排名
+#
+# NOTE: 一次性计算模式——第一个子类运行时，动态发现并实例化所有子类，
+# 逐 event 查询一次 MySQL 后为每个子类的 compute_metric 计算 ranking。
+# 11 个子类 × 20 events = 220 次查询减到 20 次。
 require_relative "../../core/grouped_statistic"
 require_relative "../../core/events"
 require_relative "../../core/solve_time"
@@ -9,6 +13,10 @@ require_relative "../../core/database"
 
 class WrRoundHistory < GroupedStatistic
   include TabUi
+
+  # NOTE: 预计算结果缓存
+  # 结构：{ "ClassName" => [[event_name, top10], ...] }
+  @@precomputed_rankings = {}
   def query
     <<-SQL
       SELECT
@@ -101,54 +109,22 @@ class WrRoundHistory < GroupedStatistic
     end
   end
 
-  # NOTE: 当前排名数据——按 event_id 分批查询，每人每项目最佳 metric
-  # 支持磁盘缓存，STATS_USE_CACHE=1 时直接读取最终排名结果
-  #
-  # HACK: 不再使用 all_results_cache 全表加载（549 万行 ~8GB）。
-  # 改为按 event_id 逐个查询，每次只加载一个项目的数据，
-  # 处理完后 GC 可回收，内存峰值大幅降低。
+  # NOTE: 当前排名数据——使用一次性计算模式
+  # 第一个子类触发 compute_all_rankings，后续子类直接取 @@precomputed_rankings
+  # 支持磁盘缓存，STATS_USE_CACHE=1 时直接读取
   def ranking_data
     return @_ranking_cache if @_ranking_cache
+
+    # 磁盘缓存检查（本地开发用）
     cache_file = File.join(Statistic::CACHE_DIR, "#{self.class.name}_ranking.marshal")
     if ENV["STATS_USE_CACHE"] == "1" && File.exist?(cache_file)
       return @_ranking_cache = Marshal.load(File.binread(cache_file))
     end
 
-    result = target_events.map do |event_id, event_name|
-      # NOTE: 按 event_id 单独查询，避免全表加载 OOM
-      event_rows = Database.client.query(
-        "SELECT person_id, value1, value2, value3, value4, value5, average, best,
-         CONCAT('[', person.name, '](https://www.worldcubeassociation.org/persons/', person.wca_id, ')') person_link
-         FROM results
-         JOIN persons person ON person.wca_id = person_id AND person.sub_id = 1
-         WHERE average > 0 AND event_id = '#{event_id}'"
-      ).to_a
+    # 一次性计算：第一个子类触发，后续直接取缓存
+    compute_all_rankings if @@precomputed_rankings.empty?
 
-      # 计算每人最佳 metric
-      best_by_person = {}
-      event_rows.each do |r|
-        values = (1..5).map { |n| r["value#{n}"] }
-        metric = compute_metric(values, r)
-        next unless metric
-        pid = r["person_id"]
-        if !best_by_person[pid] || metric < best_by_person[pid][:metric]
-          best_by_person[pid] = { metric: metric, person_link: r["person_link"] }
-        end
-      end
-
-      top = best_by_person.values
-        .sort_by { |v| v[:metric] }
-        .first(10)
-        .map do |v|
-          metric_str = format_metric(v[:metric], event_id)
-          [v[:person_link], metric_str]
-        end
-      [event_name, top]
-    end
-
-    FileUtils.mkdir_p(Statistic::CACHE_DIR)
-    File.binwrite(cache_file, Marshal.dump(result))
-    @_ranking_cache = result
+    @_ranking_cache = @@precomputed_rankings[self.class.name]
   end
 
   # NOTE: 用 top + tabbed_grouped_markdown 替换原手写 HTML，所有引号转义由基类统一处理
@@ -163,4 +139,58 @@ class WrRoundHistory < GroupedStatistic
   end
 
   private
+
+  # NOTE: 一次性为所有子类计算 ranking 数据
+  # 动态发现所有 WrRoundHistory 子类，逐 event 查一次 MySQL，
+  # 对每个子类实例调用 compute_metric 计算 best_by_person → top 10
+  def compute_all_rankings
+    # NOTE: 动态发现所有子类并实例化（用于调用各自的 compute_metric / format_metric）
+    subclass_instances = WrRoundHistory.subclasses.map { |c| [c.name, c.new] }.to_h
+
+    # 初始化结果容器
+    subclass_instances.each_key { |name| @@precomputed_rankings[name] = [] }
+
+    target_events.each do |event_id, event_name|
+      # NOTE: 每个项目只查询 MySQL 一次，所有子类共享同一份数据
+      event_rows = Database.client.query(
+        "SELECT person_id, value1, value2, value3, value4, value5, average, best,
+         CONCAT('[', person.name, '](https://www.worldcubeassociation.org/persons/', person.wca_id, ')') person_link
+         FROM results
+         JOIN persons person ON person.wca_id = person_id AND person.sub_id = 1
+         WHERE average > 0 AND event_id = '#{event_id}'"
+      ).to_a
+
+      subclass_instances.each do |class_name, instance|
+        # 计算每人最佳 metric
+        best_by_person = {}
+        event_rows.each do |r|
+          values = (1..5).map { |n| r["value#{n}"] }
+          metric = instance.compute_metric(values, r)
+          next unless metric
+          pid = r["person_id"]
+          if !best_by_person[pid] || metric < best_by_person[pid][:metric]
+            best_by_person[pid] = { metric: metric, person_link: r["person_link"] }
+          end
+        end
+
+        top = best_by_person.values
+          .sort_by { |v| v[:metric] }
+          .first(10)
+          .map do |v|
+            metric_str = instance.format_metric(v[:metric], event_id)
+            [v[:person_link], metric_str]
+          end
+
+        @@precomputed_rankings[class_name] << [event_name, top]
+      end
+      # event_rows 在 block 结束后可被 GC 回收
+    end
+
+    # NOTE: 写入磁盘缓存，下次 STATS_USE_CACHE=1 时可直接读取
+    FileUtils.mkdir_p(Statistic::CACHE_DIR)
+    subclass_instances.each_key do |class_name|
+      cache_file = File.join(Statistic::CACHE_DIR, "#{class_name}_ranking.marshal")
+      File.binwrite(cache_file, Marshal.dump(@@precomputed_rankings[class_name]))
+    end
+  end
 end
