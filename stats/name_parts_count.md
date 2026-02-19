@@ -7,7 +7,7 @@
   <button data-i18n-toggle="en" onclick="I18n.setLocale('en')" style="padding:6px 14px;border:none;cursor:pointer;font-size:14px;font-weight:600;background:rgba(255,255,255,0.1);color:#ccc;backdrop-filter:blur(8px)">EN</button>
   <button data-i18n-toggle="zh" onclick="I18n.setLocale('zh')" style="padding:6px 14px;border:none;cursor:pointer;font-size:14px;font-weight:600;background:rgba(255,255,255,0.1);color:#ccc;backdrop-filter:blur(8px)">中文</button>
 </div>
-<script src="../src/i18n/i18n.js" defer></script>
+<script src="../i18n/i18n.js" defer></script>
 | Parts | People | Countries of origin |
 | :--: | ---: | :--- |
 | 1 | 462 | India *(29.44 %)*, Indonesia *(22.08 %)*, United States *(9.52 %)*, China *(6.28 %)*, Australia *(2.60 %)* |

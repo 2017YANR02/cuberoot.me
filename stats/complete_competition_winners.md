@@ -7,7 +7,7 @@
   <button data-i18n-toggle="en" onclick="I18n.setLocale('en')" style="padding:6px 14px;border:none;cursor:pointer;font-size:14px;font-weight:600;background:rgba(255,255,255,0.1);color:#ccc;backdrop-filter:blur(8px)">EN</button>
   <button data-i18n-toggle="zh" onclick="I18n.setLocale('zh')" style="padding:6px 14px;border:none;cursor:pointer;font-size:14px;font-weight:600;background:rgba(255,255,255,0.1);color:#ccc;backdrop-filter:blur(8px)">中文</button>
 </div>
-<script src="../src/i18n/i18n.js" defer></script>
+<script src="../i18n/i18n.js" defer></script>
 | Events count | Person | Citizen of | Competition |
 | ---: | :--- | :--- | :--- |
 | 15 | [Daniel Wallin](https://www.worldcubeassociation.org/persons/2013WALL03) | Sweden | [Gutekuben 2024](https://www.worldcubeassociation.org/competitions/Gutekuben2024) |
