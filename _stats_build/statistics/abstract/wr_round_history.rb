@@ -29,7 +29,7 @@ class WrRoundHistory < GroupedStatistic
     SQL
   end
 
-  # NOTE: 全量查询，用于当前排名。类级别缓存，所有子类共享一次查询
+  # NOTE: 全量查询，用于当前排名。类级别内存缓存，所有子类共享一次查询
   def self.all_results_cache
     @@all_results_cache ||= begin
       require_relative "../../core/database"
@@ -115,7 +115,14 @@ class WrRoundHistory < GroupedStatistic
   end
 
   # NOTE: 当前排名数据——从全量 results 中计算每人每项目最佳 metric
+  # 支持磁盘缓存，STATS_USE_CACHE=1 时直接读取最终排名结果，完全跳过 882MB 全量查询
   def ranking_data
+    return @_ranking_cache if @_ranking_cache
+    cache_file = File.join(Statistic::CACHE_DIR, "#{self.class.name}_ranking.marshal")
+    if ENV["STATS_USE_CACHE"] == "1" && File.exist?(cache_file)
+      return @_ranking_cache = Marshal.load(File.binread(cache_file))
+    end
+
     all = self.class.all_results_cache
     target_ids = target_events.map(&:first).to_set
 
@@ -133,7 +140,7 @@ class WrRoundHistory < GroupedStatistic
     end
 
     # 按项目分组，每项目 top 10
-    target_events.map do |event_id, event_name|
+    result = target_events.map do |event_id, event_name|
       top = best_by_person
         .select { |k, _| k[0] == event_id }
         .sort_by { |_, v| v[:metric] }
@@ -144,6 +151,10 @@ class WrRoundHistory < GroupedStatistic
         end
       [event_name, top]
     end
+
+    FileUtils.mkdir_p(Statistic::CACHE_DIR)
+    File.binwrite(cache_file, Marshal.dump(result))
+    @_ranking_cache = result
   end
 
   # NOTE: 用 top + tabbed_grouped_markdown 替换原手写 HTML，所有引号转义由基类统一处理

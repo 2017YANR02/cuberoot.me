@@ -102,19 +102,26 @@ class WrSingleHistory < GroupedStatistic
   private
 
   # NOTE: 从全量 results 中取每项目 single top 10
+  # 支持磁盘缓存，STATS_USE_CACHE=1 时跳过全量 MySQL 查询
   def build_ranking_from_all(event_id)
     require_relative "../core/database"
-    # 利用之前 WR 查询的数据不包含全量排名，需要额外查询
-    # 使用 WrRoundHistory 的缓存（如果可用），否则单独查
     @@single_ranking_cache ||= begin
-      Database.client.query(
-        "SELECT event_id, person_id, best,
-         CONCAT('[', person.name, '](https://www.worldcubeassociation.org/persons/', person.wca_id, ')') person_link
-         FROM results
-         JOIN persons person ON person.wca_id = person_id AND person.sub_id = 1
-         WHERE best > 0
-         ORDER BY event_id, best"
-      ).to_a
+      cache_file = File.join(Statistic::CACHE_DIR, "wr_single_ranking.marshal")
+      if ENV["STATS_USE_CACHE"] == "1" && File.exist?(cache_file)
+        Marshal.load(File.binread(cache_file))
+      else
+        result = Database.client.query(
+          "SELECT event_id, person_id, best,
+           CONCAT('[', person.name, '](https://www.worldcubeassociation.org/persons/', person.wca_id, ')') person_link
+           FROM results
+           JOIN persons person ON person.wca_id = person_id AND person.sub_id = 1
+           WHERE best > 0
+           ORDER BY event_id, best"
+        ).to_a
+        FileUtils.mkdir_p(Statistic::CACHE_DIR)
+        File.binwrite(cache_file, Marshal.dump(result))
+        result
+      end
     end
 
     # 每人每项目最佳 single

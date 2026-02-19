@@ -12,3 +12,5 @@ _stats_build/test_output.html
 
 _site/
 .jekyll-cache/
+# 本地数据缓存（UI-only 重新渲染用，不提交）
+_stats_build/.data_cache/
