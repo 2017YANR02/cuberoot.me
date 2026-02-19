@@ -3,11 +3,7 @@
 <p><em data-i18n-en="The streak ends whenever the person doesn't participate in a competition in own country." data-i18n-zh="每当选手出国参赛，连续纪录即中断。">The streak ends whenever the person doesn't participate in a competition in own country.</em></p>
 <p><em data-i18n-en="Updated on 16 February 2026" data-i18n-zh="更新于 2026 年 2 月 16 日">Updated on 16 February 2026</em></p>
 
-<div style="position:fixed;bottom:16px;right:16px;z-index:9999;display:flex;gap:0;border-radius:6px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.15)">
-  <button data-i18n-toggle="en" onclick="I18n.setLocale('en')" style="padding:6px 14px;border:none;cursor:pointer;font-size:14px;font-weight:600;background:rgba(255,255,255,0.1);color:#ccc;backdrop-filter:blur(8px)">EN</button>
-  <button data-i18n-toggle="zh" onclick="I18n.setLocale('zh')" style="padding:6px 14px;border:none;cursor:pointer;font-size:14px;font-weight:600;background:rgba(255,255,255,0.1);color:#ccc;backdrop-filter:blur(8px)">中文</button>
-</div>
-<script src="../i18n/i18n.js" defer></script>
+
 | Competitions | Person | Country | Started at | Missed |
 | ---: | :--- | :--- | :--- | :--- |
 | 117 | [Niko Ronkainen](https://www.worldcubeassociation.org/persons/2010RONK01) | Finland | [Helsinki Open 2010](https://www.worldcubeassociation.org/competitions/HelsinkiOpen2010) | [Big & Blind & Clock Vantaa 2024](https://www.worldcubeassociation.org/competitions/BigBlindClockVantaa2024) |
