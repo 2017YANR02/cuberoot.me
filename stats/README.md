@@ -26,7 +26,6 @@
   <li><a href="wr_worst" data-i18n-en="Worst solve in round" data-i18n-zh="最差单次">Worst solve in round</a></li>
 </ul>
 
----
 
 <h2 data-i18n-en="General Statistics" data-i18n-zh="通用统计">General Statistics</h2>
 
