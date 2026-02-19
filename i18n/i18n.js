@@ -699,17 +699,23 @@ const I18n = {
         const noteEn = "Note: Different search instances are launched for adjacent pairs and diagonal pairs. Initial generation takes time for each.";
         document.querySelectorAll('a:not([translate="no"]):not([data-i18n])').forEach(el => {
             const text = el.textContent.trim();
-            // 翻译 Warning 长文本（覆盖 700MB/600MB/150MB 各变体）
+            // NOTE: Warning 文本因 HTML 跨行，textContent 含空白；用 includes 关键字触发，整体替换
             if (this.locale === 'zh' && text.includes('Warning: This scrambler')) {
-                el.textContent = text
-                    .replace(/Warning: This scrambler generates about 700 MB locally on first run; initial scramble generation may take several seconds to tens of seconds\./, '警告：此打乱生成器首次运行会在本地生成约 700 MB 数据；初始打乱生成可能需要几秒到几十秒。')
-                    .replace(/Warning: This scrambler generates about 600 MB locally on first run; initial scramble generation may take tens of seconds to minutes\. Note: bucket model will automatically select the lowest configuration\./, '警告：此打乱生成器首次运行会在本地生成约 600 MB 数据；初始打乱生成可能需要几十秒到几分钟。注意：bucket 模型会自动选择最低配置。')
-                    .replace(/Warning: This scrambler generates about 150 MB locally on first run; initial scramble generation may take several seconds to tens of seconds\./, '警告：此打乱生成器首次运行会在本地生成约 150 MB 数据；初始打乱生成可能需要几秒到几十秒。');
+                if (text.includes('700 MB')) {
+                    el.textContent = '警告：此打乱生成器首次运行会在本地生成约 700 MB 数据；初始打乱生成可能需要几秒到几十秒。';
+                } else if (text.includes('600')) {
+                    el.textContent = '警告：此打乱生成器首次运行会在本地生成约 600 MB 数据；初始打乱生成可能需要几十秒到几分钟。注意：bucket 模型会自动选择最低配置。';
+                } else if (text.includes('150 MB')) {
+                    el.textContent = '警告：此打乱生成器首次运行会在本地生成约 150 MB 数据；初始打乱生成可能需要几秒。';
+                }
             } else if (this.locale === 'en' && text.includes('警告：此打乱生成器')) {
-                el.textContent = text
-                    .replace(/警告：此打乱生成器首次运行会在本地生成约 700 MB 数据；初始打乱生成可能需要几秒到几十秒。/, 'Warning: This scrambler generates about 700 MB locally on first run; initial scramble generation may take several seconds to tens of seconds.')
-                    .replace(/警告：此打乱生成器首次运行会在本地生成约 600 MB 数据；初始打乱生成可能需要几十秒到几分钟。注意：bucket 模型会自动选择最低配置。/, 'Warning: This scrambler generates about 600 MB locally on first run; initial scramble generation may take tens of seconds to minutes. Note: bucket model will automatically select the lowest configuration.')
-                    .replace(/警告：此打乱生成器首次运行会在本地生成约 150 MB 数据；初始打乱生成可能需要几秒到几十秒。/, 'Warning: This scrambler generates about 150 MB locally on first run; initial scramble generation may take several seconds to tens of seconds.');
+                if (text.includes('700 MB')) {
+                    el.textContent = 'Warning: This scrambler generates about 700 MB locally on first run; initial scramble generation may take several seconds to tens of seconds.';
+                } else if (text.includes('600 MB')) {
+                    el.textContent = 'Warning: This scrambler generates about 600~ MB locally on first run; initial scramble generation may take several tens of seconds to minutes. Note that the bucket model automatically selects the minimum configuration.';
+                } else if (text.includes('150 MB')) {
+                    el.textContent = 'Warning: This scrambler generates about 150 MB locally on first run; initial scramble generation may take several seconds for setup.';
+                }
             }
             // 翻译 Note 提示文本
             if (this.locale === 'zh' && text.includes('Note: Different search instances')) {
