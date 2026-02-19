@@ -128,7 +128,13 @@ class ConsecutiveSub5Average < Statistic
   end
 
   def build_tabbed_page(ranking, wr_history)
-    md = top
+    timestamp = Time.parse(Database.metadata["export_timestamp"])
+    updated = timestamp.strftime("%e %B %Y").strip
+
+    # NOTE: 头部保持原有 Markdown 格式（## / *...*），不改为 HTML
+    md = "## #{@title}\n\n"
+    md += "*Note: #{@note}*\n"
+    md += "*Updated on #{updated}*\n\n"
     md += tab_styles
     md += tab_buttons("Current Ranking", "当前排名", "ranking", "WR History", "WR 历史", "history")
     md += "<div id=\"ranking\" class=\"stat-panel active\">\n"
@@ -143,7 +149,7 @@ class ConsecutiveSub5Average < Statistic
 
   def ranking_table(data)
     rows = data.map do |s|
-      "<tr><td>#{s[:count]}</td><td>#{person_link_html(s[:person_link])}</td>" \
+      "<tr><td style=\"text-align:right\">#{s[:count]}</td><td>#{person_link_html(s[:person_link])}</td>" \
       "<td>#{comp_link(s[:start_comp], s[:start_comp_id])}</td>" \
       "<td>#{comp_link(s[:end_comp], s[:end_comp_id])}</td></tr>"
     end.join("\n")
@@ -159,7 +165,7 @@ class ConsecutiveSub5Average < Statistic
   def history_table(data)
     rows = data.map do |s|
       period = "#{comp_link(s[:start_comp], s[:start_comp_id])} → #{comp_link(s[:end_comp], s[:end_comp_id])}"
-      "<tr><td>#{s[:count]}</td><td>#{person_link_html(s[:person_link])}</td><td>#{period}</td></tr>"
+      "<tr><td style=\"text-align:right\">#{s[:count]}</td><td>#{person_link_html(s[:person_link])}</td><td>#{period}</td></tr>"
     end.join("\n")
 
     <<~TABLE
