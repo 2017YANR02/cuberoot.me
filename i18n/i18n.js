@@ -59,7 +59,7 @@ const I18n = {
         "Winned weeks": "获胜周数", "WRs": "世界纪录",
         "Type": "类型", "First win": "首次夺冠",
         "Countries of origin": "来源国家", "Citizen of": "国籍",
-        "Region": "地区",
+        "Region": "地区", "Improvement": "进步",
     },
     _headerEn: {},
 

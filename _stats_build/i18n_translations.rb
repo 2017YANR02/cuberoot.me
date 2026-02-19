@@ -83,8 +83,8 @@ STAT_TRANSLATIONS = {
     note_zh: nil
   },
   "delegated_competition_per_year" => {
-    title_zh: "每年代理比赛数量",
-    note_zh: "仅统计至少代理过 5 场比赛的代表。代理时间按首次和最后一次代理比赛之间的差值计算。"
+    title_zh: "每年代表比赛数量",
+    note_zh: "仅统计至少代表过 5 场比赛的代表。代表时间按首次和最后一次代表比赛之间的差值计算。"
   },
   "dnf_rate_by_event" => {
     title_zh: "各项目 DNF 率",
@@ -147,7 +147,7 @@ STAT_TRANSLATIONS = {
     note_zh: nil
   },
   "most_delegated_competitions" => {
-    title_zh: "代理比赛最多",
+    title_zh: "代表比赛最多",
     note_zh: nil
   },
   "most_distinct_dates_competed_on" => {
