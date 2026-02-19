@@ -59,7 +59,7 @@ class WrDominance < Statistic
 
     data.each do |group_name, rows|
       next if rows.empty?
-      md += "<h3>#{group_name}</h3>\n\n"
+      md += "<h3>#{group_name}</h3>\n"
       md += "<table>\n"
       md += "<tr>"
       md += "<th style=\"text-align:right\">Count</th>"
@@ -77,7 +77,7 @@ class WrDominance < Statistic
         md += "<td>#{row[:date]}</td>"
         md += "</tr>\n"
       end
-      md += "</table>\n\n"
+      md += "</table>\n"
     end
 
     md

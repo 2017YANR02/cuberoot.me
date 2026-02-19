@@ -168,25 +168,25 @@ class WrRoundHistory < GroupedStatistic
     md += tab_buttons("当前排名", "ranking", "WR 历史", "history")
 
     # 当前排名面板
-    md += "<div id=\"ranking\" class=\"stat-panel active\">\n\n"
+    md += "<div id=\"ranking\" class=\"stat-panel active\">\n"
     rank_data.each do |event_name, rows|
       next if rows.empty?
       ezh = Events.zh(event_name)
-      md += "<h3 data-i18n-en=\"#{event_name}\" data-i18n-zh=\"#{ezh}\">#{event_name}</h3>\n\n"
+      md += "<h3 data-i18n-en=\"#{event_name}\" data-i18n-zh=\"#{ezh}\">#{event_name}</h3>\n"
       md += "<table>\n<tr><th data-i18n-en=\"Person\" data-i18n-zh=\"选手\">Person</th><th style=\"text-align:right\" data-i18n-en=\"Result\" data-i18n-zh=\"成绩\">Result</th></tr>\n"
       rows.each do |person_link, metric_str|
         md += "<tr><td>#{md_link_to_html(person_link)}</td><td style=\"text-align:right\">#{metric_str}</td></tr>\n"
       end
-      md += "</table>\n\n"
+      md += "</table>\n"
     end
-    md += "</div>\n\n"
+    md += "</div>\n"
 
     # WR 历史面板
-    md += "<div id=\"history\" class=\"stat-panel\">\n\n"
+    md += "<div id=\"history\" class=\"stat-panel\">\n"
     wr_data.each do |event_name, rows|
       next if rows.empty?
       ezh = Events.zh(event_name)
-      md += "<h3 data-i18n-en=\"#{event_name}\" data-i18n-zh=\"#{ezh}\">#{event_name}</h3>\n\n"
+      md += "<h3 data-i18n-en=\"#{event_name}\" data-i18n-zh=\"#{ezh}\">#{event_name}</h3>\n"
       md += "<table>\n<tr>"
       @table_header.each { |k, v| md += "<th#{v == :right ? ' style=\"text-align:right\"' : ''}>#{k}</th>" }
       md += "</tr>\n"
