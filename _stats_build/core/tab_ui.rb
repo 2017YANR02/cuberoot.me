@@ -63,4 +63,35 @@ module TabUi
     end
     "<tr>#{cells.join}</tr>\n"
   end
+
+  # NOTE: 通用双视图 Tab Markdown 生成器，消除子类手动拼 HTML 的风险
+  # ranking_data / history_data 格式：{ event_name => [[col1, col2, ...], ...] }
+  # ranking_header / history_header 格式：{ "ColName" => :left/:right }
+  def tabbed_grouped_markdown(ranking_data:, ranking_header:, history_data:, history_header:)
+    md = tab_styles
+    md += tab_buttons("当前排名", "ranking", "WR 历史", "history")
+    md += grouped_panel("ranking", true,  ranking_data, ranking_header)
+    md += grouped_panel("history", false, history_data, history_header)
+    md += tab_script
+    md
+  end
+
+  private
+
+  # NOTE: 渲染单个面板（一个 <div> 包含若干 <h3> + <table>）
+  def grouped_panel(panel_id, active, grouped_data, header)
+    active_class = active ? " active" : ""
+    md = "<div id=\"#{panel_id}\" class=\"stat-panel#{active_class}\">\n"
+    grouped_data.each do |event_name, rows|
+      next if rows.empty?
+      ezh = Events.zh(event_name)
+      md += "<h3 data-i18n-en=\"#{event_name}\" data-i18n-zh=\"#{ezh}\">#{event_name}</h3>\n"
+      md += "<table>\n"
+      md += html_table_header(header)
+      rows.each { |row| md += html_table_row(row, header) }
+      md += "</table>\n"
+    end
+    md += "</div>\n"
+    md
+  end
 end
