@@ -88,13 +88,15 @@ class WrSingleHistory < GroupedStatistic
   # ranking rows 是 hash，这里归一化为数组并加上排名序号
   def markdown
     ranking_header = { "#" => :right, "Person" => :left, "Single" => :right }
+    # NOTE: 必须先调 data 触发 transform，才能填充 @ranking_by_event
+    history_data = data
     ranking_data = @ranking_by_event.transform_values do |rows|
       rows.each_with_index.map { |r, i| [i + 1, r[:person_link], r[:result_str]] }
     end
     top + tabbed_grouped_markdown(
       ranking_data: ranking_data,
       ranking_header: ranking_header,
-      history_data: data,
+      history_data: history_data,
       history_header: @table_header
     )
   end
