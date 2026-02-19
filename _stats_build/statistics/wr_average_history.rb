@@ -33,7 +33,7 @@ class WrAverageHistory < GroupedStatistic
 
   def transform(query_results)
     # NOTE: 排除没有官方 average 的项目（333bf, 444bf, 555bf, 333mbf）
-    events_with_average = Events::OFFICIAL.reject { |id, _| Events::BLD.key?(id) }
+    events_with_average = Events::WITH_AVERAGE
 
     @ranking_by_event = {}
 
