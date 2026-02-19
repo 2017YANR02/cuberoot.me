@@ -85,48 +85,19 @@ class WrAverageHistory < GroupedStatistic
     end
   end
 
+  # NOTE: 用 top + tabbed_grouped_markdown 替换原手写 HTML
+  # ranking rows 是 hash，这里归一化为数组并加上排名序号
   def markdown
-    timestamp = Time.parse(Database.metadata["export_timestamp"])
-    updated = timestamp.strftime("%e %B %Y").strip
-
-    wr_data = data
-
-    md = "## #{@title}\n\n"
-    md += "*Note: #{@note}*\n" if @note
-    md += "*Updated on #{updated}*\n\n"
-
-    md += tab_styles
-    md += tab_buttons("当前排名", "ranking", "WR 历史", "history")
-
-    # 当前排名面板
-    md += "<div id=\"ranking\" class=\"stat-panel active\">\n"
-    @ranking_by_event.each do |event_name, rows|
-      next if rows.empty?
-      md += "<h3>#{event_name}</h3>\n"
-      md += "<table>\n<tr><th style=\"text-align:right\">#</th><th>Person</th><th style=\"text-align:right\">Average</th></tr>\n"
-      rows.each_with_index do |row, i|
-        md += "<tr><td style=\"text-align:right\">#{i + 1}</td>"
-        md += "<td>#{md_link_to_html(row[:person_link])}</td>"
-        md += "<td style=\"text-align:right\">#{row[:result_str]}</td></tr>\n"
-      end
-      md += "</table>\n"
+    ranking_header = { "#" => :right, "Person" => :left, "Average" => :right }
+    ranking_data = @ranking_by_event.transform_values do |rows|
+      rows.each_with_index.map { |r, i| [i + 1, r[:person_link], r[:result_str]] }
     end
-    md += "</div>\n"
-
-    # WR 历史面板
-    md += "<div id=\"history\" class=\"stat-panel\">\n"
-    wr_data.each do |event_name, rows|
-      next if rows.empty?
-      md += "<h3>#{event_name}</h3>\n"
-      md += "<table>\n"
-      md += html_table_header(@table_header)
-      rows.each { |row| md += html_table_row(row, @table_header) }
-      md += "</table>\n"
-    end
-    md += "</div>\n"
-
-    md += tab_script
-    md
+    top + tabbed_grouped_markdown(
+      ranking_data: ranking_data,
+      ranking_header: ranking_header,
+      history_data: data,
+      history_header: @table_header
+    )
   end
 
   private

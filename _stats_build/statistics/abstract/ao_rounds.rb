@@ -64,57 +64,20 @@ class AoRounds < GroupedStatistic
     end
   end
 
+  # NOTE: 用 top + tabbed_grouped_markdown 替换原手写 HTML
+  # 将 @ranking_by_event 中的 hash rows 归一化为数组供基类渲染
   def markdown
-    timestamp = Time.parse(Database.metadata["export_timestamp"])
-    updated = timestamp.strftime("%e %B %Y").strip
-
-    wr_data = data  # WR 历史
-
-    zh = @title_zh || @title
-    md = "<h2 data-i18n-en=\"#{@title}\" data-i18n-zh=\"#{zh}\">#{@title}</h2>\n\n"
-    if @note
-      nzh = @note_zh || @note
-      md += "<p><em data-i18n-en=\"#{@note}\" data-i18n-zh=\"#{nzh}\">#{@note}</em></p>\n"
+    ranking_header = { "Person" => :left, "Result" => :right, "Details" => :left }
+    # NOTE: build_ranking 返回 [{person_link:, metric_str:, details:}]，需转为数组格式
+    ranking_data = @ranking_by_event.transform_values do |rows|
+      rows.map { |r| [r[:person_link], r[:metric_str], r[:details]] }
     end
-    date_zh = timestamp.strftime("更新于 %Y 年 %-m 月 %-d 日")
-    md += "<p><em data-i18n-en=\"Updated on #{updated}\" data-i18n-zh=\"#{date_zh}\">Updated on #{updated}</em></p>\n\n"
-
-    md += tab_styles
-    md += tab_buttons("当前排名", "ranking", "WR 历史", "history")
-
-    # 当前排名面板
-    md += "<div id=\"ranking\" class=\"stat-panel active\">\n"
-    @ranking_by_event.each do |event_name, rows|
-      next if rows.empty?
-      ezh = Events.zh(event_name)
-      md += "<h3 data-i18n-en=\"#{event_name}\" data-i18n-zh=\"#{ezh}\">#{event_name}</h3>\n"
-      md += "<table>\n<tr><th data-i18n-en=\"Person\" data-i18n-zh=\"选手\">Person</th><th style=\"text-align:right\" data-i18n-en=\"Result\" data-i18n-zh=\"成绩\">Result</th><th>Details</th></tr>\n"
-      rows.each do |row|
-        md += "<tr><td>#{md_link_to_html(row[:person_link])}</td>"
-        md += "<td style=\"text-align:right\">#{row[:metric_str]}</td>"
-        md += "<td>#{row[:details]}</td></tr>\n"
-      end
-      md += "</table>\n"
-    end
-    md += "</div>\n"
-
-    # WR 历史面板
-    md += "<div id=\"history\" class=\"stat-panel\">\n"
-    wr_data.each do |event_name, rows|
-      next if rows.empty?
-      ezh = Events.zh(event_name)
-      md += "<h3 data-i18n-en=\"#{event_name}\" data-i18n-zh=\"#{ezh}\">#{event_name}</h3>\n"
-      md += "<table>\n"
-      md += html_table_header(@table_header)
-      rows.each do |row|
-        md += html_table_row(row, @table_header)
-      end
-      md += "</table>\n"
-    end
-    md += "</div>\n"
-
-    md += tab_script
-    md
+    top + tabbed_grouped_markdown(
+      ranking_data: ranking_data,
+      ranking_header: ranking_header,
+      history_data: data,
+      history_header: @table_header
+    )
   end
 
   private

@@ -146,64 +146,15 @@ class WrRoundHistory < GroupedStatistic
     end
   end
 
-  # NOTE: 覆盖 markdown 方法，输出带 Tab 的 HTML
+  # NOTE: 用 top + tabbed_grouped_markdown 替换原手写 HTML，所有引号转义由基类统一处理
   def markdown
-    timestamp = Time.parse(Database.metadata["export_timestamp"])
-    updated = timestamp.strftime("%e %B %Y").strip
-
-    wr_data = data  # WR 历史
-    rank_data = ranking_data  # 当前排名
-
-    zh = @title_zh || @title
-    md = "<h2 data-i18n-en=\"#{@title}\" data-i18n-zh=\"#{zh}\">#{@title}</h2>\n\n"
-    if @note
-      nzh = @note_zh || @note
-      md += "<p><em data-i18n-en=\"#{@note}\" data-i18n-zh=\"#{nzh}\">#{@note}</em></p>\n"
-    end
-    date_zh = timestamp.strftime("更新于 %Y 年 %-m 月 %-d 日")
-    md += "<p><em data-i18n-en=\"Updated on #{updated}\" data-i18n-zh=\"#{date_zh}\">Updated on #{updated}</em></p>\n\n"
-
-    # Tab CSS + JS
-    md += tab_styles
-    md += tab_buttons("当前排名", "ranking", "WR 历史", "history")
-
-    # 当前排名面板
-    md += "<div id=\"ranking\" class=\"stat-panel active\">\n"
-    rank_data.each do |event_name, rows|
-      next if rows.empty?
-      ezh = Events.zh(event_name)
-      md += "<h3 data-i18n-en=\"#{event_name}\" data-i18n-zh=\"#{ezh}\">#{event_name}</h3>\n"
-      md += "<table>\n<tr><th data-i18n-en=\"Person\" data-i18n-zh=\"选手\">Person</th><th style=\"text-align:right\" data-i18n-en=\"Result\" data-i18n-zh=\"成绩\">Result</th></tr>\n"
-      rows.each do |person_link, metric_str|
-        md += "<tr><td>#{md_link_to_html(person_link)}</td><td style=\"text-align:right\">#{metric_str}</td></tr>\n"
-      end
-      md += "</table>\n"
-    end
-    md += "</div>\n"
-
-    # WR 历史面板
-    md += "<div id=\"history\" class=\"stat-panel\">\n"
-    wr_data.each do |event_name, rows|
-      next if rows.empty?
-      ezh = Events.zh(event_name)
-      md += "<h3 data-i18n-en=\"#{event_name}\" data-i18n-zh=\"#{ezh}\">#{event_name}</h3>\n"
-      md += "<table>\n<tr>"
-      @table_header.each { |k, v| md += "<th#{v == :right ? ' style=\"text-align:right\"' : ''}>#{k}</th>" }
-      md += "</tr>\n"
-      rows.each do |row|
-        md += "<tr>"
-        row.each_with_index do |cell, i|
-          align = @table_header.values[i] == :right ? ' style="text-align:right"' : ''
-          md += "<td#{align}>#{md_link_to_html(cell.to_s)}</td>"
-        end
-        md += "</tr>\n"
-      end
-      md += "</table>\n\n"
-    end
-    md += "</div>\n\n"
-
-    md += tab_script
-    md
+    ranking_header = { "Person" => :left, "Result" => :right }
+    top + tabbed_grouped_markdown(
+      ranking_data: ranking_data,
+      ranking_header: ranking_header,
+      history_data: data,
+      history_header: @table_header
+    )
   end
 
   private
