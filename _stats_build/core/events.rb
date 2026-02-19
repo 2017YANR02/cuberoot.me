@@ -25,6 +25,11 @@ module Events
 
   OFFICIAL = ALL.first(17).to_h
 
+  # NOTE: 所有有官方平均/mo3 的项目（OFFICIAL 去掉 333mbf，加入退役项目 333ft/magic/mmagic）
+  # 333bf/444bf/555bf 用 mo3，333ft/magic/mmagic 用 ao5，333mbf 无平均故不含
+  WITH_AVERAGE = OFFICIAL.reject { |id, _| id == "333mbf" }
+                         .merge(ALL.select { |id, _| %w(333ft magic mmagic).include?(id) })
+
   BLD = ALL.select { |event_id, event_name| %w(333bf 444bf 555bf 333mbf).include?(event_id) }
 
   # NOTE: WCA 项目中文名称映射（value 是英文名 → 中文名）

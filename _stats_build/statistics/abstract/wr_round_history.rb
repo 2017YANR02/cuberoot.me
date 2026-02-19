@@ -58,7 +58,7 @@ class WrRoundHistory < GroupedStatistic
 
   # 子类可覆盖：决定哪些项目参与（默认为官方项目中有 average 的）
   def target_events
-    Events::OFFICIAL.reject { |id, _| Events::BLD.key?(id) }
+    Events::WITH_AVERAGE
   end
 
   def transform(query_results)
