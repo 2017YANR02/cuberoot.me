@@ -1,6 +1,6 @@
-require_relative "abstract/wr_round_history"
+require_relative "abstract/round_metric"
 
-class WrWorst < WrRoundHistory
+class WrWorst < RoundMetric
   def initialize
     @title = "Worst solve in round"
     @title_zh = "最差单次"

@@ -1,6 +1,6 @@
-# NOTE: 抽象基类，用于基于 WR average 轮次 value1-5 计算衍生指标的 WR 历史
-# 子类只需实现 compute_metric(values, event_id) 方法即可
-# 支持双视图 Tab：WR 历史 + 当前排名
+# NOTE: RoundMetric -- 抽象基类，从一轮的 5 次成绩 (value1-5) 中计算衍生指标
+# 子类只需实现 compute_metric(values, r) 方法即可
+# 产出双视图 Tab：当前排名 (ranking_data) + WR 历史 (transform)
 #
 # NOTE: 一次性计算模式——第一个子类运行时，动态发现并实例化所有子类，
 # 逐 event 查询一次 MySQL 后为每个子类的 compute_metric 计算 ranking。
@@ -11,7 +11,7 @@ require_relative "../../core/solve_time"
 require_relative "../../core/tab_ui"
 require_relative "../../core/database"
 
-class WrRoundHistory < GroupedStatistic
+class RoundMetric < GroupedStatistic
   include TabUi
 
   # NOTE: 预计算结果缓存
@@ -141,11 +141,11 @@ class WrRoundHistory < GroupedStatistic
   private
 
   # NOTE: 一次性为所有子类计算 ranking 数据
-  # 动态发现所有 WrRoundHistory 子类，逐 event 查一次 MySQL，
+  # 动态发现所有 RoundMetric 子类，逐 event 查一次 MySQL，
   # 对每个子类实例调用 compute_metric 计算 best_by_person → top 10
   def compute_all_rankings
     # NOTE: 动态发现所有子类并实例化（用于调用各自的 compute_metric / format_metric）
-    subclass_instances = WrRoundHistory.subclasses.map { |c| [c.name, c.new] }.to_h
+    subclass_instances = RoundMetric.subclasses.map { |c| [c.name, c.new] }.to_h
 
     # 初始化结果容器
     subclass_instances.each_key { |name| @@precomputed_rankings[name] = [] }
