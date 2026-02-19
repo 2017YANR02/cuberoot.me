@@ -82,9 +82,124 @@ const I18n = {
         "summaryAdvancedSettings": {
             "Show Advanced Settings": "显示高级设置",
             "Hide Advanced Settings": "隐藏高级设置"
+        },
+        // NOTE: 所有 analyzer 的 summary 元素，Show/Hide 切换
+        "summary_analyzer": {
+            "Show Analyzer": "显示分析器",
+            "Hide Analyzer": "隐藏分析器"
+        },
+        "summary_eo_analyzer": {
+            "Show Analyzer": "显示分析器",
+            "Hide Analyzer": "隐藏分析器"
+        },
+        "summary_panalyzer": {
+            "Show Analyzer": "显示分析器",
+            "Hide Analyzer": "隐藏分析器"
+        },
+        "summary_pair_analyzer": {
+            "Show Analyzer": "显示分析器",
+            "Hide Analyzer": "隐藏分析器"
+        },
+        "summary_pair_panalyzer": {
+            "Show Analyzer": "显示分析器",
+            "Hide Analyzer": "隐藏分析器"
         }
     },
     _dynamicTextEn: {},   // 初始化时从 _dynamicTextZh 自动生成反向映射
+
+    // NOTE: Solver/训练器页面 label 和 button 的文本翻译映射
+    // 因为不能修改上游 HTML（无 data-i18n 属性），所以在 apply() 中按文本匹配翻译
+    // 只匹配没有 translate="no" 属性的 label，避免翻译面名(U/D/L/R/F/B)
+    _solverLabelZh: {
+        "Solver:": "求解器：", "Solver: ": "求解器：",
+        "Scramble:": "打乱：", "Scramble: ": "打乱：",
+        "Rotation:": "旋转：", "Rotation: ": "旋转：",
+        "Slot:": "槽位：", "Slot: ": "槽位：",
+        "Pseudo Slot Edge:": "Pseudo 槽位 Edge：", "Pseudo Slot Edge: ": "Pseudo 槽位 Edge：",
+        "Pseudo Slot Corner:": "Pseudo 槽位 Corner：", "Pseudo Slot Corner: ": "Pseudo 槽位 Corner：",
+        "Free Pair:": "Free Pair：", "Free Pair: ": "Free Pair：",
+        "Free Pair Edge:": "Free Pair Edge：", "Free Pair Edge: ": "Free Pair Edge：",
+        "Free Pair Corner:": "Free Pair Corner：", "Free Pair Corner: ": "Free Pair Corner：",
+        "Last Layer Option:": "顶层选项：", "Last Layer Option: ": "顶层选项：",
+        "Max Length:": "最大步数：", "Max Length: ": "最大步数：",
+        "Max Count:": "最大数量：", "Max Count: ": "最大数量：",
+        "Move Restrict:": "步法限制：", "Move Restrict: ": "步法限制：",
+        "Face Option:": "面选项：", "Face Option: ": "面选项：",
+        "Solver Option:": "求解选项：", "Solver Option: ": "求解选项：",
+        "Count:": "数量：", "Count: ": "数量：",
+        "Move Available Table:": "可用步法表：",
+        "Center Restrict:": "中心限制：",
+        "Pre Move:": "预转动：", "Pre Move: ": "预转动：",
+        "Max Rotation Count:": "最大旋转次数：", "Max Rotation Count: ": "最大旋转次数：",
+        // NOTE: 贴纸设置区域 label
+        "Auto Stickering Setting": "自动贴纸设置",
+        "Centers:": "中心块：", "Centers: ": "中心块：",
+        "Edges Options": "棱块选项",
+        "Corners Options": "角块选项",
+        "Cross:": "十字：", "Cross: ": "十字：",
+        "BL Slot:": "BL 槽位：", "BL Slot: ": "BL 槽位：",
+        "BR Slot:": "BR 槽位：", "BR Slot: ": "BR 槽位：",
+        "FR Slot:": "FR 槽位：", "FR Slot: ": "FR 槽位：",
+        "FL Slot:": "FL 槽位：", "FL Slot: ": "FL 槽位：",
+        "Last Layer:": "顶层：", "Last Layer: ": "顶层：",
+        // NOTE: 状态显示 label
+        "Number of solutions:": "解法数量：", "Number of solutions: ": "解法数量：",
+        "Current Depth:": "当前深度：", "Current Depth: ": "当前深度：",
+        // NOTE: button 文本
+        "Random": "随机", "Reverse": "逆序", "Mirror": "镜像", "Clear": "清空",
+        "Analyze": "分析", "Solve": "求解",
+        "Export": "导出", "Copy": "复制",
+        "Auto": "自动", "Reset": "重置", "Output": "输出",
+        // NOTE: 贴纸设置 select option 文本
+        "Regular": "常规", "Dim": "暗淡", "Oriented": "朝向", "Ignored": "忽略",
+        // NOTE: Solver 类型下拉选项
+        "F2L Lite": "F2L 轻量", "Pairing": "基态",
+        "Pseudo F2L Lite": "伪 F2L 轻量", "Pseudo Pairing": "伪基态",
+        "LL Substeps Lite": "LL 子集轻量", "LL Lite": "LL 轻量",
+        "LL AUF Lite": "LL AUF 轻量", "Two Phase": "二阶段",
+        "LL Substeps": "LL 子集",
+        // NOTE: Cube Editor 按钮
+        "Swap": "交换", "Flip": "翻转",
+        "GetScramble": "获取打乱", "Get\nScramble": "获取\n打乱",
+        // NOTE: 颜色名（Cube Editor 下拉选项）
+        "White": "白", "Red": "红", "Green": "绿",
+        "Yellow": "黄", "Orange": "橙", "Blue": "蓝",
+        // NOTE: 训练器页面
+        "Length:": "步数：", "Length: ": "步数：",
+        "Back": "上一个", "Next": "下一个",
+        "Ignore Pre-move Center": "忽略预转动中心",
+        "Main Solver": "主求解器",
+        // NOTE: Pairing / Pseudo 训练器 label
+        "Free Pair:": "基态：", "Free Pair: ": "基态：",
+        "Free Pair Edge:": "基态棱块：", "Free Pair Edge: ": "基态棱块：",
+        "Free Pair Corner:": "基态角块：", "Free Pair Corner: ": "基态角块：",
+        "Pseudo Slot Edge:": "伪槽位棱块：", "Pseudo Slot Edge: ": "伪槽位棱块：",
+        "Pseudo Slot Corner:": "伪槽位角块：", "Pseudo Slot Corner: ": "伪槽位角块：",
+        // NOTE: Disable Move → Rotation / Enable Rotation → Move 按钮
+        "Disable Move\n                → Rotation": "禁用 Move → Rotation",
+        "Enable Rotation\n                → Move": "启用 Rotation → Move",
+    },
+    // NOTE: 菜单链接翻译（抽屉菜单中的 <a> 元素，它们有 translate="no" 需要单独处理）
+    _menuLinkZh: {
+        "Source": "源码",
+        "2x2x2 Solver": "二阶求解器",
+        "Documentation": "文档",
+        // NOTE: Cross/XCross/XXCross/EOCross 保持英文
+        "Free Pair": "基态",
+        "XCross Free Pair": "XCross + 基态",
+        "Pseudo XCross": "伪 XCross",
+        "Pseudo Free Pair": "伪基态",
+        "Alg Trainer": "公式训练器",
+        "JSON Editor": "JSON 编辑器",
+    },
+    _menuLinkEn: {},  // 初始化时自动生成反向映射
+    // NOTE: textarea placeholder 翻译映射（文本较长，单独管理）
+    _placeholderZh: {
+        "Use // to write comments, as in algs // comment. \nWrite the //setup comment in the appropriate position when viewing on alg.cubing.net or cubedb.net.":
+            "用 // 写注释，如 algs // comment。\n在 alg.cubing.net 或 cubedb.net 上查看时，将 //setup 注释写在合适位置。"
+    },
+    _placeholderEn: {},  // 初始化时自动生成反向映射
+    _solverLabelEn: {},  // 初始化时自动生成反向映射
 
     // NOTE: Stats 页面标题映射（h2），用于运行时翻译
     _statsTitleZh: {
@@ -295,6 +410,18 @@ const I18n = {
                 this._dynamicTextEn[id][zh] = en;
             }
         }
+        // 构建 solver label 反向映射
+        for (const [en, zh] of Object.entries(this._solverLabelZh)) {
+            this._solverLabelEn[zh] = en;
+        }
+        // 构建 placeholder 反向映射
+        for (const [en, zh] of Object.entries(this._placeholderZh)) {
+            this._placeholderEn[zh] = en;
+        }
+        // 构建菜单链接反向映射
+        for (const [en, zh] of Object.entries(this._menuLinkZh)) {
+            this._menuLinkEn[zh] = en;
+        }
         // NOTE: 自动注入语言切换按钮（如果页面中还没有）
         this._injectToggle();
         this._ready = true;
@@ -492,6 +619,10 @@ const I18n = {
         // NOTE: 翻译 JS 动态设置 textContent 的元素（如 Start/Stop 按钮）
         this._applyDynamicText();
 
+        // NOTE: Solver/训练器页面 label 和 button 的文本翻译
+        // 通过文本匹配实现，无需修改上游 HTML
+        this._applySolverLabels();
+
         // HTML title 标签
         const titleEl = document.querySelector('title[data-i18n]');
         if (titleEl) {
@@ -510,6 +641,95 @@ const I18n = {
                 el.textContent = textMap[text];
             }
         }
+    },
+
+    // NOTE: 翻译 solver/训练器页面的 label 和 button 文本
+    _applySolverLabels() {
+        const map = this.locale === 'zh' ? this._solverLabelZh : this._solverLabelEn;
+        // 翻译 label 元素（跳过带 translate="no" 的，如面名 U/D/L/R/F/B）
+        document.querySelectorAll('label:not([translate="no"])').forEach(el => {
+            const text = el.textContent.trim();
+            if (text && map[text]) {
+                el.textContent = map[text];
+            }
+        });
+        // 翻译 button 元素（跳过带 translate="no" 和有 data-i18n 的）
+        document.querySelectorAll('button:not([translate="no"]):not([data-i18n])').forEach(el => {
+            const text = el.textContent.trim();
+            if (text && map[text]) {
+                el.textContent = map[text];
+            }
+        });
+        // 翻译 select option（跳过带 translate="no" 的 select）
+        document.querySelectorAll('select:not([translate="no"]) option:not([translate="no"])').forEach(el => {
+            const text = el.textContent.trim();
+            if (text && map[text]) {
+                el.textContent = map[text];
+            }
+        });
+        // NOTE: solver 类型 select (#solver) 有 translate="no"，需单独处理其 option 文本
+        document.querySelectorAll('#solver option').forEach(el => {
+            const text = el.textContent.trim();
+            if (text && map[text]) {
+                el.textContent = map[text];
+            }
+        });
+        // 翻译 modal 面板中的 h2 标题
+        document.querySelectorAll('.modal-header h2').forEach(el => {
+            const text = el.textContent.trim();
+            if (text && map[text]) {
+                el.textContent = map[text];
+            }
+        });
+        // 翻译 textarea 的 placeholder 属性
+        // NOTE: HTML 中 placeholder 跨行，浏览器解析后换行符可能是 \n 或 \r\n，用 includes 匹配首段
+        const phZh = "用 // 写注释，如 algs // comment。\n在 alg.cubing.net 或 cubedb.net 上查看时，将 //setup 注释写在合适位置。";
+        const phEn = "Use // to write comments, as in algs // comment.";
+        document.querySelectorAll('textarea[placeholder]').forEach(el => {
+            const ph = el.getAttribute('placeholder');
+            if (!ph) return;
+            if (this.locale === 'zh' && ph.includes('Use // to write comments')) {
+                el.setAttribute('placeholder', phZh);
+            } else if (this.locale === 'en' && ph.includes('用 // 写注释')) {
+                el.setAttribute('placeholder', phEn + " \nWrite the //setup comment in the appropriate position when viewing on alg.cubing.net or cubedb.net.");
+            }
+        });
+        // 翻译 <a> 链接文本（训练器页面的 Warning / Note 提示文本）
+        const noteZh = "注意：相邻对和对角对会启动不同的搜索实例。每种配置的初始生成都需要时间。";
+        const noteEn = "Note: Different search instances are launched for adjacent pairs and diagonal pairs. Initial generation takes time for each.";
+        document.querySelectorAll('a:not([translate="no"]):not([data-i18n])').forEach(el => {
+            const text = el.textContent.trim();
+            // 翻译 Warning 长文本（覆盖 700MB/600MB/150MB 各变体）
+            if (this.locale === 'zh' && text.includes('Warning: This scrambler')) {
+                el.textContent = text
+                    .replace(/Warning: This scrambler generates about 700 MB locally on first run; initial scramble generation may take several seconds to tens of seconds\./, '警告：此打乱生成器首次运行会在本地生成约 700 MB 数据；初始打乱生成可能需要几秒到几十秒。')
+                    .replace(/Warning: This scrambler generates about 600 MB locally on first run; initial scramble generation may take tens of seconds to minutes\. Note: bucket model will automatically select the lowest configuration\./, '警告：此打乱生成器首次运行会在本地生成约 600 MB 数据；初始打乱生成可能需要几十秒到几分钟。注意：bucket 模型会自动选择最低配置。')
+                    .replace(/Warning: This scrambler generates about 150 MB locally on first run; initial scramble generation may take several seconds to tens of seconds\./, '警告：此打乱生成器首次运行会在本地生成约 150 MB 数据；初始打乱生成可能需要几秒到几十秒。');
+            } else if (this.locale === 'en' && text.includes('警告：此打乱生成器')) {
+                el.textContent = text
+                    .replace(/警告：此打乱生成器首次运行会在本地生成约 700 MB 数据；初始打乱生成可能需要几秒到几十秒。/, 'Warning: This scrambler generates about 700 MB locally on first run; initial scramble generation may take several seconds to tens of seconds.')
+                    .replace(/警告：此打乱生成器首次运行会在本地生成约 600 MB 数据；初始打乱生成可能需要几十秒到几分钟。注意：bucket 模型会自动选择最低配置。/, 'Warning: This scrambler generates about 600 MB locally on first run; initial scramble generation may take tens of seconds to minutes. Note: bucket model will automatically select the lowest configuration.')
+                    .replace(/警告：此打乱生成器首次运行会在本地生成约 150 MB 数据；初始打乱生成可能需要几秒到几十秒。/, 'Warning: This scrambler generates about 150 MB locally on first run; initial scramble generation may take several seconds to tens of seconds.');
+            }
+            // 翻译 Note 提示文本
+            if (this.locale === 'zh' && text.includes('Note: Different search instances')) {
+                el.textContent = noteZh + ' ';
+            } else if (this.locale === 'en' && text.includes('注意：相邻对和对角对')) {
+                el.textContent = noteEn + ' ';
+            }
+            // 翻译短文本（如 Main Solver）
+            if (text && map[text]) {
+                el.textContent = map[text];
+            }
+        });
+        // 翻译抽屉菜单中的链接（这些有 translate="no"，需要单独处理）
+        const menuMap = this.locale === 'zh' ? this._menuLinkZh : this._menuLinkEn;
+        document.querySelectorAll('.drawer-content a').forEach(el => {
+            const text = el.textContent.trim();
+            if (text && menuMap[text]) {
+                el.textContent = menuMap[text];
+            }
+        });
     },
 
     // NOTE: MutationObserver — 监听 _dynamicTextZh 注册的元素的 textContent 变化
