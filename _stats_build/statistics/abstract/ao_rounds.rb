@@ -7,6 +7,9 @@
 # results 全表 550 万行，一次加载 ~8.7GB 导致 CI OOM。
 # 改为按 event_id 逐个查询 MySQL，每次只加载 ~1-5 万行，
 # 处理完后 GC 可回收，内存峰值 ~100MB。
+#
+# NOTE: 一次性计算模式——第一个子类运行时，为 4 种 round_count 同时计算结果。
+# 后续子类直接取预计算数据，80 次 MySQL 查询减到 20 次。
 require_relative "../../core/grouped_statistic"
 require_relative "../../core/events"
 require_relative "../../core/solve_time"
@@ -15,6 +18,14 @@ require_relative "../../core/database"
 
 class AoRounds < GroupedStatistic
   include TabUi
+
+  # NOTE: 预计算结果缓存
+  # 结构：{ round_count => { history_data: [[event_name, wr_results], ...],
+  #                          ranking_by_event: { event_name => [...] } } }
+  @@precomputed = {}
+
+  # NOTE: 所有子类的 round_count 枚举，用于一次性批量计算
+  ROUND_COUNTS = [1, 2, 3, 4].freeze
 
   # NOTE: round_type_id 分类：用于确定各轮在 Details 中的排列顺序
   # 排序权重越小越靠前（R1 < R2 < R3 < Final）
@@ -49,25 +60,16 @@ class AoRounds < GroupedStatistic
     SQL
   end
 
-  # NOTE: 重写 data，绕过 Statistic 的统一 query_results → transform 流程
+  # NOTE: 重写 data，使用一次性计算模式
+  # 第一个子类触发 compute_all_round_counts，后续子类直接取缓存
   def data
     return @data if @data
 
-    events = Events::WITH_AVERAGE
-    @ranking_by_event = {}
+    compute_all_round_counts if @@precomputed.empty?
 
-    @data = events.map do |event_id, event_name|
-      # NOTE: 每个项目独立查询——内存只保留当前项目的数据
-      event_rows = Database.client.query(query_for_event(event_id)).to_a
-
-      computed = compute_metrics(event_rows, event_id)
-
-      @ranking_by_event[event_name] = build_ranking(computed, event_id)
-
-      wr_results = build_wr_history(computed, event_id)
-
-      [event_name, wr_results]
-    end
+    result = @@precomputed[round_count]
+    @ranking_by_event = result[:ranking_by_event]
+    @data = result[:history_data]
   end
 
   # NOTE: 用 top + tabbed_grouped_markdown 替换原手写 HTML
@@ -90,8 +92,36 @@ class AoRounds < GroupedStatistic
 
   private
 
-  # NOTE: 计算所有参赛者在每场比赛中的 AoXR
-  def compute_metrics(event_rows, event_id)
+  # NOTE: 一次性为所有 round_count 计算结果
+  # 每个 event 只查一次 MySQL，然后为 rc=1,2,3,4 分别计算
+  # 处理完一个 event 后 raw rows 即可被 GC 回收
+  def compute_all_round_counts
+    events = Events::WITH_AVERAGE
+
+    # 初始化结果容器
+    ROUND_COUNTS.each do |rc|
+      @@precomputed[rc] = { history_data: [], ranking_by_event: {} }
+    end
+
+    events.each do |event_id, event_name|
+      # NOTE: 每个项目只查询 MySQL 一次，4 种 round_count 共享同一份数据
+      event_rows = Database.client.query(query_for_event(event_id)).to_a
+
+      # NOTE: 先做一次分组（最耗时的操作），4 种 rc 共用分组结果
+      grouped = group_by_competition_person(event_rows, event_id)
+
+      ROUND_COUNTS.each do |rc|
+        computed = filter_and_compute(grouped, rc)
+        @@precomputed[rc][:ranking_by_event][event_name] = build_ranking(computed, event_id)
+        wr_results = build_wr_history(computed, event_id)
+        @@precomputed[rc][:history_data] << [event_name, wr_results]
+      end
+      # event_rows 和 grouped 在 block 结束后可被 GC 回收
+    end
+  end
+
+  # NOTE: 按 (competition_id, person_id) 分组，收集该人在该比赛的所有轮次记录
+  def group_by_competition_person(event_rows, event_id)
     grouped = {}
     event_rows.each do |r|
       key = [r["competition_id"], r["person_id"]]
@@ -101,16 +131,20 @@ class AoRounds < GroupedStatistic
                          "start_date" => r["start_date"], "event_id" => event_id }
       grouped[key]["rows"] << r
     end
+    grouped
+  end
 
-    # 筛选：该人在该比赛恰好有 round_count 条记录（average > 0 已在 SQL 过滤）
+  # NOTE: 从已分组数据中筛选恰好有 rc 条记录的组，计算 AoXR
+  # rc: round_count，由 compute_all_round_counts 传入
+  def filter_and_compute(grouped, rc)
     grouped.filter_map do |_key, info|
       rows = info["rows"]
-      next unless rows.size == round_count
+      next unless rows.size == rc
 
       # 按轮次排序（R1 < R2 < R3 < Final），提取 average 值
       sorted_rows = rows.sort_by { |r| ROUND_SORT_ORDER[r["round_type_id"]] || 50 }
       values = sorted_rows.map { |r| r["average"] }
-      avg = values.sum.to_f / round_count
+      avg = values.sum.to_f / rc
       info.merge("_metric" => avg, "_round_values" => values)
     end
   end
@@ -174,4 +208,5 @@ class AoRounds < GroupedStatistic
     results.reverse
   end
 end
+
 
