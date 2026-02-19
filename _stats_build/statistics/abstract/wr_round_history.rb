@@ -161,7 +161,7 @@ class WrRoundHistory < GroupedStatistic
       md += "<p><em data-i18n-en=\"#{@note}\" data-i18n-zh=\"#{nzh}\">#{@note}</em></p>\n"
     end
     date_zh = timestamp.strftime("更新于 %Y 年 %-m 月 %-d 日")
-    md += "<p><em data-i18n-en=""Updated on #{updated}"" data-i18n-zh=""#{date_zh}"">Updated on #{updated}</em></p>\n\n"
+    md += "<p><em data-i18n-en=\"Updated on #{updated}\" data-i18n-zh=\"#{date_zh}\">Updated on #{updated}</em></p>\n\n"
 
     # Tab CSS + JS
     md += tab_styles
@@ -172,7 +172,7 @@ class WrRoundHistory < GroupedStatistic
     rank_data.each do |event_name, rows|
       next if rows.empty?
       ezh = Events.zh(event_name)
-      md += "<h3 data-i18n-en=""#{event_name}"" data-i18n-zh=""#{ezh}"">#{event_name}</h3>\n"
+      md += "<h3 data-i18n-en=\"#{event_name}\" data-i18n-zh=\"#{ezh}\">#{event_name}</h3>\n"
       md += "<table>\n<tr><th data-i18n-en=\"Person\" data-i18n-zh=\"选手\">Person</th><th style=\"text-align:right\" data-i18n-en=\"Result\" data-i18n-zh=\"成绩\">Result</th></tr>\n"
       rows.each do |person_link, metric_str|
         md += "<tr><td>#{md_link_to_html(person_link)}</td><td style=\"text-align:right\">#{metric_str}</td></tr>\n"
@@ -186,7 +186,7 @@ class WrRoundHistory < GroupedStatistic
     wr_data.each do |event_name, rows|
       next if rows.empty?
       ezh = Events.zh(event_name)
-      md += "<h3 data-i18n-en=""#{event_name}"" data-i18n-zh=""#{ezh}"">#{event_name}</h3>\n"
+      md += "<h3 data-i18n-en=\"#{event_name}\" data-i18n-zh=\"#{ezh}\">#{event_name}</h3>\n"
       md += "<table>\n<tr>"
       @table_header.each { |k, v| md += "<th#{v == :right ? ' style=\"text-align:right\"' : ''}>#{k}</th>" }
       md += "</tr>\n"
