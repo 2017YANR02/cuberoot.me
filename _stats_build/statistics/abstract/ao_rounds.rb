@@ -2,10 +2,16 @@
 # AoXR = 一场比赛中某人恰好参加了 X 轮时，各轮 average 的均值
 # 子类只需指定 round_count 即可
 # 支持双视图 Tab：当前排名 + WR 历史
+#
+# HACK: 不走 Statistic 的统一 query → transform 流程。
+# results 全表 550 万行，一次加载 ~8.7GB 导致 CI OOM。
+# 改为按 event_id 逐个查询 MySQL，每次只加载 ~1-5 万行，
+# 处理完后 GC 可回收，内存峰值 ~100MB。
 require_relative "../../core/grouped_statistic"
 require_relative "../../core/events"
 require_relative "../../core/solve_time"
 require_relative "../../core/tab_ui"
+require_relative "../../core/database"
 
 class AoRounds < GroupedStatistic
   include TabUi
@@ -23,7 +29,8 @@ class AoRounds < GroupedStatistic
     raise "子类必须实现 round_count"
   end
 
-  def query
+  # NOTE: 按 event_id 单独查询，避免全表加载
+  def query_for_event(event_id)
     <<-SQL
       SELECT
         result.event_id,
@@ -37,27 +44,26 @@ class AoRounds < GroupedStatistic
       FROM results result
       JOIN persons person ON person.wca_id = result.person_id AND person.sub_id = 1
       JOIN competitions competition ON competition.id = result.competition_id
-      ORDER BY result.event_id, competition.start_date
+      WHERE result.average > 0 AND result.event_id = '#{event_id}'
+      ORDER BY competition.start_date
     SQL
   end
 
-  def transform(query_results)
-    # NOTE: 排除没有官方 average 的项目
-    events = Events::WITH_AVERAGE
+  # NOTE: 重写 data，绕过 Statistic 的统一 query_results → transform 流程
+  def data
+    return @data if @data
 
-    # 存储排名数据供 markdown 使用
+    events = Events::WITH_AVERAGE
     @ranking_by_event = {}
 
-    events.map do |event_id, event_name|
-      event_rows = query_results.select { |r| r["event_id"] == event_id }
+    @data = events.map do |event_id, event_name|
+      # NOTE: 每个项目独立查询——内存只保留当前项目的数据
+      event_rows = Database.client.query(query_for_event(event_id)).to_a
 
-      # NOTE: 按 (competition_id, person_id) 分组，收集该人在该比赛的所有轮次记录
       computed = compute_metrics(event_rows, event_id)
 
-      # 排名数据：每人最佳 metric，取 top 10
       @ranking_by_event[event_name] = build_ranking(computed, event_id)
 
-      # WR 历史数据
       wr_results = build_wr_history(computed, event_id)
 
       [event_name, wr_results]
@@ -68,7 +74,7 @@ class AoRounds < GroupedStatistic
   # 将 @ranking_by_event 中的 hash rows 归一化为数组供基类渲染
   def markdown
     ranking_header = { "Person" => :left, "Result" => :right, "Details" => :left }
-    # NOTE: 必须先调 data 触发 transform，才能填充 @ranking_by_event
+    # NOTE: 必须先调 data 触发查询，才能填充 @ranking_by_event
     history_data = data
     # NOTE: build_ranking 返回 [{person_link:, metric_str:, details:}]，需转为数组格式
     ranking_data = @ranking_by_event.transform_values do |rows|
@@ -96,11 +102,10 @@ class AoRounds < GroupedStatistic
       grouped[key]["rows"] << r
     end
 
-    # 筛选：该人在该比赛恰好有 round_count 条记录，且所有 average > 0
+    # 筛选：该人在该比赛恰好有 round_count 条记录（average > 0 已在 SQL 过滤）
     grouped.filter_map do |_key, info|
       rows = info["rows"]
       next unless rows.size == round_count
-      next if rows.any? { |r| r["average"].nil? || r["average"] <= 0 }
 
       # 按轮次排序（R1 < R2 < R3 < Final），提取 average 值
       sorted_rows = rows.sort_by { |r| ROUND_SORT_ORDER[r["round_type_id"]] || 50 }
@@ -169,3 +174,4 @@ class AoRounds < GroupedStatistic
     results.reverse
   end
 end
+
