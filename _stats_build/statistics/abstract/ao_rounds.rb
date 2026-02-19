@@ -43,7 +43,7 @@ class AoRounds < GroupedStatistic
 
   def transform(query_results)
     # NOTE: 排除没有官方 average 的项目
-    events = Events::OFFICIAL.reject { |id, _| Events::BLD.key?(id) }
+    events = Events::WITH_AVERAGE
 
     # 存储排名数据供 markdown 使用
     @ranking_by_event = {}
