@@ -103,17 +103,26 @@ class WrAverageHistory < GroupedStatistic
   private
 
   # NOTE: 从全量 results 中取每项目 average top 10
+  # 支持磁盘缓存，STATS_USE_CACHE=1 时跳过全量 MySQL 查询
   def build_ranking_from_all(event_id)
     require_relative "../core/database"
     @@average_ranking_cache ||= begin
-      Database.client.query(
-        "SELECT event_id, person_id, average,
-         CONCAT('[', person.name, '](https://www.worldcubeassociation.org/persons/', person.wca_id, ')') person_link
-         FROM results
-         JOIN persons person ON person.wca_id = person_id AND person.sub_id = 1
-         WHERE average > 0
-         ORDER BY event_id, average"
-      ).to_a
+      cache_file = File.join(Statistic::CACHE_DIR, "wr_average_ranking.marshal")
+      if ENV["STATS_USE_CACHE"] == "1" && File.exist?(cache_file)
+        Marshal.load(File.binread(cache_file))
+      else
+        result = Database.client.query(
+          "SELECT event_id, person_id, average,
+           CONCAT('[', person.name, '](https://www.worldcubeassociation.org/persons/', person.wca_id, ')') person_link
+           FROM results
+           JOIN persons person ON person.wca_id = person_id AND person.sub_id = 1
+           WHERE average > 0
+           ORDER BY event_id, average"
+        ).to_a
+        FileUtils.mkdir_p(Statistic::CACHE_DIR)
+        File.binwrite(cache_file, Marshal.dump(result))
+        result
+      end
     end
 
     best_by_person = {}
