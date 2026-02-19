@@ -19,11 +19,12 @@ module TabUi
     HTML
   end
 
-  def tab_buttons(label1, id1, label2, id2)
+  # NOTE: 支持双语标签，en/zh 分别为英文/中文文本
+  def tab_buttons(en1, zh1, id1, en2, zh2, id2)
     <<~HTML
       <div class="stat-tabs">
-        <button class="stat-tab active" onclick="switchTab(event,'#{id1}')">#{label1}</button>
-        <button class="stat-tab" onclick="switchTab(event,'#{id2}')">#{label2}</button>
+        <button class="stat-tab active" onclick="switchTab(event,'#{id1}')" data-i18n-en="#{en1}" data-i18n-zh="#{zh1}">#{en1}</button>
+        <button class="stat-tab" onclick="switchTab(event,'#{id2}')" data-i18n-en="#{en2}" data-i18n-zh="#{zh2}">#{en2}</button>
       </div>
     HTML
   end
@@ -69,7 +70,7 @@ module TabUi
   # ranking_header / history_header 格式：{ "ColName" => :left/:right }
   def tabbed_grouped_markdown(ranking_data:, ranking_header:, history_data:, history_header:)
     md = tab_styles
-    md += tab_buttons("当前排名", "ranking", "WR 历史", "history")
+    md += tab_buttons("Current Ranking", "当前排名", "ranking", "WR History", "WR 历史", "history")
     md += grouped_panel("ranking", true,  ranking_data, ranking_header)
     md += grouped_panel("history", false, history_data, history_header)
     md += tab_script

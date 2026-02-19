@@ -19,8 +19,8 @@
 </style>
 
 <div class="stat-tabs">
-  <button class="stat-tab active" onclick="switchTab(event,'ranking')">当前排名</button>
-  <button class="stat-tab" onclick="switchTab(event,'history')">WR 历史</button>
+  <button class="stat-tab active" onclick="switchTab(event,'ranking')" data-i18n-en="Current Ranking" data-i18n-zh="当前排名">Current Ranking</button>
+  <button class="stat-tab" onclick="switchTab(event,'history')" data-i18n-en="WR History" data-i18n-zh="WR 历史">WR History</button>
 </div>
 
 <div id="ranking" class="stat-panel active">
