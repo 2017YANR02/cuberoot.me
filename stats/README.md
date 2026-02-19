@@ -32,11 +32,11 @@
 
 <ul>
   <li><a href="average_event_count_by_competition" data-i18n-en="Average event count by competition" data-i18n-zh="每场比赛的平均项目数">Average event count by competition</a></li>
-  <li><a href="average_of_5" data-i18n-en="Average of 5" data-i18n-zh="{@solve_count} 次平均">Average of 5</a></li>
-  <li><a href="average_of_12" data-i18n-en="Average of 12" data-i18n-zh="{@solve_count} 次平均">Average of 12</a></li>
-  <li><a href="average_of_25" data-i18n-en="Average of 25" data-i18n-zh="{@solve_count} 次平均">Average of 25</a></li>
-  <li><a href="average_of_50" data-i18n-en="Average of 50" data-i18n-zh="{@solve_count} 次平均">Average of 50</a></li>
-  <li><a href="average_of_100" data-i18n-en="Average of 100" data-i18n-zh="{@solve_count} 次平均">Average of 100</a></li>
+  <li><a href="average_of_5" data-i18n-en="Average of 5" data-i18n-zh="5 次平均">Average of 5</a></li>
+  <li><a href="average_of_12" data-i18n-en="Average of 12" data-i18n-zh="12 次平均">Average of 12</a></li>
+  <li><a href="average_of_25" data-i18n-en="Average of 25" data-i18n-zh="25 次平均">Average of 25</a></li>
+  <li><a href="average_of_50" data-i18n-en="Average of 50" data-i18n-zh="50 次平均">Average of 50</a></li>
+  <li><a href="average_of_100" data-i18n-en="Average of 100" data-i18n-zh="100 次平均">Average of 100</a></li>
   <li><a href="best_first_average" data-i18n-en="Best first average" data-i18n-zh="最佳首次平均">Best first average</a></li>
   <li><a href="best_first_single" data-i18n-en="Best first single" data-i18n-zh="最佳首次单次">Best first single</a></li>
   <li><a href="best_medal_collection_from_abroad_by_country" data-i18n-en="Best medal collection from abroad by country" data-i18n-zh="各国海外最佳奖牌收藏">Best medal collection from abroad by country</a></li>
