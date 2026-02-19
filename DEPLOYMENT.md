@@ -75,7 +75,7 @@ ruiminyan.github.io/
 │   └── zh.json                # 中文字典（solver/trainer 页面所有 key）
 ├── .sync/                     # 同步脚本的配置和模板（修改这里来定制同步行为）
 │   ├── page_config.json       # 页面映射表：上游 HTML → 本地子目录，含 i18n title key 和需同步的根文件/目录列表
-│   └── menu_template.html     # 汉堡菜单模板：同步时替换上游菜单，加入 WCA Statistics 链接和 data-i18n 属性
+│   └── menu_template.html     # 汉堡菜单模板：同步时替换上游菜单，加入 data-i18n 属性和本站专属链接
 ├── _layouts/                  # Jekyll 布局（Stats 页面深色主题 HTML 框架）
 ├── _stats_build/              # WCA 统计构建脚本（Ruby，CI 每日运行生成 stats/）
 ├── stats/                     # 统计 Markdown 页面。由 CI 每周覆盖写入，也可本地生成后直接 push

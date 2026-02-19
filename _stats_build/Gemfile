@@ -1,4 +1,4 @@
-source "https://rubygems.org"
+source 'https://gems.ruby-china.com'
 
 gem "mysql2"
 gem "bigdecimal"

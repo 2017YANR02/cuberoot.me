@@ -13,7 +13,7 @@
 .stat-tab:hover:not(.active){background:#3b5975}
 .stat-panel{display:none;margin-top:12px}
 .stat-panel.active{display:block}
-.stat-panel table{border-collapse:collapse;width:100%}
+.stat-panel table{border-collapse:collapse}
 .stat-panel th,.stat-panel td{padding:6px 12px;border-bottom:1px solid #ddd;text-align:left}
 .stat-panel th{background:#f6f8fa;font-weight:600}
 </style>

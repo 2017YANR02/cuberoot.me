@@ -1,5 +1,5 @@
 GEM
-  remote: https://rubygems.org/
+  remote: https://gems.ruby-china.com/
   specs:
     bigdecimal (4.0.1)
     mysql2 (0.5.7)
