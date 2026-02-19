@@ -5,6 +5,7 @@ require_relative "../../core/grouped_statistic"
 require_relative "../../core/events"
 require_relative "../../core/solve_time"
 require_relative "../../core/tab_ui"
+require_relative "../../core/database"
 
 class WrRoundHistory < GroupedStatistic
   include TabUi
@@ -27,20 +28,6 @@ class WrRoundHistory < GroupedStatistic
       WHERE regional_average_record = 'WR'
       ORDER BY competition.start_date
     SQL
-  end
-
-  # NOTE: 全量查询，用于当前排名。类级别内存缓存，所有子类共享一次查询
-  def self.all_results_cache
-    @@all_results_cache ||= begin
-      require_relative "../../core/database"
-      Database.client.query(
-        "SELECT event_id, person_id, value1, value2, value3, value4, value5, average, best,
-         CONCAT('[', person.name, '](https://www.worldcubeassociation.org/persons/', person.wca_id, ')') person_link
-         FROM results
-         JOIN persons person ON person.wca_id = person_id AND person.sub_id = 1
-         WHERE average > 0"
-      ).to_a
-    end
   end
 
   # 子类必须实现：从5次成绩的数组中计算指标值
@@ -114,8 +101,12 @@ class WrRoundHistory < GroupedStatistic
     end
   end
 
-  # NOTE: 当前排名数据——从全量 results 中计算每人每项目最佳 metric
-  # 支持磁盘缓存，STATS_USE_CACHE=1 时直接读取最终排名结果，完全跳过 882MB 全量查询
+  # NOTE: 当前排名数据——按 event_id 分批查询，每人每项目最佳 metric
+  # 支持磁盘缓存，STATS_USE_CACHE=1 时直接读取最终排名结果
+  #
+  # HACK: 不再使用 all_results_cache 全表加载（549 万行 ~8GB）。
+  # 改为按 event_id 逐个查询，每次只加载一个项目的数据，
+  # 处理完后 GC 可回收，内存峰值大幅降低。
   def ranking_data
     return @_ranking_cache if @_ranking_cache
     cache_file = File.join(Statistic::CACHE_DIR, "#{self.class.name}_ranking.marshal")
@@ -123,29 +114,32 @@ class WrRoundHistory < GroupedStatistic
       return @_ranking_cache = Marshal.load(File.binread(cache_file))
     end
 
-    all = self.class.all_results_cache
-    target_ids = target_events.map(&:first).to_set
-
-    # 按项目分组计算每人最佳 metric
-    best_by_person = {}
-    all.each do |r|
-      next unless target_ids.include?(r["event_id"])
-      values = (1..5).map { |n| r["value#{n}"] }
-      metric = compute_metric(values, r)
-      next unless metric
-      key = [r["event_id"], r["person_id"]]
-      if !best_by_person[key] || metric < best_by_person[key][:metric]
-        best_by_person[key] = { metric: metric, person_link: r["person_link"] }
-      end
-    end
-
-    # 按项目分组，每项目 top 10
     result = target_events.map do |event_id, event_name|
-      top = best_by_person
-        .select { |k, _| k[0] == event_id }
-        .sort_by { |_, v| v[:metric] }
+      # NOTE: 按 event_id 单独查询，避免全表加载 OOM
+      event_rows = Database.client.query(
+        "SELECT person_id, value1, value2, value3, value4, value5, average, best,
+         CONCAT('[', person.name, '](https://www.worldcubeassociation.org/persons/', person.wca_id, ')') person_link
+         FROM results
+         JOIN persons person ON person.wca_id = person_id AND person.sub_id = 1
+         WHERE average > 0 AND event_id = '#{event_id}'"
+      ).to_a
+
+      # 计算每人最佳 metric
+      best_by_person = {}
+      event_rows.each do |r|
+        values = (1..5).map { |n| r["value#{n}"] }
+        metric = compute_metric(values, r)
+        next unless metric
+        pid = r["person_id"]
+        if !best_by_person[pid] || metric < best_by_person[pid][:metric]
+          best_by_person[pid] = { metric: metric, person_link: r["person_link"] }
+        end
+      end
+
+      top = best_by_person.values
+        .sort_by { |v| v[:metric] }
         .first(10)
-        .map do |(_eid, _pid), v|
+        .map do |v|
           metric_str = format_metric(v[:metric], event_id)
           [v[:person_link], metric_str]
         end
