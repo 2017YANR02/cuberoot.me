@@ -1,6 +1,6 @@
-require_relative "abstract/wr_round_history"
+require_relative "abstract/round_metric"
 
-class WrVariance < WrRoundHistory
+class WrVariance < RoundMetric
   def initialize
     @title = "Variance"
     @title_zh = "方差"

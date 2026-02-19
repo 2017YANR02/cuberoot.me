@@ -1,6 +1,6 @@
-require_relative "abstract/wr_round_history"
+require_relative "abstract/round_metric"
 
-class WrBpa < WrRoundHistory
+class WrBpa < RoundMetric
   def initialize
     @title = "BPA (Best Possible Average)"
     @title_zh = "BPA（最佳可能平均）"
