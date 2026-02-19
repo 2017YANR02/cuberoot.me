@@ -1,6 +1,6 @@
-<h2 data-i18n-en="Delegated competitions per year" data-i18n-zh="每年代理比赛数量">Delegated competitions per year</h2>
+<h2 data-i18n-en="Delegated competitions per year" data-i18n-zh="每年代表比赛数量">Delegated competitions per year</h2>
 
-<p><em data-i18n-en="Only delegates with at least 5 competitions are taken into account. Delegate period is calculated as the difference between first and last delegated competition." data-i18n-zh="仅统计至少代理过 5 场比赛的代表。代理时间按首次和最后一次代理比赛之间的差值计算。">Only delegates with at least 5 competitions are taken into account. Delegate period is calculated as the difference between first and last delegated competition.</em></p>
+<p><em data-i18n-en="Only delegates with at least 5 competitions are taken into account. Delegate period is calculated as the difference between first and last delegated competition." data-i18n-zh="仅统计至少代表过 5 场比赛的代表。代表时间按首次和最后一次代表比赛之间的差值计算。">Only delegates with at least 5 competitions are taken into account. Delegate period is calculated as the difference between first and last delegated competition.</em></p>
 <p><em data-i18n-en="Updated on 16 February 2026" data-i18n-zh="更新于 2026 年 2 月 16 日">Updated on 16 February 2026</em></p>
 
 
