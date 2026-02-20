@@ -3,9 +3,7 @@ require_relative "../core/statistic"
 class CompleteCompetitionWinners < Statistic
   def initialize
     @title = "Complete competition winners"
-    @title_zh = "完全比赛冠军"
     @note = "A complete win means taking the first place in every event on the given competition."
-    @note_zh = "完全获胜指在某场比赛的所有项目中均获得第一名。"
     @table_header = { "Events count" => :right, "Person" => :left, "Citizen of" => :left, "Competition" => :left }
   end
 

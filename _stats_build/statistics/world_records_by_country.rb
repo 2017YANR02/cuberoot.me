@@ -3,7 +3,6 @@ require_relative "../core/statistic"
 class WorldRecordsByCountry < Statistic
   def initialize
     @title = "World records count by country"
-    @title_zh = "各国世界纪录数量"
     @table_header = { "WRs" => :right, "Country" => :left }
   end
 

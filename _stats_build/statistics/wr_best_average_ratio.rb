@@ -3,9 +3,7 @@ require_relative "abstract/round_metric"
 class WrBestAverageRatio < RoundMetric
   def initialize
     @title = "Best/average ratio"
-    @title_zh = "最佳/平均比"
     @note = "Best/Average Ratio: ratio of the best single to the average in a round (lower = more dominant best solve)."
-    @note_zh = "最佳/平均比：一轮中最佳单次与平均的比值（越低代表最佳单次越突出）。"
     @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right, "Person" => :left, "Competition" => :left, "Date" => :left, "Details" => :left }
   end
 

@@ -3,9 +3,7 @@ require_relative "abstract/round_metric"
 class WrMedian < RoundMetric
   def initialize
     @title = "Median"
-    @title_zh = "中位数"
     @note = "Median: the middle value of all solves in a round. With DNFs, the median shifts to a higher-ranked valid solve."
-    @note_zh = "中位数：一轮中所有成绩的中间值。若有 DNF，中位数会偏向排名更高的有效成绩。"
     @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right, "Person" => :left, "Competition" => :left, "Date" => :left, "Details" => :left }
   end
 

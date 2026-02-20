@@ -5,9 +5,7 @@ require_relative "../core/solve_time"
 class WrCurrent < Statistic
   def initialize
     @title = "Current world records"
-    @title_zh = "当前世界纪录"
     @note = "Shows the current world record single and average for each official event."
-    @note_zh = "显示各官方项目当前的世界纪录单次和平均。"
     @table_header = { "Event" => :left, "Type" => :left, "Result" => :right, "Person" => :left, "Competition" => :left, "Date" => :left }
   end
 

@@ -8,9 +8,7 @@ class WrAverageHistory < RoundMetric
   def self.batch_ranking? = false
   def initialize
     @title = "Average"
-    @title_zh = "平均"
     @note = "Shows how world record averages have progressed over time for each event."
-    @note_zh = "展示各项目世界纪录平均成绩随时间的变化。"
     @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right,
                       "Person" => :left, "Competition" => :left, "Date" => :left, "Details" => :left }
   end

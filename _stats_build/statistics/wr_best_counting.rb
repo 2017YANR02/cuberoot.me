@@ -3,9 +3,7 @@ require_relative "abstract/round_metric"
 class WrBestCounting < RoundMetric
   def initialize
     @title = "Best counting solve"
-    @title_zh = "最佳有效单次"
     @note = "Best counting solve: the best single that counts into the Ao5 (excluding the dropped best and worst)."
-    @note_zh = "最佳有效单次：计入 Ao5 的最佳单次（排除去掉的最好和最差成绩）。"
     @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right, "Person" => :left, "Competition" => :left, "Date" => :left, "Details" => :left }
   end
 

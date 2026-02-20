@@ -11,9 +11,7 @@ require_relative "../core/solve_time"
 class Wr1stWr < Statistic
   def initialize
     @title = "First solve in first competition"
-    @title_zh = "首场比赛的第一次还原"
     @note = "The very first official 3x3 solve (value1 of round 1) in a person's first competition."
-    @note_zh = "选手在首场 WCA 比赛第一轮的第一次还原成绩（value1）。"
     @table_header = { "#" => :right, "Single" => :right, "Person" => :left, "Competition" => :left, "Date" => :left }
   end
 

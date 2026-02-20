@@ -7,9 +7,7 @@ require_relative "../core/solve_time"
 class FirstRIsWr < Statistic
   def initialize
     @title = "First record is a World Record"
-    @title_zh = "首次破纪录即为世界纪录"
     @note = "People whose very first record (single or average, any event) was a World Record."
-    @note_zh = "首次创造任何纪录（不限项目、不限单次/平均）即为世界纪录的选手。"
     @table_header = { "#" => :right, "Person" => :left, "Event" => :left, "Type" => :left,
                       "Result" => :right, "Competition" => :left, "Date" => :left }
   end

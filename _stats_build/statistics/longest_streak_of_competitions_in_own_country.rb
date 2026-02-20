@@ -3,9 +3,7 @@ require_relative "../core/statistic"
 class LongestStreakOfCompetitionsInOwnCountry < Statistic
   def initialize
     @title = "Longest streak of competitions in own country"
-    @title_zh = "在本国连续参赛最长纪录"
     @note = "The streak ends whenever the person doesn't participate in a competition in own country."
-    @note_zh = "每当选手出国参赛，连续纪录即中断。"
     @table_header = { "Competitions" => :right, "Person" => :left, "Country" => :left, "Started at" => :left, "Missed" => :left }
   end
 

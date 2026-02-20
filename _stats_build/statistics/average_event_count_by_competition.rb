@@ -3,7 +3,6 @@ require_relative "../core/statistic"
 class AverageEventCountByCompetition < Statistic
   def initialize
     @title = "Average event count by competition"
-    @title_zh = "每场比赛的平均项目数"
     @note = "In other words, average number of events competitors participated in."
     @table_header = { "Competition" => :left, "Average event count" => :right, "Competitors" => :right, "Country" => :left }
   end

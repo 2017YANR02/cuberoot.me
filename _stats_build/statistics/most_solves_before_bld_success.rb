@@ -3,7 +3,6 @@ require_relative "../core/grouped_statistic"
 class MostSolvesBeforeBldSuccess < GroupedStatistic
   def initialize
     @title = "Most solves before getting a successful BLD attempt"
-    @title_zh = "首次盲拧成功前尝试次数最多"
     @table_header = { "Attempts" => :right, "Person" => :left }
   end
 

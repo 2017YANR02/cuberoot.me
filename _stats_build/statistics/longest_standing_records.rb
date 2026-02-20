@@ -5,7 +5,6 @@ require_relative "../core/solve_time"
 class LongestStandingRecords < GroupedStatistic
   def initialize
     @title = "Longest standing records"
-    @title_zh = "保持时间最长的纪录"
     @table_header = { "Event" => :left, "Type" => :left, "Days" => :right, "Result" => :right, "Person" => :left, "Competition" => :left }
   end
 

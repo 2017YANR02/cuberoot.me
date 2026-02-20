@@ -51,9 +51,7 @@ class WrMetric < Statistic
 
   def initialize
     @title = "Metric"
-    @title_zh = "指标"
     @note = "World record history and current rankings for various derived metrics computed from a round's 5 solves."
-    @note_zh = "从一轮 5 次成绩中计算的各类衍生指标的世界纪录历史与当前排名。"
   end
 
   def markdown

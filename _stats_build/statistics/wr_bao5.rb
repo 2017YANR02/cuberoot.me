@@ -3,9 +3,7 @@ require_relative "abstract/round_metric"
 class WrBao5 < RoundMetric
   def initialize
     @title = "BAo5 (Best Average of 5)"
-    @title_zh = "BAo5（最佳 5 次平均）"
     @note = "Best Average of 5: average of the best 3 out of all 5 solves in a round."
-    @note_zh = "BAo5：一轮中 5 次成绩取最好的 3 次计算平均。"
     @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right, "Person" => :left, "Competition" => :left, "Date" => :left, "Details" => :left }
   end
 

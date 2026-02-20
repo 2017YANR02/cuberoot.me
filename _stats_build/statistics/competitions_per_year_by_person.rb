@@ -3,7 +3,6 @@ require_relative "../core/statistic"
 class CompetitionsPerYearByPerson < Statistic
   def initialize
     @title = "Competitions per year by person"
-    @title_zh = "个人每年参赛数量"
     @table_header = { "Competitions per year" => :right, "Competitions" => :right, "Years" => :right, "Person" => :left }
   end
 

@@ -3,7 +3,6 @@ require_relative "../core/grouped_statistic"
 class ShortestTimeToReachMilestoneInCompsCount < GroupedStatistic
   def initialize
     @title = "Shortest amount of time to reach a milestone in competitions count"
-    @title_zh = "最快达到参赛里程碑"
     @table_header = { "Days" => :right, "Person" => :left }
   end
 
