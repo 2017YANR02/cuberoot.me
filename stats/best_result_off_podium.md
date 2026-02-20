@@ -94,7 +94,7 @@
 | [DongSoo Park (박동수)](https://www.worldcubeassociation.org/persons/2017PARK05) | 1:59.22 | **1:59.68** | [WCA Asian Championship 2024](https://www.worldcubeassociation.org/competitions/RubiksWCAAsianChampionship2024/results/all#e777_f) | 5 |
 | [Seung Hyuk Nahm (남승혁)](https://www.worldcubeassociation.org/persons/2013NAHM01) | 1:56.94 | **2:00.32** | [WCA World Championship 2023](https://www.worldcubeassociation.org/competitions/WC2023/results/all#e777_f) | 6 |
 
-<h3 data-i18n-en="3x3x3 Blindfolded" data-i18n-zh="三阶盲拧">3x3x3 Blindfolded</h3>
+<h3 data-i18n-en="3x3x3 Blindfolded" data-i18n-zh="三盲">3x3x3 Blindfolded</h3>
 
 | Person | Single | Average | Competition | Place |
 | :--- | ---: | ---: | :--- | :--: |
@@ -109,7 +109,7 @@
 | [Manuel Gutman](https://www.worldcubeassociation.org/persons/2017GUTM01) | **17.24** | DNF | [WCA World Championship 2023](https://www.worldcubeassociation.org/competitions/WC2023/results/all#e333bf_f) | 8 |
 | [Calix Tang](https://www.worldcubeassociation.org/persons/2015TANG04) | **17.29** | 21.09 | [CubingUSA Nationals 2023](https://www.worldcubeassociation.org/competitions/CubingUSANationals2023/results/all#e333bf_f) | 4 |
 
-<h3 data-i18n-en="3x3x3 Fewest Moves" data-i18n-zh="三阶最少步">3x3x3 Fewest Moves</h3>
+<h3 data-i18n-en="3x3x3 Fewest Moves" data-i18n-zh="最少步">3x3x3 Fewest Moves</h3>
 
 | Person | Single | Average | Competition | Place |
 | :--- | ---: | ---: | :--- | :--: |
@@ -139,7 +139,7 @@
 | [Patrick Ponce](https://www.worldcubeassociation.org/persons/2012PONC02) | 9.31 | **10.01** | [WCA World Championship 2023](https://www.worldcubeassociation.org/competitions/WC2023/results/all#e333oh_f) | 4 |
 | [Zhouheng Sun (孙舟横)](https://www.worldcubeassociation.org/persons/2008SUNZ01) | 8.11 | **10.02** | [WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/all#e333oh_f) | 9 |
 
-<h3 data-i18n-en="Megaminx" data-i18n-zh="五魔方">Megaminx</h3>
+<h3 data-i18n-en="Megaminx" data-i18n-zh="五魔">Megaminx</h3>
 
 | Person | Single | Average | Competition | Place |
 | :--- | ---: | ---: | :--- | :--: |
@@ -184,7 +184,7 @@
 | [Quinn Maloney](https://www.worldcubeassociation.org/persons/2023MALO01) | 2.97 | **3.60** | [CubingUSA All-Stars 2025](https://www.worldcubeassociation.org/competitions/CubingUSAAllStars2025/results/all#eclock_f) | 5 |
 | [Kyler Kam Li Wei](https://www.worldcubeassociation.org/persons/2023WEIK01) | 3.43 | **3.65** | [Singapore Two-Day Nov 2025](https://www.worldcubeassociation.org/competitions/SingaporeTwoDayNov2025/results/all#eclock_f) | 4 |
 
-<h3 data-i18n-en="Skewb" data-i18n-zh="斜转魔方">Skewb</h3>
+<h3 data-i18n-en="Skewb" data-i18n-zh="斜转">Skewb</h3>
 
 | Person | Single | Average | Competition | Place |
 | :--- | ---: | ---: | :--- | :--: |
@@ -214,7 +214,7 @@
 | [Daniel Karnaukh](https://www.worldcubeassociation.org/persons/2014KARN02) | 6.48 | **6.70** | [WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/all#esq1_f) | 6 |
 | [Park Ji Won (박지원)](https://www.worldcubeassociation.org/persons/2017WONP01) | 5.47 | **6.78** | [WCA World Championship 2023](https://www.worldcubeassociation.org/competitions/WC2023/results/all#esq1_f) | 4 |
 
-<h3 data-i18n-en="4x4x4 Blindfolded" data-i18n-zh="四阶盲拧">4x4x4 Blindfolded</h3>
+<h3 data-i18n-en="4x4x4 Blindfolded" data-i18n-zh="四盲">4x4x4 Blindfolded</h3>
 
 | Person | Single | Average | Competition | Place |
 | :--- | ---: | ---: | :--- | :--: |
@@ -229,7 +229,7 @@
 | [Theodore Chan](https://www.worldcubeassociation.org/persons/2016CHAN25) | **1:55.78** | DNF | [WCA Asian Championship 2024](https://www.worldcubeassociation.org/competitions/RubiksWCAAsianChampionship2024/results/all#e444bf_f) | 4 |
 | [Kamil Przybylski](https://www.worldcubeassociation.org/persons/2016PRZY01) | **1:56.56** | 2:21.61 | [Bishop's Stortford Spring 2023](https://www.worldcubeassociation.org/competitions/BishopsStortfordSpringBBO2023/results/all#e444bf_f) | 4 |
 
-<h3 data-i18n-en="5x5x5 Blindfolded" data-i18n-zh="五阶盲拧">5x5x5 Blindfolded</h3>
+<h3 data-i18n-en="5x5x5 Blindfolded" data-i18n-zh="五盲">5x5x5 Blindfolded</h3>
 
 | Person | Single | Average | Competition | Place |
 | :--- | ---: | ---: | :--- | :--: |
@@ -244,7 +244,7 @@
 | [Alvin Cheng Hiu Yeung (鄭曉洋)](https://www.worldcubeassociation.org/persons/2019YEUN01) | **4:24.11** | DNF | [WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/all#e555bf_f) | 7 |
 | [Adrian Dębski](https://www.worldcubeassociation.org/persons/2017DEBS01) | **4:26.27** | DNF | [WCA European Championship 2024](https://www.worldcubeassociation.org/competitions/Euro2024/results/all#e555bf_f) | 5 |
 
-<h3 data-i18n-en="3x3x3 Multi-Blind" data-i18n-zh="三阶多盲">3x3x3 Multi-Blind</h3>
+<h3 data-i18n-en="3x3x3 Multi-Blind" data-i18n-zh="多盲">3x3x3 Multi-Blind</h3>
 
 | Person | Single | Average | Competition | Place |
 | :--- | ---: | ---: | :--- | :--: |

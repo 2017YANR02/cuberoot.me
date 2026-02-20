@@ -1,6 +1,6 @@
 <h2 data-i18n-en="Best round" data-i18n-zh="最佳轮次">Best round</h2>
 
-<p><em data-i18n-en="For each event, shows the rounds with the best sum of the top 3 results. For blind events the single is used, for other events the average is used." data-i18n-zh="对每个项目，展示前 3 名成绩之和最低的轮次。盲拧项目使用单次成绩，其他项目使用平均成绩。">For each event, shows the rounds with the best sum of the top 3 results. For blind events the single is used, for other events the average is used.</em></p>
+<p><em data-i18n-en="For each event, shows the rounds with the best sum of the top 3 results. For blind events the single is used, for other events the average is used." data-i18n-zh="For each event, shows the rounds with the best sum of the top 3 results. For blind events the single is used, for other events the average is used.">For each event, shows the rounds with the best sum of the top 3 results. For blind events the single is used, for other events the average is used.</em></p>
 <p><em data-i18n-en="Updated on 19 February 2026" data-i18n-zh="更新于 2026 年 2 月 19 日">Updated on 19 February 2026</em></p>
 
 
@@ -94,7 +94,7 @@
 | [Guangzhou Big Cubes 2025](https://www.worldcubeassociation.org/competitions/GuangzhouBigCubes2025/results/all#e777_f) | Final | 5:32.19 | [Ziyu Wu (吴子钰)](https://www.worldcubeassociation.org/persons/2016WUZI04) | 1:41.09 | [Chongkui Chen (陈崇魁)](https://www.worldcubeassociation.org/persons/2023CHEC12) | 1:55.47 | [Anyu Zhang (张安宇)](https://www.worldcubeassociation.org/persons/2012ZHAN08) | 1:55.63 |
 | [NAC 2024](https://www.worldcubeassociation.org/competitions/NAC2024/results/all#e777_f) | Final | 5:32.97 | [Max Park](https://www.worldcubeassociation.org/persons/2012PARK03) | 1:41.34 | [Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02) | 1:55.02 | [Seung Hyuk Nahm (남승혁)](https://www.worldcubeassociation.org/persons/2013NAHM01) | 1:56.61 |
 
-<h3 data-i18n-en="3x3x3 Blindfolded" data-i18n-zh="三阶盲拧">3x3x3 Blindfolded</h3>
+<h3 data-i18n-en="3x3x3 Blindfolded" data-i18n-zh="三盲">3x3x3 Blindfolded</h3>
 
 | Competition | Round | Sum | 1st | Result | 2nd | Result  | 3rd | Result   |
 | :--- | :--- | ---: | :--- | ---: | :--- | ---: | :--- | ---: |
@@ -109,7 +109,7 @@
 | [Mid-Atlantic Championship 2023](https://www.worldcubeassociation.org/competitions/MidAtlanticChampionship2023/results/all#e333bf_1) | First round | 44.82 | [Tommy Cherry](https://www.worldcubeassociation.org/persons/2015CHER07) | 13.46 | [Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04) | 15.64 | [Elliott Kobelansky](https://www.worldcubeassociation.org/persons/2019KOBE03) | 15.72 |
 | [NAC 2024](https://www.worldcubeassociation.org/competitions/NAC2024/results/all#e333bf_f) | Final | 45.08 | [Tommy Cherry](https://www.worldcubeassociation.org/persons/2015CHER07) | 14.48 | [Charlie Eggins](https://www.worldcubeassociation.org/persons/2019EGGI02) | 14.51 | [Elliott Kobelansky](https://www.worldcubeassociation.org/persons/2019KOBE03) | 16.09 |
 
-<h3 data-i18n-en="3x3x3 Fewest Moves" data-i18n-zh="三阶最少步">3x3x3 Fewest Moves</h3>
+<h3 data-i18n-en="3x3x3 Fewest Moves" data-i18n-zh="最少步">3x3x3 Fewest Moves</h3>
 
 | Competition | Round | Sum | 1st | Result | 2nd | Result  | 3rd | Result   |
 | :--- | :--- | ---: | :--- | ---: | :--- | ---: | :--- | ---: |
@@ -139,7 +139,7 @@
 | [Swisscubing Cup I 2025](https://www.worldcubeassociation.org/competitions/SwisscubingCupI2025/results/all#e333oh_e) | Second round | 28.17 | [Eden Robinson-Rechavi](https://www.worldcubeassociation.org/persons/2022ROBI05) | 8.53 | [Dhruva Sai Meruva](https://www.worldcubeassociation.org/persons/2021MERU01) | 9.39 | [Andrey Che](https://www.worldcubeassociation.org/persons/2015CHEA01) | 10.25 |
 | [Hangzhou Winter 2025](https://www.worldcubeassociation.org/competitions/HangzhouWinter2025/results/all#e333oh_d) | First round | 28.24 | [Zhen Chen (陈震)](https://www.worldcubeassociation.org/persons/2023CHEN30) | 8.40 | [Ruihang Xu (许瑞航)](https://www.worldcubeassociation.org/persons/2017XURU04) | 9.00 | [Tao Wen (温韬)](https://www.worldcubeassociation.org/persons/2015WENT01) | 10.84 |
 
-<h3 data-i18n-en="Megaminx" data-i18n-zh="五魔方">Megaminx</h3>
+<h3 data-i18n-en="Megaminx" data-i18n-zh="五魔">Megaminx</h3>
 
 | Competition | Round | Sum | 1st | Result | 2nd | Result  | 3rd | Result   |
 | :--- | :--- | ---: | :--- | ---: | :--- | ---: | :--- | ---: |
@@ -184,7 +184,7 @@
 | [Worlds Prep in Palisades 2025](https://www.worldcubeassociation.org/competitions/WorldsPrepinPalisades2025/results/all#eclock_f) | Final | 9.46 | [Eryk Kasperek](https://www.worldcubeassociation.org/persons/2021KASP01) | 3.12 | [Aaron Jake Wong](https://www.worldcubeassociation.org/persons/2021WONG02) | 3.13 | [Quinn Maloney](https://www.worldcubeassociation.org/persons/2023MALO01) | 3.21 |
 | [Singapore Two-Day Nov 2025](https://www.worldcubeassociation.org/competitions/SingaporeTwoDayNov2025/results/all#eclock_f) | Final | 9.47 | [Akash Sreedharan (ஆகாஷ் ஸ்ரீதரன்)](https://www.worldcubeassociation.org/persons/2019SREE06) | 3.12 | [Keagen Khew](https://www.worldcubeassociation.org/persons/2022KHEW01) | 3.13 | [Kagen Chiu](https://www.worldcubeassociation.org/persons/2024CHIU04) | 3.22 |
 
-<h3 data-i18n-en="Skewb" data-i18n-zh="斜转魔方">Skewb</h3>
+<h3 data-i18n-en="Skewb" data-i18n-zh="斜转">Skewb</h3>
 
 | Competition | Round | Sum | 1st | Result | 2nd | Result  | 3rd | Result   |
 | :--- | :--- | ---: | :--- | ---: | :--- | ---: | :--- | ---: |
@@ -214,7 +214,7 @@
 | [Don't DNS Denton 2024](https://www.worldcubeassociation.org/competitions/DontDNSDenton2024/results/all#esq1_d) | First round | 17.21 | [Dylan Baumbach](https://www.worldcubeassociation.org/persons/2019BAUM02) | 5.01 | [Ryan Pilat](https://www.worldcubeassociation.org/persons/2016PILA03) | 5.81 | [Anshu Chennuru](https://www.worldcubeassociation.org/persons/2016CHEN53) | 6.39 |
 | [WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/all#esq1_d) | First round | 17.29 | [Hassan Khanani](https://www.worldcubeassociation.org/persons/2018KHAN26) | 5.44 | [Rasmus Stub Detlefsen](https://www.worldcubeassociation.org/persons/2014DETL01) | 5.73 | [Sameer Aggarwal](https://www.worldcubeassociation.org/persons/2017AGGA01) | 6.12 |
 
-<h3 data-i18n-en="4x4x4 Blindfolded" data-i18n-zh="四阶盲拧">4x4x4 Blindfolded</h3>
+<h3 data-i18n-en="4x4x4 Blindfolded" data-i18n-zh="四盲">4x4x4 Blindfolded</h3>
 
 | Competition | Round | Sum | 1st | Result | 2nd | Result  | 3rd | Result   |
 | :--- | :--- | ---: | :--- | ---: | :--- | ---: | :--- | ---: |
@@ -229,7 +229,7 @@
 | [May MBLD Madness Singapore 2023](https://www.worldcubeassociation.org/competitions/MayMBLDMadnessSingapore2023/results/all#e444bf_f) | Final | 4:43.58 | [Kaijun Lin (林恺俊)](https://www.worldcubeassociation.org/persons/2013LINK01) | 1:11.34 | [Hill Pong Yong Feng](https://www.worldcubeassociation.org/persons/2017FENG10) | 1:26.54 | [Sora Wenjie Xu (徐文杰)](https://www.worldcubeassociation.org/persons/2016XUWE02) | 2:05.70 |
 | [NAC 2024](https://www.worldcubeassociation.org/competitions/NAC2024/results/all#e444bf_f) | Final | 4:44.90 | [Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04) | 1:25.21 | [Elliott Kobelansky](https://www.worldcubeassociation.org/persons/2019KOBE03) | 1:25.76 | [Graham Siggins](https://www.worldcubeassociation.org/persons/2016SIGG01) | 1:53.93 |
 
-<h3 data-i18n-en="5x5x5 Blindfolded" data-i18n-zh="五阶盲拧">5x5x5 Blindfolded</h3>
+<h3 data-i18n-en="5x5x5 Blindfolded" data-i18n-zh="五盲">5x5x5 Blindfolded</h3>
 
 | Competition | Round | Sum | 1st | Result | 2nd | Result  | 3rd | Result   |
 | :--- | :--- | ---: | :--- | ---: | :--- | ---: | :--- | ---: |

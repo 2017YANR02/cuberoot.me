@@ -94,7 +94,7 @@
 | 43 | [Rasmus Stub Detlefsen](https://www.worldcubeassociation.org/persons/2014DETL01) | [Aarhus Advent 2024](https://www.worldcubeassociation.org/competitions/AarhusAdvent2024) |
 | 43 | [Kevin Gerhardt](https://www.worldcubeassociation.org/persons/2013GERH01) | [Rheinland-Pfalz Open 2022](https://www.worldcubeassociation.org/competitions/RheinlandPfalzOpen2022) |
 
-<h3 data-i18n-en="3x3x3 Blindfolded" data-i18n-zh="三阶盲拧">3x3x3 Blindfolded</h3>
+<h3 data-i18n-en="3x3x3 Blindfolded" data-i18n-zh="三盲">3x3x3 Blindfolded</h3>
 
 | Competitions | Person | First win |
 | ---: | :--- | :--- |
@@ -109,7 +109,7 @@
 | 66 | [Jan Bentlage](https://www.worldcubeassociation.org/persons/2010BENT01) | [Hessen Open 2015](https://www.worldcubeassociation.org/competitions/HessenOpen2015) |
 | 66 | [Eduard Esteban García Domínguez](https://www.worldcubeassociation.org/persons/2011EDUA01) | [Avenida Chile XXIII 2025](https://www.worldcubeassociation.org/competitions/AvenidaChileXXIII2025) |
 
-<h3 data-i18n-en="3x3x3 Fewest Moves" data-i18n-zh="三阶最少步">3x3x3 Fewest Moves</h3>
+<h3 data-i18n-en="3x3x3 Fewest Moves" data-i18n-zh="最少步">3x3x3 Fewest Moves</h3>
 
 | Competitions | Person | First win |
 | ---: | :--- | :--- |
@@ -139,7 +139,7 @@
 | 77 | [Hassan Khanani](https://www.worldcubeassociation.org/persons/2018KHAN26) | [North Jersey Speedsolving A 2024](https://www.worldcubeassociation.org/competitions/NorthJerseySpeedsolvingA2024) |
 | 76 | [Mason Langenderfer](https://www.worldcubeassociation.org/persons/2013LANG03) | [Puerto Rico Open 2024](https://www.worldcubeassociation.org/competitions/PuertoRicoOpen2024) |
 
-<h3 data-i18n-en="Megaminx" data-i18n-zh="五魔方">Megaminx</h3>
+<h3 data-i18n-en="Megaminx" data-i18n-zh="五魔">Megaminx</h3>
 
 | Competitions | Person | First win |
 | ---: | :--- | :--- |
@@ -184,7 +184,7 @@
 | 50 | [Malte Ihlefeld](https://www.worldcubeassociation.org/persons/2016IHLE01) | [Rheinland-Pfalz Open 2024](https://www.worldcubeassociation.org/competitions/RheinlandPfalzOpen2024) |
 | 50 | [Ben Timmons](https://www.worldcubeassociation.org/persons/2017TIMM01) | [Belfast Autumn 2025](https://www.worldcubeassociation.org/competitions/BelfastAutumn2025) |
 
-<h3 data-i18n-en="Skewb" data-i18n-zh="斜转魔方">Skewb</h3>
+<h3 data-i18n-en="Skewb" data-i18n-zh="斜转">Skewb</h3>
 
 | Competitions | Person | First win |
 | ---: | :--- | :--- |
@@ -214,7 +214,7 @@
 | 51 | [Anthony Lafourcade](https://www.worldcubeassociation.org/persons/2014LAFO01) | [Couffoul'Events 2024](https://www.worldcubeassociation.org/competitions/CouffoulEvents2024) |
 | 50 | [Tobias Peter](https://www.worldcubeassociation.org/persons/2014PETE03) | [Montenegro Open 2019](https://www.worldcubeassociation.org/competitions/MontenegroOpen2019) |
 
-<h3 data-i18n-en="4x4x4 Blindfolded" data-i18n-zh="四阶盲拧">4x4x4 Blindfolded</h3>
+<h3 data-i18n-en="4x4x4 Blindfolded" data-i18n-zh="四盲">4x4x4 Blindfolded</h3>
 
 | Competitions | Person | First win |
 | ---: | :--- | :--- |
@@ -229,7 +229,7 @@
 | 28 | [Marco Rota](https://www.worldcubeassociation.org/persons/2009ROTA01) | [Anzio Open 2023](https://www.worldcubeassociation.org/competitions/AnzioOpen2023) |
 | 27 | [Niklas Aasen Eliasson](https://www.worldcubeassociation.org/persons/2021ELIA01) | [Vännäs & Friends 2024](https://www.worldcubeassociation.org/competitions/VannasFriends2024) |
 
-<h3 data-i18n-en="5x5x5 Blindfolded" data-i18n-zh="五阶盲拧">5x5x5 Blindfolded</h3>
+<h3 data-i18n-en="5x5x5 Blindfolded" data-i18n-zh="五盲">5x5x5 Blindfolded</h3>
 
 | Competitions | Person | First win |
 | ---: | :--- | :--- |
@@ -244,7 +244,7 @@
 | 20 | [Braden Richards](https://www.worldcubeassociation.org/persons/2017RICH02) | [Country Roads Huntington 2024](https://www.worldcubeassociation.org/competitions/CountryRoadsHuntington2024) |
 | 19 | [Aaron Spiller](https://www.worldcubeassociation.org/persons/2018SPIL01) | [Side N Blind Narre Warren 2024](https://www.worldcubeassociation.org/competitions/SideNBlindNarreWarren2024) |
 
-<h3 data-i18n-en="3x3x3 Multi-Blind" data-i18n-zh="三阶多盲">3x3x3 Multi-Blind</h3>
+<h3 data-i18n-en="3x3x3 Multi-Blind" data-i18n-zh="多盲">3x3x3 Multi-Blind</h3>
 
 | Competitions | Person | First win |
 | ---: | :--- | :--- |

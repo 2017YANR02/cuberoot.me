@@ -94,7 +94,7 @@
 | 2:27.57 | [Ziyue Peng (彭子悦)](https://www.worldcubeassociation.org/persons/2025PENG03) |
 | 2:29.23 | [Yinzhi Sha (沙印志)](https://www.worldcubeassociation.org/persons/2019SHAY01) |
 
-<h3 data-i18n-en="3x3x3 Blindfolded" data-i18n-zh="三阶盲拧">3x3x3 Blindfolded</h3>
+<h3 data-i18n-en="3x3x3 Blindfolded" data-i18n-zh="三盲">3x3x3 Blindfolded</h3>
 
 | First average | Person |
 | ---: | :--- |
@@ -109,7 +109,7 @@
 | 1:01.52 | [Minghan Shan (单明汉)](https://www.worldcubeassociation.org/persons/2024SHAN10) |
 | 1:10.79 | [Haruka Kitamura (北村晴香)](https://www.worldcubeassociation.org/persons/2017KITA03) |
 
-<h3 data-i18n-en="3x3x3 Fewest Moves" data-i18n-zh="三阶最少步">3x3x3 Fewest Moves</h3>
+<h3 data-i18n-en="3x3x3 Fewest Moves" data-i18n-zh="最少步">3x3x3 Fewest Moves</h3>
 
 | First average | Person |
 | ---: | :--- |
@@ -139,7 +139,7 @@
 | 12.74 | [Zhou Chen (陈宙)](https://www.worldcubeassociation.org/persons/2025CHEZ08) |
 | 12.83 | [Boxun Zhang (张博勋)](https://www.worldcubeassociation.org/persons/2024ZHAB01) |
 
-<h3 data-i18n-en="Megaminx" data-i18n-zh="五魔方">Megaminx</h3>
+<h3 data-i18n-en="Megaminx" data-i18n-zh="五魔">Megaminx</h3>
 
 | First average | Person |
 | ---: | :--- |
@@ -184,7 +184,7 @@
 | 5.15 | [Ruiyin Chen (陈睿尹)](https://www.worldcubeassociation.org/persons/2018CHER09) |
 | 5.16 | [Kaius Young](https://www.worldcubeassociation.org/persons/2017YOUN10) |
 
-<h3 data-i18n-en="Skewb" data-i18n-zh="斜转魔方">Skewb</h3>
+<h3 data-i18n-en="Skewb" data-i18n-zh="斜转">Skewb</h3>
 
 | First average | Person |
 | ---: | :--- |
@@ -214,7 +214,7 @@
 | 10.18 | [Brian Kan](https://www.worldcubeassociation.org/persons/2019KANB01) |
 | 10.50 | [Yasunari Kumekawa (粂川泰成)](https://www.worldcubeassociation.org/persons/2022KUME01) |
 
-<h3 data-i18n-en="4x4x4 Blindfolded" data-i18n-zh="四阶盲拧">4x4x4 Blindfolded</h3>
+<h3 data-i18n-en="4x4x4 Blindfolded" data-i18n-zh="四盲">4x4x4 Blindfolded</h3>
 
 | First average | Person |
 | ---: | :--- |
@@ -229,7 +229,7 @@
 | 8:22.15 | [Andrew Mao](https://www.worldcubeassociation.org/persons/2022MAOA01) |
 | 8:37.97 | [Mykhailo Yartsun (Михайло Ярцун)](https://www.worldcubeassociation.org/persons/2018YART01) |
 
-<h3 data-i18n-en="5x5x5 Blindfolded" data-i18n-zh="五阶盲拧">5x5x5 Blindfolded</h3>
+<h3 data-i18n-en="5x5x5 Blindfolded" data-i18n-zh="五盲">5x5x5 Blindfolded</h3>
 
 | First average | Person |
 | ---: | :--- |

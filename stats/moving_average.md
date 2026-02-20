@@ -352,7 +352,7 @@
 | 2:14.32 | [Ihor Sukhovatenko (Ігор Суховатенко)](https://www.worldcubeassociation.org/persons/2017SUKH02) |
 | 2:15.47 | [Hayden Ng (吳宇晞)](https://www.worldcubeassociation.org/persons/2018NGHA02) |
 
-<h3 data-i18n-en="3x3x3 Fewest Moves" data-i18n-zh="三阶最少步">3x3x3 Fewest Moves</h3>
+<h3 data-i18n-en="3x3x3 Fewest Moves" data-i18n-zh="最少步">3x3x3 Fewest Moves</h3>
 
 | Moving average | Person |
 | ---: | :--- |
@@ -462,7 +462,7 @@
 | 11.11 | [Lê Hà Phong](https://www.worldcubeassociation.org/persons/2017PHON07) |
 | 11.12 | [Tee Kai Yang](https://www.worldcubeassociation.org/persons/2017YANG59) |
 
-<h3 data-i18n-en="Megaminx" data-i18n-zh="五魔方">Megaminx</h3>
+<h3 data-i18n-en="Megaminx" data-i18n-zh="五魔">Megaminx</h3>
 
 | Moving average | Person |
 | ---: | :--- |
@@ -627,7 +627,7 @@
 | 4.09 | [Thomas Grahor](https://www.worldcubeassociation.org/persons/2022GRAH02) |
 | 4.11 | [Fengyuan Kelvin Lou (楼丰源)](https://www.worldcubeassociation.org/persons/2023LOUF01) |
 
-<h3 data-i18n-en="Skewb" data-i18n-zh="斜转魔方">Skewb</h3>
+<h3 data-i18n-en="Skewb" data-i18n-zh="斜转">Skewb</h3>
 
 | Moving average | Person |
 | ---: | :--- |

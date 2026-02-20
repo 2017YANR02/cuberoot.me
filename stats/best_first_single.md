@@ -94,7 +94,7 @@
 | 2:29.66 | [Ziyue Peng (彭子悦)](https://www.worldcubeassociation.org/persons/2025PENG03) |
 | 2:31.34 | [Haoxuan Zhu (朱皓轩)](https://www.worldcubeassociation.org/persons/2019ZHUH05) |
 
-<h3 data-i18n-en="3x3x3 Blindfolded" data-i18n-zh="三阶盲拧">3x3x3 Blindfolded</h3>
+<h3 data-i18n-en="3x3x3 Blindfolded" data-i18n-zh="三盲">3x3x3 Blindfolded</h3>
 
 | First single | Person |
 | ---: | :--- |
@@ -109,7 +109,7 @@
 | 30.73 | [Jorian Meeuse](https://www.worldcubeassociation.org/persons/2022MEEU02) |
 | 33.64 | [Dương Công Tuyền](https://www.worldcubeassociation.org/persons/2022TUYE01) |
 
-<h3 data-i18n-en="3x3x3 Fewest Moves" data-i18n-zh="三阶最少步">3x3x3 Fewest Moves</h3>
+<h3 data-i18n-en="3x3x3 Fewest Moves" data-i18n-zh="最少步">3x3x3 Fewest Moves</h3>
 
 | First single | Person |
 | ---: | :--- |
@@ -139,7 +139,7 @@
 | 11.47 | [Liang Liang (梁亮)](https://www.worldcubeassociation.org/persons/2019LIAN50) |
 | 11.62 | [Zhou Chen (陈宙)](https://www.worldcubeassociation.org/persons/2025CHEZ08) |
 
-<h3 data-i18n-en="Megaminx" data-i18n-zh="五魔方">Megaminx</h3>
+<h3 data-i18n-en="Megaminx" data-i18n-zh="五魔">Megaminx</h3>
 
 | First single | Person |
 | ---: | :--- |
@@ -184,7 +184,7 @@
 | 4.64 | [Adrián Morales Morales](https://www.worldcubeassociation.org/persons/2022MORA09) |
 | 4.80 | [Michael Fonseca](https://www.worldcubeassociation.org/persons/2019FONS06) |
 
-<h3 data-i18n-en="Skewb" data-i18n-zh="斜转魔方">Skewb</h3>
+<h3 data-i18n-en="Skewb" data-i18n-zh="斜转">Skewb</h3>
 
 | First single | Person |
 | ---: | :--- |
@@ -214,7 +214,7 @@
 | 9.46 | [Nathan Rahn](https://www.worldcubeassociation.org/persons/2021RAHN01) |
 | 9.58 | [David Okoro-Sokoh](https://www.worldcubeassociation.org/persons/2022OKOR01) |
 
-<h3 data-i18n-en="4x4x4 Blindfolded" data-i18n-zh="四阶盲拧">4x4x4 Blindfolded</h3>
+<h3 data-i18n-en="4x4x4 Blindfolded" data-i18n-zh="四盲">4x4x4 Blindfolded</h3>
 
 | First single | Person |
 | ---: | :--- |
@@ -229,7 +229,7 @@
 | 4:19.38 | [Kaijun Lin (林恺俊)](https://www.worldcubeassociation.org/persons/2013LINK01) |
 | 4:38.33 | [Chunjie Shan (单淳劼)](https://www.worldcubeassociation.org/persons/2013SHAN02) |
 
-<h3 data-i18n-en="5x5x5 Blindfolded" data-i18n-zh="五阶盲拧">5x5x5 Blindfolded</h3>
+<h3 data-i18n-en="5x5x5 Blindfolded" data-i18n-zh="五盲">5x5x5 Blindfolded</h3>
 
 | First single | Person |
 | ---: | :--- |
@@ -244,7 +244,7 @@
 | 12:05.00 | [Greehith Annabathina](https://www.worldcubeassociation.org/persons/2022ANNA01) |
 | 12:50.00 | [Yuki Yamamoto (山本祐輝)](https://www.worldcubeassociation.org/persons/2010YAMA04) |
 
-<h3 data-i18n-en="3x3x3 Multi-Blind" data-i18n-zh="三阶多盲">3x3x3 Multi-Blind</h3>
+<h3 data-i18n-en="3x3x3 Multi-Blind" data-i18n-zh="多盲">3x3x3 Multi-Blind</h3>
 
 | First single | Person |
 | ---: | :--- |

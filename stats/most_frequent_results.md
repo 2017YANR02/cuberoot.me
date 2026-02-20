@@ -93,7 +93,7 @@
 | 25 | 3:29.32 |
 | 25 | 2:58.66 |
 
-<h3 data-i18n-en="3x3x3 Blindfolded" data-i18n-zh="三阶盲拧">3x3x3 Blindfolded</h3>
+<h3 data-i18n-en="3x3x3 Blindfolded" data-i18n-zh="三盲">3x3x3 Blindfolded</h3>
 
 | Count | Result |
 | ---: | ---: |
@@ -108,7 +108,7 @@
 | 24 | 25.92 |
 | 24 | 20.98 |
 
-<h3 data-i18n-en="3x3x3 Fewest Moves" data-i18n-zh="三阶最少步">3x3x3 Fewest Moves</h3>
+<h3 data-i18n-en="3x3x3 Fewest Moves" data-i18n-zh="最少步">3x3x3 Fewest Moves</h3>
 
 | Count | Result |
 | ---: | ---: |
@@ -138,7 +138,7 @@
 | 1045 | 19.59 |
 | 1041 | 17.80 |
 
-<h3 data-i18n-en="Megaminx" data-i18n-zh="五魔方">Megaminx</h3>
+<h3 data-i18n-en="Megaminx" data-i18n-zh="五魔">Megaminx</h3>
 
 | Count | Result |
 | ---: | ---: |
@@ -183,7 +183,7 @@
 | 770 | 8.88 |
 | 764 | 8.56 |
 
-<h3 data-i18n-en="Skewb" data-i18n-zh="斜转魔方">Skewb</h3>
+<h3 data-i18n-en="Skewb" data-i18n-zh="斜转">Skewb</h3>
 
 | Count | Result |
 | ---: | ---: |
@@ -213,7 +213,7 @@
 | 310 | 14.03 |
 | 309 | 17.08 |
 
-<h3 data-i18n-en="4x4x4 Blindfolded" data-i18n-zh="四阶盲拧">4x4x4 Blindfolded</h3>
+<h3 data-i18n-en="4x4x4 Blindfolded" data-i18n-zh="四盲">4x4x4 Blindfolded</h3>
 
 | Count | Result |
 | ---: | ---: |
@@ -228,7 +228,7 @@
 | 19 | 12:33.00 |
 | 18 | 10:03.00 |
 
-<h3 data-i18n-en="5x5x5 Blindfolded" data-i18n-zh="五阶盲拧">5x5x5 Blindfolded</h3>
+<h3 data-i18n-en="5x5x5 Blindfolded" data-i18n-zh="五盲">5x5x5 Blindfolded</h3>
 
 | Count | Result |
 | ---: | ---: |
@@ -243,7 +243,7 @@
 | 10 | 14:37.00 |
 | 10 | 19:37.00 |
 
-<h3 data-i18n-en="3x3x3 Multi-Blind" data-i18n-zh="三阶多盲">3x3x3 Multi-Blind</h3>
+<h3 data-i18n-en="3x3x3 Multi-Blind" data-i18n-zh="多盲">3x3x3 Multi-Blind</h3>
 
 | Count | Result |
 | ---: | ---: |

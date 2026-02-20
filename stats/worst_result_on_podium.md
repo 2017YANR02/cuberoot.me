@@ -94,7 +94,7 @@
 | [Uku Kruusamägi](https://www.worldcubeassociation.org/persons/2009KRUU01) | 8:47.43 | **10:02.00** | [Estonian Open 2010](https://www.worldcubeassociation.org/competitions/EstonianOpen2010/results/podiums#e777) | 3 |
 | [David Champagne](https://www.worldcubeassociation.org/persons/2009CHAM02) | 9:29.15 | **9:55.49** | [Cube Canada Day 2011](https://www.worldcubeassociation.org/competitions/CubeCanadaDay2011/results/podiums#e777) | 2 |
 
-<h3 data-i18n-en="3x3x3 Blindfolded" data-i18n-zh="三阶盲拧">3x3x3 Blindfolded</h3>
+<h3 data-i18n-en="3x3x3 Blindfolded" data-i18n-zh="三盲">3x3x3 Blindfolded</h3>
 
 | Person | Single | Average | Competition | Place |
 | :--- | ---: | ---: | :--- | :--: |
@@ -109,7 +109,7 @@
 | [Danila Rogozhnikov (Данила Рогожников)](https://www.worldcubeassociation.org/persons/2018ROGO03) | **17:06.00** | DNF | [Almet Open 2018](https://www.worldcubeassociation.org/competitions/AlmetOpen2018/results/podiums#e333bf) | 2 |
 | [John Louis](https://www.worldcubeassociation.org/persons/2006LOUI01) | **16:07.00** |  | [Delhi Open 2011](https://www.worldcubeassociation.org/competitions/DelhiOpen2011/results/podiums#e333bf) | 1 |
 
-<h3 data-i18n-en="3x3x3 Fewest Moves" data-i18n-zh="三阶最少步">3x3x3 Fewest Moves</h3>
+<h3 data-i18n-en="3x3x3 Fewest Moves" data-i18n-zh="最少步">3x3x3 Fewest Moves</h3>
 
 | Person | Single | Average | Competition | Place |
 | :--- | ---: | ---: | :--- | :--: |
@@ -139,7 +139,7 @@
 | [Anders Larsson](https://www.worldcubeassociation.org/persons/2003LARS01) | 1:59.81 | **2:13.31** | [Svekub 2005](https://www.worldcubeassociation.org/competitions/Svekub2005/results/podiums#e333oh) | 3 |
 | [Sirac Niyazov](https://www.worldcubeassociation.org/persons/2018NIYA01) | 1:40.28 | **1:58.25** | [Northern Decathlon 2018](https://www.worldcubeassociation.org/competitions/NorthernAzerbaijanDecathlon2018/results/podiums#e333oh) | 2 |
 
-<h3 data-i18n-en="Megaminx" data-i18n-zh="五魔方">Megaminx</h3>
+<h3 data-i18n-en="Megaminx" data-i18n-zh="五魔">Megaminx</h3>
 
 | Person | Single | Average | Competition | Place |
 | :--- | ---: | ---: | :--- | :--: |
@@ -184,7 +184,7 @@
 | [Renan Mondini Cerpe](https://www.worldcubeassociation.org/persons/2007CERP02) | 1:03.66 | **1:17.55** | [UNESP Open 2009](https://www.worldcubeassociation.org/competitions/UNESPOpen2009/results/podiums#eclock) | 3 |
 | [Justin Sinel](https://www.worldcubeassociation.org/persons/2009SINE01) | 57.06 | **1:17.06** | [Rizal Open 2009](https://www.worldcubeassociation.org/competitions/RizalOpen2009/results/podiums#eclock) | 2 |
 
-<h3 data-i18n-en="Skewb" data-i18n-zh="斜转魔方">Skewb</h3>
+<h3 data-i18n-en="Skewb" data-i18n-zh="斜转">Skewb</h3>
 
 | Person | Single | Average | Competition | Place |
 | :--- | ---: | ---: | :--- | :--: |
@@ -214,7 +214,7 @@
 | [Karel Doorman](https://www.worldcubeassociation.org/persons/2010DOOR01) | 2:12.78 | **3:11.29** | [New Zealand Champs 2010](https://www.worldcubeassociation.org/competitions/NewZealand2010/results/podiums#esq1) | 3 |
 | [Hanneke Rijks](https://www.worldcubeassociation.org/persons/2008RIJK01) | 2:11.19 | **3:05.77** | [Finnish Open 2008](https://www.worldcubeassociation.org/competitions/FinnishOpen2008/results/podiums#esq1) | 3 |
 
-<h3 data-i18n-en="4x4x4 Blindfolded" data-i18n-zh="四阶盲拧">4x4x4 Blindfolded</h3>
+<h3 data-i18n-en="4x4x4 Blindfolded" data-i18n-zh="四盲">4x4x4 Blindfolded</h3>
 
 | Person | Single | Average | Competition | Place |
 | :--- | ---: | ---: | :--- | :--: |
@@ -229,7 +229,7 @@
 | [Saoud Abdulaziz Almutawa](https://www.worldcubeassociation.org/persons/2018ALMU03) | **39:50.00** | DNF | [Kuwaiti Nationals 2024](https://www.worldcubeassociation.org/competitions/KuwaitiNationals2024/results/podiums#e444bf) | 3 |
 | [Teruki Miyazaki (宮崎輝樹)](https://www.worldcubeassociation.org/persons/2006MIYA01) | **38:58.00** |  | [Japan Open 2007](https://www.worldcubeassociation.org/competitions/JapanOpen2007/results/podiums#e444bf) | 1 |
 
-<h3 data-i18n-en="5x5x5 Blindfolded" data-i18n-zh="五阶盲拧">5x5x5 Blindfolded</h3>
+<h3 data-i18n-en="5x5x5 Blindfolded" data-i18n-zh="五盲">5x5x5 Blindfolded</h3>
 
 | Person | Single | Average | Competition | Place |
 | :--- | ---: | ---: | :--- | :--: |
@@ -244,7 +244,7 @@
 | [Tomoaki Okayama (岡山友昭)](https://www.worldcubeassociation.org/persons/2009OKAY01) | **58:47.00** |  | [Osaka 2011](https://www.worldcubeassociation.org/competitions/Osaka2011/results/podiums#e555bf) | 2 |
 | [Riadi Arsandi](https://www.worldcubeassociation.org/persons/2009ARSA01) | **58:30.00** | DNF | [Fun Fasting Day 2011](https://www.worldcubeassociation.org/competitions/FunFastingDay2011/results/podiums#e555bf) | 2 |
 
-<h3 data-i18n-en="3x3x3 Multi-Blind" data-i18n-zh="三阶多盲">3x3x3 Multi-Blind</h3>
+<h3 data-i18n-en="3x3x3 Multi-Blind" data-i18n-zh="多盲">3x3x3 Multi-Blind</h3>
 
 | Person | Single | Average | Competition | Place |
 | :--- | ---: | ---: | :--- | :--: |

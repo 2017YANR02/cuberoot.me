@@ -1,6 +1,6 @@
-<h2 data-i18n-en="Average of 12" data-i18n-zh="12 次平均">Average of 12</h2>
+<h2 data-i18n-en="Average of 12" data-i18n-zh="Average of 12">Average of 12</h2>
 
-<p><em data-i18n-en="12 consecutive official attempts are considered. Only people from top 200 single are taken into account." data-i18n-zh="取连续 12 次官方成绩计算。仅考虑单次前 200 名的选手。">12 consecutive official attempts are considered. Only people from top 200 single are taken into account.</em></p>
+<p><em data-i18n-en="12 consecutive official attempts are considered. Only people from top 200 single are taken into account." data-i18n-zh="12 consecutive official attempts are considered. Only people from top 200 single are taken into account.">12 consecutive official attempts are considered. Only people from top 200 single are taken into account.</em></p>
 <p><em data-i18n-en="Updated on 19 February 2026" data-i18n-zh="更新于 2026 年 2 月 19 日">Updated on 19 February 2026</em></p>
 
 
@@ -94,7 +94,7 @@
 | 1:52.63 | [Omar Ellabban](https://www.worldcubeassociation.org/persons/2018ELLA01) | 1:59.04, 2:06.61, 1:57.29, 2:07.29, 1:55.93, 1:58.03, 1:51.89, 1:46.34, 1:37.93, 1:47.11, 1:46.14, 1:37.34 |
 | 1:53.04 | [Đỗ Quang Hưng](https://www.worldcubeassociation.org/persons/2019HUNG16) | 1:44.18, 2:08.60, 1:51.91, 2:04.87, 1:48.62, 1:50.97, 1:56.32, 2:00.69, 1:39.47, 1:45.93, 1:50.21, 1:56.68 |
 
-<h3 data-i18n-en="3x3x3 Blindfolded" data-i18n-zh="三阶盲拧">3x3x3 Blindfolded</h3>
+<h3 data-i18n-en="3x3x3 Blindfolded" data-i18n-zh="三盲">3x3x3 Blindfolded</h3>
 
 | Ao12 | Person | Times |
 | ---: | :--- | :--- |
@@ -109,7 +109,7 @@
 | 18.50 | [Liam Chen](https://www.worldcubeassociation.org/persons/2014CHEN37) | 20.68, 19.22, 18.02, 16.83, 16.09, DNF, 16.49, 17.18, 19.98, 19.88, 16.47, 20.27 |
 | 18.60 | [Jens Haber](https://www.worldcubeassociation.org/persons/2018HABE02) | 19.74, 16.80, 19.68, 20.22, 18.51, 19.15, 15.43, DNF, 18.64, 18.47, 18.85, 15.91 |
 
-<h3 data-i18n-en="3x3x3 Fewest Moves" data-i18n-zh="三阶最少步">3x3x3 Fewest Moves</h3>
+<h3 data-i18n-en="3x3x3 Fewest Moves" data-i18n-zh="最少步">3x3x3 Fewest Moves</h3>
 
 | Ao12 | Person | Times |
 | ---: | :--- | :--- |
@@ -139,7 +139,7 @@
 | 8.74 | [Dwyane Ramos](https://www.worldcubeassociation.org/persons/2019RAMO05) | 9.12, 8.72, 7.57, 9.33, 9.45, 8.56, 7.68, 7.13, 10.04, 9.17, 8.80, 8.95 |
 | 8.77 | [Sean Patrick Villanueva](https://www.worldcubeassociation.org/persons/2017VILL41) | 8.94, 9.38, 7.71, 6.60, 7.63, 7.34, 10.32, 7.29, 10.40, 8.40, 13.75, 10.31 |
 
-<h3 data-i18n-en="Megaminx" data-i18n-zh="五魔方">Megaminx</h3>
+<h3 data-i18n-en="Megaminx" data-i18n-zh="五魔">Megaminx</h3>
 
 | Ao12 | Person | Times |
 | ---: | :--- | :--- |
@@ -184,7 +184,7 @@
 | 2.91 | [Kyle Jones](https://www.worldcubeassociation.org/persons/2022JONE11) | 4.02, 2.34, 3.21, 2.88, 4.14, 3.50, 2.11, 2.34, 2.32, 2.20, 3.04, 3.27 |
 | 2.92 | [Antoni Stojek](https://www.worldcubeassociation.org/persons/2022STOJ03) | 2.59, 2.78, 3.12, 5.68, 2.56, 2.56, 2.65, 3.96, 3.51, 2.54, 2.61, 2.84 |
 
-<h3 data-i18n-en="Skewb" data-i18n-zh="斜转魔方">Skewb</h3>
+<h3 data-i18n-en="Skewb" data-i18n-zh="斜转">Skewb</h3>
 
 | Ao12 | Person | Times |
 | ---: | :--- | :--- |
@@ -214,7 +214,7 @@
 | 5.84 | [Michał Krasowski](https://www.worldcubeassociation.org/persons/2013KRAS02) | 5.28, 5.03, 6.26, 5.94, 4.53, 6.77, 6.26, 6.14, 6.01, 6.23, 5.98, 5.29 |
 | 5.89 | [Vicenzo Guerino Cecchini](https://www.worldcubeassociation.org/persons/2015CECC01) | 6.98, 4.82, 5.56, 7.48, 6.00, 4.49, 5.90, 7.41, 6.00, 4.83, 6.07, 5.34 |
 
-<h3 data-i18n-en="4x4x4 Blindfolded" data-i18n-zh="四阶盲拧">4x4x4 Blindfolded</h3>
+<h3 data-i18n-en="4x4x4 Blindfolded" data-i18n-zh="四盲">4x4x4 Blindfolded</h3>
 
 | Ao12 | Person | Times |
 | ---: | :--- | :--- |
@@ -229,7 +229,7 @@
 | 3:37.08 | [Mihály Horváth](https://www.worldcubeassociation.org/persons/2016HORV04) | 3:07.53, 3:28.12, 3:52.29, 3:47.57, 3:25.79, 3:38.07, 3:40.91, 4:19.17, 3:23.51, 3:32.08, 3:07.23, 4:14.97 |
 | 4:07.27 | [Jonathan Blöcher](https://www.worldcubeassociation.org/persons/2018BLOC01) | DNF, 3:54.26, 4:14.18, 4:56.83, 3:57.92, 3:59.95, 4:29.77, 3:41.16, 3:53.24, 4:14.62, 3:43.30, 3:48.59 |
 
-<h3 data-i18n-en="5x5x5 Blindfolded" data-i18n-zh="五阶盲拧">5x5x5 Blindfolded</h3>
+<h3 data-i18n-en="5x5x5 Blindfolded" data-i18n-zh="五盲">5x5x5 Blindfolded</h3>
 
 | Ao12 | Person | Times |
 | ---: | :--- | :--- |
