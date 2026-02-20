@@ -59,7 +59,7 @@
 | potentially_seen_world_records | 24s | 独立 |
 | most_attended_competitions_in_single_month | 21s | 独立 |
 | records_in_most_events | 19s | 独立 |
-| wr_first_comp_wr | 19s | 独立 |
+| first_r_is_wr | 19s | 独立 |
 | most_competitions_abroad | 17s | 独立 |
 | complete_competition_winners | 17s | 独立 |
 | world_records_by_country | 15s | 独立 |

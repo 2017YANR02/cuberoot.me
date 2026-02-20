@@ -1,6 +1,17 @@
-# NOTE: 统计文件中英翻译映射表
-# 用于批量注入 @title_zh 和 @note_zh
+# NOTE: 统计文件中英翻译映射表（后端构建时注入）
+# 用于批量注入 @title_zh 和 @note_zh 到各统计类实例变量
 # 格式: "file_basename" => { title_zh: "...", note_zh: "..." }
+#
+# 架构说明：本文件属于【后端构建层】
+#   - 执行时机：Ruby 生成 .md 文件时（CI/本地构建）
+#   - 作用结果：将 title_zh / note_zh 写入 .md 文件的 data-i18n-zh HTML 属性
+#   - 前端读取：浏览器加载后，i18n/i18n.js 的 apply() 直接读取 data-i18n-zh 属性切换语言
+#
+# 与 i18n/i18n.js 的分工：
+#   - 本文件（.rb）：负责 stats 统计页面的标题和说明，构建时硬编码到静态 HTML 属性
+#   - i18n.js（前端）：负责运行时翻译，覆盖表头、项目名、国家名、Solver UI 等动态内容
+#                       其 _statsTitleZh / _statsDescZh 为兜底映射，优先级低于本文件生成的属性
+# NOTE: 新增统计时只需在本文件添加条目，i18n.js 中的 _statsTitleZh 无需同步更新
 STAT_TRANSLATIONS = {
   "average_event_count_by_competition" => {
     title_zh: "每场比赛的平均项目数",
@@ -290,9 +301,13 @@ STAT_TRANSLATIONS = {
     title_zh: "当前世界纪录",
     note_zh: "显示各官方项目当前的世界纪录单次和平均。"
   },
-  "wr_first_comp_wr" => {
-    title_zh: "首次参赛即创世界纪录",
-    note_zh: "在首次 WCA 比赛中就创造了三阶世界纪录的选手。"
+  "first_r_is_wr" => {
+    title_zh: "首次破纪录即为世界纪录",
+    note_zh: "首次创造任何纪录（不限项目、不限单次/平均）即为世界纪录的选手。"
+  },
+  "wr_1st_wr" => {
+    title_zh: "首场比赛的第一次还原",
+    note_zh: "选手在首场 WCA 比赛第一轮的第一次还原成绩（value1）。"
   },
   "wr_median" => {
     title_zh: "世界纪录中位数历史",

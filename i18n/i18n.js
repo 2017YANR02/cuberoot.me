@@ -201,7 +201,9 @@ const I18n = {
     _placeholderEn: {},  // 初始化时自动生成反向映射
     _solverLabelEn: {},  // 初始化时自动生成反向映射
 
-    // NOTE: Stats 页面标题映射（h2），用于运行时翻译
+    // NOTE: Stats 页面标题映射（h2），用于运行时翻译〔兜底映射〕
+    // 主要翻译由后端 _stats_build/i18n_translations.rb 在构建时写入 data-i18n-zh 属性，apply() 优先读取该属性
+    // 本映射仅在 data-i18n-zh 属性缺失时生效（如手工编写的 .md 文件）。新增统计无需在此同步添加
     _statsTitleZh: {
         "Average event count by competition": "每场比赛平均项目数",
         "Average of 100": "100 次平均", "Average of 12": "12 次平均",
@@ -276,7 +278,8 @@ const I18n = {
     },
     _metricBtnEn: {},
 
-    // NOTE: Stats 页面描述映射（em/斜体文本），用于运行时翻译
+    // NOTE: Stats 页面描述映射（em/斜体文本），用于运行时翻译〔兜底映射〕
+    // 主要翻译由后端 _stats_build/i18n_translations.rb 在构建时写入 data-i18n-zh 属性，本映射为兜底应急方案。新增统计无需在此同步添加
     _statsDescZh: {
         "Note: In other words, average number of events competitors participated in.": "注：即选手平均参加了多少个项目。",
         "Note: 100 consecutive official attempts are considered. Only people from top 200 single are taken into account.": "注：取连续 100 次官方尝试的平均。仅考虑单次排名前 200 的选手。",
