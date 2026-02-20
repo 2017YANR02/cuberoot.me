@@ -1,30 +1,21 @@
+<div style="position:fixed;bottom:16px;right:16px;z-index:9999;display:flex;gap:0;border-radius:6px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.15)">
+  <button data-i18n-toggle="en" onclick="I18n.setLocale('en')" style="padding:6px 14px;border:none;cursor:pointer;font-size:14px;font-weight:600;background:rgba(255,255,255,0.1);color:#ccc;backdrop-filter:blur(8px)">EN</button>
+  <button data-i18n-toggle="zh" onclick="I18n.setLocale('zh')" style="padding:6px 14px;border:none;cursor:pointer;font-size:14px;font-weight:600;background:rgba(255,255,255,0.1);color:#ccc;backdrop-filter:blur(8px)">中文</button>
+</div>
+<script src="../src/i18n/i18n.js" defer></script>
 
 <h2 data-i18n-en="World Record Analysis" data-i18n-zh="世界纪录分析">World Record Analysis</h2>
 
 <ul>
-  <li><a href="wr_average_history" data-i18n-en="Average" data-i18n-zh="平均">Average</a></li>
-  <li><a href="wr_bao5" data-i18n-en="BAo5 (Best Average of 5)" data-i18n-zh="BAo5（最佳 5 次平均）">BAo5 (Best Average of 5)</a></li>
-  <li><a href="wr_bpa" data-i18n-en="BPA (Best Possible Average)" data-i18n-zh="BPA（最佳可能平均）">BPA (Best Possible Average)</a></li>
-  <li><a href="wr_best_counting" data-i18n-en="Best counting solve" data-i18n-zh="最佳有效单次">Best counting solve</a></li>
+  <li><a href="wr_aoxr" data-i18n-en="AoXR" data-i18n-zh="跨轮次均值">AoXR</a></li>
   <li><a href="wr_newcomer" data-i18n-en="Best first competition results (Newcomer World Records)" data-i18n-zh="最佳首次参赛成绩（新人世界纪录）">Best first competition results (Newcomer World Records)</a></li>
-  <li><a href="wr_best_average_ratio" data-i18n-en="Best/average ratio" data-i18n-zh="最佳/平均比">Best/average ratio</a></li>
   <li><a href="wr_current" data-i18n-en="Current world records" data-i18n-zh="当前世界纪录">Current world records</a></li>
   <li><a href="wr_dominance" data-i18n-en="Dominance (top N on leaderboard by one person)" data-i18n-zh="排行榜霸榜（单人霸占前 N 席）">Dominance (top N on leaderboard by one person)</a></li>
-  <li><a href="wr_median" data-i18n-en="Median" data-i18n-zh="中位数">Median</a></li>
-  <li><a href="wr_mo5" data-i18n-en="Mo5 (Mean of 5)" data-i18n-zh="Mo5（5 次均值）">Mo5 (Mean of 5)</a></li>
-  <li><a href="wr_single_history" data-i18n-en="Single" data-i18n-zh="单次">Single</a></li>
-  <li><a href="wr_variance" data-i18n-en="Variance" data-i18n-zh="方差">Variance</a></li>
-  <li><a href="wr_wao5" data-i18n-en="WAo5 (Worst Average of 5)" data-i18n-zh="WAo5（最差 5 次平均）">WAo5 (Worst Average of 5)</a></li>
-  <li><a href="wr_wpa" data-i18n-en="WPA (Worst Possible Average)" data-i18n-zh="WPA（最差可能平均）">WPA (Worst Possible Average)</a></li>
-  <li><a href="wr_ao1r" data-i18n-en="World record Ao1R (Average of 1 Round) history" data-i18n-zh="世界纪录 Ao1R（单轮平均）历史">World record Ao1R (Average of 1 Round) history</a></li>
-  <li><a href="wr_ao2r" data-i18n-en="World record Ao2R (Average of 2 Rounds) history" data-i18n-zh="世界纪录 Ao2R（双轮平均）历史">World record Ao2R (Average of 2 Rounds) history</a></li>
-  <li><a href="wr_ao3r" data-i18n-en="World record Ao3R (Average of 3 Rounds) history" data-i18n-zh="世界纪录 Ao3R（三轮平均）历史">World record Ao3R (Average of 3 Rounds) history</a></li>
-  <li><a href="wr_ao4r" data-i18n-en="World record Ao4R (Average of 4 Rounds) history" data-i18n-zh="世界纪录 Ao4R（四轮平均）历史">World record Ao4R (Average of 4 Rounds) history</a></li>
+  <li><a href="wr_metric" data-i18n-en="Metric" data-i18n-zh="衍生指标">Metric</a></li>
   <li><a href="wr_first_comp_wr" data-i18n-en="World records set in a person's first competition" data-i18n-zh="首次参赛即创世界纪录">World records set in a person's first competition</a></li>
-  <li><a href="wr_worst_counting" data-i18n-en="Worst counting solve" data-i18n-zh="最差有效单次">Worst counting solve</a></li>
-  <li><a href="wr_worst" data-i18n-en="Worst solve in round" data-i18n-zh="最差单次">Worst solve in round</a></li>
 </ul>
 
+---
 
 <h2 data-i18n-en="General Statistics" data-i18n-zh="通用统计">General Statistics</h2>
 
