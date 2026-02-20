@@ -32,7 +32,7 @@ const I18n = {
         "Rank": "排名", "Result": "成绩", "Details": "详情",
         "Started at": "开始于", "Ended at": "结束于",
         "DNF rate": "DNF 率", "DNFs": "DNF 次数", "Attempts": "尝试次数",
-        "Gain": "提升", "Days": "天数",
+        "Gain": "提升", "Days": "天数", "Times": "成绩",
         "Country": "国家", "Continent": "大洲", "Records": "纪录数",
         "Gold": "金牌", "Silver": "银牌", "Bronze": "铜牌", "Total": "总计",
         "Events": "项目数", "Competitions count": "比赛数",
