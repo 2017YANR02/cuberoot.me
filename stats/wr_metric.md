@@ -1,6 +1,6 @@
-<h2 data-i18n-en="Metric" data-i18n-zh="衍生指标">Metric</h2>
+<h2 data-i18n-en="Metric" data-i18n-zh="指标">Metric</h2>
 
-<p><em data-i18n-en="World record history and current rankings for various derived metrics computed from a round's 5 solves." data-i18n-zh="从一轮 5 次成绩中计算的各类衍生指标的世界纪录历史与当前排名。">World record history and current rankings for various derived metrics computed from a round's 5 solves.</em></p>
+<p><em data-i18n-en="World record history and current rankings for various derived metrics computed from a round's 5 solves." data-i18n-zh="从一轮 5 次成绩中计算的各类指标的世界纪录历史与当前排名。">World record history and current rankings for various derived metrics computed from a round's 5 solves.</em></p>
 <p><em data-i18n-en="Updated on 19 February 2026" data-i18n-zh="更新于 2026 年 2 月 19 日">Updated on 19 February 2026</em></p>
 
 <style>

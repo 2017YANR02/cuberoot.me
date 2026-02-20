@@ -345,8 +345,12 @@ STAT_TRANSLATIONS = {
     title_zh: "世界纪录 WPA（最差可能平均）历史",
     note_zh: "WPA：一轮中前 4 次成绩取最差的 3 次计算平均。"
   },
+  "wr_metric" => {
+    title_zh: "指标",
+    note_zh: "从一轮 5 次成绩中计算的各类指标的世界纪录历史与当前排名。"
+  },
   "yearly_rankings" => {
-    title_zh: nil,
-    note_zh: nil
+    title_zh: "年度排名",
+    note_zh: "根据定义，这些排名仅包含当年的成绩。"
   }
 }.freeze
