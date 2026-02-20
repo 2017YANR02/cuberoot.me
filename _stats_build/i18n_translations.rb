@@ -305,10 +305,7 @@ STAT_TRANSLATIONS = {
     title_zh: "首次破纪录即为世界纪录",
     note_zh: "首次创造任何纪录（不限项目、不限单次/平均）即为世界纪录的选手。"
   },
-  "wr_1st_wr" => {
-    title_zh: "首场比赛第一轮成绩",
-    note_zh: "选手在首场 WCA 比赛第一轮的第一次还原（单次）/ 该轮平均成绩。"
-  },
+
   "wr_median" => {
     title_zh: "世界纪录中位数历史",
     note_zh: "中位数：一轮中所有成绩的中间值。若有 DNF，中位数会偏向排名更高的有效成绩。"
@@ -318,8 +315,8 @@ STAT_TRANSLATIONS = {
     note_zh: "Mo5：一轮中 5 次成绩的算术平均（不去头尾）。"
   },
   "wr_newcomer" => {
-    title_zh: "最佳首次参赛成绩（新人世界纪录）",
-    note_zh: "展示选手在首次参加某项目比赛时取得的最佳单次/平均成绩。"
+    title_zh: "新人",
+    note_zh: "展示选手在首次参加某项目比赛时取得的最佳成绩。"
   },
   "wr_single_history" => {
     title_zh: "世界纪录单次历史",
