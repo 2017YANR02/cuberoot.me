@@ -35,7 +35,7 @@ class WrDominance < Statistic
 
   HEADER = {
     "Count" => :right, "Improvement" => :right, "Days" => :right,
-    "Person" => :left, "Competition" => :left, "Date" => :left
+    "Person" => :left, "Date" => :left, "Competition" => :left
   }.freeze
 
   def initialize
@@ -102,8 +102,8 @@ class WrDominance < Statistic
       md += "<td style=\"text-align:right\">#{row[:improvement]}</td>"
       md += "<td style=\"text-align:right\">#{row[:days]}</td>"
       md += "<td>#{md_link_to_html(row[:person_link])}</td>"
-      md += "<td>#{md_link_to_html(row[:comp_link])}</td>"
       md += "<td>#{row[:date]}</td>"
+      md += "<td>#{md_link_to_html(row[:comp_link])}</td>"
       md += "</tr>\n"
     end
     md += "</table>\n"

@@ -9,7 +9,7 @@ class FirstRIsWr < Statistic
     @title = "First record is a World Record"
     @note = "People whose very first record (single or average, any event) was a World Record."
     @table_header = { "#" => :right, "Person" => :left, "Event" => :left, "Type" => :left,
-                      "Result" => :right, "Competition" => :left, "Date" => :left }
+                      "Result" => :right, "Date" => :left, "Competition" => :left }
   end
 
   def query
@@ -60,7 +60,7 @@ class FirstRIsWr < Statistic
       result_str = SolveTime.new(r["event_id"], type_sym, r["result"]).clock_format
       type_str = r["record_type"] == "single" ? "Single" : "Average"
       date_str = r["start_date"].strftime("%Y-%m-%d")
-      [i + 1, r["person_link"], event_name, type_str, result_str, r["competition_link"], date_str]
+      [i + 1, r["person_link"], event_name, type_str, result_str, date_str, r["competition_link"]]
     end
   end
 end

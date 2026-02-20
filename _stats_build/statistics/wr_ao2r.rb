@@ -4,7 +4,7 @@ class WrAo2r < AoRounds
   def initialize
     @title = "World record Ao2R (Average of 2 Rounds) history"
     @note = "Ao2R: average of the 2 round averages (R1 + Final) in a competition."
-    @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right, "Person" => :left, "Competition" => :left, "Date" => :left, "Details" => :left }
+    @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right, "Person" => :left, "Date" => :left, "Competition" => :left, "Details" => :left }
   end
 
   def round_count

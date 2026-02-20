@@ -31,7 +31,7 @@ class WrNewcomer < GroupedStatistic
   # NOTE: History 表头
   HISTORY_HEADER = {
     "Result" => :right, "Improvement" => :right, "Days" => :right,
-    "Person" => :left, "Competition" => :left, "Date" => :left
+    "Person" => :left, "Date" => :left, "Competition" => :left
   }.freeze
 
   def initialize
@@ -228,7 +228,7 @@ class WrNewcomer < GroupedStatistic
         .each_with_index.map do |r, i|
           result_str = SolveTime.new(event_id, metric[:type], r["first_result"]).clock_format
           date_str = fmt_date(r["start_date"])
-          [i + 1, r["person_link"], result_str, r["country_id"], r["competition_link"], date_str]
+          [i + 1, r["person_link"], result_str, r["country_id"], date_str, r["competition_link"]]
         end
       [event_name, event_rows]
     end
@@ -247,7 +247,7 @@ class WrNewcomer < GroupedStatistic
         result_str = SolveTime.new(event_id, metric[:type], r["first_result"]).clock_format
         gain_str = i > 0 ? "#{((nwr[i-1]["first_result"].to_f - r["first_result"].to_f) / nwr[i-1]["first_result"].to_f * 100).round(1)}%" : ""
         days = i < nwr.size - 1 ? (nwr[i+1]["start_date"].to_date - r["start_date"].to_date).to_i : (Date.today - r["start_date"].to_date).to_i
-        [result_str, gain_str, days.to_s, r["person_link"], r["competition_link"], fmt_date(r["start_date"])]
+        [result_str, gain_str, days.to_s, r["person_link"], fmt_date(r["start_date"]), r["competition_link"]]
       end
 
       [event_name, results.reverse]
