@@ -8,6 +8,13 @@ build_path = File.expand_path("../../stats", __dir__)
 
 sort_key = ->(pair) { pair[1].title.gsub(/\d+/) { |n| n.rjust(10, "0") } }
 
+# NOTE: 复用 statistic.rb top 方法的翻译优先级: @title_zh > STAT_TRANSLATIONS > @title
+# stat.title_zh 只读 @title_zh（多数统计未设置），必须手动查翻译表
+resolve_zh = ->(id, stat) {
+  trans = STAT_TRANSLATIONS[id] || {}
+  stat.title_zh || trans[:title_zh] || stat.title
+}
+
 # NOTE: 被合并到聚合页面的统计 ID，不在索引页单独列出
 MERGED_INTO_METRIC = %w[
   wr_single_history wr_average_history
@@ -41,7 +48,7 @@ unless wr_stats.empty?
     pri ? [0, pri] : [1, stat.title.gsub(/\d+/) { |n| n.rjust(10, "0") }]
   }
   wr_sorted.each do |id, stat|
-    zh = stat.title_zh || stat.title
+    zh = resolve_zh.call(id, stat)
     output += "  <li><a href=\"#{id}\" data-i18n-en=\"#{stat.title}\" data-i18n-zh=\"#{zh}\">#{stat.title}</a></li>\n"
   end
   output += "</ul>\n\n"
@@ -52,7 +59,7 @@ unless general_stats.empty?
   output += "<h2 data-i18n-en=\"General Statistics\" data-i18n-zh=\"通用统计\">General Statistics</h2>\n\n"
   output += "<ul>\n"
   general_stats.sort_by(&sort_key).each do |id, stat|
-    zh = stat.title_zh || stat.title
+    zh = resolve_zh.call(id, stat)
     output += "  <li><a href=\"#{id}\" data-i18n-en=\"#{stat.title}\" data-i18n-zh=\"#{zh}\">#{stat.title}</a></li>\n"
   end
   output += "</ul>\n"

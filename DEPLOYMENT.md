@@ -104,6 +104,21 @@ ruiminyan.github.io/
 **问题**：每次推送代码都触发 47 分钟的完整构建。
 **解决**：拆分为语法检查（push 触发）和完整构建（定时触发）。
 
+## 本地开发服务器
+
+启动 Jekyll 本地预览服务器，修改文件后自动重新生成：
+
+```powershell
+cd D:\cube\ruiminyan.github.io
+bundle exec jekyll serve
+```
+
+- **访问地址**：http://127.0.0.1:4000
+- **自动重新生成**：已启用（保存文件后浏览器刷新即可看到变更）
+- **停止服务器**：`Ctrl+C`
+
+> 首次运行前需先 `bundle install` 安装依赖（见下方「本地环境 → Ruby」）。
+
 ## 本地发布统计（无需等待 CI）
 
 本地有 MySQL 数据库，可直接生成 `.md` 文件后 push，线上立刻生效。
