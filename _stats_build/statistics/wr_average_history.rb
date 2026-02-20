@@ -56,7 +56,7 @@ class WrAverageHistory < GroupedStatistic
       end
 
       # 当前排名：average top 10
-      @ranking_by_event[event_name] = build_ranking_from_all(event_id)
+      @ranking_by_event[event_name] = build_ranking_from_results(event_id, field: "average", type: :average, cache_name: "wr_average")
 
       results = unique_records.each_with_index.map do |r, i|
         avg = SolveTime.new(event_id, :average, r["average"])
@@ -67,63 +67,17 @@ class WrAverageHistory < GroupedStatistic
     end
   end
 
-  # NOTE: 用 top + tabbed_grouped_markdown 替换原手写 HTML
-  # ranking rows 是 hash，这里归一化为数组并加上排名序号
+  # NOTE: 用 top + tabbed_grouped_markdown + 公共 RANKING_HEADER 渲染
   def markdown
-    ranking_header = { "#" => :right, "Person" => :left, "Average" => :right }
     # NOTE: 必须先调 data 触发 transform，才能填充 @ranking_by_event
     history_data = data
-    ranking_data = @ranking_by_event.transform_values do |rows|
-      rows.each_with_index.map { |r, i| [i + 1, r[:person_link], r[:result_str]] }
-    end
+    ranking_data = @ranking_by_event.transform_values { |rows| ranking_to_arrays(rows) }
     top + tabbed_grouped_markdown(
       ranking_data: ranking_data,
-      ranking_header: ranking_header,
+      ranking_header: RANKING_HEADER,
       history_data: history_data,
       history_header: @table_header
     )
   end
 
-  private
-
-  # NOTE: 从全量 results 中取每项目 average top 10
-  # 支持磁盘缓存，STATS_USE_CACHE=1 时跳过全量 MySQL 查询
-  def build_ranking_from_all(event_id)
-    require_relative "../core/database"
-    @@average_ranking_cache ||= begin
-      cache_file = File.join(Statistic::CACHE_DIR, "wr_average_ranking.marshal")
-      if ENV["STATS_USE_CACHE"] == "1" && File.exist?(cache_file)
-        Marshal.load(File.binread(cache_file))
-      else
-        result = Database.client.query(
-          "SELECT event_id, person_id, average,
-           CONCAT('[', person.name, '](https://www.worldcubeassociation.org/persons/', person.wca_id, ')') person_link
-           FROM results
-           JOIN persons person ON person.wca_id = person_id AND person.sub_id = 1
-           WHERE average > 0
-           ORDER BY event_id, average"
-        ).to_a
-        FileUtils.mkdir_p(Statistic::CACHE_DIR)
-        File.binwrite(cache_file, Marshal.dump(result))
-        result
-      end
-    end
-
-    best_by_person = {}
-    @@average_ranking_cache.each do |r|
-      next unless r["event_id"] == event_id
-      pid = r["person_id"]
-      if !best_by_person[pid] || r["average"] < best_by_person[pid]["average"]
-        best_by_person[pid] = r
-      end
-    end
-
-    best_by_person.values
-      .sort_by { |r| r["average"] }
-      .first(10)
-      .map do |r|
-        result_str = SolveTime.new(event_id, :average, r["average"]).clock_format
-        { person_link: r["person_link"], result_str: result_str }
-      end
-  end
 end

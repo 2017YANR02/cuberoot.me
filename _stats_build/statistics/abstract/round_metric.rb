@@ -108,12 +108,11 @@ class RoundMetric < GroupedStatistic
     @_ranking_cache = @@precomputed_rankings[self.class.name]
   end
 
-  # NOTE: 用 top + tabbed_grouped_markdown 替换原手写 HTML，所有引号转义由基类统一处理
+  # NOTE: 用 top + tabbed_grouped_markdown 替换原手写 HTML，使用简化版排名表头
   def markdown
-    ranking_header = { "Person" => :left, "Result" => :right }
     top + tabbed_grouped_markdown(
       ranking_data: ranking_data,
-      ranking_header: ranking_header,
+      ranking_header: RANKING_HEADER_SIMPLE,
       history_data: data,
       history_header: @table_header
     )
@@ -135,7 +134,8 @@ class RoundMetric < GroupedStatistic
       # NOTE: 每个项目只查询 MySQL 一次，所有子类共享同一份数据
       event_rows = Database.client.query(
         "SELECT person_id, value1, value2, value3, value4, value5, average, best,
-         CONCAT('[', person.name, '](https://www.worldcubeassociation.org/persons/', person.wca_id, ')') person_link
+         CONCAT('[', person.name, '](https://www.worldcubeassociation.org/persons/', person.wca_id, ')') person_link,
+         person.country_id
          FROM results
          JOIN persons person ON person.wca_id = person_id AND person.sub_id = 1
          WHERE average > 0 AND event_id = '#{event_id}'"
@@ -150,7 +150,7 @@ class RoundMetric < GroupedStatistic
           next unless metric
           pid = r["person_id"]
           if !best_by_person[pid] || metric < best_by_person[pid][:metric]
-            best_by_person[pid] = { metric: metric, person_link: r["person_link"] }
+            best_by_person[pid] = { metric: metric, person_link: r["person_link"], country: r["country_id"] }
           end
         end
 
@@ -159,7 +159,7 @@ class RoundMetric < GroupedStatistic
           .first(10)
           .map do |v|
             metric_str = instance.format_metric(v[:metric], event_id)
-            [v[:person_link], metric_str]
+            [v[:person_link], metric_str, v[:country]]
           end
 
         @@precomputed_rankings[class_name] << [event_name, top]
