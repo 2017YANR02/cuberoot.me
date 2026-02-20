@@ -5,10 +5,9 @@
 <ul>
   <li><a href="wr_metric" data-i18n-en="Metric" data-i18n-zh="指标">Metric</a></li>
   <li><a href="wr_aoxr" data-i18n-en="AoXR" data-i18n-zh="AoXR">AoXR</a></li>
-  <li><a href="wr_newcomer" data-i18n-en="Best first competition results (Newcomer World Records)" data-i18n-zh="最佳首次参赛成绩（新人世界纪录）">Best first competition results (Newcomer World Records)</a></li>
+  <li><a href="wr_newcomer" data-i18n-en="Newcomer" data-i18n-zh="新人">Newcomer</a></li>
   <li><a href="wr_current" data-i18n-en="Current world records" data-i18n-zh="当前世界纪录">Current world records</a></li>
   <li><a href="wr_dominance" data-i18n-en="Dominance (top N on leaderboard by one person)" data-i18n-zh="排行榜霸榜（单人霸占前 N 席）">Dominance (top N on leaderboard by one person)</a></li>
-  <li><a href="wr_1st_wr" data-i18n-en="First round results in first competition" data-i18n-zh="首场比赛第一轮成绩">First round results in first competition</a></li>
 </ul>
 
 <h2 data-i18n-en="General Statistics" data-i18n-zh="通用统计">General Statistics</h2>

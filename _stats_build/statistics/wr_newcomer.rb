@@ -1,8 +1,10 @@
-# NOTE: NWR (Newcomer World Record) = 选手首场参加某项目比赛时的最佳成绩
-# 支持 Single 和 Average 两种指标，每种有 Current Ranking + NWR History 双视图
-# 与 best_first_single/best_first_average 的区别:
-#   - best_first_* 只有排名列表
-#   - wr_newcomer 增加 NWR History（按时间正序扫描首赛成绩的严格递减序列）
+# NOTE: 新人统计合并页 = wr_newcomer + wr_1st_wr
+# 两个维度:
+#   1) 指标 (metric): Single / Average
+#   2) 数据源 (source):
+#      - 首次还原 (1st-solve): 首场比赛第一轮的 value1(单次) / average(平均)
+#      - 首场比赛 (1st-comp):  首场比赛所有轮次的 MIN(best)(单次) / MIN(average)(平均)
+# 每种组合有 Current Ranking + History 双视图
 require_relative "../core/grouped_statistic"
 require_relative "../core/events"
 require_relative "../core/solve_time"
@@ -14,63 +16,89 @@ class WrNewcomer < GroupedStatistic
   include TabUi
   include MetricSelector
 
-  # NOTE: 两种指标——Single 和 Average
-  MODES = [
-    { label: "Single",  id: "single",  col: "best",    type: :single },
-    { label: "Average", id: "average", col: "average",  type: :average },
+  # NOTE: 指标维度
+  METRICS = [
+    { label: "Single",  id: "single",  type: :single },
+    { label: "Average", id: "average", type: :average },
   ].freeze
 
-  # NOTE: NWR History 表头
+  # NOTE: 数据源维度
+  SOURCES = [
+    { label: "First Solve",       label_zh: "首次还原",  id: "1st-solve" },
+    { label: "First Competition", label_zh: "首场比赛",  id: "1st-comp" },
+  ].freeze
+
+  # NOTE: History 表头
   HISTORY_HEADER = {
     "Result" => :right, "Improvement" => :right, "Days" => :right,
     "Person" => :left, "Competition" => :left, "Date" => :left
   }.freeze
 
   def initialize
-    @title = "Best first competition results (Newcomer World Records)"
-    @note = "Shows the best single/average achieved by a person in their very first competition for each event."
+    @title = "Newcomer"
+    @note = "Shows the best results from a person's very first competition for each event."
   end
 
   def markdown
     md = top
 
-    # --- 指标选择器按钮 ---
+    # --- 指标选择器（第一行：Single / Average）---
     md += metric_selector_styles
     md += newcomer_metric_buttons
+    # --- 数据源选择器（第二行：首次还原 / 首场比赛）---
+    md += source_selector_styles
     md += tab_styles
 
-    MODES.each_with_index do |mode, i|
-      prefix = mode[:id]
-      active = i == 0
+    METRICS.each_with_index do |metric, mi|
+      m_prefix = metric[:id]
+      m_active = mi == 0
 
-      md += "<div class=\"metric-panel#{active ? ' active' : ''}\" id=\"metric-#{prefix}\">\n"
+      md += "<div class=\"metric-panel#{m_active ? ' active' : ''}\" id=\"metric-#{m_prefix}\">\n"
+      md += source_selector_buttons(m_prefix)
 
-      # NOTE: 每种 mode 只查一次数据库，ranking 和 history 共享数据
-      grouped = fetch_grouped_data(mode)
-      ranking = build_ranking(grouped, mode)
-      history = build_history(grouped, mode)
+      SOURCES.each_with_index do |source, si|
+        s_prefix = "#{m_prefix}-#{source[:id]}"
+        s_active = si == 0
 
-      md += tab_buttons(
-        "Current Ranking", "当前排名", "#{prefix}-ranking",
-        "WR History", "NWR 历史", "#{prefix}-history"
-      )
-      md += grouped_panel("#{prefix}-ranking", true, ranking, RANKING_HEADER)
-      md += grouped_panel("#{prefix}-history", false, history, HISTORY_HEADER)
+        md += "<div class=\"source-panel#{s_active ? ' active' : ''}\" id=\"source-#{s_prefix}\">\n"
+
+        # NOTE: 按数据源类型查询
+        grouped = if source[:id] == "1st-solve"
+          fetch_first_round_data(metric)
+        else
+          fetch_first_comp_data(metric)
+        end
+
+        ranking = build_ranking(grouped, metric)
+        history = build_history(grouped, metric)
+
+        md += tab_buttons(
+          "Current Ranking", "当前排名", "#{s_prefix}-ranking",
+          "WR History", "历史", "#{s_prefix}-history"
+        )
+        md += grouped_panel("#{s_prefix}-ranking", true, ranking, RANKING_HEADER)
+        md += grouped_panel("#{s_prefix}-history", false, history, HISTORY_HEADER)
+
+        md += "</div>\n"
+      end
 
       md += "</div>\n"
     end
 
     md += metric_selector_script
+    md += source_selector_script
     md += tab_script
     md
   end
 
   private
 
-  # NOTE: 生成指标选择器按钮（只有 Single/Average 两个，不需要传 instances）
+  # ========== UI 组件 ==========
+
+  # NOTE: 指标按钮（Single / Average）
   def newcomer_metric_buttons
     html = "<div class=\"metric-selector\">\n"
-    MODES.each_with_index do |m, i|
+    METRICS.each_with_index do |m, i|
       active = i == 0 ? " active" : ""
       html += "  <button class=\"metric-btn#{active}\" onclick=\"switchMetric('#{m[:id]}')\" "
       html += "data-i18n-en=\"#{m[:label]}\">#{m[:label]}</button>\n"
@@ -79,13 +107,95 @@ class WrNewcomer < GroupedStatistic
     html
   end
 
-  # NOTE: 一次查询，返回按事件分组的排序结果（ranking + history 共享）
-  def fetch_grouped_data(mode)
-    col = mode[:col]
+  # NOTE: 数据源选择器样式（复用 metric-selector 的药丸按钮风格）
+  def source_selector_styles
+    <<~HTML
+      <style>
+      .source-selector{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 16px}
+      .source-btn{padding:8px 16px;border:1px solid #4a6785;border-radius:20px;background:transparent;color:#8ab4f8;cursor:pointer;font-size:14px;font-weight:500;transition:all .2s}
+      .source-btn.active{background:#2c4a6e;border-color:#8ab4f8;color:#fff}
+      .source-btn:hover:not(.active){background:rgba(138,180,248,0.1)}
+      .source-panel{display:none}
+      .source-panel.active{display:block}
+      </style>
+    HTML
+  end
+
+  # NOTE: 数据源按钮（首次还原 / 首场比赛），每个 metric-panel 内独立一组
+  def source_selector_buttons(metric_prefix)
+    html = "<div class=\"source-selector\">\n"
+    SOURCES.each_with_index do |s, i|
+      active = i == 0 ? " active" : ""
+      sid = "#{metric_prefix}-#{s[:id]}"
+      html += "  <button class=\"source-btn#{active}\" onclick=\"switchSource(this,'#{sid}')\" "
+      html += "data-i18n-en=\"#{s[:label]}\" data-i18n-zh=\"#{s[:label_zh]}\">#{s[:label]}</button>\n"
+    end
+    html += "</div>\n"
+    html
+  end
+
+  # NOTE: 数据源切换 JS——在当前 metric-panel 内切换 source-panel
+  def source_selector_script
+    <<~HTML
+      <script>
+      function switchSource(btn, id){
+        var scope = btn.closest('.metric-panel') || document;
+        scope.querySelectorAll('.source-btn').forEach(b=>b.classList.remove('active'));
+        scope.querySelectorAll('.source-panel').forEach(p=>p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('source-'+id).classList.add('active');
+      }
+      </script>
+    HTML
+  end
+
+  # ========== 数据查询 ==========
+
+  # NOTE: 数据源 1 —— 首次还原（首场比赛第一轮 value1 / average）
+  # 优先取第一轮（round_type_id IN ('1','0','d')），无则回退到决赛轮
+  def fetch_first_round_data(metric)
+    col = metric[:type] == :single ? "value1" : "average"
+    filter = metric[:type] == :single ? "r.value1 > 0" : "r.average > 0"
+    sql = <<-SQL
+      SELECT
+        fr.event_id,
+        fr.first_result,
+        CONCAT('[', p.name, '](https://www.worldcubeassociation.org/persons/', p.wca_id, ')') person_link,
+        p.country_id,
+        CONCAT('[', c.cell_name, '](https://www.worldcubeassociation.org/competitions/', c.id, ')') competition_link,
+        c.start_date
+      FROM (
+        SELECT r.person_id, r.event_id, r.#{col} AS first_result, r.competition_id,
+               ROW_NUMBER() OVER (PARTITION BY r.person_id, r.event_id ORDER BY
+                 CASE WHEN r.round_type_id IN ('1','0','d') THEN 0 ELSE 1 END
+               ) AS rn
+        FROM results r
+        JOIN competitions c1 ON c1.id = r.competition_id
+        JOIN (
+          SELECT r2.person_id, r2.event_id, MIN(c2.start_date) AS earliest_date
+          FROM results r2
+          JOIN competitions c2 ON c2.id = r2.competition_id
+          GROUP BY r2.person_id, r2.event_id
+        ) fc ON fc.person_id = r.person_id
+             AND fc.event_id = r.event_id
+             AND c1.start_date = fc.earliest_date
+        WHERE #{filter}
+      ) fr
+      JOIN persons p ON p.wca_id = fr.person_id AND p.sub_id = 1
+      JOIN competitions c ON c.id = fr.competition_id
+      WHERE fr.rn = 1
+      ORDER BY fr.event_id, fr.first_result
+    SQL
+    Database.client.query(sql).to_a.group_by { |r| r["event_id"] }
+  end
+
+  # NOTE: 数据源 2 —— 首场比赛（首场比赛所有轮次的 MIN(best) / MIN(average)）
+  def fetch_first_comp_data(metric)
+    col = metric[:type] == :single ? "best" : "average"
     sql = <<-SQL
       SELECT
         r.event_id,
-        #{col == "best" ? "MIN(r.best)" : "MIN(r.average)"} AS first_result,
+        MIN(r.#{col}) AS first_result,
         CONCAT('[', p.name, '](https://www.worldcubeassociation.org/persons/', p.wca_id, ')') person_link,
         p.country_id,
         CONCAT('[', c.cell_name, '](https://www.worldcubeassociation.org/competitions/', c.id, ')') competition_link,
@@ -94,7 +204,6 @@ class WrNewcomer < GroupedStatistic
       JOIN persons p ON p.wca_id = r.person_id AND p.sub_id = 1
       JOIN competitions c ON c.id = r.competition_id
       JOIN (
-        -- 子查询：每个选手在每个项目的首场比赛日期
         SELECT r2.person_id, r2.event_id, MIN(c2.start_date) AS earliest_date
         FROM results r2
         JOIN competitions c2 ON c2.id = r2.competition_id
@@ -107,18 +216,17 @@ class WrNewcomer < GroupedStatistic
                c.cell_name, c.id, c.start_date
       ORDER BY r.event_id, first_result
     SQL
-    rows = Database.client.query(sql).to_a
-
-    # 按 event_id 分组，每组按 first_result 升序（SQL 已排序）
-    rows.group_by { |r| r["event_id"] }
+    Database.client.query(sql).to_a.group_by { |r| r["event_id"] }
   end
 
-  # NOTE: 从分组数据中提取 Current Ranking（每项目 Top 10）
-  def build_ranking(grouped, mode)
+  # ========== 数据变换 ==========
+
+  # NOTE: Current Ranking（每项目 Top 10）
+  def build_ranking(grouped, metric)
     Events::OFFICIAL.map do |event_id, event_name|
       event_rows = (grouped[event_id] || []).first(10)
         .each_with_index.map do |r, i|
-          result_str = SolveTime.new(event_id, mode[:type], r["first_result"]).clock_format
+          result_str = SolveTime.new(event_id, metric[:type], r["first_result"]).clock_format
           date_str = fmt_date(r["start_date"])
           [i + 1, r["person_link"], result_str, r["country_id"], r["competition_link"], date_str]
         end
@@ -126,18 +234,17 @@ class WrNewcomer < GroupedStatistic
     end
   end
 
-  # NOTE: 从分组数据中提取 NWR History（严格递减序列，最新在最上面）
-  def build_history(grouped, mode)
+  # NOTE: History（严格递减序列，最新在最上面）
+  def build_history(grouped, metric)
     Events::OFFICIAL.map do |event_id, event_name|
       all = (grouped[event_id] || [])
         .sort_by { |r| [r["start_date"], r["first_result"]] }
 
-      # 扫描取严格递减序列
       min_so_far = Float::INFINITY
       nwr = all.select { |r| r["first_result"] < min_so_far && (min_so_far = r["first_result"]) }
 
       results = nwr.each_with_index.map do |r, i|
-        result_str = SolveTime.new(event_id, mode[:type], r["first_result"]).clock_format
+        result_str = SolveTime.new(event_id, metric[:type], r["first_result"]).clock_format
         gain_str = i > 0 ? "#{((nwr[i-1]["first_result"].to_f - r["first_result"].to_f) / nwr[i-1]["first_result"].to_f * 100).round(1)}%" : ""
         days = i < nwr.size - 1 ? (nwr[i+1]["start_date"].to_date - r["start_date"].to_date).to_i : (Date.today - r["start_date"].to_date).to_i
         [result_str, gain_str, days.to_s, r["person_link"], r["competition_link"], fmt_date(r["start_date"])]
