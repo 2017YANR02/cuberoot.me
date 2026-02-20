@@ -59,15 +59,7 @@ class WrSingleHistory < GroupedStatistic
       # WR 历史表格数据
       results = unique_records.each_with_index.map do |r, i|
         single = SolveTime.new(event_id, :single, r["single"])
-
-        gain_str, days_str = wr_progress(unique_records, i) { |r| r["single"] }
-
-        details = (1..5).map { |n| SolveTime.new(event_id, :single, r["value#{n}"]).clock_format }
-          .reject(&:empty?)
-          .join(', ')
-
-        date_str = r["start_date"].strftime("%Y-%m-%d")
-        [single.clock_format, gain_str, days_str, r["person_link"], r["competition_link"], date_str, details]
+        [single.clock_format] + wr_history_row(unique_records, i, event_id) { |r| r["single"] }
       end
 
       [event_name, results.reverse]

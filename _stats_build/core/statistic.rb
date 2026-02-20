@@ -2,6 +2,7 @@ require "time"
 require "fileutils"
 require_relative "database"
 require_relative "events"
+require_relative "solve_time"
 
 class Statistic
   attr_reader :title, :title_zh, :note, :note_zh
@@ -68,16 +69,20 @@ class Statistic
     table
   end
 
-  # NOTE: WR 历史表的通用计算——进步百分比 + 纪录保持天数
+  # NOTE: WR 历史行的公共字段——进步、天数、选手、比赛、日期、详情
   # records: 按时间正序排列的纪录数组
   # i: 当前索引
+  # event_id: 项目 ID（用于格式化 details 中的 value1-5）
+  # details: 可选，自定义详情字符串（ao_rounds 用各轮 average 而非 value1-5）
   # block: 从记录中提取指标值（用于计算进步百分比）
-  # 返回: [gain_str, days_str]
-  def wr_progress(records, i)
+  # 返回: [gain_str, days_str, person_link, competition_link, date_str, details]
+  def wr_history_row(records, i, event_id, details: nil)
+    r = records[i]
+
     # 进步：与前一条纪录相比的百分比提升
     if i > 0
       prev_val = yield(records[i - 1]).to_f
-      curr_val = yield(records[i]).to_f
+      curr_val = yield(r).to_f
       gain_str = "#{((prev_val - curr_val) / prev_val * 100).round(1)}%"
     else
       gain_str = ""
@@ -85,11 +90,15 @@ class Statistic
 
     # 天数：该纪录保持了多久（直到被下一条打破），最新纪录为空
     if i < records.size - 1
-      days_str = (records[i + 1]["start_date"] - records[i]["start_date"]).to_i.to_s
+      days_str = (records[i + 1]["start_date"] - r["start_date"]).to_i.to_s
     else
       days_str = ""
     end
 
-    [gain_str, days_str]
+    date_str = r["start_date"].strftime("%Y-%m-%d")
+    details ||= (1..5).map { |n| SolveTime.new(event_id, :single, r["value#{n}"]).clock_format }
+      .reject(&:empty?).join(', ')
+
+    [gain_str, days_str, r["person_link"], r["competition_link"], date_str, details]
   end
 end
