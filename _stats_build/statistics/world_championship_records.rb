@@ -5,9 +5,7 @@ require_relative "../core/events"
 class WorldChampionshipRecords < GroupedStatistic
   def initialize
     @title = "World Championship records"
-    @title_zh = "世锦赛纪录"
     @note = "This is a list of the best results from all World Championships. It corresponds to Olympic records for Olympic sports."
-    @note_zh = "此列表包含历届世界锦标赛的最佳成绩，相当于奥运项目中的奥运纪录。"
     @table_header = { "Event" => :left, "Result" => :right, "Person" => :left, "Citizen of" => :left, "Competition" => :left }
   end
 

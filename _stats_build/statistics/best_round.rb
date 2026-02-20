@@ -5,9 +5,7 @@ require_relative "../core/solve_time"
 class BestRound < GroupedStatistic
   def initialize
     @title = "Best round"
-    @title_zh = "最佳轮次"
     @note = "For each event, shows the rounds with the best sum of the top 3 results. For blind events the single is used, for other events the average is used."
-    @note_zh = "对每个项目，展示前 3 名成绩之和最低的轮次。盲拧项目使用单次成绩，其他项目使用平均成绩。"
     @table_header = { "Competition" => :left, "Round" => :left, "Sum" => :right,
                       "1st" => :left, "Result" => :right, "2nd" => :left, "Result " => :right, "3rd" => :left, "Result  " => :right }
   end

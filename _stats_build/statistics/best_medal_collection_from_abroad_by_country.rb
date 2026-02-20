@@ -3,9 +3,7 @@ require_relative "../core/statistic"
 class BestMedalCollectionFromAbroadByCountry < Statistic
   def initialize
     @title = "Best medal collection from abroad by country"
-    @title_zh = "各国海外最佳奖牌收藏"
     @note = "Only medals got abroad are taken into account."
-    @note_zh = "仅统计在海外比赛中获得的奖牌。"
     @table_header = { "Country" => :left, "Gold" => :center, "Silver" => :center, "Bronze" => :center, "Total" => :center }
   end
 

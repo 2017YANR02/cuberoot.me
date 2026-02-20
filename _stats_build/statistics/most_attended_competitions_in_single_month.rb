@@ -3,7 +3,6 @@ require_relative "../core/statistic"
 class MostAttendedCompetitionsInSingleMonth < Statistic
   def initialize
     @title = "Most attended competitions in a single month"
-    @title_zh = "单月参赛最多"
     @table_header = { "Competitions" => :right, "Person" => :left, "Month" => :left, "Year" => :left, "List" => :left }
   end
 

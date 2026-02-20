@@ -3,7 +3,6 @@ require_relative "../core/grouped_statistic"
 class CompetitionDaysCountByRegion < GroupedStatistic
   def initialize
     @title = "Competition days count by region"
-    @title_zh = "各地区比赛天数"
     @table_header = { "Days" => :right, "Region" => :left, "Competitions" => :right }
   end
 

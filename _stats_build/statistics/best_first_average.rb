@@ -5,9 +5,7 @@ require_relative "../core/solve_time"
 class BestFirstAverage < GroupedStatistic
   def initialize
     @title = "Best first average"
-    @title_zh = "最佳首次平均"
     @note = "In other words, it's the best average done when participating for the first time in the given event."
-    @note_zh = "即选手在首次参加某项目时取得的最佳平均成绩。"
     @table_header = { "First average" => :right, "Person": :left }
   end
 

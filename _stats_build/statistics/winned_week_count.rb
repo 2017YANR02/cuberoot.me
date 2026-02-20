@@ -3,9 +3,7 @@ require_relative "../core/grouped_statistic"
 class WinnedWeekCount < GroupedStatistic
   def initialize
     @title = "Winned week count"
-    @title_zh = "统治周数"
     @note = "In other words it's the number of weeks when the given person got the fastest single in the given event."
-    @note_zh = "即选手在该项目排名世界第一期间经过的周数。"
     @table_header = { "Person" => :left, "Winned weeks" => :right }
   end
 

@@ -3,9 +3,7 @@ require_relative "abstract/round_metric"
 class WrBpa < RoundMetric
   def initialize
     @title = "BPA (Best Possible Average)"
-    @title_zh = "BPA（最佳可能平均）"
     @note = "Best Possible Average: average of the best 3 out of the first 4 solves in a round."
-    @note_zh = "BPA：一轮中前 4 次成绩取最好的 3 次计算平均。"
     @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right, "Person" => :left, "Competition" => :left, "Date" => :left, "Details" => :left }
   end
 

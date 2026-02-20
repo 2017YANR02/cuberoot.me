@@ -23,9 +23,7 @@ class WrAoxr < Statistic
 
   def initialize
     @title = "AoXR"
-    @title_zh = "跨轮次均值"
     @note = "World record history and current rankings for Average of X Rounds (AoXR) — the mean of averages across multiple rounds in one competition."
-    @note_zh = "跨轮次均值（AoXR）的世界纪录历史与当前排名——一场比赛中多轮 average 的均值。"
   end
 
   def markdown

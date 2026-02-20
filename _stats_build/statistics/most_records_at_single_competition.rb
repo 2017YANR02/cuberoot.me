@@ -3,7 +3,6 @@ require_relative "../core/grouped_statistic"
 class MostRecordsAtSingleCompetition < GroupedStatistic
   def initialize
     @title = "Most records at a single competition"
-    @title_zh = "单场比赛创纪录最多"
     @table_header = { "Records" => :right, "Person" => :left, "Results" => :left }
   end
 

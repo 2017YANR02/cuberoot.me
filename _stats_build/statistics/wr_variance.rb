@@ -3,9 +3,7 @@ require_relative "abstract/round_metric"
 class WrVariance < RoundMetric
   def initialize
     @title = "Variance"
-    @title_zh = "方差"
     @note = "Variance: sample variance of all 5 solves in a round (lower = more consistent)."
-    @note_zh = "方差：一轮中 5 次成绩的样本方差（越低越稳定）。"
     @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right, "Person" => :left, "Competition" => :left, "Date" => :left, "Details" => :left }
   end
 

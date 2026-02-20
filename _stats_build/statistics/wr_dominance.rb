@@ -33,9 +33,7 @@ class WrDominance < Statistic
 
   def initialize
     @title = "Dominance (top N on leaderboard by one person)"
-    @title_zh = "排行榜霸榜（单人霸占前 N 席）"
     @note = "A competitor completely dominates top N on the leaderboard of results. Tied results are excluded."
-    @note_zh = "选手在全历史成绩排行榜上完全霸占前 N 席。并列成绩不计入。"
   end
 
   def query
@@ -47,15 +45,8 @@ class WrDominance < Statistic
   end
 
   def markdown
-    timestamp = Time.parse(Database.metadata["export_timestamp"])
-    updated = timestamp.strftime("%e %B %Y").strip
-
-    zh = @title_zh || @title
-    md = "<h2 data-i18n-en=\"#{@title}\" data-i18n-zh=\"#{zh}\">#{@title}</h2>\n\n"
-    nzh = @note_zh || @note
-    md += "<p><em data-i18n-en=\"#{@note}\" data-i18n-zh=\"#{nzh}\">#{@note}</em></p>\n"
-    date_zh = timestamp.strftime("更新于 %Y 年 %-m 月 %-d 日")
-    md += "<p><em data-i18n-en=\"Updated on #{updated}\" data-i18n-zh=\"#{date_zh}\">Updated on #{updated}</em></p>\n\n"
+    # NOTE: 复用基类 top 方法（自动从 STAT_TRANSLATIONS 查翻译）
+    md = top
 
     data.each do |event_name, group_name, rows|
       next if rows.empty?

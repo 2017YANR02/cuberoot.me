@@ -4,7 +4,6 @@ require "date"
 class MostDistinctDatesCompetedOn < Statistic
   def initialize
     @title = "Most distinct dates competed on"
-    @title_zh = "参赛日期最多"
     @table_header = { "Dates" => :right, "Person" => :left, "List" => :left }
   end
 

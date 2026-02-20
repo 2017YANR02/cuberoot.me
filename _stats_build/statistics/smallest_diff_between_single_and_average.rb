@@ -5,9 +5,7 @@ require_relative "../core/solve_time"
 class SmallestDiffBetweenSingleAndAverage < GroupedStatistic
   def initialize
     @title = "Smallest difference between a single and an average"
-    @title_zh = "单次与平均最小差距"
     @note = "FMC is ignored because values are integers, thus it's likely to get the same single and average."
-    @note_zh = "FMC 不计入，因为其数值为整数。"
     @table_header = { "Diff" => :right, "Person" => :left, "Single" => :right, "Average" => :right, "Results" => :left }
   end
 

@@ -3,11 +3,9 @@ require_relative "../core/statistic"
 class LongestStreakOfPodiums < Statistic
   def initialize
     @title = "Longest streak of podiums"
-    @title_zh = "连续领奖台最长纪录"
     @note = "All competitions that did not hold the given event are ignored. "\
             "Results without any completed attempt are not eligible for podium. "\
             "Only finals are taken into account."
-    @note_zh = "未举办该项目的比赛不计入。"
     @table_header = { "Count" => :right, "Person" => :left, "Event" => :left, "Started at" => :left, "Ended at" => :left }
   end
 
