@@ -184,16 +184,9 @@ class AoRounds < GroupedStatistic
 
     results = wr_records.each_with_index.map do |r, i|
       metric_str = SolveTime.new(event_id, :average, r["_metric"].round).clock_format
-
-      gain_str, days_str = wr_progress(wr_records, i) { |r| r["_metric"] }
-
-      # Details: 显示各轮 average（已按轮次排序）
-      details = r["_round_values"].map do |v|
-        SolveTime.new(event_id, :average, v).clock_format
-      end.join(', ')
-
-      date_str = r["start_date"].strftime("%Y-%m-%d")
-      [metric_str, gain_str, days_str, r["person_link"], r["competition_link"], date_str, details]
+      # NOTE: ao_rounds 的 details 是各轮 average，不是 value1-5
+      round_details = r["_round_values"].map { |v| SolveTime.new(event_id, :average, v).clock_format }.join(', ')
+      [metric_str] + wr_history_row(wr_records, i, event_id, details: round_details) { |r| r["_metric"] }
     end
 
     results.reverse

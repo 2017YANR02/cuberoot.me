@@ -60,15 +60,7 @@ class WrAverageHistory < GroupedStatistic
 
       results = unique_records.each_with_index.map do |r, i|
         avg = SolveTime.new(event_id, :average, r["average"])
-
-        gain_str, days_str = wr_progress(unique_records, i) { |r| r["average"] }
-
-        details = (1..5).map { |n| SolveTime.new(event_id, :single, r["value#{n}"]).clock_format }
-          .reject(&:empty?)
-          .join(', ')
-
-        date_str = r["start_date"].strftime("%Y-%m-%d")
-        [avg.clock_format, gain_str, days_str, r["person_link"], r["competition_link"], date_str, details]
+        [avg.clock_format] + wr_history_row(unique_records, i, event_id) { |r| r["average"] }
       end
 
       [event_name, results.reverse]
