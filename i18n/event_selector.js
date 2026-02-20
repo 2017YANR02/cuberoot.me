@@ -118,6 +118,51 @@
     });
   }
 
+  // ── Hash 状态持久化 ──
+
+  // NOTE: 解析 URL hash 为键值对
+  // '#event=444&metric=bao5&tab=history' → {event:'444', metric:'bao5', tab:'history'}
+  function parseHash() {
+    const h = window.location.hash.slice(1); // 去掉 #
+    if (!h) return {};
+    const params = {};
+    h.split('&').forEach(pair => {
+      const [k, v] = pair.split('=');
+      if (k && v) params[decodeURIComponent(k)] = decodeURIComponent(v);
+    });
+    return params;
+  }
+
+  // NOTE: 合并新参数到当前 hash，用 pushState 写入（支持浏览器后退）
+  // replace=true 时用 replaceState（不产生新历史记录，用于初始恢复）
+  function updateHash(newParams, replace) {
+    const current = parseHash();
+    Object.assign(current, newParams);
+    const hash = '#' + Object.entries(current)
+      .filter(([, v]) => v)
+      .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+      .join('&');
+    if (replace) {
+      history.replaceState(null, '', hash);
+    } else {
+      history.pushState(null, '', hash);
+    }
+  }
+
+  // NOTE: 保存所有选择器的引用，供 popstate 恢复时使用
+  let _allSelectors = [];
+
+  // NOTE: 选中选择器中的指定项目按钮
+  function selectEventInBar(selector, eventId) {
+    const btn = selector.querySelector(`.event-btn[data-event="${eventId}"]`);
+    if (btn) {
+      selector.querySelectorAll('.event-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      return true;
+    }
+    return false;
+  }
+
   /**
    * NOTE: 处理 GroupedStatistic 页面（h3 在页面顶层）
    */
@@ -127,14 +172,29 @@
     const uniqueIds = [...new Set(eventIds)];
     if (uniqueIds.length < 2) return; // 只有一个项目无需选择器
 
-    const selector = createSelector(uniqueIds, (id) => showEvent(sections, id));
+    const selector = createSelector(uniqueIds, (id) => {
+      showEvent(sections, id);
+      updateHash({ event: id });
+    });
 
     // NOTE: 插入到第一个 h3 之前
     const firstH3 = sections[0].h3;
     firstH3.parentNode.insertBefore(selector, firstH3);
 
-    // 默认只显示第一个项目
-    showEvent(sections, uniqueIds[0]);
+    // NOTE: 从 hash 恢复项目选择，无 hash 则默认第一个
+    const h = parseHash();
+    const initEvent = (h.event && uniqueIds.includes(h.event)) ? h.event : uniqueIds[0];
+    showEvent(sections, initEvent);
+    selectEventInBar(selector, initEvent);
+    if (h.event && uniqueIds.includes(h.event)) {
+      updateHash({ event: initEvent }, true);
+    }
+
+    // 保存引用供 popstate 使用
+    _allSelectors.push({
+      selector, uniqueIds, sections,
+      show: (id) => { showEvent(sections, id); selectEventInBar(selector, id); }
+    });
   }
 
   /**
@@ -161,6 +221,7 @@
 
     const selector = createSelector(allIds, (id) => {
       panelSections.forEach(sections => showEvent(sections, id));
+      updateHash({ event: id });
     });
 
     // NOTE: 插入到 scope 内的 .stat-tabs 按钮栏之后
@@ -172,8 +233,101 @@
       panels[0].parentNode.insertBefore(selector, panels[0]);
     }
 
-    // 默认只显示第一个项目
-    panelSections.forEach(sections => showEvent(sections, allIds[0]));
+    // NOTE: 从 hash 恢复项目选择
+    const h = parseHash();
+    const initEvent = (h.event && allIds.includes(h.event)) ? h.event : allIds[0];
+    panelSections.forEach(sections => showEvent(sections, initEvent));
+    selectEventInBar(selector, initEvent);
+    if (h.event && allIds.includes(h.event)) {
+      updateHash({ event: initEvent }, true);
+    }
+
+    // 保存引用供 popstate 使用
+    _allSelectors.push({
+      selector, uniqueIds: allIds,
+      show: (id) => {
+        panelSections.forEach(sections => showEvent(sections, id));
+        selectEventInBar(selector, id);
+      }
+    });
+  }
+
+  // NOTE: 给 tab/metric 按钮叠加 click 监听，写入 hash
+  function attachHashTracking() {
+    // Tab 按钮：提取 tab id 后缀（'wao5-history' → 'history'，'ranking' → 'ranking'）
+    // NOTE: 后缀永远只有 ranking 或 history，避免与 metric 参数冗余
+    document.querySelectorAll('.stat-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const onclick = btn.getAttribute('onclick') || '';
+        const m = onclick.match(/switchTab\(event,\s*'(.+?)'\)/);
+        if (m) {
+          const parts = m[1].split('-');
+          const suffix = parts[parts.length - 1];
+          updateHash({ tab: suffix });
+        }
+      });
+    });
+
+    // Metric 按钮：通过 onclick 属性中的 switchMetric('bao5') 提取 metric id
+    document.querySelectorAll('.metric-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const onclick = btn.getAttribute('onclick') || '';
+        const m = onclick.match(/switchMetric\('(.+?)'\)/);
+        if (m) updateHash({ metric: m[1] });
+      });
+    });
+  }
+
+  // NOTE: 从 URL hash 恢复 tab/metric 状态
+  // 需在 init() 之后调用，因为 init() 创建项目选择器 DOM
+  function restoreFromHash() {
+    const h = parseHash();
+
+    // 恢复 metric 选择（必须在 tab 之前，因为 metric panel 决定了 tab 的 scope）
+    if (h.metric && typeof switchMetric === 'function') {
+      const btn = document.querySelector(`.metric-btn[onclick*="switchMetric('${h.metric}')"]`);
+      if (btn) btn.click();
+    }
+
+    // 恢复 tab 选择——hash 中存的是后缀（ranking/history），需匹配 tab ID 末尾
+    if (h.tab && typeof switchTab === 'function') {
+      const scope = document.querySelector('.metric-panel.active') || document;
+      scope.querySelectorAll('.stat-tab').forEach(btn => {
+        const onclick = btn.getAttribute('onclick') || '';
+        const m = onclick.match(/switchTab\(event,\s*'(.+?)'\)/);
+        if (m && m[1].split('-').pop() === h.tab) btn.click();
+      });
+    }
+  }
+
+  // NOTE: 浏览器前进/后退时恢复状态
+  function setupPopstate() {
+    window.addEventListener('popstate', () => {
+      const h = parseHash();
+
+      // 恢复项目选择
+      if (h.event) {
+        _allSelectors.forEach(s => {
+          if (s.uniqueIds.includes(h.event)) s.show(h.event);
+        });
+      }
+
+      // 恢复 metric
+      if (h.metric && typeof switchMetric === 'function') {
+        const btn = document.querySelector(`.metric-btn[onclick*="switchMetric('${h.metric}')"]`);
+        if (btn) btn.click();
+      }
+
+      // 恢复 tab（hash 存后缀，匹配 tab ID 末尾）
+      if (h.tab && typeof switchTab === 'function') {
+        const scope = document.querySelector('.metric-panel.active') || document;
+        scope.querySelectorAll('.stat-tab').forEach(btn => {
+          const onclick = btn.getAttribute('onclick') || '';
+          const m = onclick.match(/switchTab\(event,\s*'(.+?)'\)/);
+          if (m && m[1].split('-').pop() === h.tab) btn.click();
+        });
+      }
+    });
   }
 
   /**
@@ -188,6 +342,9 @@
     const metricPanels = document.querySelectorAll('.metric-panel');
     if (metricPanels.length > 0) {
       metricPanels.forEach(mp => handleTabbedPage(mp));
+      attachHashTracking();
+      restoreFromHash();
+      setupPopstate();
       return;
     }
 
@@ -195,12 +352,16 @@
     if (panels.length > 0) {
       // 普通 TabUi 页面
       handleTabbedPage(document);
+      attachHashTracking();
+      restoreFromHash();
+      setupPopstate();
     } else {
       // GroupedStatistic 页面 — 在 .container 或 body 下查找 h3
       const container = document.querySelector('.container') || document.body;
       const sections = collectSections(container);
       if (sections.length >= 2) {
         handleGroupedPage(container, sections);
+        setupPopstate();
       }
     }
   }
@@ -262,3 +423,4 @@
     init();
   }
 })();
+
