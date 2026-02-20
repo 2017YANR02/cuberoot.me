@@ -83,16 +83,7 @@ class RoundMetric < GroupedStatistic
 
       results = wr_records.each_with_index.map do |r, i|
         metric_str = format_metric(r["_metric"], event_id)
-
-        gain_str, days_str = wr_progress(wr_records, i) { |r| r["_metric"] }
-
-        details = (1..5).map { |n| SolveTime.new(event_id, :single, r["value#{n}"]).clock_format }
-          .reject(&:empty?)
-          .join(', ')
-
-        date_str = r["start_date"].strftime("%Y-%m-%d")
-
-        [metric_str, gain_str, days_str, r["person_link"], r["competition_link"], date_str, details]
+        [metric_str] + wr_history_row(wr_records, i, event_id) { |r| r["_metric"] }
       end
 
       [event_name, results.reverse]
