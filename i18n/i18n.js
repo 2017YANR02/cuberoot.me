@@ -258,8 +258,23 @@ const I18n = {
         "World records count by person": "个人世界纪录总数",
         "Worst result providing a podium": "登上领奖台的最差成绩",
         "Yearly rankings": "年度排名",
+        "Metric": "衍生指标", "AoXR": "跨轮次均值",
     },
     _statsTitleEn: {},
+
+    // NOTE: 指标选择器按钮翻译（Metric / AoXR 合并页面的 .metric-btn 元素）
+    // 按钮只有 data-i18n-en 属性，中文通过此映射查找
+    _metricBtnZh: {
+        "Single": "单次", "Average": "平均",
+        "BAo5": "BAo5", "WAo5": "WAo5", "Mo5": "Mo5",
+        "BPA": "BPA", "WPA": "WPA",
+        "Median": "中位数", "Best Counting": "最佳计入",
+        "Worst Counting": "最差计入", "Worst": "最差",
+        "Variance": "方差", "Best/Avg Ratio": "最佳/平均比值",
+        "Ao1R": "Ao1R（单轮均值）", "Ao2R": "Ao2R（双轮均值）",
+        "Ao3R": "Ao3R（三轮均值）", "Ao4R": "Ao4R（四轮均值）",
+    },
+    _metricBtnEn: {},
 
     // NOTE: Stats 页面描述映射（em/斜体文本），用于运行时翻译
     _statsDescZh: {
@@ -293,6 +308,8 @@ const I18n = {
         "Note: You may think of it as \"how well the given person has been doing recently\".": "注：可理解为「该选手近期表现如何」。",
         "Note: You may think of it as \"how well the given person has been doing recently\". This computes exponentially moving average (EMA) of competitor averages. EMA is a weighted average, with weights decreasing exponentially, meaning that more recent values contribute more to the computed average. Here we use \u03b1 = 0.8, meaning that the average emphasizes last ~5 results (weight of results older than 5 is around 1/3 in total and decreases quickly for particular results). People with less than 5 averages are ignored (as there's not much data to base on).": "注：可理解为「该选手近期表现如何」。此处使用指数移动平均（EMA）计算，权重随时间指数递减，近期成绩权重更高。参数 \u03b1 = 0.8，即主要反映最近约 5 次成绩。少于 5 次平均的选手不纳入统计。",
         "Note: By definition these rankings include only results from the current year.": "注：按定义，此排名仅包含当年的成绩。",
+        "World record history and current rankings for various derived metrics computed from a round's 5 solves.": "从一轮 5 次成绩中计算的各类衍生指标的世界纪录历史与当前排名。",
+        "World record history and current rankings for Average of X Rounds (AoXR) — the mean of averages across multiple rounds in one competition.": "跨轮次均值（AoXR）的世界纪录历史与当前排名——一场比赛中多轮 average 的均值。",
     },
     _statsDescEn: {},
 
@@ -424,6 +441,10 @@ const I18n = {
         // 构建菜单链接反向映射
         for (const [en, zh] of Object.entries(this._menuLinkZh)) {
             this._menuLinkEn[zh] = en;
+        }
+        // 构建指标按钮反向映射
+        for (const [en, zh] of Object.entries(this._metricBtnZh)) {
+            this._metricBtnEn[zh] = en;
         }
         // NOTE: 自动注入语言切换按钮（如果页面中还没有）
         this._injectToggle();
@@ -611,6 +632,20 @@ const I18n = {
                 const text = em.textContent.trim().replace(/\s+/g, ' ');
                 const en = this._statsDescEn[text];
                 if (en) em.textContent = en;
+            });
+        }
+
+        // NOTE: 指标选择器按钮翻译（Metric / AoXR 合并页面）
+        if (this.locale === 'zh') {
+            document.querySelectorAll('.metric-btn').forEach(btn => {
+                const en = btn.getAttribute('data-i18n-en');
+                if (en && this._metricBtnZh[en]) btn.textContent = this._metricBtnZh[en];
+            });
+        } else {
+            document.querySelectorAll('.metric-btn').forEach(btn => {
+                const text = btn.textContent.trim();
+                const en = this._metricBtnEn[text] || btn.getAttribute('data-i18n-en');
+                if (en) btn.textContent = en;
             });
         }
 

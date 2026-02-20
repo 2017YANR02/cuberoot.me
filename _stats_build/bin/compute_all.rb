@@ -23,8 +23,36 @@ STATISTICS.each_value do |obj|
   CACHE_GROUPS.each_key { |cls| group_total[cls] += 1 if obj.is_a?(cls) }
 end
 
+# NOTE: 被合并到聚合页面的统计 ID，不再单独生成 .md 文件
+# wr_metric.rb 聚合 13 个 RoundMetric 子类，wr_aoxr.rb 聚合 4 个 AoRounds 子类
+MERGED_IDS = %w[
+  wr_single_history wr_average_history
+  wr_bao5 wr_wao5 wr_mo5 wr_bpa wr_wpa
+  wr_median wr_best_counting wr_worst_counting wr_worst
+  wr_variance wr_best_average_ratio
+  wr_ao1r wr_ao2r wr_ao3r wr_ao4r
+].freeze
+
+# NOTE: 优先计算列表——聚合页面排在最前面
+PRIORITY_STATS = %w[
+  wr_metric wr_aoxr
+  wr_current wr_newcomer wr_first_comp_wr wr_dominance
+].freeze
+
+ordered_ids = PRIORITY_STATS.select { |id| STATISTICS.key?(id) } +
+              (STATISTICS.keys - PRIORITY_STATS - MERGED_IDS)
+
+# NOTE: STATS_FILTER 环境变量——逗号分隔的统计 ID，只计算指定项
+# 为空时计算全部。用于 CI 手动触发时快速验证特定统计
+if ENV["STATS_FILTER"] && !ENV["STATS_FILTER"].empty?
+  filter = ENV["STATS_FILTER"].split(",").map(&:strip)
+  ordered_ids = ordered_ids.select { |id| filter.include?(id) }
+  puts "STATS_FILTER active: #{filter.join(', ')} (#{ordered_ids.size} matched)"
+end
+
 Helpers.timed_task("Computing all statistics") do
-  STATISTICS.each do |statistic_id, statistic_object|
+  ordered_ids.each do |statistic_id|
+    statistic_object = STATISTICS[statistic_id]
     destination_path = File.join(build_path, "#{statistic_id}.md")
     Helpers.timed_task("Generating file at #{destination_path}") do
       markdown_result = statistic_object.markdown

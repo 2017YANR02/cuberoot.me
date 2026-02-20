@@ -42,8 +42,9 @@ module TabUi
     <<~HTML
       <script>
       function switchTab(e,id){
-        document.querySelectorAll('.stat-tab').forEach(t=>t.classList.remove('active'));
-        document.querySelectorAll('.stat-panel').forEach(p=>p.classList.remove('active'));
+        var scope=e.target.closest('.metric-panel')||document;
+        scope.querySelectorAll('.stat-tab').forEach(t=>t.classList.remove('active'));
+        scope.querySelectorAll('.stat-panel').forEach(p=>p.classList.remove('active'));
         e.target.classList.add('active');
         document.getElementById(id).classList.add('active');
       }
