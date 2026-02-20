@@ -1,8 +1,7 @@
 <h2 data-i18n-en="Best potential FMC mean" data-i18n-zh="最佳潜在 FMC 平均">Best potential FMC mean</h2>
 
 <p><em data-i18n-en="The means are computed by taking the best result for each attempt in the given round." data-i18n-zh="取该轮每次尝试的最佳成绩计算平均。">The means are computed by taking the best result for each attempt in the given round.</em></p>
-<p><em data-i18n-en="Updated on 16 February 2026" data-i18n-zh="更新于 2026 年 2 月 16 日">Updated on 16 February 2026</em></p>
-
+<p><em data-i18n-en="Updated on 19 February 2026" data-i18n-zh="更新于 2026 年 2 月 19 日">Updated on 19 February 2026</em></p>
 
 | Mean | Attempt 1 | Attempt 2 | Attempt 3 | Competition |
 | :--: | :--: | :--: | :--: | :--- |

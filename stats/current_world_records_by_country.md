@@ -1,7 +1,6 @@
 <h2 data-i18n-en="Current world records count by country" data-i18n-zh="各国当前世界纪录数量">Current world records count by country</h2>
 
-<p><em data-i18n-en="Updated on 16 February 2026" data-i18n-zh="更新于 2026 年 2 月 16 日">Updated on 16 February 2026</em></p>
-
+<p><em data-i18n-en="Updated on 19 February 2026" data-i18n-zh="更新于 2026 年 2 月 19 日">Updated on 19 February 2026</em></p>
 
 | WRs | Country | People |
 | ---: | :--- | :--- |

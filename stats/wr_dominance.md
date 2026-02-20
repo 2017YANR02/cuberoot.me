@@ -1,9 +1,9 @@
 <h2 data-i18n-en="Dominance (top N on leaderboard by one person)" data-i18n-zh="排行榜霸榜（单人霸占前 N 席）">Dominance (top N on leaderboard by one person)</h2>
 
 <p><em data-i18n-en="A competitor completely dominates top N on the leaderboard of results. Tied results are excluded." data-i18n-zh="选手在全历史成绩排行榜上完全霸占前 N 席。并列成绩不计入。">A competitor completely dominates top N on the leaderboard of results. Tied results are excluded.</em></p>
-<p><em data-i18n-en="Updated on 18 February 2026" data-i18n-zh="更新于 2026 年 2 月 18 日">Updated on 18 February 2026</em></p>
+<p><em data-i18n-en="Updated on 19 February 2026" data-i18n-zh="更新于 2026 年 2 月 19 日">Updated on 19 February 2026</em></p>
 
-<h3>Rubik's Cube Single</h3>
+<h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube Single</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th></tr>
 <tr><td style="text-align:right">10</td><td style="text-align:right">+2</td><td style="text-align:right">119</td><td><a href="https://www.worldcubeassociation.org/persons/2003MAKI01">Shotaro Makisumi (牧角章太郎)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/CaltechDallas2005">Caltech Dallas 2005</a></td><td>2005-08-13</td></tr>
@@ -12,12 +12,12 @@
 <tr><td style="text-align:right">3</td><td style="text-align:right">+2</td><td style="text-align:right">7903</td><td><a href="https://www.worldcubeassociation.org/persons/2003MAKI01">Shotaro Makisumi (牧角章太郎)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/CaltechWinter2004">Caltech Winter 2004</a></td><td>2004-01-24</td></tr>
 <tr><td style="text-align:right">1</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/1982THAI01">Minh Thai</a></td><td><a href="https://www.worldcubeassociation.org/competitions/WC1982">World Championship 1982</a></td><td>1982-06-05</td></tr>
 </table>
-<h3>2x2x2 Cube Single</h3>
+<h3 data-i18n-en="2x2x2 Cube" data-i18n-zh="二阶魔方">2x2x2 Cube Single</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th></tr>
 <tr><td style="text-align:right">1</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2004HELL01">Micael Hellberg</a></td><td><a href="https://www.worldcubeassociation.org/competitions/Sweden2004">Swedish CubeDay 2004</a></td><td>2004-11-27</td></tr>
 </table>
-<h3>4x4x4 Cube Single</h3>
+<h3 data-i18n-en="4x4x4 Cube" data-i18n-zh="四阶魔方">4x4x4 Cube Single</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th></tr>
 <tr><td style="text-align:right">8</td><td style="text-align:right">+1</td><td style="text-align:right">100</td><td><a href="https://www.worldcubeassociation.org/persons/2012PARK03">Max Park</a></td><td><a href="https://www.worldcubeassociation.org/competitions/TemeculaValleyFall2024">Temecula Valley Fall 2024</a></td><td>2024-10-26</td></tr>
@@ -29,7 +29,7 @@
 <tr><td style="text-align:right">2</td><td style="text-align:right">+1</td><td style="text-align:right">322</td><td><a href="https://www.worldcubeassociation.org/persons/2003HARD01">Chris Hardwick</a></td><td><a href="https://www.worldcubeassociation.org/competitions/US2004">US Nationals 2004</a></td><td>2004-07-10</td></tr>
 <tr><td style="text-align:right">1</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2003AKIM01">Masayuki Akimoto (秋元正行)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/WC2003">World Championship 2003</a></td><td>2003-08-23</td></tr>
 </table>
-<h3>5x5x5 Cube Single</h3>
+<h3 data-i18n-en="5x5x5 Cube" data-i18n-zh="五阶魔方">5x5x5 Cube Single</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th></tr>
 <tr><td style="text-align:right">18</td><td style="text-align:right">+2</td><td style="text-align:right">118</td><td><a href="https://www.worldcubeassociation.org/persons/2009ZEMD01">Feliks Zemdegs</a></td><td><a href="https://www.worldcubeassociation.org/competitions/Euro2016">Euro 2016</a></td><td>2016-07-15</td></tr>
@@ -44,7 +44,7 @@
 <tr><td style="text-align:right">3</td><td style="text-align:right">+1</td><td style="text-align:right">414</td><td><a href="https://www.worldcubeassociation.org/persons/2003VAND01">Lars Vandenbergh</a></td><td><a href="https://www.worldcubeassociation.org/competitions/DutchOpen2004">Dutch Open 2004</a></td><td>2004-10-10</td></tr>
 <tr><td style="text-align:right">2</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2003WESL01">David Wesley</a></td><td><a href="https://www.worldcubeassociation.org/competitions/WC2003">World Championship 2003</a></td><td>2003-08-23</td></tr>
 </table>
-<h3>6x6x6 Cube Single</h3>
+<h3 data-i18n-en="6x6x6 Cube" data-i18n-zh="六阶魔方">6x6x6 Cube Single</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th></tr>
 <tr><td style="text-align:right">17</td><td style="text-align:right">+2</td><td style="text-align:right">1374</td><td><a href="https://www.worldcubeassociation.org/persons/2012PARK03">Max Park</a></td><td><a href="https://www.worldcubeassociation.org/competitions/GonnaNeedaBiggerCubeSD2023">Gonna Need a Bigger Cube SD 2023</a></td><td>2023-05-06</td></tr>
@@ -63,7 +63,7 @@
 <tr><td style="text-align:right">2</td><td style="text-align:right">+1</td><td style="text-align:right">169</td><td><a href="https://www.worldcubeassociation.org/persons/2007COHE01">Dan Cohen</a></td><td><a href="https://www.worldcubeassociation.org/competitions/BigCubesSummer2009">Big Cubes Summer 2009</a></td><td>2009-07-26</td></tr>
 <tr><td style="text-align:right">1</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2007COHE01">Dan Cohen</a></td><td><a href="https://www.worldcubeassociation.org/competitions/NewarkWinter2009">Newark Winter 2009</a></td><td>2009-02-07</td></tr>
 </table>
-<h3>7x7x7 Cube Single</h3>
+<h3 data-i18n-en="7x7x7 Cube" data-i18n-zh="七阶魔方">7x7x7 Cube Single</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th></tr>
 <tr><td style="text-align:right">15</td><td style="text-align:right">+1</td><td style="text-align:right">21</td><td><a href="https://www.worldcubeassociation.org/persons/2012PARK03">Max Park</a></td><td><a href="https://www.worldcubeassociation.org/competitions/BerkeleySummer2022">Berkeley Summer 2022</a></td><td>2022-06-11</td></tr>
@@ -80,7 +80,7 @@
 <tr><td style="text-align:right">2</td><td style="text-align:right">+1</td><td style="text-align:right">539</td><td><a href="https://www.worldcubeassociation.org/persons/2008BARA01">Bence Barát</a></td><td><a href="https://www.worldcubeassociation.org/competitions/AustrianOpen2010">Austrian Open 2010</a></td><td>2010-07-31</td></tr>
 <tr><td style="text-align:right">1</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2009HEDI01">Claes Hedin</a></td><td><a href="https://www.worldcubeassociation.org/competitions/NorrkopingOpen2009">Norrköping Open 2009</a></td><td>2009-02-07</td></tr>
 </table>
-<h3>3x3x3 Blindfolded Single</h3>
+<h3 data-i18n-en="3x3x3 Blindfolded" data-i18n-zh="三阶盲拧">3x3x3 Blindfolded Single</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th></tr>
 <tr><td style="text-align:right">16</td><td style="text-align:right">+1</td><td style="text-align:right">15</td><td><a href="https://www.worldcubeassociation.org/persons/2008ZHUA01">Haiyan Zhuang (庄海燕)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/HunanOpen2010">Hunan Open 2010</a></td><td>2010-07-18</td></tr>
@@ -97,13 +97,13 @@
 <tr><td style="text-align:right">2</td><td style="text-align:right">+1</td><td style="text-align:right">420</td><td><a href="https://www.worldcubeassociation.org/persons/2003MAKI01">Shotaro Makisumi (牧角章太郎)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/CaltechFall2004">Caltech Fall 2004</a></td><td>2004-10-16</td></tr>
 <tr><td style="text-align:right">1</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2003VOMB01">Dror Vomberg</a></td><td><a href="https://www.worldcubeassociation.org/competitions/WC2003">World Championship 2003</a></td><td>2003-08-23</td></tr>
 </table>
-<h3>3x3x3 Fewest Moves Single</h3>
+<h3 data-i18n-en="3x3x3 Fewest Moves" data-i18n-zh="三阶最少步">3x3x3 Fewest Moves Single</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th></tr>
 <tr><td style="text-align:right">2</td><td style="text-align:right">+1</td><td style="text-align:right">511</td><td><a href="https://www.worldcubeassociation.org/persons/2003GOLJ01">Mirek Goljan</a></td><td><a href="https://www.worldcubeassociation.org/competitions/CaltechWinter2005">Caltech Winter 2005</a></td><td>2005-01-15</td></tr>
 <tr><td style="text-align:right">1</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2003GOLJ01">Mirek Goljan</a></td><td><a href="https://www.worldcubeassociation.org/competitions/WC2003">World Championship 2003</a></td><td>2003-08-23</td></tr>
 </table>
-<h3>3x3x3 One-Handed Single</h3>
+<h3 data-i18n-en="3x3x3 One-Handed" data-i18n-zh="三阶单手">3x3x3 One-Handed Single</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th></tr>
 <tr><td style="text-align:right">4</td><td style="text-align:right">+1</td><td style="text-align:right">111</td><td><a href="https://www.worldcubeassociation.org/persons/2004PATR01">Ryan Patricio</a></td><td><a href="https://www.worldcubeassociation.org/competitions/US2006">US Nationals 2006</a></td><td>2006-08-04</td></tr>
@@ -111,7 +111,7 @@
 <tr><td style="text-align:right">2</td><td style="text-align:right">+1</td><td style="text-align:right">805</td><td><a href="https://www.worldcubeassociation.org/persons/2004PATR01">Ryan Patricio</a></td><td><a href="https://www.worldcubeassociation.org/competitions/WC2005">World Championship 2005</a></td><td>2005-11-05</td></tr>
 <tr><td style="text-align:right">1</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2003HARD01">Chris Hardwick</a></td><td><a href="https://www.worldcubeassociation.org/competitions/WC2003">World Championship 2003</a></td><td>2003-08-23</td></tr>
 </table>
-<h3>Megaminx Single</h3>
+<h3 data-i18n-en="Megaminx" data-i18n-zh="五魔方">Megaminx Single</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th></tr>
 <tr><td style="text-align:right">15</td><td style="text-align:right">+1</td><td style="text-align:right">63</td><td><a href="https://www.worldcubeassociation.org/persons/2005AKKE01">Erik Akkersdijk</a></td><td><a href="https://www.worldcubeassociation.org/competitions/AachenOpen2009">Aachen Open 2009</a></td><td>2009-01-10</td></tr>
@@ -129,14 +129,14 @@
 <tr><td style="text-align:right">3</td><td style="text-align:right">+2</td><td style="text-align:right">805</td><td><a href="https://www.worldcubeassociation.org/persons/2003POCH01">Stefan Pochmann</a></td><td><a href="https://www.worldcubeassociation.org/competitions/WC2005">World Championship 2005</a></td><td>2005-11-05</td></tr>
 <tr><td style="text-align:right">1</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2003TREG02">Grant Tregay</a></td><td><a href="https://www.worldcubeassociation.org/competitions/WC2003">World Championship 2003</a></td><td>2003-08-23</td></tr>
 </table>
-<h3>Pyraminx Single</h3>
+<h3 data-i18n-en="Pyraminx" data-i18n-zh="金字塔">Pyraminx Single</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th></tr>
 <tr><td style="text-align:right">3</td><td style="text-align:right">+1</td><td style="text-align:right">20</td><td><a href="https://www.worldcubeassociation.org/persons/2008ANDE02">Oscar Roth Andersen</a></td><td><a href="https://www.worldcubeassociation.org/competitions/DanishOpen2011">Danish Open 2011</a></td><td>2011-04-22</td></tr>
 <tr><td style="text-align:right">2</td><td style="text-align:right">+1</td><td style="text-align:right">2779</td><td><a href="https://www.worldcubeassociation.org/persons/2008ANDE02">Oscar Roth Andersen</a></td><td><a href="https://www.worldcubeassociation.org/competitions/VejstrupOpen2011">Vejstrup Open 2011</a></td><td>2011-04-02</td></tr>
 <tr><td style="text-align:right">1</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2003BELL01">Andy Bellenir</a></td><td><a href="https://www.worldcubeassociation.org/competitions/WC2003">World Championship 2003</a></td><td>2003-08-23</td></tr>
 </table>
-<h3>Rubik's Clock Single</h3>
+<h3 data-i18n-en="Rubik's Clock" data-i18n-zh="魔表">Rubik's Clock Single</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th></tr>
 <tr><td style="text-align:right">10</td><td style="text-align:right">+2</td><td style="text-align:right">20</td><td><a href="https://www.worldcubeassociation.org/persons/2003POCH01">Stefan Pochmann</a></td><td><a href="https://www.worldcubeassociation.org/competitions/WC2005">World Championship 2005</a></td><td>2005-11-05</td></tr>
@@ -147,13 +147,13 @@
 <tr><td style="text-align:right">2</td><td style="text-align:right">+1</td><td style="text-align:right">245</td><td><a href="https://www.worldcubeassociation.org/persons/2003POCH01">Stefan Pochmann</a></td><td><a href="https://www.worldcubeassociation.org/competitions/GermanOpen2004">German Open 2004</a></td><td>2004-04-24</td></tr>
 <tr><td style="text-align:right">1</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2003SCHE01">Jaap Scherphuis</a></td><td><a href="https://www.worldcubeassociation.org/competitions/WC2003">World Championship 2003</a></td><td>2003-08-23</td></tr>
 </table>
-<h3>Skewb Single</h3>
+<h3 data-i18n-en="Skewb" data-i18n-zh="斜转魔方">Skewb Single</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th></tr>
 <tr><td style="text-align:right">2</td><td style="text-align:right">+1</td><td style="text-align:right">913</td><td><a href="https://www.worldcubeassociation.org/persons/2013KOSK01">Jonatan Kłosko</a></td><td><a href="https://www.worldcubeassociation.org/competitions/KaliskaOpen2016">Kaliska Open 2016</a></td><td>2016-07-02</td></tr>
 <tr><td style="text-align:right">1</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2013TANT02">Santosh Tantravahi</a></td><td><a href="https://www.worldcubeassociation.org/competitions/TelesisOpen2014">Telesis Open 2014</a></td><td>2014-01-01</td></tr>
 </table>
-<h3>Square-1 Single</h3>
+<h3 data-i18n-en="Square-1" data-i18n-zh="SQ1">Square-1 Single</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th></tr>
 <tr><td style="text-align:right">5</td><td style="text-align:right">+1</td><td style="text-align:right">167</td><td><a href="https://www.worldcubeassociation.org/persons/2003VAND01">Lars Vandenbergh</a></td><td><a href="https://www.worldcubeassociation.org/competitions/GermanOpen2006">German Open 2006</a></td><td>2006-04-21</td></tr>
@@ -161,7 +161,7 @@
 <tr><td style="text-align:right">2</td><td style="text-align:right">+1</td><td style="text-align:right">785</td><td><a href="https://www.worldcubeassociation.org/persons/2003VAND01">Lars Vandenbergh</a></td><td><a href="https://www.worldcubeassociation.org/competitions/DutchOpen2005">Dutch Open 2005</a></td><td>2005-10-16</td></tr>
 <tr><td style="text-align:right">1</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2003VAND01">Lars Vandenbergh</a></td><td><a href="https://www.worldcubeassociation.org/competitions/WC2003">World Championship 2003</a></td><td>2003-08-23</td></tr>
 </table>
-<h3>4x4x4 Blindfolded Single</h3>
+<h3 data-i18n-en="4x4x4 Blindfolded" data-i18n-zh="四阶盲拧">4x4x4 Blindfolded Single</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th></tr>
 <tr><td style="text-align:right">19</td><td style="text-align:right">+1</td><td style="text-align:right">35</td><td><a href="https://www.worldcubeassociation.org/persons/2016CHAP04">Stanley Chapel</a></td><td><a href="https://www.worldcubeassociation.org/competitions/CubingUSAAllStars2025">CubingUSA All-Stars 2025</a></td><td>2025-11-01</td></tr>
@@ -183,7 +183,7 @@
 <tr><td style="text-align:right">2</td><td style="text-align:right">+1</td><td style="text-align:right">78</td><td><a href="https://www.worldcubeassociation.org/persons/2003HARD01">Chris Hardwick</a></td><td><a href="https://www.worldcubeassociation.org/competitions/GWiz2006">G-Wiz Fall 2006</a></td><td>2006-10-21</td></tr>
 <tr><td style="text-align:right">1</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2003HARD01">Chris Hardwick</a></td><td><a href="https://www.worldcubeassociation.org/competitions/US2006">US Nationals 2006</a></td><td>2006-08-04</td></tr>
 </table>
-<h3>5x5x5 Blindfolded Single</h3>
+<h3 data-i18n-en="5x5x5 Blindfolded" data-i18n-zh="五阶盲拧">5x5x5 Blindfolded Single</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th></tr>
 <tr><td style="text-align:right">13</td><td style="text-align:right">+1</td><td style="text-align:right">2247</td><td><a href="https://www.worldcubeassociation.org/persons/2016CHAP04">Stanley Chapel</a></td><td><a href="https://www.worldcubeassociation.org/competitions/MultiMayhemVA2026">Multi Mayhem VA 2026</a></td><td>2026-01-02</td></tr>
@@ -200,7 +200,7 @@
 <tr><td style="text-align:right">2</td><td style="text-align:right">+1</td><td style="text-align:right">146</td><td><a href="https://www.worldcubeassociation.org/persons/2003HARD01">Chris Hardwick</a></td><td><a href="https://www.worldcubeassociation.org/competitions/US2006">US Nationals 2006</a></td><td>2006-08-04</td></tr>
 <tr><td style="text-align:right">1</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2003HARD01">Chris Hardwick</a></td><td><a href="https://www.worldcubeassociation.org/competitions/Chattahoochee2006">Chattahoochee 2006</a></td><td>2006-03-11</td></tr>
 </table>
-<h3>3x3x3 Multi-Blind Single</h3>
+<h3 data-i18n-en="3x3x3 Multi-Blind" data-i18n-zh="三阶多盲">3x3x3 Multi-Blind Single</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th></tr>
 <tr><td style="text-align:right">14</td><td style="text-align:right">+1</td><td style="text-align:right">7</td><td><a href="https://www.worldcubeassociation.org/persons/2011KOWA01">Marcin Kowalczyk</a></td><td><a href="https://www.worldcubeassociation.org/competitions/MasterpressSummer2014">Masterpress Summer 2014</a></td><td>2014-06-28</td></tr>
@@ -218,7 +218,7 @@
 <tr><td style="text-align:right">2</td><td style="text-align:right">+1</td><td style="text-align:right">532</td><td><a href="https://www.worldcubeassociation.org/persons/2007STRE01">Dennis Strehlau</a></td><td><a href="https://www.worldcubeassociation.org/competitions/DanishCubeDay2008">Danish Cube Day 2008</a></td><td>2008-10-11</td></tr>
 <tr><td style="text-align:right">1</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2004GALL02">Clément Gallet</a></td><td><a href="https://www.worldcubeassociation.org/competitions/BelgianOpen2007">Belgian Open 2007</a></td><td>2007-04-28</td></tr>
 </table>
-<h3>3x3x3 With Feet Single</h3>
+<h3 data-i18n-en="3x3x3 With Feet" data-i18n-zh="三阶脚拧">3x3x3 With Feet Single</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th></tr>
 <tr><td style="text-align:right">6</td><td style="text-align:right">+1</td><td style="text-align:right">147</td><td><a href="https://www.worldcubeassociation.org/persons/2005VANH01">Anssi Vanhala</a></td><td><a href="https://www.worldcubeassociation.org/competitions/FinnishOpen2008">Finnish Open 2008</a></td><td>2008-07-19</td></tr>
@@ -228,7 +228,7 @@
 <tr><td style="text-align:right">2</td><td style="text-align:right">+1</td><td style="text-align:right">232</td><td><a href="https://www.worldcubeassociation.org/persons/2004KRIG02">Kåre Krig</a></td><td><a href="https://www.worldcubeassociation.org/competitions/Svekub2005">Svekub 2005</a></td><td>2005-03-27</td></tr>
 <tr><td style="text-align:right">1</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2004KRIG02">Kåre Krig</a></td><td><a href="https://www.worldcubeassociation.org/competitions/Euro2004">Euro 2004</a></td><td>2004-08-07</td></tr>
 </table>
-<h3>Rubik's Magic Single</h3>
+<h3 data-i18n-en="Rubik's Magic" data-i18n-zh="八板">Rubik's Magic Single</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th></tr>
 <tr><td style="text-align:right">8</td><td style="text-align:right">+1</td><td style="text-align:right">49</td><td><a href="https://www.worldcubeassociation.org/persons/2006KUTI01">Mátyás Kuti</a></td><td><a href="https://www.worldcubeassociation.org/competitions/BelgianOpen2008">Belgian Open 2008</a></td><td>2008-02-02</td></tr>
@@ -240,18 +240,18 @@
 <tr><td style="text-align:right">2</td><td style="text-align:right">+1</td><td style="text-align:right">245</td><td><a href="https://www.worldcubeassociation.org/persons/2003SCHE01">Jaap Scherphuis</a></td><td><a href="https://www.worldcubeassociation.org/competitions/GermanOpen2004">German Open 2004</a></td><td>2004-04-24</td></tr>
 <tr><td style="text-align:right">1</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2003SCHE01">Jaap Scherphuis</a></td><td><a href="https://www.worldcubeassociation.org/competitions/WC2003">World Championship 2003</a></td><td>2003-08-23</td></tr>
 </table>
-<h3>Master Magic Single</h3>
+<h3 data-i18n-en="Master Magic" data-i18n-zh="十二板">Master Magic Single</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th></tr>
 <tr><td style="text-align:right">2</td><td style="text-align:right">+1</td><td style="text-align:right">1344</td><td><a href="https://www.worldcubeassociation.org/persons/2007HORV01">Máté Horváth</a></td><td><a href="https://www.worldcubeassociation.org/competitions/GermanOpen2007">German Open 2007</a></td><td>2007-04-28</td></tr>
 <tr><td style="text-align:right">1</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2003SCHE01">Jaap Scherphuis</a></td><td><a href="https://www.worldcubeassociation.org/competitions/WC2003">World Championship 2003</a></td><td>2003-08-23</td></tr>
 </table>
-<h3>Rubik's Cube: Multiple blind old style Single</h3>
+<h3 data-i18n-en="Rubik's Cube: Multiple blind old style" data-i18n-zh="旧多盲">Rubik's Cube: Multiple blind old style Single</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th></tr>
 <tr><td style="text-align:right">1</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2005KOHN01">Thomas Kohn</a></td><td><a href="https://www.worldcubeassociation.org/competitions/GermanOpen2006">German Open 2006</a></td><td>2006-04-21</td></tr>
 </table>
-<h3>Rubik's Cube Average</h3>
+<h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube Average</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th></tr>
 <tr><td style="text-align:right">28</td><td style="text-align:right">+1</td><td style="text-align:right">286</td><td><a href="https://www.worldcubeassociation.org/persons/2019WANY36">Yiheng Wang (王艺衡)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/HKRCU20thAnniversary2025">HKRCU 20th Anniversary 2025</a></td><td>2025-09-20</td></tr>
@@ -272,7 +272,7 @@
 <tr><td style="text-align:right">2</td><td style="text-align:right">+1</td><td style="text-align:right">224</td><td><a href="https://www.worldcubeassociation.org/persons/2003MAKI01">Shotaro Makisumi (牧角章太郎)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/CaltechSpring2004">Caltech Spring 2004</a></td><td>2004-04-03</td></tr>
 <tr><td style="text-align:right">1</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2003KNIG01">Dan Knights</a></td><td><a href="https://www.worldcubeassociation.org/competitions/WC2003">World Championship 2003</a></td><td>2003-08-23</td></tr>
 </table>
-<h3>2x2x2 Cube Average</h3>
+<h3 data-i18n-en="2x2x2 Cube" data-i18n-zh="二阶魔方">2x2x2 Cube Average</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th></tr>
 <tr><td style="text-align:right">25</td><td style="text-align:right">+2</td><td style="text-align:right">107</td><td><a href="https://www.worldcubeassociation.org/persons/2018KHAN28">Zayn Khanani</a></td><td><a href="https://www.worldcubeassociation.org/competitions/PioneerValleyCubingB2023">Pioneer Valley Cubing B 2023</a></td><td>2023-01-22</td></tr>
@@ -295,7 +295,7 @@
 <tr><td style="text-align:right">2</td><td style="text-align:right">+1</td><td style="text-align:right">120</td><td><a href="https://www.worldcubeassociation.org/persons/2004KRIG01">Gunnar Kantare Krig</a></td><td><a href="https://www.worldcubeassociation.org/competitions/Svekub2005">Svekub 2005</a></td><td>2005-03-27</td></tr>
 <tr><td style="text-align:right">1</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2004KRIG01">Gunnar Kantare Krig</a></td><td><a href="https://www.worldcubeassociation.org/competitions/Sweden2004">Swedish CubeDay 2004</a></td><td>2004-11-27</td></tr>
 </table>
-<h3>4x4x4 Cube Average</h3>
+<h3 data-i18n-en="4x4x4 Cube" data-i18n-zh="四阶魔方">4x4x4 Cube Average</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th></tr>
 <tr><td style="text-align:right">25</td><td style="text-align:right">+1</td><td style="text-align:right">12</td><td><a href="https://www.worldcubeassociation.org/persons/2012PARK03">Max Park</a></td><td><a href="https://www.worldcubeassociation.org/competitions/CubingUSAWesternChampionship2023">Western Championship 2023</a></td><td>2023-06-30</td></tr>
@@ -319,7 +319,7 @@
 <tr><td style="text-align:right">2</td><td style="text-align:right">+1</td><td style="text-align:right">805</td><td><a href="https://www.worldcubeassociation.org/persons/2005HAYA01">Yuki Hayashi (林祐樹)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/WC2005">World Championship 2005</a></td><td>2005-11-05</td></tr>
 <tr><td style="text-align:right">1</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2003WESL01">David Wesley</a></td><td><a href="https://www.worldcubeassociation.org/competitions/WC2003">World Championship 2003</a></td><td>2003-08-23</td></tr>
 </table>
-<h3>5x5x5 Cube Average</h3>
+<h3 data-i18n-en="5x5x5 Cube" data-i18n-zh="五阶魔方">5x5x5 Cube Average</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th></tr>
 <tr><td style="text-align:right">24</td><td style="text-align:right">+1</td><td style="text-align:right">35</td><td><a href="https://www.worldcubeassociation.org/persons/2009ZEMD01">Feliks Zemdegs</a></td><td><a href="https://www.worldcubeassociation.org/competitions/AdelaideSummer2017">Adelaide Summer 2017</a></td><td>2017-01-21</td></tr>
@@ -340,7 +340,7 @@
 <tr><td style="text-align:right">2</td><td style="text-align:right">+1</td><td style="text-align:right">414</td><td><a href="https://www.worldcubeassociation.org/persons/2003VAND01">Lars Vandenbergh</a></td><td><a href="https://www.worldcubeassociation.org/competitions/DutchOpen2004">Dutch Open 2004</a></td><td>2004-10-10</td></tr>
 <tr><td style="text-align:right">1</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2003AKIM01">Masayuki Akimoto (秋元正行)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/WC2003">World Championship 2003</a></td><td>2003-08-23</td></tr>
 </table>
-<h3>6x6x6 Cube Average</h3>
+<h3 data-i18n-en="6x6x6 Cube" data-i18n-zh="六阶魔方">6x6x6 Cube Average</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th></tr>
 <tr><td style="text-align:right">18</td><td style="text-align:right">+1</td><td style="text-align:right">16</td><td><a href="https://www.worldcubeassociation.org/persons/2012PARK03">Max Park</a></td><td><a href="https://www.worldcubeassociation.org/competitions/WC2023">WCA World Championship 2023</a></td><td>2023-08-12</td></tr>
@@ -361,7 +361,7 @@
 <tr><td style="text-align:right">2</td><td style="text-align:right">+1</td><td style="text-align:right">112</td><td><a href="https://www.worldcubeassociation.org/persons/2006HALC01">Michał Halczuk</a></td><td><a href="https://www.worldcubeassociation.org/competitions/LublinOpen2009">Lublin Open 2009</a></td><td>2009-05-30</td></tr>
 <tr><td style="text-align:right">1</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2007COHE01">Dan Cohen</a></td><td><a href="https://www.worldcubeassociation.org/competitions/NewarkWinter2009">Newark Winter 2009</a></td><td>2009-02-07</td></tr>
 </table>
-<h3>7x7x7 Cube Average</h3>
+<h3 data-i18n-en="7x7x7 Cube" data-i18n-zh="七阶魔方">7x7x7 Cube Average</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th></tr>
 <tr><td style="text-align:right">28</td><td style="text-align:right">+2</td><td style="text-align:right">16</td><td><a href="https://www.worldcubeassociation.org/persons/2012PARK03">Max Park</a></td><td><a href="https://www.worldcubeassociation.org/competitions/WC2023">WCA World Championship 2023</a></td><td>2023-08-12</td></tr>
@@ -385,7 +385,7 @@
 <tr><td style="text-align:right">2</td><td style="text-align:right">+1</td><td style="text-align:right">523</td><td><a href="https://www.worldcubeassociation.org/persons/2008BARA01">Bence Barát</a></td><td><a href="https://www.worldcubeassociation.org/competitions/CzechOpen2010">Czech Open 2010</a></td><td>2010-07-16</td></tr>
 <tr><td style="text-align:right">1</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2008CHAN09">Hsuan Chang (張璿)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/TaiwanWinterOpen2009">Taiwan Winter Open 2009</a></td><td>2009-02-08</td></tr>
 </table>
-<h3>3x3x3 Blindfolded Average</h3>
+<h3 data-i18n-en="3x3x3 Blindfolded" data-i18n-zh="三阶盲拧">3x3x3 Blindfolded Average</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th></tr>
 <tr><td style="text-align:right">4</td><td style="text-align:right">+1</td><td style="text-align:right">385</td><td><a href="https://www.worldcubeassociation.org/persons/2004LOLE01">Leyan Lo</a></td><td><a href="https://www.worldcubeassociation.org/competitions/USOpen2007">US Open 2007</a></td><td>2007-06-16</td></tr>
@@ -393,7 +393,7 @@
 <tr><td style="text-align:right">2</td><td style="text-align:right">+1</td><td style="text-align:right">322</td><td><a href="https://www.worldcubeassociation.org/persons/2004LOLE01">Leyan Lo</a></td><td><a href="https://www.worldcubeassociation.org/competitions/CaltechSpring2006">Caltech Spring 2006</a></td><td>2006-04-15</td></tr>
 <tr><td style="text-align:right">1</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2004LOLE01">Leyan Lo</a></td><td><a href="https://www.worldcubeassociation.org/competitions/CaltechSpring2005">Caltech Spring 2005</a></td><td>2005-05-28</td></tr>
 </table>
-<h3>3x3x3 Fewest Moves Average</h3>
+<h3 data-i18n-en="3x3x3 Fewest Moves" data-i18n-zh="三阶最少步">3x3x3 Fewest Moves Average</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th></tr>
 <tr><td style="text-align:right">4</td><td style="text-align:right">+1</td><td style="text-align:right">43</td><td><a href="https://www.worldcubeassociation.org/persons/2008AURO01">Sébastien Auroux</a></td><td><a href="https://www.worldcubeassociation.org/competitions/ValenciaSummerOpen2013">Valencia Open 2013</a></td><td>2013-06-29</td></tr>
@@ -401,7 +401,7 @@
 <tr><td style="text-align:right">2</td><td style="text-align:right">+1</td><td style="text-align:right">1043</td><td><a href="https://www.worldcubeassociation.org/persons/2008AURO01">Sébastien Auroux</a></td><td><a href="https://www.worldcubeassociation.org/competitions/VelbertOpen2013">Velbert Open 2013</a></td><td>2013-02-16</td></tr>
 <tr><td style="text-align:right">1</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2008ZHAN13">Hong Zhang (张宏)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/PKUFMC2010">PKU Fewest Moves 2010</a></td><td>2010-04-10</td></tr>
 </table>
-<h3>3x3x3 One-Handed Average</h3>
+<h3 data-i18n-en="3x3x3 One-Handed" data-i18n-zh="三阶单手">3x3x3 One-Handed Average</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th></tr>
 <tr><td style="text-align:right">5</td><td style="text-align:right">+1</td><td style="text-align:right">76</td><td><a href="https://www.worldcubeassociation.org/persons/2006TABU02">Yumu Tabuchi (田渕雄夢)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/30thAnniversaryMegaHouse2010">MegaHouse Cup 2010</a></td><td>2010-07-24</td></tr>
@@ -410,7 +410,7 @@
 <tr><td style="text-align:right">2</td><td style="text-align:right">+1</td><td style="text-align:right">742</td><td><a href="https://www.worldcubeassociation.org/persons/2004PATR01">Ryan Patricio</a></td><td><a href="https://www.worldcubeassociation.org/competitions/CaltechSpring2006">Caltech Spring 2006</a></td><td>2006-04-15</td></tr>
 <tr><td style="text-align:right">1</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2003MAKI01">Shotaro Makisumi (牧角章太郎)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/CaltechSpring2004">Caltech Spring 2004</a></td><td>2004-04-03</td></tr>
 </table>
-<h3>Megaminx Average</h3>
+<h3 data-i18n-en="Megaminx" data-i18n-zh="五魔方">Megaminx Average</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th></tr>
 <tr><td style="text-align:right">15</td><td style="text-align:right">+1</td><td style="text-align:right">63</td><td><a href="https://www.worldcubeassociation.org/persons/2005AKKE01">Erik Akkersdijk</a></td><td><a href="https://www.worldcubeassociation.org/competitions/AachenOpen2009">Aachen Open 2009</a></td><td>2009-01-10</td></tr>
@@ -429,7 +429,7 @@
 <tr><td style="text-align:right">2</td><td style="text-align:right">+1</td><td style="text-align:right">155</td><td><a href="https://www.worldcubeassociation.org/persons/2003POCH01">Stefan Pochmann</a></td><td><a href="https://www.worldcubeassociation.org/competitions/Euro2006">Euro 2006</a></td><td>2006-09-23</td></tr>
 <tr><td style="text-align:right">1</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2003POCH01">Stefan Pochmann</a></td><td><a href="https://www.worldcubeassociation.org/competitions/GermanOpen2006">German Open 2006</a></td><td>2006-04-21</td></tr>
 </table>
-<h3>Pyraminx Average</h3>
+<h3 data-i18n-en="Pyraminx" data-i18n-zh="金字塔">Pyraminx Average</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th></tr>
 <tr><td style="text-align:right">8</td><td style="text-align:right">+1</td><td style="text-align:right">5333</td><td><a href="https://www.worldcubeassociation.org/persons/2019JIAN54">Lingkun Jiang (姜凌坤)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/RubiksWCAAsianChampionship2024">WCA Asian Championship 2024</a></td><td>2024-11-01</td></tr>
@@ -440,7 +440,7 @@
 <tr><td style="text-align:right">2</td><td style="text-align:right">+1</td><td style="text-align:right">839</td><td><a href="https://www.worldcubeassociation.org/persons/2005LUCZ01">Grzegorz Łuczyna</a></td><td><a href="https://www.worldcubeassociation.org/competitions/CzechOpen2007">Czech Open 2007</a></td><td>2007-07-14</td></tr>
 <tr><td style="text-align:right">1</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2004KRIG01">Gunnar Kantare Krig</a></td><td><a href="https://www.worldcubeassociation.org/competitions/Svekub2005">Svekub 2005</a></td><td>2005-03-27</td></tr>
 </table>
-<h3>Rubik's Clock Average</h3>
+<h3 data-i18n-en="Rubik's Clock" data-i18n-zh="魔表">Rubik's Clock Average</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th></tr>
 <tr><td style="text-align:right">6</td><td style="text-align:right">+1</td><td style="text-align:right">20</td><td><a href="https://www.worldcubeassociation.org/persons/2003POCH01">Stefan Pochmann</a></td><td><a href="https://www.worldcubeassociation.org/competitions/WC2005">World Championship 2005</a></td><td>2005-11-05</td></tr>
@@ -450,7 +450,7 @@
 <tr><td style="text-align:right">2</td><td style="text-align:right">+1</td><td style="text-align:right">105</td><td><a href="https://www.worldcubeassociation.org/persons/2003POCH01">Stefan Pochmann</a></td><td><a href="https://www.worldcubeassociation.org/competitions/Euro2004">Euro 2004</a></td><td>2004-08-07</td></tr>
 <tr><td style="text-align:right">1</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2003POCH01">Stefan Pochmann</a></td><td><a href="https://www.worldcubeassociation.org/competitions/GermanOpen2004">German Open 2004</a></td><td>2004-04-24</td></tr>
 </table>
-<h3>Skewb Average</h3>
+<h3 data-i18n-en="Skewb" data-i18n-zh="斜转魔方">Skewb Average</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th></tr>
 <tr><td style="text-align:right">10</td><td style="text-align:right">+1</td><td style="text-align:right">6</td><td><a href="https://www.worldcubeassociation.org/persons/2018KHAN28">Zayn Khanani</a></td><td><a href="https://www.worldcubeassociation.org/competitions/MidAtlanticChampionship2023">Mid-Atlantic Championship 2023</a></td><td>2023-06-17</td></tr>
@@ -462,7 +462,7 @@
 <tr><td style="text-align:right">3</td><td style="text-align:right">+1</td><td style="text-align:right">122</td><td><a href="https://www.worldcubeassociation.org/persons/2013KOSK01">Jonatan Kłosko</a></td><td><a href="https://www.worldcubeassociation.org/competitions/SLSChorzow2014">SLS Chorzow 2014</a></td><td>2014-05-03</td></tr>
 <tr><td style="text-align:right">2</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2012SATH01">Abhishek Sathyanarayanan</a></td><td><a href="https://www.worldcubeassociation.org/competitions/TelesisOpen2014">Telesis Open 2014</a></td><td>2014-01-01</td></tr>
 </table>
-<h3>Square-1 Average</h3>
+<h3 data-i18n-en="Square-1" data-i18n-zh="SQ1">Square-1 Average</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th></tr>
 <tr><td style="text-align:right">13</td><td style="text-align:right">+1</td><td style="text-align:right">201</td><td><a href="https://www.worldcubeassociation.org/persons/2008LIBI01">Bingliang Li (李炳良)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/ChinaChampionship2015">China Championship 2015</a></td><td>2015-10-02</td></tr>
@@ -477,7 +477,7 @@
 <tr><td style="text-align:right">2</td><td style="text-align:right">+1</td><td style="text-align:right">371</td><td><a href="https://www.worldcubeassociation.org/persons/2003VAND01">Lars Vandenbergh</a></td><td><a href="https://www.worldcubeassociation.org/competitions/DutchOpen2005">Dutch Open 2005</a></td><td>2005-10-16</td></tr>
 <tr><td style="text-align:right">1</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2003VAND01">Lars Vandenbergh</a></td><td><a href="https://www.worldcubeassociation.org/competitions/DutchOpen2004">Dutch Open 2004</a></td><td>2004-10-10</td></tr>
 </table>
-<h3>4x4x4 Blindfolded Average</h3>
+<h3 data-i18n-en="4x4x4 Blindfolded" data-i18n-zh="四阶盲拧">4x4x4 Blindfolded Average</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th></tr>
 <tr><td style="text-align:right">14</td><td style="text-align:right">+1</td><td style="text-align:right">35</td><td><a href="https://www.worldcubeassociation.org/persons/2016CHAP04">Stanley Chapel</a></td><td><a href="https://www.worldcubeassociation.org/competitions/CubingUSAAllStars2025">CubingUSA All-Stars 2025</a></td><td>2025-11-01</td></tr>
@@ -494,14 +494,14 @@
 <tr><td style="text-align:right">2</td><td style="text-align:right">+1</td><td style="text-align:right">1946</td><td><a href="https://www.worldcubeassociation.org/persons/2013LINK01">Kaijun Lin (林恺俊)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/ZUAOpen2017">ZUA Open 2017</a></td><td>2017-03-25</td></tr>
 <tr><td style="text-align:right">1</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2008CASI01">Gabriel Alejandro Orozco Casillas</a></td><td><a href="https://www.worldcubeassociation.org/competitions/GuadalajaraOpen2010">Guadalajara Open 2010</a></td><td>2011-11-26</td></tr>
 </table>
-<h3>5x5x5 Blindfolded Average</h3>
+<h3 data-i18n-en="5x5x5 Blindfolded" data-i18n-zh="五阶盲拧">5x5x5 Blindfolded Average</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th></tr>
 <tr><td style="text-align:right">3</td><td style="text-align:right">+1</td><td style="text-align:right">83</td><td><a href="https://www.worldcubeassociation.org/persons/2013LINK01">Kaijun Lin (林恺俊)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/YJFest2018">YJ Fest 2018</a></td><td>2018-05-18</td></tr>
 <tr><td style="text-align:right">2</td><td style="text-align:right">+1</td><td style="text-align:right">1674</td><td><a href="https://www.worldcubeassociation.org/persons/2013LINK01">Kaijun Lin (林恺俊)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/SingaporeChampionship2018">Singapore Championship 2018</a></td><td>2018-02-24</td></tr>
 <tr><td style="text-align:right">1</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2007ENDR01">Marcell Endrey</a></td><td><a href="https://www.worldcubeassociation.org/competitions/WC2013">World Championship 2013</a></td><td>2013-07-26</td></tr>
 </table>
-<h3>3x3x3 With Feet Average</h3>
+<h3 data-i18n-en="3x3x3 With Feet" data-i18n-zh="三阶脚拧">3x3x3 With Feet Average</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th></tr>
 <tr><td style="text-align:right">11</td><td style="text-align:right">+1</td><td style="text-align:right">28</td><td><a href="https://www.worldcubeassociation.org/persons/2015ROSE01">Daniel Rose-Levine</a></td><td><a href="https://www.worldcubeassociation.org/competitions/PittsburghSpring2019">Pittsburgh Spring 2019</a></td><td>2019-03-09</td></tr>
@@ -515,7 +515,7 @@
 <tr><td style="text-align:right">2</td><td style="text-align:right">+1</td><td style="text-align:right">301</td><td><a href="https://www.worldcubeassociation.org/persons/2005VANH01">Anssi Vanhala</a></td><td><a href="https://www.worldcubeassociation.org/competitions/HelsinkiOpen2007">Helsinki Open 2007</a></td><td>2007-01-13</td></tr>
 <tr><td style="text-align:right">1</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2005VANH01">Anssi Vanhala</a></td><td><a href="https://www.worldcubeassociation.org/competitions/Svekub2006">SveKub 2006</a></td><td>2006-03-18</td></tr>
 </table>
-<h3>Rubik's Magic Average</h3>
+<h3 data-i18n-en="Rubik's Magic" data-i18n-zh="八板">Rubik's Magic Average</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th></tr>
 <tr><td style="text-align:right">5</td><td style="text-align:right">+1</td><td style="text-align:right">1583</td><td><a href="https://www.worldcubeassociation.org/persons/2009WANG13">Yuxuan Wang (王宇轩)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/TianjinOpen2011">Tianjin Open 2011</a></td><td>2011-12-25</td></tr>
@@ -523,8 +523,11 @@
 <tr><td style="text-align:right">3</td><td style="text-align:right">+1</td><td style="text-align:right">1176</td><td><a href="https://www.worldcubeassociation.org/persons/2006KUTI01">Mátyás Kuti</a></td><td><a href="https://www.worldcubeassociation.org/competitions/CzechOpen2007">Czech Open 2007</a></td><td>2007-07-14</td></tr>
 <tr><td style="text-align:right">2</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2003SCHE01">Jaap Scherphuis</a></td><td><a href="https://www.worldcubeassociation.org/competitions/GermanOpen2004">German Open 2004</a></td><td>2004-04-24</td></tr>
 </table>
-<h3>Master Magic Average</h3>
+<h3 data-i18n-en="Master Magic" data-i18n-zh="十二板">Master Magic Average</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th></tr>
 <tr><td style="text-align:right">1</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2003BURT01">Bob Burton</a></td><td><a href="https://www.worldcubeassociation.org/competitions/CaltechDallas2005">Caltech Dallas 2005</a></td><td>2005-09-17</td></tr>
 </table>
+
+
+<a href="https://github.com/RuiminYan/ruiminyan.github.io" class="github-corner" aria-label="View source on Github"><svg width="80" height="80" viewBox="0 0 250 250" style="fill:#151513; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>

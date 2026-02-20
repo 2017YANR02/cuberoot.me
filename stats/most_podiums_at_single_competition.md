@@ -1,7 +1,6 @@
 <h2 data-i18n-en="Most podiums at a single competition" data-i18n-zh="单场比赛登台最多">Most podiums at a single competition</h2>
 
-<p><em data-i18n-en="Updated on 16 February 2026" data-i18n-zh="更新于 2026 年 2 月 16 日">Updated on 16 February 2026</em></p>
-
+<p><em data-i18n-en="Updated on 19 February 2026" data-i18n-zh="更新于 2026 年 2 月 19 日">Updated on 19 February 2026</em></p>
 
 | Podiums | Person |
 | ---: | :--- |

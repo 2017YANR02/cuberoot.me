@@ -1,8 +1,7 @@
-<h2 data-i18n-en="Average of 25" data-i18n-zh="{@solve_count} 次平均">Average of 25</h2>
+<h2 data-i18n-en="Average of 25" data-i18n-zh="25 次平均">Average of 25</h2>
 
 <p><em data-i18n-en="25 consecutive official attempts are considered. Only people from top 200 single are taken into account." data-i18n-zh="取连续 25 次官方成绩计算。仅考虑单次前 200 名的选手。">25 consecutive official attempts are considered. Only people from top 200 single are taken into account.</em></p>
-<p><em data-i18n-en="Updated on 16 February 2026" data-i18n-zh="更新于 2026 年 2 月 16 日">Updated on 16 February 2026</em></p>
-
+<p><em data-i18n-en="Updated on 19 February 2026" data-i18n-zh="更新于 2026 年 2 月 19 日">Updated on 19 February 2026</em></p>
 
 
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
@@ -39,9 +38,9 @@
 
 | Ao25 | Person | Times |
 | ---: | :--- | :--- |
+| 20.28 | [Max Park](https://www.worldcubeassociation.org/persons/2012PARK03) | 19.97, 21.25, 20.43, 23.61, 24.38, 19.83, 19.88, 20.51, 20.62, 18.55, 20.81, 18.04, 20.45, 17.73, 24.52, 21.18, 18.45, 19.65, 19.52, 21.11, 16.70, 22.23, 17.86, 18.60, 23.24 |
 | 20.42 | [Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02) | 25.11, 16.41, 19.20, 19.97, 21.52, 20.43, 18.52, 20.23, 20.06, 20.57, 17.61, 21.68, 21.92, 16.75, 19.91, 22.56, 21.51, 22.26, 18.90, 21.50, 20.66, 20.96, 22.72, 21.69, 17.20 |
 | 20.46 | [Sebastian Weyer](https://www.worldcubeassociation.org/persons/2010WEYE02) | 17.97, 26.40, 21.69, 20.43, 21.03, 21.39, 20.97, 20.82, 21.16, 19.96, 21.69, 18.47, 19.02, 18.71, 20.56, 19.44, 22.49, 20.40, 23.01, 21.28, 21.13, 18.52, 20.27, 19.59, 19.21 |
-| 20.56 | [Max Park](https://www.worldcubeassociation.org/persons/2012PARK03) | 21.89, 19.49, 23.70, 17.29, 20.25, 19.13, 19.68, 18.65, 21.18, 19.90, 20.35, 26.26, 22.43, 23.05, 22.15, 17.89, 20.94, 19.67, 18.89, 19.50, 23.08, 21.25, 19.42, 19.42, 21.50 |
 | 20.94 | [Timofei Tarasenko](https://www.worldcubeassociation.org/persons/2019TARA09) | 18.69, 20.87, 19.40, 18.84, 19.56, 22.23, 25.16, 21.98, 21.78, 18.12, 22.60, 23.44, 23.71, 20.65, 16.95, 20.21, 19.55, 18.93, 17.49, 22.23, 22.53, 30.71, 18.70, 27.46, 20.66 |
 | 21.77 | [Đỗ Quang Hưng](https://www.worldcubeassociation.org/persons/2019HUNG16) | 22.21, 21.65, 21.31, 23.81, 19.62, 21.70, 22.46, 24.25, 19.21, 21.74, 23.83, 22.48, 21.15, 21.37, 22.17, 19.76, 22.45, 21.14, 19.88, 22.54, 20.87, 23.96, 21.90, 23.09, 18.45 |
 | 21.83 | [Ruihang Xu (许瑞航)](https://www.worldcubeassociation.org/persons/2017XURU04) | 19.15, 24.23, 24.56, 21.69, 22.94, 25.51, 22.05, 19.66, 21.85, 20.78, 21.17, 19.80, 20.64, 20.21, 17.98, 25.23, 26.68, 25.10, 20.67, 19.75, 22.81, 18.33, 22.47, 22.03, 21.60 |
@@ -122,7 +121,7 @@
 | 21.76 | [Evan Brown](https://www.worldcubeassociation.org/persons/2013BROW04) | 22, 21, 25, 23, 19, 21, DNF, DNF, 26, 20, 22, 20, 21, 20, 24, 21, 23, 20, 24, 21, 19, 22, 21, 20, 20 |
 | 21.95 | [Lichi Fang (方力驰)](https://www.worldcubeassociation.org/persons/2018FANG03) | 20, 22, 19, 22, 23, 23, 22, 21, 23, 23, 21, 23, 20, 19, 22, 21, 21, 23, 21, DNF, 28, 24, 22, 22, 22 |
 | 22.05 | [Carter Kucala](https://www.worldcubeassociation.org/persons/2015KUCA01) | 22, 22, 23, 21, 23, 22, 22, 27, 22, 22, 21, 23, 19, 22, 22, DNF, 21, 21, 22, 21, 21, 25, 23, 22, 21 |
-| 22.19 | [Levi Gibson](https://www.worldcubeassociation.org/persons/2018GIBS04) | DNF, 20, 21, 20, 22, 24, 24, 20, 25, 23, 22, 19, 22, 21, 21, 22, 24, 22, 22, 24, 20, 23, 24, 23, 22 |
+| 22.14 | [Levi Gibson](https://www.worldcubeassociation.org/persons/2018GIBS04) | 20, 21, 20, 22, 24, 24, 20, 25, 23, 22, 19, 22, 21, 21, 22, 24, 22, 22, 24, 20, 23, 24, 23, 22, 23 |
 | 22.29 | [Fabio Schwandt](https://www.worldcubeassociation.org/persons/2014SCHW02) | 28, 24, 21, 23, 22, 20, 24, 20, 22, 23, 20, 20, 23, 26, 23, 21, 22, 27, 23, 22, 22, 25, 21, 21, 20 |
 
 <h3 data-i18n-en="3x3x3 One-Handed" data-i18n-zh="三阶单手">3x3x3 One-Handed</h3>

@@ -1,8 +1,7 @@
-<h2 data-i18n-en="Average of 12" data-i18n-zh="{@solve_count} 次平均">Average of 12</h2>
+<h2 data-i18n-en="Average of 12" data-i18n-zh="12 次平均">Average of 12</h2>
 
 <p><em data-i18n-en="12 consecutive official attempts are considered. Only people from top 200 single are taken into account." data-i18n-zh="取连续 12 次官方成绩计算。仅考虑单次前 200 名的选手。">12 consecutive official attempts are considered. Only people from top 200 single are taken into account.</em></p>
-<p><em data-i18n-en="Updated on 16 February 2026" data-i18n-zh="更新于 2026 年 2 月 16 日">Updated on 16 February 2026</em></p>
-
+<p><em data-i18n-en="Updated on 19 February 2026" data-i18n-zh="更新于 2026 年 2 月 19 日">Updated on 19 February 2026</em></p>
 
 
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
@@ -39,8 +38,8 @@
 
 | Ao12 | Person | Times |
 | ---: | :--- | :--- |
+| 19.55 | [Max Park](https://www.worldcubeassociation.org/persons/2012PARK03) | 18.55, 20.81, 18.04, 20.45, 17.73, 24.52, 21.18, 18.45, 19.65, 19.52, 21.11, 16.70 |
 | 19.71 | [Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02) | 18.99, 25.11, 16.41, 19.20, 19.97, 21.52, 20.43, 18.52, 20.23, 20.06, 20.57, 17.61 |
-| 19.76 | [Max Park](https://www.worldcubeassociation.org/persons/2012PARK03) | 18.02, 21.20, 20.35, 21.45, 17.72, 20.46, 17.60, 18.49, 19.37, 23.80, 20.28, 20.29 |
 | 20.15 | [Sebastian Weyer](https://www.worldcubeassociation.org/persons/2010WEYE02) | 20.89, 17.17, 20.99, 19.00, 23.64, 19.04, 23.57, 19.54, 20.63, 20.35, 18.01, 19.49 |
 | 20.48 | [Timofei Tarasenko](https://www.worldcubeassociation.org/persons/2019TARA09) | 21.98, 21.78, 18.12, 22.60, 23.44, 23.71, 20.65, 16.95, 20.21, 19.55, 18.93, 17.49 |
 | 21.08 | [Ruihang Xu (许瑞航)](https://www.worldcubeassociation.org/persons/2017XURU04) | 21.69, 22.94, 25.51, 22.05, 19.66, 21.85, 20.78, 21.17, 19.80, 20.64, 20.21, 17.98 |

@@ -1,8 +1,7 @@
 <h2 data-i18n-en="Best/average ratio" data-i18n-zh="最佳/平均比">Best/average ratio</h2>
 
 <p><em data-i18n-en="Best/Average Ratio: ratio of the best single to the average in a round (lower = more dominant best solve)." data-i18n-zh="最佳/平均比：一轮中最佳单次与平均的比值（越低代表最佳单次越突出）。">Best/Average Ratio: ratio of the best single to the average in a round (lower = more dominant best solve).</em></p>
-<p><em data-i18n-en="Updated on 18 February 2026" data-i18n-zh="更新于 2026 年 2 月 18 日">Updated on 18 February 2026</em></p>
-
+<p><em data-i18n-en="Updated on 19 February 2026" data-i18n-zh="更新于 2026 年 2 月 19 日">Updated on 19 February 2026</em></p>
 
 <style>
 .stat-tabs{display:flex;gap:0;margin:16px 0 0}
@@ -30,11 +29,11 @@
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2009CHAI01">Tanai Chaikraveephand (ธนัย ชัยกระวีพันธ์)</a></td><td style="text-align:right">0.22</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2023GALV08">Hugh Galvin</a></td><td style="text-align:right">0.22</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2016RAZZ01">Nikita Razzamazov (Никита Раззама́зов)</a></td><td style="text-align:right">0.23</td></tr>
-<tr><td><a href="https://www.worldcubeassociation.org/persons/2014KANT03">Kasoju Chandra Kanth</a></td><td style="text-align:right">0.27</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2018DUSA01">Samuel Du</a></td><td style="text-align:right">0.29</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2024THUR01">Chase Thurlow</a></td><td style="text-align:right">0.29</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2024ISAZ02">Juan Camilo Gonzalez Isaza</a></td><td style="text-align:right">0.30</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2023LEEM01">Mingyu Lee</a></td><td style="text-align:right">0.30</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2022RODR26">Edward Andrés Osorio Rodríguez</a></td><td style="text-align:right">0.30</td></tr>
 </table>
 <h3 data-i18n-en="2x2x2 Cube" data-i18n-zh="二阶魔方">2x2x2 Cube</h3>
 <table>
@@ -77,6 +76,20 @@
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2021KULA02">Maksymilian Kulas</a></td><td style="text-align:right">0.61</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2022GRIS03">Julian Daza Grisales</a></td><td style="text-align:right">0.61</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2015CORP02">Angel Antonio Corporam</a></td><td style="text-align:right">0.61</td></tr>
+</table>
+<h3 data-i18n-en="3x3x3 Blindfolded" data-i18n-zh="三阶盲拧">3x3x3 Blindfolded</h3>
+<table>
+<tr><th>Person</th><th style="text-align:right">Result</th></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2018ZYNE01">Arkadiusz Żynel</a></td><td style="text-align:right">0.57</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2015JOIN01">Kyra Joiner</a></td><td style="text-align:right">0.61</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2024CHOI04">Won Jae Choi (최원재)</a></td><td style="text-align:right">0.61</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2019KONI03">Flurin König</a></td><td style="text-align:right">0.64</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2020DWOR01">Kacper Paweł Dworak</a></td><td style="text-align:right">0.66</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2024MANA05">Juan Miguel C. Manalo</a></td><td style="text-align:right">0.68</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2010BENT01">Jan Bentlage</a></td><td style="text-align:right">0.71</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2016HOUG01">Levin Houghton</a></td><td style="text-align:right">0.71</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2012GOOD02">Callum James Goodyear-Jørgensen</a></td><td style="text-align:right">0.72</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2018CAMP17">Bella Campbell</a></td><td style="text-align:right">0.72</td></tr>
 </table>
 <h3 data-i18n-en="3x3x3 One-Handed" data-i18n-zh="三阶单手">3x3x3 One-Handed</h3>
 <table>
@@ -162,6 +175,48 @@
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2017PETE04">Tripp Peters</a></td><td style="text-align:right">0.29</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2016CUST02">Jason R. Custodio</a></td><td style="text-align:right">0.29</td></tr>
 </table>
+<h3 data-i18n-en="3x3x3 With Feet" data-i18n-zh="三阶脚拧">3x3x3 With Feet</h3>
+<table>
+<tr><th>Person</th><th style="text-align:right">Result</th></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2012KRIS04">Velidi Venkata Jagan Mohana Murali Krishna</a></td><td style="text-align:right">0.42</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2016SWAN03">Shane Swanepoel</a></td><td style="text-align:right">0.43</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2014DETL01">Rasmus Stub Detlefsen</a></td><td style="text-align:right">0.45</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2014VENK02">Rahul Venkatesan</a></td><td style="text-align:right">0.49</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2018WALD03">Eric Waldbillig</a></td><td style="text-align:right">0.51</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2019WEII01">Ivan Goh Tat Wei</a></td><td style="text-align:right">0.51</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2015VASI02">Nikolay Vasilyev</a></td><td style="text-align:right">0.51</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2017PINT05">Josias Milan Sirpa Pinto</a></td><td style="text-align:right">0.52</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2015EWER01">Helmer Ewert</a></td><td style="text-align:right">0.52</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2012SOLH02">Jonatan Solheim</a></td><td style="text-align:right">0.52</td></tr>
+</table>
+<h3 data-i18n-en="Rubik's Magic" data-i18n-zh="八板">Rubik's Magic</h3>
+<table>
+<tr><th>Person</th><th style="text-align:right">Result</th></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2011BENZ01">Boriss Benzerruki</a></td><td style="text-align:right">0.13</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2004GALL02">Clément Gallet</a></td><td style="text-align:right">0.17</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2008AURO01">Sébastien Auroux</a></td><td style="text-align:right">0.18</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2010JUNL01">Kang Jun Lee (이광준)</a></td><td style="text-align:right">0.18</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2007HUGH01">Mike Hughey</a></td><td style="text-align:right">0.19</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2005CIAL02">Łukasz Ciałoń</a></td><td style="text-align:right">0.20</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2007LEMO01">Laetitia Lemoine</a></td><td style="text-align:right">0.21</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2003BRUC01">Ron van Bruchem</a></td><td style="text-align:right">0.21</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2011JONA01">Andre Febriato Jonathan</a></td><td style="text-align:right">0.21</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2005AKKE01">Erik Akkersdijk</a></td><td style="text-align:right">0.22</td></tr>
+</table>
+<h3 data-i18n-en="Master Magic" data-i18n-zh="十二板">Master Magic</h3>
+<table>
+<tr><th>Person</th><th style="text-align:right">Result</th></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2007JAKU01">Marcin Jakubowski</a></td><td style="text-align:right">0.08</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2010BREC01">John Brechon</a></td><td style="text-align:right">0.21</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2005BATI01">Milán Baticz</a></td><td style="text-align:right">0.23</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2006GARR01">Lucas Garron</a></td><td style="text-align:right">0.26</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2005AKKE01">Erik Akkersdijk</a></td><td style="text-align:right">0.31</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2011QUAC01">David Quach</a></td><td style="text-align:right">0.32</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2010LECA01">Calvin Le</a></td><td style="text-align:right">0.33</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2008GREW01">Darren Grewe</a></td><td style="text-align:right">0.35</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2010ESTU01">Rémi Esturoune</a></td><td style="text-align:right">0.36</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2007LOGA01">Bryan Logan</a></td><td style="text-align:right">0.36</td></tr>
+</table>
 </div>
 <div id="history" class="stat-panel">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
@@ -241,6 +296,22 @@
 <tr><td style="text-align:right">0.70</td><td style="text-align:right">15.2%</td><td style="text-align:right">413</td><td><a href="https://www.worldcubeassociation.org/persons/2008LIBI01">Bingliang Li (李炳良)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/GuangdongOpen2010">Guangdong Open 2010</a></td><td>2010-10-03</td><td>13.83, 11.53, 13.88, 11.75, 8.65</td></tr>
 <tr><td style="text-align:right">0.82</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2007ZHUJ01">Jianwei Zhu (朱剑伟)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/BeijingSummerOpen2009">Beijing Summer Open 2009</a></td><td>2009-08-16</td><td>16.44, 15.66, 13.65, 12.05, 14.52</td></tr>
 </table>
+<h3 data-i18n-en="3x3x3 With Feet" data-i18n-zh="三阶脚拧">3x3x3 With Feet</h3>
+<table>
+<tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th><th>Details</th></tr>
+<tr><td style="text-align:right">0.85</td><td style="text-align:right">4.7%</td><td style="text-align:right">97</td><td><a href="https://www.worldcubeassociation.org/persons/2015ROSE01">Daniel Rose-Levine</a></td><td><a href="https://www.worldcubeassociation.org/competitions/Euro2018">WCA Euro 2018</a></td><td>2018-07-19</td><td>24.81, 27.81, 18.96, 18.87, 22.89</td></tr>
+<tr><td style="text-align:right">0.89</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2015ROSE01">Daniel Rose-Levine</a></td><td><a href="https://www.worldcubeassociation.org/competitions/SEChamp2018">SE Champ 2018</a></td><td>2018-04-13</td><td>24.38, 21.11, 22.48, 28.06, 24.21</td></tr>
+</table>
+<h3 data-i18n-en="Rubik's Magic" data-i18n-zh="八板">Rubik's Magic</h3>
+<table>
+<tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th><th>Details</th></tr>
+<tr><td style="text-align:right">0.76</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2003SCHE01">Jaap Scherphuis</a></td><td><a href="https://www.worldcubeassociation.org/competitions/GermanOpen2004">German Open 2004</a></td><td>2004-04-24</td><td>2.41, 3.05, 3.73, 2.22, 3.30</td></tr>
+</table>
+<h3 data-i18n-en="Master Magic" data-i18n-zh="十二板">Master Magic</h3>
+<table>
+<tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th><th>Details</th></tr>
+<tr><td style="text-align:right">0.86</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2003BURT01">Bob Burton</a></td><td><a href="https://www.worldcubeassociation.org/competitions/CaltechDallas2005">Caltech Dallas 2005</a></td><td>2005-08-13</td><td>3.46, 3.05, 3.05, 4.11, 4.16</td></tr>
+</table>
 </div>
 <script>
 function switchTab(e,id){
@@ -250,3 +321,6 @@ function switchTab(e,id){
   document.getElementById(id).classList.add('active');
 }
 </script>
+
+
+<a href="https://github.com/RuiminYan/ruiminyan.github.io" class="github-corner" aria-label="View source on Github"><svg width="80" height="80" viewBox="0 0 250 250" style="fill:#151513; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>

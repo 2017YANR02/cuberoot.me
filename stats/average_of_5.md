@@ -1,8 +1,7 @@
-<h2 data-i18n-en="Average of 5" data-i18n-zh="{@solve_count} 次平均">Average of 5</h2>
+<h2 data-i18n-en="Average of 5" data-i18n-zh="5 次平均">Average of 5</h2>
 
 <p><em data-i18n-en="5 consecutive official attempts are considered. Only people from top 200 single are taken into account." data-i18n-zh="取连续 5 次官方成绩计算。仅考虑单次前 200 名的选手。">5 consecutive official attempts are considered. Only people from top 200 single are taken into account.</em></p>
-<p><em data-i18n-en="Updated on 16 February 2026" data-i18n-zh="更新于 2026 年 2 月 16 日">Updated on 16 February 2026</em></p>
-
+<p><em data-i18n-en="Updated on 19 February 2026" data-i18n-zh="更新于 2026 年 2 月 19 日">Updated on 19 February 2026</em></p>
 
 
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>

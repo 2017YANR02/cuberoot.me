@@ -1,53 +1,52 @@
 <h2 data-i18n-en="Best medal collection from abroad by country" data-i18n-zh="各国海外最佳奖牌收藏">Best medal collection from abroad by country</h2>
 
 <p><em data-i18n-en="Only medals got abroad are taken into account." data-i18n-zh="仅统计在海外比赛中获得的奖牌。">Only medals got abroad are taken into account.</em></p>
-<p><em data-i18n-en="Updated on 16 February 2026" data-i18n-zh="更新于 2026 年 2 月 16 日">Updated on 16 February 2026</em></p>
-
+<p><em data-i18n-en="Updated on 19 February 2026" data-i18n-zh="更新于 2026 年 2 月 19 日">Updated on 19 February 2026</em></p>
 
 | Country | Gold | Silver | Bronze | Total |
 | :--- | :--: | :--: | :--: | :--: |
 | Hungary | **1551** | 1320 | 1140 | 4011 |
 | United States | **1526** | 1203 | 1030 | 3759 |
 | Germany | **1385** | 1312 | 1294 | 3991 |
-| Russia | **1328** | 719 | 544 | 2591 |
+| Russia | **1331** | 719 | 546 | 2596 |
 | France | **1127** | 988 | 853 | 2968 |
-| China | **1090** | 1008 | 897 | 2995 |
+| China | **1092** | 1012 | 897 | 3001 |
 | Netherlands | **1063** | 853 | 744 | 2660 |
 | Poland | **853** | 554 | 440 | 1847 |
-| Malaysia | **503** | 538 | 492 | 1533 |
+| Malaysia | **503** | 539 | 492 | 1534 |
 | Canada | **500** | 506 | 552 | 1558 |
 | United Kingdom | **493** | 546 | 516 | 1555 |
 | Hong Kong, China | **491** | 488 | 409 | 1388 |
 | Switzerland | **474** | 514 | 413 | 1401 |
-| India | **450** | 440 | 421 | 1311 |
-| Italy | **436** | 432 | 403 | 1271 |
+| India | **451** | 441 | 422 | 1314 |
+| Italy | **437** | 435 | 406 | 1278 |
 | Republic of Korea | **429** | 367 | 321 | 1117 |
 | Denmark | **387** | 335 | 280 | 1002 |
 | Ukraine | **371** | 386 | 397 | 1154 |
 | Sweden | **342** | 397 | 399 | 1138 |
-| Finland | **321** | 264 | 223 | 808 |
+| Finland | **324** | 264 | 228 | 816 |
 | Australia | **315** | 183 | 136 | 634 |
 | Argentina | **295** | 201 | 180 | 676 |
 | Singapore | **270** | 239 | 254 | 763 |
 | Indonesia | **263** | 248 | 190 | 701 |
 | Romania | **263** | 194 | 163 | 620 |
 | Chinese Taipei | **260** | 244 | 245 | 749 |
-| Japan | **254** | 208 | 185 | 647 |
+| Japan | **254** | 208 | 187 | 649 |
 | Spain | **239** | 233 | 257 | 729 |
 | Ireland | **233** | 118 | 101 | 452 |
 | Austria | **211** | 261 | 282 | 754 |
 | Slovenia | **199** | 266 | 271 | 736 |
-| Peru | **196** | 182 | 233 | 611 |
+| Peru | **196** | 183 | 235 | 614 |
 | Latvia | **177** | 256 | 261 | 694 |
 | Czech Republic | **163** | 190 | 202 | 555 |
 | Belgium | **159** | 235 | 229 | 623 |
 | Colombia | **154** | 128 | 124 | 406 |
 | Norway | **138** | 149 | 147 | 434 |
-| Kazakhstan | **136** | 158 | 171 | 465 |
+| Kazakhstan | **136** | 158 | 173 | 467 |
 | Greece | **132** | 166 | 131 | 429 |
 | Lithuania | **120** | 105 | 107 | 332 |
 | Belarus | **115** | 84 | 95 | 294 |
-| Venezuela | **108** | 139 | 125 | 372 |
+| Venezuela | **108** | 141 | 125 | 374 |
 | Philippines | **108** | 126 | 119 | 353 |
 | Thailand | **105** | 111 | 68 | 284 |
 | Slovakia | **103** | 149 | 149 | 401 |
@@ -76,7 +75,7 @@
 | El Salvador | **22** | 28 | 26 | 76 |
 | North Macedonia | **20** | 27 | 31 | 78 |
 | Bulgaria | **19** | 53 | 60 | 132 |
-| Nigeria | **18** | 36 | 29 | 83 |
+| Nigeria | **19** | 36 | 29 | 84 |
 | Kuwait | **16** | 14 | 30 | 60 |
 | Morocco | **15** | 19 | 20 | 54 |
 | Nicaragua | **14** | 8 | 10 | 32 |

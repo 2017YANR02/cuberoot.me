@@ -1,8 +1,7 @@
 <h2 data-i18n-en="Best medal collection from abroad by person" data-i18n-zh="个人海外最佳奖牌收藏">Best medal collection from abroad by person</h2>
 
 <p><em data-i18n-en="Only medals got abroad are taken into account." data-i18n-zh="仅统计在海外比赛中获得的奖牌。">Only medals got abroad are taken into account.</em></p>
-<p><em data-i18n-en="Updated on 16 February 2026" data-i18n-zh="更新于 2026 年 2 月 16 日">Updated on 16 February 2026</em></p>
-
+<p><em data-i18n-en="Updated on 19 February 2026" data-i18n-zh="更新于 2026 年 2 月 19 日">Updated on 19 February 2026</em></p>
 
 | Person | Gold | Silver | Bronze | Total |
 | :--- | :--: | :--: | :--: | :--: |
@@ -42,8 +41,8 @@
 | [Kyeongmin Choi (최경민)](https://www.worldcubeassociation.org/persons/2017CHOI07) | **91** | 53 | 46 | 190 |
 | [János Bereczki](https://www.worldcubeassociation.org/persons/2018BERE01) | **88** | 31 | 27 | 146 |
 | [Timofei Tarasenko](https://www.worldcubeassociation.org/persons/2019TARA09) | **88** | 25 | 19 | 132 |
+| [Niko Ronkainen](https://www.worldcubeassociation.org/persons/2010RONK01) | **87** | 67 | 62 | 216 |
 | [Burno Li Chak Kwan (李澤堃)](https://www.worldcubeassociation.org/persons/2017KWAN05) | **87** | 61 | 37 | 185 |
-| [Niko Ronkainen](https://www.worldcubeassociation.org/persons/2010RONK01) | **86** | 67 | 60 | 213 |
 | [Lim Hung (林弘)](https://www.worldcubeassociation.org/persons/2016HUNG08) | **84** | 53 | 54 | 191 |
 | [Michał Pleskowicz](https://www.worldcubeassociation.org/persons/2009PLES01) | **84** | 35 | 27 | 146 |
 | [Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36) | **84** | 21 | 4 | 109 |
@@ -69,7 +68,7 @@
 | [Elian Beguec](https://www.worldcubeassociation.org/persons/2014BEGU01) | **57** | 32 | 26 | 115 |
 | [David Vujasić](https://www.worldcubeassociation.org/persons/2015VUJA01) | **56** | 72 | 50 | 178 |
 | [Jong-Ho Jeong (정종호)](https://www.worldcubeassociation.org/persons/2008JONG03) | **55** | 35 | 35 | 125 |
-| [Vincenzo Maria Gammino](https://www.worldcubeassociation.org/persons/2016GAMM01) | **55** | 32 | 29 | 116 |
+| [Vincenzo Maria Gammino](https://www.worldcubeassociation.org/persons/2016GAMM01) | **55** | 32 | 31 | 118 |
 | [Kevin Hays](https://www.worldcubeassociation.org/persons/2009HAYS01) | **55** | 24 | 13 | 92 |
 | [François Courtès](https://www.worldcubeassociation.org/persons/2008COUR01) | **54** | 61 | 45 | 160 |
 | [Sameer Aggarwal](https://www.worldcubeassociation.org/persons/2017AGGA01) | **54** | 35 | 21 | 110 |

@@ -1,8 +1,7 @@
 <h2 data-i18n-en="Best result not providing a podium" data-i18n-zh="未登领奖台的最佳成绩">Best result not providing a podium</h2>
 
 <p><em data-i18n-en="Only finals are taken into account." data-i18n-zh="仅统计决赛。">Only finals are taken into account.</em></p>
-<p><em data-i18n-en="Updated on 16 February 2026" data-i18n-zh="更新于 2026 年 2 月 16 日">Updated on 16 February 2026</em></p>
-
+<p><em data-i18n-en="Updated on 19 February 2026" data-i18n-zh="更新于 2026 年 2 月 19 日">Updated on 19 February 2026</em></p>
 
 
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
