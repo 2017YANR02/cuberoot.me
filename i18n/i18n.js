@@ -481,19 +481,6 @@ const I18n = {
             }
         });
 
-        // NOTE: Stats 页面 h2 标题翻译
-        if (this.locale === 'zh') {
-            document.querySelectorAll('h2').forEach(h2 => {
-                const zh = this._statsTitleZh[h2.textContent.trim()];
-                if (zh) h2.textContent = zh;
-            });
-        } else {
-            document.querySelectorAll('h2').forEach(h2 => {
-                const en = this._statsTitleEn[h2.textContent.trim()];
-                if (en) h2.textContent = en;
-            });
-        }
-
         // NOTE: Stats 页面 h3 项目名翻译（复用 _eventZh 和 _countryZh 映射）
         // h3 可能是项目名（如 "3x3x3 Cube"）或地区分类（如 "World"、"Continents"、"Countries"）
         const _h3ExtraZh = { "Continents": "各大洲", "Countries": "各国家/地区" };
@@ -522,22 +509,6 @@ const I18n = {
             document.querySelectorAll('td').forEach(td => {
                 const en = this._countryEn[td.textContent.trim()];
                 if (en) td.textContent = en;
-            });
-        }
-
-        // NOTE: Stats 页面描述翻译（em 元素内的斜体文本）
-        // Markdown 跨行 *...* 渲染后 textContent 含换行+多余空格，需归一化后匹配
-        if (this.locale === 'zh') {
-            document.querySelectorAll('em').forEach(em => {
-                const text = em.textContent.trim().replace(/\s+/g, ' ');
-                const zh = this._statsDescZh[text];
-                if (zh) em.textContent = zh;
-            });
-        } else {
-            document.querySelectorAll('em').forEach(em => {
-                const text = em.textContent.trim().replace(/\s+/g, ' ');
-                const en = this._statsDescEn[text];
-                if (en) em.textContent = en;
             });
         }
 
