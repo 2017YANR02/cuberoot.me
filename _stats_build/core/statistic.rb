@@ -1,3 +1,4 @@
+require "date"
 require "time"
 require "fileutils"
 require_relative "database"
@@ -88,11 +89,12 @@ class Statistic
       gain_str = ""
     end
 
-    # 天数：该纪录保持了多久（直到被下一条打破），最新纪录为空
+    # 天数：该纪录保持了多久
+    # 已被打破 → 到下一条纪录的天数；仍保持 → 到今天的天数
     if i < records.size - 1
       days_str = (records[i + 1]["start_date"] - r["start_date"]).to_i.to_s
     else
-      days_str = ""
+      days_str = (Date.today - r["start_date"].to_date).to_i.to_s
     end
 
     date_str = r["start_date"].strftime("%Y-%m-%d")
