@@ -60,17 +60,7 @@ class WrSingleHistory < GroupedStatistic
       results = unique_records.each_with_index.map do |r, i|
         single = SolveTime.new(event_id, :single, r["single"])
 
-        if i > 0
-          prev = unique_records[i - 1]
-          prev_value = prev["single"].to_f
-          gain = ((prev_value - r["single"]) / prev_value * 100).round(1)
-          gain_str = "#{gain}%"
-          duration = (r["start_date"] - prev["start_date"]).to_i
-          days_str = duration.to_s
-        else
-          gain_str = ""
-          days_str = ""
-        end
+        gain_str, days_str = wr_progress(unique_records, i) { |r| r["single"] }
 
         details = (1..5).map { |n| SolveTime.new(event_id, :single, r["value#{n}"]).clock_format }
           .reject(&:empty?)
