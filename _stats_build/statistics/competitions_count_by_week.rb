@@ -3,9 +3,7 @@ require_relative "../core/statistic"
 class CompetitionsCountByWeek < Statistic
   def initialize
     @title = "Competitions count by week"
-    @title_zh = "每周比赛数量"
     @note = "Week is considered to start on Monday and end on Sunday."
-    @note_zh = "一周从周一开始到周日结束。"
     @table_header = { "Competitions" => :center, "Week start" => :right, "Week end" => :right, "List on WCA" => :center }
   end
 

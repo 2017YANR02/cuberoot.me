@@ -4,7 +4,6 @@ require_relative "../core/events"
 class MostFrequentResults < GroupedStatistic
   def initialize
     @title = "Most frequent results"
-    @title_zh = "出现频率最高的成绩"
     @table_header = { "Count" => :right, "Result" => :right }
   end
 

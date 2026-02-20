@@ -397,6 +397,7 @@ const I18n = {
     _countryEn: {},
 
     // NOTE: 初始化入口 — 自动检测语言、加载字典、应用翻译
+    // 分为同步阶段和异步阶段，消除 FOUC（先显示英文再切中文的闪烁）
     async init() {
         this._basePath = this._detectBasePath();
         // 优先级: localStorage > navigator.language > 默认 en
@@ -406,54 +407,55 @@ const I18n = {
         } else if (navigator.language && navigator.language.startsWith('zh')) {
             this.locale = 'zh';
         }
-        // 并行加载两种语言的字典
-        await Promise.all([this._loadDict('en'), this._loadDict('zh')]);
-        // 构建反向映射（中文 → 英文）
+
+        // ── 同步阶段：在 await 让出执行权之前完成，确保首帧即为正确语言 ──
+
+        // 构建反向映射（纯同步，不依赖网络）
         for (const [en, zh] of Object.entries(this._eventZh)) {
             this._eventEn[zh] = en;
         }
         for (const [en, zh] of Object.entries(this._headerZh)) {
             this._headerEn[zh] = en;
         }
-        // 构建国家名反向映射
         for (const [en, zh] of Object.entries(this._countryZh)) {
             this._countryEn[zh] = en;
         }
-        // 构建 stats 标题和描述的反向映射
         for (const [en, zh] of Object.entries(this._statsTitleZh)) {
             this._statsTitleEn[zh] = en;
         }
         for (const [en, zh] of Object.entries(this._statsDescZh)) {
             this._statsDescEn[zh] = en;
         }
-        // 构建动态文本反向映射 { zh → en }
         for (const [id, map] of Object.entries(this._dynamicTextZh)) {
             this._dynamicTextEn[id] = {};
             for (const [en, zh] of Object.entries(map)) {
                 this._dynamicTextEn[id][zh] = en;
             }
         }
-        // 构建 solver label 反向映射
         for (const [en, zh] of Object.entries(this._solverLabelZh)) {
             this._solverLabelEn[zh] = en;
         }
-        // 构建 placeholder 反向映射
         for (const [en, zh] of Object.entries(this._placeholderZh)) {
             this._placeholderEn[zh] = en;
         }
-        // 构建菜单链接反向映射
         for (const [en, zh] of Object.entries(this._menuLinkZh)) {
             this._menuLinkEn[zh] = en;
         }
-        // 构建指标按钮反向映射
         for (const [en, zh] of Object.entries(this._metricBtnZh)) {
             this._metricBtnEn[zh] = en;
         }
-        // NOTE: 自动注入语言切换按钮（如果页面中还没有）
-        this._injectToggle();
+
+        // NOTE: 同步快速翻译 — 处理 data-i18n-en/zh 属性（stats 页面标题/描述等）
+        // 这些翻译已嵌入 HTML 属性，不需要 JSON 字典，可以立即应用
         this._ready = true;
+        this._injectToggle();
         this.apply();
         this._updateToggle();
+
+        // ── 异步阶段：加载 JSON 字典后做完整翻译（solver 页面需要） ──
+        await Promise.all([this._loadDict('en'), this._loadDict('zh')]);
+        // NOTE: 字典加载完后再次 apply，翻译 data-i18n="key" 形式的元素（solver 页面）
+        this.apply();
         this._startObserver();
     },
 

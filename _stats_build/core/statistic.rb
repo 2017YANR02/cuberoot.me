@@ -4,6 +4,7 @@ require "fileutils"
 require_relative "database"
 require_relative "events"
 require_relative "solve_time"
+require_relative "../i18n_translations"
 
 class Statistic
   attr_reader :title, :title_zh, :note, :note_zh
@@ -41,12 +42,16 @@ class Statistic
   end
 
   # NOTE: 用 HTML data-i18n 属性实现双语切换，前端 i18n.js 据此替换文本
+  # 翻译来源优先级: @title_zh (硬编码) > STAT_TRANSLATIONS (集中管理) > @title (英文原文)
   def top
     timestamp = Time.parse(Database.metadata["export_timestamp"])
-    zh = @title_zh || @title
+    # NOTE: 通过类名反推文件 basename（CamelCase → snake_case），查找集中翻译表
+    basename = self.class.name.gsub(/([a-z\d])([A-Z])/, '\1_\2').downcase
+    trans = defined?(STAT_TRANSLATIONS) ? (STAT_TRANSLATIONS[basename] || {}) : {}
+    zh = @title_zh || trans[:title_zh] || @title
     markdown = "<h2 data-i18n-en=\"#{@title}\" data-i18n-zh=\"#{zh}\">#{@title}</h2>\n\n"
     if @note
-      nzh = @note_zh || @note
+      nzh = @note_zh || trans[:note_zh] || @note
       markdown += "<p><em data-i18n-en=\"#{@note}\" data-i18n-zh=\"#{nzh}\">#{@note}</em></p>\n"
     end
     # NOTE: 日期也用双语输出

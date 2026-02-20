@@ -3,9 +3,7 @@ require_relative "abstract/round_metric"
 class WrWpa < RoundMetric
   def initialize
     @title = "WPA (Worst Possible Average)"
-    @title_zh = "WPA（最差可能平均）"
     @note = "Worst Possible Average: average of the worst 3 out of the first 4 solves in a round."
-    @note_zh = "WPA：一轮中前 4 次成绩取最差的 3 次计算平均。"
     @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right, "Person" => :left, "Competition" => :left, "Date" => :left, "Details" => :left }
   end
 

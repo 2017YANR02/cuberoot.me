@@ -3,9 +3,7 @@ require_relative "../core/statistic"
 class BestPotentialFmcMean < Statistic
   def initialize
     @title = "Best potential FMC mean"
-    @title_zh = "最佳潜在 FMC 平均"
     @note = "The means are computed by taking the best result for each attempt in the given round."
-    @note_zh = "取该轮每次尝试的最佳成绩计算平均。"
     @table_header = { "Mean" => :center, "Attempt 1" => :center, "Attempt 2" => :center, "Attempt 3" => :center, "Competition" => :left }
   end
 
