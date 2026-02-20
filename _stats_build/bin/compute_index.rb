@@ -33,7 +33,7 @@ output += <<~HTML
     <button data-i18n-toggle="en" onclick="I18n.setLocale('en')" style="padding:6px 14px;border:none;cursor:pointer;font-size:14px;font-weight:600;background:rgba(255,255,255,0.1);color:#ccc;backdrop-filter:blur(8px)">EN</button>
     <button data-i18n-toggle="zh" onclick="I18n.setLocale('zh')" style="padding:6px 14px;border:none;cursor:pointer;font-size:14px;font-weight:600;background:rgba(255,255,255,0.1);color:#ccc;backdrop-filter:blur(8px)">中文</button>
   </div>
-  <script src="../src/i18n/i18n.js" defer></script>
+  <script src="../i18n/i18n.js" defer></script>
 
 HTML
 
@@ -45,7 +45,7 @@ unless wr_stats.empty?
     zh = stat.title_zh || stat.title
     output += "  <li><a href=\"#{id}\" data-i18n-en=\"#{stat.title}\" data-i18n-zh=\"#{zh}\">#{stat.title}</a></li>\n"
   end
-  output += "</ul>\n\n---\n\n"
+  output += "</ul>\n\n"
 end
 
 # 通用统计组
