@@ -4,7 +4,7 @@ class WrWpa < RoundMetric
   def initialize
     @title = "WPA (Worst Possible Average)"
     @note = "Worst Possible Average: average of the worst 3 out of the first 4 solves in a round."
-    @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right, "Person" => :left, "Competition" => :left, "Date" => :left, "Details" => :left }
+    @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right, "Person" => :left, "Date" => :left, "Competition" => :left, "Details" => :left }
   end
 
   # NOTE: WPA = 前4次中取最差的3次求均值

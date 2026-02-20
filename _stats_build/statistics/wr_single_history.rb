@@ -9,7 +9,7 @@ class WrSingleHistory < RoundMetric
     @title = "Single"
     @note = "Shows how world record singles have progressed over time for each event."
     @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right,
-                      "Person" => :left, "Competition" => :left, "Date" => :left, "Details" => :left }
+                      "Person" => :left, "Date" => :left, "Competition" => :left, "Details" => :left }
   end
 
   # NOTE: Single 的 metric 就是 best 字段本身

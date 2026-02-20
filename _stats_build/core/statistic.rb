@@ -81,7 +81,7 @@ class Statistic
   # event_id: 项目 ID（用于格式化 details 中的 value1-5）
   # details: 可选，自定义详情字符串（ao_rounds 用各轮 average 而非 value1-5）
   # block: 从记录中提取指标值（用于计算进步百分比）
-  # 返回: [gain_str, days_str, person_link, competition_link, date_str, details]
+  # 返回: [gain_str, days_str, person_link, date_str, competition_link, details]
   def wr_history_row(records, i, event_id, details: nil)
     r = records[i]
 
@@ -106,6 +106,6 @@ class Statistic
     details ||= (1..5).map { |n| SolveTime.new(event_id, :single, r["value#{n}"]).clock_format }
       .reject(&:empty?).join(', ')
 
-    [gain_str, days_str, r["person_link"], r["competition_link"], date_str, details]
+    [gain_str, days_str, r["person_link"], date_str, r["competition_link"], details]
   end
 end
