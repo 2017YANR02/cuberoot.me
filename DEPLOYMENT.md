@@ -135,6 +135,10 @@ $env:STATS_USE_CACHE="1"; ruby bin/compute.rb wr_bao5
 # Step 3：提交并 push，GitHub Pages 1-2 分钟内上线
 git add ../stats/wr_bao5.md
 git commit -m "chore: update wr_bao5"
+
+# ⚠️ 关键步骤：由于 GitHub Actions (CI) 可能在后台推了 commit，
+# 必须先拉取合并远程的新 commit 到本地最新进展的下方，然后推。
+git pull --rebase origin main
 git push
 ```
 
