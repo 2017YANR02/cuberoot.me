@@ -20,6 +20,10 @@ const I18n = {
         "3x3x3 Multi-Blind": "三阶多盲", "3x3x3 With Feet": "三阶脚拧",
         "Rubik's Magic": "八板", "Master Magic": "十二板",
         "Rubik's Cube: Multiple blind old style": "旧多盲",
+        // NOTE: Kramdown SmartyPants 会把 ' (U+0027) 转成 ' (U+2019)，需要两种都匹配
+        "Rubik\u2019s Cube": "三阶魔方", "Rubik\u2019s Clock": "魔表",
+        "Rubik\u2019s Magic": "八板",
+        "Rubik\u2019s Cube: Multiple blind old style": "旧多盲",
     },
     // NOTE: 反向映射，用于切回英文时恢复原文
     _eventEn: {},
@@ -552,7 +556,9 @@ const I18n = {
                 if (zh) th.textContent = zh;
             });
             document.querySelectorAll('td').forEach(td => {
-                const zh = this._eventZh[td.textContent.trim()];
+                const t = td.textContent.trim();
+                // NOTE: td 可能包含项目名、表头值（如 Single/Average）
+                const zh = this._eventZh[t] || this._headerZh[t];
                 if (zh) td.textContent = zh;
             });
         } else {
@@ -562,7 +568,8 @@ const I18n = {
                 if (en) th.textContent = en;
             });
             document.querySelectorAll('td').forEach(td => {
-                const en = this._eventEn[td.textContent.trim()];
+                const t = td.textContent.trim();
+                const en = this._eventEn[t] || this._headerEn[t];
                 if (en) td.textContent = en;
             });
         }
