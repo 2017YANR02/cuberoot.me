@@ -1,8 +1,7 @@
 <h2 data-i18n-en="Most 4th places" data-i18n-zh="最多第四名">Most 4th places</h2>
 
 <p><em data-i18n-en="Only finals are taken into account." data-i18n-zh="仅统计决赛。">Only finals are taken into account.</em></p>
-<p><em data-i18n-en="Updated on 16 February 2026" data-i18n-zh="更新于 2026 年 2 月 16 日">Updated on 16 February 2026</em></p>
-
+<p><em data-i18n-en="Updated on 19 February 2026" data-i18n-zh="更新于 2026 年 2 月 19 日">Updated on 19 February 2026</em></p>
 
 | 4th places | Person |
 | ---: | :--- |
@@ -25,13 +24,13 @@
 | 153 | [Helmer Ewert](https://www.worldcubeassociation.org/persons/2015EWER01) |
 | 151 | [Sébastien Auroux](https://www.worldcubeassociation.org/persons/2008AURO01) |
 | 151 | [Brian Johnson](https://www.worldcubeassociation.org/persons/2013JOHN10) |
+| 148 | [Yuji Yoshida](https://www.worldcubeassociation.org/persons/2015YOSH01) |
 | 147 | [Adam Marcellus Kelly](https://www.worldcubeassociation.org/persons/2016KELL10) |
-| 147 | [Yuji Yoshida](https://www.worldcubeassociation.org/persons/2015YOSH01) |
 | 145 | [Callum Hales-Jepp](https://www.worldcubeassociation.org/persons/2012HALE01) |
-| 141 | [Dennis Rosero](https://www.worldcubeassociation.org/persons/2010ROSE03) |
+| 142 | [Dennis Rosero](https://www.worldcubeassociation.org/persons/2010ROSE03) |
 | 140 | [Łukasz Burliga](https://www.worldcubeassociation.org/persons/2013BURL01) |
 | 137 | [Simon Kellum](https://www.worldcubeassociation.org/persons/2016KELL12) |
-| 135 | [Joseph Daniel Blas Sanchez](https://www.worldcubeassociation.org/persons/2016SANC08) |
+| 137 | [Joseph Daniel Blas Sanchez](https://www.worldcubeassociation.org/persons/2016SANC08) |
 | 133 | [Paul Mahvi](https://www.worldcubeassociation.org/persons/2012MAHV01) |
 | 131 | [Manuel Prieto de Antón](https://www.worldcubeassociation.org/persons/2015ANTO04) |
 | 130 | [Zeke Mackay](https://www.worldcubeassociation.org/persons/2015MACK06) |
@@ -49,8 +48,8 @@
 | 118 | [Marco Rota](https://www.worldcubeassociation.org/persons/2009ROTA01) |
 | 117 | [Przemysław Rogalski](https://www.worldcubeassociation.org/persons/2013ROGA02) |
 | 117 | [Lucas Ichiro Yunomae](https://www.worldcubeassociation.org/persons/2014YUNO01) |
+| 117 | [Antto Pitkänen](https://www.worldcubeassociation.org/persons/2017PITK01) |
 | 116 | [Diego Alejandro Casas Jimenez](https://www.worldcubeassociation.org/persons/2014JIME05) |
-| 116 | [Antto Pitkänen](https://www.worldcubeassociation.org/persons/2017PITK01) |
 | 115 | [Pedro Giuseppe Garcia Milla](https://www.worldcubeassociation.org/persons/2016MILL07) |
 | 114 | [Oliver Fritz](https://www.worldcubeassociation.org/persons/2014FRIT02) |
 | 113 | [Cham J. Chambers](https://www.worldcubeassociation.org/persons/2017CHAM09) |
@@ -93,15 +92,15 @@
 | 93 | [Arnaud van Galen](https://www.worldcubeassociation.org/persons/2006GALE01) |
 | 93 | [Mason Langenderfer](https://www.worldcubeassociation.org/persons/2013LANG03) |
 | 92 | [Clément Gallet](https://www.worldcubeassociation.org/persons/2004GALL02) |
-| 91 | [Shivam Bansal](https://www.worldcubeassociation.org/persons/2011BANS02) |
 | 91 | [Lim Hung (林弘)](https://www.worldcubeassociation.org/persons/2016HUNG08) |
 | 91 | [Wilfrid Py](https://www.worldcubeassociation.org/persons/2016PYWI01) |
+| 91 | [Shivam Bansal](https://www.worldcubeassociation.org/persons/2011BANS02) |
 | 90 | [Benjamin Gottschalk](https://www.worldcubeassociation.org/persons/2016GOTT01) |
 | 89 | [Wilson Alvis (陈智胜)](https://www.worldcubeassociation.org/persons/2011ALVI01) |
 | 88 | [Jared Stinson](https://www.worldcubeassociation.org/persons/2014STIN01) |
 | 88 | [Federico da Fonseca](https://www.worldcubeassociation.org/persons/2015FONS02) |
-| 87 | [Asia Konvittayayotin (เอเชีย กรวิทยโยธิน)](https://www.worldcubeassociation.org/persons/2009KONV01) |
 | 87 | [Olivér Perge](https://www.worldcubeassociation.org/persons/2007PERG01) |
+| 87 | [Asia Konvittayayotin (เอเชีย กรวิทยโยธิน)](https://www.worldcubeassociation.org/persons/2009KONV01) |
 | 86 | [Livia Kleiner](https://www.worldcubeassociation.org/persons/2013KLEI03) |
 | 86 | [Magnus Søndergaard Byrne](https://www.worldcubeassociation.org/persons/2017BYRN01) |
 | 86 | [Michał Krasowski](https://www.worldcubeassociation.org/persons/2013KRAS02) |

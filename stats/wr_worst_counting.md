@@ -1,7 +1,7 @@
 <h2 data-i18n-en="Worst counting solve" data-i18n-zh="最差有效单次">Worst counting solve</h2>
 
 <p><em data-i18n-en="Worst counting solve: the worst single that counts into the Ao5 (excluding the dropped best and worst)." data-i18n-zh="最差有效单次：计入 Ao5 的最差单次（排除去掉的最好和最差成绩）。">Worst counting solve: the worst single that counts into the Ao5 (excluding the dropped best and worst).</em></p>
-<p><em data-i18n-en=Updated on 16 February 2026 data-i18n-zh=更新于 2026 年 2 月 16 日>Updated on 16 February 2026</em></p>
+<p><em data-i18n-en="Updated on 19 February 2026" data-i18n-zh="更新于 2026 年 2 月 19 日">Updated on 19 February 2026</em></p>
 
 <style>
 .stat-tabs{display:flex;gap:0;margin:16px 0 0}
@@ -21,9 +21,9 @@
   <button class="stat-tab" onclick="switchTab(event,'history')" data-i18n-en="WR History" data-i18n-zh="WR 历史">WR History</button>
 </div>
 <div id="ranking" class="stat-panel active">
-<h3 data-i18n-en=Rubik's Cube data-i18n-zh=三阶魔方>Rubik's Cube</h3>
+<h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
-<tr><th data-i18n-en="Person" data-i18n-zh="选手">Person</th><th style="text-align:right" data-i18n-en="Result" data-i18n-zh="成绩">Result</th></tr>
+<tr><th>Person</th><th style="text-align:right">Result</th></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2023GENG02">Xuanyi Geng (耿暄一)</a></td><td style="text-align:right">3.96</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2019WANY36">Yiheng Wang (王艺衡)</a></td><td style="text-align:right">4.12</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2023DUYU01">Yufang Du (杜昱方)</a></td><td style="text-align:right">4.67</td></tr>
@@ -35,23 +35,23 @@
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2021ZHAN01">Bofan Zhang (张博藩)</a></td><td style="text-align:right">5.05</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2017GARR05">Luke Garrett</a></td><td style="text-align:right">5.06</td></tr>
 </table>
-<h3 data-i18n-en=2x2x2 Cube data-i18n-zh=二阶魔方>2x2x2 Cube</h3>
+<h3 data-i18n-en="2x2x2 Cube" data-i18n-zh="二阶魔方">2x2x2 Cube</h3>
 <table>
-<tr><th data-i18n-en="Person" data-i18n-zh="选手">Person</th><th style="text-align:right" data-i18n-en="Result" data-i18n-zh="成绩">Result</th></tr>
+<tr><th>Person</th><th style="text-align:right">Result</th></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2019WANY36">Yiheng Wang (王艺衡)</a></td><td style="text-align:right">0.91</td></tr>
-<tr><td><a href="https://www.worldcubeassociation.org/persons/2022PHAN03">Nigel Phang</a></td><td style="text-align:right">0.98</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2021ZAJD03">Teodor Zajder</a></td><td style="text-align:right">0.98</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2022PHAN03">Nigel Phang</a></td><td style="text-align:right">0.98</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2018KHAN28">Zayn Khanani</a></td><td style="text-align:right">0.99</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2021YEZI01">Ziyu Ye (叶梓渝)</a></td><td style="text-align:right">0.99</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2016FEIS01">Sujan Feist</a></td><td style="text-align:right">0.99</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2020NGUY04">Newken Nguyen (นิวเคน เหงียน)</a></td><td style="text-align:right">0.99</td></tr>
-<tr><td><a href="https://www.worldcubeassociation.org/persons/2021YEZI01">Ziyu Ye (叶梓渝)</a></td><td style="text-align:right">0.99</td></tr>
-<tr><td><a href="https://www.worldcubeassociation.org/persons/2018KHAN28">Zayn Khanani</a></td><td style="text-align:right">0.99</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2022STOJ03">Antoni Stojek</a></td><td style="text-align:right">1.03</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2012PATE01">Antonie Paterakis</a></td><td style="text-align:right">1.05</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2022SCHE13">Emanuel Schelin</a></td><td style="text-align:right">1.07</td></tr>
 </table>
-<h3 data-i18n-en=4x4x4 Cube data-i18n-zh=四阶魔方>4x4x4 Cube</h3>
+<h3 data-i18n-en="4x4x4 Cube" data-i18n-zh="四阶魔方">4x4x4 Cube</h3>
 <table>
-<tr><th data-i18n-en="Person" data-i18n-zh="选手">Person</th><th style="text-align:right" data-i18n-en="Result" data-i18n-zh="成绩">Result</th></tr>
+<tr><th>Person</th><th style="text-align:right">Result</th></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2016KOLA02">Tymon Kolasiński</a></td><td style="text-align:right">19.16</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2012PARK03">Max Park</a></td><td style="text-align:right">19.67</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2019HUNG16">Đỗ Quang Hưng</a></td><td style="text-align:right">19.74</td></tr>
@@ -63,9 +63,9 @@
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2015WANG09">Kai-Wen Wang (王楷文)</a></td><td style="text-align:right">21.45</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2013NAHM01">Seung Hyuk Nahm (남승혁)</a></td><td style="text-align:right">21.74</td></tr>
 </table>
-<h3 data-i18n-en=5x5x5 Cube data-i18n-zh=五阶魔方>5x5x5 Cube</h3>
+<h3 data-i18n-en="5x5x5 Cube" data-i18n-zh="五阶魔方">5x5x5 Cube</h3>
 <table>
-<tr><th data-i18n-en="Person" data-i18n-zh="选手">Person</th><th style="text-align:right" data-i18n-en="Result" data-i18n-zh="成绩">Result</th></tr>
+<tr><th>Person</th><th style="text-align:right">Result</th></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2016KOLA02">Tymon Kolasiński</a></td><td style="text-align:right">35.20</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2012PARK03">Max Park</a></td><td style="text-align:right">35.44</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2019TARA09">Timofei Tarasenko</a></td><td style="text-align:right">36.78</td></tr>
@@ -77,9 +77,23 @@
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2016WUZI04">Ziyu Wu (吴子钰)</a></td><td style="text-align:right">40.50</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2012BEAH01">Ciarán Beahan</a></td><td style="text-align:right">40.64</td></tr>
 </table>
-<h3 data-i18n-en=3x3x3 One-Handed data-i18n-zh=三阶单手>3x3x3 One-Handed</h3>
+<h3 data-i18n-en="3x3x3 Blindfolded" data-i18n-zh="三阶盲拧">3x3x3 Blindfolded</h3>
 <table>
-<tr><th data-i18n-en="Person" data-i18n-zh="选手">Person</th><th style="text-align:right" data-i18n-en="Result" data-i18n-zh="成绩">Result</th></tr>
+<tr><th>Person</th><th style="text-align:right">Result</th></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2019EGGI02">Charlie Eggins</a></td><td style="text-align:right">13.95</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2018DALO01">Charles Daloz-Baltenberger</a></td><td style="text-align:right">17.15</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2018HABE02">Jens Haber</a></td><td style="text-align:right">17.78</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2016BARO04">Ben Baron</a></td><td style="text-align:right">18.35</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2017MAXW01">Phillip Maxwell</a></td><td style="text-align:right">18.90</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2016VOSO01">Olivier Vos</a></td><td style="text-align:right">18.98</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2014GARC27">Arthur Garcin</a></td><td style="text-align:right">19.00</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2016PILA03">Ryan Pilat</a></td><td style="text-align:right">19.44</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2013BOBE01">Krzysztof Bober</a></td><td style="text-align:right">19.53</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2021MORA01">Mikołaj Morawski</a></td><td style="text-align:right">20.42</td></tr>
+</table>
+<h3 data-i18n-en="3x3x3 One-Handed" data-i18n-zh="三阶单手">3x3x3 One-Handed</h3>
+<table>
+<tr><th>Person</th><th style="text-align:right">Result</th></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2023ARRA01">Crimson Arradaza</a></td><td style="text-align:right">8.07</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2021MERU01">Dhruva Sai Meruva</a></td><td style="text-align:right">8.26</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2012PARK03">Max Park</a></td><td style="text-align:right">8.27</td></tr>
@@ -91,9 +105,9 @@
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2022MARC05">Radosław Marcinek</a></td><td style="text-align:right">8.70</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2019RAMO05">Dwyane Ramos</a></td><td style="text-align:right">8.76</td></tr>
 </table>
-<h3 data-i18n-en=Megaminx data-i18n-zh=五魔方>Megaminx</h3>
+<h3 data-i18n-en="Megaminx" data-i18n-zh="五魔方">Megaminx</h3>
 <table>
-<tr><th data-i18n-en="Person" data-i18n-zh="选手">Person</th><th style="text-align:right" data-i18n-en="Result" data-i18n-zh="成绩">Result</th></tr>
+<tr><th>Person</th><th style="text-align:right">Result</th></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2016WUZI04">Ziyu Wu (吴子钰)</a></td><td style="text-align:right">25.30</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2019TARA09">Timofei Tarasenko</a></td><td style="text-align:right">25.65</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2016YONG02">Tristan Chua Yong</a></td><td style="text-align:right">25.79</td></tr>
@@ -105,23 +119,23 @@
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2017CHOI07">Kyeongmin Choi (최경민)</a></td><td style="text-align:right">29.02</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2015NAIN01">Nicolas Naing</a></td><td style="text-align:right">29.17</td></tr>
 </table>
-<h3 data-i18n-en=Pyraminx data-i18n-zh=金字塔>Pyraminx</h3>
+<h3 data-i18n-en="Pyraminx" data-i18n-zh="金字塔">Pyraminx</h3>
 <table>
-<tr><th data-i18n-en="Person" data-i18n-zh="选手">Person</th><th style="text-align:right" data-i18n-en="Result" data-i18n-zh="成绩">Result</th></tr>
+<tr><th>Person</th><th style="text-align:right">Result</th></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2019JIAN54">Lingkun Jiang (姜凌坤)</a></td><td style="text-align:right">1.21</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2021LEES01">Sebastian Lee</a></td><td style="text-align:right">1.22</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2018PERK01">Elliott Perkins</a></td><td style="text-align:right">1.40</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2016TRAG01">Parker Trager</a></td><td style="text-align:right">1.48</td></tr>
-<tr><td><a href="https://www.worldcubeassociation.org/persons/2018EYOU02">Elyas Eyou</a></td><td style="text-align:right">1.50</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2019SHER10">Ezra Shere</a></td><td style="text-align:right">1.50</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2018EYOU02">Elyas Eyou</a></td><td style="text-align:right">1.50</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2022LARR02">Aratz Larruzea</a></td><td style="text-align:right">1.50</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2019HUAH03">Huining Huang (黄徽宁)</a></td><td style="text-align:right">1.51</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2017NIEL03">Michael Nielsen</a></td><td style="text-align:right">1.52</td></tr>
-<tr><td><a href="https://www.worldcubeassociation.org/persons/2018MURR03">Jasper Murray</a></td><td style="text-align:right">1.55</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2017TSVE02">Alexey Tsvetkov</a></td><td style="text-align:right">1.55</td></tr>
 </table>
-<h3 data-i18n-en=Rubik's Clock data-i18n-zh=魔表>Rubik's Clock</h3>
+<h3 data-i18n-en="Rubik's Clock" data-i18n-zh="魔表">Rubik's Clock</h3>
 <table>
-<tr><th data-i18n-en="Person" data-i18n-zh="选手">Person</th><th style="text-align:right" data-i18n-en="Result" data-i18n-zh="成绩">Result</th></tr>
+<tr><th>Person</th><th style="text-align:right">Result</th></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2021DUNA01">Brendyn Dunagan</a></td><td style="text-align:right">2.07</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2022GIBS04">Lachlan Gibson</a></td><td style="text-align:right">2.19</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2022KAPU01">Volodymyr Kapustianskyi</a></td><td style="text-align:right">2.40</td></tr>
@@ -133,23 +147,23 @@
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2022DUON09">Ivan ThanhDanh Duong</a></td><td style="text-align:right">2.72</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2022STOJ03">Antoni Stojek</a></td><td style="text-align:right">2.73</td></tr>
 </table>
-<h3 data-i18n-en=Skewb data-i18n-zh=斜转魔方>Skewb</h3>
+<h3 data-i18n-en="Skewb" data-i18n-zh="斜转魔方">Skewb</h3>
 <table>
-<tr><th data-i18n-en="Person" data-i18n-zh="选手">Person</th><th style="text-align:right" data-i18n-en="Result" data-i18n-zh="成绩">Result</th></tr>
+<tr><th>Person</th><th style="text-align:right">Result</th></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2022SAMS03">Ignacy Samselski</a></td><td style="text-align:right">1.46</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2019REDI02">Dominic Redisi</a></td><td style="text-align:right">1.59</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2023GUOK01">Kaixi Guo (郭铠希)</a></td><td style="text-align:right">1.62</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2015KUCA01">Carter Kucala</a></td><td style="text-align:right">1.65</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2018HANU02">Oskar Hanuszkiewicz</a></td><td style="text-align:right">1.65</td></tr>
-<tr><td><a href="https://www.worldcubeassociation.org/persons/2018KHAN28">Zayn Khanani</a></td><td style="text-align:right">1.66</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2021PIET01">Tomasz Pietruszka</a></td><td style="text-align:right">1.66</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2018KHAN28">Zayn Khanani</a></td><td style="text-align:right">1.66</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2023LANG03">Alex Rosado Saez de Langarica</a></td><td style="text-align:right">1.75</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2018WROT01">Brayden Wroten</a></td><td style="text-align:right">1.77</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2023YILU01">Luis Tan Hong Yi (陈宏溢)</a></td><td style="text-align:right">1.83</td></tr>
 </table>
-<h3 data-i18n-en=Square-1 data-i18n-zh=SQ1>Square-1</h3>
+<h3 data-i18n-en="Square-1" data-i18n-zh="SQ1">Square-1</h3>
 <table>
-<tr><th data-i18n-en="Person" data-i18n-zh="选手">Person</th><th style="text-align:right" data-i18n-en="Result" data-i18n-zh="成绩">Result</th></tr>
+<tr><th>Person</th><th style="text-align:right">Result</th></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2019BAUM02">Dylan Baumbach</a></td><td style="text-align:right">4.83</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2017AGGA01">Sameer Aggarwal</a></td><td style="text-align:right">5.05</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2018KHAN26">Hassan Khanani</a></td><td style="text-align:right">5.06</td></tr>
@@ -161,12 +175,53 @@
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2018MATY02">Adrien Auvray Matyn</a></td><td style="text-align:right">5.76</td></tr>
 <tr><td><a href="https://www.worldcubeassociation.org/persons/2013JOHN10">Brian Johnson</a></td><td style="text-align:right">5.78</td></tr>
 </table>
-</div>
-
-<div id="history" class="stat-panel">
-<h3 data-i18n-en=Rubik's Cube data-i18n-zh=三阶魔方>Rubik's Cube</h3>
+<h3 data-i18n-en="3x3x3 With Feet" data-i18n-zh="三阶脚拧">3x3x3 With Feet</h3>
 <table>
-<tr><th style=\"text-align:right\">Result</th><th style=\"text-align:right\">Improvement</th><th style=\"text-align:right\">Days</th><th>Person</th><th>Competition</th><th>Date</th><th>Details</th></tr>
+<tr><th>Person</th><th style="text-align:right">Result</th></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2016HUNG08">Lim Hung (林弘)</a></td><td style="text-align:right">21.01</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2015ROSE01">Daniel Rose-Levine</a></td><td style="text-align:right">21.73</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2017KOLI01">Mohammed Aiman Koli</a></td><td style="text-align:right">23.63</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2015MINK04">Kevin Min</a></td><td style="text-align:right">25.84</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2015CHER07">Tommy Cherry</a></td><td style="text-align:right">26.18</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2014GERB01">Henri Gerber</a></td><td style="text-align:right">27.19</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2015BYEO01">Jimin Byeon (변지민)</a></td><td style="text-align:right">27.71</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2012QUIB01">Louie Jay Quibote</a></td><td style="text-align:right">27.78</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2016GUTI23">Daniel Gutierrez</a></td><td style="text-align:right">28.40</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2017HONG17">Jinseo Hong</a></td><td style="text-align:right">28.74</td></tr>
+</table>
+<h3 data-i18n-en="Rubik's Magic" data-i18n-zh="八板">Rubik's Magic</h3>
+<table>
+<tr><th>Person</th><th style="text-align:right">Result</th></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2009WANG13">Yuxuan Wang (王宇轩)</a></td><td style="text-align:right">0.77</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2009DICK01">Jan Dickmann</a></td><td style="text-align:right">0.83</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2010PANK01">Ke Pan (潘轲)</a></td><td style="text-align:right">0.84</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2010PRAB02">Tanto Prabowo</a></td><td style="text-align:right">0.84</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2007MING01">Ming Gao (高鸣)</a></td><td style="text-align:right">0.86</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2010KRYU01">Dmitry Kryuzban</a></td><td style="text-align:right">0.86</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2010KIPA01">Jakub Kipa</a></td><td style="text-align:right">0.86</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2008JISE02">Chae Jiseok (채지석)</a></td><td style="text-align:right">0.86</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2008BODO01">Bálint Bodor</a></td><td style="text-align:right">0.86</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2007JAKU01">Marcin Jakubowski</a></td><td style="text-align:right">0.86</td></tr>
+</table>
+<h3 data-i18n-en="Master Magic" data-i18n-zh="十二板">Master Magic</h3>
+<table>
+<tr><th>Person</th><th style="text-align:right">Result</th></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2010PULC01">Ernie Pulchny</a></td><td style="text-align:right">1.78</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2010WANG52">Haokun Wang (王皓琨)</a></td><td style="text-align:right">1.94</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2006KUTI01">Mátyás Kuti</a></td><td style="text-align:right">1.95</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2007HORV01">Máté Horváth</a></td><td style="text-align:right">1.97</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2008HUAY01">Yiming Hua (华一鸣)</a></td><td style="text-align:right">2.00</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2009TANX01">Xiao Tan (谭啸)</a></td><td style="text-align:right">2.04</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2011DERS01">Ramón Dersch</a></td><td style="text-align:right">2.08</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2011ATRI01">Angga Atrie</a></td><td style="text-align:right">2.09</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2010RUGA01">Ilham Ridhwan Kharisma Yudha</a></td><td style="text-align:right">2.11</td></tr>
+<tr><td><a href="https://www.worldcubeassociation.org/persons/2012FIED01">Kamil Fiedoruk</a></td><td style="text-align:right">2.13</td></tr>
+</table>
+</div>
+<div id="history" class="stat-panel">
+<h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
+<table>
+<tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th><th>Details</th></tr>
 <tr><td style="text-align:right">3.96</td><td style="text-align:right">4.3%</td><td style="text-align:right">398</td><td><a href="https://www.worldcubeassociation.org/persons/2023GENG02">Xuanyi Geng (耿暄一)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/BeijingWinter2026">Beijing Winter 2026</a></td><td>2026-01-10</td><td>5.09, 3.96, 3.71, 3.84, 3.37</td></tr>
 <tr><td style="text-align:right">4.14</td><td style="text-align:right">3.5%</td><td style="text-align:right">37</td><td><a href="https://www.worldcubeassociation.org/persons/2019WANY36">Yiheng Wang (王艺衡)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/ZhengzhouOpen2024">Zhengzhou Open 2024</a></td><td>2024-12-08</td><td>3.84, 4.25, 4.14, 4.13, 3.87</td></tr>
 <tr><td style="text-align:right">4.29</td><td style="text-align:right">5.7%</td><td style="text-align:right">41</td><td><a href="https://www.worldcubeassociation.org/persons/2019WANY36">Yiheng Wang (王艺衡)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/RubiksWCAAsianChampionship2024">WCA Asian Championship 2024</a></td><td>2024-11-01</td><td>3.96, 4.29, 4.48, 3.69, 4.01</td></tr>
@@ -201,9 +256,9 @@
 <tr><td style="text-align:right">17.65</td><td style="text-align:right">16.5%</td><td style="text-align:right">154</td><td><a href="https://www.worldcubeassociation.org/persons/2003MAKI01">Shotaro Makisumi (牧角章太郎)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/CaltechWinter2004">Caltech Winter 2004</a></td><td>2004-01-24</td><td>15.29, 16.64, 17.65, 18.05, 14.76</td></tr>
 <tr><td style="text-align:right">21.13</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2003KNIG01">Dan Knights</a></td><td><a href="https://www.worldcubeassociation.org/competitions/WC2003">World Championship 2003</a></td><td>2003-08-23</td><td>21.13, 19.93, 18.95, 22.07, 18.76</td></tr>
 </table>
-<h3 data-i18n-en=2x2x2 Cube data-i18n-zh=二阶魔方>2x2x2 Cube</h3>
+<h3 data-i18n-en="2x2x2 Cube" data-i18n-zh="二阶魔方">2x2x2 Cube</h3>
 <table>
-<tr><th style=\"text-align:right\">Result</th><th style=\"text-align:right\">Improvement</th><th style=\"text-align:right\">Days</th><th>Person</th><th>Competition</th><th>Date</th><th>Details</th></tr>
+<tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th><th>Details</th></tr>
 <tr><td style="text-align:right">0.91</td><td style="text-align:right">6.2%</td><td style="text-align:right">176</td><td><a href="https://www.worldcubeassociation.org/persons/2019WANY36">Yiheng Wang (王艺衡)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/HangzhouOpen2024">Hangzhou Open 2024</a></td><td>2024-12-15</td><td>1.26, 0.84, 0.91, 0.89, 0.85</td></tr>
 <tr><td style="text-align:right">0.97</td><td style="text-align:right">1.0%</td><td style="text-align:right">119</td><td><a href="https://www.worldcubeassociation.org/persons/2019WANY36">Yiheng Wang (王艺衡)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/JohorCubeOpen2024">Johor Cube Open 2024</a></td><td>2024-06-22</td><td>0.81, 1.81, 0.82, 0.97, 0.97</td></tr>
 <tr><td style="text-align:right">0.98</td><td style="text-align:right">9.3%</td><td style="text-align:right">847</td><td><a href="https://www.worldcubeassociation.org/persons/2019WANY36">Yiheng Wang (王艺衡)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/TwistFriesJohorBahru2024">Twist & Fries Johor Bahru 2024</a></td><td>2024-02-24</td><td>0.94, 0.87, 0.98, 1.90, 0.79</td></tr>
@@ -228,9 +283,9 @@
 <tr><td style="text-align:right">8.78</td><td style="text-align:right">27.7%</td><td style="text-align:right">120</td><td><a href="https://www.worldcubeassociation.org/persons/2004KRIG01">Gunnar Kantare Krig</a></td><td><a href="https://www.worldcubeassociation.org/competitions/Svekub2005">Svekub 2005</a></td><td>2005-03-27</td><td>7.97, 8.78, 22.12, 6.35, 8.60</td></tr>
 <tr><td style="text-align:right">12.15</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2004KRIG01">Gunnar Kantare Krig</a></td><td><a href="https://www.worldcubeassociation.org/competitions/Sweden2004">Swedish CubeDay 2004</a></td><td>2004-11-27</td><td>9.81, 12.15, 14.64, 10.66, 9.59</td></tr>
 </table>
-<h3 data-i18n-en=4x4x4 Cube data-i18n-zh=四阶魔方>4x4x4 Cube</h3>
+<h3 data-i18n-en="4x4x4 Cube" data-i18n-zh="四阶魔方">4x4x4 Cube</h3>
 <table>
-<tr><th style=\"text-align:right\">Result</th><th style=\"text-align:right\">Improvement</th><th style=\"text-align:right\">Days</th><th>Person</th><th>Competition</th><th>Date</th><th>Details</th></tr>
+<tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th><th>Details</th></tr>
 <tr><td style="text-align:right">19.16</td><td style="text-align:right">2.0%</td><td style="text-align:right">343</td><td><a href="https://www.worldcubeassociation.org/persons/2016KOLA02">Tymon Kolasiński</a></td><td><a href="https://www.worldcubeassociation.org/competitions/SeoulWinter2026">Seoul Winter 2026</a></td><td>2026-01-17</td><td>19.16, 18.01, 18.51, 21.64, 16.09</td></tr>
 <tr><td style="text-align:right">19.55</td><td style="text-align:right">3.6%</td><td style="text-align:right">692</td><td><a href="https://www.worldcubeassociation.org/persons/2016KOLA02">Tymon Kolasiński</a></td><td><a href="https://www.worldcubeassociation.org/competitions/HvidovreNxN2025">Hvidovre NxN 2025</a></td><td>2025-02-08</td><td>22.21, 19.55, 18.95, 17.84, 19.01</td></tr>
 <tr><td style="text-align:right">20.28</td><td style="text-align:right">3.1%</td><td style="text-align:right">372</td><td><a href="https://www.worldcubeassociation.org/persons/2012PARK03">Max Park</a></td><td><a href="https://www.worldcubeassociation.org/competitions/ArizonaSpeedcubingSpring2023">Arizona Speedcubing Spring 2023</a></td><td>2023-03-19</td><td>17.60, 18.49, 19.37, 23.80, 20.28</td></tr>
@@ -261,9 +316,9 @@
 <tr><td style="text-align:right">1:02.53</td><td style="text-align:right">1.2%</td><td style="text-align:right">21</td><td><a href="https://www.worldcubeassociation.org/persons/2005FUNG01">Michael Fung</a></td><td><a href="https://www.worldcubeassociation.org/competitions/DutchOpen2006">Dutch Open 2006</a></td><td>2006-10-14</td><td>1:02.53, 1:38.09, 54.22, 51.16, 1:00.87</td></tr>
 <tr><td style="text-align:right">1:03.31</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2004PONS01">Jean Pons</a></td><td><a href="https://www.worldcubeassociation.org/competitions/Euro2006">Euro 2006</a></td><td>2006-09-23</td><td>1:03.31, 2:05.19, 1:02.77, 57.32, 1:01.13</td></tr>
 </table>
-<h3 data-i18n-en=5x5x5 Cube data-i18n-zh=五阶魔方>5x5x5 Cube</h3>
+<h3 data-i18n-en="5x5x5 Cube" data-i18n-zh="五阶魔方">5x5x5 Cube</h3>
 <table>
-<tr><th style=\"text-align:right\">Result</th><th style=\"text-align:right\">Improvement</th><th style=\"text-align:right\">Days</th><th>Person</th><th>Competition</th><th>Date</th><th>Details</th></tr>
+<tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th><th>Details</th></tr>
 <tr><td style="text-align:right">35.44</td><td style="text-align:right">5.2%</td><td style="text-align:right">215</td><td><a href="https://www.worldcubeassociation.org/persons/2012PARK03">Max Park</a></td><td><a href="https://www.worldcubeassociation.org/competitions/NAC2024">NAC 2024</a></td><td>2024-07-18</td><td>39.71, 35.10, 33.55, 35.44, 33.75</td></tr>
 <tr><td style="text-align:right">37.37</td><td style="text-align:right">0.2%</td><td style="text-align:right">280</td><td><a href="https://www.worldcubeassociation.org/persons/2012PARK03">Max Park</a></td><td><a href="https://www.worldcubeassociation.org/competitions/UCSDWinter2023">UCSD Winter 2023</a></td><td>2023-12-16</td><td>37.37, 35.13, 35.32, 32.60, 40.31</td></tr>
 <tr><td style="text-align:right">37.45</td><td style="text-align:right">6.0%</td><td style="text-align:right">251</td><td><a href="https://www.worldcubeassociation.org/persons/2012PARK03">Max Park</a></td><td><a href="https://www.worldcubeassociation.org/competitions/CircleCityTurbocharged2023">Circle City Turbocharged 2023</a></td><td>2023-03-11</td><td>36.81, 43.10, 37.45, 35.90, 36.75</td></tr>
@@ -306,9 +361,14 @@
 <tr><td style="text-align:right">1:58.26</td><td style="text-align:right">1.6%</td><td style="text-align:right">78</td><td><a href="https://www.worldcubeassociation.org/persons/2003MORR01">Frank Morris</a></td><td><a href="https://www.worldcubeassociation.org/competitions/GWiz2006">G-Wiz Fall 2006</a></td><td>2006-10-21</td><td>1:51.78, 2:02.46, 1:58.26, 1:55.67, 1:46.28</td></tr>
 <tr><td style="text-align:right">2:00.23</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2003MORR01">Frank Morris</a></td><td><a href="https://www.worldcubeassociation.org/competitions/US2006">US Nationals 2006</a></td><td>2006-08-04</td><td>2:00.23, 1:47.40, 2:10.01, 1:59.53, 1:56.23</td></tr>
 </table>
-<h3 data-i18n-en=3x3x3 One-Handed data-i18n-zh=三阶单手>3x3x3 One-Handed</h3>
+<h3 data-i18n-en="3x3x3 Blindfolded" data-i18n-zh="三阶盲拧">3x3x3 Blindfolded</h3>
 <table>
-<tr><th style=\"text-align:right\">Result</th><th style=\"text-align:right\">Improvement</th><th style=\"text-align:right\">Days</th><th>Person</th><th>Competition</th><th>Date</th><th>Details</th></tr>
+<tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th><th>Details</th></tr>
+<tr><td style="text-align:right">13.95</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2019EGGI02">Charlie Eggins</a></td><td><a href="https://www.worldcubeassociation.org/competitions/CubingatTheCube2026">Cubing at The Cube 2026</a></td><td>2026-01-10</td><td>14.34, DNF, 13.95, 13.85, 11.67</td></tr>
+</table>
+<h3 data-i18n-en="3x3x3 One-Handed" data-i18n-zh="三阶单手">3x3x3 One-Handed</h3>
+<table>
+<tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th><th>Details</th></tr>
 <tr><td style="text-align:right">8.51</td><td style="text-align:right">2.7%</td><td style="text-align:right">28</td><td><a href="https://www.worldcubeassociation.org/persons/2020ARCH01">Nicholas Archer</a></td><td><a href="https://www.worldcubeassociation.org/competitions/ManchesterFebruary2025">Manchester February 2025</a></td><td>2025-02-22</td><td>8.51, 8.66, 7.66, 7.68, 6.49</td></tr>
 <tr><td style="text-align:right">8.75</td><td style="text-align:right">2.1%</td><td style="text-align:right">245</td><td><a href="https://www.worldcubeassociation.org/persons/2020ARCH01">Nicholas Archer</a></td><td><a href="https://www.worldcubeassociation.org/competitions/StevenageJanuary2025">Stevenage January 2025</a></td><td>2025-01-25</td><td>7.02, 7.31, 10.50, 8.04, 8.75</td></tr>
 <tr><td style="text-align:right">8.94</td><td style="text-align:right">1.9%</td><td style="text-align:right">756</td><td><a href="https://www.worldcubeassociation.org/persons/2017VILL41">Sean Patrick Villanueva</a></td><td><a href="https://www.worldcubeassociation.org/competitions/QuezonCityOpenII2024">Quezon City Open II 2024</a></td><td>2024-05-25</td><td>8.94, 9.38, 7.71, 6.60, 7.63</td></tr>
@@ -336,9 +396,9 @@
 <tr><td style="text-align:right">24.81</td><td style="text-align:right">13.9%</td><td style="text-align:right">111</td><td><a href="https://www.worldcubeassociation.org/persons/2004PATR01">Ryan Patricio</a></td><td><a href="https://www.worldcubeassociation.org/competitions/US2006">US Nationals 2006</a></td><td>2006-08-04</td><td>27.09, 23.17, 24.81, 21.19, 24.11</td></tr>
 <tr><td style="text-align:right">28.80</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2004PATR01">Ryan Patricio</a></td><td><a href="https://www.worldcubeassociation.org/competitions/CaltechSpring2006">Caltech Spring 2006</a></td><td>2006-04-15</td><td>24.68, 28.80, 26.08, 32.21, 20.09</td></tr>
 </table>
-<h3 data-i18n-en=Megaminx data-i18n-zh=五魔方>Megaminx</h3>
+<h3 data-i18n-en="Megaminx" data-i18n-zh="五魔方">Megaminx</h3>
 <table>
-<tr><th style=\"text-align:right\">Result</th><th style=\"text-align:right\">Improvement</th><th style=\"text-align:right\">Days</th><th>Person</th><th>Competition</th><th>Date</th><th>Details</th></tr>
+<tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th><th>Details</th></tr>
 <tr><td style="text-align:right">25.30</td><td style="text-align:right">1.7%</td><td style="text-align:right">6</td><td><a href="https://www.worldcubeassociation.org/persons/2016WUZI04">Ziyu Wu (吴子钰)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/GuangzhouSpecial2025">Guangzhou Special 2025</a></td><td>2025-11-08</td><td>25.03, 27.75, 23.49, 23.94, 25.30</td></tr>
 <tr><td style="text-align:right">25.74</td><td style="text-align:right">4.6%</td><td style="text-align:right">267</td><td><a href="https://www.worldcubeassociation.org/persons/2016WUZI04">Ziyu Wu (吴子钰)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/XianAutumn2025">Xi'an Autumn 2025</a></td><td>2025-11-02</td><td>25.13, 27.46, 24.18, 25.74, 24.58</td></tr>
 <tr><td style="text-align:right">26.98</td><td style="text-align:right">0.1%</td><td style="text-align:right">39</td><td><a href="https://www.worldcubeassociation.org/persons/2019TARA09">Timofei Tarasenko</a></td><td><a href="https://www.worldcubeassociation.org/competitions/CentralAsianTourAstana2025">Central Asian Tour Astana 2025</a></td><td>2025-02-08</td><td>24.61, 23.39, 30.66, 24.49, 26.98</td></tr>
@@ -360,9 +420,9 @@
 <tr><td style="text-align:right">54.43</td><td style="text-align:right">10.5%</td><td style="text-align:right">160</td><td><a href="https://www.worldcubeassociation.org/persons/2008BODO01">Bálint Bodor</a></td><td><a href="https://www.worldcubeassociation.org/competitions/Euro2010">Euro 2010</a></td><td>2010-10-01</td><td>49.16, 47.53, 54.43, 1:02.09, 50.77</td></tr>
 <tr><td style="text-align:right">1:00.80</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2008BODO01">Bálint Bodor</a></td><td><a href="https://www.worldcubeassociation.org/competitions/SlovenianOpen2010">Slovenian Open 2010</a></td><td>2010-04-24</td><td>54.27, 54.78, 1:01.86, 1:00.80, 49.71</td></tr>
 </table>
-<h3 data-i18n-en=Pyraminx data-i18n-zh=金字塔>Pyraminx</h3>
+<h3 data-i18n-en="Pyraminx" data-i18n-zh="金字塔">Pyraminx</h3>
 <table>
-<tr><th style=\"text-align:right\">Result</th><th style=\"text-align:right\">Improvement</th><th style=\"text-align:right\">Days</th><th>Person</th><th>Competition</th><th>Date</th><th>Details</th></tr>
+<tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th><th>Details</th></tr>
 <tr><td style="text-align:right">1.21</td><td style="text-align:right">0.8%</td><td style="text-align:right">399</td><td><a href="https://www.worldcubeassociation.org/persons/2019JIAN54">Lingkun Jiang (姜凌坤)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/ZhengzhouZest2025">Zhengzhou Zest 2025</a></td><td>2025-12-27</td><td>1.04, 3.22, 0.97, 1.21, 1.16</td></tr>
 <tr><td style="text-align:right">1.22</td><td style="text-align:right">12.2%</td><td style="text-align:right">90</td><td><a href="https://www.worldcubeassociation.org/persons/2021LEES01">Sebastian Lee</a></td><td><a href="https://www.worldcubeassociation.org/competitions/MaitlandSpring2024">Maitland Spring 2024</a></td><td>2024-11-23</td><td>1.15, 1.53, 1.22, 1.01, 1.09</td></tr>
 <tr><td style="text-align:right">1.39</td><td style="text-align:right">4.8%</td><td style="text-align:right">148</td><td><a href="https://www.worldcubeassociation.org/persons/2019JIAN54">Lingkun Jiang (姜凌坤)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/DeqingSmallCubesSummer2024">Deqing Small Cubes Summer 2024</a></td><td>2024-08-25</td><td>1.43, 1.22, 1.18, 1.21, 1.39</td></tr>
@@ -395,9 +455,9 @@
 <tr><td style="text-align:right">17.96</td><td style="text-align:right">7.3%</td><td style="text-align:right">167</td><td><a href="https://www.worldcubeassociation.org/persons/2004KRIG01">Gunnar Kantare Krig</a></td><td><a href="https://www.worldcubeassociation.org/competitions/SwedishOpen2005">Swedish Open 2005</a></td><td>2005-09-10</td><td>6.55, 17.96, 23.24, 12.46, 14.00</td></tr>
 <tr><td style="text-align:right">19.37</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2004KRIG01">Gunnar Kantare Krig</a></td><td><a href="https://www.worldcubeassociation.org/competitions/Svekub2005">Svekub 2005</a></td><td>2005-03-27</td><td>22.26, 14.41, 19.37, 15.87, 13.96</td></tr>
 </table>
-<h3 data-i18n-en=Rubik's Clock data-i18n-zh=魔表>Rubik's Clock</h3>
+<h3 data-i18n-en="Rubik's Clock" data-i18n-zh="魔表">Rubik's Clock</h3>
 <table>
-<tr><th style=\"text-align:right\">Result</th><th style=\"text-align:right\">Improvement</th><th style=\"text-align:right\">Days</th><th>Person</th><th>Competition</th><th>Date</th><th>Details</th></tr>
+<tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th><th>Details</th></tr>
 <tr><td style="text-align:right">2.27</td><td style="text-align:right">3.8%</td><td style="text-align:right">98</td><td><a href="https://www.worldcubeassociation.org/persons/2022GIBS04">Lachlan Gibson</a></td><td><a href="https://www.worldcubeassociation.org/competitions/2x2inTamakiMakaurau2025">2x2 in Tāmaki Makaurau 2025</a></td><td>2025-08-16</td><td>2.27, 1.82, 3.01, 2.26, 2.24</td></tr>
 <tr><td style="text-align:right">2.36</td><td style="text-align:right">4.1%</td><td style="text-align:right">238</td><td><a href="https://www.worldcubeassociation.org/persons/2022GIBS04">Lachlan Gibson</a></td><td><a href="https://www.worldcubeassociation.org/competitions/PuzzlingPapatoetoe2025">Puzzling Papatoetoe 2025</a></td><td>2025-05-10</td><td>2.20, 2.22, 2.26, 2.36, 2.65</td></tr>
 <tr><td style="text-align:right">2.46</td><td style="text-align:right">5.0%</td><td style="text-align:right">147</td><td><a href="https://www.worldcubeassociation.org/persons/2022KAPU01">Volodymyr Kapustianskyi</a></td><td><a href="https://www.worldcubeassociation.org/competitions/GrandForks2024">Grand Forks 2024</a></td><td>2024-09-14</td><td>2.96, 2.46, 2.24, 2.29, 2.43</td></tr>
@@ -422,9 +482,9 @@
 <tr><td style="text-align:right">8.46</td><td style="text-align:right">6.3%</td><td style="text-align:right">71</td><td><a href="https://www.worldcubeassociation.org/persons/2008SAJI01">Yu Sajima (佐島優)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/KawasakiOpen2010">Kawasaki Open 2010</a></td><td>2010-06-06</td><td>9.38, 6.36, 8.46, 7.47, 6.65</td></tr>
 <tr><td style="text-align:right">9.03</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2008SAJI01">Yu Sajima (佐島優)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/JapanOpen2010">Japan Open 2010</a></td><td>2010-03-27</td><td>7.09, 9.03, 7.43, 9.43, 7.43</td></tr>
 </table>
-<h3 data-i18n-en=Skewb data-i18n-zh=斜转魔方>Skewb</h3>
+<h3 data-i18n-en="Skewb" data-i18n-zh="斜转魔方">Skewb</h3>
 <table>
-<tr><th style=\"text-align:right\">Result</th><th style=\"text-align:right\">Improvement</th><th style=\"text-align:right\">Days</th><th>Person</th><th>Competition</th><th>Date</th><th>Details</th></tr>
+<tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th><th>Details</th></tr>
 <tr><td style="text-align:right">1.46</td><td style="text-align:right">11.5%</td><td style="text-align:right">372</td><td><a href="https://www.worldcubeassociation.org/persons/2022SAMS03">Ignacy Samselski</a></td><td><a href="https://www.worldcubeassociation.org/competitions/CFLJustynow2025">CFL Justynów 2025</a></td><td>2025-06-14</td><td>1.22, 1.43, 1.16, 1.46, 2.93</td></tr>
 <tr><td style="text-align:right">1.65</td><td style="text-align:right">7.8%</td><td style="text-align:right">643</td><td><a href="https://www.worldcubeassociation.org/persons/2015KUCA01">Carter Kucala</a></td><td><a href="https://www.worldcubeassociation.org/competitions/HeartlandChampionship2024">Heartland Championship 2024</a></td><td>2024-06-07</td><td>1.65, 1.45, 2.57, 1.37, 1.45</td></tr>
 <tr><td style="text-align:right">1.79</td><td style="text-align:right">10.5%</td><td style="text-align:right">84</td><td><a href="https://www.worldcubeassociation.org/persons/2018KHAN28">Zayn Khanani</a></td><td><a href="https://www.worldcubeassociation.org/competitions/PretzelMania2022">Pretzel Mania 2022</a></td><td>2022-09-03</td><td>1.30, 1.20, 1.79, 1.60, 4.89</td></tr>
@@ -444,9 +504,9 @@
 <tr><td style="text-align:right">8.63</td><td style="text-align:right">43.7%</td><td style="text-align:right">3</td><td><a href="https://www.worldcubeassociation.org/persons/2011WELC01">Walker Welch</a></td><td><a href="https://www.worldcubeassociation.org/competitions/HoustonWinterOpen2014">Houston Winter 2014</a></td><td>2014-01-04</td><td>4.63, 8.69, 8.63, 7.71, 8.15</td></tr>
 <tr><td style="text-align:right">15.32</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2012SATH01">Abhishek Sathyanarayanan</a></td><td><a href="https://www.worldcubeassociation.org/competitions/TelesisOpen2014">Telesis Open 2014</a></td><td>2014-01-01</td><td>13.05, 15.32, 12.72, 11.62, 18.22</td></tr>
 </table>
-<h3 data-i18n-en=Square-1 data-i18n-zh=SQ1>Square-1</h3>
+<h3 data-i18n-en="Square-1" data-i18n-zh="SQ1">Square-1</h3>
 <table>
-<tr><th style=\"text-align:right\">Result</th><th style=\"text-align:right\">Improvement</th><th style=\"text-align:right\">Days</th><th>Person</th><th>Competition</th><th>Date</th><th>Details</th></tr>
+<tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th><th>Details</th></tr>
 <tr><td style="text-align:right">4.89</td><td style="text-align:right">1.6%</td><td style="text-align:right">27</td><td><a href="https://www.worldcubeassociation.org/persons/2019BAUM02">Dylan Baumbach</a></td><td><a href="https://www.worldcubeassociation.org/competitions/CubeMoreinArdmore2024">Cube More in Ardmore 2024</a></td><td>2024-09-21</td><td>4.19, 4.40, 5.13, 4.89, DNF</td></tr>
 <tr><td style="text-align:right">4.97</td><td style="text-align:right">5.0%</td><td style="text-align:right">821</td><td><a href="https://www.worldcubeassociation.org/persons/2019BAUM02">Dylan Baumbach</a></td><td><a href="https://www.worldcubeassociation.org/competitions/DFWBacktoSchool2024">DFW Back to School 2024</a></td><td>2024-08-25</td><td>4.48, 4.82, 4.97, 7.90, 4.84</td></tr>
 <tr><td style="text-align:right">5.23</td><td style="text-align:right">15.0%</td><td style="text-align:right">895</td><td><a href="https://www.worldcubeassociation.org/persons/2017SIAU02">Max Siauw</a></td><td><a href="https://www.worldcubeassociation.org/competitions/NortheastChampionship2022">Northeast Championship 2022</a></td><td>2022-05-27</td><td>5.23, 9.73, 4.97, 4.84, 4.86</td></tr>
@@ -470,8 +530,45 @@
 <tr><td style="text-align:right">15.66</td><td style="text-align:right">3.7%</td><td style="text-align:right">57</td><td><a href="https://www.worldcubeassociation.org/persons/2007ZHUJ01">Jianwei Zhu (朱剑伟)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/BeijingSummerOpen2009">Beijing Summer Open 2009</a></td><td>2009-08-16</td><td>16.44, 15.66, 13.65, 12.05, 14.52</td></tr>
 <tr><td style="text-align:right">16.27</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2007COHE01">Dan Cohen</a></td><td><a href="https://www.worldcubeassociation.org/competitions/SafeHaven2009">Safe Haven 2009</a></td><td>2009-06-20</td><td>16.27, 14.46, 16.38, 16.18, DNF</td></tr>
 </table>
+<h3 data-i18n-en="3x3x3 With Feet" data-i18n-zh="三阶脚拧">3x3x3 With Feet</h3>
+<table>
+<tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th><th>Details</th></tr>
+<tr><td style="text-align:right">21.01</td><td style="text-align:right">3.8%</td><td style="text-align:right">142</td><td><a href="https://www.worldcubeassociation.org/persons/2016HUNG08">Lim Hung (林弘)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/Medan10thAnniversary2019">Medan 10th Anniversary 2019</a></td><td>2019-12-21</td><td>17.88, 36.12, 18.98, 21.01, 19.72</td></tr>
+<tr><td style="text-align:right">21.83</td><td style="text-align:right">9.4%</td><td style="text-align:right">418</td><td><a href="https://www.worldcubeassociation.org/persons/2015ROSE01">Daniel Rose-Levine</a></td><td><a href="https://www.worldcubeassociation.org/competitions/CubingUSANationals2019">CubingUSA Nationals 2019</a></td><td>2019-08-01</td><td>21.30, 21.83, 20.12, 26.09, 21.41</td></tr>
+<tr><td style="text-align:right">24.09</td><td style="text-align:right">1.2%</td><td style="text-align:right">57</td><td><a href="https://www.worldcubeassociation.org/persons/2015ROSE01">Daniel Rose-Levine</a></td><td><a href="https://www.worldcubeassociation.org/competitions/Meadowlands2018">Meadowlands 2018</a></td><td>2018-06-09</td><td>23.68, 24.09, 22.85, 22.76, 38.16</td></tr>
+<tr><td style="text-align:right">24.38</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2015ROSE01">Daniel Rose-Levine</a></td><td><a href="https://www.worldcubeassociation.org/competitions/SEChamp2018">SE Champ 2018</a></td><td>2018-04-13</td><td>24.38, 21.11, 22.48, 28.06, 24.21</td></tr>
+</table>
+<h3 data-i18n-en="Rubik's Magic" data-i18n-zh="八板">Rubik's Magic</h3>
+<table>
+<tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th><th>Details</th></tr>
+<tr><td style="text-align:right">0.77</td><td style="text-align:right">3.8%</td><td style="text-align:right">71</td><td><a href="https://www.worldcubeassociation.org/persons/2009WANG13">Yuxuan Wang (王宇轩)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/BeijingSummer2011">Beijing Summer Open 2011</a></td><td>2011-07-31</td><td>0.72, 0.77, 0.77, 0.75, DNF</td></tr>
+<tr><td style="text-align:right">0.80</td><td style="text-align:right">1.2%</td><td style="text-align:right">391</td><td><a href="https://www.worldcubeassociation.org/persons/2009WANG13">Yuxuan Wang (王宇轩)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/Taiyuan2011">Taiyuan 2011</a></td><td>2011-05-21</td><td>0.80, 0.77, 0.77, DNF, 0.81</td></tr>
+<tr><td style="text-align:right">0.81</td><td style="text-align:right">8.0%</td><td style="text-align:right">141</td><td><a href="https://www.worldcubeassociation.org/persons/2009WANG13">Yuxuan Wang (王宇轩)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/NanjingSpringOpen2010">Nanjing Spring Open 2010</a></td><td>2010-04-25</td><td>0.80, 0.80, 0.83, 0.81, 0.80</td></tr>
+<tr><td style="text-align:right">0.88</td><td style="text-align:right">3.3%</td><td style="text-align:right">140</td><td><a href="https://www.worldcubeassociation.org/persons/2009BUIH02">Henrik Bui</a></td><td><a href="https://www.worldcubeassociation.org/competitions/SwedishCubeDay2009">Swedish Cube Day 2009</a></td><td>2009-12-05</td><td>0.91, 0.88, 0.88, 0.86, 0.84</td></tr>
+<tr><td style="text-align:right">0.91</td><td style="text-align:right">3.2%</td><td style="text-align:right">0</td><td><a href="https://www.worldcubeassociation.org/persons/2009CHUN07">Tang Yiu Chun (鄧耀俊)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/HongKongOpen2009">Hong Kong Open 2009</a></td><td>2009-07-18</td><td>0.91, 0.90, 0.91, 0.90, 0.86</td></tr>
+<tr><td style="text-align:right">0.94</td><td style="text-align:right">10.5%</td><td style="text-align:right">875</td><td><a href="https://www.worldcubeassociation.org/persons/2008HINL01">Lee Chun Hin (李震軒)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/HongKongOpen2009">Hong Kong Open 2009</a></td><td>2009-07-18</td><td>0.90, 0.90, 0.94, 0.96, DNF</td></tr>
+<tr><td style="text-align:right">1.05</td><td style="text-align:right">15.3%</td><td style="text-align:right">98</td><td><a href="https://www.worldcubeassociation.org/persons/2006KUTI01">Mátyás Kuti</a></td><td><a href="https://www.worldcubeassociation.org/competitions/BelgianOpen2007">Belgian Open 2007</a></td><td>2007-02-24</td><td>2.06, 0.94, 1.05, 0.86, 0.88</td></tr>
+<tr><td style="text-align:right">1.24</td><td style="text-align:right">9.5%</td><td style="text-align:right">118</td><td><a href="https://www.worldcubeassociation.org/persons/2005BOUC01">Craig Bouchard</a></td><td><a href="https://www.worldcubeassociation.org/competitions/RutgersFall2006">Rutgers Fall 2006</a></td><td>2006-11-18</td><td>1.09, 1.24, 1.08, 2.78, 1.12</td></tr>
+<tr><td style="text-align:right">1.37</td><td style="text-align:right">6.2%</td><td style="text-align:right">260</td><td><a href="https://www.worldcubeassociation.org/persons/2005BATI01">Milán Baticz</a></td><td><a href="https://www.worldcubeassociation.org/competitions/CzechOpen2006">Czech Open 2006</a></td><td>2006-07-23</td><td>DNF, 1.37, 1.47, 1.35, 1.30</td></tr>
+<tr><td style="text-align:right">1.46</td><td style="text-align:right">2.7%</td><td style="text-align:right">20</td><td><a href="https://www.worldcubeassociation.org/persons/2005OOMS01">Alexander Ooms</a></td><td><a href="https://www.worldcubeassociation.org/competitions/WC2005">World Championship 2005</a></td><td>2005-11-05</td><td>DNF, 1.44, 1.48, 1.40, 1.46</td></tr>
+<tr><td style="text-align:right">1.50</td><td style="text-align:right">3.8%</td><td style="text-align:right">28</td><td><a href="https://www.worldcubeassociation.org/persons/2005OOMS01">Alexander Ooms</a></td><td><a href="https://www.worldcubeassociation.org/competitions/DutchOpen2005">Dutch Open 2005</a></td><td>2005-10-16</td><td>DNF, 1.51, 1.44, 1.50, 1.32</td></tr>
+<tr><td style="text-align:right">1.56</td><td style="text-align:right">6.0%</td><td style="text-align:right">407</td><td><a href="https://www.worldcubeassociation.org/persons/2004JELI01">Josef Jelínek</a></td><td><a href="https://www.worldcubeassociation.org/competitions/PolishOpen2005">Polish Open 2005</a></td><td>2005-09-18</td><td>1.56, 1.73, 1.47, 1.52, 1.48</td></tr>
+<tr><td style="text-align:right">1.66</td><td style="text-align:right">42.6%</td><td style="text-align:right">105</td><td><a href="https://www.worldcubeassociation.org/persons/2003SCHE01">Jaap Scherphuis</a></td><td><a href="https://www.worldcubeassociation.org/competitions/Euro2004">Euro 2004</a></td><td>2004-08-07</td><td>3.03, 1.66, 1.54, 1.59, 1.47</td></tr>
+<tr><td style="text-align:right">2.89</td><td style="text-align:right">12.4%</td><td style="text-align:right">0</td><td><a href="https://www.worldcubeassociation.org/persons/2003SCHE01">Jaap Scherphuis</a></td><td><a href="https://www.worldcubeassociation.org/competitions/GermanOpen2004">German Open 2004</a></td><td>2004-04-24</td><td>2.89, 2.28, 3.04, 2.15, 2.09</td></tr>
+<tr><td style="text-align:right">3.30</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2003SCHE01">Jaap Scherphuis</a></td><td><a href="https://www.worldcubeassociation.org/competitions/GermanOpen2004">German Open 2004</a></td><td>2004-04-24</td><td>2.41, 3.05, 3.73, 2.22, 3.30</td></tr>
+</table>
+<h3 data-i18n-en="Master Magic" data-i18n-zh="十二板">Master Magic</h3>
+<table>
+<tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Competition</th><th>Date</th><th>Details</th></tr>
+<tr><td style="text-align:right">1.78</td><td style="text-align:right">8.7%</td><td style="text-align:right">1427</td><td><a href="https://www.worldcubeassociation.org/persons/2010PULC01">Ernie Pulchny</a></td><td><a href="https://www.worldcubeassociation.org/competitions/USNationals2011">US Nationals 2011</a></td><td>2011-08-12</td><td>1.78, 1.71, 1.77, 1.71, 3.08</td></tr>
+<tr><td style="text-align:right">1.95</td><td style="text-align:right">15.6%</td><td style="text-align:right">140</td><td><a href="https://www.worldcubeassociation.org/persons/2006KUTI01">Mátyás Kuti</a></td><td><a href="https://www.worldcubeassociation.org/competitions/PolishOpen2007">Polish Open 2007</a></td><td>2007-09-15</td><td>2.02, 1.95, DNF, 1.90, 1.90</td></tr>
+<tr><td style="text-align:right">2.31</td><td style="text-align:right">2.9%</td><td style="text-align:right">63</td><td><a href="https://www.worldcubeassociation.org/persons/2007HORV01">Máté Horváth</a></td><td><a href="https://www.worldcubeassociation.org/competitions/GermanOpen2007">German Open 2007</a></td><td>2007-04-28</td><td>3.13, 2.31, 1.94, 2.21, 1.94</td></tr>
+<tr><td style="text-align:right">2.38</td><td style="text-align:right">19.0%</td><td style="text-align:right">98</td><td><a href="https://www.worldcubeassociation.org/persons/2005BATI01">Milán Baticz</a></td><td><a href="https://www.worldcubeassociation.org/competitions/BelgianOpen2007">Belgian Open 2007</a></td><td>2007-02-24</td><td>2.16, 2.38, 2.25, 4.71, 2.18</td></tr>
+<tr><td style="text-align:right">2.94</td><td style="text-align:right">16.7%</td><td style="text-align:right">398</td><td><a href="https://www.worldcubeassociation.org/persons/2005BOUC01">Craig Bouchard</a></td><td><a href="https://www.worldcubeassociation.org/competitions/RutgersFall2006">Rutgers Fall 2006</a></td><td>2006-11-18</td><td>2.94, 2.68, 2.90, DNF, 3.62</td></tr>
+<tr><td style="text-align:right">3.53</td><td style="text-align:right">14.1%</td><td style="text-align:right">64</td><td><a href="https://www.worldcubeassociation.org/persons/2003POCH01">Stefan Pochmann</a></td><td><a href="https://www.worldcubeassociation.org/competitions/DutchOpen2005">Dutch Open 2005</a></td><td>2005-10-16</td><td>4.18, 3.53, 3.06, 3.28, 3.28</td></tr>
+<tr><td style="text-align:right">4.11</td><td style="text-align:right"></td><td style="text-align:right"></td><td><a href="https://www.worldcubeassociation.org/persons/2003BURT01">Bob Burton</a></td><td><a href="https://www.worldcubeassociation.org/competitions/CaltechDallas2005">Caltech Dallas 2005</a></td><td>2005-08-13</td><td>3.46, 3.05, 3.05, 4.11, 4.16</td></tr>
+</table>
 </div>
-
 <script>
 function switchTab(e,id){
   document.querySelectorAll('.stat-tab').forEach(t=>t.classList.remove('active'));

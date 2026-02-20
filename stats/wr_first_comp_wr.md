@@ -1,8 +1,7 @@
 <h2 data-i18n-en="World records set in a person's first competition" data-i18n-zh="首次参赛即创世界纪录">World records set in a person's first competition</h2>
 
 <p><em data-i18n-en="People who set a 3x3 World Record in their very first WCA competition." data-i18n-zh="在首次 WCA 比赛中就创造了三阶世界纪录的选手。">People who set a 3x3 World Record in their very first WCA competition.</em></p>
-<p><em data-i18n-en="Updated on 16 February 2026" data-i18n-zh="更新于 2026 年 2 月 16 日">Updated on 16 February 2026</em></p>
-
+<p><em data-i18n-en="Updated on 19 February 2026" data-i18n-zh="更新于 2026 年 2 月 19 日">Updated on 19 February 2026</em></p>
 
 | # | Single | Person | Competition | Date |
 | ---: | ---: | :--- | :--- | :--- |

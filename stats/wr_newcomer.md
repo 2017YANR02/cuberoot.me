@@ -1,8 +1,7 @@
 <h2 data-i18n-en="Best first competition results (Newcomer World Records)" data-i18n-zh="最佳首次参赛成绩（新人世界纪录）">Best first competition results (Newcomer World Records)</h2>
 
 <p><em data-i18n-en="Shows the best single achieved by a person in their very first 3x3 competition." data-i18n-zh="展示选手在首次三阶比赛中取得的最佳单次成绩。">Shows the best single achieved by a person in their very first 3x3 competition.</em></p>
-<p><em data-i18n-en="Updated on 16 February 2026" data-i18n-zh="更新于 2026 年 2 月 16 日">Updated on 16 February 2026</em></p>
-
+<p><em data-i18n-en="Updated on 19 February 2026" data-i18n-zh="更新于 2026 年 2 月 19 日">Updated on 19 February 2026</em></p>
 
 | # | Single | Person | Competition | Date |
 | ---: | ---: | :--- | :--- | :--- |

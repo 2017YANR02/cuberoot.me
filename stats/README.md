@@ -1,4 +1,8 @@
-
+<div style="position:fixed;bottom:16px;right:16px;z-index:9999;display:flex;gap:0;border-radius:6px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.15)">
+  <button data-i18n-toggle="en" onclick="I18n.setLocale('en')" style="padding:6px 14px;border:none;cursor:pointer;font-size:14px;font-weight:600;background:rgba(255,255,255,0.1);color:#ccc;backdrop-filter:blur(8px)">EN</button>
+  <button data-i18n-toggle="zh" onclick="I18n.setLocale('zh')" style="padding:6px 14px;border:none;cursor:pointer;font-size:14px;font-weight:600;background:rgba(255,255,255,0.1);color:#ccc;backdrop-filter:blur(8px)">中文</button>
+</div>
+<script src="../src/i18n/i18n.js" defer></script>
 
 <h2 data-i18n-en="World Record Analysis" data-i18n-zh="世界纪录分析">World Record Analysis</h2>
 
@@ -26,6 +30,7 @@
   <li><a href="wr_worst" data-i18n-en="Worst solve in round" data-i18n-zh="最差单次">Worst solve in round</a></li>
 </ul>
 
+---
 
 <h2 data-i18n-en="General Statistics" data-i18n-zh="通用统计">General Statistics</h2>
 
@@ -92,7 +97,7 @@
   <li><a href="world_records_by_country" data-i18n-en="World records count by country" data-i18n-zh="各国世界纪录数量">World records count by country</a></li>
   <li><a href="world_records_by_person" data-i18n-en="World records count by person" data-i18n-zh="个人世界纪录数量">World records count by person</a></li>
   <li><a href="worst_result_on_podium" data-i18n-en="Worst result providing a podium" data-i18n-zh="登上领奖台的最差成绩">Worst result providing a podium</a></li>
-  <li><a href="yearly_rankings" data-i18n-en="Yearly rankings" data-i18n-zh="年度排名">Yearly rankings</a></li>
+  <li><a href="yearly_rankings" data-i18n-en="Yearly rankings" data-i18n-zh="Yearly rankings">Yearly rankings</a></li>
 </ul>
 
 

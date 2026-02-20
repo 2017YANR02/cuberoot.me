@@ -1,8 +1,7 @@
 <h2 data-i18n-en="Smallest difference between a single and an average" data-i18n-zh="单次与平均最小差距">Smallest difference between a single and an average</h2>
 
 <p><em data-i18n-en="FMC is ignored because values are integers, thus it's likely to get the same single and average." data-i18n-zh="FMC 不计入，因为其数值为整数。">FMC is ignored because values are integers, thus it's likely to get the same single and average.</em></p>
-<p><em data-i18n-en="Updated on 16 February 2026" data-i18n-zh="更新于 2026 年 2 月 16 日">Updated on 16 February 2026</em></p>
-
+<p><em data-i18n-en="Updated on 19 February 2026" data-i18n-zh="更新于 2026 年 2 月 19 日">Updated on 19 February 2026</em></p>
 
 
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
