@@ -61,6 +61,10 @@ STAT_TRANSLATIONS = {
     title_zh: "未登领奖台的最佳成绩",
     note_zh: "仅统计决赛。"
   },
+  "best_round" => {
+    title_zh: "最佳轮次",
+    note_zh: nil
+  },
   "best_single_counting_into_average" => {
     title_zh: "计入 Ao5 的最佳单次",
     note_zh: nil
