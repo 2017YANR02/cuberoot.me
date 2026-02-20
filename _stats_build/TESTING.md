@@ -30,6 +30,8 @@ password: "your_password"
 
 ## 测试工具
 
+> **工作目录**：以下所有命令均需在 `_stats_build/` 目录下运行。
+
 ### 1. `test_stat.rb` — 快速验证（控制台输出）
 
 ```bash
