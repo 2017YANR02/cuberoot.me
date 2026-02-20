@@ -27,9 +27,16 @@ require_relative "../core/events"
 require_relative "../core/solve_time"
 require_relative "../core/database"
 require_relative "../core/tab_ui"
+require_relative "../core/metric_selector"
 
 class WrDominance < Statistic
   include TabUi
+  include MetricSelector
+
+  HEADER = {
+    "Count" => :right, "Improvement" => :right, "Days" => :right,
+    "Person" => :left, "Competition" => :left, "Date" => :left
+  }.freeze
 
   def initialize
     @title = "Dominance (top N on leaderboard by one person)"
@@ -45,64 +52,87 @@ class WrDominance < Statistic
   end
 
   def markdown
-    # NOTE: 复用基类 top 方法（自动从 STAT_TRANSLATIONS 查翻译）
     md = top
+    md += metric_selector_styles
+    md += dominance_metric_buttons
 
-    data.each do |event_name, group_name, rows|
+    # NOTE: Single 面板
+    md += "<div class=\"metric-panel active\" id=\"metric-single\">\n"
+    data[:single].each do |event_name, rows|
       next if rows.empty?
-      # NOTE: data-i18n-en 用纯项目名，供 event_selector.js 识别；显示文本含 Single/Average 后缀
-      md += "<h3 data-i18n-en=\"#{event_name}\" data-i18n-zh=\"#{Events.zh(event_name)}\">#{group_name}</h3>\n"
-      md += "<table>\n"
-      md += "<tr>"
-      md += "<th style=\"text-align:right\">Count</th>"
-      md += "<th style=\"text-align:right\">Improvement</th>"
-      md += "<th style=\"text-align:right\">Days</th>"
-      md += "<th>Person</th><th>Competition</th><th>Date</th>"
-      md += "</tr>\n"
-      rows.each do |row|
-        md += "<tr>"
-        md += "<td style=\"text-align:right\">#{row[:count]}</td>"
-        md += "<td style=\"text-align:right\">#{row[:improvement]}</td>"
-        md += "<td style=\"text-align:right\">#{row[:days]}</td>"
-        md += "<td>#{md_link_to_html(row[:person_link])}</td>"
-        md += "<td>#{md_link_to_html(row[:comp_link])}</td>"
-        md += "<td>#{row[:date]}</td>"
-        md += "</tr>\n"
-      end
-      md += "</table>\n"
+      md += render_event_table(event_name, rows)
     end
+    md += "</div>\n"
 
+    # NOTE: Average 面板
+    md += "<div class=\"metric-panel\" id=\"metric-average\">\n"
+    data[:average].each do |event_name, rows|
+      next if rows.empty?
+      md += render_event_table(event_name, rows)
+    end
+    md += "</div>\n"
+
+    md += metric_selector_script
     md
   end
 
   private
 
-  def compute_all
-    results = []
+  # NOTE: 指标按钮（Single / Average）
+  def dominance_metric_buttons
+    html = "<div class=\"metric-selector\">\n"
+    [{"Single" => "single"}, {"Average" => "average"}].each_with_index do |m, i|
+      label, id = m.first
+      active = i == 0 ? " active" : ""
+      html += "  <button class=\"metric-btn#{active}\" onclick=\"switchMetric('#{id}')\" "
+      html += "data-i18n-en=\"#{label}\">#{label}</button>\n"
+    end
+    html += "</div>\n"
+    html
+  end
 
-    # NOTE: 合并 single + average 为一次全表查询，省去一次 ~500 万行的全表扫描
+  # NOTE: 渲染单个项目的表格
+  def render_event_table(event_name, rows)
+    md = "<h3 data-i18n-en=\"#{event_name}\" data-i18n-zh=\"#{Events.zh(event_name)}\">#{event_name}</h3>\n"
+    md += "<table>\n"
+    md += html_table_header(HEADER)
+    rows.each do |row|
+      md += "<tr>"
+      md += "<td style=\"text-align:right\">#{row[:count]}</td>"
+      md += "<td style=\"text-align:right\">#{row[:improvement]}</td>"
+      md += "<td style=\"text-align:right\">#{row[:days]}</td>"
+      md += "<td>#{md_link_to_html(row[:person_link])}</td>"
+      md += "<td>#{md_link_to_html(row[:comp_link])}</td>"
+      md += "<td>#{row[:date]}</td>"
+      md += "</tr>\n"
+    end
+    md += "</table>\n"
+    md
+  end
+
+  def compute_all
+    result = { single: [], average: [] }
+
     puts "  Dominance: querying all results..."
     all_rows = fetch_all_results
 
-    # Single: 所有项目（含退役项目）
+    # Single: 所有项目
     Events::ALL.each do |event_id, event_name|
-      group = "#{event_name} Single"
       rows = all_rows.select { |r| r["event_id"] == event_id && r["best"] > 0 }
       next if rows.empty?
       hist = compute_wr_history(rows, "best")
-      results << [event_name, group, hist] unless hist.empty?
+      result[:single] << [event_name, hist] unless hist.empty?
     end
 
-    # Average/Mean: 所有项目（BLD 类用 mean，也存储在 average 列）
+    # Average: 所有项目
     Events::ALL.each do |event_id, event_name|
-      group = "#{event_name} Average"
       rows = all_rows.select { |r| r["event_id"] == event_id && r["average"] > 0 }
       next if rows.empty?
       hist = compute_wr_history(rows, "average")
-      results << [event_name, group, hist] unless hist.empty?
+      result[:average] << [event_name, hist] unless hist.empty?
     end
 
-    results
+    result
   end
 
   # NOTE: 一次查询同时取 best 和 average，由调用方按需使用对应列
