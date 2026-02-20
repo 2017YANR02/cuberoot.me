@@ -185,16 +185,7 @@ class AoRounds < GroupedStatistic
     results = wr_records.each_with_index.map do |r, i|
       metric_str = SolveTime.new(event_id, :average, r["_metric"].round).clock_format
 
-      if i > 0
-        prev = wr_records[i - 1]
-        gain = ((prev["_metric"] - r["_metric"]) / prev["_metric"] * 100).round(1)
-        gain_str = "#{gain}%"
-        duration = (r["start_date"] - prev["start_date"]).to_i
-        days_str = duration.to_s
-      else
-        gain_str = ""
-        days_str = ""
-      end
+      gain_str, days_str = wr_progress(wr_records, i) { |r| r["_metric"] }
 
       # Details: 显示各轮 average（已按轮次排序）
       details = r["_round_values"].map do |v|

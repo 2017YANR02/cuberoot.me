@@ -200,13 +200,19 @@ class WrDominance < Statistic
     end
 
     # 计算 improvement 和 days，然后倒序
+    # NOTE: days = 该纪录保持的天数（到被下一条打破为止），最新纪录的 days 为空
     result = wr_records.each_with_index.map do |r, i|
       if i > 0
         prev = wr_records[i - 1]
         improvement = "+#{r[:count] - prev[:count]}"
-        days = (r[:date] - prev[:date]).to_i.to_s
       else
         improvement = ""
+      end
+
+      if i < wr_records.size - 1
+        next_r = wr_records[i + 1]
+        days = (next_r[:date] - r[:date]).to_i.to_s
+      else
         days = ""
       end
       {

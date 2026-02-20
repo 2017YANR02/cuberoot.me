@@ -67,4 +67,29 @@ class Statistic
     end
     table
   end
+
+  # NOTE: WR 历史表的通用计算——进步百分比 + 纪录保持天数
+  # records: 按时间正序排列的纪录数组
+  # i: 当前索引
+  # block: 从记录中提取指标值（用于计算进步百分比）
+  # 返回: [gain_str, days_str]
+  def wr_progress(records, i)
+    # 进步：与前一条纪录相比的百分比提升
+    if i > 0
+      prev_val = yield(records[i - 1]).to_f
+      curr_val = yield(records[i]).to_f
+      gain_str = "#{((prev_val - curr_val) / prev_val * 100).round(1)}%"
+    else
+      gain_str = ""
+    end
+
+    # 天数：该纪录保持了多久（直到被下一条打破），最新纪录为空
+    if i < records.size - 1
+      days_str = (records[i + 1]["start_date"] - records[i]["start_date"]).to_i.to_s
+    else
+      days_str = ""
+    end
+
+    [gain_str, days_str]
+  end
 end
