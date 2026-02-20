@@ -50,6 +50,7 @@ class AoRounds < GroupedStatistic
         result.competition_id,
         CONCAT('[', person.name, '](https://www.worldcubeassociation.org/persons/', person.wca_id, ')') person_link,
         person.wca_id AS person_id,
+        person.country_id,
         CONCAT('[', competition.cell_name, '](https://www.worldcubeassociation.org/competitions/', competition.id, ')') competition_link,
         competition.start_date
       FROM results result
@@ -75,13 +76,13 @@ class AoRounds < GroupedStatistic
   # NOTE: 用 top + tabbed_grouped_markdown 替换原手写 HTML
   # 将 @ranking_by_event 中的 hash rows 归一化为数组供基类渲染
   def markdown
-    ranking_header = { "Person" => :left, "Result" => :right, "Details" => :left }
+    # NOTE: 在标准 RANKING_HEADER 基础上追加 Details 列
+    ranking_header = RANKING_HEADER.merge("Details" => :left)
     # NOTE: 必须先调 data 触发查询，才能填充 @ranking_by_event
     history_data = data
-    # NOTE: build_ranking 返回 [{person_link:, metric_str:, details:}]，需转为数组格式
-    ranking_data = @ranking_by_event.transform_values do |rows|
-      rows.map { |r| [r[:person_link], r[:metric_str], r[:details]] }
-    end
+    # NOTE: 转换时包含 details 字段
+    ao_keys = [:rank, :person_link, :result_str, :country, :competition_link, :date, :details]
+    ranking_data = @ranking_by_event.transform_values { |rows| ranking_to_arrays(rows, keys: ao_keys) }
     top + tabbed_grouped_markdown(
       ranking_data: ranking_data,
       ranking_header: ranking_header,
@@ -126,7 +127,7 @@ class AoRounds < GroupedStatistic
     event_rows.each do |r|
       key = [r["competition_id"], r["person_id"]]
       grouped[key] ||= { "rows" => [], "person_link" => r["person_link"],
-                         "person_id" => r["person_id"],
+                         "person_id" => r["person_id"], "country_id" => r["country_id"],
                          "competition_link" => r["competition_link"],
                          "start_date" => r["start_date"], "event_id" => event_id }
       grouped[key]["rows"] << r
@@ -162,10 +163,19 @@ class AoRounds < GroupedStatistic
     best_by_person.values
       .sort_by { |r| r["_metric"] }
       .first(10)
-      .map do |r|
+      .each_with_index.map do |r, i|
         metric_str = SolveTime.new(event_id, :average, r["_metric"].round).clock_format
         details = r["_round_values"].map { |v| SolveTime.new(event_id, :average, v).clock_format }.join(', ')
-        { person_link: r["person_link"], metric_str: metric_str, details: details }
+        date_str = r["start_date"].respond_to?(:strftime) ? r["start_date"].strftime("%Y-%m-%d") : r["start_date"].to_s
+        {
+          rank: i + 1,
+          person_link: r["person_link"],
+          result_str: metric_str,
+          country: r["country_id"],
+          competition_link: r["competition_link"],
+          date: date_str,
+          details: details
+        }
       end
   end
 

@@ -1,6 +1,19 @@
 # NOTE: 通用 Tab UI mixin，提供双视图（当前排名 + WR 历史）的 HTML 生成能力
 # 任何需要 Tab 双视图的统计类都可以 include 此 module
 module TabUi
+
+  # NOTE: 标准排名表头——所有带 Tab 双视图的统计共用
+  # 子类可用此常量或在此基础上追加列（如 ao_rounds 追加 Details）
+  RANKING_HEADER = {
+    "#" => :right, "Person" => :left, "Result" => :right,
+    "Country" => :left, "Competition" => :left, "Date" => :left
+  }.freeze
+
+  # NOTE: 简化版排名表头——round_metric 等不关联具体比赛的统计使用
+  RANKING_HEADER_SIMPLE = {
+    "Person" => :left, "Result" => :right, "Country" => :left
+  }.freeze
+
   def tab_styles
     <<~HTML
       <style>
@@ -75,6 +88,68 @@ module TabUi
     md += grouped_panel("history", false, history_data, history_header)
     md += tab_script
     md
+  end
+
+  # NOTE: 通用排名查询——逐事件查询 top 10（避免全表 550 万行 JOIN）
+  # 合并了 wr_single_history 和 wr_average_history 的 build_ranking_from_all
+  # field: "best" 或 "average"（SQL 列名）
+  # type: :single 或 :average（SolveTime 格式化用）
+  # cache_name: 缓存标识，避免 single/average 冲突
+  def build_ranking_from_results(event_id, field:, type:, cache_name:)
+    require_relative "database"
+    # NOTE: 用类变量 hash 做内存缓存，同一进程重复调用时直接返回
+    cache_key = :"@@ranking_cache_#{cache_name}"
+    self.class.class_variable_set(cache_key, {}) unless self.class.class_variable_defined?(cache_key)
+    cache = self.class.class_variable_get(cache_key)
+    return cache[event_id] if cache[event_id]
+
+    # NOTE: 逐事件查询，每次只加载一个项目的数据（几千~几万行），避免全表 JOIN
+    rows = Database.client.query(
+      "SELECT r.person_id, r.#{field},
+       CONCAT('[', p.name, '](https://www.worldcubeassociation.org/persons/', p.wca_id, ')') person_link,
+       p.country_id,
+       CONCAT('[', c.cell_name, '](https://www.worldcubeassociation.org/competitions/', c.id, ')') competition_link,
+       c.start_date
+       FROM results r
+       JOIN persons p ON p.wca_id = r.person_id AND p.sub_id = 1
+       JOIN competitions c ON c.id = r.competition_id
+       WHERE r.#{field} > 0 AND r.event_id = '#{event_id}'
+       ORDER BY r.#{field}"
+    ).to_a
+
+    # NOTE: 每人每项目最佳成绩，保留对应的比赛/日期/国家信息
+    best_by_person = {}
+    rows.each do |r|
+      pid = r["person_id"]
+      if !best_by_person[pid] || r[field] < best_by_person[pid][field]
+        best_by_person[pid] = r
+      end
+    end
+
+    result = best_by_person.values
+      .sort_by { |r| r[field] }
+      .first(10)
+      .each_with_index.map do |r, i|
+        result_str = SolveTime.new(event_id, type, r[field]).clock_format
+        date_str = r["start_date"].respond_to?(:strftime) ? r["start_date"].strftime("%Y-%m-%d") : r["start_date"].to_s
+        {
+          rank: i + 1,
+          person_link: r["person_link"],
+          result_str: result_str,
+          country: r["country_id"],
+          competition_link: r["competition_link"],
+          date: date_str
+        }
+      end
+
+    cache[event_id] = result
+    result
+  end
+
+  # NOTE: 将排名 hash 数组转为 tabbed_grouped_markdown 需要的二维数组
+  # keys: 要提取的字段列表，顺序与 ranking_header 对应
+  def ranking_to_arrays(ranking_rows, keys: [:rank, :person_link, :result_str, :country, :competition_link, :date])
+    ranking_rows.map { |r| keys.map { |k| r[k] } }
   end
 
   private
