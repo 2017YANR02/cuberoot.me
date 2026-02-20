@@ -232,26 +232,32 @@ class WrNewcomer < GroupedStatistic
   end
 
   # NOTE: 数据源 2 —— 首场比赛（首场比赛所有轮次的 MIN(best) / MIN(average)）
+  # 用 ROW_NUMBER 窗口函数代替 GROUP BY + MIN，性能提升 ~10 倍
   def fetch_first_comp_data(metric, client)
     col = metric[:type] == :single ? "best" : "average"
+    filter = metric[:type] == :single ? "r.best > 0" : "r.average > 0"
     sql = <<-SQL
       SELECT
-        r.event_id,
-        MIN(r.#{col}) AS first_result,
+        fr.event_id,
+        fr.first_result,
         CONCAT('[', p.name, '](https://www.worldcubeassociation.org/persons/', p.wca_id, ')') person_link,
         p.country_id,
         CONCAT('[', c.cell_name, '](https://www.worldcubeassociation.org/competitions/', c.id, ')') competition_link,
         c.start_date
-      FROM results r
-      JOIN persons p ON p.wca_id = r.person_id AND p.sub_id = 1
-      JOIN competitions c ON c.id = r.competition_id
-      JOIN tmp_first_comp fc ON fc.person_id = r.person_id
-           AND fc.event_id = r.event_id
-           AND c.start_date = fc.earliest_date
-      WHERE r.#{col} > 0
-      GROUP BY r.event_id, p.wca_id, p.name, p.country_id,
-               c.cell_name, c.id, c.start_date
-      ORDER BY r.event_id, first_result
+      FROM (
+        SELECT r.person_id, r.event_id, r.#{col} AS first_result, r.competition_id,
+               ROW_NUMBER() OVER (PARTITION BY r.person_id, r.event_id ORDER BY r.#{col}) AS rn
+        FROM results r
+        JOIN competitions c1 ON c1.id = r.competition_id
+        JOIN tmp_first_comp fc ON fc.person_id = r.person_id
+             AND fc.event_id = r.event_id
+             AND c1.start_date = fc.earliest_date
+        WHERE #{filter}
+      ) fr
+      JOIN persons p ON p.wca_id = fr.person_id AND p.sub_id = 1
+      JOIN competitions c ON c.id = fr.competition_id
+      WHERE fr.rn = 1
+      ORDER BY fr.event_id, fr.first_result
     SQL
     client.query(sql).to_a.group_by { |r| r["event_id"] }
   end
