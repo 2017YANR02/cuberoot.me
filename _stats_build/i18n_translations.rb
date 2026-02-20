@@ -306,8 +306,8 @@ STAT_TRANSLATIONS = {
     note_zh: "首次创造任何纪录（不限项目、不限单次/平均）即为世界纪录的选手。"
   },
   "wr_1st_wr" => {
-    title_zh: "首场比赛的第一次还原",
-    note_zh: "选手在首场 WCA 比赛第一轮的第一次还原成绩（value1）。"
+    title_zh: "首场比赛第一轮成绩",
+    note_zh: "选手在首场 WCA 比赛第一轮的第一次还原（单次）/ 该轮平均成绩。"
   },
   "wr_median" => {
     title_zh: "世界纪录中位数历史",
