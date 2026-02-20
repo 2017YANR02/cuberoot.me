@@ -77,5 +77,5 @@
   <li><a href="world_records_by_country" data-i18n-en="World records count by country" data-i18n-zh="各国世界纪录数量">World records count by country</a></li>
   <li><a href="world_records_by_person" data-i18n-en="World records count by person" data-i18n-zh="个人世界纪录数量">World records count by person</a></li>
   <li><a href="worst_result_on_podium" data-i18n-en="Worst result providing a podium" data-i18n-zh="登上领奖台的最差成绩">Worst result providing a podium</a></li>
-  <li><a href="yearly_rankings" data-i18n-en="Yearly rankings" data-i18n-zh="Yearly rankings">Yearly rankings</a></li>
+  <li><a href="yearly_rankings" data-i18n-en="Yearly rankings" data-i18n-zh="年度排名">Yearly rankings</a></li>
 </ul>
