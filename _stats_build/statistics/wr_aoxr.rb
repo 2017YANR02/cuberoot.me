@@ -1,6 +1,7 @@
 # NOTE: 聚合页面——将 4 个 AoRounds 子类合并为一个 AoXR 入口
 # 用户通过选择器在 Ao1R / Ao2R / Ao3R / Ao4R 之间切换
 require_relative "abstract/ao_rounds"
+require_relative "../core/metric_selector"
 require_relative "wr_ao1r"
 require_relative "wr_ao2r"
 require_relative "wr_ao3r"
@@ -8,6 +9,7 @@ require_relative "wr_ao4r"
 
 class WrAoxr < Statistic
   include TabUi
+  include MetricSelector
 
   AOXR_CLASSES = [WrAo1r, WrAo2r, WrAo3r, WrAo4r].freeze
 
@@ -33,7 +35,7 @@ class WrAoxr < Statistic
 
     # --- 选择器按钮 ---
     md += metric_selector_styles
-    md += metric_selector_buttons(instances)
+    md += metric_selector_buttons(instances, AOXR_META)
 
     # --- Tab 样式 ---
     md += tab_styles
@@ -68,46 +70,5 @@ class WrAoxr < Statistic
     md += metric_selector_script
     md += tab_script
     md
-  end
-
-  private
-
-  # NOTE: 复用 WrMetric 相同的选择器样式和 JS
-  def metric_selector_styles
-    <<~HTML
-      <style>
-      .metric-selector{display:flex;flex-wrap:wrap;gap:6px;margin:16px 0}
-      .metric-btn{padding:8px 16px;border:1px solid #4a6785;border-radius:20px;background:transparent;color:#8ab4f8;cursor:pointer;font-size:14px;font-weight:500;transition:all .2s}
-      .metric-btn.active{background:#2c4a6e;border-color:#8ab4f8;color:#fff}
-      .metric-btn:hover:not(.active){background:rgba(138,180,248,0.1)}
-      .metric-panel{display:none}
-      .metric-panel.active{display:block}
-      </style>
-    HTML
-  end
-
-  def metric_selector_buttons(instances)
-    html = "<div class=\"metric-selector\">\n"
-    instances.each_with_index do |inst, i|
-      meta = AOXR_META[inst.class]
-      active = i == 0 ? " active" : ""
-      html += "  <button class=\"metric-btn#{active}\" onclick=\"switchMetric('#{meta[:id]}')\" "
-      html += "data-i18n-en=\"#{meta[:label]}\">#{meta[:label]}</button>\n"
-    end
-    html += "</div>\n"
-    html
-  end
-
-  def metric_selector_script
-    <<~HTML
-      <script>
-      function switchMetric(id){
-        document.querySelectorAll('.metric-panel').forEach(p=>p.classList.remove('active'));
-        document.querySelectorAll('.metric-btn').forEach(b=>b.classList.remove('active'));
-        document.getElementById('metric-'+id).classList.add('active');
-        event.target.classList.add('active');
-      }
-      </script>
-    HTML
   end
 end
