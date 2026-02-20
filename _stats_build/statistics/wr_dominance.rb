@@ -89,45 +89,46 @@ class WrDominance < Statistic
   def compute_all
     results = []
 
+    # NOTE: 合并 single + average 为一次全表查询，省去一次 ~500 万行的全表扫描
+    puts "  Dominance: querying all results..."
+    all_rows = fetch_all_results
+
     # Single: 所有项目（含退役项目）
-    puts "  Dominance: querying singles..."
-    single_rows = fetch_results(:single)
     Events::ALL.each do |event_id, event_name|
       group = "#{event_name} Single"
-      rows = single_rows.select { |r| r["event_id"] == event_id }
+      rows = all_rows.select { |r| r["event_id"] == event_id && r["best"] > 0 }
       next if rows.empty?
-      hist = compute_wr_history(rows)
+      hist = compute_wr_history(rows, "best")
       results << [event_name, group, hist] unless hist.empty?
     end
 
     # Average/Mean: 所有项目（BLD 类用 mean，也存储在 average 列）
-    puts "  Dominance: querying averages..."
-    avg_rows = fetch_results(:average)
     Events::ALL.each do |event_id, event_name|
       group = "#{event_name} Average"
-      rows = avg_rows.select { |r| r["event_id"] == event_id }
+      rows = all_rows.select { |r| r["event_id"] == event_id && r["average"] > 0 }
       next if rows.empty?
-      hist = compute_wr_history(rows)
+      hist = compute_wr_history(rows, "average")
       results << [event_name, group, hist] unless hist.empty?
     end
 
     results
   end
 
-  def fetch_results(type)
-    col = type == :single ? "best" : "average"
+  # NOTE: 一次查询同时取 best 和 average，由调用方按需使用对应列
+  def fetch_all_results
     sql = <<-SQL
       SELECT
         result.event_id,
         result.person_id,
-        result.#{col} AS value,
+        result.best,
+        result.average,
         CONCAT('[', person.name, '](https://www.worldcubeassociation.org/persons/', person.wca_id, ')') person_link,
         CONCAT('[', competition.cell_name, '](https://www.worldcubeassociation.org/competitions/', competition.id, ')') comp_link,
         competition.start_date
       FROM results result
       JOIN persons person ON person.wca_id = result.person_id AND person.sub_id = 1
       JOIN competitions competition ON competition.id = result.competition_id
-      WHERE result.#{col} > 0
+      WHERE result.best > 0 OR result.average > 0
       ORDER BY result.event_id, competition.start_date
     SQL
     Database.client.query(sql).to_a
@@ -135,7 +136,8 @@ class WrDominance < Statistic
 
   # NOTE: 按时间线追踪 dominance 最高纪录的变化
   # 优化：维护 per-person 排序数组 + best_by_person hash，避免每步全量排序
-  def compute_wr_history(rows)
+  # value_col: "best" 或 "average"，指定从哪个列读取成绩值
+  def compute_wr_history(rows, value_col)
     # per-person 排序值列表（用于 binary search 计数）
     pv = Hash.new { |h, k| h[k] = [] }  # person_id => sorted [values]
     # 每人最佳（最小）值
@@ -150,7 +152,7 @@ class WrDominance < Statistic
     rows.group_by { |r| r["start_date"] }.each do |date, comp_rows|
       comp_rows.each do |r|
         pid = r["person_id"]
-        val = r["value"]
+        val = r[value_col]
 
         # 二分插入，保持有序
         idx = pv[pid].bsearch_index { |v| v >= val } || pv[pid].size
