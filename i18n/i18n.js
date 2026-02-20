@@ -548,6 +548,10 @@ const I18n = {
         if (titleEl) {
             document.title = this.t(titleEl.getAttribute('data-i18n'));
         }
+
+        // NOTE: 解除 FOUC 隐藏——翻译全部完成后显示页面
+        document.body.classList.add('i18n-ready');
+        document.documentElement.classList.remove('i18n-loading');
     },
 
     // NOTE: 对 _dynamicTextZh 中注册的元素进行翻译
