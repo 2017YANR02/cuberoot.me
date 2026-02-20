@@ -35,8 +35,8 @@ MERGED_IDS = %w[
 
 # NOTE: 优先计算列表——聚合页面排在最前面
 PRIORITY_STATS = %w[
-  wr_metric wr_aoxr
-  wr_current wr_newcomer first_r_is_wr wr_1st_wr wr_dominance
+  wr_newcomer wr_metric wr_aoxr
+  wr_current first_r_is_wr wr_1st_wr wr_dominance
 ].freeze
 
 ordered_ids = PRIORITY_STATS.select { |id| STATISTICS.key?(id) } +
