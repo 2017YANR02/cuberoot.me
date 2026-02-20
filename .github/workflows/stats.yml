@@ -1,6 +1,9 @@
 name: Update Stats
 
 on:
+  push:
+    paths:
+      - '_stats_build/**/*.rb'
   schedule:
     # 每周一早上 3:00（北京时间）= UTC 周日 19:00
     - cron: '0 19 * * 0'
