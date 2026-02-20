@@ -41,11 +41,9 @@ class WrNewcomer < GroupedStatistic
 
   def markdown
     # NOTE: 使用单一连接，确保临时表在所有查询中可见
+    puts "  [newcomer] Connecting to database..."
     @client = Database.client
-    t0 = Time.now
-    $stdout.write "  [newcomer] Creating temp table..."
     create_first_comp_temp_table(@client)
-    puts " done (#{(Time.now - t0).round(1)}s)"
 
     md = top
 
@@ -78,10 +76,18 @@ class WrNewcomer < GroupedStatistic
         else
           fetch_first_comp_data(metric, @client)
         end
-        puts " done (#{(Time.now - t).round(1)}s)"
+        row_count = grouped.values.sum(&:size)
+        puts " #{row_count} rows (#{(Time.now - t).round(1)}s)"
 
+        t2 = Time.now
+        $stdout.write "  [newcomer]   Building ranking..."
         ranking = build_ranking(grouped, metric)
+        puts " done (#{(Time.now - t2).round(1)}s)"
+
+        t3 = Time.now
+        $stdout.write "  [newcomer]   Building history..."
         history = build_history(grouped, metric)
+        puts " done (#{(Time.now - t3).round(1)}s)"
 
         md += tab_buttons(
           "Current Ranking", "当前排名", "#{s_prefix}-ranking",
@@ -101,6 +107,7 @@ class WrNewcomer < GroupedStatistic
     md += tab_script
     md
   ensure
+    puts "  [newcomer] Closing connection..."
     @client&.close
   end
 
@@ -168,6 +175,9 @@ class WrNewcomer < GroupedStatistic
   # 630 万行 results 全表 GROUP BY 只执行一次，后续查询 JOIN 临时表走索引
   def create_first_comp_temp_table(client)
     client.query("DROP TEMPORARY TABLE IF EXISTS tmp_first_comp")
+
+    t1 = Time.now
+    $stdout.write "  [newcomer] Creating temp table (GROUP BY results)..."
     client.query(<<-SQL)
       CREATE TEMPORARY TABLE tmp_first_comp AS
       SELECT r.person_id, r.event_id, MIN(c.start_date) AS earliest_date
@@ -175,8 +185,15 @@ class WrNewcomer < GroupedStatistic
       JOIN competitions c ON c.id = r.competition_id
       GROUP BY r.person_id, r.event_id
     SQL
-    # NOTE: 为临时表加索引，加速后续 4 次 JOIN
+    puts " done (#{(Time.now - t1).round(1)}s)"
+
+    t2 = Time.now
+    $stdout.write "  [newcomer]   Adding index..."
     client.query("ALTER TABLE tmp_first_comp ADD INDEX idx_pid_eid_date (person_id, event_id, earliest_date)")
+    puts " done (#{(Time.now - t2).round(1)}s)"
+
+    row_count = client.query("SELECT COUNT(*) AS cnt FROM tmp_first_comp").first["cnt"]
+    puts "  [newcomer]   Table rows: #{row_count}"
   end
 
   # ========== 数据查询 ==========
