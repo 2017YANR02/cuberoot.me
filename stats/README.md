@@ -3,11 +3,11 @@
 <h2 data-i18n-en="World Record Analysis" data-i18n-zh="世界纪录分析">World Record Analysis</h2>
 
 <ul>
+  <li><a href="wr_metric" data-i18n-en="Metric" data-i18n-zh="指标">Metric</a></li>
   <li><a href="wr_aoxr" data-i18n-en="AoXR" data-i18n-zh="跨轮次均值">AoXR</a></li>
   <li><a href="wr_newcomer" data-i18n-en="Best first competition results (Newcomer World Records)" data-i18n-zh="最佳首次参赛成绩（新人世界纪录）">Best first competition results (Newcomer World Records)</a></li>
   <li><a href="wr_current" data-i18n-en="Current world records" data-i18n-zh="当前世界纪录">Current world records</a></li>
   <li><a href="wr_dominance" data-i18n-en="Dominance (top N on leaderboard by one person)" data-i18n-zh="排行榜霸榜（单人霸占前 N 席）">Dominance (top N on leaderboard by one person)</a></li>
-  <li><a href="wr_metric" data-i18n-en="Metric" data-i18n-zh="衍生指标">Metric</a></li>
   <li><a href="wr_first_comp_wr" data-i18n-en="World records set in a person's first competition" data-i18n-zh="首次参赛即创世界纪录">World records set in a person's first competition</a></li>
 </ul>
 

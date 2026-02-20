@@ -34,7 +34,13 @@ output += "<script src=\"../i18n/i18n.js\" defer></script>\n\n"
 unless wr_stats.empty?
   output += "<h2 data-i18n-en=\"World Record Analysis\" data-i18n-zh=\"世界纪录分析\">World Record Analysis</h2>\n\n"
   output += "<ul>\n"
-  wr_stats.sort_by(&sort_key).each do |id, stat|
+# NOTE: WR 组内排序——wr_metric 和 wr_aoxr 置顶，其余按标题字母排
+  wr_priority = %w[wr_metric wr_aoxr]
+  wr_sorted = wr_stats.sort_by { |id, stat|
+    pri = wr_priority.index(id)
+    pri ? [0, pri] : [1, stat.title.gsub(/\d+/) { |n| n.rjust(10, "0") }]
+  }
+  wr_sorted.each do |id, stat|
     zh = stat.title_zh || stat.title
     output += "  <li><a href=\"#{id}\" data-i18n-en=\"#{stat.title}\" data-i18n-zh=\"#{zh}\">#{stat.title}</a></li>\n"
   end
