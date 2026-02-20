@@ -84,17 +84,7 @@ class RoundMetric < GroupedStatistic
       results = wr_records.each_with_index.map do |r, i|
         metric_str = format_metric(r["_metric"], event_id)
 
-        if i > 0
-          prev = wr_records[i - 1]
-          # NOTE: .to_f 防止 compute_metric 返回整数时的整数除法问题
-          gain = ((prev["_metric"] - r["_metric"]).to_f / prev["_metric"] * 100).round(1)
-          gain_str = "#{gain}%"
-          duration = (r["start_date"] - prev["start_date"]).to_i
-          days_str = duration.to_s
-        else
-          gain_str = ""
-          days_str = ""
-        end
+        gain_str, days_str = wr_progress(wr_records, i) { |r| r["_metric"] }
 
         details = (1..5).map { |n| SolveTime.new(event_id, :single, r["value#{n}"]).clock_format }
           .reject(&:empty?)
