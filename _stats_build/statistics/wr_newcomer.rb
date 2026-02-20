@@ -42,7 +42,10 @@ class WrNewcomer < GroupedStatistic
   def markdown
     # NOTE: 使用单一连接，确保临时表在所有查询中可见
     @client = Database.client
+    t0 = Time.now
+    $stdout.write "  [newcomer] Creating temp table..."
     create_first_comp_temp_table(@client)
+    puts " done (#{(Time.now - t0).round(1)}s)"
 
     md = top
 
@@ -67,11 +70,15 @@ class WrNewcomer < GroupedStatistic
         md += "<div class=\"source-panel#{s_active ? ' active' : ''}\" id=\"source-#{s_prefix}\">\n"
 
         # NOTE: 按数据源类型查询
+        label = "#{metric[:id]}/#{source[:id]}"
+        t = Time.now
+        $stdout.write "  [newcomer] Querying #{label}..."
         grouped = if source[:id] == "1st-solve"
           fetch_first_round_data(metric, @client)
         else
           fetch_first_comp_data(metric, @client)
         end
+        puts " done (#{(Time.now - t).round(1)}s)"
 
         ranking = build_ranking(grouped, metric)
         history = build_history(grouped, metric)
