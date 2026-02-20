@@ -4,28 +4,7 @@
 
 A collection of Rubik's Cube solvers, trainers, and statistics tools — all running as static pages on GitHub Pages.
 
-## Site Architecture
 
-```
-ruiminyan.github.io/
-├── index.html                 # Landing page (Solver / WCA Stats)
-├── solver/                    # 3x3x3 Solver (main solver page)
-├── 2x2x2.html                # 2x2x2 Solver
-├── documentation.html         # Documentation & examples
-├── cross_trainer.html         # Cross trainer
-├── xcross_trainer.html        # XCross trainer
-├── pairing_trainer.html       # Free Pair trainer
-├── pseudo_xcross_trainer.html # Pseudo XCross trainer
-├── pseudo_pairing_trainer.html# Pseudo Free Pair trainer
-├── eocross_trainer.html       # EOCross trainer
-├── algTrainer.html            # Algorithm trainer
-├── jsonEditor.html            # JSON editor utility
-├── src/i18n/                  # Multi-language support (EN/中文)
-├── stats/                     # WCA Statistics (auto-generated)
-├── _stats_build/              # Statistics build scripts (not deployed)
-└── .github/workflows/
-    └── stats.yml              # CI: weekly stats auto-update
-```
 
 ## Features
 
@@ -69,54 +48,9 @@ Originally forked from [or18/RubiksSolverDemo](https://github.com/or18/RubiksSol
 
 ### WCA Statistics Pipeline
 
-The statistics pages are auto-generated via GitHub Actions, based on [jonatanklosko/wca_statistics](https://github.com/jonatanklosko/wca_statistics):
+The statistics pages are auto-generated from the [WCA database](https://www.worldcubeassociation.org/) via GitHub Actions + Ruby + MySQL, updated weekly.
 
-```
-WCA Database (SQL dump)
-  ↓  wget (download ~2GB zip)
-  ↓  unzip + import into MySQL
-  ↓  14 tables imported
-Ruby Scripts (60+ statistics)
-  ↓  SQL queries → Markdown files
-  ↓  output to stats/ directory
-GitHub Pages (Jekyll)
-  ↓  Markdown → HTML rendering
-  ↓  auto-deploy
-Live at ruiminyan.github.io/stats/
-```
-
-**Schedule**: Updated weekly (Monday 3:00 AM Beijing Time).
-
-**CI Strategy**:
-- `push` → syntax check only (~30 seconds)
-- `schedule` / `workflow_dispatch` → full database download + compute (~47 minutes)
-
-### Adding a New Statistic
-
-1. Create a new `.rb` file in `_stats_build/statistics/`
-2. Inherit from `Statistic` (or `GroupedStatistic`) and implement the `query` method
-3. Push to `main` — syntax is checked automatically
-4. The next scheduled run (or manual trigger) will generate the new page
-
-Example:
-
-```ruby
-require_relative "../core/statistic"
-
-class MyNewStatistic < Statistic
-  def initialize
-    @title = "My New Statistic"
-    @title_zh = "我的新统计"
-    @table_header = { "Rank" => :right, "Name" => :left, "Value" => :right }
-  end
-
-  def query
-    <<-SQL
-      SELECT ... FROM results ...
-    SQL
-  end
-end
-```
+For deployment details, CI strategy, local development setup, and how to add new statistics, see [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## Multi-language Support (i18n)
 

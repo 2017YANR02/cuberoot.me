@@ -1,82 +1,24 @@
-require_relative "../core/grouped_statistic"
-require_relative "../core/events"
-require_relative "../core/solve_time"
-require_relative "../core/tab_ui"
+require_relative "abstract/round_metric"
 
-class WrSingleHistory < GroupedStatistic
-  include TabUi
-
+# NOTE: WR Single 历史——RoundMetric 的退化情况
+# compute_metric 直接返回 best 字段，无需从 value1-5 计算
+class WrSingleHistory < RoundMetric
+  # NOTE: metric = best 字段本身，用高效两步 SQL 排名（不参与 compute_all_rankings）
+  def self.batch_ranking? = false
   def initialize
     @title = "Single"
     @title_zh = "单次"
     @note = "Shows how world record singles have progressed over time for each event."
     @note_zh = "展示各项目世界纪录单次成绩随时间的变化。"
-    @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right, "Person" => :left, "Competition" => :left, "Date" => :left, "Details" => :left }
+    @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right,
+                      "Person" => :left, "Competition" => :left, "Date" => :left, "Details" => :left }
   end
 
-  def query
-    <<-SQL
-      SELECT
-        result.event_id,
-        best single,
-        value1, value2, value3, value4, value5,
-        CONCAT('[', person.name, '](https://www.worldcubeassociation.org/persons/', person.wca_id, ')') person_link,
-        CONCAT('[', competition.cell_name, '](https://www.worldcubeassociation.org/competitions/', competition.id, ')') competition_link,
-        competition.start_date
-      FROM results result
-      JOIN persons person ON person.wca_id = person_id AND person.sub_id = 1
-      JOIN competitions competition ON competition.id = competition_id
-      WHERE regional_single_record = 'WR'
-      ORDER BY competition.start_date
-    SQL
-  end
-
-  def transform(query_results)
-    @ranking_by_event = {}
-
-    Events::OFFICIAL.map do |event_id, event_name|
-      records = query_results
-        .select { |r| r["event_id"] == event_id && r["single"] > 0 }
-        .sort_by { |r| r["start_date"] }
-
-      # NOTE: 同一项目可能有多条 WR 记录值相同（平 WR），
-      # 这里只保留每个成绩值的第一次出现（真正打破纪录的那次）
-      seen_values = {}
-      unique_records = records.select do |r|
-        val = r["single"]
-        if seen_values[val]
-          false
-        else
-          seen_values[val] = true
-          true
-        end
-      end
-
-      # 当前排名：每个 WR single 值只出现一次，取最后 N 个（最近的纪录 = 当前纪录持有者在最上面）
-      # NOTE: 对 WR single/average 历史来说，"当前排名" = 按 single 全量排名 top 10
-      @ranking_by_event[event_name] = build_ranking_from_results(event_id, field: "best", type: :single, cache_name: "wr_single")
-
-      # WR 历史表格数据
-      results = unique_records.each_with_index.map do |r, i|
-        single = SolveTime.new(event_id, :single, r["single"])
-        [single.clock_format] + wr_history_row(unique_records, i, event_id) { |r| r["single"] }
-      end
-
-      [event_name, results.reverse]
-    end
-  end
-
-  # NOTE: 用 top + tabbed_grouped_markdown + 公共 RANKING_HEADER 渲染
-  def markdown
-    # NOTE: 必须先调 data 触发 transform，才能填充 @ranking_by_event
-    history_data = data
-    ranking_data = @ranking_by_event.transform_values { |rows| ranking_to_arrays(rows) }
-    top + tabbed_grouped_markdown(
-      ranking_data: ranking_data,
-      ranking_header: RANKING_HEADER,
-      history_data: history_data,
-      history_header: @table_header
-    )
-  end
-
+  # NOTE: Single 的 metric 就是 best 字段本身
+  def compute_metric(_values, r) = r["best"]
+  def format_metric(v, eid) = SolveTime.new(eid, :single, v.round).clock_format
+  def target_events = Events::OFFICIAL
+  def wr_record_column = "regional_single_record"
+  def value_column = "best"
+  def value_type = :single
 end
