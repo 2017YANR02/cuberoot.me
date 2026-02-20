@@ -1,4 +1,4 @@
-<h2 data-i18n-en="Longest time to achieve sub 10 3x3x3 average" data-i18n-zh="达到 sub-10 三阶平均所用最长时间">Longest time to achieve sub 10 3x3x3 average</h2>
+<h2 data-i18n-en="Longest time to achieve sub 10 3x3x3 average" data-i18n-zh="Longest time to achieve sub 10 3x3x3 average">Longest time to achieve sub 10 3x3x3 average</h2>
 
 <p><em data-i18n-en="Updated on 19 February 2026" data-i18n-zh="更新于 2026 年 2 月 19 日">Updated on 19 February 2026</em></p>
 
@@ -90,9 +90,9 @@
 | [Steven Cheung](https://www.worldcubeassociation.org/persons/2013CHEU01) | 11.04 |
 | [Feilong Tang (唐飞龙)](https://www.worldcubeassociation.org/persons/2013TANG07) | 11.03 |
 | [Moritz Karl](https://www.worldcubeassociation.org/persons/2008KARL02) | 11.02 |
+| [Israel Fraga da Silva](https://www.worldcubeassociation.org/persons/2012SILV22) | 11.00 |
 | [Jack O'Mahony](https://www.worldcubeassociation.org/persons/2011OMAH01) | 11.00 |
 | [Chisanupong Chulasereekul (ชิษณุพงศ์ จุฬาเสรีกุล)](https://www.worldcubeassociation.org/persons/2014CHUL02) | 11.00 |
-| [Israel Fraga da Silva](https://www.worldcubeassociation.org/persons/2012SILV22) | 11.00 |
 | [Markus Wolf](https://www.worldcubeassociation.org/persons/2015WOLF01) | 11.00 |
 | [Santiago A. Ospina Botero](https://www.worldcubeassociation.org/persons/2013BOTE01) | 10.94 |
 | [Jakka Chang](https://www.worldcubeassociation.org/persons/2014CHAN17) | 10.94 |

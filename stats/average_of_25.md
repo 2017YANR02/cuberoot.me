@@ -1,6 +1,6 @@
-<h2 data-i18n-en="Average of 25" data-i18n-zh="25 次平均">Average of 25</h2>
+<h2 data-i18n-en="Average of 25" data-i18n-zh="Average of 25">Average of 25</h2>
 
-<p><em data-i18n-en="25 consecutive official attempts are considered. Only people from top 200 single are taken into account." data-i18n-zh="取连续 25 次官方成绩计算。仅考虑单次前 200 名的选手。">25 consecutive official attempts are considered. Only people from top 200 single are taken into account.</em></p>
+<p><em data-i18n-en="25 consecutive official attempts are considered. Only people from top 200 single are taken into account." data-i18n-zh="25 consecutive official attempts are considered. Only people from top 200 single are taken into account.">25 consecutive official attempts are considered. Only people from top 200 single are taken into account.</em></p>
 <p><em data-i18n-en="Updated on 19 February 2026" data-i18n-zh="更新于 2026 年 2 月 19 日">Updated on 19 February 2026</em></p>
 
 
@@ -94,7 +94,7 @@
 | 1:55.71 | [Omar Ellabban](https://www.worldcubeassociation.org/persons/2018ELLA01) | 1:54.76, 2:09.81, 1:55.67, 1:50.81, 1:49.48, 1:43.08, 2:11.97, 2:06.12, 2:00.24, 2:06.86, 1:52.24, 1:59.47, 1:55.52, 1:59.04, 2:06.61, 1:57.29, 2:07.29, 1:55.93, 1:58.03, 1:51.89, 1:46.34, 1:37.93, 1:47.11, 1:46.14, 1:37.34 |
 | 1:56.30 | [Henry Lichner](https://www.worldcubeassociation.org/persons/2018LICH05) | 1:57.81, 1:58.88, 1:44.33, 1:58.29, 2:01.16, 1:50.59, 1:55.89, 2:02.91, 2:00.30, 1:46.66, 1:55.52, 2:03.27, 1:54.20, 2:01.02, 1:56.14, 1:54.65, 2:13.48, 2:01.05, 2:04.32, 1:53.35, 1:47.78, 1:47.52, 2:00.76, 1:46.79, 1:54.47 |
 
-<h3 data-i18n-en="3x3x3 Blindfolded" data-i18n-zh="三阶盲拧">3x3x3 Blindfolded</h3>
+<h3 data-i18n-en="3x3x3 Blindfolded" data-i18n-zh="三盲">3x3x3 Blindfolded</h3>
 
 | Ao25 | Person | Times |
 | ---: | :--- | :--- |
@@ -109,7 +109,7 @@
 | 25.11 | [Thomas Strasser](https://www.worldcubeassociation.org/persons/2022STRA10) | 31.49, 24.23, 25.96, 21.03, 31.03, 19.02, 24.93, 26.19, 21.49, 24.50, 21.81, 26.81, 24.70, 25.34, 24.20, 23.71, 26.49, 43.55, 24.87, 26.21, 25.59, DNF, 22.82, 19.99, 23.89 |
 | 25.53 | [Ezra Hirschi](https://www.worldcubeassociation.org/persons/2019HIRS01) | 29.82, 28.64, 23.07, 21.30, DNF, 27.87, 25.18, 22.48, 22.99, 25.60, 23.05, 29.42, 22.83, 27.82, 25.54, 25.08, 30.25, 26.47, 28.58, 20.45, DNF, 21.22, 23.27, 23.41, 23.40 |
 
-<h3 data-i18n-en="3x3x3 Fewest Moves" data-i18n-zh="三阶最少步">3x3x3 Fewest Moves</h3>
+<h3 data-i18n-en="3x3x3 Fewest Moves" data-i18n-zh="最少步">3x3x3 Fewest Moves</h3>
 
 | Ao25 | Person | Times |
 | ---: | :--- | :--- |
@@ -139,7 +139,7 @@
 | 9.10 | [Radosław Marcinek](https://www.worldcubeassociation.org/persons/2022MARC05) | 10.38, 11.86, DNF, 8.81, 9.37, 8.06, 8.82, 8.72, 6.17, 11.90, 10.20, 7.58, 8.55, 10.49, 8.97, 8.35, 9.04, 8.40, 8.30, 9.33, 8.34, 9.59, 8.16, 8.62, 8.70 |
 | 9.12 | [Ruihang Xu (许瑞航)](https://www.worldcubeassociation.org/persons/2017XURU04) | 8.73, 10.91, 9.29, 7.49, 10.12, 8.98, 9.80, 9.38, 7.86, 10.13, 9.17, 9.27, 7.67, 9.33, 9.35, 8.90, 9.14, 6.78, 9.27, 8.81, 8.16, 10.07, 9.22, 14.68, 8.79 |
 
-<h3 data-i18n-en="Megaminx" data-i18n-zh="五魔方">Megaminx</h3>
+<h3 data-i18n-en="Megaminx" data-i18n-zh="五魔">Megaminx</h3>
 
 | Ao25 | Person | Times |
 | ---: | :--- | :--- |
@@ -184,7 +184,7 @@
 | 3.23 | [Kyle Jones](https://www.worldcubeassociation.org/persons/2022JONE11) | 3.76, 2.96, 3.59, 3.85, 2.92, 2.72, DNF, 2.68, 2.33, 2.96, 3.19, DNF, 5.86, 4.02, 2.34, 3.21, 2.88, 4.14, 3.50, 2.11, 2.34, 2.32, 2.20, 3.04, 3.27 |
 | 3.25 | [Antoni Stojek](https://www.worldcubeassociation.org/persons/2022STOJ03) | 2.73, 2.54, 8.88, 3.33, 3.46, 4.14, 3.36, DNF, 3.21, 3.32, 2.95, 2.59, 2.78, 3.12, 5.68, 2.56, 2.56, 2.65, 3.96, 3.51, 2.54, 2.61, 2.84, 4.20, 2.63 |
 
-<h3 data-i18n-en="Skewb" data-i18n-zh="斜转魔方">Skewb</h3>
+<h3 data-i18n-en="Skewb" data-i18n-zh="斜转">Skewb</h3>
 
 | Ao25 | Person | Times |
 | ---: | :--- | :--- |
@@ -214,7 +214,7 @@
 | 6.05 | [Michał Krasowski](https://www.worldcubeassociation.org/persons/2013KRAS02) | 5.31, 4.39, 6.74, 6.27, 8.71, 5.93, 6.93, 6.05, 6.11, 5.28, 5.03, 6.26, 5.94, 4.53, 6.77, 6.26, 6.14, 6.01, 6.23, 5.98, 5.29, 6.25, 6.74, 6.36, 6.03 |
 | 6.06 | [Rasmus Stub Detlefsen](https://www.worldcubeassociation.org/persons/2014DETL01) | 4.43, 5.41, 4.39, 7.49, 7.60, 5.81, 5.73, 5.35, 4.68, 9.99, 6.59, 4.81, 7.23, 5.51, 8.09, 7.35, 6.43, 5.42, 6.34, 4.79, 5.42, 5.54, 5.07, 9.19, 6.63 |
 
-<h3 data-i18n-en="4x4x4 Blindfolded" data-i18n-zh="四阶盲拧">4x4x4 Blindfolded</h3>
+<h3 data-i18n-en="4x4x4 Blindfolded" data-i18n-zh="四盲">4x4x4 Blindfolded</h3>
 
 | Ao25 | Person | Times |
 | ---: | :--- | :--- |
