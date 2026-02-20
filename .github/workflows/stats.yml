@@ -8,6 +8,11 @@ on:
     # 每周一早上 3:00（北京时间）= UTC 周日 19:00
     - cron: '0 19 * * 0'
   workflow_dispatch:
+    inputs:
+      stats_filter:
+        description: 'Comma-separated stat IDs to compute (empty = all). Example: wr_metric,wr_aoxr'
+        required: false
+        default: ''
 
 jobs:
   # 推送代码时只做语法检查（~30秒），快速发现错误
@@ -64,6 +69,8 @@ jobs:
 
       - name: Compute all statistics
         working-directory: _stats_build
+        env:
+          STATS_FILTER: ${{ github.event.inputs.stats_filter || '' }}
         run: ruby bin/compute_all.rb
 
       - name: Compute index
@@ -84,7 +91,15 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
-          git add stats/
+          # NOTE: 清理已被合并到聚合页面的旧 .md 文件
+          for f in wr_single_history wr_average_history \
+                   wr_bao5 wr_wao5 wr_mo5 wr_bpa wr_wpa \
+                   wr_median wr_best_counting wr_worst_counting wr_worst \
+                   wr_variance wr_best_average_ratio \
+                   wr_ao1r wr_ao2r wr_ao3r wr_ao4r; do
+            rm -f "stats/${f}.md"
+          done
+          git add -A stats/
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else
