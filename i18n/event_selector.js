@@ -140,8 +140,12 @@
   /**
    * NOTE: 处理 TabUi 页面（h3 在 .stat-panel 容器内）
    * 两个面板共享一个选择器，切换时联动
+   * @param {HTMLElement} scope - 限定搜索范围（.metric-panel 或 document）
    */
-  function handleTabbedPage(panels) {
+  function handleTabbedPage(scope) {
+    const panels = Array.from(scope.querySelectorAll('.stat-panel'));
+    if (panels.length === 0) return;
+
     // 收集所有面板的 sections
     const panelSections = panels.map(p => collectSections(p));
 
@@ -159,8 +163,8 @@
       panelSections.forEach(sections => showEvent(sections, id));
     });
 
-    // NOTE: 插入到 .stat-tabs 按钮栏之后
-    const tabBar = document.querySelector('.stat-tabs');
+    // NOTE: 插入到 scope 内的 .stat-tabs 按钮栏之后
+    const tabBar = scope.querySelector('.stat-tabs');
     if (tabBar) {
       tabBar.parentNode.insertBefore(selector, tabBar.nextSibling);
     } else {
@@ -179,11 +183,18 @@
     // 检测是否在 /stats/ 路径下
     if (!window.location.pathname.includes('/stats/')) return;
 
-    const panels = document.querySelectorAll('.stat-panel');
+    // NOTE: 优先检测 metric-panel 结构（Metric / AoXR 聚合页面）
+    // 每个 metric-panel 内有独立的 .stat-panel，需各自创建选择器
+    const metricPanels = document.querySelectorAll('.metric-panel');
+    if (metricPanels.length > 0) {
+      metricPanels.forEach(mp => handleTabbedPage(mp));
+      return;
+    }
 
+    const panels = document.querySelectorAll('.stat-panel');
     if (panels.length > 0) {
-      // TabUi 页面
-      handleTabbedPage(Array.from(panels));
+      // 普通 TabUi 页面
+      handleTabbedPage(document);
     } else {
       // GroupedStatistic 页面 — 在 .container 或 body 下查找 h3
       const container = document.querySelector('.container') || document.body;
