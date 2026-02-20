@@ -40,6 +40,10 @@ class WrNewcomer < GroupedStatistic
   end
 
   def markdown
+    # NOTE: 使用单一连接，确保临时表在所有查询中可见
+    @client = Database.client
+    create_first_comp_temp_table(@client)
+
     md = top
 
     # --- 指标选择器（第一行：Single / Average）---
@@ -64,9 +68,9 @@ class WrNewcomer < GroupedStatistic
 
         # NOTE: 按数据源类型查询
         grouped = if source[:id] == "1st-solve"
-          fetch_first_round_data(metric)
+          fetch_first_round_data(metric, @client)
         else
-          fetch_first_comp_data(metric)
+          fetch_first_comp_data(metric, @client)
         end
 
         ranking = build_ranking(grouped, metric)
@@ -89,6 +93,8 @@ class WrNewcomer < GroupedStatistic
     md += source_selector_script
     md += tab_script
     md
+  ensure
+    @client&.close
   end
 
   private
@@ -149,11 +155,28 @@ class WrNewcomer < GroupedStatistic
     HTML
   end
 
+  # ========== 临时表 ==========
+
+  # NOTE: 创建临时表缓存每人每项目的首场比赛日期
+  # 630 万行 results 全表 GROUP BY 只执行一次，后续查询 JOIN 临时表走索引
+  def create_first_comp_temp_table(client)
+    client.query("DROP TEMPORARY TABLE IF EXISTS tmp_first_comp")
+    client.query(<<-SQL)
+      CREATE TEMPORARY TABLE tmp_first_comp AS
+      SELECT r.person_id, r.event_id, MIN(c.start_date) AS earliest_date
+      FROM results r
+      JOIN competitions c ON c.id = r.competition_id
+      GROUP BY r.person_id, r.event_id
+    SQL
+    # NOTE: 为临时表加索引，加速后续 4 次 JOIN
+    client.query("ALTER TABLE tmp_first_comp ADD INDEX idx_pid_eid_date (person_id, event_id, earliest_date)")
+  end
+
   # ========== 数据查询 ==========
 
   # NOTE: 数据源 1 —— 首次还原（首场比赛第一轮 value1 / average）
   # 优先取第一轮（round_type_id IN ('1','0','d')），无则回退到决赛轮
-  def fetch_first_round_data(metric)
+  def fetch_first_round_data(metric, client)
     col = metric[:type] == :single ? "value1" : "average"
     filter = metric[:type] == :single ? "r.value1 > 0" : "r.average > 0"
     sql = <<-SQL
@@ -171,12 +194,7 @@ class WrNewcomer < GroupedStatistic
                ) AS rn
         FROM results r
         JOIN competitions c1 ON c1.id = r.competition_id
-        JOIN (
-          SELECT r2.person_id, r2.event_id, MIN(c2.start_date) AS earliest_date
-          FROM results r2
-          JOIN competitions c2 ON c2.id = r2.competition_id
-          GROUP BY r2.person_id, r2.event_id
-        ) fc ON fc.person_id = r.person_id
+        JOIN tmp_first_comp fc ON fc.person_id = r.person_id
              AND fc.event_id = r.event_id
              AND c1.start_date = fc.earliest_date
         WHERE #{filter}
@@ -186,11 +204,11 @@ class WrNewcomer < GroupedStatistic
       WHERE fr.rn = 1
       ORDER BY fr.event_id, fr.first_result
     SQL
-    Database.client.query(sql).to_a.group_by { |r| r["event_id"] }
+    client.query(sql).to_a.group_by { |r| r["event_id"] }
   end
 
   # NOTE: 数据源 2 —— 首场比赛（首场比赛所有轮次的 MIN(best) / MIN(average)）
-  def fetch_first_comp_data(metric)
+  def fetch_first_comp_data(metric, client)
     col = metric[:type] == :single ? "best" : "average"
     sql = <<-SQL
       SELECT
@@ -203,12 +221,7 @@ class WrNewcomer < GroupedStatistic
       FROM results r
       JOIN persons p ON p.wca_id = r.person_id AND p.sub_id = 1
       JOIN competitions c ON c.id = r.competition_id
-      JOIN (
-        SELECT r2.person_id, r2.event_id, MIN(c2.start_date) AS earliest_date
-        FROM results r2
-        JOIN competitions c2 ON c2.id = r2.competition_id
-        GROUP BY r2.person_id, r2.event_id
-      ) fc ON fc.person_id = r.person_id
+      JOIN tmp_first_comp fc ON fc.person_id = r.person_id
            AND fc.event_id = r.event_id
            AND c.start_date = fc.earliest_date
       WHERE r.#{col} > 0
@@ -216,7 +229,7 @@ class WrNewcomer < GroupedStatistic
                c.cell_name, c.id, c.start_date
       ORDER BY r.event_id, first_result
     SQL
-    Database.client.query(sql).to_a.group_by { |r| r["event_id"] }
+    client.query(sql).to_a.group_by { |r| r["event_id"] }
   end
 
   # ========== 数据变换 ==========
