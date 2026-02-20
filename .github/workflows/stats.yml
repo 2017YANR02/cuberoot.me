@@ -33,6 +33,9 @@ jobs:
   build:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    # NOTE: 确保 Ruby File.write 输出中文不乱码（ubuntu 默认 locale 可能非 UTF-8）
+    env:
+      LANG: en_US.UTF-8
     permissions:
       contents: write
     steps:
