@@ -130,6 +130,24 @@
             color: #fff;
         }
     </style>
+    <!-- NOTE: 防 FOUC（Flash of Untranslated Content）——中文用户先隐藏页面，等翻译完后再显示 -->
+    <script>
+        if (localStorage.getItem('i18n_locale') === 'zh' ||
+            (!localStorage.getItem('i18n_locale') && navigator.language && navigator.language.startsWith('zh'))) {
+            document.documentElement.classList.add('i18n-loading');
+            // 安全回退：如果 i18n.js 加载失败，200ms 后自动显示
+            setTimeout(function () { document.documentElement.classList.remove('i18n-loading'); }, 200);
+        }
+    </script>
+    <style>
+        .i18n-loading body {
+            opacity: 0;
+        }
+
+        .i18n-loading body.i18n-ready {
+            opacity: 1;
+        }
+    </style>
 </head>
 
 <body>
