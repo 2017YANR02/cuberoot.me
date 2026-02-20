@@ -258,7 +258,7 @@ const I18n = {
         "World records count by person": "个人世界纪录总数",
         "Worst result providing a podium": "登上领奖台的最差成绩",
         "Yearly rankings": "年度排名",
-        "Metric": "衍生指标", "AoXR": "跨轮次均值",
+        "Metric": "指标", "AoXR": "跨轮次均值",
     },
     _statsTitleEn: {},
 
@@ -308,7 +308,7 @@ const I18n = {
         "Note: You may think of it as \"how well the given person has been doing recently\".": "注：可理解为「该选手近期表现如何」。",
         "Note: You may think of it as \"how well the given person has been doing recently\". This computes exponentially moving average (EMA) of competitor averages. EMA is a weighted average, with weights decreasing exponentially, meaning that more recent values contribute more to the computed average. Here we use \u03b1 = 0.8, meaning that the average emphasizes last ~5 results (weight of results older than 5 is around 1/3 in total and decreases quickly for particular results). People with less than 5 averages are ignored (as there's not much data to base on).": "注：可理解为「该选手近期表现如何」。此处使用指数移动平均（EMA）计算，权重随时间指数递减，近期成绩权重更高。参数 \u03b1 = 0.8，即主要反映最近约 5 次成绩。少于 5 次平均的选手不纳入统计。",
         "Note: By definition these rankings include only results from the current year.": "注：按定义，此排名仅包含当年的成绩。",
-        "World record history and current rankings for various derived metrics computed from a round's 5 solves.": "从一轮 5 次成绩中计算的各类衍生指标的世界纪录历史与当前排名。",
+        "World record history and current rankings for various derived metrics computed from a round's 5 solves.": "从一轮 5 次成绩中计算的各类指标的世界纪录历史与当前排名。",
         "World record history and current rankings for Average of X Rounds (AoXR) — the mean of averages across multiple rounds in one competition.": "跨轮次均值（AoXR）的世界纪录历史与当前排名——一场比赛中多轮 average 的均值。",
     },
     _statsDescEn: {},
