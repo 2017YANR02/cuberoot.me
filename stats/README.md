@@ -3,9 +3,9 @@
 <h2 data-i18n-en="World Record Analysis" data-i18n-zh="世界纪录分析">World Record Analysis</h2>
 
 <ul>
+  <li><a href="wr_current" data-i18n-en="Current world records" data-i18n-zh="当前世界纪录">Current world records</a></li>
   <li><a href="wr_metric" data-i18n-en="Metric" data-i18n-zh="指标">Metric</a></li>
   <li><a href="wr_aoxr" data-i18n-en="AoXR" data-i18n-zh="AoXR">AoXR</a></li>
-  <li><a href="wr_current" data-i18n-en="Current world records" data-i18n-zh="当前世界纪录">Current world records</a></li>
   <li><a href="wr_dominance" data-i18n-en="Dominance (top N on leaderboard by one person)" data-i18n-zh="屠榜">Dominance (top N on leaderboard by one person)</a></li>
   <li><a href="wr_newcomer" data-i18n-en="Newcomer" data-i18n-zh="新人">Newcomer</a></li>
 </ul>

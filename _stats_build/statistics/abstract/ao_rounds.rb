@@ -81,7 +81,7 @@ class AoRounds < GroupedStatistic
     # NOTE: 必须先调 data 触发查询，才能填充 @ranking_by_event
     history_data = data
     # NOTE: 转换时包含 details 字段
-    ao_keys = [:rank, :person_link, :result_str, :country, :competition_link, :date, :details]
+    ao_keys = [:rank, :person_link, :result_str, :country, :date, :competition_link, :details]
     ranking_data = @ranking_by_event.transform_values { |rows| ranking_to_arrays(rows, keys: ao_keys) }
     top + tabbed_grouped_markdown(
       ranking_data: ranking_data,
