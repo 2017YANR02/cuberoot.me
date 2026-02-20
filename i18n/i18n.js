@@ -696,47 +696,60 @@ const I18n = {
         }
     },
 
-    // NOTE: 自动注入固定在右下角的语言切换按钮
-    // 如果页面中已有 .lang-toggle（如 index.html），则跳过
-    _injectToggle() {
-        if (document.querySelector('[data-i18n-toggle]')) return;
-
-        // 注入样式
+    // NOTE: 注入公共 toggle 样式（.lang-toggle 和 .lang-toggle-fixed 共用）
+    // 主页用 .lang-toggle（嵌在 footer），其他页面注入 .lang-toggle-fixed（fixed 定位）
+    // 用 id 防止重复注入
+    _injectToggleStyles() {
+        if (document.getElementById('i18n-toggle-style')) return;
         const style = document.createElement('style');
+        style.id = 'i18n-toggle-style';
         style.textContent = `
+            /* 公共：主页和注入固定按钮共享 */
+            .lang-toggle, .lang-toggle-fixed {
+                display: inline-flex;
+                border-radius: 4px;
+                overflow: hidden;
+                border: 1px solid #3a3a5c;
+            }
+            .lang-toggle button, .lang-toggle-fixed button {
+                background: transparent;
+                border: none;
+                color: #777;
+                padding: 4px 9px;
+                font-size: 0.78rem;
+                cursor: pointer;
+                transition: background 0.2s, color 0.2s;
+            }
+            .lang-toggle button.active, .lang-toggle-fixed button.active {
+                background: #2a3f6e;
+                color: #e8eeff;
+            }
+            .lang-toggle button:hover:not(.active),
+            .lang-toggle-fixed button:hover:not(.active) {
+                color: #bbb;
+                background: rgba(100, 100, 180, 0.12);
+            }
+            /* fixed 专属 */
             .lang-toggle-fixed {
                 position: fixed;
                 bottom: 16px;
                 right: 16px;
                 z-index: 9999;
-                display: inline-flex;
-                border-radius: 4px;
-                overflow: hidden;
-                border: 1px solid #444;
-                background: rgba(20, 20, 30, 0.85);
+                background: rgba(12, 12, 22, 0.88);
                 backdrop-filter: blur(8px);
                 -webkit-backdrop-filter: blur(8px);
             }
-            .lang-toggle-fixed button {
-                background: transparent;
-                border: none;
-                color: #777;
-                padding: 5px 10px;
-                font-size: 0.8rem;
-                cursor: pointer;
-                transition: background 0.2s, color 0.2s;
-            }
-            .lang-toggle-fixed button.active {
-                background: rgba(100, 100, 180, 0.3);
-                color: #fff;
-            }
-            .lang-toggle-fixed button:hover:not(.active) {
-                color: #aaa;
-            }
         `;
         document.head.appendChild(style);
+    },
 
-        // 注入按钮
+    // NOTE: 自动注入固定在右下角的语言切换按钮
+    // 如果页面中已有 [data-i18n-toggle]（如 index.html），只补样式，不注入 DOM
+    _injectToggle() {
+        this._injectToggleStyles();
+        if (document.querySelector('[data-i18n-toggle]')) return;
+
+        // 注入按钮容器
         const container = document.createElement('div');
         container.className = 'lang-toggle-fixed';
         const btnEn = document.createElement('button');
