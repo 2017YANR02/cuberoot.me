@@ -4,7 +4,7 @@ class WrBestCounting < RoundMetric
   def initialize
     @title = "Best counting solve"
     @note = "Best counting solve: the best single that counts into the Ao5 (excluding the dropped best and worst)."
-    @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right, "Person" => :left, "Competition" => :left, "Date" => :left, "Details" => :left }
+    @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right, "Person" => :left, "Date" => :left, "Competition" => :left, "Details" => :left }
   end
 
   # NOTE: Best Counting = Ao5 中计入平均的3次成绩中的最好一次

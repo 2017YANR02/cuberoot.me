@@ -6,7 +6,7 @@ class WrCurrent < Statistic
   def initialize
     @title = "Current world records"
     @note = "Shows the current world record single and average for each official event."
-    @table_header = { "Event" => :left, "Type" => :left, "Result" => :right, "Person" => :left, "Competition" => :left, "Date" => :left }
+    @table_header = { "Event" => :left, "Type" => :left, "Result" => :right, "Person" => :left, "Date" => :left, "Competition" => :left }
   end
 
   def query

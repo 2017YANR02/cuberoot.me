@@ -4,7 +4,7 @@ class WrBestAverageRatio < RoundMetric
   def initialize
     @title = "Best/average ratio"
     @note = "Best/Average Ratio: ratio of the best single to the average in a round (lower = more dominant best solve)."
-    @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right, "Person" => :left, "Competition" => :left, "Date" => :left, "Details" => :left }
+    @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right, "Person" => :left, "Date" => :left, "Competition" => :left, "Details" => :left }
   end
 
   # NOTE: Best/Average Ratio = best / average

@@ -4,7 +4,7 @@ class WrVariance < RoundMetric
   def initialize
     @title = "Variance"
     @note = "Variance: sample variance of all 5 solves in a round (lower = more consistent)."
-    @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right, "Person" => :left, "Competition" => :left, "Date" => :left, "Details" => :left }
+    @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right, "Person" => :left, "Date" => :left, "Competition" => :left, "Details" => :left }
   end
 
   # NOTE: Variance = 5次成绩的样本方差 (n-1)

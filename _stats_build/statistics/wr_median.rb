@@ -4,7 +4,7 @@ class WrMedian < RoundMetric
   def initialize
     @title = "Median"
     @note = "Median: the middle value of all solves in a round. With DNFs, the median shifts to a higher-ranked valid solve."
-    @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right, "Person" => :left, "Competition" => :left, "Date" => :left, "Details" => :left }
+    @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right, "Person" => :left, "Date" => :left, "Competition" => :left, "Details" => :left }
   end
 
   # NOTE: Median = 5次成绩排序后的中位数（第3位）

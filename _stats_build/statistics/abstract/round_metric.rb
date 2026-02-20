@@ -200,7 +200,7 @@ class RoundMetric < GroupedStatistic
             .each_with_index.map do |v, i|
               metric_str = instance.format_metric(v[:metric], event_id)
               date_str = v[:start_date].respond_to?(:strftime) ? v[:start_date].strftime("%Y-%m-%d") : v[:start_date].to_s
-              [i + 1, v[:person_link], metric_str, v[:country], v[:competition_link], date_str]
+              [i + 1, v[:person_link], metric_str, v[:country], date_str, v[:competition_link]]
             end
 
           @@precomputed_rankings[class_name] << [event_name, top]
@@ -270,7 +270,7 @@ class RoundMetric < GroupedStatistic
         .each_with_index.map do |r, i|
           val_str = format_metric(r[vc], event_id)
           date_str = r["start_date"].respond_to?(:strftime) ? r["start_date"].strftime("%Y-%m-%d") : r["start_date"].to_s
-          [i + 1, r["person_link"], val_str, r["country_id"], r["competition_link"], date_str]
+          [i + 1, r["person_link"], val_str, r["country_id"], date_str, r["competition_link"]]
         end
 
       [event_name, top]

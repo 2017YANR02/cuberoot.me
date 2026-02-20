@@ -6,7 +6,7 @@ module TabUi
   # 子类可用此常量或在此基础上追加列（如 ao_rounds 追加 Details）
   RANKING_HEADER = {
     "#" => :right, "Person" => :left, "Result" => :right,
-    "Country" => :left, "Competition" => :left, "Date" => :left
+    "Country" => :left, "Date" => :left, "Competition" => :left
   }.freeze
 
 

@@ -4,7 +4,7 @@ class WrWorstCounting < RoundMetric
   def initialize
     @title = "Worst counting solve"
     @note = "Worst counting solve: the worst single that counts into the Ao5 (excluding the dropped best and worst)."
-    @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right, "Person" => :left, "Competition" => :left, "Date" => :left, "Details" => :left }
+    @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right, "Person" => :left, "Date" => :left, "Competition" => :left, "Details" => :left }
   end
 
   # NOTE: Worst Counting = Ao5 中计入平均的3次成绩中的最差一次
