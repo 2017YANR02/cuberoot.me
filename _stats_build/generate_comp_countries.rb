@@ -24,7 +24,8 @@ puts "  #{comp_path} (#{comp_map.size} competitions, #{File.size(comp_path)} byt
 puts "Scanning stats markdown for person IDs..."
 person_ids = Set.new
 Dir.glob(File.join(STATS_DIR, "**", "*.md")).each do |md|
-  File.read(md).scan(%r{/persons/([A-Z0-9]+)\)}) { |m| person_ids.add(m[0]) }
+  # NOTE: 同时匹配 Markdown 格式 /persons/ID) 和 HTML 格式 /persons/ID"
+  File.read(md).scan(%r{/persons/([A-Z0-9]+)[)"]}) { |m| person_ids.add(m[0]) }
 end
 puts "  Found #{person_ids.size} unique person IDs"
 
