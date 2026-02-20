@@ -135,12 +135,14 @@
 
   // NOTE: 合并新参数到当前 hash，用 pushState 写入（支持浏览器后退）
   // replace=true 时用 replaceState（不产生新历史记录，用于初始恢复）
+  // 参数顺序固定为 event → metric → tab，与 UI 视觉顺序一致
   function updateHash(newParams, replace) {
     const current = parseHash();
     Object.assign(current, newParams);
-    const hash = '#' + Object.entries(current)
-      .filter(([, v]) => v)
-      .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+    const ORDER = ['event', 'metric', 'tab'];
+    const hash = '#' + ORDER
+      .filter(k => current[k])
+      .map(k => `${k}=${encodeURIComponent(current[k])}`)
       .join('&');
     if (replace) {
       history.replaceState(null, '', hash);
@@ -224,10 +226,10 @@
       updateHash({ event: id });
     });
 
-    // NOTE: 插入到 scope 内的 .stat-tabs 按钮栏之后
+    // NOTE: 插入到 .stat-tabs 之前（项目选择器在最上方）
     const tabBar = scope.querySelector('.stat-tabs');
     if (tabBar) {
-      tabBar.parentNode.insertBefore(selector, tabBar.nextSibling);
+      tabBar.parentNode.insertBefore(selector, tabBar);
     } else {
       // fallback: 插入到第一个面板之前
       panels[0].parentNode.insertBefore(selector, panels[0]);
@@ -331,6 +333,65 @@
   }
 
   /**
+   * NOTE: 处理 Metric 聚合页面（如 wr_metric、wr_aoxr）
+   * 收集所有 metric panel 的 sections，创建一个共享的项目选择器
+   * 插入到 .metric-selector 之前（视觉上在最顶部）
+   */
+  function handleMetricPage(metricPanels) {
+    // 收集所有 metric panel 内所有 stat-panel 的 sections
+    const allPanelSections = [];
+    metricPanels.forEach(mp => {
+      const panels = Array.from(mp.querySelectorAll('.stat-panel'));
+      panels.forEach(p => {
+        const sections = collectSections(p);
+        if (sections.length > 0) allPanelSections.push(sections);
+      });
+    });
+
+    // 合并所有 eventId（取并集，保持顺序）
+    const allIds = [];
+    allPanelSections.forEach(sections => {
+      sections.forEach(s => {
+        if (!allIds.includes(s.eventId)) allIds.push(s.eventId);
+      });
+    });
+
+    if (allIds.length < 2) return;
+
+    const selector = createSelector(allIds, (id) => {
+      allPanelSections.forEach(sections => showEvent(sections, id));
+      updateHash({ event: id });
+    });
+
+    // NOTE: 插入到 .metric-selector 之前（项目选择器在最顶部）
+    const metricSelector = document.querySelector('.metric-selector');
+    if (metricSelector) {
+      metricSelector.parentNode.insertBefore(selector, metricSelector);
+    } else {
+      // fallback: 插入到第一个 metric-panel 之前
+      metricPanels[0].parentNode.insertBefore(selector, metricPanels[0]);
+    }
+
+    // NOTE: 从 hash 恢复项目选择
+    const h = parseHash();
+    const initEvent = (h.event && allIds.includes(h.event)) ? h.event : allIds[0];
+    allPanelSections.forEach(sections => showEvent(sections, initEvent));
+    selectEventInBar(selector, initEvent);
+    if (h.event && allIds.includes(h.event)) {
+      updateHash({ event: initEvent }, true);
+    }
+
+    // 保存引用供 popstate 使用
+    _allSelectors.push({
+      selector, uniqueIds: allIds,
+      show: (id) => {
+        allPanelSections.forEach(sections => showEvent(sections, id));
+        selectEventInBar(selector, id);
+      }
+    });
+  }
+
+  /**
    * NOTE: 入口 — DOMContentLoaded 时执行
    */
   function init() {
@@ -338,10 +399,10 @@
     if (!window.location.pathname.includes('/stats/')) return;
 
     // NOTE: 优先检测 metric-panel 结构（Metric / AoXR 聚合页面）
-    // 每个 metric-panel 内有独立的 .stat-panel，需各自创建选择器
+    // 收集所有 metric panel 的 sections，创建一个共享选择器插到 .metric-selector 之前
     const metricPanels = document.querySelectorAll('.metric-panel');
     if (metricPanels.length > 0) {
-      metricPanels.forEach(mp => handleTabbedPage(mp));
+      handleMetricPage(metricPanels);
       attachHashTracking();
       restoreFromHash();
       setupPopstate();
