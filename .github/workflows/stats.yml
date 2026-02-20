@@ -28,6 +28,16 @@ jobs:
     permissions:
       contents: write
     steps:
+      # NOTE: 删除 runner 上不需要的预装软件，腾出 ~10GB 磁盘
+      # 防止 MySQL 临时文件撑满 /tmp (errno 28: No space left on device)
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          df -h /
+
       - uses: actions/checkout@v4
 
       - name: Activate MySQL
