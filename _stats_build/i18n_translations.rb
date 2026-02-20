@@ -319,7 +319,7 @@ STAT_TRANSLATIONS = {
   },
   "wr_newcomer" => {
     title_zh: "最佳首次参赛成绩（新人世界纪录）",
-    note_zh: "展示选手在首次三阶比赛中取得的最佳单次成绩。"
+    note_zh: "展示选手在首次参加某项目比赛时取得的最佳单次/平均成绩。"
   },
   "wr_single_history" => {
     title_zh: "世界纪录单次历史",
