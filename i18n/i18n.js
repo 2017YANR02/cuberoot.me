@@ -296,8 +296,88 @@ const I18n = {
         "North America": "北美洲", "South America": "南美洲",
         "Oceania": "大洋洲", "World": "世界",
         "Multiple Continents": "多大洲",
+        // NOTE: WCA Countries 表中 id ≠ name 的别名（SQL 可能输出 country_id 而非 country.name）
+        "USA": "美国", "Korea": "韩国", "Hong Kong": "中国香港", "Macau": "中国澳门",
+        "Taiwan": "中国台湾", "Cote d_Ivoire": "科特迪瓦",
+        "Sao Tome and Principe": "圣多美和普林西比",
     },
     _countryEn: {},
+
+    // NOTE: 国家英文名 → 小写 ISO2 代码映射（来源：WCA 官方 countries.real.json + countries.fictive.json）
+    // 用于在 stats 表格中根据国家名显示对应国旗图标
+    _countryIso2: {
+        "Afghanistan": "af", "Albania": "al", "Algeria": "dz", "Andorra": "ad",
+        "Angola": "ao", "Antigua and Barbuda": "ag", "Argentina": "ar", "Armenia": "am",
+        "Australia": "au", "Austria": "at", "Azerbaijan": "az", "Bahamas": "bs",
+        "Bahrain": "bh", "Bangladesh": "bd", "Barbados": "bb", "Belarus": "by",
+        "Belgium": "be", "Belize": "bz", "Benin": "bj", "Bhutan": "bt",
+        "Bolivia": "bo", "Bosnia and Herzegovina": "ba", "Botswana": "bw",
+        "Brazil": "br", "Brunei": "bn", "Bulgaria": "bg", "Burkina Faso": "bf",
+        "Burundi": "bi", "Cabo Verde": "cv", "Cambodia": "kh", "Cameroon": "cm",
+        "Canada": "ca", "Central African Republic": "cf", "Chad": "td",
+        "Chile": "cl", "China": "cn", "Colombia": "co", "Comoros": "km",
+        "Congo": "cg", "Costa Rica": "cr", "C\u00f4te d'Ivoire": "ci",
+        "Croatia": "hr", "Cuba": "cu", "Cyprus": "cy", "Czech Republic": "cz",
+        "Democratic People's Republic of Korea": "kp",
+        "Democratic Republic of the Congo": "cd",
+        "Denmark": "dk", "Djibouti": "dj", "Dominica": "dm",
+        "Dominican Republic": "do", "Ecuador": "ec", "Egypt": "eg",
+        "El Salvador": "sv", "Equatorial Guinea": "gq", "Eritrea": "er",
+        "Estonia": "ee", "Eswatini": "sz", "Ethiopia": "et",
+        "Federated States of Micronesia": "fm", "Fiji": "fj", "Finland": "fi",
+        "France": "fr", "Gabon": "ga", "Gambia": "gm", "Georgia": "ge",
+        "Germany": "de", "Ghana": "gh", "Greece": "gr", "Grenada": "gd",
+        "Guatemala": "gt", "Guinea": "gn", "Guinea Bissau": "gw",
+        "Guyana": "gy", "Haiti": "ht", "Honduras": "hn",
+        "Hong Kong, China": "hk", "Hungary": "hu", "Iceland": "is",
+        "India": "in", "Indonesia": "id", "Iran": "ir", "Iraq": "iq",
+        "Ireland": "ie", "Israel": "il", "Italy": "it", "Jamaica": "jm",
+        "Japan": "jp", "Jordan": "jo", "Kazakhstan": "kz", "Kenya": "ke",
+        "Kiribati": "ki", "Kosovo": "xk", "Kuwait": "kw", "Kyrgyzstan": "kg",
+        "Laos": "la", "Latvia": "lv", "Lebanon": "lb", "Lesotho": "ls",
+        "Liberia": "lr", "Libya": "ly", "Liechtenstein": "li",
+        "Lithuania": "lt", "Luxembourg": "lu", "Macau, China": "mo",
+        "Madagascar": "mg", "Malawi": "mw", "Malaysia": "my", "Maldives": "mv",
+        "Mali": "ml", "Malta": "mt", "Marshall Islands": "mh",
+        "Mauritania": "mr", "Mauritius": "mu", "Mexico": "mx",
+        "Moldova": "md", "Monaco": "mc", "Mongolia": "mn", "Montenegro": "me",
+        "Morocco": "ma", "Mozambique": "mz", "Myanmar": "mm",
+        "Namibia": "na", "Nauru": "nr", "Nepal": "np", "Netherlands": "nl",
+        "New Zealand": "nz", "Nicaragua": "ni", "Niger": "ne", "Nigeria": "ng",
+        "North Macedonia": "mk", "Norway": "no", "Oman": "om",
+        "Pakistan": "pk", "Palau": "pw", "Palestine": "ps", "Panama": "pa",
+        "Papua New Guinea": "pg", "Paraguay": "py", "Peru": "pe",
+        "Philippines": "ph", "Poland": "pl", "Portugal": "pt", "Qatar": "qa",
+        "Republic of Korea": "kr", "Romania": "ro", "Russia": "ru",
+        "Rwanda": "rw", "Saint Kitts and Nevis": "kn", "Saint Lucia": "lc",
+        "Saint Vincent and the Grenadines": "vc", "Samoa": "ws",
+        "San Marino": "sm", "S\u00e3o Tom\u00e9 and Pr\u00edncipe": "st",
+        "Saudi Arabia": "sa", "Senegal": "sn", "Serbia": "rs",
+        "Seychelles": "sc", "Sierra Leone": "sl", "Singapore": "sg",
+        "Slovakia": "sk", "Slovenia": "si", "Solomon Islands": "sb",
+        "Somalia": "so", "South Africa": "za", "South Sudan": "ss",
+        "Spain": "es", "Sri Lanka": "lk", "Sudan": "sd", "Suriname": "sr",
+        "Sweden": "se", "Switzerland": "ch", "Syria": "sy",
+        "Chinese Taipei": "tw",  // NOTE: 特殊处理，用 WCA 自定义梅花旗 SVG 而非 flag-icons
+        "Tajikistan": "tj", "Tanzania": "tz", "Thailand": "th",
+        "Timor-Leste": "tl", "Togo": "tg", "Tonga": "to",
+        "Trinidad and Tobago": "tt", "Tunisia": "tn", "Turkey": "tr",
+        "Turkmenistan": "tm", "Tuvalu": "tv", "Uganda": "ug",
+        "Ukraine": "ua", "United Arab Emirates": "ae", "United Kingdom": "gb",
+        "United States": "us", "Uruguay": "uy", "Uzbekistan": "uz",
+        "Vanuatu": "vu", "Vatican City": "va", "Venezuela": "ve",
+        "Vietnam": "vn", "Yemen": "ye", "Zambia": "zm", "Zimbabwe": "zw",
+        // NOTE: _countryZh 中有但 WCA JSON 中未列出的非主权国家/地区，手动补充
+        "Aruba": "aw", "New Caledonia": "nc", "Puerto Rico": "pr",
+        // NOTE: WCA Countries 表中 id ≠ name 的条目（SQL 可能用 country_id 而非 country.name）
+        "USA": "us", "Korea": "kr", "Hong Kong": "hk", "Macau": "mo",
+        "Taiwan": "tw", "Cote d_Ivoire": "ci",
+        "Sao Tome and Principe": "st",
+        "Democratic People_s Republic of Korea": "kp",
+    },
+
+    // NOTE: 标记，避免重复注入国旗样式
+    _flagStyleInjected: false,
 
     // NOTE: 初始化入口 — 自动检测语言、加载字典、应用翻译
     // 分为同步阶段和异步阶段，消除 FOUC（先显示英文再切中文的闪烁）
@@ -499,18 +579,8 @@ const I18n = {
             });
         }
 
-        // NOTE: Stats 页面国家/地区名翻译（td 中的 Region/Country 列）
-        if (this.locale === 'zh') {
-            document.querySelectorAll('td').forEach(td => {
-                const zh = this._countryZh[td.textContent.trim()];
-                if (zh) td.textContent = zh;
-            });
-        } else {
-            document.querySelectorAll('td').forEach(td => {
-                const en = this._countryEn[td.textContent.trim()];
-                if (en) td.textContent = en;
-            });
-        }
+        // NOTE: Stats 页面国家/地区名翻译 + 国旗图标插入
+        this._applyCountryFlags();
 
         // NOTE: 指标选择器按钮翻译（Metric / AoXR 合并页面）
         if (this.locale === 'zh') {
@@ -552,6 +622,9 @@ const I18n = {
         // NOTE: 解除 FOUC 隐藏——翻译全部完成后显示页面
         document.body.classList.add('i18n-ready');
         document.documentElement.classList.remove('i18n-loading');
+
+        // NOTE: 注入国旗样式（仅一次）
+        this._injectFlagStyles();
     },
 
     // NOTE: 对 _dynamicTextZh 中注册的元素进行翻译
@@ -661,6 +734,97 @@ const I18n = {
             }
         });
     },
+
+    // NOTE: 注入国旗图标的微调 CSS（尺寸、间距、圆角）
+    _injectFlagStyles() {
+        if (this._flagStyleInjected) return;
+        this._flagStyleInjected = true;
+        const style = document.createElement('style');
+        style.id = 'i18n-flag-style';
+        style.textContent = `
+            /* 国旗图标微调 */
+            .country-flag {
+                display: inline-block;
+                vertical-align: middle;
+                margin-right: 5px;
+                border-radius: 2px;
+                /* NOTE: 覆盖 flag-icons 默认尺寸 */
+                width: 1.25em !important;
+                line-height: 1em !important;
+            }
+            /* Chinese Taipei 自定义 SVG 图标 */
+            .country-flag-ct {
+                display: inline-block;
+                vertical-align: middle;
+                margin-right: 5px;
+                width: 1.25em;
+                height: 0.9em;
+                border-radius: 2px;
+            }
+        `;
+        document.head.appendChild(style);
+    },
+
+    // NOTE: 扫描表格 td，匹配到国家名时插入国旗图标 + 翻译文本
+    // 用 data-country-en 属性标记已处理的 td，记录原始英文国家名
+    // 切换语言时根据该属性恢复/翻译国家名，同时保留国旗图标
+    _applyCountryFlags() {
+        document.querySelectorAll('td').forEach(td => {
+            // 检查是否已标记过（已有国旗的 td）
+            const markedEn = td.getAttribute('data-country-en');
+            if (markedEn) {
+                // 已有国旗，只需更新文字（国旗 span 保留不动）
+                const textNode = td.lastChild;
+                if (textNode && textNode.nodeType === Node.TEXT_NODE) {
+                    if (this.locale === 'zh') {
+                        const zh = this._countryZh[markedEn];
+                        if (zh) textNode.textContent = ' ' + zh;
+                    } else {
+                        textNode.textContent = ' ' + markedEn;
+                    }
+                }
+                return;
+            }
+
+            // 未标记：尝试匹配国家名（英文或中文）
+            const rawText = td.textContent.trim();
+            // 先尝试英文匹配
+            let enName = rawText;
+            if (!this._countryIso2[enName]) {
+                // 可能是中文，尝试反查
+                enName = this._countryEn[rawText];
+            }
+            if (!enName || !this._countryIso2[enName]) return;
+
+            const iso2 = this._countryIso2[enName];
+            // 标记原始英文名，防止重复处理
+            td.setAttribute('data-country-en', enName);
+
+            // 清空 td，重新构建内容：国旗 + 文字
+            td.textContent = '';
+
+            if (enName === 'Chinese Taipei') {
+                // NOTE: Chinese Taipei 用 WCA 自定义梅花旗 SVG
+                const img = document.createElement('img');
+                img.src = '/assets/images/ChineseTaipei.svg';
+                img.alt = 'Chinese Taipei';
+                img.className = 'country-flag-ct';
+                td.appendChild(img);
+            } else {
+                // 普通国家：用 flag-icons CSS class
+                const span = document.createElement('span');
+                span.className = `fi fi-${iso2} country-flag`;
+                td.appendChild(span);
+            }
+
+            // 添加国家名文本
+            const displayName = this.locale === 'zh'
+                ? (this._countryZh[enName] || enName)
+                : enName;
+            td.appendChild(document.createTextNode(' ' + displayName));
+        });
+    },
+
 
     // NOTE: MutationObserver — 监听 _dynamicTextZh 注册的元素的 textContent 变化
     // 当 JS 代码（如 solver 页面）动态修改文本时，自动翻译为当前语言
