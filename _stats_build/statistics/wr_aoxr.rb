@@ -51,7 +51,7 @@ class WrAoxr < Statistic
 
       # NOTE: 获取数据——第一个子类触发 compute_all_round_counts，后续直接取缓存
       history = inst.data
-      ao_keys = [:rank, :person_link, :result_str, :country, :competition_link, :date, :details]
+      ao_keys = [:rank, :person_link, :result_str, :country, :date, :competition_link, :details]
       ranking = inst.instance_variable_get(:@ranking_by_event)
         .transform_values { |rows| ranking_to_arrays(rows, keys: ao_keys) }
 

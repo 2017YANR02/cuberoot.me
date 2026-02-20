@@ -43,7 +43,7 @@ class WrCurrent < Statistic
         # NOTE: 值最小即为当前 WR；若有平局取最新日期
         best = single_records.min_by { |r| [r["single"], -r["start_date"].to_time.to_i] }
         st = SolveTime.new(event_id, :single, best["single"])
-        rows << [event_name, "Single", st.clock_format, best["person_link"], best["competition_link"], best["start_date"].strftime("%Y-%m-%d")]
+        rows << [event_name, "Single", st.clock_format, best["person_link"], best["start_date"].strftime("%Y-%m-%d"), best["competition_link"]]
       end
 
       # 当前 WR average
@@ -53,7 +53,7 @@ class WrCurrent < Statistic
       unless avg_records.empty?
         best = avg_records.min_by { |r| [r["average"], -r["start_date"].to_time.to_i] }
         st = SolveTime.new(event_id, :average, best["average"])
-        rows << [event_name, "Average", st.clock_format, best["person_link"], best["competition_link"], best["start_date"].strftime("%Y-%m-%d")]
+        rows << [event_name, "Average", st.clock_format, best["person_link"], best["start_date"].strftime("%Y-%m-%d"), best["competition_link"]]
       end
 
       rows

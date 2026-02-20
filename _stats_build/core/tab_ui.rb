@@ -90,7 +90,7 @@ module TabUi
 
   # NOTE: 将排名 hash 数组转为 tabbed_grouped_markdown 需要的二维数组
   # keys: 要提取的字段列表，顺序与 ranking_header 对应
-  def ranking_to_arrays(ranking_rows, keys: [:rank, :person_link, :result_str, :country, :competition_link, :date])
+  def ranking_to_arrays(ranking_rows, keys: [:rank, :person_link, :result_str, :country, :date, :competition_link])
     ranking_rows.map { |r| keys.map { |k| r[k] } }
   end
 
