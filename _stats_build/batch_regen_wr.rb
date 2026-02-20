@@ -10,7 +10,7 @@ STATS_TO_BUILD = %w[
   wr_average_history wr_bpa wr_best_counting wr_best_average_ratio
   wr_current wr_dominance wr_median wr_mo5 wr_single_history wr_variance
   wr_wao5 wr_wpa wr_ao1r wr_ao2r wr_ao3r wr_ao4r
-  wr_worst_counting wr_worst wr_newcomer wr_first_comp_wr
+  wr_worst_counting wr_worst wr_newcomer first_r_is_wr wr_1st_wr
 ]
 
 total_start = Time.now
