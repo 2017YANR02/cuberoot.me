@@ -6,6 +6,8 @@ const I18n = {
     _ready: false,
     _basePath: '',           // JSON 文件的基础路径，由 init 自动计算
     _observer: null,         // MutationObserver 实例
+    _compCountries: null,    // competition_id → country_id 映射（异步加载）
+    _personCountries: null,  // wca_id → iso2 映射（异步加载）
 
     // NOTE: WCA 项目名中英映射，用于 stats 表格数据的运行时翻译
     _eventZh: {
@@ -431,8 +433,9 @@ const I18n = {
         this._updateToggle();
 
         // ── 异步阶段：加载 JSON 字典后做完整翻译（solver 页面需要） ──
-        await Promise.all([this._loadDict('en'), this._loadDict('zh')]);
+        await Promise.all([this._loadDict('en'), this._loadDict('zh'), this._loadCompCountries(), this._loadPersonCountries()]);
         // NOTE: 字典加载完后再次 apply，翻译 data-i18n="key" 形式的元素（solver 页面）
+        // 同时 comp_countries.json 也已加载，可以插入比赛国旗
         this.apply();
         this._startObserver();
     },
@@ -459,6 +462,157 @@ const I18n = {
             console.warn(`[i18n] Failed to load ${lang}.json:`, e.message);
             this.dictionaries[lang] = {};
         }
+    },
+
+    // NOTE: 异步加载 competition_id → country_id 映射（由 generate_comp_countries.rb 生成）
+    async _loadCompCountries() {
+        if (this._compCountries) return;
+        try {
+            const resp = await fetch('/stats/comp_countries.json');
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            this._compCountries = await resp.json();
+        } catch (e) {
+            console.warn('[i18n] Failed to load comp_countries.json:', e.message);
+            this._compCountries = {};
+        }
+    },
+
+    // NOTE: 异步加载 wca_id → iso2 映射（由 generate_comp_countries.rb 生成，仅含 stats 页面出现的选手）
+    async _loadPersonCountries() {
+        if (this._personCountries) return;
+        try {
+            const resp = await fetch('/stats/person_countries.json');
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            this._personCountries = await resp.json();
+        } catch (e) {
+            console.warn('[i18n] Failed to load person_countries.json:', e.message);
+            this._personCountries = {};
+        }
+    },
+
+    // NOTE: 在比赛链接前插入比赛所在国家的国旗图标
+    // 从 <a href="...competitions/XXX"> 提取 competition_id，查 _compCountries 映射
+    // 用 data-comp-flag 标记已处理的 <a>，防止重复插入
+    _applyCompetitionFlags() {
+        if (!this._compCountries) return;
+
+        document.querySelectorAll('td a[href*="competitions/"]').forEach(a => {
+            // 跳过已处理的
+            if (a.getAttribute('data-comp-flag')) return;
+
+            // 从 URL 提取 competition_id
+            const href = a.getAttribute('href') || '';
+            // 匹配 /competitions/XXX 或 /competitions/XXX/...
+            const m = href.match(/\/competitions\/([^\/\#\?]+)/);
+            if (!m) return;
+
+            const compId = m[1];
+            const countryId = this._compCountries[compId];
+            if (!countryId) return;
+
+            const iso2 = this._countryIso2[countryId];
+            if (!iso2) return;
+
+            // 标记已处理
+            a.setAttribute('data-comp-flag', iso2);
+
+            // 在 <a> 前插入国旗
+            const td = a.closest('td');
+            if (!td) return;
+
+            if (countryId === 'Taiwan') {
+                // NOTE: Chinese Taipei 用 WCA 自定义梅花旗
+                const img = document.createElement('img');
+                img.src = '/assets/images/ChineseTaipei.svg';
+                img.alt = 'Chinese Taipei';
+                img.className = 'country-flag-ct';
+                td.insertBefore(img, a);
+            } else {
+                const span = document.createElement('span');
+                span.className = `fi fi-${iso2} country-flag`;
+                td.insertBefore(span, a);
+            }
+            // 加一个空格分隔
+            td.insertBefore(document.createTextNode(' '), a);
+        });
+    },
+
+    // NOTE: 在选手链接前插入国籍国旗（基于 person_countries.json）
+    // 从 <a href="...persons/WCAID"> 提取 WCA ID，查 _personCountries 得到 iso2
+    // 用 data-person-flag 标记已处理的 <a>，防止重复插入
+    _applyPersonFlags() {
+        if (!this._personCountries) return;
+
+        document.querySelectorAll('td a[href*="persons/"]').forEach(a => {
+            if (a.getAttribute('data-person-flag')) return;
+
+            const href = a.getAttribute('href') || '';
+            const m = href.match(/\/persons\/([A-Z0-9]+)/);
+            if (!m) return;
+
+            const wcaId = m[1];
+            const iso2 = this._personCountries[wcaId];
+            if (!iso2) return;
+
+            a.setAttribute('data-person-flag', iso2);
+
+            // 在 <a> 前插入国旗
+            const td = a.closest('td');
+            if (!td) return;
+
+            if (iso2 === 'tw') {
+                // NOTE: Chinese Taipei 用 WCA 自定义梅花旗
+                const img = document.createElement('img');
+                img.src = '/assets/images/ChineseTaipei.svg';
+                img.alt = 'Chinese Taipei';
+                img.className = 'country-flag-ct';
+                td.insertBefore(img, a);
+            } else {
+                const span = document.createElement('span');
+                span.className = `fi fi-${iso2} country-flag`;
+                td.insertBefore(span, a);
+            }
+            td.insertBefore(document.createTextNode(' '), a);
+        });
+    },
+
+    // NOTE: 检测同时有 Person 和 Country 表头的表格，隐藏 Country 列
+    // 因为国旗已通过 _applyPersonFlags 内嵌到 Person 列中
+    _mergeCountryColumn() {
+        // 表头可能是英文或中文
+        const PERSON_HEADERS = new Set(['Person', '选手']);
+        const COUNTRY_HEADERS = new Set(['Country', '国家']);
+
+        document.querySelectorAll('table').forEach(table => {
+            if (table.getAttribute('data-country-merged')) return;
+
+            const ths = table.querySelectorAll('thead th, tr:first-child th');
+            if (!ths.length) return;
+
+            let countryIdx = -1;
+            let hasPerson = false;
+            ths.forEach((th, i) => {
+                const t = th.textContent.trim();
+                if (PERSON_HEADERS.has(t)) hasPerson = true;
+                if (COUNTRY_HEADERS.has(t)) countryIdx = i;
+            });
+
+            // 只有同时有 Person 和 Country 列的表格才合并
+            if (!hasPerson || countryIdx < 0) return;
+
+            table.setAttribute('data-country-merged', 'true');
+
+            // 隐藏 Country 表头
+            ths[countryIdx].style.display = 'none';
+
+            // 隐藏每行的 Country 单元格
+            table.querySelectorAll('tbody tr, tr').forEach(tr => {
+                const tds = tr.querySelectorAll('td');
+                if (tds.length > countryIdx) {
+                    tds[countryIdx].style.display = 'none';
+                }
+            });
+        });
     },
 
     // NOTE: 切换语言并更新页面
@@ -581,6 +735,18 @@ const I18n = {
 
         // NOTE: Stats 页面国家/地区名翻译 + 国旗图标插入
         this._applyCountryFlags();
+
+        // NOTE: 选手名前插入国籍国旗（基于 person_countries.json）
+        this._applyPersonFlags();
+
+        // NOTE: 中文模式下简化中国/中华台北/香港/澳门选手姓名
+        this._applyLocalNames();
+
+        // NOTE: 比赛名前插入比赛所在国家的国旗图标
+        this._applyCompetitionFlags();
+
+        // NOTE: 隐藏同时有 Person 和 Country 列的表格的 Country 列（国旗已内嵌到 Person 列）
+        this._mergeCountryColumn();
 
         // NOTE: 指标选择器按钮翻译（Metric / AoXR 合并页面）
         if (this.locale === 'zh') {
@@ -822,6 +988,44 @@ const I18n = {
                 ? (this._countryZh[enName] || enName)
                 : enName;
             td.appendChild(document.createTextNode(' ' + displayName));
+        });
+    },
+
+    // NOTE: 中文模式下简化选手姓名：
+    // 1. 括号内含 CJK 字符 → 只显示中文名（如 "耿暄一"）
+    // 2. 括号内含其他非拉丁文字（泰文、韩文等）→ 只显示罗马名（如 "Tankhun Panyakham"）
+    // 用 data-full-name 保存原始全名，切换语言时可恢复
+    _applyLocalNames() {
+        // 匹配 "Romanized Name (本地名)" 格式
+        const LOCAL_NAME_RE = /^(.+?)\s*\(([^)]+)\)$/;
+        // CJK 统一表意文字范围（中日韩汉字）
+        const CJK_RE = /[\u4e00-\u9fff]/;
+
+        document.querySelectorAll('td a[href*="persons"]').forEach(a => {
+            const saved = a.getAttribute('data-full-name');
+            if (saved) {
+                // 已标记过，按语言切换
+                if (this.locale === 'zh') {
+                    const m = saved.match(LOCAL_NAME_RE);
+                    if (m) {
+                        a.textContent = CJK_RE.test(m[2]) ? m[2] : m[1].trim();
+                    }
+                } else {
+                    a.textContent = saved;
+                }
+                return;
+            }
+
+            const text = a.textContent.trim();
+            const m = text.match(LOCAL_NAME_RE);
+            if (!m) return;
+
+            // 保存完整名，标记已处理
+            a.setAttribute('data-full-name', text);
+            if (this.locale === 'zh') {
+                // CJK → 显示中文名；其他非拉丁 → 显示罗马名
+                a.textContent = CJK_RE.test(m[2]) ? m[2] : m[1].trim();
+            }
         });
     },
 
