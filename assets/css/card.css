@@ -5,7 +5,7 @@
 
 .glass-card {
     position: relative;
-    background: rgba(30, 30, 50, 0.6);
+    background: rgba(30, 30, 50, 0.4);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-radius: 16px;
