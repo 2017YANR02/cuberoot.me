@@ -1,6 +1,6 @@
-<h2 data-i18n-en="First record is a World Record" data-i18n-zh="First record is a World Record">First record is a World Record</h2>
+<h2 data-i18n-en="First record is a World Record" data-i18n-zh="首次破纪录即为世界纪录">First record is a World Record</h2>
 
-<p><em data-i18n-en="People whose very first record (single or average, any event) was a World Record." data-i18n-zh="People whose very first record (single or average, any event) was a World Record.">People whose very first record (single or average, any event) was a World Record.</em></p>
+<p><em data-i18n-en="People whose very first record (single or average, any event) was a World Record." data-i18n-zh="首次创造任何纪录（不限项目、不限单次/平均）即为世界纪录的选手。">People whose very first record (single or average, any event) was a World Record.</em></p>
 <p><em data-i18n-en="Updated on 19 February 2026" data-i18n-zh="更新于 2026 年 2 月 19 日">Updated on 19 February 2026</em></p>
 
 | # | Person | Event | Type | Result | Date | Competition |

@@ -1,6 +1,6 @@
-<h2 data-i18n-en="Most 4th places" data-i18n-zh="Most 4th places">Most 4th places</h2>
+<h2 data-i18n-en="Most 4th places" data-i18n-zh="最多第四名">Most 4th places</h2>
 
-<p><em data-i18n-en="Only finals are taken into account." data-i18n-zh="Only finals are taken into account.">Only finals are taken into account.</em></p>
+<p><em data-i18n-en="Only finals are taken into account." data-i18n-zh="仅统计决赛。">Only finals are taken into account.</em></p>
 <p><em data-i18n-en="Updated on 19 February 2026" data-i18n-zh="更新于 2026 年 2 月 19 日">Updated on 19 February 2026</em></p>
 
 | 4th places | Person |

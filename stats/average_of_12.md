@@ -1,6 +1,6 @@
-<h2 data-i18n-en="Average of 12" data-i18n-zh="Average of 12">Average of 12</h2>
+<h2 data-i18n-en="Average of 12" data-i18n-zh="12 次平均">Average of 12</h2>
 
-<p><em data-i18n-en="12 consecutive official attempts are considered. Only people from top 200 single are taken into account." data-i18n-zh="12 consecutive official attempts are considered. Only people from top 200 single are taken into account.">12 consecutive official attempts are considered. Only people from top 200 single are taken into account.</em></p>
+<p><em data-i18n-en="12 consecutive official attempts are considered. Only people from top 200 single are taken into account." data-i18n-zh="取连续 12 次官方成绩计算。仅考虑单次前 200 名的选手。">12 consecutive official attempts are considered. Only people from top 200 single are taken into account.</em></p>
 <p><em data-i18n-en="Updated on 19 February 2026" data-i18n-zh="更新于 2026 年 2 月 19 日">Updated on 19 February 2026</em></p>
 
 

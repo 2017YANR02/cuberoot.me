@@ -1,6 +1,6 @@
 <h2 data-i18n-en="Average event count by competition" data-i18n-zh="每场比赛的平均项目数">Average event count by competition</h2>
 
-<p><em data-i18n-en="In other words, average number of events competitors participated in." data-i18n-zh="In other words, average number of events competitors participated in.">In other words, average number of events competitors participated in.</em></p>
+<p><em data-i18n-en="In other words, average number of events competitors participated in." data-i18n-zh="即参赛选手平均参加了多少个项目。">In other words, average number of events competitors participated in.</em></p>
 <p><em data-i18n-en="Updated on 19 February 2026" data-i18n-zh="更新于 2026 年 2 月 19 日">Updated on 19 February 2026</em></p>
 
 | Competition | Average event count | Competitors | Country |

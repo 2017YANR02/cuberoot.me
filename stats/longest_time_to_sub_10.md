@@ -1,4 +1,4 @@
-<h2 data-i18n-en="Longest time to achieve sub 10 3x3x3 average" data-i18n-zh="Longest time to achieve sub 10 3x3x3 average">Longest time to achieve sub 10 3x3x3 average</h2>
+<h2 data-i18n-en="Longest time to achieve sub 10 3x3x3 average" data-i18n-zh="达到 sub-10 三阶平均所用最长时间">Longest time to achieve sub 10 3x3x3 average</h2>
 
 <p><em data-i18n-en="Updated on 19 February 2026" data-i18n-zh="更新于 2026 年 2 月 19 日">Updated on 19 February 2026</em></p>
 
