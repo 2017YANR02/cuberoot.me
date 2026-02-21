@@ -46,7 +46,13 @@ class Statistic
   def top
     timestamp = Time.parse(Database.metadata["export_timestamp"])
     # NOTE: 通过类名反推文件 basename（CamelCase → snake_case），查找集中翻译表
-    basename = self.class.name.gsub(/([a-z\d])([A-Z])/, '\1_\2').downcase
+    # NOTE: CamelCase -> snake_case 需分两步：
+    #   1. 小写/数字 + 大写 -> 插入 _（如 MostPodiums -> most_podiums）
+    #   2. 小写字母 + 数字 -> 插入 _（如 Most4thPlaces -> most_4th_places）
+    basename = self.class.name
+                    .gsub(/([a-z\d])([A-Z])/, '\1_\2')
+                    .gsub(/([a-z])(\d)/, '\1_\2')
+                    .downcase
     trans = defined?(STAT_TRANSLATIONS) ? (STAT_TRANSLATIONS[basename] || {}) : {}
     zh = @title_zh || trans[:title_zh] || @title
     markdown = "<h2 data-i18n-en=\"#{@title}\" data-i18n-zh=\"#{zh}\">#{@title}</h2>\n\n"
