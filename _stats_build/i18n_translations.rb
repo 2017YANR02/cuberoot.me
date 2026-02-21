@@ -19,7 +19,7 @@ STAT_TRANSLATIONS = {
   },
   "average_of" => {
     title_zh: "X 次平均",
-    note_zh: "取连续 X 次官方成绩计算。仅考虑平均前 25 名的选手。"
+    note_zh: "取连续 X 次官方成绩计算。筛选范围因项目而异：三阶前 15，多数项目前 30，最少步/金字塔/魔表/四盲/五盲/八板/十二板前 300，三盲前 2000。"
   },
   "best_first_average" => {
     title_zh: "最佳首次平均",

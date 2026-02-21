@@ -7,18 +7,35 @@
 # 3. At every position compute the trimmed mean (5% trimmed each side).
 # 4. Keep the best (lowest) one as the person's result.
 #
-# Data scope: only top-25 average globally (SQL subquery filter).
+# Data scope: per-event top-N average globally (SQL CASE WHEN filter).
 require_relative "../../core/grouped_statistic"
 require_relative "../../core/events"
 require_relative "../../core/solve_time"
 
 class AverageOfX < GroupedStatistic
+  # NOTE: 各项目的候选选手筛选范围（世界平均排名前 N）
+  # 333 top-15，主流项目 top-30，特殊项目 top-300，333bf top-2000
+  TOP_N_BY_EVENT = {
+    "333" => 15,
+    "222" => 30, "444" => 30, "555" => 30,
+    "666" => 30, "777" => 30, "333ft" => 30, "skewb" => 30,
+    "sq1" => 30, "333oh" => 30, "minx" => 30,
+    "333fm" => 300, "pyram" => 300, "clock" => 300,
+    "444bf" => 300, "555bf" => 300, "magic" => 300, "mmagic" => 300,
+    "333bf" => 2000,
+  }.freeze
+
+  DEFAULT_TOP_N = 30
+
   def initialize(solve_count:)
     @solve_count = solve_count
 
     @title = "Average of #{@solve_count}"
 
-    @note = "#{@solve_count} consecutive official attempts are considered. Only people from top 25 average are taken into account."
+    @note = "#{@solve_count} consecutive official attempts are considered. " \
+            "Top N varies by event: 333 top 15, most events top 30, " \
+            "333fm/pyram/clock/444bf/555bf/magic/mmagic top 300, " \
+            "333bf top 2000."
     @table_header = { "Ao#{@solve_count}" => :right, "Person" => :left, "Times" => :left }
   end
 
@@ -48,7 +65,18 @@ class AverageOfX < GroupedStatistic
           WHERE r.average > 0
           GROUP BY r.event_id, r.person_id
         ) ranked
-        WHERE global_rank <= 25
+        WHERE global_rank <= CASE ranked.event_id
+          WHEN '333' THEN 15
+          WHEN '333fm' THEN 300
+          WHEN 'pyram' THEN 300
+          WHEN 'clock' THEN 300
+          WHEN '444bf' THEN 300
+          WHEN '555bf' THEN 300
+          WHEN 'magic' THEN 300
+          WHEN 'mmagic' THEN 300
+          WHEN '333bf' THEN 2000
+          ELSE 30
+        END
       ) top_avg ON top_avg.event_id = result.event_id AND top_avg.person_id = result.person_id
       WHERE result.event_id NOT IN ('333mbf', '333mbo')
       ORDER BY competition.start_date, round_type.rank
