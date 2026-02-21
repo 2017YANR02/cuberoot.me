@@ -234,7 +234,7 @@ class WrDominance < Statistic
         next_r = wr_records[i + 1]
         days = (next_r[:date] - r[:date]).to_i.to_s
       else
-        days = ""
+        days = (Date.today - r[:date]).to_i.to_s
       end
       {
         count: r[:count],
