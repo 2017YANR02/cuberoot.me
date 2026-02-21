@@ -7,6 +7,9 @@ class WrWorstCounting < RoundMetric
     @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right, "Person" => :left, "Date" => :left, "Competition" => :left, "Details" => :left }
   end
 
+  # NOTE: 基于 5 把的指标，不适用于 Mo3 项目
+  def target_events = Events::WITH_AO5
+
   # NOTE: Worst Counting = Ao5 中计入平均的3次成绩中的最差一次
   # 即去掉最好和最差后，剩余3次中的最大值
   # 等价于排序后第4个值（0-indexed: sorted[3]）
