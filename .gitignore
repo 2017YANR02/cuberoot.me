@@ -21,3 +21,6 @@ _stats_build/.data_cache/
 
 # 数据库配置（含密码，禁止提交）
 database.yml
+
+# 粒子系统归档版本（调试用，不提交）
+assets/js/particles_v*.js
