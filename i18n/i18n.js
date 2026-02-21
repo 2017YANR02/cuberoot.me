@@ -22,6 +22,9 @@ const I18n = {
         "3x3x3 Multi-Blind": "多盲", "3x3x3 With Feet": "三阶脚拧",
         "Rubik's Magic": "八板", "Master Magic": "十二板",
         "Rubik's Cube: Multiple blind old style": "旧多盲",
+        // NOTE: 上游统计 SQL 输出的别名（与 WCA 官方全名不同）
+        "3x3x3 Cube": "三阶魔方", "Clock": "魔表", "Magic": "八板",
+        "3x3x3 Multi-Blind Old Style": "旧多盲",
     },
     // NOTE: 反向映射，用于切回英文时恢复原文
     _eventEn: {},
