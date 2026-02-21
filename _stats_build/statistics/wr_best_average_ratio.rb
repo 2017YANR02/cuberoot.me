@@ -7,6 +7,9 @@ class WrBestAverageRatio < RoundMetric
     @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right, "Person" => :left, "Date" => :left, "Competition" => :left, "Details" => :left }
   end
 
+  # NOTE: 基于 5 把的指标，不适用于 Mo3 项目
+  def target_events = Events::WITH_AO5
+
   # NOTE: Best/Average Ratio = best / average
   # 需要全部5次有效且 average > 0
   def compute_metric(values, r)

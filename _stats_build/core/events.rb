@@ -30,6 +30,13 @@ module Events
   WITH_AVERAGE = OFFICIAL.reject { |id, _| id == "333mbf" }
                          .merge(ALL.select { |id, _| %w(333ft magic mmagic).include?(id) })
 
+  # NOTE: Mo3 项目（一轮只有 3 把）——666, 777, 333bf, 333fm, 444bf, 555bf
+  MO3_EVENTS = %w[666 777 333bf 333fm 444bf 555bf].freeze
+
+  # NOTE: Ao5 项目（一轮 5 把）= WITH_AVERAGE 去掉 Mo3 项目
+  # BAo5/WAo5/Mo5/BPA/WPA 等基于 5 把的指标只查这些项目
+  WITH_AO5 = WITH_AVERAGE.reject { |id, _| MO3_EVENTS.include?(id) }
+
   BLD = ALL.select { |event_id, event_name| %w(333bf 444bf 555bf 333mbf).include?(event_id) }
 
   # NOTE: WCA 项目中文名称映射（value 是英文名 → 中文名）

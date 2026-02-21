@@ -7,6 +7,9 @@ class WrMedian < RoundMetric
     @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right, "Person" => :left, "Date" => :left, "Competition" => :left, "Details" => :left }
   end
 
+  # NOTE: 基于 5 把的指标，不适用于 Mo3 项目
+  def target_events = Events::WITH_AO5
+
   # NOTE: Median = 5次成绩排序后的中位数（第3位）
   # 有 DNF/DNS 时中位数往后移：1个无效→第4位，2个无效→第5位，3个及以上→无效
   def compute_metric(values, r)

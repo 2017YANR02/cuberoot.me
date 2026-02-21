@@ -7,6 +7,9 @@ class WrWao5 < RoundMetric
     @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right, "Person" => :left, "Date" => :left, "Competition" => :left, "Details" => :left }
   end
 
+  # NOTE: 基于 5 把的指标，不适用于 Mo3 项目
+  def target_events = Events::WITH_AO5
+
   # NOTE: WAo5 = 5次中取最差的3次求均值
   # 需要全部5次都有效
   def compute_metric(values, r)
