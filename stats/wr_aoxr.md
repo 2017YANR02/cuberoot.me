@@ -1,6 +1,6 @@
-<h2 data-i18n-en="AoXR" data-i18n-zh="AoXR">AoXR</h2>
+<h2 data-i18n-en="AoXR" data-i18n-zh="多轮均值（AoXR）">AoXR</h2>
 
-<p><em data-i18n-en="World record history and current rankings for Average of X Rounds (AoXR) — the mean of averages across multiple rounds in one competition." data-i18n-zh="World record history and current rankings for Average of X Rounds (AoXR) — the mean of averages across multiple rounds in one competition.">World record history and current rankings for Average of X Rounds (AoXR) — the mean of averages across multiple rounds in one competition.</em></p>
+<p><em data-i18n-en="World record history and current rankings for Average of X Rounds (AoXR) — the mean of averages across multiple rounds in one competition." data-i18n-zh="一场比赛中多轮平均成绩的均值的世界纪录历史与当前排名。">World record history and current rankings for Average of X Rounds (AoXR) — the mean of averages across multiple rounds in one competition.</em></p>
 <p><em data-i18n-en="Updated on 19 February 2026" data-i18n-zh="更新于 2026 年 2 月 19 日">Updated on 19 February 2026</em></p>
 
 <style>
