@@ -23,12 +23,12 @@ module Events
     "333mbo"  => "Rubik's Cube: Multiple blind old style",
   }
 
-  OFFICIAL = ALL.first(17).to_h
+  # NOTE: 所有正式 + 退役项目（用于 WR Single、wr_current 等覆盖全量项目的统计）
+  OFFICIAL = ALL.dup
 
-  # NOTE: 所有有官方平均/mo3 的项目（OFFICIAL 去掉 333mbf，加入退役项目 333ft/magic/mmagic）
-  # 333bf/444bf/555bf 用 mo3，333ft/magic/mmagic 用 ao5，333mbf 无平均故不含
-  WITH_AVERAGE = OFFICIAL.reject { |id, _| id == "333mbf" }
-                         .merge(ALL.select { |id, _| %w(333ft magic mmagic).include?(id) })
+  # NOTE: 所有有官方平均/mo3 的项目（去掉 333mbf 和 333mbo——它们无平均）
+  # 333bf/444bf/555bf 用 mo3，333ft/magic/mmagic 用 ao5
+  WITH_AVERAGE = OFFICIAL.reject { |id, _| %w(333mbf 333mbo).include?(id) }
 
   # NOTE: Mo3 项目（一轮只有 3 把）——666, 777, 333bf, 333fm, 444bf, 555bf
   MO3_EVENTS = %w[666 777 333bf 333fm 444bf 555bf].freeze
