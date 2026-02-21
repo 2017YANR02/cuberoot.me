@@ -40,10 +40,14 @@ class WrCurrent < Statistic
         .select { |r| r["event_id"] == event_id && r["regional_single_record"] == "WR" && r["single"] > 0 }
 
       unless single_records.empty?
-        # NOTE: 值最小即为当前 WR；若有平局取最新日期
-        best = single_records.min_by { |r| [r["single"], -r["start_date"].to_time.to_i] }
-        st = SolveTime.new(event_id, :single, best["single"])
-        rows << [event_name, "Single", st.clock_format, best["person_link"], best["start_date"].strftime("%Y-%m-%d"), best["competition_link"]]
+        # NOTE: 取最小值，然后找出所有持有该值的记录（tie WR）
+        min_val = single_records.map { |r| r["single"] }.min
+        ties = single_records.select { |r| r["single"] == min_val }
+          .sort_by { |r| r["start_date"] }
+        ties.each do |best|
+          st = SolveTime.new(event_id, :single, best["single"])
+          rows << [event_name, "Single", st.clock_format, best["person_link"], best["start_date"].strftime("%Y-%m-%d"), best["competition_link"]]
+        end
       end
 
       # 当前 WR average
@@ -51,9 +55,14 @@ class WrCurrent < Statistic
         .select { |r| r["event_id"] == event_id && r["regional_average_record"] == "WR" && r["average"] > 0 }
 
       unless avg_records.empty?
-        best = avg_records.min_by { |r| [r["average"], -r["start_date"].to_time.to_i] }
-        st = SolveTime.new(event_id, :average, best["average"])
-        rows << [event_name, "Average", st.clock_format, best["person_link"], best["start_date"].strftime("%Y-%m-%d"), best["competition_link"]]
+        # NOTE: 取最小值，然后找出所有持有该值的记录（tie WR）
+        min_val = avg_records.map { |r| r["average"] }.min
+        ties = avg_records.select { |r| r["average"] == min_val }
+          .sort_by { |r| r["start_date"] }
+        ties.each do |best|
+          st = SolveTime.new(event_id, :average, best["average"])
+          rows << [event_name, "Average", st.clock_format, best["person_link"], best["start_date"].strftime("%Y-%m-%d"), best["competition_link"]]
+        end
       end
 
       rows
