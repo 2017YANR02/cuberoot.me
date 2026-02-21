@@ -140,12 +140,10 @@
     <p><em data-i18n-en="Updated on 18 February 2026" data-i18n-zh="更新于 2026 年 2 月 18 日">Updated on 18 February
             2026</em></p>
 
-    <div
-        style="position:fixed;bottom:16px;right:16px;z-index:9999;display:flex;gap:0;border-radius:6px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.15)">
-        <button data-i18n-toggle="en" onclick="I18n.setLocale('en')"
-            style="padding:6px 14px;border:none;cursor:pointer;font-size:14px;font-weight:600;background:rgba(255,255,255,0.1);color:#ccc;backdrop-filter:blur(8px)">EN</button>
-        <button data-i18n-toggle="zh" onclick="I18n.setLocale('zh')"
-            style="padding:6px 14px;border:none;cursor:pointer;font-size:14px;font-weight:600;background:rgba(255,255,255,0.1);color:#ccc;backdrop-filter:blur(8px)">中文</button>
+    <div data-i18n-toggle="true" onclick="I18n.toggle()"
+        style="position:fixed;bottom:16px;right:16px;z-index:9999;display:inline-flex;align-items:center;gap:5px;border-radius:6px;padding:4px 10px;cursor:pointer;border:1px solid #3a3a5c;background:rgba(12,12,22,0.88);color:#999;font-size:0.78rem;backdrop-filter:blur(8px)">
+        <span class="globe-icon">🌐</span>
+        <span class="lang-label">中文</span>
     </div>
     <script src="../i18n/i18n.js" defer=""></script>
 
