@@ -52,15 +52,7 @@ class AverageOf < Statistic
       md += "<div class=\"metric-panel#{active ? ' active' : ''}\" id=\"metric-#{prefix}\">\n"
 
       header = inst.instance_variable_get(:@table_header)
-      inst.data.each do |event_name, rows|
-        next if rows.empty?
-        ezh = Events.zh(event_name)
-        md += "<h3 data-i18n-en=\"#{event_name}\" data-i18n-zh=\"#{ezh}\">#{event_name}</h3>\n"
-        md += "<table>\n"
-        md += html_table_header(header)
-        rows.each { |row| md += html_table_row(row, header) }
-        md += "</table>\n"
-      end
+      md += grouped_panel(prefix, true, inst.data, header)
 
       md += "</div>\n"
     end
