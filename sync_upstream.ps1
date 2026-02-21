@@ -135,6 +135,38 @@ if ($config.rootDirs)
     }
 }
 
+# ===== Step 2c: 修正 sw.js 缓存列表 =====
+# NOTE: 上游 sw.js 使用扁平 HTML 路径（如 2x2x2.html），
+#       本站已重构为目录结构（如 2x2x2/index.html），且已用内联 GA 替代 analytics.js
+Write-Host "`nStep 2c: Patching sw.js cache lists..." -ForegroundColor Green
+
+$swPath = Join-Path $LocalDir "sw.js"
+if (Test-Path $swPath)
+{
+    $swBytes = [System.IO.File]::ReadAllBytes($swPath)
+    $swContent = [System.Text.Encoding]::UTF8.GetString($swBytes)
+
+    # 1. 删除 analytics.js 引用（本地不存在此文件）
+    $swContent = [regex]::Replace($swContent, "(?m)^\t'analytics\.js',?\r?\n", "")
+
+    # 2. 将扁平 HTML 路径替换为目录结构（与 page_config.json 一致）
+    foreach ($page in $config.pages)
+    {
+        # NOTE: 跳过 index.html — 根 index.html 指向首页，保留原样
+        if ($page.upstream -eq "index.html") { continue }
+        $escaped = [regex]::Escape($page.upstream)
+        $newPath = "$($page.subdir)/index.html"
+        $swContent = $swContent -replace "'$escaped'", "'$newPath'"
+    }
+
+    if (-not $DryRun)
+    {
+        $outBytes = [System.Text.Encoding]::UTF8.GetBytes($swContent)
+        [System.IO.File]::WriteAllBytes($swPath, $outBytes)
+    }
+    Write-Host "  [PATCH] sw.js: removed analytics.js, fixed HTML paths" -ForegroundColor DarkCyan
+}
+
 # ===== Step 3: 逐页面转换 =====
 Write-Host "`nStep 3: Converting HTML pages..." -ForegroundColor Green
 
