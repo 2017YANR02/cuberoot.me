@@ -1076,30 +1076,29 @@ const I18n = {
         const style = document.createElement('style');
         style.id = 'i18n-toggle-style';
         style.textContent = `
-            /* 公共：主页和注入固定按钮共享 */
+            /* 公共：🌐 + 目标语言文字的单按钮设计 */
             .lang-toggle, .lang-toggle-fixed {
                 display: inline-flex;
-                border-radius: 4px;
-                overflow: hidden;
-                border: 1px solid #3a3a5c;
-            }
-            .lang-toggle button, .lang-toggle-fixed button {
-                background: transparent;
-                border: none;
-                color: #777;
-                padding: 4px 9px;
-                font-size: 0.78rem;
+                align-items: center;
+                gap: 5px;
+                border-radius: 6px;
+                padding: 4px 10px;
                 cursor: pointer;
-                transition: background 0.2s, color 0.2s;
+                border: 1px solid #3a3a5c;
+                background: transparent;
+                color: #999;
+                font-size: 0.78rem;
+                transition: color 0.2s, border-color 0.2s, background 0.2s;
+                user-select: none;
             }
-            .lang-toggle button.active, .lang-toggle-fixed button.active {
-                background: #2a3f6e;
+            .lang-toggle:hover, .lang-toggle-fixed:hover {
                 color: #e8eeff;
-            }
-            .lang-toggle button:hover:not(.active),
-            .lang-toggle-fixed button:hover:not(.active) {
-                color: #bbb;
+                border-color: rgba(100, 100, 180, 0.5);
                 background: rgba(100, 100, 180, 0.12);
+            }
+            .lang-toggle .globe-icon, .lang-toggle-fixed .globe-icon {
+                font-size: 0.95rem;
+                line-height: 1;
             }
             /* fixed 专属 */
             .lang-toggle-fixed {
@@ -1115,33 +1114,32 @@ const I18n = {
         document.head.appendChild(style);
     },
 
-    // NOTE: 自动注入固定在右下角的语言切换按钮
+    // NOTE: 自动注入固定在右下角的语言切换按钮（🌐 + 目标语言文字）
     // 如果页面中已有 [data-i18n-toggle]（如 index.html），只补样式，不注入 DOM
     _injectToggle() {
         this._injectToggleStyles();
         if (document.querySelector('[data-i18n-toggle]')) return;
 
-        // 注入按钮容器
         const container = document.createElement('div');
         container.className = 'lang-toggle-fixed';
-        const btnEn = document.createElement('button');
-        btnEn.setAttribute('data-i18n-toggle', 'en');
-        btnEn.textContent = 'EN';
-        btnEn.onclick = () => this.setLocale('en');
-        const btnZh = document.createElement('button');
-        btnZh.setAttribute('data-i18n-toggle', 'zh');
-        btnZh.textContent = '中文';
-        btnZh.onclick = () => this.setLocale('zh');
-        container.appendChild(btnEn);
-        container.appendChild(btnZh);
+        container.setAttribute('data-i18n-toggle', 'true');
+        const globe = document.createElement('span');
+        globe.className = 'globe-icon';
+        globe.textContent = '🌐';
+        const label = document.createElement('span');
+        label.className = 'lang-label';
+        // NOTE: 显示目标语言（当前语言的反面）
+        label.textContent = this.locale === 'en' ? '中文' : 'EN';
+        container.appendChild(globe);
+        container.appendChild(label);
+        container.onclick = () => this.toggle();
         document.body.appendChild(container);
     },
 
-    // NOTE: 更新语言切换按钮的高亮状态
+    // NOTE: 更新语言切换按钮的文字（显示目标语言）
     _updateToggle() {
-        document.querySelectorAll('[data-i18n-toggle]').forEach(btn => {
-            const lang = btn.getAttribute('data-i18n-toggle');
-            btn.classList.toggle('active', lang === this.locale);
+        document.querySelectorAll('[data-i18n-toggle] .lang-label').forEach(label => {
+            label.textContent = this.locale === 'en' ? '中文' : 'EN';
         });
     },
 

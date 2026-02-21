@@ -178,32 +178,31 @@
             color: #aaa;
         }
 
-        /* NOTE: 语言切换按钮样式 */
+        /* NOTE: 语言切换按钮样式（🌐 + 目标语言文字） */
         .lang-toggle {
             display: inline-flex;
-            gap: 0;
-            border-radius: 4px;
-            overflow: hidden;
-            border: 1px solid #444;
-        }
-
-        .lang-toggle button {
-            background: transparent;
-            border: none;
-            color: #777;
-            padding: 3px 8px;
-            font-size: 0.75rem;
+            align-items: center;
+            gap: 5px;
+            border-radius: 6px;
+            padding: 4px 10px;
             cursor: pointer;
-            transition: background 0.2s, color 0.2s;
+            border: 1px solid #444;
+            background: transparent;
+            color: #999;
+            font-size: 0.75rem;
+            transition: color 0.2s, border-color 0.2s, background 0.2s;
+            user-select: none;
         }
 
-        .lang-toggle button.active {
-            background: rgba(100, 100, 180, 0.3);
-            color: #fff;
+        .lang-toggle:hover {
+            color: #e8eeff;
+            border-color: rgba(100, 100, 180, 0.5);
+            background: rgba(100, 100, 180, 0.12);
         }
 
-        .lang-toggle button:hover:not(.active) {
-            color: #aaa;
+        .lang-toggle .globe-icon {
+            font-size: 0.9rem;
+            line-height: 1;
         }
     </style>
 </head>
@@ -231,9 +230,9 @@
     <div class="footer">
         <span>v1.4.1</span>
         <a href="https://github.com/RuiminYan/ruiminyan.github.io" target="_blank" rel="noopener noreferrer">GitHub</a>
-        <div class="lang-toggle">
-            <button data-i18n-toggle="en" onclick="I18n.setLocale('en')">EN</button>
-            <button data-i18n-toggle="zh" onclick="I18n.setLocale('zh')">中文</button>
+        <div class="lang-toggle" data-i18n-toggle="true" onclick="I18n.toggle()">
+            <span class="globe-icon">🌐</span>
+            <span class="lang-label">中文</span>
         </div>
     </div>
 
