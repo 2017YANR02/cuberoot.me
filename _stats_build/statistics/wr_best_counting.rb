@@ -7,6 +7,9 @@ class WrBestCounting < RoundMetric
     @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right, "Person" => :left, "Date" => :left, "Competition" => :left, "Details" => :left }
   end
 
+  # NOTE: 基于 5 把的指标，不适用于 Mo3 项目
+  def target_events = Events::WITH_AO5
+
   # NOTE: Best Counting = Ao5 中计入平均的3次成绩中的最好一次
   # 即去掉最好和最差后，剩余3次中的最小值
   # 等价于排序后第2个值（0-indexed: sorted[1]）

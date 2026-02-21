@@ -7,6 +7,9 @@ class WrWpa < RoundMetric
     @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right, "Person" => :left, "Date" => :left, "Competition" => :left, "Details" => :left }
   end
 
+  # NOTE: 基于 5 把的指标，不适用于 Mo3 项目
+  def target_events = Events::WITH_AO5
+
   # NOTE: WPA = 前4次中取最差的3次求均值
   # 需要全部4次都有效（> 0）
   def compute_metric(values, r)

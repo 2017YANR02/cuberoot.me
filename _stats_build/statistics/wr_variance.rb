@@ -7,6 +7,9 @@ class WrVariance < RoundMetric
     @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right, "Person" => :left, "Date" => :left, "Competition" => :left, "Details" => :left }
   end
 
+  # NOTE: 基于 5 把的指标，不适用于 Mo3 项目
+  def target_events = Events::WITH_AO5
+
   # NOTE: Variance = 5次成绩的样本方差 (n-1)
   # 需要全部5次都有效
   def compute_metric(values, r)

@@ -7,6 +7,9 @@ class WrBpa < RoundMetric
     @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right, "Person" => :left, "Date" => :left, "Competition" => :left, "Details" => :left }
   end
 
+  # NOTE: 基于 5 把的指标，不适用于 Mo3 项目
+  def target_events = Events::WITH_AO5
+
   # NOTE: BPA = 前4次中取最好的3次求均值
   # 如果前4次中有2个及以上 DNF/DNS，则无效
   def compute_metric(values, r)
