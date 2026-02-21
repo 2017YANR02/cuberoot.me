@@ -28,76 +28,48 @@ username: "root"
 password: "your_password"
 ```
 
-## 测试工具
+## 测试方法
 
 > **工作目录**：以下所有命令均需在 `_stats_build/` 目录下运行。
 
-### 1. `test_stat.rb` — 快速验证（控制台输出）
+### 单个统计测试
 
-```bash
-ruby test_stat.rb <statistic_name>
+使用 `STATS_FILTER` 环境变量，只计算指定的统计并写入 `stats/` 目录。Jekyll 的 `--watch` 会自动检测变化并重新构建，刷新浏览器即可看到结果。
+
+```powershell
+$env:STATS_FILTER = "average_of_5"
+ruby bin/compute_all.rb
+# 浏览器访问 http://127.0.0.1:4000/stats/average_of_5/
 ```
 
-输出 markdown 的前 50 行到控制台，用于快速检查是否报错。
+多个统计用逗号分隔：
 
-```bash
-# 示例
-ruby test_stat.rb wr_dominance
-ruby test_stat.rb wr_bpa
+```powershell
+$env:STATS_FILTER = "wr_bpa,wr_dominance"
+ruby bin/compute_all.rb
 ```
 
-### 2. `test_html.rb` — HTML 预览（浏览器查看）
+### 全部统计生成
 
-```bash
-ruby test_html.rb <statistic_name>
+```powershell
+ruby bin/compute_all.rb
 ```
 
-将统计输出包装为完整 HTML 页面，保存到 `test_output.html`，双击即可在浏览器中查看表格、Tab 切换等效果。
+### 查看所有可用统计名称
 
-```bash
-# 示例
-ruby test_html.rb consecutive_sub_5_average
-# 然后打开 test_output.html
+```powershell
+ruby -e "$LOADED_FEATURES << 'bundler/setup'; require_relative 'statistics/index'; puts STATISTICS.keys.sort.join(', ')"
 ```
 
-### 3. 查看所有可用统计名称
+### 语法检查
 
-```bash
-ruby test_stat.rb
-# 不带参数会列出所有统计名
+提交前推荐做语法检查：
+
+```powershell
+ruby -c statistics/xxx.rb
 ```
-
-## 标准测试流程 (Standard Verification Workflow)
-
-每次修改统计代码（尤其是 HTML 结构）后，**必须**按以下步骤验证：
-
-### 第一步：数据逻辑检查 (Data Check)
-快速检查生成的 Markdown 数据内容是否正确，有无报错。
-
-```bash
-ruby test_stat.rb <statistic_name>
-# 例: ruby test_stat.rb wr_bao5
-```
-
-### 第二步：HTML 渲染验证 (HTML Rendering Verification)
-**（核心步骤）** 使用与 GitHub Pages 一致的 `kramdown (GFM)` 引擎生成真实 HTML，验证属性引号、表格结构和转义情况。
-
-```bash
-ruby verify_render_kramdown.rb <statistic_name>
-# 例: ruby verify_render_kramdown.rb wr_bao5
-```
-脚本会生成 `preview_kramdown.html` 文件。
-
-### 第三步：浏览器视觉验收 (Browser Inspection)
-直接双击打开生成的 `preview_kramdown.html`：
-1. **看格式**：表格样式是否正常，Tab 切换是否工作。
-2. **看源码**：右键“检查元素”，确认 `data-i18n` 属性值是否完整（无截断、引号闭合正确）。
-
----
 
 ## 注意事项
 
 - **大项目很慢**：`wr_dominance` 等需要全量查询的统计，在 333 (三阶) 上可能需要几分钟。建议先用小项目（如 `skewb`、`555bf`）测试逻辑是否正确。
 - **内存占用**：全量查询会消耗大量内存（333 可达数 GB），测试完毕后注意 kill Ruby 进程。
-- **忽略文件**：`test_output.html` 和 `preview_kramdown.html` 已在 `.gitignore` 中，不会被提交。
-- **语法检查**：提交前推荐用 `ruby -c statistics/xxx.rb` 做语法检查。
