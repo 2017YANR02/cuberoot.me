@@ -90,11 +90,11 @@ class RoundMetric < GroupedStatistic
         r.merge("_metric" => metric)
       end
 
-      # 构建 WR 历史：按日期正序扫描，只保留刷新最小值的记录
-      # NOTE: < 严格小于，自动排除同值记录（平 WR），无需额外去重
+      # 构建 WR 历史：按日期正序扫描，保留刷新或等于最小值的记录（含 tie WR）
+      # NOTE: <= 包含平 WR，与 WCA 官方行为一致；同值行 Improvement 显示 0.0%
       min_so_far = Float::INFINITY
       wr_records = computed.select do |r|
-        if r["_metric"] < min_so_far
+        if r["_metric"] <= min_so_far
           min_so_far = r["_metric"]
           true
         else
