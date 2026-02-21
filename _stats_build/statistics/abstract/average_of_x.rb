@@ -7,7 +7,7 @@
 # 3. At every position compute the trimmed mean (5% trimmed each side).
 # 4. Keep the best (lowest) one as the person's result.
 #
-# Data scope: only top-200 single per country (SQL subquery filter).
+# Data scope: only top-25 average globally (SQL subquery filter).
 require_relative "../../core/grouped_statistic"
 require_relative "../../core/events"
 require_relative "../../core/solve_time"
@@ -18,7 +18,7 @@ class AverageOfX < GroupedStatistic
 
     @title = "Average of #{@solve_count}"
 
-    @note = "#{@solve_count} consecutive official attempts are considered. Only people from top 200 single are taken into account."
+    @note = "#{@solve_count} consecutive official attempts are considered. Only people from top 25 average are taken into account."
     @table_header = { "Ao#{@solve_count}" => :right, "Person" => :left, "Times" => :left }
   end
 
@@ -43,14 +43,13 @@ class AverageOfX < GroupedStatistic
         SELECT event_id, person_id
         FROM (
           SELECT r.event_id, r.person_id,
-            RANK() OVER (PARTITION BY r.event_id, p.country_id ORDER BY MIN(r.best)) AS country_rank
+            RANK() OVER (PARTITION BY r.event_id ORDER BY MIN(r.average)) AS global_rank
           FROM results r
-          JOIN persons p ON p.wca_id = r.person_id AND p.sub_id = 1
-          WHERE r.best > 0
-          GROUP BY r.event_id, r.person_id, p.country_id
+          WHERE r.average > 0
+          GROUP BY r.event_id, r.person_id
         ) ranked
-        WHERE country_rank <= 200
-      ) top_single ON top_single.event_id = result.event_id AND top_single.person_id = result.person_id
+        WHERE global_rank <= 25
+      ) top_avg ON top_avg.event_id = result.event_id AND top_avg.person_id = result.person_id
       WHERE result.event_id NOT IN ('333mbf', '333mbo')
       ORDER BY competition.start_date, round_type.rank
     SQL

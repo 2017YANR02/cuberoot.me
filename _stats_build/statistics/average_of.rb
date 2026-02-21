@@ -26,7 +26,7 @@ class AverageOf < Statistic
 
   def initialize
     @title = "Average of X"
-    @note = "X consecutive official attempts are considered. Only people from top 200 single are taken into account."
+    @note = "X consecutive official attempts are considered. Only people from top 25 average are taken into account."
   end
 
   def markdown
