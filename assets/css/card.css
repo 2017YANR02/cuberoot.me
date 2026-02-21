@@ -1,0 +1,39 @@
+/* NOTE: 共享毛玻璃卡片基础样式 — index.html 和 stats 页面共用
+ * 使用方: .card (首页), .stat-card (stats 索引页)
+ * CSS 变量: --card-gradient 控制顶部渐变光带颜色
+ */
+
+.glass-card {
+    position: relative;
+    background: rgba(30, 30, 50, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 16px;
+    border: 1px solid rgba(100, 100, 180, 0.2);
+    overflow: hidden;
+    transition: transform 0.25s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* NOTE: 顶部渐变光带，默认蓝紫色 */
+.glass-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    border-radius: 16px 16px 0 0;
+    background: var(--card-gradient, linear-gradient(90deg, #6366f1, #8b5cf6));
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+}
+
+.glass-card:hover::before {
+    opacity: 1;
+}
+
+.glass-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(130, 130, 220, 0.4);
+    box-shadow: 0 8px 32px rgba(80, 80, 160, 0.15);
+}

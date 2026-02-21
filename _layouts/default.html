@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="https://cdn.cubing.net/v0/css/@cubing/icons/css">
     <!-- NOTE: 国旗图标 — 用于 stats 表格中国家列显示国旗 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.3.2/css/flag-icons.min.css">
+    <link rel="stylesheet" href="/assets/css/card.css">
     <style>
         *,
         *::before,
@@ -34,7 +35,7 @@
         }
 
         .container {
-            max-width: 960px;
+            max-width: 1200px;
             margin: 0 auto;
         }
 
@@ -130,6 +131,60 @@
         .tab-btn:hover {
             background: rgba(255, 255, 255, 0.12);
             color: #fff;
+        }
+
+        /* NOTE: Stats 索引页——卡片网格布局 */
+        .stats-dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+            margin-top: 1rem;
+        }
+
+        /* NOTE: stat-card 继承 glass-card 基类，仅定义差异属性 */
+        .stat-card {
+            padding: 1.4rem 1.5rem;
+        }
+
+        .stat-card h3 {
+            font-size: 1.05rem;
+            margin: 0 0 0.8rem 0;
+            color: #f1f5f9;
+        }
+
+        .stat-links {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .stat-links a {
+            display: block;
+            padding: 6px 10px;
+            border-radius: 6px;
+            color: #cbd5e1;
+            font-size: 0.9rem;
+            transition: all 0.15s ease;
+            text-decoration: none;
+        }
+
+        .stat-links a:hover {
+            background: rgba(255, 255, 255, 0.06);
+            color: #93bbfc;
+            padding-left: 16px;
+            text-decoration: none;
+        }
+
+        /* NOTE: 手机端——加大触控区域满足 44px 最小要求 */
+        @media (max-width: 768px) {
+            .stats-dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .stat-links a {
+                padding: 10px;
+                font-size: 0.95rem;
+            }
         }
     </style>
     <!-- NOTE: 防 FOUC（Flash of Untranslated Content）——中文用户先隐藏页面，等翻译完后再显示 -->
