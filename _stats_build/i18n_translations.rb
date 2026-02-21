@@ -17,25 +17,9 @@ STAT_TRANSLATIONS = {
     title_zh: "每场比赛的平均项目数",
     note_zh: "即参赛选手平均参加了多少个项目。"
   },
-  "average_of_100" => {
-    title_zh: "100 次平均",
-    note_zh: "取连续 100 次官方成绩计算。仅考虑单次前 200 名的选手。"
-  },
-  "average_of_12" => {
-    title_zh: "12 次平均",
-    note_zh: "取连续 12 次官方成绩计算。仅考虑单次前 200 名的选手。"
-  },
-  "average_of_25" => {
-    title_zh: "25 次平均",
-    note_zh: "取连续 25 次官方成绩计算。仅考虑单次前 200 名的选手。"
-  },
-  "average_of_5" => {
-    title_zh: "5 次平均",
-    note_zh: "取连续 5 次官方成绩计算。仅考虑单次前 200 名的选手。"
-  },
-  "average_of_50" => {
-    title_zh: "50 次平均",
-    note_zh: "取连续 50 次官方成绩计算。仅考虑单次前 200 名的选手。"
+  "average_of" => {
+    title_zh: "X 次平均",
+    note_zh: "取连续 X 次官方成绩计算。仅考虑单次前 200 名的选手。"
   },
   "best_first_average" => {
     title_zh: "最佳首次平均",
