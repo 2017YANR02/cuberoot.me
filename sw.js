@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pwa-cache_v64';
+const CACHE_NAME = 'pwa-cache_v65';
 
 const urlsToPrecache = [
 	'index.html',
@@ -6,7 +6,9 @@ const urlsToPrecache = [
 	'icons/icon-512x512.png',
 	'icons/icon-192x192.png',
 	'sw-register.js',
-	'url_params_compressor_simple.js'
+	'url_params_compressor_simple.js',
+	'assets/css/card.css',
+	'assets/js/particles.js'
 ];
 
 const urlsToCache = [
