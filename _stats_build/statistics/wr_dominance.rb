@@ -56,20 +56,14 @@ class WrDominance < Statistic
     md += metric_selector_styles
     md += dominance_metric_buttons
 
-    # NOTE: Single 面板
+    # NOTE: Single 面板——grouped_panel 自动生成 .stat-panel + h3 + table
     md += "<div class=\"metric-panel active\" id=\"metric-single\">\n"
-    data[:single].each do |event_name, rows|
-      next if rows.empty?
-      md += render_event_table(event_name, rows)
-    end
+    md += grouped_panel("single", true, data[:single].to_h, HEADER)
     md += "</div>\n"
 
     # NOTE: Average 面板
     md += "<div class=\"metric-panel\" id=\"metric-average\">\n"
-    data[:average].each do |event_name, rows|
-      next if rows.empty?
-      md += render_event_table(event_name, rows)
-    end
+    md += grouped_panel("average", true, data[:average].to_h, HEADER)
     md += "</div>\n"
 
     md += metric_selector_script
@@ -91,24 +85,7 @@ class WrDominance < Statistic
     html
   end
 
-  # NOTE: 渲染单个项目的表格
-  def render_event_table(event_name, rows)
-    md = "<h3 data-i18n-en=\"#{event_name}\" data-i18n-zh=\"#{Events.zh(event_name)}\">#{event_name}</h3>\n"
-    md += "<table>\n"
-    md += html_table_header(HEADER)
-    rows.each do |row|
-      md += "<tr>"
-      md += "<td style=\"text-align:right\">#{row[:count]}</td>"
-      md += "<td style=\"text-align:right\">#{row[:improvement]}</td>"
-      md += "<td style=\"text-align:right\">#{row[:days]}</td>"
-      md += "<td>#{md_link_to_html(row[:person_link])}</td>"
-      md += "<td>#{row[:date]}</td>"
-      md += "<td>#{md_link_to_html(row[:comp_link])}</td>"
-      md += "</tr>\n"
-    end
-    md += "</table>\n"
-    md
-  end
+
 
   def compute_all
     result = { single: [], average: [] }
@@ -236,14 +213,11 @@ class WrDominance < Statistic
       else
         days = (Date.today - r[:date]).to_i.to_s
       end
-      {
-        count: r[:count],
-        improvement: improvement,
-        days: days,
-        person_link: r[:person_link],
-        comp_link: r[:comp_link],
-        date: r[:date].strftime("%Y-%m-%d")
-      }
+      # NOTE: 返回二维数组，列顺序与 HEADER 一致，供 html_table_row 消费
+      # html_table_row 内部会调用 md_link_to_html，此处传原始 markdown link
+      [r[:count], improvement, days,
+       r[:person_link], r[:date].strftime("%Y-%m-%d"),
+       r[:comp_link]]
     end
 
     result.reverse
