@@ -8,7 +8,8 @@ const urlsToPrecache = [
 	'sw-register.js',
 	'url_params_compressor_simple.js',
 	'assets/css/card.css',
-	'assets/js/particles.js'
+	'assets/js/particles.js',
+	'assets/js/particles_stats.js'
 ];
 
 const urlsToCache = [

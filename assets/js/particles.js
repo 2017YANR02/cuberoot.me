@@ -15,7 +15,7 @@
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
 
-    // NOTE: 移动端粒子数减半，避免低端手机掉帧
+    // ── 配置 ─────────────────────────────────────────────
     const isMobile = window.innerWidth < 768;
     const PARTICLES_PER_FACE = isMobile ? 100 : 200;
     const TOTAL = PARTICLES_PER_FACE * 6;
@@ -30,14 +30,14 @@
         { normal: [1, 0, 0], color: '#0046AD', light: '#3377CC' }, // R 蓝
     ];
 
-    const SIZE_RATIO = 0.2;         // 魔方边长 = (w+h)/2 * ratio
-    const SCATTER_RATIO = 0.5;      // 爆炸球壳外径
+    const SIZE_RATIO = 0.2;
+    const SCATTER_RATIO = 0.5;
     const FOV = 800;
     const SPRING_K = 0.06;
     const FRICTION = 0.88;
-    const EXPLODE_RADIUS = 300;     // 鼠标距中心多近时开始爆炸（动态调整）
-    const ROTATE_Y_SPEED = 0.003;   // 全局 Y 轴自转
-    const ROTATE_X_SPEED = 0.001;   // 全局 X 轴缓慢摆动
+    const EXPLODE_RADIUS = 300;
+    const ROTATE_Y_SPEED = 0.003;
+    const ROTATE_X_SPEED = 0.001;
     const TRAIL_SCALE = 1.5;
     const DEPTH_NEAR = -500;
     const DEPTH_FAR = 500;
