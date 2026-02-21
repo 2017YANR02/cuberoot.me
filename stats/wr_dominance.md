@@ -1,4 +1,4 @@
-<h2 data-i18n-en="Dominance (top N on leaderboard by one person)" data-i18n-zh="屠榜">Dominance (top N on leaderboard by one person)</h2>
+<h2 data-i18n-en="Dominance" data-i18n-zh="屠榜">Dominance</h2>
 
 <p><em data-i18n-en="A competitor completely dominates top N on the leaderboard of results. Tied results are excluded." data-i18n-zh="选手在全历史成绩排行榜上完全霸占前 N 席。并列成绩不计入。">A competitor completely dominates top N on the leaderboard of results. Tied results are excluded.</em></p>
 <p><em data-i18n-en="Updated on 19 February 2026" data-i18n-zh="更新于 2026 年 2 月 19 日">Updated on 19 February 2026</em></p>
@@ -16,6 +16,7 @@
   <button class="metric-btn" onclick="switchMetric('average')" data-i18n-en="Average">Average</button>
 </div>
 <div class="metric-panel active" id="metric-single">
+<div id="single" class="stat-panel active">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Date</th><th>Competition</th></tr>
@@ -265,7 +266,9 @@
 <tr><td style="text-align:right">1</td><td style="text-align:right"></td><td style="text-align:right">7246</td><td><a href="https://www.worldcubeassociation.org/persons/2005KOHN01">Thomas Kohn</a></td><td>2006-04-21</td><td><a href="https://www.worldcubeassociation.org/competitions/GermanOpen2006">German Open 2006</a></td></tr>
 </table>
 </div>
+</div>
 <div class="metric-panel" id="metric-average">
+<div id="average" class="stat-panel active">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Date</th><th>Competition</th></tr>
@@ -543,6 +546,7 @@
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Date</th><th>Competition</th></tr>
 <tr><td style="text-align:right">1</td><td style="text-align:right"></td><td style="text-align:right">7462</td><td><a href="https://www.worldcubeassociation.org/persons/2003BURT01">Bob Burton</a></td><td>2005-09-17</td><td><a href="https://www.worldcubeassociation.org/competitions/CaltechDallas2005">Caltech Dallas 2005</a></td></tr>
 </table>
+</div>
 </div>
 <script>
 function switchMetric(id){
