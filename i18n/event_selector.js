@@ -133,8 +133,8 @@
     return params;
   }
 
-  // NOTE: 合并新参数到当前 hash，用 pushState 写入（支持浏览器后退）
-  // replace=true 时用 replaceState（不产生新历史记录，用于初始恢复）
+  // NOTE: 合并新参数到当前 hash，用 replaceState 写入
+  // 不产生新历史记录，后退按钮会直接返回上级页面
   // 参数顺序固定为 event → metric → tab，与 UI 视觉顺序一致
   function updateHash(newParams, replace) {
     const current = parseHash();
@@ -144,11 +144,7 @@
       .filter(k => current[k])
       .map(k => `${k}=${encodeURIComponent(current[k])}`)
       .join('&');
-    if (replace) {
-      history.replaceState(null, '', hash);
-    } else {
-      history.pushState(null, '', hash);
-    }
+    history.replaceState(null, '', hash);
   }
 
   // NOTE: 保存所有选择器的引用，供 popstate 恢复时使用
