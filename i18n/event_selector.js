@@ -162,79 +162,31 @@
   }
 
   /**
-   * NOTE: 处理 GroupedStatistic 页面（h3 在页面顶层）
+   * NOTE: 统一的选择器创建+绑定核心——DRY 抽取自原 handleGroupedPage/handleTabbedPage/handleMetricPage
+   * @param {Array<Array>} allPanelSections - 多组 sections（每组来自一个容器）
+   * @param {HTMLElement} insertBeforeNode - 选择器 DOM 的插入点
    */
-  function handleGroupedPage(container, sections) {
-    const eventIds = sections.map(s => s.eventId);
-    // 去重但保持顺序
-    const uniqueIds = [...new Set(eventIds)];
-    if (uniqueIds.length < 2) return; // 只有一个项目无需选择器
-
-    const selector = createSelector(uniqueIds, (id) => {
-      showEvent(sections, id);
-      updateHash({ event: id });
-    });
-
-    // NOTE: 插入到第一个 h3 之前
-    const firstH3 = sections[0].h3;
-    firstH3.parentNode.insertBefore(selector, firstH3);
-
-    // NOTE: 从 hash 恢复项目选择，无 hash 则默认第一个
-    const h = parseHash();
-    const initEvent = (h.event && uniqueIds.includes(h.event)) ? h.event : uniqueIds[0];
-    showEvent(sections, initEvent);
-    selectEventInBar(selector, initEvent);
-    if (h.event && uniqueIds.includes(h.event)) {
-      updateHash({ event: initEvent }, true);
-    }
-
-    // 保存引用供 popstate 使用
-    _allSelectors.push({
-      selector, uniqueIds, sections,
-      show: (id) => { showEvent(sections, id); selectEventInBar(selector, id); }
-    });
-  }
-
-  /**
-   * NOTE: 处理 TabUi 页面（h3 在 .stat-panel 容器内）
-   * 两个面板共享一个选择器，切换时联动
-   * @param {HTMLElement} scope - 限定搜索范围（.metric-panel 或 document）
-   */
-  function handleTabbedPage(scope) {
-    const panels = Array.from(scope.querySelectorAll('.stat-panel'));
-    if (panels.length === 0) return;
-
-    // 收集所有面板的 sections
-    const panelSections = panels.map(p => collectSections(p));
-
-    // 合并所有面板中出现的 eventId（取并集，保持顺序）
+  function setupSelector(allPanelSections, insertBeforeNode) {
+    // 合并所有 eventId（取并集，保持顺序）
     const allIds = [];
-    panelSections.forEach(sections => {
+    allPanelSections.forEach(sections => {
       sections.forEach(s => {
         if (!allIds.includes(s.eventId)) allIds.push(s.eventId);
       });
     });
-
     if (allIds.length < 2) return;
 
     const selector = createSelector(allIds, (id) => {
-      panelSections.forEach(sections => showEvent(sections, id));
+      allPanelSections.forEach(sections => showEvent(sections, id));
       updateHash({ event: id });
     });
 
-    // NOTE: 插入到 .stat-tabs 之前（项目选择器在最上方）
-    const tabBar = scope.querySelector('.stat-tabs');
-    if (tabBar) {
-      tabBar.parentNode.insertBefore(selector, tabBar);
-    } else {
-      // fallback: 插入到第一个面板之前
-      panels[0].parentNode.insertBefore(selector, panels[0]);
-    }
+    insertBeforeNode.parentNode.insertBefore(selector, insertBeforeNode);
 
-    // NOTE: 从 hash 恢复项目选择
+    // NOTE: 从 hash 恢复项目选择，无 hash 则默认第一个
     const h = parseHash();
     const initEvent = (h.event && allIds.includes(h.event)) ? h.event : allIds[0];
-    panelSections.forEach(sections => showEvent(sections, initEvent));
+    allPanelSections.forEach(sections => showEvent(sections, initEvent));
     selectEventInBar(selector, initEvent);
     if (h.event && allIds.includes(h.event)) {
       updateHash({ event: initEvent }, true);
@@ -244,10 +196,29 @@
     _allSelectors.push({
       selector, uniqueIds: allIds,
       show: (id) => {
-        panelSections.forEach(sections => showEvent(sections, id));
+        allPanelSections.forEach(sections => showEvent(sections, id));
         selectEventInBar(selector, id);
       }
     });
+  }
+
+  /**
+   * NOTE: 处理 GroupedStatistic 页面（h3 在页面顶层，无 .stat-panel 容器）
+   */
+  function handleGroupedPage(container, sections) {
+    setupSelector([sections], sections[0].h3);
+  }
+
+  /**
+   * NOTE: 处理 TabUi 页面（h3 在 .stat-panel 容器内）
+   * @param {HTMLElement} scope - 限定搜索范围（.metric-panel 或 document）
+   */
+  function handleTabbedPage(scope) {
+    const panels = Array.from(scope.querySelectorAll('.stat-panel'));
+    if (panels.length === 0) return;
+    const allPanelSections = panels.map(p => collectSections(p)).filter(s => s.length > 0);
+    const insertBefore = scope.querySelector('.stat-tabs') || panels[0];
+    setupSelector(allPanelSections, insertBefore);
   }
 
   // NOTE: 给 tab/metric 按钮叠加 click 监听，写入 hash
@@ -329,12 +300,10 @@
   }
 
   /**
-   * NOTE: 处理 Metric 聚合页面（如 wr_metric、wr_aoxr）
-   * 收集所有 metric panel 的 sections，创建一个共享的项目选择器
-   * 插入到 .metric-selector 之前（视觉上在最顶部）
+   * NOTE: 处理 Metric 聚合页面（如 wr_metric、wr_aoxr、wr_dominance）
+   * 收集所有 metric panel 内的 .stat-panel sections，创建共享的项目选择器
    */
   function handleMetricPage(metricPanels) {
-    // 收集所有 metric panel 内所有 stat-panel 的 sections
     const allPanelSections = [];
     metricPanels.forEach(mp => {
       const panels = Array.from(mp.querySelectorAll('.stat-panel'));
@@ -343,48 +312,8 @@
         if (sections.length > 0) allPanelSections.push(sections);
       });
     });
-
-    // 合并所有 eventId（取并集，保持顺序）
-    const allIds = [];
-    allPanelSections.forEach(sections => {
-      sections.forEach(s => {
-        if (!allIds.includes(s.eventId)) allIds.push(s.eventId);
-      });
-    });
-
-    if (allIds.length < 2) return;
-
-    const selector = createSelector(allIds, (id) => {
-      allPanelSections.forEach(sections => showEvent(sections, id));
-      updateHash({ event: id });
-    });
-
-    // NOTE: 插入到 .metric-selector 之前（项目选择器在最顶部）
-    const metricSelector = document.querySelector('.metric-selector');
-    if (metricSelector) {
-      metricSelector.parentNode.insertBefore(selector, metricSelector);
-    } else {
-      // fallback: 插入到第一个 metric-panel 之前
-      metricPanels[0].parentNode.insertBefore(selector, metricPanels[0]);
-    }
-
-    // NOTE: 从 hash 恢复项目选择
-    const h = parseHash();
-    const initEvent = (h.event && allIds.includes(h.event)) ? h.event : allIds[0];
-    allPanelSections.forEach(sections => showEvent(sections, initEvent));
-    selectEventInBar(selector, initEvent);
-    if (h.event && allIds.includes(h.event)) {
-      updateHash({ event: initEvent }, true);
-    }
-
-    // 保存引用供 popstate 使用
-    _allSelectors.push({
-      selector, uniqueIds: allIds,
-      show: (id) => {
-        allPanelSections.forEach(sections => showEvent(sections, id));
-        selectEventInBar(selector, id);
-      }
-    });
+    const insertBefore = document.querySelector('.metric-selector') || metricPanels[0];
+    setupSelector(allPanelSections, insertBefore);
   }
 
   /**
