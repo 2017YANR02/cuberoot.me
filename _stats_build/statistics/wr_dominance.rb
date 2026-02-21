@@ -39,7 +39,7 @@ class WrDominance < Statistic
   }.freeze
 
   def initialize
-    @title = "Dominance (top N on leaderboard by one person)"
+    @title = "Dominance"
     @note = "A competitor completely dominates top N on the leaderboard of results. Tied results are excluded."
   end
 

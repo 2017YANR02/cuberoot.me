@@ -19,7 +19,7 @@ STAT_TRANSLATIONS = {
   },
   "average_of" => {
     title_zh: "X 次平均",
-    note_zh: "取连续 X 次官方成绩计算。仅考虑单次前 200 名的选手。"
+    note_zh: "取连续 X 次官方成绩计算。仅考虑平均前 25 名的选手。"
   },
   "best_first_average" => {
     title_zh: "最佳首次平均",
