@@ -277,6 +277,10 @@ STAT_TRANSLATIONS = {
     title_zh: "世界纪录 Ao4R（四轮平均）历史",
     note_zh: "Ao4R：一场比赛中四轮平均成绩的均值（第一轮 + 第二轮 + 第三轮 + 决赛）。"
   },
+  "wr_aoxr" => {
+    title_zh: "多轮均值（AoXR）",
+    note_zh: "一场比赛中多轮平均成绩的均值的世界纪录历史与当前排名。"
+  },
   "wr_average_history" => {
     title_zh: "世界纪录平均历史",
     note_zh: "展示各项目世界纪录平均成绩随时间的变化。"
