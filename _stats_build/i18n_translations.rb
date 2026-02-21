@@ -15,7 +15,7 @@
 STAT_TRANSLATIONS = {
   "average_event_count_by_competition" => {
     title_zh: "每场比赛的平均项目数",
-    note_zh: nil
+    note_zh: "即参赛选手平均参加了多少个项目。"
   },
   "average_of_100" => {
     title_zh: "100 次平均",
