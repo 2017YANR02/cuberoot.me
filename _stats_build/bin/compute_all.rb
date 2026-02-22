@@ -29,6 +29,11 @@ HEAVY_STATS = %w[
   best_result_off_podium
   consecutive_sub_5_average
   wr_newcomer
+  most_completed_solves
+  most_competitions_before_winning
+  smallest_diff_between_single_and_average
+  most_frequent_results
+  moving_average
 ].freeze
 
 # NOTE: 优先计算列表——聚合页面排在最前面，确保缓存及时释放
@@ -108,6 +113,7 @@ Helpers.timed_task("Computing all statistics") do
       Helpers.timed_task("  #{statistic_id}") do
         File.write(destination_path, statistic_object.markdown)
       end
+      puts "  #{rss_mb_str.strip}" unless rss_mb_str.empty?
 
       # NOTE: 释放实例级缓存
       statistic_object.instance_variables.each do |ivar|
