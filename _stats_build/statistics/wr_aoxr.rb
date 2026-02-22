@@ -46,6 +46,7 @@ class WrAoxr < Statistic
       meta = AOXR_META[inst.class]
       prefix = meta[:id]
       active = i == 0
+      t_sub = Time.now
 
       md += "<div class=\"metric-panel#{active ? ' active' : ''}\" id=\"metric-#{prefix}\">\n"
 
@@ -63,6 +64,7 @@ class WrAoxr < Statistic
       md += grouped_panel("#{prefix}-history", false, history, inst.instance_variable_get(:@table_header))
 
       md += "</div>\n"
+      printf("    [%d/%d] %-20s %5.1fs\n", i + 1, instances.size, meta[:label], Time.now - t_sub)
     end
 
     md += metric_selector_script
