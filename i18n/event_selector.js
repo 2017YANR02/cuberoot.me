@@ -11,7 +11,7 @@
     '333ft', 'magic', 'mmagic', '333mbo'
   ];
 
-    // NOTE: 英文项目名 → WCA event ID 映射，用于生成 cubing-icon class
+  // NOTE: 英文项目名 → WCA event ID 映射，用于生成 cubing-icon class
   const EVENT_MAP = {
     "Rubik's Cube": "333",
     "2x2x2 Cube": "222",
@@ -90,9 +90,9 @@
       const btn = document.createElement('button');
       btn.className = 'event-btn';
       btn.setAttribute('data-event', id);
-      // NOTE: 双语 tooltip
+      // NOTE: 双语 tooltip（用 data-tooltip 属性 + CSS ::after 伪元素代替原生 title）
       const lang = document.documentElement.getAttribute('data-lang') || 'en';
-      btn.title = lang === 'zh' ? (EVENT_ZH[id] || id) : (
+      btn.dataset.tooltip = lang === 'zh' ? (EVENT_ZH[id] || id) : (
         Object.keys(EVENT_MAP).find(k => EVENT_MAP[k] === id) || id
       );
 
@@ -103,7 +103,7 @@
 
       if (disabledIds.has(id)) {
         btn.classList.add('disabled');
-        btn.title += ' (N/A)';
+        btn.dataset.tooltip += ' (N/A)';
       } else {
         if (idx === 0) btn.classList.add('active');
         btn.addEventListener('click', () => {
@@ -387,6 +387,7 @@
         border: 1px solid rgba(255, 255, 255, 0.06);
       }
       .event-btn {
+        position: relative;
         width: 40px;
         height: 40px;
         display: flex;
@@ -432,6 +433,27 @@
       .event-btn.active .cubing-icon {
         color: #fff;
       }
+      /* NOTE: CSS tooltip — 模仿 WCA 官网白色卡片样式 */
+      .event-btn::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: calc(100% + 8px);
+        left: 50%;
+        transform: translateX(-50%);
+        background: #fff;
+        color: #333;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 13px;
+        white-space: nowrap;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.15s;
+        z-index: 100;
+      }
+      .event-btn:hover::after { opacity: 1; }
+      .event-btn.disabled::after { display: none; }
     `;
     document.head.appendChild(style);
   }
