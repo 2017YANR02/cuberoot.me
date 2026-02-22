@@ -6,7 +6,7 @@ class MovingAverage < GroupedStatistic
   def initialize
     @title = "Moving average"
     @note = <<-NOTE
-      You may think of it as "how well the given person has been doing recently".
+      You may think of it as &quot;how well the given person has been doing recently&quot;.
       This computes exponentially moving average (EMA) of competitor averages.
       EMA is a weighted average, with weights decreasing exponentially,
       meaning that more recent values contribute more to the computed average.

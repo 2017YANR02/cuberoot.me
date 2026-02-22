@@ -25,7 +25,7 @@ class AverageOf < Statistic
   }.freeze
 
   def initialize
-    @title = "Average of X"
+    @title = "Rolling Average"
     @note = "X consecutive official attempts are considered. " \
             "Top N varies by event: 333 top 15, most events top 30, " \
             "333fm/pyram/clock/444bf/555bf/magic/mmagic top 300, " \
