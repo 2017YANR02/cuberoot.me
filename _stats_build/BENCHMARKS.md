@@ -20,7 +20,6 @@
 | average_of_100 | 4m 50s | AverageOfX |
 | average_of_50 | 4m 32s | AverageOfX |
 | longest_streak_of_podiums | 3m 6s | 独立 |
-| best_single_counting_into_average | 2m 21s | 独立 |
 | most_completed_solves | 2m 20s | 独立 |
 | wr_single_history | 2m 12s | RoundMetric |
 | most_competitions_before_winning | 2m 10s | 独立 |

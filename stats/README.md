@@ -13,7 +13,6 @@
 <a href="wr_dominance" data-i18n-en="Dominance" data-i18n-zh="屠榜">Dominance</a>
 <a href="wr_newcomer" data-i18n-en="Newcomer" data-i18n-zh="新人">Newcomer</a>
 <a href="average_of" data-i18n-en="Average of X" data-i18n-zh="X 次平均">Average of X</a>
-<a href="best_single_counting_into_average" data-i18n-en="Best single counting into an average of 5" data-i18n-zh="计入 Ao5 的最佳单次">Best single counting into an average of 5</a>
 <a href="consecutive_sub_5_average" data-i18n-en="Most consecutive sub-5 averages in 3x3x3" data-i18n-zh="最多连续 sub-5 三阶平均">Most consecutive sub-5 averages in 3x3x3</a>
 </div>
 </div>

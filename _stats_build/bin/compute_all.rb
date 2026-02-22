@@ -33,7 +33,6 @@ AGGREGATE_CACHE_CLEANUP = {
 # 必须串行执行，防止两个重量级同时运行导致 OOM（CI 7GB 上限）
 # 新增全表查询类统计时，应检查 CI RSS 日志，超过 3GB 则加入此列表
 HEAVY_STATS = %w[
-  best_single_counting_into_average
   longest_streak_of_podiums
   longest_streak_of_personal_records
   wr_dominance

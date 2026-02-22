@@ -49,10 +49,6 @@ STAT_TRANSLATIONS = {
     title_zh: "最佳轮次",
     note_zh: nil
   },
-  "best_single_counting_into_average" => {
-    title_zh: "计入 Ao5 的最佳单次",
-    note_zh: nil
-  },
   "competition_days_count_by_region" => {
     title_zh: "各地区比赛天数",
     note_zh: nil
