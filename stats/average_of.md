@@ -1,4 +1,4 @@
-<h2 data-i18n-en="Average of X" data-i18n-zh="X 次平均">Average of X</h2>
+<h2 data-i18n-en="Rolling Average" data-i18n-zh="滚动平均">Rolling Average</h2>
 
 <p><em data-i18n-en="X consecutive official attempts are considered. Top N varies by event: 333 top 15, most events top 30, 333fm/pyram/clock/444bf/555bf/magic/mmagic top 300, 333bf top 2000." data-i18n-zh="取连续 X 次官方成绩计算。筛选范围因项目而异：三阶前 15，多数项目前 30，最少步/金字塔/魔表/四盲/五盲/八板/十二板前 300，三盲前 2000。">X consecutive official attempts are considered. Top N varies by event: 333 top 15, most events top 30, 333fm/pyram/clock/444bf/555bf/magic/mmagic top 300, 333bf top 2000.</em></p>
 <p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>

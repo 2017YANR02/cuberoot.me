@@ -18,7 +18,7 @@ STAT_TRANSLATIONS = {
     note_zh: "即参赛选手平均参加了多少个项目。"
   },
   "average_of" => {
-    title_zh: "X 次平均",
+    title_zh: "滚动平均",
     note_zh: "取连续 X 次官方成绩计算。筛选范围因项目而异：三阶前 15，多数项目前 30，最少步/金字塔/魔表/四盲/五盲/八板/十二板前 300，三盲前 2000。"
   },
   "best_first_average" => {
@@ -182,8 +182,8 @@ STAT_TRANSLATIONS = {
     note_zh: nil
   },
   "moving_average" => {
-    title_zh: "滑动平均",
-    note_zh: nil
+    title_zh: "移动平均",
+    note_zh: "可以理解为「该选手近期表现如何」。此处计算的是选手历次官方平均成绩的指数移动平均（EMA），α = 0.8，约侧重最近 5 次成绩。少于 5 次平均成绩的选手不纳入统计。"
   },
   "name_parts_count" => {
     title_zh: "姓名词数统计",

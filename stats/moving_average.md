@@ -1,24 +1,6 @@
-<h2 data-i18n-en="Moving average" data-i18n-zh="滑动平均">Moving average</h2>
+<h2 data-i18n-en="Moving average" data-i18n-zh="移动平均">Moving average</h2>
 
-<p><em data-i18n-en="You may think of it as "how well the given person has been doing recently".
-      This computes exponentially moving average (EMA) of competitor averages.
-      EMA is a weighted average, with weights decreasing exponentially,
-      meaning that more recent values contribute more to the computed average.
-      Here we use α = 0.8, meaning that the average emphasizes last ~5 results
-      (weight of results older than 5 is around 1/3 in total and decreases quickly for particular results).
-      People with less than 5 averages are ignored (as there's not much data to base on)." data-i18n-zh="You may think of it as "how well the given person has been doing recently".
-      This computes exponentially moving average (EMA) of competitor averages.
-      EMA is a weighted average, with weights decreasing exponentially,
-      meaning that more recent values contribute more to the computed average.
-      Here we use α = 0.8, meaning that the average emphasizes last ~5 results
-      (weight of results older than 5 is around 1/3 in total and decreases quickly for particular results).
-      People with less than 5 averages are ignored (as there's not much data to base on).">You may think of it as "how well the given person has been doing recently".
-      This computes exponentially moving average (EMA) of competitor averages.
-      EMA is a weighted average, with weights decreasing exponentially,
-      meaning that more recent values contribute more to the computed average.
-      Here we use α = 0.8, meaning that the average emphasizes last ~5 results
-      (weight of results older than 5 is around 1/3 in total and decreases quickly for particular results).
-      People with less than 5 averages are ignored (as there's not much data to base on).</em></p>
+<p><em data-i18n-en="You may think of it as &quot;how well the given person has been doing recently&quot;. This computes exponentially moving average (EMA) of competitor averages. EMA is a weighted average, with weights decreasing exponentially, meaning that more recent values contribute more to the computed average. Here we use α = 0.8, meaning that the average emphasizes last ~5 results (weight of results older than 5 is around 1/3 in total and decreases quickly for particular results). People with less than 5 averages are ignored (as there's not much data to base on)." data-i18n-zh="可以理解为「该选手近期表现如何」。此处计算的是选手历次官方平均成绩的指数移动平均（EMA），α = 0.8，约侧重最近 5 次成绩。少于 5 次平均成绩的选手不纳入统计。">You may think of it as &quot;how well the given person has been doing recently&quot;. This computes exponentially moving average (EMA) of competitor averages. EMA is a weighted average, with weights decreasing exponentially, meaning that more recent values contribute more to the computed average. Here we use α = 0.8, meaning that the average emphasizes last ~5 results (weight of results older than 5 is around 1/3 in total and decreases quickly for particular results). People with less than 5 averages are ignored (as there's not much data to base on).</em></p>
 <p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>
 
 

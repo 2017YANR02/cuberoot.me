@@ -12,7 +12,7 @@
 <a href="wr_aoxr" data-i18n-en="AoXR" data-i18n-zh="多轮均值（AoXR）">AoXR</a>
 <a href="wr_dominance" data-i18n-en="Dominance" data-i18n-zh="屠榜">Dominance</a>
 <a href="wr_newcomer" data-i18n-en="Newcomer" data-i18n-zh="新人">Newcomer</a>
-<a href="average_of" data-i18n-en="Average of X" data-i18n-zh="X 次平均">Average of X</a>
+<a href="average_of" data-i18n-en="Rolling Average" data-i18n-zh="滚动平均">Rolling Average</a>
 <a href="consecutive_sub_5_average" data-i18n-en="Most consecutive sub-5 averages in 3x3x3" data-i18n-zh="最多连续 sub-5 三阶平均">Most consecutive sub-5 averages in 3x3x3</a>
 </div>
 </div>
@@ -23,7 +23,7 @@
 <a href="best_potential_fmc_mean" data-i18n-en="Best potential FMC mean" data-i18n-zh="最佳潜在 FMC 平均">Best potential FMC mean</a>
 <a href="best_round" data-i18n-en="Best round" data-i18n-zh="最佳轮次">Best round</a>
 <a href="most_frequent_results" data-i18n-en="Most frequent results" data-i18n-zh="出现频率最高的成绩">Most frequent results</a>
-<a href="moving_average" data-i18n-en="Moving average" data-i18n-zh="滑动平均">Moving average</a>
+<a href="moving_average" data-i18n-en="Moving average" data-i18n-zh="移动平均">Moving average</a>
 <a href="smallest_diff_between_single_and_average" data-i18n-en="Smallest difference between a single and an average" data-i18n-zh="单次与平均最小差距">Smallest difference between a single and an average</a>
 <a href="yearly_rankings" data-i18n-en="Yearly rankings" data-i18n-zh="年度排名">Yearly rankings</a>
 </div>
