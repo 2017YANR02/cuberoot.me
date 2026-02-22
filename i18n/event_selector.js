@@ -3,7 +3,15 @@
 (function () {
   'use strict';
 
-  // NOTE: 英文项目名 → WCA event ID 映射，用于生成 cubing-icon class
+  // NOTE: 全部 21 个项目 ID（标准顺序），用于项目选择器始终显示完整列表
+  const ALL_EVENT_IDS = [
+    '333', '222', '444', '555', '666', '777',
+    '333bf', '333fm', '333oh', 'minx', 'pyram', 'clock',
+    'skewb', 'sq1', '444bf', '555bf', '333mbf',
+    '333ft', 'magic', 'mmagic', '333mbo'
+  ];
+
+    // NOTE: 英文项目名 → WCA event ID 映射，用于生成 cubing-icon class
   const EVENT_MAP = {
     "Rubik's Cube": "333",
     "2x2x2 Cube": "222",
@@ -73,7 +81,8 @@
    * @param {Function} onSelect - 点击回调 (eventId) => void
    * @returns {HTMLElement}
    */
-  function createSelector(eventIds, onSelect) {
+  function createSelector(eventIds, onSelect, disabledIds) {
+    disabledIds = disabledIds || new Set();
     const bar = document.createElement('div');
     bar.className = 'event-selector';
 
@@ -92,13 +101,17 @@
       icon.className = `cubing-icon event-${id}`;
       btn.appendChild(icon);
 
-      if (idx === 0) btn.classList.add('active');
-
-      btn.addEventListener('click', () => {
-        bar.querySelectorAll('.event-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        onSelect(id);
-      });
+      if (disabledIds.has(id)) {
+        btn.classList.add('disabled');
+        btn.title += ' (N/A)';
+      } else {
+        if (idx === 0) btn.classList.add('active');
+        btn.addEventListener('click', () => {
+          bar.querySelectorAll('.event-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          onSelect(id);
+        });
+      }
 
       bar.appendChild(btn);
     });
@@ -176,10 +189,17 @@
     });
     if (allIds.length < 2) return;
 
-    const selector = createSelector(allIds, (id) => {
+    // NOTE: 补齐到全部 21 个项目，无数据的标记为 disabled
+    const disabledIds = new Set();
+    const fullIds = ALL_EVENT_IDS.filter(id => {
+      if (!allIds.includes(id)) disabledIds.add(id);
+      return true;
+    });
+
+    const selector = createSelector(fullIds, (id) => {
       allPanelSections.forEach(sections => showEvent(sections, id));
       updateHash({ event: id });
-    });
+    }, disabledIds);
 
     insertBeforeNode.parentNode.insertBefore(selector, insertBeforeNode);
 
@@ -394,6 +414,20 @@
       .event-btn.active {
         background: #2e7d32;
         border-color: #4caf50;
+      }
+      .event-btn.disabled {
+        opacity: 0.25;
+        cursor: not-allowed;
+      }
+      .event-btn.disabled .cubing-icon {
+        color: #666;
+      }
+      .event-btn.disabled {
+        opacity: 0.25;
+        cursor: not-allowed;
+      }
+      .event-btn.disabled .cubing-icon {
+        color: #666;
       }
       .event-btn.active .cubing-icon {
         color: #fff;
