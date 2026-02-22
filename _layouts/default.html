@@ -7,7 +7,9 @@
     <title>{{ page.title | default: site.title }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.cubing.net/v0/css/@cubing/icons/css">
     <!-- NOTE: 国旗图标 — 用于 stats 表格中国家列显示国旗 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.3.2/css/flag-icons.min.css">
@@ -102,6 +104,12 @@
             padding: 6px 12px;
             border: 1px solid rgba(255, 255, 255, 0.04) !important;
             white-space: nowrap;
+        }
+
+        /* NOTE: 成绩、日期等数字列使用 Roboto Mono 等宽字体 */
+        .mono-col {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.85rem;
         }
 
         /* 交替行 — 半透明层叠 */
@@ -220,6 +228,34 @@
     <script src="/assets/js/particles_stats.js" defer></script>
     <script src="/i18n/i18n.js" defer></script>
     <script src="/i18n/event_selector.js" defer></script>
+    <script>
+    // NOTE: 反向排除策略——排除已知纯文本列，其余自动应用 Roboto Mono 等宽字体
+    document.addEventListener('DOMContentLoaded', function() {
+        // 纯文本列（不需要等宽字体）
+        var textHeaders = new Set([
+            'Person', '选手', 'Name', '姓名', 'First name', '名', 'Last name', '姓',
+            'Competition', '比赛', 'Competitions', 'Country', '国家', 'Citizen of',
+            'Continent', '大洲', 'Details', '详情', 'List', 'Results',
+            'Countries of origin', 'Event', '项目', 'Type', '类型',
+            'List on WCA', 'WCA 页面', 'People', 'Round', '轮次'
+        ]);
+        document.querySelectorAll('table').forEach(function(table) {
+            var ths = table.querySelectorAll('thead th, tr:first-child th');
+            if (!ths.length) return;
+            var monoCols = [];
+            ths.forEach(function(th, i) {
+                if (!textHeaders.has(th.textContent.trim())) monoCols.push(i);
+            });
+            if (!monoCols.length) return;
+            table.querySelectorAll('tbody tr, tr').forEach(function(tr) {
+                var cells = tr.querySelectorAll('td');
+                monoCols.forEach(function(ci) {
+                    if (cells[ci]) cells[ci].classList.add('mono-col');
+                });
+            });
+        });
+    });
+    </script>
 </body>
 
 </html>
