@@ -20,7 +20,7 @@
 #   - 维护 best_by_person hash 快速找 top/second（O(p)，p=选手数）
 #
 # 设计决策:
-#   - 仅做 WR 历史，不做当前排名 tab（屠榜是早期历史现象，如今意义不大）
+#   - 提供双视图：当前排名 + WR 历史
 #   - Single 和 Average/Mean 均覆盖所有项目（含退役项目如脚拧、八板等）
 require_relative "../core/statistic"
 require_relative "../core/events"
@@ -33,9 +33,16 @@ class WrDominance < Statistic
   include TabUi
   include MetricSelector
 
-  HEADER = {
+  # NOTE: WR 历史表头
+  HISTORY_HEADER = {
     "Count" => :right, "Improvement" => :right, "Days" => :right,
     "Person" => :left, "Date" => :left, "Competition" => :left
+  }.freeze
+
+  # NOTE: 当前排名表头
+  RANKING_HEADER = {
+    "#" => :right, "Person" => :left, "Count" => :right,
+    "Date" => :left, "Competition" => :left
   }.freeze
 
   def initialize
@@ -56,17 +63,31 @@ class WrDominance < Statistic
     md += metric_selector_styles
     md += dominance_metric_buttons
 
-    # NOTE: Single 面板——grouped_panel 自动生成 .stat-panel + h3 + table
+    # NOTE: Tab 样式（全局只输出一次）
+    md += tab_styles
+
+    # NOTE: Single 面板——内含 Tab 双视图（当前排名 + WR 历史）
     md += "<div class=\"metric-panel active\" id=\"metric-single\">\n"
-    md += grouped_panel("single", true, data[:single].to_h, HEADER)
+    md += tab_buttons(
+      "Current Ranking", "当前排名", "single-ranking",
+      "WR History", "WR 历史", "single-history"
+    )
+    md += grouped_panel("single-ranking", true, data[:single][:ranking].to_h, RANKING_HEADER)
+    md += grouped_panel("single-history", false, data[:single][:history].to_h, HISTORY_HEADER)
     md += "</div>\n"
 
     # NOTE: Average 面板
     md += "<div class=\"metric-panel\" id=\"metric-average\">\n"
-    md += grouped_panel("average", true, data[:average].to_h, HEADER)
+    md += tab_buttons(
+      "Current Ranking", "当前排名", "average-ranking",
+      "WR History", "WR 历史", "average-history"
+    )
+    md += grouped_panel("average-ranking", true, data[:average][:ranking].to_h, RANKING_HEADER)
+    md += grouped_panel("average-history", false, data[:average][:history].to_h, HISTORY_HEADER)
     md += "</div>\n"
 
     md += metric_selector_script
+    md += tab_script
     md
   end
 
@@ -88,7 +109,10 @@ class WrDominance < Statistic
 
 
   def compute_all
-    result = { single: [], average: [] }
+    result = {
+      single:  { ranking: [], history: [] },
+      average: { ranking: [], history: [] }
+    }
 
     puts "  Dominance: querying all results..."
     all_rows = fetch_all_results
@@ -97,16 +121,20 @@ class WrDominance < Statistic
     Events::ALL.each do |event_id, event_name|
       rows = all_rows.select { |r| r["event_id"] == event_id && r["best"] > 0 }
       next if rows.empty?
-      hist = compute_wr_history(rows, "best")
-      result[:single] << [event_name, hist] unless hist.empty?
+
+      dom = compute_dominance(rows, "best")
+      result[:single][:history] << [event_name, dom[:history]] unless dom[:history].empty?
+      result[:single][:ranking] << [event_name, dom[:ranking]] unless dom[:ranking].empty?
     end
 
     # Average: 所有项目
     Events::ALL.each do |event_id, event_name|
       rows = all_rows.select { |r| r["event_id"] == event_id && r["average"] > 0 }
       next if rows.empty?
-      hist = compute_wr_history(rows, "average")
-      result[:average] << [event_name, hist] unless hist.empty?
+
+      dom = compute_dominance(rows, "average")
+      result[:average][:history] << [event_name, dom[:history]] unless dom[:history].empty?
+      result[:average][:ranking] << [event_name, dom[:ranking]] unless dom[:ranking].empty?
     end
 
     result
@@ -132,21 +160,21 @@ class WrDominance < Statistic
     Database.client.query(sql).to_a
   end
 
-  # NOTE: 按时间线追踪 dominance 最高纪录的变化
-  # 优化：维护 per-person 排序数组 + best_by_person hash，避免每步全量排序
+  # NOTE: 统一计算 dominance 的 WR 历史和当前排名（共享 pv/pb 数据结构，单次遍历）
   # value_col: "best" 或 "average"，指定从哪个列读取成绩值
-  def compute_wr_history(rows, value_col)
+  # 返回 { history: [[cols...], ...], ranking: [[cols...], ...] }
+  def compute_dominance(rows, value_col)
     # per-person 排序值列表（用于 binary search 计数）
     pv = Hash.new { |h, k| h[k] = [] }  # person_id => sorted [values]
     # 每人最佳（最小）值
     pb = {}  # person_id => best value
-    # 每人最新的 link 信息
-    pl = {}  # person_id => person_link
-    cl = {}  # person_id => comp_link
+    # 每人最新的 link/date 信息（WR 历史和当前排名共用）
+    pi = {}  # person_id => { person_link, comp_link, date }
 
     max_dom = 0
     wr_records = []
 
+    # --- WR 历史追踪：按日期分组逐步构建 pv/pb ---
     rows.group_by { |r| r["start_date"] }.each do |date, comp_rows|
       comp_rows.each do |r|
         pid = r["person_id"]
@@ -159,8 +187,11 @@ class WrDominance < Statistic
         # 更新 best
         pb[pid] = val if !pb[pid] || val < pb[pid]
 
-        pl[pid] = r["person_link"]
-        cl[pid] = r["comp_link"]
+        pi[pid] = {
+          person_link: r["person_link"],
+          comp_link: r["comp_link"],
+          date: r["start_date"]
+        }
       end
 
       # 找 top person（best 最小的人）和 second_best（非 top 的最小 best）
@@ -190,16 +221,15 @@ class WrDominance < Statistic
         wr_records << {
           count: cnt,
           person_id: top_pid,
-          person_link: pl[top_pid],
-          comp_link: cl[top_pid],
+          person_link: pi[top_pid][:person_link],
+          comp_link: pi[top_pid][:comp_link],
           date: date
         }
       end
     end
 
-    # 计算 improvement 和 days，然后倒序
-    # NOTE: days = 该纪录保持的天数（到被下一条打破为止），最新纪录的 days 为空
-    result = wr_records.each_with_index.map do |r, i|
+    # --- WR 历史：计算 improvement 和 days，然后倒序 ---
+    history = wr_records.each_with_index.map do |r, i|
       if i > 0
         prev = wr_records[i - 1]
         improvement = "+#{r[:count] - prev[:count]}"
@@ -213,13 +243,54 @@ class WrDominance < Statistic
       else
         days = (Date.today - r[:date]).to_i.to_s
       end
-      # NOTE: 返回二维数组，列顺序与 HEADER 一致，供 html_table_row 消费
-      # html_table_row 内部会调用 md_link_to_html，此处传原始 markdown link
       [r[:count], improvement, days,
        r[:person_link], r[:date].strftime("%Y-%m-%d"),
        r[:comp_link]]
+    end.reverse
+
+    # --- 当前排名：复用遍历结束后的 pv/pb 最终状态 ---
+    ranking = compute_ranking_from_state(pv, pb, pi)
+
+    { history: history, ranking: ranking }
+  end
+
+  # NOTE: 从 pv/pb/pi 最终状态计算当前 dominance Top 10
+  def compute_ranking_from_state(pv, pb, pi)
+    # 预计算全局 top1 和 second_best
+    top_pid = nil
+    top_best = Float::INFINITY
+    second_best = Float::INFINITY
+
+    pb.each do |pid, best|
+      if best < top_best
+        second_best = top_best
+        top_pid = pid
+        top_best = best
+      elsif best < second_best
+        second_best = best
+      end
     end
 
-    result.reverse
+    return [] if second_best == Float::INFINITY
+
+    # 对每个 person 计算 dominance
+    # others_best: 如果 P 是全局最佳选手则为 second_best，否则为 top_best
+    ranking = []
+    pv.each do |pid, values|
+      others_best = (pid == top_pid) ? second_best : top_best
+
+      cnt = values.bsearch_index { |v| v >= others_best } || values.size
+      next if cnt <= 0
+
+      info = pi[pid]
+      date_str = info[:date].respond_to?(:strftime) ? info[:date].strftime("%Y-%m-%d") : info[:date].to_s
+      ranking << [cnt, pid, info[:person_link], date_str, info[:comp_link]]
+    end
+
+    # 按 dominance 降序排序，取 Top 10
+    ranking.sort_by! { |r| -r[0] }
+    ranking.first(10).each_with_index.map do |r, i|
+      [i + 1, r[2], r[0], r[3], r[4]]
+    end
   end
 end
