@@ -4,6 +4,7 @@ GEM
     bigdecimal (4.0.1)
     mysql2 (0.5.7)
       bigdecimal
+    parallel (1.27.0)
 
 PLATFORMS
   ruby
@@ -12,6 +13,7 @@ PLATFORMS
 DEPENDENCIES
   bigdecimal
   mysql2
+  parallel
 
 BUNDLED WITH
    2.6.9
