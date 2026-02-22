@@ -73,3 +73,9 @@ ruby -c statistics/xxx.rb
 
 - **大项目很慢**：`wr_dominance` 等需要全量查询的统计，在 333 (三阶) 上可能需要几分钟。建议先用小项目（如 `skewb`、`555bf`）测试逻辑是否正确。
 - **内存占用**：全量查询会消耗大量内存（333 可达数 GB），测试完毕后注意 kill Ruby 进程。
+- **并行构建**：全量构建默认使用 4 个 worker 并行计算独立统计。可通过 `STATS_WORKERS` 环境变量调整：
+  ```powershell
+  $env:STATS_WORKERS = 8    # 本地 16GB 内存可适当增加
+  ruby bin/compute_all.rb
+  ```
+  Linux 使用多进程模式（绕过 GIL），Windows 使用多线程模式（MySQL I/O 仍可并行）。
