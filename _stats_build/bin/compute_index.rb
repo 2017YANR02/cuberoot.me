@@ -25,7 +25,7 @@ STAT_CATEGORIES = [
     icon: "🏆", gradient: "linear-gradient(90deg, #f59e0b, #ef4444, #ec4899)",
     # NOTE: preserve_order = true 时保持 ids 数组顺序，不按字母排序
     preserve_order: true,
-    ids: %w[wr_metric wr_current wr_aoxr wr_dominance wr_newcomer
+    ids: %w[wr_current wr_metric wr_aoxr wr_dominance wr_newcomer
             average_of best_first_average best_first_single
             best_single_counting_into_average consecutive_sub_5_average]
   },
