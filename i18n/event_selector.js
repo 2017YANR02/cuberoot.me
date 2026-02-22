@@ -90,11 +90,13 @@
       const btn = document.createElement('button');
       btn.className = 'event-btn';
       btn.setAttribute('data-event', id);
-      // NOTE: 双语 tooltip（用 data-tooltip 属性 + CSS ::after 伪元素代替原生 title）
+      // NOTE: 双语 tooltip（存储中英文，由 i18n.js apply() 动态切换）
       const lang = document.documentElement.getAttribute('data-lang') || 'en';
-      btn.dataset.tooltip = lang === 'zh' ? (EVENT_ZH[id] || id) : (
-        Object.keys(EVENT_MAP).find(k => EVENT_MAP[k] === id) || id
-      );
+      const enName = Object.keys(EVENT_MAP).find(k => EVENT_MAP[k] === id) || id;
+      const zhName = EVENT_ZH[id] || id;
+      btn.dataset.tooltipEn = enName;
+      btn.dataset.tooltipZh = zhName;
+      btn.dataset.tooltip = lang === 'zh' ? zhName : enName;
 
       // cubing-icon span
       const icon = document.createElement('span');
