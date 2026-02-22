@@ -46,7 +46,7 @@ class WrMetric < Statistic
     WrWorstCounting     => { label: "Worst Counting",  id: "worstc" },
     WrWorst             => { label: "Worst",           id: "worst" },
     WrVariance          => { label: "Variance",        id: "variance" },
-    WrBestAverageRatio  => { label: "Best/Avg Ratio",  id: "ratio" },
+    WrBestAverageRatio  => { label: "Best/Avg",        id: "ratio" },
   }.freeze
 
   def initialize

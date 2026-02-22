@@ -216,7 +216,7 @@ const I18n = {
         "BPA": "BPA", "WPA": "WPA",
         "Median": "中位数", "Best Counting": "最佳计入",
         "Worst Counting": "最差计入", "Worst": "最差",
-        "Variance": "方差", "Best/Avg Ratio": "最佳/平均比值",
+        "Variance": "方差", "Best/Avg": "最佳/平均",
         "Ao1R": "Ao1R（单轮均值）", "Ao2R": "Ao2R（双轮均值）",
         "Ao3R": "Ao3R（三轮均值）", "Ao4R": "Ao4R（四轮均值）",
     },
