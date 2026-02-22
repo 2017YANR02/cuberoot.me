@@ -36,7 +36,8 @@ class WrDominance < Statistic
   # NOTE: WR 历史表头
   HISTORY_HEADER = {
     "Count" => :right, "Improvement" => :right, "Days" => :right,
-    "Person" => :left, "Date" => :left, "Competition" => :left
+    "Person" => :left, "Start Date" => :left, "Start Comp" => :left,
+    "Date" => :left, "Competition" => :left
   }.freeze
 
   # NOTE: 当前排名表头
@@ -173,6 +174,8 @@ class WrDominance < Statistic
 
     max_dom = 0
     wr_records = []
+    # NOTE: 追踪每位选手首次 dominance 的比赛信息
+    first_dom = {}  # person_id => { comp_link:, date: }
 
     # --- WR 历史追踪：按日期分组逐步构建 pv/pb ---
     rows.group_by { |r| r["start_date"] }.each do |date, comp_rows|
@@ -218,6 +221,7 @@ class WrDominance < Statistic
 
       if cnt > max_dom && cnt > 0
         max_dom = cnt
+        first_dom[top_pid] ||= { comp_link: pi[top_pid][:comp_link], date: date }
         wr_records << {
           count: cnt,
           person_id: top_pid,
@@ -243,9 +247,11 @@ class WrDominance < Statistic
       else
         days = (Date.today - r[:date]).to_i.to_s
       end
+      first = first_dom[r[:person_id]]
       [r[:count], improvement, days,
-       r[:person_link], r[:date].strftime("%Y-%m-%d"),
-       r[:comp_link]]
+       r[:person_link],
+       first[:date].strftime("%Y-%m-%d"), first[:comp_link],
+       r[:date].strftime("%Y-%m-%d"), r[:comp_link]]
     end.reverse
 
     # --- 当前排名：复用遍历结束后的 pv/pb 最终状态 ---

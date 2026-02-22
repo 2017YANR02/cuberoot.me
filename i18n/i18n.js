@@ -33,7 +33,7 @@ const I18n = {
     _headerZh: {
         "Person": "选手", "Event": "项目", "Count": "次数",
         "Competition": "比赛", "Competitions": "比赛",
-        "Date": "日期", "Single": "单次", "Average": "平均",
+        "Date": "日期", "Start Date": "开始日期", "Start Comp": "开始比赛", "Single": "单次", "Average": "平均",
         "Rank": "排名", "Result": "成绩", "Details": "详情",
         "Started at": "开始于", "Ended at": "结束于",
         "DNF rate": "DNF 率", "DNFs": "DNF 次数", "Attempts": "尝试次数",

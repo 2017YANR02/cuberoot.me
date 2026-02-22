@@ -72,6 +72,8 @@ module Events
     "Competition" => "比赛",
     "Competitions" => "比赛",
     "Date" => "日期",
+    "Start Date" => "开始日期",
+    "Start Comp" => "开始比赛",
     "Single" => "单次",
     "Average" => "平均",
     "Rank" => "排名",
