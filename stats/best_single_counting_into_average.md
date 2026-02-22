@@ -1,6 +1,6 @@
 <h2 data-i18n-en="Best single counting into an average of 5" data-i18n-zh="计入 Ao5 的最佳单次">Best single counting into an average of 5</h2>
 
-<p><em data-i18n-en="Updated on 19 February 2026" data-i18n-zh="更新于 2026 年 2 月 19 日">Updated on 19 February 2026</em></p>
+<p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>
 
 
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
@@ -13,25 +13,25 @@
 | 3.57 | [Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36) | [Xi'an Cherry Blossom 2025](https://www.worldcubeassociation.org/competitions/XianCherryBlossom2025/results/by_person#2019WANY36) |
 | 3.62 | [Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36) | [Taizhou Open 2025](https://www.worldcubeassociation.org/competitions/TaizhouOpen2025/results/by_person#2019WANY36) |
 | 3.64 | [Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36) | [Beijing Only 3x3 2025](https://www.worldcubeassociation.org/competitions/BeijingOnly3x32025/results/by_person#2019WANY36) |
-| 3.68 | [Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36) | [Guilin Open 2025](https://www.worldcubeassociation.org/competitions/GuilinOpen2025/results/by_person#2019WANY36) |
 | 3.68 | [Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36) | [Singapore Mofunland Cruise 2025](https://www.worldcubeassociation.org/competitions/SingaporeMofunlandCruise2025/results/by_person#2019WANY36) |
-| 3.71 | [Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36) | [Xi'an Autumn 2025](https://www.worldcubeassociation.org/competitions/XianAutumn2025/results/by_person#2019WANY36) |
+| 3.68 | [Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36) | [Guilin Open 2025](https://www.worldcubeassociation.org/competitions/GuilinOpen2025/results/by_person#2019WANY36) |
 | 3.71 | [Xuanyi Geng (耿暄一)](https://www.worldcubeassociation.org/persons/2023GENG02) | [Beijing Winter 2026](https://www.worldcubeassociation.org/competitions/BeijingWinter2026/results/by_person#2023GENG02) |
+| 3.71 | [Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36) | [Xi'an Autumn 2025](https://www.worldcubeassociation.org/competitions/XianAutumn2025/results/by_person#2019WANY36) |
 
 <h3 data-i18n-en="2x2x2 Cube" data-i18n-zh="二阶魔方">2x2x2 Cube</h3>
 
 | Counting | Peson | Competition |
 | ---: | :--- | :--- |
 | 0.63 | [Teodor Zajder](https://www.worldcubeassociation.org/persons/2021ZAJD03) | [Warsaw Cube Masters 2023](https://www.worldcubeassociation.org/competitions/WarsawCubeMasters2023/results/by_person#2021ZAJD03) |
-| 0.70 | [Sujan Feist](https://www.worldcubeassociation.org/persons/2016FEIS01) | [Kids America Christmas OH 2025](https://www.worldcubeassociation.org/competitions/KidsAmericaChristmasOH2025/results/by_person#2016FEIS01) |
 | 0.70 | [Sujan Feist](https://www.worldcubeassociation.org/persons/2016FEIS01) | [Lexington Winter 2025](https://www.worldcubeassociation.org/competitions/LexingtonWinter2025/results/by_person#2016FEIS01) |
+| 0.70 | [Sujan Feist](https://www.worldcubeassociation.org/persons/2016FEIS01) | [Kids America Christmas OH 2025](https://www.worldcubeassociation.org/competitions/KidsAmericaChristmasOH2025/results/by_person#2016FEIS01) |
 | 0.71 | [Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28) | [CMT Grand Junction 2023](https://www.worldcubeassociation.org/competitions/CMTGrandJunction2023/results/by_person#2018KHAN28) |
 | 0.75 | [Ezra Severson](https://www.worldcubeassociation.org/persons/2023SEVE03) | [Davis Winter 2026](https://www.worldcubeassociation.org/competitions/DavisWinter2026/results/by_person#2023SEVE03) |
-| 0.75 | [Newken Nguyen (นิวเคน เหงียน)](https://www.worldcubeassociation.org/persons/2020NGUY04) | [Phitsanulok Big & Sides 2026](https://www.worldcubeassociation.org/competitions/PhitsanulokBigSides2026/results/by_person#2020NGUY04) |
 | 0.75 | [Nigel Phang](https://www.worldcubeassociation.org/persons/2022PHAN03) | [Singapore 50 and Counting 2024](https://www.worldcubeassociation.org/competitions/Singapore50andCounting2024/results/by_person#2022PHAN03) |
-| 0.78 | [Jiazhou Li (李佳洲)](https://www.worldcubeassociation.org/persons/2016LIJI05) | [Chongqing Open 2023](https://www.worldcubeassociation.org/competitions/ChongqingOpen2023/results/by_person#2016LIJI05) |
-| 0.78 | [Teodor Zajder](https://www.worldcubeassociation.org/persons/2021ZAJD03) | [Energy Cube Białołęka 2024](https://www.worldcubeassociation.org/competitions/EnergyCubeBialoleka2024/results/by_person#2021ZAJD03) |
+| 0.75 | [Newken Nguyen (นิวเคน เหงียน)](https://www.worldcubeassociation.org/persons/2020NGUY04) | [Phitsanulok Big & Sides 2026](https://www.worldcubeassociation.org/competitions/PhitsanulokBigSides2026/results/by_person#2020NGUY04) |
 | 0.78 | [Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28) | [Across the Woods Kentucky B 2023](https://www.worldcubeassociation.org/competitions/AcrosstheWoodsKentuckyB2023/results/by_person#2018KHAN28) |
+| 0.78 | [Teodor Zajder](https://www.worldcubeassociation.org/persons/2021ZAJD03) | [Energy Cube Białołęka 2024](https://www.worldcubeassociation.org/competitions/EnergyCubeBialoleka2024/results/by_person#2021ZAJD03) |
+| 0.78 | [Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36) | [Beijing Winter 2026](https://www.worldcubeassociation.org/competitions/BeijingWinter2026/results/by_person#2019WANY36) |
 
 <h3 data-i18n-en="4x4x4 Cube" data-i18n-zh="四阶魔方">4x4x4 Cube</h3>
 
@@ -59,9 +59,9 @@
 | 33.53 | [Max Park](https://www.worldcubeassociation.org/persons/2012PARK03) | [DFW Megacomp 2024](https://www.worldcubeassociation.org/competitions/DFWMegacomp2024/results/by_person#2012PARK03) |
 | 33.69 | [Max Park](https://www.worldcubeassociation.org/persons/2012PARK03) | [CubingUSA All-Stars 2025](https://www.worldcubeassociation.org/competitions/CubingUSAAllStars2025/results/by_person#2012PARK03) |
 | 33.75 | [Max Park](https://www.worldcubeassociation.org/persons/2012PARK03) | [NAC 2024](https://www.worldcubeassociation.org/competitions/NAC2024/results/by_person#2012PARK03) |
+| 33.79 | [Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02) | [Melbourne Summer 2026](https://www.worldcubeassociation.org/competitions/MelbourneSummer2026/results/by_person#2016KOLA02) |
 | 33.82 | [Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02) | [WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/by_person#2016KOLA02) |
 | 34.00 | [Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02) | [Energy Cube Białołęka 2025](https://www.worldcubeassociation.org/competitions/EnergyCubeBialoleka2025/results/by_person#2016KOLA02) |
-| 34.11 | [Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02) | [Olsztyn Open 2024](https://www.worldcubeassociation.org/competitions/OlsztynOpen2024/results/by_person#2016KOLA02) |
 
 <h3 data-i18n-en="3x3x3 One-Handed" data-i18n-zh="三阶单手">3x3x3 One-Handed</h3>
 
@@ -91,7 +91,7 @@
 | 24.26 | [Timofei Tarasenko](https://www.worldcubeassociation.org/persons/2019TARA09) | [Uzbekistan Nationals 2025](https://www.worldcubeassociation.org/competitions/UzbekistanNationals2025/results/by_person#2019TARA09) |
 | 24.38 | [Timofei Tarasenko](https://www.worldcubeassociation.org/persons/2019TARA09) | [Uzbekistan Nationals 2025](https://www.worldcubeassociation.org/competitions/UzbekistanNationals2025/results/by_person#2019TARA09) |
 | 24.40 | [Ziyu Wu (吴子钰)](https://www.worldcubeassociation.org/persons/2016WUZI04) | [Zhengzhou Zeal 2025](https://www.worldcubeassociation.org/competitions/ZhengzhouZeal2025/results/by_person#2016WUZI04) |
-| 24.49 | [Leandro Martín López](https://www.worldcubeassociation.org/persons/2018LOPE22) | [Lomas de Zamora 2025](https://www.worldcubeassociation.org/competitions/LomasdeZamora2025/results/by_person#2018LOPE22) |
+| 24.49 | [Timofei Tarasenko](https://www.worldcubeassociation.org/persons/2019TARA09) | [Central Asian Tour Astana 2025](https://www.worldcubeassociation.org/competitions/CentralAsianTourAstana2025/results/by_person#2019TARA09) |
 
 <h3 data-i18n-en="Pyraminx" data-i18n-zh="金字塔">Pyraminx</h3>
 
@@ -101,12 +101,12 @@
 | 1.04 | [Lingkun Jiang (姜凌坤)](https://www.worldcubeassociation.org/persons/2019JIAN54) | [Zhengzhou Zest 2025](https://www.worldcubeassociation.org/competitions/ZhengzhouZest2025/results/by_person#2019JIAN54) |
 | 1.07 | [Lingkun Jiang (姜凌坤)](https://www.worldcubeassociation.org/persons/2019JIAN54) | [Xuzhou Newcomers 2025](https://www.worldcubeassociation.org/competitions/XuzhouNewcomers2025/results/by_person#2019JIAN54) |
 | 1.07 | [Alexey Tsvetkov](https://www.worldcubeassociation.org/persons/2017TSVE02) | [Prague Open 2024](https://www.worldcubeassociation.org/competitions/PragueOpen2024/results/by_person#2017TSVE02) |
-| 1.09 | [Lingkun Jiang (姜凌坤)](https://www.worldcubeassociation.org/persons/2019JIAN54) | [WCA Asian Championship 2024](https://www.worldcubeassociation.org/competitions/RubiksWCAAsianChampionship2024/results/by_person#2019JIAN54) |
-| 1.09 | [Lingkun Jiang (姜凌坤)](https://www.worldcubeassociation.org/persons/2019JIAN54) | [Taizhou Open 2025](https://www.worldcubeassociation.org/competitions/TaizhouOpen2025/results/by_person#2019JIAN54) |
+| 1.08 | [Lingkun Jiang (姜凌坤)](https://www.worldcubeassociation.org/persons/2019JIAN54) | [Guangdong Revival & Rival 2026](https://www.worldcubeassociation.org/competitions/GuangdongRevivalRival2026/results/by_person#2019JIAN54) |
 | 1.09 | [Sebastian Lee](https://www.worldcubeassociation.org/persons/2021LEES01) | [Maitland Spring 2024](https://www.worldcubeassociation.org/competitions/MaitlandSpring2024/results/by_person#2021LEES01) |
+| 1.09 | [Lingkun Jiang (姜凌坤)](https://www.worldcubeassociation.org/persons/2019JIAN54) | [Taizhou Open 2025](https://www.worldcubeassociation.org/competitions/TaizhouOpen2025/results/by_person#2019JIAN54) |
+| 1.09 | [Lingkun Jiang (姜凌坤)](https://www.worldcubeassociation.org/persons/2019JIAN54) | [WCA Asian Championship 2024](https://www.worldcubeassociation.org/competitions/RubiksWCAAsianChampionship2024/results/by_person#2019JIAN54) |
 | 1.11 | [Lingkun Jiang (姜凌坤)](https://www.worldcubeassociation.org/persons/2019JIAN54) | [Taizhou Open 2025](https://www.worldcubeassociation.org/competitions/TaizhouOpen2025/results/by_person#2019JIAN54) |
 | 1.11 | [Lingkun Jiang (姜凌坤)](https://www.worldcubeassociation.org/persons/2019JIAN54) | [Hangzhou Open 2024](https://www.worldcubeassociation.org/competitions/HangzhouOpen2024/results/by_person#2019JIAN54) |
-| 1.14 | [Michael Nielsen](https://www.worldcubeassociation.org/persons/2017NIEL03) | [WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/by_person#2017NIEL03) |
 
 <h3 data-i18n-en="Rubik's Clock" data-i18n-zh="魔表">Rubik's Clock</h3>
 
@@ -117,8 +117,8 @@
 | 1.97 | [Brendyn Dunagan](https://www.worldcubeassociation.org/persons/2021DUNA01) | [Agoura Winter 2026](https://www.worldcubeassociation.org/competitions/AgouraWinter2026/results/by_person#2021DUNA01) |
 | 1.98 | [Lachlan Gibson](https://www.worldcubeassociation.org/persons/2022GIBS04) | [NZ Cubing Decathlon 2025](https://www.worldcubeassociation.org/competitions/NZCubingDecathlon2025/results/by_person#2022GIBS04) |
 | 2.02 | [Brendyn Dunagan](https://www.worldcubeassociation.org/persons/2021DUNA01) | [Temecula Valley Winter 2025](https://www.worldcubeassociation.org/competitions/TemeculaValleyWinter2025/results/by_person#2021DUNA01) |
-| 2.04 | [Lachlan Gibson](https://www.worldcubeassociation.org/persons/2022GIBS04) | [NZ Cubing Decathlon 2025](https://www.worldcubeassociation.org/competitions/NZCubingDecathlon2025/results/by_person#2022GIBS04) |
 | 2.04 | [Lachlan Gibson](https://www.worldcubeassociation.org/persons/2022GIBS04) | [Beachside Auckland 2025](https://www.worldcubeassociation.org/competitions/BeachsideAuckland2025/results/by_person#2022GIBS04) |
+| 2.04 | [Lachlan Gibson](https://www.worldcubeassociation.org/persons/2022GIBS04) | [NZ Cubing Decathlon 2025](https://www.worldcubeassociation.org/competitions/NZCubingDecathlon2025/results/by_person#2022GIBS04) |
 | 2.07 | [Brendyn Dunagan](https://www.worldcubeassociation.org/persons/2021DUNA01) | [Agoura Winter 2026](https://www.worldcubeassociation.org/competitions/AgouraWinter2026/results/by_person#2021DUNA01) |
 | 2.08 | [Lachlan Gibson](https://www.worldcubeassociation.org/persons/2022GIBS04) | [Milford Winter Warm Up 2025](https://www.worldcubeassociation.org/competitions/MilfordWinterWarmUp2025/results/by_person#2022GIBS04) |
 | 2.10 | [Volodymyr Kapustianskyi](https://www.worldcubeassociation.org/persons/2022KAPU01) | [Grand Forks 2025](https://www.worldcubeassociation.org/competitions/GrandForks2025/results/by_person#2022KAPU01) |
@@ -172,30 +172,30 @@
 
 | Counting | Peson | Competition |
 | ---: | :--- | :--- |
-| 0.75 | [Yuxuan Wang (王宇轩)](https://www.worldcubeassociation.org/persons/2009WANG13) | [Tianjin Winter 2012](https://www.worldcubeassociation.org/competitions/TianjinWinter2012/results/by_person#2009WANG13) |
 | 0.75 | [Yuxuan Wang (王宇轩)](https://www.worldcubeassociation.org/persons/2009WANG13) | [Beijing Summer Open 2011](https://www.worldcubeassociation.org/competitions/BeijingSummer2011/results/by_person#2009WANG13) |
+| 0.75 | [Yuxuan Wang (王宇轩)](https://www.worldcubeassociation.org/persons/2009WANG13) | [Tianjin Winter 2012](https://www.worldcubeassociation.org/competitions/TianjinWinter2012/results/by_person#2009WANG13) |
 | 0.77 | [Yuxuan Wang (王宇轩)](https://www.worldcubeassociation.org/persons/2009WANG13) | [Taiyuan 2011](https://www.worldcubeassociation.org/competitions/Taiyuan2011/results/by_person#2009WANG13) |
 | 0.77 | [Yuxuan Wang (王宇轩)](https://www.worldcubeassociation.org/persons/2009WANG13) | [Beijing Summer Open 2011](https://www.worldcubeassociation.org/competitions/BeijingSummer2011/results/by_person#2009WANG13) |
 | 0.77 | [Yuxuan Wang (王宇轩)](https://www.worldcubeassociation.org/persons/2009WANG13) | [Beijing Summer Open 2011](https://www.worldcubeassociation.org/competitions/BeijingSummer2011/results/by_person#2009WANG13) |
 | 0.78 | [Yuxuan Wang (王宇轩)](https://www.worldcubeassociation.org/persons/2009WANG13) | [Beijing No Cubes 2010](https://www.worldcubeassociation.org/competitions/BeijingNoCubes2010/results/by_person#2009WANG13) |
-| 0.78 | [Yuxuan Wang (王宇轩)](https://www.worldcubeassociation.org/persons/2009WANG13) | [Shanghai Open 2010](https://www.worldcubeassociation.org/competitions/ShanghaiOpen2010/results/by_person#2009WANG13) |
-| 0.78 | [Yuxuan Wang (王宇轩)](https://www.worldcubeassociation.org/persons/2009WANG13) | [Shanghai Open 2010](https://www.worldcubeassociation.org/competitions/ShanghaiOpen2010/results/by_person#2009WANG13) |
 | 0.78 | [Yuxuan Wang (王宇轩)](https://www.worldcubeassociation.org/persons/2009WANG13) | [Beijing Spring 2011](https://www.worldcubeassociation.org/competitions/BeijingSpring2011/results/by_person#2009WANG13) |
-| 0.80 | [Yuxuan Wang (王宇轩)](https://www.worldcubeassociation.org/persons/2009WANG13) | [Nanjing Spring Open 2010](https://www.worldcubeassociation.org/competitions/NanjingSpringOpen2010/results/by_person#2009WANG13) |
+| 0.78 | [Yuxuan Wang (王宇轩)](https://www.worldcubeassociation.org/persons/2009WANG13) | [Shanghai Open 2010](https://www.worldcubeassociation.org/competitions/ShanghaiOpen2010/results/by_person#2009WANG13) |
+| 0.78 | [Yuxuan Wang (王宇轩)](https://www.worldcubeassociation.org/persons/2009WANG13) | [Shanghai Open 2010](https://www.worldcubeassociation.org/competitions/ShanghaiOpen2010/results/by_person#2009WANG13) |
+| 0.80 | [Yuxuan Wang (王宇轩)](https://www.worldcubeassociation.org/persons/2009WANG13) | [Tianjin Open 2011](https://www.worldcubeassociation.org/competitions/TianjinOpen2011/results/by_person#2009WANG13) |
 
 <h3 data-i18n-en="Master Magic" data-i18n-zh="十二板">Master Magic</h3>
 
 | Counting | Peson | Competition |
 | ---: | :--- | :--- |
 | 1.71 | [Ernie Pulchny](https://www.worldcubeassociation.org/persons/2010PULC01) | [US Nationals 2011](https://www.worldcubeassociation.org/competitions/USNationals2011/results/by_person#2010PULC01) |
-| 1.77 | [Yuxuan Wang (王宇轩)](https://www.worldcubeassociation.org/persons/2009WANG13) | [Tianjin Winter 2012](https://www.worldcubeassociation.org/competitions/TianjinWinter2012/results/by_person#2009WANG13) |
 | 1.77 | [Ernie Pulchny](https://www.worldcubeassociation.org/persons/2010PULC01) | [US Nationals 2011](https://www.worldcubeassociation.org/competitions/USNationals2011/results/by_person#2010PULC01) |
+| 1.77 | [Yuxuan Wang (王宇轩)](https://www.worldcubeassociation.org/persons/2009WANG13) | [Tianjin Winter 2012](https://www.worldcubeassociation.org/competitions/TianjinWinter2012/results/by_person#2009WANG13) |
 | 1.78 | [Yuxuan Wang (王宇轩)](https://www.worldcubeassociation.org/persons/2009WANG13) | [Wuhan Open 2012](https://www.worldcubeassociation.org/competitions/WuhanOpen2012/results/by_person#2009WANG13) |
 | 1.78 | [Ernie Pulchny](https://www.worldcubeassociation.org/persons/2010PULC01) | [US Nationals 2011](https://www.worldcubeassociation.org/competitions/USNationals2011/results/by_person#2010PULC01) |
 | 1.80 | [Ernie Pulchny](https://www.worldcubeassociation.org/persons/2010PULC01) | [SJC Winter 2012](https://www.worldcubeassociation.org/competitions/SJCWinter2012/results/by_person#2010PULC01) |
-| 1.81 | [Ernie Pulchny](https://www.worldcubeassociation.org/persons/2010PULC01) | [Newark Head to Head 2011](https://www.worldcubeassociation.org/competitions/NewarkH2H2011/results/by_person#2010PULC01) |
-| 1.81 | [Yuxuan Wang (王宇轩)](https://www.worldcubeassociation.org/persons/2009WANG13) | [Beijing Winter 2012](https://www.worldcubeassociation.org/competitions/BeijingWinter2012/results/by_person#2009WANG13) |
 | 1.81 | [Ernie Pulchny](https://www.worldcubeassociation.org/persons/2010PULC01) | [Jersey Shore Open 2012](https://www.worldcubeassociation.org/competitions/JerseyShoreOpen2012/results/by_person#2010PULC01) |
+| 1.81 | [Yuxuan Wang (王宇轩)](https://www.worldcubeassociation.org/persons/2009WANG13) | [Beijing Winter 2012](https://www.worldcubeassociation.org/competitions/BeijingWinter2012/results/by_person#2009WANG13) |
+| 1.81 | [Ernie Pulchny](https://www.worldcubeassociation.org/persons/2010PULC01) | [Newark Head to Head 2011](https://www.worldcubeassociation.org/competitions/NewarkH2H2011/results/by_person#2010PULC01) |
 | 1.83 | [Kamil Fiedoruk](https://www.worldcubeassociation.org/persons/2012FIED01) | [Polish Nationals 2012](https://www.worldcubeassociation.org/competitions/PolishNationals2012/results/by_person#2012FIED01) |
 
 

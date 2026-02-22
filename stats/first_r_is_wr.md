@@ -1,7 +1,7 @@
 <h2 data-i18n-en="First record is a World Record" data-i18n-zh="First record is a World Record">First record is a World Record</h2>
 
 <p><em data-i18n-en="People whose very first record (single or average, any event) was a World Record." data-i18n-zh="People whose very first record (single or average, any event) was a World Record.">People whose very first record (single or average, any event) was a World Record.</em></p>
-<p><em data-i18n-en="Updated on 19 February 2026" data-i18n-zh="更新于 2026 年 2 月 19 日">Updated on 19 February 2026</em></p>
+<p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>
 
 | # | Person | Event | Type | Result | Date | Competition |
 | ---: | :--- | :--- | :--- | ---: | :--- | :--- |
@@ -32,7 +32,7 @@
 | 25 | [Keisuke Hiraya (平谷啓輔)](https://www.worldcubeassociation.org/persons/2007HIRA02) | 3x3x3 One-Handed | Average | 20.69 | 2008-01-14 | [Kawasaki Open 2008](https://www.worldcubeassociation.org/competitions/KawasakiOpen2008) |
 | 26 | [Dennis Strehlau](https://www.worldcubeassociation.org/persons/2007STRE01) | Rubik's Cube: Multiple blind old style | Single | 10/10 1:36:39 | 2008-02-02 | [Belgian Open 2008](https://www.worldcubeassociation.org/competitions/BelgianOpen2008) |
 | 27 | [Tomasz Kiedrowicz](https://www.worldcubeassociation.org/persons/2006KIED01) | Pyraminx | Single | 2.83 | 2008-02-24 | [Gdansk Open 2008](https://www.worldcubeassociation.org/competitions/GdanskOpen2008) |
-| 28 | [Claes Hedin](https://www.worldcubeassociation.org/persons/2009HEDI01) | 6x6x6 Cube | Average | 4:04.30 | 2009-02-07 | [Norrköping Open 2009](https://www.worldcubeassociation.org/competitions/NorrkopingOpen2009) |
+| 28 | [Claes Hedin](https://www.worldcubeassociation.org/persons/2009HEDI01) | 6x6x6 Cube | Single | 3:44.84 | 2009-02-07 | [Norrköping Open 2009](https://www.worldcubeassociation.org/competitions/NorrkopingOpen2009) |
 | 29 | [Oskar Åsbrink](https://www.worldcubeassociation.org/persons/2009ASBR01) | Rubik's Magic | Single | 0.80 | 2009-08-15 | [Kristianstad Open 2009](https://www.worldcubeassociation.org/competitions/KristianstadOpen2009) |
 | 30 | [Tong Jiang (蒋彤)](https://www.worldcubeassociation.org/persons/2009JIAN03) | 3x3x3 Multi-Blind | Single | 15/15 52:01 | 2009-08-16 | [Beijing Summer Open 2009](https://www.worldcubeassociation.org/competitions/BeijingSummerOpen2009) |
 | 31 | [Yuxuan Wang (王宇轩)](https://www.worldcubeassociation.org/persons/2009WANG13) | Rubik's Magic | Single | 0.83 | 2009-08-16 | [Beijing Summer Open 2009](https://www.worldcubeassociation.org/competitions/BeijingSummerOpen2009) |
