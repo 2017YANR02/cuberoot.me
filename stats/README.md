@@ -7,14 +7,12 @@
 <div class="glass-card stat-card" style="--card-gradient: linear-gradient(90deg, #f59e0b, #ef4444, #ec4899)">
 <h3 data-i18n-en="🏆 World Record Analysis" data-i18n-zh="🏆 世界纪录分析">🏆 World Record Analysis</h3>
 <div class="stat-links">
-<a href="wr_metric" data-i18n-en="Metric" data-i18n-zh="指标">Metric</a>
 <a href="wr_current" data-i18n-en="Current world records" data-i18n-zh="当前世界纪录">Current world records</a>
+<a href="wr_metric" data-i18n-en="Metric" data-i18n-zh="指标">Metric</a>
 <a href="wr_aoxr" data-i18n-en="AoXR" data-i18n-zh="多轮均值（AoXR）">AoXR</a>
 <a href="wr_dominance" data-i18n-en="Dominance" data-i18n-zh="屠榜">Dominance</a>
 <a href="wr_newcomer" data-i18n-en="Newcomer" data-i18n-zh="新人">Newcomer</a>
 <a href="average_of" data-i18n-en="Average of X" data-i18n-zh="X 次平均">Average of X</a>
-<a href="best_first_average" data-i18n-en="Best first average" data-i18n-zh="最佳首次平均">Best first average</a>
-<a href="best_first_single" data-i18n-en="Best first single" data-i18n-zh="最佳首次单次">Best first single</a>
 <a href="best_single_counting_into_average" data-i18n-en="Best single counting into an average of 5" data-i18n-zh="计入 Ao5 的最佳单次">Best single counting into an average of 5</a>
 <a href="consecutive_sub_5_average" data-i18n-en="Most consecutive sub-5 averages in 3x3x3" data-i18n-zh="最多连续 sub-5 三阶平均">Most consecutive sub-5 averages in 3x3x3</a>
 </div>
