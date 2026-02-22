@@ -765,6 +765,13 @@ const I18n = {
             });
         }
 
+        // NOTE: 项目选择器图标的 tooltip 语言切换
+        document.querySelectorAll('.event-btn[data-tooltip-en]').forEach(btn => {
+            btn.dataset.tooltip = this.locale === 'zh'
+                ? (btn.dataset.tooltipZh || btn.dataset.tooltipEn)
+                : btn.dataset.tooltipEn;
+        });
+
         // NOTE: Stats 页面 "Updated on" 日期翻译
         if (this.locale === 'zh') {
             const _months = { January: '1', February: '2', March: '3', April: '4', May: '5', June: '6', July: '7', August: '8', September: '9', October: '10', November: '11', December: '12' };
