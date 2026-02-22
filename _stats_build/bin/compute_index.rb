@@ -26,7 +26,7 @@ STAT_CATEGORIES = [
     # NOTE: preserve_order = true 时保持 ids 数组顺序，不按字母排序
     preserve_order: true,
     ids: %w[wr_current wr_metric wr_aoxr wr_dominance wr_newcomer
-            average_of best_single_counting_into_average consecutive_sub_5_average]
+            average_of consecutive_sub_5_average]
   },
   {
     name_en: "Results & Records", name_zh: "成绩与纪录",
