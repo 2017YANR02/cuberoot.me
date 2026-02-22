@@ -71,6 +71,7 @@ class WrMetric < Statistic
       meta = METRIC_META[inst.class]
       prefix = meta[:id]
       active = i == 0
+      t_sub = Time.now
 
       md += "<div class=\"metric-panel#{active ? ' active' : ''}\" id=\"metric-#{prefix}\">\n"
 
@@ -87,6 +88,7 @@ class WrMetric < Statistic
       md += grouped_panel("#{prefix}-history", false, history, inst.instance_variable_get(:@table_header))
 
       md += "</div>\n"
+      printf("    [%2d/%d] %-20s %5.1fs\n", i + 1, instances.size, meta[:label], Time.now - t_sub)
     end
 
     # --- JS ---

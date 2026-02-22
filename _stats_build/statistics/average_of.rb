@@ -48,6 +48,7 @@ class AverageOf < Statistic
       meta = AOX_META[inst.class]
       prefix = meta[:id]
       active = i == 0
+      t_sub = Time.now
 
       md += "<div class=\"metric-panel#{active ? ' active' : ''}\" id=\"metric-#{prefix}\">\n"
 
@@ -55,6 +56,7 @@ class AverageOf < Statistic
       md += grouped_panel(prefix, true, inst.data, header)
 
       md += "</div>\n"
+      printf("    [%d/%d] %-20s %5.1fs\n", i + 1, instances.size, meta[:label], Time.now - t_sub)
     end
 
     # --- JS ---
