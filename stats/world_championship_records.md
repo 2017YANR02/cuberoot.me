@@ -1,7 +1,7 @@
 <h2 data-i18n-en="World Championship records" data-i18n-zh="世锦赛纪录">World Championship records</h2>
 
 <p><em data-i18n-en="This is a list of the best results from all World Championships. It corresponds to Olympic records for Olympic sports." data-i18n-zh="此列表包含历届世界锦标赛的最佳成绩，相当于奥运项目中的奥运纪录。">This is a list of the best results from all World Championships. It corresponds to Olympic records for Olympic sports.</em></p>
-<p><em data-i18n-en="Updated on 19 February 2026" data-i18n-zh="更新于 2026 年 2 月 19 日">Updated on 19 February 2026</em></p>
+<p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>
 
 
 <h3 data-i18n-en="Single" data-i18n-zh="Single">Single</h3>

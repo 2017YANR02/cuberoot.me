@@ -1,7 +1,7 @@
 <h2 data-i18n-en="Dominance" data-i18n-zh="屠榜">Dominance</h2>
 
 <p><em data-i18n-en="A competitor completely dominates top N on the leaderboard of results. Tied results are excluded." data-i18n-zh="选手在全历史成绩排行榜上完全霸占前 N 席。并列成绩不计入。">A competitor completely dominates top N on the leaderboard of results. Tied results are excluded.</em></p>
-<p><em data-i18n-en="Updated on 18 February 2026" data-i18n-zh="更新于 2026 年 2 月 18 日">Updated on 18 February 2026</em></p>
+<p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>
 
 <style>
 .metric-selector{display:flex;flex-wrap:wrap;gap:6px;margin:16px 0}
@@ -42,17 +42,17 @@
 <h3 data-i18n-en="2x2x2 Cube" data-i18n-zh="二阶魔方">2x2x2 Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Count</th><th>Date</th><th>Competition</th></tr>
-<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2021YEZI01">Ziyu Ye (叶梓渝)</a></td><td style="text-align:right">1</td><td>2025-12-27</td><td><a href="https://www.worldcubeassociation.org/competitions/ZhengzhouZest2025">Zhengzhou Zest 2025</a></td></tr>
+<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2021YEZI01">Ziyu Ye (叶梓渝)</a></td><td style="text-align:right">1</td><td>2026-02-06</td><td><a href="https://www.worldcubeassociation.org/competitions/GuangdongRevivalRival2026">Guangdong Revival & Rival 2026</a></td></tr>
 </table>
 <h3 data-i18n-en="4x4x4 Cube" data-i18n-zh="四阶魔方">4x4x4 Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Count</th><th>Date</th><th>Competition</th></tr>
-<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2016KOLA02">Tymon Kolasiński</a></td><td style="text-align:right">1</td><td>2026-01-17</td><td><a href="https://www.worldcubeassociation.org/competitions/SeoulWinter2026">Seoul Winter 2026</a></td></tr>
+<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2016KOLA02">Tymon Kolasiński</a></td><td style="text-align:right">1</td><td>2026-01-24</td><td><a href="https://www.worldcubeassociation.org/competitions/MelbourneSummer2026">Melbourne Summer 2026</a></td></tr>
 </table>
 <h3 data-i18n-en="5x5x5 Cube" data-i18n-zh="五阶魔方">5x5x5 Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Count</th><th>Date</th><th>Competition</th></tr>
-<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2016KOLA02">Tymon Kolasiński</a></td><td style="text-align:right">2</td><td>2026-01-17</td><td><a href="https://www.worldcubeassociation.org/competitions/SeoulWinter2026">Seoul Winter 2026</a></td></tr>
+<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2016KOLA02">Tymon Kolasiński</a></td><td style="text-align:right">2</td><td>2026-01-24</td><td><a href="https://www.worldcubeassociation.org/competitions/MelbourneSummer2026">Melbourne Summer 2026</a></td></tr>
 </table>
 <h3 data-i18n-en="6x6x6 Cube" data-i18n-zh="六阶魔方">6x6x6 Cube</h3>
 <table>
@@ -67,7 +67,7 @@
 <h3 data-i18n-en="3x3x3 Blindfolded" data-i18n-zh="三盲">3x3x3 Blindfolded</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Count</th><th>Date</th><th>Competition</th></tr>
-<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2019EGGI02">Charlie Eggins</a></td><td style="text-align:right">1</td><td>2026-01-10</td><td><a href="https://www.worldcubeassociation.org/competitions/CubingatTheCube2026">Cubing at The Cube 2026</a></td></tr>
+<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2019EGGI02">Charlie Eggins</a></td><td style="text-align:right">2</td><td>2026-01-24</td><td><a href="https://www.worldcubeassociation.org/competitions/MelbourneSummer2026">Melbourne Summer 2026</a></td></tr>
 </table>
 <h3 data-i18n-en="3x3x3 One-Handed" data-i18n-zh="三阶单手">3x3x3 One-Handed</h3>
 <table>
@@ -77,7 +77,7 @@
 <h3 data-i18n-en="Megaminx" data-i18n-zh="五魔">Megaminx</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Count</th><th>Date</th><th>Competition</th></tr>
-<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2019TARA09">Timofei Tarasenko</a></td><td style="text-align:right">3</td><td>2025-12-06</td><td><a href="https://www.worldcubeassociation.org/competitions/TashkentOpen2025">Tashkent Open 2025</a></td></tr>
+<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2019TARA09">Timofei Tarasenko</a></td><td style="text-align:right">3</td><td>2026-02-06</td><td><a href="https://www.worldcubeassociation.org/competitions/GuangdongRevivalRival2026">Guangdong Revival & Rival 2026</a></td></tr>
 </table>
 <h3 data-i18n-en="Pyraminx" data-i18n-zh="金字塔">Pyraminx</h3>
 <table>
@@ -97,7 +97,7 @@
 <h3 data-i18n-en="Square-1" data-i18n-zh="SQ1">Square-1</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Count</th><th>Date</th><th>Competition</th></tr>
-<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2018KHAN26">Hassan Khanani</a></td><td style="text-align:right">1</td><td>2026-01-31</td><td><a href="https://www.worldcubeassociation.org/competitions/FredericksburgWinterPM2026">Fredericksburg Winter PM 2026</a></td></tr>
+<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2018KHAN26">Hassan Khanani</a></td><td style="text-align:right">1</td><td>2026-02-14</td><td><a href="https://www.worldcubeassociation.org/competitions/UMBCWinter2026">UMBC Winter 2026</a></td></tr>
 </table>
 <h3 data-i18n-en="4x4x4 Blindfolded" data-i18n-zh="四盲">4x4x4 Blindfolded</h3>
 <table>
@@ -395,7 +395,7 @@
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Count</th><th>Date</th><th>Competition</th></tr>
-<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2023GENG02">Xuanyi Geng (耿暄一)</a></td><td style="text-align:right">1</td><td>2026-01-10</td><td><a href="https://www.worldcubeassociation.org/competitions/BeijingWinter2026">Beijing Winter 2026</a></td></tr>
+<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2023GENG02">Xuanyi Geng (耿暄一)</a></td><td style="text-align:right">1</td><td>2026-02-06</td><td><a href="https://www.worldcubeassociation.org/competitions/GuangdongRevivalRival2026">Guangdong Revival & Rival 2026</a></td></tr>
 </table>
 <h3 data-i18n-en="2x2x2 Cube" data-i18n-zh="二阶魔方">2x2x2 Cube</h3>
 <table>
@@ -405,12 +405,12 @@
 <h3 data-i18n-en="4x4x4 Cube" data-i18n-zh="四阶魔方">4x4x4 Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Count</th><th>Date</th><th>Competition</th></tr>
-<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2016KOLA02">Tymon Kolasiński</a></td><td style="text-align:right">1</td><td>2026-01-17</td><td><a href="https://www.worldcubeassociation.org/competitions/SeoulWinter2026">Seoul Winter 2026</a></td></tr>
+<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2016KOLA02">Tymon Kolasiński</a></td><td style="text-align:right">1</td><td>2026-01-24</td><td><a href="https://www.worldcubeassociation.org/competitions/MelbourneSummer2026">Melbourne Summer 2026</a></td></tr>
 </table>
 <h3 data-i18n-en="5x5x5 Cube" data-i18n-zh="五阶魔方">5x5x5 Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Count</th><th>Date</th><th>Competition</th></tr>
-<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2016KOLA02">Tymon Kolasiński</a></td><td style="text-align:right">1</td><td>2026-01-17</td><td><a href="https://www.worldcubeassociation.org/competitions/SeoulWinter2026">Seoul Winter 2026</a></td></tr>
+<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2016KOLA02">Tymon Kolasiński</a></td><td style="text-align:right">1</td><td>2026-01-24</td><td><a href="https://www.worldcubeassociation.org/competitions/MelbourneSummer2026">Melbourne Summer 2026</a></td></tr>
 </table>
 <h3 data-i18n-en="6x6x6 Cube" data-i18n-zh="六阶魔方">6x6x6 Cube</h3>
 <table>
@@ -435,12 +435,12 @@
 <h3 data-i18n-en="Megaminx" data-i18n-zh="五魔">Megaminx</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Count</th><th>Date</th><th>Competition</th></tr>
-<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2019TARA09">Timofei Tarasenko</a></td><td style="text-align:right">1</td><td>2025-12-06</td><td><a href="https://www.worldcubeassociation.org/competitions/TashkentOpen2025">Tashkent Open 2025</a></td></tr>
+<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2019TARA09">Timofei Tarasenko</a></td><td style="text-align:right">1</td><td>2026-02-06</td><td><a href="https://www.worldcubeassociation.org/competitions/GuangdongRevivalRival2026">Guangdong Revival & Rival 2026</a></td></tr>
 </table>
 <h3 data-i18n-en="Pyraminx" data-i18n-zh="金字塔">Pyraminx</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Count</th><th>Date</th><th>Competition</th></tr>
-<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2019JIAN54">Lingkun Jiang (姜凌坤)</a></td><td style="text-align:right">1</td><td>2026-01-17</td><td><a href="https://www.worldcubeassociation.org/competitions/FuzhouOpen2026">Fuzhou Open 2026</a></td></tr>
+<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2019JIAN54">Lingkun Jiang (姜凌坤)</a></td><td style="text-align:right">1</td><td>2026-02-06</td><td><a href="https://www.worldcubeassociation.org/competitions/GuangdongRevivalRival2026">Guangdong Revival & Rival 2026</a></td></tr>
 </table>
 <h3 data-i18n-en="Rubik's Clock" data-i18n-zh="魔表">Rubik's Clock</h3>
 <table>
@@ -780,3 +780,6 @@ function switchTab(e,id){
   document.getElementById(id).classList.add('active');
 }
 </script>
+
+
+<a href="https://github.com/RuiminYan/ruiminyan.github.io" class="github-corner" aria-label="View source on Github"><svg width="80" height="80" viewBox="0 0 250 250" style="fill:#151513; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>

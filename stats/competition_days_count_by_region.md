@@ -1,31 +1,31 @@
 <h2 data-i18n-en="Competition days count by region" data-i18n-zh="各地区比赛天数">Competition days count by region</h2>
 
-<p><em data-i18n-en="Updated on 19 February 2026" data-i18n-zh="更新于 2026 年 2 月 19 日">Updated on 19 February 2026</em></p>
+<p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>
 
 
 <h3 data-i18n-en="World" data-i18n-zh="World">World</h3>
 
 | Days | Region | Competitions |
 | ---: | :--- | ---: |
-| 1.46 | World | 16984 |
+| 1.46 | World | 16998 |
 
 <h3 data-i18n-en="Continents" data-i18n-zh="Continents">Continents</h3>
 
 | Days | Region | Competitions |
 | ---: | :--- | ---: |
-| 1.72 | Europe | 5506 |
-| 1.48 | Oceania | 734 |
-| 1.46 | South America | 2176 |
-| 1.40 | Asia | 3450 |
-| 1.33 | Africa | 220 |
-| 1.21 | North America | 4898 |
+| 1.72 | Europe | 5510 |
+| 1.48 | Oceania | 735 |
+| 1.46 | South America | 2177 |
+| 1.40 | Asia | 3453 |
+| 1.33 | Africa | 221 |
+| 1.21 | North America | 4902 |
 
 <h3 data-i18n-en="Countries" data-i18n-zh="Countries">Countries</h3>
 
 | Days | Region | Competitions |
 | ---: | :--- | ---: |
-| 2.04 | Uzbekistan | 27 |
-| 2.00 | Kazakhstan | 63 |
+| 2.04 | Uzbekistan | 28 |
+| 2.00 | Kazakhstan | 64 |
 | 2.00 | Liechtenstein | 3 |
 | 1.94 | Germany | 287 |
 | 1.93 | Belarus | 42 |
@@ -43,7 +43,7 @@
 | 1.84 | Spain | 478 |
 | 1.84 | Finland | 188 |
 | 1.83 | Serbia | 30 |
-| 1.81 | United Kingdom | 348 |
+| 1.81 | United Kingdom | 349 |
 | 1.80 | Slovakia | 56 |
 | 1.80 | Bosnia and Herzegovina | 15 |
 | 1.79 | Mexico | 256 |
@@ -51,17 +51,17 @@
 | 1.76 | Switzerland | 173 |
 | 1.76 | Austria | 37 |
 | 1.75 | Luxembourg | 4 |
+| 1.75 | Madagascar | 4 |
 | 1.75 | Sri Lanka | 16 |
 | 1.75 | Guatemala | 63 |
 | 1.74 | Ukraine | 151 |
-| 1.72 | Poland | 604 |
+| 1.72 | Poland | 607 |
 | 1.72 | Ireland | 95 |
 | 1.69 | Hungary | 74 |
 | 1.67 | Argentina | 124 |
 | 1.67 | Belgium | 108 |
-| 1.67 | Madagascar | 3 |
 | 1.67 | North Macedonia | 6 |
-| 1.66 | Brazil | 678 |
+| 1.66 | Brazil | 679 |
 | 1.63 | Italy | 288 |
 | 1.60 | Iran | 43 |
 | 1.60 | Dominican Republic | 30 |
@@ -81,7 +81,7 @@
 | 1.50 | Laos | 2 |
 | 1.49 | Sweden | 394 |
 | 1.48 | Peru | 261 |
-| 1.45 | Australia | 558 |
+| 1.45 | Australia | 559 |
 | 1.43 | Montenegro | 7 |
 | 1.41 | Vietnam | 76 |
 | 1.41 | Costa Rica | 32 |
@@ -118,8 +118,8 @@
 | 1.17 | Canada | 491 |
 | 1.17 | Armenia | 12 |
 | 1.17 | Tunisia | 24 |
-| 1.16 | United States | 3926 |
-| 1.15 | Mongolia | 52 |
+| 1.16 | United States | 3930 |
+| 1.15 | Mongolia | 53 |
 | 1.12 | Azerbaijan | 50 |
 | 1.12 | Cyprus | 17 |
 | 1.11 | Egypt | 9 |

@@ -1,6 +1,6 @@
 <h2 data-i18n-en="Most visited continents" data-i18n-zh="去过最多大洲参赛">Most visited continents</h2>
 
-<p><em data-i18n-en="Updated on 19 February 2026" data-i18n-zh="更新于 2026 年 2 月 19 日">Updated on 19 February 2026</em></p>
+<p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>
 
 | Continents | Person |
 | ---: | :--- |
@@ -189,6 +189,7 @@
 | 4 | [Emmet Hobbs](https://www.worldcubeassociation.org/persons/2016HOBB01) |
 | 4 | [Hitoki Kidahashi (木田橋仁毅)](https://www.worldcubeassociation.org/persons/2016KIDA02) |
 | 4 | [Lim Hung (林弘)](https://www.worldcubeassociation.org/persons/2016HUNG08) |
+| 4 | [Tyler Williams](https://www.worldcubeassociation.org/persons/2017WILL05) |
 | 4 | [Manuel Gutman](https://www.worldcubeassociation.org/persons/2017GUTM01) |
 | 4 | [Timo Norrkniivilä](https://www.worldcubeassociation.org/persons/2017NORR01) |
 | 4 | [Max Siauw](https://www.worldcubeassociation.org/persons/2017SIAU02) |

@@ -1,7 +1,7 @@
 ## Most consecutive sub-5 averages in 3x3x3
 
 *Note: Only official 3x3x3 averages are considered. Computed across all rounds in chronological order.*
-*Updated on 19 February 2026*
+*Updated on 22 February 2026*
 
 <style>
 .stat-tabs{display:flex;gap:0;margin:16px 0 0}
@@ -27,6 +27,7 @@
 <tr><td style="text-align:right">17</td><td><a href="https://www.worldcubeassociation.org/persons/2019WANY36">Yiheng Wang (王艺衡)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/XuzhouOpen2025">Xuzhou Open 2025</a></td><td><a href="https://www.worldcubeassociation.org/competitions/BeijingWinter2026">Beijing Winter 2026</a></td></tr>
 <tr><td style="text-align:right">3</td><td><a href="https://www.worldcubeassociation.org/persons/2023DUYU01">Yufang Du (杜昱方)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/BeijingSummer2025">Beijing Summer 2025</a></td><td><a href="https://www.worldcubeassociation.org/competitions/TaizhouOpen2025">Taizhou Open 2025</a></td></tr>
 <tr><td style="text-align:right">2</td><td><a href="https://www.worldcubeassociation.org/persons/2016KOLA02">Tymon Kolasiński</a></td><td><a href="https://www.worldcubeassociation.org/competitions/RubiksNorthAmericaAllStars2024">Rubik's NA All-Stars 2024</a></td><td><a href="https://www.worldcubeassociation.org/competitions/NAC2024">NAC 2024</a></td></tr>
+<tr><td style="text-align:right">2</td><td><a href="https://www.worldcubeassociation.org/persons/2017XURU04">Ruihang Xu (许瑞航)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/GuangdongRevivalRival2026">Guangdong Revival & Rival 2026</a></td><td><a href="https://www.worldcubeassociation.org/competitions/GuangdongRevivalRival2026">Guangdong Revival & Rival 2026</a></td></tr>
 </table>
 </div>
 <div id="history" class="stat-panel">
