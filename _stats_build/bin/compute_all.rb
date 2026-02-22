@@ -18,6 +18,19 @@ AGGREGATE_CACHE_CLEANUP = {
   "average_of" => { AverageOfX  => :@@query_results },
 }.freeze
 
+# NOTE: CI RSS 数据显示这些统计单进程 RSS > 3GB（全表查询加载百万行到 Ruby）
+# 必须串行执行，防止两个重量级同时运行导致 OOM（CI 7GB 上限）
+# 新增全表查询类统计时，应检查 CI RSS 日志，超过 3GB 则加入此列表
+HEAVY_STATS = %w[
+  best_single_counting_into_average
+  longest_streak_of_podiums
+  longest_streak_of_personal_records
+  wr_dominance
+  best_result_off_podium
+  consecutive_sub_5_average
+  wr_newcomer
+].freeze
+
 # NOTE: 优先计算列表——聚合页面排在最前面，确保缓存及时释放
 PRIORITY_STATS = %w[
   wr_newcomer wr_metric wr_aoxr average_of
@@ -36,10 +49,54 @@ if ENV["STATS_FILTER"] && !ENV["STATS_FILTER"].empty?
   puts "STATS_FILTER active: #{filter.join(', ')} (#{ordered_ids.size} matched)"
 end
 
-# NOTE: 分离聚合统计（有类级缓存依赖，必须串行）和独立统计（可并行）
-# 新增独立统计时无需修改此处——不在 AGGREGATE_CACHE_CLEANUP 中的自动归入并行组
+# NOTE: 三段分离：聚合统计 → 重量级独立统计 → 轻量级独立统计
 aggregate_ids = ordered_ids & AGGREGATE_CACHE_CLEANUP.keys
 independent_ids = ordered_ids - aggregate_ids
+heavy_ids = independent_ids & HEAVY_STATS
+light_ids = independent_ids - heavy_ids
+
+# NOTE: RSS 内存监控（仅 Linux），帮助定位内存热点
+def rss_mb_str
+  return "" unless File.exist?("/proc/self/status")
+  rss_kb = File.read("/proc/self/status")[/VmRSS:\s+(\d+)/, 1]
+  rss_kb ? "  [#{rss_kb.to_i / 1024}MB]" : ""
+end
+
+# NOTE: fork 隔离执行——在独立子进程中运行统计，任务完成后进程退出，OS 回收全部内存
+# Windows 无 fork，直接在主进程执行（线程模式下共享内存，GC 可回收）
+def run_isolated(statistic_id, build_path)
+  destination_path = File.join(build_path, "#{statistic_id}.md")
+  t_start = Time.now
+
+  if !Gem.win_platform? && Process.respond_to?(:fork)
+    pid = Process.fork do
+      # NOTE: 抑制统计内部日志（wr_newcomer 有 13 处 puts、wr_dominance 有 1 处）
+      $stdout = File.open(File::NULL, "w")
+      statistic_object = Module.const_get(camelize(statistic_id)).new
+      File.write(destination_path, statistic_object.markdown)
+    end
+    Process.wait(pid)
+    success = $?.success?
+  else
+    # Windows 回退：直接在主进程执行
+    begin
+      statistic_object = Module.const_get(camelize(statistic_id)).new
+      File.write(destination_path, statistic_object.markdown)
+      # NOTE: 释放内存
+      statistic_object.instance_variables.each { |iv| statistic_object.instance_variable_set(iv, nil) }
+      GC.start
+      success = true
+    rescue => e
+      $stderr.puts "  ERROR #{statistic_id}: #{e.class}: #{e.message}"
+      success = false
+    end
+  end
+
+  duration = Time.now - t_start
+  status = success ? "" : " FAILED"
+  printf("  %-50s %5.1fs%s%s\n", statistic_id, duration, rss_mb_str, status)
+  success
+end
 
 Helpers.timed_task("Computing all statistics") do
   # ======= 阶段 1：聚合统计串行执行（有 @@ 类级缓存依赖） =======
@@ -71,61 +128,61 @@ Helpers.timed_task("Computing all statistics") do
     end
   end
 
-  # ======= 阶段 2：独立统计并行执行 =======
-  unless independent_ids.empty?
-    # NOTE: 默认 4 worker。CI runner 7GB RAM 足够（峰值 ~3GB）
-    # 可通过 STATS_WORKERS 环境变量覆盖
+  # ======= 阶段 2：重量级独立统计串行执行（fork 隔离内存） =======
+  # NOTE: 这些统计单进程 RSS 3-6GB，不能并行。每个用 fork 隔离，
+  # 子进程退出后 OS 回收全部内存，避免内存累积
+  unless heavy_ids.empty?
+    puts "Phase 2: #{heavy_ids.size} heavy stats (serial, isolated)"
+    # NOTE: fork 前强制 GC，确保 Phase 1 遗留的 Mysql2::Client 被 finalizer 关闭
+    GC.start(full_mark: true, immediate_sweep: true) unless Gem.win_platform?
+
+    heavy_ids.each { |id| run_isolated(id, build_path) }
+  end
+
+  # ======= 阶段 3：轻量级独立统计并行执行 =======
+  # NOTE: 这些统计 RSS < 2GB，可安全并行。isolation 模式防止内存跨任务累积
+  unless light_ids.empty?
     worker_count = (ENV["STATS_WORKERS"] || 4).to_i
-    # NOTE: Windows 不支持 fork，用 in_threads 替代
-    # 多线程下 I/O 等待（MySQL 查询）时 GIL 释放，仍有显著加速
     parallel_opts = if Gem.win_platform?
       { in_threads: worker_count }
     else
-      { in_processes: worker_count }
+      # NOTE: isolation 确保每个任务在独立子进程执行，任务完成后进程退出
+      # 防止内存碎片在子进程中累积
+      { in_processes: worker_count, isolation: true }
     end
     mode_label = Gem.win_platform? ? "threads" : "processes"
-    puts "Phase 2: #{independent_ids.size} independent stats, #{worker_count} #{mode_label}"
+    puts "Phase 3: #{light_ids.size} light stats, #{worker_count} #{mode_label}"
 
-    # NOTE: fork 前强制 GC，确保 Phase 1 遗留的 Mysql2::Client 被 finalizer 关闭
-    # 否则子进程继承父进程的 stale socket 文件描述符，GC 时 double-close 可能导致 segfault
-    GC.start(full_mark: true, immediate_sweep: true) unless Gem.win_platform?
+    # NOTE: fork 前强制 GC（如果 Phase 2 没执行过的话）
+    GC.start(full_mark: true, immediate_sweep: true) if heavy_ids.empty? && !Gem.win_platform?
 
-    # NOTE: 临时文件用于跨进程传递失败信息（fork 模式下子进程无法共享 Ruby 对象）
     fail_dir = Dir.mktmpdir("stats_fail")
     log_mutex = Mutex.new
-    # NOTE: 抑制统计内部的 puts（wr_newcomer 有 13 处、wr_dominance 有 1 处）
-    # 这些内部日志不受 Mutex 保护，会交错。重定向到 NULL 后只输出汇总行
-    # 进程模式下子进程继承 NULL stdout，内部日志同样被抑制
     saved_stdout = $stdout
     $stdout = File.open(File::NULL, "w")
 
-    Parallel.each(independent_ids, **parallel_opts) do |statistic_id|
+    Parallel.each(light_ids, **parallel_opts) do |statistic_id|
       destination_path = File.join(build_path, "#{statistic_id}.md")
       t_start = Time.now
       success = false
 
-      # NOTE: 最多尝试 2 次（首次 + 1 次重试），防止瞬态故障终止整个构建
       2.times do |attempt|
         begin
           statistic_object = Module.const_get(camelize(statistic_id)).new
           File.write(destination_path, statistic_object.markdown)
-          # NOTE: 及时释放内存，防止多 worker 同时持有大量数据导致 OOM
           statistic_object.instance_variables.each { |iv| statistic_object.instance_variable_set(iv, nil) }
           success = true
           break
         rescue => e
           if attempt == 0
             GC.start
-            # 重试前不输出日志，静默重试
           else
-            # NOTE: 写入临时文件，主进程最后读取（fork 模式下不能直接共享数组）
             File.write(File.join(fail_dir, statistic_id), "#{e.class}: #{e.message}")
           end
         end
       end
 
       duration = Time.now - t_start
-      # NOTE: RSS 内存监控（仅 Linux），帮助定位内存热点
       rss_str = ""
       if File.exist?("/proc/self/status")
         rss_kb = File.read("/proc/self/status")[/VmRSS:\s+(\d+)/, 1]
@@ -133,8 +190,6 @@ Helpers.timed_task("Computing all statistics") do
       end
       status = success ? "" : " FAILED"
 
-      # NOTE: 原子化输出——单行 printf，Mutex 保护（线程模式）
-      # 进程模式下 Mutex 不跨进程，但单行 write ≤4KB，POSIX 保证原子性
       log_mutex.synchronize do
         saved_stdout.printf("  %-50s %5.1fs%s%s\n", statistic_id, duration, rss_str, status)
       end
@@ -142,7 +197,6 @@ Helpers.timed_task("Computing all statistics") do
 
     $stdout = saved_stdout
 
-    # NOTE: 汇总失败报告（读取子进程写入的临时文件）
     fail_files = Dir.glob(File.join(fail_dir, "*"))
     unless fail_files.empty?
       $stderr.puts "WARNING: #{fail_files.size} stat(s) failed after retry:"
@@ -153,3 +207,4 @@ Helpers.timed_task("Computing all statistics") do
     FileUtils.rm_rf(fail_dir)
   end
 end
+
