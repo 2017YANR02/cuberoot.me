@@ -1,39 +1,92 @@
-/* NOTE: 共享毛玻璃卡片基础样式 — index.html 和 stats 页面共用
- * 使用方: .card (首页), .stat-card (stats 索引页)
- * CSS 变量: --card-gradient 控制顶部渐变光带颜色
- */
+/* ==========================================================================
+ * NOTE: 共享毛玻璃卡片基础样式
+ *
+ * 使用方:
+ *   - .card  (首页 index.html)
+ *   - .stat-card (stats 索引页)
+ *
+ * CSS 变量:
+ *   --card-gradient  控制顶部渐变光带颜色，可在使用方覆盖
+ * ========================================================================== */
 
 .glass-card {
     position: relative;
-    background: rgba(30, 30, 50, 0.4);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+
+    /* 卡片背景色
+     * rgba 最后一个值 = 不透明度:
+     *   0    = 完全透明（当前）
+     *   0.2  = 微透
+     *   0.4  = 半透明毛玻璃感
+     *   1    = 纯色不透明 */
+    background: rgba(30, 30, 50, 0);
+
+    /* 背景模糊（毛玻璃效果的核心）
+     * blur 值越大，卡片后面的内容越模糊:
+     *   0px  = 无模糊，完全通透
+     *   4px  = 轻微模糊（当前）
+     *   12px = 明显毛玻璃
+     *   20px = 强模糊
+     * NOTE: 两行必须同步修改，backdrop-filter 给 Chrome，-webkit- 给 Safari */
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+
+    /* 圆角半径，值越大越圆润 */
     border-radius: 16px;
+
+    /* 边框颜色和透明度
+     * rgba 最后一个值控制边框可见度:
+     *   0.1 = 若隐若现
+     *   0.2 = 淡雅（当前）
+     *   0.5 = 明显 */
     border: 1px solid rgba(100, 100, 180, 0.2);
+
     overflow: hidden;
+
+    /* 悬停动画的过渡速度（秒），值越大动画越慢 */
     transition: transform 0.25s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-/* NOTE: 顶部渐变光带，默认蓝紫色 */
+/* --------------------------------------------------------------------------
+ * 顶部渐变光带（::before 伪元素）
+ * 默认蓝紫色，可通过 --card-gradient 变量覆盖
+ * -------------------------------------------------------------------------- */
 .glass-card::before {
     content: '';
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
+
+    /* 光带高度（px），值越大光带越粗 */
     height: 3px;
+
     border-radius: 16px 16px 0 0;
+
+    /* 光带渐变色，可在 HTML 元素上用 style="--card-gradient: ..." 覆盖 */
     background: var(--card-gradient, linear-gradient(90deg, #6366f1, #8b5cf6));
+
+    /* 光带初始不透明度，hover 时变为 1（全亮） */
     opacity: 0.7;
     transition: opacity 0.3s ease;
 }
 
+/* --------------------------------------------------------------------------
+ * 悬停效果
+ * -------------------------------------------------------------------------- */
+
+/* 悬停时光带全亮 */
 .glass-card:hover::before {
     opacity: 1;
 }
 
 .glass-card:hover {
+    /* 向上浮起的距离（px），负值 = 上移 */
     transform: translateY(-4px);
+
+    /* 悬停时边框变亮 */
     border-color: rgba(130, 130, 220, 0.4);
+
+    /* 悬停阴影: 水平偏移 垂直偏移 模糊半径 颜色
+     * 最后一个 rgba 值控制阴影浓度 */
     box-shadow: 0 8px 32px rgba(80, 80, 160, 0.15);
 }
