@@ -1,5 +1,16 @@
 #!/usr/bin/env ruby
-
+#
+# === 执行架构 ===
+# Phase 1: 聚合统计串行（wr_metric, wr_aoxr, average_of），有类级缓存依赖
+# Phase 2: 重量级独立统计串行（HEAVY_STATS，RSS > 3GB 的 12 个）
+#   - Linux(CI): fork 隔离，子进程退出后 OS 回收内存
+#   - Windows:   主进程执行 + GC
+# Phase 3: 轻量级独立统计并行（~48 个，RSS < 2GB）
+#   - Linux(CI): 4 processes + isolation 模式
+#   - Windows:   4 threads
+#
+# CI 实测: ~48 min（7GB RAM）| 本地 Windows 预估: ~43 min
+#
 require_relative "helpers"
 require_relative "../statistics/index"
 require "parallel"
