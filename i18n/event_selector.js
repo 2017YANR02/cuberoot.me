@@ -222,6 +222,11 @@
         selectEventInBar(selector, id);
       }
     });
+
+    // NOTE: 删除项目名 h3（图标选择器 + tooltip 已替代其功能）
+    allPanelSections.forEach(sections => {
+      sections.forEach(sec => sec.h3.remove());
+    });
   }
 
   /**
