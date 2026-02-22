@@ -17,7 +17,7 @@ GitHub Actions（ubuntu-latest, 2 核, 7GB 内存）
   ↓
 1. 下载 WCA 数据库（约 2GB）
 2. 导入 MySQL（约 9 分钟）
-3. 计算 60+ 项统计（约 37 分钟）
+3. 并行计算 60+ 项统计（约 37 分钟，4 worker）
 4. 生成 Markdown 文件
 5. 提交并推送到 main 分支
   ↓
@@ -349,11 +349,13 @@ gem install mysql2 bigdecimal --no-document
 
 ```powershell
 cd _stats_build
-# 快速验证（控制台输出前 50 行）
-ruby test_stat.rb <statistic_name>     # 例: ruby test_stat.rb wr_bpa
+# 测试单个统计
+$env:STATS_FILTER = "wr_bpa"
+ruby bin/compute_all.rb
 
-# HTML 预览（生成 test_output.html，双击打开查看表格效果）
-ruby test_html.rb <statistic_name>     # 例: ruby test_html.rb wr_dominance
+# 调整并行 worker 数（默认 4，本地 16GB 可增加）
+$env:STATS_WORKERS = 8
+ruby bin/compute_all.rb
 ```
 
 > **注意**：全量查询统计（如 `wr_dominance`）在大项目（333）上可能很慢，建议先用小项目（如 `skewb`、`555bf`）验证逻辑。
