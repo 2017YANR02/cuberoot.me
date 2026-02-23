@@ -1,26 +1,26 @@
 # NOTE: 指标选择器 UI 模块——为聚合页面（WrMetric / WrAoxr）提供
 # 选择器按钮、样式和切换脚本的共享实现
 # 消费方只需定义 META 常量（class => { label:, id: }）
+require_relative 'segmented_btn'
+
 module MetricSelector
+  include SegmentedBtn
+
   # NOTE: 通用分段控件 CSS 生成器
   # @param css_prefix [String] CSS 类名前缀 ("metric" 或 "source")
   #   生成 .{prefix}-selector, .{prefix}-btn, .{prefix}-panel 等样式
   def segmented_selector_styles(css_prefix = "metric")
     p = css_prefix # 简写
-    <<~HTML
+    html = segmented_btn_styles
+    html += <<~HTML
       <style>
       .#{p}-selector{display:flex;align-items:center;gap:0;margin:16px 0}
       .#{p}-selector-group{display:flex;gap:0}
-      .#{p}-btn{padding:8px 20px;border:1px solid #4a6785;background:transparent;color:#8ab4f8;cursor:pointer;font-size:14px;font-weight:600;line-height:1.2;transition:all .2s;border-radius:0}
-      .#{p}-btn:first-child{border-radius:6px 0 0 6px}
-      .#{p}-btn:last-child{border-radius:0 6px 6px 0}
-      .#{p}-btn + .#{p}-btn{border-left:none}
-      .#{p}-btn.active{background:#2c4a6e;border-color:#8ab4f8;color:#fff}
-      .#{p}-btn:hover:not(.active){background:rgba(138,180,248,0.08)}
       .#{p}-panel{display:none}
       .#{p}-panel.active{display:block}
       </style>
     HTML
+    html
   end
 
   # NOTE: 通用分段控件按钮生成器
@@ -41,7 +41,7 @@ module MetricSelector
       active = i == 0 ? " active" : ""
       full_id = id_prefix ? "#{id_prefix}-#{item[:id]}" : item[:id]
       onclick = pass_self ? "#{js_fn}(this,'#{full_id}')" : "#{js_fn}('#{full_id}')"
-      html += "    <button class=\"#{p}-btn#{active}\" onclick=\"#{onclick}\" "
+      html += "    <button class=\"segmented-btn #{p}-btn#{active}\" onclick=\"#{onclick}\" "
       html += "data-i18n-en=\"#{item[:label]}\" "
       html += "data-i18n-zh=\"#{item[:label_zh]}\" " if item[:label_zh]
       html += ">#{item[:label]}</button>\n"
