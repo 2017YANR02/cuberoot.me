@@ -1,4 +1,4 @@
-# 部署指南
+﻿# 概览
 
 ## 当前状态
 
@@ -34,6 +34,16 @@ GitHub Pages（Jekyll）
 | **手动触发**（`workflow_dispatch`） | 完整构建 | 约 47 分钟 |
 
 > Push 代码不再触发 CI。统计页面可本地生成后直接 push（见下方「本地发布」）。
+
+## 手动触发 CI
+
+如需立即全量更新所有统计：
+
+1. 前往 [Actions 页面](https://github.com/RuiminYan/ruiminyan.github.io/actions)
+2. 选择 "Update Stats" workflow
+3. 点击 "Run workflow" → "Run workflow"
+
+# 项目结构
 
 ## 重要文件
 
@@ -90,213 +100,9 @@ ruiminyan.github.io/
 └── LICENSE                    # 上游的许可证，与本地不同
 ```
 
-## 经验教训
+# 本地环境搭建
 
-### 1. Windows → Linux 权限问题
-**问题**：从 Windows 复制的脚本在 Linux 上丢失可执行权限。
-**解决**：在 workflow 中用 `ruby script.rb` 而非 `./script.rb`。
-
-### 2. GitHub Actions 默认权限
-**问题**：`GITHUB_TOKEN` 默认只读（2023 年后的新仓库）。
-**解决**：在 workflow 中显式声明 `permissions: contents: write`。
-
-### 3. 长时间 CI 优化
-**问题**：每次推送代码都触发 47 分钟的完整构建。
-**解决**：拆分为语法检查（push 触发）和完整构建（定时触发）。
-
-## Jekyll 本地开发服务器
-
-启动 Jekyll 本地预览服务器，修改文件后自动重新生成：
-
-```powershell
-cd D:\cube\ruiminyan.github.io
-# 必须要先用 bundle exec，否则可能会缺少依赖
-bundle exec jekyll serve
-# 浏览器访问 http://127.0.0.1:4000
-```
-
-- **访问地址**：http://127.0.0.1:4000
-- **自动重新生成**：已启用（保存文件后浏览器刷新即可看到变更）
-- **停止服务器**：`Ctrl+C`
-
-> 首次运行前需先 `bundle install` 安装依赖（见下方「本地环境 → Ruby」）。
-
-### UI 快速测试 (无需数据库)
-
-很多时候只需要调试分段控件、标签、表格等前端渲染效果，并不需要花费几十分钟生成全站数据。
-本项目提供了专门的纯前端静态测试页，无需启动数据库即可直接在 Jekyll 预览：
-
-- 访问地址：[http://127.0.0.1:4000/stats/test_ui](http://127.0.0.1:4000/stats/test_ui)
-- 源码位置：`stats/test_ui.md`
-- 用途：各种布局、响应式折行、夜间模式等 CSS 和国际化 JS 逻辑验证。
-
-## 本地发布统计（无需等待 CI）
-
-本地有 MySQL 数据库，可直接生成 `.md` 文件后 push，线上立刻生效。
-
-```powershell
-cd _stats_build
-
-# 查看所有可用统计名称 (ID)：
-ruby -e "$LOADED_FEATURES << 'bundler/setup'; require_relative 'statistics/index'; puts STATISTICS.keys.sort.join(', ')"
-
-# Step 1：测试/生成单个或多个统计（使用 STATS_FILTER，逗号分隔）
-$env:STATS_FILTER="wr_bao5,average_of"
-ruby bin/compute_all.rb
-
-# Step 2：如果代码没改表结构和 SQL 查询只改了 UI 模板——用缓存跳过 MySQL（约 0.1 秒）
-$env:STATS_USE_CACHE="1"; ruby bin/compute_all.rb
-
-# 提交前可选：检查 Ruby 语法
-ruby -c statistics/wr_bao5.rb
-
-# Step 3：提交并 push，GitHub Pages 1-2 分钟内上线
-git add ../stats/wr_bao5.md
-git commit -m "chore: update wr_bao5"
-
-# ⚠️ 关键步骤：由于 GitHub Actions (CI) 可能在后台推了 commit，
-# 必须先拉取合并远程的新 commit 到本地最新进展的下方，然后推。
-git pull --rebase origin main
-git push
-```
-
-> 缓存文件存于 `.data_cache/`（已加入 `.gitignore`，不提交）。
-> 周 CI 运行时不设 `STATS_USE_CACHE`，始终从 MySQL 全量刷新，数据始终最新。
-
-## 手动触发 CI
-
-如需立即全量更新所有统计：
-
-1. 前往 [Actions 页面](https://github.com/RuiminYan/ruiminyan.github.io/actions)
-2. 选择 "Update Stats" workflow
-3. 点击 "Run workflow" → "Run workflow"
-
-## 添加新统计
-
-1. 创建 `_stats_build/statistics/my_new_stat.rb`：
-   ```ruby
-   require_relative "../core/statistic"
-
-   class MyNewStat < Statistic
-     def initialize
-       @title = "My New Statistic"
-       @table_header = { "Rank" => :right, "Name" => :left }
-     end
-
-     def query
-       <<-SQL
-         SELECT ... FROM results ...
-       SQL
-     end
-   end
-   ```
-
-2. 用本地发布流程生成并 push 新统计（见上方「本地发布统计」）
-3. 等待 GitHub Pages 构建（约 1 分钟）
-4. 新页面出现在 `ruiminyan.github.io/stats/my_new_stat`
-5. **翻译维护**：在 `src/i18n/i18n.js` 中更新以下映射：
-   - `_statsTitleZh`：添加页面标题的中文翻译
-   - `_statsDescZh`：添加 Note 描述的中文翻译（如有）
-   - `_headerZh`：添加新表头列名的中文翻译（如有新列名）
-
-## 常见问题排查
-
-### 统计未更新？
-- 检查 [Actions 页面](https://github.com/RuiminYan/ruiminyan.github.io/actions) 是否有错误
-- 确认 `stats.yml` 中设置了 `permissions: contents: write`
-- 确保提交信息包含 `[skip ci]` 以避免递归触发
-
-### 语法检查失败？
-- 本地运行 `ruby -c _stats_build/statistics/*.rb`
-- 检查 Ruby 2.7 兼容性
-
-### 内存不足？
-- GitHub Actions 内存上限 7GB
-- 当前用量在限制范围内（MySQL + 表约 2GB）
-
-## 同步上游 Solver
-
-当上游 [or18/RubiksSolverDemo](https://github.com/or18/RubiksSolverDemo) 有更新时，运行以下命令一键同步：
-
-```powershell
-# 1. 拉取上游最新代码
-git -C D:\cube\RubiksSolverDemo pull
-
-# 2. 运行同步脚本
-cd D:\cube\ruiminyan.github.io
-.\sync_upstream.ps1
-```
-
-脚本会自动：同步 `src/` 运行时模块、复制根目录依赖、转换 13 个 HTML 页面（应用背景色、汉化、菜单链接等定制化）。
-
-**模板文件**（定制化集中管理）：
-- `.sync/page_config.json`：页面映射表和 i18n key 配置
-- `.sync/menu_template.html`：汉堡菜单链接模板
-
-## 致谢
-
-- **原始 WCA 统计项目**：[jonatanklosko/wca_statistics](https://github.com/jonatanklosko/wca_statistics)
-- **求解器与训练器**：[or18/RubiksSolverDemo](https://github.com/or18/RubiksSolverDemo)
-
----
-
-## WCADB 统计迁移（进行中）
-
-WCADB.xlsx 包含 27 个 sheet 的 WCA 世界纪录统计数据，目标是迁移到 `_stats_build` 框架实现自动化更新。
-
-### 架构设计
-
-- **Tab 双视图**：19 个统计支持「当前排名」和「WR 历史」双 Tab 切换
-  - `core/tab_ui.rb`：通用 Tab UI mixin（样式、按钮、脚本、HTML 辅助方法）
-- 抽象基类 `statistics/abstract/wr_round_history.rb`：封装 WR 轮次衍生指标的通用模式
-  - SQL 统一查询 `regional_average_record = 'WR'` 的 value1-5 数据
-  - 子类只需实现 `compute_metric(values, r)` 即可
-  - 自动处理 WR 历史构建 + 当前排名（类级别缓存全量 results）
-- 抽象基类 `statistics/abstract/ao_rounds.rb`：跨轮次 AoXR 的通用模式
-  - 子类只需指定 `round_count` 即可
-
-### 已完成脚本
-
-| 脚本 | 说明 | Tab 双视图 |
-|------|------|:-----------:|
-| `wr_single_history.rb` | WR 单次历史 | ✅ |
-| `wr_average_history.rb` | WR 平均历史 | ✅ |
-| `wr_current.rb` | 当前 WR 总览 | — |
-| `wr_bpa.rb` | BPA (前4次最佳3次均值) | ✅ |
-| `wr_wpa.rb` | WPA (前4次最差3次均值) | ✅ |
-| `wr_bao5.rb` | BAo5 (5次中最佳3次均值) | ✅ |
-| `wr_wao5.rb` | WAo5 (5次中最差3次均值) | ✅ |
-| `wr_mo5.rb` | Mo5 (5次全部均值) | ✅ |
-| `wr_median.rb` | 中位数 | ✅ |
-| `wr_best_counting.rb` | Ao5计入的最佳成绩 | ✅ |
-| `wr_worst_counting.rb` | Ao5计入的最差成绩 | ✅ |
-| `wr_worst.rb` | 整轮最差成绩 | ✅ |
-| `wr_variance.rb` | 5次方差 | ✅ |
-| `wr_best_average_ratio.rb` | best/average 比值 | ✅ |
-| `wr_newcomer.rb` | NWR 首场比赛最佳成绩 | — |
-| `wr_first_comp_wr.rb` | 首场就破 WR 的选手 | — |
-| `wr_ao1r~4r.rb` | AoXR (跨轮次均值) ×4 | ✅ |
-| `consecutive_sub_5_average.rb` | 连续 sub-5 average | ✅ |
-| `wr_dominance.rb` | 屠榜（单人霸占排行榜前 N 席）WR 历史 | — |
-
-### 待完成
-
-- [x] SQL 验证（通过本地 MySQL 测试关键查询）
-- [x] Git commit + push 全部新脚本
-- [ ] CI 语法检查通过
-- [ ] 手动触发完整构建
-- [ ] 对比输出与 WCADB.xlsx 数据
-
-### 验证步骤
-
-1. 推送到 main → CI 语法检查通过
-2. 手动触发完整构建（约 2 h）
-3. 访问 `https://ruiminyan.github.io/stats/wr_XXX` 查看各统计页面
-4. 与 WCADB.xlsx 对应 sheet 数据抽查对比
-
-### 本地环境
-
-#### MySQL
+## MySQL
 
 | 配置 | 值 |
 |------|-----|
@@ -326,7 +132,7 @@ sudo net start MySQL80
 
 > **关闭 MySQL**：务必用 `sudo net stop MySQL80` 或 `sudo mysqladmin shutdown` 干净关闭，**绝对不要强杀** `mysqld.exe`，否则会损坏 InnoDB。
 
-#### Ruby（本地验证用）
+## Ruby（本地验证用）
 
 | 配置 | 值 |
 |------|-----|
@@ -377,3 +183,182 @@ ruby bin/compute_all.rb
 ```
 
 > **注意**：全量查询统计（如 `wr_dominance`）在大项目（333）上可能很慢，建议先用小项目（如 `skewb`、`555bf`）验证逻辑。全量查询非常消耗内存（333可达数 GB），每次本地完整测试完毕后注意 kill 遗留的 Ruby 进程及释放。
+
+## Jekyll 本地开发服务器
+
+启动 Jekyll 本地预览服务器，修改文件后自动重新生成：
+
+```powershell
+cd D:\cube\ruiminyan.github.io
+# 必须要先用 bundle exec，否则可能会缺少依赖
+bundle exec jekyll serve
+# 浏览器访问 http://127.0.0.1:4000
+```
+
+- **访问地址**：http://127.0.0.1:4000
+- **自动重新生成**：已启用（保存文件后浏览器刷新即可看到变更）
+- **停止服务器**：`Ctrl+C`
+
+> 首次运行前需先 `bundle install` 安装依赖（见下方「本地环境 → Ruby」）。
+
+### UI 快速测试 (无需数据库)
+
+很多时候只需要调试分段控件、标签、表格等前端渲染效果，并不需要花费几十分钟生成全站数据。
+本项目提供了专门的纯前端静态测试页，无需启动数据库即可直接在 Jekyll 预览：
+
+- 访问地址：[http://127.0.0.1:4000/stats/test_ui](http://127.0.0.1:4000/stats/test_ui)
+- 源码位置：`stats/test_ui.md`
+- 用途：各种布局、响应式折行、夜间模式等 CSS 和国际化 JS 逻辑验证。
+
+# 日常操作
+
+## 本地发布统计（无需等待 CI）
+
+本地有 MySQL 数据库，可直接生成 `.md` 文件后 push，线上立刻生效。
+
+```powershell
+cd _stats_build
+
+# 查看所有可用统计名称 (ID)：
+ruby -e "$LOADED_FEATURES << 'bundler/setup'; require_relative 'statistics/index'; puts STATISTICS.keys.sort.join(', ')"
+
+# Step 1：测试/生成单个或多个统计（使用 STATS_FILTER，逗号分隔）
+$env:STATS_FILTER="wr_bao5,average_of"
+ruby bin/compute_all.rb
+
+# Step 2：如果代码没改表结构和 SQL 查询只改了 UI 模板——用缓存跳过 MySQL（约 0.1 秒）
+$env:STATS_USE_CACHE="1"; ruby bin/compute_all.rb
+
+# 提交前可选：检查 Ruby 语法
+ruby -c statistics/wr_bao5.rb
+
+# Step 3：提交并 push，GitHub Pages 1-2 分钟内上线
+git add ../stats/wr_bao5.md
+git commit -m "chore: update wr_bao5"
+
+# ⚠️ 关键步骤：由于 GitHub Actions (CI) 可能在后台推了 commit，
+# 必须先拉取合并远程的新 commit 到本地最新进展的下方，然后推。
+git pull --rebase origin main
+git push
+```
+
+> 缓存文件存于 `.data_cache/`（已加入 `.gitignore`，不提交）。
+> 周 CI 运行时不设 `STATS_USE_CACHE`，始终从 MySQL 全量刷新，数据始终最新。
+
+
+## 添加新统计
+
+1. 创建 `_stats_build/statistics/my_new_stat.rb`：
+   ```ruby
+   require_relative "../core/statistic"
+
+   class MyNewStat < Statistic
+     def initialize
+       @title = "My New Statistic"
+       @table_header = { "Rank" => :right, "Name" => :left }
+     end
+
+     def query
+       <<-SQL
+         SELECT ... FROM results ...
+       SQL
+     end
+   end
+   ```
+
+2. 用本地发布流程生成并 push 新统计（见上方「本地发布统计」）
+3. 等待 GitHub Pages 构建（约 1 分钟）
+4. 新页面出现在 `ruiminyan.github.io/stats/my_new_stat`
+5. **翻译维护**：在 `src/i18n/i18n.js` 中更新以下映射：
+   - `_statsTitleZh`：添加页面标题的中文翻译
+   - `_statsDescZh`：添加 Note 描述的中文翻译（如有）
+   - `_headerZh`：添加新表头列名的中文翻译（如有新列名）
+
+# 故障排除与经验
+
+## 常见问题排查
+
+### 统计未更新？
+- 检查 [Actions 页面](https://github.com/RuiminYan/ruiminyan.github.io/actions) 是否有错误
+- 确认 `stats.yml` 中设置了 `permissions: contents: write`
+- 确保提交信息包含 `[skip ci]` 以避免递归触发
+
+### 语法检查失败？
+- 本地运行 `ruby -c _stats_build/statistics/*.rb`
+- 检查 Ruby 2.7 兼容性
+
+### 内存不足？
+- GitHub Actions 内存上限 7GB
+- 当前用量在限制范围内（MySQL + 表约 2GB）
+
+## 经验教训
+
+### 1. Windows → Linux 权限问题
+**问题**：从 Windows 复制的脚本在 Linux 上丢失可执行权限。
+**解决**：在 workflow 中用 `ruby script.rb` 而非 `./script.rb`。
+
+### 2. GitHub Actions 默认权限
+**问题**：`GITHUB_TOKEN` 默认只读（2023 年后的新仓库）。
+**解决**：在 workflow 中显式声明 `permissions: contents: write`。
+
+### 3. 长时间 CI 优化
+**问题**：每次推送代码都触发 47 分钟的完整构建。
+**解决**：拆分为语法检查（push 触发）和完整构建（定时触发）。
+
+## 同步上游 Solver
+
+当上游 [or18/RubiksSolverDemo](https://github.com/or18/RubiksSolverDemo) 有更新时，运行以下命令一键同步：
+
+```powershell
+# 1. 拉取上游最新代码
+git -C D:\cube\RubiksSolverDemo pull
+
+# 2. 运行同步脚本
+cd D:\cube\ruiminyan.github.io
+.\sync_upstream.ps1
+```
+
+脚本会自动：同步 `src/` 运行时模块、复制根目录依赖、转换 13 个 HTML 页面（应用背景色、汉化、菜单链接等定制化）。
+
+**模板文件**（定制化集中管理）：
+- `.sync/page_config.json`：页面映射表和 i18n key 配置
+- `.sync/menu_template.html`：汉堡菜单链接模板
+
+# 附录
+
+## WCADB 统计迁移（进行中）
+
+WCADB.xlsx 包含 27 个 sheet 的 WCA 世界纪录统计数据，目标是迁移到 `_stats_build` 框架实现自动化更新。
+
+### 架构设计
+
+- **Tab 双视图**：19 个统计支持「当前排名」和「WR 历史」双 Tab 切换
+  - `core/tab_ui.rb`：通用 Tab UI mixin（样式、按钮、脚本、HTML 辅助方法）
+- 抽象基类 `statistics/abstract/wr_round_history.rb`：封装 WR 轮次衍生指标的通用模式
+  - SQL 统一查询 `regional_average_record = 'WR'` 的 value1-5 数据
+  - 子类只需实现 `compute_metric(values, r)` 即可
+  - 自动处理 WR 历史构建 + 当前排名（类级别缓存全量 results）
+- 抽象基类 `statistics/abstract/ao_rounds.rb`：跨轮次 AoXR 的通用模式
+  - 子类只需指定 `round_count` 即可
+
+### 待完成
+
+- [x] SQL 验证（通过本地 MySQL 测试关键查询）
+- [x] Git commit + push 全部新脚本
+- [ ] CI 语法检查通过
+- [ ] 手动触发完整构建
+- [ ] 对比输出与 WCADB.xlsx 数据
+
+### 验证步骤
+
+1. 推送到 main → CI 语法检查通过
+2. 手动触发完整构建（约 2 h）
+3. 访问 `https://ruiminyan.github.io/stats/wr_XXX` 查看各统计页面
+4. 与 WCADB.xlsx 对应 sheet 数据抽查对比
+
+---
+
+## 致谢
+
+- **原始 WCA 统计项目**：[jonatanklosko/wca_statistics](https://github.com/jonatanklosko/wca_statistics)
+- **求解器与训练器**：[or18/RubiksSolverDemo](https://github.com/or18/RubiksSolverDemo)
