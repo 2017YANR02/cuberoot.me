@@ -498,6 +498,3 @@
 | [Yucheng Chen (陈裕铖)](https://www.worldcubeassociation.org/persons/2015CHEN49) | **50/59 59:51** | China | [Guangdong Revival & Rival 2026](https://www.worldcubeassociation.org/competitions/GuangdongRevivalRival2026) | 50/59 59:51 |
 | [James Macdiarmid](https://www.worldcubeassociation.org/persons/2015MACD03) | **49/58 1:00:00** | New Zealand | [Wellington Mind Games 2026](https://www.worldcubeassociation.org/competitions/WellingtonMindGames2026) | 49/58 1:00:00, 46/58 1:00:00 |
 | [Daniel Wallin](https://www.worldcubeassociation.org/persons/2013WALL03) | **40/45 59:30** | Sweden | [Multi-Blind i Jönköping 2026](https://www.worldcubeassociation.org/competitions/MultiBlindiJonkoping2026) | 37/45 59:45, 40/45 59:30, DNF |
-
-
-

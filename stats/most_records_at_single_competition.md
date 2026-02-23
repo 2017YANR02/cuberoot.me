@@ -92,6 +92,3 @@
 | 19 | [Joshua Shing Shun Li](https://www.worldcubeassociation.org/persons/2007LIJO01) | [Guangdong Open 2008](https://www.worldcubeassociation.org/competitions/GuangdongOpen2008/results/by_person#2007LIJO01) |
 | 19 | [Anatoly Kim](https://www.worldcubeassociation.org/persons/2009KIMA01) | [MPEI Open 2010](https://www.worldcubeassociation.org/competitions/MPEIOpen2010/results/by_person#2009KIMA01) |
 | 19 | [Henrik Buus Aagaard](https://www.worldcubeassociation.org/persons/2006BUUS01) | [Benelux Open 2008](https://www.worldcubeassociation.org/competitions/BeneluxOpen2008/results/by_person#2006BUUS01) |
-
-
-

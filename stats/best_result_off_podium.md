@@ -258,6 +258,3 @@
 | [Krzysztof Bober](https://www.worldcubeassociation.org/persons/2013BOBE01) | **50/62 59:44** |  | [WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/all#e333mbf_f) | 7 |
 | [Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04) | **47/57 59:34** |  | [Multi Mayhem VA 2026](https://www.worldcubeassociation.org/competitions/MultiMayhemVA2026/results/all#e333mbf_f) | 5 |
 | [Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04) | **39/42 55:43** |  | [WCA World Championship 2019](https://www.worldcubeassociation.org/competitions/WC2019/results/all#e333mbf_f) | 5 |
-
-
-

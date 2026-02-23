@@ -105,6 +105,3 @@
 | 23 | [Mateo Rodríguez](https://www.worldcubeassociation.org/persons/2013RODR11) | Uruguay | [Montevideo Open 2014](https://www.worldcubeassociation.org/competitions/MontevideoOpen2014) | [Stickers Open 2018](https://www.worldcubeassociation.org/competitions/StickersPuntadelEsteOpen2018) |
 | 23 | [Tsang Hon Pong (曾漢邦)](https://www.worldcubeassociation.org/persons/2014PONG01) | Hong Kong, China | [Back To Cubing Hong Kong 2015](https://www.worldcubeassociation.org/competitions/BackToCubingHongKong2015) |  |
 | 23 | [MinGwan Yeo (여민관)](https://www.worldcubeassociation.org/persons/2018MING07) | Republic of Korea | [Korean Championship Mini 2021](https://www.worldcubeassociation.org/competitions/KoreanChampionshipMini2021) | [Silent Korea Spring 2024](https://www.worldcubeassociation.org/competitions/SilentKoreaSpring2024) |
-
-
-

@@ -105,6 +105,3 @@
 | 67 | [James Hildreth](https://www.worldcubeassociation.org/persons/2009HILD01) |
 | 67 | [Laura Ohrndorf](https://www.worldcubeassociation.org/persons/2009OHRN01) |
 | 67 | [Blake Thompson](https://www.worldcubeassociation.org/persons/2010THOM03) |
-
-
-

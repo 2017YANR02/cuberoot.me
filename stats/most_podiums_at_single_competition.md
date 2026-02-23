@@ -1535,6 +1535,3 @@
 | 10 | [Reto Bubendorf](https://www.worldcubeassociation.org/persons/2012BUBE01) | [Zurich Open 2016](https://www.worldcubeassociation.org/competitions/ZurichOpen2016/results/podiums) |
 | 10 | [Leo Lindqvist](https://www.worldcubeassociation.org/persons/2017LIND01) | [Zvornik Summer 2024](https://www.worldcubeassociation.org/competitions/ZvornikSummer2024/results/podiums) |
 | 10 | [Alwin Rölz](https://www.worldcubeassociation.org/persons/2016ROLZ01) | [Zwolle Open 2018](https://www.worldcubeassociation.org/competitions/ZwolleOpen2018/results/podiums) |
-
-
-

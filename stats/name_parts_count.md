@@ -14,6 +14,3 @@
 | 7 | 77 | Brazil *(42.86 %)*, Malaysia *(37.66 %)*, Portugal *(9.09 %)*, Egypt *(2.60 %)*, Spain *(1.30 %)* |
 | 8 | 11 | Brazil *(36.36 %)*, Malaysia *(27.27 %)*, Dominican Republic *(9.09 %)*, Egypt *(9.09 %)*, Angola *(9.09 %)* |
 | 9 | 1 | Malaysia *(100.00 %)* |
-
-
-

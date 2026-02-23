@@ -13,6 +13,3 @@
 | 1 | New Zealand | [Lachlan Gibson](https://www.worldcubeassociation.org/persons/2022GIBS04) |
 | 1 | Switzerland | [Dhruva Sai Meruva](https://www.worldcubeassociation.org/persons/2021MERU01) |
 | 1 | United Kingdom | [Jacob Sherwen Brown](https://www.worldcubeassociation.org/persons/2022BROW01) |
-
-
-

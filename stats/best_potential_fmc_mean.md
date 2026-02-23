@@ -105,6 +105,3 @@
 | 21.00 | 20 | 21 | 22 | [New York Multimate PBQ II 2025](https://www.worldcubeassociation.org/competitions/NewYorkMultimatePBQII2025/results/all#e333fm_1) |
 | 21.00 | 22 | 23 | 18 | [New York Quiet Championship 2024](https://www.worldcubeassociation.org/competitions/NewYorkQuietChampionship2024/results/all#e333fm_f) |
 | 21.00 | 21 | 23 | 19 | [No Noise November Singapore 2023](https://www.worldcubeassociation.org/competitions/NoNoiseNovemberSingapore2023/results/all#e333fm_f) |
-
-
-

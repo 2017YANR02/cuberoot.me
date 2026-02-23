@@ -223,6 +223,3 @@
 | 4 | [Joseph Liu (劉睿博)](https://www.worldcubeassociation.org/persons/2023LIUJ01) |
 | 4 | [Catherine Rush](https://www.worldcubeassociation.org/persons/2023RUSH01) |
 | 4 | [Kyle Rongkai Wang](https://www.worldcubeassociation.org/persons/2023WANG90) |
-
-
-

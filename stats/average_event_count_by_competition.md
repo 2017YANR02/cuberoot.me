@@ -105,6 +105,3 @@
 | [ACT Championship 2025](https://www.worldcubeassociation.org/competitions/ACTChampionship2025) | 8.78 | 76 | Australia |
 | [Ostróda Open 2024](https://www.worldcubeassociation.org/competitions/OstrodaOpen2024) | 8.78 | 40 | Poland |
 | [Open Ovalle Summer 2024](https://www.worldcubeassociation.org/competitions/OpenOvalleSummer2024) | 8.77 | 22 | Chile |
-
-
-
