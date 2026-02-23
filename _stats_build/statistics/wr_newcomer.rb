@@ -50,7 +50,22 @@ class WrNewcomer < GroupedStatistic
     # --- 分段控件样式（metric + source 共用模板）---
     md += segmented_selector_styles("metric")
     md += segmented_selector_styles("source")
-    md += segmented_selector_buttons(METRICS, label: "Type")
+    
+    # NOTE: 用户要求将两个选择器放在同一行。由于 source 是动态显示在 metric panel 内部的，
+    # 我们通过 CSS 给定一个包裹所有内容的容器，并让 metric-panel 呈现 display: contents;
+    # 这样 .source-selector 就和外面的 .metric-selector 成为了真正意义上的兄弟元素！
+    # 从而能完美应用外层的 flex 布局，支持自适应换行 (flex-wrap: wrap)
+    md += <<~HTML
+      <style>
+      .newcomer-header-wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin: 16px 0; }
+      .newcomer-header-wrap .metric-selector, .newcomer-header-wrap .source-selector { margin: 0; }
+      .metric-panel { display: contents; } /* 让面板本身不参与布局，但将其内容暴露出来 */
+      .metric-panel > :not(.source-selector) { width: 100%; } /* 让内容区域（如图表）换行显示占满整个宽度 */
+      </style>
+      <div class="newcomer-header-wrap">
+    HTML
+
+    md += segmented_selector_buttons(METRICS)
     md += tab_styles
 
     METRICS.each_with_index do |metric, mi|
@@ -59,8 +74,8 @@ class WrNewcomer < GroupedStatistic
 
       md += "<div class=\"metric-panel#{m_active ? ' active' : ''}\" id=\"metric-#{m_prefix}\">\n"
       md += segmented_selector_buttons(SOURCES, css_prefix: "source",
-             js_fn: "switchSource", label: "Source",
-             id_prefix: m_prefix, pass_self: true)
+                                    js_fn: "switchSource",
+                                    id_prefix: m_prefix, pass_self: true)
 
       SOURCES.each_with_index do |source, si|
         s_prefix = "#{m_prefix}-#{source[:id]}"
@@ -102,6 +117,8 @@ class WrNewcomer < GroupedStatistic
 
       md += "</div>\n"
     end
+
+    md += "</div><!-- newcomer-header-wrap -->\n"
 
     md += metric_selector_script
     md += source_selector_script
