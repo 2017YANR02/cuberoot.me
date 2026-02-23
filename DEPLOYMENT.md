@@ -245,6 +245,29 @@ git push
 > 缓存文件存于 `.data_cache/`（已加入 `.gitignore`，不提交）。
 > 周 CI 运行时不设 `STATS_USE_CACHE`，始终从 MySQL 全量刷新，数据始终最新。
 
+### 统计计算架构（`compute_all.rb`）
+
+62 个顶级统计 ID 分三阶段执行（详见 `_stats_build/bin/compute_all.rb`）：
+
+| 阶段 | 模式 | 数量 | 说明 |
+|------|------|------|------|
+| Phase 1 | 串行 | 3 | 聚合统计，有类级缓存依赖，完成后立即释放 |
+| Phase 2 | 串行 fork 隔离 | 11 | 重量级（RSS > 3GB），每个独立进程执行后回收内存 |
+| Phase 3 | 4 worker 并行 | 48 | 轻量级（RSS < 2GB），可安全并行 |
+
+**Phase 1 聚合统计**（输入子统计 ID 到 `STATS_FILTER` 无效，需输入聚合 ID）：
+
+| 聚合 ID | 包含的子统计 |
+|---------|-------------|
+| `wr_metric` | `wr_single_history`, `wr_average_history`, `wr_bao5`, `wr_wao5`, `wr_mo5`, `wr_bpa`, `wr_wpa`, `wr_median`, `wr_best_counting`, `wr_worst_counting`, `wr_worst`, `wr_variance`, `wr_best_average_ratio` |
+| `wr_aoxr` | `wr_ao1r`, `wr_ao2r`, `wr_ao3r`, `wr_ao4r` |
+| `average_of` | `average_of_5`, `average_of_12`, `average_of_25`, `average_of_50`, `average_of_100` |
+
+**Phase 2 重量级统计**（CI 内存调优时关注）：
+`wr_newcomer`, `wr_dominance`, `best_result_off_podium`, `consecutive_sub_5_average`, `longest_streak_of_personal_records`, `longest_streak_of_podiums`, `most_competitions_before_winning`, `most_completed_solves`, `most_frequent_results`, `moving_average`, `smallest_diff_between_single_and_average`
+
+**Phase 3 轻量级统计**：剩余 48 个，可通过命令查看完整列表（见上方 `ruby -e ...` 命令）。
+
 
 ## 添加新统计
 
