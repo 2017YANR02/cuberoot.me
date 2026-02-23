@@ -9,9 +9,6 @@
 
 
 
-.metric-btn + 
-
-
 .metric-panel{display:none}
 .metric-panel.active{display:block}
 </style>
@@ -83,10 +80,6 @@
 
 .source-selector{display:inline-flex;margin:16px 0;vertical-align:middle}
 .source-selector-group{display:flex;gap:0}
-
-
-
-.source-btn + 
 
 
 

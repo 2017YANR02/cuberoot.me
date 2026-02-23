@@ -15,9 +15,6 @@
 
 
 
-.metric-btn + 
-
-
 .metric-panel{display:none}
 .metric-panel.active{display:block}
 </style>
