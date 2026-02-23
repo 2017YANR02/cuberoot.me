@@ -1,4 +1,4 @@
-# NOTE: 通用 Tab UI mixin，提供双视图（当前排名 + WR 历史）的 HTML 生成能力
+# NOTE: 通用 Tab UI mixin，提供双视图（排名 + 历史）的 HTML 生成能力
 # 任何需要 Tab 双视图的统计类都可以 include 此 module
 module TabUi
 
@@ -116,7 +116,7 @@ module TabUi
   # ranking_header / history_header 格式：{ "ColName" => :left/:right }
   def tabbed_grouped_markdown(ranking_data:, ranking_header:, history_data:, history_header:)
     md = tab_styles
-    md += tab_buttons("Current Ranking", "当前排名", "ranking", "WR History", "WR 历史", "history")
+    md += tab_buttons("Current Ranking", "排名", "ranking", "WR History", "历史", "history")
     md += grouped_panel("ranking", true,  ranking_data, ranking_header)
     md += grouped_panel("history", false, history_data, history_header)
     md += tab_script

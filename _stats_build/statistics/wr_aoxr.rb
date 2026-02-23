@@ -58,8 +58,8 @@ class WrAoxr < Statistic
         .transform_values { |rows| ranking_to_arrays(rows, keys: ao_keys) }
 
       md += tab_buttons(
-        "Current Ranking", "当前排名", "#{prefix}-ranking",
-        "WR History", "WR 历史", "#{prefix}-history"
+        "Current Ranking", "排名", "#{prefix}-ranking",
+        "WR History", "历史", "#{prefix}-history"
       )
       md += grouped_panel("#{prefix}-ranking", true, ranking, ranking_header)
       md += grouped_panel("#{prefix}-history", false, history, inst.instance_variable_get(:@table_header))
