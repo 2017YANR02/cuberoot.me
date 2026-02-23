@@ -2591,10 +2591,20 @@
 </div><!-- newcomer-header-wrap -->
 <script>
 function switchMetric(id){
+  // NOTE: metric 和 source 是独立选择器，切换 metric 时保持 source 选择不变
+  var oldPanel=document.querySelector('.metric-panel.active');
+  var srcIdx=0;
+  if(oldPanel){
+    oldPanel.querySelectorAll('.source-btn').forEach(function(b,i){if(b.classList.contains('active'))srcIdx=i;});
+  }
   document.querySelectorAll('.metric-panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.metric-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('metric-'+id).classList.add('active');
+  var panel=document.getElementById('metric-'+id);
+  panel.classList.add('active');
   event.target.classList.add('active');
+  // NOTE: 同步 source 索引到新 panel
+  var newBtns=panel.querySelectorAll('.source-btn');
+  if(newBtns[srcIdx]) newBtns[srcIdx].click();
 }
 </script>
 <script>
