@@ -528,6 +528,3 @@
 | [John Robert Anguluan](https://www.worldcubeassociation.org/persons/2008ANGU01) | 1 |
 | [Alex Cook](https://www.worldcubeassociation.org/persons/2008COOK01) | 1 |
 | [Ángel de Jaén Gotarredona](https://www.worldcubeassociation.org/persons/2007GOTA01) | 1 |
-
-
-

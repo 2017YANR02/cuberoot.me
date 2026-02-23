@@ -53,6 +53,3 @@
 | 3x3x3 With Feet | 23.29 | [Lim Hung (林弘)](https://www.worldcubeassociation.org/persons/2016HUNG08) | Malaysia | [WCA World Championship 2019](https://www.worldcubeassociation.org/competitions/WC2019) |
 | Rubik's Magic | 0.87 | [Bálint Bodor](https://www.worldcubeassociation.org/persons/2008BODO01) | Hungary | [World Championship 2011](https://www.worldcubeassociation.org/competitions/WC2011) |
 | Master Magic | 2.21 | [Máté Horváth](https://www.worldcubeassociation.org/persons/2007HORV01) | Hungary | [World Championship 2011](https://www.worldcubeassociation.org/competitions/WC2011) |
-
-
-

@@ -147,6 +147,3 @@
 | 1.00 | Trinidad and Tobago | 1 |
 | 1.00 | Uganda | 1 |
 | 1.00 | Zambia | 2 |
-
-
-

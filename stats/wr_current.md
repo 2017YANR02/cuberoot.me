@@ -49,6 +49,3 @@
 | Master Magic | Single | 1.66 | [Yuxuan Wang (王宇轩)](https://www.worldcubeassociation.org/persons/2009WANG13) | 2012-12-23 | [Tianjin Winter 2012](https://www.worldcubeassociation.org/competitions/TianjinWinter2012) |
 | Master Magic | Average | 1.75 | [Ernie Pulchny](https://www.worldcubeassociation.org/persons/2010PULC01) | 2011-08-12 | [US Nationals 2011](https://www.worldcubeassociation.org/competitions/USNationals2011) |
 | Rubik's Cube: Multiple blind old style | Single | 24/24 2:15:57 | [Tim Habermaas](https://www.worldcubeassociation.org/persons/2007HABE01) | 2008-04-19 | [German Open 2008](https://www.worldcubeassociation.org/competitions/GermanOpen2008) |
-
-
-

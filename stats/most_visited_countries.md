@@ -104,6 +104,3 @@
 | 17 | [Rui-Jun Liu (劉睿鈞)](https://www.worldcubeassociation.org/persons/2011LIUR02) |
 | 17 | [Liam Wadek](https://www.worldcubeassociation.org/persons/2017WADE01) |
 | 17 | [Laura Ohrndorf](https://www.worldcubeassociation.org/persons/2009OHRN01) |
-
-
-

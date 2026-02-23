@@ -43,6 +43,3 @@
 | 1 | Belarus |
 | 1 | Romania |
 | 1 | Switzerland |
-
-
-

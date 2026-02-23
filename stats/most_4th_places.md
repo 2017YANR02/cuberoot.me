@@ -105,6 +105,3 @@
 | 86 | [Livia Kleiner](https://www.worldcubeassociation.org/persons/2013KLEI03) |
 | 86 | [Michał Krasowski](https://www.worldcubeassociation.org/persons/2013KRAS02) |
 | 86 | [Anton Piau](https://www.worldcubeassociation.org/persons/2008PIAU01) |
-
-
-

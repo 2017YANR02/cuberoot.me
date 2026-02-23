@@ -125,6 +125,3 @@
 | Turkmenistan | **0** | 0 | 2 | 2 |
 | Côte d'Ivoire | **0** | 0 | 1 | 1 |
 | Mauritius | **0** | 0 | 1 | 1 |
-
-
-

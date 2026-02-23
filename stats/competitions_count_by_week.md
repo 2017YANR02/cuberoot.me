@@ -1043,6 +1043,3 @@
 | 1 |  6 Oct 2003 | 12 Oct 2003 | [List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2003-10-11&to_date=2003-10-11) |
 | 1 | 18 Aug 2003 | 24 Aug 2003 | [List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2003-08-23&to_date=2003-08-24) |
 | 1 | 31 May 1982 |  6 Jun 1982 | [List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=1982-06-05&to_date=1982-06-05) |
-
-
-

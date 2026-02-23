@@ -258,6 +258,3 @@
 | [Peter Hugosson-Miller](https://www.worldcubeassociation.org/persons/2021HUGO01) | **3/6 1:00:00** |  | [JL Final: Kebabpizza 2023](https://www.worldcubeassociation.org/competitions/JLFinalKebabpizza2023/results/podiums#e333mbf) | 1 |
 | [Selim Makni](https://www.worldcubeassociation.org/persons/2018MAKN01) | **5/10 59:57** |  | [Idéale Nabeul Open 2019](https://www.worldcubeassociation.org/competitions/IdealeNabeulOpen2019/results/podiums#e333mbf) | 1 |
 | [Ernesto Cabrera](https://www.worldcubeassociation.org/persons/2014CABR05) | **3/6 59:46** |  | [San Lorenzo Invierno 2015](https://www.worldcubeassociation.org/competitions/SanLorenzoInvierno2015/results/podiums#e333mbf) | 3 |
-
-
-

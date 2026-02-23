@@ -104,6 +104,3 @@
 | 919 | [István Kocza](https://www.worldcubeassociation.org/persons/2005KOCZ01) |
 | 919 | [Livia Kleiner](https://www.worldcubeassociation.org/persons/2013KLEI03) |
 | 915 | [Jayden McNeill](https://www.worldcubeassociation.org/persons/2012MCNE01) |
-
-
-

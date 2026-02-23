@@ -271,6 +271,3 @@
 | [Yunliang Zhang (张赟量)](https://www.worldcubeassociation.org/persons/2016ZHAN45) | **0** | 0 | 1 | 1 |
 | [Zijia Feng (冯子甲)](https://www.worldcubeassociation.org/persons/2013FENG02) | **0** | 0 | 1 | 1 |
 | [Zoltán Lábas](https://www.worldcubeassociation.org/persons/1982LABA01) | **0** | 0 | 1 | 1 |
-
-
-

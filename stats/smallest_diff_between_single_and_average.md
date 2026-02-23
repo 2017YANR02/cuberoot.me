@@ -273,6 +273,3 @@
 | 0.03 | [Gábor Szabó](https://www.worldcubeassociation.org/persons/2005SZAB02) | 3.80 | 3.83 | [Belgian Open 2007](https://www.worldcubeassociation.org/competitions/BelgianOpen2007/results/by_person#2005SZAB02) |
 | 0.04 | [Ernie Pulchny](https://www.worldcubeassociation.org/persons/2010PULC01) | 1.71 | 1.75 | [US Nationals 2011](https://www.worldcubeassociation.org/competitions/USNationals2011/results/by_person#2010PULC01) |
 | 0.04 | [Sen Dang (党森)](https://www.worldcubeassociation.org/persons/2009DANG01) | 2.40 | 2.44 | [Xi'an Newborn 2012](https://www.worldcubeassociation.org/competitions/XianNewborn2012/results/by_person#2009DANG01) |
-
-
-

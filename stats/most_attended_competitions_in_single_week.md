@@ -739,6 +739,3 @@
 | 3 | [Zhedong Wang (王哲栋)](https://www.worldcubeassociation.org/persons/2015WANG83) | 15&nbsp;Dec&nbsp;2025 | 21&nbsp;Dec&nbsp;2025 | [FMC under the Mistletoe 2025](https://www.worldcubeassociation.org/competitions/FMCundertheMistletoe2025), [FMC Cubing China 2025](https://www.worldcubeassociation.org/competitions/FMCCubingChina2025), [Guangzhou Big Cubes 2025](https://www.worldcubeassociation.org/competitions/GuangzhouBigCubes2025) |
 | 3 | [Zian Song (宋子安)](https://www.worldcubeassociation.org/persons/2014SONG08) | 15&nbsp;Dec&nbsp;2025 | 21&nbsp;Dec&nbsp;2025 | [FMC under the Mistletoe 2025](https://www.worldcubeassociation.org/competitions/FMCundertheMistletoe2025), [FMC Cubing China 2025](https://www.worldcubeassociation.org/competitions/FMCCubingChina2025), [Guangzhou Big Cubes 2025](https://www.worldcubeassociation.org/competitions/GuangzhouBigCubes2025) |
 | 3 | [Ziyi Xu (徐梓翼)](https://www.worldcubeassociation.org/persons/2023XUZI01) | 27&nbsp;May&nbsp;2024 |  2&nbsp;Jun&nbsp;2024 | [FMC 2024](https://www.worldcubeassociation.org/competitions/FMC2024), [Please Be Quiet Xi'an 2024](https://www.worldcubeassociation.org/competitions/PleaseBeQuietXian2024), [Guangzhou Special 2024](https://www.worldcubeassociation.org/competitions/GuangzhouSpecial2024) |
-
-
-

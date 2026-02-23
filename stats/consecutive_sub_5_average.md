@@ -4,8 +4,8 @@
 *Updated on 22 February 2026*
 
 <style>
-.stat-tabs{display:flex;gap:0;margin:16px 0 0}
-.stat-tab{flex:1;padding:10px 20px;border:none;cursor:pointer;font-size:15px;font-weight:600;color:#fff;background:#4a6785;transition:background .2s}
+.stat-tabs{display:flex;gap:0;margin:0}
+.stat-tab{flex:none;padding:10px 20px;border:none;cursor:pointer;font-size:15px;font-weight:600;color:#fff;background:#4a6785;transition:background .2s}
 .stat-tab:first-child{border-radius:6px 0 0 6px}
 .stat-tab:last-child{border-radius:0 6px 6px 0}
 .stat-tab.active{background:#2c4a6e}
@@ -54,6 +54,3 @@ function switchTab(e,id){
   document.getElementById(id).classList.add('active');
 }
 </script>
-
-
-

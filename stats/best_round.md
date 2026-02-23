@@ -288,6 +288,3 @@
 | [Hungarian Open 2010](https://www.worldcubeassociation.org/competitions/HungarianOpen2010/results/all#emmagic_f) | Final | 7.05 | [Milán Baticz](https://www.worldcubeassociation.org/persons/2005BATI01) | 2.16 | [Máté Horváth](https://www.worldcubeassociation.org/persons/2007HORV01) | 2.25 | [Bertalan Bodor](https://www.worldcubeassociation.org/persons/2007BODO01) | 2.64 |
 | [Czech Open 2012](https://www.worldcubeassociation.org/competitions/CzechOpen2012/results/all#emmagic_f) | Final | 7.14 | [Milán Baticz](https://www.worldcubeassociation.org/persons/2005BATI01) | 2.16 | [Sanio Kasumovic](https://www.worldcubeassociation.org/persons/2009KASU01) | 2.44 | [Bertalan Bodor](https://www.worldcubeassociation.org/persons/2007BODO01) | 2.54 |
 | [Polish Nationals 2012](https://www.worldcubeassociation.org/competitions/PolishNationals2012/results/all#emmagic_2) | Second round | 7.15 | [Kamil Fiedoruk](https://www.worldcubeassociation.org/persons/2012FIED01) | 2.08 | [Owidiusz Pryk](https://www.worldcubeassociation.org/persons/2008PRYK01) | 2.51 | [Piotr Michał Padlewski](https://www.worldcubeassociation.org/persons/2008PADL01) | 2.56 |
-
-
-

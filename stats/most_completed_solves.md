@@ -139,6 +139,3 @@
 | 3x3x3 Multi-Blind | **28733** | 48592 |
 | 4x4x4 Blindfolded | **17352** | 65013 |
 | 5x5x5 Blindfolded | **7331** | 34636 |
-
-
-

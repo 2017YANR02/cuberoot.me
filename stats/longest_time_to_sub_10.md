@@ -104,6 +104,3 @@
 | [Dominik Beese](https://www.worldcubeassociation.org/persons/2013BEES01) | 10.79 |
 | [Simon Stannek](https://www.worldcubeassociation.org/persons/2012STAN04) | 10.75 |
 | [Tsang Hon Pong (曾漢邦)](https://www.worldcubeassociation.org/persons/2014PONG01) | 10.74 |
-
-
-

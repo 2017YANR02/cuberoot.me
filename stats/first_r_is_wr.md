@@ -85,6 +85,3 @@
 | 78 | [Xuanyi Geng (耿暄一)](https://www.worldcubeassociation.org/persons/2023GENG02) | Rubik's Cube | Single | 3.05 | 2025-04-13 | [Shenyang Spring 2025](https://www.worldcubeassociation.org/competitions/ShenyangSpring2025) |
 | 79 | [Ziyu Ye (叶梓渝)](https://www.worldcubeassociation.org/persons/2021YEZI01) | 2x2x2 Cube | Single | 0.39 | 2025-10-25 | [Hefei Open 2025](https://www.worldcubeassociation.org/competitions/HefeiOpen2025) |
 | 80 | [Sujan Feist](https://www.worldcubeassociation.org/persons/2016FEIS01) | 2x2x2 Cube | Average | 0.86 | 2025-12-13 | [Kids America Christmas OH 2025](https://www.worldcubeassociation.org/competitions/KidsAmericaChristmasOH2025) |
-
-
-
