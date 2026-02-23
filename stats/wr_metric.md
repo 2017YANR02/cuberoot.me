@@ -12,7 +12,7 @@
   border:1px solid #4a6785;border-radius:8px;
   background:rgba(255,255,255,0.03);
   color:#e0e0e0;cursor:pointer;
-  font-size:14px;font-weight:500;
+  font-size:14px;font-weight:600;line-height:1.2;
   transition:all .2s
 }
 .metric-dropdown-trigger:hover{border-color:#8ab4f8;background:rgba(138,180,248,0.08)}
@@ -49,7 +49,7 @@
   border:1px solid transparent;border-radius:6px;
   background:transparent;
   color:#c0c8d8;cursor:pointer;
-  font-size:14px;font-weight:500;
+  font-size:14px;font-weight:600;line-height:1.2;
   transition:all .15s
 }
 .metric-dropdown-item:hover{background:rgba(138,180,248,0.12);color:#fff}
