@@ -259,7 +259,7 @@ STAT_TRANSLATIONS = {
   },
   "wr_aoxr" => {
     title_zh: "多轮均值（AoXR）",
-    note_zh: "一场比赛中多轮平均成绩的均值的世界纪录历史与当前排名。"
+    note_zh: "一场比赛中多轮平均成绩的均值的世界纪录历史与排名。"
   },
   "wr_average_history" => {
     title_zh: "世界纪录平均历史",
@@ -332,7 +332,7 @@ STAT_TRANSLATIONS = {
   },
   "wr_metric" => {
     title_zh: "指标",
-    note_zh: "从一轮 5 次成绩中计算的各类指标的世界纪录历史与当前排名。"
+    note_zh: "从一轮 5 次成绩中计算的各类指标的世界纪录历史与排名。"
   },
   "yearly_rankings" => {
     title_zh: "年度排名",

@@ -64,7 +64,7 @@
 </div>
 <div class="source-panel active" id="source-single-1st-solve">
 <div class="stat-tabs">
-  <button class="stat-tab active" onclick="switchTab(event,'single-1st-solve-ranking')" data-i18n-en="Current Ranking" data-i18n-zh="当前排名">Current Ranking</button>
+  <button class="stat-tab active" onclick="switchTab(event,'single-1st-solve-ranking')" data-i18n-en="Current Ranking" data-i18n-zh="排名">Current Ranking</button>
   <button class="stat-tab" onclick="switchTab(event,'single-1st-solve-history')" data-i18n-en="WR History" data-i18n-zh="历史">WR History</button>
 </div>
 <div id="single-1st-solve-ranking" class="stat-panel active">
@@ -712,7 +712,7 @@
 </div>
 <div class="source-panel" id="source-single-1st-comp">
 <div class="stat-tabs">
-  <button class="stat-tab active" onclick="switchTab(event,'single-1st-comp-ranking')" data-i18n-en="Current Ranking" data-i18n-zh="当前排名">Current Ranking</button>
+  <button class="stat-tab active" onclick="switchTab(event,'single-1st-comp-ranking')" data-i18n-en="Current Ranking" data-i18n-zh="排名">Current Ranking</button>
   <button class="stat-tab" onclick="switchTab(event,'single-1st-comp-history')" data-i18n-en="WR History" data-i18n-zh="历史">WR History</button>
 </div>
 <div id="single-1st-comp-ranking" class="stat-panel active">
@@ -1404,7 +1404,7 @@
 </div>
 <div class="source-panel active" id="source-average-1st-solve">
 <div class="stat-tabs">
-  <button class="stat-tab active" onclick="switchTab(event,'average-1st-solve-ranking')" data-i18n-en="Current Ranking" data-i18n-zh="当前排名">Current Ranking</button>
+  <button class="stat-tab active" onclick="switchTab(event,'average-1st-solve-ranking')" data-i18n-en="Current Ranking" data-i18n-zh="排名">Current Ranking</button>
   <button class="stat-tab" onclick="switchTab(event,'average-1st-solve-history')" data-i18n-en="WR History" data-i18n-zh="历史">WR History</button>
 </div>
 <div id="average-1st-solve-ranking" class="stat-panel active">
@@ -2000,7 +2000,7 @@
 </div>
 <div class="source-panel" id="source-average-1st-comp">
 <div class="stat-tabs">
-  <button class="stat-tab active" onclick="switchTab(event,'average-1st-comp-ranking')" data-i18n-en="Current Ranking" data-i18n-zh="当前排名">Current Ranking</button>
+  <button class="stat-tab active" onclick="switchTab(event,'average-1st-comp-ranking')" data-i18n-en="Current Ranking" data-i18n-zh="排名">Current Ranking</button>
   <button class="stat-tab" onclick="switchTab(event,'average-1st-comp-history')" data-i18n-en="WR History" data-i18n-zh="历史">WR History</button>
 </div>
 <div id="average-1st-comp-ranking" class="stat-panel active">

@@ -47,14 +47,14 @@ class ConsecutiveSub5Average < Statistic
   def markdown
     streaks = data
 
-    # 视图 1: 当前排名（每人只取最长 streak，按 streak 降序）
+    # 视图 1: 排名（每人只取最长 streak，按 streak 降序）
     ranking = streaks
       .group_by { |s| s[:person_id] }
       .map { |_pid, ss| ss.max_by { |s| s[:count] } }
       .sort_by { |s| -s[:count] }
       .first(100)
 
-    # 视图 2: WR 历史（按结束日期排序，只保留打破/追平纪录的行，最终倒序显示）
+    # 视图 2: 历史（按结束日期排序，只保留打破/追平纪录的行，最终倒序显示）
     wr_history = build_wr_history(streaks)
 
     build_tabbed_page(ranking, wr_history)
@@ -99,7 +99,7 @@ class ConsecutiveSub5Average < Statistic
       end_comp: nil, end_comp_id: nil, end_date: nil }
   end
 
-  # NOTE: 构建 WR 历史——按结束日期排序，只保留 >= 当前最大值的行，最终倒序
+  # NOTE: 构建 历史——按结束日期排序，只保留 >= 当前最大值的行，最终倒序
   def build_wr_history(streaks)
     sorted = streaks.sort_by { |s| s[:end_date] }
     max_count = 0
@@ -134,7 +134,7 @@ class ConsecutiveSub5Average < Statistic
     md += "*Note: #{@note}*\n"
     md += "*Updated on #{updated}*\n\n"
     md += tab_styles
-    md += tab_buttons("Current Ranking", "当前排名", "ranking", "WR History", "WR 历史", "history")
+    md += tab_buttons("Current Ranking", "排名", "ranking", "WR History", "历史", "history")
     md += "<div id=\"ranking\" class=\"stat-panel active\">\n"
     md += ranking_table(ranking)
     md += "</div>\n"

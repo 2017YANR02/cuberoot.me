@@ -1,6 +1,6 @@
 <h2 data-i18n-en="Metric" data-i18n-zh="指标">Metric</h2>
 
-<p><em data-i18n-en="World record history and current rankings for various derived metrics computed from a round's 5 solves." data-i18n-zh="从一轮 5 次成绩中计算的各类指标的世界纪录历史与当前排名。">World record history and current rankings for various derived metrics computed from a round's 5 solves.</em></p>
+<p><em data-i18n-en="World record history and current rankings for various derived metrics computed from a round's 5 solves." data-i18n-zh="从一轮 5 次成绩中计算的各类指标的世界纪录历史与排名。">World record history and current rankings for various derived metrics computed from a round's 5 solves.</em></p>
 <p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>
 
 <style>
@@ -106,8 +106,8 @@
   </div>
 </div>
 <div class="stat-tabs">
-  <button class="stat-tab active" onclick="switchGlobalTab(event,'ranking')" data-i18n-en="Current Ranking" data-i18n-zh="当前排名">Current Ranking</button>
-  <button class="stat-tab" onclick="switchGlobalTab(event,'history')" data-i18n-en="WR History" data-i18n-zh="WR 历史">WR History</button>
+  <button class="stat-tab active" onclick="switchGlobalTab(event,'ranking')" data-i18n-en="Current Ranking" data-i18n-zh="排名">Current Ranking</button>
+  <button class="stat-tab" onclick="switchGlobalTab(event,'history')" data-i18n-en="WR History" data-i18n-zh="历史">WR History</button>
 </div>
 </div>
 <div class="metric-panel active" id="metric-single">

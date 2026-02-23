@@ -1,6 +1,6 @@
 <h2 data-i18n-en="AoXR" data-i18n-zh="多轮均值（AoXR）">AoXR</h2>
 
-<p><em data-i18n-en="World record history and current rankings for Average of X Rounds (AoXR) — the mean of averages across multiple rounds in one competition." data-i18n-zh="一场比赛中多轮平均成绩的均值的世界纪录历史与当前排名。">World record history and current rankings for Average of X Rounds (AoXR) — the mean of averages across multiple rounds in one competition.</em></p>
+<p><em data-i18n-en="World record history and current rankings for Average of X Rounds (AoXR) — the mean of averages across multiple rounds in one competition." data-i18n-zh="一场比赛中多轮平均成绩的均值的世界纪录历史与排名。">World record history and current rankings for Average of X Rounds (AoXR) — the mean of averages across multiple rounds in one competition.</em></p>
 <p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>
 
 <style>
@@ -38,8 +38,8 @@
 </style>
 <div class="metric-panel active" id="metric-ao1r">
 <div class="stat-tabs">
-  <button class="stat-tab active" onclick="switchTab(event,'ao1r-ranking')" data-i18n-en="Current Ranking" data-i18n-zh="当前排名">Current Ranking</button>
-  <button class="stat-tab" onclick="switchTab(event,'ao1r-history')" data-i18n-en="WR History" data-i18n-zh="WR 历史">WR History</button>
+  <button class="stat-tab active" onclick="switchTab(event,'ao1r-ranking')" data-i18n-en="Current Ranking" data-i18n-zh="排名">Current Ranking</button>
+  <button class="stat-tab" onclick="switchTab(event,'ao1r-history')" data-i18n-en="WR History" data-i18n-zh="历史">WR History</button>
 </div>
 <div id="ao1r-ranking" class="stat-panel active">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
@@ -887,8 +887,8 @@
 </div>
 <div class="metric-panel" id="metric-ao2r">
 <div class="stat-tabs">
-  <button class="stat-tab active" onclick="switchTab(event,'ao2r-ranking')" data-i18n-en="Current Ranking" data-i18n-zh="当前排名">Current Ranking</button>
-  <button class="stat-tab" onclick="switchTab(event,'ao2r-history')" data-i18n-en="WR History" data-i18n-zh="WR 历史">WR History</button>
+  <button class="stat-tab active" onclick="switchTab(event,'ao2r-ranking')" data-i18n-en="Current Ranking" data-i18n-zh="排名">Current Ranking</button>
+  <button class="stat-tab" onclick="switchTab(event,'ao2r-history')" data-i18n-en="WR History" data-i18n-zh="历史">WR History</button>
 </div>
 <div id="ao2r-ranking" class="stat-panel active">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
@@ -1714,8 +1714,8 @@
 </div>
 <div class="metric-panel" id="metric-ao3r">
 <div class="stat-tabs">
-  <button class="stat-tab active" onclick="switchTab(event,'ao3r-ranking')" data-i18n-en="Current Ranking" data-i18n-zh="当前排名">Current Ranking</button>
-  <button class="stat-tab" onclick="switchTab(event,'ao3r-history')" data-i18n-en="WR History" data-i18n-zh="WR 历史">WR History</button>
+  <button class="stat-tab active" onclick="switchTab(event,'ao3r-ranking')" data-i18n-en="Current Ranking" data-i18n-zh="排名">Current Ranking</button>
+  <button class="stat-tab" onclick="switchTab(event,'ao3r-history')" data-i18n-en="WR History" data-i18n-zh="历史">WR History</button>
 </div>
 <div id="ao3r-ranking" class="stat-panel active">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
@@ -2385,8 +2385,8 @@
 </div>
 <div class="metric-panel" id="metric-ao4r">
 <div class="stat-tabs">
-  <button class="stat-tab active" onclick="switchTab(event,'ao4r-ranking')" data-i18n-en="Current Ranking" data-i18n-zh="当前排名">Current Ranking</button>
-  <button class="stat-tab" onclick="switchTab(event,'ao4r-history')" data-i18n-en="WR History" data-i18n-zh="WR 历史">WR History</button>
+  <button class="stat-tab active" onclick="switchTab(event,'ao4r-ranking')" data-i18n-en="Current Ranking" data-i18n-zh="排名">Current Ranking</button>
+  <button class="stat-tab" onclick="switchTab(event,'ao4r-history')" data-i18n-en="WR History" data-i18n-zh="历史">WR History</button>
 </div>
 <div id="ao4r-ranking" class="stat-panel active">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>

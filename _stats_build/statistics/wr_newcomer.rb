@@ -108,7 +108,7 @@ class WrNewcomer < GroupedStatistic
         puts " done (#{(Time.now - t3).round(1)}s)"
 
         md += tab_buttons(
-          "Current Ranking", "当前排名", "#{s_prefix}-ranking",
+          "Current Ranking", "排名", "#{s_prefix}-ranking",
           "WR History", "历史", "#{s_prefix}-history"
         )
         md += grouped_panel("#{s_prefix}-ranking", true, ranking, RANKING_HEADER)
