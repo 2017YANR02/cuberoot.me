@@ -83,6 +83,17 @@ module MetricSelector
         if(oldPanel){
           oldPanel.querySelectorAll('.source-btn').forEach(function(b,i){if(b.classList.contains('active'))srcIdx=i;});
         }
+        // NOTE: 记住当前 tab suffix（ranking/history），切换 metric 后同步到新面板
+        // 限定到活跃 source-panel（wr_newcomer 三层嵌套场景）
+        var tabSuffix=null;
+        if(oldPanel){
+          var tabReadScope=oldPanel.querySelector('.source-panel.active')||oldPanel;
+          var activeTab=tabReadScope.querySelector('.stat-tab.active');
+          if(activeTab){
+            var m=(activeTab.getAttribute('onclick')||'').match(/switchTab\(event,\s*'(.+?)'\)/);
+            if(m) tabSuffix=m[1].split('-').pop();
+          }
+        }
         document.querySelectorAll('.metric-panel').forEach(p=>p.classList.remove('active'));
         document.querySelectorAll('.metric-btn').forEach(b=>b.classList.remove('active'));
         var panel=document.getElementById('metric-'+id);
@@ -91,6 +102,21 @@ module MetricSelector
         // NOTE: 同步 source 索引到新 panel
         var newBtns=panel.querySelectorAll('.source-btn');
         if(newBtns[srcIdx]) newBtns[srcIdx].click();
+        // NOTE: 同步 tab suffix 到新 panel，保持 tab 选择不变
+        // wr_newcomer 有三层嵌套（metric→source→tab），需限定到活跃 source-panel
+        if(tabSuffix){
+          var tabScope=panel.querySelector('.source-panel.active')||panel;
+          tabScope.querySelectorAll('.stat-tab').forEach(t=>t.classList.remove('active'));
+          tabScope.querySelectorAll('.stat-panel').forEach(p=>p.classList.remove('active'));
+          tabScope.querySelectorAll('.stat-tab').forEach(function(t){
+            var tm=(t.getAttribute('onclick')||'').match(/switchTab\(event,\s*'(.+?)'\)/);
+            if(tm&&tm[1].split('-').pop()===tabSuffix){
+              t.classList.add('active');
+              var tp=document.getElementById(tm[1]);
+              if(tp) tp.classList.add('active');
+            }
+          });
+        }
       }
       </script>
     HTML
