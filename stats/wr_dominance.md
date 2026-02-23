@@ -15,6 +15,14 @@
 .metric-panel{display:none}
 .metric-panel.active{display:block}
 </style>
+<style>
+.metric-tab-wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin: 16px 0; }
+.metric-tab-wrap .metric-selector { margin: 0; }
+.metric-tab-wrap .metric-panel { display: none; }
+.metric-tab-wrap .metric-panel.active { display: contents; }
+.metric-tab-wrap .stat-panel { width: 100%; }
+</style>
+<div class="metric-tab-wrap">
 <div class="metric-selector">
   <div class="metric-selector-group">
     <button class="metric-btn active" onclick="switchMetric('single')" data-i18n-en="Single" >Single</button>
@@ -767,6 +775,7 @@
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Start Date</th><th>Start Comp</th><th>Date</th><th>Competition</th></tr>
 <tr><td style="text-align:right">1</td><td style="text-align:right"></td><td style="text-align:right">7464</td><td><a href="https://www.worldcubeassociation.org/persons/2003BURT01">Bob Burton</a></td><td>2005-09-17</td><td><a href="https://www.worldcubeassociation.org/competitions/CaltechDallas2005">Caltech Dallas 2005</a></td><td>2005-09-17</td><td><a href="https://www.worldcubeassociation.org/competitions/CaltechDallas2005">Caltech Dallas 2005</a></td></tr>
 </table>
+</div>
 </div>
 </div>
 <script>

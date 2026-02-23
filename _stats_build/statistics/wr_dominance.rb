@@ -62,6 +62,7 @@ class WrDominance < Statistic
   def markdown
     md = top
     md += segmented_selector_styles
+    md += metric_tab_wrap_start
     md += segmented_selector_buttons(
       [{ label: "Single", id: "single" }, { label: "Average", id: "average" }]
     )
@@ -88,6 +89,8 @@ class WrDominance < Statistic
     md += grouped_panel("average-ranking", true, data[:average][:ranking].to_h, RANKING_HEADER)
     md += grouped_panel("average-history", false, data[:average][:history].to_h, HISTORY_HEADER)
     md += "</div>\n"
+
+    md += metric_tab_wrap_end
 
     md += metric_selector_script
     md += tab_script

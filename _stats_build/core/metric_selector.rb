@@ -51,6 +51,25 @@ module MetricSelector
     html
   end
 
+  # NOTE: 通用 flex 包装容器——让 metric 选择器、tab 选择器在桌面端同行显示
+  # 通过 display:contents 将 metric-panel 的子元素暴露到 flex 布局中
+  # 手机端自动换行（flex-wrap: wrap）
+  def metric_tab_wrap_start
+    <<~HTML
+      <style>
+      .metric-tab-wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin: 16px 0; }
+      .metric-tab-wrap .metric-selector { margin: 0; }
+      .metric-tab-wrap .metric-panel { display: none; }
+      .metric-tab-wrap .metric-panel.active { display: contents; }
+      .metric-tab-wrap .stat-panel { width: 100%; }
+      </style>
+      <div class="metric-tab-wrap">
+    HTML
+  end
+
+  def metric_tab_wrap_end
+    "</div><!-- metric-tab-wrap -->\n"
+  end
 
 
   # NOTE: 指标切换 JS——显示选中的 .metric-panel，高亮按钮
