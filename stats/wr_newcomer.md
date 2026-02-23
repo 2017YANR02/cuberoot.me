@@ -28,14 +28,17 @@
 .source-panel.active{display:block}
 </style>
 <style>
-.newcomer-header-wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin: 16px 0; }
-.newcomer-header-wrap .metric-selector, .newcomer-header-wrap .source-selector { margin: 0; }
-.metric-panel { display: none; }
-.metric-panel.active { display: contents; } /* NOTE: 只有 active 面板才用 contents 暴露子元素到 flex 布局 */
-.newcomer-header-wrap .source-panel.active { display: contents; } /* NOTE: source-panel 也用 contents，让 stat-tabs 上到同一行 */
-.newcomer-header-wrap .stat-panel { width: 100%; } /* 数据表格区域占满整行 */
+.metric-tab-wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin: 16px 0; }
+.metric-tab-wrap .metric-selector { margin: 0; }
+.metric-tab-wrap .metric-panel { display: none; }
+.metric-tab-wrap .metric-panel.active { display: contents; }
+.metric-tab-wrap .stat-panel { width: 100%; }
 </style>
-<div class="newcomer-header-wrap">
+<style>
+.metric-tab-wrap .source-selector { margin: 0; }
+.metric-tab-wrap .source-panel.active { display: contents; }
+</style>
+<div class="metric-tab-wrap">
 <div class="metric-selector">
   <div class="metric-selector-group">
     <button class="metric-btn active" onclick="switchMetric('single')" data-i18n-en="Single" >Single</button>
@@ -2589,7 +2592,7 @@
 </div>
 </div>
 </div>
-</div><!-- newcomer-header-wrap -->
+</div><!-- metric-tab-wrap -->
 <script>
 function switchMetric(id){
   // NOTE: metric 和 source 是独立选择器，切换 metric 时保持 source 选择不变

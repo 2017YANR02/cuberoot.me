@@ -33,6 +33,7 @@ class WrAoxr < Statistic
 
     # --- 选择器按钮 ---
     md += segmented_selector_styles
+    md += metric_tab_wrap_start
     items = instances.map { |inst| AOXR_META[inst.class] }
     md += segmented_selector_buttons(items)
 
@@ -67,6 +68,8 @@ class WrAoxr < Statistic
       md += "</div>\n"
       printf("    [%d/%d] %-20s %5.1fs\n", i + 1, instances.size, meta[:label], Time.now - t_sub)
     end
+
+    md += metric_tab_wrap_end
 
     md += metric_selector_script
     md += tab_script

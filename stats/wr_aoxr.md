@@ -15,6 +15,14 @@
 .metric-panel{display:none}
 .metric-panel.active{display:block}
 </style>
+<style>
+.metric-tab-wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin: 16px 0; }
+.metric-tab-wrap .metric-selector { margin: 0; }
+.metric-tab-wrap .metric-panel { display: none; }
+.metric-tab-wrap .metric-panel.active { display: contents; }
+.metric-tab-wrap .stat-panel { width: 100%; }
+</style>
+<div class="metric-tab-wrap">
 <div class="metric-selector">
   <div class="metric-selector-group">
     <button class="metric-btn active" onclick="switchMetric('ao1r')" data-i18n-en="Ao1R" >Ao1R</button>
@@ -2648,6 +2656,7 @@
 <tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Date</th><th>Competition</th><th>Details</th></tr>
 <tr><td style="text-align:right">6.00</td><td style="text-align:right"></td><td style="text-align:right">1368</td><td><a href="https://www.worldcubeassociation.org/persons/2017SIAU02">Max Siauw</a></td><td>2022-05-27</td><td><a href="https://www.worldcubeassociation.org/competitions/NortheastChampionship2022">Northeast Championship 2022</a></td><td>7.56, 5.82, 5.02, 5.58</td></tr>
 </table>
+</div>
 </div>
 </div>
 <script>
