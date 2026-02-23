@@ -69,6 +69,15 @@ ruby -e "$LOADED_FEATURES << 'bundler/setup'; require_relative 'statistics/index
 ruby -c statistics/xxx.rb
 ```
 
+### UI 快速测试 (无需数据库)
+
+很多时候只需要调试分段控件、标签、表格等前端渲染效果，并不需要花费几十分钟生成全站数据。
+本项目提供了专门的静态测试页，无需启动数据库即可直接在 Jekyll 预览：
+
+- 访问地址：[http://127.0.0.1:4000/stats/test_ui](http://127.0.0.1:4000/stats/test_ui)
+- 源码位置：`stats/test_ui.md`
+- 用途：各种布局、响应式折行、夜间模式等 CSS 和国际化 JS 逻辑调整。
+
 ## 注意事项
 
 - **大项目很慢**：`wr_dominance` 等需要全量查询的统计，在 333 (三阶) 上可能需要几分钟。建议先用小项目（如 `skewb`、`555bf`）测试逻辑是否正确。
