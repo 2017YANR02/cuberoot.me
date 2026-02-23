@@ -62,12 +62,13 @@
 .metric-panel.active{display:block}
 </style>
 <style>
-.stat-tabs{display:flex;gap:0;margin:0}
-.stat-tab{flex:none;padding:10px 20px;border:none;cursor:pointer;font-size:15px;font-weight:600;color:#fff;background:#4a6785;transition:background .2s}
+.stat-tabs{display:flex;gap:0}
+.stat-tab{flex:none;padding:8px 20px;border:1px solid #4a6785;background:transparent;color:#8ab4f8;cursor:pointer;font-size:14px;font-weight:600;transition:all .2s;border-radius:0}
 .stat-tab:first-child{border-radius:6px 0 0 6px}
 .stat-tab:last-child{border-radius:0 6px 6px 0}
-.stat-tab.active{background:#2c4a6e}
-.stat-tab:hover:not(.active){background:#3b5975}
+.stat-tab + .stat-tab{border-left:none}
+.stat-tab.active{background:#2c4a6e;border-color:#8ab4f8;color:#fff}
+.stat-tab:hover:not(.active){background:rgba(138,180,248,0.08)}
 .stat-panel{display:none;margin-top:12px}
 .stat-panel.active{display:block}
 .stat-panel table{border-collapse:collapse}
