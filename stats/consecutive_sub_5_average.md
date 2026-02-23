@@ -10,8 +10,9 @@
 .segmented-btn + .segmented-btn{border-left:none}
 .segmented-btn.active{background:#2c4a6e;border-color:#8ab4f8;color:#fff}
 .segmented-btn:hover:not(.active){background:rgba(138,180,248,0.08)}
+</style>
+<style>
 .stat-tabs{display:flex;gap:0}
-
 .stat-panel{display:none;margin-top:12px}
 .stat-panel.active{display:block}
 .stat-panel table{border-collapse:collapse}

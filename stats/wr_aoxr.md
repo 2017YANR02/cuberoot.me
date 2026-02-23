@@ -4,14 +4,16 @@
 <p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>
 
 <style>
-.metric-selector{display:flex;align-items:center;gap:0;margin:16px 0}
-.metric-selector-group{display:flex;gap:0}
 .segmented-btn{padding:8px 20px;border:1px solid #4a6785;background:transparent;color:#8ab4f8;cursor:pointer;font-size:14px;font-weight:600;line-height:1.2;transition:all .2s;border-radius:0}
 .segmented-btn:first-child{border-radius:6px 0 0 6px}
 .segmented-btn:last-child{border-radius:0 6px 6px 0}
 .segmented-btn + .segmented-btn{border-left:none}
 .segmented-btn.active{background:#2c4a6e;border-color:#8ab4f8;color:#fff}
 .segmented-btn:hover:not(.active){background:rgba(138,180,248,0.08)}
+</style>
+<style>
+.metric-selector{display:flex;align-items:center;gap:0;margin:16px 0}
+.metric-selector-group{display:flex;gap:0}
 .metric-panel{display:none}
 .metric-panel.active{display:block}
 </style>
@@ -33,7 +35,6 @@
 </div>
 <style>
 .stat-tabs{display:flex;gap:0}
-
 .stat-panel{display:none;margin-top:12px}
 .stat-panel.active{display:block}
 .stat-panel table{border-collapse:collapse}
@@ -2654,13 +2655,49 @@
 </table>
 </div>
 </div>
-</div>
+</div><!-- metric-tab-wrap -->
 <script>
 function switchMetric(id){
+  // NOTE: metric 和 source 是独立选择器，切换 metric 时保持 source 选择不变
+  var oldPanel=document.querySelector('.metric-panel.active');
+  var srcIdx=0;
+  if(oldPanel){
+    oldPanel.querySelectorAll('.source-btn').forEach(function(b,i){if(b.classList.contains('active'))srcIdx=i;});
+  }
+  // NOTE: 记住当前 tab suffix（ranking/history），切换 metric 后同步到新面板
+  // 限定到活跃 source-panel（wr_newcomer 三层嵌套场景）
+  var tabSuffix=null;
+  if(oldPanel){
+    var tabReadScope=oldPanel.querySelector('.source-panel.active')||oldPanel;
+    var activeTab=tabReadScope.querySelector('.stat-tab.active');
+    if(activeTab){
+      var m=(activeTab.getAttribute('onclick')||'').match(/switchTab(event, *'(.+?)')/);
+      if(m) tabSuffix=m[1].split('-').pop();
+    }
+  }
   document.querySelectorAll('.metric-panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.metric-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('metric-'+id).classList.add('active');
+  var panel=document.getElementById('metric-'+id);
+  panel.classList.add('active');
   event.target.classList.add('active');
+  // NOTE: 同步 source 索引到新 panel
+  var newBtns=panel.querySelectorAll('.source-btn');
+  if(newBtns[srcIdx]) newBtns[srcIdx].click();
+  // NOTE: 同步 tab suffix 到新 panel，保持 tab 选择不变
+  // wr_newcomer 有三层嵌套（metric→source→tab），需限定到活跃 source-panel
+  if(tabSuffix){
+    var tabScope=panel.querySelector('.source-panel.active')||panel;
+    tabScope.querySelectorAll('.stat-tab').forEach(t=>t.classList.remove('active'));
+    tabScope.querySelectorAll('.stat-panel').forEach(p=>p.classList.remove('active'));
+    tabScope.querySelectorAll('.stat-tab').forEach(function(t){
+      var tm=(t.getAttribute('onclick')||'').match(/switchTab(event, *'(.+?)')/);
+      if(tm&&tm[1].split('-').pop()===tabSuffix){
+        t.classList.add('active');
+        var tp=document.getElementById(tm[1]);
+        if(tp) tp.classList.add('active');
+      }
+    });
+  }
 }
 </script>
 <script>
