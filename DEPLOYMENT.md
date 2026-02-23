@@ -110,7 +110,9 @@ ruiminyan.github.io/
 
 ```powershell
 cd D:\cube\ruiminyan.github.io
+# 必须要先用 bundle exec，否则可能会缺少依赖
 bundle exec jekyll serve
+# 浏览器访问 http://127.0.0.1:4000
 ```
 
 - **访问地址**：http://127.0.0.1:4000
@@ -119,6 +121,15 @@ bundle exec jekyll serve
 
 > 首次运行前需先 `bundle install` 安装依赖（见下方「本地环境 → Ruby」）。
 
+### UI 快速测试 (无需数据库)
+
+很多时候只需要调试分段控件、标签、表格等前端渲染效果，并不需要花费几十分钟生成全站数据。
+本项目提供了专门的纯前端静态测试页，无需启动数据库即可直接在 Jekyll 预览：
+
+- 访问地址：[http://127.0.0.1:4000/stats/test_ui](http://127.0.0.1:4000/stats/test_ui)
+- 源码位置：`stats/test_ui.md`
+- 用途：各种布局、响应式折行、夜间模式等 CSS 和国际化 JS 逻辑验证。
+
 ## 本地发布统计（无需等待 CI）
 
 本地有 MySQL 数据库，可直接生成 `.md` 文件后 push，线上立刻生效。
@@ -126,11 +137,18 @@ bundle exec jekyll serve
 ```powershell
 cd _stats_build
 
-# Step 1：首次 / 数据有更新时——正常跑（约 1-5 分钟），同时写入磁盘缓存
-ruby bin/compute.rb wr_bao5
+# 查看所有可用统计名称 (ID)：
+ruby -e "$LOADED_FEATURES << 'bundler/setup'; require_relative 'statistics/index'; puts STATISTICS.keys.sort.join(', ')"
 
-# Step 2：只改了 UI 代码时——用缓存跳过 MySQL（约 0.1 秒）
-$env:STATS_USE_CACHE="1"; ruby bin/compute.rb wr_bao5
+# Step 1：测试/生成单个或多个统计（使用 STATS_FILTER，逗号分隔）
+$env:STATS_FILTER="wr_bao5,average_of"
+ruby bin/compute_all.rb
+
+# Step 2：如果代码没改表结构和 SQL 查询只改了 UI 模板——用缓存跳过 MySQL（约 0.1 秒）
+$env:STATS_USE_CACHE="1"; ruby bin/compute_all.rb
+
+# 提交前可选：检查 Ruby 语法
+ruby -c statistics/wr_bao5.rb
 
 # Step 3：提交并 push，GitHub Pages 1-2 分钟内上线
 git add ../stats/wr_bao5.md
@@ -353,9 +371,9 @@ cd _stats_build
 $env:STATS_FILTER = "wr_bpa"
 ruby bin/compute_all.rb
 
-# 调整并行 worker 数（默认 4，本地 16GB 可增加）
+# 调整并行 worker 数（默认 4，本地 16GB 可增加，Linux 使用多进程，Win 使用多线程互不干扰）
 $env:STATS_WORKERS = 8
 ruby bin/compute_all.rb
 ```
 
-> **注意**：全量查询统计（如 `wr_dominance`）在大项目（333）上可能很慢，建议先用小项目（如 `skewb`、`555bf`）验证逻辑。
+> **注意**：全量查询统计（如 `wr_dominance`）在大项目（333）上可能很慢，建议先用小项目（如 `skewb`、`555bf`）验证逻辑。全量查询非常消耗内存（333可达数 GB），每次本地完整测试完毕后注意 kill 遗留的 Ruby 进程及释放。
