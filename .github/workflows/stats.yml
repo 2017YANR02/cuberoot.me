@@ -80,16 +80,6 @@ jobs:
         working-directory: _stats_build
         run: ruby bin/compute_index.rb
 
-      - name: Add GitHub corner
-        run: |
-          github_corner_html=$(cat _stats_build/bin/templates/github_corner.html)
-          github_corner_html="${github_corner_html/<<<GITHUB_REPO_SLUG>>>/RuiminYan/ruiminyan.github.io}"
-          for file in stats/*.md; do
-            if ! grep -q "github-corner" "$file"; then
-              printf "\n\n%s" "$github_corner_html" >> "$file"
-            fi
-          done
-
       - name: Commit and push
         run: |
           git config user.name 'github-actions[bot]'
