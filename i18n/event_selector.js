@@ -406,6 +406,8 @@
         background: rgba(255, 255, 255, 0.03);
         border-radius: 8px;
         border: 1px solid rgba(255, 255, 255, 0.06);
+        box-sizing: border-box;
+        width: 100%;
       }
       .event-btn {
         position: relative;
