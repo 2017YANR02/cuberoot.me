@@ -61,7 +61,8 @@ class WrNewcomer < GroupedStatistic
       .newcomer-header-wrap .metric-selector, .newcomer-header-wrap .source-selector { margin: 0; }
       .metric-panel { display: none; }
       .metric-panel.active { display: contents; } /* NOTE: 只有 active 面板才用 contents 暴露子元素到 flex 布局 */
-      .metric-panel > :not(.source-selector) { width: 100%; } /* 让内容区域（如图表）换行显示占满整个宽度 */
+      .newcomer-header-wrap .source-panel.active { display: contents; } /* NOTE: source-panel 也用 contents，让 stat-tabs 上到同一行 */
+      .newcomer-header-wrap .stat-panel { width: 100%; } /* 数据表格区域占满整行 */
       </style>
       <div class="newcomer-header-wrap">
     HTML
