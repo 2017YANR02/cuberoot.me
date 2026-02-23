@@ -6,22 +6,22 @@
 <style>
 .metric-selector{display:flex;align-items:center;gap:0;margin:16px 0}
 .metric-selector-group{display:flex;gap:0}
-.metric-btn{padding:8px 20px;border:1px solid #4a6785;background:transparent;color:#8ab4f8;cursor:pointer;font-size:14px;font-weight:600;transition:all .2s;border-radius:0}
-.metric-btn:first-child{border-radius:6px 0 0 6px}
-.metric-btn:last-child{border-radius:0 6px 6px 0}
-.metric-btn + .metric-btn{border-left:none}
-.metric-btn.active{background:#2c4a6e;border-color:#8ab4f8;color:#fff}
-.metric-btn:hover:not(.active){background:rgba(138,180,248,0.08)}
+
+
+
+.metric-btn + 
+
+
 .metric-panel{display:none}
 .metric-panel.active{display:block}
 </style>
 <div class="metric-selector">
   <div class="metric-selector-group">
-    <button class="metric-btn active" onclick="switchMetric('ao5')" data-i18n-en="Ao5" >Ao5</button>
-    <button class="metric-btn" onclick="switchMetric('ao12')" data-i18n-en="Ao12" >Ao12</button>
-    <button class="metric-btn" onclick="switchMetric('ao25')" data-i18n-en="Ao25" >Ao25</button>
-    <button class="metric-btn" onclick="switchMetric('ao50')" data-i18n-en="Ao50" >Ao50</button>
-    <button class="metric-btn" onclick="switchMetric('ao100')" data-i18n-en="Ao100" >Ao100</button>
+    <button class="segmented-btn metric-btn active" onclick="switchMetric('ao5')" data-i18n-en="Ao5" >Ao5</button>
+    <button class="segmented-btn metric-btn" onclick="switchMetric('ao12')" data-i18n-en="Ao12" >Ao12</button>
+    <button class="segmented-btn metric-btn" onclick="switchMetric('ao25')" data-i18n-en="Ao25" >Ao25</button>
+    <button class="segmented-btn metric-btn" onclick="switchMetric('ao50')" data-i18n-en="Ao50" >Ao50</button>
+    <button class="segmented-btn metric-btn" onclick="switchMetric('ao100')" data-i18n-en="Ao100" >Ao100</button>
   </div>
 </div>
 <div class="metric-panel active" id="metric-ao5">
