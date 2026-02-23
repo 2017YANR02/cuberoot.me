@@ -13,7 +13,7 @@
    - 导入方式见 `bin/update_database.rb`
    - 配置文件 `database.yml`（格式见下方）
 
-3. **安装 gem**
+3. **安装 gem** (已安装)
    ```bash
    gem install mysql2
    ```
