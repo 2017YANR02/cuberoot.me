@@ -4,6 +4,12 @@
 <p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>
 
 <style>
+.segmented-btn{padding:8px 20px;border:1px solid #4a6785;background:transparent;color:#8ab4f8;cursor:pointer;font-size:14px;font-weight:600;line-height:1.2;transition:all .2s;border-radius:0}
+.segmented-btn:first-child{border-radius:6px 0 0 6px}
+.segmented-btn:last-child{border-radius:0 6px 6px 0}
+.segmented-btn + .segmented-btn{border-left:none}
+.segmented-btn.active{background:#2c4a6e;border-color:#8ab4f8;color:#fff}
+.segmented-btn:hover:not(.active){background:rgba(138,180,248,0.08)}
 .metric-selector{display:flex;align-items:center;gap:0;margin:16px 0}
 .metric-selector-group{display:flex;gap:0}
 
