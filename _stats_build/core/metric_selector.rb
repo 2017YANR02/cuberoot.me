@@ -109,11 +109,11 @@ module MetricSelector
       .metric-dropdown{position:relative;display:inline-block;margin:0}
       .metric-dropdown-trigger{
         display:flex;align-items:center;gap:8px;
-        padding:10px 18px;
+        padding:8px 18px;
         border:1px solid #4a6785;border-radius:8px;
         background:rgba(255,255,255,0.03);
         color:#e0e0e0;cursor:pointer;
-        font-size:15px;font-weight:500;
+        font-size:14px;font-weight:500;
         transition:all .2s
       }
       .metric-dropdown-trigger:hover{border-color:#8ab4f8;background:rgba(138,180,248,0.08)}
