@@ -70,12 +70,13 @@ class WrMetric < Statistic
 
     md = top
 
-    # --- 指标下拉菜单 ---
+    # --- 顶栏（下拉菜单 + 全局 Tab） ---
     md += metric_dropdown_styles
-    md += metric_dropdown_html(METRIC_GROUPS, METRIC_META)
-
-    # --- Tab 样式（全局只输出一次）---
     md += tab_styles
+    md += "<div class=\"metric-toolbar\">\n"
+    md += metric_dropdown_html(METRIC_GROUPS, METRIC_META)
+    md += global_tab_buttons("Current Ranking", "当前排名", "ranking", "WR History", "WR 历史", "history")
+    md += "</div>\n"
 
     # --- 每个指标的内容面板 ---
     instances.each_with_index do |inst, i|
@@ -90,11 +91,7 @@ class WrMetric < Statistic
       ranking = inst.ranking_data
       history = inst.data  # 调用 query → transform
 
-      # NOTE: Tab ID 加前缀避免 13 个面板的 ID 冲突
-      md += tab_buttons(
-        "Current Ranking", "当前排名", "#{prefix}-ranking",
-        "WR History", "WR 历史", "#{prefix}-history"
-      )
+      # NOTE: 输出两个 stat-panel（去掉了原本的 tab_buttons）
       md += grouped_panel("#{prefix}-ranking", true, ranking, RANKING_HEADER)
       md += grouped_panel("#{prefix}-history", false, history, inst.instance_variable_get(:@table_header))
 
@@ -105,7 +102,7 @@ class WrMetric < Statistic
     # --- JS ---
     md += metric_selector_script  # NOTE: 提供共享的 switchMetric()
     md += metric_dropdown_script  # NOTE: 下拉菜单交互
-    md += tab_script  # NOTE: 作用域版，用 closest('.metric-panel') 限定
+    md += global_tab_script       # NOTE: 全局 Tab 交互逻辑
     md
   end
 end

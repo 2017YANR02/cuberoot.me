@@ -13,8 +13,8 @@ module TabUi
   def tab_styles
     <<~HTML
       <style>
-      .stat-tabs{display:flex;gap:0;margin:16px 0 0}
-      .stat-tab{flex:1;padding:10px 20px;border:none;cursor:pointer;font-size:15px;font-weight:600;color:#fff;background:#4a6785;transition:background .2s}
+      .stat-tabs{display:flex;gap:0;margin:0}
+      .stat-tab{flex:none;padding:10px 20px;border:none;cursor:pointer;font-size:15px;font-weight:600;color:#fff;background:#4a6785;transition:background .2s}
       .stat-tab:first-child{border-radius:6px 0 0 6px}
       .stat-tab:last-child{border-radius:0 6px 6px 0}
       .stat-tab.active{background:#2c4a6e}
@@ -47,6 +47,42 @@ module TabUi
         scope.querySelectorAll('.stat-panel').forEach(p=>p.classList.remove('active'));
         e.target.classList.add('active');
         document.getElementById(id).classList.add('active');
+      }
+      </script>
+    HTML
+  end
+
+  # NOTE: 全局 Tab 按钮（只生成一组，用于 metric-toolbar）
+  # 传入的 id 是后缀（例如 "ranking" 或 "history"），非特定面板 ID
+  def global_tab_buttons(en1, zh1, suffix1, en2, zh2, suffix2)
+    <<~HTML
+      <div class="stat-tabs">
+        <button class="stat-tab active" onclick="switchGlobalTab(event,'#{suffix1}')" data-i18n-en="#{en1}" data-i18n-zh="#{zh1}">#{en1}</button>
+        <button class="stat-tab" onclick="switchGlobalTab(event,'#{suffix2}')" data-i18n-en="#{en2}" data-i18n-zh="#{zh2}">#{en2}</button>
+      </div>
+    HTML
+  end
+
+  # NOTE: 全局 Tab 交互逻辑（遍历所有 .metric-panel）
+  def global_tab_script
+    <<~HTML
+      <script>
+      function switchGlobalTab(e, suffix){
+        // 更新所有 Tab 按钮状态
+        document.querySelectorAll('.stat-tab').forEach(t=>t.classList.remove('active'));
+        e.target.classList.add('active');
+
+        // 遍历所有面板，用 prefix 拼接 suffix 得到具体 ID 并激活
+        document.querySelectorAll('.metric-panel').forEach(panel => {
+          panel.querySelectorAll('.stat-panel').forEach(p=>p.classList.remove('active'));
+          // panel.id 形如 "metric-single"，截取后面的 "single"
+          let prefix = panel.id.replace('metric-', '');
+          let targetId = prefix + '-' + suffix;
+          let targetPanel = document.getElementById(targetId);
+          if (targetPanel) {
+            targetPanel.classList.add('active');
+          }
+        });
       }
       </script>
     HTML

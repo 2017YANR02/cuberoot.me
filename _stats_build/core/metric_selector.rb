@@ -76,7 +76,8 @@ module MetricSelector
   def metric_dropdown_styles
     <<~HTML
       <style>
-      .metric-dropdown{position:relative;display:inline-block;margin:16px 0}
+      .metric-toolbar{display:flex;align-items:center;gap:16px;margin:16px 0;flex-wrap:wrap}
+      .metric-dropdown{position:relative;display:inline-block;margin:0}
       .metric-dropdown-trigger{
         display:flex;align-items:center;gap:8px;
         padding:10px 18px;
