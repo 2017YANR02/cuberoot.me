@@ -51,20 +51,15 @@ class WrNewcomer < GroupedStatistic
     md += segmented_selector_styles("metric")
     md += segmented_selector_styles("source")
     
-    # NOTE: 用户要求将两个选择器放在同一行。由于 source 是动态显示在 metric panel 内部的，
-    # 我们通过 CSS 给定一个包裹所有内容的容器，并让 metric-panel 呈现 display: contents;
-    # 这样 .source-selector 就和外面的 .metric-selector 成为了真正意义上的兄弟元素！
-    # 从而能完美应用外层的 flex 布局，支持自适应换行 (flex-wrap: wrap)
+    # NOTE: 用户要求将所有选择器放在同一行
+    # 通用 wrap 提供 flex 容器 + metric-panel display:contents
+    # newcomer 特有：source-panel 也需要 display:contents，让 stat-tabs 也上到同一行
+    md += metric_tab_wrap_start
     md += <<~HTML
       <style>
-      .newcomer-header-wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin: 16px 0; }
-      .newcomer-header-wrap .metric-selector, .newcomer-header-wrap .source-selector { margin: 0; }
-      .metric-panel { display: none; }
-      .metric-panel.active { display: contents; } /* NOTE: 只有 active 面板才用 contents 暴露子元素到 flex 布局 */
-      .newcomer-header-wrap .source-panel.active { display: contents; } /* NOTE: source-panel 也用 contents，让 stat-tabs 上到同一行 */
-      .newcomer-header-wrap .stat-panel { width: 100%; } /* 数据表格区域占满整行 */
+      .metric-tab-wrap .source-selector { margin: 0; }
+      .metric-tab-wrap .source-panel.active { display: contents; }
       </style>
-      <div class="newcomer-header-wrap">
     HTML
 
     md += segmented_selector_buttons(METRICS)
@@ -120,7 +115,7 @@ class WrNewcomer < GroupedStatistic
       md += "</div>\n"
     end
 
-    md += "</div><!-- newcomer-header-wrap -->\n"
+    md += metric_tab_wrap_end
 
     md += metric_selector_script
     md += source_selector_script
