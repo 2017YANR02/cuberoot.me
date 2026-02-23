@@ -62,13 +62,14 @@
 .metric-panel.active{display:block}
 </style>
 <style>
+.segmented-btn{padding:8px 20px;border:1px solid #4a6785;background:transparent;color:#8ab4f8;cursor:pointer;font-size:14px;font-weight:600;line-height:1.2;transition:all .2s;border-radius:0}
+.segmented-btn:first-child{border-radius:6px 0 0 6px}
+.segmented-btn:last-child{border-radius:0 6px 6px 0}
+.segmented-btn + .segmented-btn{border-left:none}
+.segmented-btn.active{background:#2c4a6e;border-color:#8ab4f8;color:#fff}
+.segmented-btn:hover:not(.active){background:rgba(138,180,248,0.08)}
 .stat-tabs{display:flex;gap:0}
-.stat-tab{flex:none;padding:8px 20px;border:1px solid #4a6785;background:transparent;color:#8ab4f8;cursor:pointer;font-size:14px;font-weight:600;line-height:1.2;transition:all .2s;border-radius:0}
-.stat-tab:first-child{border-radius:6px 0 0 6px}
-.stat-tab:last-child{border-radius:0 6px 6px 0}
-.stat-tab + .stat-tab{border-left:none}
-.stat-tab.active{background:#2c4a6e;border-color:#8ab4f8;color:#fff}
-.stat-tab:hover:not(.active){background:rgba(138,180,248,0.08)}
+
 .stat-panel{display:none;margin-top:12px}
 .stat-panel.active{display:block}
 .stat-panel table{border-collapse:collapse}
@@ -107,8 +108,8 @@
   </div>
 </div>
 <div class="stat-tabs">
-  <button class="stat-tab active" onclick="switchGlobalTab(event,'ranking')" data-i18n-en="Current Ranking" data-i18n-zh="排名">Current Ranking</button>
-  <button class="stat-tab" onclick="switchGlobalTab(event,'history')" data-i18n-en="WR History" data-i18n-zh="历史">WR History</button>
+  <button class="segmented-btn stat-tab active" onclick="switchGlobalTab(event,'ranking')" data-i18n-en="Current Ranking" data-i18n-zh="排名">Current Ranking</button>
+  <button class="segmented-btn stat-tab" onclick="switchGlobalTab(event,'history')" data-i18n-en="WR History" data-i18n-zh="历史">WR History</button>
 </div>
 </div>
 <div class="metric-panel active" id="metric-single">
