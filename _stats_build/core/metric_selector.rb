@@ -2,31 +2,42 @@
 # 选择器按钮、样式和切换脚本的共享实现
 # 消费方只需定义 META 常量（class => { label:, id: }）
 module MetricSelector
-  # NOTE: 选择器按钮的 CSS 样式（药丸按钮 + metric-panel 显隐）
+  # NOTE: 选择器按钮的 CSS 样式（分段控件 + metric-panel 显隐）
   def metric_selector_styles
     <<~HTML
       <style>
-      .metric-selector{display:flex;flex-wrap:wrap;gap:6px;margin:16px 0}
-      .metric-btn{padding:8px 16px;border:1px solid #4a6785;border-radius:20px;background:transparent;color:#8ab4f8;cursor:pointer;font-size:14px;font-weight:500;transition:all .2s}
+      .metric-selector{display:flex;align-items:center;gap:0;margin:16px 0}
+      .metric-selector-label{font-size:14px;font-weight:600;color:#c0c8d8;margin-right:12px}
+      .metric-selector-group{display:flex;gap:0}
+      .metric-btn{padding:8px 20px;border:1px solid #4a6785;background:transparent;color:#8ab4f8;cursor:pointer;font-size:14px;font-weight:600;transition:all .2s;border-radius:0}
+      .metric-btn:first-child{border-radius:6px 0 0 6px}
+      .metric-btn:last-child{border-radius:0 6px 6px 0}
+      .metric-btn + .metric-btn{border-left:none}
       .metric-btn.active{background:#2c4a6e;border-color:#8ab4f8;color:#fff}
-      .metric-btn:hover:not(.active){background:rgba(138,180,248,0.1)}
+      .metric-btn:hover:not(.active){background:rgba(138,180,248,0.08)}
       .metric-panel{display:none}
       .metric-panel.active{display:block}
       </style>
     HTML
   end
 
-  # NOTE: 生成指标选择器按钮行
+  # NOTE: 生成指标选择器按钮行（分段控件风格）
   # @param instances [Array] 子类实例列表
   # @param meta [Hash] class => { label:, id: } 映射
-  def metric_selector_buttons(instances, meta)
+  # @param label [String] 左侧标签文字（如 "Type"），nil 则不显示
+  def metric_selector_buttons(instances, meta, label: nil)
     html = "<div class=\"metric-selector\">\n"
+    if label
+      html += "  <span class=\"metric-selector-label\" data-i18n-en=\"#{label}\">#{label}</span>\n"
+    end
+    html += "  <div class=\"metric-selector-group\">\n"
     instances.each_with_index do |inst, i|
       m = meta[inst.class]
       active = i == 0 ? " active" : ""
-      html += "  <button class=\"metric-btn#{active}\" onclick=\"switchMetric('#{m[:id]}')\" "
+      html += "    <button class=\"metric-btn#{active}\" onclick=\"switchMetric('#{m[:id]}')\" "
       html += "data-i18n-en=\"#{m[:label]}\">#{m[:label]}</button>\n"
     end
+    html += "  </div>\n"
     html += "</div>\n"
     html
   end
