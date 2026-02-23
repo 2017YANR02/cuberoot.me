@@ -102,6 +102,48 @@
 
 </div>
 
+<hr>
+
+<h3>聚合统计页 — 下拉菜单 + 全局 Tab（同一行）</h3>
+
+<style>
+.metric-toolbar{display:flex;align-items:center;gap:16px;margin:16px 0;flex-wrap:wrap}
+.metric-dropdown{position:relative;display:inline-block;margin:0}
+.metric-dropdown-trigger{
+  display:flex;align-items:center;gap:8px;
+  padding:10px 18px;
+  border:1px solid #4a6785;border-radius:8px;
+  background:rgba(255,255,255,0.03);
+  color:#e0e0e0;cursor:pointer;
+  font-size:15px;font-weight:500;
+  transition:all .2s
+}
+.metric-dropdown-trigger:hover{border-color:#8ab4f8;background:rgba(138,180,248,0.08)}
+.metric-dropdown-trigger .arrow{
+  font-size:10px;color:#8ab4f8;
+  transition:transform .2s
+}
+
+.stat-tabs{display:flex;gap:0;margin:0}
+.stat-tab{flex:none;padding:10px 20px;border:none;cursor:pointer;font-size:15px;font-weight:600;color:#fff;background:#4a6785;transition:background .2s}
+.stat-tab:first-child{border-radius:6px 0 0 6px}
+.stat-tab:last-child{border-radius:0 6px 6px 0}
+.stat-tab.active{background:#2c4a6e}
+</style>
+
+<div class="metric-toolbar">
+  <div class="metric-dropdown">
+    <button class="metric-dropdown-trigger">
+      <span data-role="trigger-text">Single</span>
+      <span class="arrow">▼</span>
+    </button>
+  </div>
+  <div class="stat-tabs">
+    <button class="stat-tab active">Current Ranking</button>
+    <button class="stat-tab">WR History</button>
+  </div>
+</div>
+
 <div class="metric-panel active" style="clear:both;">
 <p>✅ 数据内容区域</p>
 </div>
