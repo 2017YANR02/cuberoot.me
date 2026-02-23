@@ -272,6 +272,14 @@
         if (m) updateHash({ metric: m[1] });
       });
     });
+
+    // NOTE: 下拉菜单方案——通过 data-id 属性提取 metric id
+    document.querySelectorAll('.metric-dropdown-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const id = item.getAttribute('data-id');
+        if (id) updateHash({ metric: id });
+      });
+    });
   }
 
   // NOTE: 从 URL hash 恢复 tab/metric 状态
@@ -281,8 +289,11 @@
 
     // 恢复 metric 选择（必须在 tab 之前，因为 metric panel 决定了 tab 的 scope）
     if (h.metric && typeof switchMetric === 'function') {
+      // NOTE: 优先查找下拉菜单项，再查找药丸按钮
+      const ddItem = document.querySelector(`.metric-dropdown-item[data-id="${h.metric}"]`);
       const btn = document.querySelector(`.metric-btn[onclick*="switchMetric('${h.metric}')"]`);
-      if (btn) btn.click();
+      if (ddItem) ddItem.click();
+      else if (btn) btn.click();
     }
 
     // 恢复 tab 选择——hash 中存的是后缀（ranking/history），需匹配 tab ID 末尾
@@ -310,8 +321,10 @@
 
       // 恢复 metric
       if (h.metric && typeof switchMetric === 'function') {
+        const ddItem = document.querySelector(`.metric-dropdown-item[data-id="${h.metric}"]`);
         const btn = document.querySelector(`.metric-btn[onclick*="switchMetric('${h.metric}')"]`);
-        if (btn) btn.click();
+        if (ddItem) ddItem.click();
+        else if (btn) btn.click();
       }
 
       // 恢复 tab（hash 存后缀，匹配 tab ID 末尾）
@@ -339,7 +352,8 @@
         if (sections.length > 0) allPanelSections.push(sections);
       });
     });
-    const insertBefore = document.querySelector('.metric-selector') || metricPanels[0];
+    // NOTE: 兼容下拉菜单（.metric-dropdown）和药丸按钮（.metric-selector）
+    const insertBefore = document.querySelector('.metric-dropdown') || document.querySelector('.metric-selector') || metricPanels[0];
     setupSelector(allPanelSections, insertBefore);
   }
 

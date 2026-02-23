@@ -765,6 +765,30 @@ const I18n = {
             });
         }
 
+        // NOTE: 下拉菜单方案——翻译选项和触发器文本
+        if (this.locale === 'zh') {
+            document.querySelectorAll('.metric-dropdown-item').forEach(item => {
+                const en = item.getAttribute('data-i18n-en');
+                if (en && this._metricBtnZh[en]) item.textContent = this._metricBtnZh[en];
+            });
+        } else {
+            document.querySelectorAll('.metric-dropdown-item').forEach(item => {
+                const text = item.textContent.trim();
+                const en = this._metricBtnEn[text] || item.getAttribute('data-i18n-en');
+                if (en) item.textContent = en;
+            });
+        }
+        // NOTE: 下拉触发器文本跟随当前选中项的语言
+        const trigger = document.querySelector('[data-role="trigger-text"]');
+        if (trigger) {
+            const en = trigger.getAttribute('data-i18n-en');
+            if (this.locale === 'zh' && en && this._metricBtnZh[en]) {
+                trigger.textContent = this._metricBtnZh[en];
+            } else if (this.locale === 'en' && en) {
+                trigger.textContent = en;
+            }
+        }
+
         // NOTE: 项目选择器图标的 tooltip 语言切换
         document.querySelectorAll('.event-btn[data-tooltip-en]').forEach(btn => {
             btn.dataset.tooltip = this.locale === 'zh'
