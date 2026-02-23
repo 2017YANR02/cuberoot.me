@@ -6,20 +6,20 @@
 .metric-selector{display:flex;align-items:center;gap:0;margin:16px 0}
 .metric-selector-label{font-size:14px;font-weight:600;color:#c0c8d8;margin-right:12px}
 .metric-selector-group{display:flex;gap:0}
-.metric-btn{padding:8px 20px;border:1px solid #4a6785;background:transparent;color:#8ab4f8;cursor:pointer;font-size:14px;font-weight:600;transition:all .2s;border-radius:0}
-.metric-btn:first-child{border-radius:6px 0 0 6px}
-.metric-btn:last-child{border-radius:0 6px 6px 0}
-.metric-btn + .metric-btn{border-left:none}
-.metric-btn.active{background:#2c4a6e;border-color:#8ab4f8;color:#fff}
-.metric-btn:hover:not(.active){background:rgba(138,180,248,0.08)}
+
+
+
+.metric-btn + 
+
+
 .metric-panel{display:none}
 .metric-panel.active{display:block}
 </style>
 
 <div class="metric-selector">
   <div class="metric-selector-group">
-    <button class="metric-btn active" onclick="switchMetric('single')" data-i18n-en="Single" data-i18n-zh="单次">单次</button>
-    <button class="metric-btn" onclick="switchMetric('average')" data-i18n-en="Average" data-i18n-zh="平均">平均</button>
+    <button class="segmented-btn metric-btn active" onclick="switchMetric('single')" data-i18n-en="Single" data-i18n-zh="单次">单次</button>
+    <button class="segmented-btn metric-btn" onclick="switchMetric('average')" data-i18n-en="Average" data-i18n-zh="平均">平均</button>
   </div>
 </div>
 
@@ -83,12 +83,12 @@
 
 .source-selector{display:inline-flex;margin:16px 0;vertical-align:middle}
 .source-selector-group{display:flex;gap:0}
-.source-btn{padding:8px 20px;border:1px solid #4a6785;background:transparent;color:#8ab4f8;cursor:pointer;font-size:14px;font-weight:600;transition:all .2s;border-radius:0}
-.source-btn:first-child{border-radius:6px 0 0 6px}
-.source-btn:last-child{border-radius:0 6px 6px 0}
-.source-btn + .source-btn{border-left:none}
-.source-btn.active{background:#2c4a6e;border-color:#8ab4f8;color:#fff}
-.source-btn:hover:not(.active){background:rgba(138,180,248,0.08)}
+
+
+
+.source-btn + 
+
+
 
 .source-panel { display: none; }
 .source-panel.active { display: block; }
@@ -100,8 +100,8 @@
 <div class="newcomer-header-wrap">
   <div class="metric-selector">
     <div class="metric-selector-group">
-      <button class="metric-btn active" onclick="switchMetricUI('single')" data-i18n-en="Single" data-i18n-zh="单次">单次</button>
-      <button class="metric-btn" onclick="switchMetricUI('average')" data-i18n-en="Average" data-i18n-zh="平均">平均</button>
+      <button class="segmented-btn metric-btn active" onclick="switchMetricUI('single')" data-i18n-en="Single" data-i18n-zh="单次">单次</button>
+      <button class="segmented-btn metric-btn" onclick="switchMetricUI('average')" data-i18n-en="Average" data-i18n-zh="平均">平均</button>
     </div>
   </div>
 
@@ -109,8 +109,8 @@
   <div class="metric-panel active" id="ui-metric-single">
     <div class="source-selector">
       <div class="source-selector-group">
-        <button class="source-btn active" onclick="switchSourceUI(this, 's-1')" data-i18n-en="First Solve" data-i18n-zh="首次还原">首次还原</button>
-        <button class="source-btn" onclick="switchSourceUI(this, 's-2')" data-i18n-en="First Comp" data-i18n-zh="首场比赛">首场比赛</button>
+        <button class="segmented-btn source-btn active" onclick="switchSourceUI(this, 's-1')" data-i18n-en="First Solve" data-i18n-zh="首次还原">首次还原</button>
+        <button class="segmented-btn source-btn" onclick="switchSourceUI(this, 's-2')" data-i18n-en="First Comp" data-i18n-zh="首场比赛">首场比赛</button>
       </div>
     </div>
     
@@ -130,8 +130,8 @@
   <div class="metric-panel" id="ui-metric-average">
     <div class="source-selector">
       <div class="source-selector-group">
-        <button class="source-btn active" onclick="switchSourceUI(this, 'a-1')" data-i18n-en="First Solve" data-i18n-zh="首次还原">首次还原</button>
-        <button class="source-btn" onclick="switchSourceUI(this, 'a-2')" data-i18n-en="First Comp" data-i18n-zh="首场比赛">首场比赛</button>
+        <button class="segmented-btn source-btn active" onclick="switchSourceUI(this, 'a-1')" data-i18n-en="First Solve" data-i18n-zh="首次还原">首次还原</button>
+        <button class="segmented-btn source-btn" onclick="switchSourceUI(this, 'a-2')" data-i18n-en="First Comp" data-i18n-zh="首场比赛">首场比赛</button>
       </div>
     </div>
 
@@ -192,10 +192,10 @@ function switchSourceUI(btn, id) {
 }
 
 .stat-tabs{display:flex;gap:0;margin:0}
-.stat-tab{flex:none;padding:10px 20px;border:none;cursor:pointer;font-size:15px;font-weight:600;color:#fff;background:#4a6785;transition:background .2s}
-.stat-tab:first-child{border-radius:6px 0 0 6px}
-.stat-tab:last-child{border-radius:0 6px 6px 0}
-.stat-tab.active{background:#2c4a6e}
+
+
+
+
 </style>
 
 <div class="metric-toolbar">
@@ -206,8 +206,8 @@ function switchSourceUI(btn, id) {
     </button>
   </div>
   <div class="stat-tabs">
-    <button class="stat-tab active">Current Ranking</button>
-    <button class="stat-tab">WR History</button>
+    <button class="segmented-btn stat-tab active">Current Ranking</button>
+    <button class="segmented-btn stat-tab">WR History</button>
   </div>
 </div>
 
