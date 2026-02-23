@@ -1,6 +1,6 @@
 # NOTE: RoundMetric -- 抽象基类，从一轮的 5 次成绩 (value1-5) 中计算衍生指标
 # 子类只需实现 compute_metric(values, r) 方法即可
-# 产出双视图 Tab：当前排名 (ranking_data) + WR 历史 (transform)
+# 产出双视图 Tab：排名 (ranking_data) + 历史 (transform)
 #
 # NOTE: 一次性计算模式——第一个子类运行时，动态发现并实例化所有子类，
 # 按 (value_column, target_events) 分组，逐 event 查询一次 MySQL
@@ -90,7 +90,7 @@ class RoundMetric < GroupedStatistic
         r.merge("_metric" => metric)
       end
 
-      # 构建 WR 历史：按日期正序扫描，保留刷新或等于最小值的记录（含 tie WR）
+      # 构建 历史：按日期正序扫描，保留刷新或等于最小值的记录（含 tie WR）
       # NOTE: <= 包含平 WR，与 WCA 官方行为一致；同值行 Improvement 显示 0.0%
       min_so_far = Float::INFINITY
       wr_records = computed.select do |r|
@@ -111,7 +111,7 @@ class RoundMetric < GroupedStatistic
     end
   end
 
-  # NOTE: 当前排名数据
+  # NOTE: 排名数据
   # batch_ranking? = true 的子类走 compute_all_rankings（批量加载 + Ruby 计算 metric）
   # batch_ranking? = false 的子类走 compute_own_ranking（两步 SQL，秒级完成）
   def ranking_data

@@ -81,7 +81,7 @@ class Statistic
     table
   end
 
-  # NOTE: WR 历史行的公共字段——进步、天数、选手、比赛、日期、详情
+  # NOTE: 历史行的公共字段——进步、天数、选手、比赛、日期、详情
   # records: 按时间正序排列的纪录数组
   # i: 当前索引
   # event_id: 项目 ID（用于格式化 details 中的 value1-5）

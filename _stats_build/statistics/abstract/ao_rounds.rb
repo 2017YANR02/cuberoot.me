@@ -1,7 +1,7 @@
-# NOTE: 抽象基类，用于计算跨轮次 average of averages 的 WR 历史
+# NOTE: 抽象基类，用于计算跨轮次 average of averages 的 历史
 # AoXR = 一场比赛中某人恰好参加了 X 轮时，各轮 average 的均值
 # 子类只需指定 round_count 即可
-# 支持双视图 Tab：当前排名 + WR 历史
+# 支持双视图 Tab：排名 + 历史
 #
 # HACK: 不走 Statistic 的统一 query → transform 流程。
 # results 全表 550 万行，一次加载 ~8.7GB 导致 CI OOM。
@@ -179,7 +179,7 @@ class AoRounds < GroupedStatistic
       end
   end
 
-  # NOTE: WR 历史——按日期正序扫描，只保留刷新最小值的记录，最终倒序
+  # NOTE: 历史——按日期正序扫描，只保留刷新最小值的记录，最终倒序
   def build_wr_history(computed, event_id)
     sorted = computed.sort_by { |r| r["start_date"] }
     min_so_far = Float::INFINITY

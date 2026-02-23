@@ -36,8 +36,8 @@
 </style>
 <div class="metric-panel active" id="metric-single">
 <div class="stat-tabs">
-  <button class="stat-tab active" onclick="switchTab(event,'single-ranking')" data-i18n-en="Current Ranking" data-i18n-zh="当前排名">Current Ranking</button>
-  <button class="stat-tab" onclick="switchTab(event,'single-history')" data-i18n-en="WR History" data-i18n-zh="WR 历史">WR History</button>
+  <button class="stat-tab active" onclick="switchTab(event,'single-ranking')" data-i18n-en="Current Ranking" data-i18n-zh="排名">Current Ranking</button>
+  <button class="stat-tab" onclick="switchTab(event,'single-history')" data-i18n-en="WR History" data-i18n-zh="历史">WR History</button>
 </div>
 <div id="single-ranking" class="stat-panel active">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
@@ -394,8 +394,8 @@
 </div>
 <div class="metric-panel" id="metric-average">
 <div class="stat-tabs">
-  <button class="stat-tab active" onclick="switchTab(event,'average-ranking')" data-i18n-en="Current Ranking" data-i18n-zh="当前排名">Current Ranking</button>
-  <button class="stat-tab" onclick="switchTab(event,'average-history')" data-i18n-en="WR History" data-i18n-zh="WR 历史">WR History</button>
+  <button class="stat-tab active" onclick="switchTab(event,'average-ranking')" data-i18n-en="Current Ranking" data-i18n-zh="排名">Current Ranking</button>
+  <button class="stat-tab" onclick="switchTab(event,'average-history')" data-i18n-en="WR History" data-i18n-zh="历史">WR History</button>
 </div>
 <div id="average-ranking" class="stat-panel active">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>

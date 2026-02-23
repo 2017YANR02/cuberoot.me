@@ -10,7 +10,7 @@
 #   2. 找到非 P 选手中的最佳成绩 others_best（second_best）
 #   3. dominance = P 的成绩中严格 < others_best 的数量
 #
-# WR 历史:
+# 历史:
 #   按比赛日期正序处理所有 results，每场比赛结束后重新计算 dominance。
 #   只记录 dominance 刷新历史最高的时刻，最终倒序输出。
 #
@@ -20,7 +20,7 @@
 #   - 维护 best_by_person hash 快速找 top/second（O(p)，p=选手数）
 #
 # 设计决策:
-#   - 提供双视图：当前排名 + WR 历史
+#   - 提供双视图：排名 + 历史
 #   - Single 和 Average/Mean 均覆盖所有项目（含退役项目如脚拧、八板等）
 require_relative "../core/statistic"
 require_relative "../core/events"
@@ -33,14 +33,14 @@ class WrDominance < Statistic
   include TabUi
   include MetricSelector
 
-  # NOTE: WR 历史表头
+  # NOTE: 历史表头
   HISTORY_HEADER = {
     "Count" => :right, "Improvement" => :right, "Days" => :right,
     "Person" => :left, "Start Date" => :left, "Start Comp" => :left,
     "Date" => :left, "Competition" => :left
   }.freeze
 
-  # NOTE: 当前排名表头
+  # NOTE: 排名表头
   RANKING_HEADER = {
     "#" => :right, "Person" => :left, "Count" => :right,
     "Date" => :left, "Competition" => :left
@@ -69,11 +69,11 @@ class WrDominance < Statistic
     # NOTE: Tab 样式（全局只输出一次）
     md += tab_styles
 
-    # NOTE: Single 面板——内含 Tab 双视图（当前排名 + WR 历史）
+    # NOTE: Single 面板——内含 Tab 双视图（排名 + 历史）
     md += "<div class=\"metric-panel active\" id=\"metric-single\">\n"
     md += tab_buttons(
-      "Current Ranking", "当前排名", "single-ranking",
-      "WR History", "WR 历史", "single-history"
+      "Current Ranking", "排名", "single-ranking",
+      "WR History", "历史", "single-history"
     )
     md += grouped_panel("single-ranking", true, data[:single][:ranking].to_h, RANKING_HEADER)
     md += grouped_panel("single-history", false, data[:single][:history].to_h, HISTORY_HEADER)
@@ -82,8 +82,8 @@ class WrDominance < Statistic
     # NOTE: Average 面板
     md += "<div class=\"metric-panel\" id=\"metric-average\">\n"
     md += tab_buttons(
-      "Current Ranking", "当前排名", "average-ranking",
-      "WR History", "WR 历史", "average-history"
+      "Current Ranking", "排名", "average-ranking",
+      "WR History", "历史", "average-history"
     )
     md += grouped_panel("average-ranking", true, data[:average][:ranking].to_h, RANKING_HEADER)
     md += grouped_panel("average-history", false, data[:average][:history].to_h, HISTORY_HEADER)
@@ -149,7 +149,7 @@ class WrDominance < Statistic
     Database.client.query(sql).to_a
   end
 
-  # NOTE: 统一计算 dominance 的 WR 历史和当前排名（共享 pv/pb 数据结构，单次遍历）
+  # NOTE: 统一计算 dominance 的 历史和排名（共享 pv/pb 数据结构，单次遍历）
   # value_col: "best" 或 "average"，指定从哪个列读取成绩值
   # 返回 { history: [[cols...], ...], ranking: [[cols...], ...] }
   def compute_dominance(rows, value_col)
@@ -157,7 +157,7 @@ class WrDominance < Statistic
     pv = Hash.new { |h, k| h[k] = [] }  # person_id => sorted [values]
     # 每人最佳（最小）值
     pb = {}  # person_id => best value
-    # 每人最新的 link/date 信息（WR 历史和当前排名共用）
+    # 每人最新的 link/date 信息（历史和排名共用）
     pi = {}  # person_id => { person_link, comp_link, date }
 
     max_dom = 0
@@ -165,7 +165,7 @@ class WrDominance < Statistic
     # NOTE: 追踪每位选手首次 dominance 的比赛信息
     first_dom = {}  # person_id => { comp_link:, date: }
 
-    # --- WR 历史追踪：按日期分组逐步构建 pv/pb ---
+    # --- 历史追踪：按日期分组逐步构建 pv/pb ---
     rows.group_by { |r| r["start_date"] }.each do |date, comp_rows|
       comp_rows.each do |r|
         pid = r["person_id"]
@@ -220,7 +220,7 @@ class WrDominance < Statistic
       end
     end
 
-    # --- WR 历史：计算 improvement 和 days，然后倒序 ---
+    # --- 历史：计算 improvement 和 days，然后倒序 ---
     history = wr_records.each_with_index.map do |r, i|
       if i > 0
         prev = wr_records[i - 1]
@@ -242,7 +242,7 @@ class WrDominance < Statistic
        r[:date].strftime("%Y-%m-%d"), r[:comp_link]]
     end.reverse
 
-    # --- 当前排名：复用遍历结束后的 pv/pb 最终状态 ---
+    # --- 排名：复用遍历结束后的 pv/pb 最终状态 ---
     ranking = compute_ranking_from_state(pv, pb, pi)
 
     { history: history, ranking: ranking }

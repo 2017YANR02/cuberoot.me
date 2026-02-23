@@ -75,7 +75,7 @@ class WrMetric < Statistic
     md += tab_styles
     md += "<div class=\"metric-toolbar\">\n"
     md += metric_dropdown_html(METRIC_GROUPS, METRIC_META)
-    md += global_tab_buttons("Current Ranking", "当前排名", "ranking", "WR History", "WR 历史", "history")
+    md += global_tab_buttons("Current Ranking", "排名", "ranking", "WR History", "历史", "history")
     md += "</div>\n"
 
     # --- 每个指标的内容面板 ---
@@ -87,7 +87,7 @@ class WrMetric < Statistic
 
       md += "<div class=\"metric-panel#{active ? ' active' : ''}\" id=\"metric-#{prefix}\">\n"
 
-      # NOTE: 获取排名数据和 WR 历史数据
+      # NOTE: 获取排名数据和 历史数据
       ranking = inst.ranking_data
       history = inst.data  # 调用 query → transform
 
