@@ -49,6 +49,17 @@ class WrMetric < Statistic
     WrBestAverageRatio  => { label: "Best/Avg",        id: "ratio" },
   }.freeze
 
+  # NOTE: 指标分组定义（下拉菜单用）
+  METRIC_GROUPS = [
+    { label: "Basic", label_zh: "基本",
+      items: [WrSingleHistory, WrAverageHistory] },
+    { label: "Composite", label_zh: "复合",
+      items: [WrBao5, WrWao5, WrMo5, WrBpa, WrWpa] },
+    { label: "Distribution", label_zh: "分布",
+      items: [WrMedian, WrBestCounting, WrWorstCounting,
+              WrWorst, WrVariance, WrBestAverageRatio] },
+  ].freeze
+
   def initialize
     @title = "Metric"
     @note = "World record history and current rankings for various derived metrics computed from a round's 5 solves."
@@ -59,9 +70,9 @@ class WrMetric < Statistic
 
     md = top
 
-    # --- 指标选择器按钮 ---
-    md += metric_selector_styles
-    md += metric_selector_buttons(instances, METRIC_META)
+    # --- 指标下拉菜单 ---
+    md += metric_dropdown_styles
+    md += metric_dropdown_html(METRIC_GROUPS, METRIC_META)
 
     # --- Tab 样式（全局只输出一次）---
     md += tab_styles
@@ -92,7 +103,8 @@ class WrMetric < Statistic
     end
 
     # --- JS ---
-    md += metric_selector_script
+    md += metric_selector_script  # NOTE: 提供共享的 switchMetric()
+    md += metric_dropdown_script  # NOTE: 下拉菜单交互
     md += tab_script  # NOTE: 作用域版，用 closest('.metric-panel') 限定
     md
   end
