@@ -63,7 +63,7 @@
 </style>
 <style>
 .stat-tabs{display:flex;gap:0}
-.stat-tab{flex:none;padding:8px 20px;border:1px solid #4a6785;background:transparent;color:#8ab4f8;cursor:pointer;font-size:14px;font-weight:600;transition:all .2s;border-radius:0}
+.stat-tab{flex:none;padding:8px 20px;border:1px solid #4a6785;background:transparent;color:#8ab4f8;cursor:pointer;font-size:14px;font-weight:600;line-height:1.2;transition:all .2s;border-radius:0}
 .stat-tab:first-child{border-radius:6px 0 0 6px}
 .stat-tab:last-child{border-radius:0 6px 6px 0}
 .stat-tab + .stat-tab{border-left:none}

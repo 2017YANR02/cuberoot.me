@@ -11,7 +11,7 @@ module MetricSelector
       <style>
       .#{p}-selector{display:flex;align-items:center;gap:0;margin:16px 0}
       .#{p}-selector-group{display:flex;gap:0}
-      .#{p}-btn{padding:8px 20px;border:1px solid #4a6785;background:transparent;color:#8ab4f8;cursor:pointer;font-size:14px;font-weight:600;transition:all .2s;border-radius:0}
+      .#{p}-btn{padding:8px 20px;border:1px solid #4a6785;background:transparent;color:#8ab4f8;cursor:pointer;font-size:14px;font-weight:600;line-height:1.2;transition:all .2s;border-radius:0}
       .#{p}-btn:first-child{border-radius:6px 0 0 6px}
       .#{p}-btn:last-child{border-radius:0 6px 6px 0}
       .#{p}-btn + .#{p}-btn{border-left:none}
