@@ -94,15 +94,18 @@ class WrDominance < Statistic
 
   private
 
-  # NOTE: 指标按钮（Single / Average）
+  # NOTE: 指标按钮（Single / Average），分段控件风格
   def dominance_metric_buttons
     html = "<div class=\"metric-selector\">\n"
+    html += "  <span class=\"metric-selector-label\" data-i18n-en=\"Type\">Type</span>\n"
+    html += "  <div class=\"metric-selector-group\">\n"
     [{"Single" => "single"}, {"Average" => "average"}].each_with_index do |m, i|
       label, id = m.first
       active = i == 0 ? " active" : ""
-      html += "  <button class=\"metric-btn#{active}\" onclick=\"switchMetric('#{id}')\" "
+      html += "    <button class=\"metric-btn#{active}\" onclick=\"switchMetric('#{id}')\" "
       html += "data-i18n-en=\"#{label}\">#{label}</button>\n"
     end
+    html += "  </div>\n"
     html += "</div>\n"
     html
   end
