@@ -61,8 +61,11 @@ class WrDominance < Statistic
 
   def markdown
     md = top
-    md += metric_selector_styles
-    md += dominance_metric_buttons
+    md += segmented_selector_styles
+    md += segmented_selector_buttons(
+      [{ label: "Single", id: "single" }, { label: "Average", id: "average" }],
+      label: "Type"
+    )
 
     # NOTE: Tab 样式（全局只输出一次）
     md += tab_styles
@@ -93,23 +96,6 @@ class WrDominance < Statistic
   end
 
   private
-
-  # NOTE: 指标按钮（Single / Average），分段控件风格
-  def dominance_metric_buttons
-    html = "<div class=\"metric-selector\">\n"
-    html += "  <span class=\"metric-selector-label\" data-i18n-en=\"Type\">Type</span>\n"
-    html += "  <div class=\"metric-selector-group\">\n"
-    [{"Single" => "single"}, {"Average" => "average"}].each_with_index do |m, i|
-      label, id = m.first
-      active = i == 0 ? " active" : ""
-      html += "    <button class=\"metric-btn#{active}\" onclick=\"switchMetric('#{id}')\" "
-      html += "data-i18n-en=\"#{label}\">#{label}</button>\n"
-    end
-    html += "  </div>\n"
-    html += "</div>\n"
-    html
-  end
-
 
 
   def compute_all

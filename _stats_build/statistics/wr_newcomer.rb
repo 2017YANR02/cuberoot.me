@@ -47,11 +47,10 @@ class WrNewcomer < GroupedStatistic
 
     md = top
 
-    # --- 指标选择器（第一行：Single / Average）---
-    md += metric_selector_styles
-    md += newcomer_metric_buttons
-    # --- 数据源选择器（第二行：首次还原 / 首场比赛）---
-    md += source_selector_styles
+    # --- 分段控件样式（metric + source 共用模板）---
+    md += segmented_selector_styles("metric")
+    md += segmented_selector_styles("source")
+    md += segmented_selector_buttons(METRICS, label: "Type")
     md += tab_styles
 
     METRICS.each_with_index do |metric, mi|
@@ -59,7 +58,9 @@ class WrNewcomer < GroupedStatistic
       m_active = mi == 0
 
       md += "<div class=\"metric-panel#{m_active ? ' active' : ''}\" id=\"metric-#{m_prefix}\">\n"
-      md += source_selector_buttons(m_prefix)
+      md += segmented_selector_buttons(SOURCES, css_prefix: "source",
+             js_fn: "switchSource", label: "Source",
+             id_prefix: m_prefix, pass_self: true)
 
       SOURCES.each_with_index do |source, si|
         s_prefix = "#{m_prefix}-#{source[:id]}"
@@ -115,55 +116,7 @@ class WrNewcomer < GroupedStatistic
 
   # ========== UI 组件 ==========
 
-  # NOTE: 指标按钮（Single / Average），分段控件风格
-  def newcomer_metric_buttons
-    html = "<div class=\"metric-selector\">\n"
-    html += "  <span class=\"metric-selector-label\" data-i18n-en=\"Type\">Type</span>\n"
-    html += "  <div class=\"metric-selector-group\">\n"
-    METRICS.each_with_index do |m, i|
-      active = i == 0 ? " active" : ""
-      html += "    <button class=\"metric-btn#{active}\" onclick=\"switchMetric('#{m[:id]}')\" "
-      html += "data-i18n-en=\"#{m[:label]}\">#{m[:label]}</button>\n"
-    end
-    html += "  </div>\n"
-    html += "</div>\n"
-    html
-  end
 
-  # NOTE: 数据源选择器样式（分段控件风格，与 metric-selector 一致）
-  def source_selector_styles
-    <<~HTML
-      <style>
-      .source-selector{display:flex;align-items:center;gap:0;margin:8px 0 16px}
-      .source-selector-label{font-size:14px;font-weight:600;color:#c0c8d8;margin-right:12px}
-      .source-selector-group{display:flex;gap:0}
-      .source-btn{padding:8px 20px;border:1px solid #4a6785;background:transparent;color:#8ab4f8;cursor:pointer;font-size:14px;font-weight:600;transition:all .2s;border-radius:0}
-      .source-btn:first-child{border-radius:6px 0 0 6px}
-      .source-btn:last-child{border-radius:0 6px 6px 0}
-      .source-btn + .source-btn{border-left:none}
-      .source-btn.active{background:#2c4a6e;border-color:#8ab4f8;color:#fff}
-      .source-btn:hover:not(.active){background:rgba(138,180,248,0.08)}
-      .source-panel{display:none}
-      .source-panel.active{display:block}
-      </style>
-    HTML
-  end
-
-  # NOTE: 数据源按钮（首次还原 / 首场比赛），每个 metric-panel 内独立一组，分段控件风格
-  def source_selector_buttons(metric_prefix)
-    html = "<div class=\"source-selector\">\n"
-    html += "  <span class=\"source-selector-label\" data-i18n-en=\"Source\">Source</span>\n"
-    html += "  <div class=\"source-selector-group\">\n"
-    SOURCES.each_with_index do |s, i|
-      active = i == 0 ? " active" : ""
-      sid = "#{metric_prefix}-#{s[:id]}"
-      html += "    <button class=\"source-btn#{active}\" onclick=\"switchSource(this,'#{sid}')\" "
-      html += "data-i18n-en=\"#{s[:label]}\" data-i18n-zh=\"#{s[:label_zh]}\">#{s[:label]}</button>\n"
-    end
-    html += "  </div>\n"
-    html += "</div>\n"
-    html
-  end
 
   # NOTE: 数据源切换 JS——在当前 metric-panel 内切换 source-panel
   def source_selector_script

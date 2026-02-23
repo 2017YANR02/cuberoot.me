@@ -2,45 +2,60 @@
 # 选择器按钮、样式和切换脚本的共享实现
 # 消费方只需定义 META 常量（class => { label:, id: }）
 module MetricSelector
-  # NOTE: 选择器按钮的 CSS 样式（分段控件 + metric-panel 显隐）
-  def metric_selector_styles
+  # NOTE: 通用分段控件 CSS 生成器
+  # @param css_prefix [String] CSS 类名前缀 ("metric" 或 "source")
+  #   生成 .{prefix}-selector, .{prefix}-btn, .{prefix}-panel 等样式
+  def segmented_selector_styles(css_prefix = "metric")
+    p = css_prefix # 简写
     <<~HTML
       <style>
-      .metric-selector{display:flex;align-items:center;gap:0;margin:16px 0}
-      .metric-selector-label{font-size:14px;font-weight:600;color:#c0c8d8;margin-right:12px}
-      .metric-selector-group{display:flex;gap:0}
-      .metric-btn{padding:8px 20px;border:1px solid #4a6785;background:transparent;color:#8ab4f8;cursor:pointer;font-size:14px;font-weight:600;transition:all .2s;border-radius:0}
-      .metric-btn:first-child{border-radius:6px 0 0 6px}
-      .metric-btn:last-child{border-radius:0 6px 6px 0}
-      .metric-btn + .metric-btn{border-left:none}
-      .metric-btn.active{background:#2c4a6e;border-color:#8ab4f8;color:#fff}
-      .metric-btn:hover:not(.active){background:rgba(138,180,248,0.08)}
-      .metric-panel{display:none}
-      .metric-panel.active{display:block}
+      .#{p}-selector{display:flex;align-items:center;gap:0;margin:16px 0}
+      .#{p}-selector-label{font-size:14px;font-weight:600;color:#c0c8d8;margin-right:12px}
+      .#{p}-selector-group{display:flex;gap:0}
+      .#{p}-btn{padding:8px 20px;border:1px solid #4a6785;background:transparent;color:#8ab4f8;cursor:pointer;font-size:14px;font-weight:600;transition:all .2s;border-radius:0}
+      .#{p}-btn:first-child{border-radius:6px 0 0 6px}
+      .#{p}-btn:last-child{border-radius:0 6px 6px 0}
+      .#{p}-btn + .#{p}-btn{border-left:none}
+      .#{p}-btn.active{background:#2c4a6e;border-color:#8ab4f8;color:#fff}
+      .#{p}-btn:hover:not(.active){background:rgba(138,180,248,0.08)}
+      .#{p}-panel{display:none}
+      .#{p}-panel.active{display:block}
       </style>
     HTML
   end
 
-  # NOTE: 生成指标选择器按钮行（分段控件风格）
-  # @param instances [Array] 子类实例列表
-  # @param meta [Hash] class => { label:, id: } 映射
-  # @param label [String] 左侧标签文字（如 "Type"），nil 则不显示
-  def metric_selector_buttons(instances, meta, label: nil)
-    html = "<div class=\"metric-selector\">\n"
+  # NOTE: 通用分段控件按钮生成器
+  # @param items [Array<Hash>] [{ label:, id:, label_zh: nil }]
+  # @param css_prefix [String] CSS 类名前缀 ("metric" / "source")
+  # @param js_fn [String] 点击回调函数名
+  # @param label [String/nil] 左侧标签文字（如 "Type"）
+  # @param id_prefix [String/nil] ID 前缀（source 需要拼接 metric 的 id）
+  # @param pass_self [Boolean] onclick 是否传 this（switchSource 需要 btn 引用定位 scope）
+  def segmented_selector_buttons(items, css_prefix: "metric",
+                                  js_fn: "switchMetric",
+                                  label: nil, id_prefix: nil,
+                                  pass_self: false)
+    p = css_prefix
+    html = "<div class=\"#{p}-selector\">\n"
     if label
-      html += "  <span class=\"metric-selector-label\" data-i18n-en=\"#{label}\">#{label}</span>\n"
+      html += "  <span class=\"#{p}-selector-label\" data-i18n-en=\"#{label}\">#{label}</span>\n"
     end
-    html += "  <div class=\"metric-selector-group\">\n"
-    instances.each_with_index do |inst, i|
-      m = meta[inst.class]
+    html += "  <div class=\"#{p}-selector-group\">\n"
+    items.each_with_index do |item, i|
       active = i == 0 ? " active" : ""
-      html += "    <button class=\"metric-btn#{active}\" onclick=\"switchMetric('#{m[:id]}')\" "
-      html += "data-i18n-en=\"#{m[:label]}\">#{m[:label]}</button>\n"
+      full_id = id_prefix ? "#{id_prefix}-#{item[:id]}" : item[:id]
+      onclick = pass_self ? "#{js_fn}(this,'#{full_id}')" : "#{js_fn}('#{full_id}')"
+      html += "    <button class=\"#{p}-btn#{active}\" onclick=\"#{onclick}\" "
+      html += "data-i18n-en=\"#{item[:label]}\" "
+      html += "data-i18n-zh=\"#{item[:label_zh]}\" " if item[:label_zh]
+      html += ">#{item[:label]}</button>\n"
     end
     html += "  </div>\n"
     html += "</div>\n"
     html
   end
+
+
 
   # NOTE: 指标切换 JS——显示选中的 .metric-panel，高亮按钮
   def metric_selector_script
