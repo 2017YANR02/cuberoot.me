@@ -2,7 +2,13 @@
 
 <p><em>此页面用于测试分段控件样式，无真实数据。</em></p>
 
-<style>
+<style>.segmented-btn{padding:8px 20px;border:1px solid #4a6785;background:transparent;color:#8ab4f8;cursor:pointer;font-size:14px;font-weight:600;line-height:1.2;transition:all .2s;border-radius:0}
+.segmented-btn:first-child{border-radius:6px 0 0 6px}
+.segmented-btn:last-child{border-radius:0 6px 6px 0}
+.segmented-btn + .segmented-btn{border-left:none}
+.segmented-btn.active{background:#2c4a6e;border-color:#8ab4f8;color:#fff}
+.segmented-btn:hover:not(.active){background:rgba(138,180,248,0.08)}
+
 .metric-selector{display:flex;align-items:center;gap:0;margin:16px 0}
 .metric-selector-label{font-size:14px;font-weight:600;color:#c0c8d8;margin-right:12px}
 .metric-selector-group{display:flex;gap:0}
@@ -32,7 +38,13 @@
 
 <h3>多轮均值页 — 4 个按钮</h3>
 
-<style>
+<style>.segmented-btn{padding:8px 20px;border:1px solid #4a6785;background:transparent;color:#8ab4f8;cursor:pointer;font-size:14px;font-weight:600;line-height:1.2;transition:all .2s;border-radius:0}
+.segmented-btn:first-child{border-radius:6px 0 0 6px}
+.segmented-btn:last-child{border-radius:0 6px 6px 0}
+.segmented-btn + .segmented-btn{border-left:none}
+.segmented-btn.active{background:#2c4a6e;border-color:#8ab4f8;color:#fff}
+.segmented-btn:hover:not(.active){background:rgba(138,180,248,0.08)}
+
 .aoxr-selector{display:flex;align-items:center;gap:0;margin:16px 0}
 .aoxr-selector-group{display:flex;gap:0}
 .aoxr-btn{padding:8px 20px;border:1px solid #4a6785;background:transparent;color:#8ab4f8;cursor:pointer;font-size:14px;font-weight:600;transition:all .2s;border-radius:0}
@@ -70,7 +82,13 @@
 
 <h3>新人页 — 双选择器（同一行）</h3>
 
-<style>
+<style>.segmented-btn{padding:8px 20px;border:1px solid #4a6785;background:transparent;color:#8ab4f8;cursor:pointer;font-size:14px;font-weight:600;line-height:1.2;transition:all .2s;border-radius:0}
+.segmented-btn:first-child{border-radius:6px 0 0 6px}
+.segmented-btn:last-child{border-radius:0 6px 6px 0}
+.segmented-btn + .segmented-btn{border-left:none}
+.segmented-btn.active{background:#2c4a6e;border-color:#8ab4f8;color:#fff}
+.segmented-btn:hover:not(.active){background:rgba(138,180,248,0.08)}
+
 /* 新人页布局和选择器样式 */
 .newcomer-header-wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin: 16px 0; }
 .newcomer-header-wrap .metric-selector, .newcomer-header-wrap .source-selector { margin: 0; }
@@ -166,7 +184,13 @@ function switchSourceUI(btn, id) {
 
 <h3>聚合统计页 — 下拉菜单 + 全局 Tab（同一行）</h3>
 
-<style>
+<style>.segmented-btn{padding:8px 20px;border:1px solid #4a6785;background:transparent;color:#8ab4f8;cursor:pointer;font-size:14px;font-weight:600;line-height:1.2;transition:all .2s;border-radius:0}
+.segmented-btn:first-child{border-radius:6px 0 0 6px}
+.segmented-btn:last-child{border-radius:0 6px 6px 0}
+.segmented-btn + .segmented-btn{border-left:none}
+.segmented-btn.active{background:#2c4a6e;border-color:#8ab4f8;color:#fff}
+.segmented-btn:hover:not(.active){background:rgba(138,180,248,0.08)}
+
 .metric-toolbar{display:flex;align-items:center;gap:16px;margin:16px 0;flex-wrap:wrap}
 .metric-dropdown{position:relative;display:inline-block;margin:0}
 .metric-dropdown-trigger{
@@ -212,7 +236,13 @@ function switchSourceUI(btn, id) {
 
 <h3>旧样式对比 — 药丸按钮</h3>
 
-<style>
+<style>.segmented-btn{padding:8px 20px;border:1px solid #4a6785;background:transparent;color:#8ab4f8;cursor:pointer;font-size:14px;font-weight:600;line-height:1.2;transition:all .2s;border-radius:0}
+.segmented-btn:first-child{border-radius:6px 0 0 6px}
+.segmented-btn:last-child{border-radius:0 6px 6px 0}
+.segmented-btn + .segmented-btn{border-left:none}
+.segmented-btn.active{background:#2c4a6e;border-color:#8ab4f8;color:#fff}
+.segmented-btn:hover:not(.active){background:rgba(138,180,248,0.08)}
+
 .old-selector{display:flex;flex-wrap:wrap;gap:6px;margin:16px 0}
 .old-btn{padding:8px 16px;border:1px solid #4a6785;border-radius:20px;background:transparent;color:#8ab4f8;cursor:pointer;font-size:14px;font-weight:500;transition:all .2s}
 .old-btn.active{background:#2c4a6e;border-color:#8ab4f8;color:#fff}

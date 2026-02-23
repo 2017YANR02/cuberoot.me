@@ -3,7 +3,13 @@
 <p><em>此页面用于测试 wr_newcomer 选择器结构，无真实数据。</em></p>
 
 <!-- ===== 1) metric 分段控件样式 ===== -->
-<style>
+<style>.segmented-btn{padding:8px 20px;border:1px solid #4a6785;background:transparent;color:#8ab4f8;cursor:pointer;font-size:14px;font-weight:600;line-height:1.2;transition:all .2s;border-radius:0}
+.segmented-btn:first-child{border-radius:6px 0 0 6px}
+.segmented-btn:last-child{border-radius:0 6px 6px 0}
+.segmented-btn + .segmented-btn{border-left:none}
+.segmented-btn.active{background:#2c4a6e;border-color:#8ab4f8;color:#fff}
+.segmented-btn:hover:not(.active){background:rgba(138,180,248,0.08)}
+
 .metric-selector{display:flex;align-items:center;gap:0;margin:16px 0}
 .metric-selector-group{display:flex;gap:0}
 
@@ -14,7 +20,13 @@
 </style>
 
 <!-- ===== 2) source 分段控件样式 ===== -->
-<style>
+<style>.segmented-btn{padding:8px 20px;border:1px solid #4a6785;background:transparent;color:#8ab4f8;cursor:pointer;font-size:14px;font-weight:600;line-height:1.2;transition:all .2s;border-radius:0}
+.segmented-btn:first-child{border-radius:6px 0 0 6px}
+.segmented-btn:last-child{border-radius:0 6px 6px 0}
+.segmented-btn + .segmented-btn{border-left:none}
+.segmented-btn.active{background:#2c4a6e;border-color:#8ab4f8;color:#fff}
+.segmented-btn:hover:not(.active){background:rgba(138,180,248,0.08)}
+
 .source-selector{display:flex;align-items:center;gap:0;margin:16px 0}
 .source-selector-group{display:flex;gap:0}
 
@@ -25,7 +37,13 @@
 </style>
 
 <!-- ===== 3) tab 样式 ===== -->
-<style>
+<style>.segmented-btn{padding:8px 20px;border:1px solid #4a6785;background:transparent;color:#8ab4f8;cursor:pointer;font-size:14px;font-weight:600;line-height:1.2;transition:all .2s;border-radius:0}
+.segmented-btn:first-child{border-radius:6px 0 0 6px}
+.segmented-btn:last-child{border-radius:0 6px 6px 0}
+.segmented-btn + .segmented-btn{border-left:none}
+.segmented-btn.active{background:#2c4a6e;border-color:#8ab4f8;color:#fff}
+.segmented-btn:hover:not(.active){background:rgba(138,180,248,0.08)}
+
 .stat-tabs{display:flex;gap:0;margin:16px 0 0}
 
 
@@ -40,7 +58,13 @@
 </style>
 
 <!-- ===== 4) newcomer-header-wrap 布局覆盖（修复版） ===== -->
-<style>
+<style>.segmented-btn{padding:8px 20px;border:1px solid #4a6785;background:transparent;color:#8ab4f8;cursor:pointer;font-size:14px;font-weight:600;line-height:1.2;transition:all .2s;border-radius:0}
+.segmented-btn:first-child{border-radius:6px 0 0 6px}
+.segmented-btn:last-child{border-radius:0 6px 6px 0}
+.segmented-btn + .segmented-btn{border-left:none}
+.segmented-btn.active{background:#2c4a6e;border-color:#8ab4f8;color:#fff}
+.segmented-btn:hover:not(.active){background:rgba(138,180,248,0.08)}
+
 .newcomer-header-wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin: 16px 0; }
 .newcomer-header-wrap .metric-selector, .newcomer-header-wrap .source-selector { margin: 0; }
 .metric-panel { display: none; }
