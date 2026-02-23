@@ -32,8 +32,9 @@ class WrAoxr < Statistic
     md = top
 
     # --- 选择器按钮 ---
-    md += metric_selector_styles
-    md += metric_selector_buttons(instances, AOXR_META)
+    md += segmented_selector_styles
+    items = instances.map { |inst| AOXR_META[inst.class] }
+    md += segmented_selector_buttons(items)
 
     # --- Tab 样式 ---
     md += tab_styles

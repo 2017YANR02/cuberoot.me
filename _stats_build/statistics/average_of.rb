@@ -38,8 +38,9 @@ class AverageOf < Statistic
     md = top
 
     # --- 选择器按钮 ---
-    md += metric_selector_styles
-    md += metric_selector_buttons(instances, AOX_META)
+    md += segmented_selector_styles
+    items = instances.map { |inst| AOX_META[inst.class] }
+    md += segmented_selector_buttons(items)
 
     # --- 每个 AoX 的内容面板 ---
     # NOTE: AverageOfX 没有 Ranking/History 双视图，
