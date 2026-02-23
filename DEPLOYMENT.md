@@ -189,8 +189,8 @@ ruby bin/compute_all.rb
 启动 Jekyll 本地预览服务器，修改文件后自动重新生成：
 
 ```powershell
-cd D:\cube\ruiminyan.github.io
 # 必须要先用 bundle exec，否则可能会缺少依赖
+cd D:\cube\ruiminyan.github.io
 bundle exec jekyll serve
 # 浏览器访问 http://127.0.0.1:4000
 ```
