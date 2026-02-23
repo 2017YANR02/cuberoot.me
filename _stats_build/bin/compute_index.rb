@@ -2,7 +2,7 @@
 
 require_relative "../statistics/index"
 
-# NOTE: 生成 stats/README.md 索引页，使用卡片网格布局 + data-i18n 属性实现双语
+# NOTE: 生成 stats/index.md 索引页，使用卡片网格布局 + data-i18n 属性实现双语
 puts "Computing statistics index."
 build_path = File.expand_path("../../stats", __dir__)
 
@@ -140,6 +140,6 @@ end
 
 output += "</div>\n"
 
-destination_path = File.join(build_path, "README.md")
+destination_path = File.join(build_path, "index.md")
 File.write(destination_path, output)
 puts "File generated at #{destination_path}"
