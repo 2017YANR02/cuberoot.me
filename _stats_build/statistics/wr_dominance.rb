@@ -63,8 +63,7 @@ class WrDominance < Statistic
     md = top
     md += segmented_selector_styles
     md += segmented_selector_buttons(
-      [{ label: "Single", id: "single" }, { label: "Average", id: "average" }],
-      label: "Type"
+      [{ label: "Single", id: "single" }, { label: "Average", id: "average" }]
     )
 
     # NOTE: Tab 样式（全局只输出一次）

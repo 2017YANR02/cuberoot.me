@@ -10,7 +10,6 @@ module MetricSelector
     <<~HTML
       <style>
       .#{p}-selector{display:flex;align-items:center;gap:0;margin:16px 0}
-      .#{p}-selector-label{font-size:14px;font-weight:600;color:#c0c8d8;margin-right:12px}
       .#{p}-selector-group{display:flex;gap:0}
       .#{p}-btn{padding:8px 20px;border:1px solid #4a6785;background:transparent;color:#8ab4f8;cursor:pointer;font-size:14px;font-weight:600;transition:all .2s;border-radius:0}
       .#{p}-btn:first-child{border-radius:6px 0 0 6px}
@@ -37,9 +36,6 @@ module MetricSelector
                                   pass_self: false)
     p = css_prefix
     html = "<div class=\"#{p}-selector\">\n"
-    if label
-      html += "  <span class=\"#{p}-selector-label\" data-i18n-en=\"#{label}\">#{label}</span>\n"
-    end
     html += "  <div class=\"#{p}-selector-group\">\n"
     items.each_with_index do |item, i|
       active = i == 0 ? " active" : ""
