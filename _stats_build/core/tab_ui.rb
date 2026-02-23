@@ -1,6 +1,8 @@
 # NOTE: 通用 Tab UI mixin，提供双视图（排名 + 历史）的 HTML 生成能力
-# 任何需要 Tab 双视图的统计类都可以 include 此 module
+require_relative 'segmented_btn'
+
 module TabUi
+  include SegmentedBtn
 
   # NOTE: 标准排名表头——所有带 Tab 双视图的统计共用
   # 子类可用此常量或在此基础上追加列（如 ao_rounds 追加 Details）
@@ -11,15 +13,10 @@ module TabUi
 
 
   def tab_styles
-    <<~HTML
+    html = segmented_btn_styles
+    html += <<~HTML
       <style>
       .stat-tabs{display:flex;gap:0}
-      .stat-tab{flex:none;padding:8px 20px;border:1px solid #4a6785;background:transparent;color:#8ab4f8;cursor:pointer;font-size:14px;font-weight:600;line-height:1.2;transition:all .2s;border-radius:0}
-      .stat-tab:first-child{border-radius:6px 0 0 6px}
-      .stat-tab:last-child{border-radius:0 6px 6px 0}
-      .stat-tab + .stat-tab{border-left:none}
-      .stat-tab.active{background:#2c4a6e;border-color:#8ab4f8;color:#fff}
-      .stat-tab:hover:not(.active){background:rgba(138,180,248,0.08)}
       .stat-panel{display:none;margin-top:12px}
       .stat-panel.active{display:block}
       .stat-panel table{border-collapse:collapse}
@@ -27,14 +24,15 @@ module TabUi
       .stat-panel th{background:#f6f8fa;font-weight:600}
       </style>
     HTML
+    html
   end
 
   # NOTE: 支持双语标签，en/zh 分别为英文/中文文本
   def tab_buttons(en1, zh1, id1, en2, zh2, id2)
     <<~HTML
       <div class="stat-tabs">
-        <button class="stat-tab active" onclick="switchTab(event,'#{id1}')" data-i18n-en="#{en1}" data-i18n-zh="#{zh1}">#{en1}</button>
-        <button class="stat-tab" onclick="switchTab(event,'#{id2}')" data-i18n-en="#{en2}" data-i18n-zh="#{zh2}">#{en2}</button>
+        <button class="segmented-btn stat-tab active" onclick="switchTab(event,'#{id1}')" data-i18n-en="#{en1}" data-i18n-zh="#{zh1}">#{en1}</button>
+        <button class="segmented-btn stat-tab" onclick="switchTab(event,'#{id2}')" data-i18n-en="#{en2}" data-i18n-zh="#{zh2}">#{en2}</button>
       </div>
     HTML
   end
@@ -58,8 +56,8 @@ module TabUi
   def global_tab_buttons(en1, zh1, suffix1, en2, zh2, suffix2)
     <<~HTML
       <div class="stat-tabs">
-        <button class="stat-tab active" onclick="switchGlobalTab(event,'#{suffix1}')" data-i18n-en="#{en1}" data-i18n-zh="#{zh1}">#{en1}</button>
-        <button class="stat-tab" onclick="switchGlobalTab(event,'#{suffix2}')" data-i18n-en="#{en2}" data-i18n-zh="#{zh2}">#{en2}</button>
+        <button class="segmented-btn stat-tab active" onclick="switchGlobalTab(event,'#{suffix1}')" data-i18n-en="#{en1}" data-i18n-zh="#{zh1}">#{en1}</button>
+        <button class="segmented-btn stat-tab" onclick="switchGlobalTab(event,'#{suffix2}')" data-i18n-en="#{en2}" data-i18n-zh="#{zh2}">#{en2}</button>
       </div>
     HTML
   end

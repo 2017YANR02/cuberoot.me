@@ -6,12 +6,12 @@
 <style>
 .metric-selector{display:flex;align-items:center;gap:0;margin:16px 0}
 .metric-selector-group{display:flex;gap:0}
-.metric-btn{padding:8px 20px;border:1px solid #4a6785;background:transparent;color:#8ab4f8;cursor:pointer;font-size:14px;font-weight:600;line-height:1.2;transition:all .2s;border-radius:0}
-.metric-btn:first-child{border-radius:6px 0 0 6px}
-.metric-btn:last-child{border-radius:0 6px 6px 0}
-.metric-btn + .metric-btn{border-left:none}
-.metric-btn.active{background:#2c4a6e;border-color:#8ab4f8;color:#fff}
-.metric-btn:hover:not(.active){background:rgba(138,180,248,0.08)}
+.segmented-btn{padding:8px 20px;border:1px solid #4a6785;background:transparent;color:#8ab4f8;cursor:pointer;font-size:14px;font-weight:600;line-height:1.2;transition:all .2s;border-radius:0}
+.segmented-btn:first-child{border-radius:6px 0 0 6px}
+.segmented-btn:last-child{border-radius:0 6px 6px 0}
+.segmented-btn + .segmented-btn{border-left:none}
+.segmented-btn.active{background:#2c4a6e;border-color:#8ab4f8;color:#fff}
+.segmented-btn:hover:not(.active){background:rgba(138,180,248,0.08)}
 .metric-panel{display:none}
 .metric-panel.active{display:block}
 </style>
@@ -25,18 +25,13 @@
 <div class="metric-tab-wrap">
 <div class="metric-selector">
   <div class="metric-selector-group">
-    <button class="metric-btn active" onclick="switchMetric('single')" data-i18n-en="Single" >Single</button>
-    <button class="metric-btn" onclick="switchMetric('average')" data-i18n-en="Average" >Average</button>
+    <button class="segmented-btn metric-btn active" onclick="switchMetric('single')" data-i18n-en="Single" >Single</button>
+    <button class="segmented-btn metric-btn" onclick="switchMetric('average')" data-i18n-en="Average" >Average</button>
   </div>
 </div>
 <style>
 .stat-tabs{display:flex;gap:0}
-.stat-tab{flex:none;padding:8px 20px;border:1px solid #4a6785;background:transparent;color:#8ab4f8;cursor:pointer;font-size:14px;font-weight:600;line-height:1.2;transition:all .2s;border-radius:0}
-.stat-tab:first-child{border-radius:6px 0 0 6px}
-.stat-tab:last-child{border-radius:0 6px 6px 0}
-.stat-tab + .stat-tab{border-left:none}
-.stat-tab.active{background:#2c4a6e;border-color:#8ab4f8;color:#fff}
-.stat-tab:hover:not(.active){background:rgba(138,180,248,0.08)}
+
 .stat-panel{display:none;margin-top:12px}
 .stat-panel.active{display:block}
 .stat-panel table{border-collapse:collapse}
@@ -45,8 +40,8 @@
 </style>
 <div class="metric-panel active" id="metric-single">
 <div class="stat-tabs">
-  <button class="stat-tab active" onclick="switchTab(event,'single-ranking')" data-i18n-en="Current Ranking" data-i18n-zh="排名">Current Ranking</button>
-  <button class="stat-tab" onclick="switchTab(event,'single-history')" data-i18n-en="WR History" data-i18n-zh="历史">WR History</button>
+  <button class="segmented-btn stat-tab active" onclick="switchTab(event,'single-ranking')" data-i18n-en="Current Ranking" data-i18n-zh="排名">Current Ranking</button>
+  <button class="segmented-btn stat-tab" onclick="switchTab(event,'single-history')" data-i18n-en="WR History" data-i18n-zh="历史">WR History</button>
 </div>
 <div id="single-ranking" class="stat-panel active">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
@@ -403,8 +398,8 @@
 </div>
 <div class="metric-panel" id="metric-average">
 <div class="stat-tabs">
-  <button class="stat-tab active" onclick="switchTab(event,'average-ranking')" data-i18n-en="Current Ranking" data-i18n-zh="排名">Current Ranking</button>
-  <button class="stat-tab" onclick="switchTab(event,'average-history')" data-i18n-en="WR History" data-i18n-zh="历史">WR History</button>
+  <button class="segmented-btn stat-tab active" onclick="switchTab(event,'average-ranking')" data-i18n-en="Current Ranking" data-i18n-zh="排名">Current Ranking</button>
+  <button class="segmented-btn stat-tab" onclick="switchTab(event,'average-history')" data-i18n-en="WR History" data-i18n-zh="历史">WR History</button>
 </div>
 <div id="average-ranking" class="stat-panel active">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
