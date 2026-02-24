@@ -63,10 +63,15 @@ class AoRounds < GroupedStatistic
 
   # NOTE: 重写 data，使用一次性计算模式
   # 第一个子类触发 compute_all_round_counts，后续子类直接取缓存
+  # STATS_USE_CACHE=1 时从 marshal 文件读取，避免查 MySQL
   def data
     return @data if @data
 
-    compute_all_round_counts if @@precomputed.empty?
+    if @@precomputed.empty?
+      # NOTE: 用 fetch_with_cache 缓存全部 round_count 的结果
+      all = fetch_with_cache("AoRounds_all") { compute_all_round_counts; @@precomputed }
+      @@precomputed = all
+    end
 
     result = @@precomputed[round_count]
     @ranking_by_event = result[:ranking_by_event]
