@@ -7,7 +7,7 @@ require_relative "solve_time"
 require_relative "../i18n_translations"
 
 class Statistic
-  attr_reader :title, :title_zh, :note, :note_zh
+  attr_reader :title, :title_zh, :note, :note_zh, :table_header
 
   # NOTE: 缓存目录，存放 marshal 格式的查询结果。不提交到 git
   CACHE_DIR = File.expand_path("../../.data_cache", __dir__)

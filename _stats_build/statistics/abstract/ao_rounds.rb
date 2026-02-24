@@ -17,6 +17,7 @@ require_relative "../../core/stat_panel"
 require_relative "../../core/database"
 
 class AoRounds < GroupedStatistic
+  attr_reader :ranking_by_event
   include StatPanel
 
   # NOTE: 预计算结果缓存
