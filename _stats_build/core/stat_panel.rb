@@ -12,12 +12,6 @@ module StatPanel
   }.freeze
 
 
-  # NOTE: (已废弃空方法，保留签名防止老调用方报错)
-  def tab_styles; ""; end
-  def tab_buttons(en1, zh1, id1, en2, zh2, id2); ""; end
-  def global_tab_buttons(en1, zh1, suffix1, en2, zh2, suffix2); ""; end
-
-
   # NOTE: 把 markdown link [text](url) 转为 <a> 标签
   def md_link_to_html(text)
     text.to_s.gsub(/\[(.+?)\]\((.+?)\)/) { "<a href=\"#{$2}\">#{$1}</a>" }
