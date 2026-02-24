@@ -5,96 +5,246 @@
  * ========================================================================== */
 
 /* ── 通用分段控件按钮 ────────────────────────────────────── */
-.segmented-btn{padding:8px 20px;border:1px solid #4a6785;background:transparent;color:#8ab4f8;cursor:pointer;font-size:14px;font-weight:600;line-height:1.2;transition:all .2s;border-radius:0}
-.segmented-btn:first-child{border-radius:6px 0 0 6px}
-.segmented-btn:last-child{border-radius:0 6px 6px 0}
-.segmented-btn + .segmented-btn{border-left:none}
-.segmented-btn.active{background:#2c4a6e;border-color:#8ab4f8;color:#fff}
-.segmented-btn:hover:not(.active){background:rgba(138,180,248,0.08)}
+.segmented-btn {
+  padding: 8px 20px;
+  border: 1px solid #4a6785;
+  background: transparent;
+  color: #8ab4f8;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+  transition: all .2s;
+  border-radius: 0
+}
+
+.segmented-btn:first-child {
+  border-radius: 6px 0 0 6px
+}
+
+.segmented-btn:last-child {
+  border-radius: 0 6px 6px 0
+}
+
+.segmented-btn+.segmented-btn {
+  border-left: none
+}
+
+.segmented-btn.active {
+  background: #2c4a6e;
+  border-color: #8ab4f8;
+  color: #fff
+}
+
+.segmented-btn:hover:not(.active) {
+  background: rgba(138, 180, 248, 0.08)
+}
 
 /* ── Metric 选择器 ───────────────────────────────────────── */
-.metric-selector{display:flex;align-items:center;gap:0;margin:16px 0}
-.metric-selector-group{display:flex;gap:0}
-.metric-panel{display:none}
-.metric-panel.active{display:block}
+.metric-selector {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin: 16px 0
+}
+
+.metric-selector-group {
+  display: flex;
+  gap: 0
+}
+
+.metric-panel {
+  display: none
+}
+
+.metric-panel.active {
+  display: block
+}
 
 /* ── Source 选择器（wr_newcomer 专用）──────────────────── */
-.source-selector{display:inline-flex;margin:16px 0;vertical-align:middle}
-.source-selector-group{display:flex;gap:0}
-.source-panel{display:none}
-.source-panel.active{display:block}
+.source-selector {
+  display: inline-flex;
+  margin: 16px 0;
+  vertical-align: middle
+}
+
+.source-selector-group {
+  display: flex;
+  gap: 0
+}
+
+.source-panel {
+  display: none
+}
+
+.source-panel.active {
+  display: block
+}
 
 /* ── Metric + Tab 同行布局容器 ──────────────────────────── */
 /* NOTE: display:contents 将 metric-panel 子元素暴露到 flex 布局 */
-.metric-tab-wrap{display:flex;flex-wrap:wrap;align-items:center;gap:16px;margin:16px 0}
-.metric-tab-wrap .metric-selector{margin:0}
-.metric-tab-wrap .metric-panel{display:none}
-.metric-tab-wrap .metric-panel.active{display:contents}
-.metric-tab-wrap .stat-panel{width:100%}
+.metric-tab-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin: 16px 0
+}
+
+.metric-tab-wrap .metric-selector {
+  margin: 0
+}
+
+.metric-tab-wrap .metric-panel {
+  display: none
+}
+
+.metric-tab-wrap .metric-panel.active {
+  display: contents
+}
+
+.metric-tab-wrap .stat-panel {
+  width: 100%
+}
+
 /* NOTE: wr_newcomer 特有 — source 选择器和面板也参与 wrap 布局 */
-.metric-tab-wrap .source-selector{margin:0}
-.metric-tab-wrap .source-panel.active{display:contents}
+.metric-tab-wrap .source-selector {
+  margin: 0
+}
+
+.metric-tab-wrap .source-panel.active {
+  display: contents
+}
 
 /* ── Tab 面板 ────────────────────────────────────────────── */
-.stat-tabs{display:flex;gap:0}
-.stat-panel{display:none;margin-top:12px}
-.stat-panel.active{display:block}
-.stat-panel table{border-collapse:collapse}
-.stat-panel th,.stat-panel td{padding:6px 12px;border-bottom:1px solid #ddd;text-align:left}
-.stat-panel th{background:#f6f8fa;font-weight:600}
+.stat-tabs {
+  display: flex;
+  gap: 0
+}
+
+.stat-panel {
+  display: none;
+  margin-top: 12px
+}
+
+.stat-panel.active {
+  display: block
+}
+
+.stat-panel table {
+  border-collapse: collapse
+}
+
+.stat-panel th,
+.stat-panel td {
+  padding: 6px 12px;
+  border-bottom: 1px solid #ddd;
+  text-align: left
+}
+
+.stat-panel th {
+  background: #f6f8fa;
+  font-weight: 600
+}
 
 /* ── 下拉菜单（wr_metric 专用）──────────────────────────── */
-.metric-toolbar{display:flex;align-items:center;gap:16px;margin:16px 0;flex-wrap:wrap}
-.metric-dropdown{position:relative;display:inline-block;margin:0}
-.metric-dropdown-trigger{
-  display:flex;align-items:center;gap:8px;
-  padding:8px 18px;
-  border:1px solid #4a6785;border-radius:8px;
-  background:rgba(255,255,255,0.03);
-  color:#e0e0e0;cursor:pointer;
-  font-size:14px;font-weight:600;line-height:1.2;
-  transition:all .2s
+
+.metric-dropdown {
+  position: relative;
+  display: inline-block;
+  margin: 0
 }
-.metric-dropdown-trigger:hover{border-color:#8ab4f8;background:rgba(138,180,248,0.08)}
-.metric-dropdown-trigger .arrow{
-  font-size:10px;color:#8ab4f8;
-  transition:transform .2s
+
+.metric-dropdown-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border: 1px solid #4a6785;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  color: #e0e0e0;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+  transition: all .2s
 }
-.metric-dropdown.open .arrow{transform:rotate(180deg)}
-.metric-dropdown-panel{
-  display:none;position:absolute;top:calc(100% + 6px);left:0;
-  min-width:320px;
-  padding:12px 0;
-  background:rgba(20,25,40,0.95);
-  backdrop-filter:blur(12px);
-  border:1px solid rgba(138,180,248,0.2);
-  border-radius:10px;
-  box-shadow:0 8px 32px rgba(0,0,0,0.4);
-  z-index:50
+
+.metric-dropdown-trigger:hover {
+  border-color: #8ab4f8;
+  background: rgba(138, 180, 248, 0.08)
 }
-.metric-dropdown.open .metric-dropdown-panel{display:block}
-.metric-dropdown-group-label{
-  padding:4px 16px;margin-top:8px;
-  font-size:12px;font-weight:600;
-  color:rgba(138,180,248,0.7);
-  text-transform:uppercase;letter-spacing:0.5px
+
+.metric-dropdown-trigger .arrow {
+  font-size: 10px;
+  color: #8ab4f8;
+  transition: transform .2s
 }
-.metric-dropdown-group-label:first-child{margin-top:0}
-.metric-dropdown-items{
-  display:flex;flex-wrap:wrap;gap:4px;
-  padding:4px 12px
+
+.metric-dropdown.open .arrow {
+  transform: rotate(180deg)
 }
-.metric-dropdown-item{
-  padding:6px 14px;
-  border:1px solid transparent;border-radius:6px;
-  background:transparent;
-  color:#c0c8d8;cursor:pointer;
-  font-size:14px;font-weight:500;
-  transition:all .15s
+
+.metric-dropdown-panel {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 320px;
+  padding: 12px 0;
+  background: rgba(20, 25, 40, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(138, 180, 248, 0.2);
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  z-index: 50
 }
-.metric-dropdown-item:hover{background:rgba(138,180,248,0.12);color:#fff}
-.metric-dropdown-item.active{
-  background:rgba(138,180,248,0.18);
-  border-color:rgba(138,180,248,0.3);
-  color:#8ab4f8
+
+.metric-dropdown.open .metric-dropdown-panel {
+  display: block
+}
+
+.metric-dropdown-group-label {
+  padding: 4px 16px;
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(138, 180, 248, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.5px
+}
+
+.metric-dropdown-group-label:first-child {
+  margin-top: 0
+}
+
+.metric-dropdown-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px 12px
+}
+
+.metric-dropdown-item {
+  padding: 6px 14px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: #c0c8d8;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all .15s
+}
+
+.metric-dropdown-item:hover {
+  background: rgba(138, 180, 248, 0.12);
+  color: #fff
+}
+
+.metric-dropdown-item.active {
+  background: rgba(138, 180, 248, 0.18);
+  border-color: rgba(138, 180, 248, 0.3);
+  color: #8ab4f8
 }
