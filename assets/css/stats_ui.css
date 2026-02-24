@@ -104,7 +104,9 @@
 }
 
 .metric-tab-wrap .stat-panel {
-  width: 100%
+  width: 100%;
+  margin-top: 0
+    /* NOTE: flex gap 已提供行间距，无需额外 margin */
 }
 
 /* NOTE: wr_newcomer 特有 — source 选择器和面板也参与 wrap 布局 */
