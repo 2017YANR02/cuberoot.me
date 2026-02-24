@@ -12,6 +12,8 @@ class WrAverageHistory < RoundMetric
     @title = "Average"
     @note = "Shows how world record averages have progressed over time for each event. " \
             "For 333mbf and 333mbo, Mo3 (mean of 3) is used as an unofficial substitute."
+    @note_zh = "展示各项目世界纪录平均成绩的历史变化。" \
+               "对于 333mbf 和 333mbo，使用非官方的 Mo3（三次均值）代替。"
     @table_header = { "Result" => :right, "Improvement" => :right, "Days" => :right,
                       "Person" => :left, "Date" => :left, "Competition" => :left, "Details" => :left }
   end

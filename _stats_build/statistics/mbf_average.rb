@@ -39,6 +39,10 @@ class MbfAverage < Statistic
             "Each part is averaged across 3 attempts and rounded to the nearest integer, " \
             "then reassembled into a single value for ranking. " \
             "333mbo data is hardcoded (only one person has ever completed a Mo3)."
+    @note_zh = "333mbf 的非官方 Mo3（WCA 不追踪此指标）。" \
+               "WCA 编码值 0DDTTTTTMM 被拆分为 DD（99 减差值）、TTTTT（秒数）和 MM（失败数）。" \
+               "三次尝试各部分分别取均值并四舍五入后重新拼接，用于排名。" \
+               "333mbo 数据为硬编码（历史上仅有一人完成过 Mo3）。"
     @table_header = HISTORY_HEADER
   end
 
