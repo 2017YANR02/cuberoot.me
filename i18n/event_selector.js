@@ -154,7 +154,7 @@
   function updateHash(newParams, replace) {
     const current = parseHash();
     Object.assign(current, newParams);
-    const ORDER = ['event', 'metric', 'tab'];
+    const ORDER = ['event', 'metric', 'source', 'tab'];
     const hash = '#' + ORDER
       .filter(k => current[k])
       .map(k => `${k}=${encodeURIComponent(current[k])}`)
@@ -280,6 +280,22 @@
         if (id) updateHash({ metric: id });
       });
     });
+
+    // Source 按钮：提取 source 后缀（'single-1st-solve' → '1st-solve'）
+    // NOTE: 仅 wr_newcomer 等有 source 面板的页面会注册此监听
+    document.querySelectorAll('.source-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const onclick = btn.getAttribute('onclick') || '';
+        const m = onclick.match(/switchSource\(this,\s*'(.+?)'\)/);
+        if (m) {
+          // NOTE: fullId = 'single-1st-solve'，去掉 metric 前缀得到 source 后缀
+          const panel = btn.closest('.metric-panel');
+          const prefix = panel ? panel.id.replace('metric-', '') + '-' : '';
+          const sourceId = m[1].replace(prefix, '');
+          updateHash({ source: sourceId });
+        }
+      });
+    });
   }
 
   // NOTE: 从 URL hash 恢复 tab/metric 状态
@@ -294,6 +310,16 @@
       const btn = document.querySelector(`.metric-btn[onclick*="switchMetric('${h.metric}')"]`);
       if (ddItem) ddItem.click();
       else if (btn) btn.click();
+    }
+
+    // 恢复 source 选择（必须在 tab 之前，因为 source panel 决定了 tab 的 scope）
+    // NOTE: 仅 wr_newcomer 等有 source 面板的页面会生效
+    if (h.source && typeof switchSource === 'function') {
+      const metricScope = document.querySelector('.metric-panel.active') || document;
+      const prefix = metricScope.id ? metricScope.id.replace('metric-', '') + '-' : '';
+      const fullId = prefix + h.source;
+      const btn = metricScope.querySelector(`.source-btn[onclick*="switchSource(this,'${fullId}')"]`);
+      if (btn) btn.click();
     }
 
     // 恢复 tab 选择——hash 中存的是后缀（ranking/history），需匹配 tab ID 末尾
@@ -332,6 +358,15 @@
         const btn = document.querySelector(`.metric-btn[onclick*="switchMetric('${h.metric}')"]`);
         if (ddItem) ddItem.click();
         else if (btn) btn.click();
+      }
+
+      // 恢复 source（同 restoreFromHash）
+      if (h.source && typeof switchSource === 'function') {
+        const metricScope = document.querySelector('.metric-panel.active') || document;
+        const prefix = metricScope.id ? metricScope.id.replace('metric-', '') + '-' : '';
+        const fullId = prefix + h.source;
+        const btn = metricScope.querySelector(`.source-btn[onclick*="switchSource(this,'${fullId}')"]`);
+        if (btn) btn.click();
       }
 
       // 恢复 tab（hash 存后缀，匹配 tab ID 末尾）
