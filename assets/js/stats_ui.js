@@ -6,6 +6,9 @@
 // NOTE: 显示选中的 .metric-panel，高亮按钮
 // 同时保持 source 索引和 tab 选择不变（跨面板同步）
 function switchMetric(e, id) {
+    // NOTE: 向后兼容——现有页面 onclick 仍是 switchMetric('id') 单参数格式
+    // Phase 2 改完 Ruby 输出后可移除此兼容逻辑
+    if (typeof id === 'undefined') { id = e; e = window.event || { target: document.querySelector('.metric-btn.active') }; }
     var oldPanel = document.querySelector('.metric-panel.active');
     // NOTE: 记住当前 source 按钮索引
     var srcIdx = 0;
