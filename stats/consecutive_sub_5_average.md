@@ -1,7 +1,7 @@
-## Most consecutive sub-5 averages in 3x3x3
+<h2 data-i18n-en="Most consecutive sub-5 averages in 3x3x3" data-i18n-zh="最多连续 sub-5 三阶平均">Most consecutive sub-5 averages in 3x3x3</h2>
 
-*Note: Only official 3x3x3 averages are considered. Computed across all rounds in chronological order.*
-*Updated on 18 February 2026*
+<p><em data-i18n-en="Only official 3x3x3 averages are considered. Computed across all rounds in chronological order." data-i18n-zh="仅考虑官方 3x3x3 平均成绩。按时间顺序统计所有轮次。">Only official 3x3x3 averages are considered. Computed across all rounds in chronological order.</em></p>
+<p><em data-i18n-en="Updated on 18 February 2026" data-i18n-zh="更新于 2026 年 2 月 18 日">Updated on 18 February 2026</em></p>
 
 <div id="ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
 <table>

@@ -126,13 +126,8 @@ class ConsecutiveSub5Average < Statistic
   end
 
   def build_tabbed_page(ranking, wr_history)
-    timestamp = Time.parse(Database.metadata["export_timestamp"])
-    updated = timestamp.strftime("%e %B %Y").strip
-
-    # NOTE: 头部保持原有 Markdown 格式（## / *...*），不改为 HTML
-    md = "## #{@title}\n\n"
-    md += "*Note: #{@note}*\n"
-    md += "*Updated on #{updated}*\n\n"
+    # NOTE: 使用 top() 统一输出标题/Note/日期，自动带 data-i18n-* 翻译属性
+    md = top
     md += tab_styles
     md += tab_buttons("Current Ranking", "排名", "ranking", "WR History", "历史", "history")
     md += "<div id=\"ranking\" class=\"stat-panel active\" data-label-en=\"Current Ranking\" data-label-zh=\"排名\">\n"
