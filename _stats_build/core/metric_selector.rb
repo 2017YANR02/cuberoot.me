@@ -1,5 +1,5 @@
 # NOTE: 指标选择器 UI 模块——为聚合页面（WrMetric / WrAoxr）提供
-# 选择器按钮、样式和切换脚本的共享实现
+# 选择器按钮和样式的共享实现（交互 JS 已移至 assets/js/stats_ui.js）
 # 消费方只需定义 META 常量（class => { label:, id: }）
 require_relative 'segmented_btn'
 
@@ -71,56 +71,6 @@ module MetricSelector
     "</div><!-- metric-tab-wrap -->\n"
   end
 
-
-  # NOTE: 指标切换 JS——显示选中的 .metric-panel，高亮按钮
-  def metric_selector_script
-    <<~HTML
-      <script>
-      function switchMetric(id){
-        // NOTE: metric 和 source 是独立选择器，切换 metric 时保持 source 选择不变
-        var oldPanel=document.querySelector('.metric-panel.active');
-        var srcIdx=0;
-        if(oldPanel){
-          oldPanel.querySelectorAll('.source-btn').forEach(function(b,i){if(b.classList.contains('active'))srcIdx=i;});
-        }
-        // NOTE: 记住当前 tab suffix（ranking/history），切换 metric 后同步到新面板
-        // 限定到活跃 source-panel（wr_newcomer 三层嵌套场景）
-        var tabSuffix=null;
-        if(oldPanel){
-          var tabReadScope=oldPanel.querySelector('.source-panel.active')||oldPanel;
-          var activeTab=tabReadScope.querySelector('.stat-tab.active');
-          if(activeTab){
-            var m=(activeTab.getAttribute('onclick')||'').match(/switchTab\\(event,\\s*'(.+?)'\\)/);
-            if(m) tabSuffix=m[1].split('-').pop();
-          }
-        }
-        document.querySelectorAll('.metric-panel').forEach(p=>p.classList.remove('active'));
-        document.querySelectorAll('.metric-btn').forEach(b=>b.classList.remove('active'));
-        var panel=document.getElementById('metric-'+id);
-        panel.classList.add('active');
-        event.target.classList.add('active');
-        // NOTE: 同步 source 索引到新 panel
-        var newBtns=panel.querySelectorAll('.source-btn');
-        if(newBtns[srcIdx]) newBtns[srcIdx].click();
-        // NOTE: 同步 tab suffix 到新 panel，保持 tab 选择不变
-        // wr_newcomer 有三层嵌套（metric→source→tab），需限定到活跃 source-panel
-        if(tabSuffix){
-          var tabScope=panel.querySelector('.source-panel.active')||panel;
-          tabScope.querySelectorAll('.stat-tab').forEach(t=>t.classList.remove('active'));
-          tabScope.querySelectorAll('.stat-panel').forEach(p=>p.classList.remove('active'));
-          tabScope.querySelectorAll('.stat-tab').forEach(function(t){
-            var tm=(t.getAttribute('onclick')||'').match(/switchTab\\(event,\\s*'(.+?)'\\)/);
-            if(tm&&tm[1].split('-').pop()===tabSuffix){
-              t.classList.add('active');
-              var tp=document.getElementById(tm[1]);
-              if(tp) tp.classList.add('active');
-            }
-          });
-        }
-      }
-      </script>
-    HTML
-  end
 
   # ═══════════════════════════════════════════════
   # NOTE: 下拉菜单方案（适用于指标数量 > 5 的页面）
@@ -225,38 +175,5 @@ module MetricSelector
     html += "  </div>\n"
     html += "</div>\n"
     html
-  end
-
-  # NOTE: 下拉菜单交互 JS
-  # 依赖 switchMetric()（由 metric_selector_script 定义）
-  def metric_dropdown_script
-    <<~HTML
-      <script>
-      function toggleMetricDropdown(){
-        document.querySelector('.metric-dropdown').classList.toggle('open');
-      }
-      function selectFromDropdown(id){
-        // NOTE: 调用共享的面板切换逻辑
-        switchMetric(id);
-        // 更新触发器文本
-        var item=document.querySelector('.metric-dropdown-item[data-id="'+id+'"]');
-        if(item){
-          var trigger=document.querySelector('[data-role="trigger-text"]');
-          trigger.textContent=item.textContent;
-          trigger.setAttribute('data-i18n-en',item.getAttribute('data-i18n-en'));
-        }
-        // 高亮当前项
-        document.querySelectorAll('.metric-dropdown-item').forEach(function(i){i.classList.remove('active')});
-        if(item) item.classList.add('active');
-        // 关闭面板
-        document.querySelector('.metric-dropdown').classList.remove('open');
-      }
-      // NOTE: 点击面板外部关闭
-      document.addEventListener('click',function(e){
-        var dd=document.querySelector('.metric-dropdown');
-        if(dd && !dd.contains(e.target)) dd.classList.remove('open');
-      });
-      </script>
-    HTML
   end
 end

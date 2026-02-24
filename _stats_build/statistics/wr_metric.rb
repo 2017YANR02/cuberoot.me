@@ -99,10 +99,6 @@ class WrMetric < Statistic
       printf("    [%2d/%d] %-20s %5.1fs\n", i + 1, instances.size, meta[:label], Time.now - t_sub)
     end
 
-    # --- JS ---
-    md += metric_selector_script  # NOTE: 提供共享的 switchMetric()
-    md += metric_dropdown_script  # NOTE: 下拉菜单交互
-    md += global_tab_script       # NOTE: 全局 Tab 交互逻辑
     md
   end
 end

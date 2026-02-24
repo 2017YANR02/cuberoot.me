@@ -141,7 +141,6 @@ class ConsecutiveSub5Average < Statistic
     md += "<div id=\"history\" class=\"stat-panel\">\n"
     md += history_table(wr_history)
     md += "</div>\n"
-    md += tab_script
     md
   end
 
