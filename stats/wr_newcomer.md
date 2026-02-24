@@ -3,65 +3,10 @@
 <p><em data-i18n-en="Shows the best results from a person's very first competition for each event." data-i18n-zh="展示选手在首次参加某项目比赛时取得的最佳成绩。">Shows the best results from a person's very first competition for each event.</em></p>
 <p><em data-i18n-en="Updated on 18 February 2026" data-i18n-zh="更新于 2026 年 2 月 18 日">Updated on 18 February 2026</em></p>
 
-<style>
-.segmented-btn{padding:8px 20px;border:1px solid #4a6785;background:transparent;color:#8ab4f8;cursor:pointer;font-size:14px;font-weight:600;line-height:1.2;transition:all .2s;border-radius:0}
-.segmented-btn:first-child{border-radius:6px 0 0 6px}
-.segmented-btn:last-child{border-radius:0 6px 6px 0}
-.segmented-btn + .segmented-btn{border-left:none}
-.segmented-btn.active{background:#2c4a6e;border-color:#8ab4f8;color:#fff}
-.segmented-btn:hover:not(.active){background:rgba(138,180,248,0.08)}
-</style>
-<style>
-.metric-selector{display:flex;align-items:center;gap:0;margin:16px 0}
-.metric-selector-group{display:flex;gap:0}
-.metric-panel{display:none}
-.metric-panel.active{display:block}
-</style>
-<style>
-.source-selector{display:flex;align-items:center;gap:0;margin:16px 0}
-.source-selector-group{display:flex;gap:0}
-.source-panel{display:none}
-.source-panel.active{display:block}
-</style>
-<style>
-.metric-tab-wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin: 16px 0; }
-.metric-tab-wrap .metric-selector { margin: 0; }
-.metric-tab-wrap .metric-panel { display: none; }
-.metric-tab-wrap .metric-panel.active { display: contents; }
-.metric-tab-wrap .stat-panel { width: 100%; }
-</style>
 <div class="metric-tab-wrap">
-<style>
-.metric-tab-wrap .source-selector { margin: 0; }
-.metric-tab-wrap .source-panel.active { display: contents; }
-</style>
-<div class="metric-selector">
-  <div class="metric-selector-group">
-    <button class="segmented-btn metric-btn active" onclick="switchMetric('single')" data-i18n-en="Single" >Single</button>
-    <button class="segmented-btn metric-btn" onclick="switchMetric('average')" data-i18n-en="Average" >Average</button>
-  </div>
-</div>
-<style>
-.stat-tabs{display:flex;gap:0}
-.stat-panel{display:none;margin-top:12px}
-.stat-panel.active{display:block}
-.stat-panel table{border-collapse:collapse}
-.stat-panel th,.stat-panel td{padding:6px 12px;border-bottom:1px solid #ddd;text-align:left}
-.stat-panel th{background:#f6f8fa;font-weight:600}
-</style>
-<div class="metric-panel active" id="metric-single">
-<div class="source-selector">
-  <div class="source-selector-group">
-    <button class="segmented-btn source-btn active" onclick="switchSource(this,'single-1st-solve')" data-i18n-en="First Solve" data-i18n-zh="首次还原" >First Solve</button>
-    <button class="segmented-btn source-btn" onclick="switchSource(this,'single-1st-comp')" data-i18n-en="First Competition" data-i18n-zh="首场比赛" >First Competition</button>
-  </div>
-</div>
-<div class="source-panel active" id="source-single-1st-solve">
-<div class="stat-tabs">
-  <button class="segmented-btn stat-tab active" onclick="switchTab(event,'single-1st-solve-ranking')" data-i18n-en="Current Ranking" data-i18n-zh="排名">Current Ranking</button>
-  <button class="segmented-btn stat-tab" onclick="switchTab(event,'single-1st-solve-history')" data-i18n-en="WR History" data-i18n-zh="历史">WR History</button>
-</div>
-<div id="single-1st-solve-ranking" class="stat-panel active">
+<div class="metric-panel active" id="metric-single" data-label-en="Single" data-label-zh="单次">
+<div class="source-panel active" id="source-single-1st-solve" data-label-en="First Solve" data-label-zh="首次还原">
+<div id="single-1st-solve-ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Result</th><th>Country</th><th>Date</th><th>Competition</th></tr>
@@ -357,7 +302,7 @@
 <tr><td style="text-align:right">10</td><td><a href="https://www.worldcubeassociation.org/persons/2007JIPT01">Kai Jiptner</a></td><td style="text-align:right">3/3 20:06</td><td>Germany</td><td>2008-02-16</td><td><a href="https://www.worldcubeassociation.org/competitions/BeneluxOpen2008">Benelux Open 2008</a></td></tr>
 </table>
 </div>
-<div id="single-1st-solve-history" class="stat-panel">
+<div id="single-1st-solve-history" class="stat-panel" data-label-en="WR History" data-label-zh="历史">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Date</th><th>Competition</th></tr>
@@ -704,12 +649,8 @@
 </table>
 </div>
 </div>
-<div class="source-panel" id="source-single-1st-comp">
-<div class="stat-tabs">
-  <button class="segmented-btn stat-tab active" onclick="switchTab(event,'single-1st-comp-ranking')" data-i18n-en="Current Ranking" data-i18n-zh="排名">Current Ranking</button>
-  <button class="segmented-btn stat-tab" onclick="switchTab(event,'single-1st-comp-history')" data-i18n-en="WR History" data-i18n-zh="历史">WR History</button>
-</div>
-<div id="single-1st-comp-ranking" class="stat-panel active">
+<div class="source-panel" id="source-single-1st-comp" data-label-en="First Competition" data-label-zh="首场比赛">
+<div id="single-1st-comp-ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Result</th><th>Country</th><th>Date</th><th>Competition</th></tr>
@@ -1005,7 +946,7 @@
 <tr><td style="text-align:right">10</td><td><a href="https://www.worldcubeassociation.org/persons/2007LOPE01">Manuel López Sheriff</a></td><td style="text-align:right">3/3 18:44</td><td>Spain</td><td>2008-05-02</td><td><a href="https://www.worldcubeassociation.org/competitions/BarcelonaOpen2008">Barcelona Open 2008</a></td></tr>
 </table>
 </div>
-<div id="single-1st-comp-history" class="stat-panel">
+<div id="single-1st-comp-history" class="stat-panel" data-label-en="WR History" data-label-zh="历史">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Date</th><th>Competition</th></tr>
@@ -1389,19 +1330,9 @@
 </div>
 </div>
 </div>
-<div class="metric-panel" id="metric-average">
-<div class="source-selector">
-  <div class="source-selector-group">
-    <button class="segmented-btn source-btn active" onclick="switchSource(this,'average-1st-solve')" data-i18n-en="First Solve" data-i18n-zh="首次还原" >First Solve</button>
-    <button class="segmented-btn source-btn" onclick="switchSource(this,'average-1st-comp')" data-i18n-en="First Competition" data-i18n-zh="首场比赛" >First Competition</button>
-  </div>
-</div>
-<div class="source-panel active" id="source-average-1st-solve">
-<div class="stat-tabs">
-  <button class="segmented-btn stat-tab active" onclick="switchTab(event,'average-1st-solve-ranking')" data-i18n-en="Current Ranking" data-i18n-zh="排名">Current Ranking</button>
-  <button class="segmented-btn stat-tab" onclick="switchTab(event,'average-1st-solve-history')" data-i18n-en="WR History" data-i18n-zh="历史">WR History</button>
-</div>
-<div id="average-1st-solve-ranking" class="stat-panel active">
+<div class="metric-panel" id="metric-average" data-label-en="Average" data-label-zh="平均">
+<div class="source-panel active" id="source-average-1st-solve" data-label-en="First Solve" data-label-zh="首次还原">
+<div id="average-1st-solve-ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Result</th><th>Country</th><th>Date</th><th>Competition</th></tr>
@@ -1667,7 +1598,7 @@
 <tr><td style="text-align:right">10</td><td><a href="https://www.worldcubeassociation.org/persons/2009MUCK01">Daniel Mucklow</a></td><td style="text-align:right">2.59</td><td>United Kingdom</td><td>2011-07-30</td><td><a href="https://www.worldcubeassociation.org/competitions/GuildfordSummerOpen2011">Guildford Summer Open 2011</a></td></tr>
 </table>
 </div>
-<div id="average-1st-solve-history" class="stat-panel">
+<div id="average-1st-solve-history" class="stat-panel" data-label-en="WR History" data-label-zh="历史">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Date</th><th>Competition</th></tr>
@@ -1992,12 +1923,8 @@
 </table>
 </div>
 </div>
-<div class="source-panel" id="source-average-1st-comp">
-<div class="stat-tabs">
-  <button class="segmented-btn stat-tab active" onclick="switchTab(event,'average-1st-comp-ranking')" data-i18n-en="Current Ranking" data-i18n-zh="排名">Current Ranking</button>
-  <button class="segmented-btn stat-tab" onclick="switchTab(event,'average-1st-comp-history')" data-i18n-en="WR History" data-i18n-zh="历史">WR History</button>
-</div>
-<div id="average-1st-comp-ranking" class="stat-panel active">
+<div class="source-panel" id="source-average-1st-comp" data-label-en="First Competition" data-label-zh="首场比赛">
+<div id="average-1st-comp-ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Result</th><th>Country</th><th>Date</th><th>Competition</th></tr>
@@ -2263,7 +2190,7 @@
 <tr><td style="text-align:right">10</td><td><a href="https://www.worldcubeassociation.org/persons/2011DERS01">Ramón Dersch</a></td><td style="text-align:right">2.47</td><td>Germany</td><td>2011-04-09</td><td><a href="https://www.worldcubeassociation.org/competitions/GermanOpen2011">German Open 2011</a></td></tr>
 </table>
 </div>
-<div id="average-1st-comp-history" class="stat-panel">
+<div id="average-1st-comp-history" class="stat-panel" data-label-en="WR History" data-label-zh="历史">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Date</th><th>Competition</th></tr>
