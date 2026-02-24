@@ -119,8 +119,10 @@ function toggleMetricDropdown() {
 }
 
 function selectFromDropdown(id) {
-    // NOTE: 调用共享的面板切换逻辑
-    switchMetric(event, id);
+    // NOTE: data-id 存的是完整 panel id（如 "metric-mo5"），
+    // 而 switchMetric 内部会自己拼 "metric-" 前缀，所以需要先去掉
+    var shortId = id.replace(/^metric-/, '');
+    switchMetric(event, shortId);
     // NOTE: 更新触发器文本
     var item = document.querySelector('.metric-dropdown-item[data-id="' + id + '"]');
     if (item) {
