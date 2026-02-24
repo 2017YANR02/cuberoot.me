@@ -128,8 +128,7 @@ class ConsecutiveSub5Average < Statistic
   def build_tabbed_page(ranking, wr_history)
     # NOTE: 使用 top() 统一输出标题/Note/日期，自动带 data-i18n-* 翻译属性
     md = top
-    md += tab_styles
-    md += tab_buttons("Current Ranking", "排名", "ranking", "WR History", "历史", "history")
+    # NOTE: tab 按钮由 JS 根据 data-label-* 自动生成，无需 Ruby 输出
     md += "<div id=\"ranking\" class=\"stat-panel active\" data-label-en=\"Current Ranking\" data-label-zh=\"排名\">\n"
     md += ranking_table(ranking)
     md += "</div>\n"
