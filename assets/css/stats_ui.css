@@ -89,9 +89,9 @@
   align-items: center;
   column-gap: 16px;
   /* NOTE: 同行元素水平间距 */
-  row-gap: 12px;
-  /* NOTE: 对齐 average_of 页面 .stat-panel margin-top:12px 的视觉间距 */
-  margin: 16px 0
+  row-gap: 8px;
+  /* NOTE: 选择器行与表格之间的紧凑间距 */
+  margin: 12px 0
 }
 
 .metric-tab-wrap .metric-selector {
