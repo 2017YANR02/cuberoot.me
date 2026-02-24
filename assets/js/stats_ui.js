@@ -5,7 +5,7 @@
 // ── Metric 切换 ───────────────────────────────────────────
 // NOTE: 显示选中的 .metric-panel，高亮按钮
 // 同时保持 source 索引和 tab 选择不变（跨面板同步）
-function switchMetric(id) {
+function switchMetric(e, id) {
     var oldPanel = document.querySelector('.metric-panel.active');
     // NOTE: 记住当前 source 按钮索引
     var srcIdx = 0;
@@ -30,7 +30,7 @@ function switchMetric(id) {
     document.querySelectorAll('.metric-btn').forEach(function (b) { b.classList.remove('active'); });
     var panel = document.getElementById('metric-' + id);
     panel.classList.add('active');
-    event.target.classList.add('active');
+    e.target.classList.add('active');
     // NOTE: 同步 source 索引到新 panel
     var newBtns = panel.querySelectorAll('.source-btn');
     if (newBtns[srcIdx]) newBtns[srcIdx].click();
@@ -120,7 +120,7 @@ function toggleMetricDropdown() {
 
 function selectFromDropdown(id) {
     // NOTE: 调用共享的面板切换逻辑
-    switchMetric(id);
+    switchMetric(event, id);
     // NOTE: 更新触发器文本
     var item = document.querySelector('.metric-dropdown-item[data-id="' + id + '"]');
     if (item) {
@@ -140,3 +140,190 @@ document.addEventListener('click', function (e) {
     var dd = document.querySelector('.metric-dropdown');
     if (dd && !dd.contains(e.target)) dd.classList.remove('open');
 });
+
+// ── JS 驱动 UI 初始化 ──────────────────────────────────────
+// NOTE: 扫描带 data-label-en 的面板，自动生成按钮
+// 约束：只对有 data-label-en 属性的面板生效，现有页面无此属性则静默跳过
+function initStatsUI() {
+    // --- 第一步：处理语义容器内的 metric-panel ---
+    // NOTE: metric-tab-wrap 和 metric-toolbar 是已知的语义容器
+    var containers = document.querySelectorAll('.metric-tab-wrap, .metric-toolbar');
+    var handled = new Set(); // NOTE: 记录已处理的 metric-panel，避免重复
+
+    containers.forEach(function (container) {
+        var panels = container.querySelectorAll(':scope > .metric-panel[data-label-en]');
+        if (panels.length === 0) return;
+        panels.forEach(function (p) { handled.add(p); });
+        processMetricGroup(container, panels);
+    });
+
+    // --- 第二步：处理顶层散落的 metric-panel（如 Mode E 的 average_of）---
+    // NOTE: 不在任何语义容器内的 metric-panel，按连续相邻分组
+    var loosePanels = [];
+    document.querySelectorAll('.metric-panel[data-label-en]').forEach(function (p) {
+        if (!handled.has(p)) loosePanels.push(p);
+    });
+
+    if (loosePanels.length >= 2) {
+        // NOTE: 按连续相邻的 metric-panel 分组（中间可能被 h3 等标签隔开）
+        var currentGroup = [loosePanels[0]];
+        for (var i = 1; i < loosePanels.length; i++) {
+            // NOTE: 检查是否与前一个是相邻兄弟（中间只有文本/注释节点）
+            var prev = currentGroup[currentGroup.length - 1];
+            var next = prev.nextElementSibling;
+            if (next === loosePanels[i]) {
+                currentGroup.push(loosePanels[i]);
+            } else {
+                if (currentGroup.length >= 2) {
+                    processMetricGroup(currentGroup[0].parentElement, currentGroup);
+                }
+                currentGroup = [loosePanels[i]];
+            }
+        }
+        if (currentGroup.length >= 2) {
+            processMetricGroup(currentGroup[0].parentElement, currentGroup);
+        }
+    }
+
+    // --- 第三步：处理顶层独立 stat-panel（Mode A，不在任何 metric/source-panel 内）---
+    var topStatPanels = [];
+    document.querySelectorAll('.stat-panel[data-label-en]').forEach(function (sp) {
+        if (!sp.closest('.metric-panel') && !sp.closest('.source-panel')) {
+            topStatPanels.push(sp);
+        }
+    });
+    // NOTE: 按连续相邻分组
+    if (topStatPanels.length >= 2) {
+        var tg = [topStatPanels[0]];
+        for (var j = 1; j < topStatPanels.length; j++) {
+            if (tg[tg.length - 1].nextElementSibling === topStatPanels[j]) {
+                tg.push(topStatPanels[j]);
+            } else {
+                if (tg.length >= 2) createTabButtons(tg[0].parentElement, tg, false);
+                tg = [topStatPanels[j]];
+            }
+        }
+        if (tg.length >= 2) createTabButtons(tg[0].parentElement, tg, false);
+    }
+}
+
+// NOTE: 处理一组同父容器的 metric-panel：生成 metric 按钮、source 按钮、tab 按钮
+function processMetricGroup(container, panels) {
+    // --- Metric 按钮 ---
+    if (panels.length >= 2 && !container.querySelector('.metric-btn')) {
+        var isDropdown = container.getAttribute('data-ui') === 'dropdown';
+
+        if (isDropdown) {
+            // TODO: Phase 2 实现下拉菜单动态生成
+        } else {
+            var selectorDiv = document.createElement('div');
+            selectorDiv.className = 'metric-selector';
+            var groupDiv = document.createElement('div');
+            groupDiv.className = 'metric-selector-group';
+
+            for (var i = 0; i < panels.length; i++) {
+                var panel = panels[i];
+                var id = panel.id.replace('metric-', '');
+                var btn = document.createElement('button');
+                btn.className = 'segmented-btn metric-btn' + (i === 0 ? ' active' : '');
+                btn.setAttribute('onclick', "switchMetric(event,'" + id + "')");
+                btn.textContent = panel.getAttribute('data-label-en');
+                if (panel.hasAttribute('data-label-zh')) {
+                    btn.setAttribute('data-i18n-en', panel.getAttribute('data-label-en'));
+                    btn.setAttribute('data-i18n-zh', panel.getAttribute('data-label-zh'));
+                }
+                groupDiv.appendChild(btn);
+            }
+            selectorDiv.appendChild(groupDiv);
+            container.insertBefore(selectorDiv, panels[0]);
+        }
+    }
+
+    // --- Source 按钮 + Tab 按钮（每个 metric-panel 内）---
+    for (var k = 0; k < panels.length; k++) {
+        var mp = panels[k];
+
+        // Source 按钮
+        var sourcePanels = mp.querySelectorAll(':scope > .source-panel[data-label-en]');
+        if (sourcePanels.length >= 2 && !mp.querySelector('.source-btn')) {
+            var sd = document.createElement('div');
+            sd.className = 'source-selector';
+            var sg = document.createElement('div');
+            sg.className = 'source-selector-group';
+
+            for (var s = 0; s < sourcePanels.length; s++) {
+                var sp = sourcePanels[s];
+                var sid = sp.id.replace('source-', '');
+                var sbtn = document.createElement('button');
+                sbtn.className = 'segmented-btn source-btn' + (s === 0 ? ' active' : '');
+                sbtn.setAttribute('onclick', "switchSource(this,'" + sid + "')");
+                sbtn.textContent = sp.getAttribute('data-label-en');
+                if (sp.hasAttribute('data-label-zh')) {
+                    sbtn.setAttribute('data-i18n-en', sp.getAttribute('data-label-en'));
+                    sbtn.setAttribute('data-i18n-zh', sp.getAttribute('data-label-zh'));
+                }
+                sg.appendChild(sbtn);
+            }
+            sd.appendChild(sg);
+            mp.insertBefore(sd, sourcePanels[0]);
+        }
+
+        // Tab 按钮——直属于 metric-panel 的 stat-panel
+        generateTabsInScope(mp);
+
+        // Tab 按钮——在 source-panel 内
+        var sps = mp.querySelectorAll('.source-panel[data-label-en]');
+        for (var t = 0; t < sps.length; t++) {
+            generateTabsInScope(sps[t]);
+        }
+    }
+}
+
+// NOTE: 在 scope 内查找直属 stat-panel 并生成 tab 按钮
+function generateTabsInScope(scope) {
+    var statPanels = [];
+    scope.querySelectorAll('.stat-panel[data-label-en]').forEach(function (sp) {
+        // NOTE: 确保是此 scope 的直属（不跨 source-panel 边界）
+        var closestScope = sp.closest('.source-panel[data-label-en]') || sp.closest('.metric-panel[data-label-en]');
+        if (closestScope === scope) statPanels.push(sp);
+    });
+
+    if (statPanels.length >= 2 && !scope.querySelector('.stat-tab')) {
+        var isGlobal = !!scope.closest('[data-tab-mode="global"]');
+        createTabButtons(scope, statPanels, isGlobal);
+    }
+}
+
+// NOTE: 创建 tab 按钮并插入到 scope 内第一个 stat-panel 之前
+function createTabButtons(scope, statPanels, isGlobal) {
+    var tabsDiv = document.createElement('div');
+    tabsDiv.className = 'stat-tabs';
+
+    statPanels.forEach(function (panel, i) {
+        var btn = document.createElement('button');
+        btn.className = 'segmented-btn stat-tab' + (i === 0 ? ' active' : '');
+        btn.textContent = panel.getAttribute('data-label-en');
+        if (panel.hasAttribute('data-label-zh')) {
+            btn.setAttribute('data-i18n-en', panel.getAttribute('data-label-en'));
+            btn.setAttribute('data-i18n-zh', panel.getAttribute('data-label-zh'));
+        }
+
+        if (isGlobal) {
+            // NOTE: 全局模式，传 suffix（ranking/history）
+            var suffix = panel.id.split('-').pop();
+            btn.setAttribute('onclick', "switchGlobalTab(event,'" + suffix + "')");
+        } else {
+            // NOTE: 局部模式，传完整 panel ID
+            btn.setAttribute('onclick', "switchTab(event,'" + panel.id + "')");
+        }
+
+        tabsDiv.appendChild(btn);
+    });
+
+    statPanels[0].parentElement.insertBefore(tabsDiv, statPanels[0]);
+}
+
+// NOTE: DOMContentLoaded 时自动初始化
+// event_selector.js 在此之后执行（defer 顺序保证），会处理 hash 恢复
+document.addEventListener('DOMContentLoaded', initStatsUI);
+
