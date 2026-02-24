@@ -79,15 +79,19 @@ ruiminyan.github.io/
 │
 │── 📌 本地维护（不受同步影响）
 ├── index.html                 # 落地页（Solver / WCA Stats 入口卡片）
-├── i18n/                      # 多语言支持（独立于 src/，不受同步影响）
-│   ├── i18n.js                # 语言切换引擎：扫描 data-i18n 属性、MutationObserver 动态翻译、Stats 页面运行时翻译
+├── assets/js/                 # Stats 前端交互逻辑（前后端分离）
+│   ├── stats_ui.js            # Metric/Tab/Source/Dropdown 交互函数（从 Ruby Heredoc 提取）
+│   └── particles_stats.js     # Stats 页面粒子背景动画
+├── i18n/                      # 多语言 + 项目选择器
+│   ├── i18n.js                # 语言切换引擎：扫描 data-i18n 属性、MutationObserver 动态翻译
+│   ├── event_selector.js      # WCA 项目选择器 + URL hash 状态持久化
 │   ├── en.json                # 英文字典（solver/trainer 页面所有 key）
 │   └── zh.json                # 中文字典（solver/trainer 页面所有 key）
 ├── .sync/                     # 同步脚本的配置和模板（修改这里来定制同步行为）
 │   ├── page_config.json       # 页面映射表：上游 HTML → 本地子目录，含 i18n title key 和需同步的根文件/目录列表
 │   └── menu_template.html     # 汉堡菜单模板：同步时替换上游菜单，加入 data-i18n 属性和本站专属链接
-├── _layouts/                  # Jekyll 布局（Stats 页面深色主题 HTML 框架）
-├── _stats_build/              # WCA 统计构建脚本（Ruby，CI 每日运行生成 stats/）
+├── _layouts/                  # Jekyll 布局（Stats 深色主题框架，全局加载 stats_ui.js / i18n.js / event_selector.js）
+├── _stats_build/              # WCA 统计构建脚本（Ruby，只生成 HTML 结构，不含 <script> 块）
 ├── stats/                     # 统计 Markdown 页面。由 CI 每周覆盖写入，也可本地生成后直接 push
 ├── .github/workflows/         # CI 配置（stats.yml：每日定时构建 + push）
 ├── _config.yml                # Jekyll 配置（排除 _stats_build/、配置 permalink 等）

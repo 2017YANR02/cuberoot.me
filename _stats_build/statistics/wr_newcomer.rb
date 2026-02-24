@@ -1,4 +1,5 @@
 # NOTE: 新人统计合并页 = wr_newcomer + wr_1st_wr
+# 支持 STATS_USE_CACHE=1 跳过 MySQL，直接从 .data_cache/ 读取 marshal 文件
 # 两个维度:
 #   1) 指标 (metric): Single / Average
 #   2) 数据源 (source):
@@ -6,6 +7,7 @@
 #      - 首场比赛 (1st-comp):  首场比赛所有轮次的 MIN(best)(单次) / MIN(average)(平均)
 # 每种组合有 Current Ranking + History 双视图
 require_relative "../core/grouped_statistic"
+require "fileutils"
 require_relative "../core/events"
 require_relative "../core/solve_time"
 require_relative "../core/tab_ui"
@@ -40,10 +42,15 @@ class WrNewcomer < GroupedStatistic
   end
 
   def markdown
-    # NOTE: 使用单一连接，确保临时表在所有查询中可见
-    puts "  [newcomer] Connecting to database..."
-    @client = Database.client
-    create_first_comp_temp_table(@client)
+    # NOTE: STATS_USE_CACHE=1 且缓存全命中时完全跳过 MySQL
+    use_cache = ENV["STATS_USE_CACHE"] == "1"
+    if use_cache && all_caches_exist?
+      puts "  [newcomer] All caches hit, skipping MySQL"
+    else
+      puts "  [newcomer] Connecting to database..."
+      @client = Database.client
+      create_first_comp_temp_table(@client)
+    end
 
     md = top
 
@@ -80,14 +87,17 @@ class WrNewcomer < GroupedStatistic
 
         md += "<div class=\"source-panel#{s_active ? ' active' : ''}\" id=\"source-#{s_prefix}\">\n"
 
-        # NOTE: 按数据源类型查询
+        # NOTE: 按数据源类型查询（支持缓存）
+        cache_key = "WrNewcomer_#{metric[:id]}_#{source[:id].tr('-', '_')}"
         label = "#{metric[:id]}/#{source[:id]}"
         t = Time.now
-        $stdout.write "  [newcomer] Querying #{label}..."
-        grouped = if source[:id] == "1st-solve"
-          fetch_first_round_data(metric, @client)
-        else
-          fetch_first_comp_data(metric, @client)
+        $stdout.write "  [newcomer] #{label}..."
+        grouped = fetch_with_cache(cache_key) do
+          if source[:id] == "1st-solve"
+            fetch_first_round_data(metric, @client)
+          else
+            fetch_first_comp_data(metric, @client)
+          end
         end
         row_count = grouped.values.sum(&:size)
         puts " #{row_count} rows (#{(Time.now - t).round(1)}s)"
@@ -126,7 +136,28 @@ class WrNewcomer < GroupedStatistic
 
   private
 
+  # ========== 缓存 ==========
 
+  # NOTE: 查询结果缓存——正常运行时写入 marshal，STATS_USE_CACHE=1 时读取
+  def fetch_with_cache(key)
+    cache_file = File.join(Statistic::CACHE_DIR, "#{key}.marshal")
+    if ENV["STATS_USE_CACHE"] == "1" && File.exist?(cache_file)
+      $stdout.write " (cache) "
+      return Marshal.load(File.binread(cache_file))
+    end
+    result = yield
+    FileUtils.mkdir_p(Statistic::CACHE_DIR)
+    File.binwrite(cache_file, Marshal.dump(result))
+    result
+  end
+
+  # NOTE: 判断所有 4 个缓存文件是否存在
+  def all_caches_exist?
+    METRICS.product(SOURCES).all? do |metric, source|
+      key = "WrNewcomer_#{metric[:id]}_#{source[:id].tr('-', '_')}"
+      File.exist?(File.join(Statistic::CACHE_DIR, "#{key}.marshal"))
+    end
+  end
 
   # ========== 临时表 ==========
 
