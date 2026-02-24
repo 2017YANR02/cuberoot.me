@@ -1,8 +1,6 @@
 <h2 data-i18n-en="Longest competitions path" data-i18n-zh="最长比赛路径">Longest competitions path</h2>
 
 <p><em data-i18n-en="Calculated as the sum of direct distance between subsequent competitions." data-i18n-zh="按相邻比赛之间的直线距离之和计算。">Calculated as the sum of direct distance between subsequent competitions.</em></p>
-<p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>
-
 | Person | Distance |
 | :--- | ---: |
 | [Ron van Bruchem](https://www.worldcubeassociation.org/persons/2003BRUC01) | 677 178 km |

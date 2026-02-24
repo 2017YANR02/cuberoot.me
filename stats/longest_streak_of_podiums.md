@@ -1,8 +1,6 @@
 <h2 data-i18n-en="Longest streak of podiums" data-i18n-zh="连续领奖台最长纪录">Longest streak of podiums</h2>
 
 <p><em data-i18n-en="All competitions that did not hold the given event are ignored. Results without any completed attempt are not eligible for podium. Only finals are taken into account." data-i18n-zh="未举办该项目的比赛不计入。">All competitions that did not hold the given event are ignored. Results without any completed attempt are not eligible for podium. Only finals are taken into account.</em></p>
-<p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>
-
 | Count | Person | Event | Started at | Ended at |
 | ---: | :--- | :--- | :--- | :--- |
 | 109 | [Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02) | 3x3x3 Cube | [Cubing in Cill Chainnigh 2019](https://www.worldcubeassociation.org/competitions/CubinginCillChainnigh2019) |  |

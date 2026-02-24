@@ -1,7 +1,5 @@
 <h2 data-i18n-en="Shortest amount of time to reach a milestone in competitions count" data-i18n-zh="最快达到参赛里程碑">Shortest amount of time to reach a milestone in competitions count</h2>
 
-<p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>
-
 
 <h3 data-i18n-en="300 Competitions" data-i18n-zh="300 Competitions">300 Competitions</h3>
 

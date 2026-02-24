@@ -1,7 +1,5 @@
 <h2 data-i18n-en="Most competitions abroad" data-i18n-zh="海外参赛最多">Most competitions abroad</h2>
 
-<p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>
-
 | Competitions | Person |
 | ---: | :--- |
 | 227 | [Callum James Goodyear-Jørgensen](https://www.worldcubeassociation.org/persons/2012GOOD02) |

@@ -1,7 +1,5 @@
 <h2 data-i18n-en="Most finals" data-i18n-zh="进入决赛最多">Most finals</h2>
 
-<p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>
-
 | Finals | Person |
 | ---: | :--- |
 | 2946 | [Daniel Wallin](https://www.worldcubeassociation.org/persons/2013WALL03) |

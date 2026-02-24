@@ -1,8 +1,6 @@
 <h2 data-i18n-en="Best round" data-i18n-zh="最佳轮次">Best round</h2>
 
 <p><em data-i18n-en="For each event, shows the rounds with the best sum of the top 3 results. For blind events the single is used, for other events the average is used." data-i18n-zh="For each event, shows the rounds with the best sum of the top 3 results. For blind events the single is used, for other events the average is used.">For each event, shows the rounds with the best sum of the top 3 results. For blind events the single is used, for other events the average is used.</em></p>
-<p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>
-
 
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 

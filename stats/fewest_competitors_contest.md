@@ -1,7 +1,5 @@
 <h2 data-i18n-en="Fewest competitors contest" data-i18n-zh="参赛人数最少的比赛">Fewest competitors contest</h2>
 
-<p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>
-
 | Competitors | Competition |
 | ---: | :--- |
 | 2 | [5Bld in Tashkent Phase One 2025](https://www.worldcubeassociation.org/competitions/5BldinTashkentPhaseOne2025) |

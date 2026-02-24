@@ -1,7 +1,5 @@
 <h2 data-i18n-en="Longest streak of world records of the same type in the given event" data-i18n-zh="同一项目连续世界纪录最长纪录">Longest streak of world records of the same type in the given event</h2>
 
-<p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>
-
 | Records | Event | Type | Person | Started at | Ended at | Years |
 | ---: | :--- | :--- | :--- | :--- | :--- | ---: |
 | 21 | 5x5x5 Cube | Average | [Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01) | [Australian Nationals 2010](https://www.worldcubeassociation.org/competitions/AustralianNationals2010) | [Western Championship 2018](https://www.worldcubeassociation.org/competitions/WesternChampionship2018) | 7.78 |

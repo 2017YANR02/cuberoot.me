@@ -1,7 +1,5 @@
 <h2 data-i18n-en="Most podiums at a single competition" data-i18n-zh="单场比赛登台最多">Most podiums at a single competition</h2>
 
-<p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>
-
 | Podiums | Person |
 | ---: | :--- |
 | 12 | [Theo Goluboff](https://www.worldcubeassociation.org/persons/2017GOLU01) | [10th Anniversary Cervantes 2024](https://www.worldcubeassociation.org/competitions/10thAnniversaryCervantes2024/results/podiums) |

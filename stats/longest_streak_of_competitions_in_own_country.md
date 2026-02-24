@@ -1,8 +1,6 @@
 <h2 data-i18n-en="Longest streak of competitions in own country" data-i18n-zh="在本国连续参赛最长纪录">Longest streak of competitions in own country</h2>
 
 <p><em data-i18n-en="The streak ends whenever the person doesn't participate in a competition in own country." data-i18n-zh="每当选手出国参赛，连续纪录即中断。">The streak ends whenever the person doesn't participate in a competition in own country.</em></p>
-<p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>
-
 | Competitions | Person | Country | Started at | Missed |
 | ---: | :--- | :--- | :--- | :--- |
 | 117 | [Niko Ronkainen](https://www.worldcubeassociation.org/persons/2010RONK01) | Finland | [Helsinki Open 2010](https://www.worldcubeassociation.org/competitions/HelsinkiOpen2010) | [Big & Blind & Clock Vantaa 2024](https://www.worldcubeassociation.org/competitions/BigBlindClockVantaa2024) |

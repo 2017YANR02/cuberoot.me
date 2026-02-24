@@ -1,8 +1,6 @@
 <h2 data-i18n-en="Name parts count" data-i18n-zh="姓名词数统计">Name parts count</h2>
 
 <p><em data-i18n-en="Local names within parentheses are ignored." data-i18n-zh="括号中的本地名称不计入。">Local names within parentheses are ignored.</em></p>
-<p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>
-
 | Parts | People | Countries of origin |
 | :--: | ---: | :--- |
 | 1 | 462 | India *(29.44 %)*, Indonesia *(22.08 %)*, United States *(9.52 %)*, China *(6.28 %)*, Australia *(2.60 %)* |
