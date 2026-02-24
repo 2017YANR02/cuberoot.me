@@ -81,6 +81,11 @@
   display: block
 }
 
+/* NOTE: 消除容器上方 <p>（更新日期）的默认下边距，避免间距过大 */
+p+.metric-tab-wrap {
+  margin-top: -8px
+}
+
 /* ── Metric + Tab 同行布局容器 ──────────────────────────── */
 /* NOTE: display:contents 将 metric-panel 子元素暴露到 flex 布局 */
 .metric-tab-wrap {
@@ -91,7 +96,7 @@
   /* NOTE: 同行元素水平间距 */
   row-gap: 8px;
   /* NOTE: 选择器行与表格之间的紧凑间距 */
-  margin: 12px 0
+  margin: 0px 0
 }
 
 .metric-tab-wrap .metric-selector {
