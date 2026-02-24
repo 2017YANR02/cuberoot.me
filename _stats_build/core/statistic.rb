@@ -71,7 +71,7 @@ class Statistic
     markdown = "<h2 data-i18n-en=\"#{@title}\" data-i18n-zh=\"#{zh}\">#{@title}</h2>\n\n"
     if @note
       nzh = @note_zh || trans[:note_zh] || @note
-      markdown += "<p><em data-i18n-en=\"#{@note}\" data-i18n-zh=\"#{nzh}\">#{@note}</em></p>\n"
+      markdown += "<p><em data-i18n-en=\"#{@note}\" data-i18n-zh=\"#{nzh}\">#{@note}</em></p>\n\n"
     end
     markdown
   end
