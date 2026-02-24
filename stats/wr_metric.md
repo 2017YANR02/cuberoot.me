@@ -3,7 +3,7 @@
 <p><em data-i18n-en="World record history and current rankings for various derived metrics computed from a round's 5 solves." data-i18n-zh="从一轮 5 次成绩中计算的各类指标的世界纪录历史与排名。">World record history and current rankings for various derived metrics computed from a round's 5 solves.</em></p>
 <p><em data-i18n-en="Updated on 18 February 2026" data-i18n-zh="更新于 2026 年 2 月 18 日">Updated on 18 February 2026</em></p>
 
-<div class="metric-toolbar" data-tab-mode="global">
+<div class="metric-tab-wrap" data-tab-mode="global">
 <div class="metric-dropdown">
   <button class="metric-dropdown-trigger" onclick="toggleMetricDropdown()">
     <span data-i18n-en="Single" data-role="trigger-text">Single</span>
@@ -33,7 +33,6 @@
       <button class="metric-dropdown-item" data-id="ratio" data-i18n-en="Best/Avg" onclick="selectFromDropdown('ratio')">Best/Avg</button>
     </div>
   </div>
-</div>
 </div>
 <div class="metric-panel active" id="metric-single" data-label-en="Single">
 <div id="single-ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
@@ -7413,3 +7412,4 @@
 </table>
 </div>
 </div>
+</div><!-- metric-tab-wrap -->

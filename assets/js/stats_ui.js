@@ -148,8 +148,8 @@ document.addEventListener('click', function (e) {
 // 约束：只对有 data-label-en 属性的面板生效，现有页面无此属性则静默跳过
 function initStatsUI() {
     // --- 第一步：处理语义容器内的 metric-panel ---
-    // NOTE: metric-tab-wrap 和 metric-toolbar 是已知的语义容器
-    var containers = document.querySelectorAll('.metric-tab-wrap, .metric-toolbar');
+    // NOTE: metric-tab-wrap 是已知的语义容器
+    var containers = document.querySelectorAll('.metric-tab-wrap');
     var handled = new Set(); // NOTE: 记录已处理的 metric-panel，避免重复
 
     containers.forEach(function (container) {

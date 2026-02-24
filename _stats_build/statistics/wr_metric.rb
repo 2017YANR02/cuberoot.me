@@ -72,9 +72,8 @@ class WrMetric < Statistic
 
     # --- 顶栏（下拉菜单 + 全局 Tab） ---
     # NOTE: data-tab-mode="global" 让 JS 生成 switchGlobalTab 而非 switchTab
-    md += "<div class=\"metric-toolbar\" data-tab-mode=\"global\">\n"
+    md += "<div class=\"metric-tab-wrap\" data-tab-mode=\"global\">\n"
     md += metric_dropdown_html(METRIC_GROUPS, METRIC_META)
-    md += "</div>\n"
 
     # --- 每个指标的内容面板 ---
     instances.each_with_index do |inst, i|
@@ -97,6 +96,7 @@ class WrMetric < Statistic
       md += "</div>\n"
       printf("    [%2d/%d] %-20s %5.1fs\n", i + 1, instances.size, meta[:label], Time.now - t_sub)
     end
+    md += "</div><!-- metric-tab-wrap -->\n"
 
     md
   end
