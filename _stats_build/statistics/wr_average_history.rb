@@ -41,7 +41,7 @@ class WrAverageHistory < RoundMetric
 
     # 替换 333mbf/333mbo 条目（基类返回的是 nil 或空）
     normal_results.map do |event_name, rows|
-      event_id = Events::WITH_MO3.key(event_name)
+      event_id = Events::WITH_AVERAGE__MBF.key(event_name)
       if event_id && mbf_ids.include?(event_id)
         [event_name, mbf_instance.history_for(event_name)]
       else
@@ -65,7 +65,7 @@ class WrAverageHistory < RoundMetric
 
     mbf_ids = %w[333mbf 333mbo]
     result = raw.map do |event_name, rows|
-      event_id = Events::WITH_MO3.key(event_name)
+      event_id = Events::WITH_AVERAGE__MBF.key(event_name)
       if event_id && mbf_ids.include?(event_id)
         [event_name, mbf_instance.ranking_for(event_name)]
       else
