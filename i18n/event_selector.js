@@ -268,7 +268,7 @@
     document.querySelectorAll('.metric-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const onclick = btn.getAttribute('onclick') || '';
-        const m = onclick.match(/switchMetric\(event,\s*'(.+?)'\)/);
+        const m = onclick.match(/switchMetric\((?:event,\s*)?'(.+?)'\)/);
         if (m) updateHash({ metric: m[1] });
       });
     });
@@ -307,7 +307,7 @@
     if (h.metric && typeof switchMetric === 'function') {
       // NOTE: 优先查找下拉菜单项，再查找药丸按钮
       const ddItem = document.querySelector(`.metric-dropdown-item[data-id="${h.metric}"]`);
-      const btn = document.querySelector(`.metric-btn[onclick*="switchMetric(event,'${h.metric}')"]`);
+      const btn = document.querySelector(`.metric-btn[onclick*="switchMetric"][onclick*="'${h.metric}'"]`);
       if (ddItem) ddItem.click();
       else if (btn) btn.click();
     }
@@ -355,7 +355,7 @@
       // 恢复 metric
       if (h.metric && typeof switchMetric === 'function') {
         const ddItem = document.querySelector(`.metric-dropdown-item[data-id="${h.metric}"]`);
-        const btn = document.querySelector(`.metric-btn[onclick*="switchMetric(event,'${h.metric}')"]`);
+        const btn = document.querySelector(`.metric-btn[onclick*="switchMetric"][onclick*="'${h.metric}'"]`);
         if (ddItem) ddItem.click();
         else if (btn) btn.click();
       }
