@@ -2,6 +2,8 @@
 
 <h2 data-i18n-en="WCA Statistics" data-i18n-zh="WCA 统计数据">WCA Statistics</h2>
 
+<p><em data-i18n-en="Updated on 18 February 2026" data-i18n-zh="更新于 2026 年 2 月 18 日">Updated on 18 February 2026</em></p>
+
 <div class="stats-dashboard">
 
 <div class="glass-card stat-card" style="--card-gradient: linear-gradient(90deg, #f59e0b, #ef4444, #ec4899)">
