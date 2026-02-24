@@ -27,42 +27,26 @@ class WrAoxr < Statistic
   end
 
   def markdown
-    instances = AOXR_CLASSES.map(&:new)
-
     md = top
-
-    # --- 容器 ---
     md += metric_tab_wrap_start
 
-    # --- 每个 AoXR 的内容面板 ---
-    # NOTE: AoRounds.markdown 调 data 触发一次性计算，4 个子类共享一次查询
     ranking_header = RANKING_HEADER.merge("Details" => :left)
+    ao_keys = [:rank, :person_link, :result_str, :country, :date, :competition_link, :details]
 
-    instances.each_with_index do |inst, i|
-      meta = AOXR_META[inst.class]
-      prefix = meta[:id]
-      active = i == 0
-      t_sub = Time.now
-
-      md += "<div class=\"metric-panel#{active ? ' active' : ''}\" id=\"metric-#{prefix}\" data-label-en=\"#{meta[:label]}\">\n"
-
-      # NOTE: 获取数据——第一个子类触发 compute_all_round_counts，后续直接取缓存
+    md += aggregate_panels(AOXR_CLASSES, AOXR_META) do |inst, prefix|
+      # NOTE: 必须先调 data 触发 compute_all_round_counts，才能填充 ranking_by_event
       history = inst.data
-      ao_keys = [:rank, :person_link, :result_str, :country, :date, :competition_link, :details]
-      ranking = inst.instance_variable_get(:@ranking_by_event)
+      ranking = inst.ranking_by_event
         .transform_values { |rows| ranking_to_arrays(rows, keys: ao_keys) }
 
-      md += grouped_panel("#{prefix}-ranking", true, ranking, ranking_header,
-                          label_en: "Current Ranking", label_zh: "排名")
-      md += grouped_panel("#{prefix}-history", false, history, inst.instance_variable_get(:@table_header),
-                          label_en: "WR History", label_zh: "历史")
-
-      md += "</div>\n"
-      printf("    [%d/%d] %-20s %5.1fs\n", i + 1, instances.size, meta[:label], Time.now - t_sub)
+      panel = grouped_panel("#{prefix}-ranking", true, ranking, ranking_header,
+                            label_en: "Current Ranking", label_zh: "排名")
+      panel += grouped_panel("#{prefix}-history", false, history, inst.table_header,
+                             label_en: "WR History", label_zh: "历史")
+      panel
     end
 
     md += metric_tab_wrap_end
-
     md
   end
 end
