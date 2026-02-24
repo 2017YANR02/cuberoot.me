@@ -2,6 +2,7 @@
 
 <p><em data-i18n-en="Only finals are taken into account." data-i18n-zh="仅统计决赛。">Only finals are taken into account.</em></p>
 
+
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 
 | Person | Single | Average | Competition | Place |

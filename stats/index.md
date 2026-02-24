@@ -104,4 +104,11 @@
 </div>
 </div>
 
+<div class="stat-card" style="border-top-color: #6b7280">
+<h3 data-i18n-en="Other" data-i18n-zh="其他"><span class="card-icon">📌</span> Other</h3>
+<div class="stat-links">
+<a href="mbf_average" data-i18n-en="3x3x3 Multi-Blind Mo3" data-i18n-zh="3x3x3 Multi-Blind Mo3">3x3x3 Multi-Blind Mo3</a>
+</div>
+</div>
+
 </div>

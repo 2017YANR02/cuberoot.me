@@ -1,7 +1,6 @@
 <h2 data-i18n-en="Current world records" data-i18n-zh="当前世界纪录">Current world records</h2>
 
 <p><em data-i18n-en="Shows the current world record single and average for each official event." data-i18n-zh="显示各官方项目当前的世界纪录单次和平均。">Shows the current world record single and average for each official event.</em></p>
-<p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>
 
 | Event | Type | Result | Person | Date | Competition |
 | :--- | :--- | ---: | :--- | :--- | :--- |

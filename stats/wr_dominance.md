@@ -1,6 +1,7 @@
 <h2 data-i18n-en="Dominance" data-i18n-zh="屠榜">Dominance</h2>
 
 <p><em data-i18n-en="A competitor completely dominates top N on the leaderboard of results. Tied results are excluded." data-i18n-zh="选手在全历史成绩排行榜上完全霸占前 N 席。并列成绩不计入。">A competitor completely dominates top N on the leaderboard of results. Tied results are excluded.</em></p>
+
 <div class="metric-tab-wrap">
 <div class="metric-panel active" id="metric-single" data-label-en="Single" data-label-zh="单次">
 <div id="single-ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">

@@ -2,6 +2,7 @@
 
 <p><em data-i18n-en="By definition these rankings include only results from the current year." data-i18n-zh="根据定义，这些排名仅包含当年的成绩。">By definition these rankings include only results from the current year.</em></p>
 
+
 <h3 data-i18n-en="Rubik's Cube - Single" data-i18n-zh="Rubik's Cube - Single">Rubik's Cube - Single</h3>
 
 | Person | Result | Country | Competition | Details |

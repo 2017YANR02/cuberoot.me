@@ -1,6 +1,7 @@
 <h2 data-i18n-en="Average event count by competition" data-i18n-zh="每场比赛的平均项目数">Average event count by competition</h2>
 
 <p><em data-i18n-en="In other words, average number of events competitors participated in." data-i18n-zh="即参赛选手平均参加了多少个项目。">In other words, average number of events competitors participated in.</em></p>
+
 | Competition | Average event count | Competitors | Country |
 | :--- | ---: | ---: | :--- |
 | [Utsjoki 2025](https://www.worldcubeassociation.org/competitions/Utsjoki2025) | 13.67 | 6 | Finland |

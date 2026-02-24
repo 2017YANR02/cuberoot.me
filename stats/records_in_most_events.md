@@ -2,6 +2,7 @@
 
 <p><em data-i18n-en="All historical records are taken into account (i.e. not only the current ones)." data-i18n-zh="统计所有历史纪录（不仅是当前纪录）。">All historical records are taken into account (i.e. not only the current ones).</em></p>
 
+
 <h3 data-i18n-en="World" data-i18n-zh="World">World</h3>
 
 | Events | Person | List |

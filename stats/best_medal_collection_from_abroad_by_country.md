@@ -1,6 +1,7 @@
 <h2 data-i18n-en="Best medal collection from abroad by country" data-i18n-zh="各国海外最佳奖牌收藏">Best medal collection from abroad by country</h2>
 
 <p><em data-i18n-en="Only medals got abroad are taken into account." data-i18n-zh="仅统计在海外比赛中获得的奖牌。">Only medals got abroad are taken into account.</em></p>
+
 | Country | Gold | Silver | Bronze | Total |
 | :--- | :--: | :--: | :--: | :--: |
 | Hungary | **1551** | 1320 | 1140 | 4011 |

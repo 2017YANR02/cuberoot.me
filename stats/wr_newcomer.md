@@ -1,6 +1,7 @@
 <h2 data-i18n-en="Newcomer" data-i18n-zh="新人">Newcomer</h2>
 
 <p><em data-i18n-en="Shows the best results from a person's very first competition for each event." data-i18n-zh="展示选手在首次参加某项目比赛时取得的最佳成绩。">Shows the best results from a person's very first competition for each event.</em></p>
+
 <div class="metric-tab-wrap">
 <div class="metric-panel active" id="metric-single" data-label-en="Single" data-label-zh="单次">
 <div class="source-panel active" id="source-single-1st-solve" data-label-en="First Solve" data-label-zh="首次还原">

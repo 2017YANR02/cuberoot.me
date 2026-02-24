@@ -1,6 +1,7 @@
 <h2 data-i18n-en="Most consecutive sub-5 averages in 3x3x3" data-i18n-zh="最多连续 sub-5 三阶平均">Most consecutive sub-5 averages in 3x3x3</h2>
 
 <p><em data-i18n-en="Only official 3x3x3 averages are considered. Computed across all rounds in chronological order." data-i18n-zh="仅考虑官方 3x3x3 平均成绩。按时间顺序统计所有轮次。">Only official 3x3x3 averages are considered. Computed across all rounds in chronological order.</em></p>
+
 <div id="ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
 <table>
 <tr><th style="text-align:right">Streak</th><th>Person</th><th>Started at</th><th>Ended at</th></tr>
