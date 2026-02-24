@@ -71,8 +71,6 @@ class WrAoxr < Statistic
 
     md += metric_tab_wrap_end
 
-    md += metric_selector_script
-    md += tab_script
     md
   end
 end

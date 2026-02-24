@@ -297,13 +297,20 @@
     }
 
     // 恢复 tab 选择——hash 中存的是后缀（ranking/history），需匹配 tab ID 末尾
+    // NOTE: 限定到活跃 source-panel，避免在多 source 页面（wr_newcomer）中
+    // forEach 遍历到非活跃面板的 tab 并 click，导致 switchTab 反复清除状态
     if (h.tab && typeof switchTab === 'function') {
-      const scope = document.querySelector('.metric-panel.active') || document;
-      scope.querySelectorAll('.stat-tab').forEach(btn => {
-        const onclick = btn.getAttribute('onclick') || '';
+      const metricScope = document.querySelector('.metric-panel.active') || document;
+      const tabScope = metricScope.querySelector('.source-panel.active') || metricScope;
+      const tabs = tabScope.querySelectorAll('.stat-tab');
+      for (let i = 0; i < tabs.length; i++) {
+        const onclick = tabs[i].getAttribute('onclick') || '';
         const m = onclick.match(/switchTab\(event,\s*'(.+?)'\)/);
-        if (m && m[1].split('-').pop() === h.tab) btn.click();
-      });
+        if (m && m[1].split('-').pop() === h.tab) {
+          tabs[i].click();
+          break;  // NOTE: 只激活第一个匹配的 tab，避免多次 click
+        }
+      }
     }
   }
 
@@ -328,13 +335,19 @@
       }
 
       // 恢复 tab（hash 存后缀，匹配 tab ID 末尾）
+      // NOTE: 限定到活跃 source-panel（同 restoreFromHash 的修复）
       if (h.tab && typeof switchTab === 'function') {
-        const scope = document.querySelector('.metric-panel.active') || document;
-        scope.querySelectorAll('.stat-tab').forEach(btn => {
-          const onclick = btn.getAttribute('onclick') || '';
+        const metricScope = document.querySelector('.metric-panel.active') || document;
+        const tabScope = metricScope.querySelector('.source-panel.active') || metricScope;
+        const tabs = tabScope.querySelectorAll('.stat-tab');
+        for (let i = 0; i < tabs.length; i++) {
+          const onclick = tabs[i].getAttribute('onclick') || '';
           const m = onclick.match(/switchTab\(event,\s*'(.+?)'\)/);
-          if (m && m[1].split('-').pop() === h.tab) btn.click();
-        });
+          if (m && m[1].split('-').pop() === h.tab) {
+            tabs[i].click();
+            break;
+          }
+        }
       }
     });
   }
