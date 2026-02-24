@@ -216,12 +216,19 @@ bundle exec jekyll serve
 
 ### UI 快速测试 (无需数据库)
 
-很多时候只需要调试分段控件、标签、表格等前端渲染效果，并不需要花费几十分钟生成全站数据。
-本项目提供了专门的纯前端静态测试页，无需启动数据库即可直接在 Jekyll 预览：
+很多时候只需要调试前端渲染效果，无需花费几十分钟重跑数据库。
+本项目提供专门的纯前端静态测试页，启动 Jekyll 后直接访问：
 
-- 访问地址：[http://127.0.0.1:4000/stats/test_ui](http://127.0.0.1:4000/stats/test_ui)
-- 源码位置：`stats/test_ui.md`
-- 用途：各种布局、响应式折行、夜间模式等 CSS 和国际化 JS 逻辑验证。
+| 页面 | 布局模式 | 地址 |
+|------|----------|------|
+| `test_ui.md` | 测试页导航入口（链接到 a~e） | http://127.0.0.1:4000/stats/test_ui |
+| `test_ui_a.md` | Mode A：简单双 tab | http://127.0.0.1:4000/stats/test_ui_a |
+| `test_ui_b.md` | Mode B：metric 分段 + tab | http://127.0.0.1:4000/stats/test_ui_b |
+| `test_ui_c.md` | Mode C：metric 下拉 + 全局 tab | http://127.0.0.1:4000/stats/test_ui_c |
+| `test_ui_d.md` | Mode D：三级嵌套（metric + source + tab）| http://127.0.0.1:4000/stats/test_ui_d |
+| `test_ui_e.md` | Mode E：metric 分段（无 tab）| http://127.0.0.1:4000/stats/test_ui_e |
+
+> **改 JS/CSS 后只需刷新浏览器**，无需重跑 `compute_all.rb`。
 
 # 日常操作
 
