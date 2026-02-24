@@ -80,7 +80,8 @@ ruiminyan.github.io/
 │── 📌 本地维护（不受同步影响）
 ├── index.html                 # 落地页（Solver / WCA Stats 入口卡片）
 ├── assets/css/                # Stats 页面统一 UI 样式
-│   └── stats_ui.css           # 所有选择器/Tab/下拉菜单 CSS（从 Ruby 迁出，集中管理）
+│   ├── stats_ui.css           # 所有选择器/Tab/下拉菜单 CSS（从 Ruby 迁出，集中管理）
+│   └── card.css               # 落地页入口卡片样式
 ├── assets/js/                 # Stats 前端交互逻辑（前后端分离）
 │   ├── stats_ui.js            # Metric/Tab/Source/Dropdown 交互函数 + initStatsUI() 自动生成按钮
 │   └── particles_stats.js     # Stats 页面粒子背景动画
