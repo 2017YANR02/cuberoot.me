@@ -1301,7 +1301,7 @@ function switchMetric(id){
     var tabReadScope=oldPanel.querySelector('.source-panel.active')||oldPanel;
     var activeTab=tabReadScope.querySelector('.stat-tab.active');
     if(activeTab){
-      var m=(activeTab.getAttribute('onclick')||'').match(/switchTab(event, *'(.+?)')/);
+      var m=(activeTab.getAttribute('onclick')||'').match(/switchTab\(event,\s*'(.+?)'\)/);
       if(m) tabSuffix=m[1].split('-').pop();
     }
   }
@@ -1320,7 +1320,7 @@ function switchMetric(id){
     tabScope.querySelectorAll('.stat-tab').forEach(t=>t.classList.remove('active'));
     tabScope.querySelectorAll('.stat-panel').forEach(p=>p.classList.remove('active'));
     tabScope.querySelectorAll('.stat-tab').forEach(function(t){
-      var tm=(t.getAttribute('onclick')||'').match(/switchTab(event, *'(.+?)')/);
+      var tm=(t.getAttribute('onclick')||'').match(/switchTab\(event,\s*'(.+?)'\)/);
       if(tm&&tm[1].split('-').pop()===tabSuffix){
         t.classList.add('active');
         var tp=document.getElementById(tm[1]);
