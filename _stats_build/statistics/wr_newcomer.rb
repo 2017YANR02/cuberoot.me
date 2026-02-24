@@ -20,8 +20,8 @@ class WrNewcomer < GroupedStatistic
 
   # NOTE: 指标维度
   METRICS = [
-    { label: "Single",  id: "single",  type: :single },
-    { label: "Average", id: "average", type: :average },
+    { label: "Single",  label_zh: "单次",  id: "single",  type: :single },
+    { label: "Average", label_zh: "平均",  id: "average", type: :average },
   ].freeze
 
   # NOTE: 数据源维度
@@ -54,38 +54,20 @@ class WrNewcomer < GroupedStatistic
 
     md = top
 
-    # --- 分段控件样式（metric + source 共用模板）---
-    md += segmented_selector_styles("metric")
-    md += segmented_selector_styles("source")
-    
-    # NOTE: 用户要求将所有选择器放在同一行
-    # 通用 wrap 提供 flex 容器 + metric-panel display:contents
-    # newcomer 特有：source-panel 也需要 display:contents，让 stat-tabs 也上到同一行
+    # NOTE: metric-tab-wrap 容器（CSS 已在 stats_ui.css）
     md += metric_tab_wrap_start
-    md += <<~HTML
-      <style>
-      .metric-tab-wrap .source-selector { margin: 0; }
-      .metric-tab-wrap .source-panel.active { display: contents; }
-      </style>
-    HTML
-
-    md += segmented_selector_buttons(METRICS)
-    md += tab_styles
 
     METRICS.each_with_index do |metric, mi|
       m_prefix = metric[:id]
       m_active = mi == 0
 
-      md += "<div class=\"metric-panel#{m_active ? ' active' : ''}\" id=\"metric-#{m_prefix}\">\n"
-      md += segmented_selector_buttons(SOURCES, css_prefix: "source",
-                                    js_fn: "switchSource",
-                                    id_prefix: m_prefix, pass_self: true)
+      md += "<div class=\"metric-panel#{m_active ? ' active' : ''}\" id=\"metric-#{m_prefix}\" data-label-en=\"#{metric[:label]}\" data-label-zh=\"#{metric[:label_zh]}\">\n"
 
       SOURCES.each_with_index do |source, si|
         s_prefix = "#{m_prefix}-#{source[:id]}"
         s_active = si == 0
 
-        md += "<div class=\"source-panel#{s_active ? ' active' : ''}\" id=\"source-#{s_prefix}\">\n"
+        md += "<div class=\"source-panel#{s_active ? ' active' : ''}\" id=\"source-#{s_prefix}\" data-label-en=\"#{source[:label]}\" data-label-zh=\"#{source[:label_zh]}\">\n"
 
         # NOTE: 按数据源类型查询（支持缓存）
         cache_key = "WrNewcomer_#{metric[:id]}_#{source[:id].tr('-', '_')}"
@@ -112,12 +94,10 @@ class WrNewcomer < GroupedStatistic
         history = build_history(grouped, metric)
         puts " done (#{(Time.now - t3).round(1)}s)"
 
-        md += tab_buttons(
-          "Current Ranking", "排名", "#{s_prefix}-ranking",
-          "WR History", "历史", "#{s_prefix}-history"
-        )
-        md += grouped_panel("#{s_prefix}-ranking", true, ranking, RANKING_HEADER)
-        md += grouped_panel("#{s_prefix}-history", false, history, HISTORY_HEADER)
+        md += grouped_panel("#{s_prefix}-ranking", true, ranking, RANKING_HEADER,
+                            label_en: "Current Ranking", label_zh: "排名")
+        md += grouped_panel("#{s_prefix}-history", false, history, HISTORY_HEADER,
+                            label_en: "WR History", label_zh: "历史")
 
         md += "</div>\n"
       end
@@ -138,18 +118,7 @@ class WrNewcomer < GroupedStatistic
 
   # ========== 缓存 ==========
 
-  # NOTE: 查询结果缓存——正常运行时写入 marshal，STATS_USE_CACHE=1 时读取
-  def fetch_with_cache(key)
-    cache_file = File.join(Statistic::CACHE_DIR, "#{key}.marshal")
-    if ENV["STATS_USE_CACHE"] == "1" && File.exist?(cache_file)
-      $stdout.write " (cache) "
-      return Marshal.load(File.binread(cache_file))
-    end
-    result = yield
-    FileUtils.mkdir_p(Statistic::CACHE_DIR)
-    File.binwrite(cache_file, Marshal.dump(result))
-    result
-  end
+  # NOTE: fetch_with_cache 已提升至 Statistic 基类
 
   # NOTE: 判断所有 4 个缓存文件是否存在
   def all_caches_exist?
