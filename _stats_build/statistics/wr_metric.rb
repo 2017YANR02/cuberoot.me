@@ -71,11 +71,9 @@ class WrMetric < Statistic
     md = top
 
     # --- 顶栏（下拉菜单 + 全局 Tab） ---
-    md += metric_dropdown_styles
-    md += tab_styles
-    md += "<div class=\"metric-toolbar\">\n"
+    # NOTE: data-tab-mode="global" 让 JS 生成 switchGlobalTab 而非 switchTab
+    md += "<div class=\"metric-toolbar\" data-tab-mode=\"global\">\n"
     md += metric_dropdown_html(METRIC_GROUPS, METRIC_META)
-    md += global_tab_buttons("Current Ranking", "排名", "ranking", "WR History", "历史", "history")
     md += "</div>\n"
 
     # --- 每个指标的内容面板 ---
@@ -85,15 +83,16 @@ class WrMetric < Statistic
       active = i == 0
       t_sub = Time.now
 
-      md += "<div class=\"metric-panel#{active ? ' active' : ''}\" id=\"metric-#{prefix}\">\n"
+      md += "<div class=\"metric-panel#{active ? ' active' : ''}\" id=\"metric-#{prefix}\" data-label-en=\"#{meta[:label]}\">\n"
 
       # NOTE: 获取排名数据和 历史数据
       ranking = inst.ranking_data
       history = inst.data  # 调用 query → transform
 
-      # NOTE: 输出两个 stat-panel（去掉了原本的 tab_buttons）
-      md += grouped_panel("#{prefix}-ranking", true, ranking, RANKING_HEADER)
-      md += grouped_panel("#{prefix}-history", false, history, inst.instance_variable_get(:@table_header))
+      md += grouped_panel("#{prefix}-ranking", true, ranking, RANKING_HEADER,
+                          label_en: "Current Ranking", label_zh: "排名")
+      md += grouped_panel("#{prefix}-history", false, history, inst.instance_variable_get(:@table_header),
+                          label_en: "WR History", label_zh: "历史")
 
       md += "</div>\n"
       printf("    [%2d/%d] %-20s %5.1fs\n", i + 1, instances.size, meta[:label], Time.now - t_sub)

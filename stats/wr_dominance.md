@@ -1,50 +1,11 @@
 <h2 data-i18n-en="Dominance" data-i18n-zh="屠榜">Dominance</h2>
 
 <p><em data-i18n-en="A competitor completely dominates top N on the leaderboard of results. Tied results are excluded." data-i18n-zh="选手在全历史成绩排行榜上完全霸占前 N 席。并列成绩不计入。">A competitor completely dominates top N on the leaderboard of results. Tied results are excluded.</em></p>
-<p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>
+<p><em data-i18n-en="Updated on 18 February 2026" data-i18n-zh="更新于 2026 年 2 月 18 日">Updated on 18 February 2026</em></p>
 
-<style>
-.segmented-btn{padding:8px 20px;border:1px solid #4a6785;background:transparent;color:#8ab4f8;cursor:pointer;font-size:14px;font-weight:600;line-height:1.2;transition:all .2s;border-radius:0}
-.segmented-btn:first-child{border-radius:6px 0 0 6px}
-.segmented-btn:last-child{border-radius:0 6px 6px 0}
-.segmented-btn + .segmented-btn{border-left:none}
-.segmented-btn.active{background:#2c4a6e;border-color:#8ab4f8;color:#fff}
-.segmented-btn:hover:not(.active){background:rgba(138,180,248,0.08)}
-</style>
-<style>
-.metric-selector{display:flex;align-items:center;gap:0;margin:16px 0}
-.metric-selector-group{display:flex;gap:0}
-.metric-panel{display:none}
-.metric-panel.active{display:block}
-</style>
-<style>
-.metric-tab-wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin: 16px 0; }
-.metric-tab-wrap .metric-selector { margin: 0; }
-.metric-tab-wrap .metric-panel { display: none; }
-.metric-tab-wrap .metric-panel.active { display: contents; }
-.metric-tab-wrap .stat-panel { width: 100%; }
-</style>
 <div class="metric-tab-wrap">
-<div class="metric-selector">
-  <div class="metric-selector-group">
-    <button class="segmented-btn metric-btn active" onclick="switchMetric('single')" data-i18n-en="Single" >Single</button>
-    <button class="segmented-btn metric-btn" onclick="switchMetric('average')" data-i18n-en="Average" >Average</button>
-  </div>
-</div>
-<style>
-.stat-tabs{display:flex;gap:0}
-.stat-panel{display:none;margin-top:12px}
-.stat-panel.active{display:block}
-.stat-panel table{border-collapse:collapse}
-.stat-panel th,.stat-panel td{padding:6px 12px;border-bottom:1px solid #ddd;text-align:left}
-.stat-panel th{background:#f6f8fa;font-weight:600}
-</style>
-<div class="metric-panel active" id="metric-single">
-<div class="stat-tabs">
-  <button class="segmented-btn stat-tab active" onclick="switchTab(event,'single-ranking')" data-i18n-en="Current Ranking" data-i18n-zh="排名">Current Ranking</button>
-  <button class="segmented-btn stat-tab" onclick="switchTab(event,'single-history')" data-i18n-en="WR History" data-i18n-zh="历史">WR History</button>
-</div>
-<div id="single-ranking" class="stat-panel active">
+<div class="metric-panel active" id="metric-single" data-label-en="Single" data-label-zh="单次">
+<div id="single-ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Count</th><th>Date</th><th>Competition</th></tr>
@@ -53,17 +14,17 @@
 <h3 data-i18n-en="2x2x2 Cube" data-i18n-zh="二阶魔方">2x2x2 Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Count</th><th>Date</th><th>Competition</th></tr>
-<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2021YEZI01">Ziyu Ye (叶梓渝)</a></td><td style="text-align:right">1</td><td>2026-02-06</td><td><a href="https://www.worldcubeassociation.org/competitions/GuangdongRevivalRival2026">Guangdong Revival & Rival 2026</a></td></tr>
+<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2021YEZI01">Ziyu Ye (叶梓渝)</a></td><td style="text-align:right">1</td><td>2025-12-27</td><td><a href="https://www.worldcubeassociation.org/competitions/ZhengzhouZest2025">Zhengzhou Zest 2025</a></td></tr>
 </table>
 <h3 data-i18n-en="4x4x4 Cube" data-i18n-zh="四阶魔方">4x4x4 Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Count</th><th>Date</th><th>Competition</th></tr>
-<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2016KOLA02">Tymon Kolasiński</a></td><td style="text-align:right">1</td><td>2026-01-24</td><td><a href="https://www.worldcubeassociation.org/competitions/MelbourneSummer2026">Melbourne Summer 2026</a></td></tr>
+<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2016KOLA02">Tymon Kolasiński</a></td><td style="text-align:right">1</td><td>2026-01-17</td><td><a href="https://www.worldcubeassociation.org/competitions/SeoulWinter2026">Seoul Winter 2026</a></td></tr>
 </table>
 <h3 data-i18n-en="5x5x5 Cube" data-i18n-zh="五阶魔方">5x5x5 Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Count</th><th>Date</th><th>Competition</th></tr>
-<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2016KOLA02">Tymon Kolasiński</a></td><td style="text-align:right">2</td><td>2026-01-24</td><td><a href="https://www.worldcubeassociation.org/competitions/MelbourneSummer2026">Melbourne Summer 2026</a></td></tr>
+<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2016KOLA02">Tymon Kolasiński</a></td><td style="text-align:right">2</td><td>2026-01-17</td><td><a href="https://www.worldcubeassociation.org/competitions/SeoulWinter2026">Seoul Winter 2026</a></td></tr>
 </table>
 <h3 data-i18n-en="6x6x6 Cube" data-i18n-zh="六阶魔方">6x6x6 Cube</h3>
 <table>
@@ -78,7 +39,7 @@
 <h3 data-i18n-en="3x3x3 Blindfolded" data-i18n-zh="三盲">3x3x3 Blindfolded</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Count</th><th>Date</th><th>Competition</th></tr>
-<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2019EGGI02">Charlie Eggins</a></td><td style="text-align:right">2</td><td>2026-01-24</td><td><a href="https://www.worldcubeassociation.org/competitions/MelbourneSummer2026">Melbourne Summer 2026</a></td></tr>
+<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2019EGGI02">Charlie Eggins</a></td><td style="text-align:right">1</td><td>2026-01-10</td><td><a href="https://www.worldcubeassociation.org/competitions/CubingatTheCube2026">Cubing at The Cube 2026</a></td></tr>
 </table>
 <h3 data-i18n-en="3x3x3 One-Handed" data-i18n-zh="三阶单手">3x3x3 One-Handed</h3>
 <table>
@@ -88,7 +49,7 @@
 <h3 data-i18n-en="Megaminx" data-i18n-zh="五魔">Megaminx</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Count</th><th>Date</th><th>Competition</th></tr>
-<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2019TARA09">Timofei Tarasenko</a></td><td style="text-align:right">3</td><td>2026-02-06</td><td><a href="https://www.worldcubeassociation.org/competitions/GuangdongRevivalRival2026">Guangdong Revival & Rival 2026</a></td></tr>
+<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2019TARA09">Timofei Tarasenko</a></td><td style="text-align:right">3</td><td>2025-12-06</td><td><a href="https://www.worldcubeassociation.org/competitions/TashkentOpen2025">Tashkent Open 2025</a></td></tr>
 </table>
 <h3 data-i18n-en="Pyraminx" data-i18n-zh="金字塔">Pyraminx</h3>
 <table>
@@ -108,7 +69,7 @@
 <h3 data-i18n-en="Square-1" data-i18n-zh="SQ1">Square-1</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Count</th><th>Date</th><th>Competition</th></tr>
-<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2018KHAN26">Hassan Khanani</a></td><td style="text-align:right">1</td><td>2026-02-14</td><td><a href="https://www.worldcubeassociation.org/competitions/UMBCWinter2026">UMBC Winter 2026</a></td></tr>
+<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2018KHAN26">Hassan Khanani</a></td><td style="text-align:right">1</td><td>2026-01-31</td><td><a href="https://www.worldcubeassociation.org/competitions/FredericksburgWinterPM2026">Fredericksburg Winter PM 2026</a></td></tr>
 </table>
 <h3 data-i18n-en="4x4x4 Blindfolded" data-i18n-zh="四盲">4x4x4 Blindfolded</h3>
 <table>
@@ -146,7 +107,7 @@
 <tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2007HABE01">Tim Habermaas</a></td><td style="text-align:right">1</td><td>2009-01-10</td><td><a href="https://www.worldcubeassociation.org/competitions/AachenOpen2009">Aachen Open 2009</a></td></tr>
 </table>
 </div>
-<div id="single-history" class="stat-panel">
+<div id="single-history" class="stat-panel" data-label-en="WR History" data-label-zh="历史">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Start Date</th><th>Start Comp</th><th>Date</th><th>Competition</th></tr>
@@ -397,16 +358,12 @@
 </table>
 </div>
 </div>
-<div class="metric-panel" id="metric-average">
-<div class="stat-tabs">
-  <button class="segmented-btn stat-tab active" onclick="switchTab(event,'average-ranking')" data-i18n-en="Current Ranking" data-i18n-zh="排名">Current Ranking</button>
-  <button class="segmented-btn stat-tab" onclick="switchTab(event,'average-history')" data-i18n-en="WR History" data-i18n-zh="历史">WR History</button>
-</div>
-<div id="average-ranking" class="stat-panel active">
+<div class="metric-panel" id="metric-average" data-label-en="Average" data-label-zh="平均">
+<div id="average-ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Count</th><th>Date</th><th>Competition</th></tr>
-<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2023GENG02">Xuanyi Geng (耿暄一)</a></td><td style="text-align:right">1</td><td>2026-02-06</td><td><a href="https://www.worldcubeassociation.org/competitions/GuangdongRevivalRival2026">Guangdong Revival & Rival 2026</a></td></tr>
+<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2023GENG02">Xuanyi Geng (耿暄一)</a></td><td style="text-align:right">1</td><td>2026-01-10</td><td><a href="https://www.worldcubeassociation.org/competitions/BeijingWinter2026">Beijing Winter 2026</a></td></tr>
 </table>
 <h3 data-i18n-en="2x2x2 Cube" data-i18n-zh="二阶魔方">2x2x2 Cube</h3>
 <table>
@@ -416,12 +373,12 @@
 <h3 data-i18n-en="4x4x4 Cube" data-i18n-zh="四阶魔方">4x4x4 Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Count</th><th>Date</th><th>Competition</th></tr>
-<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2016KOLA02">Tymon Kolasiński</a></td><td style="text-align:right">1</td><td>2026-01-24</td><td><a href="https://www.worldcubeassociation.org/competitions/MelbourneSummer2026">Melbourne Summer 2026</a></td></tr>
+<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2016KOLA02">Tymon Kolasiński</a></td><td style="text-align:right">1</td><td>2026-01-17</td><td><a href="https://www.worldcubeassociation.org/competitions/SeoulWinter2026">Seoul Winter 2026</a></td></tr>
 </table>
 <h3 data-i18n-en="5x5x5 Cube" data-i18n-zh="五阶魔方">5x5x5 Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Count</th><th>Date</th><th>Competition</th></tr>
-<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2016KOLA02">Tymon Kolasiński</a></td><td style="text-align:right">1</td><td>2026-01-24</td><td><a href="https://www.worldcubeassociation.org/competitions/MelbourneSummer2026">Melbourne Summer 2026</a></td></tr>
+<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2016KOLA02">Tymon Kolasiński</a></td><td style="text-align:right">1</td><td>2026-01-17</td><td><a href="https://www.worldcubeassociation.org/competitions/SeoulWinter2026">Seoul Winter 2026</a></td></tr>
 </table>
 <h3 data-i18n-en="6x6x6 Cube" data-i18n-zh="六阶魔方">6x6x6 Cube</h3>
 <table>
@@ -446,12 +403,12 @@
 <h3 data-i18n-en="Megaminx" data-i18n-zh="五魔">Megaminx</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Count</th><th>Date</th><th>Competition</th></tr>
-<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2019TARA09">Timofei Tarasenko</a></td><td style="text-align:right">1</td><td>2026-02-06</td><td><a href="https://www.worldcubeassociation.org/competitions/GuangdongRevivalRival2026">Guangdong Revival & Rival 2026</a></td></tr>
+<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2019TARA09">Timofei Tarasenko</a></td><td style="text-align:right">1</td><td>2025-12-06</td><td><a href="https://www.worldcubeassociation.org/competitions/TashkentOpen2025">Tashkent Open 2025</a></td></tr>
 </table>
 <h3 data-i18n-en="Pyraminx" data-i18n-zh="金字塔">Pyraminx</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Count</th><th>Date</th><th>Competition</th></tr>
-<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2019JIAN54">Lingkun Jiang (姜凌坤)</a></td><td style="text-align:right">1</td><td>2026-02-06</td><td><a href="https://www.worldcubeassociation.org/competitions/GuangdongRevivalRival2026">Guangdong Revival & Rival 2026</a></td></tr>
+<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2019JIAN54">Lingkun Jiang (姜凌坤)</a></td><td style="text-align:right">1</td><td>2026-01-17</td><td><a href="https://www.worldcubeassociation.org/competitions/FuzhouOpen2026">Fuzhou Open 2026</a></td></tr>
 </table>
 <h3 data-i18n-en="Rubik's Clock" data-i18n-zh="魔表">Rubik's Clock</h3>
 <table>
@@ -494,7 +451,7 @@
 <tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2010PULC01">Ernie Pulchny</a></td><td style="text-align:right">1</td><td>2012-12-15</td><td><a href="https://www.worldcubeassociation.org/competitions/LibertyScience2012">Liberty Science 2012</a></td></tr>
 </table>
 </div>
-<div id="average-history" class="stat-panel">
+<div id="average-history" class="stat-panel" data-label-en="WR History" data-label-zh="历史">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Start Date</th><th>Start Comp</th><th>Date</th><th>Competition</th></tr>
@@ -775,56 +732,3 @@
 </div>
 </div>
 </div><!-- metric-tab-wrap -->
-<script>
-function switchMetric(id){
-  // NOTE: metric 和 source 是独立选择器，切换 metric 时保持 source 选择不变
-  var oldPanel=document.querySelector('.metric-panel.active');
-  var srcIdx=0;
-  if(oldPanel){
-    oldPanel.querySelectorAll('.source-btn').forEach(function(b,i){if(b.classList.contains('active'))srcIdx=i;});
-  }
-  // NOTE: 记住当前 tab suffix（ranking/history），切换 metric 后同步到新面板
-  // 限定到活跃 source-panel（wr_newcomer 三层嵌套场景）
-  var tabSuffix=null;
-  if(oldPanel){
-    var tabReadScope=oldPanel.querySelector('.source-panel.active')||oldPanel;
-    var activeTab=tabReadScope.querySelector('.stat-tab.active');
-    if(activeTab){
-      var m=(activeTab.getAttribute('onclick')||'').match(/switchTab\(event,\s*'(.+?)'\)/);
-      if(m) tabSuffix=m[1].split('-').pop();
-    }
-  }
-  document.querySelectorAll('.metric-panel').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.metric-btn').forEach(b=>b.classList.remove('active'));
-  var panel=document.getElementById('metric-'+id);
-  panel.classList.add('active');
-  event.target.classList.add('active');
-  // NOTE: 同步 source 索引到新 panel
-  var newBtns=panel.querySelectorAll('.source-btn');
-  if(newBtns[srcIdx]) newBtns[srcIdx].click();
-  // NOTE: 同步 tab suffix 到新 panel，保持 tab 选择不变
-  // wr_newcomer 有三层嵌套（metric→source→tab），需限定到活跃 source-panel
-  if(tabSuffix){
-    var tabScope=panel.querySelector('.source-panel.active')||panel;
-    tabScope.querySelectorAll('.stat-tab').forEach(t=>t.classList.remove('active'));
-    tabScope.querySelectorAll('.stat-panel').forEach(p=>p.classList.remove('active'));
-    tabScope.querySelectorAll('.stat-tab').forEach(function(t){
-      var tm=(t.getAttribute('onclick')||'').match(/switchTab\(event,\s*'(.+?)'\)/);
-      if(tm&&tm[1].split('-').pop()===tabSuffix){
-        t.classList.add('active');
-        var tp=document.getElementById(tm[1]);
-        if(tp) tp.classList.add('active');
-      }
-    });
-  }
-}
-</script>
-<script>
-function switchTab(e,id){
-  var scope=e.target.closest('.metric-panel')||document;
-  scope.querySelectorAll('.stat-tab').forEach(t=>t.classList.remove('active'));
-  scope.querySelectorAll('.stat-panel').forEach(p=>p.classList.remove('active'));
-  e.target.classList.add('active');
-  document.getElementById(id).classList.add('active');
-}
-</script>

@@ -56,38 +56,27 @@ class WrDominance < Statistic
   end
 
   def data
-    @data ||= compute_all
+    @data ||= fetch_with_cache("WrDominance") { compute_all }
   end
 
   def markdown
     md = top
-    md += segmented_selector_styles
     md += metric_tab_wrap_start
-    md += segmented_selector_buttons(
-      [{ label: "Single", id: "single" }, { label: "Average", id: "average" }]
-    )
-
-    # NOTE: Tab 样式（全局只输出一次）
-    md += tab_styles
 
     # NOTE: Single 面板——内含 Tab 双视图（排名 + 历史）
-    md += "<div class=\"metric-panel active\" id=\"metric-single\">\n"
-    md += tab_buttons(
-      "Current Ranking", "排名", "single-ranking",
-      "WR History", "历史", "single-history"
-    )
-    md += grouped_panel("single-ranking", true, data[:single][:ranking].to_h, RANKING_HEADER)
-    md += grouped_panel("single-history", false, data[:single][:history].to_h, HISTORY_HEADER)
+    md += "<div class=\"metric-panel active\" id=\"metric-single\" data-label-en=\"Single\" data-label-zh=\"单次\">\n"
+    md += grouped_panel("single-ranking", true, data[:single][:ranking].to_h, RANKING_HEADER,
+                        label_en: "Current Ranking", label_zh: "排名")
+    md += grouped_panel("single-history", false, data[:single][:history].to_h, HISTORY_HEADER,
+                        label_en: "WR History", label_zh: "历史")
     md += "</div>\n"
 
     # NOTE: Average 面板
-    md += "<div class=\"metric-panel\" id=\"metric-average\">\n"
-    md += tab_buttons(
-      "Current Ranking", "排名", "average-ranking",
-      "WR History", "历史", "average-history"
-    )
-    md += grouped_panel("average-ranking", true, data[:average][:ranking].to_h, RANKING_HEADER)
-    md += grouped_panel("average-history", false, data[:average][:history].to_h, HISTORY_HEADER)
+    md += "<div class=\"metric-panel\" id=\"metric-average\" data-label-en=\"Average\" data-label-zh=\"平均\">\n"
+    md += grouped_panel("average-ranking", true, data[:average][:ranking].to_h, RANKING_HEADER,
+                        label_en: "Current Ranking", label_zh: "排名")
+    md += grouped_panel("average-history", false, data[:average][:history].to_h, HISTORY_HEADER,
+                        label_en: "WR History", label_zh: "历史")
     md += "</div>\n"
 
     md += metric_tab_wrap_end
