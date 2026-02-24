@@ -4,28 +4,6 @@
 
 module MetricSelector
 
-  # NOTE: 通用分段控件 CSS 生成器
-  # @param css_prefix [String] CSS 类名前缀 ("metric" 或 "source")
-  #   生成 .{prefix}-selector, .{prefix}-btn, .{prefix}-panel 等样式
-  # NOTE: CSS 已迁至 assets/css/stats_ui.css
-  def segmented_selector_styles(css_prefix = "metric")
-    ""
-  end
-
-  # NOTE: 通用分段控件按钮生成器
-  # @param items [Array<Hash>] [{ label:, id:, label_zh: nil }]
-  # @param css_prefix [String] CSS 类名前缀 ("metric" / "source")
-  # @param js_fn [String] 点击回调函数名
-  # @param label [String/nil] 左侧标签文字（如 "Type"）
-  # @param id_prefix [String/nil] ID 前缀（source 需要拼接 metric 的 id）
-  # @param pass_self [Boolean] onclick 是否传 this（switchSource 需要 btn 引用定位 scope）
-  # NOTE: 按钮由 JS initStatsUI() 自动生成
-  def segmented_selector_buttons(items, css_prefix: "metric",
-                                  js_fn: "switchMetric",
-                                  label: nil, id_prefix: nil,
-                                  pass_self: false)
-    ""
-  end
 
   # NOTE: 通用 flex 包装容器——让 metric 选择器、tab 选择器在桌面端同行显示
   # 通过 display:contents 将 metric-panel 的子元素暴露到 flex 布局中
@@ -44,12 +22,6 @@ module MetricSelector
   # NOTE: 下拉菜单方案（适用于指标数量 > 5 的页面）
   # 与药丸按钮方案并列，消费方按需选择
   # ═══════════════════════════════════════════════
-
-  # NOTE: 下拉菜单 CSS 样式
-  # NOTE: CSS 已迁至 assets/css/stats_ui.css
-  def metric_dropdown_styles
-    ""
-  end
 
   # NOTE: 生成分组下拉菜单 HTML
   # @param groups [Array<Hash>] 分组定义 [{ label:, label_zh:, items: [Class, ...] }, ...]
