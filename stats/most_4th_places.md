@@ -1,6 +1,7 @@
 <h2 data-i18n-en="Most 4th places" data-i18n-zh="最多第四名">Most 4th places</h2>
 
 <p><em data-i18n-en="Only finals are taken into account." data-i18n-zh="仅统计决赛。">Only finals are taken into account.</em></p>
+
 | 4th places | Person |
 | ---: | :--- |
 | 276 | [Daniel Vædele Egdal](https://www.worldcubeassociation.org/persons/2013EGDA01) |

@@ -2,6 +2,7 @@
 
 <p><em data-i18n-en="This is a list of the best results from all World Championships. It corresponds to Olympic records for Olympic sports." data-i18n-zh="此列表包含历届世界锦标赛的最佳成绩，相当于奥运项目中的奥运纪录。">This is a list of the best results from all World Championships. It corresponds to Olympic records for Olympic sports.</em></p>
 
+
 <h3 data-i18n-en="Single" data-i18n-zh="Single">Single</h3>
 
 | Event | Result | Person | Citizen of | Competition |

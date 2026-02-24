@@ -2,6 +2,7 @@
 
 <p><em data-i18n-en="For each event, shows the rounds with the best sum of the top 3 results. For blind events the single is used, for other events the average is used." data-i18n-zh="For each event, shows the rounds with the best sum of the top 3 results. For blind events the single is used, for other events the average is used.">For each event, shows the rounds with the best sum of the top 3 results. For blind events the single is used, for other events the average is used.</em></p>
 
+
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 
 | Competition | Round | Sum | 1st | Result | 2nd | Result  | 3rd | Result   |

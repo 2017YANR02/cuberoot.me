@@ -2,6 +2,7 @@
 
 <p><em data-i18n-en="Only finals are taken into account. Results where the main statistic is DNF are ignored." data-i18n-zh="仅统计决赛。主要成绩为 DNF 的结果不计入。">Only finals are taken into account. Results where the main statistic is DNF are ignored.</em></p>
 
+
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 
 | Person | Single | Average | Competition | Place |

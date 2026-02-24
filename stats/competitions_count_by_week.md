@@ -1,6 +1,7 @@
 <h2 data-i18n-en="Competitions count by week" data-i18n-zh="每周比赛数量">Competitions count by week</h2>
 
 <p><em data-i18n-en="Week is considered to start on Monday and end on Sunday." data-i18n-zh="一周从周一开始到周日结束。">Week is considered to start on Monday and end on Sunday.</em></p>
+
 | Competitions | Week start | Week end | List on WCA |
 | :--: | ---: | ---: | :--: |
 | 76 |  2 Dec 2024 |  8 Dec 2024 | [List](https://www.worldcubeassociation.org/competitions?state=custom&from_date=2024-12-02&to_date=2024-12-08) |

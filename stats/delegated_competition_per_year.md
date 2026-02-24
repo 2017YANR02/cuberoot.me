@@ -1,6 +1,7 @@
 <h2 data-i18n-en="Delegated competitions per year" data-i18n-zh="每年代表比赛数量">Delegated competitions per year</h2>
 
 <p><em data-i18n-en="Only delegates with at least 5 competitions are taken into account. Delegate period is calculated as the difference between first and last delegated competition." data-i18n-zh="仅统计至少代表过 5 场比赛的代表。代表时间按首次和最后一次代表比赛之间的差值计算。">Only delegates with at least 5 competitions are taken into account. Delegate period is calculated as the difference between first and last delegated competition.</em></p>
+
 | Delegated per year | Delegated | Years | Person | List on WCA |
 | ---: | ---: | ---: | :--- | :--: |
 | 60.87 | 7 | 0.12 | [Zhiheng Wang (王智恒)](https://www.worldcubeassociation.org/persons/2018WANZ21) | [List](https://www.worldcubeassociation.org/competitions?year=all+years&state=past&delegate=132545) |

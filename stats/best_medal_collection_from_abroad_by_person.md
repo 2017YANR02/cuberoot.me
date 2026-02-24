@@ -1,6 +1,7 @@
 <h2 data-i18n-en="Best medal collection from abroad by person" data-i18n-zh="个人海外最佳奖牌收藏">Best medal collection from abroad by person</h2>
 
 <p><em data-i18n-en="Only medals got abroad are taken into account." data-i18n-zh="仅统计在海外比赛中获得的奖牌。">Only medals got abroad are taken into account.</em></p>
+
 | Person | Gold | Silver | Bronze | Total |
 | :--- | :--: | :--: | :--: | :--: |
 | [Bence Barát](https://www.worldcubeassociation.org/persons/2008BARA01) | **578** | 366 | 247 | 1191 |

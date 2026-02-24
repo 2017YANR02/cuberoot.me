@@ -2,6 +2,7 @@
 
 <p><em data-i18n-en="In other words it's the number of weeks when the given person got the fastest single in the given event." data-i18n-zh="即选手在该项目排名世界第一期间经过的周数。">In other words it's the number of weeks when the given person got the fastest single in the given event.</em></p>
 
+
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 
 | Person | Winned weeks |
