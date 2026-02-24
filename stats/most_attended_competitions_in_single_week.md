@@ -1,7 +1,5 @@
 <h2 data-i18n-en="Most attended competitions in a single week" data-i18n-zh="单周参赛最多">Most attended competitions in a single week</h2>
 
-<p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>
-
 | Competitions | Person | Start date | End date | List |
 | ---: | :--- | :--- | :--- | :--- |
 | 7 | [Eng Dickson (黄迪胜)](https://www.worldcubeassociation.org/persons/2016DICK03) | 24&nbsp;Jun&nbsp;2024 | 30&nbsp;Jun&nbsp;2024 | [Hari-Hari Horas 1 2024](https://www.worldcubeassociation.org/competitions/HariHariHoras12024), [Hari-Hari Horas 2 2024](https://www.worldcubeassociation.org/competitions/HariHariHoras22024), [Hari-Hari Horas 3 2024](https://www.worldcubeassociation.org/competitions/HariHariHoras32024), [Hari-Hari Horas 4 FMC PM 2024](https://www.worldcubeassociation.org/competitions/HariHariHoras4HorasFMCTourPM2024), [Hari-Hari Horas 4 FMC AM 2024](https://www.worldcubeassociation.org/competitions/HariHariHoras4HorasFMCTourAM2024), [Hari-Hari Horas 5 SC 2024](https://www.worldcubeassociation.org/competitions/HariHariHoras5SC2024), [Hari-Hari Horas 5 FMC S 2024](https://www.worldcubeassociation.org/competitions/HariHariHoras5HorasFMCS2024) |

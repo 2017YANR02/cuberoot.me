@@ -1,7 +1,5 @@
 <h2 data-i18n-en="Most delegated competitions" data-i18n-zh="代表比赛最多">Most delegated competitions</h2>
 
-<p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>
-
 | Delegated | Person | List on WCA |
 | ---: | :--- | :--: |
 | 261 | [Evan Liu](https://www.worldcubeassociation.org/persons/2009LIUE01) | [List](https://www.worldcubeassociation.org/competitions?year=all+years&state=past&delegate=15) |

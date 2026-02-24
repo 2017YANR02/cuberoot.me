@@ -1,7 +1,5 @@
 <h2 data-i18n-en="Most solves before getting a successful BLD attempt" data-i18n-zh="首次盲拧成功前尝试次数最多">Most solves before getting a successful BLD attempt</h2>
 
-<p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>
-
 
 <h3 data-i18n-en="3x3x3 Blindfolded" data-i18n-zh="三盲">3x3x3 Blindfolded</h3>
 

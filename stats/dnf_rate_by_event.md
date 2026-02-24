@@ -1,7 +1,5 @@
 <h2 data-i18n-en="DNF rate by event" data-i18n-zh="各项目 DNF 率">DNF rate by event</h2>
 
-<p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>
-
 | DNF rate | Event | DNFs | Attempts |
 | ---: | :--- | ---: | ---: |
 | 78.83 % | 5x5x5 Blindfolded | 27305 | 34636 |

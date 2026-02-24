@@ -1,7 +1,5 @@
 <h2 data-i18n-en="Most visited countries" data-i18n-zh="去过最多国家参赛">Most visited countries</h2>
 
-<p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>
-
 | Countries | Person |
 | ---: | :--- |
 | 80 | [Ron van Bruchem](https://www.worldcubeassociation.org/persons/2003BRUC01) |

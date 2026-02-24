@@ -1,8 +1,6 @@
 <h2 data-i18n-en="Most consecutive sub-5 averages in 3x3x3" data-i18n-zh="最多连续 sub-5 三阶平均">Most consecutive sub-5 averages in 3x3x3</h2>
 
 <p><em data-i18n-en="Only official 3x3x3 averages are considered. Computed across all rounds in chronological order." data-i18n-zh="仅考虑官方 3x3x3 平均成绩。按时间顺序统计所有轮次。">Only official 3x3x3 averages are considered. Computed across all rounds in chronological order.</em></p>
-<p><em data-i18n-en="Updated on 18 February 2026" data-i18n-zh="更新于 2026 年 2 月 18 日">Updated on 18 February 2026</em></p>
-
 <div id="ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
 <table>
 <tr><th style="text-align:right">Streak</th><th>Person</th><th>Started at</th><th>Ended at</th></tr>
@@ -10,6 +8,7 @@
 <tr><td style="text-align:right">17</td><td><a href="https://www.worldcubeassociation.org/persons/2019WANY36">Yiheng Wang (王艺衡)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/XuzhouOpen2025">Xuzhou Open 2025</a></td><td><a href="https://www.worldcubeassociation.org/competitions/BeijingWinter2026">Beijing Winter 2026</a></td></tr>
 <tr><td style="text-align:right">3</td><td><a href="https://www.worldcubeassociation.org/persons/2023DUYU01">Yufang Du (杜昱方)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/BeijingSummer2025">Beijing Summer 2025</a></td><td><a href="https://www.worldcubeassociation.org/competitions/TaizhouOpen2025">Taizhou Open 2025</a></td></tr>
 <tr><td style="text-align:right">2</td><td><a href="https://www.worldcubeassociation.org/persons/2016KOLA02">Tymon Kolasiński</a></td><td><a href="https://www.worldcubeassociation.org/competitions/RubiksNorthAmericaAllStars2024">Rubik's NA All-Stars 2024</a></td><td><a href="https://www.worldcubeassociation.org/competitions/NAC2024">NAC 2024</a></td></tr>
+<tr><td style="text-align:right">2</td><td><a href="https://www.worldcubeassociation.org/persons/2017XURU04">Ruihang Xu (许瑞航)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/GuangdongRevivalRival2026">Guangdong Revival & Rival 2026</a></td><td><a href="https://www.worldcubeassociation.org/competitions/GuangdongRevivalRival2026">Guangdong Revival & Rival 2026</a></td></tr>
 </table>
 </div>
 <div id="history" class="stat-panel" data-label-en="WR History" data-label-zh="历史">

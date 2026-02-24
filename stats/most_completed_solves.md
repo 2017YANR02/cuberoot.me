@@ -1,7 +1,5 @@
 <h2 data-i18n-en="Most completed solves" data-i18n-zh="完成还原次数最多">Most completed solves</h2>
 
-<p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>
-
 
 <h3 data-i18n-en="Competition" data-i18n-zh="Competition">Competition</h3>
 

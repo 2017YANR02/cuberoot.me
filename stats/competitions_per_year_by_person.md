@@ -1,7 +1,5 @@
 <h2 data-i18n-en="Competitions per year by person" data-i18n-zh="个人每年参赛数量">Competitions per year by person</h2>
 
-<p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>
-
 | Competitions per year | Competitions | Years | Person |
 | ---: | ---: | ---: | :--- |
 | 76.39 | 238 | 3.12 | [Filip Åström](https://www.worldcubeassociation.org/persons/2023ASTR01) |

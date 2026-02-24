@@ -1,7 +1,5 @@
 <h2 data-i18n-en="Most frequent results" data-i18n-zh="出现频率最高的成绩">Most frequent results</h2>
 
-<p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>
-
 
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 

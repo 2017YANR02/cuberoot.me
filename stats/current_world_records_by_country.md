@@ -1,7 +1,5 @@
 <h2 data-i18n-en="Current world records count by country" data-i18n-zh="各国当前世界纪录数量">Current world records count by country</h2>
 
-<p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>
-
 | WRs | Country | People |
 | ---: | :--- | :--- |
 | 15 | United States | [Aedan Bryant](https://www.worldcubeassociation.org/persons/2017BRYA06), [Brendyn Dunagan](https://www.worldcubeassociation.org/persons/2021DUNA01), [Carter Kucala](https://www.worldcubeassociation.org/persons/2015KUCA01), [Graham Siggins](https://www.worldcubeassociation.org/persons/2016SIGG01), [Hassan Khanani](https://www.worldcubeassociation.org/persons/2018KHAN26), [Levi Gibson](https://www.worldcubeassociation.org/persons/2018GIBS04), [Luke Garrett](https://www.worldcubeassociation.org/persons/2017GARR05), [Max Park](https://www.worldcubeassociation.org/persons/2012PARK03), [Sameer Aggarwal](https://www.worldcubeassociation.org/persons/2017AGGA01), [Simon Kellum](https://www.worldcubeassociation.org/persons/2016KELL12), [Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04), [Sujan Feist](https://www.worldcubeassociation.org/persons/2016FEIS01), [Tommy Cherry](https://www.worldcubeassociation.org/persons/2015CHER07) |

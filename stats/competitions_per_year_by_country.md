@@ -1,7 +1,5 @@
 <h2 data-i18n-en="Competitions per year by country" data-i18n-zh="各国每年比赛数量">Competitions per year by country</h2>
 
-<p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>
-
 | Competitions per year | Competitions | Years | Country |
 | ---: | ---: | ---: | :--- |
 | 164.94 | 3643 | 22.09 | United States |

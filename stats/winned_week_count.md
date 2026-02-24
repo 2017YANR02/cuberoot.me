@@ -1,8 +1,6 @@
 <h2 data-i18n-en="Winned week count" data-i18n-zh="统治周数">Winned week count</h2>
 
 <p><em data-i18n-en="In other words it's the number of weeks when the given person got the fastest single in the given event." data-i18n-zh="即选手在该项目排名世界第一期间经过的周数。">In other words it's the number of weeks when the given person got the fastest single in the given event.</em></p>
-<p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>
-
 
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 

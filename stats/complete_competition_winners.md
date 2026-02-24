@@ -1,8 +1,6 @@
 <h2 data-i18n-en="Complete competition winners" data-i18n-zh="完全比赛冠军">Complete competition winners</h2>
 
 <p><em data-i18n-en="A complete win means taking the first place in every event on the given competition." data-i18n-zh="完全获胜指在某场比赛的所有项目中均获得第一名。">A complete win means taking the first place in every event on the given competition.</em></p>
-<p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>
-
 | Events count | Person | Citizen of | Competition |
 | ---: | :--- | :--- | :--- |
 | 15 | [Daniel Wallin](https://www.worldcubeassociation.org/persons/2013WALL03) | Sweden | [Gutekuben 2024](https://www.worldcubeassociation.org/competitions/Gutekuben2024) |

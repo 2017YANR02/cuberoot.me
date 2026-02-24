@@ -1,8 +1,6 @@
 <h2 data-i18n-en="Worst result providing a podium" data-i18n-zh="登上领奖台的最差成绩">Worst result providing a podium</h2>
 
 <p><em data-i18n-en="Only finals are taken into account. Results where the main statistic is DNF are ignored." data-i18n-zh="仅统计决赛。主要成绩为 DNF 的结果不计入。">Only finals are taken into account. Results where the main statistic is DNF are ignored.</em></p>
-<p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>
-
 
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 

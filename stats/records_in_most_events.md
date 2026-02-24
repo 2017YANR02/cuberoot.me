@@ -1,8 +1,6 @@
 <h2 data-i18n-en="Records in the highest number of events" data-i18n-zh="在最多项目中创造纪录">Records in the highest number of events</h2>
 
 <p><em data-i18n-en="All historical records are taken into account (i.e. not only the current ones)." data-i18n-zh="统计所有历史纪录（不仅是当前纪录）。">All historical records are taken into account (i.e. not only the current ones).</em></p>
-<p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>
-
 
 <h3 data-i18n-en="World" data-i18n-zh="World">World</h3>
 

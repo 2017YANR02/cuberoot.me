@@ -1,8 +1,6 @@
 <h2 data-i18n-en="First record is a World Record" data-i18n-zh="First record is a World Record">First record is a World Record</h2>
 
 <p><em data-i18n-en="People whose very first record (single or average, any event) was a World Record." data-i18n-zh="People whose very first record (single or average, any event) was a World Record.">People whose very first record (single or average, any event) was a World Record.</em></p>
-<p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>
-
 | # | Person | Event | Type | Result | Date | Competition |
 | ---: | :--- | :--- | :--- | ---: | :--- | :--- |
 | 1 | [Minh Thai](https://www.worldcubeassociation.org/persons/1982THAI01) | Rubik's Cube | Single | 22.95 | 1982-06-05 | [World Championship 1982](https://www.worldcubeassociation.org/competitions/WC1982) |

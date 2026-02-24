@@ -1,7 +1,5 @@
 <h2 data-i18n-en="World Championship podiums by country" data-i18n-zh="各国世锦赛领奖台次数">World Championship podiums by country</h2>
 
-<p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>
-
 | Country | Gold | Silver | Bronze | Total |
 | :--- | :--: | :--: | :--: | :--: |
 | United States | **56** | 46 | 48 | 150 |

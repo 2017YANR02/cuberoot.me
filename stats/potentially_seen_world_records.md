@@ -1,8 +1,6 @@
 <h2 data-i18n-en="Potentially seen world records" data-i18n-zh="可能亲眼见证的世界纪录">Potentially seen world records</h2>
 
 <p><em data-i18n-en="Potentially means that a person was on a competition and could see a world record being set." data-i18n-zh="「可能」指该选手参加了某场创造世界纪录的比赛。">Potentially means that a person was on a competition and could see a world record being set.</em></p>
-<p><em data-i18n-en="Updated on 22 February 2026" data-i18n-zh="更新于 2026 年 2 月 22 日">Updated on 22 February 2026</em></p>
-
 | WRs | Person |
 | ---: | :--- |
 | 230 | [Ron van Bruchem](https://www.worldcubeassociation.org/persons/2003BRUC01) |
