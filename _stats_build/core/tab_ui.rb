@@ -12,41 +12,23 @@ module TabUi
   }.freeze
 
 
+  # NOTE: CSS 已迁至 assets/css/stats_ui.css
   def tab_styles
-    html = segmented_btn_styles
-    html += <<~HTML
-      <style>
-      .stat-tabs{display:flex;gap:0}
-      .stat-panel{display:none;margin-top:12px}
-      .stat-panel.active{display:block}
-      .stat-panel table{border-collapse:collapse}
-      .stat-panel th,.stat-panel td{padding:6px 12px;border-bottom:1px solid #ddd;text-align:left}
-      .stat-panel th{background:#f6f8fa;font-weight:600}
-      </style>
-    HTML
-    html
+    ""
   end
 
   # NOTE: 支持双语标签，en/zh 分别为英文/中文文本
+  # NOTE: Tab 按钮由 JS initStatsUI() 自动生成
   def tab_buttons(en1, zh1, id1, en2, zh2, id2)
-    <<~HTML
-      <div class="stat-tabs">
-        <button class="segmented-btn stat-tab active" onclick="switchTab(event,'#{id1}')" data-i18n-en="#{en1}" data-i18n-zh="#{zh1}">#{en1}</button>
-        <button class="segmented-btn stat-tab" onclick="switchTab(event,'#{id2}')" data-i18n-en="#{en2}" data-i18n-zh="#{zh2}">#{en2}</button>
-      </div>
-    HTML
+    ""
   end
 
 
   # NOTE: 全局 Tab 按钮（只生成一组，用于 metric-toolbar）
   # 传入的 id 是后缀（例如 "ranking" 或 "history"），非特定面板 ID
+  # NOTE: 全局 Tab 按钮由 JS initStatsUI() 自动生成
   def global_tab_buttons(en1, zh1, suffix1, en2, zh2, suffix2)
-    <<~HTML
-      <div class="stat-tabs">
-        <button class="segmented-btn stat-tab active" onclick="switchGlobalTab(event,'#{suffix1}')" data-i18n-en="#{en1}" data-i18n-zh="#{zh1}">#{en1}</button>
-        <button class="segmented-btn stat-tab" onclick="switchGlobalTab(event,'#{suffix2}')" data-i18n-en="#{en2}" data-i18n-zh="#{zh2}">#{en2}</button>
-      </div>
-    HTML
+    ""
   end
 
 
@@ -77,10 +59,11 @@ module TabUi
   # ranking_data / history_data 格式：{ event_name => [[col1, col2, ...], ...] }
   # ranking_header / history_header 格式：{ "ColName" => :left/:right }
   def tabbed_grouped_markdown(ranking_data:, ranking_header:, history_data:, history_header:)
-    md = tab_styles
-    md += tab_buttons("Current Ranking", "排名", "ranking", "WR History", "历史", "history")
-    md += grouped_panel("ranking", true,  ranking_data, ranking_header)
-    md += grouped_panel("history", false, history_data, history_header)
+    # NOTE: tab_styles / tab_buttons 不再需要，JS 根据 data-label-* 自动生成
+    md = grouped_panel("ranking", true,  ranking_data, ranking_header,
+                       label_en: "Current Ranking", label_zh: "排名")
+    md += grouped_panel("history", false, history_data, history_header,
+                        label_en: "WR History", label_zh: "历史")
     md
   end
 
@@ -94,9 +77,13 @@ module TabUi
   private
 
   # NOTE: 渲染单个面板（一个 <div> 包含若干 <h3> + <table>）
-  def grouped_panel(panel_id, active, grouped_data, header)
+  # label_en / label_zh：供 JS initStatsUI() 自动生成 tab 按钮
+  def grouped_panel(panel_id, active, grouped_data, header, label_en: nil, label_zh: nil)
     active_class = active ? " active" : ""
-    md = "<div id=\"#{panel_id}\" class=\"stat-panel#{active_class}\">\n"
+    data_attrs = ""
+    data_attrs += " data-label-en=\"#{label_en}\"" if label_en
+    data_attrs += " data-label-zh=\"#{label_zh}\"" if label_zh
+    md = "<div id=\"#{panel_id}\" class=\"stat-panel#{active_class}\"#{data_attrs}>\n"
     grouped_data.each do |event_name, rows|
       next if rows.empty?
       ezh = Events.zh(event_name)

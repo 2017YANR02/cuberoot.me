@@ -32,6 +32,20 @@ class Statistic
     @query_results
   end
 
+  # NOTE: 通用键值缓存——任何子类都可用
+  # STATS_USE_CACHE=1 时读取 marshal 文件；否则执行 block 并写入缓存
+  def fetch_with_cache(key)
+    cache_file = File.join(CACHE_DIR, "#{key}.marshal")
+    if ENV["STATS_USE_CACHE"] == "1" && File.exist?(cache_file)
+      $stdout.write " (cache) "
+      return Marshal.load(File.binread(cache_file))
+    end
+    result = yield
+    FileUtils.mkdir_p(CACHE_DIR)
+    File.binwrite(cache_file, Marshal.dump(result))
+    result
+  end
+
   # NOTE: 默认 transform — 从 Array of Hashes 取值列（顺序与 SQL SELECT 一致）
   def transform(query_results)
     query_results.map(&:values)

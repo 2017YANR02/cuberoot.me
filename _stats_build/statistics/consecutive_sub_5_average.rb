@@ -135,10 +135,10 @@ class ConsecutiveSub5Average < Statistic
     md += "*Updated on #{updated}*\n\n"
     md += tab_styles
     md += tab_buttons("Current Ranking", "排名", "ranking", "WR History", "历史", "history")
-    md += "<div id=\"ranking\" class=\"stat-panel active\">\n"
+    md += "<div id=\"ranking\" class=\"stat-panel active\" data-label-en=\"Current Ranking\" data-label-zh=\"排名\">\n"
     md += ranking_table(ranking)
     md += "</div>\n"
-    md += "<div id=\"history\" class=\"stat-panel\">\n"
+    md += "<div id=\"history\" class=\"stat-panel\" data-label-en=\"WR History\" data-label-zh=\"历史\">\n"
     md += history_table(wr_history)
     md += "</div>\n"
     md

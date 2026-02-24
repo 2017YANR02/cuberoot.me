@@ -37,11 +37,6 @@ class AverageOf < Statistic
 
     md = top
 
-    # --- 选择器按钮 ---
-    md += segmented_selector_styles
-    items = instances.map { |inst| AOX_META[inst.class] }
-    md += segmented_selector_buttons(items)
-
     # --- 每个 AoX 的内容面板 ---
     # NOTE: AverageOfX 没有 Ranking/History 双视图，
     # 直接渲染分组 HTML 表格（不能用 Markdown 表格，因为在 <div> 内 Kramdown 不解析）
@@ -51,7 +46,7 @@ class AverageOf < Statistic
       active = i == 0
       t_sub = Time.now
 
-      md += "<div class=\"metric-panel#{active ? ' active' : ''}\" id=\"metric-#{prefix}\">\n"
+      md += "<div class=\"metric-panel#{active ? ' active' : ''}\" id=\"metric-#{prefix}\" data-label-en=\"#{meta[:label]}\">\n"
 
       header = inst.instance_variable_get(:@table_header)
       md += grouped_panel(prefix, true, inst.data, header)
