@@ -117,9 +117,7 @@ class WrNewcomer < GroupedStatistic
 
     md += metric_tab_wrap_end
 
-    md += metric_selector_script
-    md += source_selector_script
-    md += tab_script
+
     md
   ensure
     puts "  [newcomer] Closing connection..."
@@ -128,24 +126,7 @@ class WrNewcomer < GroupedStatistic
 
   private
 
-  # ========== UI 组件 ==========
 
-
-
-  # NOTE: 数据源切换 JS——在当前 metric-panel 内切换 source-panel
-  def source_selector_script
-    <<~HTML
-      <script>
-      function switchSource(btn, id){
-        var scope = btn.closest('.metric-panel') || document;
-        scope.querySelectorAll('.source-btn').forEach(b=>b.classList.remove('active'));
-        scope.querySelectorAll('.source-panel').forEach(p=>p.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById('source-'+id).classList.add('active');
-      }
-      </script>
-    HTML
-  end
 
   # ========== 临时表 ==========
 

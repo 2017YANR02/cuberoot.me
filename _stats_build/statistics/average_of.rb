@@ -60,8 +60,6 @@ class AverageOf < Statistic
       printf("    [%d/%d] %-20s %5.1fs\n", i + 1, instances.size, meta[:label], Time.now - t_sub)
     end
 
-    # --- JS ---
-    md += metric_selector_script
     md
   end
 end

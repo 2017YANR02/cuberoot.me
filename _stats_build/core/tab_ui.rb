@@ -37,19 +37,6 @@ module TabUi
     HTML
   end
 
-  def tab_script
-    <<~HTML
-      <script>
-      function switchTab(e,id){
-        var scope=e.target.closest('.metric-panel')||document;
-        scope.querySelectorAll('.stat-tab').forEach(t=>t.classList.remove('active'));
-        scope.querySelectorAll('.stat-panel').forEach(p=>p.classList.remove('active'));
-        e.target.classList.add('active');
-        document.getElementById(id).classList.add('active');
-      }
-      </script>
-    HTML
-  end
 
   # NOTE: 全局 Tab 按钮（只生成一组，用于 metric-toolbar）
   # 传入的 id 是后缀（例如 "ranking" 或 "history"），非特定面板 ID
@@ -62,30 +49,6 @@ module TabUi
     HTML
   end
 
-  # NOTE: 全局 Tab 交互逻辑（遍历所有 .metric-panel）
-  def global_tab_script
-    <<~HTML
-      <script>
-      function switchGlobalTab(e, suffix){
-        // 更新所有 Tab 按钮状态
-        document.querySelectorAll('.stat-tab').forEach(t=>t.classList.remove('active'));
-        e.target.classList.add('active');
-
-        // 遍历所有面板，用 prefix 拼接 suffix 得到具体 ID 并激活
-        document.querySelectorAll('.metric-panel').forEach(panel => {
-          panel.querySelectorAll('.stat-panel').forEach(p=>p.classList.remove('active'));
-          // panel.id 形如 "metric-single"，截取后面的 "single"
-          let prefix = panel.id.replace('metric-', '');
-          let targetId = prefix + '-' + suffix;
-          let targetPanel = document.getElementById(targetId);
-          if (targetPanel) {
-            targetPanel.classList.add('active');
-          }
-        });
-      }
-      </script>
-    HTML
-  end
 
   # NOTE: 把 markdown link [text](url) 转为 <a> 标签
   def md_link_to_html(text)
@@ -118,7 +81,6 @@ module TabUi
     md += tab_buttons("Current Ranking", "排名", "ranking", "WR History", "历史", "history")
     md += grouped_panel("ranking", true,  ranking_data, ranking_header)
     md += grouped_panel("history", false, history_data, history_header)
-    md += tab_script
     md
   end
 
