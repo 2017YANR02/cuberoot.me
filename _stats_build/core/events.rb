@@ -30,8 +30,8 @@ module Events
   # 333bf/444bf/555bf 用 mo3，333ft/magic/mmagic 用 ao5
   WITH_AVERAGE = OFFICIAL.reject { |id, _| %w(333mbf 333mbo).include?(id) }
 
-  # NOTE: 包含 Mo3 的项目——WITH_AVERAGE + 333mbf/333mbo（虽无官方平均，但可计算 Mo3）
-  WITH_MO3 = WITH_AVERAGE.merge("333mbf" => ALL["333mbf"], "333mbo" => ALL["333mbo"])
+  # NOTE: WITH_AVERAGE 的扩展——加入 333mbf/333mbo（无官方 average，用自定义 Mo3 补充）
+  WITH_AVERAGE__MBF = WITH_AVERAGE.merge("333mbf" => ALL["333mbf"], "333mbo" => ALL["333mbo"])
 
   # NOTE: Mo3 项目（一轮只有 3 把）——666, 777, 333bf, 333fm, 444bf, 555bf
   MO3_EVENTS = %w[666 777 333bf 333fm 444bf 555bf].freeze

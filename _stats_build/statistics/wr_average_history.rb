@@ -22,7 +22,7 @@ class WrAverageHistory < RoundMetric
 
   # NOTE: 覆盖 target_events：加入 333mbf/333mbo（通过 Mo3 展示）
   def target_events
-    Events::WITH_MO3
+    Events::WITH_AVERAGE__MBF
   end
 
   # NOTE: MbfAverage 单例——延迟初始化，避免重复实例化
