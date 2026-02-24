@@ -1,4 +1,4 @@
-# NOTE: 新人统计合并页 = wr_newcomer + wr_1st_wr
+﻿# NOTE: 新人统计合并页 = wr_newcomer + wr_1st_wr
 # 支持 STATS_USE_CACHE=1 跳过 MySQL，直接从 .data_cache/ 读取 marshal 文件
 # 两个维度:
 #   1) 指标 (metric): Single / Average
@@ -10,13 +10,13 @@ require_relative "../core/grouped_statistic"
 require "fileutils"
 require_relative "../core/events"
 require_relative "../core/solve_time"
-require_relative "../core/tab_ui"
-require_relative "../core/metric_selector"
+require_relative "../core/stat_panel"
+require_relative "../core/metric_layout"
 require_relative "../core/database"
 
 class WrNewcomer < GroupedStatistic
-  include TabUi
-  include MetricSelector
+  include StatPanel
+  include MetricLayout
 
   # NOTE: 指标维度
   METRICS = [

@@ -1,9 +1,9 @@
-require_relative "../core/statistic"
+﻿require_relative "../core/statistic"
 require_relative "../core/solve_time"
-require_relative "../core/tab_ui"
+require_relative "../core/stat_panel"
 
 class ConsecutiveSub5Average < Statistic
-  include TabUi
+  include StatPanel
 
   def initialize
     @title = "Most consecutive sub-5 averages in 3x3x3"

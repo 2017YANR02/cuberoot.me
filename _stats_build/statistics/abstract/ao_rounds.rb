@@ -1,4 +1,4 @@
-# NOTE: 抽象基类，用于计算跨轮次 average of averages 的 历史
+﻿# NOTE: 抽象基类，用于计算跨轮次 average of averages 的 历史
 # AoXR = 一场比赛中某人恰好参加了 X 轮时，各轮 average 的均值
 # 子类只需指定 round_count 即可
 # 支持双视图 Tab：排名 + 历史
@@ -13,11 +13,11 @@
 require_relative "../../core/grouped_statistic"
 require_relative "../../core/events"
 require_relative "../../core/solve_time"
-require_relative "../../core/tab_ui"
+require_relative "../../core/stat_panel"
 require_relative "../../core/database"
 
 class AoRounds < GroupedStatistic
-  include TabUi
+  include StatPanel
 
   # NOTE: 预计算结果缓存
   # 结构：{ round_count => { history_data: [[event_name, wr_results], ...],
