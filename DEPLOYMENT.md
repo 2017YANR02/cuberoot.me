@@ -84,7 +84,13 @@ ruiminyan.github.io/
 │   └── card.css               # 落地页入口卡片样式
 ├── assets/js/                 # Stats 前端交互逻辑（前后端分离）
 │   ├── stats_ui.js            # Metric/Tab/Source/Dropdown 交互函数 + initStatsUI() 自动生成按钮
-│   └── particles_stats.js     # Stats 页面粒子背景动画
+│   ├── particles_stats.js     # Stats 页面粒子背景动画（当前使用版本）
+│   ├── particles.js           # 粒子动画库
+│   ├── particles_v2.0.js      # 粒子动画历史版本
+│   ├── particles_v2.1.js      # 粒子动画历史版本
+│   └── particles_v2.1_final.js  # 粒子动画历史版本
+├── assets/images/             # 静态图片资源
+│   └── ChineseTaipei.svg      # 中华台北旗帜图标（WCA 项目用）
 ├── i18n/                      # 多语言 + 项目选择器
 │   ├── i18n.js                # 语言切换引擎：扫描 data-i18n 属性、MutationObserver 动态翻译
 │   ├── event_selector.js      # WCA 项目选择器 + URL hash 状态持久化
