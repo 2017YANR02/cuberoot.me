@@ -66,8 +66,6 @@ class WrMetric < Statistic
   end
 
   def markdown
-    instances = METRIC_CLASSES.map(&:new)
-
     md = top
 
     # --- 顶栏（下拉菜单 + 全局 Tab） ---
@@ -75,29 +73,15 @@ class WrMetric < Statistic
     md += "<div class=\"metric-tab-wrap\" data-tab-mode=\"global\">\n"
     md += metric_dropdown_html(METRIC_GROUPS, METRIC_META)
 
-    # --- 每个指标的内容面板 ---
-    instances.each_with_index do |inst, i|
-      meta = METRIC_META[inst.class]
-      prefix = meta[:id]
-      active = i == 0
-      t_sub = Time.now
-
-      md += "<div class=\"metric-panel#{active ? ' active' : ''}\" id=\"metric-#{prefix}\" data-label-en=\"#{meta[:label]}\">\n"
-
-      # NOTE: 获取排名数据和 历史数据
-      ranking = inst.ranking_data
-      history = inst.data  # 调用 query → transform
-
-      md += grouped_panel("#{prefix}-ranking", true, ranking, RANKING_HEADER,
-                          label_en: "Current Ranking", label_zh: "排名")
-      md += grouped_panel("#{prefix}-history", false, history, inst.instance_variable_get(:@table_header),
-                          label_en: "WR History", label_zh: "历史")
-
-      md += "</div>\n"
-      printf("    [%2d/%d] %-20s %5.1fs\n", i + 1, instances.size, meta[:label], Time.now - t_sub)
+    md += aggregate_panels(METRIC_CLASSES, METRIC_META) do |inst, prefix|
+      panel = grouped_panel("#{prefix}-ranking", true, inst.ranking_data, RANKING_HEADER,
+                            label_en: "Current Ranking", label_zh: "排名")
+      panel += grouped_panel("#{prefix}-history", false, inst.data, inst.table_header,
+                             label_en: "WR History", label_zh: "历史")
+      panel
     end
-    md += "</div><!-- metric-tab-wrap -->\n"
 
+    md += "</div><!-- metric-tab-wrap -->\n"
     md
   end
 end

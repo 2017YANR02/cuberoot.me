@@ -16,6 +16,27 @@ module MetricLayout
     "</div><!-- metric-tab-wrap -->\n"
   end
 
+  # NOTE: 聚合页面通用模板——遍历子类实例，生成 metric-panel div + timing 日志
+  # @param classes [Array<Class>] 子类列表（如 METRIC_CLASSES）
+  # @param meta_map [Hash] Class => { label:, id: } 映射
+  # @yield [inst, prefix] 每个子类实例和 HTML ID 前缀，返回面板内部 HTML
+  def aggregate_panels(classes, meta_map)
+    instances = classes.map(&:new)
+    md = ""
+    instances.each_with_index do |inst, i|
+      meta = meta_map[inst.class]
+      prefix = meta[:id]
+      active = i == 0
+      t_sub = Time.now
+
+      md += "<div class=\"metric-panel#{active ? ' active' : ''}\" id=\"metric-#{prefix}\" data-label-en=\"#{meta[:label]}\">\n"
+      md += yield(inst, prefix)
+      md += "</div>\n"
+
+      printf("    [%d/%d] %-20s %5.1fs\n", i + 1, instances.size, meta[:label], Time.now - t_sub)
+    end
+    md
+  end
 
   # ═══════════════════════════════════════════════
   # NOTE: 下拉菜单方案（适用于指标数量 > 5 的页面，如 wr_metric）

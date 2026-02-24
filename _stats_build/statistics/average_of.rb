@@ -33,26 +33,10 @@ class AverageOf < Statistic
   end
 
   def markdown
-    instances = AOX_CLASSES.map(&:new)
-
     md = top
 
-    # --- 每个 AoX 的内容面板 ---
-    # NOTE: AverageOfX 没有 Ranking/History 双视图，
-    # 直接渲染分组 HTML 表格（不能用 Markdown 表格，因为在 <div> 内 Kramdown 不解析）
-    instances.each_with_index do |inst, i|
-      meta = AOX_META[inst.class]
-      prefix = meta[:id]
-      active = i == 0
-      t_sub = Time.now
-
-      md += "<div class=\"metric-panel#{active ? ' active' : ''}\" id=\"metric-#{prefix}\" data-label-en=\"#{meta[:label]}\">\n"
-
-      header = inst.instance_variable_get(:@table_header)
-      md += grouped_panel(prefix, true, inst.data, header)
-
-      md += "</div>\n"
-      printf("    [%d/%d] %-20s %5.1fs\n", i + 1, instances.size, meta[:label], Time.now - t_sub)
+    md += aggregate_panels(AOX_CLASSES, AOX_META) do |inst, prefix|
+      grouped_panel(prefix, true, inst.data, inst.table_header)
     end
 
     md
