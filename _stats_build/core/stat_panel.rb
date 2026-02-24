@@ -1,6 +1,8 @@
-# NOTE: 通用 Tab UI mixin，提供双视图（排名 + 历史）的 HTML 生成能力
+# NOTE: 数据面板渲染模块——把 DB 查询结果渲染成 stat-panel + table HTML
+# 所有统计页面的表格生成共用此 mixin
+# UI 层（按钮、Tab 切换）已完全迁至 assets/js/stats_ui.js
 
-module TabUi
+module StatPanel
 
   # NOTE: 标准排名表头——所有带 Tab 双视图的统计共用
   # 子类可用此常量或在此基础上追加列（如 ao_rounds 追加 Details）
@@ -10,24 +12,10 @@ module TabUi
   }.freeze
 
 
-  # NOTE: CSS 已迁至 assets/css/stats_ui.css
-  def tab_styles
-    ""
-  end
-
-  # NOTE: 支持双语标签，en/zh 分别为英文/中文文本
-  # NOTE: Tab 按钮由 JS initStatsUI() 自动生成
-  def tab_buttons(en1, zh1, id1, en2, zh2, id2)
-    ""
-  end
-
-
-  # NOTE: 全局 Tab 按钮（只生成一组，用于 metric-toolbar）
-  # 传入的 id 是后缀（例如 "ranking" 或 "history"），非特定面板 ID
-  # NOTE: 全局 Tab 按钮由 JS initStatsUI() 自动生成
-  def global_tab_buttons(en1, zh1, suffix1, en2, zh2, suffix2)
-    ""
-  end
+  # NOTE: (已废弃空方法，保留签名防止老调用方报错)
+  def tab_styles; ""; end
+  def tab_buttons(en1, zh1, id1, en2, zh2, id2); ""; end
+  def global_tab_buttons(en1, zh1, suffix1, en2, zh2, suffix2); ""; end
 
 
   # NOTE: 把 markdown link [text](url) 转为 <a> 标签
@@ -57,7 +45,7 @@ module TabUi
   # ranking_data / history_data 格式：{ event_name => [[col1, col2, ...], ...] }
   # ranking_header / history_header 格式：{ "ColName" => :left/:right }
   def tabbed_grouped_markdown(ranking_data:, ranking_header:, history_data:, history_header:)
-    # NOTE: tab_styles / tab_buttons 不再需要，JS 根据 data-label-* 自动生成
+    # NOTE: tab 按钮由 JS 根据 data-label-* 自动生成
     md = grouped_panel("ranking", true,  ranking_data, ranking_header,
                        label_en: "Current Ranking", label_zh: "排名")
     md += grouped_panel("history", false, history_data, history_header,

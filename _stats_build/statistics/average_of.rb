@@ -1,8 +1,8 @@
-# NOTE: 聚合页面——将 5 个 AverageOfX 子类合并为一个入口
+﻿# NOTE: 聚合页面——将 5 个 AverageOfX 子类合并为一个入口
 # 用户通过选择器在 Ao5 / Ao12 / Ao25 / Ao50 / Ao100 之间切换
 require_relative "abstract/average_of_x"
-require_relative "../core/tab_ui"
-require_relative "../core/metric_selector"
+require_relative "../core/stat_panel"
+require_relative "../core/metric_layout"
 require_relative "average_of_5"
 require_relative "average_of_12"
 require_relative "average_of_25"
@@ -10,8 +10,8 @@ require_relative "average_of_50"
 require_relative "average_of_100"
 
 class AverageOf < Statistic
-  include TabUi
-  include MetricSelector
+  include StatPanel
+  include MetricLayout
 
   AOX_CLASSES = [AverageOf5, AverageOf12, AverageOf25, AverageOf50, AverageOf100].freeze
 

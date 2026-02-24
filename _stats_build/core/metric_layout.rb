@@ -1,14 +1,13 @@
-# NOTE: 指标选择器 UI 模块——为聚合页面（WrMetric / WrAoxr）提供
-# 选择器按钮和样式的共享实现（交互 JS 已移至 assets/js/stats_ui.js）
-# 消费方只需定义 META 常量（class => { label:, id: }）
+# NOTE: 多指标页面布局模块——为聚合页面（wr_metric / wr_dominance / wr_aoxr 等）提供
+# metric-panel 包装容器和下拉菜单的 HTML 生成
+# 仅供指标数量 >= 2 的页面使用（单指标页面无需此 mixin）
 
-module MetricSelector
-
+module MetricLayout
 
   # NOTE: 通用 flex 包装容器——让 metric 选择器、tab 选择器在桌面端同行显示
   # 通过 display:contents 将 metric-panel 的子元素暴露到 flex 布局中
   # 手机端自动换行（flex-wrap: wrap）
-  # NOTE: CSS 已迁至 assets/css/stats_ui.css，只输出容器 div
+  # CSS 已迁至 assets/css/stats_ui.css，只输出容器 div
   def metric_tab_wrap_start
     "<div class=\"metric-tab-wrap\">\n"
   end
@@ -19,7 +18,7 @@ module MetricSelector
 
 
   # ═══════════════════════════════════════════════
-  # NOTE: 下拉菜单方案（适用于指标数量 > 5 的页面）
+  # NOTE: 下拉菜单方案（适用于指标数量 > 5 的页面，如 wr_metric）
   # 与药丸按钮方案并列，消费方按需选择
   # ═══════════════════════════════════════════════
 
@@ -47,8 +46,7 @@ module MetricSelector
         active = is_first ? " active" : ""
         html += "      <button class=\"metric-dropdown-item#{active}\" "
         html += "data-id=\"#{m[:id]}\" data-i18n-en=\"#{m[:label]}\" "
-        html += "onclick=\"selectFromDropdown('#{m[:id]}')\">"
-        html += "#{m[:label]}</button>\n"
+        html += "onclick=\"selectFromDropdown('#{m[:id]}')\">#{m[:label]}</button>\n"
         is_first = false
       end
       html += "    </div>\n"
