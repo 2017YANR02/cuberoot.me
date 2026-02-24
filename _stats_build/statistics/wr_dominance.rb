@@ -1,4 +1,4 @@
-# NOTE: Dominance（屠榜）= 选手在某项目全历史成绩排行榜上完全霸占前 N 席
+﻿# NOTE: Dominance（屠榜）= 选手在某项目全历史成绩排行榜上完全霸占前 N 席
 #
 # 概念说明:
 #   将某项目所有历史 results（每轮的 best 或 average）按成绩值升序排列，
@@ -26,12 +26,12 @@ require_relative "../core/statistic"
 require_relative "../core/events"
 require_relative "../core/solve_time"
 require_relative "../core/database"
-require_relative "../core/tab_ui"
-require_relative "../core/metric_selector"
+require_relative "../core/stat_panel"
+require_relative "../core/metric_layout"
 
 class WrDominance < Statistic
-  include TabUi
-  include MetricSelector
+  include StatPanel
+  include MetricLayout
 
   # NOTE: 历史表头
   HISTORY_HEADER = {

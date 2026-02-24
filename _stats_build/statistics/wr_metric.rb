@@ -1,8 +1,8 @@
-# NOTE: 聚合页面——将 13 个 RoundMetric 子类合并为一个入口
+﻿# NOTE: 聚合页面——将 13 个 RoundMetric 子类合并为一个入口
 # 用户通过指标选择器切换 Single/Average/BAo5/Mo5 等
 # 每个指标有独立的 Tab 双视图（Current Ranking + WR History）
 require_relative "abstract/round_metric"
-require_relative "../core/metric_selector"
+require_relative "../core/metric_layout"
 
 # NOTE: 加载所有 RoundMetric 子类
 require_relative "wr_single_history"
@@ -20,8 +20,8 @@ require_relative "wr_variance"
 require_relative "wr_best_average_ratio"
 
 class WrMetric < Statistic
-  include TabUi
-  include MetricSelector
+  include StatPanel
+  include MetricLayout
 
   # NOTE: 指标展示顺序——Single/Average 在前，衍生指标按逻辑相近分组
   METRIC_CLASSES = [

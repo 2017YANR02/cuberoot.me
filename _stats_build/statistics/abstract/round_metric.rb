@@ -1,4 +1,4 @@
-# NOTE: RoundMetric -- 抽象基类，从一轮的 5 次成绩 (value1-5) 中计算衍生指标
+﻿# NOTE: RoundMetric -- 抽象基类，从一轮的 5 次成绩 (value1-5) 中计算衍生指标
 # 子类只需实现 compute_metric(values, r) 方法即可
 # 产出双视图 Tab：排名 (ranking_data) + 历史 (transform)
 #
@@ -9,11 +9,11 @@
 require_relative "../../core/grouped_statistic"
 require_relative "../../core/events"
 require_relative "../../core/solve_time"
-require_relative "../../core/tab_ui"
+require_relative "../../core/stat_panel"
 require_relative "../../core/database"
 
 class RoundMetric < GroupedStatistic
-  include TabUi
+  include StatPanel
 
   # NOTE: 预计算结果缓存
   # 结构：{ "ClassName" => [[event_name, top10], ...] }

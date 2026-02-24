@@ -1,15 +1,15 @@
-# NOTE: 聚合页面——将 4 个 AoRounds 子类合并为一个 AoXR 入口
+﻿# NOTE: 聚合页面——将 4 个 AoRounds 子类合并为一个 AoXR 入口
 # 用户通过选择器在 Ao1R / Ao2R / Ao3R / Ao4R 之间切换
 require_relative "abstract/ao_rounds"
-require_relative "../core/metric_selector"
+require_relative "../core/metric_layout"
 require_relative "wr_ao1r"
 require_relative "wr_ao2r"
 require_relative "wr_ao3r"
 require_relative "wr_ao4r"
 
 class WrAoxr < Statistic
-  include TabUi
-  include MetricSelector
+  include StatPanel
+  include MetricLayout
 
   AOXR_CLASSES = [WrAo1r, WrAo2r, WrAo3r, WrAo4r].freeze
 
