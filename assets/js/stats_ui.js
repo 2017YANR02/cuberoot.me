@@ -213,33 +213,29 @@ function initStatsUI() {
 // NOTE: 处理一组同父容器的 metric-panel：生成 metric 按钮、source 按钮、tab 按钮
 function processMetricGroup(container, panels) {
     // --- Metric 按钮 ---
-    if (panels.length >= 2 && !container.querySelector('.metric-btn')) {
-        var isDropdown = container.getAttribute('data-ui') === 'dropdown';
+    // NOTE: 如果容器中有下拉菜单（Mode C），metric 切换由下拉控制，不生成药丸按钮
+    var hasDropdown = !!container.querySelector('.metric-dropdown');
+    if (panels.length >= 2 && !hasDropdown && !container.querySelector('.metric-btn')) {
+        var selectorDiv = document.createElement('div');
+        selectorDiv.className = 'metric-selector';
+        var groupDiv = document.createElement('div');
+        groupDiv.className = 'metric-selector-group';
 
-        if (isDropdown) {
-            // TODO: Phase 2 实现下拉菜单动态生成
-        } else {
-            var selectorDiv = document.createElement('div');
-            selectorDiv.className = 'metric-selector';
-            var groupDiv = document.createElement('div');
-            groupDiv.className = 'metric-selector-group';
-
-            for (var i = 0; i < panels.length; i++) {
-                var panel = panels[i];
-                var id = panel.id.replace('metric-', '');
-                var btn = document.createElement('button');
-                btn.className = 'segmented-btn metric-btn' + (i === 0 ? ' active' : '');
-                btn.setAttribute('onclick', "switchMetric(event,'" + id + "')");
-                btn.textContent = panel.getAttribute('data-label-en');
-                if (panel.hasAttribute('data-label-zh')) {
-                    btn.setAttribute('data-i18n-en', panel.getAttribute('data-label-en'));
-                    btn.setAttribute('data-i18n-zh', panel.getAttribute('data-label-zh'));
-                }
-                groupDiv.appendChild(btn);
+        for (var i = 0; i < panels.length; i++) {
+            var panel = panels[i];
+            var id = panel.id.replace('metric-', '');
+            var btn = document.createElement('button');
+            btn.className = 'segmented-btn metric-btn' + (i === 0 ? ' active' : '');
+            btn.setAttribute('onclick', "switchMetric(event,'" + id + "')");
+            btn.textContent = panel.getAttribute('data-label-en');
+            if (panel.hasAttribute('data-label-zh')) {
+                btn.setAttribute('data-i18n-en', panel.getAttribute('data-label-en'));
+                btn.setAttribute('data-i18n-zh', panel.getAttribute('data-label-zh'));
             }
-            selectorDiv.appendChild(groupDiv);
-            container.insertBefore(selectorDiv, panels[0]);
+            groupDiv.appendChild(btn);
         }
+        selectorDiv.appendChild(groupDiv);
+        container.insertBefore(selectorDiv, panels[0]);
     }
 
     // --- Source 按钮 + Tab 按钮（每个 metric-panel 内）---
@@ -292,7 +288,11 @@ function generateTabsInScope(scope) {
     });
 
     if (statPanels.length >= 2 && !scope.querySelector('.stat-tab')) {
+        // NOTE: 检测全局 tab 模式——直接在 scope 上，或在容器中的 metric-toolbar 上
         var isGlobal = !!scope.closest('[data-tab-mode="global"]');
+        if (!isGlobal && scope.parentElement) {
+            isGlobal = !!scope.parentElement.querySelector('.metric-toolbar[data-tab-mode="global"]');
+        }
         createTabButtons(scope, statPanels, isGlobal);
     }
 }
