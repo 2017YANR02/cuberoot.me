@@ -142,6 +142,7 @@ reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Sudo" /v Enabled /t REG_
 ```powershell
 # 启动
 sudo net start MySQL80
+```
 
 > **关闭 MySQL**：务必用 `sudo net stop MySQL80` 或 `sudo mysqladmin shutdown` 干净关闭，**绝对不要强杀** `mysqld.exe`，否则会损坏 InnoDB。
 
@@ -312,7 +313,7 @@ git push
 2. 用本地发布流程生成并 push 新统计（见上方「本地发布统计」）
 3. 等待 GitHub Pages 构建（约 1 分钟）
 4. 新页面出现在 `ruiminyan.github.io/stats/my_new_stat`
-5. **翻译维护**：在 `src/i18n/i18n.js` 中更新以下映射：
+5. **翻译维护**：在 `i18n/i18n.js` 中更新以下映射：
    - `_statsTitleZh`：添加页面标题的中文翻译
    - `_statsDescZh`：添加 Note 描述的中文翻译（如有）
    - `_headerZh`：添加新表头列名的中文翻译（如有新列名）
@@ -327,7 +328,7 @@ git push
 - 确保提交信息包含 `[skip ci]` 以避免递归触发
 
 ### 语法检查失败？
-- 本地运行 `ruby -c _stats_build/statistics/*.rb`
+- 本地运行：`Get-ChildItem _stats_build/statistics/*.rb | ForEach-Object { ruby -c $_.FullName }`
 - 检查 Ruby 2.7 兼容性
 
 ### 内存不足？
@@ -369,7 +370,7 @@ cd D:\cube\ruiminyan.github.io
 
 # 附录
 
-## WCADB 统计迁移（进行中）
+## WCADB 统计迁移（已完成）
 
 WCADB.xlsx 包含 27 个 sheet 的 WCA 世界纪录统计数据，目标是迁移到 `_stats_build` 框架实现自动化更新。
 
