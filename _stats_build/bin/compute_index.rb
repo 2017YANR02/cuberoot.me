@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 
+require "time"
 require_relative "../statistics/index"
 
 # NOTE: 生成 stats/index.md 索引页，使用卡片网格布局 + data-i18n 属性实现双语
@@ -98,6 +99,12 @@ output += "<script src=\"../i18n/i18n.js\" defer></script>\n\n"
 
 # NOTE: 页面标题
 output += "<h2 data-i18n-en=\"WCA Statistics\" data-i18n-zh=\"WCA 统计数据\">WCA Statistics</h2>\n\n"
+
+# NOTE: 日期集中在主页显示，子页面不再单独显示
+timestamp = Time.parse(Database.metadata["export_timestamp"])
+date_en = timestamp.strftime("Updated on %e %B %Y").strip
+date_zh = timestamp.strftime("更新于 %Y 年 %-m 月 %-d 日")
+output += "<p><em data-i18n-en=\"#{date_en}\" data-i18n-zh=\"#{date_zh}\">#{date_en}</em></p>\n\n"
 
 # NOTE: 卡片网格容器
 output += "<div class=\"stats-dashboard\">\n\n"

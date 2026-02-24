@@ -1,5 +1,5 @@
 require "date"
-require "time"
+
 require "fileutils"
 require_relative "database"
 require_relative "events"
@@ -58,7 +58,6 @@ class Statistic
   # NOTE: 用 HTML data-i18n 属性实现双语切换，前端 i18n.js 据此替换文本
   # 翻译来源优先级: @title_zh (硬编码) > STAT_TRANSLATIONS (集中管理) > @title (英文原文)
   def top
-    timestamp = Time.parse(Database.metadata["export_timestamp"])
     # NOTE: 通过类名反推文件 basename（CamelCase → snake_case），查找集中翻译表
     # NOTE: CamelCase -> snake_case 需分两步：
     #   1. 小写/数字 + 大写 -> 插入 _（如 MostPodiums -> most_podiums）
@@ -74,10 +73,6 @@ class Statistic
       nzh = @note_zh || trans[:note_zh] || @note
       markdown += "<p><em data-i18n-en=\"#{@note}\" data-i18n-zh=\"#{nzh}\">#{@note}</em></p>\n"
     end
-    # NOTE: 日期也用双语输出
-    date_en = timestamp.strftime("Updated on %e %B %Y").strip
-    date_zh = timestamp.strftime("更新于 %Y 年 %-m 月 %-d 日")
-    markdown += "<p><em data-i18n-en=\"#{date_en}\" data-i18n-zh=\"#{date_zh}\">#{date_en}</em></p>\n\n"
     markdown
   end
 
