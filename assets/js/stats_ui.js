@@ -76,12 +76,41 @@ function switchGlobalTab(e, suffix) {
 }
 
 // ── Source 切换（wr_newcomer 三级嵌套）─────────────────────
+// NOTE: 切换 source 时同步 tab 状态到新面板
 function switchSource(btn, id) {
     var scope = btn.closest('.metric-panel') || document;
+
+    // NOTE: 记住当前 tab suffix（ranking/history），切换 source 后同步
+    var tabSuffix = null;
+    var oldSource = scope.querySelector('.source-panel.active');
+    if (oldSource) {
+        var activeTab = oldSource.querySelector('.stat-tab.active');
+        if (activeTab) {
+            var m = (activeTab.getAttribute('onclick') || '').match(/switchTab\(event,\s*'(.+?)'\)/);
+            if (m) tabSuffix = m[1].split('-').pop();
+        }
+    }
+
+    // NOTE: 切换 source 面板
     scope.querySelectorAll('.source-btn').forEach(function (b) { b.classList.remove('active'); });
     scope.querySelectorAll('.source-panel').forEach(function (p) { p.classList.remove('active'); });
     btn.classList.add('active');
-    document.getElementById('source-' + id).classList.add('active');
+    var newPanel = document.getElementById('source-' + id);
+    newPanel.classList.add('active');
+
+    // NOTE: 同步 tab suffix 到新 source panel
+    if (tabSuffix) {
+        newPanel.querySelectorAll('.stat-tab').forEach(function (t) { t.classList.remove('active'); });
+        newPanel.querySelectorAll('.stat-panel').forEach(function (p) { p.classList.remove('active'); });
+        newPanel.querySelectorAll('.stat-tab').forEach(function (t) {
+            var tm = (t.getAttribute('onclick') || '').match(/switchTab\(event,\s*'(.+?)'\)/);
+            if (tm && tm[1].split('-').pop() === tabSuffix) {
+                t.classList.add('active');
+                var tp = document.getElementById(tm[1]);
+                if (tp) tp.classList.add('active');
+            }
+        });
+    }
 }
 
 // ── 下拉菜单（wr_metric 页面）─────────────────────────────
