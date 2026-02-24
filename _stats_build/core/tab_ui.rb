@@ -1,8 +1,6 @@
 # NOTE: 通用 Tab UI mixin，提供双视图（排名 + 历史）的 HTML 生成能力
-require_relative 'segmented_btn'
 
 module TabUi
-  include SegmentedBtn
 
   # NOTE: 标准排名表头——所有带 Tab 双视图的统计共用
   # 子类可用此常量或在此基础上追加列（如 ao_rounds 追加 Details）

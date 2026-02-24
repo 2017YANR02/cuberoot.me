@@ -1,10 +1,8 @@
 # NOTE: 指标选择器 UI 模块——为聚合页面（WrMetric / WrAoxr）提供
 # 选择器按钮和样式的共享实现（交互 JS 已移至 assets/js/stats_ui.js）
 # 消费方只需定义 META 常量（class => { label:, id: }）
-require_relative 'segmented_btn'
 
 module MetricSelector
-  include SegmentedBtn
 
   # NOTE: 通用分段控件 CSS 生成器
   # @param css_prefix [String] CSS 类名前缀 ("metric" 或 "source")
