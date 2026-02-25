@@ -21,7 +21,8 @@ function switchMetric(e, id) {
         var tabReadScope = oldPanel.querySelector('.source-panel.active') || oldPanel;
         var activeTab = tabReadScope.querySelector('.stat-tab.active');
         if (activeTab) {
-            var m = (activeTab.getAttribute('onclick') || '').match(/switchTab\(event,\s*'(.+?)'\)/);
+            // NOTE: 兼容 switchTab 和 switchGlobalTab 两种 onclick 格式
+            var m = (activeTab.getAttribute('onclick') || '').match(/switch(?:Global)?Tab\(event,\s*'(.+?)'\)/);
             if (m) tabSuffix = m[1].split('-').pop();
         }
     }
@@ -41,10 +42,18 @@ function switchMetric(e, id) {
         tabScope.querySelectorAll('.stat-tab').forEach(function (t) { t.classList.remove('active'); });
         tabScope.querySelectorAll('.stat-panel').forEach(function (p) { p.classList.remove('active'); });
         tabScope.querySelectorAll('.stat-tab').forEach(function (t) {
-            var tm = (t.getAttribute('onclick') || '').match(/switchTab\(event,\s*'(.+?)'\)/);
+            // NOTE: 兼容 switchTab 和 switchGlobalTab 两种格式
+            var tm = (t.getAttribute('onclick') || '').match(/switch(?:Global)?Tab\(event,\s*'(.+?)'\)/);
             if (tm && tm[1].split('-').pop() === tabSuffix) {
                 t.classList.add('active');
+                // NOTE: switchGlobalTab 的参数只是 suffix（如 "ranking"），不是完整 panel ID
+                // 先按完整 ID 查找，再拼接 metric prefix 回退
                 var tp = document.getElementById(tm[1]);
+                if (!tp) {
+                    var metricPanel = tabScope.closest('.metric-panel');
+                    var pPrefix = metricPanel ? metricPanel.id.replace('metric-', '') : '';
+                    tp = document.getElementById(pPrefix + '-' + tm[1]);
+                }
                 if (tp) tp.classList.add('active');
             }
         });
@@ -64,14 +73,18 @@ function switchTab(e, id) {
 // ── Tab 切换（全局，遍历所有 metric-panel）────────────────
 function switchGlobalTab(e, suffix) {
     document.querySelectorAll('.stat-tab').forEach(function (t) { t.classList.remove('active'); });
-    e.target.classList.add('active');
     document.querySelectorAll('.metric-panel').forEach(function (panel) {
+        // NOTE: 同步 stat-panel
         panel.querySelectorAll('.stat-panel').forEach(function (p) { p.classList.remove('active'); });
-        // NOTE: panel.id 形如 "metric-single"，截取后面的 "single"
         var prefix = panel.id.replace('metric-', '');
         var targetId = prefix + '-' + suffix;
         var targetPanel = document.getElementById(targetId);
         if (targetPanel) targetPanel.classList.add('active');
+        // NOTE: 同步 tab 按钮——在每个 metric-panel 中高亮匹配 suffix 的按钮
+        panel.querySelectorAll('.stat-tab').forEach(function (t) {
+            var tm = (t.getAttribute('onclick') || '').match(/switchGlobalTab\(event,\s*'(.+?)'\)/);
+            if (tm && tm[1] === suffix) t.classList.add('active');
+        });
     });
 }
 
