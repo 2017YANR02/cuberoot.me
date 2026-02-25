@@ -231,6 +231,38 @@ bundle exec jekyll serve
 
 > **改 JS/CSS 后只需刷新浏览器**，无需重跑 `compute_all.rb`。
 
+### Playwright 自动化验证（前端行为测试）
+
+需要验证具体的 DOM 交互行为时（如按钮变灰、class 是否正确添加、点击后状态是否变化），推荐使用 Playwright 编写临时 Python 脚本，在本地 Jekyll 服务器运行时执行：
+
+```python
+# 示例：验证七阶魔方下 BAo5 变灰、切回三阶后恢复
+from playwright.sync_api import sync_playwright
+
+with sync_playwright() as p:
+    browser = p.chromium.launch()
+    page = browser.new_page()
+    page.goto('http://127.0.0.1:4000/stats/wr_metric', wait_until='networkidle')
+
+    # 切换到七阶
+    page.click('.event-btn[data-event="777"]')
+    page.wait_for_timeout(500)
+
+    # 检查 BAo5 下拉项是否含 disabled 类
+    bao5 = page.query_selector('.metric-dropdown-item[data-id="bao5"]')
+    print("BAo5 classes:", bao5.get_attribute('class'))  # 期望含 "disabled"
+
+    browser.close()
+```
+
+**使用前提**：
+```powershell
+pip install playwright
+playwright install chromium
+```
+
+**注意**：这类脚本是一次性临时工具，验证完即可删除，不提交到 git。
+
 # 日常操作
 
 ## 本地发布统计（无需等待 CI）
