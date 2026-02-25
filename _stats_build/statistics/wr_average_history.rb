@@ -24,7 +24,7 @@ class WrAverageHistory < RoundMetric
 
   # NOTE: 覆盖 target_events：加入 333mbf/333mbo（通过 Mo3 展示）
   def target_events
-    Events::WITH_AVERAGE__MBF
+    Events::WITH_AVERAGE_MBF
   end
 
   # NOTE: MbfAverage 单例——延迟初始化，避免重复实例化
@@ -41,7 +41,7 @@ class WrAverageHistory < RoundMetric
 
     # 替换 333mbf/333mbo 条目（基类返回的是 nil 或空）
     normal_results.map do |event_name, rows|
-      event_id = Events::WITH_AVERAGE__MBF.key(event_name)
+      event_id = Events::WITH_AVERAGE_MBF.key(event_name)
       if event_id && mbf_ids.include?(event_id)
         [event_name, mbf_instance.history_for(event_name)]
       else
@@ -65,7 +65,7 @@ class WrAverageHistory < RoundMetric
 
     mbf_ids = %w[333mbf 333mbo]
     result = raw.map do |event_name, rows|
-      event_id = Events::WITH_AVERAGE__MBF.key(event_name)
+      event_id = Events::WITH_AVERAGE_MBF.key(event_name)
       if event_id && mbf_ids.include?(event_id)
         [event_name, mbf_instance.ranking_for(event_name)]
       else
