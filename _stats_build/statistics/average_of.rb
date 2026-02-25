@@ -1,4 +1,4 @@
-﻿# NOTE: 聚合页面——将 5 个 AverageOfX 子类合并为一个入口
+# NOTE: 聚合页面——将 5 个 AverageOfX 子类合并为一个入口
 # 用户通过选择器在 Ao5 / Ao12 / Ao25 / Ao50 / Ao100 之间切换
 require_relative "abstract/average_of_x"
 require_relative "../core/stat_panel"
