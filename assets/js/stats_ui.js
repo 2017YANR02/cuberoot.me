@@ -19,12 +19,7 @@ function switchMetric(e, id) {
     var tabSuffix = null;
     if (oldPanel) {
         var tabReadScope = oldPanel.querySelector('.source-panel.active') || oldPanel;
-        var activeTab = tabReadScope.querySelector('.stat-tab.active');
-        if (activeTab) {
-            // NOTE: 兼容 switchTab 和 switchGlobalTab 两种 onclick 格式
-            var m = (activeTab.getAttribute('onclick') || '').match(/switch(?:Global)?Tab\(event,\s*'(.+?)'\)/);
-            if (m) tabSuffix = m[1].split('-').pop();
-        }
+        tabSuffix = getTabSuffix(tabReadScope);
     }
     // NOTE: 切换面板
     document.querySelectorAll('.metric-panel').forEach(function (p) { p.classList.remove('active'); });
@@ -37,27 +32,8 @@ function switchMetric(e, id) {
     if (newBtns[srcIdx]) newBtns[srcIdx].click();
     // NOTE: 同步 tab suffix 到新 panel，保持 tab 选择不变
     // wr_newcomer 有三层嵌套（metric→source→tab），需限定到活跃 source-panel
-    if (tabSuffix) {
-        var tabScope = panel.querySelector('.source-panel.active') || panel;
-        tabScope.querySelectorAll('.stat-tab').forEach(function (t) { t.classList.remove('active'); });
-        tabScope.querySelectorAll('.stat-panel').forEach(function (p) { p.classList.remove('active'); });
-        tabScope.querySelectorAll('.stat-tab').forEach(function (t) {
-            // NOTE: 兼容 switchTab 和 switchGlobalTab 两种格式
-            var tm = (t.getAttribute('onclick') || '').match(/switch(?:Global)?Tab\(event,\s*'(.+?)'\)/);
-            if (tm && tm[1].split('-').pop() === tabSuffix) {
-                t.classList.add('active');
-                // NOTE: switchGlobalTab 的参数只是 suffix（如 "ranking"），不是完整 panel ID
-                // 先按完整 ID 查找，再拼接 metric prefix 回退
-                var tp = document.getElementById(tm[1]);
-                if (!tp) {
-                    var metricPanel = tabScope.closest('.metric-panel');
-                    var pPrefix = metricPanel ? metricPanel.id.replace('metric-', '') : '';
-                    tp = document.getElementById(pPrefix + '-' + tm[1]);
-                }
-                if (tp) tp.classList.add('active');
-            }
-        });
-    }
+    var tabScope = panel.querySelector('.source-panel.active') || panel;
+    syncTabSuffix(tabScope, tabSuffix);
 }
 
 // ── Tab 切换（局部作用域）─────────────────────────────────
@@ -97,11 +73,7 @@ function switchSource(btn, id) {
     var tabSuffix = null;
     var oldSource = scope.querySelector('.source-panel.active');
     if (oldSource) {
-        var activeTab = oldSource.querySelector('.stat-tab.active');
-        if (activeTab) {
-            var m = (activeTab.getAttribute('onclick') || '').match(/switchTab\(event,\s*'(.+?)'\)/);
-            if (m) tabSuffix = m[1].split('-').pop();
-        }
+        tabSuffix = getTabSuffix(oldSource);
     }
 
     // NOTE: 切换 source 面板
@@ -112,18 +84,44 @@ function switchSource(btn, id) {
     newPanel.classList.add('active');
 
     // NOTE: 同步 tab suffix 到新 source panel
-    if (tabSuffix) {
-        newPanel.querySelectorAll('.stat-tab').forEach(function (t) { t.classList.remove('active'); });
-        newPanel.querySelectorAll('.stat-panel').forEach(function (p) { p.classList.remove('active'); });
-        newPanel.querySelectorAll('.stat-tab').forEach(function (t) {
-            var tm = (t.getAttribute('onclick') || '').match(/switchTab\(event,\s*'(.+?)'\)/);
-            if (tm && tm[1].split('-').pop() === tabSuffix) {
-                t.classList.add('active');
-                var tp = document.getElementById(tm[1]);
-                if (tp) tp.classList.add('active');
-            }
-        });
+    syncTabSuffix(newPanel, tabSuffix);
+}
+
+// ── 辅助函数: Tab 状态同步 ─────────────────────────────────
+
+// NOTE: 从指定作用域中提取当前 active tab 的 suffix（如 'ranking', 'history'）
+function getTabSuffix(scope) {
+    var activeTab = scope.querySelector('.stat-tab.active');
+    if (activeTab) {
+        // 兼容 switchTab 和 switchGlobalTab 两种 onclick 格式
+        var m = (activeTab.getAttribute('onclick') || '').match(/switch(?:Global)?Tab\(event,\s*'(.+?)'\)/);
+        if (m) return m[1].split('-').pop();
     }
+    return null;
+}
+
+// NOTE: 将 tabSuffix 同步应用到新的面板作用域
+function syncTabSuffix(scope, tabSuffix) {
+    if (!tabSuffix) return;
+
+    scope.querySelectorAll('.stat-tab').forEach(function (t) { t.classList.remove('active'); });
+    scope.querySelectorAll('.stat-panel').forEach(function (p) { p.classList.remove('active'); });
+
+    scope.querySelectorAll('.stat-tab').forEach(function (t) {
+        var tm = (t.getAttribute('onclick') || '').match(/switch(?:Global)?Tab\(event,\s*'(.+?)'\)/);
+        if (tm && tm[1].split('-').pop() === tabSuffix) {
+            t.classList.add('active');
+
+            // NOTE: switchGlobalTab 的参数只是 suffix，需要先按完整 ID 查找，再按 metric prefix 拼接回退
+            var tp = document.getElementById(tm[1]);
+            if (!tp) {
+                var metricPanel = scope.closest('.metric-panel');
+                var pPrefix = metricPanel ? metricPanel.id.replace('metric-', '') : '';
+                tp = document.getElementById(pPrefix + '-' + tm[1]);
+            }
+            if (tp) tp.classList.add('active');
+        }
+    });
 }
 
 // ── 下拉菜单（wr_metric 页面）─────────────────────────────
