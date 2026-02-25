@@ -49,6 +49,7 @@
 | 5 | [Nathaniel Berg](https://www.worldcubeassociation.org/persons/2012BERG04) |
 | 5 | [Ulrik Bredland](https://www.worldcubeassociation.org/persons/2012BRED01) |
 | 5 | [Jayden McNeill](https://www.worldcubeassociation.org/persons/2012MCNE01) |
+| 5 | [Patrick Ponce](https://www.worldcubeassociation.org/persons/2012PONC02) |
 | 5 | [Katie Hardwick](https://www.worldcubeassociation.org/persons/2013ENGE01) |
 | 5 | [Gianfranco Huanqui](https://www.worldcubeassociation.org/persons/2013HUAN29) |
 | 5 | [Juan Pablo Huanqui](https://www.worldcubeassociation.org/persons/2013HUAN30) |
@@ -130,7 +131,6 @@
 | 4 | [Jack Pan (潘杰康)](https://www.worldcubeassociation.org/persons/2012PANJ02) |
 | 4 | [Max Park](https://www.worldcubeassociation.org/persons/2012PARK03) |
 | 4 | [Antonie Paterakis](https://www.worldcubeassociation.org/persons/2012PATE01) |
-| 4 | [Patrick Ponce](https://www.worldcubeassociation.org/persons/2012PONC02) |
 | 4 | [Rituraj Sohoni](https://www.worldcubeassociation.org/persons/2012SOHO01) |
 | 4 | [Ilya Tsiareshka](https://www.worldcubeassociation.org/persons/2012TERE01) |
 | 4 | [Nicolas Gertner Kilian](https://www.worldcubeassociation.org/persons/2013GERT01) |

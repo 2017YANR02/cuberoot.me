@@ -664,6 +664,8 @@
 | 12 | [Fabio Bini Graciose](https://www.worldcubeassociation.org/persons/2010GRAC02) | [II CUBIFMA 2017](https://www.worldcubeassociation.org/competitions/IICUBIFMA2017/results/podiums) |
 | 10 | [Edgar Nogueira Garcia Pinho](https://www.worldcubeassociation.org/persons/2019PINH01) | [II Cubo de Barro ES 2025](https://www.worldcubeassociation.org/competitions/IICubodeBarroES2025/results/podiums) |
 | 10 | [Rafael Hiroshi Eguchi Neves](https://www.worldcubeassociation.org/persons/2023NEVE01) | [II Cubo de Barro ES 2025](https://www.worldcubeassociation.org/competitions/IICubodeBarroES2025/results/podiums) |
+| 12 | [Rafael Hiroshi Eguchi Neves](https://www.worldcubeassociation.org/persons/2023NEVE01) | [III Samuel Asafe Vila Velha 2026](https://www.worldcubeassociation.org/competitions/IIISamuelAsafeVilaVelha2026/results/podiums) |
+| 10 | [Edgar Nogueira Garcia Pinho](https://www.worldcubeassociation.org/persons/2019PINH01) | [III Samuel Asafe Vila Velha 2026](https://www.worldcubeassociation.org/competitions/IIISamuelAsafeVilaVelha2026/results/podiums) |
 | 13 | [Vicenzo Guerino Cecchini](https://www.worldcubeassociation.org/persons/2015CECC01) | [II Mineirim Open 2019](https://www.worldcubeassociation.org/competitions/IIMineirimOpen2019/results/podiums) |
 | 12 | [Martin Vædele Egdal](https://www.worldcubeassociation.org/persons/2013EGDA02) | [Ikast Winter Cubing 2023](https://www.worldcubeassociation.org/competitions/IkastWinterCubing2023/results/podiums) |
 | 10 | [William Lavoie](https://www.worldcubeassociation.org/persons/2023LAVO01) | [Imaginaire Québec 2025](https://www.worldcubeassociation.org/competitions/ImaginaireQuebec2025/results/podiums) |

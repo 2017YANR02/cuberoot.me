@@ -32,10 +32,10 @@
 | [Björneborg Winter 2023](https://www.worldcubeassociation.org/competitions/BjorneborgWinter2023) | 9.82 | 11 | Sweden |
 | [Cyprus Nationals 2025](https://www.worldcubeassociation.org/competitions/CyprusNationals2025) | 9.79 | 42 | Cyprus |
 | [Indonesian Championship 2023](https://www.worldcubeassociation.org/competitions/MYHMIndonesianChampionship2023) | 9.77 | 35 | Indonesia |
-| [Silesian Minx Fest 2025](https://www.worldcubeassociation.org/competitions/SilesianMinxFest2025) | 9.77 | 39 | Poland |
 | [Dvärsätt Open 2026](https://www.worldcubeassociation.org/competitions/DvarsattOpen2026) | 9.77 | 26 | Sweden |
-| [Val d'Aran Open 2024](https://www.worldcubeassociation.org/competitions/ValdAranOpen2024) | 9.75 | 28 | Spain |
+| [Silesian Minx Fest 2025](https://www.worldcubeassociation.org/competitions/SilesianMinxFest2025) | 9.77 | 39 | Poland |
 | [Bogotá No Duerme 2024](https://www.worldcubeassociation.org/competitions/BogotaNoDuerme2024) | 9.75 | 28 | Colombia |
+| [Val d'Aran Open 2024](https://www.worldcubeassociation.org/competitions/ValdAranOpen2024) | 9.75 | 28 | Spain |
 | [Welcome Back Again Jkpg 2021](https://www.worldcubeassociation.org/competitions/WelcomeBackAgainJkpg2021) | 9.72 | 25 | Sweden |
 | [Kediri Open 2013](https://www.worldcubeassociation.org/competitions/KediriOpen2013) | 9.65 | 23 | Indonesia |
 | [Begastri Open 2025](https://www.worldcubeassociation.org/competitions/BegastriOpen2025) | 9.62 | 48 | Spain |
@@ -51,8 +51,8 @@
 | [Irish Open 2012](https://www.worldcubeassociation.org/competitions/IrishOpen2012) | 9.47 | 15 | Ireland |
 | [Autotalo Anime Adventure VI 2024](https://www.worldcubeassociation.org/competitions/AutotaloAnimeAdventureVI2024) | 9.46 | 24 | Finland |
 | [Twixmas Flen 2024](https://www.worldcubeassociation.org/competitions/TwixmasFlen2024) | 9.39 | 57 | Sweden |
-| [GA Cubers Mashed Potatoes 2022](https://www.worldcubeassociation.org/competitions/GACubersMashedPotatoes2022) | 9.36 | 25 | United States |
 | [Lyon Winter Open 2012](https://www.worldcubeassociation.org/competitions/LyonWinterOpen2012) | 9.36 | 25 | France |
+| [GA Cubers Mashed Potatoes 2022](https://www.worldcubeassociation.org/competitions/GACubersMashedPotatoes2022) | 9.36 | 25 | United States |
 | [Solving in Sayre 2025](https://www.worldcubeassociation.org/competitions/SolvinginSayre2025) | 9.33 | 3 | United States |
 | [Kārķi Open 2024](https://www.worldcubeassociation.org/competitions/KarkiOpen2024) | 9.31 | 32 | Latvia |
 | [Cube4fun Bełżyce 2023](https://www.worldcubeassociation.org/competitions/Cube4funBelzyceMultiEvents2023) | 9.31 | 74 | Poland |
@@ -94,8 +94,8 @@
 | [Odsherred Sommercubing 2023](https://www.worldcubeassociation.org/competitions/OdsherredSommercubing2023) | 8.84 | 25 | Denmark |
 | [The End of Autotalo 2024](https://www.worldcubeassociation.org/competitions/TheEndofAutotalo2024) | 8.83 | 29 | Finland |
 | [EatSleepCubeRepeat Leersum 2025](https://www.worldcubeassociation.org/competitions/EatSleepCubeRepeatLeersum2025) | 8.82 | 96 | Netherlands |
-| [New York Championship 2025](https://www.worldcubeassociation.org/competitions/NewYorkChampionship2025) | 8.82 | 66 | United States |
 | [Rebild Open 2014](https://www.worldcubeassociation.org/competitions/RebildOpen2014) | 8.82 | 22 | Denmark |
+| [New York Championship 2025](https://www.worldcubeassociation.org/competitions/NewYorkChampionship2025) | 8.82 | 66 | United States |
 | [Manchester Spring 2024](https://www.worldcubeassociation.org/competitions/ManchesterSpring2024) | 8.81 | 116 | United Kingdom |
 | [Guildford Open 2013](https://www.worldcubeassociation.org/competitions/GuildfordOpen2013) | 8.81 | 47 | United Kingdom |
 | [Georgia Championship 2018](https://www.worldcubeassociation.org/competitions/GAChamp2018) | 8.79 | 73 | United States |
