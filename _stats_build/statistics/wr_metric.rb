@@ -1,4 +1,4 @@
-﻿# NOTE: 聚合页面——将 13 个 RoundMetric 子类合并为一个入口
+# NOTE: 聚合页面——将 13 个 RoundMetric 子类合并为一个入口
 # 用户通过指标选择器切换 Single/Average/BAo5/Mo5 等
 # 每个指标有独立的 Tab 双视图（Current Ranking + WR History）
 require_relative "abstract/round_metric"

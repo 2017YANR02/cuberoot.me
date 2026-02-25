@@ -1,4 +1,4 @@
-﻿# NOTE: 抽象基类，用于计算跨轮次 average of averages 的 历史
+# NOTE: 抽象基类，用于计算跨轮次 average of averages 的 历史
 # AoXR = 一场比赛中某人恰好参加了 X 轮时，各轮 average 的均值
 # 子类只需指定 round_count 即可
 # 支持双视图 Tab：排名 + 历史
