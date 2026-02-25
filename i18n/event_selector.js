@@ -181,7 +181,7 @@
    * @param {Array<Array>} allPanelSections - 多组 sections（每组来自一个容器）
    * @param {HTMLElement} insertBeforeNode - 选择器 DOM 的插入点
    */
-  function setupSelector(allPanelSections, insertBeforeNode) {
+  function setupSelector(allPanelSections, insertBeforeNode, onEventChanged = null) {
     // 合并所有 eventId（取并集，保持顺序）
     const allIds = [];
     allPanelSections.forEach(sections => {
@@ -200,6 +200,7 @@
 
     const selector = createSelector(fullIds, (id) => {
       allPanelSections.forEach(sections => showEvent(sections, id));
+      if (onEventChanged) onEventChanged(id);
       updateHash({ event: id });
     }, disabledIds);
 
@@ -210,6 +211,7 @@
     const initEvent = (h.event && allIds.includes(h.event)) ? h.event : allIds[0];
     allPanelSections.forEach(sections => showEvent(sections, initEvent));
     selectEventInBar(selector, initEvent);
+    if (onEventChanged) onEventChanged(initEvent);
     if (h.event && allIds.includes(h.event)) {
       updateHash({ event: initEvent }, true);
     }
@@ -220,6 +222,7 @@
       show: (id) => {
         allPanelSections.forEach(sections => showEvent(sections, id));
         selectEventInBar(selector, id);
+        if (onEventChanged) onEventChanged(id);
       }
     });
 
@@ -393,16 +396,62 @@
    */
   function handleMetricPage(metricPanels) {
     const allPanelSections = [];
+    const metricSupportedEvents = new Map(); // mp -> Set<eventId>
+
     metricPanels.forEach(mp => {
       const panels = Array.from(mp.querySelectorAll('.stat-panel'));
+      const supported = new Set();
       panels.forEach(p => {
         const sections = collectSections(p);
-        if (sections.length > 0) allPanelSections.push(sections);
+        if (sections.length > 0) {
+          allPanelSections.push(sections);
+          sections.forEach(s => supported.add(s.eventId));
+        }
       });
+      metricSupportedEvents.set(mp, supported);
     });
+
+    const onEventChanged = (eventId) => {
+      let activeMetricDisabled = false;
+      const validMetrics = [];
+
+      metricSupportedEvents.forEach((supportedSet, mp) => {
+        const metricId = mp.id.replace('metric-', '');
+        const hasData = supportedSet.has(eventId);
+
+        // 找下拉项
+        const ddItem = document.querySelector('.metric-dropdown-item[data-id="' + metricId + '"]');
+        if (ddItem) {
+          if (hasData) ddItem.classList.remove('disabled');
+          else ddItem.classList.add('disabled');
+        }
+        // 找药丸按钮
+        const btn = document.querySelector(`.metric-btn[onclick*="switchMetric"][onclick*="'${metricId}'"]`);
+        if (btn) {
+          if (hasData) btn.classList.remove('disabled');
+          else btn.classList.add('disabled');
+        }
+
+        if (hasData) validMetrics.push(metricId);
+        if (!hasData && mp.classList.contains('active')) {
+          activeMetricDisabled = true;
+        }
+      });
+
+      // 如果当前 metric 因为项目切换变成无数据，自动跳到第一个有效 metric
+      if (activeMetricDisabled && validMetrics.length > 0 && typeof switchMetric === 'function') {
+        const fallbackId = validMetrics.includes('single') ? 'single'
+          : (validMetrics.includes('average') ? 'average' : validMetrics[0]);
+        const ddFallback = document.querySelector('.metric-dropdown-item[data-id="' + fallbackId + '"]');
+        const btnFallback = document.querySelector(`.metric-btn[onclick*="switchMetric"][onclick*="'${fallbackId}'"]`);
+        if (ddFallback) ddFallback.click();
+        else if (btnFallback) btnFallback.click();
+      }
+    };
+
     // NOTE: 兼容下拉菜单（.metric-dropdown）和药丸按钮（.metric-selector）
     const insertBefore = document.querySelector('.metric-dropdown') || document.querySelector('.metric-selector') || metricPanels[0];
-    setupSelector(allPanelSections, insertBefore);
+    setupSelector(allPanelSections, insertBefore, onEventChanged);
   }
 
   /**
