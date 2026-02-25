@@ -1,4 +1,4 @@
-﻿# NOTE: 新人统计合并页 = wr_newcomer + wr_1st_wr
+# NOTE: 新人统计合并页 = wr_newcomer + wr_1st_wr
 # 支持 STATS_USE_CACHE=1 跳过 MySQL，直接从 .data_cache/ 读取 marshal 文件
 # 两个维度:
 #   1) 指标 (metric): Single / Average

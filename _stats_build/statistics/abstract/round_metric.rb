@@ -1,4 +1,4 @@
-﻿# NOTE: RoundMetric -- 抽象基类，从一轮的 5 次成绩 (value1-5) 中计算衍生指标
+# NOTE: RoundMetric -- 抽象基类，从一轮的 5 次成绩 (value1-5) 中计算衍生指标
 # 子类只需实现 compute_metric(values, r) 方法即可
 # 产出双视图 Tab：排名 (ranking_data) + 历史 (transform)
 #

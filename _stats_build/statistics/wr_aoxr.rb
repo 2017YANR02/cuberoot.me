@@ -1,4 +1,4 @@
-﻿# NOTE: 聚合页面——将 4 个 AoRounds 子类合并为一个 AoXR 入口
+# NOTE: 聚合页面——将 4 个 AoRounds 子类合并为一个 AoXR 入口
 # 用户通过选择器在 Ao1R / Ao2R / Ao3R / Ao4R 之间切换
 require_relative "abstract/ao_rounds"
 require_relative "../core/metric_layout"

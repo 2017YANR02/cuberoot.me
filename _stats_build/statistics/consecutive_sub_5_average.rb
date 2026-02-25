@@ -1,4 +1,4 @@
-﻿require_relative "../core/statistic"
+require_relative "../core/statistic"
 require_relative "../core/solve_time"
 require_relative "../core/stat_panel"
 
