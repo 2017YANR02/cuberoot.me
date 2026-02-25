@@ -263,7 +263,7 @@ STAT_TRANSLATIONS = {
   },
   "wr_average_history" => {
     title_zh: "世界纪录平均历史",
-    note_zh: "展示各项目世界纪录平均成绩随时间的变化。"
+    note_zh: "展示各项目世界纪录平均成绩的历史变化。对于 333mbf 和 333mbo，使用非官方的 Mo3（三次均值）代替。"
   },
   "wr_bao5" => {
     title_zh: "世界纪录 BAo5（最佳 5 次平均）历史",
@@ -332,7 +332,7 @@ STAT_TRANSLATIONS = {
   },
   "wr_metric" => {
     title_zh: "指标",
-    note_zh: "从一轮 5 次成绩中计算的各类指标的世界纪录历史与排名。"
+    note_zh: "从一轮成绩中计算的各类指标的世界纪录历史与排名。"
   },
   "yearly_rankings" => {
     title_zh: "年度排名",
