@@ -258,3 +258,18 @@ p+.metric-tab-wrap {
   border-color: rgba(138, 180, 248, 0.3);
   color: #8ab4f8
 }
+/* Metric Disabled States */
+.metric-dropdown-item.disabled {
+  color: #556070;
+  pointer-events: none;
+  background: transparent !important;
+  border-color: transparent !important;
+}
+
+.segmented-btn.metric-btn.disabled {
+  color: #556070;
+  pointer-events: none;
+  border-color: #4a6785;
+  background: transparent !important;
+  opacity: 0.5;
+}
