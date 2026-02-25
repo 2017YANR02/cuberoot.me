@@ -68,6 +68,7 @@
 | 20.67 | 19 | 22 | 21 | [Quad Cities Sunday 2025](https://www.worldcubeassociation.org/competitions/QuadCitiesSunday2025/results/all#e333fm_f) |
 | 20.67 | 25 | 21 | 16 | [Rubik's UK Championship FMC 2024](https://www.worldcubeassociation.org/competitions/RubiksUKChampionshipFMC2024/results/all#e333fm_f) |
 | 20.67 | 22 | 21 | 19 | [Singapore 3xFMCx3 2024](https://www.worldcubeassociation.org/competitions/Singapore3xFMCx32024/results/all#e333fm_1) |
+| 20.67 | 22 | 20 | 20 | [Singapore Championship 2026](https://www.worldcubeassociation.org/competitions/SingaporeChampionship2026/results/all#e333fm_f) |
 | 20.67 | 21 | 19 | 22 | [Southern Indiana Qualifier 2025](https://www.worldcubeassociation.org/competitions/SouthernIndianaQualifier2025/results/all#e333fm_f) |
 | 20.67 | 22 | 22 | 18 | [Tokyo Open FMC Winter 2025](https://www.worldcubeassociation.org/competitions/TokyoOpenFMCWinter2025/results/all#e333fm_f) |
 | 21.00 | 21 | 22 | 20 | [5BLD in a Madison Fall 2024](https://www.worldcubeassociation.org/competitions/5BLDinaMadisonFall2024/results/all#e333fm_f) |
@@ -103,4 +104,3 @@
 | 21.00 | 19 | 22 | 22 | [New England Championship 2023](https://www.worldcubeassociation.org/competitions/NewEnglandChampionship2023/results/all#e333fm_f) |
 | 21.00 | 20 | 21 | 22 | [New York Multimate PBQ II 2025](https://www.worldcubeassociation.org/competitions/NewYorkMultimatePBQII2025/results/all#e333fm_1) |
 | 21.00 | 22 | 23 | 18 | [New York Quiet Championship 2024](https://www.worldcubeassociation.org/competitions/NewYorkQuietChampionship2024/results/all#e333fm_f) |
-| 21.00 | 21 | 23 | 19 | [No Noise November Singapore 2023](https://www.worldcubeassociation.org/competitions/NoNoiseNovemberSingapore2023/results/all#e333fm_f) |

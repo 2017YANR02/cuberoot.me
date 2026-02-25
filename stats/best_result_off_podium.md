@@ -172,16 +172,16 @@
 
 | Person | Single | Average | Competition | Place |
 | :--- | ---: | ---: | :--- | :--: |
+| [Matthew Powell](https://www.worldcubeassociation.org/persons/2023POWE10) | 2.92 | **3.20** | [Singapore Championship 2026](https://www.worldcubeassociation.org/competitions/SingaporeChampionship2026/results/all#eclock_f) | 4 |
+| [Dayson Lu (吕昊骏)](https://www.worldcubeassociation.org/persons/2023LUDA02) | 3.02 | **3.29** | [Singapore Championship 2026](https://www.worldcubeassociation.org/competitions/SingaporeChampionship2026/results/all#eclock_f) | 5 |
 | [Anders Barhaugen](https://www.worldcubeassociation.org/persons/2015BARH01) | 3.09 | **3.33** | [WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/all#eclock_f) | 4 |
 | [Rex Ozsvath](https://www.worldcubeassociation.org/persons/2022OZSV04) | 3.00 | **3.34** | [Worlds Prep in Palisades 2025](https://www.worldcubeassociation.org/competitions/WorldsPrepinPalisades2025/results/all#eclock_f) | 4 |
 | [Aarni Salakari](https://www.worldcubeassociation.org/persons/2022SALA09) | 2.86 | **3.43** | [WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/all#eclock_f) | 5 |
+| [Karl Abarquez](https://www.worldcubeassociation.org/persons/2023ABAR02) | 2.11 | **3.45** | [Singapore Championship 2026](https://www.worldcubeassociation.org/competitions/SingaporeChampionship2026/results/all#eclock_f) | 6 |
 | [Kyle Jones](https://www.worldcubeassociation.org/persons/2022JONE11) | 2.72 | **3.45** | [WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/all#eclock_f) | 6 |
 | [Eryk Kasperek](https://www.worldcubeassociation.org/persons/2021KASP01) | 2.61 | **3.46** | [WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/all#eclock_f) | 7 |
 | [Zoei Principe](https://www.worldcubeassociation.org/persons/2022PRIN09) | 2.77 | **3.53** | [WCA Asian Championship 2024](https://www.worldcubeassociation.org/competitions/RubiksWCAAsianChampionship2024/results/all#eclock_f) | 4 |
 | [Ethan Zhuang](https://www.worldcubeassociation.org/persons/2018ZHUA10) | 2.72 | **3.54** | [CubingUSA All-Stars 2025](https://www.worldcubeassociation.org/competitions/CubingUSAAllStars2025/results/all#eclock_f) | 4 |
-| [Greyson James](https://www.worldcubeassociation.org/persons/2022JAME02) | 2.97 | **3.58** | [WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/all#eclock_f) | 8 |
-| [Quinn Maloney](https://www.worldcubeassociation.org/persons/2023MALO01) | 2.97 | **3.60** | [CubingUSA All-Stars 2025](https://www.worldcubeassociation.org/competitions/CubingUSAAllStars2025/results/all#eclock_f) | 5 |
-| [Kyler Kam Li Wei](https://www.worldcubeassociation.org/persons/2023WEIK01) | 3.43 | **3.65** | [Singapore Two-Day Nov 2025](https://www.worldcubeassociation.org/competitions/SingaporeTwoDayNov2025/results/all#eclock_f) | 4 |
 
 <h3 data-i18n-en="Skewb" data-i18n-zh="斜转">Skewb</h3>
 

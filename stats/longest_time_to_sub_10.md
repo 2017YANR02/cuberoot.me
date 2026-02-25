@@ -26,6 +26,7 @@
 | [Hana Nakano](https://www.worldcubeassociation.org/persons/2009DAVI01) | 13.84 |
 | [Marco Rota](https://www.worldcubeassociation.org/persons/2009ROTA01) | 13.83 |
 | [Weijie Jian (简维杰)](https://www.worldcubeassociation.org/persons/2011JIAN07) | 13.60 |
+| [Jackson Taylor](https://www.worldcubeassociation.org/persons/2012TAYL02) | 13.59 |
 | [Ishmam Mirza](https://www.worldcubeassociation.org/persons/2011MIRZ01) | 13.59 |
 | [Rémi Esturoune](https://www.worldcubeassociation.org/persons/2010ESTU01) | 13.37 |
 | [Yen-Pin Xiao (蕭彥平)](https://www.worldcubeassociation.org/persons/2010XIAO01) | 13.36 |
@@ -73,6 +74,7 @@
 | [Jorge Martín Espinosa](https://www.worldcubeassociation.org/persons/2012ESPI02) | 11.48 |
 | [Nurym Kudaibergen](https://www.worldcubeassociation.org/persons/2011KUDA01) | 11.48 |
 | [Bohdan Yaryha (Богдан Ярига)](https://www.worldcubeassociation.org/persons/2012YARY01) | 11.46 |
+| [Alexander Karlov](https://www.worldcubeassociation.org/persons/2014KARL01) | 11.44 |
 | [David Lin](https://www.worldcubeassociation.org/persons/2012LIND02) | 11.44 |
 | [Angus Hannelly](https://www.worldcubeassociation.org/persons/2013HANN01) | 11.43 |
 | [Brock Hamann](https://www.worldcubeassociation.org/persons/2012HAMA03) | 11.36 |
@@ -100,5 +102,3 @@
 | [Ottfried Kejs](https://www.worldcubeassociation.org/persons/2012KEJS01) | 10.83 |
 | [Carsten Matheus](https://www.worldcubeassociation.org/persons/2014MATH02) | 10.80 |
 | [Dominik Beese](https://www.worldcubeassociation.org/persons/2013BEES01) | 10.79 |
-| [Simon Stannek](https://www.worldcubeassociation.org/persons/2012STAN04) | 10.75 |
-| [Tsang Hon Pong (曾漢邦)](https://www.worldcubeassociation.org/persons/2014PONG01) | 10.74 |
