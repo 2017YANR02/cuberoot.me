@@ -1,0 +1,18 @@
+# NOTE: 统一使用 LF 行尾符（部署目标为 Linux/GitHub Pages）
+# 防止 Windows git 自动将 LF 转换为 CRLF
+
+* text=auto eol=lf
+
+# 二进制文件不做行尾处理
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.wasm binary
+*.marshal binary
