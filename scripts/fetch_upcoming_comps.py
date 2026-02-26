@@ -4,11 +4,16 @@
 # NOTE: 顶尖选手近期比赛追踪 - 数据抓取脚本
 # 遵循原则: DRY, 模块化, 前后端分离, 防 BUG (限流重试)
 #
-# 1. 从 stats/wr_metric.md 的排名和历史区域提取去重后的顶尖选手 WCA ID
-#    并记录每位选手在哪些项目上榜及是否曾破 WR
-# 2. 爬取 WCA API 获取此名单内所有人 upcoming_competitions
-# 3. 数据清洗、去重和按时间线聚合
-# 4. 生成极简 JSON 给前端页面使用
+# 数据源:
+#   1. WCA API — 全球比赛 + 选手注册信息
+#   2. cubing.com（粗饼网）— 中国内地比赛（WCA API 不覆盖）
+#
+# 流程:
+#   1. 从 stats/wr_metric.md 提取去重后的顶尖选手 WCA ID + 项目 + WR 标记
+#   2. 爬取 WCA API 获取名单内所有人的 upcoming_competitions
+#   3. 从 cubing.com 获取中国内地比赛列表 + 选手 HTML 页面，交叉匹配 top cubers
+#   4. 数据清洗、去重、按时间线聚合
+#   5. 生成极简 JSON 给前端页面使用
 
 import re
 import json
