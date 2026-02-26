@@ -287,7 +287,7 @@ description: Track upcoming WCA competitions of the world's top cubers.
         Each cuber's tag shows their relevant events, with <span class="wr-badge" style="vertical-align: baseline;">WR</span> indicating a former or current World Record holder in that event.
     </p>
     <div class="toolbar">
-        <input type="text" class="search-box" id="search-input" placeholder="Search by competition name or cuber name...">
+        <input type="text" class="search-box" id="search-input" placeholder="Search by competition name, cuber name, or WCA ID...">
         <button class="toggle-btn" id="toggle-all-btn">▲ Collapse All</button>
     </div>
     
