@@ -198,6 +198,54 @@ description: Track upcoming WCA competitions of the world's top cubers.
     color: #8ab4f8;
     font-size: 16px;
 }
+
+/* 搜索框 */
+.search-box {
+    width: 100%;
+    padding: 10px 14px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(138, 180, 248, 0.2);
+    border-radius: 8px;
+    background: rgba(25, 30, 45, 0.6);
+    color: #e8eaed;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+.search-box:focus {
+    border-color: rgba(138, 180, 248, 0.5);
+}
+.search-box::placeholder {
+    color: #6b7280;
+}
+
+/* 月份分组折叠 */
+.month-group summary {
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    color: #8ab4f8;
+    padding: 8px 0;
+    margin-bottom: 8px;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.month-group summary::before {
+    content: '▶';
+    font-size: 10px;
+    transition: transform 0.2s;
+}
+.month-group[open] summary::before {
+    transform: rotate(90deg);
+}
+.month-group summary .comp-count {
+    font-size: 13px;
+    font-weight: 400;
+    color: #9aa0a6;
+}
 </style>
 
 <div id="upcoming-comps-container">
@@ -205,6 +253,8 @@ description: Track upcoming WCA competitions of the world's top cubers.
         <h1>Top Cubers' Upcoming Comps</h1>
         <div class="timeline-meta" id="update-meta">加载中...</div>
     </div>
+    
+    <input type="text" class="search-box" id="search-input" placeholder="Search by competition name or cuber name...">
     
     <div id="timeline-body" class="timeline">
         <div class="state-message">Loading schedule data...</div>
@@ -216,22 +266,74 @@ document.addEventListener('DOMContentLoaded', function() {
     const DATA_URL = '{{ site.baseurl }}/stats/upcoming_comps.json';
     const timelineBody = document.getElementById('timeline-body');
     const updateMeta = document.getElementById('update-meta');
+    const searchInput = document.getElementById('search-input');
 
-    // 工具函数：格式化日期 (e.g., "2026-03-07" -> "Mar 7")
     function formatDate(dateStr) {
         if (!dateStr) return '';
         const d = new Date(dateStr);
         return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     }
 
-    // 渲染主流程
+    // NOTE: 将日期字符串转为年月分组键 — “March 2026”
+    function getMonthKey(dateStr) {
+        const d = new Date(dateStr);
+        return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    }
+
+    // 渲染单张比赛卡片的 HTML
+    function renderCompCard(comp) {
+        const isClash = comp.top_cubers.length >= 3;
+        const highlightClass = isClash ? 'highlight' : '';
+        const clashBadge = isClash ? '<span class="badge-clash">🔥 Clashing</span>' : '';
+
+        let dateDisplay = formatDate(comp.start_date);
+        if (comp.end_date && comp.end_date !== comp.start_date) {
+            dateDisplay += ' - ' + formatDate(comp.end_date);
+        }
+
+        const locDisplay = `${comp.city}, ${comp.country}`;
+
+        const cubersHtml = comp.top_cubers.map(c => {
+            let evHtml = '';
+            if (c.events && c.events.length > 0) {
+                const evParts = c.events.map(ev => {
+                    const wrBadge = ev.wr ? '<span class="wr-badge">WR</span>' : '';
+                    return `${ev.id}${wrBadge}`;
+                });
+                evHtml = `<span class="event-label">${evParts.join(' ')}</span>`;
+            }
+            return `<a href="https://www.worldcubeassociation.org/persons/${c.id}" class="cuber-tag" target="_blank" rel="noopener noreferrer">${c.name} ${evHtml}</a>`;
+        }).join('');
+
+        const eventHtml = comp.events ? `<div style="font-size: 12px; color: #556070; margin-top: 4px;">Events: ${comp.events.join(', ')}</div>` : '';
+
+        return `
+        <div class="comp-card ${highlightClass}" data-comp-name="${comp.name.toLowerCase()}" data-cuber-names="${comp.top_cubers.map(c => c.name.toLowerCase()).join(' ')}">
+            <div class="comp-header">
+                <h2 class="comp-title">
+                    <a href="https://www.worldcubeassociation.org/competitions/${comp.id}" target="_blank" rel="noopener noreferrer">
+                        ${comp.name}
+                    </a>
+                    ${clashBadge}
+                </h2>
+                <div class="comp-date">${dateDisplay}</div>
+            </div>
+            <div class="comp-location">📍 ${locDisplay}</div>
+            ${eventHtml}
+            <div class="cuber-list">
+                ${cubersHtml}
+            </div>
+        </div>
+        `;
+    }
+
+    // 主渲染流程
     fetch(DATA_URL)
         .then(response => {
             if (!response.ok) throw new Error('Failed to load JSON');
             return response.json();
         })
         .then(data => {
-            // 更新元信息
             let timeStr = new Date(data.updated_at).toLocaleString();
             updateMeta.textContent = `Updated: ${timeStr} | Tracking ${data.total_cubers_tracked} players`;
 
@@ -241,57 +343,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            // 生成 HTML
-            let html = '';
+            // NOTE: 按月份分组
+            const monthGroups = new Map();
             comps.forEach(comp => {
-                // 如果单场比赛有多于等于 3 名顶尖玩家参加，视为 "神仙打架"
-                const isClash = comp.top_cubers.length >= 3;
-                const highlightClass = isClash ? 'highlight' : '';
-                const clashBadge = isClash ? '<span class="badge-clash">🔥 Clashing</span>' : '';
+                const key = getMonthKey(comp.start_date);
+                if (!monthGroups.has(key)) monthGroups.set(key, []);
+                monthGroups.get(key).push(comp);
+            });
 
-                // 日期字符串
-                let dateDisplay = formatDate(comp.start_date);
-                if (comp.end_date && comp.end_date !== comp.start_date) {
-                    dateDisplay += ' - ' + formatDate(comp.end_date);
-                }
-
-                // 地区
-                const locDisplay = `${comp.city}, ${comp.country}`;
-
-                // 选手标签（含事件简码 + WR 徽章）
-                const cubersHtml = comp.top_cubers.map(c => {
-                    // NOTE: 构建事件标签，如 "333 WR 444 555"
-                    let evHtml = '';
-                    if (c.events && c.events.length > 0) {
-                        const evParts = c.events.map(ev => {
-                            const wrBadge = ev.wr ? '<span class="wr-badge">WR</span>' : '';
-                            return `${ev.id}${wrBadge}`;
-                        });
-                        evHtml = `<span class="event-label">${evParts.join(' ')}</span>`;
-                    }
-                    return `<a href="https://www.worldcubeassociation.org/persons/${c.id}" class="cuber-tag" target="_blank" rel="noopener noreferrer">${c.name} ${evHtml}</a>`;
-                }).join('');
-
-                const eventHtml = comp.events ? `<div style="font-size: 12px; color: #556070; margin-top: 4px;">Events: ${comp.events.join(', ')}</div>` : '';
-
-                html += `
-                <div class="comp-card ${highlightClass}">
-                    <div class="comp-header">
-                        <h2 class="comp-title">
-                            <a href="https://www.worldcubeassociation.org/competitions/${comp.id}" target="_blank" rel="noopener noreferrer">
-                                ${comp.name}
-                            </a>
-                            ${clashBadge}
-                        </h2>
-                        <div class="comp-date">${dateDisplay}</div>
-                    </div>
-                    <div class="comp-location">📍 ${locDisplay}</div>
-                    ${eventHtml}
-                    <div class="cuber-list">
-                        ${cubersHtml}
-                    </div>
-                </div>
-                `;
+            let html = '';
+            monthGroups.forEach((groupComps, monthName) => {
+                html += `<details class="month-group" open>
+                    <summary>${monthName} <span class="comp-count">(${groupComps.length} comps)</span></summary>`;
+                groupComps.forEach(comp => {
+                    html += renderCompCard(comp);
+                });
+                html += '</details>';
             });
 
             timelineBody.innerHTML = html;
@@ -300,5 +367,24 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error fetching comp data:', error);
             timelineBody.innerHTML = '<div class="state-message" style="color: #f28b82;">Failed to load upcoming competitions data. Please try again later.</div>';
         });
+
+    // NOTE: 搜索过滤 — 实时匹配比赛名或选手名
+    searchInput.addEventListener('input', function() {
+        const query = this.value.toLowerCase().trim();
+        const cards = timelineBody.querySelectorAll('.comp-card');
+        cards.forEach(card => {
+            const compName = card.getAttribute('data-comp-name') || '';
+            const cuberNames = card.getAttribute('data-cuber-names') || '';
+            const match = !query || compName.includes(query) || cuberNames.includes(query);
+            card.style.display = match ? '' : 'none';
+        });
+
+        // NOTE: 如果某个月份分组内所有卡片都被隐藏，则隐藏整个分组
+        const groups = timelineBody.querySelectorAll('.month-group');
+        groups.forEach(group => {
+            const visibleCards = group.querySelectorAll('.comp-card:not([style*="display: none"])');
+            group.style.display = visibleCards.length > 0 ? '' : 'none';
+        });
+    });
 });
 </script>
