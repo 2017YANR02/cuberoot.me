@@ -391,26 +391,31 @@ description: Track upcoming WCA competitions of the world's top cubers.
 
 <div id="upcoming-comps-container">
     <div class="timeline-header">
-        <h1>Top Cubers' Upcoming Comps</h1>
-        <div class="timeline-meta" id="update-meta">加载中...</div>
+        <h1 data-i18n-en="Top Cubers' Upcoming Comps" data-i18n-zh="顶尖选手近期比赛">Top Cubers' Upcoming Comps</h1>
+        <div class="timeline-meta" id="update-meta" data-i18n-en="Loading..." data-i18n-zh="加载中...">Loading...</div>
     </div>
     
-    <p style="font-size: 13px; color: #9aa0a6; margin: 0 0 16px 0; line-height: 1.6;">
+    <p id="desc-en" style="font-size: 13px; color: #9aa0a6; margin: 0 0 16px 0; line-height: 1.6;">
         Tracking cubers who are currently <strong style="color:#e8eaed">ranked in the world top 10</strong> (single or average) in any official event, 
         or have <strong style="color:#e8eaed">held a World Record</strong> at any point in history.
         Each cuber's tag shows their relevant events, with <span style="color:#d93025;">red-colored</span> icons indicating a former or current World Record holder in that event.
         <br>Monthly stats: 📋 competitions · 🌍 countries · 👤 cubers · 🔥 clashing (3+ top cubers) · ⏰ starting within 7 days.
     </p>
+    <p id="desc-zh" style="font-size: 13px; color: #9aa0a6; margin: 0 0 16px 0; line-height: 1.6; display: none;">
+        追踪目前在任意官方项目中<strong style="color:#e8eaed">世界排名前 10</strong>（单次或平均）的选手，以及历史上<strong style="color:#e8eaed">曾保持过世界纪录</strong>的选手。
+        每位选手标签显示其上榜项目，<span style="color:#d93025;">红色</span>图标表示该项目的现任或前任世界纪录保持者。
+        <br>月度统计：📋 比赛 · 🌍 国家 · 👤 选手 · 🔥 扎堆（3+ 位顶尖选手）· ⏰ 7 天内开赛。
+    </p>
     <div class="toolbar">
-        <input type="text" class="search-box" id="search-input" placeholder="Search by competition, cuber, WCA ID, or country...">
+        <input type="text" class="search-box" id="search-input" placeholder="Search by competition, cuber, WCA ID, or country..." data-placeholder-en="Search by competition, cuber, WCA ID, or country..." data-placeholder-zh="搜索比赛、选手、WCA ID 或国家...">
         <select class="country-filter" id="country-filter">
-            <option value="">All Countries</option>
+            <option value="" data-i18n-en="All Countries" data-i18n-zh="所有国家">All Countries</option>
         </select>
-        <button class="toggle-btn" id="toggle-all-btn">▲ Collapse All</button>
+        <button class="toggle-btn" id="toggle-all-btn" data-i18n-en="▲ Collapse All" data-i18n-zh="▲ 全部折叠">▲ Collapse All</button>
     </div>
     
     <div id="timeline-body" class="timeline">
-        <div class="state-message">Loading schedule data...</div>
+        <div class="state-message" data-i18n-en="Loading schedule data..." data-i18n-zh="加载赛事数据...">Loading schedule data...</div>
     </div>
 </div>
 
@@ -476,23 +481,38 @@ document.addEventListener('DOMContentLoaded', function() {
         'ft':'333ft','mbo':'333mbo','mag':'magic','mmag':'mmagic',
     };
 
-    // 获取国家全名，fallback 到 ISO2 码
+    // NOTE: 语言辅助函数 — 复用 i18n.js 的 locale 状态
+    function isZh() { return window.I18n?.locale === 'zh'; }
+
+    // 获取国家全名（英文），fallback 到 ISO2 码
     function getCountryName(iso2) {
         return COUNTRY_MAP[iso2] || iso2;
     }
 
-    // NOTE: 构建搜索用的国家文本（ISO码 + 全名 + 别名），全小写
+    // NOTE: 获取国家显示名（根据当前语言）
+    function getCountryDisplay(iso2) {
+        const en = getCountryName(iso2);
+        if (isZh() && window.I18n?._countryZh) {
+            return I18n._countryZh[en] || en;
+        }
+        return en;
+    }
+
+    // NOTE: 构建搜索用的国家文本（ISO码 + 英文名 + 别名 + 中文名），全小写
     function buildCountrySearchText(iso2) {
-        const name = getCountryName(iso2).toLowerCase();
+        const enName = getCountryName(iso2).toLowerCase();
         const aliases = Object.entries(COUNTRY_ALIASES)
             .filter(([, v]) => v === iso2)
             .map(([k]) => k);
-        return [iso2.toLowerCase(), name, ...aliases].join(' ');
+        // NOTE: 追加中文国家名，支持搜索"中国""日本"等
+        const zhName = (window.I18n?._countryZh?.[COUNTRY_MAP[iso2]] || '').toLowerCase();
+        return [iso2.toLowerCase(), enName, ...aliases, zhName].filter(Boolean).join(' ');
     }
 
     function formatDate(dateStr) {
         if (!dateStr) return '';
         const d = new Date(dateStr);
+        if (isZh()) return `${d.getMonth() + 1}月${d.getDate()}日`;
         return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     }
 
@@ -524,11 +544,23 @@ document.addEventListener('DOMContentLoaded', function() {
             dateDisplay += ' - ' + formatDate(comp.end_date);
         }
 
-        const countryName = getCountryName(comp.country);
-        const locDisplay = `${comp.city}, ${countryName}`;
+        // NOTE: 根据当前语言选择比赛名和城市
+        const displayName = isZh() ? (comp.name_zh || comp.name) : comp.name;
+        const displayCity = isZh() ? (comp.city_zh || comp.city) : comp.city;
+        const countryDisplay = getCountryDisplay(comp.country);
+        const locDisplay = `${displayCity}, ${countryDisplay}`;
         const countrySearchText = buildCountrySearchText(comp.country);
+        // NOTE: 搜索属性同时存中英文，确保两种语言下搜索都命中
+        const searchName = `${comp.name} ${comp.name_zh || ''} ${comp.city} ${comp.city_zh || ''}`.toLowerCase();
 
         const cubersHtml = comp.top_cubers.map(c => {
+            // NOTE: 中文模式下简化选手姓名（与 i18n.js _applyLocalNames 逻辑一致）
+            // "Yiheng Wang (王艺衡)" → "王艺衡"（CJK）；非 CJK 括号内容 → 保留罗马名
+            let displayCuberName = c.name;
+            if (isZh()) {
+                const m = c.name.match(/^(.+?)\s*\(([^)]+)\)$/);
+                if (m && /[\u4e00-\u9fff]/.test(m[2])) displayCuberName = m[2];
+            }
             let evHtml = '';
             if (c.events && c.events.length > 0) {
                 const evParts = c.events.map(ev => {
@@ -538,17 +570,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 evHtml = `<span class="event-label">${evParts.join(' ')}</span>`;
             }
-            return `<a href="https://www.worldcubeassociation.org/persons/${c.id}" class="cuber-tag" target="_blank" rel="noopener noreferrer">${c.name} ${evHtml}</a>`;
+            return `<a href="https://www.worldcubeassociation.org/persons/${c.id}" class="cuber-tag" target="_blank" rel="noopener noreferrer">${displayCuberName} ${evHtml}</a>`;
         }).join('');
 
         const eventHtml = comp.events ? `<div style="display:inline-flex;align-items:center;gap:4px;color:#556070;transform:translateY(-5px);">${comp.events.map(e => `<span class="cubing-icon event-${SHORT_TO_EVENT_ID[e] || e}" style="font-size:14px;"></span>`).join('')}</div>` : '';
 
         return `
-        <div class="comp-card ${highlightClass} ${soonClass}" data-comp-name="${comp.name.toLowerCase()}" data-cuber-names="${comp.top_cubers.map(c => c.name.toLowerCase() + ' ' + c.id.toLowerCase()).join(' ')}" data-country="${comp.country}" data-country-search="${countrySearchText}">
+        <div class="comp-card ${highlightClass} ${soonClass}" data-comp-name="${searchName}" data-cuber-names="${comp.top_cubers.map(c => c.name.toLowerCase() + ' ' + c.id.toLowerCase()).join(' ')}" data-country="${comp.country}" data-country-search="${countrySearchText}">
             <div class="comp-header">
                 <h2 class="comp-title">
                     <a href="https://www.worldcubeassociation.org/competitions/${comp.id}" target="_blank" rel="noopener noreferrer">
-                        ${comp.name.includes('Championship') ? '🏆 ' : ''}<span class="fi fi-${comp.country.toLowerCase()}" style="margin-right:6px;font-size:0.8em;"></span>${comp.name}
+                        ${comp.name.includes('Championship') ? '🏆 ' : ''}<span class="fi fi-${comp.country.toLowerCase()}" style="margin-right:6px;font-size:0.8em;"></span>${displayName}
                     </a>${clashBadge}${soonBadge}
                 </h2>
                 <div class="comp-date">${dateDisplay}</div>
@@ -587,78 +619,117 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 主渲染流程
+    // NOTE: 缓存 JSON 数据，供语言切换时重渲染
+    let cachedData = null;
+
+    // NOTE: 切换描述段落和 placeholder 的语言
+    function applyLangUI() {
+        const zh = isZh();
+        const descEn = document.getElementById('desc-en');
+        const descZh = document.getElementById('desc-zh');
+        if (descEn) descEn.style.display = zh ? 'none' : '';
+        if (descZh) descZh.style.display = zh ? '' : 'none';
+        // NOTE: 切换搜索框 placeholder
+        const si = document.getElementById('search-input');
+        if (si) si.placeholder = si.getAttribute(zh ? 'data-placeholder-zh' : 'data-placeholder-en') || si.placeholder;
+    }
+
+    // NOTE: 主渲染函数 — 从 data 渲染整个页面（可重复调用）
+    function renderAll(data) {
+        const zh = isZh();
+        let timeStr = new Date(data.updated_at).toLocaleString();
+        updateMeta.textContent = zh
+            ? `更新于: ${timeStr} | 追踪 ${data.total_cubers_tracked} 位选手`
+            : `Updated: ${timeStr} | Tracking ${data.total_cubers_tracked} players`;
+        // NOTE: 清除 update-meta 的 data-i18n 属性，防止 i18n.js 覆盖动态设置的文本
+        updateMeta.removeAttribute('data-i18n-en');
+        updateMeta.removeAttribute('data-i18n-zh');
+
+        const comps = data.competitions || [];
+        if (comps.length === 0) {
+            timelineBody.innerHTML = `<div class="state-message">${zh ? '未找到追踪选手的近期比赛。' : 'No upcoming competitions found for the tracked players.'}</div>`;
+            return;
+        }
+
+        // NOTE: 按月份分组
+        const monthGroups = new Map();
+        comps.forEach(comp => {
+            const key = getMonthKey(comp.start_date);
+            if (!monthGroups.has(key)) monthGroups.set(key, []);
+            monthGroups.get(key).push(comp);
+        });
+
+        // NOTE: 重建国家下拉框（语言切换后显示名会变）
+        const savedCountry = countryFilter.value;
+        // 保留第一个 "All Countries" 选项，清除其余
+        while (countryFilter.options.length > 1) countryFilter.remove(1);
+        const countryCounts = {};
+        comps.forEach(c => {
+            countryCounts[c.country] = (countryCounts[c.country] || 0) + 1;
+        });
+        Object.entries(countryCounts)
+            .sort((a, b) => b[1] - a[1])
+            .forEach(([iso2, count]) => {
+                const opt = document.createElement('option');
+                opt.value = iso2;
+                opt.textContent = `${getCountryDisplay(iso2)} (${count})`;
+                countryFilter.appendChild(opt);
+            });
+        countryFilter.value = savedCountry;
+
+        let html = '';
+        monthGroups.forEach((groupComps, monthName) => {
+            // NOTE: 计算月份统计摘要
+            const countrySet = new Set(groupComps.map(c => c.country));
+            const cuberSet = new Set();
+            let clashCount = 0;
+            groupComps.forEach(c => {
+                if (c.top_cubers.length >= 3) clashCount++;
+                c.top_cubers.forEach(p => cuberSet.add(p.id));
+            });
+
+            // NOTE: \u00a0 是不换行空格，用于补位对齐数字列
+            const pad = (n, w=3) => String(n).padStart(w, '\u00a0');
+            const statsHtml = `<span class="month-stats">
+                <span>📋 ${pad(groupComps.length)}</span>
+                <span>🌍 ${pad(countrySet.size, 2)}</span>
+                <span>👤 ${pad(cuberSet.size)}</span>
+                ${clashCount > 0 ? `<span>🔥 ${pad(clashCount, 2)}</span>` : ''}
+            </span>`;
+
+            html += `<details class="month-group" open>
+                <summary>${monthName} ${statsHtml}</summary>`;
+            groupComps.forEach(comp => {
+                html += renderCompCard(comp);
+            });
+            html += '</details>';
+        });
+
+        timelineBody.innerHTML = html;
+        applyLangUI();
+        applyFilters();
+    }
+
+    // 主加载流程
     fetch(DATA_URL)
         .then(response => {
             if (!response.ok) throw new Error('Failed to load JSON');
             return response.json();
         })
         .then(data => {
-            let timeStr = new Date(data.updated_at).toLocaleString();
-            updateMeta.textContent = `Updated: ${timeStr} | Tracking ${data.total_cubers_tracked} players`;
-
-            const comps = data.competitions || [];
-            if (comps.length === 0) {
-                timelineBody.innerHTML = '<div class="state-message">No upcoming competitions found for the tracked players.</div>';
-                return;
-            }
-
-            // NOTE: 按月份分组
-            const monthGroups = new Map();
-            comps.forEach(comp => {
-                const key = getMonthKey(comp.start_date);
-                if (!monthGroups.has(key)) monthGroups.set(key, []);
-                monthGroups.get(key).push(comp);
-            });
-
-            // NOTE: 收集所有国家 → 按出现频次降序填充下拉框
-            const countryCounts = {};
-            comps.forEach(c => {
-                countryCounts[c.country] = (countryCounts[c.country] || 0) + 1;
-            });
-            const sortedCountries = Object.entries(countryCounts)
-                .sort((a, b) => b[1] - a[1]);
-            sortedCountries.forEach(([iso2, count]) => {
-                const opt = document.createElement('option');
-                opt.value = iso2;
-                opt.textContent = `${getCountryName(iso2)} (${count})`;
-                countryFilter.appendChild(opt);
-            });
-
-            let html = '';
-            monthGroups.forEach((groupComps, monthName) => {
-                // NOTE: 计算月份统计摘要
-                const countrySet = new Set(groupComps.map(c => c.country));
-                const cuberSet = new Set();
-                let clashCount = 0;
-                groupComps.forEach(c => {
-                    if (c.top_cubers.length >= 3) clashCount++;
-                    c.top_cubers.forEach(p => cuberSet.add(p.id));
-                });
-
-                // NOTE: \u00a0 是不换行空格，用于补位对齐数字列
-                const pad = (n, w=3) => String(n).padStart(w, '\u00a0');
-                const statsHtml = `<span class="month-stats">
-                    <span>📋 ${pad(groupComps.length)}</span>
-                    <span>🌍 ${pad(countrySet.size, 2)}</span>
-                    <span>👤 ${pad(cuberSet.size)}</span>
-                    ${clashCount > 0 ? `<span>🔥 ${pad(clashCount, 2)}</span>` : ''}
-                </span>`;
-
-                html += `<details class="month-group" open>
-                    <summary>${monthName} ${statsHtml}</summary>`;
-                groupComps.forEach(comp => {
-                    html += renderCompCard(comp);
-                });
-                html += '</details>';
-            });
-
-            timelineBody.innerHTML = html;
+            cachedData = data;
+            renderAll(data);
         })
         .catch(error => {
             console.error('Error fetching comp data:', error);
-            timelineBody.innerHTML = '<div class="state-message" style="color: #f28b82;">Failed to load upcoming competitions data. Please try again later.</div>';
+            const msg = isZh() ? '加载近期比赛数据失败，请稍后重试。' : 'Failed to load upcoming competitions data. Please try again later.';
+            timelineBody.innerHTML = `<div class="state-message" style="color: #f28b82;">${msg}</div>`;
         });
+
+    // NOTE: 监听语言切换事件，用缓存数据重渲染
+    window.addEventListener('i18n:locale-changed', () => {
+        if (cachedData) renderAll(cachedData);
+    });
 
     // NOTE: 搜索和国家过滤都调用统一入口
     searchInput.addEventListener('input', applyFilters);
@@ -671,7 +742,9 @@ document.addEventListener('DOMContentLoaded', function() {
         allExpanded = !allExpanded;
         const groups = timelineBody.querySelectorAll('.month-group');
         groups.forEach(g => { g.open = allExpanded; });
-        toggleBtn.textContent = allExpanded ? '▲ Collapse All' : '▼ Expand All';
+        toggleBtn.textContent = allExpanded
+            ? (isZh() ? '▲ 全部折叠' : '▲ Collapse All')
+            : (isZh() ? '▼ 全部展开' : '▼ Expand All');
     });
 });
 </script>
