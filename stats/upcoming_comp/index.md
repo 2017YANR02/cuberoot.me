@@ -354,7 +354,7 @@ description: Track upcoming WCA competitions of the world's top cubers.
         gap: 4px;
     }
     .timeline-header h1 {
-        font-size: 18px;
+        font-size: 20px;
     }
 
     /* display:contents 让 <h2> 盒模型消失，子元素直接进入 comp-header flex 布局 */
@@ -510,11 +510,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const highlightClass = isClash ? 'highlight' : '';
         const clashBadge = isClash ? '<span class="badge-clash">🔥</span>' : '';
 
-        // NOTE: 7 天内即将开始的比赛高亮
+        // NOTE: 7 天内即将开始且尚未结束的比赛高亮
         const now = new Date();
         const startDate = new Date(comp.start_date + 'T00:00:00');
+        const endDate = new Date((comp.end_date || comp.start_date) + 'T23:59:59');
         const daysUntil = startDate - now;
-        const isSoon = daysUntil >= 0 && daysUntil <= SOON_MS;
+        const isSoon = now <= endDate && daysUntil <= SOON_MS;
         const soonClass = isSoon ? 'soon' : '';
         const soonBadge = isSoon ? '<span class="badge-soon">⏰</span>' : '';
 
