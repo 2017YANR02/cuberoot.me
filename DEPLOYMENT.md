@@ -274,7 +274,21 @@ playwright install chromium
 
 **页面**：[/stats/upcoming_comp/](https://ruiminyan.github.io/stats/upcoming_comp/)
 
-追踪 432 名顶尖选手（WR 指标排名 + WR 历史）的近期 WCA 比赛，展示事件标签和 WR 徽章。
+追踪 434 名顶尖选手（WR 指标排名 + WR 历史）的近期 WCA 比赛，展示事件标签和 WR 徽章。
+
+### 数据源
+
+| 数据源 | 用途 | 方式 |
+|--------|------|------|
+| WCA API | 全球比赛 + 选手注册 | JSON API |
+| cubing.com（粗饼网）| 中国内地比赛（WCA API 不覆盖）| JSON API（比赛列表）+ HTML 爬取（选手页面）|
+
+cubing.com 集成流程：
+1. `cubing.com/api/competition` → 获取 WCA 类型比赛列表
+2. `cubing.com/competition/{alias}/competitors` → 爬取选手 HTML，提取 WCA ID
+3. 与 top cubers 名单交叉匹配，有匹配才加入
+4. comp ID = alias 去连字符（如 `Xianju-NxN-2026` → `XianjuNxN2026`），与 WCA 链接一致
+5. 整体 `try/except` 降级——cubing.com 不可用时不影响 WCA 数据
 
 ### 运行脚本
 
@@ -294,8 +308,13 @@ python scripts/fetch_upcoming_comps.py
 |------|------|
 | 缓存目录 | `.upcoming_cache/`（已在 `.gitignore`） |
 | TTL | 24 小时 |
-| 首次运行 | ~15 分钟（432 人 × 0.5s API 延迟） |
-| 缓存运行 | ~0.12 秒 |
+| 首次运行 | ~15 分钟（434 人 × 0.5s API 延迟 + cubing.com 8 场 × 0.5s）|
+| 缓存运行 | ~5 秒 |
+
+缓存文件：
+- `{WCA_ID}.json` — 每位选手的 WCA API 响应
+- `_cubing_china_list.json` — cubing.com 比赛列表
+- `_cubing_china_{alias}.html` — 各场 CN 比赛的选手页面 HTML
 
 ### 输出
 
@@ -309,6 +328,7 @@ python scripts/fetch_upcoming_comps.py
 - 只展示到**明年底**（当前年+1），排除遥远的占位赛事
 - API 返回 404 的选手自动跳过（退役/无网站账号）
 - 事件按 WCA 官方顺序排列，使用短名（`333`→`3`, `pyram`→`py`）
+- CN 比赛的 `events` 为空（cubing.com API 不提供），前端自动跳过事件图标行
 
 ### 前端功能
 
