@@ -334,7 +334,7 @@ description: Track upcoming WCA competitions of the world's top cubers.
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    min-width: 100px;
+    min-width: 50px;
 }
 </style>
 
@@ -348,6 +348,7 @@ description: Track upcoming WCA competitions of the world's top cubers.
         Tracking cubers who are currently <strong style="color:#e8eaed">ranked in the world top 10</strong> (single or average) in any official event, 
         or have <strong style="color:#e8eaed">held a World Record</strong> at any point in history.
         Each cuber's tag shows their relevant events, with <span class="wr-badge" style="vertical-align: baseline;">WR</span> indicating a former or current World Record holder in that event.
+        <br>Monthly stats: 📋 competitions · 🌍 countries · 👤 cubers · 🔥 clashing (3+ top cubers).
     </p>
     <div class="toolbar">
         <input type="text" class="search-box" id="search-input" placeholder="Search by competition, cuber, WCA ID, or country...">
@@ -574,10 +575,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 // NOTE: \u00a0 是不换行空格，用于补位对齐数字列
                 const pad = (n, w=3) => String(n).padStart(w, '\u00a0');
                 const statsHtml = `<span class="month-stats">
-                    <span>📋 ${pad(groupComps.length)} comps</span>
-                    <span>🌍 ${pad(countrySet.size, 2)} countries</span>
-                    <span>👤 ${pad(cuberSet.size)} cubers</span>
-                    ${clashCount > 0 ? `<span>🔥 ${pad(clashCount, 2)} clashing</span>` : ''}
+                    <span>📋 ${pad(groupComps.length)}</span>
+                    <span>🌍 ${pad(countrySet.size, 2)}</span>
+                    <span>👤 ${pad(cuberSet.size)}</span>
+                    ${clashCount > 0 ? `<span>🔥 ${pad(clashCount, 2)}</span>` : ''}
                 </span>`;
 
                 html += `<details class="month-group" open>
