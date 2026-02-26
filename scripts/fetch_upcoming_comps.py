@@ -191,6 +191,7 @@ def _aggregate_comps(comps_map, comps, wca_id, cuber_info):
                 "start_date": comp["start_date"],
                 "end_date": comp["end_date"],
                 "events": set(comp.get("event_ids", [])),
+                "competitor_limit": comp.get("competitor_limit", 0),
                 "top_cubers": []
             }
         else:
