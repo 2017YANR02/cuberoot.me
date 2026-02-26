@@ -152,10 +152,12 @@ description: Track upcoming WCA competitions of the world's top cubers.
 .cuber-tag {
     display: inline-flex;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
     background: rgba(138, 180, 248, 0.1);
     border: 1px solid rgba(138, 180, 248, 0.2);
     color: #e8eaed;
-    padding: 4px 10px;
+    padding: 5px 10px;
     border-radius: 16px;
     font-size: 13px;
     text-decoration: none;
@@ -166,6 +168,27 @@ description: Track upcoming WCA competitions of the world's top cubers.
     background: rgba(138, 180, 248, 0.2);
     border-color: rgba(138, 180, 248, 0.4);
     color: #fff;
+}
+
+/* 选手旁的事件简码标签 */
+.cuber-tag .event-label {
+    font-size: 11px;
+    color: #9aa0a6;
+    margin-left: 2px;
+}
+
+/* WR 红底白字圆角徽章 */
+.wr-badge {
+    display: inline-block;
+    background: #d93025;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 4px;
+    border-radius: 3px;
+    line-height: 1.3;
+    vertical-align: middle;
+    margin-left: 1px;
 }
 
 /* 占位与错误状态 */
@@ -235,9 +258,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 // 地区
                 const locDisplay = `${comp.city}, ${comp.country}`;
 
-                // 选手标签
+                // 选手标签（含事件简码 + WR 徽章）
                 const cubersHtml = comp.top_cubers.map(c => {
-                    return `<a href="https://www.worldcubeassociation.org/persons/${c.id}" class="cuber-tag" target="_blank" rel="noopener noreferrer">${c.name}</a>`;
+                    // NOTE: 构建事件标签，如 "333 WR 444 555"
+                    let evHtml = '';
+                    if (c.events && c.events.length > 0) {
+                        const evParts = c.events.map(ev => {
+                            const wrBadge = ev.wr ? '<span class="wr-badge">WR</span>' : '';
+                            return `${ev.id}${wrBadge}`;
+                        });
+                        evHtml = `<span class="event-label">${evParts.join(' ')}</span>`;
+                    }
+                    return `<a href="https://www.worldcubeassociation.org/persons/${c.id}" class="cuber-tag" target="_blank" rel="noopener noreferrer">${c.name} ${evHtml}</a>`;
                 }).join('');
 
                 const eventHtml = comp.events ? `<div style="font-size: 12px; color: #556070; margin-top: 4px;">Events: ${comp.events.join(', ')}</div>` : '';
