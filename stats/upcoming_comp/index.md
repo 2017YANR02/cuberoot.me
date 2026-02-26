@@ -379,6 +379,17 @@ description: Track upcoming WCA competitions of the world's top cubers.
         align-items: center;
         gap: 4px;
     }
+
+    /* 搜索框强制独占一行 */
+    .toolbar .search-box {
+        flex-basis: 100%;
+    }
+
+    /* 国家过滤 + 折叠按钮同行：min-width 允许缩小，flex-basis: 0 从零起步 */
+    .country-filter {
+        min-width: 0;
+        flex: 1 1 0;
+    }
 }
 </style>
 
