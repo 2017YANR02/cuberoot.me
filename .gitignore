@@ -24,3 +24,5 @@ database.yml
 
 # 粒子系统归档版本（调试用，不提交）
 assets/js/particles_v*.js
+# API response cache for upcoming comps fetcher
+.upcoming_cache/
