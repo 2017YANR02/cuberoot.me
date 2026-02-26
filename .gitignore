@@ -26,3 +26,6 @@ database.yml
 assets/js/particles_v*.js
 # API response cache for upcoming comps fetcher
 .upcoming_cache/
+
+# Python bytecode cache
+__pycache__/

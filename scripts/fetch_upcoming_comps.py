@@ -261,9 +261,13 @@ def build_upcoming_comps(cubers: CuberData) -> List[Dict[str, Any]]:
 
         _aggregate_comps(comps_map, comps, wca_id, cuber_info)
 
-    # 转化为 list，events set -> sorted list
+    # NOTE: 过滤掉太遥远的比赛（仅保留到明年底），排除占位赛事如 2028 年欧锦赛
+    import datetime
+    max_year = datetime.datetime.now().year + 1  # 2026 -> 最多展示到 2027
     results = []
     for c_id, info in comps_map.items():
+        if int(info["start_date"][:4]) > max_year:
+            continue
         info["events"] = sorted(list(info["events"]))
         results.append(info)
 
