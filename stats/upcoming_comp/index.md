@@ -373,21 +373,23 @@ description: Track upcoming WCA competitions of the world's top cubers.
         font-size: 18px;
     }
 
-    /* 修复1: header 改纵向排列，日期从右上角移到名称下方 */
+    /* display:contents 让 <h2> 盒模型消失，子元素直接进入 comp-header flex 布局 */
     .comp-header {
-        flex-direction: column;
-        gap: 4px;
-    }
-    .comp-date {
-        align-self: flex-start;
-    }
-
-    /* 修复2: <h2> 设为 flex 容器，badge 水平排列不各占一行 */
-    .comp-title {
-        display: flex;
+        flex-direction: row;
         flex-wrap: wrap;
-        align-items: center;
-        gap: 4px;
+        gap: 4px 6px;
+    }
+    .comp-title {
+        display: contents;
+    }
+    /* 名称链接独占第一行 */
+    .comp-title a {
+        flex-basis: 100%;
+    }
+    /* 日期顶到最右 */
+    .comp-date {
+        margin-left: auto;
+        align-self: center;
     }
 
     /* 搜索框强制独占一行 */
@@ -530,7 +532,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const daysUntil = startDate - now;
         const isSoon = daysUntil >= 0 && daysUntil <= SOON_MS;
         const soonClass = isSoon ? 'soon' : '';
-        const soonBadge = isSoon ? '<span class="badge-soon">⏰ Starting Soon</span>' : '';
+        const soonBadge = isSoon ? '<span class="badge-soon">⏰ Upcoming</span>' : '';
 
         let dateDisplay = formatDate(comp.start_date);
         if (comp.end_date && comp.end_date !== comp.start_date) {
