@@ -277,6 +277,13 @@ def build_upcoming_comps(cubers: CuberData) -> List[Dict[str, Any]]:
         results.append(info)
 
     results.sort(key=lambda x: x["start_date"])
+
+    # NOTE: 选手按 WR 标志数量降序排列，WR 多者排前面；相同则按名字字母序
+    for info in results:
+        info["top_cubers"].sort(
+            key=lambda c: (-sum(1 for e in c["events"] if e["wr"]), c["name"])
+        )
+
     return results
 
 
