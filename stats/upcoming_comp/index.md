@@ -110,12 +110,13 @@ description: Track upcoming WCA competitions of the world's top cubers.
 }
 
 .comp-date {
-    font-size: 14px;
+    font-size: 12px;
     color: #abb2bf;
     background: rgba(255, 255, 255, 0.05);
-    padding: 4px 8px;
+    padding: 3px 7px;
     border-radius: 4px;
     white-space: nowrap;
+    line-height: 1;
 }
 
 .comp-location {
@@ -129,14 +130,10 @@ description: Track upcoming WCA competitions of the world's top cubers.
 
 .badge-clash {
     display: inline-block;
-    background: linear-gradient(135deg, #c73800, #b21f1f);
-    color: white;
-    font-size: 12px;
-    font-weight: bold;
-    padding: 2px 6px;
-    border-radius: 4px;
-    margin-left: 8px;
+    font-size: 14px;
+    margin-left: 0;
     vertical-align: middle;
+    line-height: 1;
 }
 
 /* 参赛顶尖选手列表 */
@@ -199,10 +196,10 @@ description: Track upcoming WCA competitions of the world's top cubers.
     display: inline-block;
     background: #d93025;
     color: #fff;
-    font-size: 10px;
+    font-size: 8px;
     font-weight: 700;
-    padding: 1px 4px;
-    border-radius: 3px;
+    padding: 1px 3px;
+    border-radius: 2px;
     line-height: 1.3;
     vertical-align: middle;
     margin-left: 1px;
@@ -336,14 +333,10 @@ description: Track upcoming WCA competitions of the world's top cubers.
 
 .badge-soon {
     display: inline-block;
-    background: linear-gradient(135deg, #fbbc04, #f9a825);
-    color: #1a1f2e;
-    font-size: 12px;
-    font-weight: bold;
-    padding: 2px 6px;
-    border-radius: 4px;
-    margin-left: 8px;
+    font-size: 14px;
+    margin-left: 0;
     vertical-align: middle;
+    line-height: 1;
 }
 
 /* 月份统计摘要行 */
@@ -377,7 +370,7 @@ description: Track upcoming WCA competitions of the world's top cubers.
     .comp-header {
         flex-direction: row;
         flex-wrap: wrap;
-        gap: 4px 6px;
+        gap: 4px 0;
     }
     .comp-title {
         display: contents;
@@ -415,7 +408,7 @@ description: Track upcoming WCA competitions of the world's top cubers.
         Tracking cubers who are currently <strong style="color:#e8eaed">ranked in the world top 10</strong> (single or average) in any official event, 
         or have <strong style="color:#e8eaed">held a World Record</strong> at any point in history.
         Each cuber's tag shows their relevant events, with <span class="wr-badge" style="vertical-align: baseline;">WR</span> indicating a former or current World Record holder in that event.
-        <br>Monthly stats: 📋 competitions · 🌍 countries · 👤 cubers · 🔥 clashing (3+ top cubers).
+        <br>Monthly stats: 📋 competitions · 🌍 countries · 👤 cubers · 🔥 clashing (3+ top cubers) · ⏰ starting within 7 days.
     </p>
     <div class="toolbar">
         <input type="text" class="search-box" id="search-input" placeholder="Search by competition, cuber, WCA ID, or country...">
@@ -524,7 +517,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderCompCard(comp) {
         const isClash = comp.top_cubers.length >= 3;
         const highlightClass = isClash ? 'highlight' : '';
-        const clashBadge = isClash ? '<span class="badge-clash">🔥 Clashing</span>' : '';
+        const clashBadge = isClash ? '<span class="badge-clash">🔥</span>' : '';
 
         // NOTE: 7 天内即将开始的比赛高亮
         const now = new Date();
@@ -532,7 +525,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const daysUntil = startDate - now;
         const isSoon = daysUntil >= 0 && daysUntil <= SOON_MS;
         const soonClass = isSoon ? 'soon' : '';
-        const soonBadge = isSoon ? '<span class="badge-soon">⏰ Upcoming</span>' : '';
+        const soonBadge = isSoon ? '<span class="badge-soon">⏰</span>' : '';
 
         let dateDisplay = formatDate(comp.start_date);
         if (comp.end_date && comp.end_date !== comp.start_date) {
@@ -563,10 +556,8 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="comp-header">
                 <h2 class="comp-title">
                     <a href="https://www.worldcubeassociation.org/competitions/${comp.id}" target="_blank" rel="noopener noreferrer">
-                        ${comp.name.includes('Championship') ? '🏆 ' : ''}<span class="fi fi-${comp.country.toLowerCase()}" style="margin-right:6px;"></span>${comp.name}
-                    </a>
-                    ${clashBadge}
-                    ${soonBadge}
+                        ${comp.name.includes('Championship') ? '🏆 ' : ''}<span class="fi fi-${comp.country.toLowerCase()}" style="margin-right:6px;font-size:0.8em;"></span>${comp.name}
+                    </a>${clashBadge}${soonBadge}
                 </h2>
                 <div class="comp-date">${dateDisplay}</div>
             </div>
