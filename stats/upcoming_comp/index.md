@@ -216,11 +216,18 @@ description: Track upcoming WCA competitions of the world's top cubers.
     font-size: 16px;
 }
 
+/* 工具栏布局 */
+.toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
 /* 搜索框 */
 .search-box {
-    width: 100%;
+    flex: 1 1 100%;
     padding: 10px 14px;
-    margin-bottom: 20px;
     border: 1px solid rgba(138, 180, 248, 0.2);
     border-radius: 8px;
     background: rgba(25, 30, 45, 0.6);
@@ -352,6 +359,26 @@ description: Track upcoming WCA competitions of the world's top cubers.
     align-items: center;
     gap: 4px;
     min-width: 50px;
+}
+
+/* ── 手机端布局修复 ──────────────────────────────────── */
+@media (max-width: 500px) {
+    /* 修复1: header 改纵向排列，日期从右上角移到名称下方 */
+    .comp-header {
+        flex-direction: column;
+        gap: 4px;
+    }
+    .comp-date {
+        align-self: flex-start;
+    }
+
+    /* 修复2: <h2> 设为 flex 容器，badge 水平排列不各占一行 */
+    .comp-title {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 4px;
+    }
 }
 </style>
 
