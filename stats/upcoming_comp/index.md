@@ -246,6 +246,33 @@ description: Track upcoming WCA competitions of the world's top cubers.
     font-weight: 400;
     color: #9aa0a6;
 }
+
+/* 搜索栏 + 折叠按钮容器 */
+.toolbar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    align-items: center;
+}
+.toolbar .search-box {
+    margin-bottom: 0;
+    flex: 1;
+}
+.toggle-btn {
+    white-space: nowrap;
+    padding: 10px 14px;
+    border: 1px solid rgba(138, 180, 248, 0.2);
+    border-radius: 8px;
+    background: rgba(25, 30, 45, 0.6);
+    color: #8ab4f8;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.toggle-btn:hover {
+    border-color: rgba(138, 180, 248, 0.5);
+    background: rgba(138, 180, 248, 0.1);
+}
 </style>
 
 <div id="upcoming-comps-container">
@@ -254,7 +281,10 @@ description: Track upcoming WCA competitions of the world's top cubers.
         <div class="timeline-meta" id="update-meta">加载中...</div>
     </div>
     
-    <input type="text" class="search-box" id="search-input" placeholder="Search by competition name or cuber name...">
+    <div class="toolbar">
+        <input type="text" class="search-box" id="search-input" placeholder="Search by competition name or cuber name...">
+        <button class="toggle-btn" id="toggle-all-btn">▲ Collapse All</button>
+    </div>
     
     <div id="timeline-body" class="timeline">
         <div class="state-message">Loading schedule data...</div>
@@ -385,6 +415,16 @@ document.addEventListener('DOMContentLoaded', function() {
             const visibleCards = group.querySelectorAll('.comp-card:not([style*="display: none"])');
             group.style.display = visibleCards.length > 0 ? '' : 'none';
         });
+    });
+
+    // NOTE: 一键全部收缩/展开月份分组
+    const toggleBtn = document.getElementById('toggle-all-btn');
+    let allExpanded = true;
+    toggleBtn.addEventListener('click', function() {
+        allExpanded = !allExpanded;
+        const groups = timelineBody.querySelectorAll('.month-group');
+        groups.forEach(g => { g.open = allExpanded; });
+        toggleBtn.textContent = allExpanded ? '▲ Collapse All' : '▼ Expand All';
     });
 });
 </script>
