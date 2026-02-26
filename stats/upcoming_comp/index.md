@@ -176,6 +176,23 @@ description: Track upcoming WCA competitions of the world's top cubers.
     color: #9aa0a6;
     margin-left: 2px;
 }
+.cuber-tag .event-label .cubing-icon {
+    font-size: 14px;
+    vertical-align: middle;
+}
+
+/* 地点 + 项目图标行：桌面端一行，手机端换行 */
+.comp-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.comp-meta .cubing-icon {
+    vertical-align: middle;
+    position: relative;
+    top: -1px;
+}
 
 /* WR 红底白字圆角徽章 */
 .wr-badge {
@@ -415,6 +432,16 @@ document.addEventListener('DOMContentLoaded', function() {
         'holland':'NL',
     };
 
+    // NOTE: 后端短名 → WCA eventId，用于生成 cubing-icon class
+    const SHORT_TO_EVENT_ID = {
+        '3':'333','2':'222','4':'444','5':'555','6':'666','7':'777',
+        '3bf':'333bf','fm':'333fm','oh':'333oh',
+        'minx':'minx','py':'pyram','clock':'clock',
+        'sk':'skewb','sq1':'sq1',
+        '4bf':'444bf','5bf':'555bf','mbf':'333mbf',
+        'ft':'333ft','mbo':'333mbo','mag':'magic','mmag':'mmagic',
+    };
+
     // 获取国家全名，fallback 到 ISO2 码
     function getCountryName(iso2) {
         return COUNTRY_MAP[iso2] || iso2;
@@ -471,14 +498,15 @@ document.addEventListener('DOMContentLoaded', function() {
             if (c.events && c.events.length > 0) {
                 const evParts = c.events.map(ev => {
                     const wrBadge = ev.wr ? '<span class="wr-badge">WR</span>' : '';
-                    return `${ev.id}${wrBadge}`;
+                    const eid = SHORT_TO_EVENT_ID[ev.id] || ev.id;
+                    return `<span class="cubing-icon event-${eid}"></span>${wrBadge}`;
                 });
                 evHtml = `<span class="event-label">${evParts.join(' ')}</span>`;
             }
             return `<a href="https://www.worldcubeassociation.org/persons/${c.id}" class="cuber-tag" target="_blank" rel="noopener noreferrer">${c.name} ${evHtml}</a>`;
         }).join('');
 
-        const eventHtml = comp.events ? `<div style="font-size: 12px; color: #556070; margin-top: 4px;">Events: ${comp.events.join(', ')}</div>` : '';
+        const eventHtml = comp.events ? `<div style="display:inline-flex;align-items:center;gap:4px;color:#556070;transform:translateY(-5px);">${comp.events.map(e => `<span class="cubing-icon event-${SHORT_TO_EVENT_ID[e] || e}" style="font-size:14px;"></span>`).join('')}</div>` : '';
 
         return `
         <div class="comp-card ${highlightClass} ${soonClass}" data-comp-name="${comp.name.toLowerCase()}" data-cuber-names="${comp.top_cubers.map(c => c.name.toLowerCase() + ' ' + c.id.toLowerCase()).join(' ')}" data-country="${comp.country}" data-country-search="${countrySearchText}">
@@ -492,8 +520,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 </h2>
                 <div class="comp-date">${dateDisplay}</div>
             </div>
-            <div class="comp-location">📍 ${locDisplay}</div>
-            ${eventHtml}
+            <div class="comp-meta">
+                <div class="comp-location">📍 ${locDisplay}</div>
+                ${eventHtml}
+            </div>
             <div class="cuber-list">
                 ${cubersHtml}
             </div>
