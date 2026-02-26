@@ -625,6 +625,8 @@ const I18n = {
         localStorage.setItem('i18n_locale', lang);
         this.apply();
         this._updateToggle();
+        // NOTE: 通知其他页面语言已切换（如 upcoming_comp 重渲染）
+        window.dispatchEvent(new CustomEvent('i18n:locale-changed', { detail: { locale: lang } }));
     },
 
     // NOTE: 用点分 key（如 "solver.label"）查字典，支持嵌套
