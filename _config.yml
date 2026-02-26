@@ -1,3 +1,4 @@
+# Jekyll 网站构建配置：GitHub Pages 用此文件决定如何生成静态站点
 plugins:
   - jekyll-sitemap
   - jekyll-optional-front-matter
