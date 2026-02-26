@@ -311,7 +311,11 @@ def _fetch_cubing_china_competitors(alias):
         cache_file.write_text(html, encoding="utf-8")
 
     # NOTE: cubing.com 使用完整 URL（href="https://cubing.com/results/person/..."）
-    return set(re.findall(r'person/([A-Z0-9]+)', html))
+    ids = set(re.findall(r'person/([A-Z0-9]+)', html))
+    # NOTE: 0 个 ID 通常意味着 cubing.com 页面结构变更，需要更新正则
+    if not ids:
+        print(f"[CN][WARN] {alias}: 选手页面未解析到任何 WCA ID，请检查 cubing.com 页面结构")
+    return ids
 
 
 def _integrate_cubing_china(comps_map, cubers):
