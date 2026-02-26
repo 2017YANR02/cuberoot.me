@@ -6,8 +6,9 @@ on:
     paths:
       - '_stats_build/**/*.rb'
   schedule:
-    # 每周一凌晨 4:00（北京时间）= UTC 周日 20:00
-    - cron: '0 20 * * 0'
+    # 每周一凌晨 5:00（北京时间）= UTC 周日 21:00
+    # NOTE: 故意比每日 CI（UTC 20:00）正 1 小时，避免周日并发 push 冲突
+    - cron: '0 21 * * 0'
   workflow_dispatch:
     inputs:
       stats_filter:
