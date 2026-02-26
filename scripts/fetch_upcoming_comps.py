@@ -268,7 +268,12 @@ def build_upcoming_comps(cubers: CuberData) -> List[Dict[str, Any]]:
     for c_id, info in comps_map.items():
         if int(info["start_date"][:4]) > max_year:
             continue
-        info["events"] = sorted(list(info["events"]))
+        # NOTE: events 也用短名并按 WCA 官方顺序排序
+        info["events"] = sorted(
+            list(info["events"]),
+            key=lambda e: EVENT_ORDER_MAP.get(e, (999, e))[0]
+        )
+        info["events"] = [EVENT_ORDER_MAP.get(e, (999, e))[1] for e in info["events"]]
         results.append(info)
 
     results.sort(key=lambda x: x["start_date"])
