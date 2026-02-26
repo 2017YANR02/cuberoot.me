@@ -33,12 +33,12 @@ CACHE_DIR = ROOT_DIR / ".upcoming_cache"
 WCA_API_BASE = "https://www.worldcubeassociation.org/api/v0"
 API_DELAY_SEC = 0.5
 MAX_RETRIES = 3
-# NOTE: 缓存有效期（秒），24 小时内复用缓存不走网络
+# NOTE: 缓存有效期（秒），默认 24 小时。用户选择刷新时会被置为 0
 CACHE_TTL_SEC = 24 * 3600
 
 # NOTE: 设为正整数可截断调试，生产环境为 None
 # NOTE: 设为 10 方便测试，全量为 None
-DEBUG_LIMIT = 10
+DEBUG_LIMIT = None
 
 # NOTE: wr_metric.md 中 <h3 data-i18n-en> 全名 -> WCA 内部 ID
 EVENT_NAME_TO_ID = {
@@ -272,8 +272,21 @@ def build_upcoming_comps(cubers: CuberData) -> List[Dict[str, Any]]:
 
 
 def main():
+    global CACHE_TTL_SEC
     print("=== 开始构建 Top Cubers 近期比赛追踪数据 ===")
     start_time = time.time()
+
+    # NOTE: 交互式询问缓存策略；CI 环境用 --refresh 参数跳过交互
+    if "--refresh" in sys.argv:
+        print("[INFO] 检测到 --refresh 参数，强制刷新缓存。")
+        CACHE_TTL_SEC = 0
+    elif CACHE_DIR.exists() and any(CACHE_DIR.iterdir()):
+        ans = input("发现已有缓存，是否刷新? (y=重新拉取 / 回车=用缓存): ").strip().lower()
+        if ans == "y":
+            CACHE_TTL_SEC = 0
+            print("[INFO] 将重新拉取所有数据。")
+        else:
+            print("[INFO] 使用已有缓存（24h 内有效）。")
 
     # 1. 抽取白名单（含事件标签和 WR 标记）
     cubers = extract_top_cubers()
