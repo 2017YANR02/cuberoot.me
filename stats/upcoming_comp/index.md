@@ -363,6 +363,16 @@ description: Track upcoming WCA competitions of the world's top cubers.
 
 /* ── 手机端布局修复 ──────────────────────────────────── */
 @media (max-width: 500px) {
+    /* 标题 + meta 上下排列，各获全宽 */
+    .timeline-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+    .timeline-header h1 {
+        font-size: 18px;
+    }
+
     /* 修复1: header 改纵向排列，日期从右上角移到名称下方 */
     .comp-header {
         flex-direction: column;
