@@ -349,7 +349,7 @@ description: Track upcoming WCA competitions of the world's top cubers.
 /* 月份统计摘要行 */
 .month-stats {
     display: inline-flex;
-    gap: 16px;
+    gap: 0px;
     font-size: 13px;
     color: #9aa0a6;
     margin-left: 12px;
