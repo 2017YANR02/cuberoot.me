@@ -15,7 +15,8 @@ import json
 import sys
 import io
 import time
-import requests
+import urllib.request
+import urllib.error
 from pathlib import Path
 from typing import Dict, List, Any
 
@@ -33,9 +34,10 @@ API_DELAY_SEC = 0.5
 MAX_RETRIES = 3
 
 # NOTE: 设为正整数可截断调试，生产环境为 None
-DEBUG_LIMIT = None
+# NOTE: 设为 10 方便测试，全量为 None
+DEBUG_LIMIT = 10
 
-# NOTE: wr_metric.md 中 <h3 data-i18n-en> 全名 -> WCA 标准简码
+# NOTE: wr_metric.md 中 <h3 data-i18n-en> 全名 -> WCA 内部 ID
 EVENT_NAME_TO_ID = {
     "Rubik's Cube": "333",
     "2x2x2 Cube": "222",
@@ -54,12 +56,27 @@ EVENT_NAME_TO_ID = {
     "4x4x4 Blindfolded": "444bf",
     "5x5x5 Blindfolded": "555bf",
     "3x3x3 Multi-Blind": "333mbf",
-    # 已取消项目（仍然纳入选手追踪，但前端会标注为已取消）
     "3x3x3 With Feet": "333ft",
     "Rubik's Magic": "magic",
     "Master Magic": "mmagic",
     "Rubik's Cube: Multiple blind old style": "333mbo",
 }
+
+# NOTE: WCA 官方项目顺序 + 前端展示用短名
+# (内部ID, 显示短名) — 排序依据此列表的顺序
+EVENT_DISPLAY_ORDER = [
+    ("333",   "3"),    ("222",   "2"),    ("444",   "4"),
+    ("555",   "5"),    ("666",   "6"),    ("777",   "7"),
+    ("333bf", "3bf"),  ("333fm", "fm"),   ("333oh", "oh"),
+    ("minx",  "minx"), ("pyram", "py"),   ("clock", "clock"),
+    ("skewb", "sk"),   ("sq1",   "sq1"),
+    ("444bf", "4bf"),  ("555bf", "5bf"),  ("333mbf","mbf"),
+    ("333ft", "ft"),   ("333mbo","mbo"),  ("magic", "mag"),
+    ("mmagic","mmag"),
+]
+# 内部ID -> (排序索引, 显示短名)
+EVENT_ORDER_MAP = {eid: (idx, short) for idx, (eid, short) in enumerate(EVENT_DISPLAY_ORDER)}
+USER_AGENT = "WCA-Stats-Bot/1.0 (ruiminyan.github.io)"
 # ==================================================
 
 
@@ -129,25 +146,29 @@ def extract_top_cubers() -> CuberData:
     return cubers
 
 
-def fetch_with_retry(session: requests.Session, url: str) -> Dict[str, Any]:
-    """带限流和防封禁重试机制的网络请求"""
+def fetch_with_retry(url: str) -> Dict[str, Any]:
+    """带限流和防封禁重试机制的网络请求（使用标准库 urllib）"""
+    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     for attempt in range(MAX_RETRIES):
         try:
             time.sleep(API_DELAY_SEC)
-            resp = session.get(url, timeout=10)
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                return json.loads(resp.read().decode("utf-8"))
 
-            if resp.status_code == 200:
-                return resp.json()
-            elif resp.status_code == 429:
-                wait = int(resp.headers.get("Retry-After", 2))
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                # NOTE: 404 说明选手无 WCA 账号（已退役/被合并），立即跳过不重试
+                return {}
+            elif e.code == 429:
+                wait = int(e.headers.get("Retry-After", 2))
                 print(f"[WARN] 触发 429 限制，等待 {wait} 秒...")
                 time.sleep(wait)
             else:
-                print(f"[ERROR] API 返回 {resp.status_code}: {url}")
+                print(f"[ERROR] API 返回 {e.code}: {url}")
                 time.sleep(1)
 
-        except requests.RequestException as e:
-            print(f"[WARN] 请求异常 {e}, 尝试重试 {attempt + 1}/{MAX_RETRIES}...")
+        except (urllib.error.URLError, OSError) as e:
+            print(f"[WARN] 请求异常 {e}, 重试 {attempt + 1}/{MAX_RETRIES}...")
             time.sleep(2)
 
     return {}
@@ -158,9 +179,6 @@ def build_upcoming_comps(cubers: CuberData) -> List[Dict[str, Any]]:
     遍历选手名单，请求 WCA API 获取近期比赛并聚合。
     每个比赛的 top_cubers 包含选手的事件标签和 WR 标记。
     """
-    session = requests.Session()
-    session.headers.update({"User-Agent": "WCA-Stats-Bot/1.0 (ruiminyan.github.io)"})
-
     comps_map = {}
 
     cuber_items = list(cubers.items())
@@ -171,11 +189,19 @@ def build_upcoming_comps(cubers: CuberData) -> List[Dict[str, Any]]:
     total = len(cuber_items)
     for i, (wca_id, cuber_info) in enumerate(cuber_items, 1):
         name = cuber_info["name"]
-        print(f"[{i}/{total}] 拉取 {wca_id} ({name}) 的赛程...")
         url = f"{WCA_API_BASE}/users/{wca_id}?upcoming_competitions=true"
-        data = fetch_with_retry(session, url)
+        data = fetch_with_retry(url)
 
         comps = data.get("upcoming_competitions", [])
+        n = len(comps)  # 用于进度显示
+        # NOTE: 进度格式改进，显示比赛场数
+        if n > 0:
+            print(f"[{i}/{total}] {wca_id} ({name}): {n} 场")
+        elif not data:
+            print(f"[{i}/{total}] {wca_id} ({name}): 404 跳过")
+        else:
+            print(f"[{i}/{total}] {wca_id} ({name}): 0 场")
+
         for comp in comps:
             c_id = comp["id"]
             if c_id not in comps_map:
@@ -192,12 +218,15 @@ def build_upcoming_comps(cubers: CuberData) -> List[Dict[str, Any]]:
             else:
                 comps_map[c_id]["events"].update(comp.get("event_ids", []))
 
-            # NOTE: 构造选手的事件标签列表
-            # 格式: [{"id": "333", "wr": true}, {"id": "444", "wr": false}, ...]
+            # NOTE: 构造选手的事件标签列表，按 WCA 官方顺序排列并使用短名
             event_tags = []
-            for ev_id, flags in cuber_info["events"].items():
+            for ev_id, flags in sorted(
+                cuber_info["events"].items(),
+                key=lambda x: EVENT_ORDER_MAP.get(x[0], (999, x[0]))[0]
+            ):
+                _, short = EVENT_ORDER_MAP.get(ev_id, (999, ev_id))
                 event_tags.append({
-                    "id": ev_id,
+                    "id": short,
                     "wr": flags["wr"],
                 })
 
