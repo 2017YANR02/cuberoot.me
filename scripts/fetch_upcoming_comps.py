@@ -344,15 +344,34 @@ def _integrate_cubing_china(comps_map, cubers):
             if not matched:
                 continue
 
+            # NOTE: 从 WCA API 获取英文名、英文城市和比赛项目（带缓存）
+            wca_cache = CACHE_DIR / f"_wca_comp_{comp_id}.json"
+            if _is_cache_valid(wca_cache):
+                wca_data = json.loads(wca_cache.read_text(encoding="utf-8"))
+            else:
+                wca_data = fetch_with_retry(
+                    f"{WCA_API_BASE}/competitions/{comp_id}"
+                )
+                wca_cache.write_text(
+                    json.dumps(wca_data, ensure_ascii=False), encoding="utf-8"
+                )
+
+            # NOTE: WCA API 提供英文名和城市；cubing.com 提供中文名和城市
+            en_name = wca_data.get("name", comp["name"])
+            en_city = wca_data.get("city", comp["city"])
+            event_ids = set(wca_data.get("event_ids", []))
+
             # 创建比赛条目
             comps_map[comp_id] = {
                 "id": comp_id,
-                "name": comp["name"],
-                "city": comp["city"],
+                "name": en_name,
+                "name_zh": comp["name"],
+                "city": en_city,
+                "city_zh": comp["city"],
                 "country": "CN",
                 "start_date": comp["start_date"],
                 "end_date": comp["end_date"],
-                "events": set(),  # NOTE: cubing.com API 不提供比赛项目，管线会转空列表
+                "events": event_ids,
                 "competitor_limit": comp["competitor_limit"],
                 "top_cubers": [],
             }
