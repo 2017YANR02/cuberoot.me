@@ -15,6 +15,7 @@ import json
 import sys
 import io
 import time
+import datetime
 import urllib.request
 import urllib.error
 from pathlib import Path
@@ -31,6 +32,9 @@ OUTPUT_JSON_PATH = ROOT_DIR / "stats" / "upcoming_comps.json"
 CACHE_DIR = ROOT_DIR / ".upcoming_cache"
 
 WCA_API_BASE = "https://www.worldcubeassociation.org/api/v0"
+# NOTE: cubing.com（粗饼网）管理中国内地比赛报名，WCA API 不返回这些比赛
+CUBING_CHINA_API = "https://cubing.com/api/competition"
+CUBING_CHINA_BASE = "https://cubing.com"
 API_DELAY_SEC = 0.5
 MAX_RETRIES = 3
 # NOTE: 缓存有效期（秒），默认 24 小时。用户选择刷新时会被置为 0
@@ -149,14 +153,32 @@ def extract_top_cubers() -> CuberData:
     return cubers
 
 
-def fetch_with_retry(url: str) -> Dict[str, Any]:
-    """带限流和防封禁重试机制的网络请求（使用标准库 urllib）"""
+def _is_cache_valid(path: Path) -> bool:
+    """检查缓存文件是否存在且未过期。"""
+    return path.exists() and (time.time() - path.stat().st_mtime) < CACHE_TTL_SEC
+
+
+def _build_event_tags(cuber_info) -> list:
+    """从选手数据构造事件标签列表（按 WCA 官方顺序、使用短名）。"""
+    tags = []
+    for ev_id, flags in sorted(
+        cuber_info["events"].items(),
+        key=lambda x: EVENT_ORDER_MAP.get(x[0], (999, x[0]))[0]
+    ):
+        _, short = EVENT_ORDER_MAP.get(ev_id, (999, ev_id))
+        tags.append({"id": short, "wr": flags["wr"]})
+    return tags
+
+
+def fetch_with_retry(url: str, raw: bool = False):
+    """带限流和防封禁重试机制的网络请求。raw=True 时返回原始文本，否则解析 JSON。"""
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     for attempt in range(MAX_RETRIES):
         try:
             time.sleep(API_DELAY_SEC)
             with urllib.request.urlopen(req, timeout=10) as resp:
-                return json.loads(resp.read().decode("utf-8"))
+                text = resp.read().decode("utf-8")
+                return text if raw else json.loads(text)
 
         except urllib.error.HTTPError as e:
             if e.code == 404:
@@ -197,21 +219,156 @@ def _aggregate_comps(comps_map, comps, wca_id, cuber_info):
         else:
             comps_map[c_id]["events"].update(comp.get("event_ids", []))
 
-        # NOTE: 构造选手的事件标签列表，按 WCA 官方顺序排列并使用短名
-        event_tags = []
-        for ev_id, flags in sorted(
-            cuber_info["events"].items(),
-            key=lambda x: EVENT_ORDER_MAP.get(x[0], (999, x[0]))[0]
-        ):
-            _, short = EVENT_ORDER_MAP.get(ev_id, (999, ev_id))
-            event_tags.append({"id": short, "wr": flags["wr"]})
-
         comps_map[c_id]["top_cubers"].append({
             "id": wca_id,
             "name": name,
-            "events": event_tags,
+            "events": _build_event_tags(cuber_info),
         })
 
+
+def _fetch_cubing_china_comps():
+    """
+    从 cubing.com API 获取即将举行的中国内地 WCA 比赛列表。
+    返回 [{alias, name, city, start_date, end_date, competitor_limit}, ...]
+    """
+    cache_file = CACHE_DIR / "_cubing_china_list.json"
+    if _is_cache_valid(cache_file):
+        data = json.loads(cache_file.read_text(encoding="utf-8"))
+        print(f"[CN] 比赛列表: {len(data)} 场 [缓存]")
+        return data
+
+    raw_data = fetch_with_retry(CUBING_CHINA_API)
+    if not raw_data or raw_data.get("status") != 0:
+        print("[CN] 获取比赛列表失败")
+        return []
+
+    now_ts = time.time()
+    comps = []
+    for c in raw_data.get("data", []):
+        # NOTE: 只要 WCA 认证赛、未结束、日期在未来
+        if c.get("type") != "WCA" or c.get("live") != 0:
+            continue
+        date_from = c.get("date", {}).get("from", 0)
+        if date_from <= now_ts:
+            continue
+
+        # NOTE: 时间戳 → YYYY-MM-DD（UTC）
+        start = datetime.datetime.fromtimestamp(
+            date_from, tz=datetime.timezone.utc
+        ).strftime("%Y-%m-%d")
+        date_to = c.get("date", {}).get("to", date_from)
+        end = datetime.datetime.fromtimestamp(
+            date_to, tz=datetime.timezone.utc
+        ).strftime("%Y-%m-%d")
+
+        # NOTE: 多地点比赛顶级 competitor_limit 可能为 0，fallback 到各 location 限额之和
+        limit = c.get("competitor_limit", 0)
+        if not limit:
+            limit = sum(
+                loc.get("competitor_limit", 0)
+                for loc in c.get("locations", [])
+            )
+
+        # NOTE: 拼接省份+城市（取第一个 location）
+        locs = c.get("locations", [{}])
+        province = locs[0].get("province", "")
+        city = locs[0].get("city", "")
+
+        comps.append({
+            "alias": c["alias"],
+            "name": c["name"],
+            "city": f"{province}, {city}" if province != city else city,
+            "start_date": start,
+            "end_date": end,
+            "competitor_limit": limit,
+        })
+
+    # 写入缓存
+    cache_file.write_text(json.dumps(comps, ensure_ascii=False), encoding="utf-8")
+    print(f"[CN] 比赛列表: {len(comps)} 场")
+    return comps
+
+
+def _fetch_cubing_china_competitors(alias):
+    """
+    从 cubing.com 比赛选手页面提取所有参赛者的 WCA ID。
+    返回 set of WCA IDs。
+    """
+    cache_file = CACHE_DIR / f"_cubing_china_{alias}.html"
+    if _is_cache_valid(cache_file):
+        html = cache_file.read_text(encoding="utf-8")
+    else:
+        url = f"{CUBING_CHINA_BASE}/competition/{alias}/competitors"
+        html = fetch_with_retry(url, raw=True)
+        # NOTE: raw=True 失败时返回空 dict（fetch_with_retry 的兜底）
+        if not html or isinstance(html, dict):
+            return set()
+        cache_file.write_text(html, encoding="utf-8")
+
+    # NOTE: cubing.com 使用完整 URL（href="https://cubing.com/results/person/..."）
+    return set(re.findall(r'person/([A-Z0-9]+)', html))
+
+
+def _integrate_cubing_china(comps_map, cubers):
+    """
+    集成 cubing.com 上的中国内地比赛到 comps_map。
+    只有当比赛中有 top cubers 参赛时才加入（与 WCA 数据逻辑一致）。
+    整体 try/except 保护：失败时优雅降级，不影响 WCA 数据。
+    """
+    try:
+        cn_comps = _fetch_cubing_china_comps()
+        if not cn_comps:
+            return
+
+        cn_added = 0
+        for comp in cn_comps:
+            alias = comp["alias"]
+            # NOTE: alias 去连字符 = WCA comp ID，确保前端链接正确
+            comp_id = alias.replace("-", "")
+
+            # NOTE: 如果 WCA API 已经返回了这场比赛（理论上不会），跳过避免重复
+            if comp_id in comps_map:
+                continue
+
+            competitor_ids = _fetch_cubing_china_competitors(alias)
+            if not competitor_ids:
+                continue
+
+            # NOTE: 与 top cubers 名单交叉匹配
+            matched = competitor_ids & set(cubers.keys())
+            if not matched:
+                continue
+
+            # 创建比赛条目
+            comps_map[comp_id] = {
+                "id": comp_id,
+                "name": comp["name"],
+                "city": comp["city"],
+                "country": "CN",
+                "start_date": comp["start_date"],
+                "end_date": comp["end_date"],
+                "events": set(),  # NOTE: cubing.com API 不提供比赛项目，管线会转空列表
+                "competitor_limit": comp["competitor_limit"],
+                "top_cubers": [],
+            }
+
+            for wca_id in matched:
+                comps_map[comp_id]["top_cubers"].append({
+                    "id": wca_id,
+                    "name": cubers[wca_id]["name"],
+                    "events": _build_event_tags(cubers[wca_id]),
+                })
+
+            cn_added += 1
+
+        if cn_added > 0:
+            print(f"[CN] 成功集成 {cn_added} 场中国内地比赛")
+        else:
+            print("[CN] 未找到有 top cubers 参赛的中国内地比赛")
+
+    except Exception as e:
+        # NOTE: 优雅降级 — CN 集成失败不影响 WCA 数据
+        print(f"[CN][WARN] cubing.com 集成失败，已跳过: {e}")
 
 def build_upcoming_comps(cubers: CuberData) -> List[Dict[str, Any]]:
     """
@@ -262,8 +419,10 @@ def build_upcoming_comps(cubers: CuberData) -> List[Dict[str, Any]]:
 
         _aggregate_comps(comps_map, comps, wca_id, cuber_info)
 
+    # NOTE: 集成 cubing.com 上的中国内地比赛
+    _integrate_cubing_china(comps_map, cubers)
+
     # NOTE: 过滤掉太遥远的比赛（仅保留到明年底），排除占位赛事如 2028 年欧锦赛
-    import datetime
     max_year = datetime.datetime.now().year + 1  # 2026 -> 最多展示到 2027
     results = []
     for c_id, info in comps_map.items():
