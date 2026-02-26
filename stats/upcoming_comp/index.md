@@ -281,6 +281,11 @@ description: Track upcoming WCA competitions of the world's top cubers.
         <div class="timeline-meta" id="update-meta">加载中...</div>
     </div>
     
+    <p style="font-size: 13px; color: #9aa0a6; margin: 0 0 16px 0; line-height: 1.6;">
+        Tracking cubers who are currently <strong style="color:#e8eaed">ranked in the world top 10</strong> (single or average) in any official event, 
+        or have <strong style="color:#e8eaed">held a World Record</strong> at any point in history.
+        Each cuber's tag shows their relevant events, with <span class="wr-badge" style="vertical-align: baseline;">WR</span> indicating a former or current World Record holder in that event.
+    </p>
     <div class="toolbar">
         <input type="text" class="search-box" id="search-input" placeholder="Search by competition name or cuber name...">
         <button class="toggle-btn" id="toggle-all-btn">▲ Collapse All</button>
@@ -338,7 +343,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const eventHtml = comp.events ? `<div style="font-size: 12px; color: #556070; margin-top: 4px;">Events: ${comp.events.join(', ')}</div>` : '';
 
         return `
-        <div class="comp-card ${highlightClass}" data-comp-name="${comp.name.toLowerCase()}" data-cuber-names="${comp.top_cubers.map(c => c.name.toLowerCase()).join(' ')}">
+        <div class="comp-card ${highlightClass}" data-comp-name="${comp.name.toLowerCase()}" data-cuber-names="${comp.top_cubers.map(c => c.name.toLowerCase() + ' ' + c.id.toLowerCase()).join(' ')}">
             <div class="comp-header">
                 <h2 class="comp-title">
                     <a href="https://www.worldcubeassociation.org/competitions/${comp.id}" target="_blank" rel="noopener noreferrer">
