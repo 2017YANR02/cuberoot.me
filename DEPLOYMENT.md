@@ -102,7 +102,12 @@ ruiminyan.github.io/
 ├── _layouts/                  # Jekyll 布局（Stats 深色主题框架，全局加载 stats_ui.js / i18n.js / event_selector.js）
 ├── _stats_build/              # WCA 统计构建脚本（Ruby，只生成数据面板 + data-label-* 属性，UI 由 JS 驱动）
 ├── stats/                     # 统计 Markdown 页面。由 CI 每周覆盖写入，也可本地生成后直接 push
-├── .github/workflows/         # CI 配置（stats.yml：每日定时构建 + push）
+│   ├── upcoming_comp/         # 近期比赛追踪页面（前端 JS 从 upcoming_comps.json 渲染）
+│   └── upcoming_comps.json    # 选手比赛数据（由 scripts/fetch_upcoming_comps.py 生成）
+├── scripts/                   # Python 数据抓取脚本
+│   └── fetch_upcoming_comps.py  # 从 WCA API 抓取 432 名顶尖选手的近期比赛
+├── .upcoming_cache/           # API 响应本地缓存（已在 .gitignore，24h TTL）
+├── .github/workflows/         # CI 配置（stats.yml：每周定时构建 + push）
 ├── _config.yml                # Jekyll 配置（排除 _stats_build/、配置 permalink 等）
 │
 │── ❌ 上游有但不同步
@@ -264,6 +269,53 @@ playwright install chromium
 **注意**：这类脚本是一次性临时工具，验证完即可删除，不提交到 git。
 
 # 日常操作
+
+## 近期比赛追踪（Upcoming Comps）
+
+**页面**：[/stats/upcoming_comp/](https://ruiminyan.github.io/stats/upcoming_comp/)
+
+追踪 432 名顶尖选手（WR 指标排名 + WR 历史）的近期 WCA 比赛，展示事件标签和 WR 徽章。
+
+### 运行脚本
+
+```powershell
+cd D:\cube\ruiminyan.github.io
+python scripts/fetch_upcoming_comps.py
+```
+
+运行时会询问：
+- **回车** → 使用 24h 内的缓存（秒完成）
+- **输入 `y`** → 强制重新拉取全量数据（~15 分钟）
+- **CI 用法** → `python scripts/fetch_upcoming_comps.py --refresh`（跳过交互直接刷新）
+
+### 缓存机制
+
+| 项目 | 说明 |
+|------|------|
+| 缓存目录 | `.upcoming_cache/`（已在 `.gitignore`） |
+| TTL | 24 小时 |
+| 首次运行 | ~15 分钟（432 人 × 0.5s API 延迟） |
+| 缓存运行 | ~0.12 秒 |
+
+### 输出
+
+`stats/upcoming_comps.json` — 前端契约文件，含：
+- `updated_at`：生成时间
+- `total_cubers_tracked`：追踪人数
+- `competitions[]`：按日期排序，每场含 `top_cubers[].events[{id, wr}]`
+
+### 数据过滤
+
+- 只展示到**明年底**（当前年+1），排除遥远的占位赛事
+- API 返回 404 的选手自动跳过（退役/无网站账号）
+- 事件按 WCA 官方顺序排列，使用短名（`333`→`3`, `pyram`→`py`）
+
+### 前端功能
+
+- 按月份折叠分组（`<details>`）
+- 搜索框实时过滤比赛名/选手名
+- 一键全部收缩/展开
+- WR 红底白字圆角徽章
 
 ## 本地发布统计（无需等待 CI）
 
