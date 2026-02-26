@@ -191,18 +191,9 @@ description: Track upcoming WCA competitions of the world's top cubers.
     top: -1px;
 }
 
-/* WR 红底白字圆角徽章 */
-.wr-badge {
-    display: inline-block;
-    background: #d93025;
-    color: #fff;
-    font-size: 8px;
-    font-weight: 700;
-    padding: 1px 3px;
-    border-radius: 2px;
-    line-height: 1.3;
-    vertical-align: middle;
-    margin-left: 1px;
+/* WR 项目图标红色高亮 */
+.wr-event {
+    color: #d93025 !important;
 }
 
 /* 占位与错误状态 */
@@ -407,7 +398,7 @@ description: Track upcoming WCA competitions of the world's top cubers.
     <p style="font-size: 13px; color: #9aa0a6; margin: 0 0 16px 0; line-height: 1.6;">
         Tracking cubers who are currently <strong style="color:#e8eaed">ranked in the world top 10</strong> (single or average) in any official event, 
         or have <strong style="color:#e8eaed">held a World Record</strong> at any point in history.
-        Each cuber's tag shows their relevant events, with <span class="wr-badge" style="vertical-align: baseline;">WR</span> indicating a former or current World Record holder in that event.
+        Each cuber's tag shows their relevant events, with <span style="color:#d93025;">red-colored</span> icons indicating a former or current World Record holder in that event.
         <br>Monthly stats: 📋 competitions · 🌍 countries · 👤 cubers · 🔥 clashing (3+ top cubers) · ⏰ starting within 7 days.
     </p>
     <div class="toolbar">
@@ -540,9 +531,9 @@ document.addEventListener('DOMContentLoaded', function() {
             let evHtml = '';
             if (c.events && c.events.length > 0) {
                 const evParts = c.events.map(ev => {
-                    const wrBadge = ev.wr ? '<span class="wr-badge">WR</span>' : '';
+                    const wrClass = ev.wr ? ' wr-event' : '';
                     const eid = SHORT_TO_EVENT_ID[ev.id] || ev.id;
-                    return `<span class="cubing-icon event-${eid}"></span>${wrBadge}`;
+                    return `<span class="cubing-icon event-${eid}${wrClass}"></span>`;
                 });
                 evHtml = `<span class="event-label">${evParts.join(' ')}</span>`;
             }
