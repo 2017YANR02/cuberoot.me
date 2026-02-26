@@ -1,6 +1,6 @@
 # 每天自动刷新 Upcoming Comps 数据（WCA + cubing.com CN 比赛）
 # 约 15 分钟，月耗 450 分钟，远低于 GitHub Actions 免费额度 2000 分钟/月
-name: Daily Upcoming Comps Refresh
+name: Update Upcoming Comps
 
 on:
   schedule:
@@ -9,14 +9,14 @@ on:
   workflow_dispatch:
 
 jobs:
-  refresh:
+  build:
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
 
-      - name: Refresh upcoming comps (WCA + CN)
+      - name: Fetch upcoming comps (WCA + CN)
         run: python scripts/fetch_upcoming_comps.py --refresh
 
       - name: Commit and push
@@ -27,7 +27,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "chore: daily refresh upcoming comps [skip ci]"
+            git commit -m "chore: update upcoming comps [skip ci]"
             git pull --rebase origin main
             git push
           fi
