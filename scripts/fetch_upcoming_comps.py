@@ -28,10 +28,13 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", line_bufferin
 ROOT_DIR = Path(__file__).parent.parent
 WR_METRIC_PATH = ROOT_DIR / "stats" / "wr_metric.md"
 OUTPUT_JSON_PATH = ROOT_DIR / "stats" / "upcoming_comps.json"
+CACHE_DIR = ROOT_DIR / ".upcoming_cache"
 
 WCA_API_BASE = "https://www.worldcubeassociation.org/api/v0"
 API_DELAY_SEC = 0.5
 MAX_RETRIES = 3
+# NOTE: 缓存有效期（秒），24 小时内复用缓存不走网络
+CACHE_TTL_SEC = 24 * 3600
 
 # NOTE: 设为正整数可截断调试，生产环境为 None
 # NOTE: 设为 10 方便测试，全量为 None
@@ -174,6 +177,41 @@ def fetch_with_retry(url: str) -> Dict[str, Any]:
     return {}
 
 
+def _aggregate_comps(comps_map, comps, wca_id, cuber_info):
+    """将某位选手的比赛列表聚合到全局 comps_map 中。"""
+    name = cuber_info["name"]
+    for comp in comps:
+        c_id = comp["id"]
+        if c_id not in comps_map:
+            comps_map[c_id] = {
+                "id": c_id,
+                "name": comp["name"],
+                "city": comp.get("city", "Unknown"),
+                "country": comp.get("country_iso2", ""),
+                "start_date": comp["start_date"],
+                "end_date": comp["end_date"],
+                "events": set(comp.get("event_ids", [])),
+                "top_cubers": []
+            }
+        else:
+            comps_map[c_id]["events"].update(comp.get("event_ids", []))
+
+        # NOTE: 构造选手的事件标签列表，按 WCA 官方顺序排列并使用短名
+        event_tags = []
+        for ev_id, flags in sorted(
+            cuber_info["events"].items(),
+            key=lambda x: EVENT_ORDER_MAP.get(x[0], (999, x[0]))[0]
+        ):
+            _, short = EVENT_ORDER_MAP.get(ev_id, (999, ev_id))
+            event_tags.append({"id": short, "wr": flags["wr"]})
+
+        comps_map[c_id]["top_cubers"].append({
+            "id": wca_id,
+            "name": name,
+            "events": event_tags,
+        })
+
+
 def build_upcoming_comps(cubers: CuberData) -> List[Dict[str, Any]]:
     """
     遍历选手名单，请求 WCA API 获取近期比赛并聚合。
@@ -187,14 +225,30 @@ def build_upcoming_comps(cubers: CuberData) -> List[Dict[str, Any]]:
         cuber_items = cuber_items[:DEBUG_LIMIT]
 
     total = len(cuber_items)
+    CACHE_DIR.mkdir(exist_ok=True)
+    cache_hit = 0
+
     for i, (wca_id, cuber_info) in enumerate(cuber_items, 1):
         name = cuber_info["name"]
+        cache_file = CACHE_DIR / f"{wca_id}.json"
+
+        # NOTE: 缓存命中判断 — 文件存在且未过期
+        if cache_file.exists():
+            age = time.time() - cache_file.stat().st_mtime
+            if age < CACHE_TTL_SEC:
+                data = json.loads(cache_file.read_text(encoding="utf-8"))
+                cache_hit += 1
+                comps = data.get("upcoming_competitions", [])
+                print(f"[{i}/{total}] {wca_id} ({name}): {len(comps)} 场 [缓存]")
+                _aggregate_comps(comps_map, comps, wca_id, cuber_info)
+                continue
+
+        # 缓存未命中，走网络请求
         url = f"{WCA_API_BASE}/users/{wca_id}?upcoming_competitions=true"
         data = fetch_with_retry(url)
 
         comps = data.get("upcoming_competitions", [])
-        n = len(comps)  # 用于进度显示
-        # NOTE: 进度格式改进，显示比赛场数
+        n = len(comps)
         if n > 0:
             print(f"[{i}/{total}] {wca_id} ({name}): {n} 场")
         elif not data:
@@ -202,39 +256,10 @@ def build_upcoming_comps(cubers: CuberData) -> List[Dict[str, Any]]:
         else:
             print(f"[{i}/{total}] {wca_id} ({name}): 0 场")
 
-        for comp in comps:
-            c_id = comp["id"]
-            if c_id not in comps_map:
-                comps_map[c_id] = {
-                    "id": c_id,
-                    "name": comp["name"],
-                    "city": comp.get("city", "Unknown"),
-                    "country": comp.get("country_iso2", ""),
-                    "start_date": comp["start_date"],
-                    "end_date": comp["end_date"],
-                    "events": set(comp.get("event_ids", [])),
-                    "top_cubers": []
-                }
-            else:
-                comps_map[c_id]["events"].update(comp.get("event_ids", []))
+        # NOTE: 写入缓存（包括空结果和 404，防止重复请求）
+        cache_file.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
 
-            # NOTE: 构造选手的事件标签列表，按 WCA 官方顺序排列并使用短名
-            event_tags = []
-            for ev_id, flags in sorted(
-                cuber_info["events"].items(),
-                key=lambda x: EVENT_ORDER_MAP.get(x[0], (999, x[0]))[0]
-            ):
-                _, short = EVENT_ORDER_MAP.get(ev_id, (999, ev_id))
-                event_tags.append({
-                    "id": short,
-                    "wr": flags["wr"],
-                })
-
-            comps_map[c_id]["top_cubers"].append({
-                "id": wca_id,
-                "name": name,
-                "events": event_tags,
-            })
+        _aggregate_comps(comps_map, comps, wca_id, cuber_info)
 
     # 转化为 list，events set -> sorted list
     results = []
