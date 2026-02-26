@@ -144,8 +144,8 @@ description: Track upcoming WCA competitions of the world's top cubers.
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    margin-top: 12px;
-    padding-top: 12px;
+    margin-top: 6px;
+    padding-top: 6px;
     border-top: 1px dashed rgba(255, 255, 255, 0.1);
 }
 
@@ -513,7 +513,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="comp-header">
                 <h2 class="comp-title">
                     <a href="https://www.worldcubeassociation.org/competitions/${comp.id}" target="_blank" rel="noopener noreferrer">
-                        ${comp.name}
+                        ${comp.name.includes('Championship') ? '🏆 ' : ''}<span class="fi fi-${comp.country.toLowerCase()}" style="margin-right:6px;"></span>${comp.name}
                     </a>
                     ${clashBadge}
                     ${soonBadge}
@@ -522,6 +522,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
             <div class="comp-meta">
                 <div class="comp-location">📍 ${locDisplay}</div>
+                ${comp.competitor_limit ? `<span style="color:#9aa0a6;font-size:13px;transform:translateY(-7px);display:inline-block;">👥${comp.competitor_limit}</span>` : ''}
                 ${eventHtml}
             </div>
             <div class="cuber-list">
