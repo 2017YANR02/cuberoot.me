@@ -317,15 +317,15 @@
 
         // 右列：复盘步骤
         html += '<div>';
-        if (s.caption) {
-            html += '<div class="detail-recon">';
-            html += '<div class="detail-recon-label">' + (isZh ? '复盘' : 'Reconstruction') + '</div>';
-            html += '<div class="detail-recon-text">' + formatReconText(s.caption) + '</div>';
-            html += '</div>';
-        } else if (s.recon) {
+        if (s.recon) {
             html += '<div class="detail-recon">';
             html += '<div class="detail-recon-label">' + (isZh ? '复盘' : 'Reconstruction') + '</div>';
             html += '<div class="detail-recon-text">' + formatReconText(s.recon) + '</div>';
+            html += '</div>';
+        } else if (s.caption) {
+            html += '<div class="detail-recon">';
+            html += '<div class="detail-recon-label">' + (isZh ? '复盘' : 'Reconstruction') + '</div>';
+            html += '<div class="detail-recon-text">' + formatReconText(s.caption) + '</div>';
             html += '</div>';
         }
         html += '</div>';
