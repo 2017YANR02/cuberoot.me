@@ -74,6 +74,13 @@
 
         // NOTE: 初始渲染
         applyFilters();
+
+        // NOTE: 监听客户端提交的本地复盘
+        window.addEventListener('recon-local-add', function (e) {
+            var solve = e.detail;
+            allSolves.unshift(solve);
+            applyFilters();
+        });
     }
 
     // ==================== 筛选器 ====================
