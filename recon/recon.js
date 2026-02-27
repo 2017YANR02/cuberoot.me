@@ -342,8 +342,12 @@
         }
         html += '</div>';
 
-        // 右列：打乱 + 元数据
+        // 右列：统计网格 + 打乱 + 元数据
         html += '<div>';
+
+        // NOTE: 统计网格（从 recon 文本自动计算的统计值）
+        html += buildStatsGrid(s, isZh);
+
         if (s.scramble) {
             html += '<div class="detail-scramble">';
             html += '<div class="detail-scramble-label"><span data-i18n-en="Optimal Scramble (scr*)" data-i18n-zh="最少步打乱 (scr*)">' + (isZh ? '最少步打乱 (scr*)' : 'Optimal Scramble (scr*)') + '</span></div>';
@@ -378,6 +382,67 @@
 
         html += '</div>'; // detail-grid
         html += '</div>'; // detail-content
+        return html;
+    }
+
+    /**
+     * NOTE: 构建统计网格 HTML。
+     * 展示从 recon 文本自动计算的统计值（STM、TPS、F2L、LL 等）。
+     */
+    function buildStatsGrid(s, isZh) {
+        // NOTE: Cross 类型数字 → 可读标签
+        const CROSS_LABELS = { 0: 'cross', 1: 'xcross', 2: 'xxcross', 3: 'xxxcross', 4: 'xxxxcross' };
+
+        // NOTE: 定义统计项列表：[JSON字段, 英文标签, 中文标签, 格式化函数(可选)]
+        const items = [
+            ['stm', 'STM', 'STM'],
+            ['tps', 'TPS', 'TPS'],
+            ['crossStm', 'Cross', 'Cross'],
+            ['f2l', 'F2L', 'F2L'],
+            ['ll', 'LL', 'LL'],
+            ['crossType', '?x', '?x', function (v) { return CROSS_LABELS[v] || v; }],
+            ['freePair', 'Free Pair', '基态'],
+            ['yRot', 'y rot', 'y 旋转'],
+            ['regrip', 'Regrip', '换手'],
+            ['lockup', 'Lockup', '卡顿'],
+            ['sMove', 'S move', 'S 步'],
+            ['crossColor', 'Color', '底色', function (v) {
+                // NOTE: 使用对应的魔方面颜色着色
+                var color = FACE_COLORS[v];
+                if (color) return '<span style="color:' + color + ';font-weight:600">' + v + '</span>';
+                return v;
+            }],
+            ['ollShort', 'OLL', 'OLL'],
+            ['pllShort', 'PLL', 'PLL'],
+        ];
+
+        // NOTE: 过滤出有值的统计项
+        var visibleItems = [];
+        for (var i = 0; i < items.length; i++) {
+            var key = items[i][0];
+            var val = s[key];
+            if (val !== undefined && val !== null && val !== '') {
+                visibleItems.push(items[i]);
+            }
+        }
+        if (visibleItems.length === 0) return '';
+
+        var html = '<div class="detail-stats">';
+        html += '<div class="detail-stats-label">📊 ' + (isZh ? '统计' : 'Stats') + '</div>';
+        html += '<div class="detail-stats-grid">';
+        for (var j = 0; j < visibleItems.length; j++) {
+            var item = visibleItems[j];
+            var key = item[0];
+            var label = isZh ? item[2] : item[1];
+            var val = s[key];
+            var fmt = item[3];
+            var displayVal = fmt ? fmt(val) : escHtml(String(val));
+            html += '<div class="stat-item">' +
+                '<span class="stat-label">' + escHtml(label) + '</span>' +
+                '<span class="stat-value">' + displayVal + '</span>' +
+                '</div>';
+        }
+        html += '</div></div>';
         return html;
     }
 
