@@ -401,12 +401,12 @@ description: Track upcoming WCA competitions of the world's top cubers.
     <p id="desc-en" style="font-size: 13px; color: #9aa0a6; margin: 0 0 16px 0; line-height: 1.6;">
         Tracking cubers who are currently <strong style="color:#e8eaed">ranked in the world top 10</strong> (single or average) in any official event, 
         or have <strong style="color:#e8eaed">held a World Record</strong> at any point in history.
-        Each cuber's tag shows their relevant events, with <span style="color:#d93025;">red-colored</span> icons indicating a former or current World Record holder in that event.
+        Each cuber's tag shows their relevant events, with <span style="color:#d93025;">red</span> icons indicating a current World Record holder, and <span style="color:#e8890c;">orange</span> icons indicating a former one.
         <br>Monthly stats: 📋 competitions · 🌍 countries · 👤 cubers · 🔥 clashing (3+ top cubers) · ⏰ starting within 7 days.
     </p>
     <p id="desc-zh" style="font-size: 13px; color: #9aa0a6; margin: 0 0 16px 0; line-height: 1.6; display: none;">
         追踪目前在任意官方项目中<strong style="color:#e8eaed">世界排名前 10</strong>（单次或平均）的选手，以及历史上<strong style="color:#e8eaed">曾保持过世界纪录</strong>的选手。
-        每位选手标签显示其上榜项目，<span style="color:#d93025;">红色</span>图标表示该项目的现任或前任世界纪录保持者。
+        每位选手标签显示其上榜项目，<span style="color:#d93025;">红色</span>图标表示该项目的现任世界纪录保持者，<span style="color:#e8890c;">橙色</span>表示前任世界纪录保持者。
         <br>月度统计：📋 比赛 · 🌍 国家 · 👤 选手 · 🔥 扎堆（3+ 位顶尖选手）· ⏰ 7 天内开赛。
     </p>
     <div class="toolbar">
