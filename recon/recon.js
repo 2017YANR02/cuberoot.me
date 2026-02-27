@@ -48,7 +48,7 @@
             allSolves = data.solves || [];
             compCountries = await compResp.json();
         } catch (e) {
-            tbody.innerHTML = '<tr><td colspan="15" style="text-align:center;color:#f87171">Failed to load data</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;color:#f87171">Failed to load data</td></tr>';
             console.error('Failed to load recon data:', e);
             return;
         }
@@ -246,11 +246,9 @@
         tr.innerHTML =
             '<td class="col-expand"><span class="expand-icon">▶</span></td>' +
             '<td class="col-result mono">' + formatResult(solve.single) + '</td>' +
-            '<td class="col-country">' + countryFlag(solve.countryIso2) + '</td>' +
-            '<td class="col-solver">' + escHtml(displaySolverName(solve)) + '</td>' +
+            '<td class="col-solver">' + countryFlag(solve.countryIso2) + ' ' + escHtml(displaySolverName(solve)) + '</td>' +
             '<td class="col-method">' + escHtml(solve.method || '') + '</td>' +
-            '<td class="col-comp-country">' + countryFlag(compCountries[solve.comp]) + '</td>' +
-            '<td class="col-comp">' + escHtml(solve.comp || '') + '</td>' +
+            '<td class="col-comp">' + countryFlag(compCountries[solve.comp]) + ' ' + escHtml(solve.comp || '') + '</td>' +
             '<td class="col-round">' + escHtml(formatRound(solve)) + '</td>' +
             '<td class="col-date">' + escHtml(solve.date || '') + '</td>' +
             '<td class="col-stm">' + (solve.stm || '') + '</td>' +
@@ -291,7 +289,7 @@
         const detailRow = document.createElement('tr');
         detailRow.className = 'detail-row';
         const td = document.createElement('td');
-        td.colSpan = 15;
+        td.colSpan = 13;
         td.innerHTML = buildDetailHtml(solve);
         detailRow.appendChild(td);
 
