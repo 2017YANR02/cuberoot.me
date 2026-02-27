@@ -77,3 +77,14 @@ SQL
 end
 File.write(person_name_path, JSON.generate(person_name_map))
 puts "  #{person_name_path} (#{person_name_map.size} persons, #{File.size(person_name_path)} bytes)"
+
+# ── 5. 比赛展示名 → 日期（recon 页面用） ──
+# NOTE: recon 页面的日期优先使用 WCA 数据库中的 start_date，而非 CSV 手动输入
+puts "Generating comp name → date mapping..."
+comp_dates_path = File.join(STATS_DIR, "comp_dates.json")
+comp_dates_map = {}
+Database.client.query("SELECT cell_name, start_date FROM Competitions").each do |r|
+  comp_dates_map[r["cell_name"]] = r["start_date"].strftime("%Y-%m-%d")
+end
+File.write(comp_dates_path, JSON.generate(comp_dates_map))
+puts "  #{comp_dates_path} (#{comp_dates_map.size} competitions, #{File.size(comp_dates_path)} bytes)"
