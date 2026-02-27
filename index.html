@@ -74,13 +74,13 @@
 
         .cards-container {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             gap: 2rem;
-            max-width: 720px;
+            max-width: 960px;
             width: 100%;
         }
 
-        @media (max-width: 600px) {
+        @media (max-width: 768px) {
             .cards-container {
                 grid-template-columns: 1fr;
                 gap: 1.5rem;
@@ -106,6 +106,10 @@
             --card-gradient: linear-gradient(90deg, #f59e0b, #ef4444, #ec4899);
         }
 
+        .card-recon {
+            --card-gradient: linear-gradient(90deg, #10b981, #06b6d4, #3b82f6);
+        }
+
         .card-solver:hover {
             border-color: rgba(99, 102, 241, 0.4);
             box-shadow: 0 8px 32px rgba(99, 102, 241, 0.12);
@@ -114,6 +118,11 @@
         .card-stats:hover {
             border-color: rgba(245, 158, 11, 0.4);
             box-shadow: 0 8px 32px rgba(245, 158, 11, 0.12);
+        }
+
+        .card-recon:hover {
+            border-color: rgba(16, 185, 129, 0.4);
+            box-shadow: 0 8px 32px rgba(16, 185, 129, 0.12);
         }
 
         .card-icon {
@@ -252,6 +261,13 @@
             <div class="card-icon">📊</div>
             <div class="card-name" data-i18n="index.wca_stats">WCA Stats</div>
             <div class="card-desc" data-i18n="index.stats_desc">60+ statistics from the WCA database, updated weekly
+            </div>
+        </a>
+
+        <a href="recon/" class="glass-card card card-recon" id="card-recon">
+            <div class="card-icon">🔍</div>
+            <div class="card-name" data-i18n="index.recon">Recon</div>
+            <div class="card-desc" data-i18n="index.recon_desc">Competition solve reconstructions and analysis
             </div>
         </a>
     </div>

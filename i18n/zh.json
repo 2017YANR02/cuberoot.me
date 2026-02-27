@@ -21,7 +21,9 @@
         "solver": "求解器",
         "solver_desc": "Cross、XCross、EOCross、基态、伪 F2L、Last Layer 及训练器",
         "wca_stats": "WCA 统计",
-        "stats_desc": "来自 WCA 数据库的 60+ 项统计，每周更新"
+        "stats_desc": "来自 WCA 数据库的 60+ 项统计，每周更新",
+        "recon": "复盘",
+        "recon_desc": "比赛还原的步骤拆解与分析数据"
     },
     "solver": {
         "title": "魔方求解器",
@@ -128,5 +130,20 @@
         "puzzle": "魔方：",
         "next": "下一个",
         "show_ans": "显示答案"
+    },
+    "recon": {
+        "title": "比赛复盘",
+        "subtitle": "顶尖选手的比赛还原复盘与分析",
+        "search_placeholder": "搜索选手、比赛...",
+        "all_solvers": "所有选手",
+        "all_methods": "所有方法",
+        "all_events": "所有项目",
+        "col_result": "成绩",
+        "col_solver": "选手",
+        "col_method": "方法",
+        "col_comp": "比赛",
+        "col_round": "轮",
+        "col_date": "日期",
+        "load_more": "加载更多"
     }
 }
