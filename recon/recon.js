@@ -541,12 +541,17 @@
     }
 
     function updateStats() {
+        const isZh = localStorage.getItem('i18n_locale') === 'zh';
         const total = allSolves.length;
         const shown = filteredSolves.length;
         if (shown === total) {
-            statsEl.innerHTML = `<span data-i18n-en="${total} reconstructions" data-i18n-zh="共 ${total} 条复盘"></span>`;
+            const enText = `${total} reconstructions`;
+            const zhText = `共 ${total} 条复盘`;
+            statsEl.innerHTML = `<span data-i18n-en="${enText}" data-i18n-zh="${zhText}">${isZh ? zhText : enText}</span>`;
         } else {
-            statsEl.innerHTML = `<span data-i18n-en="${shown} of ${total} matching" data-i18n-zh="${shown} / ${total} 条匹配"></span>`;
+            const enText = `${shown} of ${total} matching`;
+            const zhText = `${shown} / ${total} 条匹配`;
+            statsEl.innerHTML = `<span data-i18n-en="${enText}" data-i18n-zh="${zhText}">${isZh ? zhText : enText}</span>`;
         }
     }
 
