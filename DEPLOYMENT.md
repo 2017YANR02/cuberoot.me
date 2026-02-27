@@ -160,8 +160,20 @@ sudo net start MySQL80
 | DevKit/MSYS2 | 内置，已全量升级 |
 | mysql2 gem | 0.5.7（依赖 `libmariadbclient`，通过 MSYS2 pacman 安装） |
 | bigdecimal gem | 4.0.1（Ruby 3.4 不再内置，需手动添加） |
+| Gem 源 | `Gemfile` 写 `rubygems.org`（CI 兼容），本地通过 mirror 配置走国内镜像（见下方） |
 
 > **注意**：MSYS2 默认镜像在国内可能超时，已在 `mirrorlist.ucrt64` 和 `mirrorlist.msys` 顶部添加清华镜像。
+
+**Gem 源镜像配置**：
+
+`Gemfile` 中 source 统一写 `https://rubygems.org`（确保 CI 在海外能正常访问）。本地通过 `bundle config` 设置镜像，让实际请求走国内源加速：
+
+```powershell
+# 首次设置（全局生效，存于 ~/.bundle/config，不会提交到 git）
+bundle config set mirror.https://rubygems.org https://gems.ruby-china.com
+```
+
+> 设置后本地 `bundle install` 自动走 `gems.ruby-china.com`，CI 走 `rubygems.org`，互不影响。
 
 **安装步骤**（首次）：
 
