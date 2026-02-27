@@ -95,7 +95,7 @@ def buildSolveRecord(row, headers):
     if hasRecon != "YES":
         return None
 
-    single = parseFloat(col("single"))
+    single = parseFloat(col("time"))
     if single is None or single <= 0:
         return None
 
