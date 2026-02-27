@@ -362,14 +362,34 @@
         return val.toFixed(2);
     }
 
-    // NOTE: Record 标记格式化，WR 用红色高亮
+    // NOTE: Record 标记格式化为 badge（白字彩色圆角方框）
+    // 颜色规则：WR=红色, 洲际(AsR/ER/CR)=黄色, NR=绿色, 个人(PR/PB)=蓝色
+    // 前缀 F=女子纪录，颜色同上
     function formatRecord(val) {
         if (!val) return '';
-        if (val === 'WR') return '<span style="color:#ef4444;font-weight:600">WR</span>';
-        if (val === 'CR' || val === 'AsR' || val === 'ER') return '<span style="color:#f59e0b;font-weight:600">' + escHtml(val) + '</span>';
-        if (val === 'NR') return '<span style="color:#3b82f6;font-weight:600">NR</span>';
-        if (val === 'PR') return '<span style="color:#10b981">PR</span>';
-        return escHtml(val);
+        const cls = getRecordClass(val);
+        return '<span class="record-badge record-' + cls + '">' + escHtml(val) + '</span>';
+    }
+
+    function getRecordClass(val) {
+        // NOTE: 去掉可能的前缀 F(女子)、X、U 等，取核心后缀判断
+        const v = val.toUpperCase();
+        // 世界纪录（红色）
+        if (v === 'WR' || v === 'FWR' || v === 'RWR' || v === 'XWR' || v === 'UWR'
+            || v === '1STWR' || v === 'YTWR' || v === 'YTWB') return 'wr';
+        // 洲际纪录（黄色）：AsR, ER, CR, SAR, NAR, WCR 等
+        if (v.endsWith('ASR') || v.endsWith('ER') || v.endsWith('CR')
+            || v === 'SAR' || v === 'NAR' || v === 'WCR'
+            || v === 'FASR' || v === 'XASR' || v === 'UASR') return 'cr';
+        // 国家纪录（绿色）
+        if (v.endsWith('NR') || v === 'FNR' || v === 'XNR' || v === 'UNR'
+            || v === 'NWR' || v === 'ANR' || v === 'YTNR'
+            || v === 'NB' || v === 'YTNB') return 'nr';
+        // 个人纪录（蓝色）
+        if (v.endsWith('PR') || v.endsWith('PB')
+            || v === 'YTPR' || v === 'YTPB' || v === 'UPR') return 'pr';
+        // 其他（WB 等，灰色）
+        return 'other';
     }
 
     function formatRound(s) {

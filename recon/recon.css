@@ -295,6 +295,43 @@ tr.detail-row td {
     color: #6b7280;
 }
 
+/* NOTE: Record badge 样式（白字彩色圆角方框） */
+.record-badge {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+    line-height: 1.4;
+}
+
+/* 世界纪录 — 红色 */
+.record-wr {
+    background: #dc2626;
+}
+
+/* 洲际纪录 — 黄色 */
+.record-cr {
+    background: #d97706;
+}
+
+/* 国家纪录 — 绿色 */
+.record-nr {
+    background: #16a34a;
+}
+
+/* 个人纪录 — 蓝色 */
+.record-pr {
+    background: #2563eb;
+}
+
+/* 其他 — 灰色 */
+.record-other {
+    background: #6b7280;
+}
+
 /* NOTE: 步骤中的 inspection 标记 */
 .recon-step-label {
     color: #93bbfc;
