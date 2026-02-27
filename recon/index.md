@@ -32,18 +32,19 @@ layout: default
         <thead>
             <tr>
                 <th class="col-expand"></th>
-                <th class="col-result" data-i18n="recon.col_result" data-sort="single">Result</th>
-                <th class="col-solver" data-i18n="recon.col_solver" data-sort="solver">Solver</th>
+                <th class="col-official">Official?</th>
+                <th class="col-event" data-sort="event">Event</th>
                 <th class="col-method" data-i18n="recon.col_method">Method</th>
+                <th class="col-date" data-i18n="recon.col_date" data-sort="date">Date</th>
                 <th class="col-comp" data-i18n="recon.col_comp">Competition</th>
                 <th class="col-round" data-i18n="recon.col_round">Rnd</th>
-                <th class="col-date" data-i18n="recon.col_date">Date</th>
-                <th class="col-stm">STM</th>
-                <th class="col-tps">TPS</th>
-                <th class="col-oll">OLL</th>
-                <th class="col-pll">PLL</th>
-                <th class="col-ravg" data-i18n="recon.col_ravg">R Avg</th>
-                <th class="col-rsingle" data-i18n="recon.col_rsingle">R Single</th>
+                <th class="col-aoxr" data-sort="aoType">AoXR</th>
+                <th class="col-avg" data-sort="avg">Avg</th>
+                <th class="col-ravg" data-i18n="recon.col_ravg" data-sort="rAvg">PR Avg</th>
+                <th class="col-single" data-i18n="recon.col_result" data-sort="single">Single</th>
+                <th class="col-rsingle" data-i18n="recon.col_rsingle" data-sort="rSingle">PR Single</th>
+                <th class="col-solver" data-i18n="recon.col_solver" data-sort="solver">Solver</th>
+                <th class="col-recon-preview" data-i18n="recon.col_recon">Recon</th>
             </tr>
         </thead>
         <tbody id="recon-tbody"></tbody>

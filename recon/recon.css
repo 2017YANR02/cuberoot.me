@@ -148,14 +148,13 @@
 }
 
 /* NOTE: 数字列等宽字体 */
-.col-result,
-.col-stm,
-.col-tps {
+.col-single,
+.col-avg {
     font-family: 'Roboto Mono', monospace;
     font-size: 0.85rem;
 }
 
-.col-result {
+.col-single {
     font-weight: 600;
     color: #f1f5f9;
 }
@@ -167,6 +166,19 @@
 
 .col-round {
     text-align: center;
+}
+
+.col-official {
+    text-align: center;
+}
+
+.col-recon-preview {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #9ca3af;
+    font-size: 0.8rem;
 }
 
 /* NOTE: 展开箭头 */
@@ -414,13 +426,12 @@ tr.detail-row td {
     }
 
     /* NOTE: 手机端隐藏次要列 */
-    .col-stm,
-    .col-tps,
-    .col-oll,
-    .col-pll,
     .col-round,
+    .col-aoxr,
+    .col-avg,
     .col-ravg,
-    .col-rsingle {
+    .col-rsingle,
+    .col-recon-preview {
         display: none;
     }
 

@@ -52,7 +52,7 @@
             compCountries = await compResp.json();
             personCountries = await personResp.json();
         } catch (e) {
-            tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;color:#f87171">Failed to load data</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="14" style="text-align:center;color:#f87171">Failed to load data</td></tr>';
             console.error('Failed to load recon data:', e);
             return;
         }
@@ -159,16 +159,18 @@
 
     function handleSort(th) {
         const colMap = {
-            'col-result': 'single',
-            'col-solver': 'solver',
+            'col-official': 'official',
+            'col-event': 'event',
             'col-method': 'method',
+            'col-date': 'date',
             'col-comp': 'comp',
             'col-round': 'round',
-            'col-date': 'date',
-            'col-stm': 'stm',
-            'col-tps': 'tps',
-            'col-oll': 'oll',
-            'col-pll': 'pll'
+            'col-aoxr': 'aoType',
+            'col-avg': 'avg',
+            'col-ravg': 'rAvg',
+            'col-single': 'single',
+            'col-rsingle': 'rSingle',
+            'col-solver': 'solver'
         };
 
         const classes = [...th.classList];
@@ -183,7 +185,7 @@
             sortDir = sortDir === 'asc' ? 'desc' : 'asc';
         } else {
             sortCol = col;
-            sortDir = ['single', 'stm', 'tps'].includes(col) ? 'asc' : 'desc';
+            sortDir = ['single', 'avg'].includes(col) ? 'asc' : 'desc';
         }
 
         // NOTE: 更新表头样式
@@ -247,20 +249,23 @@
         tr.className = 'solve-row';
         tr.dataset.id = solve.id;
 
+        const officialHtml = solve.official ? '✅' : '';
+
         tr.innerHTML =
             '<td class="col-expand"><span class="expand-icon">▶</span></td>' +
-            '<td class="col-result mono">' + formatResult(solve.single) + '</td>' +
-            '<td class="col-solver">' + countryFlag(solverCountry(solve)) + ' ' + escHtml(displaySolverName(solve)) + '</td>' +
+            '<td class="col-official">' + officialHtml + '</td>' +
+            '<td class="col-event">' + escHtml(solve.event || '') + '</td>' +
             '<td class="col-method">' + escHtml(solve.method || '') + '</td>' +
+            '<td class="col-date">' + escHtml(solve.date || '') + '</td>' +
             '<td class="col-comp">' + countryFlag(compCountries[solve.comp]) + ' ' + escHtml(solve.comp || '') + '</td>' +
             '<td class="col-round">' + escHtml(formatRound(solve)) + '</td>' +
-            '<td class="col-date">' + escHtml(solve.date || '') + '</td>' +
-            '<td class="col-stm">' + (solve.stm || '') + '</td>' +
-            '<td class="col-tps">' + formatTps(solve.tps) + '</td>' +
-            '<td class="col-oll">' + escHtml(solve.oll || '') + '</td>' +
-            '<td class="col-pll">' + escHtml(solve.pll || '') + '</td>' +
+            '<td class="col-aoxr">' + escHtml(solve.aoType || '') + '</td>' +
+            '<td class="col-avg mono">' + formatResult(solve.avg) + '</td>' +
             '<td class="col-ravg">' + formatRecord(solve.rAvg) + '</td>' +
-            '<td class="col-rsingle">' + formatRecord(solve.rSingle) + '</td>';
+            '<td class="col-single mono">' + formatResult(solve.single) + '</td>' +
+            '<td class="col-rsingle">' + formatRecord(solve.rSingle) + '</td>' +
+            '<td class="col-solver">' + countryFlag(solverCountry(solve)) + ' ' + escHtml(displaySolverName(solve)) + '</td>' +
+            '<td class="col-recon-preview">' + escHtml(getReconPreview(solve)) + '</td>';
 
         tr.addEventListener('click', () => toggleDetail(solve, tr));
         return tr;
@@ -293,7 +298,7 @@
         const detailRow = document.createElement('tr');
         detailRow.className = 'detail-row';
         const td = document.createElement('td');
-        td.colSpan = 13;
+        td.colSpan = 14;
         td.innerHTML = buildDetailHtml(solve);
         detailRow.appendChild(td);
 
@@ -429,6 +434,12 @@
         const isZh = localStorage.getItem('i18n_locale') === 'zh';
         if (isZh && s.solverZh) return s.solverZh;
         return s.solver || '';
+    }
+
+    function getReconPreview(s) {
+        const text = s.recon || s.caption || '';
+        if (!text) return '';
+        return text.split('\n')[0].trim();
     }
 
     function formatReconText(text) {
