@@ -426,22 +426,44 @@
 
     // ==================== 魔方动画 ====================
 
-    /** 从复盘文本中提取纯公式（去除 // 注释和统计行） */
+    /**
+     * 从复盘文本中提取纯解法（去除统计行、打乱行、// 注释）
+     * 三行格式: 第1行=统计, 第2行=打乱, 第3行起=解法
+     */
     function extractAlgFromRecon(text) {
         if (!text) return '';
-        // NOTE: 匹配统计行，如 "41STM /3.64=11.26TPS" 或 "29STM /2.76=10.51TPS"
-        var statsPattern = /^\d+STM\s/i;
-        return text.split('\n')
+        var lines = text.split('\n');
+        var startIdx = 0;
+        // NOTE: 跳过第1行统计（如 "41STM /3.64=11.26TPS"）
+        if (lines.length > 0 && /^\d+STM\s/i.test(lines[0])) {
+            startIdx = 1;
+            // NOTE: 跳过第2行打乱（统计行之后紧跟的一行纯公式，无 // 注释）
+            if (lines.length > 1 && lines[1].indexOf('//') < 0) {
+                startIdx = 2;
+            }
+        }
+        var alg = lines.slice(startIdx)
             .map(function (line) {
-                // NOTE: 去掉 // 及其后的注释
                 var idx = line.indexOf('//');
                 return (idx >= 0 ? line.substring(0, idx) : line).trim();
             })
-            .filter(function (line) {
-                // NOTE: 跳过空行和统计行
-                return line.length > 0 && !statsPattern.test(line);
-            })
+            .filter(function (line) { return line.length > 0; })
             .join('\n');
+        // NOTE: 规范化步骤间距——twisty-player 无法解析连写的步骤（如 UD, U'D'）
+        // 在步骤结束（字母或'或2或w）与下一个步骤字母之间插入空格
+        alg = alg.replace(/([RULDFBMESruldfbmesxyz][w]?[2']?)(?=[RULDFBMESxyz])/g, '$1 ');
+        return alg;
+    }
+
+    /** 从复盘文本第2行提取打乱公式（当 wcaScramble/scramble 字段为空时的 fallback） */
+    function extractScrambleFromRecon(text) {
+        if (!text) return '';
+        var lines = text.split('\n');
+        // NOTE: 第1行是统计行时, 第2行就是打乱
+        if (lines.length > 1 && /^\d+STM\s/i.test(lines[0])) {
+            return lines[1].trim();
+        }
+        return '';
     }
 
     /** 懒加载 twisty-player 并插入到容器 */
@@ -451,18 +473,19 @@
             var Ctor = window.__TwistyPlayerCtor;
             if (!Ctor) { container.innerHTML = ''; return; }
 
-            var setup = solve.wcaScramble || solve.scramble || '';
-            var alg = extractAlgFromRecon(solve.recon || solve.caption || '');
+            var reconText = solve.recon || solve.caption || '';
+            // NOTE: 优先用独立字段, fallback 从 recon 文本第2行提取
+            var setup = solve.wcaScramble || solve.scramble || extractScrambleFromRecon(reconText);
+            var alg = extractAlgFromRecon(reconText);
             // NOTE: 根据项目切换 puzzle
             var puzzle = '3x3x3';
             if (solve.event && solve.event.indexOf('2') >= 0) puzzle = '2x2x2';
 
-            // NOTE: 与 solver 页面完全一致的配置
+            // NOTE: 使用默认配置（棋盘格背景 + 完整控制面板）
             var player = new Ctor({
                 puzzle: puzzle,
                 experimentalSetupAlg: setup,
-                alg: alg,
-                background: 'none'
+                alg: alg
             });
 
             container.innerHTML = '';
@@ -494,11 +517,13 @@
             html += '</div>';
         }
         // NOTE: 有打乱时插入 twisty-player 占位符 + alg.cubing.net 链接
-        if ((s.wcaScramble || s.scramble) && (s.recon || s.caption)) {
+        var reconText = s.recon || s.caption || '';
+        var scrambleForPlayer = s.wcaScramble || s.scramble || extractScrambleFromRecon(reconText);
+        if (scrambleForPlayer && reconText) {
             html += '<div class="recon-twisty-container"></div>';
             // NOTE: 构建 alg.cubing.net 链接
-            var setupStr = encodeURIComponent(s.wcaScramble || s.scramble || '');
-            var algStr = encodeURIComponent(extractAlgFromRecon(s.recon || s.caption || ''));
+            var setupStr = encodeURIComponent(scrambleForPlayer);
+            var algStr = encodeURIComponent(extractAlgFromRecon(reconText));
             var puzzleStr = (s.event && s.event.indexOf('2') >= 0) ? '2x2x2' : '3x3x3';
             var algUrl = 'https://alg.cubing.net/?setup=' + setupStr + '&alg=' + algStr + '&puzzle=' + puzzleStr;
             var cubedbUrl = 'https://cubedb.net/?puzzle=' + (puzzleStr === '2x2x2' ? '2x2' : '3x3') + '&scramble=' + setupStr + '&alg=' + algStr;
