@@ -71,6 +71,28 @@ layout: default
     <span id="recon-showing" class="recon-showing"></span>
 </div>
 
+<!-- NOTE: cubing/twisty 3D 动画播放器（懒加载） -->
+<script type="module">
+    let twistyPromise = null;
+    function ensureTwisty() {
+        if (!twistyPromise) {
+            twistyPromise = import('https://cdn.cubing.net/v0/js/cubing/twisty')
+                .then(mod => {
+                    window.__TwistyPlayerCtor = mod.TwistyPlayer || mod.default;
+                    return mod;
+                })
+                .catch(err => {
+                    console.error('Twisty import failed:', err);
+                    throw err;
+                });
+        }
+        return twistyPromise;
+    }
+    window.ensureTwisty = ensureTwisty;
+    // NOTE: 空闲时预加载
+    try { ensureTwisty().catch(() => {}); } catch(e) {}
+</script>
+
 <!-- NOTE: Firebase compat SDK（CDN） -->
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
