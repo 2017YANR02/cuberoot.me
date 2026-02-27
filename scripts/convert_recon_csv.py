@@ -57,30 +57,6 @@ def parseInt(val):
         return None
 
 
-# NOTE: 国家全名 → ISO 3166-1 alpha-2 映射（用于前端旗帜 emoji 渲染）
-COUNTRY_ISO2 = {
-    "Australia": "AU", "Canada": "CA", "Chile": "CL", "China": "CN",
-    "France": "FR", "Germany": "DE", "Hong Kong": "HK", "Japan": "JP",
-    "Korea": "KR", "South Korea": "KR", "Netherlands": "NL",
-    "Norway": "NO", "Philippines": "PH", "Poland": "PL",
-    "Russia": "RU", "Singapore": "SG", "Switzerland": "CH",
-    "USA": "US", "United States": "US", "United Kingdom": "GB",
-    "Spain": "ES", "Sweden": "SE", "Taiwan": "TW", "India": "IN",
-    "Indonesia": "ID", "Vietnam": "VN", "Thailand": "TH",
-    "Brazil": "BR", "Mexico": "MX", "Italy": "IT", "New Zealand": "NZ",
-    "Czech Republic": "CZ", "Slovakia": "SK", "Hungary": "HU",
-    "Austria": "AT", "Belgium": "BE", "Denmark": "DK", "Finland": "FI",
-    "Ireland": "IE", "Israel": "IL", "Malaysia": "MY", "Colombia": "CO",
-    "Argentina": "AR", "Peru": "PE", "Ukraine": "UA", "Turkey": "TR",
-    "Macau": "MO", "Portugal": "PT", "Romania": "RO", "Croatia": "HR",
-}
-
-
-def countryToIso2(name):
-    """国家全名转 ISO2 代码"""
-    return COUNTRY_ISO2.get(name, "")
-
-
 def extractReconSteps(reconText):
     """
     从 recon 列文本中提取分步骤复盘。
@@ -137,7 +113,6 @@ def buildSolveRecord(row, headers):
         "date": col("date"),
         "comp": comp,
         "country": col("region_solver"),
-        "countryIso2": countryToIso2(col("region_solver")),
         "round": col("round"),
         "solveNum": parseInt(col("#")),
         "single": single,

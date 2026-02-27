@@ -9,6 +9,7 @@
     const PAGE_SIZE = 50; // NOTE: 每次加载的行数
     const DATA_URL = '/recon/recon_data.json';
     const COMP_COUNTRIES_URL = '/stats/comp_name_countries.json';
+    const PERSON_COUNTRIES_URL = '/stats/person_name_countries.json';
     const DEFAULT_SORT = { key: 'date', asc: false };
 
     // --- 状态 ---
@@ -19,6 +20,7 @@
     let sortDir = 'desc';     // 排序方向
     let expandedId = null;    // 当前展开的行 ID
     let compCountries = {};   // 比赛名 → ISO2 映射
+    let personCountries = {};  // 选手名 → ISO2 映射
 
     // --- DOM 引用 ---
     let tbody, searchInput, filterSolver, filterMethod, filterEvent;
@@ -40,13 +42,15 @@
 
         // NOTE: 加载数据
         try {
-            const [reconResp, compResp] = await Promise.all([
+            const [reconResp, compResp, personResp] = await Promise.all([
                 fetch(DATA_URL),
-                fetch(COMP_COUNTRIES_URL)
+                fetch(COMP_COUNTRIES_URL),
+                fetch(PERSON_COUNTRIES_URL)
             ]);
             const data = await reconResp.json();
             allSolves = data.solves || [];
             compCountries = await compResp.json();
+            personCountries = await personResp.json();
         } catch (e) {
             tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;color:#f87171">Failed to load data</td></tr>';
             console.error('Failed to load recon data:', e);
@@ -246,7 +250,7 @@
         tr.innerHTML =
             '<td class="col-expand"><span class="expand-icon">▶</span></td>' +
             '<td class="col-result mono">' + formatResult(solve.single) + '</td>' +
-            '<td class="col-solver">' + countryFlag(solve.countryIso2) + ' ' + escHtml(displaySolverName(solve)) + '</td>' +
+            '<td class="col-solver">' + countryFlag(personCountries[solve.solver]) + ' ' + escHtml(displaySolverName(solve)) + '</td>' +
             '<td class="col-method">' + escHtml(solve.method || '') + '</td>' +
             '<td class="col-comp">' + countryFlag(compCountries[solve.comp]) + ' ' + escHtml(solve.comp || '') + '</td>' +
             '<td class="col-round">' + escHtml(formatRound(solve)) + '</td>' +
