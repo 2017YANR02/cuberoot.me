@@ -24,7 +24,7 @@ layout: default
         </select>
     </div>
     <div class="recon-stats" id="recon-stats"></div>
-    <button id="btn-add-recon" class="recon-btn recon-btn-add" data-i18n-en="➕ Add" data-i18n-zh="➕ 添加">➕ Add</button>
+    <button id="btn-add-recon" class="recon-btn recon-btn-add" data-i18n-en="➕" data-i18n-zh="➕">➕</button>
     <!-- NOTE: WCA 登录区域 -->
     <div class="wca-auth-area" id="wca-auth-area">
         <button id="btn-wca-login" class="recon-btn wca-login-btn" onclick="WcaAuth.login()">
