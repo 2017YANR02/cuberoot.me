@@ -302,6 +302,63 @@ tr.detail-row td {
     max-width: 100%;
 }
 
+/* --- 统计网格 --- */
+.detail-stats {
+    margin-bottom: 14px;
+}
+
+.detail-stats-label {
+    font-size: 0.75rem;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+}
+
+.detail-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px 12px;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 10px 14px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 0;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: #666;
+    white-space: nowrap;
+}
+
+.stat-value {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.82rem;
+    color: #d0d8e0;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+
+@media (max-width: 768px) {
+    .detail-stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .detail-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
 /* NOTE: 步骤注释高亮 */
 .recon-comment {
     color: #6b7280;
