@@ -14,6 +14,7 @@ import json
 import os
 import sys
 from datetime import datetime
+from recon_stats import computeAllStats
 
 # NOTE: 路径相对于项目根目录
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -142,22 +143,6 @@ def buildSolveRecord(row, headers):
     if aoType and aoType.strip() not in ("", "-"):
         record["aoType"] = aoType.strip()
 
-    stm = parseInt(col("STM"))
-    if stm:
-        record["stm"] = stm
-
-    tps = parseFloat(col("TPS"))
-    if tps:
-        record["tps"] = tps
-
-    # NOTE: OLL/PLL 案例名（使用 full 版本，更精确）
-    ollFull = col("OLL_full")
-    pllFull = col("PLL_full")
-    if ollFull:
-        record["oll"] = ollFull
-    if pllFull:
-        record["pll"] = pllFull
-
     # NOTE: Record 标记（PR/NR/AsR/WR 等）
     rAvgFull = col("R avg_full")
     if rAvgFull:
@@ -186,7 +171,6 @@ def buildSolveRecord(row, headers):
     if caption:
         record["caption"] = caption
 
-
     cube = col("cube")
     if cube:
         record["cube"] = cube
@@ -198,6 +182,36 @@ def buildSolveRecord(row, headers):
     reconer = col("reconer")
     if reconer:
         record["reconer"] = reconer
+
+    # NOTE: 从 recon 文本自动计算所有统计值（不依赖 CSV 预计算列）
+    reconText = recon or caption or ""
+    if reconText:
+        stats = computeAllStats(reconText, single)
+        # NOTE: 有值才写入 JSON（减小体积）
+        statFields = {
+            "stm": stats["stm"],
+            "tps": stats["tps"],
+            "oll": stats["ollFull"],
+            "pll": stats["pllFull"],
+            "ollShort": stats["ollShort"],
+            "pllShort": stats["pllShort"],
+            "freePair": stats["freePair"],
+            "yRot": stats["yRot"],
+            "regrip": stats["regrip"],
+            "lockup": stats["lockup"],
+            "crossType": stats["crossType"],
+            "crossStm": stats["crossStm"],
+            "f2l": stats["f2l"],
+            "ll": stats["ll"],
+            "sMove": stats["sMove"],
+            "crossColor": stats["crossColor"],
+        }
+        for key, val in statFields.items():
+            if val is not None and val != "" and val != 0:
+                record[key] = val
+            # NOTE: freePair/yRot/regrip/lockup/crossType/sMove 为 0 也是有意义的值
+            elif key in ("freePair", "yRot", "regrip", "lockup", "crossType", "sMove") and val == 0:
+                record[key] = 0
 
     return record
 
