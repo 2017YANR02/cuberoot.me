@@ -108,9 +108,19 @@
         });
         document.getElementById('recon-form').addEventListener('submit', handleSubmit);
 
-        // NOTE: focus 时自动全选，方便用户替换内容，同时触发 datalist 显示全部选项
-        ['rf-event', 'rf-method'].forEach(function (id) {
-            document.getElementById(id).addEventListener('focus', function () { this.select(); });
+        // NOTE: 带默认值的字段初始显示为灰色，focus 时变白
+        ['rf-solver', 'rf-event', 'rf-method'].forEach(function (id) {
+            var el = document.getElementById(id);
+            el.classList.add('default-val');
+            el.addEventListener('focus', function () {
+                this.classList.remove('default-val');
+                this.select();
+            });
+            el.addEventListener('blur', function () {
+                // NOTE: 如果用户没改内容，恢复灰色
+                var defaults = { 'rf-solver': '耿暄一', 'rf-event': '3x3', 'rf-method': 'ZB' };
+                if (this.value === defaults[id]) this.classList.add('default-val');
+            });
         });
     }
 
