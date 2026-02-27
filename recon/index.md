@@ -36,6 +36,7 @@ layout: default
                 <th class="col-country"></th>
                 <th class="col-solver" data-i18n="recon.col_solver" data-sort="solver">Solver</th>
                 <th class="col-method" data-i18n="recon.col_method">Method</th>
+                <th class="col-comp-country"></th>
                 <th class="col-comp" data-i18n="recon.col_comp">Competition</th>
                 <th class="col-round" data-i18n="recon.col_round">Rnd</th>
                 <th class="col-date" data-i18n="recon.col_date">Date</th>
