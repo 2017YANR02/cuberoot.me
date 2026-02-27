@@ -579,7 +579,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="comp-card ${highlightClass} ${soonClass}" data-comp-name="${searchName}" data-cuber-names="${comp.top_cubers.map(c => c.name.toLowerCase() + ' ' + c.id.toLowerCase()).join(' ')}" data-country="${comp.country}" data-country-search="${countrySearchText}">
             <div class="comp-header">
                 <h2 class="comp-title">
-                    <a href="https://www.worldcubeassociation.org/competitions/${comp.id}" target="_blank" rel="noopener noreferrer">
+                    <a href="${comp.cubing_china_url || 'https://www.worldcubeassociation.org/competitions/' + comp.id}" target="_blank" rel="noopener noreferrer">
                         ${comp.name.includes('Championship') ? '🏆 ' : ''}<span class="fi fi-${comp.country.toLowerCase()}" style="margin-right:6px;font-size:0.8em;"></span>${displayName}
                     </a>${clashBadge}${soonBadge}
                 </h2>
