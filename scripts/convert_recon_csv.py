@@ -94,7 +94,11 @@ def buildSolveRecord(row, headers):
 
     # NOTE: 只展示有复盘的数据（Phase 1）
     hasRecon = col("recon?")
-    if hasRecon != "YES":
+    recon = col("recon")
+    caption = col("caption")
+    
+    # NOTE: 只要 `recon?`="YES" 或是 `recon`、`caption` 列不为空，就保留
+    if hasRecon != "YES" and not recon and not caption:
         return None
 
     single = parseFloat(col("time"))
