@@ -72,10 +72,38 @@ var ReconStore = (function () {
         return db.collection(COLLECTION).doc(id).delete();
     }
 
+    // ==================== 按用户查询 ====================
+
+    /** 加载指定用户的社区复盘 */
+    function loadByUser(wcaId) {
+        init();
+        // NOTE: 不用 orderBy 避免需要复合索引，在 JS 端排序
+        return db.collection(COLLECTION)
+            .where('wcaId', '==', wcaId)
+            .get()
+            .then(function (snapshot) {
+                var solves = [];
+                snapshot.forEach(function (doc) {
+                    var data = doc.data();
+                    data.id = doc.id;
+                    data._community = true;
+                    solves.push(data);
+                });
+                // NOTE: 按创建时间降序排列
+                solves.sort(function (a, b) {
+                    var ta = a.createdAt ? a.createdAt.toMillis() : 0;
+                    var tb = b.createdAt ? b.createdAt.toMillis() : 0;
+                    return tb - ta;
+                });
+                return solves;
+            });
+    }
+
     // NOTE: 导出公共 API
     return {
         init: init,
         loadAll: loadAll,
+        loadByUser: loadByUser,
         addRecon: addRecon,
         deleteRecon: deleteRecon
     };
