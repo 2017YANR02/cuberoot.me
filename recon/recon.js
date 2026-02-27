@@ -8,24 +8,7 @@
     // --- 常量 ---
     const PAGE_SIZE = 50; // NOTE: 每次加载的行数
     const DATA_URL = '/recon/recon_data.json';
-
-    // NOTE: 国家全名 → ISO 3166-1 alpha-2 映射（用于旗帜 emoji）
-    const COUNTRY_ISO2 = {
-        'Australia': 'AU', 'Canada': 'CA', 'Chile': 'CL', 'China': 'CN',
-        'France': 'FR', 'Germany': 'DE', 'Hong Kong': 'HK', 'Japan': 'JP',
-        'Korea': 'KR', 'South Korea': 'KR', 'Netherlands': 'NL',
-        'Norway': 'NO', 'Philippines': 'PH', 'Poland': 'PL',
-        'Russia': 'RU', 'Singapore': 'SG', 'Switzerland': 'CH',
-        'USA': 'US', 'United States': 'US', 'United Kingdom': 'GB',
-        'Spain': 'ES', 'Sweden': 'SE', 'Taiwan': 'TW', 'India': 'IN',
-        'Indonesia': 'ID', 'Vietnam': 'VN', 'Thailand': 'TH',
-        'Brazil': 'BR', 'Mexico': 'MX', 'Italy': 'IT', 'New Zealand': 'NZ',
-        'Czech Republic': 'CZ', 'Slovakia': 'SK', 'Hungary': 'HU',
-        'Austria': 'AT', 'Belgium': 'BE', 'Denmark': 'DK', 'Finland': 'FI',
-        'Ireland': 'IE', 'Israel': 'IL', 'Malaysia': 'MY', 'Colombia': 'CO',
-        'Argentina': 'AR', 'Peru': 'PE', 'Ukraine': 'UA', 'Turkey': 'TR',
-        'Macau': 'MO', 'Portugal': 'PT', 'Romania': 'RO', 'Croatia': 'HR'
-    };
+    const DEFAULT_SORT = { key: 'date', asc: false };
 
     // --- 状态 ---
     let allSolves = [];       // 全部数据
@@ -257,7 +240,7 @@
         tr.innerHTML =
             '<td class="col-expand"><span class="expand-icon">▶</span></td>' +
             '<td class="col-result mono">' + formatResult(solve.single) + '</td>' +
-            '<td class="col-country">' + countryFlag(solve.country) + '</td>' +
+            '<td class="col-country">' + countryFlag(solve.countryIso2) + '</td>' +
             '<td class="col-solver">' + escHtml(displaySolverName(solve)) + '</td>' +
             '<td class="col-method">' + escHtml(solve.method || '') + '</td>' +
             '<td class="col-comp">' + escHtml(solve.comp || '') + '</td>' +
@@ -385,13 +368,11 @@
         return val.toFixed(2);
     }
 
-    // NOTE: 国家名转旗帜 emoji（Unicode Regional Indicator）
-    function countryFlag(country) {
-        if (!country) return '';
-        const iso = COUNTRY_ISO2[country];
-        if (!iso) return escHtml(country);
+    // NOTE: ISO2 代码转旗帜 emoji（Unicode Regional Indicator）
+    function countryFlag(iso2) {
+        if (!iso2) return '';
         return String.fromCodePoint(
-            ...iso.split('').map(c => 0x1F1E6 + c.charCodeAt(0) - 65)
+            ...iso2.split('').map(c => 0x1F1E6 + c.charCodeAt(0) - 65)
         );
     }
 
