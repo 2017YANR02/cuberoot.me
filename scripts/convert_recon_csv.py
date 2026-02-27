@@ -156,6 +156,11 @@ def buildSolveRecord(row, headers):
     if scramble:
         record["scramble"] = scramble
 
+    # NOTE: WCA 官方打乱（scr 列），与最少步打乱（scr*）不同
+    wcaScramble = col("scr")
+    if wcaScramble:
+        record["wcaScramble"] = wcaScramble
+
     # NOTE: caption 列有完整的分步骤文本（每行一个步骤）
     caption = col("caption")
     if caption:

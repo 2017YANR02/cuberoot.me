@@ -296,8 +296,14 @@
         html += '<div>';
         if (s.scramble) {
             html += '<div class="detail-scramble">';
-            html += '<div class="detail-scramble-label">' + (isZh ? '打乱' : 'Scramble') + '</div>';
+            html += '<div class="detail-scramble-label">' + (isZh ? '最少步打乱 (scr*)' : 'Optimal Scramble (scr*)') + '</div>';
             html += '<div class="detail-scramble-text">' + escHtml(s.scramble) + '</div>';
+            html += '</div>';
+        }
+        if (s.wcaScramble) {
+            html += '<div class="detail-scramble">';
+            html += '<div class="detail-scramble-label">' + (isZh ? 'WCA 打乱 (scr)' : 'WCA Scramble (scr)') + '</div>';
+            html += '<div class="detail-scramble-text">' + escHtml(s.wcaScramble) + '</div>';
             html += '</div>';
         }
 
