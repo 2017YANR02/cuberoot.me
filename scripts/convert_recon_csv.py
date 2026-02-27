@@ -20,6 +20,8 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
 CSV_PATH = os.path.join(PROJECT_ROOT, "CubeAlgWB - Recon.csv")
 OUTPUT_PATH = os.path.join(PROJECT_ROOT, "recon", "recon_data.json")
+# NOTE: WCA 比赛日期映射（由 generate_comp_countries.rb 生成）
+COMP_DATES_PATH = os.path.join(PROJECT_ROOT, "stats", "comp_dates.json")
 
 
 def parseCsvHeaders(headerRow):
@@ -120,6 +122,10 @@ def buildSolveRecord(row, headers):
         "solver": solverEn,
     }
 
+    # NOTE: 如果比赛在 WCA 数据库中存在，使用数据库日期覆盖 CSV 手动日期
+    if comp in _compDates:
+        record["date"] = _compDates[comp]
+
     # NOTE: 可选字段，有值才加入（减小 JSON 体积）
     if solverZh:
         record["solverZh"] = solverZh
@@ -198,6 +204,16 @@ def main():
         sys.exit(1)
 
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
+
+    # NOTE: 加载 WCA 比赛日期映射
+    global _compDates
+    _compDates = {}
+    if os.path.exists(COMP_DATES_PATH):
+        with open(COMP_DATES_PATH, "r", encoding="utf-8") as f:
+            _compDates = json.load(f)
+        print(f"已加载 WCA 比赛日期映射: {len(_compDates)} 条")
+    else:
+        print(f"警告：找不到 {COMP_DATES_PATH}，将使用 CSV 原始日期")
 
     solves = []
     skipped = 0
