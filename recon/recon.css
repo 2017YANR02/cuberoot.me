@@ -287,8 +287,9 @@ tr.detail-row td {
 /* NOTE: 详情区域内的两列布局 */
 .detail-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: auto auto;
     gap: 20px;
+    justify-content: start;
 }
 
 /* NOTE: grid 子元素默认 min-width:auto 会导致内容撑破容器 */
@@ -355,11 +356,26 @@ tr.detail-row td {
     /* NOTE: 超长行允许横向滚动 */
     overflow-x: auto;
     max-width: 100%;
+    width: fit-content;
+}
+
+.detail-scramble-text {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.82rem;
+    line-height: 1.7;
+    color: #d0d8e0;
+    background: rgba(255, 255, 255, 0.04);
+    padding: 12px 14px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    width: fit-content;
+    max-width: 100%;
 }
 
 /* --- 统计网格 --- */
 .detail-stats {
     margin-bottom: 14px;
+    width: fit-content;
 }
 
 .detail-stats-label {
@@ -719,6 +735,35 @@ tr.detail-row td {
 .recon-btn-danger:hover {
     background: rgba(239, 68, 68, 0.35);
     color: #fff;
+}
+
+/* --- 统计网格 --- */
+.detail-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px 16px;
+    text-align: left;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: flex-start;
+    gap: 6px;
+    align-items: baseline;
+    text-align: left;
+}
+
+.stat-label {
+    color: #888;
+    font-size: 0.82rem;
+    text-align: left;
+}
+
+.stat-value {
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-align: left;
+    margin-left: 0;
 }
 
 /* --- 魔方 3D 动画播放器 --- */

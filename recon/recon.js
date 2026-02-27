@@ -838,12 +838,12 @@
         const total = allSolves.length;
         const shown = filteredSolves.length;
         if (shown === total) {
-            const enText = `${total} reconstructions`;
-            const zhText = `共 ${total} 条复盘`;
+            const enText = `${total} recons`;
+            const zhText = `共 ${total} 条`;
             statsEl.innerHTML = `<span data-i18n-en="${enText}" data-i18n-zh="${zhText}">${isZh ? zhText : enText}</span>`;
         } else {
-            const enText = `${shown} of ${total} matching`;
-            const zhText = `${shown} / ${total} 条匹配`;
+            const enText = `${shown}/${total} matching`;
+            const zhText = `${shown}/${total} 匹配`;
             statsEl.innerHTML = `<span data-i18n-en="${enText}" data-i18n-zh="${zhText}">${isZh ? zhText : enText}</span>`;
         }
     }
