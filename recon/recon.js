@@ -81,6 +81,13 @@
             allSolves.unshift(solve);
             applyFilters();
         });
+
+        // NOTE: 监听删除本地复盘
+        window.addEventListener('recon-local-delete', function (e) {
+            var id = e.detail;
+            allSolves = allSolves.filter(function (s) { return s.id !== id; });
+            applyFilters();
+        });
     }
 
     // ==================== 筛选器 ====================
@@ -388,6 +395,15 @@
         html += '</div>';
 
         html += '</div>'; // detail-grid
+
+        // NOTE: 仅本地提交的复盘显示删除按钮
+        if (s._local) {
+            html += '<div class="detail-local-actions">' +
+                '<button class="recon-btn recon-btn-danger" onclick="window.dispatchEvent(new CustomEvent(\'recon-local-delete\',{detail:\'' + s.id + '\'}))">' +
+                '🗑️ ' + (isZh ? '删除' : 'Delete') +
+                '</button></div>';
+        }
+
         html += '</div>'; // detail-content
         return html;
     }
