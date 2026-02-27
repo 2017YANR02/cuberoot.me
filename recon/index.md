@@ -58,7 +58,8 @@ layout: default
                 <th class="col-single" data-i18n="recon.col_result" data-sort="single">Single</th>
                 <th class="col-rsingle" data-i18n="recon.col_rsingle" data-sort="rSingle">PR Single</th>
                 <th class="col-solver" data-i18n="recon.col_solver" data-sort="solver">Solver</th>
-                <th class="col-recon-preview" data-i18n="recon.col_recon">Recon</th>
+                <th class="col-stm" data-sort="stm">STM</th>
+                <th class="col-tps" data-sort="tps">TPS</th>
             </tr>
         </thead>
         <tbody id="recon-tbody"></tbody>
