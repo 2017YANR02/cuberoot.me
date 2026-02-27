@@ -191,9 +191,12 @@ description: Track upcoming WCA competitions of the world's top cubers.
     top: -1px;
 }
 
-/* WR 项目图标红色高亮 */
-.wr-event {
+/* WR 项目图标颜色：当前保持者红色、历史保持者橙色 */
+.wr-current {
     color: #d93025 !important;
+}
+.wr-former {
+    color: #e8890c !important;
 }
 
 /* 占位与错误状态 */
@@ -564,7 +567,7 @@ document.addEventListener('DOMContentLoaded', function() {
             let evHtml = '';
             if (c.events && c.events.length > 0) {
                 const evParts = c.events.map(ev => {
-                    const wrClass = ev.wr ? ' wr-event' : '';
+                    const wrClass = ev.wr === 'current' ? ' wr-current' : (ev.wr === 'former' ? ' wr-former' : '');
                     const eid = SHORT_TO_EVENT_ID[ev.id] || ev.id;
                     return `<span class="cubing-icon event-${eid}${wrClass}"></span>`;
                 });
