@@ -92,6 +92,35 @@
             '</datalist>' +
             '</div>' +
             '</div>' +
+            // NOTE: 比赛 + 轮次 + 第几把
+            '<div class="recon-form-row">' +
+            '<div class="recon-form-group" style="flex:2;position:relative">' +
+            '<label>' + (isZh ? '比赛' : 'Competition') + '</label>' +
+            '<input type="text" id="rf-comp" autocomplete="off" placeholder="' + (isZh ? '搜索比赛名称（可选）' : 'Search competition (optional)') + '">' +
+            '<div id="rf-comp-dropdown" class="comp-dropdown"></div>' +
+            '</div>' +
+            '<div class="recon-form-group">' +
+            '<label>' + (isZh ? '轮次' : 'Round') + '</label>' +
+            '<select id="rf-round">' +
+            '<option value="">—</option>' +
+            '<option value="R1">R1</option>' +
+            '<option value="R2">R2</option>' +
+            '<option value="R3">R3</option>' +
+            '<option value="Fi">Fi</option>' +
+            '</select>' +
+            '</div>' +
+            '<div class="recon-form-group">' +
+            '<label>' + (isZh ? '第几把' : 'Solve #') + '</label>' +
+            '<select id="rf-solve-num">' +
+            '<option value="">—</option>' +
+            '<option value="1">#1</option>' +
+            '<option value="2">#2</option>' +
+            '<option value="3">#3</option>' +
+            '<option value="4">#4</option>' +
+            '<option value="5">#5</option>' +
+            '</select>' +
+            '</div>' +
+            '</div>' +
             '<div class="recon-form-group">' +
             '<label>' + (isZh ? '复盘文本' : 'Reconstruction') + '</label>' +
             '<textarea id="rf-recon" rows="10" placeholder="' +
@@ -129,6 +158,90 @@
                 if (this.value === defaults[id]) this.classList.add('default-val');
             });
         });
+
+        // NOTE: 从 comp_dates.json + comp_name_countries.json 加载比赛列表
+        var compInput = document.getElementById('rf-comp');
+        var compDropdown = document.getElementById('rf-comp-dropdown');
+        var recentComps = []; // [{name, date, iso2}]
+
+        Promise.all([
+            fetch('/stats/comp_dates.json').then(function (r) { return r.json(); }),
+            fetch('/stats/comp_name_countries.json').then(function (r) { return r.json(); })
+        ]).then(function (results) {
+            var compDateMap = results[0];
+            var compCountryMap = results[1];
+
+            // NOTE: 30 天前的日期字符串
+            var cutoff = new Date();
+            cutoff.setDate(cutoff.getDate() - 30);
+            var cutoffStr = cutoff.toISOString().split('T')[0];
+            var today = new Date().toISOString().split('T')[0];
+
+            // NOTE: 筛选最近 30 天，过滤乱码（含 ? 的条目），按日期降序
+            recentComps = Object.keys(compDateMap)
+                .filter(function (name) {
+                    var d = compDateMap[name];
+                    return d >= cutoffStr && d <= today && name.indexOf('?') < 0;
+                })
+                .map(function (name) {
+                    return {
+                        name: name,
+                        date: compDateMap[name],
+                        iso2: (compCountryMap[name] || '').toLowerCase()
+                    };
+                })
+                .sort(function (a, b) {
+                    return b.date.localeCompare(a.date);
+                });
+
+            // NOTE: 初始显示全部近期比赛
+            renderCompDropdown(recentComps, '');
+        }).catch(function (e) {
+            console.warn('Failed to load competition data:', e);
+        });
+
+        /** 渲染比赛下拉列表 */
+        function renderCompDropdown(comps, query) {
+            var q = query.toLowerCase();
+            var filtered = q
+                ? comps.filter(function (c) { return c.name.toLowerCase().indexOf(q) >= 0; })
+                : comps;
+            var html = '';
+            filtered.slice(0, 30).forEach(function (c) {
+                var flag = c.iso2 ? '<span class="fi fi-' + c.iso2 + '"></span> ' : '';
+                html += '<div class="comp-dropdown-item" data-name="' + c.name.replace(/"/g, '&quot;') + '" data-date="' + c.date + '">' +
+                    flag + '<span>' + c.name + '</span><small>' + c.date + '</small></div>';
+            });
+            if (!html && q) html = '<div class="comp-dropdown-empty">' + (localStorage.getItem('i18n_locale') === 'zh' ? '无匹配' : 'No match') + '</div>';
+            compDropdown.innerHTML = html;
+        }
+
+        // NOTE: 输入时实时筛选
+        compInput.addEventListener('input', function () {
+            renderCompDropdown(recentComps, this.value);
+            compDropdown.style.display = 'block';
+        });
+
+        // NOTE: focus 时显示下拉
+        compInput.addEventListener('focus', function () {
+            renderCompDropdown(recentComps, this.value);
+            compDropdown.style.display = 'block';
+        });
+
+        // NOTE: 点击选中比赛
+        compDropdown.addEventListener('mousedown', function (e) {
+            var item = e.target.closest('.comp-dropdown-item');
+            if (item) {
+                compInput.value = item.dataset.name;
+                compInput.dataset.autoDate = item.dataset.date;
+                compDropdown.style.display = 'none';
+            }
+        });
+
+        // NOTE: blur 时隐藏下拉
+        compInput.addEventListener('blur', function () {
+            setTimeout(function () { compDropdown.style.display = 'none'; }, 150);
+        });
     }
 
     function closeModal() {
@@ -146,6 +259,9 @@
         var event = document.getElementById('rf-event').value.trim() || '3x3';
         var method = document.getElementById('rf-method').value.trim() || 'ZB';
         var recon = document.getElementById('rf-recon').value;
+        var comp = document.getElementById('rf-comp').value.trim();
+        var round = document.getElementById('rf-round').value;
+        var solveNum = document.getElementById('rf-solve-num').value;
 
         // NOTE: 成绩解析：3位整数(如 373)自动转为 3.73，支持直接输入 3.73
         var single = parseFloat(rawSingle);
@@ -158,16 +274,24 @@
         // NOTE: 调用 JS 计算引擎
         var stats = ReconStats.computeAllStats(recon, single);
 
+        // NOTE: 日期自动匹配：如果选了已有比赛，用比赛日期；否则用今天
+        var compInput = document.getElementById('rf-comp');
+        var autoDate = compInput && compInput.dataset.autoDate;
+        var date = autoDate || new Date().toISOString().split('T')[0];
+
         var solve = {
             id: 'local_' + Date.now(),
             official: false,
             event: event,
             method: method,
-            date: new Date().toISOString().split('T')[0],
+            date: date,
             solver: solver,
             single: single,
             recon: recon
         };
+        if (comp) solve.comp = comp;
+        if (round) solve.round = round;
+        if (solveNum) solve.solveNum = parseInt(solveNum);
 
         // NOTE: 合并统计字段
         var statFields = {
