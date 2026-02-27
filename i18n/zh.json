@@ -134,7 +134,7 @@
     "recon": {
         "title": "比赛复盘",
         "subtitle": "顶尖选手的比赛还原复盘与分析",
-        "search_placeholder": "搜索选手、比赛...",
+        "search_placeholder": "搜索选手、比赛、成绩、纪录...",
         "all_solvers": "所有选手",
         "all_methods": "所有方法",
         "all_events": "所有项目",

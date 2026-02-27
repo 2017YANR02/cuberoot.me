@@ -10,7 +10,7 @@ layout: default
 
 <!-- NOTE: 工具栏：搜索 + 筛选 -->
 <div class="recon-toolbar">
-    <input type="text" id="recon-search" placeholder="Search solver, competition..."
+    <input type="text" id="recon-search" placeholder="Search solver, competition, result, record..."
         data-i18n-placeholder="recon.search_placeholder" autocomplete="off">
     <div class="recon-filters">
         <select id="filter-solver">
