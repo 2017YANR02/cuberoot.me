@@ -639,3 +639,24 @@ tr.detail-row td {
 .recon-btn-primary:hover {
     background: rgba(99, 102, 241, 1) !important;
 }
+
+/* --- 删除按钮 --- */
+.detail-local-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding: 8px 0 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    margin-top: 8px;
+}
+
+.recon-btn-danger {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #fca5a5;
+    font-size: 0.78rem;
+}
+
+.recon-btn-danger:hover {
+    background: rgba(239, 68, 68, 0.35);
+    color: #fff;
+}

@@ -16,6 +16,13 @@
 
         // NOTE: 页面加载时恢复 localStorage 中的本地复盘
         restoreLocalSolves();
+
+        // NOTE: 监听删除事件，从 localStorage 中移除
+        window.addEventListener('recon-local-delete', function (e) {
+            var id = e.detail;
+            var solves = getLocalSolves().filter(function (s) { return s.id !== id; });
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(solves));
+        });
     });
 
     // ==================== 模态框 ====================
@@ -50,7 +57,20 @@
             '<div class="recon-form-row">' +
             '<div class="recon-form-group">' +
             '<label>' + (isZh ? '项目' : 'Event') + '</label>' +
-            '<input type="text" id="rf-event" value="3x3" placeholder="3x3">' +
+            '<input type="text" id="rf-event" value="3x3" list="event-options" placeholder="3x3">' +
+            '<datalist id="event-options">' +
+            '<option value="3x3">' +
+            '<option value="2x2">' +
+            '<option value="OH">' +
+            '<option value="4x4">' +
+            '<option value="5x5">' +
+            '<option value="6x6">' +
+            '<option value="7x7">' +
+            '<option value="Mega">' +
+            '<option value="Pyra">' +
+            '<option value="Skewb">' +
+            '<option value="SQ1">' +
+            '</datalist>' +
             '</div>' +
             '<div class="recon-form-group">' +
             '<label>' + (isZh ? '方法' : 'Method') + '</label>' +
@@ -87,6 +107,11 @@
             if (e.target === modal) closeModal();
         });
         document.getElementById('recon-form').addEventListener('submit', handleSubmit);
+
+        // NOTE: focus 时自动全选，方便用户替换内容，同时触发 datalist 显示全部选项
+        ['rf-event', 'rf-method'].forEach(function (id) {
+            document.getElementById(id).addEventListener('focus', function () { this.select(); });
+        });
     }
 
     function closeModal() {
