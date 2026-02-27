@@ -3,9 +3,9 @@
    与现有 stats 深色主题保持一致
    ============================================================ */
 
-/* NOTE: 覆盖全局 max-width: 1200px，让 recon 表格利用超宽屏全部宽度 */
+/* NOTE: 覆盖全局 max-width: 1200px，让 recon 表格按内容自适应宽度 */
 .container:has(.recon-toolbar) {
-    max-width: 100% !important;
+    max-width: fit-content !important;
 }
 
 /* --- 副标题 --- */
@@ -95,7 +95,7 @@
 }
 
 #recon-table {
-    width: 100%;
+    width: auto;
     border-collapse: collapse;
     font-size: 0.88rem;
 }
