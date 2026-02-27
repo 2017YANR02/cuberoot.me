@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>WCA Login - Redirecting...</title>
+    <style>
+        body {
+            background: #161616;
+            color: #e0e0e0;
+            font-family: 'Inter', Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .callback-msg {
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        .callback-msg .spinner {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            border-top-color: #60a5fa;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 12px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .error {
+            color: #f87171;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="callback-msg" id="msg">
+        <div class="spinner"></div>
+        <div>正在登录 WCA...</div>
+    </div>
+
+    <!-- NOTE: 内联 WCA Auth 配置，避免引用外部文件（回调页需要独立工作） -->
+    <script>
+        (function () {
+            'use strict';
+
+            var CONFIG = {
+                clientId: 'mPeg5FiAn7l0CcyQ9CdiSEn3XlBrcA7IMw6Vd9AOsz4',
+                clientSecret: 'VWuxOldakkxcI-Tl7koalES5ir_Xw_y5bUw38N-mJ-Y',
+                tokenUrl: 'https://www.worldcubeassociation.org/oauth/token',
+                meUrl: 'https://www.worldcubeassociation.org/api/v0/me',
+                redirectUri: window.location.hostname === 'localhost'
+                    ? 'http://localhost:4000/recon/callback.html'
+                    : 'https://ruiminyan.github.io/recon/callback.html'
+            };
+
+            var msgEl = document.getElementById('msg');
+
+            // NOTE: 解析 URL 参数
+            var params = new URLSearchParams(window.location.search);
+            var code = params.get('code');
+            var state = params.get('state');
+            var error = params.get('error');
+
+            if (error) {
+                showError('授权被拒绝: ' + error);
+                return;
+            }
+
+            if (!code) {
+                showError('缺少 authorization code');
+                return;
+            }
+
+            // NOTE: 验证 state
+            var savedState = sessionStorage.getItem('wca_oauth_state');
+            if (!savedState || savedState !== state) {
+                showError('OAuth state 不匹配，请重试');
+                return;
+            }
+            sessionStorage.removeItem('wca_oauth_state');
+
+            // NOTE: 用 code 换 token
+            var body = [
+                'grant_type=authorization_code',
+                'code=' + encodeURIComponent(code),
+                'client_id=' + encodeURIComponent(CONFIG.clientId),
+                'client_secret=' + encodeURIComponent(CONFIG.clientSecret),
+                'redirect_uri=' + encodeURIComponent(CONFIG.redirectUri)
+            ].join('&');
+
+            fetch(CONFIG.tokenUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: body
+            })
+                .then(function (res) {
+                    if (!res.ok) throw new Error('Token exchange failed: ' + res.status);
+                    return res.json();
+                })
+                .then(function (tokenData) {
+                    // NOTE: 用 token 获取用户信息
+                    return fetch(CONFIG.meUrl, {
+                        headers: { 'Authorization': 'Bearer ' + tokenData.access_token }
+                    });
+                })
+                .then(function (res) {
+                    if (!res.ok) throw new Error('WCA /me failed: ' + res.status);
+                    return res.json();
+                })
+                .then(function (data) {
+                    var me = data.me;
+                    var user = {
+                        wcaId: me.wca_id,
+                        name: me.name,
+                        avatar: me.avatar && me.avatar.thumb_url ? me.avatar.thumb_url : '',
+                        country: me.country_iso2 || ''
+                    };
+
+                    // NOTE: 存入 sessionStorage，recon 页面会读取
+                    sessionStorage.setItem('wca_user', JSON.stringify(user));
+
+                    // NOTE: 跳回 recon 页面
+                    window.location.href = '/recon/';
+                })
+                .catch(function (err) {
+                    showError('登录失败: ' + err.message);
+                });
+
+            function showError(msg) {
+                msgEl.innerHTML = '<div class="error">❌ ' + msg + '</div>' +
+                    '<div style="margin-top:12px"><a href="/recon/" style="color:#60a5fa">返回复盘页面</a></div>';
+            }
+        })();
+    </script>
+</body>
+
+</html>

@@ -17,11 +17,18 @@
         // NOTE: 页面加载时恢复 localStorage 中的本地复盘
         restoreLocalSolves();
 
-        // NOTE: 监听删除事件，从 localStorage 中移除
+        // NOTE: 监听删除事件，从 localStorage 或 Firestore 中移除
         window.addEventListener('recon-local-delete', function (e) {
             var id = e.detail;
+            // NOTE: 本地复盘从 localStorage 删除
             var solves = getLocalSolves().filter(function (s) { return s.id !== id; });
             localStorage.setItem(STORAGE_KEY, JSON.stringify(solves));
+            // NOTE: 社区复盘从 Firestore 删除
+            if (typeof ReconStore !== 'undefined' && id.indexOf('local_') !== 0) {
+                ReconStore.deleteRecon(id).catch(function (err) {
+                    console.error('Failed to delete from Firestore:', err);
+                });
+            }
         });
     });
 
@@ -159,9 +166,7 @@
             date: new Date().toISOString().split('T')[0],
             solver: solver,
             single: single,
-            recon: recon,
-            // NOTE: 标记为本地提交（未持久化到 git）
-            _local: true
+            recon: recon
         };
 
         // NOTE: 合并统计字段
@@ -184,14 +189,28 @@
             }
         }
 
-        // NOTE: 保存到 localStorage
-        saveLocalSolve(solve);
-
-        // NOTE: 插入到全局数据并刷新表格
-        // 通过自定义事件通知 recon.js
-        window.dispatchEvent(new CustomEvent('recon-local-add', { detail: solve }));
-
-        closeModal();
+        // NOTE: 已登录 → 提交到 Firestore，未登录 → 保存到 localStorage
+        var wcaUser = (typeof WcaAuth !== 'undefined') ? WcaAuth.getUser() : null;
+        if (wcaUser && typeof ReconStore !== 'undefined') {
+            solve.wcaId = wcaUser.wcaId;
+            solve.displayName = wcaUser.name;
+            solve._community = true;
+            delete solve._local;
+            delete solve.id;
+            ReconStore.addRecon(solve).then(function (savedSolve) {
+                window.dispatchEvent(new CustomEvent('recon-local-add', { detail: savedSolve }));
+                closeModal();
+            }).catch(function (err) {
+                console.error('Failed to save to Firestore:', err);
+                alert('提交失败: ' + err.message);
+            });
+        } else {
+            // NOTE: 未登录，走本地 localStorage
+            solve._local = true;
+            saveLocalSolve(solve);
+            window.dispatchEvent(new CustomEvent('recon-local-add', { detail: solve }));
+            closeModal();
+        }
     }
 
     // ==================== localStorage 持久化 ====================

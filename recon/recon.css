@@ -15,6 +15,56 @@
     font-size: 0.95rem;
 }
 
+/* --- WCA 登录 --- */
+.wca-auth-area {
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+}
+
+.wca-login-btn {
+    background: rgba(59, 130, 246, 0.15) !important;
+    border-color: rgba(59, 130, 246, 0.4) !important;
+    color: #93bbfc !important;
+    white-space: nowrap;
+}
+
+.wca-login-btn:hover {
+    background: rgba(59, 130, 246, 0.3) !important;
+    color: #fff !important;
+}
+
+.wca-user-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.wca-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.wca-name {
+    color: #cbd5e1;
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+.wca-logout-btn {
+    font-size: 0.75rem;
+    padding: 2px 6px !important;
+    min-width: auto !important;
+    color: #888 !important;
+}
+
+/* NOTE: 社区提交的复盘行有微妙的左边框标记 */
+.community-row td:first-child {
+    border-left: 2px solid rgba(59, 130, 246, 0.4);
+}
+
 /* --- 工具栏 --- */
 .recon-toolbar {
     display: flex;
