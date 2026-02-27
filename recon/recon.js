@@ -118,11 +118,12 @@
             if (method && s.method !== method) return false;
             if (event && s.event !== event) return false;
             if (query) {
-                // NOTE: 搜索范围：选手名（中英文）、比赛名、成绩、打乱、OLL/PLL
+                // NOTE: 搜索范围：选手名（中英文）、比赛名、成绩、打乱、OLL/PLL、纪录标记
                 const haystack = [
                     s.solver, s.solverZh, s.comp, s.scramble,
                     s.oll, s.pll, s.country, s.note,
-                    s.single != null ? s.single.toFixed(3) : ''
+                    s.single != null ? s.single.toFixed(3) : '',
+                    s.rAvg, s.rSingle
                 ].filter(Boolean).join(' ').toLowerCase();
                 if (!haystack.includes(query)) return false;
             }
