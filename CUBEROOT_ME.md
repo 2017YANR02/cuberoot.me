@@ -7,16 +7,120 @@
 | **域名** | `cuberoot.me` → 301 到 `www.cuberoot.me` |
 | **服务器 IP** | `47.97.30.181` |
 | **托管** | 阿里云 ECS |
-| **OS** | Alibaba Cloud Linux 3.2104 U10（基于 CentOS/RHEL） |
+| **OS** | Alibaba Cloud Linux 3.2104 U10（基于 CentOS/RHEL，包管理用 `dnf`） |
 | **Web 服务器** | Nginx 1.26.2 |
 | **管理面板** | 宝塔面板（端口 8888） |
 | **WordPress 路径** | `/www/wwwroot/wordpress/` |
-| **Nginx 配置** | `/www/server/nginx/conf/nginx.conf` |
-| **HTTPS** | ✅ 已启用（HSTS + QUIC/h3，SSL 由宝塔管理） |
+| **Nginx 主配置** | `/www/server/nginx/conf/nginx.conf` |
+| **HTTPS** | ✅ 已启用（HSTS + QUIC/h3，SSL 由宝塔管理，Let's Encrypt 自动续签） |
 | **多语言** | Polylang 插件（中/英双语，`/zh/` 路径） |
-| **磁盘** | 40GB 总量，17GB 可用 |
+| **磁盘** | 40GB 总量，约 17GB 可用 |
 
-## 镜像部署
+## 国内镜像站 toolkit.cuberoot.me
 
-`ruiminyan.github.io` 的静态镜像通过 `toolkit.cuberoot.me` 子域名提供国内访问。
-详见 `implementation_plan.md`。
+### 概述
+
+`ruiminyan.github.io`（GitHub Pages）在国内无法访问，因此在阿里云 ECS 上部署了静态镜像。
+
+| 项目 | 值 |
+|------|-----|
+| **地址** | [toolkit.cuberoot.me](https://toolkit.cuberoot.me) |
+| **内容** | `ruiminyan.github.io` 的完整 1:1 镜像（Jekyll `_site/` 构建产物） |
+| **根目录** | `/www/wwwroot/toolkit/` |
+| **Nginx 站点配置** | `/www/server/panel/vhost/nginx/toolkit.cuberoot.me.conf` |
+| **SSL 证书** | `/www/server/panel/vhost/cert/toolkit.cuberoot.me/`（Let's Encrypt，自动续签） |
+| **CI 配置** | `.github/workflows/deploy_mirror.yml` |
+
+### 同步机制
+
+```
+push 到 main 分支
+      │
+      ▼
+GitHub Actions（deploy_mirror.yml）
+      │
+      ├── 1. Jekyll build（生成 _site/）
+      ├── 2. SSH 连接阿里云
+      └── 3. rsync 同步 _site/ → /www/wwwroot/toolkit/
+      │
+      ▼
+toolkit.cuberoot.me 更新（约 40 秒）
+```
+
+**自动触发条件**：
+| 事件 | 说明 |
+|------|------|
+| `push` 到 main | 手动推代码/数据时触发 |
+| Update Stats CI 完成 | 每周统计更新后自动同步 |
+| Update Upcoming Comps CI 完成 | 每日比赛数据更新后自动同步 |
+
+### GitHub Secrets（部署凭据）
+
+存储在 [仓库 Settings → Secrets](https://github.com/RuiminYan/ruiminyan.github.io/settings/secrets/actions)：
+
+| Secret | 用途 |
+|--------|------|
+| `DEPLOY_SSH_KEY` | SSH 私钥（服务器 `/root/.ssh/github_deploy`） |
+| `DEPLOY_HOST` | 服务器 IP |
+| `DEPLOY_USER` | SSH 用户名（`root`） |
+| `DEPLOY_PATH` | 部署目录（`/www/wwwroot/toolkit`） |
+
+> 对应的公钥已加入服务器 `/root/.ssh/authorized_keys`。
+
+### Nginx 关键配置
+
+宝塔自动生成的站点配置在 `/www/server/panel/vhost/nginx/toolkit.cuberoot.me.conf`，其中有一条**关键规则**：
+
+```nginx
+# Jekyll 生成的 .html 文件在 GitHub Pages 上无需扩展名访问
+# 例如 /stats/wr_current 实际对应 /stats/wr_current.html
+location / {
+    try_files $uri $uri/ $uri.html $uri/index.html =404;
+}
+```
+
+> 如果通过宝塔面板重新配置站点（如改 SSL），可能会覆盖此文件，需要重新加上 `$uri.html` 规则。
+
+### rsync 参数说明
+
+```bash
+rsync -rltz --delete --exclude='.user.ini' --chmod=D755,F644 ...
+```
+
+| 参数 | 说明 |
+|------|------|
+| `-rltz` | 递归(r) + 保留软链接(l) + 保留时间戳(t) + 压缩传输(z) |
+| `--delete` | 删除远程有但本地 `_site/` 中没有的文件 |
+| `--exclude='.user.ini'` | 排除宝塔自动创建的不可删除文件（设了 `chattr +i`） |
+| `--chmod=D755,F644` | 目录 755、文件 644，避免权限错误 |
+
+> 不用 `-a`（archive）是因为 `-a` 会尝试同步 owner/group/perms，在 CI 环境下会导致 code 23 错误。
+
+## 故障排除
+
+### 镜像未更新？
+1. 检查 [Actions 页面](https://github.com/RuiminYan/ruiminyan.github.io/actions) → "Deploy Mirror to China" 是否全绿
+2. 如果红叉，查看日志定位错误（通常是 SSH 连接或 rsync 问题）
+
+### 页面 404？
+- 检查 Nginx 配置是否包含 `$uri.html`（见上方 Nginx 关键配置）
+- 宝塔面板修改站点后可能覆盖配置，需要重新添加
+
+### SSH 连接失败？
+- 检查阿里云安全组是否放行了 22 端口
+- 确认 `/root/.ssh/authorized_keys` 包含部署公钥
+- 如果密钥丢失，在服务器重新生成并更新 GitHub Secret `DEPLOY_SSH_KEY`
+
+### SSL 证书过期？
+- 宝塔默认自动续签，通常无需操作
+- 手动续签：宝塔面板 → 网站 → `toolkit.cuberoot.me` → SSL → 续签
+
+## SSH 登录方式
+
+```bash
+# 密码登录（密码在阿里云控制台 → ECS → 重置密码）
+ssh root@47.97.30.181
+
+# 或使用阿里云网页终端
+# 阿里云控制台 → ECS → 实例列表 → 远程连接 → Workbench
+```
