@@ -40,6 +40,10 @@
         showingEl = document.getElementById('recon-showing');
         loadMoreBtn = document.getElementById('btn-load-more');
 
+        // NOTE: 检测 URL ?user=wcaId 参数，进入用户模式
+        var urlParams = new URLSearchParams(window.location.search);
+        var userWcaId = urlParams.get('user');
+
         // NOTE: 加载数据
         try {
             const [reconResp, compResp, personResp] = await Promise.all([
@@ -72,22 +76,30 @@
             th.addEventListener('click', () => handleSort(th));
         });
 
-        // NOTE: 初始渲染
-        applyFilters();
+        // NOTE: 初始渲染（用户模式下跳过，由 enterUserMode 处理）
+        if (!userWcaId) {
+            applyFilters();
+        }
 
         // NOTE: 初始化 WCA 登录 UI
         updateWcaAuthUI();
 
-        // NOTE: 加载 Firestore 社区复盘
+        // NOTE: 加载社区复盘（区分用户模式 / 全量模式）
         if (typeof ReconStore !== 'undefined') {
-            ReconStore.loadAll().then(function (communityRecons) {
-                if (communityRecons.length > 0) {
-                    allSolves = communityRecons.concat(allSolves);
-                    applyFilters();
-                }
-            }).catch(function (e) {
-                console.warn('Failed to load community recons:', e);
-            });
+            if (userWcaId) {
+                // NOTE: 用户模式：清空 CSV 数据，只显示该用户的 Firestore 复盘
+                allSolves = [];
+                enterUserMode(userWcaId);
+            } else {
+                ReconStore.loadAll().then(function (communityRecons) {
+                    if (communityRecons.length > 0) {
+                        allSolves = communityRecons.concat(allSolves);
+                        applyFilters();
+                    }
+                }).catch(function (e) {
+                    console.warn('Failed to load community recons:', e);
+                });
+            }
         }
 
         // NOTE: 监听客户端提交的本地复盘
@@ -117,13 +129,52 @@
             loginBtn.style.display = 'none';
             userInfo.style.display = 'flex';
             document.getElementById('wca-avatar').src = user.avatar || '';
-            document.getElementById('wca-name').textContent = user.name || user.wcaId;
+            var nameEl = document.getElementById('wca-name');
+            nameEl.textContent = user.name || user.wcaId;
+            // NOTE: 头像/名字可点击进入个人复盘页
+            nameEl.style.cursor = 'pointer';
+            nameEl.onclick = function () {
+                window.location.href = '/recon/?user=' + encodeURIComponent(user.wcaId);
+            };
+            document.getElementById('wca-avatar').style.cursor = 'pointer';
+            document.getElementById('wca-avatar').onclick = nameEl.onclick;
+            // NOTE: 登录后才显示添加按钮
+            var addBtn = document.getElementById('btn-add-recon');
+            if (addBtn) addBtn.style.display = '';
         } else {
             loginBtn.style.display = '';
             userInfo.style.display = 'none';
+            // NOTE: 未登录时隐藏添加按钮（防止滥用）
+            var addBtn = document.getElementById('btn-add-recon');
+            if (addBtn) addBtn.style.display = 'none';
         }
     }
 
+    /** 进入用户模式：只显示指定 wcaId 的复盘 */
+    function enterUserMode(wcaId) {
+        // NOTE: 更新页面标题
+        var titleEl = document.querySelector('h1') || document.querySelector('.recon-title');
+        if (titleEl) {
+            titleEl.innerHTML = '<a href="/recon/" style="color:#60a5fa;text-decoration:none;font-size:0.7em">← </a>' +
+                wcaId + ' 的复盘';
+        }
+
+        // NOTE: 隐藏选手筛选（用户模式下无意义）
+        if (filterSolver) filterSolver.style.display = 'none';
+
+        // NOTE: 加载该用户的复盘
+        ReconStore.loadByUser(wcaId).then(function (userRecons) {
+            allSolves = userRecons;
+            applyFilters();
+            // NOTE: 用第一条复盘的 displayName 更新标题
+            if (userRecons.length > 0 && userRecons[0].displayName && titleEl) {
+                titleEl.innerHTML = '<a href="/recon/" style="color:#60a5fa;text-decoration:none;font-size:0.7em">← </a>' +
+                    userRecons[0].displayName + ' 的复盘';
+            }
+        }).catch(function (e) {
+            console.warn('Failed to load user recons:', e);
+        });
+    }
     // ==================== 筛选器 ====================
 
     function buildFilterOptions() {
