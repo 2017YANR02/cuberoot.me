@@ -99,6 +99,12 @@
             '<input type="text" id="rf-comp" autocomplete="off" placeholder="' + (isZh ? '搜索比赛名称（可选）' : 'Search competition (optional)') + '">' +
             '</div>' +
             '<div class="recon-form-group">' +
+            '<label>' + (isZh ? '备注' : 'Note') + '</label>' +
+            '<textarea id="rf-note" rows="3" placeholder="' + (isZh ? '可选' : 'optional') + '"></textarea>' +
+            '</div>' +
+            '</div>' +
+            '<div class="recon-form-row">' +
+            '<div class="recon-form-group">' +
             '<label>' + (isZh ? '轮次' : 'Round') + '</label>' +
             '<select id="rf-round">' +
             '<option value="">—</option>' +
@@ -120,6 +126,10 @@
             '</select>' +
             '</div>' +
             '</div>' +
+            // NOTE: 实时统计显示（STM / time = TPS）
+            '<div class="recon-form-group">' +
+            '<div id="rf-stats-display" style="font-size:0.85rem;color:#fff;padding:8px 12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:6px;min-height:1.4em;display:none"></div>' +
+            '</div>' +
             '<div class="recon-form-group">' +
             '<label>' + (isZh ? '打乱公式' : 'Scramble') + '</label>' +
             '<input type="text" id="rf-scramble" placeholder="' + (isZh ? '粘贴打乱公式（可选）' : 'Paste scramble (optional)') + '">' +
@@ -129,6 +139,15 @@
             '<textarea id="rf-recon" rows="10" placeholder="' +
             (isZh ? '粘贴复盘文本...\n例如:\n33STM /3.05=10.82TPS\n...' : 'Paste reconstruction...\ne.g.:\n33STM /3.05=10.82TPS\n...') +
             '" required></textarea>' +
+            '</div>' +
+            // NOTE: alg.cubing.net 预览区域
+            '<div class="recon-form-group">' +
+            '<button type="button" id="rf-preview-btn" class="recon-btn" style="margin-bottom:8px">' +
+            (isZh ? '预览动画' : 'Preview Animation') +
+            '</button>' +
+            '<div id="rf-preview-container" style="display:none">' +
+            '<iframe id="rf-preview-iframe" style="width:100%;height:400px;border:1px solid #444;border-radius:8px;background:#fff" allowfullscreen></iframe>' +
+            '</div>' +
             '</div>' +
             '<div class="recon-form-actions">' +
             '<button type="button" id="rf-cancel" class="recon-btn">' + (isZh ? '取消' : 'Cancel') + '</button>' +
@@ -146,6 +165,62 @@
             if (e.target === modal) closeModal();
         });
         document.getElementById('recon-form').addEventListener('submit', handleSubmit);
+
+        // NOTE: 预览动画按钮 — 加载 alg.cubing.net iframe
+        document.getElementById('rf-preview-btn').addEventListener('click', function () {
+            var scramble = document.getElementById('rf-scramble').value.trim();
+            var recon = document.getElementById('rf-recon').value.trim();
+            if (!scramble && !recon) return;
+
+            // NOTE: 从 recon 文本提取纯公式（去统计行和注释）
+            var alg = recon.split('\n')
+                .map(function (line) {
+                    var idx = line.indexOf('//');
+                    return (idx >= 0 ? line.substring(0, idx) : line).trim();
+                })
+                .filter(function (line) {
+                    return line.length > 0 && !/^\d+STM\s/i.test(line);
+                })
+                .join('\n');
+
+            var url = 'https://alg.cubing.net/?setup=' + encodeURIComponent(scramble) +
+                '&alg=' + encodeURIComponent(alg) +
+                '&type=reconstruction&puzzle=3x3x3';
+
+            var container = document.getElementById('rf-preview-container');
+            var iframe = document.getElementById('rf-preview-iframe');
+            iframe.src = url;
+            container.style.display = 'block';
+        });
+
+        // NOTE: 实时计算 STM/TPS 统计
+        function updateStatsDisplay() {
+            var recon = document.getElementById('rf-recon').value;
+            var rawSingle = document.getElementById('rf-single').value.trim();
+            var display = document.getElementById('rf-stats-display');
+            if (!display || !recon) { if (display) display.textContent = ''; return; }
+
+            var single = parseFloat(rawSingle);
+            // NOTE: 3位整数自动转换
+            if (!isNaN(single) && single > 0 && Number.isInteger(single) && rawSingle.indexOf('.') < 0 && rawSingle.length === 3) {
+                single = single / 100;
+            }
+
+            var stats = ReconStats.computeAllStats(recon, single);
+            if (stats.stm) {
+                var parts = stats.stm + 'STM';
+                if (!isNaN(single) && single > 0) {
+                    parts += ' /' + single.toFixed(2) + '=' + (stats.tps || 0) + 'TPS';
+                }
+                display.textContent = parts;
+                display.style.display = 'block';
+            } else {
+                display.textContent = '';
+                display.style.display = 'none';
+            }
+        }
+        document.getElementById('rf-recon').addEventListener('input', updateStatsDisplay);
+        document.getElementById('rf-single').addEventListener('input', updateStatsDisplay);
 
         // NOTE: 带默认值的字段初始显示为灰色，focus 时变白
         ['rf-solver', 'rf-event', 'rf-method'].forEach(function (id) {
@@ -293,6 +368,7 @@
         var scramble = document.getElementById('rf-scramble').value.trim();
         var recon = document.getElementById('rf-recon').value;
         var comp = document.getElementById('rf-comp').value.trim();
+        var note = document.getElementById('rf-note').value.trim();
         var round = document.getElementById('rf-round').value;
         var solveNum = document.getElementById('rf-solve-num').value;
 
@@ -307,6 +383,16 @@
         // NOTE: 调用 JS 计算引擎
         var stats = ReconStats.computeAllStats(recon, single);
 
+        // NOTE: 合并 recon 文本为标准三行格式：统计 + 打乱 + 解法
+        var fullRecon = '';
+        if (stats.stm) {
+            fullRecon += stats.stm + 'STM /' + single.toFixed(2) + '=' + (stats.tps || 0) + 'TPS\n';
+        }
+        if (scramble) {
+            fullRecon += scramble + '\n';
+        }
+        fullRecon += recon;
+
         // NOTE: 日期自动匹配：如果选了已有比赛，用比赛日期；否则用今天
         var compInput = document.getElementById('rf-comp');
         var autoDate = compInput && compInput.dataset.autoDate;
@@ -320,10 +406,11 @@
             date: date,
             solver: solver,
             single: single,
-            recon: recon
+            recon: fullRecon
         };
         if (comp) solve.comp = comp;
         if (scramble) solve.wcaScramble = scramble;
+        if (note) solve.note = note;
         if (round) solve.round = round;
         if (solveNum) solve.solveNum = parseInt(solveNum);
 
