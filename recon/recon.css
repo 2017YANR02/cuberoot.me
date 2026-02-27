@@ -720,3 +720,52 @@ tr.detail-row td {
     background: rgba(239, 68, 68, 0.35);
     color: #fff;
 }
+
+/* --- 比赛搜索自定义下拉菜单 --- */
+.comp-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    max-height: 220px;
+    overflow-y: auto;
+    background: #1e1e2e;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 6px;
+    z-index: 100;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.comp-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: #cbd5e1;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.comp-dropdown-item:hover {
+    background: rgba(59, 130, 246, 0.2);
+}
+
+.comp-dropdown-item .fi {
+    flex-shrink: 0;
+}
+
+.comp-dropdown-item small {
+    margin-left: auto;
+    color: #666;
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+
+.comp-dropdown-empty {
+    padding: 10px;
+    text-align: center;
+    color: #666;
+    font-size: 0.85rem;
+}
