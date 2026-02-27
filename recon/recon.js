@@ -250,7 +250,7 @@
         tr.innerHTML =
             '<td class="col-expand"><span class="expand-icon">▶</span></td>' +
             '<td class="col-result mono">' + formatResult(solve.single) + '</td>' +
-            '<td class="col-solver">' + countryFlag(personCountries[solve.solver]) + ' ' + escHtml(displaySolverName(solve)) + '</td>' +
+            '<td class="col-solver">' + countryFlag(solverCountry(solve)) + ' ' + escHtml(displaySolverName(solve)) + '</td>' +
             '<td class="col-method">' + escHtml(solve.method || '') + '</td>' +
             '<td class="col-comp">' + countryFlag(compCountries[solve.comp]) + ' ' + escHtml(solve.comp || '') + '</td>' +
             '<td class="col-round">' + escHtml(formatRound(solve)) + '</td>' +
@@ -375,6 +375,16 @@
     function formatTps(val) {
         if (val == null) return '';
         return val.toFixed(2);
+    }
+
+    // NOTE: 查找选手国旗 ISO2。WCA 数据库中中国选手名格式为 "Ruimin Yan (颜瑞民)"
+    // CSV 中 solver="Ruimin Yan", solverZh="颜瑞民"，需要拼成 WCA 格式查找
+    function solverCountry(solve) {
+        if (solve.solverZh) {
+            const wcaName = solve.solver + ' (' + solve.solverZh + ')';
+            if (personCountries[wcaName]) return personCountries[wcaName];
+        }
+        return personCountries[solve.solver] || '';
     }
 
     // NOTE: ISO2 代码转国旗图标（使用 flag-icons CSS 库，与 stats 页面一致）
