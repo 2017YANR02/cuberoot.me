@@ -9,6 +9,10 @@ defaults:
       path: "stats"
     values:
       layout: "default"
+  - scope:
+      path: "recon"
+    values:
+      layout: "default"
 
 # NOTE: 关闭 Kramdown SmartyPants，保持直引号 ' (U+0027)
 # 弯引号 ' (U+2019) 会导致 i18n.js 文本匹配 "Rubik's" 失败

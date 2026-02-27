@@ -1,0 +1,383 @@
+/* ============================================================
+   Recon 复盘页面样式
+   与现有 stats 深色主题保持一致
+   ============================================================ */
+
+/* --- 副标题 --- */
+.recon-subtitle {
+    color: #888;
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+}
+
+/* --- 工具栏 --- */
+.recon-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 1rem;
+}
+
+#recon-search {
+    flex: 1;
+    min-width: 200px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.05);
+    color: #e0e0e0;
+    font-size: 0.9rem;
+    font-family: 'Inter', Arial, sans-serif;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+#recon-search:focus {
+    border-color: rgba(99, 102, 241, 0.5);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+#recon-search::placeholder {
+    color: #666;
+}
+
+/* --- 筛选器下拉 --- */
+.recon-filters {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.recon-filters select {
+    padding: 7px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.05);
+    color: #ccc;
+    font-size: 0.85rem;
+    font-family: 'Inter', Arial, sans-serif;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+    /* NOTE: 下拉箭头颜色 */
+    appearance: auto;
+}
+
+.recon-filters select:focus {
+    border-color: rgba(99, 102, 241, 0.5);
+}
+
+.recon-filters select option {
+    background: #1a1a2e;
+    color: #ccc;
+}
+
+/* --- 统计摘要 --- */
+.recon-stats {
+    font-size: 0.8rem;
+    color: #666;
+    white-space: nowrap;
+}
+
+/* --- 表格容器 --- */
+.recon-table-wrap {
+    overflow-x: auto;
+    margin-bottom: 1rem;
+    /* NOTE: 圆角边框效果 */
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+#recon-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+}
+
+#recon-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: rgba(15, 15, 25, 0.95) !important;
+    backdrop-filter: blur(8px);
+    color: #8892a0 !important;
+    font-weight: 600;
+    padding: 10px 12px;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.08) !important;
+    text-align: left;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.15s;
+}
+
+#recon-table thead th:hover {
+    color: #b0b8c4 !important;
+}
+
+/* NOTE: 排序指示器 */
+#recon-table thead th.sort-asc::after {
+    content: " ▲";
+    font-size: 0.7em;
+}
+
+#recon-table thead th.sort-desc::after {
+    content: " ▼";
+    font-size: 0.7em;
+}
+
+/* --- 表格行 --- */
+#recon-table tbody tr.solve-row {
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+#recon-table tbody tr.solve-row:hover {
+    background: rgba(255, 255, 255, 0.07) !important;
+}
+
+#recon-table tbody td {
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
+    border-top: none !important;
+    border-left: none !important;
+    border-right: none !important;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+/* NOTE: 数字列等宽字体 */
+.col-result, .col-stm, .col-tps {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.85rem;
+}
+
+.col-result {
+    font-weight: 600;
+    color: #f1f5f9;
+}
+
+.col-expand {
+    width: 24px;
+    text-align: center;
+}
+
+.col-round {
+    text-align: center;
+}
+
+/* NOTE: 展开箭头 */
+.expand-icon {
+    font-size: 0.7rem;
+    color: #666;
+    transition: transform 0.2s, color 0.2s;
+    display: inline-block;
+}
+
+.solve-row.expanded .expand-icon {
+    transform: rotate(90deg);
+    color: #93bbfc;
+}
+
+/* --- 展开详情行 --- */
+tr.detail-row {
+    background: rgba(20, 20, 35, 0.8) !important;
+}
+
+tr.detail-row:hover {
+    /* NOTE: 详情行不需要 hover 高亮 */
+    background: rgba(20, 20, 35, 0.8) !important;
+}
+
+tr.detail-row td {
+    padding: 0 !important;
+    border-bottom: 2px solid rgba(99, 102, 241, 0.15) !important;
+}
+
+.detail-content {
+    padding: 16px 20px;
+    animation: detailSlideIn 0.2s ease-out;
+}
+
+@keyframes detailSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* NOTE: 详情区域内的两列布局 */
+.detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+@media (max-width: 768px) {
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* --- 打乱公式 --- */
+.detail-scramble {
+    margin-bottom: 12px;
+}
+
+.detail-scramble-label {
+    font-size: 0.75rem;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+}
+
+.detail-scramble-text {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.85rem;
+    color: #b0b8c4;
+    background: rgba(255, 255, 255, 0.04);
+    padding: 10px 14px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    word-break: break-all;
+    line-height: 1.6;
+}
+
+/* --- 复盘步骤 --- */
+.detail-recon {
+    margin-bottom: 12px;
+}
+
+.detail-recon-label {
+    font-size: 0.75rem;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+}
+
+.detail-recon-text {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.82rem;
+    line-height: 1.7;
+    color: #d0d8e0;
+    background: rgba(255, 255, 255, 0.04);
+    padding: 12px 14px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* NOTE: 步骤注释高亮 */
+.recon-comment {
+    color: #6b7280;
+}
+
+/* NOTE: 步骤中的 inspection 标记 */
+.recon-step-label {
+    color: #93bbfc;
+    font-weight: 500;
+}
+
+/* --- 详情元数据 --- */
+.detail-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 8px;
+    font-size: 0.8rem;
+    color: #888;
+}
+
+.detail-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.detail-meta-label {
+    color: #666;
+}
+
+.detail-meta-value {
+    color: #b0b8c4;
+}
+
+/* --- 分页 --- */
+.recon-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin: 1.5rem 0;
+}
+
+.recon-btn {
+    padding: 8px 24px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.06);
+    color: #ccc;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.recon-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    border-color: rgba(99, 102, 241, 0.4);
+}
+
+.recon-showing {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+/* --- 手机端适配 --- */
+@media (max-width: 768px) {
+    .recon-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    #recon-search {
+        min-width: unset;
+    }
+
+    .recon-filters {
+        flex-wrap: wrap;
+    }
+
+    .recon-filters select {
+        flex: 1;
+        min-width: 100px;
+    }
+
+    /* NOTE: 手机端隐藏次要列 */
+    .col-stm, .col-tps, .col-oll, .col-pll, .col-round {
+        display: none;
+    }
+
+    #recon-table {
+        font-size: 0.82rem;
+    }
+
+    #recon-table tbody td,
+    #recon-table thead th {
+        padding: 6px 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .col-method, .col-date {
+        display: none;
+    }
+}

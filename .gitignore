@@ -29,3 +29,8 @@ assets/js/particles_v*.js
 
 # Python bytecode cache
 __pycache__/
+
+recon/recon_data_debug.json
+CubeAlgWB*.csv
+CubeAlgWB*.xlsx
+recon_dump.txt

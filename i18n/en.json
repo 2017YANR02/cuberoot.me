@@ -21,7 +21,9 @@
         "solver": "Solver",
         "solver_desc": "Cross, XCross, EOCross, Free Pair, Pseudo F2L, Last Layer, and trainers",
         "wca_stats": "WCA Stats",
-        "stats_desc": "60+ statistics from the WCA database, updated weekly"
+        "stats_desc": "60+ statistics from the WCA database, updated weekly",
+        "recon": "Recon",
+        "recon_desc": "Competition solve reconstructions and analysis"
     },
     "solver": {
         "title": "Rubik's Cube Solver",
@@ -116,5 +118,20 @@
         "puzzle": "Puzzle: ",
         "next": "Next",
         "show_ans": "Show Ans"
+    },
+    "recon": {
+        "title": "Solve Reconstructions",
+        "subtitle": "Competition solve reconstructions and analysis for top cubers",
+        "search_placeholder": "Search solver, competition...",
+        "all_solvers": "All Solvers",
+        "all_methods": "All Methods",
+        "all_events": "All Events",
+        "col_result": "Result",
+        "col_solver": "Solver",
+        "col_method": "Method",
+        "col_comp": "Competition",
+        "col_round": "Rnd",
+        "col_date": "Date",
+        "load_more": "Load More"
     }
 }
