@@ -726,14 +726,11 @@ tr.detail-row td {
     margin-top: 12px;
     max-width: 400px;
     border-radius: 8px;
-    overflow: hidden;
 }
 
 .recon-twisty-container twisty-player {
     width: 100%;
     display: block;
-    /* NOTE: 与 solver 页面一致 */
-    background-color: #000000;
 }
 
 .recon-external-links {

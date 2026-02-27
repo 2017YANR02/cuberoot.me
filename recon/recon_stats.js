@@ -368,7 +368,11 @@ var ReconStats = (function () {
     // ==================== 统一入口 ====================
 
     function computeAllStats(recon, single) {
+        // NOTE: 优先从首行解析 STM，失败时 fallback 为直接计算
         var stm = parseStm(recon);
+        if (stm == null) {
+            stm = htm(expandAlg(deleteComment(recon))) || null;
+        }
         var tps = parseTps(stm, single);
         var ct = crossType(recon);
         var cStm = crossStm(recon);
