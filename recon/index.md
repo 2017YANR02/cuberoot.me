@@ -42,6 +42,8 @@ layout: default
                 <th class="col-tps">TPS</th>
                 <th class="col-oll">OLL</th>
                 <th class="col-pll">PLL</th>
+                <th class="col-ravg" data-i18n="recon.col_ravg">R Avg</th>
+                <th class="col-rsingle" data-i18n="recon.col_rsingle">R Single</th>
             </tr>
         </thead>
         <tbody id="recon-tbody"></tbody>
