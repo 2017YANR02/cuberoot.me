@@ -425,15 +425,7 @@ tr.detail-row td {
         min-width: 100px;
     }
 
-    /* NOTE: 手机端隐藏次要列 */
-    .col-round,
-    .col-aoxr,
-    .col-avg,
-    .col-ravg,
-    .col-rsingle,
-    .col-recon-preview {
-        display: none;
-    }
+    /* NOTE: 手机端显示所有列，与电脑端保持一致 */
 
     #recon-table {
         font-size: 0.82rem;
