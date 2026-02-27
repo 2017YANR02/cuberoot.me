@@ -59,3 +59,21 @@ SQL
 end
 File.write(comp_name_path, JSON.generate(comp_name_map))
 puts "  #{comp_name_path} (#{comp_name_map.size} competitions, #{File.size(comp_name_path)} bytes)"
+
+# ── 4. 选手展示名 → ISO2（recon 页面用） ──
+# NOTE: recon 页面的选手数据来自 CSV（只有展示名），需要通过 persons.name 查国家
+# 同名选手可能来自不同国家，取 sub_id=1（当前有效记录）
+puts "Generating person name → iso2 mapping..."
+person_name_path = File.join(STATS_DIR, "person_name_countries.json")
+person_name_map = {}
+Database.client.query(<<-SQL).each do |r|
+  SELECT p.name, co.iso2
+  FROM persons p
+  JOIN countries co ON co.id = p.country_id
+  WHERE p.sub_id = 1
+SQL
+  # NOTE: 同名选手保留第一个匹配（绝大多数情况名字唯一）
+  person_name_map[r["name"]] ||= r["iso2"].downcase
+end
+File.write(person_name_path, JSON.generate(person_name_map))
+puts "  #{person_name_path} (#{person_name_map.size} persons, #{File.size(person_name_path)} bytes)"
