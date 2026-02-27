@@ -368,12 +368,10 @@
         return val.toFixed(2);
     }
 
-    // NOTE: ISO2 代码转旗帜 emoji（Unicode Regional Indicator）
+    // NOTE: ISO2 代码转国旗图标（使用 flag-icons CSS 库，与 stats 页面一致）
     function countryFlag(iso2) {
         if (!iso2) return '';
-        return String.fromCodePoint(
-            ...iso2.split('').map(c => 0x1F1E6 + c.charCodeAt(0) - 65)
-        );
+        return '<span class="fi fi-' + iso2.toLowerCase() + '"></span>';
     }
 
     // NOTE: Record 标记格式化为 badge（白字彩色圆角方框）
