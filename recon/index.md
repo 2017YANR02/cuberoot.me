@@ -24,6 +24,7 @@ layout: default
         </select>
     </div>
     <div class="recon-stats" id="recon-stats"></div>
+    <button id="btn-add-recon" class="recon-btn recon-btn-add" data-i18n-en="➕ Add" data-i18n-zh="➕ 添加">➕ Add</button>
 </div>
 
 <!-- NOTE: 主表格容器 -->
@@ -57,4 +58,6 @@ layout: default
     <span id="recon-showing" class="recon-showing"></span>
 </div>
 
+<script src="/recon/recon_stats.js"></script>
 <script src="/recon/recon.js" defer></script>
+<script src="/recon/recon_submit.js" defer></script>
