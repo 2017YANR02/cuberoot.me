@@ -121,6 +121,10 @@
             '</div>' +
             '</div>' +
             '<div class="recon-form-group">' +
+            '<label>' + (isZh ? '打乱公式' : 'Scramble') + '</label>' +
+            '<input type="text" id="rf-scramble" placeholder="' + (isZh ? '粘贴打乱公式（可选）' : 'Paste scramble (optional)') + '">' +
+            '</div>' +
+            '<div class="recon-form-group">' +
             '<label>' + (isZh ? '复盘文本' : 'Reconstruction') + '</label>' +
             '<textarea id="rf-recon" rows="10" placeholder="' +
             (isZh ? '粘贴复盘文本...\n例如:\n33STM /3.05=10.82TPS\n...' : 'Paste reconstruction...\ne.g.:\n33STM /3.05=10.82TPS\n...') +
@@ -286,6 +290,7 @@
         var rawSingle = document.getElementById('rf-single').value.trim();
         var event = document.getElementById('rf-event').value.trim() || '3x3';
         var method = document.getElementById('rf-method').value.trim() || 'ZB';
+        var scramble = document.getElementById('rf-scramble').value.trim();
         var recon = document.getElementById('rf-recon').value;
         var comp = document.getElementById('rf-comp').value.trim();
         var round = document.getElementById('rf-round').value;
@@ -318,6 +323,7 @@
             recon: recon
         };
         if (comp) solve.comp = comp;
+        if (scramble) solve.wcaScramble = scramble;
         if (round) solve.round = round;
         if (solveNum) solve.solveNum = parseInt(solveNum);
 
