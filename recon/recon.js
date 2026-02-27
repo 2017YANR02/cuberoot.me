@@ -312,10 +312,25 @@
 
         let html = '<div class="detail-content">';
 
-        // NOTE: 打乱 + 复盘两列布局
+        // NOTE: 复盘 + 打乱两列布局（复盘在左，手机端也先显示复盘）
         html += '<div class="detail-grid">';
 
-        // 左列：打乱
+        // 左列：复盘步骤
+        html += '<div>';
+        if (s.recon) {
+            html += '<div class="detail-recon">';
+            html += '<div class="detail-recon-label">' + (isZh ? '复盘' : 'Reconstruction') + '</div>';
+            html += '<div class="detail-recon-text">' + formatReconText(s.recon) + '</div>';
+            html += '</div>';
+        } else if (s.caption) {
+            html += '<div class="detail-recon">';
+            html += '<div class="detail-recon-label">' + (isZh ? '复盘' : 'Reconstruction') + '</div>';
+            html += '<div class="detail-recon-text">' + formatReconText(s.caption) + '</div>';
+            html += '</div>';
+        }
+        html += '</div>';
+
+        // 右列：打乱 + 元数据
         html += '<div>';
         if (s.scramble) {
             html += '<div class="detail-scramble">';
@@ -345,21 +360,6 @@
             html += '<div class="detail-note">';
             html += '<div class="detail-scramble-label">📝 ' + (isZh ? '备注' : 'Note') + '</div>';
             html += '<div class="detail-recon-text">' + escHtml(s.note) + '</div>';
-            html += '</div>';
-        }
-        html += '</div>';
-
-        // 右列：复盘步骤
-        html += '<div>';
-        if (s.recon) {
-            html += '<div class="detail-recon">';
-            html += '<div class="detail-recon-label">' + (isZh ? '复盘' : 'Reconstruction') + '</div>';
-            html += '<div class="detail-recon-text">' + formatReconText(s.recon) + '</div>';
-            html += '</div>';
-        } else if (s.caption) {
-            html += '<div class="detail-recon">';
-            html += '<div class="detail-recon-label">' + (isZh ? '复盘' : 'Reconstruction') + '</div>';
-            html += '<div class="detail-recon-text">' + formatReconText(s.caption) + '</div>';
             html += '</div>';
         }
         html += '</div>';
