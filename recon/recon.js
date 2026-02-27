@@ -55,10 +55,23 @@
             allSolves = data.solves || [];
             compCountries = await compResp.json();
             personCountries = await personResp.json();
+
+            // NOTE: 预处理数据，提取 STM/TPS 用于排序和显示
+            preprocessSolves(allSolves);
         } catch (e) {
-            tbody.innerHTML = '<tr><td colspan="14" style="text-align:center;color:#f87171">Failed to load data</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="15" style="text-align:center;color:#f87171">Failed to load data</td></tr>';
             console.error('Failed to load recon data:', e);
             return;
+        }
+
+        function preprocessSolves(solves) {
+            solves.forEach(solve => {
+                const preview = getReconPreview(solve);
+                const stmMatch = preview.match(/(\d+)STM/i);
+                const tpsMatch = preview.match(/([\d.]+)TPS/i);
+                solve.stm = stmMatch ? parseInt(stmMatch[1]) : 0;
+                solve.tps = tpsMatch ? parseFloat(tpsMatch[1]) : 0;
+            });
         }
 
         // NOTE: 构建筛选器选项
@@ -281,7 +294,9 @@
             'col-ravg': 'rAvg',
             'col-single': 'single',
             'col-rsingle': 'rSingle',
-            'col-solver': 'solver'
+            'col-solver': 'solver',
+            'col-stm': 'stm',
+            'col-tps': 'tps'
         };
 
         const classes = [...th.classList];
@@ -376,7 +391,8 @@
             '<td class="col-single mono">' + formatResult(solve.single) + '</td>' +
             '<td class="col-rsingle">' + formatRecord(solve.rSingle) + '</td>' +
             '<td class="col-solver">' + countryFlag(solverCountry(solve)) + ' ' + displaySolverName(solve) + '</td>' +
-            '<td class="col-recon-preview">' + escHtml(getReconPreview(solve)) + '</td>';
+            '<td class="col-stm mono">' + (solve.stm || '') + '</td>' +
+            '<td class="col-tps mono">' + (solve.tps ? solve.tps.toFixed(2) : '') + '</td>';
 
         tr.addEventListener('click', () => toggleDetail(solve, tr));
         return tr;
@@ -691,10 +707,20 @@
     // CSV 中 solver="Ruimin Yan", solverZh="颜瑞民"，需要拼成 WCA 格式查找
     function solverCountry(solve) {
         if (solve.solverZh) {
-            const wcaName = solve.solver + ' (' + solve.solverZh + ')';
+            var wcaName = solve.solver + ' (' + solve.solverZh + ')';
             if (personCountries[wcaName]) return personCountries[wcaName];
         }
-        return personCountries[solve.solver] || '';
+        if (personCountries[solve.solver]) return personCountries[solve.solver];
+
+        // NOTE: fallback——社区复盘可能只存了中文名或英文名，
+        // 在 personCountries 的 key 中模糊搜索
+        var name = solve.solver || '';
+        if (name) {
+            for (var key in personCountries) {
+                if (key.indexOf(name) !== -1) return personCountries[key];
+            }
+        }
+        return '';
     }
 
     // NOTE: ISO2 代码转国旗图标（使用 flag-icons CSS 库，与 stats 页面一致）
