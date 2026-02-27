@@ -628,6 +628,11 @@ tr.detail-row td {
     resize: vertical;
 }
 
+/* NOTE: 默认值显示为灰色，focus 后变白 */
+.default-val {
+    color: #666 !important;
+}
+
 .recon-form-actions {
     display: flex;
     justify-content: flex-end;
