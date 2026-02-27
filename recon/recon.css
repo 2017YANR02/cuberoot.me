@@ -148,7 +148,9 @@
 }
 
 /* NOTE: 数字列等宽字体 */
-.col-result, .col-stm, .col-tps {
+.col-result,
+.col-stm,
+.col-tps {
     font-family: 'Roboto Mono', monospace;
     font-size: 0.85rem;
 }
@@ -198,6 +200,9 @@ tr.detail-row td {
 .detail-content {
     padding: 16px 20px;
     animation: detailSlideIn 0.2s ease-out;
+    /* NOTE: 防止内容溢出表格宽度 */
+    overflow: hidden;
+    max-width: 100%;
 }
 
 @keyframes detailSlideIn {
@@ -205,6 +210,7 @@ tr.detail-row td {
         opacity: 0;
         transform: translateY(-8px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -216,6 +222,12 @@ tr.detail-row td {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 20px;
+}
+
+/* NOTE: grid 子元素默认 min-width:auto 会导致内容撑破容器 */
+.detail-grid>div {
+    min-width: 0;
+    overflow: hidden;
 }
 
 @media (max-width: 768px) {
@@ -273,6 +285,9 @@ tr.detail-row td {
     border: 1px solid rgba(255, 255, 255, 0.06);
     white-space: pre-wrap;
     word-break: break-word;
+    /* NOTE: 超长行允许横向滚动 */
+    overflow-x: auto;
+    max-width: 100%;
 }
 
 /* NOTE: 步骤注释高亮 */
@@ -362,7 +377,11 @@ tr.detail-row td {
     }
 
     /* NOTE: 手机端隐藏次要列 */
-    .col-stm, .col-tps, .col-oll, .col-pll, .col-round {
+    .col-stm,
+    .col-tps,
+    .col-oll,
+    .col-pll,
+    .col-round {
         display: none;
     }
 
@@ -377,7 +396,9 @@ tr.detail-row td {
 }
 
 @media (max-width: 480px) {
-    .col-method, .col-date {
+
+    .col-method,
+    .col-date {
         display: none;
     }
 }
