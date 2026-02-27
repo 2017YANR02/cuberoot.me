@@ -315,10 +315,15 @@
         if (s.reconer) {
             html += '<div class="detail-meta-item"><span class="detail-meta-label">✍️</span><span class="detail-meta-value">' + escHtml(s.reconer) + '</span></div>';
         }
-        if (s.note) {
-            html += '<div class="detail-meta-item"><span class="detail-meta-label">📝</span><span class="detail-meta-value">' + escHtml(s.note) + '</span></div>';
-        }
         html += '</div>';
+
+        // NOTE: note 内容可能很长（包含替代解法等），独立显示
+        if (s.note) {
+            html += '<div class="detail-note">';
+            html += '<div class="detail-scramble-label">📝 ' + (isZh ? '备注' : 'Note') + '</div>';
+            html += '<div class="detail-recon-text">' + escHtml(s.note) + '</div>';
+            html += '</div>';
+        }
         html += '</div>';
 
         // 右列：复盘步骤
