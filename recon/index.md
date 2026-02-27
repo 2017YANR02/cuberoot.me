@@ -25,6 +25,19 @@ layout: default
     </div>
     <div class="recon-stats" id="recon-stats"></div>
     <button id="btn-add-recon" class="recon-btn recon-btn-add" data-i18n-en="➕ Add" data-i18n-zh="➕ 添加">➕ Add</button>
+    <!-- NOTE: WCA 登录区域 -->
+    <div class="wca-auth-area" id="wca-auth-area">
+        <button id="btn-wca-login" class="recon-btn wca-login-btn" onclick="WcaAuth.login()">
+            🔐 WCA Login
+        </button>
+        <div id="wca-user-info" class="wca-user-info" style="display:none">
+            <img id="wca-avatar" class="wca-avatar" src="" alt="">
+            <span id="wca-name" class="wca-name"></span>
+            <button id="btn-wca-logout" class="recon-btn wca-logout-btn" onclick="WcaAuth.logout();location.reload()">
+                ✕
+            </button>
+        </div>
+    </div>
 </div>
 
 <!-- NOTE: 主表格容器 -->
@@ -58,6 +71,12 @@ layout: default
     <span id="recon-showing" class="recon-showing"></span>
 </div>
 
+<!-- NOTE: Firebase compat SDK（CDN） -->
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+
 <script src="/recon/recon_stats.js"></script>
+<script src="/recon/wca_auth.js"></script>
+<script src="/recon/firebase_store.js"></script>
 <script src="/recon/recon.js" defer></script>
 <script src="/recon/recon_submit.js" defer></script>

@@ -75,6 +75,21 @@
         // NOTE: 初始渲染
         applyFilters();
 
+        // NOTE: 初始化 WCA 登录 UI
+        updateWcaAuthUI();
+
+        // NOTE: 加载 Firestore 社区复盘
+        if (typeof ReconStore !== 'undefined') {
+            ReconStore.loadAll().then(function (communityRecons) {
+                if (communityRecons.length > 0) {
+                    allSolves = communityRecons.concat(allSolves);
+                    applyFilters();
+                }
+            }).catch(function (e) {
+                console.warn('Failed to load community recons:', e);
+            });
+        }
+
         // NOTE: 监听客户端提交的本地复盘
         window.addEventListener('recon-local-add', function (e) {
             var solve = e.detail;
@@ -82,12 +97,31 @@
             applyFilters();
         });
 
-        // NOTE: 监听删除本地复盘
+        // NOTE: 监听删除本地/社区复盘
         window.addEventListener('recon-local-delete', function (e) {
             var id = e.detail;
             allSolves = allSolves.filter(function (s) { return s.id !== id; });
             applyFilters();
         });
+    }
+
+    /** 更新 WCA 登录按钮/用户头像 UI */
+    function updateWcaAuthUI() {
+        if (typeof WcaAuth === 'undefined') return;
+        var user = WcaAuth.getUser();
+        var loginBtn = document.getElementById('btn-wca-login');
+        var userInfo = document.getElementById('wca-user-info');
+        if (!loginBtn || !userInfo) return;
+
+        if (user) {
+            loginBtn.style.display = 'none';
+            userInfo.style.display = 'flex';
+            document.getElementById('wca-avatar').src = user.avatar || '';
+            document.getElementById('wca-name').textContent = user.name || user.wcaId;
+        } else {
+            loginBtn.style.display = '';
+            userInfo.style.display = 'none';
+        }
     }
 
     // ==================== 筛选器 ====================
@@ -272,7 +306,7 @@
 
     function createSolveRow(solve) {
         const tr = document.createElement('tr');
-        tr.className = 'solve-row';
+        tr.className = 'solve-row' + (solve._community ? ' community-row' : '');
         tr.dataset.id = solve.id;
 
         const officialHtml = solve.official ? '✅' : '';
@@ -396,8 +430,15 @@
 
         html += '</div>'; // detail-grid
 
-        // NOTE: 仅本地提交的复盘显示删除按钮
+        // NOTE: 本地复盘或当前用户的社区复盘显示删除按钮
+        var canDelete = false;
         if (s._local) {
+            canDelete = true;
+        } else if (s._community && typeof WcaAuth !== 'undefined') {
+            var currentUser = WcaAuth.getUser();
+            if (currentUser && currentUser.wcaId === s.wcaId) canDelete = true;
+        }
+        if (canDelete) {
             html += '<div class="detail-local-actions">' +
                 '<button class="recon-btn recon-btn-danger" onclick="window.dispatchEvent(new CustomEvent(\'recon-local-delete\',{detail:\'' + s.id + '\'}))">' +
                 '🗑️ ' + (isZh ? '删除' : 'Delete') +
