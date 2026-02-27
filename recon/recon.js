@@ -458,11 +458,16 @@
      * 这样可以避免误匹配 OLL/PLL/ZBLL/CMLL/EG/VLS 等算法名中的字母。
      */
     function colorizeComment(commentHtml) {
-        // NOTE: 正则将 「字母序列 + 可选的连字符/加号后缀」 作为一个整体 token 匹配
-        // 支持 PLL-Y, OLL(CP)-C3, GRc+GOe 等格式
-        return commentHtml.replace(/[A-Za-z]+(?:[-+()][A-Za-z0-9]+)*/g, function (word) {
-            // NOTE: 算法名白名单 — 这些单词中的字母不着色
-            if (/^(?:OLL|PLL|ZBLL|ZBLS|EPLL|OCLL|COLL|CMLL|EG|VLS|VH|WV|CLL|CSP|OBL|CP|EP|EO|EOLRb|DR|insp|cross|xcross|pscross|psxcross|xxxcross|xxcross|layer|face|cancel|into|auto|Skip|Fail|STM|SPS|TPS|better|NR|pair|pairs|free|predicted|counting|full|move|edge|Reconstruction|PBL|OLLCP|1LLL)$/i.test(word.replace(/[-+()0-9].*$/, ''))) {
+        // NOTE: 正则将连续的字母、数字及常见的连接符（-+()*.）匹配为一个整体 token。
+        // 这样可以确保 OLL(CP)-R- 或 EPLL-U- 不会被中途截断而导致后续字母被误着色。
+        return commentHtml.replace(/[A-Za-z0-9+\-()*.]+/g, function (word) {
+            // NOTE: 清理 token 首尾的标点，便于判断（如 (BR) -> BR）
+            var cleanWord = word.replace(/^[+\-()*.]+/, '').replace(/[+\-()*.]+$/, '');
+            if (!cleanWord) return word;
+
+            // NOTE: 提取开头的字母部分检查是否在算法白名单中
+            var baseName = cleanWord.replace(/[-+()0-9.*].*$/, ''); 
+            if (/^(?:OLL|PLL|ZBLL|ZBLS|EPLL|OCLL|COLL|CMLL|EG|VLS|VH|WV|CLL|CSP|OBL|CP|EP|EO|EOLRb|DR|insp|cross|xcross|pscross|psxcross|xxxcross|xxcross|layer|face|cancel|into|auto|Skip|Fail|STM|SPS|TPS|better|NR|pair|pairs|free|predicted|counting|full|move|edge|Reconstruction|PBL|OLLCP|1LLL)$/i.test(baseName)) {
                 return word;
             }
 
@@ -475,22 +480,30 @@
     }
 
     function colorizePart(word) {
+        // 先去掉可能存在的包裹标点，再对剩余的部分染色。例如 "(BR)" -> 着色 BR 然后包回括号
+        var prefixMatch = word.match(/^[+\-()*.]+/);
+        var suffixMatch = word.match(/[+\-()*.]+$/);
+        var prefix = prefixMatch ? prefixMatch[0] : '';
+        var suffix = suffixMatch ? suffixMatch[0] : '';
+        var inner = word.substring(prefix.length, word.length - suffix.length);
+
+        if (!inner) return word;
+
         // NOTE: 纯颜色字母组成的 token（如 BR, WO, GR, W, Y）→ 逐字母着色
-        if (/^[WYROGB]+$/.test(word)) {
-            return word.split('').map(function (ch) {
+        if (/^[WYROGB]+$/.test(inner)) {
+            inner = inner.split('').map(function (ch) {
                 return '<span style="color:' + FACE_COLORS[ch] + ';font-weight:600">' + ch + '</span>';
             }).join('');
+            return prefix + inner + suffix;
         }
         // NOTE: 颜色字母开头 + 特定小写后缀（如 e=棱块, c=角块）→ 只着色大写部分
-        // 例如 GRe, GOc
-        var m = word.match(/^([WYROGB]+)([ec])$/);
+        var m = inner.match(/^([WYROGB]+)([ec])$/);
         if (m) {
-            return m[1].split('').map(function (ch) {
+            inner = m[1].split('').map(function (ch) {
                 return '<span style="color:' + FACE_COLORS[ch] + ';font-weight:600">' + ch + '</span>';
             }).join('') + m[2];
+            return prefix + inner + suffix;
         }
-        // NOTE: 其他混合 token（可能包含 -, ()），如果是纯算法名（如 PLL-Y），前面已经被白名单过滤了。
-        // 如果漏网之鱼，就不着色。
         return word;
     }
 
