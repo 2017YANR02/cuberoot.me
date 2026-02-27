@@ -122,10 +122,13 @@
                 const haystack = [
                     s.solver, s.solverZh, s.comp, s.scramble,
                     s.oll, s.pll, s.country, s.note,
-                    s.single != null ? s.single.toFixed(3) : '',
-                    s.rAvg, s.rSingle
+                    s.single != null ? s.single.toFixed(3) : ''
                 ].filter(Boolean).join(' ').toLowerCase();
-                if (!haystack.includes(query)) return false;
+                // NOTE: 纪录字段用精确匹配（大小写不敏感），搜 WR 不应匹配 FWR
+                const q = query.toUpperCase();
+                const recordMatch = (s.rAvg && s.rAvg.toUpperCase() === q)
+                    || (s.rSingle && s.rSingle.toUpperCase() === q);
+                if (!haystack.includes(query) && !recordMatch) return false;
             }
             return true;
         });
