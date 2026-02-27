@@ -377,6 +377,8 @@ def _integrate_cubing_china(comps_map, cubers):
                 "end_date": comp["end_date"],
                 "events": event_ids,
                 "competitor_limit": comp["competitor_limit"],
+                # NOTE: 中国内地比赛链接跳转粗饼网而非 WCA 官网
+                "cubing_china_url": f"https://cubing.com/competition/{alias}",
                 "top_cubers": [],
             }
 
