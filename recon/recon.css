@@ -381,7 +381,9 @@ tr.detail-row td {
     .col-tps,
     .col-oll,
     .col-pll,
-    .col-round {
+    .col-round,
+    .col-ravg,
+    .col-rsingle {
         display: none;
     }
 
