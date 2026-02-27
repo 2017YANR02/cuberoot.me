@@ -416,6 +416,60 @@
         solveRow.after(detailRow);
         solveRow.classList.add('expanded');
         expandedId = solve.id;
+
+        // NOTE: 懒加载 twisty-player（有 wcaScramble 时）
+        var twistyContainer = td.querySelector('.recon-twisty-container');
+        if (twistyContainer && typeof window.ensureTwisty === 'function') {
+            loadTwistyPlayer(twistyContainer, solve);
+        }
+    }
+
+    // ==================== 魔方动画 ====================
+
+    /** 从复盘文本中提取纯公式（去除 // 注释和统计行） */
+    function extractAlgFromRecon(text) {
+        if (!text) return '';
+        // NOTE: 匹配统计行，如 "41STM /3.64=11.26TPS" 或 "29STM /2.76=10.51TPS"
+        var statsPattern = /^\d+STM\s/i;
+        return text.split('\n')
+            .map(function (line) {
+                // NOTE: 去掉 // 及其后的注释
+                var idx = line.indexOf('//');
+                return (idx >= 0 ? line.substring(0, idx) : line).trim();
+            })
+            .filter(function (line) {
+                // NOTE: 跳过空行和统计行
+                return line.length > 0 && !statsPattern.test(line);
+            })
+            .join('\n');
+    }
+
+    /** 懒加载 twisty-player 并插入到容器 */
+    function loadTwistyPlayer(container, solve) {
+        container.innerHTML = '<div style="color:#888;font-size:0.8em">加载中...</div>';
+        window.ensureTwisty().then(function () {
+            var Ctor = window.__TwistyPlayerCtor;
+            if (!Ctor) { container.innerHTML = ''; return; }
+
+            var setup = solve.wcaScramble || solve.scramble || '';
+            var alg = extractAlgFromRecon(solve.recon || solve.caption || '');
+            // NOTE: 根据项目切换 puzzle
+            var puzzle = '3x3x3';
+            if (solve.event && solve.event.indexOf('2') >= 0) puzzle = '2x2x2';
+
+            // NOTE: 与 solver 页面完全一致的配置
+            var player = new Ctor({
+                puzzle: puzzle,
+                experimentalSetupAlg: setup,
+                alg: alg,
+                background: 'none'
+            });
+
+            container.innerHTML = '';
+            container.appendChild(player);
+        }).catch(function () {
+            container.innerHTML = '';
+        });
     }
 
     function buildDetailHtml(s) {
@@ -437,6 +491,20 @@
             html += '<div class="detail-recon">';
             html += '<div class="detail-recon-label"><span data-i18n-en="Reconstruction" data-i18n-zh="复盘">' + (isZh ? '复盘' : 'Reconstruction') + '</span></div>';
             html += '<div class="detail-recon-text">' + formatReconText(s.caption) + '</div>';
+            html += '</div>';
+        }
+        // NOTE: 有打乱时插入 twisty-player 占位符 + alg.cubing.net 链接
+        if ((s.wcaScramble || s.scramble) && (s.recon || s.caption)) {
+            html += '<div class="recon-twisty-container"></div>';
+            // NOTE: 构建 alg.cubing.net 链接
+            var setupStr = encodeURIComponent(s.wcaScramble || s.scramble || '');
+            var algStr = encodeURIComponent(extractAlgFromRecon(s.recon || s.caption || ''));
+            var puzzleStr = (s.event && s.event.indexOf('2') >= 0) ? '2x2x2' : '3x3x3';
+            var algUrl = 'https://alg.cubing.net/?setup=' + setupStr + '&alg=' + algStr + '&puzzle=' + puzzleStr;
+            var cubedbUrl = 'https://cubedb.net/?puzzle=' + (puzzleStr === '2x2x2' ? '2x2' : '3x3') + '&scramble=' + setupStr + '&alg=' + algStr;
+            html += '<div class="recon-external-links">';
+            html += '<a href="' + algUrl + '" target="_blank" rel="noopener noreferrer">alg.cubing.net</a>';
+            html += ' <a href="' + cubedbUrl + '" target="_blank" rel="noopener noreferrer">cubedb.net</a>';
             html += '</div>';
         }
         html += '</div>';

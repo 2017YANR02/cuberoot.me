@@ -721,6 +721,36 @@ tr.detail-row td {
     color: #fff;
 }
 
+/* --- 魔方 3D 动画播放器 --- */
+.recon-twisty-container {
+    margin-top: 12px;
+    max-width: 400px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.recon-twisty-container twisty-player {
+    width: 100%;
+    display: block;
+    /* NOTE: 与 solver 页面一致 */
+    background-color: #000000;
+}
+
+.recon-external-links {
+    margin-top: 6px;
+    font-size: 0.8rem;
+}
+
+.recon-external-links a {
+    color: #8b9cf7;
+    text-decoration: none;
+    margin-right: 12px;
+}
+
+.recon-external-links a:hover {
+    text-decoration: underline;
+}
+
 /* --- 比赛搜索自定义下拉菜单 --- */
 .comp-dropdown {
     display: none;
