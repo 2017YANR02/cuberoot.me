@@ -122,7 +122,7 @@
     "recon": {
         "title": "Solve Reconstructions",
         "subtitle": "Competition solve reconstructions and analysis for top cubers",
-        "search_placeholder": "Search solver, competition...",
+        "search_placeholder": "Search solver, competition, result, record...",
         "all_solvers": "All Solvers",
         "all_methods": "All Methods",
         "all_events": "All Events",
