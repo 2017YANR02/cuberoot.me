@@ -724,16 +724,15 @@ tr.detail-row td {
 /* --- 比赛搜索自定义下拉菜单 --- */
 .comp-dropdown {
     display: none;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    max-height: 220px;
+    position: fixed;
+    min-width: 300px;
+    width: max-content;
+    max-height: 70vh;
     overflow-y: auto;
-    background: #1e1e2e;
+    background: #2a2a2a;
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 6px;
-    z-index: 100;
+    z-index: 10000;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
 
@@ -746,6 +745,7 @@ tr.detail-row td {
     font-size: 0.85rem;
     color: #cbd5e1;
     border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    white-space: nowrap;
 }
 
 .comp-dropdown-item:hover {
@@ -757,10 +757,10 @@ tr.detail-row td {
 }
 
 .comp-dropdown-item small {
-    margin-left: auto;
-    color: #666;
+    color: #888;
     font-size: 0.75rem;
     white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .comp-dropdown-empty {

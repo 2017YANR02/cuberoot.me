@@ -97,7 +97,6 @@
             '<div class="recon-form-group" style="flex:2;position:relative">' +
             '<label>' + (isZh ? '比赛' : 'Competition') + '</label>' +
             '<input type="text" id="rf-comp" autocomplete="off" placeholder="' + (isZh ? '搜索比赛名称（可选）' : 'Search competition (optional)') + '">' +
-            '<div id="rf-comp-dropdown" class="comp-dropdown"></div>' +
             '</div>' +
             '<div class="recon-form-group">' +
             '<label>' + (isZh ? '轮次' : 'Round') + '</label>' +
@@ -161,7 +160,11 @@
 
         // NOTE: 从 comp_dates.json + comp_name_countries.json 加载比赛列表
         var compInput = document.getElementById('rf-comp');
-        var compDropdown = document.getElementById('rf-comp-dropdown');
+        // NOTE: dropdown 动态创建并 append 到 body，避免被模态框的 overflow:auto 裁剪
+        var compDropdown = document.createElement('div');
+        compDropdown.id = 'rf-comp-dropdown';
+        compDropdown.className = 'comp-dropdown';
+        document.body.appendChild(compDropdown);
         var recentComps = []; // [{name, date, iso2}]
 
         Promise.all([
@@ -191,7 +194,9 @@
                     };
                 })
                 .sort(function (a, b) {
-                    return b.date.localeCompare(a.date);
+                    // NOTE: 日期降序，同日期按字母表升序
+                    var dc = b.date.localeCompare(a.date);
+                    return dc !== 0 ? dc : a.name.localeCompare(b.name);
                 });
 
             // NOTE: 初始显示全部近期比赛
@@ -207,24 +212,44 @@
                 ? comps.filter(function (c) { return c.name.toLowerCase().indexOf(q) >= 0; })
                 : comps;
             var html = '';
-            filtered.slice(0, 30).forEach(function (c) {
+            filtered.forEach(function (c) {
                 var flag = c.iso2 ? '<span class="fi fi-' + c.iso2 + '"></span> ' : '';
                 html += '<div class="comp-dropdown-item" data-name="' + c.name.replace(/"/g, '&quot;') + '" data-date="' + c.date + '">' +
-                    flag + '<span>' + c.name + '</span><small>' + c.date + '</small></div>';
+                    '<small>' + c.date + '</small>' + flag + '<span>' + c.name + '</span></div>';
             });
             if (!html && q) html = '<div class="comp-dropdown-empty">' + (localStorage.getItem('i18n_locale') === 'zh' ? '无匹配' : 'No match') + '</div>';
             compDropdown.innerHTML = html;
         }
 
+        /** 定位下拉菜单：优先向下展开，空间不足时向上 */
+        function positionDropdown() {
+            var rect = compInput.getBoundingClientRect();
+            var spaceBelow = window.innerHeight - rect.bottom;
+            var spaceAbove = rect.top;
+            compDropdown.style.left = rect.left + 'px';
+            // NOTE: 哪边空间大就往哪边展开
+            if (spaceBelow >= spaceAbove) {
+                compDropdown.style.top = rect.bottom + 'px';
+                compDropdown.style.bottom = 'auto';
+                compDropdown.style.maxHeight = (spaceBelow - 10) + 'px';
+            } else {
+                compDropdown.style.top = 'auto';
+                compDropdown.style.bottom = (window.innerHeight - rect.top) + 'px';
+                compDropdown.style.maxHeight = (spaceAbove - 10) + 'px';
+            }
+        }
+
         // NOTE: 输入时实时筛选
         compInput.addEventListener('input', function () {
             renderCompDropdown(recentComps, this.value);
+            positionDropdown();
             compDropdown.style.display = 'block';
         });
 
         // NOTE: focus 时显示下拉
         compInput.addEventListener('focus', function () {
             renderCompDropdown(recentComps, this.value);
+            positionDropdown();
             compDropdown.style.display = 'block';
         });
 
@@ -247,6 +272,9 @@
     function closeModal() {
         var modal = document.getElementById('recon-modal');
         if (modal) modal.remove();
+        // NOTE: 清理 body 上的 dropdown
+        var dd = document.getElementById('rf-comp-dropdown');
+        if (dd) dd.remove();
     }
 
     // ==================== 提交处理 ====================

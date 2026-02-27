@@ -108,10 +108,15 @@ ruiminyan.github.io/
 ├── scripts/                   # Python 数据脚本
 │   ├── fetch_upcoming_comps.py  # 从 WCA API 抓取 432 名顶尖选手的近期比赛
 │   └── convert_recon_csv.py   # 复盘 CSV → JSON 转换（含国家名→ISO2 映射）
-├── recon/                     # 比赛复盘页面（数据来自 Google Sheets CSV）
-│   ├── index.md               # 页面入口（Jekyll Markdown）
-│   ├── recon.js               # 前端逻辑：表格渲染、筛选搜索、排序、行展开
-│   ├── recon.css              # 页面样式
+├── recon/                     # 比赛复盘页面（数据来自 Google Sheets CSV + Firebase 社区提交）
+│   ├── index.md               # 页面入口（Jekyll Markdown，引入 Firebase SDK + WCA Auth）
+│   ├── recon.js               # 前端逻辑：表格渲染、筛选搜索、排序、行展开、WCA 登录 UI
+│   ├── recon.css              # 页面样式（含社区行标记、WCA 登录按钮、比赛搜索下拉菜单样式）
+│   ├── recon_submit.js        # 提交表单：选手/成绩/比赛/轮次/第几把，登录用户→Firestore，访客→localStorage
+│   ├── recon_stats.js         # 统计计算引擎：STM/TPS/OLL/PLL/Cross 等指标分析
+│   ├── wca_auth.js            # WCA OAuth 模块（Implicit Grant 流程，绕过 CORS）
+│   ├── callback.html          # WCA OAuth 回调页（解析 URL hash 中的 access_token）
+│   ├── firebase_store.js      # Firebase Firestore 数据层（社区复盘的 CRUD 封装）
 │   └── recon_data.json        # 构建产物（由 convert_recon_csv.py 生成，需提交到 git）
 ├── .upcoming_cache/           # API 响应本地缓存（已在 .gitignore，24h TTL）
 ├── .github/workflows/         # CI 配置（stats.yml：每周定时构建 + push）
@@ -157,6 +162,30 @@ sudo net start MySQL80
 ```
 
 > **关闭 MySQL**：务必用 `sudo net stop MySQL80` 或 `sudo mysqladmin shutdown` 干净关闭，**绝对不要强杀** `mysqld.exe`，否则会损坏 InnoDB。
+
+## Firebase（Recon 社区提交）
+
+| 配置 | 值 |
+|------|------|
+| 项目 | `recon-stats` |
+| 区域 | `asia-southeast1` |
+| 数据库 | Firestore（`recons` 集合） |
+| 控制台 | [console.firebase.google.com/project/recon-stats](https://console.firebase.google.com/project/recon-stats/firestore) |
+| 安全规则 | `read: true`、`create: wcaId 非空`、`delete: true`（前端按 wcaId 控制） |
+
+> **注意**：Firebase API Key 在前端代码中是公开的（`firebase_store.js`），这是 Firebase 的正常设计。安全由 Firestore Security Rules 控制，不依赖 API Key 保密。GitHub Secret Scanning 会报警，标记为 "Used in tests" 忽略即可。
+
+## WCA OAuth（Recon 登录）
+
+| 配置 | 值 |
+|------|------|
+| 流程 | Implicit Grant（`response_type=token`，绕过 CORS） |
+| Client ID | `mPeg5FiAn7l0CcyQ9CdiSEn3XlBrcA7IMw6Vd9AOsz4` |
+| Scopes | `public` |
+| Redirect URIs | `https://ruiminyan.github.io/recon/callback.html`<br>`http://localhost:4000/recon/callback.html` |
+| 管理页面 | [worldcubeassociation.org/oauth/applications](https://www.worldcubeassociation.org/oauth/applications) |
+
+> **为什么不用 Authorization Code 流程**：WCA 的 token endpoint 不开放 CORS，浏览器无法直接调用。Implicit Grant 将 token 直接放在 URL hash 中返回，完全绕过跨域问题。
 
 ## Ruby（本地验证用）
 
