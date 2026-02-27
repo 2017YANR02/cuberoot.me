@@ -1,4 +1,4 @@
-source 'https://gems.ruby-china.com'
+source 'https://rubygems.org'
 
 # 核心 Jekyll 引擎
 gem "jekyll", "~> 4.3"
