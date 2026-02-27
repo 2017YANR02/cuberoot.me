@@ -8,6 +8,7 @@
     // --- 常量 ---
     const PAGE_SIZE = 50; // NOTE: 每次加载的行数
     const DATA_URL = '/recon/recon_data.json';
+    const COMP_COUNTRIES_URL = '/stats/comp_name_countries.json';
     const DEFAULT_SORT = { key: 'date', asc: false };
 
     // --- 状态 ---
@@ -17,6 +18,7 @@
     let sortCol = 'date';     // 当前排序列
     let sortDir = 'desc';     // 排序方向
     let expandedId = null;    // 当前展开的行 ID
+    let compCountries = {};   // 比赛名 → ISO2 映射
 
     // --- DOM 引用 ---
     let tbody, searchInput, filterSolver, filterMethod, filterEvent;
@@ -38,11 +40,15 @@
 
         // NOTE: 加载数据
         try {
-            const resp = await fetch(DATA_URL);
-            const data = await resp.json();
+            const [reconResp, compResp] = await Promise.all([
+                fetch(DATA_URL),
+                fetch(COMP_COUNTRIES_URL)
+            ]);
+            const data = await reconResp.json();
             allSolves = data.solves || [];
+            compCountries = await compResp.json();
         } catch (e) {
-            tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:#f87171">Failed to load data</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="15" style="text-align:center;color:#f87171">Failed to load data</td></tr>';
             console.error('Failed to load recon data:', e);
             return;
         }
@@ -243,6 +249,7 @@
             '<td class="col-country">' + countryFlag(solve.countryIso2) + '</td>' +
             '<td class="col-solver">' + escHtml(displaySolverName(solve)) + '</td>' +
             '<td class="col-method">' + escHtml(solve.method || '') + '</td>' +
+            '<td class="col-comp-country">' + countryFlag(compCountries[solve.comp]) + '</td>' +
             '<td class="col-comp">' + escHtml(solve.comp || '') + '</td>' +
             '<td class="col-round">' + escHtml(formatRound(solve)) + '</td>' +
             '<td class="col-date">' + escHtml(solve.date || '') + '</td>' +
@@ -284,7 +291,7 @@
         const detailRow = document.createElement('tr');
         detailRow.className = 'detail-row';
         const td = document.createElement('td');
-        td.colSpan = 14;
+        td.colSpan = 15;
         td.innerHTML = buildDetailHtml(solve);
         detailRow.appendChild(td);
 

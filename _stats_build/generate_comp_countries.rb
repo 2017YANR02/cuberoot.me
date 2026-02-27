@@ -44,3 +44,18 @@ person_ids.each_slice(500) do |batch|
 end
 File.write(person_path, JSON.generate(person_map))
 puts "  #{person_path} (#{person_map.size} persons, #{File.size(person_path)} bytes)"
+
+# ── 3. 比赛展示名 → ISO2（recon 页面用） ──
+# NOTE: recon 页面的比赛数据来自 CSV（只有展示名），需要通过 cell_name 查国家
+puts "Generating comp name → iso2 mapping..."
+comp_name_path = File.join(STATS_DIR, "comp_name_countries.json")
+comp_name_map = {}
+Database.client.query(<<-SQL).each do |r|
+  SELECT c.cell_name, co.iso2
+  FROM competitions c
+  JOIN countries co ON co.id = c.country_id
+SQL
+  comp_name_map[r["cell_name"]] = r["iso2"].downcase
+end
+File.write(comp_name_path, JSON.generate(comp_name_map))
+puts "  #{comp_name_path} (#{comp_name_map.size} competitions, #{File.size(comp_name_path)} bytes)"
