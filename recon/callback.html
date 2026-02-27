@@ -50,26 +50,22 @@
         <div>正在登录 WCA...</div>
     </div>
 
-    <!-- NOTE: 内联 WCA Auth 配置，避免引用外部文件（回调页需要独立工作） -->
+    <!--
+        NOTE: Implicit Grant 回调页
+        token 在 URL hash 中（#access_token=xxx&state=yyy）
+        解析 hash → 验证 state → 调用 /me → 存 sessionStorage → 跳回 /recon/
+    -->
     <script>
         (function () {
             'use strict';
 
-            var CONFIG = {
-                clientId: 'mPeg5FiAn7l0CcyQ9CdiSEn3XlBrcA7IMw6Vd9AOsz4',
-                clientSecret: 'VWuxOldakkxcI-Tl7koalES5ir_Xw_y5bUw38N-mJ-Y',
-                tokenUrl: 'https://www.worldcubeassociation.org/oauth/token',
-                meUrl: 'https://www.worldcubeassociation.org/api/v0/me',
-                redirectUri: window.location.hostname === 'localhost'
-                    ? 'http://localhost:4000/recon/callback.html'
-                    : 'https://ruiminyan.github.io/recon/callback.html'
-            };
-
+            var ME_URL = 'https://www.worldcubeassociation.org/api/v0/me';
             var msgEl = document.getElementById('msg');
 
-            // NOTE: 解析 URL 参数
-            var params = new URLSearchParams(window.location.search);
-            var code = params.get('code');
+            // NOTE: 解析 URL hash 参数
+            var hash = window.location.hash.substring(1);
+            var params = new URLSearchParams(hash);
+            var accessToken = params.get('access_token');
             var state = params.get('state');
             var error = params.get('error');
 
@@ -78,12 +74,12 @@
                 return;
             }
 
-            if (!code) {
-                showError('缺少 authorization code');
+            if (!accessToken) {
+                showError('未获取到 access_token');
                 return;
             }
 
-            // NOTE: 验证 state
+            // NOTE: 验证 state 防 CSRF
             var savedState = sessionStorage.getItem('wca_oauth_state');
             if (!savedState || savedState !== state) {
                 showError('OAuth state 不匹配，请重试');
@@ -91,30 +87,10 @@
             }
             sessionStorage.removeItem('wca_oauth_state');
 
-            // NOTE: 用 code 换 token
-            var body = [
-                'grant_type=authorization_code',
-                'code=' + encodeURIComponent(code),
-                'client_id=' + encodeURIComponent(CONFIG.clientId),
-                'client_secret=' + encodeURIComponent(CONFIG.clientSecret),
-                'redirect_uri=' + encodeURIComponent(CONFIG.redirectUri)
-            ].join('&');
-
-            fetch(CONFIG.tokenUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: body
+            // NOTE: 用 token 调用 WCA /me API 获取用户信息
+            fetch(ME_URL, {
+                headers: { 'Authorization': 'Bearer ' + accessToken }
             })
-                .then(function (res) {
-                    if (!res.ok) throw new Error('Token exchange failed: ' + res.status);
-                    return res.json();
-                })
-                .then(function (tokenData) {
-                    // NOTE: 用 token 获取用户信息
-                    return fetch(CONFIG.meUrl, {
-                        headers: { 'Authorization': 'Bearer ' + tokenData.access_token }
-                    });
-                })
                 .then(function (res) {
                     if (!res.ok) throw new Error('WCA /me failed: ' + res.status);
                     return res.json();
