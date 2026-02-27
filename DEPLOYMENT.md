@@ -112,7 +112,7 @@ ruiminyan.github.io/
 │   ├── index.md               # 页面入口（Jekyll Markdown，引入 Firebase SDK + WCA Auth）
 │   ├── recon.js               # 前端逻辑：表格渲染、筛选搜索、排序、行展开、WCA 登录 UI
 │   ├── recon.css              # 页面样式（含社区行标记、WCA 登录按钮、比赛搜索下拉菜单样式）
-│   ├── recon_submit.js        # 提交表单：选手/成绩/比赛/轮次/第几把，登录用户→Firestore，访客→localStorage
+│   ├── recon_submit.js        # 提交表单：选手/成绩/比赛/备注/轮次/第几把/打乱/解法，含实时STM/TPS统计 + alg.cubing.net 预览
 │   ├── recon_stats.js         # 统计计算引擎：STM/TPS/OLL/PLL/Cross 等指标分析
 │   ├── wca_auth.js            # WCA OAuth 模块（Implicit Grant 流程，绕过 CORS）
 │   ├── callback.html          # WCA OAuth 回调页（解析 URL hash 中的 access_token）
