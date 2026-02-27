@@ -452,24 +452,28 @@ tr.detail-row td {
     background: #dc2626;
 }
 
-/* 洲际纪录 — 黄色 */
+/* 洲际纪录 — 改为黄色黑字 */
 .record-cr {
-    background: #d97706;
+    background: #facc15;
+    color: #000;
 }
 
-/* 国家纪录 — 绿色 */
+/* 国家纪录 — 改为黄色黑字 */
 .record-nr {
-    background: #16a34a;
+    background: #facc15;
+    color: #000;
 }
 
 /* 个人纪录 — 蓝色 */
 .record-pr {
     background: #2563eb;
+    color: #fff;
 }
 
 /* 其他 — 灰色 */
 .record-other {
     background: #6b7280;
+    color: #fff;
 }
 
 /* NOTE: 步骤中的 inspection 标记 */
