@@ -147,6 +147,15 @@ def buildSolveRecord(row, headers):
     if pllFull:
         record["pll"] = pllFull
 
+    # NOTE: Record 标记（PR/NR/AsR/WR 等）
+    rAvgFull = col("R avg_full")
+    if rAvgFull:
+        record["rAvg"] = rAvgFull
+
+    rSingle = col("R single")
+    if rSingle:
+        record["rSingle"] = rSingle
+
     # NOTE: 复盘文本和打乱
     recon = col("recon")
     if recon:

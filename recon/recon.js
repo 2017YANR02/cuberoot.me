@@ -243,7 +243,9 @@
             '<td class="col-stm">' + (solve.stm || '') + '</td>' +
             '<td class="col-tps">' + formatTps(solve.tps) + '</td>' +
             '<td class="col-oll">' + escHtml(solve.oll || '') + '</td>' +
-            '<td class="col-pll">' + escHtml(solve.pll || '') + '</td>';
+            '<td class="col-pll">' + escHtml(solve.pll || '') + '</td>' +
+            '<td class="col-ravg">' + formatRecord(solve.rAvg) + '</td>' +
+            '<td class="col-rsingle">' + formatRecord(solve.rSingle) + '</td>';
 
         tr.addEventListener('click', () => toggleDetail(solve, tr));
         return tr;
@@ -276,7 +278,7 @@
         const detailRow = document.createElement('tr');
         detailRow.className = 'detail-row';
         const td = document.createElement('td');
-        td.colSpan = 11;
+        td.colSpan = 13;
         td.innerHTML = buildDetailHtml(solve);
         detailRow.appendChild(td);
 
@@ -358,6 +360,16 @@
     function formatTps(val) {
         if (val == null) return '';
         return val.toFixed(2);
+    }
+
+    // NOTE: Record 标记格式化，WR 用红色高亮
+    function formatRecord(val) {
+        if (!val) return '';
+        if (val === 'WR') return '<span style="color:#ef4444;font-weight:600">WR</span>';
+        if (val === 'CR' || val === 'AsR' || val === 'ER') return '<span style="color:#f59e0b;font-weight:600">' + escHtml(val) + '</span>';
+        if (val === 'NR') return '<span style="color:#3b82f6;font-weight:600">NR</span>';
+        if (val === 'PR') return '<span style="color:#10b981">PR</span>';
+        return escHtml(val);
     }
 
     function formatRound(s) {
