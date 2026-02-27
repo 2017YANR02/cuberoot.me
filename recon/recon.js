@@ -91,15 +91,27 @@
 
         // NOTE: 按出现频率排序选手（最多的在前）
         const solverCounts = {};
+        const solverZhMap = {};
         allSolves.forEach(s => {
-            if (s.solver) solverCounts[s.solver] = (solverCounts[s.solver] || 0) + 1;
+            if (s.solver) {
+                solverCounts[s.solver] = (solverCounts[s.solver] || 0) + 1;
+                if (s.solverZh) solverZhMap[s.solver] = s.solverZh;
+            }
         });
         const sortedSolvers = [...solvers].sort((a, b) => (solverCounts[b] || 0) - (solverCounts[a] || 0));
+
+        const isZh = localStorage.getItem('i18n_locale') === 'zh';
 
         sortedSolvers.forEach(name => {
             const opt = document.createElement('option');
             opt.value = name;
-            opt.textContent = name + ' (' + (solverCounts[name] || 0) + ')';
+            const cnt = solverCounts[name] || 0;
+            const zhName = solverZhMap[name] || name;
+
+            opt.setAttribute('data-i18n-en', `${name} (${cnt})`);
+            opt.setAttribute('data-i18n-zh', `${zhName} (${cnt})`);
+            opt.textContent = isZh ? opt.getAttribute('data-i18n-zh') : opt.getAttribute('data-i18n-en');
+
             filterSolver.appendChild(opt);
         });
 
@@ -264,7 +276,7 @@
             '<td class="col-ravg">' + formatRecord(solve.rAvg) + '</td>' +
             '<td class="col-single mono">' + formatResult(solve.single) + '</td>' +
             '<td class="col-rsingle">' + formatRecord(solve.rSingle) + '</td>' +
-            '<td class="col-solver">' + countryFlag(solverCountry(solve)) + ' ' + escHtml(displaySolverName(solve)) + '</td>' +
+            '<td class="col-solver">' + countryFlag(solverCountry(solve)) + ' ' + displaySolverName(solve) + '</td>' +
             '<td class="col-recon-preview">' + escHtml(getReconPreview(solve)) + '</td>';
 
         tr.addEventListener('click', () => toggleDetail(solve, tr));
@@ -319,12 +331,12 @@
         html += '<div>';
         if (s.recon) {
             html += '<div class="detail-recon">';
-            html += '<div class="detail-recon-label">' + (isZh ? '复盘' : 'Reconstruction') + '</div>';
+            html += '<div class="detail-recon-label"><span data-i18n-en="Reconstruction" data-i18n-zh="复盘">' + (isZh ? '复盘' : 'Reconstruction') + '</span></div>';
             html += '<div class="detail-recon-text">' + formatReconText(s.recon) + '</div>';
             html += '</div>';
         } else if (s.caption) {
             html += '<div class="detail-recon">';
-            html += '<div class="detail-recon-label">' + (isZh ? '复盘' : 'Reconstruction') + '</div>';
+            html += '<div class="detail-recon-label"><span data-i18n-en="Reconstruction" data-i18n-zh="复盘">' + (isZh ? '复盘' : 'Reconstruction') + '</span></div>';
             html += '<div class="detail-recon-text">' + formatReconText(s.caption) + '</div>';
             html += '</div>';
         }
@@ -334,13 +346,13 @@
         html += '<div>';
         if (s.scramble) {
             html += '<div class="detail-scramble">';
-            html += '<div class="detail-scramble-label">' + (isZh ? '最少步打乱 (scr*)' : 'Optimal Scramble (scr*)') + '</div>';
+            html += '<div class="detail-scramble-label"><span data-i18n-en="Optimal Scramble (scr*)" data-i18n-zh="最少步打乱 (scr*)">' + (isZh ? '最少步打乱 (scr*)' : 'Optimal Scramble (scr*)') + '</span></div>';
             html += '<div class="detail-scramble-text">' + escHtml(s.scramble) + '</div>';
             html += '</div>';
         }
         if (s.wcaScramble) {
             html += '<div class="detail-scramble">';
-            html += '<div class="detail-scramble-label">' + (isZh ? 'WCA 打乱 (scr)' : 'WCA Scramble (scr)') + '</div>';
+            html += '<div class="detail-scramble-label"><span data-i18n-en="WCA Scramble (scr)" data-i18n-zh="WCA 打乱 (scr)">' + (isZh ? 'WCA 打乱 (scr)' : 'WCA Scramble (scr)') + '</span></div>';
             html += '<div class="detail-scramble-text">' + escHtml(s.wcaScramble) + '</div>';
             html += '</div>';
         }
@@ -430,10 +442,15 @@
     }
 
     function displaySolverName(s) {
-        // NOTE: 中文模式下优先显示中文名
+        // NOTE: 中文模式下优先显示中文名，附加双语切换 data-i18n 属性
         const isZh = localStorage.getItem('i18n_locale') === 'zh';
-        if (isZh && s.solverZh) return s.solverZh;
-        return s.solver || '';
+        const enName = s.solver || '';
+        if (s.solverZh) {
+            const zhName = s.solverZh;
+            const text = isZh ? zhName : enName;
+            return `<span data-i18n-en="${escHtml(enName)}" data-i18n-zh="${escHtml(zhName)}">${escHtml(text)}</span>`;
+        }
+        return escHtml(enName);
     }
 
     function getReconPreview(s) {
@@ -466,7 +483,7 @@
             if (!cleanWord) return word;
 
             // NOTE: 提取开头的字母部分检查是否在算法白名单中
-            var baseName = cleanWord.replace(/[-+()0-9.*].*$/, ''); 
+            var baseName = cleanWord.replace(/[-+()0-9.*].*$/, '');
             if (/^(?:OLL|PLL|ZBLL|ZBLS|EPLL|OCLL|COLL|CMLL|EG|VLS|VH|WV|CLL|CSP|OBL|CP|EP|EO|EOLRb|DR|insp|cross|xcross|pscross|psxcross|xxxcross|xxcross|layer|face|cancel|into|auto|Skip|Fail|STM|SPS|TPS|better|NR|pair|pairs|free|predicted|counting|full|move|edge|Reconstruction|PBL|OLLCP|1LLL)$/i.test(baseName)) {
                 return word;
             }
