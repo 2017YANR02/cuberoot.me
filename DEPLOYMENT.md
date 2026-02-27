@@ -5,6 +5,7 @@
 ✅ **WCA 统计自动更新已上线**
 
 - **地址**：[ruiminyan.github.io/stats/](https://ruiminyan.github.io/stats/)
+- **国内镜像**：[toolkit.cuberoot.me](https://toolkit.cuberoot.me)（自动同步，CI 配置：`.github/workflows/deploy_mirror.yml`）
 - **更新时间**：每周一凌晨 3:00（北京时间）= 周日 19:00 UTC
 - **CI 配置**：`.github/workflows/stats.yml`
 
