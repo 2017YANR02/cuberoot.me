@@ -108,6 +108,7 @@ def buildSolveRecord(row, headers):
         solverEn = solver
 
     record = {
+        "official": col("Official?") == "Official",
         "event": col("event"),
         "method": col("Method"),
         "date": col("date"),
