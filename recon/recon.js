@@ -340,7 +340,7 @@
     function formatResult(val) {
         if (val == null) return '';
         if (val >= 9999) return 'DNF';
-        return val.toFixed(2);
+        return val.toFixed(3);
     }
 
     function formatTps(val) {
