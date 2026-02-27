@@ -188,16 +188,23 @@ def _is_cache_valid(path: Path) -> bool:
 
 
 def _build_event_tags(cuber_info) -> list:
-    """从选手数据构造事件标签列表（按 WCA 官方顺序、使用短名）。"""
+    """从选手数据构造事件标签列表（按 WR优先级 -> WCA 官方顺序）。"""
     tags = []
-    for ev_id, flags in sorted(
-        cuber_info["events"].items(),
-        key=lambda x: EVENT_ORDER_MAP.get(x[0], (999, x[0]))[0]
-    ):
+
+    def sort_key(item):
+        ev_id, flags = item
+        # WR 优先级: current(0) > former(1) > 无(2)
+        wr_priority = 0 if flags["current_wr"] else (1 if flags["wr"] else 2)
+        # 项目优先级
+        event_priority = EVENT_ORDER_MAP.get(ev_id, (999, ev_id))[0]
+        return (wr_priority, event_priority)
+
+    for ev_id, flags in sorted(cuber_info["events"].items(), key=sort_key):
         _, short = EVENT_ORDER_MAP.get(ev_id, (999, ev_id))
         # NOTE: current=当前WR保持者, former=曾破WR但非当前保持者
         wr_val = "current" if flags["current_wr"] else ("former" if flags["wr"] else None)
         tags.append({"id": short, "wr": wr_val})
+        
     return tags
 
 
