@@ -449,10 +449,30 @@
             })
             .filter(function (line) { return line.length > 0; })
             .join('\n');
-        // NOTE: 规范化步骤间距——twisty-player 无法解析连写的步骤（如 UD, U'D'）
-        // 在步骤结束（字母或'或2或w）与下一个步骤字母之间插入空格
-        alg = alg.replace(/([RULDFBMESruldfbmesxyz][w]?[2']?)(?=[RULDFBMESxyz])/g, '$1 ');
+        // NOTE: 清除复盘专用标记（卡顿/换手），twisty-player 无法解析
+        alg = alg.replace(/[.·↑↓⅓⅔]/g, '');
+        // NOTE: 规范化步骤间距——twisty-player 无法解析连写的步骤（如 UD, U'D', U2'R）
+        // 支持修饰符组合: 2, ', 2'（如 R2', U2'）
+        alg = alg.replace(/([RULDFBMESruldfbmesxyz][w]?2?'?)(?=[RULDFBMESxyz])/g, '$1 ');
         return alg;
+    }
+
+    /** 提取纯解法但保留 // 注释（用于 alg.cubing.net 链接） */
+    function extractAlgWithComments(text) {
+        if (!text) return '';
+        var lines = text.split('\n');
+        var startIdx = 0;
+        if (lines.length > 0 && /^\d+STM\s/i.test(lines[0])) {
+            startIdx = 1;
+            if (lines.length > 1 && lines[1].indexOf('//') < 0) {
+                startIdx = 2;
+            }
+        }
+        return lines.slice(startIdx)
+            .filter(function (line) { return line.trim().length > 0; })
+            .join('\n')
+            // NOTE: alg.cubing.net 不支持 ·↑↓，但支持 .
+            .replace(/[·↑↓⅓⅔]/g, '');
     }
 
     /** 从复盘文本第2行提取打乱公式（当 wcaScramble/scramble 字段为空时的 fallback） */
@@ -523,7 +543,7 @@
             html += '<div class="recon-twisty-container"></div>';
             // NOTE: 构建 alg.cubing.net 链接
             var setupStr = encodeURIComponent(scrambleForPlayer);
-            var algStr = encodeURIComponent(extractAlgFromRecon(reconText));
+            var algStr = encodeURIComponent(extractAlgWithComments(reconText));
             var puzzleStr = (s.event && s.event.indexOf('2') >= 0) ? '2x2x2' : '3x3x3';
             var algUrl = 'https://alg.cubing.net/?setup=' + setupStr + '&alg=' + algStr + '&puzzle=' + puzzleStr;
             var cubedbUrl = 'https://cubedb.net/?puzzle=' + (puzzleStr === '2x2x2' ? '2x2' : '3x3') + '&scramble=' + setupStr + '&alg=' + algStr;
