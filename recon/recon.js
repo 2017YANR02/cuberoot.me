@@ -373,23 +373,18 @@
     }
 
     function getRecordClass(val) {
-        // NOTE: 去掉可能的前缀 F(女子)、X、U 等，取核心后缀判断
+        // NOTE: B=Best 与 R=Record 同色；F=女子纪录颜色同上
         const v = val.toUpperCase();
-        // 世界纪录（红色）
-        if (v === 'WR' || v === 'FWR' || v === 'RWR' || v === 'XWR' || v === 'UWR'
-            || v === '1STWR' || v === 'YTWR' || v === 'YTWB') return 'wr';
-        // 洲际纪录（黄色）：AsR, ER, CR, SAR, NAR, WCR 等
-        if (v.endsWith('ASR') || v.endsWith('ER') || v.endsWith('CR')
-            || v === 'SAR' || v === 'NAR' || v === 'WCR'
-            || v === 'FASR' || v === 'XASR' || v === 'UASR') return 'cr';
-        // 国家纪录（绿色）
-        if (v.endsWith('NR') || v === 'FNR' || v === 'XNR' || v === 'UNR'
-            || v === 'NWR' || v === 'ANR' || v === 'YTNR'
-            || v === 'NB' || v === 'YTNB') return 'nr';
-        // 个人纪录（蓝色）
-        if (v.endsWith('PR') || v.endsWith('PB')
-            || v === 'YTPR' || v === 'YTPB' || v === 'UPR') return 'pr';
-        // 其他（WB 等，灰色）
+        // 世界纪录/世界最好（红色）
+        if (/^[FXU]?W[RB]$|^1STWR$|^RWR$|^YTW[RB]$|^XWR$/.test(v)) return 'wr';
+        // 洲际纪录（黄色）：AsR/AsB, ER/EB, CR/CB, SAR, NAR, WCR 等
+        if (/(?:AS|E|C)[RB]$/.test(v) || /^(?:SAR|NAR|WCR|FASR|XASR|UASR)$/.test(v)) return 'cr';
+        // 国家纪录/国家最好（绿色）
+        if (/^[FXU]?N[RB]$|^NWR$|^ANR$|^YTN[RB]$/.test(v)) return 'nr';
+        // 个人纪录/个人最好（蓝色）
+        if (/[PU]?[RB]$/.test(v) && (v.endsWith('PR') || v.endsWith('PB')
+            || v === 'YTPR' || v === 'YTPB' || v === 'UPR' || v === 'UPB')) return 'pr';
+        // 其他（灰色）
         return 'other';
     }
 
