@@ -34,3 +34,4 @@ recon/recon_data_debug.json
 CubeAlgWB*.csv
 CubeAlgWB*.xlsx
 recon_dump.txt
+.bundle/
