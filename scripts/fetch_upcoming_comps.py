@@ -108,8 +108,12 @@ def extract_top_cubers() -> CuberData:
 
     content = WR_METRIC_PATH.read_text(encoding="utf-8")
     person_pattern = r'href="https://www\.worldcubeassociation\.org/persons/([A-Z0-9]+)">([^<]+)</a>'
+    # NOTE: 从 ranking 表格行中同时提取 WCA ID、姓名和成绩值，用于判断 current WR
+    row_pattern = r'<tr>\s*<td[^>]*>\d+</td>\s*<td><a href="[^"]*persons/([A-Z0-9]+)">([^<]+)</a></td>\s*<td[^>]*>([^<]+)</td>'
 
     cubers: CuberData = {}
+    # NOTE: 记录每个项目的当前 WR 保持者（含 tie），key=event_id, value=set(wca_id)
+    current_wr_holders: dict[str, set[str]] = {}
 
     # NOTE: 遍历 4 个 section: single/average × ranking/history
     section_ids = [
@@ -138,6 +142,18 @@ def extract_top_cubers() -> CuberData:
             event_html = event_blocks[i + 1] if i + 1 < len(event_blocks) else ""
             event_id = EVENT_NAME_TO_ID.get(event_name, event_name)
 
+            # NOTE: ranking 区域额外做 current WR 识别（early termination）
+            if not is_history:
+                rank1_result = None
+                for row in re.finditer(row_pattern, event_html):
+                    result = row.group(3).strip()
+                    if rank1_result is None:
+                        rank1_result = result
+                    elif result != rank1_result:
+                        break  # 成绩与第1名不同，后续不可能是 WR holder
+                    wca_id = row.group(1)
+                    current_wr_holders.setdefault(event_id, set()).add(wca_id)
+
             for pm in re.finditer(person_pattern, event_html):
                 wca_id, name = pm.group(1), pm.group(2)
 
@@ -145,7 +161,9 @@ def extract_top_cubers() -> CuberData:
                     cubers[wca_id] = {"name": name, "events": {}}
 
                 if event_id not in cubers[wca_id]["events"]:
-                    cubers[wca_id]["events"][event_id] = {"ranking": False, "wr": False}
+                    cubers[wca_id]["events"][event_id] = {
+                        "ranking": False, "wr": False, "current_wr": False,
+                    }
 
                 if is_history:
                     cubers[wca_id]["events"][event_id]["wr"] = True
@@ -153,6 +171,12 @@ def extract_top_cubers() -> CuberData:
                     cubers[wca_id]["events"][event_id]["ranking"] = True
 
         print(f"  [{label}] {section_id} 处理完毕")
+
+    # NOTE: 将 current_wr_holders 的信息写入 cubers 数据
+    for ev_id, holder_ids in current_wr_holders.items():
+        for wca_id in holder_ids:
+            if wca_id in cubers and ev_id in cubers[wca_id]["events"]:
+                cubers[wca_id]["events"][ev_id]["current_wr"] = True
 
     print(f"[INFO] 提取到 {len(cubers)} 名选手（排名+WR历史，含已取消项目）.")
     return cubers
@@ -171,7 +195,9 @@ def _build_event_tags(cuber_info) -> list:
         key=lambda x: EVENT_ORDER_MAP.get(x[0], (999, x[0]))[0]
     ):
         _, short = EVENT_ORDER_MAP.get(ev_id, (999, ev_id))
-        tags.append({"id": short, "wr": flags["wr"]})
+        # NOTE: current=当前WR保持者, former=曾破WR但非当前保持者
+        wr_val = "current" if flags["current_wr"] else ("former" if flags["wr"] else None)
+        tags.append({"id": short, "wr": wr_val})
     return tags
 
 
