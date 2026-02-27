@@ -442,12 +442,51 @@
         return text.split('\n')[0].trim();
     }
 
+    // NOTE: 魔方面颜色映射（用于注释中的颜色字母着色）
+    const FACE_COLORS = {
+        W: '#e8e8e8', // 白色（暗色背景上用浅灰白，避免太刺眼）
+        Y: '#facc15', // 黄色
+        R: '#ef4444', // 红色
+        O: '#f97316', // 橙色
+        G: '#22c55e', // 绿色
+        B: '#3b82f6'  // 蓝色
+    };
+
+    /**
+     * NOTE: 对注释文本中的魔方面颜色字母着色。
+     * 只处理「独立的颜色字母」，即前后都不是英文字母的 W/Y/R/O/G/B，
+     * 这样可以避免误匹配 OLL/PLL/ZBLL/CMLL/EG/VLS 等算法名中的字母。
+     */
+    function colorizeComment(commentHtml) {
+        // NOTE: 匹配独立的颜色字母（前后非字母）。
+        // (?<![A-Za-z]) 确保前面不是字母，(?![A-Za-z]) 确保后面不是字母。
+        // 这样 "BR" 中 B 和 R 会分别命中（B 后面是 R 但 R 也是颜色字母，
+        // 所以我们需要逐字符扫描而非一次性全局替换）。
+        // 实际策略：先拆分出「非字母区」和「纯字母区」，对纯字母区判断是否为颜色 token。
+        return commentHtml.replace(/[A-Za-z]+/g, function (word) {
+            // NOTE: 算法名前缀白名单 — 这些单词中的字母不着色
+            if (/^(?:OLL|PLL|ZBLL|ZBLS|EPLL|OCLL|COLL|CMLL|EG|VLS|VH|WV|CLL|CSP|OBL|CP|EP|EO|EOLRb|DR|insp|cross|xcross|pscross|psxcross|xxxcross|xxcross|layer|face|cancel|into|auto|Skip|Fail|Skip|STM|SPS|TPS|better|NR|pair|pairs|free|predicted|cancel|counting|full|move|edge|Reconstruction|PBL)$/i.test(word)) {
+                return word;
+            }
+            // NOTE: 纯颜色字母组成的 token （如 BR, WO, GR, W, Y）→ 逐字母着色
+            if (/^[WYROGB]+$/.test(word)) {
+                return word.split('').map(function (ch) {
+                    return '<span style="color:' + FACE_COLORS[ch] + ';font-weight:600">' + ch + '</span>';
+                }).join('');
+            }
+            // NOTE: 混合 token（如 "RBe" — 实际不太会出现），不着色
+            return word;
+        });
+    }
+
     function formatReconText(text) {
         if (!text) return '';
-        // NOTE: 高亮步骤注释（// 后的内容）
+        // NOTE: 先 HTML 转义，再对 // 注释部分着色
         return escHtml(text).replace(
             /\/\/(.*?)(?=\n|$)/g,
-            '<span class="recon-comment">//$1</span>'
+            function (match, content) {
+                return '<span class="recon-comment">//' + colorizeComment(content) + '</span>';
+            }
         );
     }
 
