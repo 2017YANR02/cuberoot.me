@@ -85,8 +85,17 @@
         filterSolver.addEventListener('change', applyFilters);
         filterMethod.addEventListener('change', applyFilters);
         filterEvent.addEventListener('change', applyFilters);
-        filterWca.addEventListener('change', applyFilters);
-        filterNonWca.addEventListener('change', applyFilters);
+        // NOTE: WCA/non-WCA 复选框——不允许两个都不选
+        function guardTypeFilter() {
+            if (!filterWca.checked && !filterNonWca.checked) {
+                // NOTE: 阻止操作，恢复刚被取消的那个
+                this.checked = true;
+                return;
+            }
+            applyFilters();
+        }
+        filterWca.addEventListener('change', guardTypeFilter);
+        filterNonWca.addEventListener('change', guardTypeFilter);
         // NOTE: 无限滚动——用 IntersectionObserver 监听 sentinel 元素
         loadMoreBtn.style.display = 'none';
         var sentinel = document.createElement('div');
