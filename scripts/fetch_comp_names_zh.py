@@ -10,7 +10,7 @@
 # 输出：recon/comp_names_zh.json — { "English Name": "中文名", ... }
 #
 # 用法：python scripts/fetch_comp_names_zh.py
-#   首次运行约 2 分钟（12 页 cubing.com + 8 页 WCA API）
+#   首次运行约 30 秒（自动检测页数 + WCA API 批量查询）
 #   后续运行使用缓存，约 1 秒
 
 import re
@@ -32,7 +32,6 @@ CUBING_CHINA_URL = "https://cubing.com/competition"
 WCA_API_BASE = "https://www.worldcubeassociation.org/api/v0"
 USER_AGENT = "WCA-Stats-Bot/1.0 (ruiminyan.github.io)"
 API_DELAY_SEC = 0.3
-CUBING_CHINA_PAGES = 12
 
 
 def fetch_url(url, raw=False):
@@ -50,13 +49,19 @@ def fetch_url(url, raw=False):
     return "" if raw else []
 
 
+def _detect_total_pages(html):
+    """从首页 HTML 的分页链接中提取最大 page=N 值。"""
+    pages = [int(n) for n in re.findall(r'page=(\d+)', html)]
+    return max(pages) if pages else 1
+
+
 def scrape_cubing_china():
     """
-    爬取 cubing.com 比赛列表全部页面。
+    爬取 cubing.com 比赛列表全部页面（自动检测页数）。
     返回 { wca_id: zh_name, ... }（wca_id = alias 去连字符）
     """
     # NOTE: <a> 标签内含 <img> 子元素（WCA 赛事图标），需跨标签匹配
-    pattern = re.compile(
+    comp_pattern = re.compile(
         r'<a[^>]*href="https://cubing\.com/competition/([^"?]+)"[^>]*>(.*?)</a>',
         re.DOTALL
     )
@@ -65,7 +70,21 @@ def scrape_cubing_china():
     wca_id_to_zh = {}
     CACHE_DIR.mkdir(exist_ok=True)
 
-    for page in range(1, CUBING_CHINA_PAGES + 1):
+    # NOTE: 先抓首页，自动检测总页数
+    first_cache = CACHE_DIR / "page_1.html"
+    if first_cache.exists():
+        first_html = first_cache.read_text(encoding="utf-8")
+    else:
+        first_html = fetch_url(
+            f"{CUBING_CHINA_URL}?year=&type=&province=&event=&page=1", raw=True
+        )
+        if first_html:
+            first_cache.write_text(first_html, encoding="utf-8")
+
+    total_pages = _detect_total_pages(first_html) if first_html else 1
+    print(f"  自动检测到 {total_pages} 页")
+
+    for page in range(1, total_pages + 1):
         cache_file = CACHE_DIR / f"page_{page}.html"
 
         if cache_file.exists():
@@ -75,13 +94,13 @@ def scrape_cubing_china():
             url = f"{CUBING_CHINA_URL}?year=&type=&province=&event=&page={page}"
             html = fetch_url(url, raw=True)
             if not html:
-                print(f"  [{page}/{CUBING_CHINA_PAGES}] 抓取失败")
+                print(f"  [{page}/{total_pages}] 抓取失败")
                 continue
             cache_file.write_text(html, encoding="utf-8")
             source = "网络"
 
         count = 0
-        for m in pattern.finditer(html):
+        for m in comp_pattern.finditer(html):
             alias = m.group(1)
             name = tag_strip.sub("", m.group(2)).strip()
             if name and not alias.startswith("?"):
@@ -89,7 +108,7 @@ def scrape_cubing_china():
                 wca_id_to_zh[wca_id] = name
                 count += 1
 
-        print(f"  [{page}/{CUBING_CHINA_PAGES}] {count} 条 [{source}]")
+        print(f"  [{page}/{total_pages}] {count} 条 [{source}]")
 
     print(f"[INFO] cubing.com: {len(wca_id_to_zh)} 条")
     return wca_id_to_zh
