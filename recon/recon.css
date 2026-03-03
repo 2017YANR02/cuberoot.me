@@ -203,8 +203,7 @@
 }
 
 /* NOTE: 数字列等宽字体 */
-.col-single,
-.col-avg {
+.col-single {
     font-family: 'Roboto Mono', monospace;
     font-size: 0.85rem;
 }
