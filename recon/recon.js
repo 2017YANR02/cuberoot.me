@@ -325,13 +325,15 @@
                     s.solver, s.solverZh, s.comp, s.scramble,
                     s.oll, s.pll, s.country, s.note,
                     s.single != null ? s.single.toFixed(3) : '',
-                    // NOTE: 支持按编号搜索
-                    s.id != null ? String(s.id) : '',
                     // NOTE: 支持搜索 "cancelled"/"取消" 匹配被取消的纪录
                     s.rAvg, s.rSingle, s.rAoXR
                 ].filter(Boolean).join(' ').toLowerCase();
                 // NOTE: "cancel"/"取消" 均映射为 "cancelled" 以匹配被取消的纪录
                 const normalizedQuery = (query === '取消' || query === 'cancel') ? 'cancelled' : query;
+                // NOTE: #编号 精确匹配（如 #2026 只匹配 id=2026，不会误中 2026 年比赛）
+                if (normalizedQuery.startsWith('#')) {
+                    return String(s.id) === normalizedQuery.slice(1);
+                }
                 // NOTE: 纪录字段用精确匹配（大小写不敏感），搜 WR 不应匹配 FWR
                 const q = normalizedQuery.toUpperCase();
                 const recordMatch = (s.rAvg && s.rAvg.toUpperCase() === q)
