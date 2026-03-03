@@ -286,13 +286,18 @@
                 const haystack = [
                     s.solver, s.solverZh, s.comp, s.scramble,
                     s.oll, s.pll, s.country, s.note,
-                    s.single != null ? s.single.toFixed(3) : ''
+                    s.single != null ? s.single.toFixed(3) : '',
+                    // NOTE: 支持搜索 "cancelled"/"取消" 匹配被取消的纪录
+                    s.rAvg, s.rSingle, s.rAoXR
                 ].filter(Boolean).join(' ').toLowerCase();
+                // NOTE: "cancel"/"取消" 均映射为 "cancelled" 以匹配被取消的纪录
+                const normalizedQuery = (query === '取消' || query === 'cancel') ? 'cancelled' : query;
                 // NOTE: 纪录字段用精确匹配（大小写不敏感），搜 WR 不应匹配 FWR
-                const q = query.toUpperCase();
+                const q = normalizedQuery.toUpperCase();
                 const recordMatch = (s.rAvg && s.rAvg.toUpperCase() === q)
-                    || (s.rSingle && s.rSingle.toUpperCase() === q);
-                if (!haystack.includes(query) && !recordMatch) return false;
+                    || (s.rSingle && s.rSingle.toUpperCase() === q)
+                    || (s.rAoXR && s.rAoXR.toUpperCase() === q);
+                if (!haystack.includes(normalizedQuery) && !recordMatch) return false;
             }
             return true;
         });
@@ -809,8 +814,12 @@
     // 前缀 F=女子纪录，颜色同上
     function formatRecord(val) {
         if (!val) return '';
-        const cls = getRecordClass(val);
-        return '<span class="record-badge record-' + cls + '">' + escHtml(val) + '</span>';
+        // NOTE: 处理 "WR cancelled" 等被取消的纪录，用紫色 + 红色对角线（CSS 实现）
+        const cancelled = /\bcancelled\b/i.test(val);
+        const recordType = cancelled ? val.replace(/\s*cancelled\s*/i, '').trim() : val;
+        // NOTE: 如果被取消，统一使用紫色的 cancelled 样式，否则用对应级别的颜色
+        const cls = cancelled ? 'cancelled' : getRecordClass(recordType);
+        return '<span class="record-badge record-' + cls + '">' + escHtml(recordType) + '</span>';
     }
 
     function getRecordClass(val) {
