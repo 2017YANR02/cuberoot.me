@@ -308,6 +308,8 @@
                     s.solver, s.solverZh, s.comp, s.scramble,
                     s.oll, s.pll, s.country, s.note,
                     s.single != null ? s.single.toFixed(3) : '',
+                    // NOTE: 支持按编号搜索
+                    s.id != null ? String(s.id) : '',
                     // NOTE: 支持搜索 "cancelled"/"取消" 匹配被取消的纪录
                     s.rAvg, s.rSingle, s.rAoXR
                 ].filter(Boolean).join(' ').toLowerCase();
@@ -403,7 +405,7 @@
         const fragment = document.createDocumentFragment();
 
         for (let i = displayCount; i < end; i++) {
-            fragment.appendChild(createSolveRow(filteredSolves[i], i));
+            fragment.appendChild(createSolveRow(filteredSolves[i]));
         }
 
         tbody.appendChild(fragment);
@@ -422,17 +424,15 @@
         }
     }
 
-    function createSolveRow(solve, idx) {
+    function createSolveRow(solve) {
         const tr = document.createElement('tr');
         tr.className = 'solve-row' + (solve._community ? ' community-row' : '');
         tr.dataset.id = solve.id;
 
         const officialHtml = solve.official ? '✅' : '';
-        // NOTE: 倒序索引——最后一行为 1，往上递增
-        const rowIndex = filteredSolves.length - idx;
 
         tr.innerHTML =
-            '<td class="col-idx">' + rowIndex + '</td>' +
+            '<td class="col-idx">' + (solve.id || '') + '</td>' +
             '<td class="col-avg">' + formatAvg(solve.avg) + (solve.rAvg ? ' ' + formatRecord(solve.rAvg) : '') + '</td>' +
             '<td class="col-dsingle mono">' + escHtml(solve.displaySingle || '') + (solve.rSingle ? ' ' + formatRecord(solve.rSingle) : '') + '</td>' +
             '<td class="col-solver">' + countryFlag(solverCountry(solve)) + ' ' + displaySolverName(solve) + '</td>' +
