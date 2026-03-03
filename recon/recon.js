@@ -59,7 +59,7 @@
             // NOTE: 预处理数据，提取 STM/TPS 用于排序和显示
             preprocessSolves(allSolves);
         } catch (e) {
-            tbody.innerHTML = '<tr><td colspan="15" style="text-align:center;color:#f87171">Failed to load data</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="14" style="text-align:center;color:#f87171">Failed to load data</td></tr>';
             console.error('Failed to load recon data:', e);
             return;
         }
@@ -320,10 +320,8 @@
             'col-round': 'round',
             'col-aoxr': 'aoType',
             'col-avg': 'avg',
-            'col-ravg': 'rAvg',
             'col-single': 'single',
             'col-dsingle': 'displaySingle',
-            'col-rsingle': 'rSingle',
             'col-solver': 'solver',
             'col-stm': 'stm',
             'col-tps': 'tps'
@@ -411,13 +409,12 @@
             '<td class="col-method">' + escHtml(solve.method || '') + '</td>' +
             '<td class="col-date">' + escHtml(solve.date || '') + '</td>' +
             '<td class="col-comp">' + countryFlag(compCountries[solve.comp]) + ' ' + escHtml(solve.comp || '') + '</td>' +
-            '<td class="col-round">' + escHtml(formatRound(solve)) + '</td>' +
+            '<td class="col-round">' + escHtml(solve.round || '') + '</td>' +
+            '<td class="col-solvenum">' + (solve.solveNum || '') + '</td>' +
             '<td class="col-aoxr">' + escHtml(solve.aoType || '') + '</td>' +
-            '<td class="col-avg mono">' + formatAvg(solve.avg) + '</td>' +
-            '<td class="col-ravg">' + formatRecord(solve.rAvg) + '</td>' +
+            '<td class="col-avg">' + formatAvg(solve.avg) + (solve.rAvg ? ' ' + formatRecord(solve.rAvg) : '') + '</td>' +
             '<td class="col-single mono">' + formatResult(solve.single) + '</td>' +
-            '<td class="col-dsingle mono">' + escHtml(solve.displaySingle || '') + '</td>' +
-            '<td class="col-rsingle">' + formatRecord(solve.rSingle) + '</td>' +
+            '<td class="col-dsingle mono">' + escHtml(solve.displaySingle || '') + (solve.rSingle ? ' ' + formatRecord(solve.rSingle) : '') + '</td>' +
             '<td class="col-solver">' + countryFlag(solverCountry(solve)) + ' ' + displaySolverName(solve) + '</td>' +
             '<td class="col-stm mono">' + (solve.stm || '') + '</td>' +
             '<td class="col-tps mono">' + (solve.tps ? solve.tps.toFixed(2) : '') + '</td>';
@@ -453,13 +450,16 @@
         const detailRow = document.createElement('tr');
         detailRow.className = 'detail-row';
         const td = document.createElement('td');
-        td.colSpan = 14;
+        td.colSpan = 13;
         td.innerHTML = buildDetailHtml(solve);
         detailRow.appendChild(td);
 
         solveRow.after(detailRow);
         solveRow.classList.add('expanded');
         expandedId = solve.id;
+
+        // NOTE: 点击展开时滚动到屏幕顶部
+        solveRow.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
         // NOTE: 懒加载 twisty-player（有 wcaScramble 时）
         var twistyContainer = td.querySelector('.recon-twisty-container');
@@ -633,7 +633,7 @@
             var captionText = generateCaption(reconText);
             if (captionText) {
                 html += ' <a href="#" class="caption-copy-btn" data-caption="' + escHtml(captionText).replace(/"/g, '&quot;') + '"' +
-                    ' data-i18n-en="caption" data-i18n-zh="caption">caption</a>';
+                    ' data-i18n-en="caption" data-i18n-zh="字幕">caption</a>';
             }
             html += '</div>';
         }
