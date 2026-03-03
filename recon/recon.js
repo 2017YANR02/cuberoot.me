@@ -24,6 +24,7 @@
 
     // --- DOM 引用 ---
     let tbody, searchInput, filterSolver, filterMethod, filterEvent;
+    let filterWca, filterNonWca;
     let statsEl, showingEl, loadMoreBtn;
 
     // ==================== 初始化 ====================
@@ -36,6 +37,8 @@
         filterSolver = document.getElementById('filter-solver');
         filterMethod = document.getElementById('filter-method');
         filterEvent = document.getElementById('filter-event');
+        filterWca = document.getElementById('filter-wca');
+        filterNonWca = document.getElementById('filter-nonwca');
         statsEl = document.getElementById('recon-stats');
         showingEl = document.getElementById('recon-showing');
         loadMoreBtn = document.getElementById('btn-load-more');
@@ -82,6 +85,8 @@
         filterSolver.addEventListener('change', applyFilters);
         filterMethod.addEventListener('change', applyFilters);
         filterEvent.addEventListener('change', applyFilters);
+        filterWca.addEventListener('change', applyFilters);
+        filterNonWca.addEventListener('change', applyFilters);
         // NOTE: 无限滚动——用 IntersectionObserver 监听 sentinel 元素
         loadMoreBtn.style.display = 'none';
         var sentinel = document.createElement('div');
@@ -277,10 +282,17 @@
         const method = filterMethod.value;
         const event = filterEvent.value;
 
+        // NOTE: WCA/non-WCA 复选框筛选
+        const showWca = filterWca.checked;
+        const showNonWca = filterNonWca.checked;
+
         filteredSolves = allSolves.filter(s => {
             if (solver && s.solver !== solver) return false;
             if (method && s.method !== method) return false;
             if (event && s.event !== event) return false;
+            // NOTE: 根据 official 字段过滤 WCA / non-WCA
+            if (!showWca && s.official) return false;
+            if (!showNonWca && !s.official) return false;
             if (query) {
                 // NOTE: 搜索范围：选手名（中英文）、比赛名、成绩、打乱、OLL/PLL、纪录标记
                 const haystack = [

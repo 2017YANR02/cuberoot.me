@@ -894,3 +894,19 @@ tr.detail-row td {
     color: #666;
     font-size: 0.85rem;
 }
+
+/* NOTE: WCA / non-WCA 复选框筛选行 */
+.recon-type-filters {
+    display: flex;
+    gap: 16px;
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    color: #cbd5e1;
+}
+
+.recon-type-filters label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+}

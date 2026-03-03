@@ -40,6 +40,12 @@ layout: default
     </div>
 </div>
 
+<!-- NOTE: WCA / non-WCA 筛选复选框 -->
+<div class="recon-type-filters">
+    <label><input type="checkbox" id="filter-wca" checked> WCA</label>
+    <label><input type="checkbox" id="filter-nonwca" checked> non-WCA</label>
+</div>
+
 <!-- NOTE: 主表格容器 -->
 <div class="recon-table-wrap">
     <table id="recon-table">
