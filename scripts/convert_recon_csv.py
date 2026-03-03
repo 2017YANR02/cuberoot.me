@@ -280,6 +280,23 @@ def main():
             else:
                 skipped += 1
 
+    # NOTE: 后处理——将 AoXR 标记从首行传播到同 (solver, comp, event) 组的所有行
+    groups = {}
+    for s in solves:
+        key = (s["solver"], s.get("comp", ""), s.get("event", ""))
+        groups.setdefault(key, []).append(s)
+    propagated = 0
+    for key, group in groups.items():
+        source = next((s for s in group if "aoType" in s), None)
+        if source:
+            for s in group:
+                if "aoType" not in s:
+                    s["aoType"] = source["aoType"]
+                    propagated += 1
+                if "rAoXR" in source and "rAoXR" not in s:
+                    s["rAoXR"] = source["rAoXR"]
+    print(f"  AoXR 传播: {propagated} 条记录已补充标记")
+
     # NOTE: 按日期降序排列（最新在前），与 reco.nz 一致
     solves.sort(key=lambda s: s.get("date", ""), reverse=True)
 
