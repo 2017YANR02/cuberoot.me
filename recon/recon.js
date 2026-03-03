@@ -82,11 +82,40 @@
         filterSolver.addEventListener('change', applyFilters);
         filterMethod.addEventListener('change', applyFilters);
         filterEvent.addEventListener('change', applyFilters);
-        loadMoreBtn.addEventListener('click', loadMore);
+        // NOTE: 无限滚动——用 IntersectionObserver 监听 sentinel 元素
+        loadMoreBtn.style.display = 'none';
+        var sentinel = document.createElement('div');
+        sentinel.id = 'scroll-sentinel';
+        document.getElementById('recon-pagination').appendChild(sentinel);
+        var scrollObserver = new IntersectionObserver(function (entries) {
+            if (entries[0].isIntersecting && displayCount < filteredSolves.length) {
+                loadMore();
+            }
+        }, { rootMargin: '200px' });
+        scrollObserver.observe(sentinel);
 
         // NOTE: 表头排序
         document.querySelectorAll('#recon-table thead th').forEach(th => {
             th.addEventListener('click', () => handleSort(th));
+        });
+
+        // NOTE: caption 复制按钮——事件委托
+        tbody.addEventListener('click', function (e) {
+            var btn = e.target.closest('.caption-copy-btn');
+            if (!btn) return;
+            e.preventDefault();
+            e.stopPropagation();
+            var text = btn.getAttribute('data-caption');
+            navigator.clipboard.writeText(text).then(function () {
+                var isZh = localStorage.getItem('i18n_locale') === 'zh';
+                var orig = btn.textContent;
+                btn.textContent = isZh ? '已复制' : 'copied';
+                btn.classList.add('copied');
+                setTimeout(function () {
+                    btn.textContent = orig;
+                    btn.classList.remove('copied');
+                }, 1500);
+            });
         });
 
         // NOTE: 初始渲染（用户模式下跳过，由 enterUserMode 处理）
@@ -359,12 +388,10 @@
         // NOTE: 更新分页状态
         const isZh = localStorage.getItem('i18n_locale') === 'zh';
         if (displayCount >= filteredSolves.length) {
-            loadMoreBtn.style.display = 'none';
             showingEl.textContent = isZh
                 ? `共 ${filteredSolves.length} 条`
                 : `${filteredSolves.length} total`;
         } else {
-            loadMoreBtn.style.display = '';
             showingEl.textContent = isZh
                 ? `已显示 ${displayCount} / ${filteredSolves.length}`
                 : `Showing ${displayCount} of ${filteredSolves.length}`;
@@ -503,6 +530,41 @@
         return '';
     }
 
+    /**
+     * 从 recon 文本动态生成 caption（等效 Google Sheets CAPTION 函数）。
+     * 逻辑：去掉统计行和打乱行，去掉 insp 行，
+     * 去掉每行 // 后的注释，末尾附加统计行。
+     */
+    function generateCaption(text) {
+        if (!text) return '';
+        var lines = text.split('\n');
+        var statsLine = '';
+        var startIdx = 0;
+        // NOTE: 第1行是 STM/TPS 统计行，提取后跳过
+        if (lines.length > 0 && /^\d+STM\s/i.test(lines[0])) {
+            statsLine = lines[0].trim();
+            startIdx = 1;
+            // NOTE: 第2行无 // 则为打乱行，跳过
+            if (lines.length > 1 && lines[1].indexOf('//') < 0) {
+                startIdx = 2;
+            }
+        }
+        var result = lines.slice(startIdx)
+            .filter(function (line) {
+                // NOTE: 去掉 insp 行和空行
+                return line.trim().length > 0 && !/\binsp\b/i.test(line);
+            })
+            .map(function (line) {
+                // NOTE: 去掉 // 及之后的注释，保留纯公式
+                var pos = line.indexOf('//');
+                return pos >= 0 ? line.substring(0, pos).trimEnd() : line;
+            })
+            .filter(function (line) { return line.trim().length > 0; });
+        // NOTE: 末尾附加统计行
+        if (statsLine) result.push(statsLine);
+        return result.join('\n');
+    }
+
     /** 懒加载 twisty-player 并插入到容器 */
     function loadTwistyPlayer(container, solve) {
         container.innerHTML = '<div style="color:#888;font-size:0.8em">加载中...</div>';
@@ -567,6 +629,12 @@
             html += '<div class="recon-external-links">';
             html += '<a href="' + algUrl + '" target="_blank" rel="noopener noreferrer">alg.cubing.net</a>';
             html += ' <a href="' + cubedbUrl + '" target="_blank" rel="noopener noreferrer">cubedb.net</a>';
+            // NOTE: caption 复制按钮——动态生成 caption 文本并复制到剪贴板
+            var captionText = generateCaption(reconText);
+            if (captionText) {
+                html += ' <a href="#" class="caption-copy-btn" data-caption="' + escHtml(captionText).replace(/"/g, '&quot;') + '"' +
+                    ' data-i18n-en="caption" data-i18n-zh="caption">caption</a>';
+            }
             html += '</div>';
         }
         html += '</div>';
