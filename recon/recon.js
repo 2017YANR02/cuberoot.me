@@ -10,6 +10,7 @@
     const DATA_URL = '/recon/recon_data.json';
     const COMP_COUNTRIES_URL = '/stats/comp_name_countries.json';
     const PERSON_COUNTRIES_URL = '/stats/person_name_countries.json';
+    const COMP_NAMES_ZH_URL = '/recon/comp_names_zh.json';
     const DEFAULT_SORT = { key: 'date', asc: false };
 
     // --- 状态 ---
@@ -21,6 +22,7 @@
     let expandedId = null;    // 当前展开的行 ID
     let compCountries = {};   // 比赛名 → ISO2 映射
     let personCountries = {};  // 选手名 → ISO2 映射
+    let compNamesZh = {};     // 英文比赛名 → 中文比赛名 映射
 
     // --- DOM 引用 ---
     let tbody, searchInput, filterSolver, filterMethod, filterEvent;
@@ -49,15 +51,17 @@
 
         // NOTE: 加载数据
         try {
-            const [reconResp, compResp, personResp] = await Promise.all([
+            const [reconResp, compResp, personResp, compZhResp] = await Promise.all([
                 fetch(DATA_URL),
                 fetch(COMP_COUNTRIES_URL),
-                fetch(PERSON_COUNTRIES_URL)
+                fetch(PERSON_COUNTRIES_URL),
+                fetch(COMP_NAMES_ZH_URL)
             ]);
             const data = await reconResp.json();
             allSolves = data.solves || [];
             compCountries = await compResp.json();
             personCountries = await personResp.json();
+            compNamesZh = await compZhResp.json();
 
             // NOTE: 预处理数据，提取 STM/TPS 用于排序和显示
             preprocessSolves(allSolves);
@@ -325,6 +329,8 @@
                     s.solver, s.solverZh, s.comp, s.scramble,
                     s.oll, s.pll, s.country, s.note,
                     s.single != null ? s.single.toFixed(3) : '',
+                    // NOTE: 支持中文比赛名搜索
+                    compNamesZh[s.comp] || '',
                     // NOTE: 支持搜索 "cancelled"/"取消" 匹配被取消的纪录
                     s.rAvg, s.rSingle, s.rAoXR
                 ].filter(Boolean).join(' ').toLowerCase();
@@ -443,6 +449,14 @@
         }
     }
 
+    // NOTE: 中文模式下优先显示中文比赛名（有映射时）
+    function displayCompName(comp) {
+        if (!comp) return '';
+        var isZh = localStorage.getItem('i18n_locale') === 'zh';
+        if (isZh && compNamesZh[comp]) return escHtml(compNamesZh[comp]);
+        return escHtml(comp);
+    }
+
     function createSolveRow(solve) {
         const tr = document.createElement('tr');
         tr.className = 'solve-row' + (solve._community ? ' community-row' : '');
@@ -456,7 +470,7 @@
             '<td class="col-dsingle mono">' + escHtml(solve.displaySingle || '') + (solve.rSingle ? ' ' + formatRecord(solve.rSingle) : '') + '</td>' +
             '<td class="col-solver">' + countryFlag(solverCountry(solve)) + ' ' + displaySolverName(solve) + '</td>' +
             '<td class="col-date">' + escHtml(solve.date || '') + '</td>' +
-            '<td class="col-comp">' + countryFlag(compCountries[solve.comp]) + ' ' + escHtml(solve.comp || '') + '</td>' +
+            '<td class="col-comp">' + countryFlag(compCountries[solve.comp]) + ' ' + displayCompName(solve.comp) + '</td>' +
             '<td class="col-round">' + escHtml(solve.round || '') + (solve.round && solve.solveNum ? '#' : '') + (solve.solveNum || '') + '</td>' +
             '<td class="col-aoxr">' + escHtml(solve.aoType || '') + (solve.rAoXR ? ' ' + formatRecord(solve.rAoXR) : '') + '</td>' +
             '<td class="col-single mono">' + formatResult(solve.single) + '</td>' +
