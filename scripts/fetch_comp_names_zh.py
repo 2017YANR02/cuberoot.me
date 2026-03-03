@@ -26,7 +26,7 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", line_bufferin
 
 ROOT_DIR = Path(__file__).parent.parent
 OUTPUT_PATH = ROOT_DIR / "recon" / "comp_names_zh.json"
-CACHE_DIR = ROOT_DIR / ".comp_names_cache"
+CACHE_DIR = ROOT_DIR / ".comp_names_zh_cache"
 
 CUBING_CHINA_URL = "https://cubing.com/competition"
 WCA_API_BASE = "https://www.worldcubeassociation.org/api/v0"
