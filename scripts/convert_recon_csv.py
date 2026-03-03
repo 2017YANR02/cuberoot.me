@@ -64,6 +64,22 @@ def parseInt(val):
         return None
 
 
+def normalizeDate(val):
+    """将日期统一为 YYYY-MM-DD 格式（去除时间部分，补零）"""
+    if not val or val.strip() in ("", "-", "#REF!"):
+        return ""
+    # NOTE: 先去掉时间部分（如 "2025-5-24 19:53" → "2025-5-24"）
+    datePart = val.strip().split(" ")[0]
+    try:
+        # NOTE: 支持 YYYY-M-D 和 YYYY-MM-DD 两种格式
+        parts = datePart.split("-")
+        if len(parts) == 3:
+            return f"{int(parts[0]):04d}-{int(parts[1]):02d}-{int(parts[2]):02d}"
+    except (ValueError, IndexError):
+        pass
+    return datePart
+
+
 def extractReconSteps(reconText):
     """
     从 recon 列文本中提取分步骤复盘。
@@ -121,7 +137,8 @@ def buildSolveRecord(row, headers):
         "official": col("Official?") == "Official",
         "event": col("event"),
         "method": col("Method"),
-        "date": col("date"),
+        # NOTE: 统一日期格式为 YYYY-MM-DD（去除时间部分，补零）
+        "date": normalizeDate(col("date")),
         "comp": comp,
         "country": col("region_solver"),
         # NOTE: round_full 可能含纯数字（如 174.00）或 #REF!，过滤为空
