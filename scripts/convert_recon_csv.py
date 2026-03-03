@@ -124,7 +124,8 @@ def buildSolveRecord(row, headers):
         "date": col("date"),
         "comp": comp,
         "country": col("region_solver"),
-        "round": col("round"),
+        # NOTE: round_full 可能含纯数字（如 174.00）或 #REF!，过滤为空
+        "round": (lambda v: "" if not v or v == "#REF!" or v.replace(".", "").replace("-", "").isdigit() else v)(col("round_full")),
         "solveNum": parseInt(col("#")),
         "single": single,
         "solver": solverEn,

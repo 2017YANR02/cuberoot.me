@@ -51,12 +51,11 @@ layout: default
                 <th class="col-date" data-i18n="recon.col_date" data-sort="date">Date</th>
                 <th class="col-comp" data-i18n="recon.col_comp">Competition</th>
                 <th class="col-round" data-i18n="recon.col_round">Rnd</th>
+                <th class="col-solvenum" data-i18n-en="#" data-i18n-zh="#">#</th>
                 <th class="col-aoxr" data-sort="aoType">AoXR</th>
-                <th class="col-avg" data-sort="avg">Avg</th>
-                <th class="col-ravg" data-i18n="recon.col_ravg" data-sort="rAvg">PR Avg</th>
+                <th class="col-avg" data-i18n-en="Avg" data-i18n-zh="平均" data-sort="avg">Avg</th>
                 <th class="col-single" data-i18n="recon.col_result" data-sort="single">Single</th>
                 <th class="col-dsingle" data-i18n-en="Single" data-i18n-zh="单次" data-sort="displaySingle">Single</th>
-                <th class="col-rsingle" data-i18n="recon.col_rsingle" data-sort="rSingle">PR Single</th>
                 <th class="col-solver" data-i18n="recon.col_solver" data-sort="solver">Solver</th>
                 <th class="col-stm" data-sort="stm">STM</th>
                 <th class="col-tps" data-sort="tps">TPS</th>
