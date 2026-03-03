@@ -207,8 +207,13 @@
 }
 
 .col-single {
-    font-weight: 600;
     color: #f1f5f9;
+}
+
+/* NOTE: Avg 和 Single 列加粗 */
+.col-avg,
+.col-dsingle {
+    font-weight: 600;
 }
 
 .col-expand {
