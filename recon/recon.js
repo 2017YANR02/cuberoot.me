@@ -150,6 +150,7 @@
                 ReconStore.loadAll().then(function (communityRecons) {
                     if (communityRecons.length > 0) {
                         allSolves = communityRecons.concat(allSolves);
+                        assignCommunityIds();
                         applyFilters();
                     }
                 }).catch(function (e) {
@@ -162,6 +163,7 @@
         window.addEventListener('recon-local-add', function (e) {
             var solve = e.detail;
             allSolves.unshift(solve);
+            assignCommunityIds();
             applyFilters();
         });
 
@@ -231,6 +233,21 @@
             console.warn('Failed to load user recons:', e);
         });
     }
+
+    // NOTE: 给社区/本地提交分配递增编号（从 JSON 数据最大 id + 1 开始）
+    function assignCommunityIds() {
+        var maxId = 0;
+        allSolves.forEach(function (s) {
+            if (typeof s.id === 'number' && s.id > maxId) maxId = s.id;
+        });
+        allSolves.forEach(function (s) {
+            if (typeof s.id !== 'number') {
+                maxId++;
+                s.id = maxId;
+            }
+        });
+    }
+
     // ==================== 筛选器 ====================
 
     function buildFilterOptions() {
