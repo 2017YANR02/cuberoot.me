@@ -91,9 +91,9 @@ def buildSolveRecord(row, headers):
                 return row[idx].strip() if idx < len(row) and row[idx] else ""
         return ""
 
-    # NOTE: 过滤模板行（solver 为 "cuber name" 或 comp 为 "temp"）
+    # NOTE: 过滤模板行（solver 为 "cuber name" 或 comp_full 为 "temp"）
     solver = col("solver")
-    comp = col("comp")
+    comp = col("comp_full")
     if solver == "cuber name" or comp == "temp":
         return None
 
@@ -138,7 +138,7 @@ def buildSolveRecord(row, headers):
     if solverZh:
         record["solverZh"] = solverZh
 
-    avg = parseFloat(col("avg"))
+    avg = parseFloat(col("avg_full"))
     if avg and avg > 0:
         record["avg"] = avg
 
