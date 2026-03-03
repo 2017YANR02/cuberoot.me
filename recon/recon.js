@@ -62,7 +62,7 @@
             // NOTE: 预处理数据，提取 STM/TPS 用于排序和显示
             preprocessSolves(allSolves);
         } catch (e) {
-            tbody.innerHTML = '<tr><td colspan="14" style="text-align:center;color:#f87171">Failed to load data</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="15" style="text-align:center;color:#f87171">Failed to load data</td></tr>';
             console.error('Failed to load recon data:', e);
             return;
         }
@@ -403,7 +403,7 @@
         const fragment = document.createDocumentFragment();
 
         for (let i = displayCount; i < end; i++) {
-            fragment.appendChild(createSolveRow(filteredSolves[i]));
+            fragment.appendChild(createSolveRow(filteredSolves[i], i));
         }
 
         tbody.appendChild(fragment);
@@ -422,14 +422,17 @@
         }
     }
 
-    function createSolveRow(solve) {
+    function createSolveRow(solve, idx) {
         const tr = document.createElement('tr');
         tr.className = 'solve-row' + (solve._community ? ' community-row' : '');
         tr.dataset.id = solve.id;
 
         const officialHtml = solve.official ? '✅' : '';
+        // NOTE: 倒序索引——最后一行为 1，往上递增
+        const rowIndex = filteredSolves.length - idx;
 
         tr.innerHTML =
+            '<td class="col-idx">' + rowIndex + '</td>' +
             '<td class="col-avg">' + formatAvg(solve.avg) + (solve.rAvg ? ' ' + formatRecord(solve.rAvg) : '') + '</td>' +
             '<td class="col-dsingle mono">' + escHtml(solve.displaySingle || '') + (solve.rSingle ? ' ' + formatRecord(solve.rSingle) : '') + '</td>' +
             '<td class="col-solver">' + countryFlag(solverCountry(solve)) + ' ' + displaySolverName(solve) + '</td>' +
@@ -474,7 +477,7 @@
         const detailRow = document.createElement('tr');
         detailRow.className = 'detail-row';
         const td = document.createElement('td');
-        td.colSpan = 13;
+        td.colSpan = 14;
         td.innerHTML = buildDetailHtml(solve);
         detailRow.appendChild(td);
 
@@ -791,10 +794,16 @@
         return val.toFixed(3);
     }
 
-    // NOTE: 平均成绩只需精确到百分位
+    // NOTE: 平均成绩只需精确到百分位，≥60 秒时显示为 分:秒.xx
     function formatAvg(val) {
         if (val == null) return '';
         if (val >= 9999) return 'DNF';
+        if (val >= 60) {
+            var m = Math.floor(val / 60);
+            var s = (val % 60).toFixed(2);
+            // NOTE: 秒部分不足 10 时补前导零（如 1:05.23）
+            return m + ':' + (s < 10 ? '0' : '') + s;
+        }
         return val.toFixed(2);
     }
 

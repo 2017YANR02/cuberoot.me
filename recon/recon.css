@@ -910,3 +910,12 @@ tr.detail-row td {
     gap: 4px;
     cursor: pointer;
 }
+
+/* NOTE: 索引列——窄宽度、居中、淡灰色 */
+.col-idx {
+    text-align: center;
+    color: #666;
+    width: 40px;
+    min-width: 40px;
+    cursor: default !important;
+}
