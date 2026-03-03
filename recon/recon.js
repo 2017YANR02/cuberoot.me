@@ -293,6 +293,7 @@
             'col-avg': 'avg',
             'col-ravg': 'rAvg',
             'col-single': 'single',
+            'col-dsingle': 'displaySingle',
             'col-rsingle': 'rSingle',
             'col-solver': 'solver',
             'col-stm': 'stm',
@@ -378,7 +379,6 @@
         const officialHtml = solve.official ? '✅' : '';
 
         tr.innerHTML =
-            '<td class="col-expand"><span class="expand-icon">▶</span></td>' +
             '<td class="col-official">' + officialHtml + '</td>' +
             '<td class="col-event">' + escHtml(solve.event || '') + '</td>' +
             '<td class="col-method">' + escHtml(solve.method || '') + '</td>' +
@@ -386,9 +386,10 @@
             '<td class="col-comp">' + countryFlag(compCountries[solve.comp]) + ' ' + escHtml(solve.comp || '') + '</td>' +
             '<td class="col-round">' + escHtml(formatRound(solve)) + '</td>' +
             '<td class="col-aoxr">' + escHtml(solve.aoType || '') + '</td>' +
-            '<td class="col-avg mono">' + formatResult(solve.avg) + '</td>' +
+            '<td class="col-avg mono">' + formatAvg(solve.avg) + '</td>' +
             '<td class="col-ravg">' + formatRecord(solve.rAvg) + '</td>' +
             '<td class="col-single mono">' + formatResult(solve.single) + '</td>' +
+            '<td class="col-dsingle mono">' + escHtml(solve.displaySingle || '') + '</td>' +
             '<td class="col-rsingle">' + formatRecord(solve.rSingle) + '</td>' +
             '<td class="col-solver">' + countryFlag(solverCountry(solve)) + ' ' + displaySolverName(solve) + '</td>' +
             '<td class="col-stm mono">' + (solve.stm || '') + '</td>' +
@@ -698,6 +699,13 @@
         return val.toFixed(3);
     }
 
+    // NOTE: 平均成绩只需精确到百分位
+    function formatAvg(val) {
+        if (val == null) return '';
+        if (val >= 9999) return 'DNF';
+        return val.toFixed(2);
+    }
+
     function formatTps(val) {
         if (val == null) return '';
         return val.toFixed(2);
@@ -743,8 +751,10 @@
         const v = val.toUpperCase();
         // 世界纪录/世界最好（红色）
         if (/^[FXU]?W[RB]$|^1STWR$|^RWR$|^YTW[RB]$|^XWR$/.test(v)) return 'wr';
-        // 洲际纪录（黄色）：AsR/AsB, ER/EB, CR/CB, SAR, NAR, WCR 等
-        if (/(?:AS|E|C)[RB]$/.test(v) || /^(?:SAR|NAR|WCR|FASR|XASR|UASR)$/.test(v)) return 'cr';
+        // WCR（橙色）
+        if (v === 'WCR') return 'wcr';
+        // 洲际纪录（黄色）：AsR/AsB, ER/EB, CR/CB, SAR, NAR 等
+        if (/(?:AS|E|C)[RB]$/.test(v) || /^(?:SAR|NAR|FASR|XASR|UASR)$/.test(v)) return 'cr';
         // 国家纪录/国家最好（绿色）
         if (/^[FXU]?N[RB]$|^NWR$|^ANR$|^YTN[RB]$/.test(v)) return 'nr';
         // 个人纪录/个人最好（蓝色）

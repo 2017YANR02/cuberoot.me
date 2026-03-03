@@ -40,11 +40,15 @@ def parseCsvHeaders(headerRow):
 
 def parseFloat(val):
     """安全解析浮点数，DNF/空值返回 None"""
-    if not val or val.strip() in ("", "DNF", "-", "#REF!", "#VALUE!"):
+    if not val or val.strip() in ("", "DNF", "-", "/", "#REF!", "#VALUE!", "Invalid", "Unkown"):
         return None
     try:
         # NOTE: 有些值带括号如 (3.48) 表示最好/最差成绩
         cleaned = val.strip().strip("()")
+        # NOTE: 支持分:秒格式（如 1:17.57 → 77.57）
+        if ":" in cleaned:
+            parts = cleaned.split(":")
+            return float(parts[0]) * 60 + float(parts[1])
         return float(cleaned)
     except ValueError:
         return None
@@ -102,9 +106,8 @@ def buildSolveRecord(row, headers):
     if hasRecon != "YES" and not recon and not caption:
         return None
 
+    # NOTE: 解析时间，允许无效时间通过（single 为 None 时仍保留记录）
     single = parseFloat(col("time"))
-    if single is None or single <= 0:
-        return None
 
     # NOTE: solver 中文名在括号里，如 "Xuanyi Geng (耿暄一)"
     solverZh = ""
@@ -151,6 +154,11 @@ def buildSolveRecord(row, headers):
     rSingle = col("R single")
     if rSingle:
         record["rSingle"] = rSingle
+
+    # NOTE: 显示用的单次成绩（来自 CSV 的 single 列，如 3.05 或 (3.48)）
+    displaySingle = col("single")
+    if displaySingle:
+        record["displaySingle"] = displaySingle
 
     # NOTE: 复盘文本和打乱
     recon = col("recon")

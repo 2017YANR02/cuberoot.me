@@ -27,8 +27,8 @@ layout: default
     <button id="btn-add-recon" class="recon-btn recon-btn-add" data-i18n-en="➕" data-i18n-zh="➕">➕</button>
     <!-- NOTE: WCA 登录区域 -->
     <div class="wca-auth-area" id="wca-auth-area">
-        <button id="btn-wca-login" class="recon-btn wca-login-btn" onclick="WcaAuth.login()">
-            🔐 WCA Login
+        <button id="btn-wca-login" class="recon-btn wca-login-btn" onclick="WcaAuth.login()" data-i18n-en="Login" data-i18n-zh="登录">
+            Login
         </button>
         <div id="wca-user-info" class="wca-user-info" style="display:none">
             <img id="wca-avatar" class="wca-avatar" src="" alt="">
@@ -45,8 +45,7 @@ layout: default
     <table id="recon-table">
         <thead>
             <tr>
-                <th class="col-expand"></th>
-                <th class="col-official">Official?</th>
+                <th class="col-official" data-i18n-en="Official" data-i18n-zh="官方">Official</th>
                 <th class="col-event" data-sort="event">Event</th>
                 <th class="col-method" data-i18n="recon.col_method">Method</th>
                 <th class="col-date" data-i18n="recon.col_date" data-sort="date">Date</th>
@@ -56,6 +55,7 @@ layout: default
                 <th class="col-avg" data-sort="avg">Avg</th>
                 <th class="col-ravg" data-i18n="recon.col_ravg" data-sort="rAvg">PR Avg</th>
                 <th class="col-single" data-i18n="recon.col_result" data-sort="single">Single</th>
+                <th class="col-dsingle" data-i18n-en="Single" data-i18n-zh="单次" data-sort="displaySingle">Single</th>
                 <th class="col-rsingle" data-i18n="recon.col_rsingle" data-sort="rSingle">PR Single</th>
                 <th class="col-solver" data-i18n="recon.col_solver" data-sort="solver">Solver</th>
                 <th class="col-stm" data-sort="stm">STM</th>
