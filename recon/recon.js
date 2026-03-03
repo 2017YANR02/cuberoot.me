@@ -404,19 +404,19 @@
         const officialHtml = solve.official ? '✅' : '';
 
         tr.innerHTML =
-            '<td class="col-official">' + officialHtml + '</td>' +
-            '<td class="col-event">' + escHtml(solve.event || '') + '</td>' +
-            '<td class="col-method">' + escHtml(solve.method || '') + '</td>' +
+            '<td class="col-avg">' + formatAvg(solve.avg) + (solve.rAvg ? ' ' + formatRecord(solve.rAvg) : '') + '</td>' +
+            '<td class="col-dsingle mono">' + escHtml(solve.displaySingle || '') + (solve.rSingle ? ' ' + formatRecord(solve.rSingle) : '') + '</td>' +
+            '<td class="col-solver">' + countryFlag(solverCountry(solve)) + ' ' + displaySolverName(solve) + '</td>' +
             '<td class="col-date">' + escHtml(solve.date || '') + '</td>' +
             '<td class="col-comp">' + countryFlag(compCountries[solve.comp]) + ' ' + escHtml(solve.comp || '') + '</td>' +
             '<td class="col-round">' + escHtml(solve.round || '') + (solve.round && solve.solveNum ? '#' : '') + (solve.solveNum || '') + '</td>' +
             '<td class="col-aoxr">' + escHtml(solve.aoType || '') + (solve.rAoXR ? ' ' + formatRecord(solve.rAoXR) : '') + '</td>' +
-            '<td class="col-avg">' + formatAvg(solve.avg) + (solve.rAvg ? ' ' + formatRecord(solve.rAvg) : '') + '</td>' +
             '<td class="col-single mono">' + formatResult(solve.single) + '</td>' +
-            '<td class="col-dsingle mono">' + escHtml(solve.displaySingle || '') + (solve.rSingle ? ' ' + formatRecord(solve.rSingle) : '') + '</td>' +
-            '<td class="col-solver">' + countryFlag(solverCountry(solve)) + ' ' + displaySolverName(solve) + '</td>' +
             '<td class="col-stm mono">' + (solve.stm || '') + '</td>' +
-            '<td class="col-tps mono">' + (solve.tps ? solve.tps.toFixed(2) : '') + '</td>';
+            '<td class="col-tps mono">' + (solve.tps ? solve.tps.toFixed(2) : '') + '</td>' +
+            '<td class="col-official">' + officialHtml + '</td>' +
+            '<td class="col-event">' + escHtml(solve.event || '') + '</td>' +
+            '<td class="col-method">' + escHtml(solve.method || '') + '</td>';
 
         tr.addEventListener('click', () => toggleDetail(solve, tr));
         return tr;
