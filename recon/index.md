@@ -55,7 +55,7 @@ layout: default
                 <th class="col-single" data-i18n="recon.col_result" data-sort="single">Result</th>
                 <th class="col-stm" data-sort="stm">STM</th>
                 <th class="col-tps" data-sort="tps">TPS</th>
-                <th class="col-official" data-i18n-en="Official" data-i18n-zh="官方">Official</th>
+
                 <th class="col-event" data-sort="event">Event</th>
                 <th class="col-method" data-i18n="recon.col_method">Method</th>
             </tr>

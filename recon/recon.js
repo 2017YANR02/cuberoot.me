@@ -419,7 +419,6 @@
             '<td class="col-single mono">' + formatResult(solve.single) + '</td>' +
             '<td class="col-stm mono">' + (solve.stm || '') + '</td>' +
             '<td class="col-tps mono">' + (solve.tps ? solve.tps.toFixed(2) : '') + '</td>' +
-            '<td class="col-official">' + officialHtml + '</td>' +
             '<td class="col-event">' + escHtml(solve.event || '') + '</td>' +
             '<td class="col-method">' + escHtml(solve.method || '') + '</td>';
 
