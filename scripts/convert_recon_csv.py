@@ -147,6 +147,10 @@ def buildSolveRecord(row, headers):
     if aoType and aoType.strip() not in ("", "-"):
         record["aoType"] = aoType.strip()
 
+    rAoXR = col("R AoXR")
+    if rAoXR:
+        record["rAoXR"] = rAoXR
+
     # NOTE: Record 标记（PR/NR/AsR/WR 等）
     rAvgFull = col("R avg_full")
     if rAvgFull:
