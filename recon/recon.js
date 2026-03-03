@@ -409,8 +409,7 @@
             '<td class="col-method">' + escHtml(solve.method || '') + '</td>' +
             '<td class="col-date">' + escHtml(solve.date || '') + '</td>' +
             '<td class="col-comp">' + countryFlag(compCountries[solve.comp]) + ' ' + escHtml(solve.comp || '') + '</td>' +
-            '<td class="col-round">' + escHtml(solve.round || '') + '</td>' +
-            '<td class="col-solvenum">' + (solve.solveNum || '') + '</td>' +
+            '<td class="col-round">' + escHtml(solve.round || '') + (solve.round && solve.solveNum ? '#' : '') + (solve.solveNum || '') + '</td>' +
             '<td class="col-aoxr">' + escHtml(solve.aoType || '') + '</td>' +
             '<td class="col-avg">' + formatAvg(solve.avg) + (solve.rAvg ? ' ' + formatRecord(solve.rAvg) : '') + '</td>' +
             '<td class="col-single mono">' + formatResult(solve.single) + '</td>' +
