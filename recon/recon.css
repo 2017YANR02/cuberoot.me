@@ -452,15 +452,21 @@ tr.detail-row td {
     background: #dc2626;
 }
 
+/* WCR — 橙色 */
+.record-wcr {
+    background: #f97316;
+    color: #fff;
+}
+
 /* 洲际纪录 — 改为黄色黑字 */
 .record-cr {
     background: #facc15;
     color: #000;
 }
 
-/* 国家纪录 — 改为黄色黑字 */
+/* 国家纪录 — 绿色 */
 .record-nr {
-    background: #facc15;
+    background: #16a34a;
     color: #000;
 }
 
