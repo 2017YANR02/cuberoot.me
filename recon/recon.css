@@ -803,6 +803,15 @@ tr.detail-row td {
     text-decoration: underline;
 }
 
+/* NOTE: caption 复制按钮——复制成功后的视觉反馈 */
+.recon-external-links .caption-copy-btn {
+    cursor: pointer;
+}
+
+.recon-external-links .caption-copy-btn.copied {
+    color: #4ade80;
+}
+
 /* --- 比赛搜索自定义下拉菜单 --- */
 .comp-dropdown {
     display: none;
