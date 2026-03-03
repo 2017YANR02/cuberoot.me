@@ -2,7 +2,7 @@
 
 ## 已完成（Phase 1 MVP）
 
-- [x] 数据管线：`convert_recon_csv.py` 读取 CSV → 过滤模板行 → 输出 JSON
+- [x] 数据管线：`recon_data.json` 直接维护
 - [x] 前端骨架：`recon/index.md` + `recon.js` + `recon.css`
 - [x] 表格列：成绩、选手、方法、比赛、轮次、日期、STM、TPS、OLL、PLL
 - [x] 点击行展开完整复盘文本 + 打乱（最少步打乱 + WCA 打乱）
@@ -43,21 +43,18 @@
 
 | 文件 | 说明 |
 |------|------|
-| `scripts/convert_recon_csv.py` | CSV → JSON 转换脚本 |
 | `recon/index.md` | Jekyll 页面入口 |
 | `recon/recon.js` | 前端逻辑（渲染、筛选、排序、展开） |
 | `recon/recon.css` | 页面样式 |
-| `recon/recon_data.json` | 构建产物（需提交 git） |
+| `recon/recon_data.json` | 复盘数据（直接维护，需提交 git） |
 | `_stats_build/generate_comp_countries.rb` | 生成国旗映射 JSON |
 | `DEPLOYMENT.md` | 完整架构文档（含国旗渲染方案、数据流、Record Badge 规则） |
 
 ## 数据更新流程
 
 ```powershell
-# 1. 从 Google Sheets 导出 CSV 到项目根目录（CubeAlgWB - Recon.csv）
-# 2. 运行转换脚本
-python scripts/convert_recon_csv.py
-# 3. 提交
+# 1. 编辑 recon/recon_data.json
+# 2. 提交
 git add recon/recon_data.json
 git commit -m "data: update recon data"
 git push
