@@ -151,6 +151,16 @@ def main():
     print("=== 构建中国比赛英文名 → 中文名映射 ===\n")
     start = time.time()
 
+    # NOTE: --refresh 增量模式：只刷新第 1 页（最新比赛）和 WCA API 缓存
+    if "--refresh" in sys.argv:
+        p1 = CACHE_DIR / "page_1.html"
+        wca = CACHE_DIR / "wca_cn_comps.json"
+        if p1.exists():
+            p1.unlink()
+        if wca.exists():
+            wca.unlink()
+        print("[INFO] 增量模式：已清除第 1 页和 WCA API 缓存\n")
+
     # Step 1: cubing.com → { wca_id: 中文名 }
     print("[Step 1] 从 cubing.com 提取中文名...")
     wca_id_to_zh = scrape_cubing_china()
@@ -185,3 +195,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
