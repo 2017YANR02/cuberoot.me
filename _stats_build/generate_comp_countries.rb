@@ -46,19 +46,24 @@ File.write(person_path, JSON.generate(person_map))
 puts "  #{person_path} (#{person_map.size} persons, #{File.size(person_path)} bytes)"
 
 # ── 3. 比赛展示名 → ISO2（recon 页面用） ──
-# NOTE: recon 页面的比赛数据来自 CSV（只有展示名），需要通过 cell_name 查国家
+# NOTE: recon 页面的比赛数据来自 CSV，可能使用 name（完整名）或 cell_name（短名）。
+# 例如 name="Rubik's x TheCubicle CubingUSA All-Stars 2025" 但 cell_name="CubingUSA All-Stars 2025"。
+# 同时写入两种 key 确保都能匹配。
 puts "Generating comp name → iso2 mapping..."
 comp_name_path = File.join(STATS_DIR, "comp_name_countries.json")
 comp_name_map = {}
 Database.client.query(<<-SQL).each do |r|
-  SELECT c.cell_name, co.iso2
+  SELECT c.name, c.cell_name, co.iso2
   FROM competitions c
   JOIN countries co ON co.id = c.country_id
 SQL
-  comp_name_map[r["cell_name"]] = r["iso2"].downcase
+  iso2 = r["iso2"].downcase
+  comp_name_map[r["cell_name"]] = iso2
+  # NOTE: name 与 cell_name 不同时，额外写入 name 作为 key
+  comp_name_map[r["name"]] = iso2 if r["name"] != r["cell_name"]
 end
 File.write(comp_name_path, JSON.generate(comp_name_map))
-puts "  #{comp_name_path} (#{comp_name_map.size} competitions, #{File.size(comp_name_path)} bytes)"
+puts "  #{comp_name_path} (#{comp_name_map.size} entries, #{File.size(comp_name_path)} bytes)"
 
 # ── 4. 选手展示名 → ISO2（recon 页面用） ──
 # NOTE: recon 页面的选手数据来自 CSV（只有展示名），需要通过 persons.name 查国家
