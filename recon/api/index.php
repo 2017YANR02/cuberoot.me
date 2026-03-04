@@ -217,7 +217,7 @@ switch ($action) {
         // NOTE: 移除前端可能传入的 id（由数据库自增）
         unset($body['id']);
 
-        $row = jsonToRow($body, false);
+        $row = jsonToRow($body, true);
         // NOTE: 布尔值转换
         if (isset($row['official'])) {
             $row['official'] = $row['official'] ? 1 : 0;
@@ -228,7 +228,8 @@ switch ($action) {
                 $row[$k] = null;
         }
 
-        $cols = implode(', ', array_keys($row));
+        // NOTE: 反引号包裹列名（防止 date/round 等 SQL 保留字冲突）
+        $cols = implode(', ', array_map(fn($c) => "`$c`", array_keys($row)));
         $placeholders = implode(', ', array_fill(0, count($row), '?'));
         $stmt = $db->prepare("INSERT INTO recons ($cols) VALUES ($placeholders)");
         $stmt->execute(array_values($row));
@@ -305,11 +306,11 @@ switch ($action) {
                 $row[$k] = null;
         }
 
-        // NOTE: 动态构建 UPDATE SET 子句（列名来自白名单，安全）
+        // NOTE: 动态构建 UPDATE SET 子句（列名来自白名单 + 反引号包裹）
         $setParts = [];
         $values = [];
         foreach ($row as $col => $val) {
-            $setParts[] = "$col = ?";
+            $setParts[] = "`$col` = ?";
             $values[] = $val;
         }
         $values[] = $id;
@@ -449,7 +450,7 @@ switch ($action) {
         try {
             $maxId = 0;
             foreach ($solves as $s) {
-                $row = jsonToRow($s, false);
+                $row = jsonToRow($s, true);
                 if (isset($row['official'])) {
                     $row['official'] = $row['official'] ? 1 : 0;
                 }
@@ -458,7 +459,7 @@ switch ($action) {
                         $row[$k] = null;
                 }
 
-                $cols = implode(', ', array_keys($row));
+                $cols = implode(', ', array_map(fn($c) => "`$c`", array_keys($row)));
                 $placeholders = implode(', ', array_fill(0, count($row), '?'));
                 $stmt = $db->prepare("INSERT INTO recons ($cols) VALUES ($placeholders)");
                 $stmt->execute(array_values($row));
