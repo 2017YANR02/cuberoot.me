@@ -140,8 +140,8 @@ switch ($action) {
     // ==================== recons 集合 ====================
 
     case 'list':
-        // NOTE: 只读接口——允许浏览器缓存 60 秒，减少重复请求
-        header('Cache-Control: public, max-age=60');
+        // NOTE: 不缓存——写操作后需要立即看到最新数据
+        header('Cache-Control: no-cache, no-store, must-revalidate');
         $wcaId = $_GET['wcaId'] ?? '';
         $recons = readJson($reconsFile);
 
