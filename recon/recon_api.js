@@ -94,7 +94,7 @@ var ReconStore = (function () {
 
     // NOTE: 导出公共 API（签名与原 firebase_store.js 完全一致）
     return {
-        init: function () {}, // NOTE: 无需初始化，保持接口兼容
+        init: function () { }, // NOTE: 无需初始化，保持接口兼容
         loadAll: loadAll,
         loadByUser: loadByUser,
         addRecon: addRecon,
