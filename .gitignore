@@ -37,3 +37,6 @@ recon_dump.txt
 .bundle/
 
 .comp_names_zh_cache/
+
+# Recon API 数据库凭据（含密码，禁止提交）
+recon/api/db_config.php
