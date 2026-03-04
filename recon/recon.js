@@ -184,9 +184,30 @@
 
         // NOTE: 编辑现在通过独立页面完成，跳回时整页重载自动拉取最新数据
 
+        // NOTE: 复制分享链接按钮事件委托
+        tbody.addEventListener('click', function (e) {
+            var linkBtn = e.target.closest('.share-link-btn');
+            if (!linkBtn) return;
+            e.preventDefault();
+            e.stopPropagation();
+            var url = linkBtn.getAttribute('data-url');
+            navigator.clipboard.writeText(url).then(function () {
+                var isZh = localStorage.getItem('i18n_locale') === 'zh';
+                var orig = linkBtn.textContent;
+                linkBtn.textContent = isZh ? '已复制' : 'copied';
+                linkBtn.classList.add('copied');
+                setTimeout(function () {
+                    linkBtn.textContent = orig;
+                    linkBtn.classList.remove('copied');
+                }, 1500);
+            });
+        });
+
         // NOTE: 初始渲染（用户模式下跳过，由 enterUserMode 处理）
         if (!userWcaId) {
             applyFilters();
+            // NOTE: 初始渲染后尝试从 hash 展开目标行
+            tryExpandFromHash();
         }
 
         // NOTE: 初始化 WCA 登录 UI
@@ -205,6 +226,8 @@
                         assignCommunityIds();
                         applyFilters();
                     }
+                    // NOTE: 社区复盘加载完成后再次尝试从 hash 展开（hash 可能指向社区复盘 ID）
+                    tryExpandFromHash();
                 }).catch(function (e) {
                     console.warn('Failed to load community recons:', e);
                 });
@@ -225,6 +248,36 @@
             allSolves = allSolves.filter(function (s) { return s.id !== id; });
             applyFilters();
         });
+    }
+
+    /**
+     * 从 URL hash 自动展开对应行
+     * NOTE: 如果目标行不在当前已渲染的行中（被分页截断），先加载全部数据再定位
+     */
+    function tryExpandFromHash() {
+        if (expandedId !== null) return; // NOTE: 已有展开行，不重复处理
+        var hash = location.hash.replace('#', '');
+        if (!hash) return;
+        var targetId = isNaN(hash) ? hash : parseInt(hash);
+
+        // NOTE: 确保目标行已渲染（可能被分页截断），逐批加载直到找到
+        while (displayCount < filteredSolves.length) {
+            var found = false;
+            for (var i = 0; i < displayCount; i++) {
+                if (String(filteredSolves[i].id) === String(targetId)) { found = true; break; }
+            }
+            if (found) break;
+            loadMore();
+        }
+
+        // NOTE: 查找并点击目标行
+        var targetRow = tbody.querySelector('.solve-row[data-id="' + targetId + '"]');
+        if (targetRow) {
+            var solve = allSolves.find(function (s) { return String(s.id) === String(targetId); });
+            if (solve) {
+                toggleDetail(solve, targetRow);
+            }
+        }
     }
 
     /** 更新 WCA 登录按钮/用户头像 UI */
@@ -541,6 +594,8 @@
             existingDetail.remove();
             solveRow.classList.remove('expanded');
             expandedId = null;
+            // NOTE: 收起时清除 hash（不触发滚动）
+            history.replaceState(null, '', location.pathname + location.search);
             return;
         }
 
@@ -567,6 +622,8 @@
         solveRow.after(detailRow);
         solveRow.classList.add('expanded');
         expandedId = solve.id;
+        // NOTE: 更新 URL hash，方便分享链接
+        history.replaceState(null, '', '#' + solve.id);
 
         // NOTE: 点击展开时滚动到屏幕顶部
         solveRow.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -739,6 +796,10 @@
                 html += ' <a href="#" class="caption-copy-btn" data-caption="' + escHtml(captionText).replace(/"/g, '&quot;') + '"' +
                     ' data-i18n-en="caption" data-i18n-zh="字幕">caption</a>';
             }
+            // NOTE: 复制分享链接按钮
+            var shareUrl = location.origin + '/recon/#' + s.id;
+            html += ' <a href="#" class="share-link-btn" data-url="' + shareUrl + '"' +
+                ' data-i18n-en="link" data-i18n-zh="链接">link</a>';
             html += '</div>';
         }
         html += '</div>';
