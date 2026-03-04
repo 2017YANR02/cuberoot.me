@@ -115,6 +115,25 @@ rsync -rltz --delete --exclude='.user.ini' --chmod=D755,F644 ...
 - 宝塔默认自动续签，通常无需操作
 - 手动续签：宝塔面板 → 网站 → `toolkit.cuberoot.me` → SSL → 续签
 
+## MariaDB 数据库（Recon 复盘）
+
+| 项目 | 值 |
+|------|-----|
+| **数据库** | MariaDB 10.5.27 |
+| **数据库名** | `recon_db` |
+| **用户** | `recon_user`（仅限 localhost 连接，外网不可直连） |
+| **凭据文件** | `/www/wwwroot/toolkit/recon/api/db_config.php`（不在 git 中） |
+| **表** | `recons`（复盘数据）、`edits`（编辑覆盖）、`edit_history`（编辑历史） |
+
+### 备份策略
+
+| 备份层 | 方式 | 频率 | 位置 |
+|--------|------|------|------|
+| API 备份 | `backup_recon.yml` CI | 每天 | GitHub 仓库（`recon/backup/recons_backup.json`） |
+| 数据库备份 | 宝塔计划任务（Shell 脚本 `mysqldump`） | 每天 03:00 | ECS `/www/backup/recon_db_*.sql.gz`（保留 7 天） |
+
+> ⚠️ 宝塔内置的"备份数据库"任务**不会**备份命令行创建的数据库，必须用 Shell 脚本方式。
+
 ## SSH 登录方式
 
 ```bash
