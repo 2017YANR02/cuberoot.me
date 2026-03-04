@@ -45,6 +45,7 @@
     height: 28px;
     border-radius: 50%;
     border: 1px solid rgba(255, 255, 255, 0.15);
+    object-fit: cover;
 }
 
 .wca-name {
@@ -572,9 +573,17 @@ tr.detail-row td {
 /* --- 手机端适配 --- */
 @media (max-width: 768px) {
     .recon-toolbar {
-        flex-direction: column;
-        align-items: stretch;
+        flex-wrap: wrap;
+        align-items: center;
     }
+
+    /* NOTE: 搜索框和筛选器各占满一行 */
+    #recon-search,
+    .recon-filters {
+        width: 100%;
+    }
+
+    /* NOTE: stats/➕/头像 自然并排到同一行 */
 
     #recon-search {
         min-width: unset;
