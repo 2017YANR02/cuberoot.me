@@ -59,15 +59,12 @@ layout: default
             <div class="recon-form-row">
                 <div class="recon-form-group" style="flex:2;position:relative">
                     <label data-i18n-en="Competition" data-i18n-zh="比赛">Competition</label>
-                    <input type="text" id="rf-comp" autocomplete="off"
-                        placeholder="Search competition (optional)"
-                        data-i18n-placeholder-en="Search competition (optional)"
-                        data-i18n-placeholder-zh="搜索比赛名称（可选）">
+                    <input type="text" id="rf-comp" autocomplete="off" placeholder="Search competition (optional)"
+                        data-i18n-placeholder-en="Search competition (optional)" data-i18n-placeholder-zh="搜索比赛名称（可选）">
                 </div>
                 <div class="recon-form-group">
                     <label data-i18n-en="Note" data-i18n-zh="备注">Note</label>
-                    <textarea id="rf-note" rows="3" placeholder="optional"
-                        data-i18n-placeholder-en="optional"
+                    <textarea id="rf-note" rows="3" placeholder="optional" data-i18n-placeholder-en="optional"
                         data-i18n-placeholder-zh="可选"></textarea>
                 </div>
             </div>
@@ -102,27 +99,23 @@ layout: default
             <!-- 打乱公式 -->
             <div class="recon-form-group">
                 <label data-i18n-en="Scramble" data-i18n-zh="打乱公式">Scramble</label>
-                <input type="text" id="rf-scramble"
-                    placeholder="Paste scramble (optional)"
-                    data-i18n-placeholder-en="Paste scramble (optional)"
-                    data-i18n-placeholder-zh="粘贴打乱公式（可选）">
+                <input type="text" id="rf-scramble" placeholder="Paste scramble (optional)"
+                    data-i18n-placeholder-en="Paste scramble (optional)" data-i18n-placeholder-zh="粘贴打乱公式（可选）">
             </div>
             <!-- 复盘文本 -->
             <div class="recon-form-group">
                 <label data-i18n-en="Reconstruction" data-i18n-zh="复盘文本">Reconstruction</label>
-                <textarea id="rf-recon" rows="12"
-                    placeholder="Paste reconstruction..."
+                <textarea id="rf-recon" rows="12" placeholder="Paste reconstruction..."
                     data-i18n-placeholder-en="Paste reconstruction...&#10;e.g.:&#10;33STM /3.05=10.82TPS&#10;..."
-                    data-i18n-placeholder-zh="粘贴复盘文本...&#10;例如：&#10;33STM /3.05=10.82TPS&#10;..."
-                    required></textarea>
+                    data-i18n-placeholder-zh="粘贴复盘文本...&#10;例如：&#10;33STM /3.05=10.82TPS&#10;..." required></textarea>
             </div>
             <!-- NOTE: 编辑专用字段容器（编辑模式时由 JS 动态填充） -->
             <div id="rf-edit-fields"></div>
             <!-- 操作按钮 -->
             <div class="recon-form-actions">
                 <a href="/recon/" class="recon-btn" data-i18n-en="Cancel" data-i18n-zh="取消">Cancel</a>
-                <button type="submit" id="rf-submit-btn" class="recon-btn recon-btn-primary"
-                    data-i18n-en="Submit" data-i18n-zh="提交">Submit</button>
+                <button type="submit" id="rf-submit-btn" class="recon-btn recon-btn-primary" data-i18n-en="Submit"
+                    data-i18n-zh="提交">Submit</button>
             </div>
         </form>
     </div>
@@ -144,9 +137,9 @@ layout: default
     <a href="/recon/" data-i18n-en="← Back to Recon List" data-i18n-zh="← 返回复盘列表">← Back to Recon List</a>
 </div>
 
-<!-- NOTE: Firebase compat SDK（CDN） -->
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<!-- NOTE: Firebase compat SDK（本地托管，避免国内 gstatic.com 被墙） -->
+<script src="/recon/vendor/firebase-app-compat.js"></script>
+<script src="/recon/vendor/firebase-firestore-compat.js"></script>
 
 <script src="/recon/recon_stats.js"></script>
 <script src="/recon/wca_auth.js"></script>
