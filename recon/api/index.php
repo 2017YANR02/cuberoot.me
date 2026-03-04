@@ -228,6 +228,14 @@ switch ($action) {
                 $row[$k] = null;
         }
 
+        // NOTE: 校验字段类型/范围/长度（安全防线，防止非法输入导致 SQL 报错）
+        $errors = validateRow($row);
+        if (!empty($errors)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Validation failed', 'fields' => $errors]);
+            break;
+        }
+
         // NOTE: 反引号包裹列名（防止 date/round 等 SQL 保留字冲突）
         $cols = implode(', ', array_map(fn($c) => "`$c`", array_keys($row)));
         $placeholders = implode(', ', array_fill(0, count($row), '?'));
@@ -304,6 +312,14 @@ switch ($action) {
         foreach ($row as $k => $v) {
             if ($v === '')
                 $row[$k] = null;
+        }
+
+        // NOTE: 校验字段类型/范围/长度
+        $errors = validateRow($row);
+        if (!empty($errors)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Validation failed', 'fields' => $errors]);
+            break;
         }
 
         // NOTE: 动态构建 UPDATE SET 子句（列名来自白名单 + 反引号包裹）
@@ -457,6 +473,12 @@ switch ($action) {
                 foreach ($row as $k => $v) {
                     if ($v === '')
                         $row[$k] = null;
+                }
+
+                // NOTE: 校验字段（import 中 throw 触发事务回滚）
+                $errors = validateRow($row);
+                if (!empty($errors)) {
+                    throw new Exception('Validation failed for item: ' . implode('; ', $errors));
                 }
 
                 $cols = implode(', ', array_map(fn($c) => "`$c`", array_keys($row)));
