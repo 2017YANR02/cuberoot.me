@@ -349,6 +349,18 @@
         } else if (existing) {
             existing.remove();
         }
+        // NOTE: 联动提交按钮——有任何字段错误时禁用
+        updateSubmitButton();
+    }
+
+    /** 根据页面上是否存在字段错误来启用/禁用提交按钮 */
+    function updateSubmitButton() {
+        var btn = document.getElementById('rf-submit-btn');
+        if (!btn) return;
+        var hasErrors = document.querySelectorAll('.rf-field-error').length > 0;
+        btn.disabled = hasErrors;
+        btn.style.opacity = hasErrors ? '0.4' : '';
+        btn.style.pointerEvents = hasErrors ? 'none' : '';
     }
 
     /** 给一个字段注册 blur 校验 */
