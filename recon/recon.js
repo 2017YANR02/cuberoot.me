@@ -603,12 +603,7 @@
             })
             .filter(function (line) { return line.length > 0; })
             .join('\n');
-        // NOTE: 清除复盘专用标记（卡顿/换手），twisty-player 无法解析
-        alg = alg.replace(/[.·↑↓⅓⅔]/g, '');
-        // NOTE: 规范化步骤间距——twisty-player 无法解析连写的步骤（如 UD, U'D', U2'R）
-        // 支持修饰符组合: 2, ', 2'（如 R2', U2'）
-        alg = alg.replace(/([RULDFBMESruldfbmesxyz][w]?2?'?)(?=[RULDFBMESxyz])/g, '$1 ');
-        return alg;
+        return ReconAlgUtils.cleanForPlayer(alg);
     }
 
     /** 提取纯解法但保留 // 注释（用于 alg.cubing.net 链接） */
@@ -622,11 +617,10 @@
                 startIdx = 2;
             }
         }
-        return lines.slice(startIdx)
+        var alg = lines.slice(startIdx)
             .filter(function (line) { return line.trim().length > 0; })
-            .join('\n')
-            // NOTE: alg.cubing.net 不支持 ·↑↓，但支持 .
-            .replace(/[·↑↓⅓⅔]/g, '');
+            .join('\n');
+        return ReconAlgUtils.cleanForAlgCubingNet(alg);
     }
 
     /** 从复盘文本第2行提取打乱公式（当 wcaScramble/scramble 字段为空时的 fallback） */
