@@ -935,7 +935,6 @@ tr.detail-row td {
     color: #666;
     width: 40px;
     min-width: 40px;
-    cursor: default !important;
 }
 
 /* --- 管理员操作按钮（编辑/恢复/历史） --- */

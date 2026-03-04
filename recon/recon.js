@@ -440,6 +440,7 @@
 
     function handleSort(th) {
         const colMap = {
+            'col-idx': 'id',
             'col-official': 'official',
             'col-event': 'event',
             'col-method': 'method',
