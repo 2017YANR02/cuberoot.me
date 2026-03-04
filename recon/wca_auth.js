@@ -106,11 +106,20 @@ var WcaAuth = (function () {
         return getUser() !== null;
     }
 
+    // NOTE: 管理员 WCA ID 列表（前端硬编码，仅控制 UI 显示）
+    var ADMIN_WCA_IDS = ['2017YANR02'];
+
+    function isAdmin() {
+        var user = getUser();
+        return user !== null && ADMIN_WCA_IDS.indexOf(user.wcaId) >= 0;
+    }
+
     return {
         login: login,
         handleCallback: handleCallback,
         getUser: getUser,
         logout: logout,
-        isLoggedIn: isLoggedIn
+        isLoggedIn: isLoggedIn,
+        isAdmin: isAdmin
     };
 })();

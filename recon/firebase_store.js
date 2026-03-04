@@ -99,12 +99,86 @@ var ReconStore = (function () {
             });
     }
 
+    // ==================== 管理员编辑覆盖层 ====================
+
+    var EDITS_COLLECTION = 'recon_edits';
+    var HISTORY_COLLECTION = 'recon_edit_history';
+
+    /** 加载所有编辑覆盖（文档数通常很少） */
+    function loadEdits() {
+        init();
+        return db.collection(EDITS_COLLECTION).get()
+            .then(function (snapshot) {
+                var edits = {};
+                snapshot.forEach(function (doc) {
+                    edits[doc.id] = doc.data();
+                });
+                return edits;
+            });
+    }
+
+    /** 保存一条编辑覆盖（merge=true，只更新指定字段） */
+    function saveEdit(solveId, fields) {
+        init();
+        fields._editedAt = firebase.firestore.FieldValue.serverTimestamp();
+        return db.collection(EDITS_COLLECTION).doc(String(solveId)).set(fields, { merge: true });
+    }
+
+    /** 删除一条编辑覆盖（恢复原始数据） */
+    function deleteEdit(solveId) {
+        init();
+        return db.collection(EDITS_COLLECTION).doc(String(solveId)).delete();
+    }
+
+    /** 记录编辑前后的快照（用于历史查看） */
+    function saveEditHistory(solveId, beforeSnapshot, afterFields) {
+        init();
+        return db.collection(HISTORY_COLLECTION).add({
+            solveId: String(solveId),
+            before: beforeSnapshot,
+            after: afterFields,
+            editedBy: afterFields._editedBy || '',
+            editedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    }
+
+    /** 获取某条 solve 的编辑历史（按时间降序，最多 20 条） */
+    function getEditHistory(solveId) {
+        init();
+        return db.collection(HISTORY_COLLECTION)
+            .where('solveId', '==', String(solveId))
+            .orderBy('editedAt', 'desc')
+            .limit(20)
+            .get()
+            .then(function (snapshot) {
+                var history = [];
+                snapshot.forEach(function (doc) {
+                    var d = doc.data();
+                    d.id = doc.id;
+                    history.push(d);
+                });
+                return history;
+            });
+    }
+
+    /** 更新已有社区复盘的指定字段 */
+    function updateRecon(id, fields) {
+        init();
+        return db.collection(COLLECTION).doc(id).update(fields);
+    }
+
     // NOTE: 导出公共 API
     return {
         init: init,
         loadAll: loadAll,
         loadByUser: loadByUser,
         addRecon: addRecon,
-        deleteRecon: deleteRecon
+        deleteRecon: deleteRecon,
+        loadEdits: loadEdits,
+        saveEdit: saveEdit,
+        deleteEdit: deleteEdit,
+        saveEditHistory: saveEditHistory,
+        getEditHistory: getEditHistory,
+        updateRecon: updateRecon
     };
 })();
