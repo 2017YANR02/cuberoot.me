@@ -311,8 +311,8 @@
                 })
                 .join('\n');
 
-            // NOTE: 清除 alg.cubing.net 不支持的复盘专用标记（卡顿·、换手↑↓、分数⅓⅔）
-            alg = alg.replace(/[.·↑↓⅓⅔]/g, '');
+            // NOTE: 清理不兼容符号 + 规范化步骤间距（共享工具函数）
+            alg = ReconAlgUtils.cleanForPlayer(alg);
 
             var url = 'https://alg.cubing.net/?setup=' + encodeURIComponent(scramble) +
                 '&alg=' + encodeURIComponent(alg) +
