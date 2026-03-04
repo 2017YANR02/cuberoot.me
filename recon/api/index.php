@@ -2,8 +2,8 @@
 /**
  * Recon API 后端
  * 功能：复盘数据的 CRUD（统一管理 CSV 迁移数据 + 社区提交）
- * 存储：JSON 文件（data/ 目录）
- * 部署：阿里云 ECS，通过 rsync 同步 PHP 文件，data/ 目录由 rsync 排除
+ * 存储：MariaDB 数据库（recon_db）
+ * 部署：阿里云 ECS，通过 rsync 同步 PHP 文件
  */
 
 // NOTE: gzip 压缩——2.3MB JSON 压缩后约 300KB，大幅减少传输时间
@@ -32,69 +32,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 header('Content-Type: application/json; charset=utf-8');
 
-// ==================== 数据目录 ====================
+// ==================== 数据库连接 ====================
+
+require_once __DIR__ . '/db.php';
+
+// ==================== 速率限制（仍用文件，简单有效） ====================
 
 $dataDir = __DIR__ . '/data';
 if (!is_dir($dataDir)) {
     mkdir($dataDir, 0755, true);
 }
 
-$reconsFile = $dataDir . '/recons.json';
-$editsFile = $dataDir . '/edits.json';
-$historyFile = $dataDir . '/history.json';
-$counterFile = $dataDir . '/counter.json';
-
 // ==================== 工具函数 ====================
-
-/** 读取 JSON 文件（文件不存在则返回空数组/对象） */
-function readJson(string $path, bool $assoc = true)
-{
-    if (!file_exists($path))
-        return $assoc ? [] : new stdClass();
-    $content = file_get_contents($path);
-    return json_decode($content, $assoc) ?: ($assoc ? [] : new stdClass());
-}
-
-/** 写入 JSON 文件（带文件锁防并发冲突） */
-function writeJson(string $path, $data): void
-{
-    $fp = fopen($path, 'c');
-    if (!$fp) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Cannot open file']);
-        exit;
-    }
-    flock($fp, LOCK_EX);
-    ftruncate($fp, 0);
-    fwrite($fp, json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
-    fflush($fp);
-    flock($fp, LOCK_UN);
-    fclose($fp);
-}
 
 /** 生成唯一字符串 ID（仅用于 edit_history 等内部记录） */
 function genId(): string
 {
     return uniqid('', true);
-}
-
-/** 获取下一个自增数字 ID（用于复盘条目的永久 ID） */
-function nextNumericId(string $counterFile): int
-{
-    $data = file_exists($counterFile)
-        ? json_decode(file_get_contents($counterFile), true)
-        : ['nextId' => 1];
-    $id = $data['nextId'];
-    $data['nextId'] = $id + 1;
-    // NOTE: 带文件锁写回，防并发冲突
-    $fp = fopen($counterFile, 'c');
-    flock($fp, LOCK_EX);
-    ftruncate($fp, 0);
-    fwrite($fp, json_encode($data));
-    fflush($fp);
-    flock($fp, LOCK_UN);
-    fclose($fp);
-    return $id;
 }
 
 /** 获取 POST JSON body */
@@ -151,7 +105,8 @@ function authenticateUser(): ?array
 
     // NOTE: 文件缓存——用 token 的 hash 作为文件名
     $cacheDir = __DIR__ . '/data/.token_cache';
-    if (!is_dir($cacheDir)) mkdir($cacheDir, 0755, true);
+    if (!is_dir($cacheDir))
+        mkdir($cacheDir, 0755, true);
     $cacheFile = $cacheDir . '/' . md5($token) . '.json';
     $cacheTTL = 300; // 5 分钟
 
@@ -223,6 +178,7 @@ function requireAdmin(): array
 // ==================== 路由 ====================
 
 $action = $_GET['action'] ?? '';
+$db = getDb();
 
 switch ($action) {
 
@@ -232,34 +188,52 @@ switch ($action) {
         // NOTE: 不缓存——写操作后需要立即看到最新数据
         header('Cache-Control: no-cache, no-store, must-revalidate');
         $wcaId = $_GET['wcaId'] ?? '';
-        $recons = readJson($reconsFile);
 
         if ($wcaId) {
-            $recons = array_values(array_filter($recons, fn($r) => ($r['wcaId'] ?? '') === $wcaId));
+            $stmt = $db->prepare("SELECT * FROM recons WHERE wca_id = ? ORDER BY id DESC");
+            $stmt->execute([$wcaId]);
+        } else {
+            $stmt = $db->query("SELECT * FROM recons ORDER BY id DESC");
         }
 
-        // NOTE: 按 ID 降序排列（ID 越大越新）
-        usort($recons, fn($a, $b) => ($b['id'] ?? 0) <=> ($a['id'] ?? 0));
+        $results = [];
+        while ($row = $stmt->fetch()) {
+            $results[] = rowToJson($row);
+        }
 
-        echo json_encode($recons);
+        echo json_encode($results);
         break;
 
     case 'add':
-        // NOTE: 添加复盘（分配永久自增数字 ID）
+        // NOTE: 添加复盘（数据库 AUTO_INCREMENT 自动分配 ID）
         header('Cache-Control: no-cache, no-store, must-revalidate');
         checkRateLimit();
         $authUser = requireAuth();
         $body = getPostBody();
         // NOTE: 强制用服务端验证的 wcaId，防止前端伪造
         $body['wcaId'] = $authUser['wcaId'];
-
-        $body['id'] = nextNumericId($counterFile);
         $body['createdAt'] = time();
 
-        $recons = readJson($reconsFile);
-        array_unshift($recons, $body);
-        writeJson($reconsFile, $recons);
+        // NOTE: 移除前端可能传入的 id（由数据库自增）
+        unset($body['id']);
 
+        $row = jsonToRow($body, false);
+        // NOTE: 布尔值转换
+        if (isset($row['official'])) {
+            $row['official'] = $row['official'] ? 1 : 0;
+        }
+        // NOTE: 空字符串转 NULL
+        foreach ($row as $k => $v) {
+            if ($v === '')
+                $row[$k] = null;
+        }
+
+        $cols = implode(', ', array_keys($row));
+        $placeholders = implode(', ', array_fill(0, count($row), '?'));
+        $stmt = $db->prepare("INSERT INTO recons ($cols) VALUES ($placeholders)");
+        $stmt->execute(array_values($row));
+
+        $body['id'] = (int) $db->lastInsertId();
         echo json_encode($body);
         break;
 
@@ -275,33 +249,28 @@ switch ($action) {
             break;
         }
 
-        // NOTE: ID 可能是数字或字符串，统一用字符串比较
-        $recons = readJson($reconsFile);
-
         // NOTE: 查找目标复盘，验证删除权限
-        $targetRecon = null;
-        foreach ($recons as $r) {
-            if ((string) ($r['id'] ?? '') === (string) $id) {
-                $targetRecon = $r;
-                break;
-            }
-        }
+        $stmt = $db->prepare("SELECT wca_id FROM recons WHERE id = ?");
+        $stmt->execute([$id]);
+        $targetRecon = $stmt->fetch();
+
         if (!$targetRecon) {
             http_response_code(404);
             echo json_encode(['error' => 'Not found']);
             break;
         }
+
         // NOTE: 非管理员只能删自己的复盘
         if (!in_array($authUser['wcaId'], $ADMIN_WCA_IDS)) {
-            if (($targetRecon['wcaId'] ?? '') !== $authUser['wcaId']) {
+            if (($targetRecon['wca_id'] ?? '') !== $authUser['wcaId']) {
                 http_response_code(403);
                 echo json_encode(['error' => 'Cannot delete others recon']);
                 break;
             }
         }
 
-        $recons = array_values(array_filter($recons, fn($r) => (string) ($r['id'] ?? '') !== (string) $id));
-        writeJson($reconsFile, $recons);
+        $stmt = $db->prepare("DELETE FROM recons WHERE id = ?");
+        $stmt->execute([$id]);
 
         echo json_encode(['ok' => true]);
         break;
@@ -319,34 +288,54 @@ switch ($action) {
             break;
         }
 
-        $recons = readJson($reconsFile);
-        $found = false;
-        foreach ($recons as &$r) {
-            // NOTE: 统一用字符串比较 ID
-            if ((string) ($r['id'] ?? '') === (string) $id) {
-                foreach ($body as $k => $v) {
-                    $r[$k] = $v;
-                }
-                $found = true;
-                break;
-            }
+        // NOTE: 通过白名单过滤可更新字段（防 SQL 注入）
+        $row = jsonToRow($body, true);
+        if (empty($row)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'No valid fields to update']);
+            break;
         }
 
-        if (!$found) {
+        // NOTE: 布尔值和空字符串转换
+        if (isset($row['official'])) {
+            $row['official'] = $row['official'] ? 1 : 0;
+        }
+        foreach ($row as $k => $v) {
+            if ($v === '')
+                $row[$k] = null;
+        }
+
+        // NOTE: 动态构建 UPDATE SET 子句（列名来自白名单，安全）
+        $setParts = [];
+        $values = [];
+        foreach ($row as $col => $val) {
+            $setParts[] = "$col = ?";
+            $values[] = $val;
+        }
+        $values[] = $id;
+
+        $sql = "UPDATE recons SET " . implode(', ', $setParts) . " WHERE id = ?";
+        $stmt = $db->prepare($sql);
+        $stmt->execute($values);
+
+        if ($stmt->rowCount() === 0) {
             http_response_code(404);
             echo json_encode(['error' => 'Not found']);
             break;
         }
 
-        writeJson($reconsFile, $recons);
         echo json_encode(['ok' => true]);
         break;
 
     // ==================== edits 集合 ====================
 
     case 'edits':
-        // NOTE: 加载所有编辑覆盖
-        $edits = readJson($editsFile);
+        // NOTE: 加载所有编辑覆盖——必须返回 {solveId: fields} 的 map 格式
+        $stmt = $db->query("SELECT solve_id, fields FROM edits");
+        $edits = new stdClass(); // NOTE: 空对象而非空数组，确保 JSON 输出 {} 而非 []
+        while ($row = $stmt->fetch()) {
+            $edits->{$row['solve_id']} = json_decode($row['fields'], true);
+        }
         echo json_encode($edits);
         break;
 
@@ -364,15 +353,14 @@ switch ($action) {
         }
 
         $fields['_editedAt'] = time();
+        $fieldsJson = json_encode($fields, JSON_UNESCAPED_UNICODE);
 
-        $edits = readJson($editsFile);
-        // NOTE: merge 模式——已有则合并，没有则新建
-        if (isset($edits[$solveId])) {
-            $edits[$solveId] = array_merge($edits[$solveId], $fields);
-        } else {
-            $edits[$solveId] = $fields;
-        }
-        writeJson($editsFile, $edits);
+        // NOTE: 使用 JSON_MERGE_PATCH 实现字段级合并（MariaDB 10.5+ 原生支持）
+        $stmt = $db->prepare(
+            "INSERT INTO edits (solve_id, fields, edited_at) VALUES (?, ?, ?)
+             ON DUPLICATE KEY UPDATE fields = JSON_MERGE_PATCH(fields, VALUES(fields)), edited_at = VALUES(edited_at)"
+        );
+        $stmt->execute([$solveId, $fieldsJson, time()]);
 
         echo json_encode(['ok' => true]);
         break;
@@ -388,9 +376,8 @@ switch ($action) {
             break;
         }
 
-        $edits = readJson($editsFile);
-        unset($edits[$id]);
-        writeJson($editsFile, $edits);
+        $stmt = $db->prepare("DELETE FROM edits WHERE solve_id = ?");
+        $stmt->execute([$id]);
 
         echo json_encode(['ok' => true]);
         break;
@@ -405,9 +392,17 @@ switch ($action) {
         $body['id'] = genId();
         $body['editedAt'] = time();
 
-        $history = readJson($historyFile);
-        array_unshift($history, $body);
-        writeJson($historyFile, $history);
+        $stmt = $db->prepare(
+            "INSERT INTO edit_history (id, solve_id, before_snapshot, after_fields, edited_by, edited_at) VALUES (?, ?, ?, ?, ?, ?)"
+        );
+        $stmt->execute([
+            $body['id'],
+            $body['solveId'] ?? '',
+            isset($body['before']) ? json_encode($body['before'], JSON_UNESCAPED_UNICODE) : null,
+            isset($body['after']) ? json_encode($body['after'], JSON_UNESCAPED_UNICODE) : null,
+            $body['editedBy'] ?? '',
+            $body['editedAt'],
+        ]);
 
         echo json_encode(['ok' => true]);
         break;
@@ -415,14 +410,26 @@ switch ($action) {
     case 'getHistory':
         // NOTE: 获取指定 solve 的编辑历史（最多 20 条，按时间降序）
         $solveId = $_GET['id'] ?? '';
-        $history = readJson($historyFile);
+        $stmt = $db->prepare(
+            "SELECT * FROM edit_history WHERE solve_id = ? ORDER BY edited_at DESC LIMIT 20"
+        );
+        $stmt->execute([$solveId]);
 
-        $filtered = array_filter($history, fn($h) => ($h['solveId'] ?? '') === (string) $solveId);
-        // NOTE: 按时间降序
-        usort($filtered, fn($a, $b) => ($b['editedAt'] ?? 0) <=> ($a['editedAt'] ?? 0));
-        $filtered = array_slice(array_values($filtered), 0, 20);
+        $results = [];
+        while ($row = $stmt->fetch()) {
+            // NOTE: JSON 字段需要解码回对象
+            $item = [
+                'id' => $row['id'],
+                'solveId' => $row['solve_id'],
+                'before' => $row['before_snapshot'] ? json_decode($row['before_snapshot'], true) : null,
+                'after' => $row['after_fields'] ? json_decode($row['after_fields'], true) : null,
+                'editedBy' => $row['edited_by'],
+                'editedAt' => (int) $row['edited_at'],
+            ];
+            $results[] = $item;
+        }
 
-        echo json_encode($filtered);
+        echo json_encode($results);
         break;
 
     case 'import':
@@ -438,30 +445,41 @@ switch ($action) {
             break;
         }
 
-        $recons = readJson($reconsFile);
+        $db->beginTransaction();
+        try {
+            $maxId = 0;
+            foreach ($solves as $s) {
+                $row = jsonToRow($s, false);
+                if (isset($row['official'])) {
+                    $row['official'] = $row['official'] ? 1 : 0;
+                }
+                foreach ($row as $k => $v) {
+                    if ($v === '')
+                        $row[$k] = null;
+                }
 
-        // NOTE: 找到现有数据中最大 ID，确保计数器不会倒退
-        $maxId = 0;
-        foreach ($recons as $r) {
-            if (is_int($r['id'] ?? null) && $r['id'] > $maxId)
-                $maxId = $r['id'];
+                $cols = implode(', ', array_keys($row));
+                $placeholders = implode(', ', array_fill(0, count($row), '?'));
+                $stmt = $db->prepare("INSERT INTO recons ($cols) VALUES ($placeholders)");
+                $stmt->execute(array_values($row));
+
+                if (is_int($s['id'] ?? null) && $s['id'] > $maxId) {
+                    $maxId = $s['id'];
+                }
+            }
+
+            // NOTE: 更新 AUTO_INCREMENT 为 maxId + 1
+            if ($maxId > 0) {
+                $db->exec("ALTER TABLE recons AUTO_INCREMENT = " . ($maxId + 1));
+            }
+
+            $db->commit();
+            echo json_encode(['ok' => true, 'imported' => count($solves), 'nextId' => $maxId + 1]);
+        } catch (Exception $e) {
+            $db->rollBack();
+            http_response_code(500);
+            echo json_encode(['error' => 'Import failed: ' . $e->getMessage()]);
         }
-        foreach ($solves as $s) {
-            if (is_int($s['id'] ?? null) && $s['id'] > $maxId)
-                $maxId = $s['id'];
-        }
-
-        // NOTE: 将导入数据追加到现有数据
-        foreach ($solves as $s) {
-            $recons[] = $s;
-        }
-        writeJson($reconsFile, $recons);
-
-        // NOTE: 更新计数器为 maxId + 1
-        $counterData = ['nextId' => $maxId + 1];
-        file_put_contents($counterFile, json_encode($counterData));
-
-        echo json_encode(['ok' => true, 'imported' => count($solves), 'nextId' => $maxId + 1]);
         break;
 
     default:
