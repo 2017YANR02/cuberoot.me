@@ -457,8 +457,11 @@
                 var el = document.getElementById('rf-edit-' + f.key);
                 if (el) {
                     var val = el.value.trim();
-                    // NOTE: 数字字段尝试转为 number（avg/displaySingle 除外，它们可能含特殊格式）
-                    if (['avg', 'displaySingle'].indexOf(f.key) < 0 && !isNaN(val) && val !== '') {
+                    // NOTE: 数字字段尝试转为 number
+                    // HACK: rSingle/rAvg/rAoXR 等纪录字段是 VARCHAR 存储的标记（如 "WR"），
+                    // 但值可能恰好是纯数字字符串（如 "3.73"），parseFloat 会把它转成 number，
+                    // 导致前端 .toUpperCase() 调用 TypeError 崩溃，所以必须豁免
+                    if (['avg', 'displaySingle', 'rSingle', 'rAvg', 'rAoXR'].indexOf(f.key) < 0 && !isNaN(val) && val !== '') {
                         newData[f.key] = parseFloat(val);
                     } else {
                         newData[f.key] = val;
