@@ -10,13 +10,13 @@
     const COMP_COUNTRIES_URL = '/stats/comp_name_countries.json';
     const PERSON_COUNTRIES_URL = '/stats/person_name_countries.json';
     const COMP_NAMES_ZH_URL = '/recon/comp_names_zh.json';
-    const DEFAULT_SORT = { key: 'date', asc: false };
+    const DEFAULT_SORT = { key: 'id', asc: false };
 
     // --- 状态 ---
     let allSolves = [];       // 全部数据
     let filteredSolves = [];  // 筛选后的数据
     let displayCount = 0;     // 当前已显示的行数
-    let sortCol = 'date';     // 当前排序列
+    let sortCol = 'id';       // 当前排序列
     let sortDir = 'desc';     // 排序方向
     let expandedId = null;    // 当前展开的行 ID
     let compCountries = {};   // 比赛名 → ISO2 映射
@@ -231,6 +231,8 @@
             var id = String(e.detail);
             allSolves = allSolves.filter(function (s) { return String(s.id) !== id; });
             applyFilters();
+            // NOTE: 删除后清除 hash，避免停留在已删除条目的锚点
+            history.replaceState(null, '', location.pathname + location.search);
         });
     }
 
@@ -815,22 +817,10 @@
 
         html += '</div>'; // detail-grid
 
-        // NOTE: 管理员操作按钮（编辑/恢复/历史）
+        // NOTE: 管理员操作按钮（编辑/恢复/历史）+ 删除按钮
         var isAdminUser = typeof WcaAuth !== 'undefined' && WcaAuth.isAdmin();
-        if (isAdminUser) {
-            html += '<div class="detail-admin-actions">';
-            html += '<button class="recon-btn recon-btn-edit" data-solve-id="' + s.id + '">' +
-                (isZh ? '✏️ 编辑' : '✏️ Edit') + '</button>';
-            if (s._edited) {
-                html += '<button class="recon-btn recon-btn-restore" data-solve-id="' + s.id + '">' +
-                    (isZh ? '↩️ 恢复原始' : '↩️ Restore') + '</button>';
-            }
-            html += '<button class="recon-btn recon-btn-history" data-solve-id="' + s.id + '">' +
-                (isZh ? '📋 历史' : '📋 History') + '</button>';
-            html += '</div>';
-        }
 
-        // NOTE: 删除按钮——自己提交的复盘 + 管理员可删任何复盘
+        // NOTE: 删除权限判断——自己提交的复盘 + 管理员可删任何复盘
         var canDelete = false;
         if (s._local) {
             canDelete = true;
@@ -839,11 +829,26 @@
             if (currentUser && currentUser.wcaId === s.wcaId) canDelete = true;
         }
         if (isAdminUser) canDelete = true;
-        if (canDelete) {
-            html += '<div class="detail-local-actions">' +
-                '<button class="recon-btn recon-btn-danger" onclick="window.dispatchEvent(new CustomEvent(\'recon-local-delete\',{detail:\'' + s.id + '\'}))">' +
-                '🗑️ ' + (isZh ? '删除' : 'Delete') +
-                '</button></div>';
+
+        if (isAdminUser || canDelete) {
+            html += '<div class="detail-admin-actions">';
+            if (isAdminUser) {
+                html += '<button class="recon-btn recon-btn-edit" data-solve-id="' + s.id + '">' +
+                    (isZh ? '✏️ 编辑' : '✏️ Edit') + '</button>';
+                if (s._edited) {
+                    html += '<button class="recon-btn recon-btn-restore" data-solve-id="' + s.id + '">' +
+                        (isZh ? '↩️ 恢复原始' : '↩️ Restore') + '</button>';
+                }
+                html += '<button class="recon-btn recon-btn-history" data-solve-id="' + s.id + '">' +
+                    (isZh ? '📋 历史' : '📋 History') + '</button>';
+            }
+            if (canDelete) {
+                // NOTE: 删除按钮紧跟其他按钮
+                html += '<button class="recon-btn recon-btn-danger" onclick="window.dispatchEvent(new CustomEvent(\'recon-local-delete\',{detail:\'' + s.id + '\'}))">' +
+                    '🗑️ ' + (isZh ? '删除' : 'Delete') +
+                    '</button>';
+            }
+            html += '</div>';
         }
 
         html += '</div>'; // detail-content
