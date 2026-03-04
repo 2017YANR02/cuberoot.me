@@ -4,8 +4,8 @@ name: Backup Recon Data
 
 on:
   schedule:
-    # NOTE: 每天 UTC 20:00（北京时间凌晨 4:00）
-    - cron: '0 20 * * *'
+    # NOTE: 每周日 UTC 20:00（北京时间周一凌晨 4:00）
+    - cron: '0 20 * * 0'
   workflow_dispatch: # 支持手动触发
 
 permissions:
