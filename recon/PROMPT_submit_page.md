@@ -76,13 +76,13 @@
 
 从 `recon_submit.js` 迁移以下逻辑（不要复制粘贴，重写以适配页面模式）：
 
-- [ ] 比赛搜索下拉（`comp_dates.json` 加载、模糊搜索、国旗、日期自动填充）
-- [ ] 预览动画（alg.cubing.net iframe，打乱行检测与排除）
-- [ ] 实时统计显示（STM / TPS 计算）
-- [ ] 编辑模式字段预填充（含 `EDIT_ONLY_FIELDS`）
-- [ ] 打乱提取（从 recon 文本第二行）
-- [ ] 提交处理：新增模式 → `ReconStore.addRecon()` + localStorage，编辑模式 → 差异保存
-- [ ] 提交成功后跳转回 `/recon/`
+- [x] 比赛搜索下拉（`comp_dates.json` 加载、模糊搜索、国旗、日期自动填充）
+- [x] 预览动画（alg.cubing.net iframe，打乱行检测与排除）
+- [x] 实时统计显示（STM / TPS 计算）
+- [x] 编辑模式字段预填充（含 `EDIT_ONLY_FIELDS`）
+- [x] 打乱提取（从 recon 文本第二行）
+- [x] 提交处理：新增模式 → `ReconStore.addRecon()` + localStorage，编辑模式 → 差异保存
+- [x] 提交成功后跳转回 `/recon/`
 
 ### 4. 修改现有文件
 
