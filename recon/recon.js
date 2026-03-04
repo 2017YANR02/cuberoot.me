@@ -138,13 +138,16 @@
 
         // NOTE: 事件委托——管理员按钮 + caption 复制
         tbody.addEventListener('click', function (e) {
-            // --- 管理员编辑按钮 ---
+            // --- 管理员编辑按钮 → sessionStorage + 跳转到独立编辑页 ---
             var editBtn = e.target.closest('.recon-btn-edit');
             if (editBtn) {
                 e.stopPropagation();
                 var solveId = editBtn.dataset.solveId;
                 var solve = allSolves.find(function (s) { return String(s.id) === solveId; });
-                if (solve) window.dispatchEvent(new CustomEvent('recon-edit-request', { detail: solve }));
+                if (solve) {
+                    sessionStorage.setItem('recon_edit_solve', JSON.stringify(solve));
+                    location.href = '/recon/submit/';
+                }
                 return;
             }
             // --- 管理员恢复按钮 ---
@@ -179,8 +182,7 @@
             });
         });
 
-        // NOTE: 编辑完成后刷新表格
-        window.addEventListener('recon-edit-done', function () { applyFilters(); });
+        // NOTE: 编辑现在通过独立页面完成，跳回时整页重载自动拉取最新数据
 
         // NOTE: 初始渲染（用户模式下跳过，由 enterUserMode 处理）
         if (!userWcaId) {
