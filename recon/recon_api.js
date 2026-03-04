@@ -11,6 +11,8 @@ var ReconStore = (function () {
 
     /** 通用 GET 请求 */
     function apiGet(params) {
+        // NOTE: 加时间戳防止 Service Worker Cache API 命中旧缓存
+        params._t = Date.now();
         var url = API_BASE + '?' + new URLSearchParams(params).toString();
         return fetch(url).then(function (r) {
             if (!r.ok) throw new Error('API error: ' + r.status);
