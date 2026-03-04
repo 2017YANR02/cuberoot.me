@@ -919,3 +919,51 @@ tr.detail-row td {
     min-width: 40px;
     cursor: default !important;
 }
+
+/* --- 管理员操作按钮（编辑/恢复/历史） --- */
+.detail-admin-actions {
+    display: flex;
+    gap: 8px;
+    padding: 10px 0 4px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    margin-top: 8px;
+}
+
+.recon-btn-edit {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: rgba(59, 130, 246, 0.4);
+    color: #93bbfc;
+    font-size: 0.78rem;
+    padding: 5px 12px;
+}
+
+.recon-btn-edit:hover {
+    background: rgba(59, 130, 246, 0.35);
+    color: #fff;
+}
+
+.recon-btn-restore {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: rgba(245, 158, 11, 0.4);
+    color: #fbbf24;
+    font-size: 0.78rem;
+    padding: 5px 12px;
+}
+
+.recon-btn-restore:hover {
+    background: rgba(245, 158, 11, 0.35);
+    color: #fff;
+}
+
+.recon-btn-history {
+    background: rgba(107, 114, 128, 0.15);
+    border-color: rgba(107, 114, 128, 0.4);
+    color: #9ca3af;
+    font-size: 0.78rem;
+    padding: 5px 12px;
+}
+
+.recon-btn-history:hover {
+    background: rgba(107, 114, 128, 0.35);
+    color: #fff;
+}
