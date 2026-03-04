@@ -52,11 +52,20 @@ if (!is_array($recons)) {
 
 echo "  JSON 中共 " . count($recons) . " 条记录\n";
 
-// NOTE: 获取 recons 表所有列名，用于过滤有效字段
+// NOTE: 获取 recons 表所有列名和类型，用于过滤有效字段和类型转换
 $columns = [];
+$columnTypes = [];
 $stmt = $db->query("SHOW COLUMNS FROM recons");
 while ($row = $stmt->fetch()) {
     $columns[] = $row['Field'];
+    $columnTypes[$row['Field']] = $row['Type'];
+}
+
+// NOTE: 清理上次失败残留的数据（支持重复运行）
+$existingCount = $db->query("SELECT COUNT(*) FROM recons")->fetchColumn();
+if ((int) $existingCount > 0) {
+    echo "  ⚠ 检测到已有 $existingCount 条数据，清理后重新导入...\n";
+    $db->exec("TRUNCATE TABLE recons");
 }
 
 $inserted = 0;
@@ -71,7 +80,12 @@ try {
             $col = FIELD_MAP_JSON_TO_SQL[$key] ?? $key;
             // NOTE: 只插入表中实际存在的列
             if (in_array($col, $columns)) {
-                $row[$col] = $val;
+                // NOTE: 空字符串转 NULL——DATE/DECIMAL/TINYINT/SMALLINT 不接受空字符串
+                if ($val === '' || $val === null) {
+                    $row[$col] = null;
+                } else {
+                    $row[$col] = $val;
+                }
             }
         }
 
