@@ -311,6 +311,9 @@
                 })
                 .join('\n');
 
+            // NOTE: 清除 alg.cubing.net 不支持的复盘专用标记（卡顿·、换手↑↓、分数⅓⅔）
+            alg = alg.replace(/[.·↑↓⅓⅔]/g, '');
+
             var url = 'https://alg.cubing.net/?setup=' + encodeURIComponent(scramble) +
                 '&alg=' + encodeURIComponent(alg) +
                 '&type=reconstruction&puzzle=3x3x3';
