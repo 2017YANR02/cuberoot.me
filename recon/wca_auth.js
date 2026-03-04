@@ -98,6 +98,7 @@ var WcaAuth = (function () {
 
     function logout() {
         sessionStorage.removeItem(SESSION_KEY);
+        sessionStorage.removeItem('wca_access_token');
     }
 
     function isLoggedIn() {
@@ -116,6 +117,9 @@ var WcaAuth = (function () {
         login: login,
         handleCallback: handleCallback,
         getUser: getUser,
+        getAccessToken: function () {
+            return sessionStorage.getItem('wca_access_token') || '';
+        },
         logout: logout,
         isLoggedIn: isLoggedIn,
         isAdmin: isAdmin
