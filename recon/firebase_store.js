@@ -145,9 +145,9 @@ var ReconStore = (function () {
     /** 获取某条 solve 的编辑历史（按时间降序，最多 20 条） */
     function getEditHistory(solveId) {
         init();
+        // NOTE: 不使用 orderBy 避免 Firestore 要求复合索引，改为客户端排序
         return db.collection(HISTORY_COLLECTION)
             .where('solveId', '==', String(solveId))
-            .orderBy('editedAt', 'desc')
             .limit(20)
             .get()
             .then(function (snapshot) {
@@ -156,6 +156,12 @@ var ReconStore = (function () {
                     var d = doc.data();
                     d.id = doc.id;
                     history.push(d);
+                });
+                // NOTE: 客户端按 editedAt 降序排列
+                history.sort(function (a, b) {
+                    var ta = a.editedAt ? a.editedAt.seconds : 0;
+                    var tb = b.editedAt ? b.editedAt.seconds : 0;
+                    return tb - ta;
                 });
                 return history;
             });
