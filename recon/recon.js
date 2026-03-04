@@ -81,6 +81,25 @@
             });
         }
 
+        // NOTE: 加载管理员编辑覆盖层（Firestore recon_edits 集合）
+        if (typeof ReconStore !== 'undefined' && ReconStore.loadEdits) {
+            try {
+                var editsMap = await ReconStore.loadEdits();
+                allSolves.forEach(function (solve) {
+                    var edit = editsMap[String(solve.id)];
+                    if (edit) {
+                        for (var key in edit) {
+                            if (key.charAt(0) === '_') continue;
+                            solve[key] = edit[key];
+                        }
+                        solve._edited = true;
+                    }
+                });
+            } catch (e) {
+                console.warn('Failed to load edits overlay:', e);
+            }
+        }
+
         // NOTE: 构建筛选器选项
         buildFilterOptions();
 
@@ -117,8 +136,32 @@
             th.addEventListener('click', () => handleSort(th));
         });
 
-        // NOTE: caption 复制按钮——事件委托
+        // NOTE: 事件委托——管理员按钮 + caption 复制
         tbody.addEventListener('click', function (e) {
+            // --- 管理员编辑按钮 ---
+            var editBtn = e.target.closest('.recon-btn-edit');
+            if (editBtn) {
+                e.stopPropagation();
+                var solveId = editBtn.dataset.solveId;
+                var solve = allSolves.find(function (s) { return String(s.id) === solveId; });
+                if (solve) window.dispatchEvent(new CustomEvent('recon-edit-request', { detail: solve }));
+                return;
+            }
+            // --- 管理员恢复按钮 ---
+            var restoreBtn = e.target.closest('.recon-btn-restore');
+            if (restoreBtn) {
+                e.stopPropagation();
+                handleRestore(restoreBtn.dataset.solveId);
+                return;
+            }
+            // --- 管理员历史按钮 ---
+            var historyBtn = e.target.closest('.recon-btn-history');
+            if (historyBtn) {
+                e.stopPropagation();
+                showEditHistory(historyBtn.dataset.solveId);
+                return;
+            }
+            // --- caption 复制按钮 ---
             var btn = e.target.closest('.caption-copy-btn');
             if (!btn) return;
             e.preventDefault();
@@ -135,6 +178,9 @@
                 }, 1500);
             });
         });
+
+        // NOTE: 编辑完成后刷新表格
+        window.addEventListener('recon-edit-done', function () { applyFilters(); });
 
         // NOTE: 初始渲染（用户模式下跳过，由 enterUserMode 处理）
         if (!userWcaId) {
@@ -739,7 +785,22 @@
 
         html += '</div>'; // detail-grid
 
-        // NOTE: 本地复盘或当前用户的社区复盘显示删除按钮
+        // NOTE: 管理员操作按钮（编辑/恢复/历史）
+        var isAdminUser = typeof WcaAuth !== 'undefined' && WcaAuth.isAdmin();
+        if (isAdminUser) {
+            html += '<div class="detail-admin-actions">';
+            html += '<button class="recon-btn recon-btn-edit" data-solve-id="' + s.id + '">' +
+                (isZh ? '✏️ 编辑' : '✏️ Edit') + '</button>';
+            if (s._edited) {
+                html += '<button class="recon-btn recon-btn-restore" data-solve-id="' + s.id + '">' +
+                    (isZh ? '↩️ 恢复原始' : '↩️ Restore') + '</button>';
+            }
+            html += '<button class="recon-btn recon-btn-history" data-solve-id="' + s.id + '">' +
+                (isZh ? '📋 历史' : '📋 History') + '</button>';
+            html += '</div>';
+        }
+
+        // NOTE: 删除按钮——本地/自己的社区复盘 + 管理员可删任何社区复盘
         var canDelete = false;
         if (s._local) {
             canDelete = true;
@@ -747,6 +808,7 @@
             var currentUser = WcaAuth.getUser();
             if (currentUser && currentUser.wcaId === s.wcaId) canDelete = true;
         }
+        if (isAdminUser && s._community) canDelete = true;
         if (canDelete) {
             html += '<div class="detail-local-actions">' +
                 '<button class="recon-btn recon-btn-danger" onclick="window.dispatchEvent(new CustomEvent(\'recon-local-delete\',{detail:\'' + s.id + '\'}))">' +
@@ -756,6 +818,45 @@
 
         html += '</div>'; // detail-content
         return html;
+    }
+
+    // NOTE: 管理员恢复原始数据（删除 Firestore 覆盖层）
+    function handleRestore(solveId) {
+        var isZh = localStorage.getItem('i18n_locale') === 'zh';
+        if (!confirm(isZh ? '确定恢复为原始数据？' : 'Restore original data?')) return;
+        ReconStore.deleteEdit(solveId).then(function () {
+            location.reload();
+        }).catch(function (err) {
+            console.error('Failed to restore:', err);
+            alert('Restore failed: ' + err.message);
+        });
+    }
+
+    // NOTE: 显示编辑历史弹窗（任务 4 实现具体 UI）
+    function showEditHistory(solveId) {
+        ReconStore.getEditHistory(solveId).then(function (history) {
+            var isZh = localStorage.getItem('i18n_locale') === 'zh';
+            if (history.length === 0) {
+                alert(isZh ? '暂无编辑历史' : 'No edit history');
+                return;
+            }
+            // NOTE: 简单弹窗展示历史记录，任务 4 替换为模态框
+            var msg = (isZh ? '编辑历史 (#' : 'Edit History (#') + solveId + ')\n\n';
+            history.forEach(function (h) {
+                var time = h.editedAt ? new Date(h.editedAt.seconds * 1000).toLocaleString() : '?';
+                msg += time + '  by ' + (h.editedBy || '?') + '\n';
+                if (h.before && h.after) {
+                    for (var key in h.after) {
+                        if (key.charAt(0) === '_') continue;
+                        msg += '  ' + key + ': ' + (h.before[key] || '') + ' → ' + h.after[key] + '\n';
+                    }
+                }
+                msg += '\n';
+            });
+            alert(msg);
+        }).catch(function (err) {
+            console.error('Failed to load history:', err);
+        });
     }
 
     /**
