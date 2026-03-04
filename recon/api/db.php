@@ -70,8 +70,8 @@ const FIELD_MAP_SQL_TO_JSON = [
     'created_at' => 'createdAt',
 ];
 
-// NOTE: 允许通过 update action 修改的列白名单（防止 SQL 注入）
-const ALLOWED_UPDATE_COLUMNS = [
+// NOTE: 允许通过 INSERT/UPDATE 操作的列白名单（防止前端传入非数据库字段）
+const ALLOWED_COLUMNS = [
     'official',
     'event',
     'method',
@@ -111,6 +111,7 @@ const ALLOWED_UPDATE_COLUMNS = [
     'll',
     's_move',
     'cross_color',
+    'created_at',
 ];
 
 /**
@@ -174,7 +175,7 @@ function jsonToRow(array $json, bool $filterByWhitelist = true): array
     $row = [];
     foreach ($json as $key => $val) {
         $col = FIELD_MAP_JSON_TO_SQL[$key] ?? $key;
-        if ($filterByWhitelist && !in_array($col, ALLOWED_UPDATE_COLUMNS) && $col !== 'id' && $col !== 'created_at') {
+        if ($filterByWhitelist && !in_array($col, ALLOWED_COLUMNS) && $col !== 'id') {
             continue;
         }
         $row[$col] = $val;

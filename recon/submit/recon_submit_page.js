@@ -390,13 +390,8 @@
             changedFields._editedBy = WcaAuth.getUser().wcaId;
             // NOTE: 保存编辑历史
             ReconStore.saveEditHistory(s.id, beforeSnapshot, changedFields);
-            // NOTE: 根据数据来源选择保存方式
-            var savePromise;
-            if (s._community) {
-                savePromise = ReconStore.updateRecon(s._firestoreId, changedFields);
-            } else {
-                savePromise = ReconStore.saveEdit(s.id, changedFields);
-            }
+            // NOTE: 所有数据都在 MariaDB，编辑统一走 edit overlay
+            var savePromise = ReconStore.saveEdit(s.id, changedFields);
             savePromise.then(function () {
                 location.href = '/recon/';
             }).catch(function (err) {
@@ -484,9 +479,6 @@
         var wcaUser = (typeof WcaAuth !== 'undefined') ? WcaAuth.getUser() : null;
         if (wcaUser && typeof ReconStore !== 'undefined') {
             solve.wcaId = wcaUser.wcaId;
-            solve.displayName = wcaUser.name;
-            solve._community = true;
-            delete solve._local;
             delete solve.id;
             ReconStore.addRecon(solve).then(function () {
                 location.href = '/recon/';

@@ -821,11 +821,9 @@
         // NOTE: 管理员操作按钮（编辑/恢复/历史）+ 删除按钮
         var isAdminUser = typeof WcaAuth !== 'undefined' && WcaAuth.isAdmin();
 
-        // NOTE: 删除权限判断——自己提交的复盘 + 管理员可删任何复盘
+        // NOTE: 删除权限：本人提交的复盘（wcaId 匹配）或管理员
         var canDelete = false;
-        if (s._local) {
-            canDelete = true;
-        } else if (s.wcaId && typeof WcaAuth !== 'undefined') {
+        if (s.wcaId && typeof WcaAuth !== 'undefined') {
             var currentUser = WcaAuth.getUser();
             if (currentUser && currentUser.wcaId === s.wcaId) canDelete = true;
         }
