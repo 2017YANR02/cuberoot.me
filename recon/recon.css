@@ -989,6 +989,22 @@ tr.detail-row td {
    独立提交页面 /recon/submit/ 布局
    ============================================================ */
 
+/* NOTE: 校验错误提示框 */
+.rf-errors {
+    color: #ff6b6b;
+    background: rgba(255, 107, 107, 0.1);
+    border: 1px solid rgba(255, 107, 107, 0.3);
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-bottom: 12px;
+    font-size: 0.9em;
+}
+
+.rf-errors ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
 /* NOTE: 两列布局：左=表单，右=预览动画 */
 .submit-page-layout {
     display: grid;

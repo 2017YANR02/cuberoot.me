@@ -329,10 +329,110 @@
         document.getElementById('recon-form').addEventListener('submit', handleSubmit);
     });
 
-    // ==================== 提交处理 ====================
+    // ==================== 校验工具 ====================
+
+    /**
+     * 校验表单字段，返回错误消息数组
+     * NOTE: 与后端 validateRow() 规则对齐，前端校验只覆盖用户可输入的字段
+     */
+    function validateForm(isEditMode) {
+        var isZh = localStorage.getItem('i18n_locale') === 'zh';
+        var errors = [];
+
+        // --- 必填 + 类型校验 ---
+        var solver = document.getElementById('rf-solver').value.trim();
+        if (!solver) {
+            errors.push(isZh ? '请输入选手名' : 'Solver is required');
+        } else if (solver.length > 100) {
+            errors.push(isZh ? '选手名不超过100字符' : 'Solver max 100 chars');
+        }
+
+        var rawSingle = document.getElementById('rf-single').value.trim();
+        var single = parseFloat(rawSingle);
+        // NOTE: 3位整数自动转换（如 305 → 3.05）
+        if (!isNaN(single) && single > 0 && Number.isInteger(single) && rawSingle.indexOf('.') < 0 && rawSingle.length === 3) {
+            single = single / 100;
+        }
+        if (!rawSingle || isNaN(single) || single <= 0) {
+            errors.push(isZh ? '成绩必须是正数' : 'Time must be a positive number');
+        }
+
+        var recon = document.getElementById('rf-recon').value;
+        if (!recon || !recon.trim()) {
+            errors.push(isZh ? '请输入复盘文本' : 'Reconstruction is required');
+        }
+
+        // --- 长度校验 ---
+        var event = document.getElementById('rf-event').value.trim();
+        if (event.length > 20) {
+            errors.push(isZh ? '项目名不超过20字符' : 'Event max 20 chars');
+        }
+
+        var method = document.getElementById('rf-method').value.trim();
+        if (method.length > 20) {
+            errors.push(isZh ? '方法名不超过20字符' : 'Method max 20 chars');
+        }
+
+        var comp = document.getElementById('rf-comp').value.trim();
+        if (comp.length > 200) {
+            errors.push(isZh ? '比赛名不超过200字符' : 'Competition max 200 chars');
+        }
+
+        // --- 编辑模式额外校验 ---
+        if (isEditMode) {
+            var dateEl = document.getElementById('rf-edit-date');
+            if (dateEl) {
+                var dateVal = dateEl.value.trim();
+                if (dateVal && !/^\d{4}-\d{2}-\d{2}$/.test(dateVal)) {
+                    errors.push(isZh ? '日期格式必须是 YYYY-MM-DD' : 'Date must be YYYY-MM-DD');
+                }
+            }
+
+            var avgEl = document.getElementById('rf-edit-avg');
+            if (avgEl) {
+                var avgVal = avgEl.value.trim();
+                if (avgVal && isNaN(parseFloat(avgVal))) {
+                    errors.push(isZh ? '平均必须是数字或留空' : 'Average must be a number or empty');
+                }
+            }
+        }
+
+        return errors;
+    }
+
+    /** 显示或隐藏错误提示框 */
+    function showErrors(errors) {
+        var el = document.getElementById('rf-errors');
+        if (!el) return;
+        if (errors.length === 0) {
+            el.style.display = 'none';
+            el.innerHTML = '';
+            return;
+        }
+        var html = '<ul>';
+        errors.forEach(function (msg) {
+            html += '<li>' + msg + '</li>';
+        });
+        html += '</ul>';
+        el.innerHTML = html;
+        el.style.display = 'block';
+        // NOTE: 滚动到错误提示位置
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    // ==================== 提交处理 ======================================
 
     function handleSubmit(e) {
         e.preventDefault();
+
+        // NOTE: 统一校验，替换原有的静默 return
+        var isEditMode = !!currentEditSolve;
+        var errors = validateForm(isEditMode);
+        if (errors.length > 0) {
+            showErrors(errors);
+            return;
+        }
+        showErrors([]); // NOTE: 清除之前的错误
 
         // ========== 编辑模式 ==========
         if (currentEditSolve) {
@@ -420,7 +520,10 @@
             single = single / 100;
         }
 
-        if (!solver || isNaN(single) || single <= 0 || !recon) return;
+        if (!solver || isNaN(single) || single <= 0 || !recon) {
+            // NOTE: 理论上不会到这里（validateForm 已拦截），保留作为兜底
+            return;
+        }
 
         var stats = ReconStats.computeAllStats(recon, single);
 
