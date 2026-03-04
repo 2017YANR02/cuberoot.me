@@ -417,9 +417,9 @@
                 }
                 // NOTE: 纪录字段用精确匹配（大小写不敏感），搜 WR 不应匹配 FWR
                 const q = normalizedQuery.toUpperCase();
-                const recordMatch = (s.rAvg && s.rAvg.toUpperCase() === q)
-                    || (s.rSingle && s.rSingle.toUpperCase() === q)
-                    || (s.rAoXR && s.rAoXR.toUpperCase() === q);
+                const recordMatch = (s.rAvg && String(s.rAvg).toUpperCase() === q)
+                    || (s.rSingle && String(s.rSingle).toUpperCase() === q)
+                    || (s.rAoXR && String(s.rAoXR).toUpperCase() === q);
                 if (!haystack.includes(normalizedQuery) && !recordMatch) return false;
             }
             return true;
