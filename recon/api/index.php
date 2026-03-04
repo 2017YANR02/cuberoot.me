@@ -36,21 +36,24 @@ if (!is_dir($dataDir)) {
     mkdir($dataDir, 0755, true);
 }
 
-$reconsFile  = $dataDir . '/recons.json';
-$editsFile   = $dataDir . '/edits.json';
+$reconsFile = $dataDir . '/recons.json';
+$editsFile = $dataDir . '/edits.json';
 $historyFile = $dataDir . '/history.json';
 
 // ==================== 工具函数 ====================
 
 /** 读取 JSON 文件（文件不存在则返回空数组/对象） */
-function readJson(string $path, bool $assoc = true) {
-    if (!file_exists($path)) return $assoc ? [] : new stdClass();
+function readJson(string $path, bool $assoc = true)
+{
+    if (!file_exists($path))
+        return $assoc ? [] : new stdClass();
     $content = file_get_contents($path);
     return json_decode($content, $assoc) ?: ($assoc ? [] : new stdClass());
 }
 
 /** 写入 JSON 文件（带文件锁防并发冲突） */
-function writeJson(string $path, $data): void {
+function writeJson(string $path, $data): void
+{
     $fp = fopen($path, 'c');
     if (!$fp) {
         http_response_code(500);
@@ -66,37 +69,41 @@ function writeJson(string $path, $data): void {
 }
 
 /** 生成唯一 ID */
-function genId(): string {
+function genId(): string
+{
     return uniqid('', true);
 }
 
 /** 获取 POST JSON body */
-function getPostBody(): array {
+function getPostBody(): array
+{
     $raw = file_get_contents('php://input');
     return json_decode($raw, true) ?: [];
 }
 
 /** 简易速率限制（每 IP 每分钟 30 次写操作） */
-function checkRateLimit(): void {
+function checkRateLimit(): void
+{
     $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
     $rateDir = __DIR__ . '/data/.rate';
-    if (!is_dir($rateDir)) mkdir($rateDir, 0755, true);
-    
+    if (!is_dir($rateDir))
+        mkdir($rateDir, 0755, true);
+
     $rateFile = $rateDir . '/' . md5($ip) . '.json';
     $now = time();
     $window = 60; // NOTE: 60 秒窗口
     $maxReqs = 30;
-    
+
     $data = file_exists($rateFile) ? json_decode(file_get_contents($rateFile), true) : [];
     // NOTE: 清理过期记录
     $data = array_filter($data, fn($t) => $t > $now - $window);
-    
+
     if (count($data) >= $maxReqs) {
         http_response_code(429);
         echo json_encode(['error' => 'Rate limit exceeded']);
         exit;
     }
-    
+
     $data[] = $now;
     file_put_contents($rateFile, json_encode($data));
 }
@@ -113,19 +120,19 @@ switch ($action) {
         // NOTE: 加载全部社区复盘（按创建时间降序）
         $wcaId = $_GET['wcaId'] ?? '';
         $recons = readJson($reconsFile);
-        
+
         if ($wcaId) {
             $recons = array_values(array_filter($recons, fn($r) => ($r['wcaId'] ?? '') === $wcaId));
         }
-        
+
         // NOTE: 按创建时间降序排列
         usort($recons, fn($a, $b) => ($b['createdAt'] ?? 0) <=> ($a['createdAt'] ?? 0));
-        
+
         // NOTE: 标记为社区复盘
         foreach ($recons as &$r) {
             $r['_community'] = true;
         }
-        
+
         echo json_encode($recons);
         break;
 
@@ -138,14 +145,14 @@ switch ($action) {
             echo json_encode(['error' => 'wcaId is required']);
             break;
         }
-        
+
         $body['id'] = genId();
         $body['createdAt'] = time();
-        
+
         $recons = readJson($reconsFile);
         array_unshift($recons, $body);
         writeJson($reconsFile, $recons);
-        
+
         echo json_encode($body);
         break;
 
@@ -158,11 +165,11 @@ switch ($action) {
             echo json_encode(['error' => 'id is required']);
             break;
         }
-        
+
         $recons = readJson($reconsFile);
         $recons = array_values(array_filter($recons, fn($r) => ($r['id'] ?? '') !== $id));
         writeJson($reconsFile, $recons);
-        
+
         echo json_encode(['ok' => true]);
         break;
 
@@ -176,7 +183,7 @@ switch ($action) {
             echo json_encode(['error' => 'id is required']);
             break;
         }
-        
+
         $recons = readJson($reconsFile);
         $found = false;
         foreach ($recons as &$r) {
@@ -188,13 +195,13 @@ switch ($action) {
                 break;
             }
         }
-        
+
         if (!$found) {
             http_response_code(404);
             echo json_encode(['error' => 'Not found']);
             break;
         }
-        
+
         writeJson($reconsFile, $recons);
         echo json_encode(['ok' => true]);
         break;
@@ -212,15 +219,15 @@ switch ($action) {
         checkRateLimit();
         $body = getPostBody();
         $solveId = $body['solveId'] ?? '';
-        $fields  = $body['fields'] ?? [];
+        $fields = $body['fields'] ?? [];
         if (!$solveId) {
             http_response_code(400);
             echo json_encode(['error' => 'solveId is required']);
             break;
         }
-        
+
         $fields['_editedAt'] = time();
-        
+
         $edits = readJson($editsFile);
         // NOTE: merge 模式——已有则合并，没有则新建
         if (isset($edits[$solveId])) {
@@ -229,7 +236,7 @@ switch ($action) {
             $edits[$solveId] = $fields;
         }
         writeJson($editsFile, $edits);
-        
+
         echo json_encode(['ok' => true]);
         break;
 
@@ -242,11 +249,11 @@ switch ($action) {
             echo json_encode(['error' => 'id is required']);
             break;
         }
-        
+
         $edits = readJson($editsFile);
         unset($edits[$id]);
         writeJson($editsFile, $edits);
-        
+
         echo json_encode(['ok' => true]);
         break;
 
@@ -258,11 +265,11 @@ switch ($action) {
         $body = getPostBody();
         $body['id'] = genId();
         $body['editedAt'] = time();
-        
+
         $history = readJson($historyFile);
         array_unshift($history, $body);
         writeJson($historyFile, $history);
-        
+
         echo json_encode(['ok' => true]);
         break;
 
@@ -270,12 +277,12 @@ switch ($action) {
         // NOTE: 获取指定 solve 的编辑历史（最多 20 条，按时间降序）
         $solveId = $_GET['id'] ?? '';
         $history = readJson($historyFile);
-        
-        $filtered = array_filter($history, fn($h) => ($h['solveId'] ?? '') === (string)$solveId);
+
+        $filtered = array_filter($history, fn($h) => ($h['solveId'] ?? '') === (string) $solveId);
         // NOTE: 按时间降序
         usort($filtered, fn($a, $b) => ($b['editedAt'] ?? 0) <=> ($a['editedAt'] ?? 0));
         $filtered = array_slice(array_values($filtered), 0, 20);
-        
+
         echo json_encode($filtered);
         break;
 
