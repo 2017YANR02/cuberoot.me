@@ -285,6 +285,7 @@
     }
 
     // NOTE: 给社区/本地提交分配递增编号（从 JSON 数据最大 id + 1 开始）
+    //       原始 Firestore 文档 ID 保存到 _firestoreId，供编辑/删除使用
     function assignCommunityIds() {
         var maxId = 0;
         allSolves.forEach(function (s) {
@@ -292,6 +293,7 @@
         });
         allSolves.forEach(function (s) {
             if (typeof s.id !== 'number') {
+                s._firestoreId = s.id;
                 maxId++;
                 s.id = maxId;
             }
