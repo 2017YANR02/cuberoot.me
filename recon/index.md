@@ -99,13 +99,9 @@ layout: default
     try { ensureTwisty().catch(() => {}); } catch(e) {}
 </script>
 
-<!-- NOTE: Firebase compat SDK（本地托管，避免国内 gstatic.com 被墙） -->
-<script src="/recon/vendor/firebase-app-compat.js"></script>
-<script src="/recon/vendor/firebase-firestore-compat.js"></script>
-
 <script src="/recon/recon_stats.js"></script>
 <script src="/recon/wca_auth.js"></script>
-<script src="/recon/firebase_store.js"></script>
+<script src="/recon/recon_api.js"></script>
 <script src="/recon/recon_local_store.js"></script>
 <script src="/recon/recon_alg_utils.js"></script>
 <script src="/recon/recon.js" defer></script>
