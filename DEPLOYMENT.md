@@ -33,7 +33,7 @@ GitHub Pages（Jekyll）
 |----------|----------|----------|------|
 | **Update Stats** | 定时（每周）/ 手动 | 下载 WCA 数据库 + 计算统计 | ~47 分钟 |
 | **Deploy Mirror** | push main / 其他 CI 完成 | Jekyll 构建 + rsync 到阿里云 | ~45 秒 |
-| **Backup Recon Data** | 定时（每日凌晨 4:00）/ 手动 | 从 API 拉取复盘数据备份到 git | ~10 秒 |
+| **Backup Recon Data** | 定时（每周一凌晨 4:00）/ 手动 | 从 API 拉取复盘数据备份到 git | ~10 秒 |
 | **Update Upcoming Comps** | 定时（每日）/ 手动 | 拉取顶尖选手近期比赛 | ~15 分钟 |
 
 > Push 代码不触发统计 CI。统计页面可本地生成后直接 push（见下方「本地发布」）。
