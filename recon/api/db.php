@@ -185,10 +185,17 @@ function jsonToRow(array $json, bool $filterByWhitelist = true): array
 
 /**
  * 建表 SQL（供迁移脚本使用）
+ *
+ * 三张表的关系：
+ *   recons       — 主表，存储用户提交的原始复盘数据（不可被管理员编辑直接修改）
+ *   edits        — 编辑覆盖层，管理员的修正以 JSON 字段存储，前端加载时与原始数据合并
+ *                  （设计理念：原始数据永远不变，修正叠加在上面，类似 Photoshop 图层）
+ *   edit_history — 编辑历史，每次覆盖操作的前后快照，用于审计追踪和回退
  */
 function getCreateTablesSql(): string
 {
     return <<<'SQL'
+-- 主表：用户提交的原始复盘数据
 CREATE TABLE IF NOT EXISTS recons (
   id             INT UNSIGNED   PRIMARY KEY AUTO_INCREMENT,
   official       TINYINT(1)     NOT NULL DEFAULT 1,
@@ -237,12 +244,15 @@ CREATE TABLE IF NOT EXISTS recons (
   INDEX idx_comp (comp(50))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 编辑覆盖层：管理员修正不直接改原始数据，而是存一份 JSON 覆盖
+-- 前端用 Object.assign(原始数据, edits.fields) 合并，覆盖层优先
 CREATE TABLE IF NOT EXISTS edits (
   solve_id   VARCHAR(50)  PRIMARY KEY,
   fields     JSON         NOT NULL,
   edited_at  INT UNSIGNED DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 编辑历史：记录每次覆盖操作的修改前后快照，支持审计和回退
 CREATE TABLE IF NOT EXISTS edit_history (
   id              VARCHAR(50)  PRIMARY KEY,
   solve_id        VARCHAR(50)  NOT NULL,
