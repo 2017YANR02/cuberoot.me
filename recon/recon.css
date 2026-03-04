@@ -846,6 +846,15 @@ tr.detail-row td {
     color: #4ade80;
 }
 
+/* NOTE: 分享链接按钮——复制成功后绿色反馈 */
+.recon-external-links .share-link-btn {
+    cursor: pointer;
+}
+
+.recon-external-links .share-link-btn.copied {
+    color: #4ade80;
+}
+
 /* --- 比赛搜索自定义下拉菜单 --- */
 .comp-dropdown {
     display: none;
