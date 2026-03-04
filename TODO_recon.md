@@ -5,10 +5,9 @@
 ### 优先级高
 
 - [ ] **搜索 placeholder 更新**：国旗功能已加入，但搜索说明文字未同步更新（支持搜索国家名）
-- [ ] **添加/编辑复盘独立页面**：将当前弹窗（`recon_submit.js`）迁移为独立页面 `/recon/submit/`
-  - 优势：更大编辑空间、手机端友好、可收藏 URL、编辑模式通过 `sessionStorage` 传递数据
-  - 涉及文件：新建 `recon/submit/index.md` + `recon_submit_page.js`，修改 `recon.js` 跳转逻辑
-  - 详细 AI 提示词见 `recon/PROMPT_submit_page.md`
+- [x] **添加/编辑复盘独立页面**：已迁移为 `/recon/submit/`（`submit/index.html` + `recon_submit_page.js`）
+  - 共享模块：`recon_local_store.js`（localStorage）、`recon_alg_utils.js`（公式清理）
+  - `recon_submit.js` 精简为跳转逻辑（672→32行）
 
 ### 优先级中
 
@@ -18,7 +17,7 @@
 
 ### 优先级低（Phase 2）
 
-- [ ] **独立详情页**：点击 solve 跳转到独立页面，带 URL 可分享
+- [x] **独立详情链接**：`/recon/#id` hash URL 分享，自动定位展开，详情中 link 复制按钮
 - [ ] **统计图表**：选手成绩趋势、TPS 分布等可视化
 - [ ] **3D 可视化**：Cube 状态可视化（需要解析打乱和步骤）
 
@@ -27,8 +26,13 @@
 | 文件 | 说明 |
 |------|------|
 | `recon/index.md` | Jekyll 页面入口 |
-| `recon/recon.js` | 前端逻辑（渲染、筛选、排序、展开） |
-| `recon/recon.css` | 页面样式 |
+| `recon/recon.js` | 前端逻辑（渲染、筛选、排序、展开、hash 链接分享） |
+| `recon/recon.css` | 页面样式（含提交页两列布局） |
+| `recon/recon_submit.js` | 列表页提交入口（跳转 + localStorage 恢复 + 删除） |
+| `recon/recon_local_store.js` | 共享 localStorage 模块 |
+| `recon/recon_alg_utils.js` | 共享公式清理模块 |
+| `recon/submit/index.html` | 独立提交页面 HTML |
+| `recon/submit/recon_submit_page.js` | 提交页面逻辑 |
 | `recon/recon_data.json` | 复盘数据（直接维护，需提交 git） |
 | `_stats_build/generate_comp_countries.rb` | 生成国旗映射 JSON |
 | `DEPLOYMENT.md` | 完整架构文档（含国旗渲染方案、数据流、Record Badge 规则） |

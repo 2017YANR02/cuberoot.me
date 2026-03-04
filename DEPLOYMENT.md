@@ -110,15 +110,20 @@ ruiminyan.github.io/
 │   └── fetch_comp_names_zh.py   # 爬取 cubing.com 中国比赛中文名映射（CI 每日自动运行）
 ├── recon/                     # 比赛复盘页面（数据直接维护 JSON + Firebase 社区提交）
 │   ├── index.md               # 页面入口（Jekyll Markdown，引入 Firebase SDK + WCA Auth）
-│   ├── recon.js               # 前端逻辑：表格渲染、筛选搜索、排序、行展开、WCA 登录 UI
-│   ├── recon.css              # 页面样式（含社区行标记、WCA 登录按钮、比赛搜索下拉菜单样式）
-│   ├── recon_submit.js        # 提交表单：选手/成绩/比赛/备注/轮次/第几把/打乱/解法，含实时STM/TPS统计 + alg.cubing.net 预览
+│   ├── recon.js               # 前端逻辑：表格渲染、筛选搜索、排序、行展开、hash URL 分享、WCA 登录 UI
+│   ├── recon.css              # 页面样式（含社区行标记、WCA 登录、比赛搜索下拉、提交页两列布局）
+│   ├── recon_submit.js        # 列表页提交入口：➕ 跳转、localStorage 恢复、删除处理
+│   ├── recon_local_store.js   # 共享模块：localStorage 复盘持久化 CRUD
+│   ├── recon_alg_utils.js     # 共享模块：公式清理（twisty-player / alg.cubing.net 不兼容符号）
 │   ├── recon_stats.js         # 统计计算引擎：STM/TPS/OLL/PLL/Cross 等指标分析
 │   ├── wca_auth.js            # WCA OAuth 模块（Implicit Grant 流程，绕过 CORS）
 │   ├── callback.html          # WCA OAuth 回调页（解析 URL hash 中的 access_token）
 │   ├── firebase_store.js      # Firebase Firestore 数据层（社区复盘的 CRUD 封装）
 │   ├── recon_data.json        # 复盘数据（直接维护 JSON，需提交 git）
-│   └── comp_names_zh.json     # 英文比赛名→中文名映射（由 fetch_comp_names_zh.py 生成，CI 每日更新）
+│   ├── comp_names_zh.json     # 英文比赛名→中文名映射（由 fetch_comp_names_zh.py 生成，CI 每日更新）
+│   └── submit/                # 独立提交页面
+│       ├── index.html         # 提交/编辑复盘表单 HTML（两列布局：表单+预览）
+│       └── recon_submit_page.js # 提交页逻辑（表单交互、编辑预填充、提交处理）
 ├── .upcoming_cache/           # API 响应本地缓存（已在 .gitignore，24h TTL）
 ├── .comp_names_zh_cache/      # cubing.com + WCA API 缓存（已在 .gitignore）
 ├── .github/workflows/         # CI 配置（stats.yml：每周定时构建 + push）
