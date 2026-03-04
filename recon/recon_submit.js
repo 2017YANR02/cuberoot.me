@@ -7,12 +7,34 @@
 
     var STORAGE_KEY = 'recon_local_solves';
 
+    // NOTE: 编辑模式专用字段（新增模式不显示这些）
+    var EDIT_ONLY_FIELDS = [
+        { key: 'solverZh', labelEn: 'Solver(ZH)', labelZh: '选手(中文)' },
+        { key: 'displaySingle', labelEn: 'Display', labelZh: '显示成绩' },
+        { key: 'avg', labelEn: 'Average', labelZh: '平均' },
+        { key: 'date', labelEn: 'Date', labelZh: '日期' },
+        { key: 'aoType', labelEn: 'AoXR', labelZh: 'AoXR' },
+        { key: 'rAvg', labelEn: 'Avg Record', labelZh: '平均纪录' },
+        { key: 'rSingle', labelEn: 'Single Rec', labelZh: '单次纪录' },
+        { key: 'rAoXR', labelEn: 'AoXR Rec', labelZh: 'AoXR纪录' },
+        { key: 'cube', labelEn: 'Cube', labelZh: '魔方' },
+        { key: 'reconer', labelEn: 'Reconer', labelZh: '复盘者' },
+    ];
+
+    // NOTE: 当前正在编辑的 solve 对象（null 表示新增模式）
+    var currentEditSolve = null;
+
     // ==================== 初始化 ====================
 
     document.addEventListener('DOMContentLoaded', function () {
         var addBtn = document.getElementById('btn-add-recon');
         if (!addBtn) return;
-        addBtn.addEventListener('click', openModal);
+        addBtn.addEventListener('click', function () { openModal(null); });
+
+        // NOTE: 监听编辑请求事件（从 recon.js 触发）
+        window.addEventListener('recon-edit-request', function (e) {
+            openModal(e.detail);
+        });
 
         // NOTE: 页面加载时恢复 localStorage 中的本地复盘
         restoreLocalSolves();
@@ -34,12 +56,21 @@
 
     // ==================== 模态框 ====================
 
-    function openModal() {
+    function openModal(editSolve) {
+        currentEditSolve = editSolve || null;
+        var isEditMode = !!currentEditSolve;
+
         // NOTE: 如已存在则先移除
         var existing = document.getElementById('recon-modal');
         if (existing) existing.remove();
 
         var isZh = localStorage.getItem('i18n_locale') === 'zh';
+        var title = isEditMode
+            ? (isZh ? '✏️ 编辑复盘' : '✏️ Edit Recon')
+            : (isZh ? '➕ 添加复盘' : '➕ Add Recon');
+        var submitLabel = isEditMode
+            ? (isZh ? '保存修改' : 'Save Changes')
+            : (isZh ? '提交' : 'Submit');
 
         var modal = document.createElement('div');
         modal.id = 'recon-modal';
@@ -47,7 +78,7 @@
         modal.innerHTML =
             '<div class="recon-modal">' +
             '<div class="recon-modal-header">' +
-            '<h3>' + (isZh ? '➕ 添加复盘' : '➕ Add Recon') + '</h3>' +
+            '<h3>' + title + '</h3>' +
             '<button class="recon-modal-close" id="modal-close">&times;</button>' +
             '</div>' +
             '<form id="recon-form" class="recon-form">' +
@@ -151,12 +182,44 @@
             '</div>' +
             '<div class="recon-form-actions">' +
             '<button type="button" id="rf-cancel" class="recon-btn">' + (isZh ? '取消' : 'Cancel') + '</button>' +
-            '<button type="submit" class="recon-btn recon-btn-primary">' + (isZh ? '提交' : 'Submit') + '</button>' +
+            '<button type="submit" class="recon-btn recon-btn-primary">' + submitLabel + '</button>' +
             '</div>' +
             '</form>' +
             '</div>';
 
         document.body.appendChild(modal);
+
+        // NOTE: 编辑模式——在表单末尾追加编辑专用字段
+        if (isEditMode) {
+            var form = document.getElementById('recon-form');
+            var actions = form.querySelector('.recon-form-actions');
+            // NOTE: official checkbox
+            var officialHtml = '<div class="recon-form-row">' +
+                '<div class="recon-form-group">' +
+                '<label><input type="checkbox" id="rf-official"' + (currentEditSolve.official ? ' checked' : '') + '> ' +
+                (isZh ? '官方比赛' : 'Official') + '</label>' +
+                '</div></div>';
+            // NOTE: 编辑专用文本字段（2列布局）
+            var extraHtml = officialHtml;
+            for (var i = 0; i < EDIT_ONLY_FIELDS.length; i += 2) {
+                extraHtml += '<div class="recon-form-row">';
+                for (var j = i; j < Math.min(i + 2, EDIT_ONLY_FIELDS.length); j++) {
+                    var f = EDIT_ONLY_FIELDS[j];
+                    var val = currentEditSolve[f.key];
+                    if (val === undefined || val === null) val = '';
+                    extraHtml += '<div class="recon-form-group">' +
+                        '<label>' + (isZh ? f.labelZh : f.labelEn) + '</label>' +
+                        '<input type="text" id="rf-edit-' + f.key + '" value="' + String(val).replace(/"/g, '&quot;') + '">' +
+                        '</div>';
+                }
+                extraHtml += '</div>';
+            }
+            var extraDiv = document.createElement('div');
+            extraDiv.innerHTML = extraHtml;
+            while (extraDiv.firstChild) {
+                form.insertBefore(extraDiv.firstChild, actions);
+            }
+        }
 
         // NOTE: 绑定事件
         document.getElementById('modal-close').addEventListener('click', closeModal);
@@ -166,14 +229,51 @@
         });
         document.getElementById('recon-form').addEventListener('submit', handleSubmit);
 
+        // NOTE: 编辑模式——预填充现有字段
+        if (isEditMode) {
+            var s = currentEditSolve;
+            document.getElementById('rf-solver').value = s.solver || '';
+            document.getElementById('rf-single').value = s.single || '';
+            document.getElementById('rf-event').value = s.event || '3x3';
+            document.getElementById('rf-method').value = s.method || '';
+            document.getElementById('rf-comp').value = s.comp || '';
+            document.getElementById('rf-note').value = s.note || '';
+            document.getElementById('rf-round').value = s.round || '';
+            document.getElementById('rf-solve-num').value = s.solveNum ? String(s.solveNum) : '';
+            // NOTE: 打乱预填充：优先用 wcaScramble 字段，否则从 recon 文本第二行提取
+            //       recon 格式：第一行=统计（如 44STM /3.73=11.80TPS），第二行=打乱
+            var scramblePrefill = s.wcaScramble || s.scramble || '';
+            if (!scramblePrefill && s.recon) {
+                var reconLines = s.recon.split('\n');
+                if (reconLines.length >= 2 && /^\d+STM\s/i.test(reconLines[0])) {
+                    scramblePrefill = reconLines[1].trim();
+                }
+            }
+            document.getElementById('rf-scramble').value = scramblePrefill;
+            // NOTE: recon 文本原样显示（含统计行），管理员可自行修改
+            document.getElementById('rf-recon').value = s.recon || s.caption || '';
+        }
+
         // NOTE: 预览动画按钮 — 加载 alg.cubing.net iframe
         document.getElementById('rf-preview-btn').addEventListener('click', function () {
             var scramble = document.getElementById('rf-scramble').value.trim();
             var recon = document.getElementById('rf-recon').value.trim();
             if (!scramble && !recon) return;
 
-            // NOTE: 从 recon 文本提取纯公式（去统计行和注释）
-            var alg = recon.split('\n')
+            // NOTE: 从 recon 文本提取纯公式（去统计行、打乱行和注释）
+            var reconLines = recon.split('\n');
+            // NOTE: 判断第二行是否是打乱（第一行是统计行且打乱栏内容与第二行匹配）
+            var scrambleLineIdx = -1;
+            if (scramble && reconLines.length >= 2 && /^\d+STM\s/i.test(reconLines[0])) {
+                if (reconLines[1].trim() === scramble) {
+                    scrambleLineIdx = 1;
+                }
+            }
+            var alg = reconLines
+                .filter(function (line, idx) {
+                    if (idx === scrambleLineIdx) return false;
+                    return true;
+                })
                 .map(function (line) {
                     var idx = line.indexOf('//');
                     return (idx >= 0 ? line.substring(0, idx) : line).trim();
@@ -360,6 +460,89 @@
 
     function handleSubmit(e) {
         e.preventDefault();
+
+        // ========== 编辑模式 ==========
+        if (currentEditSolve) {
+            var s = currentEditSolve;
+            // NOTE: 从表单读取所有字段的新值
+            var newData = {
+                solver: document.getElementById('rf-solver').value.trim(),
+                single: parseFloat(document.getElementById('rf-single').value.trim()) || 0,
+                event: document.getElementById('rf-event').value.trim() || '3x3',
+                method: document.getElementById('rf-method').value.trim(),
+                comp: document.getElementById('rf-comp').value.trim(),
+                note: document.getElementById('rf-note').value.trim(),
+                round: document.getElementById('rf-round').value,
+                solveNum: document.getElementById('rf-solve-num').value ? parseInt(document.getElementById('rf-solve-num').value) : null,
+                wcaScramble: document.getElementById('rf-scramble').value.trim(),
+                recon: document.getElementById('rf-recon').value
+            };
+            // NOTE: official checkbox
+            var officialEl = document.getElementById('rf-official');
+            if (officialEl) newData.official = officialEl.checked;
+            // NOTE: 读取编辑专用字段
+            EDIT_ONLY_FIELDS.forEach(function (f) {
+                var el = document.getElementById('rf-edit-' + f.key);
+                if (el) {
+                    var val = el.value.trim();
+                    // NOTE: 数字字段尝试转为 number
+                    if (['avg', 'displaySingle'].indexOf(f.key) < 0 && !isNaN(val) && val !== '') {
+                        newData[f.key] = parseFloat(val);
+                    } else {
+                        newData[f.key] = val;
+                    }
+                }
+            });
+            // NOTE: 重新计算 STM/TPS
+            if (newData.recon && typeof ReconStats !== 'undefined') {
+                var stats = ReconStats.computeAllStats(newData.recon, newData.single);
+                if (stats.stm) newData.stm = stats.stm;
+                if (stats.tps) newData.tps = stats.tps;
+            }
+            // NOTE: 对比原始值和新值，只保存差异字段
+            var changedFields = {};
+            var beforeSnapshot = {};
+            for (var key in newData) {
+                var oldVal = s[key];
+                var newVal = newData[key];
+                // NOTE: 统一比较（null/undefined/''/0 的转换）
+                if (String(newVal || '') !== String(oldVal || '')) {
+                    changedFields[key] = newVal;
+                    beforeSnapshot[key] = oldVal !== undefined ? oldVal : null;
+                }
+            }
+            if (Object.keys(changedFields).length === 0) {
+                closeModal();
+                return;
+            }
+            changedFields._editedBy = WcaAuth.getUser().wcaId;
+            // NOTE: 保存编辑历史（用显示 ID 作标识）
+            ReconStore.saveEditHistory(s.id, beforeSnapshot, changedFields);
+            // NOTE: 根据数据来源选择保存方式
+            //       社区复盘用 _firestoreId（原始文档 ID），静态 JSON 用显示 ID
+            var savePromise;
+            if (s._community) {
+                savePromise = ReconStore.updateRecon(s._firestoreId, changedFields);
+            } else {
+                savePromise = ReconStore.saveEdit(s.id, changedFields);
+            }
+            savePromise.then(function () {
+                // NOTE: 更新内存中的数据
+                for (var k in changedFields) {
+                    if (k.charAt(0) !== '_') s[k] = changedFields[k];
+                }
+                s._edited = true;
+                // NOTE: 通知 recon.js 刷新 UI
+                window.dispatchEvent(new CustomEvent('recon-edit-done', { detail: s }));
+                closeModal();
+            }).catch(function (err) {
+                console.error('Failed to save edit:', err);
+                alert('Save failed: ' + err.message);
+            });
+            return;
+        }
+
+        // ========== 新增模式（原有逻辑） ==========
 
         var solver = document.getElementById('rf-solver').value.trim();
         var rawSingle = document.getElementById('rf-single').value.trim();
