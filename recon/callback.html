@@ -109,6 +109,8 @@
 
                     // NOTE: 存入 sessionStorage，recon 页面会读取
                     sessionStorage.setItem('wca_user', JSON.stringify(user));
+                    // NOTE: 存 access_token，后续 API 写操作需携带
+                    sessionStorage.setItem('wca_access_token', accessToken);
 
                     // NOTE: 跳回 recon 页面
                     window.location.href = '/recon/';
