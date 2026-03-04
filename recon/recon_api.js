@@ -20,14 +20,25 @@ var ReconStore = (function () {
         });
     }
 
-    /** 通用 POST 请求 */
+    /** 通用 POST 请求（自动携带 WCA access_token） */
     function apiPost(params, body) {
         var url = API_BASE + '?' + new URLSearchParams(params).toString();
+        var headers = { 'Content-Type': 'application/json' };
+        // NOTE: 携带 WCA access_token 供后端验证身份
+        if (typeof WcaAuth !== 'undefined') {
+            var token = WcaAuth.getAccessToken();
+            if (token) headers['Authorization'] = 'Bearer ' + token;
+        }
         return fetch(url, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: headers,
             body: JSON.stringify(body)
         }).then(function (r) {
+            // NOTE: 401 = token 过期或无效，清除登录态
+            if (r.status === 401) {
+                if (typeof WcaAuth !== 'undefined') WcaAuth.logout();
+                throw new Error('登录已过期，请重新登录');
+            }
             if (!r.ok) throw new Error('API error: ' + r.status);
             return r.json();
         });

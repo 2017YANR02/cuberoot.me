@@ -21,7 +21,7 @@ $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 if (in_array($origin, $allowedOrigins)) {
     header('Access-Control-Allow-Origin: ' . $origin);
     header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-    header('Access-Control-Allow-Headers: Content-Type');
+    header('Access-Control-Allow-Headers: Content-Type, Authorization');
 }
 
 // NOTE: 预检请求直接返回
@@ -131,6 +131,95 @@ function checkRateLimit(): void
     file_put_contents($rateFile, json_encode($data));
 }
 
+// ==================== 认证鉴权 ====================
+
+// NOTE: 管理员 WCA ID 列表（后端硬编码，前端的仅控制 UI 显示）
+$ADMIN_WCA_IDS = ['2017YANR02'];
+
+/**
+ * 验证 WCA access_token 并返回用户信息
+ * NOTE: 带文件缓存（TTL 5 分钟），避免每次都调 WCA API
+ * @return array|null 成功返回 ['wcaId' => '...', 'name' => '...']，失败返回 null
+ */
+function authenticateUser(): ?array
+{
+    $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+    if (!preg_match('/^Bearer\s+(.+)$/i', $authHeader, $matches)) {
+        return null;
+    }
+    $token = $matches[1];
+
+    // NOTE: 文件缓存——用 token 的 hash 作为文件名
+    $cacheDir = __DIR__ . '/data/.token_cache';
+    if (!is_dir($cacheDir)) mkdir($cacheDir, 0755, true);
+    $cacheFile = $cacheDir . '/' . md5($token) . '.json';
+    $cacheTTL = 300; // 5 分钟
+
+    if (file_exists($cacheFile)) {
+        $cached = json_decode(file_get_contents($cacheFile), true);
+        if ($cached && ($cached['_cachedAt'] ?? 0) > time() - $cacheTTL) {
+            return $cached;
+        }
+    }
+
+    // NOTE: 调用 WCA /me API 验证 token
+    $ch = curl_init('https://www.worldcubeassociation.org/api/v0/me');
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_HTTPHEADER => ['Authorization: Bearer ' . $token],
+        CURLOPT_TIMEOUT => 10,
+    ]);
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($httpCode !== 200 || !$response) {
+        return null;
+    }
+
+    $data = json_decode($response, true);
+    $me = $data['me'] ?? null;
+    if (!$me || empty($me['wca_id'])) {
+        return null;
+    }
+
+    $user = [
+        'wcaId' => $me['wca_id'],
+        'name' => $me['name'] ?? '',
+        '_cachedAt' => time(),
+    ];
+
+    // NOTE: 写入缓存
+    file_put_contents($cacheFile, json_encode($user));
+
+    return $user;
+}
+
+/** 要求登录，失败返回 401 并终止 */
+function requireAuth(): array
+{
+    $user = authenticateUser();
+    if (!$user) {
+        http_response_code(401);
+        echo json_encode(['error' => 'Authentication required']);
+        exit;
+    }
+    return $user;
+}
+
+/** 要求管理员权限，失败返回 403 并终止 */
+function requireAdmin(): array
+{
+    global $ADMIN_WCA_IDS;
+    $user = requireAuth();
+    if (!in_array($user['wcaId'], $ADMIN_WCA_IDS)) {
+        http_response_code(403);
+        echo json_encode(['error' => 'Admin access required']);
+        exit;
+    }
+    return $user;
+}
+
 // ==================== 路由 ====================
 
 $action = $_GET['action'] ?? '';
@@ -159,12 +248,10 @@ switch ($action) {
         // NOTE: 添加复盘（分配永久自增数字 ID）
         header('Cache-Control: no-cache, no-store, must-revalidate');
         checkRateLimit();
+        $authUser = requireAuth();
         $body = getPostBody();
-        if (empty($body['wcaId'])) {
-            http_response_code(400);
-            echo json_encode(['error' => 'wcaId is required']);
-            break;
-        }
+        // NOTE: 强制用服务端验证的 wcaId，防止前端伪造
+        $body['wcaId'] = $authUser['wcaId'];
 
         $body['id'] = nextNumericId($counterFile);
         $body['createdAt'] = time();
@@ -177,9 +264,10 @@ switch ($action) {
         break;
 
     case 'delete':
-        // NOTE: 删除复盘
+        // NOTE: 删除复盘（本人或管理员）
         header('Cache-Control: no-cache, no-store, must-revalidate');
         checkRateLimit();
+        $authUser = requireAuth();
         $id = $_GET['id'] ?? '';
         if (!$id) {
             http_response_code(400);
@@ -189,6 +277,29 @@ switch ($action) {
 
         // NOTE: ID 可能是数字或字符串，统一用字符串比较
         $recons = readJson($reconsFile);
+
+        // NOTE: 查找目标复盘，验证删除权限
+        $targetRecon = null;
+        foreach ($recons as $r) {
+            if ((string) ($r['id'] ?? '') === (string) $id) {
+                $targetRecon = $r;
+                break;
+            }
+        }
+        if (!$targetRecon) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Not found']);
+            break;
+        }
+        // NOTE: 非管理员只能删自己的复盘
+        if (!in_array($authUser['wcaId'], $ADMIN_WCA_IDS)) {
+            if (($targetRecon['wcaId'] ?? '') !== $authUser['wcaId']) {
+                http_response_code(403);
+                echo json_encode(['error' => 'Cannot delete others recon']);
+                break;
+            }
+        }
+
         $recons = array_values(array_filter($recons, fn($r) => (string) ($r['id'] ?? '') !== (string) $id));
         writeJson($reconsFile, $recons);
 
@@ -196,9 +307,10 @@ switch ($action) {
         break;
 
     case 'update':
-        // NOTE: 更新复盘指定字段
+        // NOTE: 更新复盘指定字段（管理员专用）
         header('Cache-Control: no-cache, no-store, must-revalidate');
         checkRateLimit();
+        requireAdmin();
         $id = $_GET['id'] ?? '';
         $body = getPostBody();
         if (!$id) {
@@ -239,8 +351,9 @@ switch ($action) {
         break;
 
     case 'saveEdit':
-        // NOTE: 保存编辑覆盖（merge 模式）
+        // NOTE: 保存编辑覆盖（merge 模式，管理员专用）
         checkRateLimit();
+        requireAdmin();
         $body = getPostBody();
         $solveId = $body['solveId'] ?? '';
         $fields = $body['fields'] ?? [];
@@ -265,8 +378,9 @@ switch ($action) {
         break;
 
     case 'deleteEdit':
-        // NOTE: 删除编辑覆盖
+        // NOTE: 删除编辑覆盖（管理员专用）
         checkRateLimit();
+        requireAdmin();
         $id = $_GET['id'] ?? '';
         if (!$id) {
             http_response_code(400);
@@ -284,8 +398,9 @@ switch ($action) {
     // ==================== edit_history 集合 ====================
 
     case 'saveHistory':
-        // NOTE: 记录编辑历史
+        // NOTE: 记录编辑历史（管理员专用）
         checkRateLimit();
+        requireAdmin();
         $body = getPostBody();
         $body['id'] = genId();
         $body['editedAt'] = time();
@@ -311,9 +426,10 @@ switch ($action) {
         break;
 
     case 'import':
-        // NOTE: 批量导入（一次性迁移用）——接收 solves 数组，写入 recons.json 并更新计数器
+        // NOTE: 批量导入（一次性迁移用，管理员专用）
         header('Cache-Control: no-cache, no-store, must-revalidate');
         checkRateLimit();
+        requireAdmin();
         $body = getPostBody();
         $solves = $body['solves'] ?? [];
         if (empty($solves)) {
