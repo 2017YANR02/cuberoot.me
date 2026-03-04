@@ -124,6 +124,9 @@ ruiminyan.github.io/
 │   └── submit/                # 独立提交页面
 │       ├── index.html         # 提交/编辑复盘表单 HTML（两列布局：表单+预览）
 │       └── recon_submit_page.js # 提交页逻辑（表单交互、编辑预填充、提交处理）
+│   └── vendor/                # 第三方 SDK（本地托管，避免国内 CDN 被墙）
+│       ├── firebase-app-compat.js       # Firebase App SDK v10.14.1
+│       └── firebase-firestore-compat.js # Firebase Firestore SDK v10.14.1
 ├── .upcoming_cache/           # API 响应本地缓存（已在 .gitignore，24h TTL）
 ├── .comp_names_zh_cache/      # cubing.com + WCA API 缓存（已在 .gitignore）
 ├── .github/workflows/         # CI 配置（stats.yml：每周定时构建 + push）
@@ -179,6 +182,9 @@ sudo net start MySQL80
 | 数据库 | Firestore（`recons` 集合） |
 | 控制台 | [console.firebase.google.com/project/recon-stats](https://console.firebase.google.com/project/recon-stats/firestore) |
 | 安全规则 | `read: true`、`create: wcaId 非空`、`delete: true`（前端按 wcaId 控制） |
+| SDK 版本 | 10.14.1 compat（本地托管于 `recon/vendor/`） |
+
+> **SDK 本地托管**：Firebase compat SDK 已从 Google CDN (`gstatic.com`) 下载到 `recon/vendor/` 目录，通过 GitHub Pages 静态分发。原因：`gstatic.com` 在中国国内被墙，CDN 加载会导致页面阻塞 30-60 秒。升级时需手动下载新版替换。
 
 > **注意**：Firebase API Key 在前端代码中是公开的（`firebase_store.js`），这是 Firebase 的正常设计。安全由 Firestore Security Rules 控制，不依赖 API Key 保密。GitHub Secret Scanning 会报警，标记为 "Used in tests" 忽略即可。
 
