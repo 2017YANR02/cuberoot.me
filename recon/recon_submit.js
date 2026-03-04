@@ -17,14 +17,14 @@
         // NOTE: 页面加载时恢复 localStorage 中的本地复盘
         ReconLocalStore.restoreToRecon();
 
-        // NOTE: 监听删除事件，从 localStorage 和 Firestore 中移除
+        // NOTE: 监听删除事件，从 localStorage 和后端中移除
         window.addEventListener('recon-local-delete', function (e) {
             var id = e.detail;
             ReconLocalStore.remove(id);
-            // NOTE: 社区复盘从 Firestore 删除
-            if (typeof ReconStore !== 'undefined' && String(id).indexOf('local_') !== 0) {
+            // NOTE: 调用后端 API 删除
+            if (typeof ReconStore !== 'undefined') {
                 ReconStore.deleteRecon(id).catch(function (err) {
-                    console.error('Failed to delete from Firestore:', err);
+                    console.error('Failed to delete recon:', err);
                 });
             }
         });

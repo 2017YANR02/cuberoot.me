@@ -1,10 +1,13 @@
 <?php
 /**
  * Recon API 后端
- * 功能：社区复盘的 CRUD，替代 Firebase Firestore
+ * 功能：复盘数据的 CRUD（统一管理 CSV 迁移数据 + 社区提交）
  * 存储：JSON 文件（data/ 目录）
  * 部署：阿里云 ECS，通过 rsync 同步 PHP 文件，data/ 目录由 rsync 排除
  */
+
+// NOTE: gzip 压缩——2.3MB JSON 压缩后约 300KB，大幅减少传输时间
+ob_start('ob_gzhandler');
 
 // NOTE: CORS 白名单——只允许已知域名跨域访问
 $allowedOrigins = [
@@ -28,7 +31,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 header('Content-Type: application/json; charset=utf-8');
-header('Cache-Control: no-cache, no-store, must-revalidate');
 
 // ==================== 数据目录 ====================
 
@@ -40,6 +42,7 @@ if (!is_dir($dataDir)) {
 $reconsFile = $dataDir . '/recons.json';
 $editsFile = $dataDir . '/edits.json';
 $historyFile = $dataDir . '/history.json';
+$counterFile = $dataDir . '/counter.json';
 
 // ==================== 工具函数 ====================
 
@@ -69,10 +72,29 @@ function writeJson(string $path, $data): void
     fclose($fp);
 }
 
-/** 生成唯一 ID */
+/** 生成唯一字符串 ID（仅用于 edit_history 等内部记录） */
 function genId(): string
 {
     return uniqid('', true);
+}
+
+/** 获取下一个自增数字 ID（用于复盘条目的永久 ID） */
+function nextNumericId(string $counterFile): int
+{
+    $data = file_exists($counterFile)
+        ? json_decode(file_get_contents($counterFile), true)
+        : ['nextId' => 1];
+    $id = $data['nextId'];
+    $data['nextId'] = $id + 1;
+    // NOTE: 带文件锁写回，防并发冲突
+    $fp = fopen($counterFile, 'c');
+    flock($fp, LOCK_EX);
+    ftruncate($fp, 0);
+    fwrite($fp, json_encode($data));
+    fflush($fp);
+    flock($fp, LOCK_UN);
+    fclose($fp);
+    return $id;
 }
 
 /** 获取 POST JSON body */
@@ -118,7 +140,8 @@ switch ($action) {
     // ==================== recons 集合 ====================
 
     case 'list':
-        // NOTE: 加载全部社区复盘（按创建时间降序）
+        // NOTE: 只读接口——允许浏览器缓存 60 秒，减少重复请求
+        header('Cache-Control: public, max-age=60');
         $wcaId = $_GET['wcaId'] ?? '';
         $recons = readJson($reconsFile);
 
@@ -126,19 +149,15 @@ switch ($action) {
             $recons = array_values(array_filter($recons, fn($r) => ($r['wcaId'] ?? '') === $wcaId));
         }
 
-        // NOTE: 按创建时间降序排列
-        usort($recons, fn($a, $b) => ($b['createdAt'] ?? 0) <=> ($a['createdAt'] ?? 0));
-
-        // NOTE: 标记为社区复盘
-        foreach ($recons as &$r) {
-            $r['_community'] = true;
-        }
+        // NOTE: 按 ID 降序排列（ID 越大越新）
+        usort($recons, fn($a, $b) => ($b['id'] ?? 0) <=> ($a['id'] ?? 0));
 
         echo json_encode($recons);
         break;
 
     case 'add':
-        // NOTE: 添加社区复盘
+        // NOTE: 添加复盘（分配永久自增数字 ID）
+        header('Cache-Control: no-cache, no-store, must-revalidate');
         checkRateLimit();
         $body = getPostBody();
         if (empty($body['wcaId'])) {
@@ -147,7 +166,7 @@ switch ($action) {
             break;
         }
 
-        $body['id'] = genId();
+        $body['id'] = nextNumericId($counterFile);
         $body['createdAt'] = time();
 
         $recons = readJson($reconsFile);
@@ -158,7 +177,8 @@ switch ($action) {
         break;
 
     case 'delete':
-        // NOTE: 删除社区复盘
+        // NOTE: 删除复盘
+        header('Cache-Control: no-cache, no-store, must-revalidate');
         checkRateLimit();
         $id = $_GET['id'] ?? '';
         if (!$id) {
@@ -167,15 +187,17 @@ switch ($action) {
             break;
         }
 
+        // NOTE: ID 可能是数字或字符串，统一用字符串比较
         $recons = readJson($reconsFile);
-        $recons = array_values(array_filter($recons, fn($r) => ($r['id'] ?? '') !== $id));
+        $recons = array_values(array_filter($recons, fn($r) => (string) ($r['id'] ?? '') !== (string) $id));
         writeJson($reconsFile, $recons);
 
         echo json_encode(['ok' => true]);
         break;
 
     case 'update':
-        // NOTE: 更新社区复盘指定字段
+        // NOTE: 更新复盘指定字段
+        header('Cache-Control: no-cache, no-store, must-revalidate');
         checkRateLimit();
         $id = $_GET['id'] ?? '';
         $body = getPostBody();
@@ -188,7 +210,8 @@ switch ($action) {
         $recons = readJson($reconsFile);
         $found = false;
         foreach ($recons as &$r) {
-            if (($r['id'] ?? '') === $id) {
+            // NOTE: 统一用字符串比较 ID
+            if ((string) ($r['id'] ?? '') === (string) $id) {
                 foreach ($body as $k => $v) {
                     $r[$k] = $v;
                 }
@@ -285,6 +308,44 @@ switch ($action) {
         $filtered = array_slice(array_values($filtered), 0, 20);
 
         echo json_encode($filtered);
+        break;
+
+    case 'import':
+        // NOTE: 批量导入（一次性迁移用）——接收 solves 数组，写入 recons.json 并更新计数器
+        header('Cache-Control: no-cache, no-store, must-revalidate');
+        checkRateLimit();
+        $body = getPostBody();
+        $solves = $body['solves'] ?? [];
+        if (empty($solves)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'solves array is required']);
+            break;
+        }
+
+        $recons = readJson($reconsFile);
+
+        // NOTE: 找到现有数据中最大 ID，确保计数器不会倒退
+        $maxId = 0;
+        foreach ($recons as $r) {
+            if (is_int($r['id'] ?? null) && $r['id'] > $maxId)
+                $maxId = $r['id'];
+        }
+        foreach ($solves as $s) {
+            if (is_int($s['id'] ?? null) && $s['id'] > $maxId)
+                $maxId = $s['id'];
+        }
+
+        // NOTE: 将导入数据追加到现有数据
+        foreach ($solves as $s) {
+            $recons[] = $s;
+        }
+        writeJson($reconsFile, $recons);
+
+        // NOTE: 更新计数器为 maxId + 1
+        $counterData = ['nextId' => $maxId + 1];
+        file_put_contents($counterFile, json_encode($counterData));
+
+        echo json_encode(['ok' => true, 'imported' => count($solves), 'nextId' => $maxId + 1]);
         break;
 
     default:

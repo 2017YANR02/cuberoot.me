@@ -7,7 +7,6 @@
 
     // --- 常量 ---
     const PAGE_SIZE = 50; // NOTE: 每次加载的行数
-    const DATA_URL = '/recon/recon_data.json';
     const COMP_COUNTRIES_URL = '/stats/comp_name_countries.json';
     const PERSON_COUNTRIES_URL = '/stats/person_name_countries.json';
     const COMP_NAMES_ZH_URL = '/recon/comp_names_zh.json';
@@ -49,26 +48,18 @@
         var urlParams = new URLSearchParams(window.location.search);
         var userWcaId = urlParams.get('user');
 
-        // NOTE: 加载数据
+        // NOTE: 加载辅助数据（国旗映射、中文比赛名）
         try {
-            const [reconResp, compResp, personResp, compZhResp] = await Promise.all([
-                fetch(DATA_URL),
+            const [compResp, personResp, compZhResp] = await Promise.all([
                 fetch(COMP_COUNTRIES_URL),
                 fetch(PERSON_COUNTRIES_URL),
                 fetch(COMP_NAMES_ZH_URL)
             ]);
-            const data = await reconResp.json();
-            allSolves = data.solves || [];
             compCountries = await compResp.json();
             personCountries = await personResp.json();
             compNamesZh = await compZhResp.json();
-
-            // NOTE: 预处理数据，提取 STM/TPS 用于排序和显示
-            preprocessSolves(allSolves);
         } catch (e) {
-            tbody.innerHTML = '<tr><td colspan="15" style="text-align:center;color:#f87171">Failed to load data</td></tr>';
-            console.error('Failed to load recon data:', e);
-            return;
+            console.warn('Failed to load auxiliary data:', e);
         }
 
         function preprocessSolves(solves) {
@@ -79,25 +70,6 @@
                 solve.stm = stmMatch ? parseInt(stmMatch[1]) : 0;
                 solve.tps = tpsMatch ? parseFloat(tpsMatch[1]) : 0;
             });
-        }
-
-        // NOTE: 加载管理员编辑覆盖层（Firestore recon_edits 集合）
-        if (typeof ReconStore !== 'undefined' && ReconStore.loadEdits) {
-            try {
-                var editsMap = await ReconStore.loadEdits();
-                allSolves.forEach(function (solve) {
-                    var edit = editsMap[String(solve.id)];
-                    if (edit) {
-                        for (var key in edit) {
-                            if (key.charAt(0) === '_') continue;
-                            solve[key] = edit[key];
-                        }
-                        solve._edited = true;
-                    }
-                });
-            } catch (e) {
-                console.warn('Failed to load edits overlay:', e);
-            }
         }
 
         // NOTE: 构建筛选器选项
@@ -203,49 +175,61 @@
             });
         });
 
-        // NOTE: 初始渲染（用户模式下跳过，由 enterUserMode 处理）
-        if (!userWcaId) {
-            applyFilters();
-            // NOTE: 初始渲染后尝试从 hash 展开目标行
-            tryExpandFromHash();
-        }
-
         // NOTE: 初始化 WCA 登录 UI
         updateWcaAuthUI();
 
-        // NOTE: 加载社区复盘（区分用户模式 / 全量模式）
+        // NOTE: 从 API 统一加载所有复盘数据
         if (typeof ReconStore !== 'undefined') {
-            if (userWcaId) {
-                // NOTE: 用户模式：清空 CSV 数据，只显示该用户的 Firestore 复盘
-                allSolves = [];
-                enterUserMode(userWcaId);
-            } else {
-                ReconStore.loadAll().then(function (communityRecons) {
-                    if (communityRecons.length > 0) {
-                        allSolves = communityRecons.concat(allSolves);
-                        assignCommunityIds();
-                        applyFilters();
+            try {
+                if (userWcaId) {
+                    // NOTE: 用户模式：只加载该用户的复盘
+                    enterUserMode(userWcaId);
+                } else {
+                    var recons = await ReconStore.loadAll();
+                    allSolves = recons;
+                    preprocessSolves(allSolves);
+
+                    // NOTE: 加载编辑覆盖层
+                    if (ReconStore.loadEdits) {
+                        try {
+                            var editsMap = await ReconStore.loadEdits();
+                            allSolves.forEach(function (solve) {
+                                var edit = editsMap[String(solve.id)];
+                                if (edit) {
+                                    for (var key in edit) {
+                                        if (key.charAt(0) === '_') continue;
+                                        solve[key] = edit[key];
+                                    }
+                                    solve._edited = true;
+                                }
+                            });
+                        } catch (e) {
+                            console.warn('Failed to load edits overlay:', e);
+                        }
                     }
-                    // NOTE: 社区复盘加载完成后再次尝试从 hash 展开（hash 可能指向社区复盘 ID）
+
+                    buildFilterOptions();
+                    applyFilters();
                     tryExpandFromHash();
-                }).catch(function (e) {
-                    console.warn('Failed to load community recons:', e);
-                });
+                }
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="15" style="text-align:center;color:#f87171">Failed to load data</td></tr>';
+                console.error('Failed to load recon data:', e);
+                return;
             }
         }
 
-        // NOTE: 监听客户端提交的本地复盘
+        // NOTE: 监听客户端提交的新复盘
         window.addEventListener('recon-local-add', function (e) {
             var solve = e.detail;
             allSolves.unshift(solve);
-            assignCommunityIds();
             applyFilters();
         });
 
-        // NOTE: 监听删除本地/社区复盘
+        // NOTE: 监听删除复盘——统一用字符串比较 ID
         window.addEventListener('recon-local-delete', function (e) {
-            var id = e.detail;
-            allSolves = allSolves.filter(function (s) { return s.id !== id; });
+            var id = String(e.detail);
+            allSolves = allSolves.filter(function (s) { return String(s.id) !== id; });
             applyFilters();
         });
     }
@@ -339,21 +323,7 @@
         });
     }
 
-    // NOTE: 给社区/本地提交分配递增编号（从 JSON 数据最大 id + 1 开始）
-    //       原始 Firestore 文档 ID 保存到 _firestoreId，供编辑/删除使用
-    function assignCommunityIds() {
-        var maxId = 0;
-        allSolves.forEach(function (s) {
-            if (typeof s.id === 'number' && s.id > maxId) maxId = s.id;
-        });
-        allSolves.forEach(function (s) {
-            if (typeof s.id !== 'number') {
-                s._firestoreId = s.id;
-                maxId++;
-                s.id = maxId;
-            }
-        });
-    }
+    // NOTE: assignCommunityIds() 已删除——后端统一分配永久数字 ID
 
     // ==================== 筛选器 ====================
 
@@ -562,7 +532,8 @@
 
     function createSolveRow(solve) {
         const tr = document.createElement('tr');
-        tr.className = 'solve-row' + (solve._community ? ' community-row' : '');
+        // NOTE: wcaId 字段表示社区提交（CSV 迁移数据无此字段）
+        tr.className = 'solve-row' + (solve.wcaId ? ' community-row' : '');
         tr.dataset.id = solve.id;
 
         const officialHtml = solve.official ? '✅' : '';
@@ -859,15 +830,15 @@
             html += '</div>';
         }
 
-        // NOTE: 删除按钮——本地/自己的社区复盘 + 管理员可删任何社区复盘
+        // NOTE: 删除按钮——自己提交的复盘 + 管理员可删任何复盘
         var canDelete = false;
         if (s._local) {
             canDelete = true;
-        } else if (s._community && typeof WcaAuth !== 'undefined') {
+        } else if (s.wcaId && typeof WcaAuth !== 'undefined') {
             var currentUser = WcaAuth.getUser();
             if (currentUser && currentUser.wcaId === s.wcaId) canDelete = true;
         }
-        if (isAdminUser && s._community) canDelete = true;
+        if (isAdminUser) canDelete = true;
         if (canDelete) {
             html += '<div class="detail-local-actions">' +
                 '<button class="recon-btn recon-btn-danger" onclick="window.dispatchEvent(new CustomEvent(\'recon-local-delete\',{detail:\'' + s.id + '\'}))">' +
