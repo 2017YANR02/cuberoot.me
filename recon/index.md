@@ -106,5 +106,6 @@ layout: default
 <script src="/recon/recon_stats.js"></script>
 <script src="/recon/wca_auth.js"></script>
 <script src="/recon/firebase_store.js"></script>
+<script src="/recon/recon_local_store.js"></script>
 <script src="/recon/recon.js" defer></script>
 <script src="/recon/recon_submit.js" defer></script>

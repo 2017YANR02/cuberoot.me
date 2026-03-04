@@ -1,0 +1,155 @@
+---
+title: "Recon - Submit"
+layout: default
+---
+
+<link rel="stylesheet" href="/recon/recon.css">
+
+<!-- NOTE: 页面标题由 JS 根据模式动态切换 -->
+<h1 id="submit-title" data-i18n-en="➕ Add Recon" data-i18n-zh="➕ 添加复盘">➕ Add Recon</h1>
+
+<div class="submit-page-layout">
+    <!-- ========== 左列：表单 ========== -->
+    <div class="submit-form-col">
+        <form id="recon-form" class="recon-form">
+            <!-- 选手 + 成绩 -->
+            <div class="recon-form-row">
+                <div class="recon-form-group">
+                    <label data-i18n-en="Solver" data-i18n-zh="选手">Solver</label>
+                    <input type="text" id="rf-solver" value="耿暄一" placeholder="耿暄一" required>
+                </div>
+                <div class="recon-form-group">
+                    <label data-i18n-en="Time (sec)" data-i18n-zh="成绩 (秒)">Time (sec)</label>
+                    <input type="text" id="rf-single" placeholder="3.05 或 305" required>
+                </div>
+            </div>
+            <!-- 项目 + 方法 -->
+            <div class="recon-form-row">
+                <div class="recon-form-group">
+                    <label data-i18n-en="Event" data-i18n-zh="项目">Event</label>
+                    <input type="text" id="rf-event" value="3x3" list="event-options" placeholder="3x3">
+                    <datalist id="event-options">
+                        <option value="3x3">
+                        <option value="2x2">
+                        <option value="OH">
+                        <option value="4x4">
+                        <option value="5x5">
+                        <option value="6x6">
+                        <option value="7x7">
+                        <option value="Mega">
+                        <option value="Pyra">
+                        <option value="Skewb">
+                        <option value="SQ1">
+                    </datalist>
+                </div>
+                <div class="recon-form-group">
+                    <label data-i18n-en="Method" data-i18n-zh="方法">Method</label>
+                    <input type="text" id="rf-method" value="ZB" list="method-options" placeholder="ZB">
+                    <datalist id="method-options">
+                        <option value="CFOP">
+                        <option value="ZB">
+                        <option value="ZZ">
+                        <option value="Roux">
+                        <option value="Petrus">
+                        <option value="LEOR">
+                    </datalist>
+                </div>
+            </div>
+            <!-- 比赛 + 备注 -->
+            <div class="recon-form-row">
+                <div class="recon-form-group" style="flex:2;position:relative">
+                    <label data-i18n-en="Competition" data-i18n-zh="比赛">Competition</label>
+                    <input type="text" id="rf-comp" autocomplete="off"
+                        placeholder="Search competition (optional)"
+                        data-i18n-placeholder-en="Search competition (optional)"
+                        data-i18n-placeholder-zh="搜索比赛名称（可选）">
+                </div>
+                <div class="recon-form-group">
+                    <label data-i18n-en="Note" data-i18n-zh="备注">Note</label>
+                    <textarea id="rf-note" rows="3" placeholder="optional"
+                        data-i18n-placeholder-en="optional"
+                        data-i18n-placeholder-zh="可选"></textarea>
+                </div>
+            </div>
+            <!-- 轮次 + 第几把 -->
+            <div class="recon-form-row">
+                <div class="recon-form-group">
+                    <label data-i18n-en="Round" data-i18n-zh="轮次">Round</label>
+                    <select id="rf-round">
+                        <option value="">—</option>
+                        <option value="R1">R1</option>
+                        <option value="R2">R2</option>
+                        <option value="R3">R3</option>
+                        <option value="Fi">Fi</option>
+                    </select>
+                </div>
+                <div class="recon-form-group">
+                    <label data-i18n-en="Solve #" data-i18n-zh="第几把">Solve #</label>
+                    <select id="rf-solve-num">
+                        <option value="">—</option>
+                        <option value="1">#1</option>
+                        <option value="2">#2</option>
+                        <option value="3">#3</option>
+                        <option value="4">#4</option>
+                        <option value="5">#5</option>
+                    </select>
+                </div>
+            </div>
+            <!-- 实时统计显示 -->
+            <div class="recon-form-group">
+                <div id="rf-stats-display" class="rf-stats-display" style="display:none"></div>
+            </div>
+            <!-- 打乱公式 -->
+            <div class="recon-form-group">
+                <label data-i18n-en="Scramble" data-i18n-zh="打乱公式">Scramble</label>
+                <input type="text" id="rf-scramble"
+                    placeholder="Paste scramble (optional)"
+                    data-i18n-placeholder-en="Paste scramble (optional)"
+                    data-i18n-placeholder-zh="粘贴打乱公式（可选）">
+            </div>
+            <!-- 复盘文本 -->
+            <div class="recon-form-group">
+                <label data-i18n-en="Reconstruction" data-i18n-zh="复盘文本">Reconstruction</label>
+                <textarea id="rf-recon" rows="12"
+                    placeholder="Paste reconstruction..."
+                    data-i18n-placeholder-en="Paste reconstruction...&#10;e.g.:&#10;33STM /3.05=10.82TPS&#10;..."
+                    data-i18n-placeholder-zh="粘贴复盘文本...&#10;例如：&#10;33STM /3.05=10.82TPS&#10;..."
+                    required></textarea>
+            </div>
+            <!-- NOTE: 编辑专用字段容器（编辑模式时由 JS 动态填充） -->
+            <div id="rf-edit-fields"></div>
+            <!-- 操作按钮 -->
+            <div class="recon-form-actions">
+                <a href="/recon/" class="recon-btn" data-i18n-en="Cancel" data-i18n-zh="取消">Cancel</a>
+                <button type="submit" id="rf-submit-btn" class="recon-btn recon-btn-primary"
+                    data-i18n-en="Submit" data-i18n-zh="提交">Submit</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- ========== 右列：预览动画 ========== -->
+    <div class="submit-preview-col">
+        <button type="button" id="rf-preview-btn" class="recon-btn" style="margin-bottom:8px"
+            data-i18n-en="Preview Animation" data-i18n-zh="预览动画">Preview Animation</button>
+        <div id="rf-preview-container" style="display:none">
+            <iframe id="rf-preview-iframe"
+                style="width:100%;height:500px;border:1px solid #444;border-radius:8px;background:#fff"
+                allowfullscreen></iframe>
+        </div>
+    </div>
+</div>
+
+<!-- NOTE: 底部返回链接 -->
+<div class="submit-back-link">
+    <a href="/recon/" data-i18n-en="← Back to Recon List" data-i18n-zh="← 返回复盘列表">← Back to Recon List</a>
+</div>
+
+<!-- NOTE: Firebase compat SDK（CDN） -->
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+
+<script src="/recon/recon_stats.js"></script>
+<script src="/recon/wca_auth.js"></script>
+<script src="/recon/firebase_store.js"></script>
+<script src="/recon/recon_local_store.js"></script>
+<script src="/recon/submit/recon_submit_page.js" defer></script>
