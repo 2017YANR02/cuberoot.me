@@ -1,31 +1,14 @@
 # Recon 页面 TODO
 
-## 已完成（Phase 1 MVP）
-
-- [x] 数据管线：`recon_data.json` 直接维护
-- [x] 前端骨架：`recon/index.md` + `recon.js` + `recon.css`
-- [x] 表格列：成绩、选手、方法、比赛、轮次、日期、STM、TPS、OLL、PLL
-- [x] 点击行展开完整复盘文本 + 打乱（最少步打乱 + WCA 打乱）
-- [x] 筛选器：选手（按频率排序）、方法、项目
-- [x] 搜索：选手名、比赛名、成绩、纪录标记（精确匹配 WR/NR/PR 等）
-- [x] 表头排序（列点击切换升降序）
-- [x] 分页加载（每次 50 条 + "加载更多"）
-- [x] R Avg / R Single 列 + Record Badge 彩色标签
-- [x] 国旗：选手和比赛国旗内联显示（数据来自 WCA 数据库，见 DEPLOYMENT.md）
-- [x] i18n 中英文切换
-- [x] 深色主题 + 响应式布局
-- [x] 首页入口卡片：在 `index.html` 新增第三个入口卡片（🔍 Recon），与 Solver 和 WCA Stats 并列
-- [x] 手机端适配：手机端显示所有列，与电脑端保持一致
-- [x] 表头列顺序重排：按图2设计稿调整（Expand → Official? → Event → Method → Date → Comp → Rnd → AoXR → Avg → PR Avg → Single → PR Single → Solver → Recon Preview）
-- [x] 详情展开布局：复盘在左、打乱/元数据在右（手机端复盘优先显示）
-- [x] 比赛日期从 WCA 数据库获取：`comp_dates.json` 映射比赛名 → 日期，非 WCA 比赛 fallback 到 CSV 原始日期
-- [x] 全站背景色调整：非求解器页面改为深灰 `#161616`，移除粒子动画（主页除外）
-
 ## 待完成
 
 ### 优先级高
 
 - [ ] **搜索 placeholder 更新**：国旗功能已加入，但搜索说明文字未同步更新（支持搜索国家名）
+- [ ] **添加/编辑复盘独立页面**：将当前弹窗（`recon_submit.js`）迁移为独立页面 `/recon/submit/`
+  - 优势：更大编辑空间、手机端友好、可收藏 URL、编辑模式通过 `sessionStorage` 传递数据
+  - 涉及文件：新建 `recon/submit/index.md` + `recon_submit_page.js`，修改 `recon.js` 跳转逻辑
+  - 详细 AI 提示词见 `recon/PROMPT_submit_page.md`
 
 ### 优先级中
 
