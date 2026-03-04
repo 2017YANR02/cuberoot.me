@@ -403,7 +403,7 @@
                 const haystack = [
                     s.solver, s.solverZh, s.comp, s.scramble,
                     s.oll, s.pll, s.country, s.note,
-                    s.single != null ? s.single.toFixed(3) : '',
+                    s.single != null && typeof s.single === 'number' ? s.single.toFixed(3) : '',
                     // NOTE: 支持中文比赛名搜索
                     compNamesZh[s.comp] || '',
                     // NOTE: 支持搜索 "cancelled"/"取消" 匹配被取消的纪录
@@ -552,7 +552,7 @@
             '<td class="col-aoxr">' + escHtml(solve.aoType || '') + (solve.rAoXR ? ' ' + formatRecord(solve.rAoXR) : '') + '</td>' +
             '<td class="col-single mono">' + formatResult(solve.single) + '</td>' +
             '<td class="col-stm mono">' + (solve.stm || '') + '</td>' +
-            '<td class="col-tps mono">' + (solve.tps ? solve.tps.toFixed(2) : '') + '</td>' +
+            '<td class="col-tps mono">' + (solve.tps && typeof solve.tps === 'number' ? solve.tps.toFixed(2) : '') + '</td>' +
             '<td class="col-event">' + escHtml(solve.event || '') + '</td>' +
             '<td class="col-method">' + escHtml(solve.method || '') + '</td>';
 
@@ -959,6 +959,7 @@
     function formatResult(val) {
         if (val == null) return '';
         if (val >= 9999) return 'DNF';
+        if (typeof val !== 'number') return String(val);
         return val.toFixed(3);
     }
 
@@ -972,11 +973,13 @@
             // NOTE: 秒部分不足 10 时补前导零（如 1:05.23）
             return m + ':' + (s < 10 ? '0' : '') + s;
         }
+        if (typeof val !== 'number') return String(val);
         return val.toFixed(2);
     }
 
     function formatTps(val) {
         if (val == null) return '';
+        if (typeof val !== 'number') return String(val);
         return val.toFixed(2);
     }
 
@@ -1011,6 +1014,7 @@
     // 前缀 F=女子纪录，颜色同上
     function formatRecord(val) {
         if (!val) return '';
+        val = String(val); // NOTE: 防御性强转（edit overlay 可能存入非字符串）
         // NOTE: 处理 "WR cancelled" 等被取消的纪录，用紫色 + 红色对角线（CSS 实现）
         const cancelled = /\bcancelled\b/i.test(val);
         const recordType = cancelled ? val.replace(/\s*cancelled\s*/i, '').trim() : val;
