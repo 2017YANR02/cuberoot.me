@@ -327,7 +327,83 @@
         // ==================== 表单提交 ====================
 
         document.getElementById('recon-form').addEventListener('submit', handleSubmit);
+
+        // NOTE: 注册字段级 blur 即时校验
+        setupBlurValidation();
     });
+
+    // ==================== 字段级 Blur 校验 ====================
+
+    /** 设置或清除单个字段的错误状态（红框 + 提示文字） */
+    function setFieldError(inputEl, msg) {
+        if (!inputEl) return;
+        inputEl.classList.toggle('rf-field-error', !!msg);
+        var existing = inputEl.parentElement.querySelector('.rf-error-msg');
+        if (msg) {
+            if (!existing) {
+                existing = document.createElement('span');
+                existing.className = 'rf-error-msg';
+                inputEl.parentElement.appendChild(existing);
+            }
+            existing.textContent = msg;
+        } else if (existing) {
+            existing.remove();
+        }
+    }
+
+    /** 给一个字段注册 blur 校验 */
+    function addBlurCheck(id, checkFn) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('blur', function () {
+            setFieldError(el, checkFn(el.value.trim()));
+        });
+    }
+
+    /** 初始化所有字段的 blur 校验 */
+    function setupBlurValidation() {
+        var isZh = localStorage.getItem('i18n_locale') === 'zh';
+
+        addBlurCheck('rf-solver', function (v) {
+            if (!v) return isZh ? '请输入选手名' : 'Solver is required';
+            if (v.length > 100) return isZh ? '≤100字符' : '≤100 chars';
+            return '';
+        });
+
+        addBlurCheck('rf-single', function (v) {
+            if (!v) return isZh ? '请输入成绩' : 'Time is required';
+            var n = parseFloat(v);
+            if (isNaN(n) || n <= 0) return isZh ? '成绩必须是正数' : 'Must be a positive number';
+            return '';
+        });
+
+        addBlurCheck('rf-event', function (v) {
+            if (v.length > 20) return isZh ? '≤20字符' : '≤20 chars';
+            return '';
+        });
+
+        addBlurCheck('rf-method', function (v) {
+            if (v.length > 20) return isZh ? '≤20字符' : '≤20 chars';
+            return '';
+        });
+
+        addBlurCheck('rf-comp', function (v) {
+            if (v.length > 200) return isZh ? '≤200字符' : '≤200 chars';
+            return '';
+        });
+
+        // NOTE: 编辑模式字段——动态创建后才存在，用 MutationObserver 等不值得
+        // 直接尝试注册，不存在则跳过，编辑页刷新时这些字段已在 DOM 中
+        addBlurCheck('rf-edit-date', function (v) {
+            if (v && !/^\d{4}-\d{2}-\d{2}$/.test(v)) return isZh ? '格式: YYYY-MM-DD' : 'Format: YYYY-MM-DD';
+            return '';
+        });
+
+        addBlurCheck('rf-edit-avg', function (v) {
+            if (v && isNaN(parseFloat(v))) return isZh ? '必须是数字或留空' : 'Must be a number or empty';
+            return '';
+        });
+    }
 
     // ==================== 校验工具 ====================
 

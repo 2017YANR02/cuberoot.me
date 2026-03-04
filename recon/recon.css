@@ -1005,6 +1005,19 @@ tr.detail-row td {
     padding-left: 20px;
 }
 
+/* NOTE: 字段级即时校验——红色边框 */
+.rf-field-error {
+    border-color: rgba(255, 107, 107, 0.7) !important;
+}
+
+/* NOTE: 字段级错误提示文字 */
+.rf-error-msg {
+    color: #ff6b6b;
+    font-size: 0.78rem;
+    margin-top: 2px;
+    display: block;
+}
+
 /* NOTE: 两列布局：左=表单，右=预览动画 */
 .submit-page-layout {
     display: grid;
