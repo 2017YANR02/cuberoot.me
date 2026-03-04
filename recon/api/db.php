@@ -184,6 +184,113 @@ function jsonToRow(array $json, bool $filterByWhitelist = true): array
 }
 
 /**
+ * 校验 SQL 行数据的字段类型/范围/长度
+ * NOTE: 按数据库 Schema 校验，防止非法输入导致 SQL 报错
+ * @return array 错误消息数组（空=通过）
+ */
+function validateRow(array $row): array
+{
+    $errors = [];
+
+    // DECIMAL(8,3)：single, avg — 数值，范围 ±99999.999
+    foreach (['single', 'avg'] as $col) {
+        if (isset($row[$col]) && $row[$col] !== null) {
+            if (!is_numeric($row[$col])) {
+                $errors[] = "$col must be a number";
+            } elseif (abs($row[$col]) > 99999.999) {
+                $errors[] = "$col out of range";
+            }
+        }
+    }
+
+    // DECIMAL(5,2)：tps — 数值，范围 ±999.99
+    if (isset($row['tps']) && $row['tps'] !== null) {
+        if (!is_numeric($row['tps'])) {
+            $errors[] = "tps must be a number";
+        } elseif (abs($row['tps']) > 999.99) {
+            $errors[] = "tps out of range";
+        }
+    }
+
+    // DATE：必须是合法的 YYYY-MM-DD（不接受 2026-99-99 等）
+    if (isset($row['date']) && $row['date'] !== null) {
+        $d = DateTime::createFromFormat('Y-m-d', $row['date']);
+        if (!$d || $d->format('Y-m-d') !== $row['date']) {
+            $errors[] = "date must be a valid YYYY-MM-DD date";
+        }
+    }
+
+    // TINYINT：整数，-128 ~ 127
+    foreach (['solve_num', 'free_pair', 'y_rot', 'regrip', 'lockup', 'cross_type', 's_move'] as $col) {
+        if (isset($row[$col]) && $row[$col] !== null) {
+            if (!is_numeric($row[$col]) || intval($row[$col]) != $row[$col]) {
+                $errors[] = "$col must be an integer";
+            } elseif ($row[$col] < -128 || $row[$col] > 127) {
+                $errors[] = "$col out of range (-128~127)";
+            }
+        }
+    }
+
+    // SMALLINT：整数，-32768 ~ 32767
+    foreach (['stm', 'cross_stm', 'f2l', 'll'] as $col) {
+        if (isset($row[$col]) && $row[$col] !== null) {
+            if (!is_numeric($row[$col]) || intval($row[$col]) != $row[$col]) {
+                $errors[] = "$col must be an integer";
+            } elseif ($row[$col] < -32768 || $row[$col] > 32767) {
+                $errors[] = "$col out of range (-32768~32767)";
+            }
+        }
+    }
+
+    // INT UNSIGNED：created_at — 非负整数
+    if (isset($row['created_at']) && $row['created_at'] !== null) {
+        if (!is_numeric($row['created_at']) || intval($row['created_at']) != $row['created_at'] || $row['created_at'] < 0) {
+            $errors[] = "created_at must be a non-negative integer";
+        }
+    }
+
+    // VARCHAR 长度限制
+    $varcharLimits = [
+        'event' => 20,
+        'method' => 20,
+        'round' => 20,
+        'comp' => 200,
+        'country' => 100,
+        'solver' => 100,
+        'solver_zh' => 100,
+        'wca_id' => 20,
+        'display_single' => 20,
+        'r_single' => 20,
+        'r_avg' => 20,
+        'ao_type' => 50,
+        'r_ao_xr' => 20,
+        'oll' => 100,
+        'pll' => 100,
+        'oll_short' => 50,
+        'pll_short' => 50,
+    ];
+    foreach ($varcharLimits as $col => $max) {
+        if (isset($row[$col]) && $row[$col] !== null && mb_strlen($row[$col]) > $max) {
+            $errors[] = "$col exceeds max length ($max)";
+        }
+    }
+
+    // CHAR(1)：cross_color
+    if (isset($row['cross_color']) && $row['cross_color'] !== null && mb_strlen($row['cross_color']) > 1) {
+        $errors[] = "cross_color must be a single character";
+    }
+
+    // TEXT 上限 64KB（防 DoS，TEXT 类型上限 65535 字节）
+    foreach (['recon', 'scramble', 'wca_scramble', 'caption', 'note'] as $col) {
+        if (isset($row[$col]) && $row[$col] !== null && strlen($row[$col]) > 65535) {
+            $errors[] = "$col exceeds max size (64KB)";
+        }
+    }
+
+    return $errors;
+}
+
+/**
  * 建表 SQL（供迁移脚本使用）
  *
  * 三张表的关系：

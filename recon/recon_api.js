@@ -34,10 +34,15 @@ var ReconStore = (function () {
             headers: headers,
             body: JSON.stringify(body)
         }).then(function (r) {
-            // NOTE: 401 = token 过期或无效，清除登录态
             if (r.status === 401) {
                 if (typeof WcaAuth !== 'undefined') WcaAuth.logout();
                 throw new Error('登录已过期，请重新登录');
+            }
+            // NOTE: 400 = 校验失败，解析后端返回的具体字段错误信息
+            if (r.status === 400) {
+                return r.json().then(function (data) {
+                    throw new Error(data.fields ? data.fields.join('; ') : (data.error || 'Validation failed'));
+                });
             }
             if (!r.ok) throw new Error('API error: ' + r.status);
             return r.json();
