@@ -132,8 +132,8 @@ function rowToJson(array $row): array
         $json['official'] = (bool) $json['official'];
     if (isset($json['single']) && $json['single'] !== null)
         $json['single'] = (float) $json['single'];
-    if (isset($json['avg']) && $json['avg'] !== null)
-        $json['avg'] = (float) $json['avg'];
+    if (isset($json['average']) && $json['average'] !== null)
+        $json['average'] = (float) $json['average'];
     if (isset($json['stm']) && $json['stm'] !== null)
         $json['stm'] = (int) $json['stm'];
     if (isset($json['tps']) && $json['tps'] !== null)
@@ -314,7 +314,7 @@ CREATE TABLE IF NOT EXISTS recons (
   person                   VARCHAR(100)   DEFAULT NULL,
   person_id                VARCHAR(20)    DEFAULT NULL,
   single                   DECIMAL(8,3)   DEFAULT NULL,
-  average                  DECIMAL(8,3)   DEFAULT NULL,
+  average                  DECIMAL(8,2)   DEFAULT NULL,
   value                    VARCHAR(20)    DEFAULT NULL,
   regional_single_record   VARCHAR(20)    DEFAULT NULL,
   regional_average_record  VARCHAR(20)    DEFAULT NULL,
