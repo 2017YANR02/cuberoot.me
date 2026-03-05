@@ -401,7 +401,7 @@
             if (query) {
                 // NOTE: 搜索范围：选手名（含括号内中文名）、比赛名、成绩、打乱、OLL/PLL、纪录标记
                 const haystack = [
-                    s.person, s.comp, s.scramble,
+                    s.person, s.comp, s.optimalScramble,
                     s.oll, s.pll, s.country, s.note,
                     s.single != null && typeof s.single === 'number' ? s.single.toFixed(3) : '',
                     // NOTE: 支持中文比赛名搜索
@@ -709,7 +709,7 @@
 
             var reconText = solve.recon || solve.caption || '';
             // NOTE: 优先用独立字段, fallback 从 recon 文本第2行提取
-            var setup = solve.wcaScramble || solve.scramble || extractScrambleFromRecon(reconText);
+            var setup = solve.wcaScramble || solve.optimalScramble || extractScrambleFromRecon(reconText);
             var alg = extractAlgFromRecon(reconText);
             // NOTE: 根据项目切换 puzzle
             var puzzle = '3x3x3';
@@ -752,7 +752,7 @@
         }
         // NOTE: 有打乱时插入 twisty-player 占位符 + alg.cubing.net 链接
         var reconText = s.recon || s.caption || '';
-        var scrambleForPlayer = s.wcaScramble || s.scramble || extractScrambleFromRecon(reconText);
+        var scrambleForPlayer = s.wcaScramble || s.optimalScramble || extractScrambleFromRecon(reconText);
         if (scrambleForPlayer && reconText) {
             html += '<div class="recon-twisty-container"></div>';
             // NOTE: 构建 alg.cubing.net 链接
@@ -784,10 +784,10 @@
         // NOTE: 统计网格（从 recon 文本自动计算的统计值）
         html += buildStatsGrid(s, isZh);
 
-        if (s.scramble) {
+        if (s.optimalScramble) {
             html += '<div class="detail-scramble">';
             html += '<div class="detail-scramble-label"><span data-i18n-en="Optimal Scramble (scr*)" data-i18n-zh="最少步打乱 (scr*)">' + (isZh ? '最少步打乱 (scr*)' : 'Optimal Scramble (scr*)') + '</span></div>';
-            html += '<div class="detail-scramble-text">' + escHtml(s.scramble) + '</div>';
+            html += '<div class="detail-scramble-text">' + escHtml(s.optimalScramble) + '</div>';
             html += '</div>';
         }
         if (s.wcaScramble) {
