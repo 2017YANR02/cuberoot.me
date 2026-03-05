@@ -9,7 +9,7 @@
     // NOTE: 编辑模式专用字段（新增模式不显示这些）
     var EDIT_ONLY_FIELDS = [
         { key: 'value', labelEn: 'Single', labelZh: '单次' },
-        { key: 'avg', labelEn: 'Average', labelZh: '平均' },
+        { key: 'average', labelEn: 'Average', labelZh: '平均' },
         { key: 'date', labelEn: 'Date', labelZh: '日期' },
         { key: 'aoType', labelEn: 'AoXR', labelZh: 'AoXR' },
         { key: 'regionalAverageRecord', labelEn: 'Avg Rec', labelZh: '平均纪录' },
@@ -63,7 +63,7 @@
 
         if (isEditMode) {
             var s = currentEditSolve;
-            document.getElementById('rf-solver').value = s.solver || '';
+            document.getElementById('rf-solver').value = s.person || '';
             document.getElementById('rf-single').value = s.single || '';
             document.getElementById('rf-event').value = s.event || '3x3';
             document.getElementById('rf-method').value = s.method || '';
@@ -577,7 +577,7 @@
         if (currentEditSolve) {
             var s = currentEditSolve;
             var newData = {
-                solver: document.getElementById('rf-solver').value.trim(),
+                person: document.getElementById('rf-solver').value.trim(),
                 single: parseFloat(document.getElementById('rf-single').value.trim()) || 0,
                 event: document.getElementById('rf-event').value.trim() || '3x3',
                 method: document.getElementById('rf-method').value.trim(),
@@ -600,7 +600,7 @@
                     // HACK: rSingle/rAvg/rAoXR 等纪录字段是 VARCHAR 存储的标记（如 "WR"），
                     // 但值可能恰好是纯数字字符串（如 "3.73"），parseFloat 会把它转成 number，
                     // 导致前端 .toUpperCase() 调用 TypeError 崩溃，所以必须豁免
-                    if (['avg', 'displaySingle', 'rSingle', 'rAvg', 'rAoXR'].indexOf(f.key) < 0 && !isNaN(val) && val !== '') {
+                    if (['average', 'value', 'regionalSingleRecord', 'regionalAverageRecord', 'regionalAoxrRecord'].indexOf(f.key) < 0 && !isNaN(val) && val !== '') {
                         newData[f.key] = parseFloat(val);
                     } else {
                         newData[f.key] = val;
@@ -704,7 +704,7 @@
             event: event,
             method: method,
             date: date,
-            solver: solver,
+            person: solver,
             single: single,
             recon: fullRecon
         };
@@ -715,7 +715,7 @@
         if (solveNum) solve.solveNum = parseInt(solveNum);
 
         if (value) solve.value = value;
-        if (avg) solve.avg = parseFloat(avg);
+        if (avg) solve.average = parseFloat(avg);
         if (aoType) solve.aoType = aoType;
         if (regionalAverageRecord) solve.regionalAverageRecord = regionalAverageRecord;
         if (regionalSingleRecord) solve.regionalSingleRecord = regionalSingleRecord;
