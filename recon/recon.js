@@ -342,11 +342,9 @@
 
         // NOTE: 按出现频率排序选手（最多的在前）
         const solverCounts = {};
-        const solverZhMap = {};
         allSolves.forEach(s => {
             if (s.solver) {
                 solverCounts[s.solver] = (solverCounts[s.solver] || 0) + 1;
-                if (s.solverZh) solverZhMap[s.solver] = s.solverZh;
             }
         });
         const sortedSolvers = [...solvers].sort((a, b) => (solverCounts[b] || 0) - (solverCounts[a] || 0));
@@ -357,11 +355,13 @@
             const opt = document.createElement('option');
             opt.value = name;
             const cnt = solverCounts[name] || 0;
-            const zhName = solverZhMap[name] || name;
+            const parsed = parseSolverName(name);
+            const enDisplay = parsed.en + ` (${cnt})`;
+            const zhDisplay = (parsed.zh || parsed.en) + ` (${cnt})`;
 
-            opt.setAttribute('data-i18n-en', `${name} (${cnt})`);
-            opt.setAttribute('data-i18n-zh', `${zhName} (${cnt})`);
-            opt.textContent = isZh ? opt.getAttribute('data-i18n-zh') : opt.getAttribute('data-i18n-en');
+            opt.setAttribute('data-i18n-en', enDisplay);
+            opt.setAttribute('data-i18n-zh', zhDisplay);
+            opt.textContent = isZh ? zhDisplay : enDisplay;
 
             filterSolver.appendChild(opt);
         });
@@ -399,9 +399,9 @@
             if (!showWca && s.official) return false;
             if (!showNonWca && !s.official) return false;
             if (query) {
-                // NOTE: 搜索范围：选手名（中英文）、比赛名、成绩、打乱、OLL/PLL、纪录标记
+                // NOTE: 搜索范围：选手名（含括号内中文名）、比赛名、成绩、打乱、OLL/PLL、纪录标记
                 const haystack = [
-                    s.solver, s.solverZh, s.comp, s.scramble,
+                    s.solver, s.comp, s.scramble,
                     s.oll, s.pll, s.country, s.note,
                     s.single != null && typeof s.single === 'number' ? s.single.toFixed(3) : '',
                     // NOTE: 支持中文比赛名搜索
@@ -983,13 +983,17 @@
         return val.toFixed(2);
     }
 
-    // NOTE: 查找选手国旗 ISO2。WCA 数据库中中国选手名格式为 "Ruimin Yan (颜瑞民)"
-    // CSV 中 solver="Ruimin Yan", solverZh="颜瑞民"，需要拼成 WCA 格式查找
+    // NOTE: 从 WCA 格式名字中提取英文名和中文名
+    // "Ruimin Yan (颜瑞民)" → {en: "Ruimin Yan", zh: "颜瑞民"}
+    // "Max Park" → {en: "Max Park", zh: null}
+    function parseSolverName(fullName) {
+        var m = fullName.match(/^(.+?)\s*\((.+)\)$/);
+        if (m) return { en: m[1], zh: m[2] };
+        return { en: fullName, zh: null };
+    }
+
+    // NOTE: 查找选手国旗 ISO2。solver 字段已含完整 WCA 格式名（如 "Ruimin Yan (颜瑞民)"）
     function solverCountry(solve) {
-        if (solve.solverZh) {
-            var wcaName = solve.solver + ' (' + solve.solverZh + ')';
-            if (personCountries[wcaName]) return personCountries[wcaName];
-        }
         if (personCountries[solve.solver]) return personCountries[solve.solver];
 
         // NOTE: fallback——社区复盘可能只存了中文名或英文名，
@@ -1048,15 +1052,14 @@
     }
 
     function displaySolverName(s) {
-        // NOTE: 中文模式下优先显示中文名，附加双语切换 data-i18n 属性
+        // NOTE: 中文模式下优先显示中文名，从 solver 括号中提取
         const isZh = localStorage.getItem('i18n_locale') === 'zh';
-        const enName = s.solver || '';
-        if (s.solverZh) {
-            const zhName = s.solverZh;
-            const text = isZh ? zhName : enName;
-            return `<span data-i18n-en="${escHtml(enName)}" data-i18n-zh="${escHtml(zhName)}">${escHtml(text)}</span>`;
+        const parsed = parseSolverName(s.solver || '');
+        if (parsed.zh) {
+            const text = isZh ? parsed.zh : parsed.en;
+            return `<span data-i18n-en="${escHtml(parsed.en)}" data-i18n-zh="${escHtml(parsed.zh)}">${escHtml(text)}</span>`;
         }
-        return escHtml(enName);
+        return escHtml(parsed.en);
     }
 
     function getReconPreview(s) {
