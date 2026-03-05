@@ -12,6 +12,8 @@
     const PERSON_COUNTRIES_URL = '/stats/person_name_countries.json';
     const COMP_NAMES_ZH_URL = '/recon/comp_names_zh.json';
     const COMP_WCA_IDS_URL = '/stats/comp_name_to_wca_id.json';
+    // NOTE: recon 专用精简映射（4 合 1，~21KB），替代上面 4 个 URL（共 ~9.6MB）
+    const RECON_AUX_URL = '/recon/recon_aux_data.json';
     const DEFAULT_SORT = { key: 'id', asc: false };
 
     // --- 状态 ---
@@ -55,20 +57,31 @@
         var urlParams = new URLSearchParams(window.location.search);
         var userWcaId = urlParams.get('user');
 
-        // NOTE: 加载辅助数据（国旗映射、中文比赛名）
+        // NOTE: 加载辅助数据（国旗映射、中文比赛名、WCA ID 映射）
+        // 优先使用 recon 专用精简文件（~21KB），fallback 到全量文件（~9.6MB）
         try {
-            const [compResp, personResp, compZhResp, compWcaIdsResp] = await Promise.all([
-                fetch(COMP_COUNTRIES_URL),
-                fetch(PERSON_COUNTRIES_URL),
-                fetch(COMP_NAMES_ZH_URL),
-                fetch(COMP_WCA_IDS_URL)
-            ]);
-            compCountries = await compResp.json();
-            personCountries = await personResp.json();
-            compNamesZh = await compZhResp.json();
-            compWcaIds = await compWcaIdsResp.json();
+            const auxResp = await fetch(RECON_AUX_URL);
+            const aux = await auxResp.json();
+            compCountries = aux.compCountries || {};
+            personCountries = aux.personCountries || {};
+            compNamesZh = aux.compNamesZh || {};
+            compWcaIds = aux.compWcaIds || {};
         } catch (e) {
-            console.warn('Failed to load auxiliary data:', e);
+            console.warn('Failed to load recon aux data, falling back to full files:', e);
+            try {
+                const [compResp, personResp, compZhResp, compWcaIdsResp] = await Promise.all([
+                    fetch(COMP_COUNTRIES_URL),
+                    fetch(PERSON_COUNTRIES_URL),
+                    fetch(COMP_NAMES_ZH_URL),
+                    fetch(COMP_WCA_IDS_URL)
+                ]);
+                compCountries = await compResp.json();
+                personCountries = await personResp.json();
+                compNamesZh = await compZhResp.json();
+                compWcaIds = await compWcaIdsResp.json();
+            } catch (e2) {
+                console.warn('Failed to load auxiliary data:', e2);
+            }
         }
 
         function preprocessSolves(solves) {

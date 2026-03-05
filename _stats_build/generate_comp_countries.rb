@@ -106,3 +106,51 @@ Database.client.query("SELECT id, name, cell_name FROM Competitions").each do |r
 end
 File.write(comp_wca_ids_path, JSON.generate(comp_wca_ids_map))
 puts "  #{comp_wca_ids_path} (#{comp_wca_ids_map.size} entries, #{File.size(comp_wca_ids_path)} bytes)"
+
+# ── 7. Recon 专用精简映射（4 合 1，从 ~9.6MB 降到 ~30KB） ──
+# NOTE: 从备份文件提取 recon 实际涉及的选手/比赛名，过滤出子集
+# 合并 personCountries + compCountries + compWcaIds + compNamesZh 为一个文件
+# 前端只需 1 次 fetch，替代原来的 4 次（共 ~9.6MB）
+puts "Generating recon auxiliary data (subset)..."
+recon_dir = File.expand_path("../recon", __dir__)
+backup_path = File.join(recon_dir, "backup", "recons_backup.json")
+comp_zh_path = File.join(recon_dir, "comp_names_zh.json")
+aux_out_path = File.join(recon_dir, "recon_aux_data.json")
+
+if File.exist?(backup_path)
+  backup = JSON.parse(File.read(backup_path))
+  # 提取所有 unique person 和 comp
+  persons = backup.map { |s| s["person"] }.compact.uniq
+  comps = backup.map { |s| s["comp"] }.compact.uniq
+  puts "  Recon uses #{persons.size} unique persons, #{comps.size} unique comps"
+
+  # 从步骤 3/4/6 的内存映射中过滤子集
+  sub_person_countries = {}
+  persons.each { |p| sub_person_countries[p] = person_name_map[p] if person_name_map[p] }
+
+  sub_comp_countries = {}
+  comps.each { |c| sub_comp_countries[c] = comp_name_map[c] if comp_name_map[c] }
+
+  sub_comp_wca_ids = {}
+  comps.each { |c| sub_comp_wca_ids[c] = comp_wca_ids_map[c] if comp_wca_ids_map[c] }
+
+  # comp_names_zh 由 Python 脚本独立生成，从磁盘读取并过滤
+  sub_comp_names_zh = {}
+  if File.exist?(comp_zh_path)
+    all_zh = JSON.parse(File.read(comp_zh_path))
+    comps.each { |c| sub_comp_names_zh[c] = all_zh[c] if all_zh[c] }
+  end
+
+  aux_data = {
+    "personCountries" => sub_person_countries,
+    "compCountries" => sub_comp_countries,
+    "compWcaIds" => sub_comp_wca_ids,
+    "compNamesZh" => sub_comp_names_zh
+  }
+  File.write(aux_out_path, JSON.generate(aux_data))
+  puts "  #{aux_out_path} (#{File.size(aux_out_path)} bytes)"
+  puts "  Subset sizes: #{sub_person_countries.size} persons, #{sub_comp_countries.size} comp countries, " \
+       "#{sub_comp_wca_ids.size} comp WCA IDs, #{sub_comp_names_zh.size} comp zh names"
+else
+  puts "  SKIP: #{backup_path} not found (run backup CI first)"
+end
