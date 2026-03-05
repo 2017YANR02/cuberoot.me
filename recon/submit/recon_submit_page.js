@@ -308,6 +308,12 @@
             }
             // NOTE: 200ms debounce 防止快速输入频繁请求
             solverDebounceTimer = setTimeout(function () {
+                // NOTE: 立即显示 loading，让用户感知搜索进行中
+                solverDropdown.innerHTML = '<div class="solver-dropdown-loading"><span class="solver-spinner"></span>' +
+                    (isZh ? '搜索中...' : 'Searching...') + '</div>';
+                positionDropdownFor(solverInput, solverDropdown);
+                solverDropdown.style.display = 'block';
+
                 fetch(API_BASE + '?action=searchSolvers&q=' + encodeURIComponent(q))
                     .then(function (r) { return r.json(); })
                     .then(function (results) {
