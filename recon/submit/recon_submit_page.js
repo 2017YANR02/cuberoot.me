@@ -690,7 +690,7 @@
         var official = officialEl ? officialEl.checked : false;
 
         var value = document.getElementById('rf-edit-value').value.trim();
-        var avg = document.getElementById('rf-edit-avg').value.trim();
+        var avg = document.getElementById('rf-edit-average').value.trim();
         var aoType = document.getElementById('rf-edit-aoType').value.trim();
         var regionalAverageRecord = document.getElementById('rf-edit-regionalAverageRecord').value.trim();
         var regionalSingleRecord = document.getElementById('rf-edit-regionalSingleRecord').value.trim();
