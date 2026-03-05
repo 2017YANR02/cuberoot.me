@@ -107,8 +107,13 @@ var ReconUtils = (function () {
      */
     function displayCompName(comp, compNamesZh) {
         if (!comp) return '';
-        var isZh = localStorage.getItem('i18n_locale') === 'zh';
-        if (isZh && compNamesZh && compNamesZh[comp]) return escHtml(compNamesZh[comp]);
+        var zhName = compNamesZh && compNamesZh[comp];
+        if (zhName) {
+            // NOTE: 有中文名时用 data-i18n-en/zh 属性，使 i18n 切换时自动更新文本
+            var isZh = localStorage.getItem('i18n_locale') === 'zh';
+            var text = isZh ? zhName : comp;
+            return '<span data-i18n-en="' + escHtml(comp) + '" data-i18n-zh="' + escHtml(zhName) + '">' + escHtml(text) + '</span>';
+        }
         return escHtml(comp);
     }
 
