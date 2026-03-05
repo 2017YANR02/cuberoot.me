@@ -143,7 +143,8 @@
             e.stopPropagation();
             var text = btn.getAttribute('data-caption');
             navigator.clipboard.writeText(text).then(function () {
-                var isZh = localStorage.getItem('i18n_locale') === 'zh';
+                var _sl = localStorage.getItem('i18n_locale');
+                var isZh = _sl ? _sl === 'zh' : (navigator.language && navigator.language.startsWith('zh'));
                 var orig = btn.textContent;
                 btn.textContent = isZh ? '已复制' : 'copied';
                 btn.classList.add('copied');
@@ -164,7 +165,8 @@
             e.stopPropagation();
             var url = linkBtn.getAttribute('data-url');
             navigator.clipboard.writeText(url).then(function () {
-                var isZh = localStorage.getItem('i18n_locale') === 'zh';
+                var _sl = localStorage.getItem('i18n_locale');
+                var isZh = _sl ? _sl === 'zh' : (navigator.language && navigator.language.startsWith('zh'));
                 var orig = linkBtn.textContent;
                 linkBtn.textContent = isZh ? '已复制' : 'copied';
                 linkBtn.classList.add('copied');

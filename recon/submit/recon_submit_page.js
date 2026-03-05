@@ -23,7 +23,9 @@
     var currentEditSolve = null;
 
     document.addEventListener('DOMContentLoaded', function () {
-        var isZh = localStorage.getItem('i18n_locale') === 'zh';
+        // NOTE: 与 i18n.js 保持一致：localStorage 优先，fallback 到浏览器语言
+        var savedLocale = localStorage.getItem('i18n_locale');
+        var isZh = savedLocale ? savedLocale === 'zh' : (navigator.language && navigator.language.startsWith('zh'));
 
         // ==================== 模式检测 ====================
 
