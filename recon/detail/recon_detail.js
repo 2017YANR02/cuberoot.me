@@ -26,8 +26,17 @@
     document.addEventListener('DOMContentLoaded', init);
 
     function init() {
+        // NOTE: 支持两种 URL 格式获取复盘 ID：
+        //   1. /recon/detail/?id=2263（本地开发 / 直接链接）
+        //   2. /recon/2263（Nginx rewrite 后浏览器地址栏保留的路径）
         var params = new URLSearchParams(location.search);
         var id = params.get('id');
+        if (!id) {
+            var pathMatch = location.pathname.match(/\/recon\/(\d+)$/);
+            if (pathMatch) {
+                id = pathMatch[1];
+            }
+        }
         if (!id) {
             location.href = '/recon/';
             return;
