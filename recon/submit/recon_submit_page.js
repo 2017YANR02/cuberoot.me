@@ -8,13 +8,13 @@
 
     // NOTE: 编辑模式专用字段（新增模式不显示这些）
     var EDIT_ONLY_FIELDS = [
-        { key: 'displaySingle', labelEn: 'Display', labelZh: '显示成绩' },
+        { key: 'value', labelEn: 'Single', labelZh: '单次' },
         { key: 'avg', labelEn: 'Average', labelZh: '平均' },
         { key: 'date', labelEn: 'Date', labelZh: '日期' },
         { key: 'aoType', labelEn: 'AoXR', labelZh: 'AoXR' },
-        { key: 'rAvg', labelEn: 'Avg Record', labelZh: '平均纪录' },
-        { key: 'rSingle', labelEn: 'Single Rec', labelZh: '单次纪录' },
-        { key: 'rAoXR', labelEn: 'AoXR Rec', labelZh: 'AoXR纪录' },
+        { key: 'regionalAverageRecord', labelEn: 'Avg Rec', labelZh: '平均纪录' },
+        { key: 'regionalSingleRecord', labelEn: 'Single Rec', labelZh: '单次纪录' },
+        { key: 'regionalAoxrRecord', labelEn: 'AoXR Rec', labelZh: 'AoXR纪录' },
         { key: 'cube', labelEn: 'Cube', labelZh: '魔方' },
         { key: 'reconer', labelEn: 'Reconer', labelZh: '复盘者' },
     ];
@@ -689,12 +689,12 @@
         var officialEl = document.getElementById('rf-official');
         var official = officialEl ? officialEl.checked : false;
 
-        var displaySingle = document.getElementById('rf-edit-displaySingle').value.trim();
+        var value = document.getElementById('rf-edit-value').value.trim();
         var avg = document.getElementById('rf-edit-avg').value.trim();
         var aoType = document.getElementById('rf-edit-aoType').value.trim();
-        var rAvg = document.getElementById('rf-edit-rAvg').value.trim();
-        var rSingle = document.getElementById('rf-edit-rSingle').value.trim();
-        var rAoXR = document.getElementById('rf-edit-rAoXR').value.trim();
+        var regionalAverageRecord = document.getElementById('rf-edit-regionalAverageRecord').value.trim();
+        var regionalSingleRecord = document.getElementById('rf-edit-regionalSingleRecord').value.trim();
+        var regionalAoxrRecord = document.getElementById('rf-edit-regionalAoxrRecord').value.trim();
         var cube = document.getElementById('rf-edit-cube').value.trim();
         var reconer = document.getElementById('rf-edit-reconer').value.trim();
 
@@ -714,12 +714,12 @@
         if (round) solve.round = round;
         if (solveNum) solve.solveNum = parseInt(solveNum);
 
-        if (displaySingle) solve.displaySingle = displaySingle;
+        if (value) solve.value = value;
         if (avg) solve.avg = parseFloat(avg);
         if (aoType) solve.aoType = aoType;
-        if (rAvg) solve.rAvg = rAvg;
-        if (rSingle) solve.rSingle = rSingle;
-        if (rAoXR) solve.rAoXR = rAoXR;
+        if (regionalAverageRecord) solve.regionalAverageRecord = regionalAverageRecord;
+        if (regionalSingleRecord) solve.regionalSingleRecord = regionalSingleRecord;
+        if (regionalAoxrRecord) solve.regionalAoxrRecord = regionalAoxrRecord;
         if (cube) solve.cube = cube;
         if (reconer) solve.reconer = reconer;
 
