@@ -136,6 +136,18 @@ ruiminyan.github.io/
 │   │   └── recon_submit_page.js # 提交页逻辑（表单交互、编辑预填充、提交处理）
 │   └── backup/                # 复盘数据备份（CI 每日自动从 API 拉取）
 │       └── recons_backup.json # 全量复盘数据备份
+
+#### Recon 详情页路由架构
+
+用户访问 `/recon/2263` → 不同环境有不同路由方式，最终都加载 `/recon/detail/index.html`：
+
+| 环境 | 实现方式 | 浏览器感知 |
+|------|---------|----------|
+| **localhost** | `recon.js` 中 `getDetailUrl()` 直接跳 `/recon/detail/?id=2263` → JS `replaceState` 改为 `/recon/2263` | 无闪烁 |
+| **GitHub Pages** | `404.html` 检测 `/recon/数字` → `location.replace` 重定向到 `/recon/detail/?id=2263` → JS `replaceState` 改回 | 极短闪烁 |
+| **toolkit.cuberoot.me** | Nginx `rewrite` 内部转发到 `/recon/detail/?id=2263`，浏览器 URL 始终为 `/recon/2263` → JS 从路径提取 ID | 无闪烁 |
+
+相关文件：`404.html`（GitHub Pages 路由）、`CUBEROOT_ME.md`（Nginx rewrite 规则）、`recon.js`（`getDetailUrl()`）、`recon_detail.js`（双模式 ID 提取）
 ├── .upcoming_cache/           # API 响应本地缓存（已在 .gitignore，24h TTL）
 ├── .comp_names_zh_cache/      # cubing.com + WCA API 缓存（已在 .gitignore）
 ├── .github/workflows/         # CI 配置
