@@ -505,6 +505,67 @@ switch ($action) {
         }
         break;
 
+    // ==================== 选手搜索（代理 WCA API） ====================
+
+    case 'searchSolvers':
+        // NOTE: 公开只读端点，无需认证
+        $q = trim($_GET['q'] ?? '');
+        if (mb_strlen($q) < 2) {
+            echo json_encode([]);
+            break;
+        }
+
+        // NOTE: 文件缓存——同一 query 24h 内复用，避免频繁调 WCA API
+        $cacheDir = __DIR__ . '/data/.solver_cache';
+        if (!is_dir($cacheDir)) mkdir($cacheDir, 0755, true);
+        $cacheFile = $cacheDir . '/' . md5(mb_strtolower($q)) . '.json';
+        $cacheTTL = 86400; // 24 小时
+
+        if (file_exists($cacheFile) && filemtime($cacheFile) > time() - $cacheTTL) {
+            // NOTE: 缓存命中，直接返回
+            header('Cache-Control: public, max-age=3600');
+            echo file_get_contents($cacheFile);
+            break;
+        }
+
+        // NOTE: 调用 WCA 搜索 API
+        $wcaUrl = 'https://www.worldcubeassociation.org/api/v0/search/users?'
+            . http_build_query(['q' => $q, 'persons_table' => 'true']);
+        $ch = curl_init($wcaUrl);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 10,
+        ]);
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($httpCode !== 200 || !$response) {
+            http_response_code(502);
+            echo json_encode(['error' => 'WCA API unavailable']);
+            break;
+        }
+
+        $data = json_decode($response, true);
+        $wcaResults = $data['result'] ?? [];
+
+        // NOTE: 精简返回字段——只保留 name + iso2，减小响应体
+        $results = [];
+        foreach ($wcaResults as $person) {
+            $results[] = [
+                'name' => $person['name'] ?? '',
+                'iso2' => strtolower($person['country_iso2'] ?? ''),
+            ];
+        }
+
+        $resultJson = json_encode($results, JSON_UNESCAPED_UNICODE);
+        // NOTE: 写入缓存文件
+        file_put_contents($cacheFile, $resultJson);
+
+        header('Cache-Control: public, max-age=3600');
+        echo $resultJson;
+        break;
+
     default:
         http_response_code(400);
         echo json_encode(['error' => 'Unknown action: ' . $action]);
