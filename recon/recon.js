@@ -842,8 +842,8 @@
                     (isZh ? '📋 历史' : '📋 History') + '</button>';
             }
             if (canDelete) {
-                // NOTE: 删除按钮紧跟其他按钮
-                html += '<button class="recon-btn recon-btn-danger" onclick="window.dispatchEvent(new CustomEvent(\'recon-local-delete\',{detail:\'' + s.id + '\'}))">' +
+                // NOTE: 删除按钮紧跟其他按钮，confirm 防止误删
+                html += '<button class="recon-btn recon-btn-danger" onclick="if(confirm(\'' + (isZh ? '确定删除 #' + s.id + ' 吗？' : 'Delete #' + s.id + '?') + '\'))window.dispatchEvent(new CustomEvent(\'recon-local-delete\',{detail:\'' + s.id + '\'}))">' +
                     '🗑️ ' + (isZh ? '删除' : 'Delete') +
                     '</button>';
             }
