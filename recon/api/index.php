@@ -510,8 +510,8 @@ switch ($action) {
     case 'listPersons':
         // NOTE: 缓存 1 小时——选手列表变化不频繁
         header('Cache-Control: public, max-age=3600');
-        $stmt = $db->query("SELECT DISTINCT person FROM recons WHERE person_id IS NOT NULL AND person IS NOT NULL ORDER BY person");
-        $persons = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        $stmt = $db->query("SELECT DISTINCT person, person_id FROM recons WHERE person_id IS NOT NULL AND person IS NOT NULL ORDER BY person");
+        $persons = $stmt->fetchAll(PDO::FETCH_ASSOC);
         echo json_encode($persons);
         break;
 

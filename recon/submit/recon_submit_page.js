@@ -309,9 +309,11 @@
             var html = '';
             results.forEach(function (p) {
                 var flag = p.iso2 ? '<span class="fi fi-' + p.iso2 + '"></span> ' : '';
+                // NOTE: 如果有 wcaId，在名字前显示
+                var idBadge = p.wcaId ? '<span class="solver-wca-id">' + p.wcaId + '</span> ' : '';
                 html += '<div class="solver-dropdown-item" data-name="' +
                     p.name.replace(/"/g, '&quot;') + '">' +
-                    flag + '<span>' + p.name + '</span></div>';
+                    flag + idBadge + '<span>' + p.name + '</span></div>';
             });
             solverDropdown.innerHTML = html;
         }
@@ -365,7 +367,7 @@
         solverInput.addEventListener('focus', function () {
             if (this.value.trim().length > 0) return;
             if (cachedPersons) {
-                renderSolverDropdown(cachedPersons.map(function (name) { return { name: name, iso2: '' }; }));
+                renderSolverDropdown(cachedPersons.map(function (p) { return { name: p.person, iso2: '', wcaId: p.person_id }; }));
                 positionDropdownFor(solverInput, solverDropdown);
                 solverDropdown.style.display = 'block';
                 return;
@@ -380,7 +382,7 @@
                 .then(function (r) { return r.json(); })
                 .then(function (persons) {
                     cachedPersons = persons;
-                    renderSolverDropdown(persons.map(function (name) { return { name: name, iso2: '' }; }));
+                    renderSolverDropdown(persons.map(function (p) { return { name: p.person, iso2: '', wcaId: p.person_id }; }));
                     positionDropdownFor(solverInput, solverDropdown);
                     solverDropdown.style.display = 'block';
                 })
