@@ -53,11 +53,35 @@
         updateWcaAuthUI();
 
         // NOTE: 并行加载辅助数据和复盘数据
+        // 优先使用 recon 专用精简文件（~21KB），fallback 到全量文件（~9.6MB）
+        var auxPromise = fetch('/recon/recon_aux_data.json').then(function (r) { return r.json(); })
+            .then(function (aux) {
+                return {
+                    compCountries: aux.compCountries || {},
+                    personCountries: aux.personCountries || {},
+                    compNamesZh: aux.compNamesZh || {},
+                    compWcaIds: aux.compWcaIds || {}
+                };
+            })
+            .catch(function () {
+                // NOTE: fallback 到全量文件
+                return Promise.all([
+                    fetch('/stats/comp_name_countries.json').then(function (r) { return r.json(); }).catch(function () { return {}; }),
+                    fetch('/stats/person_name_countries.json').then(function (r) { return r.json(); }).catch(function () { return {}; }),
+                    fetch('/recon/comp_names_zh.json').then(function (r) { return r.json(); }).catch(function () { return {}; }),
+                    fetch('/stats/comp_name_to_wca_id.json').then(function (r) { return r.json(); }).catch(function () { return {}; })
+                ]).then(function (results) {
+                    return {
+                        compCountries: results[0],
+                        personCountries: results[1],
+                        compNamesZh: results[2],
+                        compWcaIds: results[3]
+                    };
+                });
+            });
+
         Promise.all([
-            fetch('/stats/comp_name_countries.json').then(function (r) { return r.json(); }).catch(function () { return {}; }),
-            fetch('/stats/person_name_countries.json').then(function (r) { return r.json(); }).catch(function () { return {}; }),
-            fetch('/recon/comp_names_zh.json').then(function (r) { return r.json(); }).catch(function () { return {}; }),
-            fetch('/stats/comp_name_to_wca_id.json').then(function (r) { return r.json(); }).catch(function () { return {}; }),
+            auxPromise,
             // NOTE: 优先用 loadOne 单条查询；若后端尚未部署 get action 则 fallback 到 loadAll
             ReconStore.loadOne(id).catch(function () {
                 return ReconStore.loadAll().then(function (all) {
@@ -67,11 +91,12 @@
                 });
             })
         ]).then(function (results) {
-            compCountries = results[0];
-            personCountries = results[1];
-            compNamesZh = results[2];
-            compWcaIds = results[3];
-            var solve = results[4];
+            var aux = results[0];
+            compCountries = aux.compCountries;
+            personCountries = aux.personCountries;
+            compNamesZh = aux.compNamesZh;
+            compWcaIds = aux.compWcaIds;
+            var solve = results[1];
 
             // NOTE: 计算统计（STM、TPS、OLL、PLL 等）
             if (typeof ReconStats !== 'undefined') {
