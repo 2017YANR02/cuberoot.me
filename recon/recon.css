@@ -20,9 +20,15 @@
     flex: 1;
 }
 
-/* NOTE: 限制国旗图标大小，不受父元素字号影响（如 h1 标题行） */
-.fi {
+/* NOTE: 国旗图标大小——表格行 16px，标题行 24px */
+#recon-table .fi,
+.detail-summary .fi {
     font-size: 16px !important;
+    vertical-align: middle;
+}
+
+h1 .fi {
+    font-size: 24px !important;
     vertical-align: middle;
 }
 
