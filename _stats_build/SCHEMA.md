@@ -80,8 +80,8 @@
 | 列名 | 类型 | 说明 |
 |------|------|------|
 | `id` | varchar(32) | 主键（如 `LyonOpen2007`）|
-| `cell_name` | varchar(45) | 显示名称（短名）|
-| `name` | varchar(50) | 完整名称 |
+| `cell_name` | varchar(45) | 简称 (魔方根网站采用这个) |
+| `name` | varchar(50) | 全称 |
 | `country_id` | varchar(50) | 国家 |
 | `city_name` | varchar(50) | 城市 |
 | `start_date` | date | 开始日期 |
