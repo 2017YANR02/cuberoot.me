@@ -73,7 +73,7 @@
             document.getElementById('rf-solve-num').value = s.solveNum ? String(s.solveNum) : '';
 
             // NOTE: 打乱预填充：优先用 wcaScramble，否则从 recon 文本第二行提取
-            var scramblePrefill = s.wcaScramble || s.scramble || '';
+            var scramblePrefill = s.wcaScramble || s.optimalScramble || '';
             var solutionText = s.recon || s.caption || '';
 
             // NOTE: 从完整 recon 中剥离统计行和打乱行，只保留纯解法
