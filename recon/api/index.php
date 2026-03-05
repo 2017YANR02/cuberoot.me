@@ -204,6 +204,38 @@ switch ($action) {
         echo json_encode($results);
         break;
 
+    case 'get':
+        // NOTE: 单条查询——详情页专用，服务端合并编辑覆盖层
+        $id = $_GET['id'] ?? '';
+        if (!$id) {
+            http_response_code(400);
+            echo json_encode(['error' => 'id is required']);
+            break;
+        }
+        $stmt = $db->prepare("SELECT * FROM recons WHERE id = ?");
+        $stmt->execute([$id]);
+        $row = $stmt->fetch();
+        if (!$row) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Not found']);
+            break;
+        }
+        $result = rowToJson($row);
+        // NOTE: 合并编辑覆盖层（避免前端再调 edits 接口）
+        $estmt = $db->prepare("SELECT fields FROM edits WHERE solve_id = ?");
+        $estmt->execute([$id]);
+        $edit = $estmt->fetch();
+        if ($edit) {
+            $fields = json_decode($edit['fields'], true);
+            foreach ($fields as $k => $v) {
+                if ($k[0] !== '_')
+                    $result[$k] = $v;
+            }
+            $result['_edited'] = true;
+        }
+        echo json_encode($result);
+        break;
+
     case 'add':
         // NOTE: 添加复盘（数据库 AUTO_INCREMENT 自动分配 ID）
         header('Cache-Control: no-cache, no-store, must-revalidate');

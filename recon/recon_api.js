@@ -56,6 +56,11 @@ var ReconStore = (function () {
         return apiGet({ action: 'list' });
     }
 
+    /** 加载单条复盘（含编辑覆盖合并） */
+    function loadOne(id) {
+        return apiGet({ action: 'get', id: id });
+    }
+
     /** 加载指定用户的社区复盘 */
     function loadByUser(wcaId) {
         return apiGet({ action: 'list', wcaId: wcaId });
@@ -114,6 +119,7 @@ var ReconStore = (function () {
     return {
         init: function () { }, // NOTE: 无需初始化，保持接口兼容
         loadAll: loadAll,
+        loadOne: loadOne,
         loadByUser: loadByUser,
         addRecon: addRecon,
         deleteRecon: deleteRecon,
