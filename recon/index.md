@@ -49,6 +49,21 @@ layout: default
 <!-- NOTE: 主表格容器 -->
 <div class="recon-table-wrap">
     <table id="recon-table">
+        <colgroup>
+            <col class="col-idx" style="width: 30px">
+            <col class="col-dsingle" style="width: 75px">
+            <col class="col-solver" style="width: 100px">
+            <col class="col-date" style="width: 85px">
+            <col class="col-comp" style="width: 150px">
+            <col class="col-round" style="width: 35px">
+            <col class="col-avg" style="width: 55px">
+            <col class="col-aoxr" style="width: 70px">
+            <col class="col-single" style="width: 50px">
+            <col class="col-stm" style="width: 35px">
+            <col class="col-tps" style="width: 40px">
+            <col class="col-event" style="width: 30px">
+            <col class="col-method" style="width: 45px">
+        </colgroup>
         <thead>
             <tr>
                 <th class="col-idx">#</th>
