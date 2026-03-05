@@ -111,10 +111,10 @@
 
             renderDetail(solve);
         }).catch(function (err) {
-            var isZh = localStorage.getItem('i18n_locale') === 'zh';
             var container = document.getElementById('detail-container');
             container.innerHTML = '<div style="text-align:center;padding:60px;color:#f87171">' +
-                '<p>' + (isZh ? '未找到复盘 #' + id : 'Recon #' + id + ' not found') + '</p>' +
+                '<p><span data-i18n-en="Recon #' + id + ' not found" data-i18n-zh="未找到复盘 #' + id + '">' +
+                (localStorage.getItem('i18n_locale') === 'zh' ? '未找到复盘 #' + id : 'Recon #' + id + ' not found') + '</span></p>' +
                 '<a href="/recon/" style="color:#60a5fa">←</a>' +
                 '</div>';
             console.error('Failed to load recon:', err);
@@ -316,7 +316,7 @@
         // NOTE: 摘要第二行——纪录信息（无内容则不渲染）
         var line2Parts = [];
         if (s.average != null) {
-            var avgText = U.formatAvg(s.average) + (isZh ? '平均' : ' Avg');
+            var avgText = U.formatAvg(s.average) + ' <span data-i18n-en="Avg" data-i18n-zh="平均">' + (isZh ? '平均' : 'Avg') + '</span>';
             if (s.regionalAverageRecord) avgText += ' ' + U.formatRecord(s.regionalAverageRecord);
             line2Parts.push(avgText);
         }
@@ -400,7 +400,7 @@
 
         if (s.note) {
             html += '<div class="detail-note">';
-            html += '<div class="detail-scramble-label">📝 ' + (isZh ? '备注' : 'Note') + '</div>';
+            html += '<div class="detail-scramble-label">📝 <span data-i18n-en="Note" data-i18n-zh="备注">' + (isZh ? '备注' : 'Note') + '</span></div>';
             html += '<div class="detail-recon-text">' + U.escHtml(s.note) + '</div>';
             html += '</div>';
         }
@@ -421,17 +421,17 @@
             html += '<div class="detail-admin-actions">';
             if (isAdminUser) {
                 html += '<button class="recon-btn recon-btn-edit" data-solve-id="' + s.id + '">' +
-                    (isZh ? '编辑' : 'Edit') + '</button>';
+                    '<span data-i18n-en="Edit" data-i18n-zh="编辑">' + (isZh ? '编辑' : 'Edit') + '</span></button>';
                 if (s._edited) {
                     html += '<button class="recon-btn recon-btn-restore" data-solve-id="' + s.id + '">' +
-                        (isZh ? '恢复' : 'Restore') + '</button>';
+                        '<span data-i18n-en="Restore" data-i18n-zh="恢复">' + (isZh ? '恢复' : 'Restore') + '</span></button>';
                 }
                 html += '<button class="recon-btn recon-btn-history" data-solve-id="' + s.id + '">' +
-                    (isZh ? '历史' : 'History') + '</button>';
+                    '<span data-i18n-en="History" data-i18n-zh="历史">' + (isZh ? '历史' : 'History') + '</span></button>';
             }
             if (canDelete) {
                 html += '<button class="recon-btn recon-btn-danger">' +
-                    (isZh ? '删除' : 'Delete') + '</button>';
+                    '<span data-i18n-en="Delete" data-i18n-zh="删除">' + (isZh ? '删除' : 'Delete') + '</span></button>';
             }
             html += '</div>';
         }
@@ -477,16 +477,22 @@
         if (visibleItems.length === 0) return '';
 
         var html = '<div class="detail-stats">';
-        html += '<div class="detail-stats-label">📊 ' + (isZh ? '统计' : 'Stats') + '</div>';
+        html += '<div class="detail-stats-label">📊 <span data-i18n-en="Stats" data-i18n-zh="统计">' + (isZh ? '统计' : 'Stats') + '</span></div>';
         html += '<div class="detail-stats-grid">';
         for (var j = 0; j < visibleItems.length; j++) {
             var item = visibleItems[j];
-            var label = isZh ? item[2] : item[1];
+            var enLabel = item[1];
+            var zhLabel = item[2];
+            var label = isZh ? zhLabel : enLabel;
             var val = s[item[0]];
             var fmt = item[3];
             var displayVal = fmt ? fmt(val) : U.escHtml(String(val));
+            // NOTE: 标签相同时无需 data-i18n 属性（如 STM、TPS、OLL、PLL）
+            var labelHtml = (enLabel === zhLabel)
+                ? U.escHtml(label)
+                : '<span data-i18n-en="' + U.escHtml(enLabel) + '" data-i18n-zh="' + U.escHtml(zhLabel) + '">' + U.escHtml(label) + '</span>';
             html += '<div class="stat-item">' +
-                '<span class="stat-label">' + U.escHtml(label) + '</span>' +
+                '<span class="stat-label">' + labelHtml + '</span>' +
                 '<span class="stat-value">' + displayVal + '</span>' +
                 '</div>';
         }

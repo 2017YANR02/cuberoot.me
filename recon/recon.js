@@ -463,13 +463,13 @@
         // NOTE: 更新分页状态
         const isZh = localStorage.getItem('i18n_locale') === 'zh';
         if (displayCount >= filteredSolves.length) {
-            showingEl.textContent = isZh
-                ? `共 ${filteredSolves.length} 条`
-                : `${filteredSolves.length} total`;
+            const enText = `${filteredSolves.length} total`;
+            const zhText = `共 ${filteredSolves.length} 条`;
+            showingEl.innerHTML = `<span data-i18n-en="${enText}" data-i18n-zh="${zhText}">${isZh ? zhText : enText}</span>`;
         } else {
-            showingEl.textContent = isZh
-                ? `已显示 ${displayCount} / ${filteredSolves.length}`
-                : `Showing ${displayCount} of ${filteredSolves.length}`;
+            const enText = `Showing ${displayCount} of ${filteredSolves.length}`;
+            const zhText = `已显示 ${displayCount} / ${filteredSolves.length}`;
+            showingEl.innerHTML = `<span data-i18n-en="${enText}" data-i18n-zh="${zhText}">${isZh ? zhText : enText}</span>`;
         }
     }
 
