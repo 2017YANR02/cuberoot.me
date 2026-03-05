@@ -8,7 +8,6 @@
 
     // NOTE: 编辑模式专用字段（新增模式不显示这些）
     var EDIT_ONLY_FIELDS = [
-        { key: 'solverZh', labelEn: 'Solver(ZH)', labelZh: '选手(中文)' },
         { key: 'displaySingle', labelEn: 'Display', labelZh: '显示成绩' },
         { key: 'avg', labelEn: 'Average', labelZh: '平均' },
         { key: 'date', labelEn: 'Date', labelZh: '日期' },
@@ -685,7 +684,7 @@
         // NOTE: 读取额外字段
         var officialEl = document.getElementById('rf-official');
         var official = officialEl ? officialEl.checked : false;
-        var solverZh = document.getElementById('rf-edit-solverZh').value.trim();
+
         var displaySingle = document.getElementById('rf-edit-displaySingle').value.trim();
         var avg = document.getElementById('rf-edit-avg').value.trim();
         var aoType = document.getElementById('rf-edit-aoType').value.trim();
@@ -710,7 +709,7 @@
         if (note) solve.note = note;
         if (round) solve.round = round;
         if (solveNum) solve.solveNum = parseInt(solveNum);
-        if (solverZh) solve.solverZh = solverZh;
+
         if (displaySingle) solve.displaySingle = displaySingle;
         if (avg) solve.avg = parseFloat(avg);
         if (aoType) solve.aoType = aoType;

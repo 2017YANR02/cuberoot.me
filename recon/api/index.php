@@ -505,6 +505,41 @@ switch ($action) {
         }
         break;
 
+    // ==================== 临时迁移端点（合并 solver_zh 到 solver，迁移完成后删除） ====================
+
+    case 'migrateSolverZh':
+        header('Cache-Control: no-cache, no-store, must-revalidate');
+        requireAdmin();
+
+        // NOTE: 将 solver_zh 合并到 solver（WCA 格式：English Name (中文名)）
+        // 跳过已含括号的和 solver_zh 含特殊字符的（如双人合作）
+        $stmt = $db->query(
+            "SELECT id, solver, solver_zh FROM recons
+             WHERE solver_zh IS NOT NULL
+               AND solver_zh != ''
+               AND solver NOT LIKE CONCAT('%(', solver_zh, ')%')
+               AND solver_zh NOT LIKE '%)%'"
+        );
+        $rows = $stmt->fetchAll();
+
+        $updateStmt = $db->prepare(
+            "UPDATE recons SET solver = ?, solver_zh = NULL WHERE id = ?"
+        );
+
+        $migrated = 0;
+        foreach ($rows as $row) {
+            $newSolver = $row['solver'] . ' (' . $row['solver_zh'] . ')';
+            $updateStmt->execute([$newSolver, $row['id']]);
+            $migrated++;
+        }
+
+        echo json_encode([
+            'ok' => true,
+            'migrated' => $migrated,
+            'skipped_special' => count($rows) === 0 ? 'none' : null
+        ]);
+        break;
+
     // ==================== 选手搜索（代理 WCA API） ====================
 
     case 'searchSolvers':
@@ -517,7 +552,8 @@ switch ($action) {
 
         // NOTE: 文件缓存——同一 query 24h 内复用，避免频繁调 WCA API
         $cacheDir = __DIR__ . '/data/.solver_cache';
-        if (!is_dir($cacheDir)) mkdir($cacheDir, 0755, true);
+        if (!is_dir($cacheDir))
+            mkdir($cacheDir, 0755, true);
         $cacheFile = $cacheDir . '/' . md5(mb_strtolower($q)) . '.json';
         $cacheTTL = 86400; // 24 小时
 
