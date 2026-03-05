@@ -501,11 +501,12 @@
         });
         // NOTE: 中键点击任意列 → 新标签打开
         tr.addEventListener('mousedown', function (e) {
-            // NOTE: 阻止中键默认的自动滚动图标
-            if (e.button === 1) e.preventDefault();
+            // NOTE: 阻止中键默认的自动滚动图标，但不拦截 <a> 标签
+            if (e.button === 1 && !e.target.closest('a')) e.preventDefault();
         });
         tr.addEventListener('mouseup', function (e) {
             if (e.button === 1) {
+                if (e.target.closest('a')) return; // NOTE: <a> 标签让浏览器原生处理中键
                 e.preventDefault();
                 window.open(url, '_blank');
             }
