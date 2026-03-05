@@ -178,10 +178,12 @@
 
         Promise.all([
             fetch('/stats/comp_dates.json').then(function (r) { return r.json(); }),
-            fetch('/stats/comp_name_countries.json').then(function (r) { return r.json(); })
+            fetch('/stats/comp_name_countries.json').then(function (r) { return r.json(); }),
+            fetch('/recon/comp_names_zh.json').then(function (r) { return r.json(); }).catch(function () { return {}; })
         ]).then(function (results) {
             var compDateMap = results[0];
             var compCountryMap = results[1];
+            var compNamesZh = results[2];
 
             // NOTE: 30 天内的比赛
             var cutoff = new Date();
@@ -195,6 +197,7 @@
                 .map(function (name) {
                     return {
                         name: name,
+                        nameZh: compNamesZh[name] || '',
                         date: compDateMap[name],
                         iso2: (compCountryMap[name] || '').toLowerCase()
                     };
@@ -216,13 +219,19 @@
         function renderCompDropdown(comps, query) {
             var q = query.toLowerCase();
             var filtered = q
-                ? comps.filter(function (c) { return c.name.toLowerCase().indexOf(q) >= 0 || c.date.indexOf(q) >= 0; })
+                ? comps.filter(function (c) {
+                    return c.name.toLowerCase().indexOf(q) >= 0 ||
+                        c.date.indexOf(q) >= 0 ||
+                        (c.nameZh && c.nameZh.indexOf(query) >= 0);
+                })
                 : comps;
             var html = '';
             filtered.forEach(function (c) {
                 var flag = c.iso2 ? '<span class="fi fi-' + c.iso2 + '"></span> ' : '';
+                // NOTE: 中文模式下国内比赛显示中文名，点击仍填入英文名
+                var displayName = (isZh && c.nameZh) ? c.nameZh : c.name;
                 html += '<div class="comp-dropdown-item" data-name="' + c.name.replace(/"/g, '&quot;') + '" data-date="' + c.date + '">' +
-                    '<small>' + c.date + '</small>' + flag + '<span>' + c.name + '</span></div>';
+                    '<small>' + c.date + '</small>' + flag + '<span>' + displayName + '</span></div>';
             });
             if (!html && q) {
                 html = '<div class="comp-dropdown-empty">' + (isZh ? '无匹配' : 'No match') + '</div>';
