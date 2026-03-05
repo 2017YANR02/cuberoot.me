@@ -26,6 +26,7 @@
     let personCountries = {};  // 选手名 → ISO2 映射
     let compNamesZh = {};     // 英文比赛名 → 中文比赛名 映射
     let compWcaIds = {};      // 英文比赛名 → WCA 比赛 ID 映射
+    let compNameAliases = {};  // cell_name → name 别名映射（搜索用）
 
     // --- DOM 引用 ---
     let tbody, searchInput, filterSolver, filterMethod, filterEvent;
@@ -66,6 +67,7 @@
             personCountries = aux.personCountries || {};
             compNamesZh = aux.compNamesZh || {};
             compWcaIds = aux.compWcaIds || {};
+            compNameAliases = aux.compNameAliases || {};
         } catch (e) {
             console.warn('Failed to load recon aux data, falling back to full files:', e);
             try {
@@ -352,6 +354,8 @@
                     s.single != null && typeof s.single === 'number' ? s.single.toFixed(3) : '',
                     // NOTE: 支持中文比赛名搜索
                     compNamesZh[s.comp] || '',
+                    // NOTE: 支持用全称（name）搜索简称（cell_name）的比赛
+                    compNameAliases[s.comp] || '',
                     // NOTE: 支持搜索 "cancelled"/"取消" 匹配被取消的纪录
                     s.regionalAverageRecord, s.regionalSingleRecord, s.regionalAoxrRecord
                 ].filter(Boolean).join(' ').toLowerCase();
