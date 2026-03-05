@@ -110,11 +110,15 @@ ruiminyan.github.io/
 ├── scripts/                   # Python 数据脚本
 │   ├── fetch_upcoming_comps.py  # 从 WCA API 抓取 432 名顶尖选手的近期比赛
 │   └── fetch_comp_names_zh.py   # 爬取 cubing.com 中国比赛中文名映射（CI 每日自动运行）
+├── 404.html                   # 自定义 404 页面（GitHub Pages / Jekyll serve 路由）
+│                              # 检测 /recon/数字 URL → JS 重定向到 /recon/detail/?id=数字
+│                              # NOTE: GitHub Pages 无服务端路由，这是支持 /recon/2263 干净 URL 的唯一方式
 ├── recon/                     # 比赛复盘页面（数据统一由阿里云 PHP 后端管理）
-│   ├── index.md               # 页面入口（Jekyll Markdown，引入 WCA Auth）
-│   ├── recon.js               # 前端逻辑：表格渲染、筛选搜索、排序、行展开、hash URL 分享、WCA 登录 UI
-│   ├── recon.css              # 页面样式（含社区行标记、WCA 登录、比赛搜索下拉、提交页两列布局）
-│   ├── recon_api.js           # PHP 后端 API 数据层（复盘的 CRUD 封装）
+│   ├── index.md               # 列表页入口（Jekyll Markdown，引入 WCA Auth）
+│   ├── recon.js               # 列表页逻辑：表格渲染、筛选搜索、排序、点击跳转详情页
+│   ├── recon.css              # 页面样式（含社区行标记、WCA 登录、比赛搜索下拉、提交页/详情页布局）
+│   ├── recon_utils.js         # 共享工具模块：格式化、国旗、名字解析等（列表页+详情页共用，DRY）
+│   ├── recon_api.js           # PHP 后端 API 数据层（复盘的 CRUD + 单条查询 loadOne）
 │   ├── recon_submit.js        # 列表页提交入口：➕ 跳转、localStorage 恢复、删除处理
 │   ├── recon_local_store.js   # 共享模块：localStorage 复盘持久化 CRUD
 │   ├── recon_alg_utils.js     # 共享模块：公式清理（twisty-player / alg.cubing.net 不兼容符号）
@@ -123,10 +127,13 @@ ruiminyan.github.io/
 │   ├── callback.html          # WCA OAuth 回调页（解析 URL hash 中的 access_token）
 │   ├── comp_names_zh.json     # 英文比赛名→中文名映射（由 fetch_comp_names_zh.py 生成，CI 每日更新）
 │   ├── api/                   # PHP 后端（阿里云 ECS，通过 CI rsync 部署）
-│   │   └── index.php            # API 入口：list/add/delete/update/edits/import
-│   └── submit/                # 独立提交页面
-│       ├── index.html         # 提交/编辑复盘表单 HTML（两列布局：表单+预览）
-│       └── recon_submit_page.js # 提交页逻辑（表单交互、编辑预填充、提交处理）
+│   │   └── index.php            # API 入口：list/get/add/delete/update/edits/import
+│   ├── detail/                # 独立详情页（点击列表行跳转，URL: /recon/ID）
+│   │   ├── index.md           # 详情页 HTML（Jekyll Markdown，引入共享模块）
+│   │   └── recon_detail.js    # 详情页逻辑：单条加载、渲染、twisty 动画、管理员操作
+│   ├── submit/                # 独立提交页面
+│   │   ├── index.html         # 提交/编辑复盘表单 HTML（两列布局：表单+预览）
+│   │   └── recon_submit_page.js # 提交页逻辑（表单交互、编辑预填充、提交处理）
 │   └── backup/                # 复盘数据备份（CI 每日自动从 API 拉取）
 │       └── recons_backup.json # 全量复盘数据备份
 ├── .upcoming_cache/           # API 响应本地缓存（已在 .gitignore，24h TTL）
