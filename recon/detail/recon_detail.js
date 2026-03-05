@@ -87,7 +87,7 @@
             var container = document.getElementById('detail-container');
             container.innerHTML = '<div style="text-align:center;padding:60px;color:#f87171">' +
                 '<p>' + (isZh ? '未找到复盘 #' + id : 'Recon #' + id + ' not found') + '</p>' +
-                '<a href="/recon/" style="color:#60a5fa">' + (isZh ? '返回列表' : 'Back to list') + '</a>' +
+                '<a href="/recon/" style="color:#60a5fa">←</a>' +
                 '</div>';
             console.error('Failed to load recon:', err);
         });
@@ -117,12 +117,16 @@
         var isZh = localStorage.getItem('i18n_locale') === 'zh';
         var U = ReconUtils;
 
-        // NOTE: 更新页面标题
+        // NOTE: 更新页面标题——包含 ID、成绩、项目、方法、国旗+选手名
         var titleEl = document.getElementById('detail-title');
         var solverDisplay = U.displaySolverName(solve.person);
-        var compDisplay = U.displayCompName(solve.comp, compNamesZh);
-        titleEl.innerHTML = '#' + solve.id + ' ' +
-            U.countryFlag(U.solverCountry(solve.person, personCountries)) + ' ' + solverDisplay;
+        var titleParts = ['<span style="color:#888;font-size:0.7em">#' + solve.id + '</span>'];
+        titleParts.push('<span class="mono">' + U.formatResult(solve.single) + '</span>');
+        if (solve.regionalSingleRecord) titleParts.push(U.formatRecord(solve.regionalSingleRecord));
+        if (solve.event) titleParts.push(U.escHtml(solve.event));
+        if (solve.method) titleParts.push(U.escHtml(solve.method));
+        titleParts.push(U.countryFlag(U.solverCountry(solve.person, personCountries)) + solverDisplay);
+        titleEl.innerHTML = titleParts.join(' ');
 
         // NOTE: 更新浏览器标签页标题
         var parsed = U.parseSolverName(solve.person || '');
@@ -259,20 +263,29 @@
 
         var html = '<div class="detail-content">';
 
-        // NOTE: 基本信息摘要行
-        html += '<div class="detail-summary">';
-        html += '<span class="mono">' + U.formatResult(s.single) + '</span>';
-        if (s.regionalSingleRecord) html += ' ' + U.formatRecord(s.regionalSingleRecord);
-        if (s.average != null) html += ' · ' + (isZh ? '平均 ' : 'Avg ') + U.formatAvg(s.average);
-        if (s.regionalAverageRecord) html += ' ' + U.formatRecord(s.regionalAverageRecord);
-        if (s.aoType) html += ' · ' + U.escHtml(s.aoType);
-        if (s.regionalAoxrRecord) html += ' ' + U.formatRecord(s.regionalAoxrRecord);
-        html += ' · ' + U.escHtml(s.date || '');
-        if (s.comp) html += ' · ' + U.countryFlag(compCountries[s.comp]) + ' ' + U.displayCompName(s.comp, compNamesZh);
-        if (s.round) html += ' · ' + U.escHtml(s.round) + (s.solveNum ? '#' + s.solveNum : '');
-        if (s.event) html += ' · ' + U.escHtml(s.event);
-        if (s.method) html += ' · ' + U.escHtml(s.method);
-        html += '</div>';
+        // NOTE: 摘要第一行——比赛信息（日期后无逗号，其他用逗号分隔）
+        var line1 = U.escHtml(s.date || '');
+        var line1Rest = [];
+        if (s.comp) line1Rest.push(U.countryFlag(compCountries[s.comp]) + ' ' + U.displayCompName(s.comp, compNamesZh));
+        if (s.round) line1Rest.push(U.escHtml(s.round) + (s.solveNum ? '#' + s.solveNum : ''));
+        if (line1Rest.length > 0) line1 += ' ' + line1Rest.join(', ');
+        html += '<div class="detail-summary">' + line1 + '</div>';
+
+        // NOTE: 摘要第二行——纪录信息（无内容则不渲染）
+        var line2Parts = [];
+        if (s.average != null) {
+            var avgText = U.formatAvg(s.average) + (isZh ? '平均' : ' Avg');
+            if (s.regionalAverageRecord) avgText += ' ' + U.formatRecord(s.regionalAverageRecord);
+            line2Parts.push(avgText);
+        }
+        if (s.aoType) {
+            var aoText = U.escHtml(s.aoType);
+            if (s.regionalAoxrRecord) aoText += ' ' + U.formatRecord(s.regionalAoxrRecord);
+            line2Parts.push(aoText);
+        }
+        if (line2Parts.length > 0) {
+            html += '<div class="detail-summary">' + line2Parts.join(', ') + '</div>';
+        }
 
         // NOTE: 复盘 + 统计两列布局
         html += '<div class="detail-grid">';
