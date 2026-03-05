@@ -174,6 +174,7 @@
         compDropdown.className = 'comp-dropdown';
         document.body.appendChild(compDropdown);
         var recentComps = [];
+        var allComps = [];
 
         Promise.all([
             fetch('/stats/comp_dates.json').then(function (r) { return r.json(); }),
@@ -188,11 +189,9 @@
             var cutoffStr = cutoff.toISOString().split('T')[0];
             var today = new Date().toISOString().split('T')[0];
 
-            recentComps = Object.keys(compDateMap)
-                .filter(function (name) {
-                    var d = compDateMap[name];
-                    return d >= cutoffStr && d <= today && name.indexOf('?') < 0;
-                })
+            // NOTE: 全量比赛列表（关键字搜索用）
+            allComps = Object.keys(compDateMap)
+                .filter(function (name) { return name.indexOf('?') < 0; })
                 .map(function (name) {
                     return {
                         name: name,
@@ -204,6 +203,10 @@
                     var dc = b.date.localeCompare(a.date);
                     return dc !== 0 ? dc : a.name.localeCompare(b.name);
                 });
+
+            recentComps = allComps.filter(function (c) {
+                return c.date >= cutoffStr && c.date <= today;
+            });
 
             renderCompDropdown(recentComps, '');
         }).catch(function (e) {
@@ -246,13 +249,16 @@
         }
 
         compInput.addEventListener('input', function () {
-            renderCompDropdown(recentComps, this.value);
+            // NOTE: 有输入时搜索全量比赛，空输入时显示近期比赛
+            var q = this.value.trim();
+            renderCompDropdown(q ? allComps : recentComps, q);
             positionDropdownFor(compInput, compDropdown);
             compDropdown.style.display = 'block';
         });
 
         compInput.addEventListener('focus', function () {
-            renderCompDropdown(recentComps, this.value);
+            var q = this.value.trim();
+            renderCompDropdown(q ? allComps : recentComps, q);
             positionDropdownFor(compInput, compDropdown);
             compDropdown.style.display = 'block';
         });
