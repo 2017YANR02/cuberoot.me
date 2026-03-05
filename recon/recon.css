@@ -722,7 +722,7 @@ tr.detail-row td {
     letter-spacing: 0.05em;
 }
 
-.recon-form-group input,
+.recon-form-group input:not([type="checkbox"]),
 .recon-form-group textarea {
     padding: 8px 12px;
     border-radius: 6px;
@@ -733,9 +733,11 @@ tr.detail-row td {
     font-size: 0.9rem;
     outline: none;
     transition: border-color 0.2s;
+    box-sizing: border-box;
+    width: 100%;
 }
 
-.recon-form-group input:focus,
+.recon-form-group input:not([type="checkbox"]):focus,
 .recon-form-group textarea:focus {
     border-color: rgba(99, 102, 241, 0.5);
 }
@@ -1018,26 +1020,27 @@ tr.detail-row td {
     display: block;
 }
 
-/* NOTE: 两列布局：左=表单，右=预览动画 */
+/* NOTE: 提交页面外层容器 */
 .submit-page-layout {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* NOTE: 表单双列布局：左=核心内容，右=元数据 */
+.submit-two-col {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 32px;
+    gap: 0 32px;
     align-items: start;
 }
 
-.submit-form-col {
+.submit-col-main,
+.submit-col-meta {
     min-width: 0;
-}
-
-.submit-preview-col {
-    min-width: 0;
-    position: sticky;
-    top: 24px;
 }
 
 /* NOTE: 提交页面的 select 元素继承深色主题 */
-.submit-form-col select {
+.submit-two-col select {
     padding: 8px 12px;
     border-radius: 6px;
     border: 1px solid rgba(255, 255, 255, 0.12);
@@ -1051,11 +1054,11 @@ tr.detail-row td {
     width: 100%;
 }
 
-.submit-form-col select:focus {
+.submit-two-col select:focus {
     border-color: rgba(99, 102, 241, 0.5);
 }
 
-.submit-form-col select option {
+.submit-two-col select option {
     background: #333333;
     color: #ccc;
 }
@@ -1089,11 +1092,7 @@ tr.detail-row td {
 
 /* NOTE: 手机端单列布局 */
 @media (max-width: 768px) {
-    .submit-page-layout {
+    .submit-two-col {
         grid-template-columns: 1fr;
-    }
-
-    .submit-preview-col {
-        position: static;
     }
 }
