@@ -957,6 +957,33 @@ tr.detail-row td {
     font-size: 0.85rem;
 }
 
+.solver-dropdown-loading {
+    padding: 10px;
+    text-align: center;
+    color: #aaa;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.solver-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-top-color: #aaa;
+    border-radius: 50%;
+    animation: solver-spin 0.6s linear infinite;
+}
+
+@keyframes solver-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 /* NOTE: WCA / non-WCA 复选框筛选行 */
 .recon-type-filters {
     display: flex;
