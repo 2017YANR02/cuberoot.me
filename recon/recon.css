@@ -269,6 +269,26 @@ h1 .fi {
     font-size: 0.8rem;
 }
 
+/* NOTE: 防止长选手名/比赛名撑宽表格，溢出部分截断显示省略号 */
+.col-solver,
+.col-comp {
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* NOTE: 内部的 <a> 也需要截断，否则 inline 元素不受 td 的 max-width 约束 */
+.col-solver a,
+.col-comp a {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
 /* NOTE: 展开箭头 */
 .expand-icon {
     font-size: 0.7rem;
