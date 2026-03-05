@@ -517,6 +517,33 @@ switch ($action) {
 
     // ==================== 临时迁移端点（完成后删除） ====================
 
+    // ==================== 临时：查询缺 person_id 的选手 ====================
+    case 'missingPersonIds':
+        header('Cache-Control: no-cache');
+        $stmt = $db->query("SELECT DISTINCT person FROM recons WHERE (person_id IS NULL OR person_id = '') AND person IS NOT NULL AND person != '' ORDER BY person");
+        echo json_encode($stmt->fetchAll(PDO::FETCH_COLUMN));
+        break;
+
+    // ==================== 临时：批量更新 person_id ====================
+    case 'fillPersonIds':
+        header('Cache-Control: no-cache');
+        requireAdmin();
+        $input = json_decode(file_get_contents('php://input'), true);
+        // NOTE: 输入格式 [{ "person": "Name", "personId": "2019XXXX01" }, ...]
+        if (!is_array($input)) {
+            http_response_code(400);
+            echo '{"error":"array expected"}';
+            break;
+        }
+        $stmt = $db->prepare("UPDATE recons SET person_id = :pid WHERE person = :name AND (person_id IS NULL OR person_id = '')");
+        $results = [];
+        foreach ($input as $item) {
+            $stmt->execute([':pid' => $item['personId'], ':name' => $item['person']]);
+            $results[] = ['person' => $item['person'], 'personId' => $item['personId'], 'rows' => $stmt->rowCount()];
+        }
+        echo json_encode($results);
+        break;
+
     case 'renameColumns2':
         header('Cache-Control: no-cache, no-store, must-revalidate');
         requireAdmin();
