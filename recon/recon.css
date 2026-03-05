@@ -950,6 +950,17 @@ tr.detail-row td {
     flex-shrink: 0;
 }
 
+/* NOTE: WCA ID 徽章——小字号等宽字体，与名字区分 */
+.solver-wca-id {
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.72rem;
+    color: #8b9cb8;
+    background: rgba(255, 255, 255, 0.06);
+    padding: 1px 5px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
 .solver-dropdown-empty {
     padding: 10px;
     text-align: center;
