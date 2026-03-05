@@ -141,16 +141,26 @@ if File.exist?(backup_path)
     comps.each { |c| sub_comp_names_zh[c] = all_zh[c] if all_zh[c] }
   end
 
+  # NOTE: 构建 cell_name → name 别名映射（仅 name ≠ cell_name 的比赛）
+  # 用途：前端搜索时支持用全称（name）匹配简称（cell_name）
+  cell_to_name = {}
+  Database.client.query("SELECT name, cell_name FROM Competitions WHERE name != cell_name").each do |r|
+    cell_to_name[r["cell_name"]] = r["name"]
+  end
+  sub_comp_aliases = {}
+  comps.each { |c| sub_comp_aliases[c] = cell_to_name[c] if cell_to_name[c] }
+
   aux_data = {
     "personCountries" => sub_person_countries,
     "compCountries" => sub_comp_countries,
     "compWcaIds" => sub_comp_wca_ids,
-    "compNamesZh" => sub_comp_names_zh
+    "compNamesZh" => sub_comp_names_zh,
+    "compNameAliases" => sub_comp_aliases
   }
   File.write(aux_out_path, JSON.generate(aux_data))
   puts "  #{aux_out_path} (#{File.size(aux_out_path)} bytes)"
   puts "  Subset sizes: #{sub_person_countries.size} persons, #{sub_comp_countries.size} comp countries, " \
-       "#{sub_comp_wca_ids.size} comp WCA IDs, #{sub_comp_names_zh.size} comp zh names"
+       "#{sub_comp_wca_ids.size} comp WCA IDs, #{sub_comp_names_zh.size} comp zh names, #{sub_comp_aliases.size} comp aliases"
 else
   puts "  SKIP: #{backup_path} not found (run backup CI first)"
 end
