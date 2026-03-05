@@ -488,14 +488,16 @@
                 var solverHtml = U.countryFlag(U.solverCountry(solve.person, personCountries)) + ' ' + U.displaySolverName(solve.person);
                 var pUrl = U.personWcaUrl(solve.personId);
                 // NOTE: 有 WCA ID 时渲染为链接，否则纯文本
-                return pUrl ? '<a href="' + U.escHtml(pUrl) + '" target="_blank" rel="noopener noreferrer">' + solverHtml + '</a>' : solverHtml;
+                // NOTE: data-person-flag 标记阻止 i18n._applyPersonFlags() 重复插入国旗
+                return pUrl ? '<a href="' + U.escHtml(pUrl) + '" target="_blank" rel="noopener noreferrer" data-person-flag="done">' + solverHtml + '</a>' : solverHtml;
             })() + '</td>' +
             '<td class="col-date">' + U.escHtml(solve.date || '') + '</td>' +
             '<td class="col-comp">' + (function () {
                 var compHtml = U.countryFlag(compCountries[solve.comp]) + ' ' + U.displayCompName(solve.comp, compNamesZh);
                 var cUrl = U.compWcaUrl(solve.comp, compWcaIds);
                 // NOTE: 有 WCA 比赛映射时渲染为链接，否则纯文本
-                return cUrl ? '<a href="' + U.escHtml(cUrl) + '" target="_blank" rel="noopener noreferrer">' + compHtml + '</a>' : compHtml;
+                // NOTE: data-comp-flag 标记阻止 i18n._applyCompetitionFlags() 重复插入国旗
+                return cUrl ? '<a href="' + U.escHtml(cUrl) + '" target="_blank" rel="noopener noreferrer" data-comp-flag="done">' + compHtml + '</a>' : compHtml;
             })() + '</td>' +
             '<td class="col-round">' + U.escHtml(solve.round || '') + (solve.round && solve.solveNum ? '#' : '') + (solve.solveNum || '') + '</td>' +
             '<td class="col-avg">' + U.formatAvg(solve.average) + (solve.regionalAverageRecord ? ' ' + U.formatRecord(solve.regionalAverageRecord) : '') + '</td>' +
