@@ -1,0 +1,30 @@
+---
+permalink: /404.html
+layout: null
+---
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Redirecting...</title>
+</head>
+
+<body>
+    <script>
+        // NOTE: /recon/数字 → 重定向到独立详情页
+        var m = location.pathname.match(/^\/recon\/(\d+)$/);
+        if (m) {
+            location.replace('/recon/detail/?id=' + m[1]);
+        } else {
+            document.body.style.cssText = 'font-family:system-ui;color:#888;text-align:center;padding:80px 20px';
+            document.body.innerHTML = '<h1>404</h1><p>Page not found</p><a href="/" style="color:#60a5fa">← Home</a>';
+        }
+    </script>
+    <noscript>
+        <h1>404 - Page Not Found</h1>
+        <p><a href="/">← Home</a></p>
+    </noscript>
+</body>
+
+</html>
