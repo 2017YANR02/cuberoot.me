@@ -495,7 +495,17 @@
             })() + '</td>' +
             '<td class="col-round">' + U.escHtml(solve.round || '') + (solve.round && solve.solveNum ? '#' : '') + (solve.solveNum || '') + '</td>' +
             '<td class="col-avg">' + U.formatAvg(solve.average) + (solve.regionalAverageRecord ? ' ' + U.formatRecord(solve.regionalAverageRecord) : '') + '</td>' +
-            '<td class="col-aoxr">' + U.escHtml(solve.aoType || '') + (solve.regionalAoxrRecord ? ' ' + U.formatRecord(solve.regionalAoxrRecord) : '') + '</td>' +
+            // NOTE: 多轮平均列——"4.24 Ao4R" → "4.24(4)"，节省列宽
+            '<td class="col-aoxr">' + (function () {
+                var ao = solve.aoType || '';
+                if (!ao) return '';
+                // 从 "4.24 Ao4R" 提取平均值和轮数，或从 "Ao3R" 仅提取轮数
+                var m = ao.match(/^([\d.]+)\s+Ao(\d)R$/);
+                if (m) return m[1] + '(' + m[2] + ')';
+                var m2 = ao.match(/^Ao(\d)R$/);
+                if (m2) return '(' + m2[1] + ')';
+                return U.escHtml(ao);
+            })() + (solve.regionalAoxrRecord ? ' ' + U.formatRecord(solve.regionalAoxrRecord) : '') + '</td>' +
             '<td class="col-single mono">' + U.formatResult(solve.single) + '</td>' +
             '<td class="col-stm mono">' + (solve.stm || '') + '</td>' +
             '<td class="col-tps mono">' + (solve.tps && typeof solve.tps === 'number' ? solve.tps.toFixed(2) : '') + '</td>' +
