@@ -915,6 +915,48 @@ tr.detail-row td {
     font-size: 0.85rem;
 }
 
+/* --- 选手搜索自定义下拉菜单（复用比赛下拉的视觉风格） --- */
+.solver-dropdown {
+    display: none;
+    position: fixed;
+    min-width: 250px;
+    width: max-content;
+    max-height: 70vh;
+    overflow-y: auto;
+    background: #2a2a2a;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 6px;
+    z-index: 10000;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.solver-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: #cbd5e1;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    white-space: nowrap;
+}
+
+.solver-dropdown-item:hover {
+    background: rgba(59, 130, 246, 0.2);
+}
+
+.solver-dropdown-item .fi {
+    flex-shrink: 0;
+}
+
+.solver-dropdown-empty {
+    padding: 10px;
+    text-align: center;
+    color: #666;
+    font-size: 0.85rem;
+}
+
 /* NOTE: WCA / non-WCA 复选框筛选行 */
 .recon-type-filters {
     display: flex;
