@@ -403,6 +403,13 @@ const I18n = {
             }
         }
 
+        // NOTE: URL 没有 ?lang= 时自动追加，确保 URL 始终反映语言状态
+        if (!urlLang) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('lang', this.locale);
+            history.replaceState(null, '', url.toString());
+        }
+
         // ── 同步阶段：在 await 让出执行权之前完成，确保首帧即为正确语言 ──
 
         // 构建反向映射（纯同步，不依赖网络）
