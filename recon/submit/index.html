@@ -111,6 +111,67 @@ layout: default
             </div>
             <!-- NOTE: 编辑专用字段容器（编辑模式时由 JS 动态填充） -->
             <div id="rf-edit-fields"></div>
+            <!-- 官方比赛 -->
+            <div class="recon-form-row">
+                <div class="recon-form-group">
+                    <label><input type="checkbox" id="rf-official"> <span data-i18n-en="Official" data-i18n-zh="官方比赛">Official</span></label>
+                </div>
+            </div>
+            <!-- 选手中文 + 显示成绩 -->
+            <div class="recon-form-row">
+                <div class="recon-form-group">
+                    <label data-i18n-en="Solver(ZH)" data-i18n-zh="选手(中文)">Solver(ZH)</label>
+                    <input type="text" id="rf-edit-solverZh">
+                </div>
+                <div class="recon-form-group">
+                    <label data-i18n-en="Display" data-i18n-zh="显示成绩">Display</label>
+                    <input type="text" id="rf-edit-displaySingle">
+                </div>
+            </div>
+            <!-- 平均 + 日期 -->
+            <div class="recon-form-row">
+                <div class="recon-form-group">
+                    <label data-i18n-en="Average" data-i18n-zh="平均">Average</label>
+                    <input type="text" id="rf-edit-avg">
+                </div>
+                <div class="recon-form-group">
+                    <label data-i18n-en="Date" data-i18n-zh="日期">Date</label>
+                    <input type="text" id="rf-edit-date" placeholder="YYYY-MM-DD">
+                </div>
+            </div>
+            <!-- AoXR + 平均纪录 -->
+            <div class="recon-form-row">
+                <div class="recon-form-group">
+                    <label data-i18n-en="AoXR" data-i18n-zh="AoXR">AoXR</label>
+                    <input type="text" id="rf-edit-aoType">
+                </div>
+                <div class="recon-form-group">
+                    <label data-i18n-en="Avg Record" data-i18n-zh="平均纪录">Avg Record</label>
+                    <input type="text" id="rf-edit-rAvg">
+                </div>
+            </div>
+            <!-- 单次纪录 + AoXR纪录 -->
+            <div class="recon-form-row">
+                <div class="recon-form-group">
+                    <label data-i18n-en="Single Rec" data-i18n-zh="单次纪录">Single Rec</label>
+                    <input type="text" id="rf-edit-rSingle">
+                </div>
+                <div class="recon-form-group">
+                    <label data-i18n-en="AoXR Rec" data-i18n-zh="AoXR纪录">AoXR Rec</label>
+                    <input type="text" id="rf-edit-rAoXR">
+                </div>
+            </div>
+            <!-- 魔方 + 复盘者 -->
+            <div class="recon-form-row">
+                <div class="recon-form-group">
+                    <label data-i18n-en="Cube" data-i18n-zh="魔方">Cube</label>
+                    <input type="text" id="rf-edit-cube">
+                </div>
+                <div class="recon-form-group">
+                    <label data-i18n-en="Reconer" data-i18n-zh="复盘者">Reconer</label>
+                    <input type="text" id="rf-edit-reconer">
+                </div>
+            </div>
             <!-- NOTE: 校验错误提示容器（JS 动态填充） -->
             <div id="rf-errors" class="rf-errors" style="display:none"></div>
             <!-- 操作按钮 -->

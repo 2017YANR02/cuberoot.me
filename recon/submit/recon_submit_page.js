@@ -85,33 +85,16 @@
             // NOTE: recon 文本原样显示（含统计行），管理员可自行修改
             document.getElementById('rf-recon').value = s.recon || s.caption || '';
 
-            // NOTE: 编辑专用字段——在 #rf-edit-fields 容器中动态插入
-            var editFieldsContainer = document.getElementById('rf-edit-fields');
-            if (editFieldsContainer) {
-                // NOTE: official checkbox
-                var officialHtml = '<div class="recon-form-row">' +
-                    '<div class="recon-form-group">' +
-                    '<label><input type="checkbox" id="rf-official"' + (s.official ? ' checked' : '') + '> ' +
-                    (isZh ? '官方比赛' : 'Official') + '</label>' +
-                    '</div></div>';
-
-                var extraHtml = officialHtml;
-                // NOTE: 两列排列编辑专用字段
-                for (var i = 0; i < EDIT_ONLY_FIELDS.length; i += 2) {
-                    extraHtml += '<div class="recon-form-row">';
-                    for (var j = i; j < Math.min(i + 2, EDIT_ONLY_FIELDS.length); j++) {
-                        var f = EDIT_ONLY_FIELDS[j];
-                        var val = s[f.key];
-                        if (val === undefined || val === null) val = '';
-                        extraHtml += '<div class="recon-form-group">' +
-                            '<label>' + (isZh ? f.labelZh : f.labelEn) + '</label>' +
-                            '<input type="text" id="rf-edit-' + f.key + '" value="' + String(val).replace(/"/g, '&quot;') + '">' +
-                            '</div>';
-                    }
-                    extraHtml += '</div>';
+            // NOTE: 预填额外字段值（字段已在 HTML 中，不再动态创建）
+            var officialEl = document.getElementById('rf-official');
+            if (officialEl) officialEl.checked = !!s.official;
+            EDIT_ONLY_FIELDS.forEach(function (f) {
+                var el = document.getElementById('rf-edit-' + f.key);
+                if (el) {
+                    var val = s[f.key];
+                    el.value = (val === undefined || val === null) ? '' : String(val);
                 }
-                editFieldsContainer.innerHTML = extraHtml;
-            }
+            });
         }
 
         // ==================== i18n placeholder 适配 ====================
@@ -466,22 +449,20 @@
             errors.push(isZh ? '比赛名不超过200字符' : 'Competition max 200 chars');
         }
 
-        // --- 编辑模式额外校验 ---
-        if (isEditMode) {
-            var dateEl = document.getElementById('rf-edit-date');
-            if (dateEl) {
-                var dateVal = dateEl.value.trim();
-                if (dateVal && !/^\d{4}-\d{2}-\d{2}$/.test(dateVal)) {
-                    errors.push(isZh ? '日期格式必须是 YYYY-MM-DD' : 'Date must be YYYY-MM-DD');
-                }
+        // --- 日期校验 ---
+        var dateEl = document.getElementById('rf-edit-date');
+        if (dateEl) {
+            var dateVal = dateEl.value.trim();
+            if (dateVal && !/^\d{4}-\d{2}-\d{2}$/.test(dateVal)) {
+                errors.push(isZh ? '日期格式必须是 YYYY-MM-DD' : 'Date must be YYYY-MM-DD');
             }
+        }
 
-            var avgEl = document.getElementById('rf-edit-avg');
-            if (avgEl) {
-                var avgVal = avgEl.value.trim();
-                if (avgVal && isNaN(parseFloat(avgVal))) {
-                    errors.push(isZh ? '平均必须是数字或留空' : 'Average must be a number or empty');
-                }
+        var avgEl = document.getElementById('rf-edit-avg');
+        if (avgEl) {
+            var avgVal = avgEl.value.trim();
+            if (avgVal && isNaN(parseFloat(avgVal))) {
+                errors.push(isZh ? '平均必须是数字或留空' : 'Average must be a number or empty');
             }
         }
 
@@ -628,14 +609,28 @@
         }
         fullRecon += recon;
 
-        // NOTE: 日期：如果选了比赛用比赛日期，否则用今天
+        // NOTE: 日期优先级：手动输入 > 比赛自动填充 > 今天
         var compInput = document.getElementById('rf-comp');
         var autoDate = compInput && compInput.dataset.autoDate;
-        var date = autoDate || new Date().toISOString().split('T')[0];
+        var manualDate = document.getElementById('rf-edit-date').value.trim();
+        var date = manualDate || autoDate || new Date().toISOString().split('T')[0];
+
+        // NOTE: 读取额外字段
+        var officialEl = document.getElementById('rf-official');
+        var official = officialEl ? officialEl.checked : false;
+        var solverZh = document.getElementById('rf-edit-solverZh').value.trim();
+        var displaySingle = document.getElementById('rf-edit-displaySingle').value.trim();
+        var avg = document.getElementById('rf-edit-avg').value.trim();
+        var aoType = document.getElementById('rf-edit-aoType').value.trim();
+        var rAvg = document.getElementById('rf-edit-rAvg').value.trim();
+        var rSingle = document.getElementById('rf-edit-rSingle').value.trim();
+        var rAoXR = document.getElementById('rf-edit-rAoXR').value.trim();
+        var cube = document.getElementById('rf-edit-cube').value.trim();
+        var reconer = document.getElementById('rf-edit-reconer').value.trim();
 
         var solve = {
             id: 'local_' + Date.now(),
-            official: false,
+            official: official,
             event: event,
             method: method,
             date: date,
@@ -648,6 +643,15 @@
         if (note) solve.note = note;
         if (round) solve.round = round;
         if (solveNum) solve.solveNum = parseInt(solveNum);
+        if (solverZh) solve.solverZh = solverZh;
+        if (displaySingle) solve.displaySingle = displaySingle;
+        if (avg) solve.avg = parseFloat(avg);
+        if (aoType) solve.aoType = aoType;
+        if (rAvg) solve.rAvg = rAvg;
+        if (rSingle) solve.rSingle = rSingle;
+        if (rAoXR) solve.rAoXR = rAoXR;
+        if (cube) solve.cube = cube;
+        if (reconer) solve.reconer = reconer;
 
         // NOTE: 合并统计字段
         var statFields = {
