@@ -505,6 +505,16 @@ switch ($action) {
         }
         break;
 
+    // ==================== 已有选手列表（复盘数据库中有 WCA ID 的选手） ====================
+
+    case 'listPersons':
+        // NOTE: 缓存 1 小时——选手列表变化不频繁
+        header('Cache-Control: public, max-age=3600');
+        $stmt = $db->query("SELECT DISTINCT person FROM recons WHERE person_id IS NOT NULL AND person IS NOT NULL ORDER BY person");
+        $persons = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        echo json_encode($persons);
+        break;
+
     // ==================== 临时迁移端点（完成后删除） ====================
 
     case 'renameColumns2':
