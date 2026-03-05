@@ -181,11 +181,34 @@
         Promise.all([
             fetch('/stats/comp_dates.json').then(function (r) { return r.json(); }),
             fetch('/stats/comp_name_countries.json').then(function (r) { return r.json(); }),
-            fetch('/recon/comp_names_zh.json').then(function (r) { return r.json(); }).catch(function () { return {}; })
+            fetch('/recon/comp_names_zh.json').then(function (r) { return r.json(); }).catch(function () { return {}; }),
+            fetch('/stats/comp_name_to_wca_id.json').then(function (r) { return r.json(); }).catch(function () { return {}; })
         ]).then(function (results) {
             var compDateMap = results[0];
             var compCountryMap = results[1];
             var compNamesZh = results[2];
+            var compWcaIdMap = results[3];
+
+            // NOTE: 构建 cell_name → name 反向映射（用于搜索时匹配全称）
+            // comp_name_to_wca_id 包含两种键：cell_name 和 name，映射到同一个 WCA ID
+            var wcaIdToCellName = {};
+            var wcaIdToFullName = {};
+            Object.keys(compWcaIdMap).forEach(function (k) {
+                var wcaId = compWcaIdMap[k];
+                // cell_name 已存在于 compDateMap 中；name 不在 compDateMap 中
+                if (compDateMap[k]) {
+                    wcaIdToCellName[wcaId] = k;
+                } else {
+                    wcaIdToFullName[wcaId] = k;
+                }
+            });
+            // cell_name → name 别名映射
+            var compAliases = {};
+            Object.keys(wcaIdToCellName).forEach(function (wcaId) {
+                if (wcaIdToFullName[wcaId]) {
+                    compAliases[wcaIdToCellName[wcaId]] = wcaIdToFullName[wcaId];
+                }
+            });
 
             // NOTE: 30 天内的比赛
             var cutoff = new Date();
@@ -200,6 +223,7 @@
                     return {
                         name: name,
                         nameZh: compNamesZh[name] || '',
+                        nameAlt: compAliases[name] || '',  // NOTE: 全称别名（搜索用）
                         date: compDateMap[name],
                         iso2: (compCountryMap[name] || '').toLowerCase()
                     };
@@ -224,7 +248,8 @@
                 ? comps.filter(function (c) {
                     return c.name.toLowerCase().indexOf(q) >= 0 ||
                         c.date.indexOf(q) >= 0 ||
-                        (c.nameZh && c.nameZh.indexOf(query) >= 0);
+                        (c.nameZh && c.nameZh.indexOf(query) >= 0) ||
+                        (c.nameAlt && c.nameAlt.toLowerCase().indexOf(q) >= 0);
                 })
                 : comps;
             var html = '';

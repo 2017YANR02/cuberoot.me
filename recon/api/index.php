@@ -585,6 +585,56 @@ switch ($action) {
         echo json_encode(['oldName' => $input['oldName'], 'newName' => $input['newName'], 'rows' => $stmt->rowCount()]);
         break;
 
+    // ==================== 临时：批量重命名比赛（全称 → 简称） ====================
+    case 'renameComps':
+        header('Cache-Control: no-cache, no-store, must-revalidate');
+        requireAdmin();
+        // NOTE: WCA name → cell_name 映射（21 条 name ≠ cell_name 的 recon 记录）
+        $renames = [
+            'Bali Discovery Speedcubing Masters 2024' => 'Bali Discovery Masters 2024',
+            "Bay Area Speedcubin' 63 - Atherton 2024" => "Bay Area Speedcubin' 63 2024",
+            'Cube4fun in Warsaw 2022' => 'Cube4fun Warsaw 2022',
+            'Cubing on the Plains at Auburn 2025' => 'Cubing on the Plains Auburn 2025',
+            "Rubik's x TheCubicle CubingUSA All-Stars 2025" => 'CubingUSA All-Stars 2025',
+            'CubingUSA Western Championship 2021' => 'Western Championship 2021',
+            'CubingUSA Western Championship 2023' => 'Western Championship 2023',
+            "Rubik's WCA European Championship 2022" => 'WCA European Championship 2022',
+            "Gdańska Liga Speedcubingu III 2025" => 'GLS III 2025',
+            'CubingUSA Great Lakes Championship 2023' => 'Great Lakes Championship 2023',
+            "Honolulu Li\xCA\xBBili\xCA\xBBi a \xCA\xBBIke Maka 2024" => "Honolulu Li\xCA\xBBili\xCA\xBBi 2024",
+            'Liberty Science Center Open B 2025' => 'Liberty Science Center B 2025',
+            'CubingUSA New Jersey Championship 2018' => 'New Jersey Championship 2018',
+            'CubingUSA Northwest Championship 2024' => 'Northwest Championship 2024',
+            'NZ South Island Championship 2023' => 'NZ South Island Champs 2023',
+            "Rubik's WCA Asian Championship 2024" => 'WCA Asian Championship 2024',
+            'CubingUSA Southeast Championship 2025' => 'Southeast Championship 2025',
+            'University Heights Cubing Winter 2024' => 'Uni Heights Cubing Winter 2024',
+            "Rubik's WCA World Championship 2023" => 'WCA World Championship 2023',
+            "Rubik's WCA World Championship 2025" => 'WCA World Championship 2025',
+            'Yong Jun KL Speedcubing 2023' => 'YJ KL 2023',
+        ];
+        $stmt = $db->prepare("UPDATE recons SET comp = ? WHERE comp = ?");
+        $results = [];
+        foreach ($renames as $old => $new) {
+            $stmt->execute([$new, $old]);
+            $results[] = ['old' => $old, 'new' => $new, 'rows' => $stmt->rowCount()];
+        }
+        // NOTE: edits 表也可能有 comp 字段的覆盖，需同步更新
+        $estmt = $db->prepare("SELECT solve_id, fields FROM edits WHERE fields LIKE ?");
+        $ustmt = $db->prepare("UPDATE edits SET fields = ? WHERE solve_id = ?");
+        foreach ($renames as $old => $new) {
+            $estmt->execute(['%' . $old . '%']);
+            while ($row = $estmt->fetch()) {
+                $fields = json_decode($row['fields'], true);
+                if (isset($fields['comp']) && $fields['comp'] === $old) {
+                    $fields['comp'] = $new;
+                    $ustmt->execute([json_encode($fields, JSON_UNESCAPED_UNICODE), $row['solve_id']]);
+                }
+            }
+        }
+        echo json_encode(['ok' => true, 'results' => $results]);
+        break;
+
     case 'renameColumns2':
         header('Cache-Control: no-cache, no-store, must-revalidate');
         requireAdmin();
