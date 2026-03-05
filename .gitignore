@@ -43,3 +43,5 @@ recon/api/db_config.php
 
 # 比赛名对照文件（本地参考用）
 comp_name_diff.txt
+
+__pycache__/
