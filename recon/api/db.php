@@ -36,6 +36,7 @@ const FIELD_MAP_JSON_TO_SQL = [
     'aoType' => 'ao_type',
     'regionalAoxrRecord' => 'regional_aoxr_record',
     'wcaScramble' => 'wca_scramble',
+    'optimalScramble' => 'optimal_scramble',
     'ollShort' => 'oll_short',
     'pllShort' => 'pll_short',
     'freePair' => 'free_pair',
@@ -57,6 +58,7 @@ const FIELD_MAP_SQL_TO_JSON = [
     'ao_type' => 'aoType',
     'regional_aoxr_record' => 'regionalAoxrRecord',
     'wca_scramble' => 'wcaScramble',
+    'optimal_scramble' => 'optimalScramble',
     'oll_short' => 'ollShort',
     'pll_short' => 'pllShort',
     'free_pair' => 'freePair',
@@ -88,7 +90,7 @@ const ALLOWED_COLUMNS = [
     'ao_type',
     'regional_aoxr_record',
     'recon',
-    'scramble',
+    'optimal_scramble',
     'wca_scramble',
     'caption',
     'note',
@@ -277,7 +279,7 @@ function validateRow(array $row): array
     }
 
     // TEXT 上限 64KB（防 DoS，TEXT 类型上限 65535 字节）
-    foreach (['recon', 'scramble', 'wca_scramble', 'caption', 'note'] as $col) {
+    foreach (['recon', 'optimal_scramble', 'wca_scramble', 'caption', 'note'] as $col) {
         if (isset($row[$col]) && $row[$col] !== null && strlen($row[$col]) > 65535) {
             $errors[] = "$col exceeds max size (64KB)";
         }
@@ -319,7 +321,7 @@ CREATE TABLE IF NOT EXISTS recons (
   ao_type                  VARCHAR(50)    DEFAULT NULL,
   regional_aoxr_record     VARCHAR(20)    DEFAULT NULL,
   recon                    TEXT           DEFAULT NULL,
-  scramble                 TEXT           DEFAULT NULL,
+  optimal_scramble          TEXT           DEFAULT NULL,
   wca_scramble             TEXT           DEFAULT NULL,
   caption                  TEXT           DEFAULT NULL,
   note                     TEXT           DEFAULT NULL,

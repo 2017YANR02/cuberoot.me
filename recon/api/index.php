@@ -517,6 +517,7 @@ switch ($action) {
             'ALTER TABLE recons RENAME COLUMN avg TO average',
             'ALTER TABLE recons DROP INDEX idx_solver',
             'ALTER TABLE recons ADD INDEX idx_person (person)',
+            'ALTER TABLE recons RENAME COLUMN scramble TO optimal_scramble',
         ];
         $results = [];
         foreach ($sqls as $sql) {
