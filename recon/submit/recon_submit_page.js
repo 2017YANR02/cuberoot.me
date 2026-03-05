@@ -224,32 +224,33 @@
             compDropdown.innerHTML = html;
         }
 
-        function positionDropdown() {
-            var rect = compInput.getBoundingClientRect();
+        // NOTE: 通用下拉定位函数——根据输入框位置和屏幕空间自动选择向上/向下展开
+        function positionDropdownFor(inputEl, dropdownEl) {
+            var rect = inputEl.getBoundingClientRect();
             var spaceBelow = window.innerHeight - rect.bottom;
             var spaceAbove = rect.top;
-            compDropdown.style.left = rect.left + 'px';
-            compDropdown.style.width = rect.width + 'px';
+            dropdownEl.style.left = rect.left + 'px';
+            dropdownEl.style.width = rect.width + 'px';
             if (spaceBelow >= spaceAbove) {
-                compDropdown.style.top = rect.bottom + 'px';
-                compDropdown.style.bottom = 'auto';
-                compDropdown.style.maxHeight = (spaceBelow - 10) + 'px';
+                dropdownEl.style.top = rect.bottom + 'px';
+                dropdownEl.style.bottom = 'auto';
+                dropdownEl.style.maxHeight = (spaceBelow - 10) + 'px';
             } else {
-                compDropdown.style.top = 'auto';
-                compDropdown.style.bottom = (window.innerHeight - rect.top) + 'px';
-                compDropdown.style.maxHeight = (spaceAbove - 10) + 'px';
+                dropdownEl.style.top = 'auto';
+                dropdownEl.style.bottom = (window.innerHeight - rect.top) + 'px';
+                dropdownEl.style.maxHeight = (spaceAbove - 10) + 'px';
             }
         }
 
         compInput.addEventListener('input', function () {
             renderCompDropdown(recentComps, this.value);
-            positionDropdown();
+            positionDropdownFor(compInput, compDropdown);
             compDropdown.style.display = 'block';
         });
 
         compInput.addEventListener('focus', function () {
             renderCompDropdown(recentComps, this.value);
-            positionDropdown();
+            positionDropdownFor(compInput, compDropdown);
             compDropdown.style.display = 'block';
         });
 
@@ -264,6 +265,72 @@
 
         compInput.addEventListener('blur', function () {
             setTimeout(function () { compDropdown.style.display = 'none'; }, 150);
+        });
+
+        // ==================== 选手搜索下拉 ====================
+
+        var solverInput = document.getElementById('rf-solver');
+        var solverDropdown = document.createElement('div');
+        solverDropdown.id = 'rf-solver-dropdown';
+        solverDropdown.className = 'solver-dropdown';
+        document.body.appendChild(solverDropdown);
+
+        // NOTE: API 基址——与 recon_api.js 保持一致
+        var API_BASE = 'https://toolkit.cuberoot.me/recon/api/';
+
+        var solverDebounceTimer = null;
+
+        function renderSolverDropdown(results) {
+            if (!results || results.length === 0) {
+                solverDropdown.innerHTML = '<div class="solver-dropdown-empty">' +
+                    (isZh ? '无匹配' : 'No match') + '</div>';
+                return;
+            }
+            var html = '';
+            results.forEach(function (p) {
+                var flag = p.iso2 ? '<span class="fi fi-' + p.iso2 + '"></span> ' : '';
+                html += '<div class="solver-dropdown-item" data-name="' +
+                    p.name.replace(/"/g, '&quot;') + '">' +
+                    flag + '<span>' + p.name + '</span></div>';
+            });
+            solverDropdown.innerHTML = html;
+        }
+
+        solverInput.addEventListener('input', function () {
+            var q = this.value.trim();
+            clearTimeout(solverDebounceTimer);
+            if (q.length < 2) {
+                solverDropdown.style.display = 'none';
+                return;
+            }
+            // NOTE: 200ms debounce 防止快速输入频繁请求
+            solverDebounceTimer = setTimeout(function () {
+                fetch(API_BASE + '?action=searchSolvers&q=' + encodeURIComponent(q))
+                    .then(function (r) { return r.json(); })
+                    .then(function (results) {
+                        renderSolverDropdown(results);
+                        positionDropdownFor(solverInput, solverDropdown);
+                        solverDropdown.style.display = 'block';
+                    })
+                    .catch(function (e) {
+                        console.warn('Solver search failed:', e);
+                        solverDropdown.style.display = 'none';
+                    });
+            }, 200);
+        });
+
+        solverDropdown.addEventListener('mousedown', function (e) {
+            var item = e.target.closest('.solver-dropdown-item');
+            if (item) {
+                solverInput.value = item.dataset.name;
+                solverDropdown.style.display = 'none';
+                // NOTE: 清除默认值灰色样式
+                solverInput.classList.remove('default-val');
+            }
+        });
+
+        solverInput.addEventListener('blur', function () {
+            setTimeout(function () { solverDropdown.style.display = 'none'; }, 150);
         });
 
         // ==================== 预览动画 ====================
