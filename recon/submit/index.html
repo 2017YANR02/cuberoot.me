@@ -5,8 +5,14 @@ layout: default
 
 <link rel="stylesheet" href="/recon/recon.css">
 
-<!-- NOTE: 页面标题由 JS 根据模式动态切换 -->
-<h1 id="submit-title" data-i18n-en="➕ Add Recon" data-i18n-zh="➕ 添加复盘">➕ Add Recon</h1>
+<!-- NOTE: 页面头部：返回箭头 + 标题 -->
+<div class="detail-page-header">
+    <a href="/recon/" class="detail-back-link"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+        </svg></a>
+    <h1 id="submit-title" data-i18n-en="➕ Add Recon" data-i18n-zh="➕ 添加复盘">➕ Add Recon</h1>
+</div>
 
 <div class="submit-page-layout">
     <form id="recon-form" class="recon-form submit-two-col" autocomplete="off">
@@ -191,10 +197,7 @@ layout: default
     </form>
 </div>
 
-<!-- NOTE: 底部返回链接 -->
-<div class="submit-back-link">
-    <a href="/recon/" data-i18n-en="← Back to Recon List" data-i18n-zh="← 返回复盘列表">← Back to Recon List</a>
-</div>
+
 
 <script src="/recon/recon_stats.js"></script>
 <script src="/recon/wca_auth.js"></script>
