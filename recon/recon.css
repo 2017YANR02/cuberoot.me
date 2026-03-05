@@ -270,7 +270,13 @@ h1 .fi {
 }
 
 /* NOTE: 防止长选手名/比赛名撑宽表格，溢出部分截断显示省略号 */
-.col-solver,
+.col-solver {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .col-comp {
     max-width: 180px;
     overflow: hidden;
