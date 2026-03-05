@@ -58,10 +58,10 @@ layout: default
                 <th class="col-comp" data-i18n="recon.col_comp">Competition</th>
                 <th class="col-round" data-i18n-en="Rnd#" data-i18n-zh="轮#">Rnd#</th>
                 <th class="col-avg" data-i18n-en="Avg" data-i18n-zh="平均" data-sort="avg">Avg</th>
-                <th class="col-aoxr" data-sort="aoType">AoXR</th>
+                <th class="col-aoxr" data-i18n-en="AoXR" data-i18n-zh="多轮平均" data-sort="aoType">AoXR</th>
                 <th class="col-single" data-i18n="recon.col_result" data-sort="single">Result</th>
-                <th class="col-stm" data-sort="stm">STM</th>
-                <th class="col-tps" data-sort="tps">TPS</th>
+                <th class="col-stm" data-i18n-en="STM" data-i18n-zh="步数" data-sort="stm">STM</th>
+                <th class="col-tps" data-i18n-en="TPS" data-i18n-zh="手速" data-sort="tps">TPS</th>
 
                 <th class="col-event" data-sort="event">Event</th>
                 <th class="col-method" data-i18n="recon.col_method">Method</th>

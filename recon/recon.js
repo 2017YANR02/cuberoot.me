@@ -458,8 +458,10 @@
         tr.className = 'solve-row' + (solve.personId ? ' community-row' : '');
         tr.dataset.id = solve.id;
 
+        var url = getDetailUrl(solve.id);
+
         tr.innerHTML =
-            '<td class="col-idx">' + (solve.id || '') + '</td>' +
+            '<td class="col-idx"><a href="' + url + '">' + (solve.id || '') + '</a></td>' +
             '<td class="col-dsingle mono">' + U.escHtml(solve.value || '') + (solve.regionalSingleRecord ? ' ' + U.formatRecord(solve.regionalSingleRecord) : '') + '</td>' +
             '<td class="col-solver">' + U.countryFlag(U.solverCountry(solve.person, personCountries)) + ' ' + U.displaySolverName(solve.person) + '</td>' +
             '<td class="col-date">' + U.escHtml(solve.date || '') + '</td>' +
@@ -473,9 +475,26 @@
             '<td class="col-event">' + U.escHtml(solve.event || '') + '</td>' +
             '<td class="col-method">' + U.escHtml(solve.method || '') + '</td>';
 
-        // NOTE: 点击行跳转到独立详情页
-        tr.addEventListener('click', function () {
-            location.href = getDetailUrl(solve.id);
+        // NOTE: 点击行跳转——<a> 标签的原生中键/Ctrl/右键菜单自动生效，
+        //       行级 click 增强修饰键检测，auxclick 处理中键点击非 <a> 区域
+        tr.addEventListener('click', function (e) {
+            if (e.target.closest('a')) return; // NOTE: <a> 标签让浏览器原生处理
+            if (e.ctrlKey || e.metaKey) {
+                window.open(url, '_blank');
+            } else {
+                location.href = url;
+            }
+        });
+        // NOTE: 中键点击任意列 → 新标签打开
+        tr.addEventListener('mousedown', function (e) {
+            // NOTE: 阻止中键默认的自动滚动图标
+            if (e.button === 1) e.preventDefault();
+        });
+        tr.addEventListener('mouseup', function (e) {
+            if (e.button === 1) {
+                e.preventDefault();
+                window.open(url, '_blank');
+            }
         });
         tr.style.cursor = 'pointer';
         return tr;
