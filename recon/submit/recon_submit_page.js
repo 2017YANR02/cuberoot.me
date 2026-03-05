@@ -56,9 +56,9 @@
         // NOTE: 更新提交按钮文本
         var submitBtn = document.getElementById('rf-submit-btn');
         if (submitBtn && isEditMode) {
-            submitBtn.textContent = isZh ? '保存修改' : 'Save Changes';
-            submitBtn.setAttribute('data-i18n-en', 'Save Changes');
-            submitBtn.setAttribute('data-i18n-zh', '保存修改');
+            submitBtn.textContent = isZh ? '保存' : 'Save';
+            submitBtn.setAttribute('data-i18n-en', 'Save');
+            submitBtn.setAttribute('data-i18n-zh', '保存');
         }
 
         // ==================== 编辑模式预填充 ====================

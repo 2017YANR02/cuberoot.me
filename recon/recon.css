@@ -8,6 +8,24 @@
     max-width: fit-content !important;
 }
 
+/* --- 详情页头部布局 --- */
+/* NOTE: flex 让返回箭头靠左、标题居中扩展、登录按钮靠右 */
+.detail-page-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.detail-page-header h1 {
+    flex: 1;
+}
+
+/* NOTE: 限制国旗图标大小，不受父元素字号影响（如 h1 标题行） */
+.fi {
+    font-size: 16px !important;
+    vertical-align: middle;
+}
+
 /* --- 副标题 --- */
 .recon-subtitle {
     color: #888;
