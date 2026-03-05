@@ -132,7 +132,7 @@
         "show_ans": "显示答案"
     },
     "recon": {
-        "title": "比赛复盘",
+        "title": "魔方还原复盘",
         "subtitle": "顶尖选手的比赛还原复盘与分析",
         "search_placeholder": "搜索选手、比赛、成绩、纪录...",
         "all_solvers": "所有选手",
