@@ -128,7 +128,13 @@
         if (solve.regionalSingleRecord) titleParts.push(U.formatRecord(solve.regionalSingleRecord));
         if (solve.event) titleParts.push(U.escHtml(solve.event));
         if (solve.method) titleParts.push(U.escHtml(solve.method));
-        titleParts.push(U.countryFlag(U.solverCountry(solve.person, personCountries)) + solverDisplay);
+        var solverHtml = U.countryFlag(U.solverCountry(solve.person, personCountries)) + solverDisplay;
+        // NOTE: 有 WCA ID 时选手名可点击跳转 WCA 个人页面
+        var personUrl = U.personWcaUrl(solve.personId);
+        if (personUrl) {
+            solverHtml = '<a href="' + U.escHtml(personUrl) + '" target="_blank" rel="noopener noreferrer">' + solverHtml + '</a>';
+        }
+        titleParts.push(solverHtml);
         titleEl.innerHTML = titleParts.join(' ');
 
         // NOTE: 更新浏览器标签页标题
