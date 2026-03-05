@@ -388,12 +388,19 @@ const I18n = {
     // 分为同步阶段和异步阶段，消除 FOUC（先显示英文再切中文的闪烁）
     async init() {
         this._basePath = this._detectBasePath();
-        // 优先级: localStorage > navigator.language > 默认 en
-        const saved = localStorage.getItem('i18n_locale');
-        if (saved && (saved === 'en' || saved === 'zh')) {
-            this.locale = saved;
-        } else if (navigator.language && navigator.language.startsWith('zh')) {
-            this.locale = 'zh';
+        // 优先级: URL ?lang= > localStorage > navigator.language > 默认 en
+        const urlLang = new URLSearchParams(window.location.search).get('lang');
+        if (urlLang && (urlLang === 'en' || urlLang === 'zh')) {
+            // NOTE: URL 参数优先级最高，且同步到 localStorage
+            this.locale = urlLang;
+            localStorage.setItem('i18n_locale', urlLang);
+        } else {
+            const saved = localStorage.getItem('i18n_locale');
+            if (saved && (saved === 'en' || saved === 'zh')) {
+                this.locale = saved;
+            } else if (navigator.language && navigator.language.startsWith('zh')) {
+                this.locale = 'zh';
+            }
         }
 
         // ── 同步阶段：在 await 让出执行权之前完成，确保首帧即为正确语言 ──
@@ -623,6 +630,10 @@ const I18n = {
         if (lang !== 'en' && lang !== 'zh') return;
         this.locale = lang;
         localStorage.setItem('i18n_locale', lang);
+        // NOTE: 同步语言到 URL 参数，使分享链接时携带语言偏好
+        const url = new URL(window.location.href);
+        url.searchParams.set('lang', lang);
+        history.replaceState(null, '', url.toString());
         this.apply();
         this._updateToggle();
         // NOTE: 通知其他页面语言已切换（如 upcoming_comp 重渲染）
