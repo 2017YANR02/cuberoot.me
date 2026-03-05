@@ -187,7 +187,7 @@ h1 .fi {
     backdrop-filter: blur(8px);
     color: #8892a0 !important;
     font-weight: 600;
-    padding: 10px 12px;
+    padding: 10px 6px;
     border-bottom: 2px solid rgba(255, 255, 255, 0.08) !important;
     text-align: left;
     white-space: nowrap;
@@ -222,7 +222,7 @@ h1 .fi {
 }
 
 #recon-table tbody td {
-    padding: 8px 12px;
+    padding: 8px 6px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
     border-top: none !important;
     border-left: none !important;
@@ -237,6 +237,13 @@ h1 .fi {
 #detail-title .fi {
     transform: scale(0.75);
     display: inline-block;
+}
+
+/* NOTE: 编号列缩小，降低视觉权重 */
+.col-idx {
+    font-size: 0.6rem;
+    color: #666;
+    padding: 6px 4px !important;
 }
 
 /* NOTE: 数字列等宽字体 */
