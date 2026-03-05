@@ -74,15 +74,19 @@
 
             // NOTE: 打乱预填充：优先用 wcaScramble，否则从 recon 文本第二行提取
             var scramblePrefill = s.wcaScramble || s.scramble || '';
-            if (!scramblePrefill && s.recon) {
-                var reconLines = s.recon.split('\n');
-                if (reconLines.length >= 2 && /^\d+STM\s/i.test(reconLines[0])) {
-                    scramblePrefill = reconLines[1].trim();
-                }
+            var solutionText = s.recon || s.caption || '';
+
+            // NOTE: 从完整 recon 中剥离统计行和打乱行，只保留纯解法
+            // 提交时会自动拼接回去（统计 + 打乱 + 解法）
+            var reconLines = solutionText.split('\n');
+            if (reconLines.length >= 2 && /^\d+STM\s/i.test(reconLines[0])) {
+                // 第一行是统计行，第二行是打乱
+                if (!scramblePrefill) scramblePrefill = reconLines[1].trim();
+                solutionText = reconLines.slice(2).join('\n');
             }
+
             document.getElementById('rf-scramble').value = scramblePrefill;
-            // NOTE: recon 文本原样显示（含统计行），管理员可自行修改
-            document.getElementById('rf-recon').value = s.recon || s.caption || '';
+            document.getElementById('rf-recon').value = solutionText;
 
             // NOTE: 预填额外字段值（字段已在 HTML 中，不再动态创建）
             var officialEl = document.getElementById('rf-official');
