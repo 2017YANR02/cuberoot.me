@@ -134,6 +134,26 @@ rsync -rltz --delete --exclude='.user.ini' --chmod=D755,F644 ...
 
 > ⚠️ 宝塔内置的"备份数据库"任务**不会**备份命令行创建的数据库，必须用 Shell 脚本方式。
 
+### 数据库列重命名
+
+列重命名通过 `index.php` 中的临时管理员端点 `renameColumns2` 执行。流程：
+
+1. **修改代码**：更新 `db.php`（映射表、白名单、MAX_FIELD_LENGTHS、CREATE TABLE）和前端 JS 中的字段引用
+2. **更新迁移 SQL**：在 `index.php` 的 `renameColumns2` case 中添加/替换 `ALTER TABLE` 语句
+3. **Push 并等 CI 部署**（约 40 秒）
+4. **在已登录的 Recon 页面控制台执行**：
+
+```javascript
+fetch('https://toolkit.cuberoot.me/recon/api/?action=renameColumns2', {
+  method: 'GET',
+  headers: { 'Authorization': 'Bearer ' + WcaAuth.getAccessToken() }
+}).then(r => r.json()).then(console.log)
+```
+
+> 必须先在页面上登录 WCA 账号（管理员），`WcaAuth.getAccessToken()` 从 `sessionStorage` 读取 token。localhost 和线上均可，只要已登录。
+
+> 已执行过的 ALTER TABLE 会报错但不影响新增的 SQL（`try/catch` 逐条执行）。
+
 ## SSH 登录方式
 
 ```bash
