@@ -11,6 +11,7 @@
     const COMP_COUNTRIES_URL = '/stats/comp_name_countries.json';
     const PERSON_COUNTRIES_URL = '/stats/person_name_countries.json';
     const COMP_NAMES_ZH_URL = '/recon/comp_names_zh.json';
+    const COMP_WCA_IDS_URL = '/stats/comp_name_to_wca_id.json';
     const DEFAULT_SORT = { key: 'id', asc: false };
 
     // --- 状态 ---
@@ -22,6 +23,7 @@
     let compCountries = {};   // 比赛名 → ISO2 映射
     let personCountries = {};  // 选手名 → ISO2 映射
     let compNamesZh = {};     // 英文比赛名 → 中文比赛名 映射
+    let compWcaIds = {};      // 英文比赛名 → WCA 比赛 ID 映射
 
     // --- DOM 引用 ---
     let tbody, searchInput, filterSolver, filterMethod, filterEvent;
@@ -55,14 +57,16 @@
 
         // NOTE: 加载辅助数据（国旗映射、中文比赛名）
         try {
-            const [compResp, personResp, compZhResp] = await Promise.all([
+            const [compResp, personResp, compZhResp, compWcaIdsResp] = await Promise.all([
                 fetch(COMP_COUNTRIES_URL),
                 fetch(PERSON_COUNTRIES_URL),
-                fetch(COMP_NAMES_ZH_URL)
+                fetch(COMP_NAMES_ZH_URL),
+                fetch(COMP_WCA_IDS_URL)
             ]);
             compCountries = await compResp.json();
             personCountries = await personResp.json();
             compNamesZh = await compZhResp.json();
+            compWcaIds = await compWcaIdsResp.json();
         } catch (e) {
             console.warn('Failed to load auxiliary data:', e);
         }
@@ -463,9 +467,19 @@
         tr.innerHTML =
             '<td class="col-idx"><a href="' + url + '">' + (solve.id || '') + '</a></td>' +
             '<td class="col-dsingle mono">' + U.escHtml(solve.value || '') + (solve.regionalSingleRecord ? ' ' + U.formatRecord(solve.regionalSingleRecord) : '') + '</td>' +
-            '<td class="col-solver">' + U.countryFlag(U.solverCountry(solve.person, personCountries)) + ' ' + U.displaySolverName(solve.person) + '</td>' +
+            '<td class="col-solver">' + (function () {
+                var solverHtml = U.countryFlag(U.solverCountry(solve.person, personCountries)) + ' ' + U.displaySolverName(solve.person);
+                var pUrl = U.personWcaUrl(solve.personId);
+                // NOTE: 有 WCA ID 时渲染为链接，否则纯文本
+                return pUrl ? '<a href="' + U.escHtml(pUrl) + '" target="_blank" rel="noopener noreferrer">' + solverHtml + '</a>' : solverHtml;
+            })() + '</td>' +
             '<td class="col-date">' + U.escHtml(solve.date || '') + '</td>' +
-            '<td class="col-comp">' + U.countryFlag(compCountries[solve.comp]) + ' ' + U.displayCompName(solve.comp, compNamesZh) + '</td>' +
+            '<td class="col-comp">' + (function () {
+                var compHtml = U.countryFlag(compCountries[solve.comp]) + ' ' + U.displayCompName(solve.comp, compNamesZh);
+                var cUrl = U.compWcaUrl(solve.comp, compWcaIds);
+                // NOTE: 有 WCA 比赛映射时渲染为链接，否则纯文本
+                return cUrl ? '<a href="' + U.escHtml(cUrl) + '" target="_blank" rel="noopener noreferrer">' + compHtml + '</a>' : compHtml;
+            })() + '</td>' +
             '<td class="col-round">' + U.escHtml(solve.round || '') + (solve.round && solve.solveNum ? '#' : '') + (solve.solveNum || '') + '</td>' +
             '<td class="col-avg">' + U.formatAvg(solve.average) + (solve.regionalAverageRecord ? ' ' + U.formatRecord(solve.regionalAverageRecord) : '') + '</td>' +
             '<td class="col-aoxr">' + U.escHtml(solve.aoType || '') + (solve.regionalAoxrRecord ? ' ' + U.formatRecord(solve.regionalAoxrRecord) : '') + '</td>' +
