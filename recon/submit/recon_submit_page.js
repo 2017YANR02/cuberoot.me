@@ -213,7 +213,7 @@
         function renderCompDropdown(comps, query) {
             var q = query.toLowerCase();
             var filtered = q
-                ? comps.filter(function (c) { return c.name.toLowerCase().indexOf(q) >= 0; })
+                ? comps.filter(function (c) { return c.name.toLowerCase().indexOf(q) >= 0 || c.date.indexOf(q) >= 0; })
                 : comps;
             var html = '';
             filtered.forEach(function (c) {
@@ -340,6 +340,37 @@
 
         solverInput.addEventListener('blur', function () {
             setTimeout(function () { solverDropdown.style.display = 'none'; }, 150);
+        });
+
+        // NOTE: 缓存已有选手列表，避免重复请求
+        var cachedPersons = null;
+
+        solverInput.addEventListener('focus', function () {
+            if (this.value.trim().length > 0) return;
+            if (cachedPersons) {
+                renderSolverDropdown(cachedPersons.map(function (name) { return { name: name, iso2: '' }; }));
+                positionDropdownFor(solverInput, solverDropdown);
+                solverDropdown.style.display = 'block';
+                return;
+            }
+            // NOTE: 首次加载显示 loading spinner
+            solverDropdown.innerHTML = '<div class="solver-dropdown-loading"><span class="solver-spinner"></span>' +
+                (isZh ? '加载中...' : 'Loading...') + '</div>';
+            positionDropdownFor(solverInput, solverDropdown);
+            solverDropdown.style.display = 'block';
+
+            fetch(API_BASE + '?action=listPersons')
+                .then(function (r) { return r.json(); })
+                .then(function (persons) {
+                    cachedPersons = persons;
+                    renderSolverDropdown(persons.map(function (name) { return { name: name, iso2: '' }; }));
+                    positionDropdownFor(solverInput, solverDropdown);
+                    solverDropdown.style.display = 'block';
+                })
+                .catch(function (e) {
+                    console.warn('listPersons failed:', e);
+                    solverDropdown.style.display = 'none';
+                });
         });
 
         // ==================== 预览动画 ====================
