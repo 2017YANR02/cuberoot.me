@@ -126,6 +126,16 @@ var ReconUtils = (function () {
         return 'https://www.worldcubeassociation.org/competitions/' + wcaId;
     }
 
+    /**
+     * 根据 WCA ID 生成选手个人页面 URL
+     * @param {string} personId - WCA ID（如 "2023GENG02"）
+     * @returns {string} WCA 个人页面 URL，无 personId 则返回空字符串
+     */
+    function personWcaUrl(personId) {
+        if (!personId) return '';
+        return 'https://www.worldcubeassociation.org/persons/' + personId;
+    }
+
     return {
         escHtml: escHtml,
         countryFlag: countryFlag,
@@ -137,6 +147,7 @@ var ReconUtils = (function () {
         displaySolverName: displaySolverName,
         solverCountry: solverCountry,
         displayCompName: displayCompName,
-        compWcaUrl: compWcaUrl
+        compWcaUrl: compWcaUrl,
+        personWcaUrl: personWcaUrl
     };
 })();
