@@ -77,6 +77,13 @@ toolkit.cuberoot.me 更新（约 40 秒）
 location / {
     try_files $uri $uri/ $uri.html $uri/index.html =404;
 }
+
+# Recon 详情页干净 URL：/recon/2263 → /recon/detail/?id=2263
+# NOTE: GitHub Pages 通过 404.html JS 重定向实现；toolkit 通过此 Nginx rewrite 实现（无闪烁）
+# ⚠️ 此规则需在 location / 之前添加
+location ~ ^/recon/(\d+)$ {
+    rewrite ^/recon/(\d+)$ /recon/detail/?id=$1 last;
+}
 ```
 
 > 如果通过宝塔面板重新配置站点（如改 SSL），可能会覆盖此文件，需要重新加上 `$uri.html` 规则。

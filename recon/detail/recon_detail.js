@@ -33,6 +33,12 @@
             return;
         }
 
+        // NOTE: 将 URL 静默替换为干净格式 /recon/ID（无论从哪种路径进入）
+        var cleanUrl = '/recon/' + id;
+        if (location.pathname !== cleanUrl) {
+            history.replaceState(null, '', cleanUrl);
+        }
+
         // NOTE: 初始化 WCA 登录 UI（详情页需要鉴权才能显示管理员按钮）
         updateWcaAuthUI();
 
@@ -41,7 +47,14 @@
             fetch('/stats/comp_name_countries.json').then(function (r) { return r.json(); }).catch(function () { return {}; }),
             fetch('/stats/person_name_countries.json').then(function (r) { return r.json(); }).catch(function () { return {}; }),
             fetch('/recon/comp_names_zh.json').then(function (r) { return r.json(); }).catch(function () { return {}; }),
-            ReconStore.loadOne(id)
+            // NOTE: 优先用 loadOne 单条查询；若后端尚未部署 get action 则 fallback 到 loadAll
+            ReconStore.loadOne(id).catch(function () {
+                return ReconStore.loadAll().then(function (all) {
+                    var found = all.find(function (s) { return String(s.id) === String(id); });
+                    if (!found) throw new Error('Not found');
+                    return found;
+                });
+            })
         ]).then(function (results) {
             compCountries = results[0];
             personCountries = results[1];
