@@ -505,33 +505,6 @@ switch ($action) {
         }
         break;
 
-    // ==================== 临时迁移端点（列重命名，完成后删除） ====================
-
-    case 'renameColumns':
-        header('Cache-Control: no-cache, no-store, must-revalidate');
-        requireAdmin();
-
-        $sqls = [
-            'ALTER TABLE recons RENAME COLUMN display_single TO value',
-            'ALTER TABLE recons RENAME COLUMN r_single TO regional_single_record',
-            'ALTER TABLE recons RENAME COLUMN r_avg TO regional_average_record',
-            'ALTER TABLE recons RENAME COLUMN r_ao_xr TO regional_aoxr_record',
-            'ALTER TABLE recons RENAME COLUMN wca_id TO person_id',
-            'ALTER TABLE recons DROP INDEX idx_wca_id',
-            'ALTER TABLE recons ADD INDEX idx_person_id (person_id)',
-        ];
-        $results = [];
-        foreach ($sqls as $sql) {
-            try {
-                $db->exec($sql);
-                $results[] = ['sql' => $sql, 'ok' => true];
-            } catch (Exception $e) {
-                $results[] = ['sql' => $sql, 'ok' => false, 'error' => $e->getMessage()];
-            }
-        }
-        echo json_encode(['ok' => true, 'results' => $results]);
-        break;
-
     // ==================== 选手搜索（代理 WCA API） ====================
 
     case 'searchSolvers':
