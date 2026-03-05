@@ -51,14 +51,16 @@ var ReconUtils = (function () {
     /** 平均成绩格式化（两位小数，≥60 秒显示为 分:秒.xx） */
     function formatAvg(val) {
         if (val == null) return '';
-        if (val >= 9999) return 'DNF';
-        if (val >= 60) {
-            var m = Math.floor(val / 60);
-            var s = (val % 60).toFixed(2);
+        // NOTE: API 可能返回字符串形式的数字（如 "4.190"），统一转为 number
+        var n = typeof val === 'number' ? val : parseFloat(val);
+        if (isNaN(n)) return String(val);
+        if (n >= 9999) return 'DNF';
+        if (n >= 60) {
+            var m = Math.floor(n / 60);
+            var s = (n % 60).toFixed(2);
             return m + ':' + (s < 10 ? '0' : '') + s;
         }
-        if (typeof val !== 'number') return String(val);
-        return val.toFixed(2);
+        return n.toFixed(2);
     }
 
     /**

@@ -366,17 +366,17 @@
             html += '<div class="detail-admin-actions">';
             if (isAdminUser) {
                 html += '<button class="recon-btn recon-btn-edit" data-solve-id="' + s.id + '">' +
-                    (isZh ? '✏️ 编辑' : '✏️ Edit') + '</button>';
+                    (isZh ? '编辑' : 'Edit') + '</button>';
                 if (s._edited) {
                     html += '<button class="recon-btn recon-btn-restore" data-solve-id="' + s.id + '">' +
-                        (isZh ? '↩️ 恢复原始' : '↩️ Restore') + '</button>';
+                        (isZh ? '恢复' : 'Restore') + '</button>';
                 }
                 html += '<button class="recon-btn recon-btn-history" data-solve-id="' + s.id + '">' +
-                    (isZh ? '📋 历史' : '📋 History') + '</button>';
+                    (isZh ? '历史' : 'History') + '</button>';
             }
             if (canDelete) {
                 html += '<button class="recon-btn recon-btn-danger">' +
-                    '🗑️ ' + (isZh ? '删除' : 'Delete') + '</button>';
+                    (isZh ? '删除' : 'Delete') + '</button>';
             }
             html += '</div>';
         }

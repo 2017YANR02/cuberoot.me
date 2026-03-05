@@ -609,6 +609,19 @@ switch ($action) {
         echo json_encode(['ok' => true, 'results' => $results]);
         break;
 
+    // NOTE: 临时迁移——average 列精度从 DECIMAL(8,3) 降为 DECIMAL(8,2)
+    case 'modifyAvgPrecision':
+        header('Cache-Control: no-cache, no-store, must-revalidate');
+        requireAdmin();
+        try {
+            $db->exec('ALTER TABLE recons MODIFY COLUMN average DECIMAL(8,2) DEFAULT NULL');
+            echo json_encode(['ok' => true]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+        break;
+
     // ==================== 选手搜索（代理 WCA API） ====================
 
     case 'searchSolvers':

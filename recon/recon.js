@@ -460,12 +460,12 @@
 
         tr.innerHTML =
             '<td class="col-idx">' + (solve.id || '') + '</td>' +
-            '<td class="col-avg">' + U.formatAvg(solve.average) + (solve.regionalAverageRecord ? ' ' + U.formatRecord(solve.regionalAverageRecord) : '') + '</td>' +
             '<td class="col-dsingle mono">' + U.escHtml(solve.value || '') + (solve.regionalSingleRecord ? ' ' + U.formatRecord(solve.regionalSingleRecord) : '') + '</td>' +
             '<td class="col-solver">' + U.countryFlag(U.solverCountry(solve.person, personCountries)) + ' ' + U.displaySolverName(solve.person) + '</td>' +
             '<td class="col-date">' + U.escHtml(solve.date || '') + '</td>' +
             '<td class="col-comp">' + U.countryFlag(compCountries[solve.comp]) + ' ' + U.displayCompName(solve.comp, compNamesZh) + '</td>' +
             '<td class="col-round">' + U.escHtml(solve.round || '') + (solve.round && solve.solveNum ? '#' : '') + (solve.solveNum || '') + '</td>' +
+            '<td class="col-avg">' + U.formatAvg(solve.average) + (solve.regionalAverageRecord ? ' ' + U.formatRecord(solve.regionalAverageRecord) : '') + '</td>' +
             '<td class="col-aoxr">' + U.escHtml(solve.aoType || '') + (solve.regionalAoxrRecord ? ' ' + U.formatRecord(solve.regionalAoxrRecord) : '') + '</td>' +
             '<td class="col-single mono">' + U.formatResult(solve.single) + '</td>' +
             '<td class="col-stm mono">' + (solve.stm || '') + '</td>' +
