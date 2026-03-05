@@ -330,31 +330,31 @@
     // ==================== 筛选器 ====================
 
     function buildFilterOptions() {
-        const solvers = new Set();
+        const persons = new Set();
         const methods = new Set();
         const events = new Set();
 
         allSolves.forEach(s => {
-            if (s.solver) solvers.add(s.solver);
+            if (s.person) persons.add(s.person);
             if (s.method) methods.add(s.method);
             if (s.event) events.add(s.event);
         });
 
         // NOTE: 按出现频率排序选手（最多的在前）
-        const solverCounts = {};
+        const personCounts = {};
         allSolves.forEach(s => {
-            if (s.solver) {
-                solverCounts[s.solver] = (solverCounts[s.solver] || 0) + 1;
+            if (s.person) {
+                personCounts[s.person] = (personCounts[s.person] || 0) + 1;
             }
         });
-        const sortedSolvers = [...solvers].sort((a, b) => (solverCounts[b] || 0) - (solverCounts[a] || 0));
+        const sortedPersons = [...persons].sort((a, b) => (personCounts[b] || 0) - (personCounts[a] || 0));
 
         const isZh = localStorage.getItem('i18n_locale') === 'zh';
 
-        sortedSolvers.forEach(name => {
+        sortedPersons.forEach(name => {
             const opt = document.createElement('option');
             opt.value = name;
-            const cnt = solverCounts[name] || 0;
+            const cnt = personCounts[name] || 0;
             const parsed = parseSolverName(name);
             const enDisplay = parsed.en + ` (${cnt})`;
             const zhDisplay = (parsed.zh || parsed.en) + ` (${cnt})`;
@@ -392,7 +392,7 @@
         const showNonWca = filterNonWca.checked;
 
         filteredSolves = allSolves.filter(s => {
-            if (solver && s.solver !== solver) return false;
+            if (solver && s.person !== solver) return false;
             if (method && s.method !== method) return false;
             if (event && s.event !== event) return false;
             // NOTE: 根据 official 字段过滤 WCA / non-WCA
@@ -401,7 +401,7 @@
             if (query) {
                 // NOTE: 搜索范围：选手名（含括号内中文名）、比赛名、成绩、打乱、OLL/PLL、纪录标记
                 const haystack = [
-                    s.solver, s.comp, s.scramble,
+                    s.person, s.comp, s.scramble,
                     s.oll, s.pll, s.country, s.note,
                     s.single != null && typeof s.single === 'number' ? s.single.toFixed(3) : '',
                     // NOTE: 支持中文比赛名搜索
@@ -448,10 +448,10 @@
             'col-comp': 'comp',
             'col-round': 'round',
             'col-aoxr': 'aoType',
-            'col-avg': 'avg',
+            'col-avg': 'average',
             'col-single': 'single',
-            'col-dsingle': 'displaySingle',
-            'col-solver': 'solver',
+            'col-dsingle': 'value',
+            'col-solver': 'person',
             'col-stm': 'stm',
             'col-tps': 'tps'
         };
@@ -543,7 +543,7 @@
 
         tr.innerHTML =
             '<td class="col-idx">' + (solve.id || '') + '</td>' +
-            '<td class="col-avg">' + formatAvg(solve.avg) + (solve.regionalAverageRecord ? ' ' + formatRecord(solve.regionalAverageRecord) : '') + '</td>' +
+            '<td class="col-avg">' + formatAvg(solve.average) + (solve.regionalAverageRecord ? ' ' + formatRecord(solve.regionalAverageRecord) : '') + '</td>' +
             '<td class="col-dsingle mono">' + escHtml(solve.value || '') + (solve.regionalSingleRecord ? ' ' + formatRecord(solve.regionalSingleRecord) : '') + '</td>' +
             '<td class="col-solver">' + countryFlag(solverCountry(solve)) + ' ' + displaySolverName(solve) + '</td>' +
             '<td class="col-date">' + escHtml(solve.date || '') + '</td>' +
@@ -994,11 +994,11 @@
 
     // NOTE: 查找选手国旗 ISO2。solver 字段已含完整 WCA 格式名（如 "Ruimin Yan (颜瑞民)"）
     function solverCountry(solve) {
-        if (personCountries[solve.solver]) return personCountries[solve.solver];
+        if (personCountries[solve.person]) return personCountries[solve.person];
 
         // NOTE: fallback——社区复盘可能只存了中文名或英文名，
         // 在 personCountries 的 key 中模糊搜索
-        var name = solve.solver || '';
+        var name = solve.person || '';
         if (name) {
             for (var key in personCountries) {
                 if (key.indexOf(name) !== -1) return personCountries[key];
@@ -1054,7 +1054,7 @@
     function displaySolverName(s) {
         // NOTE: 中文模式下优先显示中文名，从 solver 括号中提取
         const isZh = localStorage.getItem('i18n_locale') === 'zh';
-        const parsed = parseSolverName(s.solver || '');
+        const parsed = parseSolverName(s.person || '');
         if (parsed.zh) {
             const text = isZh ? parsed.zh : parsed.en;
             return `<span data-i18n-en="${escHtml(parsed.en)}" data-i18n-zh="${escHtml(parsed.zh)}">${escHtml(text)}</span>`;
