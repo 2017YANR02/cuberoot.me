@@ -113,7 +113,7 @@ ruiminyan.github.io/
 ├── 404.html                   # 自定义 404 页面（GitHub Pages / Jekyll serve 路由）
 │                              # 检测 /recon/数字 URL → JS 重定向到 /recon/detail/?id=数字
 │                              # NOTE: GitHub Pages 无服务端路由，这是支持 /recon/2263 干净 URL 的唯一方式
-├── recon/                     # 比赛复盘页面（数据统一由阿里云 PHP 后端管理）
+├── recon/                     # 魔方还原复盘页面（数据统一由阿里云 PHP 后端管理）
 │   ├── index.md               # 列表页入口（Jekyll Markdown，引入 WCA Auth）
 │   ├── recon.js               # 列表页逻辑：表格渲染、筛选搜索、排序、点击跳转详情页
 │   ├── recon.css              # 页面样式（含社区行标记、WCA 登录、比赛搜索下拉、提交页/详情页布局）
