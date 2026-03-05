@@ -104,5 +104,6 @@ layout: default
 <script src="/recon/recon_api.js"></script>
 <script src="/recon/recon_local_store.js"></script>
 <script src="/recon/recon_alg_utils.js"></script>
+<script src="/recon/recon_utils.js"></script>
 <script src="/recon/recon.js" defer></script>
 <script src="/recon/recon_submit.js" defer></script>

@@ -1,0 +1,577 @@
+/**
+ * Recon 详情页逻辑
+ * 功能：从 URL 参数读取复盘 ID，调 API 加载单条数据，渲染详情视图
+ * NOTE: 详情渲染函数从 recon.js 迁移而来，列表页不再行内展开
+ */
+(function () {
+    'use strict';
+
+    // --- 辅助数据（在 init 时加载） ---
+    var compCountries = {};
+    var personCountries = {};
+    var compNamesZh = {};
+
+    // --- 魔方面颜色映射（用于注释中的颜色字母着色） ---
+    var FACE_COLORS = {
+        W: '#e8e8e8',
+        Y: '#facc15',
+        R: '#ef4444',
+        O: '#f97316',
+        G: '#22c55e',
+        B: '#3b82f6'
+    };
+
+    // ==================== 初始化 ====================
+
+    document.addEventListener('DOMContentLoaded', init);
+
+    function init() {
+        var params = new URLSearchParams(location.search);
+        var id = params.get('id');
+        if (!id) {
+            location.href = '/recon/';
+            return;
+        }
+
+        // NOTE: 初始化 WCA 登录 UI（详情页需要鉴权才能显示管理员按钮）
+        updateWcaAuthUI();
+
+        // NOTE: 并行加载辅助数据和复盘数据
+        Promise.all([
+            fetch('/stats/comp_name_countries.json').then(function (r) { return r.json(); }).catch(function () { return {}; }),
+            fetch('/stats/person_name_countries.json').then(function (r) { return r.json(); }).catch(function () { return {}; }),
+            fetch('/recon/comp_names_zh.json').then(function (r) { return r.json(); }).catch(function () { return {}; }),
+            ReconStore.loadOne(id)
+        ]).then(function (results) {
+            compCountries = results[0];
+            personCountries = results[1];
+            compNamesZh = results[2];
+            var solve = results[3];
+
+            // NOTE: 计算统计（STM、TPS、OLL、PLL 等）
+            if (typeof ReconStats !== 'undefined') {
+                var reconText = solve.recon || solve.caption || '';
+                var stats = ReconStats.computeAllStats(reconText, solve.single);
+                for (var key in stats) {
+                    if (stats[key] !== null && stats[key] !== undefined && stats[key] !== '') {
+                        solve[key] = stats[key];
+                    }
+                }
+            }
+
+            renderDetail(solve);
+        }).catch(function (err) {
+            var isZh = localStorage.getItem('i18n_locale') === 'zh';
+            var container = document.getElementById('detail-container');
+            container.innerHTML = '<div style="text-align:center;padding:60px;color:#f87171">' +
+                '<p>' + (isZh ? '未找到复盘 #' + id : 'Recon #' + id + ' not found') + '</p>' +
+                '<a href="/recon/" style="color:#60a5fa">' + (isZh ? '返回列表' : 'Back to list') + '</a>' +
+                '</div>';
+            console.error('Failed to load recon:', err);
+        });
+    }
+
+    /** 更新 WCA 登录按钮/用户头像 UI */
+    function updateWcaAuthUI() {
+        if (typeof WcaAuth === 'undefined') return;
+        var user = WcaAuth.getUser();
+        var loginBtn = document.getElementById('btn-wca-login');
+        var userInfo = document.getElementById('wca-user-info');
+        if (!loginBtn || !userInfo) return;
+        if (user) {
+            loginBtn.style.display = 'none';
+            userInfo.style.display = 'flex';
+            document.getElementById('wca-avatar').src = user.avatar || '';
+            document.getElementById('wca-name').textContent = user.name || user.wcaId;
+        } else {
+            loginBtn.style.display = '';
+            userInfo.style.display = 'none';
+        }
+    }
+
+    // ==================== 渲染 ====================
+
+    function renderDetail(solve) {
+        var isZh = localStorage.getItem('i18n_locale') === 'zh';
+        var U = ReconUtils;
+
+        // NOTE: 更新页面标题
+        var titleEl = document.getElementById('detail-title');
+        var solverDisplay = U.displaySolverName(solve.person);
+        var compDisplay = U.displayCompName(solve.comp, compNamesZh);
+        titleEl.innerHTML = '#' + solve.id + ' ' +
+            U.countryFlag(U.solverCountry(solve.person, personCountries)) + ' ' + solverDisplay;
+
+        // NOTE: 更新浏览器标签页标题
+        var parsed = U.parseSolverName(solve.person || '');
+        document.title = '#' + solve.id + ' ' + (isZh && parsed.zh ? parsed.zh : parsed.en) + ' - Recon';
+
+        // NOTE: 渲染详情内容
+        var container = document.getElementById('detail-container');
+        container.innerHTML = buildDetailHtml(solve);
+
+        // NOTE: 懒加载 twisty-player
+        var twistyContainer = container.querySelector('.recon-twisty-container');
+        if (twistyContainer && typeof window.ensureTwisty === 'function') {
+            loadTwistyPlayer(twistyContainer, solve);
+        }
+
+        // NOTE: 绑定按钮事件
+        bindButtonEvents(container, solve);
+    }
+
+    function bindButtonEvents(container, solve) {
+        // NOTE: caption 复制按钮
+        container.addEventListener('click', function (e) {
+            var btn = e.target.closest('.caption-copy-btn');
+            if (!btn) return;
+            e.preventDefault();
+            var text = btn.getAttribute('data-caption');
+            navigator.clipboard.writeText(text).then(function () {
+                var isZh = localStorage.getItem('i18n_locale') === 'zh';
+                var orig = btn.textContent;
+                btn.textContent = isZh ? '已复制' : 'copied';
+                btn.classList.add('copied');
+                setTimeout(function () {
+                    btn.textContent = orig;
+                    btn.classList.remove('copied');
+                }, 1500);
+            });
+        });
+
+        // NOTE: 分享链接复制按钮
+        container.addEventListener('click', function (e) {
+            var linkBtn = e.target.closest('.share-link-btn');
+            if (!linkBtn) return;
+            e.preventDefault();
+            var url = linkBtn.getAttribute('data-url');
+            navigator.clipboard.writeText(url).then(function () {
+                var isZh = localStorage.getItem('i18n_locale') === 'zh';
+                var orig = linkBtn.textContent;
+                linkBtn.textContent = isZh ? '已复制' : 'copied';
+                linkBtn.classList.add('copied');
+                setTimeout(function () {
+                    linkBtn.textContent = orig;
+                    linkBtn.classList.remove('copied');
+                }, 1500);
+            });
+        });
+
+        // NOTE: 管理员编辑按钮
+        var editBtn = container.querySelector('.recon-btn-edit');
+        if (editBtn) {
+            editBtn.addEventListener('click', function () {
+                sessionStorage.setItem('recon_edit_solve', JSON.stringify(solve));
+                location.href = '/recon/submit/';
+            });
+        }
+
+        // NOTE: 管理员恢复按钮
+        var restoreBtn = container.querySelector('.recon-btn-restore');
+        if (restoreBtn) {
+            restoreBtn.addEventListener('click', function () {
+                var isZh = localStorage.getItem('i18n_locale') === 'zh';
+                if (!confirm(isZh ? '确定恢复为原始数据？' : 'Restore original data?')) return;
+                ReconStore.deleteEdit(solve.id).then(function () {
+                    location.reload();
+                }).catch(function (err) {
+                    console.error('Failed to restore:', err);
+                    alert('Restore failed: ' + err.message);
+                });
+            });
+        }
+
+        // NOTE: 管理员历史按钮
+        var historyBtn = container.querySelector('.recon-btn-history');
+        if (historyBtn) {
+            historyBtn.addEventListener('click', function () {
+                showEditHistory(solve.id);
+            });
+        }
+
+        // NOTE: 删除按钮（本人或管理员）
+        var deleteBtn = container.querySelector('.recon-btn-danger');
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', function () {
+                var isZh = localStorage.getItem('i18n_locale') === 'zh';
+                if (!confirm(isZh ? '确定删除 #' + solve.id + ' 吗？' : 'Delete #' + solve.id + '?')) return;
+                ReconStore.deleteRecon(solve.id).then(function () {
+                    location.href = '/recon/';
+                }).catch(function (err) {
+                    alert('Delete failed: ' + err.message);
+                });
+            });
+        }
+    }
+
+    function showEditHistory(solveId) {
+        ReconStore.getEditHistory(solveId).then(function (history) {
+            var isZh = localStorage.getItem('i18n_locale') === 'zh';
+            if (history.length === 0) {
+                alert(isZh ? '暂无编辑历史' : 'No edit history');
+                return;
+            }
+            var msg = (isZh ? '编辑历史 (#' : 'Edit History (#') + solveId + ')\n\n';
+            history.forEach(function (h) {
+                var time = h.editedAt ? new Date(h.editedAt * 1000).toLocaleString() : '?';
+                msg += time + '  by ' + (h.editedBy || '?') + '\n';
+                if (h.before && h.after) {
+                    for (var key in h.after) {
+                        if (key.charAt(0) === '_') continue;
+                        msg += '  ' + key + ': ' + (h.before[key] || '') + ' → ' + h.after[key] + '\n';
+                    }
+                }
+                msg += '\n';
+            });
+            alert(msg);
+        }).catch(function (err) {
+            console.error('Failed to load history:', err);
+        });
+    }
+
+    // ==================== 详情 HTML 构建（从 recon.js 迁移） ====================
+
+    function buildDetailHtml(s) {
+        var isZh = localStorage.getItem('i18n_locale') === 'zh';
+        var U = ReconUtils;
+
+        var html = '<div class="detail-content">';
+
+        // NOTE: 基本信息摘要行
+        html += '<div class="detail-summary">';
+        html += '<span class="mono">' + U.formatResult(s.single) + '</span>';
+        if (s.regionalSingleRecord) html += ' ' + U.formatRecord(s.regionalSingleRecord);
+        if (s.average != null) html += ' · ' + (isZh ? '平均 ' : 'Avg ') + U.formatAvg(s.average);
+        if (s.regionalAverageRecord) html += ' ' + U.formatRecord(s.regionalAverageRecord);
+        if (s.aoType) html += ' · ' + U.escHtml(s.aoType);
+        if (s.regionalAoxrRecord) html += ' ' + U.formatRecord(s.regionalAoxrRecord);
+        html += ' · ' + U.escHtml(s.date || '');
+        if (s.comp) html += ' · ' + U.countryFlag(compCountries[s.comp]) + ' ' + U.displayCompName(s.comp, compNamesZh);
+        if (s.round) html += ' · ' + U.escHtml(s.round) + (s.solveNum ? '#' + s.solveNum : '');
+        if (s.event) html += ' · ' + U.escHtml(s.event);
+        if (s.method) html += ' · ' + U.escHtml(s.method);
+        html += '</div>';
+
+        // NOTE: 复盘 + 统计两列布局
+        html += '<div class="detail-grid">';
+
+        // 左列：复盘步骤
+        html += '<div>';
+        if (s.recon) {
+            html += '<div class="detail-recon">';
+            html += '<div class="detail-recon-label"><span data-i18n-en="Reconstruction" data-i18n-zh="复盘">' + (isZh ? '复盘' : 'Reconstruction') + '</span></div>';
+            html += '<div class="detail-recon-text">' + formatReconText(s.recon) + '</div>';
+            html += '</div>';
+        } else if (s.caption) {
+            html += '<div class="detail-recon">';
+            html += '<div class="detail-recon-label"><span data-i18n-en="Reconstruction" data-i18n-zh="复盘">' + (isZh ? '复盘' : 'Reconstruction') + '</span></div>';
+            html += '<div class="detail-recon-text">' + formatReconText(s.caption) + '</div>';
+            html += '</div>';
+        }
+        // NOTE: 有打乱时插入 twisty-player 占位符 + 外部链接
+        var reconText = s.recon || s.caption || '';
+        var scrambleForPlayer = s.wcaScramble || s.optimalScramble || extractScrambleFromRecon(reconText);
+        if (scrambleForPlayer && reconText) {
+            html += '<div class="recon-twisty-container"></div>';
+            var setupStr = encodeURIComponent(scrambleForPlayer);
+            var algStr = encodeURIComponent(extractAlgWithComments(reconText));
+            var puzzleStr = (s.event && s.event.indexOf('2') >= 0) ? '2x2x2' : '3x3x3';
+            var algUrl = 'https://alg.cubing.net/?setup=' + setupStr + '&alg=' + algStr + '&puzzle=' + puzzleStr;
+            var cubedbUrl = 'https://cubedb.net/?puzzle=' + (puzzleStr === '2x2x2' ? '2x2' : '3x3') + '&scramble=' + setupStr + '&alg=' + algStr;
+            html += '<div class="recon-external-links">';
+            html += '<a href="' + algUrl + '" target="_blank" rel="noopener noreferrer">alg.cubing.net</a>';
+            html += ' <a href="' + cubedbUrl + '" target="_blank" rel="noopener noreferrer">cubedb.net</a>';
+            var captionText = generateCaption(reconText);
+            if (captionText) {
+                html += ' <a href="#" class="caption-copy-btn" data-caption="' + U.escHtml(captionText).replace(/"/g, '&quot;') + '"' +
+                    ' data-i18n-en="caption" data-i18n-zh="字幕">caption</a>';
+            }
+            // NOTE: 分享链接
+            var shareUrl = location.origin + '/recon/' + s.id;
+            html += ' <a href="#" class="share-link-btn" data-url="' + shareUrl + '"' +
+                ' data-i18n-en="link" data-i18n-zh="链接">link</a>';
+            html += '</div>';
+        }
+        html += '</div>';
+
+        // 右列：统计网格 + 打乱 + 元数据
+        html += '<div>';
+        html += buildStatsGrid(s, isZh);
+
+        if (s.optimalScramble) {
+            html += '<div class="detail-scramble">';
+            html += '<div class="detail-scramble-label"><span data-i18n-en="Optimal Scramble (scr*)" data-i18n-zh="最少步打乱 (scr*)">' + (isZh ? '最少步打乱 (scr*)' : 'Optimal Scramble (scr*)') + '</span></div>';
+            html += '<div class="detail-scramble-text">' + U.escHtml(s.optimalScramble) + '</div>';
+            html += '</div>';
+        }
+        if (s.wcaScramble) {
+            html += '<div class="detail-scramble">';
+            html += '<div class="detail-scramble-label"><span data-i18n-en="WCA Scramble (scr)" data-i18n-zh="WCA 打乱 (scr)">' + (isZh ? 'WCA 打乱 (scr)' : 'WCA Scramble (scr)') + '</span></div>';
+            html += '<div class="detail-scramble-text">' + U.escHtml(s.wcaScramble) + '</div>';
+            html += '</div>';
+        }
+
+        // 元数据
+        html += '<div class="detail-meta">';
+        if (s.cube) {
+            html += '<div class="detail-meta-item"><span class="detail-meta-label">🧊</span><span class="detail-meta-value">' + U.escHtml(s.cube) + '</span></div>';
+        }
+        if (s.reconer) {
+            html += '<div class="detail-meta-item"><span class="detail-meta-label">✍️</span><span class="detail-meta-value">' + U.escHtml(s.reconer) + '</span></div>';
+        }
+        html += '</div>';
+
+        if (s.note) {
+            html += '<div class="detail-note">';
+            html += '<div class="detail-scramble-label">📝 ' + (isZh ? '备注' : 'Note') + '</div>';
+            html += '<div class="detail-recon-text">' + U.escHtml(s.note) + '</div>';
+            html += '</div>';
+        }
+        html += '</div>';
+
+        html += '</div>'; // detail-grid
+
+        // NOTE: 管理员操作按钮
+        var isAdminUser = typeof WcaAuth !== 'undefined' && WcaAuth.isAdmin();
+        var canDelete = false;
+        if (s.personId && typeof WcaAuth !== 'undefined') {
+            var currentUser = WcaAuth.getUser();
+            if (currentUser && currentUser.wcaId === s.personId) canDelete = true;
+        }
+        if (isAdminUser) canDelete = true;
+
+        if (isAdminUser || canDelete) {
+            html += '<div class="detail-admin-actions">';
+            if (isAdminUser) {
+                html += '<button class="recon-btn recon-btn-edit" data-solve-id="' + s.id + '">' +
+                    (isZh ? '✏️ 编辑' : '✏️ Edit') + '</button>';
+                if (s._edited) {
+                    html += '<button class="recon-btn recon-btn-restore" data-solve-id="' + s.id + '">' +
+                        (isZh ? '↩️ 恢复原始' : '↩️ Restore') + '</button>';
+                }
+                html += '<button class="recon-btn recon-btn-history" data-solve-id="' + s.id + '">' +
+                    (isZh ? '📋 历史' : '📋 History') + '</button>';
+            }
+            if (canDelete) {
+                html += '<button class="recon-btn recon-btn-danger">' +
+                    '🗑️ ' + (isZh ? '删除' : 'Delete') + '</button>';
+            }
+            html += '</div>';
+        }
+
+        html += '</div>'; // detail-content
+        return html;
+    }
+
+    // ==================== 统计网格 ====================
+
+    function buildStatsGrid(s, isZh) {
+        var U = ReconUtils;
+        var CROSS_LABELS = { 0: 'cross', 1: 'xcross', 2: 'xxcross', 3: 'xxxcross', 4: 'xxxxcross' };
+
+        var items = [
+            ['stm', 'STM', 'STM'],
+            ['tps', 'TPS', 'TPS'],
+            ['crossStm', 'Cross', 'Cross'],
+            ['f2l', 'F2L', 'F2L'],
+            ['ll', 'LL', 'LL'],
+            ['crossType', '?x', '?x', function (v) { return CROSS_LABELS[v] || v; }],
+            ['freePair', 'Free Pair', '基态'],
+            ['yRot', 'y rot', 'y 旋转'],
+            ['regrip', 'Regrip', '换手'],
+            ['lockup', 'Lockup', '卡顿'],
+            ['sMove', 'S move', 'S 步'],
+            ['crossColor', 'Color', '底色', function (v) {
+                var color = FACE_COLORS[v];
+                if (color) return '<span style="color:' + color + ';font-weight:600">' + v + '</span>';
+                return v;
+            }],
+            ['ollShort', 'OLL', 'OLL'],
+            ['pllShort', 'PLL', 'PLL'],
+        ];
+
+        var visibleItems = [];
+        for (var i = 0; i < items.length; i++) {
+            var val = s[items[i][0]];
+            if (val !== undefined && val !== null && val !== '') {
+                visibleItems.push(items[i]);
+            }
+        }
+        if (visibleItems.length === 0) return '';
+
+        var html = '<div class="detail-stats">';
+        html += '<div class="detail-stats-label">📊 ' + (isZh ? '统计' : 'Stats') + '</div>';
+        html += '<div class="detail-stats-grid">';
+        for (var j = 0; j < visibleItems.length; j++) {
+            var item = visibleItems[j];
+            var label = isZh ? item[2] : item[1];
+            var val = s[item[0]];
+            var fmt = item[3];
+            var displayVal = fmt ? fmt(val) : U.escHtml(String(val));
+            html += '<div class="stat-item">' +
+                '<span class="stat-label">' + U.escHtml(label) + '</span>' +
+                '<span class="stat-value">' + displayVal + '</span>' +
+                '</div>';
+        }
+        html += '</div></div>';
+        return html;
+    }
+
+    // ==================== 文本格式化（从 recon.js 迁移） ====================
+
+    function formatReconText(text) {
+        if (!text) return '';
+        return ReconUtils.escHtml(text).replace(
+            /\/\/(.*?)(?=\n|$)/g,
+            function (match, content) {
+                return '<span class="recon-comment">//' + colorizeComment(content) + '</span>';
+            }
+        );
+    }
+
+    /**
+     * NOTE: 对注释文本中的魔方面颜色字母着色。
+     * 只处理「独立的颜色字母」，避免误匹配算法名中的字母。
+     */
+    function colorizeComment(commentHtml) {
+        return commentHtml.replace(/[A-Za-z0-9+\-()*.]+/g, function (word) {
+            var cleanWord = word.replace(/^[+\-()*.]+/, '').replace(/[+\-()*.]+$/, '');
+            if (!cleanWord) return word;
+            var baseName = cleanWord.replace(/[-+()0-9.*].*$/, '');
+            if (/^(?:OLL|PLL|ZBLL|ZBLS|EPLL|OCLL|COLL|CMLL|EG|VLS|VH|WV|CLL|CSP|OBL|CP|EP|EO|EOLRb|DR|insp|cross|xcross|pscross|psxcross|xxxcross|xxcross|layer|face|cancel|into|auto|Skip|Fail|STM|SPS|TPS|better|NR|pair|pairs|free|predicted|counting|full|move|edge|Reconstruction|PBL|OLLCP|1LLL)$/i.test(baseName)) {
+                return word;
+            }
+            if (word.includes('+')) {
+                return word.split('+').map(function (part) { return colorizePart(part); }).join('+');
+            }
+            return colorizePart(word);
+        });
+    }
+
+    function colorizePart(word) {
+        var prefixMatch = word.match(/^[+\-()*.]+/);
+        var suffixMatch = word.match(/[+\-()*.]+$/);
+        var prefix = prefixMatch ? prefixMatch[0] : '';
+        var suffix = suffixMatch ? suffixMatch[0] : '';
+        var inner = word.substring(prefix.length, word.length - suffix.length);
+        if (!inner) return word;
+        if (/^[WYROGB]+$/.test(inner)) {
+            inner = inner.split('').map(function (ch) {
+                return '<span style="color:' + FACE_COLORS[ch] + ';font-weight:600">' + ch + '</span>';
+            }).join('');
+            return prefix + inner + suffix;
+        }
+        var m = inner.match(/^([WYROGB]+)([ec])$/);
+        if (m) {
+            inner = m[1].split('').map(function (ch) {
+                return '<span style="color:' + FACE_COLORS[ch] + ';font-weight:600">' + ch + '</span>';
+            }).join('') + m[2];
+            return prefix + inner + suffix;
+        }
+        return word;
+    }
+
+    // ==================== 公式提取（从 recon.js 迁移） ====================
+
+    /** 提取纯解法（去除统计行、打乱行、// 注释） */
+    function extractAlgFromRecon(text) {
+        if (!text) return '';
+        var lines = text.split('\n');
+        var startIdx = 0;
+        if (lines.length > 0 && /^\d+STM\s/i.test(lines[0])) {
+            startIdx = 1;
+            if (lines.length > 1 && lines[1].indexOf('//') < 0) {
+                startIdx = 2;
+            }
+        }
+        var alg = lines.slice(startIdx)
+            .map(function (line) {
+                var idx = line.indexOf('//');
+                return (idx >= 0 ? line.substring(0, idx) : line).trim();
+            })
+            .filter(function (line) { return line.length > 0; })
+            .join('\n');
+        return ReconAlgUtils.cleanForPlayer(alg);
+    }
+
+    /** 提取纯解法但保留 // 注释（用于 alg.cubing.net 链接） */
+    function extractAlgWithComments(text) {
+        if (!text) return '';
+        var lines = text.split('\n');
+        var startIdx = 0;
+        if (lines.length > 0 && /^\d+STM\s/i.test(lines[0])) {
+            startIdx = 1;
+            if (lines.length > 1 && lines[1].indexOf('//') < 0) {
+                startIdx = 2;
+            }
+        }
+        var alg = lines.slice(startIdx)
+            .filter(function (line) { return line.trim().length > 0; })
+            .join('\n');
+        return ReconAlgUtils.cleanForAlgCubingNet(alg);
+    }
+
+    /** 从复盘文本第2行提取打乱公式 */
+    function extractScrambleFromRecon(text) {
+        if (!text) return '';
+        var lines = text.split('\n');
+        if (lines.length > 1 && /^\d+STM\s/i.test(lines[0])) {
+            return lines[1].trim();
+        }
+        return '';
+    }
+
+    /**
+     * 从 recon 文本动态生成 caption
+     * 去掉统计行和打乱行，去掉 insp 行，去掉 // 后的注释，末尾附加统计行
+     */
+    function generateCaption(text) {
+        if (!text) return '';
+        var lines = text.split('\n');
+        var statsLine = '';
+        var startIdx = 0;
+        if (lines.length > 0 && /^\d+STM\s/i.test(lines[0])) {
+            statsLine = lines[0].trim();
+            startIdx = 1;
+            if (lines.length > 1 && lines[1].indexOf('//') < 0) {
+                startIdx = 2;
+            }
+        }
+        var result = lines.slice(startIdx)
+            .filter(function (line) {
+                return line.trim().length > 0 && !/\binsp\b/i.test(line);
+            })
+            .map(function (line) {
+                var pos = line.indexOf('//');
+                return pos >= 0 ? line.substring(0, pos).trimEnd() : line;
+            })
+            .filter(function (line) { return line.trim().length > 0; });
+        if (statsLine) result.push(statsLine);
+        return result.join('\n');
+    }
+
+    // ==================== 魔方动画 ====================
+
+    function loadTwistyPlayer(container, solve) {
+        container.innerHTML = '<div style="color:#888;font-size:0.8em">加载中...</div>';
+        window.ensureTwisty().then(function () {
+            var Ctor = window.__TwistyPlayerCtor;
+            if (!Ctor) { container.innerHTML = ''; return; }
+            var reconText = solve.recon || solve.caption || '';
+            var setup = solve.wcaScramble || solve.optimalScramble || extractScrambleFromRecon(reconText);
+            var alg = extractAlgFromRecon(reconText);
+            var puzzle = '3x3x3';
+            if (solve.event && solve.event.indexOf('2') >= 0) puzzle = '2x2x2';
+            var player = new Ctor({
+                puzzle: puzzle,
+                experimentalSetupAlg: setup,
+                alg: alg
+            });
+            container.innerHTML = '';
+            container.appendChild(player);
+        }).catch(function () {
+            container.innerHTML = '';
+        });
+    }
+
+})();
