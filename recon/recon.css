@@ -64,6 +64,12 @@
     border-left: 2px solid rgba(59, 130, 246, 0.4);
 }
 
+/* NOTE: 表格行内 <a> 继承行样式，不显示为链接外观 */
+.solve-row a {
+    color: inherit;
+    text-decoration: none;
+}
+
 /* --- 工具栏 --- */
 .recon-toolbar {
     display: flex;
