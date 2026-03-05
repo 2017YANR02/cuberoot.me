@@ -9,9 +9,9 @@ layout: default
 <h1 id="submit-title" data-i18n-en="➕ Add Recon" data-i18n-zh="➕ 添加复盘">➕ Add Recon</h1>
 
 <div class="submit-page-layout">
-    <!-- ========== 左列：表单 ========== -->
-    <div class="submit-form-col">
-        <form id="recon-form" class="recon-form">
+    <form id="recon-form" class="recon-form submit-two-col">
+        <!-- ========== 左列：核心内容 ========== -->
+        <div class="submit-col-main">
             <!-- 实时统计显示 -->
             <div class="recon-form-group">
                 <div id="rf-stats-display" class="rf-stats-display" style="display:none"></div>
@@ -29,6 +29,19 @@ layout: default
                     data-i18n-placeholder-en="Paste reconstruction...&#10;e.g.:&#10;33STM /3.05=10.82TPS&#10;..."
                     data-i18n-placeholder-zh="粘贴复盘文本...&#10;例如：&#10;33STM /3.05=10.82TPS&#10;..." required></textarea>
             </div>
+            <!-- 预览动画 -->
+            <div class="recon-form-group">
+                <button type="button" id="rf-preview-btn" class="recon-btn" style="margin-bottom:8px"
+                    data-i18n-en="Preview Animation" data-i18n-zh="预览动画">Preview Animation</button>
+                <div id="rf-preview-container" style="display:none">
+                    <iframe id="rf-preview-iframe"
+                        style="width:100%;height:500px;border:1px solid #444;border-radius:8px;background:#fff"
+                        allowfullscreen></iframe>
+                </div>
+            </div>
+        </div> <!-- submit-col-main -->
+        <!-- ========== 右列：元数据 ========== -->
+        <div class="submit-col-meta">
             <!-- 选手 + 成绩 -->
             <div class="recon-form-row">
                 <div class="recon-form-group">
@@ -38,6 +51,39 @@ layout: default
                 <div class="recon-form-group">
                     <label data-i18n-en="Time (sec)" data-i18n-zh="成绩 (秒)">Time (sec)</label>
                     <input type="text" id="rf-single" placeholder="3.05 或 305" required>
+                </div>
+            </div>
+            <!-- 显示成绩 + 单次纪录 -->
+            <div class="recon-form-row">
+                <div class="recon-form-group">
+                    <label data-i18n-en="Display" data-i18n-zh="显示成绩">Display</label>
+                    <input type="text" id="rf-edit-displaySingle">
+                </div>
+                <div class="recon-form-group">
+                    <label data-i18n-en="Single Rec" data-i18n-zh="单次纪录">Single Rec</label>
+                    <input type="text" id="rf-edit-rSingle">
+                </div>
+            </div>
+            <!-- 平均 + 平均纪录 -->
+            <div class="recon-form-row">
+                <div class="recon-form-group">
+                    <label data-i18n-en="Average" data-i18n-zh="平均">Average</label>
+                    <input type="text" id="rf-edit-avg">
+                </div>
+                <div class="recon-form-group">
+                    <label data-i18n-en="Avg Record" data-i18n-zh="平均纪录">Avg Record</label>
+                    <input type="text" id="rf-edit-rAvg">
+                </div>
+            </div>
+            <!-- AoXR + AoXR纪录 -->
+            <div class="recon-form-row">
+                <div class="recon-form-group">
+                    <label data-i18n-en="AoXR" data-i18n-zh="AoXR">AoXR</label>
+                    <input type="text" id="rf-edit-aoType">
+                </div>
+                <div class="recon-form-group">
+                    <label data-i18n-en="AoXR Rec" data-i18n-zh="AoXR纪录">AoXR Rec</label>
+                    <input type="text" id="rf-edit-rAoXR">
                 </div>
             </div>
             <!-- 项目 + 方法 -->
@@ -72,18 +118,22 @@ layout: default
                     </datalist>
                 </div>
             </div>
-            <!-- 比赛 + 备注 -->
+            <!-- 比赛 + 日期 -->
             <div class="recon-form-row">
-                <div class="recon-form-group" style="flex:2;position:relative">
+                <div class="recon-form-group" style="position:relative">
                     <label data-i18n-en="Competition" data-i18n-zh="比赛">Competition</label>
                     <input type="text" id="rf-comp" autocomplete="off" placeholder="Search competition (optional)"
                         data-i18n-placeholder-en="Search competition (optional)" data-i18n-placeholder-zh="搜索比赛名称（可选）">
                 </div>
                 <div class="recon-form-group">
-                    <label data-i18n-en="Note" data-i18n-zh="备注">Note</label>
-                    <textarea id="rf-note" rows="3" placeholder="optional" data-i18n-placeholder-en="optional"
-                        data-i18n-placeholder-zh="可选"></textarea>
+                    <label data-i18n-en="Date" data-i18n-zh="日期">Date</label>
+                    <input type="text" id="rf-edit-date" placeholder="YYYY-MM-DD">
                 </div>
+            </div>
+            <!-- 官方比赛 -->
+            <div class="recon-form-group">
+                <label><input type="checkbox" id="rf-official"> <span data-i18n-en="Official"
+                        data-i18n-zh="官方比赛">Official</span></label>
             </div>
             <!-- 轮次 + 第几把 -->
             <div class="recon-form-row">
@@ -109,69 +159,31 @@ layout: default
                     </select>
                 </div>
             </div>
-            <!-- NOTE: 编辑专用字段容器（编辑模式时由 JS 动态填充） -->
+            <!-- NOTE: 编辑专用字段容器 -->
             <div id="rf-edit-fields"></div>
-            <!-- 官方比赛 -->
-            <div class="recon-form-row">
-                <div class="recon-form-group">
-                    <label><input type="checkbox" id="rf-official"> <span data-i18n-en="Official"
-                            data-i18n-zh="官方比赛">Official</span></label>
-                </div>
-            </div>
-            <!-- 选手中文 + 显示成绩 -->
+            <!-- 选手中文 + 魔方 -->
             <div class="recon-form-row">
                 <div class="recon-form-group">
                     <label data-i18n-en="Solver(ZH)" data-i18n-zh="选手(中文)">Solver(ZH)</label>
                     <input type="text" id="rf-edit-solverZh">
                 </div>
                 <div class="recon-form-group">
-                    <label data-i18n-en="Display" data-i18n-zh="显示成绩">Display</label>
-                    <input type="text" id="rf-edit-displaySingle">
-                </div>
-            </div>
-            <!-- 平均 + 日期 -->
-            <div class="recon-form-row">
-                <div class="recon-form-group">
-                    <label data-i18n-en="Average" data-i18n-zh="平均">Average</label>
-                    <input type="text" id="rf-edit-avg">
-                </div>
-                <div class="recon-form-group">
-                    <label data-i18n-en="Date" data-i18n-zh="日期">Date</label>
-                    <input type="text" id="rf-edit-date" placeholder="YYYY-MM-DD">
-                </div>
-            </div>
-            <!-- AoXR + 平均纪录 -->
-            <div class="recon-form-row">
-                <div class="recon-form-group">
-                    <label data-i18n-en="AoXR" data-i18n-zh="AoXR">AoXR</label>
-                    <input type="text" id="rf-edit-aoType">
-                </div>
-                <div class="recon-form-group">
-                    <label data-i18n-en="Avg Record" data-i18n-zh="平均纪录">Avg Record</label>
-                    <input type="text" id="rf-edit-rAvg">
-                </div>
-            </div>
-            <!-- 单次纪录 + AoXR纪录 -->
-            <div class="recon-form-row">
-                <div class="recon-form-group">
-                    <label data-i18n-en="Single Rec" data-i18n-zh="单次纪录">Single Rec</label>
-                    <input type="text" id="rf-edit-rSingle">
-                </div>
-                <div class="recon-form-group">
-                    <label data-i18n-en="AoXR Rec" data-i18n-zh="AoXR纪录">AoXR Rec</label>
-                    <input type="text" id="rf-edit-rAoXR">
-                </div>
-            </div>
-            <!-- 魔方 + 复盘者 -->
-            <div class="recon-form-row">
-                <div class="recon-form-group">
                     <label data-i18n-en="Cube" data-i18n-zh="魔方">Cube</label>
                     <input type="text" id="rf-edit-cube">
                 </div>
+            </div>
+            <!-- 复盘者 -->
+            <div class="recon-form-row">
                 <div class="recon-form-group">
                     <label data-i18n-en="Reconer" data-i18n-zh="复盘者">Reconer</label>
                     <input type="text" id="rf-edit-reconer">
                 </div>
+            </div>
+            <!-- 备注 -->
+            <div class="recon-form-group">
+                <label data-i18n-en="Note" data-i18n-zh="备注">Note</label>
+                <textarea id="rf-note" rows="3" placeholder="optional" data-i18n-placeholder-en="optional"
+                    data-i18n-placeholder-zh="可选"></textarea>
             </div>
             <!-- NOTE: 校验错误提示容器（JS 动态填充） -->
             <div id="rf-errors" class="rf-errors" style="display:none"></div>
@@ -181,19 +193,8 @@ layout: default
                 <button type="submit" id="rf-submit-btn" class="recon-btn recon-btn-primary" data-i18n-en="Submit"
                     data-i18n-zh="提交">Submit</button>
             </div>
-        </form>
-    </div>
-
-    <!-- ========== 右列：预览动画 ========== -->
-    <div class="submit-preview-col">
-        <button type="button" id="rf-preview-btn" class="recon-btn" style="margin-bottom:8px"
-            data-i18n-en="Preview Animation" data-i18n-zh="预览动画">Preview Animation</button>
-        <div id="rf-preview-container" style="display:none">
-            <iframe id="rf-preview-iframe"
-                style="width:100%;height:500px;border:1px solid #444;border-radius:8px;background:#fff"
-                allowfullscreen></iframe>
-        </div>
-    </div>
+        </div> <!-- submit-col-meta -->
+    </form>
 </div>
 
 <!-- NOTE: 底部返回链接 -->
