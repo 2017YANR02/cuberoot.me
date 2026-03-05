@@ -231,6 +231,14 @@ h1 .fi {
     vertical-align: middle;
 }
 
+/* NOTE: Recon 全站国旗图标缩小，与文字协调 */
+#recon-table .fi,
+.detail-content .fi,
+#detail-title .fi {
+    transform: scale(0.75);
+    display: inline-block;
+}
+
 /* NOTE: 数字列等宽字体 */
 .col-single {
     font-family: 'Roboto Mono', monospace;
