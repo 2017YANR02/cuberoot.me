@@ -112,6 +112,20 @@ var ReconUtils = (function () {
         return escHtml(comp);
     }
 
+    /**
+     * 查表获取 WCA 比赛页面 URL
+     * NOTE: 比赛名含特殊字符（变音符号等）时不能简单去空格，必须查映射表
+     * @param {string} comp - 英文比赛名（cell_name）
+     * @param {Object} compWcaIds - 比赛展示名 → WCA 比赛 ID 映射表
+     * @returns {string} WCA 比赛页面 URL，未找到则返回空字符串
+     */
+    function compWcaUrl(comp, compWcaIds) {
+        if (!comp || !compWcaIds) return '';
+        var wcaId = compWcaIds[comp];
+        if (!wcaId) return '';
+        return 'https://www.worldcubeassociation.org/competitions/' + wcaId;
+    }
+
     return {
         escHtml: escHtml,
         countryFlag: countryFlag,
@@ -122,6 +136,7 @@ var ReconUtils = (function () {
         parseSolverName: parseSolverName,
         displaySolverName: displaySolverName,
         solverCountry: solverCountry,
-        displayCompName: displayCompName
+        displayCompName: displayCompName,
+        compWcaUrl: compWcaUrl
     };
 })();
