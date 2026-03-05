@@ -190,7 +190,7 @@ switch ($action) {
         $wcaId = $_GET['wcaId'] ?? '';
 
         if ($wcaId) {
-            $stmt = $db->prepare("SELECT * FROM recons WHERE wca_id = ? ORDER BY id DESC");
+            $stmt = $db->prepare("SELECT * FROM recons WHERE person_id = ? ORDER BY id DESC");
             $stmt->execute([$wcaId]);
         } else {
             $stmt = $db->query("SELECT * FROM recons ORDER BY id DESC");
@@ -271,7 +271,7 @@ switch ($action) {
 
         // NOTE: 非管理员只能删自己的复盘
         if (!in_array($authUser['wcaId'], $ADMIN_WCA_IDS)) {
-            if (($targetRecon['wca_id'] ?? '') !== $authUser['wcaId']) {
+            if (($targetRecon['person_id'] ?? '') !== $authUser['wcaId']) {
                 http_response_code(403);
                 echo json_encode(['error' => 'Cannot delete others recon']);
                 break;
@@ -503,6 +503,33 @@ switch ($action) {
             http_response_code(500);
             echo json_encode(['error' => 'Import failed: ' . $e->getMessage()]);
         }
+        break;
+
+    // ==================== 临时迁移端点（列重命名，完成后删除） ====================
+
+    case 'renameColumns':
+        header('Cache-Control: no-cache, no-store, must-revalidate');
+        requireAdmin();
+
+        $sqls = [
+            'ALTER TABLE recons RENAME COLUMN display_single TO value',
+            'ALTER TABLE recons RENAME COLUMN r_single TO regional_single_record',
+            'ALTER TABLE recons RENAME COLUMN r_avg TO regional_average_record',
+            'ALTER TABLE recons RENAME COLUMN r_ao_xr TO regional_aoxr_record',
+            'ALTER TABLE recons RENAME COLUMN wca_id TO person_id',
+            'ALTER TABLE recons DROP INDEX idx_wca_id',
+            'ALTER TABLE recons ADD INDEX idx_person_id (person_id)',
+        ];
+        $results = [];
+        foreach ($sqls as $sql) {
+            try {
+                $db->exec($sql);
+                $results[] = ['sql' => $sql, 'ok' => true];
+            } catch (Exception $e) {
+                $results[] = ['sql' => $sql, 'ok' => false, 'error' => $e->getMessage()];
+            }
+        }
+        echo json_encode(['ok' => true, 'results' => $results]);
         break;
 
     // ==================== 选手搜索（代理 WCA API） ====================

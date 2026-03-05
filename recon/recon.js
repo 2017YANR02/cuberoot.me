@@ -407,7 +407,7 @@
                     // NOTE: 支持中文比赛名搜索
                     compNamesZh[s.comp] || '',
                     // NOTE: 支持搜索 "cancelled"/"取消" 匹配被取消的纪录
-                    s.rAvg, s.rSingle, s.rAoXR
+                    s.regionalAverageRecord, s.regionalSingleRecord, s.regionalAoxrRecord
                 ].filter(Boolean).join(' ').toLowerCase();
                 // NOTE: "cancel"/"取消" 均映射为 "cancelled" 以匹配被取消的纪录
                 const normalizedQuery = (query === '取消' || query === 'cancel') ? 'cancelled' : query;
@@ -417,9 +417,9 @@
                 }
                 // NOTE: 纪录字段用精确匹配（大小写不敏感），搜 WR 不应匹配 FWR
                 const q = normalizedQuery.toUpperCase();
-                const recordMatch = (s.rAvg && String(s.rAvg).toUpperCase() === q)
-                    || (s.rSingle && String(s.rSingle).toUpperCase() === q)
-                    || (s.rAoXR && String(s.rAoXR).toUpperCase() === q);
+                const recordMatch = (s.regionalAverageRecord && String(s.regionalAverageRecord).toUpperCase() === q)
+                    || (s.regionalSingleRecord && String(s.regionalSingleRecord).toUpperCase() === q)
+                    || (s.regionalAoxrRecord && String(s.regionalAoxrRecord).toUpperCase() === q);
                 if (!haystack.includes(normalizedQuery) && !recordMatch) return false;
             }
             return true;
@@ -535,21 +535,21 @@
 
     function createSolveRow(solve) {
         const tr = document.createElement('tr');
-        // NOTE: wcaId 字段表示社区提交（CSV 迁移数据无此字段）
-        tr.className = 'solve-row' + (solve.wcaId ? ' community-row' : '');
+        // NOTE: personId 字段表示社区提交（CSV 迁移数据无此字段）
+        tr.className = 'solve-row' + (solve.personId ? ' community-row' : '');
         tr.dataset.id = solve.id;
 
         const officialHtml = solve.official ? '✅' : '';
 
         tr.innerHTML =
             '<td class="col-idx">' + (solve.id || '') + '</td>' +
-            '<td class="col-avg">' + formatAvg(solve.avg) + (solve.rAvg ? ' ' + formatRecord(solve.rAvg) : '') + '</td>' +
-            '<td class="col-dsingle mono">' + escHtml(solve.displaySingle || '') + (solve.rSingle ? ' ' + formatRecord(solve.rSingle) : '') + '</td>' +
+            '<td class="col-avg">' + formatAvg(solve.avg) + (solve.regionalAverageRecord ? ' ' + formatRecord(solve.regionalAverageRecord) : '') + '</td>' +
+            '<td class="col-dsingle mono">' + escHtml(solve.value || '') + (solve.regionalSingleRecord ? ' ' + formatRecord(solve.regionalSingleRecord) : '') + '</td>' +
             '<td class="col-solver">' + countryFlag(solverCountry(solve)) + ' ' + displaySolverName(solve) + '</td>' +
             '<td class="col-date">' + escHtml(solve.date || '') + '</td>' +
             '<td class="col-comp">' + countryFlag(compCountries[solve.comp]) + ' ' + displayCompName(solve.comp) + '</td>' +
             '<td class="col-round">' + escHtml(solve.round || '') + (solve.round && solve.solveNum ? '#' : '') + (solve.solveNum || '') + '</td>' +
-            '<td class="col-aoxr">' + escHtml(solve.aoType || '') + (solve.rAoXR ? ' ' + formatRecord(solve.rAoXR) : '') + '</td>' +
+            '<td class="col-aoxr">' + escHtml(solve.aoType || '') + (solve.regionalAoxrRecord ? ' ' + formatRecord(solve.regionalAoxrRecord) : '') + '</td>' +
             '<td class="col-single mono">' + formatResult(solve.single) + '</td>' +
             '<td class="col-stm mono">' + (solve.stm || '') + '</td>' +
             '<td class="col-tps mono">' + (solve.tps && typeof solve.tps === 'number' ? solve.tps.toFixed(2) : '') + '</td>' +
@@ -821,11 +821,11 @@
         // NOTE: 管理员操作按钮（编辑/恢复/历史）+ 删除按钮
         var isAdminUser = typeof WcaAuth !== 'undefined' && WcaAuth.isAdmin();
 
-        // NOTE: 删除权限：本人提交的复盘（wcaId 匹配）或管理员
+        // NOTE: 删除权限：本人提交的复盘（personId 匹配）或管理员
         var canDelete = false;
-        if (s.wcaId && typeof WcaAuth !== 'undefined') {
+        if (s.personId && typeof WcaAuth !== 'undefined') {
             var currentUser = WcaAuth.getUser();
-            if (currentUser && currentUser.wcaId === s.wcaId) canDelete = true;
+            if (currentUser && currentUser.wcaId === s.personId) canDelete = true;
         }
         if (isAdminUser) canDelete = true;
 
