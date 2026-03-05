@@ -544,6 +544,17 @@ switch ($action) {
         echo json_encode($results);
         break;
 
+    // ==================== 临时：重命名选手 ====================
+    case 'renamePerson':
+        header('Cache-Control: no-cache');
+        requireAdmin();
+        $input = json_decode(file_get_contents('php://input'), true);
+        // NOTE: 输入格式 { "oldName": "耿暄一", "newName": "Xuanyi Geng (耿暄一)", "personId": "2023GENG02" }
+        $stmt = $db->prepare("UPDATE recons SET person = :newName, person_id = :pid WHERE person = :oldName");
+        $stmt->execute([':newName' => $input['newName'], ':pid' => $input['personId'], ':oldName' => $input['oldName']]);
+        echo json_encode(['oldName' => $input['oldName'], 'newName' => $input['newName'], 'rows' => $stmt->rowCount()]);
+        break;
+
     case 'renameColumns2':
         header('Cache-Control: no-cache, no-store, must-revalidate');
         requireAdmin();
