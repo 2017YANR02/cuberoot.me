@@ -10,6 +10,7 @@
     var compCountries = {};
     var personCountries = {};
     var compNamesZh = {};
+    var compWcaIds = {};
 
     // --- 魔方面颜色映射（用于注释中的颜色字母着色） ---
     var FACE_COLORS = {
@@ -56,6 +57,7 @@
             fetch('/stats/comp_name_countries.json').then(function (r) { return r.json(); }).catch(function () { return {}; }),
             fetch('/stats/person_name_countries.json').then(function (r) { return r.json(); }).catch(function () { return {}; }),
             fetch('/recon/comp_names_zh.json').then(function (r) { return r.json(); }).catch(function () { return {}; }),
+            fetch('/stats/comp_name_to_wca_id.json').then(function (r) { return r.json(); }).catch(function () { return {}; }),
             // NOTE: 优先用 loadOne 单条查询；若后端尚未部署 get action 则 fallback 到 loadAll
             ReconStore.loadOne(id).catch(function () {
                 return ReconStore.loadAll().then(function (all) {
@@ -68,7 +70,8 @@
             compCountries = results[0];
             personCountries = results[1];
             compNamesZh = results[2];
-            var solve = results[3];
+            compWcaIds = results[3];
+            var solve = results[4];
 
             // NOTE: 计算统计（STM、TPS、OLL、PLL 等）
             if (typeof ReconStats !== 'undefined') {
@@ -266,7 +269,15 @@
         // NOTE: 摘要第一行——比赛信息（日期后无逗号，其他用逗号分隔）
         var line1 = U.escHtml(s.date || '');
         var line1Rest = [];
-        if (s.comp) line1Rest.push(U.countryFlag(compCountries[s.comp]) + ' ' + U.displayCompName(s.comp, compNamesZh));
+        if (s.comp) {
+            var compDisplay = U.countryFlag(compCountries[s.comp]) + ' ' + U.displayCompName(s.comp, compNamesZh);
+            var wcaUrl = U.compWcaUrl(s.comp, compWcaIds);
+            // NOTE: 有 WCA 链接时渲染为 <a> 标签，否则纯文本
+            if (wcaUrl) {
+                compDisplay = '<a href="' + U.escHtml(wcaUrl) + '" target="_blank" rel="noopener noreferrer" class="comp-link">' + compDisplay + '</a>';
+            }
+            line1Rest.push(compDisplay);
+        }
         if (s.round) line1Rest.push(U.escHtml(s.round) + (s.solveNum ? '#' + s.solveNum : ''));
         if (line1Rest.length > 0) line1 += ' ' + line1Rest.join(', ');
         html += '<div class="detail-summary">' + line1 + '</div>';

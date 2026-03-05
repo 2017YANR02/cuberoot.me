@@ -93,3 +93,16 @@ Database.client.query("SELECT cell_name, start_date FROM Competitions").each do 
 end
 File.write(comp_dates_path, JSON.generate(comp_dates_map))
 puts "  #{comp_dates_path} (#{comp_dates_map.size} competitions, #{File.size(comp_dates_path)} bytes)"
+
+# ── 6. 比赛展示名 → WCA 比赛 ID（recon 页面用，点击比赛名跳转 WCA 页面） ──
+# NOTE: 比赛名含特殊字符（变音符号等）时不能简单去空格推导 ID，必须查映射表
+puts "Generating comp name → WCA ID mapping..."
+comp_wca_ids_path = File.join(STATS_DIR, "comp_name_to_wca_id.json")
+comp_wca_ids_map = {}
+Database.client.query("SELECT id, name, cell_name FROM Competitions").each do |r|
+  comp_wca_ids_map[r["cell_name"]] = r["id"]
+  # NOTE: name 与 cell_name 不同时，额外写入 name 作为 key
+  comp_wca_ids_map[r["name"]] = r["id"] if r["name"] != r["cell_name"]
+end
+File.write(comp_wca_ids_path, JSON.generate(comp_wca_ids_map))
+puts "  #{comp_wca_ids_path} (#{comp_wca_ids_map.size} entries, #{File.size(comp_wca_ids_path)} bytes)"
