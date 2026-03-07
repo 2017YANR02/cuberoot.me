@@ -242,8 +242,8 @@ switch ($action) {
         checkRateLimit();
         $authUser = requireAuth();
         $body = getPostBody();
-        // NOTE: 强制用服务端验证的 wcaId，防止前端伪造
-        $body['wcaId'] = $authUser['wcaId'];
+        // NOTE: 强制用服务端验证的 wcaId 写入 person_id，防止前端伪造
+        $body['personId'] = $authUser['wcaId'];
         $body['createdAt'] = time();
 
         // NOTE: 移除前端可能传入的 id（由数据库自增）
@@ -291,7 +291,7 @@ switch ($action) {
         }
 
         // NOTE: 查找目标复盘，验证删除权限
-        $stmt = $db->prepare("SELECT wca_id FROM recons WHERE id = ?");
+        $stmt = $db->prepare("SELECT person_id FROM recons WHERE id = ?");
         $stmt->execute([$id]);
         $targetRecon = $stmt->fetch();
 
