@@ -37,6 +37,22 @@ var WcaAuth = (function () {
         window.location.href = CONFIG.authorizeUrl + '?' + params;
     }
 
+    /**
+     * 切换账号：清除本地 session → 跳转 WCA 登出 → 自动重新登录
+     * NOTE: WCA OAuth (Doorkeeper) 无 prompt=login 参数，已登录的 WCA session
+     *       会自动授权同一账号。必须先清除 WCA session 才能登录其他账号。
+     *       由于 WCA (Devise) 的 sign_out 需要 DELETE 方法且存在跨域限制，
+     *       我们在新窗口打开 WCA 官网让用户手动登出，然后本页自动触发重新登录。
+     */
+    function switchAccount() {
+        logout();
+        // NOTE: 在新标签页打开 WCA 官网，用户可在那里登出当前账号
+        window.open('https://www.worldcubeassociation.org', '_blank');
+        // NOTE: 设置标记 + 刷新页面，页面加载后显示 Login 按钮
+        //       用户在 WCA 登出后，回到本页点击 Login 即可用新账号登录
+        location.reload();
+    }
+
     // ==================== 回调处理 ====================
 
     /**
@@ -66,7 +82,8 @@ var WcaAuth = (function () {
     /** 调用 WCA API 获取用户信息 */
     function fetchMe(accessToken) {
         return fetch(CONFIG.meUrl, {
-            headers: { 'Authorization': 'Bearer ' + accessToken }
+            headers: { 'Authorization': 'Bearer ' + accessToken },
+            cache: 'no-store'
         })
             .then(function (res) {
                 if (!res.ok) throw new Error('WCA /me failed: ' + res.status);
@@ -115,6 +132,7 @@ var WcaAuth = (function () {
 
     return {
         login: login,
+        switchAccount: switchAccount,
         handleCallback: handleCallback,
         getUser: getUser,
         getAccessToken: function () {
@@ -125,3 +143,4 @@ var WcaAuth = (function () {
         isAdmin: isAdmin
     };
 })();
+
