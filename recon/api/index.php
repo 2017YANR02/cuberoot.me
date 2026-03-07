@@ -690,9 +690,9 @@ switch ($action) {
         }
         break;
     // NOTE: 临时迁移——添加 added_by / added_by_id 列（记录复盘添加者）
-    // HACK: 临时去掉认证以便自动部署后执行迁移，迁移完成后立即恢复
     case 'addAddedByColumns':
         header('Cache-Control: no-cache, no-store, must-revalidate');
+        requireAdmin();
         $sqls = [
             'ALTER TABLE recons ADD COLUMN added_by VARCHAR(100) DEFAULT NULL',
             'ALTER TABLE recons ADD COLUMN added_by_id VARCHAR(20) DEFAULT NULL',
