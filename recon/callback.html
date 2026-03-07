@@ -92,7 +92,8 @@
 
             // NOTE: 用 token 调用 WCA /me API 获取用户信息
             fetch(ME_URL, {
-                headers: { 'Authorization': 'Bearer ' + accessToken }
+                headers: { 'Authorization': 'Bearer ' + accessToken },
+                cache: 'no-store'
             })
                 .then(function (res) {
                     if (!res.ok) throw new Error('WCA /me failed: ' + res.status);
