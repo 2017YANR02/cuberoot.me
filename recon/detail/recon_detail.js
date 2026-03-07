@@ -408,20 +408,21 @@
 
         html += '</div>'; // detail-grid
 
-        // NOTE: 管理员操作按钮
+        // NOTE: 权限判断——本人可编辑/删除自己的复盘，管理员可操作所有复盘
         var isAdminUser = typeof WcaAuth !== 'undefined' && WcaAuth.isAdmin();
-        var canDelete = false;
+        var isOwner = false;
         if (s.personId && typeof WcaAuth !== 'undefined') {
             var currentUser = WcaAuth.getUser();
-            if (currentUser && currentUser.wcaId === s.personId) canDelete = true;
+            if (currentUser && currentUser.wcaId === s.personId) isOwner = true;
         }
-        if (isAdminUser) canDelete = true;
 
-        if (isAdminUser || canDelete) {
+        if (isAdminUser || isOwner) {
             html += '<div class="detail-admin-actions">';
+            // NOTE: 本人和管理员都能编辑
+            html += '<button class="recon-btn recon-btn-edit" data-solve-id="' + s.id + '">' +
+                '<span data-i18n-en="Edit" data-i18n-zh="编辑">' + (isZh ? '编辑' : 'Edit') + '</span></button>';
+            // NOTE: Restore / History 仅管理员可见（这些是覆盖层管理功能）
             if (isAdminUser) {
-                html += '<button class="recon-btn recon-btn-edit" data-solve-id="' + s.id + '">' +
-                    '<span data-i18n-en="Edit" data-i18n-zh="编辑">' + (isZh ? '编辑' : 'Edit') + '</span></button>';
                 if (s._edited) {
                     html += '<button class="recon-btn recon-btn-restore" data-solve-id="' + s.id + '">' +
                         '<span data-i18n-en="Restore" data-i18n-zh="恢复">' + (isZh ? '恢复' : 'Restore') + '</span></button>';
@@ -429,10 +430,9 @@
                 html += '<button class="recon-btn recon-btn-history" data-solve-id="' + s.id + '">' +
                     '<span data-i18n-en="History" data-i18n-zh="历史">' + (isZh ? '历史' : 'History') + '</span></button>';
             }
-            if (canDelete) {
-                html += '<button class="recon-btn recon-btn-danger">' +
-                    '<span data-i18n-en="Delete" data-i18n-zh="删除">' + (isZh ? '删除' : 'Delete') + '</span></button>';
-            }
+            // NOTE: 本人和管理员都能删除
+            html += '<button class="recon-btn recon-btn-danger">' +
+                '<span data-i18n-en="Delete" data-i18n-zh="删除">' + (isZh ? '删除' : 'Delete') + '</span></button>';
             html += '</div>';
         }
 
