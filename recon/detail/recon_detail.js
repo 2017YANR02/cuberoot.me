@@ -396,6 +396,10 @@
         if (s.reconer) {
             html += '<div class="detail-meta-item"><span class="detail-meta-label">✍️</span><span class="detail-meta-value">' + U.escHtml(s.reconer) + '</span></div>';
         }
+        if (s.addedBy) {
+            html += '<div class="detail-meta-item"><span class="detail-meta-label" data-i18n-en="Added by" data-i18n-zh="添加者">' +
+                (isZh ? '添加者' : 'Added by') + '</span><span class="detail-meta-value">' + U.escHtml(s.addedBy) + '</span></div>';
+        }
         html += '</div>';
 
         if (s.note) {
@@ -408,12 +412,12 @@
 
         html += '</div>'; // detail-grid
 
-        // NOTE: 权限判断——本人可编辑/删除自己的复盘，管理员可操作所有复盘
+        // NOTE: 权限判断——添加者可编辑/删除自己提交的复盘，管理员可操作所有复盘
         var isAdminUser = typeof WcaAuth !== 'undefined' && WcaAuth.isAdmin();
         var isOwner = false;
-        if (s.personId && typeof WcaAuth !== 'undefined') {
+        if (s.addedById && typeof WcaAuth !== 'undefined') {
             var currentUser = WcaAuth.getUser();
-            if (currentUser && currentUser.wcaId === s.personId) isOwner = true;
+            if (currentUser && currentUser.wcaId === s.addedById) isOwner = true;
         }
 
         if (isAdminUser || isOwner) {

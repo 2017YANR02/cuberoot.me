@@ -242,8 +242,9 @@ switch ($action) {
         checkRateLimit();
         $authUser = requireAuth();
         $body = getPostBody();
-        // NOTE: 强制用服务端验证的 wcaId 写入 person_id，防止前端伪造
-        $body['personId'] = $authUser['wcaId'];
+        // NOTE: 记录添加者身份（由服务端从 token 获取，不信任前端传值）
+        $body['addedBy'] = $authUser['name'];
+        $body['addedById'] = $authUser['wcaId'];
         $body['createdAt'] = time();
 
         // NOTE: 移除前端可能传入的 id（由数据库自增）
@@ -290,8 +291,8 @@ switch ($action) {
             break;
         }
 
-        // NOTE: 查找目标复盘，验证删除权限
-        $stmt = $db->prepare("SELECT person_id FROM recons WHERE id = ?");
+        // NOTE: 查找目标复盘，验证删除权限（基于添加者身份）
+        $stmt = $db->prepare("SELECT added_by_id FROM recons WHERE id = ?");
         $stmt->execute([$id]);
         $targetRecon = $stmt->fetch();
 
@@ -303,7 +304,7 @@ switch ($action) {
 
         // NOTE: 非管理员只能删自己的复盘
         if (!in_array($authUser['wcaId'], $ADMIN_WCA_IDS)) {
-            if (($targetRecon['person_id'] ?? '') !== $authUser['wcaId']) {
+            if (($targetRecon['added_by_id'] ?? '') !== $authUser['wcaId']) {
                 http_response_code(403);
                 echo json_encode(['error' => 'Cannot delete others recon']);
                 break;
@@ -329,9 +330,9 @@ switch ($action) {
             break;
         }
 
-        // NOTE: 非管理员只能更新自己的复盘
+        // NOTE: 非管理员只能更新自己的复盘（检查 added_by_id）
         if (!in_array($authUser['wcaId'], $ADMIN_WCA_IDS)) {
-            $stmt = $db->prepare("SELECT person_id FROM recons WHERE id = ?");
+            $stmt = $db->prepare("SELECT added_by_id FROM recons WHERE id = ?");
             $stmt->execute([$id]);
             $targetRecon = $stmt->fetch();
             if (!$targetRecon) {
@@ -339,7 +340,7 @@ switch ($action) {
                 echo json_encode(['error' => 'Not found']);
                 break;
             }
-            if (($targetRecon['person_id'] ?? '') !== $authUser['wcaId']) {
+            if (($targetRecon['added_by_id'] ?? '') !== $authUser['wcaId']) {
                 http_response_code(403);
                 echo json_encode(['error' => 'Cannot edit others recon']);
                 break;
@@ -687,6 +688,26 @@ switch ($action) {
             http_response_code(500);
             echo json_encode(['error' => $e->getMessage()]);
         }
+        break;
+    // NOTE: 临时迁移——添加 added_by / added_by_id 列（记录复盘添加者）
+    case 'addAddedByColumns':
+        header('Cache-Control: no-cache, no-store, must-revalidate');
+        requireAdmin();
+        $sqls = [
+            'ALTER TABLE recons ADD COLUMN added_by VARCHAR(100) DEFAULT NULL',
+            'ALTER TABLE recons ADD COLUMN added_by_id VARCHAR(20) DEFAULT NULL',
+            'ALTER TABLE recons ADD INDEX idx_added_by_id (added_by_id)',
+        ];
+        $results = [];
+        foreach ($sqls as $sql) {
+            try {
+                $db->exec($sql);
+                $results[] = ['sql' => $sql, 'ok' => true];
+            } catch (Exception $e) {
+                $results[] = ['sql' => $sql, 'ok' => false, 'error' => $e->getMessage()];
+            }
+        }
+        echo json_encode(['ok' => true, 'results' => $results]);
         break;
 
     // ==================== 选手搜索（代理 WCA API） ====================
