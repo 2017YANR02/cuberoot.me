@@ -317,16 +317,33 @@ switch ($action) {
         break;
 
     case 'update':
-        // NOTE: 更新复盘指定字段（管理员专用）
+        // NOTE: 更新复盘指定字段（本人或管理员）
         header('Cache-Control: no-cache, no-store, must-revalidate');
         checkRateLimit();
-        requireAdmin();
+        $authUser = requireAuth();
         $id = $_GET['id'] ?? '';
         $body = getPostBody();
         if (!$id) {
             http_response_code(400);
             echo json_encode(['error' => 'id is required']);
             break;
+        }
+
+        // NOTE: 非管理员只能更新自己的复盘
+        if (!in_array($authUser['wcaId'], $ADMIN_WCA_IDS)) {
+            $stmt = $db->prepare("SELECT person_id FROM recons WHERE id = ?");
+            $stmt->execute([$id]);
+            $targetRecon = $stmt->fetch();
+            if (!$targetRecon) {
+                http_response_code(404);
+                echo json_encode(['error' => 'Not found']);
+                break;
+            }
+            if (($targetRecon['person_id'] ?? '') !== $authUser['wcaId']) {
+                http_response_code(403);
+                echo json_encode(['error' => 'Cannot edit others recon']);
+                break;
+            }
         }
 
         // NOTE: 通过白名单过滤可更新字段（防 SQL 注入）
