@@ -33,9 +33,8 @@ layout: default
         <div id="wca-user-info" class="wca-user-info" style="display:none">
             <img id="wca-avatar" class="wca-avatar" src="" alt="">
             <span id="wca-name" class="wca-name"></span>
-            <button id="btn-wca-logout" class="recon-btn wca-logout-btn" onclick="WcaAuth.logout();location.reload()">
-                ✕
-            </button>
+            <button id="btn-wca-logout" class="recon-btn wca-logout-btn" onclick="WcaAuth.switchAccount()"
+                data-i18n-en="Switch" data-i18n-zh="切换">Switch</button>
         </div>
     </div>
 </div>
