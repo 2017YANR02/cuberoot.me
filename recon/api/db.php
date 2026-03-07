@@ -46,6 +46,8 @@ const FIELD_MAP_JSON_TO_SQL = [
     'sMove' => 's_move',
     'crossColor' => 'cross_color',
     'createdAt' => 'created_at',
+    'addedBy' => 'added_by',
+    'addedById' => 'added_by_id',
 ];
 
 // NOTE: 反向映射（SQL → JSON），运行时自动生成
@@ -68,6 +70,8 @@ const FIELD_MAP_SQL_TO_JSON = [
     's_move' => 'sMove',
     'cross_color' => 'crossColor',
     'created_at' => 'createdAt',
+    'added_by' => 'addedBy',
+    'added_by_id' => 'addedById',
 ];
 
 // NOTE: 允许通过 INSERT/UPDATE 操作的列白名单（防止前端传入非数据库字段）
@@ -111,6 +115,8 @@ const ALLOWED_COLUMNS = [
     's_move',
     'cross_color',
     'created_at',
+    'added_by',
+    'added_by_id',
 ];
 
 /**
@@ -257,6 +263,8 @@ function validateRow(array $row): array
         'country' => 100,
         'person' => 100,
         'person_id' => 20,
+        'added_by' => 100,
+        'added_by_id' => 20,
         'value' => 20,
         'regional_single_record' => 20,
         'regional_average_record' => 20,
@@ -342,9 +350,12 @@ CREATE TABLE IF NOT EXISTS recons (
   s_move                   TINYINT        DEFAULT NULL,
   cross_color              CHAR(1)        DEFAULT NULL,
   created_at               INT UNSIGNED   DEFAULT NULL,
+  added_by                 VARCHAR(100)   DEFAULT NULL,
+  added_by_id              VARCHAR(20)    DEFAULT NULL,
   INDEX idx_person (person),
   INDEX idx_date (date),
   INDEX idx_person_id (person_id),
+  INDEX idx_added_by_id (added_by_id),
   INDEX idx_comp (comp(50))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
