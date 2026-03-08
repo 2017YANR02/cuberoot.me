@@ -78,11 +78,10 @@ location / {
     try_files $uri $uri/ $uri.html $uri/index.html =404;
 }
 
-# Recon 详情页干净 URL：/recon/2263 → /recon/detail/?id=2263
-# NOTE: GitHub Pages 通过 404.html JS 重定向实现；toolkit 通过此 Nginx rewrite 实现（无闪烁）
-# ⚠️ 此规则需在 location / 之前添加
-location ~ ^/recon/(\d+)$ {
-    rewrite ^/recon/(\d+)$ /recon/detail/?id=$1 last;
+# Recon 详情页旧链接兼容：/recon/2263 → 301 重定向到 /recon/detail/?id=2263
+# NOTE: 新链接统一使用 /recon/detail/?id=X，此规则仅兼容旧书签/分享链接
+location ~ ^/recon/(\d+)/?$ {
+    return 301 /recon/detail/?id=$1;
 }
 ```
 
