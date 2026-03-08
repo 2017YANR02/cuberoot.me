@@ -297,7 +297,10 @@
         var line1Rest = [];
         if (s.comp) {
             var compDisplay = U.countryFlag(compCountries[s.comp]) + ' ' + U.displayCompName(s.comp, compNamesZh);
-            var wcaUrl = U.compWcaUrl(s.comp, compWcaIds);
+            // NOTE: 优先用数据库的 compWcaId，fallback 到映射表
+            var wcaUrl = s.compWcaId
+                ? 'https://www.worldcubeassociation.org/competitions/' + s.compWcaId
+                : U.compWcaUrl(s.comp, compWcaIds);
             // NOTE: 有 WCA 链接时渲染为 <a> 标签，否则纯文本
             if (wcaUrl) {
                 compDisplay = '<a href="' + U.escHtml(wcaUrl) + '" target="_blank" rel="noopener noreferrer" class="comp-link">' + compDisplay + '</a>';
