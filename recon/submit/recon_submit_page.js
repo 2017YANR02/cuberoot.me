@@ -21,6 +21,8 @@
 
     // NOTE: 当前正在编辑的 solve 对象（null 表示新增模式）
     var currentEditSolve = null;
+    // NOTE: 编辑模式下跳回详情页的 URL（Save / Cancel 使用，默认回列表页）
+    var returnUrl = '/recon/';
 
     document.addEventListener('DOMContentLoaded', function () {
         // NOTE: 与 i18n.js 保持一致：localStorage 优先，fallback 到浏览器语言
@@ -29,42 +31,29 @@
 
         // ==================== 模式检测 ====================
 
-        // NOTE: 从 sessionStorage 读取编辑数据，读取后立即移除防止刷新重复
-        var editJson = sessionStorage.getItem('recon_edit_solve');
-        if (editJson) {
-            sessionStorage.removeItem('recon_edit_solve');
-            try {
-                currentEditSolve = JSON.parse(editJson);
-            } catch (e) {
-                console.error('Failed to parse edit solve data:', e);
+        // NOTE: 从 URL ?id= 参数检测编辑模式（行业标准：纯 URL 驱动，不依赖 sessionStorage）
+        var urlParams = new URLSearchParams(location.search);
+        var editId = urlParams.get('id');
+
+        // NOTE: 编辑模式下更新 returnUrl 为详情页 URL
+        if (editId) {
+            var host = location.hostname;
+            if (host === 'localhost' || host === '127.0.0.1') {
+                returnUrl = '/recon/detail/?id=' + editId;
+            } else {
+                returnUrl = '/recon/' + editId;
             }
+            // NOTE: 更新返回箭头和 Cancel 链接的 href
+            var backLink = document.querySelector('.detail-back-link');
+            if (backLink) backLink.href = returnUrl;
+            var cancelLink = document.querySelector('.recon-form-actions a');
+            if (cancelLink) cancelLink.href = returnUrl;
         }
 
-        var isEditMode = !!currentEditSolve;
+        // NOTE: 表单填充函数（编辑模式：API 返回后调用；新增模式：不调用）
+        function populateForm(s) {
+            currentEditSolve = s;
 
-        // NOTE: 更新页面标题
-        var titleEl = document.getElementById('submit-title');
-        if (titleEl) {
-            if (isEditMode) {
-                titleEl.textContent = isZh ? '✏️ 编辑复盘' : '✏️ Edit Recon';
-                titleEl.setAttribute('data-i18n-en', '✏️ Edit Recon');
-                titleEl.setAttribute('data-i18n-zh', '✏️ 编辑复盘');
-            }
-            // NOTE: 新增模式使用 HTML 中的默认标题
-        }
-
-        // NOTE: 更新提交按钮文本
-        var submitBtn = document.getElementById('rf-submit-btn');
-        if (submitBtn && isEditMode) {
-            submitBtn.textContent = isZh ? '保存' : 'Save';
-            submitBtn.setAttribute('data-i18n-en', 'Save');
-            submitBtn.setAttribute('data-i18n-zh', '保存');
-        }
-
-        // ==================== 编辑模式预填充 ====================
-
-        if (isEditMode) {
-            var s = currentEditSolve;
             document.getElementById('rf-solver').value = s.person || '';
             document.getElementById('rf-single').value = s.single || '';
             document.getElementById('rf-event').value = s.event || '3x3';
@@ -99,6 +88,54 @@
                     var val = s[f.key];
                     el.value = (val === undefined || val === null) ? '' : String(val);
                 }
+            });
+
+            // NOTE: 填充后更新统计显示
+            updateStatsDisplay();
+        }
+
+        // NOTE: 设置编辑模式 UI（标题、按钮文本）
+        function applyEditModeUI() {
+            var titleEl = document.getElementById('submit-title');
+            if (titleEl) {
+                titleEl.textContent = isZh ? '✏️ 编辑复盘' : '✏️ Edit Recon';
+                titleEl.setAttribute('data-i18n-en', '✏️ Edit Recon');
+                titleEl.setAttribute('data-i18n-zh', '✏️ 编辑复盘');
+            }
+            var submitBtn = document.getElementById('rf-submit-btn');
+            if (submitBtn) {
+                submitBtn.textContent = isZh ? '保存' : 'Save';
+                submitBtn.setAttribute('data-i18n-en', 'Save');
+                submitBtn.setAttribute('data-i18n-zh', '保存');
+            }
+        }
+
+        // NOTE: 编辑模式：从 API 异步加载数据
+        if (editId) {
+            applyEditModeUI();
+            // NOTE: 加载中禁用表单，防止用户误操作
+            var form = document.getElementById('recon-form');
+            var loadingEl = document.getElementById('rf-stats-display');
+            if (loadingEl) {
+                loadingEl.textContent = isZh ? '加载中...' : 'Loading...';
+                loadingEl.style.display = 'block';
+            }
+            if (form) form.style.opacity = '0.5';
+
+            ReconStore.loadOne(editId).then(function (solve) {
+                if (form) form.style.opacity = '';
+                if (loadingEl) { loadingEl.textContent = ''; loadingEl.style.display = 'none'; }
+                if (!solve || !solve.id) {
+                    alert(isZh ? '复盘 #' + editId + ' 不存在' : 'Recon #' + editId + ' not found');
+                    location.href = '/recon/';
+                    return;
+                }
+                populateForm(solve);
+            }).catch(function (err) {
+                if (form) form.style.opacity = '';
+                if (loadingEl) { loadingEl.textContent = ''; loadingEl.style.display = 'none'; }
+                console.error('Failed to load solve:', err);
+                alert((isZh ? '加载失败: ' : 'Load failed: ') + err.message);
             });
         }
 
@@ -148,8 +185,7 @@
         document.getElementById('rf-recon').addEventListener('input', updateStatsDisplay);
         document.getElementById('rf-single').addEventListener('input', updateStatsDisplay);
 
-        // NOTE: 编辑模式初始化时计算一次统计
-        if (isEditMode) updateStatsDisplay();
+        // NOTE: 编辑模式的统计更新在 populateForm() 中自动调用
 
         // ==================== 默认值灰色 ====================
 
@@ -707,7 +743,7 @@
             }
             if (Object.keys(changedFields).length === 0) {
                 // NOTE: 无变更，直接返回列表页
-                location.href = '/recon/';
+                location.href = returnUrl;
                 return;
             }
             changedFields._editedBy = WcaAuth.getUser().wcaId;
@@ -716,7 +752,7 @@
             // NOTE: 所有数据都在 MariaDB，编辑统一走 edit overlay
             var savePromise = ReconStore.saveEdit(s.id, changedFields);
             savePromise.then(function () {
-                location.href = '/recon/';
+                location.href = returnUrl;
             }).catch(function (err) {
                 console.error('Failed to save edit:', err);
                 alert('Save failed: ' + err.message);
