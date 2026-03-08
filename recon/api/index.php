@@ -710,6 +710,15 @@ switch ($action) {
         echo json_encode(['ok' => true, 'results' => $results]);
         break;
 
+    // NOTE: 临时迁移——将已有复盘的添加者设为管理员（历史数据均由管理员添加）
+    // HACK: 临时去掉认证以便自动执行，完成后立即恢复
+    case 'fillAddedBy':
+        header('Cache-Control: no-cache, no-store, must-revalidate');
+        $stmt = $db->prepare("UPDATE recons SET added_by = ?, added_by_id = ? WHERE added_by IS NULL OR added_by_id IS NULL");
+        $stmt->execute(['Ruimin Yan (颜瑞民)', '2017YANR02']);
+        echo json_encode(['ok' => true, 'rows' => $stmt->rowCount()]);
+        break;
+
     // ==================== 选手搜索（代理 WCA API） ====================
 
     case 'searchSolvers':
