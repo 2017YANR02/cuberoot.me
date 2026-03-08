@@ -113,8 +113,10 @@
                     // NOTE: 存 access_token，后续 API 写操作需携带
                     sessionStorage.setItem('wca_access_token', accessToken);
 
-                    // NOTE: 跳回 recon 页面
-                    window.location.href = '/recon/';
+                    // NOTE: 跳回登录前的页面（详情页 / 列表页），无记录时 fallback 到列表页
+                    var returnUrl = sessionStorage.getItem('wca_return_url') || '/recon/';
+                    sessionStorage.removeItem('wca_return_url');
+                    window.location.href = returnUrl;
                 })
                 .catch(function (err) {
                     showError('登录失败: ' + err.message);
