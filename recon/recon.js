@@ -192,15 +192,11 @@
     }
 
     /**
-     * 根据环境返回详情页 URL
-     * NOTE: 线上环境（GitHub Pages / toolkit）用 /recon/ID（通过 404.html 或 Nginx rewrite）
-     *       本地 localhost 直接跳 /recon/detail/?id=ID（WEBrick 不支持自定义 404 页面）
+     * 返回详情页 URL
+     * NOTE: 统一用 /recon/detail/?id=ID（所有环境一致）
      */
     function getDetailUrl(id) {
-        if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
-            return '/recon/detail/?id=' + id;
-        }
-        return '/recon/' + id;
+        return '/recon/detail/?id=' + id;
     }
 
     /**
