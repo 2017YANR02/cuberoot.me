@@ -397,8 +397,11 @@
             html += '<div class="detail-meta-item"><span class="detail-meta-label">✍️</span><span class="detail-meta-value">' + U.escHtml(s.reconer) + '</span></div>';
         }
         if (s.addedBy) {
+            var addedByHtml = s.addedById
+                ? '<a href="https://www.worldcubeassociation.org/persons/' + U.escHtml(s.addedById) + '" target="_blank">' + U.escHtml(s.addedBy) + '</a>'
+                : U.escHtml(s.addedBy);
             html += '<div class="detail-meta-item"><span class="detail-meta-label" data-i18n-en="Added by" data-i18n-zh="添加者">' +
-                (isZh ? '添加者' : 'Added by') + '</span><span class="detail-meta-value">' + U.escHtml(s.addedBy) + '</span></div>';
+                (isZh ? '添加者' : 'Added by') + '</span><span class="detail-meta-value">' + addedByHtml + '</span></div>';
         }
         html += '</div>';
 
