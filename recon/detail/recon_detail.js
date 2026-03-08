@@ -44,8 +44,12 @@
         }
 
         // NOTE: 将 URL 静默替换为干净格式 /recon/ID（无论从哪种路径进入）
-        var cleanUrl = '/recon/' + id;
-        if (location.pathname !== cleanUrl) {
+        // 保留现有 search params（如 ?lang=zh），但移除 id（已在路径中）
+        var cleanParams = new URLSearchParams(location.search);
+        cleanParams.delete('id');
+        var cleanSearch = cleanParams.toString() ? '?' + cleanParams.toString() : '';
+        var cleanUrl = '/recon/' + id + cleanSearch;
+        if (location.pathname + location.search !== cleanUrl) {
             history.replaceState(null, '', cleanUrl);
         }
 
