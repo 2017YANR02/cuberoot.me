@@ -25,6 +25,8 @@
     var returnUrl = '/recon/';
     // NOTE: 比赛名 → WCA ID 映射表（initAutocomplete 加载后填充，handleSubmit 中查表）
     var compWcaIdMap = {};
+    // NOTE: 比赛名 → 国家代码映射表（同上）
+    var compCountryMap = {};
 
     document.addEventListener('DOMContentLoaded', function () {
         // NOTE: 与 i18n.js 保持一致：localStorage 优先，fallback 到浏览器语言
@@ -218,7 +220,7 @@
             fetch('/stats/comp_name_to_wca_id.json').then(function (r) { return r.json(); }).catch(function () { return {}; })
         ]).then(function (results) {
             var compDateMap = results[0];
-            var compCountryMap = results[1];
+            compCountryMap = results[1];
             var compNamesZh = results[2];
             compWcaIdMap = results[3];
 
@@ -698,6 +700,8 @@
                 comp: document.getElementById('rf-comp').value.trim(),
                 // NOTE: 提交时自动查表获取 WCA 比赛 ID
                 compWcaId: compWcaIdMap[document.getElementById('rf-comp').value.trim()] || '',
+                // NOTE: 提交时自动查表获取比赛国家
+                country: compCountryMap[document.getElementById('rf-comp').value.trim()] || '',
                 note: document.getElementById('rf-note').value.trim(),
                 round: document.getElementById('rf-round').value,
                 solveNum: document.getElementById('rf-solve-num').value ? parseInt(document.getElementById('rf-solve-num').value) : null,
@@ -827,6 +831,8 @@
         if (comp) solve.comp = comp;
         // NOTE: 提交时自动查表获取 WCA 比赛 ID
         if (comp && compWcaIdMap[comp]) solve.compWcaId = compWcaIdMap[comp];
+        // NOTE: 提交时自动查表获取比赛国家
+        if (comp && compCountryMap[comp]) solve.country = compCountryMap[comp];
         if (scramble) solve.wcaScramble = scramble;
         if (note) solve.note = note;
         if (round) solve.round = round;
