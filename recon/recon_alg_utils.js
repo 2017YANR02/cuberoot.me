@@ -8,11 +8,11 @@ var ReconAlgUtils = (function () {
 
     /**
      * 清理公式供 twisty-player 使用
-     * - 删除 .·↑↓⅓⅔（卡顿/换手/分数标记）
+     * - 删除 .·↑↓⅓⅔()（卡顿/换手/分数/分组标记）
      * - 规范化步骤间距（UD → U D，twisty-player 无法解析连写步骤）
      */
     function cleanForPlayer(alg) {
-        alg = alg.replace(/[.·↑↓⅓⅔]/g, '');
+        alg = alg.replace(/[.·↑↓⅓⅔()]/g, '');
         // NOTE: 在连写的步骤之间插入空格
         // 支持修饰符组合: 2, ', 2'（如 R2', U2'）
         alg = alg.replace(/([RULDFBMESruldfbmesxyz][w]?2?'?)(?=[RULDFBMESruldfbmesxyz])/g, '$1 ');

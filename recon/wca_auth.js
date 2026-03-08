@@ -25,6 +25,8 @@ var WcaAuth = (function () {
     function login() {
         var state = Math.random().toString(36).substring(2) + Date.now().toString(36);
         sessionStorage.setItem(STATE_KEY, state);
+        // NOTE: 记录登录前的页面 URL，回调后跳回此页面而非固定跳 /recon/
+        sessionStorage.setItem('wca_return_url', window.location.href);
 
         var params = [
             'client_id=' + encodeURIComponent(CONFIG.clientId),
