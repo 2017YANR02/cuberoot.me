@@ -706,8 +706,8 @@
                 }
             }
             if (Object.keys(changedFields).length === 0) {
-                // NOTE: 无变更，直接返回详情页
-                window.location.href = '/recon/' + s.id;
+                // NOTE: 无变更，直接返回列表页
+                location.href = '/recon/';
                 return;
             }
             changedFields._editedBy = WcaAuth.getUser().wcaId;
@@ -716,8 +716,7 @@
             // NOTE: 所有数据都在 MariaDB，编辑统一走 edit overlay
             var savePromise = ReconStore.saveEdit(s.id, changedFields);
             savePromise.then(function () {
-                // NOTE: 保存成功，返回详情页
-                window.location.href = '/recon/' + s.id;
+                location.href = '/recon/';
             }).catch(function (err) {
                 console.error('Failed to save edit:', err);
                 alert('Save failed: ' + err.message);
