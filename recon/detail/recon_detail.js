@@ -347,7 +347,7 @@
         }
         // NOTE: 有打乱时插入 twisty-player 占位符 + 外部链接
         var reconText = s.recon || s.caption || '';
-        var scrambleForPlayer = s.wcaScramble || s.optimalScramble || extractScrambleFromRecon(reconText);
+        var scrambleForPlayer = s.optimalScramble || s.wcaScramble || extractScrambleFromRecon(reconText);
         if (scrambleForPlayer && reconText) {
             html += '<div class="recon-twisty-container"></div>';
             var setupStr = encodeURIComponent(scrambleForPlayer);
@@ -648,7 +648,7 @@
             var Ctor = window.__TwistyPlayerCtor;
             if (!Ctor) { container.innerHTML = ''; return; }
             var reconText = solve.recon || solve.caption || '';
-            var setup = solve.wcaScramble || solve.optimalScramble || extractScrambleFromRecon(reconText);
+            var setup = solve.optimalScramble || solve.wcaScramble || extractScrambleFromRecon(reconText);
             var alg = extractAlgFromRecon(reconText);
             var puzzle = '3x3x3';
             if (solve.event && solve.event.indexOf('2') >= 0) puzzle = '2x2x2';
