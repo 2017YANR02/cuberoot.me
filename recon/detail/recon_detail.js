@@ -225,8 +225,7 @@
         var editBtn = container.querySelector('.recon-btn-edit');
         if (editBtn) {
             editBtn.addEventListener('click', function () {
-                sessionStorage.setItem('recon_edit_solve', JSON.stringify(solve));
-                location.href = '/recon/submit/';
+                location.href = '/recon/submit/?id=' + solve.id;
             });
         }
 
