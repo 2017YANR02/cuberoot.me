@@ -297,16 +297,9 @@
 
         var html = '<div class="detail-content">';
 
-        // NOTE: 摘要第一行——项目 + 方法 + 官方标识 + 比赛信息
-        var line1Parts = [];
-        if (s.event) line1Parts.push(U.escHtml(s.event));
-        if (s.method) line1Parts.push(U.escHtml(s.method));
-        if (s.official) line1Parts.push('<span class="detail-official-badge" data-i18n-en="Official" data-i18n-zh="官方">🏆 ' + (isZh ? '官方' : 'Official') + '</span>');
-        var line1 = line1Parts.join(' · ');
-
-        // NOTE: 摘要第二行——日期 + 比赛 + 轮次
-        var line2Parts = [];
-        if (s.date) line2Parts.push(U.escHtml(s.date));
+        // NOTE: 摘要第一行——比赛信息（日期后无逗号，其他用逗号分隔）
+        var line1 = U.escHtml(s.date || '');
+        var line1Rest = [];
         if (s.comp) {
             var compDisplay = U.countryFlag(compCountries[s.comp]) + ' ' + U.displayCompName(s.comp, compNamesZh);
             var wcaUrl = U.compWcaUrl(s.comp, compWcaIds);
@@ -314,29 +307,26 @@
             if (wcaUrl) {
                 compDisplay = '<a href="' + U.escHtml(wcaUrl) + '" target="_blank" rel="noopener noreferrer" class="comp-link">' + compDisplay + '</a>';
             }
-            line2Parts.push(compDisplay);
+            line1Rest.push(compDisplay);
         }
-        if (s.round) line2Parts.push(U.escHtml(s.round) + (s.solveNum ? '#' + s.solveNum : ''));
-        if (line1) html += '<div class="detail-summary">' + line1 + '</div>';
-        if (line2Parts.length > 0) html += '<div class="detail-summary">' + line2Parts.join(', ') + '</div>';
+        if (s.round) line1Rest.push(U.escHtml(s.round) + (s.solveNum ? '#' + s.solveNum : ''));
+        if (line1Rest.length > 0) line1 += ' ' + line1Rest.join(', ');
+        html += '<div class="detail-summary">' + line1 + '</div>';
 
-        // NOTE: 摘要第三行——纪录信息（无内容则不渲染）
-        var line3Parts = [];
-        if (s.value) {
-            line3Parts.push('<span class="mono">' + U.escHtml(s.value) + '</span>');
-        }
+        // NOTE: 摘要第二行——纪录信息（无内容则不渲染）
+        var line2Parts = [];
         if (s.average != null) {
             var avgText = U.formatAvg(s.average) + ' <span data-i18n-en="Avg" data-i18n-zh="平均">' + (isZh ? '平均' : 'Avg') + '</span>';
             if (s.regionalAverageRecord) avgText += ' ' + U.formatRecord(s.regionalAverageRecord);
-            line3Parts.push(avgText);
+            line2Parts.push(avgText);
         }
         if (s.aoType) {
             var aoText = U.escHtml(s.aoType);
             if (s.regionalAoxrRecord) aoText += ' ' + U.formatRecord(s.regionalAoxrRecord);
-            line3Parts.push(aoText);
+            line2Parts.push(aoText);
         }
-        if (line3Parts.length > 0) {
-            html += '<div class="detail-summary">' + line3Parts.join(', ') + '</div>';
+        if (line2Parts.length > 0) {
+            html += '<div class="detail-summary">' + line2Parts.join(', ') + '</div>';
         }
 
         // NOTE: 复盘 + 统计两列布局
