@@ -492,7 +492,8 @@
             })() + '</td>' +
             '<td class="col-date">' + U.escHtml(solve.date || '') + '</td>' +
             '<td class="col-comp">' + (function () {
-                var compHtml = U.countryFlag(compCountries[solve.comp]) + ' ' + U.displayCompName(solve.comp, compNamesZh);
+                // NOTE: 国旗直接用数据库 country（已统一为 ISO2）
+                var compHtml = U.countryFlag(solve.country) + ' ' + U.displayCompName(solve.comp, compNamesZh);
                 var cUrl = U.compWcaUrl(solve.comp, compWcaIds);
                 // NOTE: 有 WCA 比赛映射时渲染为链接，否则纯文本
                 // NOTE: data-comp-flag 标记阻止 i18n._applyCompetitionFlags() 重复插入国旗

@@ -296,7 +296,8 @@
         var line1 = U.escHtml(s.date || '');
         var line1Rest = [];
         if (s.comp) {
-            var compDisplay = U.countryFlag(compCountries[s.comp]) + ' ' + U.displayCompName(s.comp, compNamesZh);
+            // NOTE: 国旗直接用数据库 country（已统一为 ISO2）
+            var compDisplay = U.countryFlag(s.country) + ' ' + U.displayCompName(s.comp, compNamesZh);
             // NOTE: 优先用数据库的 compWcaId，fallback 到映射表
             var wcaUrl = s.compWcaId
                 ? 'https://www.worldcubeassociation.org/competitions/' + s.compWcaId
