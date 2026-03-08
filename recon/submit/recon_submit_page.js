@@ -37,12 +37,7 @@
 
         // NOTE: 编辑模式下更新 returnUrl 为详情页 URL
         if (editId) {
-            var host = location.hostname;
-            if (host === 'localhost' || host === '127.0.0.1') {
-                returnUrl = '/recon/detail/?id=' + editId;
-            } else {
-                returnUrl = '/recon/' + editId;
-            }
+            returnUrl = '/recon/detail/?id=' + editId;
             // NOTE: 更新返回箭头和 Cancel 链接的 href
             var backLink = document.querySelector('.detail-back-link');
             if (backLink) backLink.href = returnUrl;

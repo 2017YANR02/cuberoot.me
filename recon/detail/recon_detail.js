@@ -43,15 +43,7 @@
             return;
         }
 
-        // NOTE: 将 URL 静默替换为干净格式 /recon/ID（无论从哪种路径进入）
-        // 保留现有 search params（如 ?lang=zh），但移除 id（已在路径中）
-        var cleanParams = new URLSearchParams(location.search);
-        cleanParams.delete('id');
-        var cleanSearch = cleanParams.toString() ? '?' + cleanParams.toString() : '';
-        var cleanUrl = '/recon/' + id + cleanSearch;
-        if (location.pathname + location.search !== cleanUrl) {
-            history.replaceState(null, '', cleanUrl);
-        }
+        // NOTE: 不再做 replaceState URL 重写，保持 /recon/detail/?id=X 原样
 
         // NOTE: 初始化 WCA 登录 UI（详情页需要鉴权才能显示管理员按钮）
         updateWcaAuthUI();
@@ -367,7 +359,7 @@
                     ' data-i18n-en="caption" data-i18n-zh="字幕">caption</a>';
             }
             // NOTE: 分享链接
-            var shareUrl = location.origin + '/recon/' + s.id;
+            var shareUrl = location.origin + '/recon/detail/?id=' + s.id;
             html += ' <a href="#" class="share-link-btn" data-url="' + shareUrl + '"' +
                 ' data-i18n-en="link" data-i18n-zh="链接">link</a>';
             html += '</div>';
