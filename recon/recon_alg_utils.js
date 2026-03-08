@@ -15,7 +15,7 @@ var ReconAlgUtils = (function () {
         alg = alg.replace(/[.·↑↓⅓⅔]/g, '');
         // NOTE: 在连写的步骤之间插入空格
         // 支持修饰符组合: 2, ', 2'（如 R2', U2'）
-        alg = alg.replace(/([RULDFBMESruldfbmesxyz][w]?2?'?)(?=[RULDFBMESxyz])/g, '$1 ');
+        alg = alg.replace(/([RULDFBMESruldfbmesxyz][w]?2?'?)(?=[RULDFBMESruldfbmesxyz])/g, '$1 ');
         return alg;
     }
 
