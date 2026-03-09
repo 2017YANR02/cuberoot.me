@@ -762,7 +762,7 @@ switch ($action) {
             "SELECT id FROM recons WHERE person = ? AND comp = ? AND `round` = ? AND ABS(single - ?) < 0.005 AND solve_num = ?"
         );
         $stmtUpdate = $db->prepare(
-            "UPDATE recons SET group_id = ?, reconer = ?, recon_date = ?, cube = ? WHERE id = ?"
+            "UPDATE recons SET group_id = COALESCE(?, group_id), reconer = COALESCE(?, reconer), recon_date = COALESCE(?, recon_date), cube = COALESCE(?, cube), `round` = COALESCE(?, `round`), solve_num = COALESCE(?, solve_num) WHERE id = ?"
         );
 
         $report = ['updated' => 0, 'skipped' => 0, 'miss' => [], 'conflict' => []];
@@ -798,6 +798,15 @@ switch ($action) {
                 $rows = $stmtLoose->fetchAll(PDO::FETCH_COLUMN);
             }
 
+            // NOTE: 还失败 → 去掉 round（Ying's Cube 等非标赛事 round 格式不同）
+            if (count($rows) === 0) {
+                $stmtNoRound = $db->prepare(
+                    "SELECT id FROM recons WHERE person = ? AND comp = ? AND ABS(single - ?) < 0.005"
+                );
+                $stmtNoRound->execute([$person, $comp, $single]);
+                $rows = $stmtNoRound->fetchAll(PDO::FETCH_COLUMN);
+            }
+
             if (count($rows) === 0) {
                 $report['miss'][] = compact('person', 'comp', 'round', 'single');
                 continue;
@@ -814,12 +823,14 @@ switch ($action) {
                 continue;
             }
 
-            // NOTE: 空字符串转 NULL
+            // NOTE: 空字符串转 NULL（COALESCE 用 NULL 保留原值）
             $stmtUpdate->execute([
                 $groupId ?: null,
                 $reconer ?: null,
                 $reconDate ?: null,
                 $cube ?: null,
+                $round ?: null,
+                $solveNum !== null ? $solveNum : null,
                 $rows[0]
             ]);
             $report['updated']++;
