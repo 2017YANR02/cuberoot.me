@@ -110,6 +110,13 @@
             }
         }
 
+        // NOTE: 统一登录守卫——新增和编辑都需要登录（后端 API 也有 token 验证兜底）
+        if (!WcaAuth.isLoggedIn()) {
+            alert(isZh() ? '请先登录 WCA 账号' : 'Please log in with your WCA account first');
+            WcaAuth.login();
+            return;
+        }
+
         // NOTE: 编辑模式：从 API 异步加载数据
         if (editId) {
             applyEditModeUI();
@@ -130,12 +137,7 @@
                     location.href = '/recon/';
                     return;
                 }
-                // NOTE: 前端权限守卫——未登录先引导登录，已登录再检查是否管理员或添加者
-                if (!WcaAuth.isLoggedIn()) {
-                    alert(isZh() ? '请先登录 WCA 账号' : 'Please log in with your WCA account first');
-                    WcaAuth.login();
-                    return;
-                }
+                // NOTE: 权限检查——仅管理员或添加者可编辑（登录已在上方统一守卫中确保）
                 var user = WcaAuth.getUser();
                 var canEdit = WcaAuth.isAdmin() || (user && solve.addedById && user.wcaId === solve.addedById);
                 if (!canEdit) {
