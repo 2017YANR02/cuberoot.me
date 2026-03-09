@@ -207,12 +207,44 @@
         // ==================== 比赛搜索下拉 ====================
 
         var compInput = document.getElementById('rf-comp');
+        var compDisplay = document.getElementById('rf-comp-display');
         var compDropdown = document.createElement('div');
         compDropdown.id = 'rf-comp-dropdown';
         compDropdown.className = 'comp-dropdown';
         document.body.appendChild(compDropdown);
         var recentComps = [];
         var allComps = [];
+        // NOTE: 提升到闭包作用域，供 buildCompHtml 使用
+        var compNamesZh = {};
+
+        // NOTE: 共享 HTML 构建——下拉项和选中态 display 复用（DRY）
+        function buildCompHtml(name, date, iso2) {
+            var flag = iso2 ? '<span class="fi fi-' + iso2 + '"></span> ' : '';
+            var displayName = (isZh() && compNamesZh[name]) ? compNamesZh[name] : name;
+            return '<small>' + date + '</small>' + flag + '<span>' + displayName + '</span>';
+        }
+
+        // NOTE: 选中比赛后显示富内容 div，隐藏 input
+        function showCompDisplay(name, date, iso2) {
+            compDisplay.innerHTML = buildCompHtml(name, date, iso2)
+                + '<span class="comp-display-clear">&times;</span>';
+            compDisplay.style.display = 'flex';
+            compInput.style.display = 'none';
+        }
+
+        // NOTE: 清除选中态，恢复 input 可编辑
+        function hideCompDisplay() {
+            compDisplay.style.display = 'none';
+            compInput.style.display = '';
+        }
+
+        // NOTE: 从 allComps 查找比赛信息（编辑模式加载和 blur 恢复用）
+        function findComp(name) {
+            for (var i = 0; i < allComps.length; i++) {
+                if (allComps[i].name === name) return allComps[i];
+            }
+            return null;
+        }
 
         Promise.all([
             fetch('/stats/comp_dates.json').then(function (r) { return r.json(); }),
@@ -222,7 +254,7 @@
         ]).then(function (results) {
             var compDateMap = results[0];
             compCountryMap = results[1];
-            var compNamesZh = results[2];
+            compNamesZh = results[2];
             compWcaIdMap = results[3];
 
             // NOTE: 构建 cell_name → name 反向映射（用于搜索时匹配全称）
@@ -274,6 +306,13 @@
             });
 
             renderCompDropdown(recentComps, '');
+
+            // NOTE: 时序安全——若 populateForm 已先于 fetch 完成，此时 input 有值但 display 未显示
+            var prefilledComp = compInput.value.trim();
+            if (prefilledComp) {
+                var found = findComp(prefilledComp);
+                if (found) showCompDisplay(found.name, found.date, found.iso2);
+            }
         }).catch(function (e) {
             console.warn('Failed to load competition data:', e);
         });
@@ -290,11 +329,9 @@
                 : comps;
             var html = '';
             filtered.forEach(function (c) {
-                var flag = c.iso2 ? '<span class="fi fi-' + c.iso2 + '"></span> ' : '';
-                // NOTE: 中文模式下国内比赛显示中文名，点击仍填入英文名
-                var displayName = (isZh() && c.nameZh) ? c.nameZh : c.name;
-                html += '<div class="comp-dropdown-item" data-name="' + c.name.replace(/"/g, '&quot;') + '" data-date="' + c.date + '">' +
-                    '<small>' + c.date + '</small>' + flag + '<span>' + displayName + '</span></div>';
+                // NOTE: 复用 buildCompHtml 构建下拉项内容（DRY）
+                html += '<div class="comp-dropdown-item" data-name="' + c.name.replace(/"/g, '&quot;') + '" data-date="' + c.date
+                    + '" data-iso2="' + (c.iso2 || '') + '">' + buildCompHtml(c.name, c.date, c.iso2) + '</div>';
             });
             if (!html && q) {
                 html = '<div class="comp-dropdown-empty">' + (isZh() ? '无匹配' : 'No match') + '</div>';
@@ -341,11 +378,32 @@
                 compInput.value = item.dataset.name;
                 compInput.dataset.autoDate = item.dataset.date;
                 compDropdown.style.display = 'none';
+                // NOTE: 选中后显示富内容 div
+                showCompDisplay(item.dataset.name, item.dataset.date, item.dataset.iso2);
             }
         });
 
+        // NOTE: 点击 display div 或 × 按钮 → 清除选中态，恢复 input 可编辑
+        compDisplay.addEventListener('click', function (e) {
+            if (e.target.closest('.comp-display-clear')) {
+                // × 按钮：清除比赛值
+                compInput.value = '';
+                compInput.dataset.autoDate = '';
+            }
+            hideCompDisplay();
+            compInput.focus();
+        });
+
         compInput.addEventListener('blur', function () {
-            setTimeout(function () { compDropdown.style.display = 'none'; }, 150);
+            setTimeout(function () {
+                compDropdown.style.display = 'none';
+                // NOTE: blur 保护——若 input 有值且匹配已知比赛，自动恢复 display
+                var val = compInput.value.trim();
+                if (val && compDisplay.style.display === 'none') {
+                    var found = findComp(val);
+                    if (found) showCompDisplay(found.name, found.date, found.iso2);
+                }
+            }, 200);
         });
 
         // ==================== 选手搜索下拉 ====================

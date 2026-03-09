@@ -994,6 +994,51 @@ tr.detail-row td {
     font-size: 0.85rem;
 }
 
+/* NOTE: 比赛选中态——替代 input 显示富内容（日期+国旗+名称） */
+.comp-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.05);
+    color: #cbd5e1;
+    font-size: 0.85rem;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.comp-display:hover {
+    border-color: rgba(99, 102, 241, 0.4);
+}
+
+.comp-display small {
+    color: #888;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+}
+
+.comp-display .fi {
+    flex-shrink: 0;
+}
+
+.comp-display-clear {
+    margin-left: auto;
+    color: #666;
+    font-size: 1.1rem;
+    line-height: 1;
+    padding: 0 2px;
+    flex-shrink: 0;
+}
+
+.comp-display-clear:hover {
+    color: #fff;
+}
+
 /* --- 选手搜索自定义下拉菜单（复用比赛下拉的视觉风格） --- */
 .solver-dropdown {
     display: none;
