@@ -875,9 +875,10 @@
 
         // NOTE: 已登录 → 提交到 Firestore，未登录 → 保存到 localStorage
         var wcaUser = (typeof WcaAuth !== 'undefined') ? WcaAuth.getUser() : null;
-        // NOTE: 新增模式下，reconer 默认填入当前登录用户名
+        // NOTE: 新增模式下，reconer 默认填入当前登录用户名，reconerId 填入 WCA ID
         if (wcaUser && !solve.reconer) {
             solve.reconer = wcaUser.name || '';
+            solve.reconerId = wcaUser.wcaId || '';
         }
         if (wcaUser && typeof ReconStore !== 'undefined') {
             solve.wcaId = wcaUser.wcaId;
