@@ -130,7 +130,12 @@
                     location.href = '/recon/';
                     return;
                 }
-                // NOTE: 前端权限守卫——仅管理员或添加者可编辑（后端 API 也有 requireAdmin 兜底）
+                // NOTE: 前端权限守卫——未登录先引导登录，已登录再检查是否管理员或添加者
+                if (!WcaAuth.isLoggedIn()) {
+                    alert(isZh() ? '请先登录 WCA 账号' : 'Please log in with your WCA account first');
+                    WcaAuth.login();
+                    return;
+                }
                 var user = WcaAuth.getUser();
                 var canEdit = WcaAuth.isAdmin() || (user && solve.addedById && user.wcaId === solve.addedById);
                 if (!canEdit) {
