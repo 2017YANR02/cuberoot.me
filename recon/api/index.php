@@ -563,6 +563,104 @@ switch ($action) {
         echo json_encode($persons);
         break;
 
+    // NOTE: 临时补救——用精确 single（time 列）匹配，只填空字段。跑完后删除。
+    case 'fillCsvFields2':
+        header('Cache-Control: no-cache, no-store, must-revalidate');
+        requireAdmin();
+        $body = getPostBody();
+        $items = $body['items'] ?? [];
+        if (empty($items)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'items array is required']);
+            break;
+        }
+
+        $stmtUpdate = $db->prepare(
+            "UPDATE recons SET
+                group_id = COALESCE(NULLIF(group_id, ''), ?),
+                reconer = COALESCE(NULLIF(reconer, ''), ?),
+                recon_date = COALESCE(recon_date, ?),
+                cube = COALESCE(NULLIF(cube, ''), ?),
+                `round` = COALESCE(NULLIF(`round`, ''), ?)
+            WHERE id = ?"
+        );
+
+        $report = ['updated' => 0, 'skipped' => 0, 'miss' => [], 'conflict' => []];
+        foreach ($items as $item) {
+            $person = $item['person'] ?? '';
+            $single = $item['single'] ?? 0;
+            $comp = $item['comp'] ?? '';
+            $round = $item['round'] ?? '';
+            $groupId = $item['groupId'] ?? null;
+            $reconer = $item['reconer'] ?? null;
+            $reconDate = $item['reconDate'] ?? null;
+            $cube = $item['cube'] ?? null;
+
+            if (!$groupId && !$reconer && !$reconDate && !$cube && !$round) {
+                $report['skipped']++;
+                continue;
+            }
+
+            // NOTE: 用精确 single 值匹配（time 列有千分位精度）
+            $stmt = $db->prepare(
+                "SELECT id, group_id, reconer, recon_date, cube, `round` FROM recons WHERE person = ? AND ABS(single - ?) < 0.001"
+            );
+            $stmt->execute([$person, $single]);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // NOTE: 多条时用 comp 消歧
+            if (count($rows) > 1 && $comp) {
+                $stmtComp = $db->prepare(
+                    "SELECT id, group_id, reconer, recon_date, cube, `round` FROM recons WHERE person = ? AND ABS(single - ?) < 0.001 AND comp = ?"
+                );
+                $stmtComp->execute([$person, $single, $comp]);
+                $narrowed = $stmtComp->fetchAll(PDO::FETCH_ASSOC);
+                if (count($narrowed) > 0)
+                    $rows = $narrowed;
+            }
+
+            if (count($rows) === 0) {
+                $report['miss'][] = compact('person', 'comp', 'single');
+                continue;
+            }
+            if (count($rows) > 1) {
+                $report['conflict'][] = ['count' => count($rows)] + compact('person', 'comp', 'single');
+                continue;
+            }
+
+            $dbRow = $rows[0];
+            // NOTE: 检查是否有需要更新的字段
+            $needsUpdate = false;
+            if ($groupId && !$dbRow['group_id'])
+                $needsUpdate = true;
+            if ($reconer && !$dbRow['reconer'])
+                $needsUpdate = true;
+            if ($reconDate && !$dbRow['recon_date'])
+                $needsUpdate = true;
+            if ($cube && !$dbRow['cube'])
+                $needsUpdate = true;
+            if ($round && !$dbRow['round'])
+                $needsUpdate = true;
+
+            if (!$needsUpdate) {
+                $report['skipped']++;
+                continue;
+            }
+
+            $stmtUpdate->execute([
+                $groupId ?: null,
+                $reconer ?: null,
+                $reconDate ?: null,
+                $cube ?: null,
+                $round ?: null,
+                $dbRow['id']
+            ]);
+            $report['updated']++;
+        }
+
+        echo json_encode(['ok' => true, 'report' => $report]);
+        break;
+
 
     // ==================== 选手搜索（代理 WCA API） ====================
 
