@@ -34,6 +34,35 @@
         // NOTE: 实时读取 locale，避免闭包缓存导致的时序问题（i18n.js 可能在本脚本之后更新 localStorage）
         function isZh() { return localStorage.getItem('i18n_locale') === 'zh'; }
 
+        // ==================== 通用人员富显示 ====================
+
+        // NOTE: DOM 引用——选手和复盘者的 input + display div
+        var solverInput = document.getElementById('rf-solver');
+        var solverDisplay = document.getElementById('rf-solver-display');
+        var reconerInput = document.getElementById('rf-edit-reconer');
+        var reconerDisplay = document.getElementById('rf-reconer-display');
+
+        /** 构建人员富显示 HTML（旗帜 + WCA ID 徽章 + 名字） */
+        function buildPersonHtml(name, iso2, wcaId) {
+            var flag = iso2 ? '<span class="fi fi-' + iso2 + '"></span> ' : '';
+            var idBadge = wcaId ? '<span class="solver-wca-id">' + wcaId + '</span> ' : '';
+            return flag + idBadge + '<span>' + name + '</span>';
+        }
+
+        /** 显示人员富内容 div，隐藏 input */
+        function showPersonDisplay(displayEl, inputEl, name, iso2, wcaId) {
+            displayEl.innerHTML = buildPersonHtml(name, iso2, wcaId)
+                + '<span class="person-display-clear">&times;</span>';
+            displayEl.style.display = 'flex';
+            inputEl.style.display = 'none';
+        }
+
+        /** 隐藏富内容 div，恢复 input 可编辑 */
+        function hidePersonDisplay(displayEl, inputEl) {
+            displayEl.style.display = 'none';
+            inputEl.style.display = '';
+        }
+
         // ==================== 模式检测 ====================
 
         // NOTE: 从 URL ?id= 参数检测编辑模式（行业标准：纯 URL 驱动，不依赖 sessionStorage）
@@ -92,6 +121,35 @@
 
             // NOTE: 填充后更新统计显示
             updateStatsDisplay();
+
+            // NOTE: 异步加载选手/复盘者富显示（搜索 WCA API 获取旗帜和 ID）
+            tryShowPersonRichDisplay(s.person, solverDisplay, solverInput);
+            var reconerVal = (s.reconer || '').trim();
+            if (reconerVal) {
+                tryShowPersonRichDisplay(reconerVal, reconerDisplay, reconerInput);
+            }
+        }
+
+        /** 尝试通过 searchSolvers API 查询人员信息并显示富内容 */
+        function tryShowPersonRichDisplay(name, displayEl, inputEl) {
+            if (!name) return;
+            var API = 'https://toolkit.cuberoot.me/recon/api/';
+            fetch(API + '?action=searchSolvers&q=' + encodeURIComponent(name))
+                .then(function (r) { return r.json(); })
+                .then(function (results) {
+                    if (!results || results.length === 0) return;
+                    // NOTE: 精确匹配名字（大小写不敏感）
+                    var match = null;
+                    for (var i = 0; i < results.length; i++) {
+                        if (results[i].name.toLowerCase() === name.toLowerCase()) {
+                            match = results[i];
+                            break;
+                        }
+                    }
+                    if (!match) match = results[0];
+                    showPersonDisplay(displayEl, inputEl, inputEl.value || name, match.iso2 || '', match.wcaId || '');
+                })
+                .catch(function () { /* 搜索失败保持纯文本 */ });
         }
 
         // NOTE: 设置编辑模式 UI（标题、按钮文本）
@@ -188,7 +246,9 @@
             if (stats.stm) {
                 var parts = stats.stm + 'STM';
                 if (!isNaN(single) && single > 0) {
-                    parts += ' /' + single.toFixed(2) + '=' + (stats.tps || 0) + 'TPS';
+                    // NOTE: 用截断（非四舍五入）保持与 parseTps 的 Math.floor 逻辑一致
+                    var floored = Math.floor(single * 100) / 100;
+                    parts += ' /' + floored.toFixed(2) + '=' + (stats.tps || 0) + 'TPS';
                 }
                 display.textContent = parts;
                 display.style.display = 'block';
@@ -421,87 +481,103 @@
             }, 200);
         });
 
-        // ==================== 选手搜索下拉 ====================
-
-        var solverInput = document.getElementById('rf-solver');
-        var solverDropdown = document.createElement('div');
-        solverDropdown.id = 'rf-solver-dropdown';
-        solverDropdown.className = 'solver-dropdown';
-        document.body.appendChild(solverDropdown);
+        // ==================== 通用人员搜索下拉 ====================
 
         // NOTE: API 基址——与 recon_api.js 保持一致
         var API_BASE = 'https://toolkit.cuberoot.me/recon/api/';
 
-        var solverDebounceTimer = null;
-
-        function renderSolverDropdown(results) {
+        /** 渲染人员下拉列表（选手/复盘者共用） */
+        function renderPersonDropdown(dropdownEl, results) {
             if (!results || results.length === 0) {
-                solverDropdown.innerHTML = '<div class="solver-dropdown-empty">' +
+                dropdownEl.innerHTML = '<div class="solver-dropdown-empty">' +
                     (isZh() ? '无匹配' : 'No match') + '</div>';
                 return;
             }
             var html = '';
             results.forEach(function (p) {
-                var flag = p.iso2 ? '<span class="fi fi-' + p.iso2 + '"></span> ' : '';
-                // NOTE: 如果有 wcaId，在名字前显示
-                var idBadge = p.wcaId ? '<span class="solver-wca-id">' + p.wcaId + '</span> ' : '';
                 html += '<div class="solver-dropdown-item" data-name="' +
-                    p.name.replace(/"/g, '&quot;') + '">' +
-                    flag + idBadge + '<span>' + p.name + '</span></div>';
+                    p.name.replace(/"/g, '&quot;') + '" data-iso2="' + (p.iso2 || '') +
+                    '" data-wcaid="' + (p.wcaId || '') + '">' +
+                    buildPersonHtml(p.name, p.iso2, p.wcaId) + '</div>';
             });
-            solverDropdown.innerHTML = html;
+            dropdownEl.innerHTML = html;
         }
 
-        solverInput.addEventListener('input', function () {
-            var q = this.value.trim();
-            clearTimeout(solverDebounceTimer);
-            if (q.length < 2) {
-                solverDropdown.style.display = 'none';
-                return;
-            }
-            // NOTE: 200ms debounce 防止快速输入频繁请求
-            solverDebounceTimer = setTimeout(function () {
-                // NOTE: 立即显示 loading，让用户感知搜索进行中
-                solverDropdown.innerHTML = '<div class="solver-dropdown-loading"><span class="solver-spinner"></span>' +
-                    (isZh() ? '搜索中...' : 'Searching...') + '</div>';
-                positionDropdownFor(solverInput, solverDropdown);
-                solverDropdown.style.display = 'block';
+        /** 为人员 input 绑定搜索输入事件（debounce + API 调用） */
+        function bindPersonSearch(inputEl, dropdownEl, displayEl) {
+            var debounceTimer = null;
 
-                fetch(API_BASE + '?action=searchSolvers&q=' + encodeURIComponent(q))
-                    .then(function (r) { return r.json(); })
-                    .then(function (results) {
-                        renderSolverDropdown(results);
-                        positionDropdownFor(solverInput, solverDropdown);
-                        solverDropdown.style.display = 'block';
-                    })
-                    .catch(function (e) {
-                        console.warn('Solver search failed:', e);
-                        solverDropdown.style.display = 'none';
-                    });
-            }, 200);
-        });
+            inputEl.addEventListener('input', function () {
+                var q = this.value.trim();
+                clearTimeout(debounceTimer);
+                if (q.length < 2) {
+                    dropdownEl.style.display = 'none';
+                    return;
+                }
+                // NOTE: 200ms debounce 防止快速输入频繁请求
+                debounceTimer = setTimeout(function () {
+                    dropdownEl.innerHTML = '<div class="solver-dropdown-loading"><span class="solver-spinner"></span>' +
+                        (isZh() ? '搜索中...' : 'Searching...') + '</div>';
+                    positionDropdownFor(inputEl, dropdownEl);
+                    dropdownEl.style.display = 'block';
 
-        solverDropdown.addEventListener('mousedown', function (e) {
-            var item = e.target.closest('.solver-dropdown-item');
-            if (item) {
-                solverInput.value = item.dataset.name;
-                solverDropdown.style.display = 'none';
-                // NOTE: 清除默认值灰色样式
-                solverInput.classList.remove('default-val');
-            }
-        });
+                    fetch(API_BASE + '?action=searchSolvers&q=' + encodeURIComponent(q))
+                        .then(function (r) { return r.json(); })
+                        .then(function (results) {
+                            renderPersonDropdown(dropdownEl, results);
+                            positionDropdownFor(inputEl, dropdownEl);
+                            dropdownEl.style.display = 'block';
+                        })
+                        .catch(function (e) {
+                            console.warn('Person search failed:', e);
+                            dropdownEl.style.display = 'none';
+                        });
+                }, 200);
+            });
 
-        solverInput.addEventListener('blur', function () {
-            setTimeout(function () { solverDropdown.style.display = 'none'; }, 150);
-        });
+            // NOTE: 选中下拉项 → 设置 input 值 + 显示富内容
+            dropdownEl.addEventListener('mousedown', function (e) {
+                var item = e.target.closest('.solver-dropdown-item');
+                if (item) {
+                    inputEl.value = item.dataset.name;
+                    dropdownEl.style.display = 'none';
+                    inputEl.classList.remove('default-val');
+                    showPersonDisplay(displayEl, inputEl, item.dataset.name, item.dataset.iso2, item.dataset.wcaid);
+                }
+            });
+
+            inputEl.addEventListener('blur', function () {
+                setTimeout(function () { dropdownEl.style.display = 'none'; }, 150);
+            });
+
+            // NOTE: 点击 display div 的 × 按钮 → 清除选中态，恢复 input 可编辑
+            displayEl.addEventListener('click', function (e) {
+                if (e.target.closest('.person-display-clear')) {
+                    inputEl.value = '';
+                }
+                hidePersonDisplay(displayEl, inputEl);
+                inputEl.focus();
+            });
+        }
+
+        // ==================== 选手搜索下拉 ====================
+
+        var solverDropdown = document.createElement('div');
+        solverDropdown.id = 'rf-solver-dropdown';
+        solverDropdown.className = 'solver-dropdown';
+        document.body.appendChild(solverDropdown);
+
+        bindPersonSearch(solverInput, solverDropdown, solverDisplay);
 
         // NOTE: 缓存已有选手列表，避免重复请求
         var cachedPersons = null;
 
         solverInput.addEventListener('focus', function () {
+            // NOTE: 已有富显示或有输入值时不弹下拉
+            if (solverDisplay.style.display !== 'none') return;
             if (this.value.trim().length > 0) return;
             if (cachedPersons) {
-                renderSolverDropdown(cachedPersons.map(function (p) { return { name: p.person, iso2: '', wcaId: p.person_id }; }));
+                renderPersonDropdown(solverDropdown, cachedPersons.map(function (p) { return { name: p.person, iso2: '', wcaId: p.person_id }; }));
                 positionDropdownFor(solverInput, solverDropdown);
                 solverDropdown.style.display = 'block';
                 return;
@@ -516,7 +592,7 @@
                 .then(function (r) { return r.json(); })
                 .then(function (persons) {
                     cachedPersons = persons;
-                    renderSolverDropdown(persons.map(function (p) { return { name: p.person, iso2: '', wcaId: p.person_id }; }));
+                    renderPersonDropdown(solverDropdown, persons.map(function (p) { return { name: p.person, iso2: '', wcaId: p.person_id }; }));
                     positionDropdownFor(solverInput, solverDropdown);
                     solverDropdown.style.display = 'block';
                 })
@@ -525,6 +601,15 @@
                     solverDropdown.style.display = 'none';
                 });
         });
+
+        // ==================== 复盘者搜索下拉 ====================
+
+        var reconerDropdown = document.createElement('div');
+        reconerDropdown.id = 'rf-reconer-dropdown';
+        reconerDropdown.className = 'solver-dropdown';
+        document.body.appendChild(reconerDropdown);
+
+        bindPersonSearch(reconerInput, reconerDropdown, reconerDisplay);
 
         // ==================== 预览动画 ====================
 
@@ -809,7 +894,8 @@
                 // NOTE: 与新增模式一致，合并为标准三行格式写入 recons 主表
                 var fullRecon = '';
                 if (stats.stm) {
-                    fullRecon += stats.stm + 'STM /' + newData.single.toFixed(2) + '=' + (stats.tps || 0) + 'TPS\n';
+                    var flooredSingle = Math.floor(newData.single * 100) / 100;
+                    fullRecon += stats.stm + 'STM /' + flooredSingle.toFixed(2) + '=' + (stats.tps || 0) + 'TPS\n';
                 }
                 if (newData.wcaScramble) {
                     fullRecon += newData.wcaScramble + '\n';
@@ -882,7 +968,8 @@
         // NOTE: 合并 recon 文本为标准三行格式：统计 + 打乱 + 解法
         var fullRecon = '';
         if (stats.stm) {
-            fullRecon += stats.stm + 'STM /' + single.toFixed(2) + '=' + (stats.tps || 0) + 'TPS\n';
+            var flooredSingle = Math.floor(single * 100) / 100;
+            fullRecon += stats.stm + 'STM /' + flooredSingle.toFixed(2) + '=' + (stats.tps || 0) + 'TPS\n';
         }
         if (scramble) {
             fullRecon += scramble + '\n';

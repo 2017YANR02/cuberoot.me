@@ -51,9 +51,11 @@ layout: default
         <div class="submit-col-meta">
             <!-- 选手 + 成绩 -->
             <div class="recon-form-row">
-                <div class="recon-form-group">
+                <div class="recon-form-group" style="position:relative">
                     <label data-i18n-en="Solver" data-i18n-zh="选手">Solver</label>
                     <input type="text" id="rf-solver" value="" autocomplete="one-time-code" required>
+                    <!-- NOTE: 选中选手后显示富内容（旗帜+WCA ID+名字），隐藏 input -->
+                    <div id="rf-solver-display" class="person-display" style="display:none"></div>
                 </div>
                 <div class="recon-form-group">
                     <label data-i18n-en="Time (sec)" data-i18n-zh="成绩 (秒)">Time (sec)</label>
@@ -187,9 +189,11 @@ layout: default
                     <label data-i18n-en="Cube" data-i18n-zh="魔方">Cube</label>
                     <input type="text" id="rf-edit-cube">
                 </div>
-                <div class="recon-form-group">
+                <div class="recon-form-group" style="position:relative">
                     <label data-i18n-en="Reconer" data-i18n-zh="复盘者">Reconer</label>
                     <input type="text" id="rf-edit-reconer">
+                    <!-- NOTE: 选中复盘者后显示富内容（旗帜+WCA ID+名字），隐藏 input -->
+                    <div id="rf-reconer-display" class="person-display" style="display:none"></div>
                 </div>
             </div>
             <!-- 备注 -->

@@ -1039,6 +1039,49 @@ tr.detail-row td {
     color: #fff;
 }
 
+/* NOTE: 选手/复盘者选中态——与 comp-display 相同的视觉风格 */
+.person-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.05);
+    color: #cbd5e1;
+    font-size: 0.85rem;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.person-display:hover {
+    border-color: rgba(99, 102, 241, 0.4);
+}
+
+.person-display .fi {
+    flex-shrink: 0;
+}
+
+.person-display .solver-wca-id {
+    flex-shrink: 0;
+}
+
+.person-display-clear {
+    margin-left: auto;
+    color: #666;
+    font-size: 1.1rem;
+    line-height: 1;
+    padding: 0 2px;
+    flex-shrink: 0;
+}
+
+.person-display-clear:hover {
+    color: #fff;
+}
+
 /* --- 选手搜索自定义下拉菜单（复用比赛下拉的视觉风格） --- */
 .solver-dropdown {
     display: none;
