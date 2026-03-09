@@ -130,6 +130,14 @@
                     location.href = '/recon/';
                     return;
                 }
+                // NOTE: 前端权限守卫——仅管理员或添加者可编辑（后端 API 也有 requireAdmin 兜底）
+                var user = WcaAuth.getUser();
+                var canEdit = WcaAuth.isAdmin() || (user && solve.addedById && user.wcaId === solve.addedById);
+                if (!canEdit) {
+                    alert(isZh() ? '无编辑权限' : 'No edit permission');
+                    location.href = '/recon/detail/?id=' + editId;
+                    return;
+                }
                 populateForm(solve);
             }).catch(function (err) {
                 if (form) form.style.opacity = '';
