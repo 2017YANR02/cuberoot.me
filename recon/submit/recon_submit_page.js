@@ -133,11 +133,20 @@
         /** 尝试通过 searchSolvers API 查询人员信息并显示富内容 */
         function tryShowPersonRichDisplay(name, displayEl, inputEl) {
             if (!name) return;
+            // NOTE: 搜索中先显示 loading 状态（spinner + 名字）
+            displayEl.innerHTML = '<span class="solver-spinner"></span> <span>' + name + '</span>';
+            displayEl.style.display = 'flex';
+            inputEl.style.display = 'none';
+
             var API = 'https://toolkit.cuberoot.me/recon/api/';
             fetch(API + '?action=searchSolvers&q=' + encodeURIComponent(name))
                 .then(function (r) { return r.json(); })
                 .then(function (results) {
-                    if (!results || results.length === 0) return;
+                    if (!results || results.length === 0) {
+                        // NOTE: 搜索无结果，显示纯名字（无旗帜/ID）
+                        showPersonDisplay(displayEl, inputEl, name, '', '');
+                        return;
+                    }
                     // NOTE: 精确匹配名字（大小写不敏感）
                     var match = null;
                     for (var i = 0; i < results.length; i++) {
@@ -149,7 +158,10 @@
                     if (!match) match = results[0];
                     showPersonDisplay(displayEl, inputEl, inputEl.value || name, match.iso2 || '', match.wcaId || '');
                 })
-                .catch(function () { /* 搜索失败保持纯文本 */ });
+                .catch(function () {
+                    // NOTE: 搜索失败回退为纯名字显示
+                    showPersonDisplay(displayEl, inputEl, name, '', '');
+                });
         }
 
         // NOTE: 设置编辑模式 UI（标题、按钮文本）
