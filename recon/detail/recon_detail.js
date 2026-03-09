@@ -398,7 +398,11 @@
             html += '<div class="detail-meta-item"><span class="detail-meta-label">🧊</span><span class="detail-meta-value">' + U.escHtml(s.cube) + '</span></div>';
         }
         if (s.reconer) {
-            html += '<div class="detail-meta-item"><span class="detail-meta-label">✍️</span><span class="detail-meta-value">' + U.escHtml(s.reconer) + '</span></div>';
+            // NOTE: 有 reconerId 时渲染为 WCA 个人主页链接（与 addedBy 模式一致）
+            var reconerHtml = s.reconerId
+                ? '<a href="https://www.worldcubeassociation.org/persons/' + U.escHtml(s.reconerId) + '" target="_blank">' + U.escHtml(s.reconer) + '</a>'
+                : U.escHtml(s.reconer);
+            html += '<div class="detail-meta-item"><span class="detail-meta-label">✍️</span><span class="detail-meta-value">' + reconerHtml + '</span></div>';
         }
         if (s.reconDate) {
             html += '<div class="detail-meta-item"><span class="detail-meta-label">📅</span><span class="detail-meta-value">' + U.escHtml(s.reconDate) + '</span></div>';
@@ -407,8 +411,7 @@
             var addedByHtml = s.addedById
                 ? '<a href="https://www.worldcubeassociation.org/persons/' + U.escHtml(s.addedById) + '" target="_blank">' + U.escHtml(s.addedBy) + '</a>'
                 : U.escHtml(s.addedBy);
-            html += '<div class="detail-meta-item"><span class="detail-meta-label" data-i18n-en="Added by" data-i18n-zh="添加者">' +
-                (isZh ? '添加者' : 'Added by') + '</span><span class="detail-meta-value">' + addedByHtml + '</span></div>';
+            html += '<div class="detail-meta-item"><span class="detail-meta-label">➕</span><span class="detail-meta-value">' + addedByHtml + '</span></div>';
         }
         html += '</div>';
 
