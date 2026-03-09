@@ -719,6 +719,105 @@ switch ($action) {
         echo json_encode(['ok' => true, 'rows' => $stmt->rowCount()]);
         break;
 
+    // NOTE: 临时迁移——添加 cube/reconer/group_id/recon_date 列
+    case 'addNewColumns':
+        header('Cache-Control: no-cache, no-store, must-revalidate');
+        requireAdmin();
+        $sqls = [
+            'ALTER TABLE recons ADD COLUMN cube VARCHAR(100) DEFAULT NULL',
+            'ALTER TABLE recons ADD COLUMN reconer VARCHAR(100) DEFAULT NULL',
+            'ALTER TABLE recons ADD COLUMN group_id VARCHAR(10) DEFAULT NULL',
+            'ALTER TABLE recons ADD COLUMN recon_date DATE DEFAULT NULL',
+        ];
+        $results = [];
+        foreach ($sqls as $sql) {
+            try {
+                $db->exec($sql);
+                $results[] = ['sql' => $sql, 'ok' => true];
+            } catch (Exception $e) {
+                $results[] = ['sql' => $sql, 'ok' => false, 'error' => $e->getMessage()];
+            }
+        }
+        echo json_encode(['ok' => true, 'results' => $results]);
+        break;
+
+    // NOTE: 临时迁移——根据组合键匹配 CSV 数据，批量填充 group_id/reconer/recon_date/cube
+    case 'fillCsvFields':
+        header('Cache-Control: no-cache, no-store, must-revalidate');
+        requireAdmin();
+        $body = getPostBody();
+        $items = $body['items'] ?? [];
+        if (empty($items)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'items array is required']);
+            break;
+        }
+
+        // NOTE: 先用 4 字段组合键匹配，匹配到多条时加 solve_num 消歧
+        $stmtFind = $db->prepare(
+            "SELECT id FROM recons WHERE person = ? AND comp = ? AND `round` = ? AND single = ?"
+        );
+        $stmtFindWithNum = $db->prepare(
+            "SELECT id FROM recons WHERE person = ? AND comp = ? AND `round` = ? AND single = ? AND solve_num = ?"
+        );
+        $stmtUpdate = $db->prepare(
+            "UPDATE recons SET group_id = ?, reconer = ?, recon_date = ?, cube = ? WHERE id = ?"
+        );
+
+        $report = ['updated' => 0, 'skipped' => 0, 'miss' => [], 'conflict' => []];
+        foreach ($items as $item) {
+            $person = $item['person'] ?? '';
+            $comp = $item['comp'] ?? '';
+            $round = $item['round'] ?? '';
+            $single = $item['single'] ?? 0;
+            $solveNum = $item['solveNum'] ?? null;
+
+            // NOTE: 跳过无复盘标志的行
+            $groupId = $item['groupId'] ?? null;
+            $reconer = $item['reconer'] ?? null;
+            $reconDate = $item['reconDate'] ?? null;
+            $cube = $item['cube'] ?? null;
+
+            // NOTE: 至少有一个新字段非空才更新
+            if (!$groupId && !$reconer && !$reconDate && !$cube) {
+                $report['skipped']++;
+                continue;
+            }
+
+            // NOTE: 先用 4 字段组合键查找
+            $stmtFind->execute([$person, $comp, $round, $single]);
+            $rows = $stmtFind->fetchAll(PDO::FETCH_COLUMN);
+
+            if (count($rows) === 0) {
+                $report['miss'][] = compact('person', 'comp', 'round', 'single');
+                continue;
+            }
+
+            if (count($rows) > 1 && $solveNum !== null) {
+                // NOTE: 加 solve_num 消歧
+                $stmtFindWithNum->execute([$person, $comp, $round, $single, $solveNum]);
+                $rows = $stmtFindWithNum->fetchAll(PDO::FETCH_COLUMN);
+            }
+
+            if (count($rows) !== 1) {
+                $report['conflict'][] = ['count' => count($rows)] + compact('person', 'comp', 'round', 'single');
+                continue;
+            }
+
+            // NOTE: 空字符串转 NULL
+            $stmtUpdate->execute([
+                $groupId ?: null,
+                $reconer ?: null,
+                $reconDate ?: null,
+                $cube ?: null,
+                $rows[0]
+            ]);
+            $report['updated']++;
+        }
+
+        echo json_encode(['ok' => true, 'report' => $report]);
+        break;
+
     // ==================== 选手搜索（代理 WCA API） ====================
 
     case 'searchSolvers':

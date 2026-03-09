@@ -45,6 +45,8 @@ const FIELD_MAP_JSON_TO_SQL = [
     'crossStm' => 'cross_stm',
     'sMove' => 's_move',
     'crossColor' => 'cross_color',
+    'groupId' => 'group_id',
+    'reconDate' => 'recon_date',
     'createdAt' => 'created_at',
     'addedBy' => 'added_by',
     'addedById' => 'added_by_id',
@@ -70,6 +72,8 @@ const FIELD_MAP_SQL_TO_JSON = [
     'cross_stm' => 'crossStm',
     's_move' => 'sMove',
     'cross_color' => 'crossColor',
+    'group_id' => 'groupId',
+    'recon_date' => 'reconDate',
     'created_at' => 'createdAt',
     'added_by' => 'addedBy',
     'added_by_id' => 'addedById',
@@ -116,6 +120,10 @@ const ALLOWED_COLUMNS = [
     'll',
     's_move',
     'cross_color',
+    'cube',
+    'reconer',
+    'group_id',
+    'recon_date',
     'created_at',
     'added_by',
     'added_by_id',
@@ -267,6 +275,9 @@ function validateRow(array $row): array
         'country' => 100,
         'person' => 100,
         'person_id' => 20,
+        'cube' => 100,
+        'reconer' => 100,
+        'group_id' => 10,
         'added_by' => 100,
         'added_by_id' => 20,
         'value' => 20,
@@ -288,6 +299,14 @@ function validateRow(array $row): array
     // CHAR(1)：cross_color
     if (isset($row['cross_color']) && $row['cross_color'] !== null && mb_strlen($row['cross_color']) > 1) {
         $errors[] = "cross_color must be a single character";
+    }
+
+    // DATE：recon_date 必须是合法的 YYYY-MM-DD
+    if (isset($row['recon_date']) && $row['recon_date'] !== null) {
+        $d = DateTime::createFromFormat('Y-m-d', $row['recon_date']);
+        if (!$d || $d->format('Y-m-d') !== $row['recon_date']) {
+            $errors[] = "recon_date must be a valid YYYY-MM-DD date";
+        }
     }
 
     // TEXT 上限 64KB（防 DoS，TEXT 类型上限 65535 字节）
@@ -354,6 +373,10 @@ CREATE TABLE IF NOT EXISTS recons (
   ll                       SMALLINT       DEFAULT NULL,
   s_move                   TINYINT        DEFAULT NULL,
   cross_color              CHAR(1)        DEFAULT NULL,
+  cube                     VARCHAR(100)   DEFAULT NULL,
+  reconer                  VARCHAR(100)   DEFAULT NULL,
+  group_id                 VARCHAR(10)    DEFAULT NULL,
+  recon_date               DATE           DEFAULT NULL,
   created_at               INT UNSIGNED   DEFAULT NULL,
   added_by                 VARCHAR(100)   DEFAULT NULL,
   added_by_id              VARCHAR(20)    DEFAULT NULL,
