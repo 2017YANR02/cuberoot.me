@@ -788,6 +788,15 @@ switch ($action) {
             $stmtFind->execute([$person, $comp, $round, $single]);
             $rows = $stmtFind->fetchAll(PDO::FETCH_COLUMN);
 
+            // NOTE: 精确匹配失败 → 宽松匹配（去掉 comp）
+            if (count($rows) === 0) {
+                $stmtLoose = $db->prepare(
+                    "SELECT id FROM recons WHERE person = ? AND `round` = ? AND single = ?"
+                );
+                $stmtLoose->execute([$person, $round, $single]);
+                $rows = $stmtLoose->fetchAll(PDO::FETCH_COLUMN);
+            }
+
             if (count($rows) === 0) {
                 $report['miss'][] = compact('person', 'comp', 'round', 'single');
                 continue;
