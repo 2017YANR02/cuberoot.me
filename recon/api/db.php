@@ -51,6 +51,7 @@ const FIELD_MAP_JSON_TO_SQL = [
     'addedBy' => 'added_by',
     'addedById' => 'added_by_id',
     'compWcaId' => 'comp_wca_id',
+    'reconerId' => 'reconer_id',
 ];
 
 // NOTE: 反向映射（SQL → JSON），运行时自动生成
@@ -78,6 +79,7 @@ const FIELD_MAP_SQL_TO_JSON = [
     'added_by' => 'addedBy',
     'added_by_id' => 'addedById',
     'comp_wca_id' => 'compWcaId',
+    'reconer_id' => 'reconerId',
 ];
 
 // NOTE: 允许通过 INSERT/UPDATE 操作的列白名单（防止前端传入非数据库字段）
@@ -122,6 +124,7 @@ const ALLOWED_COLUMNS = [
     'cross_color',
     'cube',
     'reconer',
+    'reconer_id',
     'group_id',
     'recon_date',
     'created_at',
@@ -277,6 +280,7 @@ function validateRow(array $row): array
         'person_id' => 20,
         'cube' => 100,
         'reconer' => 100,
+        'reconer_id' => 20,
         'group_id' => 10,
         'added_by' => 100,
         'added_by_id' => 20,
@@ -375,6 +379,7 @@ CREATE TABLE IF NOT EXISTS recons (
   cross_color              CHAR(1)        DEFAULT NULL,
   cube                     VARCHAR(100)   DEFAULT NULL,
   reconer                  VARCHAR(100)   DEFAULT NULL,
+  reconer_id               VARCHAR(20)    DEFAULT NULL,
   group_id                 VARCHAR(10)    DEFAULT NULL,
   recon_date               DATE           DEFAULT NULL,
   created_at               INT UNSIGNED   DEFAULT NULL,

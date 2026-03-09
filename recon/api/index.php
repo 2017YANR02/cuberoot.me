@@ -719,6 +719,25 @@ switch ($action) {
         echo json_encode(['ok' => true, 'rows' => $stmt->rowCount()]);
         break;
 
+    // NOTE: 临时迁移——添加 reconer_id 列 + CubeRoot → Ruimin Yan (颜瑞民)
+    case 'addReconerIdColumn':
+        header('Cache-Control: no-cache, no-store, must-revalidate');
+        requireAdmin();
+        $results = [];
+        // 1. 加列（已存在则忽略）
+        try {
+            $db->exec('ALTER TABLE recons ADD COLUMN reconer_id VARCHAR(20) DEFAULT NULL AFTER reconer');
+            $results[] = ['step' => 'add_column', 'ok' => true];
+        } catch (Exception $e) {
+            $results[] = ['step' => 'add_column', 'ok' => false, 'error' => $e->getMessage()];
+        }
+        // 2. 迁移 CubeRoot → Ruimin Yan (颜瑞民) + 2017YANR02
+        $stmt = $db->prepare("UPDATE recons SET reconer = ?, reconer_id = ? WHERE reconer = 'CubeRoot'");
+        $stmt->execute(['Ruimin Yan (颜瑞民)', '2017YANR02']);
+        $results[] = ['step' => 'migrate_cuberoot', 'rows' => $stmt->rowCount()];
+        echo json_encode(['ok' => true, 'results' => $results]);
+        break;
+
 
     // ==================== 选手搜索（代理 WCA API） ====================
 
