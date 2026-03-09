@@ -17,6 +17,8 @@
         { key: 'regionalAoxrRecord', labelEn: 'AoXR Rec', labelZh: 'AoXR纪录' },
         { key: 'cube', labelEn: 'Cube', labelZh: '魔方' },
         { key: 'reconer', labelEn: 'Reconer', labelZh: '复盘者' },
+        { key: 'groupId', labelEn: 'Group', labelZh: '组' },
+        { key: 'reconDate', labelEn: 'Recon Date', labelZh: '复盘日期' },
     ];
 
     // NOTE: 当前正在编辑的 solve 对象（null 表示新增模式）
@@ -817,6 +819,8 @@
         var regionalAoxrRecord = document.getElementById('rf-edit-regionalAoxrRecord').value.trim();
         var cube = document.getElementById('rf-edit-cube').value.trim();
         var reconer = document.getElementById('rf-edit-reconer').value.trim();
+        var groupId = document.getElementById('rf-edit-groupId').value.trim();
+        var reconDate = document.getElementById('rf-edit-reconDate').value.trim();
 
         var solve = {
             id: 'local_' + Date.now(),
@@ -846,6 +850,8 @@
         if (regionalAoxrRecord) solve.regionalAoxrRecord = regionalAoxrRecord;
         if (cube) solve.cube = cube;
         if (reconer) solve.reconer = reconer;
+        if (groupId) solve.groupId = groupId;
+        if (reconDate) solve.reconDate = reconDate;
 
         // NOTE: 合并统计字段
         var statFields = {
@@ -869,6 +875,10 @@
 
         // NOTE: 已登录 → 提交到 Firestore，未登录 → 保存到 localStorage
         var wcaUser = (typeof WcaAuth !== 'undefined') ? WcaAuth.getUser() : null;
+        // NOTE: 新增模式下，reconer 默认填入当前登录用户名
+        if (wcaUser && !solve.reconer) {
+            solve.reconer = wcaUser.name || '';
+        }
         if (wcaUser && typeof ReconStore !== 'undefined') {
             solve.wcaId = wcaUser.wcaId;
             delete solve.id;
