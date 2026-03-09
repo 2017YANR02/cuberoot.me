@@ -327,9 +327,8 @@ function validateRow(array $row): array
  * 建表 SQL（供迁移脚本使用）
  *
  * 三张表的关系：
- *   recons       — 主表，存储用户提交的原始复盘数据（不可被管理员编辑直接修改）
- *   edits        — 编辑覆盖层，管理员的修正以 JSON 字段存储，前端加载时与原始数据合并
- *                  （设计理念：原始数据永远不变，修正叠加在上面，类似 Photoshop 图层）
+ *   recons       — 主表，存储复盘数据（用户编辑直接更新此表）
+ *   edits        — 管理员编辑覆盖层，管理员的修正以 JSON 字段存储，前端加载时与原始数据合并
  *   edit_history — 编辑历史，每次覆盖操作的前后快照，用于审计追踪和回退
  */
 function getCreateTablesSql(): string

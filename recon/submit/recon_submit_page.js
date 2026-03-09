@@ -801,11 +801,21 @@
                     }
                 }
             });
-            // NOTE: 重新计算 STM/TPS
+            // NOTE: 重新计算 STM/TPS + 重建完整 recon 文本（统计行 + 打乱 + 解法）
             if (newData.recon && typeof ReconStats !== 'undefined') {
                 var stats = ReconStats.computeAllStats(newData.recon, newData.single);
                 if (stats.stm) newData.stm = stats.stm;
                 if (stats.tps) newData.tps = stats.tps;
+                // NOTE: 与新增模式一致，合并为标准三行格式写入 recons 主表
+                var fullRecon = '';
+                if (stats.stm) {
+                    fullRecon += stats.stm + 'STM /' + newData.single.toFixed(2) + '=' + (stats.tps || 0) + 'TPS\n';
+                }
+                if (newData.wcaScramble) {
+                    fullRecon += newData.wcaScramble + '\n';
+                }
+                fullRecon += newData.recon;
+                newData.recon = fullRecon;
             }
             // NOTE: 对比原始值和新值，只保存差异字段
             var changedFields = {};
@@ -826,9 +836,15 @@
             changedFields._editedBy = WcaAuth.getUser().wcaId;
             // NOTE: 保存编辑历史
             ReconStore.saveEditHistory(s.id, beforeSnapshot, changedFields);
-            // NOTE: 所有数据都在 MariaDB，编辑统一走 edit overlay
-            var savePromise = ReconStore.saveEdit(s.id, changedFields);
+            // NOTE: 直写 recons 主表，过滤掉 _ 前缀的内部字段
+            var updateFields = {};
+            for (var key in changedFields) {
+                if (key.charAt(0) !== '_') updateFields[key] = changedFields[key];
+            }
+            var savePromise = ReconStore.updateRecon(s.id, updateFields);
             savePromise.then(function () {
+                // NOTE: 数据已写入主表，清理旧的编辑覆盖层（如果有）
+                if (s._edited) ReconStore.deleteEdit(s.id);
                 location.href = returnUrl;
             }).catch(function (err) {
                 console.error('Failed to save edit:', err);
