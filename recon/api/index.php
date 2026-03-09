@@ -731,10 +731,29 @@ switch ($action) {
         } catch (Exception $e) {
             $results[] = ['step' => 'add_column', 'ok' => false, 'error' => $e->getMessage()];
         }
-        // 2. 迁移 CubeRoot → Ruimin Yan (颜瑞民) + 2017YANR02
+        // 2. 迁移主表 CubeRoot → Ruimin Yan (颜瑞民) + 2017YANR02
         $stmt = $db->prepare("UPDATE recons SET reconer = ?, reconer_id = ? WHERE reconer = 'CubeRoot'");
         $stmt->execute(['Ruimin Yan (颜瑞民)', '2017YANR02']);
-        $results[] = ['step' => 'migrate_cuberoot', 'rows' => $stmt->rowCount()];
+        $results[] = ['step' => 'migrate_recons', 'rows' => $stmt->rowCount()];
+        // 3. 迁移 edits 表覆盖层中的 reconer（根因：覆盖层优先于主表）
+        $estmt = $db->prepare("SELECT solve_id, fields FROM edits WHERE fields LIKE '%CubeRoot%'");
+        $estmt->execute();
+        $ustmt = $db->prepare("UPDATE edits SET fields = ? WHERE solve_id = ?");
+        $editRows = 0;
+        while ($row = $estmt->fetch()) {
+            $fields = json_decode($row['fields'], true);
+            $changed = false;
+            if (isset($fields['reconer']) && $fields['reconer'] === 'CubeRoot') {
+                $fields['reconer'] = 'Ruimin Yan (颜瑞民)';
+                $fields['reconerId'] = '2017YANR02';
+                $changed = true;
+            }
+            if ($changed) {
+                $ustmt->execute([json_encode($fields, JSON_UNESCAPED_UNICODE), $row['solve_id']]);
+                $editRows++;
+            }
+        }
+        $results[] = ['step' => 'migrate_edits', 'rows' => $editRows];
         echo json_encode(['ok' => true, 'results' => $results]);
         break;
 
