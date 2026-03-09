@@ -308,7 +308,12 @@
             }
             line1Rest.push(compDisplay);
         }
-        if (s.round) line1Rest.push(U.escHtml(s.round) + (s.solveNum ? '#' + s.solveNum : ''));
+        if (s.round) {
+            var roundText = U.escHtml(s.round) + (s.solveNum ? '#' + s.solveNum : '');
+            // NOTE: 有组号时追加 Grp A 格式展示
+            if (s.groupId) roundText += ', Grp ' + U.escHtml(s.groupId);
+            line1Rest.push(roundText);
+        }
         if (line1Rest.length > 0) line1 += ' ' + line1Rest.join(', ');
         html += '<div class="detail-summary">' + line1 + '</div>';
 
@@ -394,6 +399,9 @@
         }
         if (s.reconer) {
             html += '<div class="detail-meta-item"><span class="detail-meta-label">✍️</span><span class="detail-meta-value">' + U.escHtml(s.reconer) + '</span></div>';
+        }
+        if (s.reconDate) {
+            html += '<div class="detail-meta-item"><span class="detail-meta-label">📅</span><span class="detail-meta-value">' + U.escHtml(s.reconDate) + '</span></div>';
         }
         if (s.addedBy) {
             var addedByHtml = s.addedById
