@@ -609,12 +609,13 @@ switch ($action) {
         $data = json_decode($response, true);
         $wcaResults = $data['result'] ?? [];
 
-        // NOTE: 精简返回字段——只保留 name + iso2，减小响应体
+        // NOTE: 精简返回字段——保留 name + iso2 + wcaId，用于前端富显示
         $results = [];
         foreach ($wcaResults as $person) {
             $results[] = [
                 'name' => $person['name'] ?? '',
                 'iso2' => strtolower($person['country_iso2'] ?? ''),
+                'wcaId' => $person['wca_id'] ?? '',
             ];
         }
 
