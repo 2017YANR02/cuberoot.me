@@ -738,6 +738,15 @@ switch ($action) {
         echo json_encode(['ok' => true, 'results' => $results]);
         break;
 
+    // NOTE: 临时迁移——空复盘者补充为管理员
+    case 'fillReconer':
+        header('Cache-Control: no-cache, no-store, must-revalidate');
+        requireAdmin();
+        $stmt = $db->prepare("UPDATE recons SET reconer = ?, reconer_id = ? WHERE reconer IS NULL OR reconer = ''");
+        $stmt->execute(['Ruimin Yan (颜瑞民)', '2017YANR02']);
+        echo json_encode(['ok' => true, 'rows' => $stmt->rowCount()]);
+        break;
+
 
     // ==================== 选手搜索（代理 WCA API） ====================
 
