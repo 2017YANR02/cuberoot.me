@@ -587,44 +587,31 @@ switch ($action) {
 
         $report = ['updated' => 0, 'skipped' => 0, 'miss' => [], 'conflict' => []];
         foreach ($items as $item) {
-            $person = $item['person'] ?? '';
-            $single = $item['single'] ?? 0;
-            $comp = $item['comp'] ?? '';
+            $reconText = $item['recon'] ?? '';
             $round = $item['round'] ?? '';
             $groupId = $item['groupId'] ?? null;
             $reconer = $item['reconer'] ?? null;
             $reconDate = $item['reconDate'] ?? null;
             $cube = $item['cube'] ?? null;
 
-            if (!$groupId && !$reconer && !$reconDate && !$cube && !$round) {
+            if (!$reconText || (!$groupId && !$reconer && !$reconDate && !$cube && !$round)) {
                 $report['skipped']++;
                 continue;
             }
 
-            // NOTE: 用精确 single 值匹配（time 列有千分位精度）
+            // NOTE: 用 recon 文本做唯一匹配（复盘内容唯一标识一条记录）
             $stmt = $db->prepare(
-                "SELECT id, group_id, reconer, recon_date, cube, `round` FROM recons WHERE person = ? AND ABS(single - ?) < 0.001"
+                "SELECT id, group_id, reconer, recon_date, cube, `round` FROM recons WHERE recon = ?"
             );
-            $stmt->execute([$person, $single]);
+            $stmt->execute([$reconText]);
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            // NOTE: 多条时用 comp 消歧
-            if (count($rows) > 1 && $comp) {
-                $stmtComp = $db->prepare(
-                    "SELECT id, group_id, reconer, recon_date, cube, `round` FROM recons WHERE person = ? AND ABS(single - ?) < 0.001 AND comp = ?"
-                );
-                $stmtComp->execute([$person, $single, $comp]);
-                $narrowed = $stmtComp->fetchAll(PDO::FETCH_ASSOC);
-                if (count($narrowed) > 0)
-                    $rows = $narrowed;
-            }
-
             if (count($rows) === 0) {
-                $report['miss'][] = compact('person', 'comp', 'single');
+                $report['miss'][] = ['recon' => mb_substr($reconText, 0, 50)];
                 continue;
             }
             if (count($rows) > 1) {
-                $report['conflict'][] = ['count' => count($rows)] + compact('person', 'comp', 'single');
+                $report['conflict'][] = ['count' => count($rows), 'recon' => mb_substr($reconText, 0, 50)];
                 continue;
             }
 
