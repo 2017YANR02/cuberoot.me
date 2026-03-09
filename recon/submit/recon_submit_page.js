@@ -31,9 +31,8 @@
     var compCountryMap = {};
 
     document.addEventListener('DOMContentLoaded', function () {
-        // NOTE: 与 i18n.js 保持一致：localStorage 优先，fallback 到浏览器语言
-        var savedLocale = localStorage.getItem('i18n_locale');
-        var isZh = savedLocale ? savedLocale === 'zh' : (navigator.language && navigator.language.startsWith('zh'));
+        // NOTE: 实时读取 locale，避免闭包缓存导致的时序问题（i18n.js 可能在本脚本之后更新 localStorage）
+        function isZh() { return localStorage.getItem('i18n_locale') === 'zh'; }
 
         // ==================== 模式检测 ====================
 
@@ -99,13 +98,13 @@
         function applyEditModeUI() {
             var titleEl = document.getElementById('submit-title');
             if (titleEl) {
-                titleEl.textContent = isZh ? '✏️ 编辑复盘' : '✏️ Edit Recon';
+                titleEl.textContent = isZh() ? '✏️ 编辑复盘' : '✏️ Edit Recon';
                 titleEl.setAttribute('data-i18n-en', '✏️ Edit Recon');
                 titleEl.setAttribute('data-i18n-zh', '✏️ 编辑复盘');
             }
             var submitBtn = document.getElementById('rf-submit-btn');
             if (submitBtn) {
-                submitBtn.textContent = isZh ? '保存' : 'Save';
+                submitBtn.textContent = isZh() ? '保存' : 'Save';
                 submitBtn.setAttribute('data-i18n-en', 'Save');
                 submitBtn.setAttribute('data-i18n-zh', '保存');
             }
@@ -118,7 +117,7 @@
             var form = document.getElementById('recon-form');
             var loadingEl = document.getElementById('rf-stats-display');
             if (loadingEl) {
-                loadingEl.textContent = isZh ? '加载中...' : 'Loading...';
+                loadingEl.textContent = isZh() ? '加载中...' : 'Loading...';
                 loadingEl.style.display = 'block';
             }
             if (form) form.style.opacity = '0.5';
@@ -127,7 +126,7 @@
                 if (form) form.style.opacity = '';
                 if (loadingEl) { loadingEl.textContent = ''; loadingEl.style.display = 'none'; }
                 if (!solve || !solve.id) {
-                    alert(isZh ? '复盘 #' + editId + ' 不存在' : 'Recon #' + editId + ' not found');
+                    alert(isZh() ? '复盘 #' + editId + ' 不存在' : 'Recon #' + editId + ' not found');
                     location.href = '/recon/';
                     return;
                 }
@@ -136,14 +135,14 @@
                 if (form) form.style.opacity = '';
                 if (loadingEl) { loadingEl.textContent = ''; loadingEl.style.display = 'none'; }
                 console.error('Failed to load solve:', err);
-                alert((isZh ? '加载失败: ' : 'Load failed: ') + err.message);
+                alert((isZh() ? '加载失败: ' : 'Load failed: ') + err.message);
             });
         }
 
         // ==================== i18n placeholder 适配 ====================
 
         // NOTE: 根据语言切换 placeholder 文本
-        if (isZh) {
+        if (isZh()) {
             document.querySelectorAll('[data-i18n-placeholder-zh]').forEach(function (el) {
                 el.placeholder = el.getAttribute('data-i18n-placeholder-zh');
             });
@@ -293,12 +292,12 @@
             filtered.forEach(function (c) {
                 var flag = c.iso2 ? '<span class="fi fi-' + c.iso2 + '"></span> ' : '';
                 // NOTE: 中文模式下国内比赛显示中文名，点击仍填入英文名
-                var displayName = (isZh && c.nameZh) ? c.nameZh : c.name;
+                var displayName = (isZh() && c.nameZh) ? c.nameZh : c.name;
                 html += '<div class="comp-dropdown-item" data-name="' + c.name.replace(/"/g, '&quot;') + '" data-date="' + c.date + '">' +
                     '<small>' + c.date + '</small>' + flag + '<span>' + displayName + '</span></div>';
             });
             if (!html && q) {
-                html = '<div class="comp-dropdown-empty">' + (isZh ? '无匹配' : 'No match') + '</div>';
+                html = '<div class="comp-dropdown-empty">' + (isZh() ? '无匹配' : 'No match') + '</div>';
             }
             compDropdown.innerHTML = html;
         }
@@ -365,7 +364,7 @@
         function renderSolverDropdown(results) {
             if (!results || results.length === 0) {
                 solverDropdown.innerHTML = '<div class="solver-dropdown-empty">' +
-                    (isZh ? '无匹配' : 'No match') + '</div>';
+                    (isZh() ? '无匹配' : 'No match') + '</div>';
                 return;
             }
             var html = '';
@@ -391,7 +390,7 @@
             solverDebounceTimer = setTimeout(function () {
                 // NOTE: 立即显示 loading，让用户感知搜索进行中
                 solverDropdown.innerHTML = '<div class="solver-dropdown-loading"><span class="solver-spinner"></span>' +
-                    (isZh ? '搜索中...' : 'Searching...') + '</div>';
+                    (isZh() ? '搜索中...' : 'Searching...') + '</div>';
                 positionDropdownFor(solverInput, solverDropdown);
                 solverDropdown.style.display = 'block';
 
@@ -436,7 +435,7 @@
             }
             // NOTE: 首次加载显示 loading spinner
             solverDropdown.innerHTML = '<div class="solver-dropdown-loading"><span class="solver-spinner"></span>' +
-                (isZh ? '加载中...' : 'Loading...') + '</div>';
+                (isZh() ? '加载中...' : 'Loading...') + '</div>';
             positionDropdownFor(solverInput, solverDropdown);
             solverDropdown.style.display = 'block';
 
