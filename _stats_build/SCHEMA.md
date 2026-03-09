@@ -4,9 +4,9 @@
 
 ---
 
-## 项目使用的表（共 11 张）
+## 项目使用的表（共 11 张）+ 参考表
 
-数据库总计 121 张表，统计脚本只用到以下这些：
+数据库总计 121 张表，统计脚本只用到以下 11 张，另附 1 张参考表（`Scrambles`）：
 
 | 表名 | 行数 | 大小 | 用途 |
 |------|-----:|-----:|------|
@@ -183,6 +183,24 @@
 | `gender` | varchar(255) | 性别 |
 | `dob` | date | 出生日期 |
 | *(其余 30+ 列)* | — | 认证/会话/通知等系统字段，统计脚本不使用 |
+
+---
+
+### `Scrambles`（本项目不使用）
+
+> 本项目统计脚本不使用此表，仅供参考。
+
+| 列名 | 类型 | 可空 | 索引 | 说明 |
+|------|------|:----:|:----:|------|
+| `id` | int unsigned | NO | PRI | 主键（自增）|
+| `competition_id` | varchar(32) | NO | MUL | 比赛 ID → `competitions.id` |
+| `event_id` | varchar(6) | NO | — | 项目 ID（如 `333`）|
+| `group_id` | varchar(3) | NO | — | 组号 |
+| `is_extra` | tinyint(1) | NO | — | 是否为备用打乱（0/1）|
+| `round_id` | int | NO | MUL | 轮次 ID |
+| `round_type_id` | varchar(1) | NO | — | 轮次类型 → `round_types.id` |
+| `scramble` | text | NO | — | 打乱公式文本 |
+| `scramble_num` | int | NO | — | 组内打乱序号 |
 
 ---
 
