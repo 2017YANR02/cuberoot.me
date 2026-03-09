@@ -754,11 +754,12 @@ switch ($action) {
         }
 
         // NOTE: 先用 4 字段组合键匹配，匹配到多条时加 solve_num 消歧
+        // NOTE: single 用 ABS 差值比较，容许 5 vs 5.00 精度差异
         $stmtFind = $db->prepare(
-            "SELECT id FROM recons WHERE person = ? AND comp = ? AND `round` = ? AND single = ?"
+            "SELECT id FROM recons WHERE person = ? AND comp = ? AND `round` = ? AND ABS(single - ?) < 0.005"
         );
         $stmtFindWithNum = $db->prepare(
-            "SELECT id FROM recons WHERE person = ? AND comp = ? AND `round` = ? AND single = ? AND solve_num = ?"
+            "SELECT id FROM recons WHERE person = ? AND comp = ? AND `round` = ? AND ABS(single - ?) < 0.005 AND solve_num = ?"
         );
         $stmtUpdate = $db->prepare(
             "UPDATE recons SET group_id = ?, reconer = ?, recon_date = ?, cube = ? WHERE id = ?"
@@ -791,7 +792,7 @@ switch ($action) {
             // NOTE: 精确匹配失败 → 宽松匹配（去掉 comp）
             if (count($rows) === 0) {
                 $stmtLoose = $db->prepare(
-                    "SELECT id FROM recons WHERE person = ? AND `round` = ? AND single = ?"
+                    "SELECT id FROM recons WHERE person = ? AND `round` = ? AND ABS(single - ?) < 0.005"
                 );
                 $stmtLoose->execute([$person, $round, $single]);
                 $rows = $stmtLoose->fetchAll(PDO::FETCH_COLUMN);
