@@ -627,6 +627,44 @@ switch ($action) {
         echo $resultJson;
         break;
 
+    // ==================== 临时迁移端点 ====================
+
+    case 'extractSolution':
+        // NOTE: 从 recon 列提取纯解法到 solution 列（管理员专用，一次性迁移）
+        // 仅处理含 STM 统计行且 solution 为空的记录
+        requireAdmin();
+        $stmt = $db->query(
+            "SELECT id, recon FROM recons WHERE recon REGEXP '^[0-9]+STM ' AND solution IS NULL"
+        );
+        $rows = $stmt->fetchAll();
+        $updateStmt = $db->prepare("UPDATE recons SET solution = ? WHERE id = ?");
+
+        $processed = 0;
+        $samples = [];
+        foreach ($rows as $row) {
+            $lines = explode("\n", $row['recon']);
+            // NOTE: 第 1 行是统计行（如 "26STM /3.69=7.05TPS"），第 2 行是打乱，第 3 行起是解法
+            if (count($lines) >= 3) {
+                $solution = implode("\n", array_slice($lines, 2));
+                $updateStmt->execute([$solution, $row['id']]);
+                $processed++;
+                if (count($samples) < 3) {
+                    $samples[] = [
+                        'id' => (int) $row['id'],
+                        'solutionPreview' => mb_substr($solution, 0, 80)
+                    ];
+                }
+            }
+        }
+
+        echo json_encode([
+            'ok' => true,
+            'total' => count($rows),
+            'processed' => $processed,
+            'samples' => $samples
+        ]);
+        break;
+
     default:
         http_response_code(400);
         echo json_encode(['error' => 'Unknown action: ' . $action]);

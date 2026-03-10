@@ -102,6 +102,7 @@ const ALLOWED_COLUMNS = [
     'ao_type',
     'regional_aoxr_record',
     'recon',
+    'solution',
     'optimal_scramble',
     'wca_scramble',
     'caption',
@@ -314,7 +315,7 @@ function validateRow(array $row): array
     }
 
     // TEXT 上限 64KB（防 DoS，TEXT 类型上限 65535 字节）
-    foreach (['recon', 'optimal_scramble', 'wca_scramble', 'caption', 'note'] as $col) {
+    foreach (['recon', 'solution', 'optimal_scramble', 'wca_scramble', 'caption', 'note'] as $col) {
         if (isset($row[$col]) && $row[$col] !== null && strlen($row[$col]) > 65535) {
             $errors[] = "$col exceeds max size (64KB)";
         }
@@ -356,6 +357,7 @@ CREATE TABLE IF NOT EXISTS recons (
   ao_type                  VARCHAR(50)    DEFAULT NULL,
   regional_aoxr_record     VARCHAR(20)    DEFAULT NULL,
   recon                    TEXT           DEFAULT NULL,
+  solution                 TEXT           DEFAULT NULL,
   optimal_scramble          TEXT           DEFAULT NULL,
   wca_scramble             TEXT           DEFAULT NULL,
   caption                  TEXT           DEFAULT NULL,
