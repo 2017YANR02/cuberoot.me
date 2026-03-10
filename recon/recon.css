@@ -1084,6 +1084,82 @@ tr.detail-row td {
     color: #fff;
 }
 
+/* --- 纪录字段选中态——彩色 badge 富显示 --- */
+.record-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.05);
+    color: #cbd5e1;
+    font-size: 0.85rem;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.record-display:hover {
+    border-color: rgba(99, 102, 241, 0.4);
+}
+
+/* NOTE: badge 在 display div 中不用 super 对齐 */
+.record-display .record-badge {
+    vertical-align: middle;
+    font-size: 0.75rem;
+}
+
+.record-display-clear {
+    margin-left: auto;
+    color: #666;
+    font-size: 1.1rem;
+    line-height: 1;
+    padding: 0 2px;
+    flex-shrink: 0;
+}
+
+.record-display-clear:hover {
+    color: #fff;
+}
+
+/* --- 纪录下拉菜单 --- */
+.record-dropdown {
+    display: none;
+    position: fixed;
+    min-width: 120px;
+    max-height: 50vh;
+    overflow-y: auto;
+    background: #2a2a2a;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 6px;
+    z-index: 10000;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.record-dropdown-item {
+    padding: 6px 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: #cbd5e1;
+    transition: background 0.1s;
+}
+
+.record-dropdown-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* NOTE: 下拉中 badge 正常大小，不缩小 */
+.record-dropdown-item .record-badge {
+    vertical-align: middle;
+    font-size: 0.7rem;
+}
+
 /* --- 选手搜索自定义下拉菜单（复用比赛下拉的视觉风格） --- */
 .solver-dropdown {
     display: none;

@@ -23,7 +23,7 @@ var ReconUtils = (function () {
         var v = val.toUpperCase();
         if (/^[FXU]?W[RB]$|^1STWR$|^RWR$|^YTW[RB]$|^XWR$/.test(v)) return 'wr';
         if (v === 'WCR') return 'wcr';
-        if (/(?:AS|E|C)[RB]$/.test(v) || /^(?:SAR|NAR|FASR|XASR|UASR)$/.test(v)) return 'cr';
+        if (/(?:AS|E)[RB]$/.test(v) || /^(?:F|YT|X|U)?(?:SAR|SAB|NAR|NAB|OCR|OCB|AFR|AFB|ANR|ANB|ASR|ASB)$/.test(v)) return 'cr';
         if (/^[FXU]?N[RB]$|^NWR$|^ANR$|^YTN[RB]$/.test(v)) return 'nr';
         if (/[PU]?[RB]$/.test(v) && (v.endsWith('PR') || v.endsWith('PB')
             || v === 'YTPR' || v === 'YTPB' || v === 'UPR' || v === 'UPB')) return 'pr';
@@ -34,8 +34,11 @@ var ReconUtils = (function () {
     function formatRecord(val) {
         if (!val) return '';
         val = String(val);
-        var cancelled = /\bcancelled\b/i.test(val);
-        var recordType = cancelled ? val.replace(/\s*cancelled\s*/i, '').trim() : val;
+        // NOTE: 支持多种取消表述：cancel/cancelled/取消，前缀或后缀
+        var cancelled = /\bcancell?ed?\b|取消/i.test(val);
+        var recordType = cancelled
+            ? val.replace(/\s*\bcancell?ed?\b\s*|\s*取消\s*/gi, '').trim()
+            : val;
         var cls = cancelled ? 'cancelled' : getRecordClass(recordType);
         return '<span class="record-badge record-' + cls + '">' + escHtml(recordType) + '</span>';
     }

@@ -75,9 +75,11 @@ layout: default
                     <label data-i18n-en="Single" data-i18n-zh="单次">Single</label>
                     <input type="text" id="rf-edit-value">
                 </div>
-                <div class="recon-form-group">
+                <div class="recon-form-group" style="position:relative">
                     <label data-i18n-en="Single Rec" data-i18n-zh="单次纪录">Single Rec</label>
                     <input type="text" id="rf-edit-regionalSingleRecord">
+                    <!-- NOTE: 选中纪录后显示彩色 badge，隐藏 input -->
+                    <div id="rf-singleRec-display" class="record-display" style="display:none"></div>
                 </div>
             </div>
             <!-- 平均 + 平均纪录 -->
@@ -86,9 +88,11 @@ layout: default
                     <label data-i18n-en="Average" data-i18n-zh="平均">Average</label>
                     <input type="text" id="rf-edit-average">
                 </div>
-                <div class="recon-form-group">
+                <div class="recon-form-group" style="position:relative">
                     <label data-i18n-en="Avg Record" data-i18n-zh="平均纪录">Avg Record</label>
                     <input type="text" id="rf-edit-regionalAverageRecord">
+                    <!-- NOTE: 选中纪录后显示彩色 badge，隐藏 input -->
+                    <div id="rf-avgRec-display" class="record-display" style="display:none"></div>
                 </div>
             </div>
             <!-- AoXR + AoXR纪录 -->
@@ -97,9 +101,11 @@ layout: default
                     <label data-i18n-en="AoXR" data-i18n-zh="AoXR">AoXR</label>
                     <input type="text" id="rf-edit-aoType">
                 </div>
-                <div class="recon-form-group">
+                <div class="recon-form-group" style="position:relative">
                     <label data-i18n-en="AoXR Rec" data-i18n-zh="AoXR纪录">AoXR Rec</label>
                     <input type="text" id="rf-edit-regionalAoxrRecord">
+                    <!-- NOTE: 选中纪录后显示彩色 badge，隐藏 input -->
+                    <div id="rf-aoxrRec-display" class="record-display" style="display:none"></div>
                 </div>
             </div>
             <!-- 项目 + 方法 -->
@@ -223,6 +229,7 @@ layout: default
 
 
 
+<script src="/recon/recon_utils.js"></script>
 <script src="/recon/recon_stats.js"></script>
 <script src="/recon/wca_auth.js"></script>
 <script src="/recon/recon_api.js"></script>
