@@ -91,7 +91,7 @@
                 // NOTE: 从 solution 文本计算 STM/TPS（不再依赖 recon 第 1 行的统计行）
                 if (typeof ReconStats !== 'undefined') {
                     var text = solve.solution || solve.caption || '';
-                    var stats = ReconStats.computeAllStats(text, solve.single);
+                    var stats = ReconStats.computeAllStats(text, solve.rawTime);
                     solve.stm = stats.stm || 0;
                     solve.tps = stats.tps || 0;
                 } else {
@@ -352,7 +352,7 @@
                 const haystack = [
                     s.person, s.comp, s.optimalScramble,
                     s.oll, s.pll, s.country, s.note,
-                    s.single != null && typeof s.single === 'number' ? s.single.toFixed(3) : '',
+                    s.rawTime != null && typeof s.rawTime === 'number' ? s.rawTime.toFixed(3) : '',
                     // NOTE: 支持中文比赛名搜索
                     compNamesZh[s.comp] || '',
                     // NOTE: 支持用全称（name）搜索简称（cell_name）的比赛
@@ -399,7 +399,7 @@
             'col-round': 'round',
             'col-aoxr': 'aoType',
             'col-avg': 'average',
-            'col-single': 'single',
+            'col-single': 'rawTime',
             'col-dsingle': 'value',
             'col-solver': 'person',
             'col-stm': 'stm',
@@ -418,7 +418,7 @@
             sortDir = sortDir === 'asc' ? 'desc' : 'asc';
         } else {
             sortCol = col;
-            sortDir = ['single', 'avg'].includes(col) ? 'asc' : 'desc';
+            sortDir = ['rawTime', 'avg'].includes(col) ? 'asc' : 'desc';
         }
 
         // NOTE: 更新表头样式
@@ -517,7 +517,7 @@
                 if (m2) return '(' + m2[1] + ')';
                 return U.escHtml(ao);
             })() + (solve.regionalAoxrRecord ? ' ' + U.formatRecord(solve.regionalAoxrRecord) : '') + '</td>' +
-            '<td class="col-single mono">' + U.formatResult(solve.single) + '</td>' +
+            '<td class="col-single mono">' + U.formatResult(solve.rawTime) + '</td>' +
             '<td class="col-stm mono">' + (solve.stm || '') + '</td>' +
             '<td class="col-tps mono">' + (solve.tps && typeof solve.tps === 'number' ? solve.tps.toFixed(2) : '') + '</td>' +
             '<td class="col-event">' + U.escHtml(solve.event || '') + '</td>' +

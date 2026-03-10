@@ -28,6 +28,7 @@ function getDb(): PDO
 // NOTE: JSON camelCase ↔ SQL snake_case 映射
 // 只列出名称不同的字段，同名字段（如 id, event, method 等）无需映射
 const FIELD_MAP_JSON_TO_SQL = [
+    'rawTime' => 'raw_time',
     'solveNum' => 'solve_num',
     'personId' => 'person_id',
     'value' => 'value',
@@ -57,6 +58,7 @@ const FIELD_MAP_JSON_TO_SQL = [
 
 // NOTE: 反向映射（SQL → JSON），运行时自动生成
 const FIELD_MAP_SQL_TO_JSON = [
+    'raw_time' => 'rawTime',
     'solve_num' => 'solveNum',
     'person_id' => 'personId',
     'value' => 'value',
@@ -96,7 +98,7 @@ const ALLOWED_COLUMNS = [
     'solve_num',
     'person',
     'person_id',
-    'single',
+    'raw_time',
     'average',
     'value',
     'regional_single_record',
@@ -153,8 +155,8 @@ function rowToJson(array $row): array
         $json['id'] = (int) $json['id'];
     if (isset($json['official']))
         $json['official'] = (bool) $json['official'];
-    if (isset($json['single']) && $json['single'] !== null)
-        $json['single'] = (float) $json['single'];
+    if (isset($json['rawTime']) && $json['rawTime'] !== null)
+        $json['rawTime'] = (float) $json['rawTime'];
     if (isset($json['average']) && $json['average'] !== null)
         $json['average'] = (float) $json['average'];
     if (isset($json['stm']) && $json['stm'] !== null)
@@ -215,7 +217,7 @@ function validateRow(array $row): array
     $errors = [];
 
     // DECIMAL(8,3)：single, avg — 数值，范围 ±99999.999
-    foreach (['single', 'avg'] as $col) {
+    foreach (['raw_time', 'avg'] as $col) {
         if (isset($row[$col]) && $row[$col] !== null) {
             if (!is_numeric($row[$col])) {
                 $errors[] = "$col must be a number";
@@ -353,7 +355,7 @@ CREATE TABLE IF NOT EXISTS recons (
   person                   VARCHAR(100)   DEFAULT NULL,
   person_id                VARCHAR(20)    DEFAULT NULL,
   person_country           VARCHAR(10)    DEFAULT NULL,
-  single                   DECIMAL(8,3)   DEFAULT NULL,
+  raw_time                 DECIMAL(8,3)   DEFAULT NULL,
   average                  DECIMAL(8,2)   DEFAULT NULL,
   value                    VARCHAR(20)    DEFAULT NULL,
   regional_single_record   VARCHAR(20)    DEFAULT NULL,

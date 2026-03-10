@@ -98,7 +98,7 @@
             if (typeof ReconStats !== 'undefined') {
                 // NOTE: 优先用 solution 列（纯解法），fallback 到 recon（含统计+打乱的旧格式）
                 var reconText = solve.solution || solve.caption || '';
-                var stats = ReconStats.computeAllStats(reconText, solve.single);
+                var stats = ReconStats.computeAllStats(reconText, solve.rawTime);
                 for (var key in stats) {
                     if (stats[key] !== null && stats[key] !== undefined && stats[key] !== '') {
                         solve[key] = stats[key];
@@ -146,7 +146,7 @@
         var titleEl = document.getElementById('detail-title');
         var solverDisplay = U.displaySolverName(solve.person);
         var titleParts = ['<span style="color:#888;font-size:0.7em">#' + solve.id + '</span>'];
-        titleParts.push('<span class="mono">' + U.formatResult(solve.single) + '</span>');
+        titleParts.push('<span class="mono">' + U.formatResult(solve.rawTime) + '</span>');
         if (solve.regionalSingleRecord) titleParts.push(U.formatRecord(solve.regionalSingleRecord));
         if (solve.event) titleParts.push(U.escHtml(solve.event));
         if (solve.method) titleParts.push(U.escHtml(solve.method));
@@ -644,10 +644,10 @@
             })
             .filter(function (line) { return line.trim().length > 0; });
         // NOTE: 用 ReconStats 实时计算 STM/TPS 统计行
-        if (solve && solve.single && typeof ReconStats !== 'undefined') {
-            var stats = ReconStats.computeAllStats(text, solve.single);
+        if (solve && solve.rawTime && typeof ReconStats !== 'undefined') {
+            var stats = ReconStats.computeAllStats(text, solve.rawTime);
             if (stats.stm) {
-                var flooredSingle = Math.floor(solve.single * 100) / 100;
+                var flooredSingle = Math.floor(solve.rawTime * 100) / 100;
                 result.push(stats.stm + 'STM /' + flooredSingle.toFixed(2) + '=' + (stats.tps || 0) + 'TPS');
             }
         }
