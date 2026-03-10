@@ -346,16 +346,17 @@ switch ($action) {
             break;
         }
 
+        // NOTE: 先查记录是否存在（管理员和非管理员都需要确认记录存在）
+        $checkStmt = $db->prepare("SELECT added_by_id FROM recons WHERE id = ?");
+        $checkStmt->execute([$id]);
+        $targetRecon = $checkStmt->fetch();
+        if (!$targetRecon) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Not found']);
+            break;
+        }
         // NOTE: 非管理员只能更新自己的复盘（检查 added_by_id）
         if (!in_array($authUser['wcaId'], $ADMIN_WCA_IDS)) {
-            $stmt = $db->prepare("SELECT added_by_id FROM recons WHERE id = ?");
-            $stmt->execute([$id]);
-            $targetRecon = $stmt->fetch();
-            if (!$targetRecon) {
-                http_response_code(404);
-                echo json_encode(['error' => 'Not found']);
-                break;
-            }
             if (($targetRecon['added_by_id'] ?? '') !== $authUser['wcaId']) {
                 http_response_code(403);
                 echo json_encode(['error' => 'Cannot edit others recon']);
@@ -400,12 +401,8 @@ switch ($action) {
         $sql = "UPDATE recons SET " . implode(', ', $setParts) . " WHERE id = ?";
         $stmt = $db->prepare($sql);
         $stmt->execute($values);
-
-        if ($stmt->rowCount() === 0) {
-            http_response_code(404);
-            echo json_encode(['error' => 'Not found']);
-            break;
-        }
+        // NOTE: 不用 rowCount() 判断——MySQL/MariaDB 在数据未变时 rowCount() 返回 0，
+        // 会被误判为记录不存在。记录存在性已在上方 checkStmt 中确认。
 
         echo json_encode(['ok' => true]);
         break;
