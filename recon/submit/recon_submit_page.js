@@ -96,7 +96,7 @@
             // NOTE: 打乱预填充：只用 wcaScramble（optimalScramble 有独立输入框）
             var scramblePrefill = s.wcaScramble || '';
             // NOTE: 解法优先用 solution 列（为未来移除 recon 做准备），fallback 解析 recon
-            var solutionText = s.solution || s.recon || s.caption || '';
+            var solutionText = s.solution || s.caption || '';
 
             // NOTE: 如果用的是 recon（含统计行+打乱），需要剥离前两行
             if (!s.solution && solutionText) {
@@ -883,8 +883,6 @@
                 round: document.getElementById('rf-round').value,
                 solveNum: document.getElementById('rf-solve-num').value ? parseInt(document.getElementById('rf-solve-num').value) : null,
                 wcaScramble: document.getElementById('rf-scramble').value.trim(),
-                recon: document.getElementById('rf-recon').value,
-                // NOTE: solution 存纯解法（为未来移除 recon 做准备）
                 solution: document.getElementById('rf-recon').value
             };
             // NOTE: official checkbox
@@ -906,22 +904,11 @@
                     }
                 }
             });
-            // NOTE: 重新计算 STM/TPS + 重建完整 recon 文本（统计行 + 打乱 + 解法）
+            // NOTE: 重新计算 STM/TPS
             if (newData.solution && typeof ReconStats !== 'undefined') {
                 var stats = ReconStats.computeAllStats(newData.solution, newData.single);
                 if (stats.stm) newData.stm = stats.stm;
                 if (stats.tps) newData.tps = stats.tps;
-                // NOTE: 同时写入 recon（过渡期保持兼容），拼接为标准三行格式
-                var fullRecon = '';
-                if (stats.stm) {
-                    var flooredSingle = Math.floor(newData.single * 100) / 100;
-                    fullRecon += stats.stm + 'STM /' + flooredSingle.toFixed(2) + '=' + (stats.tps || 0) + 'TPS\n';
-                }
-                if (newData.wcaScramble) {
-                    fullRecon += newData.wcaScramble + '\n';
-                }
-                fullRecon += newData.solution;
-                newData.recon = fullRecon;
             }
             // NOTE: 对比原始值和新值，只保存差异字段
             var changedFields = {};
@@ -985,17 +972,6 @@
 
         var stats = ReconStats.computeAllStats(recon, single);
 
-        // NOTE: 合并 recon 文本为标准三行格式：统计 + 打乱 + 解法
-        var fullRecon = '';
-        if (stats.stm) {
-            var flooredSingle = Math.floor(single * 100) / 100;
-            fullRecon += stats.stm + 'STM /' + flooredSingle.toFixed(2) + '=' + (stats.tps || 0) + 'TPS\n';
-        }
-        if (scramble) {
-            fullRecon += scramble + '\n';
-        }
-        fullRecon += recon;
-
         // NOTE: 日期优先级：手动输入 > 比赛自动填充 > 今天
         var compInput = document.getElementById('rf-comp');
         var autoDate = compInput && compInput.dataset.autoDate;
@@ -1024,8 +1000,7 @@
             method: method,
             date: date,
             person: solver,
-            single: single,
-            recon: fullRecon
+            single: single
         };
         if (comp) solve.comp = comp;
         // NOTE: 提交时自动查表获取 WCA 比赛 ID
