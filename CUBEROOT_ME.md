@@ -156,9 +156,9 @@ fetch('https://toolkit.cuberoot.me/recon/api/?action=renameColumns2', {
 }).then(r => r.json()).then(console.log)
 ```
 
-> 必须先在页面上登录 WCA 账号（管理员），`WcaAuth.getAccessToken()` 从 `sessionStorage` 读取 token。localhost 和线上均可，只要已登录。
+> 必须先在页面上登录 WCA 账号（管理员），`WcaAuth.getAccessToken()` 从 `localStorage` 读取 token。localhost 和线上均可，只要已登录。
 
-> 获取 WCA access token（用于脚本/API 调用）：在已登录的 Recon 页面控制台执行 `console.log(sessionStorage.getItem('wca_access_token'))`。Token 有效期约 2 小时（WCA Doorkeeper 默认配置）。
+> 获取 WCA access token（用于脚本/API 调用）：在已登录的 Recon 页面控制台执行 `console.log(localStorage.getItem('wca_access_token'))`。Token 有效期约 2 小时（WCA Doorkeeper 默认配置）。
 
 > 已执行过的 ALTER TABLE 会报错但不影响新增的 SQL（`try/catch` 逐条执行）。
 
