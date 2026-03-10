@@ -13,6 +13,31 @@
         return BLD_EVENTS.indexOf(ev) >= 0;
     }
 
+    /**
+     * 解析用户输入的成绩字符串为秒数
+     * 支持三种格式：
+     *   1:12.10  → 72.10（分:秒格式）
+     *   305      → 3.05（三位整数，自动÷100）
+     *   72.10    → 72.10（普通小数）
+     */
+    function parseTimeInput(str) {
+        if (!str) return NaN;
+        // NOTE: 分:秒格式（如 1:12.10）
+        var colonIdx = str.indexOf(':');
+        if (colonIdx > 0) {
+            var mins = parseInt(str.substring(0, colonIdx), 10);
+            var secs = parseFloat(str.substring(colonIdx + 1));
+            if (!isNaN(mins) && !isNaN(secs)) return mins * 60 + secs;
+            return NaN;
+        }
+        var v = parseFloat(str);
+        // NOTE: 三位整数（如 305）自动转为 3.05
+        if (!isNaN(v) && v > 0 && Number.isInteger(v) && str.indexOf('.') < 0 && str.length === 3) {
+            return v / 100;
+        }
+        return v;
+    }
+
     // NOTE: 编辑模式专用字段（新增模式不显示这些）
     var EDIT_ONLY_FIELDS = [
         { key: 'value', labelEn: 'Single', labelZh: '单次' },
@@ -426,11 +451,7 @@
                 return;
             }
 
-            var single = parseFloat(rawSingle);
-            // NOTE: 3位整数自动转换（如 305 → 3.05）
-            if (!isNaN(single) && single > 0 && Number.isInteger(single) && rawSingle.indexOf('.') < 0 && rawSingle.length === 3) {
-                single = single / 100;
-            }
+            var single = parseTimeInput(rawSingle);
 
             // NOTE: 盲拧项目用 execTime 算 TPS（手速 = 步数 / 执行时间）
             var tpsTime = single;
@@ -506,7 +527,7 @@
 
         /** 计算并填充 memo time = truncate(rawTime) - execTime */
         function updateMemoTime() {
-            var rawTimeVal = parseFloat(document.getElementById('rf-single').value.trim());
+            var rawTimeVal = parseTimeInput(document.getElementById('rf-single').value.trim());
             var execVal = parseFloat(execTimeInput.value.trim());
             if (!isNaN(rawTimeVal) && !isNaN(execVal) && execVal > 0) {
                 // NOTE: 截断千分位——计时器噪声，不参与计算
@@ -1108,11 +1129,7 @@
         }
 
         var rawSingle = document.getElementById('rf-single').value.trim();
-        var single = parseFloat(rawSingle);
-        // NOTE: 3位整数自动转换（如 305 → 3.05）
-        if (!isNaN(single) && single > 0 && Number.isInteger(single) && rawSingle.indexOf('.') < 0 && rawSingle.length === 3) {
-            single = single / 100;
-        }
+        var single = parseTimeInput(rawSingle);
         if (!rawSingle || isNaN(single) || single <= 0) {
             errors.push(isZh ? '成绩必须是正数' : 'Time must be a positive number');
         }
@@ -1206,7 +1223,7 @@
             var s = currentEditSolve;
             var newData = {
                 person: document.getElementById('rf-solver').value.trim(),
-                rawTime: parseFloat(document.getElementById('rf-single').value.trim()) || 0,
+                rawTime: parseTimeInput(document.getElementById('rf-single').value.trim()) || 0,
                 event: (document.getElementById('rf-event').value === '__other__' ? document.getElementById('rf-event-custom').value.trim() : document.getElementById('rf-event').value) || '3x3',
                 method: document.getElementById('rf-method').value.trim(),
                 comp: document.getElementById('rf-comp').value.trim(),
@@ -1309,11 +1326,8 @@
         var round = document.getElementById('rf-round').value;
         var solveNum = document.getElementById('rf-solve-num').value;
 
-        // NOTE: 成绩解析：3位整数(如 373)自动转为 3.73
-        var single = parseFloat(rawSingle);
-        if (!isNaN(single) && single > 0 && Number.isInteger(single) && rawSingle.indexOf('.') < 0 && rawSingle.length === 3) {
-            single = single / 100;
-        }
+        // NOTE: 成绩解析：支持 1:12.10、305（自动÷100）、普通小数
+        var single = parseTimeInput(rawSingle);
 
         if (!solver || isNaN(single) || single <= 0 || !recon) {
             // NOTE: 理论上不会到这里（validateForm 已拦截），保留作为兜底
