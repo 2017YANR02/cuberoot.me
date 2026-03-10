@@ -665,6 +665,44 @@ switch ($action) {
         ]);
         break;
 
+    case 'extractScramble':
+        // NOTE: 从 recon 第 2 行提取打乱覆盖写入 optimal_scramble（管理员专用，一次性迁移）
+        // 仅处理 event='3x3' 且含 STM 统计行的记录
+        requireAdmin();
+        $stmt = $db->query(
+            "SELECT id, recon FROM recons WHERE event = '3x3' AND recon REGEXP '^[0-9]+STM '"
+        );
+        $rows = $stmt->fetchAll();
+        $updateStmt = $db->prepare("UPDATE recons SET optimal_scramble = ? WHERE id = ?");
+
+        $processed = 0;
+        $samples = [];
+        foreach ($rows as $row) {
+            $lines = explode("\n", $row['recon']);
+            // NOTE: 第 1 行是统计行，第 2 行是打乱
+            if (count($lines) >= 2) {
+                $scramble = trim($lines[1]);
+                if ($scramble !== '') {
+                    $updateStmt->execute([$scramble, $row['id']]);
+                    $processed++;
+                    if (count($samples) < 3) {
+                        $samples[] = [
+                            'id' => (int) $row['id'],
+                            'scramble' => $scramble
+                        ];
+                    }
+                }
+            }
+        }
+
+        echo json_encode([
+            'ok' => true,
+            'total' => count($rows),
+            'processed' => $processed,
+            'samples' => $samples
+        ]);
+        break;
+
     default:
         http_response_code(400);
         echo json_encode(['error' => 'Unknown action: ' . $action]);
