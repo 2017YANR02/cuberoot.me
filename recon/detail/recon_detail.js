@@ -318,8 +318,10 @@
         }
         if (s.round) {
             var roundText = U.escHtml(s.round) + (s.solveNum ? '#' + s.solveNum : '');
-            // NOTE: 有组号时追加 Grp A 格式展示
-            if (s.groupId) roundText += ', Grp ' + U.escHtml(s.groupId);
+            // NOTE: 有组号时追加 Grp A（英）/ A组（中）格式展示
+            if (s.groupId) roundText += ', ' + (isZh
+                ? U.escHtml(s.groupId) + '<span data-i18n-en="Group" data-i18n-zh="组">组</span>'
+                : 'Grp ' + U.escHtml(s.groupId));
             line1Rest.push(roundText);
         }
         if (line1Rest.length > 0) line1 += ' ' + line1Rest.join(', ');
