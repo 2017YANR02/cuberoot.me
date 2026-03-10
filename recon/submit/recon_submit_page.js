@@ -206,7 +206,19 @@
 
             document.getElementById('rf-solver').value = s.person || '';
             document.getElementById('rf-single').value = s.single || '';
-            document.getElementById('rf-event').value = s.event || '3x3';
+            // NOTE: 设置 event——若值匹配预设选项则直选，否则切换到"其他"模式
+            var eventSelect = document.getElementById('rf-event');
+            var eventCustom = document.getElementById('rf-event-custom');
+            var eventVal = s.event || '3x3';
+            var hasOption = Array.from(eventSelect.options).some(function (o) { return o.value === eventVal && o.value !== '__other__'; });
+            if (hasOption) {
+                eventSelect.value = eventVal;
+                eventCustom.style.display = 'none';
+            } else {
+                eventSelect.value = '__other__';
+                eventCustom.value = eventVal;
+                eventCustom.style.display = '';
+            }
             document.getElementById('rf-method').value = s.method || '';
             document.getElementById('rf-comp').value = s.comp || '';
             document.getElementById('rf-note').value = s.note || '';
@@ -416,10 +428,46 @@
 
         // NOTE: 编辑模式的统计更新在 populateForm() 中自动调用
 
+        // ==================== Event 下拉 + 自定义输入 ====================
+
+        var eventSelect = document.getElementById('rf-event');
+        var eventCustom = document.getElementById('rf-event-custom');
+
+        // NOTE: 选择"其他"时显示自定义输入框，否则隐藏
+        eventSelect.addEventListener('change', function () {
+            if (this.value === '__other__') {
+                eventCustom.style.display = '';
+                eventCustom.focus();
+            } else {
+                eventCustom.style.display = 'none';
+                eventCustom.value = '';
+            }
+        });
+
+        // NOTE: i18n 切换时更新 option 文本（中文/英文）
+        function applyEventOptionI18n() {
+            var lang = localStorage.getItem('i18n_locale') || 'en';
+            Array.from(eventSelect.options).forEach(function (opt) {
+                var zhText = opt.getAttribute('data-i18n-option-zh');
+                var enText = opt.getAttribute('data-i18n-option-en');
+                if (lang === 'zh' && zhText) {
+                    opt.textContent = zhText;
+                } else if (lang !== 'zh' && enText) {
+                    opt.textContent = enText;
+                } else if (lang !== 'zh' && zhText) {
+                    // NOTE: 英文模式下还原为 value（短名），因为英文显示就是短名
+                    opt.textContent = opt.value === '__other__' ? 'Other...' : opt.value;
+                }
+            });
+        }
+        applyEventOptionI18n();
+        // NOTE: 监听 locale 变更事件（i18n.js setLocale 触发）
+        window.addEventListener('i18n:locale-changed', applyEventOptionI18n);
+
         // ==================== 默认值灰色 ====================
 
         // NOTE: 带默认值的字段初始显示为灰色，focus 时变白
-        ['rf-solver', 'rf-event', 'rf-method'].forEach(function (id) {
+        ['rf-solver', 'rf-method'].forEach(function (id) {
             var el = document.getElementById(id);
             if (!el) return;
             el.classList.add('default-val');
@@ -428,7 +476,7 @@
                 this.select();
             });
             el.addEventListener('blur', function () {
-                var defaults = { 'rf-solver': '耿暄一', 'rf-event': '3x3', 'rf-method': 'ZB' };
+                var defaults = { 'rf-solver': '耿暄一', 'rf-method': 'ZB' };
                 if (this.value === defaults[id]) this.classList.add('default-val');
             });
         });
@@ -903,7 +951,8 @@
             return '';
         });
 
-        addBlurCheck('rf-event', function (v) {
+        // NOTE: 自定义 event 输入框的长度校验（select 预设值无需校验）
+        addBlurCheck('rf-event-custom', function (v) {
             if (v.length > 20) return isZh ? '≤20字符' : '≤20 chars';
             return '';
         });
@@ -972,7 +1021,8 @@
         }
 
         // --- 长度校验 ---
-        var event = document.getElementById('rf-event').value.trim();
+        var eventSel = document.getElementById('rf-event').value;
+        var event = eventSel === '__other__' ? document.getElementById('rf-event-custom').value.trim() : eventSel;
         if (event.length > 20) {
             errors.push(isZh ? '项目名不超过20字符' : 'Event max 20 chars');
         }
@@ -1055,7 +1105,7 @@
             var newData = {
                 person: document.getElementById('rf-solver').value.trim(),
                 single: parseFloat(document.getElementById('rf-single').value.trim()) || 0,
-                event: document.getElementById('rf-event').value.trim() || '3x3',
+                event: (document.getElementById('rf-event').value === '__other__' ? document.getElementById('rf-event-custom').value.trim() : document.getElementById('rf-event').value) || '3x3',
                 method: document.getElementById('rf-method').value.trim(),
                 comp: document.getElementById('rf-comp').value.trim(),
                 // NOTE: 提交时自动查表获取 WCA 比赛 ID
@@ -1135,7 +1185,8 @@
 
         var solver = document.getElementById('rf-solver').value.trim();
         var rawSingle = document.getElementById('rf-single').value.trim();
-        var event = document.getElementById('rf-event').value.trim() || '3x3';
+        var eventSel = document.getElementById('rf-event').value;
+        var event = (eventSel === '__other__' ? document.getElementById('rf-event-custom').value.trim() : eventSel) || '3x3';
         var method = document.getElementById('rf-method').value.trim() || 'ZB';
         var scramble = document.getElementById('rf-scramble').value.trim();
         var recon = document.getElementById('rf-recon').value;
