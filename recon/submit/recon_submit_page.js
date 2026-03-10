@@ -205,7 +205,7 @@
             currentEditSolve = s;
 
             document.getElementById('rf-solver').value = s.person || '';
-            document.getElementById('rf-single').value = s.single || '';
+            document.getElementById('rf-single').value = s.rawTime || '';
             // NOTE: 设置 event——若值匹配预设选项则直选，否则切换到"其他"模式
             var eventSelect = document.getElementById('rf-event');
             var eventCustom = document.getElementById('rf-event-custom');
@@ -1104,7 +1104,7 @@
             var s = currentEditSolve;
             var newData = {
                 person: document.getElementById('rf-solver').value.trim(),
-                single: parseFloat(document.getElementById('rf-single').value.trim()) || 0,
+                rawTime: parseFloat(document.getElementById('rf-single').value.trim()) || 0,
                 event: (document.getElementById('rf-event').value === '__other__' ? document.getElementById('rf-event-custom').value.trim() : document.getElementById('rf-event').value) || '3x3',
                 method: document.getElementById('rf-method').value.trim(),
                 comp: document.getElementById('rf-comp').value.trim(),
@@ -1141,7 +1141,7 @@
             });
             // NOTE: 重新计算 STM/TPS
             if (newData.solution && typeof ReconStats !== 'undefined') {
-                var stats = ReconStats.computeAllStats(newData.solution, newData.single);
+                var stats = ReconStats.computeAllStats(newData.solution, newData.rawTime);
                 if (stats.stm) newData.stm = stats.stm;
                 if (stats.tps) newData.tps = stats.tps;
             }
@@ -1236,7 +1236,7 @@
             method: method,
             date: date,
             person: solver,
-            single: single
+            rawTime: single
         };
         if (comp) solve.comp = comp;
         // NOTE: 提交时自动查表获取 WCA 比赛 ID
