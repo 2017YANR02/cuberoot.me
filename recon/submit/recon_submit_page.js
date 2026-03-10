@@ -746,10 +746,13 @@
                 if (officialEl && compWcaIdMap[item.dataset.name]) {
                     officialEl.checked = true;
                 }
-                // NOTE: 自动填充日期字段
+                // NOTE: 自动填充日期并锁定——WCA 官方日期不应被手动修改
                 var dateEl = document.getElementById('rf-edit-date');
                 if (dateEl && item.dataset.date) {
                     dateEl.value = item.dataset.date;
+                    dateEl.readOnly = true;
+                    dateEl.style.opacity = '0.5';
+                    dateEl.title = isZh() ? '日期由比赛自动填充' : 'Date auto-filled from competition';
                 }
             }
         });
@@ -757,9 +760,15 @@
         // NOTE: 点击 display div 或 × 按钮 → 清除选中态，恢复 input 可编辑
         compDisplay.addEventListener('click', function (e) {
             if (e.target.closest('.comp-display-clear')) {
-                // × 按钮：清除比赛值
+                // × 按钮：清除比赛值，并解锁日期
                 compInput.value = '';
                 compInput.dataset.autoDate = '';
+                var dateEl2 = document.getElementById('rf-edit-date');
+                if (dateEl2) {
+                    dateEl2.readOnly = false;
+                    dateEl2.style.opacity = '';
+                    dateEl2.title = '';
+                }
             }
             hideCompDisplay();
             compInput.focus();
