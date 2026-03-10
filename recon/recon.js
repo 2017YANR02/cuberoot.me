@@ -545,6 +545,8 @@
     }
 
     function getReconPreview(s) {
+        // NOTE: 统计行在 recon 的第 1 行（如 "29STM /3.91=7.42TPS"）
+        // solution 不含统计行，所以仍用 recon 提取 STM/TPS
         const text = s.recon || s.caption || '';
         if (!text) return '';
         return text.split('\n')[0].trim();

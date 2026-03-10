@@ -907,11 +907,11 @@
                 }
             });
             // NOTE: 重新计算 STM/TPS + 重建完整 recon 文本（统计行 + 打乱 + 解法）
-            if (newData.recon && typeof ReconStats !== 'undefined') {
-                var stats = ReconStats.computeAllStats(newData.recon, newData.single);
+            if (newData.solution && typeof ReconStats !== 'undefined') {
+                var stats = ReconStats.computeAllStats(newData.solution, newData.single);
                 if (stats.stm) newData.stm = stats.stm;
                 if (stats.tps) newData.tps = stats.tps;
-                // NOTE: 与新增模式一致，合并为标准三行格式写入 recons 主表
+                // NOTE: 同时写入 recon（过渡期保持兼容），拼接为标准三行格式
                 var fullRecon = '';
                 if (stats.stm) {
                     var flooredSingle = Math.floor(newData.single * 100) / 100;
@@ -920,7 +920,7 @@
                 if (newData.wcaScramble) {
                     fullRecon += newData.wcaScramble + '\n';
                 }
-                fullRecon += newData.recon;
+                fullRecon += newData.solution;
                 newData.recon = fullRecon;
             }
             // NOTE: 对比原始值和新值，只保存差异字段
