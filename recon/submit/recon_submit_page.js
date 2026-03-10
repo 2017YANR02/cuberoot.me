@@ -64,6 +64,124 @@
             inputEl.style.display = '';
         }
 
+        // ==================== 通用纪录富显示 ====================
+
+        // NOTE: 所有可选纪录值（世界→洲际→国家→个人），供下拉列表使用
+        var RECORD_OPTIONS = [
+            'WR', 'WB', 'FWR', 'FWB', 'XWR', 'UWR', 'YTWR', 'YTWB',
+            'WCR',
+            'AsR', 'AsB', 'ER', 'EB', 'NAR', 'NAB', 'SAR', 'SAB', 'OcR', 'OcB', 'AfR', 'AfB', 'AnR', 'AnB',
+            'FAsR', 'FAsB', 'FER', 'FEB', 'FNAR', 'FNAB', 'FSAR', 'FSAB', 'FOcR', 'FOcB', 'FAfR', 'FAfB', 'FAnR', 'FAnB',
+            'YTAsR', 'YTAsB', 'YTER', 'YTEB', 'YTNAR', 'YTNAB', 'YTSAR', 'YTSAB', 'YTOcR', 'YTOcB', 'YTAfR', 'YTAfB', 'YTAnR', 'YTAnB',
+            'XAsR', 'XAsB', 'XER', 'XEB', 'XNAR', 'XNAB', 'XSAR', 'XSAB', 'XOcR', 'XOcB', 'XAfR', 'XAfB', 'XAnR', 'XAnB',
+            'NR', 'NB', 'FNR', 'FNB', 'XNR', 'XNB', 'YTNR', 'YTNB',
+            'PR', 'PB', 'XPR', 'YTPR', 'YTPB'
+        ];
+
+        // NOTE: 工具引用——ReconUtils 在 recon_utils.js 中定义
+        var RU = window.ReconUtils || {};
+
+        /** 显示纪录 badge 富内容 div，隐藏 input */
+        function showRecordDisplay(displayEl, inputEl, val) {
+            var badgeHtml = RU.formatRecord ? RU.formatRecord(val) : val;
+            displayEl.innerHTML = badgeHtml
+                + '<span class="record-display-clear">&times;</span>';
+            displayEl.style.display = 'flex';
+            inputEl.style.display = 'none';
+        }
+
+        /** 隐藏纪录富内容 div，恢复 input */
+        function hideRecordDisplay(displayEl, inputEl) {
+            displayEl.style.display = 'none';
+            inputEl.style.display = '';
+        }
+
+        /** 为一个 record input 绑定下拉搜索 + badge 富文本 */
+        function bindRecordDropdown(inputEl, displayEl) {
+            // NOTE: 创建下拉 DOM（三个字段各自独立，避免冲突）
+            var dropdown = document.createElement('div');
+            dropdown.className = 'record-dropdown';
+            document.body.appendChild(dropdown);
+
+            function renderOptions(query) {
+                // NOTE: 检测 query 中是否含有取消关键词，若有则进入取消纪录模式
+                var cancelMatch = query.match(/\bcancell?ed?\b|取消/i);
+                var cancelKeyword = cancelMatch ? cancelMatch[0] : null;
+                // NOTE: 过滤用的基准词——取消模式下剥离关键词后再过滤
+                var baseQuery = cancelKeyword
+                    ? query.replace(/\s*\bcancell?ed?\b\s*|\s*取消\s*/gi, '').trim()
+                    : query;
+                var q = baseQuery.toUpperCase();
+                var filtered = q
+                    ? RECORD_OPTIONS.filter(function (r) { return r.toUpperCase().indexOf(q) >= 0; })
+                    : RECORD_OPTIONS;
+                var html = '';
+                filtered.forEach(function (r) {
+                    // NOTE: 取消模式：下拉显示 "WR取消" / "WR cancel" 形式
+                    var displayVal = cancelKeyword ? (r + cancelKeyword) : r;
+                    var badge = RU.formatRecord ? RU.formatRecord(displayVal) : displayVal;
+                    html += '<div class="record-dropdown-item" data-val="' + displayVal + '">'
+                        + badge + '</div>';
+                });
+                dropdown.innerHTML = html || '<div style="padding:6px 12px;color:#666">'
+                    + (isZh() ? '无匹配' : 'No match') + '</div>';
+            }
+
+            inputEl.addEventListener('focus', function () {
+                if (displayEl.style.display !== 'none') return;
+                renderOptions(this.value.trim());
+                positionDropdownFor(inputEl, dropdown);
+                dropdown.style.display = 'block';
+            });
+
+            inputEl.addEventListener('input', function () {
+                renderOptions(this.value.trim());
+                positionDropdownFor(inputEl, dropdown);
+                dropdown.style.display = 'block';
+            });
+
+            dropdown.addEventListener('mousedown', function (e) {
+                var item = e.target.closest('.record-dropdown-item');
+                if (item) {
+                    inputEl.value = item.dataset.val;
+                    dropdown.style.display = 'none';
+                    showRecordDisplay(displayEl, inputEl, item.dataset.val);
+                }
+            });
+
+            inputEl.addEventListener('blur', function () {
+                setTimeout(function () {
+                    dropdown.style.display = 'none';
+                    // NOTE: blur 时若有值且 display 未显示，自动显示 badge
+                    var val = inputEl.value.trim();
+                    if (val && displayEl.style.display === 'none') {
+                        showRecordDisplay(displayEl, inputEl, val);
+                    }
+                }, 150);
+            });
+
+            // NOTE: 点击 display 或 × 按钮，恢复 input
+            displayEl.addEventListener('click', function (e) {
+                if (e.target.closest('.record-display-clear')) {
+                    inputEl.value = '';
+                }
+                hideRecordDisplay(displayEl, inputEl);
+                inputEl.focus();
+            });
+        }
+
+        // NOTE: 绑定三个纪录字段
+        var recFields = [
+            { inputId: 'rf-edit-regionalSingleRecord', displayId: 'rf-singleRec-display' },
+            { inputId: 'rf-edit-regionalAverageRecord', displayId: 'rf-avgRec-display' },
+            { inputId: 'rf-edit-regionalAoxrRecord', displayId: 'rf-aoxrRec-display' }
+        ];
+        recFields.forEach(function (f) {
+            var inp = document.getElementById(f.inputId);
+            var disp = document.getElementById(f.displayId);
+            if (inp && disp) bindRecordDropdown(inp, disp);
+        });
+
         // ==================== 模式检测 ====================
 
         // NOTE: 从 URL ?id= 参数检测编辑模式（行业标准：纯 URL 驱动，不依赖 sessionStorage）
@@ -139,6 +257,15 @@
                 var compDate = s.date || '';
                 showCompDisplay(s.comp, compDate, compIso2);
             }
+
+            // NOTE: 纪录字段 badge 自动显示
+            recFields.forEach(function (f) {
+                var inp = document.getElementById(f.inputId);
+                var disp = document.getElementById(f.displayId);
+                if (inp && disp && inp.value.trim()) {
+                    showRecordDisplay(disp, inp, inp.value.trim());
+                }
+            });
         }
 
         /** 尝试通过 searchSolvers API 查询人员信息并显示富内容 */
@@ -482,6 +609,11 @@
                 var officialEl = document.getElementById('rf-official');
                 if (officialEl && compWcaIdMap[item.dataset.name]) {
                     officialEl.checked = true;
+                }
+                // NOTE: 自动填充日期字段
+                var dateEl = document.getElementById('rf-edit-date');
+                if (dateEl && item.dataset.date) {
+                    dateEl.value = item.dataset.date;
                 }
             }
         });
