@@ -337,11 +337,11 @@
         // NOTE: 复盘 + 统计两列布局
         html += '<div class="detail-grid">';
 
-        // 左列：预览动画 → 打乱 → 解法
+        // 左列：预览动画 → 打乱 → 解法 → 外部链接
         html += '<div>';
         // NOTE: 优先用 solution 列（纯解法），fallback 到 recon
         var solutionText = s.solution || s.recon || s.caption || '';
-        // NOTE: 有打乱时插入 twisty-player 占位符 + 外部链接
+        // NOTE: 有打乱时插入 twisty-player 占位符
         var scrambleForPlayer = s.optimalScramble || s.wcaScramble || extractScrambleFromRecon(s.recon || s.caption || '');
         // NOTE: alg 提取优先用 solution（纯解法，无需跳过统计/打乱行）
         var algSourceText = solutionText;
@@ -366,7 +366,7 @@
                 ' data-i18n-en="link" data-i18n-zh="链接">link</a>';
             html += '</div>';
         }
-        // NOTE: 打乱展示移到左列（预览动画下方、解法上方）
+        // NOTE: 打乱展示
         if (s.optimalScramble) {
             html += '<div class="detail-scramble">';
             html += '<div class="detail-scramble-label"><span data-i18n-en="Optimal Scramble (scr*)" data-i18n-zh="最少步打乱 (scr*)">' + (isZh ? '最少步打乱 (scr*)' : 'Optimal Scramble (scr*)') + '</span></div>';
