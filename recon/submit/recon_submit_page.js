@@ -131,6 +131,14 @@
             if (reconerVal) {
                 tryShowPersonRichDisplay(reconerVal, reconerDisplay, reconerInput);
             }
+
+            // NOTE: 比赛富显示——用 solve 自带的 country/date 直接渲染，
+            // 不依赖 allComps 加载完成（解决 loadOne 比 allComps 先返回的竞态问题）
+            if (s.comp) {
+                var compIso2 = (s.country || '').toLowerCase();
+                var compDate = s.date || '';
+                showCompDisplay(s.comp, compDate, compIso2);
+            }
         }
 
         /** 尝试通过 searchSolvers API 查询人员信息并显示富内容 */
@@ -470,6 +478,11 @@
                 compDropdown.style.display = 'none';
                 // NOTE: 选中后显示富内容 div
                 showCompDisplay(item.dataset.name, item.dataset.date, item.dataset.iso2);
+                // NOTE: WCA 比赛自动勾选 Official（用户可手动取消）
+                var officialEl = document.getElementById('rf-official');
+                if (officialEl && compWcaIdMap[item.dataset.name]) {
+                    officialEl.checked = true;
+                }
             }
         });
 
