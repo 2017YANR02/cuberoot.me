@@ -36,18 +36,19 @@ header('Content-Type: application/json; charset=utf-8');
 
 require_once __DIR__ . '/db.php';
 
-// NOTE: 一次性自动迁移——新增 person_country 列（文件锁，只在首次请求时执行）
-$migrationFlag = __DIR__ . '/.migration_person_country';
+// NOTE: 一次性自动迁移——新增 person_country 列
+// 标记文件放在 data/ 目录（PHP 可写，且不被 rsync --delete 清除）
+$migrationFlag = __DIR__ . '/data/.migration_person_country';
 if (!file_exists($migrationFlag)) {
     try {
         $cols = getDb()->query("SHOW COLUMNS FROM recons LIKE 'person_country'")->fetchAll();
         if (empty($cols)) {
             getDb()->exec("ALTER TABLE recons ADD COLUMN person_country VARCHAR(10) DEFAULT NULL AFTER person_id");
         }
-        file_put_contents($migrationFlag, date('Y-m-d H:i:s'));
+        @file_put_contents($migrationFlag, date('Y-m-d H:i:s'));
     } catch (Exception $e) {
         // NOTE: 权限不足等错误不应阻断正常 API 功能，静默跳过
-        error_log('Migration person_country failed: ' . $e->getMessage());
+        @error_log('Migration person_country failed: ' . $e->getMessage());
     }
 }
 
