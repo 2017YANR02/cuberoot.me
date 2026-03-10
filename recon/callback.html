@@ -56,7 +56,7 @@
     <!--
         NOTE: Implicit Grant 回调页
         token 在 URL hash 中（#access_token=xxx&state=yyy）
-        解析 hash → 验证 state → 调用 /me → 存 sessionStorage → 跳回 /recon/
+        解析 hash → 验证 state → 调用 /me → 存 localStorage → 跳回 /recon/
     -->
     <script>
         (function () {
@@ -108,10 +108,10 @@
                         country: me.country_iso2 || ''
                     };
 
-                    // NOTE: 存入 sessionStorage，recon 页面会读取
-                    sessionStorage.setItem('wca_user', JSON.stringify(user));
+                    // NOTE: 存入 localStorage（跨 tab 共享登录状态）
+                    localStorage.setItem('wca_user', JSON.stringify(user));
                     // NOTE: 存 access_token，后续 API 写操作需携带
-                    sessionStorage.setItem('wca_access_token', accessToken);
+                    localStorage.setItem('wca_access_token', accessToken);
 
                     // NOTE: 跳回登录前的页面（详情页 / 列表页），无记录时 fallback 到列表页
                     var returnUrl = sessionStorage.getItem('wca_return_url') || '/recon/';

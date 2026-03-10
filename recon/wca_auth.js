@@ -99,7 +99,7 @@ var WcaAuth = (function () {
                     avatar: me.avatar && me.avatar.thumb_url ? me.avatar.thumb_url : '',
                     country: me.country_iso2 || ''
                 };
-                sessionStorage.setItem(SESSION_KEY, JSON.stringify(user));
+                localStorage.setItem(SESSION_KEY, JSON.stringify(user));
                 return user;
             });
     }
@@ -108,7 +108,7 @@ var WcaAuth = (function () {
 
     function getUser() {
         try {
-            var data = sessionStorage.getItem(SESSION_KEY);
+            var data = localStorage.getItem(SESSION_KEY);
             return data ? JSON.parse(data) : null;
         } catch (e) {
             return null;
@@ -116,8 +116,8 @@ var WcaAuth = (function () {
     }
 
     function logout() {
-        sessionStorage.removeItem(SESSION_KEY);
-        sessionStorage.removeItem('wca_access_token');
+        localStorage.removeItem(SESSION_KEY);
+        localStorage.removeItem('wca_access_token');
     }
 
     function isLoggedIn() {
@@ -138,7 +138,7 @@ var WcaAuth = (function () {
         handleCallback: handleCallback,
         getUser: getUser,
         getAccessToken: function () {
-            return sessionStorage.getItem('wca_access_token') || '';
+            return localStorage.getItem('wca_access_token') || '';
         },
         logout: logout,
         isLoggedIn: isLoggedIn,
