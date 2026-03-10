@@ -52,6 +52,7 @@ const FIELD_MAP_JSON_TO_SQL = [
     'addedById' => 'added_by_id',
     'compWcaId' => 'comp_wca_id',
     'reconerId' => 'reconer_id',
+    'personCountry' => 'person_country',
 ];
 
 // NOTE: 反向映射（SQL → JSON），运行时自动生成
@@ -80,6 +81,7 @@ const FIELD_MAP_SQL_TO_JSON = [
     'added_by_id' => 'addedById',
     'comp_wca_id' => 'compWcaId',
     'reconer_id' => 'reconerId',
+    'person_country' => 'personCountry',
 ];
 
 // NOTE: 允许通过 INSERT/UPDATE 操作的列白名单（防止前端传入非数据库字段）
@@ -131,6 +133,7 @@ const ALLOWED_COLUMNS = [
     'added_by',
     'added_by_id',
     'comp_wca_id',
+    'person_country',
 ];
 
 /**
@@ -278,6 +281,7 @@ function validateRow(array $row): array
         'country' => 100,
         'person' => 100,
         'person_id' => 20,
+        'person_country' => 10,
         'cube' => 100,
         'reconer' => 100,
         'reconer_id' => 20,
@@ -348,6 +352,7 @@ CREATE TABLE IF NOT EXISTS recons (
   solve_num                TINYINT        DEFAULT NULL,
   person                   VARCHAR(100)   DEFAULT NULL,
   person_id                VARCHAR(20)    DEFAULT NULL,
+  person_country           VARCHAR(10)    DEFAULT NULL,
   single                   DECIMAL(8,3)   DEFAULT NULL,
   average                  DECIMAL(8,2)   DEFAULT NULL,
   value                    VARCHAR(20)    DEFAULT NULL,

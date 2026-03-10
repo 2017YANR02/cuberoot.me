@@ -42,6 +42,8 @@
         var solverDisplay = document.getElementById('rf-solver-display');
         var reconerInput = document.getElementById('rf-edit-reconer');
         var reconerDisplay = document.getElementById('rf-reconer-display');
+        // NOTE: 缓存选手国籍 ISO2——searchSolvers 返回后存入，提交时写入数据库
+        var cachedSolverIso2 = '';
 
         /** 构建人员富显示 HTML（旗帜 + WCA ID 徽章 + 名字） */
         function buildPersonHtml(name, iso2, wcaId) {
@@ -295,6 +297,8 @@
                     }
                     if (!match) match = results[0];
                     showPersonDisplay(displayEl, inputEl, inputEl.value || name, match.iso2 || '', match.wcaId || '');
+                    // NOTE: 如果是 solver（非 reconer），缓存国籍用于提交
+                    if (inputEl === solverInput) cachedSolverIso2 = match.iso2 || '';
                 })
                 .catch(function () {
                     // NOTE: 搜索失败回退为纯名字显示
@@ -1024,6 +1028,8 @@
                 compWcaId: compWcaIdMap[document.getElementById('rf-comp').value.trim()] || '',
                 // NOTE: 提交时自动查表获取比赛国家
                 country: compCountryMap[document.getElementById('rf-comp').value.trim()] || '',
+                // NOTE: 选手国籍（从 searchSolvers API 缓存的 iso2）
+                personCountry: cachedSolverIso2 || '',
                 note: document.getElementById('rf-note').value.trim(),
                 round: document.getElementById('rf-round').value,
                 solveNum: document.getElementById('rf-solve-num').value ? parseInt(document.getElementById('rf-solve-num').value) : null,
@@ -1152,6 +1158,8 @@
         if (comp && compWcaIdMap[comp]) solve.compWcaId = compWcaIdMap[comp];
         // NOTE: 提交时自动查表获取比赛国家
         if (comp && compCountryMap[comp]) solve.country = compCountryMap[comp];
+        // NOTE: 选手国籍（从 searchSolvers API 缓存的 iso2）
+        if (cachedSolverIso2) solve.personCountry = cachedSolverIso2;
         if (scramble) solve.wcaScramble = scramble;
         // NOTE: optimalScramble 也在新增模式下传递
         var optimalScramble = document.getElementById('rf-edit-optimalScramble').value.trim();
