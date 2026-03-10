@@ -30,6 +30,8 @@
     var compWcaIdMap = {};
     // NOTE: 比赛名 → 国家代码映射表（同上）
     var compCountryMap = {};
+    // NOTE: 缓存选手国籍 ISO2——searchSolvers 返回后存入，提交时写入数据库
+    var cachedSolverIso2 = '';
 
     document.addEventListener('DOMContentLoaded', function () {
         // NOTE: 实时读取 locale，避免闭包缓存导致的时序问题（i18n.js 可能在本脚本之后更新 localStorage）
@@ -42,8 +44,6 @@
         var solverDisplay = document.getElementById('rf-solver-display');
         var reconerInput = document.getElementById('rf-edit-reconer');
         var reconerDisplay = document.getElementById('rf-reconer-display');
-        // NOTE: 缓存选手国籍 ISO2——searchSolvers 返回后存入，提交时写入数据库
-        var cachedSolverIso2 = '';
 
         /** 构建人员富显示 HTML（旗帜 + WCA ID 徽章 + 名字） */
         function buildPersonHtml(name, iso2, wcaId) {
