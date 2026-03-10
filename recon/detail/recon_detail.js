@@ -355,7 +355,7 @@
             html += '<div class="recon-external-links">';
             html += '<a href="' + algUrl + '" target="_blank" rel="noopener noreferrer">alg.cubing.net</a>';
             html += ' <a href="' + cubedbUrl + '" target="_blank" rel="noopener noreferrer">cubedb.net</a>';
-            var captionText = generateCaption(algSourceText);
+            var captionText = generateCaption(algSourceText, s);
             if (captionText) {
                 html += ' <a href="#" class="caption-copy-btn" data-caption="' + U.escHtml(captionText).replace(/"/g, '&quot;') + '"' +
                     ' data-i18n-en="caption" data-i18n-zh="字幕">caption</a>';
@@ -622,31 +622,31 @@
     }
 
     /**
-     * 从 recon 文本动态生成 caption
-     * 去掉统计行和打乱行，去掉 insp 行，去掉 // 后的注释，末尾附加统计行
-     */
-    function generateCaption(text) {
+ * 从 solution 文本动态生成 caption
+ * 去掉 insp 行，去掉 // 后的注释，末尾附加实时计算的统计行
+ */
+    function generateCaption(text, solve) {
         if (!text) return '';
         var lines = text.split('\n');
-        var statsLine = '';
-        var startIdx = 0;
-        if (lines.length > 0 && /^\d+STM\s/i.test(lines[0])) {
-            statsLine = lines[0].trim();
-            startIdx = 1;
-            if (lines.length > 1 && lines[1].indexOf('//') < 0) {
-                startIdx = 2;
-            }
-        }
-        var result = lines.slice(startIdx)
+        var result = lines
             .filter(function (line) {
+                // NOTE: 过滤 insp 行和空行
                 return line.trim().length > 0 && !/\binsp\b/i.test(line);
             })
             .map(function (line) {
+                // NOTE: 去掉 // 后的注释，保留解法部分
                 var pos = line.indexOf('//');
                 return pos >= 0 ? line.substring(0, pos).trimEnd() : line;
             })
             .filter(function (line) { return line.trim().length > 0; });
-        if (statsLine) result.push(statsLine);
+        // NOTE: 用 ReconStats 实时计算 STM/TPS 统计行
+        if (solve && solve.single && typeof ReconStats !== 'undefined') {
+            var stats = ReconStats.computeAllStats(text, solve.single);
+            if (stats.stm) {
+                var flooredSingle = Math.floor(solve.single * 100) / 100;
+                result.push(stats.stm + 'STM /' + flooredSingle.toFixed(2) + '=' + (stats.tps || 0) + 'TPS');
+            }
+        }
         return result.join('\n');
     }
 
