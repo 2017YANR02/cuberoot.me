@@ -155,6 +155,19 @@ layout: default
                     </datalist>
                 </div>
             </div>
+            <!-- NOTE: 盲拧专用字段——选中 3BLD/4BLD/5BLD/MBLD 时显示 -->
+            <div id="rf-bld-row" class="recon-form-row" style="display:none">
+                <div class="recon-form-group">
+                    <label data-i18n-en="Exec Time" data-i18n-zh="执行时间">Exec Time</label>
+                    <input type="text" id="rf-exec-time" placeholder="e.g. 14.36" data-i18n-placeholder-en="e.g. 14.36"
+                        data-i18n-placeholder-zh="如 14.36">
+                </div>
+                <div class="recon-form-group">
+                    <label data-i18n-en="Memo Time" data-i18n-zh="记忆时间">Memo Time</label>
+                    <input type="text" id="rf-memo-time" readonly tabindex="-1"
+                        style="background:transparent; border-color:#444; color:#999">
+                </div>
+            </div>
             <!-- 比赛 + 日期 -->
             <div class="recon-form-row">
                 <div class="recon-form-group" style="position:relative">
