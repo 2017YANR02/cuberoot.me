@@ -150,7 +150,9 @@
         if (solve.regionalSingleRecord) titleParts.push(U.formatRecord(solve.regionalSingleRecord));
         if (solve.event) titleParts.push(U.escHtml(solve.event));
         if (solve.method) titleParts.push(U.escHtml(solve.method));
-        var solverHtml = U.countryFlag(U.solverCountry(solve.person, personCountries)) + solverDisplay;
+        // NOTE: 选手国旗——优先用 solve 自带的 personCountry，fallback 到静态映射
+        var pCountry = solve.personCountry || U.solverCountry(solve.person, personCountries);
+        var solverHtml = U.countryFlag(pCountry) + solverDisplay;
         // NOTE: 有 WCA ID 时选手名可点击跳转 WCA 个人页面
         var personUrl = U.personWcaUrl(solve.personId);
         if (personUrl) {

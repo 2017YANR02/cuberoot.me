@@ -36,6 +36,16 @@ header('Content-Type: application/json; charset=utf-8');
 
 require_once __DIR__ . '/db.php';
 
+// NOTE: 一次性自动迁移——新增 person_country 列（文件锁，只在首次请求时执行）
+$migrationFlag = __DIR__ . '/.migration_person_country';
+if (!file_exists($migrationFlag)) {
+    $cols = getDb()->query("SHOW COLUMNS FROM recons LIKE 'person_country'")->fetchAll();
+    if (empty($cols)) {
+        getDb()->exec("ALTER TABLE recons ADD COLUMN person_country VARCHAR(10) DEFAULT NULL AFTER person_id");
+    }
+    file_put_contents($migrationFlag, date('Y-m-d H:i:s'));
+}
+
 // ==================== 速率限制（仍用文件，简单有效） ====================
 
 $dataDir = __DIR__ . '/data';
