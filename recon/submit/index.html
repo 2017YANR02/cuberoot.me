@@ -112,20 +112,35 @@ layout: default
             <div class="recon-form-row">
                 <div class="recon-form-group">
                     <label data-i18n-en="Event" data-i18n-zh="项目">Event</label>
-                    <input type="text" id="rf-event" value="3x3" list="event-options" placeholder="3x3">
-                    <datalist id="event-options">
-                        <option value="3x3">
-                        <option value="2x2">
-                        <option value="OH">
-                        <option value="4x4">
-                        <option value="5x5">
-                        <option value="6x6">
-                        <option value="7x7">
-                        <option value="Mega">
-                        <option value="Pyra">
-                        <option value="Skewb">
-                        <option value="SQ1">
-                    </datalist>
+                    <select id="rf-event" translate="no">
+                        <option value="3x3" data-i18n-option-zh="三阶魔方">3x3</option>
+                        <option value="2x2" data-i18n-option-zh="二阶魔方">2x2</option>
+                        <option value="4x4" data-i18n-option-zh="四阶魔方">4x4</option>
+                        <option value="5x5" data-i18n-option-zh="五阶魔方">5x5</option>
+                        <option value="6x6" data-i18n-option-zh="六阶魔方">6x6</option>
+                        <option value="7x7" data-i18n-option-zh="七阶魔方">7x7</option>
+                        <option value="3BLD" data-i18n-option-zh="三阶盲拧">3BLD</option>
+                        <option value="4BLD" data-i18n-option-zh="四阶盲拧">4BLD</option>
+                        <option value="5BLD" data-i18n-option-zh="五阶盲拧">5BLD</option>
+                        <option value="MBLD" data-i18n-option-zh="三阶多盲">MBLD</option>
+                        <option value="FMC" data-i18n-option-zh="三阶最少步">FMC</option>
+                        <option value="OH" data-i18n-option-zh="三阶单手">OH</option>
+                        <option value="Megaminx" data-i18n-option-zh="五魔方">Megaminx</option>
+                        <option value="Pyraminx" data-i18n-option-zh="金字塔">Pyraminx</option>
+                        <option value="Clock" data-i18n-option-zh="魔表">Clock</option>
+                        <option value="Skewb" data-i18n-option-zh="斜转魔方">Skewb</option>
+                        <option value="SQ1">SQ1</option>
+                        <option value="3x3 Robot" data-i18n-option-zh="三阶机器人">3x3 Robot</option>
+                        <option value="3x3 Smart" data-i18n-option-zh="三阶智能魔方">3x3 Smart</option>
+                        <option value="Gear" data-i18n-option-zh="齿轮魔方">Gear</option>
+                        <option value="Mirror" data-i18n-option-zh="镜面魔方">Mirror</option>
+                        <option value="Feet" data-i18n-option-zh="三阶脚拧">Feet</option>
+                        <option value="__other__" data-i18n-option-en="Other..." data-i18n-option-zh="其他...">Other...
+                        </option>
+                    </select>
+                    <!-- NOTE: 选"其他"时显示的自定义输入框 -->
+                    <input type="text" id="rf-event-custom" style="display:none" placeholder="Enter event name"
+                        data-i18n-placeholder-en="Enter event name" data-i18n-placeholder-zh="输入项目名">
                 </div>
                 <div class="recon-form-group">
                     <label data-i18n-en="Method" data-i18n-zh="方法">Method</label>
