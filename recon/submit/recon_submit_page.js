@@ -233,10 +233,12 @@
             if (BLD.indexOf(eventVal) >= 0) {
                 bldRowEl.style.display = '';
                 execEl.value = s.execTime || '';
-                // NOTE: memo 由 rawTime - execTime 自动计算
-                if (s.rawTime && s.execTime && s.rawTime > s.execTime) {
+                // NOTE: memo = truncate(rawTime) - execTime
+                // 千分位是计时器噪声，截断而非四舍五入
+                var truncated = Math.floor(s.rawTime * 100) / 100;
+                if (truncated > s.execTime) {
                     document.getElementById('rf-memo-time').value =
-                        Math.round((s.rawTime - s.execTime) * 1000) / 1000;
+                        Math.round((truncated - s.execTime) * 100) / 100;
                 }
             } else {
                 bldRowEl.style.display = 'none';
@@ -502,14 +504,19 @@
             updateStatsDisplay();
         });
 
-        /** 计算并填充 memo time = rawTime - execTime */
+        /** 计算并填充 memo time = truncate(rawTime) - execTime */
         function updateMemoTime() {
             var rawTimeVal = parseFloat(document.getElementById('rf-single').value.trim());
             var execVal = parseFloat(execTimeInput.value.trim());
-            if (!isNaN(rawTimeVal) && !isNaN(execVal) && execVal > 0 && rawTimeVal > execVal) {
-                // NOTE: 用 Math.round 避免浮点精度问题（如 21.39 - 14.36 = 7.029999...）
-                var memo = Math.round((rawTimeVal - execVal) * 1000) / 1000;
-                memoTimeInput.value = memo;
+            if (!isNaN(rawTimeVal) && !isNaN(execVal) && execVal > 0) {
+                // NOTE: 截断千分位——计时器噪声，不参与计算
+                var truncated = Math.floor(rawTimeVal * 100) / 100;
+                if (truncated > execVal) {
+                    var memo = Math.round((truncated - execVal) * 100) / 100;
+                    memoTimeInput.value = memo;
+                } else {
+                    memoTimeInput.value = '';
+                }
             } else {
                 memoTimeInput.value = '';
             }
@@ -1062,6 +1069,15 @@
             if (v && isNaN(parseFloat(v))) return isZh ? '必须是数字或留空' : 'Must be a number or empty';
             return '';
         });
+
+        // NOTE: execTime 不允许千分位——盲拧计时器精度只到百分位
+        addBlurCheck('rf-exec-time', function (v) {
+            if (!v) return '';
+            if (isNaN(parseFloat(v))) return isZh ? '必须是数字' : 'Must be a number';
+            var parts = v.split('.');
+            if (parts.length > 1 && parts[1].length > 2) return isZh ? '最多两位小数' : 'Max 2 decimal places';
+            return '';
+        });
     }
 
     // ==================== 校验工具 ====================
@@ -1202,8 +1218,10 @@
                 var eVal = parseFloat(document.getElementById('rf-exec-time').value.trim());
                 if (!isNaN(eVal) && eVal > 0) {
                     newData.execTime = eVal;
-                    if (newData.rawTime > eVal) {
-                        newData.memoTime = Math.round((newData.rawTime - eVal) * 1000) / 1000;
+                    // NOTE: 截断千分位后计算 memo
+                    var truncRaw = Math.floor(newData.rawTime * 100) / 100;
+                    if (truncRaw > eVal) {
+                        newData.memoTime = Math.round((truncRaw - eVal) * 100) / 100;
                     }
                 }
             }
@@ -1344,8 +1362,10 @@
             var eVal = parseFloat(document.getElementById('rf-exec-time').value.trim());
             if (!isNaN(eVal) && eVal > 0) {
                 solve.execTime = eVal;
-                if (single > eVal) {
-                    solve.memoTime = Math.round((single - eVal) * 1000) / 1000;
+                // NOTE: 截断千分位后计算 memo
+                var truncRaw = Math.floor(single * 100) / 100;
+                if (truncRaw > eVal) {
+                    solve.memoTime = Math.round((truncRaw - eVal) * 100) / 100;
                 }
             }
         }
