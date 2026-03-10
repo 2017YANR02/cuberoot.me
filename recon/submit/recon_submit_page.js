@@ -867,6 +867,25 @@
         });
     }
 
+    /**
+     * 日期自动补零：将 2021-1-1 等非标准输入规范化为 2021-01-01
+     * NOTE: 只处理形如 YYYY-M-D / YYYY-MM-D / YYYY-M-DD 的宽松格式
+     * @returns {string} 规范化后的值（若无法识别则原样返回）
+     */
+    function normalizeDateValue(inputEl) {
+        var v = inputEl.value.trim();
+        if (!v) return v;
+        var m = v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+        if (m) {
+            var month = m[2].length === 1 ? '0' + m[2] : m[2];
+            var day = m[3].length === 1 ? '0' + m[3] : m[3];
+            var normalized = m[1] + '-' + month + '-' + day;
+            if (normalized !== v) inputEl.value = normalized;
+            return normalized;
+        }
+        return v;
+    }
+
     /** 初始化所有字段的 blur 校验 */
     function setupBlurValidation() {
         var isZh = localStorage.getItem('i18n_locale') === 'zh';
@@ -901,8 +920,15 @@
 
         // NOTE: 编辑模式字段——动态创建后才存在，用 MutationObserver 等不值得
         // 直接尝试注册，不存在则跳过，编辑页刷新时这些字段已在 DOM 中
-        addBlurCheck('rf-edit-date', function (v) {
-            if (v && !/^\d{4}-\d{2}-\d{2}$/.test(v)) return isZh ? '格式: YYYY-MM-DD' : 'Format: YYYY-MM-DD';
+        addBlurCheck('rf-edit-date', function () {
+            var normalized = normalizeDateValue(document.getElementById('rf-edit-date'));
+            if (normalized && !/^\d{4}-\d{2}-\d{2}$/.test(normalized)) return isZh ? '格式: YYYY-MM-DD' : 'Format: YYYY-MM-DD';
+            return '';
+        });
+
+        addBlurCheck('rf-edit-reconDate', function () {
+            var normalized = normalizeDateValue(document.getElementById('rf-edit-reconDate'));
+            if (normalized && !/^\d{4}-\d{2}-\d{2}$/.test(normalized)) return isZh ? '格式: YYYY-MM-DD' : 'Format: YYYY-MM-DD';
             return '';
         });
 
@@ -961,12 +987,20 @@
             errors.push(isZh ? '比赛名不超过200字符' : 'Competition max 200 chars');
         }
 
-        // --- 日期校验 ---
+        // --- 日期校验（提交前再次自动补零） ---
         var dateEl = document.getElementById('rf-edit-date');
         if (dateEl) {
-            var dateVal = dateEl.value.trim();
+            var dateVal = normalizeDateValue(dateEl);
             if (dateVal && !/^\d{4}-\d{2}-\d{2}$/.test(dateVal)) {
                 errors.push(isZh ? '日期格式必须是 YYYY-MM-DD' : 'Date must be YYYY-MM-DD');
+            }
+        }
+
+        var reconDateEl = document.getElementById('rf-edit-reconDate');
+        if (reconDateEl) {
+            var reconDateVal = normalizeDateValue(reconDateEl);
+            if (reconDateVal && !/^\d{4}-\d{2}-\d{2}$/.test(reconDateVal)) {
+                errors.push(isZh ? '复盘日期格式必须是 YYYY-MM-DD' : 'Recon date must be YYYY-MM-DD');
             }
         }
 
