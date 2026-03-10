@@ -96,7 +96,8 @@
 
             // NOTE: 计算统计（STM、TPS、OLL、PLL 等）
             if (typeof ReconStats !== 'undefined') {
-                var reconText = solve.recon || solve.caption || '';
+                // NOTE: 优先用 solution 列（纯解法），fallback 到 recon（含统计+打乱的旧格式）
+                var reconText = solve.solution || solve.recon || solve.caption || '';
                 var stats = ReconStats.computeAllStats(reconText, solve.single);
                 for (var key in stats) {
                     if (stats[key] !== null && stats[key] !== undefined && stats[key] !== '') {
@@ -336,33 +337,25 @@
         // NOTE: 复盘 + 统计两列布局
         html += '<div class="detail-grid">';
 
-        // 左列：复盘步骤
+        // 左列：预览动画 → 打乱 → 解法
         html += '<div>';
-        if (s.recon) {
-            html += '<div class="detail-recon">';
-            html += '<div class="detail-recon-label"><span data-i18n-en="Reconstruction" data-i18n-zh="复盘">' + (isZh ? '复盘' : 'Reconstruction') + '</span></div>';
-            html += '<div class="detail-recon-text">' + formatReconText(s.recon) + '</div>';
-            html += '</div>';
-        } else if (s.caption) {
-            html += '<div class="detail-recon">';
-            html += '<div class="detail-recon-label"><span data-i18n-en="Reconstruction" data-i18n-zh="复盘">' + (isZh ? '复盘' : 'Reconstruction') + '</span></div>';
-            html += '<div class="detail-recon-text">' + formatReconText(s.caption) + '</div>';
-            html += '</div>';
-        }
+        // NOTE: 优先用 solution 列（纯解法），fallback 到 recon
+        var solutionText = s.solution || s.recon || s.caption || '';
         // NOTE: 有打乱时插入 twisty-player 占位符 + 外部链接
-        var reconText = s.recon || s.caption || '';
-        var scrambleForPlayer = s.optimalScramble || s.wcaScramble || extractScrambleFromRecon(reconText);
-        if (scrambleForPlayer && reconText) {
+        var scrambleForPlayer = s.optimalScramble || s.wcaScramble || extractScrambleFromRecon(s.recon || s.caption || '');
+        // NOTE: alg 提取优先用 solution（纯解法，无需跳过统计/打乱行）
+        var algSourceText = solutionText;
+        if (scrambleForPlayer && solutionText) {
             html += '<div class="recon-twisty-container"></div>';
             var setupStr = encodeURIComponent(scrambleForPlayer);
-            var algStr = encodeURIComponent(extractAlgWithComments(reconText));
+            var algStr = encodeURIComponent(extractAlgWithComments(algSourceText));
             var puzzleStr = (s.event && s.event.indexOf('2') >= 0) ? '2x2x2' : '3x3x3';
             var algUrl = 'https://alg.cubing.net/?setup=' + setupStr + '&alg=' + algStr + '&puzzle=' + puzzleStr;
             var cubedbUrl = 'https://cubedb.net/?puzzle=' + (puzzleStr === '2x2x2' ? '2x2' : '3x3') + '&scramble=' + setupStr + '&alg=' + algStr;
             html += '<div class="recon-external-links">';
             html += '<a href="' + algUrl + '" target="_blank" rel="noopener noreferrer">alg.cubing.net</a>';
             html += ' <a href="' + cubedbUrl + '" target="_blank" rel="noopener noreferrer">cubedb.net</a>';
-            var captionText = generateCaption(reconText);
+            var captionText = generateCaption(algSourceText);
             if (captionText) {
                 html += ' <a href="#" class="caption-copy-btn" data-caption="' + U.escHtml(captionText).replace(/"/g, '&quot;') + '"' +
                     ' data-i18n-en="caption" data-i18n-zh="字幕">caption</a>';
@@ -373,12 +366,7 @@
                 ' data-i18n-en="link" data-i18n-zh="链接">link</a>';
             html += '</div>';
         }
-        html += '</div>';
-
-        // 右列：统计网格 + 打乱 + 元数据
-        html += '<div>';
-        html += buildStatsGrid(s, isZh);
-
+        // NOTE: 打乱展示移到左列（预览动画下方、解法上方）
         if (s.optimalScramble) {
             html += '<div class="detail-scramble">';
             html += '<div class="detail-scramble-label"><span data-i18n-en="Optimal Scramble (scr*)" data-i18n-zh="最少步打乱 (scr*)">' + (isZh ? '最少步打乱 (scr*)' : 'Optimal Scramble (scr*)') + '</span></div>';
@@ -391,6 +379,18 @@
             html += '<div class="detail-scramble-text">' + U.escHtml(s.wcaScramble) + '</div>';
             html += '</div>';
         }
+        // NOTE: 解法区块
+        if (solutionText) {
+            html += '<div class="detail-recon">';
+            html += '<div class="detail-recon-label"><span data-i18n-en="Solution" data-i18n-zh="解法">' + (isZh ? '解法' : 'Solution') + '</span></div>';
+            html += '<div class="detail-recon-text">' + formatReconText(solutionText) + '</div>';
+            html += '</div>';
+        }
+        html += '</div>';
+
+        // 右列：统计网格 + 元数据
+        html += '<div>';
+        html += buildStatsGrid(s, isZh);
 
         // 元数据
         html += '<div class="detail-meta">';
@@ -657,7 +657,8 @@
         window.ensureTwisty().then(function () {
             var Ctor = window.__TwistyPlayerCtor;
             if (!Ctor) { container.innerHTML = ''; return; }
-            var reconText = solve.recon || solve.caption || '';
+            // NOTE: 优先用 solution 列（纯解法）
+            var reconText = solve.solution || solve.recon || solve.caption || '';
             var setup = solve.optimalScramble || solve.wcaScramble || extractScrambleFromRecon(reconText);
             var alg = extractAlgFromRecon(reconText);
             var puzzle = '3x3x3';
