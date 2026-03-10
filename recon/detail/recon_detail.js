@@ -98,7 +98,12 @@
             if (typeof ReconStats !== 'undefined') {
                 // NOTE: 优先用 solution 列（纯解法），fallback 到 recon（含统计+打乱的旧格式）
                 var reconText = solve.solution || solve.caption || '';
-                var stats = ReconStats.computeAllStats(reconText, solve.rawTime);
+                // NOTE: 盲拧项目用 execTime 算 TPS（手速 = 步数 / 执行时间）
+                var BLD_EVENTS = ['3BLD', '4BLD', '5BLD', 'MBLD'];
+                var tpsTime = (solve.execTime && BLD_EVENTS.indexOf(solve.event) >= 0)
+                    ? solve.execTime
+                    : solve.rawTime;
+                var stats = ReconStats.computeAllStats(reconText, tpsTime);
                 for (var key in stats) {
                     if (stats[key] !== null && stats[key] !== undefined && stats[key] !== '') {
                         solve[key] = stats[key];
@@ -470,6 +475,9 @@
         var items = [
             ['stm', 'STM', 'STM'],
             ['tps', 'TPS', 'TPS'],
+            // NOTE: 盲拧专用——非盲拧项目 execTime/memoTime 为 null，不会显示
+            ['execTime', 'Exec Time', '执行时间', function (v) { return parseFloat(v).toFixed(2); }],
+            ['memoTime', 'Memo Time', '记忆时间', function (v) { return parseFloat(v).toFixed(2); }],
             ['crossStm', 'Cross', 'Cross'],
             ['f2l', 'F2L', 'F2L'],
             ['ll', 'LL', '顶层'],
