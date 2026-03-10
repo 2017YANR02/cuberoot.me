@@ -97,7 +97,7 @@
             // NOTE: 计算统计（STM、TPS、OLL、PLL 等）
             if (typeof ReconStats !== 'undefined') {
                 // NOTE: 优先用 solution 列（纯解法），fallback 到 recon（含统计+打乱的旧格式）
-                var reconText = solve.solution || solve.recon || solve.caption || '';
+                var reconText = solve.solution || solve.caption || '';
                 var stats = ReconStats.computeAllStats(reconText, solve.single);
                 for (var key in stats) {
                     if (stats[key] !== null && stats[key] !== undefined && stats[key] !== '') {
@@ -340,9 +340,9 @@
         // 左列：预览动画 → 打乱 → 解法 → 外部链接
         html += '<div>';
         // NOTE: 优先用 solution 列（纯解法），fallback 到 recon
-        var solutionText = s.solution || s.recon || s.caption || '';
+        var solutionText = s.solution || s.caption || '';
         // NOTE: 有打乱时插入 twisty-player 占位符
-        var scrambleForPlayer = s.optimalScramble || s.wcaScramble || extractScrambleFromRecon(s.recon || s.caption || '');
+        var scrambleForPlayer = s.optimalScramble || s.wcaScramble || '';
         // NOTE: alg 提取优先用 solution（纯解法，无需跳过统计/打乱行）
         var algSourceText = solutionText;
         if (scrambleForPlayer && solutionText) {
@@ -658,7 +658,7 @@
             var Ctor = window.__TwistyPlayerCtor;
             if (!Ctor) { container.innerHTML = ''; return; }
             // NOTE: 优先用 solution 列（纯解法）
-            var reconText = solve.solution || solve.recon || solve.caption || '';
+            var reconText = solve.solution || solve.caption || '';
             var setup = solve.optimalScramble || solve.wcaScramble || extractScrambleFromRecon(reconText);
             var alg = extractAlgFromRecon(reconText);
             var puzzle = '3x3x3';
