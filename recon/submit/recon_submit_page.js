@@ -6,6 +6,13 @@
 (function () {
     'use strict';
 
+    // NOTE: 盲拧项目集合——IIFE 层定义，供 DOMContentLoaded 和 handleSubmit 共用
+    var BLD_EVENTS = ['3BLD', '4BLD', '5BLD', 'MBLD'];
+
+    function isBldEvent(ev) {
+        return BLD_EVENTS.indexOf(ev) >= 0;
+    }
+
     // NOTE: 编辑模式专用字段（新增模式不显示这些）
     var EDIT_ONLY_FIELDS = [
         { key: 'value', labelEn: 'Single', labelZh: '单次' },
@@ -464,12 +471,6 @@
         var execTimeInput = document.getElementById('rf-exec-time');
         var memoTimeInput = document.getElementById('rf-memo-time');
 
-        // NOTE: 盲拧项目集合——DRY，多处判断统一引用
-        var BLD_EVENTS = ['3BLD', '4BLD', '5BLD', 'MBLD'];
-
-        function isBldEvent(ev) {
-            return BLD_EVENTS.indexOf(ev) >= 0;
-        }
 
         /** 获取当前 event 值（考虑"其他"模式） */
         function getCurrentEvent() {
