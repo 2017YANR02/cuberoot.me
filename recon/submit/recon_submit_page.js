@@ -219,6 +219,21 @@
                 eventCustom.value = eventVal;
                 eventCustom.style.display = '';
             }
+            // NOTE: 编辑模式下根据 event 显示/隐藏 BLD 行并回填
+            var bldRowEl = document.getElementById('rf-bld-row');
+            var execEl = document.getElementById('rf-exec-time');
+            var BLD = ['3BLD', '4BLD', '5BLD', 'MBLD'];
+            if (BLD.indexOf(eventVal) >= 0) {
+                bldRowEl.style.display = '';
+                execEl.value = s.execTime || '';
+                // NOTE: memo 由 rawTime - execTime 自动计算
+                if (s.rawTime && s.execTime && s.rawTime > s.execTime) {
+                    document.getElementById('rf-memo-time').value =
+                        Math.round((s.rawTime - s.execTime) * 1000) / 1000;
+                }
+            } else {
+                bldRowEl.style.display = 'none';
+            }
             document.getElementById('rf-method').value = s.method || '';
             document.getElementById('rf-comp').value = s.comp || '';
             document.getElementById('rf-note').value = s.note || '';
@@ -408,12 +423,21 @@
                 single = single / 100;
             }
 
-            var stats = ReconStats.computeAllStats(recon, single);
+            // NOTE: 盲拧项目用 execTime 算 TPS（手速 = 步数 / 执行时间）
+            var tpsTime = single;
+            if (typeof getCurrentEvent === 'function' && isBldEvent(getCurrentEvent())) {
+                var execVal = parseFloat(execTimeInput.value.trim());
+                if (!isNaN(execVal) && execVal > 0) {
+                    tpsTime = execVal;
+                }
+            }
+
+            var stats = ReconStats.computeAllStats(recon, tpsTime);
             if (stats.stm) {
                 var parts = stats.stm + 'STM';
-                if (!isNaN(single) && single > 0) {
+                if (!isNaN(tpsTime) && tpsTime > 0) {
                     // NOTE: 用截断（非四舍五入）保持与 parseTps 的 Math.floor 逻辑一致
-                    var floored = Math.floor(single * 100) / 100;
+                    var floored = Math.floor(tpsTime * 100) / 100;
                     parts += ' /' + floored.toFixed(2) + '=' + (stats.tps || 0) + 'TPS';
                 }
                 display.textContent = parts;
@@ -424,16 +448,47 @@
             }
         }
         document.getElementById('rf-recon').addEventListener('input', updateStatsDisplay);
-        document.getElementById('rf-single').addEventListener('input', updateStatsDisplay);
+        document.getElementById('rf-single').addEventListener('input', function () {
+            updateStatsDisplay();
+            // NOTE: rawTime 变化时也联动更新 memo 计算
+            if (typeof updateMemoTime === 'function') updateMemoTime();
+        });
 
         // NOTE: 编辑模式的统计更新在 populateForm() 中自动调用
 
-        // ==================== Event 下拉 + 自定义输入 ====================
+        // ==================== Event 下拉 + 自定义输入 + BLD ====================
 
         var eventSelect = document.getElementById('rf-event');
         var eventCustom = document.getElementById('rf-event-custom');
+        var bldRow = document.getElementById('rf-bld-row');
+        var execTimeInput = document.getElementById('rf-exec-time');
+        var memoTimeInput = document.getElementById('rf-memo-time');
 
-        // NOTE: 选择"其他"时显示自定义输入框，否则隐藏
+        // NOTE: 盲拧项目集合——DRY，多处判断统一引用
+        var BLD_EVENTS = ['3BLD', '4BLD', '5BLD', 'MBLD'];
+
+        function isBldEvent(ev) {
+            return BLD_EVENTS.indexOf(ev) >= 0;
+        }
+
+        /** 获取当前 event 值（考虑"其他"模式） */
+        function getCurrentEvent() {
+            return eventSelect.value === '__other__'
+                ? eventCustom.value.trim()
+                : eventSelect.value;
+        }
+
+        /** 根据当前 event 显示/隐藏 BLD 行和自定义输入框 */
+        function updateBldRow() {
+            var ev = getCurrentEvent();
+            bldRow.style.display = isBldEvent(ev) ? '' : 'none';
+            if (!isBldEvent(ev)) {
+                execTimeInput.value = '';
+                memoTimeInput.value = '';
+            }
+        }
+
+        // NOTE: 选择"其他"时显示自定义输入框，否则隐藏；同时联动 BLD 行
         eventSelect.addEventListener('change', function () {
             if (this.value === '__other__') {
                 eventCustom.style.display = '';
@@ -442,6 +497,27 @@
                 eventCustom.style.display = 'none';
                 eventCustom.value = '';
             }
+            updateBldRow();
+            updateStatsDisplay();
+        });
+
+        /** 计算并填充 memo time = rawTime - execTime */
+        function updateMemoTime() {
+            var rawTimeVal = parseFloat(document.getElementById('rf-single').value.trim());
+            var execVal = parseFloat(execTimeInput.value.trim());
+            if (!isNaN(rawTimeVal) && !isNaN(execVal) && execVal > 0 && rawTimeVal > execVal) {
+                // NOTE: 用 Math.round 避免浮点精度问题（如 21.39 - 14.36 = 7.029999...）
+                var memo = Math.round((rawTimeVal - execVal) * 1000) / 1000;
+                memoTimeInput.value = memo;
+            } else {
+                memoTimeInput.value = '';
+            }
+        }
+
+        // NOTE: exec time 输入联动 memo 计算和 stats 更新
+        execTimeInput.addEventListener('input', function () {
+            updateMemoTime();
+            updateStatsDisplay();
         });
 
         // NOTE: i18n 切换时更新 option 文本（中文/英文）
@@ -1120,6 +1196,16 @@
                 wcaScramble: document.getElementById('rf-scramble').value.trim(),
                 solution: document.getElementById('rf-recon').value
             };
+            // NOTE: 盲拧项目时附加 execTime/memoTime
+            if (isBldEvent(newData.event)) {
+                var eVal = parseFloat(document.getElementById('rf-exec-time').value.trim());
+                if (!isNaN(eVal) && eVal > 0) {
+                    newData.execTime = eVal;
+                    if (newData.rawTime > eVal) {
+                        newData.memoTime = Math.round((newData.rawTime - eVal) * 1000) / 1000;
+                    }
+                }
+            }
             // NOTE: official checkbox
             var officialEl = document.getElementById('rf-official');
             if (officialEl) newData.official = officialEl.checked;
@@ -1252,6 +1338,16 @@
         // NOTE: solution 存纯解法（为未来移除 recon 做准备）
         solve.solution = recon;
         if (note) solve.note = note;
+        // NOTE: 盲拧项目时附加 execTime/memoTime
+        if (isBldEvent(event)) {
+            var eVal = parseFloat(document.getElementById('rf-exec-time').value.trim());
+            if (!isNaN(eVal) && eVal > 0) {
+                solve.execTime = eVal;
+                if (single > eVal) {
+                    solve.memoTime = Math.round((single - eVal) * 1000) / 1000;
+                }
+            }
+        }
         if (round) solve.round = round;
         if (solveNum) solve.solveNum = parseInt(solveNum);
 
