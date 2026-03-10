@@ -15,6 +15,7 @@
         { key: 'regionalAverageRecord', labelEn: 'Avg Rec', labelZh: '平均纪录' },
         { key: 'regionalSingleRecord', labelEn: 'Single Rec', labelZh: '单次纪录' },
         { key: 'regionalAoxrRecord', labelEn: 'AoXR Rec', labelZh: 'AoXR纪录' },
+        { key: 'optimalScramble', labelEn: 'Optimal Scramble', labelZh: '最少步打乱' },
         { key: 'cube', labelEn: 'Cube', labelZh: '魔方' },
         { key: 'reconer', labelEn: 'Reconer', labelZh: '复盘者' },
         { key: 'groupId', labelEn: 'Group', labelZh: '组' },
@@ -92,17 +93,19 @@
             document.getElementById('rf-round').value = s.round || '';
             document.getElementById('rf-solve-num').value = s.solveNum ? String(s.solveNum) : '';
 
-            // NOTE: 打乱预填充：优先用 wcaScramble，否则从 recon 文本第二行提取
-            var scramblePrefill = s.wcaScramble || s.optimalScramble || '';
-            var solutionText = s.recon || s.caption || '';
+            // NOTE: 打乱预填充：只用 wcaScramble（optimalScramble 有独立输入框）
+            var scramblePrefill = s.wcaScramble || '';
+            // NOTE: 解法优先用 solution 列（为未来移除 recon 做准备），fallback 解析 recon
+            var solutionText = s.solution || s.recon || s.caption || '';
 
-            // NOTE: 从完整 recon 中剥离统计行和打乱行，只保留纯解法
-            // 提交时会自动拼接回去（统计 + 打乱 + 解法）
-            var reconLines = solutionText.split('\n');
-            if (reconLines.length >= 2 && /^\d+STM\s/i.test(reconLines[0])) {
-                // 第一行是统计行，第二行是打乱
-                if (!scramblePrefill) scramblePrefill = reconLines[1].trim();
-                solutionText = reconLines.slice(2).join('\n');
+            // NOTE: 如果用的是 recon（含统计行+打乱），需要剥离前两行
+            if (!s.solution && solutionText) {
+                var reconLines = solutionText.split('\n');
+                if (reconLines.length >= 2 && /^\d+STM\s/i.test(reconLines[0])) {
+                    // 第一行是统计行，第二行是打乱
+                    if (!scramblePrefill) scramblePrefill = reconLines[1].trim();
+                    solutionText = reconLines.slice(2).join('\n');
+                }
             }
 
             document.getElementById('rf-scramble').value = scramblePrefill;
@@ -877,7 +880,9 @@
                 round: document.getElementById('rf-round').value,
                 solveNum: document.getElementById('rf-solve-num').value ? parseInt(document.getElementById('rf-solve-num').value) : null,
                 wcaScramble: document.getElementById('rf-scramble').value.trim(),
-                recon: document.getElementById('rf-recon').value
+                recon: document.getElementById('rf-recon').value,
+                // NOTE: solution 存纯解法（为未来移除 recon 做准备）
+                solution: document.getElementById('rf-recon').value
             };
             // NOTE: official checkbox
             var officialEl = document.getElementById('rf-official');
@@ -1025,6 +1030,8 @@
         // NOTE: 提交时自动查表获取比赛国家
         if (comp && compCountryMap[comp]) solve.country = compCountryMap[comp];
         if (scramble) solve.wcaScramble = scramble;
+        // NOTE: solution 存纯解法（为未来移除 recon 做准备）
+        solve.solution = recon;
         if (note) solve.note = note;
         if (round) solve.round = round;
         if (solveNum) solve.solveNum = parseInt(solveNum);
