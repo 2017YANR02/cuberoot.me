@@ -369,13 +369,13 @@
         // NOTE: 打乱展示
         if (s.optimalScramble) {
             html += '<div class="detail-scramble">';
-            html += '<div class="detail-scramble-label"><span data-i18n-en="Optimal Scramble (scr*)" data-i18n-zh="最少步打乱 (scr*)">' + (isZh ? '最少步打乱 (scr*)' : 'Optimal Scramble (scr*)') + '</span></div>';
+            html += '<div class="detail-scramble-label"><span data-i18n-en="Optimal Scramble" data-i18n-zh="最少步打乱">' + (isZh ? '最少步打乱' : 'Optimal Scramble') + '</span></div>';
             html += '<div class="detail-scramble-text">' + U.escHtml(s.optimalScramble) + '</div>';
             html += '</div>';
         }
         if (s.wcaScramble) {
             html += '<div class="detail-scramble">';
-            html += '<div class="detail-scramble-label"><span data-i18n-en="WCA Scramble (scr)" data-i18n-zh="WCA 打乱 (scr)">' + (isZh ? 'WCA 打乱 (scr)' : 'WCA Scramble (scr)') + '</span></div>';
+            html += '<div class="detail-scramble-label"><span data-i18n-en="WCA Scramble" data-i18n-zh="WCA 打乱">' + (isZh ? 'WCA 打乱' : 'WCA Scramble') + '</span></div>';
             html += '<div class="detail-scramble-text">' + U.escHtml(s.wcaScramble) + '</div>';
             html += '</div>';
         }
@@ -399,18 +399,20 @@
         }
         if (s.reconer) {
             // NOTE: 有 reconerId 时渲染为 WCA 个人主页链接（与 addedBy 模式一致）
+            var reconerDisplay = U.displaySolverName(s.reconer);
             var reconerHtml = s.reconerId
-                ? '<a href="https://www.worldcubeassociation.org/persons/' + U.escHtml(s.reconerId) + '" target="_blank">' + U.escHtml(s.reconer) + '</a>'
-                : U.escHtml(s.reconer);
+                ? '<a href="https://www.worldcubeassociation.org/persons/' + U.escHtml(s.reconerId) + '" target="_blank">' + reconerDisplay + '</a>'
+                : reconerDisplay;
             html += '<div class="detail-meta-item"><span class="detail-meta-label">✍️</span><span class="detail-meta-value">' + reconerHtml + '</span></div>';
         }
         if (s.reconDate) {
             html += '<div class="detail-meta-item"><span class="detail-meta-label">📅</span><span class="detail-meta-value">' + U.escHtml(s.reconDate) + '</span></div>';
         }
         if (s.addedBy) {
+            var addedByDisplay = U.displaySolverName(s.addedBy);
             var addedByHtml = s.addedById
-                ? '<a href="https://www.worldcubeassociation.org/persons/' + U.escHtml(s.addedById) + '" target="_blank">' + U.escHtml(s.addedBy) + '</a>'
-                : U.escHtml(s.addedBy);
+                ? '<a href="https://www.worldcubeassociation.org/persons/' + U.escHtml(s.addedById) + '" target="_blank">' + addedByDisplay + '</a>'
+                : addedByDisplay;
             html += '<div class="detail-meta-item"><span class="detail-meta-label">➕</span><span class="detail-meta-value">' + addedByHtml + '</span></div>';
         }
         html += '</div>';
@@ -468,13 +470,13 @@
             ['tps', 'TPS', 'TPS'],
             ['crossStm', 'Cross', 'Cross'],
             ['f2l', 'F2L', 'F2L'],
-            ['ll', 'LL', 'LL'],
+            ['ll', 'LL', '顶层'],
             ['crossType', '?x', '?x', function (v) { return CROSS_LABELS[v] || v; }],
             ['freePair', 'Free Pair', '基态'],
-            ['yRot', 'y rot', 'y 旋转'],
+            ['yRot', 'y rot', 'y 转体'],
             ['regrip', 'Regrip', '换手'],
             ['lockup', 'Lockup', '卡顿'],
-            ['sMove', 'S move', 'S 步'],
+            ['sMove', 'S move', 'S转动'],
             ['crossColor', 'Color', '底色', function (v) {
                 var color = FACE_COLORS[v];
                 if (color) return '<span style="color:' + color + ';font-weight:600">' + v + '</span>';
