@@ -913,8 +913,10 @@ tr.detail-row td {
 }
 
 .recon-external-links {
-    margin-top: 6px;
-    font-size: 0.8rem;
+    margin-top: 32px;
+    font-size: 0.85rem;
+    text-align: center;
+    max-width: 400px;
 }
 
 .recon-external-links a {
