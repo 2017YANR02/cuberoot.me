@@ -88,11 +88,16 @@
 
         function preprocessSolves(solves) {
             solves.forEach(solve => {
-                const preview = getReconPreview(solve);
-                const stmMatch = preview.match(/(\d+)STM/i);
-                const tpsMatch = preview.match(/([\d.]+)TPS/i);
-                solve.stm = stmMatch ? parseInt(stmMatch[1]) : 0;
-                solve.tps = tpsMatch ? parseFloat(tpsMatch[1]) : 0;
+                // NOTE: 从 solution 文本计算 STM/TPS（不再依赖 recon 第 1 行的统计行）
+                if (typeof ReconStats !== 'undefined') {
+                    var text = solve.solution || solve.recon || solve.caption || '';
+                    var stats = ReconStats.computeAllStats(text, solve.single);
+                    solve.stm = stats.stm || 0;
+                    solve.tps = stats.tps || 0;
+                } else {
+                    solve.stm = 0;
+                    solve.tps = 0;
+                }
             });
         }
 
@@ -542,14 +547,6 @@
         });
         tr.style.cursor = 'pointer';
         return tr;
-    }
-
-    function getReconPreview(s) {
-        // NOTE: 统计行在 recon 的第 1 行（如 "29STM /3.91=7.42TPS"）
-        // solution 不含统计行，所以仍用 recon 提取 STM/TPS
-        const text = s.recon || s.caption || '';
-        if (!text) return '';
-        return text.split('\n')[0].trim();
     }
 
     function updateStats() {
