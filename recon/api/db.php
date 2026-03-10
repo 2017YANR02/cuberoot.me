@@ -101,7 +101,6 @@ const ALLOWED_COLUMNS = [
     'regional_average_record',
     'ao_type',
     'regional_aoxr_record',
-    'recon',
     'solution',
     'optimal_scramble',
     'wca_scramble',

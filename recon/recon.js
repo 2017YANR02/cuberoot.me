@@ -90,7 +90,7 @@
             solves.forEach(solve => {
                 // NOTE: 从 solution 文本计算 STM/TPS（不再依赖 recon 第 1 行的统计行）
                 if (typeof ReconStats !== 'undefined') {
-                    var text = solve.solution || solve.recon || solve.caption || '';
+                    var text = solve.solution || solve.caption || '';
                     var stats = ReconStats.computeAllStats(text, solve.single);
                     solve.stm = stats.stm || 0;
                     solve.tps = stats.tps || 0;
