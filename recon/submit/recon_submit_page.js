@@ -629,7 +629,10 @@
         // ==================== 预览动画 ====================
 
         document.getElementById('rf-preview-btn').addEventListener('click', function () {
-            var scramble = document.getElementById('rf-scramble').value.trim();
+            // NOTE: 预览打乱优先用 optimalScramble，fallback 到 wcaScramble
+            var optScr = document.getElementById('rf-edit-optimalScramble').value.trim();
+            var wcaScr = document.getElementById('rf-scramble').value.trim();
+            var scramble = optScr || wcaScr;
             var recon = document.getElementById('rf-recon').value.trim();
             if (!scramble && !recon) return;
 
@@ -1030,6 +1033,9 @@
         // NOTE: 提交时自动查表获取比赛国家
         if (comp && compCountryMap[comp]) solve.country = compCountryMap[comp];
         if (scramble) solve.wcaScramble = scramble;
+        // NOTE: optimalScramble 也在新增模式下传递
+        var optimalScramble = document.getElementById('rf-edit-optimalScramble').value.trim();
+        if (optimalScramble) solve.optimalScramble = optimalScramble;
         // NOTE: solution 存纯解法（为未来移除 recon 做准备）
         solve.solution = recon;
         if (note) solve.note = note;
