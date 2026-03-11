@@ -440,6 +440,21 @@ tr.detail-row td {
     width: fit-content;
 }
 
+/* NOTE: 解法文本中的可视闪烁光标 */
+.detail-cursor {
+    display: inline-block;
+    width: 1.5px;
+    height: 1.1em;
+    background: #58a6ff;
+    vertical-align: text-bottom;
+    animation: detail-cursor-blink 0.8s step-end infinite;
+    margin: 0 -0.5px;
+}
+@keyframes detail-cursor-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
 .detail-scramble-text {
     font-family: 'Roboto Mono', monospace;
     font-size: 0.82rem;

@@ -180,6 +180,92 @@
             loadTwistyPlayer(twistyContainer, solve);
         }
 
+        // NOTE: 绑定解法文本的 click/keydown 事件实现光标跟随
+        var reconTextEl = container.querySelector('.detail-recon-text');
+        if (reconTextEl) {
+            reconTextEl.style.cursor = 'text';
+            reconTextEl.setAttribute('tabindex', '0');
+            reconTextEl.style.outline = 'none'; // NOTE: 去掉聚焦框
+            reconTextEl.addEventListener('click', function () {
+                var offset = getTextOffsetInElement(reconTextEl);
+                if (offset >= 0) {
+                    detailCursorOffset = offset;
+                    syncDetailAtOffset(reconTextEl, offset);
+                }
+            });
+            reconTextEl.addEventListener('keydown', function (e) {
+                if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft' &&
+                    e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+                if (!currentDetailPlayer) return;
+                var fullText = reconTextEl.textContent || '';
+                // NOTE: 去掉可视光标的零宽空格
+                fullText = fullText.replace(/\u200B/g, '');
+                var tokens = findDetailTokenPositions(fullText);
+                if (tokens.length === 0) return;
+
+                var newPos = detailCursorOffset;
+                if (e.key === 'ArrowRight') {
+                    for (var i = 0; i < tokens.length; i++) {
+                        if (tokens[i].start >= detailCursorOffset) {
+                            newPos = tokens[i].end;
+                            break;
+                        }
+                    }
+                } else if (e.key === 'ArrowLeft') {
+                    for (var j = tokens.length - 1; j >= 0; j--) {
+                        if (tokens[j].end < detailCursorOffset) {
+                            newPos = tokens[j].end;
+                            break;
+                        }
+                    }
+                } else {
+                    // NOTE: ArrowUp/ArrowDown — 找当前光标所在行，跳到上/下一行的 token
+                    var lines = fullText.split('\n');
+                    var lineStarts = []; // 每行在全文中的起始偏移
+                    var offset = 0;
+                    for (var k = 0; k < lines.length; k++) {
+                        lineStarts.push(offset);
+                        offset += lines[k].length + 1;
+                    }
+                    // NOTE: 找当前光标所在行号
+                    var curLine = 0;
+                    for (var l = lineStarts.length - 1; l >= 0; l--) {
+                        if (detailCursorOffset >= lineStarts[l]) {
+                            curLine = l;
+                            break;
+                        }
+                    }
+                    var targetLine = e.key === 'ArrowDown' ? curLine + 1 : curLine - 1;
+                    if (targetLine < 0 || targetLine >= lines.length) return;
+
+                    // NOTE: 找目标行的 token
+                    var targetStart = lineStarts[targetLine];
+                    var targetEnd = targetStart + lines[targetLine].length;
+                    if (e.key === 'ArrowDown') {
+                        // 跳到目标行第一个 token 末尾
+                        for (var m = 0; m < tokens.length; m++) {
+                            if (tokens[m].start >= targetStart && tokens[m].end <= targetEnd) {
+                                newPos = tokens[m].end;
+                                break;
+                            }
+                        }
+                    } else {
+                        // ArrowUp: 跳到目标行最后一个 token 末尾
+                        for (var n = tokens.length - 1; n >= 0; n--) {
+                            if (tokens[n].start >= targetStart && tokens[n].end <= targetEnd) {
+                                newPos = tokens[n].end;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (newPos === detailCursorOffset) return;
+                e.preventDefault();
+                detailCursorOffset = newPos;
+                syncDetailAtOffset(reconTextEl, newPos);
+            });
+        }
+
         // NOTE: 绑定按钮事件
         bindButtonEvents(container, solve);
     }
@@ -658,9 +744,9 @@
     }
 
     /**
- * 从 solution 文本动态生成 caption
- * 去掉 insp 行，去掉 // 后的注释，末尾附加实时计算的统计行
- */
+     * 从 solution 文本动态生成 caption
+     * 去掉 insp 行，去掉 // 后的注释，末尾附加实时计算的统计行
+     */
     function generateCaption(text, solve) {
         if (!text) return '';
         var lines = text.split('\n');
@@ -688,6 +774,10 @@
 
     // ==================== 魔方动画 ====================
 
+    // NOTE: 详情页光标跟随所需的闭包变量
+    var currentDetailPlayer = null;
+    var detailScramble = '';
+    var detailSolutionText = '';
 
     function loadTwistyPlayer(container, solve) {
         container.innerHTML = '<div style="color:#888;font-size:0.8em">加载中...</div>';
@@ -695,6 +785,10 @@
         var reconText = solve.solution || solve.caption || '';
         var setup = solve.optimalScramble || solve.wcaScramble || extractScrambleFromRecon(reconText);
         var alg = extractAlgFromRecon(reconText);
+
+        // NOTE: 保存数据用于光标跟随
+        detailScramble = setup;
+        detailSolutionText = reconText;
 
         // NOTE: SQ1 用 cubedb.net iframe（twisty-player 对 SQ1 渲染不友好）
         if (solve.event === 'SQ1') {
@@ -705,6 +799,7 @@
             container.innerHTML = '<iframe src="' + cubedbUrl + '" ' +
                 'style="width:100%;height:400px;border:1px solid #444;border-radius:8px" ' +
                 'allowfullscreen></iframe>';
+            currentDetailPlayer = null;
             return;
         }
 
@@ -719,9 +814,125 @@
             });
             container.innerHTML = '';
             container.appendChild(player);
+            currentDetailPlayer = player; // NOTE: 保存引用用于光标跟随
         }).catch(function () {
             container.innerHTML = '';
         });
+    }
+
+    /**
+     * NOTE: 获取点击在 DOM 元素纯文本中的绝对偏移。
+     * 遍历 anchorNode 的前置兄弟和父节点累加 textContent.length。
+     */
+    function getTextOffsetInElement(el) {
+        var sel = window.getSelection();
+        if (!sel || sel.rangeCount === 0) return -1;
+        var node = sel.anchorNode;
+        var offset = sel.anchorOffset;
+        if (!el.contains(node)) return -1;
+
+        // NOTE: 从 anchorNode 向前遍历，累加前置兄弟的文本长度
+        var current = node;
+        while (current && current !== el) {
+            var prev = current.previousSibling;
+            while (prev) {
+                offset += (prev.textContent || '').length;
+                prev = prev.previousSibling;
+            }
+            current = current.parentNode;
+        }
+        return offset;
+    }
+
+    // NOTE: 详情页 token 正则（魔方指令）
+    var DETAIL_TOKEN_RE = /[RUFLDBrufldbxyzMSE][2']?'?/g;
+
+    /** 扫描纯文本的非注释区域，返回 token 位置数组 */
+    function findDetailTokenPositions(text) {
+        var tokens = [];
+        var lines = text.split('\n');
+        var offset = 0;
+        for (var i = 0; i < lines.length; i++) {
+            var line = lines[i];
+            var commentIdx = line.indexOf('//');
+            var instrPart = commentIdx >= 0 ? line.substring(0, commentIdx) : line;
+            DETAIL_TOKEN_RE.lastIndex = 0;
+            var m;
+            while ((m = DETAIL_TOKEN_RE.exec(instrPart)) !== null) {
+                tokens.push({ start: offset + m.index, end: offset + m.index + m[0].length });
+            }
+            offset += line.length + 1;
+        }
+        return tokens;
+    }
+
+    // NOTE: 详情页虚拟光标偏移
+    var detailCursorOffset = 0;
+
+    /**
+     * NOTE: 在 DOM 元素的指定纯文本偏移处插入可视光标。
+     * 遍历所有子文本节点找到偏移位置，在该处插入闪烁光标 span。
+     */
+    function insertVisualCursor(el, textOffset) {
+        // NOTE: 先移除旧光标
+        var old = el.querySelector('.detail-cursor');
+        if (old) old.remove();
+
+        // NOTE: 遍历文本节点找到偏移位置
+        var walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null, false);
+        var accumulated = 0;
+        var targetNode = null;
+        var localOffset = 0;
+        while (walker.nextNode()) {
+            var nodeLen = walker.currentNode.textContent.length;
+            if (accumulated + nodeLen >= textOffset) {
+                targetNode = walker.currentNode;
+                localOffset = textOffset - accumulated;
+                break;
+            }
+            accumulated += nodeLen;
+        }
+        if (!targetNode) return;
+
+        // NOTE: 在文本节点的指定偏移处分割并插入光标
+        var cursor = document.createElement('span');
+        cursor.className = 'detail-cursor';
+        cursor.textContent = '\u200B'; // NOTE: 零宽空格占位
+        var afterNode = targetNode.splitText(localOffset);
+        afterNode.parentNode.insertBefore(cursor, afterNode);
+    }
+
+    /** 根据文本偏移同步 twisty-player 并显示可视光标 */
+    function syncDetailAtOffset(reconTextEl, textOffset) {
+        // NOTE: 先插入可视光标（在更新 twisty 前，因为 insertVisualCursor 会修改 DOM）
+        insertVisualCursor(reconTextEl, textOffset);
+
+        if (!currentDetailPlayer || !detailSolutionText) return;
+
+        // NOTE: 用原始纯文本分割（不受光标 span 影响）
+        var fullText = detailSolutionText;
+        // NOTE: reconTextEl.textContent 会包含光标的零宽空格，用 detailSolutionText 的 formatReconText 前文本
+        // 但 textOffset 是基于渲染后的 textContent 的，所以还是用 textContent
+        // 重新获取去掉光标后的纯文本
+        var cursorEl = reconTextEl.querySelector('.detail-cursor');
+        var plainText = reconTextEl.textContent || '';
+        // NOTE: 去掉零宽空格的影响
+        plainText = plainText.replace(/\u200B/g, '');
+
+        var textBefore = plainText.substring(0, textOffset);
+        var textAfter = plainText.substring(textOffset);
+
+        var algBefore = extractAlgFromRecon(textBefore);
+        var algAfter = extractAlgFromRecon(textAfter);
+
+        var setup = detailScramble ? detailScramble + '\n' + algBefore : algBefore;
+
+        try {
+            currentDetailPlayer.experimentalSetupAlg = setup;
+            currentDetailPlayer.alg = algAfter;
+        } catch (e) {
+            // NOTE: 属性更新失败时静默忽略
+        }
     }
 
 })();
