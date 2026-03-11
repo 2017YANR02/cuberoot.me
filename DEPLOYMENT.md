@@ -292,20 +292,11 @@ ruby bin/compute_all.rb
 
 ## Jekyll 本地开发服务器
 
-启动 Jekyll 本地预览服务器，修改文件后自动重新生成：
-
-```powershell
-# 必须要先用 bundle exec，否则可能会缺少依赖
+```
 cd D:\cube\ruiminyan.github.io
 bundle exec jekyll serve
-# 浏览器访问 http://127.0.0.1:4000
 ```
-
-- **访问地址**：http://127.0.0.1:4000
-- **自动重新生成**：已启用（保存文件后浏览器刷新即可看到变更）
-- **停止服务器**：`Ctrl+C`
-
-> 首次运行前需先 `bundle install` 安装依赖（见下方「本地环境 → Ruby」）。
+浏览器访问 http://localhost:4000/
 
 ### UI 快速测试 (无需数据库)
 
