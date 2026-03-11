@@ -688,15 +688,29 @@
 
     // ==================== 魔方动画 ====================
 
+
     function loadTwistyPlayer(container, solve) {
         container.innerHTML = '<div style="color:#888;font-size:0.8em">加载中...</div>';
+        // NOTE: 优先用 solution 列（纯解法）
+        var reconText = solve.solution || solve.caption || '';
+        var setup = solve.optimalScramble || solve.wcaScramble || extractScrambleFromRecon(reconText);
+        var alg = extractAlgFromRecon(reconText);
+
+        // NOTE: SQ1 用 cubedb.net iframe（twisty-player 对 SQ1 渲染不友好）
+        if (solve.event === 'SQ1') {
+            var cubedbPuzzle = ReconUtils.eventToCubedbPuzzle(solve.event);
+            var cubedbUrl = 'https://cubedb.net/?puzzle=' + cubedbPuzzle +
+                '&scramble=' + encodeURIComponent(setup) +
+                '&alg=' + encodeURIComponent(alg);
+            container.innerHTML = '<iframe src="' + cubedbUrl + '" ' +
+                'style="width:100%;height:400px;border:1px solid #444;border-radius:8px" ' +
+                'allowfullscreen></iframe>';
+            return;
+        }
+
         window.ensureTwisty().then(function () {
             var Ctor = window.__TwistyPlayerCtor;
             if (!Ctor) { container.innerHTML = ''; return; }
-            // NOTE: 优先用 solution 列（纯解法）
-            var reconText = solve.solution || solve.caption || '';
-            var setup = solve.optimalScramble || solve.wcaScramble || extractScrambleFromRecon(reconText);
-            var alg = extractAlgFromRecon(reconText);
             var puzzle = ReconUtils.eventToPuzzle(solve.event);
             var player = new Ctor({
                 puzzle: puzzle,
