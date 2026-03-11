@@ -73,24 +73,30 @@ var ReconAlgUtils = (function () {
     function snapToTokenBoundary(offset, tokens) {
         if (tokens.length === 0) return offset;
 
+        // NOTE: 在 token 内部 → 吸附到更近的边界
         for (var i = 0; i < tokens.length; i++) {
             var t = tokens[i];
-            // NOTE: 在 token 内部 → 吸附到更近的边界
             if (offset > t.start && offset < t.end) {
                 return (offset - t.start <= t.end - offset) ? t.start : t.end;
             }
         }
 
-        // NOTE: 在 token 间的空白区域 → 吸附到最近的 token 边界
-        var bestDist = Infinity;
-        var bestPos = offset;
-        for (var j = 0; j < tokens.length; j++) {
-            var ds = Math.abs(offset - tokens[j].start);
-            var de = Math.abs(offset - tokens[j].end);
-            if (ds < bestDist) { bestDist = ds; bestPos = tokens[j].start; }
-            if (de < bestDist) { bestDist = de; bestPos = tokens[j].end; }
+        // NOTE: 恰好在 token 边界上（start 或 end）→ 保持
+        for (var k = 0; k < tokens.length; k++) {
+            if (offset === tokens[k].start || offset === tokens[k].end) {
+                return offset;
+            }
         }
-        return bestPos;
+
+        // NOTE: 在 token 间的空白区域 → 吸附到前一个 token 的 end
+        // 语义：光标表示"已执行到此处"，所以停在前一步的末尾
+        for (var j = tokens.length - 1; j >= 0; j--) {
+            if (offset > tokens[j].end) {
+                return tokens[j].end;
+            }
+        }
+        // NOTE: 在第一个 token 之前
+        return tokens[0].start;
     }
 
     return {
