@@ -1122,8 +1122,6 @@
                     alg: fullAlg
                 });
                 container.appendChild(currentPlayer);
-                // NOTE: 首次创建后立即同步光标位置
-                syncCursorToPlayer();
             }).catch(function () {});
         }
 
