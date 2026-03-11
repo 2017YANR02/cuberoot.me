@@ -172,8 +172,7 @@ layout: default
             <div class="recon-form-row">
                 <div class="recon-form-group" style="position:relative">
                     <label data-i18n-en="Competition" data-i18n-zh="比赛">Competition</label>
-                    <input type="text" id="rf-comp" autocomplete="off" placeholder="Search competition (optional)"
-                        data-i18n-placeholder-en="Search competition (optional)" data-i18n-placeholder-zh="搜索比赛名称（可选）">
+                    <input type="text" id="rf-comp" autocomplete="off">
                     <!-- NOTE: 选中比赛后显示富内容（日期+国旗+名称），隐藏 input -->
                     <div id="rf-comp-display" class="comp-display" style="display:none"></div>
                 </div>
@@ -240,8 +239,7 @@ layout: default
             <!-- 备注 -->
             <div class="recon-form-group">
                 <label data-i18n-en="Note" data-i18n-zh="备注">Note</label>
-                <textarea id="rf-note" rows="3" placeholder="optional" data-i18n-placeholder-en="optional"
-                    data-i18n-placeholder-zh="可选"></textarea>
+                <textarea id="rf-note" rows="3"></textarea>
             </div>
             <!-- NOTE: 校验错误提示容器（JS 动态填充） -->
             <div id="rf-errors" class="rf-errors" style="display:none"></div>

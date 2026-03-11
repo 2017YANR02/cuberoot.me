@@ -82,7 +82,10 @@
         function buildPersonHtml(name, iso2, wcaId) {
             var flag = iso2 ? '<span class="fi fi-' + iso2 + '"></span> ' : '';
             var idBadge = wcaId ? '<span class="solver-wca-id">' + wcaId + '</span> ' : '';
-            return flag + idBadge + '<span>' + name + '</span>';
+            // NOTE: 复用 ReconUtils.parseSolverName()——中文模式下只显示中文名（DRY）
+            var parsed = RU.parseSolverName ? RU.parseSolverName(name) : { en: name, zh: null };
+            var displayName = (isZh() && parsed.zh) ? parsed.zh : parsed.en;
+            return flag + idBadge + '<span>' + displayName + '</span>';
         }
 
         /** 显示人员富内容 div，隐藏 input */
