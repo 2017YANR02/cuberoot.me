@@ -812,6 +812,31 @@
         // NOTE: API 基址——与 recon_api.js 保持一致
         var API_BASE = 'https://toolkit.cuberoot.me/recon/api/';
 
+        // NOTE: 缓存已有选手列表（DOMContentLoaded 时预拉取，避免 focus 时才加载）
+        var cachedPersons = null;
+
+        // NOTE: 预拉取——异步不阻塞页面，用户开始输入时本地数据已就绪
+        fetch(API_BASE + '?action=listPersons')
+            .then(function (r) { return r.json(); })
+            .then(function (persons) { cachedPersons = persons; })
+            .catch(function (e) { console.warn('listPersons prefetch failed:', e); });
+
+        /** 将 listPersons 原始格式转为下拉渲染格式（DRY——消除三处重复映射） */
+        function mapPersonsToDropdownFormat(persons) {
+            return persons.map(function (p) {
+                return { name: p.person, iso2: p.person_country || '', wcaId: p.person_id };
+            });
+        }
+
+        /** 从本地缓存中模糊过滤匹配项 */
+        function filterLocalPersons(persons, query) {
+            var q = query.toLowerCase();
+            return persons.filter(function (p) {
+                return p.person.toLowerCase().indexOf(q) >= 0 ||
+                    (p.person_id && p.person_id.toLowerCase().indexOf(q) >= 0);
+            });
+        }
+
         /** 渲染人员下拉列表（选手/复盘者共用） */
         function renderPersonDropdown(dropdownEl, results) {
             if (!results || results.length === 0) {
@@ -829,18 +854,43 @@
             dropdownEl.innerHTML = html;
         }
 
-        /** 为人员 input 绑定搜索输入事件（debounce + API 调用） */
-        function bindPersonSearch(inputEl, dropdownEl, displayEl) {
+        /**
+         * 为人员 input 绑定搜索事件（Slack 模式：本地优先，0 结果才调 WCA API）
+         * @param {HTMLElement} inputEl   - 输入框
+         * @param {HTMLElement} dropdownEl - 下拉容器
+         * @param {HTMLElement} displayEl  - 富显示容器
+         * @param {Object} [opts]          - 可选配置
+         * @param {Function} [opts.localPersonsFn] - 返回本地人员数组（或 null）
+         * @param {Function} [opts.onSelect]       - 选中回调 (name, iso2, wcaId)
+         */
+        function bindPersonSearch(inputEl, dropdownEl, displayEl, opts) {
+            opts = opts || {};
             var debounceTimer = null;
 
             inputEl.addEventListener('input', function () {
                 var q = this.value.trim();
                 clearTimeout(debounceTimer);
-                if (q.length < 2) {
+                // NOTE: 中文单字语义足够精确（如"耿"），阈值 1；拉丁字母阈值 2
+                var minLen = /[^\x00-\x7F]/.test(q) ? 1 : 2;
+                if (q.length < minLen) {
                     dropdownEl.style.display = 'none';
                     return;
                 }
-                // NOTE: 200ms debounce 防止快速输入频繁请求
+
+                // NOTE: Slack 模式——先本地过滤（即时）
+                var localData = opts.localPersonsFn ? opts.localPersonsFn() : null;
+                if (localData) {
+                    var localMatches = filterLocalPersons(localData, q);
+                    if (localMatches.length > 0) {
+                        // NOTE: 本地有结果 → 立即渲染，不调 WCA API
+                        renderPersonDropdown(dropdownEl, mapPersonsToDropdownFormat(localMatches));
+                        positionDropdownFor(inputEl, dropdownEl);
+                        dropdownEl.style.display = 'block';
+                        return;
+                    }
+                }
+
+                // NOTE: 本地无结果 → 200ms debounce 后调 WCA API
                 debounceTimer = setTimeout(function () {
                     dropdownEl.innerHTML = '<div class="solver-dropdown-loading"><span class="solver-spinner"></span>' +
                         (isZh() ? '搜索中...' : 'Searching...') + '</div>';
@@ -850,6 +900,8 @@
                     fetch(API_BASE + '?action=searchSolvers&q=' + encodeURIComponent(q))
                         .then(function (r) { return r.json(); })
                         .then(function (results) {
+                            // NOTE: 用户已选中 → 不再更新下拉（防延迟回调覆盖）
+                            if (displayEl.style.display !== 'none') return;
                             renderPersonDropdown(dropdownEl, results);
                             positionDropdownFor(inputEl, dropdownEl);
                             dropdownEl.style.display = 'block';
@@ -861,7 +913,7 @@
                 }, 200);
             });
 
-            // NOTE: 选中下拉项 → 设置 input 值 + 显示富内容
+            // NOTE: 选中下拉项 → 设置 input 值 + 显示富内容 + 调用 onSelect 回调
             dropdownEl.addEventListener('mousedown', function (e) {
                 var item = e.target.closest('.solver-dropdown-item');
                 if (item) {
@@ -869,6 +921,9 @@
                     dropdownEl.style.display = 'none';
                     inputEl.classList.remove('default-val');
                     showPersonDisplay(displayEl, inputEl, item.dataset.name, item.dataset.iso2, item.dataset.wcaid);
+                    if (opts.onSelect) {
+                        opts.onSelect(item.dataset.name, item.dataset.iso2 || '', item.dataset.wcaid || '');
+                    }
                 }
             });
 
@@ -893,39 +948,20 @@
         solverDropdown.className = 'solver-dropdown';
         document.body.appendChild(solverDropdown);
 
-        bindPersonSearch(solverInput, solverDropdown, solverDisplay);
+        bindPersonSearch(solverInput, solverDropdown, solverDisplay, {
+            localPersonsFn: function () { return cachedPersons; },
+            // NOTE: 选中时缓存国籍，提交时写入 personCountry 字段
+            onSelect: function (name, iso2) { cachedSolverIso2 = iso2; }
+        });
 
-        // NOTE: 缓存已有选手列表，避免重复请求
-        var cachedPersons = null;
-
+        // NOTE: focus 空输入框时展示全部已有选手（快速选择常用选手）
         solverInput.addEventListener('focus', function () {
-            // NOTE: 已有富显示或有输入值时不弹下拉
             if (solverDisplay.style.display !== 'none') return;
             if (this.value.trim().length > 0) return;
-            if (cachedPersons) {
-                renderPersonDropdown(solverDropdown, cachedPersons.map(function (p) { return { name: p.person, iso2: '', wcaId: p.person_id }; }));
-                positionDropdownFor(solverInput, solverDropdown);
-                solverDropdown.style.display = 'block';
-                return;
-            }
-            // NOTE: 首次加载显示 loading spinner
-            solverDropdown.innerHTML = '<div class="solver-dropdown-loading"><span class="solver-spinner"></span>' +
-                (isZh() ? '加载中...' : 'Loading...') + '</div>';
+            if (!cachedPersons) return;
+            renderPersonDropdown(solverDropdown, mapPersonsToDropdownFormat(cachedPersons));
             positionDropdownFor(solverInput, solverDropdown);
             solverDropdown.style.display = 'block';
-
-            fetch(API_BASE + '?action=listPersons')
-                .then(function (r) { return r.json(); })
-                .then(function (persons) {
-                    cachedPersons = persons;
-                    renderPersonDropdown(solverDropdown, persons.map(function (p) { return { name: p.person, iso2: '', wcaId: p.person_id }; }));
-                    positionDropdownFor(solverInput, solverDropdown);
-                    solverDropdown.style.display = 'block';
-                })
-                .catch(function (e) {
-                    console.warn('listPersons failed:', e);
-                    solverDropdown.style.display = 'none';
-                });
         });
 
         // ==================== 复盘者搜索下拉 ====================
@@ -935,7 +971,9 @@
         reconerDropdown.className = 'solver-dropdown';
         document.body.appendChild(reconerDropdown);
 
-        bindPersonSearch(reconerInput, reconerDropdown, reconerDisplay);
+        bindPersonSearch(reconerInput, reconerDropdown, reconerDisplay, {
+            localPersonsFn: function () { return cachedPersons; }
+        });
 
         // ==================== 预览动画 ====================
 
