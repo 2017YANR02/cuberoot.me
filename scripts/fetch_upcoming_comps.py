@@ -368,8 +368,12 @@ def _integrate_cubing_china(comps_map, cubers):
             # NOTE: alias 去连字符 = WCA comp ID，确保前端链接正确
             comp_id = alias.replace("-", "")
 
-            # NOTE: 如果 WCA API 已经返回了这场比赛（理论上不会），跳过避免重复
+            # NOTE: WCA API 可能已创建此条目，但缺少 cubing.com 独有字段
             if comp_id in comps_map:
+                # NOTE: 补充中文名、中文城市、cubing.com 链接
+                comps_map[comp_id]["name_zh"] = comp["name"]
+                comps_map[comp_id]["city_zh"] = comp["city"]
+                comps_map[comp_id]["cubing_china_url"] = f"https://cubing.com/competition/{alias}"
                 continue
 
             competitor_ids = _fetch_cubing_china_competitors(alias)
