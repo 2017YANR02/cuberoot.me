@@ -134,12 +134,8 @@ if File.exist?(backup_path)
   sub_comp_wca_ids = {}
   comps.each { |c| sub_comp_wca_ids[c] = comp_wca_ids_map[c] if comp_wca_ids_map[c] }
 
-  # comp_names_zh 由 Python 脚本独立生成，从磁盘读取并过滤
-  sub_comp_names_zh = {}
-  if File.exist?(comp_zh_path)
-    all_zh = JSON.parse(File.read(comp_zh_path))
-    comps.each { |c| sub_comp_names_zh[c] = all_zh[c] if all_zh[c] }
-  end
+  # NOTE: 全量嵌入 comp_names_zh，确保新比赛即时翻译，无需等 backup 更新
+  sub_comp_names_zh = File.exist?(comp_zh_path) ? JSON.parse(File.read(comp_zh_path)) : {}
 
   # NOTE: 构建 cell_name → name 别名映射（仅 name ≠ cell_name 的比赛）
   # 用途：前端搜索时支持用全称（name）匹配简称（cell_name）
