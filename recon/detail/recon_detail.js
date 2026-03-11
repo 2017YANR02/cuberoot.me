@@ -359,12 +359,21 @@
             var setupStr = encodeURIComponent(scrambleForPlayer);
             var algStr = encodeURIComponent(extractAlgWithComments(algSourceText));
             var puzzleStr = ReconUtils.eventToPuzzle(s.event);
-            var algUrl = 'https://alg.cubing.net/?setup=' + setupStr + '&alg=' + algStr + '&puzzle=' + puzzleStr;
+            // NOTE: alg.cubing.net 只支持 NxNxN 正阶魔方，非正阶用 alpha.twizzle.net
+            var isCube = /^\d+x\d+x\d+$/.test(puzzleStr);
+            var algUrl, algSiteName;
+            if (isCube) {
+                algUrl = 'https://alg.cubing.net/?setup=' + setupStr + '&alg=' + algStr + '&puzzle=' + puzzleStr;
+                algSiteName = 'alg.cubing.net';
+            } else {
+                algUrl = 'https://alpha.twizzle.net/edit/?puzzle=' + puzzleStr + '&setup-alg=' + setupStr + '&alg=' + algStr;
+                algSiteName = 'twizzle.net';
+            }
             // NOTE: cubedb 用短格式（'3x3'、'2x2'等），取 puzzleStr 第一段
-            var cubedbPuzzle = puzzleStr.replace(/x[0-9]+x[0-9]+/, '').length ? puzzleStr.split('x').slice(0, 2).join('x') : puzzleStr;
+            var cubedbPuzzle = puzzleStr.split('x').slice(0, 2).join('x');
             var cubedbUrl = 'https://cubedb.net/?puzzle=' + cubedbPuzzle + '&scramble=' + setupStr + '&alg=' + algStr;
             html += '<div class="recon-external-links">';
-            html += '<a href="' + algUrl + '" target="_blank" rel="noopener noreferrer">alg.cubing.net</a>';
+            html += '<a href="' + algUrl + '" target="_blank" rel="noopener noreferrer">' + algSiteName + '</a>';
             html += ' <a href="' + cubedbUrl + '" target="_blank" rel="noopener noreferrer">cubedb.net</a>';
             var captionText = generateCaption(algSourceText, s);
             if (captionText) {
