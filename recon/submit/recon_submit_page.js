@@ -931,6 +931,14 @@
                 setTimeout(function () { dropdownEl.style.display = 'none'; }, 150);
             });
 
+            // NOTE: 重新聚焦已有文本时，重新触发搜索恢复下拉
+            inputEl.addEventListener('focus', function () {
+                if (displayEl.style.display !== 'none') return;
+                if (this.value.trim().length > 0) {
+                    this.dispatchEvent(new Event('input'));
+                }
+            });
+
             // NOTE: 点击 display div 的 × 按钮 → 清除选中态，恢复 input 可编辑
             displayEl.addEventListener('click', function (e) {
                 if (e.target.closest('.person-display-clear')) {
