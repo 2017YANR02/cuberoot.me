@@ -162,6 +162,24 @@ var ReconUtils = (function () {
         return EVENT_PUZZLE_MAP[event] || '3x3x3';
     }
 
+    // NOTE: cubedb.net 的 puzzle 参数格式与 twisty 不同
+    var EVENT_CUBEDB_MAP = {
+        '2x2': '2x2',
+        '4x4': '4x4', '4BLD': '4x4',
+        '5x5': '5x5', '5BLD': '5x5',
+        '6x6': '6x6',
+        '7x7': '7x7',
+        'Megaminx': 'Megaminx',
+        'Pyraminx': 'Pyraminx',
+        'Skewb': 'Skewb',
+        'SQ1': 'Square1',
+        'Clock': 'Clock'
+    };
+    /** 项目代码转 cubedb.net puzzle 参数，默认 3x3 */
+    function eventToCubedbPuzzle(event) {
+        return EVENT_CUBEDB_MAP[event] || '3x3';
+    }
+
     return {
         escHtml: escHtml,
         countryFlag: countryFlag,
@@ -175,6 +193,7 @@ var ReconUtils = (function () {
         displayCompName: displayCompName,
         compWcaUrl: compWcaUrl,
         personWcaUrl: personWcaUrl,
-        eventToPuzzle: eventToPuzzle
+        eventToPuzzle: eventToPuzzle,
+        eventToCubedbPuzzle: eventToCubedbPuzzle
     };
 })();
