@@ -7,12 +7,6 @@
     'use strict';
 
     document.addEventListener('DOMContentLoaded', function () {
-        // NOTE: ➕ 按钮 → 跳转到独立提交页面
-        var addBtn = document.getElementById('btn-add-recon');
-        if (!addBtn) return;
-        addBtn.addEventListener('click', function () {
-            location.href = '/recon/submit/';
-        });
 
         // NOTE: 页面加载时恢复 localStorage 中的本地复盘
         ReconLocalStore.restoreToRecon();
