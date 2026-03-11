@@ -397,7 +397,7 @@
         }
         // NOTE: 仅三阶/三阶单手，且有双层转动时显示标准化 cross
         if (typeof ReconNormCross !== 'undefined' &&
-            (s.event === '3x3' || s.event === '3OH') && solutionText) {
+            (s.event === '3x3' || s.event === 'OH') && solutionText) {
             var normResult = ReconNormCross.normalize(solutionText);
             if (normResult && normResult.hasWideMoves) {
                 html += '<div class="detail-recon">';

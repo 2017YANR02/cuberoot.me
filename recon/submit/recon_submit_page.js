@@ -280,6 +280,7 @@
             document.getElementById('rf-method').value = s.method || '';
             document.getElementById('rf-comp').value = s.comp || '';
             document.getElementById('rf-note').value = s.note || '';
+            autoResize(document.getElementById('rf-note'));
             document.getElementById('rf-round').value = s.round || '';
             document.getElementById('rf-solve-num').value = s.solveNum ? String(s.solveNum) : '';
 
@@ -300,6 +301,7 @@
 
             document.getElementById('rf-scramble').value = scramblePrefill;
             document.getElementById('rf-recon').value = solutionText;
+            autoResize(document.getElementById('rf-recon'));
 
             // NOTE: 预填额外字段值（字段已在 HTML 中，不再动态创建）
             var officialEl = document.getElementById('rf-official');
@@ -486,7 +488,18 @@
                 display.style.display = 'none';
             }
         }
-        document.getElementById('rf-recon').addEventListener('input', updateStatsDisplay);
+        // NOTE: textarea 自适应高度——先收缩到最小再撑开到 scrollHeight
+        function autoResize(el) {
+            el.style.height = 'auto';
+            el.style.height = el.scrollHeight + 'px';
+        }
+        var reconEl = document.getElementById('rf-recon');
+        reconEl.addEventListener('input', function () {
+            updateStatsDisplay();
+            autoResize(reconEl);
+        });
+        var noteEl = document.getElementById('rf-note');
+        noteEl.addEventListener('input', function () { autoResize(noteEl); });
         document.getElementById('rf-single').addEventListener('input', function () {
             updateStatsDisplay();
             // NOTE: rawTime 变化时也联动更新 memo 计算
