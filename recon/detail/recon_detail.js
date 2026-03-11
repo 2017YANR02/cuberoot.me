@@ -793,6 +793,7 @@
     var currentDetailPlayer = null;
     var detailScramble = '';
     var detailSolutionText = '';
+    var detailFullAlg = ''; // NOTE: 完整清理后的公式，用于 timestamp 计算
 
     function loadTwistyPlayer(container, solve) {
         container.innerHTML = '<div style="color:#888;font-size:0.8em">加载中...</div>';
@@ -804,6 +805,7 @@
         // NOTE: 保存数据用于光标跟随
         detailScramble = setup;
         detailSolutionText = reconText;
+        detailFullAlg = alg; // NOTE: 完整清理后的公式
 
         // NOTE: SQ1 用 cubedb.net iframe（twisty-player 对 SQ1 渲染不友好）
         if (solve.event === 'SQ1') {
@@ -898,20 +900,13 @@
 
     /** 根据文本偏移同步 twisty-player 并显示可视光标 */
     function syncDetailAtOffset(reconTextEl, textOffset) {
-        // NOTE: 先插入可视光标（在更新 twisty 前，因为 insertVisualCursor 会修改 DOM）
+        // NOTE: 先插入可视光标
         insertVisualCursor(reconTextEl, textOffset);
 
         if (!currentDetailPlayer || !detailSolutionText) return;
 
-        // NOTE: 用原始纯文本分割（不受光标 span 影响）
-        var fullText = detailSolutionText;
-        // NOTE: reconTextEl.textContent 会包含光标的零宽空格，用 detailSolutionText 的 formatReconText 前文本
-        // 但 textOffset 是基于渲染后的 textContent 的，所以还是用 textContent
-        // 重新获取去掉光标后的纯文本
-        var cursorEl = reconTextEl.querySelector('.detail-cursor');
-        var plainText = reconTextEl.textContent || '';
-        // NOTE: 去掉零宽空格的影响
-        plainText = plainText.replace(/\u200B/g, '');
+        // NOTE: 去掉零宽空格获取纯文本
+        var plainText = (reconTextEl.textContent || '').replace(/\u200B/g, '');
 
         var textBefore = plainText.substring(0, textOffset);
         var textAfter = plainText.substring(textOffset);
