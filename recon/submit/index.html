@@ -35,7 +35,7 @@ layout: default
             <!-- 解法 -->
             <div class="recon-form-group">
                 <label data-i18n-en="Solution" data-i18n-zh="解法">Solution</label>
-                <textarea id="rf-recon" rows="12" placeholder="Paste solution..."
+                <textarea id="rf-recon" rows="4" style="overflow:hidden" placeholder="Paste solution..."
                     data-i18n-placeholder-en="Paste solution...&#10;e.g.:&#10;x2 // insp&#10;R' F R D' F' // xxcross&#10;..."
                     data-i18n-placeholder-zh="粘贴解法...&#10;例如：&#10;x2 // insp&#10;R' F R D' F' // xxcross&#10;..."
                     required></textarea>
@@ -236,7 +236,7 @@ layout: default
             <!-- 备注 -->
             <div class="recon-form-group">
                 <label data-i18n-en="Note" data-i18n-zh="备注">Note</label>
-                <textarea id="rf-note" rows="3"></textarea>
+                <textarea id="rf-note" rows="1" style="overflow:hidden"></textarea>
             </div>
             <!-- NOTE: 校验错误提示容器（JS 动态填充） -->
             <div id="rf-errors" class="rf-errors" style="display:none"></div>
