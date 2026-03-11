@@ -62,8 +62,9 @@
     var compWcaIdMap = {};
     // NOTE: 比赛名 → 国家代码映射表（同上）
     var compCountryMap = {};
-    // NOTE: 缓存选手国籍 ISO2——searchSolvers 返回后存入，提交时写入数据库
+    // NOTE: 缓存选手国籍 ISO2 和 WCA ID——选中后存入，提交时写入数据库
     var cachedSolverIso2 = '';
+    var cachedSolverWcaId = '';
 
     document.addEventListener('DOMContentLoaded', function () {
         // NOTE: 实时读取 locale，避免闭包缓存导致的时序问题（i18n.js 可能在本脚本之后更新 localStorage）
@@ -958,8 +959,8 @@
 
         bindPersonSearch(solverInput, solverDropdown, solverDisplay, {
             localPersonsFn: function () { return cachedPersons; },
-            // NOTE: 选中时缓存国籍，提交时写入 personCountry 字段
-            onSelect: function (name, iso2) { cachedSolverIso2 = iso2; }
+            // NOTE: 选中时缓存国籍和 WCA ID，提交时写入 personCountry/personId 字段
+            onSelect: function (name, iso2, wcaId) { cachedSolverIso2 = iso2; cachedSolverWcaId = wcaId; }
         });
 
         // NOTE: focus 空输入框时展示全部已有选手（快速选择常用选手）
@@ -982,6 +983,12 @@
         bindPersonSearch(reconerInput, reconerDropdown, reconerDisplay, {
             localPersonsFn: function () { return cachedPersons; }
         });
+
+        // NOTE: 复盘日期默认当天（新增模式下输入框为空时自动填入）
+        var reconDateEl = document.getElementById('rf-edit-reconDate');
+        if (reconDateEl && !reconDateEl.value) {
+            reconDateEl.value = new Date().toISOString().slice(0, 10);
+        }
 
         // ==================== 预览动画 ====================
 
@@ -1277,8 +1284,9 @@
                 compWcaId: compWcaIdMap[document.getElementById('rf-comp').value.trim()] || '',
                 // NOTE: 提交时自动查表获取比赛国家
                 country: compCountryMap[document.getElementById('rf-comp').value.trim()] || '',
-                // NOTE: 选手国籍（从 searchSolvers API 缓存的 iso2）
+                // NOTE: 选手国籍和 WCA ID（从搜索选中时缓存）
                 personCountry: cachedSolverIso2 || '',
+                personId: cachedSolverWcaId || '',
                 note: document.getElementById('rf-note').value.trim(),
                 round: document.getElementById('rf-round').value,
                 solveNum: document.getElementById('rf-solve-num').value ? parseInt(document.getElementById('rf-solve-num').value) : null,
@@ -1417,8 +1425,9 @@
         if (comp && compWcaIdMap[comp]) solve.compWcaId = compWcaIdMap[comp];
         // NOTE: 提交时自动查表获取比赛国家
         if (comp && compCountryMap[comp]) solve.country = compCountryMap[comp];
-        // NOTE: 选手国籍（从 searchSolvers API 缓存的 iso2）
+        // NOTE: 选手国籍和 WCA ID（从搜索选中时缓存）
         if (cachedSolverIso2) solve.personCountry = cachedSolverIso2;
+        if (cachedSolverWcaId) solve.personId = cachedSolverWcaId;
         if (scramble) solve.wcaScramble = scramble;
         // NOTE: optimalScramble 也在新增模式下传递
         var optimalScramble = document.getElementById('rf-edit-optimalScramble').value.trim();
