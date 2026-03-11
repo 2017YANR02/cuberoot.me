@@ -1194,6 +1194,90 @@
         reconElForCursor.addEventListener('click', debounceCursorSync);
         reconElForCursor.addEventListener('keyup', debounceCursorSync);
 
+        // ==================== 箭头键 Token 跳转 ====================
+
+        // NOTE: 魔方指令 token 正则（R, R', R2, R2', x, y2 等）
+        var TOKEN_RE = /[RUFLDBrufldbxyzMSE][2']?'?/g;
+
+        /**
+         * 扫描全文，返回所有非注释区域的 token 位置数组。
+         * 同时返回每行 // 注释的起始位置，用于判断光标是否在注释区。
+         * @returns {{ tokens: {start:number, end:number}[], commentStarts: {pos:number, lineEnd:number}[] }}
+         */
+        function findTokenPositions(text) {
+            var tokens = [];
+            var commentStarts = [];
+            var lines = text.split('\n');
+            var offset = 0; // 当前行在全文中的字符偏移
+            for (var i = 0; i < lines.length; i++) {
+                var line = lines[i];
+                var commentIdx = line.indexOf('//');
+                if (commentIdx >= 0) {
+                    commentStarts.push({ pos: offset + commentIdx, lineEnd: offset + line.length });
+                }
+                // NOTE: 只在注释前的部分扫描 token
+                var instrPart = commentIdx >= 0 ? line.substring(0, commentIdx) : line;
+                TOKEN_RE.lastIndex = 0;
+                var m;
+                while ((m = TOKEN_RE.exec(instrPart)) !== null) {
+                    tokens.push({ start: offset + m.index, end: offset + m.index + m[0].length });
+                }
+                offset += line.length + 1; // +1 是换行符
+            }
+            return { tokens: tokens, commentStarts: commentStarts };
+        }
+
+        /** 判断光标是否在注释区域内 */
+        function isCursorInComment(cursorPos, commentStarts) {
+            for (var i = 0; i < commentStarts.length; i++) {
+                var c = commentStarts[i];
+                if (cursorPos >= c.pos && cursorPos <= c.lineEnd) return true;
+            }
+            return false;
+        }
+
+        reconElForCursor.addEventListener('keydown', function (e) {
+            if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+
+            var text = reconElForCursor.value;
+            var cursorPos = reconElForCursor.selectionStart;
+            var result = findTokenPositions(text);
+
+            // NOTE: 光标在注释区域内时，保持默认逐字符行为
+            if (isCursorInComment(cursorPos, result.commentStarts)) return;
+
+            var tokens = result.tokens;
+            if (tokens.length === 0) return;
+
+            var newPos = cursorPos;
+            if (e.key === 'ArrowRight') {
+                // NOTE: 找当前或下一个 token（start >= cursorPos），跳到其末尾
+                for (var i = 0; i < tokens.length; i++) {
+                    if (tokens[i].start >= cursorPos) {
+                        newPos = tokens[i].end;
+                        break;
+                    }
+                }
+                // NOTE: 如果没找到（已在最后一个 token 之后），不拦截
+                if (newPos === cursorPos) return;
+            } else {
+                // ArrowLeft: 找最后一个 end < cursorPos 的 token，跳到其末尾
+                for (var j = tokens.length - 1; j >= 0; j--) {
+                    if (tokens[j].end < cursorPos) {
+                        newPos = tokens[j].end;
+                        break;
+                    }
+                }
+                if (newPos === cursorPos) return;
+            }
+
+            e.preventDefault();
+            reconElForCursor.selectionStart = newPos;
+            reconElForCursor.selectionEnd = newPos;
+            // NOTE: 跳转后同步 twisty 预览
+            debounceCursorSync();
+        });
+
         // ==================== 表单提交 ====================
 
         document.getElementById('recon-form').addEventListener('submit', handleSubmit);
