@@ -1066,22 +1066,24 @@
 
         var previewActive = false;  // 是否已激活预览
         var twistyDebounceTimer = null;
+        var currentPlayer = null;   // 当前 TwistyPlayer 实例引用
 
-        /** 从解法文本提取纯公式（去统计行、打乱行和注释） */
-        function extractAlgForPreview() {
+        /** 获取打乱公式 */
+        function getScramble() {
             var optScr = document.getElementById('rf-edit-optimalScramble').value.trim();
             var wcaScr = document.getElementById('rf-scramble').value.trim();
-            var scramble = optScr || wcaScr;
-            var recon = document.getElementById('rf-recon').value.trim();
+            return optScr || wcaScr;
+        }
 
-            var reconLines = recon.split('\n');
+        /** 从解法文本提取纯公式（去统计行、打乱行和注释） */
+        function cleanReconText(text) {
+            var scramble = getScramble();
+            var lines = text.split('\n');
             var scrambleLineIdx = -1;
-            if (scramble && reconLines.length >= 2 && /^\d+STM\s/i.test(reconLines[0])) {
-                if (reconLines[1].trim() === scramble) {
-                    scrambleLineIdx = 1;
-                }
+            if (scramble && lines.length >= 2 && /^\d+STM\s/i.test(lines[0])) {
+                if (lines[1].trim() === scramble) scrambleLineIdx = 1;
             }
-            var alg = reconLines
+            var alg = lines
                 .filter(function (line, idx) { return idx !== scrambleLineIdx; })
                 .map(function (line) {
                     var idx = line.indexOf('//');
@@ -1091,30 +1093,64 @@
                     return line.length > 0 && !/^\d+STM\s/i.test(line);
                 })
                 .join('\n');
-            alg = ReconAlgUtils.cleanForPlayer(alg);
-            return { scramble: scramble, alg: alg };
+            return ReconAlgUtils.cleanForPlayer(alg);
         }
 
-        /** 创建/更新 twisty-player 预览 */
-        function updateTwistyPreview() {
-            var data = extractAlgForPreview();
-            if (!data.scramble && !data.alg) return;
+        /** 创建 twisty-player 并显示（首次或内容变化时） */
+        function createTwistyPlayer() {
+            var scramble = getScramble();
+            var fullAlg = cleanReconText(document.getElementById('rf-recon').value);
+            if (!scramble && !fullAlg) return;
 
             if (typeof window.ensureTwisty !== 'function') return;
             window.ensureTwisty().then(function () {
                 var Ctor = window.__TwistyPlayerCtor;
                 if (!Ctor) return;
                 var container = document.getElementById('rf-twisty-container');
-                // NOTE: 每次销毁重建（TwistyPlayer 属性更新 API 不稳定）
                 container.innerHTML = '';
                 container.style.display = 'block';
-                var player = new Ctor({
+                currentPlayer = new Ctor({
                     puzzle: '3x3x3',
-                    experimentalSetupAlg: data.scramble,
-                    alg: data.alg
+                    experimentalSetupAlg: scramble,
+                    alg: fullAlg
                 });
-                container.appendChild(player);
+                container.appendChild(currentPlayer);
+                // NOTE: 首次创建后立即同步光标位置
+                syncCursorToPlayer();
             }).catch(function () {});
+        }
+
+        /**
+         * NOTE: 光标跟随——将光标前的移动设为 setupAlg，光标后的设为 alg。
+         * 这样魔方直接显示光标处的状态，和 alg.cubing.net 行为一致。
+         */
+        function syncCursorToPlayer() {
+            if (!currentPlayer || !previewActive) return;
+            var container = document.getElementById('rf-twisty-container');
+            if (container.style.display === 'none') return;
+
+            var reconEl = document.getElementById('rf-recon');
+            var cursorPos = reconEl.selectionStart;
+            var fullText = reconEl.value;
+
+            // NOTE: 在光标位置分割原文，分别清理
+            var textBefore = fullText.substring(0, cursorPos);
+            var textAfter = fullText.substring(cursorPos);
+
+            var algBefore = cleanReconText(textBefore);
+            var algAfter = cleanReconText(textAfter);
+
+            var scramble = getScramble();
+            // NOTE: setupAlg = 打乱 + 光标前的移动（魔方跳到此状态）
+            var setup = scramble ? scramble + '\n' + algBefore : algBefore;
+
+            try {
+                currentPlayer.experimentalSetupAlg = setup;
+                currentPlayer.alg = algAfter;
+            } catch (e) {
+                // NOTE: 属性更新失败时 fallback 到重建
+                createTwistyPlayer();
+            }
         }
 
         // NOTE: 按钮首次点击加载 twisty 并激活，后续切换显示/隐藏
@@ -1123,7 +1159,7 @@
         previewBtn.addEventListener('click', function () {
             if (!previewActive) {
                 previewActive = true;
-                updateTwistyPreview();
+                createTwistyPlayer();
                 previewBtn.textContent = isZhBtn ? '隐藏预览' : 'Hide Preview';
             } else {
                 var container = document.getElementById('rf-twisty-container');
@@ -1135,17 +1171,28 @@
             }
         });
 
-        // NOTE: 激活后，解法/打乱变化时 500ms debounce 自动更新
+        // NOTE: 激活后，解法/打乱变化时重建 player
         function debounceTwistyUpdate() {
             if (!previewActive) return;
             var container = document.getElementById('rf-twisty-container');
             if (container.style.display === 'none') return;
             clearTimeout(twistyDebounceTimer);
-            twistyDebounceTimer = setTimeout(updateTwistyPreview, 500);
+            twistyDebounceTimer = setTimeout(createTwistyPlayer, 500);
         }
         document.getElementById('rf-recon').addEventListener('input', debounceTwistyUpdate);
         document.getElementById('rf-scramble').addEventListener('input', debounceTwistyUpdate);
         document.getElementById('rf-edit-optimalScramble').addEventListener('input', debounceTwistyUpdate);
+
+        // NOTE: 光标位置变化时同步 twisty 状态（click/键盘移动光标）
+        var cursorSyncTimer = null;
+        function debounceCursorSync() {
+            if (!previewActive || !currentPlayer) return;
+            clearTimeout(cursorSyncTimer);
+            cursorSyncTimer = setTimeout(syncCursorToPlayer, 100);
+        }
+        var reconElForCursor = document.getElementById('rf-recon');
+        reconElForCursor.addEventListener('click', debounceCursorSync);
+        reconElForCursor.addEventListener('keyup', debounceCursorSync);
 
         // ==================== 表单提交 ====================
 
