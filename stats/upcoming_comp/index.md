@@ -93,7 +93,7 @@ description: Track upcoming WCA competitions of the world's top cubers.
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 12px;
+    margin-bottom: 4px;
 }
 
 .comp-title {
@@ -109,20 +109,10 @@ description: Track upcoming WCA competitions of the world's top cubers.
     text-decoration: underline;
 }
 
-.comp-date {
-    font-size: 12px;
-    color: #abb2bf;
-    background: rgba(255, 255, 255, 0.05);
-    padding: 3px 7px;
-    border-radius: 4px;
-    white-space: nowrap;
-    line-height: 1;
-}
-
 .comp-location {
     font-size: 14px;
     color: #9aa0a6;
-    margin-bottom: 12px;
+    margin-bottom: 4px;
     display: flex;
     align-items: center;
     gap: 6px;
@@ -373,11 +363,6 @@ description: Track upcoming WCA competitions of the world's top cubers.
     .comp-title a {
         flex-basis: 100%;
     }
-    /* 日期顶到最右 */
-    .comp-date {
-        margin-left: auto;
-        align-self: center;
-    }
 
     /* 搜索框强制独占一行 */
     .toolbar .search-box {
@@ -576,7 +561,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return `<a href="https://www.worldcubeassociation.org/persons/${c.id}" class="cuber-tag" target="_blank" rel="noopener noreferrer">${displayCuberName} ${evHtml}</a>`;
         }).join('');
 
-        const eventHtml = comp.events ? `<div style="display:inline-flex;align-items:center;gap:4px;color:#556070;transform:translateY(-5px);">${comp.events.map(e => `<span class="cubing-icon event-${SHORT_TO_EVENT_ID[e] || e}" style="font-size:14px;"></span>`).join('')}</div>` : '';
+        const eventHtml = comp.events ? `<div style="display:inline-flex;align-items:center;gap:4px;color:#556070;">${comp.events.map(e => `<span class="cubing-icon event-${SHORT_TO_EVENT_ID[e] || e}" style="font-size:14px;"></span>`).join('')}</div>` : '';
 
         return `
         <div class="comp-card ${highlightClass} ${soonClass}" data-comp-name="${searchName}" data-cuber-names="${comp.top_cubers.map(c => c.name.toLowerCase() + ' ' + c.id.toLowerCase()).join(' ')}" data-country="${comp.country}" data-country-search="${countrySearchText}">
@@ -586,11 +571,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         ${comp.name.includes('Championship') ? '🏆 ' : ''}<span class="fi fi-${comp.country.toLowerCase()}" style="margin-right:6px;font-size:0.8em;"></span>${displayName}
                     </a>${clashBadge}${soonBadge}
                 </h2>
-                <div class="comp-date">${dateDisplay}</div>
             </div>
             <div class="comp-meta">
-                <div class="comp-location">📍 ${locDisplay}</div>
-                ${comp.competitor_limit ? `<span style="color:#9aa0a6;font-size:13px;transform:translateY(-7px);display:inline-block;">👥${comp.competitor_limit}</span>` : ''}
+                <div class="comp-location">${dateDisplay}, ${locDisplay}</div>
+                ${comp.competitor_limit ? `<span style="color:#9aa0a6;font-size:13px;display:inline-block;">👥${comp.competitor_limit}</span>` : ''}
                 ${eventHtml}
             </div>
             <div class="cuber-list">
