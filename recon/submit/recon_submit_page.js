@@ -1131,14 +1131,22 @@
             if (!v) return isZh ? '请输入成绩' : 'Time is required';
             var n = parseFloat(v);
             if (isNaN(n) || n <= 0) return isZh ? '成绩必须是正数' : 'Must be a positive number';
-            // NOTE: 自动填充"单次"——截断千分位（如 4.239 → 4.23），仅在单次为空时
+            // NOTE: 自动同步"单次"——截断千分位（如 4.239 → 4.23），每次成绩变化都更新
             var valueEl = document.getElementById('rf-edit-value');
-            if (valueEl && !valueEl.value) {
+            if (valueEl) {
                 var parsed = parseTimeInput(v);
                 if (!isNaN(parsed) && parsed > 0) {
                     valueEl.value = Math.floor(parsed * 100) / 100;
                 }
             }
+            return '';
+        });
+
+        // NOTE: 自定义 event 输入框的长度校验（select 预设值无需校验）
+        addBlurCheck('rf-edit-value', function (v) {
+            if (!v) return isZh ? '请输入单次成绩' : 'Single is required';
+            var n = parseFloat(v);
+            if (isNaN(n) || n <= 0) return isZh ? '成绩必须是正数' : 'Must be a positive number';
             return '';
         });
 
