@@ -1062,17 +1062,18 @@
         }
 
 
-        // ==================== 预览动画 ====================
+        // ==================== 预览动画（twisty-player 组件） ====================
 
-        document.getElementById('rf-preview-btn').addEventListener('click', function () {
-            // NOTE: 预览打乱优先用 optimalScramble，fallback 到 wcaScramble
+        var previewActive = false;  // 是否已激活预览
+        var twistyDebounceTimer = null;
+
+        /** 从解法文本提取纯公式（去统计行、打乱行和注释） */
+        function extractAlgForPreview() {
             var optScr = document.getElementById('rf-edit-optimalScramble').value.trim();
             var wcaScr = document.getElementById('rf-scramble').value.trim();
             var scramble = optScr || wcaScr;
             var recon = document.getElementById('rf-recon').value.trim();
-            if (!scramble && !recon) return;
 
-            // NOTE: 从 recon 文本提取纯公式（去统计行、打乱行和注释）
             var reconLines = recon.split('\n');
             var scrambleLineIdx = -1;
             if (scramble && reconLines.length >= 2 && /^\d+STM\s/i.test(reconLines[0])) {
@@ -1081,9 +1082,7 @@
                 }
             }
             var alg = reconLines
-                .filter(function (line, idx) {
-                    return idx !== scrambleLineIdx;
-                })
+                .filter(function (line, idx) { return idx !== scrambleLineIdx; })
                 .map(function (line) {
                     var idx = line.indexOf('//');
                     return (idx >= 0 ? line.substring(0, idx) : line).trim();
@@ -1092,19 +1091,61 @@
                     return line.length > 0 && !/^\d+STM\s/i.test(line);
                 })
                 .join('\n');
-
-            // NOTE: 清理不兼容符号 + 规范化步骤间距（共享工具函数）
             alg = ReconAlgUtils.cleanForPlayer(alg);
+            return { scramble: scramble, alg: alg };
+        }
 
-            var url = 'https://alg.cubing.net/?setup=' + encodeURIComponent(scramble) +
-                '&alg=' + encodeURIComponent(alg) +
-                '&type=reconstruction&puzzle=3x3x3';
+        /** 创建/更新 twisty-player 预览 */
+        function updateTwistyPreview() {
+            var data = extractAlgForPreview();
+            if (!data.scramble && !data.alg) return;
 
-            var container = document.getElementById('rf-preview-container');
-            var iframe = document.getElementById('rf-preview-iframe');
-            iframe.src = url;
-            container.style.display = 'block';
+            if (typeof window.ensureTwisty !== 'function') return;
+            window.ensureTwisty().then(function () {
+                var Ctor = window.__TwistyPlayerCtor;
+                if (!Ctor) return;
+                var container = document.getElementById('rf-twisty-container');
+                // NOTE: 每次销毁重建（TwistyPlayer 属性更新 API 不稳定）
+                container.innerHTML = '';
+                container.style.display = 'block';
+                var player = new Ctor({
+                    puzzle: '3x3x3',
+                    experimentalSetupAlg: data.scramble,
+                    alg: data.alg
+                });
+                container.appendChild(player);
+            }).catch(function () {});
+        }
+
+        // NOTE: 按钮首次点击加载 twisty 并激活，后续切换显示/隐藏
+        var isZhBtn = localStorage.getItem('i18n_locale') === 'zh';
+        var previewBtn = document.getElementById('rf-preview-btn');
+        previewBtn.addEventListener('click', function () {
+            if (!previewActive) {
+                previewActive = true;
+                updateTwistyPreview();
+                previewBtn.textContent = isZhBtn ? '隐藏预览' : 'Hide Preview';
+            } else {
+                var container = document.getElementById('rf-twisty-container');
+                var visible = container.style.display !== 'none';
+                container.style.display = visible ? 'none' : 'block';
+                previewBtn.textContent = visible
+                    ? (isZhBtn ? '预览动画' : 'Preview Animation')
+                    : (isZhBtn ? '隐藏预览' : 'Hide Preview');
+            }
         });
+
+        // NOTE: 激活后，解法/打乱变化时 500ms debounce 自动更新
+        function debounceTwistyUpdate() {
+            if (!previewActive) return;
+            var container = document.getElementById('rf-twisty-container');
+            if (container.style.display === 'none') return;
+            clearTimeout(twistyDebounceTimer);
+            twistyDebounceTimer = setTimeout(updateTwistyPreview, 500);
+        }
+        document.getElementById('rf-recon').addEventListener('input', debounceTwistyUpdate);
+        document.getElementById('rf-scramble').addEventListener('input', debounceTwistyUpdate);
+        document.getElementById('rf-edit-optimalScramble').addEventListener('input', debounceTwistyUpdate);
 
         // ==================== 表单提交 ====================
 
