@@ -728,7 +728,9 @@
             var spaceBelow = window.innerHeight - rect.bottom;
             var spaceAbove = rect.top;
             dropdownEl.style.left = rect.left + 'px';
-            dropdownEl.style.width = rect.width + 'px';
+            dropdownEl.style.minWidth = rect.width + 'px';
+            // NOTE: 约束下拉面板不超出屏幕右边界（留 8px 安全边距）
+            dropdownEl.style.maxWidth = (window.innerWidth - rect.left - 8) + 'px';
             if (spaceBelow >= spaceAbove) {
                 dropdownEl.style.top = rect.bottom + 'px';
                 dropdownEl.style.bottom = 'auto';
