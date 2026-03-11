@@ -395,6 +395,17 @@
             html += '<div class="detail-recon-text">' + formatReconText(solutionText) + '</div>';
             html += '</div>';
         }
+        // NOTE: 仅三阶/三阶单手，且有双层转动时显示标准化 cross
+        if (typeof ReconNormCross !== 'undefined' &&
+            (s.event === '3x3' || s.event === '3OH') && solutionText) {
+            var normResult = ReconNormCross.normalize(solutionText);
+            if (normResult && normResult.hasWideMoves) {
+                html += '<div class="detail-recon">';
+                html += '<div class="detail-recon-label">🔄 <span data-i18n-en="Outer-layer-only Opening" data-i18n-zh="仅外层转动的开头">' + (isZh ? '仅外层转动的开头' : 'Outer-layer-only Opening') + '</span></div>';
+                html += '<div class="detail-recon-text">' + formatReconText(normResult.result) + '</div>';
+                html += '</div>';
+            }
+        }
         html += '</div>';
 
         // 右列：统计网格 + 元数据

@@ -55,4 +55,5 @@ layout: default
 <script src="/recon/recon_api.js"></script>
 <script src="/recon/recon_utils.js"></script>
 <script src="/recon/recon_alg_utils.js"></script>
+<script src="/recon/recon_norm_cross.js"></script>
 <script src="/recon/detail/recon_detail.js" defer></script>
