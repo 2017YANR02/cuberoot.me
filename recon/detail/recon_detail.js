@@ -358,9 +358,11 @@
             html += '<div class="recon-twisty-container"></div>';
             var setupStr = encodeURIComponent(scrambleForPlayer);
             var algStr = encodeURIComponent(extractAlgWithComments(algSourceText));
-            var puzzleStr = (s.event && s.event.indexOf('2') >= 0) ? '2x2x2' : '3x3x3';
+            var puzzleStr = ReconUtils.eventToPuzzle(s.event);
             var algUrl = 'https://alg.cubing.net/?setup=' + setupStr + '&alg=' + algStr + '&puzzle=' + puzzleStr;
-            var cubedbUrl = 'https://cubedb.net/?puzzle=' + (puzzleStr === '2x2x2' ? '2x2' : '3x3') + '&scramble=' + setupStr + '&alg=' + algStr;
+            // NOTE: cubedb 用短格式（'3x3'、'2x2'等），取 puzzleStr 第一段
+            var cubedbPuzzle = puzzleStr.replace(/x[0-9]+x[0-9]+/, '').length ? puzzleStr.split('x').slice(0, 2).join('x') : puzzleStr;
+            var cubedbUrl = 'https://cubedb.net/?puzzle=' + cubedbPuzzle + '&scramble=' + setupStr + '&alg=' + algStr;
             html += '<div class="recon-external-links">';
             html += '<a href="' + algUrl + '" target="_blank" rel="noopener noreferrer">alg.cubing.net</a>';
             html += ' <a href="' + cubedbUrl + '" target="_blank" rel="noopener noreferrer">cubedb.net</a>';
@@ -686,8 +688,7 @@
             var reconText = solve.solution || solve.caption || '';
             var setup = solve.optimalScramble || solve.wcaScramble || extractScrambleFromRecon(reconText);
             var alg = extractAlgFromRecon(reconText);
-            var puzzle = '3x3x3';
-            if (solve.event && solve.event.indexOf('2') >= 0) puzzle = '2x2x2';
+            var puzzle = ReconUtils.eventToPuzzle(solve.event);
             var player = new Ctor({
                 puzzle: puzzle,
                 experimentalSetupAlg: setup,
