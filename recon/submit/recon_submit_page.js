@@ -85,6 +85,11 @@
             // NOTE: 复用 ReconUtils.parseSolverName()——中文模式下只显示中文名（DRY）
             var parsed = RU.parseSolverName ? RU.parseSolverName(name) : { en: name, zh: null };
             var displayName = (isZh() && parsed.zh) ? parsed.zh : parsed.en;
+            // NOTE: 有中文名时加 data-i18n 属性，使切换语言后 i18n 自动更新文本
+            if (parsed.zh) {
+                var esc = RU.escHtml || function(s) { return s; };
+                return flag + idBadge + '<span data-i18n-en="' + esc(parsed.en) + '" data-i18n-zh="' + esc(parsed.zh) + '">' + displayName + '</span>';
+            }
             return flag + idBadge + '<span>' + displayName + '</span>';
         }
 
@@ -606,8 +611,13 @@
         // NOTE: 共享 HTML 构建——下拉项和选中态 display 复用（DRY）
         function buildCompHtml(name, date, iso2) {
             var flag = iso2 ? '<span class="fi fi-' + iso2 + '"></span> ' : '';
-            var displayName = (isZh() && compNamesZh[name]) ? compNamesZh[name] : name;
-            return '<small>' + date + '</small>' + flag + '<span>' + displayName + '</span>';
+            var zhName = compNamesZh[name];
+            var displayName = (isZh() && zhName) ? zhName : name;
+            // NOTE: 有中文名时加 data-i18n 属性，使切换语言后 i18n 自动更新文本
+            var nameSpan = zhName
+                ? '<span data-i18n-en="' + name + '" data-i18n-zh="' + zhName + '">' + displayName + '</span>'
+                : '<span>' + displayName + '</span>';
+            return '<small>' + date + '</small>' + flag + nameSpan;
         }
 
         // NOTE: 选中比赛后显示富内容 div，隐藏 input
