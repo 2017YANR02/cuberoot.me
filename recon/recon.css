@@ -954,7 +954,8 @@ tr.detail-row td {
     display: none;
     position: fixed;
     min-width: 300px;
-    width: max-content;
+    /* NOTE: 不用 width: max-content，改由 JS 设 minWidth + maxWidth 控制 */
+    max-width: calc(100vw - 16px);
     max-height: 70vh;
     overflow-y: auto;
     background: #2a2a2a;
@@ -974,6 +975,12 @@ tr.detail-row td {
     color: #cbd5e1;
     border-bottom: 1px solid rgba(255, 255, 255, 0.04);
     white-space: nowrap;
+}
+
+/* NOTE: 下拉项中比赛名 span 截断——仅截断名称，保留日期/国旗不压缩 */
+.comp-dropdown-item > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .comp-dropdown-item:hover {
