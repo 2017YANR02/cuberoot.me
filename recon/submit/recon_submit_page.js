@@ -819,7 +819,22 @@
         // NOTE: 预拉取——异步不阻塞页面，用户开始输入时本地数据已就绪
         fetch(API_BASE + '?action=listPersons')
             .then(function (r) { return r.json(); })
-            .then(function (persons) { cachedPersons = persons; })
+            .then(function (persons) {
+                cachedPersons = persons;
+                // NOTE: cachedPersons 就绪后，填入默认复盘者（当前登录用户）
+                if (reconerInput && !reconerInput.value && typeof WcaAuth !== 'undefined') {
+                    var wcaUser = WcaAuth.getUser();
+                    if (wcaUser && wcaUser.name) {
+                        reconerInput.value = wcaUser.name;
+                        var userIso2 = '';
+                        var match = persons.find(function (p) {
+                            return p.person_id === wcaUser.wcaId;
+                        });
+                        if (match) userIso2 = match.person_country || '';
+                        showPersonDisplay(reconerDisplay, reconerInput, wcaUser.name, userIso2, wcaUser.wcaId || '');
+                    }
+                }
+            })
             .catch(function (e) { console.warn('listPersons prefetch failed:', e); });
 
         /** 将 listPersons 原始格式转为下拉渲染格式（DRY——消除三处重复映射） */
@@ -990,22 +1005,6 @@
             reconDateEl.value = new Date().toISOString().slice(0, 10);
         }
 
-        // NOTE: 复盘者默认填入当前登录用户名（新增模式下为空时）
-        if (reconerInput && !reconerInput.value && typeof WcaAuth !== 'undefined') {
-            var wcaUser = WcaAuth.getUser();
-            if (wcaUser && wcaUser.name) {
-                reconerInput.value = wcaUser.name;
-                // NOTE: 从本地缓存查国籍，秒加载不调 API
-                var userIso2 = '';
-                if (cachedPersons) {
-                    var match = cachedPersons.find(function (p) {
-                        return p.person_id === wcaUser.wcaId;
-                    });
-                    if (match) userIso2 = match.person_country || '';
-                }
-                showPersonDisplay(reconerDisplay, reconerInput, wcaUser.name, userIso2, wcaUser.wcaId || '');
-            }
-        }
 
         // ==================== 预览动画 ====================
 
