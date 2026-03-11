@@ -720,6 +720,70 @@ switch ($action) {
         ]);
         break;
 
+    case 'backfillPersonCountry':
+        // NOTE: 一次性迁移——回填 person_country（Expand-Contract 的 Backfill 步骤）
+        requireAdmin();
+
+        // Step 1: SQL 自回填——从同一 person_id 的其他记录中取已有的 country
+        $selfFill = $db->exec(
+            "UPDATE recons r1
+             SET person_country = (
+                 SELECT r2.person_country FROM recons r2
+                 WHERE r2.person_id = r1.person_id
+                   AND r2.person_country IS NOT NULL
+                 LIMIT 1
+             )
+             WHERE r1.person_country IS NULL
+               AND r1.person_id IS NOT NULL"
+        );
+
+        // Step 2: WCA API 补填——仍为 NULL 的 distinct person_id
+        $stmt = $db->query(
+            "SELECT DISTINCT person_id FROM recons
+             WHERE person_country IS NULL AND person_id IS NOT NULL"
+        );
+        $missing = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+        $apiFixed = 0;
+        $apiFailed = [];
+        $updateStmt = $db->prepare(
+            "UPDATE recons SET person_country = ? WHERE person_id = ?"
+        );
+
+        foreach ($missing as $wcaId) {
+            // NOTE: 调用 WCA Persons API 获取国籍
+            $ch = curl_init('https://www.worldcubeassociation.org/api/v0/persons/' . urlencode($wcaId));
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_TIMEOUT => 10,
+            ]);
+            $resp = curl_exec($ch);
+            $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            if ($code === 200 && $resp) {
+                $data = json_decode($resp, true);
+                $iso2 = strtolower($data['person']['country_iso2'] ?? '');
+                if ($iso2) {
+                    $updateStmt->execute([$iso2, $wcaId]);
+                    $apiFixed++;
+                } else {
+                    $apiFailed[] = $wcaId;
+                }
+            } else {
+                $apiFailed[] = $wcaId;
+            }
+        }
+
+        echo json_encode([
+            'ok' => true,
+            'selfFilled' => $selfFill,
+            'apiQueried' => count($missing),
+            'apiFixed' => $apiFixed,
+            'apiFailed' => $apiFailed,
+        ]);
+        break;
+
     default:
         http_response_code(400);
         echo json_encode(['error' => 'Unknown action: ' . $action]);
