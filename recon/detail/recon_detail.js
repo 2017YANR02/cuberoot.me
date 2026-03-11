@@ -369,8 +369,8 @@
                 algUrl = 'https://alpha.twizzle.net/edit/?puzzle=' + puzzleStr + '&setup-alg=' + setupStr + '&alg=' + algStr;
                 algSiteName = 'twizzle.net';
             }
-            // NOTE: cubedb 用短格式（'3x3'、'2x2'等），取 puzzleStr 第一段
-            var cubedbPuzzle = puzzleStr.split('x').slice(0, 2).join('x');
+            // NOTE: cubedb 用独立映射（格式不同于 twisty）
+            var cubedbPuzzle = ReconUtils.eventToCubedbPuzzle(s.event);
             var cubedbUrl = 'https://cubedb.net/?puzzle=' + cubedbPuzzle + '&scramble=' + setupStr + '&alg=' + algStr;
             html += '<div class="recon-external-links">';
             html += '<a href="' + algUrl + '" target="_blank" rel="noopener noreferrer">' + algSiteName + '</a>';
