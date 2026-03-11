@@ -1154,22 +1154,32 @@
             var cursorPos = reconEl.selectionStart;
             var fullText = reconEl.value;
 
-            // NOTE: 在光标位置分割原文，分别清理
+            // NOTE: 计算光标前的步数
             var textBefore = fullText.substring(0, cursorPos);
-            var textAfter = fullText.substring(cursorPos);
-
             var algBefore = cleanReconText(textBefore);
-            var algAfter = cleanReconText(textAfter);
+            var moves = algBefore.trim().split(/\s+/).filter(function (s) { return s.length > 0; });
+            var moveCount = moves.length;
 
-            var scramble = getScramble();
-            // NOTE: setupAlg = 打乱 + 光标前的移动（魔方跳到此状态）
-            var setup = scramble ? scramble + '\n' + algBefore : algBefore;
-
+            // NOTE: 通过 indexer 获取精确的毫秒时间戳
             try {
-                currentPlayer.experimentalSetupAlg = setup;
-                currentPlayer.alg = algAfter;
+                var model = currentPlayer.experimentalModel;
+                if (model && model.indexer) {
+                    model.indexer.get().then(function (indexer) {
+                        if (typeof indexer.indexToMoveStartTimestamp === 'function') {
+                            var totalMoves = typeof indexer.numAnimatedLeaves === 'function'
+                                ? indexer.numAnimatedLeaves()
+                                : (typeof indexer.numMoves === 'function' ? indexer.numMoves() : 0);
+                            // NOTE: 光标在末尾时用 algDuration 跳到绝对末尾
+                            if (moveCount >= totalMoves && typeof indexer.algDuration === 'function') {
+                                currentPlayer.timestamp = indexer.algDuration();
+                            } else {
+                                currentPlayer.timestamp = indexer.indexToMoveStartTimestamp(moveCount);
+                            }
+                        }
+                    });
+                }
             } catch (e) {
-                // NOTE: 属性更新失败时 fallback 到重建
+                // NOTE: 实验性 API 失败时 fallback 到重建
                 createTwistyPlayer();
             }
         }
