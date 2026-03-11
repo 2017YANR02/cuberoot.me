@@ -1115,6 +1115,14 @@
             if (!v) return isZh ? '请输入成绩' : 'Time is required';
             var n = parseFloat(v);
             if (isNaN(n) || n <= 0) return isZh ? '成绩必须是正数' : 'Must be a positive number';
+            // NOTE: 自动填充"单次"——截断千分位（如 4.239 → 4.23），仅在单次为空时
+            var valueEl = document.getElementById('rf-edit-value');
+            if (valueEl && !valueEl.value) {
+                var parsed = parseTimeInput(v);
+                if (!isNaN(parsed) && parsed > 0) {
+                    valueEl.value = Math.floor(parsed * 100) / 100;
+                }
+            }
             return '';
         });
 
