@@ -1109,11 +1109,27 @@
             var fullAlg = cleanReconText(document.getElementById('rf-recon').value);
             if (!scramble && !fullAlg) return;
 
+            var container = document.getElementById('rf-twisty-container');
+            var eventVal = document.getElementById('rf-event').value;
+
+            // NOTE: SQ1 用 cubedb.net iframe（twisty-player 对 SQ1 渲染不友好）
+            if (eventVal === 'SQ1') {
+                var cubedbPuzzle = ReconUtils.eventToCubedbPuzzle(eventVal);
+                var cubedbUrl = 'https://cubedb.net/?puzzle=' + cubedbPuzzle +
+                    '&scramble=' + encodeURIComponent(scramble) +
+                    '&alg=' + encodeURIComponent(fullAlg);
+                container.innerHTML = '<iframe src="' + cubedbUrl + '" ' +
+                    'style="width:100%;height:400px;border:1px solid #444;border-radius:8px" ' +
+                    'allowfullscreen></iframe>';
+                container.style.display = 'block';
+                currentPlayer = null; // NOTE: iframe 不支持光标跟随
+                return;
+            }
+
             if (typeof window.ensureTwisty !== 'function') return;
             window.ensureTwisty().then(function () {
                 var Ctor = window.__TwistyPlayerCtor;
                 if (!Ctor) return;
-                var container = document.getElementById('rf-twisty-container');
                 container.innerHTML = '';
                 container.style.display = 'block';
                 currentPlayer = new Ctor({
