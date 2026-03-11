@@ -144,6 +144,24 @@ var ReconUtils = (function () {
         return 'https://www.worldcubeassociation.org/persons/' + personId;
     }
 
+    // NOTE: 项目代码 → twisty-player puzzle 标识符映射
+    var EVENT_PUZZLE_MAP = {
+        '2x2': '2x2x2',
+        '4x4': '4x4x4', '4BLD': '4x4x4',
+        '5x5': '5x5x5', '5BLD': '5x5x5',
+        '6x6': '6x6x6',
+        '7x7': '7x7x7',
+        'Megaminx': 'megaminx',
+        'Pyraminx': 'pyraminx',
+        'Skewb': 'skewb',
+        'SQ1': 'square1',
+        'Clock': 'clock'
+    };
+    /** 项目代码转 twisty-player puzzle 字符串，默认 3x3x3 */
+    function eventToPuzzle(event) {
+        return EVENT_PUZZLE_MAP[event] || '3x3x3';
+    }
+
     return {
         escHtml: escHtml,
         countryFlag: countryFlag,
@@ -156,6 +174,7 @@ var ReconUtils = (function () {
         solverCountry: solverCountry,
         displayCompName: displayCompName,
         compWcaUrl: compWcaUrl,
-        personWcaUrl: personWcaUrl
+        personWcaUrl: personWcaUrl,
+        eventToPuzzle: eventToPuzzle
     };
 })();

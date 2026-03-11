@@ -1097,6 +1097,13 @@
         }
 
         /** 创建 twisty-player 并显示（首次或内容变化时） */
+        /** 从项目下拉获取 twisty puzzle 类型 */
+        function getCurrentPuzzle() {
+            var eventEl = document.getElementById('rf-event');
+            var event = eventEl ? eventEl.value : '3x3';
+            return ReconUtils.eventToPuzzle(event);
+        }
+
         function createTwistyPlayer() {
             var scramble = getScramble();
             var fullAlg = cleanReconText(document.getElementById('rf-recon').value);
@@ -1110,7 +1117,7 @@
                 container.innerHTML = '';
                 container.style.display = 'block';
                 currentPlayer = new Ctor({
-                    puzzle: '3x3x3',
+                    puzzle: getCurrentPuzzle(),
                     experimentalSetupAlg: scramble,
                     alg: fullAlg
                 });
@@ -1182,6 +1189,8 @@
         document.getElementById('rf-recon').addEventListener('input', debounceTwistyUpdate);
         document.getElementById('rf-scramble').addEventListener('input', debounceTwistyUpdate);
         document.getElementById('rf-edit-optimalScramble').addEventListener('input', debounceTwistyUpdate);
+        // NOTE: 项目变化时重建 player（切换 puzzle 类型）
+        document.getElementById('rf-event').addEventListener('change', debounceTwistyUpdate);
 
         // NOTE: 光标位置变化时同步 twisty 状态（click/键盘移动光标）
         var cursorSyncTimer = null;
