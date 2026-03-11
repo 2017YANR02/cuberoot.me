@@ -908,19 +908,32 @@
         // NOTE: 去掉零宽空格获取纯文本
         var plainText = (reconTextEl.textContent || '').replace(/\u200B/g, '');
 
+        // NOTE: 计算光标前的步数
         var textBefore = plainText.substring(0, textOffset);
-        var textAfter = plainText.substring(textOffset);
-
         var algBefore = extractAlgFromRecon(textBefore);
-        var algAfter = extractAlgFromRecon(textAfter);
+        var moves = algBefore.trim().split(/\s+/).filter(function (s) { return s.length > 0; });
+        var moveCount = moves.length;
 
-        var setup = detailScramble ? detailScramble + '\n' + algBefore : algBefore;
-
+        // NOTE: 通过 indexer 获取精确的毫秒时间戳，而非简单的 moveCount * 1000
         try {
-            currentDetailPlayer.experimentalSetupAlg = setup;
-            currentDetailPlayer.alg = algAfter;
+            var model = currentDetailPlayer.experimentalModel;
+            if (model && model.indexer) {
+                model.indexer.get().then(function (indexer) {
+                    if (typeof indexer.indexToMoveStartTimestamp === 'function') {
+                        var totalMoves = typeof indexer.numAnimatedLeaves === 'function'
+                            ? indexer.numAnimatedLeaves()
+                            : (typeof indexer.numMoves === 'function' ? indexer.numMoves() : 0);
+                        // NOTE: 如果光标在末尾，用 algDuration 跳到绝对末尾
+                        if (moveCount >= totalMoves && typeof indexer.algDuration === 'function') {
+                            currentDetailPlayer.timestamp = indexer.algDuration();
+                        } else {
+                            currentDetailPlayer.timestamp = indexer.indexToMoveStartTimestamp(moveCount);
+                        }
+                    }
+                });
+            }
         } catch (e) {
-            // NOTE: 属性更新失败时静默忽略
+            // NOTE: 实验性 API 失败时静默忽略
         }
     }
 
