@@ -189,6 +189,9 @@
             reconTextEl.addEventListener('click', function () {
                 var offset = getTextOffsetInElement(reconTextEl);
                 if (offset >= 0) {
+                    var fullText = (reconTextEl.textContent || '').replace(/\u200B/g, '');
+                    var result = ReconAlgUtils.findTokenPositions(fullText);
+                    offset = ReconAlgUtils.snapToTokenBoundary(offset, result.tokens);
                     detailCursorOffset = offset;
                     syncDetailAtOffset(reconTextEl, offset);
                 }
@@ -200,7 +203,8 @@
                 var fullText = reconTextEl.textContent || '';
                 // NOTE: 去掉可视光标的零宽空格
                 fullText = fullText.replace(/\u200B/g, '');
-                var tokens = findDetailTokenPositions(fullText);
+                var result = ReconAlgUtils.findTokenPositions(fullText);
+                var tokens = result.tokens;
                 if (tokens.length === 0) return;
 
                 var newPos = detailCursorOffset;
@@ -472,14 +476,18 @@
                 ' data-i18n-en="link" data-i18n-zh="链接">link</a>';
             html += '</div>';
         }
-        // NOTE: 打乱展示
+        // NOTE: 当两种打乱都有时，顺序调整为：最少步打乱 → 解法 → 仅外层 → WCA打乱
+        var hasBothScrambles = s.optimalScramble && s.wcaScramble;
+
+        // NOTE: 最少步打乱（始终在前）
         if (s.optimalScramble) {
             html += '<div class="detail-scramble">';
             html += '<div class="detail-scramble-label"><span data-i18n-en="Optimal Scramble" data-i18n-zh="最少步打乱">' + (isZh ? '最少步打乱' : 'Optimal Scramble') + '</span></div>';
             html += '<div class="detail-scramble-text">' + U.escHtml(s.optimalScramble) + '</div>';
             html += '</div>';
         }
-        if (s.wcaScramble) {
+        // NOTE: 只有一种打乱时，WCA 打乱紧跟在最少步后面
+        if (s.wcaScramble && !hasBothScrambles) {
             html += '<div class="detail-scramble">';
             html += '<div class="detail-scramble-label"><span data-i18n-en="WCA Scramble" data-i18n-zh="WCA 打乱">' + (isZh ? 'WCA 打乱' : 'WCA Scramble') + '</span></div>';
             html += '<div class="detail-scramble-text">' + U.escHtml(s.wcaScramble) + '</div>';
@@ -502,6 +510,13 @@
                 html += '<div class="detail-recon-text">' + formatReconText(normResult.result) + '</div>';
                 html += '</div>';
             }
+        }
+        // NOTE: 两种打乱都有时，WCA 打乱放在解法和仅外层之后
+        if (s.wcaScramble && hasBothScrambles) {
+            html += '<div class="detail-scramble">';
+            html += '<div class="detail-scramble-label"><span data-i18n-en="WCA Scramble" data-i18n-zh="WCA 打乱">' + (isZh ? 'WCA 打乱' : 'WCA Scramble') + '</span></div>';
+            html += '<div class="detail-scramble-text">' + U.escHtml(s.wcaScramble) + '</div>';
+            html += '</div>';
         }
         html += '</div>';
 
@@ -844,27 +859,6 @@
         return offset;
     }
 
-    // NOTE: 详情页 token 正则（魔方指令）
-    var DETAIL_TOKEN_RE = /[RUFLDBrufldbxyzMSE][2']?'?/g;
-
-    /** 扫描纯文本的非注释区域，返回 token 位置数组 */
-    function findDetailTokenPositions(text) {
-        var tokens = [];
-        var lines = text.split('\n');
-        var offset = 0;
-        for (var i = 0; i < lines.length; i++) {
-            var line = lines[i];
-            var commentIdx = line.indexOf('//');
-            var instrPart = commentIdx >= 0 ? line.substring(0, commentIdx) : line;
-            DETAIL_TOKEN_RE.lastIndex = 0;
-            var m;
-            while ((m = DETAIL_TOKEN_RE.exec(instrPart)) !== null) {
-                tokens.push({ start: offset + m.index, end: offset + m.index + m[0].length });
-            }
-            offset += line.length + 1;
-        }
-        return tokens;
-    }
 
     // NOTE: 详情页虚拟光标偏移
     var detailCursorOffset = 0;
