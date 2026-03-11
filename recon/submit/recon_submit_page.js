@@ -493,13 +493,41 @@
             el.style.height = 'auto';
             el.style.height = el.scrollHeight + 'px';
         }
+        // NOTE: 自动替换非标准标点——弯引号/双引号→直单引号、中文括号/逗号/句号→英文
+        var PUNCT_MAP = {
+            '\u2018': "'", '\u2019': "'",  // 弯单引号 → 直单引号
+            '\u201C': "'", '\u201D': "'",  // 弯双引号 → 直单引号
+            '"': "'",                       // 直双引号 → 直单引号
+            '\uFF08': '(', '\uFF09': ')',  // 中文括号
+            '\uFF0C': ',',                  // 中文逗号
+            '\u3002': '.'                   // 中文句号
+        };
+        var PUNCT_RE = /[\u2018\u2019\u201C\u201D"\uFF08\uFF09\uFF0C\u3002]/g;
+        function normalizePunctuation(el) {
+            var val = el.value;
+            var newVal = val.replace(PUNCT_RE, function (ch) { return PUNCT_MAP[ch] || ch; });
+            // NOTE: 输入法可能插入配对引号("")，替换后会变成 '' 两个单引号，折叠为1个
+            newVal = newVal.replace(/''+/g, "'");
+            if (newVal !== val) {
+                // NOTE: 保持光标位置不变
+                var start = el.selectionStart;
+                var end = el.selectionEnd;
+                el.value = newVal;
+                el.selectionStart = start;
+                el.selectionEnd = end;
+            }
+        }
         var reconEl = document.getElementById('rf-recon');
         reconEl.addEventListener('input', function () {
+            normalizePunctuation(reconEl);
             updateStatsDisplay();
             autoResize(reconEl);
         });
         var noteEl = document.getElementById('rf-note');
-        noteEl.addEventListener('input', function () { autoResize(noteEl); });
+        noteEl.addEventListener('input', function () {
+            normalizePunctuation(noteEl);
+            autoResize(noteEl);
+        });
         document.getElementById('rf-single').addEventListener('input', function () {
             updateStatsDisplay();
             // NOTE: rawTime 变化时也联动更新 memo 计算
