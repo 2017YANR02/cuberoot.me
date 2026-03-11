@@ -571,7 +571,8 @@ switch ($action) {
     // ==================== 已有选手列表（复盘数据库中有 WCA ID 的选手） ====================
 
     case 'listPersons':
-        $stmt = $db->query("SELECT DISTINCT person, person_id FROM recons WHERE person_id IS NOT NULL AND person IS NOT NULL ORDER BY person");
+        // NOTE: GROUP BY 而非 DISTINCT——同一选手可能有 NULL 和非 NULL 的 person_country，MAX() 优先取非 NULL
+        $stmt = $db->query("SELECT person, person_id, MAX(person_country) AS person_country FROM recons WHERE person_id IS NOT NULL AND person IS NOT NULL GROUP BY person, person_id ORDER BY person");
         $persons = $stmt->fetchAll(PDO::FETCH_ASSOC);
         echo json_encode($persons);
         break;
@@ -633,8 +634,11 @@ switch ($action) {
         }
 
         $resultJson = json_encode($results, JSON_UNESCAPED_UNICODE);
-        // NOTE: 写入缓存文件
-        file_put_contents($cacheFile, $resultJson);
+        // NOTE: 只有非空结果才写入缓存——WCA API 偶尔超时/无结果，
+        // 空结果不缓存可避免 24h 内持续返回"无匹配"
+        if (!empty($results)) {
+            file_put_contents($cacheFile, $resultJson);
+        }
 
         header('Cache-Control: public, max-age=3600');
         echo $resultJson;
