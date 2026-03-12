@@ -91,7 +91,7 @@
             var displayName = (isZh() && parsed.zh) ? parsed.zh : parsed.en;
             // NOTE: 有中文名时加 data-i18n 属性，使切换语言后 i18n 自动更新文本
             if (parsed.zh) {
-                var esc = RU.escHtml || function(s) { return s; };
+                var esc = RU.escHtml || function (s) { return s; };
                 return flag + idBadge + '<span data-i18n-en="' + esc(parsed.en) + '" data-i18n-zh="' + esc(parsed.zh) + '">' + displayName + '</span>';
             }
             return flag + idBadge + '<span>' + displayName + '</span>';
@@ -1186,7 +1186,7 @@
                 });
                 container.appendChild(currentPlayer);
                 ReconUtils.setupResizeHandle(container);
-            }).catch(function () {});
+            }).catch(function () { });
         }
 
         /**
