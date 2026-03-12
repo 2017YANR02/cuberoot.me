@@ -421,6 +421,7 @@ switch ($action) {
 
     case 'saveEdit':
         // NOTE: 保存编辑覆盖（merge 模式，管理员专用）
+        // 同时同步更新 recons 主表，使主表成为 source of truth
         checkRateLimit();
         requireAdmin();
         $body = getPostBody();
@@ -441,6 +442,34 @@ switch ($action) {
              ON DUPLICATE KEY UPDATE fields = JSON_MERGE_PATCH(fields, VALUES(fields)), edited_at = VALUES(edited_at)"
         );
         $stmt->execute([$solveId, $fieldsJson, time()]);
+
+        // NOTE: 同步更新 recons 主表——只写非内部字段（过滤 _ 开头的元数据）
+        $publicFields = [];
+        foreach ($fields as $k => $v) {
+            if ($k[0] !== '_') $publicFields[$k] = $v;
+        }
+        if (!empty($publicFields)) {
+            $row = jsonToRow($publicFields, true);
+            if (!empty($row)) {
+                // NOTE: 布尔值和空字符串转换（与 update action 保持一致）
+                if (isset($row['official'])) {
+                    $row['official'] = $row['official'] ? 1 : 0;
+                }
+                foreach ($row as $k => $v) {
+                    if ($v === '') $row[$k] = null;
+                }
+                $setParts = [];
+                $values = [];
+                foreach ($row as $col => $val) {
+                    $setParts[] = "`$col` = ?";
+                    $values[] = $val;
+                }
+                $values[] = $solveId;
+                $sql = "UPDATE recons SET " . implode(', ', $setParts) . " WHERE id = ?";
+                $updateStmt = $db->prepare($sql);
+                $updateStmt->execute($values);
+            }
+        }
 
         echo json_encode(['ok' => true]);
         break;
