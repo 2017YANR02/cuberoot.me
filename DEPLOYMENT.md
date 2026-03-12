@@ -71,6 +71,7 @@ ruiminyan.github.io/
 ├── algTrainer/                 # JSON 公式训练器
 ├── jsonEditor/                 # JSON 编辑器
 ├── documentation/              # 文档页面
+├── hthgrapher/                 # HTH 成绩计算器（carykh/hthgrapher 上游同步）
 ├── src/                        # 运行时模块（WASM、Worker、Solver 等，100% 上游）
 ├── icons/                     # PWA 图标
 ├── documents/                 # 文档资源
@@ -556,6 +557,7 @@ cd D:\cube\ruiminyan.github.io
 **模板文件**（定制化集中管理）：
 - `.sync/page_config.json`：页面映射表和 i18n key 配置
 - `.sync/menu_template.html`：汉堡菜单链接模板
+
 
 # 附录
 
