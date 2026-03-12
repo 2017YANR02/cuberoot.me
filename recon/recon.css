@@ -1631,6 +1631,18 @@ tr.detail-row td {
     color: #a5b4fc;
 }
 
+/* NOTE: 未复盘的 sibling——虚线下划线提示已登录用户可点击添加复盘 */
+.sibling-add-link {
+    color: #999;
+    text-decoration: none;
+    border-bottom: 1px dashed #666;
+}
+
+.sibling-add-link:hover {
+    border-bottom-color: #60a5fa;
+    color: #60a5fa;
+}
+
 /* NOTE: 复盘标记（对钩）——表示该 solve 有对应复盘 */
 .sibling-recon-badge {
     color: #4ade80;
