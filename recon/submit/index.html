@@ -32,6 +32,12 @@ layout: default
                 <label data-i18n-en="WCA Scramble" data-i18n-zh="WCA打乱">WCA Scramble</label>
                 <input type="text" id="rf-scramble">
             </div>
+            <!-- 预览动画（放在解法上方，方便对照） -->
+            <div class="recon-form-group">
+                <button type="button" id="rf-preview-btn" class="recon-btn" style="margin-bottom:8px"
+                    data-i18n-en="Preview Animation" data-i18n-zh="预览动画">Preview Animation</button>
+                <div id="rf-twisty-container" class="recon-twisty-container" style="display:none"></div>
+            </div>
             <!-- 解法 -->
             <div class="recon-form-group">
                 <label data-i18n-en="Solution" data-i18n-zh="解法">Solution</label>
@@ -39,12 +45,6 @@ layout: default
                     data-i18n-placeholder-en="Paste solution...&#10;e.g.:&#10;x2 // insp&#10;R' F R D' F' // xxcross&#10;..."
                     data-i18n-placeholder-zh="粘贴解法...&#10;例如：&#10;x2 // insp&#10;R' F R D' F' // xxcross&#10;..."
                     required></textarea>
-            </div>
-            <!-- 预览动画 -->
-            <div class="recon-form-group">
-                <button type="button" id="rf-preview-btn" class="recon-btn" style="margin-bottom:8px"
-                    data-i18n-en="Preview Animation" data-i18n-zh="预览动画">Preview Animation</button>
-                <div id="rf-twisty-container" class="recon-twisty-container" style="display:none"></div>
             </div>
         </div> <!-- submit-col-main -->
         <!-- ========== 右列：元数据 ========== -->
