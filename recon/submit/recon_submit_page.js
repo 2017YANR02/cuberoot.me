@@ -1185,6 +1185,60 @@
             }).catch(function () {});
         }
 
+        /**
+         * NOTE: 光标跟随——根据光标位置计算步数，让 twisty 显示对应的魔方状态。
+         */
+        function syncCursorToPlayer() {
+            if (!currentPlayer || !previewActive) return;
+            var container = document.getElementById('rf-twisty-container');
+            if (container.style.display === 'none') return;
+
+            var reconEl = document.getElementById('rf-recon');
+            var cursorPos = reconEl.selectionStart;
+            var fullText = reconEl.value;
+
+            // NOTE: 计算光标前的步数
+            var textBefore = fullText.substring(0, cursorPos);
+            var algBefore = cleanReconText(textBefore);
+            var moves = algBefore.trim().split(/\s+/).filter(function (s) { return s.length > 0; });
+            var moveCount = moves.length;
+
+            // NOTE: 通过 indexer 获取精确的毫秒时间戳
+            try {
+                var model = currentPlayer.experimentalModel;
+                if (model && model.indexer) {
+                    model.indexer.get().then(function (indexer) {
+                        if (typeof indexer.indexToMoveStartTimestamp === 'function') {
+                            var totalMoves = typeof indexer.numAnimatedLeaves === 'function'
+                                ? indexer.numAnimatedLeaves()
+                                : (typeof indexer.numMoves === 'function' ? indexer.numMoves() : 0);
+                            // NOTE: 光标在末尾时用 algDuration 跳到绝对末尾
+                            if (moveCount >= totalMoves && typeof indexer.algDuration === 'function') {
+                                currentPlayer.timestamp = indexer.algDuration();
+                            } else {
+                                currentPlayer.timestamp = indexer.indexToMoveStartTimestamp(moveCount);
+                            }
+                        }
+                    });
+                }
+            } catch (e) {
+                // NOTE: 实验性 API 失败时 fallback 到重建
+                createTwistyPlayer();
+            }
+        }
+
+        // NOTE: 光标位置变化时同步 twisty 状态（无磁吸，保留跟随）
+        var cursorSyncTimer = null;
+        function debounceCursorSync() {
+            if (!previewActive || !currentPlayer) return;
+            clearTimeout(cursorSyncTimer);
+            cursorSyncTimer = setTimeout(syncCursorToPlayer, 100);
+        }
+        var reconElForCursor = document.getElementById('rf-recon');
+        reconElForCursor.addEventListener('click', function () {
+            setTimeout(syncCursorToPlayer, 0);
+        });
+        reconElForCursor.addEventListener('keyup', debounceCursorSync);
 
         // NOTE: 按钮首次点击加载 twisty 并激活，后续切换显示/隐藏
         var isZhBtn = localStorage.getItem('i18n_locale') === 'zh';
