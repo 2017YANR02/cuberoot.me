@@ -1445,3 +1445,68 @@ tr.detail-row td {
         grid-template-columns: 1fr;
     }
 }
+
+/* --- 同轮次成绩组件 --- */
+.siblings-solves {
+    margin-top: 16px;
+}
+
+.siblings-title {
+    font-size: 0.85rem;
+    color: #888;
+    font-weight: 400;
+    margin: 0 0 8px 0;
+}
+
+.siblings-list {
+    display: flex;
+    gap: 6px;
+    flex-wrap: nowrap;
+}
+
+.sibling-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 0.85rem;
+    transition: border-color 0.2s;
+}
+
+/* NOTE: 当前 solve 用主题色高亮 */
+.sibling-current {
+    background: rgba(99, 102, 241, 0.15);
+    border-color: rgba(99, 102, 241, 0.4);
+}
+
+.sibling-num {
+    color: #666;
+    font-size: 0.75rem;
+    margin-right: 2px;
+}
+
+.sibling-time {
+    font-family: 'Roboto Mono', monospace;
+    color: #ccc;
+}
+
+/* NOTE: 有复盘的成绩显示为可点击链接 */
+.sibling-link {
+    color: #8b9cf7;
+    text-decoration: none;
+}
+
+.sibling-link:hover {
+    text-decoration: underline;
+    color: #a5b4fc;
+}
+
+/* NOTE: 复盘标记（对钩）——表示该 solve 有对应复盘 */
+.sibling-recon-badge {
+    color: #4ade80;
+    font-size: 0.7rem;
+    margin-left: 2px;
+}
