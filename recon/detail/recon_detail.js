@@ -314,6 +314,16 @@
             });
         });
 
+        // NOTE: YouTube facade 点击——缩略图替换为 iframe 并自动播放
+        container.addEventListener('click', function (e) {
+            var facade = e.target.closest('.detail-video-facade');
+            if (!facade) return;
+            var embedUrl = facade.getAttribute('data-embed-url');
+            if (!embedUrl) return;
+            facade.innerHTML = '<iframe src="' + embedUrl + '" allowfullscreen allow="autoplay; encrypted-media"></iframe>';
+            facade.classList.remove('detail-video-facade');
+        });
+
         // NOTE: 管理员编辑按钮
         var editBtn = container.querySelector('.recon-btn-edit');
         if (editBtn) {
@@ -527,7 +537,7 @@
         html += '<div>';
         // NOTE: 有视频链接时嵌入播放器（YouTube / Bilibili）
         if (s.videoUrl) {
-            html += buildVideoEmbeds(s.videoUrl, isZh);
+            html += buildVideoEmbeds(s.videoUrl);
         }
         html += buildStatsGrid(s, isZh);
 
@@ -667,50 +677,59 @@
     // ==================== 视频嵌入 ====================
 
     /**
-     * 从 video_url 字段（换行分隔的多 URL）构建视频 iframe HTML
-     * NOTE: 自动检测 YouTube / Bilibili 平台并生成对应 embed URL
+     * 从 video_url 字段（换行分隔的多 URL）构建视频 HTML
+     * NOTE: YouTube 使用缩略图 + 点击加载 iframe（facade 模式，避免预加载重量级 iframe）
+     *       Bilibili 直接嵌入 iframe（无公开缩略图 API）
      */
-    function buildVideoEmbeds(videoUrlField, isZh) {
+    function buildVideoEmbeds(videoUrlField) {
         var urls = videoUrlField.split('\n').map(function (u) { return u.trim(); }).filter(Boolean);
         if (urls.length === 0) return '';
 
         var html = '<div class="detail-video">';
-        html += '<div class="detail-stats-label">🎬 <span data-i18n-en="Video" data-i18n-zh="视频">' + (isZh ? '视频' : 'Video') + '</span></div>';
-
         for (var i = 0; i < urls.length; i++) {
-            var embedUrl = parseVideoUrl(urls[i]);
-            if (!embedUrl) continue;
-            html += '<div class="detail-video-wrap">';
-            html += '<iframe src="' + ReconUtils.escHtml(embedUrl) + '" allowfullscreen allow="autoplay; encrypted-media"></iframe>';
-            html += '</div>';
+            var info = parseVideoUrl(urls[i]);
+            if (!info) continue;
+
+            if (info.type === 'youtube') {
+                // NOTE: YouTube facade——静态缩略图 + CSS 播放按钮，点击时替换为 iframe（autoplay=1）
+                html += '<div class="detail-video-wrap detail-video-facade" data-embed-url="' + ReconUtils.escHtml(info.embedUrl) + '&autoplay=1">';
+                html += '<img src="https://img.youtube.com/vi/' + info.id + '/hqdefault.jpg" alt="YouTube" loading="lazy">';
+                html += '<div class="detail-video-play"></div>';
+                html += '</div>';
+            } else {
+                // NOTE: Bilibili 直接嵌入 iframe
+                html += '<div class="detail-video-wrap">';
+                html += '<iframe src="' + ReconUtils.escHtml(info.embedUrl) + '" allowfullscreen allow="autoplay; encrypted-media"></iframe>';
+                html += '</div>';
+            }
         }
         html += '</div>';
         return html;
     }
 
     /**
-     * 将用户输入的视频 URL 转换为可嵌入的 embed URL
+     * 将用户输入的视频 URL 解析为 {type, id, embedUrl} 或 null
      * 支持格式：
      *   YouTube: youtu.be/ID, youtube.com/watch?v=ID, youtube.com/embed/ID
      *   Bilibili: bilibili.com/video/BVID
-     * @return {string|null} embed URL，不识别的格式返回 null
      */
     function parseVideoUrl(url) {
+        var m;
         // NOTE: YouTube 短链接 youtu.be/ID
-        var m = url.match(/youtu\.be\/([A-Za-z0-9_-]+)/);
-        if (m) return 'https://www.youtube.com/embed/' + m[1];
+        m = url.match(/youtu\.be\/([A-Za-z0-9_-]+)/);
+        if (m) return { type: 'youtube', id: m[1], embedUrl: 'https://www.youtube.com/embed/' + m[1] };
 
         // NOTE: YouTube 标准链接 youtube.com/watch?v=ID
         m = url.match(/youtube\.com\/watch\?.*v=([A-Za-z0-9_-]+)/);
-        if (m) return 'https://www.youtube.com/embed/' + m[1];
+        if (m) return { type: 'youtube', id: m[1], embedUrl: 'https://www.youtube.com/embed/' + m[1] };
 
-        // NOTE: YouTube embed 链接（已是 embed 格式，直接返回）
+        // NOTE: YouTube embed 链接
         m = url.match(/youtube\.com\/embed\/([A-Za-z0-9_-]+)/);
-        if (m) return 'https://www.youtube.com/embed/' + m[1];
+        if (m) return { type: 'youtube', id: m[1], embedUrl: 'https://www.youtube.com/embed/' + m[1] };
 
         // NOTE: Bilibili 链接 bilibili.com/video/BVxxx
         m = url.match(/bilibili\.com\/video\/(BV[A-Za-z0-9]+)/);
-        if (m) return 'https://player.bilibili.com/player.html?bvid=' + m[1] + '&autoplay=0';
+        if (m) return { type: 'bilibili', id: m[1], embedUrl: 'https://player.bilibili.com/player.html?bvid=' + m[1] + '&autoplay=0' };
 
         return null;
     }
