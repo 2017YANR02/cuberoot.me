@@ -1547,13 +1547,13 @@
                 event: (document.getElementById('rf-event').value === '__other__' ? document.getElementById('rf-event-custom').value.trim() : document.getElementById('rf-event').value) || '3x3',
                 method: document.getElementById('rf-method').value.trim(),
                 comp: document.getElementById('rf-comp').value.trim(),
-                // NOTE: 提交时自动查表获取 WCA 比赛 ID
-                compWcaId: compWcaIdMap[document.getElementById('rf-comp').value.trim()] || '',
-                // NOTE: 提交时自动查表获取比赛国家
-                country: compCountryMap[document.getElementById('rf-comp').value.trim()] || '',
-                // NOTE: 选手国籍和 WCA ID（从搜索选中时缓存）
-                personCountry: cachedSolverIso2 || '',
-                personId: cachedSolverWcaId || '',
+                // NOTE: 提交时自动查表获取 WCA 比赛 ID，未改比赛时保留原值
+                compWcaId: compWcaIdMap[document.getElementById('rf-comp').value.trim()] || s.compWcaId || '',
+                // NOTE: 提交时自动查表获取比赛国家，未改比赛时保留原值
+                country: compCountryMap[document.getElementById('rf-comp').value.trim()] || s.country || '',
+                // NOTE: 选手国籍和 WCA ID——未重新选择 solver 时保留原值，防止空覆盖
+                personCountry: cachedSolverIso2 || s.personCountry || '',
+                personId: cachedSolverWcaId || s.personId || '',
                 note: document.getElementById('rf-note').value.trim(),
                 round: document.getElementById('rf-round').value,
                 solveNum: document.getElementById('rf-solve-num').value ? parseInt(document.getElementById('rf-solve-num').value) : null,
