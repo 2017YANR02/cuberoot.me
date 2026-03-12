@@ -2,6 +2,7 @@
 # 用户通过选择器在 Ao5 / Ao12 / Ao25 / Ao50 / Ao100 之间切换
 require_relative "abstract/average_of_x"
 require_relative "../core/stat_panel"
+require_relative "average_of_3"
 require_relative "../core/metric_layout"
 require_relative "average_of_5"
 require_relative "average_of_12"
@@ -13,10 +14,11 @@ class AverageOf < Statistic
   include StatPanel
   include MetricLayout
 
-  AOX_CLASSES = [AverageOf5, AverageOf12, AverageOf25, AverageOf50, AverageOf100].freeze
+  AOX_CLASSES = [AverageOf3, AverageOf5, AverageOf12, AverageOf25, AverageOf50, AverageOf100].freeze
 
   # NOTE: 按钮标签和 HTML ID 前缀
   AOX_META = {
+    AverageOf3   => { label: "Mo3",   id: "mo3" },
     AverageOf5   => { label: "Ao5",   id: "ao5" },
     AverageOf12  => { label: "Ao12",  id: "ao12" },
     AverageOf25  => { label: "Ao25",  id: "ao25" },
