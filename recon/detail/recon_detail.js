@@ -747,21 +747,32 @@
      */
     function parseVideoUrl(url) {
         var m;
-        // NOTE: YouTube 短链接 youtu.be/ID
-        m = url.match(/youtu\.be\/([A-Za-z0-9_-]+)/);
-        if (m) return { type: 'youtube', id: m[1], embedUrl: 'https://www.youtube.com/embed/' + m[1] };
+        var ytId = null;
 
-        // NOTE: YouTube 标准链接 youtube.com/watch?v=ID
-        m = url.match(/youtube\.com\/watch\?.*v=([A-Za-z0-9_-]+)/);
-        if (m) return { type: 'youtube', id: m[1], embedUrl: 'https://www.youtube.com/embed/' + m[1] };
+        // NOTE: 按优先级匹配各种 YouTube URL 格式
+        if ((m = url.match(/youtu\.be\/([A-Za-z0-9_-]+)/))) ytId = m[1];
+        else if ((m = url.match(/youtube\.com\/watch\?.*v=([A-Za-z0-9_-]+)/))) ytId = m[1];
+        else if ((m = url.match(/youtube\.com\/embed\/([A-Za-z0-9_-]+)/))) ytId = m[1];
+        else if ((m = url.match(/youtube\.com\/shorts\/([A-Za-z0-9_-]+)/))) ytId = m[1];
+        else if ((m = url.match(/youtube\.com\/live\/([A-Za-z0-9_-]+)/))) ytId = m[1];
+        else if ((m = url.match(/youtube\.com\/v\/([A-Za-z0-9_-]+)/))) ytId = m[1];
 
-        // NOTE: YouTube embed 链接
-        m = url.match(/youtube\.com\/embed\/([A-Za-z0-9_-]+)/);
-        if (m) return { type: 'youtube', id: m[1], embedUrl: 'https://www.youtube.com/embed/' + m[1] };
+        if (ytId) {
+            // NOTE: ?t= 参数转换为 YouTube embed 的 start= 参数
+            var tMatch = url.match(/[?&]t=(\d+)/);
+            var embedUrl = 'https://www.youtube.com/embed/' + ytId + '?rel=0';
+            if (tMatch) embedUrl += '&start=' + tMatch[1];
+            return { type: 'youtube', id: ytId, embedUrl: embedUrl };
+        }
 
         // NOTE: Bilibili 链接 bilibili.com/video/BVxxx
         m = url.match(/bilibili\.com\/video\/(BV[A-Za-z0-9]+)/);
-        if (m) return { type: 'bilibili', id: m[1], embedUrl: 'https://player.bilibili.com/player.html?bvid=' + m[1] + '&autoplay=0' };
+        if (m) {
+            var biliEmbed = 'https://player.bilibili.com/player.html?bvid=' + m[1] + '&autoplay=0';
+            var biliT = url.match(/[?&]t=(\d+)/);
+            if (biliT) biliEmbed += '&t=' + biliT[1];
+            return { type: 'bilibili', id: m[1], embedUrl: biliEmbed };
+        }
 
         return null;
     }
