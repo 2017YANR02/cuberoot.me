@@ -534,6 +534,14 @@
         videoUrlEl.addEventListener('input', function () {
             autoResize(videoUrlEl);
         });
+        // NOTE: blur 时自动标准化链接格式并排序（YouTube 在前，Bilibili 在后）
+        videoUrlEl.addEventListener('blur', function () {
+            var normalized = normalizeVideoUrls(videoUrlEl.value);
+            if (normalized !== videoUrlEl.value.trim()) {
+                videoUrlEl.value = normalized;
+                autoResize(videoUrlEl);
+            }
+        });
         document.getElementById('rf-single').addEventListener('input', function () {
             updateStatsDisplay();
             // NOTE: rawTime 变化时也联动更新 memo 计算
@@ -1377,13 +1385,19 @@
 
     /**
      * 标准化视频链接输入（支持多行，每行一个链接）
+     * NOTE: 自动排序——YouTube 在前，Bilibili 在后
      */
     function normalizeVideoUrls(text) {
         if (!text || !text.trim()) return '';
-        return text.split('\n')
+        var lines = text.split('\n')
             .map(function (line) { return normalizeSingleVideoUrl(line.trim()); })
-            .filter(function (line) { return line.length > 0; })
-            .join('\n');
+            .filter(function (line) { return line.length > 0; });
+        lines.sort(function (a, b) {
+            var aIsYt = a.indexOf('youtu') >= 0 ? 0 : 1;
+            var bIsYt = b.indexOf('youtu') >= 0 ? 0 : 1;
+            return aIsYt - bIsYt;
+        });
+        return lines.join('\n');
     }
 
     /**
