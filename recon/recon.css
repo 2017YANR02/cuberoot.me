@@ -410,6 +410,31 @@ tr.detail-row td {
     line-height: 1.6;
 }
 
+/* --- 打乱+解法融合容器 --- */
+.detail-solution-block {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 6px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+}
+
+/* NOTE: 融合容器内的文本框不再需要独立边框/背景/圆角 */
+.detail-solution-block .detail-scramble-text,
+.detail-solution-block .detail-recon-text {
+    background: none;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+}
+
+/* NOTE: 融合容器内的分隔线 */
+.detail-block-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+    margin: 10px 0;
+}
+
 /* --- 复盘步骤 --- */
 .detail-recon {
     margin-bottom: 12px;
