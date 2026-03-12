@@ -281,6 +281,8 @@
             document.getElementById('rf-comp').value = s.comp || '';
             document.getElementById('rf-note').value = s.note || '';
             autoResize(document.getElementById('rf-note'));
+            document.getElementById('rf-video-url').value = s.videoUrl || '';
+            autoResize(document.getElementById('rf-video-url'));
             document.getElementById('rf-round').value = s.round || '';
             document.getElementById('rf-solve-num').value = s.solveNum ? String(s.solveNum) : '';
 
@@ -527,6 +529,10 @@
         noteEl.addEventListener('input', function () {
             normalizePunctuation(noteEl);
             autoResize(noteEl);
+        });
+        var videoUrlEl = document.getElementById('rf-video-url');
+        videoUrlEl.addEventListener('input', function () {
+            autoResize(videoUrlEl);
         });
         document.getElementById('rf-single').addEventListener('input', function () {
             updateStatsDisplay();
@@ -1555,6 +1561,7 @@
                 personCountry: cachedSolverIso2 || s.personCountry || '',
                 personId: cachedSolverWcaId || s.personId || '',
                 note: document.getElementById('rf-note').value.trim(),
+                videoUrl: document.getElementById('rf-video-url').value.trim(),
                 round: document.getElementById('rf-round').value,
                 solveNum: document.getElementById('rf-solve-num').value ? parseInt(document.getElementById('rf-solve-num').value) : null,
                 wcaScramble: document.getElementById('rf-scramble').value.trim(),
@@ -1702,6 +1709,8 @@
         // NOTE: solution 存纯解法（为未来移除 recon 做准备）
         solve.solution = recon;
         if (note) solve.note = note;
+        var videoUrl = document.getElementById('rf-video-url').value.trim();
+        if (videoUrl) solve.videoUrl = videoUrl;
         // NOTE: 盲拧项目时附加 execTime/memoTime
         if (isBldEvent(event)) {
             var eVal = parseFloat(document.getElementById('rf-exec-time').value.trim());

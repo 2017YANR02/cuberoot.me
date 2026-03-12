@@ -523,8 +523,12 @@
         }
         html += '</div>';
 
-        // 右列：统计网格 + 元数据
+        // 右列：视频 → 统计网格 + 元数据
         html += '<div>';
+        // NOTE: 有视频链接时嵌入播放器（YouTube / Bilibili）
+        if (s.videoUrl) {
+            html += buildVideoEmbeds(s.videoUrl, isZh);
+        }
         html += buildStatsGrid(s, isZh);
 
         // NOTE: 同轮次成绩容器（JS 异步填充，位于统计栏下方）
@@ -658,6 +662,57 @@
         }
         html += '</div></div>';
         return html;
+    }
+
+    // ==================== 视频嵌入 ====================
+
+    /**
+     * 从 video_url 字段（换行分隔的多 URL）构建视频 iframe HTML
+     * NOTE: 自动检测 YouTube / Bilibili 平台并生成对应 embed URL
+     */
+    function buildVideoEmbeds(videoUrlField, isZh) {
+        var urls = videoUrlField.split('\n').map(function (u) { return u.trim(); }).filter(Boolean);
+        if (urls.length === 0) return '';
+
+        var html = '<div class="detail-video">';
+        html += '<div class="detail-stats-label">🎬 <span data-i18n-en="Video" data-i18n-zh="视频">' + (isZh ? '视频' : 'Video') + '</span></div>';
+
+        for (var i = 0; i < urls.length; i++) {
+            var embedUrl = parseVideoUrl(urls[i]);
+            if (!embedUrl) continue;
+            html += '<div class="detail-video-wrap">';
+            html += '<iframe src="' + ReconUtils.escHtml(embedUrl) + '" allowfullscreen allow="autoplay; encrypted-media"></iframe>';
+            html += '</div>';
+        }
+        html += '</div>';
+        return html;
+    }
+
+    /**
+     * 将用户输入的视频 URL 转换为可嵌入的 embed URL
+     * 支持格式：
+     *   YouTube: youtu.be/ID, youtube.com/watch?v=ID, youtube.com/embed/ID
+     *   Bilibili: bilibili.com/video/BVID
+     * @return {string|null} embed URL，不识别的格式返回 null
+     */
+    function parseVideoUrl(url) {
+        // NOTE: YouTube 短链接 youtu.be/ID
+        var m = url.match(/youtu\.be\/([A-Za-z0-9_-]+)/);
+        if (m) return 'https://www.youtube.com/embed/' + m[1];
+
+        // NOTE: YouTube 标准链接 youtube.com/watch?v=ID
+        m = url.match(/youtube\.com\/watch\?.*v=([A-Za-z0-9_-]+)/);
+        if (m) return 'https://www.youtube.com/embed/' + m[1];
+
+        // NOTE: YouTube embed 链接（已是 embed 格式，直接返回）
+        m = url.match(/youtube\.com\/embed\/([A-Za-z0-9_-]+)/);
+        if (m) return 'https://www.youtube.com/embed/' + m[1];
+
+        // NOTE: Bilibili 链接 bilibili.com/video/BVxxx
+        m = url.match(/bilibili\.com\/video\/(BV[A-Za-z0-9]+)/);
+        if (m) return 'https://player.bilibili.com/player.html?bvid=' + m[1] + '&autoplay=0';
+
+        return null;
     }
 
     // ==================== 文本格式化（从 recon.js 迁移） ====================
