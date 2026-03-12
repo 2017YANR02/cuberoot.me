@@ -1001,6 +1001,34 @@ const I18n = {
                 el.textContent = map[text];
             }
         });
+        // NOTE: Alg-Trainers 训练器标题（如 "Square-1 OBL Trainer | Back"）
+        // 由 main.js 动态生成，无法精确匹配，用子字符串替换 "Trainer" 和 "Back"
+        const trainerTitle = document.getElementById('trainerTitle');
+        if (trainerTitle) {
+            // 遍历子节点：文本节点含 "Trainer"，<a> 含 "Back"
+            for (const node of trainerTitle.childNodes) {
+                if (node.nodeType === Node.TEXT_NODE) {
+                    let t = node.textContent;
+                    if (this.locale === 'zh') {
+                        t = t.replace('Trainer', '训练器');
+                        // 翻译标题中的魔方名称
+                        for (const [en, zh] of Object.entries(this._solverLabelZh)) {
+                            if (t.includes(en)) t = t.replace(en, zh);
+                        }
+                    } else {
+                        t = t.replace('训练器', 'Trainer');
+                        for (const [zh, en] of Object.entries(this._solverLabelEn)) {
+                            if (t.includes(zh)) t = t.replace(zh, en);
+                        }
+                    }
+                    node.textContent = t;
+                } else if (node.nodeType === Node.ELEMENT_NODE && node.tagName === 'A') {
+                    const text = node.textContent.trim();
+                    if (this.locale === 'zh' && text === 'Back') node.textContent = '返回';
+                    if (this.locale === 'en' && text === '返回') node.textContent = 'Back';
+                }
+            }
+        }
         // NOTE: Alg-Trainers h3 标题（如 "Welcome to ALLG-Trainer"）
         document.querySelectorAll('h3:not([data-i18n])').forEach(el => {
             const text = el.textContent.trim();
