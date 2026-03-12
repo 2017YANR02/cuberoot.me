@@ -92,6 +92,20 @@
 				font-size: 16px;
 				line-height: 2;
 			}
+			/* NOTE: tavg 输入框样式 */
+			.tavg-input {
+				width: 80px;
+				padding: 4px 8px;
+				font-size: 16px;
+				text-align: center;
+				border: 1px solid #999;
+				border-radius: 4px;
+				background: #fff;
+			}
+			.calc-nan {
+				color: #999;
+				font-style: italic;
+			}
 		</style>
 	</head>
 	<body>
@@ -1119,6 +1133,17 @@
         </h2>
 	<script src="calc.js"></script>
 	<script>
+	// NOTE: 每个 seed 的 tavg(目标平均)存储，单位 centiseconds
+	var targetAvgs = {};
+
+	function getTavg(seedIdx) {
+		return targetAvgs[seedIdx] || 0;
+	}
+	function setTavg(seedIdx, val) {
+		targetAvgs[seedIdx] = val;
+		renderCalcTable();
+	}
+
 	// NOTE: 渲染指标对比表格 — 每次 updateSort() 调用时触发
 	function renderCalcTable() {
 		var tbody = document.getElementById('calc-tbody');
@@ -1154,7 +1179,7 @@
 			['Mo2', 'mo2', true],
 			['Mo3', 'mo3', true],
 			['Mo4', 'mo4', true],
-			['Mean (tavg)', 'tavg', true],
+			['Mean', 'mo5', true],
 			['Variance', 'variance', false],
 			['Best/Avg', 'bestAvgRatio', false],
 		];
@@ -1169,9 +1194,9 @@
 			var v1 = r1 ? r1[key] : null;
 
 			// 跳过两边都没有有效值的指标
-		var hasV0 = (v0 !== undefined && v0 !== null);
-		var hasV1 = (v1 !== undefined && v1 !== null);
-		if (!hasV0 && !hasV1) continue;
+			var hasV0 = (v0 !== undefined && v0 !== null);
+			var hasV1 = (v1 !== undefined && v1 !== null);
+			if (!hasV0 && !hasV1) continue;
 
 			// 格式化显示值
 			var s0, s1;
@@ -1195,8 +1220,6 @@
 					if (v0 < v1) cls0 = 'calc-better';
 					else if (v1 < v0) cls1 = 'calc-better';
 				} else {
-					// Variance: 越小越稳定 = 更好
-					// Best/Avg: 越接近 1 越好（越大 = 越好）
 					if (key === 'variance') {
 						if (v0 < v1) cls0 = 'calc-better';
 						else if (v1 < v0) cls1 = 'calc-better';
@@ -1213,8 +1236,53 @@
 			html += '<td class="' + cls1 + '">' + s1 + '</td>';
 			html += '</tr>';
 		}
+
+		// NOTE: tavg 目标平均输入行 + 阈值行
+		var tavgVal0 = getTavg(seedOn);
+		var tavgVal1 = getTavg(seedOn + 1);
+		// tavg 输入行
+		var tvStr0 = tavgVal0 > 0 ? CalcEngine.formatTime(tavgVal0) : '';
+		var tvStr1 = tavgVal1 > 0 ? CalcEngine.formatTime(tavgVal1) : '';
+		html += '<tr style="background:#d4e6d4">';
+		html += '<td>Target Avg</td>';
+		html += '<td><input class="tavg-input" id="tavg-input-0" value="' + tvStr0 + '" placeholder="e.g. 5.00" onchange="onTavgChange(0)"></td>';
+		html += '<td><input class="tavg-input" id="tavg-input-1" value="' + tvStr1 + '" placeholder="e.g. 5.00" onchange="onTavgChange(1)"></td>';
+		html += '</tr>';
+
+		// 阈值计算
+		var th0 = tavgVal0 > 0 ? CalcEngine.computeThresholds(t0, tavgVal0) : null;
+		var th1 = tavgVal1 > 0 ? CalcEngine.computeThresholds(t1, tavgVal1) : null;
+
+		var thresholds = [
+			['t#4 (WPA≤tavg)', 't4wpa'],
+			['t#4 (BPA≤tavg)', 't4bpa'],
+			['t#5 (Avg≤tavg)', 't5'],
+		];
+		for (var j = 0; j < thresholds.length; j++) {
+			var tLabel = thresholds[j][0];
+			var tKey = thresholds[j][1];
+			var tv0 = th0 ? th0[tKey] : undefined;
+			var tv1 = th1 ? th1[tKey] : undefined;
+			// 格式化：null = NaN, undefined = -
+			var ts0 = tv0 === undefined ? '-' : (tv0 === null ? '<span class="calc-nan">NaN</span>' : CalcEngine.formatTime(tv0));
+			var ts1 = tv1 === undefined ? '-' : (tv1 === null ? '<span class="calc-nan">NaN</span>' : CalcEngine.formatTime(tv1));
+			html += '<tr>';
+			html += '<td>' + tLabel + '</td>';
+			html += '<td>' + ts0 + '</td>';
+			html += '<td>' + ts1 + '</td>';
+			html += '</tr>';
+		}
+
 		tbody.innerHTML = html;
 	}
+
+	// NOTE: tavg 输入框变更回调
+	function onTavgChange(playerIdx) {
+		var input = document.getElementById('tavg-input-' + playerIdx);
+		var val = textToTime(input.value);
+		setTavg(seedOn + playerIdx, val);
+	}
+
 	// NOTE: 首次加载也渲染一次
 	renderCalcTable();
 	</script>
