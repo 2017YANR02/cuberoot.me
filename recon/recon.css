@@ -498,7 +498,7 @@ tr.detail-row td {
     cursor: pointer;
 }
 
-.detail-video-facade img:not(.detail-video-play-bili) {
+.detail-video-facade img:not(.detail-video-play-bili):not(.detail-video-play-yt) {
     position: absolute;
     top: 0;
     left: 0;
