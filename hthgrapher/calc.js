@@ -72,14 +72,34 @@ const CalcEngine = {
             result.mo5 = Math.round(filled.reduce((s, v) => s + v, 0) / 5);
         }
 
-        // ── BPA (sorted[0]) — 最佳可能成绩 ──
-        result.bpa = nonDnf.length > 0 ? nonDnf[0] : DNF_VALUE;
+        // ── BPA (Best Possible Average) 和 WPA (Worst Possible Average) ──
+        // 逻辑：如果已有前 4 把（times5 的前 4 个元素，而非排好序的），
+        // 假设第 5 把是 0（对于 BPA）或 DNF（对于 WPA）算出来的 Ao5。
+        // （如果不满 4 把，按照 cdt/carykh 逻辑，通常是不可计算或基于已填写的把数，
+        // 但为了简单，我们可以基于已填入的所有成绩，再假设缺的那把是 0 或 DNF。
+        // 如果连同假设也凑不够 5 把，则是 DNF 或 null。
+        // Excel 里的 BPA/WPA 似乎就是前 4 把+假设之后的 Ao5）
+        if (times5.length === 5) {
+            // 取前 4 次的真实成绩（不排序！按输入顺序的前 4 个有效成绩）
+            // 这里我们用 filled 数组，如果是填满 5 把，就算前 4 把的 WPA/BPA
+            // 如果填了 4 把，也是自身前 4 把的 WPA/BPA
+            var baseForPa = filled.slice(0, 4);
+            if (baseForPa.length === 4) {
+                // BPA: 加一个 0
+                var bpaArr = [...baseForPa, 0].sort((a,b)=>a-b);
+                var bpaDnfCount = bpaArr.filter(t => t >= DNF_VALUE).length;
+                if (bpaDnfCount >= 2) result.bpa = DNF_VALUE;
+                else result.bpa = Math.round((bpaArr[1] + bpaArr[2] + bpaArr[3]) / 3);
 
-        // ── WPA (sorted[3] 或 DNF) — 最差可能成绩（第4好的，因为只计3次）──
-        if (dnfCount >= 2) {
-            result.wpa = DNF_VALUE;
-        } else {
-            result.wpa = sorted[3];
+                // WPA: 加一个 DNF
+                var wpaArr = [...baseForPa, DNF_VALUE].sort((a,b)=>a-b);
+                var wpaDnfCount = wpaArr.filter(t => t >= DNF_VALUE).length;
+                if (wpaDnfCount >= 2) result.wpa = DNF_VALUE;
+                else result.wpa = Math.round((wpaArr[1] + wpaArr[2] + wpaArr[3]) / 3);
+            } else {
+                result.bpa = null;
+                result.wpa = null;
+            }
         }
 
         // ── BestC — 最佳计入成绩（sorted[1]，Ao5 中间 3 次的最好）──
