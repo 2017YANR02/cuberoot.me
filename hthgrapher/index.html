@@ -100,6 +100,74 @@
 				color: #999;
 				font-style: italic;
 			}
+			/* NOTE: iOS 计算器风格数字键盘 */
+			#numpad {
+				display: none;
+				max-width: 400px;
+				margin: 10px auto;
+				padding: 12px;
+				background: #222;
+				border-radius: 16px;
+				box-sizing: border-box;
+			}
+			#numpad-display {
+				color: #fff;
+				font-size: 28px;
+				font-family: 'Helvetica Neue', Helvetica, sans-serif;
+				text-align: right;
+				padding: 8px 16px;
+				margin-bottom: 10px;
+				background: #333;
+				border-radius: 10px;
+				min-height: 40px;
+				line-height: 40px;
+				overflow: hidden;
+			}
+			#numpad-label {
+				color: #aaa;
+				font-size: 14px;
+				float: left;
+				line-height: 40px;
+			}
+			#numpad-grid {
+				display: grid;
+				grid-template-columns: repeat(4, 1fr);
+				gap: 8px;
+			}
+			.np-btn {
+				border: none;
+				border-radius: 50%;
+				width: 100%;
+				aspect-ratio: 1;
+				font-size: 24px;
+				font-family: 'Helvetica Neue', Helvetica, sans-serif;
+				font-weight: 500;
+				cursor: pointer;
+				outline: none;
+				-webkit-tap-highlight-color: transparent;
+				transition: background 0.1s;
+			}
+			.np-btn:active {
+				opacity: 0.7;
+			}
+			.np-digit {
+				background: #505050;
+				color: #fff;
+			}
+			.np-op {
+				background: #a5a5a5;
+				color: #000;
+			}
+			.np-action {
+				background: #ff9f0a;
+				color: #fff;
+				font-weight: 700;
+			}
+			.np-action-alt {
+				background: #3b6978;
+				color: #fff;
+				font-weight: 600;
+			}
 		</style>
 	</head>
 	<body>
@@ -202,6 +270,7 @@
 				c.onmousedown = null;
 				c.onmouseup = null;
 				c.onmousemove = null;
+				if (option == 1) showNumpad();
 				textBoxState = option;
 			}
 			function clickedWhileTextBoxOpen(e){
@@ -245,6 +314,7 @@
 						names[seedOn+highlight[0]] = document.getElementById("value").value;
 					}
 				}
+				hideNumpad();
 				textBoxState = 0;
 				highlight = [-1,-1];
 				// NOTE: 名称/比赛名变更后同步 URL
@@ -1012,6 +1082,75 @@
 				seedOn = 0;
 				updateSort();
 			}
+			// NOTE: 数字键盘相关函数
+			function showNumpad() {
+				var np = document.getElementById('numpad');
+				np.style.display = 'block';
+				// NOTE: 阻止 numpad 上的 mousedown 夺走 #value 的焦点
+				np.onmousedown = function(e) { e.preventDefault(); };
+				syncNumpadDisplay();
+			}
+			function hideNumpad() {
+				document.getElementById('numpad').style.display = 'none';
+			}
+			function syncNumpadDisplay() {
+				var v = document.getElementById('value');
+				document.getElementById('numpad-value').textContent = v ? v.value : '';
+				// 显示当前编辑位置
+				var label = '';
+				if (highlight[0] >= 0 && highlight[1] >= 0) {
+					var pName = names[seedOn + highlight[0]] || ('Player ' + highlight[0]);
+					label = pName + ' #' + (highlight[1] + 1);
+				}
+				document.getElementById('numpad-label').textContent = label;
+			}
+			function numpadPress(key) {
+				var v = document.getElementById('value');
+				if (!v || textBoxState != 1) return;
+				if (key == 'enter') {
+					// 等同于按 Enter：保存并跳到同选手下一把
+					if (highlight[1] >= 0 && highlight[1] < 4) {
+						var p = highlight[0], t = highlight[1];
+						closeTextBox(true);
+						highlight = [p, t + 1];
+						openTextBox(1);
+					} else {
+						closeTextBox(true);
+					}
+				} else if (key == 'tab') {
+					// 等同于按 Tab：保存并交替跳转
+					var p = highlight[0], t = highlight[1];
+					closeTextBox(true);
+					if (p == 0) {
+						highlight = [1, t];
+					} else if (t < 4) {
+						highlight = [0, t + 1];
+					} else {
+						return;
+					}
+					openTextBox(1);
+				} else if (key == 'dnf') {
+					v.value = 'DNF';
+					syncNumpadDisplay();
+					// 自动跳到下一把
+					if (highlight[1] >= 0 && highlight[1] < 4) {
+						var p = highlight[0], t = highlight[1];
+						closeTextBox(true);
+						highlight = [p, t + 1];
+						openTextBox(1);
+					} else {
+						closeTextBox(true);
+					}
+				} else if (key == 'backspace') {
+					v.value = v.value.slice(0, -1);
+					syncNumpadDisplay();
+				} else {
+					// 字符键：0-9, '.', ':'
+					v.value += key;
+					syncNumpadDisplay();
+				}
+				v.focus();
+			}
 			function onKey(e) {
 		    if(e.keyCode == 32){ // SPACE
 					interactTimeLive();
@@ -1140,6 +1279,28 @@
 		function drawCredits(){
 		}
 		</script>
+		<!-- NOTE: 手机端数字键盘 -->
+		<div id="numpad">
+			<div id="numpad-display"><span id="numpad-label"></span><span id="numpad-value"></span></div>
+			<div id="numpad-grid">
+				<button class="np-btn np-digit" onclick="numpadPress('7')">7</button>
+				<button class="np-btn np-digit" onclick="numpadPress('8')">8</button>
+				<button class="np-btn np-digit" onclick="numpadPress('9')">9</button>
+				<button class="np-btn np-op" onclick="numpadPress('backspace')">⌫</button>
+				<button class="np-btn np-digit" onclick="numpadPress('4')">4</button>
+				<button class="np-btn np-digit" onclick="numpadPress('5')">5</button>
+				<button class="np-btn np-digit" onclick="numpadPress('6')">6</button>
+				<button class="np-btn np-op" onclick="numpadPress('dnf')" style="font-size:18px">DNF</button>
+				<button class="np-btn np-digit" onclick="numpadPress('1')">1</button>
+				<button class="np-btn np-digit" onclick="numpadPress('2')">2</button>
+				<button class="np-btn np-digit" onclick="numpadPress('3')">3</button>
+				<button class="np-btn np-digit" onclick="numpadPress(':')" style="font-size:28px">:</button>
+				<button class="np-btn np-digit" onclick="numpadPress('0')">0</button>
+				<button class="np-btn np-digit" onclick="numpadPress('.')">.</button>
+				<button class="np-btn np-action" onclick="numpadPress('enter')" style="font-size:20px">✓→</button>
+				<button class="np-btn np-action-alt" onclick="numpadPress('tab')" style="font-size:20px">⇄</button>
+			</div>
+		</div>
 		<noscript>
 			<h3>Head-to-Head Average of 5 Calculator</h3>
 		</noscript>
