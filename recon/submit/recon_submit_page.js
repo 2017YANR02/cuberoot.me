@@ -52,6 +52,8 @@
         { key: 'reconer', labelEn: 'Reconer', labelZh: '复盘者' },
         { key: 'groupId', labelEn: 'Group', labelZh: '组' },
         { key: 'reconDate', labelEn: 'Recon Date', labelZh: '复盘日期' },
+        // NOTE: 添加者——仅管理员可见，由 admin 判断逻辑控制 display
+        { key: 'addedBy', labelEn: 'Added By', labelZh: '添加者' },
     ];
 
     // NOTE: 当前正在编辑的 solve 对象（null 表示新增模式）
@@ -65,6 +67,8 @@
     // NOTE: 缓存选手国籍 ISO2 和 WCA ID——选中后存入，提交时写入数据库
     var cachedSolverIso2 = '';
     var cachedSolverWcaId = '';
+    // NOTE: 管理员修改添加者时缓存 WCA ID
+    var cachedAdderWcaId = '';
 
     document.addEventListener('DOMContentLoaded', function () {
         // NOTE: 实时读取 locale，避免闭包缓存导致的时序问题（i18n.js 可能在本脚本之后更新 localStorage）
@@ -324,6 +328,11 @@
             var reconerVal = (s.reconer || '').trim();
             if (reconerVal) {
                 tryShowPersonRichDisplay(reconerVal, reconerDisplay, reconerInput);
+            }
+            // NOTE: 管理员编辑时回填添加者富显示
+            var adderVal = (s.addedBy || '').trim();
+            if (adderVal && adderDisplay && adderInput && WcaAuth.isAdmin()) {
+                tryShowPersonRichDisplay(adderVal, adderDisplay, adderInput);
             }
 
             // NOTE: 比赛富显示——用 solve 自带的 country/date 直接渲染，
@@ -1069,6 +1078,26 @@
             localPersonsFn: function () { return cachedPersons; }
         });
 
+        // ==================== 管理员专用：添加者搜索下拉 ====================
+
+        var adderInput = document.getElementById('rf-edit-addedBy');
+        var adderDisplay = document.getElementById('rf-adder-display');
+        var adderRow = document.getElementById('rf-adder-row');
+
+        // NOTE: 仅管理员可见——非管理员看不到此行
+        if (adderInput && adderRow && WcaAuth.isAdmin()) {
+            adderRow.style.display = '';
+            var adderDropdown = document.createElement('div');
+            adderDropdown.id = 'rf-adder-dropdown';
+            adderDropdown.className = 'solver-dropdown';
+            document.body.appendChild(adderDropdown);
+
+            bindPersonSearch(adderInput, adderDropdown, adderDisplay, {
+                localPersonsFn: function () { return cachedPersons; },
+                onSelect: function (name, iso2, wcaId) { cachedAdderWcaId = wcaId; }
+            });
+        }
+
         // NOTE: 复盘日期默认当天（新增模式下输入框为空时自动填入）
         var reconDateEl = document.getElementById('rf-edit-reconDate');
         if (reconDateEl && !reconDateEl.value) {
@@ -1659,6 +1688,8 @@
                     }
                 }
             });
+            // NOTE: 管理员修改添加者时附加 WCA ID
+            if (cachedAdderWcaId) newData.addedById = cachedAdderWcaId;
             // NOTE: 重新计算 STM/TPS
             if (newData.solution && typeof ReconStats !== 'undefined') {
                 var stats = ReconStats.computeAllStats(newData.solution, newData.rawTime);
