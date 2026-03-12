@@ -193,7 +193,7 @@ const CalcEngine = {
                     // 即使 x=0 也无法达标（前 3 个 counting 值已超标）
                     result.t5 = null; // NaN
                 } else {
-                    result.t5 = Math.floor(threshold);
+                    result.t5 = Math.round(threshold);
                 }
             }
         }
@@ -220,10 +220,10 @@ const CalcEngine = {
                 } else {
                     // x 在 s3[1]~s3[2] 之间时：中间 3 取决于位置
                     // 最宽松 = 3*tavg - s3[0] - s3[1]（x 替代 s3[2]）
-                    result.t4bpa = Math.floor(3 * tavg - s3[0] - s3[1]);
+                    result.t4bpa = Math.round(3 * tavg - s3[0] - s3[1]);
                 }
             } else {
-                result.t4bpa = Math.floor(threshold);
+                result.t4bpa = Math.round(threshold);
             }
 
             // ── t#4 (WPA<=tavg): 第 4 把阈值，WPA 场景（第 5 把 = DNF）──
