@@ -496,26 +496,38 @@
         // NOTE: 当两种打乱都有时，顺序调整为：最少步打乱 → 解法 → 仅外层 → WCA打乱
         var hasBothScrambles = s.optimalScramble && s.wcaScramble;
 
-        // NOTE: 最少步打乱（始终在前）
-        if (s.optimalScramble) {
-            html += '<div class="detail-scramble">';
-            html += '<div class="detail-scramble-label"><span data-i18n-en="Optimal Scramble" data-i18n-zh="最少步打乱">' + (isZh ? '最少步打乱' : 'Optimal Scramble') + '</span></div>';
-            html += '<div class="detail-scramble-text">' + U.escHtml(s.optimalScramble) + '</div>';
-            html += '</div>';
-        }
-        // NOTE: 只有一种打乱时，WCA 打乱紧跟在最少步后面
-        if (s.wcaScramble && !hasBothScrambles) {
-            html += '<div class="detail-scramble">';
-            html += '<div class="detail-scramble-label"><span data-i18n-en="WCA Scramble" data-i18n-zh="WCA 打乱">' + (isZh ? 'WCA 打乱' : 'WCA Scramble') + '</span></div>';
-            html += '<div class="detail-scramble-text">' + U.escHtml(s.wcaScramble) + '</div>';
-            html += '</div>';
-        }
-        // NOTE: 解法区块
-        if (solutionText) {
-            html += '<div class="detail-recon">';
-            html += '<div class="detail-recon-label"><span data-i18n-en="Solution" data-i18n-zh="解法">' + (isZh ? '解法' : 'Solution') + '</span></div>';
+        // NOTE: 判断是否有"主打乱"（最少步 或 唯一的 WCA 打乱）需要与解法融合
+        var primaryScramble = s.optimalScramble || (!hasBothScrambles ? s.wcaScramble : '');
+        var hasFusedBlock = primaryScramble && solutionText;
+
+        if (hasFusedBlock) {
+            // NOTE: 融合容器——打乱和解法共享一个视觉框体，不显示标签
+            html += '<div class="detail-solution-block">';
+            html += '<div class="detail-scramble-text">' + U.escHtml(primaryScramble) + '</div>';
+            // NOTE: 分隔线
+            html += '<div class="detail-block-divider"></div>';
             html += '<div class="detail-recon-text">' + formatReconText(solutionText) + '</div>';
             html += '</div>';
+        } else {
+            // NOTE: 没有打乱时，打乱和解法各自独立渲染
+            if (s.optimalScramble) {
+                html += '<div class="detail-scramble">';
+                html += '<div class="detail-scramble-label"><span data-i18n-en="Optimal Scramble" data-i18n-zh="最少步打乱">' + (isZh ? '最少步打乱' : 'Optimal Scramble') + '</span></div>';
+                html += '<div class="detail-scramble-text">' + U.escHtml(s.optimalScramble) + '</div>';
+                html += '</div>';
+            }
+            if (s.wcaScramble && !hasBothScrambles) {
+                html += '<div class="detail-scramble">';
+                html += '<div class="detail-scramble-label"><span data-i18n-en="WCA Scramble" data-i18n-zh="WCA 打乱">' + (isZh ? 'WCA 打乱' : 'WCA Scramble') + '</span></div>';
+                html += '<div class="detail-scramble-text">' + U.escHtml(s.wcaScramble) + '</div>';
+                html += '</div>';
+            }
+            if (solutionText) {
+                html += '<div class="detail-recon">';
+                html += '<div class="detail-recon-label"><span data-i18n-en="Solution" data-i18n-zh="解法">' + (isZh ? '解法' : 'Solution') + '</span></div>';
+                html += '<div class="detail-recon-text">' + formatReconText(solutionText) + '</div>';
+                html += '</div>';
+            }
         }
         // NOTE: 仅三阶/三阶单手，且有双层转动时显示标准化 cross
         if (typeof ReconNormCross !== 'undefined' &&
