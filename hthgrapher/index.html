@@ -47,6 +47,51 @@
 			audio, video {
 				display: none;
 			}
+			/* NOTE: 指标对比表格样式 */
+			#calc-section {
+				max-width: 900px;
+				margin: 0 auto;
+				padding: 20px;
+				box-sizing: border-box;
+			}
+			#calc-table {
+				width: 100%;
+				border-collapse: collapse;
+				font-family: Helvetica, Arial, sans-serif;
+				font-size: 18px;
+			}
+			#calc-table th {
+				background: #3B6978;
+				color: #fff;
+				padding: 10px 16px;
+				text-align: center;
+				font-weight: 600;
+			}
+			#calc-table td {
+				padding: 8px 16px;
+				text-align: center;
+				border-bottom: 1px solid #ccc;
+			}
+			#calc-table tr:nth-child(even) {
+				background: #f0ece4;
+			}
+			#calc-table tr:nth-child(odd) {
+				background: #E7DFD5;
+			}
+			#calc-table td:first-child {
+				font-weight: 600;
+				text-align: left;
+			}
+			/* NOTE: 优势方高亮 — 更小的时间 = 更好 */
+			.calc-better {
+				color: #006400;
+				font-weight: 700;
+			}
+			#calc-section .links {
+				margin-top: 20px;
+				font-size: 16px;
+				line-height: 2;
+			}
 		</style>
 	</head>
 	<body>
@@ -1009,6 +1054,8 @@
                     singles[p] = getBestSingle(times[p]);
                 }
                 sorted_cache = getSortedIndices(avgs,singles);
+			    // NOTE: 每次数据更新后刷新指标对比表格
+			    if (typeof renderCalcTable === 'function') renderCalcTable();
 			}
 			function endTimeLive(){
 				if(timeLive[0] >= 0){
@@ -1056,10 +1103,120 @@
 		<noscript>
 			<h3>Head-to-Head Average of 5 Calculator</h3>
 		</noscript>
-		<h2 id="blah"> 
-    		<p><a href="https://www.youtube.com/watch?v=92Dg-iV5o0c">Demonstration video explaining how this works</a></p>
-    		<p><a href="https://github.com/carykh/hthgrapher">Source Code on GitHub</a></p>
-            <p><a href="https://htwins.net">Back to htwins</a></p>
+		<h2 id="blah">
+			<div id="calc-section">
+				<table id="calc-table">
+					<thead>
+						<tr><th>Metric</th><th id="calc-th-a">Seed 1</th><th id="calc-th-b">Seed 2</th></tr>
+					</thead>
+					<tbody id="calc-tbody"></tbody>
+				</table>
+				<div class="links">
+					<p><a href="https://www.youtube.com/watch?v=92Dg-iV5o0c">Demonstration video explaining how this works</a></p>
+					<p><a href="https://github.com/carykh/hthgrapher">Source Code on GitHub</a></p>
+				</div>
+			</div>
         </h2>
+	<script src="calc.js"></script>
+	<script>
+	// NOTE: 渲染指标对比表格 — 每次 updateSort() 调用时触发
+	function renderCalcTable() {
+		var tbody = document.getElementById('calc-tbody');
+		if (!tbody) return;
+
+		var t0 = times[seedOn];
+		var t1 = times[seedOn + 1];
+		var r0 = CalcEngine.compute(t0);
+		var r1 = CalcEngine.compute(t1);
+
+		// 更新表头为当前选手名
+		document.getElementById('calc-th-a').textContent = names[seedOn];
+		document.getElementById('calc-th-b').textContent = names[seedOn + 1];
+
+		if (!r0 && !r1) {
+			tbody.innerHTML = '<tr><td colspan="3" style="color:#888">Enter times above to see metrics</td></tr>';
+			return;
+		}
+
+		// NOTE: 指标定义表 — [显示名, key, 是否越小越好]
+		var metrics = [
+			['Best', 'best', true],
+			['Avg (Ao5)', 'avg', true],
+			['BAo5', 'bao5', true],
+			['WAo5', 'wao5', true],
+			['Mo5', 'mo5', true],
+			['BPA', 'bpa', true],
+			['WPA', 'wpa', true],
+			['BestC', 'bestC', true],
+			['Median', 'median', true],
+			['WorstC', 'worstC', true],
+			['Worst', 'worst', true],
+			['Mo2', 'mo2', true],
+			['Mo3', 'mo3', true],
+			['Mo4', 'mo4', true],
+			['Mean (tavg)', 'tavg', true],
+			['Variance', 'variance', false],
+			['Best/Avg', 'bestAvgRatio', false],
+		];
+
+		var html = '';
+		for (var i = 0; i < metrics.length; i++) {
+			var label = metrics[i][0];
+			var key = metrics[i][1];
+			var lowerBetter = metrics[i][2];
+
+			var v0 = r0 ? r0[key] : null;
+			var v1 = r1 ? r1[key] : null;
+
+			// 跳过两边都没有有效值的指标
+		var hasV0 = (v0 !== undefined && v0 !== null);
+		var hasV1 = (v1 !== undefined && v1 !== null);
+		if (!hasV0 && !hasV1) continue;
+
+			// 格式化显示值
+			var s0, s1;
+			if (key === 'variance') {
+				s0 = (v0 !== null && v0 !== undefined) ? v0.toFixed(2) : '-';
+				s1 = (v1 !== null && v1 !== undefined) ? v1.toFixed(2) : '-';
+			} else if (key === 'bestAvgRatio') {
+				s0 = (v0 !== null && v0 !== undefined) ? v0.toFixed(2) : '-';
+				s1 = (v1 !== null && v1 !== undefined) ? v1.toFixed(2) : '-';
+			} else {
+				s0 = CalcEngine.formatTime(v0);
+				s1 = CalcEngine.formatTime(v1);
+			}
+
+			// 判断谁更优
+			var cls0 = '';
+			var cls1 = '';
+			if (v0 !== null && v0 !== undefined && v1 !== null && v1 !== undefined
+				&& v0 !== DNF_VALUE && v1 !== DNF_VALUE) {
+				if (lowerBetter) {
+					if (v0 < v1) cls0 = 'calc-better';
+					else if (v1 < v0) cls1 = 'calc-better';
+				} else {
+					// Variance: 越小越稳定 = 更好
+					// Best/Avg: 越接近 1 越好（越大 = 越好）
+					if (key === 'variance') {
+						if (v0 < v1) cls0 = 'calc-better';
+						else if (v1 < v0) cls1 = 'calc-better';
+					} else if (key === 'bestAvgRatio') {
+						if (v0 > v1) cls0 = 'calc-better';
+						else if (v1 > v0) cls1 = 'calc-better';
+					}
+				}
+			}
+
+			html += '<tr>';
+			html += '<td>' + label + '</td>';
+			html += '<td class="' + cls0 + '">' + s0 + '</td>';
+			html += '<td class="' + cls1 + '">' + s1 + '</td>';
+			html += '</tr>';
+		}
+		tbody.innerHTML = html;
+	}
+	// NOTE: 首次加载也渲染一次
+	renderCalcTable();
+	</script>
 	</body>
 </html>
