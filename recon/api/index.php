@@ -46,7 +46,8 @@ if (!file_exists($migrationFlag)) {
             getDb()->exec("ALTER TABLE recons ADD COLUMN person_country VARCHAR(10) DEFAULT NULL AFTER person_id");
         }
         @file_put_contents($migrationFlag, date('Y-m-d H:i:s'));
-    } catch (Exception $e) {
+    }
+    catch (Exception $e) {
         // NOTE: 权限不足等错误不应阻断正常 API 功能，静默跳过
         @error_log('Migration person_country failed: ' . $e->getMessage());
     }
@@ -61,7 +62,8 @@ if (!file_exists($migrationFlagVideo)) {
             getDb()->exec("ALTER TABLE recons ADD COLUMN video_url TEXT DEFAULT NULL");
         }
         @file_put_contents($migrationFlagVideo, date('Y-m-d H:i:s'));
-    } catch (Exception $e) {
+    }
+    catch (Exception $e) {
         @error_log('Migration video_url failed: ' . $e->getMessage());
     }
 }
@@ -222,7 +224,8 @@ switch ($action) {
         if ($wcaId) {
             $stmt = $db->prepare("SELECT * FROM recons WHERE person_id = ? ORDER BY id DESC");
             $stmt->execute([$wcaId]);
-        } else {
+        }
+        else {
             $stmt = $db->query("SELECT * FROM recons ORDER BY id DESC");
         }
 
@@ -305,7 +308,7 @@ switch ($action) {
         $stmt = $db->prepare("INSERT INTO recons ($cols) VALUES ($placeholders)");
         $stmt->execute(array_values($row));
 
-        $body['id'] = (int) $db->lastInsertId();
+        $body['id'] = (int)$db->lastInsertId();
         echo json_encode($body);
         break;
 
@@ -428,7 +431,7 @@ switch ($action) {
         $stmt = $db->query("SELECT solve_id, fields FROM edits");
         $edits = new stdClass(); // NOTE: 空对象而非空数组，确保 JSON 输出 {} 而非 []
         while ($row = $stmt->fetch()) {
-            $edits->{$row['solve_id']} = json_decode($row['fields'], true);
+            $edits->{ $row['solve_id']} = json_decode($row['fields'], true);
         }
         echo json_encode($edits);
         break;
@@ -460,7 +463,8 @@ switch ($action) {
         // NOTE: 同步更新 recons 主表——只写非内部字段（过滤 _ 开头的元数据）
         $publicFields = [];
         foreach ($fields as $k => $v) {
-            if ($k[0] !== '_') $publicFields[$k] = $v;
+            if ($k[0] !== '_')
+                $publicFields[$k] = $v;
         }
         if (!empty($publicFields)) {
             $row = jsonToRow($publicFields, true);
@@ -470,7 +474,8 @@ switch ($action) {
                     $row['official'] = $row['official'] ? 1 : 0;
                 }
                 foreach ($row as $k => $v) {
-                    if ($v === '') $row[$k] = null;
+                    if ($v === '')
+                        $row[$k] = null;
                 }
                 $setParts = [];
                 $values = [];
@@ -518,7 +523,8 @@ switch ($action) {
 
         // NOTE: 文件缓存——每个比赛一个 JSON 文件，TTL 7 天
         $cacheDir = __DIR__ . '/data/.wca_cache';
-        if (!is_dir($cacheDir)) mkdir($cacheDir, 0755, true);
+        if (!is_dir($cacheDir))
+            mkdir($cacheDir, 0755, true);
         $cacheFile = $cacheDir . '/' . preg_replace('/[^a-zA-Z0-9_-]/', '', $compId) . '.json';
         $cacheTTL = 7 * 86400;
 
@@ -557,7 +563,8 @@ switch ($action) {
                     $eventId = $entry['event_id'] ?? '';
                     $roundTypeId = $entry['round_type_id'] ?? '';
                     $attempts = $entry['attempts'] ?? [];
-                    if (!$wcaId || !$eventId || !$roundTypeId || empty($attempts)) continue;
+                    if (!$wcaId || !$eventId || !$roundTypeId || empty($attempts))
+                        continue;
 
                     $key = $eventId . '_' . $roundTypeId;
                     $compResults[$wcaId][$key] = ['a' => $attempts];
@@ -621,7 +628,7 @@ switch ($action) {
                 'before' => $row['before_snapshot'] ? json_decode($row['before_snapshot'], true) : null,
                 'after' => $row['after_fields'] ? json_decode($row['after_fields'], true) : null,
                 'editedBy' => $row['edited_by'],
-                'editedAt' => (int) $row['edited_at'],
+                'editedAt' => (int)$row['edited_at'],
             ];
             $results[] = $item;
         }
@@ -678,7 +685,8 @@ switch ($action) {
 
             $db->commit();
             echo json_encode(['ok' => true, 'imported' => count($solves), 'nextId' => $maxId + 1]);
-        } catch (Exception $e) {
+        }
+        catch (Exception $e) {
             $db->rollBack();
             http_response_code(500);
             echo json_encode(['error' => 'Import failed: ' . $e->getMessage()]);
@@ -774,7 +782,8 @@ switch ($action) {
 
         // NOTE: 文件缓存——每个 BV 号一个 JSON 文件，TTL 7 天
         $cacheDir = __DIR__ . '/data/.bili_cover';
-        if (!is_dir($cacheDir)) mkdir($cacheDir, 0755, true);
+        if (!is_dir($cacheDir))
+            mkdir($cacheDir, 0755, true);
         $cacheFile = $cacheDir . '/' . $bvid . '.json';
         $cacheTTL = 7 * 86400;
 
@@ -842,7 +851,7 @@ switch ($action) {
                 $processed++;
                 if (count($samples) < 3) {
                     $samples[] = [
-                        'id' => (int) $row['id'],
+                        'id' => (int)$row['id'],
                         'solutionPreview' => mb_substr($solution, 0, 80)
                     ];
                 }
@@ -879,7 +888,7 @@ switch ($action) {
                     $processed++;
                     if (count($samples) < 3) {
                         $samples[] = [
-                            'id' => (int) $row['id'],
+                            'id' => (int)$row['id'],
                             'scramble' => $scramble
                         ];
                     }
@@ -942,10 +951,12 @@ switch ($action) {
                 if ($iso2) {
                     $updateStmt->execute([$iso2, $wcaId]);
                     $apiFixed++;
-                } else {
+                }
+                else {
                     $apiFailed[] = $wcaId;
                 }
-            } else {
+            }
+            else {
                 $apiFailed[] = $wcaId;
             }
         }
