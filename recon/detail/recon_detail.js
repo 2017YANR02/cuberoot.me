@@ -154,13 +154,14 @@
         var titleEl = document.getElementById('detail-title');
         var solverDisplay = U.displaySolverName(solve.person);
         var titleParts = ['<span style="color:#888;font-size:0.7em">#' + solve.id + '</span>'];
-        titleParts.push('<span class="mono">' + U.formatResult(solve.rawTime) + '</span>');
+        // NOTE: 标题用 value（WCA 标准截断百分位成绩）而非 rawTime（原始精确时间）
+        titleParts.push('<span class="mono">' + U.escHtml(solve.value || '') + '</span>');
         if (solve.regionalSingleRecord) titleParts.push(U.formatRecord(solve.regionalSingleRecord));
-        if (solve.event) titleParts.push(U.escHtml(solve.event));
-        if (solve.method) titleParts.push(U.escHtml(solve.method));
+        if (solve.event) titleParts.push(U.displayEventName(solve.event));
+
         // NOTE: 选手国旗——优先用 solve 自带的 personCountry，fallback 到静态映射
         var pCountry = solve.personCountry || U.solverCountry(solve.person, personCountries);
-        var solverHtml = U.countryFlag(pCountry) + solverDisplay;
+        var solverHtml = solverDisplay + ' ' + U.countryFlag(pCountry);
         // NOTE: 有 WCA ID 时选手名可点击跳转 WCA 个人页面
         var personUrl = U.personWcaUrl(solve.personId);
         if (personUrl) {
@@ -621,6 +622,8 @@
         var CROSS_LABELS = { 0: 'cross', 1: 'xcross', 2: 'xxcross', 3: 'xxxcross', 4: 'xxxxcross' };
 
         var items = [
+            // NOTE: method 从标题移到统计网格开头
+            ['method', 'Method', '方法'],
             ['stm', 'STM', 'STM'],
             ['tps', 'TPS', 'TPS'],
             // NOTE: 盲拧专用——非盲拧项目 execTime/memoTime 为 null，不会显示
