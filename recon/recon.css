@@ -507,32 +507,21 @@ tr.detail-row td {
     object-fit: cover;
 }
 
-/* NOTE: 纯 CSS 播放按钮——红色圆角矩形 + 白色三角（YouTube 风格） */
-.detail-video-play {
+/* NOTE: YouTube 播放按钮——使用品牌 logo SVG */
+.detail-video-play-yt {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     width: 68px;
     height: 48px;
-    background: rgba(255, 0, 0, 0.8);
-    border-radius: 14px;
-    transition: background 0.2s;
+    opacity: 0.85;
+    transition: opacity 0.2s;
+    pointer-events: none;
 }
 
-.detail-video-play::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 53%;
-    transform: translate(-50%, -50%);
-    border-style: solid;
-    border-width: 10px 0 10px 18px;
-    border-color: transparent transparent transparent #fff;
-}
-
-.detail-video-facade:hover .detail-video-play {
-    background: rgba(255, 0, 0, 1);
+.detail-video-facade:hover .detail-video-play-yt {
+    opacity: 1;
 }
 
 /* NOTE: Bilibili 播放按钮——使用品牌 logo 图片 */

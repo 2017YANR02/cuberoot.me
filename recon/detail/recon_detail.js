@@ -709,25 +709,30 @@
             var shouldEmbed = (info.type === embedType);
 
             if (!shouldEmbed) {
-                // NOTE: 非嵌入方——只渲染可点击链接
+                // NOTE: 非嵌入方——渲染平台 logo 链接
                 var linkUrl = info.type === 'youtube'
                     ? 'https://youtu.be/' + info.id
                     : 'https://www.bilibili.com/video/' + info.id;
-                var linkLabel = info.type === 'youtube' ? '▶ YouTube' : '▶ Bilibili';
+                var logoSrc = info.type === 'youtube'
+                    ? '/recon/assets/youtube_logo.svg'
+                    : '/recon/assets/bilibili_logo.png';
+                var logoAlt = info.type === 'youtube' ? 'YouTube' : 'Bilibili';
                 html += '<div style="margin-bottom:8px"><a href="' + linkUrl
                     + '" target="_blank" rel="noopener noreferrer" class="recon-link">'
-                    + linkLabel + '</a></div>';
+                    + '<img src="' + logoSrc + '" alt="' + logoAlt
+                    + '" style="height:28px;vertical-align:middle">'
+                    + '</a></div>';
                 continue;
             }
 
             if (info.type === 'youtube') {
-                // NOTE: YouTube facade——静态缩略图即时可用
+                // NOTE: YouTube facade——缩略图 + YouTube logo 叠加
                 html += '<div class="detail-video-wrap detail-video-facade" data-embed-url="' + ReconUtils.escHtml(info.embedUrl) + '&autoplay=1">';
                 html += '<img src="https://img.youtube.com/vi/' + info.id + '/hqdefault.jpg" alt="YouTube" loading="lazy">';
-                html += '<div class="detail-video-play"></div>';
+                html += '<img class="detail-video-play-yt" src="/recon/assets/youtube_logo.svg" alt="Play">';
                 html += '</div>';
             } else {
-                // NOTE: Bilibili facade——先渲染占位（灰色背景+播放按钮），异步加载封面图
+                // NOTE: Bilibili facade——先渲染占位（灰色背景+B站logo），异步加载封面图
                 html += '<div class="detail-video-wrap detail-video-facade" data-embed-url="' + ReconUtils.escHtml(info.embedUrl) + '" data-bvid="' + info.id + '">';
                 html += '<img class="detail-video-play-bili" src="/recon/assets/bilibili_logo.png" alt="Bilibili">';
                 html += '</div>';
