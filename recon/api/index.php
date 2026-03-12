@@ -809,6 +809,8 @@ switch ($action) {
             echo json_encode(['error' => 'Cover not found']);
             break;
         }
+        // NOTE: Bilibili API 返回 http:// 链接，HTTPS 页面需要升级为 https://（CDN 支持）
+        $pic = str_replace('http://', 'https://', $pic);
 
         $result = json_encode(['pic' => $pic]);
         file_put_contents($cacheFile, $result);
