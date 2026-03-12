@@ -1,0 +1,9 @@
+const timesArrayKey = "megawvTimesArray";
+const selectionArrayKey = "megawvSelection";
+var trainerTitle = "Megaminx WV Trainer";
+var preRotations = [''];
+var postRotations = [''];
+var preMoves = ["", "U", "U'", "U2", "U2'"];
+var postMoves = preMoves;
+var selCases = [];
+var maxAlgsPerRow = 8;

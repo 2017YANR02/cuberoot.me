@@ -1,0 +1,9 @@
+const timesArrayKey = "sq1oblTimesArray";
+const selectionArrayKey = "sq1oblSelection";
+var trainerTitle = "Square-1 OBL Trainer";
+var preRotations = [''];
+var postRotations = [''];
+var preMoves = ["3,0", "6,0", "-3,0", "0,-3", "0,3", "0,6", "3,3", "3,-3", "3,6", "6,3", "6,-3", "6,6", "-3,3", "-3,-3", "-3,6", "0,0"];
+var postMoves = preMoves;
+var selCases = [];
+var maxAlgsPerRow = 8;

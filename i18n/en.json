@@ -23,7 +23,9 @@
         "wca_stats": "WCA Stats",
         "stats_desc": "60+ statistics from the WCA database, updated weekly",
         "recon": "Recon",
-        "recon_desc": "Competition solve reconstructions and analysis"
+        "recon_desc": "Competition solve reconstructions and analysis",
+        "alg_trainer": "Alg Trainer",
+        "alg_trainer_desc": "OLL, PLL, ZBLL, CMLL, and algorithm trainers for various puzzles"
     },
     "solver": {
         "title": "Rubik's Cube Solver",

@@ -1,0 +1,9 @@
+const timesArrayKey = "2x2tcllTimes";
+const selectionArrayKey = "2x2tcllSelection";
+var trainerTitle = "2×2 TCLL Trainer";
+var preRotations = ['', 'y', 'y2', "y'", "x", "x y", "x y2", "x y'", "z'", "z' y", "z' y2", "z' y'", "z", "z y", "z y2", "z y'", "z2 y'", "z2", "x2", "z2 y"];
+var postRotations = [''];
+var preMoves = ["", "U", "U'", "U2"];
+var postMoves = preMoves;
+var selCases = [];
+var maxAlgsPerRow = 6;
