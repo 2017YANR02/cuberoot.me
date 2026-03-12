@@ -1165,7 +1165,15 @@
                     'style="width:100%;height:400px;border:1px solid #444;border-radius:8px" ' +
                     'allowfullscreen></iframe>';
                 container.style.display = 'block';
-                currentPlayer = null; // NOTE: iframe 不支持光标跟随
+                currentPlayer = null;
+                return;
+            }
+
+            // NOTE: 就地更新——player 已存在且 puzzle 类型没变时，直接更新属性避免闪烁
+            var newPuzzle = getCurrentPuzzle();
+            if (currentPlayer && currentPlayer._puzzle === newPuzzle) {
+                currentPlayer.experimentalSetupAlg = scramble;
+                currentPlayer.alg = fullAlg;
                 return;
             }
 
@@ -1176,10 +1184,12 @@
                 container.innerHTML = '';
                 container.style.display = 'block';
                 currentPlayer = new Ctor({
-                    puzzle: getCurrentPuzzle(),
+                    puzzle: newPuzzle,
                     experimentalSetupAlg: scramble,
                     alg: fullAlg
                 });
+                // NOTE: 记录 puzzle 类型，用于后续判断是否需要重建
+                currentPlayer._puzzle = newPuzzle;
                 container.appendChild(currentPlayer);
                 ReconUtils.setupResizeHandle(container);
             }).catch(function () {});
