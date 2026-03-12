@@ -368,9 +368,9 @@ tr.detail-row td {
 /* NOTE: 详情区域内的两列布局 */
 .detail-grid {
     display: grid;
-    grid-template-columns: auto auto;
+    /* NOTE: 两列各占一半，让视频等内容填满右列 */
+    grid-template-columns: 1fr 1fr;
     gap: 20px;
-    justify-content: start;
 }
 
 /* NOTE: grid 子元素默认 min-width:auto 会导致内容撑破容器 */
@@ -1004,7 +1004,7 @@ tr.detail-row td {
 /* --- 魔方 3D 动画播放器 --- */
 .recon-twisty-container {
     margin-top: 12px;
-    max-width: 400px;
+    /* NOTE: 不限制 max-width，让播放器宽度与上方文本区域一致 */
     border-radius: 8px;
 }
 
@@ -1017,7 +1017,6 @@ tr.detail-row td {
     margin-top: 32px;
     font-size: 0.85rem;
     text-align: center;
-    max-width: 400px;
 }
 
 .recon-external-links a {
