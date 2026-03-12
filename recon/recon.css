@@ -1485,6 +1485,11 @@ tr.detail-row td {
     min-width: 0;
 }
 
+/* NOTE: 左列裁剪 twisty-player 缩放溢出 */
+.submit-col-main {
+    overflow: hidden;
+}
+
 /* NOTE: 提交页面的 select 元素继承深色主题 */
 .submit-two-col select {
     padding: 8px 12px;
