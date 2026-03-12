@@ -248,6 +248,8 @@
 				}
 				textBoxState = 0;
 				highlight = [-1,-1];
+				// NOTE: 名称/比赛名变更后同步 URL
+				if (typeof syncToUrl === 'function') syncToUrl();
 			}
 			function textToTime(s){
 			    var dnf = "dnf";
@@ -1068,8 +1070,9 @@
                     singles[p] = getBestSingle(times[p]);
                 }
                 sorted_cache = getSortedIndices(avgs,singles);
-			    // NOTE: 每次数据更新后刷新指标对比表格
+			    // NOTE: 每次数据更新后刷新指标对比表格和 URL
 			    if (typeof renderCalcTable === 'function') renderCalcTable();
+			    if (typeof syncToUrl === 'function') syncToUrl();
 			}
 			function endTimeLive(){
 				if(timeLive[0] >= 0){
@@ -1283,7 +1286,68 @@
 		setTavg(seedOn + playerIdx, val);
 	}
 
-	// NOTE: 首次加载也渲染一次
+	// NOTE: URL 状态同步 — 将成绩、名字、比赛名编码到 URL
+	var _syncTimer = null;
+	function syncToUrl() {
+		// NOTE: 防抖——避免 60fps 连续更新时拖慢浏览器
+		if (_syncTimer) return;
+		_syncTimer = setTimeout(function() {
+			_syncTimer = null;
+			_doSyncToUrl();
+		}, 200);
+	}
+	function _doSyncToUrl() {
+		var params = new URLSearchParams();
+		params.set('comp', compName);
+		// 编码所有 seed 的名字和成绩
+		for (var i = 0; i < names.length; i++) {
+			params.set('n' + i, names[i]);
+		}
+		for (var i = 0; i < times.length; i++) {
+			var t = times[i];
+			// 只在有数据时编码
+			var hasData = t.some(function(v) { return v > 0; });
+			if (hasData) {
+				params.set('t' + i, t.join(','));
+			}
+		}
+		if (seedOn > 0) params.set('seed', seedOn);
+		history.replaceState(null, '', '?' + params.toString());
+	}
+
+	// NOTE: 页面加载时从 URL 参数恢复状态
+	function loadFromUrl() {
+		var params = new URLSearchParams(window.location.search);
+		if (!params.has('comp') && !params.has('t0')) return;
+
+		if (params.has('comp')) compName = params.get('comp');
+
+		// 恢复名字
+		var i = 0;
+		while (params.has('n' + i)) {
+			if (i >= names.length) names.push('Name ' + String.fromCharCode(65 + i));
+			names[i] = params.get('n' + i);
+			i++;
+		}
+
+		// 恢复成绩
+		var j = 0;
+		while (params.has('t' + j)) {
+			var parts = params.get('t' + j).split(',').map(Number);
+			if (j >= times.length) times.push([0,0,0,0,0]);
+			for (var k = 0; k < 5 && k < parts.length; k++) {
+				times[j][k] = parts[k] || 0;
+			}
+			j++;
+		}
+
+		if (params.has('seed')) seedOn = parseInt(params.get('seed')) || 0;
+
+		updateSort();
+	}
+
+	// NOTE: 首次加载
+	loadFromUrl();
 	renderCalcTable();
 	</script>
 	</body>
