@@ -688,9 +688,13 @@
         var urls = videoUrlField.split('\n').map(function (u) { return u.trim(); }).filter(Boolean);
         if (urls.length === 0) return '';
 
+        // NOTE: 解析并排序——YouTube 在前，Bilibili 在后
+        var infos = urls.map(parseVideoUrl).filter(Boolean);
+        infos.sort(function (a, b) { return (a.type === 'youtube' ? 0 : 1) - (b.type === 'youtube' ? 0 : 1); });
+
         var html = '<div class="detail-video">';
-        for (var i = 0; i < urls.length; i++) {
-            var info = parseVideoUrl(urls[i]);
+        for (var i = 0; i < infos.length; i++) {
+            var info = infos[i];
             if (!info) continue;
 
             if (info.type === 'youtube') {
