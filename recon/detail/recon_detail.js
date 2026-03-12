@@ -636,11 +636,11 @@
         var items = [
             // NOTE: method 从标题移到统计网格开头
             ['method', 'Method', '方法'],
-            ['stm', 'STM', 'STM'],
-            ['tps', 'TPS', 'TPS'],
+            ['stm', 'STM', '步数'],
+            ['tps', 'TPS', '手速'],
             // NOTE: 盲拧专用——非盲拧项目 execTime/memoTime 为 null，不会显示
-            ['execTime', 'Exec Time', '执行时间', function (v) { return parseFloat(v).toFixed(2); }],
-            ['memoTime', 'Memo Time', '记忆时间', function (v) { return parseFloat(v).toFixed(2); }],
+            ['execTime', 'Exec', '执行', function (v) { return parseFloat(v).toFixed(2); }],
+            ['memoTime', 'Memo', '记忆', function (v) { return parseFloat(v).toFixed(2); }],
             ['crossStm', 'Cross', 'Cross'],
             ['f2l', 'F2L', 'F2L'],
             ['ll', 'LL', '顶层'],
@@ -1205,8 +1205,8 @@
         var isZh = localStorage.getItem('i18n_locale') === 'zh';
         var html = '<div class="siblings-solves">';
         html += '<h3 class="siblings-title">';
-        html += '<span data-i18n-en="Solves in this average" data-i18n-zh="本轮次所有成绩">';
-        html += isZh ? '本轮次所有成绩' : 'Solves in this average';
+        html += '<span data-i18n-en="Singles in this average" data-i18n-zh="本轮单次">';
+        html += isZh ? '本轮单次' : 'Singles in this average';
         html += '</span></h3>';
         html += '<div class="siblings-list">';
 
