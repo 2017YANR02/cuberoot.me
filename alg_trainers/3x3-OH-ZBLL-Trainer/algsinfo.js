@@ -1,0 +1,9 @@
+const timesArrayKey = "3x3ohzbllTimes";
+const selectionArrayKey = "3x3ohzbllselection";
+var trainerTitle = "OH ZBLL Trainer";
+var preRotations = [''];
+var postRotations = [''];
+var preMoves = ["", "U", "U'", "U2"];
+var postMoves = preMoves;
+var selCases = [];
+var maxAlgsPerRow = 6;

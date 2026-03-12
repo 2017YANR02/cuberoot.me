@@ -1,0 +1,9 @@
+const timesArrayKey = "megazblTimesArray";
+const selectionArrayKey = "megazblSelection";
+var trainerTitle = "Megaminx ZBLS Trainer";
+var preRotations = [''];
+var postRotations = [''];
+var preMoves = ["", "U", "U'", "U2", "U2'"];
+var postMoves = preMoves;
+var selCases = [];
+var maxAlgsPerRow = 8;

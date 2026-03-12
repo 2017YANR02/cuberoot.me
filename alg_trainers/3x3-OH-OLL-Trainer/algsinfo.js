@@ -1,0 +1,9 @@
+const timesArrayKey = "3x3ohollTimes";
+const selectionArrayKey = "3x3ohollselection";
+var trainerTitle = "OH OLL Trainer";
+var preRotations = [''];
+var postRotations = [''];
+var preMoves = ["", "U", "U'", "U2"];
+var postMoves = preMoves;
+var selCases = [];
+var maxAlgsPerRow = 8;

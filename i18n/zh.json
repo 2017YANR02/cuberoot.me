@@ -23,7 +23,9 @@
         "wca_stats": "WCA 统计",
         "stats_desc": "来自 WCA 数据库的 60+ 项统计，每周更新",
         "recon": "复盘",
-        "recon_desc": "比赛还原的步骤拆解与分析数据"
+        "recon_desc": "比赛还原的步骤拆解与分析数据",
+        "alg_trainer": "训练器",
+        "alg_trainer_desc": "OLL、PLL、ZBLL、CMLL 等多种魔方公式训练器"
     },
     "solver": {
         "title": "魔方求解器",

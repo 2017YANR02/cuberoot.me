@@ -1,0 +1,9 @@
+const timesArrayKey = "l4eTimesArray";
+const selectionArrayKey = "l4eSelection";
+var trainerTitle = "Pyraminx L4E Trainer";
+var preRotations = ['', "y", "y'", "x", "x y", "x z'", "z", "z'", "y z", "y z'"];
+var postRotations = [''];
+var preMoves = ["", "U", "U'"];
+var postMoves = preMoves;
+var maxAlgsPerRow = 8;
+var selCases = [];

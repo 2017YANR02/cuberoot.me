@@ -1,0 +1,41 @@
+{
+    "trainerDirs": [
+        "2x2-EG-Trainer",
+        "2x2-FH-Trainer",
+        "2x2-LS-Trainer",
+        "2x2-TCLL-Trainer",
+        "2x2-TEG-Trainer",
+        "3x3-BLD-UF-Trainer",
+        "3x3-BLD-UFR-Trainer",
+        "3x3-CMLL-Trainer",
+        "3x3-OH-CMLL-Trainer",
+        "3x3-OH-OLL-Trainer",
+        "3x3-OH-PLL-Trainer",
+        "3x3-OH-ZBLL-Trainer",
+        "3x3-OLL-Trainer",
+        "3x3-PLL-Trainer",
+        "3x3-ZBLL-Trainer",
+        "3x3-ZBLS-Trainer",
+        "5x5-L2E-Trainer",
+        "5x5-LCE-Trainer",
+        "Megaminx-OLL-Trainer",
+        "Megaminx-PLL-Trainer",
+        "Megaminx-WV-Trainer",
+        "Megaminx-ZBLS-Trainer",
+        "Octaminx-L3T-Trainer",
+        "Octaminx-TCP-Trainer",
+        "Pyraminx-L4E-Trainer",
+        "Skewb-L6C-Trainer",
+        "Skewb-NS2-Trainer",
+        "Sq1-CPEP-Trainer",
+        "Sq1-OBL-Trainer",
+        "Sq1-PBL-Trainer"
+    ],
+    "rootFiles": [
+        "template.html",
+        "icon.png"
+    ],
+    "analytics": {
+        "trackingId": "G-MXJH30352W"
+    }
+}

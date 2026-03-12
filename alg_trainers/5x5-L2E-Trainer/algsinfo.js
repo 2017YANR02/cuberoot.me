@@ -1,0 +1,9 @@
+const timesArrayKey = "5x5l2eTimes";
+const selectionArrayKey = "5x5l2eselection";
+var trainerTitle = "5×5 L2E Trainer";
+var preRotations = [''];
+var postRotations = [''];
+var preMoves = [""];
+var postMoves = preMoves;
+var selCases = [];
+var maxAlgsPerRow = 8;
