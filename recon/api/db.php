@@ -56,6 +56,7 @@ const FIELD_MAP_JSON_TO_SQL = [
     'compWcaId' => 'comp_wca_id',
     'reconerId' => 'reconer_id',
     'personCountry' => 'person_country',
+    'videoUrl' => 'video_url',
 ];
 
 // NOTE: 反向映射（SQL → JSON），运行时自动生成
@@ -88,6 +89,7 @@ const FIELD_MAP_SQL_TO_JSON = [
     'comp_wca_id' => 'compWcaId',
     'reconer_id' => 'reconerId',
     'person_country' => 'personCountry',
+    'video_url' => 'videoUrl',
 ];
 
 // NOTE: 允许通过 INSERT/UPDATE 操作的列白名单（防止前端传入非数据库字段）
@@ -142,6 +144,7 @@ const ALLOWED_COLUMNS = [
     'added_by_id',
     'comp_wca_id',
     'person_country',
+    'video_url',
 ];
 
 /**
@@ -330,7 +333,7 @@ function validateRow(array $row): array
     }
 
     // TEXT 上限 64KB（防 DoS，TEXT 类型上限 65535 字节）
-    foreach (['recon', 'solution', 'optimal_scramble', 'wca_scramble', 'caption', 'note'] as $col) {
+    foreach (['recon', 'solution', 'optimal_scramble', 'wca_scramble', 'caption', 'note', 'video_url'] as $col) {
         if (isset($row[$col]) && $row[$col] !== null && strlen($row[$col]) > 65535) {
             $errors[] = "$col exceeds max size (64KB)";
         }
@@ -404,6 +407,7 @@ CREATE TABLE IF NOT EXISTS recons (
   created_at               INT UNSIGNED   DEFAULT NULL,
   added_by                 VARCHAR(100)   DEFAULT NULL,
   added_by_id              VARCHAR(20)    DEFAULT NULL,
+  video_url                TEXT           DEFAULT NULL,
   INDEX idx_person (person),
   INDEX idx_date (date),
   INDEX idx_person_id (person_id),

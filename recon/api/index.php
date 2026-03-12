@@ -52,6 +52,20 @@ if (!file_exists($migrationFlag)) {
     }
 }
 
+// NOTE: 一次性自动迁移——新增 video_url 列
+$migrationFlagVideo = __DIR__ . '/data/.migration_video_url';
+if (!file_exists($migrationFlagVideo)) {
+    try {
+        $cols = getDb()->query("SHOW COLUMNS FROM recons LIKE 'video_url'")->fetchAll();
+        if (empty($cols)) {
+            getDb()->exec("ALTER TABLE recons ADD COLUMN video_url TEXT DEFAULT NULL");
+        }
+        @file_put_contents($migrationFlagVideo, date('Y-m-d H:i:s'));
+    } catch (Exception $e) {
+        @error_log('Migration video_url failed: ' . $e->getMessage());
+    }
+}
+
 // ==================== 速率限制（仍用文件，简单有效） ====================
 
 $dataDir = __DIR__ . '/data';
