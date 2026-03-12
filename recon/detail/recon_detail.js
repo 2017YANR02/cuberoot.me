@@ -177,6 +177,9 @@
         var container = document.getElementById('detail-container');
         container.innerHTML = buildDetailHtml(solve);
 
+        // NOTE: 异步加载 Bilibili 封面图（不阻塞页面渲染）
+        loadBiliCovers(container);
+
         // NOTE: 懒加载 twisty-player
         var twistyContainer = container.querySelector('.recon-twisty-container');
         if (twistyContainer && typeof window.ensureTwisty === 'function') {
@@ -678,8 +681,8 @@
 
     /**
      * 从 video_url 字段（换行分隔的多 URL）构建视频 HTML
-     * NOTE: YouTube 使用缩略图 + 点击加载 iframe（facade 模式，避免预加载重量级 iframe）
-     *       Bilibili 直接嵌入 iframe（无公开缩略图 API）
+     * NOTE: YouTube / Bilibili 均使用 facade 模式（缩略图 + 播放按钮，点击加载 iframe）
+     *       YouTube 缩略图直接用 img.youtube.com，Bilibili 异步通过 PHP 代理获取
      */
     function buildVideoEmbeds(videoUrlField) {
         var urls = videoUrlField.split('\n').map(function (u) { return u.trim(); }).filter(Boolean);
@@ -691,20 +694,47 @@
             if (!info) continue;
 
             if (info.type === 'youtube') {
-                // NOTE: YouTube facade——静态缩略图 + CSS 播放按钮，点击时替换为 iframe（autoplay=1）
+                // NOTE: YouTube facade——静态缩略图即时可用
                 html += '<div class="detail-video-wrap detail-video-facade" data-embed-url="' + ReconUtils.escHtml(info.embedUrl) + '&autoplay=1">';
                 html += '<img src="https://img.youtube.com/vi/' + info.id + '/hqdefault.jpg" alt="YouTube" loading="lazy">';
                 html += '<div class="detail-video-play"></div>';
                 html += '</div>';
             } else {
-                // NOTE: Bilibili 直接嵌入 iframe
-                html += '<div class="detail-video-wrap">';
-                html += '<iframe src="' + ReconUtils.escHtml(info.embedUrl) + '" allowfullscreen allow="autoplay; encrypted-media"></iframe>';
+                // NOTE: Bilibili facade——先渲染占位（灰色背景+播放按钮），异步加载封面图
+                html += '<div class="detail-video-wrap detail-video-facade" data-embed-url="' + ReconUtils.escHtml(info.embedUrl) + '" data-bvid="' + info.id + '">';
+                html += '<div class="detail-video-play"></div>';
                 html += '</div>';
             }
         }
         html += '</div>';
         return html;
+    }
+
+    /**
+     * 异步加载 Bilibili 封面图——渲染完成后调用
+     * NOTE: 通过 PHP 代理调 Bilibili API（前端跨域不可达），带 7 天服务端缓存
+     */
+    function loadBiliCovers(container) {
+        var facades = container.querySelectorAll('.detail-video-facade[data-bvid]');
+        var API = 'https://toolkit.cuberoot.me/recon/api/';
+        facades.forEach(function (el) {
+            var bvid = el.getAttribute('data-bvid');
+            fetch(API + '?action=biliCover&bvid=' + bvid)
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.pic) {
+                        var img = document.createElement('img');
+                        img.src = data.pic;
+                        img.alt = 'Bilibili';
+                        img.loading = 'lazy';
+                        // NOTE: 插入到播放按钮之前，确保按钮在图片上方
+                        el.insertBefore(img, el.firstChild);
+                    }
+                })
+                .catch(function () {
+                    // NOTE: 封面获取失败时保留灰色占位，不影响点击播放功能
+                });
+        });
     }
 
     /**
