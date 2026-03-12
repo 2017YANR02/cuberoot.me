@@ -58,6 +58,7 @@ const I18n = {
         "Continents": "大洲数", "Countries": "国家数",
         "Dates": "日期数", "Distance": "距离",
         "4th places": "第四名次数", "Moving average": "移动平均",
+        "Mo3": "三次平均",
         "Mean": "平均", "Month": "月份", "Missed": "错过",
         "Results": "成绩数", "List": "列表",
         "Week start": "周起始", "Week end": "周结束",
@@ -183,6 +184,45 @@ const I18n = {
         // NOTE: Disable Move → Rotation / Enable Rotation → Move 按钮
         "Disable Move\n                → Rotation": "禁用 Move → Rotation",
         "Enable Rotation\n                → Move": "启用 Rotation → Move",
+        // NOTE: Alg-Trainers 页面（template.html 动态加载的 UI 文本）
+        "Welcome to ALLG-Trainer": "欢迎来到公式训练器",
+        "Times": "计时", "Cases": "情况数",
+        "Last Scramble": "上一次打乱",
+        "Hotkeys": "快捷键", "Credits": "致谢",
+        "loading, please wait...": "加载中，请稍候...",
+        // 设置面板标签
+        "Weighted choice (# of Solves)": "加权选择（按完成次数）",
+        "Weighted choice (Mean time)": "加权选择（按平均用时）",
+        "Import/export": "导入/导出",
+        "Base size": "基础大小", "Timer size": "计时器大小",
+        "Scramble size": "打乱大小", "Theme": "主题",
+        "Background": "背景", "Text": "文字",
+        "Primary": "主色", "Secondary": "副色", "Accent": "强调色",
+        "Corner Letterscheme": "角块字母方案",
+        "Edges Letterscheme": "棱块字母方案",
+        "Change Letter Pairs": "更改字母对",
+        "Corner Letter Pair Words": "角块字母对词汇",
+        "Edges Letter Pair Words": "棱块字母对词汇",
+        "Cube Colors": "魔方颜色",
+        "Default": "默认", "Red-Green": "红绿", "Blue-Yellow": "蓝黄",
+        // 颜色名（设置面板，注意不要与 solver 的颜色名冲突）
+        "Grey": "灰", "Black": "黑",
+        "Ligtblue": "浅蓝", "Lightblue": "浅蓝",
+        "Pink": "粉", "Beige": "米",
+        "Lightgreen": "浅绿", "Purple": "紫",
+        // 热键描述
+        "Delete last time": "删除上次计时",
+        "Clear session": "清空本次记录",
+        "Remove last case from selection": "从选择中移除上一个情况",
+        "Switch training mode": "切换训练模式",
+        "Bookmark case": "收藏情况",
+        "Show hint for current case": "显示当前情况提示",
+        "Show hint for last case": "显示上次情况提示",
+        // About 对话框
+        "Alg-sheets": "公式表", "Other": "其他",
+        "Close": "关闭",
+        // 首页按钮
+        "Add": "添加",
     },
     // NOTE: 菜单链接翻译（抽屉菜单中的 <a> 元素，它们有 translate="no" 需要单独处理）
     _menuLinkZh: {
@@ -211,6 +251,7 @@ const I18n = {
     // NOTE: 指标选择器按钮翻译（Metric / AoXR 合并页面的 .metric-btn 元素）
     // 按钮只有 data-i18n-en 属性，中文通过此映射查找
     _metricBtnZh: {
+        "Mo3": "Mo3",
         "Single": "单次", "Average": "平均",
         "BAo5": "BAo5", "WAo5": "WAo5", "Mo5": "Mo5",
         "BPA": "BPA", "WPA": "WPA",
@@ -455,6 +496,25 @@ const I18n = {
         // 同时 comp_countries.json 也已加载，可以插入比赛国旗
         this.apply();
         this._startObserver();
+    },
+
+    // NOTE: 监听 DOM 动态变化，自动重新翻译新添加的元素
+    // 主要场景：Alg-Trainers 的 main.js 用 document.body.outerHTML 替换整个 body
+    // 必须监听 documentElement（html），因为 body 节点本身会被替换（旧 observer 失效）
+    // 使用防抖策略，避免频繁翻译；断开→重连防止 apply() 导致无限递归
+    _startObserver() {
+        if (this._observer) return;  // 防止重复注册
+        let debounceTimer = null;
+        const target = document.documentElement;  // html 元素不会被替换
+        this._observer = new MutationObserver(() => {
+            if (debounceTimer) clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                this._observer.disconnect();
+                this.apply();
+                this._observer.observe(target, { childList: true, subtree: true });
+            }, 100);
+        });
+        this._observer.observe(target, { childList: true, subtree: true });
     },
 
     // NOTE: 根据当前脚本的路径推断 JSON 文件所在目录
@@ -891,6 +951,36 @@ const I18n = {
                 el.textContent = map[text];
             }
         });
+        // NOTE: Alg-Trainers 设置面板中的 div 文本（如 "Weighted choice"、"Theme"）
+        document.querySelectorAll('.settingsEntry > div:first-child').forEach(el => {
+            const text = el.textContent.trim();
+            if (text && map[text]) {
+                el.textContent = map[text];
+            }
+        });
+        // NOTE: Alg-Trainers 中的 span 文本（如 "Times"、"Cases"、"Last Scramble"）
+        document.querySelectorAll('span:not([translate="no"]):not([data-i18n])').forEach(el => {
+            // 只匹配纯文本 span（无子元素），避免误翻译容器 span
+            if (el.children.length > 0) return;
+            const text = el.textContent.trim();
+            if (text && map[text]) {
+                el.textContent = map[text];
+            }
+        });
+        // NOTE: Alg-Trainers 热键面板中的 hotKeyText span
+        document.querySelectorAll('.hotKeyText').forEach(el => {
+            const text = el.textContent.trim();
+            if (text && map[text]) {
+                el.textContent = map[text];
+            }
+        });
+        // NOTE: Alg-Trainers h3 标题（如 "Welcome to ALLG-Trainer"）
+        document.querySelectorAll('h3:not([data-i18n])').forEach(el => {
+            const text = el.textContent.trim();
+            if (text && map[text]) {
+                el.textContent = map[text];
+            }
+        });
         // 翻译 modal 面板中的 h2 标题
         document.querySelectorAll('.modal-header h2').forEach(el => {
             const text = el.textContent.trim();
@@ -1084,43 +1174,9 @@ const I18n = {
     },
 
 
-    // NOTE: MutationObserver — 监听 _dynamicTextZh 注册的元素的 textContent 变化
-    // 当 JS 代码（如 solver 页面）动态修改文本时，自动翻译为当前语言
-    _startObserver() {
-        if (this._observer) return;  // 防止重复注册
-        this._observer = new MutationObserver(mutations => {
-            if (!this._ready || this.locale === 'en') return;
-            for (const m of mutations) {
-                // 只处理 characterData（文本节点变化）或 childList（子节点替换）
-                const el = m.target.nodeType === Node.TEXT_NODE ? m.target.parentElement : m.target;
-                if (!el || !el.id) continue;
-                const textMap = this._dynamicTextZh[el.id];
-                if (!textMap) continue;
-                const text = el.textContent.trim();
-                if (textMap[text]) {
-                    // HACK: 暂时断开 observer 避免无限递归
-                    this._observer.disconnect();
-                    el.textContent = textMap[text];
-                    this._observeTargets();
-                }
-            }
-        });
-        this._observeTargets();
-    },
-
-    // NOTE: 对所有动态翻译目标元素注册 observer
-    _observeTargets() {
-        for (const id of Object.keys(this._dynamicTextZh)) {
-            const el = document.getElementById(id);
-            if (el) {
-                this._observer.observe(el, {
-                    childList: true,
-                    characterData: true,
-                    subtree: true
-                });
-            }
-        }
-    },
+    // NOTE: 旧的 _startObserver 和 _observeTargets 已合并到新的 _startObserver（第 499 行）
+    // 新的 observer 监听 documentElement 的 childList 变化并调用 apply()
+    // apply() 内部已调用 _applyDynamicText()，无需单独监听每个动态元素
 
     // NOTE: 注入公共 toggle 样式（.lang-toggle 和 .lang-toggle-fixed 共用）
     // 主页用 .lang-toggle（嵌在 footer），其他页面注入 .lang-toggle-fixed（fixed 定位）
