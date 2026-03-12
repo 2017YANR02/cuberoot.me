@@ -30,6 +30,9 @@ assets/js/particles_v*.js
 # Python bytecode cache
 __pycache__/
 
+# 敏感凭据（含数据库密码，禁止提交）
+.secrets.md
+
 recon/recon_data_debug.json
 CubeAlgWB*.csv
 CubeAlgWB*.xlsx
