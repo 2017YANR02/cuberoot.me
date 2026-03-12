@@ -245,10 +245,13 @@ foreach ($dir in $config.trainerDirs)
 	<script src='../../i18n/i18n.js' defer></script>
 	<script>
 		// NOTE: 等待 template.html 动态注入完成后触发翻译
+		// body.outerHTML 替换会移除之前注入的语言切换按钮，需要重新注入
 		var _i18nPoll = setInterval(function() {
 			if (document.getElementById('timer') && window.I18n && I18n._ready) {
 				clearInterval(_i18nPoll);
 				I18n.apply();
+				I18n._injectToggle();
+				I18n._updateToggle();
 			}
 		}, 200);
 	</script>
