@@ -180,6 +180,49 @@ var ReconUtils = (function () {
         return EVENT_CUBEDB_MAP[event] || '3x3';
     }
 
+    // NOTE: Recon 项目代码 → WCA event_id 映射（用于同轮次成绩匹配）
+    var EVENT_WCA_MAP = {
+        '3x3': '333', '2x2': '222', 'OH': '333oh',
+        '3BLD': '333bf', '4BLD': '444bf', '5BLD': '555bf',
+        '5x5': '555', '6x6': '666', '7x7': '777',
+        'Pyraminx': 'pyram', 'Skewb': 'skewb', 'SQ1': 'sq1',
+        'Megaminx': 'minx', 'Clock': 'clock'
+    };
+
+    /** Recon event 转 WCA event_id，非 WCA 项目返回 null */
+    function eventToWcaId(event) {
+        return EVENT_WCA_MAP[event] || null;
+    }
+
+    // NOTE: Recon round → WCA round_type_id 多值映射（旧/新格式共存）
+    var ROUND_WCA_MAP = {
+        'R1': ['1', 'd'], 'R2': ['2', 'e'],
+        'R3': ['3', 'g'], 'Fi': ['f', 'c', 'b']
+    };
+
+    /** 判断 Recon round 是否匹配 WCA round_type_id */
+    function roundMatchesWca(reconRound, wcaRoundTypeId) {
+        var types = ROUND_WCA_MAP[reconRound];
+        return types ? types.indexOf(wcaRoundTypeId) >= 0 : false;
+    }
+
+    /**
+     * WCA 厘秒值格式化为可读字符串
+     * 正数 → 秒（三位小数），-1 → DNF，-2 → DNS，0 → 空
+     */
+    function formatWcaTime(cs) {
+        if (cs === 0) return '';
+        if (cs === -1) return 'DNF';
+        if (cs === -2) return 'DNS';
+        var sec = cs / 100;
+        if (sec >= 60) {
+            var m = Math.floor(sec / 60);
+            var s = (sec % 60).toFixed(2);
+            return m + ':' + (s < 10 ? '0' : '') + s;
+        }
+        return sec.toFixed(2);
+    }
+
     return {
         escHtml: escHtml,
         countryFlag: countryFlag,
@@ -194,6 +237,9 @@ var ReconUtils = (function () {
         compWcaUrl: compWcaUrl,
         personWcaUrl: personWcaUrl,
         eventToPuzzle: eventToPuzzle,
-        eventToCubedbPuzzle: eventToCubedbPuzzle
+        eventToCubedbPuzzle: eventToCubedbPuzzle,
+        eventToWcaId: eventToWcaId,
+        roundMatchesWca: roundMatchesWca,
+        formatWcaTime: formatWcaTime
     };
 })();
