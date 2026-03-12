@@ -179,64 +179,52 @@ const CalcEngine = {
         const result = {};
 
         // ── t#5: 已有 4 次非 DNF 成绩，第 5 把最多多少才能 Ao5 ≤ tavg ──
+        // NOTE: Ao5 = Math.round(sum_of_counted / 3)
+        // Math.round(v) <= tavg 当且仅当 v < tavg + 0.5
+        // 即 sum_of_counted < 3*tavg + 1.5，整数情况下 sum_of_counted <= 3*tavg + 1
         if (filled.length >= 4) {
             var s = [...filled.slice(0, 4)].sort((a, b) => a - b);
-            // Ao5 = mean(sorted middle 3)
-            // 如果 x > s[3]（最差），x 被去掉，avg = (s[1]+s[2]+s[3])/3
-            if ((s[1] + s[2] + s[3]) / 3 <= tavg) {
+            // 如果 x > s[3]（最差），x 被去掉，avg = round((s[1]+s[2]+s[3])/3)
+            if (s[1] + s[2] + s[3] <= 3 * tavg + 1) {
                 // 即使 DNF 也能达标
                 result.t5 = DNF_VALUE;
             } else {
-                // x 在计入范围内：max x = 3*tavg - s[1] - s[2]
-                var threshold = 3 * tavg - s[1] - s[2];
-                if (threshold < 0 || (s[0] + s[1] + s[2]) / 3 > tavg) {
-                    // 即使 x=0 也无法达标（前 3 个 counting 值已超标）
+                // x 在计入范围内：sum_counted = s[1] + s[2] + x <= 3*tavg + 1
+                var threshold = 3 * tavg + 1 - s[1] - s[2];
+                if (threshold < 0 || s[0] + s[1] + s[2] > 3 * tavg + 1) {
+                    // 即使 x=0 也无法达标
                     result.t5 = null; // NaN
                 } else {
-                    result.t5 = Math.round(threshold);
+                    result.t5 = threshold;
                 }
             }
         }
 
         // ── t#4 (BPA<=tavg): 已有 3 次，第 4 把最多多少才能让 BPA ≤ tavg ──
         // BPA 场景：第 5 把假设为 0（最佳情况）
-        // 5 次排序 = {0, x, s[0], s[1], s[2]} 或其交错
-        // 去掉最好(0)和最差，中间 3 次的均值 ≤ tavg
         if (filled.length >= 3) {
             var s3 = [...filled.slice(0, 3)].sort((a, b) => a - b);
-            // 5 次 = {0, x, s3[0], s3[1], s3[2]}
-            // 如果 x ≤ s3[0]: 排序 = 0, x, s3[0], s3[1], s3[2]
-            //   去掉 0 和 s3[2]，中间 3 = x, s3[0], s3[1]
-            //   (x + s3[0] + s3[1]) / 3 ≤ tavg → x ≤ 3*tavg - s3[0] - s3[1]
-            var threshold = 3 * tavg - s3[0] - s3[1];
+            var threshold = 3 * tavg + 1 - s3[0] - s3[1];
             if (threshold < 0) {
                 result.t4bpa = null; // NaN
             } else if (threshold >= s3[2]) {
-                // 如果阈值 ≥ s3[2]，x 可能落入不同排序位置
-                // 检查 x > s3[2] 时：排序 = 0, s3[0], s3[1], s3[2], x
-                // 中间 3 = s3[0], s3[1], s3[2]，avg = (s3[0]+s3[1]+s3[2])/3
-                if ((s3[0] + s3[1] + s3[2]) / 3 <= tavg) {
+                // x > s3[2] 时：sorted = {0, s3[0], s3[1], s3[2], x}
+                // counted = s3[0], s3[1], s3[2]
+                if (s3[0] + s3[1] + s3[2] <= 3 * tavg + 1) {
                     result.t4bpa = DNF_VALUE; // 任何值都行
                 } else {
-                    // x 在 s3[1]~s3[2] 之间时：中间 3 取决于位置
-                    // 最宽松 = 3*tavg - s3[0] - s3[1]（x 替代 s3[2]）
-                    result.t4bpa = Math.round(3 * tavg - s3[0] - s3[1]);
+                    result.t4bpa = 3 * tavg + 1 - s3[0] - s3[1];
                 }
             } else {
-                result.t4bpa = Math.round(threshold);
+                result.t4bpa = threshold;
             }
 
             // ── t#4 (WPA<=tavg): 第 4 把阈值，WPA 场景（第 5 把 = DNF）──
             // 5 次 = {x, s3[0], s3[1], s3[2], DNF}
             // 去掉最好和 DNF，中间 3 取决于 x 位置
-            // 如果 x ≤ s3[0]: 中间 3 = s3[0], s3[1], s3[2]
-            //   avg = (s3[0]+s3[1]+s3[2])/3，不依赖 x
-            var wpaFixed = (s3[0] + s3[1] + s3[2]) / 3;
-            if (wpaFixed <= tavg) {
-                // 即使第 5 把 DNF 也能达标
+            if (s3[0] + s3[1] + s3[2] <= 3 * tavg + 1) {
                 result.t4wpa = DNF_VALUE;
             } else {
-                // 不可能：无论 x 多小，WPA 都 > tavg
                 result.t4wpa = null; // NaN
             }
         }
