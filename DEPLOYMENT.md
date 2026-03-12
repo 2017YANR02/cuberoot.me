@@ -33,7 +33,7 @@ GitHub Pages（Jekyll）
 |----------|----------|----------|------|
 | **Update Stats** | 定时（每周）/ 手动 | 下载 WCA 数据库 + 计算统计 | ~47 分钟 |
 | **Deploy Mirror** | push main / 其他 CI 完成 | Jekyll 构建 + rsync 到阿里云 | ~45 秒 |
-| **Backup Recon Data** | 定时（每周一凌晨 4:00）/ 手动 | 从 API 拉取复盘数据备份到 git | ~10 秒 |
+| **Backup Recon Data** | 定时（每周一凌晨 4:00）/ 手动 | 从 API 拉取复盘数据备份到 git + 增量构建 WCA 成绩数据 | ~10 秒（增量） |
 | **Update Upcoming Comps** | 定时（每日）/ 手动 | 拉取顶尖选手近期比赛 | ~15 分钟 |
 
 > Push 代码不触发统计 CI。统计页面可本地生成后直接 push（见下方「本地发布」）。
@@ -117,7 +117,7 @@ ruiminyan.github.io/
 │   ├── index.md               # 列表页入口（Jekyll Markdown，引入 WCA Auth）
 │   ├── recon.js               # 列表页逻辑：表格渲染、筛选搜索、排序、点击跳转详情页
 │   ├── recon.css              # 页面样式（含社区行标记、WCA 登录、比赛搜索下拉、提交页/详情页布局）
-│   ├── recon_utils.js         # 共享工具模块：格式化、国旗、名字解析等（列表页+详情页共用，DRY）
+│   ├── recon_utils.js         # 共享工具模块：格式化、国旗、名字解析、WCA 映射等（列表页+详情页共用，DRY）
 │   ├── recon_api.js           # PHP 后端 API 数据层（复盘的 CRUD + 单条查询 loadOne）
 │   ├── recon_submit.js        # 列表页提交入口：➕ 跳转、localStorage 恢复、删除处理
 │   ├── recon_local_store.js   # 共享模块：localStorage 复盘持久化 CRUD
@@ -130,10 +130,13 @@ ruiminyan.github.io/
 │   │   └── index.php            # API 入口：list/get/add/delete/update/edits/import
 │   ├── detail/                # 独立详情页（点击列表行跳转，URL: /recon/ID）
 │   │   ├── index.md           # 详情页 HTML（Jekyll Markdown，引入共享模块）
-│   │   └── recon_detail.js    # 详情页逻辑：单条加载、渲染、twisty 动画、管理员操作
+│   │   └── recon_detail.js    # 详情页逻辑：单条加载、渲染、twisty 动画、同轮次成绩、管理员操作
 │   ├── submit/                # 独立提交页面
 │   │   ├── index.html         # 提交/编辑复盘表单 HTML（两列布局：表单+预览）
 │   │   └── recon_submit_page.js # 提交页逻辑（表单交互、编辑预填充、提交处理）
+│   ├── build_wca_attempts.py  # CI 脚本：增量构建 WCA 成绩（同轮次 siblings 数据源）
+│   ├── data/                  # 预构建数据文件
+│   │   └── wca_attempts.json  # WCA 成绩数据（CI 增量构建，详情页 siblings 用）
 │   └── backup/                # 复盘数据备份（CI 每日自动从 API 拉取）
 │       └── recons_backup.json # 全量复盘数据备份
 
