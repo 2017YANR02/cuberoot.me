@@ -380,8 +380,11 @@
                     }
                     if (!match) match = results[0];
                     showPersonDisplay(displayEl, inputEl, inputEl.value || name, match.iso2 || '', match.wcaId || '');
-                    // NOTE: 如果是 solver（非 reconer），缓存国籍用于提交
-                    if (inputEl === solverInput) cachedSolverIso2 = match.iso2 || '';
+                    // NOTE: 如果是 solver（非 reconer），缓存国籍和 WCA ID 用于提交
+                    if (inputEl === solverInput) {
+                        cachedSolverIso2 = match.iso2 || '';
+                        cachedSolverWcaId = match.wcaId || '';
+                    }
                 })
                 .catch(function () {
                     // NOTE: 搜索失败回退为纯名字显示
@@ -447,6 +450,78 @@
                 console.error('Failed to load solve:', err);
                 alert((isZh() ? '加载失败: ' : 'Load failed: ') + err.message);
             });
+        }
+
+        // NOTE: 预填模式——从同轮次成绩跳转过来，预填共享字段（与编辑模式互斥）
+        if (!editId && urlParams.get('prefill')) {
+            var pPerson = urlParams.get('person') || '';
+            var pComp = urlParams.get('comp') || '';
+            var pEvent = urlParams.get('event') || '';
+            var pRound = urlParams.get('round') || '';
+            var pSolveNum = urlParams.get('solveNum') || '';
+            var pRawTime = urlParams.get('rawTime') || '';
+            var pDate = urlParams.get('date') || '';
+            var pCountry = urlParams.get('country') || '';
+            var pOfficial = urlParams.get('official') === '1';
+            var pPersonId = urlParams.get('personId') || '';
+
+            // NOTE: 填充表单字段
+            if (pPerson) {
+                document.getElementById('rf-solver').value = pPerson;
+                // NOTE: 异步加载选手富显示
+                tryShowPersonRichDisplay(pPerson, solverDisplay, solverInput);
+                cachedSolverWcaId = pPersonId;
+            }
+            if (pRawTime) document.getElementById('rf-single').value = pRawTime;
+            if (pEvent) {
+                var evSelect = document.getElementById('rf-event');
+                var evCustom = document.getElementById('rf-event-custom');
+                var hasOpt = Array.from(evSelect.options).some(function (o) { return o.value === pEvent && o.value !== '__other__'; });
+                if (hasOpt) {
+                    evSelect.value = pEvent;
+                    evCustom.style.display = 'none';
+                } else {
+                    evSelect.value = '__other__';
+                    evCustom.value = pEvent;
+                    evCustom.style.display = '';
+                }
+                // NOTE: 盲拧项目显示 BLD 行
+                var bldRow2 = document.getElementById('rf-bld-row');
+                if (isBldEvent(pEvent)) {
+                    bldRow2.style.display = '';
+                }
+            }
+            if (pComp) {
+                document.getElementById('rf-comp').value = pComp;
+                // NOTE: 显示比赛富内容（日期+国旗+名称）
+                if (pDate || pCountry) {
+                    showCompDisplay(pComp, pDate, pCountry.toLowerCase());
+                }
+            }
+            if (pDate) {
+                var dateEl = document.getElementById('rf-edit-date');
+                if (dateEl) {
+                    dateEl.value = pDate;
+                    dateEl.readOnly = true;
+                    dateEl.style.opacity = '0.5';
+                    dateEl.title = isZh() ? '日期由比赛自动填充' : 'Date auto-filled from competition';
+                }
+            }
+            if (pRound) document.getElementById('rf-round').value = pRound;
+            if (pSolveNum) document.getElementById('rf-solve-num').value = pSolveNum;
+            if (pOfficial) {
+                var officialEl2 = document.getElementById('rf-official');
+                if (officialEl2) officialEl2.checked = true;
+            }
+            // NOTE: 自动计算 value（WCA 截断百分位）
+            if (pRawTime) {
+                var rawNum = parseFloat(pRawTime);
+                if (!isNaN(rawNum)) {
+                    var truncated = Math.floor(rawNum * 100) / 100;
+                    var valueEl = document.getElementById('rf-edit-value');
+                    if (valueEl) valueEl.value = truncated.toFixed(2);
+                }
+            }
         }
 
         // ==================== i18n placeholder 适配 ====================
