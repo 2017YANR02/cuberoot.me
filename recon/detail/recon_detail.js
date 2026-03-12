@@ -727,6 +727,8 @@
                         img.src = data.pic;
                         img.alt = 'Bilibili';
                         img.loading = 'lazy';
+                        // NOTE: Bilibili CDN 拒绝跨域 referer，不发送即可绕过 ORB 拦截
+                        img.referrerPolicy = 'no-referrer';
                         // NOTE: 插入到播放按钮之前，确保按钮在图片上方
                         el.insertBefore(img, el.firstChild);
                     }
