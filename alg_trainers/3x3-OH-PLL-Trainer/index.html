@@ -3,8 +3,13 @@
 <head>
 	<title>
 		OH PLL Trainer
-	</title>
-	<script async data-id="101460922" src="//static.getclicky.com/js"></script>
+	</title>	<script async src="https://www.googletagmanager.com/gtag/js?id=G-MXJH30352W"></script>
+	<script>
+		window.dataLayer = window.dataLayer || [];
+		function gtag() { dataLayer.push(arguments); }
+		gtag('js', new Date());
+		gtag('config', 'G-MXJH30352W');
+	</script>
 	<link rel="icon" type="image/png" href="icon.png">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0">
 	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8" />
@@ -39,6 +44,16 @@
 	<script src="../src/practice.js"></script>
 	<script src="../src/settings.js"></script>
 	<script src="../src/main.js" defer></script>
+	<script src='../../i18n/i18n.js' defer></script>
+	<script>
+		// NOTE: 等待 template.html 动态注入完成后触发翻译
+		var _i18nPoll = setInterval(function() {
+			if (document.getElementById('timer') && window.I18n && I18n._ready) {
+				clearInterval(_i18nPoll);
+				I18n.apply();
+			}
+		}, 200);
+	</script>
 </head>
 <body class="niceBody"></body>
 </html>
