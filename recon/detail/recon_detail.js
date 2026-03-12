@@ -691,14 +691,34 @@
         var urls = videoUrlField.split('\n').map(function (u) { return u.trim(); }).filter(Boolean);
         if (urls.length === 0) return '';
 
-        // NOTE: 解析并排序——YouTube 在前，Bilibili 在后
+        // NOTE: 解析所有视频 URL
         var infos = urls.map(parseVideoUrl).filter(Boolean);
-        infos.sort(function (a, b) { return (a.type === 'youtube' ? 0 : 1) - (b.type === 'youtube' ? 0 : 1); });
+
+        // NOTE: 国内镜像嵌入 B 站、国际站嵌入 YouTube；另一方只给链接
+        var isDomestic = location.hostname.indexOf('cuberoot.me') >= 0;
+        var embedType = isDomestic ? 'bilibili' : 'youtube';
+
+        // NOTE: 排序——嵌入的在前，链接的在后
+        infos.sort(function (a, b) {
+            return (a.type === embedType ? 0 : 1) - (b.type === embedType ? 0 : 1);
+        });
 
         var html = '<div class="detail-video">';
         for (var i = 0; i < infos.length; i++) {
             var info = infos[i];
-            if (!info) continue;
+            var shouldEmbed = (info.type === embedType);
+
+            if (!shouldEmbed) {
+                // NOTE: 非嵌入方——只渲染可点击链接
+                var linkUrl = info.type === 'youtube'
+                    ? 'https://youtu.be/' + info.id
+                    : 'https://www.bilibili.com/video/' + info.id;
+                var linkLabel = info.type === 'youtube' ? '▶ YouTube' : '▶ Bilibili';
+                html += '<div style="margin-bottom:8px"><a href="' + linkUrl
+                    + '" target="_blank" rel="noopener noreferrer" class="recon-link">'
+                    + linkLabel + '</a></div>';
+                continue;
+            }
 
             if (info.type === 'youtube') {
                 // NOTE: YouTube facade——静态缩略图即时可用
