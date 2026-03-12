@@ -761,6 +761,62 @@ switch ($action) {
         echo $resultJson;
         break;
 
+    // ==================== Bilibili 封面代理 ====================
+
+    case 'biliCover':
+        // NOTE: 代理 Bilibili API 获取视频封面 URL（前端无法直接跨域调用）
+        $bvid = $_GET['bvid'] ?? '';
+        if (!$bvid || !preg_match('/^BV[A-Za-z0-9]+$/', $bvid)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid bvid']);
+            break;
+        }
+
+        // NOTE: 文件缓存——每个 BV 号一个 JSON 文件，TTL 7 天
+        $cacheDir = __DIR__ . '/data/.bili_cover';
+        if (!is_dir($cacheDir)) mkdir($cacheDir, 0755, true);
+        $cacheFile = $cacheDir . '/' . $bvid . '.json';
+        $cacheTTL = 7 * 86400;
+
+        if (file_exists($cacheFile) && filemtime($cacheFile) > time() - $cacheTTL) {
+            header('Cache-Control: public, max-age=86400');
+            echo file_get_contents($cacheFile);
+            break;
+        }
+
+        // NOTE: 调 Bilibili API 获取视频信息
+        $biliUrl = 'https://api.bilibili.com/x/web-interface/view?bvid=' . urlencode($bvid);
+        $ch = curl_init($biliUrl);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 10,
+            CURLOPT_HTTPHEADER => ['User-Agent: Mozilla/5.0', 'Referer: https://www.bilibili.com/'],
+        ]);
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($httpCode !== 200 || !$response) {
+            http_response_code(502);
+            echo json_encode(['error' => 'Bilibili API unavailable']);
+            break;
+        }
+
+        $data = json_decode($response, true);
+        $pic = $data['data']['pic'] ?? null;
+        if (!$pic) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Cover not found']);
+            break;
+        }
+
+        $result = json_encode(['pic' => $pic]);
+        file_put_contents($cacheFile, $result);
+
+        header('Cache-Control: public, max-age=86400');
+        echo $result;
+        break;
+
     // ==================== 临时迁移端点 ====================
 
     case 'extractSolution':
