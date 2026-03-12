@@ -102,7 +102,7 @@
 			}
 			/* NOTE: iOS 计算器风格数字键盘 */
 			#numpad {
-				display: none;
+				display: block;
 				max-width: 400px;
 				margin: 10px auto;
 				padding: 12px;
@@ -1091,7 +1091,9 @@
 				syncNumpadDisplay();
 			}
 			function hideNumpad() {
-				document.getElementById('numpad').style.display = 'none';
+				// NOTE: 键盘始终可见，仅清空当前编辑标签
+				document.getElementById('numpad-label').textContent = '';
+				document.getElementById('numpad-value').textContent = '';
 			}
 			function syncNumpadDisplay() {
 				var v = document.getElementById('value');
