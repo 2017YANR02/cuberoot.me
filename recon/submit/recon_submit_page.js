@@ -452,77 +452,6 @@
             });
         }
 
-        // NOTE: 预填模式——从同轮次成绩跳转过来，预填共享字段（与编辑模式互斥）
-        if (!editId && urlParams.get('prefill')) {
-            var pPerson = urlParams.get('person') || '';
-            var pComp = urlParams.get('comp') || '';
-            var pEvent = urlParams.get('event') || '';
-            var pRound = urlParams.get('round') || '';
-            var pSolveNum = urlParams.get('solveNum') || '';
-            var pRawTime = urlParams.get('rawTime') || '';
-            var pDate = urlParams.get('date') || '';
-            var pCountry = urlParams.get('country') || '';
-            var pOfficial = urlParams.get('official') === '1';
-            var pPersonId = urlParams.get('personId') || '';
-
-            // NOTE: 填充表单字段
-            if (pPerson) {
-                document.getElementById('rf-solver').value = pPerson;
-                // NOTE: 异步加载选手富显示
-                tryShowPersonRichDisplay(pPerson, solverDisplay, solverInput);
-                cachedSolverWcaId = pPersonId;
-            }
-            if (pRawTime) document.getElementById('rf-single').value = pRawTime;
-            if (pEvent) {
-                var evSelect = document.getElementById('rf-event');
-                var evCustom = document.getElementById('rf-event-custom');
-                var hasOpt = Array.from(evSelect.options).some(function (o) { return o.value === pEvent && o.value !== '__other__'; });
-                if (hasOpt) {
-                    evSelect.value = pEvent;
-                    evCustom.style.display = 'none';
-                } else {
-                    evSelect.value = '__other__';
-                    evCustom.value = pEvent;
-                    evCustom.style.display = '';
-                }
-                // NOTE: 盲拧项目显示 BLD 行
-                var bldRow2 = document.getElementById('rf-bld-row');
-                if (isBldEvent(pEvent)) {
-                    bldRow2.style.display = '';
-                }
-            }
-            if (pComp) {
-                document.getElementById('rf-comp').value = pComp;
-                // NOTE: 显示比赛富内容（日期+国旗+名称）
-                if (pDate || pCountry) {
-                    showCompDisplay(pComp, pDate, pCountry.toLowerCase());
-                }
-            }
-            if (pDate) {
-                var dateEl = document.getElementById('rf-edit-date');
-                if (dateEl) {
-                    dateEl.value = pDate;
-                    dateEl.readOnly = true;
-                    dateEl.style.opacity = '0.5';
-                    dateEl.title = isZh() ? '日期由比赛自动填充' : 'Date auto-filled from competition';
-                }
-            }
-            if (pRound) document.getElementById('rf-round').value = pRound;
-            if (pSolveNum) document.getElementById('rf-solve-num').value = pSolveNum;
-            if (pOfficial) {
-                var officialEl2 = document.getElementById('rf-official');
-                if (officialEl2) officialEl2.checked = true;
-            }
-            // NOTE: 自动计算 value（WCA 截断百分位）
-            if (pRawTime) {
-                var rawNum = parseFloat(pRawTime);
-                if (!isNaN(rawNum)) {
-                    var truncated = Math.floor(rawNum * 100) / 100;
-                    var valueEl = document.getElementById('rf-edit-value');
-                    if (valueEl) valueEl.value = truncated.toFixed(2);
-                }
-            }
-        }
 
         // ==================== i18n placeholder 适配 ====================
 
@@ -1891,6 +1820,87 @@
             ReconLocalStore.save(solve);
             location.href = '/recon/';
         }
+    }
+
+    // ==================== 预填模式 ====================
+    // NOTE: 从详情页同轮次成绩跳转过来，预填共享字段（与编辑模式互斥）
+    // 必须放在所有变量/函数初始化之后，否则 compDisplay、showCompDisplay 等尚未定义
+    var pfUrlParams = new URLSearchParams(window.location.search);
+    var pfEditId = pfUrlParams.get('id');
+    if (!pfEditId && pfUrlParams.get('prefill')) {
+        var pPerson = pfUrlParams.get('person') || '';
+        var pComp = pfUrlParams.get('comp') || '';
+        var pEvent = pfUrlParams.get('event') || '';
+        var pRound = pfUrlParams.get('round') || '';
+        var pSolveNum = pfUrlParams.get('solveNum') || '';
+        var pRawTime = pfUrlParams.get('rawTime') || '';
+        var pDate = pfUrlParams.get('date') || '';
+        var pCountry = pfUrlParams.get('country') || '';
+        var pOfficial = pfUrlParams.get('official') === '1';
+        var pPersonId = pfUrlParams.get('personId') || '';
+
+        if (pPerson) {
+            document.getElementById('rf-solver').value = pPerson;
+        }
+        if (pRawTime) document.getElementById('rf-single').value = pRawTime;
+        if (pEvent) {
+            var evSelect = document.getElementById('rf-event');
+            var evCustom = document.getElementById('rf-event-custom');
+            var hasOpt = Array.from(evSelect.options).some(function (o) { return o.value === pEvent && o.value !== '__other__'; });
+            if (hasOpt) {
+                evSelect.value = pEvent;
+                evCustom.style.display = 'none';
+            } else {
+                evSelect.value = '__other__';
+                evCustom.value = pEvent;
+                evCustom.style.display = '';
+            }
+            var bldRow2 = document.getElementById('rf-bld-row');
+            if (isBldEvent(pEvent)) {
+                bldRow2.style.display = '';
+            }
+        }
+        if (pComp) {
+            document.getElementById('rf-comp').value = pComp;
+        }
+        if (pDate) {
+            var dateEl = document.getElementById('rf-edit-date');
+            if (dateEl) {
+                dateEl.value = pDate;
+                dateEl.readOnly = true;
+                dateEl.style.opacity = '0.5';
+            }
+        }
+        if (pRound) document.getElementById('rf-round').value = pRound;
+        if (pSolveNum) document.getElementById('rf-solve-num').value = pSolveNum;
+        if (pOfficial) {
+            var officialEl2 = document.getElementById('rf-official');
+            if (officialEl2) officialEl2.checked = true;
+        }
+        if (pRawTime) {
+            var rawNum = parseFloat(pRawTime);
+            if (!isNaN(rawNum)) {
+                var truncated = Math.floor(rawNum * 100) / 100;
+                var valueEl = document.getElementById('rf-edit-value');
+                if (valueEl) valueEl.value = truncated.toFixed(2);
+            }
+        }
+        // NOTE: 平均、平均纪录、AOXR、AOXR纪录——同一轮次共享
+        var pAvg = pfUrlParams.get('average') || '';
+        var pAvgRec = pfUrlParams.get('averageRecord') || '';
+        var pAoType = pfUrlParams.get('aoType') || '';
+        var pAoxrRec = pfUrlParams.get('aoxrRecord') || '';
+        if (pAvg) document.getElementById('rf-edit-average').value = pAvg;
+        if (pAvgRec) document.getElementById('rf-edit-regionalAverageRecord').value = pAvgRec;
+        if (pAoType) document.getElementById('rf-edit-aoType').value = pAoType;
+        if (pAoxrRec) document.getElementById('rf-edit-regionalAoxrRecord').value = pAoxrRec;
+        // NOTE: 组号、魔方、视频链接——同一轮次可能共享
+        var pGroupId = pfUrlParams.get('groupId') || '';
+        var pCube = pfUrlParams.get('cube') || '';
+        var pVideoUrl = pfUrlParams.get('videoUrl') || '';
+        if (pGroupId) document.getElementById('rf-edit-groupId').value = pGroupId;
+        if (pCube) document.getElementById('rf-edit-cube').value = pCube;
+        if (pVideoUrl) document.getElementById('rf-video-url').value = pVideoUrl;
     }
 
 })();

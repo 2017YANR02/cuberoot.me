@@ -1230,6 +1230,32 @@
             if (reconId && !isCurrent) {
                 // NOTE: 有复盘且不是当前页，显示为可点击链接
                 html += '<a href="/recon/detail/?id=' + reconId + '" class="sibling-time sibling-link">' + U.escHtml(timeStr) + '</a>';
+            } else if (!reconId && !isCurrent && attempts[k] > 0) {
+                // NOTE: 无复盘 + 非 DNF/DNS → 渲染为"添加复盘"预填链接
+                // 提交页已有登录守卫，未登录用户到达后会引导登录
+                var rawTimeSec = attempts[k] / 100;
+                var prefillParams = new URLSearchParams();
+                prefillParams.set('prefill', '1');
+                if (solve.person) prefillParams.set('person', solve.person);
+                if (solve.personId) prefillParams.set('personId', solve.personId);
+                if (solve.comp) prefillParams.set('comp', solve.comp);
+                if (solve.event) prefillParams.set('event', solve.event);
+                if (solve.round) prefillParams.set('round', solve.round);
+                if (solve.date) prefillParams.set('date', solve.date);
+                if (solve.country) prefillParams.set('country', solve.country);
+                if (solve.official) prefillParams.set('official', '1');
+                if (solve.average) prefillParams.set('average', solve.average);
+                if (solve.regionalAverageRecord) prefillParams.set('averageRecord', solve.regionalAverageRecord);
+                if (solve.aoType) prefillParams.set('aoType', solve.aoType);
+                if (solve.regionalAoxrRecord) prefillParams.set('aoxrRecord', solve.regionalAoxrRecord);
+                if (solve.groupId) prefillParams.set('groupId', solve.groupId);
+                if (solve.cube) prefillParams.set('cube', solve.cube);
+                if (solve.videoUrl) prefillParams.set('videoUrl', solve.videoUrl);
+                prefillParams.set('solveNum', String(sn));
+                prefillParams.set('rawTime', String(rawTimeSec));
+                var addTitle = isZh ? '添加复盘' : 'Add recon';
+                html += '<a href="/recon/submit/?' + prefillParams.toString() + '" class="sibling-time sibling-add-link" title="' + addTitle + '">'
+                    + U.escHtml(timeStr) + '</a>';
             } else {
                 html += '<span class="sibling-time">' + U.escHtml(timeStr) + '</span>';
             }
