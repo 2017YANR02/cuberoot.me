@@ -144,6 +144,32 @@ var ReconUtils = (function () {
         return 'https://www.worldcubeassociation.org/persons/' + personId;
     }
 
+    // NOTE: 项目代码 → 中文名映射（与提交页 HTML option 一致）
+    var EVENT_NAMES_ZH = {
+        '3x3': '三阶魔方', '2x2': '二阶魔方',
+        '4x4': '四阶魔方', '5x5': '五阶魔方',
+        '6x6': '六阶魔方', '7x7': '七阶魔方',
+        '3BLD': '三阶盲拧', '4BLD': '四阶盲拧',
+        '5BLD': '五阶盲拧', 'MBLD': '三阶多盲',
+        'FMC': '三阶最少步', 'OH': '三阶单手',
+        'Megaminx': '五魔方', 'Pyraminx': '金字塔',
+        'Clock': '魔表', 'Skewb': '斜转魔方',
+        '3x3 Robot': '三阶机器人', '3x3 Smart': '三阶智能魔方',
+        'Gear': '齿轮魔方', 'Mirror': '镜面魔方', 'Feet': '三阶脚拧'
+    };
+
+    /** 项目名展示（中文模式优先显示中文项目名） */
+    function displayEventName(event) {
+        if (!event) return '';
+        var zhName = EVENT_NAMES_ZH[event];
+        if (zhName) {
+            var isZh = localStorage.getItem('i18n_locale') === 'zh';
+            var text = isZh ? zhName : event;
+            return '<span data-i18n-en="' + escHtml(event) + '" data-i18n-zh="' + escHtml(zhName) + '">' + escHtml(text) + '</span>';
+        }
+        return escHtml(event);
+    }
+
     // NOTE: 项目代码 → twisty-player puzzle 标识符映射
     var EVENT_PUZZLE_MAP = {
         '2x2': '2x2x2',
@@ -236,6 +262,7 @@ var ReconUtils = (function () {
         displayCompName: displayCompName,
         compWcaUrl: compWcaUrl,
         personWcaUrl: personWcaUrl,
+        displayEventName: displayEventName,
         eventToPuzzle: eventToPuzzle,
         eventToCubedbPuzzle: eventToCubedbPuzzle,
         eventToWcaId: eventToWcaId,
