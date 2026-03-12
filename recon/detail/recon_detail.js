@@ -994,6 +994,20 @@
                 }
                 if (solveCount === 0) return;
 
+                // NOTE: Ao5 时找出最快/最慢索引，加括号显示（WCA 标准格式）
+                // Mo3（3把）不加括号
+                var bestIdx = -1, worstIdx = -1;
+                if (solveCount >= 5) {
+                    var bestVal = Infinity, worstVal = -Infinity;
+                    for (var b = 0; b < attempts.length; b++) {
+                        if (attempts[b] === 0) continue;
+                        // DNF(-1)/DNS(-2) 视为无穷大（最差）
+                        var v = attempts[b] < 0 ? Infinity : attempts[b];
+                        if (v < bestVal) { bestVal = v; bestIdx = b; }
+                        if (v >= worstVal) { worstVal = v; worstIdx = b; }
+                    }
+                }
+
                 var isZh = localStorage.getItem('i18n_locale') === 'zh';
                 var html = '<div class="siblings-solves">';
                 html += '<h3 class="siblings-title">';
@@ -1007,6 +1021,10 @@
 
                     var sn = k + 1; // solveNum 从 1 开始
                     var timeStr = U.formatWcaTime(attempts[k]);
+                    // NOTE: 最快/最慢成绩加括号（WCA Ao5 标准格式）
+                    if (k === bestIdx || k === worstIdx) {
+                        timeStr = '(' + timeStr + ')';
+                    }
                     var reconId = reconIds[String(sn)];
                     // NOTE: 当前 solve 高亮标记
                     var isCurrent = (String(solve.solveNum) === String(sn));
