@@ -1181,6 +1181,7 @@
                     alg: fullAlg
                 });
                 container.appendChild(currentPlayer);
+                ReconUtils.setupResizeHandle(container);
             }).catch(function () {});
         }
 

@@ -249,6 +249,64 @@ var ReconUtils = (function () {
         return sec.toFixed(2);
     }
 
+    /**
+     * 为 twisty-player 容器添加拖拽调整大小手柄
+     * NOTE: 用 transform:scale() 缩放 twisty-player（Closed Shadow DOM 不响应外部 height）
+     */
+    function setupResizeHandle(container) {
+        container.style.position = 'relative';
+
+        var handle = document.createElement('div');
+        handle.className = 'twisty-resize-handle';
+        handle.title = 'Drag to resize';
+        handle.textContent = '\u2195';
+        container.appendChild(handle);
+
+        var player = container.querySelector('twisty-player');
+        if (!player) return;
+
+        // NOTE: 水平居中缩放，垂直从顶部开始
+        player.style.transformOrigin = 'center top';
+        var baseH = 0;
+        var startY = 0;
+        var currentScale = 1;
+        var MIN_SCALE = 0.6;
+        var MAX_SCALE = 2.0;
+
+        function onMove(e) {
+            var clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            var delta = clientY - startY;
+            var newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, currentScale + delta / 200));
+            player.style.transform = 'scale(' + newScale + ')';
+            container.style.height = (baseH * newScale) + 'px';
+        }
+
+        function onEnd(e) {
+            var clientY = (e.changedTouches ? e.changedTouches[0].clientY : e.clientY);
+            var delta = clientY - startY;
+            currentScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, currentScale + delta / 200));
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onEnd);
+            document.removeEventListener('touchmove', onMove);
+            document.removeEventListener('touchend', onEnd);
+        }
+
+        handle.addEventListener('mousedown', function (e) {
+            e.preventDefault();
+            startY = e.clientY;
+            if (!baseH) baseH = player.offsetHeight;
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', onEnd);
+        });
+
+        handle.addEventListener('touchstart', function (e) {
+            startY = e.touches[0].clientY;
+            if (!baseH) baseH = player.offsetHeight;
+            document.addEventListener('touchmove', onMove, { passive: false });
+            document.addEventListener('touchend', onEnd);
+        }, { passive: false });
+    }
+
     return {
         escHtml: escHtml,
         countryFlag: countryFlag,
@@ -267,6 +325,7 @@ var ReconUtils = (function () {
         eventToCubedbPuzzle: eventToCubedbPuzzle,
         eventToWcaId: eventToWcaId,
         roundMatchesWca: roundMatchesWca,
-        formatWcaTime: formatWcaTime
+        formatWcaTime: formatWcaTime,
+        setupResizeHandle: setupResizeHandle
     };
 })();
