@@ -491,6 +491,80 @@ switch ($action) {
         echo json_encode(['ok' => true]);
         break;
 
+    case 'wcaAttempts':
+        // NOTE: 实时获取 WCA 比赛成绩——前端静态文件 miss 时 fallback 到此端点
+        // 按需请求 WCA API 并缓存 7 天，实现提交复盘后立刻能看到同轮次 5 把成绩
+        $compId = $_GET['compId'] ?? '';
+        $personId = $_GET['personId'] ?? '';
+        if (!$compId || !$personId) {
+            http_response_code(400);
+            echo json_encode(['error' => 'compId and personId are required']);
+            break;
+        }
+
+        // NOTE: 文件缓存——每个比赛一个 JSON 文件，TTL 7 天
+        $cacheDir = __DIR__ . '/data/.wca_cache';
+        if (!is_dir($cacheDir)) mkdir($cacheDir, 0755, true);
+        $cacheFile = $cacheDir . '/' . preg_replace('/[^a-zA-Z0-9_-]/', '', $compId) . '.json';
+        $cacheTTL = 7 * 86400;
+
+        $compResults = null;
+        if (file_exists($cacheFile) && filemtime($cacheFile) > time() - $cacheTTL) {
+            // NOTE: 缓存命中——直接读文件
+            $compResults = json_decode(file_get_contents($cacheFile), true);
+        }
+
+        if ($compResults === null) {
+            // NOTE: 缓存 miss——调 WCA API 获取整个比赛的成绩
+            $wcaUrl = 'https://www.worldcubeassociation.org/api/v0/competitions/'
+                . urlencode($compId) . '/results';
+            $ch = curl_init($wcaUrl);
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_TIMEOUT => 30,
+                CURLOPT_HTTPHEADER => ['User-Agent: CubeRoot-Recon/1.0'],
+            ]);
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            if ($httpCode !== 200 || !$response) {
+                http_response_code(502);
+                echo json_encode(['error' => 'WCA API unavailable']);
+                break;
+            }
+
+            // NOTE: 解析成按 wca_id 分组的结构，与静态文件格式对齐
+            $rawResults = json_decode($response, true);
+            $compResults = [];
+            if (is_array($rawResults)) {
+                foreach ($rawResults as $entry) {
+                    $wcaId = $entry['wca_id'] ?? '';
+                    $eventId = $entry['event_id'] ?? '';
+                    $roundTypeId = $entry['round_type_id'] ?? '';
+                    $attempts = $entry['attempts'] ?? [];
+                    if (!$wcaId || !$eventId || !$roundTypeId || empty($attempts)) continue;
+
+                    $key = $eventId . '_' . $roundTypeId;
+                    $compResults[$wcaId][$key] = ['a' => $attempts];
+                }
+            }
+
+            // NOTE: 写入缓存（含空结果，防止重复请求不存在的比赛）
+            file_put_contents($cacheFile, json_encode($compResults, JSON_UNESCAPED_UNICODE));
+        }
+
+        // NOTE: 提取目标选手的数据
+        $personData = $compResults[$personId] ?? null;
+        if (!$personData) {
+            echo json_encode(new stdClass()); // NOTE: 空对象 {}
+            break;
+        }
+
+        header('Cache-Control: public, max-age=3600');
+        echo json_encode($personData, JSON_UNESCAPED_UNICODE);
+        break;
+
     // ==================== edit_history 集合 ====================
 
     case 'saveHistory':

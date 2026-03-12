@@ -947,7 +947,8 @@
 
     /**
      * 异步加载并渲染同一轮次的所有成绩
-     * NOTE: 从预构建的 wca_attempts.json 读取，无额外 API 请求
+     * NOTE: 优先从预构建的 wca_attempts.json 读取（秒返回），
+     * 静态文件无数据时 fallback 到后端 wcaAttempts 代理（实时请求 WCA API）
      */
     function renderSiblingsSolves(solve) {
         var container = document.getElementById('siblings-container');
@@ -966,92 +967,119 @@
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 var compData = data[wcaCompId];
-                if (!compData) return;
+                if (!compData) return null;
                 var personData = compData[solve.personId];
-                if (!personData) return;
-
-                // NOTE: 在所有 eventId_roundTypeId 键中查找匹配当前轮次的
-                var matchedKey = null;
-                var keys = Object.keys(personData);
-                for (var i = 0; i < keys.length; i++) {
-                    var parts = keys[i].split('_');
-                    // parts[0] = eventId, parts[1] = roundTypeId
-                    if (parts[0] === wcaEventId && U.roundMatchesWca(solve.round, parts[1])) {
-                        matchedKey = keys[i];
-                        break;
-                    }
+                if (!personData) return null;
+                return personData;
+            })
+            .then(function (personData) {
+                if (personData) {
+                    // NOTE: 静态文件命中，直接渲染
+                    renderSiblingsFromPersonData(container, solve, personData, wcaEventId);
+                    return;
                 }
-                if (!matchedKey) return;
-
-                var entry = personData[matchedKey];
-                var attempts = entry.a || [];
-                var reconIds = entry.r || {}; // {solveNum: reconId}
-
-                // NOTE: 过滤掉值为 0 的 attempt（Mo3 项目后面补 0）
-                var solveCount = 0;
-                for (var j = 0; j < attempts.length; j++) {
-                    if (attempts[j] !== 0) solveCount++;
-                }
-                if (solveCount === 0) return;
-
-                // NOTE: Ao5 时找出最快/最慢索引，加括号显示（WCA 标准格式）
-                // Mo3（3把）不加括号
-                var bestIdx = -1, worstIdx = -1;
-                if (solveCount >= 5) {
-                    var bestVal = Infinity, worstVal = -Infinity;
-                    for (var b = 0; b < attempts.length; b++) {
-                        if (attempts[b] === 0) continue;
-                        // DNF(-1)/DNS(-2) 视为无穷大（最差）
-                        var v = attempts[b] < 0 ? Infinity : attempts[b];
-                        if (v < bestVal) { bestVal = v; bestIdx = b; }
-                        if (v >= worstVal) { worstVal = v; worstIdx = b; }
-                    }
-                }
-
-                var isZh = localStorage.getItem('i18n_locale') === 'zh';
-                var html = '<div class="siblings-solves">';
-                html += '<h3 class="siblings-title">';
-                html += '<span data-i18n-en="Solves in this average" data-i18n-zh="本轮次所有成绩">';
-                html += isZh ? '本轮次所有成绩' : 'Solves in this average';
-                html += '</span></h3>';
-                html += '<div class="siblings-list">';
-
-                for (var k = 0; k < attempts.length; k++) {
-                    if (attempts[k] === 0) continue; // NOTE: Mo3 补 0 跳过
-
-                    var sn = k + 1; // solveNum 从 1 开始
-                    var timeStr = U.formatWcaTime(attempts[k]);
-                    // NOTE: 最快/最慢成绩加括号（WCA Ao5 标准格式）
-                    if (k === bestIdx || k === worstIdx) {
-                        timeStr = '(' + timeStr + ')';
-                    }
-                    var reconId = reconIds[String(sn)];
-                    // NOTE: 当前 solve 高亮标记
-                    var isCurrent = (String(solve.solveNum) === String(sn));
-                    var cls = 'sibling-item' + (isCurrent ? ' sibling-current' : '');
-
-                    html += '<div class="' + cls + '">';
-                    html += '<span class="sibling-num">#' + sn + '</span>';
-
-                    if (reconId && !isCurrent) {
-                        // NOTE: 有复盘且不是当前页，显示为可点击链接
-                        html += '<a href="/recon/detail/?id=' + reconId + '" class="sibling-time sibling-link">' + U.escHtml(timeStr) + '</a>';
-                    } else {
-                        html += '<span class="sibling-time">' + U.escHtml(timeStr) + '</span>';
-                    }
-
-                    if (reconId) {
-                        html += '<span class="sibling-recon-badge" title="Has recon">✓</span>';
-                    }
-                    html += '</div>';
-                }
-
-                html += '</div></div>';
-                container.innerHTML = html;
+                // NOTE: 静态文件无数据，fallback 到后端代理实时获取
+                var apiUrl = 'https://toolkit.cuberoot.me/recon/api/?action=wcaAttempts'
+                    + '&compId=' + encodeURIComponent(wcaCompId)
+                    + '&personId=' + encodeURIComponent(solve.personId);
+                return fetch(apiUrl)
+                    .then(function (r) { return r.json(); })
+                    .then(function (pd) {
+                        if (pd && Object.keys(pd).length > 0) {
+                            renderSiblingsFromPersonData(container, solve, pd, wcaEventId);
+                        }
+                    });
             })
             .catch(function () {
                 // NOTE: 静默失败，不影响页面其他内容
             });
+    }
+
+    /**
+     * 从 personData 中匹配轮次并渲染 siblings
+     * personData 格式: {eventId_roundTypeId: {a: [...], r?: {solveNum: reconId}}}
+     */
+    function renderSiblingsFromPersonData(container, solve, personData, wcaEventId) {
+        var U = ReconUtils;
+
+        // NOTE: 在所有 eventId_roundTypeId 键中查找匹配当前轮次的
+        var matchedKey = null;
+        var keys = Object.keys(personData);
+        for (var i = 0; i < keys.length; i++) {
+            var parts = keys[i].split('_');
+            // parts[0] = eventId, parts[1] = roundTypeId
+            if (parts[0] === wcaEventId && U.roundMatchesWca(solve.round, parts[1])) {
+                matchedKey = keys[i];
+                break;
+            }
+        }
+        if (!matchedKey) return;
+
+        var entry = personData[matchedKey];
+        var attempts = entry.a || [];
+        var reconIds = entry.r || {}; // {solveNum: reconId}
+
+        // NOTE: 过滤掉值为 0 的 attempt（Mo3 项目后面补 0）
+        var solveCount = 0;
+        for (var j = 0; j < attempts.length; j++) {
+            if (attempts[j] !== 0) solveCount++;
+        }
+        if (solveCount === 0) return;
+
+        // NOTE: Ao5 时找出最快/最慢索引，加括号显示（WCA 标准格式）
+        // Mo3（3把）不加括号
+        var bestIdx = -1, worstIdx = -1;
+        if (solveCount >= 5) {
+            var bestVal = Infinity, worstVal = -Infinity;
+            for (var b = 0; b < attempts.length; b++) {
+                if (attempts[b] === 0) continue;
+                // DNF(-1)/DNS(-2) 视为无穷大（最差）
+                var v = attempts[b] < 0 ? Infinity : attempts[b];
+                if (v < bestVal) { bestVal = v; bestIdx = b; }
+                if (v >= worstVal) { worstVal = v; worstIdx = b; }
+            }
+        }
+
+        var isZh = localStorage.getItem('i18n_locale') === 'zh';
+        var html = '<div class="siblings-solves">';
+        html += '<h3 class="siblings-title">';
+        html += '<span data-i18n-en="Solves in this average" data-i18n-zh="本轮次所有成绩">';
+        html += isZh ? '本轮次所有成绩' : 'Solves in this average';
+        html += '</span></h3>';
+        html += '<div class="siblings-list">';
+
+        for (var k = 0; k < attempts.length; k++) {
+            if (attempts[k] === 0) continue; // NOTE: Mo3 补 0 跳过
+
+            var sn = k + 1; // solveNum 从 1 开始
+            var timeStr = U.formatWcaTime(attempts[k]);
+            // NOTE: 最快/最慢成绩加括号（WCA Ao5 标准格式）
+            if (k === bestIdx || k === worstIdx) {
+                timeStr = '(' + timeStr + ')';
+            }
+            var reconId = reconIds[String(sn)];
+            // NOTE: 当前 solve 高亮标记
+            var isCurrent = (String(solve.solveNum) === String(sn));
+            var cls = 'sibling-item' + (isCurrent ? ' sibling-current' : '');
+
+            html += '<div class="' + cls + '">';
+            html += '<span class="sibling-num">#' + sn + '</span>';
+
+            if (reconId && !isCurrent) {
+                // NOTE: 有复盘且不是当前页，显示为可点击链接
+                html += '<a href="/recon/detail/?id=' + reconId + '" class="sibling-time sibling-link">' + U.escHtml(timeStr) + '</a>';
+            } else {
+                html += '<span class="sibling-time">' + U.escHtml(timeStr) + '</span>';
+            }
+
+            if (reconId) {
+                html += '<span class="sibling-recon-badge" title="Has recon">✓</span>';
+            }
+            html += '</div>';
+        }
+
+        html += '</div></div>';
+        container.innerHTML = html;
     }
 
 })();

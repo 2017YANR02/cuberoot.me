@@ -105,10 +105,10 @@ def main():
     for comp_id, person_id in pairs:
         all_comps.setdefault(comp_id, set()).add(person_id)
 
-    # NOTE: 增量判断——跳过已有实际数据的比赛；空占位符需重新请求（成绩可能已上传）
+    # NOTE: 增量判断——跳过已查询过的比赛（含空占位符 = 确认无数据）
     comps_to_fetch = {}
     for comp_id, person_ids in all_comps.items():
-        if comp_id in existing and existing[comp_id]:
+        if comp_id in existing:
             continue
         comps_to_fetch[comp_id] = person_ids
 
