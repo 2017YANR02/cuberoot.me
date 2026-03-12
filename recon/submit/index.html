@@ -242,6 +242,12 @@ layout: default
                 <label data-i18n-en="Note" data-i18n-zh="备注">Note</label>
                 <textarea id="rf-note" rows="1" style="overflow:hidden"></textarea>
             </div>
+            <!-- NOTE: 仅管理员可见——允许管理员修改添加者 -->
+            <div id="rf-adder-row" class="recon-form-group" style="display:none">
+                <label data-i18n-en="Added By" data-i18n-zh="添加者">Added By</label>
+                <input type="text" id="rf-edit-addedBy" autocomplete="one-time-code">
+                <div id="rf-adder-display" class="person-display" style="display:none"></div>
+            </div>
             <!-- NOTE: 校验错误提示容器（JS 动态填充） -->
             <div id="rf-errors" class="rf-errors" style="display:none"></div>
             <!-- 操作按钮 -->
