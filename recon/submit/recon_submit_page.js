@@ -1340,6 +1340,53 @@
     }
 
     /**
+     * 标准化单条视频链接
+     * YouTube → https://youtu.be/{ID}[?t=秒]
+     * Bilibili → https://www.bilibili.com/video/{BVid}[?t=秒]
+     * NOTE: 清理追踪参数（si=、feature= 等），只保留 ?t= 时间戳
+     */
+    function normalizeSingleVideoUrl(url) {
+        if (!url) return url;
+        url = url.trim();
+
+        // NOTE: 提取 ?t= 或 &t= 时间戳参数
+        var tMatch = url.match(/[?&]t=(\d+)/);
+        var tParam = tMatch ? tMatch[1] : null;
+        var suffix = tParam ? '?t=' + tParam : '';
+
+        // YouTube: 各种格式统一为 youtu.be/{ID}
+        var ytId = null;
+        var m;
+        if ((m = url.match(/youtube\.com\/shorts\/([A-Za-z0-9_-]+)/))) ytId = m[1];
+        else if ((m = url.match(/youtube\.com\/live\/([A-Za-z0-9_-]+)/))) ytId = m[1];
+        else if ((m = url.match(/youtube\.com\/v\/([A-Za-z0-9_-]+)/))) ytId = m[1];
+        else if ((m = url.match(/youtube\.com\/watch\?.*v=([A-Za-z0-9_-]+)/))) ytId = m[1];
+        else if ((m = url.match(/youtube\.com\/embed\/([A-Za-z0-9_-]+)/))) ytId = m[1];
+        else if ((m = url.match(/youtu\.be\/([A-Za-z0-9_-]+)/))) ytId = m[1];
+        if (ytId) return 'https://youtu.be/' + ytId + suffix;
+
+        // Bilibili: 各种格式统一为 bilibili.com/video/{BVid}
+        var bvId = null;
+        if ((m = url.match(/(BV[A-Za-z0-9]+)/))) bvId = m[1];
+        else if ((m = url.match(/bilibili\.com\/video\/(av\d+)/))) bvId = m[1];
+        if (bvId) return 'https://www.bilibili.com/video/' + bvId + suffix;
+        // NOTE: b23.tv 短链无法在前端解析（需服务端重定向），原样保留
+
+        return url;
+    }
+
+    /**
+     * 标准化视频链接输入（支持多行，每行一个链接）
+     */
+    function normalizeVideoUrls(text) {
+        if (!text || !text.trim()) return '';
+        return text.split('\n')
+            .map(function (line) { return normalizeSingleVideoUrl(line.trim()); })
+            .filter(function (line) { return line.length > 0; })
+            .join('\n');
+    }
+
+    /**
      * 日期自动补零：将 2021-1-1 等非标准输入规范化为 2021-01-01
      * NOTE: 只处理形如 YYYY-M-D / YYYY-MM-D / YYYY-M-DD 的宽松格式
      * @returns {string} 规范化后的值（若无法识别则原样返回）
@@ -1561,7 +1608,7 @@
                 personCountry: cachedSolverIso2 || s.personCountry || '',
                 personId: cachedSolverWcaId || s.personId || '',
                 note: document.getElementById('rf-note').value.trim(),
-                videoUrl: document.getElementById('rf-video-url').value.trim(),
+                videoUrl: normalizeVideoUrls(document.getElementById('rf-video-url').value),
                 round: document.getElementById('rf-round').value,
                 solveNum: document.getElementById('rf-solve-num').value ? parseInt(document.getElementById('rf-solve-num').value) : null,
                 wcaScramble: document.getElementById('rf-scramble').value.trim(),
@@ -1709,7 +1756,7 @@
         // NOTE: solution 存纯解法（为未来移除 recon 做准备）
         solve.solution = recon;
         if (note) solve.note = note;
-        var videoUrl = document.getElementById('rf-video-url').value.trim();
+        var videoUrl = normalizeVideoUrls(document.getElementById('rf-video-url').value);
         if (videoUrl) solve.videoUrl = videoUrl;
         // NOTE: 盲拧项目时附加 execTime/memoTime
         if (isBldEvent(event)) {
