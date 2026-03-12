@@ -702,7 +702,7 @@
             } else {
                 // NOTE: Bilibili facade——先渲染占位（灰色背景+播放按钮），异步加载封面图
                 html += '<div class="detail-video-wrap detail-video-facade" data-embed-url="' + ReconUtils.escHtml(info.embedUrl) + '" data-bvid="' + info.id + '">';
-                html += '<div class="detail-video-play"></div>';
+                html += '<div class="detail-video-play detail-video-play-bili"></div>';
                 html += '</div>';
             }
         }
