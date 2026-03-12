@@ -1185,48 +1185,6 @@
             }).catch(function () {});
         }
 
-        /**
-         * NOTE: 光标跟随——将光标前的移动设为 setupAlg，光标后的设为 alg。
-         * 这样魔方直接显示光标处的状态，和 alg.cubing.net 行为一致。
-         */
-        function syncCursorToPlayer() {
-            if (!currentPlayer || !previewActive) return;
-            var container = document.getElementById('rf-twisty-container');
-            if (container.style.display === 'none') return;
-
-            var reconEl = document.getElementById('rf-recon');
-            var cursorPos = reconEl.selectionStart;
-            var fullText = reconEl.value;
-
-            // NOTE: 计算光标前的步数
-            var textBefore = fullText.substring(0, cursorPos);
-            var algBefore = cleanReconText(textBefore);
-            var moves = algBefore.trim().split(/\s+/).filter(function (s) { return s.length > 0; });
-            var moveCount = moves.length;
-
-            // NOTE: 通过 indexer 获取精确的毫秒时间戳
-            try {
-                var model = currentPlayer.experimentalModel;
-                if (model && model.indexer) {
-                    model.indexer.get().then(function (indexer) {
-                        if (typeof indexer.indexToMoveStartTimestamp === 'function') {
-                            var totalMoves = typeof indexer.numAnimatedLeaves === 'function'
-                                ? indexer.numAnimatedLeaves()
-                                : (typeof indexer.numMoves === 'function' ? indexer.numMoves() : 0);
-                            // NOTE: 光标在末尾时用 algDuration 跳到绝对末尾
-                            if (moveCount >= totalMoves && typeof indexer.algDuration === 'function') {
-                                currentPlayer.timestamp = indexer.algDuration();
-                            } else {
-                                currentPlayer.timestamp = indexer.indexToMoveStartTimestamp(moveCount);
-                            }
-                        }
-                    });
-                }
-            } catch (e) {
-                // NOTE: 实验性 API 失败时 fallback 到重建
-                createTwistyPlayer();
-            }
-        }
 
         // NOTE: 按钮首次点击加载 twisty 并激活，后续切换显示/隐藏
         var isZhBtn = localStorage.getItem('i18n_locale') === 'zh';
@@ -1260,74 +1218,6 @@
         // NOTE: 项目变化时重建 player（切换 puzzle 类型）
         document.getElementById('rf-event').addEventListener('change', debounceTwistyUpdate);
 
-        // NOTE: 光标位置变化时同步 twisty 状态（click/键盘移动光标）
-        var cursorSyncTimer = null;
-        function debounceCursorSync() {
-            if (!previewActive || !currentPlayer) return;
-            clearTimeout(cursorSyncTimer);
-            cursorSyncTimer = setTimeout(syncCursorToPlayer, 100);
-        }
-        var reconElForCursor = document.getElementById('rf-recon');
-        // NOTE: click 时先吸附光标到 token 边界再同步 twisty
-        reconElForCursor.addEventListener('click', function () {
-            // NOTE: setTimeout(0) 确保浏览器先更新 selectionStart
-            setTimeout(function () {
-                var text = reconElForCursor.value;
-                var pos = reconElForCursor.selectionStart;
-                var result = ReconAlgUtils.findTokenPositions(text);
-                var snapped = ReconAlgUtils.snapToTokenBoundary(pos, result.tokens);
-                if (snapped !== pos) {
-                    reconElForCursor.selectionStart = snapped;
-                    reconElForCursor.selectionEnd = snapped;
-                }
-                syncCursorToPlayer();
-            }, 0);
-        });
-        reconElForCursor.addEventListener('keyup', debounceCursorSync);
-
-        // ==================== 箭头键 Token 跳转 ====================
-
-        reconElForCursor.addEventListener('keydown', function (e) {
-            if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
-
-            var text = reconElForCursor.value;
-            var cursorPos = reconElForCursor.selectionStart;
-            var result = ReconAlgUtils.findTokenPositions(text);
-
-            // NOTE: 光标在注释区域内时，保持默认逐字符行为
-            if (ReconAlgUtils.isCursorInComment(cursorPos, result.commentStarts)) return;
-
-            var tokens = result.tokens;
-            if (tokens.length === 0) return;
-
-            var newPos = cursorPos;
-            if (e.key === 'ArrowRight') {
-                // NOTE: 找当前或下一个 token（start >= cursorPos），跳到其末尾
-                for (var i = 0; i < tokens.length; i++) {
-                    if (tokens[i].start >= cursorPos) {
-                        newPos = tokens[i].end;
-                        break;
-                    }
-                }
-                // NOTE: 如果没找到（已在最后一个 token 之后），不拦截
-                if (newPos === cursorPos) return;
-            } else {
-                // ArrowLeft: 找最后一个 end < cursorPos 的 token，跳到其末尾
-                for (var j = tokens.length - 1; j >= 0; j--) {
-                    if (tokens[j].end < cursorPos) {
-                        newPos = tokens[j].end;
-                        break;
-                    }
-                }
-                if (newPos === cursorPos) return;
-            }
-
-            e.preventDefault();
-            reconElForCursor.selectionStart = newPos;
-            reconElForCursor.selectionEnd = newPos;
-            // NOTE: 跳转后同步 twisty 预览
-            debounceCursorSync();
-        });
 
         // ==================== 表单提交 ====================
 
