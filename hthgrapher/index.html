@@ -1282,14 +1282,8 @@
 	}
 
 	// NOTE: URL 状态同步 — 将成绩、名字、比赛名编码到 URL
-	var _syncTimer = null;
 	function syncToUrl() {
-		// NOTE: 标准防抖——确保最后一次变更一定会同步到 URL
-		if (_syncTimer) clearTimeout(_syncTimer);
-		_syncTimer = setTimeout(function() {
-			_syncTimer = null;
-			_doSyncToUrl();
-		}, 200);
+		_doSyncToUrl();
 	}
 	function _doSyncToUrl() {
 		var params = new URLSearchParams();
