@@ -72,6 +72,13 @@ ruiminyan.github.io/
 ├── jsonEditor/                 # JSON 编辑器
 ├── documentation/              # 文档页面
 ├── hthgrapher/                 # HTH 成绩计算器（carykh/hthgrapher 上游同步）
+├── alg_trainers/               # 公式训练器（mihlefeld/Alg-Trainers 上游同步，sync_alg_trainers.ps1 管理）
+│   ├── src/                    # 🔄 训练器运行时 JS（main.js、timer.js、settings.js 等）
+│   ├── style/                  # 🔄 训练器样式
+│   ├── template.html           # 🔄 训练器共用模板（body 替换注入）
+│   ├── index.html              # 📌 首页（由同步脚本从上游转换 + 注入 GA/i18n）
+│   ├── */index.html            # 📌 各训练器入口（同步脚本注入 i18n.js + setInterval 轮询）
+│   └── */algsinfo.js           # 🔄 各训练器公式数据
 ├── src/                        # 运行时模块（WASM、Worker、Solver 等，100% 上游）
 ├── icons/                     # PWA 图标
 ├── documents/                 # 文档资源
@@ -557,6 +564,29 @@ cd D:\cube\ruiminyan.github.io
 **模板文件**（定制化集中管理）：
 - `.sync/page_config.json`：页面映射表和 i18n key 配置
 - `.sync/menu_template.html`：汉堡菜单链接模板
+
+## 同步上游 Alg-Trainers
+
+当上游 [mihlefeld/Alg-Trainers](https://github.com/mihlefeld/Alg-Trainers) 有更新时，运行以下命令一键同步：
+
+```powershell
+# 1. 拉取上游最新代码
+git -C D:\cube\mihlefeld-alg-trainers pull
+
+# 2. 运行同步脚本
+cd D:\cube\ruiminyan.github.io
+.\sync_alg_trainers.ps1
+```
+
+脚本会自动：同步 30 个训练器目录、`src/` 运行时、`style/` 样式、根文件（`template.html` 等），转换首页 HTML（注入 GA + i18n），为每个训练器注入 `i18n.js`（含 `setInterval` 轮询等待 template 动态加载后触发翻译）。
+
+**配置文件**：
+- `.sync/alg_trainers_config.json`：上游路径、GA ID
+- `i18n/i18n.js`：翻译映射（`_solverLabelZh` 中约 50 条 Alg-Trainers 专用映射）
+
+**技术要点**：
+- 训练器的 `main.js` 用 `body.outerHTML` 替换整个 body，MutationObserver 会失效
+- 解决方案：注入 `setInterval` 轮询 `#timer` 元素存在 + `I18n._ready`，然后调用 `apply()` + `_injectToggle()`
 
 
 # 附录
