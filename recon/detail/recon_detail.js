@@ -153,7 +153,7 @@
         // NOTE: 更新页面标题——包含 ID、成绩、项目、方法、国旗+选手名
         var titleEl = document.getElementById('detail-title');
         var solverDisplay = U.displaySolverName(solve.person);
-        var titleParts = ['<span style="color:#888;font-size:0.7em">#' + solve.id + '</span>'];
+        var titleParts = [];
         // NOTE: 标题用 value（WCA 标准截断百分位成绩）而非 rawTime（原始精确时间）
         titleParts.push('<span class="mono">' + U.escHtml(solve.value || '') + '</span>');
         if (solve.regionalSingleRecord) titleParts.push(U.formatRecord(solve.regionalSingleRecord));
