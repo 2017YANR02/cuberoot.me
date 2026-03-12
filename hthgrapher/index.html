@@ -2,6 +2,7 @@
 <!DOCTYPE html>
 <html>
 	<head>
+		<meta charset="utf-8">
 		<title>Head-to-Head Average of 5 Calculator</title>
 		<style>
 			body {
@@ -148,7 +149,19 @@
 				transition: background 0.1s;
 			}
 			.np-btn:active {
-				opacity: 0.7;
+				transition: none;
+			}
+			.np-digit:active {
+				background: #7a7a7a;
+			}
+			.np-op:active {
+				background: #c5c5c5;
+			}
+			.np-action:active {
+				background: #ffbf5a;
+			}
+			.np-action-alt:active {
+				background: #5a8fa0;
 			}
 			.np-digit {
 				background: #505050;
@@ -173,7 +186,7 @@
 	<body>
       <canvas id="myCanvas" width="1600" height="900"></canvas>
         <div id="overlay">
-			<input style="font-size:36px;text-align:center;" type="text" id="value"/>
+			<input style="font-size:36px;text-align:center;" type="text" id="value" inputmode="none"/>
 		</div>
 		<script language="javascript" type="text/javascript">
 			var c=document.getElementById("myCanvas");
@@ -1293,7 +1306,7 @@
 						<button class="np-btn np-digit" onclick="numpadPress('7')">7</button>
 						<button class="np-btn np-digit" onclick="numpadPress('8')">8</button>
 						<button class="np-btn np-digit" onclick="numpadPress('9')">9</button>
-						<button class="np-btn np-op" onclick="numpadPress('backspace')">⌫</button>
+						<button class="np-btn np-op" onclick="numpadPress('backspace')" style="font-size:20px">DEL</button>
 						<button class="np-btn np-digit" onclick="numpadPress('4')">4</button>
 						<button class="np-btn np-digit" onclick="numpadPress('5')">5</button>
 						<button class="np-btn np-digit" onclick="numpadPress('6')">6</button>
@@ -1304,8 +1317,8 @@
 						<button class="np-btn np-digit" onclick="numpadPress(':')" style="font-size:28px">:</button>
 						<button class="np-btn np-digit" onclick="numpadPress('0')">0</button>
 						<button class="np-btn np-digit" onclick="numpadPress('.')">.</button>
-						<button class="np-btn np-action" onclick="numpadPress('enter')" style="font-size:20px">✓→</button>
-						<button class="np-btn np-action-alt" onclick="numpadPress('tab')" style="font-size:20px">⇄</button>
+						<button class="np-btn np-action" onclick="numpadPress('enter')" style="font-size:20px">OK</button>
+						<button class="np-btn np-action-alt" onclick="numpadPress('tab')" style="font-size:20px">TAB</button>
 					</div>
 				</div>
 				<table id="calc-table">
