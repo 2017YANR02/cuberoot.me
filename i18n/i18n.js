@@ -223,6 +223,12 @@ const I18n = {
         "Close": "关闭",
         // 首页按钮
         "Add": "添加",
+        // 首页魔方项目名称
+        "3×3": "三阶", "3×3 OH": "三阶单手", "3×3 Blind": "三阶盲拧",
+        "2×2": "二阶", "5×5": "五阶",
+        "Megaminx": "五魔方", "Pyraminx": "金字塔",
+        "Skewb": "斜转", "Octaminx": "八面体",
+        "Square-1": "SQ1",
     },
     // NOTE: 菜单链接翻译（抽屉菜单中的 <a> 元素，它们有 translate="no" 需要单独处理）
     _menuLinkZh: {
@@ -953,6 +959,13 @@ const I18n = {
         });
         // NOTE: Alg-Trainers 设置面板中的 div 文本（如 "Weighted choice"、"Theme"）
         document.querySelectorAll('.settingsEntry > div:first-child').forEach(el => {
+            const text = el.textContent.trim();
+            if (text && map[text]) {
+                el.textContent = map[text];
+            }
+        });
+        // NOTE: Alg-Trainers 首页魔方项目名称（.puzzle-header 内的 span）
+        document.querySelectorAll('.puzzle-header span').forEach(el => {
             const text = el.textContent.trim();
             if (text && map[text]) {
                 el.textContent = map[text];
