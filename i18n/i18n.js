@@ -909,6 +909,12 @@ const I18n = {
         document.body.classList.add('i18n-ready');
         document.documentElement.classList.remove('i18n-loading');
 
+        // NOTE: 训练器子页面 main.js 会用 document.body.outerHTML 替换整个 body，
+        // 导致已注入的语言切换按钮丢失。这里检测并重新注入。
+        if (!document.querySelector('[data-i18n-toggle]')) {
+            this._injectToggle();
+        }
+
         // NOTE: 注入国旗样式（仅一次）
         this._injectFlagStyles();
     },
