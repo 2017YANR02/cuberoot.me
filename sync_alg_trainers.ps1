@@ -191,6 +191,17 @@ if (Test-Path $srcIndex)
     # NOTE: 上游 manifest 指向 /Alg-Trainers/，本地已有全站 manifest
     $content = [regex]::Replace($content, '(?m)\s*<link\s+rel="manifest"\s+href="manifest\.json"\s*/?\s*>', '')
 
+    # --- 4d. 注入 i18n.js ---
+    if ($content -notmatch 'i18n\.js')
+    {
+        $content = $content -replace '(</body>)', "<script src=""../i18n/i18n.js"" defer></script>`n`$1"
+        # NOTE: 如果没有 </body>，在 </html> 前注入
+        if ($content -notmatch 'i18n\.js')
+        {
+            $content = $content -replace '(</html>)', "<script src=""../i18n/i18n.js"" defer></script>`n`$1"
+        }
+    }
+
     # --- 写入文件 ---
     if (-not $DryRun)
     {
@@ -206,7 +217,55 @@ if (Test-Path $srcIndex)
     Write-Host "  [CONV] index.html" -ForegroundColor DarkCyan
 }
 
-# ===== Step 5: 输出变更摘要 =====
+# ===== Step 5: 转换训练器子页面（注入 i18n.js + 替换分析脚本） =====
+Write-Host "`nStep 5: Patching trainer pages (i18n + analytics)..." -ForegroundColor Green
+
+foreach ($dir in $config.trainerDirs)
+{
+    $trainerIndex = Join-Path $destBase "$dir\index.html"
+    if (-not (Test-Path $trainerIndex)) { continue }
+
+    $bytes = [System.IO.File]::ReadAllBytes($trainerIndex)
+    $content = [System.Text.Encoding]::UTF8.GetString($bytes)
+    $changed = $false
+
+    # --- 5a. 替换 getclicky 为内联 GA ---
+    if ($content -match 'getclicky\.com')
+    {
+        $content = [regex]::Replace($content, '(?m)\s*<script\s+async\s+data-id="[^"]*"\s+src="//static\.getclicky\.com/js"\s*>\s*</script>', $gaCode)
+        $changed = $true
+    }
+
+    # --- 5b. 注入 i18n.js（在 </head> 前） ---
+    if ($content -notmatch 'i18n\.js')
+    {
+        # NOTE: 因为 main.js 用 body.outerHTML 替换整个 body，MutationObserver 会失效
+        # 所以用 setInterval 轮询 template 加载完成后调用 I18n.apply()
+        $i18nScript = @"
+	<script src='../../i18n/i18n.js' defer></script>
+	<script>
+		// NOTE: 等待 template.html 动态注入完成后触发翻译
+		var _i18nPoll = setInterval(function() {
+			if (document.getElementById('timer') && window.I18n && I18n._ready) {
+				clearInterval(_i18nPoll);
+				I18n.apply();
+			}
+		}, 200);
+	</script>
+"@
+        $content = $content -replace '(</head>)', "$i18nScript`n`$1"
+        $changed = $true
+    }
+
+    if ($changed -and -not $DryRun)
+    {
+        $outBytes = [System.Text.Encoding]::UTF8.GetBytes($content)
+        [System.IO.File]::WriteAllBytes($trainerIndex, $outBytes)
+        Write-Host "  [PATCH] $dir/index.html" -ForegroundColor DarkCyan
+    }
+}
+
+# ===== Step 6: 输出变更摘要 =====
 Write-Host "`n========================================" -ForegroundColor Cyan
 Write-Host "  Sync Complete!" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan

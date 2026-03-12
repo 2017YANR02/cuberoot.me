@@ -959,12 +959,26 @@ const I18n = {
             }
         });
         // NOTE: Alg-Trainers 中的 span 文本（如 "Times"、"Cases"、"Last Scramble"）
+        // 对于含子元素的 span（如 <span>Times <span id=...></span></span>），
+        // 只翻译第一个文本节点，避免覆盖子元素内容
         document.querySelectorAll('span:not([translate="no"]):not([data-i18n])').forEach(el => {
-            // 只匹配纯文本 span（无子元素），避免误翻译容器 span
-            if (el.children.length > 0) return;
-            const text = el.textContent.trim();
-            if (text && map[text]) {
-                el.textContent = map[text];
+            if (el.children.length === 0) {
+                // 纯文本 span：直接替换 textContent
+                const text = el.textContent.trim();
+                if (text && map[text]) {
+                    el.textContent = map[text];
+                }
+            } else {
+                // 含子元素的 span：只替换第一个文本节点
+                for (const node of el.childNodes) {
+                    if (node.nodeType === Node.TEXT_NODE) {
+                        const text = node.textContent.trim();
+                        if (text && map[text]) {
+                            node.textContent = map[text] + ' ';
+                            break;
+                        }
+                    }
+                }
             }
         });
         // NOTE: Alg-Trainers 热键面板中的 hotKeyText span
