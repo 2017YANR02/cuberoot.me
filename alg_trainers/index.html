@@ -1,0 +1,139 @@
+<html>
+
+<head>	<script async src="https://www.googletagmanager.com/gtag/js?id=G-MXJH30352W"></script>
+	<script>
+		window.dataLayer = window.dataLayer || [];
+		function gtag() { dataLayer.push(arguments); }
+		gtag('js', new Date());
+		gtag('config', 'G-MXJH30352W');
+	</script>
+    <meta name="description" content="Sleek modern alg trainers for a variety of algsets and puzzles. Installable as a PWA and customizable with your own color scheme.">
+    <meta name="keywords" content="3x3, OH, One-Handed, 2x2, Megaminx, Pyraminx, Skewb, FTO, Face Turning Octahedron, Octaminx, PLL, OLL, CMLL, EG, TCLL, LS, FH, L4E, NS2, EG2, TCP">
+    <meta name="author" content="Malte Ihlefeld">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0">
+    <link rel="icon" type="image/png" href="icon.png">
+    <link rel="stylesheet" type="text/css" href="style/main.css">
+    <title>ALLG Trainer</title>
+    <script>var selectedAlgSets = {};</script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Titillium+Web:ital,wght@0,200;0,300;0,400;0,600;0,700;0,900;1,200;1,300;1,400;1,600;1,700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings:
+                'FILL' 0,
+                'wght' 400,
+                'GRAD' 0,
+                'opsz' 24
+        }
+    </style>
+    <script src="https://colorjs.io/dist/color.global.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="src/utils.js"></script>
+    <script src="src/settings.js"></script>
+</head>
+
+<body id="bodyid" class="niceBody colFlex" style="background-color: var(--backgroundDarker);">
+    <div class="colFlex pad"><h3>Welcome to ALLG-Trainer</h3></div>
+    <div id="algtrainer-selections" class="rowFlex pad"> 
+        <!-- 3X3 -->
+        <div class="borderedContainer pad colFlex">
+            <div class="puzzle-header borderedContainer pad" style="background-color: var(--backgroundDarker);"><span>3×3</span><img src="3x3-PLL-Trainer/icon.png"></div>
+            <div class="rowFlex" >
+                <span class="abutton grow" onclick='window.location="3x3-PLL-Trainer/index.html"'><b>PLL</b></span>
+                <span class="abutton grow" onclick='window.location="3x3-OLL-Trainer/index.html"'><b>OLL</b></span>
+                <span class="abutton grow" onclick='window.location="3x3-ZBLL-Trainer/index.html"'><b>ZBLL</b></span>
+                <span class="abutton grow" onclick='window.location="3x3-ZBLS-Trainer/index.html"'><b>ZBLS</b></span>
+                <span class="abutton grow" onclick='window.location="3x3-CMLL-Trainer/index.html"'><b>CMLL</b></span>
+            </div>
+        </div>
+        <!-- 3X3-OH -->
+        <div class="borderedContainer pad colFlex">
+            <div class="puzzle-header borderedContainer pad" style="background-color: var(--backgroundDarker);"><span>3×3 OH</span><img src="3x3-PLL-Trainer/icon.png"></div>
+            <div class="rowFlex" >
+                <span class="abutton grow" onclick='window.location="3x3-OH-PLL-Trainer/index.html"'><b>PLL</b></span>
+                <span class="abutton grow" onclick='window.location="3x3-OH-OLL-Trainer/index.html"'><b>OLL</b></span>
+                <span class="abutton grow" onclick='window.location="3x3-OH-ZBLL-Trainer/index.html"'><b>ZBLL</b></span>
+                <span class="abutton grow" onclick='window.location="3x3-OH-CMLL-Trainer/index.html"'><b>CMLL</b></span>
+            </div>
+        </div>
+        <!-- 3X3-BLD -->
+        <div class="borderedContainer pad colFlex">
+            <div class="puzzle-header borderedContainer pad" style="background-color: var(--backgroundDarker);"><span>3×3 Blind</span><img src="3x3-PLL-Trainer/icon.png"></div>
+            <div class="rowFlex" >
+                <span class="abutton grow" onclick='window.location="3x3-BLD-UFR-Trainer/index.html"'><b>UFR+</b></span>
+                <span class="abutton grow" onclick='window.location="3x3-BLD-UF-Trainer/index.html"'><b>UF+</b></span>
+            </div>
+        </div>
+        <!-- 2x2 -->
+        <div class="borderedContainer pad colFlex">
+            <div class="puzzle-header borderedContainer pad" style="background-color: var(--backgroundDarker);"><span>2×2</span><img src="2x2-EG-Trainer/icon.png"></div>
+            <div class="rowFlex">
+                <span class="abutton grow" onclick='window.location="2x2-EG-Trainer/index.html"'><b>EG</b></span>
+                <span class="abutton grow" onclick='window.location="2x2-TCLL-Trainer/index.html"'><b>TCLL</b></span>
+                <span class="abutton grow" onclick='window.location="2x2-TEG-Trainer/index.html"'><b>TEG</b></span>
+                <span class="abutton grow" onclick='window.location="2x2-LS-Trainer/index.html"'><b>LS</b></span>
+                <span class="abutton grow" onclick='window.location="2x2-FH-Trainer/index.html"'><b>FH</b></span>
+            </div>
+        </div>  
+        <!-- 5x5 -->
+        <div class="borderedContainer pad colFlex">
+            <div class="puzzle-header borderedContainer pad" style="background-color: var(--backgroundDarker);"><span>5×5</span><img src="5x5-L2E-Trainer/icon.png"></div>
+            <div class="rowFlex">
+                <span class="abutton grow" onclick='window.location="5x5-L2E-Trainer/index.html"'><b>L2E</b></span>
+                <span class="abutton grow" onclick='window.location="5x5-LCE-Trainer/index.html"'><b>LCE</b></span>
+            </div>
+        </div>  
+        <!-- Megaminx -->
+        <div class="borderedContainer pad colFlex">
+            <div class="puzzle-header borderedContainer pad" style="background-color: var(--backgroundDarker);"><span>Megaminx</span><img src="Megaminx-OLL-Trainer/icon.png"></div>
+            <div class="rowFlex" >
+                <span class="abutton grow" onclick='window.location="Megaminx-PLL-Trainer/index.html"'><b>PLL</b></span>
+                <span class="abutton grow" onclick='window.location="Megaminx-OLL-Trainer/index.html"'><b>OLL</b></span>
+                <span class="abutton grow" onclick='window.location="Megaminx-WV-Trainer/index.html"'><b>WV</b></span>
+                <span class="abutton grow" onclick='window.location="Megaminx-ZBLS-Trainer/index.html"'><b>ZBLS</b></span>
+            </div>
+        </div>
+        <!-- Pyraminx -->
+        <div class="borderedContainer pad colFlex">
+            <div class="puzzle-header borderedContainer pad" style="background-color: var(--backgroundDarker);"><span>Pyraminx</span><img src="Pyraminx-L4E-Trainer/icon.png"></div>
+            <div class="rowFlex" >
+                <span class="abutton grow" onclick='window.location="Pyraminx-L4E-Trainer/index.html"'><b>L4E</b></span>
+            </div>
+        </div>
+        <!-- Skewb -->
+        <div class="borderedContainer pad colFlex">
+            <div class="puzzle-header borderedContainer pad" style="background-color: var(--backgroundDarker);"><span>Skewb</span><img src="Skewb-NS2-Trainer/icon.png"></div>
+            <div class="rowFlex" >
+                <span class="abutton grow" onclick='window.location="Skewb-NS2-Trainer/index.html"'><b>NS+EG</b></span>
+                <span class="abutton grow" onclick='window.location="Skewb-L6C-Trainer/index.html"'><b>L6C</b></span>
+            </div>
+        </div>  
+        <!-- Octaminx -->
+        <div class="borderedContainer pad colFlex">
+            <div class="puzzle-header borderedContainer pad" style="background-color: var(--backgroundDarker);"><span>Octaminx</span><img src="Octaminx-TCP-Trainer/icon.png"></div>
+            <div class="rowFlex">
+                <span class="abutton grow" onclick='window.location="Octaminx-TCP-Trainer/index.html"'><b>TCP</b></span>
+                <span class="abutton grow" onclick='window.location="Octaminx-L3T-Trainer/index.html"'><b>L3T</b></span>
+            </div>
+        </div>
+        <!-- Square-1 -->
+        <div class="borderedContainer pad colFlex">
+            <div class="puzzle-header borderedContainer pad" style="background-color: var(--backgroundDarker);"><span>Square-1</span><img src="Sq1-PBL-Trainer/icon.png"></div>
+            <div class="rowFlex">
+                <span class="abutton grow" onclick='window.location="Sq1-CPEP-Trainer/index.html"'><b>CPEP</b></span>
+                <span class="abutton grow" onclick='window.location="Sq1-OBL-Trainer/index.html"'><b>OBL</b></span>
+                <span class="abutton grow" onclick='window.location="Sq1-PBL-Trainer/index.html"'><b>PBL</b></span>
+            </div>
+        </div>
+    </div>
+</body>
+<script>
+    loadSettings();
+    applySettings();
+</script>
+</html>

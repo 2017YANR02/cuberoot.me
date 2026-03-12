@@ -1,0 +1,9 @@
+const timesArrayKey = "3x3zblsTimes";
+const selectionArrayKey = "3x3zblsselection";
+var trainerTitle = "3×3 ZBLS Trainer";
+var preRotations = ["", "y", "y'", "y2"];
+var postRotations = ["", "y", "y'", "y2"];
+var preMoves = ["", "U", "U'", "U2"];
+var postMoves = preMoves;
+var selCases = [];
+var maxAlgsPerRow = 8;

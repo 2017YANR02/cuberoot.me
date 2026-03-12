@@ -1,0 +1,9 @@
+const timesArrayKey = "octaminxL3TTimesArray";
+const selectionArrayKey = "octaminxL3TSelection";
+var trainerTitle = "Octaminx L3T Trainer"
+var maxAlgsPerRow = 5;
+var preRotations = [''];
+var postRotations = [''];
+var preMoves = ["", "U", "U'"];
+var postMoves = preMoves;
+var selCases = [];

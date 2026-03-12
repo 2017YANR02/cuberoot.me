@@ -1,0 +1,9 @@
+const timesArrayKey = "sq1cpepTimesArray";
+const selectionArrayKey = "sq1cpepSelection";
+var trainerTitle = "Square-1 CPEP Trainer";
+var preRotations = [''];
+var postRotations = [''];
+var preMoves = ["3,0", "6,0", "-3,0", "0,-3", "0,3", "0,6", "3,3", "3,-3", "3,6", "6,3", "6,-3", "6,6", "-3,3", "-3,-3", "-3,6", "0,0"];
+var postMoves = preMoves;
+var selCases = [];
+var maxAlgsPerRow = 8;

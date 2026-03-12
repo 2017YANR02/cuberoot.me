@@ -1,0 +1,342 @@
+.borderedContainer {
+    border-width: var(--borderWidth);
+    border-style: solid;
+    border-radius: var(--borderRadius);
+    background-color: var(--background);
+    border-color: transparent;
+}
+
+:root {
+    -webkit-tap-highlight-color: transparent;
+}
+
+.rowFlex {
+    display: flex;
+    flex-direction: row;
+    gap: 0.2em;
+}
+
+.colFlex {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2em;
+}  
+
+
+body.niceBody {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%; 
+    margin: 0;
+}
+
+.grow {
+    flex-grow: 1;
+}
+
+.pad {
+    padding: 0.3em;
+}
+
+.center {
+    align-items: center;
+}
+
+.caseNameStats {
+    font-weight: bold;
+    cursor: pointer;
+    color: var(--primaryBG);
+}
+
+a {
+    text-decoration: underline;
+    cursor: pointer;
+    color: var(--primaryBG);
+}
+
+a:hover {
+    color: var(--primaryBGHover);
+}
+
+
+body {
+    font-family: "Titilium Web", sans-serif;
+    font-weight: 400;
+    font-size: 1.3em;
+    --background: #222222;
+    --backgroundDarker: #111;
+    --text: #ffffff;
+    --secondary: #ffd700;
+    --secondaryHover: var(--secondary);
+    --secondaryText: var(--text);
+    --primary: #658320;
+    --primaryText: var(--primary);
+    --primaryTextHover: var(--primary);
+    --accent: #abdf32;
+    --accentHover: var(--accent);
+    --accentText: var(--background);
+    --borderRadius: 0.3em;
+    --borderWidth: 0.13em;
+    background-color: var(--background);
+    color: var(--text);
+}
+
+#algtrainer-selections {
+    justify-content: center; 
+    width: min(80vw, 62em);
+    flex-wrap: wrap;
+}
+
+#algtrainer-selections > div {
+    width: 19em;
+}
+
+dialog::backdrop {
+    background-color: rgba(0, 0, 0, 0.7);
+    cursor: pointer;
+}
+
+dialog {
+    scale: 0;
+    opacity: 0;
+}
+
+dialog[open] {
+    width: 100%;
+    height: 100%;
+    scale: 1;
+    opacity: 1;
+    margin: 0;
+    background-color: transparent;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow: scroll;
+}
+
+.dialogBackground {
+    position: fixed;
+    height: 100%;
+    width: 100%;
+    top: 0;
+    background: transparent;
+    z-index: -1;
+}
+
+.dialogBackground:hover {
+    cursor: pointer;
+}
+
+.dialogDiv {
+    background-color: var(--backgroundDarker);
+    color: var(--text);
+    border-radius: var(--borderRadius);
+    margin: 0;
+    padding: 0.3em;
+    box-shadow: 5px 5px 30px black;
+    outline: none;
+    border-color: transparent;
+    width: 32em;
+    max-width: 95%;
+}
+
+dialog:focus {
+    outline: none;
+}
+
+.puzzle-header {
+    display: flex;
+    justify-content: space-between;
+}
+
+.puzzle-header > img {
+    height: 1.4em;
+}
+
+html {
+    height: 100%;
+}
+
+/* done button that appends ">" on hover */
+.abutton {
+    display: inline-block;
+    border-radius: var(--borderRadius);
+    border-style: solid;
+    text-align: center;
+    padding: 0.5em;
+    margin: 0em;
+    transition: all 0.3s;
+    cursor: pointer;
+    box-shadow: 0 3px 10px rgb(0 0 0 / 0.2);
+    background-color: var(--primaryBG);
+    color: var(--primaryText);
+    font-size: 1em;
+    border-color: var(--primaryBG);
+    touch-action: manipulation;
+    user-select: none;
+    display: flex !important;;
+    justify-content: center;
+    align-items: center;
+}
+
+.closeButton {
+    background-color: var(--accent);
+    border-color: var(--accent);
+    color: var(--accentText);
+    font-size: unset !important;
+    height: 0.2em;
+    width: auto !important;
+}
+
+.largeButton {
+    font-size: 2.8em !important; 
+    margin: 0em !important;
+    height: 1.3em;
+    width: 1.3em;
+}
+
+.mbutton {
+    height: 1em !important;
+    width: 1em !important;
+    padding: 0.2em !important;
+    font-size: 2em !important;
+    margin: 0em !important;
+    touch-action: manipulation;
+    user-select: none;
+}
+
+.abutton:hover {
+    transform: translateY(-0.05em);
+    box-shadow: 0px 0px 5px var(--primaryBGHover);
+    background-color: var(--primaryBGHover);
+    border-color: var(--primaryBGHover);
+}
+
+.closeButton:hover {
+    transform: translateY(-0.05em);
+    box-shadow: 0px 0px 5px var(--accentHover);
+    background-color: var(--accentHover);
+    border-color: var(--accentHover);
+    color: var(--accentText);
+}
+
+.abutton:focus {
+    outline: none;
+}
+
+.inlineButton {
+    color: var(--primaryBG);
+    font-size: 2.3em !important;
+    cursor: pointer;
+}
+
+.inlineButton:hover {
+    color: var(--primaryBGHover);
+}
+
+/* The switch - the box around the slider */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 3em;
+    height: 1.3em;
+}
+
+/* Hide default HTML checkbox */
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+/* The slider */
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--text);
+    transition: .4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 1em;
+    width: 1em;
+    left: 0.15em;
+    bottom: 0.15em;
+    background-color: var(--background);
+    -webkit-transition: .4s;
+    transition: .4s;
+}
+
+input:checked+.slider {
+    background-color: var(--primaryBG);
+}
+input:checked+.slider:before {
+    transform: translateX(1.65em);
+}
+
+
+/* Rounded sliders */
+.slider.round {
+    border-radius: 34px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
+@supports (scrollbar-width: auto) {
+    .scroller {
+        scrollbar-color: var(--primary) transparent;
+        scrollbar-width: thin;
+    }
+}
+
+
+/* width */
+::-webkit-scrollbar {
+width: 0.3em;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+background: transparent;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: 0.3em;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+background: var(--primaryTextHover);
+} 
+
+.hotkeyRow {
+    justify-content: space-between;
+}
+
+.hotkeyValue {
+    display: flex;
+    gap: 0.2em;
+}
+
+.hotkey {
+    background: white;
+    color: black;
+    padding: 0.18em 0.4em 0.2em 0.4em;
+    border-right-color: grey;
+    border-right-width: 0.2em;
+    border-right-style: solid;
+    border-bottom-color: grey;
+    border-bottom-width: 0.2em;
+    border-bottom-style: solid;
+}

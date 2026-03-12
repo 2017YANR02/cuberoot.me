@@ -1,0 +1,377 @@
+<body id="bodyid" class="niceBody">
+	<div id='practiceLayout' class="colFlex" style="display: none;">
+		<div id="casesBox" class="borderedContainer pad rowFlex center">
+			<span onclick="window.history.go(-1)" class="material-symbols-outlined abutton mbutton">arrow_back</span>
+			<span id='selInfo' style="font-size: 2em;"></span>
+			<span onclick="openDialog('settings')" style="padding: 0.2em; font-size: 2em; height: 1em; width: 1em;"
+				class="material-symbols-outlined abutton">
+				settings
+		</div>
+		<div class="borderedContainer pad center rowFlex" style="justify-content: space-between;">
+			<div id="scramble"></div>
+		</div>
+		<div id="timer_and_stats" class="rowFlex grow">
+			 <div id="timerDiv" class="borderedContainer" oncontextmenu="return false;">
+				<span id="timer" style="text-align: center;">loading, please wait...</span>
+			</div>
+			<div id="stats" class="borderedContainer colFlex pad" style="gap: 0.3em;">
+				<div class="timeEntry rowFlex" style="justify-content: space-between;">
+					<div class="colFlex">
+						<span>Times <span id='infoHeader'></span></span>
+						<span>Cases <span id="numCases"></span></span>
+					</div>
+					<span onclick="confirmClear();" class="material-symbols-outlined inlineButton">delete</span>
+				</div>
+				<div id="times" class="colFlex" style="gap: 0.3em;">
+				</div>
+			</div>
+		</div>
+		<!-- case description box -->
+		<div class="borderedContainer pad rowFlex center"
+			style="justify-content: space-between; flex-direction: row-reverse;">
+			<div id='last_scramble' class="colFlex" style="width: 100%;">
+				<span>Last Scramble</span>
+				<span id="last-scramble-buttons">
+					<span class='material-symbols-outlined inlineButton'
+						onclick='window.alert("No case to bookmark.")'>bookmark_add</span>
+					<span class='material-symbols-outlined inlineButton'
+						onclick='window.alert("No case to unselect.")'>close</span>
+					<span class='material-symbols-outlined inlineButton'
+						onclick='window.alert("No time to delete.")'>undo</span>
+				</span>
+			</div>
+		</div>
+	</div> <!-- practice_layout -->
+
+	<div id='selectionLayout' class="colFlex scroller" style="margin: 0.5em; max-width: 70em; display: none; transition: width 0.2s;">
+		<div class="colFlex">
+			<div class="rowFlex center" style="justify-content: space-between;">
+				<h1 id="trainerTitle">Some Trainer</h1>
+				<div class="colFlex">
+					<div id="settingsButton">
+						<button onclick="openDialog('settings')" class="material-symbols-outlined abutton largeButton">
+							settings
+						</button>
+					</div>
+					<div id="modeButtons" class="colFlex">
+						<button class="material-symbols-outlined abutton largeButton"
+							onclick="changeMode('recap')">send</button>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="borderedContainer colFlex pad center" style="background-color: var(--backgroundDarker);">
+			<div id="presetsSettings" class="colFlex" style="width: fit-content; max-width: 100%;"></div>
+			<div style="width: 100%; display: flex; justify-content: space-between; align-items: end;">
+				<a onclick="openDialog('hotkeysDialog')">Hotkeys</a>
+				<span class="version">v1.6.11</span>
+				<a onclick="openDialog('aboutDialog')">Credits</a>
+			</div>
+		</div>
+		<div id="cases_selection" style="width: 100%;" class="colFlex">
+		</div>
+	</div> <!-- selection layout -->
+
+
+	<dialog id='hintWindow' class="colFlex" onclick="dialogClick(event, this)" onkeydown="if(dialogOpen && event.target.id == 'hintWindow' && event.code == 'KeyH') {closeDialog(dialogOpenId);}" autofocus=''>
+		<div class="dialogDiv colFlex borderedContainer">
+			<span onclick="closeDialog('hintWindow')" class="material-symbols-outlined abutton closeButton">Close</span>
+			<div class="borderedContainer rowFlex pad center" style="justify-content: space-between;">
+				<span id='prevButton' onclick="previousCase()"
+					class="material-symbols-outlined abutton prevNext">arrow_back</span>
+				<span id='boxTitle'>
+				</span>
+				<span id='nextButton' onclick="nextCase()"
+					class="material-symbols-outlined abutton prevNext">arrow_forward</span>
+			</div>
+			<div class="borderedContainer colFlex center" style="background-color: var(--secondary);">
+				<img id='boxImg' />
+			</div>
+			<div class="borderedContainer grow rowFlex center pad">
+				<div id='boxsetup'>
+				</div>
+			</div>
+			<div class="borderedContainer grow colFlex pad" style="min-height: 5em; justify-content: space-between;">
+				<div id='boxalg' class="rowFlex grow"></div>
+				<div class="rowFlex">
+					<span onclick="downloadCustomAlgs()" id="downloadButton" class="material-symbols-outlined abutton grow" >
+						download
+					</span>
+					<label id="uploadButton" for="uploadFile" class="material-symbols-outlined abutton grow" >
+						upload
+					</label><input type="file" id="uploadFile" style="display: none;" onchange="uploadCustomAlgs()">
+					<span onclick="editAlg()" id="editAlgButton" class="material-symbols-outlined abutton grow" >
+						edit
+					</span>
+				</div>
+			</div>
+
+		</div>
+		<div class="dialogBackground" onclick="closeDialog('hintWindow')"></div>
+	</dialog>
+
+	<dialog id="caseTimeDetails" class="colFlex" onclick="dialogClick(event, this)" autofocus="">
+		<div class="dialogDiv colFlex borderedContainer">
+			<span onclick="closeDialog('caseTimeDetails')" class="material-symbols-outlined abutton closeButton">Close</span>
+			<div class="borderedContainer pad rowFlex" style="justify-content: center;"><b id="caseTimeDetailsCaseHeader">Case</b></div>
+			<div class="borderedContainer pad">
+				<canvas id="timeHistogram"></canvas>
+			</div>
+			<div class="borderedContainer pad">
+				<canvas id="timePlot"></canvas>
+			</div>
+			<div class="rowFlex borderedContainer pad">
+				<div>Times: </div>
+				<div id="caseTimeDetailsTimes"></div>
+			</div>
+		</div>
+		<div class="dialogBackground" onclick="closeDialog('caseTimeDetails')"></div>
+	</dialog>
+
+	<dialog id="settings" class='colFlex borderedContainer' autofocus="">
+		<div class="dialogDiv colFlex borderedContainer">
+			<span onclick="closeDialog('settings')" class="material-symbols-outlined abutton closeButton">Close</span>
+			<div class="settingsEntry">
+				<div>Weighted choice (# of Solves)</div>
+				<!-- Rounded switch -->
+				<label class="switch">
+					<input onclick="toggleSetting(this, 'weightedChoice');" type="checkbox" id="weighted_choice_on_off" value="using">
+					<span class="slider round"></span>
+				</label>
+			</div>
+			<div class="settingsEntry">
+				<div>Weighted choice (Mean time)</div>
+				<!-- Rounded switch -->
+				<label class="switch">
+					<input onclick="toggleSetting(this, 'weightedChoiceTime');" type="checkbox" id="weighted_choice_time_on_off" value="using">
+					<span class="slider round"></span>
+				</label>
+			</div>
+			<div class="settingsEntry">
+				<div>Import/export</div>
+				<div class="plusMinus">
+					<label for="uploadLS" id="uploadLSLabel" class="material-symbols-outlined abutton" >
+						upload
+					</label><input type="file" id="uploadLS" style="display: none;" onchange="uploadLocalStorage()">
+					<button onclick="downloadLocalStorage()" type="button" class="material-symbols-outlined abutton">download</button>
+				</div>
+			</div>
+			<div class="settingsEntry">
+				<div>Base size</div>
+				<div class="plusMinus">
+					<button onclick="adjustSize('body', 0.1);" type="button" class="abutton">+</button>
+					<button onclick="adjustSize('body', -0.1);" type="button" class="abutton">-</button>
+				</div>
+			</div>
+			<div class="settingsEntry">
+				<div>Timer size</div>
+				<div class="plusMinus">
+					<button onclick="adjustSize('timer', 0.1);" type="button" class="abutton">+</button>
+					<button onclick="adjustSize('timer', -0.1);" type="button" class="abutton">-</button>
+				</div>
+			</div>
+			<div class="settingsEntry">
+				<div>Scramble size</div>
+				<div class="plusMinus">
+					<button onclick="adjustSize('scramble', 0.1);" type="button" class="abutton">+</button>
+					<button onclick="adjustSize('scramble', -0.1);" type="button" class="abutton">-</button>
+				</div>
+			</div>
+			<div class="settingsEntry">
+				<div>Theme</div>
+				<div class="plusMinus">
+					<span onclick="resetStyle('light')" class="material-symbols-outlined abutton">
+						light_mode
+					</span>
+					<span onclick="resetStyle('dark')" class="material-symbols-outlined abutton">
+						dark_mode
+					</span>
+				</div>
+			</div>
+			<div class="settingsEntry">
+				<div>Background</div><input type='text' value='#222222' class='settinginput' id='--background'
+					onchange="changeColor(event);" placeholder='#222222' />
+			</div>
+			<div class="settingsEntry">
+				<div>Text</div>
+				<div style="background-color: var(--text);"></div><input type='text' value='#ffffff' class='settinginput'
+					id='--text' onchange="changeColor(event);" placeholder='oklch(1 0 360)'
+					style="background-color: var(--text); color: var(--background);" />
+			</div>
+			<div class="settingsEntry">
+				<div>Primary</div> <input type='text' value='#ffd700' class='settinginput' id='--primary'
+					onchange="changeColor(event);" placeholder='lch(0.87 86 88)'
+					style="background-color: var(--primary); color: var(--primaryText)" />
+			</div>
+			<div class="settingsEntry">
+				<div>Secondary</div> <input type='text' value='#ffd700' class='settinginput' id='--secondary'
+					onchange="changeColor(event);" placeholder='rgb(1 0.5 1)'
+					style="background-color: var(--secondary); color: var(--secondaryText);" />
+			</div>
+			<div class="settingsEntry">
+				<div>Accent</div> <input type='text' value='#ffd700' class='settinginput' id='--accent'
+					onchange="changeColor(event);" placeholder='#ffd700'
+					style="background-color: var(--accent); color: var(--accentText)" />
+			</div>			
+			<div class="settingsEntry">
+				<div> Corner Letterscheme</div><input type="text" value="abcdefghijklmnopqrstuvwx" class="settinginput" id="cornerSchemeInput" onchange="changeSettingsKey(event, 'letterSchemeCorners')">
+			</div>
+			<div class="settingsEntry">
+				<div> Edges Letterscheme</div><input type="text" value="abcdefghijklmnopqrstuvwx" class="settinginput" id="edgeSchemeInput" onchange="changeSettingsKey(event, 'letterSchemeEdges')">
+			</div>
+			<div class="settingsEntry">
+				<div>Change Letter Pairs</div>
+				<div class="plusMinus">
+					<label for="uploadLP" id="uploadLPLabel" class="material-symbols-outlined abutton" >
+						upload
+					</label><input type="file" id="uploadLP" style="display: none;" onchange="uploadLetterPairs()">
+					<button onclick="" type="button" class="material-symbols-outlined abutton">download</button>
+				</div>
+			</div>
+			<div class="settingsEntry">
+				<div>Corner Letter Pair Words</div>
+				<!-- Rounded switch -->
+				<label class="switch">
+					<input onclick="toggleSetting(this, 'useCornersLetterPairs');" type="checkbox" id="corners_letter_pairs_on_off" value="using">
+					<span class="slider round"></span>
+				</label>
+			</div>
+			<div class="settingsEntry">
+				<div>Edges Letter Pair Words</div>
+				<!-- Rounded switch -->
+				<label class="switch">
+					<input onclick="toggleSetting(this, 'useEdgesLetterPairs');" type="checkbox" id="edges_letter_pairs_on_off" value="using">
+					<span class="slider round"></span>
+				</label>
+			</div>
+			<div class="settingsEntry">
+				<div>Cube Colors</div>
+				<div id="cubeColorPresets">
+					<button onclick="resetCubeColors('default')" class="abutton">Default</button>
+					<button onclick="resetCubeColors('redgreen')" class="abutton">Red-Green</button>
+					<button onclick="resetCubeColors('blueyellow')" class="abutton">Blue-Yellow</button>
+				</div>
+			</div>
+			<div class="settingsEntry">
+				<div>White</div> <input type='text' value='#FAFAFA' class='settinginput' id='cc-white'
+					onchange="changeCubeColor(event, 'white');" placeholder='#FAFAFA'/>
+			</div>
+			<div class="settingsEntry">
+				<div>Grey</div> <input type='text' value='#777777' class='settinginput' id='cc-ignore'
+					onchange="changeCubeColor(event, 'ignore');" placeholder='#777777'/>
+			</div>
+			<div class="settingsEntry">
+				<div>Black</div> <input type='text' value='#222222' class='settinginput' id='cc-black'
+					onchange="changeCubeColor(event, 'black');" placeholder='#222222'/>
+			</div>
+			<div class="settingsEntry">
+				<div>Ligtblue</div> <input type='text' value='#A0CBE8' class='settinginput' id='cc-lightblue'
+					onchange="changeCubeColor(event, 'lightblue');" placeholder='#A0CBE8'/>
+			</div>
+			<div class="settingsEntry">
+				<div>Blue</div> <input type='text' value='#4E79A7' class='settinginput' id='cc-blue'
+					onchange="changeCubeColor(event, 'blue');" placeholder='#4E79A7'/>
+			</div>
+			<div class="settingsEntry">
+				<div>Red</div> <input type='text' value='#E15759' class='settinginput' id='cc-red'
+					onchange="changeCubeColor(event, 'red');" placeholder='#E15759'/>
+			</div>
+			<div class="settingsEntry">
+				<div>Pink</div> <input type='text' value='#FF9D9A' class='settinginput' id='cc-pink'
+					onchange="changeCubeColor(event, 'pink');" placeholder='#FF9D9A'/>
+			</div>
+			<div class="settingsEntry">
+				<div>Beige</div> <input type='text' value='#F4F3AA' class='settinginput' id='cc-beige'
+					onchange="changeCubeColor(event, 'beige');" placeholder='#F4F3AA'/>
+			</div>
+			<div class="settingsEntry">
+				<div>Yellow</div> <input type='text' value='#F1CE63' class='settinginput' id='cc-yellow'
+					onchange="changeCubeColor(event, 'yellow');" placeholder='#F1CE63'/>
+			</div>
+			<div class="settingsEntry">
+				<div>Green</div> <input type='text' value='#59A14F' class='settinginput' id='cc-green'
+					onchange="changeCubeColor(event, 'green');" placeholder='#59A14F'/>
+			</div>
+			<div class="settingsEntry">
+				<div>Lightgreen</div> <input type='text' value='#8CD17D' class='settinginput' id='cc-lightgreen'
+					onchange="changeCubeColor(event, 'lightgreen');" placeholder='#8CD17D'/>
+			</div>
+			<div class="settingsEntry">
+				<div>Purple</div> <input type='text' value='#B07AA1' class='settinginput' id='cc-purple'
+					onchange="changeCubeColor(event, 'purple');" placeholder='#B07AA1'/>
+			</div>
+			<div class="settingsEntry">
+				<div>Orange</div> <input type='text' value='#F28E2B' class='settinginput' id='cc-orange'
+					onchange="changeCubeColor(event, 'orange');" placeholder='#F28E2B'/>
+			</div>
+			
+		</div>
+		<div class="dialogBackground" onclick="closeDialog('settings')"></div>
+	</dialog>
+
+	<dialog id="hotkeysDialog" onclick="dialogClick(event, this)" autofocus=''>
+		<div class="dialogDiv colFlex borderedContainer">
+			<span onclick="closeDialog('hotkeysDialog')" class="material-symbols-outlined abutton closeButton">Close</span>
+			<div class="borderedContainer pad rowFlex hotkeyRow" style="flex-wrap: wrap; gap: 2em">
+				<span class="hotKeyText">Delete last time</span><span class="hotkeyValue"><kbd class="hotkey">Delete</kbd></span>
+			</div>
+			<div class="borderedContainer pad rowFlex hotkeyRow" style="flex-wrap: wrap; gap: 2em">
+				<span class="hotKeyText">Clear session</span><span class="hotkeyValue"><kbd class="hotkey">Shift</kbd><span>+</span><kbd class="hotkey">Delete</kbd></span>
+			</div>
+			<div class="borderedContainer pad rowFlex hotkeyRow" style="flex-wrap: wrap; gap: 2em">
+				<span class="hotKeyText">Remove last case from selection</span><span class="hotkeyValue"><kbd class="hotkey">R</kbd></span>
+			</div>
+			<div class="borderedContainer pad rowFlex hotkeyRow" style="flex-wrap: wrap; gap: 2em">
+				<span class="hotKeyText">Switch training mode</span><span class="hotkeyValue"><kbd class="hotkey">X</kbd></span>
+			</div>
+			<div class="borderedContainer pad rowFlex hotkeyRow" style="flex-wrap: wrap; gap: 2em">
+				<span class="hotKeyText">Bookmark case</span><span class="hotkeyValue"><kbd class="hotkey">B</kbd></span>
+			</div>
+			<div class="borderedContainer pad rowFlex hotkeyRow" style="flex-wrap: wrap; gap: 2em">
+				<span class="hotKeyText">Show hint for current case</span><span class="hotkeyValue"><kbd class="hotkey">H</kbd></span>
+			</div>
+			<div class="borderedContainer pad rowFlex hotkeyRow" style="flex-wrap: wrap; gap: 2em">
+				<span class="hotKeyText">Show hint for last case</span><span class="hotkeyValue"><kbd class="hotkey">Shift</kbd><span>+</span><kbd class="hotkey">H</kbd></span>
+			</div>
+		</div>
+		<div class="dialogBackground" onclick="closeDialog('hotkeysDialog')"></div>
+	</dialog>
+
+	<dialog id="aboutDialog" onclick="dialogClick(event, this)" autofocus=''>
+		<div class="dialogDiv colFlex borderedContainer">
+			<span onclick="closeDialog('aboutDialog')" class="material-symbols-outlined abutton closeButton">Close</span>
+			<div class="borderedContainer pad rowFlex" style="flex-wrap: wrap; gap: 2em">
+				<div class="colFlex">
+					<span>Alg-sheets</span>
+					<a href="https://docs.google.com/spreadsheets/d/1j-SGlgZk20D3d2TyeiXhMWzeyTBuuix3Owgj9Q8rNbo/edit#gid=1373252438">Skewb Resources</a>
+					<a href="https://docs.google.com/spreadsheets/d/175ZOo4a9MwglJCnoJ3bWkPOhLhG__kPX4uVSkJMHwio/edit#gid=0">Skewb Algs</a>
+					<a href="https://docs.google.com/spreadsheets/d/12FH8MswpdBJxLJ_Eu_gopoxTCySPk9H_o7_yjN8_ECw/edit#gid=566431744">The Pyraminx Sheet</a>
+					<a href="https://docs.google.com/spreadsheets/d/1lVODoMORbDdVXwTG4RUZPWCSrx8uPx2bvwvXg5tuQYE/edit#gid=165427832">James' Megaminx Algs</a>
+					<a href="https://docs.google.com/spreadsheets/d/17Ym3zUyYXX9NzFcPw5iCs-3fXAjfqCezK-Dsofv8A2Y/edit#gid=288801998">Ore's Mega Dot OLLs</a>
+					<a href="https://docs.google.com/spreadsheets/d/1OFXakCV85Mp2zsQBXMxiMX9a506JeAcLnUXZr8FgXAY/edit#gid=1684065307">Best 2x2 Algs</a>
+					<a href="https://crazymonkeyonspeed.github.io/">Frederik's FH Algs</a>
+					<a href="https://www.youtube.com/@BrinaSun">Brian Sun 3x3 Algs</a>
+					<a href="https://speedcubedb.com/">SpeedCubeDB</a>
+					<a href="https://docs.google.com/document/d/1nkgNFdAu9v6p871urGrdkKD-QGmftYhjqZjD75z4Wqo/edit#heading=h.zf1ib2cgt533">Octaminx TCP</a>
+					<a href="https://docs.google.com/spreadsheets/d/1uc5V3G-kRH3qV5b6Lq1yzTjnqSMS3D3dZcsCIOiJqcI/edit?gid=1409661599#gid=1409661599">2H CMLL</a>
+					<a href="https://docs.google.com/spreadsheets/d/1WHnksK4yyv63sv3Es-PuKfnFRtZGafqp6rEuEfOx-cg/edit?gid=1409661599#gid=1409661599">OH CMLL</a>
+					<a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vSKmPOKUtF0g1FUn7wEFtyZJFYegBXuYxlA4ZcUDYmoqC4xBQOXnsaKgAydGoohlI-c97HeRpMyec7d/pubhtml?gid=0&single=true">OH PLL</a>
+					<a href="https://docs.google.com/spreadsheets/d/1-uwmZHf4vwJxFgeB3-TiF8MQ0RFSS30d5CUK96PoIwk/edit?gid=0#gid=0">Juju ZBLL</a>
+					<a href="https://docs.google.com/presentation/d/1cD9AdZ1GYT2Jxznlbtn1yNXOnAATZRgEW1I2qcyorok/edit?slide=id.p#slide=id.p">Anthony and Jonas OH OLL</a>
+					<a href="https://docs.google.com/spreadsheets/d/1s8Q2VM2c1eV3oLIxFfM4exvABO0AcCeMCUdMiYKnzC0/edit?gid=0#gid=0">ZBLS Tao Yu</a>
+					<a href="https://docs.google.com/spreadsheets/d/1VQNYNwdOLqqBkacHcfYtEBst22FOVhH9EAhTOYOZTgo/edit?gid=467747530#gid=467747530">Daniel's PBL Document</a>
+					<a href="https://docs.google.com/spreadsheets/d/1txRjB-fAWWSM-1e1w-eJbDp9xhu0ZDwLWQdswNZhcew/edit?gid=804375502#gid=804375502">Elliot Full Floating</a>
+				</div>
+				<div class="colFlex">
+					<span>Other</span>
+					<a href="https://reinierschippers.nl/oll_trainer-master/">Reinier's OLL Trainer</a>
+					<a href="https://bestsiteever.ru/oll/">Roman's OLL Trainer</a>
+					<a href="https://trangium.github.io/BatchSolver/">Batch Solver</a>
+					<a href="https://github.com/mihlefeld/Alg-Trainers">Github</a>
+				</div>
+			</div>
+		</div>
+		<div class="dialogBackground" onclick="closeDialog('aboutDialog')"></div>
+	</dialog>
+</body>
+</body>

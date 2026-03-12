@@ -1,0 +1,104 @@
+div.itemSel {
+    background-color: var(--accent);
+    cursor: pointer;
+    touch-action: manipulation;
+    border-color: var(--accent);
+    color: var(--accentText);
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    align-items: center;
+    -webkit-user-select: none; /* Safari */        
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* IE10+/Edge */
+    user-select: none; /* Standard */
+}
+
+div.itemSel > {
+    font-size: small;
+    font-weight: bold;
+}
+
+div.itemUnSel > {
+    font-size: small;
+    font-weight: bold;
+}
+
+div.itemUnsel {
+    background-color: transparent;
+    cursor: pointer;
+    touch-action: manipulation;
+    background-color: var(--secondary);
+    border-color: var(--secondary);
+    color: var(--secondaryText);
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    align-items: center;
+    -webkit-user-select: none; /* Safari */        
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* IE10+/Edge */
+    user-select: none; /* Standard */
+}
+
+div#cases_selection {
+    width: fit-content;
+    padding-bottom: 5em;
+    font-variant-numeric: tabular-nums;
+}
+
+img.caseImage {
+    width: 5em;
+}
+
+span.caseSpan {
+    width: 5em;
+    text-align: center;
+}
+
+.version {
+    opacity: 0.8;
+    font-size: 0.5em;
+}
+
+div#modeButtons {
+    position: fixed;
+    bottom: 0.5em;
+    gap: 0.3em;
+    /* font-size: 1.3em; */
+    transition: all 0.3s;
+}
+
+div#presetsSettings span {
+    height: 100%;
+    font-size: 1em;
+    padding-left: 0.1em;
+    padding-right: 0.1em;
+    padding-top: 0em;
+    padding-bottom: 0em;
+    margin: 0;
+    border-width: var(--borderWidth);
+    box-sizing: border-box;
+    line-height: normal;
+}
+
+div#presetsSettings input[type=text] {
+    cursor: pointer;
+    border-color: var(--background);
+    border-radius: var(--borderRadius);
+    width: 12em;
+    height: fit-content;
+    margin: 0;
+    padding: 0;
+    font-size: 1em;
+    text-align: left;
+    background-color: var(--backgroundDarker);
+    color: var(--text);
+}
+
+div#presetsSettings input[type=text]:focus {
+    border-style: solid;
+    border-color: var(--secondary);
+    border-width: var(--borderWidth);
+    outline: none;
+}
