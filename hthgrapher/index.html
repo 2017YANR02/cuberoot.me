@@ -280,9 +280,14 @@
 						time += centis*1;
 					}
 				}else{
-					var sec = strToNumber(s,-1);
-					time += sec*100;
+				// NOTE: 无小数点 — 无冒号时当 centiseconds，有冒号时当整秒
+				var sec = strToNumber(s,-1);
+				if(CPL == 1){
+					time += sec; // 纯数字 → centiseconds（536 → 5.36 秒）
+				}else{
+					time += sec*100; // 有冒号 → 整秒（1:23 中的 23 秒）
 				}
+			}
 				if(time > MAX_TIME_VALUE){
 					time = MAX_TIME_VALUE;
 				}
