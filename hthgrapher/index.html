@@ -1030,6 +1030,23 @@
 					}else{
 						closeTextBox(true);
 					}
+				}else if(e.keyCode == 9){ // TAB — 交替跳转两个选手
+					if(textBoxState == 1 && highlight[0] >= 0){
+						e.preventDefault();
+						var p = highlight[0];
+						var t = highlight[1];
+						closeTextBox(true);
+						// NOTE: p0→p1 同一把；p1→p0 下一把
+						if(p == 0){
+							highlight = [1, t];
+						}else if(t < 4){
+							highlight = [0, t + 1];
+						}else{
+							// p1 最后一把，结束
+							return;
+						}
+						openTextBox(1);
+					}
 				}else if(e.keyCode == 27){ // ESCAPE
 					if(textBoxState >= 1){
 						closeTextBox(false);
