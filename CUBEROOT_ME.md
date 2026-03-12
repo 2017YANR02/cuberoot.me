@@ -128,7 +128,7 @@ rsync -rltz --delete --exclude='.user.ini' --chmod=D755,F644 ...
 | **数据库** | MariaDB 10.5.27 |
 | **数据库名** | `recon_db` |
 | **用户** | `recon_user`（仅限 localhost 连接，外网不可直连） |
-| **凭据文件** | `/www/wwwroot/toolkit/recon/api/db_config.php`（不在 git 中） |
+| **凭据文件** | 服务端：`/www/wwwroot/toolkit/recon/api/db_config.php`；本地：`.secrets.md`（均不在 git 中） |
 | **表** | `recons`（复盘数据）、`edits`（编辑覆盖）、`edit_history`（编辑历史） |
 
 ### 备份策略
