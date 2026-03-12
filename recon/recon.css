@@ -535,13 +535,21 @@ tr.detail-row td {
     background: rgba(255, 0, 0, 1);
 }
 
-/* NOTE: Bilibili 播放按钮——品牌粉色 */
+/* NOTE: Bilibili 播放按钮——使用品牌 logo 图片 */
 .detail-video-play-bili {
-    background: rgba(251, 114, 153, 0.85);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 68px;
+    height: 68px;
+    opacity: 0.85;
+    transition: opacity 0.2s;
+    pointer-events: none;
 }
 
 .detail-video-facade:hover .detail-video-play-bili {
-    background: rgba(251, 114, 153, 1);
+    opacity: 1;
 }
 
 /* --- 统计网格 --- */
