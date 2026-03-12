@@ -193,6 +193,11 @@
 				v.style.width = b["w"]+"px";
 				v.style.height = b["h"]+"px";
   			    v.focus();
+			// NOTE: blur 时也关闭文本框并保存，确保 URL 同步
+			v.addEventListener('blur', function onBlur() {
+				v.removeEventListener('blur', onBlur);
+				if (textBoxState >= 1) closeTextBox(true);
+			});
 
 				c.onmousedown = null;
 				c.onmouseup = null;
