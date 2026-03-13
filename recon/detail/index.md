@@ -56,4 +56,7 @@ layout: default
 <script src="/recon/recon_utils.js"></script>
 <script src="/recon/recon_alg_utils.js"></script>
 <script src="/recon/recon_norm_cross.js"></script>
+<!-- NOTE: Markdown 渲染（评论区）——marked 转 HTML + DOMPurify 防 XSS -->
+<script src="https://cdn.jsdelivr.net/npm/marked@15.0.7/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.4/dist/purify.min.js"></script>
 <script src="/recon/detail/recon_detail.js" defer></script>
