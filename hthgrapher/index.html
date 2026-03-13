@@ -315,6 +315,7 @@
 			v.style.width = b["w"] + "px";
 			v.style.height = b["h"] + "px";
 			v.focus();
+			v.select(); // NOTE: 点击单元格时全选，方便直接覆盖输入
 			// NOTE: blur 时也关闭文本框并保存，确保 URL 同步
 			v.addEventListener('blur', function onBlur() {
 				v.removeEventListener('blur', onBlur);
@@ -1161,6 +1162,18 @@
 			}
 			document.getElementById('numpad-label').textContent = label;
 		}
+		// NOTE: .: 按钮 — 末尾是 . 则替换为 :，否则追加 .
+		function dotColonPress() {
+			var v = document.getElementById('value');
+			if (!v || textBoxState != 1) return;
+			if (v.value.length > 0 && v.value[v.value.length - 1] == '.') {
+				v.value = v.value.slice(0, -1) + ':';
+			} else {
+				v.value += '.';
+			}
+			syncNumpadDisplay();
+			v.focus();
+		}
 		function numpadPress(key) {
 			var v = document.getElementById('value');
 			if (!v || textBoxState != 1) return;
@@ -1384,21 +1397,20 @@
 			<div id="numpad">
 				<div id="numpad-display"><span id="numpad-label"></span><span id="numpad-value"></span></div>
 				<div id="numpad-grid">
-					<button class="np-btn np-digit" onclick="numpadPress('7')">7</button>
-					<button class="np-btn np-digit" onclick="numpadPress('8')">8</button>
-					<button class="np-btn np-digit" onclick="numpadPress('9')">9</button>
-					<button class="np-btn np-op" onclick="numpadPress('backspace')">DEL</button>
+					<button class="np-btn np-digit" onclick="numpadPress('1')">1</button>
+					<button class="np-btn np-digit" onclick="numpadPress('2')">2</button>
+					<button class="np-btn np-digit" onclick="numpadPress('3')">3</button>
+					<button class="np-btn np-op" onclick="numpadPress('backspace')"><svg viewBox="0 0 33 22" width="33" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 1h19a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H11L1 11z"/><line x1="17" y1="7" x2="25" y2="15"/><line x1="25" y1="7" x2="17" y2="15"/></svg></button>
 					<button class="np-btn np-digit" onclick="numpadPress('4')">4</button>
 					<button class="np-btn np-digit" onclick="numpadPress('5')">5</button>
 					<button class="np-btn np-digit" onclick="numpadPress('6')">6</button>
 					<button class="np-btn np-op" onclick="numpadPress('dnf')">DNF</button>
-					<button class="np-btn np-digit" onclick="numpadPress('1')">1</button>
-					<button class="np-btn np-digit" onclick="numpadPress('2')">2</button>
-					<button class="np-btn np-digit" onclick="numpadPress('3')">3</button>
-					<button class="np-btn np-digit" onclick="numpadPress(':')">:</button>
-					<button class="np-btn np-digit" onclick="numpadPress('0')">0</button>
-					<button class="np-btn np-digit" onclick="numpadPress('.')">.</button>
+					<button class="np-btn np-digit" onclick="numpadPress('7')">7</button>
+					<button class="np-btn np-digit" onclick="numpadPress('8')">8</button>
+					<button class="np-btn np-digit" onclick="numpadPress('9')">9</button>
 					<button class="np-btn np-action" onclick="numpadPress('enter')">OK</button>
+					<button class="np-btn np-digit" onclick="dotColonPress()">·:</button>
+					<button class="np-btn np-digit" onclick="numpadPress('0')">0</button>
 					<button class="np-btn np-action-alt" onclick="numpadPress('tab')">TAB</button>
 				</div>
 			</div>
