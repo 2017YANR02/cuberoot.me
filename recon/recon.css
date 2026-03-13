@@ -317,6 +317,30 @@ h1 .fi {
     vertical-align: middle;
 }
 
+/* NOTE: 自定义即时 tooltip（替代浏览器原生 title 的 500ms 延迟） */
+td[data-tip] {
+    position: relative;
+}
+td[data-tip-show]:hover {
+    overflow: visible;
+}
+td[data-tip-show]:hover::after {
+    content: attr(data-tip);
+    position: absolute;
+    left: 0;
+    bottom: 100%;
+    z-index: 100;
+    padding: 4px 8px;
+    background: #1e1e2e;
+    color: #e2e8f0;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+    font-size: 0.78rem;
+    white-space: nowrap;
+    pointer-events: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
 /* NOTE: 展开箭头 */
 .expand-icon {
     font-size: 0.7rem;

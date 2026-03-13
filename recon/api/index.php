@@ -91,18 +91,6 @@ if (!file_exists($migrationFlagComments)) {
         @error_log('Migration comments table failed: ' . $e->getMessage());
     }
 }
-// ==================== 一次性迁移：DNF 值统一 ====================
-// 原数据有多种格式：(DNF(3.62))、DNF(10.18)、(DNF)、DNF (5.45) 等，全部统一为 "DNF"
-$migrationFlagDnf = __DIR__ . '/data/.migration_dnf_value';
-if (!file_exists($migrationFlagDnf)) {
-    try {
-        $affected = getDb()->exec("UPDATE recons SET value = 'DNF' WHERE value LIKE '%DNF%' AND value != 'DNF'");
-        @file_put_contents($migrationFlagDnf, date('Y-m-d H:i:s') . " affected: $affected");
-    }
-    catch (Exception $e) {
-        @error_log('Migration DNF value failed: ' . $e->getMessage());
-    }
-}
 
 // ==================== 速率限制（仍用文件，简单有效） ====================
 
