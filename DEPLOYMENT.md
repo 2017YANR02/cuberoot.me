@@ -71,7 +71,7 @@ ruiminyan.github.io/
 ├── algTrainer/                 # JSON 公式训练器
 ├── jsonEditor/                 # JSON 编辑器
 ├── documentation/              # 文档页面
-├── hthgrapher/                 # HTH 成绩计算器（carykh/hthgrapher 上游同步）
+├── hthgrapher/                 # HTH 成绩计算器
 ├── alg_trainers/               # 公式训练器（mihlefeld/Alg-Trainers 上游同步，sync_alg_trainers.ps1 管理）
 │   ├── src/                    # 🔄 训练器运行时 JS（main.js、timer.js、settings.js 等）
 │   ├── style/                  # 🔄 训练器样式
@@ -108,6 +108,7 @@ ruiminyan.github.io/
 │   ├── en.json                # 英文字典（solver/trainer 页面所有 key）
 │   └── zh.json                # 中文字典（solver/trainer 页面所有 key）
 ├── .sync/                     # 同步脚本的配置和模板（修改这里来定制同步行为）
+│   ├── sync_utils.ps1         # 公共工具函数（MD5 文件同步、目录覆盖、GA 代码生成、UTF-8 读写）
 │   ├── page_config.json       # 页面映射表：上游 HTML → 本地子目录，含 i18n title key 和需同步的根文件/目录列表
 │   └── menu_template.html     # 汉堡菜单模板：同步时替换上游菜单，加入 data-i18n 属性和本站专属链接
 ├── _layouts/                  # Jekyll 布局（Stats 深色主题框架，全局加载 stats_ui.js / i18n.js / event_selector.js）
