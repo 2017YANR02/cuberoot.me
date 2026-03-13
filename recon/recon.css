@@ -1612,7 +1612,7 @@ tr.detail-row td {
 .siblings-list {
     display: flex;
     gap: 6px;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
 }
 
 .sibling-item {
