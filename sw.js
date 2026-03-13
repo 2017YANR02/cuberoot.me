@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pwa-cache_v65';
+const CACHE_NAME = 'pwa-cache_v66';
 
 const urlsToPrecache = [
 	'index.html',
@@ -6,15 +6,11 @@ const urlsToPrecache = [
 	'icons/icon-512x512.png',
 	'icons/icon-192x192.png',
 	'sw-register.js',
-	'url_params_compressor_simple.js',
-	'assets/css/card.css',
-	'assets/js/particles.js',
-	'assets/js/particles_stats.js'
+	'url_params_compressor_simple.js'
 ];
 
 const urlsToCache = [
 	'index.html',
-	'solver/index.html',
 	'2x2x2/index.html',
 	'cross_trainer/index.html',
 	'documentation/index.html',
@@ -99,7 +95,19 @@ const urlsToCache = [
 	'src/xxcrossTrainer/production/worker_prod.js',
 	'src/xcross_free_pair_trainer/production/solver_prod.js',
 	'src/xcross_free_pair_trainer/production/solver_prod.js',
-	'src/xcross_free_pair_trainer/production/worker_prod.js'
+	'src/xcross_free_pair_trainer/production/worker_prod.js',
+	'src/F2LEOAnalyzer/analyzer.js',
+	'src/F2LEOAnalyzer/analyzer.wasm',
+	'src/F2LEOAnalyzer/worker_analyzer.js',
+	'src/F2LEOSolver/solver.js',
+	'src/F2LEOSolver/solver.wasm',
+	'src/F2LEOSolver/worker.js',
+	'src/pseudoF2LEOAnalyzer/pseudo_analyzer.js',
+	'src/pseudoF2LEOAnalyzer/pseudo_analyzer.wasm',
+	'src/pseudoF2LEOAnalyzer/worker_panalyzer.js',
+	'src/pseudoF2LEOSolver/pseudo.js',
+	'src/pseudoF2LEOSolver/pseudo.wasm',
+	'src/pseudoF2LEOSolver/worker3.js',
 ];
 
 let precacheDone = false;

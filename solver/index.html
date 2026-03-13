@@ -668,21 +668,21 @@
                 <button id="drawer-close-btn" class="drawer-close-btn" aria-label="Close menu">&times;</button>
             </div>
             <div class="drawer-content">
-<a href="https://github.com/or18/RubiksSolverDemo" rel="noopener noreferrer" translate="no">Source</a>
+<a href="https://github.com/or18/RubiksSolverDemo" rel="noopener noreferrer">Source</a>
 <a href="/solver/">Main Solver</a>
-<a href="/2x2x2/" rel="noopener noreferrer" translate="no">2x2x2 Solver</a>
-<a href="/documentation/" translate="no">Documentation</a>
+<a href="/2x2x2/">2x2x2 Solver</a>
+<a href="/documentation/">Documentation</a>
 <span style="font-weight:bold;margin-top:12px;display:block;color:#fff;" data-i18n="common.trainers">Trainers:</span>
-<a href="/cross_trainer/" rel="noopener noreferrer" translate="no">Cross</a>
-<a href="/xcross_trainer/" rel="noopener noreferrer" translate="no">XCross</a>
-<a href="/xxcross_trainer/" rel="noopener noreferrer" translate="no">XXCross</a>
-<a href="/pairing_trainer/" rel="noopener noreferrer" translate="no">Free Pair</a>
-<a href="/xcross_pairing_trainer/" rel="noopener noreferrer" translate="no">XCross Free Pair</a>
-<a href="/pseudo_xcross_trainer/" rel="noopener noreferrer" translate="no">Pseudo XCross</a>
-<a href="/pseudo_pairing_trainer/" rel="noopener noreferrer" translate="no">Pseudo Free Pair</a>
-<a href="/eocross_trainer/" rel="noopener noreferrer" translate="no">EOCross</a>
-<a href="/algTrainer/" rel="noopener noreferrer" translate="no">Alg Trainer</a>
-<a href="/jsonEditor/" rel="noopener noreferrer" translate="no">JSON Editor</a>
+<a href="/cross_trainer/" translate="no">Cross</a>
+<a href="/xcross_trainer/" translate="no">XCross</a>
+<a href="/xxcross_trainer/" translate="no">XXCross</a>
+<a href="/pairing_trainer/">Free Pair</a>
+<a href="/xcross_pairing_trainer/">XCross Free Pair</a>
+<a href="/pseudo_xcross_trainer/">Pseudo XCross</a>
+<a href="/pseudo_pairing_trainer/">Pseudo Free Pair</a>
+<a href="/eocross_trainer/" translate="no">EOCross</a>
+<a href="/algTrainer/">Alg Trainer</a>
+<a href="/jsonEditor/">JSON Editor</a>
 <span style="font-weight:bold;margin-top:12px;display:block;color:#fff;" data-i18n="common.external_tools">External
     tools:</span>
 <a href="https://trangium.github.io/MovecountCoefficient/" target="_blank" rel="noopener noreferrer" translate="no">MCC
@@ -874,6 +874,8 @@
         <option translate="no" value="PF2L">Pseudo F2L Lite</option>
         <option translate="no" value="PF2L_pair">Pseudo Pairing</option>
         <option translate="no" value="EOCross">EOCross</option>
+        <option translate="no" value="F2LEO">F2LEO</option>
+        <option translate="no" value="PF2LEO">Pseudo F2LEO</option>
         <option translate="no" value="LS">LL Substeps Lite</option>
         <option translate="no" value="LL">LL Lite</option>
         <option translate="no" value="LU">LL AUF Lite</option>
@@ -965,6 +967,39 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
         <div id="eo_table"></div>
     </details>
 
+    <details id="f2leo_analyze">
+        <summary id="summary_f2leo_analyzer">Show Analyzer</summary><br>
+        <label for="f2leo_analyzer_rotation_option">Face Option: </label>
+        <fieldset id="f2leo_analyzer_rotation_option">
+            <input type="checkbox" id="checkboxD_f2leo_analyzer" class="custom-checkbox f2leo_analyzer" value="D" checked>
+            <label translate="no" for="checkboxD_f2leo_analyzer">D</label>
+            <input type="checkbox" id="checkboxU_f2leo_analyzer" class="custom-checkbox f2leo_analyzer" value="U">
+            <label translate="no" for="checkboxU_f2leo_analyzer">U</label>
+            <input type="checkbox" id="checkboxL_f2leo_analyzer" class="custom-checkbox f2leo_analyzer" value="L">
+            <label translate="no" for="checkboxL_f2leo_analyzer">L</label>
+            <input type="checkbox" id="checkboxR_f2leo_analyzer" class="custom-checkbox f2leo_analyzer" value="R">
+            <label translate="no" for="checkboxR_f2leo_analyzer">R</label>
+            <input type="checkbox" id="checkboxF_f2leo_analyzer" class="custom-checkbox f2leo_analyzer" value="F">
+            <label translate="no" for="checkboxF_f2leo_analyzer">F</label>
+            <input type="checkbox" id="checkboxB_f2leo_analyzer" class="custom-checkbox f2leo_analyzer" value="B">
+            <label translate="no" for="checkboxB_f2leo_analyzer">B</label>
+        </fieldset>
+        <label for="f2leo_analyzer_option">Solver Option: </label>
+        <select translate="no" id="f2leo_analyzer_option">
+            <option translate="no" value="cross">cross</option>
+            <option translate="no" value="xcross">xcross</option>
+            <option translate="no" value="xxcross">xxcross</option>
+            <option translate="no" value="xxxcross">xxxcross</option>
+            <option translate="no" value="2x">cross, x</option>
+            <option translate="no" value="3x">cross, x, xx</option>
+            <option translate="no" value="4x">cross, x, xx, xxx</option>
+        </select><br>
+        <label for="f2leo_analyzer_num">Count: </label>
+        <input type="number" id="f2leo_analyzer_num" value="1" min="1" required><br>
+        <button id="f2leo_analyzer" class="button medium" onclick="f2leo_analyze()">Analyze</button>
+        <div id="f2leo_table"></div>
+    </details>
+
     <details id="panalyze">
         <summary id="summary_panalyzer">Show Analyzer</summary><br>
         <label for="panalyzer_rotation_option">Face Option: </label>
@@ -996,6 +1031,39 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
         <input type="number" id="panalyzer_num" value="1" min="1" required><br>
         <button id="panalyzer" class="button medium" onclick="panalyze()">Analyze</button>
         <div id="ptable"></div>
+    </details>
+
+    <details id="f2leo_panalyze">
+        <summary id="summary_f2leo_panalyzer">Show Analyzer</summary><br>
+        <label for="f2leo_panalyzer_rotation_option">Face Option: </label>
+        <fieldset id="f2leo_panalyzer_rotation_option">
+            <input type="checkbox" id="checkboxD_f2leo_panalyzer" class="custom-checkbox f2leo_panalyzer" value="D" checked>
+            <label translate="no" for="checkboxD_f2leo_panalyzer">D</label>
+            <input type="checkbox" id="checkboxU_f2leo_panalyzer" class="custom-checkbox f2leo_panalyzer" value="U">
+            <label translate="no" for="checkboxU_f2leo_panalyzer">U</label>
+            <input type="checkbox" id="checkboxL_f2leo_panalyzer" class="custom-checkbox f2leo_panalyzer" value="L">
+            <label translate="no" for="checkboxL_f2leo_panalyzer">L</label>
+            <input type="checkbox" id="checkboxR_f2leo_panalyzer" class="custom-checkbox f2leo_panalyzer" value="R">
+            <label translate="no" for="checkboxR_f2leo_panalyzer">R</label>
+            <input type="checkbox" id="checkboxF_f2leo_panalyzer" class="custom-checkbox f2leo_panalyzer" value="F">
+            <label translate="no" for="checkboxF_f2leo_panalyzer">F</label>
+            <input type="checkbox" id="checkboxB_f2leo_panalyzer" class="custom-checkbox f2leo_panalyzer" value="B">
+            <label translate="no" for="checkboxB_f2leo_panalyzer">B</label>
+        </fieldset>
+        <label for="f2leo_panalyzer_option">Solver Option: </label>
+        <select translate="no" id="f2leo_panalyzer_option">
+            <option translate="no" value="cross">cross</option>
+            <option translate="no" value="xcross">xcross</option>
+            <option translate="no" value="xxcross">xxcross</option>
+            <option translate="no" value="xxxcross">xxxcross</option>
+            <option translate="no" value="2x">cross, x</option>
+            <option translate="no" value="3x">cross, x, xx</option>
+            <option translate="no" value="4x">cross, x, xx, xxx</option>
+        </select><br>
+        <label for="f2leo_panalyzer_num">Count: </label>
+        <input type="number" id="f2leo_panalyzer_num" value="1" min="1" required><br>
+        <button id="f2leo_panalyzer" class="button medium" onclick="f2leo_panalyze()">Analyze</button>
+        <div id="f2leo_ptable"></div>
     </details>
 
     <details id="pair_analyze">
@@ -1145,6 +1213,34 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
         </div>
     </div>
 
+    <div id="option_for_PF2LEO" class="hidden">
+        <div id="option_for_PF2LEOE">
+            <label for="f2leo_pslot_edge">Pseudo Slot Edge: </label>
+            <select translate="no" id="f2leo_pslot_edge" onchange="updateDropdown5(); updateUrlParams();">
+                <option translate="no" value="">None</option>
+                <option translate="no" value="BL">BL</option>
+                <option translate="no" value="BR">BR</option>
+                <option translate="no" value="FR">FR</option>
+                <option translate="no" value="FL">FL</option>
+                <option translate="no" value="BL BR">BL BR</option>
+                <option translate="no" value="BL FR">BL FR</option>
+                <option translate="no" value="BL FL">BL FL</option>
+                <option translate="no" value="BR FR">BR FR</option>
+                <option translate="no" value="BR FL">BR FL</option>
+                <option translate="no" value="FR FL">FR FL</option>
+                <option translate="no" value="BL BR FR">BL BR FR</option>
+                <option translate="no" value="BL BR FL">BL BR FL</option>
+                <option translate="no" value="BL FR FL">BL FR FL</option>
+                <option translate="no" value="BR FR FL">BR FR FL</option>
+            </select>
+        </div>
+        <div id="option_for_PF2LEOC" class="hidden">
+            <label for="f2leo_pslot_corner">Pseudo Slot Corner: </label>
+            <select translate="no" id="f2leo_pslot_corner" onchange="updateUrlParams()">
+            </select>
+        </div>
+    </div>
+
     <div id="option_for_F2L2" class="hidden">
         <label for="slot2">Slot: </label>
         <select translate="no" id="slot2" onchange="updateDropdown2(); updateUrlParams()">
@@ -1240,6 +1336,27 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             <option translate="no" value="BL FR FL">BL FR FL</option>
             <option translate="no" value="BR FR FL">BR FR FL</option>
             <option translate="no" value="BL BR FR FL">BL BR FR FL</option>
+        </select>
+    </div>
+
+    <div id="option_for_f2leo" class="hidden">
+        <label for="slot_f2leo">Slot: </label>
+        <select translate="no" id="slot_f2leo" onchange="updateUrlParams()">
+            <option translate="no" value="">None</option>
+            <option translate="no" value="BL">BL</option>
+            <option translate="no" value="BR">BR</option>
+            <option translate="no" value="FR">FR</option>
+            <option translate="no" value="FL">FL</option>
+            <option translate="no" value="BL BR">BL BR</option>
+            <option translate="no" value="BL FR">BL FR</option>
+            <option translate="no" value="BL FL">BL FL</option>
+            <option translate="no" value="BR FR">BR FR</option>
+            <option translate="no" value="BR FL">BR FL</option>
+            <option translate="no" value="FR FL">FR FL</option>
+            <option translate="no" value="BL BR FR">BL BR FR</option>
+            <option translate="no" value="BL BR FL">BL BR FL</option>
+            <option translate="no" value="BL FR FL">BL FR FL</option>
+            <option translate="no" value="BR FR FL">BR FR FL</option>
         </select>
     </div>
 
@@ -1848,22 +1965,30 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
         let worker4;
         let worker5;
         let worker6;
+        let worker7;
+        let worker8;
         let messageCount = 0;
         let messageCount_analyzer = 0;
         let messageCount_panalyzer = 0;
         let messageCount_pair_analyzer = 0;
         let messageCount_pair_panalyze = 0;
         let messageCount_eo_analyzer = 0;
+        let messageCount_f2leo_analyzer = 0;
+        let messageCount_f2leo_panalyzer = 0;
         let option_table;
         let option_ptable;
         let option_pair_table;
         let option_pair_ptable;
         let option_eo_table;
+        let option_f2leo_table;
+        let option_f2leo_ptable;
         let list_table;
         let list_ptable;
         let list_pair_table;
         let list_pair_ptable;
         let list_eo_table;
+        let list_f2leo_table;
+        let list_f2leo_ptable;
         let sol_input = false;
         let AutoMaskSetting = true;
         let mask = {
@@ -2060,6 +2185,27 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                     setStickeringOptionsAutoF2LCorners(slot, '-');
                     setMaskTmp();
                     break;
+                case "F2LEO":
+                    resetStickeringOptions('I');
+                    setStickeringOptionsAutoF2LEdges('BL BR FR FL', '?');
+                    document.getElementById("maskOptionCenter").value = '-';
+                    document.getElementById("maskOptionDE").value = '-';
+                    slot = document.getElementById("slot_f2leo").value;
+                    setStickeringOptionsAutoF2LEdges(slot, '-');
+                    setStickeringOptionsAutoF2LCorners(slot, '-');
+                    setMaskTmp();
+                    break;
+                case "PF2LEO":
+                    resetStickeringOptions('I');
+                    setStickeringOptionsAutoF2LEdges('BL BR FR FL', '?');
+                    document.getElementById("maskOptionCenter").value = '-';
+                    document.getElementById('maskOptionDE').value = '-';
+                    pslote = document.getElementById("f2leo_pslot_edge").value;
+                    pslotc = document.getElementById("f2leo_pslot_corner").value;
+                    setStickeringOptionsAutoF2LEdges(pslote, '-');
+                    setStickeringOptionsAutoF2LCorners(pslotc, '-');
+                    setMaskTmp();
+                    break;
                 case "LS":
                 case "LS2":
                     ll = document.getElementById("ll").value;
@@ -2243,9 +2389,12 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             'slot': 'slot',
             'slot2': 'slot2',
             'slot_eo': 'slot3',
+            'slot_f2leo': 'slot4',
             'pair_slot': 'aslot',
             'pslot_edge': 'pse',
             'pslot_corner': 'psc',
+            'f2leo_pslot_edge': 'psef',
+            'f2leo_pslot_corner': 'pscf',
             'pslot_edge2': 'pse2',
             'pslot_corner2': 'psc2',
             'pair_pslot_edge': 'apse',
@@ -2449,7 +2598,38 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                 'rot_count': '0',
                 'center_restrict': 'EMPTY_EMPTY',
                 'mcv': ''
-            }
+            },
+            'F2LEO': {
+                'solver': 'F2LEO',
+                'scr': '',
+                'rot': '',
+                'slot_f2leo': '',
+                'len': '20',
+                'num': '20',
+                'res': 'UDLRFB',
+                'rest': 'U_U2_U-_D_D2_D-_L_L2_L-_R_R2_R-_F_F2_F-_B_B2_B-',
+                'mav': '',
+                'premove': '',
+                'rot_count': '0',
+                'center_restrict': 'EMPTY_EMPTY',
+                'mcv': ''
+            },
+            'PF2LEO': {
+                'solver': 'PF2LEO',
+                'scr': '',
+                'rot': '',
+                'f2leo_pslot_edge': '',
+                'f2leo_pslot_corner': '',
+                'len': '20',
+                'num': '20',
+                'res': 'UDLRFB',
+                'rest': 'U_U2_U-_D_D2_D-_L_L2_L-_R_R2_R-_F_F2_F-_B_B2_B-',
+                'mav': '',
+                'premove': '',
+                'rot_count': '0',
+                'center_restrict': 'EMPTY_EMPTY',
+                'mcv': ''
+            },
         };
 
         const idList = [
@@ -2459,9 +2639,12 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             'slot',
             'slot2',
             'slot_eo',
+            'slot_f2leo',
             'pair_slot',
             'pslot_edge',
             'pslot_corner',
+            'f2leo_pslot_edge',
+            'f2leo_pslot_corner',
             'pslot_edge2',
             'pslot_corner2',
             'pair_pslot_edge',
@@ -3798,6 +3981,16 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                 }
             } else if (solver === "EOCross") {
                 document.getElementById('slot_eo').value = urlParams.get(idToKeyMap['slot_eo']) ? urlParams.get(idToKeyMap['slot_eo']).replace(/_/g, ' ') : defaultValues[solver]['slot_eo'];
+            } else if (solver === "F2LEO") {
+                document.getElementById('slot_f2leo').value = urlParams.get(idToKeyMap['slot_f2leo']) ? urlParams.get(idToKeyMap['slot_f2leo']).replace(/_/g, ' ') : defaultValues[solver]['slot_f2leo'];
+            } else if (solver === "PF2LEO") {
+                document.getElementById('f2leo_pslot_edge').value = urlParams.get(idToKeyMap['f2leo_pslot_edge']) ? urlParams.get(idToKeyMap['f2leo_pslot_edge']).replace(/_/g, ' ') : defaultValues[solver]['f2leo_pslot_edge'];
+                updateDropdown5();
+                if (urlParams.get(idToKeyMap['f2leo_pslot_corner'])) {
+                    document.getElementById('f2leo_pslot_corner').value = urlParams.get(idToKeyMap['f2leo_pslot_corner']).replace(/_/g, ' ');
+                } else {
+                    document.getElementById('f2leo_pslot_corner').selectedIndex = 0;
+                }
             }
 
             // Sync all tables after parameter updates
@@ -3959,9 +4152,12 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                 const slot = document.getElementById('slot').value;
                 const slot2 = document.getElementById('slot2').value;
                 const slot3 = document.getElementById('slot_eo').value;
+                const slot4 = document.getElementById('slot_f2leo').value;
                 const pair_slot = document.getElementById('pair_slot').value;
                 const pslot_e = document.getElementById('pslot_edge').value;
                 const pslot_c = document.getElementById('pslot_corner').value;
+                const fpslot_e = document.getElementById('f2leo_pslot_edge').value;
+                const fpslot_c = document.getElementById('f2leo_pslot_corner').value;
                 const pslot_e2 = document.getElementById('pslot_edge2').value;
                 const pslot_c2 = document.getElementById('pslot_corner2').value;
                 const pair_pslot_e = document.getElementById('pair_pslot_edge').value;
@@ -4052,6 +4248,14 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                 } else if (solver === "EOCross") {
                     const args = { scr: result_moves, rot: rot, slot: slot3, num: parseInt(num, 10), len: parseInt(len, 10), move_restrict: restrict, post_alg: premove, center_offset: center_offset, max_rot_count: parseInt(max_rot_count, 10), ma2: ma, mcString: mc };
                     worker = new Worker("../src/EOCrossSolver/worker.js");
+                    worker.postMessage(args);
+                } else if (solver === "F2LEO") {
+                    const args = { scr: result_moves, rot: rot, slot: slot4, num: parseInt(num, 10), len: parseInt(len, 10), move_restrict: restrict, post_alg: premove, center_offset: center_offset, max_rot_count: parseInt(max_rot_count, 10), ma2: ma, mcString: mc };
+                    worker = new Worker("../src/F2LEOSolver/worker.js");
+                    worker.postMessage(args);
+                } else if (solver === "PF2LEO") {
+                    const args = { scr: result_moves, rot: rot, slot: fpslot_e, pslot: fpslot_c, num: parseInt(num, 10), len: parseInt(len, 10), move_restrict: restrict, post_alg: premove, center_offset: center_offset, max_rot_count: parseInt(max_rot_count, 10), ma2: ma, mcString: mc };
+                    worker = new Worker('../src/pseudoF2LEOSolver/worker3.js');
                     worker.postMessage(args);
                 }
                 if (worker) {
@@ -4166,12 +4370,11 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
                 details.appendChild(spaceElement2);
                 
                 // Create link with current parameters
-                // Use cached normalized URL if available (to avoid timing issues after history.replaceState)
-                const sourceUrl = cachedNormalizedUrl || window.location.href;
-                const currentUrl = new URL(sourceUrl);
+                // Use current window.location.href to get latest parameters
+                const currentUrl = new URL(window.location.href);
                 
-                // Normalize URL if not using cached version (cached is already normalized)
-                const normalizedHref = cachedNormalizedUrl || window.urlParamsCompressor.normalizeUrl(currentUrl.href);
+                // Normalize URL to get full uncompressed parameters
+                const normalizedHref = window.urlParamsCompressor.normalizeUrl(currentUrl.href);
                 const normalizedUrl = new URL(normalizedHref);
                 
                 const linkParams = new URLSearchParams(normalizedUrl.search);
@@ -4219,8 +4422,11 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             document.getElementById("option_for_LS").classList.add("hidden");
             document.getElementById("analyze").classList.add("hidden");
             document.getElementById("eo_analyze").classList.add("hidden");
+            document.getElementById("f2leo_analyze").classList.add("hidden");
             document.getElementById("panalyze").classList.add("hidden");
             document.getElementById("option_for_PF2L").classList.add("hidden");
+            document.getElementById("f2leo_panalyze").classList.add("hidden");
+            document.getElementById("option_for_PF2LEO").classList.add("hidden");
             document.getElementById("option_for_PF2L2").classList.add("hidden");
             document.getElementById("option_for_pair_F2L").classList.add("hidden");
             document.getElementById("option_for_pair_PF2L").classList.add("hidden");
@@ -4228,6 +4434,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             document.getElementById("pair_panalyze").classList.add("hidden");
             document.getElementById("tp_alert").classList.add("hidden");
             document.getElementById('option_for_eocross').classList.add("hidden");
+            document.getElementById('option_for_f2leo').classList.add("hidden");
             if (selectedValue === "F2L" || selectedValue === "F2L2") {
                 document.getElementById("option_for_F2L").classList.remove("hidden");
                 document.getElementById("analyze").classList.remove("hidden");
@@ -4250,6 +4457,12 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             } else if (selectedValue === "EOCross") {
                 document.getElementById('option_for_eocross').classList.remove("hidden");
                 document.getElementById("eo_analyze").classList.remove("hidden");
+            } else if (selectedValue === "F2LEO") {
+                document.getElementById('option_for_f2leo').classList.remove("hidden");
+                document.getElementById("f2leo_analyze").classList.remove("hidden");
+            } else if (selectedValue === "PF2LEO") {
+                document.getElementById("option_for_PF2LEO").classList.remove("hidden");
+                document.getElementById("f2leo_panalyze").classList.remove("hidden");
             }
         }
 
@@ -4622,6 +4835,7 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
         }
 
         let currentDropdownBOptions = [];
+        let currentDropdownBOptions5 = [];
         let currentDropdownPairSlotOptions = [];
         let currentDropdownCorner2Options = [];
         let currentDropdownPairEdgeOptions = [];
@@ -4770,6 +4984,32 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
 
             if (newOptions.some(option => option.value === previousSelectionB)) {
                 dropdownB.value = previousSelectionB;
+            }
+        }
+
+        function updateDropdown5() {
+            const dropdownA = document.getElementById("f2leo_pslot_edge");
+            const dropdownB = document.getElementById("f2leo_pslot_corner");
+            const optionForPF2LC = document.getElementById("option_for_PF2LEOC");
+            const selectedValue = dropdownA.value;
+            const newOptions = getOptionsForCorner(selectedValue);
+            if (areOptionArraysEqual(currentDropdownBOptions5, newOptions)) return;
+            const currentlySelectedB = dropdownB.value;
+            dropdownB.innerHTML = "";
+            newOptions.forEach(option => {
+                const newOption = document.createElement("option");
+                newOption.value = option.value;
+                newOption.textContent = option.text;
+                dropdownB.appendChild(newOption);
+            });
+            currentDropdownBOptions5 = newOptions;
+            if (newOptions.some(option => option.value === currentlySelectedB)) {
+                dropdownB.value = currentlySelectedB;
+            }
+            if (selectedValue !== "") {
+                optionForPF2LC.classList.remove("hidden");
+            } else {
+                optionForPF2LC.classList.add("hidden");
             }
         }
 
@@ -5469,6 +5709,351 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             await startWorker();
         }
 
+        function f2leo_analyze() {
+            try {
+                if (worker7) {
+                    worker7.terminate();
+                    worker7 = null;
+                    document.getElementById("f2leo_analyzer").textContent = "Analyze";
+                    if (messageCount_f2leo_analyzer > 0) {
+                        option_f2leo_table = {
+                            valueNames: ["No", "slot", "D", "D1", "U", "U1", "L", "L1", "R", "R1", "F", "F1", "B", "B1"]
+                        };
+                        window.loadListJs().then(() => {
+                            try {
+                                list_f2leo_table = new List('f2leo_table', option_f2leo_table);
+                            } catch (e) {
+                                console.error('List init failed (f2leo_table):', e);
+                            }
+                        }).catch(e => console.error('loadListJs failed:', e));
+                    }
+                    return;
+                }
+
+                if (!isFunctionsReady) {
+                    alert("The module is still initializing. Please try again in a moment.");
+                    document.getElementById("f2leo_analyzer").textContent = "Analyze";
+                    return;
+                }
+                if (typeof convert !== "function") {
+                    alert("Error: The required function is not initialized. Please reload the page manually.");
+                    document.getElementById("f2leo_analyzer").textContent = "Analyze";
+                    const error_message = "<br><a>Analyzer terminated due to an error.</a><br>";
+                    document.getElementById('f2leo_table').innerHTML += error_message;
+                    return;
+                }
+                const content = "<a>Hint: Click a cell to start the search with that condition, and click the header to sort.</a><br>";
+                document.getElementById('f2leo_table').innerHTML = content;
+                let scr = document.getElementById("scr").value;
+                const scramble = scr_fix(scr);
+                const option = document.getElementById('f2leo_analyzer_option').value;
+                const checkboxes = document.querySelectorAll('#f2leo_analyzer_rotation_option .f2leo_analyzer');
+                const values = [];
+                checkboxes.forEach(function (checkbox) {
+                    if (checkbox.checked) {
+                        values.push(checkbox.value);
+                    }
+                });
+                const rot_set = values.join('');
+                const sol_num = document.getElementById("f2leo_analyzer_num").value;
+                messageCount_f2leo_analyzer = -2;
+                document.getElementById('f2leo_table').innerHTML += "<a>Solved: </a>";
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.id = 'count_f2leo_analyzer';
+                input.readOnly = true;
+                const input2 = document.createElement('input');
+                input2.type = 'text';
+                input2.id = 'count_f2leo_analyzer_max';
+                input2.readOnly = true;
+                document.getElementById('f2leo_table').appendChild(input);
+                document.getElementById('f2leo_table').innerHTML += "<a>/</a>";
+                document.getElementById('f2leo_table').appendChild(input2);
+                worker7 = new Worker('../src/F2LEOAnalyzer/worker_analyzer.js');
+                document.getElementById("f2leo_analyzer").textContent = "End";
+                worker7.onmessage = function (event) {
+                    if (event.data == "Error") {
+                        if (worker7) {
+                            worker7.terminate();
+                        }
+                        worker7 = null;
+                        document.getElementById("f2leo_analyzer").textContent = "Analyze";
+                        if (messageCount_f2leo_analyzer > 0) {
+                            option_f2leo_table = {
+                                valueNames: ["No", "slot", "D", "D1", "U", "U1", "L", "L1", "R", "R1", "F", "F1", "B", "B1"]
+                            };
+                            window.loadListJs().then(() => {
+                                try {
+                                    list_f2leo_table = new List('f2leo_table', option_f2leo_table);
+                                } catch (e) {
+                                    console.error('List init failed (f2leo_table):', e);
+                                }
+                            }).catch(e => console.error('loadListJs failed:', e));
+                        }
+                        const error_message = "<br><a>Error: Analyzer terminated due to an error.</a><br>";
+                        document.getElementById('f2leo_table').innerHTML += error_message;
+                        return;
+                    } else if (messageCount_f2leo_analyzer === -2) {
+                        messageCount_f2leo_analyzer++;
+                        document.getElementById('f2leo_table').innerHTML += event.data;
+                    } else if (messageCount_f2leo_analyzer === -1) {
+                        messageCount_f2leo_analyzer++;
+                        document.getElementById("count_f2leo_analyzer_max").value = event.data;
+                    } else if (event.data === "Finished.") {
+                        if (worker7) {
+                            worker7.terminate();
+                            worker7 = null;
+                            document.getElementById("f2leo_analyzer").textContent = "Analyze";
+                            option_f2leo_table = {
+                                valueNames: ["No", "slot", "D", "D1", "U", "U1", "L", "L1", "R", "R1", "F", "F1", "B", "B1"]
+                            };
+                            window.loadListJs().then(() => {
+                                try {
+                                    list_f2leo_table = new List('f2leo_table', option_f2leo_table);
+                                } catch (e) {
+                                    console.error('List init failed (f2leo_table):', e);
+                                }
+                            }).catch(e => console.error('loadListJs failed:', e));
+                            return;
+                        }
+                    } else {
+                        messageCount_f2leo_analyzer++;
+                        document.querySelector('#f2leo_analyzer_result tbody').insertAdjacentHTML('beforeend', event.data);
+                        document.getElementById("count_f2leo_analyzer").value = messageCount_f2leo_analyzer;
+                    }
+                };
+                let cross = false;
+                let xcross = false;
+                let xxcross = false;
+                let xxxcross = false;
+                if (option === "cross" || option == "2x" || option === "3x" || option === "4x") {
+                    cross = true;
+                }
+                if (option === "xcross" || option == "2x" || option === "3x" || option === "4x") {
+                    xcross = true;
+                }
+                if (option === "xxcross" || option === "3x" || option === "4x") {
+                    xxcross = true;
+                }
+                if (option === "xxxcross" || option === "4x") {
+                    xxxcross = true;
+                }
+                const args = { scramble: convert(scramble)[0], cross: cross, x: xcross, xx: xxcross, xxx: xxxcross, n: sol_num, rot_set: rot_set };
+                worker7.postMessage(args);
+            } catch (e) {
+                console.log(e.message);
+                if (worker7) {
+                    worker7.terminate();
+                }
+                worker7 = null;
+                document.getElementById("f2leo_analyzer").textContent = "Analyze";
+                if (messageCount_f2leo_analyzer > 0) {
+                    option_f2leo_table = {
+                        valueNames: ["No", "slot", "D", "D1", "U", "U1", "L", "L1", "R", "R1", "F", "F1", "B", "B1"]
+                    };
+                    window.loadListJs().then(() => {
+                        try {
+                            list_f2leo_table = new List('f2leo_table', option_f2leo_table);
+                        } catch (e) {
+                            console.error('List init failed (f2leo_table):', e);
+                        }
+                    }).catch(e => console.error('loadListJs failed:', e));
+                }
+                const error_message = "<br><a>AError: nalyzer terminated due to an error.</a><br>";
+                document.getElementById('f2leo_table').innerHTML += error_message;
+                return;
+            }
+        }
+
+        async function f2leo_solve(slot_option, rotation_option) {
+            document.getElementById("solver").value = "F2LEO";
+            document.getElementById('rot').value = rotation_option;
+            document.getElementById('slot_f2leo').value = slot_option;
+            document.getElementById('num').value = 20;
+            document.getElementById('len').value = 20;
+            document.getElementById('premove').value = '';
+            document.getElementById('rot_count').value = '0';
+            initializeForAnalyzer(defaultValues['F2LEO']);
+            updateUrlParams();
+            if (worker) {
+                await startWorker();
+            }
+            await startWorker();
+        }
+
+        function f2leo_panalyze() {
+            try {
+                if (worker8) {
+                    worker8.terminate();
+                    worker8 = null;
+                    document.getElementById("f2leo_panalyzer").textContent = "Analyze";
+                    if (messageCount_f2leo_panalyzer > 0) {
+                        option_f2leo_ptable = {
+                            valueNames: ["No", "slot", "D", "D1", "U", "U1", "L", "L1", "R", "R1", "F", "F1", "B", "B1"]
+                        };
+                        window.loadListJs().then(() => {
+                            try {
+                                list_f2leo_ptable = new List('f2leo_ptable', option_f2leo_ptable);
+                            } catch (e) {
+                                console.error('List init failed (f2leo_ptable):', e);
+                            }
+                        }).catch(e => console.error('loadListJs failed:', e));
+                    }
+                    return;
+                }
+                if (!isFunctionsReady) {
+                    alert("The module is still initializing. Please try again in a moment.");
+                    document.getElementById("f2leo_panalyzer").textContent = "Analyze";
+                    return;
+                }
+                if (typeof convert !== "function") {
+                    alert("Error: The required function is not initialized. Please reload the page manually.");
+                    document.getElementById("f2leo_panalyzer").textContent = "Analyze";
+                    const error_message = "<br><a>Error: Analyzer terminated due to an error.</a><br>";
+                    document.getElementById('f2leo_ptable').innerHTML += error_message;
+                    return;
+                }
+                const content = "<a>Hint: Click a cell to start the search with that condition, and click the header to sort.</a><br>";
+                document.getElementById('f2leo_ptable').innerHTML = content;
+                let scr = document.getElementById("scr").value;
+                const scramble = scr_fix(scr);
+                const option = document.getElementById('f2leo_panalyzer_option').value;
+                const checkboxes = document.querySelectorAll('#f2leo_panalyzer_rotation_option .f2leo_panalyzer');
+                const values = [];
+                checkboxes.forEach(function (checkbox) {
+                    if (checkbox.checked) {
+                        values.push(checkbox.value);
+                    }
+                });
+                const rot_set = values.join('');
+                const sol_num = document.getElementById("f2leo_panalyzer_num").value;
+                messageCount_f2leo_panalyzer = -2;
+                document.getElementById('f2leo_ptable').innerHTML += "<a>Solved: </a>";
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.id = 'count_f2leo_panalyzer';
+                input.readOnly = true;
+                const input2 = document.createElement('input');
+                input2.type = 'text';
+                input2.id = 'count_f2leo_panalyzer_max';
+                input2.readOnly = true;
+                document.getElementById('f2leo_ptable').appendChild(input);
+                document.getElementById('f2leo_ptable').innerHTML += "<a>/</a>";
+                document.getElementById('f2leo_ptable').appendChild(input2);
+                worker8 = new Worker('../src/pseudoF2LEOAnalyzer/worker_panalyzer.js');
+                document.getElementById("f2leo_panalyzer").textContent = "End";
+                worker8.onmessage = function (event) {
+                    if (event.data == "Error") {
+                        if (worker8) {
+                            worker8.terminate();
+                        }
+                        worker8 = null;
+                        document.getElementById("f2leo_panalyzer").textContent = "Analyze";
+                        if (messageCount_f2leo_panalyzer > 0) {
+                            option_f2leo_ptable = {
+                                valueNames: ["No", "slot", "D", "D1", "U", "U1", "L", "L1", "R", "R1", "F", "F1", "B", "B1"]
+                            };
+                            window.loadListJs().then(() => {
+                                try {
+                                    list_f2leo_ptable = new List('f2leo_ptable', option_f2leo_ptable);
+                                } catch (e) {
+                                    console.error('List init failed (f2leo_ptable):', e);
+                                }
+                            }).catch(e => console.error('loadListJs failed:', e));
+                        }
+                        const error_message = "<br><a>Analyzer terminated due to an error.</a><br>";
+                        document.getElementById('f2leo_ptable').innerHTML += error_message;
+                        return;
+                    } else if (messageCount_f2leo_panalyzer === -2) {
+                        messageCount_f2leo_panalyzer++;
+                        document.getElementById('f2leo_ptable').innerHTML += event.data;
+                    } else if (messageCount_f2leo_panalyzer === -1) {
+                        messageCount_f2leo_panalyzer++;
+                        document.getElementById("count_f2leo_panalyzer_max").value = event.data;
+                    } else if (event.data === "Finished.") {
+                        if (worker8) {
+                            worker8.terminate();
+                            worker8 = null;
+                            document.getElementById("f2leo_panalyzer").textContent = "Analyze";
+                            option_f2leo_ptable = {
+                                valueNames: ["No", "slot", "D", "D1", "U", "U1", "L", "L1", "R", "R1", "F", "F1", "B", "B1"]
+                            };
+                            window.loadListJs().then(() => {
+                                try {
+                                    list_f2leo_ptable = new List('f2leo_ptable', option_f2leo_ptable);
+                                } catch (e) {
+                                    console.error('List init failed (f2leo_ptable):', e);
+                                }
+                            }).catch(e => console.error('loadListJs failed:', e));
+                            return;
+                        }
+                    } else {
+                        messageCount_f2leo_panalyzer++;
+                        document.querySelector('#f2leo_panalyzer_result tbody').insertAdjacentHTML('beforeend', event.data);
+                        document.getElementById("count_f2leo_panalyzer").value = messageCount_f2leo_panalyzer;
+                    }
+                };
+                let cross = false;
+                let xcross = false;
+                let xxcross = false;
+                let xxxcross = false;
+                if (option === "cross" || option == "2x" || option === "3x" || option === "4x") {
+                    cross = true;
+                }
+                if (option === "xcross" || option == "2x" || option === "3x" || option === "4x") {
+                    xcross = true;
+                }
+                if (option === "xxcross" || option === "3x" || option === "4x") {
+                    xxcross = true;
+                }
+                if (option === "xxxcross" || option === "4x") {
+                    xxxcross = true;
+                }
+                const args = { scramble: convert(scramble)[0], cross: cross, x: xcross, xx: xxcross, xxx: xxxcross, n: sol_num, rot_set: rot_set };
+                worker8.postMessage(args);
+            } catch (e) {
+                console.log(e.message);
+                if (worker8) {
+                    worker8.terminate();
+                }
+                worker8 = null;
+                document.getElementById("f2leo_panalyzer").textContent = "Analyze";
+                if (messageCount_f2leo_panalyzer > 0) {
+                    option_f2leo_ptable = {
+                        valueNames: ["No", "slot", "pslot", "D", "U", "L", "R", "F", "B"]
+                    };
+                    window.loadListJs().then(() => {
+                        try {
+                            list_f2leo_ptable = new List('f2leo_ptable', option_f2leo_ptable);
+                        } catch (e) {
+                            console.error('List init failed (f2leo_ptable):', e);
+                        }
+                    }).catch(e => console.error('loadListJs failed:', e));
+                }
+                const error_message = "<br><a>Error: Analyzer terminated due to an error.</a><br>";
+                document.getElementById('f2leo_ptable').innerHTML += error_message;
+                return;
+            }
+        }
+
+        async function f2leo_psolve(slot_option, pslot_option, rotation_option) {
+            document.getElementById("solver").value = "PF2LEO";
+            document.getElementById('rot').value = rotation_option;
+            document.getElementById('f2leo_pslot_edge').value = slot_option;
+            updateDropdown5();
+            document.getElementById('f2leo_pslot_corner').value = pslot_option;
+            document.getElementById('num').value = 20;
+            document.getElementById('len').value = 20;
+            document.getElementById('premove').value = '';
+            document.getElementById('rot_count').value = '0';
+            initializeForAnalyzer(defaultValues['PF2LEO']);
+            updateUrlParams();
+            if (worker) {
+                await startWorker();
+            }
+            await startWorker();
+        }
+
         function add(s) {
             document.getElementById('scr').value += "\n" + s;
             save();
@@ -5476,7 +6061,9 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
 
         const details_analyzer = document.getElementById("analyze");
         const details_eo_analyzer = document.getElementById("eo_analyze");
+        const details_f2leo_analyzer = document.getElementById("f2leo_analyze");
         const details_panalyzer = document.getElementById("panalyze");
+        const details_f2leo_panalyzer = document.getElementById("f2leo_panalyze");
         const details_pair_analyzer = document.getElementById("pair_analyze");
         const details_pair_panalyzer = document.getElementById("pair_panalyze");
         const details_mask_options = document.getElementById("maskOptions");
@@ -5485,7 +6072,9 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
         const details_cubeUI = document.getElementById("details_cubeUI");
         const summary_analyzer = document.getElementById("summary_analyzer");
         const summary_eo_analyzer = document.getElementById("summary_eo_analyzer");
+        const summary_f2leo_analyzer = document.getElementById("summary_f2leo_analyzer");
         const summary_panalyzer = document.getElementById("summary_panalyzer");
+        const summary_f2leo_panalyzer = document.getElementById("summary_f2leo_panalyzer");
         const summary_pair_analyzer = document.getElementById("summary_pair_analyzer");
         const summary_pair_panalyzer = document.getElementById("summary_pair_panalyzer");
         const summary_mask_options = document.getElementById("summaryMaskOptions");
@@ -5509,11 +6098,27 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             }
         });
 
+        details_f2leo_analyzer.addEventListener('toggle', () => {
+            if (details_f2leo_analyzer.open) {
+                summary_f2leo_analyzer.textContent = "Hide Analyzer";
+            } else {
+                summary_f2leo_analyzer.textContent = "Show Analyzer";
+            }
+        });
+
         details_panalyzer.addEventListener('toggle', () => {
             if (details_panalyzer.open) {
                 summary_panalyzer.textContent = "Hide Analyzer";
             } else {
                 summary_panalyzer.textContent = "Show Analyzer";
+            }
+        });
+
+        details_f2leo_panalyzer.addEventListener('toggle', () => {
+            if (details_f2leo_panalyzer.open) {
+                summary_f2leo_panalyzer.textContent = "Hide Analyzer";
+            } else {
+                summary_f2leo_panalyzer.textContent = "Show Analyzer";
             }
         });
 
@@ -5650,12 +6255,16 @@ Write the //setup comment in the appropriate position when viewing on alg.cubing
             const searchParams = new URLSearchParams(window.location.search);
             const restParam = searchParams.get('rest');
             const mavParam = searchParams.get('mav');
+            const crestParam = searchParams.get('crest');
+            const mcvParam = searchParams.get('mcv');
             
             // Check if query parameters are compressed (v3 format)
             // v3: alphanumeric+hyphens, v0: contains underscores/tildes/pipes
             const hasCompressedRest = restParam && !restParam.includes('_');
             const hasCompressedMav = mavParam && !mavParam.includes('~') && !mavParam.includes('|');
-            const hasCompressedQueryParams = hasCompressedRest || hasCompressedMav;
+            const hasCompressedCrest = crestParam && !crestParam.includes('_') && crestParam.length === 6;
+            const hasCompressedMcv = mcvParam && !mcvParam.includes(':');
+            const hasCompressedQueryParams = hasCompressedRest || hasCompressedMav || hasCompressedCrest || hasCompressedMcv;
             
             if (hasHashParams || hasCompressedQueryParams) {
                 try {
