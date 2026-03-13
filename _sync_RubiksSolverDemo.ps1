@@ -138,23 +138,31 @@ if (Test-Path $swPath)
     Write-Host "  [PATCH] sw.js: removed analytics.js, fixed HTML paths" -ForegroundColor DarkCyan
 }
 
-# ===== Step 2d: 修正 manifest.json 路径 =====
-# NOTE: 上游 manifest.json 的 start_url 和 scope 指向 /RubiksSolverDemo/，
-#       本站部署在根路径 /，需要替换
-Write-Host "`nStep 2d: Patching manifest.json paths..." -ForegroundColor Green
+# ===== Step 2d: 修正 manifest.json =====
+# NOTE: 上游 manifest.json 的路径、名称和图标都需要适配本站
+Write-Host "`nStep 2d: Patching manifest.json..." -ForegroundColor Green
 
 $manifestPath = Join-Path $LocalDir "manifest.json"
 if (Test-Path $manifestPath)
 {
     $manifestContent = Read-Utf8File $manifestPath
+
+    # 路径修正
     $manifestContent = $manifestContent -replace '"start_url":\s*"/RubiksSolverDemo/index\.html"', '"start_url": "/"'
     $manifestContent = $manifestContent -replace '"scope":\s*"/RubiksSolverDemo/"', '"scope": "/"'
+
+    # 品牌修正
+    $manifestContent = $manifestContent -replace '"name":\s*"Rubik''s Cube Solver"', '"name": "CubeRoot"'
+    $manifestContent = $manifestContent -replace '"short_name":\s*"Solver"', '"short_name": "CubeRoot"'
+
+    # 图标路径：使用 custom_icons/（不在 rootDirs 同步清单中，不会被覆盖）
+    $manifestContent = $manifestContent -replace '"icons/', '"custom_icons/'
 
     if (-not $DryRun)
     {
         Write-Utf8File $manifestPath $manifestContent
     }
-    Write-Host "  [PATCH] manifest.json: start_url and scope -> /" -ForegroundColor DarkCyan
+    Write-Host "  [PATCH] manifest.json: paths, name, icons -> CubeRoot" -ForegroundColor DarkCyan
 }
 
 # ===== Step 3: 逐页面转换 =====
