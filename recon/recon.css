@@ -1649,3 +1649,278 @@ tr.detail-row td {
     font-size: 0.7rem;
     margin-left: 2px;
 }
+
+/* ============================================================
+   评论区 (Comments Section)
+   ============================================================ */
+
+.comments-section {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.comments-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.comments-title {
+    font-size: 0.95rem;
+    color: #aaa;
+    font-weight: 400;
+}
+
+.comments-count {
+    color: #666;
+    font-size: 0.85rem;
+    margin-left: 4px;
+}
+
+/* NOTE: 添加评论按钮——与现有 recon-btn 风格一致 */
+.comment-add-btn {
+    background: rgba(99, 102, 241, 0.12);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    color: #a5b4fc;
+    font-size: 0.78rem;
+    padding: 4px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+.comment-add-btn:hover {
+    background: rgba(99, 102, 241, 0.3);
+    color: #c7d2fe;
+}
+
+/* --- 单条评论卡片 --- */
+.comment-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+}
+
+.comment-item-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: 0.82rem;
+    color: #888;
+    flex-wrap: wrap;
+}
+
+.comment-author {
+    color: #cbd5e1;
+    font-weight: 500;
+}
+
+.comment-time {
+    color: #666;
+    font-size: 0.78rem;
+}
+
+.comment-edited-tag {
+    color: #8b8b8b;
+    font-size: 0.72rem;
+    font-style: italic;
+}
+
+/* NOTE: Markdown 渲染后的评论正文样式 */
+.comment-body {
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: #d1d5db;
+    word-break: break-word;
+}
+
+.comment-body p {
+    margin: 0 0 8px 0;
+}
+
+.comment-body p:last-child {
+    margin-bottom: 0;
+}
+
+.comment-body a {
+    color: #8b9cf7;
+    text-decoration: none;
+}
+
+.comment-body a:hover {
+    text-decoration: underline;
+}
+
+.comment-body code {
+    background: rgba(255, 255, 255, 0.08);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.85em;
+}
+
+.comment-body pre {
+    background: rgba(255, 255, 255, 0.06);
+    padding: 10px 14px;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin: 8px 0;
+}
+
+.comment-body pre code {
+    background: none;
+    padding: 0;
+}
+
+.comment-body blockquote {
+    border-left: 3px solid rgba(99, 102, 241, 0.4);
+    margin: 8px 0;
+    padding: 4px 12px;
+    color: #9ca3af;
+}
+
+.comment-body ul, .comment-body ol {
+    margin: 4px 0;
+    padding-left: 20px;
+}
+
+/* NOTE: 评论操作按钮——紧凑的文字按钮 */
+.comment-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.comment-action-btn {
+    background: none;
+    border: none;
+    color: #666;
+    font-size: 0.75rem;
+    cursor: pointer;
+    padding: 2px 4px;
+    transition: color 0.2s;
+}
+
+.comment-action-btn:hover {
+    color: #a5b4fc;
+}
+
+.comment-action-btn.comment-delete-btn:hover {
+    color: #fca5a5;
+}
+
+/* --- 评论编辑器 --- */
+.comment-editor {
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+.comment-editor textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.05);
+    color: #e0e0e0;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    resize: vertical;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+}
+
+.comment-editor textarea:focus {
+    border-color: rgba(99, 102, 241, 0.5);
+}
+
+/* NOTE: Markdown 实时预览区 */
+.comment-preview {
+    margin-top: 8px;
+    padding: 10px 14px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.02);
+    min-height: 40px;
+    display: none;
+}
+
+.comment-editor-hint {
+    font-size: 0.72rem;
+    color: #666;
+    margin-top: 4px;
+}
+
+.comment-editor-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    align-items: center;
+}
+
+/* NOTE: 预览切换按钮 */
+.comment-preview-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #888;
+    font-size: 0.78rem;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+.comment-preview-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #ccc;
+}
+
+.comment-submit-btn {
+    background: rgba(99, 102, 241, 0.8);
+    border: 1px solid rgba(99, 102, 241, 0.6);
+    color: #fff;
+    font-size: 0.78rem;
+    padding: 4px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.comment-submit-btn:hover {
+    background: rgba(99, 102, 241, 1);
+}
+
+.comment-submit-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.comment-cancel-btn {
+    background: none;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #888;
+    font-size: 0.78rem;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.comment-cancel-btn:hover {
+    color: #ccc;
+}
+
+/* NOTE: 空评论区提示 */
+.comments-empty {
+    color: #555;
+    font-size: 0.85rem;
+    padding: 8px 0;
+    font-style: italic;
+}

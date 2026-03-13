@@ -115,7 +115,29 @@ var ReconStore = (function () {
         return apiGet({ action: 'getHistory', id: String(solveId) });
     }
 
-    // NOTE: 导出公共 API（签名与原 firebase_store.js 完全一致）
+    // ==================== 评论 (comments) ====================
+
+    /** 加载指定复盘的评论列表 */
+    function loadComments(reconId) {
+        return apiGet({ action: 'listComments', reconId: reconId });
+    }
+
+    /** 添加评论（每人每复盘一条） */
+    function addComment(reconId, content) {
+        return apiPost({ action: 'addComment' }, { reconId: String(reconId), content: content });
+    }
+
+    /** 更新评论内容 */
+    function updateComment(commentId, content) {
+        return apiPost({ action: 'updateComment', id: commentId }, { content: content });
+    }
+
+    /** 删除评论 */
+    function deleteComment(commentId) {
+        return apiPost({ action: 'deleteComment', id: commentId }, {});
+    }
+
+    // NOTE: 导出公共 API
     return {
         init: function () { }, // NOTE: 无需初始化，保持接口兼容
         loadAll: loadAll,
@@ -128,6 +150,10 @@ var ReconStore = (function () {
         deleteEdit: deleteEdit,
         saveEditHistory: saveEditHistory,
         getEditHistory: getEditHistory,
-        updateRecon: updateRecon
+        updateRecon: updateRecon,
+        loadComments: loadComments,
+        addComment: addComment,
+        updateComment: updateComment,
+        deleteComment: deleteComment
     };
 })();
