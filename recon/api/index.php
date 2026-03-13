@@ -159,6 +159,9 @@ function checkRateLimit(): void
 // NOTE: 管理员 WCA ID 列表（后端硬编码，前端的仅控制 UI 显示）
 $ADMIN_WCA_IDS = ['2017YANR02'];
 
+// NOTE: 黑名单 WCA ID 列表——这些用户无法登录（所有写操作被拒绝）
+$BANNED_WCA_IDS = [];
+
 /**
  * 验证 WCA access_token 并返回用户信息
  * NOTE: 带文件缓存（TTL 5 分钟），避免每次都调 WCA API
@@ -222,10 +225,17 @@ function authenticateUser(): ?array
 /** 要求登录，失败返回 401 并终止 */
 function requireAuth(): array
 {
+    global $BANNED_WCA_IDS;
     $user = authenticateUser();
     if (!$user) {
         http_response_code(401);
         echo json_encode(['error' => 'Authentication required']);
+        exit;
+    }
+    // NOTE: 黑名单用户直接拒绝
+    if (in_array($user['wcaId'], $BANNED_WCA_IDS)) {
+        http_response_code(403);
+        echo json_encode(['error' => 'Your account has been suspended']);
         exit;
     }
     return $user;
