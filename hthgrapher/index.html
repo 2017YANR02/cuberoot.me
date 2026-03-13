@@ -155,15 +155,15 @@
 		#numpad-grid {
 			display: grid;
 			grid-template-columns: repeat(4, 1fr);
-			gap: 8px;
+			gap: 6px;
 		}
 
 		.np-btn {
 			border: 1px solid rgba(255, 255, 255, 0.15);
 			box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 rgba(0, 0, 0, 0.2);
-			border-radius: 50%;
+			border-radius: 10px;
 			width: 100%;
-			aspect-ratio: 1;
+			padding: 14px 0;
 			font-size: 30px;
 			font-family: 'Helvetica Neue', Helvetica, sans-serif;
 			font-weight: 700;
@@ -177,49 +177,36 @@
 
 		/* NOTE: iOS 键盘风格 — 按下时从中心放大 + 阴影 */
 		.np-btn:active {
-			transform: scale(1.15);
+			transform: scale(1.05);
 			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 			z-index: 10;
 			transition: none;
 		}
 
-		.np-digit:active {
-			background: #7a7a7a;
-		}
-
-		.np-op:active {
-			background: #c5c5c5;
-		}
-
-		.np-action:active {
-			background: #ffbf5a;
-		}
-
+		.np-digit:active,
+		.np-op:active,
+		.np-action:active,
 		.np-action-alt:active {
-			background: #5a8fa0;
+			background: #7a7a7e;
 		}
 
-		.np-digit {
-			background: #505050;
-			color: #fff;
-		}
-
-		.np-op {
-			background: #a5a5a5;
-			color: #000;
-			font-size: 22px;
-		}
-
-		.np-action {
-			background: #ff9f0a;
-			color: #fff;
-			font-size: 22px;
-		}
-
+		.np-digit,
+		.np-op,
+		.np-action,
 		.np-action-alt {
-			background: #3b6978;
+			background: #636366;
 			color: #fff;
+		}
+
+		.np-op,
+		.np-action,
+		.np-action-alt {
 			font-size: 22px;
+		}
+
+		/* NOTE: 回车键跨两行 */
+		.np-enter {
+			grid-row: span 2;
 		}
 	</style>
 </head>
@@ -1164,6 +1151,7 @@
 		}
 		// NOTE: .: 按钮 — 末尾是 . 则替换为 :，否则追加 .
 		function dotColonPress() {
+			if (navigator.vibrate) navigator.vibrate(10);
 			var v = document.getElementById('value');
 			if (!v || textBoxState != 1) return;
 			if (v.value.length > 0 && v.value[v.value.length - 1] == '.') {
@@ -1175,6 +1163,7 @@
 			v.focus();
 		}
 		function numpadPress(key) {
+			if (navigator.vibrate) navigator.vibrate(10);
 			var v = document.getElementById('value');
 			if (!v || textBoxState != 1) return;
 			if (key == 'enter') {
@@ -1408,7 +1397,7 @@
 					<button class="np-btn np-digit" onclick="numpadPress('7')">7</button>
 					<button class="np-btn np-digit" onclick="numpadPress('8')">8</button>
 					<button class="np-btn np-digit" onclick="numpadPress('9')">9</button>
-					<button class="np-btn np-action" onclick="numpadPress('enter')">OK</button>
+					<button class="np-btn np-action np-enter" onclick="numpadPress('enter')"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 10 4 15 9 20"/><path d="M20 4v7a4 4 0 0 1-4 4H4"/></svg></button>
 					<button class="np-btn np-digit" onclick="dotColonPress()">·:</button>
 					<button class="np-btn np-digit" onclick="numpadPress('0')">0</button>
 					<button class="np-btn np-action-alt" onclick="numpadPress('tab')">TAB</button>
