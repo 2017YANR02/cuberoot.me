@@ -3,16 +3,21 @@
 
 <head>
 	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>Head-to-Head Average of 5 Calculator</title>
 	<style>
 		body {
 			position: relative;
+			overflow-x: hidden;
 		}
 
 		#myCanvas {
 			position: absolute;
-			left: 0;
+			left: 50%;
 			top: 0;
+			transform: translateX(-50%);
+			max-width: 100%;
+			height: auto;
 		}
 
 		#blah {
@@ -27,8 +32,9 @@
 
 		#overlay {
 			position: absolute;
-			left: 0;
+			left: 50%;
 			top: 0;
+			transform: translateX(-50%);
 			width: 1600px;
 			height: 900px;
 			display: none;
@@ -242,8 +248,21 @@
 		var DNF_VALUE = 1000000000;
 		var UNFINISHED_VALUE = 2000000000;
 		var MAX_TIME_VALUE = 8640000;
+
+		// NOTE: 统一重合柱状图布局常量
+		var BAR_W = 90;         // 全宽柱宽度
+		var STRIDE = 105;       // 组间距+单柱宽度
+		var BAR_START = 390;    // 第一组 x 起点（canvas 内居中）
+		var CHART_END = BAR_START + 5 * STRIDE - (STRIDE - BAR_W); // 柱状图右端 ≈ 685
+		var CHART_CENTER = (BAR_START + CHART_END) / 2;     // 柱状图中心
+		var STATS_CENTER = 1050; // 统计区域中心 x
+
 		var resetClicks = 0;
 		var resetClicksNeeded = 5;
+
+		// NOTE: 右侧统计区域显示模式：0=Both, 1=Only A, 2=Only B
+		var viewMode = 0;
+		var VIEW_LABELS = ["Both", "A", "B"];
 
 		var timeLive = [-1, -1];
 		var timeLiveStart = -1;
@@ -264,7 +283,7 @@
 		self.setInterval(function () { run() }, 1000 / 60);
 
 		function run() {
-			setGridParameters(0, 120, 1600, 620, [483, 580, 1117, 1020, 70]);
+			setGridParameters(340, 120, 1600, 730, [CHART_END, CHART_END + 100, CHART_END, CHART_END + 350, 30]);
 			drawBackground();
 			drawHoris(ctx, g);
 			drawAverages(g);
@@ -420,6 +439,7 @@
 
 		function getVisualTextBoundaries(p, t) {
 			if (p == 2) {
+				b = {};
 				b["x"] = 100;
 				b["y"] = 18;
 				b["w"] = 1400;
@@ -430,20 +450,19 @@
 			}
 			b = {};
 			if (t == 5) {
-				var w = 446;
-				b["x"] = 27 + 1100 * p;
-				b["y"] = 800;
+				// NOTE: 名字标签 — 在时间格右侧
+				b["x"] = CHART_END + 10;
+				b["y"] = 690 + p * 48;
 				b["ts"] = 26;
-				b["w"] = w;
+				b["w"] = 150;
 				b["ty"] = b["y"] + 31;
 			} else {
-				var sign = p * 2 - 1;
-				var mx = 2;
-				var dx = 90;
-				b["x"] = 800 + (730 - t * dx) * sign - dx / 2 + mx;
-				b["y"] = 750;
-				b["ts"] = 33;
-				b["w"] = dx - mx * 2;
+				// NOTE: 时间输入格 — 2行布局，x 坐标完全重叠对齐柱子
+				var barX = BAR_START + t * STRIDE;
+				b["x"] = barX;
+				b["y"] = 690 + p * 48;
+				b["ts"] = 26;
+				b["w"] = BAR_W;
 				b["ty"] = b["y"] + 35;
 			}
 			b["h"] = 46;
@@ -565,44 +584,74 @@
 			var filleds = [0, 0];
 			var bm = 7;
 			var m = 5;
+
+			// Step 1: 预先统计 filleds
 			for (var p = 0; p < 2; p++) {
-				var s = p * 2 - 1;
 				for (var t = 0; t < 5; t++) {
-					var b = getVisualTextBoundaries(p, t);
+					if (times[seedOn + p][t] != 0) filleds[p]++;
+				}
+			}
+
+			// Step 2: 绘制重叠柱子
+			for (var t = 0; t < 5; t++) {
+				var minYs = [0, 0];
+				for(var p=0; p<2; p++) {
+					minYs[p] = (times[seedOn + p][t] != 0) ? val_to_y_cap(times[seedOn + p][t], g) : 999999;
+				}
+				// minY 越小（柱子越高）越先画（底层全宽）
+				var p_order = (minYs[0] < minYs[1]) ? [0, 1] : [1, 0]; 
+
+				for (var i = 0; i < 2; i++) {
+					var p = p_order[i];
+					// NOTE: viewMode 过滤柱子 — 只看A/只看B时跳过另一方
+					if (viewMode != 0 && viewMode != p + 1) continue;
 					if (times[seedOn + p][t] != 0) {
 						ctx.fillStyle = shades[p];
-						var minY = val_to_y_cap(times[seedOn + p][t], g);
+						var b = getVisualTextBoundaries(p, t);
+						var minY = minYs[p];
 						var maxY = val_to_y_cap(0, g);
 						var uncappedMaxY = val_to_y(0, g);
+						
+						// 较矮的柱子（后画）稍窄一点居中（仅 Both 模式）
+						var isTop = (viewMode == 0 && i == 1 && minYs[0] != 999999 && minYs[1] != 999999);
+						var fullW = b["w"] - 2 * bm;
+						var bw = isTop ? fullW * 0.55 : fullW;
+						var bx = b["x"] + bm + (fullW - bw) / 2;
+
 						if (uncappedMaxY > maxY) {
-							var bw = b["w"] - 2 * bm;
 							var pieces = 3;
-							var bpw = bw / pieces / 2;
-							var bx = b["x"] + bm;
+							var bpw = fullW / pieces / 2;
 							ctx.fillRect(bx, minY, bw, maxY - bpw - minY);
 							drawZigs(bx, maxY - bpw, bw, 1, 3);
 						} else {
-							ctx.fillRect(b["x"] + bm, minY, b["w"] - 2 * bm, (maxY - minY));
+							ctx.fillRect(bx, minY, bw, (maxY - minY));
 						}
+						
 						if (times[seedOn + p][t] == DNF_VALUE) {
-							drawZigs(b["x"] + bm, minY, b["w"] - 2 * bm, -1, 3);
+							drawZigs(bx, minY, bw, -1, 3);
 						}
-						filleds[p] += 1;
 					}
 				}
+			}
+
+			// Step 3:绘制曲线和统计区域
+			for (var p = 0; p < 2; p++) {
 				if (filleds[p] >= 4) {
 					var pa_vals = getPA(times[seedOn + p], seedOn + p);
 					var pa_coor = val_to_y_arr(pa_vals, g);
 					var ax = reformat(p, g);
 					var ay = pa_coor;
+					// NOTE: viewMode 过滤 — 只在匹配模式时绘制扇形/文字/箭头
+					var showStats = (viewMode == 0 || viewMode == p + 1);
 					var shouldDrawMiddle = (pa_vals[7] > pa_vals[6] && (filleds[p] == 4 || timeLive[0] == p));
-					draw_curved_segment(ax, ay, g, shades[p], shouldDrawMiddle);
+					if (showStats) draw_curved_segment(ax, ay, g, shades[p], shouldDrawMiddle);
 
 					ctx.fillStyle = darken(shades[p], 0.7);
 					ctx.font = mid_font_size;
-					ctx.textAlign = (p == 0) ? "right" : "left";
-					var tx = [ax[0] + m * s, ax[1] - m * s];
-					if (filleds[p] == 4 || timeLive[0] == p) {
+					// NOTE: 统一布局 — 扇形左侧文字右对齐，右侧文字左对齐
+					ctx.textAlign = "right";
+					var tx = [ax[0] - m, ax[1] + m];
+					if (showStats && (filleds[p] == 4 || timeLive[0] == p)) {
 						var ay0 = ay[0];
 						var ay1 = ay[1];
 						if (filleds[p] == 4 && pa_vals[2] != DNF_VALUE) {
@@ -627,7 +676,7 @@
 							ctx.font = mid_font_size;
 							ctx.fillText(rankify(pa_vals[6]) + " / " + pa_vals[8], tx[0], ay[2] + 21);
 						}
-						ctx.textAlign = (p == 0) ? "left" : "right";
+						ctx.textAlign = "left";
 						var ty = [ay[3] + 7, ay[4] - 21, ay[5] - 7];
 						var gapY = ty[0] - ty[1];
 						if (gapY <= mid_font_size.split(" ")[0] * 1.0) {
@@ -641,8 +690,8 @@
 						ctx.font = mid_font_size;
 						ctx.fillText(timeToText(pa_vals[3], false), tx[1], ty[0] + 28);
 						ctx.fillText(timeToText(pa_vals[4], false), tx[1], ty[1] + 28);
-					} else if (filleds[p] == 5) {
-						ctx.textAlign = (p == 0) ? "left" : "right";
+					} else if (showStats && filleds[p] == 5) {
+						ctx.textAlign = "left";
 						var avg = getAverage(times[seedOn + p], true);
 						ctx.font = mid_font_size;
 						ctx.fillText(timeToText(pa_vals[3], false), tx[1], ay[3] + 24);
@@ -650,14 +699,10 @@
 						var ys = [val_to_y_cap(times[seedOn + p][4], g), val_to_y_cap(avg, g)];
 
 						var b = getVisualTextBoundaries(p, 4);
-						var outerX = b["x"] + bm;
+						// NOTE: 连线起点贴近扇形左端，不拉回柱子边缘
+						var outerX = ax[0] - 5;
 						var innerX = g["ix"][1] + g["ix"][4] + 2;
 						var arrowX = innerX - 18;
-						if (p == 1) {
-							outerX += b["w"] - 2 * bm;
-							innerX = g["ix"][3] - g["ix"][4] - 2;
-							arrowX = innerX + 18;
-						}
 						ax.push(outerX);
 						ax.push(innerX);
 						ax.push(arrowX);
@@ -665,11 +710,15 @@
 
 
 
+						// NOTE: Placed 文字分左右放置避免重叠
+						var placedX = p == 0 ? BAR_START + 200 : CHART_END - 200;
+						ctx.textAlign = "center";
 						var ty = val_to_y_cap(DNF_VALUE, g);
+						ctx.fillStyle = darken(shades[p], 0.7);
 						ctx.font = small_font_size;
-						ctx.fillText("Placed", tx[0], ty - 4);
+						ctx.fillText("Placed", placedX, ty - 4);
 						ctx.font = mid_font_size;
-						ctx.fillText(rankify(getRankOf(seedOn + p)) + " / " + getValidsCount(), tx[0], ty + 26);
+						ctx.fillText(rankify(getRankOf(seedOn + p)) + " / " + getValidsCount(), placedX, ty + 26);
 					}
 				}
 			}
@@ -697,7 +746,10 @@
 				var p = sorted_cache[rank];
 				var average = getAverage(times[p], false);
 				var type = (p == seedOn || p == seedOn + 1) ? 2 : (rank < 3 ? 1 : 0);
-				if (average != UNFINISHED_VALUE && type >= 1) {
+				// NOTE: viewMode 过滤菱形（非当前 seed 的选手不受影响）
+				var pIdx = p - seedOn; // 0=A, 1=B
+				var showDiamond = (type < 2) || (viewMode == 0 || viewMode == pIdx + 1);
+				if (average != UNFINISHED_VALUE && type >= 1 && showDiamond) {
 					var y = val_to_y_cap(average, g);
 					var y_wings = val_to_y(average, g);
 					var cy = Math.max(y, 80);
@@ -707,20 +759,25 @@
 					if (p == seedOn + 0 || p == seedOn + 1) {
 						ctx.fillStyle = darken(shades[p - seedOn], 0.7);
 					}
+					// NOTE: 左尖右方标签 — 宽度自适应文字
+					var labelText = getLastName(names[p]) + ": " + timeToText(average, false);
+					ctx.font = (type == 2) ? mid_font_size : small_font_size;
+					var tw = ctx.measureText(labelText).width + 20; // 文字宽 + 左右内边距
+					var lx = ix[1] + im;           // 左尖端 x
+					var rx = lx + jm + tw;         // 右方端 x
 					ctx.beginPath();
-					ctx.moveTo(ix[1] + im, ay);
-					ctx.lineTo(ix[1] + im + jm, cursor - m[type]);
-					ctx.lineTo(ix[3] - im - jm, cursor - m[type]);
-					ctx.lineTo(ix[3] - im, ay);
-					ctx.lineTo(ix[3] - im - jm, cursor + m[type]);
-					ctx.lineTo(ix[1] + im + jm, cursor + m[type])
+					ctx.moveTo(lx, ay);                        // 左尖
+					ctx.lineTo(lx + jm, cursor - m[type]);     // 左上斜
+					ctx.lineTo(rx, cursor - m[type]);           // 右上（方形）
+					ctx.lineTo(rx, cursor + m[type]);           // 右下（方形）
+					ctx.lineTo(lx + jm, cursor + m[type]);     // 左下斜
 					ctx.closePath();
 					ctx.fill();
 					if (type >= 1) {
 						ctx.fillStyle = "#FFFFFF";
 						ctx.font = (type == 2) ? mid_font_size : small_font_size;
-						ctx.textAlign = "center";
-						ctx.fillText(getLastName(names[p]) + ": " + timeToText(average, false), cW / 2, cursor + offsetY[type]);
+						ctx.textAlign = "left";
+						ctx.fillText(labelText, lx + jm + 5, cursor + offsetY[type]);
 					}
 					var typePrev = type;
 				}
@@ -735,9 +792,9 @@
 			return name;
 		}
 		function reformat(p, g) {
-			var x1 = g["ix"][p * 2];
-			var x2 = g["ix"][p * 2 + 1];
-			return [x1, x2];
+			// NOTE: 扇形紧凑地出现在菱形左尖前方
+			var diamondTip = g["ix"][1] + g["ix"][4];
+			return [diamondTip - 120, diamondTip - 40];
 		}
 		function lerp(a, b, x) {
 			return a + (b - a) * x;
@@ -815,8 +872,7 @@
 			line([x[3], y[1], x[4], y[1] - 18], col);
 		}
 		function drawBackground() {
-			ctx.fillStyle = bgColor;
-			ctx.fillRect(0, 0, cW, cH);
+			ctx.clearRect(0, 0, cW, cH);
 		}
 		function drawTitle() {
 			ctx.textAlign = "center";
@@ -831,6 +887,12 @@
 					}
 					var b = getVisualTextBoundaries(p, t);
 					ctx.fillRect(b["x"], b["y"], b["w"], b["h"]);
+					// NOTE: 现代简约细边框
+					if (p < 2) {
+						ctx.strokeStyle = "#ccc";
+						ctx.lineWidth = 1;
+						ctx.strokeRect(b["x"], b["y"], b["w"], b["h"]);
+					}
 					ctx.fillStyle = "#000000";
 					ctx.font = b["ts"] + "px Helvetica";
 					var s = compName;
@@ -845,21 +907,35 @@
 
 
 
+			// NOTE: Seeds 按钮在底部中间
+			var seedsX = CHART_CENTER;
+			var seedsY = 800;
 			ctx.fillStyle = "#FFFFFF";
-			ctx.fillRect(760, 785, 80, 60);
+			ctx.fillRect(seedsX - 40, seedsY - 25, 80, 50);
 			ctx.fillStyle = "#000000";
 			ctx.font = small_font_size;
-			ctx.fillText("Seeds", cW / 2, 810);
-			ctx.fillText((seedOn + 1) + "-" + (seedOn + 2), cW / 2, 835);
+			ctx.fillText("Seeds", seedsX, seedsY - 5);
+			ctx.fillText((seedOn + 1) + "-" + (seedOn + 2), seedsX, seedsY + 18);
 
 			ctx.fillStyle = (seedOn >= 1) ? "#FFFFFF" : "#808080";
-			ctx.fillRect(695, 785, 60, 60);
+			ctx.fillRect(seedsX - 105, seedsY - 25, 60, 50);
 			ctx.fillStyle = (areTimesFullyFilled() && timeLive[0] == -1) ? "#FF8080" : "#FFFFFF";
-			ctx.fillRect(845, 785, 60, 60);
+			ctx.fillRect(seedsX + 45, seedsY - 25, 60, 50);
 			ctx.font = mid_font_size;
 			ctx.fillStyle = "#000000";
-			ctx.fillText("<", cW / 2 - 75, 825);
-			ctx.fillText(">", cW / 2 + 75, 825);
+			ctx.fillText("<", seedsX - 75, seedsY + 8);
+			ctx.fillText(">", seedsX + 75, seedsY + 8);
+
+			// NOTE: ViewMode 切换按钮 — 在 Seeds 右侧
+			var vmX = seedsX + 200;
+			var vmY = seedsY;
+			ctx.fillStyle = shades[viewMode == 2 ? 1 : (viewMode == 1 ? 0 : 2)];
+			ctx.fillRect(vmX - 40, vmY - 25, 80, 50);
+			ctx.fillStyle = "#FFFFFF";
+			ctx.font = small_font_size;
+			ctx.textAlign = "center";
+			ctx.fillText("View", vmX, vmY - 5);
+			ctx.fillText(VIEW_LABELS[viewMode], vmX, vmY + 18);
 		}
 		function areTimesFullyFilled() {
 			for (var p = 0; p < 2; p++) {
@@ -976,17 +1052,15 @@
 		function drawHoris(ctx, g) {
 			for (var yLine = g["lmin"]; yLine <= g["lmax"]; yLine += g["unit"]) {
 				var appY = val_to_y(yLine, g);
+				// NOTE: Y轴刻度标签在柱状图左侧
 				ctx.fillStyle = "#000000";
 				ctx.font = small_font_size;
-				ctx.textAlign = "center";
-				var s = timeToText(yLine, true)
-				ctx.fillText(s, cW / 2, appY + 7);
-				var w = ctx.measureText(s).width;
-				var innerX = cW / 2 - w / 2 - 10;
-				var outerX = cW / 2 + w / 2 + 10;
+				ctx.textAlign = "right";
+				var s = timeToText(yLine, true);
+				ctx.fillText(s, BAR_START - 8, appY + 7);
+				// NOTE: 水平参考线只覆盖柱状图区域
 				ctx.fillStyle = "rgba(0,0,0,0.3)";
-				ctx.fillRect(g["x"], appY - 1, innerX - g["x"], 2);
-				ctx.fillRect(outerX, appY - 1, g["x"] + g["w"] - outerX, 2);
+				ctx.fillRect(BAR_START, appY - 1, CHART_END - BAR_START, 2);
 			}
 		}
 
@@ -1096,10 +1170,13 @@
 			if (Math.abs((cW - cH + 35) - mX) <= 35 && mY >= 660 && mY < 710) {
 				drawTiesOption = !drawTiesOption;
 			}
-			if (Math.abs(mY - 815) <= 30) {
-				if (Math.abs(mX - 725) <= 30) {
+			// NOTE: Seeds 按钮点击检测 — 坐标与 drawTitle 同步
+			var seedsX = CHART_CENTER;
+			var seedsY = 800;
+			if (Math.abs(mY - seedsY) <= 25) {
+				if (Math.abs(mX - (seedsX - 75)) <= 30) {
 					seedOn = Math.max(0, seedOn - 2);
-				} else if (Math.abs(mX - 875) <= 30) {
+				} else if (Math.abs(mX - (seedsX + 75)) <= 30) {
 					seedOn += 2;
 					if (seedOn >= names.length) {
 						names.push("Name " + String.fromCharCode(65 + seedOn));
@@ -1110,6 +1187,13 @@
 						endTimeLive();
 					}
 				}
+			}
+
+			// NOTE: ViewMode 切换点击检测
+			var vmX = CHART_CENTER + 200;
+			var vmY = 800;
+			if (Math.abs(mX - vmX) <= 40 && Math.abs(mY - vmY) <= 25) {
+				viewMode = (viewMode + 1) % 3;
 			}
 
 			if (!resetClicksYesNo) {
