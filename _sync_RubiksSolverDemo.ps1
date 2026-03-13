@@ -138,6 +138,25 @@ if (Test-Path $swPath)
     Write-Host "  [PATCH] sw.js: removed analytics.js, fixed HTML paths" -ForegroundColor DarkCyan
 }
 
+# ===== Step 2d: 修正 manifest.json 路径 =====
+# NOTE: 上游 manifest.json 的 start_url 和 scope 指向 /RubiksSolverDemo/，
+#       本站部署在根路径 /，需要替换
+Write-Host "`nStep 2d: Patching manifest.json paths..." -ForegroundColor Green
+
+$manifestPath = Join-Path $LocalDir "manifest.json"
+if (Test-Path $manifestPath)
+{
+    $manifestContent = Read-Utf8File $manifestPath
+    $manifestContent = $manifestContent -replace '"start_url":\s*"/RubiksSolverDemo/index\.html"', '"start_url": "/"'
+    $manifestContent = $manifestContent -replace '"scope":\s*"/RubiksSolverDemo/"', '"scope": "/"'
+
+    if (-not $DryRun)
+    {
+        Write-Utf8File $manifestPath $manifestContent
+    }
+    Write-Host "  [PATCH] manifest.json: start_url and scope -> /" -ForegroundColor DarkCyan
+}
+
 # ===== Step 3: 逐页面转换 =====
 Write-Host "`nStep 3: Converting HTML pages..." -ForegroundColor Green
 
