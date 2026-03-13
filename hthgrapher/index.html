@@ -1,1555 +1,1634 @@
-
 <!DOCTYPE html>
 <html>
-	<head>
-		<meta charset="utf-8">
-		<title>Head-to-Head Average of 5 Calculator</title>
-		<style>
-			body {
-				position: relative;
-			}
-			#myCanvas {
-				position: absolute;
-				left: 0;
-				top: 0;
-			}
-			#blah {
-			    padding-top: 900px;
-			}
-			#faq {
-				position: absolute;
-				left: 0px;
-				top: 900px;
-			}
-			#overlay {
-				position: absolute;
-				left: 0;
-				top: 0;
-				width: 1600px;
-				height: 900px;
-				display: none;
-			}
-			#overlay #value {
-				width: 200px;
-				height: 50px;
-				background: white;
-				position: absolute;
-				left: 0%;
-				top: 0%;
-				margin-left: 0px;
-				margin-top: 0px;
-			}
-			audio, video {
-				display: none;
-			}
-			/* NOTE: 指标对比表格样式 */
-			#calc-section {
-				max-width: 900px;
-				margin: 0 auto;
-				padding: 20px;
-				box-sizing: border-box;
-			}
-			#calc-table {
-				width: 100%;
-				border-collapse: collapse;
-				font-family: Helvetica, Arial, sans-serif;
-				font-size: 18px;
-			}
-			#calc-table th {
-				background: #3B6978;
-				color: #fff;
-				padding: 10px 16px;
-				text-align: center;
-				font-weight: 600;
-			}
-			#calc-table td {
-				padding: 8px 16px;
-				text-align: center;
-				border-bottom: 1px solid #ccc;
-			}
-			#calc-table tr:nth-child(even) {
-				background: #f0ece4;
-			}
-			#calc-table tr:nth-child(odd) {
-				background: #E7DFD5;
-			}
-			#calc-table td:first-child {
-				font-weight: 600;
-				text-align: left;
-			}
-			/* NOTE: 优势方高亮 — 更小的时间 = 更好 */
-			.calc-better {
-				color: #006400;
-				font-weight: 700;
-			}
-			#calc-section .links {
-				margin-top: 20px;
-				font-size: 16px;
-				line-height: 2;
-			}
-			/* NOTE: tavg 输入框样式 */
-			.tavg-input {
-				width: 80px;
-				padding: 4px 8px;
-				font-size: 16px;
-				text-align: center;
-				border: 1px solid #999;
-				border-radius: 4px;
-				background: #fff;
-			}
-			.calc-nan {
-				color: #999;
-				font-style: italic;
-			}
-			/* NOTE: iOS 计算器风格数字键盘 */
-			#numpad {
-				display: block;
-				max-width: 400px;
-				margin: 10px auto;
-				padding: 12px;
-				background: #222;
-				border-radius: 16px;
-				box-sizing: border-box;
-			}
-			#numpad-display {
-				color: #fff;
-				font-size: 28px;
-				font-family: 'Helvetica Neue', Helvetica, sans-serif;
-				text-align: right;
-				padding: 8px 16px;
-				margin-bottom: 10px;
-				background: #333;
-				border-radius: 10px;
-				min-height: 40px;
-				line-height: 40px;
-				overflow: hidden;
-			}
-			#numpad-label {
-				color: #aaa;
-				font-size: 14px;
-				float: left;
-				line-height: 40px;
-			}
-			#numpad-grid {
-				display: grid;
-				grid-template-columns: repeat(4, 1fr);
-				gap: 8px;
-			}
-			.np-btn {
-				border: 1px solid rgba(255,255,255,0.15);
-				box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -1px 0 rgba(0,0,0,0.2);
-				border-radius: 50%;
-				width: 100%;
-				aspect-ratio: 1;
-				font-size: 30px;
-				font-family: 'Helvetica Neue', Helvetica, sans-serif;
-				font-weight: 700;
-				cursor: pointer;
-				outline: none;
-				position: relative;
-				-webkit-tap-highlight-color: transparent;
-				touch-action: manipulation;
-				transition: background 0.25s ease-out, transform 0.2s ease-out, box-shadow 0.2s ease-out;
-			}
-			/* NOTE: iOS 键盘风格 — 按下时从中心放大 + 阴影 */
-			.np-btn:active {
-				transform: scale(1.15);
-				box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-				z-index: 10;
-				transition: none;
-			}
-			.np-digit:active {
-				background: #7a7a7a;
-			}
-			.np-op:active {
-				background: #c5c5c5;
-			}
-			.np-action:active {
-				background: #ffbf5a;
-			}
-			.np-action-alt:active {
-				background: #5a8fa0;
-			}
-			.np-digit {
-				background: #505050;
-				color: #fff;
-			}
-			.np-op {
-				background: #a5a5a5;
-				color: #000;
-				font-size: 22px;
-			}
-			.np-action {
-				background: #ff9f0a;
-				color: #fff;
-				font-size: 22px;
-			}
-			.np-action-alt {
-				background: #3b6978;
-				color: #fff;
-				font-size: 22px;
-			}
-		</style>
-	</head>
-	<body>
-      <canvas id="myCanvas" width="1600" height="900"></canvas>
-        <div id="overlay">
-			<input style="font-size:36px;text-align:center;" type="text" id="value" inputmode="none"/>
-		</div>
-		<script language="javascript" type="text/javascript">
-			var c=document.getElementById("myCanvas");
-      var bgColor = "#E7DFD5";
-	  var buttonColor = "#3B6978";
-	  var buttonTextColor = "#FFFFFF";
-	  var shades = ["rgba(255,128,0,1.0)","rgba(50,130,255,1.0)","rgba(190,190,190,1.0)"];
-	  var TXT_COLOR = "#005000";
-	  var small_font_size = "22px Helvetica";
-	  var mid_font_size = "30px Helvetica";
-	  var ctx = c.getContext("2d");
 
-      var cW = myCanvas.width;
-      var cH = myCanvas.height;
-      var tW = (cW-cH-40);
-			var textBoxState = 0;
+<head>
+	<meta charset="utf-8">
+	<title>Head-to-Head Average of 5 Calculator</title>
+	<style>
+		body {
+			position: relative;
+		}
 
-			var tableX_left = (cW-cH)*0.25;
-      var tableX = (cW-cH)*0.50;
-      var tableX_right = (cW-cH)*0.75;
-      var drawTiesOption = true;
+		#myCanvas {
+			position: absolute;
+			left: 0;
+			top: 0;
+		}
 
-			var highlight = [-1,-1];
-			var g = {};
-			var DNF_VALUE = 1000000000;
-			var UNFINISHED_VALUE = 2000000000;
-			var MAX_TIME_VALUE = 8640000;
-			var resetClicks = 0;
-			var resetClicksNeeded = 5;
+		#blah {
+			padding-top: 900px;
+		}
 
-			var timeLive = [-1,-1];
-			var timeLiveStart = -1;
-			var compName = "Competition";
-			var names = ["Name A","Name B"];
-			var seedOn = 0;
-			var sorted_cache = [];
-			infoReset();
+		#faq {
+			position: absolute;
+			left: 0px;
+			top: 900px;
+		}
 
-            c.onmousedown = onClick;
-			c.onmouseup = onRelease;
-			c.onmousemove = onMove;
-			window.addEventListener('keydown',this.onKey,false);
+		#overlay {
+			position: absolute;
+			left: 0;
+			top: 0;
+			width: 1600px;
+			height: 900px;
+			display: none;
+		}
 
-			var times = [[0,0,0,0,0],[0,0,0,0,0]];
+		#overlay #value {
+			width: 200px;
+			height: 50px;
+			background: white;
+			position: absolute;
+			left: 0%;
+			top: 0%;
+			margin-left: 0px;
+			margin-top: 0px;
+		}
 
-			//document.getElementById("close").onclick = closeTextBox;
-            self.setInterval(function(){run()},1000/60);
+		audio,
+		video {
+			display: none;
+		}
 
-			function run(){
-				setGridParameters(0,120,1600,620,[483,580,1117,1020,70]);
-				drawBackground();
-				drawHoris(ctx,g);
-				drawAverages(g);
-				drawBars(g);
-				drawTitle();
-				drawCredits();
-				
-				if(timeLive[0] >= 0){
-				  updateTimeLive();
-		        }
-            }
-            function openTextBox(option){
-				if(timeLive[0] >= 0){
-					endTimeLive();
+		/* NOTE: 指标对比表格样式 */
+		#calc-section {
+			max-width: 900px;
+			margin: 0 auto;
+			padding: 20px;
+			box-sizing: border-box;
+		}
+
+		#calc-table {
+			width: 100%;
+			border-collapse: collapse;
+			font-family: Helvetica, Arial, sans-serif;
+			font-size: 18px;
+		}
+
+		#calc-table th {
+			background: #3B6978;
+			color: #fff;
+			padding: 10px 16px;
+			text-align: center;
+			font-weight: 600;
+		}
+
+		#calc-table td {
+			padding: 8px 16px;
+			text-align: center;
+			border-bottom: 1px solid #ccc;
+		}
+
+		#calc-table tr:nth-child(even) {
+			background: #f0ece4;
+		}
+
+		#calc-table tr:nth-child(odd) {
+			background: #E7DFD5;
+		}
+
+		#calc-table td:first-child {
+			font-weight: 600;
+			text-align: left;
+		}
+
+		/* NOTE: 优势方高亮 — 更小的时间 = 更好 */
+		.calc-better {
+			color: #006400;
+			font-weight: 700;
+		}
+
+		#calc-section .links {
+			margin-top: 20px;
+			font-size: 16px;
+			line-height: 2;
+		}
+
+		/* NOTE: tavg 输入框样式 */
+		.tavg-input {
+			width: 80px;
+			padding: 4px 8px;
+			font-size: 16px;
+			text-align: center;
+			border: 1px solid #999;
+			border-radius: 4px;
+			background: #fff;
+		}
+
+		.calc-nan {
+			color: #999;
+			font-style: italic;
+		}
+
+		/* NOTE: iOS 计算器风格数字键盘 */
+		#numpad {
+			display: block;
+			max-width: 400px;
+			margin: 10px auto;
+			padding: 12px;
+			background: #222;
+			border-radius: 16px;
+			box-sizing: border-box;
+		}
+
+		#numpad-display {
+			color: #fff;
+			font-size: 28px;
+			font-family: 'Helvetica Neue', Helvetica, sans-serif;
+			text-align: right;
+			padding: 8px 16px;
+			margin-bottom: 10px;
+			background: #333;
+			border-radius: 10px;
+			min-height: 40px;
+			line-height: 40px;
+			overflow: hidden;
+		}
+
+		#numpad-label {
+			color: #aaa;
+			font-size: 14px;
+			float: left;
+			line-height: 40px;
+		}
+
+		#numpad-grid {
+			display: grid;
+			grid-template-columns: repeat(4, 1fr);
+			gap: 8px;
+		}
+
+		.np-btn {
+			border: 1px solid rgba(255, 255, 255, 0.15);
+			box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+			border-radius: 50%;
+			width: 100%;
+			aspect-ratio: 1;
+			font-size: 30px;
+			font-family: 'Helvetica Neue', Helvetica, sans-serif;
+			font-weight: 700;
+			cursor: pointer;
+			outline: none;
+			position: relative;
+			-webkit-tap-highlight-color: transparent;
+			touch-action: manipulation;
+			transition: background 0.25s ease-out, transform 0.2s ease-out, box-shadow 0.2s ease-out;
+		}
+
+		/* NOTE: iOS 键盘风格 — 按下时从中心放大 + 阴影 */
+		.np-btn:active {
+			transform: scale(1.15);
+			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+			z-index: 10;
+			transition: none;
+		}
+
+		.np-digit:active {
+			background: #7a7a7a;
+		}
+
+		.np-op:active {
+			background: #c5c5c5;
+		}
+
+		.np-action:active {
+			background: #ffbf5a;
+		}
+
+		.np-action-alt:active {
+			background: #5a8fa0;
+		}
+
+		.np-digit {
+			background: #505050;
+			color: #fff;
+		}
+
+		.np-op {
+			background: #a5a5a5;
+			color: #000;
+			font-size: 22px;
+		}
+
+		.np-action {
+			background: #ff9f0a;
+			color: #fff;
+			font-size: 22px;
+		}
+
+		.np-action-alt {
+			background: #3b6978;
+			color: #fff;
+			font-size: 22px;
+		}
+	</style>
+</head>
+
+<body>
+	<canvas id="myCanvas" width="1600" height="900"></canvas>
+	<div id="overlay">
+		<input style="font-size:36px;text-align:center;" type="text" id="value" inputmode="none" />
+	</div>
+	<script language="javascript" type="text/javascript">
+		var c = document.getElementById("myCanvas");
+		var bgColor = "#E7DFD5";
+		var buttonColor = "#3B6978";
+		var buttonTextColor = "#FFFFFF";
+		var shades = ["rgba(255,128,0,1.0)", "rgba(50,130,255,1.0)", "rgba(190,190,190,1.0)"];
+		var TXT_COLOR = "#005000";
+		var small_font_size = "22px Helvetica";
+		var mid_font_size = "30px Helvetica";
+		var ctx = c.getContext("2d");
+
+		var cW = myCanvas.width;
+		var cH = myCanvas.height;
+		var tW = (cW - cH - 40);
+		var textBoxState = 0;
+
+		var tableX_left = (cW - cH) * 0.25;
+		var tableX = (cW - cH) * 0.50;
+		var tableX_right = (cW - cH) * 0.75;
+		var drawTiesOption = true;
+
+		var highlight = [-1, -1];
+		var g = {};
+		var DNF_VALUE = 1000000000;
+		var UNFINISHED_VALUE = 2000000000;
+		var MAX_TIME_VALUE = 8640000;
+		var resetClicks = 0;
+		var resetClicksNeeded = 5;
+
+		var timeLive = [-1, -1];
+		var timeLiveStart = -1;
+		var compName = "Competition";
+		var names = ["Name A", "Name B"];
+		var seedOn = 0;
+		var sorted_cache = [];
+		infoReset();
+
+		c.onmousedown = onClick;
+		c.onmouseup = onRelease;
+		c.onmousemove = onMove;
+		window.addEventListener('keydown', this.onKey, false);
+
+		var times = [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0]];
+
+		//document.getElementById("close").onclick = closeTextBox;
+		self.setInterval(function () { run() }, 1000 / 60);
+
+		function run() {
+			setGridParameters(0, 120, 1600, 620, [483, 580, 1117, 1020, 70]);
+			drawBackground();
+			drawHoris(ctx, g);
+			drawAverages(g);
+			drawBars(g);
+			drawTitle();
+			drawCredits();
+
+			if (timeLive[0] >= 0) {
+				updateTimeLive();
+			}
+		}
+		function openTextBox(option) {
+			if (timeLive[0] >= 0) {
+				endTimeLive();
+			}
+			document.getElementById("overlay").style.display = "block";
+			document.getElementById("overlay").onmousedown = clickedWhileTextBoxOpen;
+			var b = getVisualTextBoundaries(highlight[0], highlight[1]);
+
+			var v = document.getElementById("value");
+			var s = "";
+			if (highlight[0] == 2) {
+				s = compName;
+			} else if (highlight[1] == 5) {
+				s = names[seedOn + highlight[0]];
+			} else {
+				var t = times[seedOn + highlight[0]][highlight[1]];
+				if (t >= 1) {
+					s = timeToText(t, false);
 				}
-				document.getElementById("overlay").style.display = "block";
-				document.getElementById("overlay").onmousedown = clickedWhileTextBoxOpen;
-				var b = getVisualTextBoundaries(highlight[0],highlight[1]);
-
-				var v = document.getElementById("value");
-				var s = "";
-				if(highlight[0] == 2){
-					s = compName;
-				}else if(highlight[1] == 5){
-					s = names[seedOn+highlight[0]];
-				}else{
-					var t = times[seedOn+highlight[0]][highlight[1]];
-					if(t >= 1){
-						s = timeToText(t,false);
-					}
-				}
-				v.value = s;
-				v.style.marginLeft = b["x"]+"px";
-				v.style.marginTop = b["y"]+"px";
-				v.style.width = b["w"]+"px";
-				v.style.height = b["h"]+"px";
-  			    v.focus();
+			}
+			v.value = s;
+			v.style.marginLeft = b["x"] + "px";
+			v.style.marginTop = b["y"] + "px";
+			v.style.width = b["w"] + "px";
+			v.style.height = b["h"] + "px";
+			v.focus();
 			// NOTE: blur 时也关闭文本框并保存，确保 URL 同步
 			v.addEventListener('blur', function onBlur() {
 				v.removeEventListener('blur', onBlur);
 				if (textBoxState >= 1) closeTextBox(true);
 			});
 
-				c.onmousedown = null;
-				c.onmouseup = null;
-				c.onmousemove = null;
-				if (option == 1) showNumpad();
-				textBoxState = option;
+			c.onmousedown = null;
+			c.onmouseup = null;
+			c.onmousemove = null;
+			if (option == 1) showNumpad();
+			textBoxState = option;
+		}
+		function clickedWhileTextBoxOpen(e) {
+			var mX = e.offsetX;
+			var mY = e.offsetY;
+			var b = getVisualTextBoundaries(highlight[0], highlight[1]);
+			if (!(mX >= 0 && mX < b["w"] && mY >= 0 && mY < b["h"])) {
+				closeTextBox(true);
 			}
-			function clickedWhileTextBoxOpen(e){
-				var mX = e.offsetX;
-				var mY = e.offsetY;
-				var b = getVisualTextBoundaries(highlight[0],highlight[1]);
-				if(!(mX >= 0 && mX < b["w"] && mY >= 0 && mY < b["h"])){
-					closeTextBox(true);
+		}
+		function clickInBounds(mX, mY, b) {
+			return (mX >= b["x"] && mX < b["x"] + b["w"]
+				&& mY >= b["y"] && mY < b["y"] + b["h"]);
+		}
+		function rankify(s) {
+			var es = (s + 1) % 100;
+			var ending = "th";
+			if (es >= 10 && es < 20) {
+			} else if ((es % 10) == 1) {
+				ending = "st";
+			} else if ((es % 10) == 2) {
+				ending = "nd";
+			} else if ((es % 10) == 3) {
+				ending = "rd";
+			}
+			return (s + 1) + ending;
+		}
+		function closeTextBox(updateInfo) {
+			var o = document.getElementById("overlay");
+			o.style.display = "none";
+			c.onmousedown = onClick;
+			c.onmouseup = onRelease;
+			c.onmousemove = onMove;
+			if (updateInfo) {
+				if (textBoxState == 3) {
+					compName = document.getElementById("value").value;
+				} else if (textBoxState == 1) {
+					var val = textToTime(document.getElementById("value").value);
+					updateTime(seedOn + highlight[0], highlight[1], val);
+				} else {
+					names[seedOn + highlight[0]] = document.getElementById("value").value;
 				}
 			}
-			function clickInBounds(mX,mY,b){
-				return (mX >= b["x"] && mX < b["x"]+b["w"]
-				&& mY >= b["y"] && mY < b["y"]+b["h"]);
-			}
-			function rankify(s){
-			    var es = (s+1)%100;
-			    var ending = "th";
-			    if(es >= 10 && es < 20){
-			    }else if((es%10) == 1){
-			        ending = "st";
-			    }else if((es%10) == 2){
-			        ending = "nd";
-			    }else if((es%10) == 3){
-			        ending = "rd";
-			    }
-				return (s+1)+ending;
-			}
-            function closeTextBox(updateInfo){
-				var o = document.getElementById("overlay");
-				o.style.display = "none";
-				c.onmousedown = onClick;
-				c.onmouseup = onRelease;
-				c.onmousemove = onMove;
-				if(updateInfo){
-					if(textBoxState == 3){
-					    compName = document.getElementById("value").value;
-					}else if(textBoxState == 1){
-					    var val = textToTime(document.getElementById("value").value);
-					    updateTime(seedOn+highlight[0],highlight[1],val);
-					}else{
-						names[seedOn+highlight[0]] = document.getElementById("value").value;
-					}
+			hideNumpad();
+			textBoxState = 0;
+			highlight = [-1, -1];
+			// NOTE: 名称/比赛名变更后同步 URL
+			if (typeof syncToUrl === 'function') syncToUrl();
+		}
+		function textToTime(s) {
+			var dnf = "dnf";
+			for (var i = 0; i < dnf.length; i++) {
+				if (s.toLowerCase().includes(dnf.charAt(i))) {
+					return DNF_VALUE;
 				}
-				hideNumpad();
-				textBoxState = 0;
-				highlight = [-1,-1];
-				// NOTE: 名称/比赛名变更后同步 URL
-				if (typeof syncToUrl === 'function') syncToUrl();
 			}
-			function textToTime(s){
-			    var dnf = "dnf";
-			    for(var i = 0; i < dnf.length; i++){
-    				if(s.toLowerCase().includes(dnf.charAt(i))){
-    					return DNF_VALUE;
-    				}
-			    }
-				var time = 0;
-				var colonParts = s.split(":");
-				var CPL = colonParts.length;
-				var hours = (CPL >= 3) ? strToNumber(colonParts[CPL-3],-1) : 0;
-				var minutes = (CPL >= 2) ? strToNumber(colonParts[CPL-2],-1) : 0;
-				time += hours*360000+minutes*6000;
-				s = colonParts[CPL-1];
+			var time = 0;
+			var colonParts = s.split(":");
+			var CPL = colonParts.length;
+			var hours = (CPL >= 3) ? strToNumber(colonParts[CPL - 3], -1) : 0;
+			var minutes = (CPL >= 2) ? strToNumber(colonParts[CPL - 2], -1) : 0;
+			time += hours * 360000 + minutes * 6000;
+			s = colonParts[CPL - 1];
 
-				s = s.replace(",","."); // sometimes I type a comma instead of a period
-				var periodIndex = s.indexOf(".");
-				if(periodIndex >= 0){
-					var seconds = strToNumber(s.substring(0,periodIndex),-1);
-					time += seconds*100;
-					s = s.substring(periodIndex+1);
-					if(s.length == 1){
-						var decis = strToNumber(s,-1);
-						time += decis*10;
-					}else{
-						var centis = strToNumber(s,2);
-						time += centis*1;
-					}
-				}else{
+			s = s.replace(",", "."); // sometimes I type a comma instead of a period
+			var periodIndex = s.indexOf(".");
+			if (periodIndex >= 0) {
+				var seconds = strToNumber(s.substring(0, periodIndex), -1);
+				time += seconds * 100;
+				s = s.substring(periodIndex + 1);
+				if (s.length == 1) {
+					var decis = strToNumber(s, -1);
+					time += decis * 10;
+				} else {
+					var centis = strToNumber(s, 2);
+					time += centis * 1;
+				}
+			} else {
 				// NOTE: 无小数点 — 无冒号时当 centiseconds，有冒号时当整秒
-				var sec = strToNumber(s,-1);
-				if(CPL == 1){
+				var sec = strToNumber(s, -1);
+				if (CPL == 1) {
 					time += sec; // 纯数字 → centiseconds（536 → 5.36 秒）
-				}else{
-					time += sec*100; // 有冒号 → 整秒（1:23 中的 23 秒）
+				} else {
+					time += sec * 100; // 有冒号 → 整秒（1:23 中的 23 秒）
 				}
 			}
-				if(time > MAX_TIME_VALUE){
-					time = MAX_TIME_VALUE;
-				}
-				return time;
+			if (time > MAX_TIME_VALUE) {
+				time = MAX_TIME_VALUE;
 			}
+			return time;
+		}
 
-			function strToNumber(s, digitsToInclude){
-				var resultStr = s.replace(/\D/g,'');
-				if(digitsToInclude >= 1){
-					resultStr = resultStr.substring(0,digitsToInclude);
-				}
-				var result = parseInt(resultStr);
-				if(Number.isNaN(result)){
-					return 0;
-				}else{
-					return result;
-				}
+		function strToNumber(s, digitsToInclude) {
+			var resultStr = s.replace(/\D/g, '');
+			if (digitsToInclude >= 1) {
+				resultStr = resultStr.substring(0, digitsToInclude);
 			}
-
-			function getVisualTextBoundaries(p,t){
-			    if(p == 2){
-			        b["x"] = 100;
-			        b["y"] = 18;
-			        b["w"] = 1400;
-			        b["h"] = 70;
-			        b["ty"] = 70;
-			        b["ts"] = 50;
-			        return b;
-			    }
-				b = {};
-				if(t == 5){
-				    var w = 446;
-				    b["x"] = 27+1100*p;
-					b["y"] = 800;
-					b["ts"] = 26;
-					b["w"] = w;
-					b["ty"] = b["y"]+31;
-				}else{
-				    var sign = p*2-1;
-				    var mx = 2;
-				    var dx = 90;
-				    b["x"] = 800+(730-t*dx)*sign-dx/2+mx;
-				    b["y"] = 750;
-				    b["ts"] = 33;
-				    b["w"] = dx-mx*2;
-				    b["ty"] = b["y"]+35;
-				}
-				b["h"] = 46; 
-				
-				return b;
-			}
-
-        function getPA(t, p){
-            var _times = structuredClone(t);
-            _times.pop();
-            _times.sort(function(a, b) {return a - b;});
-            var results = [_times[0],_times[3],UNFINISHED_VALUE,0,0,UNFINISHED_VALUE,UNFINISHED_VALUE,UNFINISHED_VALUE];
-            _times.unshift(0);
-            results[3] = getAverage(_times,true);
-            _times.shift();
-            _times.push(DNF_VALUE);
-            results[4] = getAverage(_times,true);
-            _times.pop();
-            
-            var pr = getPossibleRank(_times, p);
-            results[2] = pr[0];
-            if(pr[1] == pr[2]){ // the rank is guaranteed, like a range form 4th to 4th
-                results[2] = DNF_VALUE;
-            }
-            _times.push(results[2]);
-            results[5] = getAverage(_times,true);
-            results[6] = pr[1];
-            results[7] = pr[2];
-            results[8] = pr[3]+1; // include yourself in the rankings!
-            _times.pop();
-            return results;
-        }
-        function getValidsCount(){
-            var validsCount = 0;
-            for(var i = 0; i < times.length; i++){
-                var sawBad = false;
-                for(var t = 0; t < 5; t++){
-                    if(times[i][t] == 0 || times[i][t] == UNFINISHED_VALUE){
-                        sawBad = true;
-                    }
-                }
-                if(!sawBad){
-                    validsCount += 1;
-                }
-            }
-            return validsCount;
-        }
-        function getRankOf(p){
-            for(var rank = 0; rank < times.length; rank++){
-                if(sorted_cache[rank] == p){
-                    return rank;
-                }
-            }
-            return -1;
-        }
-        function getPossibleRank(selfTimes, p){
-            var averagesSeen = 0;
-            var validsCount = getValidsCount();
-            var results = [0,0,0,validsCount];   // 1st: threshold score, 2nd: best rank, 3rd: worst rank, 4th: total ranks
-            for(var rank = 0; rank < times.length; rank++){
-                if(sorted_cache[rank] == p){
-                    continue;
-                }
-                var rt = times[sorted_cache[rank]];
-                var rankAverage = getAverage(rt,false);
-                if(rankAverage >= 0 && rankAverage != DNF_VALUE && rankAverage != UNFINISHED_VALUE){
-    				const otherTimesRanked = [...structuredClone(rt).sort(function(a,b){return a-b})];
-    				const selfTimesRanked = [...structuredClone(selfTimes).sort(function(a,b){return a-b})];
-    				var toWin = DNF_VALUE;
-    				if(otherTimesRanked[3] >= DNF_VALUE){
-    				    if(selfTimesRanked[0] < otherTimesRanked[0]){
-    				        toWin = DNF_VALUE;
-    				    }
-    				}else{
-        				var delta = -2;
-        				if(selfTimesRanked[0] < otherTimesRanked[0]){
-        				    delta = 1;
-        				}
-        			    var toWin = (rankAverage*3+delta)-selfTimesRanked[1]-selfTimesRanked[2];
-    				}
-    			    if(toWin >= selfTimesRanked[3]){ // you are guaranteed to beat this average
-    			        results[1] = Math.min(averagesSeen, results[1]);
-    			        results[2] = Math.min(averagesSeen, results[2]);
-    			    }else if(toWin >= selfTimesRanked[0]){ // you need a threshold to beat this average
-    			        if(results[0] == 0){
-        			        results[0] = toWin;
-        			        results[1] = averagesSeen;
-    			        }
-    			        results[2] = Math.max(averagesSeen+1, results[2]);
-    			    }else{ // you cannot beat this average
-    			        results[1] = Math.max(averagesSeen+1, results[1]);
-    			        results[2] = Math.max(averagesSeen+1, results[2]);
-    			    }
-    			    averagesSeen += 1;
-                }
-            }
-            return results;
-        }
-        function val_to_y_arr(arr,g){;
-            var results = Array(arr.length).fill(0)
-            for(var i = 0; i < arr.length; i++){
-                results[i] = val_to_y_cap(arr[i],g);
-            }
-            return results;
-        }
-        function drawZigs(x,y,w,ysign,pieces){
-            var bpw = w/pieces/2;
-            for(var pe = 0; pe < pieces*2; pe++){
-                ctx.beginPath();
-                ctx.moveTo(x+pe*bpw,y);
-                ctx.lineTo(x+(pe+1)*bpw,y);
-                ctx.lineTo(x+(pe+pe%2)*bpw,y+bpw*ysign);
-                ctx.closePath();
-                ctx.fill();
-            }
-        }
-        function drawBars(g){
-            var filleds = [0,0];
-            var bm = 7;
-            var m = 5;
-            for(var p = 0; p < 2; p++){
-                var s = p*2-1;
-				for(var t = 0; t < 5; t++){
-				    var b = getVisualTextBoundaries(p,t);
-				    if(times[seedOn+p][t] != 0){
-				        ctx.fillStyle = shades[p];
-				        var minY = val_to_y_cap(times[seedOn+p][t],g);
-				        var maxY = val_to_y_cap(0,g);
-				        var uncappedMaxY = val_to_y(0,g);
-				        if(uncappedMaxY > maxY){
-				            var bw = b["w"]-2*bm;
-				            var pieces = 3;
-				            var bpw = bw/pieces/2;
-				            var bx = b["x"]+bm;
-				            ctx.fillRect(bx,minY,bw,maxY-bpw-minY);
-				            drawZigs(bx,maxY-bpw,bw,1,3);
-				        }else{
-    				        ctx.fillRect(b["x"]+bm,minY,b["w"]-2*bm,(maxY-minY));
-				        }
-				        if(times[seedOn+p][t] == DNF_VALUE){
-				            drawZigs(b["x"]+bm,minY,b["w"]-2*bm,-1,3);
-				        }
-				        filleds[p] += 1;
-				    }
-				}
-				if(filleds[p] >= 4){
-				    var pa_vals = getPA(times[seedOn+p],seedOn+p);
-				    var pa_coor = val_to_y_arr(pa_vals,g);
-				    var ax = reformat(p,g);
-				    var ay = pa_coor;
-				    var shouldDrawMiddle = (pa_vals[7] > pa_vals[6] && (filleds[p] == 4 || timeLive[0] == p));
-				    draw_curved_segment(ax, ay, g, shades[p], shouldDrawMiddle);
-				    
-				    ctx.fillStyle = darken(shades[p],0.7);
-				    ctx.font = mid_font_size;
-        			ctx.textAlign = (p == 0) ? "right" : "left";
-        			var tx = [ax[0]+m*s, ax[1]-m*s];
-        			if(filleds[p] == 4 || timeLive[0] == p){
-        			    var ay0 = ay[0];
-            			var ay1 = ay[1];
-            			if(filleds[p] == 4 && pa_vals[2] != DNF_VALUE){
-            			    ay1 = Math.min(ay1,ay[2]-40);
-            			    ay0 = Math.max(ay0,ay[2]+45);
-            			}
-            			ctx.fillText(timeToText(pa_vals[0],false), tx[0], ay0+7);
-            			ctx.fillText(timeToText(pa_vals[1],false), tx[0], ay1+7);
-        			    if(pa_vals[7] > pa_vals[6]){
-            			    ctx.fillText(timeToText(pa_vals[2],false), tx[0], ay[2]-3);
-                			ctx.font = small_font_size;
-                			ctx.fillText("for "+rankify(pa_vals[6])+" / "+pa_vals[8], tx[0], ay[2]+20);
-                			
-                			var ty = val_to_y_cap(DNF_VALUE,g);
-                			ctx.font = small_font_size;
-        			        ctx.fillText("Can place", tx[0], ty-4);
-        			        ctx.font = mid_font_size;
-                			ctx.fillText(rankify(pa_vals[6])+" to "+rankify(pa_vals[7]), tx[0], ty+26);
-        			    }else{
-        			        ctx.font = small_font_size;
-        			        ctx.fillText("Guaranteed", tx[0], ay[2]-7);
-        			        ctx.font = mid_font_size;
-                			ctx.fillText(rankify(pa_vals[6])+" / "+pa_vals[8], tx[0], ay[2]+21);
-        			    }
-        			    ctx.textAlign = (p == 0) ? "left" : "right";
-        			    var ty = [ay[3]+7,ay[4]-21,ay[5]-7];
-        			    var gapY = ty[0]-ty[1];
-        			    if(gapY <= mid_font_size.split(" ")[0]*1.0){
-        			        var dY = (24-gapY)/2;
-        			        ty[0] += dY;
-        			        ty[1] -= dY;
-        			    }
-        			    ctx.font = small_font_size;
-            			ctx.fillText("BPA", tx[1], ty[0]);
-            			ctx.fillText("WPA", tx[1], ty[1]);
-            			ctx.font = mid_font_size;
-            			ctx.fillText(timeToText(pa_vals[3],false), tx[1], ty[0]+28);
-            			ctx.fillText(timeToText(pa_vals[4],false), tx[1], ty[1]+28);
-        			}else if(filleds[p] == 5){
-        			    ctx.textAlign = (p == 0) ? "left" : "right";
-        			    var avg = getAverage(times[seedOn+p],true);
-        			    ctx.font = mid_font_size;
-            			ctx.fillText(timeToText(pa_vals[3],false), tx[1], ay[3]+24);
-            			ctx.fillText(timeToText(pa_vals[4],false), tx[1], ay[4]-4);
-            			var ys = [val_to_y_cap(times[seedOn+p][4],g),val_to_y_cap(avg,g)];
-            			
-            			var b = getVisualTextBoundaries(p,4);
-            			var outerX = b["x"]+bm;
-            			var innerX = g["ix"][1]+g["ix"][4]+2;
-            			var arrowX = innerX-18;
-            			if(p == 1){
-            			    outerX += b["w"]-2*bm;
-            			    innerX = g["ix"][3]-g["ix"][4]-2;
-            			    arrowX = innerX+18;
-            			}
-            			ax.push(outerX);
-            			ax.push(innerX);
-            			ax.push(arrowX);
-            			draw_curved_line(ax,ys,g,"#000000");
-            			
-            			
-            			
-            			var ty = val_to_y_cap(DNF_VALUE,g);
-            			ctx.font = small_font_size;
-    			        ctx.fillText("Placed", tx[0], ty-4);
-    			        ctx.font = mid_font_size;
-            			ctx.fillText(rankify(getRankOf(seedOn+p))+" / "+getValidsCount(), tx[0], ty+26);
-        			}
-				}
-            }
-        }
-        function getSortedIndices(test, test2){
-            var len = test.length;
-            var indices = new Array(len);
-            for (var i = 0; i < len; ++i) indices[i] = i;
-            indices.sort(function (a, b) { return (test[a] < test[b] || (test[a] == test[b] && test2[a] < test2[b])) ? -1 : (test[a] > test[b] || (test[a] == test[b] && test2[a] > test2[b])) ? 1 : 0; });
-            return indices;
-        }
-        function drawAverages(g){
-            var ix = g["ix"];
-            var im = ix[4];
-            var m = [3,13,18];
-            var offsetY = [0,7.5,10];
-            var jm = 50;
-            var vm = 3;
-            var max_skew = 60;
-            var cursor = 9999;
-            var type = 0;
-            var typePrev = 0;
-            
-            for(var rank = 0; rank < times.length; rank++){
-                var p = sorted_cache[rank];
-                var average = getAverage(times[p],false);
-                var type = (p == seedOn || p == seedOn+1) ? 2 : (rank < 3 ? 1 : 0);
-                if(average != UNFINISHED_VALUE && type >= 1){
-                    var y = val_to_y_cap(average,g);
-                    var y_wings = val_to_y(average,g);
-                    var cy = Math.max(y, 80);
-                    cursor = Math.min(cursor-(m[typePrev]+vm+m[type]),cy);
-                    var ay = Math.min(Math.max(y_wings,cursor-max_skew),cursor+max_skew);
-                    ctx.fillStyle = "#000000";
-                    if(p == seedOn+0 || p == seedOn+1){
-                        ctx.fillStyle = darken(shades[p-seedOn],0.7);
-                    }
-                    ctx.beginPath();
-                    ctx.moveTo(ix[1]+im, ay);
-                    ctx.lineTo(ix[1]+im+jm, cursor-m[type]);
-                    ctx.lineTo(ix[3]-im-jm, cursor-m[type]);
-                    ctx.lineTo(ix[3]-im, ay);
-                    ctx.lineTo(ix[3]-im-jm, cursor+m[type]);
-                    ctx.lineTo(ix[1]+im+jm, cursor+m[type])
-                    ctx.closePath();
-                    ctx.fill();
-                    if(type >= 1){
-                        ctx.fillStyle = "#FFFFFF";
-        				ctx.font = (type == 2) ? mid_font_size : small_font_size;
-        				ctx.textAlign = "center";
-        				ctx.fillText(getLastName(names[p])+": "+timeToText(average,false),cW/2,cursor+offsetY[type]);
-                    }
-                    var typePrev = type;
-                }
-            }
-        }
-        function getLastName(stri){
-            var arr = stri.split(" ");
-            var name = arr[arr.length-1];
-            if(name.length >= 6){
-                return name.substring(0,6);
-            }
-            return name;
-        }
-        function reformat(p,g){
-            var x1 = g["ix"][p*2];
-            var x2 = g["ix"][p*2+1];
-            return [x1,x2];
-        }
-        function lerp(a,b,x){
-            return a+(b-a)*x;
-        }
-        function coslerp(a,b,x){
-            var x2 = 0.5-0.5*Math.cos(x*Math.PI);
-            return lerp(a,b,x2);
-        }
-        function fade(col,fac){
-            return col.substring(0,col.length-4)+fac+")";
-        }
-        function line(coor,col){
-            ctx.lineWidth = 3;
-            ctx.strokeStyle = col;
-            ctx.beginPath();
-            ctx.moveTo(coor[0], coor[1]);
-            ctx.lineTo(coor[2], coor[3]);
-            ctx.stroke();
-        }
-        function darken(col,fac){
-            var a = col.indexOf("(")+1;
-            var b = col.indexOf(")");
-            var startChunk = col.substring(0,a);
-            var midChunk = col.substring(a,b);
-            var endChunk = col.substring(b);
-            var parts = midChunk.split(",");
-            var newChunk = "";
-            for(var i = 0; i < parts.length; i++){
-                var f = 1;
-                if(i < 3){
-                    f = fac;
-                }
-                newChunk += ","+(f*parts[i]);
-            }
-            newChunk = newChunk.substring(1);
-            return startChunk+newChunk+endChunk;
-        }
-        function draw_curved_segment(x,y,g,col,draw_middle){
-            ctx.fillStyle = fade(col,0.25);
-            var dark = darken(col,0.7);
-            var PIECES = 15;
-            for(var p = 0; p < PIECES; p++){
-                var prog1 = p/PIECES;
-                var prog2 = (p+1)/PIECES;
-                var ax = [lerp(x[0],x[1],prog1),lerp(x[0],x[1],prog2)];
-                var ay = [coslerp(y[0],y[3],prog1),coslerp(y[0],y[3],prog2),
-                coslerp(y[1],y[4],prog1),coslerp(y[1],y[4],prog2),
-                coslerp(y[2],y[5],prog1),coslerp(y[2],y[5],prog2)];
-                ctx.beginPath();
-                ctx.moveTo(ax[0],ay[0]);
-                ctx.lineTo(ax[1],ay[1]);
-                ctx.lineTo(ax[1],ay[3]);
-                ctx.lineTo(ax[0],ay[2]);
-                ctx.closePath();
-                ctx.fill();
-                line([ax[0],ay[0],ax[1],ay[1]],dark);
-                line([ax[0],ay[2],ax[1],ay[3]],dark);
-                if(y[2] != y[1] && y[2] != y[0] && draw_middle){
-                    line([ax[0],ay[4],ax[1],ay[5]],dark);
-                }
-            }
-        }
-        function draw_curved_line(x,y,g,col){
-            var PIECES = 10;
-            for(var p = 0; p < PIECES; p++){
-                var prog1 = p/PIECES;
-                var prog2 = (p+1)/PIECES;
-                var ax = [lerp(x[0],x[1],prog1),lerp(x[0],x[1],prog2)];
-                var ay = [coslerp(y[0],y[1],prog1),coslerp(y[0],y[1],prog2)];
-                line([ax[0],ay[0],ax[1],ay[1]],col);
-            }
-            line([x[0],y[0],x[2],y[0]],col);
-            line([x[1],y[1],x[3],y[1]],col);
-            line([x[3],y[1],x[4],y[1]+18],col);
-            line([x[3],y[1],x[4],y[1]-18],col);
-        }
-        function drawBackground(){
-            ctx.fillStyle = bgColor;
-			ctx.fillRect(0,0,cW,cH);
-        }
-        function drawTitle(){
-				ctx.textAlign = "center";
-				for(var p = 0; p < 3; p++){
-					var t_count = (p < 2) ? 6 : 1;
-					for(var t = 0; t < t_count; t++){
-						ctx.fillStyle = "#FFFFFF";
-						if(t == highlight[1] && p == highlight[0]){
-							ctx.fillStyle = "#FF8080";
-						}else if(t != 5 && p < 2 && times[seedOn+p][t] <= 0){
-							ctx.fillStyle = "#808080";
-						}
-						var b = getVisualTextBoundaries(p,t);
-						ctx.fillRect(b["x"],b["y"],b["w"],b["h"]);
-						ctx.fillStyle = "#000000";
-						ctx.font = b["ts"]+"px Helvetica";
-						var s = compName;
-						if(p < 2 && t == 5){
-						    s = names[seedOn+p];
-						}else if(p < 2){
-						    s = timeToText(times[seedOn+p][t],false);
-						}
-						ctx.fillText(s,b["x"]+b["w"]/2,b["ty"]);
-					}
-				}
-				
-				
-			    
-			    ctx.fillStyle = "#FFFFFF";
-			    ctx.fillRect(760,785,80,60);
-			    ctx.fillStyle = "#000000";
-			    ctx.font = small_font_size;
-			    ctx.fillText("Seeds",cW/2,810);
-			    ctx.fillText((seedOn+1)+"-"+(seedOn+2),cW/2,835);
-			    
-			    ctx.fillStyle = (seedOn >= 1) ? "#FFFFFF" : "#808080";
-			    ctx.fillRect(695,785,60,60);
-			    ctx.fillStyle = (areTimesFullyFilled() && timeLive[0] == -1) ? "#FF8080" : "#FFFFFF";
-			    ctx.fillRect(845,785,60,60);
-			    ctx.font = mid_font_size;
-			    ctx.fillStyle = "#000000";
-			    ctx.fillText("<",cW/2-75,825);
-			    ctx.fillText(">",cW/2+75,825);
-			}
-			function areTimesFullyFilled(){
-			    for(var p = 0; p < 2; p++){
-			        for(var t = 0; t < 5; t++){
-			            if(times[seedOn+p][t] == 0 || times[seedOn+p][t] == UNFINISHED_VALUE){
-			                return false;
-			            }
-			        }
-			    }
-			    return true;
-			}
-
-			function getAverageString(p, includeZeros){
-			    var avg = getAverage(times[p],true);
-				if(avg < 0 || avg == DNF_VALUE){
-					return "???";
-				}
-				return timeToText(avg,false);
-			}
-			function getAverage(arr, includeZeros){
-			    if(!includeZeros){
-			        for(var i = 0; i < 5; i++){
-			            if(arr[i] == 0){
-			                return UNFINISHED_VALUE;
-			            }
-			        }
-			    }
-			    var arr_copy = structuredClone(arr);
-				const sorted = [...arr_copy.sort(function(a,b){return a-b})];
-				if(sorted[3] >= DNF_VALUE){
-				    return DNF_VALUE;
-				}
-				return Math.round((sorted[1]+sorted[2]+sorted[3])/3);
-			}
-			function getPossibleAverage(p, type){
-				const sorted = [...times[p].slice(0, 4)].sort(function(a,b){return a-b});
-				return [Math.round((sorted[type]+sorted[type+1]+sorted[type+2])/3), sorted[type*3]];
-			}
-
-			function getUnit(s){
-				var units = [1,2,5,10,20,50,100,200,500,1000,2000,3000,6000,12000,30000,60000,120000,180000,360000,720000,1080000,2160000,4320000,8640000,DNF_VALUE];
-				var u = 0;
-				while(units[u] < s/9){
-					u++;
-				}
-				return units[u];
-			}
-
-
-			function drawRotatedText(txt,x,y,r,col,size,align,txtCol,ctx){
-				ctx.save();
-				ctx.translate(x, y);
-				ctx.rotate(r);
-				if(col.length >= 1){
-					ctx.fillStyle = col;
-					ctx.fillRect(-5,-24,300,30);
-				}
-				ctx.font = size+"px Helvetica";
-				ctx.fillStyle = txtCol;
-				ctx.textAlign = align;
-				ctx.fillText(txt, 0, 0);
-				ctx.restore();
-			}
-
-			function addToViewingWindow(val,g){
-				if(val != DNF_VALUE){
-					g["min"] = Math.min(g["min"],val);
-					g["max"] = Math.max(g["max"],val);
-				}
-				g["viewcount"] += 1;
-			}
-			function setGridParameters(x, y, w, h, ix){
-				// I decided to include (0,0) in the viewing range of the graph no matter what, because it adds context.
-				g["min"] = DNF_VALUE;
-				g["max"] = -DNF_VALUE;
-				g["viewcount"] = 0;
-				for(var p = 0; p < 2; p++){
-    				for(var t = 0; t < 5; t++){
-    					if(times[seedOn+p][t] == 0){ // It's a non-recorded point.
-    					}else{
-    					    var val = times[seedOn+p][t];
-    						addToViewingWindow(val,g);
-    						if(val != DNF_VALUE && val != UNFINISHED_VALUE){
-    						    addToViewingWindow(val*0.8,g);
-    						}
-    					}
-    				}
-				}
-				var p = sorted_cache[0];
-                var topAverage = getAverage(times[sorted_cache[0]],false);
-                if(topAverage >= 0 && topAverage != DNF_VALUE && topAverage != UNFINISHED_VALUE){
-				    addToViewingWindow(topAverage,g);
-                }
-				// If there's zero or one visible points on the graph, include right above the origin for context.
-				if(g["viewcount"] <= 2){ // Edit: I changed it to 2 to more often add visual context.
-					addToViewingWindow(12,g);
-				}
-                var MIN_SPAN = 26; // minimum number of centiseconds
-				g["mid"] = (g["min"]+g["max"])/2.0;
-
-				g["x"] = x;
-				g["y"] = y;
-				g["w"] = w;
-				g["h"] = h;
-				g["ix"] = ix;
-				g["span"] = Math.max(MIN_SPAN,(g["max"]-g["min"])*1.35);
-				g["min"] = g["mid"]-g["span"]/2;
-				g["max"] = g["mid"]+g["span"]/2;
-				g["unit"] = getUnit(g["span"]);
-				g["lmin"] = Math.max(0,Math.ceil(g["min"]/g["unit"])*g["unit"]);
-				g["lmax"] = Math.max(0,Math.floor(g["max"]/g["unit"])*g["unit"]);
-			}
-
-			function drawHoris(ctx, g){
-				for(var yLine = g["lmin"]; yLine <= g["lmax"]; yLine+=g["unit"]){
-					var appY = val_to_y(yLine,g);
-					ctx.fillStyle = "#000000";
-					ctx.font = small_font_size;
-					ctx.textAlign = "center";
-					var s = timeToText(yLine,true)
-					ctx.fillText(s,cW/2,appY+7);
-					var w = ctx.measureText(s).width;
-					var innerX = cW/2-w/2-10;
-					var outerX = cW/2+w/2+10;
-					ctx.fillStyle = "rgba(0,0,0,0.3)";
-					ctx.fillRect(g["x"],appY-1,innerX-g["x"],2);
-					ctx.fillRect(outerX,appY-1,g["x"]+g["w"]-outerX,2);
-				}
-			}
-
-			function drawOriginBorder(ctx,g){
-				ctx.fillStyle = "rgba(0,0,0,0.4)";
-			  var xEdge = Math.max(xToS(0,g),g["x"]);
-			  ctx.fillRect(g["x"], g["y"], xEdge-g["x"], g["h"]);
-			  var yEdge = Math.min(yToS(0,g),g["y"]+g["h"]);
-			  ctx.fillRect(xEdge, yEdge, g["x"]+g["w"]-xEdge, g["y"]+g["h"]-yEdge);
-			}
-			function sumArray(a, s, e){
-				var sum = 0;
-				for(var i = s; i < e; i++){
-					sum += a[i];
-				}
-				return sum;
-			}
-			function val_to_y(val,g){
-				return g["y"]+g["h"]*(1-(val-g["min"])/g["span"]);
-			}
-			function val_to_y_cap(val, g){
-			    return Math.min(Math.max(val_to_y(val,g),g["y"]),g["y"]+g["h"]);
-			}
-			function xToS(x,g){
-				return g["x"]+g["w"]*(x-g["xmin"])/g["span"];
-			}
-			function yToS(y,g){
-				return g["y"]+g["h"]*(1-(y-g["ymin"])/g["span"]);
-			}
-			function sToXCap(sx,g){
-				var fac = (sx-g["x"])/g["w"];
-				return Math.min(Math.max(fac,0),1)*g["span"]+g["xmin"];
-			}
-			function sToYCap(sy,g){
-				var fac = (sy-g["y"])/g["h"];
-				return (1-Math.min(Math.max(fac,0),1))*g["span"]+g["ymin"];
-			}
-			function timeToText(preN, axisLabel){
-				var n = Math.floor(preN);
-				if(n == DNF_VALUE){
-					return "DNF";
-				}
-				var digits = [10,10,10,6,10,6,10,10];
-				var separator = ["","",".","",":","",":","","","","",""];
-				var result = "";
-
-				var digitOn = 0;
-				while(digitOn < 3 || n > 0){
-					result = (n%digits[digitOn])+separator[digitOn]+result;
-					n = Math.floor(n/digits[digitOn]);
-					digitOn += 1;
-				}
-				if(axisLabel && result.length >= 6 && result.substring(result.length-3) == ".00"){
-				    result = result.substring(0,result.length-3);
-				}
+			var result = parseInt(resultStr);
+			if (Number.isNaN(result)) {
+				return 0;
+			} else {
 				return result;
 			}
+		}
 
-      function sigfig(x) {
-        return Number.parseFloat(x).toPrecision(3);
-      }
+		function getVisualTextBoundaries(p, t) {
+			if (p == 2) {
+				b["x"] = 100;
+				b["y"] = 18;
+				b["w"] = 1400;
+				b["h"] = 70;
+				b["ty"] = 70;
+				b["ts"] = 50;
+				return b;
+			}
+			b = {};
+			if (t == 5) {
+				var w = 446;
+				b["x"] = 27 + 1100 * p;
+				b["y"] = 800;
+				b["ts"] = 26;
+				b["w"] = w;
+				b["ty"] = b["y"] + 31;
+			} else {
+				var sign = p * 2 - 1;
+				var mx = 2;
+				var dx = 90;
+				b["x"] = 800 + (730 - t * dx) * sign - dx / 2 + mx;
+				b["y"] = 750;
+				b["ts"] = 33;
+				b["w"] = dx - mx * 2;
+				b["ty"] = b["y"] + 35;
+			}
+			b["h"] = 46;
 
-      function onClick(e){
-      }
-      function onMove(e){
-				var mX = e.offsetX;
-				var mY = e.offsetY;
-				highlight = [-1,-1];
-				for(var p = 0; p < 3; p++){
-					var t_count = (p < 2) ? 6 : 1;
-					for(var t = 0; t < t_count; t++){
-						if(clickInBounds(mX,mY,getVisualTextBoundaries(p,t))){
-							highlight = [p,t];
-						}
+			return b;
+		}
+
+		function getPA(t, p) {
+			var _times = structuredClone(t);
+			_times.pop();
+			_times.sort(function (a, b) { return a - b; });
+			var results = [_times[0], _times[3], UNFINISHED_VALUE, 0, 0, UNFINISHED_VALUE, UNFINISHED_VALUE, UNFINISHED_VALUE];
+			_times.unshift(0);
+			results[3] = getAverage(_times, true);
+			_times.shift();
+			_times.push(DNF_VALUE);
+			results[4] = getAverage(_times, true);
+			_times.pop();
+
+			var pr = getPossibleRank(_times, p);
+			results[2] = pr[0];
+			if (pr[1] == pr[2]) { // the rank is guaranteed, like a range form 4th to 4th
+				results[2] = DNF_VALUE;
+			}
+			_times.push(results[2]);
+			results[5] = getAverage(_times, true);
+			results[6] = pr[1];
+			results[7] = pr[2];
+			results[8] = pr[3] + 1; // include yourself in the rankings!
+			_times.pop();
+			return results;
+		}
+		function getValidsCount() {
+			var validsCount = 0;
+			for (var i = 0; i < times.length; i++) {
+				var sawBad = false;
+				for (var t = 0; t < 5; t++) {
+					if (times[i][t] == 0 || times[i][t] == UNFINISHED_VALUE) {
+						sawBad = true;
 					}
 				}
-            }
-			function onRelease(e){
-				var mX = e.offsetX;
-				var mY = e.offsetY;
-				var resetClicksYesNo = false;
-				for(var p = 0; p < 3; p++){
-				    var t_count = (p < 2) ? 6 : 1;
-					for(var t = 0; t < t_count; t++){
-						if(clickInBounds(mX,mY,getVisualTextBoundaries(p,t))){
-							highlight = [p,t];
-							var option = (t == 5) ? 2 : 1;
-							if(p == 2){
-							    option = 3;
-							}
-							openTextBox(option);
+				if (!sawBad) {
+					validsCount += 1;
+				}
+			}
+			return validsCount;
+		}
+		function getRankOf(p) {
+			for (var rank = 0; rank < times.length; rank++) {
+				if (sorted_cache[rank] == p) {
+					return rank;
+				}
+			}
+			return -1;
+		}
+		function getPossibleRank(selfTimes, p) {
+			var averagesSeen = 0;
+			var validsCount = getValidsCount();
+			var results = [0, 0, 0, validsCount];   // 1st: threshold score, 2nd: best rank, 3rd: worst rank, 4th: total ranks
+			for (var rank = 0; rank < times.length; rank++) {
+				if (sorted_cache[rank] == p) {
+					continue;
+				}
+				var rt = times[sorted_cache[rank]];
+				var rankAverage = getAverage(rt, false);
+				if (rankAverage >= 0 && rankAverage != DNF_VALUE && rankAverage != UNFINISHED_VALUE) {
+					const otherTimesRanked = [...structuredClone(rt).sort(function (a, b) { return a - b })];
+					const selfTimesRanked = [...structuredClone(selfTimes).sort(function (a, b) { return a - b })];
+					var toWin = DNF_VALUE;
+					if (otherTimesRanked[3] >= DNF_VALUE) {
+						if (selfTimesRanked[0] < otherTimesRanked[0]) {
+							toWin = DNF_VALUE;
 						}
-					}
-					/*var x = 30+260*p;
-					if(mX >= x && mX < x+240 && mY >= 90 && mY < 150){
-						if(p == 0){
-							interactTimeLive();
-						}else if(p == 1){
-							resetClicksYesNo = true;
-							resetClicks += 1;
-							if(resetClicks >= resetClicksNeeded){
-								infoReset();
-							}
-						}
-					}*/
-				}
-				if(Math.abs((cW-cH+35)-mX) <= 35 && mY >= 660 && mY < 710){
-				    drawTiesOption = !drawTiesOption;
-				}
-			    if(Math.abs(mY-815) <= 30){
-			        if(Math.abs(mX-725) <= 30){
-			            seedOn = Math.max(0,seedOn-2);
-			        }else if(Math.abs(mX-875) <= 30){
-			            seedOn += 2;
-			            if(seedOn >= names.length){
-			                names.push("Name "+String.fromCharCode(65+seedOn));
-			                names.push("Name "+String.fromCharCode(66+seedOn));
-			                times.push([0,0,0,0,0]);
-			                times.push([0,0,0,0,0]);
-			                updateSort();
-			                endTimeLive();
-			            }
-			        }
-			    }
-				
-				if(!resetClicksYesNo){
-					resetClicks = 0;
-				}
-			}
-			function infoReset(){
-				endTimeLive();
-				times = [[0,0,0,0,0],[0,0,0,0,0]];
-				names = ["Name A","Name B"];
-				compName = "Guangdong Open - Revival & Rival 2026";
-				resetClicks = 0;
-				seedOn = 0;
-				updateSort();
-			}
-			// NOTE: 数字键盘相关函数
-			function showNumpad() {
-				var np = document.getElementById('numpad');
-				np.style.display = 'block';
-				// NOTE: 阻止 numpad 上的 mousedown 夺走 #value 的焦点
-				np.onmousedown = function(e) { e.preventDefault(); };
-				syncNumpadDisplay();
-			}
-			function hideNumpad() {
-				// NOTE: 键盘始终可见，仅清空当前编辑标签
-				document.getElementById('numpad-label').textContent = '';
-				document.getElementById('numpad-value').textContent = '';
-			}
-			function syncNumpadDisplay() {
-				var v = document.getElementById('value');
-				document.getElementById('numpad-value').textContent = v ? v.value : '';
-				// 显示当前编辑位置
-				var label = '';
-				if (highlight[0] >= 0 && highlight[1] >= 0) {
-					var pName = names[seedOn + highlight[0]] || ('Player ' + highlight[0]);
-					label = pName + ' #' + (highlight[1] + 1);
-				}
-				document.getElementById('numpad-label').textContent = label;
-			}
-			function numpadPress(key) {
-				var v = document.getElementById('value');
-				if (!v || textBoxState != 1) return;
-				if (key == 'enter') {
-					// 等同于按 Enter：保存并跳到同选手下一把
-					if (highlight[1] >= 0 && highlight[1] < 4) {
-						var p = highlight[0], t = highlight[1];
-						closeTextBox(true);
-						highlight = [p, t + 1];
-						openTextBox(1);
 					} else {
-						closeTextBox(true);
+						var delta = -2;
+						if (selfTimesRanked[0] < otherTimesRanked[0]) {
+							delta = 1;
+						}
+						var toWin = (rankAverage * 3 + delta) - selfTimesRanked[1] - selfTimesRanked[2];
 					}
-				} else if (key == 'tab') {
-					// 等同于按 Tab：保存并交替跳转
+					if (toWin >= selfTimesRanked[3]) { // you are guaranteed to beat this average
+						results[1] = Math.min(averagesSeen, results[1]);
+						results[2] = Math.min(averagesSeen, results[2]);
+					} else if (toWin >= selfTimesRanked[0]) { // you need a threshold to beat this average
+						if (results[0] == 0) {
+							results[0] = toWin;
+							results[1] = averagesSeen;
+						}
+						results[2] = Math.max(averagesSeen + 1, results[2]);
+					} else { // you cannot beat this average
+						results[1] = Math.max(averagesSeen + 1, results[1]);
+						results[2] = Math.max(averagesSeen + 1, results[2]);
+					}
+					averagesSeen += 1;
+				}
+			}
+			return results;
+		}
+		function val_to_y_arr(arr, g) {
+			;
+			var results = Array(arr.length).fill(0)
+			for (var i = 0; i < arr.length; i++) {
+				results[i] = val_to_y_cap(arr[i], g);
+			}
+			return results;
+		}
+		function drawZigs(x, y, w, ysign, pieces) {
+			var bpw = w / pieces / 2;
+			for (var pe = 0; pe < pieces * 2; pe++) {
+				ctx.beginPath();
+				ctx.moveTo(x + pe * bpw, y);
+				ctx.lineTo(x + (pe + 1) * bpw, y);
+				ctx.lineTo(x + (pe + pe % 2) * bpw, y + bpw * ysign);
+				ctx.closePath();
+				ctx.fill();
+			}
+		}
+		function drawBars(g) {
+			var filleds = [0, 0];
+			var bm = 7;
+			var m = 5;
+			for (var p = 0; p < 2; p++) {
+				var s = p * 2 - 1;
+				for (var t = 0; t < 5; t++) {
+					var b = getVisualTextBoundaries(p, t);
+					if (times[seedOn + p][t] != 0) {
+						ctx.fillStyle = shades[p];
+						var minY = val_to_y_cap(times[seedOn + p][t], g);
+						var maxY = val_to_y_cap(0, g);
+						var uncappedMaxY = val_to_y(0, g);
+						if (uncappedMaxY > maxY) {
+							var bw = b["w"] - 2 * bm;
+							var pieces = 3;
+							var bpw = bw / pieces / 2;
+							var bx = b["x"] + bm;
+							ctx.fillRect(bx, minY, bw, maxY - bpw - minY);
+							drawZigs(bx, maxY - bpw, bw, 1, 3);
+						} else {
+							ctx.fillRect(b["x"] + bm, minY, b["w"] - 2 * bm, (maxY - minY));
+						}
+						if (times[seedOn + p][t] == DNF_VALUE) {
+							drawZigs(b["x"] + bm, minY, b["w"] - 2 * bm, -1, 3);
+						}
+						filleds[p] += 1;
+					}
+				}
+				if (filleds[p] >= 4) {
+					var pa_vals = getPA(times[seedOn + p], seedOn + p);
+					var pa_coor = val_to_y_arr(pa_vals, g);
+					var ax = reformat(p, g);
+					var ay = pa_coor;
+					var shouldDrawMiddle = (pa_vals[7] > pa_vals[6] && (filleds[p] == 4 || timeLive[0] == p));
+					draw_curved_segment(ax, ay, g, shades[p], shouldDrawMiddle);
+
+					ctx.fillStyle = darken(shades[p], 0.7);
+					ctx.font = mid_font_size;
+					ctx.textAlign = (p == 0) ? "right" : "left";
+					var tx = [ax[0] + m * s, ax[1] - m * s];
+					if (filleds[p] == 4 || timeLive[0] == p) {
+						var ay0 = ay[0];
+						var ay1 = ay[1];
+						if (filleds[p] == 4 && pa_vals[2] != DNF_VALUE) {
+							ay1 = Math.min(ay1, ay[2] - 40);
+							ay0 = Math.max(ay0, ay[2] + 45);
+						}
+						ctx.fillText(timeToText(pa_vals[0], false), tx[0], ay0 + 7);
+						ctx.fillText(timeToText(pa_vals[1], false), tx[0], ay1 + 7);
+						if (pa_vals[7] > pa_vals[6]) {
+							ctx.fillText(timeToText(pa_vals[2], false), tx[0], ay[2] - 3);
+							ctx.font = small_font_size;
+							ctx.fillText("for " + rankify(pa_vals[6]) + " / " + pa_vals[8], tx[0], ay[2] + 20);
+
+							var ty = val_to_y_cap(DNF_VALUE, g);
+							ctx.font = small_font_size;
+							ctx.fillText("Can place", tx[0], ty - 4);
+							ctx.font = mid_font_size;
+							ctx.fillText(rankify(pa_vals[6]) + " to " + rankify(pa_vals[7]), tx[0], ty + 26);
+						} else {
+							ctx.font = small_font_size;
+							ctx.fillText("Guaranteed", tx[0], ay[2] - 7);
+							ctx.font = mid_font_size;
+							ctx.fillText(rankify(pa_vals[6]) + " / " + pa_vals[8], tx[0], ay[2] + 21);
+						}
+						ctx.textAlign = (p == 0) ? "left" : "right";
+						var ty = [ay[3] + 7, ay[4] - 21, ay[5] - 7];
+						var gapY = ty[0] - ty[1];
+						if (gapY <= mid_font_size.split(" ")[0] * 1.0) {
+							var dY = (24 - gapY) / 2;
+							ty[0] += dY;
+							ty[1] -= dY;
+						}
+						ctx.font = small_font_size;
+						ctx.fillText("BPA", tx[1], ty[0]);
+						ctx.fillText("WPA", tx[1], ty[1]);
+						ctx.font = mid_font_size;
+						ctx.fillText(timeToText(pa_vals[3], false), tx[1], ty[0] + 28);
+						ctx.fillText(timeToText(pa_vals[4], false), tx[1], ty[1] + 28);
+					} else if (filleds[p] == 5) {
+						ctx.textAlign = (p == 0) ? "left" : "right";
+						var avg = getAverage(times[seedOn + p], true);
+						ctx.font = mid_font_size;
+						ctx.fillText(timeToText(pa_vals[3], false), tx[1], ay[3] + 24);
+						ctx.fillText(timeToText(pa_vals[4], false), tx[1], ay[4] - 4);
+						var ys = [val_to_y_cap(times[seedOn + p][4], g), val_to_y_cap(avg, g)];
+
+						var b = getVisualTextBoundaries(p, 4);
+						var outerX = b["x"] + bm;
+						var innerX = g["ix"][1] + g["ix"][4] + 2;
+						var arrowX = innerX - 18;
+						if (p == 1) {
+							outerX += b["w"] - 2 * bm;
+							innerX = g["ix"][3] - g["ix"][4] - 2;
+							arrowX = innerX + 18;
+						}
+						ax.push(outerX);
+						ax.push(innerX);
+						ax.push(arrowX);
+						draw_curved_line(ax, ys, g, "#000000");
+
+
+
+						var ty = val_to_y_cap(DNF_VALUE, g);
+						ctx.font = small_font_size;
+						ctx.fillText("Placed", tx[0], ty - 4);
+						ctx.font = mid_font_size;
+						ctx.fillText(rankify(getRankOf(seedOn + p)) + " / " + getValidsCount(), tx[0], ty + 26);
+					}
+				}
+			}
+		}
+		function getSortedIndices(test, test2) {
+			var len = test.length;
+			var indices = new Array(len);
+			for (var i = 0; i < len; ++i) indices[i] = i;
+			indices.sort(function (a, b) { return (test[a] < test[b] || (test[a] == test[b] && test2[a] < test2[b])) ? -1 : (test[a] > test[b] || (test[a] == test[b] && test2[a] > test2[b])) ? 1 : 0; });
+			return indices;
+		}
+		function drawAverages(g) {
+			var ix = g["ix"];
+			var im = ix[4];
+			var m = [3, 13, 18];
+			var offsetY = [0, 7.5, 10];
+			var jm = 50;
+			var vm = 3;
+			var max_skew = 60;
+			var cursor = 9999;
+			var type = 0;
+			var typePrev = 0;
+
+			for (var rank = 0; rank < times.length; rank++) {
+				var p = sorted_cache[rank];
+				var average = getAverage(times[p], false);
+				var type = (p == seedOn || p == seedOn + 1) ? 2 : (rank < 3 ? 1 : 0);
+				if (average != UNFINISHED_VALUE && type >= 1) {
+					var y = val_to_y_cap(average, g);
+					var y_wings = val_to_y(average, g);
+					var cy = Math.max(y, 80);
+					cursor = Math.min(cursor - (m[typePrev] + vm + m[type]), cy);
+					var ay = Math.min(Math.max(y_wings, cursor - max_skew), cursor + max_skew);
+					ctx.fillStyle = "#000000";
+					if (p == seedOn + 0 || p == seedOn + 1) {
+						ctx.fillStyle = darken(shades[p - seedOn], 0.7);
+					}
+					ctx.beginPath();
+					ctx.moveTo(ix[1] + im, ay);
+					ctx.lineTo(ix[1] + im + jm, cursor - m[type]);
+					ctx.lineTo(ix[3] - im - jm, cursor - m[type]);
+					ctx.lineTo(ix[3] - im, ay);
+					ctx.lineTo(ix[3] - im - jm, cursor + m[type]);
+					ctx.lineTo(ix[1] + im + jm, cursor + m[type])
+					ctx.closePath();
+					ctx.fill();
+					if (type >= 1) {
+						ctx.fillStyle = "#FFFFFF";
+						ctx.font = (type == 2) ? mid_font_size : small_font_size;
+						ctx.textAlign = "center";
+						ctx.fillText(getLastName(names[p]) + ": " + timeToText(average, false), cW / 2, cursor + offsetY[type]);
+					}
+					var typePrev = type;
+				}
+			}
+		}
+		function getLastName(stri) {
+			var arr = stri.split(" ");
+			var name = arr[arr.length - 1];
+			if (name.length >= 6) {
+				return name.substring(0, 6);
+			}
+			return name;
+		}
+		function reformat(p, g) {
+			var x1 = g["ix"][p * 2];
+			var x2 = g["ix"][p * 2 + 1];
+			return [x1, x2];
+		}
+		function lerp(a, b, x) {
+			return a + (b - a) * x;
+		}
+		function coslerp(a, b, x) {
+			var x2 = 0.5 - 0.5 * Math.cos(x * Math.PI);
+			return lerp(a, b, x2);
+		}
+		function fade(col, fac) {
+			return col.substring(0, col.length - 4) + fac + ")";
+		}
+		function line(coor, col) {
+			ctx.lineWidth = 3;
+			ctx.strokeStyle = col;
+			ctx.beginPath();
+			ctx.moveTo(coor[0], coor[1]);
+			ctx.lineTo(coor[2], coor[3]);
+			ctx.stroke();
+		}
+		function darken(col, fac) {
+			var a = col.indexOf("(") + 1;
+			var b = col.indexOf(")");
+			var startChunk = col.substring(0, a);
+			var midChunk = col.substring(a, b);
+			var endChunk = col.substring(b);
+			var parts = midChunk.split(",");
+			var newChunk = "";
+			for (var i = 0; i < parts.length; i++) {
+				var f = 1;
+				if (i < 3) {
+					f = fac;
+				}
+				newChunk += "," + (f * parts[i]);
+			}
+			newChunk = newChunk.substring(1);
+			return startChunk + newChunk + endChunk;
+		}
+		function draw_curved_segment(x, y, g, col, draw_middle) {
+			ctx.fillStyle = fade(col, 0.25);
+			var dark = darken(col, 0.7);
+			var PIECES = 15;
+			for (var p = 0; p < PIECES; p++) {
+				var prog1 = p / PIECES;
+				var prog2 = (p + 1) / PIECES;
+				var ax = [lerp(x[0], x[1], prog1), lerp(x[0], x[1], prog2)];
+				var ay = [coslerp(y[0], y[3], prog1), coslerp(y[0], y[3], prog2),
+				coslerp(y[1], y[4], prog1), coslerp(y[1], y[4], prog2),
+				coslerp(y[2], y[5], prog1), coslerp(y[2], y[5], prog2)];
+				ctx.beginPath();
+				ctx.moveTo(ax[0], ay[0]);
+				ctx.lineTo(ax[1], ay[1]);
+				ctx.lineTo(ax[1], ay[3]);
+				ctx.lineTo(ax[0], ay[2]);
+				ctx.closePath();
+				ctx.fill();
+				line([ax[0], ay[0], ax[1], ay[1]], dark);
+				line([ax[0], ay[2], ax[1], ay[3]], dark);
+				if (y[2] != y[1] && y[2] != y[0] && draw_middle) {
+					line([ax[0], ay[4], ax[1], ay[5]], dark);
+				}
+			}
+		}
+		function draw_curved_line(x, y, g, col) {
+			var PIECES = 10;
+			for (var p = 0; p < PIECES; p++) {
+				var prog1 = p / PIECES;
+				var prog2 = (p + 1) / PIECES;
+				var ax = [lerp(x[0], x[1], prog1), lerp(x[0], x[1], prog2)];
+				var ay = [coslerp(y[0], y[1], prog1), coslerp(y[0], y[1], prog2)];
+				line([ax[0], ay[0], ax[1], ay[1]], col);
+			}
+			line([x[0], y[0], x[2], y[0]], col);
+			line([x[1], y[1], x[3], y[1]], col);
+			line([x[3], y[1], x[4], y[1] + 18], col);
+			line([x[3], y[1], x[4], y[1] - 18], col);
+		}
+		function drawBackground() {
+			ctx.fillStyle = bgColor;
+			ctx.fillRect(0, 0, cW, cH);
+		}
+		function drawTitle() {
+			ctx.textAlign = "center";
+			for (var p = 0; p < 3; p++) {
+				var t_count = (p < 2) ? 6 : 1;
+				for (var t = 0; t < t_count; t++) {
+					ctx.fillStyle = "#FFFFFF";
+					if (t == highlight[1] && p == highlight[0]) {
+						ctx.fillStyle = "#FF8080";
+					} else if (t != 5 && p < 2 && times[seedOn + p][t] <= 0) {
+						ctx.fillStyle = "#808080";
+					}
+					var b = getVisualTextBoundaries(p, t);
+					ctx.fillRect(b["x"], b["y"], b["w"], b["h"]);
+					ctx.fillStyle = "#000000";
+					ctx.font = b["ts"] + "px Helvetica";
+					var s = compName;
+					if (p < 2 && t == 5) {
+						s = names[seedOn + p];
+					} else if (p < 2) {
+						s = timeToText(times[seedOn + p][t], false);
+					}
+					ctx.fillText(s, b["x"] + b["w"] / 2, b["ty"]);
+				}
+			}
+
+
+
+			ctx.fillStyle = "#FFFFFF";
+			ctx.fillRect(760, 785, 80, 60);
+			ctx.fillStyle = "#000000";
+			ctx.font = small_font_size;
+			ctx.fillText("Seeds", cW / 2, 810);
+			ctx.fillText((seedOn + 1) + "-" + (seedOn + 2), cW / 2, 835);
+
+			ctx.fillStyle = (seedOn >= 1) ? "#FFFFFF" : "#808080";
+			ctx.fillRect(695, 785, 60, 60);
+			ctx.fillStyle = (areTimesFullyFilled() && timeLive[0] == -1) ? "#FF8080" : "#FFFFFF";
+			ctx.fillRect(845, 785, 60, 60);
+			ctx.font = mid_font_size;
+			ctx.fillStyle = "#000000";
+			ctx.fillText("<", cW / 2 - 75, 825);
+			ctx.fillText(">", cW / 2 + 75, 825);
+		}
+		function areTimesFullyFilled() {
+			for (var p = 0; p < 2; p++) {
+				for (var t = 0; t < 5; t++) {
+					if (times[seedOn + p][t] == 0 || times[seedOn + p][t] == UNFINISHED_VALUE) {
+						return false;
+					}
+				}
+			}
+			return true;
+		}
+
+		function getAverageString(p, includeZeros) {
+			var avg = getAverage(times[p], true);
+			if (avg < 0 || avg == DNF_VALUE) {
+				return "???";
+			}
+			return timeToText(avg, false);
+		}
+		function getAverage(arr, includeZeros) {
+			if (!includeZeros) {
+				for (var i = 0; i < 5; i++) {
+					if (arr[i] == 0) {
+						return UNFINISHED_VALUE;
+					}
+				}
+			}
+			var arr_copy = structuredClone(arr);
+			const sorted = [...arr_copy.sort(function (a, b) { return a - b })];
+			if (sorted[3] >= DNF_VALUE) {
+				return DNF_VALUE;
+			}
+			return Math.round((sorted[1] + sorted[2] + sorted[3]) / 3);
+		}
+		function getPossibleAverage(p, type) {
+			const sorted = [...times[p].slice(0, 4)].sort(function (a, b) { return a - b });
+			return [Math.round((sorted[type] + sorted[type + 1] + sorted[type + 2]) / 3), sorted[type * 3]];
+		}
+
+		function getUnit(s) {
+			var units = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 3000, 6000, 12000, 30000, 60000, 120000, 180000, 360000, 720000, 1080000, 2160000, 4320000, 8640000, DNF_VALUE];
+			var u = 0;
+			while (units[u] < s / 9) {
+				u++;
+			}
+			return units[u];
+		}
+
+
+		function drawRotatedText(txt, x, y, r, col, size, align, txtCol, ctx) {
+			ctx.save();
+			ctx.translate(x, y);
+			ctx.rotate(r);
+			if (col.length >= 1) {
+				ctx.fillStyle = col;
+				ctx.fillRect(-5, -24, 300, 30);
+			}
+			ctx.font = size + "px Helvetica";
+			ctx.fillStyle = txtCol;
+			ctx.textAlign = align;
+			ctx.fillText(txt, 0, 0);
+			ctx.restore();
+		}
+
+		function addToViewingWindow(val, g) {
+			if (val != DNF_VALUE) {
+				g["min"] = Math.min(g["min"], val);
+				g["max"] = Math.max(g["max"], val);
+			}
+			g["viewcount"] += 1;
+		}
+		function setGridParameters(x, y, w, h, ix) {
+			// I decided to include (0,0) in the viewing range of the graph no matter what, because it adds context.
+			g["min"] = DNF_VALUE;
+			g["max"] = -DNF_VALUE;
+			g["viewcount"] = 0;
+			for (var p = 0; p < 2; p++) {
+				for (var t = 0; t < 5; t++) {
+					if (times[seedOn + p][t] == 0) { // It's a non-recorded point.
+					} else {
+						var val = times[seedOn + p][t];
+						addToViewingWindow(val, g);
+						if (val != DNF_VALUE && val != UNFINISHED_VALUE) {
+							addToViewingWindow(val * 0.8, g);
+						}
+					}
+				}
+			}
+			var p = sorted_cache[0];
+			var topAverage = getAverage(times[sorted_cache[0]], false);
+			if (topAverage >= 0 && topAverage != DNF_VALUE && topAverage != UNFINISHED_VALUE) {
+				addToViewingWindow(topAverage, g);
+			}
+			// If there's zero or one visible points on the graph, include right above the origin for context.
+			if (g["viewcount"] <= 2) { // Edit: I changed it to 2 to more often add visual context.
+				addToViewingWindow(12, g);
+			}
+			var MIN_SPAN = 26; // minimum number of centiseconds
+			g["mid"] = (g["min"] + g["max"]) / 2.0;
+
+			g["x"] = x;
+			g["y"] = y;
+			g["w"] = w;
+			g["h"] = h;
+			g["ix"] = ix;
+			g["span"] = Math.max(MIN_SPAN, (g["max"] - g["min"]) * 1.35);
+			g["min"] = g["mid"] - g["span"] / 2;
+			g["max"] = g["mid"] + g["span"] / 2;
+			g["unit"] = getUnit(g["span"]);
+			g["lmin"] = Math.max(0, Math.ceil(g["min"] / g["unit"]) * g["unit"]);
+			g["lmax"] = Math.max(0, Math.floor(g["max"] / g["unit"]) * g["unit"]);
+		}
+
+		function drawHoris(ctx, g) {
+			for (var yLine = g["lmin"]; yLine <= g["lmax"]; yLine += g["unit"]) {
+				var appY = val_to_y(yLine, g);
+				ctx.fillStyle = "#000000";
+				ctx.font = small_font_size;
+				ctx.textAlign = "center";
+				var s = timeToText(yLine, true)
+				ctx.fillText(s, cW / 2, appY + 7);
+				var w = ctx.measureText(s).width;
+				var innerX = cW / 2 - w / 2 - 10;
+				var outerX = cW / 2 + w / 2 + 10;
+				ctx.fillStyle = "rgba(0,0,0,0.3)";
+				ctx.fillRect(g["x"], appY - 1, innerX - g["x"], 2);
+				ctx.fillRect(outerX, appY - 1, g["x"] + g["w"] - outerX, 2);
+			}
+		}
+
+		function drawOriginBorder(ctx, g) {
+			ctx.fillStyle = "rgba(0,0,0,0.4)";
+			var xEdge = Math.max(xToS(0, g), g["x"]);
+			ctx.fillRect(g["x"], g["y"], xEdge - g["x"], g["h"]);
+			var yEdge = Math.min(yToS(0, g), g["y"] + g["h"]);
+			ctx.fillRect(xEdge, yEdge, g["x"] + g["w"] - xEdge, g["y"] + g["h"] - yEdge);
+		}
+		function sumArray(a, s, e) {
+			var sum = 0;
+			for (var i = s; i < e; i++) {
+				sum += a[i];
+			}
+			return sum;
+		}
+		function val_to_y(val, g) {
+			return g["y"] + g["h"] * (1 - (val - g["min"]) / g["span"]);
+		}
+		function val_to_y_cap(val, g) {
+			return Math.min(Math.max(val_to_y(val, g), g["y"]), g["y"] + g["h"]);
+		}
+		function xToS(x, g) {
+			return g["x"] + g["w"] * (x - g["xmin"]) / g["span"];
+		}
+		function yToS(y, g) {
+			return g["y"] + g["h"] * (1 - (y - g["ymin"]) / g["span"]);
+		}
+		function sToXCap(sx, g) {
+			var fac = (sx - g["x"]) / g["w"];
+			return Math.min(Math.max(fac, 0), 1) * g["span"] + g["xmin"];
+		}
+		function sToYCap(sy, g) {
+			var fac = (sy - g["y"]) / g["h"];
+			return (1 - Math.min(Math.max(fac, 0), 1)) * g["span"] + g["ymin"];
+		}
+		function timeToText(preN, axisLabel) {
+			var n = Math.floor(preN);
+			if (n == DNF_VALUE) {
+				return "DNF";
+			}
+			var digits = [10, 10, 10, 6, 10, 6, 10, 10];
+			var separator = ["", "", ".", "", ":", "", ":", "", "", "", "", ""];
+			var result = "";
+
+			var digitOn = 0;
+			while (digitOn < 3 || n > 0) {
+				result = (n % digits[digitOn]) + separator[digitOn] + result;
+				n = Math.floor(n / digits[digitOn]);
+				digitOn += 1;
+			}
+			if (axisLabel && result.length >= 6 && result.substring(result.length - 3) == ".00") {
+				result = result.substring(0, result.length - 3);
+			}
+			return result;
+		}
+
+		function sigfig(x) {
+			return Number.parseFloat(x).toPrecision(3);
+		}
+
+		function onClick(e) {
+		}
+		function onMove(e) {
+			var mX = e.offsetX;
+			var mY = e.offsetY;
+			highlight = [-1, -1];
+			for (var p = 0; p < 3; p++) {
+				var t_count = (p < 2) ? 6 : 1;
+				for (var t = 0; t < t_count; t++) {
+					if (clickInBounds(mX, mY, getVisualTextBoundaries(p, t))) {
+						highlight = [p, t];
+					}
+				}
+			}
+		}
+		function onRelease(e) {
+			var mX = e.offsetX;
+			var mY = e.offsetY;
+			var resetClicksYesNo = false;
+			for (var p = 0; p < 3; p++) {
+				var t_count = (p < 2) ? 6 : 1;
+				for (var t = 0; t < t_count; t++) {
+					if (clickInBounds(mX, mY, getVisualTextBoundaries(p, t))) {
+						highlight = [p, t];
+						var option = (t == 5) ? 2 : 1;
+						if (p == 2) {
+							option = 3;
+						}
+						openTextBox(option);
+					}
+				}
+				/*var x = 30+260*p;
+				if(mX >= x && mX < x+240 && mY >= 90 && mY < 150){
+					if(p == 0){
+						interactTimeLive();
+					}else if(p == 1){
+						resetClicksYesNo = true;
+						resetClicks += 1;
+						if(resetClicks >= resetClicksNeeded){
+							infoReset();
+						}
+					}
+				}*/
+			}
+			if (Math.abs((cW - cH + 35) - mX) <= 35 && mY >= 660 && mY < 710) {
+				drawTiesOption = !drawTiesOption;
+			}
+			if (Math.abs(mY - 815) <= 30) {
+				if (Math.abs(mX - 725) <= 30) {
+					seedOn = Math.max(0, seedOn - 2);
+				} else if (Math.abs(mX - 875) <= 30) {
+					seedOn += 2;
+					if (seedOn >= names.length) {
+						names.push("Name " + String.fromCharCode(65 + seedOn));
+						names.push("Name " + String.fromCharCode(66 + seedOn));
+						times.push([0, 0, 0, 0, 0]);
+						times.push([0, 0, 0, 0, 0]);
+						updateSort();
+						endTimeLive();
+					}
+				}
+			}
+
+			if (!resetClicksYesNo) {
+				resetClicks = 0;
+			}
+		}
+		function infoReset() {
+			endTimeLive();
+			times = [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0]];
+			names = ["Name A", "Name B"];
+			compName = "Guangdong Open - Revival & Rival 2026";
+			resetClicks = 0;
+			seedOn = 0;
+			updateSort();
+		}
+		// NOTE: 数字键盘相关函数
+		function showNumpad() {
+			var np = document.getElementById('numpad');
+			np.style.display = 'block';
+			// NOTE: 阻止 numpad 上的 mousedown 夺走 #value 的焦点
+			np.onmousedown = function (e) { e.preventDefault(); };
+			syncNumpadDisplay();
+		}
+		function hideNumpad() {
+			// NOTE: 键盘始终可见，仅清空当前编辑标签
+			document.getElementById('numpad-label').textContent = '';
+			document.getElementById('numpad-value').textContent = '';
+		}
+		function syncNumpadDisplay() {
+			var v = document.getElementById('value');
+			document.getElementById('numpad-value').textContent = v ? v.value : '';
+			// 显示当前编辑位置
+			var label = '';
+			if (highlight[0] >= 0 && highlight[1] >= 0) {
+				var pName = names[seedOn + highlight[0]] || ('Player ' + highlight[0]);
+				label = pName + ' #' + (highlight[1] + 1);
+			}
+			document.getElementById('numpad-label').textContent = label;
+		}
+		function numpadPress(key) {
+			var v = document.getElementById('value');
+			if (!v || textBoxState != 1) return;
+			if (key == 'enter') {
+				// 等同于按 Enter：保存并跳到同选手下一把
+				if (highlight[1] >= 0 && highlight[1] < 4) {
 					var p = highlight[0], t = highlight[1];
 					closeTextBox(true);
+					highlight = [p, t + 1];
+					openTextBox(1);
+				} else {
+					closeTextBox(true);
+				}
+			} else if (key == 'tab') {
+				// 等同于按 Tab：保存并交替跳转
+				var p = highlight[0], t = highlight[1];
+				closeTextBox(true);
+				if (p == 0) {
+					highlight = [1, t];
+				} else if (t < 4) {
+					highlight = [0, t + 1];
+				} else {
+					return;
+				}
+				openTextBox(1);
+			} else if (key == 'dnf') {
+				v.value = 'DNF';
+				syncNumpadDisplay();
+				// 自动跳到下一把
+				if (highlight[1] >= 0 && highlight[1] < 4) {
+					var p = highlight[0], t = highlight[1];
+					closeTextBox(true);
+					highlight = [p, t + 1];
+					openTextBox(1);
+				} else {
+					closeTextBox(true);
+				}
+			} else if (key == 'backspace') {
+				if (v.value.length > 0) {
+					v.value = v.value.slice(0, -1);
+					syncNumpadDisplay();
+				} else if (highlight[1] > 0) {
+					// NOTE: 当前单元格已空，跳到同选手的前一个单元格继续删
+					var p = highlight[0], t = highlight[1];
+					closeTextBox(true);
+					highlight = [p, t - 1];
+					openTextBox(1);
+					var vPrev = document.getElementById('value');
+					if (vPrev && vPrev.value.length > 0) {
+						vPrev.value = vPrev.value.slice(0, -1);
+						syncNumpadDisplay();
+					}
+				}
+			} else {
+				// 字符键：0-9, '.', ':'
+				v.value += key;
+				syncNumpadDisplay();
+			}
+			v.focus();
+		}
+		function onKey(e) {
+			if (e.keyCode == 32) { // SPACE
+				interactTimeLive();
+			} else if (e.keyCode == 13) { // ENTER
+				if (textBoxState == 0) {
+					if (highlight[0] == -1) {
+						highlight = getFirstUnfilledTime(true);
+					}
+					openTextBox(1);
+				} else if (textBoxState == 1 && highlight[1] >= 0 && highlight[1] < 4) {
+					var p = highlight[0];
+					var t = highlight[1];
+					closeTextBox(true);
+					highlight = [p, t + 1];
+					openTextBox(1);
+				} else {
+					closeTextBox(true);
+				}
+			} else if (e.keyCode == 9) { // TAB — 交替跳转两个选手
+				if (textBoxState == 1 && highlight[0] >= 0) {
+					e.preventDefault();
+					var p = highlight[0];
+					var t = highlight[1];
+					closeTextBox(true);
+					// NOTE: p0→p1 同一把；p1→p0 下一把
 					if (p == 0) {
 						highlight = [1, t];
 					} else if (t < 4) {
 						highlight = [0, t + 1];
 					} else {
+						// p1 最后一把，结束
 						return;
 					}
 					openTextBox(1);
-				} else if (key == 'dnf') {
-					v.value = 'DNF';
-					syncNumpadDisplay();
-					// 自动跳到下一把
-					if (highlight[1] >= 0 && highlight[1] < 4) {
+				}
+			} else if (e.keyCode == 27) { // ESCAPE
+				if (textBoxState >= 1) {
+					closeTextBox(false);
+				}
+			} else if (e.keyCode == 8) { // BACKSPACE
+				// NOTE: 输入框为空时跨单元格向前删，与 numpad DEL 行为一致
+				if (textBoxState == 1) {
+					var v = document.getElementById('value');
+					if (v && v.value.length == 0 && highlight[1] > 0) {
+						e.preventDefault();
+						numpadPress('backspace');
+					}
+				}
+			} else if (e.keyCode == 46) { // DELETE
+				// NOTE: 输入框为空时跨单元格往后删（清除下一个单元格）
+				if (textBoxState == 1) {
+					var v = document.getElementById('value');
+					if (v && highlight[1] < 4) {
+						e.preventDefault();
 						var p = highlight[0], t = highlight[1];
 						closeTextBox(true);
 						highlight = [p, t + 1];
 						openTextBox(1);
-					} else {
-						closeTextBox(true);
+						var vNext = document.getElementById('value');
+						if (vNext) {
+							vNext.value = '';
+							syncNumpadDisplay();
+						}
 					}
-				} else if (key == 'backspace') {
-					v.value = v.value.slice(0, -1);
-					syncNumpadDisplay();
+				}
+			}
+			resetClicks = 0;
+		}
+		function interactTimeLive() {
+			if (textBoxState == 0) {
+				if (timeLive[0] == -1) {
+					startTimeLive();
 				} else {
-					// 字符键：0-9, '.', ':'
-					v.value += key;
-					syncNumpadDisplay();
-				}
-				v.focus();
-			}
-			function onKey(e) {
-		    if(e.keyCode == 32){ // SPACE
-					interactTimeLive();
-				}else if(e.keyCode == 13){ // ENTER
-					if(textBoxState == 0){
-						if(highlight[0] == -1){
-							highlight = getFirstUnfilledTime(true);
-						}
-						openTextBox(1);
-					}else if(textBoxState == 1 && highlight[1] >= 0 && highlight[1] < 4){
-						var p = highlight[0];
-						var t = highlight[1];
-						closeTextBox(true);
-						highlight = [p, t + 1];
-						openTextBox(1);
-					}else{
-						closeTextBox(true);
-					}
-				}else if(e.keyCode == 9){ // TAB — 交替跳转两个选手
-					if(textBoxState == 1 && highlight[0] >= 0){
-						e.preventDefault();
-						var p = highlight[0];
-						var t = highlight[1];
-						closeTextBox(true);
-						// NOTE: p0→p1 同一把；p1→p0 下一把
-						if(p == 0){
-							highlight = [1, t];
-						}else if(t < 4){
-							highlight = [0, t + 1];
-						}else{
-							// p1 最后一把，结束
-							return;
-						}
-						openTextBox(1);
-					}
-				}else if(e.keyCode == 27){ // ESCAPE
-					if(textBoxState >= 1){
-						closeTextBox(false);
-					}
-				}
-				resetClicks = 0;
-			}
-			function interactTimeLive(){
-				if(textBoxState == 0){
-					if(timeLive[0] == -1){
-						startTimeLive();
-					}else{
-						endTimeLive();
-					}
+					endTimeLive();
 				}
 			}
-			function getBestSingle(arr){
-			    var record = DNF_VALUE;
-			    for(var i = 0; i < arr.length; i++){
-			        if(arr[i] > 0 && arr[i] < record){
-			            record = arr[i];
-			        }
-			    }
-			    return record;
-			}
-			function startTimeLive(){
-				var choice = [-1,-1];
-				choice = getFirstUnfilledTime(true);
-				if(choice[0] >= 0){
-					timeLive = choice;
-					timeLiveStart = rightNow();
+		}
+		function getBestSingle(arr) {
+			var record = DNF_VALUE;
+			for (var i = 0; i < arr.length; i++) {
+				if (arr[i] > 0 && arr[i] < record) {
+					record = arr[i];
 				}
 			}
-			function updateTimeLive(){
-				if(timeLive[0] >= 0){
-				    updateTime(seedOn+timeLive[0],timeLive[1],Math.round((rightNow()-timeLiveStart)/10));
-				}
+			return record;
+		}
+		function startTimeLive() {
+			var choice = [-1, -1];
+			choice = getFirstUnfilledTime(true);
+			if (choice[0] >= 0) {
+				timeLive = choice;
+				timeLiveStart = rightNow();
 			}
-			function updateTime(a,b,x){
-			    times[a][b] = x;
-			    updateSort();
+		}
+		function updateTimeLive() {
+			if (timeLive[0] >= 0) {
+				updateTime(seedOn + timeLive[0], timeLive[1], Math.round((rightNow() - timeLiveStart) / 10));
 			}
-			function updateSort(){
-			    var avgs = new Array(times.length);
-			    var singles = new Array(times.length);
-                for(var p = 0; p < times.length; p++){
-                    avgs[p] = getAverage(times[p],false);
-                    singles[p] = getBestSingle(times[p]);
-                }
-                sorted_cache = getSortedIndices(avgs,singles);
-			    // NOTE: 每次数据更新后刷新指标对比表格和 URL
-			    if (typeof renderCalcTable === 'function') renderCalcTable();
-			    if (typeof syncToUrl === 'function') syncToUrl();
+		}
+		function updateTime(a, b, x) {
+			times[a][b] = x;
+			updateSort();
+		}
+		function updateSort() {
+			var avgs = new Array(times.length);
+			var singles = new Array(times.length);
+			for (var p = 0; p < times.length; p++) {
+				avgs[p] = getAverage(times[p], false);
+				singles[p] = getBestSingle(times[p]);
 			}
-			function endTimeLive(){
-				if(timeLive[0] >= 0){
-					updateTimeLive();
-					timeLive = [-1,-1];
-				}
+			sorted_cache = getSortedIndices(avgs, singles);
+			// NOTE: 每次数据更新后刷新指标对比表格和 URL
+			if (typeof renderCalcTable === 'function') renderCalcTable();
+			if (typeof syncToUrl === 'function') syncToUrl();
+		}
+		function endTimeLive() {
+			if (timeLive[0] >= 0) {
+				updateTimeLive();
+				timeLive = [-1, -1];
 			}
-			function getFirstUnfilledTime(countLiveTime){
-				var player = (highlight[1] == 5) ? highlight[0] : -1;
-				for(var t = 0; t < 5; t++){
-					for(var p = 0; p < 2; p++){
-						if((times[seedOn+p][t] == 0 && (player == -1 || player == p)) ||
-					(countLiveTime && timeLive[0] == p && timeLive[1] == t)){
-							return [p,t];
-						}
+		}
+		function getFirstUnfilledTime(countLiveTime) {
+			var player = (highlight[1] == 5) ? highlight[0] : -1;
+			for (var t = 0; t < 5; t++) {
+				for (var p = 0; p < 2; p++) {
+					if ((times[seedOn + p][t] == 0 && (player == -1 || player == p)) ||
+						(countLiveTime && timeLive[0] == p && timeLive[1] == t)) {
+						return [p, t];
 					}
 				}
-				return [-1,-1];
 			}
-			function dist(x1, y1, x2, y2){
-				var dx = x2-x1;
-				var dy = y2-y1;
-				return Math.sqrt(dx*dx+dy*dy);
-			}
-      function rightNow(){
-				var currentTime = new Date();
-				return currentTime.getTime();
-			}
-        function colorToString(r,g,b){
+			return [-1, -1];
+		}
+		function dist(x1, y1, x2, y2) {
+			var dx = x2 - x1;
+			var dy = y2 - y1;
+			return Math.sqrt(dx * dx + dy * dy);
+		}
+		function rightNow() {
+			var currentTime = new Date();
+			return currentTime.getTime();
+		}
+		function colorToString(r, g, b) {
 			var r1 = Math.floor(r).toString(16);
-			if(r1.length == 1) r1 = "0"+r1;
+			if (r1.length == 1) r1 = "0" + r1;
 			var g1 = Math.floor(g).toString(16);
-			if(g1.length == 1) g1 = "0"+g1;
+			if (g1.length == 1) g1 = "0" + g1;
 			var b1 = Math.floor(b).toString(16);
-			if(b1.length == 1) b1 = "0"+b1;
-			return "#"+r1+g1+b1;
+			if (b1.length == 1) b1 = "0" + b1;
+			return "#" + r1 + g1 + b1;
 		}
-		function drawCredits(){
+		function drawCredits() {
 		}
-		</script>
-		<noscript>
-			<h3>Head-to-Head Average of 5 Calculator</h3>
-		</noscript>
-		<h2 id="blah">
-			<div id="calc-section">
-				<!-- NOTE: 手机端数字键盘 -->
-				<div id="numpad">
-					<div id="numpad-display"><span id="numpad-label"></span><span id="numpad-value"></span></div>
-					<div id="numpad-grid">
-						<button class="np-btn np-digit" onclick="numpadPress('7')">7</button>
-						<button class="np-btn np-digit" onclick="numpadPress('8')">8</button>
-						<button class="np-btn np-digit" onclick="numpadPress('9')">9</button>
-						<button class="np-btn np-op" onclick="numpadPress('backspace')">DEL</button>
-						<button class="np-btn np-digit" onclick="numpadPress('4')">4</button>
-						<button class="np-btn np-digit" onclick="numpadPress('5')">5</button>
-						<button class="np-btn np-digit" onclick="numpadPress('6')">6</button>
-						<button class="np-btn np-op" onclick="numpadPress('dnf')">DNF</button>
-						<button class="np-btn np-digit" onclick="numpadPress('1')">1</button>
-						<button class="np-btn np-digit" onclick="numpadPress('2')">2</button>
-						<button class="np-btn np-digit" onclick="numpadPress('3')">3</button>
-						<button class="np-btn np-digit" onclick="numpadPress(':')">:</button>
-						<button class="np-btn np-digit" onclick="numpadPress('0')">0</button>
-						<button class="np-btn np-digit" onclick="numpadPress('.')">.</button>
-						<button class="np-btn np-action" onclick="numpadPress('enter')">OK</button>
-						<button class="np-btn np-action-alt" onclick="numpadPress('tab')">TAB</button>
-					</div>
-				</div>
-				<table id="calc-table">
-					<thead>
-						<tr><th>Metric</th><th id="calc-th-a">Seed 1</th><th id="calc-th-b">Seed 2</th></tr>
-					</thead>
-					<tbody id="calc-tbody"></tbody>
-				</table>
-				<div class="links">
-					<p><a href="https://www.youtube.com/watch?v=92Dg-iV5o0c">Demonstration video explaining how this works</a></p>
-					<p><a href="https://github.com/carykh/hthgrapher">Source Code on GitHub</a></p>
+	</script>
+	<noscript>
+		<h3>Head-to-Head Average of 5 Calculator</h3>
+	</noscript>
+	<h2 id="blah">
+		<div id="calc-section">
+			<!-- NOTE: 手机端数字键盘 -->
+			<div id="numpad">
+				<div id="numpad-display"><span id="numpad-label"></span><span id="numpad-value"></span></div>
+				<div id="numpad-grid">
+					<button class="np-btn np-digit" onclick="numpadPress('7')">7</button>
+					<button class="np-btn np-digit" onclick="numpadPress('8')">8</button>
+					<button class="np-btn np-digit" onclick="numpadPress('9')">9</button>
+					<button class="np-btn np-op" onclick="numpadPress('backspace')">DEL</button>
+					<button class="np-btn np-digit" onclick="numpadPress('4')">4</button>
+					<button class="np-btn np-digit" onclick="numpadPress('5')">5</button>
+					<button class="np-btn np-digit" onclick="numpadPress('6')">6</button>
+					<button class="np-btn np-op" onclick="numpadPress('dnf')">DNF</button>
+					<button class="np-btn np-digit" onclick="numpadPress('1')">1</button>
+					<button class="np-btn np-digit" onclick="numpadPress('2')">2</button>
+					<button class="np-btn np-digit" onclick="numpadPress('3')">3</button>
+					<button class="np-btn np-digit" onclick="numpadPress(':')">:</button>
+					<button class="np-btn np-digit" onclick="numpadPress('0')">0</button>
+					<button class="np-btn np-digit" onclick="numpadPress('.')">.</button>
+					<button class="np-btn np-action" onclick="numpadPress('enter')">OK</button>
+					<button class="np-btn np-action-alt" onclick="numpadPress('tab')">TAB</button>
 				</div>
 			</div>
-        </h2>
+			<table id="calc-table">
+				<thead>
+					<tr>
+						<th>Metric</th>
+						<th id="calc-th-a">Seed 1</th>
+						<th id="calc-th-b">Seed 2</th>
+					</tr>
+				</thead>
+				<tbody id="calc-tbody"></tbody>
+			</table>
+			<div class="links">
+				<p><a href="https://www.youtube.com/watch?v=92Dg-iV5o0c">Demonstration video explaining how this
+						works</a></p>
+				<p><a href="https://github.com/carykh/hthgrapher">Source Code on GitHub</a></p>
+			</div>
+		</div>
+	</h2>
 	<script src="calc.js?v=2"></script>
 	<script>
-	// NOTE: 每个 seed 的 tavg(目标平均)存储，单位 centiseconds
-	var targetAvgs = {};
+		// NOTE: 每个 seed 的 tavg(目标平均)存储，单位 centiseconds
+		var targetAvgs = {};
 
-	function getTavg(seedIdx) {
-		return targetAvgs[seedIdx] || 0;
-	}
-	function setTavg(seedIdx, val) {
-		targetAvgs[seedIdx] = val;
-		renderCalcTable();
-	}
-
-	// NOTE: 渲染指标对比表格 — 每次 updateSort() 调用时触发
-	function renderCalcTable() {
-		var tbody = document.getElementById('calc-tbody');
-		if (!tbody) return;
-
-		var t0 = times[seedOn];
-		var t1 = times[seedOn + 1];
-		var r0 = CalcEngine.compute(t0);
-		var r1 = CalcEngine.compute(t1);
-
-		// 更新表头为当前选手名
-		document.getElementById('calc-th-a').textContent = names[seedOn];
-		document.getElementById('calc-th-b').textContent = names[seedOn + 1];
-
-		if (!r0 && !r1) {
-			tbody.innerHTML = '<tr><td colspan="3" style="color:#888">Enter times above to see metrics</td></tr>';
-			return;
+		function getTavg(seedIdx) {
+			return targetAvgs[seedIdx] || 0;
+		}
+		function setTavg(seedIdx, val) {
+			targetAvgs[seedIdx] = val;
+			renderCalcTable();
 		}
 
-		// NOTE: 指标定义表 — [显示名, key, 是否越小越好]
-		var metrics = [
-			['Best', 'best', true],
-			['Avg (Ao5)', 'avg', true],
-			['BAo5', 'bao5', true],
-			['WAo5', 'wao5', true],
-			['Mo5', 'mo5', true],
-			['BPA', 'bpa', true],
-			['WPA', 'wpa', true],
-			['BestC', 'bestC', true],
-			['Median', 'median', true],
-			['WorstC', 'worstC', true],
-			['Worst', 'worst', true],
-			['Mo2', 'mo2', true],
-			['Mo3', 'mo3', true],
-			['Mo4', 'mo4', true],
-			['Mean', 'mo5', true],
-			['Variance', 'variance', false],
-			['Best/Avg', 'bestAvgRatio', false],
-		];
+		// NOTE: 渲染指标对比表格 — 每次 updateSort() 调用时触发
+		function renderCalcTable() {
+			var tbody = document.getElementById('calc-tbody');
+			if (!tbody) return;
 
-		var html = '';
-		for (var i = 0; i < metrics.length; i++) {
-			var label = metrics[i][0];
-			var key = metrics[i][1];
-			var lowerBetter = metrics[i][2];
+			var t0 = times[seedOn];
+			var t1 = times[seedOn + 1];
+			var r0 = CalcEngine.compute(t0);
+			var r1 = CalcEngine.compute(t1);
 
-			var v0 = r0 ? r0[key] : null;
-			var v1 = r1 ? r1[key] : null;
+			// 更新表头为当前选手名
+			document.getElementById('calc-th-a').textContent = names[seedOn];
+			document.getElementById('calc-th-b').textContent = names[seedOn + 1];
 
-			// 跳过两边都没有有效值的指标
-			var hasV0 = (v0 !== undefined && v0 !== null);
-			var hasV1 = (v1 !== undefined && v1 !== null);
-			if (!hasV0 && !hasV1) continue;
-
-			// 格式化显示值
-			var s0, s1;
-			if (key === 'variance') {
-				s0 = (v0 !== null && v0 !== undefined) ? v0.toFixed(2) : '-';
-				s1 = (v1 !== null && v1 !== undefined) ? v1.toFixed(2) : '-';
-			} else if (key === 'bestAvgRatio') {
-				s0 = (v0 !== null && v0 !== undefined) ? v0.toFixed(2) : '-';
-				s1 = (v1 !== null && v1 !== undefined) ? v1.toFixed(2) : '-';
-			} else {
-				s0 = CalcEngine.formatTime(v0);
-				s1 = CalcEngine.formatTime(v1);
+			if (!r0 && !r1) {
+				tbody.innerHTML = '<tr><td colspan="3" style="color:#888">Enter times above to see metrics</td></tr>';
+				return;
 			}
 
-			// 判断谁更优
-			var cls0 = '';
-			var cls1 = '';
-			if (v0 !== null && v0 !== undefined && v1 !== null && v1 !== undefined
-				&& v0 !== DNF_VALUE && v1 !== DNF_VALUE) {
-				if (lowerBetter) {
-					if (v0 < v1) cls0 = 'calc-better';
-					else if (v1 < v0) cls1 = 'calc-better';
+			// NOTE: 指标定义表 — [显示名, key, 是否越小越好]
+			var metrics = [
+				['Best', 'best', true],
+				['Avg (Ao5)', 'avg', true],
+				['BAo5', 'bao5', true],
+				['WAo5', 'wao5', true],
+				['Mo5', 'mo5', true],
+				['BPA', 'bpa', true],
+				['WPA', 'wpa', true],
+				['BestC', 'bestC', true],
+				['Median', 'median', true],
+				['WorstC', 'worstC', true],
+				['Worst', 'worst', true],
+				['Mo2', 'mo2', true],
+				['Mo3', 'mo3', true],
+				['Mo4', 'mo4', true],
+				['Mean', 'mo5', true],
+				['Variance', 'variance', false],
+				['Best/Avg', 'bestAvgRatio', false],
+			];
+
+			var html = '';
+			for (var i = 0; i < metrics.length; i++) {
+				var label = metrics[i][0];
+				var key = metrics[i][1];
+				var lowerBetter = metrics[i][2];
+
+				var v0 = r0 ? r0[key] : null;
+				var v1 = r1 ? r1[key] : null;
+
+				// 跳过两边都没有有效值的指标
+				var hasV0 = (v0 !== undefined && v0 !== null);
+				var hasV1 = (v1 !== undefined && v1 !== null);
+				if (!hasV0 && !hasV1) continue;
+
+				// 格式化显示值
+				var s0, s1;
+				if (key === 'variance') {
+					s0 = (v0 !== null && v0 !== undefined) ? v0.toFixed(2) : '-';
+					s1 = (v1 !== null && v1 !== undefined) ? v1.toFixed(2) : '-';
+				} else if (key === 'bestAvgRatio') {
+					s0 = (v0 !== null && v0 !== undefined) ? v0.toFixed(2) : '-';
+					s1 = (v1 !== null && v1 !== undefined) ? v1.toFixed(2) : '-';
 				} else {
-					if (key === 'variance') {
+					s0 = CalcEngine.formatTime(v0);
+					s1 = CalcEngine.formatTime(v1);
+				}
+
+				// 判断谁更优
+				var cls0 = '';
+				var cls1 = '';
+				if (v0 !== null && v0 !== undefined && v1 !== null && v1 !== undefined
+					&& v0 !== DNF_VALUE && v1 !== DNF_VALUE) {
+					if (lowerBetter) {
 						if (v0 < v1) cls0 = 'calc-better';
 						else if (v1 < v0) cls1 = 'calc-better';
-					} else if (key === 'bestAvgRatio') {
-						if (v0 > v1) cls0 = 'calc-better';
-						else if (v1 > v0) cls1 = 'calc-better';
+					} else {
+						if (key === 'variance') {
+							if (v0 < v1) cls0 = 'calc-better';
+							else if (v1 < v0) cls1 = 'calc-better';
+						} else if (key === 'bestAvgRatio') {
+							if (v0 > v1) cls0 = 'calc-better';
+							else if (v1 > v0) cls1 = 'calc-better';
+						}
 					}
 				}
+
+				html += '<tr>';
+				html += '<td>' + label + '</td>';
+				html += '<td class="' + cls0 + '">' + s0 + '</td>';
+				html += '<td class="' + cls1 + '">' + s1 + '</td>';
+				html += '</tr>';
 			}
 
-			html += '<tr>';
-			html += '<td>' + label + '</td>';
-			html += '<td class="' + cls0 + '">' + s0 + '</td>';
-			html += '<td class="' + cls1 + '">' + s1 + '</td>';
+			// NOTE: tavg 目标平均输入行 + 阈值行
+			var tavgVal0 = getTavg(seedOn);
+			var tavgVal1 = getTavg(seedOn + 1);
+			// tavg 输入行
+			var tvStr0 = tavgVal0 > 0 ? CalcEngine.formatTime(tavgVal0) : '';
+			var tvStr1 = tavgVal1 > 0 ? CalcEngine.formatTime(tavgVal1) : '';
+			html += '<tr style="background:#d4e6d4">';
+			html += '<td>Target Avg</td>';
+			html += '<td><input class="tavg-input" id="tavg-input-0" value="' + tvStr0 + '" placeholder="e.g. 5.00" onchange="onTavgChange(0)"></td>';
+			html += '<td><input class="tavg-input" id="tavg-input-1" value="' + tvStr1 + '" placeholder="e.g. 5.00" onchange="onTavgChange(1)"></td>';
 			html += '</tr>';
-		}
 
-		// NOTE: tavg 目标平均输入行 + 阈值行
-		var tavgVal0 = getTavg(seedOn);
-		var tavgVal1 = getTavg(seedOn + 1);
-		// tavg 输入行
-		var tvStr0 = tavgVal0 > 0 ? CalcEngine.formatTime(tavgVal0) : '';
-		var tvStr1 = tavgVal1 > 0 ? CalcEngine.formatTime(tavgVal1) : '';
-		html += '<tr style="background:#d4e6d4">';
-		html += '<td>Target Avg</td>';
-		html += '<td><input class="tavg-input" id="tavg-input-0" value="' + tvStr0 + '" placeholder="e.g. 5.00" onchange="onTavgChange(0)"></td>';
-		html += '<td><input class="tavg-input" id="tavg-input-1" value="' + tvStr1 + '" placeholder="e.g. 5.00" onchange="onTavgChange(1)"></td>';
-		html += '</tr>';
+			// 阈值计算
+			var th0 = tavgVal0 > 0 ? CalcEngine.computeThresholds(t0, tavgVal0) : null;
+			var th1 = tavgVal1 > 0 ? CalcEngine.computeThresholds(t1, tavgVal1) : null;
 
-		// 阈值计算
-		var th0 = tavgVal0 > 0 ? CalcEngine.computeThresholds(t0, tavgVal0) : null;
-		var th1 = tavgVal1 > 0 ? CalcEngine.computeThresholds(t1, tavgVal1) : null;
-
-		var thresholds = [
-			['t#4 (WPA≤tavg)', 't4wpa'],
-			['t#4 (BPA≤tavg)', 't4bpa'],
-			['t#5 (Avg≤tavg)', 't5'],
-		];
-		for (var j = 0; j < thresholds.length; j++) {
-			var tLabel = thresholds[j][0];
-			var tKey = thresholds[j][1];
-			var tv0 = th0 ? th0[tKey] : undefined;
-			var tv1 = th1 ? th1[tKey] : undefined;
-			// 格式化：null = NaN, undefined = -
-			var ts0 = tv0 === undefined ? '-' : (tv0 === null ? '<span class="calc-nan">NaN</span>' : CalcEngine.formatTime(tv0));
-			var ts1 = tv1 === undefined ? '-' : (tv1 === null ? '<span class="calc-nan">NaN</span>' : CalcEngine.formatTime(tv1));
-			html += '<tr>';
-			html += '<td>' + tLabel + '</td>';
-			html += '<td>' + ts0 + '</td>';
-			html += '<td>' + ts1 + '</td>';
-			html += '</tr>';
-		}
-
-		tbody.innerHTML = html;
-	}
-
-	// NOTE: tavg 输入框变更回调
-	function onTavgChange(playerIdx) {
-		var input = document.getElementById('tavg-input-' + playerIdx);
-		var val = textToTime(input.value);
-		setTavg(seedOn + playerIdx, val);
-	}
-
-	// NOTE: URL 状态同步 — 将成绩、名字、比赛名编码到 URL
-	function syncToUrl() {
-		_doSyncToUrl();
-	}
-	function _doSyncToUrl() {
-		var params = new URLSearchParams();
-		params.set('comp', compName);
-		// 编码所有 seed 的名字和成绩
-		for (var i = 0; i < names.length; i++) {
-			params.set('n' + i, names[i]);
-		}
-		for (var i = 0; i < times.length; i++) {
-			var t = times[i];
-			// 只在有数据时编码
-			var hasData = t.some(function(v) { return v > 0; });
-			if (hasData) {
-				params.set('t' + i, t.join(','));
+			var thresholds = [
+				['t#4 (WPA≤tavg)', 't4wpa'],
+				['t#4 (BPA≤tavg)', 't4bpa'],
+				['t#5 (Avg≤tavg)', 't5'],
+			];
+			for (var j = 0; j < thresholds.length; j++) {
+				var tLabel = thresholds[j][0];
+				var tKey = thresholds[j][1];
+				var tv0 = th0 ? th0[tKey] : undefined;
+				var tv1 = th1 ? th1[tKey] : undefined;
+				// 格式化：null = NaN, undefined = -
+				var ts0 = tv0 === undefined ? '-' : (tv0 === null ? '<span class="calc-nan">NaN</span>' : CalcEngine.formatTime(tv0));
+				var ts1 = tv1 === undefined ? '-' : (tv1 === null ? '<span class="calc-nan">NaN</span>' : CalcEngine.formatTime(tv1));
+				html += '<tr>';
+				html += '<td>' + tLabel + '</td>';
+				html += '<td>' + ts0 + '</td>';
+				html += '<td>' + ts1 + '</td>';
+				html += '</tr>';
 			}
-		}
-		if (seedOn > 0) params.set('seed', seedOn);
-		history.replaceState(null, '', '?' + params.toString());
-	}
 
-	// NOTE: 页面加载时从 URL 参数恢复状态
-	function loadFromUrl() {
-		var params = new URLSearchParams(window.location.search);
-		if (!params.has('comp') && !params.has('t0')) return;
-
-		if (params.has('comp')) compName = params.get('comp');
-
-		// 恢复名字
-		var i = 0;
-		while (params.has('n' + i)) {
-			if (i >= names.length) names.push('Name ' + String.fromCharCode(65 + i));
-			names[i] = params.get('n' + i);
-			i++;
+			tbody.innerHTML = html;
 		}
 
-		// 恢复成绩
-		var j = 0;
-		while (params.has('t' + j)) {
-			var parts = params.get('t' + j).split(',').map(Number);
-			if (j >= times.length) times.push([0,0,0,0,0]);
-			for (var k = 0; k < 5 && k < parts.length; k++) {
-				times[j][k] = parts[k] || 0;
+		// NOTE: tavg 输入框变更回调
+		function onTavgChange(playerIdx) {
+			var input = document.getElementById('tavg-input-' + playerIdx);
+			var val = textToTime(input.value);
+			setTavg(seedOn + playerIdx, val);
+		}
+
+		// NOTE: URL 状态同步 — 将成绩、名字、比赛名编码到 URL
+		function syncToUrl() {
+			_doSyncToUrl();
+		}
+		function _doSyncToUrl() {
+			var params = new URLSearchParams();
+			params.set('comp', compName);
+			// 编码所有 seed 的名字和成绩
+			for (var i = 0; i < names.length; i++) {
+				params.set('n' + i, names[i]);
 			}
-			j++;
+			for (var i = 0; i < times.length; i++) {
+				var t = times[i];
+				// 只在有数据时编码
+				var hasData = t.some(function (v) { return v > 0; });
+				if (hasData) {
+					params.set('t' + i, t.join(','));
+				}
+			}
+			if (seedOn > 0) params.set('seed', seedOn);
+			history.replaceState(null, '', '?' + params.toString());
 		}
 
-		if (params.has('seed')) seedOn = parseInt(params.get('seed')) || 0;
+		// NOTE: 页面加载时从 URL 参数恢复状态
+		function loadFromUrl() {
+			var params = new URLSearchParams(window.location.search);
+			if (!params.has('comp') && !params.has('t0')) return;
 
-		updateSort();
-	}
+			if (params.has('comp')) compName = params.get('comp');
 
-	// NOTE: 首次加载
-	loadFromUrl();
-	renderCalcTable();
+			// 恢复名字
+			var i = 0;
+			while (params.has('n' + i)) {
+				if (i >= names.length) names.push('Name ' + String.fromCharCode(65 + i));
+				names[i] = params.get('n' + i);
+				i++;
+			}
+
+			// 恢复成绩
+			var j = 0;
+			while (params.has('t' + j)) {
+				var parts = params.get('t' + j).split(',').map(Number);
+				if (j >= times.length) times.push([0, 0, 0, 0, 0]);
+				for (var k = 0; k < 5 && k < parts.length; k++) {
+					times[j][k] = parts[k] || 0;
+				}
+				j++;
+			}
+
+			if (params.has('seed')) seedOn = parseInt(params.get('seed')) || 0;
+
+			updateSort();
+		}
+
+		// NOTE: 首次加载
+		loadFromUrl();
+		renderCalcTable();
 	</script>
-	</body>
+</body>
+
 </html>
