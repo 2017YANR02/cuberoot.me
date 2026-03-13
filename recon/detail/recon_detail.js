@@ -429,9 +429,12 @@
         if (s.round) {
             var roundText = U.escHtml(s.round) + (s.solveNum ? '#' + s.solveNum : '');
             // NOTE: 有组号时追加 Grp A（英）/ A组（中）格式展示
-            if (s.groupId) roundText += ', ' + (isZh
-                ? U.escHtml(s.groupId) + '<span data-i18n-en="Group" data-i18n-zh="组">组</span>'
-                : 'Grp ' + U.escHtml(s.groupId));
+            // NOTE: 中英文语序不同（英：Grp B，中：B组），必须把整个组号作为一个 i18n 单元
+            if (s.groupId) {
+                var grpEn = 'Grp ' + s.groupId;
+                var grpZh = s.groupId + '组';
+                roundText += ', <span data-i18n-en="' + U.escHtml(grpEn) + '" data-i18n-zh="' + U.escHtml(grpZh) + '">' + U.escHtml(isZh ? grpZh : grpEn) + '</span>';
+            }
             line1Rest.push(roundText);
         }
         if (line1Rest.length > 0) line1 += ' ' + line1Rest.join(', ');
