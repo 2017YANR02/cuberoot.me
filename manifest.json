@@ -1,7 +1,7 @@
 {
-	"name": "Rubik's Cube Solver",
-	"short_name": "Solver",
-	"description": "Fast solver for Rubik's Cube cross, XCross, EOCross, free pair, pseudo F2L, and last layer. ",
+	"name": "魔方工具箱",
+	"short_name": "CubeTools",
+	"description": "魔方工具箱 - Solver, Trainers, Stats & more",
 	"icons": [
 		{
 			"src": "icons/icon-192x192.png",
@@ -14,11 +14,11 @@
 			"type": "image/png"
 		}
 	],
-	"start_url": "/RubiksSolverDemo/index.html",
+	"start_url": "/",
 	"display": "standalone",
 	"background_color": "#121212",
 	"theme_color": "#121212",
-	"scope": "/RubiksSolverDemo/",
+	"scope": "/",
 	"lang": "en",
 	"screenshots": [
 		{
