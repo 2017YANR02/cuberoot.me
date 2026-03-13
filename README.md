@@ -81,6 +81,9 @@ This project builds upon the work of:
 - **Solvers & Trainers**: Forked from [or18/RubiksSolverDemo](https://github.com/or18/RubiksSolverDemo) by [or18](https://github.com/or18). The original project provides the 3x3x3 and 2x2x2 solvers, all trainer pages, and the PWA infrastructure.
 - **WCA Statistics**: Based on [jonatanklosko/wca_statistics](https://github.com/jonatanklosko/wca_statistics) by [Jonatan Kłosko](https://github.com/jonatanklosko). The statistics engine, SQL queries, and the plugin framework are from the original project.
 - **Algorithm Trainers**: Forked from [mihlefeld/Alg-Trainers](https://github.com/mihlefeld/Alg-Trainers) by [mihlefeld](https://github.com/mihlefeld). The original project provides the algorithm trainer pages and the PWA infrastructure.
+- **HTH Grapher**: Forked from [carykh/hthgrapher](https://github.com/carykh/hthgrapher) by [carykh](https://github.com/carykh). The original project provides the Head-to-Head Average of 5 calculator and visualization tool.
+
+https://mihlefeld.github.io/Alg-Trainers/
 
 ## License
 
