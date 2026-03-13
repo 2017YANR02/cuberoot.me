@@ -3,7 +3,7 @@
     同步脚本公共工具函数
 .DESCRIPTION
     提供文件/目录同步、GA 代码生成、UTF-8 字节级读写等工具函数，
-    供 sync_upstream.ps1 和 sync_alg_trainers.ps1 共用。
+    供 _sync_RubiksSolverDemo.ps1 和 sync_alg_trainers.ps1 共用。
 #>
 
 function Sync-FileIfChanged

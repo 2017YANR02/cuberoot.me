@@ -50,14 +50,14 @@ GitHub Pages（Jekyll）
 
 ## 重要文件
 
-> 🔄 = 由 `sync_upstream.ps1` 从上游同步（勿手动修改，下次同步会覆盖）
+> 🔄 = 由 `_sync_RubiksSolverDemo.ps1` 从上游同步（勿手动修改，下次同步会覆盖）
 > 📌 = 本地维护（不会被同步覆盖）
 > ❌ = 上游有但不同步（有替代方案或不需要）
 
 ```
 ruiminyan.github.io/
 │
-│── 🔄 上游同步（sync_upstream.ps1 管理，勿手动改）
+│── 🔄 上游同步（_sync_RubiksSolverDemo.ps1 管理，勿手动改）
 ├── solver/                    # 3x3x3 Solver（主求解器页面）
 ├── 2x2x2/                     # 2x2x2 求解器
 ├── cross_trainer/              # Cross 训练器
@@ -557,7 +557,7 @@ git -C D:\cube\RubiksSolverDemo pull
 
 # 2. 运行同步脚本
 cd D:\cube\ruiminyan.github.io
-.\sync_upstream.ps1
+.\_sync_RubiksSolverDemo.ps1
 ```
 
 脚本会自动：同步 `src/` 运行时模块、复制根目录依赖、转换 13 个 HTML 页面（应用背景色、汉化、菜单链接等定制化）。
