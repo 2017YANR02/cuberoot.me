@@ -21,6 +21,9 @@ $ErrorActionPreference = "Stop"
 $syncDir = Join-Path $LocalDir ".sync"
 $destBase = Join-Path $LocalDir "alg_trainers"
 
+# NOTE: 引入公共工具函数（Sync-FileIfChanged / Sync-Directory / Get-GaInlineCode / Read-Utf8File / Write-Utf8File）
+. (Join-Path $syncDir "sync_utils.ps1")
+
 # ===== 加载配置 =====
 $config = Get-Content (Join-Path $syncDir "alg_trainers_config.json") -Raw | ConvertFrom-Json
 
@@ -44,24 +47,9 @@ $localSrc = Join-Path $destBase "src"
 Get-ChildItem -Path $upstreamSrc -Recurse -File | ForEach-Object {
     $rel = $_.FullName.Substring($upstreamSrc.Length)
     $dest = Join-Path $localSrc $rel
-    $destDir2 = Split-Path $dest -Parent
 
-    $needCopy = $true
-    if (Test-Path $dest)
+    if (Sync-FileIfChanged $_.FullName $dest $DryRun)
     {
-        $needCopy = (Get-FileHash $_.FullName -Algorithm MD5).Hash -ne (Get-FileHash $dest -Algorithm MD5).Hash
-    }
-
-    if ($needCopy)
-    {
-        if (-not $DryRun)
-        {
-            if (-not (Test-Path $destDir2))
-            {
-                New-Item -ItemType Directory -Path $destDir2 -Force | Out-Null
-            }
-            Copy-Item $_.FullName $dest -Force
-        }
         $stats.srcFiles++
         Write-Host "  [SYNC] src$rel" -ForegroundColor DarkGray
     }
@@ -76,24 +64,9 @@ $localStyle = Join-Path $destBase "style"
 Get-ChildItem -Path $upstreamStyle -Recurse -File | ForEach-Object {
     $rel = $_.FullName.Substring($upstreamStyle.Length)
     $dest = Join-Path $localStyle $rel
-    $destDir2 = Split-Path $dest -Parent
 
-    $needCopy = $true
-    if (Test-Path $dest)
+    if (Sync-FileIfChanged $_.FullName $dest $DryRun)
     {
-        $needCopy = (Get-FileHash $_.FullName -Algorithm MD5).Hash -ne (Get-FileHash $dest -Algorithm MD5).Hash
-    }
-
-    if ($needCopy)
-    {
-        if (-not $DryRun)
-        {
-            if (-not (Test-Path $destDir2))
-            {
-                New-Item -ItemType Directory -Path $destDir2 -Force | Out-Null
-            }
-            Copy-Item $_.FullName $dest -Force
-        }
         $stats.styleFiles++
         Write-Host "  [SYNC] style$rel" -ForegroundColor DarkGray
     }
@@ -113,23 +86,8 @@ foreach ($file in $config.rootFiles)
         continue
     }
 
-    $needCopy = $true
-    if (Test-Path $dest)
+    if (Sync-FileIfChanged $src $dest $DryRun)
     {
-        $needCopy = (Get-FileHash $src -Algorithm MD5).Hash -ne (Get-FileHash $dest -Algorithm MD5).Hash
-    }
-
-    if ($needCopy)
-    {
-        if (-not $DryRun)
-        {
-            $destDir2 = Split-Path $dest -Parent
-            if (-not (Test-Path $destDir2))
-            {
-                New-Item -ItemType Directory -Path $destDir2 -Force | Out-Null
-            }
-            Copy-Item $src $dest -Force
-        }
         $stats.rootFiles++
         Write-Host "  [SYNC] $file" -ForegroundColor DarkGray
     }
@@ -149,12 +107,7 @@ foreach ($dir in $config.trainerDirs)
         continue
     }
 
-    if (-not $DryRun)
-    {
-        # NOTE: 整体覆盖目标目录，确保与上游完全一致
-        if (Test-Path $destDir2) { Remove-Item $destDir2 -Recurse -Force }
-        Copy-Item $srcDir $destDir2 -Recurse -Force
-    }
+    Sync-Directory $srcDir $destDir2 $DryRun
     $stats.trainerDirs++
     Write-Host "  [SYNC] $dir/" -ForegroundColor DarkGray
 }
@@ -167,20 +120,10 @@ $destIndex = Join-Path $destBase "index.html"
 
 if (Test-Path $srcIndex)
 {
-    # 使用字节级操作，避免编码问题
-    $bytes = [System.IO.File]::ReadAllBytes($srcIndex)
-    $content = [System.Text.Encoding]::UTF8.GetString($bytes)
+    $content = Read-Utf8File $srcIndex
 
     # --- 4a. 替换 getclicky 分析脚本为内联 GA ---
-    $gaCode = @"
-	<script async src="https://www.googletagmanager.com/gtag/js?id=$($config.analytics.trackingId)"></script>
-	<script>
-		window.dataLayer = window.dataLayer || [];
-		function gtag() { dataLayer.push(arguments); }
-		gtag('js', new Date());
-		gtag('config', '$($config.analytics.trackingId)');
-	</script>
-"@
+    $gaCode = Get-GaInlineCode $config.analytics.trackingId
     $content = [regex]::Replace($content, '(?m)\s*<script\s+async\s+data-id="[^"]*"\s+src="//static\.getclicky\.com/js"\s*>\s*</script>', $gaCode)
 
     # --- 4b. 移除 Service Worker 注册代码块 ---
@@ -229,8 +172,7 @@ function goTrainer(path) {
         {
             New-Item -ItemType Directory -Path $destDir2 -Force | Out-Null
         }
-        $outBytes = [System.Text.Encoding]::UTF8.GetBytes($content)
-        [System.IO.File]::WriteAllBytes($destIndex, $outBytes)
+        Write-Utf8File $destIndex $content
     }
     $stats.indexConverted++
     Write-Host "  [CONV] index.html" -ForegroundColor DarkCyan
@@ -244,8 +186,7 @@ foreach ($dir in $config.trainerDirs)
     $trainerIndex = Join-Path $destBase "$dir\index.html"
     if (-not (Test-Path $trainerIndex)) { continue }
 
-    $bytes = [System.IO.File]::ReadAllBytes($trainerIndex)
-    $content = [System.Text.Encoding]::UTF8.GetString($bytes)
+    $content = Read-Utf8File $trainerIndex
     $changed = $false
 
     # --- 5a. 替换 getclicky 为内联 GA ---
@@ -281,8 +222,7 @@ foreach ($dir in $config.trainerDirs)
 
     if ($changed -and -not $DryRun)
     {
-        $outBytes = [System.Text.Encoding]::UTF8.GetBytes($content)
-        [System.IO.File]::WriteAllBytes($trainerIndex, $outBytes)
+        Write-Utf8File $trainerIndex $content
         Write-Host "  [PATCH] $dir/index.html" -ForegroundColor DarkCyan
     }
 }
