@@ -171,3 +171,38 @@ ssh root@47.97.30.181
 # 或使用阿里云网页终端
 # 阿里云控制台 → ECS → 实例列表 → 远程连接 → Workbench
 ```
+
+## 邮件发送（Postfix + Gmail SMTP 中继）
+
+PHP `mail()` 依赖 postfix 通过 Gmail SMTP 中继发送。用于复盘评论通知等场景。
+
+> 阿里云 ECS 封锁出站端口 25，必须通过 587 端口中继。
+
+**迁移服务器时需重新执行以下命令：**
+
+```bash
+# 1. 安装
+dnf install -y postfix cyrus-sasl-plain
+
+# 2. 配置 Gmail 中继
+cat >> /etc/postfix/main.cf << 'EOF'
+relayhost = [smtp.gmail.com]:587
+smtp_sasl_auth_enable = yes
+smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd
+smtp_sasl_security_options = noanonymous
+smtp_tls_security_level = encrypt
+smtp_tls_CAfile = /etc/ssl/certs/ca-bundle.crt
+EOF
+
+# 3. 创建密码文件（密码从 Google App Passwords 生成，去掉空格）
+echo "[smtp.gmail.com]:587 yrmfxc@gmail.com:APP_PASSWORD_HERE" > /etc/postfix/sasl_passwd
+chmod 600 /etc/postfix/sasl_passwd
+postmap /etc/postfix/sasl_passwd
+
+# 4. 启动
+systemctl enable postfix
+systemctl restart postfix
+
+# 5. 测试
+echo "Test" | mail -s "Postfix Test" yrmfxc@gmail.com
+```

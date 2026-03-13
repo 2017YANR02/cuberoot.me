@@ -352,6 +352,8 @@
                 const haystack = [
                     s.person, s.comp, s.optimalScramble,
                     s.oll, s.pll, s.country, s.note,
+                    // NOTE: value 字段包含 DNF/DNS 和带括号的成绩（如「(5.09)」）
+                    s.value,
                     s.rawTime != null && typeof s.rawTime === 'number' ? s.rawTime.toFixed(3) : '',
                     // NOTE: 支持中文比赛名搜索
                     compNamesZh[s.comp] || '',
@@ -487,8 +489,8 @@
 
         tr.innerHTML =
             '<td class="col-idx"><a href="' + url + '">' + (solve.id || '') + '</a></td>' +
-            '<td class="col-dsingle mono">' + U.escHtml(solve.value || '') + (solve.regionalSingleRecord ? ' ' + U.formatRecord(solve.regionalSingleRecord) : '') + '</td>' +
-            '<td class="col-solver">' + (function () {
+            '<td class="col-dsingle mono" title="' + U.escHtml(solve.value || '') + '">' + U.escHtml(solve.value || '') + (solve.regionalSingleRecord ? ' ' + U.formatRecord(solve.regionalSingleRecord) : '') + '</td>' +
+            '<td class="col-solver" title="' + U.escHtml(solve.person || '') + '">' + (function () {
                 var solverHtml = U.countryFlag(U.solverCountry(solve.person, personCountries)) + ' ' + U.displaySolverName(solve.person);
                 var pUrl = U.personWcaUrl(solve.personId);
                 // NOTE: 有 WCA ID 时渲染为链接，否则纯文本
@@ -496,7 +498,7 @@
                 return pUrl ? '<a href="' + U.escHtml(pUrl) + '" target="_blank" rel="noopener noreferrer" data-person-flag="done">' + solverHtml + '</a>' : solverHtml;
             })() + '</td>' +
             '<td class="col-date">' + U.escHtml(solve.date || '') + '</td>' +
-            '<td class="col-comp">' + (function () {
+            '<td class="col-comp" title="' + U.escHtml(solve.comp || '') + '">' + (function () {
                 // NOTE: 国旗直接用数据库 country（已统一为 ISO2）
                 var compHtml = U.countryFlag(solve.country) + ' ' + U.displayCompName(solve.comp, compNamesZh);
                 var cUrl = U.compWcaUrl(solve.comp, compWcaIds);
