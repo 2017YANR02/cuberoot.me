@@ -115,6 +115,9 @@
 
             // NOTE: 异步加载同轮次成绩，不阻塞主渲染
             renderSiblingsSolves(solve);
+
+            // NOTE: 异步加载评论区，不阻塞主渲染
+            renderComments(solve.id);
         }).catch(function (err) {
             var container = document.getElementById('detail-container');
             container.innerHTML = '<div style="text-align:center;padding:60px;color:#f87171">' +
@@ -622,6 +625,9 @@
                 '<span data-i18n-en="Delete" data-i18n-zh="删除">' + (isZh ? '删除' : 'Delete') + '</span></button>';
             html += '</div>';
         }
+
+        // NOTE: 评论区容器——JS 异步填充
+        html += '<div id="comments-container"></div>';
 
         html += '</div>'; // detail-content
         return html;
@@ -1268,6 +1274,307 @@
 
         html += '</div></div>';
         container.innerHTML = html;
+    }
+
+    // ==================== 评论区 ====================
+
+    /**
+     * Markdown → 安全 HTML
+     * NOTE: 依赖 CDN 加载的 marked + DOMPurify；不可用时 fallback 到纯文本
+     */
+    function renderMarkdown(text) {
+        if (typeof marked !== 'undefined' && typeof DOMPurify !== 'undefined') {
+            try {
+                var rawHtml = marked.parse(text, { breaks: true });
+                return DOMPurify.sanitize(rawHtml);
+            } catch (e) {
+                // NOTE: 解析失败 fallback 到纯文本
+            }
+        }
+        return ReconUtils.escHtml(text).replace(/\n/g, '<br>');
+    }
+
+    /** 异步加载并渲染评论区 */
+    function renderComments(reconId) {
+        var container = document.getElementById('comments-container');
+        if (!container) return;
+
+        ReconStore.loadComments(reconId).then(function (comments) {
+            var isZh = localStorage.getItem('i18n_locale') === 'zh';
+            var isAdmin = typeof WcaAuth !== 'undefined' && WcaAuth.isAdmin();
+            var currentUser = typeof WcaAuth !== 'undefined' ? WcaAuth.getUser() : null;
+            var currentWcaId = currentUser ? currentUser.wcaId : null;
+            // NOTE: 检查当前用户是否已评论（方案 A：每人每复盘一条）
+            var hasMyComment = comments.some(function (c) {
+                return currentWcaId && c.authorId === currentWcaId;
+            });
+
+            var html = '<div class="comments-section">';
+            // NOTE: 标题行：标题 + 计数 + 添加按钮
+            html += '<div class="comments-header">';
+            html += '<span class="comments-title">💬 ';
+            html += '<span data-i18n-en="Comments" data-i18n-zh="评论">' + (isZh ? '评论' : 'Comments') + '</span>';
+            html += '<span class="comments-count">(' + comments.length + ')</span>';
+            html += '</span>';
+            // NOTE: 已登录 + 未评论过 → 显示添加按钮
+            if (currentWcaId && !hasMyComment) {
+                html += '<button class="comment-add-btn" data-recon-id="' + reconId + '">' +
+                    '<span data-i18n-en="Add Comment" data-i18n-zh="添加评论">' +
+                    (isZh ? '添加评论' : 'Add Comment') + '</span></button>';
+            }
+            html += '</div>';
+
+            // NOTE: 编辑器插入点（添加评论时动态创建）
+            html += '<div id="comment-editor-slot"></div>';
+
+            // NOTE: 评论列表
+            if (comments.length === 0) {
+                html += '<div class="comments-empty">' +
+                    '<span data-i18n-en="No comments yet" data-i18n-zh="暂无评论">' +
+                    (isZh ? '暂无评论' : 'No comments yet') + '</span></div>';
+            } else {
+                for (var i = 0; i < comments.length; i++) {
+                    html += buildCommentItemHtml(comments[i], currentWcaId, isAdmin, isZh);
+                }
+            }
+
+            html += '</div>';
+            container.innerHTML = html;
+
+            // NOTE: 绑定评论区事件
+            bindCommentEvents(container, reconId);
+        }).catch(function (err) {
+            console.error('Failed to load comments:', err);
+            // NOTE: API 失败时仍显示评论区框架（后端未部署时的优雅降级）
+            var isZh = localStorage.getItem('i18n_locale') === 'zh';
+            var currentUser = typeof WcaAuth !== 'undefined' ? WcaAuth.getUser() : null;
+            var currentWcaId = currentUser ? currentUser.wcaId : null;
+            var html = '<div class="comments-section">' +
+                '<div class="comments-header"><span class="comments-title">💬 ' +
+                '<span data-i18n-en="Comments" data-i18n-zh="评论">' +
+                (isZh ? '评论' : 'Comments') + '</span>' +
+                '<span class="comments-count">(0)</span></span>';
+            // NOTE: 已登录时显示添加按钮
+            if (currentWcaId) {
+                html += '<button class="comment-add-btn" data-recon-id="' + reconId + '">' +
+                    '<span data-i18n-en="Add Comment" data-i18n-zh="添加评论">' +
+                    (isZh ? '添加评论' : 'Add Comment') + '</span></button>';
+            }
+            html += '</div>' +
+                '<div id="comment-editor-slot"></div>' +
+                '<div class="comments-empty"><span data-i18n-en="No comments yet" data-i18n-zh="暂无评论">' +
+                (isZh ? '暂无评论' : 'No comments yet') + '</span></div></div>';
+            container.innerHTML = html;
+            bindCommentEvents(container, reconId);
+        });
+    }
+
+    /** 构建单条评论 HTML */
+    function buildCommentItemHtml(comment, currentWcaId, isAdmin, isZh) {
+        var U = ReconUtils;
+        var isOwner = currentWcaId && comment.authorId === currentWcaId;
+        var canEdit = isOwner || isAdmin;
+
+        var html = '<div class="comment-item" data-comment-id="' + comment.id + '">';
+
+        // NOTE: 头部——作者名 + 时间 + 已编辑标记
+        html += '<div class="comment-item-header">';
+        html += '<span class="comment-author">' + U.escHtml(comment.authorName) + '</span>';
+        html += '<span class="comment-time">' + formatTimestamp(comment.createdAt) + '</span>';
+        if (comment.updatedAt) {
+            html += '<span class="comment-edited-tag">' +
+                '<span data-i18n-en="edited" data-i18n-zh="已编辑">' +
+                (isZh ? '已编辑' : 'edited') + '</span></span>';
+        }
+        html += '</div>';
+
+        // NOTE: 正文——Markdown 渲染
+        html += '<div class="comment-body">' + renderMarkdown(comment.content) + '</div>';
+
+        // NOTE: 编辑/删除按钮
+        if (canEdit) {
+            html += '<div class="comment-actions">';
+            html += '<button class="comment-action-btn comment-edit-btn" data-comment-id="' + comment.id +
+                '" data-comment-content="' + U.escHtml(comment.content).replace(/"/g, '&quot;') + '">' +
+                '<span data-i18n-en="Edit" data-i18n-zh="编辑">' + (isZh ? '编辑' : 'Edit') + '</span></button>';
+            html += '<button class="comment-action-btn comment-delete-btn" data-comment-id="' + comment.id + '">' +
+                '<span data-i18n-en="Delete" data-i18n-zh="删除">' + (isZh ? '删除' : 'Delete') + '</span></button>';
+            html += '</div>';
+        }
+
+        html += '</div>';
+        return html;
+    }
+
+    /** 格式化 Unix 时间戳为可读日期 */
+    function formatTimestamp(ts) {
+        if (!ts) return '';
+        var d = new Date(ts * 1000);
+        return d.getFullYear() + '-' +
+            String(d.getMonth() + 1).padStart(2, '0') + '-' +
+            String(d.getDate()).padStart(2, '0');
+    }
+
+    /** 创建评论编辑器 HTML */
+    function buildEditorHtml(existingContent, isZh) {
+        var html = '<div class="comment-editor">';
+        html += '<textarea class="comment-editor-textarea" placeholder="' +
+            (isZh ? '支持 Markdown 格式' : 'Supports Markdown') + '">' +
+            ReconUtils.escHtml(existingContent || '') + '</textarea>';
+        html += '<div class="comment-editor-hint">' +
+            '<span data-i18n-en="Supports **bold**, *italic*, `code`, [link](url)" ' +
+            'data-i18n-zh="支持 **粗体**、*斜体*、`代码`、[链接](url)">' +
+            (isZh ? '支持 **粗体**、*斜体*、`代码`、[链接](url)'
+                : 'Supports **bold**, *italic*, `code`, [link](url)') +
+            '</span></div>';
+        // NOTE: Markdown 预览区（默认隐藏）
+        html += '<div class="comment-preview comment-body" id="comment-preview-area"></div>';
+        html += '<div class="comment-editor-actions">';
+        html += '<button class="comment-submit-btn">' +
+            '<span data-i18n-en="Submit" data-i18n-zh="提交">' + (isZh ? '提交' : 'Submit') + '</span></button>';
+        html += '<button class="comment-preview-btn">' +
+            '<span data-i18n-en="Preview" data-i18n-zh="预览">' + (isZh ? '预览' : 'Preview') + '</span></button>';
+        html += '<button class="comment-cancel-btn">' +
+            '<span data-i18n-en="Cancel" data-i18n-zh="取消">' + (isZh ? '取消' : 'Cancel') + '</span></button>';
+        html += '</div>';
+        html += '</div>';
+        return html;
+    }
+
+    /** 绑定评论区所有事件 */
+    function bindCommentEvents(container, reconId) {
+        // NOTE: 添加评论按钮
+        container.addEventListener('click', function (e) {
+            var addBtn = e.target.closest('.comment-add-btn');
+            if (!addBtn) return;
+            e.preventDefault();
+            showAddCommentEditor(reconId);
+        });
+
+        // NOTE: 编辑评论按钮
+        container.addEventListener('click', function (e) {
+            var editBtn = e.target.closest('.comment-edit-btn');
+            if (!editBtn) return;
+            e.preventDefault();
+            var commentId = editBtn.getAttribute('data-comment-id');
+            var content = editBtn.getAttribute('data-comment-content');
+            showEditCommentEditor(reconId, commentId, content);
+        });
+
+        // NOTE: 删除评论按钮
+        container.addEventListener('click', function (e) {
+            var deleteBtn = e.target.closest('.comment-delete-btn');
+            if (!deleteBtn) return;
+            e.preventDefault();
+            var commentId = deleteBtn.getAttribute('data-comment-id');
+            var isZh = localStorage.getItem('i18n_locale') === 'zh';
+            if (!confirm(isZh ? '确定删除此评论？' : 'Delete this comment?')) return;
+            ReconStore.deleteComment(commentId).then(function () {
+                renderComments(reconId);
+            }).catch(function (err) {
+                alert('Delete failed: ' + err.message);
+            });
+        });
+    }
+
+    /** 显示添加评论编辑器 */
+    function showAddCommentEditor(reconId) {
+        var slot = document.getElementById('comment-editor-slot');
+        if (!slot) return;
+        var isZh = localStorage.getItem('i18n_locale') === 'zh';
+        slot.innerHTML = buildEditorHtml('', isZh);
+
+        // NOTE: 隐藏添加按钮
+        var addBtn = document.querySelector('.comment-add-btn');
+        if (addBtn) addBtn.style.display = 'none';
+
+        bindEditorEvents(slot, reconId, null);
+    }
+
+    /** 显示编辑评论编辑器（inline 替换评论卡片） */
+    function showEditCommentEditor(reconId, commentId, content) {
+        var commentEl = document.querySelector('.comment-item[data-comment-id="' + commentId + '"]');
+        if (!commentEl) return;
+        var isZh = localStorage.getItem('i18n_locale') === 'zh';
+        // NOTE: 保留原始 HTML，取消时恢复
+        var originalHtml = commentEl.innerHTML;
+        commentEl.innerHTML = buildEditorHtml(content, isZh);
+
+        bindEditorEvents(commentEl, reconId, commentId, function () {
+            // NOTE: 取消回调——恢复原始内容
+            commentEl.innerHTML = originalHtml;
+        });
+    }
+
+    /**
+     * 绑定编辑器内部事件（提交/预览/取消）
+     * @param {HTMLElement} editorContainer - 包含编辑器的容器
+     * @param {number|string} reconId - 复盘 ID
+     * @param {string|null} commentId - 评论 ID（null=新增模式）
+     * @param {Function} [cancelCallback] - 取消时的回调
+     */
+    function bindEditorEvents(editorContainer, reconId, commentId, cancelCallback) {
+        var textarea = editorContainer.querySelector('.comment-editor-textarea');
+        var submitBtn = editorContainer.querySelector('.comment-submit-btn');
+        var previewBtn = editorContainer.querySelector('.comment-preview-btn');
+        var cancelBtn = editorContainer.querySelector('.comment-cancel-btn');
+        var previewArea = editorContainer.querySelector('#comment-preview-area');
+        var isZh = localStorage.getItem('i18n_locale') === 'zh';
+
+        // NOTE: 自动聚焦 textarea
+        if (textarea) textarea.focus();
+
+        // NOTE: 预览切换
+        if (previewBtn && previewArea && textarea) {
+            previewBtn.addEventListener('click', function () {
+                if (previewArea.style.display === 'none' || !previewArea.style.display) {
+                    previewArea.innerHTML = renderMarkdown(textarea.value);
+                    previewArea.style.display = 'block';
+                    previewBtn.querySelector('span').textContent = isZh ? '编辑' : 'Edit';
+                } else {
+                    previewArea.style.display = 'none';
+                    previewBtn.querySelector('span').textContent = isZh ? '预览' : 'Preview';
+                }
+            });
+        }
+
+        // NOTE: 提交
+        if (submitBtn && textarea) {
+            submitBtn.addEventListener('click', function () {
+                var content = textarea.value.trim();
+                if (!content) return;
+                submitBtn.disabled = true;
+                var promise;
+                if (commentId) {
+                    // NOTE: 更新模式
+                    promise = ReconStore.updateComment(commentId, content);
+                } else {
+                    // NOTE: 新增模式
+                    promise = ReconStore.addComment(reconId, content);
+                }
+                promise.then(function () {
+                    renderComments(reconId);
+                }).catch(function (err) {
+                    submitBtn.disabled = false;
+                    alert((isZh ? '提交失败：' : 'Submit failed: ') + err.message);
+                });
+            });
+        }
+
+        // NOTE: 取消
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', function () {
+                if (cancelCallback) {
+                    cancelCallback();
+                } else {
+                    // NOTE: 新增模式——清除编辑器 + 恢复添加按钮
+                    var slot = document.getElementById('comment-editor-slot');
+                    if (slot) slot.innerHTML = '';
+                    var addBtn = document.querySelector('.comment-add-btn');
+                    if (addBtn) addBtn.style.display = '';
+                }
+            });
+        }
     }
 
 })();

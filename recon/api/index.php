@@ -68,6 +68,30 @@ if (!file_exists($migrationFlagVideo)) {
     }
 }
 
+// NOTE: 一次性自动迁移——创建 comments 表（用户评论，每人每复盘一条）
+$migrationFlagComments = __DIR__ . '/data/.migration_comments';
+if (!file_exists($migrationFlagComments)) {
+    try {
+        getDb()->exec("
+            CREATE TABLE IF NOT EXISTS comments (
+                id          INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+                recon_id    INT UNSIGNED NOT NULL,
+                author_id   VARCHAR(20)  NOT NULL,
+                author_name VARCHAR(100) NOT NULL,
+                content     TEXT         NOT NULL,
+                created_at  INT UNSIGNED NOT NULL,
+                updated_at  INT UNSIGNED DEFAULT NULL,
+                UNIQUE KEY uk_recon_author (recon_id, author_id),
+                INDEX idx_recon_id (recon_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+        @file_put_contents($migrationFlagComments, date('Y-m-d H:i:s'));
+    }
+    catch (Exception $e) {
+        @error_log('Migration comments table failed: ' . $e->getMessage());
+    }
+}
+
 // ==================== 速率限制（仍用文件，简单有效） ====================
 
 $dataDir = __DIR__ . '/data';
@@ -968,6 +992,167 @@ switch ($action) {
             'apiFixed' => $apiFixed,
             'apiFailed' => $apiFailed,
         ]);
+        break;
+
+    // ==================== 评论 (comments) ====================
+
+    case 'listComments':
+        // NOTE: 公开端点——按 recon_id 查询评论，按创建时间升序
+        $reconId = $_GET['reconId'] ?? '';
+        if (!$reconId) {
+            http_response_code(400);
+            echo json_encode(['error' => 'reconId is required']);
+            break;
+        }
+        $stmt = $db->prepare(
+            "SELECT id, recon_id, author_id, author_name, content, created_at, updated_at
+             FROM comments WHERE recon_id = ? ORDER BY created_at ASC"
+        );
+        $stmt->execute([$reconId]);
+        $comments = [];
+        while ($row = $stmt->fetch()) {
+            $comments[] = [
+                'id' => (int)$row['id'],
+                'reconId' => (int)$row['recon_id'],
+                'authorId' => $row['author_id'],
+                'authorName' => $row['author_name'],
+                'content' => $row['content'],
+                'createdAt' => (int)$row['created_at'],
+                'updatedAt' => $row['updated_at'] ? (int)$row['updated_at'] : null,
+            ];
+        }
+        header('Cache-Control: no-cache, no-store, must-revalidate');
+        echo json_encode($comments);
+        break;
+
+    case 'addComment':
+        // NOTE: 添加评论——登录用户，每人每复盘一条（UNIQUE 约束）
+        header('Cache-Control: no-cache, no-store, must-revalidate');
+        checkRateLimit();
+        $authUser = requireAuth();
+        $body = getPostBody();
+        $reconId = $body['reconId'] ?? '';
+        $content = trim($body['content'] ?? '');
+
+        if (!$reconId) {
+            http_response_code(400);
+            echo json_encode(['error' => 'reconId is required']);
+            break;
+        }
+        if ($content === '') {
+            http_response_code(400);
+            echo json_encode(['error' => 'content is required']);
+            break;
+        }
+        // NOTE: 内容长度限制 2000 字符（防滥用）
+        if (mb_strlen($content) > 2000) {
+            http_response_code(400);
+            echo json_encode(['error' => 'content exceeds 2000 characters']);
+            break;
+        }
+
+        try {
+            $stmt = $db->prepare(
+                "INSERT INTO comments (recon_id, author_id, author_name, content, created_at)
+                 VALUES (?, ?, ?, ?, ?)"
+            );
+            $stmt->execute([$reconId, $authUser['wcaId'], $authUser['name'], $content, time()]);
+            echo json_encode([
+                'ok' => true,
+                'id' => (int)$db->lastInsertId(),
+            ]);
+        } catch (PDOException $e) {
+            // NOTE: UNIQUE 约束冲突——该用户已对此复盘发表过评论
+            if ($e->getCode() == 23000) {
+                http_response_code(409);
+                echo json_encode(['error' => 'You have already commented on this recon']);
+            } else {
+                throw $e;
+            }
+        }
+        break;
+
+    case 'updateComment':
+        // NOTE: 更新评论——owner 或 admin
+        header('Cache-Control: no-cache, no-store, must-revalidate');
+        checkRateLimit();
+        $authUser = requireAuth();
+        $commentId = $_GET['id'] ?? '';
+        $body = getPostBody();
+        $content = trim($body['content'] ?? '');
+
+        if (!$commentId) {
+            http_response_code(400);
+            echo json_encode(['error' => 'id is required']);
+            break;
+        }
+        if ($content === '') {
+            http_response_code(400);
+            echo json_encode(['error' => 'content is required']);
+            break;
+        }
+        if (mb_strlen($content) > 2000) {
+            http_response_code(400);
+            echo json_encode(['error' => 'content exceeds 2000 characters']);
+            break;
+        }
+
+        // NOTE: 查找目标评论，验证权限
+        $stmt = $db->prepare("SELECT author_id FROM comments WHERE id = ?");
+        $stmt->execute([$commentId]);
+        $target = $stmt->fetch();
+        if (!$target) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Comment not found']);
+            break;
+        }
+        // NOTE: 非管理员只能编辑自己的评论
+        if (!in_array($authUser['wcaId'], $ADMIN_WCA_IDS)) {
+            if ($target['author_id'] !== $authUser['wcaId']) {
+                http_response_code(403);
+                echo json_encode(['error' => 'Cannot edit others comment']);
+                break;
+            }
+        }
+
+        $stmt = $db->prepare("UPDATE comments SET content = ?, updated_at = ? WHERE id = ?");
+        $stmt->execute([$content, time(), $commentId]);
+        echo json_encode(['ok' => true]);
+        break;
+
+    case 'deleteComment':
+        // NOTE: 删除评论——owner 或 admin
+        header('Cache-Control: no-cache, no-store, must-revalidate');
+        checkRateLimit();
+        $authUser = requireAuth();
+        $commentId = $_GET['id'] ?? '';
+
+        if (!$commentId) {
+            http_response_code(400);
+            echo json_encode(['error' => 'id is required']);
+            break;
+        }
+
+        $stmt = $db->prepare("SELECT author_id FROM comments WHERE id = ?");
+        $stmt->execute([$commentId]);
+        $target = $stmt->fetch();
+        if (!$target) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Comment not found']);
+            break;
+        }
+        // NOTE: 非管理员只能删除自己的评论
+        if (!in_array($authUser['wcaId'], $ADMIN_WCA_IDS)) {
+            if ($target['author_id'] !== $authUser['wcaId']) {
+                http_response_code(403);
+                echo json_encode(['error' => 'Cannot delete others comment']);
+                break;
+            }
+        }
+
+        $stmt = $db->prepare("DELETE FROM comments WHERE id = ?");
+        $stmt->execute([$commentId]);
+        echo json_encode(['ok' => true]);
         break;
 
     default:
