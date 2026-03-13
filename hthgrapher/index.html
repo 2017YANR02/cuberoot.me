@@ -452,7 +452,7 @@
 			if (t == 5) {
 				// NOTE: 名字标签 — 在时间格右侧
 				b["x"] = CHART_END + 10;
-				b["y"] = 690 + p * 48;
+				b["y"] = 760 + p * 48;
 				b["ts"] = 26;
 				b["w"] = 150;
 				b["ty"] = b["y"] + 31;
@@ -460,7 +460,7 @@
 				// NOTE: 时间输入格 — 2行布局，x 坐标完全重叠对齐柱子
 				var barX = BAR_START + t * STRIDE;
 				b["x"] = barX;
-				b["y"] = 690 + p * 48;
+				b["y"] = 760 + p * 48;
 				b["ts"] = 26;
 				b["w"] = BAR_W;
 				b["ty"] = b["y"] + 35;
@@ -909,7 +909,7 @@
 
 			// NOTE: Seeds 按钮在底部中间
 			var seedsX = CHART_CENTER;
-			var seedsY = 820;
+			var seedsY = 885;
 			ctx.fillStyle = "#FFFFFF";
 			ctx.fillRect(seedsX - 40, seedsY - 25, 80, 50);
 			ctx.fillStyle = "#000000";
@@ -1191,7 +1191,7 @@
 
 			// NOTE: ViewMode 切换点击检测
 			var vmX = CHART_CENTER + 200;
-			var vmY = 820;
+			var vmY = 885;
 			if (Math.abs(mX - vmX) <= 40 && Math.abs(mY - vmY) <= 25) {
 				viewMode = (viewMode + 1) % 3;
 			}
