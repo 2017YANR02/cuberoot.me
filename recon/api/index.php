@@ -101,6 +101,19 @@ if (!is_dir($dataDir)) {
 
 // ==================== 工具函数 ====================
 
+/** 评论变动时邮件通知管理员（静默失败，不影响 API 响应） */
+function notifyCommentByEmail($type, $reconId, $authorName, $content) {
+    $to = 'yrmfxc@gmail.com';
+    $label = $type === 'new' ? 'New Comment' : 'Comment Updated';
+    $subject = "=?UTF-8?B?" . base64_encode("[$label] Recon #$reconId by $authorName") . "?=";
+    $url = "https://toolkit.cuberoot.me/recon/detail/?id=$reconId";
+    $body = "$authorName {$type} a comment on Recon #$reconId:\n\n"
+          . mb_substr($content, 0, 500) . "\n\n"
+          . "View: $url";
+    $headers = "From: noreply@cuberoot.me\r\nContent-Type: text/plain; charset=UTF-8";
+    @mail($to, $subject, $body, $headers);
+}
+
 /** 生成唯一字符串 ID（仅用于 edit_history 等内部记录） */
 function genId(): string
 {
@@ -1057,10 +1070,10 @@ switch ($action) {
                  VALUES (?, ?, ?, ?, ?)"
             );
             $stmt->execute([$reconId, $authUser['wcaId'], $authUser['name'], $content, time()]);
-            echo json_encode([
-                'ok' => true,
-                'id' => (int)$db->lastInsertId(),
-            ]);
+            $newId = (int)$db->lastInsertId();
+            echo json_encode(['ok' => true, 'id' => $newId]);
+            // NOTE: 通知管理员有新评论
+            notifyCommentByEmail('new', $reconId, $authUser['name'], $content);
         } catch (PDOException $e) {
             // NOTE: UNIQUE 约束冲突——该用户已对此复盘发表过评论
             if ($e->getCode() == 23000) {
@@ -1118,6 +1131,8 @@ switch ($action) {
         $stmt = $db->prepare("UPDATE comments SET content = ?, updated_at = ? WHERE id = ?");
         $stmt->execute([$content, time(), $commentId]);
         echo json_encode(['ok' => true]);
+        // NOTE: 通知管理员评论被修改
+        notifyCommentByEmail('updated', $commentId, $authUser['name'], $content);
         break;
 
     case 'deleteComment':

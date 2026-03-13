@@ -1299,6 +1299,12 @@
         var container = document.getElementById('comments-container');
         if (!container) return;
 
+        // NOTE: 克隆节点清除之前的事件监听器，防止 handler 累积
+        // （renderComments 可能被多次调用：首次 catch + 后续成功）
+        var fresh = container.cloneNode(false);
+        container.parentNode.replaceChild(fresh, container);
+        container = fresh;
+
         ReconStore.loadComments(reconId).then(function (comments) {
             var isZh = localStorage.getItem('i18n_locale') === 'zh';
             var isAdmin = typeof WcaAuth !== 'undefined' && WcaAuth.isAdmin();
