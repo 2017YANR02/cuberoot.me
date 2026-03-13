@@ -208,6 +208,13 @@ foreach ($page in $config.pages)
         $content = $content -replace '(<meta\s+charset="UTF-8">)', "`$1`n`t<link rel=""manifest"" href=""../manifest.json"">"
     }
 
+    # --- 3c2. 注入 apple-touch-icon ---
+    # NOTE: iOS Safari 不使用 manifest.json 的 icons，只认此 link 标签
+    if ($content -notmatch 'apple-touch-icon')
+    {
+        $content = $content -replace '(<link\s+rel="manifest"[^>]*>)', "`$1`n`t<link rel=""apple-touch-icon"" href=""../custom_icons/icon-192x192.png"">"
+    }
+
     # --- 3d. 替换背景色 ---
     # NOTE: 所有 #121212 统一替换为 #0a0a0f（深黑色统一风格）
     $content = $content -replace '#121212', '#0a0a0f'
