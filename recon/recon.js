@@ -136,6 +136,23 @@
             th.addEventListener('click', () => handleSort(th));
         });
 
+        // NOTE: tooltip 溢出检测——仅当内容被截断时才显示 tooltip
+        tbody.addEventListener('mouseover', function (e) {
+            var td = e.target.closest('td[data-tip]');
+            if (!td) return;
+            // NOTE: 检查 td 本身和内部 <a> 元素的溢出（<a> 有独立的 overflow: hidden）
+            var isOverflow = td.scrollWidth > td.clientWidth;
+            if (!isOverflow) {
+                var innerA = td.querySelector('a');
+                if (innerA) isOverflow = innerA.scrollWidth > innerA.clientWidth;
+            }
+            if (isOverflow) {
+                td.setAttribute('data-tip-show', '');
+            } else {
+                td.removeAttribute('data-tip-show');
+            }
+        });
+
         // NOTE: 初始化 WCA 登录 UI
         updateWcaAuthUI();
 
@@ -489,8 +506,8 @@
 
         tr.innerHTML =
             '<td class="col-idx"><a href="' + url + '">' + (solve.id || '') + '</a></td>' +
-            '<td class="col-dsingle mono" title="' + U.escHtml(solve.value || '') + '">' + U.escHtml(solve.value || '') + (solve.regionalSingleRecord ? ' ' + U.formatRecord(solve.regionalSingleRecord) : '') + '</td>' +
-            '<td class="col-solver" title="' + U.escHtml(solve.person || '') + '">' + (function () {
+            '<td class="col-dsingle mono" data-tip="' + U.escHtml(solve.value || '') + '">'  + U.escHtml(solve.value || '') + (solve.regionalSingleRecord ? ' ' + U.formatRecord(solve.regionalSingleRecord) : '') + '</td>' +
+            '<td class="col-solver" data-tip="' + U.escHtml((function(){ var p = U.parseSolverName(solve.person); var isZh = localStorage.getItem('i18n_locale') === 'zh'; return isZh ? (p.zh || p.en) : p.en; })()) + '">'  + (function () {
                 var solverHtml = U.countryFlag(U.solverCountry(solve.person, personCountries)) + ' ' + U.displaySolverName(solve.person);
                 var pUrl = U.personWcaUrl(solve.personId);
                 // NOTE: 有 WCA ID 时渲染为链接，否则纯文本
@@ -498,7 +515,7 @@
                 return pUrl ? '<a href="' + U.escHtml(pUrl) + '" target="_blank" rel="noopener noreferrer" data-person-flag="done">' + solverHtml + '</a>' : solverHtml;
             })() + '</td>' +
             '<td class="col-date">' + U.escHtml(solve.date || '') + '</td>' +
-            '<td class="col-comp" title="' + U.escHtml(solve.comp || '') + '">' + (function () {
+            '<td class="col-comp" data-tip="' + U.escHtml((localStorage.getItem('i18n_locale') === 'zh' ? compNamesZh[solve.comp] : null) || solve.comp || '') + '">'  + (function () {
                 // NOTE: 国旗直接用数据库 country（已统一为 ISO2）
                 var compHtml = U.countryFlag(solve.country) + ' ' + U.displayCompName(solve.comp, compNamesZh);
                 var cUrl = U.compWcaUrl(solve.comp, compWcaIds);
