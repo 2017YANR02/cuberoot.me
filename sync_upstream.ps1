@@ -20,6 +20,9 @@ param(
 $ErrorActionPreference = "Stop"
 $syncDir = Join-Path $LocalDir ".sync"
 
+# NOTE: 引入公共工具函数（Sync-FileIfChanged / Sync-Directory / Get-GaInlineCode / Read-Utf8File / Write-Utf8File）
+. (Join-Path $syncDir "sync_utils.ps1")
+
 # ===== 加载配置 =====
 $config = Get-Content (Join-Path $syncDir "page_config.json") -Raw | ConvertFrom-Json
 $menuTemplate = [System.IO.File]::ReadAllText((Join-Path $syncDir "menu_template.html"))
@@ -55,24 +58,9 @@ Get-ChildItem -Path $upstreamSrc -Recurse -File | Where-Object {
 } | ForEach-Object {
     $rel = $_.FullName.Substring($upstreamSrc.Length)
     $dest = Join-Path $localSrc $rel
-    $destDir = Split-Path $dest -Parent
 
-    $needCopy = $true
-    if (Test-Path $dest)
+    if (Sync-FileIfChanged $_.FullName $dest $DryRun)
     {
-        $needCopy = (Get-FileHash $_.FullName -Algorithm MD5).Hash -ne (Get-FileHash $dest -Algorithm MD5).Hash
-    }
-
-    if ($needCopy)
-    {
-        if (-not $DryRun)
-        {
-            if (-not (Test-Path $destDir))
-            {
-                New-Item -ItemType Directory -Path $destDir -Force | Out-Null
-            }
-            Copy-Item $_.FullName $dest -Force
-        }
         $stats.srcFiles++
         Write-Host "  [SYNC] src$rel" -ForegroundColor DarkGray
     }
@@ -93,18 +81,8 @@ foreach ($file in $config.rootFiles)
         continue
     }
 
-    $needCopy = $true
-    if (Test-Path $dest)
+    if (Sync-FileIfChanged $src $dest $DryRun)
     {
-        $needCopy = (Get-FileHash $src -Algorithm MD5).Hash -ne (Get-FileHash $dest -Algorithm MD5).Hash
-    }
-
-    if ($needCopy)
-    {
-        if (-not $DryRun)
-        {
-            Copy-Item $src $dest -Force
-        }
         $stats.rootFiles++
         Write-Host "  [SYNC] $file" -ForegroundColor DarkGray
     }
@@ -124,12 +102,7 @@ if ($config.rootDirs)
             continue
         }
 
-        if (-not $DryRun)
-        {
-            # NOTE: 整体覆盖目标目录，确保与上游完全一致
-            if (Test-Path $destDir) { Remove-Item $destDir -Recurse -Force }
-            Copy-Item $srcDir $destDir -Recurse -Force
-        }
+        Sync-Directory $srcDir $destDir $DryRun
         $stats.rootDirs++
         Write-Host "  [SYNC] $dir/" -ForegroundColor DarkGray
     }
@@ -143,8 +116,7 @@ Write-Host "`nStep 2c: Patching sw.js cache lists..." -ForegroundColor Green
 $swPath = Join-Path $LocalDir "sw.js"
 if (Test-Path $swPath)
 {
-    $swBytes = [System.IO.File]::ReadAllBytes($swPath)
-    $swContent = [System.Text.Encoding]::UTF8.GetString($swBytes)
+    $swContent = Read-Utf8File $swPath
 
     # 1. 删除 analytics.js 引用（本地不存在此文件）
     $swContent = [regex]::Replace($swContent, "(?m)^\t'analytics\.js',?\r?\n", "")
@@ -161,8 +133,7 @@ if (Test-Path $swPath)
 
     if (-not $DryRun)
     {
-        $outBytes = [System.Text.Encoding]::UTF8.GetBytes($swContent)
-        [System.IO.File]::WriteAllBytes($swPath, $outBytes)
+        Write-Utf8File $swPath $swContent
     }
     Write-Host "  [PATCH] sw.js: removed analytics.js, fixed HTML paths" -ForegroundColor DarkCyan
 }
@@ -171,15 +142,7 @@ if (Test-Path $swPath)
 Write-Host "`nStep 3: Converting HTML pages..." -ForegroundColor Green
 
 # NOTE: 内联 Google Analytics 代码块，替换上游的 analytics.js 引用
-$gaCode = @"
-	<script async src="https://www.googletagmanager.com/gtag/js?id=$($config.analytics.trackingId)"></script>
-	<script>
-		window.dataLayer = window.dataLayer || [];
-		function gtag() { dataLayer.push(arguments); }
-		gtag('js', new Date());
-		gtag('config', '$($config.analytics.trackingId)');
-	</script>
-"@
+$gaCode = Get-GaInlineCode $config.analytics.trackingId
 
 foreach ($page in $config.pages)
 {
@@ -195,9 +158,7 @@ foreach ($page in $config.pages)
 
     Write-Host "  [CONV] $($page.upstream) -> $($page.subdir)/index.html" -ForegroundColor DarkCyan
 
-    # 使用字节级操作，避免编码问题
-    $bytes = [System.IO.File]::ReadAllBytes($srcFile)
-    $content = [System.Text.Encoding]::UTF8.GetString($bytes)
+    $content = Read-Utf8File $srcFile
 
     # --- 3a. 资源路径替换 ---
     # NOTE: 只替换 JS/HTML 中的路径引用，不替换 URL 中的（如 GitHub 链接）
@@ -273,8 +234,7 @@ background-color: #0a0a0f;
         {
             New-Item -ItemType Directory -Path $destDir2 -Force | Out-Null
         }
-        $outBytes = [System.Text.Encoding]::UTF8.GetBytes($content)
-        [System.IO.File]::WriteAllBytes($destFile, $outBytes)
+        Write-Utf8File $destFile $content
     }
     $stats.pages++
 }
