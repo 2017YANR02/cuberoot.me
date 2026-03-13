@@ -99,6 +99,11 @@ var WcaAuth = (function () {
                     avatar: me.avatar && me.avatar.thumb_url ? me.avatar.thumb_url : '',
                     country: me.country_iso2 || ''
                 };
+                // NOTE: 黑名单用户直接拒绝登录
+                if (BANNED_WCA_IDS.indexOf(user.wcaId) >= 0) {
+                    logout();
+                    throw new Error('Your account has been suspended');
+                }
                 localStorage.setItem(SESSION_KEY, JSON.stringify(user));
                 return user;
             });
@@ -109,7 +114,13 @@ var WcaAuth = (function () {
     function getUser() {
         try {
             var data = localStorage.getItem(SESSION_KEY);
-            return data ? JSON.parse(data) : null;
+            var user = data ? JSON.parse(data) : null;
+            // NOTE: 黑名单用户即使有缓存 session 也踢出
+            if (user && BANNED_WCA_IDS.indexOf(user.wcaId) >= 0) {
+                logout();
+                return null;
+            }
+            return user;
         } catch (e) {
             return null;
         }
@@ -126,6 +137,9 @@ var WcaAuth = (function () {
 
     // NOTE: 管理员 WCA ID 列表（前端硬编码，仅控制 UI 显示）
     var ADMIN_WCA_IDS = ['2017YANR02'];
+
+    // NOTE: 黑名单 WCA ID 列表——这些用户无法登录（前后端同步）
+    var BANNED_WCA_IDS = [];
 
     function isAdmin() {
         var user = getUser();
