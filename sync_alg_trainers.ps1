@@ -191,15 +191,34 @@ if (Test-Path $srcIndex)
     # NOTE: 上游 manifest 指向 /Alg-Trainers/，本地已有全站 manifest
     $content = [regex]::Replace($content, '(?m)\s*<link\s+rel="manifest"\s+href="manifest\.json"\s*/?\s*>', '')
 
-    # --- 4d. 注入 i18n.js ---
-    if ($content -notmatch 'i18n\.js')
+    # --- 4d. 注入链接跳转辅助函数 + i18n.js ---
+    # NOTE: 上游 onclick='window.location="xxx/index.html"' 不带 ?select 也不传 lang 参数
+    # main.js 用 split('?')[1] 判断模式，?lang=xx 会破坏此逻辑
+    # 修复：注入 goTrainer() 函数构建正确 URL，替换所有 onclick
+    if ($content -notmatch 'goTrainer')
     {
-        $content = $content -replace '(</body>)', "<script src=""../i18n/i18n.js"" defer></script>`n`$1"
-        # NOTE: 如果没有 </body>，在 </html> 前注入
-        if ($content -notmatch 'i18n\.js')
+        # 注入辅助函数和 i18n.js
+        $helperScript = @"
+<script>
+function goTrainer(path) {
+	// NOTE: 不在 URL 中传 lang 参数，因为 main.js 用 split('?')[1] 做模式判断
+	// lang 通过 localStorage 传递，i18n.js 会自动读取
+	var lang = new URLSearchParams(window.location.search).get('lang');
+	if (lang) localStorage.setItem('i18n-locale', lang);
+	window.location = path + '?select';
+}
+</script>
+<script src='../i18n/i18n.js' defer></script>
+"@
+        $content = $content -replace '(</body>)', "$helperScript`n`$1"
+        # 如果没有 </body>，在 </html> 前注入
+        if ($content -notmatch 'goTrainer')
         {
-            $content = $content -replace '(</html>)', "<script src=""../i18n/i18n.js"" defer></script>`n`$1"
+            $content = $content -replace '(</html>)', "$helperScript`n`$1"
         }
+
+        # 替换所有 onclick='window.location="xxx/index.html"' 为 goTrainer('xxx/index.html')
+        $content = [regex]::Replace($content, "onclick='window\.location=""([^""]+)""'", 'onclick="goTrainer(''$1'')"')
     }
 
     # --- 写入文件 ---

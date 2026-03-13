@@ -451,7 +451,10 @@ const I18n = {
         }
 
         // NOTE: URL 没有 ?lang= 时自动追加，确保 URL 始终反映语言状态
-        if (!urlLang) {
+        // HACK: alg_trainers 训练器子页面除外，因为 main.js 用 split('?')[1] 做模式判断
+        const isTrainerPage = window.location.pathname.includes('/alg_trainers/') &&
+                              window.location.pathname.includes('-Trainer/');
+        if (!urlLang && !isTrainerPage) {
             const url = new URL(window.location.href);
             url.searchParams.set('lang', this.locale);
             history.replaceState(null, '', url.toString());
@@ -704,9 +707,14 @@ const I18n = {
         this.locale = lang;
         localStorage.setItem('i18n_locale', lang);
         // NOTE: 同步语言到 URL 参数，使分享链接时携带语言偏好
-        const url = new URL(window.location.href);
-        url.searchParams.set('lang', lang);
-        history.replaceState(null, '', url.toString());
+        // HACK: alg_trainers 训练器子页面除外（同 init() 中的逻辑）
+        const isTrainer = window.location.pathname.includes('/alg_trainers/') &&
+                          window.location.pathname.includes('-Trainer/');
+        if (!isTrainer) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('lang', lang);
+            history.replaceState(null, '', url.toString());
+        }
         this.apply();
         this._updateToggle();
         // NOTE: 通知其他页面语言已切换（如 upcoming_comp 重渲染）
