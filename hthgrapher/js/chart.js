@@ -478,9 +478,8 @@ function drawAverages() {
                 fillColor = darken(SHADES[p - state.seedOn], 0.7);
             }
 
-            // 标签文字
-            var lastName = getLastName(state.names[p]);
-            var labelText = lastName + ': ' + formatTime(average);
+            // NOTE: 只显示成绩（颜色已代表选手身份）
+            var labelText = formatTime(average);
             var fontSize = (type === 2) ? 30 : 22;
 
             // 测量文字宽度（近似）
