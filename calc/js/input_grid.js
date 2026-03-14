@@ -204,12 +204,15 @@ function onKeyDown(e) {
         // NOTE: 当前格为空时跨单元格向前删
         if (v.value.length === 0 && t > 0) {
             e.preventDefault();
-            navigateTo(p, t - 1);
-            var prev = cells[p][t - 1];
-            if (prev.value.length > 0) {
-                prev.value = prev.value.slice(0, -1);
-                syncNumpadDisplay();
+            // 先修改上一格 state（navigateTo 会触发 refresh 覆盖 DOM）
+            var prevVal = state.times[state.seedOn + p][t - 1];
+            if (prevVal > 0 && prevVal < DNF_VALUE) {
+                var prevText = formatTime(prevVal);
+                var trimmed = prevText.slice(0, -1);
+                var newVal = textToTime(trimmed);
+                updateTime(state.seedOn + p, t - 1, newVal);
             }
+            navigateTo(p, t - 1);
         }
     } else if (e.key === 'Delete') {
         if (p < 0) return;
@@ -294,12 +297,17 @@ function numpadPress(key) {
             v.value = v.value.slice(0, -1);
             syncNumpadDisplay();
         } else if (t > 0) {
-            navigateTo(p, t - 1);
-            var prev = cells[p][t - 1];
-            if (prev.value.length > 0) {
-                prev.value = prev.value.slice(0, -1);
-                syncNumpadDisplay();
+            // NOTE: 先修改上一格的显示值 → 写回 state，再 navigateTo
+            // navigateTo 内部的 saveCell→notify→refresh 会重置所有 cell.value，
+            // 所以必须在 navigateTo 之前就把上一格的新值写入 state
+            var prevVal = state.times[state.seedOn + p][t - 1];
+            if (prevVal > 0 && prevVal < DNF_VALUE) {
+                var prevText = formatTime(prevVal);
+                var trimmed = prevText.slice(0, -1);
+                var newVal = textToTime(trimmed);
+                updateTime(state.seedOn + p, t - 1, newVal);
             }
+            navigateTo(p, t - 1);
         }
     } else if (key === 'dotcolon') {
         // NOTE: .: 按钮 — 末尾是 . 则替换为 :，否则追加 .
