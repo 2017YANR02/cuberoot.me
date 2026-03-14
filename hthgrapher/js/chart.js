@@ -452,7 +452,7 @@ function addText(parent, x, y, text, fill, size, anchor) {
 function drawAverages() {
     var im = IX[4]; // 菱形内边距
     var m = [3, 13, 18]; // 标签半高
-    var offsetY = [0, 7.5, 10]; // 文字垂直偏移
+    var offsetY = [0, 7.5, 0]; // NOTE: type 2 用 0 配合 dominant-baseline:central 居中
     var jm = 50; // 左尖到文字的水平距离
     var maxSkew = 60;
     var cursor = 9999;
