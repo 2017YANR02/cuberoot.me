@@ -358,6 +358,16 @@ function drawStats() {
             addText(statsGroup, tx1, bpaY + 28, formatTime(paVals[3]), darkCol, 30, 'start');
             addText(statsGroup, tx1, wpaY, 'WPA', darkCol, 22, 'start');
             addText(statsGroup, tx1, wpaY + 28, formatTime(paVals[4]), darkCol, 30, 'start');
+
+            // NOTE: 计时第 5 把时，实时画黑色连接线
+            if (filleds === 5 && state.timeLive[0] === p) {
+                var avg = getAverage(state.times[state.seedOn + p], true);
+                var ys = [valToYCap(state.times[state.seedOn + p][4]), valToYCap(avg)];
+                var outerX = ax[0] - 5;
+                var innerX = IX[1] + IX[4] + 2;
+                var arrowX = innerX - 18;
+                drawCurvedLine([ax[0], ax[1], outerX, innerX, arrowX], ys, '#000');
+            }
         } else if (filleds === 5) {
             // ── 5 把完成：BPA/WPA + 连接线 + Placed ──
             var tx1 = ax[1] + m;
