@@ -175,6 +175,36 @@ function navigateTo(p, t) {
     cells[p][t].select();
 }
 
+// NOTE: 计算下一个单元格 — 双选手启用时按列 zigzag（A0→B0→A1→B1→...），单选手时同行水平
+// 返回 [p, t] 或 null（已到末尾）
+function nextCell(p, t) {
+    var bothEnabled = state.playerEnabled[0] && state.playerEnabled[1];
+    if (bothEnabled) {
+        // zigzag: A→B 同列，B→A 下一列
+        if (p === 0) return [1, t];
+        if (t < 4) return [0, t + 1];
+        return null;
+    }
+    // 单选手：同行右移
+    if (t < 4) return [p, t + 1];
+    return null;
+}
+
+// NOTE: 计算上一个单元格 — 反向 zigzag
+// 返回 [p, t] 或 null（已到开头）
+function prevCell(p, t) {
+    var bothEnabled = state.playerEnabled[0] && state.playerEnabled[1];
+    if (bothEnabled) {
+        // 反向 zigzag: B→A 同列，A→B 上一列
+        if (p === 1) return [0, t];
+        if (t > 0) return [1, t - 1];
+        return null;
+    }
+    // 单选手：同行左移
+    if (t > 0) return [p, t - 1];
+    return null;
+}
+
 // ── 键盘处理 ──
 
 function onKeyDown(e) {
@@ -184,9 +214,10 @@ function onKeyDown(e) {
     if (e.key === 'Enter') {
         if (p < 0) return;
         e.preventDefault();
-        // 跳到同选手下一格
-        if (t < 4) {
-            navigateTo(p, t + 1);
+        // NOTE: zigzag 前进（双选手时按列，单选手时同行）
+        var nxt = nextCell(p, t);
+        if (nxt) {
+            navigateTo(nxt[0], nxt[1]);
         } else {
             saveCell(p, t);
             cells[p][t].blur();
@@ -195,11 +226,11 @@ function onKeyDown(e) {
     } else if (e.key === 'Tab') {
         if (p < 0) return;
         e.preventDefault();
-        // NOTE: A→B 同一把；B→A 下一把
-        if (p === 0) {
+        // NOTE: Tab 始终按列 zigzag（不受单选手影响）
+        if (p === 0 && state.playerEnabled[1]) {
             navigateTo(1, t);
         } else if (t < 4) {
-            navigateTo(0, t + 1);
+            navigateTo(state.playerEnabled[0] ? 0 : 1, t + 1);
         } else {
             saveCell(p, t);
             cells[p][t].blur();
@@ -216,22 +247,46 @@ function onKeyDown(e) {
     } else if (e.key === 'Backspace') {
         if (p < 0) return;
         var v = cells[p][t];
-        // NOTE: 当前格为空时，清空上一格并跳转（仅限本行）
-        if (v.value.length === 0 && t > 0) {
-            e.preventDefault();
-            updateTime(state.seedOn + p, t - 1, 0);
-            navigateTo(p, t - 1);
+        // NOTE: 当前格为空时，反向 zigzag 跳到上一格并清空
+        if (v.value.length === 0) {
+            var prv = prevCell(p, t);
+            if (prv) {
+                e.preventDefault();
+                updateTime(state.seedOn + prv[0], prv[1], 0);
+                navigateTo(prv[0], prv[1]);
+            }
         }
     } else if (e.key === 'Delete') {
         if (p < 0) return;
-        // NOTE: 跳到后一格清空
-        if (t < 4) {
+        // NOTE: zigzag 前进到下一格并清空
+        var del = nextCell(p, t);
+        if (del) {
             e.preventDefault();
             saveCell(p, t);
-            navigateTo(p, t + 1);
-            cells[p][t + 1].value = '';
+            navigateTo(del[0], del[1]);
+            cells[del[0]][del[1]].value = '';
             syncNumpadDisplay();
         }
+    } else if (e.key === 'ArrowDown') {
+        if (p < 0) return;
+        e.preventDefault();
+        // NOTE: A行 → B行同列
+        if (p === 0) navigateTo(1, t);
+    } else if (e.key === 'ArrowUp') {
+        if (p < 0) return;
+        e.preventDefault();
+        // NOTE: B行 → A行同列
+        if (p === 1) navigateTo(0, t);
+    } else if (e.key === 'ArrowLeft') {
+        if (p < 0) return;
+        e.preventDefault();
+        // NOTE: 同行向左一格
+        if (t > 0) navigateTo(p, t - 1);
+    } else if (e.key === 'ArrowRight') {
+        if (p < 0) return;
+        e.preventDefault();
+        // NOTE: 同行向右一格
+        if (t < 4) navigateTo(p, t + 1);
     } else if (e.key === ' ') {
         // NOTE: 空格键触发秒表（逻辑在 app.js 中注册）
         e.preventDefault();
@@ -272,18 +327,21 @@ function numpadPress(key) {
     var v = cells[p][t];
 
     if (key === 'enter') {
-        if (t < 4) {
-            navigateTo(p, t + 1);
+        // NOTE: zigzag 前进
+        var nxt = nextCell(p, t);
+        if (nxt) {
+            navigateTo(nxt[0], nxt[1]);
         } else {
             saveCell(p, t);
             v.blur();
             activeCell = [-1, -1];
         }
     } else if (key === 'tab') {
-        if (p === 0) {
+        // NOTE: Tab 始终按列 zigzag
+        if (p === 0 && state.playerEnabled[1]) {
             navigateTo(1, t);
         } else if (t < 4) {
-            navigateTo(0, t + 1);
+            navigateTo(state.playerEnabled[0] ? 0 : 1, t + 1);
         } else {
             saveCell(p, t);
             v.blur();
@@ -292,9 +350,10 @@ function numpadPress(key) {
     } else if (key === 'dnf') {
         v.value = 'DNF';
         syncNumpadDisplay();
-        // 自动跳到下一格
-        if (t < 4) {
-            navigateTo(p, t + 1);
+        // NOTE: 自动 zigzag 跳到下一格
+        var dnfNxt = nextCell(p, t);
+        if (dnfNxt) {
+            navigateTo(dnfNxt[0], dnfNxt[1]);
         } else {
             saveCell(p, t);
             v.blur();
@@ -309,10 +368,13 @@ function numpadPress(key) {
         } else if (v.value.length > 0) {
             v.value = v.value.slice(0, -1);
             syncNumpadDisplay();
-        } else if (t > 0) {
-            // NOTE: 当前格为空时，清空上一格并跳转（仅限本行）
-            updateTime(state.seedOn + p, t - 1, 0);
-            navigateTo(p, t - 1);
+        } else {
+            // NOTE: 当前格为空时，反向 zigzag 跳到上一格并清空
+            var prv = prevCell(p, t);
+            if (prv) {
+                updateTime(state.seedOn + prv[0], prv[1], 0);
+                navigateTo(prv[0], prv[1]);
+            }
         }
     } else if (key === 'dotcolon') {
         // NOTE: 全选状态下先清空
