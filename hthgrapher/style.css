@@ -96,16 +96,26 @@ body {
     font-size: 16px;
     font-weight: 600;
     text-align: center;
-    border: 1px solid #ccc;
+    border: none;
     border-radius: 4px;
-    background: #fff;
     outline: none;
-    transition: border-color 0.2s;
+    transition: opacity 0.2s;
+}
+
+/* NOTE: 选手颜色背景 — 橙色/蓝色代替名字标识 */
+.player-a .name-cell {
+    background: rgba(255, 128, 0, 0.85);
+    color: #fff;
+}
+
+.player-b .name-cell {
+    background: rgba(50, 130, 255, 0.85);
+    color: #fff;
 }
 
 .name-cell:focus {
-    border-color: #3B6978;
-    box-shadow: 0 0 0 2px rgba(59, 105, 120, 0.2);
+    opacity: 0.8;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2);
 }
 
 /* ── 控制按钮区 ── */
