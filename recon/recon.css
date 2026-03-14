@@ -1051,10 +1051,10 @@ tr.detail-row td {
     display: block;
 }
 
-/* NOTE: 拖拽调整大小手柄——右下角半透明按钮 */
+/* NOTE: 拖拽调整大小手柄——右上角半透明按钮 */
 .twisty-resize-handle {
     position: absolute;
-    bottom: 6px;
+    top: 6px;
     right: 6px;
     width: 28px;
     height: 28px;
