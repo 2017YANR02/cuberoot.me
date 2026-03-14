@@ -32,7 +32,6 @@ body {
     font-weight: 600;
     text-align: center;
     border: none;
-    border-bottom: 2px solid #3B6978;
     background: transparent;
     color: #000;
     outline: none;
@@ -323,4 +322,56 @@ body {
 
 audio, video {
     display: none;
+}
+
+/* ── 移动端适配 ── */
+
+/* NOTE: 输入格改弹性宽度，手机端自动缩小 */
+@media (max-width: 640px) {
+    .input-row {
+        gap: 3px;
+    }
+
+    .time-cell {
+        width: auto;
+        flex: 1;
+        min-width: 0;
+        padding: 6px 2px;
+        font-size: 14px;
+    }
+
+    .name-cell {
+        width: auto;
+        flex: 0 0 70px;
+        padding: 6px 2px;
+        font-size: 13px;
+    }
+
+    .player-toggle {
+        width: 16px;
+        height: 16px;
+    }
+
+    .comp-name {
+        font-size: 18px;
+        padding: 6px 8px;
+    }
+
+    .controls button {
+        padding: 6px 12px;
+        font-size: 14px;
+    }
+
+    #seed-label {
+        font-size: 14px;
+    }
+
+    #calc-table {
+        font-size: 14px;
+    }
+
+    #calc-table th,
+    #calc-table td {
+        padding: 6px 8px;
+    }
 }

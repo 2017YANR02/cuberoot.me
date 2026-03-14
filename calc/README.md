@@ -6,8 +6,8 @@ Head-to-Head Average of 5 Calculator — 魔方比赛两位选手五次平均对
 
 ## 使用方式
 
-- **在线**：`toolkit.cuberoot.me/hthgrapher/`
-- **本地**：`bundle exec jekyll serve` → `localhost:4000/hthgrapher/`
+- **在线**：`toolkit.cuberoot.me/calc/`
+- **本地**：`bundle exec jekyll serve` → `localhost:4000/calc/`
 
 ## 功能
 
@@ -23,7 +23,7 @@ Head-to-Head Average of 5 Calculator — 魔方比赛两位选手五次平均对
 ## 文件结构
 
 ```
-hthgrapher/
+calc/
   index.html        ← HTML 骨架（~90行）
   style.css         ← 全部样式（~330行）
   README.md         ← 本文件
