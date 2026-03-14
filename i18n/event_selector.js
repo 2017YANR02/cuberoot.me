@@ -212,9 +212,8 @@
     allPanelSections.forEach(sections => showEvent(sections, initEvent));
     selectEventInBar(selector, initEvent);
     if (onEventChanged) onEventChanged(initEvent);
-    if (h.event && allIds.includes(h.event)) {
-      updateHash({ event: initEvent }, true);
-    }
+    // NOTE: 始终写入 hash，确保 URL 包含 event 参数
+    updateHash({ event: initEvent }, true);
 
     // 保存引用供 popstate 使用
     _allSelectors.push({
