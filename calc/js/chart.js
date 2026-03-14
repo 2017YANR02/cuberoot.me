@@ -47,7 +47,7 @@ var gp = {};
 export function init(container) {
     svgEl = createSvgElement('svg', {
         class: 'hth-chart',
-        viewBox: '0 0 1600 850',
+        viewBox: '200 0 1200 850',
         preserveAspectRatio: 'xMidYMid meet',
     });
 
