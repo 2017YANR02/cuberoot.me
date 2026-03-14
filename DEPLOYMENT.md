@@ -71,7 +71,7 @@ ruiminyan.github.io/
 ├── algTrainer/                 # JSON 公式训练器
 ├── jsonEditor/                 # JSON 编辑器
 ├── documentation/              # 文档页面
-├── hthgrapher/                 # HTH 成绩计算器
+├── calc/                       # HTH 成绩计算器
 ├── alg_trainers/               # 公式训练器（mihlefeld/Alg-Trainers 上游同步，sync_alg_trainers.ps1 管理）
 │   ├── src/                    # 🔄 训练器运行时 JS（main.js、timer.js、settings.js 等）
 │   ├── style/                  # 🔄 训练器样式
