@@ -20,20 +20,36 @@
     var chartW = W - PAD.l - PAD.r, chartH = H - PAD.t - PAD.b;
 
     // ── 入口 ──
+    // NOTE: 用 setTimeout(0) 延后执行，确保 event_selector.js 已隐藏非活跃事件
     document.addEventListener('DOMContentLoaded', function () {
+        setTimeout(scanAndInit, 0);
+    });
+
+    function scanAndInit() {
         var tables = document.querySelectorAll('table');
         tables.forEach(function (table) {
             var ths = table.querySelectorAll('tr:first-child th');
             if (ths.length < 3) return;
             var header = ths[0].textContent.trim();
-            if (header !== 'Ao50' && header !== 'Ao100') return;
+            if (header !== 'Ao25' && header !== 'Ao50' && header !== 'Ao100') return;
+            // NOTE: 跳过被 event_selector 隐藏的表格（非当前事件）
+            if (!isVisible(table)) return;
             try {
                 initDistChart(table, header);
             } catch (e) {
                 console.error('[DistChart] Error:', e);
             }
         });
-    });
+    }
+
+    // NOTE: 检查元素及其祖先链是否全部可见
+    function isVisible(el) {
+        while (el && el !== document.body) {
+            if (el.style && el.style.display === 'none') return false;
+            el = el.parentElement;
+        }
+        return true;
+    }
 
     // ── 初始化单个表格的分布图 ──
     function initDistChart(table, aoLabel) {
@@ -89,8 +105,8 @@
         // 切换按钮
         var toggleWrap = document.createElement('div');
         toggleWrap.style.cssText = 'margin-bottom: 8px;';
-        var btnHist = createToggleBtn('直方图', true);
-        var btnKDE = createToggleBtn('KDE', false);
+        var btnHist = createToggleBtn('Histogram', '直方图', true);
+        var btnKDE = createToggleBtn('KDE', 'KDE', false);
         toggleWrap.appendChild(btnHist);
         toggleWrap.appendChild(btnKDE);
         container.appendChild(toggleWrap);
@@ -371,11 +387,18 @@
         return e;
     }
 
-    function createToggleBtn(text, active) {
+    function createToggleBtn(enText, zhText, active) {
         var btn = document.createElement('button');
-        btn.textContent = text;
         btn.className = 'segmented-btn' + (active ? ' active' : '');
-        btn.style.cssText = 'margin: 0 4px; padding: 4px 14px; font-size: 13px; cursor: pointer;';
+        // NOTE: 紧贴排列，无间距
+        btn.style.cssText = 'margin: 0; padding: 4px 14px; font-size: 13px; cursor: pointer;';
+        // NOTE: 双语支持，i18n.js 的 apply() 会根据 data-i18n-en/zh 切换
+        var span = document.createElement('span');
+        span.setAttribute('data-i18n-en', enText);
+        span.setAttribute('data-i18n-zh', zhText);
+        var lang = document.documentElement.getAttribute('data-lang') || 'en';
+        span.textContent = lang === 'zh' ? zhText : enText;
+        btn.appendChild(span);
         return btn;
     }
 })();
