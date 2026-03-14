@@ -453,3 +453,43 @@ audio, video {
         padding: 6px 8px;
     }
 }
+
+/* ── Rand 方法说明图标 ── */
+
+.rand-info {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    font-size: 14px;
+    line-height: 1;
+    color: #666;
+    cursor: help;
+    vertical-align: middle;
+    position: relative;
+    margin-left: 2px;
+}
+
+.rand-info::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: 130%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.85);
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    line-height: 1.4;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 100;
+}
+
+.rand-info:hover::after {
+    opacity: 1;
+}
