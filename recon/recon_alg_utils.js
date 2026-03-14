@@ -12,7 +12,9 @@ var ReconAlgUtils = (function () {
      * - 规范化步骤间距（UD → U D，twisty-player 无法解析连写步骤）
      */
     function cleanForPlayer(alg) {
-        alg = alg.replace(/[.·↑↓⅓⅔()]/g, '');
+        alg = alg.replace(/[.·↑↓⅓⅔]/g, '');
+        // NOTE: 保留重复标记 (...)N（twisty-player 支持），仅删除纯分组括号
+        alg = alg.replace(/\(([^)]*)\)(?!\d)/g, '$1');
         // NOTE: 在连写的步骤之间插入空格
         // 支持修饰符组合: 2, ', 2'（如 R2', U2'）
         alg = alg.replace(/([RULDFBMESruldfbmesxyz][w]?2?'?)(?=[RULDFBMESruldfbmesxyz])/g, '$1 ');
