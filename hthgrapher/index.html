@@ -299,8 +299,12 @@
 			if (timeLive[0] >= 0) {
 				endTimeLive();
 			}
-			document.getElementById("overlay").style.display = "block";
-			document.getElementById("overlay").onmousedown = clickedWhileTextBoxOpen;
+			// NOTE: overlay 尺寸动态匹配 canvas CSS 显示尺寸，确保缩放后坐标对齐
+			var overlay = document.getElementById("overlay");
+			overlay.style.width = c.clientWidth + "px";
+			overlay.style.height = c.clientHeight + "px";
+			overlay.style.display = "block";
+			overlay.onmousedown = clickedWhileTextBoxOpen;
 			var b = getVisualTextBoundaries(highlight[0], highlight[1]);
 
 			var v = document.getElementById("value");
