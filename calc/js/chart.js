@@ -38,6 +38,7 @@ var gridGroup = null;       // 网格线 <g>
 var barGroup = null;        // 柱子 <g>
 var statsGroup = null;      // 统计/扇形 <g>
 var avgGroup = null;        // 菱形标签 <g>
+var topTextGroup = null;    // NOTE: 最顶层文字（渲染在菱形之上，避免被色块遮挡）
 
 // 图表参数缓存（等价于原代码的 g 对象）
 var gp = {};
@@ -55,11 +56,13 @@ export function init(container) {
     barGroup = createSvgElement('g', { class: 'chart-bars' });
     statsGroup = createSvgElement('g', { class: 'chart-stats' });
     avgGroup = createSvgElement('g', { class: 'chart-avgs' });
+    topTextGroup = createSvgElement('g', { class: 'chart-top-text' });
 
     svgEl.appendChild(gridGroup);
     svgEl.appendChild(barGroup);
     svgEl.appendChild(statsGroup);
     svgEl.appendChild(avgGroup);
+    svgEl.appendChild(topTextGroup);
 
     container.appendChild(svgEl);
 }
@@ -77,6 +80,7 @@ export function render() {
     clearGroup(barGroup);
     clearGroup(statsGroup);
     clearGroup(avgGroup);
+    clearGroup(topTextGroup);
 
     drawGridLines();
     drawBars();
@@ -323,18 +327,18 @@ function drawStats() {
                 ay1 = Math.min(ay1, s.paY[2] - 40);
                 ay0 = Math.max(ay0, s.paY[2] + 45);
             }
-            addText(statsGroup, tx0, ay0 + 7, formatTime(s.paVals[0]), s.darkCol, 30, 'end');
-            addText(statsGroup, tx0, ay1 + 7, formatTime(s.paVals[1]), s.darkCol, 30, 'end');
+            addText(topTextGroup, tx0, ay0 + 7, formatTime(s.paVals[0]), s.darkCol, 30, 'end');
+            addText(topTextGroup, tx0, ay1 + 7, formatTime(s.paVals[1]), s.darkCol, 30, 'end');
 
             if (s.paVals[7] > s.paVals[6]) {
-                addText(statsGroup, tx0, s.paY[2] - 3, formatTime(s.paVals[2]), s.darkCol, 30, 'end');
-                addText(statsGroup, tx0, s.paY[2] + 20, 'for ' + rankify(s.paVals[6]) + ' / ' + s.paVals[8], s.darkCol, 22, 'end');
+                addText(topTextGroup, tx0, s.paY[2] - 3, formatTime(s.paVals[2]), s.darkCol, 30, 'end');
+                addText(topTextGroup, tx0, s.paY[2] + 20, 'for ' + rankify(s.paVals[6]) + ' / ' + s.paVals[8], s.darkCol, 22, 'end');
                 var ty = valToYCap(DNF_VALUE);
-                addText(statsGroup, tx0, ty - 4, 'Can place', s.darkCol, 22, 'end');
-                addText(statsGroup, tx0, ty + 26, rankify(s.paVals[6]) + ' to ' + rankify(s.paVals[7]), s.darkCol, 30, 'end');
+                addText(topTextGroup, tx0, ty - 4, 'Can place', s.darkCol, 22, 'end');
+                addText(topTextGroup, tx0, ty + 26, rankify(s.paVals[6]) + ' to ' + rankify(s.paVals[7]), s.darkCol, 30, 'end');
             } else {
-                addText(statsGroup, tx0, s.paY[2] - 7, 'Guaranteed', s.darkCol, 22, 'end');
-                addText(statsGroup, tx0, s.paY[2] + 21, rankify(s.paVals[6]) + ' / ' + s.paVals[8], s.darkCol, 30, 'end');
+                addText(topTextGroup, tx0, s.paY[2] - 7, 'Guaranteed', s.darkCol, 22, 'end');
+                addText(topTextGroup, tx0, s.paY[2] + 21, rankify(s.paVals[6]) + ' / ' + s.paVals[8], s.darkCol, 30, 'end');
             }
 
             // ── 右侧 BPA/WPA（收集进统一排斥池） ──
@@ -382,8 +386,8 @@ function drawStats() {
             // Placed 文字
             var placedX = s.p === 0 ? BAR_START + 200 : CHART_END - 200;
             var ty = valToYCap(DNF_VALUE);
-            addText(statsGroup, placedX, ty - 4, 'Placed', s.darkCol, 22, 'center');
-            addText(statsGroup, placedX, ty + 26, rankify(getRankOf(state.seedOn + s.p)) + ' / ' + getValidsCount(), s.darkCol, 30, 'center');
+            addText(topTextGroup, placedX, ty - 4, 'Placed', s.darkCol, 22, 'center');
+            addText(topTextGroup, placedX, ty + 26, rankify(getRankOf(state.seedOn + s.p)) + ' / ' + getValidsCount(), s.darkCol, 30, 'center');
         }
     }
 
@@ -396,12 +400,12 @@ function drawStats() {
     for (var li = 0; li < rightLabels.length; li++) {
         var lb = rightLabels[li];
         for (var ti = 0; ti < lb.texts.length; ti++) {
-            addText(statsGroup, lb.x, lb.y + lb.texts[ti].dy, lb.texts[ti].text, lb.col, lb.texts[ti].size, lb.anchor);
+            addText(topTextGroup, lb.x, lb.y + lb.texts[ti].dy, lb.texts[ti].text, lb.col, lb.texts[ti].size, lb.anchor);
         }
         // NOTE: 标签被推离原位时画引线（leader line）
         var shift = Math.abs(lb.y - lb.origY);
         if (shift > 5) {
-            statsGroup.appendChild(createSvgElement('line', {
+            topTextGroup.appendChild(createSvgElement('line', {
                 x1: lb.x, y1: lb.origY, x2: lb.x, y2: lb.y - 3,
                 stroke: lb.col, 'stroke-width': 1, 'stroke-dasharray': '4,3',
                 opacity: 0.5,
