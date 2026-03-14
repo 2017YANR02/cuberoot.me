@@ -280,19 +280,21 @@ function getPossibleRank(selfTimes, p) {
 
 function drawStats() {
     var m = 5;
+
+    // NOTE: 收集两个选手的标签数据，用于统一排斥计算
+    var labelSets = [];  // [{labels, paVals, paY, ax, col, darkCol, filleds, p, shouldDrawMiddle}, ...]
+
     for (var p = 0; p < 2; p++) {
         var filleds = 0;
         for (var t = 0; t < 5; t++) {
             if (state.times[state.seedOn + p][t] !== 0) filleds++;
         }
         if (filleds < 4) continue;
-
         if (!state.playerEnabled[p]) continue;
 
         var paVals = getPA(state.times[state.seedOn + p], state.seedOn + p);
         var paY = paVals.map(v => valToYCap(v));
 
-        // 扇形 x 坐标（紧贴菱形左尖前方）
         var diamondTip = IX[1] + IX[4];
         var ax = [diamondTip - 120, diamondTip - 40];
 
@@ -300,69 +302,110 @@ function drawStats() {
         var darkCol = darken(col, 0.7);
         var shouldDrawMiddle = (paVals[7] > paVals[6] && (filleds === 4 || state.timeLive[0] === p));
 
-        // 绘制扇形曲线
+        // 绘制扇形曲线（不受排斥影响）
         drawCurvedSegment(ax, paY, col, shouldDrawMiddle);
 
-        // ── 左侧文字（best/worst 单次、阈值） ──
-        var tx0 = ax[0] - m;
-        if (filleds === 4 || state.timeLive[0] === p) {
-            var ay0 = paY[0], ay1 = paY[1];
-            if (filleds === 4 && paVals[2] !== DNF_VALUE) {
-                ay1 = Math.min(ay1, paY[2] - 40);
-                ay0 = Math.max(ay0, paY[2] + 45);
-            }
-            addText(statsGroup, tx0, ay0 + 7, formatTime(paVals[0]), darkCol, 30, 'end');
-            addText(statsGroup, tx0, ay1 + 7, formatTime(paVals[1]), darkCol, 30, 'end');
+        labelSets.push({ paVals, paY, ax, col, darkCol, filleds, p, shouldDrawMiddle });
+    }
 
-            if (paVals[7] > paVals[6]) {
-                addText(statsGroup, tx0, paY[2] - 3, formatTime(paVals[2]), darkCol, 30, 'end');
-                addText(statsGroup, tx0, paY[2] + 20, 'for ' + rankify(paVals[6]) + ' / ' + paVals[8], darkCol, 22, 'end');
+    // NOTE: 收集所有右侧标签供统一排斥
+    var rightLabels = [];
+
+    for (var si = 0; si < labelSets.length; si++) {
+        var s = labelSets[si];
+        var tx0 = s.ax[0] - m;
+        var tx1 = s.ax[1] + m;
+
+        if (s.filleds === 4 || state.timeLive[0] === s.p) {
+            // ── 左侧文字（best/worst 单次、阈值） ──
+            var ay0 = s.paY[0], ay1 = s.paY[1];
+            if (s.filleds === 4 && s.paVals[2] !== DNF_VALUE) {
+                ay1 = Math.min(ay1, s.paY[2] - 40);
+                ay0 = Math.max(ay0, s.paY[2] + 45);
+            }
+            addText(statsGroup, tx0, ay0 + 7, formatTime(s.paVals[0]), s.darkCol, 30, 'end');
+            addText(statsGroup, tx0, ay1 + 7, formatTime(s.paVals[1]), s.darkCol, 30, 'end');
+
+            if (s.paVals[7] > s.paVals[6]) {
+                addText(statsGroup, tx0, s.paY[2] - 3, formatTime(s.paVals[2]), s.darkCol, 30, 'end');
+                addText(statsGroup, tx0, s.paY[2] + 20, 'for ' + rankify(s.paVals[6]) + ' / ' + s.paVals[8], s.darkCol, 22, 'end');
                 var ty = valToYCap(DNF_VALUE);
-                addText(statsGroup, tx0, ty - 4, 'Can place', darkCol, 22, 'end');
-                addText(statsGroup, tx0, ty + 26, rankify(paVals[6]) + ' to ' + rankify(paVals[7]), darkCol, 30, 'end');
+                addText(statsGroup, tx0, ty - 4, 'Can place', s.darkCol, 22, 'end');
+                addText(statsGroup, tx0, ty + 26, rankify(s.paVals[6]) + ' to ' + rankify(s.paVals[7]), s.darkCol, 30, 'end');
             } else {
-                addText(statsGroup, tx0, paY[2] - 7, 'Guaranteed', darkCol, 22, 'end');
-                addText(statsGroup, tx0, paY[2] + 21, rankify(paVals[6]) + ' / ' + paVals[8], darkCol, 30, 'end');
+                addText(statsGroup, tx0, s.paY[2] - 7, 'Guaranteed', s.darkCol, 22, 'end');
+                addText(statsGroup, tx0, s.paY[2] + 21, rankify(s.paVals[6]) + ' / ' + s.paVals[8], s.darkCol, 30, 'end');
             }
 
-            // ── 右侧文字（BPA/WPA） ──
-            var tx1 = ax[1] + m;
-            var bpaY = paY[3] + 7, wpaY = paY[4] - 21;
+            // ── 右侧 BPA/WPA（收集进统一排斥池） ──
+            var bpaY = s.paY[3] + 7, wpaY = s.paY[4] - 21;
+            // 先做自身 gap 保证
             var gap = bpaY - wpaY;
             if (gap <= 30) { bpaY += (24 - gap) / 2; wpaY -= (24 - gap) / 2; }
-            addText(statsGroup, tx1, bpaY, 'BPA', darkCol, 22, 'start');
-            addText(statsGroup, tx1, bpaY + 28, formatTime(paVals[3]), darkCol, 30, 'start');
-            addText(statsGroup, tx1, wpaY, 'WPA', darkCol, 22, 'start');
-            addText(statsGroup, tx1, wpaY + 28, formatTime(paVals[4]), darkCol, 30, 'start');
+
+            // NOTE: 每个 BPA/WPA 块占两行（标题22px + 数值30px），总高约 55px
+            rightLabels.push({ origY: s.paY[3] + 7, y: bpaY, h: 55, texts: [
+                { dy: 0, text: 'BPA', size: 22 },
+                { dy: 28, text: formatTime(s.paVals[3]), size: 30 },
+            ], x: tx1, col: s.darkCol, anchor: 'start' });
+            rightLabels.push({ origY: s.paY[4] - 21, y: wpaY, h: 55, texts: [
+                { dy: 0, text: 'WPA', size: 22 },
+                { dy: 28, text: formatTime(s.paVals[4]), size: 30 },
+            ], x: tx1, col: s.darkCol, anchor: 'start' });
 
             // NOTE: 计时第 5 把时，实时画黑色连接线
-            if (filleds === 5 && state.timeLive[0] === p) {
-                var avg = getAverage(state.times[state.seedOn + p], true);
-                var ys = [valToYCap(state.times[state.seedOn + p][4]), valToYCap(avg)];
-                var outerX = ax[0] - 5;
+            if (s.filleds === 5 && state.timeLive[0] === s.p) {
+                var avg = getAverage(state.times[state.seedOn + s.p], true);
+                var ys = [valToYCap(state.times[state.seedOn + s.p][4]), valToYCap(avg)];
+                var outerX = s.ax[0] - 5;
                 var innerX = IX[1] + IX[4] + 2;
                 var arrowX = innerX - 18;
-                drawCurvedLine([ax[0], ax[1], outerX, innerX, arrowX], ys, '#000');
+                drawCurvedLine([s.ax[0], s.ax[1], outerX, innerX, arrowX], ys, '#000');
             }
-        } else if (filleds === 5) {
-            // ── 5 把完成：BPA/WPA + 连接线 + Placed ──
-            var tx1 = ax[1] + m;
-            addText(statsGroup, tx1, paY[3] + 24, formatTime(paVals[3]), darkCol, 30, 'start');
-            addText(statsGroup, tx1, paY[4] - 4, formatTime(paVals[4]), darkCol, 30, 'start');
+        } else if (s.filleds === 5) {
+            // ── 5 把完成：只有数值标签 ──
+            rightLabels.push({ origY: s.paY[3] + 24, y: s.paY[3] + 24, h: 35, texts: [
+                { dy: 0, text: formatTime(s.paVals[3]), size: 30 },
+            ], x: tx1, col: s.darkCol, anchor: 'start' });
+            rightLabels.push({ origY: s.paY[4] - 4, y: s.paY[4] - 4, h: 35, texts: [
+                { dy: 0, text: formatTime(s.paVals[4]), size: 30 },
+            ], x: tx1, col: s.darkCol, anchor: 'start' });
 
             // 连接线（扇形到柱子区域）
-            var avg = getAverage(state.times[state.seedOn + p], true);
-            var ys = [valToYCap(state.times[state.seedOn + p][4]), valToYCap(avg)];
-            var outerX = ax[0] - 5;
+            var avg = getAverage(state.times[state.seedOn + s.p], true);
+            var ys = [valToYCap(state.times[state.seedOn + s.p][4]), valToYCap(avg)];
+            var outerX = s.ax[0] - 5;
             var innerX = IX[1] + IX[4] + 2;
             var arrowX = innerX - 18;
-            drawCurvedLine([ax[0], ax[1], outerX, innerX, arrowX], ys, '#000');
+            drawCurvedLine([s.ax[0], s.ax[1], outerX, innerX, arrowX], ys, '#000');
 
             // Placed 文字
-            var placedX = p === 0 ? BAR_START + 200 : CHART_END - 200;
+            var placedX = s.p === 0 ? BAR_START + 200 : CHART_END - 200;
             var ty = valToYCap(DNF_VALUE);
-            addText(statsGroup, placedX, ty - 4, 'Placed', darkCol, 22, 'center');
-            addText(statsGroup, placedX, ty + 26, rankify(getRankOf(state.seedOn + p)) + ' / ' + getValidsCount(), darkCol, 30, 'center');
+            addText(statsGroup, placedX, ty - 4, 'Placed', s.darkCol, 22, 'center');
+            addText(statsGroup, placedX, ty + 26, rankify(getRankOf(state.seedOn + s.p)) + ' / ' + getValidsCount(), s.darkCol, 30, 'center');
+        }
+    }
+
+    // NOTE: 统一排斥右侧标签，防止不同选手的 BPA/WPA 互相重叠
+    if (rightLabels.length > 1) {
+        resolveOverlaps(rightLabels, 8);
+    }
+
+    // 渲染排斥后的右侧标签
+    for (var li = 0; li < rightLabels.length; li++) {
+        var lb = rightLabels[li];
+        for (var ti = 0; ti < lb.texts.length; ti++) {
+            addText(statsGroup, lb.x, lb.y + lb.texts[ti].dy, lb.texts[ti].text, lb.col, lb.texts[ti].size, lb.anchor);
+        }
+        // NOTE: 标签被推离原位时画引线（leader line）
+        var shift = Math.abs(lb.y - lb.origY);
+        if (shift > 5) {
+            statsGroup.appendChild(createSvgElement('line', {
+                x1: lb.x, y1: lb.origY, x2: lb.x, y2: lb.y - 3,
+                stroke: lb.col, 'stroke-width': 1, 'stroke-dasharray': '4,3',
+                opacity: 0.5,
+            }));
         }
     }
 }
@@ -502,6 +545,27 @@ function drawAverages() {
 }
 
 // ── 工具函数 ──
+
+// NOTE: 标签排斥算法 — 防止重叠的标签互相挤压
+// labels: [{y, h, origY, ...}] — y 为当前位置，h 为标签高度
+// minGap: 标签之间的最小间距（像素）
+function resolveOverlaps(labels, minGap) {
+    labels.sort(function (a, b) { return a.y - b.y; });
+    // 多轮迭代直到无碰撞（最多 10 轮防无限循环）
+    for (var iter = 0; iter < 10; iter++) {
+        var moved = false;
+        for (var i = 1; i < labels.length; i++) {
+            var overlap = (labels[i - 1].y + labels[i - 1].h + minGap) - labels[i].y;
+            if (overlap > 0) {
+                // 各推一半
+                labels[i - 1].y -= overlap / 2;
+                labels[i].y += overlap / 2;
+                moved = true;
+            }
+        }
+        if (!moved) break;
+    }
+}
 
 function getLastName(name) {
     var arr = name.split(' ');
