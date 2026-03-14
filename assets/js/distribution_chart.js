@@ -96,6 +96,7 @@
 
             players.push({
                 name: name,
+                nameCell: cells[1],  // NOTE: 保存引用，draw() 时动态读取（语言切换后名字会变）
                 times: times,
                 checkbox: cb,
                 color: COLORS[players.length % COLORS.length]
@@ -390,7 +391,8 @@
 
                 // 色块 + 名字
                 svgEl('rect', { x: lx, y: ly, width: 12, height: 12, fill: p.color, rx: '2' }, svg);
-                var label = p.name;
+                // NOTE: 从表格单元格动态读取名字（语言切换后 i18n 会更新 <a> 文本）
+                var label = p.nameCell ? p.nameCell.textContent.trim() : p.name;
                 if (label.length > 10) label = label.substring(0, 9) + '…';
                 svgEl('text', { x: lx + 16, y: ly + 10, fill: '#ccc', 'font-size': '12',
                     'text-anchor': 'start', 'font-weight': 'bold' }, svg).textContent = label;
