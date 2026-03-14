@@ -5,7 +5,7 @@ import {
     DNF_VALUE, formatTime, textToTime
 } from './calc_engine.js';
 import {
-    state, updateTime, notify
+    state, updateTime, notify, solveCount
 } from './state.js';
 
 // NOTE: 当前聚焦的单元格 [player, solve]，-1 表示无聚焦
@@ -176,7 +176,8 @@ function onTogglePlayer(e) {
     var p = parseInt(e.target.dataset.player);
     var disabled = !e.target.checked;
     state.playerEnabled[p] = e.target.checked;
-    for (var t = 0; t < 5; t++) {
+    var n = solveCount();
+    for (var t = 0; t < n; t++) {
         cells[p][t].disabled = disabled;
         cells[p][t].style.opacity = disabled ? '0.3' : '1';
     }
@@ -207,7 +208,7 @@ function saveCell(p, t) {
 
 // NOTE: 导航到指定单元格
 export function navigateTo(p, t) {
-    if (p < 0 || p > 1 || t < 0 || t > 4) return;
+    if (p < 0 || p > 1 || t < 0 || t > solveCount() - 1) return;
 
     // 先保存当前格
     if (activeCell[0] >= 0 && activeCell[1] >= 0) {
@@ -222,15 +223,16 @@ export function navigateTo(p, t) {
 // NOTE: 计算下一个单元格 — 双选手启用时按列 zigzag（A0→B0→A1→B1→...），单选手时同行水平
 // 返回 [p, t] 或 null（已到末尾）
 function nextCell(p, t) {
+    var maxT = solveCount() - 1;
     var bothEnabled = state.playerEnabled[0] && state.playerEnabled[1];
     if (bothEnabled) {
         // zigzag: A→B 同列，B→A 下一列
         if (p === 0) return [1, t];
-        if (t < 4) return [0, t + 1];
+        if (t < maxT) return [0, t + 1];
         return null;
     }
     // 单选手：同行右移
-    if (t < 4) return [p, t + 1];
+    if (t < maxT) return [p, t + 1];
     return null;
 }
 
@@ -273,7 +275,7 @@ function onKeyDown(e) {
         // NOTE: Tab 始终按列 zigzag（不受单选手影响）
         if (p === 0 && state.playerEnabled[1]) {
             navigateTo(1, t);
-        } else if (t < 4) {
+        } else if (t < solveCount() - 1) {
             navigateTo(state.playerEnabled[0] ? 0 : 1, t + 1);
         } else {
             saveCell(p, t);
@@ -330,7 +332,7 @@ function onKeyDown(e) {
         if (p < 0) return;
         e.preventDefault();
         // NOTE: 同行向右一格
-        if (t < 4) navigateTo(p, t + 1);
+        if (t < solveCount() - 1) navigateTo(p, t + 1);
     } else if (e.key === 'z' && (e.ctrlKey || e.metaKey)) {
         // NOTE: Ctrl+Z 撤销上一次单元格修改并跳回该格
         e.preventDefault();
@@ -370,7 +372,8 @@ function numpadPress(key) {
     // 如果没有活跃单元格，聚焦第一个空格
     if (p < 0 || t < 0) {
         // 找到第一个空格
-        for (var ti = 0; ti < 5; ti++) {
+        var n = solveCount();
+        for (var ti = 0; ti < n; ti++) {
             for (var pi = 0; pi < 2; pi++) {
                 if (state.times[state.seedOn + pi][ti] === 0) {
                     navigateTo(pi, ti);
@@ -399,7 +402,7 @@ function numpadPress(key) {
         // NOTE: Tab 始终按列 zigzag
         if (p === 0 && state.playerEnabled[1]) {
             navigateTo(1, t);
-        } else if (t < 4) {
+        } else if (t < solveCount() - 1) {
             navigateTo(state.playerEnabled[0] ? 0 : 1, t + 1);
         } else {
             saveCell(p, t);
@@ -483,16 +486,33 @@ function syncNumpadDisplay() {
 // NOTE: 当 seed 切换时，刷新所有输入框的值
 export function refresh() {
     compNameInput.value = state.compName;
+    var n = solveCount();
     for (var p = 0; p < 2; p++) {
         for (var t = 0; t < 5; t++) {
-            var rawVal = state.times[state.seedOn + p][t];
-            cells[p][t].value = (rawVal > 0 && rawVal < DNF_VALUE)
-                ? formatTime(rawVal)
-                : (rawVal >= DNF_VALUE ? 'DNF' : '');
+            if (t < n) {
+                var rawVal = state.times[state.seedOn + p][t];
+                cells[p][t].value = (rawVal > 0 && rawVal < DNF_VALUE)
+                    ? formatTime(rawVal)
+                    : (rawVal >= DNF_VALUE ? 'DNF' : '');
+                cells[p][t].style.display = '';
+            } else {
+                cells[p][t].value = '';
+                cells[p][t].style.display = 'none';
+            }
         }
         nameCells[p].value = state.names[state.seedOn + p];
     }
     syncNumpadDisplay();
+}
+
+// NOTE: 项目切换时更新可见输入格数量
+export function updateVisibleCells() {
+    var n = solveCount();
+    for (var p = 0; p < 2; p++) {
+        for (var t = 0; t < 5; t++) {
+            cells[p][t].style.display = (t < n) ? '' : 'none';
+        }
+    }
 }
 
 // NOTE: 获取当前活跃单元格

@@ -6,7 +6,7 @@ import {
     formatTime, getAverage, getBestSingle, rankify
 } from './calc_engine.js';
 import {
-    state, getRankOf, getValidsCount
+    state, getRankOf, getValidsCount, solveCount, isMo3
 } from './state.js';
 import { isWR } from './wr_data.js';
 
@@ -15,11 +15,14 @@ import { isWR } from './wr_data.js';
 const BAR_W = 90;          // 柱宽
 const STRIDE = 105;        // 组间距
 const BAR_START = 390;     // 第一组 x 起点
-const CHART_END = BAR_START + 5 * STRIDE - (STRIDE - BAR_W);
-const CHART_CENTER = (BAR_START + CHART_END) / 2;
 
-// NOTE: 统计区域入口参数（与原 setGridParameters 的 ix 参数对齐）
-const IX = [CHART_END, CHART_END + 100, CHART_END, CHART_END + 350, 30];
+// NOTE: 动态计算 — 根据当前项目的 solveCount 调整图表结束位置
+function chartEnd() { return BAR_START + solveCount() * STRIDE - (STRIDE - BAR_W); }
+function chartCenter() { return (BAR_START + chartEnd()) / 2; }
+function chartIX() {
+    var ce = chartEnd();
+    return [ce, ce + 100, ce, ce + 350, 30];
+}
 
 const COLORS = {
     playerA: 'rgba(255,128,0,1.0)',
@@ -104,7 +107,7 @@ function computeGridParams() {
 
     for (var p = 0; p < 2; p++) {
         if (!state.playerEnabled[p]) continue;
-        for (var t = 0; t < 5; t++) {
+        for (var t = 0; t < solveCount(); t++) {
             var val = state.times[state.seedOn + p][t];
             if (val !== 0) {
                 addToViewingWindow(val);
@@ -164,7 +167,7 @@ function drawGridLines() {
         var appY = valToY(yLine);
         // 水平参考线
         gridGroup.appendChild(createSvgElement('line', {
-            x1: BAR_START, y1: appY, x2: CHART_END, y2: appY,
+            x1: BAR_START, y1: appY, x2: chartEnd(), y2: appY,
             stroke: 'rgba(0,0,0,0.3)', 'stroke-width': 2,
         }));
         // Y 轴标签
@@ -183,7 +186,7 @@ function drawGridLines() {
 function drawBars() {
     var bm = 7; // 柱内边距
 
-    for (var t = 0; t < 5; t++) {
+    for (var t = 0; t < solveCount(); t++) {
         var minYs = [0, 0];
         for (var p = 0; p < 2; p++) {
             minYs[p] = (state.times[state.seedOn + p][t] !== 0)
@@ -291,26 +294,37 @@ function drawStats() {
 
     for (var p = 0; p < 2; p++) {
         var filleds = 0;
-        for (var t = 0; t < 5; t++) {
+        for (var t = 0; t < solveCount(); t++) {
             if (state.times[state.seedOn + p][t] !== 0) filleds++;
         }
-        if (filleds < 4) continue;
+        if (filleds < solveCount() - 1) continue;
         if (!state.playerEnabled[p]) continue;
 
-        var paVals = getPA(state.times[state.seedOn + p], state.seedOn + p);
-        var paY = paVals.map(v => valToYCap(v));
+        if (isMo3()) {
+            // NOTE: Mo3 不需要 PA 计算和扇形，只收集 Placed 所需数据
+            var IX = chartIX();
+            var diamondTip = IX[1] + IX[4];
+            var ax = [diamondTip - 120, diamondTip - 40];
+            var col = SHADES[p];
+            var darkCol = darken(col, 0.7);
+            labelSets.push({ paVals: null, paY: null, ax, col, darkCol, filleds, p, shouldDrawMiddle: false });
+        } else {
+            var paVals = getPA(state.times[state.seedOn + p], state.seedOn + p);
+            var paY = paVals.map(v => valToYCap(v));
 
-        var diamondTip = IX[1] + IX[4];
-        var ax = [diamondTip - 120, diamondTip - 40];
+            var IX = chartIX();
+            var diamondTip = IX[1] + IX[4];
+            var ax = [diamondTip - 120, diamondTip - 40];
 
-        var col = SHADES[p];
-        var darkCol = darken(col, 0.7);
-        var shouldDrawMiddle = (paVals[7] > paVals[6] && (filleds === 4 || state.timeLive[0] === p));
+            var col = SHADES[p];
+            var darkCol = darken(col, 0.7);
+            var shouldDrawMiddle = (paVals[7] > paVals[6] && (filleds === 4 || state.timeLive[0] === p));
 
-        // 绘制扇形曲线（不受排斥影响）
-        drawCurvedSegment(ax, paY, col, shouldDrawMiddle);
+            // 绘制扇形曲线（不受排斥影响）
+            drawCurvedSegment(ax, paY, col, shouldDrawMiddle);
 
-        labelSets.push({ paVals, paY, ax, col, darkCol, filleds, p, shouldDrawMiddle });
+            labelSets.push({ paVals, paY, ax, col, darkCol, filleds, p, shouldDrawMiddle });
+        }
     }
 
     // NOTE: 收集所有右侧标签供统一排斥
@@ -320,6 +334,27 @@ function drawStats() {
         var s = labelSets[si];
         var tx0 = s.ax[0] - m;
         var tx1 = s.ax[1] + m;
+
+        // NOTE: Mo3 模式下不画 BPA/WPA 扇形和标签
+        if (isMo3()) {
+            if (s.filleds === solveCount()) {
+                // Mo3 全部完成 — 只显示 Placed 排名
+                var placedX = s.p === 0 ? BAR_START + 200 : chartEnd() - 200;
+                var ty = valToYCap(DNF_VALUE);
+                addText(topTextGroup, placedX, ty - 4, 'Placed', s.darkCol, 22, 'center');
+                addText(topTextGroup, placedX, ty + 26, rankify(getRankOf(state.seedOn + s.p)) + ' / ' + getValidsCount(), s.darkCol, 30, 'center');
+
+                // 连接线
+                var avg = getAverage(state.times[state.seedOn + s.p], true);
+                var ys = [valToYCap(state.times[state.seedOn + s.p][solveCount() - 1]), valToYCap(avg)];
+                var outerX = s.ax[0] - 5;
+                var innerIX = chartIX();
+                var innerX = innerIX[1] + innerIX[4] + 2;
+                var arrowX = innerX - 18;
+                drawCurvedLine([s.ax[0], s.ax[1], outerX, innerX, arrowX], ys, '#000');
+            }
+            continue; // NOTE: Mo3 不绘制 BPA/WPA 右侧标签
+        }
 
         if (s.filleds === 4 || state.timeLive[0] === s.p) {
             // ── 左侧文字（best/worst 单次、阈值） ──
@@ -365,7 +400,7 @@ function drawStats() {
                 var avg = getAverage(state.times[state.seedOn + s.p], true);
                 var ys = [valToYCap(state.times[state.seedOn + s.p][4]), valToYCap(avg)];
                 var outerX = s.ax[0] - 5;
-                var innerX = IX[1] + IX[4] + 2;
+                var innerX = chartIX()[1] + chartIX()[4] + 2;
                 var arrowX = innerX - 18;
                 drawCurvedLine([s.ax[0], s.ax[1], outerX, innerX, arrowX], ys, '#000');
             }
@@ -384,12 +419,12 @@ function drawStats() {
             var avg = getAverage(state.times[state.seedOn + s.p], true);
             var ys = [valToYCap(state.times[state.seedOn + s.p][4]), valToYCap(avg)];
             var outerX = s.ax[0] - 5;
-            var innerX = IX[1] + IX[4] + 2;
+            var innerX = chartIX()[1] + chartIX()[4] + 2;
             var arrowX = innerX - 18;
             drawCurvedLine([s.ax[0], s.ax[1], outerX, innerX, arrowX], ys, '#000');
 
             // Placed 文字
-            var placedX = s.p === 0 ? BAR_START + 200 : CHART_END - 200;
+            var placedX = s.p === 0 ? BAR_START + 200 : chartEnd() - 200;
             var ty = valToYCap(DNF_VALUE);
             addText(topTextGroup, placedX, ty - 4, 'Placed', s.darkCol, 22, 'center');
             addText(topTextGroup, placedX, ty + 26, rankify(getRankOf(state.seedOn + s.p)) + ' / ' + getValidsCount(), s.darkCol, 30, 'center');
@@ -497,6 +532,7 @@ function addText(parent, x, y, text, fill, size, anchor) {
 // ── 平均菱形标签 ──
 
 function drawAverages() {
+    var IX = chartIX();
     var im = IX[4]; // 菱形内边距
     var m = [3, 13, 18]; // 标签半高
     var offsetY = [0, 7.5, 0]; // NOTE: type 2 用 0 配合 dominant-baseline:central 居中
@@ -532,7 +568,7 @@ function drawAverages() {
 
             // 测量文字宽度（近似）
             var tw = labelText.length * fontSize * 0.55 + 20;
-            var lx = IX[1] + im;
+            var lx = chartIX()[1] + im;
             var rx = lx + jm + tw;
 
             // 菱形路径（左尖右方）

@@ -109,15 +109,26 @@ export function rankify(s) {
 
 // ── 核心统计计算 ──
 
-// NOTE: Ao5 平均值（WCA 规则：去掉最好最差，取中间 3 次均值）
+// NOTE: 平均值计算（自动适配 Mo3 和 Ao5）
+// Mo3 (arr.length=3): 算术均值，任何 DNF = 整个 DNF
+// Ao5 (arr.length=5): 去掉最好最差，取中间 3 次均值
 // includeZeros: false 时遇到 0（未填）返回 UNFINISHED
 export function getAverage(arr, includeZeros) {
+    var n = arr.length;
     if (!includeZeros) {
-        for (var i = 0; i < 5; i++) {
+        for (var i = 0; i < n; i++) {
             if (arr[i] === 0) return UNFINISHED_VALUE;
         }
     }
     var sorted = [...structuredClone(arr)].sort((a, b) => a - b);
+    if (n <= 3) {
+        // NOTE: Mo3 — 任何一个 DNF 则整个 Mean = DNF
+        if (sorted[n - 1] >= DNF_VALUE) return DNF_VALUE;
+        var sum = 0;
+        for (var i = 0; i < n; i++) sum += sorted[i];
+        return Math.round(sum / n);
+    }
+    // Ao5
     if (sorted[3] >= DNF_VALUE) return DNF_VALUE;
     return Math.round((sorted[1] + sorted[2] + sorted[3]) / 3);
 }
@@ -152,8 +163,10 @@ export function getBestSingle(arr) {
 export const CalcEngine = {
 
     // 主入口 — 返回值中 null 表示该指标无法计算（数据不足）
-    compute(times5) {
-        var filled = times5.filter(t => t > 0);
+    // mo3Mode: true 时使用 Mo3 计算（算术均值，无 BPA/WPA 等）
+    compute(times, mo3Mode) {
+        var n = times.length;
+        var filled = times.filter(t => t > 0);
         if (filled.length === 0) return null;
 
         var sorted = [...filled].sort((a, b) => a - b);
@@ -166,63 +179,114 @@ export const CalcEngine = {
         result.best = nonDnf.length > 0 ? nonDnf[0] : DNF_VALUE;
         result.worst = filled.length > 0 ? sorted[sorted.length - 1] : null;
 
-        if (filled.length < 5) {
+        if (filled.length < n) {
             result.complete = false;
             return result;
         }
         result.complete = true;
 
-        // ── Ao5 ──
-        result.avg = (dnfCount >= 2) ? DNF_VALUE
-            : Math.round((sorted[1] + sorted[2] + sorted[3]) / 3);
+        if (mo3Mode) {
+            // NOTE: Mo3 模式 — 算术均值，无 BPA/WPA/BestC/WorstC/BAo5/WAo5
+            result.avg = (dnfCount > 0) ? DNF_VALUE
+                : Math.round(filled.reduce((s, v) => s + v, 0) / n);
 
-        // ── BAo5 — 去掉最差，取最好 3 次均值 ──
-        result.bao5 = (nonDnf.length < 3) ? DNF_VALUE
-            : Math.round((nonDnf[0] + nonDnf[1] + nonDnf[2]) / 3);
+            // Mo2 / Mo3 — 连续 N 次的最佳算术均值
+            for (var nn = 2; nn <= 3; nn++) {
+                var key = 'mo' + nn;
+                if (dnfCount > 0) {
+                    result[key] = DNF_VALUE;
+                } else {
+                    var bestMean = Infinity;
+                    for (var i = 0; i <= n - nn; i++) {
+                        var sum = 0;
+                        var hasDnf = false;
+                        for (var j = i; j < i + nn; j++) {
+                            if (times[j] >= DNF_VALUE) { hasDnf = true; break; }
+                            sum += times[j];
+                        }
+                        if (!hasDnf) bestMean = Math.min(bestMean, Math.round(sum / nn));
+                    }
+                    result[key] = bestMean === Infinity ? DNF_VALUE : bestMean;
+                }
+            }
+        } else {
+            // NOTE: Ao5 模式
+            // ── Ao5 ──
+            result.avg = (dnfCount >= 2) ? DNF_VALUE
+                : Math.round((sorted[1] + sorted[2] + sorted[3]) / 3);
 
-        // ── WAo5 — 去掉最好，取最差 3 次均值 ──
-        result.wao5 = (dnfCount >= 1) ? DNF_VALUE
-            : Math.round((sorted[2] + sorted[3] + sorted[4]) / 3);
+            // ── BAo5 — 去掉最差，取最好 3 次均值 ──
+            result.bao5 = (nonDnf.length < 3) ? DNF_VALUE
+                : Math.round((nonDnf[0] + nonDnf[1] + nonDnf[2]) / 3);
 
-        // ── Mo5 — 5 次算术均值 ──
-        result.mo5 = (dnfCount > 0) ? DNF_VALUE
-            : Math.round(filled.reduce((s, v) => s + v, 0) / 5);
+            // ── WAo5 — 去掉最好，取最差 3 次均值 ──
+            result.wao5 = (dnfCount >= 1) ? DNF_VALUE
+                : Math.round((sorted[2] + sorted[3] + sorted[4]) / 3);
 
-        // ── BPA / WPA ──
-        if (times5.length === 5) {
-            var baseForPa = filled.slice(0, 4);
-            if (baseForPa.length === 4) {
-                // BPA: 假设第 5 把为 0（最佳情况）
-                var bpaArr = [...baseForPa, 0].sort((a, b) => a - b);
-                var bpaDnf = bpaArr.filter(t => t >= DNF_VALUE).length;
-                result.bpa = (bpaDnf >= 2) ? DNF_VALUE
-                    : Math.round((bpaArr[1] + bpaArr[2] + bpaArr[3]) / 3);
-                // WPA: 假设第 5 把为 DNF（最差情况）
-                var wpaArr = [...baseForPa, DNF_VALUE].sort((a, b) => a - b);
-                var wpaDnf = wpaArr.filter(t => t >= DNF_VALUE).length;
-                result.wpa = (wpaDnf >= 2) ? DNF_VALUE
-                    : Math.round((wpaArr[1] + wpaArr[2] + wpaArr[3]) / 3);
+            // ── Mo5 — 5 次算术均值 ──
+            result.mo5 = (dnfCount > 0) ? DNF_VALUE
+                : Math.round(filled.reduce((s, v) => s + v, 0) / 5);
+
+            // ── BPA / WPA ──
+            if (times.length === 5) {
+                var baseForPa = filled.slice(0, 4);
+                if (baseForPa.length === 4) {
+                    var bpaArr = [...baseForPa, 0].sort((a, b) => a - b);
+                    var bpaDnf = bpaArr.filter(t => t >= DNF_VALUE).length;
+                    result.bpa = (bpaDnf >= 2) ? DNF_VALUE
+                        : Math.round((bpaArr[1] + bpaArr[2] + bpaArr[3]) / 3);
+                    var wpaArr = [...baseForPa, DNF_VALUE].sort((a, b) => a - b);
+                    var wpaDnf = wpaArr.filter(t => t >= DNF_VALUE).length;
+                    result.wpa = (wpaDnf >= 2) ? DNF_VALUE
+                        : Math.round((wpaArr[1] + wpaArr[2] + wpaArr[3]) / 3);
+                } else {
+                    result.bpa = null;
+                    result.wpa = null;
+                }
+            }
+
+            // ── BestC / Median / WorstC — 计入成绩的最好/中位/最差 ──
+            if (dnfCount >= 2) {
+                result.bestC = result.median = result.worstC = DNF_VALUE;
             } else {
-                result.bpa = null;
-                result.wpa = null;
+                result.bestC = sorted[1];
+                result.median = sorted[2];
+                result.worstC = sorted[3];
+            }
+
+            // ── Mo2 ~ Mo4 — 连续 N 次的最佳算术均值 ──
+            for (var nn = 2; nn <= 4; nn++) {
+                var key = 'mo' + nn;
+                if (dnfCount > 0) {
+                    result[key] = DNF_VALUE;
+                } else {
+                    var bestMean = Infinity;
+                    for (var i = 0; i <= 5 - nn; i++) {
+                        var sum = 0;
+                        var hasDnf = false;
+                        for (var j = i; j < i + nn; j++) {
+                            if (times[j] >= DNF_VALUE) { hasDnf = true; break; }
+                            sum += times[j];
+                        }
+                        if (!hasDnf) bestMean = Math.min(bestMean, Math.round(sum / nn));
+                    }
+                    result[key] = bestMean === Infinity ? DNF_VALUE : bestMean;
+                }
             }
         }
 
-        // ── BestC / Median / WorstC — 计入成绩的最好/中位/最差 ──
-        if (dnfCount >= 2) {
-            result.bestC = result.median = result.worstC = DNF_VALUE;
-        } else {
-            result.bestC = sorted[1];
-            result.median = sorted[2];
-            result.worstC = sorted[3];
-        }
-
-        // ── Variance — 中间 3 次的方差（秒²单位） ──
-        if (result.avg !== DNF_VALUE) {
-            var counting = [sorted[1], sorted[2], sorted[3]];
-            var mean = counting.reduce((s, v) => s + v, 0) / 3;
-            result.variance = counting.reduce((s, v) => s + (v - mean) ** 2, 0) / 3;
-            result.variance = Math.round(result.variance) / 10000; // centiseconds² → seconds²
+        // NOTE: 以下指标 Mo3/Ao5 通用
+        // ── Variance — 方差（秒²单位） ──
+        if (result.avg !== DNF_VALUE && result.avg !== undefined) {
+            var countingVals;
+            if (mo3Mode) {
+                countingVals = nonDnf;
+            } else {
+                countingVals = [sorted[1], sorted[2], sorted[3]];
+            }
+            var mean = countingVals.reduce((s, v) => s + v, 0) / countingVals.length;
+            result.variance = countingVals.reduce((s, v) => s + (v - mean) ** 2, 0) / countingVals.length;
+            result.variance = Math.round(result.variance) / 10000;
         } else {
             result.variance = null;
         }
@@ -231,26 +295,6 @@ export const CalcEngine = {
         result.bestAvgRatio = (result.avg !== DNF_VALUE && result.best !== DNF_VALUE)
             ? Math.round(result.best / result.avg * 100) / 100
             : null;
-
-        // ── Mo2 ~ Mo4 — 连续 N 次的最佳算术均值 ──
-        for (var n = 2; n <= 4; n++) {
-            var key = 'mo' + n;
-            if (dnfCount > 0) {
-                result[key] = DNF_VALUE;
-            } else {
-                var bestMean = Infinity;
-                for (var i = 0; i <= 5 - n; i++) {
-                    var sum = 0;
-                    var hasDnf = false;
-                    for (var j = i; j < i + n; j++) {
-                        if (times5[j] >= DNF_VALUE) { hasDnf = true; break; }
-                        sum += times5[j];
-                    }
-                    if (!hasDnf) bestMean = Math.min(bestMean, Math.round(sum / n));
-                }
-                result[key] = bestMean === Infinity ? DNF_VALUE : bestMean;
-            }
-        }
 
         return result;
     },
