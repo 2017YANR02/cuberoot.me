@@ -54,6 +54,17 @@ document.addEventListener('DOMContentLoaded', () => {
         history.replaceState(null, '', window.location.pathname);
     });
 
+    // ── 随机填充（测试用） ──
+    document.getElementById('rand-fill').addEventListener('click', () => {
+        // NOTE: 生成 3.00~12.00 秒范围内的随机成绩（centiseconds）
+        for (var p = 0; p < 2; p++) {
+            for (var t = 0; t < 5; t++) {
+                var cs = 300 + Math.floor(Math.random() * 900); // 300~1199 cs
+                updateTime(state.seedOn + p, t, cs);
+            }
+        }
+    });
+
     // 首次渲染
     chart.render();
     inputGrid.refresh();
