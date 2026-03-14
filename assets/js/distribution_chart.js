@@ -148,15 +148,29 @@
         });
 
         players.forEach(function (p) {
-            p.checkbox.addEventListener('change', function () { draw(); });
+            p.checkbox.addEventListener('change', function () {
+                // NOTE: 至少保留一个选中
+                var checkedCount = players.filter(function (q) { return q.checkbox.checked; }).length;
+                if (checkedCount === 0) {
+                    p.checkbox.checked = true;
+                    return;
+                }
+                draw();
+            });
         });
 
         // 全选/取消
         var selectAllTh = table.querySelector('tr:first-child th');
         if (selectAllTh) {
             selectAllTh.addEventListener('click', function () {
-                var anyChecked = players.some(function (p) { return p.checkbox.checked; });
-                players.forEach(function (p) { p.checkbox.checked = !anyChecked; });
+                var checkedCount = players.filter(function (p) { return p.checkbox.checked; }).length;
+                if (checkedCount === players.length) {
+                    // NOTE: 全选状态 → 只保留第一个
+                    players.forEach(function (p, i) { p.checkbox.checked = (i === 0); });
+                } else {
+                    // 部分选中 → 全选
+                    players.forEach(function (p) { p.checkbox.checked = true; });
+                }
                 draw();
             });
         }
