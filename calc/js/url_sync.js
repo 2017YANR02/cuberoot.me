@@ -28,6 +28,7 @@ function doSave() {
         }
     }
     if (state.seedOn > 0) params.set('seed', state.seedOn);
+    if (state.event && state.event !== '333') params.set('event', state.event);
 
     history.replaceState(null, '', '?' + params.toString());
 }
@@ -59,6 +60,7 @@ export function load() {
     }
 
     if (params.has('seed')) state.seedOn = parseInt(params.get('seed')) || 0;
+    if (params.has('event')) state.event = params.get('event');
 
     updateSort();
 }

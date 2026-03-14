@@ -6,6 +6,7 @@ import * as inputGrid from './input_grid.js';
 import * as chart from './chart.js';
 import * as calcTable from './calc_table.js';
 import * as urlSync from './url_sync.js';
+import * as eventSelector from './event_selector.js';
 
 // ── 秒表状态 ──
 
@@ -17,11 +18,20 @@ document.addEventListener('DOMContentLoaded', () => {
     inputGrid.init(document.getElementById('input-grid-container'));
     calcTable.init();
 
+    // NOTE: 初始化项目选择器
+    eventSelector.init(document.getElementById('event-selector-container'), function (eventId) {
+        state.event = eventId;
+        notify();
+    });
+
     // NOTE: 注册秒表回调（空格键触发）
     inputGrid.onStopwatch(toggleStopwatch);
 
     // 恢复 URL 状态（必须在 init 之后、首次 render 之前）
     urlSync.load();
+
+    // NOTE: URL 恢复后同步选择器高亮
+    eventSelector.setEvent(state.event);
 
     // 注册观察者 — 数据变更时更新所有 UI
     onChange(() => {

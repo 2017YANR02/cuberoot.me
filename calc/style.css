@@ -43,6 +43,85 @@ body {
     border-bottom-color: #FF8080;
 }
 
+/* ── 项目选择器（浅色主题适配） ── */
+
+.event-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    padding: 10px;
+    margin: 0 auto 12px;
+    max-width: 800px;
+    background: rgba(0, 0, 0, 0.04);
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-sizing: border-box;
+    justify-content: center;
+}
+
+.event-btn {
+    position: relative;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.event-btn .cubing-icon {
+    font-size: 20px;
+    color: #666;
+    transition: color 0.2s ease;
+}
+
+.event-btn:hover {
+    background: rgba(0, 0, 0, 0.10);
+    border-color: rgba(0, 0, 0, 0.15);
+}
+
+.event-btn:hover .cubing-icon {
+    color: #333;
+}
+
+.event-btn.active {
+    background: #2e7d32;
+    border-color: #4caf50;
+}
+
+.event-btn.active .cubing-icon {
+    color: #fff;
+}
+
+/* NOTE: CSS tooltip 悬浮提示 */
+.event-btn::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s;
+    z-index: 100;
+}
+
+.event-btn:hover::after {
+    opacity: 1;
+}
+
 /* ── SVG 图表容器 ── */
 
 .hth-chart {
