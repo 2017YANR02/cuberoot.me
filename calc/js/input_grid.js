@@ -71,9 +71,16 @@ export function init(gridContainer) {
         // 阻止 numpad 按钮夺走 input 焦点（mousedown=桌面, touchstart=移动端）
         numpadGrid.addEventListener('mousedown', (e) => e.preventDefault());
         numpadGrid.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
-        // NOTE: touchstart preventDefault 后 click 不触发，需用 touchend 补偿
-        numpadGrid.addEventListener('touchend', onNumpadClick);
-        numpadGrid.addEventListener('click', onNumpadClick);
+        // NOTE: 防抖 — touchend 和 click 可能双触发，用标记阻止第二次
+        var numpadBusy = false;
+        var guardedHandler = function (e) {
+            if (numpadBusy) return;
+            numpadBusy = true;
+            setTimeout(() => { numpadBusy = false; }, 100);
+            onNumpadClick(e);
+        };
+        numpadGrid.addEventListener('touchend', guardedHandler);
+        numpadGrid.addEventListener('click', guardedHandler);
     }
 }
 
