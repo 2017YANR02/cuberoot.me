@@ -41,3 +41,15 @@ export function getWR(eventId, metric) {
     if (!wrData || !wrData[eventId]) return null;
     return wrData[eventId][metric] || null;
 }
+
+/**
+ * NOTE: 获取 Ao100 世界第 1 和第 2 的值
+ * @returns {[number, number]|null} [ao100_1, ao100_2] centiseconds，无数据返回 null
+ */
+export function getAo100(eventId) {
+    if (!wrData || !wrData[eventId]) return null;
+    var a1 = wrData[eventId]['ao100_1'];
+    var a2 = wrData[eventId]['ao100_2'];
+    if (!a1 || !a2) return null;
+    return [a1, a2];
+}
