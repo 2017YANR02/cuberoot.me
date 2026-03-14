@@ -12,6 +12,8 @@ body {
     font-family: Helvetica, Arial, sans-serif;
     background: #E7DFD5;
     overflow-x: hidden;
+    /* NOTE: iOS Safari 底部地址栏安全区 */
+    padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .hth-app {
@@ -168,6 +170,7 @@ body {
     display: block;
     max-width: 400px;
     margin: 10px auto;
+    margin-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
     padding: 12px;
     background: #222;
     border-radius: 16px;
