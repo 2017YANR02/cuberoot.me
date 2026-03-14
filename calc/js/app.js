@@ -92,6 +92,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!window.location.search.includes('t0=')) {
         document.getElementById('rand-fill').click();
     }
+    // NOTE: 默认激活第一个输入格
+    inputGrid.navigateTo(0, 0);
 
     console.log('HTH Grapher v2 initialized');
 });

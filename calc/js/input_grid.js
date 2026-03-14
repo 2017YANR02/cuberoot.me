@@ -174,7 +174,7 @@ function saveCell(p, t) {
 }
 
 // NOTE: 导航到指定单元格
-function navigateTo(p, t) {
+export function navigateTo(p, t) {
     if (p < 0 || p > 1 || t < 0 || t > 4) return;
 
     // 先保存当前格
