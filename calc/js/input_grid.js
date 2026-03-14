@@ -117,7 +117,8 @@ function createTimeCell(p, t) {
     input.addEventListener('input', () => {
         syncNumpadDisplay();
 
-        // NOTE: 自动跳格 — 输入完整成绩后自动前进到下一个单元格
+        // NOTE: 自动跳格 — 仅限三阶(333)，其他项目成绩范围不同
+        if (state.event !== '333') return;
         var val = input.value.trim();
         var shouldAdvance = false;
 
