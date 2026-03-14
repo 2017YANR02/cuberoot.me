@@ -88,6 +88,11 @@ document.addEventListener('DOMContentLoaded', () => {
     calcTable.render();
     updateSeedControls();
 
+    // NOTE: URL 无数据时自动随机填充，避免空白页面
+    if (!window.location.search.includes('t0=')) {
+        document.getElementById('rand-fill').click();
+    }
+
     console.log('HTH Grapher v2 initialized');
 });
 
