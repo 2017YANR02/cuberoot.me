@@ -361,15 +361,32 @@
             });
         }
 
-        // ── 图例 ──
+        // ── 图例 + 统计信息 ──
         function drawLegend(selected) {
+            // NOTE: 每名选手占 3 行（名字、均值、标准差），行高 16px
+            var ROW_H = 16;
             for (var i = 0; i < selected.length; i++) {
-                var lx = W - PAD.r + 10, ly = PAD.t + 10 + i * 22;
-                svgEl('rect', { x: lx, y: ly, width: 12, height: 12, fill: selected[i].color, rx: '2' }, svg);
-                var label = selected[i].name;
-                if (label.length > 12) label = label.substring(0, 11) + '…';
+                var p = selected[i];
+                var lx = W - PAD.r + 10;
+                var ly = PAD.t + 10 + i * (ROW_H * 3 + 6);
+
+                // 色块 + 名字
+                svgEl('rect', { x: lx, y: ly, width: 12, height: 12, fill: p.color, rx: '2' }, svg);
+                var label = p.name;
+                if (label.length > 10) label = label.substring(0, 9) + '…';
                 svgEl('text', { x: lx + 16, y: ly + 10, fill: '#ccc', 'font-size': '12',
-                    'text-anchor': 'start' }, svg).textContent = label;
+                    'text-anchor': 'start', 'font-weight': 'bold' }, svg).textContent = label;
+
+                // 均值
+                var mean = p.times.reduce(function (a, b) { return a + b; }, 0) / p.times.length;
+                svgEl('text', { x: lx + 2, y: ly + 10 + ROW_H, fill: '#aaa', 'font-size': '11',
+                    'text-anchor': 'start' }, svg).textContent = 'μ = ' + mean.toFixed(2) + 's';
+
+                // 标准差
+                var variance = p.times.reduce(function (s, v) { return s + (v - mean) * (v - mean); }, 0) / p.times.length;
+                var std = Math.sqrt(variance);
+                svgEl('text', { x: lx + 2, y: ly + 10 + ROW_H * 2, fill: '#aaa', 'font-size': '11',
+                    'text-anchor': 'start' }, svg).textContent = 'σ = ' + std.toFixed(2) + 's';
             }
         }
 
