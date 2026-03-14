@@ -1,0 +1,252 @@
+/* NOTE: HTH Grapher 全局样式
+   从原 index.html <style> 提取 + 新增 DOM/SVG 布局样式 */
+
+/* ── 基础布局 ── */
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Helvetica, Arial, sans-serif;
+    background: #E7DFD5;
+    overflow-x: hidden;
+}
+
+.hth-app {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 0 8px;
+}
+
+/* ── 比赛名称输入 ── */
+
+.comp-name {
+    display: block;
+    width: 100%;
+    max-width: 800px;
+    margin: 16px auto;
+    padding: 8px 16px;
+    font-size: 24px;
+    font-weight: 600;
+    text-align: center;
+    border: none;
+    border-bottom: 2px solid #3B6978;
+    background: transparent;
+    color: #000;
+    outline: none;
+}
+
+.comp-name:focus {
+    border-bottom-color: #FF8080;
+}
+
+/* ── SVG 图表容器 ── */
+
+.hth-chart {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+/* ── 控制按钮区 ── */
+
+.controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 0;
+}
+
+.controls button {
+    padding: 8px 20px;
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    background: #3B6978;
+    color: #fff;
+    transition: background 0.2s;
+}
+
+.controls button:hover {
+    background: #4a8a9c;
+}
+
+.controls button:disabled {
+    background: #808080;
+    cursor: not-allowed;
+}
+
+#seed-label {
+    font-size: 16px;
+    font-weight: 600;
+    padding: 0 8px;
+}
+
+/* ── 数字键盘（保持原设计） ── */
+
+#numpad {
+    display: block;
+    max-width: 400px;
+    margin: 10px auto;
+    padding: 12px;
+    background: #222;
+    border-radius: 16px;
+}
+
+#numpad-display {
+    color: #fff;
+    font-size: 28px;
+    font-family: 'Helvetica Neue', Helvetica, sans-serif;
+    text-align: right;
+    padding: 8px 16px;
+    margin-bottom: 10px;
+    background: #333;
+    border-radius: 10px;
+    min-height: 40px;
+    line-height: 40px;
+    overflow: hidden;
+}
+
+#numpad-label {
+    color: #aaa;
+    font-size: 14px;
+    float: left;
+    line-height: 40px;
+}
+
+#numpad-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+}
+
+.np-btn {
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    width: 100%;
+    padding: 14px 0;
+    font-size: 30px;
+    font-family: 'Helvetica Neue', Helvetica, sans-serif;
+    font-weight: 700;
+    cursor: pointer;
+    outline: none;
+    position: relative;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    transition: background 0.25s ease-out, transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+/* NOTE: 按下时放大 + 阴影 */
+.np-btn:active {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    z-index: 10;
+    transition: none;
+}
+
+.np-digit:active,
+.np-op:active,
+.np-action:active,
+.np-action-alt:active {
+    background: #7a7a7e;
+}
+
+.np-digit,
+.np-op,
+.np-action,
+.np-action-alt {
+    background: #636366;
+    color: #fff;
+}
+
+.np-op,
+.np-action,
+.np-action-alt {
+    font-size: 22px;
+}
+
+/* NOTE: 回车键跨两行 */
+.np-enter {
+    grid-row: span 2;
+}
+
+/* ── 指标对比表格 ── */
+
+#calc-section {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+#calc-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 18px;
+}
+
+#calc-table th {
+    background: #3B6978;
+    color: #fff;
+    padding: 10px 16px;
+    text-align: center;
+    font-weight: 600;
+}
+
+#calc-table td {
+    padding: 8px 16px;
+    text-align: center;
+    border-bottom: 1px solid #ccc;
+}
+
+#calc-table tr:nth-child(even) {
+    background: #f0ece4;
+}
+
+#calc-table tr:nth-child(odd) {
+    background: #E7DFD5;
+}
+
+#calc-table td:first-child {
+    font-weight: 600;
+    text-align: left;
+}
+
+.calc-better {
+    color: #006400;
+    font-weight: 700;
+}
+
+.calc-nan {
+    color: #999;
+    font-style: italic;
+}
+
+.tavg-input {
+    width: 80px;
+    padding: 4px 8px;
+    font-size: 16px;
+    text-align: center;
+    border: 1px solid #999;
+    border-radius: 4px;
+    background: #fff;
+}
+
+#calc-section .links {
+    margin-top: 20px;
+    font-size: 16px;
+    line-height: 2;
+}
+
+/* ── 隐藏媒体元素 ── */
+
+audio, video {
+    display: none;
+}
