@@ -12,6 +12,9 @@ import {
 var activeCell = [-1, -1];
 // NOTE: 秒表回调（由 app.js 注册，避免循环依赖）
 var stopwatchCallback = null;
+// NOTE: 撤销栈 — 每条记录 {playerIdx, solveIdx, oldValue}
+var undoStack = [];
+var UNDO_MAX = 50;
 
 // NOTE: 检测 input 文本是否处于全选状态
 function isFullySelected(input) {
@@ -151,11 +154,20 @@ function onTogglePlayer(e) {
 
 // ── 保存与导航 ──
 
+// NOTE: 带撤销记录的 updateTime 包装 — 自动在修改前记录旧值
+function recordAndUpdate(playerIdx, solveIdx, value) {
+    var oldValue = state.times[playerIdx][solveIdx];
+    if (oldValue === value) return; // 值没变，不记录
+    undoStack.push({ playerIdx: playerIdx, solveIdx: solveIdx, oldValue: oldValue, seedOn: state.seedOn });
+    if (undoStack.length > UNDO_MAX) undoStack.shift();
+    updateTime(playerIdx, solveIdx, value);
+}
+
 // NOTE: 保存单元格值到 state
 function saveCell(p, t) {
     var input = cells[p][t];
     var val = textToTime(input.value);
-    updateTime(state.seedOn + p, t, val);
+    recordAndUpdate(state.seedOn + p, t, val);
     // 回显格式化后的值
     var rawVal = state.times[state.seedOn + p][t];
     input.value = (rawVal > 0 && rawVal < DNF_VALUE) ? formatTime(rawVal) : (rawVal >= DNF_VALUE ? 'DNF' : '');
@@ -252,7 +264,7 @@ function onKeyDown(e) {
             var prv = prevCell(p, t);
             if (prv) {
                 e.preventDefault();
-                updateTime(state.seedOn + prv[0], prv[1], 0);
+                recordAndUpdate(state.seedOn + prv[0], prv[1], 0);
                 navigateTo(prv[0], prv[1]);
             }
         }
@@ -287,6 +299,21 @@ function onKeyDown(e) {
         e.preventDefault();
         // NOTE: 同行向右一格
         if (t < 4) navigateTo(p, t + 1);
+    } else if (e.key === 'z' && (e.ctrlKey || e.metaKey)) {
+        // NOTE: Ctrl+Z 撤销上一次单元格修改并跳回该格
+        e.preventDefault();
+        if (undoStack.length === 0) return;
+        var undo = undoStack.pop();
+        updateTime(undo.playerIdx, undo.solveIdx, undo.oldValue);
+        // 刷新所有输入框显示
+        refresh();
+        // NOTE: 跳回被撤销的单元格（仅当仍在同一 seed 页时）
+        var displayP = undo.playerIdx - undo.seedOn;
+        if (undo.seedOn === state.seedOn && displayP >= 0 && displayP <= 1) {
+            activeCell = [displayP, undo.solveIdx];
+            cells[displayP][undo.solveIdx].focus();
+            cells[displayP][undo.solveIdx].select();
+        }
     } else if (e.key === ' ') {
         // NOTE: 空格键触发秒表（逻辑在 app.js 中注册）
         e.preventDefault();
@@ -362,7 +389,7 @@ function numpadPress(key) {
     } else if (key === 'backspace') {
         if (isFullySelected(v)) {
             // NOTE: 全选状态下一键清空 — 必须同时写 state，否则 refresh 会还原
-            updateTime(state.seedOn + p, t, 0);
+            recordAndUpdate(state.seedOn + p, t, 0);
             v.value = '';
             syncNumpadDisplay();
         } else if (v.value.length > 0) {
@@ -372,7 +399,7 @@ function numpadPress(key) {
             // NOTE: 当前格为空时，反向 zigzag 跳到上一格并清空
             var prv = prevCell(p, t);
             if (prv) {
-                updateTime(state.seedOn + prv[0], prv[1], 0);
+                recordAndUpdate(state.seedOn + prv[0], prv[1], 0);
                 navigateTo(prv[0], prv[1]);
             }
         }
