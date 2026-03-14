@@ -447,7 +447,7 @@ function drawStats() {
             // 在最后一行文字右侧画 WR 徽章
             var lastText = lb.texts[lb.texts.length - 1];
             var approxW = lastText.text.length * lastText.size * 0.55;
-            drawWRBadge(topTextGroup, lb.x + approxW + 8, lb.y + lastText.dy - 4);
+            drawWRBadge(topTextGroup, lb.x + approxW + 2, lb.y + lastText.dy - 10);
         }
         // NOTE: 标签被推离原位时画引线（leader line）
         var shift = Math.abs(lb.y - lb.origY);
