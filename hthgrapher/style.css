@@ -52,6 +52,62 @@ body {
     margin: 0 auto;
 }
 
+/* ── 输入网格 ── */
+
+.input-row {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin: 4px 0;
+}
+
+.time-cell {
+    width: 90px;
+    padding: 8px 4px;
+    font-size: 18px;
+    font-weight: 600;
+    text-align: center;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fff;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.time-cell:focus {
+    border-color: #FF8080;
+    box-shadow: 0 0 0 2px rgba(255, 128, 128, 0.3);
+}
+
+/* NOTE: 选手 A 橙色系高亮，选手 B 蓝色系高亮 */
+.player-a .time-cell:focus {
+    border-color: rgba(255, 128, 0, 0.8);
+    box-shadow: 0 0 0 2px rgba(255, 128, 0, 0.2);
+}
+
+.player-b .time-cell:focus {
+    border-color: rgba(50, 130, 255, 0.8);
+    box-shadow: 0 0 0 2px rgba(50, 130, 255, 0.2);
+}
+
+.name-cell {
+    width: 120px;
+    padding: 8px 4px;
+    font-size: 16px;
+    font-weight: 600;
+    text-align: center;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fff;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.name-cell:focus {
+    border-color: #3B6978;
+    box-shadow: 0 0 0 2px rgba(59, 105, 120, 0.2);
+}
+
 /* ── 控制按钮区 ── */
 
 .controls {
