@@ -69,19 +69,33 @@ document.addEventListener('DOMContentLoaded', () => {
         history.replaceState(null, '', window.location.pathname);
     });
 
-    // ── 随机填充（测试用） ──
+    // ── 随机填充 ──
     document.getElementById('rand-fill').addEventListener('click', () => {
-        // NOTE: 对数正态分布 — 更真实地模拟魔方成绩的右偏特征
-        // ln(time) ~ N(μ_ln, σ_ln)，参数由 Ao100 实际数据拟合
-        // μ_ln ≈ 1.48（对应中位数 ≈ 4.40s），σ_ln ≈ 0.12
-        var MU_LN = 1.48, SIGMA_LN = 0.12;
+        // NOTE: 对数正态分布 — 基于 Ao100 世界排名数据动态计算参数
+        // Player A 用世界 #1 的 Ao100，Player B 用世界 #2 的 Ao100
+        // μ_ln = ln(ao100_cs / 100)，σ_ln 固定 0.12（经验值：顶级选手波动约 12%）
+        var SIGMA_LN = 0.12;
+        var n = solveCount();
+
+        // NOTE: 从 WR 数据动态获取 Ao100 值
+        var ao100 = wrData.getAo100(state.event);
+        var muLn;
+        if (ao100) {
+            muLn = [Math.log(ao100[0] / 100), Math.log(ao100[1] / 100)];
+        } else {
+            // NOTE: 无 Ao100 数据时，用 average WR 回退
+            var avgWr = wrData.getWR(state.event, 'average');
+            var fallback = avgWr ? Math.log(avgWr / 100) : 1.48;
+            muLn = [fallback, fallback];
+        }
+
         for (var p = 0; p < 2; p++) {
-            for (var t = 0; t < 5; t++) {
+            for (var t = 0; t < n; t++) {
                 var u1 = Math.random(), u2 = Math.random();
                 var z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
-                var timeSec = Math.exp(MU_LN + SIGMA_LN * z);
+                var timeSec = Math.exp(muLn[p] + SIGMA_LN * z);
                 var cs = Math.round(timeSec * 100);
-                cs = Math.max(200, Math.min(999, cs));
+                cs = Math.max(1, cs); // NOTE: 下限 0.01s，不设上限（666/777 成绩较大）
                 updateTime(state.seedOn + p, t, cs);
             }
         }
