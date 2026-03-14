@@ -4,7 +4,7 @@
 import {
     DNF_VALUE, formatTime, textToTime, CalcEngine
 } from './calc_engine.js';
-import { state, notify } from './state.js';
+import { state, notify, isMo3 } from './state.js';
 
 var tbodyEl = null;
 var thA = null;
@@ -24,8 +24,9 @@ export function render() {
 
     var t0 = state.times[state.seedOn];
     var t1 = state.times[state.seedOn + 1];
-    var r0 = CalcEngine.compute(t0);
-    var r1 = CalcEngine.compute(t1);
+    var mo3 = isMo3();
+    var r0 = CalcEngine.compute(t0, mo3);
+    var r1 = CalcEngine.compute(t1, mo3);
 
     // 更新表头
     if (thA) thA.textContent = state.names[state.seedOn];
@@ -37,16 +38,28 @@ export function render() {
     }
 
     // NOTE: [显示名, key, 越小越好]
-    var metrics = [
-        ['Best', 'best', true], ['Avg (Ao5)', 'avg', true],
-        ['BAo5', 'bao5', true], ['WAo5', 'wao5', true],
-        ['Mo5', 'mo5', true], ['BPA', 'bpa', true], ['WPA', 'wpa', true],
-        ['BestC', 'bestC', true], ['Median', 'median', true],
-        ['WorstC', 'worstC', true], ['Worst', 'worst', true],
-        ['Mo2', 'mo2', true], ['Mo3', 'mo3', true], ['Mo4', 'mo4', true],
-        ['Mean', 'mo5', true], ['Variance', 'variance', false],
-        ['Best/Avg', 'bestAvgRatio', false],
-    ];
+    var metrics;
+    if (mo3) {
+        // Mo3 模式：精简指标（无 BPA/WPA/BestC/WorstC/BAo5/WAo5/Mo4/Mo5）
+        metrics = [
+            ['Best', 'best', true], ['Mean (Mo3)', 'avg', true],
+            ['Worst', 'worst', true],
+            ['Mo2', 'mo2', true],
+            ['Variance', 'variance', false],
+            ['Best/Avg', 'bestAvgRatio', false],
+        ];
+    } else {
+        metrics = [
+            ['Best', 'best', true], ['Avg (Ao5)', 'avg', true],
+            ['BAo5', 'bao5', true], ['WAo5', 'wao5', true],
+            ['Mo5', 'mo5', true], ['BPA', 'bpa', true], ['WPA', 'wpa', true],
+            ['BestC', 'bestC', true], ['Median', 'median', true],
+            ['WorstC', 'worstC', true], ['Worst', 'worst', true],
+            ['Mo2', 'mo2', true], ['Mo3', 'mo3', true], ['Mo4', 'mo4', true],
+            ['Mean', 'mo5', true], ['Variance', 'variance', false],
+            ['Best/Avg', 'bestAvgRatio', false],
+        ];
+    }
 
     var html = '';
     for (var i = 0; i < metrics.length; i++) {
@@ -78,25 +91,27 @@ export function render() {
         html += '<td class="' + cls1 + '">' + s1 + '</td></tr>';
     }
 
-    // NOTE: tavg 目标平均输入行
-    var tavg0 = targetAvgs[state.seedOn] || 0;
-    var tavg1 = targetAvgs[state.seedOn + 1] || 0;
-    var tvStr0 = tavg0 > 0 ? formatTime(tavg0) : '';
-    var tvStr1 = tavg1 > 0 ? formatTime(tavg1) : '';
-    html += '<tr style="background:#d4e6d4"><td>Target Avg</td>';
-    html += '<td><input class="tavg-input" id="tavg-input-0" value="' + tvStr0 + '" placeholder="e.g. 5.00"></td>';
-    html += '<td><input class="tavg-input" id="tavg-input-1" value="' + tvStr1 + '" placeholder="e.g. 5.00"></td></tr>';
+    // NOTE: tavg 目标平均输入行（Mo3 模式下隐藏阈值行）
+    if (!mo3) {
+        var tavg0 = targetAvgs[state.seedOn] || 0;
+        var tavg1 = targetAvgs[state.seedOn + 1] || 0;
+        var tvStr0 = tavg0 > 0 ? formatTime(tavg0) : '';
+        var tvStr1 = tavg1 > 0 ? formatTime(tavg1) : '';
+        html += '<tr style="background:#d4e6d4"><td>Target Avg</td>';
+        html += '<td><input class="tavg-input" id="tavg-input-0" value="' + tvStr0 + '" placeholder="e.g. 5.00"></td>';
+        html += '<td><input class="tavg-input" id="tavg-input-1" value="' + tvStr1 + '" placeholder="e.g. 5.00"></td></tr>';
 
-    // 阈值行
-    var th0 = tavg0 > 0 ? CalcEngine.computeThresholds(t0, tavg0) : null;
-    var th1 = tavg1 > 0 ? CalcEngine.computeThresholds(t1, tavg1) : null;
-    var thresholds = [['t#4 (WPA≤tavg)', 't4wpa'], ['t#4 (BPA≤tavg)', 't4bpa'], ['t#5 (Avg≤tavg)', 't5']];
-    for (var j = 0; j < thresholds.length; j++) {
-        var tLabel = thresholds[j][0], tKey = thresholds[j][1];
-        var tv0 = th0 ? th0[tKey] : undefined, tv1 = th1 ? th1[tKey] : undefined;
-        var ts0 = tv0 === undefined ? '-' : (tv0 === null ? '<span class="calc-nan">NaN</span>' : formatTime(tv0));
-        var ts1 = tv1 === undefined ? '-' : (tv1 === null ? '<span class="calc-nan">NaN</span>' : formatTime(tv1));
-        html += '<tr><td>' + tLabel + '</td><td>' + ts0 + '</td><td>' + ts1 + '</td></tr>';
+        // 阈值行
+        var th0 = tavg0 > 0 ? CalcEngine.computeThresholds(t0, tavg0) : null;
+        var th1 = tavg1 > 0 ? CalcEngine.computeThresholds(t1, tavg1) : null;
+        var thresholds = [['t#4 (WPA≤tavg)', 't4wpa'], ['t#4 (BPA≤tavg)', 't4bpa'], ['t#5 (Avg≤tavg)', 't5']];
+        for (var j = 0; j < thresholds.length; j++) {
+            var tLabel = thresholds[j][0], tKey = thresholds[j][1];
+            var tv0 = th0 ? th0[tKey] : undefined, tv1 = th1 ? th1[tKey] : undefined;
+            var ts0 = tv0 === undefined ? '-' : (tv0 === null ? '<span class="calc-nan">NaN</span>' : formatTime(tv0));
+            var ts1 = tv1 === undefined ? '-' : (tv1 === null ? '<span class="calc-nan">NaN</span>' : formatTime(tv1));
+            html += '<tr><td>' + tLabel + '</td><td>' + ts0 + '</td><td>' + ts1 + '</td></tr>';
+        }
     }
 
     tbodyEl.innerHTML = html;
