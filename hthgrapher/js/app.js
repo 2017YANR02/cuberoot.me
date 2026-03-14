@@ -1,6 +1,6 @@
 // NOTE: 应用入口 — 导入所有模块，初始化和编排
 
-import { state, onChange, addSeedPair, updateTime, notify, getFirstUnfilledTime } from './state.js';
+import { state, onChange, addSeedPair, updateTime, resetAll, notify, getFirstUnfilledTime } from './state.js';
 import { formatTime } from './calc_engine.js';
 import * as inputGrid from './input_grid.js';
 import * as chart from './chart.js';
@@ -55,6 +55,12 @@ document.addEventListener('DOMContentLoaded', () => {
         state.viewMode = (state.viewMode + 1) % 3;
         viewBtn.textContent = viewLabels[state.viewMode];
         chart.render(); // 仅图表需要更新
+    });
+
+    // ── 一键清空 ──
+    document.getElementById('clear-all').addEventListener('click', () => {
+        resetAll();
+        history.replaceState(null, '', window.location.pathname);
     });
 
     // 首次渲染
