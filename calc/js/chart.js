@@ -98,6 +98,7 @@ function computeGridParams() {
     gp.viewcount = 0;
 
     for (var p = 0; p < 2; p++) {
+        if (!state.playerEnabled[p]) continue;
         for (var t = 0; t < 5; t++) {
             var val = state.times[state.seedOn + p][t];
             if (val !== 0) {
@@ -188,7 +189,7 @@ function drawBars() {
 
         for (var i = 0; i < 2; i++) {
             var p = pOrder[i];
-            if (state.viewMode !== 0 && state.viewMode !== p + 1) continue;
+            if (!state.playerEnabled[p]) continue;
             if (state.times[state.seedOn + p][t] === 0) continue;
 
             var barX = BAR_START + t * STRIDE;
@@ -197,7 +198,7 @@ function drawBars() {
             var uncappedMaxY = valToY(0);
 
             // 较矮柱子居中缩窄（仅 Both 模式下两柱重叠时）
-            var isTop = (state.viewMode === 0 && i === 1 && minYs[0] !== 999999 && minYs[1] !== 999999);
+            var isTop = (state.playerEnabled[0] && state.playerEnabled[1] && i === 1 && minYs[0] !== 999999 && minYs[1] !== 999999);
             var fullW = BAR_W - 2 * bm;
             var bw = isTop ? fullW * 0.55 : fullW;
             var bx = barX + bm + (fullW - bw) / 2;
@@ -286,8 +287,7 @@ function drawStats() {
         }
         if (filleds < 4) continue;
 
-        var showStats = (state.viewMode === 0 || state.viewMode === p + 1);
-        if (!showStats) continue;
+        if (!state.playerEnabled[p]) continue;
 
         var paVals = getPA(state.times[state.seedOn + p], state.seedOn + p);
         var paY = paVals.map(v => valToYCap(v));
@@ -450,7 +450,7 @@ function drawAverages() {
         var type = (p === state.seedOn || p === state.seedOn + 1) ? 2 : (rank < 3 ? 1 : 0);
 
         var pIdx = p - state.seedOn;
-        var showDiamond = (type < 2) || (state.viewMode === 0 || state.viewMode === pIdx + 1);
+        var showDiamond = (type < 2) || (pIdx >= 0 && pIdx <= 1 && state.playerEnabled[pIdx]);
 
         if (average !== UNFINISHED_VALUE && type >= 1 && showDiamond) {
             var y = valToYCap(average);
