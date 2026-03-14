@@ -61,6 +61,14 @@ body {
     margin: 4px 0;
 }
 
+.player-toggle {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #3B6978;
+    align-self: center;
+}
+
 .time-cell {
     width: 90px;
     padding: 8px 4px;
