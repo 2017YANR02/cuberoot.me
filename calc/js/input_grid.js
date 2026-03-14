@@ -307,7 +307,8 @@ function numpadPress(key) {
         }
     } else if (key === 'backspace') {
         if (isFullySelected(v)) {
-            // NOTE: 全选状态下一键清空
+            // NOTE: 全选状态下一键清空 — 必须同时写 state，否则 refresh 会还原
+            updateTime(state.seedOn + p, t, 0);
             v.value = '';
             syncNumpadDisplay();
         } else if (v.value.length > 0) {
