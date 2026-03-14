@@ -48,15 +48,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // ── ViewMode 切换 ──
-    var viewBtn = document.getElementById('view-toggle');
-    var viewLabels = ['Both', 'A', 'B'];
-    viewBtn.addEventListener('click', () => {
-        state.viewMode = (state.viewMode + 1) % 3;
-        viewBtn.textContent = viewLabels[state.viewMode];
-        chart.render(); // 仅图表需要更新
-    });
-
     // ── 一键清空 ──
     document.getElementById('clear-all').addEventListener('click', () => {
         resetAll();

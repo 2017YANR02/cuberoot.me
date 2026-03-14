@@ -13,7 +13,6 @@ export const state = {
     names: ['Name A', 'Name B'],
     compName: 'Competition',
     seedOn: 0,          // 当前显示的 seed 偏移量（0=Seeds 1-2, 2=Seeds 3-4...）
-    viewMode: 0,        // 0=Both, 1=Only A, 2=Only B
     timeLive: [-1, -1], // 秒表激活的 [player, solve]，-1 表示未激活
     timeLiveStart: -1,  // 秒表开始时间戳
     sortedCache: [],    // 按平均值排序的选手索引
