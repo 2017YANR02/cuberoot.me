@@ -72,6 +72,7 @@ ruiminyan.github.io/
 ├── jsonEditor/                 # JSON 编辑器
 ├── documentation/              # 文档页面
 ├── calc/                       # HTH 成绩计算器
+│   └── data/wr.json            # 📌 WR 数据（centiseconds，由 CI gen_wr_json.rb 每周自动刷新）
 ├── alg_trainers/               # 公式训练器（mihlefeld/Alg-Trainers 上游同步，sync_alg_trainers.ps1 管理）
 │   ├── src/                    # 🔄 训练器运行时 JS（main.js、timer.js、settings.js 等）
 │   ├── style/                  # 🔄 训练器样式
@@ -486,6 +487,13 @@ git push
 `wr_newcomer`, `wr_dominance`, `best_result_off_podium`, `consecutive_sub_5_average`, `longest_streak_of_personal_records`, `longest_streak_of_podiums`, `most_competitions_before_winning`, `most_completed_solves`, `most_frequent_results`, `moving_average`, `smallest_diff_between_single_and_average`
 
 **Phase 3 轻量级统计**：剩余 48 个，可通过命令查看完整列表（见上方 `ruby -e ...` 命令）。
+
+**附加构建步骤**（`compute_all.rb` 之后）：
+
+| 脚本 | 输出 | 用途 |
+|------|------|------|
+| `bin/gen_wr_json.rb` | `calc/data/wr.json` | 提取各项目 WR 值（single/average/bpa/wpa），供 calc 页面显示 WR 徽章 |
+| `bin/compute_index.rb` | `stats/index.md` | 统计首页索引 |
 
 
 ## 添加新统计
