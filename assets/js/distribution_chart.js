@@ -7,6 +7,11 @@
 
     var NS = 'http://www.w3.org/2000/svg';
 
+    // NOTE: 检测当前语言
+    function isZh() {
+        return (document.documentElement.getAttribute('data-lang') || 'en') === 'zh';
+    }
+
     // ── 颜色板 — 最多 10 名选手同时显示 ──
     var COLORS = [
         '#00d2ff', '#ff6b6b', '#ffd93d', '#6bcb77', '#c084fc',
@@ -269,7 +274,7 @@
             }
 
             // 轴标题
-            axisLabels('次数');
+            axisLabels('Count', '次数');
 
             // 均值线
             selected.forEach(function (p, i) {
@@ -345,7 +350,7 @@
                     'text-anchor': 'middle' }, svg).textContent = v.toFixed(1);
             }
 
-            axisLabels('密度');
+            axisLabels('Density', '密度');
 
             // 均值线
             selected.forEach(function (p) {
@@ -369,12 +374,12 @@
         }
 
         // ── 轴标题 ──
-        function axisLabels(yLabel) {
+        function axisLabels(yLabelEn, yLabelZh) {
             svgEl('text', { x: PAD.l + chartW / 2, y: H - 5, fill: '#888', 'font-size': '13',
-                'text-anchor': 'middle' }, svg).textContent = '时间 (秒)';
+                'text-anchor': 'middle' }, svg).textContent = isZh() ? '时间 (秒)' : 'Time (s)';
             var yl = svgEl('text', { x: 0, y: 0, fill: '#888', 'font-size': '13', 'text-anchor': 'middle',
                 transform: 'translate(14,' + (PAD.t + chartH / 2) + ') rotate(-90)' }, svg);
-            yl.textContent = yLabel;
+            yl.textContent = isZh() ? yLabelZh : yLabelEn;
         }
     }
 
