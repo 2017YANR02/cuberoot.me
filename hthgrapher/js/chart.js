@@ -211,31 +211,7 @@ function drawBars() {
                 x: bx, y: minY, width: bw, height: Math.max(0, barHeight),
                 fill: SHADES[p], rx: 2,
             }));
-
-            // DNF 锯齿（顶部）
-            if (state.times[state.seedOn + p][t] === DNF_VALUE) {
-                drawZigs(barGroup, bx, minY, bw, -1, 3);
-            }
-
-            // 截断锯齿（底部）
-            if (uncappedMaxY > maxY) {
-                drawZigs(barGroup, bx, maxY - bm * 2, bw, 1, 3);
-            }
         }
-    }
-}
-
-// NOTE: 锯齿底边/顶边
-function drawZigs(parent, x, y, w, ysign, pieces) {
-    var bpw = w / pieces / 2;
-    for (var pe = 0; pe < pieces * 2; pe++) {
-        var x1 = x + pe * bpw;
-        var x2 = x + (pe + 1) * bpw;
-        var x3 = x + (pe + pe % 2) * bpw;
-        parent.appendChild(createSvgElement('polygon', {
-            points: x1 + ',' + y + ' ' + x2 + ',' + y + ' ' + x3 + ',' + (y + bpw * ysign),
-            fill: 'inherit',
-        }));
     }
 }
 
