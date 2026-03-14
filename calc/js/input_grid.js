@@ -214,17 +214,10 @@ function onKeyDown(e) {
     } else if (e.key === 'Backspace') {
         if (p < 0) return;
         var v = cells[p][t];
-        // NOTE: 当前格为空时跨单元格向前删
+        // NOTE: 当前格为空时，清空上一格并跳转（仅限本行）
         if (v.value.length === 0 && t > 0) {
             e.preventDefault();
-            // 先修改上一格 state（navigateTo 会触发 refresh 覆盖 DOM）
-            var prevVal = state.times[state.seedOn + p][t - 1];
-            if (prevVal > 0 && prevVal < DNF_VALUE) {
-                var prevText = formatTime(prevVal);
-                var trimmed = prevText.slice(0, -1);
-                var newVal = textToTime(trimmed);
-                updateTime(state.seedOn + p, t - 1, newVal);
-            }
+            updateTime(state.seedOn + p, t - 1, 0);
             navigateTo(p, t - 1);
         }
     } else if (e.key === 'Delete') {
@@ -315,16 +308,8 @@ function numpadPress(key) {
             v.value = v.value.slice(0, -1);
             syncNumpadDisplay();
         } else if (t > 0) {
-            // NOTE: 先修改上一格的显示值 → 写回 state，再 navigateTo
-            // navigateTo 内部的 saveCell→notify→refresh 会重置所有 cell.value，
-            // 所以必须在 navigateTo 之前就把上一格的新值写入 state
-            var prevVal = state.times[state.seedOn + p][t - 1];
-            if (prevVal > 0 && prevVal < DNF_VALUE) {
-                var prevText = formatTime(prevVal);
-                var trimmed = prevText.slice(0, -1);
-                var newVal = textToTime(trimmed);
-                updateTime(state.seedOn + p, t - 1, newVal);
-            }
+            // NOTE: 当前格为空时，清空上一格并跳转（仅限本行）
+            updateTime(state.seedOn + p, t - 1, 0);
             navigateTo(p, t - 1);
         }
     } else if (key === 'dotcolon') {
@@ -344,7 +329,10 @@ function numpadPress(key) {
         syncNumpadDisplay();
     }
 
-    v.focus();
+    // NOTE: 仅当未跳转（activeCell 未变）时才 refocus 原格
+    if (activeCell[0] === p && activeCell[1] === t) {
+        v.focus();
+    }
 }
 
 // ── 数字键盘显示同步 ──
