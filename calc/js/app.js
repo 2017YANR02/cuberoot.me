@@ -56,10 +56,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ── 随机填充（测试用） ──
     document.getElementById('rand-fill').addEventListener('click', () => {
-        // NOTE: 生成 3.00~12.00 秒范围内的随机成绩（centiseconds）
+        // NOTE: Box-Muller 正态分布，均值 4.35s，标准差 0.55s，截断到 [2.70, 5.99]
         for (var p = 0; p < 2; p++) {
             for (var t = 0; t < 5; t++) {
-                var cs = 300 + Math.floor(Math.random() * 900); // 300~1199 cs
+                var u1 = Math.random(), u2 = Math.random();
+                var z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+                var cs = Math.round(435 + z * 55); // centiseconds
+                cs = Math.max(270, Math.min(599, cs));
                 updateTime(state.seedOn + p, t, cs);
             }
         }
