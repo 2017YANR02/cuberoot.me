@@ -1703,21 +1703,22 @@ tr.detail-row td {
     margin-left: 4px;
 }
 
-/* NOTE: 添加评论按钮——与现有 recon-btn 风格一致 */
-.comment-add-btn {
-    background: rgba(99, 102, 241, 0.12);
-    border: 1px solid rgba(99, 102, 241, 0.3);
-    color: #a5b4fc;
-    font-size: 0.78rem;
-    padding: 4px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background 0.2s, color 0.2s;
+/* NOTE: 未登录时评论区底部的登录提示 */
+.comment-login-prompt {
+    color: #555;
+    font-size: 0.85rem;
+    padding: 10px 0;
+    font-style: italic;
 }
 
-.comment-add-btn:hover {
-    background: rgba(99, 102, 241, 0.3);
-    color: #c7d2fe;
+.comment-login-prompt a {
+    color: #8b9cf7;
+    text-decoration: none;
+    font-style: normal;
+}
+
+.comment-login-prompt a:hover {
+    text-decoration: underline;
 }
 
 /* --- 单条评论卡片 --- */
