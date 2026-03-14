@@ -13,6 +13,11 @@ var activeCell = [-1, -1];
 // NOTE: 秒表回调（由 app.js 注册，避免循环依赖）
 var stopwatchCallback = null;
 
+// NOTE: 检测 input 文本是否处于全选状态
+function isFullySelected(input) {
+    return input.selectionStart === 0 && input.selectionEnd === input.value.length && input.value.length > 0;
+}
+
 // 输入框 DOM 引用缓存 — cells[p][t] 对应 player p 的第 t 个时间格
 var cells = [[], []];
 // 名字输入框引用
@@ -311,6 +316,8 @@ function numpadPress(key) {
             navigateTo(p, t - 1);
         }
     } else if (key === 'dotcolon') {
+        // NOTE: 全选状态下先清空
+        if (isFullySelected(v)) v.value = '';
         // NOTE: .: 按钮 — 末尾是 . 则替换为 :，否则追加 .
         if (v.value.length > 0 && v.value[v.value.length - 1] === '.') {
             v.value = v.value.slice(0, -1) + ':';
@@ -319,7 +326,8 @@ function numpadPress(key) {
         }
         syncNumpadDisplay();
     } else {
-        // 数字键 0-9
+        // 数字键 0-9 — 全选时替换而非追加
+        if (isFullySelected(v)) v.value = '';
         v.value += key;
         syncNumpadDisplay();
     }
