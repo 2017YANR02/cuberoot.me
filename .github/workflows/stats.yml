@@ -77,6 +77,10 @@ jobs:
           STATS_FILTER: ${{ github.event.inputs.stats_filter || '' }}
         run: ruby bin/compute_all.rb
 
+      - name: Generate WR JSON for calc page
+        working-directory: _stats_build
+        run: ruby bin/gen_wr_json.rb
+
       - name: Compute index
         working-directory: _stats_build
         run: ruby bin/compute_index.rb
@@ -97,7 +101,7 @@ jobs:
                    best_first_average best_first_single; do
             rm -f "stats/${f}.md"
           done
-          git add -A stats/
+          git add -A stats/ calc/data/wr.json
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else
