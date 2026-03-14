@@ -7,9 +7,10 @@
 
     var NS = 'http://www.w3.org/2000/svg';
 
-    // NOTE: 检测当前语言
+    // NOTE: 检测当前语言 — 从 URL ?lang= 参数读取（i18n.js 始终同步该参数）
     function isZh() {
-        return (document.documentElement.getAttribute('data-lang') || 'en') === 'zh';
+        var params = new URLSearchParams(window.location.search);
+        return params.get('lang') === 'zh';
     }
 
     // ── 颜色板 — 最多 10 名选手同时显示 ──
