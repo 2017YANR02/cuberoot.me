@@ -30,7 +30,7 @@ export function init(gridContainer) {
         notify();
     });
 
-    // 创建输入网格：2 行 × (5 时间格 + 1 名字格)
+    // 创建输入网格：2 行 × (5 时间格 + 1 名字格 + 1 勾选)
     for (var p = 0; p < 2; p++) {
         var row = document.createElement('div');
         row.className = 'input-row player-' + (p === 0 ? 'a' : 'b');
@@ -44,6 +44,15 @@ export function init(gridContainer) {
         var nameInput = createNameCell(p);
         row.appendChild(nameInput);
         nameCells[p] = nameInput;
+
+        // NOTE: 勾选框 — 控制是否启用该选手的时间输入
+        var cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = true;
+        cb.className = 'player-toggle';
+        cb.dataset.player = p;
+        cb.addEventListener('change', onTogglePlayer);
+        row.appendChild(cb);
 
         gridContainer.appendChild(row);
     }
@@ -107,6 +116,18 @@ function createNameCell(p) {
     });
 
     return input;
+}
+
+// ── 选手启用/禁用 ──
+
+// NOTE: 勾选框切换 — 启用/禁用该行所有时间格
+function onTogglePlayer(e) {
+    var p = parseInt(e.target.dataset.player);
+    var disabled = !e.target.checked;
+    for (var t = 0; t < 5; t++) {
+        cells[p][t].disabled = disabled;
+        cells[p][t].style.opacity = disabled ? '0.3' : '1';
+    }
 }
 
 // ── 保存与导航 ──
