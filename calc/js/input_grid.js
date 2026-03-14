@@ -145,6 +145,8 @@ function onTogglePlayer(e) {
         cells[p][t].disabled = disabled;
         cells[p][t].style.opacity = disabled ? '0.3' : '1';
     }
+    // NOTE: 触发图表重绘以隐藏/显示对应柱子
+    notify();
 }
 
 // ── 保存与导航 ──
