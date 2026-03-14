@@ -299,7 +299,11 @@ function numpadPress(key) {
             activeCell = [-1, -1];
         }
     } else if (key === 'backspace') {
-        if (v.value.length > 0) {
+        if (isFullySelected(v)) {
+            // NOTE: 全选状态下一键清空
+            v.value = '';
+            syncNumpadDisplay();
+        } else if (v.value.length > 0) {
             v.value = v.value.slice(0, -1);
             syncNumpadDisplay();
         } else if (t > 0) {
