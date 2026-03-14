@@ -25,7 +25,11 @@
             var header = ths[0].textContent.trim();
             // NOTE: 仅对 Ao50/Ao100 表格启用分布图
             if (header !== 'Ao50' && header !== 'Ao100') return;
-            initDistChart(table, header);
+            try {
+                initDistChart(table, header);
+            } catch (e) {
+                console.error('[DistChart] Error:', e);
+            }
         });
     });
 
@@ -211,13 +215,11 @@
                     var barH = (bins[b] / maxCount) * chartH;
                     var y = PAD.t + chartH - barH;
 
-                    ctx.beginPath();
-                    var r = Math.min(2, subBarW / 4);
-                    roundedRect(ctx, x, y, subBarW, barH, r);
-                    ctx.fill();
+                    // NOTE: 直接用 fillRect 避免 arcTo 负半径崩溃
+                    ctx.fillRect(x, y, Math.max(1, subBarW), barH);
 
                     // 柱顶计数（仅单选手或频次 >= 3 时显示）
-                    if (bins[b] >= 3 || nPlayers === 1) {
+                    if ((bins[b] >= 3 || nPlayers === 1) && subBarW > 8) {
                         ctx.fillStyle = '#fff';
                         ctx.font = '10px sans-serif';
                         ctx.textAlign = 'center';
@@ -374,13 +376,9 @@
             ctx.fillText(label, 0, 0); ctx.restore();
         }
 
+        // NOTE: roundedRect 已被 fillRect 替代，保留空函数以防调用
         function roundedRect(ctx, x, y, w, h, r) {
-            ctx.moveTo(x, y + r);
-            ctx.arcTo(x, y, x + w, y, r);
-            ctx.arcTo(x + w, y, x + w, y + h, r);
-            ctx.lineTo(x + w, y + h);
-            ctx.lineTo(x, y + h);
-            ctx.closePath();
+            ctx.rect(x, y, w, h);
         }
     }
 
