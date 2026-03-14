@@ -6,6 +6,11 @@ import {
     getAverage, getSortedIndices, getBestSingle
 } from './calc_engine.js';
 
+// NOTE: Mo3 项目 — 一轮 3 把，算术均值（不去掉任何成绩）
+const MO3_EVENTS = new Set(['666', '777', '444bf', '555bf']);
+export function solveCount() { return MO3_EVENTS.has(state.event) ? 3 : 5; }
+export function isMo3() { return MO3_EVENTS.has(state.event); }
+
 // ── 应用状态 ──
 
 export const state = {
@@ -60,15 +65,17 @@ export function addSeedPair() {
     var idx = state.names.length;
     state.names.push('Name ' + String.fromCharCode(65 + idx));
     state.names.push('Name ' + String.fromCharCode(66 + idx));
-    state.times.push([0, 0, 0, 0, 0]);
-    state.times.push([0, 0, 0, 0, 0]);
+    var n = solveCount();
+    state.times.push(new Array(n).fill(0));
+    state.times.push(new Array(n).fill(0));
     updateSort();
 }
 
 // NOTE: 判断当前 seed 对的所有时间是否已填满
 export function areTimesFullyFilled() {
+    var n = solveCount();
     for (var p = 0; p < 2; p++) {
-        for (var t = 0; t < 5; t++) {
+        for (var t = 0; t < n; t++) {
             var val = state.times[state.seedOn + p][t];
             if (val === 0 || val === UNFINISHED_VALUE) return false;
         }
@@ -78,7 +85,8 @@ export function areTimesFullyFilled() {
 
 // NOTE: 找到第一个未填的时间格
 export function getFirstUnfilledTime(countLiveTime) {
-    for (var t = 0; t < 5; t++) {
+    var n = solveCount();
+    for (var t = 0; t < n; t++) {
         for (var p = 0; p < 2; p++) {
             // NOTE: 跳过被 checkbox 禁用的选手
             if (!state.playerEnabled[p]) continue;
@@ -102,10 +110,11 @@ export function getRankOf(p) {
 
 // NOTE: 获取有效平均成绩的选手数量
 export function getValidsCount() {
+    var n = solveCount();
     var count = 0;
     for (var i = 0; i < state.times.length; i++) {
         var allFilled = true;
-        for (var t = 0; t < 5; t++) {
+        for (var t = 0; t < n; t++) {
             if (state.times[i][t] === 0 || state.times[i][t] === UNFINISHED_VALUE) {
                 allFilled = false;
                 break;
@@ -118,12 +127,26 @@ export function getValidsCount() {
 
 // NOTE: 重置所有数据
 export function resetAll() {
-    state.times = [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0]];
+    var n = solveCount();
+    state.times = [new Array(n).fill(0), new Array(n).fill(0)];
     state.names = ['Name A', 'Name B'];
     state.compName = 'Competition';
     state.seedOn = 0;
     state.timeLive = [-1, -1];
     state.timeLiveStart = -1;
+    updateSort();
+}
+
+// NOTE: 项目切换时调整 times 数组长度（截断或补零）
+export function resizeTimes(newLen) {
+    for (var i = 0; i < state.times.length; i++) {
+        var arr = state.times[i];
+        if (arr.length < newLen) {
+            while (arr.length < newLen) arr.push(0);
+        } else if (arr.length > newLen) {
+            state.times[i] = arr.slice(0, newLen);
+        }
+    }
     updateSort();
 }
 

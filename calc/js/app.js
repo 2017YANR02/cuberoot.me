@@ -1,6 +1,6 @@
 // NOTE: 应用入口 — 导入所有模块，初始化和编排
 
-import { state, onChange, addSeedPair, updateTime, resetAll, notify, getFirstUnfilledTime } from './state.js';
+import { state, onChange, addSeedPair, updateTime, resetAll, notify, getFirstUnfilledTime, resizeTimes, solveCount } from './state.js';
 import { formatTime } from './calc_engine.js';
 import * as inputGrid from './input_grid.js';
 import * as chart from './chart.js';
@@ -23,6 +23,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // NOTE: 初始化项目选择器
     eventSelector.init(document.getElementById('event-selector-container'), function (eventId) {
         state.event = eventId;
+        // NOTE: 项目切换时调整 times 数组和输入格可见性
+        resizeTimes(solveCount());
+        inputGrid.updateVisibleCells();
         notify();
     });
 
