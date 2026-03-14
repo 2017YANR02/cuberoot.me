@@ -116,6 +116,37 @@ function createTimeCell(p, t) {
     });
     input.addEventListener('input', () => {
         syncNumpadDisplay();
+
+        // NOTE: 自动跳格 — 输入完整成绩后自动前进到下一个单元格
+        var val = input.value.trim();
+        var shouldAdvance = false;
+
+        // 规则 1: 小数点后已输入 2 位数字（如 "4.42"、"12.35"）
+        var dotIdx = val.indexOf('.');
+        if (dotIdx >= 0) {
+            var afterDot = val.substring(dotIdx + 1);
+            if (afterDot.length >= 2 && /^\d{2}$/.test(afterDot)) {
+                shouldAdvance = true;
+            }
+        }
+
+        // 规则 2: 首位 ≥ 3 的 3 位纯数字（如 "354"、"999"，代表 3.54s、9.99s）
+        if (!shouldAdvance && /^\d{3}$/.test(val) && parseInt(val[0], 10) >= 3) {
+            shouldAdvance = true;
+        }
+
+        if (shouldAdvance) {
+            var p = activeCell[0], t = activeCell[1];
+            if (p < 0) return;
+            saveCell(p, t);
+            var nxt = nextCell(p, t);
+            if (nxt) {
+                navigateTo(nxt[0], nxt[1]);
+            } else {
+                cells[p][t].blur();
+                activeCell = [-1, -1];
+            }
+        }
     });
 
     return input;
