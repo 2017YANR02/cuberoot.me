@@ -102,14 +102,14 @@ body {
     transition: opacity 0.2s;
 }
 
-/* NOTE: 选手颜色背景 — 橙色/蓝色代替名字标识 */
+/* NOTE: 选手颜色背景 — 与图表柱子色号一致 */
 .player-a .name-cell {
-    background: rgba(255, 128, 0, 0.85);
+    background: rgba(255, 128, 0, 1.0);
     color: #fff;
 }
 
 .player-b .name-cell {
-    background: rgba(50, 130, 255, 0.85);
+    background: rgba(50, 130, 255, 1.0);
     color: #fff;
 }
 
