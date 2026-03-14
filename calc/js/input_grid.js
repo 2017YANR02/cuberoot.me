@@ -63,8 +63,11 @@ export function init(gridContainer) {
     // NOTE: 数字键盘事件委托
     var numpadGrid = document.getElementById('numpad-grid');
     if (numpadGrid) {
-        // 阻止 numpad 按钮夺走 input 焦点
+        // 阻止 numpad 按钮夺走 input 焦点（mousedown=桌面, touchstart=移动端）
         numpadGrid.addEventListener('mousedown', (e) => e.preventDefault());
+        numpadGrid.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
+        // NOTE: touchstart preventDefault 后 click 不触发，需用 touchend 补偿
+        numpadGrid.addEventListener('touchend', onNumpadClick);
         numpadGrid.addEventListener('click', onNumpadClick);
     }
 }
