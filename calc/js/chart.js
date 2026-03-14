@@ -8,6 +8,7 @@ import {
 import {
     state, getRankOf, getValidsCount
 } from './state.js';
+import { isWR } from './wr_data.js';
 
 // ── 布局常量（与原 canvas 1600×900 坐标系对齐） ──
 
@@ -351,11 +352,13 @@ function drawStats() {
             rightLabels.push({ origY: s.paY[3] + 7, y: bpaY, h: 55, texts: [
                 { dy: 0, text: 'BPA', size: 22 },
                 { dy: 28, text: formatTime(s.paVals[3]), size: 30 },
-            ], x: tx1, col: s.darkCol, anchor: 'start' });
+            ], x: tx1, col: s.darkCol, anchor: 'start',
+                wrMetric: 'bpa', wrValue: s.paVals[3] });
             rightLabels.push({ origY: s.paY[4] - 21, y: wpaY, h: 55, texts: [
                 { dy: 0, text: 'WPA', size: 22 },
                 { dy: 28, text: formatTime(s.paVals[4]), size: 30 },
-            ], x: tx1, col: s.darkCol, anchor: 'start' });
+            ], x: tx1, col: s.darkCol, anchor: 'start',
+                wrMetric: 'wpa', wrValue: s.paVals[4] });
 
             // NOTE: 计时第 5 把时，实时画黑色连接线
             if (s.filleds === 5 && state.timeLive[0] === s.p) {
@@ -370,10 +373,12 @@ function drawStats() {
             // ── 5 把完成：只有数值标签 ──
             rightLabels.push({ origY: s.paY[3] + 24, y: s.paY[3] + 24, h: 35, texts: [
                 { dy: 0, text: formatTime(s.paVals[3]), size: 30 },
-            ], x: tx1, col: s.darkCol, anchor: 'start' });
+            ], x: tx1, col: s.darkCol, anchor: 'start',
+                wrMetric: 'bpa', wrValue: s.paVals[3] });
             rightLabels.push({ origY: s.paY[4] - 4, y: s.paY[4] - 4, h: 35, texts: [
                 { dy: 0, text: formatTime(s.paVals[4]), size: 30 },
-            ], x: tx1, col: s.darkCol, anchor: 'start' });
+            ], x: tx1, col: s.darkCol, anchor: 'start',
+                wrMetric: 'wpa', wrValue: s.paVals[4] });
 
             // 连接线（扇形到柱子区域）
             var avg = getAverage(state.times[state.seedOn + s.p], true);
@@ -401,6 +406,13 @@ function drawStats() {
         var lb = rightLabels[li];
         for (var ti = 0; ti < lb.texts.length; ti++) {
             addText(topTextGroup, lb.x, lb.y + lb.texts[ti].dy, lb.texts[ti].text, lb.col, lb.texts[ti].size, lb.anchor);
+        }
+        // NOTE: WR 徽章 — BPA/WPA 值 ≤ WR 时显示
+        if (lb.wrMetric && lb.wrValue > 0 && lb.wrValue !== DNF_VALUE && isWR(state.event, lb.wrMetric, lb.wrValue)) {
+            // 在最后一行文字右侧画 WR 徽章
+            var lastText = lb.texts[lb.texts.length - 1];
+            var approxW = lastText.text.length * lastText.size * 0.55;
+            drawWRBadge(topTextGroup, lb.x + approxW + 8, lb.y + lastText.dy - 4);
         }
         // NOTE: 标签被推离原位时画引线（leader line）
         var shift = Math.abs(lb.y - lb.origY);
@@ -543,6 +555,11 @@ function drawAverages() {
                 });
                 text.textContent = labelText;
                 avgGroup.appendChild(text);
+
+                // NOTE: WR 徽章 — 平均值 ≤ WR 时显示红色 "WR"
+                if (type === 2 && average > 0 && average !== DNF_VALUE && isWR(state.event, 'average', average)) {
+                    drawWRBadge(avgGroup, rx + 5, cursor);
+                }
             }
 
             typePrev = type;
@@ -551,6 +568,22 @@ function drawAverages() {
 }
 
 // ── 工具函数 ──
+
+// NOTE: 渲染红色 WR 徽章（圆角矩形 + 白色 "WR" 文字）
+function drawWRBadge(parent, x, y) {
+    var bw = 42, bh = 22, br = 4;
+    parent.appendChild(createSvgElement('rect', {
+        x: x, y: y - bh / 2, width: bw, height: bh, rx: br,
+        fill: '#e03030',
+    }));
+    var text = createSvgElement('text', {
+        x: x + bw / 2, y: y,
+        'font-size': '16px', 'font-family': 'Helvetica', 'font-weight': 'bold',
+        fill: '#fff', 'text-anchor': 'middle', 'dominant-baseline': 'central',
+    });
+    text.textContent = 'WR';
+    parent.appendChild(text);
+}
 
 // NOTE: 标签排斥算法 — 防止重叠的标签互相挤压
 // labels: [{y, h, origY, ...}] — y 为当前位置，h 为标签高度
