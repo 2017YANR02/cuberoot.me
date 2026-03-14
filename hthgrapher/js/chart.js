@@ -80,6 +80,7 @@ export function render() {
 
     drawGridLines();
     drawBars();
+    drawStats();
     drawAverages();
 }
 
@@ -238,6 +239,214 @@ function drawZigs(parent, x, y, w, ysign, pieces) {
     }
 }
 
+// ── 统计可视化（扇形曲线 + 连接线 + 排名文字） ──
+
+// NOTE: 计算第 5 把的可能平均和排名范围
+function getPA(t, p) {
+    var _times = structuredClone(t);
+    _times.pop();
+    _times.sort((a, b) => a - b);
+    // results: [best单次, worst单次, 阈值, BPA, WPA, 阈值avg, bestRank, worstRank]
+    var results = [_times[0], _times[3], UNFINISHED_VALUE, 0, 0, UNFINISHED_VALUE, UNFINISHED_VALUE, UNFINISHED_VALUE];
+    _times.unshift(0);
+    results[3] = getAverage(_times, true);
+    _times.shift();
+    _times.push(DNF_VALUE);
+    results[4] = getAverage(_times, true);
+    _times.pop();
+
+    var pr = getPossibleRank(_times, p);
+    results[2] = pr[0];
+    if (pr[1] === pr[2]) results[2] = DNF_VALUE; // 排名已确定
+    _times.push(results[2]);
+    results[5] = getAverage(_times, true);
+    results[6] = pr[1];
+    results[7] = pr[2];
+    results[8] = pr[3] + 1;
+    _times.pop();
+    return results;
+}
+
+function getPossibleRank(selfTimes, p) {
+    var averagesSeen = 0;
+    var validsCount = getValidsCount();
+    var results = [0, 0, 0, validsCount];
+    for (var rank = 0; rank < state.times.length; rank++) {
+        if (state.sortedCache[rank] === p) continue;
+        var rt = state.times[state.sortedCache[rank]];
+        var rankAverage = getAverage(rt, false);
+        if (rankAverage >= 0 && rankAverage !== DNF_VALUE && rankAverage !== UNFINISHED_VALUE) {
+            var otherSorted = [...structuredClone(rt)].sort((a, b) => a - b);
+            var selfSorted = [...structuredClone(selfTimes)].sort((a, b) => a - b);
+            var toWin = DNF_VALUE;
+            if (otherSorted[3] >= DNF_VALUE) {
+                if (selfSorted[0] < otherSorted[0]) toWin = DNF_VALUE;
+            } else {
+                var delta = selfSorted[0] < otherSorted[0] ? 1 : -2;
+                toWin = (rankAverage * 3 + delta) - selfSorted[1] - selfSorted[2];
+            }
+            if (toWin >= selfSorted[3]) {
+                results[1] = Math.min(averagesSeen, results[1]);
+                results[2] = Math.min(averagesSeen, results[2]);
+            } else if (toWin >= selfSorted[0]) {
+                if (results[0] === 0) { results[0] = toWin; results[1] = averagesSeen; }
+                results[2] = Math.max(averagesSeen + 1, results[2]);
+            } else {
+                results[1] = Math.max(averagesSeen + 1, results[1]);
+                results[2] = Math.max(averagesSeen + 1, results[2]);
+            }
+            averagesSeen += 1;
+        }
+    }
+    return results;
+}
+
+function drawStats() {
+    var m = 5;
+    for (var p = 0; p < 2; p++) {
+        var filleds = 0;
+        for (var t = 0; t < 5; t++) {
+            if (state.times[state.seedOn + p][t] !== 0) filleds++;
+        }
+        if (filleds < 4) continue;
+
+        var showStats = (state.viewMode === 0 || state.viewMode === p + 1);
+        if (!showStats) continue;
+
+        var paVals = getPA(state.times[state.seedOn + p], state.seedOn + p);
+        var paY = paVals.map(v => valToYCap(v));
+
+        // 扇形 x 坐标（紧贴菱形左尖前方）
+        var diamondTip = IX[1] + IX[4];
+        var ax = [diamondTip - 120, diamondTip - 40];
+
+        var col = SHADES[p];
+        var darkCol = darken(col, 0.7);
+        var shouldDrawMiddle = (paVals[7] > paVals[6] && (filleds === 4 || state.timeLive[0] === p));
+
+        // 绘制扇形曲线
+        drawCurvedSegment(ax, paY, col, shouldDrawMiddle);
+
+        // ── 左侧文字（best/worst 单次、阈值） ──
+        var tx0 = ax[0] - m;
+        if (filleds === 4 || state.timeLive[0] === p) {
+            var ay0 = paY[0], ay1 = paY[1];
+            if (filleds === 4 && paVals[2] !== DNF_VALUE) {
+                ay1 = Math.min(ay1, paY[2] - 40);
+                ay0 = Math.max(ay0, paY[2] + 45);
+            }
+            addText(statsGroup, tx0, ay0 + 7, formatTime(paVals[0]), darkCol, 30, 'end');
+            addText(statsGroup, tx0, ay1 + 7, formatTime(paVals[1]), darkCol, 30, 'end');
+
+            if (paVals[7] > paVals[6]) {
+                addText(statsGroup, tx0, paY[2] - 3, formatTime(paVals[2]), darkCol, 30, 'end');
+                addText(statsGroup, tx0, paY[2] + 20, 'for ' + rankify(paVals[6]) + ' / ' + paVals[8], darkCol, 22, 'end');
+                var ty = valToYCap(DNF_VALUE);
+                addText(statsGroup, tx0, ty - 4, 'Can place', darkCol, 22, 'end');
+                addText(statsGroup, tx0, ty + 26, rankify(paVals[6]) + ' to ' + rankify(paVals[7]), darkCol, 30, 'end');
+            } else {
+                addText(statsGroup, tx0, paY[2] - 7, 'Guaranteed', darkCol, 22, 'end');
+                addText(statsGroup, tx0, paY[2] + 21, rankify(paVals[6]) + ' / ' + paVals[8], darkCol, 30, 'end');
+            }
+
+            // ── 右侧文字（BPA/WPA） ──
+            var tx1 = ax[1] + m;
+            var bpaY = paY[3] + 7, wpaY = paY[4] - 21;
+            var gap = bpaY - wpaY;
+            if (gap <= 30) { bpaY += (24 - gap) / 2; wpaY -= (24 - gap) / 2; }
+            addText(statsGroup, tx1, bpaY, 'BPA', darkCol, 22, 'start');
+            addText(statsGroup, tx1, bpaY + 28, formatTime(paVals[3]), darkCol, 30, 'start');
+            addText(statsGroup, tx1, wpaY, 'WPA', darkCol, 22, 'start');
+            addText(statsGroup, tx1, wpaY + 28, formatTime(paVals[4]), darkCol, 30, 'start');
+        } else if (filleds === 5) {
+            // ── 5 把完成：BPA/WPA + 连接线 + Placed ──
+            var tx1 = ax[1] + m;
+            addText(statsGroup, tx1, paY[3] + 24, formatTime(paVals[3]), darkCol, 30, 'start');
+            addText(statsGroup, tx1, paY[4] - 4, formatTime(paVals[4]), darkCol, 30, 'start');
+
+            // 连接线（扇形到柱子区域）
+            var avg = getAverage(state.times[state.seedOn + p], true);
+            var ys = [valToYCap(state.times[state.seedOn + p][4]), valToYCap(avg)];
+            var outerX = ax[0] - 5;
+            var innerX = IX[1] + IX[4] + 2;
+            var arrowX = innerX - 18;
+            drawCurvedLine([ax[0], ax[1], outerX, innerX, arrowX], ys, '#000');
+
+            // Placed 文字
+            var placedX = p === 0 ? BAR_START + 200 : CHART_END - 200;
+            var ty = valToYCap(DNF_VALUE);
+            addText(statsGroup, placedX, ty - 4, 'Placed', darkCol, 22, 'center');
+            addText(statsGroup, placedX, ty + 26, rankify(getRankOf(state.seedOn + p)) + ' / ' + getValidsCount(), darkCol, 30, 'center');
+        }
+    }
+}
+
+// NOTE: 扇形曲线（余弦插值填充区域）
+function drawCurvedSegment(x, y, col, drawMiddle) {
+    var fadedCol = fade(col, 0.25);
+    var darkCol = darken(col, 0.7);
+    var PIECES = 15;
+    var d_fill = '', d_top = '', d_bot = '', d_mid = '';
+
+    for (var i = 0; i < PIECES; i++) {
+        var p1 = i / PIECES, p2 = (i + 1) / PIECES;
+        var x1 = lerp(x[0], x[1], p1), x2 = lerp(x[0], x[1], p2);
+        var yt1 = coslerp(y[0], y[3], p1), yt2 = coslerp(y[0], y[3], p2);
+        var yb1 = coslerp(y[1], y[4], p1), yb2 = coslerp(y[1], y[4], p2);
+
+        // 填充四边形
+        d_fill += 'M' + x1 + ',' + yt1 + ' L' + x2 + ',' + yt2 + ' L' + x2 + ',' + yb2 + ' L' + x1 + ',' + yb1 + 'Z ';
+        // 上下边线
+        d_top += (i === 0 ? 'M' : 'L') + x1 + ',' + yt1 + ' ';
+        d_bot += (i === 0 ? 'M' : 'L') + x1 + ',' + yb1 + ' ';
+
+        if (drawMiddle && y[2] !== y[1] && y[2] !== y[0]) {
+            var ym1 = coslerp(y[2], y[5], p1), ym2 = coslerp(y[2], y[5], p2);
+            d_mid += (i === 0 ? 'M' : 'L') + x1 + ',' + ym1 + ' ';
+            if (i === PIECES - 1) d_mid += 'L' + x2 + ',' + ym2;
+        }
+        if (i === PIECES - 1) {
+            d_top += 'L' + x2 + ',' + yt2;
+            d_bot += 'L' + x2 + ',' + yb2;
+        }
+    }
+
+    statsGroup.appendChild(createSvgElement('path', { d: d_fill, fill: fadedCol }));
+    statsGroup.appendChild(createSvgElement('path', { d: d_top, fill: 'none', stroke: darkCol, 'stroke-width': 3 }));
+    statsGroup.appendChild(createSvgElement('path', { d: d_bot, fill: 'none', stroke: darkCol, 'stroke-width': 3 }));
+    if (d_mid) statsGroup.appendChild(createSvgElement('path', { d: d_mid, fill: 'none', stroke: darkCol, 'stroke-width': 3 }));
+}
+
+// NOTE: 连接线（余弦插值曲线 + 箭头）
+function drawCurvedLine(x, y, col) {
+    var PIECES = 10;
+    var d = '';
+    for (var i = 0; i <= PIECES; i++) {
+        var prog = i / PIECES;
+        var px = lerp(x[0], x[1], prog);
+        var py = coslerp(y[0], y[1], prog);
+        d += (i === 0 ? 'M' : 'L') + px + ',' + py + ' ';
+    }
+    statsGroup.appendChild(createSvgElement('path', { d: d, fill: 'none', stroke: col, 'stroke-width': 3 }));
+    // 水平延伸线
+    statsGroup.appendChild(createSvgElement('line', { x1: x[0], y1: y[0], x2: x[2], y2: y[0], stroke: col, 'stroke-width': 3 }));
+    statsGroup.appendChild(createSvgElement('line', { x1: x[1], y1: y[1], x2: x[3], y2: y[1], stroke: col, 'stroke-width': 3 }));
+    // 箭头
+    statsGroup.appendChild(createSvgElement('line', { x1: x[3], y1: y[1], x2: x[4], y2: y[1] + 18, stroke: col, 'stroke-width': 3 }));
+    statsGroup.appendChild(createSvgElement('line', { x1: x[3], y1: y[1], x2: x[4], y2: y[1] - 18, stroke: col, 'stroke-width': 3 }));
+}
+
+// NOTE: 快捷创建 SVG 文字
+function addText(parent, x, y, text, fill, size, anchor) {
+    var el = createSvgElement('text', {
+        x: x, y: y, fill: fill,
+        'font-size': size + 'px', 'font-family': 'Helvetica',
+        'text-anchor': anchor,
+    });
+    el.textContent = text;
+    parent.appendChild(el);
+}
+
 // ── 平均菱形标签 ──
 
 function drawAverages() {
@@ -350,5 +559,3 @@ function clearGroup(g) {
     while (g.firstChild) g.removeChild(g.firstChild);
 }
 
-// ── 导出供 Phase 4 使用 ──
-export { valToY, valToYCap, coslerp, lerp, fade, darken, createSvgElement, SHADES, BAR_START, STRIDE, BAR_W, CHART_END, CHART_CENTER, IX, gp };
