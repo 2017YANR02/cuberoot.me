@@ -473,9 +473,10 @@ function drawAverages() {
             cursor = Math.min(cursor - (m[typePrev] + 3 + m[type]), cy);
             var ay = Math.min(Math.max(yWings, cursor - maxSkew), cursor + maxSkew);
 
+            // NOTE: 菱形颜色与柱子/名字格一致，不做 darken
             var fillColor = '#000';
             if (p === state.seedOn || p === state.seedOn + 1) {
-                fillColor = darken(SHADES[p - state.seedOn], 0.7);
+                fillColor = SHADES[p - state.seedOn];
             }
 
             // NOTE: 只显示成绩（颜色已代表选手身份）
