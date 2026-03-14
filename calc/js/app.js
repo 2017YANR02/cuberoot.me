@@ -71,31 +71,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ── 随机填充 ──
     document.getElementById('rand-fill').addEventListener('click', () => {
-        // NOTE: 对数正态分布 — 基于 Ao100 世界排名数据动态计算参数
-        // Player A 用世界 #1 的 Ao100，Player B 用世界 #2 的 Ao100
-        // μ_ln = ln(ao100_cs / 100)，σ_ln 固定 0.12（经验值：顶级选手波动约 12%）
-        var SIGMA_LN = 0.12;
         var n = solveCount();
-
-        // NOTE: 从 WR 数据动态获取 Ao100 值
-        var ao100 = wrData.getAo100(state.event);
-        var muLn;
-        if (ao100) {
-            muLn = [Math.log(ao100[0] / 100), Math.log(ao100[1] / 100)];
-        } else {
-            // NOTE: 无 Ao100 数据时，用 average WR 回退
-            var avgWr = wrData.getWR(state.event, 'average');
-            var fallback = avgWr ? Math.log(avgWr / 100) : 1.48;
-            muLn = [fallback, fallback];
-        }
 
         for (var p = 0; p < 2; p++) {
             for (var t = 0; t < n; t++) {
-                var u1 = Math.random(), u2 = Math.random();
-                var z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
-                var timeSec = Math.exp(muLn[p] + SIGMA_LN * z);
-                var cs = Math.round(timeSec * 100);
-                cs = Math.max(1, cs); // NOTE: 下限 0.01s，不设上限（666/777 成绩较大）
+                // NOTE: 优先 KDE 采样（真实成绩 + Silverman 高斯扰动），零模型假设
+                var cs = wrData.sampleKDE(state.event, p);
+
+                if (cs === null) {
+                    // NOTE: 回退方案 — 对数正态分布（基于 Ao100 WR 或 average WR）
+                    var ao100 = wrData.getAo100(state.event);
+                    var muLn;
+                    if (ao100) {
+                        muLn = Math.log(ao100[p] / 100);
+                    } else {
+                        var avgWr = wrData.getWR(state.event, 'average');
+                        muLn = avgWr ? Math.log(avgWr / 100) : 1.48;
+                    }
+                    var u1 = Math.random(), u2 = Math.random();
+                    var z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+                    cs = Math.max(1, Math.round(Math.exp(muLn + 0.12 * z) * 100));
+                }
+
                 updateTime(state.seedOn + p, t, cs);
             }
         }
