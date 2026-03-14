@@ -7,6 +7,7 @@ import * as chart from './chart.js';
 import * as calcTable from './calc_table.js';
 import * as urlSync from './url_sync.js';
 import * as eventSelector from './event_selector.js';
+import * as wrData from './wr_data.js';
 
 // ── 秒表状态 ──
 
@@ -17,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     chart.init(document.getElementById('chart-container'));
     inputGrid.init(document.getElementById('input-grid-container'));
     calcTable.init();
+    wrData.load().then(function () { notify(); }); // NOTE: 异步加载 WR 数据，完成后刷新渲染
 
     // NOTE: 初始化项目选择器
     eventSelector.init(document.getElementById('event-selector-container'), function (eventId) {

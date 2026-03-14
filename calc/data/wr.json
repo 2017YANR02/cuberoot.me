@@ -1,0 +1,16 @@
+{
+  "333":   {"single": 276, "average": 384, "bpa": 357, "wpa": 390},
+  "222":   {"single": 39, "average": 86, "bpa": 73, "wpa": 89},
+  "444":   {"single": 1518, "average": 1856, "bpa": 1788, "wpa": 1888},
+  "555":   {"single": 3045, "average": 3431, "bpa": 3365, "wpa": 3532},
+  "666":   {"single": 5769, "average": 6504},
+  "777":   {"single": 9348, "average": 9686},
+  "333bf": {"single": 1167, "average": 1405},
+  "333fm": {"single": 1600, "average": 1967},
+  "333oh": {"single": 566, "average": 772, "bpa": 718, "wpa": 812},
+  "minx":  {"single": 2199, "average": 2438, "bpa": 2371, "wpa": 2518},
+  "pyram": {"single": 73, "average": 114, "bpa": 96, "wpa": 127},
+  "clock": {"single": 153, "average": 224, "bpa": 198, "wpa": 240},
+  "skewb": {"single": 75, "average": 137, "bpa": 113, "wpa": 155},
+  "sq1":   {"single": 340, "average": 463, "bpa": 424, "wpa": 492}
+}
