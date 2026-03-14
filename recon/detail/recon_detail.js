@@ -1328,14 +1328,8 @@
             html += '</div>';
 
             // NOTE: 评论列表
-            if (comments.length === 0) {
-                html += '<div class="comments-empty">' +
-                    '<span data-i18n-en="No comments yet" data-i18n-zh="暂无评论">' +
-                    (isZh ? '暂无评论' : 'No comments yet') + '</span></div>';
-            } else {
-                for (var i = 0; i < comments.length; i++) {
-                    html += buildCommentItemHtml(comments[i], currentWcaId, isAdmin, isZh);
-                }
+            for (var i = 0; i < comments.length; i++) {
+                html += buildCommentItemHtml(comments[i], currentWcaId, isAdmin, isZh);
             }
 
             // NOTE: 内联评论输入区——根据登录状态显示编辑器或登录提示
@@ -1368,9 +1362,7 @@
                 '<div class="comments-header"><span class="comments-title">💬 ' +
                 '<span data-i18n-en="Comments" data-i18n-zh="评论">' +
                 (isZh ? '评论' : 'Comments') + '</span>' +
-                '<span class="comments-count">(0)</span></span></div>' +
-                '<div class="comments-empty"><span data-i18n-en="No comments yet" data-i18n-zh="暂无评论">' +
-                (isZh ? '暂无评论' : 'No comments yet') + '</span></div>';
+                '<span class="comments-count">(0)</span></span></div>';
             // NOTE: catch 分支也显示内联登录提示（未登录时）或编辑器（已登录时）
             if (currentWcaId) {
                 html += '<div id="comment-editor-slot">' + buildEditorHtml('', isZh) + '</div>';
