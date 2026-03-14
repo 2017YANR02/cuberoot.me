@@ -465,12 +465,14 @@ function drawCurvedLine(x, y, col) {
     statsGroup.appendChild(createSvgElement('line', { x1: x[3], y1: y[1], x2: x[4], y2: y[1] - 18, stroke: col, 'stroke-width': 3 }));
 }
 
-// NOTE: 快捷创建 SVG 文字
+// NOTE: 快捷创建 SVG 文字（带 text halo 防止被线条遮挡）
 function addText(parent, x, y, text, fill, size, anchor) {
     var el = createSvgElement('text', {
         x: x, y: y, fill: fill,
         'font-size': size + 'px', 'font-family': 'Helvetica',
         'text-anchor': anchor,
+        // NOTE: paint-order:stroke 让描边画在填充下面，形成背景色光晕
+        'stroke': '#E7DFD5', 'stroke-width': 5, 'paint-order': 'stroke',
     });
     el.textContent = text;
     parent.appendChild(el);
