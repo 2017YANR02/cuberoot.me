@@ -242,17 +242,13 @@ function drawZigs(parent, x, y, w, ysign, pieces) {
 // ── 统计可视化（扇形曲线 + 连接线 + 排名文字） ──
 
 // NOTE: 计算第 5 把的可能平均和排名范围
-// 当秒表正在计时第 5 把时，用实时值作为 BPA 下限（扇形实时收缩）
 function getPA(t, p) {
     var _times = structuredClone(t);
-    var liveVal = _times.pop(); // 移除第 5 把
+    _times.pop();
     _times.sort((a, b) => a - b);
-    // results: [best单次, worst单次, 阈值, BPA, WPA, 阈值avg, bestRank, worstRank, totalPlayers]
+    // results: [best单次, worst单次, 阈值, BPA, WPA, 阈值avg, bestRank, worstRank]
     var results = [_times[0], _times[3], UNFINISHED_VALUE, 0, 0, UNFINISHED_VALUE, UNFINISHED_VALUE, UNFINISHED_VALUE];
-
-    // NOTE: BPA = 第 5 把以 liveVal（秒表实时值）或 0 为下限
-    var bpaFloor = (state.timeLiveStart >= 0 && state.timeLive[0] === (p - state.seedOn)) ? liveVal : 0;
-    _times.unshift(bpaFloor);
+    _times.unshift(0);
     results[3] = getAverage(_times, true);
     _times.shift();
     _times.push(DNF_VALUE);
