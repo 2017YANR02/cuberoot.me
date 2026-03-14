@@ -1941,11 +1941,3 @@ tr.detail-row td {
 .comment-cancel-btn:hover {
     color: #ccc;
 }
-
-/* NOTE: 空评论区提示 */
-.comments-empty {
-    color: #555;
-    font-size: 0.85rem;
-    padding: 8px 0;
-    font-style: italic;
-}
