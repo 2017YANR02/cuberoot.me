@@ -66,13 +66,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ── 随机填充（测试用） ──
     document.getElementById('rand-fill').addEventListener('click', () => {
-        // NOTE: Box-Muller 正态分布，均值 4.35s，标准差 0.55s，截断到 [2.70, 5.99]
+        // NOTE: 对数正态分布 — 更真实地模拟魔方成绩的右偏特征
+        // ln(time) ~ N(μ_ln, σ_ln)，参数由 Ao100 实际数据拟合
+        // μ_ln ≈ 1.48（对应中位数 ≈ 4.40s），σ_ln ≈ 0.12
+        var MU_LN = 1.48, SIGMA_LN = 0.12;
         for (var p = 0; p < 2; p++) {
             for (var t = 0; t < 5; t++) {
                 var u1 = Math.random(), u2 = Math.random();
                 var z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
-                var cs = Math.round(435 + z * 55); // centiseconds
-                cs = Math.max(270, Math.min(599, cs));
+                var timeSec = Math.exp(MU_LN + SIGMA_LN * z);
+                var cs = Math.round(timeSec * 100);
+                cs = Math.max(200, Math.min(999, cs));
                 updateTime(state.seedOn + p, t, cs);
             }
         }
