@@ -1224,7 +1224,9 @@ const I18n = {
                         a.textContent = CJK_RE.test(m[2]) ? m[2] : m[1].trim();
                     }
                 } else {
-                    a.textContent = saved;
+                    // NOTE: 英文模式只显示罗马名（去掉括号内的本地名）
+                    const m = saved.match(LOCAL_NAME_RE);
+                    a.textContent = m ? m[1].trim() : saved;
                 }
                 return;
             }
@@ -1238,6 +1240,9 @@ const I18n = {
             if (this.locale === 'zh') {
                 // CJK → 显示中文名；其他非拉丁 → 显示罗马名
                 a.textContent = CJK_RE.test(m[2]) ? m[2] : m[1].trim();
+            } else {
+                // NOTE: 英文模式去掉括号内的本地名
+                a.textContent = m[1].trim();
             }
         });
     },
