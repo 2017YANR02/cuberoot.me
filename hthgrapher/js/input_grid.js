@@ -124,6 +124,7 @@ function createNameCell(p) {
 function onTogglePlayer(e) {
     var p = parseInt(e.target.dataset.player);
     var disabled = !e.target.checked;
+    state.playerEnabled[p] = e.target.checked;
     for (var t = 0; t < 5; t++) {
         cells[p][t].disabled = disabled;
         cells[p][t].style.opacity = disabled ? '0.3' : '1';

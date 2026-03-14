@@ -18,6 +18,7 @@ export const state = {
     timeLiveStart: -1,  // 秒表开始时间戳
     sortedCache: [],    // 按平均值排序的选手索引
     targetAvgs: {},     // 每个 seed 的目标平均值
+    playerEnabled: [true, true], // NOTE: checkbox 控制的选手启用状态
 };
 
 // ── 观察者模式 ──
@@ -79,6 +80,8 @@ export function areTimesFullyFilled() {
 export function getFirstUnfilledTime(countLiveTime) {
     for (var t = 0; t < 5; t++) {
         for (var p = 0; p < 2; p++) {
+            // NOTE: 跳过被 checkbox 禁用的选手
+            if (!state.playerEnabled[p]) continue;
             var isFilled = state.times[state.seedOn + p][t] !== 0;
             var isLive = countLiveTime && state.timeLive[0] === p && state.timeLive[1] === t;
             if (!isFilled || isLive) {
