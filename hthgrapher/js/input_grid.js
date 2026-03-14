@@ -10,6 +10,8 @@ import {
 
 // NOTE: 当前聚焦的单元格 [player, solve]，-1 表示无聚焦
 var activeCell = [-1, -1];
+// NOTE: 秒表回调（由 app.js 注册，避免循环依赖）
+var stopwatchCallback = null;
 
 // 输入框 DOM 引用缓存 — cells[p][t] 对应 player p 的第 t 个时间格
 var cells = [[], []];
@@ -195,11 +197,9 @@ function onKeyDown(e) {
             syncNumpadDisplay();
         }
     } else if (e.key === ' ') {
-        // NOTE: 空格键保留给秒表功能（Phase 5）
-        if (p < 0) {
-            e.preventDefault();
-            // TODO: interactTimeLive()
-        }
+        // NOTE: 空格键触发秒表（逻辑在 app.js 中注册）
+        e.preventDefault();
+        if (stopwatchCallback) stopwatchCallback();
     }
 }
 
@@ -333,4 +333,16 @@ export function refresh() {
 // NOTE: 获取当前活跃单元格
 export function getActiveCell() {
     return activeCell;
+}
+
+// NOTE: 注册秒表回调（由 app.js 调用）
+export function onStopwatch(fn) {
+    stopwatchCallback = fn;
+}
+
+// NOTE: 更新指定单元格的显示内容（秒表实时更新用）
+export function setCellDisplay(p, t, text) {
+    if (cells[p] && cells[p][t]) {
+        cells[p][t].value = text;
+    }
 }
