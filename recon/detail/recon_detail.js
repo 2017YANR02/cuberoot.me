@@ -1319,22 +1319,13 @@
             });
 
             var html = '<div class="comments-section">';
-            // NOTE: 标题行：标题 + 计数 + 添加按钮
+            // NOTE: 标题行：标题 + 计数（不再有添加按钮）
             html += '<div class="comments-header">';
             html += '<span class="comments-title">💬 ';
             html += '<span data-i18n-en="Comments" data-i18n-zh="评论">' + (isZh ? '评论' : 'Comments') + '</span>';
             html += '<span class="comments-count">(' + comments.length + ')</span>';
             html += '</span>';
-            // NOTE: 已登录 + 未评论过 → 显示添加按钮
-            if (currentWcaId && !hasMyComment) {
-                html += '<button class="comment-add-btn" data-recon-id="' + reconId + '">' +
-                    '<span data-i18n-en="Add Comment" data-i18n-zh="添加评论">' +
-                    (isZh ? '添加评论' : 'Add Comment') + '</span></button>';
-            }
             html += '</div>';
-
-            // NOTE: 编辑器插入点（添加评论时动态创建）
-            html += '<div id="comment-editor-slot"></div>';
 
             // NOTE: 评论列表
             if (comments.length === 0) {
@@ -1345,6 +1336,21 @@
                 for (var i = 0; i < comments.length; i++) {
                     html += buildCommentItemHtml(comments[i], currentWcaId, isAdmin, isZh);
                 }
+            }
+
+            // NOTE: 内联评论输入区——根据登录状态显示编辑器或登录提示
+            if (currentWcaId && !hasMyComment) {
+                // 已登录 + 未评论过 → 直接渲染编辑器
+                html += '<div id="comment-editor-slot">' + buildEditorHtml('', isZh) + '</div>';
+            } else if (!currentWcaId) {
+                // 未登录 → 显示登录提示
+                html += '<div class="comment-login-prompt">' +
+                    '<span data-i18n-en="Please" data-i18n-zh="请">' + (isZh ? '请' : 'Please') + '</span> ' +
+                    '<a href="#" class="comment-login-link">' +
+                    '<span data-i18n-en="log in" data-i18n-zh="登录">' + (isZh ? '登录' : 'log in') + '</span>' +
+                    '</a> ' +
+                    '<span data-i18n-en="to comment" data-i18n-zh="后评论">' + (isZh ? '后评论' : 'to comment') + '</span>' +
+                    '</div>';
             }
 
             html += '</div>';
@@ -1362,17 +1368,20 @@
                 '<div class="comments-header"><span class="comments-title">💬 ' +
                 '<span data-i18n-en="Comments" data-i18n-zh="评论">' +
                 (isZh ? '评论' : 'Comments') + '</span>' +
-                '<span class="comments-count">(0)</span></span>';
-            // NOTE: 已登录时显示添加按钮
-            if (currentWcaId) {
-                html += '<button class="comment-add-btn" data-recon-id="' + reconId + '">' +
-                    '<span data-i18n-en="Add Comment" data-i18n-zh="添加评论">' +
-                    (isZh ? '添加评论' : 'Add Comment') + '</span></button>';
-            }
-            html += '</div>' +
-                '<div id="comment-editor-slot"></div>' +
+                '<span class="comments-count">(0)</span></span></div>' +
                 '<div class="comments-empty"><span data-i18n-en="No comments yet" data-i18n-zh="暂无评论">' +
-                (isZh ? '暂无评论' : 'No comments yet') + '</span></div></div>';
+                (isZh ? '暂无评论' : 'No comments yet') + '</span></div>';
+            // NOTE: catch 分支也显示内联登录提示（未登录时）或编辑器（已登录时）
+            if (currentWcaId) {
+                html += '<div id="comment-editor-slot">' + buildEditorHtml('', isZh) + '</div>';
+            } else {
+                html += '<div class="comment-login-prompt">' +
+                    '<span data-i18n-en="Please" data-i18n-zh="请">' + (isZh ? '请' : 'Please') + '</span> ' +
+                    '<a href="#" class="comment-login-link">' +
+                    '<span data-i18n-en="log in" data-i18n-zh="登录">' + (isZh ? '登录' : 'log in') + '</span></a> ' +
+                    '<span data-i18n-en="to comment" data-i18n-zh="后评论">' + (isZh ? '后评论' : 'to comment') + '</span></div>';
+            }
+            html += '</div>';
             container.innerHTML = html;
             bindCommentEvents(container, reconId);
         });
@@ -1452,13 +1461,19 @@
 
     /** 绑定评论区所有事件 */
     function bindCommentEvents(container, reconId) {
-        // NOTE: 添加评论按钮
+        // NOTE: 未登录时的登录链接
         container.addEventListener('click', function (e) {
-            var addBtn = e.target.closest('.comment-add-btn');
-            if (!addBtn) return;
+            var loginLink = e.target.closest('.comment-login-link');
+            if (!loginLink) return;
             e.preventDefault();
-            showAddCommentEditor(reconId);
+            if (typeof WcaAuth !== 'undefined') WcaAuth.login();
         });
+
+        // NOTE: 内联编辑器事件绑定（已登录 + 未评论过时编辑器已渲染在 DOM 中）
+        var editorSlot = container.querySelector('#comment-editor-slot');
+        if (editorSlot && editorSlot.querySelector('.comment-editor')) {
+            bindEditorEvents(editorSlot, reconId, null);
+        }
 
         // NOTE: 编辑评论按钮
         container.addEventListener('click', function (e) {
@@ -1486,19 +1501,6 @@
         });
     }
 
-    /** 显示添加评论编辑器 */
-    function showAddCommentEditor(reconId) {
-        var slot = document.getElementById('comment-editor-slot');
-        if (!slot) return;
-        var isZh = localStorage.getItem('i18n_locale') === 'zh';
-        slot.innerHTML = buildEditorHtml('', isZh);
-
-        // NOTE: 隐藏添加按钮
-        var addBtn = document.querySelector('.comment-add-btn');
-        if (addBtn) addBtn.style.display = 'none';
-
-        bindEditorEvents(slot, reconId, null);
-    }
 
     /** 显示编辑评论编辑器（inline 替换评论卡片） */
     function showEditCommentEditor(reconId, commentId, content) {
@@ -1576,11 +1578,13 @@
                 if (cancelCallback) {
                     cancelCallback();
                 } else {
-                    // NOTE: 新增模式——清除编辑器 + 恢复添加按钮
-                    var slot = document.getElementById('comment-editor-slot');
-                    if (slot) slot.innerHTML = '';
-                    var addBtn = document.querySelector('.comment-add-btn');
-                    if (addBtn) addBtn.style.display = '';
+                    // NOTE: 内联新增模式——清空 textarea + 收起预览
+                    if (textarea) textarea.value = '';
+                    if (previewArea) previewArea.style.display = 'none';
+                    if (previewBtn) {
+                        var span = previewBtn.querySelector('span');
+                        if (span) span.textContent = isZh ? '预览' : 'Preview';
+                    }
                 }
             });
         }
