@@ -86,6 +86,7 @@ function createTimeCell(p, t) {
 
     input.addEventListener('focus', () => {
         activeCell = [p, t];
+        input.select();
         syncNumpadDisplay();
     });
     input.addEventListener('blur', () => {
