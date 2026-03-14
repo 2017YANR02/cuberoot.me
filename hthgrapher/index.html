@@ -316,10 +316,13 @@
 				}
 			}
 			v.value = s;
-			v.style.marginLeft = b["x"] + "px";
-			v.style.marginTop = b["y"] + "px";
-			v.style.width = b["w"] + "px";
-			v.style.height = b["h"] + "px";
+			// NOTE: overlay 坐标从 canvas 内部空间转换为 CSS 像素
+			var sx = c.clientWidth / c.width;
+			var sy = c.clientHeight / c.height;
+			v.style.marginLeft = (b["x"] * sx) + "px";
+			v.style.marginTop = (b["y"] * sy) + "px";
+			v.style.width = (b["w"] * sx) + "px";
+			v.style.height = (b["h"] * sy) + "px";
 			v.focus();
 			v.select(); // NOTE: 点击单元格时全选，方便直接覆盖输入
 			// NOTE: blur 时也关闭文本框并保存，确保 URL 同步
@@ -335,8 +338,9 @@
 			textBoxState = option;
 		}
 		function clickedWhileTextBoxOpen(e) {
-			var mX = e.offsetX;
-			var mY = e.offsetY;
+			// NOTE: overlay 的 offsetX/Y 也需要缩放转换
+			var mX = e.offsetX * (c.width / c.clientWidth);
+			var mY = e.offsetY * (c.height / c.clientHeight);
 			var b = getVisualTextBoundaries(highlight[0], highlight[1]);
 			if (!(mX >= 0 && mX < b["w"] && mY >= 0 && mY < b["h"])) {
 				closeTextBox(true);
@@ -1126,8 +1130,9 @@
 		function onClick(e) {
 		}
 		function onMove(e) {
-			var mX = e.offsetX;
-			var mY = e.offsetY;
+			// NOTE: CSS 缩放后 offsetX/Y 是 CSS 像素，需转换为 canvas 内部坐标
+			var mX = e.offsetX * (c.width / c.clientWidth);
+			var mY = e.offsetY * (c.height / c.clientHeight);
 			highlight = [-1, -1];
 			for (var p = 0; p < 3; p++) {
 				var t_count = (p < 2) ? 6 : 1;
@@ -1139,8 +1144,9 @@
 			}
 		}
 		function onRelease(e) {
-			var mX = e.offsetX;
-			var mY = e.offsetY;
+			// NOTE: CSS 缩放后 offsetX/Y 是 CSS 像素，需转换为 canvas 内部坐标
+			var mX = e.offsetX * (c.width / c.clientWidth);
+			var mY = e.offsetY * (c.height / c.clientHeight);
 			var resetClicksYesNo = false;
 			for (var p = 0; p < 3; p++) {
 				var t_count = (p < 2) ? 6 : 1;
