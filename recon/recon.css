@@ -787,6 +787,55 @@ tr.detail-row td {
     color: #666;
 }
 
+/* --- WCA/non-WCA 切换按钮组 --- */
+.recon-type-toggle {
+    display: flex;
+    gap: 0;
+    margin-bottom: 0.8rem;
+}
+
+.toggle-btn {
+    padding: 5px 14px;
+    font-size: 0.82rem;
+    font-family: 'Inter', Arial, sans-serif;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+    color: #666;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    outline: none;
+}
+
+/* NOTE: 第一个按钮左圆角，最后一个右圆角 */
+.toggle-btn:first-child {
+    border-radius: 6px 0 0 6px;
+}
+
+.toggle-btn:last-child {
+    border-radius: 0 6px 6px 0;
+    border-left: none;
+}
+
+.toggle-btn.active {
+    background: rgba(99, 102, 241, 0.2);
+    color: #c4b5fd;
+    border-color: rgba(99, 102, 241, 0.4);
+}
+
+.toggle-btn.active + .toggle-btn.active {
+    border-left: 1px solid rgba(99, 102, 241, 0.4);
+}
+
+.toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #ccc;
+}
+
+.toggle-btn.active:hover {
+    background: rgba(99, 102, 241, 0.3);
+    color: #ddd6fe;
+}
+
 /* --- 手机端适配 --- */
 @media (max-width: 768px) {
     .recon-toolbar {
