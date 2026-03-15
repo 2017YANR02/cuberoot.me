@@ -27,7 +27,9 @@
         "alg_trainer": "训练器",
         "alg_trainer_desc": "OLL、PLL、ZBLL、CMLL 等多种魔方公式训练器",
         "hth_grapher": "成绩计算器",
-        "hth_grapher_desc": "对比 WCA 比赛决赛成绩，可视化 WPA/BPA 计算"
+        "hth_grapher_desc": "对比 WCA 比赛决赛成绩，可视化 WPA/BPA 计算",
+        "battle": "对战计时",
+        "battle_desc": "魔方面对面对战计时器，挑战你的朋友"
     },
     "solver": {
         "title": "魔方求解器",
@@ -149,5 +151,11 @@
         "col_round": "轮",
         "col_date": "日期",
         "load_more": "加载更多"
+    },
+    "battle": {
+        "title": "对战计时器",
+        "settings": "设置",
+        "puzzle": "项目",
+        "close": "关闭"
     }
 }
