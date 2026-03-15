@@ -89,6 +89,42 @@ export function init(gridContainer) {
 
 // ── 创建输入元素 ──
 
+// NOTE: 自动跳格 — 输入满足条件时自动保存并跳到下一格
+// 仅限三阶(333)，其他项目成绩范围不同
+// 由 input 事件和 numpad 数字键共享调用
+function tryAutoAdvance(rawVal) {
+    if (state.event !== '333') return;
+    var val = rawVal.trim();
+    var shouldAdvance = false;
+
+    // 规则 1: 小数点后已输入 2 位数字（如 "4.42"、"12.35"）
+    var dotIdx = val.indexOf('.');
+    if (dotIdx >= 0) {
+        var afterDot = val.substring(dotIdx + 1);
+        if (afterDot.length >= 2 && /^\d{2}$/.test(afterDot)) {
+            shouldAdvance = true;
+        }
+    }
+
+    // 规则 2: 首位 ≥ 3 的 3 位纯数字（如 "354"、"999"，代表 3.54s、9.99s）
+    if (!shouldAdvance && /^\d{3}$/.test(val) && parseInt(val[0], 10) >= 3) {
+        shouldAdvance = true;
+    }
+
+    if (shouldAdvance) {
+        var p = activeCell[0], t = activeCell[1];
+        if (p < 0) return;
+        saveCell(p, t);
+        var nxt = nextCell(p, t);
+        if (nxt) {
+            navigateTo(nxt[0], nxt[1]);
+        } else {
+            cells[p][t].blur();
+            activeCell = [-1, -1];
+        }
+    }
+}
+
 function createTimeCell(p, t) {
     var input = document.createElement('input');
     input.type = 'text';
@@ -116,38 +152,7 @@ function createTimeCell(p, t) {
     });
     input.addEventListener('input', () => {
         syncNumpadDisplay();
-
-        // NOTE: 自动跳格 — 仅限三阶(333)，其他项目成绩范围不同
-        if (state.event !== '333') return;
-        var val = input.value.trim();
-        var shouldAdvance = false;
-
-        // 规则 1: 小数点后已输入 2 位数字（如 "4.42"、"12.35"）
-        var dotIdx = val.indexOf('.');
-        if (dotIdx >= 0) {
-            var afterDot = val.substring(dotIdx + 1);
-            if (afterDot.length >= 2 && /^\d{2}$/.test(afterDot)) {
-                shouldAdvance = true;
-            }
-        }
-
-        // 规则 2: 首位 ≥ 3 的 3 位纯数字（如 "354"、"999"，代表 3.54s、9.99s）
-        if (!shouldAdvance && /^\d{3}$/.test(val) && parseInt(val[0], 10) >= 3) {
-            shouldAdvance = true;
-        }
-
-        if (shouldAdvance) {
-            var p = activeCell[0], t = activeCell[1];
-            if (p < 0) return;
-            saveCell(p, t);
-            var nxt = nextCell(p, t);
-            if (nxt) {
-                navigateTo(nxt[0], nxt[1]);
-            } else {
-                cells[p][t].blur();
-                activeCell = [-1, -1];
-            }
-        }
+        tryAutoAdvance(input.value);
     });
 
     return input;
@@ -453,6 +458,8 @@ function numpadPress(key) {
         if (isFullySelected(v)) v.value = '';
         v.value += key;
         syncNumpadDisplay();
+        // NOTE: numpad 数字键也触发自动跳格
+        tryAutoAdvance(v.value);
     }
 
     // NOTE: 仅当未跳转（activeCell 未变）时才 refocus 原格
