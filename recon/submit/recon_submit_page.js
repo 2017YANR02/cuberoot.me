@@ -560,6 +560,141 @@
             'trigger-hedge': ['F R\' F\' R', 'F\' L F L\'']
         };
 
+        // NOTE: 输入联想触发器表——完整公式列表（空格分隔的 token 序列）
+        // 格式：{ label, formula }，formula 是最终插入的字符串（带尾空格）
+        var SUGGEST_FORMULAS = [
+            { label: 'sexy',    formula: "R U R' U' " },
+            { label: 'unsexy',  formula: "R U' R' U " },
+            { label: 'sledge',  formula: "R' F R F' " },
+            { label: 'hedge',   formula: "F R' F' R " },
+            { label: '左sexy',   formula: "L' U' L U " },
+            { label: '左unsexy', formula: "L' U L U' " },
+            { label: '左sledge', formula: "L F' L' F " },
+            { label: '左hedge',  formula: "F' L F L' " }
+        ];
+
+        /**
+         * NOTE: 词法解析——把魔方公式字符串切成 token 数组
+         * 规则：字母 [UDFBRLMES] 后可接 w（宽层）和 '（逆时针）或 2（双旋）
+         * 例：R' U2 Fw → ["R'", "U2", "Fw"]
+         */
+        function tokenizeFormula(str) {
+            var tokens = [];
+            var re = /([UDFBRLMESxyz]w?['2]?)/g;
+            var m;
+            while ((m = re.exec(str)) !== null) {
+                tokens.push(m[1]);
+            }
+            return tokens;
+        }
+
+        /**
+         * NOTE: 前缀匹配——从光标前 N 个 token 中找出匹配的公式建议
+         * 返回 [{ label, formula, prefixLen }]，prefixLen 是已输入的 token 数
+         */
+        function getSuggestions(inputStr) {
+            var inputTokens = tokenizeFormula(inputStr);
+            var results = [];
+
+            SUGGEST_FORMULAS.forEach(function (def) {
+                var defTokens = tokenizeFormula(def.formula);
+                // NOTE: 只看最多 def.length 个 token，检查 inputTokens 末尾是否匹配公式前缀
+                var maxCheck = Math.min(inputTokens.length, defTokens.length - 1);
+                for (var n = maxCheck; n >= 1; n--) {
+                    var tail = inputTokens.slice(-n);
+                    var prefix = defTokens.slice(0, n);
+                    if (tail.join(' ') === prefix.join(' ')) {
+                        results.push({ label: def.label, formula: def.formula, prefixLen: n });
+                        break;
+                    }
+                }
+            });
+            return results;
+        }
+
+        // NOTE: 联想建议条 DOM（挂在键盘容器外部，绝对定位）
+        var vkbSuggestBar = document.createElement('div');
+        vkbSuggestBar.className = 'vkb-suggest-bar';
+        vkbSuggestBar.style.display = 'none';
+        vkbEl.parentNode.insertBefore(vkbSuggestBar, vkbEl);
+
+        /** 刷新建议条：读取光标前内容，匹配公式，显示/隐藏建议 */
+        function refreshSuggestions() {
+            var pos = reconEl.selectionStart || 0;
+            var before = reconEl.value.slice(0, pos);
+            // NOTE: 只取光标前最近一段（不跨换行），避免跨行误匹配
+            var line = before.split('\n').pop() || '';
+            var suggestions = getSuggestions(line);
+
+            if (suggestions.length === 0) {
+                vkbSuggestBar.style.display = 'none';
+                return;
+            }
+
+            vkbSuggestBar.innerHTML = suggestions.map(function (s) {
+                return '<button class="vkb-suggest-btn" data-label="' + s.label
+                     + '" data-formula="' + s.formula.replace(/'/g, '&#39;')
+                     + '" data-prefix-len="' + s.prefixLen + '">'
+                     + s.label + '</button>';
+            }).join('');
+            vkbSuggestBar.style.display = 'flex';
+        }
+
+        // NOTE: 点击建议按钮——删除已输入前缀，插入完整公式
+        vkbSuggestBar.addEventListener('pointerdown', function (e) {
+            e.preventDefault();
+            var btn = e.target.closest('.vkb-suggest-btn');
+            if (!btn) return;
+
+            var formula = btn.dataset.formula;
+            var prefixLen = parseInt(btn.dataset.prefixLen, 10);
+
+            // NOTE: 需要计算已输入前缀的字符长度（含空格）
+            var pos = reconEl.selectionStart || 0;
+            var before = reconEl.value.slice(0, pos);
+            var line = before.split('\n').pop() || '';
+            var tokens = tokenizeFormula(line);
+            var prefixTokens = tokens.slice(-prefixLen);
+
+            // NOTE: 逆向找到前缀 token 序列对应的字符范围并删除
+            // 简洁策略：从 line 末尾找最后一次出现这些 token 的起始位置
+            var prefixStr = prefixTokens.join(' ');
+            // 从字符串末尾反向定位（含可能存在的前导空格）
+            var searchIn = line.trimEnd();
+            // 找到 prefixStr 在末尾的位置（匹配 token 可能被空格间隔多种形式）
+            var re = new RegExp(prefixTokens.map(function(t) {
+                // NOTE: 转义正则特殊字符（' 无需转义，但安全起见）
+                return t.replace(/[.*+?^$()|[\]\\]/g, '\\$&');
+            }).join('[\\s]+') + '[\\s]*$');
+            var match = re.exec(searchIn);
+            if (!match) {
+                // NOTE: 找不到前缀时降级——直接替换：先用 backspace 逐个删
+                vkbInsert(formula);
+                vkbSuggestBar.style.display = 'none';
+                return;
+            }
+
+            var deleteCount = searchIn.length - match.index;
+            // NOTE: 删除 deleteCount 个字符（从光标往前，含尾部空格）
+            var actualPos = pos;
+            // 还要删掉 searchIn trimEnd 后被去掉的空格
+            deleteCount += (line.length - searchIn.length);
+
+            reconEl.focus();
+            reconEl.setSelectionRange(actualPos - deleteCount, actualPos);
+            document.execCommand('insertText', false, formula);
+            normalizePunctuation(reconEl);
+            updateStatsDisplay();
+            autoResize(reconEl);
+            updateModifierState();
+            vkbSuggestBar.style.display = 'none';
+        });
+
+        // NOTE: 监听 textarea 变化，实时刷新建议
+        reconEl.addEventListener('input', refreshSuggestions);
+        reconEl.addEventListener('click', refreshSuggestions);
+        reconEl.addEventListener('keyup', refreshSuggestions);
+
         // NOTE: 修饰键（' 和 w）——光标前无英文字母时禁用
         var modifierBtnPrime = vkbEl.querySelector('button[data-key="\' "]');
         var modifierBtnW = vkbEl.querySelector('button[data-key="w "]');
