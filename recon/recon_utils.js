@@ -72,6 +72,7 @@ var ReconUtils = (function () {
      * "Max Park" → {en: "Max Park", zh: null}
      */
     function parseSolverName(fullName) {
+        if (!fullName) return { en: '', zh: null };
         var m = fullName.match(/^(.+?)\s*\((.+)\)$/);
         if (m) return { en: m[1], zh: m[2] };
         return { en: fullName, zh: null };
