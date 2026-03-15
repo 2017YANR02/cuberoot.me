@@ -266,6 +266,19 @@ body {
     border-color: #555;
 }
 
+/* NOTE: 桌面端键盘快捷键提示（触摸设备隐藏） */
+.key-hint {
+    font-size: 0.65rem;
+    color: #555;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+}
+
+/* NOTE: 有触摸能力的设备不显示键盘提示 */
+@media (hover: none) and (pointer: coarse) {
+    .key-hint { display: none; }
+}
+
 /* NOTE: 全屏按钮在全屏模式下变色提示 */
 .middle-btn.fullscreen-active {
     color: #66bb6a;
