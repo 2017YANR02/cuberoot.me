@@ -11,7 +11,8 @@
     padding: 0;
 }
 
-html, body {
+html,
+body {
     height: 100%;
     overflow: hidden;
     /* NOTE: 禁止下拉刷新和弹性滚动 */
@@ -129,8 +130,8 @@ body {
    ========================================================== */
 
 .time-display {
-    /* NOTE: LCD 七段数码管字体，与 csTimer 风格一致 */
-    font-family: 'DS-Digital', 'JetBrains Mono', monospace;
+    /* NOTE: Segment7Standard — 等宽七段 LCD 字体，自托管零外部依赖 */
+    font-family: 'Segment7Standard', 'JetBrains Mono', monospace;
     /* NOTE: 大号显示，用 clamp 适配不同屏幕 */
     font-size: clamp(2.5rem, 12vw, 5rem);
     font-weight: 700;
@@ -236,8 +237,16 @@ body {
 }
 
 @keyframes scoreFlash {
-    0%, 100% { color: #fff; }
-    50% { color: #66bb6a; transform: scale(1.3); }
+
+    0%,
+    100% {
+        color: #fff;
+    }
+
+    50% {
+        color: #66bb6a;
+        transform: scale(1.3);
+    }
 }
 
 .middle-actions {
@@ -277,7 +286,9 @@ body {
 
 /* NOTE: 有触摸能力的设备不显示键盘提示 */
 @media (hover: none) and (pointer: coarse) {
-    .key-hint { display: none; }
+    .key-hint {
+        display: none;
+    }
 }
 
 /* NOTE: 全屏按钮在全屏模式下变色提示 */
@@ -455,11 +466,11 @@ body {
    字体加载
    ========================================================== */
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
-/* NOTE: LCD 七段数码管字体，csTimer 同款风格 */
+
+/* NOTE: Segment7 Standard — 等宽七段 LCD 字体（SIL OFL 开源，自托管） */
 @font-face {
-    font-family: 'DS-Digital';
-    src: url('https://cdn.jsdelivr.net/gh/nicholasgasior/gfonts@master/DS-Digital/DS-Digital.woff2') format('woff2'),
-         url('https://cdn.jsdelivr.net/gh/nicholasgasior/gfonts@master/DS-Digital/DS-Digital.woff') format('woff');
+    font-family: 'Segment7Standard';
+    src: url('/fonts/Segment7Standard.otf') format('opentype');
     font-weight: normal;
     font-style: normal;
     font-display: swap;
