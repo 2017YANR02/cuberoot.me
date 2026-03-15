@@ -7,11 +7,18 @@
     box-sizing: border-box;
 }
 
+html {
+    overflow-x: hidden;
+    /* NOTE: 阻止 iOS 横向弹性滚动 */
+    overscroll-behavior-x: none;
+}
+
 body {
     margin: 0;
     font-family: Helvetica, Arial, sans-serif;
     background: #E7DFD5;
     overflow-x: hidden;
+    overscroll-behavior-x: none;
     /* NOTE: iOS Safari 底部地址栏安全区 */
     padding-bottom: env(safe-area-inset-bottom, 0px);
 }
