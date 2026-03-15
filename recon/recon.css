@@ -2082,3 +2082,78 @@ tr.detail-row td {
     text-decoration: underline;
     margin-left: 2px;
 }
+
+/* ============================================================
+   虚拟键盘样式——iOS 深色风格，对齐 Cube Keyboard App
+   ============================================================ */
+
+/* NOTE: 键盘容器——深色背景，顶部圆角，贴在 textarea 下方 */
+.vkb {
+    background: #2c2c2e;
+    border-radius: 0 0 10px 10px;
+    padding: 8px 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* NOTE: 每行用 flex 均匀分布按键 */
+.vkb-row {
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+}
+
+/* NOTE: 通用按键样式——圆角深灰方块，蓝色文字 */
+.vkb-row button {
+    flex: 1;
+    min-width: 0;
+    height: 44px;
+    border: none;
+    border-radius: 6px;
+    background: #3a3a3c;
+    color: #007AFF;
+    font-size: 1.05rem;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.1s;
+    /* NOTE: 防止移动端长按弹出菜单 */
+    -webkit-touch-callout: none;
+}
+
+/* NOTE: 触摸/点击反馈——短暂加亮 */
+.vkb-row button:active {
+    background: #555558;
+}
+
+/* --- 底部功能行：space 和 return 宽度更大 --- */
+.vkb-space {
+    flex: 3 !important;
+    font-size: 0.85rem !important;
+    letter-spacing: 0.02em;
+    color: #8e8e93 !important;
+}
+
+.vkb-return {
+    flex: 2 !important;
+    font-size: 0.85rem !important;
+    letter-spacing: 0.02em;
+    color: #8e8e93 !important;
+}
+
+/* NOTE: 功能按键（🌐 / ⌫）稍小，不随 flex 拉伸 */
+.vkb-fn {
+    flex: 0 0 44px !important;
+    font-size: 1.1rem !important;
+}
+
+/* NOTE: 退格按键蓝色图标 */
+.vkb-fn-del {
+    color: #007AFF !important;
+}
