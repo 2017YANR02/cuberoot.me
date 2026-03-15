@@ -543,9 +543,8 @@
 
         var vkbEl = document.getElementById('rf-vkb');
 
-        // NOTE: 长按变体映射——斜杠注释 + 数字 + 触发器
+        // NOTE: 长按变体映射——数字 + 触发器
         var LONG_PRESS_VARIANTS = {
-            '/': ['/', ' // '],
             '2': ['1', '2', '3', '4', '5', '6'],
             // --- 触发器变体：左/右对应 ---
             'trigger-sexy': ['R U R\' U\'', 'L\' U\' L U'],
@@ -557,8 +556,8 @@
         // NOTE: 快速双击检测——记录上次按键和时间
         var vkbLastKey = '';
         var vkbLastKeyTime = 0;
-        // NOTE: 可双击转 180° 的按键集合
-        var DOUBLE_TAP_KEYS = { U:1, D:1, F:1, B:1, R:1, L:1, x:1, y:1, z:1, M:1, E:1, S:1 };
+        // NOTE: 可双击的按键集合：UDFBRL/xyzMES 双击转 180°，/ 双击输出 " // "
+        var DOUBLE_TAP_KEYS = { U:1, D:1, F:1, B:1, R:1, L:1, x:1, y:1, z:1, M:1, E:1, S:1, '/':1 };
         // NOTE: 面旋转键——支持下滑(逆时针)/上滑(双层)手势
         var FACE_KEYS = { U:1, D:1, F:1, B:1, R:1, L:1 };
 
@@ -940,6 +939,23 @@
                     updateModifierState();
                 }
             } else {
+                // NOTE: () 键三态——点击(), 下滑[], 上滑{}，插入后光标居中
+                if (key === '()') {
+                    var dy0 = (btn._startY !== undefined) ? (e.clientY - btn._startY) : 0;
+                    var pair = (dy0 > 20) ? '[]' : (dy0 < -20) ? '{}' : '()';
+                    var pos0 = reconEl.selectionStart || 0;
+                    reconEl.focus();
+                    reconEl.setSelectionRange(pos0, pos0);
+                    document.execCommand('insertText', false, pair);
+                    // NOTE: 光标移到左括号右侧（括号中间）
+                    reconEl.setSelectionRange(pos0 + 1, pos0 + 1);
+                    normalizePunctuation(reconEl);
+                    updateStatsDisplay();
+                    autoResize(reconEl);
+                    updateModifierState();
+                    return;
+                }
+
                 // NOTE: 滑动手势判断——仅对面旋转键 UDFBRL 生效
                 var ch;
                 if (FACE_KEYS[key] && btn._startY !== undefined) {
@@ -968,7 +984,9 @@
                     if (trimMatch) {
                         reconEl.focus();
                         reconEl.setSelectionRange(pos - trimMatch[0].length, pos);
-                        document.execCommand('insertText', false, key + '2 ');
+                        // NOTE: / 键双击特殊输出注释符，其他键输出 X2
+                        var doubleTapOut = (key === '/') ? ' // ' : (key + '2 ');
+                        document.execCommand('insertText', false, doubleTapOut);
                     }
                     vkbLastKey = '';
                     vkbLastKeyTime = 0;

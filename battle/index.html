@@ -44,6 +44,7 @@
         <div id="scramble-1" class="scramble-text">
             <span class="loading">Generating scramble...</span>
         </div>
+        <div id="scramble-img-1" class="scramble-img"></div>
     </div>
 
     <!-- ===== 中间栏（比分 + 设置） ===== -->
@@ -77,6 +78,7 @@
         <div id="scramble-0" class="scramble-text">
             <span class="loading">Generating scramble...</span>
         </div>
+        <div id="scramble-img-0" class="scramble-img"></div>
         <div id="time-0" class="time-display">0.000</div>
         <div id="penalties-0" class="penalty-buttons">
             <button class="penalty-btn active" data-penalty="ok">OK</button>
@@ -89,6 +91,17 @@
     <div id="settings-overlay" class="settings-overlay">
         <div class="settings-panel">
             <div class="settings-title" data-i18n="battle.settings">Settings</div>
+
+            <div class="settings-group">
+                <div class="settings-label" data-i18n="battle.show_image">IMAGE</div>
+                <div class="setting-item toggle-row">
+                    <span data-i18n="battle.show_image_desc">Show Scramble Image</span>
+                    <label class="switch">
+                        <input type="checkbox" id="toggle-image" checked>
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+            </div>
 
             <div class="settings-group">
                 <div class="settings-label" data-i18n="battle.puzzle">PUZZLE</div>
@@ -113,8 +126,29 @@
         </div>
     </div>
 
-    <!-- NOTE: csTimer scramble module 依赖 jQuery 子集，提供最小 shim 避免加载完整 jQuery -->
-    <script>var $ = { isArray: Array.isArray, now: Date.now, noop: function(){} };</script>
+    <!-- NOTE: csTimer scramble module 依赖 jQuery 子集 + kernel 颜色配置，提供最小 shim -->
+    <script>
+        var $ = { isArray: Array.isArray, now: Date.now, noop: function(){} };
+        // NOTE: kernel.getProp 为 image.js 提供 WCA 标准配色（默认值），不读取 localStorage
+        var kernel = {
+            getProp: function(key) {
+                var defaults = {
+                    'colcube': '#ff0#fa0#00f#fff#f00#0d0', // YOBWRG WCA 标准
+                    'colclk':  '#f00#37b#5cf#ff0#850',
+                    'colsq1':  '#ff0#f80#0f0#fff#f00#00f',
+                    'colpyr':  '#0f0#f00#00f#ff0',
+                    'colskb':  '#ff0#fa0#00f#fff#f00#0d0',
+                    'colmgm':  '#fff#d00#060#81f#fc0#00b#ffb#8df#f83#7e0#f9f#999',
+                    'colfto':  '#fff#808#0d0#f00#00f#bbb#ff0#fa0',
+                    'colico':  '#fff#084#b36#a85#088#811#e71#b9b#05a#ed1#888#6a3#e8b#a52#6cb#c10#fa0#536#49c#ec9',
+                    'col15p':  '#f00#fa0#ff0#0d0#00f#fff#888#000',
+                    'col-font':  '#fff',
+                    'col-board': '#000'
+                };
+                return defaults[key] !== undefined ? defaults[key] : null;
+            }
+        };
+    </script>
     <!-- NOTE: csTimer 打乱模块（纯 JS，无 WASM，自托管，GPL-3.0 from cs0x7f/cstimer） -->
     <script src="scramble_module.js"></script>
     <script src="battle.js" defer></script>

@@ -125,6 +125,31 @@ body {
     font-style: italic;
 }
 
+/* NOTE: 打乱图容器（csTimer SVG，由 image.js 生成） */
+.scramble-img {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 4px 0 6px;
+}
+
+.scramble-svg-img {
+    /* NOTE: 高度约为玩家区域的 1/5，横向自适应 */
+    max-height: clamp(80px, 14vh, 140px);
+    max-width: 90%;
+    object-fit: contain;
+    opacity: 0.9;
+    border-radius: 6px;
+    /* NOTE: 深色半透明背景让白色配色的 SVG 更醒目 */
+    background: rgba(255, 255, 255, 0.05);
+    padding: 4px;
+}
+
+/* NOTE: 计时中同时隐藏打乱图 */
+.player-area .scramble-text.hidden ~ .scramble-img {
+    visibility: hidden;
+}
+
 /* ==========================================================
    计时数字
    ========================================================== */
@@ -145,6 +170,15 @@ body {
     justify-content: center;
 }
 
+/* NOTE: 专门针对冒号的样式，修复 Segment7Standard 将其渲染为横线的问题 */
+.time-display .colon {
+    font-family: 'JetBrains Mono', 'Roboto Mono', monospace;
+    font-size: 0.9em;
+    vertical-align: 0.08em;
+    margin: 0 4px;
+}
+
+/* ===== 状态颜色变化 ===== */
 /* NOTE: +2 罚时时显示橙色提示 */
 .time-display.penalty-plus2 {
     color: #ffa726;
@@ -358,15 +392,65 @@ body {
 }
 
 .settings-group {
-    margin-bottom: 16px;
+    margin-bottom: 24px;
 }
 
 .settings-label {
-    font-size: 0.75rem;
+    font-size: 0.9rem;
     color: #666;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 8px;
+    margin-bottom: 12px;
+    letter-spacing: 1px;
+    font-weight: 500;
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    color: #eee;
+    font-size: 1rem;
+}
+
+/* Toggle Switch 样式 */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 24px;
+}
+.switch input { 
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #444;
+    transition: .4s;
+    border-radius: 24px;
+}
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .2s;
+    border-radius: 50%;
+}
+input:checked + .slider {
+    background-color: #2196F3;
+}
+input:checked + .slider:before {
+    transform: translateX(24px);
 }
 
 /* --- 项目选择网格 --- */
