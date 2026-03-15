@@ -17,6 +17,8 @@ body {
     overflow: hidden;
     /* NOTE: 禁止下拉刷新和弹性滚动 */
     overscroll-behavior: none;
+    /* NOTE: 结合 meta viewport，彻底干掉 iOS 上顽固的双指（捏合）缩放行为 */
+    touch-action: none;
 }
 
 :root {
@@ -386,17 +388,18 @@ body {
 }
 
 .settings-panel {
-    background: #1a1a1a;
-    border: 1px solid #333;
+    background: #1e1e1e;
+    padding: 24px;
     border-radius: 12px;
-    padding: 20px;
-    width: min(90vw, 360px);
+    width: 90%;
+    max-width: 400px;
     max-height: 80vh;
     overflow-y: auto;
-    transform: scale(0.95);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    transform: scale(0.9);
     transition: transform 0.2s ease;
+    border: 1px solid #333;
 }
-
 .settings-overlay.visible .settings-panel {
     transform: scale(1);
 }
