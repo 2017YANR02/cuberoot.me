@@ -543,40 +543,172 @@
 
         var vkbEl = document.getElementById('rf-vkb');
 
-        // NOTE: 用事件委托处理所有按键——mousedown 而非 click，配合 preventDefault 阻止 blur
-        vkbEl.addEventListener('mousedown', function (e) {
+        // NOTE: 面旋转按键的长按变体映射——长按显示气泡让用户选择
+        var FACE_VARIANTS = {
+            'U': ['U', "U'", 'U2', 'u'],
+            'D': ['D', "D'", 'D2', 'd'],
+            'F': ['F', "F'", 'F2', 'f'],
+            'B': ['B', "B'", 'B2', 'b'],
+            'R': ['R', "R'", 'R2', 'r'],
+            'L': ['L', "L'", 'L2', 'l']
+        };
+
+        // NOTE: 长按弹出气泡 DOM（动态创建，复用单个实例）
+        var vkbPopup = document.createElement('div');
+        vkbPopup.className = 'vkb-popup';
+        vkbPopup.style.display = 'none';
+        document.body.appendChild(vkbPopup);
+
+        var longPressTimer = null;
+        var isLongPress = false;
+        // NOTE: 当前活跃的按键（长按期间高亮用）
+        var activeBtn = null;
+
+        /** 向 textarea 插入文本的通用函数 */
+        function vkbInsert(text) {
+            reconEl.focus();
+            document.execCommand('insertText', false, text);
+            normalizePunctuation(reconEl);
+            updateStatsDisplay();
+            autoResize(reconEl);
+        }
+
+        /** 显示长按弹出气泡 */
+        function showPopup(btn, variants) {
+            var html = '';
+            variants.forEach(function (v) {
+                html += '<span class="vkb-popup-item" data-val="' + v + '">' + v + '</span>';
+            });
+            vkbPopup.innerHTML = html;
+            vkbPopup.style.display = 'flex';
+
+            // NOTE: 定位在按键上方居中
+            var rect = btn.getBoundingClientRect();
+            var popW = vkbPopup.offsetWidth;
+            var left = rect.left + rect.width / 2 - popW / 2;
+            // NOTE: 防止溢出屏幕左右边界
+            left = Math.max(4, Math.min(left, window.innerWidth - popW - 4));
+            vkbPopup.style.left = left + 'px';
+            vkbPopup.style.top = (rect.top - vkbPopup.offsetHeight - 6) + 'px';
+        }
+
+        function hidePopup() {
+            vkbPopup.style.display = 'none';
+            vkbPopup.innerHTML = '';
+        }
+
+        /** 根据指针坐标高亮对应的 popup item */
+        function highlightPopupItem(clientX, clientY) {
+            var items = vkbPopup.querySelectorAll('.vkb-popup-item');
+            items.forEach(function (item) {
+                var r = item.getBoundingClientRect();
+                if (clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+        }
+
+        /** 获取当前高亮的 popup item 值 */
+        function getActivePopupVal() {
+            var active = vkbPopup.querySelector('.vkb-popup-item.active');
+            return active ? active.dataset.val : null;
+        }
+
+        // NOTE: pointerdown——统一处理桌面鼠标和移动端触摸
+        vkbEl.addEventListener('pointerdown', function (e) {
             e.preventDefault();
             var btn = e.target.closest('button[data-key]');
             if (!btn) return;
+
+            activeBtn = btn;
+            isLongPress = false;
             var key = btn.dataset.key;
 
-            if (key === 'dismiss') {
-                // NOTE: 🌐——功能预留（后续扩展为切换键盘页面）
+            // NOTE: 面旋转按键才启动长按计时器
+            if (FACE_VARIANTS[key]) {
+                longPressTimer = setTimeout(function () {
+                    isLongPress = true;
+                    showPopup(btn, FACE_VARIANTS[key]);
+                }, 400);
+            }
+        });
+
+        // NOTE: pointermove——长按弹出后，滑动高亮变体
+        vkbEl.addEventListener('pointermove', function (e) {
+            if (isLongPress && vkbPopup.style.display !== 'none') {
+                highlightPopupItem(e.clientX, e.clientY);
+            }
+        });
+
+        // NOTE: pointerup——完成按键或选择变体
+        vkbEl.addEventListener('pointerup', function (e) {
+            clearTimeout(longPressTimer);
+            var btn = activeBtn;
+            activeBtn = null;
+
+            if (!btn) return;
+            var key = btn.dataset.key;
+
+            if (isLongPress && vkbPopup.style.display !== 'none') {
+                // NOTE: 长按模式——从 popup 获取选择的变体
+                highlightPopupItem(e.clientX, e.clientY);
+                var val = getActivePopupVal();
+                hidePopup();
+                isLongPress = false;
+                if (val) {
+                    // NOTE: 所有变体后都加空格（已是完整表示，如 U' D2）
+                    vkbInsert(val + ' ');
+                }
                 return;
             }
+            isLongPress = false;
+            hidePopup();
+
+            // NOTE: 短按处理——与之前逻辑相同
+            if (key === 'dismiss') return;
 
             if (key === 'backspace') {
-                // NOTE: 删除光标前一个字符
                 var start = reconEl.selectionStart;
                 if (start > 0) {
                     reconEl.focus();
                     reconEl.setSelectionRange(start - 1, start);
                     document.execCommand('delete', false);
+                    normalizePunctuation(reconEl);
+                    updateStatsDisplay();
+                    autoResize(reconEl);
                 }
             } else {
-                // NOTE: 在光标位置插入字符（enter → 换行符）
                 var ch = (key === 'enter') ? '\n' : key;
-                reconEl.focus();
-                document.execCommand('insertText', false, ch);
+                vkbInsert(ch);
             }
-
-            // NOTE: 联动统计更新和高度自适应
-            normalizePunctuation(reconEl);
-            updateStatsDisplay();
-            autoResize(reconEl);
         });
 
-        // NOTE: touchstart 也需要 preventDefault，防止移动端 blur
+        // NOTE: 指针离开键盘区域时取消长按
+        vkbEl.addEventListener('pointerleave', function () {
+            clearTimeout(longPressTimer);
+        });
+
+        // NOTE: 全局 pointermove——支持手指从按键滑到 popup 区域
+        document.addEventListener('pointermove', function (e) {
+            if (isLongPress && vkbPopup.style.display !== 'none') {
+                highlightPopupItem(e.clientX, e.clientY);
+            }
+        });
+
+        // NOTE: 全局 pointerup——防止手指在 popup 外松开时 popup 不消失
+        document.addEventListener('pointerup', function () {
+            if (isLongPress) {
+                clearTimeout(longPressTimer);
+                var val = getActivePopupVal();
+                hidePopup();
+                isLongPress = false;
+                if (val) vkbInsert(val + ' ');
+            }
+        });
+
+        // NOTE: touchstart 阻止默认行为——防止移动端 blur 和弹出选择菜单
         vkbEl.addEventListener('touchstart', function (e) {
             if (e.target.closest('button[data-key]')) {
                 e.preventDefault();
