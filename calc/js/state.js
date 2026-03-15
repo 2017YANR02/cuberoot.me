@@ -7,7 +7,7 @@ import {
 } from './calc_engine.js';
 
 // NOTE: Mo3 项目 — 一轮 3 把，算术均值（不去掉任何成绩）
-const MO3_EVENTS = new Set(['666', '777', '444bf', '555bf']);
+const MO3_EVENTS = new Set(['666', '777', '444bf', '555bf', '333fm', '333mbf', '333mbo']);
 export function solveCount() { return MO3_EVENTS.has(state.event) ? 3 : 5; }
 export function isMo3() { return MO3_EVENTS.has(state.event); }
 
