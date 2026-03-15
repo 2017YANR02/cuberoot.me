@@ -78,6 +78,9 @@ var WcaAuth = (function () {
             return Promise.reject(new Error('No access_token in callback'));
         }
 
+        // NOTE: 存储 access_token——getAccessToken() 依赖此 key 供 API 请求携带 Authorization header
+        localStorage.setItem('wca_access_token', accessToken);
+
         return fetchMe(accessToken);
     }
 
