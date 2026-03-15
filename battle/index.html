@@ -113,6 +113,8 @@
         </div>
     </div>
 
+    <!-- NOTE: csTimer scramble module 依赖 jQuery 子集，提供最小 shim 避免加载完整 jQuery -->
+    <script>var $ = { isArray: Array.isArray, now: Date.now, noop: function(){} };</script>
     <!-- NOTE: csTimer 打乱模块（纯 JS，无 WASM，自托管，GPL-3.0 from cs0x7f/cstimer） -->
     <script src="scramble_module.js"></script>
     <script src="battle.js" defer></script>
