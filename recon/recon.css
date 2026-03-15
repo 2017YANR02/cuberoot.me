@@ -2087,44 +2087,40 @@ tr.detail-row td {
    虚拟键盘样式——iOS 深色风格，对齐 Cube Keyboard App
    ============================================================ */
 
-/* NOTE: 联想建议条——显示在键盘上方，与触发器芯片同款风格 */
+/* NOTE: 联想建议条——iOS 风格全宽横条，竖线分隔 */
 .vkb-suggest-bar {
     display: flex;
-    gap: 6px;
-    padding: 6px 8px;
-    overflow-x: auto;
-    scrollbar-width: none;
+    align-items: center;
     background: #1c1c1e;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 10px 10px 0 0; /* NOTE: 顶部圆角与键盘底部圆角呼应 */
-    animation: vkb-suggest-in 0.15s ease;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    min-height: 36px;
 }
 
-.vkb-suggest-bar::-webkit-scrollbar { display: none; }
-
-@keyframes vkb-suggest-in {
-    from { opacity: 0; transform: translateY(4px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-
-/* NOTE: 建议按钮——与触发器芯片相同的 Pill 样式，颜色略不同体现层次 */
+/* NOTE: 每个建议项——等分宽度，文字居中，竖线用 border-left 实现 */
 .vkb-suggest-btn {
-    flex: 0 0 auto;
-    background: rgba(255, 255, 255, 0.1);
-    color: #34c759; /* NOTE: 绿色——区分于触发器的蓝色，表示"可以补全" */
+    flex: 1;
+    background: none;
+    color: #fff;
     border: none;
-    border-radius: 10px;
-    padding: 5px 12px;
-    font-size: 0.8rem;
-    font-weight: 600;
+    border-left: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 8px 4px;
+    font-size: 0.82rem;
+    font-weight: 400;
+    text-align: center;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
     transition: background 0.15s;
+    white-space: nowrap;
+}
+
+/* NOTE: 第一项不需要左竖线 */
+.vkb-suggest-btn:first-child {
+    border-left: none;
 }
 
 .vkb-suggest-btn:active {
-    background: rgba(52, 199, 89, 0.2);
-    transform: scale(1.05);
+    background: rgba(255, 255, 255, 0.1);
 }
 
 /* NOTE: 键盘容器——深色背景，顶部圆角，贴在 textarea 下方 */
