@@ -420,8 +420,9 @@ audio, video {
 
 /* NOTE: 输入格改弹性宽度，手机端自动缩小 */
 @media (max-width: 640px) {
-    /* NOTE: 图表撑满屏幕左右 — 用负边距抵消 .hth-app 的 8px padding */
+    /* NOTE: 图表撑满屏幕左右 — 取消 max-width 并用负边距抵消 .hth-app 的 8px padding */
     #chart-container {
+        max-width: none;
         margin-left: -8px;
         margin-right: -8px;
     }
@@ -440,7 +441,7 @@ audio, video {
 
     .name-cell {
         width: auto;
-        flex: 0 0 55px;
+        flex: 0 0 45px;
         padding: 6px 2px;
         font-size: 13px;
     }
