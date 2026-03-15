@@ -835,12 +835,17 @@
             btn._startY = e.clientY;  // NOTE: 记录按下 Y 坐标，用于滑动手势判断
             var key = btn.dataset.key;
 
-            // NOTE: 有长按变体的按键启动计时器（面旋转 + 斜杠）
+            // NOTE: 有长按变体的按键启动计时器
             if (LONG_PRESS_VARIANTS[key]) {
                 longPressTimer = setTimeout(function () {
                     isLongPress = true;
                     showPopup(btn, LONG_PRESS_VARIANTS[key]);
-                }, 400);
+                }, 250);
+            } else if (DOUBLE_TAP_KEYS[key]) {
+                // NOTE: 面旋转/轴旋转键长按——不弹 popup，仅标记（pointerup 中输出 X2'）
+                longPressTimer = setTimeout(function () {
+                    isLongPress = true;
+                }, 250);
             }
         });
 
@@ -861,7 +866,7 @@
             var key = btn.dataset.key;
 
             if (isLongPress && vkbPopup.style.display !== 'none') {
-                // NOTE: 长按模式——从 popup 获取选择的变体
+                // NOTE: 长按模式（有 popup）——从 popup 获取选择的变体
                 highlightPopupItem(e.clientX, e.clientY);
                 var val = getActivePopupVal();
                 hidePopup();
@@ -870,6 +875,14 @@
                     // NOTE: 所有变体后都加空格（已是完整表示，如 U' D2）
                     vkbInsert(val + ' ');
                 }
+                return;
+            }
+
+            if (isLongPress && DOUBLE_TAP_KEYS[key]) {
+                // NOTE: UDFBRL/xyzMES 长按（无 popup）——直接输出 X2'
+                isLongPress = false;
+                vkbInsert(key + "2' ");
+                updateModifierState();
                 return;
             }
             isLongPress = false;
