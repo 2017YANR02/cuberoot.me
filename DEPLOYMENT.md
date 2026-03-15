@@ -94,8 +94,15 @@ ruiminyan.github.io/
 │── 📌 本地维护（不受同步影响）
 ├── battle/                    # 1v1 对战计时器（源自 MatteoColombo/cube_challenge_timer，JS 重写）
 │   ├── index.html             # 页面结构（双人上下布局 + 设置弹窗）
-│   ├── battle.js              # 核心逻辑（状态机 + cubing.js CDN 打乱 + 罚时 + 胜负）
+│   ├── battle.js              # 核心逻辑（状态机 + csTimer 本地打乱 + 罚时 + 胜负）
+│   ├── scramble_module.js     # csTimer 打乱模块（由 Closure Compiler 从 cstimer 源码构建，250KB，GPL-3.0）
 │   └── battle.css             # 样式（AMOLED 深色 + LCD 字体 + 移动端适配）
+├── cstimer/                   # csTimer 计时器完整静态版（PHP+Java 构建，GPL-3.0 from cs0x7f/cstimer）
+│   ├── index.html             # 静态页面（由 PHP 渲染 timer.php 生成，内联所有语言包）
+│   ├── js/cstimer.js          # 主逻辑 + 计时器（Closure Compiler 压缩后 598KB）
+│   ├── js/twisty.js           # 魔方 3D 可视化（132KB）
+│   ├── js/jquery.min.js       # jQuery 依赖
+│   └── css/style.css          # 原版样式（60KB）
 ├── index.html                 # 落地页（Solver / WCA Stats 入口卡片）
 ├── assets/css/                # Stats 页面统一 UI 样式
 │   ├── stats_ui.css           # 所有选择器/Tab/下拉菜单 CSS（从 Ruby 迁出，集中管理）
