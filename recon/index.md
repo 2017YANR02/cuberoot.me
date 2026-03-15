@@ -39,17 +39,16 @@ layout: default
     </div>
 </div>
 
-<!-- NOTE: WCA / non-WCA 筛选复选框 -->
-<div class="recon-type-filters">
-    <label><input type="checkbox" id="filter-wca" checked> WCA</label>
-    <label><input type="checkbox" id="filter-nonwca" checked> non-WCA</label>
+<!-- NOTE: WCA / non-WCA 切换按钮组 -->
+<div class="recon-type-toggle" id="recon-type-toggle">
+    <button class="toggle-btn active" id="filter-wca" data-active="true">WCA</button>
+    <button class="toggle-btn active" id="filter-nonwca" data-active="true">non-WCA</button>
 </div>
 
 <!-- NOTE: 主表格容器 -->
 <div class="recon-table-wrap">
     <table id="recon-table">
         <colgroup>
-            <col class="col-idx" style="width: 30px">
             <col class="col-dsingle" style="width: 75px">
             <col class="col-solver" style="width: 100px">
             <col class="col-date" style="width: 85px">
@@ -62,10 +61,10 @@ layout: default
             <col class="col-tps" style="width: 40px">
             <col class="col-event" style="width: 30px">
             <col class="col-method" style="width: 45px">
+            <col class="col-idx" style="width: 30px">
         </colgroup>
         <thead>
             <tr>
-                <th class="col-idx">#</th>
                 <th class="col-dsingle" data-i18n-en="Single" data-i18n-zh="单次" data-sort="displaySingle">Single</th>
                 <th class="col-solver" data-i18n="recon.col_solver" data-sort="solver">Solver</th>
                 <th class="col-date" data-i18n="recon.col_date" data-sort="date">Date</th>
@@ -76,9 +75,9 @@ layout: default
                 <th class="col-single" data-i18n="recon.col_result" data-sort="single">Result</th>
                 <th class="col-stm" data-i18n-en="STM" data-i18n-zh="步数" data-sort="stm">STM</th>
                 <th class="col-tps" data-i18n-en="TPS" data-i18n-zh="手速" data-sort="tps">TPS</th>
-
                 <th class="col-event" data-sort="event">Event</th>
                 <th class="col-method" data-i18n="recon.col_method">Method</th>
+                <th class="col-idx">#</th>
             </tr>
         </thead>
         <tbody id="recon-tbody"></tbody>

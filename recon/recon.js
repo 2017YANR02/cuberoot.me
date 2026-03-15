@@ -109,16 +109,21 @@
         filterSolver.addEventListener('change', applyFilters);
         filterMethod.addEventListener('change', applyFilters);
         filterEvent.addEventListener('change', applyFilters);
-        // NOTE: WCA/non-WCA 复选框——不允许两个都不选
+        // NOTE: WCA/non-WCA 切换按钮组——不允许两个都不选
         function guardTypeFilter() {
-            if (!filterWca.checked && !filterNonWca.checked) {
-                this.checked = true;
+            var isActive = this.dataset.active === 'true';
+            // NOTE: 切换当前按钮状态
+            var other = (this === filterWca) ? filterNonWca : filterWca;
+            if (isActive && other.dataset.active !== 'true') {
+                // 不允许两个都取消
                 return;
             }
+            this.dataset.active = String(!isActive);
+            this.classList.toggle('active', !isActive);
             applyFilters();
         }
-        filterWca.addEventListener('change', guardTypeFilter);
-        filterNonWca.addEventListener('change', guardTypeFilter);
+        filterWca.addEventListener('click', guardTypeFilter);
+        filterNonWca.addEventListener('click', guardTypeFilter);
         // NOTE: 无限滚动——用 IntersectionObserver 监听 sentinel 元素
         loadMoreBtn.style.display = 'none';
         var sentinel = document.createElement('div');
@@ -470,9 +475,9 @@
         const method = filterMethod.value;
         const event = filterEvent.value;
 
-        // NOTE: WCA/non-WCA 复选框筛选
-        const showWca = filterWca.checked;
-        const showNonWca = filterNonWca.checked;
+        // NOTE: WCA/non-WCA 按钮组筛选
+        const showWca = filterWca.dataset.active === 'true';
+        const showNonWca = filterNonWca.dataset.active === 'true';
 
         filteredSolves = allSolves.filter(s => {
             if (solver && s.person !== solver) return false;
@@ -621,7 +626,6 @@
         var url = getDetailUrl(solve.id);
 
         tr.innerHTML =
-            '<td class="col-idx"><a href="' + url + '">' + (solve.id || '') + '</a></td>' +
             '<td class="col-dsingle mono" data-tip="' + U.escHtml(solve.value || '') + '">'  + U.escHtml(solve.value || '') + (solve.regionalSingleRecord ? ' ' + U.formatRecord(solve.regionalSingleRecord) : '') + '</td>' +
             '<td class="col-solver" data-tip="' + U.escHtml((function(){ var p = U.parseSolverName(solve.person); var isZh = localStorage.getItem('i18n_locale') === 'zh'; return isZh ? (p.zh || p.en) : p.en; })()) + '">'  + (function () {
                 var solverHtml = U.countryFlag(U.solverCountry(solve.person, personCountries)) + ' ' + U.displaySolverName(solve.person);
@@ -656,7 +660,8 @@
             '<td class="col-stm mono">' + (solve.stm || '') + '</td>' +
             '<td class="col-tps mono">' + (solve.tps && typeof solve.tps === 'number' ? solve.tps.toFixed(2) : '') + '</td>' +
             '<td class="col-event">' + U.escHtml(solve.event || '') + '</td>' +
-            '<td class="col-method">' + U.escHtml(solve.method || '') + '</td>';
+            '<td class="col-method">' + U.escHtml(solve.method || '') + '</td>' +
+            '<td class="col-idx"><a href="' + url + '">' + (solve.id || '') + '</a></td>';
 
         // NOTE: 点击行跳转——<a> 标签的原生中键/Ctrl/右键菜单自动生效，
         //       行级 click 增强修饰键检测，auxclick 处理中键点击非 <a> 区域
