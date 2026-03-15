@@ -149,6 +149,7 @@
         "hide_time": "🙈 Hide time when solving",
         "show_time": "👁️ Show time when solving",
         "delete_last": "↩️ Delete last solve",
-        "reset": "🗑️ Reset session"
+        "reset": "🗑️ Reset session",
+        "key_hint": "Enter ↑ · ↓ Space"
     }
 }
