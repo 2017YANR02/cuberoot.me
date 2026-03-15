@@ -14,10 +14,18 @@ export function isMo3() { return MO3_EVENTS.has(state.event); }
 
 // ── 应用状态 ──
 
+// NOTE: 根据 URL ?lang= 参数决定默认标题语言
+const DEFAULT_TITLES = new Set(['Result Calculator', '成绩计算器']);
+export function defaultCompName() {
+    var params = new URLSearchParams(window.location.search);
+    return params.get('lang') === 'zh' ? '成绩计算器' : 'Result Calculator';
+}
+export { DEFAULT_TITLES };
+
 export const state = {
     times: [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0]],
     names: ['Name A', 'Name B'],
-    compName: 'Competition',
+    compName: defaultCompName(),
     seedOn: 0,          // 当前显示的 seed 偏移量（0=Seeds 1-2, 2=Seeds 3-4...）
     timeLive: [-1, -1], // 秒表激活的 [player, solve]，-1 表示未激活
     timeLiveStart: -1,  // 秒表开始时间戳
@@ -133,7 +141,7 @@ export function resetAll() {
     var n = solveCount();
     state.times = [new Array(n).fill(0), new Array(n).fill(0)];
     state.names = ['Name A', 'Name B'];
-    state.compName = 'Competition';
+    state.compName = defaultCompName();
     state.seedOn = 0;
     state.timeLive = [-1, -1];
     state.timeLiveStart = -1;
