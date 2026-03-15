@@ -258,8 +258,8 @@ function drawBars() {
     }
 
     // NOTE: 柱顶成绩标签 — 在每根柱子上方显示对应成绩
-    var LABEL_FONT = 18;
-    var LABEL_H = 22;       // 标签占用高度（用于排斥计算）
+    var LABEL_FONT = 24;
+    var LABEL_H = 28;       // 标签占用高度（用于排斥计算）
     var LABEL_OFFSET = 8;   // 标签底部到柱顶的间距
 
     for (var t = 0; t < solveCount(); t++) {
