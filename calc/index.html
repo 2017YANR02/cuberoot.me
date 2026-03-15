@@ -86,6 +86,9 @@
 		document.addEventListener('touchmove', function(e) {
 			if (e.touches.length > 1) e.preventDefault();
 		}, { passive: false });
+		// NOTE: Safari 专有 gesture 事件 — pinch-to-zoom 的真正入口
+		document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
+		document.addEventListener('gesturechange', function(e) { e.preventDefault(); });
 	</script>
 </body>
 
