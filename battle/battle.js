@@ -332,8 +332,11 @@ function playerUp(playerId) {
         renderArea(playerId);
         startTimerAnimation(playerId);
         checkBothTiming();
+    } else if (p.isReady && !p.isTiming && !p.hasFinished) {
+        // NOTE: 对方未就绪时松手 → 恢复 idle（黑色），与上游行为一致
+        p.isReady = false;
+        renderArea(playerId);
     }
-    // NOTE: 宽松行为 — 松手不取消 ready，保持黄色等待对方
 }
 
 // ===== 触摸事件处理 =====
