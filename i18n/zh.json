@@ -29,7 +29,9 @@
         "hth_grapher": "成绩计算器",
         "hth_grapher_desc": "对比 WCA 比赛决赛成绩，可视化 WPA/BPA 计算",
         "battle": "对战计时",
-        "battle_desc": "魔方面对面对战计时器，挑战你的朋友"
+        "battle_desc": "魔方面对面对战计时器，挑战你的朋友",
+        "cstimer": "计时器",
+        "cstimer_desc": "专业魔方计时器，支持统计、打乱与多 Session 管理"
     },
     "solver": {
         "title": "魔方求解器",
