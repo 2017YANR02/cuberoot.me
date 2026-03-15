@@ -12,10 +12,21 @@ export const MAX_TIME_VALUE = 8640000; // 24小时 (centiseconds)
 // NOTE: 统一的时间格式化函数（替代原 timeToText + CalcEngine.formatTime）
 // cs: centiseconds 值
 // axisLabel: true 时省略尾部 ".00"（用于 Y 轴刻度）
-export function formatTime(cs, axisLabel = false) {
+// NOTE: FMC 步数模式标志 — 由 state.js 项目切换时设置
+// formatTime 内部自动判断，无需每个调用方传参
+var _isMoveCntMode = false;
+export function setMoveCntMode(flag) { _isMoveCntMode = flag; }
+
+export function formatTime(cs, axisLabel = false, isMoveCnt = false) {
     if (cs === null || cs === undefined) return '-';
     var n = Math.floor(cs);
     if (n >= DNF_VALUE) return 'DNF';
+
+    // NOTE: FMC 步数格式 — 直接返回步数（cs / 100），保留必要小数
+    if (isMoveCnt || _isMoveCntMode) {
+        var moves = cs / 100;
+        return Number.isInteger(moves) ? String(moves) : moves.toFixed(2);
+    }
 
     // NOTE: 通过 digit/separator 数组逐位拆解，自动处理 分:秒.厘秒 格式
     // digits[i] 是第 i 位的进制，separator[i] 是第 i 位前的分隔符
