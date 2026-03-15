@@ -584,6 +584,34 @@
         // NOTE: 当前活跃的按键（长按期间高亮用）
         var activeBtn = null;
 
+        // NOTE: Shift 三态——off / single / capslock
+        var vkbShiftState = 'off';
+        var vkbShiftLastTap = 0;
+
+        /** 根据 shift 状态切换 QWERTY 页字母按键大小写 */
+        function applyShiftToKeys() {
+            var isUpper = (vkbShiftState !== 'off');
+            var page1El = document.getElementById('vkb-page-1');
+            page1El.querySelectorAll('button[data-key]').forEach(function (b) {
+                var k = b.dataset.key;
+                if (/^[a-zA-Z]$/.test(k)) {
+                    var nk = isUpper ? k.toUpperCase() : k.toLowerCase();
+                    b.dataset.key = nk;
+                    b.textContent = nk;
+                }
+            });
+        }
+
+        /** single 模式输入一个字母后自动重置 shift */
+        function resetShiftIfSingle() {
+            if (vkbShiftState === 'single') {
+                vkbShiftState = 'off';
+                var shiftBtn = document.querySelector('.vkb-shift');
+                if (shiftBtn) shiftBtn.classList.remove('vkb-shift-on', 'vkb-capslock');
+                applyShiftToKeys();
+            }
+        }
+
         /** 向 textarea 插入文本的通用函数 */
         function vkbInsert(text) {
             reconEl.focus();
@@ -699,17 +727,27 @@
             }
 
             if (key === 'shift') {
-                // NOTE: ⇧——切换 QWERTY 页字母按键大小写
-                var page1El = document.getElementById('vkb-page-1');
-                var isUpper = btn.classList.toggle('vkb-shift-on');
-                page1El.querySelectorAll('button[data-key]').forEach(function (b) {
-                    var k = b.dataset.key;
-                    if (/^[a-zA-Z]$/.test(k)) {
-                        var nk = isUpper ? k.toUpperCase() : k.toLowerCase();
-                        b.dataset.key = nk;
-                        b.textContent = nk;
-                    }
-                });
+                // NOTE: iOS 风格 Shift 三态——off → single → capslock
+                // single: 输入一个大写字母后自动回 off
+                // capslock: 双击进入，持续大写直到再次点击
+                var now = Date.now();
+                var shiftBtn = btn;
+
+                if (vkbShiftState === 'off') {
+                    vkbShiftState = 'single';
+                    vkbShiftLastTap = now;
+                    shiftBtn.classList.add('vkb-shift-on');
+                    shiftBtn.classList.remove('vkb-capslock');
+                } else if (vkbShiftState === 'single' && (now - vkbShiftLastTap) < 300) {
+                    // NOTE: 300ms 内再次点击 → capslock
+                    vkbShiftState = 'capslock';
+                    shiftBtn.classList.add('vkb-shift-on', 'vkb-capslock');
+                } else {
+                    // NOTE: capslock 状态再点击 或 single 超时再点击 → off
+                    vkbShiftState = 'off';
+                    shiftBtn.classList.remove('vkb-shift-on', 'vkb-capslock');
+                }
+                applyShiftToKeys();
                 return;
             }
 
@@ -730,6 +768,8 @@
             } else {
                 var ch = (key === 'enter') ? '\n' : key;
                 vkbInsert(ch);
+                // NOTE: 单次 shift 模式——输入一个字母后自动回小写
+                if (/^[a-zA-Z]$/.test(key)) resetShiftIfSingle();
             }
         });
 
