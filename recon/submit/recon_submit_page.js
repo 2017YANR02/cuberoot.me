@@ -542,20 +542,6 @@
         // ==================== 虚拟键盘 ====================
 
         var vkbEl = document.getElementById('rf-vkb');
-        // NOTE: blur 延迟计时器——防止点击键盘按钮时 textarea blur 导致键盘先隐藏
-        var vkbBlurTimer = null;
-
-        reconEl.addEventListener('focus', function () {
-            clearTimeout(vkbBlurTimer);
-            vkbEl.style.display = '';
-        });
-
-        reconEl.addEventListener('blur', function () {
-            // NOTE: 200ms 延迟——给 mousedown preventDefault 足够时间阻止 blur
-            vkbBlurTimer = setTimeout(function () {
-                vkbEl.style.display = 'none';
-            }, 200);
-        });
 
         // NOTE: 用事件委托处理所有按键——mousedown 而非 click，配合 preventDefault 阻止 blur
         vkbEl.addEventListener('mousedown', function (e) {
@@ -565,9 +551,7 @@
             var key = btn.dataset.key;
 
             if (key === 'dismiss') {
-                // NOTE: 🌐——暂时只做隐藏键盘（后续扩展为切换页面）
-                vkbEl.style.display = 'none';
-                reconEl.blur();
+                // NOTE: 🌐——功能预留（后续扩展为切换键盘页面）
                 return;
             }
 
