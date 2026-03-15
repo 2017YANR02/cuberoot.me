@@ -345,9 +345,6 @@
             // NOTE: 计算并渲染统计摘要
             var statsEl = document.getElementById('user-profile-stats');
             if (statsEl && userRecons.length > 0) {
-                // NOTE: 统计该用户作为复盘者（reconer）贡献的复盘数量
-                var total = userRecons.filter(function (s) { return s.reconerId === wcaId; }).length;
-
                 // NOTE: 三阶最快成绩（排除 DNF/DNS/null，只看 3×3 项目）
                 var validTimes = userRecons
                     .filter(function (s) { return s.event === '3×3' || s.event === '3x3'; })
@@ -371,17 +368,15 @@
 
                 var fastestDisplay = fastest != null ? fastest.toFixed(2) : '-';
 
-                // NOTE: 统计该用户作为添加者的复盘数量
-                var addedCount = userRecons.filter(function (s) { return s.addedById === wcaId; }).length;
-
+                // NOTE: 先用本地数据渲染三阶最快和主要方法，复盘/添加数稍后由 API 填充
                 statsEl.innerHTML =
                     '<div class="user-profile-stat-item">' +
-                        '<div class="user-profile-stat-value">' + total + '</div>' +
+                        '<div class="user-profile-stat-value" id="user-stat-recon">-</div>' +
                         '<div class="user-profile-stat-label" data-i18n-en="Recons" data-i18n-zh="复盘">' +
                             (isZh ? '复盘' : 'Recons') + '</div>' +
                     '</div>' +
                     '<div class="user-profile-stat-item">' +
-                        '<div class="user-profile-stat-value">' + addedCount + '</div>' +
+                        '<div class="user-profile-stat-value" id="user-stat-added">-</div>' +
                         '<div class="user-profile-stat-label" data-i18n-en="Added" data-i18n-zh="添加">' +
                             (isZh ? '添加' : 'Added') + '</div>' +
                     '</div>' +
@@ -395,6 +390,17 @@
                         '<div class="user-profile-stat-label" data-i18n-en="Main Method" data-i18n-zh="主要方法">' +
                             (isZh ? '主要方法' : 'Main Method') + '</div>' +
                     '</div>' : '');
+
+                // NOTE: 调 userStats API 获取全库的复盘者/添加者 COUNT（不限于 person_id 子集）
+                fetch(ReconStore._apiBase + '?action=userStats&wcaId=' + encodeURIComponent(wcaId))
+                    .then(function (r) { return r.json(); })
+                    .then(function (stats) {
+                        var reconEl = document.getElementById('user-stat-recon');
+                        var addedEl = document.getElementById('user-stat-added');
+                        if (reconEl) reconEl.textContent = stats.reconCount || 0;
+                        if (addedEl) addedEl.textContent = stats.addedCount || 0;
+                    })
+                    .catch(function () { /* NOTE: 统计失败不影响页面 */ });
 
                 // NOTE: 新增的 data-i18n 属性需要重新应用翻译
                 if (typeof I18n !== 'undefined' && I18n._ready) I18n.apply();

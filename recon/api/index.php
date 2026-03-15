@@ -787,6 +787,26 @@ switch ($action) {
         }
         break;
 
+    // ==================== 用户统计（全库 COUNT） ====================
+
+    case 'userStats':
+        // NOTE: 统计指定 WCA ID 作为复盘者/添加者的全库记录数
+        $wcaId = trim($_GET['wcaId'] ?? '');
+        if (!$wcaId) {
+            echo json_encode(['reconCount' => 0, 'addedCount' => 0]);
+            break;
+        }
+        $stmtRecon = $db->prepare("SELECT COUNT(*) FROM recons WHERE reconer_id = ?");
+        $stmtRecon->execute([$wcaId]);
+        $reconCount = (int) $stmtRecon->fetchColumn();
+
+        $stmtAdded = $db->prepare("SELECT COUNT(*) FROM recons WHERE added_by_id = ?");
+        $stmtAdded->execute([$wcaId]);
+        $addedCount = (int) $stmtAdded->fetchColumn();
+
+        echo json_encode(['reconCount' => $reconCount, 'addedCount' => $addedCount]);
+        break;
+
     // ==================== 已有选手列表（复盘数据库中有 WCA ID 的选手） ====================
 
     case 'listPersons':

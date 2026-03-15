@@ -139,6 +139,7 @@ var ReconStore = (function () {
 
     // NOTE: 导出公共 API
     return {
+        _apiBase: API_BASE, // NOTE: 供外部直接 fetch 用（如 userStats）
         init: function () { }, // NOTE: 无需初始化，保持接口兼容
         loadAll: loadAll,
         loadOne: loadOne,
