@@ -2092,6 +2092,7 @@ tr.detail-row td {
     display: flex;
     align-items: center;
     background: #1c1c1e;
+    border-radius: 10px;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     min-height: 36px;
