@@ -2060,3 +2060,24 @@ tr.detail-row td {
         border-top: 1px solid rgba(255, 255, 255, 0.06);
     }
 }
+
+/* ============================================================
+   重复检测警告条（提交页）
+   ============================================================ */
+
+.duplicate-warning {
+    display: none;
+    padding: 8px 14px;
+    margin: 4px 0 8px;
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: 8px;
+    color: #f59e0b;
+    font-size: 0.82rem;
+}
+
+.duplicate-warning a {
+    color: #60a5fa;
+    text-decoration: underline;
+    margin-left: 2px;
+}

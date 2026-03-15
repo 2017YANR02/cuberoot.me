@@ -180,7 +180,9 @@ function authenticateUser(): ?array
     if (!is_dir($cacheDir))
         mkdir($cacheDir, 0755, true);
     $cacheFile = $cacheDir . '/' . md5($token) . '.json';
-    $cacheTTL = 300; // 5 分钟
+    // NOTE: 永不过期——首次验证成功后永久缓存，不再依赖 WCA token 有效期
+    // WCA implicit grant token 约 2h 过期，但我们只需首次验证身份，之后用缓存
+    $cacheTTL = PHP_INT_MAX;
 
     if (file_exists($cacheFile)) {
         $cached = json_decode(file_get_contents($cacheFile), true);
@@ -737,6 +739,51 @@ switch ($action) {
             $db->rollBack();
             http_response_code(500);
             echo json_encode(['error' => 'Import failed: ' . $e->getMessage()]);
+        }
+        break;
+
+    // ==================== 重复检测（提交前查重） ====================
+
+    case 'checkDuplicate':
+        // NOTE: 公开只读端点——检查 comp+event+选手+round+solveNum 是否已有复盘
+        $comp = trim($_GET['comp'] ?? '');
+        $event = trim($_GET['event'] ?? '');
+        $personId = trim($_GET['personId'] ?? '');
+        $person = trim($_GET['person'] ?? '');
+        $round = trim($_GET['round'] ?? '');
+        $solveNum = trim($_GET['solveNum'] ?? '');
+        $excludeId = trim($_GET['excludeId'] ?? '');
+
+        // NOTE: 关键字段不全则无法查重，直接返回不存在
+        if (!$comp || !$event || !$round || !$solveNum || (!$personId && !$person)) {
+            echo json_encode(['exists' => false]);
+            break;
+        }
+
+        // NOTE: 优先用 person_id（WCA ID）匹配——名字格式可能不一致，ID 是唯一的
+        if ($personId) {
+            $sql = "SELECT id FROM recons WHERE comp = ? AND event = ? AND person_id = ? AND `round` = ? AND solve_num = ?";
+            $params = [$comp, $event, $personId, $round, (int)$solveNum];
+        } else {
+            $sql = "SELECT id FROM recons WHERE comp = ? AND event = ? AND person = ? AND `round` = ? AND solve_num = ?";
+            $params = [$comp, $event, $person, $round, (int)$solveNum];
+        }
+
+        // NOTE: 编辑模式排除自身（避免编辑已有记录时误报重复）
+        if ($excludeId) {
+            $sql .= " AND id != ?";
+            $params[] = (int)$excludeId;
+        }
+
+        $sql .= " LIMIT 1";
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+        $found = $stmt->fetch();
+
+        if ($found) {
+            echo json_encode(['exists' => true, 'id' => (int)$found['id']]);
+        } else {
+            echo json_encode(['exists' => false]);
         }
         break;
 

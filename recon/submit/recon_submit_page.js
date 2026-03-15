@@ -1569,6 +1569,97 @@
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
+    // ==================== 重复检测 ====================
+
+    // NOTE: 标记当前是否检测到重复（提交 guard 用）
+    var duplicateDetected = false;
+
+    /**
+     * 检查当前表单数据是否与已有复盘重复
+     * 触发条件：solveNum 或 round 变更时
+     * 匹配维度：comp + event + person_id + round + solveNum
+     */
+    function checkDuplicate() {
+        var isZh = localStorage.getItem('i18n_locale') === 'zh';
+        var comp = document.getElementById('rf-comp').value.trim();
+        var eventSel = document.getElementById('rf-event').value;
+        var event = (eventSel === '__other__' ? document.getElementById('rf-event-custom').value.trim() : eventSel) || '3x3';
+        var person = document.getElementById('rf-solver').value.trim();
+        var round = document.getElementById('rf-round').value;
+        var solveNum = document.getElementById('rf-solve-num').value;
+
+        // NOTE: 关键字段不全则跳过查重
+        if (!comp || !event || !person || !round || !solveNum) {
+            clearDuplicateWarning();
+            return;
+        }
+
+        var params = 'action=checkDuplicate'
+            + '&comp=' + encodeURIComponent(comp)
+            + '&event=' + encodeURIComponent(event)
+            + '&person=' + encodeURIComponent(person)
+            + '&round=' + encodeURIComponent(round)
+            + '&solveNum=' + encodeURIComponent(solveNum);
+
+        // NOTE: 优先传 person_id（WCA ID），更精确
+        if (cachedSolverWcaId) {
+            params += '&personId=' + encodeURIComponent(cachedSolverWcaId);
+        }
+
+        // NOTE: 编辑模式排除自身
+        if (currentEditSolve && currentEditSolve.id) {
+            params += '&excludeId=' + currentEditSolve.id;
+        }
+
+        fetch(API_BASE + '?' + params)
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.exists && data.id) {
+                    showDuplicateWarning(data.id, isZh);
+                    duplicateDetected = true;
+                } else {
+                    clearDuplicateWarning();
+                    duplicateDetected = false;
+                }
+            })
+            .catch(function () {
+                // NOTE: 查重失败不阻塞用户操作
+                clearDuplicateWarning();
+                duplicateDetected = false;
+            });
+    }
+
+    /** 显示重复警告条 */
+    function showDuplicateWarning(existingId, isZh) {
+        var container = document.getElementById('rf-solve-num').closest('.recon-form-row') || document.getElementById('rf-solve-num').parentNode;
+        var warning = document.getElementById('duplicate-warning');
+        if (!warning) {
+            warning = document.createElement('div');
+            warning.id = 'duplicate-warning';
+            warning.className = 'duplicate-warning';
+            container.parentNode.insertBefore(warning, container.nextSibling);
+        }
+        var detailUrl = '/recon/detail/?id=' + existingId;
+        warning.innerHTML = '⚠️ ' +
+            (isZh ? '此复盘已存在 → ' : 'This recon already exists → ') +
+            '<a href="' + detailUrl + '" target="_blank">' +
+            (isZh ? '查看 #' : 'View #') + existingId + '</a>';
+        warning.style.display = 'block';
+    }
+
+    /** 清除重复警告条 */
+    function clearDuplicateWarning() {
+        var warning = document.getElementById('duplicate-warning');
+        if (warning) warning.style.display = 'none';
+        duplicateDetected = false;
+    }
+
+    // NOTE: 绑定 solveNum 和 round 变更时触发查重
+    var solveNumEl = document.getElementById('rf-solve-num');
+    var roundEl = document.getElementById('rf-round');
+    if (solveNumEl) solveNumEl.addEventListener('change', checkDuplicate);
+    if (roundEl) roundEl.addEventListener('change', checkDuplicate);
+
     // ==================== 提交处理 ======================================
 
     function handleSubmit(e) {
@@ -1582,6 +1673,13 @@
             return;
         }
         showErrors([]); // NOTE: 清除之前的错误
+
+        // NOTE: 重复检测 guard——存在重复时弹 confirm 让用户确认
+        if (duplicateDetected) {
+            var isZh = localStorage.getItem('i18n_locale') === 'zh';
+            var msg = isZh ? '检测到此复盘可能已存在，是否仍要提交？' : 'A duplicate recon may already exist. Submit anyway?';
+            if (!confirm(msg)) return;
+        }
 
         // ========== 编辑模式 ==========
         if (currentEditSolve) {
