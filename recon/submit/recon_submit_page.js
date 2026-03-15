@@ -543,14 +543,8 @@
 
         var vkbEl = document.getElementById('rf-vkb');
 
-        // NOTE: 长按变体映射——面旋转 + 斜杠注释
+        // NOTE: 长按变体映射——斜杠注释 + 数字 + 触发器
         var LONG_PRESS_VARIANTS = {
-            'U': ['U', "U'", 'U2', 'u'],
-            'D': ['D', "D'", 'D2', 'd'],
-            'F': ['F', "F'", 'F2', 'f'],
-            'B': ['B', "B'", 'B2', 'b'],
-            'R': ['R', "R'", 'R2', 'r'],
-            'L': ['L', "L'", 'L2', 'l'],
             '/': ['/', ' // '],
             '2': ['1', '2', '3', '4', '5', '6'],
             // --- 触发器变体：左/右对应 ---
@@ -559,6 +553,14 @@
             'trigger-unsexy': ['R U\' R\' U', 'L\' U L U\''],
             'trigger-hedge': ['F R\' F\' R', 'F\' L F L\'']
         };
+
+        // NOTE: 快速双击检测——记录上次按键和时间
+        var vkbLastKey = '';
+        var vkbLastKeyTime = 0;
+        // NOTE: 可双击转 180° 的按键集合
+        var DOUBLE_TAP_KEYS = { U:1, D:1, F:1, B:1, R:1, L:1, x:1, y:1, z:1, M:1, E:1, S:1 };
+        // NOTE: 面旋转键——支持下滑(逆时针)/上滑(双层)手势
+        var FACE_KEYS = { U:1, D:1, F:1, B:1, R:1, L:1 };
 
         // NOTE: 输入联想触发器表——完整公式列表（空格分隔的 token 序列）
         // 格式：{ label, formula }，formula 是最终插入的字符串（带尾空格）
@@ -924,7 +926,6 @@
                 }
             } else {
                 // NOTE: 滑动手势判断——仅对面旋转键 UDFBRL 生效
-                var FACE_KEYS = { U:1, D:1, F:1, B:1, R:1, L:1 };
                 var ch;
                 if (FACE_KEYS[key] && btn._startY !== undefined) {
                     var dy = e.clientY - btn._startY;
@@ -932,15 +933,35 @@
                         // NOTE: 下滑 → 逆时针（prime）
                         ch = key + "' ";
                     } else if (dy < -20) {
-                        // NOTE: 上滑 → 双旋
-                        ch = key + '2 ';
+                        // NOTE: 上滑 → 双层转动（lowercase）
+                        ch = key.toLowerCase() + ' ';
                     } else {
                         ch = btn.dataset.val || key;
                     }
                 } else {
                     ch = btn.dataset.val || ((key === 'enter') ? '\n' : key);
                 }
-                vkbInsert(ch);
+
+                // NOTE: 快速双击检测——300ms 内同一个键按两次 → 删除前一次输入，输出 X2
+                var now = Date.now();
+                if (DOUBLE_TAP_KEYS[key] && key === vkbLastKey && (now - vkbLastKeyTime) < 300) {
+                    // NOTE: 删除上一次插入的字符（包括尾空格）
+                    var pos = reconEl.selectionStart;
+                    var prevText = reconEl.value.slice(0, pos);
+                    // 匹配前一个 token + 可选空格（如 "R " 或 "R")
+                    var trimMatch = prevText.match(new RegExp(key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*$'));
+                    if (trimMatch) {
+                        reconEl.focus();
+                        reconEl.setSelectionRange(pos - trimMatch[0].length, pos);
+                        document.execCommand('insertText', false, key + '2 ');
+                    }
+                    vkbLastKey = '';
+                    vkbLastKeyTime = 0;
+                } else {
+                    vkbInsert(ch);
+                    vkbLastKey = key;
+                    vkbLastKeyTime = now;
+                }
                 // NOTE: 单次 shift 模式——输入一个字母后自动回小写
                 if (/^[a-zA-Z]$/.test(key)) resetShiftIfSingle();
                 updateModifierState();
