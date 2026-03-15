@@ -3,7 +3,8 @@
 
 import {
     DNF_VALUE, UNFINISHED_VALUE,
-    getAverage, getSortedIndices, getBestSingle
+    getAverage, getSortedIndices, getBestSingle,
+    setMoveCntMode
 } from './calc_engine.js';
 
 // NOTE: Mo3 项目 — 一轮 3 把，算术均值（不去掉任何成绩）
@@ -35,6 +36,8 @@ export function onChange(fn) {
 }
 
 export function notify() {
+    // NOTE: 每次通知前同步 FMC 步数模式标志
+    setMoveCntMode(state.event === '333fm');
     for (var i = 0; i < listeners.length; i++) {
         listeners[i]();
     }

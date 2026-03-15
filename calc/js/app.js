@@ -93,6 +93,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     cs = Math.max(1, Math.round(Math.exp(muLn + 0.12 * z) * 100));
                 }
 
+                // NOTE: FMC 单次成绩为整数步数，取整到 100 的倍数（如 2500 = 25 步）
+                if (state.event === '333fm') {
+                    cs = Math.round(cs / 100) * 100;
+                }
+
                 updateTime(state.seedOn + p, t, cs);
             }
         }
