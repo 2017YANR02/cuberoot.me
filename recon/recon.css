@@ -2092,11 +2092,15 @@ tr.detail-row td {
     background: #2c2c2e;
     border-radius: 0 0 10px 10px;
     padding: 8px 6px;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* NOTE: 键盘页面——承接原来 .vkb 上的 flex 列布局和行间距 */
+.vkb-page {
     display: flex;
     flex-direction: column;
     gap: 6px;
-    user-select: none;
-    -webkit-user-select: none;
 }
 
 /* NOTE: 每行用 flex 均匀分布按键 */
