@@ -152,6 +152,7 @@ function goTrainer(path) {
 }
 </script>
 <script src='../i18n/i18n.js' defer></script>
+<script src='../assets/js/logo_nav.js' defer></script>
 "@
         $content = $content -replace '(</body>)', "$helperScript`n`$1"
         # 如果没有 </body>，在 </html> 前注入
@@ -203,6 +204,7 @@ foreach ($dir in $config.trainerDirs)
         # 所以用 setInterval 轮询 template 加载完成后调用 I18n.apply()
         $i18nScript = @"
 	<script src='../../i18n/i18n.js' defer></script>
+	<script src='../../assets/js/logo_nav.js' defer></script>
 	<script>
 		// NOTE: 等待 template.html 动态注入完成后触发翻译
 		// body.outerHTML 替换会移除之前注入的语言切换按钮，需要重新注入
