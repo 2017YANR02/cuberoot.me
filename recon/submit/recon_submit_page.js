@@ -543,15 +543,35 @@
 
         var vkbEl = document.getElementById('rf-vkb');
 
-        // NOTE: 面旋转按键的长按变体映射——长按显示气泡让用户选择
-        var FACE_VARIANTS = {
+        // NOTE: 长按变体映射——面旋转 + 斜杠注释
+        var LONG_PRESS_VARIANTS = {
             'U': ['U', "U'", 'U2', 'u'],
             'D': ['D', "D'", 'D2', 'd'],
             'F': ['F', "F'", 'F2', 'f'],
             'B': ['B', "B'", 'B2', 'b'],
             'R': ['R', "R'", 'R2', 'r'],
-            'L': ['L', "L'", 'L2', 'l']
+            'L': ['L', "L'", 'L2', 'l'],
+            '/': ['/', ' // '],
+            '2': ['1', '2', '3', '4', '5', '6']
         };
+
+        // NOTE: 修饰键（' 和 w）——光标前无英文字母时禁用
+        var modifierBtnPrime = vkbEl.querySelector('button[data-key="\' "]');
+        var modifierBtnW = vkbEl.querySelector('button[data-key="w "]');
+
+        /** 检查光标前一个字符是否为英文字母，据此启用/禁用修饰键 */
+        function updateModifierState() {
+            var pos = reconEl.selectionStart || 0;
+            var prevChar = pos > 0 ? reconEl.value.charAt(pos - 1) : '';
+            var hasLetter = /[a-zA-Z]/.test(prevChar);
+            if (modifierBtnPrime) modifierBtnPrime.classList.toggle('vkb-disabled', !hasLetter);
+            if (modifierBtnW) modifierBtnW.classList.toggle('vkb-disabled', !hasLetter);
+        }
+        // NOTE: 初始化 + input/click 时更新状态
+        updateModifierState();
+        reconEl.addEventListener('input', updateModifierState);
+        reconEl.addEventListener('click', updateModifierState);
+        reconEl.addEventListener('keyup', updateModifierState);
 
         // NOTE: 长按弹出气泡 DOM（动态创建，复用单个实例）
         var vkbPopup = document.createElement('div');
@@ -571,6 +591,7 @@
             normalizePunctuation(reconEl);
             updateStatsDisplay();
             autoResize(reconEl);
+            updateModifierState();
         }
 
         /** 显示长按弹出气泡 */
@@ -626,11 +647,11 @@
             isLongPress = false;
             var key = btn.dataset.key;
 
-            // NOTE: 面旋转按键才启动长按计时器
-            if (FACE_VARIANTS[key]) {
+            // NOTE: 有长按变体的按键启动计时器（面旋转 + 斜杠）
+            if (LONG_PRESS_VARIANTS[key]) {
                 longPressTimer = setTimeout(function () {
                     isLongPress = true;
-                    showPopup(btn, FACE_VARIANTS[key]);
+                    showPopup(btn, LONG_PRESS_VARIANTS[key]);
                 }, 400);
             }
         });
@@ -668,6 +689,8 @@
 
             // NOTE: 短按处理——与之前逻辑相同
             if (key === 'dismiss') return;
+            // NOTE: 禁用态按键不响应
+            if (btn.classList.contains('vkb-disabled')) return;
 
             if (key === 'backspace') {
                 var start = reconEl.selectionStart;
@@ -678,6 +701,7 @@
                     normalizePunctuation(reconEl);
                     updateStatsDisplay();
                     autoResize(reconEl);
+                    updateModifierState();
                 }
             } else {
                 var ch = (key === 'enter') ? '\n' : key;
