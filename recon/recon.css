@@ -2304,12 +2304,22 @@ tr.detail-row td {
 .vkb-gesture-hint {
     margin: 6px 0 0 0;
     padding: 0;
-    text-align: center;
-    font-size: 0.7rem;
-    color: rgba(255, 255, 255, 0.3);
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 4px;
-    line-height: 1.5;
+    gap: 0;
+    list-style: none;
+}
+
+.vkb-gesture-hint span {
+    color: rgba(255, 255, 255, 0.25);
+    font-size: 0.68rem;
+    padding: 0 10px;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    line-height: 1.4;
+    letter-spacing: 0.02em;
+}
+
+.vkb-gesture-hint span:last-child {
+    border-right: none;
 }
