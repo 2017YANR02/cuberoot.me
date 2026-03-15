@@ -276,6 +276,17 @@ body {
     border-color: #555;
 }
 
+.middle-logo {
+    display: flex;
+    align-items: center;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.middle-logo:hover {
+    opacity: 1;
+}
+
 /* NOTE: 桌面端键盘快捷键提示（触摸设备隐藏） */
 .key-hint {
     font-size: 0.65rem;

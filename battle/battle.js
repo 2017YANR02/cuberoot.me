@@ -137,7 +137,7 @@ function init() {
         // NOTE: 使用 pointer 事件支持多点触控隔离
         dom.areas[i].addEventListener("pointerdown", (e) => handlePointerDown(i, e));
         dom.areas[i].addEventListener("pointerup", (e) => handlePointerUp(i, e));
-        dom.areas[i].addEventListener("pointercancel", (e) => handlePointerUp(i, e));
+        dom.areas[i].addEventListener("pointercancel", (e) => handlePointerCancel(i, e));
 
         // 绑定罚时按钮（阻止事件冒泡到 player area）
         const penBtns = dom.penalties[i].querySelectorAll(".penalty-btn");
@@ -254,11 +254,8 @@ function playerUp(playerId) {
         renderArea(playerId);
         startTimerAnimation(playerId);
         checkBothTiming();
-    } else if (p.isReady && !p.isTiming) {
-        // --- 在 ready 状态松手（还没变绿就松了）= 取消准备 ---
-        p.isReady = false;
-        renderArea(playerId);
     }
+    // NOTE: 宽松行为 — 松手不取消 ready，保持黄色等待对方
 }
 
 // ===== 触摸事件处理 =====
@@ -284,6 +281,16 @@ function handlePointerUp(playerId, e) {
     p.pointerId = null;
 
     playerUp(playerId);
+}
+
+/**
+ * NOTE: 移动端浏览器接管手势时会触发 pointercancel，
+ * 必须清除 pointerId，否则该区域永远无法再接收新触摸
+ */
+function handlePointerCancel(playerId, e) {
+    const p = state.players[playerId];
+    if (p.pointerId !== e.pointerId) return;
+    p.pointerId = null;
 }
 
 // ===== 键盘事件处理（桌面端） =====
