@@ -113,8 +113,9 @@
         </div>
     </div>
 
-    <!-- NOTE: cubing.js 通过 ES module 在 battle.js 中 import，此处只需加载入口 -->
-    <script type="module" src="battle.js"></script>
+    <!-- NOTE: csTimer 打乱模块（纯 JS，无 WASM，自托管，GPL-3.0 from cs0x7f/cstimer） -->
+    <script src="scramble_module.js"></script>
+    <script src="battle.js" defer></script>
     <script src="../i18n/i18n.js" defer></script>
 </body>
 
