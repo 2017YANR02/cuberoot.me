@@ -2220,3 +2220,9 @@ tr.detail-row td {
     background: #fff !important;
     color: #333 !important;
 }
+
+/* NOTE: Capslock 态——蓝底白字区分于单次 shift */
+.vkb-capslock {
+    background: #007AFF !important;
+    color: #fff !important;
+}
