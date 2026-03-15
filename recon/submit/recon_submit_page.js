@@ -615,7 +615,6 @@
         // NOTE: 联想建议条 DOM（挂在键盘容器外部，绝对定位）
         var vkbSuggestBar = document.createElement('div');
         vkbSuggestBar.className = 'vkb-suggest-bar';
-        vkbSuggestBar.style.display = 'none';
         vkbEl.parentNode.insertBefore(vkbSuggestBar, vkbEl);
 
         /** 刷新建议条：读取光标前内容，匹配公式，显示/隐藏建议 */
@@ -627,7 +626,7 @@
             var suggestions = getSuggestions(line);
 
             if (suggestions.length === 0) {
-                vkbSuggestBar.style.display = 'none';
+                vkbSuggestBar.innerHTML = '';
                 return;
             }
 
@@ -637,7 +636,7 @@
                      + '" data-prefix-len="' + s.prefixLen + '">'
                      + s.label + '</button>';
             }).join('');
-            vkbSuggestBar.style.display = 'flex';
+            vkbSuggestBar.style.display = 'flex';  // NOTE: 确保有建议时是 flex 布局
         }
 
         // NOTE: 点击建议按钮——删除已输入前缀，插入完整公式
@@ -670,7 +669,7 @@
             if (!match) {
                 // NOTE: 找不到前缀时降级——直接替换：先用 backspace 逐个删
                 vkbInsert(formula);
-                vkbSuggestBar.style.display = 'none';
+                vkbSuggestBar.innerHTML = '';
                 return;
             }
 
@@ -687,7 +686,7 @@
             updateStatsDisplay();
             autoResize(reconEl);
             updateModifierState();
-            vkbSuggestBar.style.display = 'none';
+            vkbSuggestBar.innerHTML = '';
         });
 
         // NOTE: 监听 textarea 变化，实时刷新建议
