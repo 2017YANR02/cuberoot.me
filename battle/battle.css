@@ -19,6 +19,10 @@ body {
     overscroll-behavior: none;
 }
 
+:root {
+    --scramble-scale: 1;
+}
+
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background-color: #000;
@@ -102,7 +106,7 @@ body {
    ========================================================== */
 
 .scramble-text {
-    font-size: clamp(0.75rem, 2.5vw, 1rem);
+    font-size: calc(clamp(1.4rem, 4.5vw, 2.0rem) * var(--scramble-scale));
     color: #ccc;
     text-align: center;
     line-height: 1.4;
@@ -143,6 +147,11 @@ body {
     /* NOTE: 深色半透明背景让白色配色的 SVG 更醒目 */
     background: rgba(255, 255, 255, 0.05);
     padding: 4px;
+}
+
+/* NOTE: 文本和图像添加平滑消失动画（与 is-timing 配合） */
+.scramble-text, .scramble-img {
+    transition: opacity 0.2s ease;
 }
 
 /* NOTE: 计时中同时隐藏打乱图 */
@@ -202,6 +211,15 @@ body {
     display: flex;
     gap: 12px;
     align-items: center;
+    transition: opacity 0.2s ease;
+}
+
+/* NOTE: 沉浸式计时，隐藏罚时按钮防止误触和视觉干扰 */
+.player-area.is-timing .penalty-buttons,
+.player-area.is-timing .scramble-text,
+.player-area.is-timing .scramble-img {
+    opacity: 0;
+    pointer-events: none;
 }
 
 .penalty-btn {
@@ -410,6 +428,17 @@ body {
     padding: 8px 0;
     color: #eee;
     font-size: 1rem;
+}
+
+.slider-row {
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.slider-row input[type="range"] {
+    width: 100%;
+    accent-color: #2196F3;
+    margin-top: 4px;
 }
 
 /* Toggle Switch 样式 */
