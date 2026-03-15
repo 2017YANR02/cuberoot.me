@@ -563,14 +563,14 @@
         // NOTE: 输入联想触发器表——完整公式列表（空格分隔的 token 序列）
         // 格式：{ label, formula }，formula 是最终插入的字符串（带尾空格）
         var SUGGEST_FORMULAS = [
-            { label: 'sexy',    formula: "R U R' U' " },
-            { label: 'unsexy',  formula: "R U' R' U " },
-            { label: 'sledge',  formula: "R' F R F' " },
-            { label: 'hedge',   formula: "F R' F' R " },
-            { label: '左sexy',   formula: "L' U' L U " },
-            { label: '左unsexy', formula: "L' U L U' " },
-            { label: '左sledge', formula: "L F' L' F " },
-            { label: '左hedge',  formula: "F' L F L' " }
+            { label: "R U R' U'",  formula: "R U R' U' " },
+            { label: "R U' R' U",  formula: "R U' R' U " },
+            { label: "R' F R F'",  formula: "R' F R F' " },
+            { label: "F R' F' R",  formula: "F R' F' R " },
+            { label: "L' U' L U",  formula: "L' U' L U " },
+            { label: "L' U L U'",  formula: "L' U L U' " },
+            { label: "L F' L' F",  formula: "L F' L' F " },
+            { label: "F' L F L'",  formula: "F' L F L' " }
         ];
 
         /**
