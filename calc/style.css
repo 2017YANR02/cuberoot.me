@@ -412,7 +412,8 @@ body {
 
 /* ── 隐藏媒体元素 ── */
 
-audio, video {
+audio,
+video {
     display: none;
 }
 
@@ -420,6 +421,7 @@ audio, video {
 
 /* NOTE: 输入格改弹性宽度，手机端自动缩小 */
 @media (max-width: 640px) {
+
     /* NOTE: 图表撑满屏幕左右 — 取消 max-width 并用负边距抵消 .hth-app 的 8px padding */
     #chart-container {
         max-width: none;
@@ -428,22 +430,34 @@ audio, video {
     }
 
     .input-row {
-        gap: 3px;
+        gap: 2px;
     }
 
     .time-cell {
         width: auto;
         flex: 1;
         min-width: 0;
-        padding: 8px 3px;
-        font-size: 18px;
+        padding: 6px 1px;
+        /* NOTE: clamp 让字号根据屏幕宽度自适应，避免截断 */
+        font-size: clamp(12px, 4vw, 18px);
     }
 
     .name-cell {
         width: auto;
-        flex: 0 0 45px;
-        padding: 6px 2px;
+        flex: 0 0 30px;
+        min-width: 0;
+        overflow: hidden;
+        padding: 6px 0;
+        font-size: 0;
+        transition: flex-basis 0.2s, font-size 0.1s, padding 0.2s;
+    }
+
+    /* NOTE: 点击时展开，允许输入名字 */
+    .name-cell:focus {
+        flex: 0 0 120px;
         font-size: 13px;
+        padding: 6px 4px;
+        overflow: visible;
     }
 
     .player-toggle {
