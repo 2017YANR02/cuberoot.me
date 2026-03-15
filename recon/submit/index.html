@@ -45,6 +45,41 @@ layout: default
                     data-i18n-placeholder-en="Paste solution...&#10;e.g.:&#10;x2 // insp&#10;R' F R D' F' // xxcross&#10;..."
                     data-i18n-placeholder-zh="粘贴解法...&#10;例如：&#10;x2 // insp&#10;R' F R D' F' // xxcross&#10;..."
                     required></textarea>
+                <!-- NOTE: 魔方公式虚拟键盘——focus 时显示，方便输入解法符号 -->
+                <div id="rf-vkb" class="vkb" style="display:none">
+                    <div class="vkb-row">
+                        <button type="button" data-key="U">U</button>
+                        <button type="button" data-key="D">D</button>
+                        <button type="button" data-key="F">F</button>
+                        <button type="button" data-key="B">B</button>
+                        <button type="button" data-key="R">R</button>
+                        <button type="button" data-key="L">L</button>
+                    </div>
+                    <div class="vkb-row">
+                        <button type="button" data-key="'">'</button>
+                        <button type="button" data-key="2">2</button>
+                        <button type="button" data-key="w">w</button>
+                        <button type="button" data-key="/">/</button>
+                        <button type="button" data-key="(">(</button>
+                        <button type="button" data-key=")">)</button>
+                    </div>
+                    <div class="vkb-row">
+                        <button type="button" data-key="x">x</button>
+                        <button type="button" data-key="y">y</button>
+                        <button type="button" data-key="z">z</button>
+                        <button type="button" data-key="M">M</button>
+                        <button type="button" data-key="E">E</button>
+                        <button type="button" data-key="S">S</button>
+                        <button type="button" data-key="+">+</button>
+                        <button type="button" data-key="-">-</button>
+                    </div>
+                    <div class="vkb-row vkb-row-bottom">
+                        <button type="button" data-key="dismiss" class="vkb-fn">🌐</button>
+                        <button type="button" data-key=" " class="vkb-space">space</button>
+                        <button type="button" data-key="enter" class="vkb-return">return</button>
+                        <button type="button" data-key="backspace" class="vkb-fn vkb-fn-del">⌫</button>
+                    </div>
+                </div>
             </div>
         </div> <!-- submit-col-main -->
         <!-- ========== 右列：元数据 ========== -->

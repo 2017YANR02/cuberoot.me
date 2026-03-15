@@ -538,6 +538,66 @@
             updateStatsDisplay();
             autoResize(reconEl);
         });
+
+        // ==================== 虚拟键盘 ====================
+
+        var vkbEl = document.getElementById('rf-vkb');
+        // NOTE: blur 延迟计时器——防止点击键盘按钮时 textarea blur 导致键盘先隐藏
+        var vkbBlurTimer = null;
+
+        reconEl.addEventListener('focus', function () {
+            clearTimeout(vkbBlurTimer);
+            vkbEl.style.display = '';
+        });
+
+        reconEl.addEventListener('blur', function () {
+            // NOTE: 200ms 延迟——给 mousedown preventDefault 足够时间阻止 blur
+            vkbBlurTimer = setTimeout(function () {
+                vkbEl.style.display = 'none';
+            }, 200);
+        });
+
+        // NOTE: 用事件委托处理所有按键——mousedown 而非 click，配合 preventDefault 阻止 blur
+        vkbEl.addEventListener('mousedown', function (e) {
+            e.preventDefault();
+            var btn = e.target.closest('button[data-key]');
+            if (!btn) return;
+            var key = btn.dataset.key;
+
+            if (key === 'dismiss') {
+                // NOTE: 🌐——暂时只做隐藏键盘（后续扩展为切换页面）
+                vkbEl.style.display = 'none';
+                reconEl.blur();
+                return;
+            }
+
+            if (key === 'backspace') {
+                // NOTE: 删除光标前一个字符
+                var start = reconEl.selectionStart;
+                if (start > 0) {
+                    reconEl.focus();
+                    reconEl.setSelectionRange(start - 1, start);
+                    document.execCommand('delete', false);
+                }
+            } else {
+                // NOTE: 在光标位置插入字符（enter → 换行符）
+                var ch = (key === 'enter') ? '\n' : key;
+                reconEl.focus();
+                document.execCommand('insertText', false, ch);
+            }
+
+            // NOTE: 联动统计更新和高度自适应
+            normalizePunctuation(reconEl);
+            updateStatsDisplay();
+            autoResize(reconEl);
+        });
+
+        // NOTE: touchstart 也需要 preventDefault，防止移动端 blur
+        vkbEl.addEventListener('touchstart', function (e) {
+            if (e.target.closest('button[data-key]')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
         var noteEl = document.getElementById('rf-note');
         noteEl.addEventListener('input', function () {
             normalizePunctuation(noteEl);
