@@ -166,6 +166,8 @@ function createNameCell(p) {
     input.value = state.names[state.seedOn + p];
     input.placeholder = 'Name ' + (p === 0 ? 'A' : 'B');
 
+    // NOTE: 聚焦时全选文字，方便快速替换
+    input.addEventListener('focus', () => input.select());
     input.addEventListener('change', () => {
         state.names[state.seedOn + p] = input.value;
         notify();
