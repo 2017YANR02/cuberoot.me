@@ -90,6 +90,10 @@ ruiminyan.github.io/
 ├── manifest.json               # PWA 清单
 │
 │── 📌 本地维护（不受同步影响）
+├── battle/                    # 1v1 对战计时器（源自 MatteoColombo/cube_challenge_timer，JS 重写）
+│   ├── index.html             # 页面结构（双人上下布局 + 设置弹窗）
+│   ├── battle.js              # 核心逻辑（状态机 + cubing.js CDN 打乱 + 罚时 + 胜负）
+│   └── battle.css             # 样式（AMOLED 深色 + LCD 字体 + 移动端适配）
 ├── index.html                 # 落地页（Solver / WCA Stats 入口卡片）
 ├── assets/css/                # Stats 页面统一 UI 样式
 │   ├── stats_ui.css           # 所有选择器/Tab/下拉菜单 CSS（从 Ruby 迁出，集中管理）

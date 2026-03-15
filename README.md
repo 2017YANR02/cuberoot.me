@@ -82,6 +82,7 @@ This project builds upon the work of:
 - **WCA Statistics**: Based on [jonatanklosko/wca_statistics](https://github.com/jonatanklosko/wca_statistics) by [Jonatan Kłosko](https://github.com/jonatanklosko). The statistics engine, SQL queries, and the plugin framework are from the original project.
 - **Algorithm Trainers**: Forked from [mihlefeld/Alg-Trainers](https://github.com/mihlefeld/Alg-Trainers) by [mihlefeld](https://github.com/mihlefeld). The original project provides the algorithm trainer pages and the PWA infrastructure.
 - **HTH Grapher**: Forked from [carykh/hthgrapher](https://github.com/carykh/hthgrapher) by [carykh](https://github.com/carykh). The original project provides the Head-to-Head Average of 5 calculator and visualization tool.
+- **1v1 Battle Timer**: Ported from [MatteoColombo/cube_challenge_timer](https://github.com/MatteoColombo/cube_challenge_timer) by [MatteoColombo](https://github.com/MatteoColombo). The original project provides the 1v1 head-to-head battle timer logic, scramble generation, and penalty system.
 
 https://mihlefeld.github.io/Alg-Trainers/
 
