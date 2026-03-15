@@ -222,6 +222,46 @@ function drawBars() {
             }));
         }
     }
+
+    // NOTE: 柱顶成绩标签 — 在每根柱子上方显示对应成绩
+    var LABEL_FONT = 18;
+    var LABEL_H = 22;       // 标签占用高度（用于排斥计算）
+    var LABEL_OFFSET = 8;   // 标签底部到柱顶的间距
+
+    for (var t = 0; t < solveCount(); t++) {
+        var colLabels = []; // 当前列的标签池
+
+        for (var p = 0; p < 2; p++) {
+            if (!state.playerEnabled[p]) continue;
+            var val = state.times[state.seedOn + p][t];
+            if (val === 0) continue;
+
+            var barX = BAR_START + t * STRIDE;
+            var cx = barX + BAR_W / 2; // 柱子水平中心
+            var topY = valToYCap(val);
+            var labelY = topY - LABEL_OFFSET;
+
+            colLabels.push({
+                origY: labelY,
+                y: labelY,
+                h: LABEL_H,
+                x: cx,
+                text: formatTime(val),
+                col: darken(SHADES[p], 0.7),
+            });
+        }
+
+        // 同列两个标签排斥
+        if (colLabels.length > 1) {
+            resolveOverlaps(colLabels, 4);
+        }
+
+        // 渲染标签（绘制到 topTextGroup 层，确保文字不被其他图形遮挡）
+        for (var li = 0; li < colLabels.length; li++) {
+            var lb = colLabels[li];
+            addText(topTextGroup, lb.x, lb.y, lb.text, lb.col, LABEL_FONT, 'middle');
+        }
+    }
 }
 
 // ── 统计可视化（扇形曲线 + 连接线 + 排名文字） ──
