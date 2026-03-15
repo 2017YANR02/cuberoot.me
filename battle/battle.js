@@ -94,6 +94,8 @@ const state = {
     puzzleId: localStorage.getItem(LS_PREFIX + "puzzle") || "333",
     // 是否显示计时中的时间
     showTime: localStorage.getItem(LS_PREFIX + "showTime") !== "false",
+    // 是否显示打乱图
+    showImage: localStorage.getItem(LS_PREFIX + "showImage") !== "false", // 默认显示图形
     // 当前打乱
     scramble: null,
     // 是否正在加载打乱
@@ -131,10 +133,12 @@ const dom = {
     areas: [null, null],       // 两个玩家触摸区域
     times: [null, null],       // 计时显示
     scrambles: [null, null],   // 打乱文字
+    scrambleImgs: [null, null],// 打乱图（csTimer SVG）
     penalties: [null, null],   // 罚时按钮组
     scores: [null, null],      // 比分数字
     settingsOverlay: null,
     puzzleGrid: null,
+    toggleImage: null,
 };
 
 // ===== 初始化 =====
@@ -149,12 +153,15 @@ function init() {
     dom.times[1] = document.getElementById("time-1");
     dom.scrambles[0] = document.getElementById("scramble-0");
     dom.scrambles[1] = document.getElementById("scramble-1");
+    dom.scrambleImgs[0] = document.getElementById("scramble-img-0");
+    dom.scrambleImgs[1] = document.getElementById("scramble-img-1");
     dom.penalties[0] = document.getElementById("penalties-0");
     dom.penalties[1] = document.getElementById("penalties-1");
     dom.scores[0] = document.getElementById("score-0");
     dom.scores[1] = document.getElementById("score-1");
     dom.settingsOverlay = document.getElementById("settings-overlay");
     dom.puzzleGrid = document.getElementById("puzzle-grid");
+    dom.toggleImage = document.getElementById("toggle-image");
 
     // 绑定触摸事件
     for (let i = 0; i < 2; i++) {
@@ -193,6 +200,14 @@ function init() {
         if (e.target === dom.settingsOverlay) closeSettings();
     });
 
+    // 初始化 Show Image 开关状态和事件
+    dom.toggleImage.checked = state.showImage;
+    dom.toggleImage.addEventListener("change", (e) => {
+        state.showImage = e.target.checked;
+        localStorage.setItem(LS_PREFIX + "showImage", state.showImage);
+        renderScrambleImage();
+    });
+
     // 渲染初始状态
     renderScores();
     updatePenaltyButtons(0);
@@ -228,6 +243,39 @@ function loadNewScramble() {
     }
     state.scrambleLoading = false;
     renderScramble();
+    renderScrambleImage(); // NOTE: 打乱文字更新后同步生成 SVG 图像
+}
+
+/**
+ * NOTE: 调用 csTimer image.js 的 renderSVG 生成打乱图（纯客户端 SVG，不需要网络）
+ * 直接调用 image 对象的内部方法，避免重复实现图像生成逻辑（DRY）
+ */
+function renderScrambleImage() {
+    for (let i = 0; i < 2; i++) {
+        dom.scrambleImgs[i].innerHTML = '';
+        dom.scrambleImgs[i].style.display = state.showImage ? 'flex' : 'none';
+    }
+    if (!state.showImage || !state.scramble || state.scrambleLoading || state.scramble.startsWith('⚠️')) {
+        return;
+    }
+    try {
+        const mapping = EVENT_TO_CSTIMER[state.puzzleId] || ['333', 0];
+        const [csType] = mapping;
+        // NOTE: image.draw([type, scrambleText, 0]) 返回 $.svg 对象，.render() 得到 SVG 字符串
+        const svg = image.draw([csType, state.scramble, 0]);
+        if (!svg) return; // 不支持图像的项目
+        const svgStr = svg.render();
+        const dataUrl = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgStr)));
+        for (let i = 0; i < 2; i++) {
+            const img = document.createElement('img');
+            img.src = dataUrl;
+            img.className = 'scramble-svg-img';
+            dom.scrambleImgs[i].appendChild(img);
+        }
+    } catch (err) {
+        // NOTE: 图像生成失败不影响打乱文字，静默处理
+        console.warn('Scramble image failed:', err);
+    }
 }
 
 // ===== 状态机核心（通用逻辑，触摸和键盘共用） =====
@@ -410,7 +458,7 @@ function startTimerAnimation(playerId) {
     function tick() {
         if (!p.isTiming) return;
         const elapsed = performance.now() - p.startTime;
-        dom.times[playerId].textContent = state.showTime
+        dom.times[playerId].innerHTML = state.showTime
             ? formatTime(elapsed)
             : "⏱️";
         p.rafId = requestAnimationFrame(tick);
@@ -576,7 +624,7 @@ function renderTime(playerId) {
         const displayTime = p.penalty === PENALTY.PLUS2
             ? p.time + 2000
             : p.time;
-        el.textContent = formatTime(displayTime);
+        el.innerHTML = formatTime(displayTime);
         if (p.penalty === PENALTY.PLUS2) {
             el.classList.add("penalty-plus2");
         }
@@ -701,7 +749,7 @@ function formatTime(ms) {
     const millisStr = millis.toString().padStart(3, "0");
 
     if (minutes > 0) {
-        return `${minutes}:${seconds.toString().padStart(2, "0")}.${millisStr}`;
+        return `${minutes}<span class="colon">:</span>${seconds.toString().padStart(2, "0")}.${millisStr}`;
     }
     return `${seconds}.${millisStr}`;
 }
