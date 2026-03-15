@@ -47,37 +47,82 @@ layout: default
                     required></textarea>
                 <!-- NOTE: 魔方公式虚拟键盘——focus 时显示，方便输入解法符号 -->
                 <div id="rf-vkb" class="vkb">
-                    <div class="vkb-row">
-                        <button type="button" data-key="U">U</button>
-                        <button type="button" data-key="D">D</button>
-                        <button type="button" data-key="F">F</button>
-                        <button type="button" data-key="B">B</button>
-                        <button type="button" data-key="R">R</button>
-                        <button type="button" data-key="L">L</button>
+                    <!-- NOTE: 第 0 页——魔方公式符号 -->
+                    <div class="vkb-page" id="vkb-page-0">
+                        <div class="vkb-row">
+                            <button type="button" data-key="U">U</button>
+                            <button type="button" data-key="D">D</button>
+                            <button type="button" data-key="F">F</button>
+                            <button type="button" data-key="B">B</button>
+                            <button type="button" data-key="R">R</button>
+                            <button type="button" data-key="L">L</button>
+                        </div>
+                        <div class="vkb-row">
+                            <button type="button" data-key="' ">'</button>
+                            <button type="button" data-key="2">2</button>
+                            <button type="button" data-key="w ">w</button>
+                            <button type="button" data-key="/">/</button>
+                            <button type="button" data-key="(">(</button>
+                            <button type="button" data-key=")">)</button>
+                        </div>
+                        <div class="vkb-row">
+                            <button type="button" data-key="x">x</button>
+                            <button type="button" data-key="y">y</button>
+                            <button type="button" data-key="z">z</button>
+                            <button type="button" data-key="M">M</button>
+                            <button type="button" data-key="E">E</button>
+                            <button type="button" data-key="S">S</button>
+                            <button type="button" data-key="+">+</button>
+                            <button type="button" data-key="-">-</button>
+                        </div>
+                        <div class="vkb-row vkb-row-bottom">
+                            <button type="button" data-key="switch" class="vkb-fn">🌐</button>
+                            <button type="button" data-key=" " class="vkb-space">space</button>
+                            <button type="button" data-key="enter" class="vkb-return">return</button>
+                            <button type="button" data-key="backspace" class="vkb-fn vkb-fn-del"><svg width="24" height="16" viewBox="0 0 33 22"><use href="/assets/icons.svg#icon-backspace"/></svg></button>
+                        </div>
                     </div>
-                    <div class="vkb-row">
-                        <button type="button" data-key="' ">'</button>
-                        <button type="button" data-key="2">2</button>
-                        <button type="button" data-key="w ">w</button>
-                        <button type="button" data-key="/">/</button>
-                        <button type="button" data-key="(">(</button>
-                        <button type="button" data-key=")">)</button>
-                    </div>
-                    <div class="vkb-row">
-                        <button type="button" data-key="x">x</button>
-                        <button type="button" data-key="y">y</button>
-                        <button type="button" data-key="z">z</button>
-                        <button type="button" data-key="M">M</button>
-                        <button type="button" data-key="E">E</button>
-                        <button type="button" data-key="S">S</button>
-                        <button type="button" data-key="+">+</button>
-                        <button type="button" data-key="-">-</button>
-                    </div>
-                    <div class="vkb-row vkb-row-bottom">
-                        <button type="button" data-key="dismiss" class="vkb-fn">🌐</button>
-                        <button type="button" data-key=" " class="vkb-space">space</button>
-                        <button type="button" data-key="enter" class="vkb-return">return</button>
-                        <button type="button" data-key="backspace" class="vkb-fn vkb-fn-del"><svg width="24" height="16" viewBox="0 0 33 22"><use href="/assets/icons.svg#icon-backspace"/></svg></button>
+                    <!-- NOTE: 第 1 页——QWERTY 英文键盘 -->
+                    <div class="vkb-page" id="vkb-page-1" style="display:none">
+                        <div class="vkb-row">
+                            <button type="button" data-key="q">q</button>
+                            <button type="button" data-key="w">w</button>
+                            <button type="button" data-key="e">e</button>
+                            <button type="button" data-key="r">r</button>
+                            <button type="button" data-key="t">t</button>
+                            <button type="button" data-key="y">y</button>
+                            <button type="button" data-key="u">u</button>
+                            <button type="button" data-key="i">i</button>
+                            <button type="button" data-key="o">o</button>
+                            <button type="button" data-key="p">p</button>
+                        </div>
+                        <div class="vkb-row">
+                            <button type="button" data-key="a">a</button>
+                            <button type="button" data-key="s">s</button>
+                            <button type="button" data-key="d">d</button>
+                            <button type="button" data-key="f">f</button>
+                            <button type="button" data-key="g">g</button>
+                            <button type="button" data-key="h">h</button>
+                            <button type="button" data-key="j">j</button>
+                            <button type="button" data-key="k">k</button>
+                            <button type="button" data-key="l">l</button>
+                        </div>
+                        <div class="vkb-row">
+                            <button type="button" data-key="shift" class="vkb-fn vkb-shift">⇧</button>
+                            <button type="button" data-key="z">z</button>
+                            <button type="button" data-key="x">x</button>
+                            <button type="button" data-key="c">c</button>
+                            <button type="button" data-key="v">v</button>
+                            <button type="button" data-key="b">b</button>
+                            <button type="button" data-key="n">n</button>
+                            <button type="button" data-key="m">m</button>
+                            <button type="button" data-key="backspace" class="vkb-fn vkb-fn-del"><svg width="24" height="16" viewBox="0 0 33 22"><use href="/assets/icons.svg#icon-backspace"/></svg></button>
+                        </div>
+                        <div class="vkb-row vkb-row-bottom">
+                            <button type="button" data-key="switch" class="vkb-fn">🌐</button>
+                            <button type="button" data-key=" " class="vkb-space">space</button>
+                            <button type="button" data-key="enter" class="vkb-return">return</button>
+                        </div>
                     </div>
                 </div>
             </div>
