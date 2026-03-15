@@ -144,6 +144,11 @@
         "title": "1v1 Battle Timer",
         "settings": "Settings",
         "puzzle": "Puzzle",
-        "close": "Close"
+        "close": "Close",
+        "generating": "Generating scramble...",
+        "hide_time": "🙈 Hide time when solving",
+        "show_time": "👁️ Show time when solving",
+        "delete_last": "↩️ Delete last solve",
+        "reset": "🗑️ Reset session"
     }
 }
