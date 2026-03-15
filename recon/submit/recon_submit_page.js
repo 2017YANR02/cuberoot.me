@@ -827,6 +827,8 @@
             var btn = e.target.closest('button[data-key]');
             if (!btn) return;
             e.preventDefault();
+            // NOTE: 锁定指针——确保上滑手势移出键盘区域后 pointerup 仍在 vkbEl 上触发
+            vkbEl.setPointerCapture(e.pointerId);
 
             activeBtn = btn;
             isLongPress = false;
