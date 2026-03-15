@@ -1,7 +1,7 @@
 // NOTE: URL 状态同步 — 保持 URL 参数格式向后兼容
 // save() 内置 debounce 防止秒表运行时高频调用
 
-import { state, updateSort } from './state.js';
+import { state, updateSort, DEFAULT_TITLES, defaultCompName } from './state.js';
 import { textToTime, formatTime } from './calc_engine.js';
 
 var debounceTimer = null;
@@ -15,7 +15,13 @@ export function save() {
 
 function doSave() {
     var params = new URLSearchParams();
-    params.set('comp', state.compName);
+    // NOTE: 保留现有的 lang 参数（语言切换按钮设置的）
+    var curLang = new URLSearchParams(window.location.search).get('lang');
+    if (curLang) params.set('lang', curLang);
+    // NOTE: 不保存默认标题到 URL，语言切换时由 defaultCompName() 动态生成
+    if (!DEFAULT_TITLES.has(state.compName)) {
+        params.set('comp', state.compName);
+    }
 
     for (var i = 0; i < state.names.length; i++) {
         params.set('n' + i, state.names[i]);
@@ -38,7 +44,11 @@ export function load() {
     var params = new URLSearchParams(window.location.search);
     if (!params.has('comp') && !params.has('t0')) return;
 
-    if (params.has('comp')) state.compName = params.get('comp');
+    // NOTE: 如果 URL 的 comp 是默认标题，用当前语言的默认值替换
+    if (params.has('comp')) {
+        var comp = params.get('comp');
+        state.compName = DEFAULT_TITLES.has(comp) ? defaultCompName() : comp;
+    }
 
     // 恢复名字
     var i = 0;

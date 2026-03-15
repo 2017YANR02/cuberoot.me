@@ -31,6 +31,39 @@ body {
     padding: 0 8px;
 }
 
+/* ── 语言切换按钮 ── */
+/* NOTE: 设计参考 i18n/i18n.js 的 .lang-toggle-fixed，浅色主题适配，定位改为右上角 */
+
+.lang-toggle {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    z-index: 9999;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border-radius: 6px;
+    padding: 4px 10px;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: #666;
+    font-size: 0.78rem;
+    transition: color 0.2s, border-color 0.2s, background 0.2s;
+    user-select: none;
+}
+.lang-toggle:hover {
+    color: #333;
+    border-color: #999;
+    background: rgba(255, 255, 255, 0.95);
+}
+.lang-toggle .globe-icon {
+    font-size: 0.95rem;
+    line-height: 1;
+}
+
 /* ── 比赛名称输入 ── */
 
 .comp-name {

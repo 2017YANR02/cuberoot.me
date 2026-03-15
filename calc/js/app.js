@@ -14,6 +14,39 @@ import * as wrData from './wr_data.js';
 var animFrameId = null; // requestAnimationFrame ID
 
 document.addEventListener('DOMContentLoaded', () => {
+    // NOTE: 语言检测逻辑 — 与 i18n/i18n.js init() 保持一致
+    // 优先级：URL ?lang= > localStorage > navigator.language > 默认 en
+    var langParams = new URLSearchParams(window.location.search);
+    var urlLang = langParams.get('lang');
+    var curLang;
+    if (urlLang === 'en' || urlLang === 'zh') {
+        curLang = urlLang;
+        localStorage.setItem('i18n_locale', urlLang);
+    } else {
+        var saved = localStorage.getItem('i18n_locale');
+        if (saved === 'en' || saved === 'zh') {
+            curLang = saved;
+        } else if (navigator.language && navigator.language.startsWith('zh')) {
+            curLang = 'zh';
+        } else {
+            curLang = 'en';
+        }
+        // NOTE: URL 没有 ?lang= 时自动追加（与 i18n.js 同策略）
+        var url = new URL(window.location.href);
+        url.searchParams.set('lang', curLang);
+        history.replaceState(null, '', url.toString());
+    }
+
+    // NOTE: 语言切换按钮初始化
+    var langLabel = document.querySelector('#lang-toggle .lang-label');
+    langLabel.textContent = curLang === 'en' ? '中文' : 'EN';
+    document.getElementById('lang-toggle').addEventListener('click', function () {
+        var targetLang = curLang === 'en' ? 'zh' : 'en';
+        var url = new URL(window.location.href);
+        url.searchParams.set('lang', targetLang);
+        window.location.href = url.toString();
+    });
+
     // 初始化各模块
     chart.init(document.getElementById('chart-container'));
     inputGrid.init(document.getElementById('input-grid-container'));
