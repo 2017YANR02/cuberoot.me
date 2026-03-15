@@ -151,10 +151,7 @@ body {
     padding: 4px;
 }
 
-/* NOTE: 文本和图像添加平滑消失动画（与 is-timing 配合） */
-.scramble-text, .scramble-img {
-    transition: opacity 0.2s ease;
-}
+
 
 /* NOTE: 计时中同时隐藏打乱图 */
 .player-area .scramble-text.hidden ~ .scramble-img {
@@ -216,13 +213,7 @@ body {
     transition: opacity 0.2s ease;
 }
 
-/* NOTE: 沉浸式计时，隐藏罚时按钮防止误触和视觉干扰 */
-.player-area.is-timing .penalty-buttons,
-.player-area.is-timing .scramble-text,
-.player-area.is-timing .scramble-img {
-    opacity: 0;
-    pointer-events: none;
-}
+
 
 .penalty-btn {
     padding: 6px 18px;
