@@ -2087,6 +2087,46 @@ tr.detail-row td {
    虚拟键盘样式——iOS 深色风格，对齐 Cube Keyboard App
    ============================================================ */
 
+/* NOTE: 联想建议条——显示在键盘上方，与触发器芯片同款风格 */
+.vkb-suggest-bar {
+    display: flex;
+    gap: 6px;
+    padding: 6px 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    background: #1c1c1e;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px 10px 0 0; /* NOTE: 顶部圆角与键盘底部圆角呼应 */
+    animation: vkb-suggest-in 0.15s ease;
+}
+
+.vkb-suggest-bar::-webkit-scrollbar { display: none; }
+
+@keyframes vkb-suggest-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* NOTE: 建议按钮——与触发器芯片相同的 Pill 样式，颜色略不同体现层次 */
+.vkb-suggest-btn {
+    flex: 0 0 auto;
+    background: rgba(255, 255, 255, 0.1);
+    color: #34c759; /* NOTE: 绿色——区分于触发器的蓝色，表示"可以补全" */
+    border: none;
+    border-radius: 10px;
+    padding: 5px 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.15s;
+}
+
+.vkb-suggest-btn:active {
+    background: rgba(52, 199, 89, 0.2);
+    transform: scale(1.05);
+}
+
 /* NOTE: 键盘容器——深色背景，顶部圆角，贴在 textarea 下方 */
 .vkb {
     background: #2c2c2e;
