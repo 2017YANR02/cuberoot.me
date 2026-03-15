@@ -828,6 +828,7 @@
 
             activeBtn = btn;
             isLongPress = false;
+            btn._startY = e.clientY;  // NOTE: 记录按下 Y 坐标，用于滑动手势判断
             var key = btn.dataset.key;
 
             // NOTE: 有长按变体的按键启动计时器（面旋转 + 斜杠）
@@ -922,7 +923,23 @@
                     updateModifierState();
                 }
             } else {
-                var ch = btn.dataset.val || ((key === 'enter') ? '\n' : key);
+                // NOTE: 滑动手势判断——仅对面旋转键 UDFBRL 生效
+                var FACE_KEYS = { U:1, D:1, F:1, B:1, R:1, L:1 };
+                var ch;
+                if (FACE_KEYS[key] && btn._startY !== undefined) {
+                    var dy = e.clientY - btn._startY;
+                    if (dy > 20) {
+                        // NOTE: 下滑 → 逆时针（prime）
+                        ch = key + "' ";
+                    } else if (dy < -20) {
+                        // NOTE: 上滑 → 双旋
+                        ch = key + '2 ';
+                    } else {
+                        ch = btn.dataset.val || key;
+                    }
+                } else {
+                    ch = btn.dataset.val || ((key === 'enter') ? '\n' : key);
+                }
                 vkbInsert(ch);
                 // NOTE: 单次 shift 模式——输入一个字母后自动回小写
                 if (/^[a-zA-Z]$/.test(key)) resetShiftIfSingle();
