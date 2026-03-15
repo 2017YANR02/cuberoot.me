@@ -2323,3 +2323,9 @@ tr.detail-row td {
 .vkb-gesture-hint span:last-child {
     border-right: none;
 }
+
+/* NOTE: 手势词——略暗，结果字符略亮，两者形成层次感 */
+.vkb-gesture-hint em {
+    font-style: normal;
+    color: rgba(255, 255, 255, 0.2);
+}
