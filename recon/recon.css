@@ -2159,7 +2159,7 @@ tr.detail-row td {
 .vkb-trigger-btn {
     flex: 0 0 auto;
     background: rgba(255, 255, 255, 0.1);
-    color: #0c8cff; /* 稍亮一点的蓝色 */
+    color: #fff;
     border: none;
     border-radius: 12px;
     padding: 6px 12px;
@@ -2183,7 +2183,7 @@ tr.detail-row td {
     justify-content: center;
 }
 
-/* NOTE: 通用按键样式——圆角深灰方块，蓝色文字 */
+/* NOTE: 通用按键样式——圆角深灰方块，白色文字 */
 .vkb-row button {
     flex: 1;
     min-width: 0;
@@ -2191,7 +2191,7 @@ tr.detail-row td {
     border: none;
     border-radius: 6px;
     background: #3a3a3c;
-    color: #007AFF;
+    color: #fff;
     font-size: 1.05rem;
     font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', sans-serif;
     font-weight: 500;
