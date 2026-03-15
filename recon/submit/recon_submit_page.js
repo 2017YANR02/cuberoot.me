@@ -607,9 +607,22 @@
             if (vkbShiftState === 'single') {
                 vkbShiftState = 'off';
                 var shiftBtn = document.querySelector('.vkb-shift');
-                if (shiftBtn) shiftBtn.classList.remove('vkb-shift-on', 'vkb-capslock');
+                if (shiftBtn) {
+                    shiftBtn.classList.remove('vkb-shift-on', 'vkb-capslock');
+                    updateShiftIcon(shiftBtn);
+                }
                 applyShiftToKeys();
             }
+        }
+
+        /** 根据 shift 状态更新按钮内的 SVG 图标 */
+        function updateShiftIcon(shiftBtn) {
+            var use = shiftBtn.querySelector('use');
+            if (!use) return;
+            var icon = (vkbShiftState === 'capslock') ? 'icon-shift-caps'
+                     : (vkbShiftState === 'single') ? 'icon-shift-on'
+                     : 'icon-shift-off';
+            use.setAttribute('href', '/assets/icons.svg#' + icon);
         }
 
         /** 向 textarea 插入文本的通用函数 */
@@ -748,6 +761,7 @@
                     shiftBtn.classList.remove('vkb-shift-on', 'vkb-capslock');
                 }
                 applyShiftToKeys();
+                updateShiftIcon(shiftBtn);
                 return;
             }
 
