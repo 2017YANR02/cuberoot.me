@@ -282,8 +282,8 @@
         var wcaUserInfo = document.getElementById('wca-user-info');
         if (wcaUserInfo) wcaUserInfo.style.display = 'none';
 
-        // NOTE: 隐藏工具栏统计数（身份卡片已展示复盘总数，避免两个 381 重复）
-        if (statsEl) statsEl.style.display = 'none';
+
+
 
         // NOTE: 检查当前登录用户是否就是被查看的用户（有头像可用）
         var loggedUser = (typeof WcaAuth !== 'undefined') ? WcaAuth.getUser() : null;

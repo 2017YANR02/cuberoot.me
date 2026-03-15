@@ -261,6 +261,12 @@ background-color: #0a0a0f;
         $content = $content -replace '(</body>)', "<script src=""../i18n/i18n.js"" defer></script>`n`$1"
     }
 
+    # 注入 logo_nav.js（如果还没有）
+    if ($content -notmatch 'logo_nav\.js')
+    {
+        $content = $content -replace '(</body>)', "<script src=""../assets/js/logo_nav.js"" defer></script>`n`$1"
+    }
+
     # --- 写入文件 ---
     if (-not $DryRun)
     {
