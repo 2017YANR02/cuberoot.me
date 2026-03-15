@@ -267,26 +267,128 @@
         }
     }
 
-    /** 进入用户模式：只显示指定 wcaId 的复盘 */
+    /** 进入用户模式：只显示指定 wcaId 的复盘，并注入身份卡片 */
     function enterUserMode(wcaId) {
-        // NOTE: 更新页面标题
+        // NOTE: 隐藏主标题和副标题（身份卡片替代）
         var titleEl = document.querySelector('h1') || document.querySelector('.recon-title');
-        if (titleEl) {
-            titleEl.innerHTML = '<a href="/recon/" style="color:#60a5fa;text-decoration:none;font-size:0.7em">← </a>' +
-                wcaId + ' 的复盘';
-        }
+        var subtitleEl = document.querySelector('.recon-subtitle');
+        if (titleEl) titleEl.style.display = 'none';
+        if (subtitleEl) subtitleEl.style.display = 'none';
 
         // NOTE: 隐藏选手筛选（用户模式下无意义）
         if (filterSolver) filterSolver.style.display = 'none';
+
+        // NOTE: 隐藏右上角头像区域（身份卡片已展示用户身份，避免两个头像重复）
+        var wcaUserInfo = document.getElementById('wca-user-info');
+        if (wcaUserInfo) wcaUserInfo.style.display = 'none';
+
+        // NOTE: 隐藏工具栏统计数（身份卡片已展示复盘总数，避免两个 381 重复）
+        if (statsEl) statsEl.style.display = 'none';
+
+        // NOTE: 检查当前登录用户是否就是被查看的用户（有头像可用）
+        var loggedUser = (typeof WcaAuth !== 'undefined') ? WcaAuth.getUser() : null;
+        var avatarUrl = (loggedUser && loggedUser.wcaId === wcaId) ? loggedUser.avatar : '';
+
+        // NOTE: 构建身份卡片 HTML（数据加载前先用 wcaId 占位）
+        var card = document.createElement('div');
+        card.className = 'user-profile-card';
+        card.id = 'user-profile-card';
+
+        // NOTE: 头像或首字母占位
+        var avatarHtml = avatarUrl
+            ? '<img class="user-profile-avatar" src="' + U.escHtml(avatarUrl) + '" alt="">'
+            : '<div class="user-profile-avatar-placeholder">' + wcaId.charAt(0).toUpperCase() + '</div>';
+
+        var isZh = localStorage.getItem('i18n_locale') === 'zh';
+
+        card.innerHTML =
+            '<a href="/recon/" class="user-profile-back" data-i18n-en="← Back" data-i18n-zh="← 返回">' +
+                (isZh ? '← 返回' : '← Back') + '</a>' +
+            avatarHtml +
+            '<div class="user-profile-info">' +
+                '<div class="user-profile-name" id="user-profile-name">' + U.escHtml(wcaId) + '</div>' +
+                '<a class="user-profile-wca-id" href="https://www.worldcubeassociation.org/persons/' +
+                    U.escHtml(wcaId) + '" target="_blank" rel="noopener noreferrer">' + U.escHtml(wcaId) + '</a>' +
+            '</div>' +
+            '<div class="user-profile-stats" id="user-profile-stats"></div>';
+
+        // NOTE: 插入到工具栏之前
+        var toolbar = document.querySelector('.recon-toolbar');
+        if (toolbar && toolbar.parentNode) {
+            toolbar.parentNode.insertBefore(card, toolbar);
+        }
 
         // NOTE: 加载该用户的复盘
         ReconStore.loadByUser(wcaId).then(function (userRecons) {
             allSolves = userRecons;
             applyFilters();
-            // NOTE: 用第一条复盘的 displayName 更新标题
-            if (userRecons.length > 0 && userRecons[0].displayName && titleEl) {
-                titleEl.innerHTML = '<a href="/recon/" style="color:#60a5fa;text-decoration:none;font-size:0.7em">← </a>' +
-                    userRecons[0].displayName + ' 的复盘';
+
+            // NOTE: 更新卡片姓名（用第一条复盘的 displayName）
+            var nameEl = document.getElementById('user-profile-name');
+            if (userRecons.length > 0 && nameEl) {
+                var firstSolve = userRecons[0];
+                var displayName = firstSolve.displayName || firstSolve.person || wcaId;
+                var parsed = U.parseSolverName(displayName);
+                var countryCode = firstSolve.country || U.solverCountry(displayName, personCountries);
+                var flagHtml = U.countryFlag(countryCode);
+
+                // NOTE: 中英文双显姓名
+                if (parsed.zh && parsed.en) {
+                    nameEl.innerHTML = flagHtml + ' ' + U.escHtml(isZh ? parsed.zh : parsed.en) +
+                        ' <span style="color:#888;font-size:0.85em">' +
+                        U.escHtml(isZh ? parsed.en : parsed.zh) + '</span>';
+                } else {
+                    nameEl.innerHTML = flagHtml + ' ' + U.escHtml(parsed.en);
+                }
+            }
+
+            // NOTE: 计算并渲染统计摘要
+            var statsEl = document.getElementById('user-profile-stats');
+            if (statsEl && userRecons.length > 0) {
+                var total = userRecons.length;
+
+                // NOTE: 三阶最快成绩（排除 DNF/DNS/null，只看 3×3 项目）
+                var validTimes = userRecons
+                    .filter(function (s) { return s.event === '3×3' || s.event === '3x3'; })
+                    .map(function (s) { return s.rawTime; })
+                    .filter(function (t) { return typeof t === 'number' && t > 0; });
+                var fastest = validTimes.length > 0 ? Math.min.apply(null, validTimes) : null;
+
+                // NOTE: 方法分布（取出现最多的方法）
+                var methodCounts = {};
+                userRecons.forEach(function (s) {
+                    if (s.method) methodCounts[s.method] = (methodCounts[s.method] || 0) + 1;
+                });
+                var topMethod = '';
+                var topMethodCount = 0;
+                for (var m in methodCounts) {
+                    if (methodCounts[m] > topMethodCount) {
+                        topMethod = m;
+                        topMethodCount = methodCounts[m];
+                    }
+                }
+
+                var fastestDisplay = fastest != null ? fastest.toFixed(2) : '-';
+
+                statsEl.innerHTML =
+                    '<div class="user-profile-stat-item">' +
+                        '<div class="user-profile-stat-value">' + total + '</div>' +
+                        '<div class="user-profile-stat-label" data-i18n-en="Recons" data-i18n-zh="复盘">' +
+                            (isZh ? '复盘' : 'Recons') + '</div>' +
+                    '</div>' +
+                    '<div class="user-profile-stat-item">' +
+                        '<div class="user-profile-stat-value">' + fastestDisplay + '</div>' +
+                        '<div class="user-profile-stat-label" data-i18n-en="3x3 Best" data-i18n-zh="三阶最快">' +
+                            (isZh ? '三阶最快' : '3x3 Best') + '</div>' +
+                    '</div>' +
+                    (topMethod ? '<div class="user-profile-stat-item">' +
+                        '<div class="user-profile-stat-value">' + U.escHtml(topMethod) + '</div>' +
+                        '<div class="user-profile-stat-label" data-i18n-en="Main Method" data-i18n-zh="主要方法">' +
+                            (isZh ? '主要方法' : 'Main Method') + '</div>' +
+                    '</div>' : '');
+
+                // NOTE: 新增的 data-i18n 属性需要重新应用翻译
+                if (typeof I18n !== 'undefined' && I18n._ready) I18n.apply();
             }
         }).catch(function (e) {
             console.warn('Failed to load user recons:', e);

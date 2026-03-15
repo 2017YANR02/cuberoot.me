@@ -48,6 +48,7 @@
         .landing-title,
         .landing-subtitle,
         .cards-container,
+        .credits,
         .footer {
             position: relative;
             z-index: 1;
@@ -164,8 +165,36 @@
             line-height: 1.5;
         }
 
+        /* NOTE: 致谢行——低调小字，不抢卡片风头 */
+        .credits {
+            margin-top: 2.5rem;
+            font-size: 0.72rem;
+            color: #555;
+            text-align: center;
+            padding: 0 1rem;
+        }
+
+        .credits::before {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.08);
+            margin: 0 auto 0.8rem;
+        }
+
+        .credits a {
+            color: #777;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .credits a:hover {
+            color: #aaa;
+        }
+
         .footer {
-            margin-top: 3rem;
+            margin-top: 1rem;
             font-size: 0.75rem;
             color: #555;
             text-align: center;
@@ -301,6 +330,15 @@
             <div class="card-name" data-i18n="index.hth_grapher">Score Calculator</div>
             <div class="card-desc" data-i18n="index.hth_grapher_desc">Compare final round results and visualize WPA/BPA for WCA competitions</div>
         </a>
+    </div>
+
+    <!-- NOTE: 致谢：列出上游开源项目作者 -->
+    <div class="credits">
+        <span data-i18n-en="Inspired by open-source projects from" data-i18n-zh="致谢">Inspired by open-source projects from</span>
+        <a href="https://github.com/or18/RubiksSolverDemo" target="_blank" rel="noopener noreferrer">or18</a> · 
+        <a href="https://github.com/jonatanklosko/wca_statistics" target="_blank" rel="noopener noreferrer">jonatanklosko</a> · 
+        <a href="https://github.com/mihlefeld/Alg-Trainers" target="_blank" rel="noopener noreferrer">mihlefeld</a> · 
+        <a href="https://github.com/carykh/hthgrapher" target="_blank" rel="noopener noreferrer">carykh</a>
     </div>
 
     <div class="footer">

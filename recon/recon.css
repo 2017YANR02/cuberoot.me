@@ -1941,3 +1941,122 @@ tr.detail-row td {
 .comment-cancel-btn:hover {
     color: #ccc;
 }
+
+/* ============================================================
+   用户身份卡片（个人页 ?user=wcaId 模式）
+   NOTE: 在主标题和工具栏之间注入，让用户一眼区分「全部列表」和「个人页」
+   ============================================================ */
+
+.user-profile-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    margin-bottom: 1.5rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    animation: detailSlideIn 0.3s ease-out;
+}
+
+/* NOTE: 圆形头像（WCA OAuth 提供 thumb_url） */
+.user-profile-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.12);
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+/* NOTE: 无头像时的首字母占位圆 */
+.user-profile-avatar-placeholder {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.12);
+    background: rgba(99, 102, 241, 0.25);
+    color: #93bbfc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.user-profile-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.user-profile-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #e2e8f0;
+    margin-bottom: 2px;
+}
+
+.user-profile-wca-id {
+    font-size: 0.8rem;
+    color: #60a5fa;
+    text-decoration: none;
+}
+
+.user-profile-wca-id:hover {
+    text-decoration: underline;
+}
+
+/* NOTE: 统计摘要——靠右侧小网格展示 */
+.user-profile-stats {
+    display: flex;
+    gap: 20px;
+    flex-shrink: 0;
+}
+
+.user-profile-stat-item {
+    text-align: center;
+}
+
+.user-profile-stat-value {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #e2e8f0;
+}
+
+.user-profile-stat-label {
+    font-size: 0.7rem;
+    color: #666;
+    margin-top: 1px;
+}
+
+/* NOTE: 返回按钮 */
+.user-profile-back {
+    color: #60a5fa;
+    text-decoration: none;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: color 0.2s;
+}
+
+.user-profile-back:hover {
+    color: #93bbfc;
+}
+
+/* --- 移动端适配 --- */
+@media (max-width: 768px) {
+    .user-profile-card {
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 12px 14px;
+    }
+
+    .user-profile-stats {
+        width: 100%;
+        justify-content: space-around;
+        padding-top: 8px;
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+}
