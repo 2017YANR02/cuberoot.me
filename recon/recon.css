@@ -2131,9 +2131,13 @@ tr.detail-row td {
     -webkit-touch-callout: none;
 }
 
-/* NOTE: 触摸/点击反馈——短暂加亮 */
+/* NOTE: 触摸/点击反馈——放大 + 阴影，参照 calc numpad */
 .vkb-row button:active {
     background: #555558;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    z-index: 10;
+    transition: none;
 }
 
 /* --- 底部功能行：space 和 return 宽度更大 --- */
