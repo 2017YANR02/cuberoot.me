@@ -5,7 +5,30 @@
  * 状态机：idle → ready(黄) → canStart(绿) → timing → finished
  */
 
-import { randomScrambleForEvent } from "https://cdn.cubing.net/v0/js/cubing/scramble";
+// NOTE: 打乱生成由本地 csTimer scramble module 提供（scramble_module.js, GPL-3.0 from cs0x7f）
+// scrMgr 全局对象由 scramble_module.js 暴露，包含 scramblers[type](type, len, state) API
+
+// NOTE: cubing.js event ID → csTimer scrambler type 映射
+const EVENT_TO_CSTIMER = {
+    '222':    '222so',    // 2x2 random-state
+    '333':    '333',      // 3x3 random-state (Kociemba)
+    '444':    '444wca',   // 4x4 WCA random-state
+    '555':    '555wca',   // 5x5 WCA
+    '666':    '666wca',   // 6x6 WCA
+    '777':    '777wca',   // 7x7 WCA
+    '333oh':  '333',      // OH 用 3x3 打乱
+    '333bf':  '333',      // 3BLD 用 3x3 打乱
+    '444bf':  '444wca',   // 4BLD 用 4x4 打乱
+    '555bf':  '555wca',   // 5BLD 用 5x5 打乱
+    '333mbf': '333',      // MBLD 用 3x3 打乱
+    'clock':  'clkwca',   // Clock WCA
+    'minx':   'mgmp',     // Megaminx WCA
+    'pyram':  'pyrso',    // Pyraminx random-state
+    'skewb':  'skbso',    // Skewb random-state
+    'sq1':    'sqrs',     // Square-1 random-state
+    'fto':    'ftoso',    // FTO random-state
+    'kilominx': 'klmso',  // Kilominx random-state
+};
 
 // ===== 常量 =====
 
@@ -183,18 +206,23 @@ function init() {
 
 // ===== 打乱生成 =====
 
-async function loadNewScramble() {
+/**
+ * NOTE: 使用本地 csTimer scramble module 生成打乱（纯 JS，无 WASM，瞬间完成）
+ * csTimer 的 scrMgr.scramblers[type](type, len, state) 同步返回打乱字符串
+ */
+function loadNewScramble() {
     state.scramble = null;
     state.scrambleLoading = true;
     renderScramble();
 
     try {
-        const alg = await randomScrambleForEvent(state.puzzleId);
-        state.scramble = alg.toString();
+        const csType = EVENT_TO_CSTIMER[state.puzzleId] || '333';
+        // NOTE: scrMgr.scramblers[type] 同步返回 HTML 格式字符串，toTxt() 转为纯文本
+        const rawScramble = scrMgr.scramblers[csType](csType, 0);
+        state.scramble = scrMgr.toTxt(rawScramble);
     } catch (err) {
-        console.error("Scramble generation failed:", err);
-        // 降级：显示错误提示
-        state.scramble = "⚠️ Scramble error";
+        console.error('Scramble generation failed:', err);
+        state.scramble = '⚠️ Scramble error';
     }
     state.scrambleLoading = false;
     renderScramble();
