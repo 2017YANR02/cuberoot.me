@@ -608,7 +608,6 @@
             const zhText = `已显示 ${displayCount} / ${filteredSolves.length}`;
             showingEl.innerHTML = `<span data-i18n-en="${enText}" data-i18n-zh="${zhText}">${isZh ? zhText : enText}</span>`;
         }
-
         // NOTE: 数据异步加载后新增的 DOM 需要重新应用 i18n 翻译
         if (typeof I18n !== 'undefined' && I18n._ready) I18n.apply();
     }
