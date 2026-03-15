@@ -182,6 +182,12 @@ async function loadNewScramble() {
  * @returns {boolean} 是否成功处理
  */
 function playerDown(playerId) {
+    // NOTE: 上一轮双方都已完成 → 任意按键触发重置，进入下一轮
+    const [p0, p1] = state.players;
+    if (p0.hasFinished && p1.hasFinished) {
+        resetForNextRound();
+    }
+
     const p = state.players[playerId];
 
     if (p.isTiming) {
@@ -311,6 +317,27 @@ function checkBothFinished() {
         computeWinner();
         loadNewScramble();
     }
+}
+
+/**
+ * NOTE: 重置上一轮状态，为新一轮做准备
+ * 在 playerDown() 开头调用，确保用户有时间查看上轮成绩/选罚时
+ */
+function resetForNextRound() {
+    for (let i = 0; i < 2; i++) {
+        const p = state.players[i];
+        p.isReady = false;
+        p.canStart = false;
+        p.isTiming = false;
+        p.hasFinished = false;
+        p.time = 0;
+        p.penalty = PENALTY.OK;
+        p.pointerId = null;
+        renderArea(i);
+        renderTime(i);
+        updatePenaltyButtons(i);
+    }
+    state.winner = -2;
 }
 
 // ===== 计时动画 =====
