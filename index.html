@@ -120,6 +120,10 @@
             --card-gradient: linear-gradient(90deg, #f59e0b, #f97316, #ef4444);
         }
 
+        .card-battle {
+            --card-gradient: linear-gradient(90deg, #8b5cf6, #6366f1, #3b82f6);
+        }
+
         .card-solver:hover {
             border-color: rgba(99, 102, 241, 0.4);
             box-shadow: 0 8px 32px rgba(99, 102, 241, 0.12);
@@ -143,6 +147,11 @@
         .card-hth:hover {
             border-color: rgba(249, 115, 22, 0.4);
             box-shadow: 0 8px 32px rgba(249, 115, 22, 0.12);
+        }
+
+        .card-battle:hover {
+            border-color: rgba(99, 102, 241, 0.4);
+            box-shadow: 0 8px 32px rgba(99, 102, 241, 0.12);
         }
 
         .card-icon {
@@ -330,6 +339,12 @@
             <div class="card-name" data-i18n="index.hth_grapher">Score Calculator</div>
             <div class="card-desc" data-i18n="index.hth_grapher_desc">Compare final round results and visualize WPA/BPA for WCA competitions</div>
         </a>
+
+        <a href="battle/" class="glass-card card card-battle" id="card-battle">
+            <div class="card-icon">⚔️</div>
+            <div class="card-name" data-i18n="index.battle">1v1 Battle</div>
+            <div class="card-desc" data-i18n="index.battle_desc">Head-to-head cube battle timer, challenge your friends face to face</div>
+        </a>
     </div>
 
     <!-- NOTE: 致谢：列出上游开源项目作者 -->
@@ -338,7 +353,8 @@
         <a href="https://github.com/or18/RubiksSolverDemo" target="_blank" rel="noopener noreferrer">or18</a> · 
         <a href="https://github.com/jonatanklosko/wca_statistics" target="_blank" rel="noopener noreferrer">jonatanklosko</a> · 
         <a href="https://github.com/mihlefeld/Alg-Trainers" target="_blank" rel="noopener noreferrer">mihlefeld</a> · 
-        <a href="https://github.com/carykh/hthgrapher" target="_blank" rel="noopener noreferrer">carykh</a>
+        <a href="https://github.com/carykh/hthgrapher" target="_blank" rel="noopener noreferrer">carykh</a> · 
+        <a href="https://github.com/MatteoColombo/cube_challenge_timer" target="_blank" rel="noopener noreferrer">MatteoColombo</a>
     </div>
 
     <div class="footer">
