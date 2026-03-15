@@ -96,6 +96,8 @@ const state = {
     showTime: localStorage.getItem(LS_PREFIX + "showTime") !== "false",
     // 是否显示打乱图
     showImage: localStorage.getItem(LS_PREFIX + "showImage") !== "false", // 默认显示图形
+    // 当前打乱图字号缩放比例
+    scrambleScale: parseFloat(localStorage.getItem(LS_PREFIX + "scrambleScale")) || 1.0,
     // 当前打乱
     scramble: null,
     // 是否正在加载打乱
@@ -139,6 +141,7 @@ const dom = {
     settingsOverlay: null,
     puzzleGrid: null,
     toggleImage: null,
+    sizeSlider: null,
 };
 
 // ===== 初始化 =====
@@ -162,6 +165,7 @@ function init() {
     dom.settingsOverlay = document.getElementById("settings-overlay");
     dom.puzzleGrid = document.getElementById("puzzle-grid");
     dom.toggleImage = document.getElementById("toggle-image");
+    dom.sizeSlider = document.getElementById("scramble-size-slider");
 
     // 绑定触摸事件
     for (let i = 0; i < 2; i++) {
@@ -206,6 +210,15 @@ function init() {
         state.showImage = e.target.checked;
         localStorage.setItem(LS_PREFIX + "showImage", state.showImage);
         renderScrambleImage();
+    });
+
+    // 初始化字号滑块
+    dom.sizeSlider.value = state.scrambleScale;
+    document.documentElement.style.setProperty('--scramble-scale', state.scrambleScale);
+    dom.sizeSlider.addEventListener("input", (e) => {
+        state.scrambleScale = e.target.value;
+        document.documentElement.style.setProperty('--scramble-scale', state.scrambleScale);
+        localStorage.setItem(LS_PREFIX + "scrambleScale", state.scrambleScale);
     });
 
     // 渲染初始状态
@@ -604,11 +617,13 @@ function renderArea(playerId) {
     const p = state.players[playerId];
     const el = dom.areas[playerId];
 
-    el.classList.remove("state-ready", "state-can-start");
+    el.classList.remove("state-ready", "state-can-start", "is-timing");
     if (p.canStart) {
         el.classList.add("state-can-start");
     } else if (p.isReady) {
         el.classList.add("state-ready");
+    } else if (p.isTiming) {
+        el.classList.add("is-timing");
     }
 }
 
