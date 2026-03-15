@@ -275,6 +275,8 @@ var ReconUtils = (function () {
         var MAX_SCALE = 2.0;
 
         function onMove(e) {
+            // NOTE: 阻止浏览器默认 touch 滚动，避免拖拽手柄时页面跟着滚
+            if (e.cancelable) e.preventDefault();
             var clientY = e.touches ? e.touches[0].clientY : e.clientY;
             var delta = clientY - startY;
             var newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, currentScale + delta / 200));
