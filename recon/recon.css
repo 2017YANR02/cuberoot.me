@@ -2200,3 +2200,9 @@ tr.detail-row td {
     background: #007AFF;
     color: #fff;
 }
+
+/* NOTE: 修饰键禁用态——光标前无英文字母时变灰 */
+.vkb-disabled {
+    opacity: 0.3;
+    pointer-events: none;
+}
