@@ -15,6 +15,7 @@ import { isWR } from './wr_data.js';
 const BAR_W = 90;          // 柱宽
 const STRIDE = 105;        // 组间距
 const BAR_START = 390;     // 第一组 x 起点
+const CHART_H = 500;       // 绘图区高度（同时用于 viewBox 保底）
 
 // NOTE: 动态计算 — 根据当前项目的 solveCount 调整图表结束位置
 function chartEnd() { return BAR_START + solveCount() * STRIDE - (STRIDE - BAR_W); }
@@ -113,15 +114,16 @@ function updateViewBox() {
     var bbox = svgEl.getBBox();
     // 空数据时 bbox 可能很小，保底最小尺寸防止图表爆大
     var w = Math.max(bbox.width, 1000);
-    var h = Math.max(bbox.height, 700);
+    var h = Math.max(bbox.height, CHART_H);
     // 保持内容居中：以 bbox 中心为基准扩展到保底尺寸
     var cx = bbox.x + bbox.width / 2;
     var cy = bbox.y + bbox.height / 2;
     var padX = w * 0.03;
-    var padY = h * 0.03;
+    var padTop = h * 0.02;  // 上方留少量空间给 Placed 文字
+    var padBot = 0;          // 底部不留白
     svgEl.setAttribute('viewBox',
-        (cx - w / 2 - padX) + ' ' + (cy - h / 2 - padY) + ' ' +
-        (w + padX * 2) + ' ' + (h + padY * 2));
+        (cx - w / 2 - padX) + ' ' + (cy - h / 2 - padTop) + ' ' +
+        (w + padX * 2) + ' ' + (h + padTop + padBot));
 }
 
 // ── 图表参数计算（等价于原 setGridParameters） ──
@@ -131,7 +133,7 @@ function computeGridParams() {
     gp.x = 340;
     gp.y = 40;
     gp.w = 1600;
-    gp.h = 700;
+    gp.h = CHART_H;
 
     gp.min = DNF_VALUE;
     gp.max = -DNF_VALUE;
