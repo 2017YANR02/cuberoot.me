@@ -5,6 +5,8 @@
 
 * {
     box-sizing: border-box;
+    /* NOTE: pan-y = 只允许纵向滚动，同时禁用双击缩放和双指缩放 */
+    touch-action: pan-y;
 }
 
 html {
