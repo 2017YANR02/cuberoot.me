@@ -224,7 +224,7 @@ body {
 }
 
 .score-value {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'Segment7Standard', 'JetBrains Mono', monospace;
     font-weight: 700;
     font-size: 1rem;
     color: #fff;
