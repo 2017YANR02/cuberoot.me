@@ -618,11 +618,14 @@
         /** 根据 shift 状态更新按钮内的 SVG 图标 */
         function updateShiftIcon(shiftBtn) {
             var use = shiftBtn.querySelector('use');
-            if (!use) return;
+            var svg = shiftBtn.querySelector('svg');
+            if (!use || !svg) return;
             var icon = (vkbShiftState === 'capslock') ? 'icon-shift-caps'
                      : (vkbShiftState === 'single') ? 'icon-shift-on'
                      : 'icon-shift-off';
             use.setAttribute('href', '/assets/icons.svg#' + icon);
+            // NOTE: capslock 图标有下划线，需要更高的 viewBox
+            svg.setAttribute('viewBox', (vkbShiftState === 'capslock') ? '0 0 24 28' : '0 0 24 24');
         }
 
         /** 向 textarea 插入文本的通用函数 */
