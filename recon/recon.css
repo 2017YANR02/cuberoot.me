@@ -2103,6 +2103,42 @@ tr.detail-row td {
     gap: 6px;
 }
 
+/* NOTE: 触发器栏——横向滑动容器 */
+.vkb-triggers {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 2px 4px 6px 4px; /* 顶部微调 */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    touch-action: pan-x; /* 明确允许横向平移，提升移动端顺滑度 */
+}
+
+.vkb-triggers::-webkit-scrollbar {
+    display: none;
+}
+
+/* NOTE: 触发器按钮——芯片/Pill 样式 */
+.vkb-trigger-btn {
+    flex: 0 0 auto;
+    background: rgba(255, 255, 255, 0.1);
+    color: #0c8cff; /* 稍亮一点的蓝色 */
+    border: none;
+    border-radius: 12px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.vkb-trigger-btn:active {
+    background: rgba(255, 255, 255, 0.15);
+    transform: scale(1.05);
+}
+
 /* NOTE: 每行用 flex 均匀分布按键 */
 .vkb-row {
     display: flex;
