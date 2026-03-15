@@ -1,0 +1,443 @@
+/* ==========================================================
+   1v1 Battle Timer — 对战计时器样式
+   NOTE: 纯黑背景，AMOLED 友好，与原始 Flutter 应用一致
+   ========================================================== */
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    height: 100%;
+    overflow: hidden;
+    /* NOTE: 禁止下拉刷新和弹性滚动 */
+    overscroll-behavior: none;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background-color: #000;
+    color: #fff;
+    /* NOTE: 用 dvh 适配移动端地址栏收缩 */
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    /* NOTE: 禁止文字选择，防干扰触摸操作 */
+    user-select: none;
+    -webkit-user-select: none;
+    /* NOTE: 禁止触摸调出上下文菜单 */
+    -webkit-touch-callout: none;
+}
+
+/* ==========================================================
+   布局：上下两个玩家区域 + 中间栏
+   ========================================================== */
+
+.player-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    /* NOTE: 防止触摸时浏览器默认滚动/缩放行为 */
+    touch-action: none;
+    cursor: pointer;
+    padding: 12px;
+    /* NOTE: 状态变化时背景色平滑过渡 */
+    transition: background-color 0.2s ease;
+    gap: 8px;
+    overflow: hidden;
+}
+
+/* NOTE: Player 2（上方）旋转 180°，让对面的人能看 */
+.player-area.rotated {
+    transform: rotate(180deg);
+}
+
+/* --- 状态背景色 --- */
+.player-area.state-ready {
+    background-color: #b8860b;
+}
+
+.player-area.state-can-start {
+    background-color: #2e7d32;
+}
+
+/* ==========================================================
+   返回按钮（左上角）
+   ========================================================== */
+
+.back-btn {
+    position: fixed;
+    top: 8px;
+    left: 8px;
+    z-index: 100;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: #fff;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+
+.back-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* ==========================================================
+   打乱公式显示
+   ========================================================== */
+
+.scramble-text {
+    font-size: clamp(0.75rem, 2.5vw, 1rem);
+    color: #ccc;
+    text-align: center;
+    line-height: 1.4;
+    padding: 0 16px;
+    word-break: break-word;
+    max-width: 100%;
+    min-height: 2.8em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* NOTE: 正在计时时隐藏打乱，留出更多空间给计时数字 */
+.scramble-text.hidden {
+    visibility: hidden;
+}
+
+.scramble-text .loading {
+    color: #666;
+    font-style: italic;
+}
+
+/* ==========================================================
+   计时数字
+   ========================================================== */
+
+.time-display {
+    font-family: 'JetBrains Mono', 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+    /* NOTE: 大号显示，用 clamp 适配不同屏幕 */
+    font-size: clamp(2.5rem, 12vw, 5rem);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-align: center;
+    /* NOTE: tabular-nums 让每个数字宽度一致，计时时不会跳动 */
+    font-variant-numeric: tabular-nums;
+    min-height: 1.2em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* NOTE: +2 罚时时显示橙色提示 */
+.time-display.penalty-plus2 {
+    color: #ffa726;
+}
+
+/* NOTE: DNF 时显示红色 */
+.time-display.penalty-dnf {
+    color: #ef5350;
+}
+
+/* NOTE: 赢家绿色高亮 */
+.time-display.winner {
+    color: #66bb6a;
+}
+
+/* ==========================================================
+   罚时按钮组
+   ========================================================== */
+
+.penalty-buttons {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.penalty-btn {
+    padding: 6px 18px;
+    border-radius: 6px;
+    border: 1px solid #444;
+    background: transparent;
+    color: #aaa;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    /* NOTE: 罚时按钮需要能接收触摸，不被父区域吞掉 */
+    touch-action: manipulation;
+}
+
+.penalty-btn:active {
+    transform: scale(0.95);
+}
+
+.penalty-btn.active {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    border-color: #888;
+}
+
+.penalty-btn:disabled {
+    opacity: 0.3;
+    cursor: default;
+}
+
+/* ==========================================================
+   中间栏（比分 + 设置）
+   ========================================================== */
+
+.middle-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 12px;
+    background: #111;
+    border-top: 1px solid #222;
+    border-bottom: 1px solid #222;
+    min-height: 40px;
+    flex-shrink: 0;
+}
+
+.score-section {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+    color: #999;
+}
+
+.score-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 1rem;
+    color: #fff;
+    font-variant-numeric: tabular-nums;
+}
+
+/* NOTE: 得分增加时的闪烁动画 */
+.score-value.flash {
+    animation: scoreFlash 0.5s ease;
+}
+
+@keyframes scoreFlash {
+    0%, 100% { color: #fff; }
+    50% { color: #66bb6a; transform: scale(1.3); }
+}
+
+.middle-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.middle-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: 1px solid #333;
+    background: transparent;
+    color: #999;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.middle-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    border-color: #555;
+}
+
+/* NOTE: 全屏按钮在全屏模式下变色提示 */
+.middle-btn.fullscreen-active {
+    color: #66bb6a;
+    border-color: #66bb6a;
+}
+
+/* ==========================================================
+   设置弹窗（模态面板）
+   ========================================================== */
+
+.settings-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    /* NOTE: 默认隐藏 */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+.settings-overlay.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.settings-panel {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 20px;
+    width: min(90vw, 360px);
+    max-height: 80vh;
+    overflow-y: auto;
+    transform: scale(0.95);
+    transition: transform 0.2s ease;
+}
+
+.settings-overlay.visible .settings-panel {
+    transform: scale(1);
+}
+
+.settings-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    text-align: center;
+    color: #fff;
+}
+
+.settings-group {
+    margin-bottom: 16px;
+}
+
+.settings-label {
+    font-size: 0.75rem;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+}
+
+/* --- 项目选择网格 --- */
+.puzzle-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+}
+
+.puzzle-btn {
+    padding: 8px 4px;
+    border-radius: 6px;
+    border: 1px solid #333;
+    background: transparent;
+    color: #aaa;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: center;
+}
+
+.puzzle-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.puzzle-btn.active {
+    background: rgba(99, 102, 241, 0.2);
+    border-color: #6366f1;
+    color: #fff;
+}
+
+/* --- 设置操作按钮 --- */
+.settings-action-btn {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #333;
+    background: transparent;
+    color: #ccc;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.settings-action-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.settings-action-btn.danger {
+    color: #ef5350;
+    border-color: rgba(239, 83, 80, 0.3);
+}
+
+.settings-action-btn.danger:hover {
+    background: rgba(239, 83, 80, 0.1);
+}
+
+.settings-close-btn {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    background: #6366f1;
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    margin-top: 8px;
+}
+
+.settings-close-btn:hover {
+    background: #5558e6;
+}
+
+/* ==========================================================
+   iOS 全屏提示
+   ========================================================== */
+
+.ios-fullscreen-hint {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 0.75rem;
+    color: #999;
+    z-index: 50;
+    text-align: center;
+    backdrop-filter: blur(4px);
+    /* NOTE: 提示 5 秒后自动消失 */
+    animation: fadeOut 0.5s ease 5s forwards;
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+        pointer-events: none;
+    }
+}
+
+/* ==========================================================
+   字体加载
+   ========================================================== */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');

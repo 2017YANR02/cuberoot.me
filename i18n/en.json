@@ -27,7 +27,9 @@
         "alg_trainer": "Alg Trainer",
         "alg_trainer_desc": "OLL, PLL, ZBLL, CMLL, and algorithm trainers for various puzzles",
         "hth_grapher": "Score Calculator",
-        "hth_grapher_desc": "Compare final round results and visualize WPA/BPA for WCA competitions"
+        "hth_grapher_desc": "Compare final round results and visualize WPA/BPA for WCA competitions",
+        "battle": "1v1 Battle",
+        "battle_desc": "Head-to-head cube battle timer, challenge your friends face to face"
     },
     "solver": {
         "title": "Rubik's Cube Solver",
@@ -137,5 +139,11 @@
         "col_round": "Rnd",
         "col_date": "Date",
         "load_more": "Load More"
+    },
+    "battle": {
+        "title": "1v1 Battle Timer",
+        "settings": "Settings",
+        "puzzle": "Puzzle",
+        "close": "Close"
     }
 }

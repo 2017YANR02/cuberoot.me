@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- NOTE: iOS Safari 全屏支持（添加到主屏幕后生效） -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="theme-color" content="#000000">
+
+    <title data-i18n="battle.title">1v1 Battle Timer</title>
+    <meta name="description" content="Head-to-head Rubik's Cube battle timer. Challenge your friends face to face.">
+
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-MXJH30352W"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-MXJH30352W');
+    </script>
+
+    <link rel="manifest" href="../manifest.json">
+    <link rel="apple-touch-icon" href="../custom_icons/icon-192x192.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="battle.css">
+</head>
+
+<body>
+    <!-- NOTE: 返回按钮（固定左上角，不受旋转影响） -->
+    <a href="../" class="back-btn" aria-label="Back">‹</a>
+
+    <!-- ===== Player 2（上方，旋转 180° 让对面的人看） ===== -->
+    <div id="player-top" class="player-area rotated">
+        <div id="penalties-1" class="penalty-buttons">
+            <button class="penalty-btn active" data-penalty="ok">OK</button>
+            <button class="penalty-btn" data-penalty="+2">+2</button>
+            <button class="penalty-btn" data-penalty="dnf">DNF</button>
+        </div>
+        <div id="time-1" class="time-display">0.000</div>
+        <div id="scramble-1" class="scramble-text">
+            <span class="loading">Generating scramble...</span>
+        </div>
+    </div>
+
+    <!-- ===== 中间栏（比分 + 设置） ===== -->
+    <div class="middle-bar">
+        <!-- NOTE: 左侧比分（Player 2，上方玩家，旋转显示所以在其视角的右侧） -->
+        <div class="score-section">
+            <span>⚔️</span>
+            <span id="score-1" class="score-value">0</span>
+        </div>
+
+        <div class="middle-actions">
+            <button id="btn-fullscreen" class="middle-btn" title="Fullscreen">⛶</button>
+            <button id="btn-settings" class="middle-btn" title="Settings">⚙️</button>
+        </div>
+
+        <!-- NOTE: 右侧比分（Player 1，下方玩家） -->
+        <div class="score-section">
+            <span id="score-0" class="score-value">0</span>
+            <span>⚔️</span>
+        </div>
+    </div>
+
+    <!-- ===== Player 1（下方，正常方向） ===== -->
+    <div id="player-bottom" class="player-area">
+        <div id="scramble-0" class="scramble-text">
+            <span class="loading">Generating scramble...</span>
+        </div>
+        <div id="time-0" class="time-display">0.000</div>
+        <div id="penalties-0" class="penalty-buttons">
+            <button class="penalty-btn active" data-penalty="ok">OK</button>
+            <button class="penalty-btn" data-penalty="+2">+2</button>
+            <button class="penalty-btn" data-penalty="dnf">DNF</button>
+        </div>
+    </div>
+
+    <!-- ===== 设置弹窗 ===== -->
+    <div id="settings-overlay" class="settings-overlay">
+        <div class="settings-panel">
+            <div class="settings-title" data-i18n="battle.settings">Settings</div>
+
+            <div class="settings-group">
+                <div class="settings-label" data-i18n="battle.puzzle">PUZZLE</div>
+                <div id="puzzle-grid" class="puzzle-grid">
+                    <!-- NOTE: 由 JS 动态生成 -->
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <button id="btn-toggle-time" class="settings-action-btn">
+                    🙈 Hide time when solving
+                </button>
+                <button id="btn-delete-last" class="settings-action-btn">
+                    ↩️ Delete last solve
+                </button>
+                <button id="btn-reset" class="settings-action-btn danger">
+                    🗑️ Reset session
+                </button>
+            </div>
+
+            <button id="settings-close" class="settings-close-btn" data-i18n="battle.close">Close</button>
+        </div>
+    </div>
+
+    <!-- NOTE: cubing.js 通过 ES module 在 battle.js 中 import，此处只需加载入口 -->
+    <script type="module" src="battle.js"></script>
+    <script src="../i18n/i18n.js" defer></script>
+</body>
+
+</html>
