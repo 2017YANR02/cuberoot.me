@@ -11,17 +11,28 @@ import { randomScrambleForEvent } from "https://cdn.cubing.net/v0/js/cubing/scra
 
 // NOTE: 所有 WCA 官方项目 + 显示名
 const PUZZLES = [
-    { id: "222",   name: "2×2" },
-    { id: "333",   name: "3×3" },
-    { id: "444",   name: "4×4" },
-    { id: "555",   name: "5×5" },
-    { id: "666",   name: "6×6" },
-    { id: "777",   name: "7×7" },
-    { id: "clock", name: "Clock" },
-    { id: "minx",  name: "Megaminx" },
-    { id: "pyram", name: "Pyraminx" },
-    { id: "skewb", name: "Skewb" },
-    { id: "sq1",   name: "Square-1" },
+    // WCA 速拧
+    { id: "222",   name: { en: "2×2",       zh: "二阶" } },
+    { id: "333",   name: { en: "3×3",       zh: "三阶" } },
+    { id: "444",   name: { en: "4×4",       zh: "四阶" } },
+    { id: "555",   name: { en: "5×5",       zh: "五阶" } },
+    { id: "666",   name: { en: "6×6",       zh: "六阶" } },
+    { id: "777",   name: { en: "7×7",       zh: "七阶" } },
+    { id: "333oh", name: { en: "OH",        zh: "单手" } },
+    // WCA 盲拧
+    { id: "333bf", name: { en: "3BLD",      zh: "三盲" } },
+    { id: "444bf", name: { en: "4BLD",      zh: "四盲" } },
+    { id: "555bf", name: { en: "5BLD",      zh: "五盲" } },
+    { id: "333mbf",name: { en: "MBLD",      zh: "多盲" } },
+    // WCA 异形
+    { id: "clock", name: { en: "Clock",     zh: "魔表" } },
+    { id: "minx",  name: { en: "Megaminx",  zh: "五魔方" } },
+    { id: "pyram", name: { en: "Pyraminx",  zh: "金字塔" } },
+    { id: "skewb", name: { en: "Skewb",     zh: "斜转" } },
+    { id: "sq1",   name: { en: "SQ1",       zh: "SQ1" } },
+    // 非 WCA（cubing.js 支持）
+    { id: "fto",              name: { en: "FTO",       zh: "FTO" } },
+    { id: "kilominx",         name: { en: "Kilominx",  zh: "二阶五魔" } },
 ];
 
 const PENALTY = { OK: "ok", PLUS2: "+2", DNF: "dnf" };
@@ -577,12 +588,13 @@ function updatePenaltyButtons(playerId) {
 
 function buildPuzzleGrid() {
     const grid = dom.puzzleGrid;
+    const lang = getLocale();
     grid.innerHTML = "";
     for (const puz of PUZZLES) {
         const btn = document.createElement("button");
         btn.className = "puzzle-btn" + (puz.id === state.puzzleId ? " active" : "");
         btn.dataset.puzzle = puz.id;
-        btn.textContent = puz.name;
+        btn.textContent = puz.name[lang] || puz.name.en;
         btn.addEventListener("click", () => changePuzzle(puz.id));
         grid.appendChild(btn);
     }
