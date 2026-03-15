@@ -18,10 +18,7 @@ function doSave() {
     // NOTE: 保留现有的 lang 参数（语言切换按钮设置的）
     var curLang = new URLSearchParams(window.location.search).get('lang');
     if (curLang) params.set('lang', curLang);
-    // NOTE: 不保存默认标题到 URL，语言切换时由 defaultCompName() 动态生成
-    if (!DEFAULT_TITLES.has(state.compName)) {
-        params.set('comp', state.compName);
-    }
+    params.set('comp', state.compName);
 
     for (var i = 0; i < state.names.length; i++) {
         params.set('n' + i, state.names[i]);
