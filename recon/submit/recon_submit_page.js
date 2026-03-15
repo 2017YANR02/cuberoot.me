@@ -687,8 +687,32 @@
             isLongPress = false;
             hidePopup();
 
-            // NOTE: 短按处理——与之前逻辑相同
-            if (key === 'dismiss') return;
+            // NOTE: 短按处理
+            if (key === 'switch') {
+                // NOTE: 🌐——切换魔方符号页 ↔ QWERTY 页
+                var page0 = document.getElementById('vkb-page-0');
+                var page1 = document.getElementById('vkb-page-1');
+                var show1 = page1.style.display === 'none';
+                page0.style.display = show1 ? 'none' : '';
+                page1.style.display = show1 ? '' : 'none';
+                return;
+            }
+
+            if (key === 'shift') {
+                // NOTE: ⇧——切换 QWERTY 页字母按键大小写
+                var page1El = document.getElementById('vkb-page-1');
+                var isUpper = btn.classList.toggle('vkb-shift-on');
+                page1El.querySelectorAll('button[data-key]').forEach(function (b) {
+                    var k = b.dataset.key;
+                    if (/^[a-zA-Z]$/.test(k)) {
+                        var nk = isUpper ? k.toUpperCase() : k.toLowerCase();
+                        b.dataset.key = nk;
+                        b.textContent = nk;
+                    }
+                });
+                return;
+            }
+
             // NOTE: 禁用态按键不响应
             if (btn.classList.contains('vkb-disabled')) return;
 

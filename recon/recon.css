@@ -2206,3 +2206,9 @@ tr.detail-row td {
     opacity: 0.3;
     pointer-events: none;
 }
+
+/* NOTE: Shift 激活态——白底深色文字提示大写模式 */
+.vkb-shift-on {
+    background: #fff !important;
+    color: #333 !important;
+}
