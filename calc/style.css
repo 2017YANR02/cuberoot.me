@@ -420,7 +420,7 @@ audio, video {
 
     .name-cell {
         width: auto;
-        flex: 0 0 70px;
+        flex: 0 0 55px;
         padding: 6px 2px;
         font-size: 13px;
     }
