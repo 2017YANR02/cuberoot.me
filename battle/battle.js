@@ -38,6 +38,20 @@ const KEY_MAP = {
     "Enter": 1,   // Enter → Player 2 (top)
 };
 
+/**
+ * NOTE: 从 URL ?lang= 参数获取当前语言（lessons.md 教训：不要假设 data-lang 属性存在）
+ */
+function getLocale() {
+    return new URLSearchParams(window.location.search).get('lang') || 'en';
+}
+
+// NOTE: 双语文本映射（JS 动态设置的文本，无法用 data-i18n 属性）
+const I18N_TEXT = {
+    hide_time:  { en: "🙈 Hide time when solving", zh: "🙈 计时时隐藏时间" },
+    show_time:  { en: "👁️ Show time when solving", zh: "👁️ 计时时显示时间" },
+    generating: { en: "Generating scramble...",    zh: "正在生成打乱..." },
+};
+
 // ===== 状态 =====
 
 const state = {
@@ -431,9 +445,10 @@ function deleteLast() {
 function toggleShowTime() {
     state.showTime = !state.showTime;
     localStorage.setItem(LS_PREFIX + "showTime", state.showTime);
-    // 更新按钮文字
-    document.getElementById("btn-toggle-time").textContent =
-        state.showTime ? "🙈 Hide time when solving" : "👁️ Show time when solving";
+    // NOTE: 更新按钮文字（根据当前语言）
+    const lang = getLocale();
+    const key = state.showTime ? 'hide_time' : 'show_time';
+    document.getElementById("btn-toggle-time").textContent = I18N_TEXT[key][lang];
     closeSettings();
 }
 
@@ -526,8 +541,9 @@ function renderTime(playerId) {
 }
 
 function renderScramble() {
+    const lang = getLocale();
     const text = state.scrambleLoading
-        ? '<span class="loading">Generating scramble...</span>'
+        ? `<span class="loading">${I18N_TEXT.generating[lang]}</span>`
         : (state.scramble || "");
 
     for (let i = 0; i < 2; i++) {
@@ -574,9 +590,10 @@ function buildPuzzleGrid() {
 
 function openSettings() {
     dom.settingsOverlay.classList.add("visible");
-    // 更新按钮文字
-    document.getElementById("btn-toggle-time").textContent =
-        state.showTime ? "🙈 Hide time when solving" : "👁️ Show time when solving";
+    // NOTE: 更新按钮文字（根据当前语言）
+    const lang = getLocale();
+    const key = state.showTime ? 'hide_time' : 'show_time';
+    document.getElementById("btn-toggle-time").textContent = I18N_TEXT[key][lang];
     // 更新 delete last 按钮状态
     const canDelete = state.players[0].hasFinished && state.players[1].hasFinished;
     document.getElementById("btn-delete-last").disabled = !canDelete;

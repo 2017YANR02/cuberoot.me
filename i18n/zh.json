@@ -156,6 +156,11 @@
         "title": "对战计时器",
         "settings": "设置",
         "puzzle": "项目",
-        "close": "关闭"
+        "close": "关闭",
+        "generating": "正在生成打乱...",
+        "hide_time": "🙈 计时时隐藏时间",
+        "show_time": "👁️ 计时时显示时间",
+        "delete_last": "↩️ 删除上一次",
+        "reset": "🗑️ 重置会话"
     }
 }
