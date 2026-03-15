@@ -62,6 +62,19 @@ export function init(container) {
     avgGroup = createSvgElement('g', { class: 'chart-avgs' });
     topTextGroup = createSvgElement('g', { class: 'chart-top-text' });
 
+    // NOTE: 定义 SVG 滤镜 — 柱顶标签的柔和白色阴影
+    var defs = createSvgElement('defs', {});
+    var filter = createSvgElement('filter', {
+        id: 'barLabelShadow', x: '-20%', y: '-20%', width: '140%', height: '140%',
+    });
+    // 多层白色模糊阴影，模拟柔和光晕
+    var shadow = createSvgElement('feDropShadow', {
+        dx: 0, dy: 0, stdDeviation: 2, 'flood-color': '#fff', 'flood-opacity': 0.9,
+    });
+    filter.appendChild(shadow);
+    defs.appendChild(filter);
+    svgEl.appendChild(defs);
+
     svgEl.appendChild(gridGroup);
     svgEl.appendChild(barGroup);
     svgEl.appendChild(statsGroup);
@@ -256,10 +269,17 @@ function drawBars() {
             resolveOverlaps(colLabels, 4);
         }
 
-        // 渲染标签（绘制到 topTextGroup 层，确保文字不被其他图形遮挡）
+        // NOTE: 渲染标签 — 使用 feDropShadow 滤镜提供柔和白色阴影，在柱子上也清晰可读
         for (var li = 0; li < colLabels.length; li++) {
             var lb = colLabels[li];
-            addText(topTextGroup, lb.x, lb.y, lb.text, lb.col, LABEL_FONT, 'middle');
+            var el = createSvgElement('text', {
+                x: lb.x, y: lb.y, fill: lb.col,
+                'font-size': LABEL_FONT + 'px', 'font-family': 'Helvetica',
+                'font-weight': 'bold', 'text-anchor': 'middle',
+                filter: 'url(#barLabelShadow)',
+            });
+            el.textContent = lb.text;
+            topTextGroup.appendChild(el);
         }
     }
 }
