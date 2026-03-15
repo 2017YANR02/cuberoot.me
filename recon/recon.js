@@ -345,7 +345,8 @@
             // NOTE: 计算并渲染统计摘要
             var statsEl = document.getElementById('user-profile-stats');
             if (statsEl && userRecons.length > 0) {
-                var total = userRecons.length;
+                // NOTE: 统计该用户作为复盘者（reconer）贡献的复盘数量
+                var total = userRecons.filter(function (s) { return s.reconerId === wcaId; }).length;
 
                 // NOTE: 三阶最快成绩（排除 DNF/DNS/null，只看 3×3 项目）
                 var validTimes = userRecons
@@ -370,11 +371,19 @@
 
                 var fastestDisplay = fastest != null ? fastest.toFixed(2) : '-';
 
+                // NOTE: 统计该用户作为添加者的复盘数量
+                var addedCount = userRecons.filter(function (s) { return s.addedById === wcaId; }).length;
+
                 statsEl.innerHTML =
                     '<div class="user-profile-stat-item">' +
                         '<div class="user-profile-stat-value">' + total + '</div>' +
                         '<div class="user-profile-stat-label" data-i18n-en="Recons" data-i18n-zh="复盘">' +
                             (isZh ? '复盘' : 'Recons') + '</div>' +
+                    '</div>' +
+                    '<div class="user-profile-stat-item">' +
+                        '<div class="user-profile-stat-value">' + addedCount + '</div>' +
+                        '<div class="user-profile-stat-label" data-i18n-en="Added" data-i18n-zh="添加">' +
+                            (isZh ? '添加' : 'Added') + '</div>' +
                     '</div>' +
                     '<div class="user-profile-stat-item">' +
                         '<div class="user-profile-stat-value">' + fastestDisplay + '</div>' +
