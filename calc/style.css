@@ -133,6 +133,11 @@ body {
 
 /* ── SVG 图表容器 ── */
 
+#chart-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
 .hth-chart {
     display: block;
     width: 100%;
@@ -415,6 +420,12 @@ audio, video {
 
 /* NOTE: 输入格改弹性宽度，手机端自动缩小 */
 @media (max-width: 640px) {
+    /* NOTE: 图表撑满屏幕左右 — 用负边距抵消 .hth-app 的 8px padding */
+    #chart-container {
+        margin-left: -8px;
+        margin-right: -8px;
+    }
+
     .input-row {
         gap: 3px;
     }

@@ -103,6 +103,25 @@ export function render() {
     drawBars();
     drawStats();
     drawAverages();
+
+    // NOTE: 根据实际渲染内容动态调整 viewBox，确保图表居中
+    updateViewBox();
+}
+
+// NOTE: 动态 viewBox — padding 按内容尺寸比例计算，避免硬编码
+function updateViewBox() {
+    var bbox = svgEl.getBBox();
+    // 空数据时 bbox 可能很小，保底最小尺寸防止图表爆大
+    var w = Math.max(bbox.width, 1000);
+    var h = Math.max(bbox.height, 700);
+    // 保持内容居中：以 bbox 中心为基准扩展到保底尺寸
+    var cx = bbox.x + bbox.width / 2;
+    var cy = bbox.y + bbox.height / 2;
+    var padX = w * 0.03;
+    var padY = h * 0.03;
+    svgEl.setAttribute('viewBox',
+        (cx - w / 2 - padX) + ' ' + (cy - h / 2 - padY) + ' ' +
+        (w + padX * 2) + ' ' + (h + padY * 2));
 }
 
 // ── 图表参数计算（等价于原 setGridParameters） ──
