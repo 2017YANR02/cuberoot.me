@@ -2299,3 +2299,17 @@ tr.detail-row td {
     background: #007AFF !important;
     color: #fff !important;
 }
+
+/* NOTE: 手势说明条——显示在键盘下方，小字灰色 */
+.vkb-gesture-hint {
+    margin: 6px 0 0 0;
+    padding: 0;
+    text-align: center;
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.3);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px;
+    line-height: 1.5;
+}
