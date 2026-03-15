@@ -8,26 +8,27 @@
 // NOTE: 打乱生成由本地 csTimer scramble module 提供（scramble_module.js, GPL-3.0 from cs0x7f）
 // scrMgr 全局对象由 scramble_module.js 暴露，包含 scramblers[type](type, len, state) API
 
-// NOTE: cubing.js event ID → csTimer scrambler type 映射
+// NOTE: cubing.js event ID → [csTimer scrambler type, 默认步数] 映射
+// 步数来源：csTimer 的 scrdata 定义（WCA 标准值）
 const EVENT_TO_CSTIMER = {
-    '222':    '222so',    // 2x2 random-state
-    '333':    '333',      // 3x3 random-state (Kociemba)
-    '444':    '444wca',   // 4x4 WCA random-state
-    '555':    '555wca',   // 5x5 WCA
-    '666':    '666wca',   // 6x6 WCA
-    '777':    '777wca',   // 7x7 WCA
-    '333oh':  '333',      // OH 用 3x3 打乱
-    '333bf':  '333',      // 3BLD 用 3x3 打乱
-    '444bf':  '444wca',   // 4BLD 用 4x4 打乱
-    '555bf':  '555wca',   // 5BLD 用 5x5 打乱
-    '333mbf': '333',      // MBLD 用 3x3 打乱
-    'clock':  'clkwca',   // Clock WCA
-    'minx':   'mgmp',     // Megaminx WCA
-    'pyram':  'pyrso',    // Pyraminx random-state
-    'skewb':  'skbso',    // Skewb random-state
-    'sq1':    'sqrs',     // Square-1 random-state
-    'fto':    'ftoso',    // FTO random-state
-    'kilominx': 'klmso',  // Kilominx random-state
+    '222':      ['222so',  0],   // 2x2 random-state（步数由求解器决定）
+    '333':      ['333',    0],   // 3x3 random-state (Kociemba)
+    '444':      ['444wca', 40],  // 4x4 WCA random-state, 40 步
+    '555':      ['555wca', 60],  // 5x5 WCA, 60 步
+    '666':      ['666wca', 80],  // 6x6 WCA, 80 步
+    '777':      ['777wca', 100], // 7x7 WCA, 100 步
+    '333oh':    ['333',    0],   // OH 用 3x3 打乱
+    '333bf':    ['333',    0],   // 3BLD 用 3x3 打乱
+    '444bf':    ['444wca', 40],  // 4BLD 用 4x4 打乱
+    '555bf':    ['555wca', 60],  // 5BLD 用 5x5 打乱
+    '333mbf':   ['333',    0],   // MBLD 用 3x3 打乱
+    'clock':    ['clkwca', 0],   // Clock WCA
+    'minx':     ['mgmp',   70],  // Megaminx WCA (Pochmann), 70 步
+    'pyram':    ['pyrso',  0],   // Pyraminx random-state
+    'skewb':    ['skbso',  0],   // Skewb random-state
+    'sq1':      ['sqrs',   0],   // Square-1 random-state
+    'fto':      ['ftoso',  0],   // FTO random-state
+    'kilominx': ['klmso',  0],   // Kilominx random-state
 };
 
 // ===== 常量 =====
@@ -216,9 +217,10 @@ function loadNewScramble() {
     renderScramble();
 
     try {
-        const csType = EVENT_TO_CSTIMER[state.puzzleId] || '333';
+        const mapping = EVENT_TO_CSTIMER[state.puzzleId] || ['333', 0];
+        const [csType, defaultLen] = mapping;
         // NOTE: scrMgr.scramblers[type] 同步返回 HTML 格式字符串，toTxt() 转为纯文本
-        const rawScramble = scrMgr.scramblers[csType](csType, 0);
+        const rawScramble = scrMgr.scramblers[csType](csType, defaultLen);
         state.scramble = scrMgr.toTxt(rawScramble);
     } catch (err) {
         console.error('Scramble generation failed:', err);
