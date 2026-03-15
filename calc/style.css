@@ -453,7 +453,8 @@ video {
     }
 
     /* NOTE: 点击时展开，允许输入名字 */
-    .name-cell:focus {
+    .name-cell:focus,
+    .name-cell:not(:placeholder-shown) {
         flex: 0 0 120px;
         font-size: 13px;
         padding: 6px 4px;
