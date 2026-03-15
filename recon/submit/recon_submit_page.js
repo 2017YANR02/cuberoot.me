@@ -552,7 +552,12 @@
             'R': ['R', "R'", 'R2', 'r'],
             'L': ['L', "L'", 'L2', 'l'],
             '/': ['/', ' // '],
-            '2': ['1', '2', '3', '4', '5', '6']
+            '2': ['1', '2', '3', '4', '5', '6'],
+            // --- 触发器变体：左/右对应 ---
+            'trigger-sexy': ['R U R\' U\'', 'L\' U\' L U'],
+            'trigger-sledge': ['R\' F R F\'', 'L F\' L\' F'],
+            'trigger-unsexy': ['R U\' R\' U', 'L\' U L U\''],
+            'trigger-hedge': ['F R\' F\' R', 'F\' L F L\'']
         };
 
         // NOTE: 修饰键（' 和 w）——光标前无英文字母时禁用
@@ -683,9 +688,9 @@
 
         // NOTE: pointerdown——统一处理桌面鼠标和移动端触摸
         vkbEl.addEventListener('pointerdown', function (e) {
-            e.preventDefault();
             var btn = e.target.closest('button[data-key]');
             if (!btn) return;
+            e.preventDefault();
 
             activeBtn = btn;
             isLongPress = false;
@@ -783,10 +788,11 @@
                     updateModifierState();
                 }
             } else {
-                var ch = (key === 'enter') ? '\n' : key;
+                var ch = btn.dataset.val || ((key === 'enter') ? '\n' : key);
                 vkbInsert(ch);
                 // NOTE: 单次 shift 模式——输入一个字母后自动回小写
                 if (/^[a-zA-Z]$/.test(key)) resetShiftIfSingle();
+                updateModifierState();
             }
         });
 
