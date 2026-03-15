@@ -92,6 +92,7 @@ ruiminyan.github.io/
 ├── manifest.json               # PWA 清单
 │
 │── 📌 本地维护（不受同步影响）
+├── _sync_cstimer.ps1          # csTimer 上游同步脚本：git pull → Closure Compiler 构建 → 复制产物
 ├── battle/                    # 1v1 对战计时器（源自 MatteoColombo/cube_challenge_timer，JS 重写）
 │   ├── index.html             # 页面结构（双人上下布局 + 设置弹窗）
 │   ├── battle.js              # 核心逻辑（状态机 + csTimer 本地打乱 + 罚时 + 胜负）
