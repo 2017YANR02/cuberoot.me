@@ -32,6 +32,12 @@ const MIN_SOLVE_TIME = 100;
 // localStorage 键名前缀，避免和其他页面冲突
 const LS_PREFIX = "battle_";
 
+// NOTE: 桌面端键盘映射 — Player 1(下方)=空格, Player 2(上方)=Enter
+const KEY_MAP = {
+    " ": 0,       // Space → Player 1 (bottom)
+    "Enter": 1,   // Enter → Player 2 (top)
+};
+
 // ===== 状态 =====
 
 const state = {
@@ -120,6 +126,10 @@ function init() {
         });
     }
 
+    // NOTE: 桌面端键盘控制 — 空格键(Player 1) / Enter键(Player 2)
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("keyup", handleKeyUp);
+
     // 设置菜单
     buildPuzzleGrid();
     document.getElementById("btn-settings").addEventListener("click", openSettings);
@@ -165,17 +175,14 @@ async function loadNewScramble() {
     renderScramble();
 }
 
-// ===== 触摸事件处理（状态机核心） =====
+// ===== 状态机核心（通用逻辑，触摸和键盘共用） =====
 
-function handlePointerDown(playerId, e) {
+/**
+ * 玩家按下（触摸/键盘）时的通用状态转换
+ * @returns {boolean} 是否成功处理
+ */
+function playerDown(playerId) {
     const p = state.players[playerId];
-
-    // NOTE: 如果此区域已经有一个 pointerId 绑定（说明已经有手指在上面），忽略
-    if (p.pointerId !== null) return;
-
-    // 捕获此 pointer，确保后续事件不丢失
-    dom.areas[playerId].setPointerCapture(e.pointerId);
-    p.pointerId = e.pointerId;
 
     if (p.isTiming) {
         // --- 按下停止计时 ---
@@ -189,20 +196,22 @@ function handlePointerDown(playerId, e) {
             renderTime(playerId);
             checkBothFinished();
         }
+        return true;
     } else if (!p.hasFinished && !p.canStart && state.scramble) {
         // --- 按下准备 ---
         p.isReady = true;
         renderArea(playerId);
         checkBothReady();
+        return true;
     }
+    return false;
 }
 
-function handlePointerUp(playerId, e) {
+/**
+ * 玩家松开（触摸/键盘）时的通用状态转换
+ */
+function playerUp(playerId) {
     const p = state.players[playerId];
-
-    // NOTE: 只响应匹配的 pointerId
-    if (p.pointerId !== e.pointerId) return;
-    p.pointerId = null;
 
     if (p.canStart) {
         // --- 松手开始计时 ---
@@ -213,14 +222,68 @@ function handlePointerUp(playerId, e) {
         p.penalty = PENALTY.OK;
         renderArea(playerId);
         startTimerAnimation(playerId);
-
-        // 检查双方是否都开始了（用于取消另一方的 ready 状态显示）
         checkBothTiming();
     } else if (p.isReady && !p.isTiming) {
         // --- 在 ready 状态松手（还没变绿就松了）= 取消准备 ---
         p.isReady = false;
         renderArea(playerId);
     }
+}
+
+// ===== 触摸事件处理 =====
+
+function handlePointerDown(playerId, e) {
+    const p = state.players[playerId];
+
+    // NOTE: 如果此区域已经有一个 pointerId 绑定，忽略
+    if (p.pointerId !== null) return;
+
+    // 捕获此 pointer，确保后续事件不丢失
+    dom.areas[playerId].setPointerCapture(e.pointerId);
+    p.pointerId = e.pointerId;
+
+    playerDown(playerId);
+}
+
+function handlePointerUp(playerId, e) {
+    const p = state.players[playerId];
+
+    // NOTE: 只响应匹配的 pointerId
+    if (p.pointerId !== e.pointerId) return;
+    p.pointerId = null;
+
+    playerUp(playerId);
+}
+
+// ===== 键盘事件处理（桌面端） =====
+
+// NOTE: 跟踪按键是否已按下，防止 keydown 事件重复触发（系统按键重复）
+const keyPressed = {};
+
+function handleKeyDown(e) {
+    // NOTE: 设置面板打开时不响应键盘
+    if (dom.settingsOverlay.classList.contains("visible")) return;
+
+    const playerId = KEY_MAP[e.key];
+    if (playerId === undefined) return;
+
+    e.preventDefault();
+
+    // NOTE: 防止系统按键重复（长按时会连续触发 keydown）
+    if (keyPressed[e.key]) return;
+    keyPressed[e.key] = true;
+
+    playerDown(playerId);
+}
+
+function handleKeyUp(e) {
+    const playerId = KEY_MAP[e.key];
+    if (playerId === undefined) return;
+
+    e.preventDefault();
+    keyPressed[e.key] = false;
+
+    playerUp(playerId);
 }
 
 function checkBothReady() {
