@@ -67,6 +67,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('clear-all').addEventListener('click', () => {
         resetAll();
         history.replaceState(null, '', window.location.pathname);
+        // NOTE: 清空后自动激活第一个输入格
+        inputGrid.navigateTo(0, 0);
     });
 
     // ── 随机填充 ──
