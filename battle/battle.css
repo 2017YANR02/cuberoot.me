@@ -119,6 +119,9 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 /* NOTE: 正在计时时隐藏打乱，留出更多空间给计时数字 */
@@ -149,6 +152,10 @@ body {
     /* NOTE: 深色半透明背景让白色配色的 SVG 更醒目 */
     background: rgba(255, 255, 255, 0.05);
     padding: 4px;
+    /* NOTE: 完全禁止对图片的交互（拖拽、长按菜单、选中），所有触摸事件直接穿透给底层的 player-area */
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-drag: none;
 }
 
 
