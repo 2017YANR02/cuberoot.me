@@ -49,12 +49,6 @@ layout: default
                 <div id="rf-vkb" class="vkb">
                     <!-- NOTE: 第 0 页——魔方公式符号 -->
                     <div class="vkb-page" id="vkb-page-0">
-                        <div class="vkb-triggers">
-                            <button type="button" class="vkb-trigger-btn" data-key="trigger-sexy" data-val="R U R' U' ">sexy</button>
-                            <button type="button" class="vkb-trigger-btn" data-key="trigger-unsexy" data-val="R U' R' U ">unsexy</button>
-                            <button type="button" class="vkb-trigger-btn" data-key="trigger-sledge" data-val="R' F R F' ">sledge</button>
-                            <button type="button" class="vkb-trigger-btn" data-key="trigger-hedge" data-val="F R' F' R ">hedge</button>
-                        </div>
                         <div class="vkb-row">
                             <button type="button" data-key="U">U</button>
                             <button type="button" data-key="D">D</button>
@@ -86,6 +80,13 @@ layout: default
                             <button type="button" data-key="enter" class="vkb-return">return</button>
                             <button type="button" data-key="backspace" class="vkb-fn vkb-fn-del"><svg width="24" height="16" viewBox="0 0 33 22"><use href="/assets/icons.svg#icon-backspace"/></svg></button>
                         </div>
+                        <!-- NOTE: 触发器（位于键盘第 0 页底部） -->
+                        <div class="vkb-triggers" style="padding-top: 4px;">
+                            <button type="button" class="vkb-trigger-btn" data-key="trigger-sexy" data-val="R U R' U' ">sexy</button>
+                            <button type="button" class="vkb-trigger-btn" data-key="trigger-unsexy" data-val="R U' R' U ">unsexy</button>
+                            <button type="button" class="vkb-trigger-btn" data-key="trigger-sledge" data-val="R' F R F' ">sledge</button>
+                            <button type="button" class="vkb-trigger-btn" data-key="trigger-hedge" data-val="F R' F' R ">hedge</button>
+                        </div>
                     </div>
                     <!-- NOTE: 第 1 页——QWERTY 英文键盘 -->
                     <div class="vkb-page" id="vkb-page-1" style="display:none">
@@ -102,6 +103,7 @@ layout: default
                             <button type="button" data-key="p">p</button>
                         </div>
                         <div class="vkb-row">
+                            <div class="vkb-spacer" style="flex:0.5"></div>
                             <button type="button" data-key="a">a</button>
                             <button type="button" data-key="s">s</button>
                             <button type="button" data-key="d">d</button>
@@ -111,6 +113,7 @@ layout: default
                             <button type="button" data-key="j">j</button>
                             <button type="button" data-key="k">k</button>
                             <button type="button" data-key="l">l</button>
+                            <div class="vkb-spacer" style="flex:0.5"></div>
                         </div>
                         <div class="vkb-row">
                             <button type="button" data-key="shift" class="vkb-fn vkb-shift"><svg width="20" height="20" viewBox="0 0 24 24"><use href="/assets/icons.svg#icon-shift-off"/></svg></button>
