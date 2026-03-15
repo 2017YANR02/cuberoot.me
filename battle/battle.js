@@ -336,14 +336,20 @@ function playerUp(playerId) {
     const p = state.players[playerId];
 
     if (p.canStart) {
-        // --- 松手开始计时 ---
-        p.canStart = false;
-        p.isTiming = true;
-        p.isReady = false;
-        p.startTime = performance.now();
-        p.penalty = PENALTY.OK;
-        renderArea(playerId);
-        startTimerAnimation(playerId);
+        // --- 第一名玩家松手触发，强制双方同时开始计时 ---
+        const startTime = performance.now();
+        for (let i = 0; i < 2; i++) {
+            const player = state.players[i];
+            if (player.canStart) {
+                player.canStart = false;
+                player.isTiming = true;
+                player.isReady = false;
+                player.startTime = startTime;
+                player.penalty = PENALTY.OK;
+                renderArea(i);
+                startTimerAnimation(i);
+            }
+        }
         checkBothTiming();
     } else if (p.isReady && !p.isTiming && !p.hasFinished) {
         // NOTE: 对方未就绪时松手 → 恢复 idle（黑色），与上游行为一致
