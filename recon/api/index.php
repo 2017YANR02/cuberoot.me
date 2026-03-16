@@ -20,7 +20,7 @@ $allowedOrigins = [
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 if (in_array($origin, $allowedOrigins)) {
     header('Access-Control-Allow-Origin: ' . $origin);
-    header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+    header('Access-Control-Allow-Methods: GET, POST, PUT, OPTIONS');
     header('Access-Control-Allow-Headers: Content-Type, Authorization');
 }
 
@@ -89,6 +89,29 @@ if (!file_exists($migrationFlagComments)) {
     }
     catch (Exception $e) {
         @error_log('Migration comments table failed: ' . $e->getMessage());
+    }
+}
+
+// NOTE: 一次性自动迁移——创建 timer_sessions 表（Battle Timer 云同步）
+$migrationFlagTimer = __DIR__ . '/data/.migration_timer_sessions';
+if (!file_exists($migrationFlagTimer)) {
+    try {
+        getDb()->exec("
+            CREATE TABLE IF NOT EXISTS timer_sessions (
+                id         INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+                wca_id     VARCHAR(20)  NOT NULL,
+                session_id VARCHAR(50)  NOT NULL,
+                puzzle_id  VARCHAR(20)  NOT NULL,
+                solves     JSON         NOT NULL,
+                updated_at INT UNSIGNED NOT NULL,
+                UNIQUE KEY uk_user_session_puzzle (wca_id, session_id, puzzle_id),
+                INDEX idx_wca_id (wca_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+        @file_put_contents($migrationFlagTimer, date('Y-m-d H:i:s'));
+    }
+    catch (Exception $e) {
+        @error_log('Migration timer_sessions table failed: ' . $e->getMessage());
     }
 }
 
@@ -1245,6 +1268,67 @@ switch ($action) {
         $stmt = $db->prepare("DELETE FROM comments WHERE id = ?");
         $stmt->execute([$commentId]);
         echo json_encode(['ok' => true]);
+        break;
+
+    // ==================== Timer 云同步 ====================
+
+    case 'timerSync':
+        // NOTE: Battle Timer 成绩云同步
+        // GET: 拉取当前用户所有 session 的成绩
+        // POST: 写入/覆盖成绩（按 wca_id + session_id + puzzle_id 为 key）
+        header('Cache-Control: no-cache, no-store, must-revalidate');
+        $authUser = requireAuth();
+        $wcaId = $authUser['wcaId'];
+
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            // NOTE: 拉取当前用户所有成绩
+            $stmt = $db->prepare(
+                "SELECT session_id, puzzle_id, solves, updated_at FROM timer_sessions WHERE wca_id = ?"
+            );
+            $stmt->execute([$wcaId]);
+
+            $results = [];
+            while ($row = $stmt->fetch()) {
+                $results[] = [
+                    'sessionId' => $row['session_id'],
+                    'puzzleId'  => $row['puzzle_id'],
+                    'solves'    => json_decode($row['solves'], true),
+                    'updatedAt' => (int)$row['updated_at'],
+                ];
+            }
+            echo json_encode($results);
+        } else {
+            // NOTE: POST — 写入成绩（UPSERT）
+            checkRateLimit();
+            $body = getPostBody();
+            $sessionId = $body['sessionId'] ?? '';
+            $puzzleId  = $body['puzzleId']  ?? '';
+            $solves    = $body['solves']    ?? [];
+
+            if (!$sessionId || !$puzzleId) {
+                http_response_code(400);
+                echo json_encode(['error' => 'sessionId and puzzleId are required']);
+                break;
+            }
+
+            // NOTE: 防止单次 payload 过大（限 500KB JSON）
+            $solvesJson = json_encode($solves, JSON_UNESCAPED_UNICODE);
+            if (strlen($solvesJson) > 512000) {
+                http_response_code(413);
+                echo json_encode(['error' => 'Payload too large (max 500KB)']);
+                break;
+            }
+
+            $now = time();
+            $stmt = $db->prepare(
+                "INSERT INTO timer_sessions (wca_id, session_id, puzzle_id, solves, updated_at)
+                 VALUES (?, ?, ?, ?, ?)
+                 ON DUPLICATE KEY UPDATE solves = VALUES(solves), updated_at = VALUES(updated_at)"
+            );
+            $stmt->execute([$wcaId, $sessionId, $puzzleId, $solvesJson, $now]);
+
+            echo json_encode(['ok' => true, 'updatedAt' => $now]);
+        }
         break;
 
     default:
