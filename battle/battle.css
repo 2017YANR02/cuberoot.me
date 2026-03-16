@@ -620,3 +620,77 @@ input:checked + .slider:before {
     font-style: normal;
     font-display: swap;
 }
+
+/* ==========================================================
+   背景自定义控件
+   ========================================================== */
+
+.bg-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.bg-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* NOTE: 原生 color input 样式修正 — 去掉默认边框和背景 */
+.bg-color-picker {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 2px solid #444;
+    border-radius: 6px;
+    cursor: pointer;
+    background: none;
+}
+
+.bg-upload-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 2px solid #444;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+}
+
+.bg-upload-label:hover {
+    border-color: #888;
+}
+
+/* NOTE: 隐藏原生 file input */
+.bg-file-input {
+    display: none;
+}
+
+.bg-reset-btn {
+    width: 32px;
+    height: 32px;
+    border: 2px solid #444;
+    border-radius: 6px;
+    background: none;
+    color: #888;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+}
+
+.bg-reset-btn:hover {
+    border-color: #e53935;
+    color: #e53935;
+}
+
+.bg-error-msg {
+    font-size: 0.75rem;
+    color: #ef5350;
+    margin-top: 4px;
+    text-align: center;
+}
