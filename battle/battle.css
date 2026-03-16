@@ -66,13 +66,15 @@ body {
     transform: rotate(180deg);
 }
 
-/* --- 状态背景色 --- */
-.player-area.state-ready {
-    background-color: #b71c1c;
+/* NOTE: 红灯/绿灯状态 — 通过时间文字颜色传达，不覆盖自定义背景 */
+.player-area.state-ready .time-display {
+    color: #ef5350;
+    text-shadow: 0 0 20px rgba(239, 83, 80, 0.6);
 }
 
-.player-area.state-can-start {
-    background-color: #2e7d32;
+.player-area.state-can-start .time-display {
+    color: #66bb6a;
+    text-shadow: 0 0 20px rgba(102, 187, 106, 0.6);
 }
 
 /* ==========================================================
