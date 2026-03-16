@@ -103,8 +103,10 @@ const state = {
     showTime: localStorage.getItem(LS_PREFIX + "showTime") !== "false",
     // 是否显示打乱图
     showImage: localStorage.getItem(LS_PREFIX + "showImage") !== "false",
-    // WCA 观察倒计时（15秒标准观察）
-    inspection: localStorage.getItem(LS_PREFIX + "inspection") === "true",
+    // WCA 观察倒计时时长（秒）：0=OFF, 8, 15(WCA), 9999=∞
+    inspectionTime: parseInt(localStorage.getItem(LS_PREFIX + "inspectionTime")) || 0,
+    // 观察语音提示（8s/12s）
+    voice: localStorage.getItem(LS_PREFIX + "voice") !== "false",
     // 当前打乱图字号缩放比例
     scrambleScale: parseFloat(localStorage.getItem(LS_PREFIX + "scrambleScale")) || 1.0,
     // 当前打乱
@@ -162,7 +164,8 @@ const dom = {
     puzzleGrid: null,
     toggleImage: null,
     toggleMode: null,          // Solo/1v1 模式切换
-    toggleInspection: null,    // WCA 观察倒计时开关
+    selectInspection: null,    // 观察时间下拉
+    toggleVoice: null,         // 语音提示开关
     sizeSlider: null,
     // NOTE: 历史面板
     historyOverlay: null,
@@ -201,7 +204,8 @@ function init() {
     dom.puzzleGrid = document.getElementById("puzzle-grid");
     dom.toggleImage = document.getElementById("toggle-image");
     dom.toggleMode = document.getElementById("toggle-mode");
-    dom.toggleInspection = document.getElementById("toggle-inspection");
+    dom.selectInspection = document.getElementById("select-inspection");
+    dom.toggleVoice = document.getElementById("toggle-voice");
     dom.sizeSlider = document.getElementById("scramble-size-slider");
     // NOTE: 历史面板引用
     dom.historyOverlay = document.getElementById("history-overlay");
@@ -278,11 +282,18 @@ function init() {
         applyMode();
     });
 
-    // NOTE: WCA Inspection 开关
-    dom.toggleInspection.checked = state.inspection;
-    dom.toggleInspection.addEventListener("change", (e) => {
-        state.inspection = e.target.checked;
-        localStorage.setItem(LS_PREFIX + 'inspection', state.inspection);
+    // NOTE: WCA Inspection 时长选择
+    dom.selectInspection.value = state.inspectionTime.toString();
+    dom.selectInspection.addEventListener("change", (e) => {
+        state.inspectionTime = parseInt(e.target.value);
+        localStorage.setItem(LS_PREFIX + 'inspectionTime', state.inspectionTime);
+    });
+
+    // NOTE: 观察语音提示开关
+    dom.toggleVoice.checked = state.voice;
+    dom.toggleVoice.addEventListener("change", (e) => {
+        state.voice = e.target.checked;
+        localStorage.setItem(LS_PREFIX + 'voice', state.voice);
     });
 
     // 初始化 Show Image 开关状态和事件
@@ -498,7 +509,7 @@ function playerUp(playerId) {
         // === Solo 模式 ===
         if (p.canStart) {
             // NOTE: inspection 开启时，松手开始观察倒计时
-            if (state.inspection && !p.isInspecting && !p.isTiming) {
+            if (state.inspectionTime > 0 && !p.isInspecting && !p.isTiming) {
                 p.canStart = false;
                 p.isReady = false;
                 startInspection(playerId);
@@ -1443,13 +1454,19 @@ function applyMode() {
 
 /**
  * NOTE: 参考 DCTimer DCTTimer.java L74-140
- * 15 秒标准观察：>15s 自动 +2，>17s 自动 DNF
+ * 可配置观察时长（8s/15s/∞），超时自动 +2/DNF
+ * 语音提示在 8s 和 12s 时播报（如果 state.voice 开启）
  */
 function startInspection(playerId) {
     const p = state.players[playerId];
+    const limit = state.inspectionTime; // 秒
     p.isInspecting = true;
     p.inspectionStart = performance.now();
     p.inspectionPenalty = null;
+
+    // NOTE: 语音播报标记，防止重复触发
+    let voiced8 = false;
+    let voiced12 = false;
 
     // NOTE: 添加观察状态 CSS class
     dom.areas[playerId].classList.add('state-inspecting');
@@ -1457,32 +1474,64 @@ function startInspection(playerId) {
     // NOTE: 每 100ms 更新倒计时显示
     p.inspectionTimer = setInterval(() => {
         const elapsed = (performance.now() - p.inspectionStart) / 1000;
-        const remaining = Math.ceil(15 - elapsed);
 
-        if (elapsed >= 17) {
-            // >17s → 自动 DNF，立即停止观察
-            p.inspectionPenalty = 'dnf';
-            dom.times[playerId].textContent = 'DNF';
-            clearInspection(playerId);
-            // 自动开始计时并立即完成（DNF 结果）
-            p.isInspecting = false;
-            p.isReady = false;
-            p.canStart = false;
-            p.isTiming = false;
-            p.hasFinished = true;
-            p.time = 0;
-            p.penalty = PENALTY.DNF;
-            renderArea(playerId);
-            checkBothFinished();
-        } else if (elapsed >= 15) {
-            // 15-17s → +2 罚时标记
-            p.inspectionPenalty = '+2';
-            dom.times[playerId].textContent = '+2';
+        // NOTE: 语音提示（8s 和 12s 时）
+        if (state.voice && elapsed >= 8 && !voiced8) {
+            voiced8 = true;
+            speakAlert('8 seconds');
+        }
+        if (state.voice && elapsed >= 12 && !voiced12) {
+            voiced12 = true;
+            speakAlert('12 seconds');
+        }
+
+        if (limit < 9999) {
+            // 有限时间模式（8s / 15s）
+            const remaining = Math.ceil(limit - elapsed);
+
+            if (elapsed >= limit + 2) {
+                // >limit+2s → 自动 DNF
+                p.inspectionPenalty = 'dnf';
+                dom.times[playerId].textContent = 'DNF';
+                clearInspection(playerId);
+                p.isInspecting = false;
+                p.isReady = false;
+                p.canStart = false;
+                p.isTiming = false;
+                p.hasFinished = true;
+                p.time = 0;
+                p.penalty = PENALTY.DNF;
+                renderArea(playerId);
+                checkBothFinished();
+            } else if (elapsed >= limit) {
+                // limit ~ limit+2s → +2 罚时标记
+                p.inspectionPenalty = '+2';
+                dom.times[playerId].textContent = '+2';
+            } else {
+                dom.times[playerId].textContent = remaining.toString();
+            }
         } else {
-            // 正常倒计时
-            dom.times[playerId].textContent = remaining.toString();
+            // NOTE: 无限模式 — 显示已用时间（上行计数）
+            dom.times[playerId].textContent = Math.floor(elapsed).toString();
         }
     }, 100);
+}
+
+/**
+ * NOTE: Web Speech API 语音播报（零依赖）
+ * 静默处理不支持的浏览器
+ */
+function speakAlert(text) {
+    try {
+        if ('speechSynthesis' in window) {
+            const u = new SpeechSynthesisUtterance(text);
+            u.rate = 1.2;
+            u.volume = 0.8;
+            speechSynthesis.speak(u);
+        }
+    } catch (_) {
+        // NOTE: 不支持时静默失败
+    }
 }
 
 /**
@@ -1501,8 +1550,35 @@ function clearInspection(playerId) {
 // ===== Solo 统计渲染 =====
 
 /**
+ * NOTE: Mo3 — 最近 3 次 Mean（不去最好最差，含 DNF 则 DNF）
+ */
+function computeMo3(history) {
+    if (history.length < 3) return null;
+    var last3 = history.slice(-3).map(getEffectiveTimeFromEntry);
+    if (last3.some(t => t === Infinity)) return Infinity;
+    return Math.round((last3[0] + last3[1] + last3[2]) / 3);
+}
+
+/**
+ * NOTE: 遍历所有历史，找出 session best average/ao5（最小非 null 非 Infinity 值）
+ * @param {Array} history - 完整历史
+ * @param {Function} computeFn - computeAo5 或 (h) => computeAverage(h, n)
+ * @returns {number|null} 最佳值，或 null
+ */
+function findBestAverage(history, computeFn) {
+    let best = null;
+    for (let i = computeFn === computeAo5 ? 5 : 12; i <= history.length; i++) {
+        const val = computeFn(history.slice(0, i));
+        if (val !== null && val !== Infinity) {
+            if (best === null || val < best) best = val;
+        }
+    }
+    return best;
+}
+
+/**
  * NOTE: Solo 模式下替代 renderAo5 — 在 ao5-display 位置显示更丰富的统计
- * 参考 DCTimer Stats.java sessionMean + sessionAvg
+ * 参考 DCTimer Stats.java sessionMean + sessionAvg + PB 标记
  */
 function renderSoloStats(playerId) {
     const el = dom.ao5s[playerId];
@@ -1521,7 +1597,6 @@ function renderSoloStats(playerId) {
 
     // Best / Worst
     const best = validTimes.length > 0 ? Math.min(...validTimes) : null;
-    const worst = validTimes.length > 0 ? Math.max(...validTimes) : null;
 
     // Session Mean（不含 DNF）
     const mean = validTimes.length > 0
@@ -1532,19 +1607,31 @@ function renderSoloStats(playerId) {
     let sdStr = '';
     if (validTimes.length > 1 && mean !== null) {
         const variance = validTimes.reduce((s, t) => s + (t - mean) * (t - mean), 0) / validTimes.length;
-        const sd = Math.sqrt(variance) / 1000; // 转为秒
+        const sd = Math.sqrt(variance) / 1000;
         sdStr = `σ=${sd.toFixed(2)}`;
     }
 
-    // Ao5 / Ao12 / Ao100
+    // Mo3 / Ao5 / Ao12 / Ao100
+    const mo3 = computeMo3(h);
     const ao5 = computeAo5(h);
     const ao12 = computeAverage(h, 12);
     const ao100 = computeAverage(h, 100);
 
+    // NOTE: Session best ao5/ao12 — 用于 PB 标记
+    const bestAo5 = findBestAverage(h, computeAo5);
+    const bestAo12 = findBestAverage(h, (sub) => computeAverage(sub, 12));
+
     // NOTE: 构建统计文本
     const parts = [];
-    if (ao5 !== null) parts.push(`ao5: ${ao5 === Infinity ? 'DNF' : formatTimePlain(ao5)}`);
-    if (ao12 !== null) parts.push(`ao12: ${ao12 === Infinity ? 'DNF' : formatTimePlain(ao12)}`);
+    if (mo3 !== null) parts.push(`mo3: ${mo3 === Infinity ? 'DNF' : formatTimePlain(mo3)}`);
+    if (ao5 !== null) {
+        const isPB = ao5 !== Infinity && bestAo5 !== null && ao5 <= bestAo5;
+        parts.push(`ao5: ${ao5 === Infinity ? 'DNF' : formatTimePlain(ao5)}${isPB ? ' 🏅' : ''}`);
+    }
+    if (ao12 !== null) {
+        const isPB = ao12 !== Infinity && bestAo12 !== null && ao12 <= bestAo12;
+        parts.push(`ao12: ${ao12 === Infinity ? 'DNF' : formatTimePlain(ao12)}${isPB ? ' 🏅' : ''}`);
+    }
     if (ao100 !== null) parts.push(`ao100: ${ao100 === Infinity ? 'DNF' : formatTimePlain(ao100)}`);
 
     const line1 = parts.join(' │ ');
