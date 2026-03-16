@@ -111,7 +111,9 @@ body {
 
 .scramble-text {
     font-size: calc(clamp(1.4rem, 4.5vw, 2.0rem) * var(--scramble-scale));
-    color: #ccc;
+    /* NOTE: 亮色背景时由 JS 将此变量设为黑色 */
+    color: var(--player-text-color, #ccc);
+    text-shadow: none;
     text-align: center;
     line-height: 1.4;
     padding: 0 16px;
@@ -172,15 +174,15 @@ body {
    ========================================================== */
 
 .time-display {
-    /* NOTE: Segment7Standard — 等宽七段 LCD 字体，自托管零外部依赖 */
     font-family: 'Segment7Standard', 'JetBrains Mono', monospace;
-    /* NOTE: 大号显示，用 clamp 适配不同屏幕 */
     font-size: clamp(2.5rem, 12vw, 5rem);
     font-weight: 700;
     letter-spacing: 0.02em;
     text-align: center;
-    /* NOTE: tabular-nums 让每个数字宽度一致，计时时不会跳动 */
     font-variant-numeric: tabular-nums;
+    /* NOTE: 亮色背景时由 JS 将此变量设为黑色 */
+    color: var(--player-text-color, #fff);
+    text-shadow: none;
     min-height: 1.2em;
     display: flex;
     align-items: center;
