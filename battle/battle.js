@@ -91,6 +91,8 @@ const I18N_TEXT = {
 
 // NOTE: 是否为 Solo 模式的快捷判断
 function isSolo() { return state.mode === 'solo'; }
+// NOTE: 是否为盲拧项目（3BLD/4BLD/5BLD）— 自动启用 memo 分段
+function isBLD() { return ['333bf', '444bf', '555bf'].includes(state.puzzleId); }
 
 // ===== 状态 =====
 
@@ -119,6 +121,8 @@ const state = {
     readyTimer: null,
     // 两个玩家状态
     players: [createPlayer(0), createPlayer(1)],
+    // NOTE: 撤销栈 — 存储被删除的 {index, entry} 供 undo
+    undoStack: [],
 };
 
 function createPlayer(id) {
@@ -138,6 +142,9 @@ function createPlayer(id) {
         time: 0,
         // performance.now() 时间戳（单调时钟，更精确）
         startTime: 0,
+        // NOTE: 盲拧分段 — memo 阶段（isMemoing=true 时计时中按下记录 memo 不停表）
+        isMemoing: false,
+        memoTime: 0,
         // 累积比分（刷新即清零）
         points: 0,
         // 此玩家绑定的 pointerId（多点触控隔离）
@@ -316,6 +323,8 @@ function init() {
     // NOTE: 历史面板事件
     document.getElementById("btn-history").addEventListener("click", openHistory);
     document.getElementById("history-close").addEventListener("click", closeHistory);
+    document.getElementById("history-undo").addEventListener("click", undoDelete);
+    document.getElementById("history-export").addEventListener("click", exportCSV);
     dom.historyOverlay.addEventListener("click", (e) => {
         if (e.target === dom.historyOverlay) closeHistory();
     });
@@ -427,9 +436,16 @@ function playerDown(playerId) {
             return true;
         }
         if (p.isTiming) {
-            // 计时中按下 → 停表
+            // 计时中按下
             const elapsed = performance.now() - p.startTime;
             if (elapsed > MIN_SOLVE_TIME) {
+                // NOTE: 盲拧第一次按下 — 只记录 memo 时间，不停表
+                if (isBLD() && p.isMemoing) {
+                    p.memoTime = elapsed;
+                    p.isMemoing = false;
+                    // NOTE: 更新显示加 memo 标记
+                    return true;
+                }
                 p.time = elapsed;
                 p.hasFinished = true;
                 p.isTiming = false;
@@ -521,6 +537,9 @@ function playerUp(playerId) {
             p.isReady = false;
             p.startTime = performance.now();
             p.time = 0;
+            // NOTE: 盲拧项目自动启用 memo 阶段
+            p.isMemoing = isBLD();
+            p.memoTime = 0;
             if (!p.inspectionPenalty) p.penalty = PENALTY.OK;
             // NOTE: 清除观察状态
             clearInspection(playerId);
@@ -694,12 +713,15 @@ function checkBothFinished() {
         // NOTE: Solo 模式——单人完成即记录
         const p = state.players[0];
         if (p.hasFinished) {
-            p.solveHistory.push({
+            const entry = {
                 time: p.time,
                 penalty: p.penalty === PENALTY.DNF ? 'dnf' : (p.penalty === PENALTY.PLUS2 ? '+2' : 'ok'),
                 scramble: state.scramble || '',
                 date: new Date().toISOString(),
-            });
+            };
+            // NOTE: 盲拧分段——记录 memo 时间
+            if (p.memoTime > 0) entry.memo = p.memoTime;
+            p.solveHistory.push(entry);
             saveSolveHistory();
             renderTime(0);
             renderSoloStats(0);
@@ -1101,6 +1123,11 @@ function renderTime(playerId) {
         if (p.penalty === PENALTY.PLUS2) {
             el.classList.add("penalty-plus2");
         }
+    }
+
+    // NOTE: 盲拧完成后显示 memo 时间
+    if (isSolo() && p.hasFinished && p.memoTime > 0) {
+        el.innerHTML += `<div class="memo-display">memo: ${formatTimePlain(p.memoTime)}</div>`;
     }
 
     // NOTE: 赢家高亮 + 🏆（平局不加奖杯）
@@ -1707,12 +1734,15 @@ function closeHistory() {
 
 /**
  * NOTE: 渲染成绩历史列表（最新在上）
- * 点击某条可展开/收起显示完整打乱
+ * 每条带 🗑️ 删除按钮，盲拧条目显示 memo 时间
  */
 function renderHistory() {
     const h = state.players[0].solveHistory;
     const listEl = dom.historyList;
     const statsEl = dom.historyStats;
+
+    // NOTE: Undo 按钮显隐
+    document.getElementById('history-undo').style.display = state.undoStack.length > 0 ? '' : 'none';
 
     if (h.length === 0) {
         listEl.innerHTML = '<div class="history-empty">No solves yet</div>';
@@ -1749,11 +1779,14 @@ function renderHistory() {
         const ao5Str = ao5 === null ? '' : (ao5 === Infinity ? 'DNF' : formatTimePlain(ao5));
 
         const scramble = typeof entry === 'object' ? (entry.scramble || '') : '';
+        // NOTE: 盲拧 memo 分段显示
+        const memoStr = (entry.memo && entry.memo > 0) ? ` <span class="h-memo">[memo: ${formatTimePlain(entry.memo)}]</span>` : '';
 
         html += `<div class="history-item" data-idx="${i}">
             <span class="h-idx">${i + 1}.</span>
-            <span class="${timeClass}">${timeStr}</span>
+            <span class="${timeClass}">${timeStr}${memoStr}</span>
             <span class="h-ao5">${ao5Str}</span>
+            <button class="h-delete" data-delidx="${i}" title="Delete">🗑️</button>
             <span class="h-scramble">${scramble}</span>
         </div>`;
     }
@@ -1761,8 +1794,77 @@ function renderHistory() {
 
     // NOTE: 点击展开/收起打乱
     listEl.querySelectorAll('.history-item').forEach(item => {
-        item.addEventListener('click', () => {
+        item.addEventListener('click', (e) => {
+            // 不在删除按钮上才 toggle
+            if (e.target.closest('.h-delete')) return;
             item.classList.toggle('expanded');
         });
     });
+
+    // NOTE: 删除按钮事件
+    listEl.querySelectorAll('.h-delete').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const idx = parseInt(btn.dataset.delidx);
+            deleteSolve(idx);
+        });
+    });
+}
+
+/**
+ * NOTE: 删除指定索引的成绩，保存到 undoStack
+ */
+function deleteSolve(idx) {
+    const h = state.players[0].solveHistory;
+    if (idx < 0 || idx >= h.length) return;
+    const entry = h.splice(idx, 1)[0];
+    state.undoStack.push({ index: idx, entry });
+    saveSolveHistory();
+    renderSoloStats(0);
+    renderHistory();
+}
+
+/**
+ * NOTE: 撤销最近一次删除
+ */
+function undoDelete() {
+    if (state.undoStack.length === 0) return;
+    const { index, entry } = state.undoStack.pop();
+    const h = state.players[0].solveHistory;
+    // NOTE: 插回原位（如果索引超范围则追加到末尾）
+    h.splice(Math.min(index, h.length), 0, entry);
+    saveSolveHistory();
+    renderSoloStats(0);
+    renderHistory();
+}
+
+/**
+ * NOTE: 导出成绩为 CSV 文件下载
+ * 列：#, Time, Penalty, Ao5, Scramble, Date, Memo(BLD)
+ */
+function exportCSV() {
+    const h = state.players[0].solveHistory;
+    if (h.length === 0) return;
+
+    const header = '#,Time(ms),Penalty,Ao5,Scramble,Date,Memo(ms)';
+    const rows = h.map((entry, i) => {
+        const effTime = getEffectiveTimeFromEntry(entry);
+        const timeStr = effTime === Infinity ? 'DNF' : formatTimePlain(effTime);
+        const ao5 = i >= 4 ? computeAo5(h.slice(0, i + 1)) : null;
+        const ao5Str = ao5 === null ? '' : (ao5 === Infinity ? 'DNF' : formatTimePlain(ao5));
+        const scramble = typeof entry === 'object' ? (entry.scramble || '').replace(/,/g, ';') : '';
+        const date = typeof entry === 'object' ? (entry.date || '') : '';
+        const memo = entry.memo ? formatTimePlain(entry.memo) : '';
+        const penalty = typeof entry === 'object' ? (entry.penalty || 'ok') : 'ok';
+        return `${i + 1},${timeStr},${penalty},${ao5Str},"${scramble}",${date},${memo}`;
+    });
+
+    const csv = header + '\n' + rows.join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `solves_${state.puzzleId}_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
 }
