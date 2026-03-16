@@ -128,8 +128,15 @@ if ($importProcess.ExitCode -eq 0) {
     Write-Host "  FAILED with exit code $($importProcess.ExitCode)" -ForegroundColor Red
 }
 
-# 5. 恢复默认参数（无论成功失败都执行）
-Write-Host "[5/5] Restoring MySQL defaults..." -ForegroundColor Cyan
+# 5. 创建覆盖索引（利用当前已优化的 InnoDB 参数加速）
+# NOTE: 与 update_database.rb (CI) 中的同名索引保持一致（DRY）
+Write-Host "[5/6] Creating covering index on result_attempts..." -ForegroundColor Cyan
+$idxSw = [System.Diagnostics.Stopwatch]::StartNew()
+mysql @mysqlArgs -e "CREATE INDEX idx_ra_covering ON result_attempts(result_id, attempt_number, value);" 2>$null
+Write-Host "  Index created in $($idxSw.Elapsed.ToString('mm\:ss'))!" -ForegroundColor Green
+
+# 6. 恢复默认参数（无论成功失败都执行）
+Write-Host "[6/6] Restoring MySQL defaults..." -ForegroundColor Cyan
 Restore-Defaults
 
 # 最终统计
