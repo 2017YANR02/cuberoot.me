@@ -97,6 +97,7 @@ ruiminyan.github.io/
 │   ├── index.html             # 页面结构（双人上下布局 + 设置弹窗）
 │   ├── battle.js              # 核心逻辑（状态机 + csTimer 本地打乱 + 罚时 + 胜负）
 │   ├── scramble_module.js     # csTimer 打乱模块（由 Closure Compiler 从 cstimer 源码构建，250KB，GPL-3.0）
+│   ├── confetti.min.js        # canvas-confetti 赢家特效（ISC 开源，自托管）
 │   └── battle.css             # 样式（AMOLED 深色 + LCD 字体 + 移动端适配）
 ├── cstimer/                   # csTimer 计时器完整静态版（PHP+Java 构建，GPL-3.0 from cs0x7f/cstimer）
 │   ├── index.html             # 静态页面（由 PHP 渲染 timer.php 生成，内联所有语言包）
