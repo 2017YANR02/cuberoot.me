@@ -787,6 +787,21 @@ input:checked+.slider:before {
     text-align: center;
 }
 
+/* NOTE: 设置面板下拉选择框 */
+.settings-select {
+    background: #222;
+    color: #fff;
+    border: 1px solid #555;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    outline: none;
+}
+.settings-select:focus {
+    border-color: #4fc3f7;
+}
+
 /* ==========================================================
    Solo 模式布局
    NOTE: body.solo 时隐藏上方区域和比分，下方全屏
