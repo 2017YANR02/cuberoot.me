@@ -1572,13 +1572,16 @@ function startInspection(playerId) {
 
 /**
  * NOTE: Web Speech API 语音播报（零依赖）
- * 静默处理不支持的浏览器
+ * 根据页面语言自动切换中文/英文
  */
 function speakAlert(text) {
     try {
         if ('speechSynthesis' in window) {
-            const u = new SpeechSynthesisUtterance(text);
-            u.lang = 'en-US';
+            const isZh = getLocale() === 'zh';
+            // NOTE: 中文模式下翻译语音文本
+            const zhMap = { '8 seconds': '八秒', '12 seconds': '十二秒' };
+            const u = new SpeechSynthesisUtterance(isZh ? (zhMap[text] || text) : text);
+            u.lang = isZh ? 'zh-CN' : 'en-US';
             u.rate = 1.2;
             u.volume = 0.8;
             speechSynthesis.speak(u);
