@@ -11,6 +11,7 @@
 | 19.67 | 16 | 21 | 22 | [FMC 2019](https://www.worldcubeassociation.org/competitions/FMC2019/results/all#e333fm_f) |
 | 19.67 | 20 | 19 | 20 | [FMC 2024](https://www.worldcubeassociation.org/competitions/FMC2024/results/all#e333fm_f) |
 | 19.67 | 22 | 18 | 19 | [FMC West Melbourne 2024](https://www.worldcubeassociation.org/competitions/FMCWestMelbourne2024/results/all#e333fm_1) |
+| 19.67 | 20 | 20 | 19 | [Madison Manor PBQ 2026](https://www.worldcubeassociation.org/competitions/MadisonManorPBQ2026/results/all#e333fm_f) |
 | 19.67 | 21 | 20 | 18 | [Rhein-Neckar Breakdown 2025](https://www.worldcubeassociation.org/competitions/RheinNeckarBreakdown2025/results/all#e333fm_f) |
 | 20.00 | 18 | 22 | 20 | [Amherst Winter Challenge 2025](https://www.worldcubeassociation.org/competitions/AmherstWinterChallenge2025/results/all#e333fm_f) |
 | 20.00 | 20 | 20 | 20 | [Europe FMC Friends Winter 2026](https://www.worldcubeassociation.org/competitions/EuropeFMCFriendsWinter2026/results/all#e333fm_1) |
@@ -103,4 +104,3 @@
 | 21.00 | 20 | 21 | 22 | [MBLD Madison Meeting Room 2023](https://www.worldcubeassociation.org/competitions/MBLDinaMadisonMeetingRoom2023/results/all#e333fm_1) |
 | 21.00 | 19 | 22 | 22 | [New England Championship 2023](https://www.worldcubeassociation.org/competitions/NewEnglandChampionship2023/results/all#e333fm_f) |
 | 21.00 | 20 | 21 | 22 | [New York Multimate PBQ II 2025](https://www.worldcubeassociation.org/competitions/NewYorkMultimatePBQII2025/results/all#e333fm_1) |
-| 21.00 | 22 | 23 | 18 | [New York Quiet Championship 2024](https://www.worldcubeassociation.org/competitions/NewYorkQuietChampionship2024/results/all#e333fm_f) |

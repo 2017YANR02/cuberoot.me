@@ -1,18 +1,104 @@
 {
-  "333":   {"single": 276, "average": 384, "bpa": 357, "wpa": 390, "ao100_1": 444, "ao100_2": 446},
-  "222":   {"single": 39, "average": 86, "bpa": 73, "wpa": 89, "ao100_1": 117, "ao100_2": 120},
-  "444":   {"single": 1518, "average": 1856, "bpa": 1788, "wpa": 1888, "ao100_1": 2200, "ao100_2": 2250},
-  "555":   {"single": 3045, "average": 3431, "bpa": 3365, "wpa": 3532, "ao100_1": 4000, "ao100_2": 4100},
-  "666":   {"single": 5769, "average": 6504, "ao100_1": 7500, "ao100_2": 7700},
-  "777":   {"single": 9348, "average": 9686, "ao100_1": 11500, "ao100_2": 11800},
-  "333bf": {"single": 1167, "average": 1405, "ao100_1": 2300, "ao100_2": 2500},
-  "333fm": {"single": 1600, "average": 1967},
-  "333oh": {"single": 566, "average": 772, "bpa": 718, "wpa": 812, "ao100_1": 900, "ao100_2": 920},
-  "minx":  {"single": 2199, "average": 2438, "bpa": 2371, "wpa": 2518, "ao100_1": 2900, "ao100_2": 2950},
-  "pyram": {"single": 73, "average": 114, "bpa": 96, "wpa": 127, "ao100_1": 170, "ao100_2": 175},
-  "clock": {"single": 153, "average": 224, "bpa": 198, "wpa": 240, "ao100_1": 310, "ao100_2": 320},
-  "skewb": {"single": 75, "average": 137, "bpa": 113, "wpa": 155, "ao100_1": 200, "ao100_2": 210},
-  "sq1":   {"single": 340, "average": 463, "bpa": 424, "wpa": 492, "ao100_1": 580, "ao100_2": 600},
-  "444bf": {"single": 7862, "average": 9530},
-  "555bf": {"single": 18696, "average": 22533}
+  "333": {
+    "single": 276,
+    "average": 384,
+    "bpa": 357,
+    "wpa": 390
+  },
+  "222": {
+    "single": 39,
+    "average": 86,
+    "bpa": 73,
+    "wpa": 89
+  },
+  "444": {
+    "single": 1518,
+    "average": 1856,
+    "bpa": 1788,
+    "wpa": 1888
+  },
+  "555": {
+    "single": 3045,
+    "average": 3431,
+    "bpa": 3365,
+    "wpa": 3532
+  },
+  "666": {
+    "single": 5769,
+    "average": 6504
+  },
+  "777": {
+    "single": 9348,
+    "average": 9686
+  },
+  "333bf": {
+    "single": 1167,
+    "average": 1405
+  },
+  "333fm": {
+    "single": 1600,
+    "average": 1967
+  },
+  "333oh": {
+    "single": 566,
+    "average": 772,
+    "bpa": 713,
+    "wpa": 772
+  },
+  "minx": {
+    "single": 2199,
+    "average": 2438,
+    "bpa": 2316,
+    "wpa": 2493
+  },
+  "pyram": {
+    "single": 73,
+    "average": 114,
+    "bpa": 107,
+    "wpa": 120
+  },
+  "clock": {
+    "single": 153,
+    "average": 224,
+    "bpa": 188,
+    "wpa": 228
+  },
+  "skewb": {
+    "single": 73,
+    "average": 137,
+    "bpa": 127,
+    "wpa": 137
+  },
+  "sq1": {
+    "single": 340,
+    "average": 463,
+    "bpa": 430,
+    "wpa": 478
+  },
+  "444bf": {
+    "single": 5196,
+    "average": 5939
+  },
+  "555bf": {
+    "single": 11859,
+    "average": 14763
+  },
+  "333ft": {
+    "single": 1556,
+    "average": 1990,
+    "bpa": 1908,
+    "wpa": 2075
+  },
+  "magic": {
+    "single": 69,
+    "average": 76,
+    "bpa": 75,
+    "wpa": 76
+  },
+  "mmagic": {
+    "single": 166,
+    "average": 175,
+    "bpa": 173,
+    "wpa": 175
+  }
 }
