@@ -105,11 +105,26 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ── 随机填充 ──
+    // NOTE: 只填充空格子；全满时才全覆盖
     document.getElementById('rand-fill').addEventListener('click', () => {
+        // NOTE: 先同步界面到 state — 用户可能清空了格子但未触发 blur/保存
+        inputGrid.flushToState();
         var n = solveCount();
+
+        // 判断当前 seed pair 是否全满
+        var allFilled = true;
+        for (var p0 = 0; p0 < 2; p0++) {
+            for (var t0 = 0; t0 < n; t0++) {
+                if (!state.times[state.seedOn + p0][t0]) { allFilled = false; break; }
+            }
+            if (!allFilled) break;
+        }
 
         for (var p = 0; p < 2; p++) {
             for (var t = 0; t < n; t++) {
+                // 有空格时跳过已填格子
+                if (!allFilled && state.times[state.seedOn + p][t]) continue;
+
                 // NOTE: 优先 KDE 采样（真实成绩 + Silverman 高斯扰动），零模型假设
                 var cs = wrData.sampleKDE(state.event, p);
 
