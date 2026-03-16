@@ -1,4 +1,4 @@
-# NOTE: RoundMetric -- 抽象基类，从一轮的 5 次成绩 (value1-5) 中计算衍生指标
+# NOTE: RoundMetric -- 抽象基类，从一轮的所有 attempt 中计算衍生指标
 # 子类只需实现 compute_metric(values, r) 方法即可
 # 产出双视图 Tab：排名 (ranking_data) + 历史 (transform)
 #
@@ -43,7 +43,7 @@ class RoundMetric < GroupedStatistic
         result.event_id,
         average,
         best,
-        value1, value2, value3, value4, value5,
+        #{Database::ATTEMPTS_SUBQUERY} AS attempts,
         CONCAT('[', person.name, '](https://www.worldcubeassociation.org/persons/', person.wca_id, ')') person_link,
         person.name person_name,
         CONCAT('[', competition.cell_name, '](https://www.worldcubeassociation.org/competitions/', competition.id, ')') competition_link,
@@ -58,8 +58,8 @@ class RoundMetric < GroupedStatistic
     SQL
   end
 
-  # 子类必须实现：从5次成绩的数组中计算指标值
-  # values: [v1, v2, v3, v4, v5] 原始 WCA 编码值
+  # 子类必须实现：从 attempt 值数组中计算指标值
+  # values: attempt 值数组（长度可变，支持 H2H 赛制）
   # r: 完整的行数据（包含 average, best 等）
   # 返回: 数值（用于排序和 WR 判断），或 nil 表示无效
   def compute_metric(values, r)
@@ -84,7 +84,7 @@ class RoundMetric < GroupedStatistic
 
       # 对每条记录计算指标值
       computed = records.filter_map do |r|
-        values = (1..5).map { |n| r["value#{n}"] }
+        values = (r["attempts"] || "").split(",").map(&:to_i)
         metric = compute_metric(values, r)
         next unless metric
         r.merge("_metric" => metric)
@@ -147,7 +147,7 @@ class RoundMetric < GroupedStatistic
   # 按 (value_column, target_events) 分组，避免跨组 target_events 冲突
   # 每组独立查 MySQL，同组子类共享数据，子进程模式下查询量与原来相同
   def compute_all_rankings
-    # NOTE: 只处理 batch_ranking? = true 的子类（metric 需要从 value1-5 计算的）
+    # NOTE: 只处理 batch_ranking? = true 的子类（metric 需要从 attempts 计算的）
     # Single/Average 等 batch_ranking? = false 的子类用 compute_own_ranking
     all_instances = RoundMetric.subclasses
       .select(&:batch_ranking?)
@@ -165,7 +165,7 @@ class RoundMetric < GroupedStatistic
       events.each do |event_id, event_name|
         # NOTE: 每组每项目只查询 MySQL 一次，同组所有子类共享数据
         event_rows = Database.client.query(
-          "SELECT person_id, value1, value2, value3, value4, value5, average, best,
+          "SELECT person_id, #{Database::ATTEMPTS_SUBQUERY} AS attempts, average, best,
            CONCAT('[', person.name, '](https://www.worldcubeassociation.org/persons/', person.wca_id, ')') person_link,
            person.country_id,
            CONCAT('[', c.cell_name, '](https://www.worldcubeassociation.org/competitions/', c.id, ')') competition_link,
@@ -180,7 +180,7 @@ class RoundMetric < GroupedStatistic
           # 计算每人最佳 metric
           best_by_person = {}
           event_rows.each do |r|
-            values = (1..5).map { |n| r["value#{n}"] }
+            values = (r["attempts"] || "").split(",").map(&:to_i)
             metric = instance.compute_metric(values, r)
             next unless metric
             pid = r["person_id"]

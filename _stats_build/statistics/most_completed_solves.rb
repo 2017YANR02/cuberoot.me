@@ -7,10 +7,11 @@ class MostCompletedSolves < GroupedStatistic
   end
 
   def query
+    # NOTE: 子查询统计每个 result 的完成数和 DNF 数，支持任意 attempt 数量
     <<-SQL
       SELECT
-        IF(value1 > 0, 1, 0) + IF(value2 > 0, 1, 0) + IF(value3 > 0, 1, 0) + IF(value4 > 0, 1, 0) + IF(value5 > 0, 1, 0) completed_count,
-        IF(value1 = -1, 1, 0) + IF(value2 = -1, 1, 0) + IF(value3 = -1, 1, 0) + IF(value4 = -1, 1, 0) + IF(value5 = -1, 1, 0) dnfs_count,
+        (SELECT COUNT(*) FROM result_attempts ra WHERE ra.result_id = result.id AND ra.value > 0) completed_count,
+        (SELECT COUNT(*) FROM result_attempts ra WHERE ra.result_id = result.id AND ra.value = -1) dnfs_count,
         CONCAT('[', competition.cell_name, '](https://www.worldcubeassociation.org/competitions/', competition.id, ')') competition_link,
         CONCAT('[', person.name, '](https://www.worldcubeassociation.org/persons/', person.wca_id, ')') person_link,
         country.name country,

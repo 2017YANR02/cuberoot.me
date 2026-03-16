@@ -8,25 +8,15 @@ class DnfRateByEvent < Statistic
   end
 
   def query
+    # NOTE: 直接聚合 result_attempts，天然支持任意 attempt 数量（含 H2H 赛制）
     <<-SQL
       SELECT
-        event_id,
-        SUM(
-            IF(value1 = -1, 1, 0)
-          + IF(value2 = -1, 1, 0)
-          + IF(value3 = -1, 1, 0)
-          + IF(value4 = -1, 1, 0)
-          + IF(value5 = -1, 1, 0)
-        ) dnfs,
-        SUM(
-            IF(value1 NOT IN (-2, 0), 1, 0)
-          + IF(value2 NOT IN (-2, 0), 1, 0)
-          + IF(value3 NOT IN (-2, 0), 1, 0)
-          + IF(value4 NOT IN (-2, 0), 1, 0)
-          + IF(value5 NOT IN (-2, 0), 1, 0)
-        ) attempts
-      FROM results
-      GROUP BY event_id
+        r.event_id,
+        SUM(CASE WHEN ra.value = -1 THEN 1 ELSE 0 END) dnfs,
+        SUM(CASE WHEN ra.value NOT IN (-2, 0) THEN 1 ELSE 0 END) attempts
+      FROM results r
+      JOIN result_attempts ra ON ra.result_id = r.id
+      GROUP BY r.event_id
     SQL
   end
 

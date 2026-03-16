@@ -84,17 +84,14 @@ Dir.mktmpdir do |tmp_direcory|
       end
     end
 
-    # NOTE: WCA 在 2026 年初将 value1-5 从 results 表迁移到独立的 result_attempts 表。
-    #       为保持下游统计脚本的兼容性，导入后通过 SQL 回填这些列。
-    #       参见: https://github.com/thewca/worldcubeassociation.org/blob/main/lib/database_dumper.rb
-    Helpers.timed_task("Backfilling value1-5 from result_attempts") do
-      backfill_sqls = [
-        "ALTER TABLE results ADD COLUMN value1 INT NOT NULL DEFAULT 0, ADD COLUMN value2 INT NOT NULL DEFAULT 0, ADD COLUMN value3 INT NOT NULL DEFAULT 0, ADD COLUMN value4 INT NOT NULL DEFAULT 0, ADD COLUMN value5 INT NOT NULL DEFAULT 0",
-        *(1..5).map { |n| "UPDATE results r JOIN result_attempts ra ON ra.result_id = r.id AND ra.attempt_number = #{n} SET r.value#{n} = ra.value" }
-      ]
-      backfill_sqls.each do |sql|
-        `#{mysql_with_credentials} #{config["database"]} -e "#{sql}" #{filter_out_mysql_warning}`
-      end
+    # NOTE: WCA 在 2026 年初将 value1-5 从 results 表拆分到 result_attempts 表。
+    #       添加覆盖索引 (result_id, attempt_number, value)，
+    #       让所有 GROUP_CONCAT / JOIN 走 index-only scan，无需回表。
+    #       临时关闭 InnoDB 刷盘同步加速建索引。
+    Helpers.timed_task("Creating covering index on result_attempts") do
+      `#{mysql_with_credentials} #{config["database"]} -e "SET GLOBAL innodb_flush_log_at_trx_commit = 0" #{filter_out_mysql_warning}`
+      `#{mysql_with_credentials} #{config["database"]} -e "CREATE INDEX idx_ra_covering ON result_attempts(result_id, attempt_number, value)" #{filter_out_mysql_warning}`
+      `#{mysql_with_credentials} #{config["database"]} -e "SET GLOBAL innodb_flush_log_at_trx_commit = 1" #{filter_out_mysql_warning}`
     end
 
     # Store the export timestamp

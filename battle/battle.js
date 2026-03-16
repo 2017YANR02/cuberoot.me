@@ -316,6 +316,12 @@ function playerDown(playerId) {
             p.isTiming = false;
             cancelAnimationFrame(p.rafId);
             renderTime(playerId);
+            // NOTE: 第一个完成的选手 — 立即喷射 confetti（不等对手）
+            const other = state.players[1 - playerId];
+            if (other.isTiming) {
+                fireWinnerConfetti(playerId);
+                if (navigator.vibrate) navigator.vibrate(200);
+            }
             checkBothFinished();
         }
         return true;
@@ -519,6 +525,37 @@ function computeWinner() {
     renderTime(1);
     updatePenaltyButtons(0);
     updatePenaltyButtons(1);
+}
+
+/**
+ * NOTE: 赢家 confetti 特效 — 从赢家半屏区域中心喷射彩纸
+ * Player 0（下方）：从屏幕 75% 高度向上喷
+ * Player 1（上方）：从屏幕 25% 高度向下喷
+ */
+function fireWinnerConfetti(playerId) {
+    if (typeof confetti !== 'function') return;
+
+    // 喷射角度和位置按玩家区域位置调整
+    var isBottom = (playerId === 0);
+    var originY = isBottom ? 0.75 : 0.25;
+    // NOTE: 下方玩家向上喷（90°），上方玩家向下喷（270°）
+    var angle = isBottom ? 90 : 270;
+
+    // 连发 3 波，营造持续的庆祝感
+    for (var i = 0; i < 3; i++) {
+        setTimeout(function () {
+            confetti({
+                particleCount: 80,
+                spread: 70,
+                origin: { x: 0.5, y: originY },
+                angle: angle,
+                colors: ['#ff0', '#0f0', '#f00', '#00f', '#f90', '#fff'],
+                gravity: isBottom ? 1 : -1,
+                ticks: 150,
+                disableForReducedMotion: true,
+            });
+        }, i * 200);
+    }
 }
 
 function effectiveTime(player) {
