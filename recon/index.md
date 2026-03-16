@@ -113,7 +113,7 @@ layout: default
 </script>
 
 <script src="/recon/recon_stats.js"></script>
-<script src="/recon/wca_auth.js"></script>
+<script src="/wca_auth.js"></script>
 <script src="/recon/recon_api.js"></script>
 <script src="/recon/recon_local_store.js"></script>
 <script src="/recon/recon_alg_utils.js"></script>
