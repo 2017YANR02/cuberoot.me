@@ -3,6 +3,11 @@
 #
 # 用法：cd _stats_build && ruby bin/gen_wr_json.rb
 
+# NOTE: 复用 compute_all.rb 已写入的 .data_cache/ marshal 缓存，跳过 MySQL 重复查询
+# 前提：compute_all.rb 必须在本脚本之前运行（CI workflow 已保证顺序）
+# 无缓存时自动 fall through 到 MySQL 查询，行为不变
+ENV["STATS_USE_CACHE"] = "1"
+
 require_relative "../statistics/index"
 require_relative "../core/events"
 require "json"
