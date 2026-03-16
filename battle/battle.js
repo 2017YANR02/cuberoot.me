@@ -104,6 +104,8 @@ const state = {
     scrambleLoading: false,
     // 赢家标识：-2=未决 -1=平局 0=下方 1=上方
     winner: -2,
+    // NOTE: 红灯→绿灯的延时计时器 ID
+    readyTimer: null,
     // 两个玩家状态
     players: [createPlayer(0), createPlayer(1)],
 };
@@ -391,7 +393,8 @@ function playerUp(playerId) {
         }
         checkBothTiming();
     } else if (p.isReady && !p.isTiming && !p.hasFinished) {
-        // NOTE: 对方未就绪时松手 → 恢复 idle（黑色），与上游行为一致
+        // NOTE: 对方未就绪时松手 → 恢复 idle（黑色），取消红灯延时
+        cancelReadyTimer();
         p.isReady = false;
         renderArea(playerId);
     }
@@ -466,11 +469,28 @@ function handleKeyUp(e) {
 function checkBothReady() {
     const [p0, p1] = state.players;
     if (p0.isReady && !p0.canStart && p1.isReady && !p1.canStart) {
-        // 双方都按住了 → 允许开始（变绿）
-        p0.canStart = true;
-        p1.canStart = true;
-        renderArea(0);
-        renderArea(1);
+        // NOTE: 双方都按住 → 红灯亮 0.2s 后变绿灯（canStart）
+        // 期间任一方松手会在 playerUp 中调用 cancelReadyTimer() 取消
+        state.readyTimer = setTimeout(() => {
+            state.readyTimer = null;
+            // NOTE: 再次确认双方仍在按住（防止极端时序竞争）
+            if (p0.isReady && p1.isReady) {
+                p0.canStart = true;
+                p1.canStart = true;
+                renderArea(0);
+                renderArea(1);
+            }
+        }, 200);
+    }
+}
+
+/**
+ * NOTE: 取消红灯→绿灯的延时计时器（在松手时调用）
+ */
+function cancelReadyTimer() {
+    if (state.readyTimer) {
+        clearTimeout(state.readyTimer);
+        state.readyTimer = null;
     }
 }
 
