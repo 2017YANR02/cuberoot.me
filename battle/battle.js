@@ -502,13 +502,16 @@ function resetForNextRound() {
 
 function startTimerAnimation(playerId) {
     const p = state.players[playerId];
+    // NOTE: 对手的 opponent 显示元素 — 实时展示此玩家的跑表
+    const oppId = 1 - playerId;
 
     function tick() {
         if (!p.isTiming) return;
         const elapsed = performance.now() - p.startTime;
-        dom.times[playerId].innerHTML = state.showTime
-            ? formatTime(elapsed)
-            : "⏱️";
+        var timeStr = state.showTime ? formatTime(elapsed) : "⏱️";
+        dom.times[playerId].innerHTML = timeStr;
+        // NOTE: 实时更新对手区域的「对手成绩」，让双方都能正面看到对方跑表
+        dom.opponents[oppId].innerHTML = '⚔️ ' + timeStr;
         p.rafId = requestAnimationFrame(tick);
     }
     p.rafId = requestAnimationFrame(tick);
