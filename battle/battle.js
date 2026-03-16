@@ -196,14 +196,29 @@ function init() {
         dom.areas[i].addEventListener("pointerup", (e) => handlePointerUp(i, e));
         dom.areas[i].addEventListener("pointercancel", (e) => handlePointerCancel(i, e));
 
-        // 绑定罚时按钮（阻止事件冒泡到 player area）
-        const penBtns = dom.penalties[i].querySelectorAll(".penalty-btn");
-        penBtns.forEach(btn => {
-            btn.addEventListener("pointerdown", (e) => e.stopPropagation());
-            btn.addEventListener("pointerup", (e) => e.stopPropagation());
-            btn.addEventListener("click", (e) => {
+        // 绑定罚时下拉（触发按钮 + 选项，阻止事件冒泡到 player area）
+        const trigger = dom.penalties[i].querySelector(".penalty-trigger");
+        const options = dom.penalties[i].querySelectorAll(".penalty-option");
+
+        trigger.addEventListener("pointerdown", (e) => e.stopPropagation());
+        trigger.addEventListener("pointerup", (e) => e.stopPropagation());
+        trigger.addEventListener("click", (e) => {
+            e.stopPropagation();
+            // NOTE: disabled 时不处理
+            if (trigger.disabled) return;
+            // 切换 open 状态，同时关闭另一个
+            const isOpen = dom.penalties[i].classList.contains("open");
+            closeAllDropdowns();
+            if (!isOpen) dom.penalties[i].classList.add("open");
+        });
+
+        options.forEach(opt => {
+            opt.addEventListener("pointerdown", (e) => e.stopPropagation());
+            opt.addEventListener("pointerup", (e) => e.stopPropagation());
+            opt.addEventListener("click", (e) => {
                 e.stopPropagation();
-                handlePenalty(i, btn.dataset.penalty);
+                handlePenalty(i, opt.dataset.penalty);
+                closeAllDropdowns();
             });
         });
     }
@@ -225,6 +240,9 @@ function init() {
     dom.settingsOverlay.addEventListener("click", (e) => {
         if (e.target === dom.settingsOverlay) closeSettings();
     });
+
+    // NOTE: 点击页面其他区域时关闭已打开的罚时下拉
+    document.addEventListener("click", () => closeAllDropdowns());
 
     // 初始化 Show Image 开关状态和事件
     dom.toggleImage.checked = state.showImage;
@@ -674,6 +692,15 @@ function effectiveTime(player) {
 
 // ===== 罚时 =====
 
+/**
+ * NOTE: 关闭所有罚时下拉菜单（点击外部或选择后调用）
+ */
+function closeAllDropdowns() {
+    document.querySelectorAll(".penalty-dropdown.open").forEach(el => {
+        el.classList.remove("open");
+    });
+}
+
 function handlePenalty(playerId, penaltyType) {
     const p = state.players[playerId];
     // NOTE: 只有已完成且不在计时中才能改罚时
@@ -815,7 +842,10 @@ function renderTime(playerId) {
         const displayTime = p.penalty === PENALTY.PLUS2
             ? p.time + 2000
             : p.time;
-        el.innerHTML = formatTime(displayTime);
+        // NOTE: +2 "+" 后缀，WCA 标准记法（如 2.632+）
+        // NOTE: +2 suffix 用 span 单独设字体，避免 Segment7Standard 字体没有标准 + 字形
+        const suffix = p.penalty === PENALTY.PLUS2 ? '<span class="plus-suffix">+</span>' : '';
+        el.innerHTML = formatTime(displayTime) + suffix;
         if (p.penalty === PENALTY.PLUS2) {
             el.classList.add("penalty-plus2");
         }
@@ -883,12 +913,19 @@ function updatePenaltyButtons(playerId) {
     const p = state.players[playerId];
     // NOTE: 只有完成后且不在计时中才可操作罚时
     const enabled = p.hasFinished && !p.isTiming && p.time > 0;
-    const btns = dom.penalties[playerId].querySelectorAll(".penalty-btn");
 
-    btns.forEach(btn => {
-        const pen = btn.dataset.penalty;
-        btn.disabled = !enabled || pen === p.penalty;
-        btn.classList.toggle("active", pen === p.penalty && enabled);
+    const trigger = dom.penalties[playerId].querySelector(".penalty-trigger");
+    const label = trigger.querySelector(".penalty-label");
+    const opts = dom.penalties[playerId].querySelectorAll(".penalty-option");
+
+    // 更新触发按钮状态
+    trigger.disabled = !enabled;
+    // NOTE: 显示当前罚时类型，DNF 全大写区分
+    label.textContent = p.penalty.toUpperCase();
+
+    // 更新选项高亮
+    opts.forEach(opt => {
+        opt.classList.toggle("active", opt.dataset.penalty === p.penalty);
     });
 }
 

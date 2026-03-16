@@ -42,17 +42,23 @@
         <div id="time-1" class="time-display">0.000</div>
         <div id="ao5-1" class="ao5-display"></div>
         <div id="opponent-1" class="opponent-display"></div>
-        <div id="penalties-1" class="penalty-buttons">
-            <button class="penalty-btn active" data-penalty="ok">OK</button>
-            <button class="penalty-btn" data-penalty="+2">+2</button>
-            <button class="penalty-btn" data-penalty="dnf">DNF</button>
-        </div>
     </div>
 
     <!-- ===== 中间栏（比分 + 设置） ===== -->
     <div class="middle-bar">
-        <!-- NOTE: 左侧比分（Player 2，上方玩家，旋转显示所以在其视角的右侧） -->
+        <!-- NOTE: 左侧比分（Player 2，上方玩家）+ 罚时下拉 -->
         <div class="score-section">
+            <div id="penalties-1" class="penalty-dropdown">
+                <button class="penalty-trigger" disabled>
+                    <span class="penalty-label">OK</span>
+                    <span class="penalty-arrow">▼</span>
+                </button>
+                <ul class="penalty-menu">
+                    <li class="penalty-option active" data-penalty="ok">OK</li>
+                    <li class="penalty-option" data-penalty="+2">+2</li>
+                    <li class="penalty-option" data-penalty="dnf">DNF</li>
+                </ul>
+            </div>
             <span id="score-1" class="score-value">0</span>
         </div>
 
@@ -67,9 +73,20 @@
             <button id="btn-settings" class="middle-btn" title="Settings">⚙️</button>
         </div>
 
-        <!-- NOTE: 右侧比分（Player 1，下方玩家） -->
+        <!-- NOTE: 右侧比分（Player 1，下方玩家）+ 罚时下拉 -->
         <div class="score-section">
             <span id="score-0" class="score-value">0</span>
+            <div id="penalties-0" class="penalty-dropdown">
+                <button class="penalty-trigger" disabled>
+                    <span class="penalty-label">OK</span>
+                    <span class="penalty-arrow">▼</span>
+                </button>
+                <ul class="penalty-menu">
+                    <li class="penalty-option active" data-penalty="ok">OK</li>
+                    <li class="penalty-option" data-penalty="+2">+2</li>
+                    <li class="penalty-option" data-penalty="dnf">DNF</li>
+                </ul>
+            </div>
         </div>
     </div>
 
@@ -82,11 +99,6 @@
         <div id="time-0" class="time-display">0.000</div>
         <div id="ao5-0" class="ao5-display"></div>
         <div id="opponent-0" class="opponent-display"></div>
-        <div id="penalties-0" class="penalty-buttons">
-            <button class="penalty-btn active" data-penalty="ok">OK</button>
-            <button class="penalty-btn" data-penalty="+2">+2</button>
-            <button class="penalty-btn" data-penalty="dnf">DNF</button>
-        </div>
     </div>
 
     <!-- ===== 设置弹窗 ===== -->
