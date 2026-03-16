@@ -350,6 +350,15 @@ function init() {
     document.getElementById("btn-session-delete").addEventListener("click", deleteSession);
     renderSessionList();
 
+    // NOTE: WCA 登录事件绑定
+    document.getElementById("btn-wca-login").addEventListener("click", () => WcaAuth.login());
+    document.getElementById("btn-wca-logout").addEventListener("click", () => {
+        WcaAuth.logout();
+        updateWcaAuthUI();
+    });
+    document.getElementById("btn-wca-sync").addEventListener("click", () => syncAllSessions());
+    updateWcaAuthUI();
+
     // 渲染初始状态
     renderScores();
     updatePenaltyButtons(0);
@@ -368,6 +377,11 @@ function init() {
 
     // NOTE: 应用初始模式布局
     applyMode();
+
+    // NOTE: 已登录时自动从云端拉取成绩
+    if (typeof WcaAuth !== 'undefined' && WcaAuth.isLoggedIn()) {
+        pullFromCloud();
+    }
 
     // 尝试锁定竖屏
     tryLockOrientation();
@@ -1735,6 +1749,8 @@ function saveSolveHistory() {
     } catch (e) {
         console.warn('Failed to save solve history:', e);
     }
+    // NOTE: 已登录时自动推送云端（debounce 2 秒）
+    debouncePushCloud();
 }
 
 function loadSolveHistory() {
@@ -2059,3 +2075,136 @@ function renderTrendChart() {
     dom.historyList.parentNode.insertBefore(container, dom.historyList);
 }
 
+// ===== WCA 登录 UI + 云同步 =====
+
+/** NOTE: 更新设置面板中的 WCA 登录状态显示 */
+function updateWcaAuthUI() {
+    if (typeof WcaAuth === 'undefined') return;
+    const user = WcaAuth.getUser();
+    const loginRow = document.getElementById('wca-login-row');
+    const userRow = document.getElementById('wca-user-row');
+    if (user) {
+        loginRow.style.display = 'none';
+        userRow.style.display = 'flex';
+        document.getElementById('wca-avatar').src = user.avatar || '';
+        document.getElementById('wca-name').textContent = user.name || user.wcaId;
+    } else {
+        loginRow.style.display = '';
+        userRow.style.display = 'none';
+    }
+}
+
+// NOTE: Debounce 定时器，避免每次 save 都立即 push
+let _pushTimer = null;
+function debouncePushCloud() {
+    if (typeof WcaAuth === 'undefined' || !WcaAuth.isLoggedIn()) return;
+    clearTimeout(_pushTimer);
+    _pushTimer = setTimeout(() => pushToCloud(), 2000);
+}
+
+/**
+ * NOTE: 构建 API 基地址
+ * localhost 时直接用 toolkit.cuberoot.me（PHP API 不在本地）
+ */
+function getApiBase() {
+    if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+        return 'https://toolkit.cuberoot.me/recon/api/';
+    }
+    return '/recon/api/';
+}
+
+/** NOTE: 推送当前 session + puzzle 的成绩到云端 */
+function pushToCloud() {
+    if (typeof WcaAuth === 'undefined' || !WcaAuth.isLoggedIn()) return;
+    if (!isSolo()) return;
+    const token = WcaAuth.getAccessToken();
+    if (!token) return;
+
+    const h = state.players[0].solveHistory;
+    fetch(getApiBase() + '?action=timerSync', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify({
+            sessionId: state.sessionId,
+            puzzleId: state.puzzleId,
+            solves: h
+        })
+    }).then(r => {
+        if (!r.ok) console.warn('Cloud push failed:', r.status);
+    }).catch(e => console.warn('Cloud push error:', e));
+}
+
+/** NOTE: 从云端拉取所有 session 的成绩并合并到 localStorage */
+function pullFromCloud() {
+    if (typeof WcaAuth === 'undefined' || !WcaAuth.isLoggedIn()) return;
+    const token = WcaAuth.getAccessToken();
+    if (!token) return;
+
+    fetch(getApiBase() + '?action=timerSync', {
+        headers: { 'Authorization': 'Bearer ' + token }
+    })
+    .then(r => {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+    })
+    .then(data => {
+        if (!Array.isArray(data)) return;
+        // NOTE: 云端数据覆盖 localStorage（服务端为 source of truth）
+        data.forEach(item => {
+            const key = `${LS_PREFIX}solo_history_${item.sessionId}_${item.puzzleId}`;
+            if (Array.isArray(item.solves)) {
+                localStorage.setItem(key, JSON.stringify(item.solves));
+            }
+        });
+        // NOTE: 刷新当前显示的历史
+        loadSolveHistory();
+        renderSoloStats(0);
+    })
+    .catch(e => console.warn('Cloud pull error:', e));
+}
+
+/** NOTE: 手动同步 — 推送所有 session 的成绩到云端 */
+function syncAllSessions() {
+    if (typeof WcaAuth === 'undefined' || !WcaAuth.isLoggedIn()) return;
+    const token = WcaAuth.getAccessToken();
+    if (!token) return;
+
+    // NOTE: 遍历 localStorage 找到所有 solo_history_ 开头的 key
+    const prefix = LS_PREFIX + 'solo_history_';
+    const keys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k.startsWith(prefix)) keys.push(k);
+    }
+
+    // NOTE: 逐个推送（串行避免并发过多）
+    let chain = Promise.resolve();
+    keys.forEach(k => {
+        // key 格式: battle_solo_history_{sessionId}_{puzzleId}
+        const rest = k.substring(prefix.length);
+        const lastUnderscore = rest.lastIndexOf('_');
+        if (lastUnderscore < 0) return;
+        const sessId = rest.substring(0, lastUnderscore);
+        const puzzId = rest.substring(lastUnderscore + 1);
+        const solves = JSON.parse(localStorage.getItem(k) || '[]');
+
+        chain = chain.then(() =>
+            fetch(getApiBase() + '?action=timerSync', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify({ sessionId: sessId, puzzleId: puzzId, solves })
+            }).catch(e => console.warn('Sync push error:', e))
+        );
+    });
+
+    chain.then(() => {
+        // NOTE: 同步完成后也拉取一下（双向同步）
+        pullFromCloud();
+    });
+}
