@@ -393,6 +393,16 @@
 
     <script src="assets/js/particles.js" defer></script>
     <script src="i18n/i18n.js" defer></script>
+    <script>
+        // NOTE: 当站内语言为中文时，给 csTimer 卡片链接追加 ?lang=zh-cn
+        // csTimer 使用独立的语言体系（zh-cn 而非站内的 zh），需要手动映射
+        document.addEventListener('DOMContentLoaded', () => {
+            const card = document.getElementById('card-cstimer');
+            if (card && typeof I18n !== 'undefined' && I18n.locale === 'zh') {
+                card.href = 'cstimer/?lang=zh-cn';
+            }
+        });
+    </script>
     <script src="sw-register.js" defer></script>
 </body>
 
