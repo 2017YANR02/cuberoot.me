@@ -1540,9 +1540,7 @@ function startInspection(playerId) {
         }
 
         if (limit < 9999) {
-            // 有限时间模式（8s / 15s）
-            const remaining = Math.ceil(limit - elapsed);
-
+            // NOTE: 有限时间模式（8s / 15s）— 上行计数显示已用秒数
             if (elapsed >= limit + 2) {
                 // >limit+2s → 自动 DNF
                 p.inspectionPenalty = 'dnf';
@@ -1562,10 +1560,11 @@ function startInspection(playerId) {
                 p.inspectionPenalty = '+2';
                 dom.times[playerId].textContent = '+2';
             } else {
-                dom.times[playerId].textContent = remaining.toString();
+                // NOTE: 从 0 开始上行计数（WCA 标准）
+                dom.times[playerId].textContent = Math.floor(elapsed).toString();
             }
         } else {
-            // NOTE: 无限模式 — 显示已用时间（上行计数）
+            // NOTE: 无限模式 — 同样上行计数
             dom.times[playerId].textContent = Math.floor(elapsed).toString();
         }
     }, 100);
