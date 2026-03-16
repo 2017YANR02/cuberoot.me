@@ -326,6 +326,10 @@ function playerDown(playerId) {
             p.isTiming = false;
             cancelAnimationFrame(p.rafId);
             renderTime(playerId);
+            // NOTE: 停表后在对方区域显示此选手的成绩（让对手从正面看到）
+            var myTime = effectiveTime(p);
+            var label = myTime === Infinity ? 'DNF' : formatTime(myTime);
+            renderOpponent(1 - playerId, '⚔️ ' + label);
             // NOTE: 第一个完成的选手 — 立即喷射 confetti（不等对手）
             const other = state.players[1 - playerId];
             if (other.isTiming) {
@@ -502,16 +506,13 @@ function resetForNextRound() {
 
 function startTimerAnimation(playerId) {
     const p = state.players[playerId];
-    // NOTE: 对手的 opponent 显示元素 — 实时展示此玩家的跑表
-    const oppId = 1 - playerId;
 
     function tick() {
         if (!p.isTiming) return;
         const elapsed = performance.now() - p.startTime;
-        var timeStr = state.showTime ? formatTime(elapsed) : "⏱️";
-        dom.times[playerId].innerHTML = timeStr;
-        // NOTE: 实时更新对手区域的「对手成绩」，让双方都能正面看到对方跑表
-        dom.opponents[oppId].innerHTML = '⚔️ ' + timeStr;
+        dom.times[playerId].innerHTML = state.showTime
+            ? formatTime(elapsed)
+            : "⏱️";
         p.rafId = requestAnimationFrame(tick);
     }
     p.rafId = requestAnimationFrame(tick);
