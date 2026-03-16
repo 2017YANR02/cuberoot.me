@@ -68,7 +68,7 @@ body {
 
 /* --- 状态背景色 --- */
 .player-area.state-ready {
-    background-color: #b8860b;
+    background-color: #b71c1c;
 }
 
 .player-area.state-can-start {

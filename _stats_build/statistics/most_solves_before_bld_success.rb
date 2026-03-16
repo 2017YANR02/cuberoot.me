@@ -11,7 +11,7 @@ class MostSolvesBeforeBldSuccess < GroupedStatistic
       SELECT
         event_id,
         CONCAT('[', person.name, '](https://www.worldcubeassociation.org/persons/', person.wca_id, ')') person_link,
-        value1, value2, value3, value4, value5
+        #{Database::ATTEMPTS_SUBQUERY} AS attempts
       FROM results
       JOIN persons person ON person.wca_id = person_id AND person.sub_id = 1
       JOIN competitions competition ON competition.id = competition_id
@@ -29,7 +29,7 @@ class MostSolvesBeforeBldSuccess < GroupedStatistic
         .group_by { |result| result["person_link"] }
         .map do |person_link, results|
           attempts_before_success = results
-            .map! { |result| (1..5).map { |n| result["value#{n}"] } }
+            .map! { |result| (result["attempts"] || "").split(",").map(&:to_i) }
             .flatten
             .select { |time| time == -1 || time > 0 } # Grab times only. Reject skipped and DNS solves.
             .find_index { |time| time > 0 }

@@ -47,9 +47,10 @@ class MbfAverage < Statistic
   end
 
   def query
+    # NOTE: GROUP_CONCAT 获取所有 attempt 值，WHERE 过滤 v1/v2/v3 > 0 移到 Ruby
     <<-SQL
       SELECT
-        value1, value2, value3,
+        #{Database::ATTEMPTS_SUBQUERY} AS attempts,
         CONCAT('[', person.name, '](https://www.worldcubeassociation.org/persons/', person.wca_id, ')') person_link,
         person.name person_name,
         result.person_id,
@@ -60,9 +61,6 @@ class MbfAverage < Statistic
       JOIN persons person ON person.wca_id = person_id AND person.sub_id = 1
       JOIN competitions competition ON competition.id = competition_id
       WHERE result.event_id = '333mbf'
-        AND value1 > 0
-        AND value2 > 0
-        AND value3 > 0
       ORDER BY competition.start_date
     SQL
   end
@@ -86,9 +84,12 @@ class MbfAverage < Statistic
   def transform(query_results)
     # --- 333mbf ---
     computed = query_results.filter_map do |r|
-      v1, v2, v3 = r["value1"], r["value2"], r["value3"]
+      vals = (r["attempts"] || "").split(",").map(&:to_i)
+      # NOTE: Mo3 需要恰好 3 个正值 attempt
+      next unless vals.length >= 3 && vals[0..2].all? { |v| v > 0 }
+      v1, v2, v3 = vals[0], vals[1], vals[2]
       mo3 = mbf_mo3(v1, v2, v3)
-      r.merge("_metric" => mo3)
+      r.merge("_metric" => mo3, "_v1" => v1, "_v2" => v2, "_v3" => v3)
     end.sort_by { |r| r["start_date"] }
 
     # WR history：按日期正序扫描，值越小越好，保留刷新最小值的记录
@@ -118,7 +119,7 @@ class MbfAverage < Statistic
         (Date.today - r["start_date"].to_date).to_i.to_s
       end
       date_str = r["start_date"].strftime("%Y-%m-%d")
-      details = (1..3).map { |n| SolveTime.new("333mbf", :single, r["value#{n}"]).clock_format }.join(", ")
+      details = (1..3).map { |n| SolveTime.new("333mbf", :single, r["_v#{n}"]).clock_format }.join(", ")
       [mo3_str, gain_str, days_str, r["person_link"], date_str, r["competition_link"], details]
     end
 
@@ -132,7 +133,7 @@ class MbfAverage < Statistic
           country: r["country_id"],
           competition_link: r["competition_link"],
           start_date: r["start_date"],
-          value1: r["value1"], value2: r["value2"], value3: r["value3"]
+          v1: r["_v1"], v2: r["_v2"], v3: r["_v3"]
         }
       end
     end
@@ -143,7 +144,7 @@ class MbfAverage < Statistic
       .each_with_index.map do |v, i|
         mo3_str = format_mo3(v[:metric])
         date_str = v[:start_date].respond_to?(:strftime) ? v[:start_date].strftime("%Y-%m-%d") : v[:start_date].to_s
-        details = [v[:value1], v[:value2], v[:value3]].map { |val| SolveTime.new("333mbf", :single, val).clock_format }.join(", ")
+        details = [v[:v1], v[:v2], v[:v3]].map { |val| SolveTime.new("333mbf", :single, val).clock_format }.join(", ")
         [i + 1, v[:person_link], mo3_str, v[:country], date_str, v[:competition_link], details]
       end
 

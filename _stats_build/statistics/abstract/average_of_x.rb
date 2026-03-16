@@ -2,7 +2,7 @@
 # Computes: a person's best trimmed-mean of @solve_count consecutive official solves.
 #
 # Algorithm: sliding window.
-# 1. For each person, line up ALL their value1-5 in chronological order.
+# 1. For each person, line up ALL their attempts in chronological order.
 # 2. Slide a window of length @solve_count across this sequence.
 # 3. At every position compute the trimmed mean (5% trimmed each side).
 # 4. Keep the best (lowest) one as the person's result.
@@ -51,7 +51,7 @@ class AverageOfX < GroupedStatistic
       SELECT
         CONCAT('[', person.name, '](https://www.worldcubeassociation.org/persons/', person.wca_id, ')') person_link,
         result.event_id,
-        value1, value2, value3, value4, value5
+        #{Database::ATTEMPTS_SUBQUERY} AS attempts
       FROM results result
       JOIN persons person ON person.wca_id = person_id AND person.sub_id = 1
       JOIN competitions competition ON competition.id = competition_id
@@ -86,7 +86,7 @@ class AverageOfX < GroupedStatistic
   # NOTE: sliding window -- find each person's best AoX across their career
   #
   # For each person:
-  #   flatten all value1..5 into a 1-D timeline
+  #   flatten all attempts into a 1-D timeline
   #   slide a window of @solve_count across it
   #   at each full window: compute trimmed mean, keep best
   #   result: one best_aox per person, then take top 10
@@ -100,7 +100,7 @@ class AverageOfX < GroupedStatistic
           # best_aox: best average found so far for this person
           data = { last_x_solves: [], best_aox: SolveTime::DNF, best_aox_solves: [] }
           results
-            .flat_map { |result| (1..5).map { |n| result["value#{n}"] } }
+            .flat_map { |result| (result["attempts"] || "").split(",").map(&:to_i) }
             .each do |value|
               next if value == SolveTime::SKIPPED_VALUE
               # NOTE: raw integers instead of SolveTime objects for performance
