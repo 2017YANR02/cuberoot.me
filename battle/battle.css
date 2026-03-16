@@ -163,9 +163,8 @@ body {
 }
 
 
-
-/* NOTE: 计时中同时隐藏打乱图 */
-.player-area .scramble-text.hidden ~ .scramble-img {
+/* NOTE: 计时中同时隐藏打乱图（JS 显式控制 hidden class，不依赖 HTML 顺序） */
+.player-area .scramble-img.hidden {
     visibility: hidden;
 }
 

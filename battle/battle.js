@@ -866,9 +866,10 @@ function renderScramble() {
 
     for (let i = 0; i < 2; i++) {
         dom.scrambles[i].innerHTML = text;
-        // NOTE: 计时中隐藏打乱文字
-        dom.scrambles[i].classList.toggle("hidden",
-            state.players[i].isTiming);
+        const isTiming = state.players[i].isTiming;
+        // NOTE: 计时中隐藏打乱文字和打乱图（JS 显式控制，不依赖 CSS 兄弟选择器）
+        dom.scrambles[i].classList.toggle('hidden', isTiming);
+        dom.scrambleImgs[i].classList.toggle('hidden', isTiming);
     }
 }
 
