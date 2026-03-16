@@ -120,6 +120,20 @@
                 </div>
             </div>
 
+            <!-- NOTE: WCA 账号（仅 Solo 模式） -->
+            <div class="settings-group solo-setting">
+                <div class="settings-label">WCA ACCOUNT</div>
+                <div class="setting-item toggle-row" id="wca-login-row">
+                    <button id="btn-wca-login" class="history-action-btn" style="width:100%">🔐 Login with WCA</button>
+                </div>
+                <div class="setting-item toggle-row" id="wca-user-row" style="display:none">
+                    <img id="wca-avatar" style="width:24px;height:24px;border-radius:50%;border:1px solid #555" src="" alt="">
+                    <span id="wca-name" style="flex:1;color:#ccc;font-size:0.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+                    <button id="btn-wca-sync" class="history-action-btn" title="Sync">☁️</button>
+                    <button id="btn-wca-logout" class="history-action-btn" title="Logout">❌</button>
+                </div>
+            </div>
+
             <!-- NOTE: Session 管理（仅 Solo 模式） -->
             <div class="settings-group solo-setting">
                 <div class="settings-label">SESSION</div>
@@ -263,6 +277,7 @@
     <script src="scramble_module.js"></script>
     <!-- NOTE: canvas-confetti — 赢家庆祝特效（ISC 开源，自托管避免国内 CDN 被墙） -->
     <script src="confetti.min.js"></script>
+    <script src="../wca_auth.js"></script>
     <script src="battle.js" defer></script>
     <script src="../i18n/i18n.js" defer></script>
 
