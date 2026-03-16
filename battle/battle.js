@@ -790,9 +790,13 @@ function renderTime(playerId) {
         }
     }
 
-    // 赢家高亮
-    if (state.winner === playerId || (state.winner === -1 && p.hasFinished)) {
-        el.classList.add("winner");
+    // NOTE: 赢家高亮 + 🏆（平局不加奖杯）
+    if (state.winner === playerId) {
+        el.classList.add('winner');
+        el.innerHTML += ' <span class="trophy-icon">🏆</span>';
+    } else if (state.winner === -1 && p.hasFinished) {
+        // 平局：高亮但不加奖杯
+        el.classList.add('winner');
     }
 }
 

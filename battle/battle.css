@@ -233,6 +233,13 @@ body {
     color: #66bb6a;
 }
 
+/* NOTE: 奖杯不继承七段 LCD 字体，用系统 emoji 字体正常渲染 */
+.trophy-icon {
+    font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+    font-size: 0.55em;
+    vertical-align: middle;
+}
+
 /* ==========================================================
    罚时按钮组
    ========================================================== */
