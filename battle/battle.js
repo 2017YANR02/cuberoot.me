@@ -506,13 +506,17 @@ function resetForNextRound() {
 
 function startTimerAnimation(playerId) {
     const p = state.players[playerId];
+    const oppId = 1 - playerId;
 
     function tick() {
         if (!p.isTiming) return;
         const elapsed = performance.now() - p.startTime;
-        dom.times[playerId].innerHTML = state.showTime
-            ? formatTime(elapsed)
-            : "⏱️";
+        var timeStr = state.showTime ? formatTime(elapsed) : "⏱️";
+        dom.times[playerId].innerHTML = timeStr;
+        // NOTE: 对手已停表时，在对手区域实时显示此玩家还在跑的时间
+        if (state.players[oppId].hasFinished) {
+            dom.opponents[oppId].innerHTML = '⚔️ ' + timeStr;
+        }
         p.rafId = requestAnimationFrame(tick);
     }
     p.rafId = requestAnimationFrame(tick);
