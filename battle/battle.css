@@ -198,7 +198,7 @@ body {
 /* NOTE: 对手成绩 — 让每个选手从正面看到对方的时间（无需看倒立的） */
 .opponent-display {
     font-family: 'Segment7Standard', 'JetBrains Mono', monospace;
-    font-size: clamp(0.65rem, 2.2vw, 0.85rem);
+    font-size: clamp(1.0rem, 3.5vw, 1.3rem);
     color: #555;
     text-align: center;
     min-height: 1.2em;
