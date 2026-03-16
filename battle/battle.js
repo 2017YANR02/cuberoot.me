@@ -628,6 +628,11 @@ function handlePenalty(playerId, penaltyType) {
 
 // ===== 设置操作 =====
 
+// NOTE: 任何玩家处于 ready/timing 状态时返回 true — 用于禁止中间栏操作
+function isAnyActive() {
+    return state.players.some(p => p.isReady || p.isTiming);
+}
+
 function deleteLast() {
     if (!state.players[0].hasFinished || !state.players[1].hasFinished) return;
 
@@ -828,6 +833,7 @@ function buildPuzzleGrid() {
 }
 
 function openSettings() {
+    if (isAnyActive()) return;
     dom.settingsOverlay.classList.add("visible");
     // NOTE: 更新按钮文字（根据当前语言）
     const lang = getLocale();
@@ -845,6 +851,7 @@ function closeSettings() {
 // ===== 全屏 =====
 
 function toggleFullscreen() {
+    if (isAnyActive()) return;
     const btn = document.getElementById("btn-fullscreen");
     if (!document.fullscreenElement) {
         document.documentElement.requestFullscreen().then(() => {
