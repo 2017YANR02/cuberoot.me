@@ -120,13 +120,22 @@
                 </div>
             </div>
 
-            <!-- NOTE: WCA 观察倒计时（仅 Solo 模式显示） -->
+            <!-- NOTE: WCA 观察倒计时（仅 Solo 模式显示），支持 OFF/8s/15s/无限 -->
             <div class="settings-group solo-setting">
                 <div class="settings-label">INSPECTION</div>
                 <div class="setting-item toggle-row">
-                    <span>WCA Inspection (15s)</span>
+                    <span>Inspection Time</span>
+                    <select id="select-inspection" class="settings-select">
+                        <option value="0">OFF</option>
+                        <option value="8">8s</option>
+                        <option value="15" selected>15s (WCA)</option>
+                        <option value="9999">∞</option>
+                    </select>
+                </div>
+                <div class="setting-item toggle-row">
+                    <span>Voice Alert (8s / 12s)</span>
                     <label class="switch">
-                        <input type="checkbox" id="toggle-inspection">
+                        <input type="checkbox" id="toggle-voice" checked>
                         <span class="slider round"></span>
                     </label>
                 </div>
