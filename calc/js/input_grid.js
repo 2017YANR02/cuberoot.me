@@ -540,3 +540,14 @@ export function setCellDisplay(p, t, text) {
         cells[p][t].value = text;
     }
 }
+
+// NOTE: 静默同步 — 将所有可见格子的 input.value 直接写入 state.times
+// 不触发 notify/undo/refresh，避免级联刷新 bug（供 Rand 等外部操作使用）
+export function flushToState() {
+    var n = solveCount();
+    for (var p = 0; p < 2; p++) {
+        for (var t = 0; t < n; t++) {
+            state.times[state.seedOn + p][t] = textToTime(cells[p][t].value);
+        }
+    }
+}
