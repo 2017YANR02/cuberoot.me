@@ -942,6 +942,23 @@ function applyBg(playerId) {
         area.style.backgroundImage = '';
         area.style.backgroundColor = '';
     }
+    // NOTE: 同步更新中间栏渐变 — 左侧=P2(上方)色，右侧=P1(下方)色，中间混合暗色
+    updateBarGradient();
+}
+
+/**
+ * NOTE: 更新中间栏渐变 — 将两个玩家的背景色混入中间条
+ * 左侧(P2)色 → 中间暗色 → 右侧(P1)色
+ * 如果玩家用了图片背景，提取其颜色选择器的值作为代表色
+ */
+function updateBarGradient() {
+    const bar = document.querySelector('.middle-bar');
+    if (!bar) return;
+    // NOTE: 取颜色（图片背景时仍用颜色选择器的值作为代表色）
+    const c0 = localStorage.getItem(`${LS_PREFIX}bg_color_0`) || '#000000';
+    const c1 = localStorage.getItem(`${LS_PREFIX}bg_color_1`) || '#000000';
+    bar.style.setProperty('--bar-color-left', c1);
+    bar.style.setProperty('--bar-color-right', c0);
 }
 
 function showBgError(msg) {
