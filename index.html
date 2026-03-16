@@ -267,6 +267,61 @@
             font-size: 0.9rem;
             line-height: 1;
         }
+
+        /* NOTE: 全局 WCA 登录区域（右上角固定定位） */
+        .global-auth {
+            position: fixed;
+            top: 12px;
+            left: 12px;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .global-auth-btn {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid #444;
+            border-radius: 8px;
+            color: #ccc;
+            padding: 6px 14px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: Inter, sans-serif;
+        }
+        .global-auth-btn:hover {
+            background: rgba(99,102,241,0.15);
+            border-color: rgba(99,102,241,0.5);
+            color: #fff;
+        }
+        .global-user {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .global-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 1px solid #555;
+        }
+        .global-name {
+            color: #ccc;
+            font-size: 0.8rem;
+            max-width: 100px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .global-logout {
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 0.7rem;
+            cursor: pointer;
+            padding: 2px 6px;
+        }
+        .global-logout:hover { color: #f87171; }
     </style>
 </head>
 
@@ -274,6 +329,16 @@
     <!-- NOTE: 粒子动画背景 Canvas，全屏覆盖但不拦截点击 -->
     <canvas id="particles-bg"
         style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;"></canvas>
+
+    <!-- NOTE: 全局 WCA 登录区域（左上角） -->
+    <div class="global-auth" id="global-auth">
+        <button id="global-login-btn" class="global-auth-btn" onclick="WcaAuth.login()" style="display:none">🔐 Login</button>
+        <div id="global-user-info" class="global-user" style="display:none">
+            <img id="global-avatar" class="global-avatar" src="" alt="">
+            <span id="global-name" class="global-name"></span>
+            <button class="global-logout" onclick="WcaAuth.logout();location.reload()" title="Logout">❌</button>
+        </div>
+    </div>
 
     <!-- NOTE: GitHub Corner 角标，仅在主页显示 -->
     <a href="https://github.com/RuiminYan/ruiminyan.github.io" class="github-corner"
@@ -393,15 +458,32 @@
 
     <script src="assets/js/particles.js" defer></script>
     <script src="i18n/i18n.js" defer></script>
+    <script src="wca_auth.js"></script>
     <script>
         // NOTE: 当站内语言为中文时，给 csTimer 卡片链接追加 ?lang=zh-cn
-        // csTimer 使用独立的语言体系（zh-cn 而非站内的 zh），需要手动映射
         document.addEventListener('DOMContentLoaded', () => {
             const card = document.getElementById('card-cstimer');
             if (card && typeof I18n !== 'undefined' && I18n.locale === 'zh') {
                 card.href = 'cstimer/?lang=zh-cn';
             }
+            // NOTE: 初始化全局登录 UI
+            updateGlobalAuth();
         });
+
+        function updateGlobalAuth() {
+            var user = WcaAuth.getUser();
+            var loginBtn = document.getElementById('global-login-btn');
+            var userInfo = document.getElementById('global-user-info');
+            if (user) {
+                loginBtn.style.display = 'none';
+                userInfo.style.display = 'flex';
+                document.getElementById('global-avatar').src = user.avatar || '';
+                document.getElementById('global-name').textContent = user.name || user.wcaId;
+            } else {
+                loginBtn.style.display = '';
+                userInfo.style.display = 'none';
+            }
+        }
     </script>
     <script src="sw-register.js" defer></script>
 </body>
