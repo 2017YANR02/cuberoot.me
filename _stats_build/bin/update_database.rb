@@ -84,6 +84,19 @@ Dir.mktmpdir do |tmp_direcory|
       end
     end
 
+    # NOTE: WCA 在 2026 年初将 value1-5 从 results 表迁移到独立的 result_attempts 表。
+    #       为保持下游统计脚本的兼容性，导入后通过 SQL 回填这些列。
+    #       参见: https://github.com/thewca/worldcubeassociation.org/blob/main/lib/database_dumper.rb
+    Helpers.timed_task("Backfilling value1-5 from result_attempts") do
+      backfill_sqls = [
+        "ALTER TABLE results ADD COLUMN value1 INT NOT NULL DEFAULT 0, ADD COLUMN value2 INT NOT NULL DEFAULT 0, ADD COLUMN value3 INT NOT NULL DEFAULT 0, ADD COLUMN value4 INT NOT NULL DEFAULT 0, ADD COLUMN value5 INT NOT NULL DEFAULT 0",
+        *(1..5).map { |n| "UPDATE results r JOIN result_attempts ra ON ra.result_id = r.id AND ra.attempt_number = #{n} SET r.value#{n} = ra.value" }
+      ]
+      backfill_sqls.each do |sql|
+        `#{mysql_with_credentials} #{config["database"]} -e "#{sql}" #{filter_out_mysql_warning}`
+      end
+    end
+
     # Store the export timestamp
     export_timestamp = File.mtime(filename)
     store_metadata_sql = "CREATE TABLE wca_statistics_metadata (field varchar(255), value varchar(255)); INSERT INTO wca_statistics_metadata (field, value) VALUES ('export_timestamp', '#{export_timestamp.iso8601}')"
