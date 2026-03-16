@@ -4,13 +4,14 @@
 
 ---
 
-## 项目使用的表（共 11 张）+ 参考表
+## 项目使用的表（共 12 张）+ 参考表
 
-数据库总计 121 张表，统计脚本只用到以下 11 张，另附 1 张参考表（`Scrambles`）：
+数据库总计 121 张表，统计脚本只用到以下 12 张，另附 1 张参考表（`Scrambles`）：
 
 | 表名 | 行数 | 大小 | 用途 |
 |------|-----:|-----:|------|
 | `results` | 609 万 | 798 MB | 核心：所有比赛成绩 |
+| `result_attempts` | ~3000 万 | — | 每次成绩的各 attempt（导入后回填到 results.value1-5）|
 | `persons` | 28 万 | 24 MB | 选手信息 |
 | `competitions` | 1.3 万 | 40 MB | 比赛信息 |
 | `countries` | 207 | — | 国家名称 |
@@ -47,13 +48,33 @@
 | `round_id` | int | NO | MUL | 轮次 ID |
 | `round_type_id` | varchar(1) | NO | MUL | 轮次类型 → `round_types.id` |
 | `updated_at` | timestamp | NO | — | 最后更新时间 |
-| `value1` | int | NO | — | 第 1 次成绩 |
-| `value2` | int | NO | — | 第 2 次成绩 |
-| `value3` | int | NO | — | 第 3 次成绩 |
-| `value4` | int | NO | — | 第 4 次成绩（Mo3 项目为 0）|
-| `value5` | int | NO | — | 第 5 次成绩（Mo3 项目为 0）|
+| `value1` | int | NO | — | 第 1 次成绩（⚠️ 回填列，见下方说明）|
+| `value2` | int | NO | — | 第 2 次成绩（⚠️ 回填列）|
+| `value3` | int | NO | — | 第 3 次成绩（⚠️ 回填列）|
+| `value4` | int | NO | — | 第 4 次成绩（Mo3 项目为 0）（⚠️ 回填列）|
+| `value5` | int | NO | — | 第 5 次成绩（Mo3 项目为 0）（⚠️ 回填列）|
+
+> **⚠️ 回填列说明**：WCA 在 2026 年初将 `value1`-`value5` 从 `results` 表拆分到独立的 `result_attempts` 表。
+> 导入脚本 `update_database.rb` 会在加载数据后通过 SQL 从 `result_attempts` 回填这 5 列，以保持下游兼容性。
+> 参见：[WCA database_dumper.rb](https://github.com/thewca/worldcubeassociation.org/blob/main/lib/database_dumper.rb)
 
 **成绩值编码**：`正整数` = 厘秒（0.01 秒），`-1` = DNF，`-2` = DNS，`0` = 无此次
+
+---
+
+### `result_attempts`（~3000 万行）
+
+> WCA 从 2026 年初开始将各 attempt 存储在此表中（原 `results.value1`-`value5`）。
+> 导入脚本 `update_database.rb` 会从此表回填 `results.value1`-`value5`，统计脚本无需直接查询此表。
+
+| 列名 | 类型 | 可空 | 索引 | 说明 |
+|------|------|:----:|:----:|------|
+| `id` | int | NO | PRI | 主键（自增）|
+| `result_id` | int | NO | MUL | → `results.id` |
+| `attempt_number` | int | NO | — | 第几次（1-5）|
+| `value` | int | NO | — | 成绩值（编码同 `results`）|
+| `created_at` | timestamp | NO | — | 创建时间 |
+| `updated_at` | timestamp | NO | — | 更新时间 |
 
 ---
 
