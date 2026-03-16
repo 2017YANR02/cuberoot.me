@@ -120,12 +120,14 @@ function createPlayer(id) {
         time: 0,
         // performance.now() 时间戳（单调时钟，更精确）
         startTime: 0,
-        // 累积比分
-        points: parseInt(localStorage.getItem(LS_PREFIX + "p" + id)) || 0,
+        // 累积比分（刷新即清零）
+        points: 0,
         // 此玩家绑定的 pointerId（多点触控隔离）
         pointerId: null,
         // requestAnimationFrame ID
         rafId: null,
+        // NOTE: 成绩历史（ms 值，DNF 存 Infinity）— 用于 Ao5 统计
+        solveHistory: [],
     };
 }
 
@@ -134,6 +136,8 @@ function createPlayer(id) {
 const dom = {
     areas: [null, null],       // 两个玩家触摸区域
     times: [null, null],       // 计时显示
+    ao5s: [null, null],        // Ao5 统计显示
+    opponents: [null, null],   // 对手成绩显示
     scrambles: [null, null],   // 打乱文字
     scrambleImgs: [null, null],// 打乱图（csTimer SVG）
     penalties: [null, null],   // 罚时按钮组
@@ -154,6 +158,10 @@ function init() {
     dom.areas[1] = document.getElementById("player-top");
     dom.times[0] = document.getElementById("time-0");
     dom.times[1] = document.getElementById("time-1");
+    dom.ao5s[0] = document.getElementById("ao5-0");
+    dom.ao5s[1] = document.getElementById("ao5-1");
+    dom.opponents[0] = document.getElementById("opponent-0");
+    dom.opponents[1] = document.getElementById("opponent-1");
     dom.scrambles[0] = document.getElementById("scramble-0");
     dom.scrambles[1] = document.getElementById("scramble-1");
     dom.scrambleImgs[0] = document.getElementById("scramble-img-0");
@@ -225,6 +233,8 @@ function init() {
     renderScores();
     updatePenaltyButtons(0);
     updatePenaltyButtons(1);
+    renderAo5(0);
+    renderAo5(1);
 
     // 加载第一个打乱
     loadNewScramble();
@@ -351,8 +361,12 @@ function playerUp(playerId) {
                 player.isTiming = true;
                 player.isReady = false;
                 player.startTime = startTime;
+                // NOTE: 此时才清除上一把成绩（用户要求保留到计时开始）
+                player.time = 0;
                 player.penalty = PENALTY.OK;
                 renderArea(i);
+                updatePenaltyButtons(i);
+                renderOpponent(i, '');
                 startTimerAnimation(i);
             }
         }
@@ -453,6 +467,13 @@ function checkBothFinished() {
     const [p0, p1] = state.players;
     if (p0.hasFinished && p1.hasFinished) {
         computeWinner();
+        // NOTE: 首次完成时记录成绩到历史（放在此处而非 computeWinner，避免罚时重判时重复 push）
+        for (let i = 0; i < 2; i++) {
+            state.players[i].solveHistory.push(effectiveTime(state.players[i]));
+        }
+        savePoints();
+        renderAo5(0);
+        renderAo5(1);
         loadNewScramble();
     }
 }
@@ -460,6 +481,7 @@ function checkBothFinished() {
 /**
  * NOTE: 重置上一轮状态，为新一轮做准备
  * 在 playerDown() 开头调用，确保用户有时间查看上轮成绩/选罚时
+ * NOTE: 不清除时间显示 — 上一把成绩保留到下一把计时开始才清零
  */
 function resetForNextRound() {
     for (let i = 0; i < 2; i++) {
@@ -468,12 +490,10 @@ function resetForNextRound() {
         p.canStart = false;
         p.isTiming = false;
         p.hasFinished = false;
-        p.time = 0;
-        p.penalty = PENALTY.OK;
+        // NOTE: 保留 p.time 和 p.penalty，让上一把成绩继续显示
         p.pointerId = null;
         renderArea(i);
-        renderTime(i);
-        updatePenaltyButtons(i);
+        // 不调用 renderTime / updatePenaltyButtons — 保留上一把显示
     }
     state.winner = -2;
 }
@@ -525,6 +545,23 @@ function computeWinner() {
     renderTime(1);
     updatePenaltyButtons(0);
     updatePenaltyButtons(1);
+    renderAo5(0);
+    renderAo5(1);
+
+    // NOTE: 在每个选手区域显示对手成绩（让双方能从正面看到对方时间）
+    for (let i = 0; i < 2; i++) {
+        var opp = state.players[1 - i];
+        var oppTime = effectiveTime(opp);
+        var label = oppTime === Infinity ? 'DNF' : formatTime(oppTime);
+        renderOpponent(i, '⚔️ ' + label);
+    }
+}
+
+/**
+ * NOTE: 显示对手成绩 — 让每个选手从自己的半屏正面看到对方时间
+ */
+function renderOpponent(playerId, text) {
+    dom.opponents[playerId].innerHTML = text;
 }
 
 /**
@@ -575,6 +612,12 @@ function handlePenalty(playerId, penaltyType) {
     renderTime(playerId);
     updatePenaltyButtons(playerId);
 
+    // NOTE: 更新历史中最后一条记录（罚时变更影响有效时间）
+    for (let i = 0; i < 2; i++) {
+        var h = state.players[i].solveHistory;
+        if (h.length > 0) h[h.length - 1] = effectiveTime(state.players[i]);
+    }
+
     // 重新判定胜负
     removeLastWinner();
     computeWinner();
@@ -590,9 +633,13 @@ function deleteLast() {
         state.players[i].time = 0;
         state.players[i].hasFinished = false;
         state.players[i].penalty = PENALTY.OK;
+        // NOTE: 同步回退历史记录
+        state.players[i].solveHistory.pop();
         renderTime(i);
         updatePenaltyButtons(i);
+        renderAo5(i);
     }
+    savePoints();
     renderScores();
     closeSettings();
 }
@@ -618,10 +665,14 @@ function resetAll() {
         p.penalty = PENALTY.OK;
         p.time = 0;
         p.points = 0;
+        // NOTE: 清空成绩历史
+        p.solveHistory = [];
         cancelAnimationFrame(p.rafId);
         renderArea(i);
         renderTime(i);
         updatePenaltyButtons(i);
+        renderAo5(i);
+        renderOpponent(i, '');
     }
     savePoints();
     renderScores();
@@ -694,6 +745,33 @@ function renderTime(playerId) {
     // 赢家高亮
     if (state.winner === playerId || (state.winner === -1 && p.hasFinished)) {
         el.classList.add("winner");
+    }
+}
+
+/**
+ * NOTE: 计算 Ao5 — 取最近 5 条成绩，排序去最好最差，取中间 3 条均值
+ * 返回 ms 值，DNF 返回 Infinity，不足 5 条返回 null
+ */
+function computeAo5(history) {
+    if (history.length < 5) return null;
+    var last5 = history.slice(-5);
+    var sorted = [...last5].sort((a, b) => a - b);
+    // NOTE: 2+ 个 DNF（Infinity）→ 整个 Ao5 = DNF
+    var dnfCount = sorted.filter(t => t === Infinity).length;
+    if (dnfCount >= 2) return Infinity;
+    // 去掉最好（sorted[0]）和最差（sorted[4]），取中间 3 条均值
+    return Math.round((sorted[1] + sorted[2] + sorted[3]) / 3);
+}
+
+function renderAo5(playerId) {
+    var ao5 = computeAo5(state.players[playerId].solveHistory);
+    var el = dom.ao5s[playerId];
+    if (ao5 === null) {
+        el.textContent = '';
+    } else if (ao5 === Infinity) {
+        el.textContent = 'ao5: DNF';
+    } else {
+        el.textContent = 'ao5: ' + formatTime(ao5);
     }
 }
 
@@ -787,10 +865,9 @@ function tryLockOrientation() {
 
 // ===== 持久化 =====
 
+// NOTE: 比分和历史仅存在内存中 — 刷新页面即清零（用户要求）
 function savePoints() {
-    for (let i = 0; i < 2; i++) {
-        localStorage.setItem(LS_PREFIX + "p" + i, state.players[i].points);
-    }
+    // 不持久化，F5 刷新回归原始状态
 }
 
 // ===== 时间格式化 =====
