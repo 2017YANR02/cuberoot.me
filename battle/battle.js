@@ -342,7 +342,8 @@ function playerDown(playerId) {
             p.hasFinished = true;
             p.isTiming = false;
             cancelAnimationFrame(p.rafId);
-            renderTime(playerId);
+            // NOTE: 立即更新奖杯显示（对方还在计时时用 Infinity 代替）
+            updateLiveWinner();
             // NOTE: 停表后在对方区域显示此选手的成绩（让对手从正面看到）
             var myTime = effectiveTime(p);
             var label = myTime === Infinity ? 'DNF' : formatTime(myTime);
@@ -386,6 +387,8 @@ function playerUp(playerId) {
                 player.time = 0;
                 player.penalty = PENALTY.OK;
                 renderArea(i);
+                // NOTE: 必须调用 renderTime 清除上一把的 .winner 绿色 class
+                renderTime(i);
                 updatePenaltyButtons(i);
                 renderOpponent(i, '');
                 startTimerAnimation(i);
@@ -559,6 +562,31 @@ function startTimerAnimation(playerId) {
 
 // ===== 胜负判定 =====
 
+/**
+ * NOTE: 实时更新奖杯显示 — 不加积分，只计算当前谁领先
+ * 对方若还在计时，用 Infinity 代表"未完成（必输）"
+ * 停表后和罚时变更后都调用此函数
+ */
+function updateLiveWinner() {
+    const [p0, p1] = state.players;
+    const t0 = p0.hasFinished ? effectiveTime(p0) : Infinity;
+    const t1 = p1.hasFinished ? effectiveTime(p1) : Infinity;
+
+    if (t0 === Infinity && t1 === Infinity) {
+        state.winner = -2;
+    } else if (t0 < t1) {
+        state.winner = 0;
+    } else if (t1 < t0) {
+        state.winner = 1;
+    } else {
+        state.winner = -1;
+    }
+
+    // NOTE: 只更新 UI，积分由 computeWinner 在双方完成后统一计算
+    renderTime(0);
+    renderTime(1);
+}
+
 function computeWinner() {
     const [p0, p1] = state.players;
 
@@ -652,7 +680,8 @@ function handlePenalty(playerId, penaltyType) {
     if (!p.hasFinished || p.isTiming) return;
 
     p.penalty = penaltyType;
-    renderTime(playerId);
+    // NOTE: 罚时变更后重新实时判断奖杯（双方都完成则 computeWinner 负责积分）
+    updateLiveWinner();
     updatePenaltyButtons(playerId);
 
     // NOTE: 更新历史中最后一条记录（罚时变更影响有效时间）
@@ -661,9 +690,11 @@ function handlePenalty(playerId, penaltyType) {
         if (h.length > 0) h[h.length - 1] = effectiveTime(state.players[i]);
     }
 
-    // 重新判定胜负
-    removeLastWinner();
-    computeWinner();
+    // NOTE: 双方完成后才重算积分
+    if (state.players[0].hasFinished && state.players[1].hasFinished) {
+        removeLastWinner();
+        computeWinner();
+    }
 }
 
 // ===== 设置操作 =====
