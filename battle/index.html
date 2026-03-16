@@ -127,9 +127,13 @@
                     <button id="btn-wca-login" class="history-action-btn" style="width:100%">🔐 Login with WCA</button>
                 </div>
                 <div class="setting-item toggle-row" id="wca-user-row" style="display:none">
-                    <img id="wca-avatar" style="width:24px;height:24px;border-radius:50%;border:1px solid #555" src="" alt="">
+                    <img id="wca-avatar" style="width:24px;height:24px;border-radius:50%;object-fit:cover;border:1px solid #555" src="" alt="">
                     <span id="wca-name" style="flex:1;color:#ccc;font-size:0.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
-                    <button id="btn-wca-sync" class="history-action-btn" title="Sync">☁️</button>
+                    <button id="btn-wca-sync" class="history-action-btn" title="Sync">
+                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
+                            <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>
+                        </svg>
+                    </button>
                     <button id="btn-wca-logout" class="history-action-btn" title="Logout">❌</button>
                 </div>
             </div>
