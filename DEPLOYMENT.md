@@ -204,10 +204,21 @@ ruiminyan.github.io/
 | 临时目录 | `E:/mysql_tmp` |
 | 数据库 | `wca_statistics`（121 张表，数据在 `E:\mysql_data\wca_statistics\`）|
 | Dump 文件 | `D:\cube\wca-developer-database\wca-developer-database-dump.sql`（从 [WCA Developer Export](https://www.worldcubeassociation.org/export/developer) 下载）|
-| 导入命令 | `mysql -u root -p --default-character-set=utf8mb4 wca_statistics -e "source D:/cube/wca-developer-database/wca-developer-database-dump.sql"` |
 | 连接凭据 | 见 `_stats_build/database.yml`（含密码，已在 `.gitignore` 中排除）|
 
-**项目使用的表**：数据库共 121 张，统计脚本只用到 11 张，含完整列定义见 [`_stats_build/SCHEMA.md`](_stats_build/SCHEMA.md)。
+**项目使用的表**：数据库共 121 张，统计脚本只用到 12 张，含完整列定义见 [`_stats_build/SCHEMA.md`](_stats_build/SCHEMA.md)。
+
+### 高效导入（~10 分钟）
+
+```powershell
+.\_stats_build\bin\import_wca_database.ps1
+# 或指定自定义 dump 文件路径
+.\_stats_build\bin\import_wca_database.ps1 -DumpFile "D:\path\to\dump.sql"
+```
+
+脚本自动完成：优化 InnoDB 参数 → 重建数据库 → cmd 管道导入 → 恢复默认参数 → 显示实时进度。凭据从 `database.yml` 读取。
+
+> **关键优化**：`innodb_flush_log_at_trx_commit = 0` 避免每次 INSERT 同步刷盘（9 小时 → ~10 分钟）。导入完后脚本会自动恢复为 1。
 
 **启用 sudo**（首次，Windows 11 24H2+）：设置 → 系统 → 开发者选项 → 启用 sudo。或通过命令：
 
