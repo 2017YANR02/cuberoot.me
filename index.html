@@ -333,9 +333,8 @@
     <!-- NOTE: 全局 WCA 登录区域（左上角） -->
     <div class="global-auth" id="global-auth">
         <button id="global-login-btn" class="global-auth-btn" onclick="WcaAuth.login()" style="display:none">🔐 Login</button>
-        <div id="global-user-info" class="global-user" style="display:none">
-            <img id="global-avatar" class="global-avatar" src="" alt="">
-            <span id="global-name" class="global-name"></span>
+        <div id="global-user-info" class="global-user" style="display:none; gap:10px;">
+            <img id="global-avatar" class="global-avatar" src="" alt="" title="">
             <button class="global-logout" onclick="WcaAuth.logout();location.reload()" title="Logout">❌</button>
         </div>
     </div>
@@ -477,8 +476,9 @@
             if (user) {
                 loginBtn.style.display = 'none';
                 userInfo.style.display = 'flex';
-                document.getElementById('global-avatar').src = user.avatar || '';
-                document.getElementById('global-name').textContent = user.name || user.wcaId;
+                var avatar = document.getElementById('global-avatar');
+                avatar.src = user.avatar || '';
+                avatar.title = user.name || user.wcaId; // NOTE: 名字放到 title 提示里
             } else {
                 loginBtn.style.display = '';
                 userInfo.style.display = 'none';
