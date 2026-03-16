@@ -93,8 +93,8 @@ class Statistic
   # NOTE: 历史行的公共字段——进步、天数、选手、比赛、日期、详情
   # records: 按时间正序排列的纪录数组
   # i: 当前索引
-  # event_id: 项目 ID（用于格式化 details 中的 value1-5）
-  # details: 可选，自定义详情字符串（ao_rounds 用各轮 average 而非 value1-5）
+  # event_id: 项目 ID（用于格式化 details 中的 attempts）
+  # details: 可选，自定义详情字符串（ao_rounds 用各轮 average 而非 attempts）
   # block: 从记录中提取指标值（用于计算进步百分比）
   # 返回: [gain_str, days_str, person_link, date_str, competition_link, details]
   def wr_history_row(records, i, event_id, details: nil)
@@ -118,7 +118,7 @@ class Statistic
     end
 
     date_str = r["start_date"].strftime("%Y-%m-%d")
-    details ||= (1..5).map { |n| SolveTime.new(event_id, :single, r["value#{n}"]).clock_format }
+    details ||= (r["attempts"] || "").split(",").map { |v| SolveTime.new(event_id, :single, v.to_i).clock_format }
       .reject(&:empty?).join(', ')
 
     [gain_str, days_str, r["person_link"], date_str, r["competition_link"], details]
