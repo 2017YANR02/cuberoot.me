@@ -109,6 +109,8 @@ const state = {
     inspectionTime: parseInt(localStorage.getItem(LS_PREFIX + "inspectionTime")) || 0,
     // 观察语音提示（8s/12s）
     voice: localStorage.getItem(LS_PREFIX + "voice") !== "false",
+    // NOTE: 多阶段计时（1=正常, 2=BLD-style, 4=CFOP）
+    phases: parseInt(localStorage.getItem(LS_PREFIX + "phases")) || 1,
     // 当前打乱图字号缩放比例
     scrambleScale: parseFloat(localStorage.getItem(LS_PREFIX + "scrambleScale")) || 1.0,
     // 当前打乱
@@ -123,6 +125,9 @@ const state = {
     players: [createPlayer(0), createPlayer(1)],
     // NOTE: 撤销栈 — 存储被删除的 {index, entry} 供 undo
     undoStack: [],
+    // NOTE: Session 管理
+    sessionId: localStorage.getItem(LS_PREFIX + 'sessionId') || '1',
+    sessions: JSON.parse(localStorage.getItem(LS_PREFIX + 'sessions') || '[{"id":"1","name":"Session 1"}]'),
 };
 
 function createPlayer(id) {
@@ -142,9 +147,8 @@ function createPlayer(id) {
         time: 0,
         // performance.now() 时间戳（单调时钟，更精确）
         startTime: 0,
-        // NOTE: 盲拧分段 — memo 阶段（isMemoing=true 时计时中按下记录 memo 不停表）
-        isMemoing: false,
-        memoTime: 0,
+        // NOTE: 多阶段计时 — phaseSplits 存储每次分段的时间戳
+        phaseSplits: [],
         // 累积比分（刷新即清零）
         points: 0,
         // 此玩家绑定的 pointerId（多点触控隔离）
@@ -183,6 +187,7 @@ const dom = {
     bgImages: [null, null],    // file input
     bgResets: [null, null],    // reset button
     bgError: null,             // 错误提示
+    selectSession: null,       // Session 下拉
 };
 
 // ===== 初始化 =====
@@ -213,6 +218,7 @@ function init() {
     dom.toggleMode = document.getElementById("toggle-mode");
     dom.selectInspection = document.getElementById("select-inspection");
     dom.toggleVoice = document.getElementById("toggle-voice");
+    dom.selectSession = document.getElementById("select-session");
     dom.sizeSlider = document.getElementById("scramble-size-slider");
     // NOTE: 历史面板引用
     dom.historyOverlay = document.getElementById("history-overlay");
@@ -303,6 +309,14 @@ function init() {
         localStorage.setItem(LS_PREFIX + 'voice', state.voice);
     });
 
+    // NOTE: 多阶段计时选择
+    const selPhases = document.getElementById("select-phases");
+    selPhases.value = state.phases.toString();
+    selPhases.addEventListener("change", (e) => {
+        state.phases = parseInt(e.target.value);
+        localStorage.setItem(LS_PREFIX + 'phases', state.phases);
+    });
+
     // 初始化 Show Image 开关状态和事件
     dom.toggleImage.checked = state.showImage;
     dom.toggleImage.addEventListener("change", (e) => {
@@ -328,6 +342,13 @@ function init() {
     dom.historyOverlay.addEventListener("click", (e) => {
         if (e.target === dom.historyOverlay) closeHistory();
     });
+
+    // NOTE: Session 管理事件
+    dom.selectSession.addEventListener("change", (e) => switchSession(e.target.value));
+    document.getElementById("btn-session-new").addEventListener("click", newSession);
+    document.getElementById("btn-session-rename").addEventListener("click", renameSession);
+    document.getElementById("btn-session-delete").addEventListener("click", deleteSession);
+    renderSessionList();
 
     // 渲染初始状态
     renderScores();
@@ -439,11 +460,11 @@ function playerDown(playerId) {
             // 计时中按下
             const elapsed = performance.now() - p.startTime;
             if (elapsed > MIN_SOLVE_TIME) {
-                // NOTE: 盲拧第一次按下 — 只记录 memo 时间，不停表
-                if (isBLD() && p.isMemoing) {
-                    p.memoTime = elapsed;
-                    p.isMemoing = false;
-                    // NOTE: 更新显示加 memo 标记
+                // NOTE: 多阶段计时 — 获取有效阶段数（BLD 强制 2 阶段）
+                const numPhases = isBLD() ? 2 : state.phases;
+                if (numPhases > 1 && p.phaseSplits.length < numPhases - 1) {
+                    // 记录分段时间（不停表）
+                    p.phaseSplits.push(elapsed);
                     return true;
                 }
                 p.time = elapsed;
@@ -537,9 +558,8 @@ function playerUp(playerId) {
             p.isReady = false;
             p.startTime = performance.now();
             p.time = 0;
-            // NOTE: 盲拧项目自动启用 memo 阶段
-            p.isMemoing = isBLD();
-            p.memoTime = 0;
+            // NOTE: 清空分段计时
+            p.phaseSplits = [];
             if (!p.inspectionPenalty) p.penalty = PENALTY.OK;
             // NOTE: 清除观察状态
             clearInspection(playerId);
@@ -719,8 +739,8 @@ function checkBothFinished() {
                 scramble: state.scramble || '',
                 date: new Date().toISOString(),
             };
-            // NOTE: 盲拧分段——记录 memo 时间
-            if (p.memoTime > 0) entry.memo = p.memoTime;
+            // NOTE: 多阶段分段记录
+            if (p.phaseSplits.length > 0) entry.phases = [...p.phaseSplits, p.time];
             p.solveHistory.push(entry);
             saveSolveHistory();
             renderTime(0);
@@ -1125,9 +1145,16 @@ function renderTime(playerId) {
         }
     }
 
-    // NOTE: 盲拧完成后显示 memo 时间
-    if (isSolo() && p.hasFinished && p.memoTime > 0) {
-        el.innerHTML += `<div class="memo-display">memo: ${formatTimePlain(p.memoTime)}</div>`;
+    // NOTE: 多阶段完成后显示分段时间
+    if (isSolo() && p.hasFinished && p.phaseSplits.length > 0) {
+        // 计算每段的增量时间
+        const allPhases = [...p.phaseSplits, p.time];
+        const parts = allPhases.map((t, i) => {
+            const delta = i === 0 ? t : t - allPhases[i - 1];
+            const label = isBLD() && i === 0 ? 'memo' : `P${i + 1}`;
+            return `${label}: ${formatTimePlain(delta)}`;
+        });
+        el.innerHTML += `<div class="memo-display">${parts.join(' │ ')}</div>`;
     }
 
     // NOTE: 赢家高亮 + 🏆（平局不加奖杯）
@@ -1696,7 +1723,7 @@ function formatTimePlain(ms) {
  * 每个项目独立存储，最多保存 1000 条（超出删除最早的）
  */
 function saveSolveHistory() {
-    const key = `${LS_PREFIX}solo_history_${state.puzzleId}`;
+    const key = `${LS_PREFIX}solo_history_${state.sessionId}_${state.puzzleId}`;
     const h = state.players[0].solveHistory;
     // NOTE: 限制最多 1000 条
     const toSave = h.length > 1000 ? h.slice(-1000) : h;
@@ -1709,7 +1736,7 @@ function saveSolveHistory() {
 
 function loadSolveHistory() {
     if (!isSolo()) return;
-    const key = `${LS_PREFIX}solo_history_${state.puzzleId}`;
+    const key = `${LS_PREFIX}solo_history_${state.sessionId}_${state.puzzleId}`;
     try {
         const data = localStorage.getItem(key);
         if (data) {
@@ -1725,6 +1752,7 @@ function loadSolveHistory() {
 function openHistory() {
     if (isAnyActive()) return;
     renderHistory();
+    renderTrendChart();
     dom.historyOverlay.classList.add('visible');
 }
 
@@ -1779,12 +1807,23 @@ function renderHistory() {
         const ao5Str = ao5 === null ? '' : (ao5 === Infinity ? 'DNF' : formatTimePlain(ao5));
 
         const scramble = typeof entry === 'object' ? (entry.scramble || '') : '';
-        // NOTE: 盲拧 memo 分段显示
-        const memoStr = (entry.memo && entry.memo > 0) ? ` <span class="h-memo">[memo: ${formatTimePlain(entry.memo)}]</span>` : '';
+        // NOTE: 多阶段分段显示
+        let phaseStr = '';
+        if (entry.phases && entry.phases.length > 1) {
+            const labels = entry.phases.map((t, j) => {
+                const delta = j === 0 ? t : t - entry.phases[j - 1];
+                const label = isBLD() && j === 0 ? 'memo' : `P${j + 1}`;
+                return `${label}:${formatTimePlain(delta)}`;
+            });
+            phaseStr = ` <span class="h-memo">[${labels.join(' ')}]</span>`;
+        } else if (entry.memo && entry.memo > 0) {
+            // NOTE: 兼容旧数据格式
+            phaseStr = ` <span class="h-memo">[memo: ${formatTimePlain(entry.memo)}]</span>`;
+        }
 
         html += `<div class="history-item" data-idx="${i}">
             <span class="h-idx">${i + 1}.</span>
-            <span class="${timeClass}">${timeStr}${memoStr}</span>
+            <span class="${timeClass}">${timeStr}${phaseStr}</span>
             <span class="h-ao5">${ao5Str}</span>
             <button class="h-delete" data-delidx="${i}" title="Delete">🗑️</button>
             <span class="h-scramble">${scramble}</span>
@@ -1868,3 +1907,152 @@ function exportCSV() {
     a.click();
     URL.revokeObjectURL(url);
 }
+
+// ===== Session 管理 =====
+
+function saveSessions() {
+    localStorage.setItem(LS_PREFIX + 'sessions', JSON.stringify(state.sessions));
+    localStorage.setItem(LS_PREFIX + 'sessionId', state.sessionId);
+}
+
+function renderSessionList() {
+    const sel = dom.selectSession;
+    sel.innerHTML = '';
+    for (const s of state.sessions) {
+        const opt = document.createElement('option');
+        opt.value = s.id;
+        opt.textContent = s.name;
+        if (s.id === state.sessionId) opt.selected = true;
+        sel.appendChild(opt);
+    }
+}
+
+function switchSession(newId) {
+    if (newId === state.sessionId) return;
+    // NOTE: 保存当前 session 的历史
+    saveSolveHistory();
+    state.sessionId = newId;
+    saveSessions();
+    // 清空内存中的历史并加载新 session
+    state.players[0].solveHistory = [];
+    state.undoStack = [];
+    loadSolveHistory();
+    renderSoloStats(0);
+    renderSessionList();
+}
+
+function newSession() {
+    // NOTE: 自增 ID（取现有最大 ID + 1）
+    const maxId = Math.max(...state.sessions.map(s => parseInt(s.id) || 0));
+    const newId = (maxId + 1).toString();
+    const name = prompt('Session name:', `Session ${newId}`);
+    if (!name) return;
+    state.sessions.push({ id: newId, name });
+    // 切换到新 session
+    saveSolveHistory(); // 保存当前
+    state.sessionId = newId;
+    state.players[0].solveHistory = [];
+    state.undoStack = [];
+    saveSessions();
+    renderSoloStats(0);
+    renderSessionList();
+}
+
+function renameSession() {
+    const current = state.sessions.find(s => s.id === state.sessionId);
+    if (!current) return;
+    const name = prompt('Rename session:', current.name);
+    if (!name) return;
+    current.name = name;
+    saveSessions();
+    renderSessionList();
+}
+
+function deleteSession() {
+    if (state.sessions.length <= 1) {
+        alert('Cannot delete the last session');
+        return;
+    }
+    const current = state.sessions.find(s => s.id === state.sessionId);
+    if (!confirm(`Delete "${current.name}" and all its data?`)) return;
+
+    // NOTE: 清理此 session 在所有 puzzle 下的 localStorage 数据
+    for (const puz of PUZZLES) {
+        localStorage.removeItem(`${LS_PREFIX}solo_history_${state.sessionId}_${puz.id}`);
+    }
+
+    state.sessions = state.sessions.filter(s => s.id !== state.sessionId);
+    state.sessionId = state.sessions[0].id;
+    state.players[0].solveHistory = [];
+    state.undoStack = [];
+    loadSolveHistory();
+    saveSessions();
+    renderSoloStats(0);
+    renderSessionList();
+}
+
+// ===== 趋势图表 =====
+
+/**
+ * NOTE: 纯 SVG 折线图（零依赖），在历史面板顶部显示
+ * X轴=序号，Y轴=时间(ms)，叠加 Ao5 线
+ * Best 点绿色，worst 点红色
+ */
+function renderTrendChart() {
+    const h = state.players[0].solveHistory;
+    const existing = document.getElementById('trend-chart-container');
+    if (existing) existing.remove();
+
+    if (h.length < 2) return; // 至少 2 条才画图
+
+    const times = h.map(getEffectiveTimeFromEntry);
+    // NOTE: DNF 不画点（过滤 Infinity）
+    const validPairs = [];
+    times.forEach((t, i) => { if (t !== Infinity) validPairs.push({ i, t }); });
+    if (validPairs.length < 2) return;
+
+    const W = 360, H = 120, PAD = 20;
+    const minT = Math.min(...validPairs.map(p => p.t));
+    const maxT = Math.max(...validPairs.map(p => p.t));
+    const rangeT = maxT - minT || 1;
+    const n = h.length;
+
+    // 坐标转换
+    const x = (idx) => PAD + (idx / (n - 1)) * (W - 2 * PAD);
+    const y = (t) => PAD + (1 - (t - minT) / rangeT) * (H - 2 * PAD);
+
+    // 折线路径
+    let pathD = '';
+    validPairs.forEach((p, j) => {
+        pathD += `${j === 0 ? 'M' : 'L'}${x(p.i).toFixed(1)},${y(p.t).toFixed(1)} `;
+    });
+
+    // Ao5 线
+    let ao5Path = '';
+    for (let i = 4; i < h.length; i++) {
+        const ao5 = computeAo5(h.slice(0, i + 1));
+        if (ao5 !== null && ao5 !== Infinity) {
+            ao5Path += `${ao5Path ? 'L' : 'M'}${x(i).toFixed(1)},${y(ao5).toFixed(1)} `;
+        }
+    }
+
+    // Best/Worst 点
+    const bestT = Math.min(...validPairs.map(p => p.t));
+    const worstT = Math.max(...validPairs.map(p => p.t));
+    const bestPt = validPairs.find(p => p.t === bestT);
+    const worstPt = validPairs.find(p => p.t === worstT);
+
+    let svg = `<svg viewBox="0 0 ${W} ${H}" class="trend-svg">
+        <path d="${pathD}" fill="none" stroke="#4fc3f7" stroke-width="1.5"/>
+        ${ao5Path ? `<path d="${ao5Path}" fill="none" stroke="#ff9800" stroke-width="1" stroke-dasharray="4,2"/>` : ''}
+        ${bestPt ? `<circle cx="${x(bestPt.i)}" cy="${y(bestPt.t)}" r="3" fill="#4caf50"/>` : ''}
+        ${worstPt ? `<circle cx="${x(worstPt.i)}" cy="${y(worstPt.t)}" r="3" fill="#f44336"/>` : ''}
+    </svg>`;
+
+    const container = document.createElement('div');
+    container.id = 'trend-chart-container';
+    container.className = 'trend-chart';
+    container.innerHTML = svg;
+    dom.historyList.parentNode.insertBefore(container, dom.historyList);
+}
+
