@@ -854,7 +854,7 @@ function renderAo5(playerId) {
     } else if (ao5 === Infinity) {
         el.textContent = 'ao5: DNF';
     } else {
-        el.textContent = 'ao5: ' + formatTime(ao5);
+        el.innerHTML = 'ao5: ' + formatTime(ao5);
     }
 }
 
