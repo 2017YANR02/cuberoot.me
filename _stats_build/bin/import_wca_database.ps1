@@ -42,10 +42,12 @@ function Restore-Defaults {
     mysql @mysqlArgs -e @"
 ALTER INSTANCE ENABLE INNODB REDO_LOG;
 SET GLOBAL innodb_flush_log_at_trx_commit = 1;
+SET GLOBAL innodb_buffer_pool_size = 134217728;
+SET GLOBAL innodb_log_buffer_size = 16777216;
 SET GLOBAL innodb_io_capacity = 200;
 SET GLOBAL innodb_io_capacity_max = 2000;
 "@ 2>$null
-    Write-Host "  Done: redo log ON, flush_log=1" -ForegroundColor Green
+    Write-Host "  Done: redo log ON, buffer_pool=128MB, flush_log=1" -ForegroundColor Green
 }
 
 $fileSizeMB = [math]::Round((Get-Item $DumpFile).Length / 1MB, 0)
