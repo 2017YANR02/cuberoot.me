@@ -85,8 +85,8 @@ This project builds upon the work of:
 - **1v1 Battle Timer**: Ported from [MatteoColombo/cube_challenge_timer](https://github.com/MatteoColombo/cube_challenge_timer) by [MatteoColombo](https://github.com/MatteoColombo). The original project provides the 1v1 head-to-head battle timer logic and penalty system.
 - **csTimer**: Integrated from [cs0x7f/cstimer](https://github.com/cs0x7f/cstimer) by [cs0x7f](https://github.com/cs0x7f). Provides the professional speedcubing timer (available at `/cstimer/`) and the pure-JS scramble generation engine used in the 1v1 Battle Timer (WCA random-state, GPL-3.0).
 - **canvas-confetti**: [catdad/canvas-confetti](https://github.com/catdad/canvas-confetti) by [catdad](https://github.com/catdad). Lightweight confetti animation for winner celebration effects (ISC license, self-hosted).
+- **DCTimer-Android**: [MeigenChou/DCTimer-Android](https://github.com/MeigenChou/DCTimer-Android) by [MeigenChou](https://github.com/MeigenChou). Android timing app that inspired parts of the Battle Timer design.
 
-https://mihlefeld.github.io/Alg-Trainers/
 
 ## License
 
