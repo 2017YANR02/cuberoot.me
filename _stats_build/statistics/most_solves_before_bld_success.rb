@@ -12,7 +12,7 @@ class MostSolvesBeforeBldSuccess < GroupedStatistic
         event_id,
         CONCAT('[', person.name, '](https://www.worldcubeassociation.org/persons/', person.wca_id, ')') person_link,
         #{Database::ATTEMPTS_SUBQUERY} AS attempts
-      FROM results
+      FROM results result
       JOIN persons person ON person.wca_id = person_id AND person.sub_id = 1
       JOIN competitions competition ON competition.id = competition_id
       JOIN round_types round_type ON round_type.id = round_type_id

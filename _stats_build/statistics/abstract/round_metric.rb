@@ -170,7 +170,7 @@ class RoundMetric < GroupedStatistic
            person.country_id,
            CONCAT('[', c.cell_name, '](https://www.worldcubeassociation.org/competitions/', c.id, ')') competition_link,
            c.start_date
-           FROM results
+           FROM results result
            JOIN persons person ON person.wca_id = person_id AND person.sub_id = 1
            JOIN competitions c ON c.id = competition_id
            WHERE #{vc} > 0 AND event_id = '#{event_id}'"
