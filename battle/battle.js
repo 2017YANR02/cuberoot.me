@@ -1000,6 +1000,9 @@ function updateBarGradient() {
     const c1 = localStorage.getItem(`${LS_PREFIX}bg_color_1`) || '#000000';
     bar.style.setProperty('--bar-color-left', c1);
     bar.style.setProperty('--bar-color-right', c0);
+    // NOTE: 取两端亮度平均值决定中间栏文字颜色，> 0.4 则用黑字
+    const avgLum = (perceivedLuminance(c0) + perceivedLuminance(c1)) / 2;
+    bar.style.setProperty('--bar-text-color', avgLum > 0.4 ? '#111' : '#ccc');
 }
 
 function showBgError(msg) {
