@@ -287,11 +287,14 @@ body {
     /* NOTE: 渐变色从左(P2)到右(P1)，由 JS 设置 CSS 变量；默认 #111 */
     --bar-color-left: #111;
     --bar-color-right: #111;
+    /* NOTE: 文字颜色由 JS 根据两端背景亮度计算 */
+    --bar-text-color: #ccc;
     background: linear-gradient(to right, var(--bar-color-left), #111, var(--bar-color-right));
     border-top: 1px solid rgba(255,255,255,0.08);
     border-bottom: 1px solid rgba(255,255,255,0.08);
     min-height: 40px;
     flex-shrink: 0;
+    color: var(--bar-text-color);
 }
 
 .score-section {
@@ -306,7 +309,8 @@ body {
     font-family: 'Segment7Standard', 'JetBrains Mono', monospace;
     font-weight: 700;
     font-size: 1rem;
-    color: #fff;
+    /* NOTE: 继承中间栏的文字颜色自适应 */
+    color: var(--bar-text-color, #fff);
     font-variant-numeric: tabular-nums;
 }
 
