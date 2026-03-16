@@ -17,6 +17,23 @@ Dir.mktmpdir do |tmp_direcory|
 
     Helpers.timed_task("Downloading #{database_export_url}") { `wget --quiet #{database_export_url}` }
     Helpers.timed_task("Unzipping #{zip_filename}") { `unzip #{zip_filename}` }
+    # NOTE: CI 是一次性 MySQL 实例，导入前设置 InnoDB 高性能参数即可，无需恢复。
+    # 与本地 import_wca_database.ps1 相同的优化策略（DRY 原则）。
+    # 这些参数同时加速后续的导入、索引创建等所有写入操作。
+    Helpers.timed_task("Setting MySQL performance parameters") do
+      [
+        "SET GLOBAL innodb_flush_log_at_trx_commit = 0",
+        "SET GLOBAL innodb_buffer_pool_size = 2147483648",  # 2GB（CI runner 7GB RAM）
+        "SET GLOBAL innodb_log_buffer_size = 268435456",    # 256MB
+        "SET GLOBAL innodb_io_capacity = 10000",
+        "SET GLOBAL innodb_io_capacity_max = 20000",
+      ].each do |sql|
+        `#{mysql_with_credentials} -e "#{sql}" #{filter_out_mysql_warning}`
+      end
+      # NOTE: DISABLE REDO_LOG 大幅加速批量写入（崩溃时需重新导入，CI 可接受）
+      `#{mysql_with_credentials} -e "ALTER INSTANCE DISABLE INNODB REDO_LOG" #{filter_out_mysql_warning}`
+    end
+
     Helpers.timed_task("Importing #{filename} into #{config["database"]}") do
       `#{mysql_with_credentials} -e "DROP DATABASE IF EXISTS #{config["database"]}" #{filter_out_mysql_warning}`
       `#{mysql_with_credentials} -e "CREATE DATABASE #{config["database"]}" #{filter_out_mysql_warning}`
@@ -89,9 +106,7 @@ Dir.mktmpdir do |tmp_direcory|
     #       让所有 GROUP_CONCAT / JOIN 走 index-only scan，无需回表。
     #       临时关闭 InnoDB 刷盘同步加速建索引。
     Helpers.timed_task("Creating covering index on result_attempts") do
-      `#{mysql_with_credentials} #{config["database"]} -e "SET GLOBAL innodb_flush_log_at_trx_commit = 0" #{filter_out_mysql_warning}`
       `#{mysql_with_credentials} #{config["database"]} -e "CREATE INDEX idx_ra_covering ON result_attempts(result_id, attempt_number, value)" #{filter_out_mysql_warning}`
-      `#{mysql_with_credentials} #{config["database"]} -e "SET GLOBAL innodb_flush_log_at_trx_commit = 1" #{filter_out_mysql_warning}`
     end
 
     # Store the export timestamp
