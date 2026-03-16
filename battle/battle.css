@@ -185,6 +185,26 @@ body {
     justify-content: center;
 }
 
+/* NOTE: Ao5 统计行 — 低调显示在计时数字下方 */
+.ao5-display {
+    font-family: 'Segment7Standard', 'JetBrains Mono', monospace;
+    font-size: clamp(0.7rem, 2.5vw, 0.9rem);
+    color: #666;
+    text-align: center;
+    min-height: 1.2em;
+    letter-spacing: 0.02em;
+}
+
+/* NOTE: 对手成绩 — 让每个选手从正面看到对方的时间（无需看倒立的） */
+.opponent-display {
+    font-family: 'Segment7Standard', 'JetBrains Mono', monospace;
+    font-size: clamp(0.65rem, 2.2vw, 0.85rem);
+    color: #555;
+    text-align: center;
+    min-height: 1.2em;
+    letter-spacing: 0.02em;
+}
+
 /* NOTE: 专门针对冒号的样式，修复 Segment7Standard 将其渲染为横线的问题 */
 .time-display .colon {
     font-family: 'JetBrains Mono', 'Roboto Mono', monospace;
