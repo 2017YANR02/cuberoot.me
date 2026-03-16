@@ -1578,6 +1578,7 @@ function speakAlert(text) {
     try {
         if ('speechSynthesis' in window) {
             const u = new SpeechSynthesisUtterance(text);
+            u.lang = 'en-US';
             u.rate = 1.2;
             u.volume = 0.8;
             speechSynthesis.speak(u);
