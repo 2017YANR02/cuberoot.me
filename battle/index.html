@@ -33,20 +33,20 @@
     <!-- NOTE: 返回按钮（固定左上角，不受旋转影响） -->
     <a href="../" class="back-btn" aria-label="Back">‹</a>
 
-    <!-- ===== Player 2（上方，旋转 180° 让对面的人看） ===== -->
+    <!-- NOTE: 旋转 180° 后用户从对面看，HTML 顺序必须反转才能匹配 Player 1 的视觉顺序 -->
     <div id="player-top" class="player-area rotated">
         <div id="penalties-1" class="penalty-buttons">
             <button class="penalty-btn active" data-penalty="ok">OK</button>
             <button class="penalty-btn" data-penalty="+2">+2</button>
             <button class="penalty-btn" data-penalty="dnf">DNF</button>
         </div>
-        <div id="time-1" class="time-display">0.000</div>
-        <div id="ao5-1" class="ao5-display"></div>
         <div id="opponent-1" class="opponent-display"></div>
+        <div id="ao5-1" class="ao5-display"></div>
+        <div id="time-1" class="time-display">0.000</div>
+        <div id="scramble-img-1" class="scramble-img"></div>
         <div id="scramble-1" class="scramble-text">
             <span class="loading">Generating scramble...</span>
         </div>
-        <div id="scramble-img-1" class="scramble-img"></div>
     </div>
 
     <!-- ===== 中间栏（比分 + 设置） ===== -->
