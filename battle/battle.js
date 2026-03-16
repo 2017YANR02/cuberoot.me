@@ -85,17 +85,26 @@ const I18N_TEXT = {
     hide_time:  { en: "🙈 Hide time when solving", zh: "🙈 计时时隐藏时间" },
     show_time:  { en: "👁️ Show time when solving", zh: "👁️ 计时时显示时间" },
     generating: { en: "Generating scramble...",    zh: "正在生成打乱..." },
+    // NOTE: WCA 观察倒计时状态文字
+    inspecting: { en: "Inspecting",                zh: "观察中" },
 };
+
+// NOTE: 是否为 Solo 模式的快捷判断
+function isSolo() { return state.mode === 'solo'; }
 
 // ===== 状态 =====
 
 const state = {
+    // NOTE: Solo/1v1 模式（'solo' 或 '1v1'）
+    mode: localStorage.getItem(LS_PREFIX + "mode") || "1v1",
     // 当前项目 ID
     puzzleId: localStorage.getItem(LS_PREFIX + "puzzle") || "333",
     // 是否显示计时中的时间
     showTime: localStorage.getItem(LS_PREFIX + "showTime") !== "false",
     // 是否显示打乱图
-    showImage: localStorage.getItem(LS_PREFIX + "showImage") !== "false", // 默认显示图形
+    showImage: localStorage.getItem(LS_PREFIX + "showImage") !== "false",
+    // WCA 观察倒计时（15秒标准观察）
+    inspection: localStorage.getItem(LS_PREFIX + "inspection") === "true",
     // 当前打乱图字号缩放比例
     scrambleScale: parseFloat(localStorage.getItem(LS_PREFIX + "scrambleScale")) || 1.0,
     // 当前打乱
@@ -117,6 +126,11 @@ function createPlayer(id) {
         canStart: false,
         isTiming: false,
         hasFinished: false,
+        // NOTE: WCA 观察状态（Solo 模式）
+        isInspecting: false,
+        inspectionStart: 0,
+        inspectionTimer: null,   // setInterval ID
+        inspectionPenalty: null, // null, '+2', 'dnf'
         penalty: PENALTY.OK,
         // NOTE: 以 ms 为单位的解题时间
         time: 0,
@@ -128,7 +142,7 @@ function createPlayer(id) {
         pointerId: null,
         // requestAnimationFrame ID
         rafId: null,
-        // NOTE: 成绩历史（ms 值，DNF 存 Infinity）— 用于 Ao5 统计
+        // NOTE: 成绩历史 — 对象数组 {time, penalty, scramble, date}
         solveHistory: [],
     };
 }
@@ -147,7 +161,13 @@ const dom = {
     settingsOverlay: null,
     puzzleGrid: null,
     toggleImage: null,
+    toggleMode: null,          // Solo/1v1 模式切换
+    toggleInspection: null,    // WCA 观察倒计时开关
     sizeSlider: null,
+    // NOTE: 历史面板
+    historyOverlay: null,
+    historyList: null,
+    historyStats: null,
     // NOTE: 背景自定义控件（每个玩家各一组）
     bgColors: [null, null],    // color input
     bgImages: [null, null],    // file input
@@ -180,7 +200,13 @@ function init() {
     dom.settingsOverlay = document.getElementById("settings-overlay");
     dom.puzzleGrid = document.getElementById("puzzle-grid");
     dom.toggleImage = document.getElementById("toggle-image");
+    dom.toggleMode = document.getElementById("toggle-mode");
+    dom.toggleInspection = document.getElementById("toggle-inspection");
     dom.sizeSlider = document.getElementById("scramble-size-slider");
+    // NOTE: 历史面板引用
+    dom.historyOverlay = document.getElementById("history-overlay");
+    dom.historyList = document.getElementById("history-list");
+    dom.historyStats = document.getElementById("history-stats");
     // NOTE: 背景自定义控件引用
     for (let i = 0; i < 2; i++) {
         dom.bgColors[i] = document.getElementById(`bg-color-${i}`);
@@ -244,6 +270,21 @@ function init() {
     // NOTE: 点击页面其他区域时关闭已打开的罚时下拉
     document.addEventListener("click", () => closeAllDropdowns());
 
+    // NOTE: Solo/1v1 模式切换
+    dom.toggleMode.checked = (state.mode === 'solo');
+    dom.toggleMode.addEventListener("change", (e) => {
+        state.mode = e.target.checked ? 'solo' : '1v1';
+        localStorage.setItem(LS_PREFIX + 'mode', state.mode);
+        applyMode();
+    });
+
+    // NOTE: WCA Inspection 开关
+    dom.toggleInspection.checked = state.inspection;
+    dom.toggleInspection.addEventListener("change", (e) => {
+        state.inspection = e.target.checked;
+        localStorage.setItem(LS_PREFIX + 'inspection', state.inspection);
+    });
+
     // 初始化 Show Image 开关状态和事件
     dom.toggleImage.checked = state.showImage;
     dom.toggleImage.addEventListener("change", (e) => {
@@ -261,6 +302,13 @@ function init() {
         localStorage.setItem(LS_PREFIX + "scrambleScale", state.scrambleScale);
     });
 
+    // NOTE: 历史面板事件
+    document.getElementById("btn-history").addEventListener("click", openHistory);
+    document.getElementById("history-close").addEventListener("click", closeHistory);
+    dom.historyOverlay.addEventListener("click", (e) => {
+        if (e.target === dom.historyOverlay) closeHistory();
+    });
+
     // 渲染初始状态
     renderScores();
     updatePenaltyButtons(0);
@@ -273,6 +321,12 @@ function init() {
 
     // 初始化背景自定义控件
     initBgControls();
+
+    // NOTE: 从 localStorage 恢复成绩历史
+    loadSolveHistory();
+
+    // NOTE: 应用初始模式布局
+    applyMode();
 
     // 尝试锁定竖屏
     tryLockOrientation();
@@ -343,13 +397,59 @@ function renderScrambleImage() {
  * @returns {boolean} 是否成功处理
  */
 function playerDown(playerId) {
+    // NOTE: Solo 模式只处理 player 0
+    if (isSolo() && playerId !== 0) return false;
+
+    const p = state.players[playerId];
+
+    if (isSolo()) {
+        // === Solo 模式状态机 ===
+        if (p.hasFinished) {
+            // 上一轮已完成 → 重置进入下一轮
+            resetForNextRound();
+        }
+        if (p.isInspecting) {
+            // NOTE: 观察中按下 → 进入准备状态
+            p.isReady = true;
+            renderArea(playerId);
+            checkBothReady();
+            return true;
+        }
+        if (p.isTiming) {
+            // 计时中按下 → 停表
+            const elapsed = performance.now() - p.startTime;
+            if (elapsed > MIN_SOLVE_TIME) {
+                p.time = elapsed;
+                p.hasFinished = true;
+                p.isTiming = false;
+                cancelAnimationFrame(p.rafId);
+                // NOTE: 应用观察罚时（如果有）
+                if (p.inspectionPenalty === '+2') {
+                    p.penalty = PENALTY.PLUS2;
+                } else if (p.inspectionPenalty === 'dnf') {
+                    p.penalty = PENALTY.DNF;
+                }
+                renderTime(playerId);
+                checkBothFinished();
+            }
+            return true;
+        }
+        if (!p.hasFinished && !p.canStart && state.scramble) {
+            // 空闲状态按下 → 准备
+            p.isReady = true;
+            renderArea(playerId);
+            checkBothReady();
+            return true;
+        }
+        return false;
+    }
+
+    // === 1v1 模式原有逻辑 ===
     // NOTE: 上一轮双方都已完成 → 任意按键触发重置，进入下一轮
     const [p0, p1] = state.players;
     if (p0.hasFinished && p1.hasFinished) {
         resetForNextRound();
     }
-
-    const p = state.players[playerId];
 
     if (p.isTiming) {
         // --- 按下停止计时 ---
@@ -389,8 +489,45 @@ function playerDown(playerId) {
  * 玩家松开（触摸/键盘）时的通用状态转换
  */
 function playerUp(playerId) {
+    // NOTE: Solo 模式只处理 player 0
+    if (isSolo() && playerId !== 0) return;
+
     const p = state.players[playerId];
 
+    if (isSolo()) {
+        // === Solo 模式 ===
+        if (p.canStart) {
+            // NOTE: inspection 开启时，松手开始观察倒计时
+            if (state.inspection && !p.isInspecting && !p.isTiming) {
+                p.canStart = false;
+                p.isReady = false;
+                startInspection(playerId);
+                return;
+            }
+            // 松手开始计时
+            p.canStart = false;
+            p.isTiming = true;
+            p.isReady = false;
+            p.startTime = performance.now();
+            p.time = 0;
+            if (!p.inspectionPenalty) p.penalty = PENALTY.OK;
+            // NOTE: 清除观察状态
+            clearInspection(playerId);
+            renderArea(playerId);
+            renderTime(playerId);
+            updatePenaltyButtons(playerId);
+            startTimerAnimation(playerId);
+            return;
+        }
+        if (p.isReady && !p.isTiming && !p.hasFinished) {
+            cancelReadyTimer();
+            p.isReady = false;
+            renderArea(playerId);
+        }
+        return;
+    }
+
+    // === 1v1 模式原有逻辑 ===
     if (p.canStart) {
         // --- 第一名玩家松手触发，强制双方同时开始计时 ---
         const startTime = performance.now();
@@ -462,11 +599,15 @@ function handlePointerCancel(playerId, e) {
 const keyPressed = {};
 
 function handleKeyDown(e) {
-    // NOTE: 设置面板打开时不响应键盘
+    // NOTE: 设置面板或历史面板打开时不响应键盘
     if (dom.settingsOverlay.classList.contains("visible")) return;
+    if (dom.historyOverlay.classList.contains("visible")) return;
 
     const playerId = KEY_MAP[e.key];
     if (playerId === undefined) return;
+
+    // NOTE: Solo 模式只响应空格键（player 0）
+    if (isSolo() && playerId !== 0) return;
 
     e.preventDefault();
 
@@ -488,10 +629,24 @@ function handleKeyUp(e) {
 }
 
 function checkBothReady() {
+    if (isSolo()) {
+        // NOTE: Solo 模式——只检查 player 0
+        const p0 = state.players[0];
+        if (p0.isReady && !p0.canStart) {
+            state.readyTimer = setTimeout(() => {
+                state.readyTimer = null;
+                if (p0.isReady) {
+                    p0.canStart = true;
+                    renderArea(0);
+                }
+            }, 200);
+        }
+        return;
+    }
+    // === 1v1 原有逻辑 ===
     const [p0, p1] = state.players;
     if (p0.isReady && !p0.canStart && p1.isReady && !p1.canStart) {
         // NOTE: 双方都按住 → 红灯亮 0.2s 后变绿灯（canStart）
-        // 期间任一方松手会在 playerUp 中调用 cancelReadyTimer() 取消
         state.readyTimer = setTimeout(() => {
             state.readyTimer = null;
             // NOTE: 再次确认双方仍在按住（防止极端时序竞争）
@@ -524,12 +679,36 @@ function checkBothTiming() {
 }
 
 function checkBothFinished() {
+    if (isSolo()) {
+        // NOTE: Solo 模式——单人完成即记录
+        const p = state.players[0];
+        if (p.hasFinished) {
+            p.solveHistory.push({
+                time: p.time,
+                penalty: p.penalty === PENALTY.DNF ? 'dnf' : (p.penalty === PENALTY.PLUS2 ? '+2' : 'ok'),
+                scramble: state.scramble || '',
+                date: new Date().toISOString(),
+            });
+            saveSolveHistory();
+            renderTime(0);
+            renderSoloStats(0);
+            updatePenaltyButtons(0);
+            loadNewScramble();
+        }
+        return;
+    }
+    // === 1v1 原有逻辑 ===
     const [p0, p1] = state.players;
     if (p0.hasFinished && p1.hasFinished) {
         computeWinner();
-        // NOTE: 首次完成时记录成绩到历史（放在此处而非 computeWinner，避免罚时重判时重复 push）
+        // NOTE: 首次完成时记录成绩到历史
         for (let i = 0; i < 2; i++) {
-            state.players[i].solveHistory.push(effectiveTime(state.players[i]));
+            state.players[i].solveHistory.push({
+                time: state.players[i].time,
+                penalty: state.players[i].penalty === PENALTY.DNF ? 'dnf' : (state.players[i].penalty === PENALTY.PLUS2 ? '+2' : 'ok'),
+                scramble: state.scramble || '',
+                date: new Date().toISOString(),
+            });
         }
         savePoints();
         renderAo5(0);
@@ -544,6 +723,20 @@ function checkBothFinished() {
  * NOTE: 不清除时间显示 — 上一把成绩保留到下一把计时开始才清零
  */
 function resetForNextRound() {
+    if (isSolo()) {
+        // NOTE: Solo 模式只重置 player 0
+        const p = state.players[0];
+        p.isReady = false;
+        p.canStart = false;
+        p.isTiming = false;
+        p.hasFinished = false;
+        p.inspectionPenalty = null;
+        clearInspection(0);
+        p.pointerId = null;
+        renderArea(0);
+        return;
+    }
+    // === 1v1 原有逻辑 ===
     for (let i = 0; i < 2; i++) {
         const p = state.players[i];
         p.isReady = false;
@@ -707,14 +900,31 @@ function handlePenalty(playerId, penaltyType) {
     if (!p.hasFinished || p.isTiming) return;
 
     p.penalty = penaltyType;
-    // NOTE: 罚时变更后重新实时判断奖杯（双方都完成则 computeWinner 负责积分）
+
+    if (isSolo()) {
+        // NOTE: Solo 模式——更新历史中最后一条记录的 penalty 字段
+        const h = p.solveHistory;
+        if (h.length > 0) {
+            h[h.length - 1].penalty = penaltyType === PENALTY.DNF ? 'dnf' : (penaltyType === PENALTY.PLUS2 ? '+2' : 'ok');
+        }
+        saveSolveHistory();
+        updatePenaltyButtons(playerId);
+        renderTime(playerId);
+        renderSoloStats(playerId);
+        return;
+    }
+
+    // === 1v1 原有逻辑 ===
+    // NOTE: 罚时变更后重新实时判断奖杯
     updateLiveWinner();
     updatePenaltyButtons(playerId);
 
-    // NOTE: 更新历史中最后一条记录（罚时变更影响有效时间）
+    // NOTE: 更新历史中最后一条记录的 penalty
     for (let i = 0; i < 2; i++) {
         var h = state.players[i].solveHistory;
-        if (h.length > 0) h[h.length - 1] = effectiveTime(state.players[i]);
+        if (h.length > 0) {
+            h[h.length - 1].penalty = state.players[i].penalty === PENALTY.DNF ? 'dnf' : (state.players[i].penalty === PENALTY.PLUS2 ? '+2' : 'ok');
+        }
     }
 
     // NOTE: 双方完成后才重算积分
@@ -732,6 +942,22 @@ function isAnyActive() {
 }
 
 function deleteLast() {
+    if (isSolo()) {
+        // NOTE: Solo 模式——删除最后一条成绩
+        const p = state.players[0];
+        if (p.solveHistory.length === 0) return;
+        p.solveHistory.pop();
+        p.time = 0;
+        p.hasFinished = false;
+        p.penalty = PENALTY.OK;
+        saveSolveHistory();
+        renderTime(0);
+        updatePenaltyButtons(0);
+        renderSoloStats(0);
+        closeSettings();
+        return;
+    }
+    // === 1v1 原有逻辑 ===
     if (!state.players[0].hasFinished || !state.players[1].hasFinished) return;
 
     removeLastWinner();
@@ -771,6 +997,8 @@ function resetAll() {
         p.penalty = PENALTY.OK;
         p.time = 0;
         p.points = 0;
+        p.inspectionPenalty = null;
+        clearInspection(i);
         // NOTE: 清空成绩历史
         p.solveHistory = [];
         cancelAnimationFrame(p.rafId);
@@ -779,6 +1007,11 @@ function resetAll() {
         updatePenaltyButtons(i);
         renderAo5(i);
         renderOpponent(i, '');
+    }
+    // NOTE: 清理持久化数据
+    if (isSolo()) {
+        saveSolveHistory();
+        renderSoloStats(0);
     }
     savePoints();
     renderScores();
@@ -802,9 +1035,17 @@ function removeLastWinner() {
 
 function changePuzzle(puzzleId) {
     if (puzzleId === state.puzzleId) return;
+    // NOTE: Solo 模式切换项目时，先保存当前项目的历史
+    if (isSolo()) saveSolveHistory();
     state.puzzleId = puzzleId;
     localStorage.setItem(LS_PREFIX + "puzzle", puzzleId);
+    // NOTE: 重置状态（包括清空当前内存中的历史）
     resetAll();
+    // NOTE: Solo 模式下加载新项目的历史
+    if (isSolo()) {
+        loadSolveHistory();
+        renderSoloStats(0);
+    }
     // 更新选中状态
     document.querySelectorAll(".puzzle-btn").forEach(btn => {
         btn.classList.toggle("active", btn.dataset.puzzle === puzzleId);
@@ -862,18 +1103,47 @@ function renderTime(playerId) {
 }
 
 /**
+ * NOTE: 从历史记录对象提取有效时间（含罚时计算）
+ * 兼容新格式 {time, penalty, scramble, date} 和旧格式（纯 ms 数字）
+ */
+function getEffectiveTimeFromEntry(entry) {
+    if (typeof entry === 'number') return entry; // 兼容旧格式
+    if (entry.penalty === 'dnf') return Infinity;
+    if (entry.penalty === '+2') return entry.time + 2000;
+    return entry.time;
+}
+
+/**
  * NOTE: 计算 Ao5 — 取最近 5 条成绩，排序去最好最差，取中间 3 条均值
  * 返回 ms 值，DNF 返回 Infinity，不足 5 条返回 null
  */
 function computeAo5(history) {
     if (history.length < 5) return null;
-    var last5 = history.slice(-5);
+    var last5 = history.slice(-5).map(getEffectiveTimeFromEntry);
     var sorted = [...last5].sort((a, b) => a - b);
     // NOTE: 2+ 个 DNF（Infinity）→ 整个 Ao5 = DNF
     var dnfCount = sorted.filter(t => t === Infinity).length;
     if (dnfCount >= 2) return Infinity;
     // 去掉最好（sorted[0]）和最差（sorted[4]），取中间 3 条均值
     return Math.round((sorted[1] + sorted[2] + sorted[3]) / 3);
+}
+
+/**
+ * NOTE: 通用 Average（Ao12/Ao100）— 参考 DCTimer Stats.java averageOf 算法
+ * n ≤ 20: 去掉最好最差各 1 个
+ * n > 20: 去掉最好最差各 ceil(n/20) 个（WCA 标准 5% trim）
+ */
+function computeAverage(history, n) {
+    if (history.length < n) return null;
+    var lastN = history.slice(-n).map(getEffectiveTimeFromEntry);
+    var trim = Math.ceil(n / 20);
+    var sorted = [...lastN].sort((a, b) => a - b);
+    var dnfCount = sorted.filter(t => t === Infinity).length;
+    if (dnfCount > trim) return Infinity; // DNF 超过 trim 数量 → 整个 average = DNF
+    // 去掉前 trim 个最好和后 trim 个最差
+    var middle = sorted.slice(trim, n - trim);
+    var sum = middle.reduce((a, b) => a + b, 0);
+    return Math.round(sum / middle.length);
 }
 
 function renderAo5(playerId) {
@@ -953,8 +1223,12 @@ function openSettings() {
     const key = state.showTime ? 'hide_time' : 'show_time';
     document.getElementById("btn-toggle-time").textContent = I18N_TEXT[key][lang];
     // 更新 delete last 按钮状态
-    const canDelete = state.players[0].hasFinished && state.players[1].hasFinished;
-    document.getElementById("btn-delete-last").disabled = !canDelete;
+    if (isSolo()) {
+        document.getElementById("btn-delete-last").disabled = state.players[0].solveHistory.length === 0;
+    } else {
+        const canDelete = state.players[0].hasFinished && state.players[1].hasFinished;
+        document.getElementById("btn-delete-last").disabled = !canDelete;
+    }
 }
 
 function closeSettings() {
@@ -1125,4 +1399,283 @@ function initBgControls() {
             applyBg(i);
         });
     }
+}
+
+// ===== Solo 模式 =====
+
+/**
+ * NOTE: 应用模式布局 — body.solo class 控制 CSS 显隐
+ * 切换模式时重置所有玩家状态
+ */
+function applyMode() {
+    document.body.classList.toggle('solo', isSolo());
+    // 重置玩家状态（但不清空历史）
+    for (let i = 0; i < 2; i++) {
+        const p = state.players[i];
+        p.isReady = false;
+        p.canStart = false;
+        p.isTiming = false;
+        p.hasFinished = false;
+        p.inspectionPenalty = null;
+        clearInspection(i);
+        cancelAnimationFrame(p.rafId);
+        p.pointerId = null;
+        renderArea(i);
+    }
+    cancelReadyTimer();
+    state.winner = -2;
+
+    if (isSolo()) {
+        // NOTE: Solo 模式 — 只显示 player 0 的统计
+        renderSoloStats(0);
+        // 隐藏 1v1 专属 UI
+        const oppo0 = document.getElementById('opponent-0');
+        if (oppo0) oppo0.textContent = '';
+    } else {
+        // NOTE: 1v1 模式 — 恢复 Ao5 显示
+        renderAo5(0);
+        renderAo5(1);
+        renderScores();
+    }
+}
+
+// ===== WCA Inspection 观察倒计时 =====
+
+/**
+ * NOTE: 参考 DCTimer DCTTimer.java L74-140
+ * 15 秒标准观察：>15s 自动 +2，>17s 自动 DNF
+ */
+function startInspection(playerId) {
+    const p = state.players[playerId];
+    p.isInspecting = true;
+    p.inspectionStart = performance.now();
+    p.inspectionPenalty = null;
+
+    // NOTE: 添加观察状态 CSS class
+    dom.areas[playerId].classList.add('state-inspecting');
+
+    // NOTE: 每 100ms 更新倒计时显示
+    p.inspectionTimer = setInterval(() => {
+        const elapsed = (performance.now() - p.inspectionStart) / 1000;
+        const remaining = Math.ceil(15 - elapsed);
+
+        if (elapsed >= 17) {
+            // >17s → 自动 DNF，立即停止观察
+            p.inspectionPenalty = 'dnf';
+            dom.times[playerId].textContent = 'DNF';
+            clearInspection(playerId);
+            // 自动开始计时并立即完成（DNF 结果）
+            p.isInspecting = false;
+            p.isReady = false;
+            p.canStart = false;
+            p.isTiming = false;
+            p.hasFinished = true;
+            p.time = 0;
+            p.penalty = PENALTY.DNF;
+            renderArea(playerId);
+            checkBothFinished();
+        } else if (elapsed >= 15) {
+            // 15-17s → +2 罚时标记
+            p.inspectionPenalty = '+2';
+            dom.times[playerId].textContent = '+2';
+        } else {
+            // 正常倒计时
+            dom.times[playerId].textContent = remaining.toString();
+        }
+    }, 100);
+}
+
+/**
+ * NOTE: 清除观察计时器和 CSS class
+ */
+function clearInspection(playerId) {
+    const p = state.players[playerId];
+    if (p.inspectionTimer) {
+        clearInterval(p.inspectionTimer);
+        p.inspectionTimer = null;
+    }
+    p.isInspecting = false;
+    dom.areas[playerId].classList.remove('state-inspecting');
+}
+
+// ===== Solo 统计渲染 =====
+
+/**
+ * NOTE: Solo 模式下替代 renderAo5 — 在 ao5-display 位置显示更丰富的统计
+ * 参考 DCTimer Stats.java sessionMean + sessionAvg
+ */
+function renderSoloStats(playerId) {
+    const el = dom.ao5s[playerId];
+    const h = state.players[playerId].solveHistory;
+
+    if (h.length === 0) {
+        el.textContent = '';
+        return;
+    }
+
+    // NOTE: 计算各项统计
+    const times = h.map(getEffectiveTimeFromEntry);
+    const validTimes = times.filter(t => t !== Infinity);
+    const solveCount = h.length;
+    const dnfCount = times.filter(t => t === Infinity).length;
+
+    // Best / Worst
+    const best = validTimes.length > 0 ? Math.min(...validTimes) : null;
+    const worst = validTimes.length > 0 ? Math.max(...validTimes) : null;
+
+    // Session Mean（不含 DNF）
+    const mean = validTimes.length > 0
+        ? Math.round(validTimes.reduce((a, b) => a + b, 0) / validTimes.length)
+        : null;
+
+    // 标准差 σ
+    let sdStr = '';
+    if (validTimes.length > 1 && mean !== null) {
+        const variance = validTimes.reduce((s, t) => s + (t - mean) * (t - mean), 0) / validTimes.length;
+        const sd = Math.sqrt(variance) / 1000; // 转为秒
+        sdStr = `σ=${sd.toFixed(2)}`;
+    }
+
+    // Ao5 / Ao12 / Ao100
+    const ao5 = computeAo5(h);
+    const ao12 = computeAverage(h, 12);
+    const ao100 = computeAverage(h, 100);
+
+    // NOTE: 构建统计文本
+    const parts = [];
+    if (ao5 !== null) parts.push(`ao5: ${ao5 === Infinity ? 'DNF' : formatTimePlain(ao5)}`);
+    if (ao12 !== null) parts.push(`ao12: ${ao12 === Infinity ? 'DNF' : formatTimePlain(ao12)}`);
+    if (ao100 !== null) parts.push(`ao100: ${ao100 === Infinity ? 'DNF' : formatTimePlain(ao100)}`);
+
+    const line1 = parts.join(' │ ');
+    const line2Parts = [];
+    if (best !== null) line2Parts.push(`best: ${formatTimePlain(best)}`);
+    if (mean !== null) line2Parts.push(`mean: ${formatTimePlain(mean)}`);
+    if (sdStr) line2Parts.push(sdStr);
+    line2Parts.push(`${solveCount - dnfCount}/${solveCount}`);
+
+    const line2 = line2Parts.join(' │ ');
+    el.innerHTML = `<div class="solo-stats-display">${line1}${line1 ? '<br>' : ''}${line2}</div>`;
+}
+
+/**
+ * NOTE: 纯文本时间格式化（不含 HTML span，用于统计显示）
+ */
+function formatTimePlain(ms) {
+    if (ms <= 0) return '0.000';
+    if (ms === Infinity) return 'DNF';
+    const totalMs = Math.floor(ms);
+    const minutes = Math.floor(totalMs / 60000);
+    const seconds = Math.floor((totalMs % 60000) / 1000);
+    const millis = totalMs % 1000;
+    const millisStr = millis.toString().padStart(3, '0');
+    if (minutes > 0) {
+        return `${minutes}:${seconds.toString().padStart(2, '0')}.${millisStr}`;
+    }
+    return `${seconds}.${millisStr}`;
+}
+
+// ===== Solo 数据持久化 =====
+
+/**
+ * NOTE: 以 puzzleId 为 key 保存/恢复 Solo 模式成绩历史
+ * 每个项目独立存储，最多保存 1000 条（超出删除最早的）
+ */
+function saveSolveHistory() {
+    const key = `${LS_PREFIX}solo_history_${state.puzzleId}`;
+    const h = state.players[0].solveHistory;
+    // NOTE: 限制最多 1000 条
+    const toSave = h.length > 1000 ? h.slice(-1000) : h;
+    try {
+        localStorage.setItem(key, JSON.stringify(toSave));
+    } catch (e) {
+        console.warn('Failed to save solve history:', e);
+    }
+}
+
+function loadSolveHistory() {
+    if (!isSolo()) return;
+    const key = `${LS_PREFIX}solo_history_${state.puzzleId}`;
+    try {
+        const data = localStorage.getItem(key);
+        if (data) {
+            state.players[0].solveHistory = JSON.parse(data);
+        }
+    } catch (e) {
+        console.warn('Failed to load solve history:', e);
+    }
+}
+
+// ===== 成绩历史面板 =====
+
+function openHistory() {
+    if (isAnyActive()) return;
+    renderHistory();
+    dom.historyOverlay.classList.add('visible');
+}
+
+function closeHistory() {
+    dom.historyOverlay.classList.remove('visible');
+}
+
+/**
+ * NOTE: 渲染成绩历史列表（最新在上）
+ * 点击某条可展开/收起显示完整打乱
+ */
+function renderHistory() {
+    const h = state.players[0].solveHistory;
+    const listEl = dom.historyList;
+    const statsEl = dom.historyStats;
+
+    if (h.length === 0) {
+        listEl.innerHTML = '<div class="history-empty">No solves yet</div>';
+        statsEl.textContent = '';
+        return;
+    }
+
+    // NOTE: 统计摘要
+    const times = h.map(getEffectiveTimeFromEntry);
+    const validTimes = times.filter(t => t !== Infinity);
+    const best = validTimes.length > 0 ? Math.min(...validTimes) : null;
+    const worst = validTimes.length > 0 ? Math.max(...validTimes) : null;
+    const bestIdx = best !== null ? times.indexOf(best) : -1;
+    const worstIdx = worst !== null ? times.lastIndexOf(worst) : -1;
+
+    statsEl.textContent = `${h.length} solves`;
+
+    // NOTE: 生成列表 HTML（最新在上）
+    let html = '';
+    for (let i = h.length - 1; i >= 0; i--) {
+        const entry = h[i];
+        const effTime = getEffectiveTimeFromEntry(entry);
+        const timeStr = effTime === Infinity ? 'DNF' : formatTimePlain(effTime);
+
+        // CSS class 标记
+        let timeClass = 'h-time';
+        if (i === bestIdx) timeClass += ' h-best';
+        else if (i === worstIdx) timeClass += ' h-worst';
+        if (entry.penalty === '+2') timeClass += ' h-plus2';
+        else if (entry.penalty === 'dnf') timeClass += ' h-dnf';
+
+        // 滚动 Ao5
+        const ao5 = i >= 4 ? computeAo5(h.slice(0, i + 1)) : null;
+        const ao5Str = ao5 === null ? '' : (ao5 === Infinity ? 'DNF' : formatTimePlain(ao5));
+
+        const scramble = typeof entry === 'object' ? (entry.scramble || '') : '';
+
+        html += `<div class="history-item" data-idx="${i}">
+            <span class="h-idx">${i + 1}.</span>
+            <span class="${timeClass}">${timeStr}</span>
+            <span class="h-ao5">${ao5Str}</span>
+            <span class="h-scramble">${scramble}</span>
+        </div>`;
+    }
+    listEl.innerHTML = html;
+
+    // NOTE: 点击展开/收起打乱
+    listEl.querySelectorAll('.history-item').forEach(item => {
+        item.addEventListener('click', () => {
+            item.classList.toggle('expanded');
+        });
+    });
 }

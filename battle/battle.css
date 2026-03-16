@@ -786,3 +786,230 @@ input:checked+.slider:before {
     margin-top: 4px;
     text-align: center;
 }
+
+/* ==========================================================
+   Solo 模式布局
+   NOTE: body.solo 时隐藏上方区域和比分，下方全屏
+   ========================================================== */
+
+body.solo #player-top {
+    display: none;
+}
+
+body.solo .score-section {
+    display: none;
+}
+
+/* NOTE: Solo 模式键盘提示改为只显示 Space */
+body.solo .key-hint {
+    visibility: hidden;
+}
+
+/* NOTE: Solo 模式下显示历史按钮 */
+body.solo #btn-history {
+    display: flex !important;
+}
+
+/* NOTE: 1v1-only 设置项在 Solo 模式下隐藏 */
+body.solo .battle-only-setting {
+    display: none;
+}
+
+/* NOTE: Solo-only 设置项在 1v1 模式下隐藏 */
+body:not(.solo) .solo-setting {
+    display: none;
+}
+
+/* ==========================================================
+   WCA Inspection 观察倒计时状态
+   ========================================================== */
+
+/* NOTE: 观察中时间显示为红色（同 DCTimer） */
+.player-area.state-inspecting .time-display {
+    color: #ff1744;
+    text-shadow: 0 0 20px rgba(255, 23, 68, 0.6);
+}
+
+/* ==========================================================
+   Solo 统计面板 — 替代 ao5-display，显示更丰富的统计
+   ========================================================== */
+
+.solo-stats-display {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: clamp(0.65rem, 2.2vw, 0.85rem);
+    color: #888;
+    text-align: center;
+    min-height: 1.2em;
+    letter-spacing: 0.02em;
+    line-height: 1.6;
+}
+
+/* ==========================================================
+   成绩历史面板（Solo 模式，底部滑出抽屉）
+   ========================================================== */
+
+.history-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 200;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    /* NOTE: 默认隐藏 */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+.history-overlay.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.history-panel {
+    background: #1a1a1a;
+    width: 100%;
+    max-width: 500px;
+    max-height: 70vh;
+    border-radius: 16px 16px 0 0;
+    display: flex;
+    flex-direction: column;
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+    border: 1px solid #333;
+    border-bottom: none;
+}
+
+.history-overlay.visible .history-panel {
+    transform: translateY(0);
+}
+
+.history-header {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid #333;
+    flex-shrink: 0;
+    gap: 8px;
+}
+
+.history-title {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #fff;
+}
+
+.history-stats {
+    flex: 1;
+    font-size: 0.75rem;
+    color: #888;
+    text-align: right;
+    font-family: 'Inter', sans-serif;
+}
+
+.history-close-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid #444;
+    background: transparent;
+    color: #888;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+
+.history-close-btn:hover {
+    border-color: #e53935;
+    color: #e53935;
+}
+
+.history-list {
+    overflow-y: auto;
+    flex: 1;
+    padding: 4px 0;
+}
+
+/* NOTE: 每条成绩记录 */
+.history-item {
+    display: flex;
+    align-items: center;
+    padding: 6px 16px;
+    font-size: 0.85rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    cursor: pointer;
+    transition: background 0.1s;
+    gap: 8px;
+}
+
+.history-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.history-item .h-idx {
+    color: #555;
+    font-size: 0.75rem;
+    min-width: 28px;
+    text-align: right;
+}
+
+.history-item .h-time {
+    font-family: 'Segment7Standard', 'JetBrains Mono', monospace;
+    color: #fff;
+    font-size: 0.95rem;
+    min-width: 80px;
+}
+
+.history-item .h-time.h-best {
+    color: #66bb6a;
+}
+
+.history-item .h-time.h-worst {
+    color: #ef5350;
+}
+
+/* NOTE: +2 罚时橙色，DNF 红色 */
+.history-item .h-time.h-plus2 {
+    color: #ffa726;
+}
+
+.history-item .h-time.h-dnf {
+    color: #ef5350;
+}
+
+.history-item .h-ao5 {
+    color: #666;
+    font-size: 0.75rem;
+    min-width: 60px;
+}
+
+.history-item .h-scramble {
+    flex: 1;
+    color: #444;
+    font-size: 0.7rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* NOTE: 展开后显示完整打乱 */
+.history-item.expanded .h-scramble {
+    white-space: normal;
+    word-break: break-word;
+    color: #777;
+}
+
+/* NOTE: 空状态 */
+.history-empty {
+    padding: 32px 16px;
+    text-align: center;
+    color: #555;
+    font-size: 0.85rem;
+}
