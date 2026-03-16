@@ -946,6 +946,20 @@ function formatTime(ms) {
 
 const BG_MAX_BYTES = 4 * 1024 * 1024; // NOTE: 4MB 上限
 
+/**
+ * NOTE: W3C 相对亮度（WCAG）公式：先线性化 sRGB，再加权求和
+ * 返回 0（纯黑）到 1（纯白），> 0.4 视为"亮色"
+ * @param {string} hex - 如 "#a0c0e0"
+ * @returns {number}
+ */
+function perceivedLuminance(hex) {
+    const r = parseInt(hex.slice(1, 3), 16) / 255;
+    const g = parseInt(hex.slice(3, 5), 16) / 255;
+    const b = parseInt(hex.slice(5, 7), 16) / 255;
+    const lin = (c) => c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+}
+
 function applyBg(playerId) {
     const area = dom.areas[playerId];
     const img = localStorage.getItem(`${LS_PREFIX}bg_img_${playerId}`);
@@ -962,6 +976,13 @@ function applyBg(playerId) {
         area.style.backgroundImage = '';
         area.style.backgroundColor = '';
     }
+
+    // NOTE: 根据背景亮度自动切换文字颜色（W3C 感知亮度）；图片背景取颜色选择器值作为代表色
+    const repColor = color || '#000000';
+    const lum = perceivedLuminance(repColor);
+    // NOTE: 0.4 阈值（实测在浅灰 #a0a0a0 附近）：亮则黑字，暗则白/灰字
+    area.style.setProperty('--player-text-color', lum > 0.4 ? '#111' : '');
+
     // NOTE: 同步更新中间栏渐变 — 左侧=P2(上方)色，右侧=P1(下方)色，中间混合暗色
     updateBarGradient();
 }
