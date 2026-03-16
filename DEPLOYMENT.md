@@ -148,11 +148,9 @@ ruiminyan.github.io/
 │   ├── recon_local_store.js   # 共享模块：localStorage 复盘持久化 CRUD
 │   ├── recon_alg_utils.js     # 共享模块：公式清理（twisty-player / alg.cubing.net 不兼容符号）
 │   ├── recon_stats.js         # 统计计算引擎：STM/TPS/OLL/PLL/Cross 等指标分析
-│   ├── wca_auth.js            # WCA OAuth 模块（Implicit Grant 流程，绕过 CORS）
-│   ├── callback.html          # WCA OAuth 回调页（解析 URL hash 中的 access_token）
 │   ├── comp_names_zh.json     # 英文比赛名→中文名映射（由 fetch_comp_names_zh.py 生成，CI 每日更新）
 │   ├── api/                   # PHP 后端（阿里云 ECS，通过 CI rsync 部署）
-│   │   └── index.php            # API 入口：list/get/add/delete/update/edits/import
+│   │   └── index.php            # API 入口：list/get/add/delete/update/edits/import/timerSync
 │   ├── detail/                # 独立详情页（点击列表行跳转，URL: /recon/ID）
 │   │   ├── index.md           # 详情页 HTML（Jekyll Markdown，引入共享模块）
 │   │   └── recon_detail.js    # 详情页逻辑：单条加载、渲染、twisty 动画、同轮次成绩、管理员操作
@@ -164,6 +162,8 @@ ruiminyan.github.io/
 │   │   └── wca_attempts.json  # WCA 成绩数据（CI 增量构建，详情页 siblings 用）
 │   └── backup/                # 复盘数据备份（CI 每日自动从 API 拉取）
 │       └── recons_backup.json # 全量复盘数据备份
+├── wca_auth.js                # 🌐 全局 WCA OAuth 模块（Implicit Grant；callback → /callback.html；被根/recon/battle 共享）
+├── callback.html              # 🌐 全局 WCA OAuth 回调页（从 URL hash 解析 access_token → 返回来源页）
 
 #### Recon 详情页路由架构
 
@@ -243,7 +243,7 @@ sudo net start MySQL80
 |------|------|
 | 服务器 | 阿里云 ECS（`toolkit.cuberoot.me`） |
 | API 入口 | `https://toolkit.cuberoot.me/recon/api/?action=...` |
-| 数据存储 | MariaDB 10.5（数据库 `recon_db`，3 张表：`recons`、`edits`、`edit_history`） |
+| 数据存储 | MariaDB 10.5（数据库 `recon_db`，4 张表：`recons`、`edits`、`edit_history`、`timer_sessions`） |
 | 部署方式 | push main → CI rsync（`db_config.php` 排除，不会被覆盖） |
 | 性能优化 | gzip 压缩 + SQL 索引（`solver`、`date`、`wca_id`、`comp`） |
 | ID 策略 | 数据库 `AUTO_INCREMENT`（无需外部计数器） |
@@ -260,7 +260,7 @@ sudo net start MySQL80
 | 流程 | Implicit Grant（`response_type=token`，绕过 CORS） |
 | Client ID | `mPeg5FiAn7l0CcyQ9CdiSEn3XlBrcA7IMw6Vd9AOsz4` |
 | Scopes | `public` |
-| Redirect URIs | `https://ruiminyan.github.io/recon/callback.html`<br>`http://localhost:4000/recon/callback.html` |
+| Redirect URIs | `https://ruiminyan.github.io/callback.html`<br>`https://toolkit.cuberoot.me/callback.html`<br>`http://localhost:4000/callback.html`<br>（旧路径 `/recon/callback.html` 保留为重定向 stub，向下兼容） |
 | 管理页面 | [worldcubeassociation.org/oauth/applications](https://www.worldcubeassociation.org/oauth/applications) |
 
 > **为什么不用 Authorization Code 流程**：WCA 的 token endpoint 不开放 CORS，浏览器无法直接调用。Implicit Grant 将 token 直接放在 URL hash 中返回，完全绕过跨域问题。
