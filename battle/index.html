@@ -120,6 +120,17 @@
                 </div>
             </div>
 
+            <!-- NOTE: Session 管理（仅 Solo 模式） -->
+            <div class="settings-group solo-setting">
+                <div class="settings-label">SESSION</div>
+                <div class="setting-item toggle-row">
+                    <select id="select-session" class="settings-select" style="flex:1"></select>
+                    <button id="btn-session-new" class="history-action-btn" title="New Session">＋</button>
+                    <button id="btn-session-rename" class="history-action-btn" title="Rename">✏️</button>
+                    <button id="btn-session-delete" class="history-action-btn" title="Delete">🗑️</button>
+                </div>
+            </div>
+
             <!-- NOTE: WCA 观察倒计时（仅 Solo 模式显示），支持 OFF/8s/15s/无限 -->
             <div class="settings-group solo-setting">
                 <div class="settings-label">INSPECTION</div>
@@ -138,6 +149,19 @@
                         <input type="checkbox" id="toggle-voice" checked>
                         <span class="slider round"></span>
                     </label>
+                </div>
+            </div>
+
+            <!-- NOTE: 多阶段计时（仅 Solo 模式） -->
+            <div class="settings-group solo-setting">
+                <div class="settings-label">MULTI-PHASE</div>
+                <div class="setting-item toggle-row">
+                    <span>Phases</span>
+                    <select id="select-phases" class="settings-select">
+                        <option value="1" selected>1 (Normal)</option>
+                        <option value="2">2 (BLD-style)</option>
+                        <option value="4">4 (CFOP)</option>
+                    </select>
                 </div>
             </div>
 
