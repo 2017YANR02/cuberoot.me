@@ -280,9 +280,12 @@ body {
     align-items: center;
     justify-content: space-between;
     padding: 4px 12px;
-    background: #111;
-    border-top: 1px solid #222;
-    border-bottom: 1px solid #222;
+    /* NOTE: 渐变色从左(P2)到右(P1)，由 JS 设置 CSS 变量；默认 #111 */
+    --bar-color-left: #111;
+    --bar-color-right: #111;
+    background: linear-gradient(to right, var(--bar-color-left), #111, var(--bar-color-right));
+    border-top: 1px solid rgba(255,255,255,0.08);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
     min-height: 40px;
     flex-shrink: 0;
 }
