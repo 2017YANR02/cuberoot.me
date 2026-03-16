@@ -26,6 +26,10 @@ module Database
   INDICES = [
     "CREATE INDEX index_results_on_competition_id_person_id ON results (competition_id, person_id);",
   ]
+  # NOTE: 统一的 GROUP_CONCAT 子查询，获取一个 result 的所有 attempt 值（逗号分隔）
+  # 支持任意 attempt 数量（H2H 赛制可能有 21+ attempts）
+  # 覆盖索引 (result_id, attempt_number, value) 保证 index-only scan
+  ATTEMPTS_SUBQUERY = "(SELECT GROUP_CONCAT(ra.value ORDER BY ra.attempt_number) FROM result_attempts ra WHERE ra.result_id = result.id)"
 
   def self.client
     Mysql2::Client.new(DATABASE_CONFIG)

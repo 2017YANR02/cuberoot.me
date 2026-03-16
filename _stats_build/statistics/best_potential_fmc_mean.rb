@@ -8,6 +8,7 @@ class BestPotentialFmcMean < Statistic
   end
 
   def query
+    # NOTE: JOIN result_attempts 按 attempt_number 分组取各尝试最佳值
     <<-SQL
       SELECT
         (best1 + best2 + best3) / 3 mean,
@@ -15,14 +16,15 @@ class BestPotentialFmcMean < Statistic
         CONCAT('[', competition.cell_name, '](https://www.worldcubeassociation.org/competitions/', competition.id, '/results/all#e333fm', '_', round_type_id, ')') round_link
       FROM (
         SELECT
-          MIN(IF(value1 > 0, value1, NULL)) best1,
-          MIN(IF(value2 > 0, value2, NULL)) best2,
-          MIN(IF(value3 > 0, value3, NULL)) best3,
-          competition_id,
-          round_type_id
-        FROM results
-        WHERE event_id = '333fm'
-        GROUP BY competition_id, round_type_id
+          MIN(CASE WHEN ra.attempt_number = 1 AND ra.value > 0 THEN ra.value END) best1,
+          MIN(CASE WHEN ra.attempt_number = 2 AND ra.value > 0 THEN ra.value END) best2,
+          MIN(CASE WHEN ra.attempt_number = 3 AND ra.value > 0 THEN ra.value END) best3,
+          r.competition_id,
+          r.round_type_id
+        FROM results r
+        JOIN result_attempts ra ON ra.result_id = r.id
+        WHERE r.event_id = '333fm'
+        GROUP BY r.competition_id, r.round_type_id
       ) AS best_attempts_by_competition_and_round
       JOIN competitions competition ON competition.id = competition_id
       WHERE LEAST(best1, best2, best3) IS NOT NULL

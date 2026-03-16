@@ -17,7 +17,7 @@ class Rankings < GroupedStatistic
         event_id,
         best single,
         average,
-        value1, value2, value3, value4, value5,
+        #{Database::ATTEMPTS_SUBQUERY} AS attempts,
         CONCAT('[', person.name, '](https://www.worldcubeassociation.org/persons/', person.wca_id, ')') person_link,
         CONCAT('[', competition.cell_name, '](https://www.worldcubeassociation.org/competitions/', competition.id, ')') competition_link,
         country.name country
@@ -39,7 +39,7 @@ class Rankings < GroupedStatistic
           .uniq { |result| result["person_link"] }
           .first(10)
           .map! do |result|
-            result_details = (1..5).map { |n| SolveTime.new(event_id, :single, result["value#{n}"]).clock_format }.reject(&:empty?).join(', ')
+            result_details = (result["attempts"] || "").split(",").map { |v| SolveTime.new(event_id, :single, v.to_i).clock_format }.reject(&:empty?).join(', ')
             [result["person_link"], "**#{result[type].clock_format}**", result["country"], result["competition_link"], result_details]
           end
         ["#{event_name} - #{type.capitalize}", results]

@@ -3,7 +3,7 @@
 # 两个维度:
 #   1) 指标 (metric): Single / Average
 #   2) 数据源 (source):
-#      - 首次还原 (1st-solve): 首场比赛第一轮的 value1(单次) / average(平均)
+#      - 首次还原 (1st-solve): 首场比赛第一轮的第一个 attempt(单次) / average(平均)
 #      - 首场比赛 (1st-comp):  首场比赛所有轮次的 MIN(best)(单次) / MIN(average)(平均)
 # 每种组合有 Current Ranking + History 双视图
 require_relative "../core/grouped_statistic"
@@ -157,11 +157,19 @@ class WrNewcomer < GroupedStatistic
 
   # ========== 数据查询 ==========
 
-  # NOTE: 数据源 1 —— 首次还原（首场比赛第一轮 value1 / average）
+  # NOTE: 数据源 1 —— 首次还原（首场比赛第一轮第一个 attempt / average）
   # 优先取第一轮（round_type_id IN ('1','0','d')），无则回退到决赛轮
   def fetch_first_round_data(metric, client)
-    col = metric[:type] == :single ? "value1" : "average"
-    filter = metric[:type] == :single ? "r.value1 > 0" : "r.average > 0"
+    # NOTE: single 模式取第一个 attempt（JOIN result_attempts），average 模式直接取 r.average
+    if metric[:type] == :single
+      col = "ra.value"
+      join_ra = "JOIN result_attempts ra ON ra.result_id = r.id AND ra.attempt_number = 1"
+      filter = "ra.value > 0"
+    else
+      col = "r.average"
+      join_ra = ""
+      filter = "r.average > 0"
+    end
     sql = <<-SQL
       SELECT
         fr.event_id,
@@ -171,11 +179,12 @@ class WrNewcomer < GroupedStatistic
         CONCAT('[', c.cell_name, '](https://www.worldcubeassociation.org/competitions/', c.id, ')') competition_link,
         c.start_date
       FROM (
-        SELECT r.person_id, r.event_id, r.#{col} AS first_result, r.competition_id,
+        SELECT r.person_id, r.event_id, #{col} AS first_result, r.competition_id,
                ROW_NUMBER() OVER (PARTITION BY r.person_id, r.event_id ORDER BY
                  CASE WHEN r.round_type_id IN ('1','0','d') THEN 0 ELSE 1 END
                ) AS rn
         FROM results r
+        #{join_ra}
         JOIN competitions c1 ON c1.id = r.competition_id
         JOIN tmp_first_comp fc ON fc.person_id = r.person_id
              AND fc.event_id = r.event_id

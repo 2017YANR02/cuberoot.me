@@ -84,6 +84,7 @@ This project builds upon the work of:
 - **HTH Grapher**: Forked from [carykh/hthgrapher](https://github.com/carykh/hthgrapher) by [carykh](https://github.com/carykh). The original project provides the Head-to-Head Average of 5 calculator and visualization tool.
 - **1v1 Battle Timer**: Ported from [MatteoColombo/cube_challenge_timer](https://github.com/MatteoColombo/cube_challenge_timer) by [MatteoColombo](https://github.com/MatteoColombo). The original project provides the 1v1 head-to-head battle timer logic and penalty system.
 - **csTimer**: Integrated from [cs0x7f/cstimer](https://github.com/cs0x7f/cstimer) by [cs0x7f](https://github.com/cs0x7f). Provides the professional speedcubing timer (available at `/cstimer/`) and the pure-JS scramble generation engine used in the 1v1 Battle Timer (WCA random-state, GPL-3.0).
+- **canvas-confetti**: [catdad/canvas-confetti](https://github.com/catdad/canvas-confetti) by [catdad](https://github.com/catdad). Lightweight confetti animation for winner celebration effects (ISC license, self-hosted).
 
 https://mihlefeld.github.io/Alg-Trainers/
 
