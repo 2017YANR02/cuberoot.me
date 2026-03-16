@@ -22,7 +22,6 @@
 
 | Diff | Person | Single | Average | Results |
 | ---: | :--- | ---: | ---: | :--- |
-| 0.00 | [Fernando Martinez](https://www.worldcubeassociation.org/persons/2023MART11) | 3.45 | 3.45 | [UNSA Speedcubing Spring 2026](https://www.worldcubeassociation.org/competitions/UNSASpeedcubingSpring2026/results/by_person#2023MART11) |
 | 0.01 | [Kevin Gerhardt](https://www.worldcubeassociation.org/persons/2013GERH01) | 1.33 | 1.34 | [Parla Open 2024](https://www.worldcubeassociation.org/competitions/ParlaOpen2024/results/by_person#2013GERH01) |
 | 0.01 | [Justin Barker](https://www.worldcubeassociation.org/persons/2013BARK01) | 2.74 | 2.75 | [Cubing Peoria 2020](https://www.worldcubeassociation.org/competitions/CubingPeoria2020/results/by_person#2013BARK01) |
 | 0.01 | [Elias Hostens](https://www.worldcubeassociation.org/persons/2022HOST01) | 3.90 | 3.91 | [Poulseur Open 2026](https://www.worldcubeassociation.org/competitions/PoulseurOpen2026/results/by_person#2022HOST01) |
@@ -32,6 +31,7 @@
 | 0.02 | [Jack Maddigan](https://www.worldcubeassociation.org/persons/2020MADD02) | 1.55 | 1.57 | [Johnsonville FTOpen 2025](https://www.worldcubeassociation.org/competitions/JohnsonvilleFTOpen2025/results/by_person#2020MADD02) |
 | 0.02 | [Luigi Soriano](https://www.worldcubeassociation.org/persons/2016SORI04) | 1.73 | 1.75 | [UIUC Fall 2023](https://www.worldcubeassociation.org/competitions/UIUCFall2023/results/by_person#2016SORI04) |
 | 0.02 | [Ben Stokes](https://www.worldcubeassociation.org/persons/2018STOK01) | 1.85 | 1.87 | [Rubik's Irish Championship 2025](https://www.worldcubeassociation.org/competitions/RubiksIrishChampionship2025/results/by_person#2018STOK01) |
+| 0.02 | [Jack Pan (潘杰康)](https://www.worldcubeassociation.org/persons/2012PANJ02) | 1.95 | 1.97 | [Beijing Open 2018](https://www.worldcubeassociation.org/competitions/BeijingOpen2018/results/by_person#2012PANJ02) |
 
 <h3 data-i18n-en="4x4x4 Cube" data-i18n-zh="四阶魔方">4x4x4 Cube</h3>
 
@@ -88,10 +88,10 @@
 | 0.07 | [Bartłomiej Owczarek](https://www.worldcubeassociation.org/persons/2013OWCZ01) | 3:02.84 | 3:02.91 | [Cube4fun Cubers Eve 2023](https://www.worldcubeassociation.org/competitions/Cube4funCubersEve2023/results/by_person#2013OWCZ01) |
 | 0.07 | [Stefan Uzelac](https://www.worldcubeassociation.org/persons/2022UZEL01) | 7:19.63 | 7:19.70 | [Arizona Championship 2025](https://www.worldcubeassociation.org/competitions/ArizonaChampionship2025/results/by_person#2022UZEL01) |
 | 0.08 | [Jack Pfeifer](https://www.worldcubeassociation.org/persons/2016PFEI01) | 2:01.05 | 2:01.13 | [WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/by_person#2016PFEI01) |
+| 0.08 | [Matěj Grohmann](https://www.worldcubeassociation.org/persons/2015GROH02) | 2:19.92 | 2:20.00 | [Głuszyca Open 2026](https://www.worldcubeassociation.org/competitions/GluszycaOpen2026/results/by_person#2015GROH02) |
 | 0.08 | [Mats Valk](https://www.worldcubeassociation.org/persons/2007VALK01) | 3:13.56 | 3:13.64 | [Dutch Open 2018](https://www.worldcubeassociation.org/competitions/DutchOpen2018/results/by_person#2007VALK01) |
 | 0.09 | [Sébastien Auroux](https://www.worldcubeassociation.org/persons/2008AURO01) | 5:14.66 | 5:14.75 | [Eat Sleep Cube Repeat 2014](https://www.worldcubeassociation.org/competitions/EatSleepCubeRepeat2014/results/by_person#2008AURO01) |
 | 0.10 | [Shane Grogan](https://www.worldcubeassociation.org/persons/2011GROG02) | 3:23.59 | 3:23.69 | [UCSD Fall 2024](https://www.worldcubeassociation.org/competitions/UCSDFall2024/results/by_person#2011GROG02) |
-| 0.10 | [Riley Woo](https://www.worldcubeassociation.org/persons/2007WOOR01) | 6:25.15 | 6:25.25 | [Oregon 2016](https://www.worldcubeassociation.org/competitions/Oregon2016/results/by_person#2007WOOR01) |
 
 <h3 data-i18n-en="3x3x3 Blindfolded" data-i18n-zh="三盲">3x3x3 Blindfolded</h3>
 
@@ -174,6 +174,7 @@
 | ---: | :--- | ---: | ---: | :--- |
 | 0.03 | [Oskar Hanuszkiewicz](https://www.worldcubeassociation.org/persons/2018HANU02) | 1.96 | 1.99 | [Dragon Cubing X 2025](https://www.worldcubeassociation.org/competitions/DragonCubingX2025/results/by_person#2018HANU02) |
 | 0.03 | [Ignacy Samselski](https://www.worldcubeassociation.org/persons/2022SAMS03) | 2.17 | 2.20 | [Żmigród Open 2024](https://www.worldcubeassociation.org/competitions/ZmigrodOpen2024/results/by_person#2022SAMS03) |
+| 0.03 | [Coral Yuxin Cai (蔡羽欣)](https://www.worldcubeassociation.org/persons/2016CAIY03) | 2.45 | 2.48 | [XMUM Cube Open 2026](https://www.worldcubeassociation.org/competitions/XMUMCubeOpen2026/results/by_person#2016CAIY03) |
 | 0.03 | [Titus Sutterfield](https://www.worldcubeassociation.org/persons/2017SUTT01) | 3.07 | 3.10 | [Cubing in Cave Springs 2025](https://www.worldcubeassociation.org/competitions/CubinginCaveSprings2025/results/by_person#2017SUTT01) |
 | 0.03 | [Maxence Baudry](https://www.worldcubeassociation.org/persons/2014BAUD02) | 3.16 | 3.19 | [Rhein-Neckar Autumn 2023](https://www.worldcubeassociation.org/competitions/RheinNeckarAutumn2023/results/by_person#2014BAUD02) |
 | 0.04 | [Coral Yuxin Cai (蔡羽欣)](https://www.worldcubeassociation.org/persons/2016CAIY03) | 2.90 | 2.94 | [You May Open 2018](https://www.worldcubeassociation.org/competitions/YouMayOpen2018/results/by_person#2016CAIY03) |
@@ -181,7 +182,6 @@
 | 0.04 | [Szymon Zastawny](https://www.worldcubeassociation.org/persons/2023ZAST01) | 3.36 | 3.40 | [CFL Final Łódź 2025](https://www.worldcubeassociation.org/competitions/CFLFinalLodz2025/results/by_person#2023ZAST01) |
 | 0.04 | [Jesús Julián De Niz Hernandez](https://www.worldcubeassociation.org/persons/2014HERN12) | 3.44 | 3.48 | [Guadalajara 2017](https://www.worldcubeassociation.org/competitions/Guadalajara2017/results/by_person#2014HERN12) |
 | 0.04 | [Antoni Stojek](https://www.worldcubeassociation.org/persons/2022STOJ03) | 3.57 | 3.61 | [Energy Cube Tomaszów 2023](https://www.worldcubeassociation.org/competitions/EnergyCubeTomaszowMazowiecki2023/results/by_person#2022STOJ03) |
-| 0.04 | [Rasmus Händén](https://www.worldcubeassociation.org/persons/2016HAND04) | 3.80 | 3.84 | [Cuboss Open 2024](https://www.worldcubeassociation.org/competitions/CubossOpen2024/results/by_person#2016HAND04) |
 
 <h3 data-i18n-en="Square-1" data-i18n-zh="SQ1">Square-1</h3>
 
@@ -207,11 +207,11 @@
 | 1.05 | [Abhijeet Ghodgaonkar (अभिजीत घोडगावकर)](https://www.worldcubeassociation.org/persons/2013GHOD01) | 3:21.39 | 3:22.44 | [Please Be Quiet DST 2023](https://www.worldcubeassociation.org/competitions/PleaseBeQuietDST2023/results/by_person#2013GHOD01) |
 | 1.45 | [Amy Smith](https://www.worldcubeassociation.org/persons/2019SMIT36) | 1:41.97 | 1:43.42 | [Jog Your Memory Joondalup 2025](https://www.worldcubeassociation.org/competitions/JogYourMemoryJoondalup2025/results/by_person#2019SMIT36) |
 | 1.62 | [Ezra Hirschi](https://www.worldcubeassociation.org/persons/2019HIRS01) | 1:34.29 | 1:35.91 | [Swisscubing Cup MB I 2024](https://www.worldcubeassociation.org/competitions/SwisscubingCupMentalBreakdow2024/results/by_person#2019HIRS01) |
+| 1.70 | [Ryan Eckersley](https://www.worldcubeassociation.org/persons/2019ECKE02) | 1:24.29 | 1:25.99 | [Glasgow BLD Evening Spring 2026](https://www.worldcubeassociation.org/competitions/GlasgowBlindEveningSpring2026/results/by_person#2019ECKE02) |
 | 1.71 | [Cale Schoon](https://www.worldcubeassociation.org/persons/2014SCHO02) | 2:00.90 | 2:02.61 | [CubingUSA Nationals 2019](https://www.worldcubeassociation.org/competitions/CubingUSANationals2019/results/by_person#2014SCHO02) |
 | 2.21 | [Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04) | 1:00.08 | 1:02.29 | [Warm Up Seattle PBQ 2025](https://www.worldcubeassociation.org/competitions/WarmUpSeattlePBQ2025/results/by_person#2016CHAP04) |
 | 2.45 | [Michael Tripodi](https://www.worldcubeassociation.org/persons/2021TRIP01) | 1:36.94 | 1:39.39 | [WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/by_person#2021TRIP01) |
 | 2.56 | [Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04) | 59.76 | 1:02.32 | [WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/by_person#2016CHAP04) |
-| 2.68 | [Mengfei Shen (沈梦非)](https://www.worldcubeassociation.org/persons/2018SHEN07) | 3:01.00 | 3:03.68 | [Stevenage January 2024](https://www.worldcubeassociation.org/competitions/StevenageJanuary2024/results/by_person#2018SHEN07) |
 
 <h3 data-i18n-en="5x5x5 Blindfolded" data-i18n-zh="五盲">5x5x5 Blindfolded</h3>
 

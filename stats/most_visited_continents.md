@@ -66,6 +66,7 @@
 | 5 | [Matteo Dummar](https://www.worldcubeassociation.org/persons/2017DUMM01) |
 | 5 | [Jordan Crippa](https://www.worldcubeassociation.org/persons/2019CRIP01) |
 | 5 | [Peter Hugosson-Miller](https://www.worldcubeassociation.org/persons/2021HUGO01) |
+| 5 | [Don Daniels](https://www.worldcubeassociation.org/persons/2022DANI10) |
 | 5 | [Achilles Standring](https://www.worldcubeassociation.org/persons/2022STAN14) |
 | 4 | [Ton Dennenbroek](https://www.worldcubeassociation.org/persons/2003DENN01) |
 | 4 | [Lars Vandenbergh](https://www.worldcubeassociation.org/persons/2003VAND01) |
@@ -90,6 +91,7 @@
 | 4 | [Michael Young](https://www.worldcubeassociation.org/persons/2008YOUN02) |
 | 4 | [Yunsu Nam (남윤수)](https://www.worldcubeassociation.org/persons/2008YUNS02) |
 | 4 | [David Adams](https://www.worldcubeassociation.org/persons/2009ADAM01) |
+| 4 | [Nora Akkersdijk](https://www.worldcubeassociation.org/persons/2009CHRI03) |
 | 4 | [Cornelius Dieckmann](https://www.worldcubeassociation.org/persons/2009DIEC01) |
 | 4 | [Anti Ingel](https://www.worldcubeassociation.org/persons/2009INGE01) |
 | 4 | [Howard Wong Jun Yen (黄俊仁)](https://www.worldcubeassociation.org/persons/2009JUNY01) |
@@ -123,6 +125,7 @@
 | 4 | [Claude Cantin](https://www.worldcubeassociation.org/persons/2012CANT01) |
 | 4 | [Simone Cantarelli](https://www.worldcubeassociation.org/persons/2012CANT02) |
 | 4 | [Jonah Crosby](https://www.worldcubeassociation.org/persons/2012CROS01) |
+| 4 | [Keaton Ellis](https://www.worldcubeassociation.org/persons/2012ELLI01) |
 | 4 | [Callum James Goodyear-Jørgensen](https://www.worldcubeassociation.org/persons/2012GOOD02) |
 | 4 | [Francisco Hamlin](https://www.worldcubeassociation.org/persons/2012HAML01) |
 | 4 | [Finn Ickler](https://www.worldcubeassociation.org/persons/2012ICKL01) |
@@ -217,7 +220,6 @@
 | 4 | [Henry Syn](https://www.worldcubeassociation.org/persons/2021SYNH01) |
 | 4 | [Thomas Pierroz](https://www.worldcubeassociation.org/persons/2021PIER01) |
 | 4 | [Mitchell Anderson](https://www.worldcubeassociation.org/persons/2022ANDE01) |
-| 4 | [Don Daniels](https://www.worldcubeassociation.org/persons/2022DANI10) |
 | 4 | [Joseph Liu (劉睿博)](https://www.worldcubeassociation.org/persons/2023LIUJ01) |
 | 4 | [Catherine Rush](https://www.worldcubeassociation.org/persons/2023RUSH01) |
 | 4 | [Kyle Rongkai Wang](https://www.worldcubeassociation.org/persons/2023WANG90) |

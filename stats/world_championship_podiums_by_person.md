@@ -77,7 +77,7 @@
 | [Arifumi Fushimi (伏見有史)](https://www.worldcubeassociation.org/persons/2009FUSH01) | **1** | 0 | 0 | 1 |
 | [Cameron Stollery](https://www.worldcubeassociation.org/persons/2010STOL01) | **1** | 0 | 0 | 1 |
 | [Charlie Eggins](https://www.worldcubeassociation.org/persons/2019EGGI02) | **1** | 0 | 0 | 1 |
-| [Christopher Chi](https://www.worldcubeassociation.org/persons/2014CHIC01) | **1** | 0 | 0 | 1 |
+| [Chris Chi](https://www.worldcubeassociation.org/persons/2014CHIC01) | **1** | 0 | 0 | 1 |
 | [Dan Knights](https://www.worldcubeassociation.org/persons/2003KNIG01) | **1** | 0 | 0 | 1 |
 | [Deven Nadudvari](https://www.worldcubeassociation.org/persons/2008NADU01) | **1** | 0 | 0 | 1 |
 | [Ezra Shere](https://www.worldcubeassociation.org/persons/2019SHER10) | **1** | 0 | 0 | 1 |

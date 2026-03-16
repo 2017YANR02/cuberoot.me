@@ -29,7 +29,7 @@
 | 6 | Malaysia |
 | 6 | Norway |
 | 5 | Hong Kong, China |
-| 3 | Czech Republic |
+| 4 | Czech Republic |
 | 3 | Indonesia |
 | 3 | Israel |
 | 3 | Philippines |

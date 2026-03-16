@@ -32,7 +32,7 @@
 | Pyraminx | Average | 1.14 | [Lingkun Jiang (姜凌坤)](https://www.worldcubeassociation.org/persons/2019JIAN54) | 2025-12-27 | [Zhengzhou Zest 2025](https://www.worldcubeassociation.org/competitions/ZhengzhouZest2025) |
 | Rubik's Clock | Single | 1.53 | [Lachlan Gibson](https://www.worldcubeassociation.org/persons/2022GIBS04) | 2025-09-27 | [Hasty Hastings 2025](https://www.worldcubeassociation.org/competitions/HastyHastings2025) |
 | Rubik's Clock | Average | 2.24 | [Brendyn Dunagan](https://www.worldcubeassociation.org/persons/2021DUNA01) | 2025-12-13 | [Temecula Valley Winter 2025](https://www.worldcubeassociation.org/competitions/TemeculaValleyWinter2025) |
-| Skewb | Single | 0.75 | [Carter Kucala](https://www.worldcubeassociation.org/persons/2015KUCA01) | 2024-03-23 | [Going Fast in Grandview 2024](https://www.worldcubeassociation.org/competitions/GoingFastinGrandview2024) |
+| Skewb | Single | 0.73 | [Vojtěch Grohmann](https://www.worldcubeassociation.org/persons/2021GROH01) | 2026-03-07 | [Głuszyca Open 2026](https://www.worldcubeassociation.org/competitions/GluszycaOpen2026) |
 | Skewb | Average | 1.37 | [Ignacy Samselski](https://www.worldcubeassociation.org/persons/2022SAMS03) | 2025-06-14 | [CFL Justynów 2025](https://www.worldcubeassociation.org/competitions/CFLJustynow2025) |
 | Square-1 | Single | 3.40 | [Hassan Khanani](https://www.worldcubeassociation.org/persons/2018KHAN26) | 2026-01-24 | [Steel City Sprint PA 2026](https://www.worldcubeassociation.org/competitions/SteelCitySprint2026) |
 | Square-1 | Average | 4.63 | [Sameer Aggarwal](https://www.worldcubeassociation.org/persons/2017AGGA01) | 2025-02-01 | [Cubing in Southern Oregon 2025](https://www.worldcubeassociation.org/competitions/CubinginSouthernOregon2025) |
