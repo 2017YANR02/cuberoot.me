@@ -115,18 +115,7 @@
 
             <div class="settings-group">
                 <div class="settings-label" data-i18n="battle.bg_label">BACKGROUND</div>
-                <!-- NOTE: P1（下方）和 P2（上方）各自独立。图片超 4MB 给提示 -->
-                <div class="setting-item bg-row">
-                    <span data-i18n="battle.bg_player1">Player 1 (bottom)</span>
-                    <div class="bg-controls">
-                        <input type="color" id="bg-color-0" class="bg-color-picker" value="#000000" title="Pick color">
-                        <label class="bg-upload-label" title="Upload image">
-                            🖼️
-                            <input type="file" id="bg-image-0" class="bg-file-input" accept="image/*">
-                        </label>
-                        <button id="bg-reset-0" class="bg-reset-btn" title="Reset">✕</button>
-                    </div>
-                </div>
+                <!-- NOTE: P2（上方）和 P1（下方）各自独立。图片超 4MB 给提示 -->
                 <div class="setting-item bg-row">
                     <span data-i18n="battle.bg_player2">Player 2 (top)</span>
                     <div class="bg-controls">
@@ -136,6 +125,17 @@
                             <input type="file" id="bg-image-1" class="bg-file-input" accept="image/*">
                         </label>
                         <button id="bg-reset-1" class="bg-reset-btn" title="Reset">✕</button>
+                    </div>
+                </div>
+                <div class="setting-item bg-row">
+                    <span data-i18n="battle.bg_player1">Player 1 (bottom)</span>
+                    <div class="bg-controls">
+                        <input type="color" id="bg-color-0" class="bg-color-picker" value="#000000" title="Pick color">
+                        <label class="bg-upload-label" title="Upload image">
+                            🖼️
+                            <input type="file" id="bg-image-0" class="bg-file-input" accept="image/*">
+                        </label>
+                        <button id="bg-reset-0" class="bg-reset-btn" title="Reset">✕</button>
                     </div>
                 </div>
                 <div id="bg-error" class="bg-error-msg" style="display:none"></div>
