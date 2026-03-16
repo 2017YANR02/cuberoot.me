@@ -18,6 +18,7 @@ module Database
     preferred_formats
     ranks_single
     ranks_average
+    result_attempts
     results
     round_types
     users
