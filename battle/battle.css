@@ -210,7 +210,9 @@ body {
 }
 
 /* NOTE: 专门针对冒号的样式，修复 Segment7Standard 将其渲染为横线的问题 */
-.time-display .colon {
+.time-display .colon,
+.opponent-display .colon,
+.ao5-display .colon {
     font-family: 'JetBrains Mono', 'Roboto Mono', monospace;
     font-size: 0.9em;
     vertical-align: 0.08em;
@@ -229,9 +231,7 @@ body {
 }
 
 /* NOTE: 赢家绿色高亮 */
-.time-display.winner {
-    color: #66bb6a;
-}
+/* NOTE: .winner class 仅用于标记赢家（JS 据此追加🏆），不改变文字颜色 */
 
 /* NOTE: 奖杯不继承七段 LCD 字体，用系统 emoji 字体正常渲染 */
 .trophy-icon {
