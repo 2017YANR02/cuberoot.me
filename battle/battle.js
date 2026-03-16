@@ -146,6 +146,11 @@ const dom = {
     puzzleGrid: null,
     toggleImage: null,
     sizeSlider: null,
+    // NOTE: 背景自定义控件（每个玩家各一组）
+    bgColors: [null, null],    // color input
+    bgImages: [null, null],    // file input
+    bgResets: [null, null],    // reset button
+    bgError: null,             // 错误提示
 };
 
 // ===== 初始化 =====
@@ -174,6 +179,13 @@ function init() {
     dom.puzzleGrid = document.getElementById("puzzle-grid");
     dom.toggleImage = document.getElementById("toggle-image");
     dom.sizeSlider = document.getElementById("scramble-size-slider");
+    // NOTE: 背景自定义控件引用
+    for (let i = 0; i < 2; i++) {
+        dom.bgColors[i] = document.getElementById(`bg-color-${i}`);
+        dom.bgImages[i] = document.getElementById(`bg-image-${i}`);
+        dom.bgResets[i] = document.getElementById(`bg-reset-${i}`);
+    }
+    dom.bgError = document.getElementById('bg-error');
 
     // 绑定触摸事件
     for (let i = 0; i < 2; i++) {
@@ -238,6 +250,9 @@ function init() {
 
     // 加载第一个打乱
     loadNewScramble();
+
+    // 初始化背景自定义控件
+    initBgControls();
 
     // 尝试锁定竖屏
     tryLockOrientation();
@@ -905,4 +920,75 @@ function formatTime(ms) {
         return `${minutes}<span class="colon">:</span>${seconds.toString().padStart(2, "0")}.${millisStr}`;
     }
     return `${seconds}.${millisStr}`;
+}
+
+// ===== 背景自定义 =====
+
+const BG_MAX_BYTES = 4 * 1024 * 1024; // NOTE: 4MB 上限
+
+function applyBg(playerId) {
+    const area = dom.areas[playerId];
+    const img = localStorage.getItem(`${LS_PREFIX}bg_img_${playerId}`);
+    const color = localStorage.getItem(`${LS_PREFIX}bg_color_${playerId}`);
+    if (img) {
+        area.style.backgroundImage = `url(${img})`;
+        area.style.backgroundSize = 'cover';
+        area.style.backgroundPosition = 'center';
+        area.style.backgroundColor = '';
+    } else if (color && color !== '#000000') {
+        area.style.backgroundImage = '';
+        area.style.backgroundColor = color;
+    } else {
+        area.style.backgroundImage = '';
+        area.style.backgroundColor = '';
+    }
+}
+
+function showBgError(msg) {
+    dom.bgError.textContent = msg;
+    dom.bgError.style.display = 'block';
+    clearTimeout(dom.bgError._timer);
+    dom.bgError._timer = setTimeout(() => { dom.bgError.style.display = 'none'; }, 3000);
+}
+
+function initBgControls() {
+    for (let i = 0; i < 2; i++) {
+        const savedColor = localStorage.getItem(`${LS_PREFIX}bg_color_${i}`);
+        if (savedColor) dom.bgColors[i].value = savedColor;
+        applyBg(i);
+
+        dom.bgColors[i].addEventListener('change', (e) => {
+            localStorage.setItem(`${LS_PREFIX}bg_color_${i}`, e.target.value);
+            localStorage.removeItem(`${LS_PREFIX}bg_img_${i}`);
+            applyBg(i);
+        });
+
+        dom.bgImages[i].addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (file.size > BG_MAX_BYTES) {
+                showBgError(`图片太大（${(file.size / 1024 / 1024).toFixed(1)} MB），请上传 4MB 以内的图片`);
+                e.target.value = '';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    localStorage.setItem(`${LS_PREFIX}bg_img_${i}`, ev.target.result);
+                    applyBg(i);
+                } catch (_) {
+                    showBgError('存储空间不足，请重置后再上传较小的图片');
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+
+        dom.bgResets[i].addEventListener('click', () => {
+            localStorage.removeItem(`${LS_PREFIX}bg_color_${i}`);
+            localStorage.removeItem(`${LS_PREFIX}bg_img_${i}`);
+            dom.bgColors[i].value = '#000000';
+            dom.bgImages[i].value = '';
+            applyBg(i);
+        });
+    }
 }
