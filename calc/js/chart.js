@@ -400,12 +400,25 @@ function drawGhostBars() {
                 tip: 'Best case: if 5th solve is great, 4th must be ≤ this to hit target avg',
                 y: th.t4bpa < DNF_VALUE ? valToYCap(th.t4bpa) : valToYCap(tavg) + 20 });
         }
+        // t#4 impossible — WPA 和 BPA 都是 null
+        if (th.t4wpa === null && th.t4bpa === null) {
+            badges.push({ line1: '4th 💀', line2: 'Impossible', color: '#D32F2F',
+                tip: 'Mathematically impossible to hit target avg — no matter what you solve',
+                y: valToYCap(tavg) });
+        }
         // t#5（仅当填了 5 把时）
-        if (filled.length >= 5 && th.t5 !== undefined && th.t5 !== null) {
-            var v = th.t5 >= DNF_VALUE ? 'ANY ✓' : '≤ ' + formatTime(th.t5);
-            badges.push({ line1: 'Need 5th', line2: v, color: BADGE_COLORS.t5,
-                tip: '5th solve must be ≤ this to hit target avg',
-                y: th.t5 < DNF_VALUE ? valToYCap(th.t5) : valToYCap(tavg) + 60 });
+        if (filled.length >= 5 && th.t5 !== undefined) {
+            if (th.t5 !== null) {
+                var v = th.t5 >= DNF_VALUE ? 'ANY ✓' : '≤ ' + formatTime(th.t5);
+                badges.push({ line1: 'Need 5th', line2: v, color: BADGE_COLORS.t5,
+                    tip: '5th solve must be ≤ this to hit target avg',
+                    y: th.t5 < DNF_VALUE ? valToYCap(th.t5) : valToYCap(tavg) + 60 });
+            } else {
+                // t#5 impossible
+                badges.push({ line1: '5th 💀', line2: 'Impossible', color: '#D32F2F',
+                    tip: 'Mathematically impossible to hit target avg — no matter what you solve',
+                    y: valToYCap(tavg) + 40 });
+            }
         }
 
         if (badges.length === 0) continue;
