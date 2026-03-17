@@ -283,13 +283,15 @@
                 }
             }
 
-            // X 轴标签
-            for (var b = 0; b < binCount; b++) {
-                var bs = gMin + b * BIN_WIDTH;
-                if (b === 0 || b === binCount - 1 || Math.abs(bs % 0.4) < 0.01) {
-                    svgEl('text', { x: PAD.l + b * barW + barW / 2, y: PAD.t + chartH + 18,
-                        fill: '#aaa', 'font-size': '12', 'text-anchor': 'middle' }, svg).textContent = bs.toFixed(1);
-                }
+            // X 轴标签 — nice ticks（均匀间距，对齐到整数倍）
+            var range = gMax - gMin;
+            // NOTE: 根据数据范围选择合适的刻度间距，保证 5~12 个刻度
+            var tickStep = range > 5 ? 1.0 : 0.5;
+            var tickStart = Math.ceil(gMin / tickStep) * tickStep;
+            for (var tv = tickStart; tv <= gMax + 0.001; tv += tickStep) {
+                var tx = PAD.l + ((tv - gMin) / (gMax - gMin)) * chartW;
+                svgEl('text', { x: tx, y: PAD.t + chartH + 18,
+                    fill: '#aaa', 'font-size': '12', 'text-anchor': 'middle' }, svg).textContent = tv.toFixed(1);
             }
 
             // 轴标题
