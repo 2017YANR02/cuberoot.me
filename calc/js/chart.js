@@ -3,7 +3,7 @@
 
 import {
     DNF_VALUE, UNFINISHED_VALUE,
-    formatTime, getAverage, getBestSingle, rankify
+    formatTime, getAverage, getBestSingle, rankify, CalcEngine
 } from './calc_engine.js';
 import {
     state, getRankOf, getValidsCount, solveCount, isMo3
@@ -45,6 +45,8 @@ var barGroup = null;        // 柱子 <g>
 var statsGroup = null;      // 统计/扇形 <g>
 var avgGroup = null;        // 菱形标签 <g>
 var topTextGroup = null;    // NOTE: 最顶层文字（渲染在菱形之上，避免被色块遮挡）
+var tooltipEl = null;       // HTML tooltip div（badge 指标说明）
+var chartContainer = null;  // 图表容器 DOM
 
 // 图表参数缓存（等价于原代码的 g 对象）
 var gp = {};
@@ -84,6 +86,17 @@ export function init(container) {
     svgEl.appendChild(topTextGroup);
 
     container.appendChild(svgEl);
+    chartContainer = container;
+
+    // NOTE: HTML tooltip div — 用于 badge 指标的悬浮提示
+    tooltipEl = document.createElement('div');
+    tooltipEl.className = 'chart-badge-tip';
+    tooltipEl.style.cssText = 'position:absolute;background:rgba(0,0,0,0.88);color:#fff;' +
+        'padding:6px 10px;border-radius:6px;font-size:12px;line-height:1.4;' +
+        'max-width:260px;pointer-events:none;opacity:0;transition:opacity 0.2s;z-index:200;' +
+        'white-space:normal;font-family:Helvetica,sans-serif;';
+    container.style.position = 'relative'; // 确保 tooltip 定位参考
+    container.appendChild(tooltipEl);
 }
 
 // ── 主渲染入口 ──
@@ -103,6 +116,7 @@ export function render() {
 
     drawGridLines();
     drawBars();
+    drawGhostBars();
     drawTargetAvgLines();
     drawStats();
     drawAverages();
@@ -146,9 +160,6 @@ function computeGridParams() {
             var val = state.times[state.seedOn + p][t];
             if (val !== 0) {
                 addToViewingWindow(val);
-                if (val !== DNF_VALUE && val !== UNFINISHED_VALUE) {
-                    addToViewingWindow(val * 0.8);
-                }
             }
         }
     }
@@ -156,6 +167,16 @@ function computeGridParams() {
     var topAvg = getAverage(state.times[state.sortedCache[0]], false);
     if (topAvg >= 0 && topAvg !== DNF_VALUE && topAvg !== UNFINISHED_VALUE) {
         addToViewingWindow(topAvg);
+    }
+
+    // NOTE: 幽灵柱值纳入 viewing window，避免柱子超出图表
+    for (var p = 0; p < 2; p++) {
+        if (!state.playerEnabled[p]) continue;
+        var tavg = getTargetAvg(state.seedOn + p);
+        var ghost = CalcEngine.getGhostBar(state.times[state.seedOn + p], tavg);
+        if (ghost && ghost.value > 0 && ghost.value < DNF_VALUE) {
+            addToViewingWindow(ghost.value);
+        }
     }
 
     if (gp.viewcount <= 2) addToViewingWindow(12);
@@ -247,6 +268,199 @@ function drawTargetAvgLines() {
         });
         label.textContent = formatTime(tavg);
         gridGroup.appendChild(label);
+    }
+}
+
+// ── 幽灵柱（阈值可视化） ──
+
+// NOTE: 在空柱位画半透明幽灵柱，显示下一把成绩的上限
+function drawGhostBars() {
+    if (isMo3()) return; // Mo3 无 BPA/WPA
+
+    var GHOST_COLORS = {
+        safe: 'rgba(76,175,80,0.25)',         // 绿色半透明 — WPA 稳
+        conditional: 'rgba(255,193,7,0.30)',   // 黄色半透明 — BPA 有条件
+        any: 'rgba(76,175,80,0.18)',           // 浅绿 — 无上限
+        impossible: 'rgba(244,67,54,0.20)',    // 红色半透明
+    };
+    var GHOST_BORDERS = {
+        safe: 'rgba(76,175,80,0.7)',
+        conditional: 'rgba(255,193,7,0.8)',
+        any: 'rgba(76,175,80,0.5)',
+        impossible: 'rgba(244,67,54,0.6)',
+    };
+    var GHOST_TEXT_COLORS = {
+        safe: '#388E3C',
+        conditional: '#F57F17',
+        any: '#388E3C',
+        impossible: '#D32F2F',
+    };
+
+    var bm = 7;
+
+    for (var p = 0; p < 2; p++) {
+        if (!state.playerEnabled[p]) continue;
+        var tavg = getTargetAvg(state.seedOn + p);
+        var ghost = CalcEngine.getGhostBar(state.times[state.seedOn + p], tavg);
+        if (!ghost) continue;
+
+        var barX = BAR_START + ghost.slotIndex * STRIDE;
+        var fullW = BAR_W - 2 * bm;
+        // Both 模式下缩窄内层
+        var isInner = (state.playerEnabled[0] && state.playerEnabled[1] && p === 1);
+        var bw = isInner ? fullW * 0.55 : fullW;
+        var bx = barX + bm + (fullW - bw) / 2;
+
+        if (ghost.type === 'impossible') {
+            // 💀 标签
+            var labelY = valToYCap(tavg);
+            addText(topTextGroup, bx + bw / 2, labelY, '💀', GHOST_TEXT_COLORS.impossible, 30, 'center');
+            addText(topTextGroup, bx + bw / 2, labelY + 26, 'Impossible', GHOST_TEXT_COLORS.impossible, 16, 'center');
+            continue;
+        }
+
+        // 幽灵柱高度
+        var ghostValue = ghost.value;
+        var isAny = (ghost.type === 'any' || ghostValue >= DNF_VALUE);
+        // ANY 时柱高到图表顶部
+        var topY = isAny ? gp.y + 5 : valToYCap(ghostValue);
+        var bottomY = valToYCap(0);
+        // NOTE: 与 drawBars 对齐 — 截断模式下底部减去 2*bm 内边距
+        if (valToY(0) > bottomY) bottomY -= bm * 2;
+        var barHeight = Math.max(0, bottomY - topY);
+
+        // 半透明填充矩形
+        barGroup.appendChild(createSvgElement('rect', {
+            x: bx, y: topY, width: bw, height: barHeight,
+            fill: GHOST_COLORS[ghost.type],
+            rx: 2,
+        }));
+        // 虚线描边矩形
+        barGroup.appendChild(createSvgElement('rect', {
+            x: bx, y: topY, width: bw, height: barHeight,
+            fill: 'none',
+            stroke: GHOST_BORDERS[ghost.type],
+            'stroke-width': 2,
+            'stroke-dasharray': '6,4',
+            rx: 2,
+        }));
+
+        // 顶部标签
+        var labelText = isAny ? 'ANY ✓' : 'Need ≤ ' + formatTime(ghostValue);
+        var labelColor = GHOST_TEXT_COLORS[ghost.type];
+        addText(topTextGroup, bx + bw / 2, topY - 8, labelText, labelColor, 18, 'center');
+    }
+
+    // NOTE: 已填柱位的阈值 badge 标签 — 彩色圆角矩形 + 左箭头
+    var BADGE_COLORS = {
+        t4wpa: '#1976D2',       // 蓝色 — WPA（最差情况）
+        t4bpa: '#388E3C',       // 绿色 — BPA（最好情况）
+        t5:    '#D32F2F',       // 红色 — 第 5 把
+    };
+
+    for (var p = 0; p < 2; p++) {
+        if (!state.playerEnabled[p]) continue;
+        var tavg = getTargetAvg(state.seedOn + p);
+        if (!tavg || tavg <= 0 || tavg >= DNF_VALUE) continue;
+
+        var times = state.times[state.seedOn + p];
+        var filled = times.filter(t => t > 0 && t < DNF_VALUE);
+        if (filled.length < 4) continue;
+
+        var th = CalcEngine.computeThresholds(times, tavg);
+        if (!th) continue;
+
+        // 收集要显示的 badge — 统一 2 行格式: "Need Nth" + "≤ X"
+        var badges = [];
+        // t#4 WPA
+        if (th.t4wpa !== undefined && th.t4wpa !== null) {
+            var v = th.t4wpa >= DNF_VALUE ? 'ANY ✓' : '≤ ' + formatTime(th.t4wpa);
+            badges.push({ line1: 'Need 4th', line2: v, color: BADGE_COLORS.t4wpa,
+                tip: 'Worst case: even if 5th solve = DNF, 4th must be ≤ this to hit target avg',
+                y: th.t4wpa < DNF_VALUE ? valToYCap(th.t4wpa) : valToYCap(tavg) - 40 });
+        }
+        // t#4 BPA
+        if (th.t4bpa !== undefined && th.t4bpa !== null) {
+            var v = th.t4bpa >= DNF_VALUE ? 'ANY ✓' : '≤ ' + formatTime(th.t4bpa);
+            badges.push({ line1: 'Need 4th', line2: v, color: BADGE_COLORS.t4bpa,
+                tip: 'Best case: if 5th solve is great, 4th must be ≤ this to hit target avg',
+                y: th.t4bpa < DNF_VALUE ? valToYCap(th.t4bpa) : valToYCap(tavg) + 20 });
+        }
+        // t#5（仅当填了 5 把时）
+        if (filled.length >= 5 && th.t5 !== undefined && th.t5 !== null) {
+            var v = th.t5 >= DNF_VALUE ? 'ANY ✓' : '≤ ' + formatTime(th.t5);
+            badges.push({ line1: 'Need 5th', line2: v, color: BADGE_COLORS.t5,
+                tip: '5th solve must be ≤ this to hit target avg',
+                y: th.t5 < DNF_VALUE ? valToYCap(th.t5) : valToYCap(tavg) + 60 });
+        }
+
+        if (badges.length === 0) continue;
+
+        // 排斥重叠
+        var badgeH = 38, badgeGap = 6;
+        var badgeItems = badges.map(function(b) { return { origY: b.y, y: b.y, h: badgeH }; });
+        if (badgeItems.length > 1) resolveOverlaps(badgeItems, badgeGap);
+        for (var bi = 0; bi < badges.length; bi++) badges[bi].y = badgeItems[bi].y;
+
+        // 绘制每个 badge — 放在图表左侧（Y 轴标签左边），右箭头指向图表
+        var bw = 72, bh = 38, br = 6, arrowW = 8;
+        // badge 右边缘（箭头尖端）紧贴 Y 轴标签区左侧
+        var badgeRight = BAR_START - 65;
+        var badgeLeft = badgeRight - arrowW - bw - br;
+
+        for (var bi = 0; bi < badges.length; bi++) {
+            var b = badges[bi];
+            var by = b.y - bh / 2;
+
+            // NOTE: 用 <g> 包裹整个 badge，事件驱动 HTML tooltip
+            var badgeGroup = createSvgElement('g', { cursor: 'help' });
+
+            // JS 事件驱动 tooltip
+            (function(tip) {
+                badgeGroup.addEventListener('mouseenter', function(e) {
+                    tooltipEl.textContent = tip;
+                    var rect = chartContainer.getBoundingClientRect();
+                    tooltipEl.style.left = (e.clientX - rect.left + 10) + 'px';
+                    tooltipEl.style.top = (e.clientY - rect.top - 40) + 'px';
+                    tooltipEl.style.opacity = '1';
+                });
+                badgeGroup.addEventListener('mouseleave', function() {
+                    tooltipEl.style.opacity = '0';
+                });
+            })(b.tip);
+
+            // 圆角矩形 + 右箭头背景
+            var lx = badgeLeft;
+            var d = 'M' + lx + ',' + (by + br) +
+                ' Q' + lx + ',' + by + ' ' + (lx + br) + ',' + by +
+                ' L' + (badgeRight - arrowW) + ',' + by +
+                ' L' + badgeRight + ',' + b.y +
+                ' L' + (badgeRight - arrowW) + ',' + (by + bh) +
+                ' L' + (lx + br) + ',' + (by + bh) +
+                ' Q' + lx + ',' + (by + bh) + ' ' + lx + ',' + (by + bh - br) +
+                ' Z';
+            badgeGroup.appendChild(createSvgElement('path', {
+                d: d, fill: b.color, opacity: 0.9,
+            }));
+
+            // 2 行白色文字
+            var tx = lx + (bw + br) / 2;
+            var textEl1 = createSvgElement('text', {
+                x: tx, y: by + 15, fill: '#fff', 'font-size': '12px',
+                'font-family': 'Helvetica', 'font-weight': 'bold', 'text-anchor': 'middle',
+            });
+            textEl1.textContent = b.line1;
+            badgeGroup.appendChild(textEl1);
+
+            var textEl2 = createSvgElement('text', {
+                x: tx, y: by + 32, fill: '#fff', 'font-size': '15px',
+                'font-family': 'Helvetica', 'font-weight': 'bold', 'text-anchor': 'middle',
+            });
+            textEl2.textContent = b.line2;
+            badgeGroup.appendChild(textEl2);
+
+            topTextGroup.appendChild(badgeGroup);
+        }
     }
 }
 
