@@ -8,6 +8,7 @@ import {
     state, updateTime, notify, solveCount
 } from './state.js';
 import * as drumPicker from './drum_picker.js';
+import { getTargetAvg, setTargetAvg } from './calc_table.js';
 
 // NOTE: 当前聚焦的单元格 [player, solve]，-1 表示无聚焦
 var activeCell = [-1, -1];
@@ -27,10 +28,26 @@ function isFullySelected(input) {
 
 // 输入框 DOM 引用缓存 — cells[p][t] 对应 player p 的第 t 个时间格
 var cells = [[], []];
-// 名字输入框引用
-var nameCells = [null, null];
+// Target Avg 输入框引用
+var tavgCells = [null, null];
 // 比赛名输入框引用
 var compNameInput = null;
+
+// NOTE: Target Avg 的固定 DOM 列索引（始终在第 6 列，不随 solveCount 变化）
+var TAVG_T = 5;
+function isTavg(t) { return t === TAVG_T; }
+// 统一获取 cell DOM 元素
+function getCellEl(p, t) { return isTavg(t) ? tavgCells[p] : cells[p][t]; }
+// 统一读取 cell 值（centiseconds）
+function getCellVal(p, t) {
+    if (isTavg(t)) return getTargetAvg(state.seedOn + p);
+    return state.times[state.seedOn + p][t];
+}
+// 统一写入 cell 值
+function setCellVal(p, t, val) {
+    if (isTavg(t)) { setTargetAvg(state.seedOn + p, val); }
+    else { updateTime(state.seedOn + p, t, val); }
+}
 
 // ── 初始化 ──
 
@@ -42,7 +59,7 @@ export function init(gridContainer) {
         notify();
     });
 
-    // 创建输入网格：2 行 × (5 时间格 + 1 名字格 + 1 勾选)
+    // 创建输入网格：2 行 × (5 时间格 + 1 Target Avg 格 + 1 勾选)
     for (var p = 0; p < 2; p++) {
         var row = document.createElement('div');
         row.className = 'input-row player-' + (p === 0 ? 'a' : 'b');
@@ -53,9 +70,10 @@ export function init(gridContainer) {
             cells[p][t] = input;
         }
 
-        var nameInput = createNameCell(p);
-        row.appendChild(nameInput);
-        nameCells[p] = nameInput;
+        // NOTE: 第 6 列 — Target Avg，复用 createTimeCell 逻辑
+        var tavgInput = createTimeCell(p, TAVG_T);
+        row.appendChild(tavgInput);
+        tavgCells[p] = tavgInput;
 
         // NOTE: 勾选框 — 控制是否启用该选手的时间输入
         var cb = document.createElement('input');
@@ -91,10 +109,7 @@ export function init(gridContainer) {
     }
 
     // NOTE: 初始化滚筒选择器
-    var drumContainer = document.getElementById('drum-picker-container');
-    if (drumContainer) {
-        drumPicker.init(drumContainer);
-    }
+    drumPicker.init();
 }
 
 // ── 创建输入元素 ──
@@ -138,24 +153,31 @@ function tryAutoAdvance(rawVal) {
 function createTimeCell(p, t) {
     var input = document.createElement('input');
     input.type = 'text';
-    input.className = 'time-cell';
     input.inputMode = 'none'; // 抑制移动端系统键盘
     input.autocomplete = 'off';
     input.dataset.player = p;
     input.dataset.solve = t;
-    input.placeholder = '#' + (t + 1);
+
+    // NOTE: tavg cell 使用 name-cell 样式 + 绿色背景，普通 cell 使用 time-cell
+    if (isTavg(t)) {
+        input.className = 'time-cell tavg-cell';
+        input.placeholder = 'Target';
+    } else {
+        input.className = 'time-cell';
+        input.placeholder = '#' + (t + 1);
+    }
 
     input.addEventListener('focus', () => {
         activeCell = [p, t];
         input.select();
         syncNumpadDisplay();
         // NOTE: 聚焦已有值的 cell 时显示滚筒选择器
-        var rawVal = state.times[state.seedOn + p][t];
+        var rawVal = getCellVal(p, t);
         if (rawVal > 0 && rawVal < DNF_VALUE) {
-            drumPicker.show(rawVal, function(newVal) {
+            drumPicker.show(rawVal, input, function(newVal) {
                 // 滚筒值变更回调 — 更新 state 和 cell 显示
                 recordAndUpdate(state.seedOn + p, t, newVal);
-                cells[p][t].value = formatTime(newVal);
+                getCellEl(p, t).value = formatTime(newVal);
                 syncNumpadDisplay();
             });
         } else {
@@ -175,28 +197,13 @@ function createTimeCell(p, t) {
     });
     input.addEventListener('input', () => {
         syncNumpadDisplay();
-        tryAutoAdvance(input.value);
+        // NOTE: tavg 格不自动跳格
+        if (!isTavg(t)) tryAutoAdvance(input.value);
+        // NOTE: 清空后隐藏滚筒
+        if (input.value.trim() === '') drumPicker.hide();
     });
     // NOTE: 滚轮微调成绩 — 仅聚焦时生效
     input.addEventListener('wheel', (e) => onWheel(e, p, t), { passive: false });
-
-    return input;
-}
-
-function createNameCell(p) {
-    var input = document.createElement('input');
-    input.type = 'text';
-    input.className = 'name-cell';
-    input.autocomplete = 'off';
-    input.value = state.names[state.seedOn + p];
-    input.placeholder = 'Name ' + (p === 0 ? 'A' : 'B');
-
-    // NOTE: 聚焦时全选文字，方便快速替换
-    input.addEventListener('focus', () => input.select());
-    input.addEventListener('change', () => {
-        state.names[state.seedOn + p] = input.value;
-        notify();
-    });
 
     return input;
 }
@@ -208,7 +215,7 @@ function createNameCell(p) {
 // FMC 步数模式：固定 ±1步(100cs)
 function onWheel(e, p, t) {
     // 空格或 DNF 不响应滚轮
-    var rawVal = state.times[state.seedOn + p][t];
+    var rawVal = getCellVal(p, t);
     if (rawVal <= 0 || rawVal >= DNF_VALUE) return;
 
     e.preventDefault(); // 阻止页面滚动
@@ -223,13 +230,8 @@ function onWheel(e, p, t) {
         step = 10;  // 0.10s
     }
 
-    // 上滚(deltaY<0)增大，下滚(deltaY>0)减小
-    var delta = e.deltaY < 0 ? step : -step;
-    var newVal = rawVal + delta;
-
-    // 边界保护
-    var minVal = (state.event === '333fm') ? 100 : 1;
-    if (newVal < minVal) newVal = minVal;
+    var dir = e.deltaY < 0 ? 1 : -1;
+    var newVal = Math.max(1, rawVal + dir * step);
     if (newVal > MAX_TIME_VALUE) newVal = MAX_TIME_VALUE;
     if (newVal === rawVal) return;
 
@@ -247,10 +249,10 @@ function onWheel(e, p, t) {
     if (undoStack.length > UNDO_MAX) undoStack.shift();
 
     // 直接写入 state（绕过 recordAndUpdate 以免重复撤销记录）
-    updateTime(state.seedOn + p, t, newVal);
+    setCellVal(p, t, newVal);
 
     // 刷新显示
-    cells[p][t].value = formatTime(newVal);
+    getCellEl(p, t).value = formatTime(newVal);
     syncNumpadDisplay();
 
     // 300ms 无新滚动则结束本轮 debounce
@@ -280,26 +282,38 @@ function onTogglePlayer(e) {
 
 // NOTE: 带撤销记录的 updateTime 包装 — 自动在修改前记录旧值
 function recordAndUpdate(playerIdx, solveIdx, value) {
-    var oldValue = state.times[playerIdx][solveIdx];
-    if (oldValue === value) return; // 值没变，不记录
-    undoStack.push({ playerIdx: playerIdx, solveIdx: solveIdx, oldValue: oldValue, seedOn: state.seedOn });
-    if (undoStack.length > UNDO_MAX) undoStack.shift();
-    updateTime(playerIdx, solveIdx, value);
+    // NOTE: tavg 不走 state.times，用 p 推导
+    var p = playerIdx - state.seedOn;
+    if (isTavg(solveIdx)) {
+        var oldValue = getTargetAvg(playerIdx);
+        if (oldValue === value) return;
+        undoStack.push({ playerIdx: playerIdx, solveIdx: solveIdx, oldValue: oldValue, seedOn: state.seedOn });
+        if (undoStack.length > UNDO_MAX) undoStack.shift();
+        setTargetAvg(playerIdx, value);
+    } else {
+        var oldValue = state.times[playerIdx][solveIdx];
+        if (oldValue === value) return;
+        undoStack.push({ playerIdx: playerIdx, solveIdx: solveIdx, oldValue: oldValue, seedOn: state.seedOn });
+        if (undoStack.length > UNDO_MAX) undoStack.shift();
+        updateTime(playerIdx, solveIdx, value);
+    }
 }
 
 // NOTE: 保存单元格值到 state
 function saveCell(p, t) {
-    var input = cells[p][t];
+    var input = getCellEl(p, t);
     var val = textToTime(input.value);
     recordAndUpdate(state.seedOn + p, t, val);
     // 回显格式化后的值
-    var rawVal = state.times[state.seedOn + p][t];
+    var rawVal = getCellVal(p, t);
     input.value = (rawVal > 0 && rawVal < DNF_VALUE) ? formatTime(rawVal) : (rawVal >= DNF_VALUE ? 'DNF' : '');
 }
 
 // NOTE: 导航到指定单元格
 export function navigateTo(p, t) {
-    if (p < 0 || p > 1 || t < 0 || t > solveCount() - 1) return;
+    // 合法范围：0~solveCount()-1（时间格）或 TAVG_T（target 格）
+    if (p < 0 || p > 1) return;
+    if (t < 0 || (t > solveCount() - 1 && !isTavg(t))) return;
 
     // 先保存当前格
     if (activeCell[0] >= 0 && activeCell[1] >= 0) {
@@ -307,37 +321,48 @@ export function navigateTo(p, t) {
     }
 
     activeCell = [p, t];
-    cells[p][t].focus();
-    cells[p][t].select();
+    var el = getCellEl(p, t);
+    el.focus();
+    el.select();
 }
 
-// NOTE: 计算下一个单元格 — 双选手启用时按列 zigzag（A0→B0→A1→B1→...），单选手时同行水平
+// NOTE: 计算下一个单元格 — 双选手启用时按列 zigzag（A0→B0→A1→B1→...→A(tavg)→B(tavg)）
 // 返回 [p, t] 或 null（已到末尾）
 function nextCell(p, t) {
     var maxT = solveCount() - 1;
     var bothEnabled = state.playerEnabled[0] && state.playerEnabled[1];
-    if (bothEnabled) {
-        // zigzag: A→B 同列，B→A 下一列
-        if (p === 0) return [1, t];
-        if (t < maxT) return [0, t + 1];
+    if (isTavg(t)) {
+        // tavg 列：A→B，B→null
+        if (bothEnabled && p === 0) return [1, TAVG_T];
         return null;
+    }
+    if (bothEnabled) {
+        if (p === 0) return [1, t];
+        // B 行最后一个 solve → A 行下一列（或跳到 tavg）
+        if (t < maxT) return [0, t + 1];
+        return [0, TAVG_T]; // 跳到 tavg
     }
     // 单选手：同行右移
     if (t < maxT) return [p, t + 1];
-    return null;
+    return [p, TAVG_T]; // 跳到 tavg
 }
 
 // NOTE: 计算上一个单元格 — 反向 zigzag
 // 返回 [p, t] 或 null（已到开头）
 function prevCell(p, t) {
+    var maxT = solveCount() - 1;
     var bothEnabled = state.playerEnabled[0] && state.playerEnabled[1];
+    if (isTavg(t)) {
+        // tavg 列前一格：回到最后一个 solve
+        if (bothEnabled && p === 1) return [0, TAVG_T];
+        if (bothEnabled) return [1, maxT];
+        return [p, maxT];
+    }
     if (bothEnabled) {
-        // 反向 zigzag: B→A 同列，A→B 上一列
         if (p === 1) return [0, t];
         if (t > 0) return [1, t - 1];
         return null;
     }
-    // 单选手：同行左移
     if (t > 0) return [p, t - 1];
     return null;
 }
@@ -357,33 +382,35 @@ function onKeyDown(e) {
             navigateTo(nxt[0], nxt[1]);
         } else {
             saveCell(p, t);
-            cells[p][t].blur();
+            getCellEl(p, t).blur();
             activeCell = [-1, -1];
         }
     } else if (e.key === 'Tab') {
         if (p < 0) return;
         e.preventDefault();
-        // NOTE: Tab 始终按列 zigzag（不受单选手影响）
+        // NOTE: Tab 始终按列 zigzag（不受单选手影响），包含 tavg 列
         if (p === 0 && state.playerEnabled[1]) {
             navigateTo(1, t);
-        } else if (t < solveCount() - 1) {
+        } else if (!isTavg(t) && t < solveCount() - 1) {
             navigateTo(state.playerEnabled[0] ? 0 : 1, t + 1);
+        } else if (!isTavg(t)) {
+            navigateTo(state.playerEnabled[0] ? 0 : 1, TAVG_T);
         } else {
             saveCell(p, t);
-            cells[p][t].blur();
+            getCellEl(p, t).blur();
             activeCell = [-1, -1];
         }
     } else if (e.key === 'Escape') {
         if (p < 0) return;
         // 取消编辑，恢复原值
-        var rawVal = state.times[state.seedOn + p][t];
-        cells[p][t].value = (rawVal > 0 && rawVal < DNF_VALUE) ? formatTime(rawVal) : (rawVal >= DNF_VALUE ? 'DNF' : '');
-        cells[p][t].blur();
+        var rawVal = getCellVal(p, t);
+        getCellEl(p, t).value = (rawVal > 0 && rawVal < DNF_VALUE) ? formatTime(rawVal) : (rawVal >= DNF_VALUE ? 'DNF' : '');
+        getCellEl(p, t).blur();
         activeCell = [-1, -1];
         syncNumpadDisplay();
     } else if (e.key === 'Backspace') {
         if (p < 0) return;
-        var v = cells[p][t];
+        var v = getCellEl(p, t);
         // NOTE: 当前格为空时，反向 zigzag 跳到上一格并清空
         if (v.value.length === 0) {
             var prv = prevCell(p, t);
@@ -401,7 +428,7 @@ function onKeyDown(e) {
             e.preventDefault();
             saveCell(p, t);
             navigateTo(del[0], del[1]);
-            cells[del[0]][del[1]].value = '';
+            getCellEl(del[0], del[1]).value = '';
             syncNumpadDisplay();
         }
     } else if (e.key === 'ArrowDown') {
@@ -417,27 +444,35 @@ function onKeyDown(e) {
     } else if (e.key === 'ArrowLeft') {
         if (p < 0) return;
         e.preventDefault();
-        // NOTE: 同行向左一格
-        if (t > 0) navigateTo(p, t - 1);
+        // NOTE: 同行向左一格（tavg → 最后一个 solve）
+        if (isTavg(t)) navigateTo(p, solveCount() - 1);
+        else if (t > 0) navigateTo(p, t - 1);
     } else if (e.key === 'ArrowRight') {
         if (p < 0) return;
         e.preventDefault();
-        // NOTE: 同行向右一格
+        // NOTE: 同行向右一格（最后一个 solve → tavg）
         if (t < solveCount() - 1) navigateTo(p, t + 1);
+        else if (!isTavg(t)) navigateTo(p, TAVG_T);
     } else if (e.key === 'z' && (e.ctrlKey || e.metaKey)) {
         // NOTE: Ctrl+Z 撤销上一次单元格修改并跳回该格
         e.preventDefault();
         if (undoStack.length === 0) return;
         var undo = undoStack.pop();
-        updateTime(undo.playerIdx, undo.solveIdx, undo.oldValue);
+        // NOTE: tavg 撤销走 setTargetAvg，普通 solve 走 updateTime
+        if (isTavg(undo.solveIdx)) {
+            setTargetAvg(undo.playerIdx, undo.oldValue);
+        } else {
+            updateTime(undo.playerIdx, undo.solveIdx, undo.oldValue);
+        }
         // 刷新所有输入框显示
         refresh();
         // NOTE: 跳回被撤销的单元格（仅当仍在同一 seed 页时）
         var displayP = undo.playerIdx - undo.seedOn;
         if (undo.seedOn === state.seedOn && displayP >= 0 && displayP <= 1) {
             activeCell = [displayP, undo.solveIdx];
-            cells[displayP][undo.solveIdx].focus();
-            cells[displayP][undo.solveIdx].select();
+            var el = getCellEl(displayP, undo.solveIdx);
+            el.focus();
+            el.select();
         }
     } else if (e.key === ' ') {
         // NOTE: 空格键触发秒表（逻辑在 app.js 中注册）
@@ -477,7 +512,7 @@ function numpadPress(key) {
         if (p < 0) return; // 所有格都已填满
     }
 
-    var v = cells[p][t];
+    var v = getCellEl(p, t);
 
     if (key === 'enter') {
         // NOTE: zigzag 前进
@@ -490,11 +525,13 @@ function numpadPress(key) {
             activeCell = [-1, -1];
         }
     } else if (key === 'tab') {
-        // NOTE: Tab 始终按列 zigzag
+        // NOTE: Tab 始终按列 zigzag，包含 tavg
         if (p === 0 && state.playerEnabled[1]) {
             navigateTo(1, t);
-        } else if (t < solveCount() - 1) {
+        } else if (!isTavg(t) && t < solveCount() - 1) {
             navigateTo(state.playerEnabled[0] ? 0 : 1, t + 1);
+        } else if (!isTavg(t)) {
+            navigateTo(state.playerEnabled[0] ? 0 : 1, TAVG_T);
         } else {
             saveCell(p, t);
             v.blur();
@@ -518,6 +555,7 @@ function numpadPress(key) {
             recordAndUpdate(state.seedOn + p, t, 0);
             v.value = '';
             syncNumpadDisplay();
+            drumPicker.hide();
         } else if (v.value.length > 0) {
             v.value = v.value.slice(0, -1);
             syncNumpadDisplay();
@@ -593,18 +631,22 @@ export function refresh() {
                 cells[p][t].style.display = 'none';
             }
         }
-        nameCells[p].value = state.names[state.seedOn + p];
+        // Target Avg 格始终可见
+        var tavg = getTargetAvg(state.seedOn + p);
+        tavgCells[p].value = tavg > 0 ? formatTime(tavg) : '';
     }
     syncNumpadDisplay();
 }
 
-// NOTE: 项目切换时更新可见输入格数量
+// NOTE: 项目切换时更新可见输入格数量（tavg 始终可见）
 export function updateVisibleCells() {
     var n = solveCount();
     for (var p = 0; p < 2; p++) {
         for (var t = 0; t < 5; t++) {
             cells[p][t].style.display = (t < n) ? '' : 'none';
         }
+        // tavg 始终可见
+        tavgCells[p].style.display = '';
     }
 }
 
@@ -633,5 +675,7 @@ export function flushToState() {
         for (var t = 0; t < n; t++) {
             state.times[state.seedOn + p][t] = textToTime(cells[p][t].value);
         }
+        // Target Avg 也同步
+        setTargetAvg(state.seedOn + p, textToTime(tavgCells[p].value));
     }
 }

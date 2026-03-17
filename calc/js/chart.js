@@ -9,6 +9,7 @@ import {
     state, getRankOf, getValidsCount, solveCount, isMo3
 } from './state.js';
 import { isWR } from './wr_data.js';
+import { getTargetAvg } from './calc_table.js';
 
 // ── 布局常量（与原 canvas 1600×900 坐标系对齐） ──
 
@@ -102,6 +103,7 @@ export function render() {
 
     drawGridLines();
     drawBars();
+    drawTargetAvgLines();
     drawStats();
     drawAverages();
 
@@ -109,21 +111,20 @@ export function render() {
     updateViewBox();
 }
 
-// NOTE: 动态 viewBox — padding 按内容尺寸比例计算，避免硬编码
+// NOTE: 动态 viewBox — 宽度按内容适配，高度固定避免数据变化导致跳动
 function updateViewBox() {
     var bbox = svgEl.getBBox();
-    // 空数据时 bbox 可能很小，保底最小尺寸防止图表爆大
+    // 宽度动态适配内容
     var w = Math.max(bbox.width, 1000);
-    var h = Math.max(bbox.height, CHART_H);
-    // 保持内容居中：以 bbox 中心为基准扩展到保底尺寸
+    // NOTE: 高度固定 — 使用 CHART_H 加上上下边距，不随数据内容变化
+    var FIXED_H = CHART_H + 100; // 500 + 上方标签区 + 底部边距
     var cx = bbox.x + bbox.width / 2;
-    var cy = bbox.y + bbox.height / 2;
     var padX = w * 0.03;
-    var padTop = h * 0.02;  // 上方留少量空间给 Placed 文字
-    var padBot = 0;          // 底部不留白
+    // 垂直方向：图表绘图区从 gp.y(40) 开始，往上留空给 Placed 文字
+    var topY = -20;
     svgEl.setAttribute('viewBox',
-        (cx - w / 2 - padX) + ' ' + (cy - h / 2 - padTop) + ' ' +
-        (w + padX * 2) + ' ' + (h + padTop + padBot));
+        (cx - w / 2 - padX) + ' ' + topY + ' ' +
+        (w + padX * 2) + ' ' + FIXED_H);
 }
 
 // ── 图表参数计算（等价于原 setGridParameters） ──
@@ -211,6 +212,40 @@ function drawGridLines() {
             fill: '#000',
         });
         label.textContent = formatTime(yLine, true);
+        gridGroup.appendChild(label);
+    }
+}
+
+// ── Target Avg 横线 ──
+
+// NOTE: 在柱状图区域画 Target Avg 水平虚线（每个选手一条，颜色与柱子一致）
+function drawTargetAvgLines() {
+    for (var p = 0; p < 2; p++) {
+        if (!state.playerEnabled[p]) continue;
+        var tavg = getTargetAvg(state.seedOn + p);
+        if (tavg <= 0 || tavg >= DNF_VALUE) continue;
+
+        var y = valToYCap(tavg);
+        var x1 = BAR_START - 10;
+        var x2 = chartEnd() + 10;
+        var col = darken(SHADES[p], 0.7);
+
+        // 虚线
+        gridGroup.appendChild(createSvgElement('line', {
+            x1: x1, y1: y, x2: x2, y2: y,
+            stroke: col, 'stroke-width': 2.5,
+            'stroke-dasharray': '10,6',
+            opacity: 0.7,
+        }));
+
+        // 右侧标注文字
+        var label = createSvgElement('text', {
+            x: x2 + 6, y: y + 6,
+            'font-size': '20px', 'font-family': 'Helvetica',
+            'font-weight': 'bold',
+            fill: col, opacity: 0.8,
+        });
+        label.textContent = formatTime(tavg);
         gridGroup.appendChild(label);
     }
 }
