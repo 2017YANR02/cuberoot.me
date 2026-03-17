@@ -874,7 +874,7 @@ function resetForNextRound() {
         p.hasFinished = false;
         p.inspectionPenalty = null;
         clearInspection(0);
-        p.pointerId = null;
+        // NOTE: 不清除 pointerId — 当前触摸可能还在进行中，由 pointer 事件自行管理
         renderArea(0);
         return;
     }
@@ -886,7 +886,7 @@ function resetForNextRound() {
         p.isTiming = false;
         p.hasFinished = false;
         // NOTE: 保留 p.time 和 p.penalty，让上一把成绩继续显示
-        p.pointerId = null;
+        // NOTE: 不清除 pointerId — 当前触摸可能还在进行中
         renderArea(i);
         // 不调用 renderTime / updatePenaltyButtons — 保留上一把显示
     }

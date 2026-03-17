@@ -258,7 +258,8 @@ function addToViewingWindow(val) {
 }
 
 function getUnit(s) {
-    var units = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 3000, 6000, 12000, 30000, 60000, 120000, 180000, 360000, 720000, 1080000, 2160000, 4320000, 8640000, DNF_VALUE];
+    // NOTE: 最小间距 50cs（0.5 秒），刻度十分位只出现 0 或 5
+    var units = [50, 100, 200, 500, 1000, 2000, 3000, 6000, 12000, 30000, 60000, 120000, 180000, 360000, 720000, 1080000, 2160000, 4320000, 8640000, DNF_VALUE];
     var u = 0;
     while (units[u] < s / 9) u++;
     return units[u];
@@ -282,7 +283,7 @@ function drawGridLines() {
         // 水平参考线
         gridGroup.appendChild(createSvgElement('line', {
             x1: BAR_START, y1: appY, x2: chartEnd(), y2: appY,
-            stroke: 'rgba(0,0,0,0.3)', 'stroke-width': 2,
+            stroke: 'rgba(0,0,0,0.08)', 'stroke-width': 1,
         }));
         // Y 轴标签
         var label = createSvgElement('text', {
@@ -290,7 +291,9 @@ function drawGridLines() {
             'text-anchor': 'end', 'font-size': '22px', 'font-family': 'Helvetica',
             fill: '#000',
         });
-        label.textContent = formatTime(yLine, true);
+        // NOTE: 多盲/旧多盲用整数标签（得分），其他项目用 formatTime
+        var isMbf = state.event === '333mbf' || state.event === '333mbo';
+        label.textContent = isMbf ? String(Math.round(yLine / 100)) : formatTime(yLine, true);
         gridGroup.appendChild(label);
     }
 }
@@ -444,15 +447,23 @@ function drawGhostBars() {
 
         // 收集要显示的 badge — 统一 2 行格式: "Need Nth" + "≤ X"
         var badges = [];
-        // t#4 WPA
-        if (th.t4wpa !== undefined && th.t4wpa !== null) {
+        // NOTE: t#4 WPA 和 BPA — 当一个是 ANY ✓ 另一个有数值时，只显示有数值的
+        var hasWpa = th.t4wpa !== undefined && th.t4wpa !== null;
+        var hasBpa = th.t4bpa !== undefined && th.t4bpa !== null;
+        var wpaIsAny = hasWpa && th.t4wpa >= DNF_VALUE;
+        var bpaIsAny = hasBpa && th.t4bpa >= DNF_VALUE;
+
+        // 两个都存在且一个是 ANY → 只显示有数值的那个
+        var showWpa = hasWpa && !(wpaIsAny && hasBpa && !bpaIsAny);
+        var showBpa = hasBpa && !(bpaIsAny && hasWpa && !wpaIsAny);
+
+        if (showWpa) {
             var v = th.t4wpa >= DNF_VALUE ? 'ANY ✓' : '≤ ' + formatTime(th.t4wpa);
             badges.push({ line1: 'Need 4th', line2: v, color: BADGE_COLORS.t4wpa,
                 tip: 'Worst case: even if 5th solve = DNF, 4th must be ≤ this to hit target avg',
                 y: th.t4wpa < DNF_VALUE ? valToYCap(th.t4wpa) : valToYCap(tavg) - 40 });
         }
-        // t#4 BPA
-        if (th.t4bpa !== undefined && th.t4bpa !== null) {
+        if (showBpa) {
             var v = th.t4bpa >= DNF_VALUE ? 'ANY ✓' : '≤ ' + formatTime(th.t4bpa);
             badges.push({ line1: 'Need 4th', line2: v, color: BADGE_COLORS.t4bpa,
                 tip: 'Best case: if 5th solve is great, 4th must be ≤ this to hit target avg',

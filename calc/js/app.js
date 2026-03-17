@@ -1,7 +1,7 @@
 // NOTE: 应用入口 — 导入所有模块，初始化和编排
 
 import { state, onChange, addSeedPair, updateTime, resetAll, notify, getFirstUnfilledTime, resizeTimes, solveCount } from './state.js';
-import { formatTime } from './calc_engine.js';
+import { formatTime, setMoveCntMode } from './calc_engine.js';
 import * as inputGrid from './input_grid.js';
 import * as chart from './chart.js';
 import * as calcTable from './calc_table.js';
@@ -164,6 +164,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
+
+    // NOTE: 首次渲染前同步 FMC 步数模式（urlSync.load 恢复了 event 但未触发 notify）
+    setMoveCntMode(state.event === '333fm');
 
     // 首次渲染
     chart.render();
