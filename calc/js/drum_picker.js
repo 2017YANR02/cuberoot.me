@@ -69,6 +69,17 @@ export function init() {
         hide();
         if (anchorCell) anchorCell.blur();
     });
+    // NOTE: 移动端 touchstart 的 preventDefault 阻止了 click 事件，
+    // 需要用 touchend 检测轻触（移动 < 5px）来隐藏滚筒
+    highlightEl.addEventListener('touchend', function(e) {
+        var touch = e.changedTouches[0];
+        var dy = Math.abs(touch.clientY - touchStartY);
+        if (dy < 5) {
+            e.stopPropagation();
+            hide();
+            if (anchorCell) anchorCell.blur();
+        }
+    });
     viewport.appendChild(highlightEl);
 
     // 上下渐变遮罩
