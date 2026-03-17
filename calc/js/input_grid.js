@@ -9,6 +9,7 @@ import {
 } from './state.js';
 import * as drumPicker from './drum_picker.js';
 import { getTargetAvg, setTargetAvg } from './calc_table.js';
+import { isWR } from './wr_data.js';
 
 // NOTE: 当前聚焦的单元格 [player, solve]，-1 表示无聚焦
 var activeCell = [-1, -1];
@@ -47,6 +48,8 @@ var cells = [[], []];
 var tavgCells = [null, null];
 // 比赛名输入框引用
 var compNameInput = null;
+// NOTE: WR 徽章 DOM 引用 — wrBadges[p][t] 对应 player p 的第 t 个时间格的 WR badge
+var wrBadges = [[], []];
 
 // NOTE: Target Avg 的固定 DOM 列索引（始终在第 6 列，不随 solveCount 变化）
 var TAVG_T = 5;
@@ -80,15 +83,17 @@ export function init(gridContainer) {
         row.className = 'input-row player-' + (p === 0 ? 'a' : 'b');
 
         for (var t = 0; t < 5; t++) {
-            var input = createTimeCell(p, t);
-            row.appendChild(input);
-            cells[p][t] = input;
+            var wrapper = createTimeCell(p, t);
+            row.appendChild(wrapper);
+            // NOTE: input 在 wrapper 的第一个子元素
+            cells[p][t] = wrapper.querySelector('input');
+            wrBadges[p][t] = wrapper.querySelector('.wr-badge');
         }
 
         // NOTE: 第 6 列 — Target Avg，复用 createTimeCell 逻辑
-        var tavgInput = createTimeCell(p, TAVG_T);
-        row.appendChild(tavgInput);
-        tavgCells[p] = tavgInput;
+        var tavgWrapper = createTimeCell(p, TAVG_T);
+        row.appendChild(tavgWrapper);
+        tavgCells[p] = tavgWrapper.querySelector('input');
 
         // NOTE: 勾选框 — 控制是否启用该选手的时间输入
         var cb = document.createElement('input');
@@ -242,7 +247,21 @@ function createTimeCell(p, t) {
     // NOTE: 滚轮微调成绩 — 仅聚焦时生效
     input.addEventListener('wheel', (e) => onWheel(e, p, t), { passive: false });
 
-    return input;
+    // NOTE: 用 wrapper div 包裹 input + WR badge（input 不支持子元素）
+    var wrapper = document.createElement('div');
+    wrapper.className = 'time-cell-wrapper';
+    wrapper.appendChild(input);
+
+    // NOTE: WR badge — 初始隐藏，refresh 时检测是否显示
+    if (!isTavg(t)) {
+        var badge = document.createElement('span');
+        badge.className = 'wr-badge';
+        badge.textContent = 'WR';
+        badge.style.display = 'none';
+        wrapper.appendChild(badge);
+    }
+
+    return wrapper;
 }
 
 // ── 滚轮微调 ──
@@ -682,6 +701,16 @@ export function refresh() {
         fitFont(tavgCells[p]);
     }
     syncNumpadDisplay();
+    // NOTE: 检测单次 WR — 显示/隐藏 WR badge
+    for (var p2 = 0; p2 < 2; p2++) {
+        for (var t2 = 0; t2 < 5; t2++) {
+            if (wrBadges[p2][t2]) {
+                var val = state.times[state.seedOn + p2][t2];
+                var show = val > 0 && val < DNF_VALUE && isWR(state.event, 'single', val);
+                wrBadges[p2][t2].style.display = show ? '' : 'none';
+            }
+        }
+    }
 }
 
 // NOTE: 项目切换时更新可见输入格数量（tavg 始终可见）
