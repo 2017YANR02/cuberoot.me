@@ -47,6 +47,7 @@ var avgGroup = null;        // 菱形标签 <g>
 var topTextGroup = null;    // NOTE: 最顶层文字（渲染在菱形之上，避免被色块遮挡）
 var tooltipEl = null;       // HTML tooltip div（badge 指标说明）
 var chartContainer = null;  // 图表容器 DOM
+var lastConfettiKey = '';    // NOTE: 防止 confetti 重复触发（记录上次触发时的状态 key）
 
 // 图表参数缓存（等价于原代码的 g 对象）
 var gp = {};
@@ -123,6 +124,49 @@ export function render() {
 
     // NOTE: 根据实际渲染内容动态调整 viewBox，确保图表居中
     updateViewBox();
+
+    // NOTE: WR avg 庆祝特效 — 第 5 把填完且 avg 达成 WR 时触发 confetti
+    checkWRConfetti();
+}
+
+// NOTE: WR avg 庆祝特效检测 — 5 把完整且 avg ≤ 世界纪录时喷射 confetti
+function checkWRConfetti() {
+    if (typeof confetti !== 'function') return;
+
+    for (var p = 0; p < 2; p++) {
+        if (!state.playerEnabled[p]) continue;
+        var times = state.times[state.seedOn + p];
+        var filled = times.filter(function(t) { return t > 0 && t < DNF_VALUE; });
+        if (filled.length < 5) continue; // 需要 5 把全部填完
+
+        var avg = getAverage(times, false);
+        if (!avg || avg <= 0 || avg >= DNF_VALUE) continue;
+
+        // 检测 avg 是否 ≤ WR average
+        if (!isWR(state.event, 'average', avg)) continue;
+
+        // 用状态 key 防重复：同一 seed + event + player + avg 只触发一次
+        var key = state.seedOn + '-' + state.event + '-' + p + '-' + avg;
+        if (key === lastConfettiKey) continue;
+        lastConfettiKey = key;
+
+        // 🎉 WR avg！连发 3 波 confetti
+        for (var i = 0; i < 3; i++) {
+            setTimeout(function() {
+                confetti({
+                    particleCount: 100,
+                    spread: 80,
+                    origin: { x: 0.5, y: 0.4 },
+                    angle: 90,
+                    colors: ['#FFD700', '#FF6B35', '#FF0000', '#00FF00', '#00BFFF', '#FF69B4'],
+                    gravity: 1.2,
+                    ticks: 200,
+                    disableForReducedMotion: true,
+                });
+            }, i * 250);
+        }
+        break; // 一次 render 最多触发一个选手的庆祝
+    }
 }
 
 // NOTE: 动态 viewBox — 宽度按内容适配，高度固定避免数据变化导致跳动
