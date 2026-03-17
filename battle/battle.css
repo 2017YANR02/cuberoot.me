@@ -166,6 +166,11 @@ body {
     pointer-events: none;
 }
 
+/* NOTE: Solo 模式下底部导航栏 56px，需要把打乱图往上推 */
+body.solo .scramble-img {
+    bottom: 64px;
+}
+
 
 .scramble-svg-img {
     /* NOTE: 高度约为玩家区域的 1/5，横向自适应 */
@@ -1141,4 +1146,129 @@ body:not(.solo) .solo-setting {
 .trend-svg {
     width: 100%;
     height: 100px;
+}
+
+/* ==========================================================
+   底部导航栏（Solo 模式，仿 DCTimer）
+   ========================================================== */
+
+/* NOTE: 默认隐藏，仅 Solo 模式显示 */
+.bottom-nav {
+    display: none;
+}
+
+/* NOTE: Solo 模式下固定底部 */
+body.solo .bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    background: #111;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 300;
+    justify-content: space-around;
+    align-items: center;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.nav-tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    background: none;
+    border: none;
+    color: #666;
+    font-size: 0.65rem;
+    cursor: pointer;
+    padding: 6px 0;
+    transition: color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.nav-tab svg {
+    transition: color 0.15s;
+}
+
+.nav-tab.active {
+    color: #4fc3f7;
+}
+
+/* NOTE: Solo 模式下为底部导航栏留出空间 */
+body.solo .player-area {
+    padding-bottom: 56px;
+}
+
+/* NOTE: Solo 模式下隐藏中间栏的 ⚙️ 和 📋 按钮（被导航栏 tab 取代） */
+body.solo #btn-settings,
+body.solo #btn-history {
+    display: none !important;
+}
+
+/* NOTE: Solo 模式下 tab 切换 — 隐藏/显示内容区域 */
+
+/* 默认（timer tab）：显示计时视图 */
+
+/* 成绩 tab：隐藏计时区域，全屏显示 history panel */
+body.solo[data-tab="results"] #player-bottom,
+body.solo[data-tab="results"] .middle-bar,
+body.solo[data-tab="results"] .back-btn {
+    display: none !important;
+}
+
+body.solo[data-tab="results"] .history-overlay {
+    position: static;
+    opacity: 1;
+    pointer-events: auto;
+    background: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    display: flex;
+    flex: 1;
+}
+
+body.solo[data-tab="results"] .history-panel {
+    transform: none;
+    max-height: none;
+    max-width: none;
+    border-radius: 0;
+    border: none;
+    flex: 1;
+    /* NOTE: 为底部导航栏留空 */
+    padding-bottom: 56px;
+}
+
+body.solo[data-tab="results"] .history-close-btn {
+    display: none;
+}
+
+/* 设置 tab：隐藏计时区域，全屏显示 settings panel */
+body.solo[data-tab="settings"] #player-bottom,
+body.solo[data-tab="settings"] .middle-bar,
+body.solo[data-tab="settings"] .back-btn {
+    display: none !important;
+}
+
+body.solo[data-tab="settings"] .settings-overlay {
+    position: static;
+    opacity: 1;
+    pointer-events: auto;
+    background: none;
+}
+
+body.solo[data-tab="settings"] .settings-panel {
+    position: static;
+    transform: none;
+    inset: auto;
+    /* NOTE: 为底部导航栏留空 */
+    padding-bottom: 72px;
+}
+
+/* NOTE: tab 模式下不需要 Close 按钮（点 "计时" tab 即返回） */
+body.solo[data-tab="settings"] .settings-close-btn {
+    display: none;
 }

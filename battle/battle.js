@@ -293,6 +293,11 @@ function init() {
         if (e.target === dom.settingsOverlay) closeSettings();
     });
 
+    // NOTE: 底部导航栏 tab 切换（Solo 模式）
+    document.querySelectorAll('.nav-tab').forEach(tab => {
+        tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+    });
+
     // NOTE: 点击页面其他区域时关闭已打开的罚时下拉
     document.addEventListener("click", () => closeAllDropdowns());
 
@@ -1367,6 +1372,36 @@ function closeSettings() {
     dom.settingsOverlay.classList.remove("visible");
 }
 
+/**
+ * NOTE: 底部导航栏 tab 切换（仅 Solo 模式生效）
+ * 通过 body[data-tab] 控制 CSS 显示/隐藏对应面板
+ */
+function switchTab(tabName) {
+    // NOTE: 1v1 模式下不使用 tab 导航
+    if (!isSolo()) return;
+
+    document.body.dataset.tab = tabName;
+
+    // 更新 active 状态
+    document.querySelectorAll('.nav-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.tab === tabName);
+    });
+
+    // NOTE: 切换到成绩 tab 时刷新数据
+    if (tabName === 'results') {
+        renderHistory();
+        renderTrendChart();
+    }
+
+    // NOTE: 切换到设置 tab 时同步按钮状态
+    if (tabName === 'settings') {
+        const lang = getLocale();
+        const key = state.showTime ? 'hide_time' : 'show_time';
+        document.getElementById('btn-toggle-time').textContent = I18N_TEXT[key][lang];
+        document.getElementById('btn-delete-last').disabled = state.players[0].solveHistory.length === 0;
+    }
+}
+
 // ===== 全屏 =====
 
 function toggleFullscreen() {
@@ -1578,6 +1613,8 @@ function initBgControls() {
  */
 function applyMode() {
     document.body.classList.toggle('solo', isSolo());
+    // NOTE: 切换模式时重置到计时 tab
+    switchTab('timer');
     // 重置玩家状态（但不清空历史）
     for (let i = 0; i < 2; i++) {
         const p = state.players[i];
