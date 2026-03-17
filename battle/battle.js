@@ -1443,6 +1443,7 @@ function switchTab(tabName) {
     if (tabName === 'results') {
         renderHistory();
         renderTrendChart();
+        renderDistributionChart();
     }
 
     // NOTE: 切换到设置 tab 时同步按钮状态
@@ -1955,6 +1956,7 @@ function openHistory() {
     if (isAnyActive()) return;
     renderHistory();
     renderTrendChart();
+    renderDistributionChart();
     dom.historyOverlay.classList.add('visible');
 }
 
@@ -2308,6 +2310,55 @@ function renderTrendChart() {
     });
 
     dom.historyList.parentNode.insertBefore(container, dom.historyList);
+}
+
+// ===== 分布图（直方图 + KDE） =====
+
+// NOTE: 缓存图表实例，避免重复创建 DOM
+let _distChartInstance = null;
+
+/**
+ * NOTE: 渲染成绩分布图（直方图 + KDE）
+ * 从 solveHistory 提取有效成绩，转 ms→秒，调用通用 DistributionChart API
+ */
+function renderDistributionChart() {
+    // NOTE: DistributionChart 由 distribution_chart.js 暴露的全局 API
+    if (typeof DistributionChart === 'undefined') return;
+
+    // 销毁旧实例
+    if (_distChartInstance) {
+        _distChartInstance.destroy();
+        _distChartInstance = null;
+    }
+
+    const h = state.players[0].solveHistory;
+    // NOTE: 过滤 DNF，转 ms→秒
+    const validTimes = h
+        .map(getEffectiveTimeFromEntry)
+        .filter(t => t !== Infinity)
+        .map(t => t / 1000);
+
+    // NOTE: 至少 5 条有效成绩才渲染（太少画不出有意义的分布）
+    if (validTimes.length < 5) return;
+
+    // 找到插入点：趋势图容器之后，成绩列表之前
+    var anchor = document.getElementById('trend-chart-container');
+    var insertTarget = anchor ? anchor.nextSibling : dom.historyList;
+
+    // 创建容器
+    var container = document.createElement('div');
+    container.id = 'dist-chart-wrapper';
+    dom.historyList.parentNode.insertBefore(container, insertTarget);
+
+    // NOTE: 构建数据集 — 单人模式，只有一个数据集
+    var puzzleName = PUZZLES.find(p => p.id === state.puzzleId);
+    var label = puzzleName ? (getLocale() === 'zh' ? puzzleName.name.zh : puzzleName.name.en) : state.puzzleId;
+
+    _distChartInstance = DistributionChart.create(container, [{
+        name: label,
+        times: validTimes,
+        color: '#00d2ff'
+    }]);
 }
 
 // ===== WCA 登录 UI + 云同步 =====

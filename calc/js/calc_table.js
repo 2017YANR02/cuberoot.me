@@ -4,7 +4,7 @@
 import {
     DNF_VALUE, formatTime, textToTime, CalcEngine
 } from './calc_engine.js';
-import { state, notify, isMo3 } from './state.js';
+import { state, notify, isMo3, isMbf } from './state.js';
 
 var tbodyEl = null;
 var thA = null;
@@ -86,11 +86,13 @@ export function render() {
         }
 
         // 判断优势方
+        // NOTE: 多盲得分模式下 higher = better，取反 lowerBetter
+        var effectiveLower = isMbf() ? !lowerBetter : lowerBetter;
         var cls0 = '', cls1 = '';
         if (v0 != null && v1 != null && v0 !== DNF_VALUE && v1 !== DNF_VALUE) {
             if (key === 'bestAvgRatio') {
                 if (v0 > v1) cls0 = 'calc-better'; else if (v1 > v0) cls1 = 'calc-better';
-            } else if (lowerBetter || key === 'variance') {
+            } else if (effectiveLower || key === 'variance') {
                 if (v0 < v1) cls0 = 'calc-better'; else if (v1 < v0) cls1 = 'calc-better';
             }
         }
