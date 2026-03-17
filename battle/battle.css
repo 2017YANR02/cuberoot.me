@@ -800,6 +800,52 @@ input:checked+.slider:before {
     color: #e53935;
 }
 
+/* NOTE: 打乱文字颜色按钮 — 仿文字编辑器"A"字色控件，下划线颜色=当前选色 */
+.scramble-color-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 2px solid #444;
+    border-radius: 6px;
+    cursor: pointer;
+    gap: 1px;
+    transition: border-color 0.2s;
+    position: relative;
+    overflow: hidden;
+}
+
+.scramble-color-label:hover {
+    border-color: #888;
+}
+
+/* NOTE: "A" 字母 */
+.scramble-color-letter {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #ccc;
+    line-height: 1;
+    /* 下划线颜色 = 当前选定的打乱颜色（由 JS 设置 CSS 变量） */
+    text-decoration: underline;
+    text-decoration-color: var(--scramble-underline-color, #ccc);
+    text-decoration-thickness: 3px;
+    text-underline-offset: 2px;
+}
+
+/* NOTE: 隐藏原生 color input，但保留可点击性 */
+.scramble-color-label input[type="color"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    border: none;
+    padding: 0;
+}
+
 .bg-error-msg {
     font-size: 0.75rem;
     color: #ef5350;
