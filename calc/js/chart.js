@@ -312,10 +312,24 @@ function drawGhostBars() {
         var bx = barX + bm + (fullW - bw) / 2;
 
         if (ghost.type === 'impossible') {
-            // 💀 标签
+            // 💀 标签（带 tooltip）
             var labelY = valToYCap(tavg);
-            addText(topTextGroup, bx + bw / 2, labelY, '💀', GHOST_TEXT_COLORS.impossible, 30, 'center');
-            addText(topTextGroup, bx + bw / 2, labelY + 26, 'Impossible', GHOST_TEXT_COLORS.impossible, 16, 'center');
+            var skullGroup = createSvgElement('g', { cursor: 'help' });
+            (function() {
+                skullGroup.addEventListener('mouseenter', function(e) {
+                    tooltipEl.textContent = 'Mathematically impossible to hit target avg — no matter what you solve';
+                    var rect = chartContainer.getBoundingClientRect();
+                    tooltipEl.style.left = (e.clientX - rect.left + 10) + 'px';
+                    tooltipEl.style.top = (e.clientY - rect.top - 40) + 'px';
+                    tooltipEl.style.opacity = '1';
+                });
+                skullGroup.addEventListener('mouseleave', function() {
+                    tooltipEl.style.opacity = '0';
+                });
+            })();
+            addText(skullGroup, bx + bw / 2, labelY, '💀', GHOST_TEXT_COLORS.impossible, 30, 'center');
+            addText(skullGroup, bx + bw / 2, labelY + 26, 'Impossible', GHOST_TEXT_COLORS.impossible, 16, 'center');
+            topTextGroup.appendChild(skullGroup);
             continue;
         }
 
