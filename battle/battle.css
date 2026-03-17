@@ -1380,8 +1380,8 @@ body.solo .bottom-nav {
 }
 
 .nav-tab.active .nav-tab-icon {
-    /* NOTE: active 状态：去掉灰度，用 hue-rotate 色偏让黄色偏蓝 + 提高亮度 */
-    filter: grayscale(0) brightness(0.7) hue-rotate(180deg) saturate(2);
+    /* NOTE: active 状态：hue-rotate 148deg 精确映射黄色(51°)→目标天蓝(199°)，匹配 #4fc3f7 */
+    filter: grayscale(0) brightness(0.85) hue-rotate(148deg) saturate(1.8);
 }
 
 /* NOTE: Solo 模式下为底部导航栏留出空间 */
