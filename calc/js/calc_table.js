@@ -112,8 +112,9 @@ export function render() {
         for (var j = 0; j < thresholds.length; j++) {
             var tLabel = thresholds[j][0], tKey = thresholds[j][1];
             var tv0 = th0 ? th0[tKey] : undefined, tv1 = th1 ? th1[tKey] : undefined;
-            var ts0 = tv0 === undefined ? '-' : (tv0 === null ? '<span class="calc-nan">NaN</span>' : formatTime(tv0));
-            var ts1 = tv1 === undefined ? '-' : (tv1 === null ? '<span class="calc-nan">NaN</span>' : formatTime(tv1));
+            // NOTE: 阈值行 DNF_VALUE 表示"任意值都可达标" → 显示 ANY
+            var ts0 = tv0 === undefined ? '-' : (tv0 === null ? '<span class="calc-nan">NaN</span>' : (tv0 >= DNF_VALUE ? 'ANY' : formatTime(tv0)));
+            var ts1 = tv1 === undefined ? '-' : (tv1 === null ? '<span class="calc-nan">NaN</span>' : (tv1 >= DNF_VALUE ? 'ANY' : formatTime(tv1)));
             html += '<tr><td>' + tLabel + '</td><td>' + ts0 + '</td><td>' + ts1 + '</td></tr>';
         }
     }

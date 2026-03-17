@@ -125,6 +125,11 @@ export function init() {
         hide();
         if (anchorCell) anchorCell.blur();
     }, { passive: true });
+
+    // NOTE: 页面滚动时隐藏滚筒
+    window.addEventListener('scroll', function() {
+        if (isVisible()) hide();
+    }, { passive: true });
 }
 
 // ── 显示/隐藏 ──
