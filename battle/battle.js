@@ -325,6 +325,21 @@ function init() {
         });
     });
 
+    // NOTE: 语言分段选择器
+    const langSeg = document.getElementById('lang-seg');
+    const curLang = getLocale();
+    langSeg.querySelectorAll('.mode-seg-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.lang === curLang);
+        btn.addEventListener('click', () => {
+            if (typeof I18n !== 'undefined') {
+                I18n.setLocale(btn.dataset.lang);
+            }
+            langSeg.querySelectorAll('.mode-seg-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.lang === btn.dataset.lang);
+            });
+        });
+    });
+
     // NOTE: 计时器精确度选择
     const selPrecision = document.getElementById("select-precision");
     selPrecision.value = state.timerPrecision.toString();
