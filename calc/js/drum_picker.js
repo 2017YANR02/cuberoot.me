@@ -107,6 +107,17 @@ export function init() {
     pickerEl.addEventListener('touchstart', function(e) {
         // 只阻止默认行为防止失焦，但不阻止冒泡（让 viewport 的 touchstart 正常工作）
     }, { passive: true });
+
+    // NOTE: 全局 touchstart — 点击 picker 和 time-cell 以外的区域时隐藏滚筒
+    // 移动端 blur 事件不可靠（numpad 的 preventDefault 会阻止 blur），所以用全局监听兜底
+    document.addEventListener('touchstart', function(e) {
+        if (!isVisible()) return;
+        // 点在 picker 内部或 time-cell 上 → 不隐藏
+        if (pickerEl.contains(e.target)) return;
+        if (e.target.closest('.time-cell')) return;
+        hide();
+        if (anchorCell) anchorCell.blur();
+    }, { passive: true });
 }
 
 // ── 显示/隐藏 ──
