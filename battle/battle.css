@@ -493,17 +493,13 @@ body {
 .settings-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.7);
+    /* NOTE: 全屏面板模式下，overlay 仅用于捕获点击事件，背景透明 */
+    background: transparent;
     z-index: 200;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
     /* NOTE: 默认隐藏 */
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.2s ease;
+    transition: opacity 0.25s ease;
 }
 
 .settings-overlay.visible {
@@ -514,19 +510,17 @@ body {
 .settings-panel {
     background: #1e1e1e;
     padding: 24px;
-    border-radius: 12px;
-    width: 90%;
-    max-width: 400px;
-    max-height: 80vh;
+    /* NOTE: 撑满全屏，移除 max-width/max-height 限制 */
+    position: fixed;
+    inset: 0;
     overflow-y: auto;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    transform: scale(0.9);
-    transition: transform 0.2s ease;
-    border: 1px solid #333;
+    transform: translateY(100%);
+    transition: transform 0.25s ease;
+    border-top: 1px solid #333;
 }
 
 .settings-overlay.visible .settings-panel {
-    transform: scale(1);
+    transform: translateY(0);
 }
 
 .settings-title {
