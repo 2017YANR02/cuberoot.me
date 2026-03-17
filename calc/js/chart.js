@@ -6,7 +6,7 @@ import {
     formatTime, getAverage, getBestSingle, rankify, CalcEngine
 } from './calc_engine.js';
 import {
-    state, getRankOf, getValidsCount, solveCount, isMo3
+    state, getRankOf, getValidsCount, solveCount, isMo3, isMbf
 } from './state.js';
 import { isWR } from './wr_data.js';
 import { getTargetAvg } from './calc_table.js';
@@ -132,6 +132,8 @@ export function render() {
 // NOTE: WR 庆祝特效检测 — 单次 WR 或 avg WR 时喷射 confetti
 function checkWRConfetti() {
     if (typeof confetti !== 'function') return;
+    // NOTE: 多盲得分不支持 WR 检测（WR 数据是 WCA 编码格式，与 score×100 不兼容）
+    if (isMbf()) return;
 
     for (var p = 0; p < 2; p++) {
         if (!state.playerEnabled[p]) continue;
@@ -258,6 +260,13 @@ function addToViewingWindow(val) {
 }
 
 function getUnit(s) {
+    // NOTE: 多盲得分模式 — 得分范围通常 1~60，内部值 100~6000，需要更小的步进
+    if (isMbf()) {
+        var mbfUnits = [100, 200, 500, 1000, 2000, 5000, 10000, DNF_VALUE];
+        var mu = 0;
+        while (mbfUnits[mu] < s / 9) mu++;
+        return mbfUnits[mu];
+    }
     // NOTE: 最小间距 50cs（0.5 秒），刻度十分位只出现 0 或 5
     var units = [50, 100, 200, 500, 1000, 2000, 3000, 6000, 12000, 30000, 60000, 120000, 180000, 360000, 720000, 1080000, 2160000, 4320000, 8640000, DNF_VALUE];
     var u = 0;
@@ -291,9 +300,8 @@ function drawGridLines() {
             'text-anchor': 'end', 'font-size': '22px', 'font-family': 'Helvetica',
             fill: '#000',
         });
-        // NOTE: 多盲/旧多盲用整数标签（得分），其他项目用 formatTime
-        var isMbf = state.event === '333mbf' || state.event === '333mbo';
-        label.textContent = isMbf ? String(Math.round(yLine / 100)) : formatTime(yLine, true);
+        // NOTE: Y 轴标签 — formatTime 内部自动处理多盲得分模式
+        label.textContent = formatTime(yLine, true);
         gridGroup.appendChild(label);
     }
 }

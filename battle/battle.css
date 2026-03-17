@@ -1474,3 +1474,54 @@ body.solo[data-tab="settings"] .settings-panel {
 body.solo[data-tab="settings"] .settings-x-btn {
     display: none;
 }
+
+/* ==========================================================
+   分布图（直方图 + KDE）切换按钮 + 容器
+   NOTE: 从 stats_ui.css 移植 segmented-btn 精简版
+   ========================================================== */
+
+.segmented-btn {
+    padding: 4px 14px;
+    border: 1px solid #4a6785;
+    background: transparent;
+    color: #8ab4f8;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.2;
+    transition: all .2s;
+    border-radius: 0;
+}
+
+.segmented-btn:first-child {
+    border-radius: 6px 0 0 6px;
+}
+
+.segmented-btn:last-child {
+    border-radius: 0 6px 6px 0;
+}
+
+.segmented-btn+.segmented-btn {
+    border-left: none;
+}
+
+.segmented-btn.active {
+    background: #2c4a6e;
+    border-color: #8ab4f8;
+    color: #fff;
+}
+
+.segmented-btn:hover:not(.active) {
+    background: rgba(138, 180, 248, 0.08);
+}
+
+/* NOTE: 分布图容器在历史面板中的间距 */
+#dist-chart-wrapper {
+    margin: 8px 0 16px;
+}
+
+/* NOTE: 分布图 SVG 在窄屏幕下自适应 */
+.dist-chart-container svg {
+    max-width: 100%;
+    height: auto;
+}

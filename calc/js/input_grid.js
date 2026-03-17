@@ -2,11 +2,12 @@
 // 替代原 canvas overlay hack，使用原生 <input> 元素
 
 import {
-    DNF_VALUE, MAX_TIME_VALUE, formatTime, textToTime
+    DNF_VALUE, MAX_TIME_VALUE, formatTime, textToTime, textToMbfScore
 } from './calc_engine.js';
 import {
     state, updateTime, notify, solveCount
 } from './state.js';
+import { isMbf } from './state.js';
 import * as drumPicker from './drum_picker.js';
 import { getTargetAvg, setTargetAvg } from './calc_table.js';
 import { isWR } from './wr_data.js';
@@ -139,6 +140,8 @@ export function init(gridContainer) {
 // 由 input 事件和 numpad 数字键共享调用
 function tryAutoAdvance(rawVal) {
     if (state.event !== '333') return;
+    // NOTE: 多盲得分模式下禁用自动跳格（得分通常 1~2 位数）
+    if (isMbf()) return;
     var val = rawVal.trim();
     var shouldAdvance = false;
 
@@ -278,8 +281,8 @@ function onWheel(e, p, t) {
 
     // 步进粒度
     var step = 1;
-    if (state.event === '333fm') {
-        step = 100; // FMC: 1步 = 100cs
+    if (state.event === '333fm' || isMbf()) {
+        step = 100; // FMC: 1步 = 100cs; 多盲: 1分 = 100
     } else if (e.ctrlKey) {
         step = 100; // 1.00s
     } else if (e.shiftKey) {
@@ -358,7 +361,8 @@ function recordAndUpdate(playerIdx, solveIdx, value) {
 // NOTE: 保存单元格值到 state
 function saveCell(p, t) {
     var input = getCellEl(p, t);
-    var val = textToTime(input.value);
+    // NOTE: 多盲得分模式用专用解析函数
+    var val = isMbf() ? textToMbfScore(input.value) : textToTime(input.value);
     recordAndUpdate(state.seedOn + p, t, val);
     // 回显格式化后的值
     var rawVal = getCellVal(p, t);
@@ -749,9 +753,14 @@ export function flushToState() {
     var n = solveCount();
     for (var p = 0; p < 2; p++) {
         for (var t = 0; t < n; t++) {
-            state.times[state.seedOn + p][t] = textToTime(cells[p][t].value);
+            // NOTE: 多盲得分模式用专用解析
+            state.times[state.seedOn + p][t] = isMbf()
+                ? textToMbfScore(cells[p][t].value)
+                : textToTime(cells[p][t].value);
         }
         // Target Avg 也同步
-        setTargetAvg(state.seedOn + p, textToTime(tavgCells[p].value));
+        setTargetAvg(state.seedOn + p, isMbf()
+            ? textToMbfScore(tavgCells[p].value)
+            : textToTime(tavgCells[p].value));
     }
 }

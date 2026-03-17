@@ -16,6 +16,9 @@ export const MAX_TIME_VALUE = 8640000; // 24小时 (centiseconds)
 // formatTime 内部自动判断，无需每个调用方传参
 var _isMoveCntMode = false;
 export function setMoveCntMode(flag) { _isMoveCntMode = flag; }
+// NOTE: 多盲得分模式旗标 — 由 state.js notify() 同步设置
+var _isMbfMode = false;
+export function setMbfMode(flag) { _isMbfMode = flag; }
 
 export function formatTime(cs, axisLabel = false, isMoveCnt = false, forceDecimal = false) {
     if (cs === null || cs === undefined) return '-';
@@ -31,6 +34,11 @@ export function formatTime(cs, axisLabel = false, isMoveCnt = false, forceDecima
             return moves.toFixed(2);
         }
         return String(moves);
+    }
+
+    // NOTE: 多盲得分模式 — 显示整数得分（score = cs / 100）
+    if (_isMbfMode) {
+        return String(Math.round(cs / 100));
     }
 
     // NOTE: 通过 digit/separator 数组逐位拆解，自动处理 分:秒.厘秒 格式
@@ -105,6 +113,20 @@ export function textToTime(s) {
     return time;
 }
 
+// NOTE: 多盲得分解析 — 纯整数输入（如 "56" → 5600）
+// 独立函数避免污染通用 textToTime 逻辑
+export function textToMbfScore(s) {
+    var dnf = 'dnf';
+    for (var i = 0; i < dnf.length; i++) {
+        if (s.toLowerCase().includes(dnf.charAt(i))) {
+            return DNF_VALUE;
+        }
+    }
+    var score = parseInt(s.replace(/\D/g, ''), 10);
+    if (Number.isNaN(score) || score <= 0) return 0;
+    return score * 100;
+}
+
 // 从字符串中提取数字，digitsToInclude 限制截取位数（-1 表示不限）
 function strToNumber(s, digitsToInclude) {
     var resultStr = s.replace(/\D/g, '');
@@ -158,20 +180,32 @@ export function getAverage(arr, includeZeros) {
 }
 
 // NOTE: 按平均值和最佳单次排序，返回索引数组
-export function getSortedIndices(test, test2) {
+export function getSortedIndices(test, test2, descending) {
     var len = test.length;
     var indices = new Array(len);
     for (var i = 0; i < len; ++i) indices[i] = i;
+    // NOTE: descending = true 时降序排列（多盲得分模式：高分 = 好）
+    var dir = descending ? -1 : 1;
     indices.sort(function (a, b) {
-        if (test[a] < test[b] || (test[a] === test[b] && test2[a] < test2[b])) return -1;
-        if (test[a] > test[b] || (test[a] === test[b] && test2[a] > test2[b])) return 1;
+        if (test[a] < test[b] || (test[a] === test[b] && test2[a] < test2[b])) return -1 * dir;
+        if (test[a] > test[b] || (test[a] === test[b] && test2[a] > test2[b])) return 1 * dir;
         return 0;
     });
     return indices;
 }
 
 // NOTE: 最佳单次成绩（忽略 0 和 DNF）
-export function getBestSingle(arr) {
+// mbf 模式下「最佳」= 最大值而非最小值
+export function getBestSingle(arr, descending) {
+    if (descending) {
+        var best = 0;
+        for (var i = 0; i < arr.length; i++) {
+            if (arr[i] > 0 && arr[i] < DNF_VALUE && arr[i] > best) {
+                best = arr[i];
+            }
+        }
+        return best === 0 ? DNF_VALUE : best;
+    }
     var record = DNF_VALUE;
     for (var i = 0; i < arr.length; i++) {
         if (arr[i] > 0 && arr[i] < record) {
