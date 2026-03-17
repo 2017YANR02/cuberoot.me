@@ -24,6 +24,19 @@ OUTPUT_PATH = File.expand_path("../../calc/data/wr.json", __dir__)
 
 result = {}
 
+# NOTE: 解析时间字符串为 centiseconds
+# 格式："3.57"（秒）、"1:05.04"（分:秒）、"16"（FMC moves）
+def parse_cs(str)
+  case str
+  when /\A(\d+):(\d+\.\d+)\z/
+    $1.to_i * 6000 + ($2.to_f * 100).round
+  when /\A\d+\.\d+\z/
+    (str.to_f * 100).round
+  when /\A\d+\z/
+    str.to_i * 100  # FMC: moves → centiseconds 代理
+  end
+end
+
 METRICS.each do |metric_id, class_name|
   klass = Object.const_get(class_name)
   instance = klass.new
@@ -31,27 +44,23 @@ METRICS.each do |metric_id, class_name|
 
   rankings.each do |event_name, top10|
     next if top10.empty?
-    # top10 第一行 = WR，格式 [rank, person_link, metric_str, country, date, comp_link]
-    wr_str = top10.first[2]
-
-    # NOTE: 解析时间字符串为 centiseconds
-    # 格式可能是 "3.57"（秒）或 "1:05.04"（分:秒）或纯整数 "16"（FMC moves）
-    cs = nil
-    if wr_str =~ /\A(\d+):(\d+\.\d+)\z/
-      cs = ($1.to_i * 6000 + ($2.to_f * 100).round)
-    elsif wr_str =~ /\A\d+\.\d+\z/
-      cs = (wr_str.to_f * 100).round
-    elsif wr_str =~ /\A\d+\z/
-      cs = wr_str.to_i * 100  # FMC: moves → centiseconds 代理
-    end
-    next unless cs && cs > 0
 
     # NOTE: 反向查找 event_id（从 event_name 映射回 event_id）
     event_id = Events::ALL.find { |id, name| name == event_name }&.first
     next unless event_id
 
+    # top10 第一行 = WR，格式 [rank, person_link, metric_str, country, date, comp_link]
+    cs = parse_cs(top10.first[2])
+    next unless cs && cs > 0
+
     result[event_id] ||= {}
     result[event_id][metric_id] = cs
+
+    # NOTE: average 指标额外存储第 2 名（供 calc 页面 Target 格默认值）
+    if metric_id == "average" && top10.size >= 2
+      cs2 = parse_cs(top10[1][2])
+      result[event_id]["average_2"] = cs2 if cs2 && cs2 > 0
+    end
   end
 end
 

@@ -23,6 +23,19 @@ var wheelUndoBase = null; // 滚动序列开始前的原始值
 // NOTE: 程序化导航时抑制滚筒弹出（Enter/Tab/自动跳格）
 var suppressDrumOnFocus = false;
 
+// NOTE: 根据文字长度自适应缩小字号，防止长时间格式（如 1:10.10）溢出
+function fitFont(input) {
+    var len = input.value.length;
+    // 5 字符及以下用默认字号（CSS 控制），6+ 字符逐级缩小
+    if (len <= 5) {
+        input.style.fontSize = '';
+    } else if (len === 6) {
+        input.style.fontSize = '20px';
+    } else {
+        input.style.fontSize = '17px';
+    }
+}
+
 // NOTE: 检测 input 文本是否处于全选状态
 function isFullySelected(input) {
     return input.selectionStart === 0 && input.selectionEnd === input.value.length && input.value.length > 0;
@@ -655,15 +668,18 @@ export function refresh() {
                 cells[p][t].value = (rawVal > 0 && rawVal < DNF_VALUE)
                     ? formatTime(rawVal)
                     : (rawVal >= DNF_VALUE ? 'DNF' : '');
+                fitFont(cells[p][t]);
                 cells[p][t].style.display = '';
             } else {
                 cells[p][t].value = '';
+                cells[p][t].style.fontSize = '';
                 cells[p][t].style.display = 'none';
             }
         }
         // Target Avg 格始终可见
         var tavg = getTargetAvg(state.seedOn + p);
         tavgCells[p].value = tavg > 0 ? formatTime(tavg) : '';
+        fitFont(tavgCells[p]);
     }
     syncNumpadDisplay();
 }
@@ -694,6 +710,7 @@ export function onStopwatch(fn) {
 export function setCellDisplay(p, t, text) {
     if (cells[p] && cells[p][t]) {
         cells[p][t].value = text;
+        fitFont(cells[p][t]);
     }
 }
 
