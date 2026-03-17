@@ -20,6 +20,8 @@ var UNDO_MAX = 50;
 // NOTE: 滚轮撤销 debounce — 连续滚动合并为一条撤销记录
 var wheelUndoTimer = null;
 var wheelUndoBase = null; // 滚动序列开始前的原始值
+// NOTE: 程序化导航时抑制滚筒弹出（Enter/Tab/自动跳格）
+var suppressDrumOnFocus = false;
 
 // NOTE: 检测 input 文本是否处于全选状态
 function isFullySelected(input) {
@@ -136,6 +138,12 @@ function tryAutoAdvance(rawVal) {
         shouldAdvance = true;
     }
 
+    // 规则 3: 4 位纯数字 1000~2959（代表 10.00s~29.59s）
+    if (!shouldAdvance && /^\d{4}$/.test(val)) {
+        var num = parseInt(val, 10);
+        if (num >= 1000 && num <= 2959) shouldAdvance = true;
+    }
+
     if (shouldAdvance) {
         var p = activeCell[0], t = activeCell[1];
         if (p < 0) return;
@@ -172,16 +180,32 @@ function createTimeCell(p, t) {
         input.select();
         syncNumpadDisplay();
         // NOTE: 聚焦已有值的 cell 时显示滚筒选择器
-        var rawVal = getCellVal(p, t);
-        if (rawVal > 0 && rawVal < DNF_VALUE) {
-            drumPicker.show(rawVal, input, function(newVal) {
-                // 滚筒值变更回调 — 更新 state 和 cell 显示
-                recordAndUpdate(state.seedOn + p, t, newVal);
-                getCellEl(p, t).value = formatTime(newVal);
-                syncNumpadDisplay();
-            });
-        } else {
+        // 程序化导航（Enter/Tab/自动跳格）时不弹滚筒，只有用户主动点击才弹
+        if (suppressDrumOnFocus) {
+            suppressDrumOnFocus = false;
             drumPicker.hide();
+        } else {
+            var rawVal = getCellVal(p, t);
+            if (rawVal > 0 && rawVal < DNF_VALUE) {
+                drumPicker.show(rawVal, input, function(newVal) {
+                    // 滚筒值变更回调 — 更新 state 和 cell 显示
+                    recordAndUpdate(state.seedOn + p, t, newVal);
+                    getCellEl(p, t).value = formatTime(newVal);
+                    syncNumpadDisplay();
+                }, function() {
+                    // NOTE: 滚筒确认回调 — 点击高亮区域后跳到下一格
+                    saveCell(p, t);
+                    var nxt = nextCell(p, t);
+                    if (nxt) {
+                        navigateTo(nxt[0], nxt[1]);
+                    } else {
+                        getCellEl(p, t).blur();
+                        activeCell = [-1, -1];
+                    }
+                });
+            } else {
+                drumPicker.hide();
+            }
         }
     });
     input.addEventListener('blur', () => {
@@ -199,8 +223,8 @@ function createTimeCell(p, t) {
         syncNumpadDisplay();
         // NOTE: tavg 格不自动跳格
         if (!isTavg(t)) tryAutoAdvance(input.value);
-        // NOTE: 清空后隐藏滚筒
-        if (input.value.trim() === '') drumPicker.hide();
+        // NOTE: 用户开始键入时隐藏滚筒，避免遮挡
+        drumPicker.hide();
     });
     // NOTE: 滚轮微调成绩 — 仅聚焦时生效
     input.addEventListener('wheel', (e) => onWheel(e, p, t), { passive: false });
@@ -320,6 +344,8 @@ export function navigateTo(p, t) {
         saveCell(activeCell[0], activeCell[1]);
     }
 
+    // NOTE: 程序化导航时抑制滚筒弹出
+    suppressDrumOnFocus = true;
     activeCell = [p, t];
     var el = getCellEl(p, t);
     el.focus();
@@ -538,6 +564,7 @@ function numpadPress(key) {
             activeCell = [-1, -1];
         }
     } else if (key === 'dnf') {
+        drumPicker.hide();
         v.value = 'DNF';
         syncNumpadDisplay();
         // NOTE: 自动 zigzag 跳到下一格
@@ -550,6 +577,7 @@ function numpadPress(key) {
             activeCell = [-1, -1];
         }
     } else if (key === 'backspace') {
+        drumPicker.hide();
         if (isFullySelected(v)) {
             // NOTE: 全选状态下一键清空 — 必须同时写 state，否则 refresh 会还原
             recordAndUpdate(state.seedOn + p, t, 0);
@@ -568,6 +596,7 @@ function numpadPress(key) {
             }
         }
     } else if (key === 'dotcolon') {
+        drumPicker.hide();
         // NOTE: 全选状态下先清空
         if (isFullySelected(v)) v.value = '';
         // NOTE: .: 按钮 — 末尾是 . 则替换为 :，否则追加 .
@@ -579,6 +608,7 @@ function numpadPress(key) {
         syncNumpadDisplay();
     } else {
         // 数字键 0-9 — 全选时替换而非追加
+        drumPicker.hide();
         if (isFullySelected(v)) v.value = '';
         v.value += key;
         syncNumpadDisplay();
