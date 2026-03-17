@@ -2,7 +2,7 @@
 // 替代原 canvas overlay hack，使用原生 <input> 元素
 
 import {
-    DNF_VALUE, formatTime, textToTime
+    DNF_VALUE, MAX_TIME_VALUE, formatTime, textToTime
 } from './calc_engine.js';
 import {
     state, updateTime, notify, solveCount
@@ -15,6 +15,9 @@ var stopwatchCallback = null;
 // NOTE: 撤销栈 — 每条记录 {playerIdx, solveIdx, oldValue}
 var undoStack = [];
 var UNDO_MAX = 50;
+// NOTE: 滚轮撤销 debounce — 连续滚动合并为一条撤销记录
+var wheelUndoTimer = null;
+var wheelUndoBase = null; // 滚动序列开始前的原始值
 
 // NOTE: 检测 input 文本是否处于全选状态
 function isFullySelected(input) {
@@ -154,6 +157,8 @@ function createTimeCell(p, t) {
         syncNumpadDisplay();
         tryAutoAdvance(input.value);
     });
+    // NOTE: 滚轮微调成绩 — 仅聚焦时生效
+    input.addEventListener('wheel', (e) => onWheel(e, p, t), { passive: false });
 
     return input;
 }
@@ -174,6 +179,65 @@ function createNameCell(p) {
     });
 
     return input;
+}
+
+// ── 滚轮微调 ──
+
+// NOTE: 滚轮调整成绩 — 仅在聚焦的 cell 上生效
+// 默认 ±0.01s(1cs)，Shift ±0.10s(10cs)，Ctrl ±1.00s(100cs)
+// FMC 步数模式：固定 ±1步(100cs)
+function onWheel(e, p, t) {
+    // 空格或 DNF 不响应滚轮
+    var rawVal = state.times[state.seedOn + p][t];
+    if (rawVal <= 0 || rawVal >= DNF_VALUE) return;
+
+    e.preventDefault(); // 阻止页面滚动
+
+    // 步进粒度
+    var step = 1;
+    if (state.event === '333fm') {
+        step = 100; // FMC: 1步 = 100cs
+    } else if (e.ctrlKey) {
+        step = 100; // 1.00s
+    } else if (e.shiftKey) {
+        step = 10;  // 0.10s
+    }
+
+    // 上滚(deltaY<0)增大，下滚(deltaY>0)减小
+    var delta = e.deltaY < 0 ? step : -step;
+    var newVal = rawVal + delta;
+
+    // 边界保护
+    var minVal = (state.event === '333fm') ? 100 : 1;
+    if (newVal < minVal) newVal = minVal;
+    if (newVal > MAX_TIME_VALUE) newVal = MAX_TIME_VALUE;
+    if (newVal === rawVal) return;
+
+    // NOTE: debounce 撤销 — 300ms 内连续滚动只记录一条
+    // 首次滚动记录 oldValue 作为 base，后续滚动复用这个 base
+    if (wheelUndoTimer) {
+        clearTimeout(wheelUndoTimer);
+        // 弹出上一次滚动的撤销记录（会被合并）
+        if (undoStack.length > 0) undoStack.pop();
+    } else {
+        wheelUndoBase = rawVal;
+    }
+    // 推入以 base 为 oldValue 的撤销记录
+    undoStack.push({ playerIdx: state.seedOn + p, solveIdx: t, oldValue: wheelUndoBase, seedOn: state.seedOn });
+    if (undoStack.length > UNDO_MAX) undoStack.shift();
+
+    // 直接写入 state（绕过 recordAndUpdate 以免重复撤销记录）
+    updateTime(state.seedOn + p, t, newVal);
+
+    // 刷新显示
+    cells[p][t].value = formatTime(newVal);
+    syncNumpadDisplay();
+
+    // 300ms 无新滚动则结束本轮 debounce
+    wheelUndoTimer = setTimeout(() => {
+        wheelUndoTimer = null;
+        wheelUndoBase = null;
+    }, 300);
 }
 
 // ── 选手启用/禁用 ──
