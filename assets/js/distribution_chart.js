@@ -1,5 +1,5 @@
-// NOTE: 分布图模块 — Ao50/Ao100 成绩直方图 + KDE（SVG 版）
-// 纯前端，零后端改动。DOMContentLoaded 时自动注入 checkbox 列和 SVG 图表
+// NOTE: 分布图模块 — 直方图 + KDE（SVG 版）
+// 两层结构：核心绘图 API（DistributionChart.create）+ Stats 页面自动初始化适配层
 // SVG 优势：原生 hover tooltip、CSS transition、rx/ry 圆角无崩溃风险
 
 (function () {
@@ -19,95 +19,67 @@
         '#f97316', '#38bdf8', '#fb7185', '#a3e635', '#e879f9'
     ];
 
-    // ── 配置 ──
-    var BIN_WIDTH = 0.2;
-    var W = 700, H = 340;
-    var PAD = { l: 50, r: 140, t: 20, b: 50 };
-    var chartW = W - PAD.l - PAD.r, chartH = H - PAD.t - PAD.b;
+    // ── 默认配置 ──
+    var DEFAULTS = {
+        binWidth: 0.2,
+        width: 700,
+        height: 340,
+        padding: { l: 50, r: 140, t: 20, b: 50 },
+        bgColor: '#16213e',
+        // NOTE: 最少数据条数门槛（低于此值不渲染）
+        minDataPoints: 5,
+        // NOTE: X 轴单位标签
+        xLabelEn: 'Time (s)',
+        xLabelZh: '时间 (秒)',
+    };
 
-    // ── 入口 ──
-    // NOTE: 用 setTimeout(0) 延后执行，确保 event_selector.js 已隐藏非活跃事件
-    document.addEventListener('DOMContentLoaded', function () {
-        setTimeout(scanAndInit, 0);
-    });
+    // ═══════════════════════════════════════════
+    // 核心绘图 API — DistributionChart.create()
+    // ═══════════════════════════════════════════
 
-    function scanAndInit() {
-        var tables = document.querySelectorAll('table');
-        tables.forEach(function (table) {
-            var ths = table.querySelectorAll('tr:first-child th');
-            if (ths.length < 3) return;
-            var header = ths[0].textContent.trim();
-            if (header !== 'Ao25' && header !== 'Ao50' && header !== 'Ao100') return;
-            // NOTE: 跳过被 event_selector 隐藏的表格（非当前事件）
-            if (!isVisible(table)) return;
-            try {
-                initDistChart(table, header);
-            } catch (e) {
-                console.error('[DistChart] Error:', e);
+    /**
+     * 创建直方图+KDE 分布图
+     * @param {HTMLElement} container - 图表挂载点
+     * @param {Array<{name: string, times: number[], color?: string}>} datasets - 数据集（times 为秒）
+     * @param {Object} [options] - 可选配置项
+     * @returns {{ update: function, destroy: function }} 图表实例控制器
+     */
+    function createDistChart(container, datasets, options) {
+        var opts = {};
+        for (var k in DEFAULTS) opts[k] = DEFAULTS[k];
+        if (options) {
+            for (var k in options) {
+                if (options[k] !== undefined) opts[k] = options[k];
             }
-        });
-    }
-
-    // NOTE: 检查元素及其祖先链是否全部可见
-    function isVisible(el) {
-        while (el && el !== document.body) {
-            if (el.style && el.style.display === 'none') return false;
-            el = el.parentElement;
         }
-        return true;
-    }
+        // 合并 padding
+        if (options && options.padding) {
+            opts.padding = {};
+            for (var pk in DEFAULTS.padding) opts.padding[pk] = DEFAULTS.padding[pk];
+            for (var pk in options.padding) opts.padding[pk] = options.padding[pk];
+        }
 
-    // ── 初始化单个表格的分布图 ──
-    function initDistChart(table, aoLabel) {
-        var players = [];
-        var rows = table.querySelectorAll('tr');
-        rows.forEach(function (tr, rowIdx) {
-            var cells = tr.querySelectorAll('td, th');
-            if (cells.length < 3) return;
+        var W = opts.width, H = opts.height;
+        var PAD = opts.padding;
+        var chartW = W - PAD.l - PAD.r, chartH = H - PAD.t - PAD.b;
+        var BIN_WIDTH = opts.binWidth;
 
-            // 表头行：插入 checkbox 列头
-            if (rowIdx === 0) {
-                var th = document.createElement('th');
-                th.textContent = '📊';
-                th.style.cssText = 'text-align: center; cursor: pointer; width: 34px;';
-                th.title = '全选/取消';
-                tr.insertBefore(th, cells[0]);
-                return;
-            }
-
-            // 数据行：解析成绩
-            var name = cells[1].textContent.trim();
-            var timesText = cells[2].textContent.trim();
-            var times = timesText.split(/,\s*/).map(parseFloat).filter(function (v) {
-                return !isNaN(v) && v > 0;
-            });
-
-            if (times.length < 10) return;
-
-            // 插入 checkbox
-            var td = document.createElement('td');
-            td.style.textAlign = 'center';
-            var cb = document.createElement('input');
-            cb.type = 'checkbox';
-            cb.style.cssText = 'cursor: pointer; width: 16px; height: 16px;';
-            if (players.length === 0) cb.checked = true;
-            td.appendChild(cb);
-            tr.insertBefore(td, cells[0]);
-
-            players.push({
-                name: name,
-                nameCell: cells[1],  // NOTE: 保存引用，draw() 时动态读取（语言切换后名字会变）
-                times: times,
-                checkbox: cb,
-                color: COLORS[players.length % COLORS.length]
-            });
+        // 分配颜色
+        datasets.forEach(function (ds, i) {
+            if (!ds.color) ds.color = COLORS[i % COLORS.length];
         });
 
-        if (players.length === 0) return;
+        // 过滤无效数据集
+        var validSets = datasets.filter(function (ds) {
+            return ds.times && ds.times.length >= opts.minDataPoints;
+        });
 
-        // ── 创建图表容器 ──
-        var container = document.createElement('div');
-        container.style.cssText = 'margin: 16px 0 32px; text-align: center; position: relative;';
+        if (validSets.length === 0) return null;
+
+        // ── 创建 DOM ──
+        var wrapper = document.createElement('div');
+        wrapper.className = 'dist-chart-container';
+        wrapper.style.cssText = 'margin: 16px 0 32px; text-align: center; position: relative;';
 
         // 切换按钮
         var toggleWrap = document.createElement('div');
@@ -116,25 +88,27 @@
         var btnKDE = createToggleBtn('KDE', 'KDE', false);
         toggleWrap.appendChild(btnHist);
         toggleWrap.appendChild(btnKDE);
-        container.appendChild(toggleWrap);
+        wrapper.appendChild(toggleWrap);
 
         // SVG
         var svg = document.createElementNS(NS, 'svg');
         svg.setAttribute('width', W);
         svg.setAttribute('height', H);
         svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
-        svg.style.cssText = 'background: #16213e; border-radius: 8px; max-width: 100%; display: block; margin: 0 auto;';
-        container.appendChild(svg);
+        svg.style.cssText = 'background: ' + opts.bgColor + '; border-radius: 8px; max-width: 100%; display: block; margin: 0 auto;';
+        wrapper.appendChild(svg);
 
         // Tooltip
         var tooltip = document.createElement('div');
         tooltip.style.cssText = 'position: absolute; background: rgba(0,0,0,0.85); color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 12px; pointer-events: none; opacity: 0; transition: opacity 0.15s; white-space: nowrap; z-index: 10; border: 1px solid rgba(255,255,255,0.15);';
-        container.appendChild(tooltip);
+        wrapper.appendChild(tooltip);
 
-        table.parentNode.insertBefore(container, table.nextSibling);
+        container.appendChild(wrapper);
 
         // ── 状态 ──
         var currentMode = 'histogram';
+        // NOTE: 当前活跃的数据集（支持外部 select/deselect）
+        var activeIndices = validSets.length === 1 ? [0] : [0];
 
         btnHist.addEventListener('click', function () {
             btnHist.classList.add('active');
@@ -149,49 +123,52 @@
             draw();
         });
 
-        players.forEach(function (p) {
-            p.checkbox.addEventListener('change', function () {
-                // NOTE: 至少保留一个选中
-                var checkedCount = players.filter(function (q) { return q.checkbox.checked; }).length;
-                if (checkedCount === 0) {
-                    p.checkbox.checked = true;
-                    return;
-                }
-                draw();
-            });
-        });
-
-        // 全选/取消
-        var selectAllTh = table.querySelector('tr:first-child th');
-        if (selectAllTh) {
-            selectAllTh.addEventListener('click', function () {
-                var checkedCount = players.filter(function (p) { return p.checkbox.checked; }).length;
-                if (checkedCount === players.length) {
-                    // NOTE: 全选状态 → 只保留第一个
-                    players.forEach(function (p, i) { p.checkbox.checked = (i === 0); });
-                } else {
-                    // 部分选中 → 全选
-                    players.forEach(function (p) { p.checkbox.checked = true; });
-                }
-                draw();
-            });
-        }
+        // NOTE: 监听语言切换事件，重绘图表更新 SVG 文本
+        function onLocaleChange() { draw(); }
+        window.addEventListener('i18n:locale-changed', onLocaleChange);
 
         draw();
 
-        // NOTE: 监听语言切换事件，重绘图表更新 SVG 文本
-        window.addEventListener('i18n:locale-changed', function () { draw(); });
+        // ── 返回控制器 ──
+        return {
+            // NOTE: 用新数据重绘（Battle 每次打开历史面板时调用）
+            update: function (newDatasets) {
+                validSets = (newDatasets || []).filter(function (ds, i) {
+                    if (!ds.color) ds.color = COLORS[i % COLORS.length];
+                    return ds.times && ds.times.length >= opts.minDataPoints;
+                });
+                if (validSets.length === 0) {
+                    svg.innerHTML = '';
+                    return;
+                }
+                activeIndices = [0];
+                draw();
+            },
+            destroy: function () {
+                window.removeEventListener('i18n:locale-changed', onLocaleChange);
+                if (wrapper.parentNode) wrapper.parentNode.removeChild(wrapper);
+            },
+            // NOTE: 暴露内部 draw，供 checkbox 变化等外部联动调用
+            setActive: function (indices) {
+                activeIndices = indices;
+                draw();
+            },
+            draw: draw
+        };
 
         // ══════════════════════════════════════════
         // 绘制
         // ══════════════════════════════════════════
         function draw() {
             svg.innerHTML = '';
-            var selected = players.filter(function (p) { return p.checkbox.checked; });
 
+            var selected = activeIndices.map(function (i) { return validSets[i]; }).filter(Boolean);
+            if (selected.length === 0 && validSets.length > 0) {
+                selected = [validSets[0]];
+            }
             if (selected.length === 0) {
                 svgEl('text', { x: W / 2, y: H / 2, fill: '#666', 'font-size': '16',
-                    'text-anchor': 'middle' }, svg).textContent = '请勾选至少一名选手';
+                    'text-anchor': 'middle' }, svg).textContent = isZh() ? '数据不足' : 'Not enough data';
                 return;
             }
 
@@ -200,8 +177,6 @@
             selected.forEach(function (p) { allTimes = allTimes.concat(p.times); });
             var gMin = Math.floor(Math.min.apply(null, allTimes) / BIN_WIDTH) * BIN_WIDTH;
             var gMax = Math.ceil(Math.max.apply(null, allTimes) / BIN_WIDTH) * BIN_WIDTH;
-
-
 
             if (currentMode === 'histogram') {
                 drawHistogram(selected, gMin, gMax);
@@ -261,7 +236,7 @@
                         fill: selected[si].color, 'fill-opacity': nP > 1 ? '0.7' : '0.85',
                         rx: nP === 1 ? '3' : '1',
                         style: 'cursor: pointer; transition: opacity 0.2s;',
-                        'data-info': selected[si].name + ' | ' + binStart + 's–' + binEnd + 's: ' + bins[b] + ' 次'
+                        'data-info': selected[si].name + ' | ' + binStart + 's–' + binEnd + 's: ' + bins[b] + (isZh() ? ' 次' : '')
                     }, svg);
 
                     rect.addEventListener('mouseenter', function (e) {
@@ -269,7 +244,7 @@
                         tooltip.style.opacity = '1';
                     });
                     rect.addEventListener('mousemove', function (e) {
-                        var cr = container.getBoundingClientRect();
+                        var cr = wrapper.getBoundingClientRect();
                         tooltip.style.left = (e.clientX - cr.left + 12) + 'px';
                         tooltip.style.top = (e.clientY - cr.top - 30) + 'px';
                     });
@@ -396,8 +371,8 @@
 
                 // 色块 + 名字
                 svgEl('rect', { x: lx, y: ly, width: 12, height: 12, fill: p.color, rx: '2' }, svg);
-                // NOTE: 从表格单元格动态读取名字（语言切换后 i18n 会更新 <a> 文本）
-                var label = p.nameCell ? p.nameCell.textContent.trim() : p.name;
+                // NOTE: 优先使用 nameGetter（动态读取 DOM），否则用静态 name
+                var label = (typeof p.nameGetter === 'function') ? p.nameGetter() : p.name;
                 if (label.length > 10) label = label.substring(0, 9) + '…';
                 svgEl('text', { x: lx + 16, y: ly + 10, fill: '#ccc', 'font-size': '12',
                     'text-anchor': 'start', 'font-weight': 'bold' }, svg).textContent = label;
@@ -418,10 +393,152 @@
         // ── 轴标题 ──
         function axisLabels(yLabelEn, yLabelZh) {
             svgEl('text', { x: PAD.l + chartW / 2, y: H - 5, fill: '#888', 'font-size': '13',
-                'text-anchor': 'middle' }, svg).textContent = isZh() ? '时间 (秒)' : 'Time (s)';
+                'text-anchor': 'middle' }, svg).textContent = isZh() ? opts.xLabelZh : opts.xLabelEn;
             var yl = svgEl('text', { x: 0, y: 0, fill: '#888', 'font-size': '13', 'text-anchor': 'middle',
                 transform: 'translate(14,' + (PAD.t + chartH / 2) + ') rotate(-90)' }, svg);
             yl.textContent = isZh() ? yLabelZh : yLabelEn;
+        }
+    }
+
+    // ═══════════════════════════════════════════
+    // Stats 页面自动初始化适配层（保持 100% 向后兼容）
+    // ═══════════════════════════════════════════
+
+    // NOTE: 用 setTimeout(0) 延后执行，确保 event_selector.js 已隐藏非活跃事件
+    document.addEventListener('DOMContentLoaded', function () {
+        setTimeout(scanAndInit, 0);
+    });
+
+    function scanAndInit() {
+        var tables = document.querySelectorAll('table');
+        tables.forEach(function (table) {
+            var ths = table.querySelectorAll('tr:first-child th');
+            if (ths.length < 3) return;
+            var header = ths[0].textContent.trim();
+            if (header !== 'Ao25' && header !== 'Ao50' && header !== 'Ao100') return;
+            // NOTE: 跳过被 event_selector 隐藏的表格（非当前事件）
+            if (!isVisible(table)) return;
+            try {
+                initStatsDistChart(table, header);
+            } catch (e) {
+                console.error('[DistChart] Error:', e);
+            }
+        });
+    }
+
+    // NOTE: 检查元素及其祖先链是否全部可见
+    function isVisible(el) {
+        while (el && el !== document.body) {
+            if (el.style && el.style.display === 'none') return false;
+            el = el.parentElement;
+        }
+        return true;
+    }
+
+    // ── Stats 页面：初始化单个表格的分布图（保持原有行为） ──
+    function initStatsDistChart(table, aoLabel) {
+        var players = [];
+        var rows = table.querySelectorAll('tr');
+        rows.forEach(function (tr, rowIdx) {
+            var cells = tr.querySelectorAll('td, th');
+            if (cells.length < 3) return;
+
+            // 表头行：插入 checkbox 列头
+            if (rowIdx === 0) {
+                var th = document.createElement('th');
+                th.textContent = '📊';
+                th.style.cssText = 'text-align: center; cursor: pointer; width: 34px;';
+                th.title = '全选/取消';
+                tr.insertBefore(th, cells[0]);
+                return;
+            }
+
+            // 数据行：解析成绩
+            var name = cells[1].textContent.trim();
+            var timesText = cells[2].textContent.trim();
+            var times = timesText.split(/,\s*/).map(parseFloat).filter(function (v) {
+                return !isNaN(v) && v > 0;
+            });
+
+            if (times.length < 10) return;
+
+            // 插入 checkbox
+            var td = document.createElement('td');
+            td.style.textAlign = 'center';
+            var cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.style.cssText = 'cursor: pointer; width: 16px; height: 16px;';
+            if (players.length === 0) cb.checked = true;
+            td.appendChild(cb);
+            tr.insertBefore(td, cells[0]);
+
+            players.push({
+                name: name,
+                nameCell: cells[1],
+                times: times,
+                checkbox: cb,
+                color: COLORS[players.length % COLORS.length]
+            });
+        });
+
+        if (players.length === 0) return;
+
+        // 创建图表容器
+        var container = document.createElement('div');
+        table.parentNode.insertBefore(container, table.nextSibling);
+
+        // 构建数据集（带动态名字 getter）
+        var datasets = players.map(function (p) {
+            return {
+                name: p.name,
+                times: p.times,
+                color: p.color,
+                // NOTE: 从表格单元格动态读取名字（语言切换后 i18n 会更新 <a> 文本）
+                nameGetter: function () {
+                    return p.nameCell ? p.nameCell.textContent.trim() : p.name;
+                }
+            };
+        });
+
+        // 创建图表实例
+        var chart = createDistChart(container, datasets);
+        if (!chart) return;
+
+        // ── checkbox 联动 ──
+        function getActiveIndices() {
+            var indices = [];
+            players.forEach(function (p, i) {
+                if (p.checkbox.checked) indices.push(i);
+            });
+            return indices;
+        }
+
+        players.forEach(function (p) {
+            p.checkbox.addEventListener('change', function () {
+                // NOTE: 至少保留一个选中
+                var checkedCount = players.filter(function (q) { return q.checkbox.checked; }).length;
+                if (checkedCount === 0) {
+                    p.checkbox.checked = true;
+                    return;
+                }
+                chart.setActive(getActiveIndices());
+            });
+        });
+
+        // 全选/取消
+        var selectAllTh = table.querySelector('tr:first-child th');
+        if (selectAllTh) {
+            selectAllTh.addEventListener('click', function () {
+                var checkedCount = players.filter(function (p) { return p.checkbox.checked; }).length;
+                if (checkedCount === players.length) {
+                    // NOTE: 全选状态 → 只保留第一个
+                    players.forEach(function (p, i) { p.checkbox.checked = (i === 0); });
+                } else {
+                    // 部分选中 → 全选
+                    players.forEach(function (p) { p.checkbox.checked = true; });
+                }
+                chart.setActive(getActiveIndices());
+            });
         }
     }
 
@@ -448,4 +565,9 @@
         btn.appendChild(span);
         return btn;
     }
+
+    // ── 暴露公共 API ──
+    window.DistributionChart = {
+        create: createDistChart
+    };
 })();

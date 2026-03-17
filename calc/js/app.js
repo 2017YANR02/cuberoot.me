@@ -1,7 +1,7 @@
 // NOTE: 应用入口 — 导入所有模块，初始化和编排
 
-import { state, onChange, addSeedPair, updateTime, resetAll, notify, getFirstUnfilledTime, resizeTimes, solveCount } from './state.js';
-import { formatTime, setMoveCntMode } from './calc_engine.js';
+import { state, onChange, addSeedPair, updateTime, resetAll, notify, getFirstUnfilledTime, resizeTimes, solveCount, isMbf } from './state.js';
+import { formatTime, setMoveCntMode, setMbfMode } from './calc_engine.js';
 import * as inputGrid from './input_grid.js';
 import * as chart from './chart.js';
 import * as calcTable from './calc_table.js';
@@ -160,13 +160,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     cs = Math.round(cs / 100) * 100;
                 }
 
+                // NOTE: 多盲得分模式 — 随机生成 1~60 范围的得分
+                if (isMbf()) {
+                    cs = (Math.floor(Math.random() * 50) + 10) * 100;
+                }
+
                 updateTime(state.seedOn + p, t, cs);
             }
         }
     });
 
-    // NOTE: 首次渲染前同步 FMC 步数模式（urlSync.load 恢复了 event 但未触发 notify）
+    // NOTE: 首次渲染前同步 FMC 步数模式和多盲得分模式
     setMoveCntMode(state.event === '333fm');
+    setMbfMode(state.event === '333mbf' || state.event === '333mbo');
 
     // 首次渲染
     chart.render();
@@ -189,6 +195,8 @@ document.addEventListener('DOMContentLoaded', () => {
 // NOTE: 当 Target 格为空时，用 WR Average #1/#2 填充默认值
 // 用户手动设置过的 Target 不会被覆盖
 function initTargetDefaults() {
+    // NOTE: 多盲得分模式下 WR 数据不兼容，跳过默认 Target
+    if (isMbf()) return;
     var wr12 = wrData.getAvgWR12(state.event);
     if (!wr12) return;
     for (var p = 0; p < 2; p++) {
@@ -218,6 +226,8 @@ function toggleStopwatch() {
 }
 
 function startStopwatch() {
+    // NOTE: 多盲得分不是时间，秒表无意义
+    if (isMbf()) return;
     // 找到第一个未填的格子
     var target = getFirstUnfilledTime(true);
     if (target[0] < 0) return; // 所有格都已填满

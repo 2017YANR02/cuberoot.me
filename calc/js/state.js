@@ -4,13 +4,15 @@
 import {
     DNF_VALUE, UNFINISHED_VALUE,
     getAverage, getSortedIndices, getBestSingle,
-    setMoveCntMode
+    setMoveCntMode, setMbfMode
 } from './calc_engine.js';
 
 // NOTE: Mo3 项目 — 一轮 3 把，算术均值（不去掉任何成绩）
 const MO3_EVENTS = new Set(['666', '777', '444bf', '555bf', '333fm', '333mbf', '333mbo']);
 export function solveCount() { return MO3_EVENTS.has(state.event) ? 3 : 5; }
 export function isMo3() { return MO3_EVENTS.has(state.event); }
+// NOTE: 多盲/旧多盲 — 得分模式（score = 成功数 − 失败数）
+export function isMbf() { return state.event === '333mbf' || state.event === '333mbo'; }
 
 // ── 应用状态 ──
 
@@ -44,8 +46,9 @@ export function onChange(fn) {
 }
 
 export function notify() {
-    // NOTE: 每次通知前同步 FMC 步数模式标志
+    // NOTE: 每次通知前同步 FMC 步数模式和多盲得分模式标志
     setMoveCntMode(state.event === '333fm');
+    setMbfMode(state.event === '333mbf' || state.event === '333mbo');
     for (var i = 0; i < listeners.length; i++) {
         listeners[i]();
     }
@@ -63,11 +66,13 @@ export function updateTime(playerIdx, solveIdx, value) {
 export function updateSort() {
     var avgs = new Array(state.times.length);
     var singles = new Array(state.times.length);
+    // NOTE: 多盲得分模式下「最佳」= 最大值，排序降序
+    var desc = isMbf();
     for (var p = 0; p < state.times.length; p++) {
         avgs[p] = getAverage(state.times[p], false);
-        singles[p] = getBestSingle(state.times[p]);
+        singles[p] = getBestSingle(state.times[p], desc);
     }
-    state.sortedCache = getSortedIndices(avgs, singles);
+    state.sortedCache = getSortedIndices(avgs, singles, desc);
     notify();
 }
 

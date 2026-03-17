@@ -144,7 +144,7 @@ export function show(value, cellEl, callback, confirmCallback) {
     anchorCell = cellEl;
 
     // 固定步进
-    step = (state.event === '333fm') ? 100 : 1;
+    step = (state.event === '333fm' || state.event === '333mbf' || state.event === '333mbo') ? 100 : 1;
 
     offset = 0;
     renderItems();
@@ -216,7 +216,7 @@ function renderItems() {
 
         var el = itemEls[i];
 
-        var minVal = (state.event === '333fm') ? 100 : 1;
+        var minVal = (state.event === '333fm' || state.event === '333mbf' || state.event === '333mbo') ? 100 : 1;
         if (itemValue < minVal || itemValue > MAX_TIME_VALUE) {
             el.textContent = '';
             el.style.opacity = '0';
@@ -249,7 +249,7 @@ function onPickerWheel(e) {
     var direction = e.deltaY < 0 ? 1 : -1;
     var newValue = currentValue + direction * step;
 
-    var minVal = (state.event === '333fm') ? 100 : 1;
+    var minVal = (state.event === '333fm' || state.event === '333mbf' || state.event === '333mbo') ? 100 : 1;
     if (newValue < minVal || newValue > MAX_TIME_VALUE) return;
 
     // NOTE: 先设置 offset 产生视觉位移，再 snap 回中心
@@ -381,7 +381,7 @@ function snapToNearest() {
     var targetOffset = targetSteps * ITEM_HEIGHT;
 
     var newValue = currentValue - targetSteps * step;
-    var minVal = (state.event === '333fm') ? 100 : 1;
+    var minVal = (state.event === '333fm' || state.event === '333mbf' || state.event === '333mbo') ? 100 : 1;
     if (newValue < minVal) {
         newValue = minVal;
         targetSteps = Math.round((currentValue - minVal) / step);
