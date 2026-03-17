@@ -1472,6 +1472,7 @@ function applyBg(playerId) {
 /**
  * NOTE: 应用玩家的打乱文字自定义颜色
  * 有自定义值则设 --scramble-color，否则清空（退回 CSS 的 --player-text-color 自动计算）
+ * 同时更新 A 按钮 label 的下划线颜色（--scramble-underline-color）给用户视觉反馈
  */
 function applyScrambleColor(playerId) {
     const area = dom.areas[playerId];
@@ -1481,6 +1482,9 @@ function applyScrambleColor(playerId) {
     } else {
         area.style.removeProperty('--scramble-color');
     }
+    // NOTE: 同步 A 按钮的下划线颜色（无自定义时用默认 #ccc）
+    const label = document.getElementById(`scramble-color-label-${playerId}`);
+    if (label) label.style.setProperty('--scramble-underline-color', saved || '#ccc');
 }
 
 /**
