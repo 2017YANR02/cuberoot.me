@@ -100,24 +100,7 @@ export function render() {
         html += '<td class="' + cls1 + '">' + s1 + '</td></tr>';
     }
 
-    // NOTE: 阈值行（数据来源于 targetAvgs，由 input_grid 的 Target Avg 输入框设置）
-    if (!mo3) {
-        var tavg0 = targetAvgs[state.seedOn] || 0;
-        var tavg1 = targetAvgs[state.seedOn + 1] || 0;
-
-        // 阈值行
-        var th0 = tavg0 > 0 ? CalcEngine.computeThresholds(t0, tavg0) : null;
-        var th1 = tavg1 > 0 ? CalcEngine.computeThresholds(t1, tavg1) : null;
-        var thresholds = [['t#4 (WPA≤tavg)', 't4wpa'], ['t#4 (BPA≤tavg)', 't4bpa'], ['t#5 (Avg≤tavg)', 't5']];
-        for (var j = 0; j < thresholds.length; j++) {
-            var tLabel = thresholds[j][0], tKey = thresholds[j][1];
-            var tv0 = th0 ? th0[tKey] : undefined, tv1 = th1 ? th1[tKey] : undefined;
-            // NOTE: 阈值行 DNF_VALUE 表示"任意值都可达标" → 显示 ANY
-            var ts0 = tv0 === undefined ? '-' : (tv0 === null ? '<span class="calc-nan">NaN</span>' : (tv0 >= DNF_VALUE ? 'ANY' : formatTime(tv0)));
-            var ts1 = tv1 === undefined ? '-' : (tv1 === null ? '<span class="calc-nan">NaN</span>' : (tv1 >= DNF_VALUE ? 'ANY' : formatTime(tv1)));
-            html += '<tr><td>' + tLabel + '</td><td>' + ts0 + '</td><td>' + ts1 + '</td></tr>';
-        }
-    }
+    // NOTE: 阈值行已移至图表 badge 展示，不再在表格中显示
 
     tbodyEl.innerHTML = html;
 }
