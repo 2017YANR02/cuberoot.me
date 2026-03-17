@@ -21,6 +21,11 @@ body {
     touch-action: none;
 }
 
+/* NOTE: 隐藏 i18n 全局注入的右下角语言切换按钮（battle 页面在设置面板内提供自己的） */
+.lang-toggle-fixed {
+    display: none !important;
+}
+
 :root {
     --scramble-scale: 1;
 }
