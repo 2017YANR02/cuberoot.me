@@ -19,6 +19,8 @@ export function setTargetAvg(seedIdx, val) {
     targetAvgs[seedIdx] = val;
     notify(); // NOTE: 触发图表和表格重绘
 }
+// NOTE: 清空所有 Target（resetAll 时调用）
+export function clearTargetAvgs() { targetAvgs = {}; }
 
 export function init() {
     tbodyEl = document.getElementById('calc-tbody');

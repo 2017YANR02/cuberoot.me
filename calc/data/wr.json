@@ -2,102 +2,121 @@
   "333": {
     "single": 276,
     "average": 384,
+    "average_2": 390,
     "bpa": 357,
     "wpa": 390
   },
   "222": {
     "single": 39,
     "average": 86,
+    "average_2": 87,
     "bpa": 73,
     "wpa": 89
   },
   "444": {
     "single": 1518,
     "average": 1856,
+    "average_2": 1874,
     "bpa": 1788,
     "wpa": 1888
   },
   "555": {
     "single": 3045,
     "average": 3431,
+    "average_2": 3476,
     "bpa": 3365,
     "wpa": 3532
   },
   "666": {
     "single": 5769,
-    "average": 6504
+    "average": 6504,
+    "average_2": 6646
   },
   "777": {
     "single": 9348,
-    "average": 9686
+    "average": 9686,
+    "average_2": 10096
   },
   "333bf": {
     "single": 1167,
-    "average": 1405
+    "average": 1405,
+    "average_2": 1405
   },
   "333fm": {
     "single": 1600,
-    "average": 1967
+    "average": 1967,
+    "average_2": 2000
   },
   "333oh": {
     "single": 566,
     "average": 772,
+    "average_2": 794,
     "bpa": 713,
     "wpa": 772
   },
   "minx": {
     "single": 2199,
     "average": 2438,
+    "average_2": 2476,
     "bpa": 2316,
-    "wpa": 2493
+    "wpa": 2497
   },
   "pyram": {
     "single": 73,
     "average": 114,
+    "average_2": 115,
     "bpa": 107,
     "wpa": 120
   },
   "clock": {
     "single": 153,
     "average": 224,
+    "average_2": 226,
     "bpa": 188,
     "wpa": 228
   },
   "skewb": {
     "single": 73,
     "average": 137,
+    "average_2": 152,
     "bpa": 127,
     "wpa": 137
   },
   "sq1": {
     "single": 340,
     "average": 463,
+    "average_2": 480,
     "bpa": 430,
     "wpa": 478
   },
   "444bf": {
     "single": 5196,
-    "average": 5939
+    "average": 5939,
+    "average_2": 8008
   },
   "555bf": {
     "single": 11859,
-    "average": 14763
+    "average": 14763,
+    "average_2": 16917
   },
   "333ft": {
     "single": 1556,
     "average": 1990,
+    "average_2": 2058,
     "bpa": 1908,
     "wpa": 2075
   },
   "magic": {
     "single": 69,
     "average": 76,
+    "average_2": 82,
     "bpa": 75,
     "wpa": 76
   },
   "mmagic": {
     "single": 166,
     "average": 175,
+    "average_2": 193,
     "bpa": 173,
     "wpa": 175
   }
