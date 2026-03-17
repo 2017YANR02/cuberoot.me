@@ -106,7 +106,10 @@
     <!-- ===== 设置弹窗 ===== -->
     <div id="settings-overlay" class="settings-overlay">
         <div class="settings-panel">
-            <div class="settings-title" data-i18n="battle.settings">Settings</div>
+            <div class="settings-header-bar">
+                <div class="settings-title" data-i18n="battle.settings">Settings</div>
+                <button id="settings-close" class="settings-x-btn" title="Close">✕</button>
+            </div>
 
             <!-- NOTE: Solo/1v1 模式切换 -->
             <div class="settings-group">
@@ -266,8 +269,6 @@
                     🗑️ Reset session
                 </button>
             </div>
-
-            <button id="settings-close" class="settings-close-btn" data-i18n="battle.close">Close</button>
         </div>
     </div>
 

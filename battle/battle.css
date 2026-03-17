@@ -528,12 +528,44 @@ body.solo .scramble-img {
     transform: translateY(0);
 }
 
+/* NOTE: 设置面板顶部栏（标题 + ✕ 关闭按钮） */
+.settings-header-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    margin-bottom: 16px;
+}
+
 .settings-title {
     font-size: 1.1rem;
     font-weight: 700;
-    margin-bottom: 16px;
     text-align: center;
     color: #fff;
+}
+
+.settings-x-btn {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: 1px solid #444;
+    border-radius: 6px;
+    color: #888;
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.2s, color 0.2s;
+}
+
+.settings-x-btn:hover {
+    border-color: #e53935;
+    color: #e53935;
 }
 
 .settings-group {
@@ -671,23 +703,7 @@ input:checked+.slider:before {
     background: rgba(239, 83, 80, 0.1);
 }
 
-.settings-close-btn {
-    width: 100%;
-    padding: 10px;
-    border-radius: 8px;
-    border: none;
-    background: #6366f1;
-    color: #fff;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.15s ease;
-    margin-top: 8px;
-}
 
-.settings-close-btn:hover {
-    background: #5558e6;
-}
 
 /* ==========================================================
    iOS 全屏提示
@@ -1268,7 +1284,7 @@ body.solo[data-tab="settings"] .settings-panel {
     padding-bottom: 72px;
 }
 
-/* NOTE: tab 模式下不需要 Close 按钮（点 "计时" tab 即返回） */
-body.solo[data-tab="settings"] .settings-close-btn {
+/* NOTE: tab 模式下不需要 ✕ 关闭按钮（点 "计时" tab 即返回） */
+body.solo[data-tab="settings"] .settings-x-btn {
     display: none;
 }
