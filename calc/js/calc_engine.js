@@ -334,24 +334,30 @@ export const CalcEngine = {
             }
         }
 
-        // ── t#4: 已有 3 次的阈值 ──
+        // ── t#4: 已有 3 次成绩，求第 4 把阈值 ──
+        // NOTE: WPA 场景 = 第 5 把假定 DNF，BPA 场景 = 第 5 把假定最佳(0)
         if (filled.length >= 3) {
             var s3 = [...filled.slice(0, 3)].sort((a, b) => a - b);
-            var threshold = 3 * tavg + 1 - s3[0] - s3[1];
+            var sumS3 = s3[0] + s3[1] + s3[2];
 
-            // BPA 场景（第 5 把 = 0）
-            if (threshold < 0) {
-                result.t4bpa = null;
-            } else if (threshold >= s3[2]) {
-                result.t4bpa = (s3[0] + s3[1] + s3[2] <= 3 * tavg + 1)
-                    ? DNF_VALUE : 3 * tavg + 1 - s3[0] - s3[1];
+            // WPA 场景（第 5 把 = DNF → 去掉最好和 DNF，counting = 中间 3 个）
+            // x 最大时进入 counting = [s3[1], s3[2], x]，上限 = S - s3[1] - s3[2]
+            // 但需 sumS3 ≤ S 才有解（否则即使 x=0，counting=[a,b,c] 仍超限）
+            if (sumS3 <= 3 * tavg + 1) {
+                result.t4wpa = 3 * tavg + 1 - s3[1] - s3[2];
             } else {
-                result.t4bpa = threshold;
+                result.t4wpa = null; // NOTE: 不可能达标
             }
 
-            // WPA 场景（第 5 把 = DNF）
-            result.t4wpa = (s3[0] + s3[1] + s3[2] <= 3 * tavg + 1)
-                ? DNF_VALUE : null;
+            // BPA 场景（第 5 把 = 0 → 去掉 0 和最差，counting = 中间 3 个）
+            // x 大时被去掉，counting = s3；只需 sumS3 ≤ S → ANY
+            if (sumS3 <= 3 * tavg + 1) {
+                result.t4bpa = DNF_VALUE; // NOTE: ANY — x 无论多大都达标
+            } else {
+                // x ≤ c 时 counting = [a, b, x] 或类似，上限 = S - a - b
+                var bpaMax = 3 * tavg + 1 - s3[0] - s3[1];
+                result.t4bpa = bpaMax >= 0 ? bpaMax : null;
+            }
         }
 
         return result;
