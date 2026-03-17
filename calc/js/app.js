@@ -5,6 +5,7 @@ import { formatTime } from './calc_engine.js';
 import * as inputGrid from './input_grid.js';
 import * as chart from './chart.js';
 import * as calcTable from './calc_table.js';
+import { getTargetAvg, setTargetAvg, clearTargetAvgs } from './calc_table.js';
 import * as urlSync from './url_sync.js';
 import * as eventSelector from './event_selector.js';
 import * as wrData from './wr_data.js';
@@ -51,15 +52,24 @@ document.addEventListener('DOMContentLoaded', () => {
     chart.init(document.getElementById('chart-container'));
     inputGrid.init(document.getElementById('input-grid-container'));
     calcTable.init();
-    wrData.load().then(function () { notify(); }); // NOTE: 异步加载 WR 数据，完成后刷新渲染
+    wrData.load().then(function () {
+        initTargetDefaults(); // NOTE: WR 数据加载后填充空的 Target 格
+        notify();
+    });
 
     // NOTE: 初始化项目选择器
     eventSelector.init(document.getElementById('event-selector-container'), function (eventId) {
         state.event = eventId;
-        // NOTE: 项目切换时调整 times 数组和输入格可见性
-        resizeTimes(solveCount());
+        // NOTE: 项目切换时调整 times 数组长度并清零，重新随机填充
+        var n = solveCount();
+        resizeTimes(n);
+        for (var p = 0; p < state.times.length; p++) {
+            for (var t = 0; t < n; t++) state.times[p][t] = 0;
+        }
         inputGrid.updateVisibleCells();
-        notify();
+        clearTargetAvgs();
+        initTargetDefaults();
+        document.getElementById('rand-fill').click(); // NOTE: 用新项目的 KDE 分布重新采样
     });
 
     // NOTE: 注册秒表回调（空格键触发）
@@ -99,6 +109,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // ── 一键清空 ──
     document.getElementById('clear-all').addEventListener('click', () => {
         resetAll();
+        clearTargetAvgs(); // NOTE: 清空 calc_table 的 targetAvgs
+        initTargetDefaults(); // NOTE: 清空后重填 WR 默认值
         history.replaceState(null, '', window.location.pathname);
         // NOTE: 清空后自动激活第一个输入格
         inputGrid.navigateTo(0, 0);
@@ -168,6 +180,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     console.log('HTH Grapher v2 initialized');
 });
+
+// ── Target 默认值 ──
+
+// NOTE: 当 Target 格为空时，用 WR Average #1/#2 填充默认值
+// 用户手动设置过的 Target 不会被覆盖
+function initTargetDefaults() {
+    var wr12 = wrData.getAvgWR12(state.event);
+    if (!wr12) return;
+    for (var p = 0; p < 2; p++) {
+        if (getTargetAvg(state.seedOn + p) === 0) {
+            setTargetAvg(state.seedOn + p, wr12[p]);
+        }
+    }
+}
 
 // ── Seeds 控制 ──
 

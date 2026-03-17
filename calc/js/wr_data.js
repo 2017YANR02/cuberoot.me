@@ -49,6 +49,18 @@ export function getWR(eventId, metric) {
 }
 
 /**
+ * NOTE: 获取 Average WR #1 和 #2
+ * @returns {[number, number]|null} [average_1, average_2] centiseconds，无数据返回 null
+ */
+export function getAvgWR12(eventId) {
+    if (!wrData || !wrData[eventId]) return null;
+    var a1 = wrData[eventId]['average'];
+    var a2 = wrData[eventId]['average_2'];
+    if (!a1 || !a2) return null;
+    return [a1, a2];
+}
+
+/**
  * NOTE: 获取 Ao100 世界第 1 和第 2 的值
  * @returns {[number, number]|null} [ao100_1, ao100_2] centiseconds，无数据返回 null
  */
