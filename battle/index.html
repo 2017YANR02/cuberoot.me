@@ -215,9 +215,12 @@
                             <input type="file" id="bg-image-1" class="bg-file-input" accept="image/*">
                         </label>
                         <button id="bg-reset-1" class="bg-reset-btn" title="Reset background">✕</button>
-                        <!-- NOTE: 打乱文字颜色，独立于背景 -->
-                        <input type="color" id="scramble-color-1" class="bg-color-picker" value="#cccccc" title="Scramble text color" style="border-color:#6366f1" >
-                        <button id="scramble-color-reset-1" class="bg-reset-btn" title="Reset scramble color">A</button>
+                        <!-- NOTE: 打乱文字颜色 — A+下划线 仿文字编辑器字色按钮，避免和背景色混淆 -->
+                        <label class="scramble-color-label" id="scramble-color-label-1" title="Scramble text color">
+                            <span class="scramble-color-letter">A</span>
+                            <input type="color" id="scramble-color-1" class="bg-file-input" value="#cccccc">
+                        </label>
+                        <button id="scramble-color-reset-1" class="bg-reset-btn" title="Reset scramble color">✕</button>
                     </div>
                 </div>
                 <div class="setting-item bg-row">
@@ -229,9 +232,12 @@
                             <input type="file" id="bg-image-0" class="bg-file-input" accept="image/*">
                         </label>
                         <button id="bg-reset-0" class="bg-reset-btn" title="Reset background">✕</button>
-                        <!-- NOTE: 打乱文字颜色，独立于背景 -->
-                        <input type="color" id="scramble-color-0" class="bg-color-picker" value="#cccccc" title="Scramble text color" style="border-color:#6366f1">
-                        <button id="scramble-color-reset-0" class="bg-reset-btn" title="Reset scramble color">A</button>
+                        <!-- NOTE: 打乱文字颜色 — A+下划线 仿文字编辑器字色按钮 -->
+                        <label class="scramble-color-label" id="scramble-color-label-0" title="Scramble text color">
+                            <span class="scramble-color-letter">A</span>
+                            <input type="color" id="scramble-color-0" class="bg-file-input" value="#cccccc">
+                        </label>
+                        <button id="scramble-color-reset-0" class="bg-reset-btn" title="Reset scramble color">✕</button>
                     </div>
                 </div>
                 <!-- NOTE: 背景不透明度滑块 -->
