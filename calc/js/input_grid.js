@@ -697,7 +697,7 @@ export function refresh() {
         }
         // Target Avg 格始终可见
         var tavg = getTargetAvg(state.seedOn + p);
-        tavgCells[p].value = tavg > 0 ? formatTime(tavg) : '';
+        tavgCells[p].value = tavg > 0 ? formatTime(tavg, false, false, true) : '';
         fitFont(tavgCells[p]);
     }
     syncNumpadDisplay();

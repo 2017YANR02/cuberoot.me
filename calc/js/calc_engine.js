@@ -17,15 +17,20 @@ export const MAX_TIME_VALUE = 8640000; // 24小时 (centiseconds)
 var _isMoveCntMode = false;
 export function setMoveCntMode(flag) { _isMoveCntMode = flag; }
 
-export function formatTime(cs, axisLabel = false, isMoveCnt = false) {
+export function formatTime(cs, axisLabel = false, isMoveCnt = false, forceDecimal = false) {
     if (cs === null || cs === undefined) return '-';
     var n = Math.floor(cs);
     if (n >= DNF_VALUE) return 'DNF';
 
-    // NOTE: FMC 步数格式 — 直接返回步数（cs / 100），保留必要小数
+    // NOTE: FMC 步数格式 — 单次显示整数("20")，平均显示小数("20.00")
+    // forceDecimal = true 时强制保留 2 位小数（用于平均值/Target Avg）
     if (isMoveCnt || _isMoveCntMode) {
         var moves = cs / 100;
-        return Number.isInteger(moves) ? String(moves) : moves.toFixed(2);
+        // NOTE: axisLabel 模式下整数步数不加 .00（如 Y 轴 "5" 而非 "5.00"）
+        if (forceDecimal || (!Number.isInteger(moves) && !axisLabel)) {
+            return moves.toFixed(2);
+        }
+        return String(moves);
     }
 
     // NOTE: 通过 digit/separator 数组逐位拆解，自动处理 分:秒.厘秒 格式
@@ -42,9 +47,12 @@ export function formatTime(cs, axisLabel = false, isMoveCnt = false) {
         digitOn += 1;
     }
 
-    // Y 轴标签省略整秒的 ".00" 后缀
-    if (axisLabel && result.length >= 6 && result.substring(result.length - 3) === '.00') {
-        result = result.substring(0, result.length - 3);
+    // NOTE: Y 轴标签精简为 1 位小数（"3.60" → "3.6"，"4.00" → "4.0"）
+    if (axisLabel) {
+        var dotIdx = result.lastIndexOf('.');
+        if (dotIdx >= 0) {
+            result = result.substring(0, dotIdx + 2); // 保留小数点后 1 位
+        }
     }
     return result;
 }
@@ -81,7 +89,12 @@ export function textToTime(s) {
         // NOTE: 无小数点 — 无冒号时当 centiseconds，有冒号时当整秒
         var sec = strToNumber(s, -1);
         if (cpl === 1) {
-            time += sec;       // 纯数字 → centiseconds（536 → 5.36 秒）
+            // NOTE: FMC 模式下纯整数 = 步数（如 "20" → 20步 = 2000cs）
+            if (_isMoveCntMode) {
+                time += sec * 100;
+            } else {
+                time += sec;       // 纯数字 → centiseconds（536 → 5.36 秒）
+            }
         } else {
             time += sec * 100; // 有冒号 → 整秒（1:23 中的 23 秒）
         }
