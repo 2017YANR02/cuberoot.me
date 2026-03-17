@@ -129,7 +129,7 @@ export function render() {
     checkWRConfetti();
 }
 
-// NOTE: WR avg 庆祝特效检测 — 5 把完整且 avg ≤ 世界纪录时喷射 confetti
+// NOTE: WR 庆祝特效检测 — 单次 WR 或 avg WR 时喷射 confetti
 function checkWRConfetti() {
     if (typeof confetti !== 'function') return;
 
@@ -137,35 +137,49 @@ function checkWRConfetti() {
         if (!state.playerEnabled[p]) continue;
         var times = state.times[state.seedOn + p];
         var filled = times.filter(function(t) { return t > 0 && t < DNF_VALUE; });
-        if (filled.length < 5) continue; // 需要 5 把全部填完
 
+        // 检测单次 WR — 任何一把 ≤ WR single
+        for (var si = 0; si < filled.length; si++) {
+            var t = times[si];
+            if (t > 0 && t < DNF_VALUE && isWR(state.event, 'single', t)) {
+                var sKey = 'single-' + state.seedOn + '-' + state.event + '-' + p + '-' + si + '-' + t;
+                if (sKey !== lastConfettiKey) {
+                    lastConfettiKey = sKey;
+                    fireConfetti();
+                    return;
+                }
+            }
+        }
+
+        // 检测 avg WR — 5 把全部填完
+        if (filled.length < 5) continue;
         var avg = getAverage(times, false);
         if (!avg || avg <= 0 || avg >= DNF_VALUE) continue;
-
-        // 检测 avg 是否 ≤ WR average
         if (!isWR(state.event, 'average', avg)) continue;
 
-        // 用状态 key 防重复：同一 seed + event + player + avg 只触发一次
-        var key = state.seedOn + '-' + state.event + '-' + p + '-' + avg;
-        if (key === lastConfettiKey) continue;
-        lastConfettiKey = key;
+        var aKey = 'avg-' + state.seedOn + '-' + state.event + '-' + p + '-' + avg;
+        if (aKey === lastConfettiKey) continue;
+        lastConfettiKey = aKey;
+        fireConfetti();
+        return;
+    }
+}
 
-        // 🎉 WR avg！连发 3 波 confetti
-        for (var i = 0; i < 3; i++) {
-            setTimeout(function() {
-                confetti({
-                    particleCount: 100,
-                    spread: 80,
-                    origin: { x: 0.5, y: 0.4 },
-                    angle: 90,
-                    colors: ['#FFD700', '#FF6B35', '#FF0000', '#00FF00', '#00BFFF', '#FF69B4'],
-                    gravity: 1.2,
-                    ticks: 200,
-                    disableForReducedMotion: true,
-                });
-            }, i * 250);
-        }
-        break; // 一次 render 最多触发一个选手的庆祝
+// NOTE: confetti 喷射 — 连发 3 波
+function fireConfetti() {
+    for (var i = 0; i < 3; i++) {
+        setTimeout(function() {
+            confetti({
+                particleCount: 100,
+                spread: 80,
+                origin: { x: 0.5, y: 0.4 },
+                angle: 90,
+                colors: ['#FFD700', '#FF6B35', '#FF0000', '#00FF00', '#00BFFF', '#FF69B4'],
+                gravity: 1.2,
+                ticks: 200,
+                disableForReducedMotion: true,
+            });
+        }, i * 250);
     }
 }
 
