@@ -209,24 +209,35 @@
                 <div class="setting-item bg-row battle-only-setting">
                     <span data-i18n="battle.bg_player2">Player 2 (top)</span>
                     <div class="bg-controls">
-                        <input type="color" id="bg-color-1" class="bg-color-picker" value="#000000" title="Pick color">
+                        <input type="color" id="bg-color-1" class="bg-color-picker" value="#000000" title="Background color">
                         <label class="bg-upload-label" title="Upload image">
                             🖼️
                             <input type="file" id="bg-image-1" class="bg-file-input" accept="image/*">
                         </label>
-                        <button id="bg-reset-1" class="bg-reset-btn" title="Reset">✕</button>
+                        <button id="bg-reset-1" class="bg-reset-btn" title="Reset background">✕</button>
+                        <!-- NOTE: 打乱文字颜色，独立于背景 -->
+                        <input type="color" id="scramble-color-1" class="bg-color-picker" value="#cccccc" title="Scramble text color" style="border-color:#6366f1" >
+                        <button id="scramble-color-reset-1" class="bg-reset-btn" title="Reset scramble color">A</button>
                     </div>
                 </div>
                 <div class="setting-item bg-row">
                     <span data-i18n="battle.bg_player1">Player 1 (bottom)</span>
                     <div class="bg-controls">
-                        <input type="color" id="bg-color-0" class="bg-color-picker" value="#000000" title="Pick color">
+                        <input type="color" id="bg-color-0" class="bg-color-picker" value="#000000" title="Background color">
                         <label class="bg-upload-label" title="Upload image">
                             🖼️
                             <input type="file" id="bg-image-0" class="bg-file-input" accept="image/*">
                         </label>
-                        <button id="bg-reset-0" class="bg-reset-btn" title="Reset">✕</button>
+                        <button id="bg-reset-0" class="bg-reset-btn" title="Reset background">✕</button>
+                        <!-- NOTE: 打乱文字颜色，独立于背景 -->
+                        <input type="color" id="scramble-color-0" class="bg-color-picker" value="#cccccc" title="Scramble text color" style="border-color:#6366f1">
+                        <button id="scramble-color-reset-0" class="bg-reset-btn" title="Reset scramble color">A</button>
                     </div>
+                </div>
+                <!-- NOTE: 背景不透明度滑块 -->
+                <div class="setting-item slider-row">
+                    <span data-i18n="battle.bg_opacity">不透明度</span>
+                    <input type="range" id="bg-opacity-slider" min="0.1" max="1.0" step="0.05" value="1.0">
                 </div>
                 <div id="bg-error" class="bg-error-msg" style="display:none"></div>
             </div>
