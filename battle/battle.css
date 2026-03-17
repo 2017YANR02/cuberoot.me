@@ -61,6 +61,26 @@ body {
     overflow: hidden;
 }
 
+/* NOTE: 伪元素渲染自定义背景，opacity 独立于前景文字 */
+.player-area::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--bg-image, none);
+    background-color: var(--bg-color);
+    background-size: cover;
+    background-position: center;
+    opacity: var(--bg-opacity, 1);
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* NOTE: 确保前景内容在伪元素之上 */
+.player-area > * {
+    position: relative;
+    z-index: 1;
+}
+
 /* NOTE: Player 2（上方）旋转 180°，让对面的人能看 */
 .player-area.rotated {
     transform: rotate(180deg);
@@ -111,8 +131,8 @@ body {
 
 .scramble-text {
     font-size: calc(clamp(1.4rem, 4.5vw, 2.0rem) * var(--scramble-scale));
-    /* NOTE: 亮色背景时由 JS 将此变量设为黑色 */
-    color: var(--player-text-color, #ccc);
+    /* NOTE: 优先用户自定义颜色，其次自动亮度颜色，默认灰色 */
+    color: var(--scramble-color, var(--player-text-color, #ccc));
     text-shadow: none;
     text-align: center;
     line-height: 1.4;

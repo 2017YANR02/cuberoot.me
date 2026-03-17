@@ -113,6 +113,8 @@ const state = {
     phases: parseInt(localStorage.getItem(LS_PREFIX + "phases")) || 1,
     // 当前打乱图字号缩放比例
     scrambleScale: parseFloat(localStorage.getItem(LS_PREFIX + "scrambleScale")) || 1.0,
+    // NOTE: 背景不透明度（0.1~1.0）
+    bgOpacity: parseFloat(localStorage.getItem(LS_PREFIX + "bgOpacity")) || 1.0,
     // 当前打乱
     scramble: null,
     // 是否正在加载打乱
@@ -187,6 +189,10 @@ const dom = {
     bgImages: [null, null],    // file input
     bgResets: [null, null],    // reset button
     bgError: null,             // 错误提示
+    bgOpacitySlider: null,     // 不透明度滑块
+    // NOTE: 打乱文字颜色自定义控件（每个玩家独立）
+    scrambleColors: [null, null],       // 打乱文字颜色选择器
+    scrambleColorResets: [null, null],  // 打乱颜色重置按鈕
     selectSession: null,       // Session 下拉
 };
 
@@ -229,8 +235,11 @@ function init() {
         dom.bgColors[i] = document.getElementById(`bg-color-${i}`);
         dom.bgImages[i] = document.getElementById(`bg-image-${i}`);
         dom.bgResets[i] = document.getElementById(`bg-reset-${i}`);
+        dom.scrambleColors[i] = document.getElementById(`scramble-color-${i}`);
+        dom.scrambleColorResets[i] = document.getElementById(`scramble-color-reset-${i}`);
     }
     dom.bgError = document.getElementById('bg-error');
+    dom.bgOpacitySlider = document.getElementById('bg-opacity-slider');
 
     // 绑定触摸事件
     for (let i = 0; i < 2; i++) {
@@ -371,6 +380,15 @@ function init() {
 
     // 初始化背景自定义控件
     initBgControls();
+
+    // NOTE: 背景不透明度滑块
+    dom.bgOpacitySlider.value = state.bgOpacity;
+    dom.bgOpacitySlider.addEventListener('input', (e) => {
+        state.bgOpacity = parseFloat(e.target.value);
+        localStorage.setItem(LS_PREFIX + 'bgOpacity', state.bgOpacity);
+        applyBg(0);
+        applyBg(1);
+    });
 
     // NOTE: 从 localStorage 恢复成绩历史
     loadSolveHistory();
@@ -1250,6 +1268,41 @@ function renderScramble() {
         dom.scrambles[i].classList.toggle('hidden', isTiming);
         dom.scrambleImgs[i].classList.toggle('hidden', isTiming);
     }
+
+    // NOTE: 打乱过长时自动缩小字号，防止与计时器/打乱图重叠
+    autoFitScrambleSize();
+}
+
+/**
+ * NOTE: 检测打乱文字是否过长导致遮挡计时器/打乱图，若过长则强制缩小字号
+ * 策略：打乱文字最多占玩家区域高度的 40%，超出时逐步缩小 font-size
+ * 通过 element.style.fontSize 直接设置，不修改 CSS 变量（不影响用户偏好）
+ */
+function autoFitScrambleSize() {
+    for (let i = 0; i < 2; i++) {
+        const el = dom.scrambles[i];
+        // 先清除之前的强制字号，恢复为 CSS 变量控制的默认大小
+        el.style.fontSize = '';
+
+        // 隐藏状态或无内容时跳过
+        if (el.classList.contains('hidden') || !state.scramble) continue;
+
+        // NOTE: 打乱区域最多占玩家区域高度的 40%（留出计时器+统计行空间）
+        const areaHeight = dom.areas[i].clientHeight;
+        const maxHeight = areaHeight * 0.4;
+
+        // 获取 CSS 计算出的基准字号（含用户 --scramble-scale 缩放）
+        const baseFontSize = parseFloat(getComputedStyle(el).fontSize);
+        let currentSize = baseFontSize;
+        // NOTE: 最小缩到基准的 30%，避免完全不可读
+        const minSize = baseFontSize * 0.3;
+
+        // 逐步缩小直到文字高度 <= 允许的最大高度
+        while (el.scrollHeight > maxHeight && currentSize > minSize) {
+            currentSize *= 0.9;  // 每次减 10%
+            el.style.fontSize = currentSize + 'px';
+        }
+    }
 }
 
 function renderScores() {
@@ -1390,18 +1443,21 @@ function applyBg(playerId) {
     const area = dom.areas[playerId];
     const img = localStorage.getItem(`${LS_PREFIX}bg_img_${playerId}`);
     const color = localStorage.getItem(`${LS_PREFIX}bg_color_${playerId}`);
+
+    // NOTE: 通过 CSS 变量传给 ::before 伪元素，使 opacity 只影响背景层
     if (img) {
-        area.style.backgroundImage = `url(${img})`;
-        area.style.backgroundSize = 'cover';
-        area.style.backgroundPosition = 'center';
-        area.style.backgroundColor = '';
+        area.style.setProperty('--bg-image', `url(${img})`);
+        area.style.setProperty('--bg-color', '');
     } else if (color && color !== '#000000') {
-        area.style.backgroundImage = '';
-        area.style.backgroundColor = color;
+        area.style.setProperty('--bg-image', 'none');
+        area.style.setProperty('--bg-color', color);
     } else {
-        area.style.backgroundImage = '';
-        area.style.backgroundColor = '';
+        area.style.setProperty('--bg-image', 'none');
+        area.style.setProperty('--bg-color', '');
     }
+
+    // NOTE: 通过 CSS 变量控制背景不透明度（伪元素渲染，不影响前景文字）
+    area.style.setProperty('--bg-opacity', state.bgOpacity);
 
     // NOTE: 根据背景亮度自动切换文字颜色（W3C 感知亮度）；图片背景取颜色选择器值作为代表色
     const repColor = color || '#000000';
@@ -1411,6 +1467,20 @@ function applyBg(playerId) {
 
     // NOTE: 同步更新中间栏渐变 — 左侧=P2(上方)色，右侧=P1(下方)色，中间混合暗色
     updateBarGradient();
+}
+
+/**
+ * NOTE: 应用玩家的打乱文字自定义颜色
+ * 有自定义值则设 --scramble-color，否则清空（退回 CSS 的 --player-text-color 自动计算）
+ */
+function applyScrambleColor(playerId) {
+    const area = dom.areas[playerId];
+    const saved = localStorage.getItem(`${LS_PREFIX}scramble_color_${playerId}`);
+    if (saved) {
+        area.style.setProperty('--scramble-color', saved);
+    } else {
+        area.style.removeProperty('--scramble-color');
+    }
 }
 
 /**
@@ -1476,6 +1546,22 @@ function initBgControls() {
             dom.bgColors[i].value = '#000000';
             dom.bgImages[i].value = '';
             applyBg(i);
+        });
+
+        // NOTE: 打乱文字颜色 — 和背景控件共用同一循环（DRY）
+        const savedScrambleColor = localStorage.getItem(`${LS_PREFIX}scramble_color_${i}`);
+        if (savedScrambleColor) dom.scrambleColors[i].value = savedScrambleColor;
+        applyScrambleColor(i);
+
+        dom.scrambleColors[i].addEventListener('change', (e) => {
+            localStorage.setItem(`${LS_PREFIX}scramble_color_${i}`, e.target.value);
+            applyScrambleColor(i);
+        });
+
+        dom.scrambleColorResets[i].addEventListener('click', () => {
+            localStorage.removeItem(`${LS_PREFIX}scramble_color_${i}`);
+            dom.scrambleColors[i].value = '#cccccc';
+            applyScrambleColor(i);
         });
     }
 }
