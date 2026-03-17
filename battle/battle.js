@@ -82,8 +82,8 @@ function getLocale() {
 
 // NOTE: 双语文本映射（JS 动态设置的文本，无法用 data-i18n 属性）
 const I18N_TEXT = {
-    hide_time:  { en: "🙈 Hide time when solving", zh: "🙈 计时时隐藏时间" },
-    show_time:  { en: "👁️ Show time when solving", zh: "👁️ 计时时显示时间" },
+    hide_time:  { en: "👀 Hide time", zh: "👀 隐藏时间" },
+    show_time:  { en: "👀 Show time", zh: "👀 显示时间" },
     generating: { en: "Generating scramble...",    zh: "正在生成打乱..." },
     // NOTE: WCA 观察倒计时状态文字
     inspecting: { en: "Inspecting",                zh: "观察中" },
@@ -115,6 +115,12 @@ const state = {
     scrambleScale: parseFloat(localStorage.getItem(LS_PREFIX + "scrambleScale")) || 1.0,
     // NOTE: 背景不透明度（0.1~1.0）
     bgOpacity: parseFloat(localStorage.getItem(LS_PREFIX + "bgOpacity")) || 1.0,
+    // NOTE: 计时器精确度（小数位数：0=秒, 1=0.1s, 2=0.01s, 3=0.001s）
+    timerPrecision: (() => { const v = localStorage.getItem(LS_PREFIX + 'timerPrecision'); return v !== null ? parseInt(v) : 3; })(),
+    // NOTE: 启动延时（ms），按住多久后才能开始计时
+    startDelay: (() => { const v = localStorage.getItem(LS_PREFIX + 'startDelay'); return v !== null ? parseInt(v) : 300; })(),
+    // NOTE: 用户选择显示的 Average 类型
+    enabledAverages: JSON.parse(localStorage.getItem(LS_PREFIX + 'enabledAverages') || '[5, 12]'),
     // 当前打乱
     scramble: null,
     // 是否正在加载打乱
@@ -176,7 +182,7 @@ const dom = {
     settingsOverlay: null,
     puzzleGrid: null,
     toggleImage: null,
-    toggleMode: null,          // Solo/1v1 模式切换
+    modeSeg: null,             // Solo/1v1 模式分段选择器
     selectInspection: null,    // 观察时间下拉
     toggleVoice: null,         // 语音提示开关
     sizeSlider: null,
@@ -221,7 +227,7 @@ function init() {
     dom.settingsOverlay = document.getElementById("settings-overlay");
     dom.puzzleGrid = document.getElementById("puzzle-grid");
     dom.toggleImage = document.getElementById("toggle-image");
-    dom.toggleMode = document.getElementById("toggle-mode");
+    dom.modeSeg = document.getElementById("mode-seg");
     dom.selectInspection = document.getElementById("select-inspection");
     dom.toggleVoice = document.getElementById("toggle-voice");
     dom.selectSession = document.getElementById("select-session");
@@ -301,12 +307,41 @@ function init() {
     // NOTE: 点击页面其他区域时关闭已打开的罚时下拉
     document.addEventListener("click", () => closeAllDropdowns());
 
-    // NOTE: Solo/1v1 模式切换
-    dom.toggleMode.checked = (state.mode === 'solo');
-    dom.toggleMode.addEventListener("change", (e) => {
-        state.mode = e.target.checked ? 'solo' : '1v1';
-        localStorage.setItem(LS_PREFIX + 'mode', state.mode);
-        applyMode();
+    // NOTE: Solo/1v1 模式分段选择器
+    dom.modeSeg.querySelectorAll('.mode-seg-btn').forEach(btn => {
+        if (btn.dataset.mode === state.mode) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+        btn.addEventListener('click', () => {
+            state.mode = btn.dataset.mode;
+            localStorage.setItem(LS_PREFIX + 'mode', state.mode);
+            // 更新 active 状态
+            dom.modeSeg.querySelectorAll('.mode-seg-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.mode === state.mode);
+            });
+            applyMode();
+        });
+    });
+
+    // NOTE: 计时器精确度选择
+    const selPrecision = document.getElementById("select-precision");
+    selPrecision.value = state.timerPrecision.toString();
+    selPrecision.addEventListener("change", (e) => {
+        state.timerPrecision = parseInt(e.target.value);
+        localStorage.setItem(LS_PREFIX + 'timerPrecision', state.timerPrecision);
+    });
+
+    // NOTE: 启动延时滑块
+    const delaySlider = document.getElementById("start-delay-slider");
+    const delayLabel = document.getElementById("start-delay-value");
+    delaySlider.value = state.startDelay;
+    delayLabel.textContent = (state.startDelay / 1000).toFixed(2) + ' s';
+    delaySlider.addEventListener("input", (e) => {
+        state.startDelay = parseInt(e.target.value);
+        localStorage.setItem(LS_PREFIX + 'startDelay', state.startDelay);
+        delayLabel.textContent = (state.startDelay / 1000).toFixed(2) + ' s';
     });
 
     // NOTE: WCA Inspection 时长选择
@@ -726,7 +761,7 @@ function checkBothReady() {
                     p0.canStart = true;
                     renderArea(0);
                 }
-            }, 200);
+            }, state.startDelay);
         }
         return;
     }
@@ -743,7 +778,7 @@ function checkBothReady() {
                 renderArea(0);
                 renderArea(1);
             }
-        }, 200);
+        }, state.startDelay);
     }
 }
 
@@ -1441,19 +1476,23 @@ function savePoints() {
  * 例如: 65432 → "1:05.432"，7890 → "7.890"
  */
 function formatTime(ms) {
-    if (ms <= 0) return "0.000";
+    // p = 精确度（小数位数）
+    const p = state.timerPrecision;
+    if (ms <= 0) return p > 0 ? `0.${'0'.repeat(p)}` : '0';
 
     const totalMs = Math.floor(ms);
     const minutes = Math.floor(totalMs / 60000);
     const seconds = Math.floor((totalMs % 60000) / 1000);
     const millis = totalMs % 1000;
 
-    const millisStr = millis.toString().padStart(3, "0");
+    // NOTE: 根据精确度截取小数部分
+    const millisStr = millis.toString().padStart(3, '0').slice(0, p);
+    const frac = p > 0 ? `.${millisStr}` : '';
 
     if (minutes > 0) {
-        return `${minutes}<span class="colon">:</span>${seconds.toString().padStart(2, "0")}.${millisStr}`;
+        return `${minutes}<span class="colon">:</span>${seconds.toString().padStart(2, '0')}${frac}`;
     }
-    return `${seconds}.${millisStr}`;
+    return `${seconds}${frac}`;
 }
 
 // ===== 背景自定义 =====
@@ -1809,37 +1848,35 @@ function renderSoloStats(playerId) {
         sdStr = `σ=${sd.toFixed(2)}`;
     }
 
-    // Mo3 / Ao5 / Ao12 / Ao100
+    // NOTE: 动态计算用户启用的所有 Average
+    const ALL_AO = [5, 12, 50, 100, 1000, 10000];
     const mo3 = computeMo3(h);
-    const ao5 = computeAo5(h);
-    const ao12 = computeAverage(h, 12);
-    const ao100 = computeAverage(h, 100);
-
-    // NOTE: Session best ao5/ao12 — 用于 PB 标记
-    const bestAo5 = findBestAverage(h, computeAo5);
-    const bestAo12 = findBestAverage(h, (sub) => computeAverage(sub, 12));
 
     // NOTE: 构建统计文本
     const parts = [];
     if (mo3 !== null) parts.push(`mo3: ${mo3 === Infinity ? 'DNF' : formatTimePlain(mo3)}`);
-    if (ao5 !== null) {
-        const isPB = ao5 !== Infinity && bestAo5 !== null && ao5 <= bestAo5;
-        parts.push(`ao5: ${ao5 === Infinity ? 'DNF' : formatTimePlain(ao5)}${isPB ? ' 🏅' : ''}`);
-    }
-    if (ao12 !== null) {
-        const isPB = ao12 !== Infinity && bestAo12 !== null && ao12 <= bestAo12;
-        parts.push(`ao12: ${ao12 === Infinity ? 'DNF' : formatTimePlain(ao12)}${isPB ? ' 🏅' : ''}`);
-    }
-    if (ao100 !== null) parts.push(`ao100: ${ao100 === Infinity ? 'DNF' : formatTimePlain(ao100)}`);
 
-    const line1 = parts.join(' │ ');
+    for (const n of state.enabledAverages) {
+        const aoFn = n === 5 ? computeAo5 : (sub) => computeAverage(sub, n);
+        const val = n === 5 ? computeAo5(h) : computeAverage(h, n);
+        if (val === null) continue;
+        // NOTE: 只对 ao5/ao12 显示 PB 标记（更大的 Ao 计算 best 太慢）
+        let pbMark = '';
+        if (n <= 12) {
+            const bestVal = findBestAverage(h, aoFn);
+            if (val !== Infinity && bestVal !== null && val <= bestVal) pbMark = ' \u{1F3C5}';
+        }
+        parts.push(`ao${n}: ${val === Infinity ? 'DNF' : formatTimePlain(val)}${pbMark}`);
+    }
+
+    const line1 = parts.join(' \u2502 ');
     const line2Parts = [];
     if (best !== null) line2Parts.push(`best: ${formatTimePlain(best)}`);
     if (mean !== null) line2Parts.push(`mean: ${formatTimePlain(mean)}`);
     if (sdStr) line2Parts.push(sdStr);
     line2Parts.push(`${solveCount - dnfCount}/${solveCount}`);
 
-    const line2 = line2Parts.join(' │ ');
+    const line2 = line2Parts.join(' \u2502 ');
     el.innerHTML = `<div class="solo-stats-display">${line1}${line1 ? '<br>' : ''}${line2}</div>`;
 }
 
@@ -1847,17 +1884,19 @@ function renderSoloStats(playerId) {
  * NOTE: 纯文本时间格式化（不含 HTML span，用于统计显示）
  */
 function formatTimePlain(ms) {
-    if (ms <= 0) return '0.000';
+    const p = state.timerPrecision;
+    if (ms <= 0) return p > 0 ? `0.${'0'.repeat(p)}` : '0';
     if (ms === Infinity) return 'DNF';
     const totalMs = Math.floor(ms);
     const minutes = Math.floor(totalMs / 60000);
     const seconds = Math.floor((totalMs % 60000) / 1000);
     const millis = totalMs % 1000;
-    const millisStr = millis.toString().padStart(3, '0');
+    const millisStr = millis.toString().padStart(3, '0').slice(0, p);
+    const frac = p > 0 ? `.${millisStr}` : '';
     if (minutes > 0) {
-        return `${minutes}:${seconds.toString().padStart(2, '0')}.${millisStr}`;
+        return `${minutes}:${seconds.toString().padStart(2, '0')}${frac}`;
     }
-    return `${seconds}.${millisStr}`;
+    return `${seconds}${frac}`;
 }
 
 // ===== Solo 数据持久化 =====
@@ -2173,12 +2212,25 @@ function renderTrendChart() {
         pathD += `${j === 0 ? 'M' : 'L'}${x(p.i).toFixed(1)},${y(p.t).toFixed(1)} `;
     });
 
-    // Ao5 线
-    let ao5Path = '';
-    for (let i = 4; i < h.length; i++) {
-        const ao5 = computeAo5(h.slice(0, i + 1));
-        if (ao5 !== null && ao5 !== Infinity) {
-            ao5Path += `${ao5Path ? 'L' : 'M'}${x(i).toFixed(1)},${y(ao5).toFixed(1)} `;
+    // NOTE: 各 Ao 类型的颜色映射
+    const AO_COLORS = { 5: '#ff9800', 12: '#e040fb', 50: '#00e5ff', 100: '#76ff03', 1000: '#ffeb3b', 10000: '#ff5252' };
+    const AO_DASH   = { 5: '4,2',     12: '6,3',     50: '2,2',     100: '8,4',     1000: '3,5',     10000: '1,3' };
+
+    // NOTE: 为每个启用的 Ao 类型计算趋势线路径
+    let aoSvgPaths = '';
+    for (const aoN of state.enabledAverages) {
+        let aoPath = '';
+        for (let i = aoN - 1; i < h.length; i++) {
+            const sub = h.slice(0, i + 1);
+            const val = aoN === 5 ? computeAo5(sub) : computeAverage(sub, aoN);
+            if (val !== null && val !== Infinity) {
+                aoPath += `${aoPath ? 'L' : 'M'}${x(i).toFixed(1)},${y(val).toFixed(1)} `;
+            }
+        }
+        if (aoPath) {
+            const color = AO_COLORS[aoN] || '#ff9800';
+            const dash = AO_DASH[aoN] || '4,2';
+            aoSvgPaths += `<path d="${aoPath}" fill="none" stroke="${color}" stroke-width="1" stroke-dasharray="${dash}"/>`;
         }
     }
 
@@ -2190,15 +2242,54 @@ function renderTrendChart() {
 
     let svg = `<svg viewBox="0 0 ${W} ${H}" class="trend-svg">
         <path d="${pathD}" fill="none" stroke="#4fc3f7" stroke-width="1.5"/>
-        ${ao5Path ? `<path d="${ao5Path}" fill="none" stroke="#ff9800" stroke-width="1" stroke-dasharray="4,2"/>` : ''}
+        ${aoSvgPaths}
         ${bestPt ? `<circle cx="${x(bestPt.i)}" cy="${y(bestPt.t)}" r="3" fill="#4caf50"/>` : ''}
         ${worstPt ? `<circle cx="${x(worstPt.i)}" cy="${y(worstPt.t)}" r="3" fill="#f44336"/>` : ''}
     </svg>`;
 
+    // NOTE: Ao 选择器（chip 按钮）
+    const ALL_AO_CHART = [5, 12, 50, 100, 1000, 10000];
+    let chipHtml = '<div class="ao-chip-bar">';
+    for (const n of ALL_AO_CHART) {
+        const active = state.enabledAverages.includes(n);
+        const color = AO_COLORS[n] || '#ff9800';
+        chipHtml += `<button class="ao-chip${active ? ' active' : ''}" data-ao="${n}" style="--chip-color:${color}">ao${n}</button>`;
+    }
+    chipHtml += '</div>';
+
+    // NOTE: 动态图例（只显示启用的 Ao 线）
+    let legendHtml = '<div class="trend-legend">';
+    legendHtml += '<span><svg width="16" height="8"><line x1="0" y1="4" x2="16" y2="4" stroke="#4fc3f7" stroke-width="1.5"/></svg> Single</span>';
+    for (const n of state.enabledAverages) {
+        const color = AO_COLORS[n] || '#ff9800';
+        const dash = AO_DASH[n] || '4,2';
+        legendHtml += `<span><svg width="16" height="8"><line x1="0" y1="4" x2="16" y2="4" stroke="${color}" stroke-width="1" stroke-dasharray="${dash}"/></svg> Ao${n}</span>`;
+    }
+    legendHtml += '<span><svg width="8" height="8"><circle cx="4" cy="4" r="3" fill="#4caf50"/></svg> Best</span>';
+    legendHtml += '<span><svg width="8" height="8"><circle cx="4" cy="4" r="3" fill="#f44336"/></svg> Worst</span>';
+    legendHtml += '</div>';
+
     const container = document.createElement('div');
     container.id = 'trend-chart-container';
     container.className = 'trend-chart';
-    container.innerHTML = svg;
+    container.innerHTML = chipHtml + svg + legendHtml;
+
+    // NOTE: Ao chip 点击事件
+    container.querySelectorAll('.ao-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            const aoN = parseInt(chip.dataset.ao);
+            const idx = state.enabledAverages.indexOf(aoN);
+            if (idx >= 0) {
+                state.enabledAverages.splice(idx, 1);
+            } else {
+                state.enabledAverages.push(aoN);
+                state.enabledAverages.sort((a, b) => a - b);
+            }
+            localStorage.setItem(LS_PREFIX + 'enabledAverages', JSON.stringify(state.enabledAverages));
+            renderHistory();
+        });
+    });
+
     dom.historyList.parentNode.insertBefore(container, dom.historyList);
 }
 

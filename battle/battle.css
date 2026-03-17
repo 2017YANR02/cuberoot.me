@@ -40,6 +40,66 @@ body {
     -webkit-touch-callout: none;
 }
 
+/* NOTE: 左上角 WCA 登录区域 */
+.wca-corner {
+    position: fixed;
+    top: 6px;
+    left: 50px;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.wca-corner-btn {
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 0.8rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    transition: color 0.2s;
+}
+
+.wca-corner-btn:hover {
+    color: #4fc3f7;
+}
+
+.wca-corner-avatar {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.wca-corner-name {
+    color: #aaa;
+    font-size: 0.75rem;
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.wca-corner-action {
+    background: none;
+    border: none;
+    color: #666;
+    font-size: 0.8rem;
+    cursor: pointer;
+    padding: 2px 4px;
+    transition: color 0.2s;
+}
+
+.wca-corner-action:hover {
+    color: #4fc3f7;
+}
+
+/* NOTE: Solo 模式下才显示 WCA 登录 */
+body:not(.solo) .wca-corner {
+    display: none;
+}
+
 /* ==========================================================
    布局：上下两个玩家区域 + 中间栏
    ========================================================== */
@@ -568,6 +628,36 @@ body.solo .scramble-img {
     color: #e53935;
 }
 
+/* NOTE: 模式分段选择器（仿 wr_metric 的「排名 | 历史」） */
+.mode-seg {
+    display: inline-flex;
+    border: 1px solid #444;
+    border-radius: 8px;
+    overflow: hidden;
+    background: transparent;
+}
+
+.mode-seg-btn {
+    padding: 8px 24px;
+    background: transparent;
+    border: none;
+    color: #888;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    white-space: nowrap;
+}
+
+.mode-seg-btn.active {
+    background: rgba(99, 102, 241, 0.25);
+    color: #fff;
+}
+
+.mode-seg-btn:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.05);
+}
+
 .settings-group {
     margin-bottom: 24px;
 }
@@ -598,6 +688,18 @@ body.solo .scramble-img {
     width: 100%;
     accent-color: #2196F3;
     margin-top: 4px;
+}
+
+.delay-value {
+    color: #888;
+    font-size: 0.85rem;
+    min-width: 50px;
+    text-align: right;
+}
+
+.settings-slider {
+    width: 100%;
+    accent-color: #2196F3;
 }
 
 /* Toggle Switch 样式 */
@@ -983,6 +1085,12 @@ body:not(.solo) .solo-setting {
     transform: translateY(0);
 }
 
+/* NOTE: tab 模式下关闭弹出动画，直接铺满无过渡 */
+body.solo[data-tab] .history-panel,
+body.solo[data-tab] .settings-panel {
+    transition: none;
+}
+
 .history-header {
     display: flex;
     align-items: center;
@@ -1164,6 +1272,51 @@ body:not(.solo) .solo-setting {
     height: 100px;
 }
 
+.trend-legend {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    padding: 4px 0 2px;
+    font-size: 0.7rem;
+    color: #888;
+}
+
+.trend-legend span {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+/* NOTE: Ao 选择器 chip 按钮 */
+.ao-chip-bar {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 8px 4px;
+    flex-wrap: wrap;
+}
+
+.ao-chip {
+    background: transparent;
+    border: 1px solid #444;
+    border-radius: 12px;
+    color: #666;
+    font-size: 0.7rem;
+    padding: 2px 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.ao-chip.active {
+    border-color: var(--chip-color);
+    color: var(--chip-color);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.ao-chip:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
 /* ==========================================================
    底部导航栏（Solo 模式，仿 DCTimer）
    ========================================================== */
@@ -1214,6 +1367,18 @@ body.solo .bottom-nav {
     color: #4fc3f7;
 }
 
+/* NOTE: PNG 图标模拟 iOS tab bar template rendering */
+.nav-tab .nav-tab-icon {
+    /* NOTE: grayscale + brightness 将黄色底变为灰色轮廓 */
+    filter: grayscale(1) brightness(0.6);
+    transition: filter 0.15s;
+}
+
+.nav-tab.active .nav-tab-icon {
+    /* NOTE: active 状态：去掉灰度，用 hue-rotate 色偏让黄色偏蓝 + 提高亮度 */
+    filter: grayscale(0) brightness(0.7) hue-rotate(180deg) saturate(2);
+}
+
 /* NOTE: Solo 模式下为底部导航栏留出空间 */
 body.solo .player-area {
     padding-bottom: 56px;
@@ -1229,10 +1394,19 @@ body.solo #btn-history {
 
 /* 默认（timer tab）：显示计时视图 */
 
+/* NOTE: results/settings tab 时恢复 body 滚动（计时器模式禁止滚动） */
+body.solo[data-tab="results"],
+body.solo[data-tab="settings"] {
+    overflow-y: auto;
+    touch-action: auto;
+}
+
 /* 成绩 tab：隐藏计时区域，全屏显示 history panel */
+body.solo[data-tab="results"] #player-top,
 body.solo[data-tab="results"] #player-bottom,
 body.solo[data-tab="results"] .middle-bar,
-body.solo[data-tab="results"] .back-btn {
+body.solo[data-tab="results"] .back-btn,
+body.solo[data-tab="results"] .wca-corner {
     display: none !important;
 }
 
@@ -1245,6 +1419,8 @@ body.solo[data-tab="results"] .history-overlay {
     -webkit-backdrop-filter: none;
     display: flex;
     flex: 1;
+    /* NOTE: 覆盖基础类的 align-items: flex-end，让 panel 铺满高度 */
+    align-items: stretch;
 }
 
 body.solo[data-tab="results"] .history-panel {
@@ -1254,6 +1430,7 @@ body.solo[data-tab="results"] .history-panel {
     border-radius: 0;
     border: none;
     flex: 1;
+    overflow-y: auto;
     /* NOTE: 为底部导航栏留空 */
     padding-bottom: 56px;
 }
@@ -1263,9 +1440,11 @@ body.solo[data-tab="results"] .history-close-btn {
 }
 
 /* 设置 tab：隐藏计时区域，全屏显示 settings panel */
+body.solo[data-tab="settings"] #player-top,
 body.solo[data-tab="settings"] #player-bottom,
 body.solo[data-tab="settings"] .middle-bar,
-body.solo[data-tab="settings"] .back-btn {
+body.solo[data-tab="settings"] .back-btn,
+body.solo[data-tab="settings"] .wca-corner {
     display: none !important;
 }
 
