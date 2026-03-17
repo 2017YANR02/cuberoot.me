@@ -12,6 +12,13 @@ var thB = null;
 
 // 每个 seed 的目标平均值
 var targetAvgs = {};
+// NOTE: 供 chart.js 读取目标平均值
+export function getTargetAvg(seedIdx) { return targetAvgs[seedIdx] || 0; }
+// NOTE: 供 input_grid.js 设置目标平均值
+export function setTargetAvg(seedIdx, val) {
+    targetAvgs[seedIdx] = val;
+    notify(); // NOTE: 触发图表和表格重绘
+}
 
 export function init() {
     tbodyEl = document.getElementById('calc-tbody');
@@ -91,15 +98,10 @@ export function render() {
         html += '<td class="' + cls1 + '">' + s1 + '</td></tr>';
     }
 
-    // NOTE: tavg 目标平均输入行（Mo3 模式下隐藏阈值行）
+    // NOTE: 阈值行（数据来源于 targetAvgs，由 input_grid 的 Target Avg 输入框设置）
     if (!mo3) {
         var tavg0 = targetAvgs[state.seedOn] || 0;
         var tavg1 = targetAvgs[state.seedOn + 1] || 0;
-        var tvStr0 = tavg0 > 0 ? formatTime(tavg0) : '';
-        var tvStr1 = tavg1 > 0 ? formatTime(tavg1) : '';
-        html += '<tr style="background:#d4e6d4"><td>Target Avg</td>';
-        html += '<td><input class="tavg-input" id="tavg-input-0" value="' + tvStr0 + '" placeholder="e.g. 5.00"></td>';
-        html += '<td><input class="tavg-input" id="tavg-input-1" value="' + tvStr1 + '" placeholder="e.g. 5.00"></td></tr>';
 
         // 阈值行
         var th0 = tavg0 > 0 ? CalcEngine.computeThresholds(t0, tavg0) : null;
@@ -115,16 +117,4 @@ export function render() {
     }
 
     tbodyEl.innerHTML = html;
-
-    // 绑定 tavg 输入事件
-    var tavgInput0 = document.getElementById('tavg-input-0');
-    var tavgInput1 = document.getElementById('tavg-input-1');
-    if (tavgInput0) tavgInput0.addEventListener('change', function () {
-        targetAvgs[state.seedOn] = textToTime(tavgInput0.value);
-        render();
-    });
-    if (tavgInput1) tavgInput1.addEventListener('change', function () {
-        targetAvgs[state.seedOn + 1] = textToTime(tavgInput1.value);
-        render();
-    });
 }
