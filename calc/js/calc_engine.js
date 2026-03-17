@@ -363,6 +363,52 @@ export const CalcEngine = {
         return result;
     },
 
+    // NOTE: 合并阈值 — 将互斥的 WPA/BPA 合并为单一幽灵柱数据
+    // 返回 { value: cs, type: 'safe'|'conditional'|'impossible'|'any', slotIndex: 3|4 }
+    // slotIndex: 幽灵柱应放在第几个柱位（0-indexed）
+    // safe = WPA 有值（绿色，即使第 5 把 DNF 也达标）
+    // conditional = BPA 有值（黄色，需第 5 把发挥好）
+    // any = 无上限（绿色）
+    // impossible = 不可能达标（红色）
+    getGhostBar(times, tavg) {
+        if (!tavg || tavg <= 0 || tavg >= DNF_VALUE) return null;
+
+        var filled = times.filter(t => t > 0 && t < DNF_VALUE);
+        if (filled.length < 3 || filled.length >= times.length) return null;
+
+        var th = this.computeThresholds(times, tavg);
+        if (!th) return null;
+
+        if (filled.length === 3) {
+            // 第 4 柱的幽灵柱
+            if (th.t4wpa !== undefined && th.t4wpa !== null) {
+                // WPA 有值 → safe（即使第 5 把 DNF 也行）
+                return th.t4wpa >= DNF_VALUE
+                    ? { value: DNF_VALUE, type: 'any', slotIndex: 3 }
+                    : { value: th.t4wpa, type: 'safe', slotIndex: 3 };
+            }
+            if (th.t4bpa !== undefined && th.t4bpa !== null) {
+                // BPA 有值 → conditional（需第 5 把好）
+                return th.t4bpa >= DNF_VALUE
+                    ? { value: DNF_VALUE, type: 'any', slotIndex: 3 }
+                    : { value: th.t4bpa, type: 'conditional', slotIndex: 3 };
+            }
+            return { value: 0, type: 'impossible', slotIndex: 3 };
+        }
+
+        if (filled.length === 4) {
+            // 第 5 柱的幽灵柱
+            if (th.t5 !== undefined && th.t5 !== null) {
+                return th.t5 >= DNF_VALUE
+                    ? { value: DNF_VALUE, type: 'any', slotIndex: 4 }
+                    : { value: th.t5, type: 'safe', slotIndex: 4 };
+            }
+            return { value: 0, type: 'impossible', slotIndex: 4 };
+        }
+
+        return null;
+    },
+
     // NOTE: 委托给统一的 formatTime
     formatTime: (cs) => formatTime(cs),
 };
