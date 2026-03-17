@@ -33,6 +33,19 @@
     <!-- NOTE: 返回按钮（固定左上角，不受旋转影响） -->
     <a href="../" class="back-btn" aria-label="Back">‹</a>
 
+    <!-- NOTE: WCA 登录区域（左上角，简洁纯文字） -->
+    <div class="wca-corner" id="wca-corner">
+        <div id="wca-login-row">
+            <button id="btn-wca-login" class="wca-corner-btn" data-i18n="battle.login">Login</button>
+        </div>
+        <div id="wca-user-row" style="display:none">
+            <img id="wca-avatar" class="wca-corner-avatar" src="" alt="">
+            <span id="wca-name" class="wca-corner-name"></span>
+            <button id="btn-wca-sync" class="wca-corner-action" title="Sync">↻</button>
+            <button id="btn-wca-logout" class="wca-corner-action" title="Logout">✕</button>
+        </div>
+    </div>
+
     <!-- NOTE: 旋转 180° 后用户从对面看，HTML 顺序必须反转才能匹配 Player 1 的视觉顺序 -->
     <div id="player-top" class="player-area rotated">
         <div id="scramble-1" class="scramble-text">
@@ -111,33 +124,33 @@
                 <button id="settings-close" class="settings-x-btn" title="Close">✕</button>
             </div>
 
-            <!-- NOTE: Solo/1v1 模式切换 -->
+            <!-- NOTE: Solo/1v1 模式切换 — 分段选择器 -->
             <div class="settings-group">
                 <div class="settings-label">MODE</div>
-                <div class="setting-item toggle-row">
-                    <span>Solo Mode</span>
-                    <label class="switch">
-                        <input type="checkbox" id="toggle-mode">
-                        <span class="slider round"></span>
-                    </label>
+                <div class="mode-seg" id="mode-seg">
+                    <button class="mode-seg-btn active" data-mode="solo" data-i18n="battle.solo_mode">单人</button>
+                    <button class="mode-seg-btn" data-mode="1v1" data-i18n="battle.1v1_mode">双人</button>
                 </div>
             </div>
 
-            <!-- NOTE: WCA 账号（仅 Solo 模式） -->
-            <div class="settings-group solo-setting">
-                <div class="settings-label">WCA ACCOUNT</div>
-                <div class="setting-item toggle-row" id="wca-login-row">
-                    <button id="btn-wca-login" class="history-action-btn" style="width:100%">🔐 Login with WCA</button>
+            <!-- NOTE: 计时器设置（单双人都显示） -->
+            <div class="settings-group">
+                <div class="settings-label" data-i18n="battle.timer_settings_label">TIMER</div>
+                <div class="setting-item toggle-row">
+                    <span data-i18n="battle.timer_precision">Timer Precision</span>
+                    <select id="select-precision" class="settings-select">
+                        <option value="3">0.001s</option>
+                        <option value="2">0.01s</option>
+                        <option value="1">0.1s</option>
+                        <option value="0">1s</option>
+                    </select>
                 </div>
-                <div class="setting-item toggle-row" id="wca-user-row" style="display:none">
-                    <img id="wca-avatar" style="width:24px;height:24px;border-radius:50%;object-fit:cover;border:1px solid #555" src="" alt="">
-                    <span id="wca-name" style="flex:1;color:#ccc;font-size:0.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
-                    <button id="btn-wca-sync" class="history-action-btn" title="Sync">
-                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
-                            <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>
-                        </svg>
-                    </button>
-                    <button id="btn-wca-logout" class="history-action-btn" title="Logout">❌</button>
+                <div class="setting-item toggle-row">
+                    <span data-i18n="battle.start_delay">Start Delay</span>
+                    <span id="start-delay-value" class="delay-value">0.30 s</span>
+                </div>
+                <div class="setting-item">
+                    <input type="range" id="start-delay-slider" class="settings-slider" min="0" max="1000" step="50" value="300">
                 </div>
             </div>
 
@@ -323,7 +336,7 @@
     <!-- ===== 底部导航栏（Solo 模式，仿 DCTimer） ===== -->
     <nav id="bottom-nav" class="bottom-nav">
         <button class="nav-tab active" data-tab="timer">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a1 1 0 0 0-2 0V3a1 1 0 0 0-2 0V2a1 1 0 0 0-2 0v1a1 1 0 0 0-2 0v8l-1.8-2.4a1.2 1.2 0 0 0-2 1.2L10 18c0 2 1.8 4 5 4h1c3 0 5-2 5-5v-5a1 1 0 0 0-2 0z"/></svg>
+            <img src="icon_timer.png" width="22" height="22" alt="Timer" class="nav-tab-icon">
             <span data-i18n="battle.tab_timer">计时</span>
         </button>
         <button class="nav-tab" data-tab="results">
