@@ -23,7 +23,9 @@ var currentValue = 0;        // 当前选中值 (centiseconds)
 var step = 1;                // 当前步进 (centiseconds)
 var offset = 0;              // 当前滚动偏移 (px)
 var onChange = null;          // 值变更回调
+var onConfirm = null;        // 点击高亮区域确认选择的回调
 var anchorCell = null;       // 当前锚定的 cell DOM 元素
+var hideTimer = null;        // hide() 延迟关闭的 timer ID
 
 // 触摸跟踪
 var touchStartY = 0;
@@ -66,8 +68,11 @@ export function init() {
     // NOTE: 点击中央高亮区域（当前值）时隐藏滚筒并使输入框失焦
     highlightEl.addEventListener('click', function(e) {
         e.stopPropagation();
+        // NOTE: 保存回调引用 — hide() 会清除 onConfirm
+        var confirmCb = onConfirm;
         hide();
-        if (anchorCell) anchorCell.blur();
+        if (confirmCb) confirmCb();
+        else if (anchorCell) anchorCell.blur();
     });
     // NOTE: 移动端 touchstart 的 preventDefault 阻止了 click 事件，
     // 需要用 touchend 检测轻触（移动 < 5px）来隐藏滚筒
@@ -76,8 +81,10 @@ export function init() {
         var dy = Math.abs(touch.clientY - touchStartY);
         if (dy < 5) {
             e.stopPropagation();
+            var confirmCb = onConfirm;
             hide();
-            if (anchorCell) anchorCell.blur();
+            if (confirmCb) confirmCb();
+            else if (anchorCell) anchorCell.blur();
         }
     });
     viewport.appendChild(highlightEl);
@@ -122,9 +129,13 @@ export function init() {
 
 // ── 显示/隐藏 ──
 
-export function show(value, cellEl, callback) {
+export function show(value, cellEl, callback, confirmCallback) {
+    // NOTE: 清除旧的 hide 延迟 — 防止前一次 hide() 的 setTimeout 干掉新弹出的滚筒
+    if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+
     currentValue = value;
     onChange = callback;
+    onConfirm = confirmCallback || null;
     anchorCell = cellEl;
 
     // 固定步进
@@ -143,11 +154,13 @@ export function hide() {
     cancelAnimation();
     pickerEl.classList.remove('drum-visible');
     pickerEl.classList.add('drum-hidden');
-    setTimeout(function() {
+    hideTimer = setTimeout(function() {
+        hideTimer = null;
         pickerEl.style.display = 'none';
         pickerEl.classList.remove('drum-hidden');
     }, 150);
     onChange = null;
+    onConfirm = null;
     anchorCell = null;
 }
 
