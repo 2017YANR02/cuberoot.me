@@ -7,6 +7,7 @@ import {
 import {
     state, updateTime, notify, solveCount
 } from './state.js';
+import * as drumPicker from './drum_picker.js';
 
 // NOTE: 当前聚焦的单元格 [player, solve]，-1 表示无聚焦
 var activeCell = [-1, -1];
@@ -88,6 +89,12 @@ export function init(gridContainer) {
         numpadGrid.addEventListener('touchend', guardedHandler);
         numpadGrid.addEventListener('click', guardedHandler);
     }
+
+    // NOTE: 初始化滚筒选择器
+    var drumContainer = document.getElementById('drum-picker-container');
+    if (drumContainer) {
+        drumPicker.init(drumContainer);
+    }
 }
 
 // ── 创建输入元素 ──
@@ -142,6 +149,18 @@ function createTimeCell(p, t) {
         activeCell = [p, t];
         input.select();
         syncNumpadDisplay();
+        // NOTE: 聚焦已有值的 cell 时显示滚筒选择器
+        var rawVal = state.times[state.seedOn + p][t];
+        if (rawVal > 0 && rawVal < DNF_VALUE) {
+            drumPicker.show(rawVal, function(newVal) {
+                // 滚筒值变更回调 — 更新 state 和 cell 显示
+                recordAndUpdate(state.seedOn + p, t, newVal);
+                cells[p][t].value = formatTime(newVal);
+                syncNumpadDisplay();
+            });
+        } else {
+            drumPicker.hide();
+        }
     });
     input.addEventListener('blur', () => {
         // NOTE: 延迟检测 — 如果焦点转移到另一个格子则不触发保存（由导航逻辑处理）
@@ -150,6 +169,7 @@ function createTimeCell(p, t) {
                 saveCell(p, t);
                 activeCell = [-1, -1];
                 syncNumpadDisplay();
+                drumPicker.hide();
             }
         }, 50);
     });

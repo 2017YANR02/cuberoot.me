@@ -564,3 +564,137 @@ video {
 .rand-info:hover::after {
     opacity: 1;
 }
+
+/* ── 滚筒选择器（iOS 风格） ── */
+
+.drum-picker {
+    max-width: 400px;
+    margin: 10px auto 0;
+    padding: 0 12px;
+    transition: opacity 0.2s, transform 0.2s;
+}
+
+.drum-picker.drum-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.drum-picker.drum-hidden {
+    opacity: 0;
+    transform: translateY(10px);
+}
+
+.drum-viewport {
+    position: relative;
+    height: 280px; /* 7 项 × 40px */
+    overflow: hidden;
+    border-radius: 12px;
+    background: #1a1a1a;
+    /* NOTE: touch-action: none 让滚筒完全接管触摸 */
+    touch-action: none;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.drum-viewport:active {
+    cursor: grabbing;
+}
+
+.drum-wheel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.drum-item {
+    position: absolute;
+    width: 100%;
+    height: 40px;
+    line-height: 40px;
+    text-align: center;
+    font-size: 24px;
+    font-weight: 600;
+    font-family: 'Helvetica Neue', Helvetica, sans-serif;
+    color: #fff;
+    /* NOTE: 由 JS 动态设置 transform + opacity */
+    will-change: transform, opacity;
+    pointer-events: none;
+    top: 50%;
+    margin-top: -20px; /* 居中对齐 = height / 2 */
+}
+
+/* NOTE: 中央高亮条 — 标记选中值 */
+.drum-highlight {
+    position: absolute;
+    top: 50%;
+    left: 8px;
+    right: 8px;
+    height: 42px;
+    margin-top: -21px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    pointer-events: none;
+}
+
+/* NOTE: 上下渐变遮罩 — 模拟透视消失感 */
+.drum-mask {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 40%;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.drum-mask-top {
+    top: 0;
+    background: linear-gradient(to bottom, #1a1a1a 0%, transparent 100%);
+}
+
+.drum-mask-bottom {
+    bottom: 0;
+    background: linear-gradient(to top, #1a1a1a 0%, transparent 100%);
+}
+
+/* ── 步进按钮组 ── */
+
+.drum-steps {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 0;
+}
+
+.drum-step-btn {
+    padding: 6px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'Helvetica Neue', Helvetica, sans-serif;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    background: #333;
+    color: #aaa;
+    cursor: pointer;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.drum-step-btn:hover {
+    background: #444;
+    color: #fff;
+}
+
+.drum-step-active {
+    background: #3B6978;
+    color: #fff;
+    border-color: #4a8a9c;
+}
