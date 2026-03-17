@@ -1,7 +1,7 @@
 // NOTE: URL 状态同步 — 保持 URL 参数格式向后兼容
 // save() 内置 debounce 防止秒表运行时高频调用
 
-import { state, updateSort, DEFAULT_TITLES, defaultCompName } from './state.js';
+import { state, updateSort, DEFAULT_TITLES, defaultCompName, solveCount, resizeTimes } from './state.js';
 import { textToTime, formatTime } from './calc_engine.js';
 
 var debounceTimer = null;
@@ -19,19 +19,21 @@ function doSave() {
     var curLang = new URLSearchParams(window.location.search).get('lang');
     if (curLang) params.set('lang', curLang);
     params.set('comp', state.compName);
+    if (state.event) params.set('event', state.event);
 
     for (var i = 0; i < state.names.length; i++) {
         params.set('n' + i, state.names[i]);
     }
+    // NOTE: 只保存 solveCount 个值（Mo3=3，Ao5=5），避免尾部多余的 0
+    var sc = solveCount();
     for (var i = 0; i < state.times.length; i++) {
-        var t = state.times[i];
+        var t = state.times[i].slice(0, sc);
         var hasData = t.some(function (v) { return v > 0; });
         if (hasData) {
             params.set('t' + i, t.join(','));
         }
     }
     if (state.seedOn > 0) params.set('seed', state.seedOn);
-    if (state.event && state.event !== '333') params.set('event', state.event);
 
     history.replaceState(null, '', '?' + params.toString());
 }
@@ -69,5 +71,7 @@ export function load() {
     if (params.has('seed')) state.seedOn = parseInt(params.get('seed')) || 0;
     if (params.has('event')) state.event = params.get('event');
 
-    updateSort();
+    // NOTE: Mo3 项目 times 数组必须截断为 3 元素（getAverage 用 arr.length 判断 Mo3/Ao5）
+    // resizeTimes 内部已调用 updateSort
+    resizeTimes(solveCount());
 }

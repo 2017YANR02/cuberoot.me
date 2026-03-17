@@ -44,4 +44,4 @@ iOS 移动端禁用页面缩放需要**三层防御**，因为双击（double-ta
 
 对于简单的单点修改（如替换首页卡片图标），**先用 DevTools Inspect 锁定目标 DOM 的特征（如特有的 class、id 或 data 属性），然后直接全局搜索这些特征去修改源码**。这比猜测组件的渲染逻辑或逐层阅读代码要快几十倍。DevTools 是人类开发者最高效的“透视眼”。
 
-i18n 的 `_applySolverLabels()` 用 `el.textContent = map[text]` 做全局文本替换，会**销毁目标元素内所有子节点**（`<img>`、`<svg>` 等）。凡是含子元素的 `<button>`/`<label>`/`<span>`，如果其 `textContent` 恰好命中翻译映射表中的某个 key，子元素就会被静默删除。防御：对含子元素的交互元素加 `translate="no"` 或 `data-i18n`，让它豁免于全局扫描；翻译由内部的 `<span data-i18n="...">` 专门负责。
+Pointer Events 状态机的两个杀手级陷阱：① `pointercancel` 触发后**不会再有 `pointerup`**（W3C spec），所以 cancel 处理函数必须也执行状态转换逻辑（如 `playerUp()`），否则状态机会卡死在中间态（如绿灯/canStart）。② 状态重置函数（如 `resetForNextRound`）**绝不能清除 `pointerId`**——此时用户手指可能还在屏幕上，清除后 `pointerup` 的 ID 检查会失败，`playerUp` 永远不被调用。`pointerId` 的生命周期只应由 pointer 事件处理函数本身管理。
