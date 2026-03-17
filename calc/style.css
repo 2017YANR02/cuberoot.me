@@ -209,6 +209,28 @@ body {
     transition: border-color 0.2s;
 }
 
+/* NOTE: wrapper 容器 — 为 WR badge 提供定位参考 */
+.time-cell-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+/* NOTE: WR 徽章 — 黑底白字，定位在 input 右上角 */
+.wr-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: #D32F2F;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 4px;
+    border-radius: 3px;
+    line-height: 1.3;
+    pointer-events: none;
+    z-index: 5;
+}
+
 .time-cell:focus {
     border-color: #FF8080;
     box-shadow: 0 0 0 2px rgba(255, 128, 128, 0.3);

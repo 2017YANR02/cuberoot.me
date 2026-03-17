@@ -721,13 +721,15 @@ function handlePointerUp(playerId, e) {
 }
 
 /**
- * NOTE: 移动端浏览器接管手势时会触发 pointercancel，
- * 必须清除 pointerId，否则该区域永远无法再接收新触摸
+ * NOTE: 移动端浏览器接管手势时会触发 pointercancel（而非 pointerup），
+ * 必须清除 pointerId 并调用 playerUp，否则 canStart 状态会卡死
+ * （spec: pointercancel 后不会再触发 pointerup）
  */
 function handlePointerCancel(playerId, e) {
     const p = state.players[playerId];
     if (p.pointerId !== e.pointerId) return;
     p.pointerId = null;
+    playerUp(playerId);
 }
 
 // ===== 键盘事件处理（桌面端） =====

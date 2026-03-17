@@ -118,6 +118,8 @@ body:not(.solo) .wca-corner {
     position: relative;
     /* NOTE: 防止触摸时浏览器默认滚动/缩放行为 */
     touch-action: none;
+    /* NOTE: 禁用移动端默认的蓝色触摸高亮 */
+    -webkit-tap-highlight-color: transparent;
     cursor: pointer;
     padding: 12px;
     /* NOTE: 状态变化时背景色平滑过渡 */
