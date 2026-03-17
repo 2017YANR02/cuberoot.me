@@ -364,11 +364,14 @@
                 svgEl('path', { d: lineD, fill: 'none', stroke: p.color, 'stroke-width': '2.5' }, svg);
             });
 
-            // X 轴标签
-            for (var v = Math.ceil(plotMin * 5) / 5; v <= plotMax; v += 0.4) {
-                var lx = PAD.l + ((v - plotMin) / (plotMax - plotMin)) * chartW;
+            // X 轴标签 — nice ticks（与 histogram 一致）
+            var kdeRange = plotMax - plotMin;
+            var kdeTickStep = kdeRange > 5 ? 1.0 : 0.5;
+            var kdeTickStart = Math.ceil(plotMin / kdeTickStep) * kdeTickStep;
+            for (var tv = kdeTickStart; tv <= plotMax + 0.001; tv += kdeTickStep) {
+                var lx = PAD.l + ((tv - plotMin) / (plotMax - plotMin)) * chartW;
                 svgEl('text', { x: lx, y: PAD.t + chartH + 18, fill: '#aaa', 'font-size': '12',
-                    'text-anchor': 'middle' }, svg).textContent = v.toFixed(1);
+                    'text-anchor': 'middle' }, svg).textContent = tv.toFixed(1);
             }
 
             axisLabels('Density', '密度');
