@@ -105,7 +105,7 @@ export function init(gridContainer) {
         // NOTE: 勾选框 — 控制是否启用该选手的时间输入
         var cb = document.createElement('input');
         cb.type = 'checkbox';
-        cb.checked = true;
+        cb.checked = (p === 0); // NOTE: 默认只有 Player A 勾选
         cb.className = 'player-toggle';
         cb.dataset.player = p;
         cb.addEventListener('change', onTogglePlayer);
@@ -113,6 +113,15 @@ export function init(gridContainer) {
 
         gridContainer.appendChild(row);
     }
+
+    // NOTE: Player B 默认不勾选，初始化时禁用所有 Player B 格子
+    var initN = solveCount();
+    for (var t = 0; t < initN; t++) {
+        cells[1][t].disabled = true;
+        cells[1][t].style.opacity = '0.3';
+    }
+    tavgCells[1].disabled = true;
+    tavgCells[1].style.opacity = '0.3';
 
     // NOTE: 全局键盘监听（Enter/Tab/Escape/Backspace/Delete/Space）
     window.addEventListener('keydown', onKeyDown);
@@ -394,6 +403,14 @@ function onWheel(e, p, t) {
 // NOTE: 勾选框切换 — 启用/禁用该行所有时间格（含 Target Avg 格）
 function onTogglePlayer(e) {
     var p = parseInt(e.target.dataset.player);
+    // NOTE: 不允许两行都不选 — 至少保留一个
+    if (!e.target.checked) {
+        var enabledCount = state.playerEnabled.filter(function(v) { return v; }).length;
+        if (enabledCount <= 1) {
+            e.target.checked = true; // 还原勾选
+            return;
+        }
+    }
     var disabled = !e.target.checked;
     state.playerEnabled[p] = e.target.checked;
     var n = solveCount();
