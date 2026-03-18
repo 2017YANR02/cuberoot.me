@@ -108,9 +108,8 @@ export function render() {
     // 计算图表参数
     computeGridParams();
 
-    // 清空并重绘
+    // 清空并重绘（barGroup 由 drawBars 自行管理复用）
     clearGroup(gridGroup);
-    clearGroup(barGroup);
     clearGroup(statsGroup);
     clearGroup(avgGroup);
     clearGroup(topTextGroup);
@@ -608,6 +607,7 @@ function drawGhostBars() {
 
 function drawBars() {
     var bm = 7; // 柱内边距
+    var usedKeys = {}; // NOTE: 追踪本轮使用的 rect，用于清理多余元素
 
     for (var t = 0; t < solveCount(); t++) {
         var minYs = [0, 0];
@@ -638,14 +638,45 @@ function drawBars() {
                 ? maxY - bm * 2 - minY  // 有截断
                 : maxY - minY;
 
-            // 柱子矩形
-            barGroup.appendChild(createSvgElement('rect', {
-                x: bx, y: minY, width: bw, height: Math.max(0, barHeight),
-                fill: SHADES[p], rx: 2,
-                class: 'chart-bar',
-                'data-player': p, 'data-slot': t,
-            }));
+            var key = p + '-' + t;
+            usedKeys[key] = true;
+
+            // NOTE: 复用已有 rect 元素；宽度/位置变化时用 Web Animations API 做过渡
+            // appendChild 会将已有元素移到末尾，保证 pOrder 决定 SVG z-order
+            var existing = barGroup.querySelector('.chart-bar[data-player="' + p + '"][data-slot="' + t + '"]');
+            if (existing) {
+                var oldW = parseFloat(existing.getAttribute('width'));
+                var oldX = parseFloat(existing.getAttribute('x'));
+                existing.setAttribute('y', minY);
+                existing.setAttribute('height', Math.max(0, barHeight));
+                existing.setAttribute('x', bx);
+                existing.setAttribute('width', bw);
+                barGroup.appendChild(existing); // NOTE: 移到末尾维持正确 z-order
+
+                // NOTE: 宽度或 X 变化时播放过渡动画（内外翻转）
+                if (Math.abs(oldW - bw) > 0.5 || Math.abs(oldX - bx) > 0.5) {
+                    existing.animate([
+                        { width: oldW + 'px', x: oldX + 'px' },
+                        { width: bw + 'px', x: bx + 'px' }
+                    ], { duration: 150, easing: 'ease' });
+                }
+            } else {
+                barGroup.appendChild(createSvgElement('rect', {
+                    x: bx, y: minY, width: bw, height: Math.max(0, barHeight),
+                    fill: SHADES[p], rx: 2,
+                    class: 'chart-bar',
+                    'data-player': p, 'data-slot': t,
+                }));
+            }
         }
+    }
+
+    // NOTE: 清理本轮不再需要的旧 rect（如选手被禁用）
+    var allBars = barGroup.querySelectorAll('.chart-bar');
+    for (var j = 0; j < allBars.length; j++) {
+        var el = allBars[j];
+        var k = el.getAttribute('data-player') + '-' + el.getAttribute('data-slot');
+        if (!usedKeys[k]) el.remove();
     }
 
     // NOTE: 柱顶成绩标签 — 在每根柱子上方显示对应成绩
