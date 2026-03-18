@@ -27,7 +27,8 @@ var suppressDrumOnFocus = false;
 
 // NOTE: 根据文字长度自适应缩小字号，防止长时间格式（如 1:10.10）溢出
 function fitFont(input) {
-    var len = input.value.length;
+    // NOTE: 去掉括号计算长度，避免 Ao5 括号标注影响字号
+    var len = input.value.replace(/[()]/g, '').length;
     // 5 字符及以下用默认字号（CSS 控制），6+ 字符逐级缩小
     if (len <= 5) {
         input.style.fontSize = '';
@@ -684,13 +685,38 @@ function syncNumpadDisplay() {
 export function refresh() {
     compNameInput.value = state.compName;
     var n = solveCount();
+    // NOTE: Ao5 括号标注 — 标记最好/最坏成绩的索引
+    var mo3 = (n === 3);
+
     for (var p = 0; p < 2; p++) {
+        // NOTE: 找到 Ao5 的 best/worst 索引（仅当 5 把全部有效时标注）
+        var bestIdx = -1, worstIdx = -1;
+        if (!mo3) {
+            var allFilled = true;
+            for (var c = 0; c < n; c++) {
+                if (state.times[state.seedOn + p][c] <= 0) { allFilled = false; break; }
+            }
+            if (allFilled) {
+                var bestVal = Infinity, worstVal = -1;
+                for (var c2 = 0; c2 < n; c2++) {
+                    var v = state.times[state.seedOn + p][c2];
+                    if (v < bestVal) { bestVal = v; bestIdx = c2; }
+                    if (v > worstVal) { worstVal = v; worstIdx = c2; }
+                }
+            }
+        }
+
         for (var t = 0; t < 5; t++) {
             if (t < n) {
                 var rawVal = state.times[state.seedOn + p][t];
-                cells[p][t].value = (rawVal > 0 && rawVal < DNF_VALUE)
+                var display = (rawVal > 0 && rawVal < DNF_VALUE)
                     ? formatTime(rawVal)
                     : (rawVal >= DNF_VALUE ? 'DNF' : '');
+                // NOTE: Ao5 括号标注 — 最好和最坏成绩加括号（WCA 惯例）
+                if (display && (t === bestIdx || t === worstIdx)) {
+                    display = '(' + display + ')';
+                }
+                cells[p][t].value = display;
                 fitFont(cells[p][t]);
                 cells[p][t].style.display = '';
             } else {
