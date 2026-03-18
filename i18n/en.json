@@ -164,6 +164,8 @@
         "no_solves": "No solves yet",
         "history": "History",
         "practice_calendar": "Practice Calendar",
-        "export_json": "Export JSON"
+        "export_json": "Export JSON",
+        "goal_label": "GOAL",
+        "goal_desc": "Target Ao5"
     }
 }

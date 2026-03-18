@@ -365,9 +365,7 @@ function saveCell(p, t) {
     // NOTE: 多盲得分模式用专用解析函数
     var val = isMbf() ? textToMbfScore(input.value) : textToTime(input.value);
     recordAndUpdate(state.seedOn + p, t, val);
-    // 回显格式化后的值
-    var rawVal = getCellVal(p, t);
-    input.value = (rawVal > 0 && rawVal < DNF_VALUE) ? formatTime(rawVal) : (rawVal >= DNF_VALUE ? 'DNF' : '');
+    // NOTE: 回显由 notify → refresh() 统一处理（含 Ao5 括号标注）
 }
 
 // NOTE: 导航到指定单元格
