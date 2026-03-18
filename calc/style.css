@@ -854,6 +854,11 @@ video {
 
 /* ── 柱子拖动交互 ── */
 
+/* NOTE: 拖动时标签可能超出 viewBox 上边界，需要可见 */
+.hth-chart {
+    overflow: visible;
+}
+
 /* NOTE: 选中态 — SVG 根加 .bar-selected 后，非活跃柱子降暗 */
 .hth-chart.bar-selected .chart-bar:not(.bar-active) {
     opacity: 0.35;
@@ -922,19 +927,4 @@ video {
     100% { transform: translate(-50%, -50%) scale(1); }
 }
 
-/* NOTE: 浮动数值气泡 — 深色圆角矩形，定位在 Handle 上方 */
-.bar-drag-tooltip {
-    position: absolute;
-    background: rgba(0, 0, 0, 0.88);
-    color: #fff;
-    font-size: 18px;
-    font-weight: 700;
-    font-family: Helvetica, sans-serif;
-    padding: 4px 12px;
-    border-radius: 8px;
-    white-space: nowrap;
-    pointer-events: none;
-    z-index: 101;
-    transform: translateX(-50%);
-    transition: top 0.05s linear;
-}
+
