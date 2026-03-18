@@ -51,21 +51,7 @@ export function initDrag() {
     // NOTE: Handle 上的拖动事件
     handleEl.addEventListener('pointerdown', onHandlePointerDown);
 
-    // NOTE: Handle 的 mouseenter/mouseleave 维持 hover 状态（防止闪烁）
-    handleEl.addEventListener('mouseenter', function() {
-        if (hoverDebounceTimer) {
-            clearTimeout(hoverDebounceTimer);
-            hoverDebounceTimer = null;
-        }
-    });
-    handleEl.addEventListener('mouseleave', function() {
-        if (!selected && hovered) {
-            hoverDebounceTimer = setTimeout(function() {
-                hoverDebounceTimer = null;
-                if (!selected) clearHover();
-            }, HOVER_DEBOUNCE);
-        }
-    });
+
 
     // NOTE: 点击空白区域取消选中（document 级别，低优先级）
     document.addEventListener('pointerdown', onDocumentPointerDown);
@@ -97,15 +83,15 @@ function resolveBarAtY(p, t, e) {
     // 内层柱子是值较小的（柱子较矮的那个）
     if (myVal <= otherVal) return { p: p }; // 当前已是内层，无需切换
 
-    // 当前命中的是外层（值更大），检查光标 Y 是否在内层柱顶以下
+    // 当前命中的是外层（值更大），检查光标是否在内层柱顶以下
+    // NOTE: 用屏幕坐标 + 5px 容差，避免 ns-resize 光标热点偏移导致边界误判
     var svg = getSvgEl();
-    var ctm = svg.getScreenCTM().inverse();
-    var svgY = ctm.b * e.clientX + ctm.d * e.clientY + ctm.f;
-    var innerTopY = valToYCap(otherVal); // 内层柱顶的 SVG Y
-
-    if (svgY >= innerTopY) {
-        // 光标在内层柱顶以下 — 重定向到内层
-        return { p: otherP };
+    var innerRect = svg.querySelector('.chart-bar[data-player="' + otherP + '"][data-slot="' + t + '"]');
+    if (innerRect) {
+        var innerBBox = innerRect.getBoundingClientRect();
+        if (e.clientY >= innerBBox.top - 5) {
+            return { p: otherP };
+        }
     }
     return { p: p };
 }
@@ -120,15 +106,24 @@ function onSvgPointerDown(e) {
     var bar = e.target.closest('.chart-bar');
     var label = e.target.closest('.chart-bar-label');
     var target = bar || label;
-    if (!target) return;
 
-    var p = parseInt(target.getAttribute('data-player'));
-    var t = parseInt(target.getAttribute('data-slot'));
-    if (isNaN(p) || isNaN(t)) return;
-
-    // NOTE: Both 模式 Y 坐标消歧 — 重叠区域强制选内层柱子
-    var resolved = resolveBarAtY(p, t, e);
-    p = resolved.p;
+    var p, t;
+    if (target) {
+        p = parseInt(target.getAttribute('data-player'));
+        t = parseInt(target.getAttribute('data-slot'));
+        if (isNaN(p) || isNaN(t)) return;
+        // NOTE: Both 模式 Y 坐标消歧 — 重叠区域强制选内层柱子
+        if (bar) {
+            var resolved = resolveBarAtY(p, t, e);
+            p = resolved.p;
+        }
+    } else if (hovered) {
+        // NOTE: 空白区域有 hover 时，使用 hovered 的柱子信息
+        p = hovered.player;
+        t = hovered.slot;
+    } else {
+        return;
+    }
 
     // 记录 pointerdown 坐标和时间
     dragStartX = e.clientX;
@@ -524,8 +519,16 @@ function createGhost(p, t, val) {
     var bm = 7;
     var fullW = BAR_W - 2 * bm;
 
-    // NOTE: Both 模式下内层柱缩窄
-    var isInner = (state.playerEnabled[0] && state.playerEnabled[1] && p === 1);
+    // NOTE: Both 模式下较矮柱（值较小 → SVG Y 更大）为内层，需缩窄
+    var isInner = false;
+    if (state.playerEnabled[0] && state.playerEnabled[1]) {
+        var otherP = 1 - p;
+        var otherVal = state.times[state.seedOn + otherP][t];
+        // 当前柱子值更小（更矮）→ 它是内层
+        if (otherVal > 0 && otherVal < DNF_VALUE && val < otherVal) {
+            isInner = true;
+        }
+    }
     var bw = isInner ? fullW * 0.55 : fullW;
     var bx = barX + bm + (fullW - bw) / 2;
 
@@ -606,50 +609,43 @@ export function onAfterRender() {
 // ── Phase 3：桌面端 hover ──
 
 // NOTE: 鼠标悬停柱子时自动显示 Handle（仅桌面端，触摸设备跳过）
-// HACK: hover 只检测 .chart-bar rect，不检测标签 — 标签文字太小且重叠时导致抖动
-var hoverDebounceTimer = null;
-var HOVER_DEBOUNCE = 80; // ms — 防止边界处快速横跳
 
 function onSvgMouseMove(e) {
     if (isTouch) return;       // 触摸设备不需要 hover
     if (dragging) return;      // 拖动中不处理 hover
     if (selected) return;      // 已有选中态时不覆盖
 
-    // NOTE: hover 只检测柱子 rect，不检测标签（标签 tap 仍可用）
+    // NOTE: hover 检测柱子 rect 和柱顶数字标签
     var bar = e.target.closest('.chart-bar');
+    var label = !bar ? e.target.closest('.chart-bar-label') : null;
+    var target = bar || label;
 
-    if (!bar) {
-        // 鼠标移出柱子 — 延迟隐藏（防抖）
-        if (hovered && !hoverDebounceTimer) {
-            hoverDebounceTimer = setTimeout(function() {
-                hoverDebounceTimer = null;
-                if (!selected) clearHover();
-            }, HOVER_DEBOUNCE);
-        }
+    if (!target) {
+        // NOTE: 空白区域保持上一个 hover 不变（只有离开 SVG 或移到另一根柱子才切换）
         return;
     }
 
-    // 鼠标在柱子上 — 取消延迟隐藏
-    if (hoverDebounceTimer) {
-        clearTimeout(hoverDebounceTimer);
-        hoverDebounceTimer = null;
-    }
 
-    var p = parseInt(bar.getAttribute('data-player'));
-    var t = parseInt(bar.getAttribute('data-slot'));
+    var p = parseInt(target.getAttribute('data-player'));
+    var t = parseInt(target.getAttribute('data-slot'));
     if (isNaN(p) || isNaN(t)) { clearHover(); return; }
 
-    // NOTE: Both 模式 Y 坐标消歧 — 重叠区域 hover 内层柱子
-    var resolved = resolveBarAtY(p, t, e);
-    p = resolved.p;
+    // NOTE: Y 坐标消歧只对柱子 rect 有意义；标签明确属于某个 player，不需要消歧
+    if (bar) {
+        var resolved = resolveBarAtY(p, t, e);
+        p = resolved.p;
+    }
 
     // 已经 hover 在同一个柱子上 — 不重复处理
     if (hovered && hovered.player === p && hovered.slot === t) return;
 
-    clearHover();
+    // NOTE: 切换 hover 时直接更新 class，不经过 clearHover 避免全亮闪一帧
+    var svg = getSvgEl();
+    var prevActive = svg.querySelector('.chart-bar.bar-active');
+    if (prevActive) prevActive.classList.remove('bar-active');
 
     var val = state.times[state.seedOn + p][t];
-    if (val <= 0 || val >= DNF_VALUE) return;
+    if (val <= 0 || val >= DNF_VALUE) { clearHover(); return; }
 
     hovered = { player: p, slot: t };
 
@@ -659,8 +655,7 @@ function onSvgMouseMove(e) {
     handleEl.style.pointerEvents = 'none';
     handleEl.classList.toggle('player-b', p === 1);
 
-    // NOTE: hover 时也降暗其他柱子
-    var svg = getSvgEl();
+    // NOTE: hover 时降暗其他柱子（svg class 可能已经有了，直接 add 无害）
     svg.classList.add('bar-selected');
     var barRect = svg.querySelector('.chart-bar[data-player="' + p + '"][data-slot="' + t + '"]');
     if (barRect) barRect.classList.add('bar-active');
@@ -674,11 +669,7 @@ function onSvgMouseLeave(e) {
     if (selected) return;  // 选中态不受 mouseleave 影响
     // NOTE: 鼠标移到 Handle 上时不清除 hover（否则会导致闪烁循环）
     if (handleEl && (handleEl.contains(e.relatedTarget) || handleEl === e.relatedTarget)) return;
-    // NOTE: 彻底离开 SVG — 立即清除，不需要延迟
-    if (hoverDebounceTimer) {
-        clearTimeout(hoverDebounceTimer);
-        hoverDebounceTimer = null;
-    }
+    // NOTE: 彻底离开 SVG — 立即清除
     clearHover();
 }
 
