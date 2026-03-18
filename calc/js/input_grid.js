@@ -324,7 +324,7 @@ function onWheel(e, p, t) {
 
 // ── 选手启用/禁用 ──
 
-// NOTE: 勾选框切换 — 启用/禁用该行所有时间格
+// NOTE: 勾选框切换 — 启用/禁用该行所有时间格（含 Target Avg 格）
 function onTogglePlayer(e) {
     var p = parseInt(e.target.dataset.player);
     var disabled = !e.target.checked;
@@ -334,6 +334,9 @@ function onTogglePlayer(e) {
         cells[p][t].disabled = disabled;
         cells[p][t].style.opacity = disabled ? '0.3' : '1';
     }
+    // NOTE: Target Avg 格跟随选手启用状态灰掉
+    tavgCells[p].disabled = disabled;
+    tavgCells[p].style.opacity = disabled ? '0.3' : '1';
     // NOTE: 触发图表重绘以隐藏/显示对应柱子
     notify();
 }
@@ -706,6 +709,11 @@ export function refresh() {
 
         for (var t = 0; t < 5; t++) {
             if (t < n) {
+                // NOTE: 跳过当前正在编辑的 activeCell — 防止中间 refresh
+                // 用 state 旧值覆盖用户编辑内容（如清空操作被还原）
+                if (activeCell[0] === p && activeCell[1] === t) {
+                    continue;
+                }
                 var rawVal = state.times[state.seedOn + p][t];
                 var display = (rawVal > 0 && rawVal < DNF_VALUE)
                     ? formatTime(rawVal)
