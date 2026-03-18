@@ -25,6 +25,10 @@ var TAP_DIST = 8;
 var TAP_TIME = 300;
 var pointerDownTime = 0;
 
+// NOTE: 桌面端 hover 状态
+var hovered = null;     // { player, slot } — 当前 hover 的柱子（仅桌面端）
+var isTouch = false;    // 是否触摸设备（hover 仅在非触摸时启用）
+
 // ── 初始化 ──
 
 export function initDrag() {
@@ -55,6 +59,16 @@ export function initDrag() {
 
     // NOTE: 点击空白区域取消选中（document 级别，低优先级）
     document.addEventListener('pointerdown', onDocumentPointerDown);
+
+    // NOTE: Phase 3 — 桌面端 hover 显示 Handle
+    svg.addEventListener('mousemove', onSvgMouseMove);
+    svg.addEventListener('mouseleave', onSvgMouseLeave);
+
+    // NOTE: Phase 3 — 滚轮精调（在选中态下可用）
+    svg.addEventListener('wheel', onSvgWheel, { passive: false });
+
+    // NOTE: 检测触摸设备 — 首次触摸后禁用 hover 逻辑
+    window.addEventListener('touchstart', function() { isTouch = true; }, { once: true });
 }
 
 // ── SVG pointerdown — 检测 tap 柱子 ──
@@ -113,10 +127,31 @@ function onSvgPointerDown(e) {
 // ── 选中/取消选中柱子 ──
 
 function selectBar(p, t, rectEl) {
-    // 如果点击已选中的同一个柱子 — 取消选中
-    if (selected && selected.player === p && selected.slot === t) {
-        deselect();
-        return;
+    // NOTE: Phase 2 Both 模式消歧 — 同一 slot 再次 tap 切换到另一个选手
+    var bothMode = state.playerEnabled[0] && state.playerEnabled[1];
+    if (selected && selected.slot === t) {
+        if (selected.player === p) {
+            // 点击已选中的柱子
+            if (bothMode) {
+                // Both 模式：切换到另一个选手的柱子
+                var otherP = 1 - p;
+                var otherVal = state.times[state.seedOn + otherP][t];
+                if (otherVal > 0 && otherVal < DNF_VALUE) {
+                    var otherRect = getSvgEl().querySelector(
+                        '.chart-bar[data-player="' + otherP + '"][data-slot="' + t + '"]'
+                    );
+                    if (otherRect) {
+                        deselect();
+                        doSelect(otherP, t, otherRect, otherVal);
+                        return;
+                    }
+                }
+            }
+            // 单人模式或另一选手无效 — 取消选中
+            deselect();
+            return;
+        }
+        // 同 slot 不同 player（直接切换）
     }
 
     // 先清除上一次选中
@@ -126,6 +161,13 @@ function selectBar(p, t, rectEl) {
     // NOTE: 空柱子和 DNF 不可拖动
     if (val <= 0 || val >= DNF_VALUE) return;
 
+    doSelect(p, t, rectEl, val);
+}
+
+// NOTE: 实际执行选中逻辑（抽取为独立函数供 selectBar 和 Both 消歧复用）
+function doSelect(p, t, rectEl, val) {
+    // NOTE: 从 hover 预览态转入正式选中态
+    hovered = null;
     selected = { player: p, slot: t, rectEl: rectEl };
 
     // NOTE: 添加 SVG class 实现视觉效果
@@ -179,10 +221,11 @@ function svgPointToContainer(svgX, svgY) {
     };
 }
 
-function positionHandleAndTooltip(val) {
-    if (!selected) return;
-    var p = selected.player;
-    var t = selected.slot;
+function positionHandleAndTooltip(val, overrideP, overrideT) {
+    // NOTE: 支持传入 p/t（hover 用）或从 selected 读取
+    var p = (overrideP !== undefined) ? overrideP : (selected ? selected.player : null);
+    var t = (overrideT !== undefined) ? overrideT : (selected ? selected.slot : null);
+    if (p === null || t === null) return;
 
     // 计算柱顶 SVG 坐标
     var barCenterX = BAR_START + t * STRIDE + BAR_W / 2;
@@ -404,4 +447,95 @@ export function onAfterRender() {
     } else {
         deselect();
     }
+}
+
+// ── Phase 3：桌面端 hover ──
+
+// NOTE: 鼠标悬停柱子时自动显示 Handle（仅桌面端，触摸设备跳过）
+function onSvgMouseMove(e) {
+    if (isTouch) return;       // 触摸设备不需要 hover
+    if (dragging) return;      // 拖动中不处理 hover
+    if (selected) return;      // 已有选中态时不覆盖
+
+    // 检测鼠标是否在柱子或标签上
+    var bar = e.target.closest('.chart-bar');
+    var label = e.target.closest('.chart-bar-label');
+    var target = bar || label;
+
+    if (!target) {
+        clearHover();
+        return;
+    }
+
+    var p = parseInt(target.getAttribute('data-player'));
+    var t = parseInt(target.getAttribute('data-slot'));
+    if (isNaN(p) || isNaN(t)) { clearHover(); return; }
+
+    // 已经 hover 在同一个柱子上 — 不重复处理
+    if (hovered && hovered.player === p && hovered.slot === t) return;
+
+    clearHover();
+
+    var val = state.times[state.seedOn + p][t];
+    if (val <= 0 || val >= DNF_VALUE) return;
+
+    hovered = { player: p, slot: t };
+
+    // NOTE: 显示 Handle（预览态，不添加 bar-selected class）
+    positionHandleAndTooltip(val, p, t);
+    handleEl.style.display = '';
+    tooltipEl.style.display = '';
+    handleEl.classList.toggle('player-b', p === 1);
+
+    // NOTE: cursor 提示可交互
+    var svg = getSvgEl();
+    svg.style.cursor = 'pointer';
+}
+
+function onSvgMouseLeave() {
+    if (isTouch) return;
+    if (selected) return;  // 选中态不受 mouseleave 影响
+    clearHover();
+}
+
+function clearHover() {
+    if (!hovered) return;
+    hovered = null;
+    if (!selected) {
+        handleEl.style.display = 'none';
+        tooltipEl.style.display = 'none';
+    }
+    var svg = getSvgEl();
+    if (svg) svg.style.cursor = '';
+}
+
+// ── Phase 3：滚轮精调 ──
+
+// NOTE: 选中态下滚轮 ±0.01s（Shift ±0.10s, Ctrl ±1.00s）
+function onSvgWheel(e) {
+    if (!selected) return;
+
+    e.preventDefault();
+
+    var p = selected.player;
+    var t = selected.slot;
+    var val = state.times[state.seedOn + p][t];
+    if (val <= 0 || val >= DNF_VALUE) return;
+
+    // 步进粒度
+    var step = 1; // 0.01s
+    if (state.event === '333fm' || isMbf()) {
+        step = 100; // FMC: 1步; 多盲: 1分
+    } else if (e.ctrlKey) {
+        step = 100; // 1.00s
+    } else if (e.shiftKey) {
+        step = 10;  // 0.10s
+    }
+
+    var dir = e.deltaY < 0 ? 1 : -1; // 向上滚 = 值增大
+    var newVal = Math.max(1, Math.min(val + dir * step, MAX_TIME_VALUE));
+    if (newVal === val) return;
+
+    // 写入 state 并触发全量重绘
+    updateTime(state.seedOn + p, t, newVal);
 }
