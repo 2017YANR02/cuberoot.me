@@ -52,6 +52,8 @@ var tavgCells = [null, null];
 var compNameInput = null;
 // NOTE: WR 徽章 DOM 引用 — wrBadges[p][t] 对应 player p 的第 t 个时间格的 WR badge
 var wrBadges = [[], []];
+// NOTE: 排名标签 DOM 引用 — rankLabels[p][t]
+var rankLabels = [[], []];
 
 // NOTE: Target Avg 的固定 DOM 列索引（始终在第 6 列，不随 solveCount 变化）
 var TAVG_T = 5;
@@ -90,6 +92,7 @@ export function init(gridContainer) {
             // NOTE: input 在 wrapper 的第一个子元素
             cells[p][t] = wrapper.querySelector('input');
             wrBadges[p][t] = wrapper.querySelector('.wr-badge');
+            rankLabels[p][t] = wrapper.querySelector('.sort-rank');
         }
 
         // NOTE: 第 6 列 — Target Avg，复用 createTimeCell 逻辑
@@ -263,6 +266,11 @@ function createTimeCell(p, t) {
         badge.textContent = 'WR';
         badge.style.display = 'none';
         wrapper.appendChild(badge);
+
+        // NOTE: 排名标签 — 左上角显示从快到慢的排序序号
+        var rankEl = document.createElement('span');
+        rankEl.className = 'sort-rank';
+        wrapper.appendChild(rankEl);
     }
 
     return wrapper;
@@ -737,13 +745,29 @@ export function refresh() {
         fitFont(tavgCells[p]);
     }
     syncNumpadDisplay();
-    // NOTE: 检测单次 WR — 显示/隐藏 WR badge
+    // NOTE: 检测单次 WR — 显示/隐藏 WR badge + 更新排名标签
     for (var p2 = 0; p2 < 2; p2++) {
-        for (var t2 = 0; t2 < 5; t2++) {
+        // NOTE: 收集有效成绩的索引和值，按值排序后分配排名 1~n
+        var ranked = [];
+        for (var t2 = 0; t2 < n; t2++) {
+            var val = state.times[state.seedOn + p2][t2];
             if (wrBadges[p2][t2]) {
-                var val = state.times[state.seedOn + p2][t2];
                 var show = val > 0 && val < DNF_VALUE && isWR(state.event, 'single', val);
                 wrBadges[p2][t2].style.display = show ? '' : 'none';
+            }
+            if (val > 0) ranked.push({ idx: t2, val: val });
+        }
+        // NOTE: DNF 值排最后
+        ranked.sort(function(a, b) { return a.val - b.val; });
+        for (var t3 = 0; t3 < 5; t3++) {
+            if (!rankLabels[p2][t3]) continue;
+            var pos = ranked.findIndex(function(r) { return r.idx === t3; });
+            if (pos >= 0) {
+                rankLabels[p2][t3].textContent = pos + 1;
+                rankLabels[p2][t3].style.display = '';
+            } else {
+                rankLabels[p2][t3].textContent = '';
+                rankLabels[p2][t3].style.display = 'none';
             }
         }
     }
