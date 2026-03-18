@@ -166,12 +166,18 @@ document.addEventListener('DOMContentLoaded', () => {
         updateProgressInfo(1, this.value);
     });
     // NOTE: ⓘ tooltip 触屏支持 — tap toggle，点击外部关闭
+    // 移动端注入 --tip-top CSS 变量，配合 position:fixed 避免 tooltip 溢出屏幕边界
     document.querySelectorAll('.rand-info').forEach(function(el) {
         el.addEventListener('click', function(e) {
             e.stopPropagation();
             var wasActive = el.classList.contains('active');
             document.querySelectorAll('.rand-info.active').forEach(function(a) { a.classList.remove('active'); });
-            if (!wasActive) el.classList.add('active');
+            if (!wasActive) {
+                // NOTE: 计算按钮底部坐标，tooltip 紧贴按钮下方显示
+                var rect = el.getBoundingClientRect();
+                el.style.setProperty('--tip-top', (rect.bottom + 8) + 'px');
+                el.classList.add('active');
+            }
         });
     });
     document.addEventListener('click', function() {

@@ -247,6 +247,11 @@ function createTimeCell(p, t) {
     }
 
     input.addEventListener('focus', () => {
+        // NOTE: 先保存上一个 activeCell — 防止逐字符清空后直接点击其他格子时
+        // 旧格子的 blur(50ms 延迟) 因 activeCell 已更新而跳过 saveCell，导致旧值复活
+        if (activeCell[0] >= 0 && activeCell[1] >= 0) {
+            saveCell(activeCell[0], activeCell[1]);
+        }
         activeCell = [p, t];
         input.select();
         syncNumpadDisplay();
