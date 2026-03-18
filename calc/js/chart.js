@@ -102,7 +102,7 @@ export function init(container) {
 
 // ── 主渲染入口 ──
 
-export function render() {
+export function render(opts) {
     if (!svgEl) return;
 
     // 计算图表参数
@@ -121,8 +121,10 @@ export function render() {
     drawStats();
     drawAverages();
 
-    // NOTE: 根据实际渲染内容动态调整 viewBox，确保图表居中
-    updateViewBox();
+    // NOTE: 拖动中跳过 viewBox 重算，防止 bbox 微变导致图表水平晃动
+    if (!opts || !opts.skipViewBox) {
+        updateViewBox();
+    }
 
     // NOTE: WR avg 庆祝特效 — 第 5 把填完且 avg 达成 WR 时触发 confetti
     checkWRConfetti();
