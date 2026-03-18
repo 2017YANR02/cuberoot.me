@@ -525,7 +525,30 @@ body {
 #calc-section {
     max-width: 900px;
     margin: 0 auto;
-    padding: 20px;
+    padding: 8px 20px;
+}
+
+.stats-toggle {
+    display: block;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+    color: #3B6978;
+    cursor: pointer;
+    padding: 6px 16px;
+    border-radius: 6px;
+    background: rgba(59, 105, 120, 0.08);
+    transition: background 0.2s;
+    user-select: none;
+    list-style: none; /* 移除默认三角 */
+}
+
+.stats-toggle::-webkit-details-marker {
+    display: none;
+}
+
+.stats-toggle:hover {
+    background: rgba(59, 105, 120, 0.15);
 }
 
 #calc-table {
