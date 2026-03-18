@@ -121,6 +121,8 @@ const state = {
     startDelay: (() => { const v = localStorage.getItem(LS_PREFIX + 'startDelay'); return v !== null ? parseInt(v) : 300; })(),
     // NOTE: 用户选择显示的 Average 类型
     enabledAverages: JSON.parse(localStorage.getItem(LS_PREFIX + 'enabledAverages') || '[5, 12]'),
+    // NOTE: 目标 Ao5 时间（秒，用于进度条显示）
+    goalTime: parseFloat(localStorage.getItem(LS_PREFIX + 'goalTime')) || 0,
     // 当前打乱
     scramble: null,
     // 是否正在加载打乱
@@ -357,6 +359,16 @@ function init() {
         state.startDelay = parseInt(e.target.value);
         localStorage.setItem(LS_PREFIX + 'startDelay', state.startDelay);
         delayLabel.textContent = (state.startDelay / 1000).toFixed(2) + ' s';
+    });
+
+    // NOTE: Goal 目标时间输入
+    const goalInput = document.getElementById("goal-time-input");
+    if (state.goalTime > 0) goalInput.value = state.goalTime.toFixed(2);
+    goalInput.addEventListener("change", (e) => {
+        const val = parseFloat(e.target.value);
+        state.goalTime = (!isNaN(val) && val > 0) ? val : 0;
+        localStorage.setItem(LS_PREFIX + 'goalTime', state.goalTime);
+        renderSoloStats(0);
     });
 
     // NOTE: WCA Inspection 时长选择
@@ -2081,7 +2093,25 @@ function renderSoloStats(playerId) {
     line2Parts.push(`${solveCount - dnfCount}/${solveCount}`);
 
     const line2 = line2Parts.join(' │ ');
-    el.innerHTML = `<div class="solo-stats-display">${line1}${line1 ? '<br>' : ''}${line2}</div>`;
+
+    // NOTE: Goal 进度条（仅当用户设置了目标时间且有 ao5 时显示）
+    let goalHtml = '';
+    if (state.goalTime > 0 && h.length >= 5) {
+        const ao5 = computeAo5(h);
+        if (ao5 !== null && ao5 !== Infinity) {
+            const goalMs = state.goalTime * 1000;
+            // NOTE: 百分比 = goal / ao5 × 100（ao5 越接近 goal，进度越高）
+            const pct = Math.min(100, Math.round(goalMs / ao5 * 100));
+            const color = pct >= 100 ? '#4caf50' : (pct >= 80 ? '#ff9800' : '#8ab4f8');
+            const label = pct >= 100 ? '🎯 Goal reached!' : `${formatTimePlain(ao5)} → ${state.goalTime.toFixed(2)}`;
+            goalHtml = `<div class="goal-progress">
+                <div class="goal-bar" style="width: ${pct}%; background: ${color};"></div>
+                <span class="goal-label">${label}</span>
+            </div>`;
+        }
+    }
+
+    el.innerHTML = `<div class="solo-stats-display">${line1}${line1 ? '<br>' : ''}${line2}${goalHtml}</div>`;
 
     // NOTE: 为 ao 统计项绑定点击事件 → 弹出详情
     el.querySelectorAll('.stat-ao').forEach(span => {
@@ -2164,6 +2194,48 @@ function closeHistory() {
  * NOTE: 渲染成绩历史列表（最新在上）
  * 每条带 🗑️ 删除按钮，盲拧条目显示 memo 时间
  */
+/**
+ * NOTE: 构建单条成绩 HTML（从 renderHistory 循环体提取，供渐进式加载复用）
+ */
+function buildHistoryItemHtml(h, i, times, bestIdx, worstIdx, pbSet, rollingAo5) {
+    var entry = h[i];
+    var effTime = times[i];
+    var timeStr = effTime === Infinity ? 'DNF' : formatTimePlain(effTime);
+
+    var timeClass = 'h-time';
+    if (i === bestIdx) timeClass += ' h-best';
+    else if (i === worstIdx) timeClass += ' h-worst';
+    if (entry.penalty === '+2') timeClass += ' h-plus2';
+    else if (entry.penalty === 'dnf') timeClass += ' h-dnf';
+
+    var pbMark = pbSet.has(i) ? ' <span class="h-pb" title="PB">🏆</span>' : '';
+    var ao5 = rollingAo5[i];
+    var ao5Str = ao5 === null ? '' : (ao5 === Infinity ? 'DNF' : formatTimePlain(ao5));
+    var scramble = typeof entry === 'object' ? (entry.scramble || '') : '';
+    var dateStr = typeof entry === 'object' && entry.date ? formatRelativeDate(entry.date) : '';
+
+    var phaseStr = '';
+    if (entry.phases && entry.phases.length > 1) {
+        var labels = entry.phases.map(function(t, j) {
+            var delta = j === 0 ? t : t - entry.phases[j - 1];
+            var label = isBLD() && j === 0 ? 'memo' : 'P' + (j + 1);
+            return label + ':' + formatTimePlain(delta);
+        });
+        phaseStr = ' <span class="h-memo">[' + labels.join(' ') + ']</span>';
+    } else if (entry.memo && entry.memo > 0) {
+        phaseStr = ' <span class="h-memo">[memo: ' + formatTimePlain(entry.memo) + ']</span>';
+    }
+
+    return '<div class="history-item" data-idx="' + i + '">' +
+        '<span class="h-idx">' + (i + 1) + '.</span>' +
+        '<span class="' + timeClass + '">' + timeStr + phaseStr + pbMark + '</span>' +
+        '<span class="h-ao5">' + ao5Str + '</span>' +
+        '<span class="h-date">' + dateStr + '</span>' +
+        '<button class="h-delete" data-delidx="' + i + '" title="Delete">🗑️</button>' +
+        '<span class="h-scramble">' + scramble + '</span>' +
+    '</div>';
+}
+
 function renderHistory() {
     const h = state.players[0].solveHistory;
     const listEl = dom.historyList;
@@ -2216,53 +2288,16 @@ function renderHistory() {
         subXHtml += '</div>';
     }
 
-    // NOTE: 生成列表 HTML（最新在上）
+    // NOTE: 生成列表 HTML（最新在上，渐进式加载 — 初始 100 条）
+    const BATCH_SIZE = 100;
     let html = subXHtml;
-    for (let i = h.length - 1; i >= 0; i--) {
-        const entry = h[i];
-        const effTime = times[i]; // NOTE: 复用预计算的 times 数组
-        const timeStr = effTime === Infinity ? 'DNF' : formatTimePlain(effTime);
-
-        // CSS class 标记
-        let timeClass = 'h-time';
-        if (i === bestIdx) timeClass += ' h-best';
-        else if (i === worstIdx) timeClass += ' h-worst';
-        if (entry.penalty === '+2') timeClass += ' h-plus2';
-        else if (entry.penalty === 'dnf') timeClass += ' h-dnf';
-
-        // NOTE: PB 标记 — 使用预计算 Set（O(1) 查找）
-        const pbMark = pbSet.has(i) ? ' <span class="h-pb" title="PB">🏆</span>' : '';
-
-        // NOTE: 滚动 Ao5 — 使用预计算数组（O(1) 查找）
-        const ao5 = rollingAo5[i];
-        const ao5Str = ao5 === null ? '' : (ao5 === Infinity ? 'DNF' : formatTimePlain(ao5));
-
-        const scramble = typeof entry === 'object' ? (entry.scramble || '') : '';
-        // NOTE: 日期显示
-        const dateStr = typeof entry === 'object' && entry.date ? formatRelativeDate(entry.date) : '';
-
-        // NOTE: 多阶段分段显示
-        let phaseStr = '';
-        if (entry.phases && entry.phases.length > 1) {
-            const labels = entry.phases.map((t, j) => {
-                const delta = j === 0 ? t : t - entry.phases[j - 1];
-                const label = isBLD() && j === 0 ? 'memo' : `P${j + 1}`;
-                return `${label}:${formatTimePlain(delta)}`;
-            });
-            phaseStr = ` <span class="h-memo">[${labels.join(' ')}]</span>`;
-        } else if (entry.memo && entry.memo > 0) {
-            // NOTE: 兼容旧数据格式
-            phaseStr = ` <span class="h-memo">[memo: ${formatTimePlain(entry.memo)}]</span>`;
-        }
-
-        html += `<div class="history-item" data-idx="${i}">
-            <span class="h-idx">${i + 1}.</span>
-            <span class="${timeClass}">${timeStr}${phaseStr}${pbMark}</span>
-            <span class="h-ao5">${ao5Str}</span>
-            <span class="h-date">${dateStr}</span>
-            <button class="h-delete" data-delidx="${i}" title="Delete">🗑️</button>
-            <span class="h-scramble">${scramble}</span>
-        </div>`;
+    const renderEnd = Math.max(0, h.length - BATCH_SIZE); // NOTE: 首批渲染到的最小索引
+    for (let i = h.length - 1; i >= renderEnd; i--) {
+        html += buildHistoryItemHtml(h, i, times, bestIdx, worstIdx, pbSet, rollingAo5);
+    }
+    // NOTE: 如果还有更多成绩未渲染，显示"加载更多"按钮
+    if (renderEnd > 0) {
+        html += `<div class="load-more-wrapper"><button class="history-tool-btn" id="load-more-btn" data-next-end="${Math.max(0, renderEnd - BATCH_SIZE)}" data-current-end="${renderEnd}">${getLocale() === 'zh' ? '加载更多 (' + renderEnd + ')' : 'Load More (' + renderEnd + ')'}</button></div>`;
     }
     listEl.innerHTML = html;
 
@@ -2283,6 +2318,51 @@ function renderHistory() {
             deleteSolve(idx);
         });
     });
+
+    // NOTE: 将预计算数据缓存到闭包外，供"加载更多"复用
+    state._historyCache = { h, times, bestIdx, worstIdx, pbSet, rollingAo5 };
+
+    // NOTE: "加载更多"按钮事件
+    const loadMoreBtn = listEl.querySelector('#load-more-btn');
+    if (loadMoreBtn) {
+        loadMoreBtn.addEventListener('click', function() {
+            const cache = state._historyCache;
+            const currentEnd = parseInt(this.dataset.currentEnd);
+            const nextEnd = Math.max(0, currentEnd - BATCH_SIZE);
+            // 生成下一批 HTML
+            let batchHtml = '';
+            for (let i = currentEnd - 1; i >= nextEnd; i--) {
+                batchHtml += buildHistoryItemHtml(cache.h, i, cache.times, cache.bestIdx, cache.worstIdx, cache.pbSet, cache.rollingAo5);
+            }
+            // 替换按钮容器为新内容
+            const wrapper = this.parentElement;
+            const fragment = document.createElement('div');
+            fragment.innerHTML = batchHtml;
+            // 为新条目绑定点击展开和删除事件
+            fragment.querySelectorAll('.history-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    if (e.target.closest('.h-delete')) return;
+                    item.classList.toggle('expanded');
+                });
+            });
+            fragment.querySelectorAll('.h-delete').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteSolve(parseInt(btn.dataset.delidx));
+                });
+            });
+            // 插入新内容
+            wrapper.before(...fragment.children);
+            // 更新或移除按钮
+            if (nextEnd > 0) {
+                this.dataset.currentEnd = nextEnd;
+                this.dataset.nextEnd = Math.max(0, nextEnd - BATCH_SIZE);
+                this.textContent = (getLocale() === 'zh' ? '加载更多 (' + nextEnd + ')' : 'Load More (' + nextEnd + ')');
+            } else {
+                wrapper.remove();
+            }
+        });
+    }
 
     // NOTE: 在列表底部追加热力图日历
     const heatmapHtml = renderHeatmapCalendar();
@@ -3100,23 +3180,31 @@ function showCsTimerImport() {
  */
 function showSessionOverview() {
     const lang = getLocale();
-    let tableHtml = `<table class="session-overview-table">
-        <tr><th>Session</th><th>Count</th><th>Best</th><th>Ao5</th><th>Ao12</th><th>Mean</th></tr>`;
-
+    // NOTE: 收集所有有数据的 session
+    const sessionData = [];
     for (const sess of state.sessions) {
         const key = `${LS_PREFIX}solo_history_${sess.id}_${state.puzzleId}`;
         let solves;
         try { solves = JSON.parse(localStorage.getItem(key) || '[]'); } catch (e) { solves = []; }
         if (solves.length === 0) continue;
-
         const times = solves.map(getEffectiveTimeFromEntry);
         const valid = times.filter(t => t !== Infinity);
+        sessionData.push({ sess, solves, valid });
+    }
+
+    const COLORS = ['#8ab4f8', '#f28b82', '#81c995', '#fdd663', '#c58af9', '#78d9ec'];
+    let tableHtml = `<table class="session-overview-table">
+        <tr><th></th><th>Session</th><th>Count</th><th>Best</th><th>Ao5</th><th>Ao12</th><th>Mean</th></tr>`;
+
+    for (let si = 0; si < sessionData.length; si++) {
+        const { sess, solves, valid } = sessionData[si];
         const best = valid.length > 0 ? formatTimePlain(Math.min(...valid)) : '-';
         const ao5 = solves.length >= 5 ? computeAo5(solves) : null;
         const ao12 = solves.length >= 12 ? computeAverage(solves, 12) : null;
         const mean = valid.length > 0 ? formatTimePlain(Math.round(valid.reduce((a, b) => a + b, 0) / valid.length)) : '-';
 
         tableHtml += `<tr>
+            <td><input type="checkbox" class="sess-cmp-cb" data-idx="${si}" ${si === 0 ? 'checked' : ''}></td>
             <td>${sess.name}</td>
             <td>${solves.length}</td>
             <td>${best}</td>
@@ -3127,11 +3215,50 @@ function showSessionOverview() {
     }
     tableHtml += '</table>';
 
-    createPopup(
+    // NOTE: 对比按钮 + 图表容器
+    tableHtml += `<div style="text-align: center; margin-top: 10px;">
+        <button class="history-tool-btn" id="sess-compare-btn">${lang === 'zh' ? '📈 对比分布' : '📈 Compare'}</button>
+    </div>
+    <div id="sess-compare-chart" style="margin-top: 10px;"></div>`;
+
+    const overlay = createPopup(
         lang === 'zh' ? 'Session 概览' : 'Session Overview',
         tableHtml,
-        { 'min-width': '340px', 'max-width': '95vw' }
+        { 'min-width': '360px', 'max-width': '95vw' }
     );
+
+    // NOTE: 对比按钮点击事件
+    overlay.querySelector('#sess-compare-btn').addEventListener('click', function() {
+        const chartContainer = overlay.querySelector('#sess-compare-chart');
+        if (typeof DistributionChart === 'undefined') {
+            chartContainer.textContent = 'DistributionChart not loaded';
+            return;
+        }
+        // 收集选中的 session 数据
+        const checked = overlay.querySelectorAll('.sess-cmp-cb:checked');
+        const datasets = [];
+        checked.forEach(function(cb) {
+            const idx = parseInt(cb.dataset.idx);
+            const sd = sessionData[idx];
+            if (sd && sd.valid.length >= 3) {
+                datasets.push({
+                    name: sd.sess.name,
+                    times: sd.valid.map(t => t / 1000),
+                    color: COLORS[idx % COLORS.length]
+                });
+            }
+        });
+        if (datasets.length === 0) {
+            chartContainer.textContent = lang === 'zh' ? '请勾选至少一个 Session' : 'Select at least one session';
+            return;
+        }
+        // 清空旧图表
+        chartContainer.innerHTML = '';
+        DistributionChart.create(chartContainer, datasets, {
+            width: 500, height: 260,
+            xLabelEn: 'Time (s)', xLabelZh: '时间 (秒)'
+        });
+    });
 }
 
 // ===== Sprint 5: Warmup 自动检测 =====
