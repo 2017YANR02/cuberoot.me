@@ -37,7 +37,6 @@
 			<span id="sim-count-b" class="sim-count"></span>
 			<button id="sim-race" class="sim-btn sim-race">⚔️ Race</button>
 			<span id="sim-count-race" class="sim-count"></span>
-			<span class="rand-info" data-tip="Rand: Row 1 ~ Ao100 World #1, Row 2 ~ Ao100 World #2. KDE sampling with Silverman bandwidth. &#10;&#10;🎯 A / 🎯 B: Repeatedly rand until average beats Target Avg. &#10;⚔️ Race: Both simulate — first to beat target wins. &#10;×N = number of tries.">&#9432;</span>
 		</div>
 
 		<!-- NOTE: 进步幅度滑杆 — 控制 KDE 采样的 Target 锚定缩放 -->
@@ -52,7 +51,7 @@
 				<input type="range" id="progress-slider-b" class="progress-slider slider-b" min="0" max="150" value="0" step="1">
 				<span id="progress-info-b" class="progress-info">0%</span>
 			</div>
-			<span class="rand-info" data-tip="Player Improvement Slider &#10;&#10;Models how much faster a player has become since their Ao100 baseline. &#10;&#10;• 0% = Current level (Ao100 average from official results) &#10;• 100% = Improved enough that expected average ≈ Target Avg &#10;• >100% = Surpassed the target &#10;&#10;Math: each solve is scaled by α = 1 − (progress/100) × (1 − Target/μ), where μ = Ao100 mean. This multiplicative scaling preserves the coefficient of variation (CV), meaning both mean and standard deviation shrink proportionally — consistent with how real cubers improve. &#10;&#10;Affects both Rand and 🎯 Simulate buttons.">&#9432;</span>
+			<span class="rand-info" data-tip="Rand: Row 1 ~ Ao100 World #1, Row 2 ~ Ao100 World #2 (KDE + Silverman bandwidth). &#10;&#10;🎯 A / 🎯 B: Repeatedly rand until avg beats Target. ⚔️ Race: first to beat target wins. ×N = tries. &#10;&#10;Improvement Slider: 0% = Ao100 baseline, 100% = Target Avg, >100% = surpass. &#10;Math: scale factor α = 1 − (progress/100) × (1 − Target/μ). Preserves CV.">&#9432;</span>
 		</div>
 		<div id="numpad">
 			<div id="numpad-display"><span id="numpad-label"></span><span id="numpad-value"></span></div>
