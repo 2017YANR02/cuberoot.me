@@ -21,7 +21,8 @@
 
     // ── 默认配置 ──
     var DEFAULTS = {
-        binWidth: 0.2,
+        // NOTE: 'auto' 表示使用 Freedman-Diaconis 规则自动计算
+        binWidth: 'auto',
         width: 700,
         height: 340,
         padding: { l: 50, r: 140, t: 20, b: 50 },
@@ -32,6 +33,44 @@
         xLabelEn: 'Time (s)',
         xLabelZh: '时间 (秒)',
     };
+
+    /**
+     * NOTE: 自动计算直方图 bin 宽度（Freedman–Diaconis 规则）
+     * 公式：binWidth = 2 * IQR * n^(-1/3)
+     * 回退：IQR=0 时用 (max-min) / sqrt(n)
+     * @param {number[]} allTimes - 所有数据点（秒）
+     * @returns {number} 推荐的 bin 宽度
+     */
+    function autoBinWidth(allTimes) {
+        if (allTimes.length < 2) return 0.2;
+        var sorted = allTimes.slice().sort(function(a, b) { return a - b; });
+        var n = sorted.length;
+        var q1 = sorted[Math.floor(n * 0.25)];
+        var q3 = sorted[Math.floor(n * 0.75)];
+        var iqr = q3 - q1;
+        var bw;
+        if (iqr > 0) {
+            bw = 2 * iqr * Math.pow(n, -1/3);
+        } else {
+            // NOTE: IQR=0 回退策略
+            bw = (sorted[n - 1] - sorted[0]) > 0
+                ? (sorted[n - 1] - sorted[0]) / Math.sqrt(n) : 0.2;
+        }
+        // NOTE: 限制 bin 数量在 5~50 之间（太少/太多都影响可读性）
+        var range = sorted[n - 1] - sorted[0];
+        if (range > 0) {
+            var bins = Math.round(range / bw);
+            if (bins < 5) bw = range / 5;
+            if (bins > 50) bw = range / 50;
+        }
+        // NOTE: 取整到 "nice number"（0.1, 0.2, 0.5, 1, 2, 5, ...）
+        var mag = Math.pow(10, Math.floor(Math.log10(bw)));
+        var residual = bw / mag;
+        if (residual <= 1.5) return mag;
+        if (residual <= 3.5) return 2 * mag;
+        if (residual <= 7.5) return 5 * mag;
+        return 10 * mag;
+    }
 
     // ═══════════════════════════════════════════
     // 核心绘图 API — DistributionChart.create()
@@ -62,6 +101,8 @@
         var W = opts.width, H = opts.height;
         var PAD = opts.padding;
         var chartW = W - PAD.l - PAD.r, chartH = H - PAD.t - PAD.b;
+
+        // NOTE: 延迟计算 binWidth（需要数据才能 auto）
         var BIN_WIDTH = opts.binWidth;
 
         // 分配颜色
@@ -81,13 +122,15 @@
         wrapper.className = 'dist-chart-container';
         wrapper.style.cssText = 'margin: 16px 0 32px; text-align: center; position: relative;';
 
-        // 切换按钮
+        // 切换按钮（直方图 / KDE / 箱线图）
         var toggleWrap = document.createElement('div');
         toggleWrap.style.cssText = 'margin-bottom: 8px;';
         var btnHist = createToggleBtn('Histogram', '直方图', true);
         var btnKDE = createToggleBtn('KDE', 'KDE', false);
+        var btnBox = createToggleBtn('Box Plot', '箱线图', false);
         toggleWrap.appendChild(btnHist);
         toggleWrap.appendChild(btnKDE);
+        toggleWrap.appendChild(btnBox);
         wrapper.appendChild(toggleWrap);
 
         // SVG
@@ -110,18 +153,16 @@
         // NOTE: 当前活跃的数据集（支持外部 select/deselect）
         var activeIndices = validSets.length === 1 ? [0] : [0];
 
-        btnHist.addEventListener('click', function () {
-            btnHist.classList.add('active');
-            btnKDE.classList.remove('active');
-            currentMode = 'histogram';
+        function setMode(mode) {
+            currentMode = mode;
+            btnHist.classList.toggle('active', mode === 'histogram');
+            btnKDE.classList.toggle('active', mode === 'kde');
+            btnBox.classList.toggle('active', mode === 'boxplot');
             draw();
-        });
-        btnKDE.addEventListener('click', function () {
-            btnKDE.classList.add('active');
-            btnHist.classList.remove('active');
-            currentMode = 'kde';
-            draw();
-        });
+        }
+        btnHist.addEventListener('click', function () { setMode('histogram'); });
+        btnKDE.addEventListener('click', function () { setMode('kde'); });
+        btnBox.addEventListener('click', function () { setMode('boxplot'); });
 
         // NOTE: 监听语言切换事件，重绘图表更新 SVG 文本
         function onLocaleChange() { draw(); }
@@ -175,13 +216,21 @@
             // 全局范围
             var allTimes = [];
             selected.forEach(function (p) { allTimes = allTimes.concat(p.times); });
+
+            // NOTE: 自动 binWidth — 用所有数据点计算
+            if (opts.binWidth === 'auto') {
+                BIN_WIDTH = autoBinWidth(allTimes);
+            }
+
             var gMin = Math.floor(Math.min.apply(null, allTimes) / BIN_WIDTH) * BIN_WIDTH;
             var gMax = Math.ceil(Math.max.apply(null, allTimes) / BIN_WIDTH) * BIN_WIDTH;
 
             if (currentMode === 'histogram') {
                 drawHistogram(selected, gMin, gMax);
-            } else {
+            } else if (currentMode === 'kde') {
                 drawKDE(selected, gMin, gMax);
+            } else {
+                drawBoxPlot(selected, gMin, gMax);
             }
 
             drawLegend(selected);
@@ -358,6 +407,120 @@
                 svgEl('line', { x1: mx, y1: PAD.t, x2: mx, y2: PAD.t + chartH,
                     stroke: p.color, 'stroke-width': '1.5', 'stroke-dasharray': '4,3', opacity: '0.6' }, svg);
             });
+        }
+
+        // ── 箱线图 ──
+        function drawBoxPlot(selected, gMin, gMax) {
+            // NOTE: Box Plot — 五数概括（min, Q1, median, Q3, max）+ 离群点
+            var nP = selected.length;
+            var boxHeight = Math.max(20, Math.min(60, (chartH - 20) / nP));
+            var gap = 10;
+
+            // X 轴范围
+            var xScale = function(v) {
+                return PAD.l + ((v - gMin) / (gMax - gMin)) * chartW;
+            };
+
+            // X 网格线 + 标签
+            var xTicks = niceAxisTicks(gMin, gMax, 8);
+            xTicks.forEach(function(val) {
+                var x = xScale(val);
+                svgEl('line', { x1: x, y1: PAD.t, x2: x, y2: PAD.t + chartH,
+                    stroke: 'rgba(255,255,255,0.08)', 'stroke-width': '1' }, svg);
+                svgEl('text', { x: x, y: PAD.t + chartH + 16, fill: '#aaa', 'font-size': '11',
+                    'text-anchor': 'middle' }, svg).textContent = val.toFixed(1);
+            });
+
+            for (var si = 0; si < nP; si++) {
+                var times = selected[si].times.slice().sort(function(a, b) { return a - b; });
+                var n = times.length;
+                if (n < 5) continue;
+
+                // NOTE: 五数概括
+                var q1 = times[Math.floor(n * 0.25)];
+                var median = times[Math.floor(n * 0.5)];
+                var q3 = times[Math.floor(n * 0.75)];
+                var iqr = q3 - q1;
+                var whiskerLow = q1 - 1.5 * iqr;
+                var whiskerHigh = q3 + 1.5 * iqr;
+
+                // NOTE: 真实须线边界（数据范围内）
+                var wLow = times.find(function(t) { return t >= whiskerLow; }) || times[0];
+                var wHigh = times[n - 1];
+                for (var j = n - 1; j >= 0; j--) {
+                    if (times[j] <= whiskerHigh) { wHigh = times[j]; break; }
+                }
+
+                var cy = PAD.t + si * (boxHeight + gap) + boxHeight / 2 + 10;
+
+                // 须线（左右横线）
+                svgEl('line', { x1: xScale(wLow), y1: cy, x2: xScale(wHigh), y2: cy,
+                    stroke: selected[si].color, 'stroke-width': '1.5' }, svg);
+                // 左端竖线
+                svgEl('line', { x1: xScale(wLow), y1: cy - boxHeight * 0.3, x2: xScale(wLow), y2: cy + boxHeight * 0.3,
+                    stroke: selected[si].color, 'stroke-width': '1.5' }, svg);
+                // 右端竖线
+                svgEl('line', { x1: xScale(wHigh), y1: cy - boxHeight * 0.3, x2: xScale(wHigh), y2: cy + boxHeight * 0.3,
+                    stroke: selected[si].color, 'stroke-width': '1.5' }, svg);
+
+                // 箱体（Q1 ~ Q3）
+                svgEl('rect', {
+                    x: xScale(q1), y: cy - boxHeight * 0.35,
+                    width: Math.max(1, xScale(q3) - xScale(q1)),
+                    height: boxHeight * 0.7,
+                    fill: selected[si].color, 'fill-opacity': '0.25',
+                    stroke: selected[si].color, 'stroke-width': '1.5',
+                    rx: '3'
+                }, svg);
+
+                // 中位线
+                svgEl('line', {
+                    x1: xScale(median), y1: cy - boxHeight * 0.35,
+                    x2: xScale(median), y2: cy + boxHeight * 0.35,
+                    stroke: '#fff', 'stroke-width': '2'
+                }, svg);
+
+                // NOTE: 离群点（IQR 1.5 倍外）
+                times.forEach(function(t) {
+                    if (t < whiskerLow || t > whiskerHigh) {
+                        svgEl('circle', {
+                            cx: xScale(t), cy: cy, r: '3',
+                            fill: 'none', stroke: selected[si].color,
+                            'stroke-width': '1.5', opacity: '0.7'
+                        }, svg);
+                    }
+                });
+            }
+
+            // X 轴线
+            svgEl('line', { x1: PAD.l, y1: PAD.t + chartH, x2: PAD.l + chartW, y2: PAD.t + chartH,
+                stroke: '#555', 'stroke-width': '1' }, svg);
+
+            var zh = isZh();
+            svgEl('text', { x: PAD.l + chartW / 2, y: H - 6, fill: '#aaa', 'font-size': '13',
+                'text-anchor': 'middle' }, svg).textContent = zh ? opts.xLabelZh : opts.xLabelEn;
+        }
+
+        /**
+         * NOTE: 生成 "nice" 刻度值用于轴标签
+         */
+        function niceAxisTicks(min, max, targetCount) {
+            var range = max - min;
+            if (range <= 0) return [min];
+            var rawStep = range / targetCount;
+            var mag = Math.pow(10, Math.floor(Math.log10(rawStep)));
+            var res = rawStep / mag;
+            var step;
+            if (res <= 1.5) step = mag;
+            else if (res <= 3.5) step = 2 * mag;
+            else if (res <= 7.5) step = 5 * mag;
+            else step = 10 * mag;
+            var ticks = [];
+            var start = Math.ceil(min / step) * step;
+            for (var v = start; v <= max; v += step) {
+                ticks.push(Math.round(v * 1000) / 1000); // 避免浮点误差
+            }
+            return ticks;
         }
 
         // ── 图例 + 统计信息 ──
