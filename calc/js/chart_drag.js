@@ -42,6 +42,7 @@ export function initDrag() {
     handleEl = document.createElement('div');
     handleEl.className = 'bar-drag-handle';
     handleEl.style.display = 'none';
+    handleEl.style.cursor = 'ns-resize';
     container.appendChild(handleEl);
 
     // NOTE: 事件委托 — 在 SVG 上监听 pointerdown
@@ -124,9 +125,21 @@ function onSvgPointerDown(e) {
         var dx = em.clientX - dragStartX;
         var dy = em.clientY - dragStartY;
         if (Math.sqrt(dx * dx + dy * dy) > TAP_DIST) {
-            // 位移超阈值 — 不是 tap，清除监听器
+            // NOTE: 位移超阈值 — 直接从柱体开始拖动（不需要先 tap 选中 pill）
             document.removeEventListener('pointerup', onUp);
             document.removeEventListener('pointermove', onMove);
+
+            var rectEl = bar || getSvgEl().querySelector(
+                '.chart-bar[data-player="' + p + '"][data-slot="' + t + '"]'
+            );
+            if (!rectEl) return;
+
+            var val = state.times[state.seedOn + p][t];
+            if (val <= 0 || val >= DNF_VALUE) return;
+
+            // 自动选中 → 立即开始拖动
+            doSelect(p, t, rectEl, val);
+            onHandlePointerDown(em);
         }
     };
     document.addEventListener('pointerup', onUp, { once: false });
@@ -269,6 +282,16 @@ function onHandlePointerDown(e) {
     var t = selected.slot;
     originalVal = state.times[state.seedOn + p][t];
 
+    // NOTE: 防止拖动中选中文字（蓝色高亮）
+    document.body.style.userSelect = 'none';
+
+    // NOTE: 记录光标与柱顶的 SVG Y 偏移，实现相对拖动（避免跳跃）
+    var svg = getSvgEl();
+    var ctm = svg.getScreenCTM().inverse();
+    var startSvgY = ctm.b * e.clientX + ctm.d * e.clientY + ctm.f;
+    var barTopSvgY = valToYCap(originalVal);
+    var dragOffsetY = startSvgY - barTopSvgY;
+
     // NOTE: 捕获 pointer 确保移出元素后仍能跟踪
     handleEl.setPointerCapture(e.pointerId);
 
@@ -346,8 +369,11 @@ function onHandlePointerDown(e) {
         var ctm = svg.getScreenCTM().inverse();
         var svgY = ctm.b * em.clientX + ctm.d * em.clientY + ctm.f;
 
+        // NOTE: 减去偏移量 — 无论从柱子哪个位置开始拖，柱顶都不会跳跃
+        var adjustedY = svgY - dragOffsetY;
+
         // SVG Y → centiseconds
-        var newVal = yToVal(svgY);
+        var newVal = yToVal(adjustedY);
 
         // 量化步长
         if (state.event === '333fm') {
@@ -378,6 +404,8 @@ function onHandlePointerDown(e) {
         document.removeEventListener('pointermove', onMove);
         document.removeEventListener('pointerup', onUp);
         stopEdgeScroll();
+        // NOTE: 恢复文字选中
+        document.body.style.userSelect = '';
 
         if (!dragging || !selected) return;
         dragging = false;
@@ -582,7 +610,7 @@ function onSvgMouseMove(e) {
     if (barRect) barRect.classList.add('bar-active');
 
     // NOTE: cursor 提示可交互
-    svg.style.cursor = 'pointer';
+    svg.style.cursor = 'ns-resize';
 }
 
 function onSvgMouseLeave(e) {

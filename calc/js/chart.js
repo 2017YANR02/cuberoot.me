@@ -139,6 +139,7 @@ export function clearPendingConfetti() {
     for (var i = 0; i < confettiTimers.length; i++) clearTimeout(confettiTimers[i]);
     confettiTimers = [];
     lastConfettiKey = '';
+    confettiActive = false;
 }
 
 function checkWRConfetti() {
@@ -179,8 +180,11 @@ function checkWRConfetti() {
     }
 }
 
-// NOTE: confetti 喷射 — 连发 3 波
+// NOTE: confetti 喷射 — 连发 3 波，期间吞掉新触发
+var confettiActive = false;
 function fireConfetti() {
+    if (confettiActive) return; // NOTE: 上一轮还没结束，直接跳过
+    confettiActive = true;
     for (var i = 0; i < 3; i++) {
         var tid = setTimeout(function () {
             confetti({
@@ -196,6 +200,9 @@ function fireConfetti() {
         }, i * 250);
         confettiTimers.push(tid);
     }
+    // NOTE: 最后一波发出后约 3s 动画结束，解锁
+    var unlockTid = setTimeout(function() { confettiActive = false; }, 500 + 3000);
+    confettiTimers.push(unlockTid);
 }
 
 // NOTE: 动态 viewBox — 宽度按内容适配，高度固定避免数据变化导致跳动
