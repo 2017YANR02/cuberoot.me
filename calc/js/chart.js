@@ -785,7 +785,7 @@ function drawStats() {
                 var innerIX = chartIX();
                 var innerX = innerIX[1] + innerIX[4] + 2;
                 var arrowX = innerX - 18;
-                drawCurvedLine([s.ax[0], s.ax[1], outerX, innerX, arrowX], ys, '#000');
+                drawCurvedLine([s.ax[0], s.ax[1], outerX, innerX, arrowX], ys, s.darkCol);
             }
             continue; // NOTE: Mo3 不绘制 BPA/WPA 右侧标签
         }
