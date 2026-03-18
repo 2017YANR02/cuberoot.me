@@ -862,6 +862,8 @@ video {
     touch-action: none;
 }
 
+
+
 /* NOTE: 选中态 — SVG 根加 .bar-selected 后，非活跃柱子降暗 */
 .hth-chart.bar-selected .chart-bar:not(.bar-active) {
     opacity: 0.35;
