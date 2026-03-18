@@ -4,6 +4,7 @@ import { state, onChange, addSeedPair, updateTime, resetAll, notify, getFirstUnf
 import { formatTime, setMoveCntMode, setMbfMode } from './calc_engine.js';
 import * as inputGrid from './input_grid.js';
 import * as chart from './chart.js';
+import { clearPendingConfetti, setSuppressConfetti } from './chart.js';
 import * as calcTable from './calc_table.js';
 import { getTargetAvg, setTargetAvg, clearTargetAvgs } from './calc_table.js';
 import * as urlSync from './url_sync.js';
@@ -60,12 +61,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // NOTE: 初始化项目选择器
     eventSelector.init(document.getElementById('event-selector-container'), function (eventId) {
         state.event = eventId;
-        // NOTE: 项目切换时调整 times 数组长度并清零，重新随机填充
+        // NOTE: 先清零旧数据，再 resize，避免 resizeTimes 触发的 notify
+        // 用旧数据 + 新项目 WR 基准误判 confetti（如 2 阶 0.96s 被判为 3 阶 WR）
+        clearPendingConfetti(); // NOTE: 清除残留 confetti 动画
+        for (var p = 0; p < state.times.length; p++) {
+            for (var t = 0; t < state.times[p].length; t++) state.times[p][t] = 0;
+        }
         var n = solveCount();
         resizeTimes(n);
-        for (var p = 0; p < state.times.length; p++) {
-            for (var t = 0; t < n; t++) state.times[p][t] = 0;
-        }
         inputGrid.updateVisibleCells();
         clearTargetAvgs();
         initTargetDefaults();
@@ -119,6 +122,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // ── 随机填充 ──
     // NOTE: 只填充空格子；全满时才全覆盖
     document.getElementById('rand-fill').addEventListener('click', () => {
+        // NOTE: rand-fill 期间抑制 confetti — KDE 采样的中间状态可能误触发 WR
+        setSuppressConfetti(true);
         // NOTE: 先同步界面到 state — 用户可能清空了格子但未触发 blur/保存
         inputGrid.flushToState();
         var n = solveCount();
@@ -168,6 +173,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateTime(state.seedOn + p, t, cs);
             }
         }
+        // NOTE: rand-fill 结束后恢复 confetti 检测，用最终数据重新检查
+        setSuppressConfetti(false);
     });
 
     // NOTE: 首次渲染前同步 FMC 步数模式和多盲得分模式
