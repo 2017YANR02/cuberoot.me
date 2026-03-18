@@ -2588,24 +2588,35 @@ function checkMilestone() {
         messages.push('🏆 New PB!');
     }
 
-    // NOTE: PB ao5 检测
+    // NOTE: PB ao5 检测 — 对比"含最后一把的 ao5"与"不含最后一把的历史最优 ao5"
     if (h.length >= 5) {
         const ao5 = computeAo5(h);
         if (ao5 !== null && ao5 !== Infinity) {
-            const bestAo5 = findBestAverage(h, computeAo5);
-            if (bestAo5 !== null && ao5 <= bestAo5) {
+            if (h.length === 5) {
+                // 第一个 ao5，一定是 PB
                 messages.push('🥇 New PB Ao5!');
+            } else {
+                // NOTE: 用 h.slice(0, -1) 计算之前的历史最优
+                const prevBest = findBestAverage(h.slice(0, -1), computeAo5);
+                if (prevBest === null || ao5 < prevBest) {
+                    messages.push('🥇 New PB Ao5!');
+                }
             }
         }
     }
 
-    // NOTE: PB ao12 检测
+    // NOTE: PB ao12 检测 — 同理
     if (h.length >= 12) {
+        const ao12Fn = (sub) => computeAverage(sub, 12);
         const ao12 = computeAverage(h, 12);
         if (ao12 !== null && ao12 !== Infinity) {
-            const bestAo12 = findBestAverage(h, (sub) => computeAverage(sub, 12));
-            if (bestAo12 !== null && ao12 <= bestAo12) {
+            if (h.length === 12) {
                 messages.push('🥇 New PB Ao12!');
+            } else {
+                const prevBest = findBestAverage(h.slice(0, -1), ao12Fn);
+                if (prevBest === null || ao12 < prevBest) {
+                    messages.push('🥇 New PB Ao12!');
+                }
             }
         }
     }
