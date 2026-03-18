@@ -8,7 +8,7 @@ import {
     state, updateTime, notify, solveCount
 } from './state.js';
 import { isMbf } from './state.js';
-import * as drumPicker from './drum_picker.js';
+
 import { getTargetAvg, setTargetAvg } from './calc_table.js';
 import { isWR } from './wr_data.js';
 
@@ -22,8 +22,7 @@ var UNDO_MAX = 50;
 // NOTE: 滚轮撤销 debounce — 连续滚动合并为一条撤销记录
 var wheelUndoTimer = null;
 var wheelUndoBase = null; // 滚动序列开始前的原始值
-// NOTE: 程序化导航时抑制滚筒弹出（Enter/Tab/自动跳格）
-var suppressDrumOnFocus = false;
+
 
 // NOTE: 根据文字长度自适应缩小字号，防止长时间格式（如 1:10.10）溢出
 function fitFont(input) {
@@ -190,8 +189,7 @@ export function init(gridContainer) {
         bkspBtn.addEventListener('touchcancel', cancelLongPress);
     }
 
-    // NOTE: 初始化滚筒选择器
-    drumPicker.init();
+
 }
 
 // ── 创建输入元素 ──
@@ -266,34 +264,7 @@ function createTimeCell(p, t) {
         activeCell = [p, t];
         input.select();
         syncNumpadDisplay();
-        // NOTE: 聚焦已有值的 cell 时显示滚筒选择器
-        // 程序化导航（Enter/Tab/自动跳格）时不弹滚筒，只有用户主动点击才弹
-        if (suppressDrumOnFocus) {
-            suppressDrumOnFocus = false;
-            drumPicker.hide();
-        } else {
-            var rawVal = getCellVal(p, t);
-            if (rawVal > 0 && rawVal < DNF_VALUE) {
-                drumPicker.show(rawVal, input, function(newVal) {
-                    // 滚筒值变更回调 — 更新 state 和 cell 显示
-                    recordAndUpdate(state.seedOn + p, t, newVal);
-                    getCellEl(p, t).value = formatTime(newVal);
-                    syncNumpadDisplay();
-                }, function() {
-                    // NOTE: 滚筒确认回调 — 点击高亮区域后跳到下一格
-                    saveCell(p, t);
-                    var nxt = nextCell(p, t);
-                    if (nxt) {
-                        navigateTo(nxt[0], nxt[1]);
-                    } else {
-                        getCellEl(p, t).blur();
-                        activeCell = [-1, -1];
-                    }
-                });
-            } else {
-                drumPicker.hide();
-            }
-        }
+
     });
     input.addEventListener('blur', () => {
         // NOTE: 延迟检测 — 如果焦点转移到另一个格子则不触发保存（由导航逻辑处理）
@@ -302,7 +273,7 @@ function createTimeCell(p, t) {
                 saveCell(p, t);
                 activeCell = [-1, -1];
                 syncNumpadDisplay();
-                drumPicker.hide();
+
             }
         }, 50);
     });
@@ -310,8 +281,7 @@ function createTimeCell(p, t) {
         syncNumpadDisplay();
         // NOTE: tavg 格不自动跳格
         if (!isTavg(t)) tryAutoAdvance(input.value);
-        // NOTE: 用户开始键入时隐藏滚筒，避免遮挡
-        drumPicker.hide();
+
     });
     // NOTE: 滚轮微调成绩 — 仅聚焦时生效
     input.addEventListener('wheel', (e) => onWheel(e, p, t), { passive: false });
@@ -466,8 +436,7 @@ export function navigateTo(p, t) {
         saveCell(activeCell[0], activeCell[1]);
     }
 
-    // NOTE: 程序化导航时抑制滚筒弹出
-    suppressDrumOnFocus = true;
+
     activeCell = [p, t];
     var el = getCellEl(p, t);
     el.focus();
@@ -582,15 +551,13 @@ function onKeyDown(e) {
     } else if (e.key === 'ArrowDown') {
         if (p < 0) return;
         e.preventDefault();
-        // NOTE: 滚筒可见时优先步进；否则 A行 → B行同列
-        if (drumPicker.isVisible()) drumPicker.stepBy(-1);
-        else if (p === 0) navigateTo(1, t);
+        // NOTE: A行 → B行同列
+        if (p === 0) navigateTo(1, t);
     } else if (e.key === 'ArrowUp') {
         if (p < 0) return;
         e.preventDefault();
-        // NOTE: 滚筒可见时优先步进；否则 B行 → A行同列
-        if (drumPicker.isVisible()) drumPicker.stepBy(1);
-        else if (p === 1) navigateTo(0, t);
+        // NOTE: B行 → A行同列
+        if (p === 1) navigateTo(0, t);
     } else if (e.key === 'ArrowLeft') {
         if (p < 0) return;
         e.preventDefault();
@@ -688,7 +655,7 @@ function numpadPress(key) {
             activeCell = [-1, -1];
         }
     } else if (key === 'dnf') {
-        drumPicker.hide();
+
         v.value = 'DNF';
         syncNumpadDisplay();
         // NOTE: 自动 zigzag 跳到下一格
@@ -701,13 +668,11 @@ function numpadPress(key) {
             activeCell = [-1, -1];
         }
     } else if (key === 'backspace') {
-        drumPicker.hide();
         if (isFullySelected(v)) {
             // NOTE: 全选状态下一键清空 — 必须同时写 state，否则 refresh 会还原
             recordAndUpdate(state.seedOn + p, t, 0);
             v.value = '';
             syncNumpadDisplay();
-            drumPicker.hide();
         } else if (v.value.length > 0) {
             v.value = v.value.slice(0, -1);
             syncNumpadDisplay();
@@ -720,7 +685,7 @@ function numpadPress(key) {
             }
         }
     } else if (key === 'dotcolon') {
-        drumPicker.hide();
+
         // NOTE: 全选状态下先清空
         if (isFullySelected(v)) v.value = '';
         // NOTE: .: 按钮 — 末尾是 . 则替换为 :，否则追加 .
@@ -732,7 +697,7 @@ function numpadPress(key) {
         syncNumpadDisplay();
     } else {
         // 数字键 0-9 — 全选时替换而非追加
-        drumPicker.hide();
+
         if (isFullySelected(v)) v.value = '';
         v.value += key;
         syncNumpadDisplay();
