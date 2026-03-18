@@ -284,8 +284,21 @@ function onHandlePointerDown(e) {
     var applyVal = function(newVal) {
         // 限制范围
         newVal = Math.max(1, Math.min(newVal, MAX_TIME_VALUE));
-        updateBarDuringDrag(newVal);
-        positionHandle(newVal);
+        if (!selected) return;
+        var p = selected.player;
+        var t = selected.slot;
+
+        // NOTE: 写入 state（不触发 notify，手动调 render 避免其他 UI 副作用）
+        state.times[state.seedOn + p][t] = newVal;
+
+        // NOTE: 全量重绘 — BPA/WPA/平均线等统计指标全部实时更新
+        chartRender();
+        onAfterRender();
+
+        // NOTE: 重绘后 ghost 被清除，需要重新创建（使用 originalVal 保持原始位置）
+        if (originalVal !== newVal) {
+            createGhost(p, t, originalVal);
+        }
 
         // NOTE: 触觉反馈 — 经过整数秒时微振
         if (navigator.vibrate) {
@@ -369,17 +382,13 @@ function onHandlePointerDown(e) {
         if (!dragging || !selected) return;
         dragging = false;
 
-        // 读取当前拖到的值
         var p = selected.player;
         var t = selected.slot;
         var currentVal = state.times[state.seedOn + p][t];
-
-        // NOTE: 写入 state 并触发全量重绘
-        // 先取消选中态，让 render() 完整重绘
         var wasP = p, wasT = t;
         deselect();
 
-        // 仅当值变化时才写入（避免无效 notify）
+        // NOTE: 通知其他 UI 模块（input grid 等）刷新
         if (currentVal !== originalVal) {
             updateTime(state.seedOn + wasP, wasT, currentVal);
         }
