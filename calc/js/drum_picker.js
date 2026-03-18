@@ -423,3 +423,37 @@ function cancelAnimation() {
         animFrame = null;
     }
 }
+
+// NOTE: 外部调用 — 键盘上下键步进滚筒（direction: +1 增大, -1 减小）
+export function stepBy(direction) {
+    if (!isVisible()) return;
+    cancelAnimation();
+
+    var newValue = currentValue + direction * step;
+    var minVal = (state.event === '333fm' || state.event === '333mbf' || state.event === '333mbo') ? 100 : 1;
+    if (newValue < minVal || newValue > MAX_TIME_VALUE) return;
+
+    offset = direction * ITEM_HEIGHT;
+    currentValue = newValue;
+    renderItems();
+
+    // 平滑 snap 回 offset=0
+    var startOffset = offset;
+    var startTime = Date.now();
+    var duration = 120;
+    var tick = function() {
+        var elapsed = Date.now() - startTime;
+        var progress = Math.min(1, elapsed / duration);
+        var eased = 1 - Math.pow(1 - progress, 2);
+        offset = startOffset * (1 - eased);
+        renderItems();
+        if (progress < 1) {
+            animFrame = requestAnimationFrame(tick);
+        } else {
+            offset = 0;
+            renderItems();
+        }
+    };
+    animFrame = requestAnimationFrame(tick);
+    if (onChange) onChange(currentValue);
+}

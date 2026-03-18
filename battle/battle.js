@@ -1201,13 +1201,34 @@ function changePuzzle(puzzleId) {
     if (isSolo()) saveSolveHistory();
     state.puzzleId = puzzleId;
     localStorage.setItem(LS_PREFIX + "puzzle", puzzleId);
-    // NOTE: 重置状态（包括清空当前内存中的历史）
-    resetAll();
-    // NOTE: Solo 模式下加载新项目的历史
+    // NOTE: 只重置计时器状态，不调 resetAll（resetAll 会把空 solveHistory 写入 localStorage 覆盖新项目数据）
+    state.winner = -2;
+    for (let i = 0; i < 2; i++) {
+        const p = state.players[i];
+        p.isReady = false;
+        p.canStart = false;
+        p.isTiming = false;
+        p.hasFinished = false;
+        p.penalty = PENALTY.OK;
+        p.time = 0;
+        p.inspectionPenalty = null;
+        clearInspection(i);
+        p.solveHistory = [];
+        cancelAnimationFrame(p.rafId);
+        renderArea(i);
+        renderTime(i);
+        updatePenaltyButtons(i);
+        renderAo5(i);
+        renderOpponent(i, '');
+    }
+    // NOTE: Solo 模式下加载新项目的历史（不 save，避免覆盖）
     if (isSolo()) {
         loadSolveHistory();
         renderSoloStats(0);
+        renderHistory();
     }
+    loadNewScramble();
+    closeSettings();
     // 更新选中状态
     document.querySelectorAll(".puzzle-btn").forEach(btn => {
         btn.classList.toggle("active", btn.dataset.puzzle === puzzleId);
@@ -2812,6 +2833,9 @@ function checkFatigue() {
     }
 }
 
+// NOTE: 分布图实例引用，用于销毁旧实例
+var _distChartInstance = null;
+
 function renderDistributionChart() {
     // NOTE: DistributionChart 由 distribution_chart.js 暴露的全局 API
     if (typeof DistributionChart === 'undefined') return;
@@ -3148,6 +3172,7 @@ function importFromCsTimer(jsonText) {
 
         saveSolveHistory();
         renderSoloStats(0);
+        renderHistory();
         const lang = getLocale();
         showMilestoneToast(lang === 'zh' ? `已导入 ${imported} 条` : `Imported ${imported} solves`);
     } catch (e) {
