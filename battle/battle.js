@@ -458,6 +458,9 @@ function init() {
 
     // 尝试锁定竖屏
     tryLockOrientation();
+
+    // NOTE: 启用 Tab 滑动手势（Solo 模式下左右滑动切换 tab）
+    initSwipeGesture();
 }
 
 // ===== 打乱生成 =====
@@ -832,6 +835,11 @@ function checkBothFinished() {
             if (p.phaseSplits.length > 0) entry.phases = [...p.phaseSplits, p.time];
             p.solveHistory.push(entry);
             saveSolveHistory();
+            // NOTE: 里程碑检测 + 疲劳预警
+            checkMilestone();
+            checkFatigue();
+            // NOTE: 普通停表触觉反馈（非 PB 时的轻微震动）
+            if (navigator.vibrate) navigator.vibrate(30);
             renderTime(0);
             renderSoloStats(0);
             updatePenaltyButtons(0);
@@ -1298,6 +1306,113 @@ function computeAverage(history, n) {
     var middle = sorted.slice(trim, n - trim);
     var sum = middle.reduce((a, b) => a + b, 0);
     return Math.round(sum / middle.length);
+}
+
+// ===== 高级统计函数 =====
+
+/**
+ * NOTE: Streak 追踪 — 连续低于阈值的成绩次数
+ * @param {number[]} times - 有效时间数组（ms）
+ * @param {number} threshold - 阈值（ms），默认为 session mean
+ * @returns {{ current: number, best: number }}
+ */
+function computeStreak(times, threshold) {
+    var current = 0, best = 0, streak = 0;
+    for (var i = 0; i < times.length; i++) {
+        if (times[i] !== Infinity && times[i] < threshold) {
+            streak++;
+            if (streak > best) best = streak;
+        } else {
+            streak = 0;
+        }
+    }
+    current = streak;
+    return { current: current, best: best };
+}
+
+/**
+ * NOTE: 百分位表 — 计算低于各阈值的成绩占比
+ * 自动生成 3~5 个有意义的阈值（基于 mean ± σ 向下取整到整秒/0.5秒）
+ * @param {number[]} validTimes - 有效时间数组（ms，不含 DNF Infinity）
+ * @returns {Array<{label: string, pct: number}>}
+ */
+function computeSubXBreakdown(validTimes) {
+    if (validTimes.length < 5) return [];
+    var mean = validTimes.reduce(function(a, b) { return a + b; }, 0) / validTimes.length;
+    var variance = validTimes.reduce(function(s, t) { return s + (t - mean) * (t - mean); }, 0) / validTimes.length;
+    var sd = Math.sqrt(variance);
+
+    // NOTE: 生成阈值候选：mean-σ, mean-0.5σ, mean, mean+0.5σ, mean+σ
+    var candidates = [mean - sd, mean - sd * 0.5, mean, mean + sd * 0.5, mean + sd];
+    // 取整到最近的 "nice number"（基于数量级）
+    var thresholds = [];
+    var seen = {};
+    for (var i = 0; i < candidates.length; i++) {
+        var c = candidates[i];
+        if (c <= 0) continue;
+        // NOTE: 根据数量级选择取整精度
+        var nice;
+        if (c >= 60000) {
+            nice = Math.round(c / 10000) * 10000; // 10s 精度（分钟级）
+        } else if (c >= 10000) {
+            nice = Math.round(c / 5000) * 5000; // 5s 精度
+        } else if (c >= 5000) {
+            nice = Math.round(c / 1000) * 1000; // 1s 精度
+        } else {
+            nice = Math.round(c / 500) * 500; // 0.5s 精度
+        }
+        if (nice <= 0) continue;
+        var key = '' + nice;
+        if (seen[key]) continue;
+        seen[key] = true;
+        var count = validTimes.filter(function(t) { return t < nice; }).length;
+        var pct = Math.round(count / validTimes.length * 100);
+        // NOTE: 只保留有区分度的阈值（0% < pct < 100%）
+        if (pct > 0 && pct < 100) {
+            thresholds.push({ threshold: nice, label: 'sub-' + formatTimePlain(nice), pct: pct });
+        }
+    }
+
+    // 去重后取最多 4 个
+    thresholds.sort(function(a, b) { return a.threshold - b.threshold; });
+    return thresholds.slice(0, 4);
+}
+
+/**
+ * NOTE: 检测第 index 条成绩是否为"截至当时"的 session best single
+ * 用于历史列表中标记 PB
+ */
+function isPBSingleAt(history, index) {
+    var effTime = getEffectiveTimeFromEntry(history[index]);
+    if (effTime === Infinity) return false;
+    for (var i = 0; i < index; i++) {
+        var t = getEffectiveTimeFromEntry(history[i]);
+        if (t <= effTime) return false;
+    }
+    return true;
+}
+
+/**
+ * NOTE: 格式化相对日期（今天/昨天/具体日期）
+ * @param {string} isoDate - ISO 8601 日期字符串
+ * @returns {string}
+ */
+function formatRelativeDate(isoDate) {
+    if (!isoDate) return '';
+    var d = new Date(isoDate);
+    var now = new Date();
+    var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    var target = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    var diff = Math.round((today - target) / 86400000);
+
+    var timeStr = d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
+
+    if (diff === 0) return timeStr;
+    if (diff === 1) {
+        var lang = getLocale();
+        return (lang === 'zh' ? '昨天 ' : 'Yesterday ') + timeStr;
+    }
+    return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + timeStr;
 }
 
 function renderAo5(playerId) {
@@ -1858,21 +1973,41 @@ function renderSoloStats(playerId) {
         ? Math.round(validTimes.reduce((a, b) => a + b, 0) / validTimes.length)
         : null;
 
-    // 标准差 σ
-    let sdStr = '';
+    // 标准差 σ 和 变异系数 CV
+    let sdStr = '', cvStr = '';
     if (validTimes.length > 1 && mean !== null) {
         const variance = validTimes.reduce((s, t) => s + (t - mean) * (t - mean), 0) / validTimes.length;
         const sd = Math.sqrt(variance) / 1000;
         sdStr = `σ=${sd.toFixed(2)}`;
+        // NOTE: CV = σ/μ × 100%，衡量一致性（消除了 mean 差异的影响）
+        const cv = (Math.sqrt(variance) / mean * 100).toFixed(0);
+        cvStr = `cv=${cv}%`;
+    }
+
+    // NOTE: Streak 追踪 — 连续低于 mean 的次数
+    let streakStr = '';
+    if (mean !== null && validTimes.length >= 5) {
+        const streak = computeStreak(times, mean);
+        if (streak.best > 1) {
+            streakStr = `🔥${streak.current}/${streak.best}`;
+        }
+    }
+
+    // NOTE: BLD 成功率追踪
+    let bldStr = '';
+    if (isBLD()) {
+        const successCount = validTimes.length;
+        const totalCount = solveCount;
+        const pct = Math.round(successCount / totalCount * 100);
+        bldStr = `✓${successCount}/${totalCount}(${pct}%)`;
     }
 
     // NOTE: 动态计算用户启用的所有 Average
-    const ALL_AO = [5, 12, 50, 100, 1000, 10000];
     const mo3 = computeMo3(h);
 
-    // NOTE: 构建统计文本
+    // NOTE: 构建统计文本 — 第一行（Averages）
     const parts = [];
-    if (mo3 !== null) parts.push(`mo3: ${mo3 === Infinity ? 'DNF' : formatTimePlain(mo3)}`);
+    if (mo3 !== null) parts.push(`<span class="stat-item">mo3: ${mo3 === Infinity ? 'DNF' : formatTimePlain(mo3)}</span>`);
 
     for (const n of state.enabledAverages) {
         const aoFn = n === 5 ? computeAo5 : (sub) => computeAverage(sub, n);
@@ -1884,18 +2019,34 @@ function renderSoloStats(playerId) {
             const bestVal = findBestAverage(h, aoFn);
             if (val !== Infinity && bestVal !== null && val <= bestVal) pbMark = ' \u{1F3C5}';
         }
-        parts.push(`ao${n}: ${val === Infinity ? 'DNF' : formatTimePlain(val)}${pbMark}`);
+        // NOTE: 包装成可点击的 span，data-ao 属性用于弹窗
+        parts.push(`<span class="stat-item stat-ao" data-ao="${n}">ao${n}: ${val === Infinity ? 'DNF' : formatTimePlain(val)}${pbMark}</span>`);
     }
 
-    const line1 = parts.join(' \u2502 ');
+    const line1 = parts.join(' <span class="stat-sep">│</span> ');
+
+    // NOTE: 第二行（统计概览）
     const line2Parts = [];
     if (best !== null) line2Parts.push(`best: ${formatTimePlain(best)}`);
     if (mean !== null) line2Parts.push(`mean: ${formatTimePlain(mean)}`);
     if (sdStr) line2Parts.push(sdStr);
+    if (cvStr) line2Parts.push(cvStr);
+    if (streakStr) line2Parts.push(streakStr);
+    if (bldStr) line2Parts.push(bldStr);
     line2Parts.push(`${solveCount - dnfCount}/${solveCount}`);
 
-    const line2 = line2Parts.join(' \u2502 ');
+    const line2 = line2Parts.join(' │ ');
     el.innerHTML = `<div class="solo-stats-display">${line1}${line1 ? '<br>' : ''}${line2}</div>`;
+
+    // NOTE: 为 ao 统计项绑定点击事件 → 弹出详情
+    el.querySelectorAll('.stat-ao').forEach(span => {
+        span.style.cursor = 'pointer';
+        span.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const aoN = parseInt(span.dataset.ao);
+            showAoDetail(aoN);
+        });
+    });
 }
 
 /**
@@ -1992,8 +2143,19 @@ function renderHistory() {
 
     statsEl.textContent = `${h.length} solves`;
 
+    // NOTE: 百分位 chip 栏（sub-X %）
+    const subXData = computeSubXBreakdown(validTimes);
+    let subXHtml = '';
+    if (subXData.length > 0) {
+        subXHtml = '<div class="subx-chip-bar">';
+        subXData.forEach(function(d) {
+            subXHtml += `<span class="subx-chip">${d.label}: ${d.pct}%</span>`;
+        });
+        subXHtml += '</div>';
+    }
+
     // NOTE: 生成列表 HTML（最新在上）
-    let html = '';
+    let html = subXHtml;
     for (let i = h.length - 1; i >= 0; i--) {
         const entry = h[i];
         const effTime = getEffectiveTimeFromEntry(entry);
@@ -2006,11 +2168,20 @@ function renderHistory() {
         if (entry.penalty === '+2') timeClass += ' h-plus2';
         else if (entry.penalty === 'dnf') timeClass += ' h-dnf';
 
+        // NOTE: PB 标记 — 截至当时的 session best
+        let pbMark = '';
+        if (isPBSingleAt(h, i)) {
+            pbMark = ' <span class="h-pb" title="PB">🏆</span>';
+        }
+
         // 滚动 Ao5
         const ao5 = i >= 4 ? computeAo5(h.slice(0, i + 1)) : null;
         const ao5Str = ao5 === null ? '' : (ao5 === Infinity ? 'DNF' : formatTimePlain(ao5));
 
         const scramble = typeof entry === 'object' ? (entry.scramble || '') : '';
+        // NOTE: 日期显示
+        const dateStr = typeof entry === 'object' && entry.date ? formatRelativeDate(entry.date) : '';
+
         // NOTE: 多阶段分段显示
         let phaseStr = '';
         if (entry.phases && entry.phases.length > 1) {
@@ -2027,8 +2198,9 @@ function renderHistory() {
 
         html += `<div class="history-item" data-idx="${i}">
             <span class="h-idx">${i + 1}.</span>
-            <span class="${timeClass}">${timeStr}${phaseStr}</span>
+            <span class="${timeClass}">${timeStr}${phaseStr}${pbMark}</span>
             <span class="h-ao5">${ao5Str}</span>
+            <span class="h-date">${dateStr}</span>
             <button class="h-delete" data-delidx="${i}" title="Delete">🗑️</button>
             <span class="h-scramble">${scramble}</span>
         </div>`;
@@ -2215,7 +2387,8 @@ function renderTrendChart() {
     times.forEach((t, i) => { if (t !== Infinity) validPairs.push({ i, t }); });
     if (validPairs.length < 2) return;
 
-    const W = 360, H = 120, PAD = 20;
+    // NOTE: 趋势图宽高（viewBox 自适应，实际通过 CSS max-width 缩放）
+    const W = 600, H = 200, PAD = 24;
     const minT = Math.min(...validPairs.map(p => p.t));
     const maxT = Math.max(...validPairs.map(p => p.t));
     const rangeT = maxT - minT || 1;
@@ -2314,13 +2487,200 @@ function renderTrendChart() {
 
 // ===== 分布图（直方图 + KDE） =====
 
-// NOTE: 缓存图表实例，避免重复创建 DOM
-let _distChartInstance = null;
+// ===== Ao 详情弹窗 =====
 
 /**
- * NOTE: 渲染成绩分布图（直方图 + KDE）
- * 从 solveHistory 提取有效成绩，转 ms→秒，调用通用 DistributionChart API
+ * NOTE: 显示 AoN 详情弹窗 — 展示构成该 Average 的 N 条成绩
+ * 标记被去掉的最好（↓ trim）和最差（↑ trim）条目
  */
+function showAoDetail(aoN) {
+    const h = state.players[0].solveHistory;
+    if (h.length < aoN) return;
+
+    const lastN = h.slice(-aoN);
+    const effTimes = lastN.map(getEffectiveTimeFromEntry);
+    const sorted = [...effTimes].sort((a, b) => a - b);
+    const trim = Math.ceil(aoN / 20); // NOTE: 与 computeAverage 保持一致
+
+    // NOTE: 标记哪些条目被 trim 了
+    const trimmedLow = []; // 被去掉的最好条目索引
+    const trimmedHigh = []; // 被去掉的最差条目索引
+    const sortedCopy = [...sorted];
+    // 找低端 trim
+    for (let t = 0; t < trim; t++) {
+        const idx = effTimes.indexOf(sortedCopy[t]);
+        // 避免重复标记同一索引
+        if (!trimmedLow.includes(idx)) trimmedLow.push(idx);
+    }
+    // 找高端 trim
+    for (let t = 0; t < trim; t++) {
+        const val = sortedCopy[sortedCopy.length - 1 - t];
+        for (let k = effTimes.length - 1; k >= 0; k--) {
+            if (effTimes[k] === val && !trimmedHigh.includes(k) && !trimmedLow.includes(k)) {
+                trimmedHigh.push(k);
+                break;
+            }
+        }
+    }
+
+    // 计算 Average 值
+    const aoVal = aoN === 5 ? computeAo5(h) : computeAverage(h, aoN);
+    const aoStr = aoVal === null ? '-' : (aoVal === Infinity ? 'DNF' : formatTimePlain(aoVal));
+
+    let html = `<div class="ao-detail-overlay">
+        <div class="ao-detail-panel">
+            <div class="ao-detail-header">
+                <h3>Ao${aoN}: ${aoStr}</h3>
+                <button class="ao-detail-close">✕</button>
+            </div>
+            <div class="ao-detail-list">`;
+
+    for (let i = 0; i < lastN.length; i++) {
+        const entry = lastN[i];
+        const effTime = effTimes[i];
+        const timeStr = effTime === Infinity ? 'DNF' : formatTimePlain(effTime);
+        let marker = '', cls = '';
+        if (trimmedLow.includes(i)) {
+            marker = ' ↓';  // NOTE: 被去掉的最好
+            cls = ' ao-trimmed-best';
+        } else if (trimmedHigh.includes(i)) {
+            marker = ' ↑';  // NOTE: 被去掉的最差
+            cls = ' ao-trimmed-worst';
+        }
+        const globalIdx = h.length - aoN + i;
+        html += `<div class="ao-detail-item${cls}">
+            <span class="ao-detail-idx">${globalIdx + 1}.</span>
+            <span class="ao-detail-time">${timeStr}${marker}</span>
+        </div>`;
+    }
+
+    html += '</div></div></div>';
+
+    // NOTE: 插入到 body 顶层
+    const container = document.createElement('div');
+    container.innerHTML = html;
+    const overlay = container.firstElementChild;
+    document.body.appendChild(overlay);
+
+    // 关闭按钮 + 遮罩点击关闭
+    overlay.querySelector('.ao-detail-close').addEventListener('click', () => overlay.remove());
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) overlay.remove();
+    });
+}
+
+// ===== 里程碑庆祝系统 =====
+
+/**
+ * NOTE: 在成绩保存后调用，检测 PB / 里程碑 / sub-X 突破
+ * 触发 confetti + 提示文字
+ */
+function checkMilestone() {
+    const h = state.players[0].solveHistory;
+    if (h.length === 0) return;
+
+    const lastEntry = h[h.length - 1];
+    const effTime = getEffectiveTimeFromEntry(lastEntry);
+    const messages = [];
+
+    // NOTE: PB single 检测
+    if (effTime !== Infinity && isPBSingleAt(h, h.length - 1)) {
+        messages.push('🏆 New PB!');
+    }
+
+    // NOTE: PB ao5 检测
+    if (h.length >= 5) {
+        const ao5 = computeAo5(h);
+        if (ao5 !== null && ao5 !== Infinity) {
+            const bestAo5 = findBestAverage(h, computeAo5);
+            if (bestAo5 !== null && ao5 <= bestAo5) {
+                messages.push('🥇 New PB Ao5!');
+            }
+        }
+    }
+
+    // NOTE: PB ao12 检测
+    if (h.length >= 12) {
+        const ao12 = computeAverage(h, 12);
+        if (ao12 !== null && ao12 !== Infinity) {
+            const bestAo12 = findBestAverage(h, (sub) => computeAverage(sub, 12));
+            if (bestAo12 !== null && ao12 <= bestAo12) {
+                messages.push('🥇 New PB Ao12!');
+            }
+        }
+    }
+
+    // NOTE: 整数里程碑（100, 200, 500, 1000...）
+    const count = h.length;
+    if (count === 100 || count === 200 || count === 500 || count === 1000 ||
+        count === 2000 || count === 5000 || count === 10000) {
+        messages.push(`🎯 ${count} solves!`);
+    }
+
+    if (messages.length > 0) {
+        // 触发 confetti 特效
+        if (typeof confetti === 'function') {
+            confetti({
+                particleCount: 80,
+                spread: 70,
+                origin: { y: 0.6 },
+            });
+        }
+        // NOTE: 触觉反馈（PB 专用节奏：短-短-长）
+        if (navigator.vibrate) {
+            navigator.vibrate([50, 50, 100]);
+        }
+        // 显示提示文字
+        showMilestoneToast(messages.join(' '));
+    }
+}
+
+/**
+ * NOTE: 临时 toast 提示（3 秒后自动消失）
+ */
+function showMilestoneToast(text) {
+    const toast = document.createElement('div');
+    toast.className = 'milestone-toast';
+    toast.textContent = text;
+    document.body.appendChild(toast);
+    // 触发入场动画
+    requestAnimationFrame(() => toast.classList.add('show'));
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// ===== 疲劳预警 =====
+
+/**
+ * NOTE: 检测最近 10 把是否呈上升趋势（疲劳信号）
+ * 连续 5 把滚动均值递增 → 温和提示休息
+ */
+function checkFatigue() {
+    const h = state.players[0].solveHistory;
+    if (h.length < 15) return; // 至少 15 把才有分析意义
+
+    const times = h.slice(-10).map(getEffectiveTimeFromEntry).filter(t => t !== Infinity);
+    if (times.length < 8) return; // 太多 DNF 不分析
+
+    // NOTE: 计算 5 把滑动均值
+    let rising = 0;
+    for (let i = 0; i <= times.length - 5; i++) {
+        const avg = (times[i] + times[i+1] + times[i+2] + times[i+3] + times[i+4]) / 5;
+        if (i > 0) {
+            const prevAvg = (times[i-1] + times[i] + times[i+1] + times[i+2] + times[i+3]) / 5;
+            if (avg > prevAvg) rising++;
+        }
+    }
+
+    // NOTE: 连续上升趋势超过阈值 → 提示休息
+    if (rising >= 4) {
+        const lang = getLocale();
+        showMilestoneToast(lang === 'zh' ? '建议休息一下 🍵' : 'Take a break? 🍵');
+    }
+}
+
 function renderDistributionChart() {
     // NOTE: DistributionChart 由 distribution_chart.js 暴露的全局 API
     if (typeof DistributionChart === 'undefined') return;
@@ -2494,3 +2854,540 @@ function syncAllSessions() {
         pullFromCloud();
     });
 }
+
+// ===== Sprint 3: Tab 左右滑动切换 =====
+
+/**
+ * NOTE: 监听触摸手势实现 Tab 滑动切换（Solo 模式，非计时状态）
+ * 水平滑动 > 50px 切换相邻 tab
+ */
+function initSwipeGesture() {
+    const TAB_ORDER = ['timer', 'results', 'settings'];
+    let startX = 0, startY = 0;
+
+    document.body.addEventListener('touchstart', function(e) {
+        if (!isSolo() || isAnyActive()) return;
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+    }, { passive: true });
+
+    document.body.addEventListener('touchend', function(e) {
+        if (!isSolo() || isAnyActive()) return;
+        // NOTE: 历史 overlay 打开时不处理
+        if (dom.historyOverlay.classList.contains('visible')) return;
+
+        const dx = e.changedTouches[0].clientX - startX;
+        const dy = e.changedTouches[0].clientY - startY;
+
+        // NOTE: 水平距离 > 50px 且角度足够水平（避免和垂直滚动冲突）
+        if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+            const curTab = document.body.dataset.tab || 'timer';
+            const curIdx = TAB_ORDER.indexOf(curTab);
+            const nextIdx = dx < 0 ? curIdx + 1 : curIdx - 1; // 左滑 → 下一个 tab
+            if (nextIdx >= 0 && nextIdx < TAB_ORDER.length) {
+                switchTab(TAB_ORDER[nextIdx]);
+            }
+        }
+    }, { passive: true });
+}
+
+// ===== Sprint 3: 手动输入成绩 =====
+
+/**
+ * NOTE: 弹出手动输入成绩的对话框
+ * 支持格式：ss.xxx, mm:ss.xxx, 纯数字（毫秒）
+ */
+function showManualInputDialog() {
+    const lang = getLocale();
+    const overlay = document.createElement('div');
+    overlay.className = 'ao-detail-overlay';
+    overlay.innerHTML = `
+        <div class="ao-detail-panel">
+            <div class="ao-detail-header">
+                <h3>${lang === 'zh' ? '手动输入成绩' : 'Manual Input'}</h3>
+                <button class="ao-detail-close">✕</button>
+            </div>
+            <div style="padding: 8px 0;">
+                <input type="text" id="manual-time-input" placeholder="${lang === 'zh' ? '输入时间 (如 8.55 或 1:23.456)' : 'Enter time (e.g. 8.55 or 1:23.456)'}"
+                    style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #4a6785; background: #0a1628; color: #fff; font-size: 16px; box-sizing: border-box;" autofocus>
+                <div style="margin-top: 8px; display: flex; gap: 8px;">
+                    <select id="manual-penalty" style="padding: 8px; border-radius: 6px; border: 1px solid #4a6785; background: #0a1628; color: #8ab4f8;">
+                        <option value="ok">OK</option>
+                        <option value="+2">+2</option>
+                        <option value="dnf">DNF</option>
+                    </select>
+                    <button id="manual-submit" class="segmented-btn active" style="flex: 1; border-radius: 6px;">
+                        ${lang === 'zh' ? '添加' : 'Add'}
+                    </button>
+                </div>
+            </div>
+        </div>`;
+    document.body.appendChild(overlay);
+
+    overlay.querySelector('.ao-detail-close').addEventListener('click', () => overlay.remove());
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+
+    const input = overlay.querySelector('#manual-time-input');
+    const submit = overlay.querySelector('#manual-submit');
+
+    // NOTE: 解析时间字符串 → 毫秒
+    function parseTimeInput(str) {
+        str = str.trim();
+        if (!str) return null;
+        // mm:ss.xxx
+        const matchMS = str.match(/^(\d+):(\d+\.?\d*)$/);
+        if (matchMS) {
+            return Math.round((parseInt(matchMS[1]) * 60 + parseFloat(matchMS[2])) * 1000);
+        }
+        // ss.xxx
+        const num = parseFloat(str);
+        if (!isNaN(num) && num > 0) {
+            // 如果值 > 100，视为毫秒；否则视为秒
+            return num > 100 ? Math.round(num) : Math.round(num * 1000);
+        }
+        return null;
+    }
+
+    function doSubmit() {
+        const ms = parseTimeInput(input.value);
+        if (ms === null || ms <= 0) {
+            input.style.borderColor = '#ef5350';
+            return;
+        }
+        const penalty = overlay.querySelector('#manual-penalty').value;
+        const entry = {
+            time: ms,
+            penalty: penalty,
+            scramble: '',
+            date: new Date().toISOString(),
+        };
+        state.players[0].solveHistory.push(entry);
+        saveSolveHistory();
+        renderSoloStats(0);
+        overlay.remove();
+    }
+
+    submit.addEventListener('click', doSubmit);
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') doSubmit(); });
+}
+
+// ===== Sprint 4: csTimer 导入 =====
+
+/**
+ * NOTE: 导入 csTimer JSON 导出数据
+ * 格式: { "session1": [[penalty, time, comment, unixTimestamp], ...], ... }
+ * penalty: 0=ok, 2000=+2, -1=DNF
+ */
+function importFromCsTimer(jsonText) {
+    try {
+        const data = JSON.parse(jsonText);
+        let imported = 0;
+
+        // NOTE: 尝试找每个 session 并导入
+        for (const key in data) {
+            if (!Array.isArray(data[key])) continue;
+            for (const record of data[key]) {
+                if (!Array.isArray(record) || record.length < 2) continue;
+                const [penalty, rawTime, comment, timestamp] = record;
+
+                // NOTE: csTimer 时间格式：[seconds, milliseconds] 或纯数字毫秒
+                let timeMs;
+                if (Array.isArray(rawTime)) {
+                    timeMs = rawTime[0] * 1000 + rawTime[1]; // [sec, ms]
+                } else {
+                    timeMs = Math.round(rawTime * 10); // csTimer 用 centi-seconds * 10?
+                    // HACK: csTimer 有时存储为 centiseconds
+                    if (timeMs > 360000000) timeMs = Math.round(rawTime); // > 100 hours? 应该是毫秒
+                }
+
+                let penaltyStr = 'ok';
+                if (penalty === -1) penaltyStr = 'dnf';
+                else if (penalty === 2000) penaltyStr = '+2';
+
+                const entry = {
+                    time: timeMs,
+                    penalty: penaltyStr,
+                    scramble: typeof comment === 'string' ? comment : '',
+                    date: timestamp ? new Date(timestamp * 1000).toISOString() : new Date().toISOString(),
+                };
+                state.players[0].solveHistory.push(entry);
+                imported++;
+            }
+        }
+
+        saveSolveHistory();
+        renderSoloStats(0);
+        const lang = getLocale();
+        showMilestoneToast(lang === 'zh' ? `已导入 ${imported} 条` : `Imported ${imported} solves`);
+    } catch (e) {
+        console.error('csTimer import error:', e);
+        showMilestoneToast('Import failed: ' + e.message);
+    }
+}
+
+/**
+ * NOTE: 弹出 csTimer 导入文件选择器
+ */
+function showCsTimerImport() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,.txt';
+    input.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => importFromCsTimer(reader.result);
+        reader.readAsText(file);
+    });
+    input.click();
+}
+
+// ===== Sprint 4: Session 概览 =====
+
+/**
+ * NOTE: 弹窗显示所有 session 的统计概览
+ */
+function showSessionOverview() {
+    const lang = getLocale();
+    let html = `<div class="ao-detail-overlay">
+        <div class="ao-detail-panel" style="min-width: 340px; max-width: 95vw;">
+            <div class="ao-detail-header">
+                <h3>${lang === 'zh' ? 'Session 概览' : 'Session Overview'}</h3>
+                <button class="ao-detail-close">✕</button>
+            </div>
+            <table class="session-overview-table">
+                <tr><th>Session</th><th>Count</th><th>Best</th><th>Ao5</th><th>Ao12</th><th>Mean</th></tr>`;
+
+    for (const sess of state.sessions) {
+        // NOTE: 遍历所有项目的成绩
+        const key = `${LS_PREFIX}solo_history_${sess.id}_${state.puzzleId}`;
+        let solves;
+        try { solves = JSON.parse(localStorage.getItem(key) || '[]'); } catch (e) { solves = []; }
+        if (solves.length === 0) continue;
+
+        const times = solves.map(getEffectiveTimeFromEntry);
+        const valid = times.filter(t => t !== Infinity);
+        const best = valid.length > 0 ? formatTimePlain(Math.min(...valid)) : '-';
+        const ao5 = solves.length >= 5 ? computeAo5(solves) : null;
+        const ao12 = solves.length >= 12 ? computeAverage(solves, 12) : null;
+        const mean = valid.length > 0 ? formatTimePlain(Math.round(valid.reduce((a, b) => a + b, 0) / valid.length)) : '-';
+
+        html += `<tr>
+            <td>${sess.name}</td>
+            <td>${solves.length}</td>
+            <td>${best}</td>
+            <td>${ao5 === null ? '-' : (ao5 === Infinity ? 'DNF' : formatTimePlain(ao5))}</td>
+            <td>${ao12 === null ? '-' : (ao12 === Infinity ? 'DNF' : formatTimePlain(ao12))}</td>
+            <td>${mean}</td>
+        </tr>`;
+    }
+
+    html += '</table></div></div>';
+
+    const container = document.createElement('div');
+    container.innerHTML = html;
+    const overlay = container.firstElementChild;
+    document.body.appendChild(overlay);
+
+    overlay.querySelector('.ao-detail-close').addEventListener('click', () => overlay.remove());
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+}
+
+// ===== Sprint 5: Warmup 自动检测 =====
+
+/**
+ * NOTE: 检测 warmup 期（session 开头 σ 明显偏高的段落）
+ * 返回 warmup 结束的索引（0 表示无明显 warmup）
+ * @param {number[]} validTimes - 有效时间序列（ms）
+ */
+function detectWarmup(validTimes) {
+    if (validTimes.length < 10) return 0;
+
+    // NOTE: 简单启发式：比较前 5 把和后续的均值差异
+    const first5mean = validTimes.slice(0, 5).reduce((a, b) => a + b, 0) / 5;
+    const rest = validTimes.slice(5);
+    const restMean = rest.reduce((a, b) => a + b, 0) / rest.length;
+
+    // NOTE: 前 5 把均值比后续高 15% 以上 → 判定为 warmup
+    if (first5mean > restMean * 1.15) {
+        return 5;
+    }
+    return 0;
+}
+
+// ===== Sprint 5: WCA 模拟赛 (Monte Carlo) =====
+
+/**
+ * NOTE: 从当前分布中 Bootstrap 抽样模拟 Ao5 比赛结果
+ * @param {number[]} validTimes - 有效时间池（ms）
+ * @param {number} iterations - 模拟次数
+ * @returns {{ p50: number, p75: number, p95: number }}
+ */
+function simulateCompetition(validTimes, iterations) {
+    if (validTimes.length < 5) return null;
+    iterations = iterations || 1000;
+
+    const results = [];
+    for (let i = 0; i < iterations; i++) {
+        // 随机抽 5 把
+        const sample = [];
+        for (let j = 0; j < 5; j++) {
+            sample.push(validTimes[Math.floor(Math.random() * validTimes.length)]);
+        }
+        sample.sort((a, b) => a - b);
+        // Ao5 = 去最好最差取中间 3 个均值
+        const ao5 = Math.round((sample[1] + sample[2] + sample[3]) / 3);
+        results.push(ao5);
+    }
+
+    results.sort((a, b) => a - b);
+    return {
+        p50: results[Math.floor(iterations * 0.5)],
+        p75: results[Math.floor(iterations * 0.75)],
+        p95: results[Math.floor(iterations * 0.95)],
+    };
+}
+
+/**
+ * NOTE: 显示模拟赛结果弹窗
+ */
+function showSimulationResult() {
+    const h = state.players[0].solveHistory;
+    const validTimes = h.map(getEffectiveTimeFromEntry).filter(t => t !== Infinity);
+    if (validTimes.length < 5) {
+        showMilestoneToast(getLocale() === 'zh' ? '至少需要 5 条成绩' : 'Need at least 5 solves');
+        return;
+    }
+
+    const result = simulateCompetition(validTimes, 1000);
+    const lang = getLocale();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'ao-detail-overlay';
+    overlay.innerHTML = `
+        <div class="ao-detail-panel">
+            <div class="ao-detail-header">
+                <h3>${lang === 'zh' ? '🎲 模拟赛结果 (1000次)' : '🎲 Competition Simulation (1000x)'}</h3>
+                <button class="ao-detail-close">✕</button>
+            </div>
+            <div class="sim-results">
+                <div class="sim-row">
+                    <span class="sim-label">${lang === 'zh' ? '50% 概率 ≤' : '50th percentile'}</span>
+                    <span class="sim-value">${formatTimePlain(result.p50)}</span>
+                </div>
+                <div class="sim-row">
+                    <span class="sim-label">${lang === 'zh' ? '75% 概率 ≤' : '75th percentile'}</span>
+                    <span class="sim-value">${formatTimePlain(result.p75)}</span>
+                </div>
+                <div class="sim-row">
+                    <span class="sim-label">${lang === 'zh' ? '95% 概率 ≤' : '95th percentile'}</span>
+                    <span class="sim-value">${formatTimePlain(result.p95)}</span>
+                </div>
+            </div>
+            <p style="color: #6b7a8d; font-size: 12px; margin-top: 12px;">
+                ${lang === 'zh' ? '基于当前成绩分布 Bootstrap 随机抽样 Ao5' : 'Ao5 bootstrap sampled from your current times distribution'}
+            </p>
+        </div>`;
+    document.body.appendChild(overlay);
+    overlay.querySelector('.ao-detail-close').addEventListener('click', () => overlay.remove());
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+}
+
+// ===== Sprint 6: 热力图日历 =====
+
+/**
+ * NOTE: 生成 GitHub 风格热力图日历
+ * 按天聚合练习量，颜色深浅 = 当日成绩数
+ * @returns {string} SVG HTML 字符串
+ */
+function renderHeatmapCalendar() {
+    const h = state.players[0].solveHistory;
+    if (h.length === 0) return '';
+
+    // NOTE: 按日期聚合
+    const dayMap = {};
+    h.forEach(entry => {
+        if (!entry.date) return;
+        const d = new Date(entry.date);
+        const key = d.getFullYear() + '-' + (d.getMonth() + 1).toString().padStart(2, '0') + '-' + d.getDate().toString().padStart(2, '0');
+        dayMap[key] = (dayMap[key] || 0) + 1;
+    });
+
+    const cellSize = 10, gap = 2;
+    const today = new Date();
+    const startDate = new Date(today);
+    startDate.setDate(startDate.getDate() - 364); // 最近 1 年
+
+    // NOTE: 找到起始日是周几（0=Sun, 1=Mon, ...）
+    const startDow = startDate.getDay();
+    const totalDays = 365;
+    const cols = Math.ceil((totalDays + startDow) / 7);
+    const W = cols * (cellSize + gap) + 30;
+    const H = 7 * (cellSize + gap) + 20;
+
+    // 颜色等级
+    const maxCount = Math.max(1, ...Object.values(dayMap));
+    function getColor(count) {
+        if (count === 0) return '#161b22';
+        const level = Math.ceil((count / maxCount) * 4);
+        return ['', '#0e4429', '#006d32', '#26a641', '#39d353'][Math.min(level, 4)];
+    }
+
+    let svgContent = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="max-width: 100%; display: block; margin: 0 auto;">`;
+
+    let current = new Date(startDate);
+    for (let day = 0; day < totalDays; day++) {
+        const col = Math.floor((day + startDow) / 7);
+        const row = (day + startDow) % 7;
+        const key = current.getFullYear() + '-' + (current.getMonth() + 1).toString().padStart(2, '0') + '-' + current.getDate().toString().padStart(2, '0');
+        const count = dayMap[key] || 0;
+        const x = col * (cellSize + gap);
+        const y = row * (cellSize + gap);
+
+        svgContent += `<rect x="${x}" y="${y}" width="${cellSize}" height="${cellSize}" rx="2" fill="${getColor(count)}">
+            <title>${key}: ${count} solves</title>
+        </rect>`;
+
+        current.setDate(current.getDate() + 1);
+    }
+
+    svgContent += '</svg>';
+
+    return `<div class="heatmap-container">
+        <div class="heatmap-title">${getLocale() === 'zh' ? '练习日历' : 'Practice Calendar'}</div>
+        ${svgContent}
+    </div>`;
+}
+
+// ===== Sprint 6: 分享成绩卡片 =====
+
+/**
+ * NOTE: 生成成绩分享卡片（Canvas → PNG 下载或 Web Share API）
+ */
+function shareResultCard() {
+    const h = state.players[0].solveHistory;
+    if (h.length < 5) {
+        showMilestoneToast(getLocale() === 'zh' ? '至少需要 5 条成绩' : 'Need at least 5 solves');
+        return;
+    }
+
+    const times = h.map(getEffectiveTimeFromEntry);
+    const validTimes = times.filter(t => t !== Infinity);
+    const best = Math.min(...validTimes);
+    const mean = Math.round(validTimes.reduce((a, b) => a + b, 0) / validTimes.length);
+    const ao5 = computeAo5(h);
+    const ao12 = h.length >= 12 ? computeAverage(h, 12) : null;
+
+    const puzzle = PUZZLES.find(p => p.id === state.puzzleId);
+    const puzzleName = puzzle ? puzzle.name[getLocale()] || puzzle.name.en : state.puzzleId;
+
+    // NOTE: 创建 Canvas
+    const canvas = document.createElement('canvas');
+    canvas.width = 400;
+    canvas.height = 500;
+    const ctx = canvas.getContext('2d');
+
+    // 背景
+    const grad = ctx.createLinearGradient(0, 0, 400, 500);
+    grad.addColorStop(0, '#0a1628');
+    grad.addColorStop(1, '#1a2332');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 400, 500);
+
+    // 标题
+    ctx.fillStyle = '#8ab4f8';
+    ctx.font = 'bold 24px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(puzzleName, 200, 50);
+
+    // 统计
+    ctx.fillStyle = '#fff';
+    ctx.font = '16px sans-serif';
+    ctx.textAlign = 'left';
+    const stats = [
+        ['Best', formatTimePlain(best)],
+        ['Mean', formatTimePlain(mean)],
+        ['Ao5', ao5 === null ? '-' : (ao5 === Infinity ? 'DNF' : formatTimePlain(ao5))],
+        ['Ao12', ao12 === null ? '-' : (ao12 === Infinity ? 'DNF' : formatTimePlain(ao12))],
+        ['Solves', h.length.toString()],
+    ];
+    let yPos = 100;
+    for (const [label, value] of stats) {
+        ctx.fillStyle = '#6b7a8d';
+        ctx.fillText(label, 60, yPos);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 20px sans-serif';
+        ctx.fillText(value, 200, yPos);
+        ctx.font = '16px sans-serif';
+        yPos += 40;
+    }
+
+    // 迷你折线图（最近 50 把）
+    const recentValid = [];
+    const last50 = h.slice(-50);
+    last50.forEach((e, i) => {
+        const t = getEffectiveTimeFromEntry(e);
+        if (t !== Infinity) recentValid.push({ i, t });
+    });
+    if (recentValid.length >= 2) {
+        const chartTop = 340, chartH = 100, chartLeft = 40, chartRight = 360;
+        const minT = Math.min(...recentValid.map(p => p.t));
+        const maxT = Math.max(...recentValid.map(p => p.t));
+        const range = maxT - minT || 1;
+
+        ctx.strokeStyle = '#4fc3f7';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        recentValid.forEach((p, j) => {
+            const px = chartLeft + (p.i / (last50.length - 1)) * (chartRight - chartLeft);
+            const py = chartTop + (1 - (p.t - minT) / range) * chartH;
+            if (j === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+        });
+        ctx.stroke();
+    }
+
+    // 水印
+    ctx.fillStyle = '#4a5568';
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('cuberoot.me/battle', 200, 480);
+
+    // 下载或分享
+    canvas.toBlob(function(blob) {
+        if (navigator.share && navigator.canShare) {
+            const file = new File([blob], 'cube-stats.png', { type: 'image/png' });
+            navigator.share({ files: [file], title: puzzleName + ' Stats' }).catch(() => {});
+        } else {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'cube-stats.png';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    }, 'image/png');
+}
+
+// ===== Sprint 6: 国际化修复 =====
+
+// NOTE: 设置页面硬编码英文文本的双语映射
+const I18N_SETTINGS = {
+    voice_alert: { en: 'Voice Alert (8s / 12s)', zh: '语音提示 (8s / 12s)' },
+    phases: { en: 'Phases', zh: '阶段' },
+    inspection_time: { en: 'Inspection Time', zh: '观察时间' },
+    off: { en: 'OFF', zh: '关' },
+    timer_precision: { en: 'Timer Precision', zh: '计时精度' },
+    start_delay: { en: 'Start Delay', zh: '启动延时' },
+    scramble_size: { en: 'Scramble Size', zh: '打乱字号' },
+    show_scramble_image: { en: 'Show Scramble Image', zh: '显示打乱图' },
+    history: { en: 'History', zh: '历史' },
+    no_solves: { en: 'No solves yet', zh: '暂无成绩' },
+    solves_unit: { en: 'solves', zh: '次' },
+    manual_input: { en: '➕ Manual', zh: '➕ 手动' },
+    import_cstimer: { en: 'Import csTimer', zh: '导入 csTimer' },
+    session_overview: { en: '📊 Overview', zh: '📊 概览' },
+    simulate: { en: '🎲 Simulate', zh: '🎲 模拟赛' },
+    share: { en: '📤 Share', zh: '📤 分享' },
+};
+

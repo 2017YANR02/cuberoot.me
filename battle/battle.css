@@ -1525,3 +1525,296 @@ body.solo[data-tab="settings"] .settings-x-btn {
     max-width: 100%;
     height: auto;
 }
+
+/* ==========================================================
+   百分位 chip 栏（sub-X %）
+   NOTE: 在趋势图上方以 chip 形式展示百分位分布
+   ========================================================== */
+
+.subx-chip-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 4px;
+    justify-content: center;
+}
+
+.subx-chip {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    background: rgba(138, 180, 248, 0.12);
+    color: #8ab4f8;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+/* ==========================================================
+   PB 标记 + 日期列
+   ========================================================== */
+
+.h-pb {
+    font-size: 12px;
+    vertical-align: middle;
+}
+
+.h-date {
+    color: #6b7a8d;
+    font-size: 11px;
+    margin-left: auto;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* NOTE: history-item 需要 flex 让日期列自动右对齐 */
+.history-item {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+}
+
+/* ==========================================================
+   Ao 详情弹窗
+   NOTE: 点击 ao 统计值弹出的详情面板
+   ========================================================== */
+
+.ao-detail-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease;
+}
+
+.ao-detail-panel {
+    background: #1a2332;
+    border: 1px solid #2c4a6e;
+    border-radius: 12px;
+    padding: 16px;
+    min-width: 260px;
+    max-width: 90vw;
+    max-height: 70vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.ao-detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.ao-detail-header h3 {
+    margin: 0;
+    color: #8ab4f8;
+    font-size: 18px;
+}
+
+.ao-detail-close {
+    background: none;
+    border: none;
+    color: #6b7a8d;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px 8px;
+}
+
+.ao-detail-close:hover {
+    color: #fff;
+}
+
+.ao-detail-item {
+    display: flex;
+    gap: 8px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 14px;
+    color: #ccc;
+}
+
+.ao-detail-item:nth-child(odd) {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.ao-detail-idx {
+    color: #6b7a8d;
+    min-width: 36px;
+}
+
+/* NOTE: trim 标记：最好的被去掉（绿色淡化），最差的被去掉（红色淡化） */
+.ao-trimmed-best {
+    color: #4caf50;
+    opacity: 0.6;
+    text-decoration: line-through;
+}
+
+.ao-trimmed-worst {
+    color: #ef5350;
+    opacity: 0.6;
+    text-decoration: line-through;
+}
+
+/* ==========================================================
+   里程碑 Toast
+   NOTE: PB / 里程碑时从顶部滑入的提示条
+   ========================================================== */
+
+.milestone-toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-100px);
+    background: linear-gradient(135deg, #1a2332 0%, #2c4a6e 100%);
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 24px;
+    font-size: 16px;
+    font-weight: 700;
+    text-align: center;
+    z-index: 99999;
+    opacity: 0;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(138, 180, 248, 0.3);
+    pointer-events: none;
+}
+
+.milestone-toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+/* ==========================================================
+   统计行可点击 ao 标签
+   ========================================================== */
+
+.stat-ao {
+    cursor: pointer;
+    transition: color 0.15s;
+}
+
+.stat-ao:hover {
+    color: #8ab4f8;
+    text-decoration: underline;
+}
+
+.stat-sep {
+    color: #4a5568;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* ==========================================================
+   历史面板功能按钮行
+   ========================================================== */
+
+.history-tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 6px 8px;
+    border-bottom: 1px solid #2c4a6e;
+}
+
+.history-tool-btn {
+    flex: 1;
+    min-width: 60px;
+    padding: 6px 8px;
+    border: 1px solid #2c4a6e;
+    border-radius: 8px;
+    background: rgba(138, 180, 248, 0.08);
+    color: #8ab4f8;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+}
+
+.history-tool-btn:active {
+    background: rgba(138, 180, 248, 0.2);
+}
+
+/* ==========================================================
+   模拟赛结果
+   ========================================================== */
+
+.sim-results {
+    padding: 8px 0;
+}
+
+.sim-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 6px;
+}
+
+.sim-row:nth-child(odd) {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.sim-label {
+    color: #8ab4f8;
+    font-size: 14px;
+}
+
+.sim-value {
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+/* ==========================================================
+   热力图日历
+   ========================================================== */
+
+.heatmap-container {
+    padding: 12px 8px;
+    text-align: center;
+}
+
+.heatmap-title {
+    color: #6b7a8d;
+    font-size: 12px;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+/* ==========================================================
+   Session 概览表格
+   ========================================================== */
+
+.session-overview-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.session-overview-table th {
+    color: #8ab4f8;
+    font-weight: 600;
+    padding: 6px 8px;
+    border-bottom: 1px solid #2c4a6e;
+    text-align: left;
+}
+
+.session-overview-table td {
+    padding: 6px 8px;
+    color: #ccc;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.session-overview-table tr:hover td {
+    background: rgba(138, 180, 248, 0.05);
+}
