@@ -294,6 +294,126 @@ body {
     cursor: not-allowed;
 }
 
+/* ── 模拟按钮栏 ── */
+
+.sim-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 2px;
+    padding: 0 0 8px;
+}
+
+.sim-btn {
+    padding: 6px 14px;
+    font-size: 14px;
+    font-weight: 700;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #fff;
+    transition: background 0.2s, opacity 0.2s;
+}
+
+.sim-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+/* NOTE: 选手颜色对应 — A 橙色、B 蓝色、Race 渐变 */
+.sim-btn.sim-a { background: rgba(255, 128, 0, 0.9); }
+.sim-btn.sim-a:hover:not(:disabled) { background: rgba(255, 128, 0, 1); }
+.sim-btn.sim-b { background: rgba(50, 130, 255, 0.9); }
+.sim-btn.sim-b:hover:not(:disabled) { background: rgba(50, 130, 255, 1); }
+.sim-btn.sim-race { background: linear-gradient(135deg, rgba(255, 128, 0, 0.9), rgba(50, 130, 255, 0.9)); }
+.sim-btn.sim-race:hover:not(:disabled) { background: linear-gradient(135deg, rgba(255, 128, 0, 1), rgba(50, 130, 255, 1)); }
+
+/* NOTE: 计数徽章 — 淡入动画 */
+.sim-count {
+    font-size: 13px;
+    font-weight: 700;
+    color: #555;
+    opacity: 0;
+    transition: opacity 0.3s;
+    /* NOTE: 隐藏时不占位，可见后因 textContent 自动撑开 */
+    padding: 0 4px;
+}
+.sim-count.visible {
+    opacity: 1;
+}
+
+/* ── 进步幅度滑杆 ── */
+
+.progress-controls {
+    max-width: 500px;
+    margin: 0 auto 6px;
+    padding: 0 16px;
+}
+
+.progress-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 2px 0;
+}
+
+.progress-label {
+    font-size: 14px;
+    font-weight: 700;
+    width: 16px;
+    text-align: center;
+}
+.progress-a .progress-label { color: rgba(255, 128, 0, 1); }
+.progress-b .progress-label { color: rgba(50, 130, 255, 1); }
+
+.progress-slider {
+    flex: 1;
+    height: 6px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: #ccc;
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+}
+
+/* NOTE: 滑块样式 — Webkit */
+.slider-a::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: rgba(255, 128, 0, 1);
+    cursor: pointer;
+}
+.slider-b::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: rgba(50, 130, 255, 1);
+    cursor: pointer;
+}
+/* NOTE: Firefox */
+.slider-a::-moz-range-thumb {
+    width: 18px; height: 18px;
+    border-radius: 50%; border: none;
+    background: rgba(255, 128, 0, 1);
+    cursor: pointer;
+}
+.slider-b::-moz-range-thumb {
+    width: 18px; height: 18px;
+    border-radius: 50%; border: none;
+    background: rgba(50, 130, 255, 1);
+    cursor: pointer;
+}
+
+.progress-info {
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+    min-width: 110px;
+    text-align: left;
+}
+
 #seed-label {
     font-size: 16px;
     font-weight: 600;
