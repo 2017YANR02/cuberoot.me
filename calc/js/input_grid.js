@@ -764,6 +764,8 @@ export function refresh() {
             var pos = ranked.findIndex(function(r) { return r.idx === t3; });
             if (pos >= 0) {
                 rankLabels[p2][t3].textContent = pos + 1;
+                rankLabels[p2][t3].dataset.rank = pos + 1;
+                rankLabels[p2][t3].dataset.total = ranked.length;
                 rankLabels[p2][t3].style.display = '';
             } else {
                 rankLabels[p2][t3].textContent = '';
