@@ -55,6 +55,9 @@ document.addEventListener('DOMContentLoaded', () => {
     calcTable.init();
     wrData.load().then(function () {
         initTargetDefaults(); // NOTE: WR 数据加载后填充空的 Target 格
+        // NOTE: WR 数据就绪后初始化进步滑杆的基线值
+        updateProgressInfo(0, 0);
+        updateProgressInfo(1, 0);
         notify();
     });
 
@@ -143,7 +146,6 @@ document.addEventListener('DOMContentLoaded', () => {
     chart.render();
     inputGrid.refresh();
     calcTable.render();
-    updateSeedControls();
 
     // NOTE: URL 无数据时自动随机填充，避免空白页面
     if (!window.location.search.includes('t0=')) {
@@ -163,9 +165,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('progress-slider-b').addEventListener('input', function() {
         updateProgressInfo(1, this.value);
     });
-    // NOTE: 初始显示 0% 基线值
-    updateProgressInfo(0, 0);
-    updateProgressInfo(1, 0);
 
     console.log('HTH Grapher v2 initialized');
 });
