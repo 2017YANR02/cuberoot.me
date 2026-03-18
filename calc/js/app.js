@@ -5,6 +5,7 @@ import { formatTime, setMoveCntMode, setMbfMode, getAverage } from './calc_engin
 import * as inputGrid from './input_grid.js';
 import * as chart from './chart.js';
 import { clearPendingConfetti, setSuppressConfetti } from './chart.js';
+import * as chartDrag from './chart_drag.js';
 import * as calcTable from './calc_table.js';
 import { getTargetAvg, setTargetAvg, clearTargetAvgs } from './calc_table.js';
 import * as urlSync from './url_sync.js';
@@ -51,6 +52,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 初始化各模块
     chart.init(document.getElementById('chart-container'));
+    // NOTE: 拖动模块初始化 — 必须在 chart.init 之后（SVG 已创建）
+    chartDrag.initDrag();
     inputGrid.init(document.getElementById('input-grid-container'));
     calcTable.init();
     wrData.load().then(function () {
@@ -90,6 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 注册观察者 — 数据变更时更新所有 UI
     onChange(() => {
         chart.render();
+        chartDrag.onAfterRender(); // NOTE: 全量重绘后恢复拖动选中态
         inputGrid.refresh();
         calcTable.render();
         urlSync.save();

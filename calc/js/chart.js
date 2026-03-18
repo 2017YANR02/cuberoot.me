@@ -635,6 +635,8 @@ function drawBars() {
             barGroup.appendChild(createSvgElement('rect', {
                 x: bx, y: minY, width: bw, height: Math.max(0, barHeight),
                 fill: SHADES[p], rx: 2,
+                class: 'chart-bar',
+                'data-player': p, 'data-slot': t,
             }));
         }
     }
@@ -664,6 +666,7 @@ function drawBars() {
                 x: cx,
                 text: formatTime(val),
                 col: darken(SHADES[p], 0.7),
+                player: p, slot: t, // NOTE: 拖动模块用 — 关联标签到柱子
             });
         }
 
@@ -680,6 +683,8 @@ function drawBars() {
                 'font-size': LABEL_FONT + 'px', 'font-family': 'Helvetica',
                 'font-weight': 'bold', 'text-anchor': 'middle',
                 filter: 'url(#barLabelShadow)',
+                class: 'chart-bar-label',
+                'data-player': lb.player, 'data-slot': lb.slot,
             });
             el.textContent = lb.text;
             topTextGroup.appendChild(el);
@@ -790,10 +795,27 @@ function drawStats() {
             var paBotY = paY[3]; // BPA（较好 = 较低位置 = 较大 Y）
             var paBarH = Math.max(3, paBotY - paTopY); // 至少 3px 高度
             var fadedCol = fade(col, 0.25);
-            statsGroup.appendChild(createSvgElement('rect', {
+
+            // NOTE: 用 <g> 包裹竖柱，添加 hover tooltip 说明上下端含义
+            var paBarGroup = createSvgElement('g', { cursor: 'help' });
+            paBarGroup.appendChild(createSvgElement('rect', {
                 x: barCx - paBarW / 2, y: paTopY, width: paBarW, height: paBarH,
                 fill: fadedCol, stroke: darkCol, 'stroke-width': 2, rx: 3,
             }));
+            (function() {
+                paBarGroup.addEventListener('mouseenter', function(e) {
+                    tooltipEl.textContent = 'Top = Worst Possible Avg (WPA)\nBottom = Best Possible Avg (BPA)';
+                    tooltipEl.style.whiteSpace = 'pre-line';
+                    var rect = chartContainer.getBoundingClientRect();
+                    tooltipEl.style.left = (e.clientX - rect.left + 10) + 'px';
+                    tooltipEl.style.top = (e.clientY - rect.top - 50) + 'px';
+                    tooltipEl.style.opacity = '1';
+                });
+                paBarGroup.addEventListener('mouseleave', function() {
+                    tooltipEl.style.opacity = '0';
+                });
+            })();
+            statsGroup.appendChild(paBarGroup);
 
             labelSets.push({ paVals, paY, ax, col, darkCol, filleds, p, shouldDrawMiddle, barCx });
         }
@@ -825,22 +847,20 @@ function drawStats() {
         }
 
         if (s.filleds === 4 || state.timeLive[0] === s.p) {
-            // NOTE: BPA/WPA 标签居中在竖柱正上方/下方
+            // NOTE: 数值标签居中在竖柱正上方/下方（不再显示 BPA/WPA 标题）
             var labelCx = s.barCx;
 
-            // ── BPA（柱子下方） ──
+            // ── BPA 数值（柱子下方） ──
             rightLabels.push({
-                origY: s.paY[3] + 30, y: s.paY[3] + 30, h: 55, texts: [
-                    { dy: 0, text: 'BPA', size: 22 },
-                    { dy: 28, text: formatTime(s.paVals[3]), size: 30 },
+                origY: s.paY[3] + 10, y: s.paY[3] + 10, h: 35, texts: [
+                    { dy: 0, text: formatTime(s.paVals[3]), size: 28 },
                 ], x: labelCx, col: s.darkCol, anchor: 'center',
                 wrMetric: 'bpa', wrValue: s.paVals[3]
             });
-            // ── WPA（柱子上方） ──
+            // ── WPA 数值（柱子上方） ──
             rightLabels.push({
-                origY: s.paY[4] - 50, y: s.paY[4] - 50, h: 55, texts: [
-                    { dy: 0, text: 'WPA', size: 22 },
-                    { dy: 28, text: formatTime(s.paVals[4]), size: 30 },
+                origY: s.paY[4] - 24, y: s.paY[4] - 24, h: 35, texts: [
+                    { dy: 0, text: formatTime(s.paVals[4]), size: 28 },
                 ], x: labelCx, col: s.darkCol, anchor: 'center',
                 wrMetric: 'wpa', wrValue: s.paVals[4]
             });
@@ -1011,7 +1031,8 @@ function drawAverages() {
 
             // 测量文字宽度（近似）
             var tw = labelText.length * fontSize * 0.55 + 20;
-            var lx = chartIX()[1] + im;
+            // NOTE: 菱形左尖对齐 BPA-WPA 竖柱右边缘
+            var lx = chartIX()[1] + im - 60;
             var rx = lx + jm + tw;
 
             // 菱形路径（左尖右方）
@@ -1170,4 +1191,16 @@ function createSvgElement(tag, attrs) {
 function clearGroup(g) {
     while (g.firstChild) g.removeChild(g.firstChild);
 }
+
+// ── 拖动模块需要的导出 ──
+
+// NOTE: Y 坐标反算为 centiseconds 值（valToY 的逆函数）
+export function yToVal(y) {
+    return gp.min + (1 - (y - gp.y) / gp.h) * gp.span;
+}
+
+export function getSvgEl() { return svgEl; }
+export function getChartContainer() { return chartContainer; }
+export { valToY, valToYCap, BAR_START, BAR_W, STRIDE, SHADES };
+export function getGp() { return gp; }
 
