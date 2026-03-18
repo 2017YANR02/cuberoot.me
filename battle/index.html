@@ -337,6 +337,14 @@
                 <button id="history-export" class="history-action-btn" title="Export CSV">📤</button>
                 <button id="history-close" class="history-close-btn">✕</button>
             </div>
+            <!-- NOTE: 功能按钮行 — 手动输入/导入/概览/模拟/分享 -->
+            <div class="history-tools">
+                <button class="history-tool-btn" onclick="showManualInputDialog()" data-i18n="battle.manual_input">➕ Manual</button>
+                <button class="history-tool-btn" onclick="showCsTimerImport()" data-i18n="battle.import_cstimer">📥 Import</button>
+                <button class="history-tool-btn" onclick="showSessionOverview()" data-i18n="battle.session_overview">📊 Overview</button>
+                <button class="history-tool-btn" onclick="showSimulationResult()" data-i18n="battle.simulate">🎲 Simulate</button>
+                <button class="history-tool-btn" onclick="shareResultCard()" data-i18n="battle.share">📤 Share</button>
+            </div>
             <div id="history-list" class="history-list">
                 <!-- NOTE: 由 JS 动态渲染成绩列表 -->
             </div>
