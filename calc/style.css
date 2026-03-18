@@ -70,7 +70,7 @@ body {
     display: block;
     width: 100%;
     max-width: 800px;
-    margin: 4px auto;
+    margin: 0 auto;
     padding: 4px 16px;
     font-size: 20px;
     font-weight: 600;

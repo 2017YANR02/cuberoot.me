@@ -204,11 +204,12 @@ function updateViewBox() {
     // 宽度动态适配内容
     var w = Math.max(bbox.width, 1000);
     // NOTE: 高度固定 — 使用 CHART_H 加上上下边距，不随数据内容变化
-    var FIXED_H = CHART_H + 100; // 500 + 上方标签区 + 底部边距
+    // NOTE: 高度固定 — 使用 CHART_H 加上上下边距
+    var FIXED_H = CHART_H + 60;
     var cx = bbox.x + bbox.width / 2;
     var padX = w * 0.03;
-    // 垂直方向：图表绘图区从 gp.y(40) 开始，往上留空给 Placed 文字
-    var topY = -20;
+    // NOTE: 顶部起始 Y（Placed 文字已移除，无需额外留白）
+    var topY = 20;
     svgEl.setAttribute('viewBox',
         (cx - w / 2 - padX) + ' ' + topY + ' ' +
         (w + padX * 2) + ' ' + FIXED_H);
