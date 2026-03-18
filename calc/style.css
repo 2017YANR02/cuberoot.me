@@ -851,3 +851,90 @@ video {
     bottom: 0;
     background: linear-gradient(to top, rgba(30, 30, 30, 0.96) 0%, transparent 100%);
 }
+
+/* ── 柱子拖动交互 ── */
+
+/* NOTE: 选中态 — SVG 根加 .bar-selected 后，非活跃柱子降暗 */
+.hth-chart.bar-selected .chart-bar:not(.bar-active) {
+    opacity: 0.35;
+    transition: opacity 0.2s;
+}
+
+/* NOTE: 选中柱子发光（使用选手颜色的 drop-shadow） */
+.chart-bar.bar-active {
+    filter: drop-shadow(0 0 8px rgba(255, 128, 0, 0.6));
+    transition: filter 0.2s;
+}
+/* NOTE: B 选手用蓝色发光 */
+.chart-bar.bar-active[data-player="1"] {
+    filter: drop-shadow(0 0 8px rgba(50, 130, 255, 0.6));
+}
+
+/* NOTE: Handle — 水平 pill 形，可拖拽 */
+.bar-drag-handle {
+    position: absolute;
+    width: 60px;
+    height: 24px;
+    border-radius: 12px;
+    background: rgba(255, 128, 0, 1);
+    border: 2px solid #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    cursor: grab;
+    z-index: 100;
+    /* NOTE: transform 居中定位 — left/top 指向柱顶中心 */
+    transform: translate(-50%, -50%);
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    /* NOTE: 弹性出现动画 */
+    animation: handleBounce 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.bar-drag-handle:active {
+    cursor: grabbing;
+}
+/* NOTE: B 选手蓝色 */
+.bar-drag-handle.player-b {
+    background: rgba(50, 130, 255, 1);
+}
+
+/* NOTE: grip lines — 三条细横线暗示可拖拽 */
+.bar-drag-handle::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 18px;
+    height: 10px;
+    border-top: 2px solid rgba(255, 255, 255, 0.5);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.5);
+    /* NOTE: 中间线用 box-shadow 模拟 */
+    box-shadow: 0 0 0 0 transparent, inset 0 0 0 0 transparent;
+    background: linear-gradient(
+        transparent 0px, transparent 3px,
+        rgba(255, 255, 255, 0.5) 3px, rgba(255, 255, 255, 0.5) 5px,
+        transparent 5px
+    );
+}
+
+@keyframes handleBounce {
+    0% { transform: translate(-50%, -50%) scale(0); }
+    100% { transform: translate(-50%, -50%) scale(1); }
+}
+
+/* NOTE: 浮动数值气泡 — 深色圆角矩形，定位在 Handle 上方 */
+.bar-drag-tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.88);
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+    font-family: Helvetica, sans-serif;
+    padding: 4px 12px;
+    border-radius: 8px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 101;
+    transform: translateX(-50%);
+    transition: top 0.05s linear;
+}
