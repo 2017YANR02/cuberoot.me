@@ -33,7 +33,6 @@ function doSave() {
             params.set('t' + i, t.join(','));
         }
     }
-    if (state.seedOn > 0) params.set('seed', state.seedOn);
 
     history.replaceState(null, '', '?' + params.toString());
 }
@@ -68,7 +67,7 @@ export function load() {
         j++;
     }
 
-    if (params.has('seed')) state.seedOn = parseInt(params.get('seed')) || 0;
+
     if (params.has('event')) state.event = params.get('event');
 
     // NOTE: Mo3 项目 times 数组必须截断为 3 元素（getAverage 用 arr.length 判断 Mo3/Ao5）

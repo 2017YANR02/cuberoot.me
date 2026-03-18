@@ -1,6 +1,6 @@
 // NOTE: 应用入口 — 导入所有模块，初始化和编排
 
-import { state, onChange, addSeedPair, updateTime, resetAll, notify, getFirstUnfilledTime, resizeTimes, solveCount, isMbf, isMo3 } from './state.js';
+import { state, onChange, updateTime, resetAll, notify, getFirstUnfilledTime, resizeTimes, solveCount, isMbf, isMo3 } from './state.js';
 import { formatTime, setMoveCntMode, setMbfMode, getAverage } from './calc_engine.js';
 import * as inputGrid from './input_grid.js';
 import * as chart from './chart.js';
@@ -90,24 +90,8 @@ document.addEventListener('DOMContentLoaded', () => {
         inputGrid.refresh();
         calcTable.render();
         urlSync.save();
-        updateSeedControls();
     });
 
-    // ── Seeds 控制 ──
-    document.getElementById('seed-prev').addEventListener('click', () => {
-        if (state.seedOn >= 2) {
-            state.seedOn -= 2;
-            notify();
-        }
-    });
-    document.getElementById('seed-next').addEventListener('click', () => {
-        state.seedOn += 2;
-        if (state.seedOn >= state.names.length) {
-            addSeedPair();
-        } else {
-            notify();
-        }
-    });
 
     // ── 一键清空 ──
     document.getElementById('clear-all').addEventListener('click', () => {
@@ -202,13 +186,7 @@ function initTargetDefaults() {
     }
 }
 
-// ── Seeds 控制 ──
 
-function updateSeedControls() {
-    document.getElementById('seed-prev').disabled = (state.seedOn < 2);
-    document.getElementById('seed-label').textContent =
-        'Seeds ' + (state.seedOn + 1) + '-' + (state.seedOn + 2);
-}
 
 // ── 秒表 ──
 
