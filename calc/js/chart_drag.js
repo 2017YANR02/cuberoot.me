@@ -168,6 +168,8 @@ function selectBar(p, t, rectEl) {
 function doSelect(p, t, rectEl, val) {
     // NOTE: 从 hover 预览态转入正式选中态
     hovered = null;
+    // NOTE: 选中态恢复 Handle 可交互（拖动需要）
+    handleEl.style.pointerEvents = '';
     selected = { player: p, slot: t, rectEl: rectEl };
 
     // NOTE: 添加 SVG class 实现视觉效果
@@ -499,6 +501,8 @@ function onSvgMouseMove(e) {
     positionHandleAndTooltip(val, p, t);
     handleEl.style.display = '';
     tooltipEl.style.display = '';
+    // NOTE: hover 预览态 Handle 必须穿透 — 否则会遮住柱子导致 hover 循环闪烁
+    handleEl.style.pointerEvents = 'none';
     handleEl.classList.toggle('player-b', p === 1);
 
     // NOTE: cursor 提示可交互
