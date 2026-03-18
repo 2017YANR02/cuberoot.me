@@ -1043,6 +1043,14 @@ function drawAverages() {
                 if (type === 2 && average > 0 && average !== DNF_VALUE && isWR(state.event, 'average', average)) {
                     drawWRBadge(avgGroup, rx + 5, cursor);
                 }
+                // NOTE: PR 徽章 — 平均值打破 Target Avg 时显示蓝色 "PR"（WR 已显示时跳过）
+                else if (type === 2 && average > 0 && average !== DNF_VALUE) {
+                    var target = getTargetAvg(p);
+                    // 普通项目 avg <= target（越小越好），mbf avg >= target（越大越好）
+                    if (target > 0 && (isMbf() ? (average >= target) : (average <= target))) {
+                        drawPRBadge(avgGroup, rx + 5, cursor);
+                    }
+                }
             }
 
             typePrev = type;
@@ -1065,6 +1073,22 @@ function drawWRBadge(parent, x, y) {
         fill: '#fff', 'text-anchor': 'middle', 'dominant-baseline': 'central',
     });
     text.textContent = 'WR';
+    parent.appendChild(text);
+}
+
+// NOTE: 渲染蓝色 PR 徽章（圆角矩形 + 白色 "PR" 文字）
+function drawPRBadge(parent, x, y) {
+    var bw = 38, bh = 22, br = 4;
+    parent.appendChild(createSvgElement('rect', {
+        x: x, y: y - bh / 2, width: bw, height: bh, rx: br,
+        fill: '#3478f6',
+    }));
+    var text = createSvgElement('text', {
+        x: x + bw / 2, y: y,
+        'font-size': '16px', 'font-family': 'Helvetica', 'font-weight': 'bold',
+        fill: '#fff', 'text-anchor': 'middle', 'dominant-baseline': 'central',
+    });
+    text.textContent = 'PR';
     parent.appendChild(text);
 }
 

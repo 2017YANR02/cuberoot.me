@@ -73,6 +73,24 @@ export function getAo100(eventId) {
 }
 
 /**
+ * NOTE: 获取 KDE 分布的期望值（ao100 times 数组的算术均值）
+ * 这是 KDE 采样的真正 μ，反映选手当前日常水平
+ * @returns {[number, number]|null} [mean_1, mean_2] centiseconds
+ */
+export function getKdeMean(eventId) {
+    if (!ao100Times || !ao100Times[eventId]) return null;
+    var result = [];
+    for (var k of ['times_1', 'times_2']) {
+        var times = ao100Times[eventId][k];
+        if (!times || times.length < 10) return null;
+        var sum = 0;
+        for (var i = 0; i < times.length; i++) sum += times[i];
+        result.push(sum / times.length);
+    }
+    return result;
+}
+
+/**
  * NOTE: KDE 采样 — 基于真实成绩的平滑 Bootstrap
  * 从指定选手的 100 个真实成绩中随机选一个，加高斯核扰动，实现连续采样
  * 带宽 h 用 Silverman 规则自动计算：h = 0.9 * min(σ, IQR/1.34) * n^(-0.2)

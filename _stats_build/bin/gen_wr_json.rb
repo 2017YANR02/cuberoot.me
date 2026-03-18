@@ -64,5 +64,32 @@ METRICS.each do |metric_id, class_name|
   end
 end
 
+# NOTE: 额外提取 Ao100 世界前 2（供 calc 页面进步幅度缩放的 μ_kde 基准）
+begin
+  ao100 = AverageOf100.new
+  ao100_rankings = ao100.ranking_data
+
+  ao100_rankings.each do |event_name, top10|
+    next if top10.empty?
+
+    event_id = Events::ALL.find { |id, name| name == event_name }&.first
+    next unless event_id
+
+    # NOTE: top10 格式 [ao100_clock, person_link, times_str]
+    cs1 = parse_cs(top10.first[0])
+    next unless cs1 && cs1 > 0
+
+    result[event_id] ||= {}
+    result[event_id]["ao100_1"] = cs1
+
+    if top10.size >= 2
+      cs2 = parse_cs(top10[1][0])
+      result[event_id]["ao100_2"] = cs2 if cs2 && cs2 > 0
+    end
+  end
+rescue => e
+  puts "WARN: Ao100 extraction failed: #{e.message}"
+end
+
 File.write(OUTPUT_PATH, JSON.pretty_generate(result) + "\n")
 puts "Generated #{OUTPUT_PATH} (#{result.size} events)"

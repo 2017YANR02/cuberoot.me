@@ -1,7 +1,7 @@
 // NOTE: 应用入口 — 导入所有模块，初始化和编排
 
-import { state, onChange, addSeedPair, updateTime, resetAll, notify, getFirstUnfilledTime, resizeTimes, solveCount, isMbf } from './state.js';
-import { formatTime, setMoveCntMode, setMbfMode } from './calc_engine.js';
+import { state, onChange, addSeedPair, updateTime, resetAll, notify, getFirstUnfilledTime, resizeTimes, solveCount, isMbf, isMo3 } from './state.js';
+import { formatTime, setMoveCntMode, setMbfMode, getAverage } from './calc_engine.js';
 import * as inputGrid from './input_grid.js';
 import * as chart from './chart.js';
 import { clearPendingConfetti, setSuppressConfetti } from './chart.js';
@@ -142,34 +142,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 // 有空格时跳过已填格子
                 if (!allFilled && state.times[state.seedOn + p][t]) continue;
 
-                // NOTE: 优先 KDE 采样（真实成绩 + Silverman 高斯扰动），零模型假设
-                var cs = wrData.sampleKDE(state.event, p);
-
-                if (cs === null) {
-                    // NOTE: 回退方案 — 对数正态分布（基于 Ao100 WR 或 average WR）
-                    var ao100 = wrData.getAo100(state.event);
-                    var muLn;
-                    if (ao100) {
-                        muLn = Math.log(ao100[p] / 100);
-                    } else {
-                        var avgWr = wrData.getWR(state.event, 'average');
-                        muLn = avgWr ? Math.log(avgWr / 100) : 1.48;
-                    }
-                    var u1 = Math.random(), u2 = Math.random();
-                    var z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
-                    cs = Math.max(1, Math.round(Math.exp(muLn + 0.12 * z) * 100));
-                }
-
-                // NOTE: FMC 单次成绩为整数步数，取整到 100 的倍数（如 2500 = 25 步）
-                if (state.event === '333fm') {
-                    cs = Math.round(cs / 100) * 100;
-                }
-
-                // NOTE: 多盲得分模式 — 随机生成 1~60 范围的得分
-                if (isMbf()) {
-                    cs = (Math.floor(Math.random() * 50) + 10) * 100;
-                }
-
+                // NOTE: 复用 sampleOneSolve — 含 KDE 采样 + 进步幅度缩放
+                var cs = sampleOneSolve(p);
                 updateTime(state.seedOn + p, t, cs);
             }
         }
@@ -193,6 +167,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     // NOTE: 默认激活第一个输入格
     inputGrid.navigateTo(0, 0);
+    // ── 模拟按钮 ──
+    document.getElementById('sim-a').addEventListener('click', () => simulateForPlayer(0));
+    document.getElementById('sim-b').addEventListener('click', () => simulateForPlayer(1));
+    document.getElementById('sim-race').addEventListener('click', simulateRace);
+
+    // ── 进步幅度滑杆 ──
+    document.getElementById('progress-slider-a').addEventListener('input', function() {
+        updateProgressInfo(0, this.value);
+    });
+    document.getElementById('progress-slider-b').addEventListener('input', function() {
+        updateProgressInfo(1, this.value);
+    });
+    // NOTE: 初始显示 0% 基线值
+    updateProgressInfo(0, 0);
+    updateProgressInfo(1, 0);
 
     console.log('HTH Grapher v2 initialized');
 });
@@ -285,4 +274,211 @@ function tickStopwatch() {
     chart.render();
 
     animFrameId = requestAnimationFrame(tickStopwatch);
+}
+
+// ── 模拟 Rand ──
+
+var SIM_MAX = 1000000; // 最大模拟次数
+// NOTE: 选手进步幅度 — 滑杆值 0~150，代表百分比
+var playerProgress = [0, 0];
+
+// NOTE: 获取 μ_kde（KDE 分布期望值）— 优先 wr.json 的 ao100，fallback 到 times 均值
+function getMuKde() {
+    return wrData.getAo100(state.event) || wrData.getKdeMean(state.event);
+}
+
+// NOTE: 计算 Target 锚定缩放因子
+// α = 1 − (progress/100) × (1 − T/μ_kde)
+// μ_kde = Ao100 trimmed mean（选手日常水平，高于 WR average = best Ao5）
+// progress=0 → α=1（不变），progress=100 → α=T/μ_kde（avg≈T）
+function getScaleFactor(p) {
+    var progress = playerProgress[p] / 100;
+    if (progress === 0) return 1;
+    var target = getTargetAvg(state.seedOn + p);
+    var muArr = getMuKde();
+    if (!muArr || !target || target <= 0) return 1;
+    var muKde = muArr[p]; // centiseconds
+    if (muKde <= 0) return 1;
+    return 1 - progress * (1 - target / muKde);
+}
+
+// NOTE: 更新滑杆旁的 info 标签（百分比 + 预估 avg）
+function updateProgressInfo(p, val) {
+    playerProgress[p] = parseInt(val);
+    var pct = playerProgress[p];
+    var infoEl = document.getElementById(p === 0 ? 'progress-info-a' : 'progress-info-b');
+    var muArr = getMuKde();
+    if (pct === 0) {
+        // NOTE: 0% 时显示当前基线（ao100 均值）
+        if (muArr) {
+            infoEl.textContent = '0% (' + (muArr[p] / 100).toFixed(2) + 's)';
+        } else {
+            infoEl.textContent = '0%';
+        }
+        return;
+    }
+    var alpha = getScaleFactor(p);
+    if (muArr) {
+        var estAvg = muArr[p] * alpha / 100;
+        infoEl.textContent = '+' + pct + '% (~' + estAvg.toFixed(2) + 's)';
+    } else {
+        infoEl.textContent = '+' + pct + '%';
+    }
+}
+
+// NOTE: 采样单次成绩 — 复用 rand-fill 的 KDE + log-normal 回退逻辑
+// 应用 Target 锚定缩放：x_new = x × α
+function sampleOneSolve(p) {
+    var cs = wrData.sampleKDE(state.event, p);
+    if (cs === null) {
+        var ao100 = wrData.getAo100(state.event);
+        var muLn;
+        if (ao100) {
+            muLn = Math.log(ao100[p] / 100);
+        } else {
+            var avgWr = wrData.getWR(state.event, 'average');
+            muLn = avgWr ? Math.log(avgWr / 100) : 1.48;
+        }
+        var u1 = Math.random(), u2 = Math.random();
+        var z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+        cs = Math.max(1, Math.round(Math.exp(muLn + 0.12 * z) * 100));
+    }
+    if (state.event === '333fm') cs = Math.round(cs / 100) * 100;
+    if (isMbf()) cs = (Math.floor(Math.random() * 50) + 10) * 100;
+
+    // NOTE: 应用进步幅度缩放（非 mbf 时）
+    if (!isMbf() && playerProgress[p] > 0) {
+        var alpha = getScaleFactor(p);
+        cs = Math.max(1, Math.round(cs * alpha));
+    }
+    return cs;
+}
+
+// NOTE: 模拟一组成绩（n 个 solve），返回 [solves[], avg]
+function simulateOnce(p) {
+    var n = solveCount();
+    var solves = new Array(n);
+    for (var i = 0; i < n; i++) solves[i] = sampleOneSolve(p);
+    var avg = getAverage(solves, true);
+    return { solves: solves, avg: avg };
+}
+
+// NOTE: 判断 avg 是否击败 target
+// 普通项目：avg <= target（越小越好）；mbf：avg >= target（越大越好）
+function isBeat(avg, target) {
+    if (avg <= 0 || avg >= 999999) return false; // DNF / UNFINISHED 不算
+    return isMbf() ? (avg >= target) : (avg <= target);
+}
+
+// NOTE: 显示计数徽章
+function showCount(id, count, winner) {
+    var el = document.getElementById(id);
+    el.textContent = '×' + count.toLocaleString();
+    el.className = 'sim-count visible';
+    if (winner !== undefined) {
+        el.style.color = winner ? '#006400' : '#999';
+    } else {
+        el.style.color = '#555';
+    }
+}
+
+// NOTE: 隐藏计数徽章
+function hideCount(id) {
+    var el = document.getElementById(id);
+    el.textContent = '';
+    el.className = 'sim-count';
+    el.style.color = '';
+}
+
+// NOTE: 单选手模拟 — 循环直到击败 Target Avg
+function simulateForPlayer(p) {
+    var target = getTargetAvg(state.seedOn + p);
+    if (target <= 0) {
+        alert('Please set a Target Avg first.');
+        return;
+    }
+
+    if (!state.playerEnabled[p]) return;
+
+    hideCount('sim-count-a');
+    hideCount('sim-count-b');
+    hideCount('sim-count-race');
+
+    var count = 0;
+    var result = null;
+    for (count = 1; count <= SIM_MAX; count++) {
+        result = simulateOnce(p);
+        if (isBeat(result.avg, target)) break;
+    }
+
+    if (count > SIM_MAX) {
+        alert('Gave up after ' + SIM_MAX.toLocaleString() + ' tries. Target too hard!');
+        return;
+    }
+
+    // NOTE: 写入 state 并刷新
+    setSuppressConfetti(true);
+    var n = solveCount();
+    for (var t = 0; t < n; t++) {
+        updateTime(state.seedOn + p, t, result.solves[t]);
+    }
+    setSuppressConfetti(false);
+
+    showCount(p === 0 ? 'sim-count-a' : 'sim-count-b', count);
+}
+
+// NOTE: Race 模式 — 两选手交替模拟，先到 target 的胜出
+function simulateRace() {
+    var targetA = getTargetAvg(state.seedOn + 0);
+    var targetB = getTargetAvg(state.seedOn + 1);
+    if (targetA <= 0 || targetB <= 0) {
+        alert('Both players need a Target Avg.');
+        return;
+    }
+    if (!state.playerEnabled[0] || !state.playerEnabled[1]) {
+        alert('Both players must be enabled.');
+        return;
+    }
+
+    hideCount('sim-count-a');
+    hideCount('sim-count-b');
+    hideCount('sim-count-race');
+
+    var countA = 0, countB = 0;
+    var resultA = null, resultB = null;
+    var doneA = false, doneB = false;
+
+    for (var round = 1; round <= SIM_MAX; round++) {
+        if (!doneA) {
+            countA++;
+            resultA = simulateOnce(0);
+            if (isBeat(resultA.avg, targetA)) doneA = true;
+        }
+        if (!doneB) {
+            countB++;
+            resultB = simulateOnce(1);
+            if (isBeat(resultB.avg, targetB)) doneB = true;
+        }
+        if (doneA || doneB) break;
+    }
+
+    if (!doneA && !doneB) {
+        alert('Neither player beat their target within ' + SIM_MAX.toLocaleString() + ' tries!');
+        return;
+    }
+
+    // NOTE: 写入成功方的结果；未成功方用最后一轮的数据
+    setSuppressConfetti(true);
+    var n = solveCount();
+    for (var t = 0; t < n; t++) {
+        if (resultA) updateTime(state.seedOn + 0, t, resultA.solves[t]);
+        if (resultB) updateTime(state.seedOn + 1, t, resultB.solves[t]);
+    }
+    setSuppressConfetti(false);
+
+    // NOTE: 显示各自尝试次数，胜方绿色
+    var winner = doneA && !doneB ? 0 : (!doneA && doneB ? 1 : (countA <= countB ? 0 : 1));
+    showCount('sim-count-a', countA, winner === 0);
+    showCount('sim-count-b', countB, winner === 1);
+    showCount('sim-count-race', Math.max(countA, countB));
 }

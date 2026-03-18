@@ -38,7 +38,31 @@
 			<span class="rand-info" data-tip="Row 1 ~ Ao100 World #1, Row 2 ~ Ao100 World #2. Method: KDE (pick a real solve, add Gaussian jitter with Silverman bandwidth). 333fm/444bf/555bf have no Ao100 data and fall back to log-normal.">&#9432;</span>
 		</div>
 
-		<!-- NOTE: 数字键盘 -->
+		<!-- NOTE: 模拟按钮 — 反复随机生成直到击败 Target Avg -->
+		<div class="sim-controls" id="sim-controls">
+			<button id="sim-a" class="sim-btn sim-a">🎯 A</button>
+			<span id="sim-count-a" class="sim-count"></span>
+			<button id="sim-b" class="sim-btn sim-b">🎯 B</button>
+			<span id="sim-count-b" class="sim-count"></span>
+			<button id="sim-race" class="sim-btn sim-race">⚔️ Race</button>
+			<span id="sim-count-race" class="sim-count"></span>
+			<span class="rand-info" data-tip="🎯 A / 🎯 B: Repeatedly rand until the average beats the Target Avg (colored cell). ⚔️ Race: Both players simulate simultaneously — first to beat their target wins. ×N shows how many tries it took.">&#9432;</span>
+		</div>
+
+		<!-- NOTE: 进步幅度滑杆 — 控制 KDE 采样的 Target 锚定缩放 -->
+		<div class="progress-controls" id="progress-controls">
+			<div class="progress-row progress-a">
+				<span class="progress-label">A</span>
+				<input type="range" id="progress-slider-a" class="progress-slider slider-a" min="0" max="150" value="0" step="1">
+				<span id="progress-info-a" class="progress-info">0%</span>
+			</div>
+			<div class="progress-row progress-b">
+				<span class="progress-label">B</span>
+				<input type="range" id="progress-slider-b" class="progress-slider slider-b" min="0" max="150" value="0" step="1">
+				<span id="progress-info-b" class="progress-info">0%</span>
+			</div>
+			<span class="rand-info" data-tip="Player Improvement Slider &#10;&#10;Models how much faster a player has become since their Ao100 baseline. &#10;&#10;• 0% = Current level (Ao100 average from official results) &#10;• 100% = Improved enough that expected average ≈ Target Avg &#10;• >100% = Surpassed the target &#10;&#10;Math: each solve is scaled by α = 1 − (progress/100) × (1 − Target/μ), where μ = Ao100 mean. This multiplicative scaling preserves the coefficient of variation (CV), meaning both mean and standard deviation shrink proportionally — consistent with how real cubers improve. &#10;&#10;Affects both Rand and 🎯 Simulate buttons.">&#9432;</span>
+		</div>
 		<div id="numpad">
 			<div id="numpad-display"><span id="numpad-label"></span><span id="numpad-value"></span></div>
 			<div id="numpad-grid">
