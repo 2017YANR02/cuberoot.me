@@ -785,11 +785,7 @@ function drawStats() {
         // NOTE: Mo3 模式下不画 BPA/WPA 扇形和标签
         if (isMo3()) {
             if (s.filleds === solveCount()) {
-                // Mo3 全部完成 — 只显示 Placed 排名
-                var placedX = s.p === 0 ? BAR_START + 200 : chartEnd() - 200;
-                var ty = valToYCap(DNF_VALUE);
-                addText(topTextGroup, placedX, ty - 4, 'Placed', s.darkCol, 22, 'center');
-                addText(topTextGroup, placedX, ty + 26, rankify(getRankOf(state.seedOn + s.p)) + ' / ' + getValidsCount(), s.darkCol, 30, 'center');
+                // Mo3 全部完成 — 绘制连接线
 
                 // 连接线
                 var avg = getAverage(state.times[state.seedOn + s.p], true);
@@ -870,11 +866,7 @@ function drawStats() {
             var arrowX = innerX - 18;
             drawCurvedLine([s.ax[0], s.ax[1], outerX, innerX, arrowX], ys, '#000');
 
-            // Placed 文字
-            var placedX = s.p === 0 ? BAR_START + 200 : chartEnd() - 200;
-            var ty = valToYCap(DNF_VALUE);
-            addText(topTextGroup, placedX, ty - 4, 'Placed', s.darkCol, 22, 'center');
-            addText(topTextGroup, placedX, ty + 26, rankify(getRankOf(state.seedOn + s.p)) + ' / ' + getValidsCount(), s.darkCol, 30, 'center');
+
         }
     }
 
@@ -1049,6 +1041,26 @@ function drawAverages() {
                     // 普通项目 avg <= target（越小越好），mbf avg >= target（越大越好）
                     if (target > 0 && (isMbf() ? (average >= target) : (average <= target))) {
                         drawPRBadge(avgGroup, rx + 5, cursor);
+                    }
+                }
+
+                // NOTE: 🏆 标记 — 两个选手都有 avg 时，赢家旁显示奖杯
+                if (type === 2 && pIdx >= 0 && pIdx <= 1) {
+                    var otherP = pIdx === 0 ? 1 : 0;
+                    if (state.playerEnabled[otherP]) {
+                        var otherAvg = getAverage(state.times[state.seedOn + otherP], false);
+                        // NOTE: 两人都有有效 avg 且当前选手更好（普通项目越小越好，mbf 越大越好）
+                        var iWin = otherAvg !== UNFINISHED_VALUE &&
+                            (isMbf() ? average > otherAvg : average < otherAvg);
+                        if (iWin) {
+                            var trophy = createSvgElement('text', {
+                                x: rx + 8, y: cursor,
+                                'font-size': '22px',
+                                'dominant-baseline': 'central',
+                            });
+                            trophy.textContent = '🏆';
+                            avgGroup.appendChild(trophy);
+                        }
                     }
                 }
             }
