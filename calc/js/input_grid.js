@@ -133,6 +133,52 @@ export function init(gridContainer) {
         numpadGrid.addEventListener('click', guardedHandler);
     }
 
+    // NOTE: 长按 ⌫ = Clear All — 500ms 后按钮变红提示，松手执行清空
+    var bkspBtn = document.querySelector('[data-key="backspace"]');
+    if (bkspBtn) {
+        var longPressTimer = null;
+        var isClearMode = false;
+        var origHTML = bkspBtn.innerHTML;
+
+        function startLongPress(e) {
+            isClearMode = false;
+            longPressTimer = setTimeout(function() {
+                isClearMode = true;
+                bkspBtn.style.background = '#c62828';
+                bkspBtn.innerHTML = '<span style="font-size:14px;color:#fff">Clear</span>';
+            }, 500);
+        }
+
+        function endLongPress(e) {
+            clearTimeout(longPressTimer);
+            if (isClearMode) {
+                // NOTE: 恢复按钮外观后 dispatch clearAll 事件
+                bkspBtn.style.background = '';
+                bkspBtn.innerHTML = origHTML;
+                document.dispatchEvent(new CustomEvent('clearAll'));
+                isClearMode = false;
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        }
+
+        function cancelLongPress() {
+            clearTimeout(longPressTimer);
+            if (isClearMode) {
+                bkspBtn.style.background = '';
+                bkspBtn.innerHTML = origHTML;
+                isClearMode = false;
+            }
+        }
+
+        bkspBtn.addEventListener('mousedown', startLongPress);
+        bkspBtn.addEventListener('mouseup', endLongPress);
+        bkspBtn.addEventListener('mouseleave', cancelLongPress);
+        bkspBtn.addEventListener('touchstart', startLongPress, { passive: true });
+        bkspBtn.addEventListener('touchend', endLongPress);
+        bkspBtn.addEventListener('touchcancel', cancelLongPress);
+    }
+
     // NOTE: 初始化滚筒选择器
     drumPicker.init();
 }

@@ -96,8 +96,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 
-    // ── 一键清空 ──
-    document.getElementById('clear-all').addEventListener('click', () => {
+    // ── 一键清空（由 numpad ⌫ 长按触发） ──
+    document.addEventListener('clearAll', () => {
         resetAll();
         clearTargetAvgs(); // NOTE: 清空 calc_table 的 targetAvgs
         initTargetDefaults(); // NOTE: 清空后重填 WR 默认值
