@@ -36,9 +36,14 @@ export function formatTime(cs, axisLabel = false, isMoveCnt = false, forceDecima
         return String(moves);
     }
 
-    // NOTE: 多盲得分模式 — 显示整数得分（score = cs / 100）
+    // NOTE: 多盲得分模式 — 单次显示整数("56")，平均值显示小数("35.67")
+    // 逻辑与 FMC 步数模式一致：axisLabel 整数，非整数自动加小数
     if (_isMbfMode) {
-        return String(Math.round(cs / 100));
+        var score = cs / 100;
+        if (forceDecimal || (!Number.isInteger(score) && !axisLabel)) {
+            return score.toFixed(2);
+        }
+        return String(Math.round(score));
     }
 
     // NOTE: 通过 digit/separator 数组逐位拆解，自动处理 分:秒.厘秒 格式
