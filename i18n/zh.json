@@ -167,6 +167,18 @@
         "key_hint": "回车 ↑ · ↓ 空格",
         "bg_label": "背景",
         "bg_player1": "P1（下方）",
-        "bg_player2": "P2（上方）"
+        "bg_player2": "P2（上方）",
+        "tab_timer": "计时",
+        "tab_results": "成绩",
+        "tab_settings": "设置",
+        "manual_input": "➕ 手动",
+        "import_cstimer": "📥 导入",
+        "session_overview": "📊 概览",
+        "simulate": "🎲 模拟赛",
+        "share": "📤 分享",
+        "no_solves": "暂无成绩",
+        "history": "历史",
+        "practice_calendar": "练习日历",
+        "export_json": "导出 JSON"
     }
 }

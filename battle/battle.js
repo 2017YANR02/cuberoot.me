@@ -2283,6 +2283,14 @@ function renderHistory() {
             deleteSolve(idx);
         });
     });
+
+    // NOTE: 在列表底部追加热力图日历
+    const heatmapHtml = renderHeatmapCalendar();
+    if (heatmapHtml) {
+        const heatmapDiv = document.createElement('div');
+        heatmapDiv.innerHTML = heatmapHtml;
+        listEl.appendChild(heatmapDiv);
+    }
 }
 
 /**
@@ -3396,25 +3404,40 @@ function shareResultCard() {
     }, 'image/png');
 }
 
-// ===== Sprint 6: 国际化修复 =====
+// ===== Phase C: JSON 导出（兼容 csTimer 格式）=====
 
-// NOTE: 设置页面硬编码英文文本的双语映射
-const I18N_SETTINGS = {
-    voice_alert: { en: 'Voice Alert (8s / 12s)', zh: '语音提示 (8s / 12s)' },
-    phases: { en: 'Phases', zh: '阶段' },
-    inspection_time: { en: 'Inspection Time', zh: '观察时间' },
-    off: { en: 'OFF', zh: '关' },
-    timer_precision: { en: 'Timer Precision', zh: '计时精度' },
-    start_delay: { en: 'Start Delay', zh: '启动延时' },
-    scramble_size: { en: 'Scramble Size', zh: '打乱字号' },
-    show_scramble_image: { en: 'Show Scramble Image', zh: '显示打乱图' },
-    history: { en: 'History', zh: '历史' },
-    no_solves: { en: 'No solves yet', zh: '暂无成绩' },
-    solves_unit: { en: 'solves', zh: '次' },
-    manual_input: { en: '➕ Manual', zh: '➕ 手动' },
-    import_cstimer: { en: 'Import csTimer', zh: '导入 csTimer' },
-    session_overview: { en: '📊 Overview', zh: '📊 概览' },
-    simulate: { en: '🎲 Simulate', zh: '🎲 模拟赛' },
-    share: { en: '📤 Share', zh: '📤 分享' },
-};
+/**
+ * NOTE: 导出当前 session 的成绩为 JSON 文件
+ * 格式兼容 csTimer 的导入（可在 csTimer 中反向导入）
+ */
+function exportToJson() {
+    var h = state.players[0].solveHistory;
+    if (h.length === 0) {
+        showMilestoneToast(getLocale() === 'zh' ? '暂无成绩可导出' : 'No solves to export');
+        return;
+    }
 
+    // NOTE: 转换为 csTimer 兼容格式
+    // csTimer 格式: { "session1": [[penalty, time, scramble, timestamp], ...] }
+    var records = [];
+    for (var i = 0; i < h.length; i++) {
+        var entry = h[i];
+        var t = typeof entry === 'object' ? entry.time : entry;
+        // penalty: 0=ok, 2000=+2, -1=DNF
+        var penalty = 0;
+        if (entry.penalty === 'dnf') penalty = -1;
+        else if (entry.penalty === '+2') penalty = 2000;
+        var scramble = typeof entry === 'object' ? (entry.scramble || '') : '';
+        var ts = entry.date ? Math.floor(new Date(entry.date).getTime() / 1000) : Math.floor(Date.now() / 1000);
+        records.push([penalty, t, scramble, ts]);
+    }
+
+    var exportData = { session1: records };
+    var blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'battle_export_' + state.puzzleId + '_' + new Date().toISOString().slice(0, 10) + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+}

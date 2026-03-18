@@ -152,6 +152,18 @@
         "show_time": "👁️ Show time when solving",
         "delete_last": "↩️ Delete last solve",
         "reset": "🗑️ Reset session",
-        "key_hint": "Enter ↑ · ↓ Space"
+        "key_hint": "Enter ↑ · ↓ Space",
+        "tab_timer": "Timer",
+        "tab_results": "Results",
+        "tab_settings": "Settings",
+        "manual_input": "➕ Manual",
+        "import_cstimer": "📥 Import",
+        "session_overview": "📊 Overview",
+        "simulate": "🎲 Simulate",
+        "share": "📤 Share",
+        "no_solves": "No solves yet",
+        "history": "History",
+        "practice_calendar": "Practice Calendar",
+        "export_json": "Export JSON"
     }
 }
