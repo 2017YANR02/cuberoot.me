@@ -1176,6 +1176,7 @@ body.solo[data-tab] .settings-panel {
     color: #fff;
     font-size: 0.95rem;
     min-width: 80px;
+    text-align: right;
 }
 
 .history-item .h-time.h-best {

@@ -150,7 +150,7 @@ function checkWRConfetti() {
     for (var p = 0; p < 2; p++) {
         if (!state.playerEnabled[p]) continue;
         var times = state.times[state.seedOn + p];
-        var filled = times.filter(function(t) { return t > 0 && t < DNF_VALUE; });
+        var filled = times.filter(function (t) { return t > 0 && t < DNF_VALUE; });
 
         // 检测单次 WR — 任何一把 ≤ WR single
         for (var si = 0; si < filled.length; si++) {
@@ -182,7 +182,7 @@ function checkWRConfetti() {
 // NOTE: confetti 喷射 — 连发 3 波
 function fireConfetti() {
     for (var i = 0; i < 3; i++) {
-        var tid = setTimeout(function() {
+        var tid = setTimeout(function () {
             confetti({
                 particleCount: 100,
                 spread: 80,
@@ -342,9 +342,10 @@ function drawTargetAvgLines() {
             opacity: 0.7,
         }));
 
-        // 右侧标注文字
+        // NOTE: 左侧标注文字 — 与 Y 轴刻度标签对齐
         var label = createSvgElement('text', {
-            x: x2 + 6, y: y + 6,
+            x: BAR_START - 8, y: y + 6,
+            'text-anchor': 'end',
             'font-size': '20px', 'font-family': 'Helvetica',
             'font-weight': 'bold',
             fill: col, opacity: 0.8,
@@ -398,20 +399,19 @@ function drawGhostBars() {
             // 💀 标签（带 tooltip）
             var labelY = valToYCap(tavg);
             var skullGroup = createSvgElement('g', { cursor: 'help' });
-            (function() {
-                skullGroup.addEventListener('mouseenter', function(e) {
+            (function () {
+                skullGroup.addEventListener('mouseenter', function (e) {
                     tooltipEl.textContent = 'Mathematically impossible to hit target avg — no matter what you solve';
                     var rect = chartContainer.getBoundingClientRect();
                     tooltipEl.style.left = (e.clientX - rect.left + 10) + 'px';
                     tooltipEl.style.top = (e.clientY - rect.top - 40) + 'px';
                     tooltipEl.style.opacity = '1';
                 });
-                skullGroup.addEventListener('mouseleave', function() {
+                skullGroup.addEventListener('mouseleave', function () {
                     tooltipEl.style.opacity = '0';
                 });
             })();
             addText(skullGroup, bx + bw / 2, labelY, '💀', GHOST_TEXT_COLORS.impossible, 30, 'center');
-            addText(skullGroup, bx + bw / 2, labelY + 26, 'Impossible', GHOST_TEXT_COLORS.impossible, 16, 'center');
             topTextGroup.appendChild(skullGroup);
             continue;
         }
@@ -442,7 +442,12 @@ function drawGhostBars() {
             rx: 2,
         }));
 
-        // 顶部标签
+        // NOTE: 幽灵柱内部居中 emoji — 🔒 safe / 🎲 conditional
+        var emoji = ghost.type === 'safe' ? '🔒' : '🎲';
+        var emojiY = topY + barHeight / 2 + 10; // 垂直居中
+        addText(barGroup, bx + bw / 2, emojiY, emoji, GHOST_TEXT_COLORS[ghost.type], 28, 'center');
+
+        // 顶部标签（纯文字，不含 emoji）
         var labelText = isAny ? 'ANY ✓' : 'Need ≤ ' + formatTime(ghostValue);
         var labelColor = GHOST_TEXT_COLORS[ghost.type];
         addText(topTextGroup, bx + bw / 2, topY - 8, labelText, labelColor, 18, 'center');
@@ -452,7 +457,7 @@ function drawGhostBars() {
     var BADGE_COLORS = {
         t4wpa: '#1976D2',       // 蓝色 — WPA（最差情况）
         t4bpa: '#388E3C',       // 绿色 — BPA（最好情况）
-        t5:    '#D32F2F',       // 红色 — 第 5 把
+        t5: '#D32F2F',       // 红色 — 第 5 把
     };
 
     for (var p = 0; p < 2; p++) {
@@ -481,34 +486,44 @@ function drawGhostBars() {
 
         if (showWpa) {
             var v = th.t4wpa >= DNF_VALUE ? 'ANY ✓' : '≤ ' + formatTime(th.t4wpa);
-            badges.push({ line1: 'Need 4th', line2: v, color: BADGE_COLORS.t4wpa,
+            badges.push({
+                line1: 'Need 4th', line2: v, color: BADGE_COLORS.t4wpa,
                 tip: 'Worst case: even if 5th solve = DNF, 4th must be ≤ this to hit target avg',
-                y: th.t4wpa < DNF_VALUE ? valToYCap(th.t4wpa) : valToYCap(tavg) - 40 });
+                y: th.t4wpa < DNF_VALUE ? valToYCap(th.t4wpa) : valToYCap(tavg) - 40
+            });
         }
         if (showBpa) {
             var v = th.t4bpa >= DNF_VALUE ? 'ANY ✓' : '≤ ' + formatTime(th.t4bpa);
-            badges.push({ line1: 'Need 4th', line2: v, color: BADGE_COLORS.t4bpa,
+            badges.push({
+                line1: 'Need 4th', line2: v, color: BADGE_COLORS.t4bpa,
                 tip: 'Best case: if 5th solve is great, 4th must be ≤ this to hit target avg',
-                y: th.t4bpa < DNF_VALUE ? valToYCap(th.t4bpa) : valToYCap(tavg) + 20 });
+                y: th.t4bpa < DNF_VALUE ? valToYCap(th.t4bpa) : valToYCap(tavg) + 20
+            });
         }
         // t#4 impossible — WPA 和 BPA 都是 null
         if (th.t4wpa === null && th.t4bpa === null) {
-            badges.push({ line1: '4th 💀', line2: 'Impossible', color: '#D32F2F',
+            badges.push({
+                line1: '4th 💀', line2: 'Impossible', color: '#D32F2F',
                 tip: 'Mathematically impossible to hit target avg — no matter what you solve',
-                y: valToYCap(tavg) });
+                y: valToYCap(tavg)
+            });
         }
         // t#5（仅当填了 5 把时）
         if (filled.length >= 5 && th.t5 !== undefined) {
             if (th.t5 !== null) {
                 var v = th.t5 >= DNF_VALUE ? 'ANY ✓' : '≤ ' + formatTime(th.t5);
-                badges.push({ line1: 'Need 5th', line2: v, color: BADGE_COLORS.t5,
+                badges.push({
+                    line1: 'Need 5th', line2: v, color: BADGE_COLORS.t5,
                     tip: '5th solve must be ≤ this to hit target avg',
-                    y: th.t5 < DNF_VALUE ? valToYCap(th.t5) : valToYCap(tavg) + 60 });
+                    y: th.t5 < DNF_VALUE ? valToYCap(th.t5) : valToYCap(tavg) + 60
+                });
             } else {
                 // t#5 impossible
-                badges.push({ line1: '5th 💀', line2: 'Impossible', color: '#D32F2F',
+                badges.push({
+                    line1: '5th 💀', line2: 'Impossible', color: '#D32F2F',
                     tip: 'Mathematically impossible to hit target avg — no matter what you solve',
-                    y: valToYCap(tavg) + 40 });
+                    y: valToYCap(tavg) + 40
+                });
             }
         }
 
@@ -516,7 +531,7 @@ function drawGhostBars() {
 
         // 排斥重叠
         var badgeH = 38, badgeGap = 6;
-        var badgeItems = badges.map(function(b) { return { origY: b.y, y: b.y, h: badgeH }; });
+        var badgeItems = badges.map(function (b) { return { origY: b.y, y: b.y, h: badgeH }; });
         if (badgeItems.length > 1) resolveOverlaps(badgeItems, badgeGap);
         for (var bi = 0; bi < badges.length; bi++) badges[bi].y = badgeItems[bi].y;
 
@@ -534,15 +549,15 @@ function drawGhostBars() {
             var badgeGroup = createSvgElement('g', { cursor: 'help' });
 
             // JS 事件驱动 tooltip
-            (function(tip) {
-                badgeGroup.addEventListener('mouseenter', function(e) {
+            (function (tip) {
+                badgeGroup.addEventListener('mouseenter', function (e) {
                     tooltipEl.textContent = tip;
                     var rect = chartContainer.getBoundingClientRect();
                     tooltipEl.style.left = (e.clientX - rect.left + 10) + 'px';
                     tooltipEl.style.top = (e.clientY - rect.top - 40) + 'px';
                     tooltipEl.style.opacity = '1';
                 });
-                badgeGroup.addEventListener('mouseleave', function() {
+                badgeGroup.addEventListener('mouseleave', function () {
                     tooltipEl.style.opacity = '0';
                 });
             })(b.tip);
@@ -768,10 +783,19 @@ function drawStats() {
             var darkCol = darken(col, 0.7);
             var shouldDrawMiddle = (paVals[7] > paVals[6] && (filleds === 4 || state.timeLive[0] === p));
 
-            // 绘制扇形曲线（不受排斥影响）
-            drawCurvedSegment(ax, paY, col, shouldDrawMiddle);
+            // NOTE: BPA→WPA 竖直柱 — 替代扇形曲线，直观展示 avg 可能范围
+            var barCx = (ax[0] + ax[1]) / 2; // 柱子水平中心
+            var paBarW = 40; // 柱宽
+            var paTopY = paY[4]; // WPA（较差 = 较高位置 = 较小 Y）
+            var paBotY = paY[3]; // BPA（较好 = 较低位置 = 较大 Y）
+            var paBarH = Math.max(3, paBotY - paTopY); // 至少 3px 高度
+            var fadedCol = fade(col, 0.25);
+            statsGroup.appendChild(createSvgElement('rect', {
+                x: barCx - paBarW / 2, y: paTopY, width: paBarW, height: paBarH,
+                fill: fadedCol, stroke: darkCol, 'stroke-width': 2, rx: 3,
+            }));
 
-            labelSets.push({ paVals, paY, ax, col, darkCol, filleds, p, shouldDrawMiddle });
+            labelSets.push({ paVals, paY, ax, col, darkCol, filleds, p, shouldDrawMiddle, barCx });
         }
     }
 
@@ -801,71 +825,44 @@ function drawStats() {
         }
 
         if (s.filleds === 4 || state.timeLive[0] === s.p) {
-            // ── 左侧文字（best/worst 单次、阈值） ──
-            var ay0 = s.paY[0], ay1 = s.paY[1];
-            if (s.filleds === 4 && s.paVals[2] !== DNF_VALUE) {
-                ay1 = Math.min(ay1, s.paY[2] - 40);
-                ay0 = Math.max(ay0, s.paY[2] + 45);
-            }
-            addText(topTextGroup, tx0, ay0 + 7, formatTime(s.paVals[0]), s.darkCol, 30, 'end');
-            addText(topTextGroup, tx0, ay1 + 7, formatTime(s.paVals[1]), s.darkCol, 30, 'end');
+            // NOTE: BPA/WPA 标签居中在竖柱正上方/下方
+            var labelCx = s.barCx;
 
-            if (s.paVals[7] > s.paVals[6]) {
-                addText(topTextGroup, tx0, s.paY[2] - 3, formatTime(s.paVals[2]), s.darkCol, 30, 'end');
-                addText(topTextGroup, tx0, s.paY[2] + 20, 'for ' + rankify(s.paVals[6]) + ' / ' + s.paVals[8], s.darkCol, 22, 'end');
-                var ty = valToYCap(DNF_VALUE);
-                addText(topTextGroup, tx0, ty - 4, 'Can place', s.darkCol, 22, 'end');
-                addText(topTextGroup, tx0, ty + 26, rankify(s.paVals[6]) + ' to ' + rankify(s.paVals[7]), s.darkCol, 30, 'end');
-            } else {
-                addText(topTextGroup, tx0, s.paY[2] - 7, 'Guaranteed', s.darkCol, 22, 'end');
-                addText(topTextGroup, tx0, s.paY[2] + 21, rankify(s.paVals[6]) + ' / ' + s.paVals[8], s.darkCol, 30, 'end');
-            }
+            // ── BPA（柱子下方） ──
+            rightLabels.push({
+                origY: s.paY[3] + 30, y: s.paY[3] + 30, h: 55, texts: [
+                    { dy: 0, text: 'BPA', size: 22 },
+                    { dy: 28, text: formatTime(s.paVals[3]), size: 30 },
+                ], x: labelCx, col: s.darkCol, anchor: 'center',
+                wrMetric: 'bpa', wrValue: s.paVals[3]
+            });
+            // ── WPA（柱子上方） ──
+            rightLabels.push({
+                origY: s.paY[4] - 50, y: s.paY[4] - 50, h: 55, texts: [
+                    { dy: 0, text: 'WPA', size: 22 },
+                    { dy: 28, text: formatTime(s.paVals[4]), size: 30 },
+                ], x: labelCx, col: s.darkCol, anchor: 'center',
+                wrMetric: 'wpa', wrValue: s.paVals[4]
+            });
 
-            // ── 右侧 BPA/WPA（收集进统一排斥池） ──
-            var bpaY = s.paY[3] + 7, wpaY = s.paY[4] - 21;
-            // 先做自身 gap 保证
-            var gap = bpaY - wpaY;
-            if (gap <= 30) { bpaY += (24 - gap) / 2; wpaY -= (24 - gap) / 2; }
 
-            // NOTE: 每个 BPA/WPA 块占两行（标题22px + 数值30px），总高约 55px
-            rightLabels.push({ origY: s.paY[3] + 7, y: bpaY, h: 55, texts: [
-                { dy: 0, text: 'BPA', size: 22 },
-                { dy: 28, text: formatTime(s.paVals[3]), size: 30 },
-            ], x: tx1, col: s.darkCol, anchor: 'start',
-                wrMetric: 'bpa', wrValue: s.paVals[3] });
-            rightLabels.push({ origY: s.paY[4] - 21, y: wpaY, h: 55, texts: [
-                { dy: 0, text: 'WPA', size: 22 },
-                { dy: 28, text: formatTime(s.paVals[4]), size: 30 },
-            ], x: tx1, col: s.darkCol, anchor: 'start',
-                wrMetric: 'wpa', wrValue: s.paVals[4] });
-
-            // NOTE: 计时第 5 把时，实时画黑色连接线
-            if (s.filleds === 5 && state.timeLive[0] === s.p) {
-                var avg = getAverage(state.times[state.seedOn + s.p], true);
-                var ys = [valToYCap(state.times[state.seedOn + s.p][4]), valToYCap(avg)];
-                var outerX = s.ax[0] - 5;
-                var innerX = chartIX()[1] + chartIX()[4] + 2;
-                var arrowX = innerX - 18;
-                drawCurvedLine([s.ax[0], s.ax[1], outerX, innerX, arrowX], ys, '#000');
-            }
         } else if (s.filleds === 5) {
-            // ── 5 把完成：只有数值标签 ──
-            rightLabels.push({ origY: s.paY[3] + 24, y: s.paY[3] + 24, h: 35, texts: [
-                { dy: 0, text: formatTime(s.paVals[3]), size: 30 },
-            ], x: tx1, col: s.darkCol, anchor: 'start',
-                wrMetric: 'bpa', wrValue: s.paVals[3] });
-            rightLabels.push({ origY: s.paY[4] - 4, y: s.paY[4] - 4, h: 35, texts: [
-                { dy: 0, text: formatTime(s.paVals[4]), size: 30 },
-            ], x: tx1, col: s.darkCol, anchor: 'start',
-                wrMetric: 'wpa', wrValue: s.paVals[4] });
+            // ── 5 把完成：数值标签居中在柱子上下 ──
+            var labelCx = s.barCx;
+            rightLabels.push({
+                origY: s.paY[3] + 24, y: s.paY[3] + 24, h: 35, texts: [
+                    { dy: 0, text: formatTime(s.paVals[3]), size: 30 },
+                ], x: labelCx, col: s.darkCol, anchor: 'center',
+                wrMetric: 'bpa', wrValue: s.paVals[3]
+            });
+            rightLabels.push({
+                origY: s.paY[4] - 4, y: s.paY[4] - 4, h: 35, texts: [
+                    { dy: 0, text: formatTime(s.paVals[4]), size: 30 },
+                ], x: labelCx, col: s.darkCol, anchor: 'center',
+                wrMetric: 'wpa', wrValue: s.paVals[4]
+            });
 
-            // 连接线（扇形到柱子区域）
-            var avg = getAverage(state.times[state.seedOn + s.p], true);
-            var ys = [valToYCap(state.times[state.seedOn + s.p][4]), valToYCap(avg)];
-            var outerX = s.ax[0] - 5;
-            var innerX = chartIX()[1] + chartIX()[4] + 2;
-            var arrowX = innerX - 18;
-            drawCurvedLine([s.ax[0], s.ax[1], outerX, innerX, arrowX], ys, '#000');
+
 
 
         }
@@ -887,7 +884,11 @@ function drawStats() {
             // 在最后一行文字右侧画 WR 徽章
             var lastText = lb.texts[lb.texts.length - 1];
             var approxW = lastText.text.length * lastText.size * 0.55;
-            drawWRBadge(topTextGroup, lb.x + approxW - 8, lb.y + lastText.dy - lastText.size / 2 - 6);
+            // NOTE: anchor=center 时文字从 lb.x 居中，badge 放在右端
+            var badgeX = (lb.anchor === 'center')
+                ? lb.x + approxW / 2 - 8
+                : lb.x + approxW - 8;
+            drawWRBadge(topTextGroup, badgeX, lb.y + lastText.dy - lastText.size / 2 - 6);
         }
         // NOTE: 标签被推离原位时画引线（leader line）
         var shift = Math.abs(lb.y - lb.origY);
@@ -958,10 +959,12 @@ function drawCurvedLine(x, y, col) {
 
 // NOTE: 快捷创建 SVG 文字（带 text halo 防止被线条遮挡）
 function addText(parent, x, y, text, fill, size, anchor) {
+    // NOTE: SVG text-anchor 合法值是 start|middle|end，兼容调用方传入的 'center'
+    var svgAnchor = (anchor === 'center') ? 'middle' : anchor;
     var el = createSvgElement('text', {
         x: x, y: y, fill: fill,
         'font-size': size + 'px', 'font-family': 'Helvetica',
-        'text-anchor': anchor,
+        'text-anchor': svgAnchor,
         // NOTE: paint-order:stroke 让描边画在填充下面，形成背景色光晕
         'stroke': '#E7DFD5', 'stroke-width': 5, 'paint-order': 'stroke',
     });

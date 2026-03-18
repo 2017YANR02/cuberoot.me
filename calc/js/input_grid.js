@@ -2,7 +2,7 @@
 // 替代原 canvas overlay hack，使用原生 <input> 元素
 
 import {
-    DNF_VALUE, MAX_TIME_VALUE, formatTime, textToTime, textToMbfScore
+    DNF_VALUE, MAX_TIME_VALUE, formatTime, textToTime, textToMbfScore, CalcEngine
 } from './calc_engine.js';
 import {
     state, updateTime, notify, solveCount
@@ -48,6 +48,7 @@ function isFullySelected(input) {
 var cells = [[], []];
 // Target Avg 输入框引用
 var tavgCells = [null, null];
+var tavgEmojis = [null, null]; // NOTE: Target Avg 单元格状态 emoji 引用
 // 比赛名输入框引用
 var compNameInput = null;
 // NOTE: WR 徽章 DOM 引用 — wrBadges[p][t] 对应 player p 的第 t 个时间格的 WR badge
@@ -99,6 +100,7 @@ export function init(gridContainer) {
         var tavgWrapper = createTimeCell(p, TAVG_T);
         row.appendChild(tavgWrapper);
         tavgCells[p] = tavgWrapper.querySelector('input');
+        tavgEmojis[p] = tavgWrapper.querySelector('.tavg-emoji');
 
         // NOTE: 勾选框 — 控制是否启用该选手的时间输入
         var cb = document.createElement('input');
@@ -322,6 +324,12 @@ function createTimeCell(p, t) {
         var rankEl = document.createElement('span');
         rankEl.className = 'sort-rank';
         wrapper.appendChild(rankEl);
+    } else {
+        // NOTE: Target Avg 状态 emoji — 左上角显示 🎯/🔒/🎲/💀
+        var emojiEl = document.createElement('span');
+        emojiEl.className = 'tavg-emoji';
+        emojiEl.textContent = '🎯';
+        wrapper.appendChild(emojiEl);
     }
 
     return wrapper;
@@ -557,13 +565,15 @@ function onKeyDown(e) {
     } else if (e.key === 'ArrowDown') {
         if (p < 0) return;
         e.preventDefault();
-        // NOTE: A行 → B行同列
-        if (p === 0) navigateTo(1, t);
+        // NOTE: 滚筒可见时优先步进；否则 A行 → B行同列
+        if (drumPicker.isVisible()) drumPicker.stepBy(-1);
+        else if (p === 0) navigateTo(1, t);
     } else if (e.key === 'ArrowUp') {
         if (p < 0) return;
         e.preventDefault();
-        // NOTE: B行 → A行同列
-        if (p === 1) navigateTo(0, t);
+        // NOTE: 滚筒可见时优先步进；否则 B行 → A行同列
+        if (drumPicker.isVisible()) drumPicker.stepBy(1);
+        else if (p === 1) navigateTo(0, t);
     } else if (e.key === 'ArrowLeft') {
         if (p < 0) return;
         e.preventDefault();
@@ -794,6 +804,22 @@ export function refresh() {
         var tavg = getTargetAvg(state.seedOn + p);
         tavgCells[p].value = tavg > 0 ? formatTime(tavg, false, false, true) : '';
         fitFont(tavgCells[p]);
+
+        // NOTE: 更新 Target Avg 状态 emoji
+        if (tavgEmojis[p]) {
+            var ghost = (tavg > 0 && tavg < DNF_VALUE)
+                ? CalcEngine.getGhostBar(state.times[state.seedOn + p], tavg)
+                : null;
+            if (!ghost) {
+                tavgEmojis[p].textContent = '🎯'; // 默认：数据不足
+            } else if (ghost.type === 'safe' || ghost.type === 'any') {
+                tavgEmojis[p].textContent = '🔒';
+            } else if (ghost.type === 'conditional') {
+                tavgEmojis[p].textContent = '🎲';
+            } else {
+                tavgEmojis[p].textContent = '💀';
+            }
+        }
     }
     syncNumpadDisplay();
     // NOTE: 检测单次 WR — 显示/隐藏 WR badge + 更新排名标签
