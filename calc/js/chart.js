@@ -1034,14 +1034,14 @@ function drawAverages() {
 
                 // NOTE: WR 徽章 — 平均值 ≤ WR 时显示红色 "WR"
                 if (type === 2 && average > 0 && average !== DNF_VALUE && isWR(state.event, 'average', average)) {
-                    drawWRBadge(avgGroup, rx - 4, cursor - fontSize / 2 - 4);
+                    drawWRBadge(topTextGroup, rx - 18, cursor - fontSize / 2 - 4);
                 }
                 // NOTE: PR 徽章 — 平均值打破 Target Avg 时显示蓝色 "PR"（WR 已显示时跳过）
                 else if (type === 2 && average > 0 && average !== DNF_VALUE) {
                     var target = getTargetAvg(p);
                     // 普通项目 avg <= target（越小越好），mbf avg >= target（越大越好）
                     if (target > 0 && (isMbf() ? (average >= target) : (average <= target))) {
-                        drawPRBadge(avgGroup, rx - 4, cursor - fontSize / 2 - 4);
+                        drawPRBadge(topTextGroup, rx - 14, cursor - fontSize / 2 - 4);
                     }
                 }
 
