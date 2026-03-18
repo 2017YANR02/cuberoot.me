@@ -924,6 +924,27 @@ video {
     );
 }
 
+/* NOTE: 移动端 pill 缩小，避免遮挡数字标签 */
+@media (max-width: 600px) {
+    .bar-drag-handle {
+        width: 36px;
+        height: 16px;
+        border-radius: 8px;
+        border-width: 1.5px;
+    }
+    .bar-drag-handle::before {
+        width: 12px;
+        height: 7px;
+        border-top-width: 1.5px;
+        border-bottom-width: 1.5px;
+        background: linear-gradient(
+            transparent 0px, transparent 2px,
+            rgba(255, 255, 255, 0.5) 2px, rgba(255, 255, 255, 0.5) 3.5px,
+            transparent 3.5px
+        );
+    }
+}
+
 @keyframes handleBounce {
     0% { transform: translate(-50%, -50%) scale(0); }
     100% { transform: translate(-50%, -50%) scale(1); }
