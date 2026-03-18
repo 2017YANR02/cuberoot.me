@@ -887,7 +887,7 @@ function drawStats() {
             // 在最后一行文字右侧画 WR 徽章
             var lastText = lb.texts[lb.texts.length - 1];
             var approxW = lastText.text.length * lastText.size * 0.55;
-            drawWRBadge(topTextGroup, lb.x + approxW + 2, lb.y + lastText.dy - 10);
+            drawWRBadge(topTextGroup, lb.x + approxW - 8, lb.y + lastText.dy - lastText.size / 2 - 6);
         }
         // NOTE: 标签被推离原位时画引线（leader line）
         var shift = Math.abs(lb.y - lb.origY);
@@ -1034,14 +1034,14 @@ function drawAverages() {
 
                 // NOTE: WR 徽章 — 平均值 ≤ WR 时显示红色 "WR"
                 if (type === 2 && average > 0 && average !== DNF_VALUE && isWR(state.event, 'average', average)) {
-                    drawWRBadge(avgGroup, rx + 5, cursor);
+                    drawWRBadge(avgGroup, rx - 4, cursor - fontSize / 2 - 4);
                 }
                 // NOTE: PR 徽章 — 平均值打破 Target Avg 时显示蓝色 "PR"（WR 已显示时跳过）
                 else if (type === 2 && average > 0 && average !== DNF_VALUE) {
                     var target = getTargetAvg(p);
                     // 普通项目 avg <= target（越小越好），mbf avg >= target（越大越好）
                     if (target > 0 && (isMbf() ? (average >= target) : (average <= target))) {
-                        drawPRBadge(avgGroup, rx + 5, cursor);
+                        drawPRBadge(avgGroup, rx - 4, cursor - fontSize / 2 - 4);
                     }
                 }
 
@@ -1073,32 +1073,32 @@ function drawAverages() {
 
 // ── 工具函数 ──
 
-// NOTE: 渲染红色 WR 徽章（圆角矩形 + 白色 "WR" 文字）
+// NOTE: 渲染红色 WR 徽章（缩小版，定位在文字右上角）
 function drawWRBadge(parent, x, y) {
-    var bw = 42, bh = 22, br = 4;
+    var bw = 28, bh = 14, br = 3;
     parent.appendChild(createSvgElement('rect', {
         x: x, y: y - bh / 2, width: bw, height: bh, rx: br,
         fill: '#e03030',
     }));
     var text = createSvgElement('text', {
         x: x + bw / 2, y: y,
-        'font-size': '16px', 'font-family': 'Helvetica', 'font-weight': 'bold',
+        'font-size': '10px', 'font-family': 'Helvetica', 'font-weight': 'bold',
         fill: '#fff', 'text-anchor': 'middle', 'dominant-baseline': 'central',
     });
     text.textContent = 'WR';
     parent.appendChild(text);
 }
 
-// NOTE: 渲染蓝色 PR 徽章（圆角矩形 + 白色 "PR" 文字）
+// NOTE: 渲染蓝色 PR 徽章（缩小版，定位在文字右上角）
 function drawPRBadge(parent, x, y) {
-    var bw = 38, bh = 22, br = 4;
+    var bw = 24, bh = 14, br = 3;
     parent.appendChild(createSvgElement('rect', {
         x: x, y: y - bh / 2, width: bw, height: bh, rx: br,
         fill: '#3478f6',
     }));
     var text = createSvgElement('text', {
         x: x + bw / 2, y: y,
-        'font-size': '16px', 'font-family': 'Helvetica', 'font-weight': 'bold',
+        'font-size': '10px', 'font-family': 'Helvetica', 'font-weight': 'bold',
         fill: '#fff', 'text-anchor': 'middle', 'dominant-baseline': 'central',
     });
     text.textContent = 'PR';
