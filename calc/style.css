@@ -880,13 +880,11 @@ video {
 /* NOTE: Handle — 水平 pill 形，可拖拽 */
 .bar-drag-handle {
     position: absolute;
-    width: 60px;
-    height: 24px;
-    border-radius: 12px;
+    /* NOTE: width/height/border-radius 由 JS positionHandle() 动态设置，跟随柱子宽度 */
     background: rgba(255, 128, 0, 1);
     border: 2px solid #fff;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    cursor: grab;
+    cursor: ns-resize;
     z-index: 100;
     /* NOTE: transform 居中定位 — left/top 指向柱顶中心 */
     transform: translate(-50%, -50%);
@@ -924,26 +922,6 @@ video {
     );
 }
 
-/* NOTE: 移动端 pill 缩小，避免遮挡数字标签 */
-@media (max-width: 600px) {
-    .bar-drag-handle {
-        width: 36px;
-        height: 16px;
-        border-radius: 8px;
-        border-width: 1.5px;
-    }
-    .bar-drag-handle::before {
-        width: 12px;
-        height: 7px;
-        border-top-width: 1.5px;
-        border-bottom-width: 1.5px;
-        background: linear-gradient(
-            transparent 0px, transparent 2px,
-            rgba(255, 255, 255, 0.5) 2px, rgba(255, 255, 255, 0.5) 3.5px,
-            transparent 3.5px
-        );
-    }
-}
 
 @keyframes handleBounce {
     0% { transform: translate(-50%, -50%) scale(0); }

@@ -254,6 +254,15 @@ function positionHandle(val, overrideP, overrideT) {
     // NOTE: Handle 下移 12px 到柱体内部，避免遮住柱顶数字标签
     var pos = svgPointToContainer(barCenterX, barTopY + 12);
 
+    // NOTE: pill 宽度动态跟随柱子宽度（SVG → 屏幕像素）
+    var leftEdge = svgPointToContainer(barCenterX - BAR_W / 2, barTopY);
+    var rightEdge = svgPointToContainer(barCenterX + BAR_W / 2, barTopY);
+    var barScreenW = rightEdge.x - leftEdge.x;
+    var pillH = barScreenW / 2.5; // NOTE: 宽高比 2.5:1
+    handleEl.style.width = barScreenW + 'px';
+    handleEl.style.height = pillH + 'px';
+    handleEl.style.borderRadius = (pillH / 2) + 'px';
+
     handleEl.style.left = pos.x + 'px';
     handleEl.style.top = pos.y + 'px';
 }
