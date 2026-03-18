@@ -33,7 +33,7 @@ export const state = {
     timeLiveStart: -1,  // 秒表开始时间戳
     sortedCache: [],    // 按平均值排序的选手索引
     targetAvgs: {},     // 每个 seed 的目标平均值
-    playerEnabled: [true, true], // NOTE: checkbox 控制的选手启用状态
+    playerEnabled: [true, false], // NOTE: 默认只启用 Player A
     event: '333',       // NOTE: 当前选中的 WCA 项目 ID
 };
 
