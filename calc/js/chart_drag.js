@@ -361,7 +361,7 @@ function onHandlePointerDown(e) {
         state.times[state.seedOn + p][t] = newVal;
 
         // NOTE: 全量重绘 — BPA/WPA/平均线等统计指标全部实时更新
-        chartRender();
+        chartRender({ skipViewBox: true });
         onAfterRender();
 
         // NOTE: 重绘后 ghost 被清除，需要重新创建（使用 originalVal 保持原始位置）
