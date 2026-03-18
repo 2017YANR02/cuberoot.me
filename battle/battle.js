@@ -1311,6 +1311,57 @@ function computeAverage(history, n) {
 // ===== 高级统计函数 =====
 
 /**
+ * NOTE: 基础统计量一站式计算（DRY — 避免 mean/sd/cv 在多处重复计算）
+ * @param {number[]} validTimes - 不含 DNF 的有效时间（ms）
+ * @returns {{ mean: number, sd: number, cv: number } | null}
+ */
+function computeBasicStats(validTimes) {
+    if (validTimes.length < 2) return null;
+    var sum = 0;
+    for (var i = 0; i < validTimes.length; i++) sum += validTimes[i];
+    var mean = sum / validTimes.length;
+    var sqSum = 0;
+    for (var j = 0; j < validTimes.length; j++) {
+        var d = validTimes[j] - mean;
+        sqSum += d * d;
+    }
+    var variance = sqSum / validTimes.length;
+    var sd = Math.sqrt(variance);
+    // cv = σ / μ × 100（百分比形式）
+    var cv = mean > 0 ? sd / mean * 100 : 0;
+    return { mean: Math.round(mean), sd: sd, cv: cv };
+}
+
+/**
+ * NOTE: 通用弹窗创建器 — 统一 overlay + panel + close 逻辑（DRY）
+ * @param {string} title - 弹窗标题
+ * @param {string} contentHtml - panel 内部 HTML
+ * @param {Object} [panelStyle] - 可选的 panel 行内样式对象
+ * @returns {HTMLElement} overlay 元素（已挂载到 body）
+ */
+function createPopup(title, contentHtml, panelStyle) {
+    var overlay = document.createElement('div');
+    overlay.className = 'ao-detail-overlay';
+    var styleAttr = '';
+    if (panelStyle) {
+        var parts = [];
+        for (var k in panelStyle) parts.push(k + ':' + panelStyle[k]);
+        styleAttr = ' style="' + parts.join(';') + '"';
+    }
+    overlay.innerHTML = '<div class="ao-detail-panel"' + styleAttr + '>' +
+        '<div class="ao-detail-header">' +
+            '<h3>' + title + '</h3>' +
+            '<button class="ao-detail-close">✕</button>' +
+        '</div>' +
+        '<div class="ao-detail-body">' + contentHtml + '</div>' +
+    '</div>';
+    document.body.appendChild(overlay);
+    overlay.querySelector('.ao-detail-close').addEventListener('click', function() { overlay.remove(); });
+    overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
+    return overlay;
+}
+
+/**
  * NOTE: Streak 追踪 — 连续低于阈值的成绩次数
  * @param {number[]} times - 有效时间数组（ms）
  * @param {number} threshold - 阈值（ms），默认为 session mean
@@ -1338,9 +1389,10 @@ function computeStreak(times, threshold) {
  */
 function computeSubXBreakdown(validTimes) {
     if (validTimes.length < 5) return [];
-    var mean = validTimes.reduce(function(a, b) { return a + b; }, 0) / validTimes.length;
-    var variance = validTimes.reduce(function(s, t) { return s + (t - mean) * (t - mean); }, 0) / validTimes.length;
-    var sd = Math.sqrt(variance);
+    var stats = computeBasicStats(validTimes);
+    if (!stats) return [];
+    var mean = stats.mean;
+    var sd = stats.sd;
 
     // NOTE: 生成阈值候选：mean-σ, mean-0.5σ, mean, mean+0.5σ, mean+σ
     var candidates = [mean - sd, mean - sd * 0.5, mean, mean + sd * 0.5, mean + sd];
@@ -1968,20 +2020,13 @@ function renderSoloStats(playerId) {
     // Best / Worst
     const best = validTimes.length > 0 ? Math.min(...validTimes) : null;
 
-    // Session Mean（不含 DNF）
-    const mean = validTimes.length > 0
-        ? Math.round(validTimes.reduce((a, b) => a + b, 0) / validTimes.length)
-        : null;
-
-    // 标准差 σ 和 变异系数 CV
+    // NOTE: 复用 computeBasicStats 避免 mean/sd/cv 重复计算（DRY）
+    const basicStats = computeBasicStats(validTimes);
+    const mean = basicStats ? basicStats.mean : (validTimes.length > 0 ? Math.round(validTimes.reduce((a, b) => a + b, 0) / validTimes.length) : null);
     let sdStr = '', cvStr = '';
-    if (validTimes.length > 1 && mean !== null) {
-        const variance = validTimes.reduce((s, t) => s + (t - mean) * (t - mean), 0) / validTimes.length;
-        const sd = Math.sqrt(variance) / 1000;
-        sdStr = `σ=${sd.toFixed(2)}`;
-        // NOTE: CV = σ/μ × 100%，衡量一致性（消除了 mean 差异的影响）
-        const cv = (Math.sqrt(variance) / mean * 100).toFixed(0);
-        cvStr = `cv=${cv}%`;
+    if (basicStats) {
+        sdStr = `σ=${(basicStats.sd / 1000).toFixed(2)}`;
+        cvStr = `cv=${basicStats.cv.toFixed(0)}%`;
     }
 
     // NOTE: Streak 追踪 — 连续低于 mean 的次数
@@ -2143,6 +2188,23 @@ function renderHistory() {
 
     statsEl.textContent = `${h.length} solves`;
 
+    // NOTE: 预计算 PB 索引集合 — O(n) 单次正向扫描（替代逐行 isPBSingleAt O(n²)）
+    const pbSet = new Set();
+    let runningMin = Infinity;
+    for (let i = 0; i < h.length; i++) {
+        const t = times[i];
+        if (t !== Infinity && t < runningMin) {
+            runningMin = t;
+            pbSet.add(i);
+        }
+    }
+
+    // NOTE: 预计算滚动 ao5 数组 — O(n) 单次正向扫描（替代逐行 computeAo5(h.slice) O(n²)）
+    const rollingAo5 = new Array(h.length).fill(null);
+    for (let i = 4; i < h.length; i++) {
+        rollingAo5[i] = computeAo5(h.slice(i - 4, i + 1));
+    }
+
     // NOTE: 百分位 chip 栏（sub-X %）
     const subXData = computeSubXBreakdown(validTimes);
     let subXHtml = '';
@@ -2158,7 +2220,7 @@ function renderHistory() {
     let html = subXHtml;
     for (let i = h.length - 1; i >= 0; i--) {
         const entry = h[i];
-        const effTime = getEffectiveTimeFromEntry(entry);
+        const effTime = times[i]; // NOTE: 复用预计算的 times 数组
         const timeStr = effTime === Infinity ? 'DNF' : formatTimePlain(effTime);
 
         // CSS class 标记
@@ -2168,14 +2230,11 @@ function renderHistory() {
         if (entry.penalty === '+2') timeClass += ' h-plus2';
         else if (entry.penalty === 'dnf') timeClass += ' h-dnf';
 
-        // NOTE: PB 标记 — 截至当时的 session best
-        let pbMark = '';
-        if (isPBSingleAt(h, i)) {
-            pbMark = ' <span class="h-pb" title="PB">🏆</span>';
-        }
+        // NOTE: PB 标记 — 使用预计算 Set（O(1) 查找）
+        const pbMark = pbSet.has(i) ? ' <span class="h-pb" title="PB">🏆</span>' : '';
 
-        // 滚动 Ao5
-        const ao5 = i >= 4 ? computeAo5(h.slice(0, i + 1)) : null;
+        // NOTE: 滚动 Ao5 — 使用预计算数组（O(1) 查找）
+        const ao5 = rollingAo5[i];
         const ao5Str = ao5 === null ? '' : (ao5 === Infinity ? 'DNF' : formatTimePlain(ao5));
 
         const scramble = typeof entry === 'object' ? (entry.scramble || '') : '';
@@ -2506,13 +2565,10 @@ function showAoDetail(aoN) {
     const trimmedLow = []; // 被去掉的最好条目索引
     const trimmedHigh = []; // 被去掉的最差条目索引
     const sortedCopy = [...sorted];
-    // 找低端 trim
     for (let t = 0; t < trim; t++) {
         const idx = effTimes.indexOf(sortedCopy[t]);
-        // 避免重复标记同一索引
         if (!trimmedLow.includes(idx)) trimmedLow.push(idx);
     }
-    // 找高端 trim
     for (let t = 0; t < trim; t++) {
         const val = sortedCopy[sortedCopy.length - 1 - t];
         for (let k = effTimes.length - 1; k >= 0; k--) {
@@ -2523,50 +2579,26 @@ function showAoDetail(aoN) {
         }
     }
 
-    // 计算 Average 值
     const aoVal = aoN === 5 ? computeAo5(h) : computeAverage(h, aoN);
     const aoStr = aoVal === null ? '-' : (aoVal === Infinity ? 'DNF' : formatTimePlain(aoVal));
 
-    let html = `<div class="ao-detail-overlay">
-        <div class="ao-detail-panel">
-            <div class="ao-detail-header">
-                <h3>Ao${aoN}: ${aoStr}</h3>
-                <button class="ao-detail-close">✕</button>
-            </div>
-            <div class="ao-detail-list">`;
-
+    // NOTE: 构建列表 HTML
+    let listHtml = '<div class="ao-detail-list">';
     for (let i = 0; i < lastN.length; i++) {
-        const entry = lastN[i];
         const effTime = effTimes[i];
         const timeStr = effTime === Infinity ? 'DNF' : formatTimePlain(effTime);
         let marker = '', cls = '';
-        if (trimmedLow.includes(i)) {
-            marker = ' ↓';  // NOTE: 被去掉的最好
-            cls = ' ao-trimmed-best';
-        } else if (trimmedHigh.includes(i)) {
-            marker = ' ↑';  // NOTE: 被去掉的最差
-            cls = ' ao-trimmed-worst';
-        }
+        if (trimmedLow.includes(i)) { marker = ' ↓'; cls = ' ao-trimmed-best'; }
+        else if (trimmedHigh.includes(i)) { marker = ' ↑'; cls = ' ao-trimmed-worst'; }
         const globalIdx = h.length - aoN + i;
-        html += `<div class="ao-detail-item${cls}">
+        listHtml += `<div class="ao-detail-item${cls}">
             <span class="ao-detail-idx">${globalIdx + 1}.</span>
             <span class="ao-detail-time">${timeStr}${marker}</span>
         </div>`;
     }
+    listHtml += '</div>';
 
-    html += '</div></div></div>';
-
-    // NOTE: 插入到 body 顶层
-    const container = document.createElement('div');
-    container.innerHTML = html;
-    const overlay = container.firstElementChild;
-    document.body.appendChild(overlay);
-
-    // 关闭按钮 + 遮罩点击关闭
-    overlay.querySelector('.ao-detail-close').addEventListener('click', () => overlay.remove());
-    overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) overlay.remove();
-    });
+    createPopup(`Ao${aoN}: ${aoStr}`, listHtml);
 }
 
 // ===== 里程碑庆祝系统 =====
@@ -3060,17 +3092,10 @@ function showCsTimerImport() {
  */
 function showSessionOverview() {
     const lang = getLocale();
-    let html = `<div class="ao-detail-overlay">
-        <div class="ao-detail-panel" style="min-width: 340px; max-width: 95vw;">
-            <div class="ao-detail-header">
-                <h3>${lang === 'zh' ? 'Session 概览' : 'Session Overview'}</h3>
-                <button class="ao-detail-close">✕</button>
-            </div>
-            <table class="session-overview-table">
-                <tr><th>Session</th><th>Count</th><th>Best</th><th>Ao5</th><th>Ao12</th><th>Mean</th></tr>`;
+    let tableHtml = `<table class="session-overview-table">
+        <tr><th>Session</th><th>Count</th><th>Best</th><th>Ao5</th><th>Ao12</th><th>Mean</th></tr>`;
 
     for (const sess of state.sessions) {
-        // NOTE: 遍历所有项目的成绩
         const key = `${LS_PREFIX}solo_history_${sess.id}_${state.puzzleId}`;
         let solves;
         try { solves = JSON.parse(localStorage.getItem(key) || '[]'); } catch (e) { solves = []; }
@@ -3083,7 +3108,7 @@ function showSessionOverview() {
         const ao12 = solves.length >= 12 ? computeAverage(solves, 12) : null;
         const mean = valid.length > 0 ? formatTimePlain(Math.round(valid.reduce((a, b) => a + b, 0) / valid.length)) : '-';
 
-        html += `<tr>
+        tableHtml += `<tr>
             <td>${sess.name}</td>
             <td>${solves.length}</td>
             <td>${best}</td>
@@ -3092,16 +3117,13 @@ function showSessionOverview() {
             <td>${mean}</td>
         </tr>`;
     }
+    tableHtml += '</table>';
 
-    html += '</table></div></div>';
-
-    const container = document.createElement('div');
-    container.innerHTML = html;
-    const overlay = container.firstElementChild;
-    document.body.appendChild(overlay);
-
-    overlay.querySelector('.ao-detail-close').addEventListener('click', () => overlay.remove());
-    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+    createPopup(
+        lang === 'zh' ? 'Session 概览' : 'Session Overview',
+        tableHtml,
+        { 'min-width': '340px', 'max-width': '95vw' }
+    );
 }
 
 // ===== Sprint 5: Warmup 自动检测 =====
@@ -3173,35 +3195,29 @@ function showSimulationResult() {
     const result = simulateCompetition(validTimes, 1000);
     const lang = getLocale();
 
-    const overlay = document.createElement('div');
-    overlay.className = 'ao-detail-overlay';
-    overlay.innerHTML = `
-        <div class="ao-detail-panel">
-            <div class="ao-detail-header">
-                <h3>${lang === 'zh' ? '🎲 模拟赛结果 (1000次)' : '🎲 Competition Simulation (1000x)'}</h3>
-                <button class="ao-detail-close">✕</button>
+    const contentHtml = `
+        <div class="sim-results">
+            <div class="sim-row">
+                <span class="sim-label">${lang === 'zh' ? '50% 概率 ≤' : '50th percentile'}</span>
+                <span class="sim-value">${formatTimePlain(result.p50)}</span>
             </div>
-            <div class="sim-results">
-                <div class="sim-row">
-                    <span class="sim-label">${lang === 'zh' ? '50% 概率 ≤' : '50th percentile'}</span>
-                    <span class="sim-value">${formatTimePlain(result.p50)}</span>
-                </div>
-                <div class="sim-row">
-                    <span class="sim-label">${lang === 'zh' ? '75% 概率 ≤' : '75th percentile'}</span>
-                    <span class="sim-value">${formatTimePlain(result.p75)}</span>
-                </div>
-                <div class="sim-row">
-                    <span class="sim-label">${lang === 'zh' ? '95% 概率 ≤' : '95th percentile'}</span>
-                    <span class="sim-value">${formatTimePlain(result.p95)}</span>
-                </div>
+            <div class="sim-row">
+                <span class="sim-label">${lang === 'zh' ? '75% 概率 ≤' : '75th percentile'}</span>
+                <span class="sim-value">${formatTimePlain(result.p75)}</span>
             </div>
-            <p style="color: #6b7a8d; font-size: 12px; margin-top: 12px;">
-                ${lang === 'zh' ? '基于当前成绩分布 Bootstrap 随机抽样 Ao5' : 'Ao5 bootstrap sampled from your current times distribution'}
-            </p>
-        </div>`;
-    document.body.appendChild(overlay);
-    overlay.querySelector('.ao-detail-close').addEventListener('click', () => overlay.remove());
-    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+            <div class="sim-row">
+                <span class="sim-label">${lang === 'zh' ? '95% 概率 ≤' : '95th percentile'}</span>
+                <span class="sim-value">${formatTimePlain(result.p95)}</span>
+            </div>
+        </div>
+        <p style="color: #6b7a8d; font-size: 12px; margin-top: 12px;">
+            ${lang === 'zh' ? '基于当前成绩分布 Bootstrap 随机抽样 Ao5' : 'Ao5 bootstrap sampled from your current times distribution'}
+        </p>`;
+
+    createPopup(
+        lang === 'zh' ? '🎲 模拟赛结果 (1000次)' : '🎲 Competition Simulation (1000x)',
+        contentHtml
+    );
 }
 
 // ===== Sprint 6: 热力图日历 =====

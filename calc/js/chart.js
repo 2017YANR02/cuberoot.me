@@ -130,8 +130,20 @@ export function render() {
 }
 
 // NOTE: WR 庆祝特效检测 — 单次 WR 或 avg WR 时喷射 confetti
+var suppressConfetti = false; // NOTE: rand-fill / 项目切换时抑制
+export function setSuppressConfetti(flag) { suppressConfetti = flag; }
+var confettiTimers = []; // NOTE: 保存 setTimeout ID，切换项目时可清除
+
+// NOTE: 外部调用 — 切换项目时清除残留 confetti 动画和 key
+export function clearPendingConfetti() {
+    for (var i = 0; i < confettiTimers.length; i++) clearTimeout(confettiTimers[i]);
+    confettiTimers = [];
+    lastConfettiKey = '';
+}
+
 function checkWRConfetti() {
     if (typeof confetti !== 'function') return;
+    if (suppressConfetti) return;
     // NOTE: 多盲得分不支持 WR 检测（WR 数据是 WCA 编码格式，与 score×100 不兼容）
     if (isMbf()) return;
 
@@ -170,7 +182,7 @@ function checkWRConfetti() {
 // NOTE: confetti 喷射 — 连发 3 波
 function fireConfetti() {
     for (var i = 0; i < 3; i++) {
-        setTimeout(function() {
+        var tid = setTimeout(function() {
             confetti({
                 particleCount: 100,
                 spread: 80,
@@ -182,6 +194,7 @@ function fireConfetti() {
                 disableForReducedMotion: true,
             });
         }, i * 250);
+        confettiTimers.push(tid);
     }
 }
 
