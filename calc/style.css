@@ -703,8 +703,8 @@ video {
     border-radius: 6px;
     font-size: 12px;
     line-height: 1.4;
-    white-space: normal;
-    max-width: 320px;
+    white-space: pre-line;
+    max-width: 360px;
     width: max-content;
     text-align: left;
     pointer-events: none;
