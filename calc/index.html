@@ -84,8 +84,9 @@
 		<!-- NOTE: 项目选择器 — 标注当前比赛项目 -->
 		<div id="event-selector-container"></div>
 
-		<!-- NOTE: 指标对比表格 -->
-		<div id="calc-section">
+		<!-- NOTE: 指标对比表格 — 可折叠 -->
+		<details id="calc-section">
+			<summary class="stats-toggle">📊 Statistics</summary>
 			<table id="calc-table">
 				<thead>
 					<tr>
@@ -96,8 +97,7 @@
 				</thead>
 				<tbody id="calc-tbody"></tbody>
 			</table>
-
-		</div>
+		</details>
 	</main>
 
 	<!-- NOTE: confetti 庆祝特效库 — WR avg 达成时触发 -->
