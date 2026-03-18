@@ -17,7 +17,6 @@ var dragStartY = 0;     // pointerdown 时的屏幕 Y
 var dragStartX = 0;     // pointerdown 时的屏幕 X（用于判断 tap vs drag）
 var originalVal = 0;    // 开始拖动时的原始值
 var handleEl = null;    // HTML: pill 形 handle 元素
-var tooltipEl = null;   // HTML: 浮动数值气泡
 var ghostEl = null;     // SVG: 原始位置虚线轮廓
 
 // NOTE: tap 判定阈值 — 位移 < 8px 且时间 < 300ms 视为 tap
@@ -45,17 +44,27 @@ export function initDrag() {
     handleEl.style.display = 'none';
     container.appendChild(handleEl);
 
-    // 创建浮动数值气泡
-    tooltipEl = document.createElement('div');
-    tooltipEl.className = 'bar-drag-tooltip';
-    tooltipEl.style.display = 'none';
-    container.appendChild(tooltipEl);
-
     // NOTE: 事件委托 — 在 SVG 上监听 pointerdown
     svg.addEventListener('pointerdown', onSvgPointerDown);
 
     // NOTE: Handle 上的拖动事件
     handleEl.addEventListener('pointerdown', onHandlePointerDown);
+
+    // NOTE: Handle 的 mouseenter/mouseleave 维持 hover 状态（防止闪烁）
+    handleEl.addEventListener('mouseenter', function() {
+        if (hoverDebounceTimer) {
+            clearTimeout(hoverDebounceTimer);
+            hoverDebounceTimer = null;
+        }
+    });
+    handleEl.addEventListener('mouseleave', function() {
+        if (!selected && hovered) {
+            hoverDebounceTimer = setTimeout(function() {
+                hoverDebounceTimer = null;
+                if (!selected) clearHover();
+            }, HOVER_DEBOUNCE);
+        }
+    });
 
     // NOTE: 点击空白区域取消选中（document 级别，低优先级）
     document.addEventListener('pointerdown', onDocumentPointerDown);
@@ -168,8 +177,6 @@ function selectBar(p, t, rectEl) {
 function doSelect(p, t, rectEl, val) {
     // NOTE: 从 hover 预览态转入正式选中态
     hovered = null;
-    // NOTE: 选中态恢复 Handle 可交互（拖动需要）
-    handleEl.style.pointerEvents = '';
     selected = { player: p, slot: t, rectEl: rectEl };
 
     // NOTE: 添加 SVG class 实现视觉效果
@@ -177,10 +184,9 @@ function doSelect(p, t, rectEl, val) {
     svg.classList.add('bar-selected');
     rectEl.classList.add('bar-active');
 
-    // NOTE: 定位 Handle 和 Tooltip
-    positionHandleAndTooltip(val);
+    // NOTE: 定位 Handle
+    positionHandle(val);
     handleEl.style.display = '';
-    tooltipEl.style.display = '';
 
     // NOTE: Handle 颜色跟随选手
     handleEl.classList.toggle('player-b', p === 1);
@@ -196,7 +202,6 @@ function deselect() {
     }
 
     handleEl.style.display = 'none';
-    tooltipEl.style.display = 'none';
     removeGhost();
 
     selected = null;
@@ -223,7 +228,7 @@ function svgPointToContainer(svgX, svgY) {
     };
 }
 
-function positionHandleAndTooltip(val, overrideP, overrideT) {
+function positionHandle(val, overrideP, overrideT) {
     // NOTE: 支持传入 p/t（hover 用）或从 selected 读取
     var p = (overrideP !== undefined) ? overrideP : (selected ? selected.player : null);
     var t = (overrideT !== undefined) ? overrideT : (selected ? selected.slot : null);
@@ -233,21 +238,28 @@ function positionHandleAndTooltip(val, overrideP, overrideT) {
     var barCenterX = BAR_START + t * STRIDE + BAR_W / 2;
     var barTopY = valToYCap(val);
 
-    // 转为容器内 CSS 坐标
-    var pos = svgPointToContainer(barCenterX, barTopY);
+    // NOTE: Handle 下移 12px 到柱体内部，避免遮住柱顶数字标签
+    var pos = svgPointToContainer(barCenterX, barTopY + 12);
 
     handleEl.style.left = pos.x + 'px';
     handleEl.style.top = pos.y + 'px';
-
-    // 气泡在 handle 上方
-    tooltipEl.textContent = formatTime(val);
-    tooltipEl.style.left = pos.x + 'px';
-    tooltipEl.style.top = (pos.y - 36) + 'px';
 }
 
 // ── Handle 拖动 ──
 
 function onHandlePointerDown(e) {
+    // NOTE: hover 态直接拖动 — 自动选中再开始拖
+    if (!selected && hovered) {
+        var p = hovered.player;
+        var t = hovered.slot;
+        var val = state.times[state.seedOn + p][t];
+        if (val <= 0 || val >= DNF_VALUE) return;
+        var rectEl = getSvgEl().querySelector(
+            '.chart-bar[data-player="' + p + '"][data-slot="' + t + '"]'
+        );
+        if (!rectEl) return;
+        doSelect(p, t, rectEl, val);
+    }
     if (!selected) return;
     e.preventDefault();
     e.stopPropagation();
@@ -263,6 +275,55 @@ function onHandlePointerDown(e) {
     // 创建原始位置虚线轮廓
     createGhost(p, t, originalVal);
 
+    // NOTE: 边缘自动递增/递减 — 拖到 SVG 边缘时持续改变值
+    var edgeTimer = null;
+    var EDGE_ZONE = 40; // px — 距 SVG 边缘多少像素触发
+    var EDGE_INTERVAL = 50; // ms — 每 tick 间隔
+    var edgeTickCount = 0; // 累计 tick 数（用于加速）
+
+    var applyVal = function(newVal) {
+        // 限制范围
+        newVal = Math.max(1, Math.min(newVal, MAX_TIME_VALUE));
+        updateBarDuringDrag(newVal);
+        positionHandle(newVal);
+
+        // NOTE: 触觉反馈 — 经过整数秒时微振
+        if (navigator.vibrate) {
+            var oldSec = Math.floor(originalVal / 100);
+            var newSec = Math.floor(newVal / 100);
+            if (newSec !== oldSec) {
+                navigator.vibrate(newVal % 100 === 0 ? 12 : 5);
+            }
+        }
+    };
+
+    var startEdgeScroll = function(dir) {
+        // dir: +1 = 值增大（往上拖超出上边缘），-1 = 值减小
+        if (edgeTimer) return;
+        edgeTickCount = 0;
+        edgeTimer = setInterval(function() {
+            if (!dragging || !selected) { stopEdgeScroll(); return; }
+            edgeTickCount++;
+            var p = selected.player;
+            var t = selected.slot;
+            var val = state.times[state.seedOn + p][t];
+            // NOTE: 步进随停留时间加速 — 前 10 tick 慢（1cs），之后快（5cs），40 tick 后更快（20cs）
+            var step = edgeTickCount < 10 ? 1 : edgeTickCount < 40 ? 5 : 20;
+            if (state.event === '333fm' || isMbf()) step = 100;
+            var newVal = Math.max(1, Math.min(val + dir * step, MAX_TIME_VALUE));
+            if (newVal === val) return;
+            applyVal(newVal);
+        }, EDGE_INTERVAL);
+    };
+
+    var stopEdgeScroll = function() {
+        if (edgeTimer) {
+            clearInterval(edgeTimer);
+            edgeTimer = null;
+            edgeTickCount = 0;
+        }
+    };
+
     var onMove = function(em) {
         em.preventDefault();
         if (!dragging || !selected) return;
@@ -277,36 +338,33 @@ function onHandlePointerDown(e) {
 
         // 量化步长
         if (state.event === '333fm') {
-            newVal = Math.round(newVal / 100) * 100; // FMC: 1 步 = 100cs
+            newVal = Math.round(newVal / 100) * 100;
         } else if (isMbf()) {
-            newVal = Math.round(newVal / 100) * 100; // 多盲: 1 分 = 100
+            newVal = Math.round(newVal / 100) * 100;
         } else {
-            newVal = Math.round(newVal); // 普通: 1 cs
+            newVal = Math.round(newVal);
         }
 
-        // 限制范围
-        newVal = Math.max(1, Math.min(newVal, MAX_TIME_VALUE));
+        // NOTE: 边缘检测 — 鼠标距 SVG 上/下边缘 < EDGE_ZONE 时自动递增/递减
+        var svgRect = svg.getBoundingClientRect();
+        var distToTop = em.clientY - svgRect.top;
+        var distToBottom = svgRect.bottom - em.clientY;
 
-        // NOTE: 拖动中直接操作 SVG rect，不触发全量重绘
-        updateBarDuringDrag(newVal);
-
-        // 更新 Handle 和 Tooltip 位置
-        positionHandleAndTooltip(newVal);
-
-        // NOTE: 触觉反馈 — 经过整数秒时微振
-        if (navigator.vibrate) {
-            var oldSec = Math.floor(originalVal / 100);
-            var newSec = Math.floor(newVal / 100);
-            if (newSec !== oldSec) {
-                // 整秒边界用稍强振动
-                navigator.vibrate(newVal % 100 === 0 ? 12 : 5);
-            }
+        if (distToTop < EDGE_ZONE) {
+            startEdgeScroll(1);  // 往上 = 值增大
+        } else if (distToBottom < EDGE_ZONE) {
+            startEdgeScroll(-1); // 往下 = 值减小
+        } else {
+            stopEdgeScroll();
         }
+
+        applyVal(newVal);
     };
 
     var onUp = function(eu) {
         document.removeEventListener('pointermove', onMove);
         document.removeEventListener('pointerup', onUp);
+        stopEdgeScroll();
 
         if (!dragging || !selected) return;
         dragging = false;
@@ -357,8 +415,14 @@ function updateBarDuringDrag(newVal) {
     rect.setAttribute('y', newTopY);
     rect.setAttribute('height', Math.max(0, barHeight));
 
-    // NOTE: 同步更新柱顶标签文字（在 topTextGroup 中找到对应的 text）
-    // 标签在全量重绘时创建，拖动中更新太复杂，靠 tooltip 显示即可
+    // NOTE: 拖动时直接更新原有 SVG 标签文字
+    var svg = getSvgEl();
+    var labelEl = svg.querySelector('.chart-bar-label[data-player="' + p + '"][data-slot="' + t + '"]');
+    if (labelEl) {
+        labelEl.textContent = formatTime(newVal);
+        // NOTE: 标签 Y 跟随柱顶，但不超出 viewBox 上边界（至少留 24px 给文字高度）
+        labelEl.setAttribute('y', Math.max(24, newTopY - 8));
+    }
 }
 
 // ── 虚线轮廓（原始位置） ──
@@ -445,7 +509,7 @@ export function onAfterRender() {
     // 重新定位 Handle 和 Tooltip
     var val = state.times[state.seedOn + p][t];
     if (val > 0 && val < DNF_VALUE) {
-        positionHandleAndTooltip(val);
+        positionHandle(val);
     } else {
         deselect();
     }
@@ -497,22 +561,26 @@ function onSvgMouseMove(e) {
 
     hovered = { player: p, slot: t };
 
-    // NOTE: 显示 Handle（预览态，不添加 bar-selected class）
-    positionHandleAndTooltip(val, p, t);
+    // NOTE: hover 预览只显示 Handle
+    positionHandle(val, p, t);
     handleEl.style.display = '';
-    tooltipEl.style.display = '';
-    // NOTE: hover 预览态 Handle 必须穿透 — 否则会遮住柱子导致 hover 循环闪烁
-    handleEl.style.pointerEvents = 'none';
     handleEl.classList.toggle('player-b', p === 1);
 
-    // NOTE: cursor 提示可交互
+    // NOTE: hover 时也降暗其他柱子
     var svg = getSvgEl();
+    svg.classList.add('bar-selected');
+    var barRect = svg.querySelector('.chart-bar[data-player="' + p + '"][data-slot="' + t + '"]');
+    if (barRect) barRect.classList.add('bar-active');
+
+    // NOTE: cursor 提示可交互
     svg.style.cursor = 'pointer';
 }
 
-function onSvgMouseLeave() {
+function onSvgMouseLeave(e) {
     if (isTouch) return;
     if (selected) return;  // 选中态不受 mouseleave 影响
+    // NOTE: 鼠标移到 Handle 上时不清除 hover（否则会导致闪烁循环）
+    if (handleEl && (handleEl.contains(e.relatedTarget) || handleEl === e.relatedTarget)) return;
     // NOTE: 彻底离开 SVG — 立即清除，不需要延迟
     if (hoverDebounceTimer) {
         clearTimeout(hoverDebounceTimer);
@@ -523,12 +591,17 @@ function onSvgMouseLeave() {
 
 function clearHover() {
     if (!hovered) return;
+    // NOTE: 移除 hover 的视觉效果
+    var svg = getSvgEl();
+    if (svg && !selected) {
+        svg.classList.remove('bar-selected');
+        var active = svg.querySelector('.chart-bar.bar-active');
+        if (active) active.classList.remove('bar-active');
+    }
     hovered = null;
     if (!selected) {
         handleEl.style.display = 'none';
-        tooltipEl.style.display = 'none';
     }
-    var svg = getSvgEl();
     if (svg) svg.style.cursor = '';
 }
 
