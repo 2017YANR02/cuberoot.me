@@ -81,6 +81,35 @@ export function initDrag() {
     window.addEventListener('touchstart', function() { isTouch = true; }, { once: true });
 }
 
+// NOTE: Both 模式 Y 坐标消歧 — 当点击到外层柱但光标在内层柱顶以下时，重定向到内层
+function resolveBarAtY(p, t, e) {
+    var bothMode = state.playerEnabled[0] && state.playerEnabled[1];
+    if (!bothMode) return { p: p };
+
+    var otherP = 1 - p;
+    var otherVal = state.times[state.seedOn + otherP][t];
+    if (otherVal <= 0 || otherVal >= DNF_VALUE) return { p: p };
+
+    var myVal = state.times[state.seedOn + p][t];
+    if (myVal <= 0 || myVal >= DNF_VALUE) return { p: p };
+
+    // NOTE: 判断谁是内层（较矮 = 值更小 = 柱顶更低 = Y 更高）
+    // 内层柱子是值较小的（柱子较矮的那个）
+    if (myVal <= otherVal) return { p: p }; // 当前已是内层，无需切换
+
+    // 当前命中的是外层（值更大），检查光标 Y 是否在内层柱顶以下
+    var svg = getSvgEl();
+    var ctm = svg.getScreenCTM().inverse();
+    var svgY = ctm.b * e.clientX + ctm.d * e.clientY + ctm.f;
+    var innerTopY = valToYCap(otherVal); // 内层柱顶的 SVG Y
+
+    if (svgY >= innerTopY) {
+        // 光标在内层柱顶以下 — 重定向到内层
+        return { p: otherP };
+    }
+    return { p: p };
+}
+
 // ── SVG pointerdown — 检测 tap 柱子 ──
 
 function onSvgPointerDown(e) {
@@ -96,6 +125,10 @@ function onSvgPointerDown(e) {
     var p = parseInt(target.getAttribute('data-player'));
     var t = parseInt(target.getAttribute('data-slot'));
     if (isNaN(p) || isNaN(t)) return;
+
+    // NOTE: Both 模式 Y 坐标消歧 — 重叠区域强制选内层柱子
+    var resolved = resolveBarAtY(p, t, e);
+    p = resolved.p;
 
     // 记录 pointerdown 坐标和时间
     dragStartX = e.clientX;
@@ -197,9 +230,10 @@ function doSelect(p, t, rectEl, val) {
     svg.classList.add('bar-selected');
     rectEl.classList.add('bar-active');
 
-    // NOTE: 定位 Handle
+    // NOTE: 定位 Handle（选中态恢复 pointer-events，允许拖动）
     positionHandle(val);
     handleEl.style.display = '';
+    handleEl.style.pointerEvents = 'auto';
 
     // NOTE: Handle 颜色跟随选手
     handleEl.classList.toggle('player-b', p === 1);
@@ -254,10 +288,18 @@ function positionHandle(val, overrideP, overrideT) {
     // NOTE: Handle 下移 12px 到柱体内部，避免遮住柱顶数字标签
     var pos = svgPointToContainer(barCenterX, barTopY + 12);
 
-    // NOTE: pill 宽度动态跟随柱子宽度（SVG → 屏幕像素）
-    var leftEdge = svgPointToContainer(barCenterX - BAR_W / 2, barTopY);
-    var rightEdge = svgPointToContainer(barCenterX + BAR_W / 2, barTopY);
-    var barScreenW = rightEdge.x - leftEdge.x;
+    // NOTE: pill 宽度直接从已渲染的 SVG rect 读取，完全匹配柱子实际宽度
+    var svg = getSvgEl();
+    var rectEl = svg.querySelector('.chart-bar[data-player="' + p + '"][data-slot="' + t + '"]');
+    var barScreenW;
+    if (rectEl) {
+        barScreenW = rectEl.getBoundingClientRect().width;
+    } else {
+        // fallback — 用 SVG 坐标换算
+        var leftEdge = svgPointToContainer(barCenterX - BAR_W / 2, barTopY);
+        var rightEdge = svgPointToContainer(barCenterX + BAR_W / 2, barTopY);
+        barScreenW = rightEdge.x - leftEdge.x;
+    }
     var pillH = barScreenW / 2.5; // NOTE: 宽高比 2.5:1
     handleEl.style.width = barScreenW + 'px';
     handleEl.style.height = pillH + 'px';
@@ -597,6 +639,10 @@ function onSvgMouseMove(e) {
     var t = parseInt(bar.getAttribute('data-slot'));
     if (isNaN(p) || isNaN(t)) { clearHover(); return; }
 
+    // NOTE: Both 模式 Y 坐标消歧 — 重叠区域 hover 内层柱子
+    var resolved = resolveBarAtY(p, t, e);
+    p = resolved.p;
+
     // 已经 hover 在同一个柱子上 — 不重复处理
     if (hovered && hovered.player === p && hovered.slot === t) return;
 
@@ -607,9 +653,10 @@ function onSvgMouseMove(e) {
 
     hovered = { player: p, slot: t };
 
-    // NOTE: hover 预览只显示 Handle
+    // NOTE: hover 预览只显示 Handle（pointer-events:none 防止 pill 挡住光标引起循环）
     positionHandle(val, p, t);
     handleEl.style.display = '';
+    handleEl.style.pointerEvents = 'none';
     handleEl.classList.toggle('player-b', p === 1);
 
     // NOTE: hover 时也降暗其他柱子
