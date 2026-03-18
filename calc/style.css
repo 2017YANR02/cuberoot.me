@@ -70,9 +70,9 @@ body {
     display: block;
     width: 100%;
     max-width: 800px;
-    margin: 16px auto;
-    padding: 8px 16px;
-    font-size: 24px;
+    margin: 4px auto;
+    padding: 4px 16px;
+    font-size: 20px;
     font-weight: 600;
     text-align: center;
     border: none;
@@ -288,13 +288,14 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 8px;
-    padding: 12px 0;
+    gap: 4px;
+    padding: 8px 0;
+    flex-wrap: wrap;
 }
 
 .controls button {
-    padding: 8px 20px;
-    font-size: 16px;
+    padding: 6px 14px;
+    font-size: 14px;
     font-weight: 600;
     border: none;
     border-radius: 6px;
@@ -311,16 +312,6 @@ body {
 .controls button:disabled {
     background: #808080;
     cursor: not-allowed;
-}
-
-/* ── 模拟按钮栏 ── */
-
-.sim-controls {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 2px;
-    padding: 0 0 8px;
 }
 
 .sim-btn {
