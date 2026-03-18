@@ -28,22 +28,16 @@
 		<!-- NOTE: 输入网格容器 — Phase 2 填充 -->
 		<div id="input-grid-container"></div>
 
-		<!-- NOTE: 控制按钮 — Phase 5 启用 -->
 		<div class="controls" id="controls">
 			<button id="clear-all">Clear</button>
 			<button id="rand-fill">Rand</button>
-			<span class="rand-info" data-tip="Row 1 ~ Ao100 World #1, Row 2 ~ Ao100 World #2. Method: KDE (pick a real solve, add Gaussian jitter with Silverman bandwidth). 333fm/444bf/555bf have no Ao100 data and fall back to log-normal.">&#9432;</span>
-		</div>
-
-		<!-- NOTE: 模拟按钮 — 反复随机生成直到击败 Target Avg -->
-		<div class="sim-controls" id="sim-controls">
 			<button id="sim-a" class="sim-btn sim-a">🎯 A</button>
 			<span id="sim-count-a" class="sim-count"></span>
 			<button id="sim-b" class="sim-btn sim-b">🎯 B</button>
 			<span id="sim-count-b" class="sim-count"></span>
 			<button id="sim-race" class="sim-btn sim-race">⚔️ Race</button>
 			<span id="sim-count-race" class="sim-count"></span>
-			<span class="rand-info" data-tip="🎯 A / 🎯 B: Repeatedly rand until the average beats the Target Avg (colored cell). ⚔️ Race: Both players simulate simultaneously — first to beat their target wins. ×N shows how many tries it took.">&#9432;</span>
+			<span class="rand-info" data-tip="Rand: Row 1 ~ Ao100 World #1, Row 2 ~ Ao100 World #2. KDE sampling with Silverman bandwidth. &#10;&#10;🎯 A / 🎯 B: Repeatedly rand until average beats Target Avg. &#10;⚔️ Race: Both simulate — first to beat target wins. &#10;×N = number of tries.">&#9432;</span>
 		</div>
 
 		<!-- NOTE: 进步幅度滑杆 — 控制 KDE 采样的 Target 锚定缩放 -->
