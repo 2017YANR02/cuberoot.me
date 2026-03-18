@@ -629,9 +629,19 @@ video {
         gap: 2px;
     }
 
-    .time-cell {
-        width: auto;
+    /* NOTE: 移动端 wrapper 参与 flex 弹性分配 */
+    .time-cell-wrapper {
         flex: 1;
+        min-width: 0;
+    }
+
+    /* NOTE: Target Avg wrapper 固定宽度，不被挤压 */
+    .time-cell-wrapper:has(.tavg-cell) {
+        flex: 0 0 60px;
+    }
+
+    .time-cell {
+        width: 100%;
         min-width: 0;
         padding: 6px 1px;
         /* NOTE: clamp 让字号根据屏幕宽度自适应，避免截断 */
@@ -639,8 +649,7 @@ video {
     }
 
     .tavg-cell {
-        width: auto;
-        flex: 0 0 60px;
+        width: 100%;
         min-width: 0;
         padding: 6px 1px;
         font-size: clamp(12px, 4vw, 18px);
@@ -672,6 +681,18 @@ video {
     #calc-table th,
     #calc-table td {
         padding: 6px 8px;
+    }
+
+    /* NOTE: 手机端 tooltip 固定定位 — position:fixed + CSS 变量由 JS 注入
+       避免 absolute 定位随父级偏移导致溢出屏幕边界 */
+    .rand-info.active::after {
+        position: fixed;
+        bottom: auto;
+        top: var(--tip-top, 50%);
+        left: 12px;
+        right: 12px;
+        max-width: none;
+        width: auto;
     }
 }
 

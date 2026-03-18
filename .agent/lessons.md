@@ -45,3 +45,9 @@ iOS 移动端禁用页面缩放需要**三层防御**，因为双击（double-ta
 对于简单的单点修改（如替换首页卡片图标），**先用 DevTools Inspect 锁定目标 DOM 的特征（如特有的 class、id 或 data 属性），然后直接全局搜索这些特征去修改源码**。这比猜测组件的渲染逻辑或逐层阅读代码要快几十倍。DevTools 是人类开发者最高效的“透视眼”。
 
 Pointer Events 状态机的两个杀手级陷阱：① `pointercancel` 触发后**不会再有 `pointerup`**（W3C spec），所以 cancel 处理函数必须也执行状态转换逻辑（如 `playerUp()`），否则状态机会卡死在中间态（如绿灯/canStart）。② 状态重置函数（如 `resetForNextRound`）**绝不能清除 `pointerId`**——此时用户手指可能还在屏幕上，清除后 `pointerup` 的 ID 检查会失败，`playerUp` 永远不被调用。`pointerId` 的生命周期只应由 pointer 事件处理函数本身管理。
+
+移动端 Flex 布局中，若父级 `display: flex`，直接子元素如果是 `inline-block` 则不参与弹性分配，极易撑破屏幕。必须让直接包裹层（如 wrapper）本身设置 `flex: 1; min-width: 0` 才能受到弹性压缩约束。全局修改要小心是否会破坏桌面端的原本布局，通常放在手机端媒体查询里覆盖。
+
+长文本 Tooltip 移动端溢出陷阱：如果是 `absolute` + `right: 0`，由于文字太长会导致气泡向屏幕左侧疯长并在视区外被截断。移动端最稳健的方案是 `position: fixed` 脱离文档流束缚，然后借助 JS 点击时动态测量触发器的坐标并注入类似 `--tip-top` CSS 自定义变量，限制在视口内全宽排布。
+
+异步 DOM/状态更新的虚假更新（死灰复燃）竞态：输入框的 `blur` 如果加了 setTimeout（预防焦点冲撞），而同时其他元素的 `focus` 事件又立刻覆盖了 `activeCell` 指针，会导致逻辑漏网。比如：用户逐字符删空旧格（仅 UI 变化），立刻点击新格，新格 `focus` 拿走指针，旧格延迟的 `blur` 发现指针不对就跳过保存 state。随后 `refresh()` 时 state 的旧值又被重绘到 DOM 上。解法：任何全局 `focus` / 导航入口，第一行代码必须是**同步检测并强行 save 遗留的旧指针状态**再转移焦点。
