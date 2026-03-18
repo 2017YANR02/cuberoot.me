@@ -165,6 +165,18 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('progress-slider-b').addEventListener('input', function() {
         updateProgressInfo(1, this.value);
     });
+    // NOTE: ⓘ tooltip 触屏支持 — tap toggle，点击外部关闭
+    document.querySelectorAll('.rand-info').forEach(function(el) {
+        el.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var wasActive = el.classList.contains('active');
+            document.querySelectorAll('.rand-info.active').forEach(function(a) { a.classList.remove('active'); });
+            if (!wasActive) el.classList.add('active');
+        });
+    });
+    document.addEventListener('click', function() {
+        document.querySelectorAll('.rand-info.active').forEach(function(a) { a.classList.remove('active'); });
+    });
 
     console.log('HTH Grapher v2 initialized');
 });
@@ -292,14 +304,20 @@ function updateProgressInfo(p, val) {
         } else {
             infoEl.textContent = '0%';
         }
+        infoEl.style.color = '';
         return;
     }
     var alpha = getScaleFactor(p);
     if (muArr) {
         var estAvg = muArr[p] * alpha / 100;
-        infoEl.textContent = '+' + pct + '% (~' + estAvg.toFixed(2) + 's)';
+        // NOTE: ↓ 箭头表示成绩降低（进步）
+        infoEl.textContent = '+' + pct + '% (↓' + estAvg.toFixed(2) + 's)';
+        // NOTE: 预估 avg 低于 Target 时变绿（代表能赢）
+        var target = getTargetAvg(state.seedOn + p);
+        infoEl.style.color = (target && estAvg * 100 < target) ? '#2e7d32' : '';
     } else {
         infoEl.textContent = '+' + pct + '%';
+        infoEl.style.color = '';
     }
 }
 
