@@ -854,11 +854,12 @@ video {
 
 /* ── 柱子拖动交互 ── */
 
-/* NOTE: 拖动时标签可能超出 viewBox 上边界，需要可见；禁止文字选中 */
+/* NOTE: 拖动时标签可能超出 viewBox 上边界，需要可见；禁止文字选中；禁止触摸滚动 */
 .hth-chart {
     overflow: visible;
     user-select: none;
     -webkit-user-select: none;
+    touch-action: none;
 }
 
 /* NOTE: 选中态 — SVG 根加 .bar-selected 后，非活跃柱子降暗 */
