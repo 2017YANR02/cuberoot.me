@@ -452,23 +452,37 @@ export function onAfterRender() {
 // ── Phase 3：桌面端 hover ──
 
 // NOTE: 鼠标悬停柱子时自动显示 Handle（仅桌面端，触摸设备跳过）
+// HACK: hover 只检测 .chart-bar rect，不检测标签 — 标签文字太小且重叠时导致抖动
+var hoverDebounceTimer = null;
+var HOVER_DEBOUNCE = 80; // ms — 防止边界处快速横跳
+
 function onSvgMouseMove(e) {
     if (isTouch) return;       // 触摸设备不需要 hover
     if (dragging) return;      // 拖动中不处理 hover
     if (selected) return;      // 已有选中态时不覆盖
 
-    // 检测鼠标是否在柱子或标签上
+    // NOTE: hover 只检测柱子 rect，不检测标签（标签 tap 仍可用）
     var bar = e.target.closest('.chart-bar');
-    var label = e.target.closest('.chart-bar-label');
-    var target = bar || label;
 
-    if (!target) {
-        clearHover();
+    if (!bar) {
+        // 鼠标移出柱子 — 延迟隐藏（防抖）
+        if (hovered && !hoverDebounceTimer) {
+            hoverDebounceTimer = setTimeout(function() {
+                hoverDebounceTimer = null;
+                if (!selected) clearHover();
+            }, HOVER_DEBOUNCE);
+        }
         return;
     }
 
-    var p = parseInt(target.getAttribute('data-player'));
-    var t = parseInt(target.getAttribute('data-slot'));
+    // 鼠标在柱子上 — 取消延迟隐藏
+    if (hoverDebounceTimer) {
+        clearTimeout(hoverDebounceTimer);
+        hoverDebounceTimer = null;
+    }
+
+    var p = parseInt(bar.getAttribute('data-player'));
+    var t = parseInt(bar.getAttribute('data-slot'));
     if (isNaN(p) || isNaN(t)) { clearHover(); return; }
 
     // 已经 hover 在同一个柱子上 — 不重复处理
@@ -495,6 +509,11 @@ function onSvgMouseMove(e) {
 function onSvgMouseLeave() {
     if (isTouch) return;
     if (selected) return;  // 选中态不受 mouseleave 影响
+    // NOTE: 彻底离开 SVG — 立即清除，不需要延迟
+    if (hoverDebounceTimer) {
+        clearTimeout(hoverDebounceTimer);
+        hoverDebounceTimer = null;
+    }
     clearHover();
 }
 
