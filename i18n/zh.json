@@ -179,6 +179,8 @@
         "no_solves": "暂无成绩",
         "history": "历史",
         "practice_calendar": "练习日历",
-        "export_json": "导出 JSON"
+        "export_json": "导出 JSON",
+        "goal_label": "目标",
+        "goal_desc": "目标 Ao5"
     }
 }

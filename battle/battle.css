@@ -1818,3 +1818,35 @@ body.solo[data-tab="settings"] .settings-x-btn {
 .session-overview-table tr:hover td {
     background: rgba(138, 180, 248, 0.05);
 }
+
+/* NOTE: Goal 进度条 */
+.goal-progress {
+    position: relative;
+    height: 18px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 9px;
+    margin-top: 6px;
+    overflow: hidden;
+}
+.goal-bar {
+    height: 100%;
+    border-radius: 9px;
+    transition: width 0.5s ease;
+}
+.goal-label {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 11px;
+    line-height: 18px;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* NOTE: 渐进式加载"加载更多"按钮 */
+.load-more-wrapper {
+    text-align: center;
+    padding: 12px 0;
+}
