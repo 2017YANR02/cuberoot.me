@@ -541,6 +541,8 @@ function onKeyDown(e) {
             var prv = prevCell(p, t);
             if (prv) {
                 e.preventDefault();
+                // NOTE: 先保存当前格（空 → state 写 0），否则 state 残留旧值
+                saveCell(p, t);
                 recordAndUpdate(state.seedOn + prv[0], prv[1], 0);
                 navigateTo(prv[0], prv[1]);
             }
@@ -726,6 +728,8 @@ function numpadPress(key) {
             // NOTE: 当前格为空时，反向 zigzag 跳到上一格并清空
             var prv = prevCell(p, t);
             if (prv) {
+                // NOTE: 先保存当前格（空 → state 写 0），否则 state 残留旧值
+                saveCell(p, t);
                 recordAndUpdate(state.seedOn + prv[0], prv[1], 0);
                 navigateTo(prv[0], prv[1]);
             }
