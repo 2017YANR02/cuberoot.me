@@ -1075,6 +1075,7 @@ function initDrum() {
     var lastMoveY = 0;
     var velocity = 0;       // px/ms（惯性用）
     var inertiaRaf = null;
+    var lastBarStepIdx = 0; // 柱子模式用——上次步进位置
 
     function onStart(e) {
         e.preventDefault();
@@ -1086,6 +1087,7 @@ function initDrum() {
         var pt = e.touches ? e.touches[0] : e;
         dragStartY = pt.clientY;
         dragStartVal = drumValue; // NOTE: 快照当前值作为基准
+        lastBarStepIdx = 0;       // NOTE: 柱子模式步进计数器归零
         lastMoveY = pt.clientY;
         lastMoveTime = Date.now();
         drumList.style.transition = 'none';
@@ -1109,51 +1111,37 @@ function initDrum() {
 
         var p = activeCell[0], t = activeCell[1];
 
+        // NOTE: 连续追踪（输入格 / 柱子共用）
+        var totalDy = pt.clientY - dragStartY;
+        var scrollPos = -totalDy;
+        var stepIdx = Math.round(scrollPos / drumItemH);
+
         if (p >= 0 && t >= 0) {
-            // ── 输入格模式：连续平滑滚动 ──
-            // NOTE: 核心——从拖动起点持续追踪总偏移量，不重置 dragStartY
-            var totalDy = pt.clientY - dragStartY; // 正 = 手指向下
-
-            // 滚动位置（正 = 向上滚 = 值增大）
-            var scrollPos = -totalDy;
-
-            // 最近的步进边界
-            var stepIdx = Math.round(scrollPos / drumItemH);
-
-            // 新值
+            // ── 输入格模式：直接设值 ──
             var newVal = clampValue(dragStartVal + stepIdx * drumStep);
-
-            // 值变了才更新数据
             if (newVal !== drumValue) {
                 drumValue = newVal;
                 setCellVal(p, t, newVal);
                 getCellEl(p, t).value = formatTime(newVal);
                 drumTick();
             }
-
-            // 更新滚筒显示
             fillDrumSlots(newVal);
-
-            // NOTE: sub-pixel 偏移 → 像素级丝滑
-            // 对齐步进边界的理想滚动位置
-            var snappedPos = stepIdx * drumItemH;
-            // 残余偏移 = 实际滚动 - 对齐位置（正 = 超过了一点 → 列表需向上偏移）
-            var fractional = scrollPos - snappedPos;
-            drumList.style.transform = 'translateY(' + (-fractional) + 'px)';
         } else {
-            // ── 图表柱子模式：离散步进（adjustSelectedBar 触发重渲染，无法连续） ──
-            var dy = pt.clientY - dragStartY;
-            var steps = Math.round(-dy / drumItemH);
-            if (steps !== 0) {
-                for (var s = 0; s < Math.abs(steps); s++) {
-                    drumAdjust(steps > 0 ? 1 : -1, false);
+            // ── 柱子模式：增量调用 adjustSelectedBar ──
+            if (stepIdx !== lastBarStepIdx) {
+                var delta = stepIdx - lastBarStepIdx;
+                for (var s = 0; s < Math.abs(delta); s++) {
+                    drumAdjust(delta > 0 ? 1 : -1, false);
                 }
-                dragStartY = pt.clientY;
-                dy = 0;
+                lastBarStepIdx = stepIdx;
                 drumTick();
             }
-            drumList.style.transform = 'translateY(' + (dy % drumItemH) + 'px)';
         }
+
+        // NOTE: sub-pixel 偏移 → 像素级丝滑（两种模式共用）
+        var snappedPos = stepIdx * drumItemH;
+        var fractional = scrollPos - snappedPos;
+        drumList.style.transform = 'translateY(' + (-fractional) + 'px)';
     }
 
     function onEnd(e) {
