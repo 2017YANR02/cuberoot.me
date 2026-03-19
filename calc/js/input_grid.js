@@ -1057,8 +1057,16 @@ function initDrum() {
     drumItemH = 30;
     if (drumSlots[0] && drumSlots[0].offsetHeight > 0) drumItemH = drumSlots[0].offsetHeight;
 
-    // NOTE: 监听柱子选中/取消事件 → 同步滚筒
-    document.addEventListener('drum-sync', function() { syncDrum(); });
+    // NOTE: 监听柱子选中/拖动事件 → 同步滚筒 + 单元格
+    document.addEventListener('drum-sync', function(e) {
+        // 拖动过程中 detail 携带 player/slot/value → 实时更新单元格
+        if (e.detail && e.detail.value !== undefined) {
+            var d = e.detail;
+            var el = getCellEl(d.player, d.slot);
+            if (el) el.value = formatTime(d.value);
+        }
+        syncDrum();
+    });
 
     var dragStartY = 0;
     var dragStartVal = 0;   // 拖动起始时的值快照

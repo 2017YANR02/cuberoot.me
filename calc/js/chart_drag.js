@@ -596,6 +596,11 @@ function onHandlePointerDown(e) {
                 navigator.vibrate(newVal % 100 === 0 ? 12 : 5);
             }
         }
+
+        // NOTE: 实时联动滚筒 + 单元格（传递 player/slot/value 供单元格更新）
+        document.dispatchEvent(new CustomEvent('drum-sync', {
+            detail: { player: p, slot: t, value: newVal }
+        }));
     };
 
     var startEdgeScroll = function(dir) {
@@ -777,6 +782,11 @@ function startPaDrag(e, p, emptyIdx, paEnd, paBarEl) {
         if (x !== targetOrigVal) {
             createGhost(p, targetSlot, targetOrigVal);
         }
+
+        // NOTE: 实时联动滚筒 + 单元格
+        document.dispatchEvent(new CustomEvent('drum-sync', {
+            detail: { player: p, slot: targetSlot, value: x }
+        }));
     };
 
     var onUp = function(eu) {
@@ -870,6 +880,11 @@ function startAvgDrag(e, p, avgBadgeEl) {
         state.times[state.seedOn + p][targetSlot] = x;
         chartRender({ skipViewBox: true });
         // NOTE: 不调 onAfterRender — avgDrag 不需要 pill 恢复
+
+        // NOTE: 实时联动滚筒 + 单元格
+        document.dispatchEvent(new CustomEvent('drum-sync', {
+            detail: { player: p, slot: targetSlot, value: x }
+        }));
     };
 
     var onUp = function(eu) {
