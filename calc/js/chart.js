@@ -849,24 +849,14 @@ function drawStats() {
             var fadedCol = fade(col, 0.25);
 
             // NOTE: 用 <g> 包裹竖柱，添加 hover tooltip 说明上下端含义
-            var paBarGroup = createSvgElement('g', { cursor: 'help' });
+            var paBarGroup = createSvgElement('g', {});
             paBarGroup.appendChild(createSvgElement('rect', {
                 x: barCx - paBarW / 2, y: paTopY, width: paBarW, height: paBarH,
                 fill: fadedCol, stroke: darkCol, 'stroke-width': 2, rx: 3,
+                class: 'chart-pa-bar',
+                'data-player': p, 'data-pa-cx': barCx, 'data-pa-w': paBarW,
+                'data-wpa-y': paTopY, 'data-bpa-y': paBotY,
             }));
-            (function() {
-                paBarGroup.addEventListener('mouseenter', function(e) {
-                    tooltipEl.textContent = 'Top = Worst Possible Avg (WPA)\nBottom = Best Possible Avg (BPA)';
-                    tooltipEl.style.whiteSpace = 'pre-line';
-                    var rect = chartContainer.getBoundingClientRect();
-                    tooltipEl.style.left = (e.clientX - rect.left + 10) + 'px';
-                    tooltipEl.style.top = (e.clientY - rect.top - 50) + 'px';
-                    tooltipEl.style.opacity = '1';
-                });
-                paBarGroup.addEventListener('mouseleave', function() {
-                    tooltipEl.style.opacity = '0';
-                });
-            })();
             statsGroup.appendChild(paBarGroup);
 
             labelSets.push({ paVals, paY, ax, col, darkCol, filleds, p, shouldDrawMiddle, barCx });
