@@ -622,35 +622,25 @@ body {
     flex-shrink: 0;
 }
 
-/* NOTE: 3D 圆柱效果 — 距中心越远越小越旋转（只在灰色层生效） */
-
-/* ±1（紧邻中心） */
-#np-drum-list .np-drum-item:nth-child(4) { transform: scale(0.97) rotateX(8deg); }
-#np-drum-list .np-drum-item:nth-child(6) { transform: scale(0.97) rotateX(-8deg); }
+/* NOTE: 灰色层颜色渐变 — 距中心越远越暗（rotateX/scale 由 JS 动态计算） */
 
 /* ±2 */
 #np-drum-list .np-drum-item:nth-child(3),
 #np-drum-list .np-drum-item:nth-child(7) {
     color: rgba(255,255,255,0.35);
 }
-#np-drum-list .np-drum-item:nth-child(3) { transform: scale(0.92) rotateX(18deg); }
-#np-drum-list .np-drum-item:nth-child(7) { transform: scale(0.92) rotateX(-18deg); }
 
 /* ±3 */
 #np-drum-list .np-drum-item:nth-child(2),
 #np-drum-list .np-drum-item:nth-child(8) {
     color: rgba(255,255,255,0.25);
 }
-#np-drum-list .np-drum-item:nth-child(2) { transform: scale(0.86) rotateX(28deg); }
-#np-drum-list .np-drum-item:nth-child(8) { transform: scale(0.86) rotateX(-28deg); }
 
 /* ±4（最外层缓冲区） */
 #np-drum-list .np-drum-item:nth-child(1),
 #np-drum-list .np-drum-item:nth-child(9) {
     color: rgba(255,255,255,0.15);
 }
-#np-drum-list .np-drum-item:nth-child(1) { transform: scale(0.80) rotateX(38deg); }
-#np-drum-list .np-drum-item:nth-child(9) { transform: scale(0.80) rotateX(-38deg); }
 
 /* NOTE: iOS 高亮条 — 比背景稍亮的圆角矩形 */
 .np-drum-highlight {
