@@ -5,13 +5,51 @@
 
 export const DNF_VALUE = 1000000000;
 export const UNFINISHED_VALUE = 2000000000;
-export const MAX_TIME_VALUE = 8640000; // 24小时 (centiseconds)
+// NOTE: 各模式合法值范围（centiseconds）— 全局 fallback
+export const MIN_TIME_VALUE = 30;       // 0.30s
+export const MAX_TIME_VALUE = 59999;    // 9:59.99
+
+// NOTE: 按项目上下限 [min, max]（centiseconds）
+// FMC: 步数×100，MBF/MBO: 得分×100
+const EVENT_LIMITS = {
+    '333': [250, 1499],   // 2.50 ~ 14.99
+    '222': [30, 999],    // 0.30 ~ 9.99
+    '444': [1300, 5999],   // 13.00 ~ 59.99
+    '555': [2600, 11999],  // 26.00 ~ 1:59.99
+    '666': [5000, 23999],  // 50.00 ~ 3:59.99
+    '777': [8000, 29999],  // 1:20.00 ~ 4:59.99
+    '333bf': [900, 29999],  // 9.00 ~ 4:59.99
+    '333fm': [1000, 4900],   // 10步 ~ 49步
+    '333oh': [500, 2999],   // 5.00 ~ 29.99
+    'minx': [1800, 11999],  // 18.00 ~ 1:59.99
+    'pyram': [60, 999],    // 0.60 ~ 9.99
+    'clock': [100, 1999],   // 1.00 ~ 19.99
+    'skewb': [60, 999],    // 0.60 ~ 9.99
+    'sq1': [250, 2999],   // 2.50 ~ 29.99
+    '444bf': [5000, 59999],  // 50.00 ~ 9:59.99
+    '555bf': [10000, 59999],  // 1:40.00 ~ 9:59.99
+    '333mbf': [100, 7000],   // 1分 ~ 70分
+    '333ft': [1200, 11999],  // 12.00 ~ 1:59.99
+    'magic': [50, 500],    // 0.50 ~ 5.00
+    'mmagic': [50, 500],    // 0.50 ~ 5.00
+    '333mbo': [100, 7000],   // 1分 ~ 70分
+};
+
+// NOTE: 当前项目 ID — 由 app.js 在项目切换时设置
+var _currentEvent = '333';
+export function setCurrentEvent(id) { _currentEvent = id; }
+
+// NOTE: 统一值 clamp — 根据当前项目查表选择上下限
+// 0 = 未填，DNF = 特殊标记，均不 clamp
+export function clampValue(val) {
+    if (val === 0 || val >= DNF_VALUE) return val;
+    var lim = EVENT_LIMITS[_currentEvent];
+    if (lim) return Math.max(lim[0], Math.min(val, lim[1]));
+    return Math.max(MIN_TIME_VALUE, Math.min(val, MAX_TIME_VALUE));
+}
 
 // ── 时间格式化 ──
 
-// NOTE: 统一的时间格式化函数（替代原 timeToText + CalcEngine.formatTime）
-// cs: centiseconds 值
-// axisLabel: true 时省略尾部 ".00"（用于 Y 轴刻度）
 // NOTE: FMC 步数模式标志 — 由 state.js 项目切换时设置
 // formatTime 内部自动判断，无需每个调用方传参
 var _isMoveCntMode = false;
@@ -112,10 +150,7 @@ export function textToTime(s) {
             time += sec * 100; // 有冒号 → 整秒（1:23 中的 23 秒）
         }
     }
-    if (time > MAX_TIME_VALUE) {
-        time = MAX_TIME_VALUE;
-    }
-    return time;
+    return clampValue(time);
 }
 
 // NOTE: 多盲得分解析 — 纯整数输入（如 "56" → 5600）
@@ -129,7 +164,7 @@ export function textToMbfScore(s) {
     }
     var score = parseInt(s.replace(/\D/g, ''), 10);
     if (Number.isNaN(score) || score <= 0) return 0;
-    return score * 100;
+    return clampValue(score * 100);
 }
 
 // 从字符串中提取数字，digitsToInclude 限制截取位数（-1 表示不限）
