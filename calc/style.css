@@ -474,10 +474,16 @@ body {
     line-height: 40px;
 }
 
+#numpad-body {
+    display: flex;
+    gap: 6px;
+}
+
 #numpad-grid {
     display: grid;
-    grid-template-columns: 0.6fr repeat(4, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 6px;
+    flex: 1;
 }
 
 .np-btn {
@@ -531,23 +537,72 @@ body {
     grid-row: span 2;
 }
 
-/* NOTE: ▲/▼ 箭头键 — 跨两行，左侧窄列 */
-.np-arrow {
-    grid-row: span 2;
-    grid-column: 1;
-    font-size: 24px;
-    background: #4a4a4e;
+#np-drum {
+    width: 72px;
+    position: relative;
+    overflow: hidden;
+    border-radius: 10px;
+    background: #2a2a2e;
+    /* NOTE: 高度跟随 numpad-grid，不撑高容器 */
+    align-self: stretch;
+    flex-shrink: 0;
+    /* NOTE: 上下梯度遮罩 — 模拟 iOS 滚筒淡出效果 */
+    -webkit-mask-image: linear-gradient(to bottom,
+        transparent 0%, rgba(0,0,0,0.3) 15%, black 35%, black 65%, rgba(0,0,0,0.3) 85%, transparent 100%);
+    mask-image: linear-gradient(to bottom,
+        transparent 0%, rgba(0,0,0,0.3) 15%, black 35%, black 65%, rgba(0,0,0,0.3) 85%, transparent 100%);
+    touch-action: none;
+    cursor: ns-resize;
+    user-select: none;
+}
+
+/* NOTE: 空态 — 无值可调时半透明 */
+#np-drum.empty {
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+#np-drum-list {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    /* NOTE: JS 通过 translateY 控制滚动位置 */
+    transition: transform 0.08s linear;
+}
+
+.np-drum-item {
+    width: 100%;
+    text-align: center;
+    font-size: 16px;
+    font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+    color: rgba(255, 255, 255, 0.5);
+    padding: 6px 0;
+    line-height: 1.2;
+    flex-shrink: 0;
+}
+
+/* NOTE: 中间选中项高亮 */
+.np-drum-item.center {
     color: #fff;
-    opacity: 0.4;
-    transition: opacity 0.2s, background 0.2s;
+    font-size: 20px;
+    font-weight: 700;
 }
-/* NOTE: 柱子选中时箭头高亮 */
-.np-arrow.active {
-    opacity: 1;
-    background: rgba(255, 128, 0, 0.85);
-}
-.np-arrow:active {
-    background: #7a7a7e;
+
+/* NOTE: 选中行高亮条 — 两条水平线 */
+.np-drum-highlight {
+    position: absolute;
+    left: 4px;
+    right: 4px;
+    top: 50%;
+    height: 32px;
+    transform: translateY(-50%);
+    border-top: 1.5px solid rgba(255, 128, 0, 0.6);
+    border-bottom: 1.5px solid rgba(255, 128, 0, 0.6);
+    background: rgba(255, 128, 0, 0.08);
+    border-radius: 4px;
+    pointer-events: none;
 }
 
 /* ── 指标对比表格 ── */
