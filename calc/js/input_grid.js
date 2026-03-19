@@ -903,6 +903,33 @@ var drumSlots = [];         // 预创建的 DOM 元素引用
 var drumAnimTimer = null;   // 滑动动画定时器
 var drumIsDragging = false; // 是否正在拖动中
 
+// NOTE: Web Audio tick 音效 — 模拟 iOS picker 滴答声
+var drumAudioCtx = null;
+
+function drumTick() {
+    // 震动反馈（移动端）
+    if (navigator.vibrate) navigator.vibrate(3);
+
+    // 音效反馈
+    try {
+        if (!drumAudioCtx) drumAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        var ctx = drumAudioCtx;
+        // 极短正弦波脉冲（1200Hz，持续 8ms）
+        var osc = ctx.createOscillator();
+        var gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = 1200;
+        gain.gain.setValueAtTime(0.08, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.008);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.01);
+    } catch (e) {
+        // HACK: 部分浏览器限制 AudioContext，静默忽略
+    }
+}
+
 // NOTE: 同步滚筒显示 — 根据当前选中柱子/聚焦 input 格更新
 export function syncDrum() {
     if (!drumEl) return;
@@ -934,10 +961,9 @@ export function syncDrum() {
 function createDrumSlots() {
     drumList.innerHTML = '';
     drumSlots = [];
-    var centerIdx = Math.floor(DRUM_SLOTS / 2); // = 4
     for (var i = 0; i < DRUM_SLOTS; i++) {
         var item = document.createElement('div');
-        item.className = 'np-drum-item' + (i === centerIdx ? ' center' : '');
+        item.className = 'np-drum-item';
         drumList.appendChild(item);
         drumSlots.push(item);
     }
@@ -962,18 +988,20 @@ function fillDrumSlots(centerVal) {
 function drumAnimateStep(dir) {
     if (drumAnimTimer) { clearTimeout(drumAnimTimer); drumAnimTimer = null; }
 
-    // 先移动 translateY 制造"滑入"效果
-    var offset = dir * drumItemH; // dir=1 → 值增大 → 列表向下滑（新值从上方滑入）
-    drumList.style.transition = 'transform 0.12s cubic-bezier(0.22, 1, 0.36, 1)';
-    drumList.style.transform = 'translateY(' + offset + 'px)';
+    // 1. 先更新内容到新值（确保 .center 文字始终与高亮条对齐）
+    fillDrumSlots(drumValue);
 
-    // 动画结束后更新内容并归位
-    drumAnimTimer = setTimeout(function() {
-        drumList.style.transition = 'none';
-        drumList.style.transform = 'translateY(0px)';
-        fillDrumSlots(drumValue);
-        drumAnimTimer = null;
-    }, 130);
+    // 2. 从偏移位置开始（模拟旧值还在中间的视觉）
+    var startOffset = dir * drumItemH;
+    drumList.style.transition = 'none';
+    drumList.style.transform = 'translateY(' + startOffset + 'px)';
+
+    // 3. 强制重排确保起始位置生效
+    void drumList.offsetHeight;
+
+    // 4. 动画滑入居中（新值从偏移方向滑入高亮条）
+    drumList.style.transition = 'transform 0.12s cubic-bezier(0.22, 1, 0.36, 1)';
+    drumList.style.transform = 'translateY(0px)';
 }
 
 // NOTE: 滚筒滑动触发值调整
@@ -989,6 +1017,7 @@ function drumAdjust(dir, animate) {
         setCellVal(p, t, newVal);
         getCellEl(p, t).value = formatTime(newVal);
         drumValue = newVal;
+        drumTick();
         if (animate) {
             // NOTE: 先更新数据，动画结束后才 fillDrumSlots
             drumAnimateStep(dir);
@@ -1088,7 +1117,7 @@ function initDrum() {
                 drumValue = newVal;
                 setCellVal(p, t, newVal);
                 getCellEl(p, t).value = formatTime(newVal);
-                if (navigator.vibrate) navigator.vibrate(3);
+                drumTick();
             }
 
             // 更新滚筒显示
@@ -1110,7 +1139,7 @@ function initDrum() {
                 }
                 dragStartY = pt.clientY;
                 dy = 0;
-                if (navigator.vibrate) navigator.vibrate(3);
+                drumTick();
             }
             drumList.style.transform = 'translateY(' + (dy % drumItemH) + 'px)';
         }
