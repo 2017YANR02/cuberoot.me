@@ -15,6 +15,8 @@ import { adjustSelectedBar, hasSelection, getSelectedValue, getSelectedInfo } fr
 
 // NOTE: 当前聚焦的单元格 [player, solve]，-1 表示无聚焦
 var activeCell = [-1, -1];
+// NOTE: 移动端柱子选中后标记 — 首次 numpad 输入应替换旧值而非追加
+var barSelectPending = false;
 // NOTE: 秒表回调（由 app.js 注册，避免循环依赖）
 var stopwatchCallback = null;
 // NOTE: 撤销栈 — 每条记录 {playerIdx, solveIdx, oldValue}
@@ -665,6 +667,7 @@ function numpadPress(key) {
         }
     } else if (key === 'dnf') {
 
+        barSelectPending = false;
         v.value = 'DNF';
         syncNumpadDisplay();
         // NOTE: 自动 zigzag 跳到下一格
@@ -677,7 +680,8 @@ function numpadPress(key) {
             activeCell = [-1, -1];
         }
     } else if (key === 'backspace') {
-        if (isFullySelected(v)) {
+        if (isFullySelected(v) || barSelectPending) {
+            barSelectPending = false;
             // NOTE: 全选状态下一键清空 — 必须同时写 state，否则 refresh 会还原
             recordAndUpdate(state.seedOn + p, t, 0);
             v.value = '';
@@ -696,7 +700,7 @@ function numpadPress(key) {
     } else if (key === 'dotcolon') {
 
         // NOTE: 全选状态下先清空
-        if (isFullySelected(v)) v.value = '';
+        if (isFullySelected(v) || barSelectPending) { v.value = ''; barSelectPending = false; }
         // NOTE: .: 按钮 — 末尾是 . 则替换为 :，否则追加 .
         if (v.value.length > 0 && v.value[v.value.length - 1] === '.') {
             v.value = v.value.slice(0, -1) + ':';
@@ -707,7 +711,7 @@ function numpadPress(key) {
     } else {
         // 数字键 0-9 — 全选时替换而非追加
 
-        if (isFullySelected(v)) v.value = '';
+        if (isFullySelected(v) || barSelectPending) { v.value = ''; barSelectPending = false; }
         v.value += key;
         syncNumpadDisplay();
         // NOTE: numpad 数字键也触发自动跳格
@@ -1125,6 +1129,7 @@ function initDrum() {
             // NOTE: 移动端不 focus（避免选区一闪而过），但设置 activeCell
             // 保证 numpad/滚筒输入目标正确
             activeCell = [p, t];
+            barSelectPending = true;
             syncNumpadDisplay();
         } else {
             el.focus();
