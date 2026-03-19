@@ -419,12 +419,17 @@ function drawGhostBars() {
                     tooltipEl.style.opacity = '0';
                 });
             })();
-            // NOTE: 用 skull.png 替代 💀 emoji
+            // NOTE: 红底 + skull.png — 提升图表中的对比度
             var skullSize = 36;
+            var cx = bx + bw / 2, cy = labelY;
+            skullGroup.appendChild(createSvgElement('circle', {
+                cx: cx, cy: cy, r: skullSize / 2 + 7,
+                fill: '#D32F2F',
+            }));
             skullGroup.appendChild(createSvgElement('image', {
                 href: '/assets/images/skull.png',
-                x: bx + bw / 2 - skullSize / 2,
-                y: labelY - skullSize / 2,
+                x: cx - skullSize / 2,
+                y: cy - skullSize / 2,
                 width: skullSize, height: skullSize,
             }));
             topTextGroup.appendChild(skullGroup);
