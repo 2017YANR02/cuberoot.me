@@ -49,6 +49,20 @@ var tooltipEl = null;       // HTML tooltip div（badge 指标说明）
 var chartContainer = null;  // 图表容器 DOM
 var lastConfettiKey = '';    // NOTE: 防止 confetti 重复触发（记录上次触发时的状态 key）
 
+// NOTE: 预加载 skull.png 为 base64 data URL，避免 SVG <image> 每次重建时触发网络请求闪烁
+var skullDataUrl = '/assets/images/skull.png'; // 默认回退
+(function preloadSkull() {
+    var img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = function () {
+        var c = document.createElement('canvas');
+        c.width = img.naturalWidth; c.height = img.naturalHeight;
+        c.getContext('2d').drawImage(img, 0, 0);
+        skullDataUrl = c.toDataURL('image/png');
+    };
+    img.src = '/assets/images/skull.png';
+})();
+
 // 图表参数缓存（等价于原代码的 g 对象）
 var gp = {};
 
@@ -454,7 +468,7 @@ function drawGhostBars() {
                     fill: '#D32F2F',
                 }));
                 skullGroup.appendChild(createSvgElement('image', {
-                    href: '/assets/images/skull.png',
+                    href: skullDataUrl,
                     x: cx - skullSize / 2,
                     y: cy - skullSize / 2,
                     width: skullSize, height: skullSize,
@@ -649,7 +663,7 @@ function drawGhostBars() {
                 textEl1.textContent = b.line1;
                 badgeGroup.appendChild(textEl1);
                 badgeGroup.appendChild(createSvgElement('image', {
-                    href: '/assets/images/skull.png',
+                    href: skullDataUrl,
                     x: startX + 30, y: by + (bh - skullSz) / 2,
                     width: skullSz, height: skullSz,
                 }));
