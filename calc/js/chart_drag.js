@@ -124,6 +124,14 @@ function onSvgPointerDown(e) {
         var onUpAvg = function(eu) {
             document.removeEventListener('pointerup', onUpAvg);
             document.removeEventListener('pointermove', onMoveAvg);
+            // NOTE: 短 tap → 选中 avg badge（进入键盘/numpad 精调模式）
+            var dx = eu.clientX - dragStartX;
+            var dy = eu.clientY - dragStartY;
+            var dist = Math.sqrt(dx * dx + dy * dy);
+            var elapsed = Date.now() - pointerDownTime;
+            if (dist < TAP_DIST && elapsed < TAP_TIME) {
+                selectAvg(avgPl, avgBadge);
+            }
         };
         var onMoveAvg = function(em) {
             var dx = em.clientX - dragStartX;
@@ -323,6 +331,10 @@ function selectBar(p, t, rectEl) {
 
 // NOTE: 实际执行选中逻辑（抽取为独立函数供 selectBar 和 Both 消歧复用）
 function doSelect(p, t, rectEl, val) {
+    // NOTE: 选中柱子时让 input 失焦，确保键盘 ↑/↓ 不被 input_grid 拦截
+    if (document.activeElement && document.activeElement.tagName === 'INPUT') {
+        document.activeElement.blur();
+    }
     // NOTE: 从 hover 预览态转入正式选中态
     hovered = null;
     selected = { player: p, slot: t, rectEl: rectEl };
@@ -343,6 +355,10 @@ function doSelect(p, t, rectEl, val) {
 
 // NOTE: PA 柱 tap 选中态 — 显示 pill 并允许拖动
 function selectPa(p, emptyIdx, paEnd, paBarEl) {
+    // NOTE: 选中 PA 时让 input 失焦
+    if (document.activeElement && document.activeElement.tagName === 'INPUT') {
+        document.activeElement.blur();
+    }
     // 如果已选中同一个 PA 端 → 取消选中
     if (selected && selected.pa && selected.player === p && selected.paEnd === paEnd) {
         deselect();
@@ -367,6 +383,32 @@ function selectPa(p, emptyIdx, paEnd, paBarEl) {
     handleEl.style.display = '';
     handleEl.style.pointerEvents = 'auto';
     handleEl.classList.toggle('player-b', p === 1);
+}
+
+// NOTE: Avg badge tap 选中态 — 允许键盘/numpad 精调 avg 值
+function selectAvg(p, avgBadgeEl) {
+    // NOTE: 选中 avg badge 时让 input 失焦，确保键盘 ↑/↓ 可用
+    if (document.activeElement && document.activeElement.tagName === 'INPUT') {
+        document.activeElement.blur();
+    }
+    // 如果已选中同一个 → 取消
+    if (selected && selected.avgDrag && selected.player === p) {
+        deselect();
+        return;
+    }
+    deselect();
+    hovered = null;
+
+    var n = solveCount();
+    var targetSlot = n - 1; // 调整 #5（最后一个 slot）
+
+    selected = { player: p, slot: targetSlot, avgDrag: true, rectEl: avgBadgeEl };
+
+    var svg = getSvgEl();
+    svg.classList.add('bar-selected');
+
+    // NOTE: 不显示 pill handle（avg badge 本身就是交互指示器）
+    handleEl.style.display = 'none';
 }
 
 function deselect() {
@@ -949,6 +991,16 @@ export function onAfterRender() {
     var t = selected.slot;
     var svg = getSvgEl();
 
+    // NOTE: Avg badge 选中态 — 查找重建后的 avg badge
+    if (selected.avgDrag) {
+        var newAvgBadge = svg.querySelector('.chart-avg-badge[data-player="' + p + '"]');
+        if (!newAvgBadge) { deselect(); return; }
+        selected.rectEl = newAvgBadge;
+        svg.classList.add('bar-selected');
+        handleEl.style.display = 'none';
+        return;
+    }
+
     // NOTE: PA 柱选中态 — 查找重建后的 PA bar
     if (selected.pa) {
         var newPaBar = svg.querySelector('.chart-pa-bar[data-player="' + p + '"]');
@@ -1148,6 +1200,34 @@ export function adjustSelectedBar(dir, step) {
     if (!selected) return false;
     if (!step) step = 1;
     var p = selected.player;
+
+    // NOTE: Avg badge 模式 — 调整 avg 值并反向推算 #5
+    if (selected.avgDrag) {
+        var times = state.times[state.seedOn + p];
+        var n = solveCount();
+        var targetSlot = n - 1;
+
+        // 获取当前 avg
+        var currentAvg = getAverage(times, false);
+        if (!currentAvg || currentAvg >= DNF_VALUE) return false;
+
+        var newAvg = currentAvg + dir * step;
+        if (newAvg <= 0) return false;
+
+        // 收集前 n-1 个值用于反向推算
+        var filled = [];
+        for (var i = 0; i < n - 1; i++) {
+            if (times[i] > 0 && times[i] < DNF_VALUE) filled.push(times[i]);
+        }
+        if (filled.length < n - 1) return false;
+        filled.sort(function(a, b) { return a - b; });
+
+        var newX = reverseAvgToTime(filled, newAvg);
+        if (newX === null || newX <= 0) return false;
+
+        updateTime(state.seedOn + p, targetSlot, newX);
+        return true;
+    }
 
     // NOTE: PA 柱模式 — 从 data 属性读取实际 PA 值，±step 后反向推算 target solve
     if (selected.pa) {

@@ -190,8 +190,8 @@ export function init(gridContainer) {
         bkspBtn.addEventListener('touchcancel', cancelLongPress);
     }
 
-    // NOTE: ▲/▼ 箭头按钮 — 长按加速精调选中柱子
-    initArrowButtons();
+    // NOTE: iOS 滚筒 — 精调选中柱子/聚焦格子的值
+    initDrum();
 
 }
 
@@ -611,7 +611,7 @@ function onNumpadClick(e) {
 }
 
 function numpadPress(key) {
-    // NOTE: ▲/▼ 由 initArrowButtons 独立处理（长按加速），此处跳过
+    // NOTE: 箭头键由滚筒处理，此处跳过
     if (key === 'arrow-up' || key === 'arrow-down') return;
 
     var p = activeCell[0];
@@ -719,6 +719,9 @@ function numpadPress(key) {
 // ── 数字键盘显示同步 ──
 
 function syncNumpadDisplay() {
+    // NOTE: 滚筒同步必须在前面，不受 display bar 是否存在的影响
+    syncDrum();
+
     var label = document.getElementById('numpad-label');
     var value = document.getElementById('numpad-value');
     if (!label || !value) return;
@@ -887,71 +890,208 @@ export function flushToState() {
     }
 }
 
-// ── ▲/▼ 箭头按钮 — 长按加速精调 ──
+// ── iOS 滚筒精调 ──
 
-// NOTE: 同步箭头按钮高亮状态 — 有柱子选中时高亮，否则半透明
-export function syncArrowState() {
-    var btns = document.querySelectorAll('.np-arrow');
-    var active = hasSelection();
-    for (var i = 0; i < btns.length; i++) {
-        btns[i].classList.toggle('active', active);
+// NOTE: 滚筒状态
+var drumEl = null;          // #np-drum
+var drumList = null;        // #np-drum-list
+var drumValue = 0;          // 当前显示的 centisecond 值
+var drumItemH = 30;         // 每项高度（px）
+var DRUM_VISIBLE = 7;       // 可见项数（上下各 3 + 中间 1）
+var drumStep = 1;           // 步进粒度（centiseconds）
+
+// NOTE: 同步滚筒显示 — 根据当前选中柱子/聚焦 input 格更新
+export function syncDrum() {
+    if (!drumEl) return;
+
+    var val = 0;
+    var p = activeCell[0], t = activeCell[1];
+
+    // 优先检查聚焦的 input 格
+    if (p >= 0 && t >= 0) {
+        val = getCellVal(p, t);
+    } else if (hasSelection()) {
+        // 其次检查选中的柱子（通过 chart_drag 的当前 state 读取）
+        val = 0; // NOTE: 选中柱子时由 adjustSelectedBar 处理，滚筒仅显示方向指示
+    }
+
+    // 空值或 DNF → 滚筒置灰
+    if (val <= 0 || val >= DNF_VALUE) {
+        drumEl.classList.add('empty');
+        renderDrumItems(0);
+        return;
+    }
+
+    drumEl.classList.remove('empty');
+    drumValue = val;
+    drumStep = (state.event === '333fm' || isMbf()) ? 100 : 1;
+    renderDrumItems(val);
+}
+
+function renderDrumItems(centerVal) {
+    if (!drumList) return;
+    // 清空旧内容
+    drumList.innerHTML = '';
+    var half = Math.floor(DRUM_VISIBLE / 2);
+    for (var i = -half; i <= half; i++) {
+        var v = centerVal + i * drumStep;
+        var item = document.createElement('div');
+        item.className = 'np-drum-item' + (i === 0 ? ' center' : '');
+        if (v > 0 && v < DNF_VALUE && centerVal > 0) {
+            item.textContent = formatTime(v);
+        } else {
+            item.textContent = '';
+        }
+        drumList.appendChild(item);
+    }
+    // 重置滚动位置
+    drumList.style.transform = 'translateY(0px)';
+}
+
+// NOTE: 滚筒滑动触发值调整
+function drumAdjust(dir) {
+    var p = activeCell[0], t = activeCell[1];
+
+    // 优先调整聚焦的 input 格
+    if (p >= 0 && t >= 0) {
+        var rawVal = getCellVal(p, t);
+        if (rawVal <= 0 || rawVal >= DNF_VALUE) return;
+        var step = drumStep;
+        var newVal = clampValue(rawVal + dir * step);
+        if (newVal === rawVal) return;
+        setCellVal(p, t, newVal);
+        getCellEl(p, t).value = formatTime(newVal);
+        syncNumpadDisplay();
+        drumValue = newVal;
+        renderDrumItems(newVal);
+        return;
+    }
+
+    // 其次调整选中的柱子
+    if (hasSelection()) {
+        adjustSelectedBar(dir, drumStep);
+        // NOTE: adjustSelectedBar 触发 notify → onChange → syncDrum 会自动更新
     }
 }
 
-function initArrowButtons() {
-    var arrows = document.querySelectorAll('.np-arrow');
-    if (!arrows.length) return;
+function initDrum() {
+    drumEl = document.getElementById('np-drum');
+    drumList = document.getElementById('np-drum-list');
+    if (!drumEl || !drumList) return;
 
-    arrows.forEach(function(btn) {
-        var dir = btn.dataset.key === 'arrow-up' ? 1 : -1;
-        var repeatTimer = null; // repeat interval ID
-        var startTime = 0;     // 按下时刻（用于加速判断）
-        var pressing = false;
+    // 初始渲染空态
+    drumEl.classList.add('empty');
+    renderDrumItems(0);
 
-        function getStep() {
-            // NOTE: 持续按时间越长步长越大
-            var elapsed = Date.now() - startTime;
-            if (state.event === '333fm' || isMbf()) return 100;
-            if (elapsed > 3000) return 100; // 3s 后 ±1.00s
-            if (elapsed > 1000) return 10;  // 1s 后 ±0.10s
-            return 1;                        // 默认 ±0.01s
+    // 计算项高
+    drumItemH = 30; // 默认值，后续由实际元素高度覆盖
+
+    var dragStartY = 0;
+    var accumulated = 0; // 累积位移（px）
+    var isDragging = false;
+    var lastMoveTime = 0;
+    var lastMoveY = 0;
+    var velocity = 0; // px/ms
+    var inertiaRaf = null;
+
+    function onStart(e) {
+        e.preventDefault();
+        if (inertiaRaf) { cancelAnimationFrame(inertiaRaf); inertiaRaf = null; }
+        isDragging = true;
+        accumulated = 0;
+        velocity = 0;
+        var pt = e.touches ? e.touches[0] : e;
+        dragStartY = pt.clientY;
+        lastMoveY = pt.clientY;
+        lastMoveTime = Date.now();
+        drumList.style.transition = 'none';
+
+        // 刷新 drumItemH
+        var firstItem = drumList.querySelector('.np-drum-item');
+        if (firstItem) drumItemH = firstItem.offsetHeight;
+    }
+
+    function onMove(e) {
+        if (!isDragging) return;
+        e.preventDefault();
+        var pt = e.touches ? e.touches[0] : e;
+        var dy = pt.clientY - dragStartY;
+        accumulated = dy;
+
+        // 计算速度（用于惯性）
+        var now = Date.now();
+        var dt = now - lastMoveTime;
+        if (dt > 0) {
+            velocity = (pt.clientY - lastMoveY) / dt;
         }
+        lastMoveY = pt.clientY;
+        lastMoveTime = now;
 
-        function doAdjust() {
-            adjustSelectedBar(dir, getStep());
-            if (navigator.vibrate) navigator.vibrate(5);
-        }
-
-        function startPress(e) {
-            e.preventDefault();
-            if (pressing) return;
-            pressing = true;
-            startTime = Date.now();
-            // 立即触发一次
-            doAdjust();
-            // 300ms 后开始 repeat（50ms 间隔 = 20次/秒）
-            repeatTimer = setTimeout(function() {
-                repeatTimer = setInterval(doAdjust, 50);
-            }, 300);
-        }
-
-        function endPress(e) {
-            if (!pressing) return;
-            pressing = false;
-            if (repeatTimer) {
-                clearTimeout(repeatTimer);
-                clearInterval(repeatTimer);
-                repeatTimer = null;
+        // NOTE: 向上滑 = 值增大，向下滑 = 值减小
+        var steps = Math.round(-dy / drumItemH);
+        if (steps !== 0) {
+            for (var s = 0; s < Math.abs(steps); s++) {
+                drumAdjust(steps > 0 ? 1 : -1);
             }
+            dragStartY = pt.clientY;
+            accumulated = 0;
+            if (navigator.vibrate) navigator.vibrate(3);
         }
 
-        // NOTE: 桌面端
-        btn.addEventListener('mousedown', startPress);
-        btn.addEventListener('mouseup', endPress);
-        btn.addEventListener('mouseleave', endPress);
-        // NOTE: 移动端
-        btn.addEventListener('touchstart', startPress, { passive: false });
-        btn.addEventListener('touchend', endPress);
-        btn.addEventListener('touchcancel', endPress);
-    });
+        // 视觉反馈：小幅偏移
+        var visualOffset = -(dy % drumItemH);
+        drumList.style.transform = 'translateY(' + visualOffset + 'px)';
+    }
+
+    function onEnd(e) {
+        if (!isDragging) return;
+        isDragging = false;
+        drumList.style.transition = '';
+        drumList.style.transform = 'translateY(0px)';
+
+        // NOTE: 惯性滚动 — 松手后按速度继续滚动
+        if (Math.abs(velocity) > 0.3) {
+            startInertia(velocity);
+        }
+    }
+
+    function startInertia(v) {
+        var FRICTION = 0.92; // 摩擦系数
+        var accum = 0;
+
+        function tick() {
+            v *= FRICTION;
+            if (Math.abs(v) < 0.05) return; // 速度太小，停止
+
+            accum += v * 16; // 假设 60fps
+            var steps = Math.round(-accum / drumItemH);
+            if (steps !== 0) {
+                for (var s = 0; s < Math.abs(steps); s++) {
+                    drumAdjust(steps > 0 ? 1 : -1);
+                }
+                accum = 0;
+            }
+
+            inertiaRaf = requestAnimationFrame(tick);
+        }
+        inertiaRaf = requestAnimationFrame(tick);
+    }
+
+    // 注册事件
+    drumEl.addEventListener('mousedown', onStart);
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onEnd);
+    drumEl.addEventListener('touchstart', onStart, { passive: false });
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('touchend', onEnd);
+    document.addEventListener('touchcancel', onEnd);
+
+    // NOTE: 鼠标滚轮 — 滚筒区域内滚轮也能微调
+    drumEl.addEventListener('wheel', function(e) {
+        e.preventDefault();
+        // deltaY > 0 = 向下滚 = 值减小; deltaY < 0 = 向上滚 = 值增大
+        var dir = e.deltaY < 0 ? 1 : -1;
+        drumAdjust(dir);
+    }, { passive: false });
 }
+

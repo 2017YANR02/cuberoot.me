@@ -108,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
     onChange(() => {
         chart.render();
         chartDrag.onAfterRender(); // NOTE: 全量重绘后恢复拖动选中态
-        inputGrid.syncArrowState(); // NOTE: 同步 ▲/▼ 按钮高亮
+        inputGrid.syncDrum(); // NOTE: 同步 iOS 滚筒显示
         inputGrid.refresh();
         calcTable.render();
         urlSync.save();
