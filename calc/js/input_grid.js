@@ -719,7 +719,9 @@ function numpadPress(key) {
     }
 
     // NOTE: 仅当未跳转（activeCell 未变）时才 refocus 原格
-    if (activeCell[0] === p && activeCell[1] === t) {
+    // NOTE: 移动端 numpad 通过 activeCell 驱动，不需要真实 focus；
+    // 调 v.focus() 会触发 focus handler 里的 select() 导致刚输入的字符被全选
+    if (activeCell[0] === p && activeCell[1] === t && !('ontouchstart' in window)) {
         v.focus();
     }
 }
