@@ -1083,7 +1083,17 @@ function drawAverages() {
                 ' L' + rx + ',' + (cursor - m[type]) +
                 ' L' + rx + ',' + (cursor + m[type]) +
                 ' L' + (lx + jm) + ',' + (cursor + m[type]) + ' Z';
-            avgGroup.appendChild(createSvgElement('path', {
+
+            // NOTE: type=2 的菱形标签用 <g> 包裹，添加 class 和 data 属性供拖动系统检测
+            var avgBadgeGroup = (type === 2) ? createSvgElement('g', {
+                class: 'chart-avg-badge',
+                'data-player': pIdx,
+                'data-avg-y': cursor, // SVG Y 坐标（用于拖动偏移计算）
+                cursor: 'ns-resize',
+            }) : null;
+
+            var pathTarget = avgBadgeGroup || avgGroup;
+            pathTarget.appendChild(createSvgElement('path', {
                 d: d, fill: fillColor,
             }));
 
@@ -1096,7 +1106,7 @@ function drawAverages() {
                     'dominant-baseline': 'central',
                 });
                 text.textContent = labelText;
-                avgGroup.appendChild(text);
+                (avgBadgeGroup || avgGroup).appendChild(text);
 
                 // NOTE: WR 徽章 — 平均值 ≤ WR 时显示红色 "WR"
                 if (type === 2 && average > 0 && average !== DNF_VALUE && isWR(state.event, 'average', average)) {
@@ -1131,6 +1141,9 @@ function drawAverages() {
                     }
                 }
             }
+
+            // NOTE: 将包裹的 group 加入 avgGroup
+            if (avgBadgeGroup) avgGroup.appendChild(avgBadgeGroup);
 
             typePrev = type;
         }
