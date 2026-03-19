@@ -11,7 +11,7 @@ import { isMbf } from './state.js';
 
 import { getTargetAvg, setTargetAvg } from './calc_table.js';
 import { isWR } from './wr_data.js';
-import { adjustSelectedBar, hasSelection, getSelectedValue } from './chart_drag.js';
+import { adjustSelectedBar, hasSelection, getSelectedValue, getSelectedInfo } from './chart_drag.js';
 
 // NOTE: 当前聚焦的单元格 [player, solve]，-1 表示无聚焦
 var activeCell = [-1, -1];
@@ -268,6 +268,8 @@ function createTimeCell(p, t) {
         input.select();
         syncNumpadDisplay();
 
+        // NOTE: 通知柱子轻高亮对应 bar
+        document.dispatchEvent(new CustomEvent('cell-focus', { detail: { player: p, slot: t } }));
     });
     input.addEventListener('blur', () => {
         // NOTE: 延迟检测 — 如果焦点转移到另一个格子则不触发保存（由导航逻辑处理）
@@ -277,6 +279,8 @@ function createTimeCell(p, t) {
                 activeCell = [-1, -1];
                 syncNumpadDisplay();
 
+                // NOTE: 清除柱子高亮
+                document.dispatchEvent(new CustomEvent('cell-focus', { detail: null }));
             }
         }, 50);
     });
@@ -894,12 +898,14 @@ export function flushToState() {
 
 // NOTE: 滚筒状态
 var drumEl = null;          // #np-drum
-var drumList = null;        // #np-drum-list
+var drumList = null;        // #np-drum-list（灰色底层）
+var drumListWhite = null;   // 白色裁剪层（clip-path 到高亮条）
 var drumValue = 0;          // 当前显示的 centisecond 值
 var drumItemH = 30;         // 每项高度（px）
 var DRUM_SLOTS = 9;         // DOM slot 数（7 可见 + 上下各 1 缓冲）
 var drumStep = 1;           // 步进粒度（centiseconds）
-var drumSlots = [];         // 预创建的 DOM 元素引用
+var drumSlots = [];         // 灰色层 DOM 元素引用
+var drumSlotsWhite = [];    // 白色层 DOM 元素引用
 var drumAnimTimer = null;   // 滑动动画定时器
 var drumIsDragging = false; // 是否正在拖动中
 
@@ -960,28 +966,43 @@ export function syncDrum() {
 // NOTE: 创建 DOM slots（只执行一次）
 function createDrumSlots() {
     drumList.innerHTML = '';
+    drumListWhite.innerHTML = '';
     drumSlots = [];
+    drumSlotsWhite = [];
     for (var i = 0; i < DRUM_SLOTS; i++) {
+        // 灰色层
         var item = document.createElement('div');
         item.className = 'np-drum-item';
         drumList.appendChild(item);
         drumSlots.push(item);
+        // 白色层（完全相同的结构）
+        var itemW = document.createElement('div');
+        itemW.className = 'np-drum-item';
+        drumListWhite.appendChild(itemW);
+        drumSlotsWhite.push(itemW);
     }
 }
 
-// NOTE: 更新所有 slot 的文本（不重建 DOM）
+// NOTE: 更新所有 slot 的文本（两层同步）
 function fillDrumSlots(centerVal) {
     var centerIdx = Math.floor(DRUM_SLOTS / 2);
     for (var i = 0; i < DRUM_SLOTS; i++) {
         var v = centerVal + (i - centerIdx) * drumStep;
-        drumSlots[i].textContent =
-            (v > 0 && v < DNF_VALUE && centerVal > 0) ? formatTime(v) : '';
+        var text = (v > 0 && v < DNF_VALUE && centerVal > 0) ? formatTime(v) : '';
+        drumSlots[i].textContent = text;
+        drumSlotsWhite[i].textContent = text;
     }
     // 非拖动状态下重置位置
     if (!drumIsDragging) {
-        drumList.style.transition = 'none';
-        drumList.style.transform = 'translateY(0px)';
+        setDrumStyle('transition', 'none');
+        setDrumStyle('transform', 'translateY(0px)');
     }
+}
+
+// NOTE: 同步两层样式的辅助函数（DRY）
+function setDrumStyle(prop, val) {
+    drumList.style[prop] = val;
+    if (drumListWhite) drumListWhite.style[prop] = val;
 }
 
 // NOTE: 带滑动动画的单步调整（用于滚轮/键盘/惯性）
@@ -993,15 +1014,15 @@ function drumAnimateStep(dir) {
 
     // 2. 从偏移位置开始（模拟旧值还在中间的视觉）
     var startOffset = dir * drumItemH;
-    drumList.style.transition = 'none';
-    drumList.style.transform = 'translateY(' + startOffset + 'px)';
+    setDrumStyle('transition', 'none');
+    setDrumStyle('transform', 'translateY(' + startOffset + 'px)');
 
     // 3. 强制重排确保起始位置生效
     void drumList.offsetHeight;
 
     // 4. 动画滑入居中（新值从偏移方向滑入高亮条）
-    drumList.style.transition = 'transform 0.12s cubic-bezier(0.22, 1, 0.36, 1)';
-    drumList.style.transform = 'translateY(0px)';
+    setDrumStyle('transition', 'transform 0.12s cubic-bezier(0.22, 1, 0.36, 1)');
+    setDrumStyle('transform', 'translateY(0px)');
 }
 
 // NOTE: 滚筒滑动触发值调整
@@ -1048,7 +1069,17 @@ function initDrum() {
     drumList = document.getElementById('np-drum-list');
     if (!drumEl || !drumList) return;
 
-    // 预创建 DOM slots（只执行一次）
+    // NOTE: 创建静态裁剪窗口 — clip-path 在不动的窗口上，列表在内滑动
+    var drumWhiteWindow = document.createElement('div');
+    drumWhiteWindow.className = 'np-drum-white-window';
+    drumEl.appendChild(drumWhiteWindow);
+
+    drumListWhite = document.createElement('div');
+    drumListWhite.id = 'np-drum-list-white';
+    drumListWhite.className = 'np-drum-list-white';
+    drumWhiteWindow.appendChild(drumListWhite);
+
+    // 预创建 DOM slots（两层同步）
     createDrumSlots();
     drumEl.classList.add('empty');
     fillDrumSlots(0);
@@ -1056,6 +1087,16 @@ function initDrum() {
     // 刷新项高
     drumItemH = 30;
     if (drumSlots[0] && drumSlots[0].offsetHeight > 0) drumItemH = drumSlots[0].offsetHeight;
+
+    // NOTE: 选中柱子时同步聚焦对应单元格（蓝底 + 全选）
+    document.addEventListener('bar-select-cell', function(e) {
+        if (!e.detail) return;
+        var el = getCellEl(e.detail.player, e.detail.slot);
+        if (el) {
+            el.focus();
+            el.select();
+        }
+    });
 
     // NOTE: 监听柱子选中/拖动事件 → 同步滚筒 + 单元格
     document.addEventListener('drum-sync', function(e) {
@@ -1066,6 +1107,15 @@ function initDrum() {
             if (el) el.value = formatTime(d.value);
         }
         syncDrum();
+
+        // NOTE: 选中普通柱时高亮对应单元格
+        var prevSynced = document.querySelector('.cell-synced');
+        if (prevSynced) prevSynced.classList.remove('cell-synced');
+        var info = getSelectedInfo();
+        if (info && !info.pa) {
+            var cellEl = getCellEl(info.player, info.slot);
+            if (cellEl) cellEl.classList.add('cell-synced');
+        }
     });
 
     var dragStartY = 0;
@@ -1090,7 +1140,7 @@ function initDrum() {
         lastBarStepIdx = 0;       // NOTE: 柱子模式步进计数器归零
         lastMoveY = pt.clientY;
         lastMoveTime = Date.now();
-        drumList.style.transition = 'none';
+        setDrumStyle('transition', 'none');
 
         if (drumSlots[0] && drumSlots[0].offsetHeight > 0) {
             drumItemH = drumSlots[0].offsetHeight;
@@ -1141,7 +1191,7 @@ function initDrum() {
         // NOTE: sub-pixel 偏移 → 像素级丝滑（两种模式共用）
         var snappedPos = stepIdx * drumItemH;
         var fractional = scrollPos - snappedPos;
-        drumList.style.transform = 'translateY(' + (-fractional) + 'px)';
+        setDrumStyle('transform', 'translateY(' + (-fractional) + 'px)');
     }
 
     function onEnd(e) {
@@ -1150,8 +1200,8 @@ function initDrum() {
         drumIsDragging = false;
 
         // NOTE: 回弹归位动画（cubic-bezier 缓出 = iOS 弹性手感）
-        drumList.style.transition = 'transform 0.2s cubic-bezier(0.22, 1, 0.36, 1)';
-        drumList.style.transform = 'translateY(0px)';
+        setDrumStyle('transition', 'transform 0.2s cubic-bezier(0.22, 1, 0.36, 1)');
+        setDrumStyle('transform', 'translateY(0px)');
 
         // 惯性滚动
         if (Math.abs(velocity) > 0.3) {
