@@ -16,6 +16,19 @@ import * as wrData from './wr_data.js';
 
 var animFrameId = null; // requestAnimationFrame ID
 
+// NOTE: Screen Wake Lock — 防止手机端息屏（含低电量模式）
+var wakeLock = null;
+async function requestWakeLock() {
+    if (!('wakeLock' in navigator)) return;
+    try {
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeLock.addEventListener('release', function () { wakeLock = null; });
+    } catch (e) {
+        // NOTE: 用户拒绝或系统不支持时静默失败
+        console.log('Wake Lock request failed:', e.message);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // NOTE: 语言检测逻辑 — 与 i18n/i18n.js init() 保持一致
     // 优先级：URL ?lang= > localStorage > navigator.language > 默认 en
@@ -188,6 +201,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     document.addEventListener('click', function() {
         document.querySelectorAll('.rand-info.active').forEach(function(a) { a.classList.remove('active'); });
+    });
+
+    // NOTE: 防止手机端息屏 — 使用 Screen Wake Lock API
+    // 低电量等系统节能策略也会被绕过，保持屏幕常亮
+    requestWakeLock();
+    document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'visible') requestWakeLock();
     });
 
     console.log('HTH Grapher v2 initialized');
