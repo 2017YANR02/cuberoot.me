@@ -926,10 +926,10 @@ function drumTick() {
     try {
         if (!drumAudioCtx) {
             drumAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            // NOTE: iOS Safari 要求在用户手势中 resume() 才能播声音
-            // drumTick 本身在触摸手势中调用，满足条件
-            drumAudioCtx.resume();
         }
+        // NOTE: 浏览器 autoplay policy 要求在用户手势中 resume()
+        // 已 running 时 resume() 是 no-op，无开销
+        if (drumAudioCtx.state === 'suspended') drumAudioCtx.resume();
         var ctx = drumAudioCtx;
         // 极短正弦波脉冲（1200Hz，持续 8ms）
         var osc = ctx.createOscillator();
