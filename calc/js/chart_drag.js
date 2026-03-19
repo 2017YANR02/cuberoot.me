@@ -351,6 +351,9 @@ function doSelect(p, t, rectEl, val) {
 
     // NOTE: Handle 颜色跟随选手
     handleEl.classList.toggle('player-b', p === 1);
+
+    // NOTE: 通知滚筒同步显示选中柱的值
+    document.dispatchEvent(new CustomEvent('drum-sync'));
 }
 
 // NOTE: PA 柱 tap 选中态 — 显示 pill 并允许拖动
@@ -383,6 +386,9 @@ function selectPa(p, emptyIdx, paEnd, paBarEl) {
     handleEl.style.display = '';
     handleEl.style.pointerEvents = 'auto';
     handleEl.classList.toggle('player-b', p === 1);
+
+    // NOTE: 通知滚筒同步显示 PA 值
+    document.dispatchEvent(new CustomEvent('drum-sync'));
 }
 
 // NOTE: Avg badge tap 选中态 — 允许键盘/numpad 精调 avg 值
@@ -409,6 +415,9 @@ function selectAvg(p, avgBadgeEl) {
 
     // NOTE: 不显示 pill handle（avg badge 本身就是交互指示器）
     handleEl.style.display = 'none';
+
+    // NOTE: 通知滚筒同步显示 avg 值
+    document.dispatchEvent(new CustomEvent('drum-sync'));
 }
 
 function deselect() {
@@ -425,6 +434,9 @@ function deselect() {
 
     selected = null;
     dragging = false;
+
+    // NOTE: 通知滚筒（取消选中后可能需要置灰）
+    document.dispatchEvent(new CustomEvent('drum-sync'));
 }
 
 // ── Handle 定位 ──
@@ -1303,3 +1315,30 @@ export function hasSelection() {
     return !!selected;
 }
 
+// NOTE: 获取选中柱/PA/Avg 的当前值（供 drum 联动显示）
+export function getSelectedValue() {
+    if (!selected) return -1;
+
+    var p = selected.player;
+
+    // Avg badge → 返回当前 ao5 均值
+    if (selected.avgDrag) {
+        var times = state.times[state.seedOn + p];
+        var avg = getAverage(times, false);
+        return (avg && avg < DNF_VALUE) ? avg : -1;
+    }
+
+    // PA 柱 → 从 data 属性读取实际 PA 值
+    if (selected.pa) {
+        var paBarEl = selected.rectEl;
+        if (!paBarEl) return -1;
+        var attr = selected.paEnd === 'wpa' ? 'data-wpa-y' : 'data-bpa-y';
+        var yStr = paBarEl.getAttribute(attr);
+        if (!yStr) return -1;
+        return yToVal(parseFloat(yStr));
+    }
+
+    // 普通柱 → 直接读 times
+    var val = state.times[state.seedOn + p][selected.slot];
+    return (val > 0 && val < DNF_VALUE) ? val : -1;
+}
