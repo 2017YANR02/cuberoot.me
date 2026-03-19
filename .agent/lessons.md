@@ -51,3 +51,9 @@ Pointer Events 状态机的两个杀手级陷阱：① `pointercancel` 触发后
 长文本 Tooltip 移动端溢出陷阱：如果是 `absolute` + `right: 0`，由于文字太长会导致气泡向屏幕左侧疯长并在视区外被截断。移动端最稳健的方案是 `position: fixed` 脱离文档流束缚，然后借助 JS 点击时动态测量触发器的坐标并注入类似 `--tip-top` CSS 自定义变量，限制在视口内全宽排布。
 
 异步 DOM/状态更新的虚假更新（死灰复燃）竞态：输入框的 `blur` 如果加了 setTimeout（预防焦点冲撞），而同时其他元素的 `focus` 事件又立刻覆盖了 `activeCell` 指针，会导致逻辑漏网。比如：用户逐字符删空旧格（仅 UI 变化），立刻点击新格，新格 `focus` 拿走指针，旧格延迟的 `blur` 发现指针不对就跳过保存 state。随后 `refresh()` 时 state 的旧值又被重绘到 DOM 上。解法：任何全局 `focus` / 导航入口，第一行代码必须是**同步检测并强行 save 遗留的旧指针状态**再转移焦点。
+
+移动端触摸非 input 元素后调用 `el.focus()+el.select()` 会一闪而过：浏览器在 `touchend` 阶段会自动"纠正"焦点到用户手指实际触摸的元素，重置其余元素的选区。所有延迟方案（`setTimeout(0)`、`rAF`、`setSelectionRange`）均无效。行业惯例：放弃强制 focus，改用 CSS 视觉高亮（如 outline）标记目标格子，让用户二次点击获得真正 focus。
+
+绕过 `focus()` 后必须**手动同步所有依赖 focus 事件的副作用**：`activeCell` 指针、`barSelectPending` 替换标志、numpad display 同步——缺任何一个都会产生新 bug（如 numpad 路由到错误格子、首次按键追加而非替换旧值、按键后全选当前字符）。
+
+Web Audio API autoplay 限制：`AudioContext` 创建后默认 `suspended`，必须在用户手势中调 `resume()` 才能发声，在 iOS Safari 和桌面 Chrome 均有效。最简单的修法：在每次播放前检查 `ctx.state === 'suspended'` 就 `resume()`，已 `running` 时 `resume()` 是 no-op 无开销。不要只在 `AudioContext` 创建时调一次——创建时机未必在用户手势内。
