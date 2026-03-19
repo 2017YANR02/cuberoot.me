@@ -568,8 +568,9 @@ body {
     align-items: center;
     justify-content: center;
     height: 100%;
-    /* NOTE: JS 通过 translateY 控制滚动位置 */
-    transition: transform 0.08s linear;
+    /* NOTE: GPU 加速 + JS 通过 translateY 控制滚动位置 */
+    will-change: transform;
+    transform: translateZ(0);
 }
 
 .np-drum-item {
@@ -581,6 +582,8 @@ body {
     padding: 6px 0;
     line-height: 1.2;
     flex-shrink: 0;
+    /* NOTE: 内容切换时的柔和过渡 */
+    transition: opacity 0.1s ease;
 }
 
 /* NOTE: 中间选中项高亮 */
