@@ -937,6 +937,14 @@ export function flushToState() {
     }
 }
 
+// NOTE: 外部操作前清除激活态 — 确保 refresh() 不跳过任何格
+export function deactivate() {
+    if (activeCell[0] >= 0 && activeCell[1] >= 0) {
+        saveCell(activeCell[0], activeCell[1]);
+    }
+    activeCell = [-1, -1];
+}
+
 // ── iOS 滚筒精调 ──
 
 // NOTE: 滚筒状态

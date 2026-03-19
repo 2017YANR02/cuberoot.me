@@ -132,6 +132,9 @@ document.addEventListener('DOMContentLoaded', () => {
         setSuppressConfetti(true);
         // NOTE: 先同步界面到 state — 用户可能清空了格子但未触发 blur/保存
         inputGrid.flushToState();
+        // NOTE: 清除 activeCell — 移动端点按钮不触发 blur，残留的 activeCell
+        // 会导致 refresh() 跳过该格，使 Rand 填充的值不显示
+        inputGrid.deactivate();
         var n = solveCount();
 
         // NOTE: 只检查已启用行是否全满，未启用行不参与判断
