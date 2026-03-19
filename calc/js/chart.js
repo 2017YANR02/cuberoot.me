@@ -419,7 +419,14 @@ function drawGhostBars() {
                     tooltipEl.style.opacity = '0';
                 });
             })();
-            addText(skullGroup, bx + bw / 2, labelY, '💀', GHOST_TEXT_COLORS.impossible, 30, 'center');
+            // NOTE: 用 skull.png 替代 💀 emoji
+            var skullSize = 36;
+            skullGroup.appendChild(createSvgElement('image', {
+                href: '/assets/images/skull.png',
+                x: bx + bw / 2 - skullSize / 2,
+                y: labelY - skullSize / 2,
+                width: skullSize, height: skullSize,
+            }));
             topTextGroup.appendChild(skullGroup);
             continue;
         }
@@ -511,7 +518,7 @@ function drawGhostBars() {
         // t#4 impossible — WPA 和 BPA 都是 null
         if (th.t4wpa === null && th.t4bpa === null) {
             badges.push({
-                line1: '4th 💀', line2: 'Impossible', color: '#D32F2F',
+                line1: '4th ☠', line2: 'Impossible', color: '#D32F2F',
                 tip: 'Mathematically impossible to hit target avg — no matter what you solve',
                 y: valToYCap(tavg)
             });
@@ -528,7 +535,7 @@ function drawGhostBars() {
             } else {
                 // t#5 impossible
                 badges.push({
-                    line1: '5th 💀', line2: 'Impossible', color: '#D32F2F',
+                    line1: '5th ☠', line2: 'Impossible', color: '#D32F2F',
                     tip: 'Mathematically impossible to hit target avg — no matter what you solve',
                     y: valToYCap(tavg) + 40
                 });

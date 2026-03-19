@@ -1,7 +1,7 @@
 // NOTE: 应用入口 — 导入所有模块，初始化和编排
 
 import { state, onChange, updateTime, resetAll, notify, getFirstUnfilledTime, resizeTimes, solveCount, isMbf, isMo3 } from './state.js';
-import { formatTime, setMoveCntMode, setMbfMode, getAverage } from './calc_engine.js';
+import { formatTime, setMoveCntMode, setMbfMode, getAverage, clampValue, setCurrentEvent } from './calc_engine.js';
 import * as inputGrid from './input_grid.js';
 import * as chart from './chart.js';
 import { clearPendingConfetti, setSuppressConfetti } from './chart.js';
@@ -67,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // NOTE: 初始化项目选择器
     eventSelector.init(document.getElementById('event-selector-container'), function (eventId) {
         state.event = eventId;
+        setCurrentEvent(eventId);
         // NOTE: 先清零旧数据，再 resize，避免 resizeTimes 触发的 notify
         // 用旧数据 + 新项目 WR 基准误判 confetti（如 2 阶 0.96s 被判为 3 阶 WR）
         clearPendingConfetti(); // NOTE: 清除残留 confetti 动画
@@ -143,6 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // NOTE: 首次渲染前同步 FMC 步数模式和多盲得分模式
+    setCurrentEvent(state.event);
     setMoveCntMode(state.event === '333fm');
     setMbfMode(state.event === '333mbf' || state.event === '333mbo');
 
@@ -346,7 +348,7 @@ function sampleOneSolve(p) {
         }
         var u1 = Math.random(), u2 = Math.random();
         var z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
-        cs = Math.max(1, Math.round(Math.exp(muLn + 0.12 * z) * 100));
+        cs = clampValue(Math.round(Math.exp(muLn + 0.12 * z) * 100));
     }
     if (state.event === '333fm') cs = Math.round(cs / 100) * 100;
     if (isMbf()) cs = (Math.floor(Math.random() * 50) + 10) * 100;
@@ -354,7 +356,7 @@ function sampleOneSolve(p) {
     // NOTE: 应用进步幅度缩放（非 mbf 时）
     if (!isMbf() && playerProgress[p] > 0) {
         var alpha = getScaleFactor(p);
-        cs = Math.max(1, Math.round(cs * alpha));
+        cs = clampValue(Math.round(cs * alpha));
     }
     return cs;
 }
