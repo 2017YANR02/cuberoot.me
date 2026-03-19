@@ -477,6 +477,8 @@ body {
 #numpad-body {
     display: flex;
     gap: 6px;
+    /* NOTE: 相对定位 — 作为 drum 绝对定位的参考 */
+    position: relative;
 }
 
 #numpad-grid {
@@ -484,6 +486,8 @@ body {
     grid-template-columns: repeat(4, 1fr);
     gap: 6px;
     flex: 1;
+    /* NOTE: 为 drum 留出左侧空间 */
+    margin-left: 78px;
 }
 
 .np-btn {
@@ -538,19 +542,20 @@ body {
 }
 
 #np-drum {
+    /* NOTE: 绝对定位 — 脱离文档流，不撑高 numpad */
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
     width: 72px;
-    position: relative;
     overflow: hidden;
     border-radius: 10px;
-    background: #2a2a2e;
-    /* NOTE: 高度跟随 numpad-grid，不撑高容器 */
-    align-self: stretch;
-    flex-shrink: 0;
-    /* NOTE: 上下梯度遮罩 — 模拟 iOS 滚筒淡出效果 */
+    background: #1c1c1e;
+    /* NOTE: 上下渐隐遮罩 — iOS 风格边缘淡出 */
     -webkit-mask-image: linear-gradient(to bottom,
-        transparent 0%, rgba(0,0,0,0.3) 15%, black 35%, black 65%, rgba(0,0,0,0.3) 85%, transparent 100%);
+        transparent 0%, rgba(0,0,0,0.4) 12%, black 30%, black 70%, rgba(0,0,0,0.4) 88%, transparent 100%);
     mask-image: linear-gradient(to bottom,
-        transparent 0%, rgba(0,0,0,0.3) 15%, black 35%, black 65%, rgba(0,0,0,0.3) 85%, transparent 100%);
+        transparent 0%, rgba(0,0,0,0.4) 12%, black 30%, black 70%, rgba(0,0,0,0.4) 88%, transparent 100%);
     touch-action: none;
     cursor: ns-resize;
     user-select: none;
@@ -568,43 +573,70 @@ body {
     align-items: center;
     justify-content: center;
     height: 100%;
-    /* NOTE: GPU 加速 + JS 通过 translateY 控制滚动位置 */
+    /* NOTE: GPU 加速 + 3D 滚筒透视 */
     will-change: transform;
     transform: translateZ(0);
+    transform-style: preserve-3d;
+    perspective: 300px;
 }
 
+/* NOTE: iOS 风格 — 所有项统一基础样式 */
 .np-drum-item {
     width: 100%;
     text-align: center;
-    font-size: 16px;
-    font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
-    color: rgba(255, 255, 255, 0.5);
-    padding: 6px 0;
-    line-height: 1.2;
-    flex-shrink: 0;
-    /* NOTE: 内容切换时的柔和过渡 */
-    transition: opacity 0.1s ease;
-}
-
-/* NOTE: 中间选中项高亮 */
-.np-drum-item.center {
+    font-size: 18px;
+    font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
     color: #fff;
-    font-size: 20px;
-    font-weight: 700;
+    padding: 6px 0;
+    line-height: 1.3;
+    flex-shrink: 0;
 }
 
-/* NOTE: 选中行高亮条 — 两条水平线 */
+/* NOTE: 3D 圆柱效果 — 距中心越远越灰越小越旋转 */
+
+/* ±1（紧邻中心） */
+.np-drum-item:nth-child(4),
+.np-drum-item:nth-child(6) {
+    color: rgba(255,255,255,0.72);
+    transform: scale(0.97);
+}
+.np-drum-item:nth-child(4) { transform: scale(0.97) rotateX(8deg); }
+.np-drum-item:nth-child(6) { transform: scale(0.97) rotateX(-8deg); }
+
+/* ±2 */
+.np-drum-item:nth-child(3),
+.np-drum-item:nth-child(7) {
+    color: rgba(255,255,255,0.50);
+}
+.np-drum-item:nth-child(3) { transform: scale(0.92) rotateX(18deg); }
+.np-drum-item:nth-child(7) { transform: scale(0.92) rotateX(-18deg); }
+
+/* ±3 */
+.np-drum-item:nth-child(2),
+.np-drum-item:nth-child(8) {
+    color: rgba(255,255,255,0.32);
+}
+.np-drum-item:nth-child(2) { transform: scale(0.86) rotateX(28deg); }
+.np-drum-item:nth-child(8) { transform: scale(0.86) rotateX(-28deg); }
+
+/* ±4（最外层缓冲区） */
+.np-drum-item:nth-child(1),
+.np-drum-item:nth-child(9) {
+    color: rgba(255,255,255,0.18);
+}
+.np-drum-item:nth-child(1) { transform: scale(0.80) rotateX(38deg); }
+.np-drum-item:nth-child(9) { transform: scale(0.80) rotateX(-38deg); }
+
+/* NOTE: iOS 高亮条 — 比背景稍亮的圆角矩形 */
 .np-drum-highlight {
     position: absolute;
-    left: 4px;
-    right: 4px;
+    left: 0;
+    right: 0;
     top: 50%;
-    height: 32px;
+    height: 34px;
     transform: translateY(-50%);
-    border-top: 1.5px solid rgba(255, 128, 0, 0.6);
-    border-bottom: 1.5px solid rgba(255, 128, 0, 0.6);
-    background: rgba(255, 128, 0, 0.08);
-    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
     pointer-events: none;
 }
 
