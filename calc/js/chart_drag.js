@@ -63,6 +63,9 @@ export function initDrag() {
     // NOTE: Phase 3 — 滚轮精调（在选中态下可用）
     svg.addEventListener('wheel', onSvgWheel, { passive: false });
 
+    // NOTE: 键盘 ↑/↓ 精调（选中态下可用，步长与滚轮一致）
+    document.addEventListener('keydown', onKeyDown);
+
     // NOTE: 检测触摸设备 — 首次触摸后禁用 hover 逻辑
     window.addEventListener('touchstart', function() { isTouch = true; }, { once: true });
 }
@@ -112,8 +115,9 @@ function onSvgPointerDown(e) {
     if (paBar) {
         var paPl = parseInt(paBar.getAttribute('data-player'));
         if (isNaN(paPl)) return;
+        // NOTE: 无空缺时假装最后一个 slot 是空的（PA 拖动始终只改倒数第 2 根）
         var emptyIdx = findEmptySlot(paPl);
-        if (emptyIdx < 0) return;
+        if (emptyIdx < 0) emptyIdx = solveCount() - 1;
         var paBBox = paBar.getBoundingClientRect();
         var midY = paBBox.top + paBBox.height / 2;
         var paEnd = (e.clientY <= midY) ? 'wpa' : 'bpa';
@@ -165,7 +169,7 @@ function onSvgPointerDown(e) {
         // NOTE: hovered 是 PA 柱时，用 PA 逻辑处理（tap/drag 区分）
         if (hovered.pa) {
             var emptyIdx = findEmptySlot(p);
-            if (emptyIdx < 0) return;
+            if (emptyIdx < 0) emptyIdx = solveCount() - 1;
             e.preventDefault();
             var paEnd = hovered.paEnd;
             dragStartX = e.clientX;
@@ -435,7 +439,7 @@ function onHandlePointerDown(e) {
         if (hovered.pa) {
             var p = hovered.player;
             var emptyIdx = findEmptySlot(p);
-            if (emptyIdx < 0) return;
+            if (emptyIdx < 0) emptyIdx = solveCount() - 1;
             e.preventDefault();
             e.stopPropagation();
             var paBarEl = getSvgEl().querySelector('.chart-pa-bar[data-player="' + p + '"]');
@@ -1013,5 +1017,40 @@ function onSvgWheel(e) {
     if (newVal === val) return;
 
     // 写入 state 并触发全量重绘
+    updateTime(state.seedOn + p, t, newVal);
+}
+
+// ── Phase 3：键盘 ↑/↓ 精调 ──
+
+// NOTE: 选中态下 ↑/↓ ±0.01s（Shift ±0.10s, Ctrl ±1.00s）
+function onKeyDown(e) {
+    if (!selected || selected.pa) return; // PA 柱暂不支持键盘调整
+    if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+
+    // NOTE: 焦点在 input/textarea 等可编辑元素时不拦截
+    var tag = document.activeElement && document.activeElement.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+    e.preventDefault(); // 防页面滚动
+
+    var p = selected.player;
+    var t = selected.slot;
+    var val = state.times[state.seedOn + p][t];
+    if (val <= 0 || val >= DNF_VALUE) return;
+
+    // 步进粒度（与滚轮一致）
+    var step = 1; // 0.01s
+    if (state.event === '333fm' || isMbf()) {
+        step = 100;
+    } else if (e.ctrlKey) {
+        step = 100;
+    } else if (e.shiftKey) {
+        step = 10;
+    }
+
+    var dir = e.key === 'ArrowUp' ? 1 : -1;
+    var newVal = clampValue(val + dir * step);
+    if (newVal === val) return;
+
     updateTime(state.seedOn + p, t, newVal);
 }
