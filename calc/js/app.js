@@ -133,9 +133,10 @@ document.addEventListener('DOMContentLoaded', () => {
         inputGrid.flushToState();
         var n = solveCount();
 
-        // 判断当前 seed pair 是否全满
+        // NOTE: 只检查已启用行是否全满，未启用行不参与判断
         var allFilled = true;
         for (var p0 = 0; p0 < 2; p0++) {
+            if (!state.playerEnabled[p0]) continue; // 跳过未打勾的行
             for (var t0 = 0; t0 < n; t0++) {
                 if (!state.times[state.seedOn + p0][t0]) { allFilled = false; break; }
             }
@@ -143,6 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         for (var p = 0; p < 2; p++) {
+            if (!state.playerEnabled[p]) continue; // NOTE: 只填充打勾行
             for (var t = 0; t < n; t++) {
                 // 有空格时跳过已填格子
                 if (!allFilled && state.times[state.seedOn + p][t]) continue;
