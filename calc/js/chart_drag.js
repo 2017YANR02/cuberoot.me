@@ -3,7 +3,7 @@
 
 import { state, updateTime, solveCount } from './state.js';
 import { isMbf } from './state.js';
-import { DNF_VALUE, formatTime, clampValue } from './calc_engine.js';
+import { DNF_VALUE, formatTime, clampValue, reverseAvgToTime, getAverage } from './calc_engine.js';
 import {
     getSvgEl, getChartContainer, yToVal, valToY, valToYCap,
     BAR_START, BAR_W, STRIDE, SHADES, getGp, render as chartRender
@@ -105,11 +105,39 @@ function onSvgPointerDown(e) {
     // 已在拖动中则忽略
     if (dragging) return;
 
-    // NOTE: 检测是否 tap 到了柱子、柱顶数字标签、或 PA 柱
+    // NOTE: 检测是否 tap 到了柱子、柱顶数字标签、PA 柱或 Ao5 菱形标签
     var bar = e.target.closest('.chart-bar');
     var label = e.target.closest('.chart-bar-label');
-    var paBar = (!bar && !label) ? e.target.closest('.chart-pa-bar') : null;
+    var avgBadge = (!bar && !label) ? e.target.closest('.chart-avg-badge') : null;
+    var paBar = (!bar && !label && !avgBadge) ? e.target.closest('.chart-pa-bar') : null;
     var target = bar || label;
+
+    // NOTE: Ao5 菱形标签 tap/drag → 反向推算 #5
+    if (avgBadge) {
+        var avgPl = parseInt(avgBadge.getAttribute('data-player'));
+        if (isNaN(avgPl)) return;
+        e.preventDefault();
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+        pointerDownTime = Date.now();
+
+        var onUpAvg = function(eu) {
+            document.removeEventListener('pointerup', onUpAvg);
+            document.removeEventListener('pointermove', onMoveAvg);
+        };
+        var onMoveAvg = function(em) {
+            var dx = em.clientX - dragStartX;
+            var dy = em.clientY - dragStartY;
+            if (Math.sqrt(dx * dx + dy * dy) > TAP_DIST) {
+                document.removeEventListener('pointerup', onUpAvg);
+                document.removeEventListener('pointermove', onMoveAvg);
+                startAvgDrag(em, avgPl, avgBadge);
+            }
+        };
+        document.addEventListener('pointerup', onUpAvg, { once: false });
+        document.addEventListener('pointermove', onMoveAvg);
+        return;
+    }
 
     // NOTE: PA 柱 tap → 直接启动 PA 拖动（不走普通柱子的 select 逻辑）
     if (paBar) {
@@ -718,6 +746,98 @@ function startPaDrag(e, p, emptyIdx, paEnd, paBarEl) {
     document.addEventListener('pointerup', onUp);
 }
 
+// ── Ao5 菱形标签拖动 — 反向推算 #5 ──
+
+// NOTE: 拖动 Ao5 均值标签，反向推算 #5 应该是多少
+// 目标 avg 限制在 BPA~WPA 范围内
+function startAvgDrag(e, p, avgBadgeEl) {
+    hovered = null;
+    deselect();
+
+    var times = state.times[state.seedOn + p];
+    var n = solveCount();
+    // NOTE: 目标 slot = 最后一个（#5，index = n-1）
+    var targetSlot = n - 1;
+    var targetOrigVal = times[targetSlot];
+
+    // NOTE: 收集前 n-1 个值用于反向推算
+    var filled = [];
+    for (var i = 0; i < n - 1; i++) {
+        if (times[i] > 0 && times[i] < DNF_VALUE) filled.push(times[i]);
+    }
+    if (filled.length < n - 1) return; // 前 4 把必须全部有值
+    filled.sort(function(a, b) { return a - b; });
+
+    // NOTE: 内联计算 BPA/WPA（getPA 未导出）
+    // BPA: 假设 #5 = 0（最好情况）
+    var bpaArr = filled.concat([0]);
+    var bpa = getAverage(bpaArr, true);
+    // WPA: 假设 #5 = DNF（最差情况）
+    var wpaArr = filled.concat([DNF_VALUE]);
+    var wpa = getAverage(wpaArr, true);
+    if (!bpa || !wpa || bpa >= DNF_VALUE || wpa >= DNF_VALUE) return;
+
+    selected = { player: p, slot: targetSlot, pa: false, avgDrag: true };
+    dragging = true;
+
+    var svg = getSvgEl();
+    svg.classList.add('bar-selected');
+    document.body.style.userSelect = 'none';
+    originalVal = targetOrigVal;
+
+    // NOTE: 记录光标与 badge Y 的偏移（抓取感）
+    var ctm = svg.getScreenCTM().inverse();
+    var startSvgY = ctm.b * e.clientX + ctm.d * e.clientY + ctm.f;
+    var badgeAvgY = parseFloat(avgBadgeEl.getAttribute('data-avg-y'));
+    var dragOffsetY = startSvgY - badgeAvgY;
+
+    var onMove = function(em) {
+        em.preventDefault();
+        if (!dragging || !selected || !selected.avgDrag) return;
+
+        var svg = getSvgEl();
+        var ctm = svg.getScreenCTM().inverse();
+        var svgY = ctm.b * em.clientX + ctm.d * em.clientY + ctm.f;
+        var adjustedY = svgY - dragOffsetY;
+
+        // Y → 目标 avg（clamp 在 BPA~WPA 范围内）
+        var targetAvg = yToVal(adjustedY);
+        targetAvg = Math.round(targetAvg);
+        // NOTE: 普通项目 BPA < WPA（数值越小越好），BPA 是下限、WPA 是上限
+        var lo = Math.min(bpa, wpa);
+        var hi = Math.max(bpa, wpa);
+        targetAvg = Math.max(lo, Math.min(hi, targetAvg));
+
+        // 反向推算 #5
+        var x = reverseAvgToTime(filled, targetAvg);
+        if (x === null || x <= 0) return;
+
+        // 写入 #5 并重绘
+        state.times[state.seedOn + p][targetSlot] = x;
+        chartRender({ skipViewBox: true });
+        // NOTE: 不调 onAfterRender — avgDrag 不需要 pill 恢复
+    };
+
+    var onUp = function(eu) {
+        document.removeEventListener('pointermove', onMove);
+        document.removeEventListener('pointerup', onUp);
+        document.body.style.userSelect = '';
+
+        if (!dragging || !selected) return;
+        dragging = false;
+
+        var currentVal = state.times[state.seedOn + p][targetSlot];
+        deselect();
+
+        if (currentVal !== targetOrigVal && currentVal > 0) {
+            updateTime(state.seedOn + p, targetSlot, currentVal);
+        }
+    };
+
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
+}
+
 // NOTE: 拖动中轻量更新 — 直接操作目标柱子的 SVG rect 属性
 function updateBarDuringDrag(newVal) {
     if (!selected) return;
@@ -814,7 +934,7 @@ function onDocumentPointerDown(e) {
     // 点击在 Handle 上 → 不取消
     if (handleEl && handleEl.contains(e.target)) return;
     // 点击在柱子或标签上 → onSvgPointerDown 处理
-    if (e.target.closest && (e.target.closest('.chart-bar') || e.target.closest('.chart-bar-label') || e.target.closest('.chart-pa-bar'))) return;
+    if (e.target.closest && (e.target.closest('.chart-bar') || e.target.closest('.chart-bar-label') || e.target.closest('.chart-pa-bar') || e.target.closest('.chart-avg-badge'))) return;
     // 点击在 numpad/input 等 UI 上 → 不取消（避免干扰输入）
     if (e.target.closest && (e.target.closest('#numpad') || e.target.closest('.time-cell'))) return;
 
@@ -1024,7 +1144,7 @@ function onSvgWheel(e) {
 
 // NOTE: 选中态下 ↑/↓ ±0.01s（Shift ±0.10s, Ctrl ±1.00s）
 function onKeyDown(e) {
-    if (!selected || selected.pa) return; // PA 柱暂不支持键盘调整
+    if (!selected) return;
     if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
 
     // NOTE: 焦点在 input/textarea 等可编辑元素时不拦截
@@ -1032,11 +1152,6 @@ function onKeyDown(e) {
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
 
     e.preventDefault(); // 防页面滚动
-
-    var p = selected.player;
-    var t = selected.slot;
-    var val = state.times[state.seedOn + p][t];
-    if (val <= 0 || val >= DNF_VALUE) return;
 
     // 步进粒度（与滚轮一致）
     var step = 1; // 0.01s
@@ -1049,6 +1164,45 @@ function onKeyDown(e) {
     }
 
     var dir = e.key === 'ArrowUp' ? 1 : -1;
+    var p = selected.player;
+
+    // NOTE: PA 柱模式 — 从 data 属性读取实际 PA 值，±step 后反向推算 target solve
+    if (selected.pa) {
+        var paBarEl = selected.rectEl;
+        if (!paBarEl) return;
+        var emptyIdx = selected.slot; // selectPa 存的是 emptyIdx
+        var targetSlot = emptyIdx - 1;
+        if (targetSlot < 0) return;
+
+        // NOTE: 从 PA bar 的 data 属性读取实际 PA 值（避免 targetSlot 非 counting solve 时的公式偏差）
+        var paYAttr = selected.paEnd === 'wpa' ? 'data-wpa-y' : 'data-bpa-y';
+        var currentPA = yToVal(parseFloat(paBarEl.getAttribute(paYAttr)));
+        var newPA = currentPA + dir * step;
+
+        // 收集固定 solves（复用 startPaDrag 的逻辑）
+        var times = state.times[state.seedOn + p];
+        var fixed = [];
+        for (var i = 0; i < solveCount(); i++) {
+            if (i !== targetSlot && i !== emptyIdx && times[i] > 0 && times[i] < DNF_VALUE) {
+                fixed.push(times[i]);
+            }
+        }
+        if (fixed.length < 3) return;
+        fixed.sort(function(a, b) { return a - b; });
+        var fixedSum = (selected.paEnd === 'wpa') ? fixed[1] + fixed[2] : fixed[0] + fixed[1];
+
+        var newX = clampValue(Math.round(3 * newPA - fixedSum));
+        if (newX <= 0) return;
+
+        updateTime(state.seedOn + p, targetSlot, newX);
+        return;
+    }
+
+    // 普通柱子模式
+    var t = selected.slot;
+    var val = state.times[state.seedOn + p][t];
+    if (val <= 0 || val >= DNF_VALUE) return;
+
     var newVal = clampValue(val + dir * step);
     if (newVal === val) return;
 
