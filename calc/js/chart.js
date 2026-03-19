@@ -208,7 +208,7 @@ function fireConfetti() {
         confettiTimers.push(tid);
     }
     // NOTE: 最后一波发出后约 3s 动画结束，解锁
-    var unlockTid = setTimeout(function() { confettiActive = false; }, 500 + 3000);
+    var unlockTid = setTimeout(function () { confettiActive = false; }, 500 + 3000);
     confettiTimers.push(unlockTid);
 }
 
