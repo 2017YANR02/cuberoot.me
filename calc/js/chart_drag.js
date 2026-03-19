@@ -27,6 +27,7 @@ var pointerDownTime = 0;
 // NOTE: 桌面端 hover 状态
 var hovered = null;     // { player, slot } — 当前 hover 的柱子（仅桌面端）
 var isTouch = false;    // 是否触摸设备（hover 仅在非触摸时启用）
+var hoverCooldown = 0;  // NOTE: 拖拽结束后短暂冷却，防止 hover 立刻重新 select
 
 // ── 初始化 ──
 
@@ -716,6 +717,8 @@ function onHandlePointerDown(e) {
         var currentVal = state.times[state.seedOn + p][t];
         var wasP = p, wasT = t;
         deselect();
+        // NOTE: 拖拽结束后 hover 冷却 — 防止鼠标仍在柱子上时 hover handler 立刻重新 select
+        hoverCooldown = Date.now() + 150;
 
         // NOTE: 通知其他 UI 模块（input grid 等）刷新
         if (currentVal !== originalVal) {
@@ -830,6 +833,7 @@ function startPaDrag(e, p, emptyIdx, paEnd, paBarEl) {
 
         var currentVal = state.times[state.seedOn + p][targetSlot];
         deselect();
+        hoverCooldown = Date.now() + 150;
 
         // NOTE: 通知其他 UI 模块
         if (currentVal !== targetOrigVal) {
@@ -928,6 +932,7 @@ function startAvgDrag(e, p, avgBadgeEl) {
 
         var currentVal = state.times[state.seedOn + p][targetSlot];
         deselect();
+        hoverCooldown = Date.now() + 150;
 
         if (currentVal !== targetOrigVal && currentVal > 0) {
             updateTime(state.seedOn + p, targetSlot, currentVal);
@@ -1106,6 +1111,8 @@ function onSvgMouseMove(e) {
     if (isTouch) return;       // 触摸设备不需要 hover
     if (dragging) return;      // 拖动中不处理 hover
     if (selected) return;      // 已有选中态时不覆盖
+    // NOTE: 拖拽刚结束时鼠标仍停在柱子上，冷却期内跳过 hover 防止立刻重新 select
+    if (Date.now() < hoverCooldown) return;
 
     // NOTE: hover 检测柱子 rect、柱顶数字标签、PA 柱
     var bar = e.target.closest('.chart-bar');
