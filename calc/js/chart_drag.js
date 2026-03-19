@@ -68,6 +68,37 @@ export function initDrag() {
 
     // NOTE: 检测触摸设备 — 首次触摸后禁用 hover 逻辑
     window.addEventListener('touchstart', function() { isTouch = true; }, { once: true });
+
+    // NOTE: 单元格聚焦时完整选中对应柱子（pill + 其他淡化）
+    document.addEventListener('cell-focus', function(e) {
+        // 失焦 → 如果当前选中是由 cell-focus 触发的，取消选中
+        if (!e.detail) {
+            if (selected && selected._fromCell) deselect();
+            return;
+        }
+        // 已经选中同一个（由用户手动选或上一次 cell-focus）→ 不重复
+        var p = e.detail.player, t = e.detail.slot;
+        if (selected && selected.player === p && selected.slot === t) return;
+
+        deselect();
+        hovered = null;
+
+        var rectEl = svg.querySelector(
+            '.chart-bar[data-player="' + p + '"][data-slot="' + t + '"]'
+        );
+        if (!rectEl) return;
+        var val = state.times[state.seedOn + p][t];
+        if (val <= 0 || val >= DNF_VALUE) return;
+
+        // NOTE: 与 doSelect 完全相同的视觉效果，但不 blur 单元格
+        selected = { player: p, slot: t, rectEl: rectEl, _fromCell: true };
+        svg.classList.add('bar-selected');
+        rectEl.classList.add('bar-active');
+        positionHandle(val);
+        handleEl.style.display = '';
+        handleEl.style.pointerEvents = 'auto';
+        handleEl.classList.toggle('player-b', p === 1);
+    });
 }
 
 // NOTE: Both 模式 Y 坐标消歧 — 当点击到外层柱但光标在内层柱顶以下时，重定向到内层
@@ -331,13 +362,12 @@ function selectBar(p, t, rectEl) {
 
 // NOTE: 实际执行选中逻辑（抽取为独立函数供 selectBar 和 Both 消歧复用）
 function doSelect(p, t, rectEl, val) {
-    // NOTE: 选中柱子时让 input 失焦，确保键盘 ↑/↓ 不被 input_grid 拦截
-    if (document.activeElement && document.activeElement.tagName === 'INPUT') {
-        document.activeElement.blur();
-    }
-    // NOTE: 从 hover 预览态转入正式选中态
+    // NOTE: 先设置 selected — 防止 bar-select-cell → focus → cell-focus 循环
     hovered = null;
     selected = { player: p, slot: t, rectEl: rectEl };
+
+    // NOTE: 选中柱子时同步聚焦对应单元格（蓝底 + 全选）
+    document.dispatchEvent(new CustomEvent('bar-select-cell', { detail: { player: p, slot: t } }));
 
     // NOTE: 添加 SVG class 实现视觉效果
     var svg = getSvgEl();
@@ -1356,4 +1386,10 @@ export function getSelectedValue() {
     // 普通柱 → 直接读 times
     var val = state.times[state.seedOn + p][selected.slot];
     return (val > 0 && val < DNF_VALUE) ? val : -1;
+}
+
+// NOTE: 获取选中柱的位置信息（供单元格联动用）
+export function getSelectedInfo() {
+    if (!selected) return null;
+    return { player: selected.player, slot: selected.slot, pa: !!selected.pa };
 }
