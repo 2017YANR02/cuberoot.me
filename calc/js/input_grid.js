@@ -2,7 +2,7 @@
 // 替代原 canvas overlay hack，使用原生 <input> 元素
 
 import {
-    DNF_VALUE, MAX_TIME_VALUE, formatTime, textToTime, textToMbfScore, CalcEngine
+    DNF_VALUE, formatTime, textToTime, textToMbfScore, CalcEngine, clampValue
 } from './calc_engine.js';
 import {
     state, updateTime, notify, solveCount
@@ -337,8 +337,7 @@ function onWheel(e, p, t) {
     }
 
     var dir = e.deltaY < 0 ? 1 : -1;
-    var newVal = Math.max(1, rawVal + dir * step);
-    if (newVal > MAX_TIME_VALUE) newVal = MAX_TIME_VALUE;
+    var newVal = clampValue(rawVal + dir * step);
     if (newVal === rawVal) return;
 
     // NOTE: debounce 撤销 — 300ms 内连续滚动只记录一条
@@ -799,7 +798,7 @@ export function refresh() {
             } else if (ghost.type === 'conditional') {
                 tavgEmojis[p].textContent = '🎲';
             } else {
-                tavgEmojis[p].textContent = '💀';
+                tavgEmojis[p].innerHTML = '<img src="/assets/images/skull.png" alt="skull" style="width:1em;height:1em;vertical-align:middle">';
             }
         }
     }

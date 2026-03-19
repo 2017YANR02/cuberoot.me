@@ -3,7 +3,7 @@
 
 import { state, updateTime, solveCount } from './state.js';
 import { isMbf } from './state.js';
-import { DNF_VALUE, MAX_TIME_VALUE, formatTime } from './calc_engine.js';
+import { DNF_VALUE, formatTime, clampValue } from './calc_engine.js';
 import {
     getSvgEl, getChartContainer, yToVal, valToY, valToYCap,
     BAR_START, BAR_W, STRIDE, SHADES, getGp, render as chartRender
@@ -352,7 +352,7 @@ function onHandlePointerDown(e) {
 
     var applyVal = function(newVal) {
         // 限制范围
-        newVal = Math.max(1, Math.min(newVal, MAX_TIME_VALUE));
+        newVal = clampValue(newVal);
         if (!selected) return;
         var p = selected.player;
         var t = selected.slot;
@@ -392,7 +392,7 @@ function onHandlePointerDown(e) {
             // NOTE: 步进随停留时间加速 — 前 10 tick 慢（1cs），之后快（5cs），40 tick 后更快（20cs）
             var step = edgeTickCount < 10 ? 1 : edgeTickCount < 40 ? 5 : 20;
             if (state.event === '333fm' || isMbf()) step = 100;
-            var newVal = Math.max(1, Math.min(val + dir * step, MAX_TIME_VALUE));
+            var newVal = clampValue(val + dir * step);
             if (newVal === val) return;
             applyVal(newVal);
         }, EDGE_INTERVAL);
@@ -713,7 +713,7 @@ function onSvgWheel(e) {
     }
 
     var dir = e.deltaY < 0 ? 1 : -1; // 向上滚 = 值增大
-    var newVal = Math.max(1, Math.min(val + dir * step, MAX_TIME_VALUE));
+    var newVal = clampValue(val + dir * step);
     if (newVal === val) return;
 
     // 写入 state 并触发全量重绘
