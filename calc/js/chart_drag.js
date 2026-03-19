@@ -102,10 +102,51 @@ function onSvgPointerDown(e) {
     // 已在拖动中则忽略
     if (dragging) return;
 
-    // NOTE: 检测是否 tap 到了柱子或柱顶数字标签
+    // NOTE: 检测是否 tap 到了柱子、柱顶数字标签、或 PA 柱
     var bar = e.target.closest('.chart-bar');
     var label = e.target.closest('.chart-bar-label');
+    var paBar = (!bar && !label) ? e.target.closest('.chart-pa-bar') : null;
     var target = bar || label;
+
+    // NOTE: PA 柱 tap → 直接启动 PA 拖动（不走普通柱子的 select 逻辑）
+    if (paBar) {
+        var paPl = parseInt(paBar.getAttribute('data-player'));
+        if (isNaN(paPl)) return;
+        var emptyIdx = findEmptySlot(paPl);
+        if (emptyIdx < 0) return;
+        var paBBox = paBar.getBoundingClientRect();
+        var midY = paBBox.top + paBBox.height / 2;
+        var paEnd = (e.clientY <= midY) ? 'wpa' : 'bpa';
+        e.preventDefault();
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+        pointerDownTime = Date.now();
+
+        // NOTE: tap/drag 区分 — tap 选中 PA 柱（显示 pill），drag 超阈值才开始拖动
+        var onUpPa = function(eu) {
+            document.removeEventListener('pointerup', onUpPa);
+            document.removeEventListener('pointermove', onMovePa);
+            var dx = eu.clientX - dragStartX;
+            var dy = eu.clientY - dragStartY;
+            var dist = Math.sqrt(dx * dx + dy * dy);
+            var elapsed = Date.now() - pointerDownTime;
+            if (dist < TAP_DIST && elapsed < TAP_TIME) {
+                selectPa(paPl, emptyIdx, paEnd, paBar);
+            }
+        };
+        var onMovePa = function(em) {
+            var dx = em.clientX - dragStartX;
+            var dy = em.clientY - dragStartY;
+            if (Math.sqrt(dx * dx + dy * dy) > TAP_DIST) {
+                document.removeEventListener('pointerup', onUpPa);
+                document.removeEventListener('pointermove', onMovePa);
+                startPaDrag(em, paPl, emptyIdx, paEnd, paBar);
+            }
+        };
+        document.addEventListener('pointerup', onUpPa, { once: false });
+        document.addEventListener('pointermove', onMovePa);
+        return;
+    }
 
     var p, t;
     if (target) {
@@ -121,6 +162,40 @@ function onSvgPointerDown(e) {
         // NOTE: 空白区域有 hover 时，使用 hovered 的柱子信息
         p = hovered.player;
         t = hovered.slot;
+        // NOTE: hovered 是 PA 柱时，用 PA 逻辑处理（tap/drag 区分）
+        if (hovered.pa) {
+            var emptyIdx = findEmptySlot(p);
+            if (emptyIdx < 0) return;
+            e.preventDefault();
+            var paEnd = hovered.paEnd;
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
+            pointerDownTime = Date.now();
+            var paBarEl = getSvgEl().querySelector('.chart-pa-bar[data-player="' + p + '"]');
+            var onUpPa2 = function(eu) {
+                document.removeEventListener('pointerup', onUpPa2);
+                document.removeEventListener('pointermove', onMovePa2);
+                var dx = eu.clientX - dragStartX;
+                var dy = eu.clientY - dragStartY;
+                var dist = Math.sqrt(dx * dx + dy * dy);
+                var elapsed = Date.now() - pointerDownTime;
+                if (dist < TAP_DIST && elapsed < TAP_TIME) {
+                    selectPa(p, emptyIdx, paEnd, paBarEl);
+                }
+            };
+            var onMovePa2 = function(em) {
+                var dx = em.clientX - dragStartX;
+                var dy = em.clientY - dragStartY;
+                if (Math.sqrt(dx * dx + dy * dy) > TAP_DIST) {
+                    document.removeEventListener('pointerup', onUpPa2);
+                    document.removeEventListener('pointermove', onMovePa2);
+                    startPaDrag(em, p, emptyIdx, paEnd, paBarEl);
+                }
+            };
+            document.addEventListener('pointerup', onUpPa2, { once: false });
+            document.addEventListener('pointermove', onMovePa2);
+            return;
+        }
     } else {
         return;
     }
@@ -234,6 +309,34 @@ function doSelect(p, t, rectEl, val) {
     handleEl.classList.toggle('player-b', p === 1);
 }
 
+// NOTE: PA 柱 tap 选中态 — 显示 pill 并允许拖动
+function selectPa(p, emptyIdx, paEnd, paBarEl) {
+    // 如果已选中同一个 PA 端 → 取消选中
+    if (selected && selected.pa && selected.player === p && selected.paEnd === paEnd) {
+        deselect();
+        return;
+    }
+    deselect();
+    hovered = null;
+
+    var paCx = parseFloat(paBarEl.getAttribute('data-pa-cx'));
+    var paW = parseFloat(paBarEl.getAttribute('data-pa-w'));
+    var endY = parseFloat(paBarEl.getAttribute(paEnd === 'wpa' ? 'data-wpa-y' : 'data-bpa-y'));
+
+    // NOTE: 存储 PA 选中信息（onHandlePointerDown 需要读取）
+    selected = { player: p, slot: emptyIdx, pa: true, paEnd: paEnd, rectEl: paBarEl };
+
+    var svg = getSvgEl();
+    svg.classList.add('bar-selected');
+    paBarEl.classList.add('bar-active');
+
+    // NOTE: pill 定位到 PA 柱端点
+    positionHandleAt(paCx, endY + (paEnd === 'wpa' ? 12 : -12), paW);
+    handleEl.style.display = '';
+    handleEl.style.pointerEvents = 'auto';
+    handleEl.classList.toggle('player-b', p === 1);
+}
+
 function deselect() {
     if (!selected) return;
 
@@ -270,45 +373,75 @@ function svgPointToContainer(svgX, svgY) {
     };
 }
 
+// NOTE: 通用 pill 定位 — 给定 SVG 坐标和柱宽，设置 handleEl 的位置和尺寸
+function positionHandleAt(svgCx, svgY, svgBarW) {
+    var pos = svgPointToContainer(svgCx, svgY);
+    var leftEdge = svgPointToContainer(svgCx - svgBarW / 2, svgY);
+    var rightEdge = svgPointToContainer(svgCx + svgBarW / 2, svgY);
+    var barScreenW = rightEdge.x - leftEdge.x;
+    // NOTE: 最小尺寸保证窄屏下 pill 仍可见可交互
+    barScreenW = Math.max(barScreenW, 24);
+    var pillH = Math.max(barScreenW / 2.5, 12);
+    handleEl.style.width = barScreenW + 'px';
+    handleEl.style.height = pillH + 'px';
+    handleEl.style.borderRadius = (pillH / 2) + 'px';
+    handleEl.style.left = pos.x + 'px';
+    handleEl.style.top = pos.y + 'px';
+}
+
 function positionHandle(val, overrideP, overrideT) {
     // NOTE: 支持传入 p/t（hover 用）或从 selected 读取
     var p = (overrideP !== undefined) ? overrideP : (selected ? selected.player : null);
     var t = (overrideT !== undefined) ? overrideT : (selected ? selected.slot : null);
     if (p === null || t === null) return;
 
-    // 计算柱顶 SVG 坐标
     var barCenterX = BAR_START + t * STRIDE + BAR_W / 2;
     var barTopY = valToYCap(val);
 
-    // NOTE: Handle 下移 12px 到柱体内部，避免遮住柱顶数字标签
-    var pos = svgPointToContainer(barCenterX, barTopY + 12);
-
-    // NOTE: pill 宽度直接从已渲染的 SVG rect 读取，完全匹配柱子实际宽度
+    // NOTE: 优先从已渲染的 rect 读取宽度，完全匹配柱子实际宽度
     var svg = getSvgEl();
     var rectEl = svg.querySelector('.chart-bar[data-player="' + p + '"][data-slot="' + t + '"]');
-    var barScreenW;
+    var svgBarW;
     if (rectEl) {
-        barScreenW = rectEl.getBoundingClientRect().width;
+        // 从 rect 属性读取 SVG 坐标系中的宽度
+        svgBarW = parseFloat(rectEl.getAttribute('width'));
     } else {
-        // fallback — 用 SVG 坐标换算
-        var leftEdge = svgPointToContainer(barCenterX - BAR_W / 2, barTopY);
-        var rightEdge = svgPointToContainer(barCenterX + BAR_W / 2, barTopY);
-        barScreenW = rightEdge.x - leftEdge.x;
+        svgBarW = BAR_W;
     }
-    var pillH = barScreenW / 2.5; // NOTE: 宽高比 2.5:1
-    handleEl.style.width = barScreenW + 'px';
-    handleEl.style.height = pillH + 'px';
-    handleEl.style.borderRadius = (pillH / 2) + 'px';
 
-    handleEl.style.left = pos.x + 'px';
-    handleEl.style.top = pos.y + 'px';
+    // NOTE: Handle 下移 12px 到柱体内部，避免遮住柱顶数字标签
+    positionHandleAt(barCenterX, barTopY + 12, svgBarW);
 }
 
 // ── Handle 拖动 ──
 
 function onHandlePointerDown(e) {
+    // NOTE: PA 柱选中态 → 从 pill 启动 PA 拖动
+    if (selected && selected.pa) {
+        e.preventDefault();
+        e.stopPropagation();
+        var p = selected.player;
+        var emptyIdx = selected.slot;
+        var paEnd = selected.paEnd;
+        var paBarEl = selected.rectEl;
+        deselect(); // 清除选中态，startPaDrag 会重新设置
+        startPaDrag(e, p, emptyIdx, paEnd, paBarEl);
+        return;
+    }
+
     // NOTE: hover 态直接拖动 — 自动选中再开始拖
     if (!selected && hovered) {
+        // NOTE: hover 在 PA 柱上 → 直接启动 PA 拖动
+        if (hovered.pa) {
+            var p = hovered.player;
+            var emptyIdx = findEmptySlot(p);
+            if (emptyIdx < 0) return;
+            e.preventDefault();
+            e.stopPropagation();
+            var paBarEl = getSvgEl().querySelector('.chart-pa-bar[data-player="' + p + '"]');
+            startPaDrag(e, p, emptyIdx, hovered.paEnd, paBarEl);
+            return;
+        }
         var p = hovered.player;
         var t = hovered.slot;
         var val = state.times[state.seedOn + p][t];
@@ -472,6 +605,115 @@ function onHandlePointerDown(e) {
     document.addEventListener('pointerup', onUp);
 }
 
+// ── PA 柱拖动 — 反向推算第 5 把 ──
+
+// NOTE: 找到该选手的空缺 slot（未填的那一把）。无空缺返回 -1。
+function findEmptySlot(p) {
+    var times = state.times[state.seedOn + p];
+    for (var i = 0; i < solveCount(); i++) {
+        if (times[i] === 0) return i;
+    }
+    return -1;
+}
+
+// NOTE: PA 柱拖动 — 拖动 WPA/BPA 端，只改第 4 根柱子的值
+// 前 3 根柱子固定不变，PA 值通过改变第 4 根实现
+function startPaDrag(e, p, emptyIdx, paEnd, paBarEl) {
+    hovered = null;
+
+    var times = state.times[state.seedOn + p];
+    // NOTE: 目标柱子 = 第 4 根（空缺 slot 前一个）
+    var targetSlot = emptyIdx - 1;
+    if (targetSlot < 0) return;
+    var targetOrigVal = times[targetSlot];
+    if (targetOrigVal <= 0 || targetOrigVal >= DNF_VALUE) return;
+
+    // NOTE: 收集前 3 根柱子的值，排序后用于反向推算
+    var fixed = [];
+    for (var i = 0; i < solveCount(); i++) {
+        if (i !== targetSlot && i !== emptyIdx && times[i] > 0 && times[i] < DNF_VALUE) {
+            fixed.push(times[i]);
+        }
+    }
+    if (fixed.length < 3) return;
+    fixed.sort(function(a, b) { return a - b; });
+    // NOTE: 反向推算公式:
+    // WPA (5th=DNF): counting = sorted[1..3] → fixedSum = f[1] + f[2]
+    // BPA (5th=0):   counting = sorted[1..3] → fixedSum = f[0] + f[1]
+    var fixedSum = (paEnd === 'wpa') ? fixed[1] + fixed[2] : fixed[0] + fixed[1];
+
+    selected = { player: p, slot: targetSlot, pa: true, paEnd: paEnd, rectEl: paBarEl };
+    dragging = true;
+
+    var svg = getSvgEl();
+    svg.classList.add('bar-selected');
+    if (paBarEl) paBarEl.classList.add('bar-active');
+    handleEl.style.display = '';
+    handleEl.style.pointerEvents = 'auto';
+    handleEl.classList.toggle('player-b', p === 1);
+
+    document.body.style.userSelect = 'none';
+    originalVal = targetOrigVal;
+
+    // NOTE: 记录光标与 PA 端点的偏移
+    var ctm = svg.getScreenCTM().inverse();
+    var startSvgY = ctm.b * e.clientX + ctm.d * e.clientY + ctm.f;
+    var paCx = parseFloat(paBarEl.getAttribute('data-pa-cx'));
+    var paW = parseFloat(paBarEl.getAttribute('data-pa-w'));
+    var endY = parseFloat(paBarEl.getAttribute(paEnd === 'wpa' ? 'data-wpa-y' : 'data-bpa-y'));
+    var dragOffsetY = startSvgY - endY;
+
+    // 创建原始位置虚线轮廓
+    createGhost(p, targetSlot, targetOrigVal);
+
+    var onMove = function(em) {
+        em.preventDefault();
+        if (!dragging || !selected || !selected.pa) return;
+
+        var svg = getSvgEl();
+        var ctm = svg.getScreenCTM().inverse();
+        var svgY = ctm.b * em.clientX + ctm.d * em.clientY + ctm.f;
+        var adjustedY = svgY - dragOffsetY;
+
+        // NOTE: Y → 目标 PA 值 → 反向推算第 4 柱的值
+        var targetPA = yToVal(adjustedY);
+        targetPA = Math.round(targetPA);
+        var x = 3 * targetPA - fixedSum;
+        if (x <= 0) return;
+        x = clampValue(Math.round(x));
+
+        // 写入目标柱子并重绘
+        state.times[state.seedOn + p][targetSlot] = x;
+        chartRender({ skipViewBox: true });
+        onAfterRender();
+
+        // 重建 ghost（render 会清除）
+        if (x !== targetOrigVal) {
+            createGhost(p, targetSlot, targetOrigVal);
+        }
+    };
+
+    var onUp = function(eu) {
+        document.removeEventListener('pointermove', onMove);
+        document.removeEventListener('pointerup', onUp);
+        document.body.style.userSelect = '';
+
+        if (!dragging || !selected) return;
+        dragging = false;
+
+        var currentVal = state.times[state.seedOn + p][targetSlot];
+        deselect();
+
+        // NOTE: 通知其他 UI 模块
+        if (currentVal !== targetOrigVal) {
+            updateTime(state.seedOn + p, targetSlot, currentVal);
+        }
+    };
+
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
+}
+
 // NOTE: 拖动中轻量更新 — 直接操作目标柱子的 SVG rect 属性
 function updateBarDuringDrag(newVal) {
     if (!selected) return;
@@ -568,7 +810,7 @@ function onDocumentPointerDown(e) {
     // 点击在 Handle 上 → 不取消
     if (handleEl && handleEl.contains(e.target)) return;
     // 点击在柱子或标签上 → onSvgPointerDown 处理
-    if (e.target.closest && (e.target.closest('.chart-bar') || e.target.closest('.chart-bar-label'))) return;
+    if (e.target.closest && (e.target.closest('.chart-bar') || e.target.closest('.chart-bar-label') || e.target.closest('.chart-pa-bar'))) return;
     // 点击在 numpad/input 等 UI 上 → 不取消（避免干扰输入）
     if (e.target.closest && (e.target.closest('#numpad') || e.target.closest('.time-cell'))) return;
 
@@ -581,9 +823,25 @@ export function onAfterRender() {
 
     var p = selected.player;
     var t = selected.slot;
+    var svg = getSvgEl();
+
+    // NOTE: PA 柱选中态 — 查找重建后的 PA bar
+    if (selected.pa) {
+        var newPaBar = svg.querySelector('.chart-pa-bar[data-player="' + p + '"]');
+        if (!newPaBar) { deselect(); return; }
+        selected.rectEl = newPaBar;
+        svg.classList.add('bar-selected');
+        newPaBar.classList.add('bar-active');
+        // 重新定位 pill 到端点
+        var paCx = parseFloat(newPaBar.getAttribute('data-pa-cx'));
+        var paW = parseFloat(newPaBar.getAttribute('data-pa-w'));
+        var paEnd = selected.paEnd;
+        var endY = parseFloat(newPaBar.getAttribute(paEnd === 'wpa' ? 'data-wpa-y' : 'data-bpa-y'));
+        positionHandleAt(paCx, endY + (paEnd === 'wpa' ? 12 : -12), paW);
+        return;
+    }
 
     // render 后旧 rectEl 已被清除，需要重新查找
-    var svg = getSvgEl();
     var newRect = svg.querySelector('.chart-bar[data-player="' + p + '"][data-slot="' + t + '"]');
     if (!newRect) {
         // 柱子消失（值被清零等） — 取消选中
@@ -615,13 +873,51 @@ function onSvgMouseMove(e) {
     if (dragging) return;      // 拖动中不处理 hover
     if (selected) return;      // 已有选中态时不覆盖
 
-    // NOTE: hover 检测柱子 rect 和柱顶数字标签
+    // NOTE: hover 检测柱子 rect、柱顶数字标签、PA 柱
     var bar = e.target.closest('.chart-bar');
     var label = !bar ? e.target.closest('.chart-bar-label') : null;
-    var target = bar || label;
+    var paBar = (!bar && !label) ? e.target.closest('.chart-pa-bar') : null;
+    var target = bar || label || paBar;
 
     if (!target) {
         // NOTE: 空白区域保持上一个 hover 不变（只有离开 SVG 或移到另一根柱子才切换）
+        return;
+    }
+
+    // NOTE: PA 柱 hover — 根据光标 Y 位置显示 WPA（上端）或 BPA（下端）pill
+    if (paBar) {
+        var paPl = parseInt(paBar.getAttribute('data-player'));
+        var paCx = parseFloat(paBar.getAttribute('data-pa-cx'));
+        var paW = parseFloat(paBar.getAttribute('data-pa-w'));
+        var wpaY = parseFloat(paBar.getAttribute('data-wpa-y'));
+        var bpaY = parseFloat(paBar.getAttribute('data-bpa-y'));
+        if (isNaN(paPl) || isNaN(paCx)) return;
+
+        // NOTE: 光标在 PA 柱上半段 → WPA pill，下半段 → BPA pill
+        var paBBox = paBar.getBoundingClientRect();
+        var midY = paBBox.top + paBBox.height / 2;
+        var paEnd = (e.clientY <= midY) ? 'wpa' : 'bpa';
+
+        // 同一个端 → 不重复处理
+        if (hovered && hovered.pa && hovered.player === paPl && hovered.paEnd === paEnd) return;
+
+        // NOTE: 切换 hover 时直接更新 class
+        var svg = getSvgEl();
+        var prevActive = svg.querySelector('.bar-active');
+        if (prevActive) prevActive.classList.remove('bar-active');
+
+        hovered = { player: paPl, slot: -1, pa: true, paEnd: paEnd };
+
+        // NOTE: pill 定位到对应端（各下移/上移 12px 避免遮挡标签）
+        var pillSvgY = (paEnd === 'wpa') ? wpaY + 12 : bpaY - 12;
+        positionHandleAt(paCx, pillSvgY, paW);
+        handleEl.style.display = '';
+        handleEl.style.pointerEvents = 'none';
+        handleEl.classList.toggle('player-b', paPl === 1);
+
+        svg.classList.add('bar-selected');
+        paBar.classList.add('bar-active');
+        svg.style.cursor = 'ns-resize';
         return;
     }
 
@@ -641,7 +937,7 @@ function onSvgMouseMove(e) {
 
     // NOTE: 切换 hover 时直接更新 class，不经过 clearHover 避免全亮闪一帧
     var svg = getSvgEl();
-    var prevActive = svg.querySelector('.chart-bar.bar-active');
+    var prevActive = svg.querySelector('.bar-active');
     if (prevActive) prevActive.classList.remove('bar-active');
 
     var val = state.times[state.seedOn + p][t];
@@ -679,7 +975,7 @@ function clearHover() {
     var svg = getSvgEl();
     if (svg && !selected) {
         svg.classList.remove('bar-selected');
-        var active = svg.querySelector('.chart-bar.bar-active');
+        var active = svg.querySelector('.bar-active');
         if (active) active.classList.remove('bar-active');
     }
     hovered = null;

@@ -219,6 +219,18 @@ export function getAverage(arr, includeZeros) {
     return Math.round((sorted[1] + sorted[2] + sorted[3]) / 3);
 }
 
+// NOTE: 反向推算 — 给定 4 个已有值和目标 Ao5，求第 5 把需要多少
+// sorted4: 已排序的 4 个值 [s0, s1, s2, s3]
+// targetAvg: 目标 Ao5（centiseconds）
+// 返回: centiseconds（已 clamp），或 null（目标不可达）
+export function reverseAvgToTime(sorted4, targetAvg) {
+    // x = 3*target - s1 - s2（无论 x 落在排序后的哪个区间）
+    var x = 3 * targetAvg - sorted4[1] - sorted4[2];
+    // 超出已有值的 [s0, s3] 范围时，counting 不含 x，avg 固定不可改变
+    if (x <= 0) return null;
+    return clampValue(Math.round(x));
+}
+
 // NOTE: 按平均值和最佳单次排序，返回索引数组
 export function getSortedIndices(test, test2, descending) {
     var len = test.length;
