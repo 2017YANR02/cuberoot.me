@@ -1113,10 +1113,12 @@ function initDrum() {
     if (drumSlots[0] && drumSlots[0].offsetHeight > 0) drumItemH = drumSlots[0].offsetHeight;
 
     // NOTE: 选中柱子时同步聚焦对应单元格（蓝底 + 全选）
+    // NOTE: 移动端触摸 SVG 后浏览器会在 touchend 阶段重置非直接触摸元素的选区，
+    // 导致 focus+select 一闪而过。移动端仅依赖 .cell-synced 视觉高亮
     document.addEventListener('bar-select-cell', function (e) {
         if (!e.detail) return;
         var el = getCellEl(e.detail.player, e.detail.slot);
-        if (el) {
+        if (el && !('ontouchstart' in window)) {
             el.focus();
             el.select();
         }
