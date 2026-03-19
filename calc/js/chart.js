@@ -367,6 +367,11 @@ function drawTargetAvgLines() {
 
 // NOTE: 在空柱位画半透明幽灵柱，显示下一把成绩的上限
 function drawGhostBars() {
+    // NOTE: 清理上一轮的幽灵柱 SVG 元素 — barGroup 不做全量 clear（普通柱子复用），
+    // 所以必须按 class 选择性清理
+    var oldGhosts = barGroup.querySelectorAll('.chart-ghost');
+    for (var i = 0; i < oldGhosts.length; i++) oldGhosts[i].remove();
+
     if (isMo3()) return; // Mo3 无 BPA/WPA
 
     var GHOST_COLORS = {
@@ -450,7 +455,7 @@ function drawGhostBars() {
         barGroup.appendChild(createSvgElement('rect', {
             x: bx, y: topY, width: bw, height: barHeight,
             fill: GHOST_COLORS[ghost.type],
-            rx: 2,
+            rx: 2, class: 'chart-ghost',
         }));
         // 虚线描边矩形
         barGroup.appendChild(createSvgElement('rect', {
@@ -459,13 +464,20 @@ function drawGhostBars() {
             stroke: GHOST_BORDERS[ghost.type],
             'stroke-width': 2,
             'stroke-dasharray': '6,4',
-            rx: 2,
+            rx: 2, class: 'chart-ghost',
         }));
 
         // NOTE: 幽灵柱内部居中 emoji — 🔒 safe / 🎲 conditional
         var emoji = ghost.type === 'safe' ? '🔒' : '🎲';
         var emojiY = topY + barHeight / 2 + 10; // 垂直居中
-        addText(barGroup, bx + bw / 2, emojiY, emoji, GHOST_TEXT_COLORS[ghost.type], 28, 'center');
+        var emojiEl = createSvgElement('text', {
+            x: bx + bw / 2, y: emojiY, fill: GHOST_TEXT_COLORS[ghost.type],
+            'font-size': '28px', 'font-family': 'Helvetica', 'text-anchor': 'middle',
+            'stroke': '#E7DFD5', 'stroke-width': 5, 'paint-order': 'stroke',
+            class: 'chart-ghost',
+        });
+        emojiEl.textContent = emoji;
+        barGroup.appendChild(emojiEl);
 
         // 顶部标签（纯文字，不含 emoji）
         var labelText = isAny ? 'ANY ✓' : 'Need ≤ ' + formatTime(ghostValue);
