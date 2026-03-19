@@ -112,10 +112,16 @@ export function render(opts) {
     clearGroup(gridGroup);
     clearGroup(statsGroup);
     clearGroup(avgGroup);
-    clearGroup(topTextGroup);
+    // NOTE: topTextGroup 保留 .chart-bar-label 和 .chart-skull（复用做过渡动画），清除其余
+    var topChildren = topTextGroup.childNodes;
+    for (var ci = topChildren.length - 1; ci >= 0; ci--) {
+        var ch = topChildren[ci];
+        if (!ch.classList) { ch.remove(); continue; }
+        if (!ch.classList.contains('chart-bar-label') && !ch.classList.contains('chart-skull')) ch.remove();
+    }
 
     drawGridLines();
-    drawBars();
+    drawBars(opts && opts.skipAnimation);
     drawGhostBars();
     drawTargetAvgLines();
     drawStats();
@@ -365,6 +371,9 @@ function drawTargetAvgLines() {
 
 // ── 幽灵柱（阈值可视化） ──
 
+// NOTE: 记住上一轮每个 player 的幽灵柱类型，仅类型变化时播放渐入动画
+var prevGhostType = [null, null];
+
 // NOTE: 在空柱位画半透明幽灵柱，显示下一把成绩的上限
 function drawGhostBars() {
     // NOTE: 清理上一轮的幽灵柱 SVG 元素 — barGroup 不做全量 clear（普通柱子复用），
@@ -401,6 +410,11 @@ function drawGhostBars() {
         var ghost = CalcEngine.getGhostBar(state.times[state.seedOn + p], tavg);
         if (!ghost) continue;
 
+        // NOTE: 检测类型是否变化，决定是否加渐入动画
+        var typeChanged = (prevGhostType[p] !== null && prevGhostType[p] !== ghost.type);
+        prevGhostType[p] = ghost.type;
+        var cls = typeChanged ? 'chart-ghost chart-ghost-anim' : 'chart-ghost';
+
         var barX = BAR_START + ghost.slotIndex * STRIDE;
         var fullW = BAR_W - 2 * bm;
         // Both 模式下缩窄内层
@@ -409,37 +423,50 @@ function drawGhostBars() {
         var bx = barX + bm + (fullW - bw) / 2;
 
         if (ghost.type === 'impossible') {
-            // 💀 标签（带 tooltip）
+            // 💀 标签（带 tooltip）— 复用已有元素避免图片重新加载闪烁
             var labelY = valToYCap(tavg);
-            var skullGroup = createSvgElement('g', { cursor: 'help' });
-            (function () {
-                skullGroup.addEventListener('mouseenter', function (e) {
-                    tooltipEl.textContent = 'Mathematically impossible to hit target avg — no matter what you solve';
-                    var rect = chartContainer.getBoundingClientRect();
-                    tooltipEl.style.left = (e.clientX - rect.left + 10) + 'px';
-                    tooltipEl.style.top = (e.clientY - rect.top - 40) + 'px';
-                    tooltipEl.style.opacity = '1';
-                });
-                skullGroup.addEventListener('mouseleave', function () {
-                    tooltipEl.style.opacity = '0';
-                });
-            })();
-            // NOTE: 红底 + skull.png — 提升图表中的对比度
-            var skullSize = 36;
             var cx = bx + bw / 2, cy = labelY;
-            skullGroup.appendChild(createSvgElement('circle', {
-                cx: cx, cy: cy, r: skullSize / 2 + 7,
-                fill: '#D32F2F',
-            }));
-            skullGroup.appendChild(createSvgElement('image', {
-                href: '/assets/images/skull.png',
-                x: cx - skullSize / 2,
-                y: cy - skullSize / 2,
-                width: skullSize, height: skullSize,
-            }));
-            topTextGroup.appendChild(skullGroup);
+            var existSkull = topTextGroup.querySelector('.chart-skull[data-player="' + p + '"]');
+            if (existSkull) {
+                // 复用 — 只更新位置
+                var circle = existSkull.querySelector('circle');
+                var img = existSkull.querySelector('image');
+                if (circle) { circle.setAttribute('cx', cx); circle.setAttribute('cy', cy); }
+                if (img) { img.setAttribute('x', cx - 18); img.setAttribute('y', cy - 18); }
+            } else {
+                var skullGroup = createSvgElement('g', { cursor: 'help', class: 'chart-skull', 'data-player': p });
+                (function () {
+                    skullGroup.addEventListener('mouseenter', function (e) {
+                        tooltipEl.textContent = 'Mathematically impossible to hit target avg — no matter what you solve';
+                        var rect = chartContainer.getBoundingClientRect();
+                        tooltipEl.style.left = (e.clientX - rect.left + 10) + 'px';
+                        tooltipEl.style.top = (e.clientY - rect.top - 40) + 'px';
+                        tooltipEl.style.opacity = '1';
+                    });
+                    skullGroup.addEventListener('mouseleave', function () {
+                        tooltipEl.style.opacity = '0';
+                    });
+                })();
+                // NOTE: 红底 + skull.png — 提升图表中的对比度
+                var skullSize = 36;
+                skullGroup.appendChild(createSvgElement('circle', {
+                    cx: cx, cy: cy, r: skullSize / 2 + 7,
+                    fill: '#D32F2F',
+                }));
+                skullGroup.appendChild(createSvgElement('image', {
+                    href: '/assets/images/skull.png',
+                    x: cx - skullSize / 2,
+                    y: cy - skullSize / 2,
+                    width: skullSize, height: skullSize,
+                }));
+                topTextGroup.appendChild(skullGroup);
+            }
             continue;
         }
+
+        // NOTE: 非 impossible 类型时清除该 player 的旧 skull（类型切换场景）
+        var oldSkull = topTextGroup.querySelector('.chart-skull[data-player="' + p + '"]');
+        if (oldSkull) oldSkull.remove();
 
         // 幽灵柱高度
         var ghostValue = ghost.value;
@@ -455,7 +482,7 @@ function drawGhostBars() {
         barGroup.appendChild(createSvgElement('rect', {
             x: bx, y: topY, width: bw, height: barHeight,
             fill: GHOST_COLORS[ghost.type],
-            rx: 2, class: 'chart-ghost',
+            rx: 2, class: cls,
         }));
         // 虚线描边矩形
         barGroup.appendChild(createSvgElement('rect', {
@@ -464,7 +491,7 @@ function drawGhostBars() {
             stroke: GHOST_BORDERS[ghost.type],
             'stroke-width': 2,
             'stroke-dasharray': '6,4',
-            rx: 2, class: 'chart-ghost',
+            rx: 2, class: cls,
         }));
 
         // NOTE: 幽灵柱内部居中 emoji — 🔒 safe / 🎲 conditional
@@ -474,7 +501,7 @@ function drawGhostBars() {
             x: bx + bw / 2, y: emojiY, fill: GHOST_TEXT_COLORS[ghost.type],
             'font-size': '28px', 'font-family': 'Helvetica', 'text-anchor': 'middle',
             'stroke': '#E7DFD5', 'stroke-width': 5, 'paint-order': 'stroke',
-            class: 'chart-ghost',
+            class: cls,
         });
         emojiEl.textContent = emoji;
         barGroup.appendChild(emojiEl);
@@ -535,7 +562,7 @@ function drawGhostBars() {
         // t#4 impossible — WPA 和 BPA 都是 null
         if (th.t4wpa === null && th.t4bpa === null) {
             badges.push({
-                line1: '4th ☠', line2: 'Impossible', color: '#D32F2F',
+                line1: '4th', line2: '', color: '#D32F2F', skull: true,
                 tip: 'Mathematically impossible to hit target avg — no matter what you solve',
                 y: valToYCap(tavg)
             });
@@ -552,7 +579,7 @@ function drawGhostBars() {
             } else {
                 // t#5 impossible
                 badges.push({
-                    line1: '5th ☠', line2: 'Impossible', color: '#D32F2F',
+                    line1: '5th', line2: '', color: '#D32F2F', skull: true,
                     tip: 'Mathematically impossible to hit target avg — no matter what you solve',
                     y: valToYCap(tavg) + 40
                 });
@@ -608,21 +635,40 @@ function drawGhostBars() {
                 d: d, fill: b.color, opacity: 0.9,
             }));
 
-            // 2 行白色文字
+            // 文字/图片内容
             var tx = lx + (bw + br) / 2;
-            var textEl1 = createSvgElement('text', {
-                x: tx, y: by + 15, fill: '#fff', 'font-size': '12px',
-                'font-family': 'Helvetica', 'font-weight': 'bold', 'text-anchor': 'middle',
-            });
-            textEl1.textContent = b.line1;
-            badgeGroup.appendChild(textEl1);
+            if (b.skull) {
+                // NOTE: impossible badge — 单行文字 + skull.png 居中
+                var skullSz = 22;
+                var totalW = 30 + skullSz; // 文字约30px + 图片
+                var startX = tx - totalW / 2;
+                var textEl1 = createSvgElement('text', {
+                    x: startX + 15, y: by + 26, fill: '#fff', 'font-size': '15px',
+                    'font-family': 'Helvetica', 'font-weight': 'bold', 'text-anchor': 'middle',
+                });
+                textEl1.textContent = b.line1;
+                badgeGroup.appendChild(textEl1);
+                badgeGroup.appendChild(createSvgElement('image', {
+                    href: '/assets/images/skull.png',
+                    x: startX + 30, y: by + (bh - skullSz) / 2,
+                    width: skullSz, height: skullSz,
+                }));
+            } else {
+                // 2 行白色文字
+                var textEl1 = createSvgElement('text', {
+                    x: tx, y: by + 15, fill: '#fff', 'font-size': '12px',
+                    'font-family': 'Helvetica', 'font-weight': 'bold', 'text-anchor': 'middle',
+                });
+                textEl1.textContent = b.line1;
+                badgeGroup.appendChild(textEl1);
 
-            var textEl2 = createSvgElement('text', {
-                x: tx, y: by + 32, fill: '#fff', 'font-size': '15px',
-                'font-family': 'Helvetica', 'font-weight': 'bold', 'text-anchor': 'middle',
-            });
-            textEl2.textContent = b.line2;
-            badgeGroup.appendChild(textEl2);
+                var textEl2 = createSvgElement('text', {
+                    x: tx, y: by + 32, fill: '#fff', 'font-size': '15px',
+                    'font-family': 'Helvetica', 'font-weight': 'bold', 'text-anchor': 'middle',
+                });
+                textEl2.textContent = b.line2;
+                badgeGroup.appendChild(textEl2);
+            }
 
             topTextGroup.appendChild(badgeGroup);
         }
@@ -631,9 +677,10 @@ function drawGhostBars() {
 
 // ── 柱状图 ──
 
-function drawBars() {
+function drawBars(skipAnim) {
     var bm = 7; // 柱内边距
     var usedKeys = {}; // NOTE: 追踪本轮使用的 rect，用于清理多余元素
+    var ANIM_MS = 100; // NOTE: 柱子高度/宽度过渡动画时长
 
     for (var t = 0; t < solveCount(); t++) {
         var minYs = [0, 0];
@@ -667,24 +714,30 @@ function drawBars() {
             var key = p + '-' + t;
             usedKeys[key] = true;
 
-            // NOTE: 复用已有 rect 元素；宽度/位置变化时用 Web Animations API 做过渡
+            // NOTE: 复用已有 rect 元素；变化时用 Web Animations API 做过渡
             // appendChild 会将已有元素移到末尾，保证 pOrder 决定 SVG z-order
             var existing = barGroup.querySelector('.chart-bar[data-player="' + p + '"][data-slot="' + t + '"]');
             if (existing) {
                 var oldW = parseFloat(existing.getAttribute('width'));
                 var oldX = parseFloat(existing.getAttribute('x'));
+                var oldY = parseFloat(existing.getAttribute('y'));
+                var oldH = parseFloat(existing.getAttribute('height'));
                 existing.setAttribute('y', minY);
                 existing.setAttribute('height', Math.max(0, barHeight));
                 existing.setAttribute('x', bx);
                 existing.setAttribute('width', bw);
                 barGroup.appendChild(existing); // NOTE: 移到末尾维持正确 z-order
 
-                // NOTE: 宽度或 X 变化时播放过渡动画（内外翻转）
-                if (Math.abs(oldW - bw) > 0.5 || Math.abs(oldX - bx) > 0.5) {
-                    existing.animate([
-                        { width: oldW + 'px', x: oldX + 'px' },
-                        { width: bw + 'px', x: bx + 'px' }
-                    ], { duration: 150, easing: 'ease' });
+                // NOTE: 属性变化时播放过渡动画（拖拽时跳过，保证实时响应）
+                if (!skipAnim) {
+                    var wxChanged = Math.abs(oldW - bw) > 0.5 || Math.abs(oldX - bx) > 0.5;
+                    var yhChanged = Math.abs(oldY - minY) > 0.5 || Math.abs(oldH - barHeight) > 0.5;
+                    if (wxChanged || yhChanged) {
+                        existing.animate([
+                            { x: oldX + 'px', y: oldY + 'px', width: oldW + 'px', height: oldH + 'px' },
+                            { x: bx + 'px', y: minY + 'px', width: bw + 'px', height: Math.max(0, barHeight) + 'px' }
+                        ], { duration: ANIM_MS, easing: 'ease' });
+                    }
                 }
             } else {
                 barGroup.appendChild(createSvgElement('rect', {
@@ -739,20 +792,48 @@ function drawBars() {
             resolveOverlaps(colLabels, 4);
         }
 
-        // NOTE: 渲染标签 — 使用 feDropShadow 滤镜提供柔和白色阴影，在柱子上也清晰可读
+        // NOTE: 渲染标签 — 复用已有元素并对 Y 位置做动画
         for (var li = 0; li < colLabels.length; li++) {
             var lb = colLabels[li];
-            var el = createSvgElement('text', {
-                x: lb.x, y: lb.y, fill: lb.col,
-                'font-size': LABEL_FONT + 'px', 'font-family': 'Helvetica',
-                'font-weight': 'bold', 'text-anchor': 'middle',
-                filter: 'url(#barLabelShadow)',
-                class: 'chart-bar-label',
-                'data-player': lb.player, 'data-slot': lb.slot,
-            });
-            el.textContent = lb.text;
-            topTextGroup.appendChild(el);
+            var existLabel = topTextGroup.querySelector(
+                '.chart-bar-label[data-player="' + lb.player + '"][data-slot="' + lb.slot + '"]'
+            );
+            if (existLabel) {
+                // 复用 — 更新文本和颜色
+                var oldLY = parseFloat(existLabel.getAttribute('y'));
+                existLabel.setAttribute('x', lb.x);
+                existLabel.setAttribute('y', lb.y);
+                existLabel.setAttribute('fill', lb.col);
+                existLabel.textContent = lb.text;
+                // NOTE: Y 变化时播放过渡动画（拖拽时跳过）
+                if (!skipAnim && Math.abs(oldLY - lb.y) > 0.5) {
+                    existLabel.animate([
+                        { y: oldLY + 'px' },
+                        { y: lb.y + 'px' }
+                    ], { duration: ANIM_MS, easing: 'ease' });
+                }
+            } else {
+                // 新建
+                var el = createSvgElement('text', {
+                    x: lb.x, y: lb.y, fill: lb.col,
+                    'font-size': LABEL_FONT + 'px', 'font-family': 'Helvetica',
+                    'font-weight': 'bold', 'text-anchor': 'middle',
+                    filter: 'url(#barLabelShadow)',
+                    class: 'chart-bar-label',
+                    'data-player': lb.player, 'data-slot': lb.slot,
+                });
+                el.textContent = lb.text;
+                topTextGroup.appendChild(el);
+            }
         }
+    }
+
+    // NOTE: 清理不再需要的旧标签（如选手被禁用或值被清零）
+    var allLabels = topTextGroup.querySelectorAll('.chart-bar-label');
+    for (var lj = 0; lj < allLabels.length; lj++) {
+        var lel = allLabels[lj];
+        var lk = lel.getAttribute('data-player') + '-' + lel.getAttribute('data-slot');
+        if (!usedKeys[lk]) lel.remove();
     }
 }
 
@@ -942,8 +1023,8 @@ function drawStats() {
         }
     }
 
-    // NOTE: 统一排斥右侧标签，防止不同选手的 BPA/WPA 互相重叠
-    if (rightLabels.length > 1) {
+    // NOTE: 仅双选手模式下排斥右侧标签（单人模式 BPA/WPA 位置固定在柱子上下方）
+    if (labelSets.length > 1 && rightLabels.length > 1) {
         resolveOverlaps(rightLabels, 8);
     }
 
