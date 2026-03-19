@@ -556,16 +556,49 @@ function onKeyDown(e) {
             getCellEl(del[0], del[1]).value = '';
             syncNumpadDisplay();
         }
-    } else if (e.key === 'ArrowDown') {
+    } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
         if (p < 0) return;
         e.preventDefault();
-        // NOTE: A行 → B行同列
-        if (p === 0) navigateTo(1, t);
-    } else if (e.key === 'ArrowUp') {
-        if (p < 0) return;
-        e.preventDefault();
-        // NOTE: B行 → A行同列
-        if (p === 1) navigateTo(0, t);
+        // NOTE: 判断勾选行数：仅 1 行打勾时上下键调值，2 行打勾时跳行
+        var toggles = document.querySelectorAll('.player-toggle');
+        var checkedCount = 0;
+        for (var i = 0; i < toggles.length; i++) { if (toggles[i].checked) checkedCount++; }
+
+        if (checkedCount === 1) {
+            // NOTE: 单行模式 — ↑/↓ 精调单元格数值
+            var step = 1;  // 0.01s
+            if (e.ctrlKey || e.metaKey) step = 100;   // 1.00s
+            else if (e.shiftKey) step = 10;            // 0.10s
+            var dir = e.key === 'ArrowUp' ? 1 : -1;
+
+            if (isTavg(t)) {
+                // NOTE: Target Avg 格用 setTargetAvg 调值
+                var tavgVal = getTargetAvg(state.seedOn + p);
+                if (tavgVal <= 0) return;
+                var newTavg = clampValue(tavgVal + dir * step);
+                if (newTavg !== tavgVal && newTavg > 0) {
+                    setTargetAvg(state.seedOn + p, newTavg);
+                    // NOTE: refresh() 跳过 activeCell，需手动同步显示
+                    tavgCells[p].value = formatTime(newTavg, false, false, true);
+                    syncNumpadDisplay();
+                }
+            } else {
+                var val = state.times[state.seedOn + p][t];
+                if (val <= 0 || val >= DNF_VALUE) return;
+                var newVal = clampValue(val + dir * step);
+                if (newVal !== val && newVal > 0) {
+                    updateTime(state.seedOn + p, t, newVal);
+                    // NOTE: refresh() 跳过 activeCell，需手动同步显示
+                    var cellEl = getCellEl(p, t);
+                    if (cellEl) cellEl.value = formatTime(newVal);
+                    syncNumpadDisplay();
+                }
+            }
+        } else {
+            // NOTE: 双行模式 — 上下键切换到另一行同列
+            if (e.key === 'ArrowDown' && p === 0) navigateTo(1, t);
+            if (e.key === 'ArrowUp' && p === 1) navigateTo(0, t);
+        }
     } else if (e.key === 'ArrowLeft') {
         if (p < 0) return;
         e.preventDefault();
