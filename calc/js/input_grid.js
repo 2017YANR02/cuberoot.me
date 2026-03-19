@@ -1114,11 +1114,19 @@ function initDrum() {
 
     // NOTE: 选中柱子时同步聚焦对应单元格（蓝底 + 全选）
     // NOTE: 移动端触摸 SVG 后浏览器会在 touchend 阶段重置非直接触摸元素的选区，
-    // 导致 focus+select 一闪而过。移动端仅依赖 .cell-synced 视觉高亮
+    // 导致 focus+select 一闪而过。移动端仅依赖 .cell-synced 视觉高亮，
+    // 但必须设置 activeCell 保证 numpad 输入到正确格子
     document.addEventListener('bar-select-cell', function (e) {
         if (!e.detail) return;
-        var el = getCellEl(e.detail.player, e.detail.slot);
-        if (el && !('ontouchstart' in window)) {
+        var p = e.detail.player, t = e.detail.slot;
+        var el = getCellEl(p, t);
+        if (!el) return;
+        if ('ontouchstart' in window) {
+            // NOTE: 移动端不 focus（避免选区一闪而过），但设置 activeCell
+            // 保证 numpad/滚筒输入目标正确
+            activeCell = [p, t];
+            syncNumpadDisplay();
+        } else {
             el.focus();
             el.select();
         }
