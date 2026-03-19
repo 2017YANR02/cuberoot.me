@@ -1140,39 +1140,22 @@ function onSvgWheel(e) {
     updateTime(state.seedOn + p, t, newVal);
 }
 
-// ── Phase 3：键盘 ↑/↓ 精调 ──
+// ── Phase 3：精调核心函数 ──
 
-// NOTE: 选中态下 ↑/↓ ±0.01s（Shift ±0.10s, Ctrl ±1.00s）
-function onKeyDown(e) {
-    if (!selected) return;
-    if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
-
-    // NOTE: 焦点在 input/textarea 等可编辑元素时不拦截
-    var tag = document.activeElement && document.activeElement.tagName;
-    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
-
-    e.preventDefault(); // 防页面滚动
-
-    // 步进粒度（与滚轮一致）
-    var step = 1; // 0.01s
-    if (state.event === '333fm' || isMbf()) {
-        step = 100;
-    } else if (e.ctrlKey) {
-        step = 100;
-    } else if (e.shiftKey) {
-        step = 10;
-    }
-
-    var dir = e.key === 'ArrowUp' ? 1 : -1;
+// NOTE: 调整选中柱子/PA 的值。dir=+1 增大 / -1 减小，step=步进粒度（默认 1=0.01s）
+// 供键盘 ↑/↓ 和 numpad ▲/▼ 共用
+export function adjustSelectedBar(dir, step) {
+    if (!selected) return false;
+    if (!step) step = 1;
     var p = selected.player;
 
     // NOTE: PA 柱模式 — 从 data 属性读取实际 PA 值，±step 后反向推算 target solve
     if (selected.pa) {
         var paBarEl = selected.rectEl;
-        if (!paBarEl) return;
+        if (!paBarEl) return false;
         var emptyIdx = selected.slot; // selectPa 存的是 emptyIdx
         var targetSlot = emptyIdx - 1;
-        if (targetSlot < 0) return;
+        if (targetSlot < 0) return false;
 
         // NOTE: 从 PA bar 的 data 属性读取实际 PA 值（避免 targetSlot 非 counting solve 时的公式偏差）
         var paYAttr = selected.paEnd === 'wpa' ? 'data-wpa-y' : 'data-bpa-y';
@@ -1187,24 +1170,56 @@ function onKeyDown(e) {
                 fixed.push(times[i]);
             }
         }
-        if (fixed.length < 3) return;
+        if (fixed.length < 3) return false;
         fixed.sort(function(a, b) { return a - b; });
         var fixedSum = (selected.paEnd === 'wpa') ? fixed[1] + fixed[2] : fixed[0] + fixed[1];
 
         var newX = clampValue(Math.round(3 * newPA - fixedSum));
-        if (newX <= 0) return;
+        if (newX <= 0) return false;
 
         updateTime(state.seedOn + p, targetSlot, newX);
-        return;
+        return true;
     }
 
     // 普通柱子模式
     var t = selected.slot;
     var val = state.times[state.seedOn + p][t];
-    if (val <= 0 || val >= DNF_VALUE) return;
+    if (val <= 0 || val >= DNF_VALUE) return false;
 
     var newVal = clampValue(val + dir * step);
-    if (newVal === val) return;
+    if (newVal === val) return false;
 
     updateTime(state.seedOn + p, t, newVal);
+    return true;
 }
+
+// NOTE: 选中态下 ↑/↓ 精调（键盘入口，解析修饰键后调用 adjustSelectedBar）
+function onKeyDown(e) {
+    if (!selected) return;
+    if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+
+    // NOTE: 焦点在 input/textarea 等可编辑元素时不拦截
+    var tag = document.activeElement && document.activeElement.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+    e.preventDefault(); // 防页面滚动
+
+    // 步进粒度
+    var step = 1; // 0.01s
+    if (state.event === '333fm' || isMbf()) {
+        step = 100;
+    } else if (e.ctrlKey) {
+        step = 100;
+    } else if (e.shiftKey) {
+        step = 10;
+    }
+
+    var dir = e.key === 'ArrowUp' ? 1 : -1;
+    adjustSelectedBar(dir, step);
+}
+
+// NOTE: 查询是否有选中的柱子（供 numpad 判断按钮状态）
+export function hasSelection() {
+    return !!selected;
+}
+
