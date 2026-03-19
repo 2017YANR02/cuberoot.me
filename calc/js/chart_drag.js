@@ -1230,12 +1230,16 @@ function clearHover() {
 
 // NOTE: 选中态下滚轮 ±0.01s（Shift ±0.10s, Ctrl ±1.00s）
 function onSvgWheel(e) {
-    if (!selected) return;
+    // NOTE: 支持 hover 态滚轮调值 — 不需要先点击选中
+    var target = selected || hovered;
+    if (!target) return;
+    // NOTE: PA 柱的 hover 不支持滚轮（slot 为 -1）
+    if (target.pa) return;
 
     e.preventDefault();
 
-    var p = selected.player;
-    var t = selected.slot;
+    var p = target.player;
+    var t = target.slot;
     var val = state.times[state.seedOn + p][t];
     if (val <= 0 || val >= DNF_VALUE) return;
 
@@ -1255,6 +1259,12 @@ function onSvgWheel(e) {
 
     // 写入 state 并触发全量重绘
     updateTime(state.seedOn + p, t, newVal);
+
+    // NOTE: hover 态下 render 后 pill 位置脱节 — 手动重定位
+    if (!selected && hovered) {
+        positionHandle(newVal, p, t);
+        handleEl.style.display = '';
+    }
 }
 
 // ── Phase 3：精调核心函数 ──
