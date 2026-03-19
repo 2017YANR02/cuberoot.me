@@ -80,7 +80,7 @@ export function initDrag() {
         var p = e.detail.player, t = e.detail.slot;
         if (selected && selected.player === p && selected.slot === t) return;
 
-        deselect();
+        deselect(true);
         hovered = null;
 
         var rectEl = svg.querySelector(
@@ -350,8 +350,8 @@ function selectBar(p, t, rectEl) {
         // 同 slot 不同 player（直接切换）
     }
 
-    // 先清除上一次选中
-    deselect();
+    // 先清除上一次选中（保持 bar-selected 避免闪烁）
+    deselect(true);
 
     var val = state.times[state.seedOn + p][t];
     // NOTE: 空柱子和 DNF 不可拖动
@@ -450,11 +450,12 @@ function selectAvg(p, avgBadgeEl) {
     document.dispatchEvent(new CustomEvent('drum-sync'));
 }
 
-function deselect() {
+// keepDimmed: true = 保留 bar-selected（其他柱子保持淡化，用于切换时防闪烁）
+function deselect(keepDimmed) {
     if (!selected) return;
 
     var svg = getSvgEl();
-    svg.classList.remove('bar-selected');
+    if (!keepDimmed) svg.classList.remove('bar-selected');
     if (selected.rectEl) {
         selected.rectEl.classList.remove('bar-active');
     }
