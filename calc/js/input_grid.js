@@ -11,7 +11,7 @@ import { isMbf } from './state.js';
 
 import { getTargetAvg, setTargetAvg } from './calc_table.js';
 import { isWR } from './wr_data.js';
-import { adjustSelectedBar, hasSelection } from './chart_drag.js';
+import { adjustSelectedBar, hasSelection, getSelectedValue } from './chart_drag.js';
 
 // NOTE: 当前聚焦的单元格 [player, solve]，-1 表示无聚焦
 var activeCell = [-1, -1];
@@ -941,7 +941,7 @@ export function syncDrum() {
     if (p >= 0 && t >= 0) {
         val = getCellVal(p, t);
     } else if (hasSelection()) {
-        val = 0; // NOTE: 选中柱子时由 adjustSelectedBar 处理
+        val = getSelectedValue(); // NOTE: 读取选中柱/PA/Avg 的实际值
     }
 
     // 空值或 DNF → 滚筒置灰
@@ -1056,6 +1056,9 @@ function initDrum() {
     // 刷新项高
     drumItemH = 30;
     if (drumSlots[0] && drumSlots[0].offsetHeight > 0) drumItemH = drumSlots[0].offsetHeight;
+
+    // NOTE: 监听柱子选中/取消事件 → 同步滚筒
+    document.addEventListener('drum-sync', function() { syncDrum(); });
 
     var dragStartY = 0;
     var dragStartVal = 0;   // 拖动起始时的值快照
