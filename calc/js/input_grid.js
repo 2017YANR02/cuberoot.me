@@ -936,7 +936,7 @@ function drumTick() {
         var gain = ctx.createGain();
         osc.type = 'sine';
         osc.frequency.value = 1200;
-        gain.gain.setValueAtTime(0.08, ctx.currentTime);
+        gain.gain.setValueAtTime(0.3, ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.008);
         osc.connect(gain);
         gain.connect(ctx.destination);
