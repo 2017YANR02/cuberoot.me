@@ -57,3 +57,7 @@ Pointer Events 状态机的两个杀手级陷阱：① `pointercancel` 触发后
 绕过 `focus()` 后必须**手动同步所有依赖 focus 事件的副作用**：`activeCell` 指针、`barSelectPending` 替换标志、numpad display 同步——缺任何一个都会产生新 bug（如 numpad 路由到错误格子、首次按键追加而非替换旧值、按键后全选当前字符）。
 
 Web Audio API autoplay 限制：`AudioContext` 创建后默认 `suspended`，必须在用户手势中调 `resume()` 才能发声，在 iOS Safari 和桌面 Chrome 均有效。最简单的修法：在每次播放前检查 `ctx.state === 'suspended'` 就 `resume()`，已 `running` 时 `resume()` 是 no-op 无开销。不要只在 `AudioContext` 创建时调一次——创建时机未必在用户手势内。
+
+"数据对了但显示不对"时，问题在**渲染层**；要先用 DevTools / JS 注入确认 state 是否真的正确，再决定去哪层找 bug。**不要想当然假设 state 残留**，盲目在数据写入路径上找遗漏。典型案例：backspace 清空后图表仍显示幽灵柱，花了很长时间找 state 漏洞，最终发现 state.times 全部是 0，是 SVG DOM 元素泄漏。
+
+SVG `<g>` 复用组（如 `barGroup`）不做 `clearGroup` 时，往里 append 的临时元素必须**打 class 标签**，并在每次重绘前按 class 选择性清除。否则旧元素无限累积，即使对应数据已归零也不消失。通用策略：只要某类 SVG 元素的生命周期不与父 `<g>` 绑定（父 `<g>` 不做整体清空），就必须给该类元素加 class，并在绘制入口处先 `querySelectorAll('.cls')` + `remove()` 再重画。
