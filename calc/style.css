@@ -476,7 +476,7 @@ body {
 
 #numpad-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: 0.6fr repeat(4, 1fr);
     gap: 6px;
 }
 
@@ -529,6 +529,25 @@ body {
 /* NOTE: 回车键跨两行 */
 .np-enter {
     grid-row: span 2;
+}
+
+/* NOTE: ▲/▼ 箭头键 — 跨两行，左侧窄列 */
+.np-arrow {
+    grid-row: span 2;
+    grid-column: 1;
+    font-size: 24px;
+    background: #4a4a4e;
+    color: #fff;
+    opacity: 0.4;
+    transition: opacity 0.2s, background 0.2s;
+}
+/* NOTE: 柱子选中时箭头高亮 */
+.np-arrow.active {
+    opacity: 1;
+    background: rgba(255, 128, 0, 0.85);
+}
+.np-arrow:active {
+    background: #7a7a7e;
 }
 
 /* ── 指标对比表格 ── */

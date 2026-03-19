@@ -11,6 +11,7 @@ import { isMbf } from './state.js';
 
 import { getTargetAvg, setTargetAvg } from './calc_table.js';
 import { isWR } from './wr_data.js';
+import { adjustSelectedBar, hasSelection } from './chart_drag.js';
 
 // NOTE: 当前聚焦的单元格 [player, solve]，-1 表示无聚焦
 var activeCell = [-1, -1];
@@ -189,6 +190,8 @@ export function init(gridContainer) {
         bkspBtn.addEventListener('touchcancel', cancelLongPress);
     }
 
+    // NOTE: ▲/▼ 箭头按钮 — 长按加速精调选中柱子
+    initArrowButtons();
 
 }
 
@@ -608,6 +611,9 @@ function onNumpadClick(e) {
 }
 
 function numpadPress(key) {
+    // NOTE: ▲/▼ 由 initArrowButtons 独立处理（长按加速），此处跳过
+    if (key === 'arrow-up' || key === 'arrow-down') return;
+
     var p = activeCell[0];
     var t = activeCell[1];
 
@@ -879,4 +885,73 @@ export function flushToState() {
             ? textToMbfScore(tavgCells[p].value)
             : textToTime(tavgCells[p].value));
     }
+}
+
+// ── ▲/▼ 箭头按钮 — 长按加速精调 ──
+
+// NOTE: 同步箭头按钮高亮状态 — 有柱子选中时高亮，否则半透明
+export function syncArrowState() {
+    var btns = document.querySelectorAll('.np-arrow');
+    var active = hasSelection();
+    for (var i = 0; i < btns.length; i++) {
+        btns[i].classList.toggle('active', active);
+    }
+}
+
+function initArrowButtons() {
+    var arrows = document.querySelectorAll('.np-arrow');
+    if (!arrows.length) return;
+
+    arrows.forEach(function(btn) {
+        var dir = btn.dataset.key === 'arrow-up' ? 1 : -1;
+        var repeatTimer = null; // repeat interval ID
+        var startTime = 0;     // 按下时刻（用于加速判断）
+        var pressing = false;
+
+        function getStep() {
+            // NOTE: 持续按时间越长步长越大
+            var elapsed = Date.now() - startTime;
+            if (state.event === '333fm' || isMbf()) return 100;
+            if (elapsed > 3000) return 100; // 3s 后 ±1.00s
+            if (elapsed > 1000) return 10;  // 1s 后 ±0.10s
+            return 1;                        // 默认 ±0.01s
+        }
+
+        function doAdjust() {
+            adjustSelectedBar(dir, getStep());
+            if (navigator.vibrate) navigator.vibrate(5);
+        }
+
+        function startPress(e) {
+            e.preventDefault();
+            if (pressing) return;
+            pressing = true;
+            startTime = Date.now();
+            // 立即触发一次
+            doAdjust();
+            // 300ms 后开始 repeat（50ms 间隔 = 20次/秒）
+            repeatTimer = setTimeout(function() {
+                repeatTimer = setInterval(doAdjust, 50);
+            }, 300);
+        }
+
+        function endPress(e) {
+            if (!pressing) return;
+            pressing = false;
+            if (repeatTimer) {
+                clearTimeout(repeatTimer);
+                clearInterval(repeatTimer);
+                repeatTimer = null;
+            }
+        }
+
+        // NOTE: 桌面端
+        btn.addEventListener('mousedown', startPress);
+        btn.addEventListener('mouseup', endPress);
+        btn.addEventListener('mouseleave', endPress);
+        // NOTE: 移动端
+        btn.addEventListener('touchstart', startPress, { passive: false });
+        btn.addEventListener('touchend', endPress);
+        btn.addEventListener('touchcancel', endPress);
+    });
 }
