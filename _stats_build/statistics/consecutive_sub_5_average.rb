@@ -101,7 +101,9 @@ class ConsecutiveSub5Average < Statistic
 
   # NOTE: 构建 历史——按结束日期排序，只保留 >= 当前最大值的行，最终倒序
   def build_wr_history(streaks)
-    sorted = streaks.sort_by { |s| s[:end_date] }
+    # NOTE: sort_by 单 key 在混合 key 时不稳定，加第二键 count 升序
+    # 这里用 >= 追踪最大值，同日期内从小到大扫描不遗漏
+    sorted = streaks.sort_by { |s| [s[:end_date], s[:count]] }
     max_count = 0
     history = sorted.filter_map do |s|
       if s[:count] >= max_count && s[:count] > 1
