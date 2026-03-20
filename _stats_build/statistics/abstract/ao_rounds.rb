@@ -187,7 +187,9 @@ class AoRounds < GroupedStatistic
 
   # NOTE: 历史——按日期正序扫描，只保留刷新最小值的记录，最终倒序
   def build_wr_history(computed, event_id)
-    sorted = computed.sort_by { |r| r["start_date"] }
+    # NOTE: sort_by 单 key 在混合 key 时不稳定，加第二键 -_metric 降序
+    # 确保同日期内从大到小扫描，不遗漏中间值
+    sorted = computed.sort_by { |r| [r["start_date"], -r["_metric"]] }
     min_so_far = Float::INFINITY
     wr_records = sorted.select do |r|
       if r["_metric"] < min_so_far

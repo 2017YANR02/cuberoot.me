@@ -92,6 +92,9 @@ class RoundMetric < GroupedStatistic
 
       # 构建 历史：按日期正序扫描，保留刷新或等于最小值的记录（含 tie WR）
       # NOTE: <= 包含平 WR，与 WCA 官方行为一致；同值行 Improvement 显示 0.0%
+      # NOTE: sort_by 单 key 在混合 key 时不稳定，同日期加第二键 -metric 降序
+      # 确保同日期内从大到小扫描，不遗漏中间值
+      computed.sort_by! { |r| [r["start_date"], -r["_metric"]] }
       min_so_far = Float::INFINITY
       wr_records = computed.select do |r|
         if r["_metric"] <= min_so_far
