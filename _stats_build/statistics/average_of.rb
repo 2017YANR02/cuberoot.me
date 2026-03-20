@@ -36,11 +36,21 @@ class AverageOf < Statistic
 
   def markdown
     md = top
+    md += metric_tab_wrap_start
 
     md += aggregate_panels(AOX_CLASSES, AOX_META) do |inst, prefix|
-      grouped_panel(prefix, true, inst.data, inst.table_header)
+      # NOTE: 双 Tab 视图——复用 wr_aoxr.rb 的 grouped_panel 模式
+      ranking = inst.ranking_data
+      history = inst.wr_history
+
+      panel = grouped_panel("#{prefix}-ranking", true, ranking, AverageOfX::RANKING_HEADER_AOX,
+                            label_en: "Current Ranking", label_zh: "排名")
+      panel += grouped_panel("#{prefix}-history", false, history, inst.history_header,
+                             label_en: "WR History", label_zh: "历史")
+      panel
     end
 
+    md += metric_tab_wrap_end
     md
   end
 end
