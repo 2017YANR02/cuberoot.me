@@ -82,6 +82,39 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // NOTE: 异步重载已登录用户的个人数据 — 切换项目后自动激活 Row A
+    // 采用 fire-and-forget 模式：同步回调先用 WR 默认值填充，此函数异步获取个人数据后覆盖
+    async function reloadActiveOverrides(eventId) {
+        if (typeof WcaAuth === 'undefined' || !WcaAuth.isLoggedIn()) return;
+        var user = WcaAuth.getUser();
+        if (!user || !user.wcaId) return;
+
+        var p = 0; // NOTE: 仅 Row A 自动激活（登录用户）
+        inputGrid.setMeButtonState(p, false, '⏳');
+
+        var data = await wcaApi.fetchUserTimes(user.wcaId, eventId);
+
+        // NOTE: 竞态保护 — 用户在 fetch 期间又切了项目，忽略过期响应
+        if (state.event !== eventId) return;
+
+        if (!data) {
+            inputGrid.setMeButtonState(p, false);
+            // NOTE: 无数据时仍恢复头像（已登录但该项目无成绩）
+            if (user.avatar) inputGrid.setMeAvatarUrl(user.avatar);
+            return;
+        }
+
+        wrData.setPlayerOverride(p, data);
+        // NOTE: 用选手官方 average PR 覆盖 WR 默认 Target
+        if (data.averagePR && !isMbf()) {
+            setTargetAvg(state.seedOn + p, data.averagePR);
+        }
+        inputGrid.setMeButtonState(p, true, null, user.avatar || '');
+        updateProgressInfo(p, playerProgress[p]);
+        // NOTE: 个人数据就绪后重新 rand-fill — 用个人 KDE 分布采样
+        document.getElementById('rand-fill').click();
+    }
+
     // NOTE: 初始化项目选择器
     eventSelector.init(document.getElementById('event-selector-container'), function (eventId) {
         state.event = eventId;
@@ -101,6 +134,11 @@ document.addEventListener('DOMContentLoaded', () => {
         clearTargetAvgs();
         initTargetDefaults();
         document.getElementById('rand-fill').click();
+        // NOTE: 立即刷新进度条 info 文字 — 用新项目的 KDE μ 重算
+        updateProgressInfo(0, playerProgress[0]);
+        updateProgressInfo(1, playerProgress[1]);
+        // NOTE: 异步重载个人数据（fire-and-forget）— 完成后覆盖 Target + 重新 rand-fill
+        reloadActiveOverrides(eventId);
     });
 
     // NOTE: 注册秒表回调（空格键触发）
