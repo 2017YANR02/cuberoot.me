@@ -81,6 +81,34 @@ h1 {
   margin-top: 2px;
 }
 
+/* ─── 模式切换按钮 ─── */
+.mode-toggle {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.mode-btn {
+  padding: 6px 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-family: 'JetBrains Mono', monospace;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.mode-btn:hover {
+  border-color: var(--accent-cyan);
+  color: var(--text-primary);
+}
+.mode-btn.active {
+  background: rgba(0, 230, 255, 0.12);
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+}
+
 /* ─── Canvas 容器 ─── */
 .canvas-wrapper {
   position: relative;
@@ -349,13 +377,29 @@ kbd {
 .ridgeline-wrapper {
   position: relative;
   width: 100%;
+  max-height: 500px;
+  overflow-y: auto;
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
   border-radius: 16px;
-  overflow: hidden;
   box-shadow:
     0 0 0 1px rgba(180, 60, 255, 0.04),
     0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* 自定义滚动条 */
+.ridgeline-wrapper::-webkit-scrollbar {
+  width: 6px;
+}
+.ridgeline-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+.ridgeline-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
+}
+.ridgeline-wrapper::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
 }
 
 #ridgelineCanvas {
