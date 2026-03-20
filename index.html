@@ -172,6 +172,14 @@
             box-shadow: 0 8px 32px rgba(99, 102, 241, 0.12);
         }
 
+        .card-viz {
+            --card-gradient: linear-gradient(90deg, #06b6d4, #0ea5e9, #6366f1);
+        }
+        .card-viz:hover {
+            border-color: rgba(6, 182, 212, 0.4);
+            box-shadow: 0 8px 32px rgba(6, 182, 212, 0.12);
+        }
+
         .card-icon {
             font-size: 3rem;
             margin-bottom: 1rem;
@@ -427,6 +435,12 @@
             <div class="card-icon">⚔️</div>
             <div class="card-name" data-i18n="index.battle">1v1 Battle</div>
             <div class="card-desc" data-i18n="index.battle_desc">Head-to-head cube battle timer, challenge your friends face to face</div>
+        </a>
+
+        <a href="viz/" class="glass-card card card-viz" id="card-viz">
+            <div class="card-icon">📈</div>
+            <div class="card-name" data-i18n="index.viz">Distribution</div>
+            <div class="card-desc" data-i18n="index.viz_desc">Visualize how solve time distributions evolve over competitions, compare multiple cubers</div>
         </a>
 
         <a href="cstimer/" class="glass-card card card-cstimer" id="card-cstimer">

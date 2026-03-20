@@ -11,6 +11,7 @@
   // DNF 数 > trim → 结果 DNF
   var CONFIGS = [
     { key: 'mo3',   size: 3,   trim: 0,  label: 'Mo3'   },
+    { key: 'ao5',   size: 5,   trim: 1,  label: 'Ao5'   },
     { key: 'ao12',  size: 12,  trim: 1,  label: 'Ao12'  },
     { key: 'ao25',  size: 25,  trim: 1,  label: 'Ao25'  },
     { key: 'ao50',  size: 50,  trim: 2,  label: 'Ao50'  },
