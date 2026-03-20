@@ -49,19 +49,7 @@ var tooltipEl = null;       // HTML tooltip div（badge 指标说明）
 var chartContainer = null;  // 图表容器 DOM
 var lastConfettiKey = '';    // NOTE: 防止 confetti 重复触发（记录上次触发时的状态 key）
 
-// NOTE: 预加载 skull.png 为 base64 data URL，避免 SVG <image> 每次重建时触发网络请求闪烁
-var skullDataUrl = '/assets/images/skull.png'; // 默认回退
-(function preloadSkull() {
-    var img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = function () {
-        var c = document.createElement('canvas');
-        c.width = img.naturalWidth; c.height = img.naturalHeight;
-        c.getContext('2d').drawImage(img, 0, 0);
-        skullDataUrl = c.toDataURL('image/png');
-    };
-    img.src = '/assets/images/skull.png';
-})();
+// NOTE: skull 标记统一用 💀 emoji，不再依赖 skull.png 图片
 
 // 图表参数缓存（等价于原代码的 g 对象）
 var gp = {};
@@ -437,16 +425,14 @@ function drawGhostBars() {
         var bx = barX + bm + (fullW - bw) / 2;
 
         if (ghost.type === 'impossible') {
-            // 💀 标签（带 tooltip）— 复用已有元素避免图片重新加载闪烁
+            // 💀 emoji 标签（带 tooltip）— 复用已有元素避免闪烁
             var labelY = valToYCap(tavg);
             var cx = bx + bw / 2, cy = labelY;
             var existSkull = topTextGroup.querySelector('.chart-skull[data-player="' + p + '"]');
             if (existSkull) {
                 // 复用 — 只更新位置
-                var circle = existSkull.querySelector('circle');
-                var img = existSkull.querySelector('image');
-                if (circle) { circle.setAttribute('cx', cx); circle.setAttribute('cy', cy); }
-                if (img) { img.setAttribute('x', cx - 18); img.setAttribute('y', cy - 18); }
+                var skullText = existSkull.querySelector('text');
+                if (skullText) { skullText.setAttribute('x', cx); skullText.setAttribute('y', cy + 12); }
             } else {
                 var skullGroup = createSvgElement('g', { cursor: 'help', class: 'chart-skull', 'data-player': p });
                 (function () {
@@ -461,18 +447,13 @@ function drawGhostBars() {
                         tooltipEl.style.opacity = '0';
                     });
                 })();
-                // NOTE: 红底 + skull.png — 提升图表中的对比度
-                var skullSize = 36;
-                skullGroup.appendChild(createSvgElement('circle', {
-                    cx: cx, cy: cy, r: skullSize / 2 + 7,
-                    fill: '#D32F2F',
-                }));
-                skullGroup.appendChild(createSvgElement('image', {
-                    href: skullDataUrl,
-                    x: cx - skullSize / 2,
-                    y: cy - skullSize / 2,
-                    width: skullSize, height: skullSize,
-                }));
+                // NOTE: 纯 💀 emoji — 无背景圆圈
+                var skullEl = createSvgElement('text', {
+                    x: cx, y: cy + 12,
+                    'font-size': '36px', 'text-anchor': 'middle',
+                });
+                skullEl.textContent = '💀';
+                skullGroup.appendChild(skullEl);
                 topTextGroup.appendChild(skullGroup);
             }
             continue;
@@ -652,9 +633,8 @@ function drawGhostBars() {
             // 文字/图片内容
             var tx = lx + (bw + br) / 2;
             if (b.skull) {
-                // NOTE: impossible badge — 单行文字 + skull.png 居中
-                var skullSz = 22;
-                var totalW = 30 + skullSz; // 文字约30px + 图片
+                // NOTE: impossible badge — 单行文字 + 💀 emoji 居中
+                var totalW = 52; // 文字约30px + emoji约22px
                 var startX = tx - totalW / 2;
                 var textEl1 = createSvgElement('text', {
                     x: startX + 15, y: by + 26, fill: '#fff', 'font-size': '15px',
@@ -662,11 +642,11 @@ function drawGhostBars() {
                 });
                 textEl1.textContent = b.line1;
                 badgeGroup.appendChild(textEl1);
-                badgeGroup.appendChild(createSvgElement('image', {
-                    href: skullDataUrl,
-                    x: startX + 30, y: by + (bh - skullSz) / 2,
-                    width: skullSz, height: skullSz,
-                }));
+                var skullEmoji = createSvgElement('text', {
+                    x: startX + 42, y: by + 28, 'font-size': '18px', 'text-anchor': 'middle',
+                });
+                skullEmoji.textContent = '💀';
+                badgeGroup.appendChild(skullEmoji);
             } else {
                 // 2 行白色文字
                 var textEl1 = createSvgElement('text', {
