@@ -534,6 +534,33 @@ kbd {
   opacity: 1;
 }
 
+/* ─── CSV 选人菜单 ─── */
+.csv-player-menu {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  margin-bottom: 6px;
+  background: rgba(20, 20, 40, 0.95);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px;
+  padding: 4px 0;
+  min-width: 200px;
+  z-index: 2000;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+.csv-menu-item {
+  padding: 8px 14px;
+  font-size: 13px;
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: background 0.15s;
+}
+.csv-menu-item:hover {
+  background: rgba(255,255,255,0.08);
+}
+
 /* ─── Loading Overlay ─── */
 .loading-overlay {
   position: fixed;

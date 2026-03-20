@@ -43,7 +43,8 @@ let dateTimeline = [];
 let currentFrame = 0;      // 窗口起始位置
 let maxFrame = 0;          // 最大帧
 let isPlaying = false;
-let playSpeed = 3;
+let playSpeed = 0.3;
+let frameAccum = 0;  // NOTE: 小数速度累加器
 let animationId = null;
 
 // NOTE: globalMaxY 需要在所有选手中取最大
@@ -82,20 +83,73 @@ async function init() {
     await reloadAllPlayers(this.value);
   });
 
-  // ── CSV 下载（导出主选手数据）──
+  // ── CSV 下载（多选手时弹出选择）──
   document.getElementById('csvDownload').addEventListener('click', function () {
-    const p = players[activePlayerIdx];
-    if (!p || !p.statsData || !p.solveEntries.length) return;
-    CsvExport.download({
-      wcaId: p.wcaId,
-      eventId: currentEventId,
-      solveEntries: p.solveEntries,
-      stats: p.statsData
-    });
+    if (players.length === 0) return;
+    if (players.length === 1) {
+      downloadCsvForPlayer(0);
+    } else {
+      showCsvPlayerMenu();
+    }
   });
 
   // 默认加载耿暄一
   await addPlayer('2023GENG02', '333');
+}
+
+/**
+ * NOTE: 导出指定选手的 CSV
+ */
+function downloadCsvForPlayer(idx) {
+  const p = players[idx];
+  if (!p || !p.statsData || !p.solveEntries.length) return;
+  CsvExport.download({
+    wcaId: p.wcaId,
+    eventId: currentEventId,
+    solveEntries: p.solveEntries,
+    stats: p.statsData
+  });
+}
+
+/**
+ * NOTE: 多选手时弹出菜单让用户选择下载谁
+ */
+function showCsvPlayerMenu() {
+  // 移除已有菜单
+  const old = document.getElementById('csvPlayerMenu');
+  if (old) old.remove();
+
+  const menu = document.createElement('div');
+  menu.id = 'csvPlayerMenu';
+  menu.className = 'csv-player-menu';
+
+  players.forEach((p, i) => {
+    const item = document.createElement('div');
+    item.className = 'csv-menu-item';
+    // 颜色圆点 + 名字
+    item.innerHTML = `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${playerHSL(i)};margin-right:6px;"></span>` +
+      escapeHtml(p.nameZh || p.name) + ` (${p.wcaId})`;
+    item.addEventListener('click', () => {
+      menu.remove();
+      downloadCsvForPlayer(i);
+    });
+    menu.appendChild(item);
+  });
+
+  // 定位在 CSV 按钮附近
+  const csvBtn = document.getElementById('csvDownload');
+  csvBtn.parentElement.style.position = 'relative';
+  csvBtn.parentElement.appendChild(menu);
+
+  // 点击外部关闭
+  setTimeout(() => {
+    document.addEventListener('click', function closeMenu(e) {
+      if (!menu.contains(e.target)) {
+        menu.remove();
+        document.removeEventListener('click', closeMenu);
+      }
+    });
+  }, 0);
 }
 
 /**
@@ -809,7 +863,7 @@ function setupControls() {
     btn.addEventListener('click', e => {
       document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
       e.target.classList.add('active');
-      playSpeed = parseInt(e.target.dataset.speed);
+      playSpeed = parseFloat(e.target.dataset.speed);
     });
   });
 
@@ -867,9 +921,17 @@ function pause() {
 function animate() {
   if (!isPlaying) return;
 
-  currentFrame += playSpeed;
+  // NOTE: 累加器模式支持小数 playSpeed（0.3 = 每 3-4 帧前进 1 个日期）
+  frameAccum += playSpeed;
+  if (frameAccum >= 1) {
+    const step = Math.floor(frameAccum);
+    frameAccum -= step;
+    currentFrame += step;
+  }
+
   if (currentFrame >= maxFrame) {
     currentFrame = maxFrame;
+    frameAccum = 0;
     drawFrame();
     pause();
     return;
