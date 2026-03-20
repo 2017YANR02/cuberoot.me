@@ -305,7 +305,8 @@ function tickStopwatch() {
 
 // ── 模拟 Rand ──
 
-var SIM_MAX = 1000000; // 最大模拟次数
+var SIM_MAX = 1000000; // 单轮最大模拟次数
+var SIM_ROUNDS = 100;  // 多轮取中位数，消除几何分布的高方差波动
 // NOTE: 选手进步幅度 — 滑杆值 0~150，代表百分比
 var playerProgress = [0, 0];
 
@@ -423,7 +424,7 @@ function hideCount(id) {
     el.style.color = '';
 }
 
-// NOTE: 单选手模拟 — 循环直到击败 Target Avg
+// NOTE: 单选手模拟 — 100 轮取中位数，消除几何分布的高方差
 function simulateForPlayer(p) {
     var target = getTargetAvg(state.seedOn + p);
     if (target <= 0) {
@@ -437,30 +438,42 @@ function simulateForPlayer(p) {
     hideCount('sim-count-b');
     hideCount('sim-count-race');
 
-    var count = 0;
-    var result = null;
-    for (count = 1; count <= SIM_MAX; count++) {
-        result = simulateOnce(p);
-        if (isBeat(result.avg, target)) break;
+    // NOTE: 收集每轮的 { count, solves } 用于取中位数
+    var rounds = [];
+    for (var r = 0; r < SIM_ROUNDS; r++) {
+        var count = 0;
+        var result = null;
+        for (count = 1; count <= SIM_MAX; count++) {
+            result = simulateOnce(p);
+            if (isBeat(result.avg, target)) break;
+        }
+        if (count > SIM_MAX) {
+            // NOTE: 某一轮超限则跳过（不计入中位数样本）
+            continue;
+        }
+        rounds.push({ count: count, solves: result.solves });
     }
 
-    if (count > SIM_MAX) {
-        alert('Gave up after ' + SIM_MAX.toLocaleString() + ' tries. Target too hard!');
+    if (rounds.length === 0) {
+        alert('Gave up after ' + SIM_ROUNDS + ' × ' + SIM_MAX.toLocaleString() + ' tries. Target too hard!');
         return;
     }
 
-    // NOTE: 写入 state 并刷新
+    // NOTE: 按 count 排序，取中位数那一轮的 solves 写入 state
+    rounds.sort(function(a, b) { return a.count - b.count; });
+    var median = rounds[Math.floor(rounds.length / 2)];
+
     setSuppressConfetti(true);
     var n = solveCount();
     for (var t = 0; t < n; t++) {
-        updateTime(state.seedOn + p, t, result.solves[t]);
+        updateTime(state.seedOn + p, t, median.solves[t]);
     }
     setSuppressConfetti(false);
 
-    showCount(p === 0 ? 'sim-count-a' : 'sim-count-b', count);
+    showCount(p === 0 ? 'sim-count-a' : 'sim-count-b', median.count);
 }
 
-// NOTE: Race 模式 — 两选手交替模拟，先到 target 的胜出
+// NOTE: Race 模式 — 100 轮取中位数，两选手交替模拟
 function simulateRace() {
     var targetA = getTargetAvg(state.seedOn + 0);
     var targetB = getTargetAvg(state.seedOn + 1);
@@ -477,41 +490,73 @@ function simulateRace() {
     hideCount('sim-count-b');
     hideCount('sim-count-race');
 
-    var countA = 0, countB = 0;
-    var resultA = null, resultB = null;
-    var doneA = false, doneB = false;
+    // NOTE: 收集每轮的 { countA, countB, solvesA, solvesB, winner } 用于取中位数
+    var rounds = [];
+    for (var r = 0; r < SIM_ROUNDS; r++) {
+        var cA = 0, cB = 0;
+        var rA = null, rB = null;
+        var dA = false, dB = false;
 
-    for (var round = 1; round <= SIM_MAX; round++) {
-        if (!doneA) {
-            countA++;
-            resultA = simulateOnce(0);
-            if (isBeat(resultA.avg, targetA)) doneA = true;
+        for (var step = 1; step <= SIM_MAX; step++) {
+            if (!dA) {
+                cA++;
+                rA = simulateOnce(0);
+                if (isBeat(rA.avg, targetA)) dA = true;
+            }
+            if (!dB) {
+                cB++;
+                rB = simulateOnce(1);
+                if (isBeat(rB.avg, targetB)) dB = true;
+            }
+            if (dA || dB) break;
         }
-        if (!doneB) {
-            countB++;
-            resultB = simulateOnce(1);
-            if (isBeat(resultB.avg, targetB)) doneB = true;
+
+        if (!dA && !dB) continue; // 超限轮次跳过
+
+        // NOTE: 未达标方继续模拟直到达标（与原逻辑一致）
+        if (dA && !dB) {
+            for (var extra = 1; extra <= SIM_MAX; extra++) {
+                cB++;
+                rB = simulateOnce(1);
+                if (isBeat(rB.avg, targetB)) { dB = true; break; }
+            }
+        } else if (dB && !dA) {
+            for (var extra2 = 1; extra2 <= SIM_MAX; extra2++) {
+                cA++;
+                rA = simulateOnce(0);
+                if (isBeat(rA.avg, targetA)) { dA = true; break; }
+            }
         }
-        if (doneA || doneB) break;
+
+        // NOTE: 用 max(cA, cB) 作为排序键 — Race 关注整体结束时间
+        rounds.push({
+            countA: cA, countB: cB,
+            solvesA: rA ? rA.solves : null,
+            solvesB: rB ? rB.solves : null,
+            maxCount: Math.max(cA, cB)
+        });
     }
 
-    if (!doneA && !doneB) {
-        alert('Neither player beat their target within ' + SIM_MAX.toLocaleString() + ' tries!');
+    if (rounds.length === 0) {
+        alert('Neither player beat their target within ' + SIM_ROUNDS + ' × ' + SIM_MAX.toLocaleString() + ' tries!');
         return;
     }
 
-    // NOTE: 写入成功方的结果；未成功方用最后一轮的数据
+    // NOTE: 按 maxCount 排序取中位数
+    rounds.sort(function(a, b) { return a.maxCount - b.maxCount; });
+    var med = rounds[Math.floor(rounds.length / 2)];
+
     setSuppressConfetti(true);
     var n = solveCount();
     for (var t = 0; t < n; t++) {
-        if (resultA) updateTime(state.seedOn + 0, t, resultA.solves[t]);
-        if (resultB) updateTime(state.seedOn + 1, t, resultB.solves[t]);
+        if (med.solvesA) updateTime(state.seedOn + 0, t, med.solvesA[t]);
+        if (med.solvesB) updateTime(state.seedOn + 1, t, med.solvesB[t]);
     }
     setSuppressConfetti(false);
 
     // NOTE: 显示各自尝试次数，胜方绿色
-    var winner = doneA && !doneB ? 0 : (!doneA && doneB ? 1 : (countA <= countB ? 0 : 1));
-    showCount('sim-count-a', countA, winner === 0);
-    showCount('sim-count-b', countB, winner === 1);
-    showCount('sim-count-race', Math.max(countA, countB));
+    var winner = med.countA <= med.countB ? 0 : 1;
+    showCount('sim-count-a', med.countA, winner === 0);
+    showCount('sim-count-b', med.countB, winner === 1);
+    showCount('sim-count-race', med.maxCount);
 }
