@@ -66,6 +66,25 @@
           <span class="ghost-dot"></span>
           <span class="ghost-text" id="ghostMeanText"></span>
         </div>
+        <!-- 图例说明按钮 -->
+        <button class="legend-info-btn" id="legendInfoBtn" title="图例说明">ⓘ</button>
+        <div class="legend-tooltip" id="legendTooltip">
+          <label class="legend-toggle">
+            <span class="legend-diamond">◆</span> 当前值
+            <input type="checkbox" checked data-layer="currentVal">
+            <span class="toggle-pill"></span>
+          </label>
+          <label class="legend-toggle">
+            <span class="legend-circle">●</span> 窗口均值
+            <input type="checkbox" checked data-layer="meanLine">
+            <span class="toggle-pill"></span>
+          </label>
+          <label class="legend-toggle">
+            <span class="legend-ghost">━</span> 初始残影
+            <input type="checkbox" checked data-layer="ghost">
+            <span class="toggle-pill"></span>
+          </label>
+        </div>
       </div>
 
       <!-- 统计面板 -->
