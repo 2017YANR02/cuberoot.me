@@ -235,7 +235,7 @@ async function fetchPlayerData(wcaId, eventId) {
       const cs = attempts[a];
       if (cs === 0) continue;
       solveData.push([cs, compIdx]);
-      solveEntries.push({ cs, compName, roundType: r.round_type_id, attemptIdx: a });
+      solveEntries.push({ cs, compName, compDate: compMap[r.competition_id].date, roundType: r.round_type_id, attemptIdx: a });
     }
   }
 
