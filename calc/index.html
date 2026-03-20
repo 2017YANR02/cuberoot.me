@@ -3,7 +3,8 @@
 
 <head>
 	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+	<meta name="viewport"
+		content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 	<title>Head-to-Head Average of 5 Calculator</title>
 	<link rel="stylesheet" href="style.css">
 	<!-- NOTE: WCA 项目图标字体 -->
@@ -46,32 +47,59 @@
 			<div class="info-modal" id="info-modal">
 				<button class="info-modal-close" id="info-modal-close">&times;</button>
 				<div class="info-modal-body">
-					<p><strong>🎲 Rand</strong> — Randomly fill empty cells using <em>Kernel Density Estimation (KDE)</em>. For each player, a real solve is randomly sampled from their official Ao100, then Gaussian jitter is added (bandwidth from Silverman's rule: h = 0.9·min(σ, IQR/1.34)·n<sup>−0.2</sup>). This produces smooth, realistic variance around their actual performance. Events without Ao100 data (333fm, 444bf, 555bf) fall back to log-normal distribution. If all cells are filled, Rand overwrites all values.</p>
+					<p><strong>📊 PA Bar (right side)</strong> — The vertical bar on the right shows the range from Best
+						Possible Avg (BPA, bottom) to Worst Possible Avg (WPA, top). Drag the top or bottom end to
+						reverse-calculate what the missing solve needs to be.</p>
+
+					<p><strong>🎲 Rand</strong> — Randomly fill empty cells using <em>Kernel Density Estimation
+							(KDE)</em>. For each player, a real solve is randomly sampled from their official Ao100,
+						then Gaussian jitter is added (bandwidth from Silverman's rule: h = 0.9·min(σ,
+						IQR/1.34)·n<sup>−0.2</sup>). This produces smooth, realistic variance around their actual
+						performance. Events without Ao100 data (333fm, 444bf, 555bf) fall back to log-normal
+						distribution. If all cells are filled, Rand overwrites all values.</p>
 
 					<p><strong>🎯 A / 🎯 B</strong> — "How many Ao5 rounds until this player beats the Target?"</p>
 					<p style="margin-left:12px; margin-top:-8px;">
-					<strong>Step 1 — Estimate p:</strong> 100,000 independent Ao5 sets are sampled using the same KDE distribution. Each Ao5 is checked against the Target Avg. The fraction that beat the target gives <em>p̂</em> = P(Ao5 ≤ Target).<br>
-					<strong>Step 2 — Geometric median:</strong> Each attempt is a Bernoulli trial with success probability p. The number of attempts until success follows the <em>Geometric distribution</em> Geo(p). Its median is:<br>
-					<span style="font-family:serif; font-size:15px; margin-left:12px;">median = ⌈−ln2 / ln(1−p)⌉</span><br>
-					<strong>Step 3 — Display data:</strong> One additional round runs until it beats the target. That round's solves are written to the cells.<br>
-					<strong>×N</strong> = The theoretical median attempts. <strong>(p=X%)</strong> = The estimated probability of beating the target in a single Ao5. A higher p means easier target; lower p means harder.</p>
+						<strong>Step 1 — Estimate p:</strong> 100,000 independent Ao5 sets are sampled using the same
+						KDE distribution. Each Ao5 is checked against the Target Avg. The fraction that beat the target
+						gives <em>p̂</em> = P(Ao5 ≤ Target).<br>
+						<strong>Step 2 — Geometric median:</strong> Each attempt is a Bernoulli trial with success
+						probability p. The number of attempts until success follows the <em>Geometric distribution</em>
+						Geo(p). Its median is:<br>
+						<span style="font-family:serif; font-size:15px; margin-left:12px;">median = ⌈−ln2 /
+							ln(1−p)⌉</span><br>
+						<strong>Step 3 — Display data:</strong> One additional round runs until it beats the target.
+						That round's solves are written to the cells.<br>
+						<strong>×N</strong> = The theoretical median attempts. <strong>(p=X%)</strong> = The estimated
+						probability of beating the target in a single Ao5. A higher p means easier target; lower p means
+						harder.
+					</p>
 
-					<p><strong>⚔️ Race</strong> — Estimates pA and pB independently, computes each player's geometric median. The one with fewer median attempts wins (appears in green). Display data is generated separately for each player.</p>
+					<p><strong>⚔️ Race</strong> — Estimates pA and pB independently, computes each player's geometric
+						median. The one with fewer median attempts wins (appears in green). Display data is generated
+						separately for each player.</p>
 
-					<p><strong>📈 Improvement Slider (A / B)</strong> — Models player progress beyond their Ao100 baseline.<br>
-					• 0% = Current level (Ao100 mean from official results)<br>
-					• 100% = Improved enough that expected average ≈ Target Avg<br>
-					• &gt;100% = Surpassed the target<br>
-					Each sampled solve is scaled by α = 1 − (progress ÷ 100) × (1 − Target ÷ μ), where μ = Ao100 mean. This preserves the coefficient of variation (CV) — both mean and standard deviation shrink proportionally, consistent with how real cubers improve.</p>
+					<p><strong>📈 Improvement Slider (A / B)</strong> — Models player progress beyond their Ao100
+						baseline.<br>
+						• 0% = Current level (Ao100 mean from official results)<br>
+						• 100% = Improved enough that expected average ≈ Target Avg<br>
+						• &gt;100% = Surpassed the target<br>
+						Each sampled solve is scaled by α = 1 − (progress ÷ 100) × (1 − Target ÷ μ), where μ = Ao100
+						mean. This preserves the coefficient of variation (CV) — both mean and standard deviation shrink
+						proportionally, consistent with how real cubers improve.</p>
 
-					<p><strong>📊 PA Bar (right side)</strong> — The vertical bar on the right shows the range from Best Possible Avg (BPA, bottom) to Worst Possible Avg (WPA, top). Drag the top or bottom end to reverse-calculate what the missing solve needs to be.</p>
+					<p><strong>👤 Avatar Buttons (right of checkbox)</strong> — Replace world record data with personal
+						WCA data.<br>
+						<strong>Row A (top):</strong> Click the avatar to use your own data. If not logged in, you'll be
+						redirected to WCA login first. After login, the avatar shows your WCA profile photo.<br>
+						<strong>Row B (bottom):</strong> Click to enter any WCA ID (e.g. 2017GENG01). This lets you
+						compare any two cubers head-to-head — no login required.<br>
+						When activated (orange glow), that row's #1–#5 solves are sampled from the selected cuber's
+						recent official singles (up to 100, KDE-smoothed), and the Target Avg is automatically set to
+						their official average PR. Click again to switch back to world record data.
+					</p>
 
-				<p><strong>👤 Avatar Buttons (right of checkbox)</strong> — Replace world record data with personal WCA data.<br>
-				<strong>Row A (top):</strong> Click the avatar to use your own data. If not logged in, you'll be redirected to WCA login first. After login, the avatar shows your WCA profile photo.<br>
-				<strong>Row B (bottom):</strong> Click to enter any WCA ID (e.g. 2017GENG01). This lets you compare any two cubers head-to-head — no login required.<br>
-				When activated (orange glow), that row's #1–#5 solves are sampled from the selected cuber's recent official singles (up to 100, KDE-smoothed), and the Target Avg is automatically set to their official average PR. Click again to switch back to world record data.</p>
-
-				<p><strong>⌫ Long press</strong> = Clear All (resets all cells and Target Avg).</p>
+					<p><strong>⌫ Long press</strong> = Clear All (resets all cells and Target Avg).</p>
 				</div>
 			</div>
 		</div>
@@ -80,12 +108,14 @@
 		<div class="progress-controls" id="progress-controls">
 			<div class="progress-row progress-a">
 				<span class="progress-label">A</span>
-				<input type="range" id="progress-slider-a" class="progress-slider slider-a" min="0" max="150" value="0" step="1">
+				<input type="range" id="progress-slider-a" class="progress-slider slider-a" min="0" max="150" value="0"
+					step="1">
 				<span id="progress-info-a" class="progress-info">0%</span>
 			</div>
 			<div class="progress-row progress-b">
 				<span class="progress-label">B</span>
-				<input type="range" id="progress-slider-b" class="progress-slider slider-b" min="0" max="150" value="0" step="1">
+				<input type="range" id="progress-slider-b" class="progress-slider slider-b" min="0" max="150" value="0"
+					step="1">
 				<span id="progress-info-b" class="progress-info">0%</span>
 			</div>
 		</div>
@@ -99,8 +129,9 @@
 					<button class="np-btn np-digit" data-key="1">1</button>
 					<button class="np-btn np-digit" data-key="2">2</button>
 					<button class="np-btn np-digit" data-key="3">3</button>
-					<button class="np-btn np-op" data-key="backspace"><svg viewBox="0 0 33 22" width="33"
-						height="22"><use href="/assets/icons.svg#icon-backspace"/></svg></button>
+					<button class="np-btn np-op" data-key="backspace"><svg viewBox="0 0 33 22" width="33" height="22">
+							<use href="/assets/icons.svg#icon-backspace" />
+						</svg></button>
 					<button class="np-btn np-digit" data-key="4">4</button>
 					<button class="np-btn np-digit" data-key="5">5</button>
 					<button class="np-btn np-digit" data-key="6">6</button>
@@ -108,12 +139,12 @@
 					<button class="np-btn np-digit" data-key="7">7</button>
 					<button class="np-btn np-digit" data-key="8">8</button>
 					<button class="np-btn np-digit" data-key="9">9</button>
-					<button class="np-btn np-action np-enter" data-key="enter"><svg viewBox="0 0 24 24"
-						width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
-						stroke-linecap="round" stroke-linejoin="round">
-						<polyline points="9 10 4 15 9 20" />
-						<path d="M20 4v7a4 4 0 0 1-4 4H4" />
-					</svg></button>
+					<button class="np-btn np-action np-enter" data-key="enter"><svg viewBox="0 0 24 24" width="24"
+							height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+							stroke-linejoin="round">
+							<polyline points="9 10 4 15 9 20" />
+							<path d="M20 4v7a4 4 0 0 1-4 4H4" />
+						</svg></button>
 					<button class="np-btn np-digit" data-key="dotcolon">·:</button>
 					<button class="np-btn np-digit" data-key="0">0</button>
 					<button class="np-btn np-action-alt" data-key="tab">TAB</button>
@@ -148,12 +179,12 @@
 	<script src="/assets/js/logo_nav.js" defer></script>
 	<script>
 		// NOTE: iOS Safari 会忽略 user-scalable=no，需要 JS 拦截多指 touch 阻止 pinch-to-zoom
-		document.addEventListener('touchmove', function(e) {
+		document.addEventListener('touchmove', function (e) {
 			if (e.touches.length > 1) e.preventDefault();
 		}, { passive: false });
 		// NOTE: Safari 专有 gesture 事件 — pinch-to-zoom 的真正入口
-		document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
-		document.addEventListener('gesturechange', function(e) { e.preventDefault(); });
+		document.addEventListener('gesturestart', function (e) { e.preventDefault(); });
+		document.addEventListener('gesturechange', function (e) { e.preventDefault(); });
 	</script>
 
 	<!-- NOTE: 选手搜索模态框（Row B 点击头像时弹出） -->

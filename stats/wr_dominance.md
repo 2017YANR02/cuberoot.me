@@ -83,7 +83,7 @@
 <h3 data-i18n-en="3x3x3 Multi-Blind" data-i18n-zh="多盲">3x3x3 Multi-Blind</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Count</th><th>Date</th><th>Competition</th></tr>
-<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2016SIGG01">Graham Siggins</a></td><td style="text-align:right">1</td><td>2026-03-14</td><td><a href="https://www.worldcubeassociation.org/competitions/SCUIIIFMCTripleScoop2026">SCU III: FMC Triple-Scoop 2026</a></td></tr>
+<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2016SIGG01">Graham Siggins</a></td><td style="text-align:right">1</td><td>2026-02-28</td><td><a href="https://www.worldcubeassociation.org/competitions/Richardshhhon2026">Richardshhhon 2026</a></td></tr>
 </table>
 <h3 data-i18n-en="3x3x3 With Feet" data-i18n-zh="三阶脚拧">3x3x3 With Feet</h3>
 <table>
@@ -367,7 +367,7 @@
 <h3 data-i18n-en="2x2x2 Cube" data-i18n-zh="二阶魔方">2x2x2 Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Count</th><th>Date</th><th>Competition</th></tr>
-<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2016FEIS01">Sujan Feist</a></td><td style="text-align:right">1</td><td>2026-03-15</td><td><a href="https://www.worldcubeassociation.org/competitions/MorrowMixupMania2026">Morrow Mixup Mania 2026</a></td></tr>
+<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2016FEIS01">Sujan Feist</a></td><td style="text-align:right">1</td><td>2026-03-07</td><td><a href="https://www.worldcubeassociation.org/competitions/OhioUniversity2026">Ohio University 2026</a></td></tr>
 </table>
 <h3 data-i18n-en="4x4x4 Cube" data-i18n-zh="四阶魔方">4x4x4 Cube</h3>
 <table>
@@ -392,12 +392,12 @@
 <h3 data-i18n-en="3x3x3 Fewest Moves" data-i18n-zh="最少步">3x3x3 Fewest Moves</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Count</th><th>Date</th><th>Competition</th></tr>
-<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2020BARA02">Radomił Baran</a></td><td style="text-align:right">1</td><td>2026-03-14</td><td><a href="https://www.worldcubeassociation.org/competitions/FMCNorway2026">FMC Norway 2026</a></td></tr>
+<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2020BARA02">Radomił Baran</a></td><td style="text-align:right">1</td><td>2026-02-28</td><td><a href="https://www.worldcubeassociation.org/competitions/WIWatOpole2026">WIW at Opole 2026</a></td></tr>
 </table>
 <h3 data-i18n-en="3x3x3 One-Handed" data-i18n-zh="三阶单手">3x3x3 One-Handed</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Count</th><th>Date</th><th>Competition</th></tr>
-<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2017GARR05">Luke Garrett</a></td><td style="text-align:right">1</td><td>2026-03-15</td><td><a href="https://www.worldcubeassociation.org/competitions/MorrowMixupMania2026">Morrow Mixup Mania 2026</a></td></tr>
+<tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2017GARR05">Luke Garrett</a></td><td style="text-align:right">1</td><td>2026-02-21</td><td><a href="https://www.worldcubeassociation.org/competitions/CincinnatiSpeedsolving2026">Cincinnati Speedsolving 2026</a></td></tr>
 </table>
 <h3 data-i18n-en="Megaminx" data-i18n-zh="五魔">Megaminx</h3>
 <table>
