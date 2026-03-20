@@ -107,3 +107,28 @@ export async function fetchPersonAvatar(wcaId) {
         return '';
     }
 }
+
+/**
+ * NOTE: 搜索 WCA 选手（调用官方搜索 API）
+ * @param {string} query - 搜索关键词（名字或 WCA ID）
+ * @returns {Promise<Array<{wcaId: string, name: string, iso2: string, avatarUrl: string}>>}
+ */
+export async function searchPersons(query) {
+    try {
+        var resp = await fetch(API_BASE + '/search/users?q=' + encodeURIComponent(query) + '&persons_table=true');
+        if (!resp.ok) return [];
+        var data = await resp.json();
+        if (!data.result) return [];
+        return data.result.map(function (p) {
+            return {
+                wcaId: p.wca_id || '',
+                name: p.name || '',
+                iso2: (p.country_iso2 || '').toLowerCase(),
+                avatarUrl: (p.avatar && !p.avatar.is_default) ? p.avatar.thumb_url : ''
+            };
+        });
+    } catch (e) {
+        console.warn('WCA person search failed:', e);
+        return [];
+    }
+}
