@@ -883,7 +883,7 @@ export function refresh() {
             } else if (ghost.type === 'conditional') {
                 tavgEmojis[p].textContent = '🎲';
             } else {
-                tavgEmojis[p].innerHTML = '<img src="/assets/images/skull.png" alt="skull" style="width:1em;height:1em;vertical-align:middle">';
+                tavgEmojis[p].textContent = '💀';
             }
         }
     }
