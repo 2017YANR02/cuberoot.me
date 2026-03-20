@@ -35,6 +35,10 @@ let canvas, ctx;
 let cw, ch;                // Canvas 逻辑尺寸（CSS 像素）
 
 // ─── 初始化 ───
+// NOTE: 其他模块（如 ridgeline.js）可通过 onDataReady() 注册回调
+const _dataReadyCallbacks = [];
+function onDataReady(fn) { _dataReadyCallbacks.push(fn); }
+
 async function init() {
   canvas = document.getElementById('kdeCanvas');
 
@@ -69,6 +73,9 @@ async function init() {
   setupControls();
   // 绘制初始帧
   drawFrame();
+
+  // 通知所有等待数据的模块
+  _dataReadyCallbacks.forEach(fn => fn());
 }
 
 // ─── Canvas DPI 适配 ───
