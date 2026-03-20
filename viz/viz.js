@@ -35,7 +35,10 @@ let currentEventId = '333';
 
 // NOTE: 7 种数据模式
 let dataMode = 'singles';
-// channelData 已迁入 player 对象内部
+
+// NOTE: 全局日期时间线 — 所有选手比赛日期的并集，排序后作为帧序列
+// currentFrame 映射到 dateTimeline[currentFrame]
+let dateTimeline = [];
 
 let currentFrame = 0;      // 窗口起始位置
 let maxFrame = 0;          // 最大帧
@@ -219,15 +222,18 @@ async function fetchPlayerData(wcaId, eventId) {
     });
 
   const competitions = [];
+  const compDates = [];       // NOTE: compDates[i] = 日期字符串，与 competitions[i] 平行
   const compNameSet = new Map();
   const solveData = [];
   const solveEntries = [];
 
   for (const r of eventResults) {
     const compName = compMap[r.competition_id].name;
+    const compDate = compMap[r.competition_id].date;
     if (!compNameSet.has(compName)) {
       compNameSet.set(compName, competitions.length);
       competitions.push(compName);
+      compDates.push(compDate);
     }
     const compIdx = compNameSet.get(compName);
     const attempts = r.attempts || [];
@@ -253,6 +259,7 @@ async function fetchPlayerData(wcaId, eventId) {
     solveData,
     channelData: [],
     competitions,
+    compDates,
     statsData,
     solveEntries,
     ghostKDE: null,
@@ -262,13 +269,14 @@ async function fetchPlayerData(wcaId, eventId) {
 }
 
 /**
- * NOTE: 重建所有选手的 channelData + 重算参数 + 绘帧
+ * NOTE: 重建所有选手的 channelData + 日期时间线 + 重算参数 + 绘帧
  */
 function rebuildAllChannels() {
   dataMode = dataMode || 'singles';
   for (const p of players) {
     buildChannelDataForPlayer(p);
   }
+  buildDateTimeline();
   recalcModeParams();
   drawFrame();
   _dataReadyCallbacks.forEach(fn => fn());
@@ -290,6 +298,41 @@ function buildChannelDataForPlayer(player) {
       player.channelData.push([arr[i], player.solveData[i][1]]);
     }
   }
+}
+
+/**
+ * NOTE: 构建全局日期时间线
+ * 从所有选手的 channelData 中收集比赛日期，去重排序
+ */
+function buildDateTimeline() {
+  const dateSet = new Set();
+  for (const p of players) {
+    for (const d of p.channelData) {
+      const compIdx = d[1];
+      dateSet.add(p.compDates[compIdx]);
+    }
+  }
+  dateTimeline = Array.from(dateSet).sort();
+}
+
+/**
+ * NOTE: 给定一个日期，返回该选手在此日期（含）之前最后一个 solve 的索引
+ * 返回 -1 表示该日期之前没有数据
+ */
+function solveIdxAtDate(playerIdx, targetDate) {
+  const p = players[playerIdx];
+  if (!p) return -1;
+  const cd = p.channelData;
+  let lastIdx = -1;
+  for (let i = 0; i < cd.length; i++) {
+    // channelData 已按日期排序，可以提前退出
+    if (p.compDates[cd[i][1]] <= targetDate) {
+      lastIdx = i;
+    } else {
+      break;
+    }
+  }
+  return lastIdx;
 }
 
 /**
@@ -486,7 +529,7 @@ function maxOfKDE(kde) {
 // ═══════════════════════════════════════
 
 function drawFrame() {
-  if (players.length === 0) return;
+  if (players.length === 0 || dateTimeline.length === 0) return;
   const { top: mt, right: mr, bottom: mb, left: ml } = MARGIN;
   const pw = cw - ml - mr;
   const ph = ch - mt - mb;
@@ -497,18 +540,24 @@ function drawFrame() {
   const sx = x => ml + ((x - xMin) / (xMax - xMin)) * pw;
   const sy = y => mt + ph - (y / globalMaxY) * ph;
 
+  // NOTE: 当前帧对应的日期
+  const currentDate = dateTimeline[Math.min(currentFrame, dateTimeline.length - 1)];
+
   // 1. 网格和坐标轴
   drawGrid(sx, sy, ml, mt, pw, ph);
 
   // 2. 循环绘制每位选手的 KDE 曲线
-  const meanPositions = []; // 记录均值用于标签绘制
+  const meanPositions = [];
   for (let pi = 0; pi < players.length; pi++) {
     const p = players[pi];
-    // NOTE: 短选手到末尾后冻结最终帧
-    const pMaxFrame = Math.max(0, p.channelData.length - windowSize);
-    const pFrame = Math.min(currentFrame, pMaxFrame);
+    // NOTE: 按日期找该选手窗口末尾的 solve index
+    const endIdx = solveIdxAtDate(pi, currentDate);
+    if (endIdx < 0) continue;  // 该日期之前该选手还没有数据
 
-    // 幽灵残影（只在当前帧 > 0 时显示）
+    // 窗口起始位置：从 endIdx 往前取 windowSize 个
+    const pFrame = Math.max(0, endIdx - windowSize + 1);
+
+    // 幽灵残影（只在前进过程中显示）
     if (p.ghostKDE && currentFrame > 0) {
       drawCurve(p.ghostKDE, sx, sy, {
         fill: playerHSL(pi, 0.03),
@@ -524,7 +573,6 @@ function drawFrame() {
     const currentMean = mean(times);
     meanPositions.push({ pi, mean: currentMean, name: p.nameZh || p.name });
 
-    // KDE 曲线 + 填充
     drawCurve(kde, sx, sy, {
       fill: playerHSL(pi, 0.15),
       stroke: playerHSL(pi, 0.85),
@@ -532,21 +580,22 @@ function drawFrame() {
       glow: pi === activePlayerIdx
     });
 
-    // 均值线
     drawMeanLine(sx, sy, mt, ph, currentMean, playerHSL(pi, 0.5), false);
   }
 
-  // 3. 均值标签（Canvas 内绘制，多选手适配）
+  // 3. 均值标签
   drawMeanLabelsOnCanvas(sx, mt, meanPositions);
 
   // 4. 更新主选手的 DOM 统计面板
   const ap = players[activePlayerIdx];
   if (ap) {
-    const apMaxFrame = Math.max(0, ap.channelData.length - windowSize);
-    const apFrame = Math.min(currentFrame, apMaxFrame);
-    const apTimes = getWindowTimes(activePlayerIdx, apFrame);
-    if (apTimes.length > 0) {
-      updateStats(apTimes, mean(apTimes));
+    const apEndIdx = solveIdxAtDate(activePlayerIdx, currentDate);
+    if (apEndIdx >= 0) {
+      const apFrame = Math.max(0, apEndIdx - windowSize + 1);
+      const apTimes = getWindowTimes(activePlayerIdx, apFrame);
+      if (apTimes.length > 0) {
+        updateStats(apTimes, mean(apTimes), currentDate);
+      }
     }
   }
 
@@ -561,10 +610,8 @@ function drawFrame() {
 
   // 7. 脊线图联动（主选手）
   if (typeof highlightRidgeRow === 'function' && ap) {
-    const apMaxFrame = Math.max(0, ap.channelData.length - windowSize);
-    const apFrame = Math.min(currentFrame, apMaxFrame);
-    const lastIdx = Math.min(apFrame + windowSize - 1, ap.channelData.length - 1);
-    highlightRidgeRow(lastIdx);
+    const apEndIdx = solveIdxAtDate(activePlayerIdx, currentDate);
+    if (apEndIdx >= 0) highlightRidgeRow(apEndIdx);
   }
 }
 
@@ -683,20 +730,22 @@ function drawMeanLine(sx, sy, mt, ph, meanVal, color, dashed) {
 }
 
 // ─── DOM 更新 ───
-function updateStats(times, currentMean) {
+function updateStats(times, currentMean, currentDate) {
   const ap = players[activePlayerIdx];
   if (!ap) return;
   const s = stddev(times);
   const delta = currentMean - ap.ghostMean;
-  const apMaxFrame = Math.max(0, ap.channelData.length - windowSize);
-  const apFrame = Math.min(currentFrame, apMaxFrame);
-  const info = getFrameCompInfo(activePlayerIdx, apFrame);
+  // NOTE: 按日期找主选手的当前比赛名
+  const endIdx = solveIdxAtDate(activePlayerIdx, currentDate);
+  const compIdx = endIdx >= 0 ? ap.channelData[endIdx][1] : 0;
+  const compName = ap.competitions[compIdx] || '';
 
   document.getElementById('statMean').textContent = currentMean.toFixed(2) + 's';
   document.getElementById('statStd').textContent = 'σ ' + s.toFixed(2) + 's';
-  document.getElementById('statComp').textContent = formatCompName(info.compName);
-  document.getElementById('statWindow').textContent =
-    `#${info.solveStart}–#${info.solveEnd}`;
+  // NOTE: 比赛名 + 日期
+  document.getElementById('statComp').textContent =
+    formatCompName(compName) + (currentDate ? ' (' + currentDate + ')' : '');
+  document.getElementById('statWindow').textContent = `#${endIdx - windowSize + 2}–#${endIdx + 1}`;
 
   const deltaEl = document.getElementById('statDelta');
   deltaEl.textContent = (delta >= 0 ? '+' : '') + delta.toFixed(2) + 's';
@@ -878,23 +927,25 @@ function recalcModeParams() {
     minBandwidth = Math.max(0.15, (hi - lo) * 0.03);
   }
 
-  // NOTE: maxFrame 取所有选手中最长的
-  maxFrame = 0;
-  for (const p of players) {
-    const pMax = p.channelData.length - windowSize;
-    if (pMax > maxFrame) maxFrame = pMax;
-  }
-  if (maxFrame < 0) maxFrame = 0;
-
+  // NOTE: maxFrame = 日期时间线长度 - 1
+  maxFrame = Math.max(0, dateTimeline.length - 1);
   currentFrame = 0;
 
-  // NOTE: 为每位选手预计算 ghostKDE + ghostMean
+  // NOTE: 为每位选手预计算 ghostKDE + ghostMean（用时间线首尾日期）
   globalMaxY = 0;
+  const firstDate = dateTimeline[0];
+  const lastDate = dateTimeline[dateTimeline.length - 1];
   for (let pi = 0; pi < players.length; pi++) {
     const p = players[pi];
-    const pMax = Math.max(0, p.channelData.length - windowSize);
-    const initTimes = getWindowTimes(pi, 0);
-    const finalTimes = getWindowTimes(pi, pMax);
+    // 初始分布：第一个日期时的窗口
+    const initEndIdx = solveIdxAtDate(pi, firstDate);
+    const initFrame = Math.max(0, initEndIdx - windowSize + 1);
+    const initTimes = initEndIdx >= 0 ? getWindowTimes(pi, initFrame) : [];
+    // 最终分布：最后一个日期时的窗口
+    const finalEndIdx = solveIdxAtDate(pi, lastDate);
+    const finalFrame = Math.max(0, finalEndIdx - windowSize + 1);
+    const finalTimes = finalEndIdx >= 0 ? getWindowTimes(pi, finalFrame) : [];
+
     p.ghostKDE = computeKDE(initTimes);
     p.ghostMean = initTimes.length > 0 ? mean(initTimes) : 0;
     const finalKDE = computeKDE(finalTimes);
