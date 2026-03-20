@@ -44,15 +44,26 @@
 			<div class="info-modal" id="info-modal">
 				<button class="info-modal-close" id="info-modal-close">&times;</button>
 				<div class="info-modal-body">
-					<p><strong>🎲 Rand</strong> — Randomly fill empty cells. Row 1 samples from Ao100 of World #1, Row 2 from World #2. Method: KDE (Kernel Density Estimation) — picks a real official solve and adds Gaussian jitter with Silverman's rule-of-thumb bandwidth. Events without Ao100 data (333fm, 444bf, 555bf) fall back to log-normal distribution. If all cells are filled, Rand overwrites all values.</p>
-					<p><strong>🎯 A / 🎯 B</strong> — Estimates the probability p of beating the Target Avg (via 10,000 Ao5 samples), then computes the theoretical median attempts using the geometric distribution formula: median = ⌈−ln2 / ln(1−p)⌉. Result is deterministic — no more fluctuation.</p>
-					<p><strong>⚔️ Race</strong> — Both players simulate simultaneously. First player whose average beats their target wins. The loser keeps trying until they also beat their target.</p>
+					<p><strong>🎲 Rand</strong> — Randomly fill empty cells using <em>Kernel Density Estimation (KDE)</em>. For each player, a real solve is randomly sampled from their official Ao100, then Gaussian jitter is added (bandwidth from Silverman's rule: h = 0.9·min(σ, IQR/1.34)·n<sup>−0.2</sup>). This produces smooth, realistic variance around their actual performance. Events without Ao100 data (333fm, 444bf, 555bf) fall back to log-normal distribution. If all cells are filled, Rand overwrites all values.</p>
+
+					<p><strong>🎯 A / 🎯 B</strong> — "How many Ao5 rounds until this player beats the Target?"</p>
+					<p style="margin-left:12px; margin-top:-8px;">
+					<strong>Step 1 — Estimate p:</strong> 100,000 independent Ao5 sets are sampled using the same KDE distribution. Each Ao5 is checked against the Target Avg. The fraction that beat the target gives <em>p̂</em> = P(Ao5 ≤ Target).<br>
+					<strong>Step 2 — Geometric median:</strong> Each attempt is a Bernoulli trial with success probability p. The number of attempts until success follows the <em>Geometric distribution</em> Geo(p). Its median is:<br>
+					<span style="font-family:serif; font-size:15px; margin-left:12px;">median = ⌈−ln2 / ln(1−p)⌉</span><br>
+					<strong>Step 3 — Display data:</strong> One additional round runs until it beats the target. That round's solves are written to the cells.<br>
+					<strong>×N</strong> = The theoretical median attempts. <strong>(p=X%)</strong> = The estimated probability of beating the target in a single Ao5. A higher p means easier target; lower p means harder.</p>
+
+					<p><strong>⚔️ Race</strong> — Estimates pA and pB independently, computes each player's geometric median. The one with fewer median attempts wins (appears in green). Display data is generated separately for each player.</p>
+
 					<p><strong>📈 Improvement Slider (A / B)</strong> — Models player progress beyond their Ao100 baseline.<br>
 					• 0% = Current level (Ao100 mean from official results)<br>
 					• 100% = Improved enough that expected average ≈ Target Avg<br>
 					• &gt;100% = Surpassed the target<br>
-					Math: each sampled solve is scaled by α = 1 − (progress ÷ 100) × (1 − Target ÷ μ), where μ = Ao100 mean. This preserves the coefficient of variation (CV), meaning both mean and standard deviation shrink proportionally — consistent with how real cubers improve.</p>
+					Each sampled solve is scaled by α = 1 − (progress ÷ 100) × (1 − Target ÷ μ), where μ = Ao100 mean. This preserves the coefficient of variation (CV) — both mean and standard deviation shrink proportionally, consistent with how real cubers improve.</p>
+
 					<p><strong>📊 PA Bar (right side)</strong> — The vertical bar on the right shows the range from Best Possible Avg (BPA, bottom) to Worst Possible Avg (WPA, top). Drag the top or bottom end to reverse-calculate what the missing solve needs to be.</p>
+
 					<p><strong>⌫ Long press</strong> = Clear All (resets all cells and Target Avg).</p>
 				</div>
 			</div>
