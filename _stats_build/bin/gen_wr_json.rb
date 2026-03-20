@@ -69,7 +69,8 @@ end
 # times_1/times_2 = 100 个原始成绩数组（KDE 采样数据源）
 begin
   ao100 = AverageOf100.new
-  ao100_rankings = ao100.ranking_data
+  # NOTE: AverageOfX < GroupedStatistic < Statistic，正确的数据方法是 data（非 ranking_data）
+  ao100_rankings = ao100.data
 
   ao100_rankings.each do |event_name, top10|
     next if top10.empty?
@@ -108,9 +109,14 @@ begin
       result[event_id]["times_#{suffix}"] = times unless times.empty?
     end
   end
-rescue => e
-  puts "WARN: Ao100 extraction failed: #{e.message}"
+end
+
+# NOTE: 校验 KDE 数据完整性 — 防止 CI 生成残缺 wr.json 覆盖旧数据
+has_kde = result.any? { |_, v| v.key?("times_1") }
+unless has_kde
+  abort "FATAL: wr.json has no KDE data (times_1 missing). Refusing to overwrite.\n" \
+        "Check AverageOf100 and database connectivity."
 end
 
 File.write(OUTPUT_PATH, JSON.pretty_generate(result) + "\n")
-puts "Generated #{OUTPUT_PATH} (#{result.size} events)"
+puts "Generated #{OUTPUT_PATH} (#{result.size} events, KDE data present)"
