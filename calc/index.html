@@ -8,6 +8,8 @@
 	<link rel="stylesheet" href="style.css">
 	<!-- NOTE: WCA 项目图标字体 -->
 	<link rel="stylesheet" href="https://cdn.cubing.net/v0/css/@cubing/icons/css">
+	<!-- NOTE: 国旗图标（选手搜索下拉用） -->
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.3.2/css/flag-icons.min.css">
 </head>
 
 <body>
@@ -153,6 +155,15 @@
 		document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
 		document.addEventListener('gesturechange', function(e) { e.preventDefault(); });
 	</script>
+
+	<!-- NOTE: 选手搜索模态框（Row B 点击头像时弹出） -->
+	<div class="person-search-overlay" id="person-search-overlay" style="display:none;">
+		<div class="person-search-modal">
+			<input type="text" class="person-search-input" id="person-search-input"
+				placeholder="Search by name or WCA ID..." autocomplete="off" />
+			<div class="person-search-results" id="person-search-results"></div>
+		</div>
+	</div>
 </body>
 
 </html>
