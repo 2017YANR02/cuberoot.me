@@ -287,10 +287,19 @@ p+.metric-tab-wrap {
   text-decoration: underline
 }
 
+/* NOTE: solve-list 成绩网格——折叠展开时用 10 列 grid */
 .solve-details .solve-list {
   display: grid;
   grid-template-columns: repeat(10, auto);
   gap: 2px 8px;
   padding: 4px 0;
+  font-size: 0.85em
+}
+
+/* NOTE: solve-list 直接展示（Mo3/Ao5/Ao12）——inline 排列 + 逗号分隔 */
+td > .solve-list {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  gap: 0 6px;
   font-size: 0.85em
 }

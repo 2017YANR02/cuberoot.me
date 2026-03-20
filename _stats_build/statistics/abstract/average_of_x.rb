@@ -314,17 +314,26 @@ class AverageOfX < GroupedStatistic
     end
   end
 
-  # NOTE: Details 折叠 HTML——懒加载模式
-  # 只输出 data-solves 属性（逗号分隔），JS 在 toggle 时才创建 DOM 节点
-  # 大幅减少初始 HTML 体积和 DOM 节点数
+  # NOTE: Details HTML
+  # ≤12 个成绩（Mo3/Ao5/Ao12）直接展示，不折叠
+  # >12 个成绩（Ao25/Ao50/Ao100）用 <details> 折叠 + data-solves 懒加载
+  LAZY_THRESHOLD = 12
+
   def details_html(solves, event_id)
     formatted = solves.map do |s|
       s == Float::INFINITY ? "DNF" : SolveTime.new(event_id, :single, s).clock_format
     end
-    summary_text = "#{formatted.size} solves"
-    csv = formatted.join(",")
-    "<details class=\"solve-details\" data-solves=\"#{csv}\">" \
-    "<summary>#{summary_text}</summary></details>"
+
+    if formatted.size <= LAZY_THRESHOLD
+      # NOTE: 直接展示——无折叠
+      spans = formatted.map { |t| "<span>#{t}</span>" }.join
+      "<div class=\"solve-list\">#{spans}</div>"
+    else
+      # NOTE: 折叠 + 懒加载
+      csv = formatted.join(",")
+      "<details class=\"solve-details\" data-solves=\"#{csv}\">" \
+      "<summary>#{formatted.size} solves</summary></details>"
+    end
   end
 
   def format_date(date)
