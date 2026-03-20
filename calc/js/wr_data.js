@@ -116,5 +116,5 @@ export function sampleKDE(eventId, playerIdx) {
     var u1 = Math.random(), u2 = Math.random();
     var z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
     var result = Math.round(baseTime + h * z);
-    return Math.max(1, result); // NOTE: 下限 0.01s
+    return Math.max(30, result); // NOTE: 下限 0.30s，避免极端采样产生不合理成绩
 }
