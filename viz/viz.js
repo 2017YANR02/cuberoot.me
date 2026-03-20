@@ -48,6 +48,9 @@ let animationId = null;
 let driverIdx = 0;  // NOTE: 帧驱动选手索引（channelData 最长者，自动选择）
 let syncMode = 'solve';  // NOTE: 'solve' = 按把数比例，'date' = 按日期同步
 
+// NOTE: 图层显隐控制（药丸开关）
+const showLayers = { currentVal: true, meanLine: true, ghost: true };
+
 // NOTE: globalMaxY 需要在所有选手中取最大
 let globalMaxY = 0;
 
@@ -696,8 +699,8 @@ function drawFrame() {
     const p = players[pi];
     const pFrame = computePlayerFrame(pi, progress);
 
-    // 幽灵残影
-    if (p.ghostKDE && currentFrame > 0) {
+    // 幽灵残影（可关闭）
+    if (showLayers.ghost && p.ghostKDE && currentFrame > 0) {
       drawCurve(p.ghostKDE, sx, sy, {
         fill: playerHSL(pi, 0.03),
         stroke: playerHSL(pi, 0.12),
@@ -710,7 +713,15 @@ function drawFrame() {
     const kde = computeKDE(times);
     if (!kde) continue;
     const currentMean = mean(times);
-    meanPositions.push({ pi, mean: currentMean, name: p.nameZh || p.name });
+
+    // NOTE: 非 singles 模式下获取当前 average 值
+    let currentVal = null;
+    if (dataMode !== 'singles') {
+      const endIdx = Math.min(pFrame + windowSize - 1, p.channelData.length - 1);
+      const v = p.channelData[endIdx][0] / 100;
+      if (v > 0) currentVal = v;
+    }
+    meanPositions.push({ pi, mean: currentMean, currentVal, name: p.nameZh || p.name });
 
     drawCurve(kde, sx, sy, {
       fill: playerHSL(pi, 0.15),
@@ -719,26 +730,14 @@ function drawFrame() {
       glow: pi === activePlayerIdx
     });
 
-    drawMeanLine(sx, sy, mt, ph, currentMean, playerHSL(pi, 0.5), false);
+    // 均值线（半透明，可关闭）
+    if (showLayers.meanLine) {
+      drawMeanLine(sx, sy, mt, ph, currentMean, playerHSL(pi, 0.5), false);
+    }
 
-    // NOTE: 非 singles 模式下标注窗口末尾的当前 average 值
-    if (dataMode !== 'singles') {
-      const endIdx = Math.min(pFrame + windowSize - 1, p.channelData.length - 1);
-      const currentVal = p.channelData[endIdx][0] / 100;
-      if (currentVal > 0) {
-        drawMeanLine(sx, sy, mt, ph, currentVal, playerHSL(pi, 0.9), false);
-        // 在线顶画一个小菱形标记
-        const cx = sx(currentVal);
-        const cy = mt + 4;
-        ctx.fillStyle = playerHSL(pi, 0.9);
-        ctx.beginPath();
-        ctx.moveTo(cx, cy - 5);
-        ctx.lineTo(cx + 4, cy);
-        ctx.lineTo(cx, cy + 5);
-        ctx.lineTo(cx - 4, cy);
-        ctx.closePath();
-        ctx.fill();
-      }
+    // 当前值线（亮色，可关闭）
+    if (showLayers.currentVal && currentVal !== null) {
+      drawMeanLine(sx, sy, mt, ph, currentVal, playerHSL(pi, 0.9), false);
     }
   }
 
@@ -925,15 +924,43 @@ function drawMeanLabelsOnCanvas(sx, mt, meanPositions) {
   ctx.save();
   ctx.textBaseline = 'bottom';
   ctx.font = '600 12px "JetBrains Mono", monospace';
+
   for (const mp of meanPositions) {
-    const px = sx(mp.mean);
-    const label = mp.mean.toFixed(2) + 's';
-    ctx.fillStyle = playerHSL(mp.pi, 0.9);
-    // NOTE: 多选手时显示名字缩写 + 均值
-    const text = players.length > 1 ? mp.name.slice(0, 3) + ' ' + label : '● ' + label;
-    ctx.textAlign = px > cw / 2 ? 'right' : 'left';
-    const offset = px > cw / 2 ? -6 : 6;
-    ctx.fillText(text, px + offset, mt - 4 - mp.pi * 16);
+    const namePrefix = players.length > 1 ? mp.name.slice(0, 3) + ' ' : '';
+    // NOTE: 行偏移避免多选手重叠
+    const row = mp.pi * 16;
+
+    // 1. 均值线标签 —— 圆形贴在均值线顶端
+    if (showLayers.meanLine) {
+      const meanPx = sx(mp.mean);
+      const meanLabel = namePrefix + mp.mean.toFixed(2) + 's';
+      const meanY = mt - 10 - row;
+      ctx.fillStyle = playerHSL(mp.pi, 0.7);
+      ctx.beginPath();
+      ctx.arc(meanPx, meanY, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.textAlign = meanPx > cw / 2 ? 'right' : 'left';
+      const meanOff = meanPx > cw / 2 ? -8 : 8;
+      ctx.fillText(meanLabel, meanPx + meanOff, meanY + 4);
+    }
+
+    // 2. 当前值标签 —— 菱形贴在当前值线顶端
+    if (showLayers.currentVal && mp.currentVal !== null && mp.currentVal !== undefined) {
+      const valPx = sx(mp.currentVal);
+      const valLabel = namePrefix + mp.currentVal.toFixed(2) + 's';
+      const valY = mt - 26 - row;
+      ctx.fillStyle = playerHSL(mp.pi, 0.95);
+      ctx.beginPath();
+      ctx.moveTo(valPx, valY - 5);
+      ctx.lineTo(valPx + 4, valY);
+      ctx.lineTo(valPx, valY + 5);
+      ctx.lineTo(valPx - 4, valY);
+      ctx.closePath();
+      ctx.fill();
+      ctx.textAlign = valPx > cw / 2 ? 'right' : 'left';
+      const valOff = valPx > cw / 2 ? -8 : 8;
+      ctx.fillText(valLabel, valPx + valOff, valY + 4);
+    }
   }
   ctx.restore();
 }
@@ -988,6 +1015,25 @@ function setupControls() {
       drawFrame();
     });
   });
+
+  // NOTE: 图例说明 ⓘ 按钮 + 药丸开关
+  const legendBtn = document.getElementById('legendInfoBtn');
+  const legendTip = document.getElementById('legendTooltip');
+  if (legendBtn && legendTip) {
+    legendBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      legendTip.classList.toggle('visible');
+    });
+    document.addEventListener('click', () => legendTip.classList.remove('visible'));
+    legendTip.addEventListener('click', e => e.stopPropagation());
+    // 药丸开关控制图层显隐
+    legendTip.querySelectorAll('input[data-layer]').forEach(cb => {
+      cb.addEventListener('change', () => {
+        showLayers[cb.dataset.layer] = cb.checked;
+        drawFrame();
+      });
+    });
+  }
 
   // 键盘快捷键
   document.addEventListener('keydown', e => {
