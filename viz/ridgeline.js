@@ -80,11 +80,17 @@ function buildGroups() {
   ridgeGroups = [];
   const minSolves = 10;
 
+  // NOTE: 脊线图仅显示主选手的分布
+  const ap = players[activePlayerIdx];
+  if (!ap) return;
+  const cd = ap.channelData;
+  const comps = ap.competitions;
+
   let currentGroup = null;
 
-  for (let i = 0; i < channelData.length; i++) {
-    const compIdx = channelData[i][1];
-    const compName = competitions[compIdx];
+  for (let i = 0; i < cd.length; i++) {
+    const compIdx = cd[i][1];
+    const compName = comps[compIdx];
 
     if (!currentGroup || currentGroup.compIdx !== compIdx) {
       if (currentGroup) {
@@ -109,9 +115,8 @@ function buildGroups() {
     currentGroup.endIdx = i;
     currentGroup.compIdx = compIdx;
 
-    // channelData 中非 singles 模式的值已全部有效（buildChannelData 过滤过）
-    if (channelData[i][0] > 0) {
-      currentGroup.times.push(channelData[i][0] / 100);
+    if (cd[i][0] > 0) {
+      currentGroup.times.push(cd[i][0] / 100);
       currentGroup.validCount++;
     }
   }
