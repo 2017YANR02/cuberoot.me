@@ -9,12 +9,11 @@
  */
 
 // ─── 常量 ───
-const RIDGE_KDE_POINTS = 150;   // 每条曲线的采样点数（比主 KDE 略少即可）
-const RIDGE_X_MIN = 2.5;
-const RIDGE_X_MAX = 9.5;
+const RIDGE_KDE_POINTS = 150;   // 每条曲线的采样点数
+// NOTE: X 轴范围复用 viz.js 的全局变量 xMin/xMax
 const RIDGE_MARGIN = { top: 30, right: 40, bottom: 45, left: 180 };
-const ROW_HEIGHT = 38;          // 每行基础高度
-const OVERLAP_RATIO = 0.55;     // 曲线向上溢出比例（产生山脊重叠效果）
+const ROW_HEIGHT = 32;          // 每行基础高度
+const OVERLAP_RATIO = 0.6;      // 曲线向上溢出比例（山脊重叠效果）
 
 // ─── 数据结构 ───
 // { label: string, times: number[], startIdx: number, endIdx: number }
@@ -42,20 +41,51 @@ function initRidgeline() {
   setupRidgeCanvas();
   // 绘制
   drawRidgeline();
+
+  // 点击交互：点击某行 → KDE 跳转到该比赛对应位置
+  rCanvas.addEventListener('click', onRidgeClick);
+}
+
+/**
+ * 脊线图点击 → KDE 跳转（双向联动）
+ * 根据点击 Y 坐标确定行索引，将 KDE 窗口移到该比赛中间
+ */
+function onRidgeClick(e) {
+  const rect = rCanvas.getBoundingClientRect();
+  const y = e.clientY - rect.top;
+
+  // 根据 Y 坐标计算行索引
+  const rowIdx = Math.floor((y - RIDGE_MARGIN.top) / ROW_HEIGHT);
+  if (rowIdx < 0 || rowIdx >= ridgeGroups.length) return;
+
+  const group = ridgeGroups[rowIdx];
+  // 将 KDE 窗口移到该比赛的中间位置
+  const targetFrame = Math.max(0, Math.min(
+    group.startIdx - Math.floor(windowSize / 2),
+    maxFrame
+  ));
+
+  // 暂停动画，跳转到目标帧
+  if (typeof pause === 'function') pause();
+  currentFrame = targetFrame;
+  drawFrame();
 }
 
 /**
  * 按比赛分组 solve 数据
  * 合并策略：每组至少 10 个有效 solve，否则与下一场合并
+ * NOTE: 根据 dataMode 选择 solveData 或 ao100Data
  */
 function buildGroups() {
   ridgeGroups = [];
   const minSolves = 10;
+  // Ao100 模式使用 ao100Data，Singles 模式使用 solveData
+  const srcData = dataMode === 'ao100' ? ao100Data : solveData;
 
   let currentGroup = null;
 
-  for (let i = 0; i < solveData.length; i++) {
-    const compIdx = solveData[i][1];
+  for (let i = 0; i < srcData.length; i++) {
+    const compIdx = srcData[i][1];
     const compName = competitions[compIdx];
 
     if (!currentGroup || currentGroup.compIdx !== compIdx) {
@@ -84,9 +114,9 @@ function buildGroups() {
     currentGroup.endIdx = i;
     currentGroup.compIdx = compIdx;
 
-    // 只收集有效成绩
-    if (solveData[i][0] > 0) {
-      currentGroup.times.push(solveData[i][0] / 100);
+    // Ao100 数据无 DNF，全部有效
+    if (dataMode === 'ao100' || srcData[i][0] > 0) {
+      currentGroup.times.push(srcData[i][0] / 100);
       currentGroup.validCount++;
     }
   }
@@ -101,7 +131,7 @@ function computeAllKDEs() {
   ridgeKDEs = [];
   ridgeMaxDensity = 0;
 
-  const step = (RIDGE_X_MAX - RIDGE_X_MIN) / (RIDGE_KDE_POINTS - 1);
+  const step = (xMax - xMin) / (RIDGE_KDE_POINTS - 1);
 
   for (const group of ridgeGroups) {
     if (group.times.length < 3) {
@@ -109,17 +139,19 @@ function computeAllKDEs() {
       continue;
     }
 
-    const h = silvermanBandwidth(group.times);
+    let h = silvermanBandwidth(group.times);
     if (h <= 0) {
       ridgeKDEs.push(null);
       continue;
     }
+    // 应用最低带宽（Ao100 模式避免尖刺）
+    if (minBandwidth > 0 && h < minBandwidth) h = minBandwidth;
 
     const n = group.times.length;
     const points = new Array(RIDGE_KDE_POINTS);
 
     for (let i = 0; i < RIDGE_KDE_POINTS; i++) {
-      const x = RIDGE_X_MIN + i * step;
+      const x = xMin + i * step;
       let density = 0;
       for (let j = 0; j < n; j++) {
         density += gaussianKernel((x - group.times[j]) / h);
@@ -169,7 +201,7 @@ function drawRidgeline() {
   rCtx.fillRect(0, 0, rcw, rch);
 
   // X 缩放函数
-  const sx = x => ml + ((x - RIDGE_X_MIN) / (RIDGE_X_MAX - RIDGE_X_MIN)) * pw;
+  const sx = x => ml + ((x - xMin) / (xMax - xMin)) * pw;
 
   // 曲线高度缩放：每条曲线的最大高度 = ROW_HEIGHT * (1 + OVERLAP_RATIO)
   const curveMaxH = ROW_HEIGHT * (1 + OVERLAP_RATIO);
@@ -177,7 +209,9 @@ function drawRidgeline() {
   // X 轴网格
   rCtx.strokeStyle = 'rgba(255,255,255,0.04)';
   rCtx.lineWidth = 1;
-  for (let x = 3; x <= 9; x++) {
+  const rGridStart = Math.ceil(xMin);
+  const rGridEnd = Math.floor(xMax);
+  for (let x = rGridStart; x <= rGridEnd; x++) {
     const px = Math.round(sx(x)) + 0.5;
     rCtx.beginPath();
     rCtx.moveTo(px, mt - 10);
@@ -190,7 +224,7 @@ function drawRidgeline() {
   rCtx.font = '11px "JetBrains Mono", monospace';
   rCtx.textAlign = 'center';
   rCtx.textBaseline = 'top';
-  for (let x = 3; x <= 9; x++) {
+  for (let x = rGridStart; x <= rGridEnd; x++) {
     rCtx.fillText(x + 's', sx(x), rch - mb + 8);
   }
 
@@ -288,6 +322,16 @@ function highlightRidgeRow(solveIndex) {
   if (newRow !== highlightRow) {
     highlightRow = newRow;
     drawRidgeline();
+
+    // 自动滚动容器，让高亮行可见
+    if (newRow >= 0 && rCanvas) {
+      const wrapper = rCanvas.parentElement;
+      const rowY = RIDGE_MARGIN.top + newRow * ROW_HEIGHT;
+      const wrapperH = wrapper.clientHeight;
+      // 将高亮行居中显示
+      const targetScroll = rowY - wrapperH / 2 + ROW_HEIGHT;
+      wrapper.scrollTo({ top: targetScroll, behavior: 'smooth' });
+    }
   }
 }
 
