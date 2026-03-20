@@ -720,6 +720,26 @@ function drawFrame() {
     });
 
     drawMeanLine(sx, sy, mt, ph, currentMean, playerHSL(pi, 0.5), false);
+
+    // NOTE: 非 singles 模式下标注窗口末尾的当前 average 值
+    if (dataMode !== 'singles') {
+      const endIdx = Math.min(pFrame + windowSize - 1, p.channelData.length - 1);
+      const currentVal = p.channelData[endIdx][0] / 100;
+      if (currentVal > 0) {
+        drawMeanLine(sx, sy, mt, ph, currentVal, playerHSL(pi, 0.9), false);
+        // 在线顶画一个小菱形标记
+        const cx = sx(currentVal);
+        const cy = mt + 4;
+        ctx.fillStyle = playerHSL(pi, 0.9);
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - 5);
+        ctx.lineTo(cx + 4, cy);
+        ctx.lineTo(cx, cy + 5);
+        ctx.lineTo(cx - 4, cy);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
   }
 
   // 3. 均值标签
