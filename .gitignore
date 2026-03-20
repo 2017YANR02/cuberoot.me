@@ -16,7 +16,6 @@ _site/
 _stats_build/.data_cache/
 
 # Gemini agent data
-.agent/
 .data_cache/
 
 # 数据库配置（含密码，禁止提交）
