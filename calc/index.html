@@ -64,7 +64,12 @@
 
 					<p><strong>📊 PA Bar (right side)</strong> — The vertical bar on the right shows the range from Best Possible Avg (BPA, bottom) to Worst Possible Avg (WPA, top). Drag the top or bottom end to reverse-calculate what the missing solve needs to be.</p>
 
-					<p><strong>⌫ Long press</strong> = Clear All (resets all cells and Target Avg).</p>
+				<p><strong>👤 Avatar Buttons (right of checkbox)</strong> — Replace world record data with personal WCA data.<br>
+				<strong>Row A (top):</strong> Click the avatar to use your own data. If not logged in, you'll be redirected to WCA login first. After login, the avatar shows your WCA profile photo.<br>
+				<strong>Row B (bottom):</strong> Click to enter any WCA ID (e.g. 2017GENG01). This lets you compare any two cubers head-to-head — no login required.<br>
+				When activated (orange glow), that row's #1–#5 solves are sampled from the selected cuber's recent official singles (up to 100, KDE-smoothed), and the Target Avg is automatically set to their official average PR. Click again to switch back to world record data.</p>
+
+				<p><strong>⌫ Long press</strong> = Clear All (resets all cells and Target Avg).</p>
 				</div>
 			</div>
 		</div>
@@ -135,6 +140,8 @@
 
 	<!-- NOTE: confetti 庆祝特效库 — WR avg 达成时触发 -->
 	<script src="/battle/confetti.min.js"></script>
+	<!-- NOTE: WCA OAuth 认证 — 提供登录状态供 👤 个人数据功能使用 -->
+	<script src="/wca_auth.js"></script>
 	<script type="module" src="js/app.js"></script>
 	<script src="/assets/js/logo_nav.js" defer></script>
 	<script>
