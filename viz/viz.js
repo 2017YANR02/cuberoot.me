@@ -49,7 +49,7 @@ let driverIdx = 0;  // NOTE: 帧驱动选手索引（channelData 最长者，自
 let syncMode = 'solve';  // NOTE: 'solve' = 按把数比例，'date' = 按日期同步
 
 // NOTE: 图层显隐控制（药丸开关）
-const showLayers = { currentVal: true, meanLine: true, ghost: true };
+const showLayers = { currentVal: true, meanLine: true, ghost: true, colorShift: true };
 
 // NOTE: globalMaxY 需要在所有选手中取最大
 let globalMaxY = 0;
@@ -163,6 +163,32 @@ function playerHSL(idx, a) {
   const c = PLAYER_COLORS[idx % PLAYER_COLORS.length];
   if (a !== undefined) return `hsla(${c.h}, ${c.s}%, ${c.l}%, ${a})`;
   return `hsl(${c.h}, ${c.s}%, ${c.l}%)`;
+}
+
+/**
+ * NOTE: 单选手变色 — 根据当前均值与初始均值的差异插值 hue
+ * 改善（delta<0）→ 绿色(hue=130)，退步（delta>0）→ 红色(hue=0)
+ * 仅单选手 + colorShift 开启时生效
+ */
+function getShiftedHSL(pi, alpha, currentMean) {
+  const p = players[pi];
+  if (!showLayers.colorShift || players.length > 1 || !p.ghostMean || p.ghostMean <= 0) {
+    return playerHSL(pi, alpha);
+  }
+  const c = PLAYER_COLORS[pi % PLAYER_COLORS.length];
+  // delta 占初始均值的比例，clamp 到 [-0.3, 0.3]
+  const ratio = Math.max(-0.3, Math.min(0.3, (currentMean - p.ghostMean) / p.ghostMean));
+  // ratio < 0 → 改善 → hue 往绿(130)偏；ratio > 0 → 退步 → hue 往红(0)偏
+  const t = ratio / 0.3;  // [-1, 1]
+  let targetHue;
+  if (t <= 0) {
+    targetHue = c.h + (-t) * (130 - c.h);  // 基色→绿
+  } else {
+    targetHue = c.h + t * (c.h - 0);        // 基色→红（减小 hue）
+    targetHue = c.h * (1 - t);              // 简化：线性插值到 0
+  }
+  if (alpha !== undefined) return `hsla(${Math.round(targetHue)}, ${c.s}%, ${c.l}%, ${alpha})`;
+  return `hsl(${Math.round(targetHue)}, ${c.s}%, ${c.l}%)`;
 }
 
 /**
@@ -729,20 +755,20 @@ function drawFrame() {
     meanPositions.push({ pi, mean: currentMean, currentVal, name: p.nameZh || p.name });
 
     drawCurve(kde, sx, sy, {
-      fill: playerHSL(pi, 0.15),
-      stroke: playerHSL(pi, 0.85),
+      fill: getShiftedHSL(pi, 0.15, currentMean),
+      stroke: getShiftedHSL(pi, 0.85, currentMean),
       lineWidth: pi === activePlayerIdx ? 2.5 : 1.8,
       glow: pi === activePlayerIdx
     });
 
     // 均值线（半透明，可关闭）
     if (showLayers.meanLine) {
-      drawMeanLine(sx, sy, mt, ph, currentMean, playerHSL(pi, 0.5), false);
+      drawMeanLine(sx, sy, mt, ph, currentMean, getShiftedHSL(pi, 0.5, currentMean), false);
     }
 
     // 当前值线（亮色，可关闭）
     if (showLayers.currentVal && currentVal !== null) {
-      drawMeanLine(sx, sy, mt, ph, currentVal, playerHSL(pi, 0.9), false);
+      drawMeanLine(sx, sy, mt, ph, currentVal, getShiftedHSL(pi, 0.9, currentMean), false);
     }
   }
 
