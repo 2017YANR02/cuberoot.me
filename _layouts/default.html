@@ -213,7 +213,27 @@
         .i18n-loading body.i18n-ready {
             opacity: 1;
         }
+
+        /* NOTE: 防 FOUC——URL hash 指定了 metric 时，先隐藏所有 metric panel，JS 恢复后移除 */
+        .stats-hash-loading .metric-panel {
+            display: none !important;
+        }
+
+        .stats-hash-loading .metric-panel.active {
+            display: none !important;
+        }
     </style>
+    <!-- NOTE: 防 FOUC——提前读 hash 判断是否需要隐藏默认 metric panel -->
+    <script>
+        (function () {
+            var h = location.hash;
+            if (h.indexOf('metric=') > -1) {
+                document.documentElement.classList.add('stats-hash-loading');
+                // 安全回退：500ms 后强制显示，防止 JS 加载失败
+                setTimeout(function () { document.documentElement.classList.remove('stats-hash-loading'); }, 500);
+            }
+        })();
+    </script>
 </head>
 
 <body>
