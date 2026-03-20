@@ -40,8 +40,20 @@ class AverageOfX < GroupedStatistic
   end
 
   # NOTE: class-level cache -- all subclasses (Ao100, Ao1000 ...) share one query result
+  # 缓存文件统一命名 AverageOfX.marshal，确保任何子类（Ao3/Ao100 等）
+  # 在不同进程中都能命中同一份磁盘缓存（如 gen_wr_json.rb 独立运行）
   def query_results
-    @@query_results ||= super
+    @@query_results ||= begin
+      cache_file = File.join(CACHE_DIR, "AverageOfX.marshal")
+      if ENV["STATS_USE_CACHE"] == "1" && File.exist?(cache_file)
+        Marshal.load(File.binread(cache_file))
+      else
+        result = Database.client.query(query).to_a
+        FileUtils.mkdir_p(CACHE_DIR)
+        File.binwrite(cache_file, Marshal.dump(result))
+        result
+      end
+    end
   end
 
   def query
