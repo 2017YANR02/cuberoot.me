@@ -11,6 +11,8 @@
 	<link rel="stylesheet" href="https://cdn.cubing.net/v0/css/@cubing/icons/css">
 	<!-- NOTE: 国旗图标（选手搜索下拉用） -->
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.3.2/css/flag-icons.min.css">
+	<!-- NOTE: 共享选手搜索组件样式 -->
+	<link rel="stylesheet" href="/shared/wca_search.css">
 </head>
 
 <body>
@@ -173,7 +175,10 @@
 
 	<!-- NOTE: confetti 庆祝特效库 — WR avg 达成时触发 -->
 	<script src="/battle/confetti.min.js"></script>
-	<!-- NOTE: WCA OAuth 认证 — 提供登录状态供 👤 个人数据功能使用 -->
+	<!-- NOTE: 共享 WCA 搜索模块（必须在 app.js 之前加载） -->
+	<script src="/shared/wca_search.js"></script>
+	<script src="/shared/wca_person_picker.js"></script>
+	<!-- NOTE: WCA OAuth 认证 -->
 	<script src="/wca_auth.js"></script>
 	<script type="module" src="js/app.js"></script>
 	<script src="/assets/js/logo_nav.js" defer></script>
@@ -187,14 +192,8 @@
 		document.addEventListener('gesturechange', function (e) { e.preventDefault(); });
 	</script>
 
-	<!-- NOTE: 选手搜索模态框（Row B 点击头像时弹出） -->
-	<div class="person-search-overlay" id="person-search-overlay" style="display:none;">
-		<div class="person-search-modal">
-			<input type="text" class="person-search-input" id="person-search-input"
-				placeholder="Search by name or WCA ID..." autocomplete="off" />
-			<div class="person-search-results" id="person-search-results"></div>
-		</div>
-	</div>
+	<!-- NOTE: 选手搜索 — 由 WcaPersonPicker 动态注入 -->
+	<div id="person-search-container"></div>
 </body>
 
 </html>
