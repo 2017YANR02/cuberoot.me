@@ -533,6 +533,34 @@ kbd {
 .player-chip .chip-remove:hover {
   opacity: 1;
 }
+/* ─── 视图模式切换 ─── */
+.view-mode-group {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: flex;
+  gap: 2px;
+  z-index: 10;
+}
+.view-btn {
+  padding: 3px 8px;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 6px;
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.4);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.view-btn:hover {
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.7);
+}
+.view-btn.active {
+  background: rgba(0,230,255,0.15);
+  border-color: rgba(0,230,255,0.4);
+  color: rgba(0,230,255,0.9);
+}
 
 /* ─── 图例说明 ─── */
 .legend-info-btn {
