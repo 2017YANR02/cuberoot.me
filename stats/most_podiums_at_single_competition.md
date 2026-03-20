@@ -448,6 +448,7 @@
 | 12 | [Alwin Rölz](https://www.worldcubeassociation.org/persons/2016ROLZ01) | [Willimiehen Kuutiopäivät 2025](https://www.worldcubeassociation.org/competitions/WillimiehenKuutiopaivat2025/results/podiums) |
 | 12 | [João Vinícius Santos](https://www.worldcubeassociation.org/persons/2016SANT66) | [Poções 2023](https://www.worldcubeassociation.org/competitions/Pocoes2023/results/podiums) |
 | 12 | [João Vinícius Santos](https://www.worldcubeassociation.org/persons/2016SANT66) | [UFBA 2023](https://www.worldcubeassociation.org/competitions/UFBA2023/results/podiums) |
+| 12 | [Caio Hideaki Sato](https://www.worldcubeassociation.org/persons/2016SATO01) | [Opentrópolis CEFET 2026](https://www.worldcubeassociation.org/competitions/OpentropolisCEFET2026/results/podiums) |
 | 12 | [Caio Hideaki Sato](https://www.worldcubeassociation.org/persons/2016SATO01) | [Rio Cubolympics 2025](https://www.worldcubeassociation.org/competitions/RioCubolympics2025/results/podiums) |
 | 12 | [Joonas Silvennoinen](https://www.worldcubeassociation.org/persons/2016SILV07) | [Pulmapelipäivät 2019](https://www.worldcubeassociation.org/competitions/Pulmapelipaivat2019/results/podiums) |
 | 12 | [Igor Tarasov](https://www.worldcubeassociation.org/persons/2016TARA04) | [Mallorca Open 2025](https://www.worldcubeassociation.org/competitions/MallorcaOpen2025/results/podiums) |
