@@ -1,10 +1,10 @@
 /**
- * viz.js — 耿暄一 3x3 成绩分布演变可视化 (Phase 1: 动态 KDE)
+ * viz.js — 通用 3x3 成绩分布演变可视化
  *
  * 核心流程：
- * 1. 加载 JSON 数据（1048 个成绩 × 62 场比赛）
- * 2. 滑动窗口（100 个 solve）计算 KDE
- * 3. Canvas 动画绘制曲线变形过程
+ * 1. 通过 WCA API 加载选手数据
+ * 2. 计算滚动统计（singles/mo3/ao12/ao25/ao50/ao100）
+ * 3. 滑窗 KDE + Canvas 动画
  */
 
 // ─── 常量和动态参数 ───
@@ -15,15 +15,25 @@ const MARGIN = { top: 50, right: 40, bottom: 55, left: 65 };
 let windowSize = 100;      // 滑动窗口大小
 let xMin = 2.5;            // X 轴左边界（秒）
 let xMax = 9.5;            // X 轴右边界（秒）
-let minBandwidth = 0;      // KDE 带宽下限（Ao100 需要）
+let minBandwidth = 0;      // KDE 带宽下限（滚动统计需要）
 
 // ─── 全局状态 ───
 let solveData = [];        // [[centiseconds, compIndex], ...]
-let ao100Data = [];        // [[ao100_centiseconds, compIndex], ...]
-let ao100StartIdx = 99;    // ao100[0] 对应 solveData[99]
 let competitions = [];     // [compName, ...]
 let playerInfo = {};
-let dataMode = 'singles';  // 'singles' | 'ao100'
+let currentWcaId = '';     // 当前加载的选手 WCA ID
+let currentEventId = '333'; // 当前项目
+
+// NOTE: 滚动统计结果（由 RollingStats.compute 生成）
+let statsData = null;
+// NOTE: solveEntries: 扁平 solve 列表，每项含元数据（用于 CSV 导出）
+let solveEntries = [];
+
+// NOTE: 6 种数据模式
+let dataMode = 'singles';  // 'singles' | 'mo3' | 'ao12' | 'ao25' | 'ao50' | 'ao100'
+// NOTE: 当前模式的通道数据（convertToChannelData 生成）
+// channelData[i] = [value_cs, compIndex]，仅含有效值
+let channelData = [];
 
 let currentFrame = 0;      // 窗口起始位置
 let maxFrame = 0;          // 最大帧
@@ -41,40 +51,183 @@ let canvas, ctx;
 let cw, ch;                // Canvas 逻辑尺寸（CSS 像素）
 
 // ─── 初始化 ───
-// NOTE: 其他模块（如 ridgeline.js）可通过 onDataReady() 注册回调
 const _dataReadyCallbacks = [];
 function onDataReady(fn) { _dataReadyCallbacks.push(fn); }
 
 async function init() {
   canvas = document.getElementById('kdeCanvas');
-
-  // 加载数据
-  const data = await fetch('data/geng02.json').then(r => r.json());
-  playerInfo = data.player;
-  competitions = data.competitions;
-  solveData = data.solves;
-  ao100Data = data.ao100 || [];
-  ao100StartIdx = data.ao100StartIdx || 99;
-
-  // 更新页面标题
-  document.getElementById('playerName').textContent =
-    `${playerInfo.nameZh} 3×3 分布演变`;
-  document.getElementById('playerMeta').textContent =
-    `${playerInfo.name} · ${playerInfo.wcaId} · ${solveData.length} solves`;
-
-  // 设置 Canvas 尺寸
   setupCanvas();
-  // 绑定控制事件
   setupControls();
-  // 绑定模式切换
   setupModeSwitcher();
-  // 初始化当前模式的 KDE 参数
-  recalcModeParams();
-  // 绘制初始帧
-  drawFrame();
 
-  // 通知所有等待数据的模块
-  _dataReadyCallbacks.forEach(fn => fn());
+  // ── 搜索框（inline 模式，嵌入 toolbar）──
+  var vizPicker = WcaPersonPicker.create(
+    document.getElementById('personPickerContainer'),
+    {
+      mode: 'inline',
+      placeholder: '搜索选手...',
+      onSelect: async function (person) {
+        if (person && person.wcaId) {
+          await loadPlayer(person.wcaId, currentEventId);
+        }
+      }
+    }
+  );
+
+  // ── 项目选择器 ──
+  document.getElementById('eventSelect').addEventListener('change', async function () {
+    await loadPlayer(currentWcaId, this.value);
+  });
+
+  // ── CSV 下载 ──
+  document.getElementById('csvDownload').addEventListener('click', function () {
+    if (!statsData || !solveEntries.length) return;
+    CsvExport.download({
+      wcaId: currentWcaId,
+      eventId: currentEventId,
+      solveEntries: solveEntries,
+      stats: statsData
+    });
+  });
+
+  // 默认加载耿暄一
+  await loadPlayer('2023GENG02', '333');
+}
+
+/**
+ * NOTE: 加载指定选手的数据（公开接口，切换选手时调用）
+ * @param {string} wcaId - WCA ID
+ * @param {string} eventId - 项目 ID
+ */
+async function loadPlayer(wcaId, eventId) {
+  currentWcaId = wcaId;
+  currentEventId = eventId;
+
+  // 显示 loading
+  const loadingEl = document.getElementById('loadingOverlay');
+  if (loadingEl) loadingEl.style.display = 'flex';
+
+  // 暂停动画
+  pause();
+
+  try {
+    // 并行获取成绩和比赛列表
+    const [results, comps] = await Promise.all([
+      WcaSearch.fetchResults(wcaId),
+      WcaSearch.fetchCompetitions(wcaId)
+    ]);
+
+    if (!results || !comps) {
+      alert('Failed to load data for ' + wcaId);
+      return;
+    }
+
+    // 构建 compId → {name, start_date} 映射
+    const compMap = {};
+    for (const c of comps) {
+      compMap[c.id] = { name: c.name, date: c.start_date };
+    }
+
+    // NOTE: 轮次排序权重
+    const ROUND_ORDER = { '1': 0, 'd': 1, '2': 2, 'b': 3, '3': 4, 'c': 5, 'f': 6 };
+
+    // 过滤指定项目的成绩，按 start_date + 轮次排序
+    const eventResults = results
+      .filter(r => r.event_id === eventId && compMap[r.competition_id])
+      .sort((a, b) => {
+        const da = compMap[a.competition_id].date;
+        const db = compMap[b.competition_id].date;
+        if (da !== db) return da < db ? -1 : 1;
+        return (ROUND_ORDER[a.round_type_id] || 0) - (ROUND_ORDER[b.round_type_id] || 0);
+      });
+
+    // 展开 attempts 为扁平 singles 数组
+    competitions = [];
+    const compNameSet = new Map(); // compName → index
+    solveData = [];
+    solveEntries = [];
+
+    for (const r of eventResults) {
+      const compName = compMap[r.competition_id].name;
+      if (!compNameSet.has(compName)) {
+        compNameSet.set(compName, competitions.length);
+        competitions.push(compName);
+      }
+      const compIdx = compNameSet.get(compName);
+
+      const attempts = r.attempts || [];
+      for (let a = 0; a < attempts.length; a++) {
+        const cs = attempts[a];
+        if (cs === 0) continue; // 未参加的 attempt 跳过
+        solveData.push([cs, compIdx]);
+        solveEntries.push({
+          cs: cs,
+          compName: compName,
+          roundType: r.round_type_id,
+          attemptIdx: a
+        });
+      }
+    }
+
+    // 提取 singles 数组用于滚动统计
+    const singlesCs = solveEntries.map(e => e.cs);
+    statsData = RollingStats.compute(singlesCs);
+
+    // 选手信息
+    const firstResult = eventResults[0];
+    const personName = firstResult ? firstResult.name : wcaId;
+    // NOTE: 从 "Xuanyi Geng (耿暄一)" 中提取中文名
+    const zhMatch = personName.match(/\((.+?)\)/);
+    playerInfo = {
+      name: personName.replace(/\s*\(.+?\)/, ''),
+      nameZh: zhMatch ? zhMatch[1] : personName.replace(/\s*\(.+?\)/, ''),
+      wcaId: wcaId
+    };
+
+    // 更新标题
+    document.getElementById('playerName').textContent =
+      `${playerInfo.nameZh} ${eventId === '333' ? '3×3' : eventId} 分布演变`;
+    document.getElementById('playerMeta').textContent =
+      `${playerInfo.name} · ${wcaId} · ${solveData.length} solves`;
+
+    // 默认 singles 模式
+    dataMode = 'singles';
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    const activeBtn = document.querySelector('.mode-btn[data-mode="singles"]');
+    if (activeBtn) activeBtn.classList.add('active');
+
+    // 构建通道数据并初始化参数
+    buildChannelData();
+    recalcModeParams();
+    drawFrame();
+
+    // 通知所有等待数据的模块
+    _dataReadyCallbacks.forEach(fn => fn());
+
+  } finally {
+    if (loadingEl) loadingEl.style.display = 'none';
+  }
+}
+
+/**
+ * NOTE: 根据 dataMode 从 statsData 构建 channelData
+ * channelData = [[value_cs, compIndex], ...] 仅含有效值（非 null/DNF）
+ */
+function buildChannelData() {
+  channelData = [];
+  if (dataMode === 'singles') {
+    // singles: 直接用 solveData（含 DNF, getWindowTimes 会跳过）
+    channelData = solveData;
+    return;
+  }
+  // 滚动统计模式：筛选有效值
+  const arr = statsData[dataMode];
+  if (!arr) { channelData = []; return; }
+  for (let i = 0; i < arr.length; i++) {
+    if (arr[i] !== null) {
+      channelData.push([arr[i], solveData[i][1]]);
+    }
+  }
 }
 
 // ─── Canvas DPI 适配 ───
@@ -150,42 +303,24 @@ function computeKDE(times) {
 
 // ─── 数据提取 ───
 function getWindowTimes(frame) {
-  if (dataMode === 'ao100') {
-    // Ao100 模式：直接返回窗口内的 Ao100 值（已是滑动平均）
-    const end = Math.min(frame + windowSize, ao100Data.length);
-    const times = [];
-    for (let i = frame; i < end; i++) {
-      times.push(ao100Data[i][0] / 100);
-    }
-    return times;
-  }
-  // Singles 模式：提取窗口内有效成绩（排除 DNF/DNS），转换为秒
-  const end = Math.min(frame + windowSize, solveData.length);
+  // 统一从 channelData 提取窗口数据
+  const end = Math.min(frame + windowSize, channelData.length);
   const times = [];
   for (let i = frame; i < end; i++) {
-    if (solveData[i][0] > 0) {
-      times.push(solveData[i][0] / 100);
-    }
+    const v = channelData[i][0];
+    // singles 模式需要排除 DNF/DNS（<= 0），统计模式数据已过滤
+    if (v > 0) times.push(v / 100);
   }
   return times;
 }
 
 /**
- * 获取当前帧最后一个 solve 对应的比赛名和序号
- * Ao100 模式的 frame 偏移量不同
+ * 获取当前帧最后一个数据点对应的比赛名和序号范围
  */
 function getFrameCompInfo(frame) {
-  if (dataMode === 'ao100') {
-    const lastIdx = Math.min(frame + windowSize - 1, ao100Data.length - 1);
-    return {
-      compName: competitions[ao100Data[lastIdx][1]],
-      solveStart: ao100StartIdx + frame + 1,
-      solveEnd: ao100StartIdx + frame + windowSize
-    };
-  }
-  const lastIdx = Math.min(frame + windowSize - 1, solveData.length - 1);
+  const lastIdx = Math.min(frame + windowSize - 1, channelData.length - 1);
   return {
-    compName: competitions[solveData[lastIdx][1]],
+    compName: competitions[channelData[lastIdx][1]],
     solveStart: frame + 1,
     solveEnd: frame + windowSize
   };
@@ -273,10 +408,9 @@ function drawFrame() {
   // 7. 更新进度条
   updateProgressUI();
 
-  // 8. 联动脊线图高亮（Phase 3）
+  // 8. 联动脊线图高亮
   if (typeof highlightRidgeRow === 'function') {
-    const srcLen = dataMode === 'ao100' ? ao100Data.length : solveData.length;
-    const lastIdx = Math.min(currentFrame + windowSize - 1, srcLen - 1);
+    const lastIdx = Math.min(currentFrame + windowSize - 1, channelData.length - 1);
     highlightRidgeRow(lastIdx);
   }
 }
@@ -284,13 +418,20 @@ function drawFrame() {
 function drawGrid(sx, sy, ml, mt, pw, ph) {
   ctx.save();
 
-  // X 轴网格线（动态刻度）
+  // NOTE: 动态刻度间距 — 目标 5~8 个刻度
+  const range = xMax - xMin;
+  const rawStep = range / 6;
+  // niceStep: 从 [1, 2, 5, 10, 20, 50, ...] 中选最近的
+  const mag = Math.pow(10, Math.floor(Math.log10(rawStep)));
+  const residual = rawStep / mag;
+  const niceStep = residual <= 1.5 ? mag : residual <= 3.5 ? 2 * mag : residual <= 7.5 ? 5 * mag : 10 * mag;
+
+  const gridStart = Math.ceil(xMin / niceStep) * niceStep;
+
+  // X 轴网格线
   ctx.strokeStyle = 'rgba(255,255,255,0.05)';
   ctx.lineWidth = 1;
-  const gridStart = Math.ceil(xMin);
-  const gridEnd = Math.floor(xMax);
-
-  for (let x = gridStart; x <= gridEnd; x += 1) {
+  for (let x = gridStart; x <= xMax; x += niceStep) {
     const px = Math.round(sx(x)) + 0.5;
     ctx.beginPath();
     ctx.moveTo(px, mt);
@@ -304,8 +445,10 @@ function drawGrid(sx, sy, ml, mt, pw, ph) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
 
-  for (let x = gridStart; x <= gridEnd; x += 1) {
-    ctx.fillText(x + 's', sx(x), mt + ph + 10);
+  for (let x = gridStart; x <= xMax; x += niceStep) {
+    // NOTE: 大数值用整数，小数值保留小数
+    const label = niceStep >= 1 ? Math.round(x) + 's' : x.toFixed(1) + 's';
+    ctx.fillText(label, sx(x), mt + ph + 10);
   }
 
   // X 轴底线
@@ -463,6 +606,9 @@ function setupControls() {
 
   // 键盘快捷键
   document.addEventListener('keydown', e => {
+    // NOTE: 焦点在 input/textarea 时不拦截键盘事件
+    var tag = (e.target.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
     if (e.code === 'Space') {
       e.preventDefault();
       togglePlay();
@@ -546,28 +692,34 @@ document.addEventListener('DOMContentLoaded', init);
  * 并重置进度条
  */
 function recalcModeParams() {
-  // 根据模式设置动态参数
-  if (dataMode === 'ao100') {
-    windowSize = 400;    // Ao100 值高度自相关，需要更大窗口展现分布
-    minBandwidth = 0.15; // 强制最低带宽，避免尖刺
-    // X 轴自适应数据范围
-    let lo = Infinity, hi = -Infinity;
-    for (const d of ao100Data) {
-      const v = d[0] / 100;
-      if (v < lo) lo = v;
-      if (v > hi) hi = v;
-    }
-    xMin = Math.floor((lo - 0.8) * 2) / 2;  // 向下取到 0.5s
-    xMax = Math.ceil((hi + 0.8) * 2) / 2;   // 向上取到 0.5s
-  } else {
+  // NOTE: 所有模式统一从 channelData 自适应 X 轴范围
+  // 高极端值用 P97 百分位截断（早期异常慢成绩不应拉大横轴），低极端值保留
+  const vals = [];
+  for (const d of channelData) {
+    const v = d[0] / 100;
+    if (v > 0) vals.push(v);
+  }
+  vals.sort((a, b) => a - b);
+  const lo = vals[0] || 0;
+  // NOTE: xMax 用 P97 而非最大值，滤除高位离群点
+  const p97Idx = Math.min(Math.floor(vals.length * 0.97), vals.length - 1);
+  const hi = vals[p97Idx] || lo + 1;
+  // 留 ~15% 两侧边距（最少 0.5s）
+  const margin = Math.max(0.5, (hi - lo) * 0.15);
+  xMin = Math.floor((lo - margin) * 2) / 2;
+  xMax = Math.ceil((hi + margin) * 2) / 2;
+  if (xMin < 0) xMin = 0;
+
+  if (dataMode === 'singles') {
     windowSize = 100;
     minBandwidth = 0;
-    xMin = 2.5;
-    xMax = 9.5;
+  } else {
+    // NOTE: 滚动统计模式：大窗口 + 带宽下限
+    windowSize = 400;
+    minBandwidth = Math.max(0.15, (hi - lo) * 0.03); // 带宽按数据范围缩放
   }
 
-  const totalItems = dataMode === 'ao100' ? ao100Data.length : solveData.length;
-  maxFrame = totalItems - windowSize;
+  maxFrame = channelData.length - windowSize;
   if (maxFrame < 0) maxFrame = 0;
 
   // 重置帧位置
@@ -598,19 +750,16 @@ function setupModeSwitcher() {
       const newMode = e.target.dataset.mode;
       if (newMode === dataMode) return;
 
-      // 暂停当前动画
       pause();
-
-      // 切换模式
       dataMode = newMode;
       document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
       e.target.classList.add('active');
 
-      // 重算参数并重绘
+      // 重建通道数据并重算参数
+      buildChannelData();
       recalcModeParams();
       drawFrame();
 
-      // 重建脊线图（如果已初始化）
       if (typeof initRidgeline === 'function') {
         initRidgeline();
       }

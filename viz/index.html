@@ -4,9 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Distribution Evolution | Rubik's Cube Toolkit</title>
-  <meta name="description" content="Visualize how a cuber's 3x3 solve time distribution evolves over competitions">
+  <meta name="description" content="Visualize how a cuber's solve time distribution evolves over competitions">
   <link rel="icon" href="/favicon.ico">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <!-- NOTE: 国旗图标 + 共享搜索组件样式 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.3.2/css/flag-icons.min.css">
+  <link rel="stylesheet" href="/shared/wca_search.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -18,17 +21,42 @@
         <h1 id="playerName">Distribution Evolution</h1>
         <div class="subtitle" id="playerMeta"></div>
       </div>
+      <!-- NOTE: 6 模式按钮组 -->
       <div class="mode-toggle">
         <button class="mode-btn active" data-mode="singles">Singles</button>
+        <button class="mode-btn" data-mode="mo3">Mo3</button>
+        <button class="mode-btn" data-mode="ao12">Ao12</button>
+        <button class="mode-btn" data-mode="ao25">Ao25</button>
+        <button class="mode-btn" data-mode="ao50">Ao50</button>
         <button class="mode-btn" data-mode="ao100">Ao100</button>
       </div>
     </header>
+
+    <!-- NOTE: 搜索栏 + 项目选择器 + CSV 下载 -->
+    <div class="toolbar">
+      <div id="personPickerContainer" class="toolbar-search"></div>
+      <select id="eventSelect" class="toolbar-select">
+        <option value="333" selected>3×3</option>
+        <option value="222">2×2</option>
+        <option value="444">4×4</option>
+        <option value="555">5×5</option>
+        <option value="666">6×6</option>
+        <option value="777">7×7</option>
+        <option value="333oh">3×3 OH</option>
+        <option value="333bf">3×3 BLD</option>
+        <option value="pyram">Pyraminx</option>
+        <option value="skewb">Skewb</option>
+        <option value="sq1">Square-1</option>
+        <option value="clock">Clock</option>
+        <option value="minx">Megaminx</option>
+      </select>
+      <button class="toolbar-btn" id="csvDownload" title="下载 CSV">📥 CSV</button>
+    </div>
 
     <!-- 主可视化区域 -->
     <main class="viz-main">
       <div class="canvas-wrapper">
         <canvas id="kdeCanvas"></canvas>
-        <!-- 均值指示线标签 -->
         <div class="mean-label" id="meanLabel" style="display:none">
           <span class="mean-dot"></span>
           <span class="mean-text" id="meanText"></span>
@@ -81,7 +109,6 @@
         </div>
       </div>
 
-      <!-- 键盘快捷键提示 -->
       <div class="shortcuts-hint">
         <kbd>Space</kbd> 播放/暂停 &nbsp;
         <kbd>←</kbd><kbd>→</kbd> 步进 &nbsp;
@@ -97,6 +124,18 @@
     </main>
   </div>
 
+  <!-- NOTE: loading overlay -->
+  <div class="loading-overlay" id="loadingOverlay" style="display:none">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Loading...</div>
+  </div>
+
+
+  <!-- NOTE: 共享模块 + 功能脚本 -->
+  <script src="/shared/wca_search.js"></script>
+  <script src="/shared/wca_person_picker.js"></script>
+  <script src="rolling_stats.js"></script>
+  <script src="csv_export.js"></script>
   <script src="viz.js"></script>
   <script src="ridgeline.js"></script>
 </body>

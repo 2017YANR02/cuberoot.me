@@ -72,31 +72,26 @@ function onRidgeClick(e) {
 }
 
 /**
- * 按比赛分组 solve 数据
- * 合并策略：每组至少 10 个有效 solve，否则与下一场合并
- * NOTE: 根据 dataMode 选择 solveData 或 ao100Data
+ * 按比赛分组数据
+ * 合并策略：每组至少 10 个有效数据，否则与下一场合并
+ * NOTE: 统一使用 channelData（已根据 dataMode 构建）
  */
 function buildGroups() {
   ridgeGroups = [];
   const minSolves = 10;
-  // Ao100 模式使用 ao100Data，Singles 模式使用 solveData
-  const srcData = dataMode === 'ao100' ? ao100Data : solveData;
 
   let currentGroup = null;
 
-  for (let i = 0; i < srcData.length; i++) {
-    const compIdx = srcData[i][1];
+  for (let i = 0; i < channelData.length; i++) {
+    const compIdx = channelData[i][1];
     const compName = competitions[compIdx];
 
     if (!currentGroup || currentGroup.compIdx !== compIdx) {
-      // 新比赛开始
       if (currentGroup) {
-        // 检查上一组是否足够大
         if (currentGroup.validCount >= minSolves) {
           ridgeGroups.push(currentGroup);
           currentGroup = null;
         }
-        // 否则继续合并
       }
 
       if (!currentGroup) {
@@ -114,14 +109,13 @@ function buildGroups() {
     currentGroup.endIdx = i;
     currentGroup.compIdx = compIdx;
 
-    // Ao100 数据无 DNF，全部有效
-    if (dataMode === 'ao100' || srcData[i][0] > 0) {
-      currentGroup.times.push(srcData[i][0] / 100);
+    // channelData 中非 singles 模式的值已全部有效（buildChannelData 过滤过）
+    if (channelData[i][0] > 0) {
+      currentGroup.times.push(channelData[i][0] / 100);
       currentGroup.validCount++;
     }
   }
 
-  // 最后一组
   if (currentGroup && currentGroup.validCount >= 3) {
     ridgeGroups.push(currentGroup);
   }
@@ -206,12 +200,18 @@ function drawRidgeline() {
   // 曲线高度缩放：每条曲线的最大高度 = ROW_HEIGHT * (1 + OVERLAP_RATIO)
   const curveMaxH = ROW_HEIGHT * (1 + OVERLAP_RATIO);
 
+  // NOTE: X 轴刻度间距 — 与主图相同的 niceStep 算法
+  const rRange = xMax - xMin;
+  const rRawStep = rRange / 6;
+  const rMag = Math.pow(10, Math.floor(Math.log10(rRawStep)));
+  const rRes = rRawStep / rMag;
+  const rNiceStep = rRes <= 1.5 ? rMag : rRes <= 3.5 ? 2 * rMag : rRes <= 7.5 ? 5 * rMag : 10 * rMag;
+  const rGridStart = Math.ceil(xMin / rNiceStep) * rNiceStep;
+
   // X 轴网格
   rCtx.strokeStyle = 'rgba(255,255,255,0.04)';
   rCtx.lineWidth = 1;
-  const rGridStart = Math.ceil(xMin);
-  const rGridEnd = Math.floor(xMax);
-  for (let x = rGridStart; x <= rGridEnd; x++) {
+  for (let x = rGridStart; x <= xMax; x += rNiceStep) {
     const px = Math.round(sx(x)) + 0.5;
     rCtx.beginPath();
     rCtx.moveTo(px, mt - 10);
@@ -224,8 +224,9 @@ function drawRidgeline() {
   rCtx.font = '11px "JetBrains Mono", monospace';
   rCtx.textAlign = 'center';
   rCtx.textBaseline = 'top';
-  for (let x = rGridStart; x <= rGridEnd; x++) {
-    rCtx.fillText(x + 's', sx(x), rch - mb + 8);
+  for (let x = rGridStart; x <= xMax; x += rNiceStep) {
+    const label = rNiceStep >= 1 ? Math.round(x) + 's' : x.toFixed(1) + 's';
+    rCtx.fillText(label, sx(x), rch - mb + 8);
   }
 
   // 从底部向上绘制（最早的在顶部，最新的在底部）
