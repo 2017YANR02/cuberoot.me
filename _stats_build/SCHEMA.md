@@ -11,7 +11,7 @@
 | 表名 | 行数 | 大小 | 用途 |
 |------|-----:|-----:|------|
 | `results` | 609 万 | 798 MB | 核心：所有比赛成绩 |
-| `result_attempts` | ~3000 万 | — | 每次成绩的各 attempt（导入后回填到 results.value1-5）|
+| `result_attempts` | ~3000 万 | — | 每次成绩的各 attempt（WCA 2026 年初从 results 拆出）|
 | `persons` | 28 万 | 24 MB | 选手信息 |
 | `competitions` | 1.3 万 | 40 MB | 比赛信息 |
 | `countries` | 207 | — | 国家名称 |
@@ -48,15 +48,9 @@
 | `round_id` | int | NO | MUL | 轮次 ID |
 | `round_type_id` | varchar(1) | NO | MUL | 轮次类型 → `round_types.id` |
 | `updated_at` | timestamp | NO | — | 最后更新时间 |
-| `value1` | int | NO | — | 第 1 次成绩（⚠️ 回填列，见下方说明）|
-| `value2` | int | NO | — | 第 2 次成绩（⚠️ 回填列）|
-| `value3` | int | NO | — | 第 3 次成绩（⚠️ 回填列）|
-| `value4` | int | NO | — | 第 4 次成绩（Mo3 项目为 0）（⚠️ 回填列）|
-| `value5` | int | NO | — | 第 5 次成绩（Mo3 项目为 0）（⚠️ 回填列）|
 
-> **⚠️ 回填列说明**：WCA 在 2026 年初将 `value1`-`value5` 从 `results` 表拆分到独立的 `result_attempts` 表。
-> 导入脚本 `update_database.rb` 会在加载数据后通过 SQL 从 `result_attempts` 回填这 5 列，以保持下游兼容性。
-> 参见：[WCA database_dumper.rb](https://github.com/thewca/worldcubeassociation.org/blob/main/lib/database_dumper.rb)
+> **注意**：`value1`-`value5` 列已在 WCA 2026 年初从 `results` 表永久移除，各 attempt 数据存储在独立的 `result_attempts` 表中。
+> 统计脚本通过 `Database::ATTEMPTS_SUBQUERY`（子查询 `result_attempts`）获取各次成绩，无需回填。
 
 **成绩值编码**：`正整数` = 厘秒（0.01 秒），`-1` = DNF，`-2` = DNS，`0` = 无此次
 
@@ -64,8 +58,8 @@
 
 ### `result_attempts`（~3000 万行）
 
-> WCA 从 2026 年初开始将各 attempt 存储在此表中（原 `results.value1`-`value5`）。
-> 导入脚本 `update_database.rb` 会从此表回填 `results.value1`-`value5`，统计脚本无需直接查询此表。
+> WCA 从 2026 年初开始将各 attempt 存储在此表中（原 `results.value1`-`value5` 已移除）。
+> 统计脚本通过 `Database::ATTEMPTS_SUBQUERY` 子查询此表获取各次成绩。
 
 | 列名 | 类型 | 可空 | 索引 | 说明 |
 |------|------|:----:|:----:|------|
@@ -229,7 +223,7 @@
 
 ```sql
 -- 查某选手三阶成绩
-SELECT value1, value2, value3, value4, value5, best, average, competition_id
+SELECT best, average, competition_id
 FROM results
 WHERE person_id = '2017XURU04' AND event_id = '333'
 ORDER BY average;
