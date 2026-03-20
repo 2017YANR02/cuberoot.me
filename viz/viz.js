@@ -43,9 +43,9 @@ let dateTimeline = [];
 let currentFrame = 0;      // 窗口起始位置
 let maxFrame = 0;          // 最大帧
 let isPlaying = false;
-let playSpeed = 0.3;
-let frameAccum = 0;  // NOTE: 小数速度累加器
+let playSpeed = 3;
 let animationId = null;
+let driverIdx = 0;  // NOTE: 帧驱动选手索引（channelData 最长者，自动选择）
 
 // NOTE: globalMaxY 需要在所有选手中取最大
 let globalMaxY = 0;
@@ -583,7 +583,7 @@ function maxOfKDE(kde) {
 // ═══════════════════════════════════════
 
 function drawFrame() {
-  if (players.length === 0 || dateTimeline.length === 0) return;
+  if (players.length === 0) return;
   const { top: mt, right: mr, bottom: mb, left: ml } = MARGIN;
   const pw = cw - ml - mr;
   const ph = ch - mt - mb;
@@ -594,8 +594,10 @@ function drawFrame() {
   const sx = x => ml + ((x - xMin) / (xMax - xMin)) * pw;
   const sy = y => mt + ph - (y / globalMaxY) * ph;
 
-  // NOTE: 当前帧对应的日期
-  const currentDate = dateTimeline[Math.min(currentFrame, dateTimeline.length - 1)];
+  // NOTE: driver 的当前 solve endIdx → 对应的日期
+  const drv = players[driverIdx];
+  const drvEndIdx = Math.min(currentFrame + windowSize - 1, drv.channelData.length - 1);
+  const driverDate = drv.compDates[drv.channelData[drvEndIdx][1]];
 
   // 1. 网格和坐标轴
   drawGrid(sx, sy, ml, mt, pw, ph);
@@ -604,14 +606,18 @@ function drawFrame() {
   const meanPositions = [];
   for (let pi = 0; pi < players.length; pi++) {
     const p = players[pi];
-    // NOTE: 按日期找该选手窗口末尾的 solve index
-    const endIdx = solveIdxAtDate(pi, currentDate);
-    if (endIdx < 0) continue;  // 该日期之前该选手还没有数据
+    let pFrame;
+    if (pi === driverIdx) {
+      // NOTE: driver 用 solve-index 直接驱动（丝滑）
+      pFrame = currentFrame;
+    } else {
+      // NOTE: 其他选手按 driver 的日期同步
+      const endIdx = solveIdxAtDate(pi, driverDate);
+      if (endIdx < 0) continue;  // 该日期之前该选手还没有数据
+      pFrame = Math.max(0, endIdx - windowSize + 1);
+    }
 
-    // 窗口起始位置：从 endIdx 往前取 windowSize 个
-    const pFrame = Math.max(0, endIdx - windowSize + 1);
-
-    // 幽灵残影（只在前进过程中显示）
+    // 幽灵残影
     if (p.ghostKDE && currentFrame > 0) {
       drawCurve(p.ghostKDE, sx, sy, {
         fill: playerHSL(pi, 0.03),
@@ -643,12 +649,18 @@ function drawFrame() {
   // 4. 更新主选手的 DOM 统计面板
   const ap = players[activePlayerIdx];
   if (ap) {
-    const apEndIdx = solveIdxAtDate(activePlayerIdx, currentDate);
-    if (apEndIdx >= 0) {
-      const apFrame = Math.max(0, apEndIdx - windowSize + 1);
+    let apFrame;
+    if (activePlayerIdx === driverIdx) {
+      apFrame = currentFrame;
+    } else {
+      const apEndIdx = solveIdxAtDate(activePlayerIdx, driverDate);
+      if (apEndIdx >= 0) apFrame = Math.max(0, apEndIdx - windowSize + 1);
+      else apFrame = -1;
+    }
+    if (apFrame >= 0) {
       const apTimes = getWindowTimes(activePlayerIdx, apFrame);
       if (apTimes.length > 0) {
-        updateStats(apTimes, mean(apTimes), currentDate);
+        updateStats(apTimes, mean(apTimes), driverDate);
       }
     }
   }
@@ -662,9 +674,14 @@ function drawFrame() {
   // 6. 进度条
   updateProgressUI();
 
-  // 7. 脊线图联动（主选手）
+  // 7. 脊线图联动
   if (typeof highlightRidgeRow === 'function' && ap) {
-    const apEndIdx = solveIdxAtDate(activePlayerIdx, currentDate);
+    let apEndIdx;
+    if (activePlayerIdx === driverIdx) {
+      apEndIdx = Math.min(currentFrame + windowSize - 1, ap.channelData.length - 1);
+    } else {
+      apEndIdx = solveIdxAtDate(activePlayerIdx, driverDate);
+    }
     if (apEndIdx >= 0) highlightRidgeRow(apEndIdx);
   }
 }
@@ -863,7 +880,7 @@ function setupControls() {
     btn.addEventListener('click', e => {
       document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
       e.target.classList.add('active');
-      playSpeed = parseFloat(e.target.dataset.speed);
+      playSpeed = parseInt(e.target.dataset.speed);
     });
   });
 
@@ -921,17 +938,9 @@ function pause() {
 function animate() {
   if (!isPlaying) return;
 
-  // NOTE: 累加器模式支持小数 playSpeed（0.3 = 每 3-4 帧前进 1 个日期）
-  frameAccum += playSpeed;
-  if (frameAccum >= 1) {
-    const step = Math.floor(frameAccum);
-    frameAccum -= step;
-    currentFrame += step;
-  }
-
+  currentFrame += playSpeed;
   if (currentFrame >= maxFrame) {
     currentFrame = maxFrame;
-    frameAccum = 0;
     drawFrame();
     pause();
     return;
@@ -963,7 +972,6 @@ document.addEventListener('DOMContentLoaded', init);
  * 并重置进度条
  */
 function recalcModeParams() {
-  // NOTE: 联合所有选手的 channelData 自适应 X 轴范围
   const vals = [];
   for (const p of players) {
     for (const d of p.channelData) {
@@ -989,25 +997,27 @@ function recalcModeParams() {
     minBandwidth = Math.max(0.15, (hi - lo) * 0.03);
   }
 
-  // NOTE: maxFrame = 日期时间线长度 - 1
-  maxFrame = Math.max(0, dateTimeline.length - 1);
+  // NOTE: 自动选择 channelData 最长的选手作为帧驱动者
+  driverIdx = 0;
+  let maxLen = 0;
+  for (let i = 0; i < players.length; i++) {
+    if (players[i].channelData.length > maxLen) {
+      maxLen = players[i].channelData.length;
+      driverIdx = i;
+    }
+  }
+
+  // NOTE: maxFrame 基于 driver 的 solve 数（大量帧 = 丝滑）
+  maxFrame = Math.max(0, maxLen - windowSize);
   currentFrame = 0;
 
-  // NOTE: 为每位选手预计算 ghostKDE + ghostMean（用时间线首尾日期）
+  // 为每位选手预计算 ghostKDE + ghostMean
   globalMaxY = 0;
-  const firstDate = dateTimeline[0];
-  const lastDate = dateTimeline[dateTimeline.length - 1];
   for (let pi = 0; pi < players.length; pi++) {
     const p = players[pi];
-    // 初始分布：第一个日期时的窗口
-    const initEndIdx = solveIdxAtDate(pi, firstDate);
-    const initFrame = Math.max(0, initEndIdx - windowSize + 1);
-    const initTimes = initEndIdx >= 0 ? getWindowTimes(pi, initFrame) : [];
-    // 最终分布：最后一个日期时的窗口
-    const finalEndIdx = solveIdxAtDate(pi, lastDate);
-    const finalFrame = Math.max(0, finalEndIdx - windowSize + 1);
-    const finalTimes = finalEndIdx >= 0 ? getWindowTimes(pi, finalFrame) : [];
-
+    const initTimes = getWindowTimes(pi, 0);
+    const pMax = Math.max(0, p.channelData.length - windowSize);
+    const finalTimes = getWindowTimes(pi, pMax);
     p.ghostKDE = computeKDE(initTimes);
     p.ghostMean = initTimes.length > 0 ? mean(initTimes) : 0;
     const finalKDE = computeKDE(finalTimes);
