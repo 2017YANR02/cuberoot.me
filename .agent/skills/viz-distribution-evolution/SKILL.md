@@ -53,19 +53,49 @@ WCA API → addPlayer() → solveData + competitions + compDates
    - 统计面板显示把数范围
 
 2. **按日期（date）模式**：
-   - driver 的连续时间进度映射到每个选手的时间范围
-   - `progress → driverDateNum → (pDateNum - pFirst)/(pLast - pFirst) → pFrame`
+   - 用**所有选手的全局最早/最晚日期**作为时间轴（非仅 driver）
+   - `progress → globalDateRange → (pDateNum - pFirst)/(pLast - pFirst) → pFrame`
    - 统计面板显示日期
 
 ### 图表标注线（非 singles 模式）
 
-每个选手绘制 2 条竖线 + 标签：
+每个选手绘制 2 条竖线 + 标签（标签始终在标记右侧）：
 
 | 标记 | 含义 | 颜色 |
 |------|------|------|
 | ◆ 菱形 + 值 | 窗口末尾的当前 Average 值 | 亮色 (0.95 alpha) |
 | ● 圆形 + 值 | 窗口内所有 Average 的均值 | 半透明 (0.7 alpha) |
 | ━ 虚线残影 | 初始分布（ghostKDE，固定参照） | 淡色 (0.12 alpha) |
+
+### 进退变色（单选手自动生效）
+
+`getShiftedHSL()` 比较 `currentMean` 与 `ghostMean`：
+- 改善（均值下降）→ hue 渐变为绿色 (130)
+- 退步（均值上升）→ hue 渐变为红色 (0)
+- clamp 在 ±30% 范围内，仅单选手时生效
+
+### 轨迹拖尾
+
+`meanTrail[]` 记录每帧均值位置，绘制渐隐圆点：
+- 二次衰减 alpha（新点亮、旧点暗）
+- 新点更大（1.5→3px），最大 600 采样点
+- 拖拽进度条回退时自动截断
+
+### 双峰检测
+
+`detectPeaks(kde)` 扫描 KDE 局部极大值（过滤 < 15% 最高峰的噪声）。
+检测到 ≥2 峰时在两峰间显示大号 ⚡ emoji。药丸开关可控。
+
+### X 轴缩放/平移
+
+| 操作 | 效果 |
+|------|------|
+| 滚轮 | 以鼠标位置为锚点缩放 |
+| 拖拽 | 平移 X 轴 |
+| 双击 | 重置到自动范围 |
+| 双指 pinch | 触摸缩放（移动端） |
+
+`userXMin/userXMax` 覆盖自动范围，切换模式/加载选手时重置。
 
 ## 修改指南
 
@@ -99,7 +129,9 @@ WCA API → addPlayer() → solveData + competitions + compDates
 |------|------|
 | Space | 播放/暂停 |
 | ← → | 步进（±playSpeed 帧） |
+| Shift + ← → | 快速步进（±20 帧） |
+| 滚轮 / 拖拽 / 双击 | X 轴缩放/平移/重置 |
 | 点击选手 chip | 切换主选手 |
 | ✕ 按钮 | 移除选手 |
-| ⓘ 按钮 | 图例说明弹窗 |
+| ⓘ 按钮 | 图例 + 药丸开关弹窗 |
 | 把数/日期 按钮 | 切换同步模式（≥2 选手时显示） |
