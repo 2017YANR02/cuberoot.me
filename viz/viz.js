@@ -10,6 +10,15 @@
 // ─── 常量和动态参数 ───
 const KDE_POINTS = 200;    // 密度曲线采样点数
 const MARGIN = { top: 50, right: 40, bottom: 55, left: 65 };
+const MAX_PLAYERS = 4;     // 最大对比选手数
+
+// NOTE: 4 色方案 — HSL 基色，用于 KDE 曲线、均值线、chip 标签
+const PLAYER_COLORS = [
+  { h: 190, s: 90, l: 55, label: '青' },   // 青色（主色调，延续原风格）
+  { h: 25,  s: 90, l: 55, label: '橙' },   // 橙色
+  { h: 280, s: 70, l: 60, label: '紫' },   // 紫色
+  { h: 130, s: 70, l: 50, label: '绿' },   // 绿色
+];
 
 // NOTE: 这些参数根据 dataMode 动态设置，见 recalcModeParams()
 let windowSize = 100;      // 滑动窗口大小
@@ -17,38 +26,29 @@ let xMin = 2.5;            // X 轴左边界（秒）
 let xMax = 9.5;            // X 轴右边界（秒）
 let minBandwidth = 0;      // KDE 带宽下限（滚动统计需要）
 
-// ─── 全局状态 ───
-let solveData = [];        // [[centiseconds, compIndex], ...]
-let competitions = [];     // [compName, ...]
-let playerInfo = {};
-let currentWcaId = '';     // 当前加载的选手 WCA ID
-let currentEventId = '333'; // 当前项目
+// ─── 多选手数据 ───
+// NOTE: players[i] = { wcaId, name, nameZh, color, solveData, channelData,
+//   competitions, statsData, solveEntries, ghostKDE, ghostMean }
+let players = [];
+let activePlayerIdx = 0;   // 主选手索引（统计面板 + 脊线图跟随）
+let currentEventId = '333';
 
-// NOTE: 滚动统计结果（由 RollingStats.compute 生成）
-let statsData = null;
-// NOTE: solveEntries: 扁平 solve 列表，每项含元数据（用于 CSV 导出）
-let solveEntries = [];
-
-// NOTE: 6 种数据模式
-let dataMode = 'singles';  // 'singles' | 'mo3' | 'ao12' | 'ao25' | 'ao50' | 'ao100'
-// NOTE: 当前模式的通道数据（convertToChannelData 生成）
-// channelData[i] = [value_cs, compIndex]，仅含有效值
-let channelData = [];
+// NOTE: 7 种数据模式
+let dataMode = 'singles';
+// channelData 已迁入 player 对象内部
 
 let currentFrame = 0;      // 窗口起始位置
 let maxFrame = 0;          // 最大帧
 let isPlaying = false;
-let playSpeed = 3;         // 每帧前进的 solve 数
+let playSpeed = 3;
 let animationId = null;
 
-// NOTE: 预计算的固定参考线,避免 Y 轴在动画中跳动
-let ghostKDE = null;       // 初始分布（幽灵残影）
-let ghostMean = 0;         // 初始均值
-let globalMaxY = 0;        // 全局 Y 轴最大密度
+// NOTE: globalMaxY 需要在所有选手中取最大
+let globalMaxY = 0;
 
 // Canvas 相关
 let canvas, ctx;
-let cw, ch;                // Canvas 逻辑尺寸（CSS 像素）
+let cw, ch;
 
 // ─── 初始化 ───
 const _dataReadyCallbacks = [];
@@ -61,14 +61,14 @@ async function init() {
   setupModeSwitcher();
 
   // ── 搜索框（inline 模式，嵌入 toolbar）──
-  var vizPicker = WcaPersonPicker.create(
+  WcaPersonPicker.create(
     document.getElementById('personPickerContainer'),
     {
       mode: 'inline',
       placeholder: '搜索选手...',
       onSelect: async function (person) {
         if (person && person.wcaId) {
-          await loadPlayer(person.wcaId, currentEventId);
+          await addPlayer(person.wcaId, currentEventId);
         }
       }
     }
@@ -76,133 +76,63 @@ async function init() {
 
   // ── 项目选择器 ──
   document.getElementById('eventSelect').addEventListener('change', async function () {
-    await loadPlayer(currentWcaId, this.value);
+    await reloadAllPlayers(this.value);
   });
 
-  // ── CSV 下载 ──
+  // ── CSV 下载（导出主选手数据）──
   document.getElementById('csvDownload').addEventListener('click', function () {
-    if (!statsData || !solveEntries.length) return;
+    const p = players[activePlayerIdx];
+    if (!p || !p.statsData || !p.solveEntries.length) return;
     CsvExport.download({
-      wcaId: currentWcaId,
+      wcaId: p.wcaId,
       eventId: currentEventId,
-      solveEntries: solveEntries,
-      stats: statsData
+      solveEntries: p.solveEntries,
+      stats: p.statsData
     });
   });
 
   // 默认加载耿暄一
-  await loadPlayer('2023GENG02', '333');
+  await addPlayer('2023GENG02', '333');
 }
 
 /**
- * NOTE: 加载指定选手的数据（公开接口，切换选手时调用）
- * @param {string} wcaId - WCA ID
- * @param {string} eventId - 项目 ID
+ * NOTE: 颜色工具 — 从 PLAYER_COLORS 构造 CSS 颜色字符串
  */
-async function loadPlayer(wcaId, eventId) {
-  currentWcaId = wcaId;
-  currentEventId = eventId;
+function playerHSL(idx, a) {
+  const c = PLAYER_COLORS[idx % PLAYER_COLORS.length];
+  if (a !== undefined) return `hsla(${c.h}, ${c.s}%, ${c.l}%, ${a})`;
+  return `hsl(${c.h}, ${c.s}%, ${c.l}%)`;
+}
 
-  // 显示 loading
+/**
+ * NOTE: 添加一位选手到对比列表
+ * 如果已存在相同 wcaId，跳过；如果超过 MAX_PLAYERS，提示并跳过
+ */
+async function addPlayer(wcaId, eventId) {
+  // 防重复
+  if (players.find(p => p.wcaId === wcaId)) return;
+  if (players.length >= MAX_PLAYERS) {
+    alert('最多同时对比 ' + MAX_PLAYERS + ' 位选手');
+    return;
+  }
+
+  currentEventId = eventId;
   const loadingEl = document.getElementById('loadingOverlay');
   if (loadingEl) loadingEl.style.display = 'flex';
-
-  // 暂停动画
   pause();
 
   try {
-    // 并行获取成绩和比赛列表
-    const [results, comps] = await Promise.all([
-      WcaSearch.fetchResults(wcaId),
-      WcaSearch.fetchCompetitions(wcaId)
-    ]);
+    const playerData = await fetchPlayerData(wcaId, eventId);
+    if (!playerData) return;
 
-    if (!results || !comps) {
-      alert('Failed to load data for ' + wcaId);
-      return;
-    }
+    playerData.colorIdx = players.length;
+    players.push(playerData);
+    activePlayerIdx = players.length - 1;
 
-    // 构建 compId → {name, start_date} 映射
-    const compMap = {};
-    for (const c of comps) {
-      compMap[c.id] = { name: c.name, date: c.start_date };
-    }
-
-    // NOTE: 轮次排序权重
-    const ROUND_ORDER = { '1': 0, 'd': 1, '2': 2, 'b': 3, '3': 4, 'c': 5, 'f': 6 };
-
-    // 过滤指定项目的成绩，按 start_date + 轮次排序
-    const eventResults = results
-      .filter(r => r.event_id === eventId && compMap[r.competition_id])
-      .sort((a, b) => {
-        const da = compMap[a.competition_id].date;
-        const db = compMap[b.competition_id].date;
-        if (da !== db) return da < db ? -1 : 1;
-        return (ROUND_ORDER[a.round_type_id] || 0) - (ROUND_ORDER[b.round_type_id] || 0);
-      });
-
-    // 展开 attempts 为扁平 singles 数组
-    competitions = [];
-    const compNameSet = new Map(); // compName → index
-    solveData = [];
-    solveEntries = [];
-
-    for (const r of eventResults) {
-      const compName = compMap[r.competition_id].name;
-      if (!compNameSet.has(compName)) {
-        compNameSet.set(compName, competitions.length);
-        competitions.push(compName);
-      }
-      const compIdx = compNameSet.get(compName);
-
-      const attempts = r.attempts || [];
-      for (let a = 0; a < attempts.length; a++) {
-        const cs = attempts[a];
-        if (cs === 0) continue; // 未参加的 attempt 跳过
-        solveData.push([cs, compIdx]);
-        solveEntries.push({
-          cs: cs,
-          compName: compName,
-          roundType: r.round_type_id,
-          attemptIdx: a
-        });
-      }
-    }
-
-    // 提取 singles 数组用于滚动统计
-    const singlesCs = solveEntries.map(e => e.cs);
-    statsData = RollingStats.compute(singlesCs);
-
-    // 选手信息
-    const firstResult = eventResults[0];
-    const personName = firstResult ? firstResult.name : wcaId;
-    // NOTE: 从 "Xuanyi Geng (耿暄一)" 中提取中文名
-    const zhMatch = personName.match(/\((.+?)\)/);
-    playerInfo = {
-      name: personName.replace(/\s*\(.+?\)/, ''),
-      nameZh: zhMatch ? zhMatch[1] : personName.replace(/\s*\(.+?\)/, ''),
-      wcaId: wcaId
-    };
-
-    // 更新标题
-    document.getElementById('playerName').textContent =
-      `${playerInfo.nameZh} ${eventId === '333' ? '3×3' : eventId} 分布演变`;
-    document.getElementById('playerMeta').textContent =
-      `${playerInfo.name} · ${wcaId} · ${solveData.length} solves`;
-
-    // 默认 singles 模式
-    dataMode = 'singles';
-    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-    const activeBtn = document.querySelector('.mode-btn[data-mode="singles"]');
-    if (activeBtn) activeBtn.classList.add('active');
-
-    // 构建通道数据并初始化参数
-    buildChannelData();
-    recalcModeParams();
-    drawFrame();
-
-    // 通知所有等待数据的模块
-    _dataReadyCallbacks.forEach(fn => fn());
+    // 重建 UI
+    updatePlayerChips();
+    updateTitle();
+    rebuildAllChannels();
 
   } finally {
     if (loadingEl) loadingEl.style.display = 'none';
@@ -210,24 +140,228 @@ async function loadPlayer(wcaId, eventId) {
 }
 
 /**
- * NOTE: 根据 dataMode 从 statsData 构建 channelData
- * channelData = [[value_cs, compIndex], ...] 仅含有效值（非 null/DNF）
+ * NOTE: 移除一位选手
  */
-function buildChannelData() {
-  channelData = [];
-  if (dataMode === 'singles') {
-    // singles: 直接用 solveData（含 DNF, getWindowTimes 会跳过）
-    channelData = solveData;
+function removePlayer(idx) {
+  if (idx < 0 || idx >= players.length) return;
+  players.splice(idx, 1);
+  // 重新分配颜色索引
+  players.forEach((p, i) => { p.colorIdx = i; });
+  if (activePlayerIdx >= players.length) activePlayerIdx = Math.max(0, players.length - 1);
+
+  pause();
+  updatePlayerChips();
+  updateTitle();
+
+  if (players.length === 0) {
+    ctx.fillStyle = '#0c0c18';
+    ctx.fillRect(0, 0, cw, ch);
     return;
   }
-  // 滚动统计模式：筛选有效值
-  const arr = statsData[dataMode];
-  if (!arr) { channelData = []; return; }
-  for (let i = 0; i < arr.length; i++) {
-    if (arr[i] !== null) {
-      channelData.push([arr[i], solveData[i][1]]);
+  rebuildAllChannels();
+}
+
+/**
+ * NOTE: 切换项目时，重新加载所有选手的数据
+ */
+async function reloadAllPlayers(eventId) {
+  currentEventId = eventId;
+  const wcaIds = players.map(p => p.wcaId);
+  players = [];
+
+  const loadingEl = document.getElementById('loadingOverlay');
+  if (loadingEl) loadingEl.style.display = 'flex';
+  pause();
+
+  try {
+    for (const id of wcaIds) {
+      const data = await fetchPlayerData(id, eventId);
+      if (data) {
+        data.colorIdx = players.length;
+        players.push(data);
+      }
+    }
+    activePlayerIdx = 0;
+    updatePlayerChips();
+    updateTitle();
+    rebuildAllChannels();
+  } finally {
+    if (loadingEl) loadingEl.style.display = 'none';
+  }
+}
+
+/**
+ * NOTE: 从 WCA API 获取并解析选手数据，返回 player 对象
+ */
+async function fetchPlayerData(wcaId, eventId) {
+  const [results, comps] = await Promise.all([
+    WcaSearch.fetchResults(wcaId),
+    WcaSearch.fetchCompetitions(wcaId)
+  ]);
+  if (!results || !comps) {
+    alert('Failed to load data for ' + wcaId);
+    return null;
+  }
+
+  const compMap = {};
+  for (const c of comps) {
+    compMap[c.id] = { name: c.name, date: c.start_date };
+  }
+
+  const ROUND_ORDER = { '1': 0, 'd': 1, '2': 2, 'b': 3, '3': 4, 'c': 5, 'f': 6 };
+  const eventResults = results
+    .filter(r => r.event_id === eventId && compMap[r.competition_id])
+    .sort((a, b) => {
+      const da = compMap[a.competition_id].date;
+      const db = compMap[b.competition_id].date;
+      if (da !== db) return da < db ? -1 : 1;
+      return (ROUND_ORDER[a.round_type_id] || 0) - (ROUND_ORDER[b.round_type_id] || 0);
+    });
+
+  const competitions = [];
+  const compNameSet = new Map();
+  const solveData = [];
+  const solveEntries = [];
+
+  for (const r of eventResults) {
+    const compName = compMap[r.competition_id].name;
+    if (!compNameSet.has(compName)) {
+      compNameSet.set(compName, competitions.length);
+      competitions.push(compName);
+    }
+    const compIdx = compNameSet.get(compName);
+    const attempts = r.attempts || [];
+    for (let a = 0; a < attempts.length; a++) {
+      const cs = attempts[a];
+      if (cs === 0) continue;
+      solveData.push([cs, compIdx]);
+      solveEntries.push({ cs, compName, roundType: r.round_type_id, attemptIdx: a });
     }
   }
+
+  const singlesCs = solveEntries.map(e => e.cs);
+  const statsData = RollingStats.compute(singlesCs);
+
+  const firstResult = eventResults[0];
+  const personName = firstResult ? firstResult.name : wcaId;
+  const zhMatch = personName.match(/\((.+?)\)/);
+
+  return {
+    wcaId,
+    name: personName.replace(/\s*\(.+?\)/, ''),
+    nameZh: zhMatch ? zhMatch[1] : personName.replace(/\s*\(.+?\)/, ''),
+    solveData,
+    channelData: [],
+    competitions,
+    statsData,
+    solveEntries,
+    ghostKDE: null,
+    ghostMean: 0,
+    colorIdx: 0
+  };
+}
+
+/**
+ * NOTE: 重建所有选手的 channelData + 重算参数 + 绘帧
+ */
+function rebuildAllChannels() {
+  dataMode = dataMode || 'singles';
+  for (const p of players) {
+    buildChannelDataForPlayer(p);
+  }
+  recalcModeParams();
+  drawFrame();
+  _dataReadyCallbacks.forEach(fn => fn());
+}
+
+/**
+ * NOTE: 根据 dataMode 从某个 player 的数据构建 channelData
+ */
+function buildChannelDataForPlayer(player) {
+  player.channelData = [];
+  if (dataMode === 'singles') {
+    player.channelData = player.solveData;
+    return;
+  }
+  const arr = player.statsData[dataMode];
+  if (!arr) return;
+  for (let i = 0; i < arr.length; i++) {
+    if (arr[i] !== null) {
+      player.channelData.push([arr[i], player.solveData[i][1]]);
+    }
+  }
+}
+
+/**
+ * NOTE: 更新标题区显示
+ */
+function updateTitle() {
+  const evLabel = currentEventId === '333' ? '3×3' : currentEventId;
+  if (players.length === 0) {
+    document.getElementById('playerName').textContent = 'Distribution Evolution';
+    document.getElementById('playerMeta').textContent = '';
+    return;
+  }
+  if (players.length === 1) {
+    const p = players[0];
+    document.getElementById('playerName').textContent = `${p.nameZh} ${evLabel} 分布演变`;
+    document.getElementById('playerMeta').textContent = `${p.name} · ${p.wcaId} · ${p.solveData.length} solves`;
+  } else {
+    const names = players.map(p => p.nameZh).join(' vs ');
+    document.getElementById('playerName').textContent = `${names} ${evLabel} 分布对比`;
+    const meta = players.map(p => `${p.name}(${p.solveData.length})`).join(' · ');
+    document.getElementById('playerMeta').textContent = meta;
+  }
+}
+
+/**
+ * NOTE: 更新选手 chip 标签（toolbar 内的彩色标签条）
+ */
+function updatePlayerChips() {
+  let container = document.getElementById('playerChips');
+  if (!container) {
+    // 首次创建，插入到 toolbar 搜索框后面
+    container = document.createElement('div');
+    container.id = 'playerChips';
+    container.className = 'player-chips';
+    const toolbar = document.querySelector('.toolbar');
+    const searchEl = document.getElementById('personPickerContainer');
+    toolbar.insertBefore(container, searchEl.nextSibling);
+  }
+  container.innerHTML = '';
+  players.forEach((p, i) => {
+    const chip = document.createElement('span');
+    chip.className = 'player-chip';
+    chip.style.borderColor = playerHSL(i, 0.6);
+    chip.style.background = playerHSL(i, 0.1);
+    // 国旗 + 名字
+    const flag = p.iso2 ? `<span class="fi fi-${p.iso2}"></span> ` : '';
+    chip.innerHTML = flag + escapeHtml(p.nameZh || p.name) +
+      ' <span class="chip-remove" data-idx="' + i + '">✕</span>';
+    // 点击 chip body → 设为主选手
+    chip.addEventListener('click', function (e) {
+      if (e.target.classList.contains('chip-remove')) return;
+      activePlayerIdx = i;
+      updatePlayerChips();
+      drawFrame();
+      if (typeof initRidgeline === 'function') initRidgeline();
+    });
+    // 点击 ✕ → 移除
+    chip.querySelector('.chip-remove').addEventListener('click', function () {
+      removePlayer(i);
+    });
+    // 主选手高亮
+    if (i === activePlayerIdx) {
+      chip.classList.add('active');
+      chip.style.background = playerHSL(i, 0.2);
+    }
+    container.appendChild(chip);
+  });
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 // ─── Canvas DPI 适配 ───
@@ -302,25 +436,27 @@ function computeKDE(times) {
 }
 
 // ─── 数据提取 ───
-function getWindowTimes(frame) {
-  // 统一从 channelData 提取窗口数据
-  const end = Math.min(frame + windowSize, channelData.length);
+// NOTE: 支持多选手 — playerIdx 参数指定选手索引
+function getWindowTimes(playerIdx, frame) {
+  const p = players[playerIdx];
+  if (!p) return [];
+  const cd = p.channelData;
+  const end = Math.min(frame + windowSize, cd.length);
   const times = [];
   for (let i = frame; i < end; i++) {
-    const v = channelData[i][0];
-    // singles 模式需要排除 DNF/DNS（<= 0），统计模式数据已过滤
+    const v = cd[i][0];
     if (v > 0) times.push(v / 100);
   }
   return times;
 }
 
-/**
- * 获取当前帧最后一个数据点对应的比赛名和序号范围
- */
-function getFrameCompInfo(frame) {
-  const lastIdx = Math.min(frame + windowSize - 1, channelData.length - 1);
+function getFrameCompInfo(playerIdx, frame) {
+  const p = players[playerIdx];
+  if (!p) return { compName: '', solveStart: 0, solveEnd: 0 };
+  const cd = p.channelData;
+  const lastIdx = Math.min(frame + windowSize - 1, cd.length - 1);
   return {
-    compName: competitions[channelData[lastIdx][1]],
+    compName: p.competitions[cd[lastIdx][1]],
     solveStart: frame + 1,
     solveEnd: frame + windowSize
   };
@@ -350,67 +486,84 @@ function maxOfKDE(kde) {
 // ═══════════════════════════════════════
 
 function drawFrame() {
+  if (players.length === 0) return;
   const { top: mt, right: mr, bottom: mb, left: ml } = MARGIN;
-  const pw = cw - ml - mr;  // 绘图区宽度
-  const ph = ch - mt - mb;  // 绘图区高度
+  const pw = cw - ml - mr;
+  const ph = ch - mt - mb;
 
-  // 清空画布
   ctx.fillStyle = '#0c0c18';
   ctx.fillRect(0, 0, cw, ch);
 
-  // 当前窗口数据
-  const times = getWindowTimes(currentFrame);
-  const kde = computeKDE(times);
-  if (!kde) return;
-
-  const currentMean = mean(times);
-
-  // 缩放函数：数据坐标 → Canvas 像素
   const sx = x => ml + ((x - xMin) / (xMax - xMin)) * pw;
   const sy = y => mt + ph - (y / globalMaxY) * ph;
 
   // 1. 网格和坐标轴
   drawGrid(sx, sy, ml, mt, pw, ph);
 
-  // 2. 幽灵残影（初始分布）
-  if (ghostKDE && currentFrame > 0) {
-    drawCurve(ghostKDE, sx, sy, {
-      fill: 'rgba(255,255,255,0.04)',
-      stroke: 'rgba(255,255,255,0.12)',
-      lineWidth: 1
+  // 2. 循环绘制每位选手的 KDE 曲线
+  const meanPositions = []; // 记录均值用于标签绘制
+  for (let pi = 0; pi < players.length; pi++) {
+    const p = players[pi];
+    // NOTE: 短选手到末尾后冻结最终帧
+    const pMaxFrame = Math.max(0, p.channelData.length - windowSize);
+    const pFrame = Math.min(currentFrame, pMaxFrame);
+
+    // 幽灵残影（只在当前帧 > 0 时显示）
+    if (p.ghostKDE && currentFrame > 0) {
+      drawCurve(p.ghostKDE, sx, sy, {
+        fill: playerHSL(pi, 0.03),
+        stroke: playerHSL(pi, 0.12),
+        lineWidth: 1
+      });
+      drawMeanLine(sx, sy, mt, ph, p.ghostMean, playerHSL(pi, 0.12), true);
+    }
+
+    const times = getWindowTimes(pi, pFrame);
+    const kde = computeKDE(times);
+    if (!kde) continue;
+    const currentMean = mean(times);
+    meanPositions.push({ pi, mean: currentMean, name: p.nameZh || p.name });
+
+    // KDE 曲线 + 填充
+    drawCurve(kde, sx, sy, {
+      fill: playerHSL(pi, 0.15),
+      stroke: playerHSL(pi, 0.85),
+      lineWidth: pi === activePlayerIdx ? 2.5 : 1.8,
+      glow: pi === activePlayerIdx
     });
-    // 幽灵均值线
-    drawMeanLine(sx, sy, mt, ph, ghostMean, 'rgba(255,255,255,0.12)', true);
+
+    // 均值线
+    drawMeanLine(sx, sy, mt, ph, currentMean, playerHSL(pi, 0.5), false);
   }
 
-  // 3. 当前 KDE 曲线
-  const grad = ctx.createLinearGradient(sx(xMin), 0, sx(xMax), 0);
-  grad.addColorStop(0, 'rgba(0, 230, 255, 0.22)');
-  grad.addColorStop(0.4, 'rgba(80, 120, 255, 0.22)');
-  grad.addColorStop(1, 'rgba(180, 60, 255, 0.22)');
+  // 3. 均值标签（Canvas 内绘制，多选手适配）
+  drawMeanLabelsOnCanvas(sx, mt, meanPositions);
 
-  drawCurve(kde, sx, sy, {
-    fill: grad,
-    stroke: 'rgba(0, 230, 255, 0.85)',
-    lineWidth: 2.5,
-    glow: true
-  });
+  // 4. 更新主选手的 DOM 统计面板
+  const ap = players[activePlayerIdx];
+  if (ap) {
+    const apMaxFrame = Math.max(0, ap.channelData.length - windowSize);
+    const apFrame = Math.min(currentFrame, apMaxFrame);
+    const apTimes = getWindowTimes(activePlayerIdx, apFrame);
+    if (apTimes.length > 0) {
+      updateStats(apTimes, mean(apTimes));
+    }
+  }
 
-  // 4. 当前均值线
-  drawMeanLine(sx, sy, mt, ph, currentMean, 'rgba(0, 230, 255, 0.5)', false);
+  // 5. 隐藏旧 DOM 均值标签
+  const oldLabel = document.getElementById('meanLabel');
+  if (oldLabel) oldLabel.style.display = 'none';
+  const oldGhost = document.getElementById('ghostMeanLabel');
+  if (oldGhost) oldGhost.style.display = 'none';
 
-  // 5. 更新 DOM 统计面板
-  updateStats(times, currentMean);
-
-  // 6. 更新均值标签位置
-  updateMeanLabels(sx, currentMean);
-
-  // 7. 更新进度条
+  // 6. 进度条
   updateProgressUI();
 
-  // 8. 联动脊线图高亮
-  if (typeof highlightRidgeRow === 'function') {
-    const lastIdx = Math.min(currentFrame + windowSize - 1, channelData.length - 1);
+  // 7. 脊线图联动（主选手）
+  if (typeof highlightRidgeRow === 'function' && ap) {
+    const apMaxFrame = Math.max(0, ap.channelData.length - windowSize);
+    const apFrame = Math.min(currentFrame, apMaxFrame);
+    const lastIdx = Math.min(apFrame + windowSize - 1, ap.channelData.length - 1);
     highlightRidgeRow(lastIdx);
   }
 }
@@ -503,7 +656,8 @@ function drawCurve(points, sx, sy, opts) {
     }
 
     if (opts.glow) {
-      ctx.shadowColor = 'rgba(0, 230, 255, 0.4)';
+      // NOTE: glow 颜色跟随 stroke，多选手时各自颜色
+      ctx.shadowColor = opts.stroke;
       ctx.shadowBlur = 12;
     }
 
@@ -530,9 +684,13 @@ function drawMeanLine(sx, sy, mt, ph, meanVal, color, dashed) {
 
 // ─── DOM 更新 ───
 function updateStats(times, currentMean) {
+  const ap = players[activePlayerIdx];
+  if (!ap) return;
   const s = stddev(times);
-  const delta = currentMean - ghostMean;
-  const info = getFrameCompInfo(currentFrame);
+  const delta = currentMean - ap.ghostMean;
+  const apMaxFrame = Math.max(0, ap.channelData.length - windowSize);
+  const apFrame = Math.min(currentFrame, apMaxFrame);
+  const info = getFrameCompInfo(activePlayerIdx, apFrame);
 
   document.getElementById('statMean').textContent = currentMean.toFixed(2) + 's';
   document.getElementById('statStd').textContent = 'σ ' + s.toFixed(2) + 's';
@@ -545,22 +703,24 @@ function updateStats(times, currentMean) {
   deltaEl.classList.toggle('improving', delta < 0);
 }
 
-function updateMeanLabels(sx, currentMean) {
-  // 当前均值标签
-  const label = document.getElementById('meanLabel');
-  const text = document.getElementById('meanText');
-  label.style.display = 'flex';
-  label.style.left = sx(currentMean) + 'px';
-  text.textContent = currentMean.toFixed(2) + 's';
-
-  // 幽灵均值标签
-  if (currentFrame > 0) {
-    const gLabel = document.getElementById('ghostMeanLabel');
-    const gText = document.getElementById('ghostMeanText');
-    gLabel.style.display = 'flex';
-    gLabel.style.left = sx(ghostMean) + 'px';
-    gText.textContent = ghostMean.toFixed(2) + 's';
+/**
+ * NOTE: 多选手均值标签 — 直接在 Canvas 上绘制，不用 DOM
+ */
+function drawMeanLabelsOnCanvas(sx, mt, meanPositions) {
+  ctx.save();
+  ctx.textBaseline = 'bottom';
+  ctx.font = '600 12px "JetBrains Mono", monospace';
+  for (const mp of meanPositions) {
+    const px = sx(mp.mean);
+    const label = mp.mean.toFixed(2) + 's';
+    ctx.fillStyle = playerHSL(mp.pi, 0.9);
+    // NOTE: 多选手时显示名字缩写 + 均值
+    const text = players.length > 1 ? mp.name.slice(0, 3) + ' ' + label : '● ' + label;
+    ctx.textAlign = px > cw / 2 ? 'right' : 'left';
+    const offset = px > cw / 2 ? -6 : 6;
+    ctx.fillText(text, px + offset, mt - 4 - mp.pi * 16);
   }
+  ctx.restore();
 }
 
 function formatCompName(name) {
@@ -692,19 +852,19 @@ document.addEventListener('DOMContentLoaded', init);
  * 并重置进度条
  */
 function recalcModeParams() {
-  // NOTE: 所有模式统一从 channelData 自适应 X 轴范围
-  // 高极端值用 P97 百分位截断（早期异常慢成绩不应拉大横轴），低极端值保留
+  // NOTE: 联合所有选手的 channelData 自适应 X 轴范围
   const vals = [];
-  for (const d of channelData) {
-    const v = d[0] / 100;
-    if (v > 0) vals.push(v);
+  for (const p of players) {
+    for (const d of p.channelData) {
+      const v = d[0] / 100;
+      if (v > 0) vals.push(v);
+    }
   }
+  if (vals.length === 0) return;
   vals.sort((a, b) => a - b);
   const lo = vals[0] || 0;
-  // NOTE: xMax 用 P97 而非最大值，滤除高位离群点
   const p97Idx = Math.min(Math.floor(vals.length * 0.97), vals.length - 1);
   const hi = vals[p97Idx] || lo + 1;
-  // 留 ~15% 两侧边距（最少 0.5s）
   const margin = Math.max(0.5, (hi - lo) * 0.15);
   xMin = Math.floor((lo - margin) * 2) / 2;
   xMax = Math.ceil((hi + margin) * 2) / 2;
@@ -714,30 +874,35 @@ function recalcModeParams() {
     windowSize = 100;
     minBandwidth = 0;
   } else {
-    // NOTE: 滚动统计模式：大窗口 + 带宽下限
     windowSize = 400;
-    minBandwidth = Math.max(0.15, (hi - lo) * 0.03); // 带宽按数据范围缩放
+    minBandwidth = Math.max(0.15, (hi - lo) * 0.03);
   }
 
-  maxFrame = channelData.length - windowSize;
+  // NOTE: maxFrame 取所有选手中最长的
+  maxFrame = 0;
+  for (const p of players) {
+    const pMax = p.channelData.length - windowSize;
+    if (pMax > maxFrame) maxFrame = pMax;
+  }
   if (maxFrame < 0) maxFrame = 0;
 
-  // 重置帧位置
   currentFrame = 0;
 
-  // 预计算初始和最终分布
-  const initTimes = getWindowTimes(0);
-  const finalTimes = getWindowTimes(maxFrame);
-  ghostKDE = computeKDE(initTimes);
-  ghostMean = initTimes.length > 0 ? mean(initTimes) : 0;
-  const finalKDE = computeKDE(finalTimes);
+  // NOTE: 为每位选手预计算 ghostKDE + ghostMean
+  globalMaxY = 0;
+  for (let pi = 0; pi < players.length; pi++) {
+    const p = players[pi];
+    const pMax = Math.max(0, p.channelData.length - windowSize);
+    const initTimes = getWindowTimes(pi, 0);
+    const finalTimes = getWindowTimes(pi, pMax);
+    p.ghostKDE = computeKDE(initTimes);
+    p.ghostMean = initTimes.length > 0 ? mean(initTimes) : 0;
+    const finalKDE = computeKDE(finalTimes);
+    const localMax = Math.max(maxOfKDE(p.ghostKDE), maxOfKDE(finalKDE));
+    if (localMax > globalMaxY) globalMaxY = localMax;
+  }
+  globalMaxY *= 1.2;
 
-  globalMaxY = Math.max(
-    maxOfKDE(ghostKDE),
-    maxOfKDE(finalKDE)
-  ) * 1.2;
-
-  // 更新进度条范围
   const progress = document.getElementById('progress');
   progress.max = maxFrame;
   progress.value = 0;
@@ -755,10 +920,8 @@ function setupModeSwitcher() {
       document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
       e.target.classList.add('active');
 
-      // 重建通道数据并重算参数
-      buildChannelData();
-      recalcModeParams();
-      drawFrame();
+      // NOTE: 重建所有选手的通道数据
+      rebuildAllChannels();
 
       if (typeof initRidgeline === 'function') {
         initRidgeline();
