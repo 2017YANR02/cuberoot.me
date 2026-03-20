@@ -331,6 +331,39 @@ kbd {
   background: rgba(255, 255, 255, 0.05);
 }
 
+/* ─── 脊线图区域 ─── */
+.section-divider {
+  height: 1px;
+  margin: 32px 0 8px;
+  background: linear-gradient(90deg, transparent, var(--border-subtle), transparent);
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 14px;
+  letter-spacing: 0.02em;
+}
+
+.ridgeline-wrapper {
+  position: relative;
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1px rgba(180, 60, 255, 0.04),
+    0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+#ridgelineCanvas {
+  display: block;
+  width: 100%;
+  cursor: pointer;
+}
+
 /* ─── 响应式 ─── */
 @media (max-width: 640px) {
   .page {
