@@ -46,6 +46,7 @@ let isPlaying = false;
 let playSpeed = 3;
 let animationId = null;
 let driverIdx = 0;  // NOTE: 帧驱动选手索引（channelData 最长者，自动选择）
+let syncMode = 'solve';  // NOTE: 'solve' = 按把数比例，'date' = 按日期同步
 
 // NOTE: globalMaxY 需要在所有选手中取最大
 let globalMaxY = 0;
@@ -503,6 +504,10 @@ function updatePlayerChips() {
     }
     container.appendChild(chip);
   });
+
+  // NOTE: 多选手时显示同步模式切换按钮
+  const syncGroup = document.getElementById('syncGroup');
+  if (syncGroup) syncGroup.style.display = players.length > 1 ? 'flex' : 'none';
 }
 
 function escapeHtml(str) {
@@ -628,6 +633,44 @@ function maxOfKDE(kde) {
 }
 
 // ═══════════════════════════════════════
+// 同步模式下的帧定位
+// ═══════════════════════════════════════
+
+/**
+ * NOTE: 根据 syncMode 计算某选手在当前 progress 下的窗口起始帧
+ * 'solve' 模式：纯比例（把数对应）
+ * 'date'  模式：连续时间映射（日期同步，丝滑版）
+ */
+function computePlayerFrame(pi, progress) {
+  const p = players[pi];
+  const pMax = Math.max(0, p.channelData.length - windowSize);
+  if (pMax === 0) return 0;
+
+  if (syncMode === 'solve' || players.length <= 1) {
+    return Math.round(progress * pMax);
+  }
+
+  // ─── date 模式：连续日期映射 ───
+  // driver 的时间跨度（起止日期）
+  const drv = players[driverIdx];
+  const drvFirst = dateToNum(drv.compDates[drv.channelData[0][1]]);
+  const drvLast = dateToNum(drv.compDates[drv.channelData[drv.channelData.length - 1][1]]);
+  if (drvLast <= drvFirst) return Math.round(progress * pMax);
+
+  // 当前连续日期数值（线性插值 driver 的起止日期）
+  const currentDateNum = drvFirst + progress * (drvLast - drvFirst);
+
+  // 该选手的时间跨度
+  const pFirst = dateToNum(p.compDates[p.channelData[0][1]]);
+  const pLast = dateToNum(p.compDates[p.channelData[p.channelData.length - 1][1]]);
+  if (pLast <= pFirst) return Math.round(progress * pMax);
+
+  // 映射 driver 的连续日期到该选手的时间跨度
+  const pProgress = (currentDateNum - pFirst) / (pLast - pFirst);
+  return Math.round(Math.max(0, Math.min(1, pProgress)) * pMax);
+}
+
+// ═══════════════════════════════════════
 // 绘制引擎
 // ═══════════════════════════════════════
 
@@ -648,12 +691,10 @@ function drawFrame() {
 
   // 2. 循环绘制每位选手的 KDE 曲线
   const meanPositions = [];
-  // NOTE: 所有选手按比例进度同步推进 → 全部丝滑
   const progress = maxFrame > 0 ? currentFrame / maxFrame : 0;
   for (let pi = 0; pi < players.length; pi++) {
     const p = players[pi];
-    const pMaxFrame = Math.max(0, p.channelData.length - windowSize);
-    const pFrame = Math.round(progress * pMaxFrame);
+    const pFrame = computePlayerFrame(pi, progress);
 
     // 幽灵残影
     if (p.ghostKDE && currentFrame > 0) {
@@ -687,8 +728,7 @@ function drawFrame() {
   // 4. 更新主选手的 DOM 统计面板
   const ap = players[activePlayerIdx];
   if (ap) {
-    const apMax = Math.max(0, ap.channelData.length - windowSize);
-    const apFrame = Math.round(progress * apMax);
+    const apFrame = computePlayerFrame(activePlayerIdx, progress);
     const apTimes = getWindowTimes(activePlayerIdx, apFrame);
     if (apTimes.length > 0) {
       // NOTE: 显示主选手当前 solve 对应的比赛日期
@@ -709,8 +749,7 @@ function drawFrame() {
 
   // 7. 脊线图联动
   if (typeof highlightRidgeRow === 'function' && ap) {
-    const apMax = Math.max(0, ap.channelData.length - windowSize);
-    const apFrame = Math.round(progress * apMax);
+    const apFrame = computePlayerFrame(activePlayerIdx, progress);
     const apEndIdx = Math.min(apFrame + windowSize - 1, ap.channelData.length - 1);
     highlightRidgeRow(apEndIdx);
   }
@@ -911,6 +950,16 @@ function setupControls() {
       document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
       e.target.classList.add('active');
       playSpeed = parseInt(e.target.dataset.speed);
+    });
+  });
+
+  // NOTE: 同步模式切换（按把数 / 按日期）
+  document.querySelectorAll('.sync-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      document.querySelectorAll('.sync-btn').forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+      syncMode = e.target.dataset.sync;
+      drawFrame();
     });
   });
 

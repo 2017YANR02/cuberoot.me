@@ -534,6 +534,28 @@ kbd {
   opacity: 1;
 }
 
+/* ─── 同步模式切换 ─── */
+.sync-group {
+  display: flex;
+  gap: 2px;
+  margin-left: 8px;
+}
+.sync-btn {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.15);
+  color: var(--text-secondary);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.sync-btn.active {
+  background: rgba(0, 230, 255, 0.15);
+  border-color: rgba(0, 230, 255, 0.4);
+  color: var(--text-primary);
+}
+
 /* ─── CSV 选人菜单 ─── */
 .csv-player-menu {
   position: absolute;
