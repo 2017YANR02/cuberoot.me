@@ -15,18 +15,18 @@
   </div>
 </div>
 <div class="metric-panel active" id="metric-bao5" data-label-en="BAo5">
-<div id="bao5-ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
+<div id="bao5-ranking" class="stat-panel active" data-label-en="Ranking" data-label-zh="排名">
 <p>BAo5 排名</p>
 </div>
-<div id="bao5-history" class="stat-panel" data-label-en="WR History" data-label-zh="历史">
+<div id="bao5-history" class="stat-panel" data-label-en="History" data-label-zh="历史">
 <p>BAo5 历史</p>
 </div>
 </div>
 <div class="metric-panel" id="metric-mo5" data-label-en="Mo5">
-<div id="mo5-ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
+<div id="mo5-ranking" class="stat-panel active" data-label-en="Ranking" data-label-zh="排名">
 <p>Mo5 排名</p>
 </div>
-<div id="mo5-history" class="stat-panel" data-label-en="WR History" data-label-zh="历史">
+<div id="mo5-history" class="stat-panel" data-label-en="History" data-label-zh="历史">
 <p>Mo5 历史</p>
 </div>
 </div>

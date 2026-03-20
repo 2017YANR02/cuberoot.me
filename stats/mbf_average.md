@@ -2,7 +2,7 @@
 
 <p><em data-i18n-en="Unofficial Mo3 for 333mbf (not tracked by WCA). The WCA value 0DDTTTTTMM is split into DD (99 minus difference), TTTTT (time in seconds), and MM (missed). Each part is averaged across 3 attempts and rounded to the nearest integer, then reassembled into a single value for ranking. 333mbo data is hardcoded (only one person has ever completed a Mo3)." data-i18n-zh="333mbf 的非官方 Mo3（WCA 不追踪此指标）。WCA 编码值 0DDTTTTTMM 被拆分为 DD（99 减差值）、TTTTT（秒数）和 MM（失败数）。三次尝试各部分分别取均值并四舍五入后重新拼接，用于排名。333mbo 数据为硬编码（历史上仅有一人完成过 Mo3）。">Unofficial Mo3 for 333mbf (not tracked by WCA). The WCA value 0DDTTTTTMM is split into DD (99 minus difference), TTTTT (time in seconds), and MM (missed). Each part is averaged across 3 attempts and rounded to the nearest integer, then reassembled into a single value for ranking. 333mbo data is hardcoded (only one person has ever completed a Mo3).</em></p>
 
-<div id="ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
+<div id="ranking" class="stat-panel active" data-label-en="Ranking" data-label-zh="排名">
 <h3 data-i18n-en="3x3x3 Multi-Blind" data-i18n-zh="多盲">3x3x3 Multi-Blind</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Result</th><th>Country</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -23,7 +23,7 @@
 <tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2003CEAU01">Constantin Ceausu</a></td><td style="text-align:right">3/4 ?:??:??</td><td>Romania</td><td>2006-09-23</td><td><a href="https://www.worldcubeassociation.org/competitions/Euro2006">European Championship 2006</a></td></tr>
 </table>
 </div>
-<div id="history" class="stat-panel" data-label-en="WR History" data-label-zh="历史">
+<div id="history" class="stat-panel" data-label-en="History" data-label-zh="历史">
 <h3 data-i18n-en="3x3x3 Multi-Blind" data-i18n-zh="多盲">3x3x3 Multi-Blind</h3>
 <table>
 <tr><th style="text-align:right">Mo3</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Date</th><th>Competition</th><th>Details</th></tr>
