@@ -57,6 +57,8 @@ var compNameInput = null;
 var wrBadges = [[], []];
 // NOTE: 排名标签 DOM 引用 — rankLabels[p][t]
 var rankLabels = [[], []];
+// NOTE: 👤 按钮 DOM 引用 — playerMeBtns[0/1]
+var playerMeBtns = [null, null];
 
 // NOTE: Target Avg 的固定 DOM 列索引（始终在第 6 列，不随 solveCount 变化）
 var TAVG_T = 5;
@@ -84,7 +86,7 @@ export function init(gridContainer) {
         notify();
     });
 
-    // 创建输入网格：2 行 × (5 时间格 + 1 Target Avg 格 + 1 勾选)
+    // 创建输入网格：2 行 × (5 时间格 + 1 Target Avg 格 + 1 勾选 + 1 👤)
     for (var p = 0; p < 2; p++) {
         var row = document.createElement('div');
         row.className = 'input-row player-' + (p === 0 ? 'a' : 'b');
@@ -112,6 +114,33 @@ export function init(gridContainer) {
         cb.dataset.player = p;
         cb.addEventListener('change', onTogglePlayer);
         row.appendChild(cb);
+
+        // NOTE: 头像按钮 — Row A: 自己的数据(需登录), Row B: 任意 WCA ID
+        var meBtn = document.createElement('button');
+        meBtn.className = 'me-btn';
+        meBtn.title = p === 0 ? 'Login to use your data' : 'Enter a WCA ID';
+        meBtn.dataset.player = p;
+        // NOTE: 内部 img 元素 — 默认显示通用头像 SVG
+        var meImg = document.createElement('img');
+        meImg.className = 'me-avatar';
+        meImg.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%23ddd'/%3E%3Ccircle cx='16' cy='12' r='5' fill='%23999'/%3E%3Cpath d='M6 28c0-6 4-9 10-9s10 3 10 9' fill='%23999'/%3E%3C/svg%3E";
+        meImg.alt = 'avatar';
+        meBtn.appendChild(meImg);
+        meBtn.addEventListener('click', (function(idx) {
+            return function() {
+                if (idx === 0) {
+                    // NOTE: Row A — 未登录则跳转登录；已登录则用自己的数据
+                    if (typeof WcaAuth !== 'undefined' && !WcaAuth.isLoggedIn()) {
+                        WcaAuth.login();
+                        return;
+                    }
+                }
+                // NOTE: Row A 和 Row B 都 dispatch 同一事件，app.js 处理差异
+                document.dispatchEvent(new CustomEvent('player-override', { detail: { player: idx } }));
+            };
+        })(p));
+        playerMeBtns[p] = meBtn;
+        row.appendChild(meBtn);
 
         gridContainer.appendChild(row);
     }
@@ -1341,3 +1370,49 @@ function initDrum() {
     }, { passive: false });
 }
 
+
+// ── 头像按钮控制 ──
+
+// NOTE: WCA 默认头像 URL（未登录或切回世界数据时使用）
+var DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%23ddd'/%3E%3Ccircle cx='16' cy='12' r='5' fill='%23999'/%3E%3Cpath d='M6 28c0-6 4-9 10-9s10 3 10 9' fill='%23999'/%3E%3C/svg%3E";
+// NOTE: 缓存登录用户的头像 URL
+var userAvatarUrl = '';
+
+/** NOTE: 登录后设置用户头像 URL 并立即更新 Row A 按钮图片 */
+export function setMeAvatarUrl(url) {
+    userAvatarUrl = url || DEFAULT_AVATAR;
+    // NOTE: 立即更新 Row A 按钮的头像，让登录后无需点击就能看到自己的头像
+    var btn = playerMeBtns[0];
+    if (btn) {
+        var img = btn.querySelector('.me-avatar');
+        if (img) img.src = userAvatarUrl;
+    }
+}
+
+/**
+ * NOTE: 设置头像按钮的激活状态
+ * @param {number} playerIdx - 0 或 1
+ * @param {boolean} active - 是否处于个人数据模式
+ * @param {string} [loadingText] - 如果传入文字，临时显示为文字（如 ⏳）
+ * @param {string} [avatarUrl] - 激活时使用的独立头像 URL（不传则用登录用户头像）
+ */
+export function setMeButtonState(playerIdx, active, loadingText, avatarUrl) {
+    var btn = playerMeBtns[playerIdx];
+    if (!btn) return;
+    var img = btn.querySelector('.me-avatar');
+    btn.classList.toggle('me-active', active);
+
+    if (loadingText && !active) {
+        // NOTE: 加载中 — 临时隐藏 img 显示文字
+        if (img) img.style.display = 'none';
+        btn.dataset.loading = loadingText;
+    } else {
+        // NOTE: 正常态 — 显示头像（优先传入的 avatarUrl，其次全局 userAvatarUrl）
+        if (img) {
+            img.style.display = '';
+            img.src = active ? (avatarUrl || userAvatarUrl || DEFAULT_AVATAR) : DEFAULT_AVATAR;
+        }
+        delete btn.dataset.loading;
+    }
+    btn.title = active ? 'Switch back to World #' + (playerIdx + 1) : 'Use my data';
+}

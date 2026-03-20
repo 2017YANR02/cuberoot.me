@@ -11,6 +11,7 @@ import { getTargetAvg, setTargetAvg, clearTargetAvgs } from './calc_table.js';
 import * as urlSync from './url_sync.js';
 import * as eventSelector from './event_selector.js';
 import * as wrData from './wr_data.js';
+import * as wcaApi from './wca_api.js';
 
 // ── 秒表状态 ──
 
@@ -70,20 +71,27 @@ document.addEventListener('DOMContentLoaded', () => {
     inputGrid.init(document.getElementById('input-grid-container'));
     calcTable.init();
     wrData.load().then(function () {
-        initTargetDefaults(); // NOTE: WR 数据加载后填充空的 Target 格
-        // NOTE: WR 数据就绪后初始化进步滑杆的基线值
+        initTargetDefaults();
         updateProgressInfo(0, 0);
         updateProgressInfo(1, 0);
         notify();
+        // NOTE: 登录后设置用户头像 URL — 按钮显示真实头像
+        if (typeof WcaAuth !== 'undefined' && WcaAuth.isLoggedIn()) {
+            var user = WcaAuth.getUser();
+            if (user && user.avatar) inputGrid.setMeAvatarUrl(user.avatar);
+        }
     });
 
     // NOTE: 初始化项目选择器
     eventSelector.init(document.getElementById('event-selector-container'), function (eventId) {
         state.event = eventId;
         setCurrentEvent(eventId);
-        // NOTE: 先清零旧数据，再 resize，避免 resizeTimes 触发的 notify
-        // 用旧数据 + 新项目 WR 基准误判 confetti（如 2 阶 0.96s 被判为 3 阶 WR）
-        clearPendingConfetti(); // NOTE: 清除残留 confetti 动画
+        // NOTE: 切换项目时清除个人数据覆盖 — 不同项目的 KDE 数据不通用
+        for (var pi = 0; pi < 2; pi++) {
+            wrData.clearPlayerOverride(pi);
+            inputGrid.setMeButtonState(pi, false);
+        }
+        clearPendingConfetti();
         for (var p = 0; p < state.times.length; p++) {
             for (var t = 0; t < state.times[p].length; t++) state.times[p][t] = 0;
         }
@@ -92,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
         inputGrid.updateVisibleCells();
         clearTargetAvgs();
         initTargetDefaults();
-        document.getElementById('rand-fill').click(); // NOTE: 用新项目的 KDE 分布重新采样
+        document.getElementById('rand-fill').click();
     });
 
     // NOTE: 注册秒表回调（空格键触发）
@@ -215,6 +223,68 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     console.log('HTH Grapher v2 initialized');
+
+    // ── 头像按钮 — 个人数据切换 ──
+    // NOTE: Row A = 登录用户自己的数据；Row B = 可输入任意 WCA ID
+    document.addEventListener('player-override', async function(e) {
+        var p = e.detail.player;
+        var override = wrData.getPlayerOverride(p);
+
+        if (override) {
+            // NOTE: 已激活 → 切换回世界数据
+            wrData.clearPlayerOverride(p);
+            inputGrid.setMeButtonState(p, false);
+            // NOTE: 恢复 Target 为 WR Average
+            if (!isMbf()) {
+                var wr12 = wrData.getAvgWR12(state.event);
+                if (wr12) setTargetAvg(state.seedOn + p, wr12[p]);
+            }
+            updateProgressInfo(p, playerProgress[p]);
+            document.getElementById('rand-fill').click();
+            return;
+        }
+
+        // NOTE: 确定要查询的 WCA ID
+        var wcaId = null;
+        var avatarUrl = '';
+
+        if (p === 0) {
+            // NOTE: Row A — 用登录用户自己的 ID
+            if (typeof WcaAuth === 'undefined' || !WcaAuth.isLoggedIn()) return;
+            var user = WcaAuth.getUser();
+            if (!user || !user.wcaId) return;
+            wcaId = user.wcaId;
+            avatarUrl = user.avatar || '';
+        } else {
+            // NOTE: Row B — 弹窗让用户输入任意 WCA ID
+            var input = prompt('Enter WCA ID (e.g. 2017GENG01):');
+            if (!input || !input.trim()) return;
+            wcaId = input.trim().toUpperCase();
+        }
+
+        // NOTE: loading 状态 — 按钮显示 ⏳
+        inputGrid.setMeButtonState(p, false, '⏳');
+
+        var data = await wcaApi.fetchUserTimes(wcaId, state.event);
+        if (!data) {
+            inputGrid.setMeButtonState(p, false);
+            alert('No data found for ' + wcaId + ' in this event.');
+            return;
+        }
+
+        wrData.setPlayerOverride(p, data);
+        // NOTE: 自动将 Target 设为该选手的官方 average PR
+        if (data.averagePR && !isMbf()) {
+            setTargetAvg(state.seedOn + p, data.averagePR);
+        }
+        // NOTE: 获取选手头像 — Row A 用登录头像，Row B 从 API 获取
+        if (p === 1 && !avatarUrl) {
+            avatarUrl = await wcaApi.fetchPersonAvatar(wcaId);
+        }
+        inputGrid.setMeButtonState(p, true, null, avatarUrl);
+        updateProgressInfo(p, playerProgress[p]);
+        document.getElementById('rand-fill').click();
+    });
 });
 
 // ── Target 默认值 ──

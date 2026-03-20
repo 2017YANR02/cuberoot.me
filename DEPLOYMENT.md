@@ -73,8 +73,22 @@ ruiminyan.github.io/
 ├── algTrainer/                 # JSON 公式训练器
 ├── jsonEditor/                 # JSON 编辑器
 ├── documentation/              # 文档页面
-├── calc/                       # HTH 成绩计算器
-│   └── data/wr.json            # 📌 WR 数据（centiseconds，由 CI gen_wr_json.rb 每周自动刷新）
+├── calc/                       # HTH 成绩计算器（Head-to-Head Ao5 模拟 + PA 计算）
+│   ├── index.html              # 📌 页面结构（tooltip 说明、进度滑杆、控件）
+│   ├── style.css               # 📌 页面样式（深色主题 + 头像按钮 + 响应式）
+│   ├── data/wr.json            # 📌 WR 数据（centiseconds，由 CI gen_wr_json.rb 每周自动刷新）
+│   └── js/                     # ES module 架构
+│       ├── app.js              # 📌 主入口：初始化 + 事件协调 + 个人数据切换逻辑
+│       ├── state.js            # 📌 全局状态管理（event、seedOn、progress 等）
+│       ├── wr_data.js          # 📌 WR 数据加载 + playerOverride 个人数据覆盖机制
+│       ├── wca_api.js          # 📌 WCA REST API 数据获取（选手成绩 + 头像，sessionStorage 缓存）
+│       ├── input_grid.js       # 📌 输入网格（时间格 + Target + checkbox + 头像按钮）
+│       ├── calc_engine.js      # 📌 计算引擎（KDE 采样 + 蒙特卡洛模拟 + 几何中位数）
+│       ├── calc_table.js       # 📌 计算表管理（Target Avg 存取）
+│       ├── chart.js            # 📌 SVG 图表渲染（柱状图 + badge + PA 竖柱）
+│       ├── chart_drag.js       # 📌 图表拖拽交互（PA 拖拽反算 + 时间格联动）
+│       ├── event_selector.js   # 📌 WCA 项目选择器
+│       └── url_sync.js         # 📌 URL 参数同步（状态持久化）
 ├── alg_trainers/               # 公式训练器（mihlefeld/Alg-Trainers 上游同步，sync_alg_trainers.ps1 管理）
 │   ├── src/                    # 🔄 训练器运行时 JS（main.js、timer.js、settings.js 等）
 │   ├── style/                  # 🔄 训练器样式
