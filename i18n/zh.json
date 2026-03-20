@@ -33,7 +33,9 @@
         "viz": "分布演变",
         "viz_desc": "可视化选手成绩分布随比赛的演变，支持多人对比",
         "cstimer": "计时器",
-        "cstimer_desc": "专业魔方计时器，支持统计、打乱与多 Session 管理"
+        "cstimer_desc": "专业魔方计时器，支持统计、打乱与多 Session 管理",
+        "upcoming": "近期比赛",
+        "upcoming_desc": "追踪顶尖选手近期 WCA 比赛，含世界纪录徽章"
     },
     "solver": {
         "title": "魔方求解器",
