@@ -577,8 +577,13 @@
         tables.forEach(function (table) {
             var ths = table.querySelectorAll('tr:first-child th');
             if (ths.length < 3) return;
-            var header = ths[0].textContent.trim();
-            if (header !== 'Ao25' && header !== 'Ao50' && header !== 'Ao100') return;
+            // NOTE: 遍历所有 th 寻找 Ao* 标识（表头列顺序可能变化）
+            var header = null;
+            for (var i = 0; i < ths.length; i++) {
+                var t = ths[i].textContent.trim();
+                if (t === 'Ao25' || t === 'Ao50' || t === 'Ao100') { header = t; break; }
+            }
+            if (!header) return;
             // NOTE: 跳过被 event_selector 隐藏的表格（非当前事件）
             if (!isVisible(table)) return;
             try {

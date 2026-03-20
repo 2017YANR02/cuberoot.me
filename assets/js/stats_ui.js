@@ -34,6 +34,8 @@ function switchMetric(e, id) {
     // wr_newcomer 有三层嵌套（metric→source→tab），需限定到活跃 source-panel
     var tabScope = panel.querySelector('.source-panel.active') || panel;
     syncTabSuffix(tabScope, tabSuffix);
+    // NOTE: 同步 metric ID 到 URL hash（如 metric=ao100）
+    updateHashParam('metric', id);
 }
 
 // ── Tab 切换（局部作用域）─────────────────────────────────
@@ -44,6 +46,9 @@ function switchTab(e, id) {
     scope.querySelectorAll('.stat-panel').forEach(function (p) { p.classList.remove('active'); });
     e.target.classList.add('active');
     document.getElementById(id).classList.add('active');
+    // NOTE: 同步 tab suffix 到 URL hash（如 type=ranking）
+    var suffix = id.split('-').pop();
+    updateHashParam('type', suffix);
 }
 
 // ── Tab 切换（全局，遍历所有 metric-panel）────────────────
@@ -62,6 +67,8 @@ function switchGlobalTab(e, suffix) {
             if (tm && tm[1] === suffix) t.classList.add('active');
         });
     });
+    // NOTE: 同步 tab suffix 到 URL hash（如 type=history）
+    updateHashParam('type', suffix);
 }
 
 // ── Source 切换（wr_newcomer 三级嵌套）─────────────────────
@@ -358,5 +365,56 @@ document.addEventListener('toggle', function(e) {
 
 // NOTE: DOMContentLoaded 时自动初始化
 // event_selector.js 在此之后执行（defer 顺序保证），会处理 hash 恢复
-document.addEventListener('DOMContentLoaded', initStatsUI);
+document.addEventListener('DOMContentLoaded', function() {
+    initStatsUI();
+    restoreTabFromHash();
+});
+
+// ── URL hash 参数工具函数 ─────────────────────────────────
+
+// NOTE: 更新 URL hash 中的指定参数（不触发页面刷新）
+// 格式：#event=333&type=history
+function updateHashParam(key, value) {
+    var hash = window.location.hash.replace(/^#/, '');
+    var params = {};
+    hash.split('&').forEach(function(part) {
+        var kv = part.split('=');
+        if (kv[0]) params[kv[0]] = kv[1] || '';
+    });
+    params[key] = value;
+    var newHash = Object.keys(params).map(function(k) { return k + '=' + params[k]; }).join('&');
+    history.replaceState(null, '', '#' + newHash);
+}
+
+// NOTE: 从 URL hash 读取指定参数
+function getHashParam(key) {
+    var hash = window.location.hash.replace(/^#/, '');
+    var match = hash.match(new RegExp('(?:^|&)' + key + '=([^&]*)'));
+    return match ? match[1] : null;
+}
+
+// NOTE: 页面加载时从 URL hash 恢复 tab 状态
+function restoreTabFromHash() {
+    // --- 恢复 metric（Mo3/Ao5/...） ---
+    var metric = getHashParam('metric');
+    if (metric) {
+        var metricBtn = document.querySelector('.metric-btn[onclick*="\'' + metric + '\'"');
+        if (metricBtn) metricBtn.click();
+    }
+    // --- 恢复 type（ranking/history） ---
+    var type = getHashParam('type');
+    if (!type) return;
+    // NOTE: 模拟点击对应的 tab 按钮
+    var clicked = false;
+    document.querySelectorAll('.stat-tab').forEach(function(t) {
+        if (clicked) return;
+        var onclick = t.getAttribute('onclick') || '';
+        // 匹配 switchGlobalTab(event,'history') 或 switchTab(event,'xxx-history')
+        var m = onclick.match(/switch(?:Global)?Tab\(event,\s*'(.+?)'\)/);
+        if (m && m[1].split('-').pop() === type) {
+            t.click();
+            clicked = true;
+        }
+    });
+}
 
