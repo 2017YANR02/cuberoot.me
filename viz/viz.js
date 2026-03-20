@@ -39,6 +39,7 @@ let currentEventId = '333';
 
 // NOTE: 7 种数据模式
 let dataMode = 'singles';
+let viewMode = 'kde';  // NOTE: 'kde' | 'histogram' | 'both'
 
 // NOTE: 全局日期时间线 — 所有选手比赛日期的并集，排序后作为帧序列
 // currentFrame 映射到 dateTimeline[currentFrame]
@@ -731,6 +732,85 @@ function detectPeaks(kde) {
 }
 
 // ═══════════════════════════════════════
+// 直方图
+// ═══════════════════════════════════════
+
+/**
+ * NOTE: Freedman-Diaconis 规则计算直方图 bins
+ * 返回 [{ xStart, xEnd, count, density }]
+ * density = count / (n × binWidth)，用于和 KDE 叠加时共享 Y 轴
+ */
+function computeHistogram(times) {
+  if (!times || times.length < 2) return [];
+  const sorted = [...times].sort((a, b) => a - b);
+  const n = sorted.length;
+  const q1 = sorted[Math.floor(n * 0.25)];
+  const q3 = sorted[Math.floor(n * 0.75)];
+  const iqr = q3 - q1;
+
+  // Freedman-Diaconis bin 宽度，兜底 5~30 bins
+  let binWidth = 2 * iqr * Math.pow(n, -1 / 3);
+  const range = sorted[n - 1] - sorted[0];
+  if (binWidth <= 0 || range / binWidth > 30) binWidth = range / 30;
+  if (range / binWidth < 5) binWidth = range / 5;
+  if (binWidth <= 0) binWidth = 0.1;
+
+  const bins = [];
+  const start = sorted[0] - binWidth * 0.5;
+  const numBins = Math.ceil((sorted[n - 1] - start) / binWidth) + 1;
+  for (let i = 0; i < numBins; i++) {
+    bins.push({ xStart: start + i * binWidth, xEnd: start + (i + 1) * binWidth, count: 0, density: 0 });
+  }
+  for (const t of times) {
+    const idx = Math.min(Math.floor((t - start) / binWidth), bins.length - 1);
+    if (idx >= 0) bins[idx].count++;
+  }
+  // 归一化为密度（和 KDE 兼容）
+  for (const b of bins) {
+    b.density = b.count / (n * binWidth);
+  }
+  return bins;
+}
+
+/**
+ * NOTE: 绘制直方图柱
+ * useDensity: true → Y 轴为概率密度（叠加模式），false → Y 轴为频次
+ */
+function drawHistogram(bins, sx, sy, pi, useDensity) {
+  if (!bins || bins.length === 0) return;
+  ctx.save();
+  const fillColor = getShiftedHSL(pi, 0.25, (bins[0].xStart + bins[bins.length - 1].xEnd) / 2);
+  const strokeColor = getShiftedHSL(pi, 0.5, (bins[0].xStart + bins[bins.length - 1].xEnd) / 2);
+  ctx.fillStyle = fillColor;
+  ctx.strokeStyle = strokeColor;
+  ctx.lineWidth = 1;
+
+  const baseline = sy(0);
+  for (const b of bins) {
+    if (b.count === 0) continue;
+    const val = useDensity ? b.density : b.count;
+    const x1 = sx(b.xStart);
+    const x2 = sx(b.xEnd);
+    const top = sy(val);
+    const w = x2 - x1;
+    const h = baseline - top;
+    ctx.fillRect(x1, top, w, h);
+    ctx.strokeRect(x1, top, w, h);
+
+    // 频次标注（仅足够宽的柱子）
+    if (w > 16 && b.count >= 2) {
+      ctx.save();
+      ctx.fillStyle = getShiftedHSL(pi, 0.8, (b.xStart + b.xEnd) / 2);
+      ctx.font = '10px Inter, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(b.count, (x1 + x2) / 2, top - 3);
+      ctx.restore();
+    }
+  }
+  ctx.restore();
+}
+
+// ═══════════════════════════════════════
 // 绘制引擎
 // ═══════════════════════════════════════
 
@@ -785,23 +865,20 @@ function drawFrame() {
 
     // NOTE: 轨迹拖尾 — 记录 + 绘制
     if (showLayers.trail) {
-      // 拖拽进度条回退时截断 trail
       while (p.meanTrail.length > 0 && p.meanTrail[p.meanTrail.length - 1].frame >= currentFrame) {
         p.meanTrail.pop();
       }
       if (currentFrame > 0) {
         p.meanTrail.push({ x: currentMean, frame: currentFrame });
       }
-      // 限制最大采样点
       const MAX_TRAIL = 600;
       if (p.meanTrail.length > MAX_TRAIL) p.meanTrail.splice(0, p.meanTrail.length - MAX_TRAIL);
-      // 绘制渐隐圆点
       const trailLen = p.meanTrail.length;
       if (trailLen > 1) {
         for (let ti = 0; ti < trailLen; ti++) {
-          const age = (trailLen - 1 - ti) / trailLen;  // 0=最新, 1=最旧
-          const alpha = 0.6 * (1 - age * age);          // 二次衰减
-          const r = 1.5 + 1.5 * (1 - age);              // 新点更大
+          const age = (trailLen - 1 - ti) / trailLen;
+          const alpha = 0.6 * (1 - age * age);
+          const r = 1.5 + 1.5 * (1 - age);
           ctx.fillStyle = getShiftedHSL(pi, alpha, p.meanTrail[ti].x);
           ctx.beginPath();
           ctx.arc(sx(p.meanTrail[ti].x), sy(0) - 3, r, 0, Math.PI * 2);
@@ -810,12 +887,20 @@ function drawFrame() {
       }
     }
 
-    drawCurve(kde, sx, sy, {
-      fill: getShiftedHSL(pi, 0.15, currentMean),
-      stroke: getShiftedHSL(pi, 0.85, currentMean),
-      lineWidth: pi === activePlayerIdx ? 2.5 : 1.8,
-      glow: pi === activePlayerIdx
-    });
+    // NOTE: 根据 viewMode 绘制直方图和/或 KDE
+    if (viewMode === 'histogram' || viewMode === 'both') {
+      const bins = computeHistogram(times);
+      // 叠加模式用 density（和 KDE 共享 Y 轴），纯直方图也用 density
+      drawHistogram(bins, sx, sy, pi, true);
+    }
+    if (viewMode === 'kde' || viewMode === 'both') {
+      drawCurve(kde, sx, sy, {
+        fill: getShiftedHSL(pi, 0.15, currentMean),
+        stroke: getShiftedHSL(pi, 0.85, currentMean),
+        lineWidth: pi === activePlayerIdx ? 2.5 : 1.8,
+        glow: pi === activePlayerIdx
+      });
+    }
 
     // NOTE: 双峰检测
     if (showLayers.bimodal) {
@@ -1111,6 +1196,16 @@ function setupControls() {
       document.querySelectorAll('.sync-btn').forEach(b => b.classList.remove('active'));
       e.target.classList.add('active');
       syncMode = e.target.dataset.sync;
+      drawFrame();
+    });
+  });
+
+  // NOTE: 视图模式切换（KDE / 直方图 / 叠加）
+  document.querySelectorAll('.view-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+      viewMode = e.target.dataset.view;
       drawFrame();
     });
   });
