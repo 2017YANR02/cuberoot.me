@@ -136,7 +136,7 @@ export function init(gridContainer) {
                     }
                 }
                 // NOTE: Row A 和 Row B 都 dispatch 同一事件，app.js 处理差异
-                document.dispatchEvent(new CustomEvent('player-override', { detail: { player: idx } }));
+                document.dispatchEvent(new CustomEvent('player-override', { detail: { player: idx, btnEl: meBtn } }));
             };
         })(p));
         playerMeBtns[p] = meBtn;
