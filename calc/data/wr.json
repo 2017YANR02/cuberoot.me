@@ -1,46 +1,60 @@
 {
-  "333": {
-    "single": 276,
-    "average": 384,
-    "average_2": 390,
-    "bpa": 357,
-    "wpa": 390
-  },
   "222": {
     "single": 39,
     "average": 86,
     "average_2": 87,
     "bpa": 73,
-    "wpa": 89
+    "wpa": 89,
+    "ao100_1": 118,
+    "ao100_2": 117
+  },
+  "333": {
+    "single": 276,
+    "average": 384,
+    "average_2": 390,
+    "bpa": 357,
+    "wpa": 390,
+    "ao100_1": 444,
+    "ao100_2": 446
   },
   "444": {
     "single": 1518,
     "average": 1856,
     "average_2": 1874,
     "bpa": 1788,
-    "wpa": 1888
+    "wpa": 1888,
+    "ao100_1": 2094,
+    "ao100_2": 2099
   },
   "555": {
     "single": 3045,
     "average": 3431,
     "average_2": 3476,
     "bpa": 3365,
-    "wpa": 3532
+    "wpa": 3532,
+    "ao100_1": 3704,
+    "ao100_2": 3725
   },
   "666": {
     "single": 5769,
     "average": 6504,
-    "average_2": 6646
+    "average_2": 6646,
+    "ao100_1": 6951,
+    "ao100_2": 7352
   },
   "777": {
     "single": 9348,
     "average": 9686,
-    "average_2": 10096
+    "average_2": 10096,
+    "ao100_1": 10576,
+    "ao100_2": 11071
   },
   "333bf": {
     "single": 1167,
     "average": 1405,
-    "average_2": 1405
+    "average_2": 1405,
+    "ao100_1": 5908,
+    "ao100_2": 11103
   },
   "333fm": {
     "single": 1600,
@@ -52,42 +66,54 @@
     "average": 772,
     "average_2": 794,
     "bpa": 713,
-    "wpa": 772
+    "wpa": 772,
+    "ao100_1": 879,
+    "ao100_2": 899
   },
   "minx": {
     "single": 2199,
     "average": 2438,
     "average_2": 2476,
     "bpa": 2316,
-    "wpa": 2493
+    "wpa": 2493,
+    "ao100_1": 2697,
+    "ao100_2": 2696
   },
   "pyram": {
     "single": 73,
     "average": 114,
     "average_2": 115,
     "bpa": 107,
-    "wpa": 120
+    "wpa": 120,
+    "ao100_1": 156,
+    "ao100_2": 175
   },
   "clock": {
     "single": 153,
     "average": 224,
     "average_2": 226,
     "bpa": 188,
-    "wpa": 228
+    "wpa": 228,
+    "ao100_1": 274,
+    "ao100_2": 292
   },
   "skewb": {
     "single": 73,
     "average": 137,
     "average_2": 152,
     "bpa": 127,
-    "wpa": 137
+    "wpa": 137,
+    "ao100_1": 203,
+    "ao100_2": 210
   },
   "sq1": {
     "single": 340,
     "average": 463,
     "average_2": 480,
     "bpa": 430,
-    "wpa": 478
+    "wpa": 478,
+    "ao100_1": 544,
+    "ao100_2": 545
   },
   "444bf": {
     "single": 5196,
