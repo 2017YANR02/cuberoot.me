@@ -190,23 +190,21 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('progress-slider-b').addEventListener('input', function() {
         updateProgressInfo(1, this.value);
     });
-    // NOTE: ⓘ tooltip 触屏支持 — tap toggle，点击外部关闭
-    // 移动端注入 --tip-top CSS 变量，配合 position:fixed 避免 tooltip 溢出屏幕边界
-    document.querySelectorAll('.rand-info').forEach(function(el) {
-        el.addEventListener('click', function(e) {
-            e.stopPropagation();
-            var wasActive = el.classList.contains('active');
-            document.querySelectorAll('.rand-info.active').forEach(function(a) { a.classList.remove('active'); });
-            if (!wasActive) {
-                // NOTE: 计算按钮底部坐标，tooltip 紧贴按钮下方显示
-                var rect = el.getBoundingClientRect();
-                el.style.setProperty('--tip-top', (rect.bottom + 8) + 'px');
-                el.classList.add('active');
-            }
-        });
+    // NOTE: ⓘ 弹窗控制 — 点击打开，点击 ×/overlay/Escape 关闭
+    var infoOverlay = document.getElementById('info-modal-overlay');
+    document.getElementById('info-trigger').addEventListener('click', function(e) {
+        e.stopPropagation();
+        infoOverlay.classList.add('visible');
     });
-    document.addEventListener('click', function() {
-        document.querySelectorAll('.rand-info.active').forEach(function(a) { a.classList.remove('active'); });
+    document.getElementById('info-modal-close').addEventListener('click', function() {
+        infoOverlay.classList.remove('visible');
+    });
+    infoOverlay.addEventListener('click', function(e) {
+        // NOTE: 点击 overlay 背景关闭，点击弹窗内容不关闭
+        if (e.target === infoOverlay) infoOverlay.classList.remove('visible');
+    });
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') infoOverlay.classList.remove('visible');
     });
 
     // NOTE: 防止手机端息屏 — 使用 Screen Wake Lock API
@@ -306,7 +304,7 @@ function tickStopwatch() {
 // ── 模拟 Rand ──
 
 var SIM_MAX = 1000000; // 单轮最大模拟次数
-var SIM_ROUNDS = 100;  // 多轮取中位数，消除几何分布的高方差波动
+var SIM_ROUNDS = 1000; // 多轮取中位数，消除几何分布的高方差波动
 // NOTE: 选手进步幅度 — 滑杆值 0~150，代表百分比
 var playerProgress = [0, 0];
 
