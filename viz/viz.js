@@ -7,20 +7,26 @@
  * 3. Canvas 动画绘制曲线变形过程
  */
 
-// ─── 常量 ───
-const WINDOW_SIZE = 100;
+// ─── 常量和动态参数 ───
 const KDE_POINTS = 200;    // 密度曲线采样点数
-const X_MIN = 2.5;         // 秒，曲线左边界
-const X_MAX = 9.5;         // 秒，曲线右边界
 const MARGIN = { top: 50, right: 40, bottom: 55, left: 65 };
+
+// NOTE: 这些参数根据 dataMode 动态设置，见 recalcModeParams()
+let windowSize = 100;      // 滑动窗口大小
+let xMin = 2.5;            // X 轴左边界（秒）
+let xMax = 9.5;            // X 轴右边界（秒）
+let minBandwidth = 0;      // KDE 带宽下限（Ao100 需要）
 
 // ─── 全局状态 ───
 let solveData = [];        // [[centiseconds, compIndex], ...]
+let ao100Data = [];        // [[ao100_centiseconds, compIndex], ...]
+let ao100StartIdx = 99;    // ao100[0] 对应 solveData[99]
 let competitions = [];     // [compName, ...]
 let playerInfo = {};
+let dataMode = 'singles';  // 'singles' | 'ao100'
 
 let currentFrame = 0;      // 窗口起始位置
-let maxFrame = 0;          // 最大帧（solveData.length - WINDOW_SIZE）
+let maxFrame = 0;          // 最大帧
 let isPlaying = false;
 let playSpeed = 3;         // 每帧前进的 solve 数
 let animationId = null;
@@ -47,7 +53,8 @@ async function init() {
   playerInfo = data.player;
   competitions = data.competitions;
   solveData = data.solves;
-  maxFrame = solveData.length - WINDOW_SIZE;
+  ao100Data = data.ao100 || [];
+  ao100StartIdx = data.ao100StartIdx || 99;
 
   // 更新页面标题
   document.getElementById('playerName').textContent =
@@ -55,22 +62,14 @@ async function init() {
   document.getElementById('playerMeta').textContent =
     `${playerInfo.name} · ${playerInfo.wcaId} · ${solveData.length} solves`;
 
-  // 预计算初始和最终分布，确定全局 Y 轴范围
-  const initTimes = getWindowTimes(0);
-  const finalTimes = getWindowTimes(maxFrame);
-  ghostKDE = computeKDE(initTimes);
-  ghostMean = mean(initTimes);
-  const finalKDE = computeKDE(finalTimes);
-
-  globalMaxY = Math.max(
-    maxOfKDE(ghostKDE),
-    maxOfKDE(finalKDE)
-  ) * 1.2;
-
   // 设置 Canvas 尺寸
   setupCanvas();
   // 绑定控制事件
   setupControls();
+  // 绑定模式切换
+  setupModeSwitcher();
+  // 初始化当前模式的 KDE 参数
+  recalcModeParams();
   // 绘制初始帧
   drawFrame();
 
@@ -129,15 +128,17 @@ function silvermanBandwidth(data) {
 function computeKDE(times) {
   if (times.length < 3) return null;
 
-  const h = silvermanBandwidth(times);
+  let h = silvermanBandwidth(times);
   if (h <= 0) return null;
+  // Ao100 数据高度自相关，Silverman 会给出极小带宽，强制下限
+  if (minBandwidth > 0 && h < minBandwidth) h = minBandwidth;
 
   const n = times.length;
-  const step = (X_MAX - X_MIN) / (KDE_POINTS - 1);
+  const step = (xMax - xMin) / (KDE_POINTS - 1);
   const points = new Array(KDE_POINTS);
 
   for (let i = 0; i < KDE_POINTS; i++) {
-    const x = X_MIN + i * step;
+    const x = xMin + i * step;
     let density = 0;
     for (let j = 0; j < n; j++) {
       density += gaussianKernel((x - times[j]) / h);
@@ -149,8 +150,17 @@ function computeKDE(times) {
 
 // ─── 数据提取 ───
 function getWindowTimes(frame) {
-  // 提取窗口内有效成绩（排除 DNF/DNS），转换为秒
-  const end = Math.min(frame + WINDOW_SIZE, solveData.length);
+  if (dataMode === 'ao100') {
+    // Ao100 模式：直接返回窗口内的 Ao100 值（已是滑动平均）
+    const end = Math.min(frame + windowSize, ao100Data.length);
+    const times = [];
+    for (let i = frame; i < end; i++) {
+      times.push(ao100Data[i][0] / 100);
+    }
+    return times;
+  }
+  // Singles 模式：提取窗口内有效成绩（排除 DNF/DNS），转换为秒
+  const end = Math.min(frame + windowSize, solveData.length);
   const times = [];
   for (let i = frame; i < end; i++) {
     if (solveData[i][0] > 0) {
@@ -158,6 +168,27 @@ function getWindowTimes(frame) {
     }
   }
   return times;
+}
+
+/**
+ * 获取当前帧最后一个 solve 对应的比赛名和序号
+ * Ao100 模式的 frame 偏移量不同
+ */
+function getFrameCompInfo(frame) {
+  if (dataMode === 'ao100') {
+    const lastIdx = Math.min(frame + windowSize - 1, ao100Data.length - 1);
+    return {
+      compName: competitions[ao100Data[lastIdx][1]],
+      solveStart: ao100StartIdx + frame + 1,
+      solveEnd: ao100StartIdx + frame + windowSize
+    };
+  }
+  const lastIdx = Math.min(frame + windowSize - 1, solveData.length - 1);
+  return {
+    compName: competitions[solveData[lastIdx][1]],
+    solveStart: frame + 1,
+    solveEnd: frame + windowSize
+  };
 }
 
 // ─── 工具函数 ───
@@ -200,7 +231,7 @@ function drawFrame() {
   const currentMean = mean(times);
 
   // 缩放函数：数据坐标 → Canvas 像素
-  const sx = x => ml + ((x - X_MIN) / (X_MAX - X_MIN)) * pw;
+  const sx = x => ml + ((x - xMin) / (xMax - xMin)) * pw;
   const sy = y => mt + ph - (y / globalMaxY) * ph;
 
   // 1. 网格和坐标轴
@@ -218,7 +249,7 @@ function drawFrame() {
   }
 
   // 3. 当前 KDE 曲线
-  const grad = ctx.createLinearGradient(sx(X_MIN), 0, sx(X_MAX), 0);
+  const grad = ctx.createLinearGradient(sx(xMin), 0, sx(xMax), 0);
   grad.addColorStop(0, 'rgba(0, 230, 255, 0.22)');
   grad.addColorStop(0.4, 'rgba(80, 120, 255, 0.22)');
   grad.addColorStop(1, 'rgba(180, 60, 255, 0.22)');
@@ -241,16 +272,25 @@ function drawFrame() {
 
   // 7. 更新进度条
   updateProgressUI();
+
+  // 8. 联动脊线图高亮（Phase 3）
+  if (typeof highlightRidgeRow === 'function') {
+    const srcLen = dataMode === 'ao100' ? ao100Data.length : solveData.length;
+    const lastIdx = Math.min(currentFrame + windowSize - 1, srcLen - 1);
+    highlightRidgeRow(lastIdx);
+  }
 }
 
 function drawGrid(sx, sy, ml, mt, pw, ph) {
   ctx.save();
 
-  // X 轴网格线
+  // X 轴网格线（动态刻度）
   ctx.strokeStyle = 'rgba(255,255,255,0.05)';
   ctx.lineWidth = 1;
+  const gridStart = Math.ceil(xMin);
+  const gridEnd = Math.floor(xMax);
 
-  for (let x = 3; x <= 9; x += 1) {
+  for (let x = gridStart; x <= gridEnd; x += 1) {
     const px = Math.round(sx(x)) + 0.5;
     ctx.beginPath();
     ctx.moveTo(px, mt);
@@ -264,7 +304,7 @@ function drawGrid(sx, sy, ml, mt, pw, ph) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
 
-  for (let x = 3; x <= 9; x += 1) {
+  for (let x = gridStart; x <= gridEnd; x += 1) {
     ctx.fillText(x + 's', sx(x), mt + ph + 10);
   }
 
@@ -349,16 +389,13 @@ function drawMeanLine(sx, sy, mt, ph, meanVal, color, dashed) {
 function updateStats(times, currentMean) {
   const s = stddev(times);
   const delta = currentMean - ghostMean;
-
-  // 当前窗口最后一个 solve 的比赛
-  const lastIdx = Math.min(currentFrame + WINDOW_SIZE - 1, solveData.length - 1);
-  const compName = competitions[solveData[lastIdx][1]];
+  const info = getFrameCompInfo(currentFrame);
 
   document.getElementById('statMean').textContent = currentMean.toFixed(2) + 's';
   document.getElementById('statStd').textContent = 'σ ' + s.toFixed(2) + 's';
-  document.getElementById('statComp').textContent = formatCompName(compName);
+  document.getElementById('statComp').textContent = formatCompName(info.compName);
   document.getElementById('statWindow').textContent =
-    `#${currentFrame + 1}–#${currentFrame + WINDOW_SIZE}`;
+    `#${info.solveStart}–#${info.solveEnd}`;
 
   const deltaEl = document.getElementById('statDelta');
   deltaEl.textContent = (delta >= 0 ? '+' : '') + delta.toFixed(2) + 's';
@@ -404,8 +441,7 @@ function updateProgressUI() {
 // ═══════════════════════════════════════
 
 function setupControls() {
-  const progress = document.getElementById('progress');
-  progress.max = maxFrame;
+  // NOTE: progress.max 由 recalcModeParams() 统一设置
 
   // 播放按钮
   document.getElementById('playBtn').addEventListener('click', togglePlay);
@@ -500,3 +536,84 @@ function stepBackward(n) {
 
 // ─── 启动 ───
 document.addEventListener('DOMContentLoaded', init);
+
+// ═══════════════════════════════════════
+// 模式切换（Singles / Ao100）
+// ═══════════════════════════════════════
+
+/**
+ * 根据当前 dataMode 重新计算 maxFrame、ghostKDE、ghostMean、globalMaxY
+ * 并重置进度条
+ */
+function recalcModeParams() {
+  // 根据模式设置动态参数
+  if (dataMode === 'ao100') {
+    windowSize = 400;    // Ao100 值高度自相关，需要更大窗口展现分布
+    minBandwidth = 0.15; // 强制最低带宽，避免尖刺
+    // X 轴自适应数据范围
+    let lo = Infinity, hi = -Infinity;
+    for (const d of ao100Data) {
+      const v = d[0] / 100;
+      if (v < lo) lo = v;
+      if (v > hi) hi = v;
+    }
+    xMin = Math.floor((lo - 0.8) * 2) / 2;  // 向下取到 0.5s
+    xMax = Math.ceil((hi + 0.8) * 2) / 2;   // 向上取到 0.5s
+  } else {
+    windowSize = 100;
+    minBandwidth = 0;
+    xMin = 2.5;
+    xMax = 9.5;
+  }
+
+  const totalItems = dataMode === 'ao100' ? ao100Data.length : solveData.length;
+  maxFrame = totalItems - windowSize;
+  if (maxFrame < 0) maxFrame = 0;
+
+  // 重置帧位置
+  currentFrame = 0;
+
+  // 预计算初始和最终分布
+  const initTimes = getWindowTimes(0);
+  const finalTimes = getWindowTimes(maxFrame);
+  ghostKDE = computeKDE(initTimes);
+  ghostMean = initTimes.length > 0 ? mean(initTimes) : 0;
+  const finalKDE = computeKDE(finalTimes);
+
+  globalMaxY = Math.max(
+    maxOfKDE(ghostKDE),
+    maxOfKDE(finalKDE)
+  ) * 1.2;
+
+  // 更新进度条范围
+  const progress = document.getElementById('progress');
+  progress.max = maxFrame;
+  progress.value = 0;
+  document.getElementById('progressFill').style.width = '0%';
+}
+
+function setupModeSwitcher() {
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const newMode = e.target.dataset.mode;
+      if (newMode === dataMode) return;
+
+      // 暂停当前动画
+      pause();
+
+      // 切换模式
+      dataMode = newMode;
+      document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+
+      // 重算参数并重绘
+      recalcModeParams();
+      drawFrame();
+
+      // 重建脊线图（如果已初始化）
+      if (typeof initRidgeline === 'function') {
+        initRidgeline();
+      }
+    });
+  });
+}
