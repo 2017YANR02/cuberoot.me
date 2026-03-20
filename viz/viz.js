@@ -881,16 +881,17 @@ function updateStats(times, currentMean, currentDate, apFrame) {
   document.getElementById('statMean').textContent = currentMean.toFixed(2) + 's';
   document.getElementById('statStd').textContent = 'σ ' + s.toFixed(2) + 's';
 
+  // NOTE: 把数/日期列根据 syncMode 动态切换
+  const syncLabel = document.getElementById('statSyncLabel');
+  const syncValue = document.getElementById('statSync');
   if (syncMode === 'solve') {
-    // NOTE: 把数模式——显示把数范围 + 比赛名
-    document.getElementById('statComp').textContent =
-      `#${apFrame + 1}–#${endIdx + 1}  ${formatCompName(compName)}`;
+    syncLabel.textContent = '把数';
+    syncValue.textContent = `#${apFrame + 1}–#${endIdx + 1}`;
   } else {
-    // NOTE: 日期模式——显示比赛名 + 日期
-    document.getElementById('statComp').textContent =
-      formatCompName(compName) + (currentDate ? ' (' + currentDate + ')' : '');
+    syncLabel.textContent = '日期';
+    syncValue.textContent = currentDate || '--';
   }
-  document.getElementById('statWindow').textContent = `#${apFrame + 1}–#${endIdx + 1}`;
+  document.getElementById('statComp').textContent = formatCompName(compName);
 
   const deltaEl = document.getElementById('statDelta');
   deltaEl.textContent = (delta >= 0 ? '+' : '') + delta.toFixed(2) + 's';
