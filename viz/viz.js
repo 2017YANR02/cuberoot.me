@@ -49,7 +49,7 @@ let driverIdx = 0;  // NOTE: 帧驱动选手索引（channelData 最长者，自
 let syncMode = 'solve';  // NOTE: 'solve' = 按把数比例，'date' = 按日期同步
 
 // NOTE: 图层显隐控制（药丸开关）
-const showLayers = { currentVal: true, meanLine: true, ghost: true, colorShift: true };
+const showLayers = { currentVal: true, meanLine: true, ghost: true, colorShift: true, trail: true };
 
 // NOTE: globalMaxY 需要在所有选手中取最大
 let globalMaxY = 0;
@@ -348,7 +348,8 @@ async function fetchPlayerData(wcaId, eventId) {
     solveEntries,
     ghostKDE: null,
     ghostMean: 0,
-    colorIdx: 0
+    colorIdx: 0,
+    meanTrail: []   // NOTE: 均值轨迹拖尾 [{ x: meanVal, frame: frameIdx }]
   };
 }
 
@@ -753,6 +754,33 @@ function drawFrame() {
       if (v > 0) currentVal = v;
     }
     meanPositions.push({ pi, mean: currentMean, currentVal, name: p.nameZh || p.name });
+
+    // NOTE: 轨迹拖尾 — 记录 + 绘制
+    if (showLayers.trail) {
+      // 拖拽进度条回退时截断 trail
+      while (p.meanTrail.length > 0 && p.meanTrail[p.meanTrail.length - 1].frame >= currentFrame) {
+        p.meanTrail.pop();
+      }
+      if (currentFrame > 0) {
+        p.meanTrail.push({ x: currentMean, frame: currentFrame });
+      }
+      // 限制最大采样点
+      const MAX_TRAIL = 600;
+      if (p.meanTrail.length > MAX_TRAIL) p.meanTrail.splice(0, p.meanTrail.length - MAX_TRAIL);
+      // 绘制渐隐圆点
+      const trailLen = p.meanTrail.length;
+      if (trailLen > 1) {
+        for (let ti = 0; ti < trailLen; ti++) {
+          const age = (trailLen - 1 - ti) / trailLen;  // 0=最新, 1=最旧
+          const alpha = 0.6 * (1 - age * age);          // 二次衰减
+          const r = 1.5 + 1.5 * (1 - age);              // 新点更大
+          ctx.fillStyle = getShiftedHSL(pi, alpha, p.meanTrail[ti].x);
+          ctx.beginPath();
+          ctx.arc(sx(p.meanTrail[ti].x), sy(0) - 3, r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    }
 
     drawCurve(kde, sx, sy, {
       fill: getShiftedHSL(pi, 0.15, currentMean),
