@@ -1,8 +1,8 @@
 // NOTE: WR 数据加载模块 — fetch calc/data/wr.json 并提供查询 API
 // JSON 由 CI 每周自动刷新（_stats_build/bin/gen_wr_json.rb）
+// 包含：WR 值、Ao100 trimmed average、100 个原始成绩（KDE 采样用）
 
-var wrData = null; // { eventId: { single, average, bpa, wpa, ao100_1, ao100_2 } }（centiseconds）
-var ao100Times = null; // { eventId: { times_1: [...], times_2: [...] } }（centiseconds）
+var wrData = null; // { eventId: { single, average, ..., ao100_1, ao100_2, times_1: [...], times_2: [...] } }
 
 /**
  * NOTE: 加载 WR 数据
@@ -11,16 +11,11 @@ var ao100Times = null; // { eventId: { times_1: [...], times_2: [...] } }（cent
 export async function load() {
     if (wrData) return;
     try {
-        var [wrResp, timesResp] = await Promise.all([
-            fetch('data/wr.json'),
-            fetch('data/ao100_times.json')
-        ]);
-        wrData = await wrResp.json();
-        ao100Times = await timesResp.json();
+        var resp = await fetch('data/wr.json');
+        wrData = await resp.json();
     } catch (e) {
         console.warn('WR data load failed:', e);
         wrData = wrData || {};
-        ao100Times = ao100Times || {};
     }
 }
 
@@ -78,10 +73,10 @@ export function getAo100(eventId) {
  * @returns {[number, number]|null} [mean_1, mean_2] centiseconds
  */
 export function getKdeMean(eventId) {
-    if (!ao100Times || !ao100Times[eventId]) return null;
+    if (!wrData || !wrData[eventId]) return null;
     var result = [];
     for (var k of ['times_1', 'times_2']) {
-        var times = ao100Times[eventId][k];
+        var times = wrData[eventId][k];
         if (!times || times.length < 10) return null;
         var sum = 0;
         for (var i = 0; i < times.length; i++) sum += times[i];
@@ -94,9 +89,9 @@ export function getKdeMean(eventId) {
 var bandwidthCache = {};
 
 export function sampleKDE(eventId, playerIdx) {
-    if (!ao100Times || !ao100Times[eventId]) return null;
+    if (!wrData || !wrData[eventId]) return null;
     var key = playerIdx === 0 ? 'times_1' : 'times_2';
-    var times = ao100Times[eventId][key];
+    var times = wrData[eventId][key];
     if (!times || times.length < 10) return null;
 
     // NOTE: 带宽缓存 — ao100 数据不变，Silverman 带宽只需算一次
