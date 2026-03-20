@@ -90,33 +90,33 @@ export function getKdeMean(eventId) {
     return result;
 }
 
-/**
- * NOTE: KDE 采样 — 基于真实成绩的平滑 Bootstrap
- * 从指定选手的 100 个真实成绩中随机选一个，加高斯核扰动，实现连续采样
- * 带宽 h 用 Silverman 规则自动计算：h = 0.9 * min(σ, IQR/1.34) * n^(-0.2)
- * @param {string} eventId
- * @param {number} playerIdx - 0 = 世界 #1，1 = 世界 #2
- * @returns {number} centiseconds（下限 1），无数据返回 null
- */
+// NOTE: Silverman 带宽缓存 — key = "eventId_playerIdx"
+var bandwidthCache = {};
+
 export function sampleKDE(eventId, playerIdx) {
     if (!ao100Times || !ao100Times[eventId]) return null;
     var key = playerIdx === 0 ? 'times_1' : 'times_2';
     var times = ao100Times[eventId][key];
     if (!times || times.length < 10) return null;
 
-    // NOTE: 计算 Silverman 带宽
-    var n = times.length;
-    var sorted = [...times].sort((a, b) => a - b);
-    var mean = sorted.reduce((s, v) => s + v, 0) / n;
-    var variance = sorted.reduce((s, v) => s + (v - mean) ** 2, 0) / n;
-    var sigma = Math.sqrt(variance);
-    var q1 = sorted[Math.floor(n * 0.25)];
-    var q3 = sorted[Math.floor(n * 0.75)];
-    var iqr = q3 - q1;
-    var h = 0.9 * Math.min(sigma, iqr / 1.34) * Math.pow(n, -0.2);
+    // NOTE: 带宽缓存 — ao100 数据不变，Silverman 带宽只需算一次
+    var cacheKey = eventId + '_' + playerIdx;
+    var h = bandwidthCache[cacheKey];
+    if (h === undefined) {
+        var n = times.length;
+        var sorted = [...times].sort((a, b) => a - b);
+        var mean = sorted.reduce((s, v) => s + v, 0) / n;
+        var variance = sorted.reduce((s, v) => s + (v - mean) ** 2, 0) / n;
+        var sigma = Math.sqrt(variance);
+        var q1 = sorted[Math.floor(n * 0.25)];
+        var q3 = sorted[Math.floor(n * 0.75)];
+        var iqr = q3 - q1;
+        h = 0.9 * Math.min(sigma, iqr / 1.34) * Math.pow(n, -0.2);
+        bandwidthCache[cacheKey] = h;
+    }
 
     // NOTE: 随机选一个真实成绩 + 高斯核扰动
-    var baseTime = times[Math.floor(Math.random() * n)];
+    var baseTime = times[Math.floor(Math.random() * times.length)];
     // Box-Muller 生成标准正态随机数
     var u1 = Math.random(), u2 = Math.random();
     var z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);

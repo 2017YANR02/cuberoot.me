@@ -303,8 +303,10 @@ function tickStopwatch() {
 
 // ── 模拟 Rand ──
 
-var SIM_MAX = 1000000; // 单轮最大模拟次数
-var SIM_ROUNDS = 1000; // 多轮取中位数，消除几何分布的高方差波动
+var SIM_MAX = 1000000; // 单轮最大模拟次数（fallback 用）
+// NOTE: 用于蒙特卡洛估计 p = P(Ao5 ≤ target) 的采样量
+// 100,000 次 × 5 solves = 500,000 次 KDE 采样，带宽缓存后 ~100ms
+var SIM_ESTIMATE_N = 100000;
 // NOTE: 选手进步幅度 — 滑杆值 0~150，代表百分比
 var playerProgress = [0, 0];
 
@@ -422,7 +424,27 @@ function hideCount(id) {
     el.style.color = '';
 }
 
-// NOTE: 单选手模拟 — 100 轮取中位数，消除几何分布的高方差
+// NOTE: 蒙特卡洛估计 p = P(Ao5 ≤ target)
+// 做 SIM_ESTIMATE_N 次独立 Ao5 采样，统计达标率
+function estimateP(p, target) {
+    var hits = 0;
+    for (var i = 0; i < SIM_ESTIMATE_N; i++) {
+        var result = simulateOnce(p);
+        if (isBeat(result.avg, target)) hits++;
+    }
+    return hits / SIM_ESTIMATE_N;
+}
+
+// NOTE: 几何分布 Geo(p) 的中位数 = ⌈-ln(2)/ln(1-p)⌉
+// 当 p→0: median ≈ ln2/p ≈ 0.693/p
+// 当 p→1: median = 1
+function geoMedian(p) {
+    if (p <= 0) return Infinity;
+    if (p >= 1) return 1;
+    return Math.ceil(-Math.LN2 / Math.log(1 - p));
+}
+
+// NOTE: 单选手模拟 — 估计 p 后用公式算理论中位数
 function simulateForPlayer(p) {
     var target = getTargetAvg(state.seedOn + p);
     if (target <= 0) {
@@ -436,42 +458,36 @@ function simulateForPlayer(p) {
     hideCount('sim-count-b');
     hideCount('sim-count-race');
 
-    // NOTE: 收集每轮的 { count, solves } 用于取中位数
-    var rounds = [];
-    for (var r = 0; r < SIM_ROUNDS; r++) {
-        var count = 0;
-        var result = null;
-        for (count = 1; count <= SIM_MAX; count++) {
-            result = simulateOnce(p);
-            if (isBeat(result.avg, target)) break;
-        }
-        if (count > SIM_MAX) {
-            // NOTE: 某一轮超限则跳过（不计入中位数样本）
-            continue;
-        }
-        rounds.push({ count: count, solves: result.solves });
-    }
-
-    if (rounds.length === 0) {
-        alert('Gave up after ' + SIM_ROUNDS + ' × ' + SIM_MAX.toLocaleString() + ' tries. Target too hard!');
+    // NOTE: 估计达标概率 p̂
+    var prob = estimateP(p, target);
+    if (prob <= 0) {
+        alert('Target too hard — 0 out of ' + SIM_ESTIMATE_N.toLocaleString() + ' simulations beat the target.');
         return;
     }
 
-    // NOTE: 按 count 排序，取中位数那一轮的 solves 写入 state
-    rounds.sort(function(a, b) { return a.count - b.count; });
-    var median = rounds[Math.floor(rounds.length / 2)];
+    // NOTE: 理论中位数
+    var median = geoMedian(prob);
 
-    setSuppressConfetti(true);
-    var n = solveCount();
-    for (var t = 0; t < n; t++) {
-        updateTime(state.seedOn + p, t, median.solves[t]);
+    // NOTE: 生成一组达标的 solves 写入 state（用于图表显示）
+    var result = null;
+    for (var i = 0; i < SIM_MAX; i++) {
+        result = simulateOnce(p);
+        if (isBeat(result.avg, target)) break;
     }
-    setSuppressConfetti(false);
 
-    showCount(p === 0 ? 'sim-count-a' : 'sim-count-b', median.count);
+    if (result) {
+        setSuppressConfetti(true);
+        var n = solveCount();
+        for (var t = 0; t < n; t++) {
+            updateTime(state.seedOn + p, t, result.solves[t]);
+        }
+        setSuppressConfetti(false);
+    }
+
+    showCount(p === 0 ? 'sim-count-a' : 'sim-count-b', median);
 }
 
-// NOTE: Race 模式 — 100 轮取中位数，两选手交替模拟
+// NOTE: Race 模式 — 分别估计 pA、pB，用公式算各自中位数
 function simulateRace() {
     var targetA = getTargetAvg(state.seedOn + 0);
     var targetB = getTargetAvg(state.seedOn + 1);
@@ -488,73 +504,37 @@ function simulateRace() {
     hideCount('sim-count-b');
     hideCount('sim-count-race');
 
-    // NOTE: 收集每轮的 { countA, countB, solvesA, solvesB, winner } 用于取中位数
-    var rounds = [];
-    for (var r = 0; r < SIM_ROUNDS; r++) {
-        var cA = 0, cB = 0;
-        var rA = null, rB = null;
-        var dA = false, dB = false;
+    // NOTE: 分别估计两选手的达标概率
+    var probA = estimateP(0, targetA);
+    var probB = estimateP(1, targetB);
 
-        for (var step = 1; step <= SIM_MAX; step++) {
-            if (!dA) {
-                cA++;
-                rA = simulateOnce(0);
-                if (isBeat(rA.avg, targetA)) dA = true;
-            }
-            if (!dB) {
-                cB++;
-                rB = simulateOnce(1);
-                if (isBeat(rB.avg, targetB)) dB = true;
-            }
-            if (dA || dB) break;
-        }
-
-        if (!dA && !dB) continue; // 超限轮次跳过
-
-        // NOTE: 未达标方继续模拟直到达标（与原逻辑一致）
-        if (dA && !dB) {
-            for (var extra = 1; extra <= SIM_MAX; extra++) {
-                cB++;
-                rB = simulateOnce(1);
-                if (isBeat(rB.avg, targetB)) { dB = true; break; }
-            }
-        } else if (dB && !dA) {
-            for (var extra2 = 1; extra2 <= SIM_MAX; extra2++) {
-                cA++;
-                rA = simulateOnce(0);
-                if (isBeat(rA.avg, targetA)) { dA = true; break; }
-            }
-        }
-
-        // NOTE: 用 max(cA, cB) 作为排序键 — Race 关注整体结束时间
-        rounds.push({
-            countA: cA, countB: cB,
-            solvesA: rA ? rA.solves : null,
-            solvesB: rB ? rB.solves : null,
-            maxCount: Math.max(cA, cB)
-        });
-    }
-
-    if (rounds.length === 0) {
-        alert('Neither player beat their target within ' + SIM_ROUNDS + ' × ' + SIM_MAX.toLocaleString() + ' tries!');
+    if (probA <= 0 && probB <= 0) {
+        alert('Neither player can beat their target!');
         return;
     }
 
-    // NOTE: 按 maxCount 排序取中位数
-    rounds.sort(function(a, b) { return a.maxCount - b.maxCount; });
-    var med = rounds[Math.floor(rounds.length / 2)];
+    var medA = geoMedian(probA);
+    var medB = geoMedian(probB);
 
+    // NOTE: 各生成一组达标 solves 写入 state
     setSuppressConfetti(true);
     var n = solveCount();
-    for (var t = 0; t < n; t++) {
-        if (med.solvesA) updateTime(state.seedOn + 0, t, med.solvesA[t]);
-        if (med.solvesB) updateTime(state.seedOn + 1, t, med.solvesB[t]);
+    for (var player = 0; player < 2; player++) {
+        for (var i = 0; i < SIM_MAX; i++) {
+            var res = simulateOnce(player);
+            if (isBeat(res.avg, player === 0 ? targetA : targetB)) {
+                for (var t = 0; t < n; t++) {
+                    updateTime(state.seedOn + player, t, res.solves[t]);
+                }
+                break;
+            }
+        }
     }
     setSuppressConfetti(false);
 
-    // NOTE: 显示各自尝试次数，胜方绿色
-    var winner = med.countA <= med.countB ? 0 : 1;
-    showCount('sim-count-a', med.countA, winner === 0);
-    showCount('sim-count-b', med.countB, winner === 1);
-    showCount('sim-count-race', med.maxCount);
+    // NOTE: 中位数小 = 先达标 = 胜方
+    var winner = medA <= medB ? 0 : 1;
+    showCount('sim-count-a', medA, winner === 0);
+    showCount('sim-count-b', medB, winner === 1);
+    showCount('sim-count-race', Math.max(medA, medB));
 }

@@ -45,7 +45,7 @@
 				<button class="info-modal-close" id="info-modal-close">&times;</button>
 				<div class="info-modal-body">
 					<p><strong>🎲 Rand</strong> — Randomly fill empty cells. Row 1 samples from Ao100 of World #1, Row 2 from World #2. Method: KDE (Kernel Density Estimation) — picks a real official solve and adds Gaussian jitter with Silverman's rule-of-thumb bandwidth. Events without Ao100 data (333fm, 444bf, 555bf) fall back to log-normal distribution. If all cells are filled, Rand overwrites all values.</p>
-					<p><strong>🎯 A / 🎯 B</strong> — Runs 1000 simulations, each repeating until the player's average beats their Target Avg. ×N shows the median attempts across all 1000 runs (stable result).</p>
+					<p><strong>🎯 A / 🎯 B</strong> — Estimates the probability p of beating the Target Avg (via 10,000 Ao5 samples), then computes the theoretical median attempts using the geometric distribution formula: median = ⌈−ln2 / ln(1−p)⌉. Result is deterministic — no more fluctuation.</p>
 					<p><strong>⚔️ Race</strong> — Both players simulate simultaneously. First player whose average beats their target wins. The loser keeps trying until they also beat their target.</p>
 					<p><strong>📈 Improvement Slider (A / B)</strong> — Models player progress beyond their Ao100 baseline.<br>
 					• 0% = Current level (Ao100 mean from official results)<br>
