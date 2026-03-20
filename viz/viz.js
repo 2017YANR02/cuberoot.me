@@ -653,22 +653,27 @@ function computePlayerFrame(pi, progress) {
     return Math.round(progress * pMax);
   }
 
-  // ─── date 模式：连续日期映射 ───
-  // driver 的时间跨度（起止日期）
-  const drv = players[driverIdx];
-  const drvFirst = dateToNum(drv.compDates[drv.channelData[0][1]]);
-  const drvLast = dateToNum(drv.compDates[drv.channelData[drv.channelData.length - 1][1]]);
-  if (drvLast <= drvFirst) return Math.round(progress * pMax);
+  // ─── date 模式：全局日期范围映射 ───
+  // NOTE: 用所有选手的最早/最晚日期作为全局时间轴，
+  //       避免某选手参赛时间跨度远大于 driver 时被跳过
+  let globalFirst = Infinity, globalLast = -Infinity;
+  for (const pl of players) {
+    const f = dateToNum(pl.compDates[pl.channelData[0][1]]);
+    const l = dateToNum(pl.compDates[pl.channelData[pl.channelData.length - 1][1]]);
+    if (f < globalFirst) globalFirst = f;
+    if (l > globalLast) globalLast = l;
+  }
+  if (globalLast <= globalFirst) return Math.round(progress * pMax);
 
-  // 当前连续日期数值（线性插值 driver 的起止日期）
-  const currentDateNum = drvFirst + progress * (drvLast - drvFirst);
+  // 当前连续日期数值（线性插值全局起止日期）
+  const currentDateNum = globalFirst + progress * (globalLast - globalFirst);
 
   // 该选手的时间跨度
   const pFirst = dateToNum(p.compDates[p.channelData[0][1]]);
   const pLast = dateToNum(p.compDates[p.channelData[p.channelData.length - 1][1]]);
   if (pLast <= pFirst) return Math.round(progress * pMax);
 
-  // 映射 driver 的连续日期到该选手的时间跨度
+  // 映射全局日期到该选手的时间跨度
   const pProgress = (currentDateNum - pFirst) / (pLast - pFirst);
   return Math.round(Math.max(0, Math.min(1, pProgress)) * pMax);
 }
