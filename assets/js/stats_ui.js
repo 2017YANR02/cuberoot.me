@@ -372,6 +372,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!getHashParam('type') && document.querySelector('.stat-tab')) {
         updateHashParam('type', 'ranking');
     }
+    // NOTE: 防 FOUC 完成——移除 head 中设置的隐藏 class
+    document.documentElement.classList.remove('stats-hash-loading');
 });
 
 // ── URL hash 参数工具函数 ─────────────────────────────────
