@@ -265,7 +265,11 @@ class AverageOfX < GroupedStatistic
       all_pbs = persons.flat_map do |p|
         p[:pb_history].map { |pb| pb.merge(person_link: p[:person_link]) }
       end
-      all_pbs.sort_by! { |pb| pb[:end_meta][:date] }
+      # NOTE: 同一日期可能有多个 PB（同一比赛中窗口连续刷新）
+      # Ruby 3.4 的 sort_by 在混合 key 时对同 key 子组不保证稳定（实测会反转），
+      # 若只按 date 排，同日期的 PB 顺序会被打乱，导致 WR 扫描跳过中间值。
+      # 加第二键按 ao 值降序：同日期内从大到小扫描，保证不遗漏。
+      all_pbs.sort_by! { |pb| [pb[:end_meta][:date], -pb[:aox].wca_value] }
 
       # 扫描全局最小值，严格 < 才计入（排除 tied）
       min_so_far = SolveTime::DNF
