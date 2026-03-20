@@ -53,7 +53,7 @@ let driverIdx = 0;  // NOTE: 帧驱动选手索引（channelData 最长者，自
 let syncMode = 'solve';  // NOTE: 'solve' = 按把数比例，'date' = 按日期同步
 
 // NOTE: 图层显隐控制（药丸开关）
-const showLayers = { currentVal: true, meanLine: true, ghost: true, trail: true };
+const showLayers = { currentVal: true, meanLine: true, ghost: true, trail: true, bimodal: true };
 
 // NOTE: globalMaxY 需要在所有选手中取最大
 let globalMaxY = 0;
@@ -817,17 +817,18 @@ function drawFrame() {
       glow: pi === activePlayerIdx
     });
 
-    // NOTE: 双峰检测（始终启用）
-    const peaks = detectPeaks(kde);
-    if (peaks.length >= 2) {
-      const midX = (peaks[0].x + peaks[1].x) / 2;
-      const midPx = sx(midX);
-      ctx.save();
-      ctx.font = 'bold 11px Inter, sans-serif';
-      ctx.fillStyle = getShiftedHSL(pi, 0.8, currentMean);
-      ctx.textAlign = 'center';
-      ctx.fillText('⚡双峰', midPx, mt + 16 + pi * 16);
-      ctx.restore();
+    // NOTE: 双峰检测
+    if (showLayers.bimodal) {
+      const peaks = detectPeaks(kde);
+      if (peaks.length >= 2) {
+        const midX = (peaks[0].x + peaks[1].x) / 2;
+        const midPx = sx(midX);
+        ctx.save();
+        ctx.font = '28px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('⚡', midPx, mt + 30 + pi * 32);
+        ctx.restore();
+      }
     }
 
     // 均值线（半透明，可关闭）
@@ -1039,9 +1040,8 @@ function drawMeanLabelsOnCanvas(sx, mt, meanPositions) {
       ctx.beginPath();
       ctx.arc(meanPx, meanY, 4, 0, Math.PI * 2);
       ctx.fill();
-      ctx.textAlign = meanPx > cw / 2 ? 'right' : 'left';
-      const meanOff = meanPx > cw / 2 ? -8 : 8;
-      ctx.fillText(meanLabel, meanPx + meanOff, meanY + 4);
+      ctx.textAlign = 'left';
+      ctx.fillText(meanLabel, meanPx + 8, meanY + 4);
     }
 
     // 2. 当前值标签 —— 菱形贴在当前值线顶端
@@ -1057,9 +1057,8 @@ function drawMeanLabelsOnCanvas(sx, mt, meanPositions) {
       ctx.lineTo(valPx - 4, valY);
       ctx.closePath();
       ctx.fill();
-      ctx.textAlign = valPx > cw / 2 ? 'right' : 'left';
-      const valOff = valPx > cw / 2 ? -8 : 8;
-      ctx.fillText(valLabel, valPx + valOff, valY + 4);
+      ctx.textAlign = 'left';
+      ctx.fillText(valLabel, valPx + 8, valY + 4);
     }
   }
   ctx.restore();
