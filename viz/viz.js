@@ -49,7 +49,7 @@ let driverIdx = 0;  // NOTE: 帧驱动选手索引（channelData 最长者，自
 let syncMode = 'solve';  // NOTE: 'solve' = 按把数比例，'date' = 按日期同步
 
 // NOTE: 图层显隐控制（药丸开关）
-const showLayers = { currentVal: true, meanLine: true, ghost: true, colorShift: true, trail: true };
+const showLayers = { currentVal: true, meanLine: true, ghost: true, colorShift: true, trail: true, bimodal: true };
 
 // NOTE: globalMaxY 需要在所有选手中取最大
 let globalMaxY = 0;
@@ -706,6 +706,27 @@ function computePlayerFrame(pi, progress) {
 }
 
 // ═══════════════════════════════════════
+// 双峰检测
+// ═══════════════════════════════════════
+
+/**
+ * NOTE: 扫描 KDE 曲线找出显著的局部极大值（峰）
+ * 返回 [{ x, y }]，过滤掉低于最高峰 15% 的噪声
+ */
+function detectPeaks(kde) {
+  if (!kde || kde.length < 3) return [];
+  const raw = [];
+  for (let i = 1; i < kde.length - 1; i++) {
+    if (kde[i].y > kde[i - 1].y && kde[i].y > kde[i + 1].y) {
+      raw.push({ x: kde[i].x, y: kde[i].y });
+    }
+  }
+  if (raw.length === 0) return [];
+  const maxY = Math.max(...raw.map(p => p.y));
+  return raw.filter(p => p.y >= maxY * 0.15);
+}
+
+// ═══════════════════════════════════════
 // 绘制引擎
 // ═══════════════════════════════════════
 
@@ -788,6 +809,22 @@ function drawFrame() {
       lineWidth: pi === activePlayerIdx ? 2.5 : 1.8,
       glow: pi === activePlayerIdx
     });
+
+    // NOTE: 双峰检测
+    if (showLayers.bimodal) {
+      const peaks = detectPeaks(kde);
+      if (peaks.length >= 2) {
+        // 在两峰中间的谷底上方标注
+        const midX = (peaks[0].x + peaks[1].x) / 2;
+        const midPx = sx(midX);
+        ctx.save();
+        ctx.font = 'bold 11px Inter, sans-serif';
+        ctx.fillStyle = getShiftedHSL(pi, 0.8, currentMean);
+        ctx.textAlign = 'center';
+        ctx.fillText('⚡双峰', midPx, mt + 16 + pi * 16);
+        ctx.restore();
+      }
+    }
 
     // 均值线（半透明，可关闭）
     if (showLayers.meanLine) {
