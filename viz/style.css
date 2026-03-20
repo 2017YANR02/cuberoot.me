@@ -496,6 +496,44 @@ kbd {
   min-width: 120px;
 }
 
+/* ─── 多选手 Chip 标签 ─── */
+.player-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.player-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border: 1px solid;
+  border-radius: 16px;
+  font-size: 12px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.player-chip.active {
+  font-weight: 600;
+}
+
+.player-chip .chip-remove {
+  margin-left: 2px;
+  font-size: 10px;
+  opacity: 0.4;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.player-chip .chip-remove:hover {
+  opacity: 1;
+}
+
 /* ─── Loading Overlay ─── */
 .loading-overlay {
   position: fixed;
