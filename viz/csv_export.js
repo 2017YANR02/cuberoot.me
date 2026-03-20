@@ -27,7 +27,7 @@
     var configs = RollingStats.getConfigs();
 
     // NOTE: 表头
-    var headers = ['序号', '比赛', '日期', '轮次', '把数', '单次(秒)', '是否单次PB'];
+    var headers = ['序号', '日期', '比赛', '轮次', '把数', '单次(秒)', '是否单次PB'];
     for (var c = 0; c < configs.length; c++) {
       headers.push(configs[c].label);
       headers.push('是否' + configs[c].label + 'PB');
@@ -41,10 +41,10 @@
 
       // 序号
       row.push(i + 1);
-      // 比赛（含逗号时加引号）
-      row.push(csvField(e.compName));
       // 日期
       row.push(e.compDate || '');
+      // 比赛（含逗号时加引号）
+      row.push(csvField(e.compName));
       // 轮次
       row.push(csvField(ROUND_NAMES[e.roundType] || e.roundType));
       // 把数
