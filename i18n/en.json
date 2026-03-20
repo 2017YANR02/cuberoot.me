@@ -31,7 +31,9 @@
         "battle": "1v1 Battle",
         "battle_desc": "Head-to-head cube battle timer, challenge your friends face to face",
         "cstimer": "csTimer",
-        "cstimer_desc": "Professional speedcubing timer with statistics, scrambles, and session management"
+        "cstimer_desc": "Professional speedcubing timer with statistics, scrambles, and session management",
+        "upcoming": "Upcoming Comps",
+        "upcoming_desc": "Track top cubers' upcoming WCA competitions with WR badges"
     },
     "solver": {
         "title": "Rubik's Cube Solver",
