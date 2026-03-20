@@ -336,6 +336,26 @@ function createTabButtons(scope, statPanels, isGlobal) {
     statPanels[0].parentElement.insertBefore(tabsDiv, statPanels[0]);
 }
 
+// NOTE: solve-details 懒加载——点击展开时才创建 DOM 节点
+// data-solves 属性存储逗号分隔的格式化成绩，避免初始加载大量 span 元素
+document.addEventListener('toggle', function(e) {
+    var d = e.target;
+    if (!d.classList || !d.classList.contains('solve-details')) return;
+    if (!d.open || d.querySelector('.solve-list')) return;
+
+    var csv = d.getAttribute('data-solves');
+    if (!csv) return;
+
+    var div = document.createElement('div');
+    div.className = 'solve-list';
+    csv.split(',').forEach(function(s) {
+        var span = document.createElement('span');
+        span.textContent = s;
+        div.appendChild(span);
+    });
+    d.appendChild(div);
+}, true);
+
 // NOTE: DOMContentLoaded 时自动初始化
 // event_selector.js 在此之后执行（defer 顺序保证），会处理 hash 恢复
 document.addEventListener('DOMContentLoaded', initStatsUI);
