@@ -54,7 +54,7 @@ let driverIdx = 0;  // NOTE: 帧驱动选手索引（channelData 最长者，自
 let syncMode = 'solve';  // NOTE: 'solve' = 按把数比例，'date' = 按日期同步
 
 // NOTE: 图层显隐控制（药丸开关）
-const showLayers = { currentVal: true, meanLine: true, ghost: true, trail: true, bimodal: true };
+const showLayers = { currentVal: true, meanLine: true, ghost: true, trail: true, bimodal: true, followMean: false };
 
 // NOTE: globalMaxY 需要在所有选手中取最大
 let globalMaxY = 0;
@@ -824,17 +824,51 @@ function drawFrame() {
   ctx.fillRect(0, 0, cw, ch);
 
   // NOTE: 用户缩放/平移覆盖自动范围
-  const viewXMin = userXMin !== null ? userXMin : xMin;
-  const viewXMax = userXMax !== null ? userXMax : xMax;
-  const sx = x => ml + ((x - viewXMin) / (viewXMax - viewXMin)) * pw;
-  const sy = y => mt + ph - (y / globalMaxY) * ph;
+  let viewXMin = userXMin !== null ? userXMin : xMin;
+  let viewXMax = userXMax !== null ? userXMax : xMax;
+
+  // NOTE: 动态 Y 轴上限 — 直方图/叠加模式需要考虑 histogram density
+  let frameMaxY = globalMaxY;
+  if (viewMode === 'histogram' || viewMode === 'both') {
+    const progress0 = maxFrame > 0 ? currentFrame / maxFrame : 0;
+    for (let pi = 0; pi < players.length; pi++) {
+      const pf = computePlayerFrame(pi, progress0);
+      const t = getWindowTimes(pi, pf);
+      if (t.length < 2) continue;
+      const bins = computeHistogram(t);
+      for (const b of bins) {
+        if (b.density > frameMaxY) frameMaxY = b.density;
+      }
+    }
+    frameMaxY *= 1.1;
+  }
+
+  let sx = x => ml + ((x - viewXMin) / (viewXMax - viewXMin)) * pw;
+  const sy = y => mt + ph - (y / frameMaxY) * ph;
 
   // 1. 网格和坐标轴
   drawGrid(sx, sy, ml, mt, pw, ph);
 
-  // 2. 循环绘制每位选手的 KDE 曲线
+  // 2. 循环绘制每位选手
   const meanPositions = [];
   const progress = maxFrame > 0 ? currentFrame / maxFrame : 0;
+
+  // NOTE: 均值居中模式 — 先算主选手均值，再调整 X 轴范围
+  if (showLayers.followMean && players.length > 0) {
+    const apf = computePlayerFrame(activePlayerIdx, progress);
+    const at = getWindowTimes(activePlayerIdx, apf);
+    if (at.length > 0) {
+      const activeMean = mean(at);
+      const halfRange = (viewXMax - viewXMin) / 2;
+      viewXMin = activeMean - halfRange;
+      viewXMax = activeMean + halfRange;
+      sx = x => ml + ((x - viewXMin) / (viewXMax - viewXMin)) * pw;
+      // 重绘网格以反映新范围
+      ctx.fillStyle = '#0c0c18';
+      ctx.fillRect(0, 0, cw, ch);
+      drawGrid(sx, sy, ml, mt, pw, ph);
+    }
+  }
   for (let pi = 0; pi < players.length; pi++) {
     const p = players[pi];
     const pFrame = computePlayerFrame(pi, progress);
