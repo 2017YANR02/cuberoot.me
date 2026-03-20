@@ -404,10 +404,17 @@ function isBeat(avg, target) {
     return isMbf() ? (avg >= target) : (avg <= target);
 }
 
-// NOTE: 显示计数徽章
-function showCount(id, count, winner) {
+// NOTE: 显示计数徽章 — 可选显示概率 p
+function showCount(id, count, winner, prob) {
     var el = document.getElementById(id);
-    el.textContent = '×' + count.toLocaleString();
+    var text = '×' + count.toLocaleString();
+    // NOTE: 概率 p 以百分比显示，根据精度自动选择小数位数
+    if (prob !== undefined && prob > 0) {
+        var pct = prob * 100;
+        var pStr = pct >= 1 ? pct.toFixed(1) : pct.toFixed(2);
+        text += ' (p=' + pStr + '%)';
+    }
+    el.textContent = text;
     el.className = 'sim-count visible';
     if (winner !== undefined) {
         el.style.color = winner ? '#006400' : '#999';
@@ -484,7 +491,7 @@ function simulateForPlayer(p) {
         setSuppressConfetti(false);
     }
 
-    showCount(p === 0 ? 'sim-count-a' : 'sim-count-b', median);
+    showCount(p === 0 ? 'sim-count-a' : 'sim-count-b', median, undefined, prob);
 }
 
 // NOTE: Race 模式 — 分别估计 pA、pB，用公式算各自中位数
@@ -534,7 +541,7 @@ function simulateRace() {
 
     // NOTE: 中位数小 = 先达标 = 胜方
     var winner = medA <= medB ? 0 : 1;
-    showCount('sim-count-a', medA, winner === 0);
-    showCount('sim-count-b', medB, winner === 1);
+    showCount('sim-count-a', medA, winner === 0, probA);
+    showCount('sim-count-b', medB, winner === 1, probB);
     showCount('sim-count-race', Math.max(medA, medB));
 }
