@@ -534,6 +534,89 @@ kbd {
   opacity: 1;
 }
 
+/* ─── 图例说明 ─── */
+.legend-info-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: rgba(255,255,255,0.4);
+  font-size: 18px;
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+.legend-info-btn:hover {
+  color: rgba(255,255,255,0.8);
+}
+.legend-tooltip {
+  display: none;
+  position: absolute;
+  top: 38px;
+  right: 8px;
+  background: rgba(12, 12, 24, 0.95);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  padding: 10px 14px;
+  z-index: 20;
+  font-size: 12px;
+  line-height: 1.8;
+  color: rgba(255,255,255,0.8);
+  backdrop-filter: blur(8px);
+}
+.legend-tooltip.visible { display: block; }
+.legend-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  cursor: pointer;
+  font-size: 12px;
+  white-space: nowrap;
+  user-select: none;
+}
+.legend-toggle input[type="checkbox"] {
+  display: none;
+}
+/* iOS 药丸开关 */
+.toggle-pill {
+  position: relative;
+  width: 38px;
+  height: 16px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 8px;
+  margin-left: auto;
+  transition: background 0.25s;
+  flex-shrink: 0;
+}
+.toggle-pill::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 12px;
+  background: white;
+  border-radius: 6px;
+  transition: all 0.25s;
+}
+input:checked + .toggle-pill {
+  background: #34c759;
+}
+input:checked + .toggle-pill::after {
+  width: 22px;
+  transform: translateX(12px);
+}
+.legend-diamond { color: #00e6ff; }
+.legend-circle  { color: rgba(0,230,255,0.7); }
+.legend-ghost   { color: rgba(0,230,255,0.3); }
+
 /* ─── 同步模式切换 ─── */
 .sync-group {
   display: flex;
