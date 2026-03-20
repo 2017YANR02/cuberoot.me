@@ -98,15 +98,15 @@
 | Person | Single | Average | Competition | Place |
 | :--- | ---: | ---: | :--- | :--: |
 | [Charlie Eggins](https://www.worldcubeassociation.org/persons/2019EGGI02) | **15.24** | DNF | [WCA World Championship 2023](https://www.worldcubeassociation.org/competitions/WC2023/results/all#e333bf_f) | 4 |
+| [Charlie Eggins](https://www.worldcubeassociation.org/persons/2019EGGI02) | **15.24** | DNF | [WCA World Championship 2023](https://www.worldcubeassociation.org/competitions/WC2023/results/all#e333bf_f) | 4 |
+| [Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04) | **15.72** | DNF | [WCA World Championship 2023](https://www.worldcubeassociation.org/competitions/WC2023/results/all#e333bf_f) | 5 |
 | [Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04) | **15.72** | DNF | [WCA World Championship 2023](https://www.worldcubeassociation.org/competitions/WC2023/results/all#e333bf_f) | 5 |
 | [Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04) | **16.43** | DNF | [Multi Mayhem VA 2026](https://www.worldcubeassociation.org/competitions/MultiMayhemVA2026/results/all#e333bf_f) | 4 |
+| [Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04) | **16.43** | DNF | [Multi Mayhem VA 2026](https://www.worldcubeassociation.org/competitions/MultiMayhemVA2026/results/all#e333bf_f) | 4 |
+| [Andy Wong](https://www.worldcubeassociation.org/persons/2017WONG13) | **16.64** | DNF | [NAC 2024](https://www.worldcubeassociation.org/competitions/NAC2024/results/all#e333bf_f) | 4 |
 | [Andy Wong](https://www.worldcubeassociation.org/persons/2017WONG13) | **16.64** | DNF | [NAC 2024](https://www.worldcubeassociation.org/competitions/NAC2024/results/all#e333bf_f) | 4 |
 | [Gianfranco Huanqui](https://www.worldcubeassociation.org/persons/2013HUAN29) | **16.80** | DNF | [WCA World Championship 2023](https://www.worldcubeassociation.org/competitions/WC2023/results/all#e333bf_f) | 6 |
-| [Yifan Wang (王逸帆)](https://www.worldcubeassociation.org/persons/2017WANY29) | **16.81** | 18.15 | [WCA World Championship 2023](https://www.worldcubeassociation.org/competitions/WC2023/results/all#e333bf_f) | 7 |
-| [Noah Swor](https://www.worldcubeassociation.org/persons/2017SWOR01) | **16.93** | DNF | [NAC 2024](https://www.worldcubeassociation.org/competitions/NAC2024/results/all#e333bf_f) | 5 |
-| [Graham Siggins](https://www.worldcubeassociation.org/persons/2016SIGG01) | **17.03** | 21.84 | [Multi Mayhem VA 2026](https://www.worldcubeassociation.org/competitions/MultiMayhemVA2026/results/all#e333bf_f) | 5 |
-| [Manuel Gutman](https://www.worldcubeassociation.org/persons/2017GUTM01) | **17.24** | DNF | [WCA World Championship 2023](https://www.worldcubeassociation.org/competitions/WC2023/results/all#e333bf_f) | 8 |
-| [Calix Tang](https://www.worldcubeassociation.org/persons/2015TANG04) | **17.29** | 21.09 | [CubingUSA Nationals 2023](https://www.worldcubeassociation.org/competitions/CubingUSANationals2023/results/all#e333bf_f) | 4 |
+| [Gianfranco Huanqui](https://www.worldcubeassociation.org/persons/2013HUAN29) | **16.80** | DNF | [WCA World Championship 2023](https://www.worldcubeassociation.org/competitions/WC2023/results/all#e333bf_f) | 6 |
 
 <h3 data-i18n-en="3x3x3 Fewest Moves" data-i18n-zh="最少步">3x3x3 Fewest Moves</h3>
 
