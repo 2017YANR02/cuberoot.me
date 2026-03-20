@@ -273,3 +273,24 @@ p+.metric-tab-wrap {
   background: transparent !important;
   opacity: 0.5;
 }
+
+/* ── AoX Details 折叠展开 ────────────────────────────────── */
+/* NOTE: 使用原生 <details>/<summary>，零 JS 依赖 */
+.solve-details summary {
+  cursor: pointer;
+  color: #8ab4f8;
+  font-size: 0.9em;
+  user-select: none
+}
+
+.solve-details summary:hover {
+  text-decoration: underline
+}
+
+.solve-details .solve-list {
+  display: grid;
+  grid-template-columns: repeat(10, auto);
+  gap: 2px 8px;
+  padding: 4px 0;
+  font-size: 0.85em
+}

@@ -7,12 +7,17 @@
 # 3. At every position compute the trimmed mean (5% trimmed each side).
 # 4. Keep the best (lowest) one as the person's result.
 #
-# Data scope: per-event top-N average globally (SQL CASE WHEN filter).
+# Data scope: per-event (TOP_N_BY_EVENT UNION WR holders).
+# 支持双视图 Tab：Current Ranking + WR History
 require_relative "../../core/grouped_statistic"
 require_relative "../../core/events"
 require_relative "../../core/solve_time"
+require_relative "../../core/stat_panel"
+require_relative "../../core/database"
 
 class AverageOfX < GroupedStatistic
+  include StatPanel
+
   # NOTE: 各项目的候选选手筛选范围（世界平均排名前 N）
   # 333 top-15，主流项目 top-30，特殊项目 top-300，333bf top-2000
   TOP_N_BY_EVENT = {
@@ -27,6 +32,20 @@ class AverageOfX < GroupedStatistic
 
   DEFAULT_TOP_N = 30
 
+  # NOTE: Current Ranking 表头（含起止比赛 + Details）
+  RANKING_HEADER_AOX = {
+    "#" => :right, "Person" => :left, "Result" => :right,
+    "Country" => :left, "Start Date" => :left, "Start Comp" => :left,
+    "Date" => :left, "Competition" => :left, "Details" => :left
+  }.freeze
+
+  # NOTE: WR History 表头
+  HISTORY_HEADER_AOX = {
+    "Result" => :right, "Improvement" => :right, "Days" => :right,
+    "Person" => :left, "Start Date" => :left, "Start Comp" => :left,
+    "Date" => :left, "Competition" => :left, "Details" => :left
+  }.freeze
+
   def initialize(solve_count:)
     @solve_count = solve_count
 
@@ -35,8 +54,19 @@ class AverageOfX < GroupedStatistic
     @note = "#{@solve_count} consecutive official attempts are considered. " \
             "Top N varies by event: 333 top 15, most events top 30, " \
             "333fm/pyram/clock/444bf/555bf/magic/mmagic top 300, " \
-            "333bf top 2000."
-    @table_header = { "Ao#{@solve_count}" => :right, "Person" => :left, "Times" => :left }
+            "333bf top 2000. " \
+            "WR History candidates also include all single and average WR holders."
+    @note_zh = "考虑连续 #{@solve_count} 次官方还原。" \
+              "各项目 Top N：333 前 15，多数项目前 30，" \
+              "333fm/pyram/clock/444bf/555bf/magic/mmagic 前 300，" \
+              "333bf 前 2000。" \
+              "WR 历史的候选人仅包括所有单次和平均 WR 获得者。"
+    @table_header = RANKING_HEADER_AOX
+  end
+
+  # NOTE: 暴露给 average_of.rb 的 history 表头
+  def history_header
+    HISTORY_HEADER_AOX
   end
 
   # NOTE: class-level cache -- all subclasses (Ao100, Ao1000 ...) share one query result
@@ -57,13 +87,17 @@ class AverageOfX < GroupedStatistic
   end
 
   def query
-    # NOTE: WCA Developer Dump 不含 ranks_single 数据行，
-    # 改用子查询从 results 表直接计算每个国家的 top-200 single 排名
+    # NOTE: 候选人 = TOP_N_BY_EVENT UNION 所有 WR 持有者（single + average）
+    # 一次查询同时覆盖 Current Ranking 和 WR History
     <<-SQL
       SELECT
         CONCAT('[', person.name, '](https://www.worldcubeassociation.org/persons/', person.wca_id, ')') person_link,
+        person.wca_id AS person_id,
+        person.country_id,
         result.event_id,
-        #{Database::ATTEMPTS_SUBQUERY} AS attempts
+        #{Database::ATTEMPTS_SUBQUERY} AS attempts,
+        CONCAT('[', competition.cell_name, '](https://www.worldcubeassociation.org/competitions/', competition.id, ')') competition_link,
+        competition.start_date
       FROM results result
       JOIN persons person ON person.wca_id = person_id AND person.sub_id = 1
       JOIN competitions competition ON competition.id = competition_id
@@ -89,59 +123,40 @@ class AverageOfX < GroupedStatistic
           WHEN '333bf' THEN 2000
           ELSE 30
         END
-      ) top_avg ON top_avg.event_id = result.event_id AND top_avg.person_id = result.person_id
+        UNION
+        SELECT DISTINCT event_id, person_id FROM results
+        WHERE regional_single_record = 'WR' OR regional_average_record = 'WR'
+      ) candidates ON candidates.event_id = result.event_id AND candidates.person_id = result.person_id
       WHERE result.event_id NOT IN ('333mbf', '333mbo')
       ORDER BY competition.start_date, round_type.rank
     SQL
   end
 
-  # NOTE: sliding window -- find each person's best AoX across their career
-  #
-  # For each person:
-  #   flatten all attempts into a 1-D timeline
-  #   slide a window of @solve_count across it
-  #   at each full window: compute trimmed mean, keep best
-  #   result: one best_aox per person, then take top 10
-  def transform(query_results)
-    Events::ALL.map do |event_id, event_name|
-      results = query_results
-        .select { |result| result["event_id"] == event_id }
-        .group_by { |result| result["person_link"] }
-        .map do |person_link, results|
-          # last_x_solves: sliding window buffer
-          # best_aox: best average found so far for this person
-          data = { last_x_solves: [], best_aox: SolveTime::DNF, best_aox_solves: [] }
-          results
-            .flat_map { |result| (result["attempts"] || "").split(",").map(&:to_i) }
-            .each do |value|
-              next if value == SolveTime::SKIPPED_VALUE
-              # NOTE: raw integers instead of SolveTime objects for performance
-              # DNF/DNS (<= 0) mapped to Infinity so they sort last
-              data[:last_x_solves] << (value > 0 ? value : Float::INFINITY)
-              if data[:last_x_solves].length == @solve_count
-                # NOTE: window is full -- compute average and check if it's a new best
-                current_aox = average(data[:last_x_solves], event_id)
-                if current_aox < data[:best_aox]
-                  data[:best_aox] = current_aox
-                  data[:best_aox_solves] = data[:last_x_solves].dup
-                end
-                # slide: pop left end, next iteration pushes right end
-                data[:last_x_solves].shift
-              end
-            end
-          [person_link, data[:best_aox], data[:best_aox_solves]]
-        end
-        .reject { |person_link, best_aox, best_aox_solves| best_aox == SolveTime::DNF }
-        .sort_by! { |person_link, best_aox, best_aox_solves| best_aox }
-        .first(10)
-        .map do |person_link, best_aox, best_aox_solves|
-          solve_times = best_aox_solves.map do |solve|
-            solve == Float::INFINITY ? SolveTime::DNF : SolveTime.new(event_id, :single, solve)
-          end
-          [best_aox.clock_format, person_link, solve_times.map(&:clock_format).join(', ')]
-        end
-      [event_name, results]
-    end
+  # NOTE: Current Ranking 数据——每人最佳 AoX，top 10
+  # 格式：[[event_name, [[col1, col2, ...], ...]], ...]
+  def ranking_data
+    @ranking_data ||= compute_ranking
+  end
+
+  # NOTE: WR History 数据——全局 AoX WR 进展
+  # 格式：[[event_name, [[col1, col2, ...], ...]], ...]
+  def wr_history
+    @wr_history ||= compute_wr_history
+  end
+
+  # NOTE: 兼容旧接口——data 仍返回基类 GroupedStatistic 需要的格式
+  def data
+    @data ||= ranking_data
+  end
+
+  # NOTE: 覆盖基类 markdown，使用双 Tab 视图
+  def markdown
+    top + tabbed_grouped_markdown(
+      ranking_data: ranking_data,
+      ranking_header: RANKING_HEADER_AOX,
+      history_data: wr_history,
+      history_header: HISTORY_HEADER_AOX
+    )
   end
 
   # NOTE: Trimmed Mean (generalized WCA average)
@@ -157,5 +172,162 @@ class AverageOfX < GroupedStatistic
     # NOTE: FMC scores are in "moves" (integer); multiply by 100 to unify with centiseconds
     mean_value *= 100 if event_id == "333fm"
     SolveTime.new(event_id, :average, mean_value.round)
+  end
+
+  private
+
+  # NOTE: 滑动窗口核心——为指定 event 的每个人计算最佳 AoX
+  # 返回每人的 best 记录（含值、solves、起止比赛元数据）
+  # 同时追踪每次刷新 PB 的记录（用于 WR History）
+  def sliding_window_per_person(event_id)
+    query_results
+      .select { |r| r["event_id"] == event_id }
+      .group_by { |r| r["person_id"] }
+      .filter_map do |person_id, rows|
+        # solves: 成绩值缓冲区 | meta: 每个 solve 对应的比赛元数据
+        solves = []
+        meta = []
+        best = { aox: SolveTime::DNF, solves: [], start_meta: nil, end_meta: nil }
+        # NOTE: pb_history 记录该选手每次刷新个人 PB 的时刻（WR History 用）
+        pb_history = []
+
+        rows.each do |row|
+          comp_meta = { comp_link: row["competition_link"], date: row["start_date"] }
+          (row["attempts"] || "").split(",").map(&:to_i).each do |value|
+            next if value == SolveTime::SKIPPED_VALUE
+            solves << (value > 0 ? value : Float::INFINITY)
+            meta << comp_meta
+            if solves.length == @solve_count
+              current_aox = average(solves, event_id)
+              if current_aox < best[:aox]
+                best[:aox] = current_aox
+                best[:solves] = solves.dup
+                best[:start_meta] = meta.first
+                best[:end_meta] = meta.last
+                pb_history << {
+                  aox: current_aox,
+                  solves: solves.dup,
+                  start_meta: meta.first,
+                  end_meta: meta.last
+                }
+              end
+              solves.shift
+              meta.shift
+            end
+          end
+        end
+
+        next if best[:aox] == SolveTime::DNF
+
+        first_row = rows.first
+        {
+          person_id: person_id,
+          person_link: first_row["person_link"],
+          country: first_row["country_id"],
+          best: best,
+          pb_history: pb_history
+        }
+      end
+  end
+
+  # NOTE: Current Ranking——每人最佳 AoX，按成绩排序取 top 10
+  def compute_ranking
+    Events::ALL.map do |event_id, event_name|
+      persons = sliding_window_per_person(event_id)
+      top10 = persons
+        .sort_by { |p| p[:best][:aox] }
+        .first(10)
+        .each_with_index.map do |p, i|
+          b = p[:best]
+          [
+            i + 1,
+            p[:person_link],
+            b[:aox].clock_format,
+            p[:country],
+            format_date(b[:start_meta][:date]),
+            b[:start_meta][:comp_link],
+            format_date(b[:end_meta][:date]),
+            b[:end_meta][:comp_link],
+            details_html(b[:solves], event_id)
+          ]
+        end
+      [event_name, top10]
+    end
+  end
+
+  # NOTE: WR History——合并所有人的 PB 进展，追踪全局最小值的刷新
+  # 严格 < （tied WR 不计入）
+  def compute_wr_history
+    Events::ALL.map do |event_id, event_name|
+      persons = sliding_window_per_person(event_id)
+
+      # 合并所有人的 PB 记录，按达成时间排序
+      all_pbs = persons.flat_map do |p|
+        p[:pb_history].map { |pb| pb.merge(person_link: p[:person_link]) }
+      end
+      all_pbs.sort_by! { |pb| pb[:end_meta][:date] }
+
+      # 扫描全局最小值，严格 < 才计入（排除 tied）
+      min_so_far = SolveTime::DNF
+      wr_records = all_pbs.select do |pb|
+        if pb[:aox] < min_so_far
+          min_so_far = pb[:aox]
+          true
+        else
+          false
+        end
+      end
+
+      # 构建输出行
+      results = wr_records.each_with_index.map do |r, i|
+        metric_str = r[:aox].clock_format
+
+        # 进步百分比
+        if i > 0
+          prev_val = wr_records[i - 1][:aox].wca_value.to_f
+          curr_val = r[:aox].wca_value.to_f
+          gain_str = "#{((prev_val - curr_val) / prev_val * 100).round(1)}%"
+        else
+          gain_str = ""
+        end
+
+        # 保持天数
+        if i < wr_records.size - 1
+          next_date = wr_records[i + 1][:end_meta][:date]
+          days_str = (next_date - r[:end_meta][:date]).to_i.to_s
+        else
+          days_str = (Date.today - r[:end_meta][:date].to_date).to_i.to_s
+        end
+
+        [
+          metric_str, gain_str, days_str,
+          r[:person_link],
+          format_date(r[:start_meta][:date]),
+          r[:start_meta][:comp_link],
+          format_date(r[:end_meta][:date]),
+          r[:end_meta][:comp_link],
+          details_html(r[:solves], event_id)
+        ]
+      end
+
+      [event_name, results.reverse]
+    end
+  end
+
+  # NOTE: Details 折叠 HTML——懒加载模式
+  # 只输出 data-solves 属性（逗号分隔），JS 在 toggle 时才创建 DOM 节点
+  # 大幅减少初始 HTML 体积和 DOM 节点数
+  def details_html(solves, event_id)
+    formatted = solves.map do |s|
+      s == Float::INFINITY ? "DNF" : SolveTime.new(event_id, :single, s).clock_format
+    end
+    summary_text = "#{formatted.size} solves"
+    csv = formatted.join(",")
+    "<details class=\"solve-details\" data-solves=\"#{csv}\">" \
+    "<summary>#{summary_text}</summary></details>"
+  end
+
+  def format_date(date)
+    date.respond_to?(:strftime) ? date.strftime("%Y-%m-%d") : date.to_s
   end
 end
