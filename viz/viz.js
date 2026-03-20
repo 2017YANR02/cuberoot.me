@@ -731,10 +731,9 @@ function drawFrame() {
     const apFrame = computePlayerFrame(activePlayerIdx, progress);
     const apTimes = getWindowTimes(activePlayerIdx, apFrame);
     if (apTimes.length > 0) {
-      // NOTE: 显示主选手当前 solve 对应的比赛日期
       const apEndIdx = Math.min(apFrame + windowSize - 1, ap.channelData.length - 1);
       const apDate = ap.compDates[ap.channelData[apEndIdx][1]];
-      updateStats(apTimes, mean(apTimes), apDate);
+      updateStats(apTimes, mean(apTimes), apDate, apFrame);
     }
   }
 
@@ -870,22 +869,28 @@ function drawMeanLine(sx, sy, mt, ph, meanVal, color, dashed) {
 }
 
 // ─── DOM 更新 ───
-function updateStats(times, currentMean, currentDate) {
+function updateStats(times, currentMean, currentDate, apFrame) {
   const ap = players[activePlayerIdx];
   if (!ap) return;
   const s = stddev(times);
   const delta = currentMean - ap.ghostMean;
-  // NOTE: 按日期找主选手的当前比赛名
-  const endIdx = solveIdxAtDate(activePlayerIdx, currentDate);
-  const compIdx = endIdx >= 0 ? ap.channelData[endIdx][1] : 0;
+  const endIdx = Math.min(apFrame + windowSize - 1, ap.channelData.length - 1);
+  const compIdx = ap.channelData[endIdx][1];
   const compName = ap.competitions[compIdx] || '';
 
   document.getElementById('statMean').textContent = currentMean.toFixed(2) + 's';
   document.getElementById('statStd').textContent = 'σ ' + s.toFixed(2) + 's';
-  // NOTE: 比赛名 + 日期
-  document.getElementById('statComp').textContent =
-    formatCompName(compName) + (currentDate ? ' (' + currentDate + ')' : '');
-  document.getElementById('statWindow').textContent = `#${endIdx - windowSize + 2}–#${endIdx + 1}`;
+
+  if (syncMode === 'solve') {
+    // NOTE: 把数模式——显示把数范围 + 比赛名
+    document.getElementById('statComp').textContent =
+      `#${apFrame + 1}–#${endIdx + 1}  ${formatCompName(compName)}`;
+  } else {
+    // NOTE: 日期模式——显示比赛名 + 日期
+    document.getElementById('statComp').textContent =
+      formatCompName(compName) + (currentDate ? ' (' + currentDate + ')' : '');
+  }
+  document.getElementById('statWindow').textContent = `#${apFrame + 1}–#${endIdx + 1}`;
 
   const deltaEl = document.getElementById('statDelta');
   deltaEl.textContent = (delta >= 0 ? '+' : '') + delta.toFixed(2) + 's';
