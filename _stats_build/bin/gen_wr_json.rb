@@ -64,7 +64,9 @@ METRICS.each do |metric_id, class_name|
   end
 end
 
-# NOTE: 额外提取 Ao100 世界前 2（供 calc 页面进步幅度缩放的 μ_kde 基准）
+# NOTE: 额外提取 Ao100 世界前 2（供 calc 页面进步幅度缩放 + KDE 采样）
+# ao100_1/ao100_2 = trimmed average 数值
+# times_1/times_2 = 100 个原始成绩数组（KDE 采样数据源）
 begin
   ao100 = AverageOf100.new
   ao100_rankings = ao100.ranking_data
@@ -75,16 +77,35 @@ begin
     event_id = Events::ALL.find { |id, name| name == event_name }&.first
     next unless event_id
 
-    # NOTE: top10 格式 [ao100_clock, person_link, times_str]
-    cs1 = parse_cs(top10.first[0])
-    next unless cs1 && cs1 > 0
-
     result[event_id] ||= {}
-    result[event_id]["ao100_1"] = cs1
 
-    if top10.size >= 2
-      cs2 = parse_cs(top10[1][0])
-      result[event_id]["ao100_2"] = cs2 if cs2 && cs2 > 0
+    # NOTE: top10 格式 [ao100_clock, person_link, times_str]
+    top10.first(2).each_with_index do |row, idx|
+      suffix = idx == 0 ? "1" : "2"
+
+      # Ao100 trimmed average 数值
+      cs = parse_cs(row[0])
+      next unless cs && cs > 0
+      result[event_id]["ao100_#{suffix}"] = cs
+
+      # NOTE: 100 个原始成绩 — 从 times_str 解析为 centiseconds 数组
+      # DNF 不参与 KDE 采样，过滤掉
+      times = row[2].split(", ").map do |t|
+        t = t.strip
+        if t == "DNF"
+          -1
+        elsif t =~ /\A(\d+):(\d+\.\d+)\z/
+          ($1.to_i * 6000 + ($2.to_f * 100).round)
+        elsif t =~ /\A\d+\.\d+\z/
+          (t.to_f * 100).round
+        elsif t =~ /\A\d+\z/
+          t.to_i * 100  # FMC
+        else
+          -1
+        end
+      end.select { |v| v > 0 }
+
+      result[event_id]["times_#{suffix}"] = times unless times.empty?
     end
   end
 rescue => e
