@@ -416,6 +416,17 @@ kbd {
   h1 {
     font-size: 18px;
   }
+  .header {
+    flex-wrap: wrap;
+  }
+  .mode-toggle {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+  .mode-btn {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
   .stats-bar {
     padding: 10px 12px;
   }
@@ -428,4 +439,88 @@ kbd {
   .shortcuts-hint {
     display: none;
   }
+  .toolbar {
+    flex-wrap: wrap;
+  }
+}
+
+/* ─── 工具栏 (搜索 + 项目 + CSV) ─── */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 8px 12px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  backdrop-filter: blur(12px);
+  /* NOTE: 创建 stacking context，让内部 dropdown (z-index:1000) 浮于 canvas 之上 */
+  position: relative;
+  z-index: 10;
+}
+
+.toolbar-btn {
+  padding: 6px 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.toolbar-btn:hover {
+  border-color: var(--accent-cyan);
+  color: var(--text-primary);
+}
+
+.toolbar-select {
+  padding: 6px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: rgba(20, 20, 40, 0.8);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  outline: none;
+}
+.toolbar-select:focus {
+  border-color: var(--accent-cyan);
+}
+
+.toolbar-search {
+  flex: 1;
+  min-width: 120px;
+}
+
+/* ─── Loading Overlay ─── */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  background: rgba(10, 10, 20, 0.85);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.15);
+  border-top-color: var(--accent-cyan);
+  border-radius: 50%;
+  animation: spinLoader 0.7s linear infinite;
+}
+
+@keyframes spinLoader { to { transform: rotate(360deg); } }
+
+.loading-text {
+  color: var(--text-secondary);
+  font-size: 14px;
 }

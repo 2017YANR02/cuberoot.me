@@ -1,25 +1,114 @@
 /* NOTE: 共享 WCA 选手搜索组件样式
    供 calc / recon / viz 三方统一使用
-   依赖：flag-icons CDN（国旗图标） */
+   依赖：flag-icons CDN（国旗图标）
 
-/* ── 遮罩层（modal 模式） ── */
+   两种模式：
+   - modal: 全屏遮罩 + 居中卡片（glassmorphism 背景）
+   - inline: 锚定到输入框下方的 dropdown */
+
+/* ═══════════════════════════════
+   Modal 模式
+   ═══════════════════════════════ */
+
 .wca-pp-overlay {
   position: fixed;
   inset: 0;
   z-index: 9999;
-  background: rgba(0, 0, 0, 0.6);
+  /* NOTE: glassmorphism 背景——模糊 + 半透明叠加 */
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* ── 弹窗主体 ── */
 .wca-pp-modal {
-  position: absolute;
-  background: #1a1a2e;
-  border-radius: 12px;
+  background: rgba(26, 26, 46, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
   width: 90%;
   max-width: 380px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  box-shadow:
+    0 0 0 1px rgba(0, 230, 255, 0.06),
+    0 12px 48px rgba(0, 0, 0, 0.5);
   overflow: hidden;
 }
+
+/* ═══════════════════════════════
+   Inline 模式
+   ═══════════════════════════════ */
+
+/* NOTE: inline 宿主容器——相对定位，用于锚定 dropdown */
+.wca-pp-host {
+  position: relative;
+  flex: 1;
+  min-width: 140px;
+}
+
+/* NOTE: inline 模式的 input 适配宿主样式 */
+.wca-pp-host .wca-pp-input {
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(20, 20, 40, 0.8);
+  padding: 7px 12px;
+  font-size: 13px;
+}
+.wca-pp-host .wca-pp-input:focus {
+  border-color: rgba(0, 230, 255, 0.4);
+  outline: none;
+}
+
+/* NOTE: inline dropdown 面板——绝对定位在 input 下方 */
+.wca-pp-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  margin-top: 4px;
+  background: rgba(26, 26, 46, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* NOTE: 选中后的名片显示 */
+.wca-pp-selected {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(20, 20, 40, 0.8);
+  border: 1px solid rgba(0, 230, 255, 0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  color: #eee;
+  font-size: 13px;
+  transition: border-color 0.2s;
+}
+.wca-pp-selected:hover {
+  border-color: rgba(0, 230, 255, 0.5);
+}
+.wca-pp-selected .wca-pp-change {
+  margin-left: auto;
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 12px;
+}
+.wca-pp-selected .wca-pp-wcaid {
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 11px;
+  color: #8899aa;
+}
+
+/* ═══════════════════════════════
+   共享样式（两种模式通用）
+   ═══════════════════════════════ */
 
 /* ── 搜索输入框 ── */
 .wca-pp-input {
@@ -27,8 +116,8 @@
   box-sizing: border-box;
   padding: 12px 16px;
   border: none;
-  border-bottom: 1px solid #333;
-  background: #16213e;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(22, 33, 62, 0.8);
   color: #eee;
   font-size: 15px;
   outline: none;
@@ -50,9 +139,8 @@
   cursor: pointer;
   transition: background 0.15s;
 }
-.wca-pp-item:hover { background: #0f3460; }
+.wca-pp-item:hover { background: rgba(0, 230, 255, 0.08); }
 
-/* NOTE: WCA ID 用等宽字体，便于视觉对齐 */
 .wca-pp-item .wca-pp-wcaid {
   font-family: 'Consolas', 'Monaco', monospace;
   font-size: 12px;
