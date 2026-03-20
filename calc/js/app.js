@@ -262,96 +262,44 @@ document.addEventListener('DOMContentLoaded', () => {
 
     console.log('HTH Grapher v2 initialized');
 
-    // ── 头像按钮 — 个人数据切换 ──
-    // NOTE: Row A = 登录用户自己的数据；Row B = 可输入任意 WCA ID
-    // ── 选手搜索模态框 ──
+    // ── 选手搜索 — 使用共享 WcaPersonPicker ──
 
-    var searchOverlay = document.getElementById('person-search-overlay');
-    var searchInput = document.getElementById('person-search-input');
-    var searchResults = document.getElementById('person-search-results');
-    var searchDebounce = null;
-    var searchResolve = null; // NOTE: Promise 的 resolve，选中后调用
+    var searchResolve = null;
+    var picker = WcaPersonPicker.create(
+      document.getElementById('person-search-container'),
+      {
+        mode: 'modal',
+        onSelect: function (person) {
+          if (searchResolve) {
+            searchResolve({
+              wcaId: person.wcaId,
+              name: person.name,
+              avatarUrl: person.avatarUrl || ''
+            });
+            searchResolve = null;
+          }
+        }
+      }
+    );
 
-    /** NOTE: 打开搜索模态框，返回 Promise<{wcaId, name, avatarUrl}> 或 null（取消） */
+    /** NOTE: 打开搜索，返回 Promise<{wcaId, name, avatarUrl}> 或 null */
     function openPersonSearch(btnEl) {
-        return new Promise(function (resolve) {
-            searchResolve = resolve;
-            searchInput.value = '';
-            searchResults.innerHTML = '';
-            // NOTE: 将模态框定位到按钮同水平线
-            var modal = searchOverlay.querySelector('.person-search-modal');
-            if (btnEl) {
-                var rect = btnEl.getBoundingClientRect();
-                modal.style.top = rect.top + 'px';
-                // NOTE: 靠右对齐 — 模态框右侧对齐按钮左侧（留 8px 间距）
-                modal.style.right = (window.innerWidth - rect.left + 8) + 'px';
-                modal.style.left = 'auto';
-            }
-            searchOverlay.style.display = 'block';
-            // NOTE: 延迟 focus 避免移动端键盘跳动
-            setTimeout(function () { searchInput.focus(); }, 100);
-        });
+      return new Promise(function (resolve) {
+        searchResolve = resolve;
+        picker.open(btnEl);
+        // NOTE: 遮罩点击/Esc 关闭时要 resolve(null)
+        var overlay = document.querySelector('.wca-pp-overlay');
+        var onClose = function () {
+          if (searchResolve) { searchResolve(null); searchResolve = null; }
+          overlay.removeEventListener('click', checkOverlay);
+          overlay.removeEventListener('keydown', checkEsc);
+        };
+        var checkOverlay = function (e) { if (e.target === overlay) onClose(); };
+        var checkEsc = function (e) { if (e.key === 'Escape') onClose(); };
+        overlay.addEventListener('click', checkOverlay);
+        overlay.addEventListener('keydown', checkEsc);
+      });
     }
-
-    function closePersonSearch(result) {
-        searchOverlay.style.display = 'none';
-        searchInput.value = '';
-        searchResults.innerHTML = '';
-        if (searchResolve) { searchResolve(result); searchResolve = null; }
-    }
-
-    // NOTE: 点击遮罩层关闭
-    searchOverlay.addEventListener('click', function (e) {
-        if (e.target === searchOverlay) closePersonSearch(null);
-    });
-
-    // NOTE: Esc 关闭
-    searchOverlay.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') closePersonSearch(null);
-    });
-
-    // NOTE: 输入时 debounce 搜索
-    searchInput.addEventListener('input', function () {
-        var q = this.value.trim();
-        clearTimeout(searchDebounce);
-        // NOTE: 中文 1 字符起搜，拉丁 2 字符
-        var minLen = /[^\x00-\x7F]/.test(q) ? 1 : 2;
-        if (q.length < minLen) { searchResults.innerHTML = ''; return; }
-
-        // NOTE: 显示 loading
-        searchResults.innerHTML = '<div class="person-search-loading"><span class="ps-spinner"></span>Searching...</div>';
-
-        searchDebounce = setTimeout(async function () {
-            var results = await wcaApi.searchPersons(q);
-            if (searchOverlay.style.display === 'none') return; // NOTE: 已关闭
-            if (!results || results.length === 0) {
-                searchResults.innerHTML = '<div class="person-search-empty">No results</div>';
-                return;
-            }
-            var html = '';
-            for (var i = 0; i < results.length; i++) {
-                var p = results[i];
-                var flag = p.iso2 ? '<span class="fi fi-' + p.iso2 + '"></span>' : '';
-                html += '<div class="person-search-item" data-wcaid="' + p.wcaId +
-                    '" data-name="' + p.name.replace(/"/g, '&quot;') +
-                    '" data-avatar="' + (p.avatarUrl || '') + '">' +
-                    flag + '<span class="ps-wcaid">' + p.wcaId + '</span>' +
-                    '<span class="ps-name">' + p.name + '</span></div>';
-            }
-            searchResults.innerHTML = html;
-        }, 300);
-    });
-
-    // NOTE: 点击搜索结果项 → 选中
-    searchResults.addEventListener('click', function (e) {
-        var item = e.target.closest('.person-search-item');
-        if (!item) return;
-        closePersonSearch({
-            wcaId: item.dataset.wcaid,
-            name: item.dataset.name,
-            avatarUrl: item.dataset.avatar || ''
-        });
-    });
 
     // ── 个人数据切换 ──
 
