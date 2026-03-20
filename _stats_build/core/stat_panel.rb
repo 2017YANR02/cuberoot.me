@@ -41,9 +41,9 @@ module StatPanel
   def tabbed_grouped_markdown(ranking_data:, ranking_header:, history_data:, history_header:)
     # NOTE: tab 按钮由 JS 根据 data-label-* 自动生成
     md = grouped_panel("ranking", true,  ranking_data, ranking_header,
-                       label_en: "Current Ranking", label_zh: "排名")
+                       label_en: "Ranking", label_zh: "排名")
     md += grouped_panel("history", false, history_data, history_header,
-                        label_en: "WR History", label_zh: "历史")
+                        label_en: "History", label_zh: "历史")
     md
   end
 

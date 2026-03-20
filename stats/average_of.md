@@ -4,7 +4,7 @@
 
 <div class="metric-tab-wrap">
 <div class="metric-panel active" id="metric-mo3" data-label-en="Mo3">
-<div id="mo3-ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
+<div id="mo3-ranking" class="stat-panel active" data-label-en="Ranking" data-label-zh="排名">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Result</th><th>Country</th><th>Start Date</th><th>Start Comp</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -272,7 +272,7 @@
 <tr><td style="text-align:right">10</td><td><a href="https://www.worldcubeassociation.org/persons/2005BATI01">Milán Baticz</a></td><td style="text-align:right">1.97</td><td>Hungary</td><td>2011-10-29</td><td><a href="https://www.worldcubeassociation.org/competitions/DutchOpen2011">Dutch Open 2011</a></td><td>2011-10-29</td><td><a href="https://www.worldcubeassociation.org/competitions/DutchOpen2011">Dutch Open 2011</a></td><td><details class="solve-details" data-solves="1.90,1.91,2.11"><summary>3 solves</summary></details></td></tr>
 </table>
 </div>
-<div id="mo3-history" class="stat-panel" data-label-en="WR History" data-label-zh="历史">
+<div id="mo3-history" class="stat-panel" data-label-en="History" data-label-zh="历史">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Start Date</th><th>Start Comp</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -1174,7 +1174,7 @@
 </div>
 </div>
 <div class="metric-panel" id="metric-ao5" data-label-en="Ao5">
-<div id="ao5-ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
+<div id="ao5-ranking" class="stat-panel active" data-label-en="Ranking" data-label-zh="排名">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Result</th><th>Country</th><th>Start Date</th><th>Start Comp</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -1442,7 +1442,7 @@
 <tr><td style="text-align:right">10</td><td><a href="https://www.worldcubeassociation.org/persons/2008HUAY01">Yiming Hua (华一鸣)</a></td><td style="text-align:right">2.04</td><td>China</td><td>2010-12-05</td><td><a href="https://www.worldcubeassociation.org/competitions/NanjingWinter2010">Nanjing Winter 2010</a></td><td>2011-10-30</td><td><a href="https://www.worldcubeassociation.org/competitions/NanjingAutumn2011">Nanjing Autumn 2011</a></td><td><details class="solve-details" data-solves="3.56,2.16,1.91,2.00,1.96"><summary>5 solves</summary></details></td></tr>
 </table>
 </div>
-<div id="ao5-history" class="stat-panel" data-label-en="WR History" data-label-zh="历史">
+<div id="ao5-history" class="stat-panel" data-label-en="History" data-label-zh="历史">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Start Date</th><th>Start Comp</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -2408,7 +2408,7 @@
 </div>
 </div>
 <div class="metric-panel" id="metric-ao12" data-label-en="Ao12">
-<div id="ao12-ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
+<div id="ao12-ranking" class="stat-panel active" data-label-en="Ranking" data-label-zh="排名">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Result</th><th>Country</th><th>Start Date</th><th>Start Comp</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -2671,7 +2671,7 @@
 <tr><td style="text-align:right">10</td><td><a href="https://www.worldcubeassociation.org/persons/2012ZHAO05">Yihao Zhao (赵羿皓)</a></td><td style="text-align:right">2.37</td><td>China</td><td>2012-08-05</td><td><a href="https://www.worldcubeassociation.org/competitions/HefeiSummer2012">Hefei Summer 2012</a></td><td>2012-12-23</td><td><a href="https://www.worldcubeassociation.org/competitions/TianjinWinter2012">Tianjin Winter 2012</a></td><td><details class="solve-details" data-solves="2.83,2.56,2.46,2.13,2.25,2.30,2.19,3.68,2.34,2.52,2.08,2.16"><summary>12 solves</summary></details></td></tr>
 </table>
 </div>
-<div id="ao12-history" class="stat-panel" data-label-en="WR History" data-label-zh="历史">
+<div id="ao12-history" class="stat-panel" data-label-en="History" data-label-zh="历史">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Start Date</th><th>Start Comp</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -4002,7 +4002,7 @@
 </div>
 </div>
 <div class="metric-panel" id="metric-ao25" data-label-en="Ao25">
-<div id="ao25-ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
+<div id="ao25-ranking" class="stat-panel active" data-label-en="Ranking" data-label-zh="排名">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Result</th><th>Country</th><th>Start Date</th><th>Start Comp</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -4249,7 +4249,7 @@
 <tr><td style="text-align:right">10</td><td><a href="https://www.worldcubeassociation.org/persons/2010JIMO01">Mo Ji (季默)</a></td><td style="text-align:right">2.54</td><td>China</td><td>2012-08-05</td><td><a href="https://www.worldcubeassociation.org/competitions/HefeiSummer2012">Hefei Summer 2012</a></td><td>2012-08-18</td><td><a href="https://www.worldcubeassociation.org/competitions/Guangdong2012">Guangdong Open 2012</a></td><td><details class="solve-details" data-solves="2.30,2.28,2.11,4.16,2.21,2.21,2.22,2.15,2.50,2.08,2.16,3.63,4.06,2.19,2.31,2.31,2.40,2.19,2.22,DNF,3.16,2.13,3.16,3.22,2.36"><summary>25 solves</summary></details></td></tr>
 </table>
 </div>
-<div id="ao25-history" class="stat-panel" data-label-en="WR History" data-label-zh="历史">
+<div id="ao25-history" class="stat-panel" data-label-en="History" data-label-zh="历史">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Start Date</th><th>Start Comp</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -6061,7 +6061,7 @@
 </div>
 </div>
 <div class="metric-panel" id="metric-ao50" data-label-en="Ao50">
-<div id="ao50-ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
+<div id="ao50-ranking" class="stat-panel active" data-label-en="Ranking" data-label-zh="排名">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Result</th><th>Country</th><th>Start Date</th><th>Start Comp</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -6301,7 +6301,7 @@
 <tr><td style="text-align:right">10</td><td><a href="https://www.worldcubeassociation.org/persons/2007BODO01">Bertalan Bodor</a></td><td style="text-align:right">2.80</td><td>Hungary</td><td>2010-07-16</td><td><a href="https://www.worldcubeassociation.org/competitions/CzechOpen2010">Czech Open 2010</a></td><td>2012-09-08</td><td><a href="https://www.worldcubeassociation.org/competitions/HungarianOpen2012">Hungarian Open 2012</a></td><td><details class="solve-details" data-solves="2.11,2.71,2.44,19.90,2.31,2.75,3.34,2.28,2.00,2.38,3.38,1.94,2.15,4.09,2.33,2.31,2.09,3.22,2.55,2.63,3.40,2.50,2.93,4.97,2.46,2.27,2.68,2.27,2.40,3.38,5.18,2.78,2.44,2.44,4.80,3.05,2.28,4.59,2.83,2.90,2.65,2.33,6.52,2.18,2.53,2.68,3.25,2.41,2.28,2.75"><summary>50 solves</summary></details></td></tr>
 </table>
 </div>
-<div id="ao50-history" class="stat-panel" data-label-en="WR History" data-label-zh="历史">
+<div id="ao50-history" class="stat-panel" data-label-en="History" data-label-zh="历史">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Start Date</th><th>Start Comp</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -8619,7 +8619,7 @@
 </div>
 </div>
 <div class="metric-panel" id="metric-ao100" data-label-en="Ao100">
-<div id="ao100-ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
+<div id="ao100-ranking" class="stat-panel active" data-label-en="Ranking" data-label-zh="排名">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Result</th><th>Country</th><th>Start Date</th><th>Start Comp</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -8852,7 +8852,7 @@
 <tr><td style="text-align:right">10</td><td><a href="https://www.worldcubeassociation.org/persons/2006PIRZ01">Markus Pirzer</a></td><td style="text-align:right">3.51</td><td>Germany</td><td>2009-10-09</td><td><a href="https://www.worldcubeassociation.org/competitions/WC2009">World Championship 2009</a></td><td>2012-12-08</td><td><a href="https://www.worldcubeassociation.org/competitions/FrankfurtOpen2012">Frankfurt Cube Days 2012</a></td><td><details class="solve-details" data-solves="3.96,3.40,3.18,3.52,3.47,3.41,4.05,3.47,3.36,3.21,4.21,5.31,5.25,2.90,3.09,3.09,3.28,5.93,3.47,3.53,3.00,4.86,3.52,2.90,2.90,3.41,2.86,3.91,3.09,3.06,6.86,3.30,3.09,3.22,5.33,3.31,3.41,3.05,3.21,2.96,3.38,3.02,3.03,2.97,3.19,5.75,3.13,3.06,3.77,3.30,5.75,5.80,3.33,3.30,3.59,4.50,3.19,3.15,2.91,2.86,3.46,3.58,3.06,3.00,3.22,3.09,3.41,4.91,4.84,3.15,2.90,6.25,3.09,3.59,2.96,3.44,3.22,3.05,3.18,2.69,2.84,4.84,5.08,3.61,3.53,4.22,3.00,2.88,3.72,3.40,3.34,3.46,3.03,4.41,2.69,5.13,3.05,2.83,2.66,3.28"><summary>100 solves</summary></details></td></tr>
 </table>
 </div>
-<div id="ao100-history" class="stat-panel" data-label-en="WR History" data-label-zh="历史">
+<div id="ao100-history" class="stat-panel" data-label-en="History" data-label-zh="历史">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Start Date</th><th>Start Comp</th><th>Date</th><th>Competition</th><th>Details</th></tr>

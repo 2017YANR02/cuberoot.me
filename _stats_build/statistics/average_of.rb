@@ -44,9 +44,9 @@ class AverageOf < Statistic
       history = inst.wr_history
 
       panel = grouped_panel("#{prefix}-ranking", true, ranking, AverageOfX::RANKING_HEADER_AOX,
-                            label_en: "Current Ranking", label_zh: "排名")
+                            label_en: "Ranking", label_zh: "排名")
       panel += grouped_panel("#{prefix}-history", false, history, inst.history_header,
-                             label_en: "WR History", label_zh: "历史")
+                             label_en: "History", label_zh: "历史")
       panel
     end
 

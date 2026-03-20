@@ -5,7 +5,7 @@
 <div class="metric-tab-wrap">
 <div class="metric-panel active" id="metric-single" data-label-en="Single" data-label-zh="单次">
 <div class="source-panel active" id="source-single-1st-solve" data-label-en="First Solve" data-label-zh="首次还原">
-<div id="single-1st-solve-ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
+<div id="single-1st-solve-ranking" class="stat-panel active" data-label-en="Ranking" data-label-zh="排名">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Result</th><th>Country</th><th>Date</th><th>Competition</th></tr>
@@ -301,7 +301,7 @@
 <tr><td style="text-align:right">10</td><td><a href="https://www.worldcubeassociation.org/persons/2007JIPT01">Kai Jiptner</a></td><td style="text-align:right">3/3 20:06</td><td>Germany</td><td>2008-02-16</td><td><a href="https://www.worldcubeassociation.org/competitions/BeneluxOpen2008">Benelux Open 2008</a></td></tr>
 </table>
 </div>
-<div id="single-1st-solve-history" class="stat-panel" data-label-en="WR History" data-label-zh="历史">
+<div id="single-1st-solve-history" class="stat-panel" data-label-en="History" data-label-zh="历史">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Date</th><th>Competition</th></tr>
@@ -649,7 +649,7 @@
 </div>
 </div>
 <div class="source-panel" id="source-single-1st-comp" data-label-en="First Competition" data-label-zh="首场比赛">
-<div id="single-1st-comp-ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
+<div id="single-1st-comp-ranking" class="stat-panel active" data-label-en="Ranking" data-label-zh="排名">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Result</th><th>Country</th><th>Date</th><th>Competition</th></tr>
@@ -945,7 +945,7 @@
 <tr><td style="text-align:right">10</td><td><a href="https://www.worldcubeassociation.org/persons/2007LOPE01">Manuel López Sheriff</a></td><td style="text-align:right">3/3 18:44</td><td>Spain</td><td>2008-05-02</td><td><a href="https://www.worldcubeassociation.org/competitions/BarcelonaOpen2008">Barcelona Open 2008</a></td></tr>
 </table>
 </div>
-<div id="single-1st-comp-history" class="stat-panel" data-label-en="WR History" data-label-zh="历史">
+<div id="single-1st-comp-history" class="stat-panel" data-label-en="History" data-label-zh="历史">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Date</th><th>Competition</th></tr>
@@ -1331,7 +1331,7 @@
 </div>
 <div class="metric-panel" id="metric-average" data-label-en="Average" data-label-zh="平均">
 <div class="source-panel active" id="source-average-1st-solve" data-label-en="First Solve" data-label-zh="首次还原">
-<div id="average-1st-solve-ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
+<div id="average-1st-solve-ranking" class="stat-panel active" data-label-en="Ranking" data-label-zh="排名">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Result</th><th>Country</th><th>Date</th><th>Competition</th></tr>
@@ -1597,7 +1597,7 @@
 <tr><td style="text-align:right">10</td><td><a href="https://www.worldcubeassociation.org/persons/2009MUCK01">Daniel Mucklow</a></td><td style="text-align:right">2.59</td><td>United Kingdom</td><td>2011-07-30</td><td><a href="https://www.worldcubeassociation.org/competitions/GuildfordSummerOpen2011">Guildford Summer Open 2011</a></td></tr>
 </table>
 </div>
-<div id="average-1st-solve-history" class="stat-panel" data-label-en="WR History" data-label-zh="历史">
+<div id="average-1st-solve-history" class="stat-panel" data-label-en="History" data-label-zh="历史">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Date</th><th>Competition</th></tr>
@@ -1923,7 +1923,7 @@
 </div>
 </div>
 <div class="source-panel" id="source-average-1st-comp" data-label-en="First Competition" data-label-zh="首场比赛">
-<div id="average-1st-comp-ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
+<div id="average-1st-comp-ranking" class="stat-panel active" data-label-en="Ranking" data-label-zh="排名">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Result</th><th>Country</th><th>Date</th><th>Competition</th></tr>
@@ -2189,7 +2189,7 @@
 <tr><td style="text-align:right">10</td><td><a href="https://www.worldcubeassociation.org/persons/2011DERS01">Ramón Dersch</a></td><td style="text-align:right">2.47</td><td>Germany</td><td>2011-04-09</td><td><a href="https://www.worldcubeassociation.org/competitions/GermanOpen2011">German Open 2011</a></td></tr>
 </table>
 </div>
-<div id="average-1st-comp-history" class="stat-panel" data-label-en="WR History" data-label-zh="历史">
+<div id="average-1st-comp-history" class="stat-panel" data-label-en="History" data-label-zh="历史">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Date</th><th>Competition</th></tr>
