@@ -368,6 +368,10 @@ document.addEventListener('toggle', function(e) {
 document.addEventListener('DOMContentLoaded', function() {
     initStatsUI();
     restoreTabFromHash();
+    // NOTE: 页面有 tab 但 URL 缺少 type 时，强制补上默认值
+    if (!getHashParam('type') && document.querySelector('.stat-tab')) {
+        updateHashParam('type', 'ranking');
+    }
 });
 
 // ── URL hash 参数工具函数 ─────────────────────────────────

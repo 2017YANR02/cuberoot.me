@@ -573,21 +573,17 @@
     });
 
     function scanAndInit() {
-        var tables = document.querySelectorAll('table');
-        tables.forEach(function (table) {
-            var ths = table.querySelectorAll('tr:first-child th');
-            if (ths.length < 3) return;
-            // NOTE: 遍历所有 th 寻找 Ao* 标识（表头列顺序可能变化）
-            var header = null;
-            for (var i = 0; i < ths.length; i++) {
-                var t = ths[i].textContent.trim();
-                if (t === 'Ao25' || t === 'Ao50' || t === 'Ao100') { header = t; break; }
-            }
-            if (!header) return;
-            // NOTE: 跳过被 event_selector 隐藏的表格（非当前事件）
-            if (!isVisible(table)) return;
+        // NOTE: 从 stat-panel ID 识别 metric（如 ao100-ranking）
+        var aoPattern = /\b(ao25|ao50|ao100)-ranking\b/;
+        document.querySelectorAll('.stat-panel').forEach(function(panel) {
+            var m = panel.id && panel.id.match(aoPattern);
+            if (!m) return;
+            if (!isVisible(panel)) return;
+            var table = panel.querySelector('table');
+            if (!table) return;
+            var label = m[1].replace('ao', 'Ao');
             try {
-                initStatsDistChart(table, header);
+                initStatsDistChart(table, label);
             } catch (e) {
                 console.error('[DistChart] Error:', e);
             }
@@ -621,13 +617,13 @@
                 return;
             }
 
-            // 数据行：解析成绩
+            // 数据行：从 data-solves 属性读取成绩
+            var details = tr.querySelector('details[data-solves]');
+            if (!details) return;
             var name = cells[1].textContent.trim();
-            var timesText = cells[2].textContent.trim();
-            var times = timesText.split(/,\s*/).map(parseFloat).filter(function (v) {
+            var times = details.getAttribute('data-solves').split(',').map(parseFloat).filter(function(v) {
                 return !isNaN(v) && v > 0;
             });
-
             if (times.length < 10) return;
 
             // 插入 checkbox
