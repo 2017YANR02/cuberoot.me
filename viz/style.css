@@ -1,0 +1,354 @@
+/* ─── 基础重置 ─── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg-primary: #0a0a14;
+  --bg-card: rgba(20, 20, 40, 0.7);
+  --bg-glass: rgba(30, 30, 60, 0.5);
+  --accent-cyan: #00e6ff;
+  --accent-purple: #b040ff;
+  --accent-blue: #5078ff;
+  --text-primary: rgba(255, 255, 255, 0.92);
+  --text-secondary: rgba(255, 255, 255, 0.55);
+  --text-muted: rgba(255, 255, 255, 0.3);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --glow-cyan: rgba(0, 230, 255, 0.3);
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  /* 微妙的径向渐变背景 */
+  background-image:
+    radial-gradient(ellipse at 20% 50%, rgba(0, 100, 180, 0.08) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(120, 40, 200, 0.06) 0%, transparent 50%);
+}
+
+.mono {
+  font-family: 'JetBrains Mono', 'Cascadia Code', monospace;
+}
+
+/* ─── 页面布局 ─── */
+.page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 20px 24px 40px;
+}
+
+/* ─── 顶部标题 ─── */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 28px;
+}
+
+.back-link {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.2s;
+  white-space: nowrap;
+}
+.back-link:hover {
+  color: var(--accent-cyan);
+}
+
+.title-block {
+  flex: 1;
+}
+
+h1 {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  /* 标题渐变文字 */
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue), var(--accent-purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+/* ─── Canvas 容器 ─── */
+.canvas-wrapper {
+  position: relative;
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  overflow: hidden;
+  /* 玻璃态边框光晕 */
+  box-shadow:
+    0 0 0 1px rgba(0, 230, 255, 0.05),
+    0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+#kdeCanvas {
+  display: block;
+  width: 100%;
+  cursor: crosshair;
+}
+
+/* 均值指示标签 */
+.mean-label, .ghost-mean-label {
+  position: absolute;
+  top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  pointer-events: none;
+  transition: left 0.15s ease-out;
+}
+
+.mean-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent-cyan);
+  box-shadow: 0 0 6px var(--glow-cyan);
+}
+.mean-text {
+  color: var(--accent-cyan);
+}
+
+.ghost-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+}
+.ghost-text {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+/* ─── 统计面板 ─── */
+.stats-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 12px;
+  padding: 14px 18px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  backdrop-filter: blur(12px);
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  min-width: 100px;
+  flex: 1;
+}
+
+.stat-comp {
+  flex: 2;
+  min-width: 180px;
+}
+
+.stat-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.stat-value {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 进步值高亮 */
+.stat-value.improving {
+  color: #4ade80;
+}
+
+/* ─── 播放控制 ─── */
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 16px;
+  padding: 10px 16px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  backdrop-filter: blur(12px);
+}
+
+.ctrl-btn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s, box-shadow 0.15s;
+  flex-shrink: 0;
+}
+.ctrl-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 0 16px var(--glow-cyan);
+}
+.ctrl-btn:active {
+  transform: scale(0.95);
+}
+
+.ctrl-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: white;
+}
+
+/* ─── 进度条 ─── */
+.progress-wrapper {
+  position: relative;
+  flex: 1;
+  height: 32px;
+  display: flex;
+  align-items: center;
+}
+
+#progress {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  outline: none;
+  position: relative;
+  z-index: 2;
+  cursor: pointer;
+}
+
+#progress::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent-cyan);
+  box-shadow: 0 0 8px var(--glow-cyan);
+  cursor: grab;
+  transition: transform 0.1s;
+}
+#progress::-webkit-slider-thumb:hover {
+  transform: scale(1.3);
+}
+#progress::-webkit-slider-thumb:active {
+  cursor: grabbing;
+}
+
+#progress::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: none;
+  background: var(--accent-cyan);
+  box-shadow: 0 0 8px var(--glow-cyan);
+  cursor: grab;
+}
+
+.progress-fill {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue));
+  pointer-events: none;
+  z-index: 1;
+  width: 0%;
+}
+
+/* ─── 速度按钮 ─── */
+.speed-group {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.speed-btn {
+  padding: 5px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.speed-btn:hover {
+  border-color: var(--accent-cyan);
+  color: var(--text-primary);
+}
+.speed-btn.active {
+  background: rgba(0, 230, 255, 0.12);
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+}
+
+/* ─── 快捷键提示 ─── */
+.shortcuts-hint {
+  text-align: center;
+  margin-top: 14px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+kbd {
+  display: inline-block;
+  padding: 1px 5px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* ─── 响应式 ─── */
+@media (max-width: 640px) {
+  .page {
+    padding: 12px 12px 30px;
+  }
+  h1 {
+    font-size: 18px;
+  }
+  .stats-bar {
+    padding: 10px 12px;
+  }
+  .stat-item {
+    min-width: 80px;
+  }
+  .speed-group {
+    flex-wrap: wrap;
+  }
+  .shortcuts-hint {
+    display: none;
+  }
+}
