@@ -186,6 +186,7 @@ body {
 .input-row {
     display: flex;
     justify-content: center;
+    align-items: center;
     gap: 6px;
     margin: 4px 0;
 }
@@ -1089,4 +1090,54 @@ video {
     to {
         opacity: 1;
     }
+}
+
+/* ── 头像按钮 ── */
+.me-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 2px solid #ccc;
+    border-radius: 50%;
+    background: #f0f0f0;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    margin-left: 2px;
+    position: relative;
+}
+
+/* NOTE: 头像图片铺满圆形 */
+.me-avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    border-radius: 50%;
+}
+
+/* NOTE: hover 效果 */
+.me-btn:hover {
+    border-color: #e65100;
+    box-shadow: 0 0 6px rgba(230, 81, 0, 0.3);
+}
+
+/* NOTE: 激活态 — 使用个人数据时橙色边框发光 */
+.me-btn.me-active {
+    border-color: #e65100;
+    box-shadow: 0 0 8px rgba(230, 81, 0, 0.5);
+}
+
+/* NOTE: 加载中 — 用 ::after 覆盖显示 ⏳ */
+.me-btn[data-loading]::after {
+    content: attr(data-loading);
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f0f0f0;
+    font-size: 16px;
+    border-radius: 50%;
 }
