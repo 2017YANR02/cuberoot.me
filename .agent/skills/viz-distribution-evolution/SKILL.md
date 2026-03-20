@@ -97,6 +97,24 @@ WCA API → addPlayer() → solveData + competitions + compDates
 
 `userXMin/userXMax` 覆盖自动范围，切换模式/加载选手时重置。
 
+### 直方图视图
+
+三种视图模式（canvas 左上角按钮切换）：
+
+| 模式 | 说明 |
+|------|------|
+| KDE | 默认，平滑概率密度曲线 |
+| 直方图 | Freedman-Diaconis bin 宽度，半透明柱 + 频次标注 |
+| 叠加 | 直方图底层 + KDE 上层，共用 density Y 轴 |
+
+`computeHistogram()` 自动计算 bin 宽度（5~30 bins），`drawHistogram()` 绘制。
+Y 轴动态调整：`frameMaxY` 取 KDE 和 histogram density 的最大值。
+
+### 均值居中模式
+
+药丸开关 `followMean`（默认关）。开启后每帧自动调整 X 轴范围使主选手均值居中，
+保持当前视口宽度不变。重绘网格以反映新范围。
+
 ## 修改指南
 
 ### 添加新的数据模式
