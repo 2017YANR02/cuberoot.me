@@ -390,6 +390,55 @@ function solveIdxAtDate(playerIdx, targetDate) {
 }
 
 /**
+ * NOTE: 日期间线性插值版本 — 让非 driver 选手在两场比赛之间平滑过渡
+ * 返回插值后的 endIdx（可能是小数，外部需 Math.round）
+ */
+function interpolatedSolveIdx(playerIdx, targetDate) {
+  const p = players[playerIdx];
+  if (!p) return -1;
+  const cd = p.channelData;
+
+  // 阶梯版定位
+  const prevIdx = solveIdxAtDate(playerIdx, targetDate);
+  if (prevIdx < 0) return -1;
+  if (prevIdx >= cd.length - 1) return prevIdx;  // 已到末尾
+
+  const prevDate = p.compDates[cd[prevIdx][1]];
+
+  // 找下一个不同日期的首个 solve
+  let nextIdx = -1;
+  let nextDate = null;
+  for (let i = prevIdx + 1; i < cd.length; i++) {
+    const d = p.compDates[cd[i][1]];
+    if (d > prevDate) {
+      nextIdx = i;
+      nextDate = d;
+      break;
+    }
+  }
+
+  // 没有下一个日期，或 targetDate 正好在 prevDate 上 → 不插值
+  if (nextIdx < 0 || targetDate <= prevDate) return prevIdx;
+
+  // NOTE: 日期 → 数值，做线性插值
+  const tNum = dateToNum(targetDate);
+  const pNum = dateToNum(prevDate);
+  const nNum = dateToNum(nextDate);
+  if (nNum <= pNum) return prevIdx;
+
+  const ratio = Math.min(1, (tNum - pNum) / (nNum - pNum));
+  return Math.round(prevIdx + ratio * (nextIdx - prevIdx));
+}
+
+/**
+ * NOTE: YYYY-MM-DD → 可比较数值（无需 Date 对象，高性能）
+ */
+function dateToNum(d) {
+  const parts = d.split('-');
+  return parts[0] * 10000 + parts[1] * 100 + parts[2] * 1;
+}
+
+/**
  * NOTE: 更新标题区显示
  */
 function updateTitle() {
@@ -594,28 +643,17 @@ function drawFrame() {
   const sx = x => ml + ((x - xMin) / (xMax - xMin)) * pw;
   const sy = y => mt + ph - (y / globalMaxY) * ph;
 
-  // NOTE: driver 的当前 solve endIdx → 对应的日期
-  const drv = players[driverIdx];
-  const drvEndIdx = Math.min(currentFrame + windowSize - 1, drv.channelData.length - 1);
-  const driverDate = drv.compDates[drv.channelData[drvEndIdx][1]];
-
   // 1. 网格和坐标轴
   drawGrid(sx, sy, ml, mt, pw, ph);
 
   // 2. 循环绘制每位选手的 KDE 曲线
   const meanPositions = [];
+  // NOTE: 所有选手按比例进度同步推进 → 全部丝滑
+  const progress = maxFrame > 0 ? currentFrame / maxFrame : 0;
   for (let pi = 0; pi < players.length; pi++) {
     const p = players[pi];
-    let pFrame;
-    if (pi === driverIdx) {
-      // NOTE: driver 用 solve-index 直接驱动（丝滑）
-      pFrame = currentFrame;
-    } else {
-      // NOTE: 其他选手按 driver 的日期同步
-      const endIdx = solveIdxAtDate(pi, driverDate);
-      if (endIdx < 0) continue;  // 该日期之前该选手还没有数据
-      pFrame = Math.max(0, endIdx - windowSize + 1);
-    }
+    const pMaxFrame = Math.max(0, p.channelData.length - windowSize);
+    const pFrame = Math.round(progress * pMaxFrame);
 
     // 幽灵残影
     if (p.ghostKDE && currentFrame > 0) {
@@ -649,19 +687,14 @@ function drawFrame() {
   // 4. 更新主选手的 DOM 统计面板
   const ap = players[activePlayerIdx];
   if (ap) {
-    let apFrame;
-    if (activePlayerIdx === driverIdx) {
-      apFrame = currentFrame;
-    } else {
-      const apEndIdx = solveIdxAtDate(activePlayerIdx, driverDate);
-      if (apEndIdx >= 0) apFrame = Math.max(0, apEndIdx - windowSize + 1);
-      else apFrame = -1;
-    }
-    if (apFrame >= 0) {
-      const apTimes = getWindowTimes(activePlayerIdx, apFrame);
-      if (apTimes.length > 0) {
-        updateStats(apTimes, mean(apTimes), driverDate);
-      }
+    const apMax = Math.max(0, ap.channelData.length - windowSize);
+    const apFrame = Math.round(progress * apMax);
+    const apTimes = getWindowTimes(activePlayerIdx, apFrame);
+    if (apTimes.length > 0) {
+      // NOTE: 显示主选手当前 solve 对应的比赛日期
+      const apEndIdx = Math.min(apFrame + windowSize - 1, ap.channelData.length - 1);
+      const apDate = ap.compDates[ap.channelData[apEndIdx][1]];
+      updateStats(apTimes, mean(apTimes), apDate);
     }
   }
 
@@ -676,13 +709,10 @@ function drawFrame() {
 
   // 7. 脊线图联动
   if (typeof highlightRidgeRow === 'function' && ap) {
-    let apEndIdx;
-    if (activePlayerIdx === driverIdx) {
-      apEndIdx = Math.min(currentFrame + windowSize - 1, ap.channelData.length - 1);
-    } else {
-      apEndIdx = solveIdxAtDate(activePlayerIdx, driverDate);
-    }
-    if (apEndIdx >= 0) highlightRidgeRow(apEndIdx);
+    const apMax = Math.max(0, ap.channelData.length - windowSize);
+    const apFrame = Math.round(progress * apMax);
+    const apEndIdx = Math.min(apFrame + windowSize - 1, ap.channelData.length - 1);
+    highlightRidgeRow(apEndIdx);
   }
 }
 
