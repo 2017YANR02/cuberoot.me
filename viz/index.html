@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Distribution Evolution | Rubik's Cube Toolkit</title>
+  <meta name="description" content="Visualize how a cuber's 3x3 solve time distribution evolves over competitions">
+  <link rel="icon" href="/favicon.ico">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="page">
+    <!-- 顶部标题区 -->
+    <header class="header">
+      <a href="/" class="back-link">← Toolkit</a>
+      <div class="title-block">
+        <h1 id="playerName">Distribution Evolution</h1>
+        <div class="subtitle" id="playerMeta"></div>
+      </div>
+    </header>
+
+    <!-- 主可视化区域 -->
+    <main class="viz-main">
+      <div class="canvas-wrapper">
+        <canvas id="kdeCanvas"></canvas>
+        <!-- 均值指示线标签 -->
+        <div class="mean-label" id="meanLabel" style="display:none">
+          <span class="mean-dot"></span>
+          <span class="mean-text" id="meanText"></span>
+        </div>
+        <div class="ghost-mean-label" id="ghostMeanLabel" style="display:none">
+          <span class="ghost-dot"></span>
+          <span class="ghost-text" id="ghostMeanText"></span>
+        </div>
+      </div>
+
+      <!-- 统计面板 -->
+      <div class="stats-bar">
+        <div class="stat-item">
+          <span class="stat-label">均值</span>
+          <span class="stat-value mono" id="statMean">--</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">标准差</span>
+          <span class="stat-value mono" id="statStd">--</span>
+        </div>
+        <div class="stat-item stat-comp">
+          <span class="stat-label">比赛</span>
+          <span class="stat-value" id="statComp">--</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">窗口</span>
+          <span class="stat-value mono" id="statWindow">--</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">进步</span>
+          <span class="stat-value mono" id="statDelta">--</span>
+        </div>
+      </div>
+
+      <!-- 播放控制区 -->
+      <div class="controls">
+        <button class="ctrl-btn" id="playBtn" title="播放/暂停 (Space)">
+          <svg class="icon-play" id="iconPlay" viewBox="0 0 24 24"><polygon points="6,3 20,12 6,21"/></svg>
+          <svg class="icon-pause" id="iconPause" viewBox="0 0 24 24" style="display:none"><rect x="5" y="3" width="4" height="18"/><rect x="15" y="3" width="4" height="18"/></svg>
+        </button>
+        <div class="progress-wrapper">
+          <input type="range" id="progress" min="0" max="100" value="0" step="1">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="speed-group">
+          <button class="speed-btn" data-speed="1">1×</button>
+          <button class="speed-btn active" data-speed="3">3×</button>
+          <button class="speed-btn" data-speed="10">10×</button>
+          <button class="speed-btn" data-speed="30">30×</button>
+        </div>
+      </div>
+
+      <!-- 键盘快捷键提示 -->
+      <div class="shortcuts-hint">
+        <kbd>Space</kbd> 播放/暂停 &nbsp;
+        <kbd>←</kbd><kbd>→</kbd> 步进 &nbsp;
+        <kbd>Shift</kbd>+<kbd>←</kbd><kbd>→</kbd> 快进
+      </div>
+    </main>
+  </div>
+
+  <script src="viz.js"></script>
+</body>
+</html>
