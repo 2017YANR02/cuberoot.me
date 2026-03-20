@@ -26,6 +26,10 @@ let xMin = 2.5;            // X 轴左边界（秒）
 let xMax = 9.5;            // X 轴右边界（秒）
 let minBandwidth = 0;      // KDE 带宽下限（滚动统计需要）
 
+// NOTE: 用户缩放/平移覆盖（null 表示使用自动范围）
+let userXMin = null;
+let userXMax = null;
+
 // ─── 多选手数据 ───
 // NOTE: players[i] = { wcaId, name, nameZh, color, solveData, channelData,
 //   competitions, statsData, solveEntries, ghostKDE, ghostMean }
@@ -49,7 +53,7 @@ let driverIdx = 0;  // NOTE: 帧驱动选手索引（channelData 最长者，自
 let syncMode = 'solve';  // NOTE: 'solve' = 按把数比例，'date' = 按日期同步
 
 // NOTE: 图层显隐控制（药丸开关）
-const showLayers = { currentVal: true, meanLine: true, ghost: true, colorShift: true, trail: true, bimodal: true };
+const showLayers = { currentVal: true, meanLine: true, ghost: true, trail: true };
 
 // NOTE: globalMaxY 需要在所有选手中取最大
 let globalMaxY = 0;
@@ -172,7 +176,7 @@ function playerHSL(idx, a) {
  */
 function getShiftedHSL(pi, alpha, currentMean) {
   const p = players[pi];
-  if (!showLayers.colorShift || players.length > 1 || !p.ghostMean || p.ghostMean <= 0) {
+  if (players.length > 1 || !p.ghostMean || p.ghostMean <= 0) {
     return playerHSL(pi, alpha);
   }
   const c = PLAYER_COLORS[pi % PLAYER_COLORS.length];
@@ -739,7 +743,10 @@ function drawFrame() {
   ctx.fillStyle = '#0c0c18';
   ctx.fillRect(0, 0, cw, ch);
 
-  const sx = x => ml + ((x - xMin) / (xMax - xMin)) * pw;
+  // NOTE: 用户缩放/平移覆盖自动范围
+  const viewXMin = userXMin !== null ? userXMin : xMin;
+  const viewXMax = userXMax !== null ? userXMax : xMax;
+  const sx = x => ml + ((x - viewXMin) / (viewXMax - viewXMin)) * pw;
   const sy = y => mt + ph - (y / globalMaxY) * ph;
 
   // 1. 网格和坐标轴
@@ -810,20 +817,17 @@ function drawFrame() {
       glow: pi === activePlayerIdx
     });
 
-    // NOTE: 双峰检测
-    if (showLayers.bimodal) {
-      const peaks = detectPeaks(kde);
-      if (peaks.length >= 2) {
-        // 在两峰中间的谷底上方标注
-        const midX = (peaks[0].x + peaks[1].x) / 2;
-        const midPx = sx(midX);
-        ctx.save();
-        ctx.font = 'bold 11px Inter, sans-serif';
-        ctx.fillStyle = getShiftedHSL(pi, 0.8, currentMean);
-        ctx.textAlign = 'center';
-        ctx.fillText('⚡双峰', midPx, mt + 16 + pi * 16);
-        ctx.restore();
-      }
+    // NOTE: 双峰检测（始终启用）
+    const peaks = detectPeaks(kde);
+    if (peaks.length >= 2) {
+      const midX = (peaks[0].x + peaks[1].x) / 2;
+      const midPx = sx(midX);
+      ctx.save();
+      ctx.font = 'bold 11px Inter, sans-serif';
+      ctx.fillStyle = getShiftedHSL(pi, 0.8, currentMean);
+      ctx.textAlign = 'center';
+      ctx.fillText('⚡双峰', midPx, mt + 16 + pi * 16);
+      ctx.restore();
     }
 
     // 均值线（半透明，可关闭）
@@ -1148,6 +1152,107 @@ function setupControls() {
     }
   });
 
+  // ═══════════════════════════════════════
+  // X 轴缩放/平移
+  // ═══════════════════════════════════════
+
+  // NOTE: 像素 → 数据值的辅助函数
+  function pxToVal(px) {
+    const { left: ml, right: mr } = MARGIN;
+    const pw = cw - ml - mr;
+    const vMin = userXMin !== null ? userXMin : xMin;
+    const vMax = userXMax !== null ? userXMax : xMax;
+    return vMin + ((px - ml) / pw) * (vMax - vMin);
+  }
+
+  // 滚轮缩放（以鼠标位置为锚点）
+  canvas.addEventListener('wheel', e => {
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const ratio = canvas.width / rect.width;  // DPR 校正
+    const px = (e.clientX - rect.left) * ratio;
+    const anchor = pxToVal(px);
+
+    const vMin = userXMin !== null ? userXMin : xMin;
+    const vMax = userXMax !== null ? userXMax : xMax;
+    const factor = e.deltaY > 0 ? 1.15 : 1 / 1.15;  // 缩小/放大
+
+    userXMin = anchor - (anchor - vMin) * factor;
+    userXMax = anchor + (vMax - anchor) * factor;
+    // 最小范围限制
+    if (userXMax - userXMin < 0.5) {
+      const mid = (userXMin + userXMax) / 2;
+      userXMin = mid - 0.25;
+      userXMax = mid + 0.25;
+    }
+    drawFrame();
+  }, { passive: false });
+
+  // 拖拽平移
+  let dragState = null;
+  canvas.addEventListener('mousedown', e => {
+    const rect = canvas.getBoundingClientRect();
+    const ratio = canvas.width / rect.width;
+    dragState = {
+      startPx: (e.clientX - rect.left) * ratio,
+      startXMin: userXMin !== null ? userXMin : xMin,
+      startXMax: userXMax !== null ? userXMax : xMax
+    };
+  });
+  window.addEventListener('mousemove', e => {
+    if (!dragState) return;
+    const rect = canvas.getBoundingClientRect();
+    const ratio = canvas.width / rect.width;
+    const dx = ((e.clientX - rect.left) * ratio - dragState.startPx);
+    const { left: ml, right: mr } = MARGIN;
+    const pw = cw - ml - mr;
+    const range = dragState.startXMax - dragState.startXMin;
+    const dVal = -(dx / pw) * range;
+    userXMin = dragState.startXMin + dVal;
+    userXMax = dragState.startXMax + dVal;
+    drawFrame();
+  });
+  window.addEventListener('mouseup', () => { dragState = null; });
+
+  // 双击重置
+  canvas.addEventListener('dblclick', () => {
+    userXMin = null;
+    userXMax = null;
+    drawFrame();
+  });
+
+  // 触摸 pinch 缩放
+  let pinchState = null;
+  canvas.addEventListener('touchstart', e => {
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const ratio = canvas.width / rect.width;
+      const t0 = (e.touches[0].clientX - rect.left) * ratio;
+      const t1 = (e.touches[1].clientX - rect.left) * ratio;
+      pinchState = {
+        dist: Math.abs(t1 - t0),
+        mid: pxToVal((t0 + t1) / 2),
+        xMin: userXMin !== null ? userXMin : xMin,
+        xMax: userXMax !== null ? userXMax : xMax
+      };
+    }
+  }, { passive: false });
+  canvas.addEventListener('touchmove', e => {
+    if (!pinchState || e.touches.length !== 2) return;
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const ratio = canvas.width / rect.width;
+    const t0 = (e.touches[0].clientX - rect.left) * ratio;
+    const t1 = (e.touches[1].clientX - rect.left) * ratio;
+    const dist = Math.abs(t1 - t0);
+    const scale = pinchState.dist / dist;
+    userXMin = pinchState.mid - (pinchState.mid - pinchState.xMin) * scale;
+    userXMax = pinchState.mid + (pinchState.xMax - pinchState.mid) * scale;
+    drawFrame();
+  }, { passive: false });
+  canvas.addEventListener('touchend', () => { pinchState = null; });
+
   // 响应窗口大小变化
   let resizeTimer;
   window.addEventListener('resize', () => {
@@ -1235,6 +1340,9 @@ function recalcModeParams() {
   xMin = Math.floor((lo - margin) * 2) / 2;
   xMax = Math.ceil((hi + margin) * 2) / 2;
   if (xMin < 0) xMin = 0;
+  // NOTE: 切换模式时重置用户缩放
+  userXMin = null;
+  userXMax = null;
 
   if (dataMode === 'singles') {
     windowSize = 100;
