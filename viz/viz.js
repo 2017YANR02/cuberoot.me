@@ -1568,10 +1568,10 @@ function setupControls() {
   });
 
   // ═══════════════════════════════════════
-  // X 轴缩放/平移
+  // 轴缩放/平移
   // ═══════════════════════════════════════
 
-  // NOTE: 像素 → 数据值的辅助函数
+  // NOTE: 像素 → 数据值的辅助函数（KDE/直方图模式：X 轴，折线图模式：Y 轴）
   function pxToVal(px) {
     const { left: ml, right: mr } = MARGIN;
     const pw = cw - ml - mr;
@@ -1579,18 +1579,35 @@ function setupControls() {
     const vMax = userXMax !== null ? userXMax : xMax;
     return vMin + ((px - ml) / pw) * (vMax - vMin);
   }
+  // NOTE: 折线图专用 — Y 像素 → 成绩值
+  function pyToVal(py) {
+    const { top: mt, bottom: mb } = MARGIN;
+    const ph = ch - mt - mb;
+    const vMin = userXMin !== null ? userXMin : xMin;
+    const vMax = userXMax !== null ? userXMax : xMax;
+    // Y 轴反向：顶部=vMax，底部=vMin
+    return vMax - ((py - mt) / ph) * (vMax - vMin);
+  }
 
   // 滚轮缩放（以鼠标位置为锚点）
   canvas.addEventListener('wheel', e => {
     e.preventDefault();
     const rect = canvas.getBoundingClientRect();
     const ratio = canvas.width / rect.width;  // DPR 校正
-    const px = (e.clientX - rect.left) * ratio;
-    const anchor = pxToVal(px);
 
     const vMin = userXMin !== null ? userXMin : xMin;
     const vMax = userXMax !== null ? userXMax : xMax;
-    const factor = e.deltaY > 0 ? 1.15 : 1 / 1.15;  // 缩小/放大
+    const factor = e.deltaY > 0 ? 1.15 : 1 / 1.15;
+
+    // NOTE: 折线图模式用 Y 轴作为锚点，其他模式用 X 轴
+    let anchor;
+    if (viewMode === 'line') {
+      const py = (e.clientY - rect.top) * ratio;
+      anchor = pyToVal(py);
+    } else {
+      const px = (e.clientX - rect.left) * ratio;
+      anchor = pxToVal(px);
+    }
 
     userXMin = anchor - (anchor - vMin) * factor;
     userXMax = anchor + (vMax - anchor) * factor;
@@ -1603,13 +1620,14 @@ function setupControls() {
     drawFrame();
   }, { passive: false });
 
-  // 拖拽平移
+  // 拖拽平移（KDE/直方图模式：左右平移 X 轴，折线图模式：上下平移 Y 轴）
   let dragState = null;
   canvas.addEventListener('mousedown', e => {
     const rect = canvas.getBoundingClientRect();
     const ratio = canvas.width / rect.width;
     dragState = {
       startPx: (e.clientX - rect.left) * ratio,
+      startPy: (e.clientY - rect.top) * ratio,  // NOTE: 折线图用
       startXMin: userXMin !== null ? userXMin : xMin,
       startXMax: userXMax !== null ? userXMax : xMax
     };
@@ -1618,13 +1636,27 @@ function setupControls() {
     if (!dragState) return;
     const rect = canvas.getBoundingClientRect();
     const ratio = canvas.width / rect.width;
-    const dx = ((e.clientX - rect.left) * ratio - dragState.startPx);
-    const { left: ml, right: mr } = MARGIN;
-    const pw = cw - ml - mr;
-    const range = dragState.startXMax - dragState.startXMin;
-    const dVal = -(dx / pw) * range;
-    userXMin = dragState.startXMin + dVal;
-    userXMax = dragState.startXMax + dVal;
+
+    if (viewMode === 'line') {
+      // NOTE: 折线图 — 垂直方向拖拽平移 Y 轴（成绩范围）
+      const dy = ((e.clientY - rect.top) * ratio - dragState.startPy);
+      const { top: mt, bottom: mb } = MARGIN;
+      const ph = ch - mt - mb;
+      const range = dragState.startXMax - dragState.startXMin;
+      // Y 轴反向：鼠标下拖 = 数值上升
+      const dVal = (dy / ph) * range;
+      userXMin = dragState.startXMin + dVal;
+      userXMax = dragState.startXMax + dVal;
+    } else {
+      // NOTE: 其他模式 — 水平方向拖拽平移 X 轴
+      const dx = ((e.clientX - rect.left) * ratio - dragState.startPx);
+      const { left: ml, right: mr } = MARGIN;
+      const pw = cw - ml - mr;
+      const range = dragState.startXMax - dragState.startXMin;
+      const dVal = -(dx / pw) * range;
+      userXMin = dragState.startXMin + dVal;
+      userXMax = dragState.startXMax + dVal;
+    }
     drawFrame();
   });
   window.addEventListener('mouseup', () => { dragState = null; });
