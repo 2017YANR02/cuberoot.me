@@ -552,15 +552,24 @@ function isBeat(avg, target) {
     return isMbf() ? (avg >= target) : (avg <= target);
 }
 
-// NOTE: 显示计数徽章 — 可选显示概率 p
-function showCount(id, count, winner, prob) {
+// NOTE: 显示计数徽章 — 支持两种模式
+// mode='geo': 几何中位数模式 — 显示 "×N (p=X%)"（🎯 A/B 用）
+// mode='winrate': 胜率模式 — 显示 "62.3%"（Race 用）
+function showCount(id, count, winner, prob, mode) {
     var el = document.getElementById(id);
-    var text = '×' + count.toLocaleString();
-    // NOTE: 概率 p 以百分比显示，根据精度自动选择小数位数
-    if (prob !== undefined && prob > 0) {
-        var pct = prob * 100;
-        var pStr = pct >= 1 ? pct.toFixed(1) : pct.toFixed(2);
-        text += ' (p=' + pStr + '%)';
+    var text;
+    if (mode === 'winrate') {
+        // NOTE: 胜率模式 — count 是 0~1 的比率
+        var pct = count * 100;
+        text = pct >= 1 ? pct.toFixed(1) + '%' : pct.toFixed(2) + '%';
+    } else {
+        text = '×' + count.toLocaleString();
+        // NOTE: 概率 p 以百分比显示，根据精度自动选择小数位数
+        if (prob !== undefined && prob > 0) {
+            var pct2 = prob * 100;
+            var pStr = pct2 >= 1 ? pct2.toFixed(1) : pct2.toFixed(2);
+            text += ' (p=' + pStr + '%)';
+        }
     }
     el.textContent = text;
     el.className = 'sim-count visible';
@@ -642,14 +651,9 @@ function simulateForPlayer(p) {
     showCount(p === 0 ? 'sim-count-a' : 'sim-count-b', median, undefined, prob);
 }
 
-// NOTE: Race 模式 — 分别估计 pA、pB，用公式算各自中位数
+// NOTE: Race 模式 — 100,000 次正面 Ao5 对决，直接统计胜率
+// 不依赖 Target Avg，纯比双方每轮 Ao5 大小
 function simulateRace() {
-    var targetA = getTargetAvg(state.seedOn + 0);
-    var targetB = getTargetAvg(state.seedOn + 1);
-    if (targetA <= 0 || targetB <= 0) {
-        alert('Both players need a Target Avg.');
-        return;
-    }
     if (!state.playerEnabled[0] || !state.playerEnabled[1]) {
         alert('Both players must be enabled.');
         return;
@@ -659,37 +663,59 @@ function simulateRace() {
     hideCount('sim-count-b');
     hideCount('sim-count-race');
 
-    // NOTE: 分别估计两选手的达标概率
-    var probA = estimateP(0, targetA);
-    var probB = estimateP(1, targetB);
+    // NOTE: 100K 次正面对决
+    var winsA = 0, winsB = 0;
+    var mbf = isMbf(); // NOTE: 多盲得分：大者胜
+    var lastSolvesA = null, lastSolvesB = null;
 
-    if (probA <= 0 && probB <= 0) {
-        alert('Neither player can beat their target!');
+    for (var i = 0; i < SIM_ESTIMATE_N; i++) {
+        var resA = simulateOnce(0);
+        var resB = simulateOnce(1);
+        var avgA = resA.avg, avgB = resB.avg;
+
+        // NOTE: DNF（>= 999999）视为最差成绩
+        var aDnf = avgA >= 999999, bDnf = avgB >= 999999;
+        if (aDnf && bDnf) {
+            // 双方都 DNF → 平局，不计入
+            continue;
+        } else if (aDnf) {
+            winsB++;
+        } else if (bDnf) {
+            winsA++;
+        } else if (mbf ? (avgA > avgB) : (avgA < avgB)) {
+            winsA++;
+        } else if (mbf ? (avgB > avgA) : (avgB < avgA)) {
+            winsB++;
+        }
+        // NOTE: avgA === avgB → 平局，不计入
+
+        // NOTE: 保留最后一轮的 solves 用于图表展示
+        lastSolvesA = resA.solves;
+        lastSolvesB = resB.solves;
+    }
+
+    // NOTE: 将最后一轮的 solves 写入 state（用于图表显示）
+    if (lastSolvesA && lastSolvesB) {
+        setSuppressConfetti(true);
+        var n = solveCount();
+        for (var t = 0; t < n; t++) {
+            updateTime(state.seedOn + 0, t, lastSolvesA[t]);
+            updateTime(state.seedOn + 1, t, lastSolvesB[t]);
+        }
+        setSuppressConfetti(false);
+    }
+
+    var total = winsA + winsB;
+    if (total === 0) {
+        alert('All 100,000 rounds ended in a draw!');
         return;
     }
 
-    var medA = geoMedian(probA);
-    var medB = geoMedian(probB);
+    var rateA = winsA / total;
+    var rateB = winsB / total;
+    var winner = rateA >= rateB ? 0 : 1;
 
-    // NOTE: 各生成一组达标 solves 写入 state
-    setSuppressConfetti(true);
-    var n = solveCount();
-    for (var player = 0; player < 2; player++) {
-        for (var i = 0; i < SIM_MAX; i++) {
-            var res = simulateOnce(player);
-            if (isBeat(res.avg, player === 0 ? targetA : targetB)) {
-                for (var t = 0; t < n; t++) {
-                    updateTime(state.seedOn + player, t, res.solves[t]);
-                }
-                break;
-            }
-        }
-    }
-    setSuppressConfetti(false);
-
-    // NOTE: 中位数小 = 先达标 = 胜方
-    var winner = medA <= medB ? 0 : 1;
-    showCount('sim-count-a', medA, winner === 0, probA);
-    showCount('sim-count-b', medB, winner === 1, probB);
-    showCount('sim-count-race', Math.max(medA, medB));
+    showCount('sim-count-a', rateA, winner === 0, undefined, 'winrate');
+    showCount('sim-count-b', rateB, winner === 1, undefined, 'winrate');
+    hideCount('sim-count-race');
 }

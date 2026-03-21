@@ -77,9 +77,10 @@
 						harder.
 					</p>
 
-					<p><strong>⚔️ Race</strong> — Estimates pA and pB independently, computes each player's geometric
-						median. The one with fewer median attempts wins (appears in green). Display data is generated
-						separately for each player.</p>
+					<p><strong>⚔️ Race</strong> — Simulates 100,000 head-to-head Ao5 rounds between A and B.
+						Each round, both players independently generate an Ao5 from their KDE distributions; the
+						lower Ao5 wins that round. After all rounds, the win rate for each player is displayed
+						(draws excluded). The player with the higher win rate appears in green.</p>
 
 					<p><strong>📈 Improvement Slider (A / B)</strong> — Models player progress beyond their Ao100
 						baseline.<br>
