@@ -501,10 +501,12 @@ function updateProgressInfo(p, val) {
     var pct = playerProgress[p];
     var infoEl = document.getElementById(p === 0 ? 'progress-info-a' : 'progress-info-b');
     var muArr = getMuKde();
+    // NOTE: 显示用 Ao100 trimmed mean（WCA 官方定义），计算缩放仍用 KDE 均值
+    var ao100Arr = getAo100(state.seedOn);
     if (pct === 0) {
-        // NOTE: 0% 时显示当前基线（ao100 均值）
-        if (muArr) {
-            infoEl.textContent = '0% (' + (muArr[p] / 100).toFixed(2) + 's)';
+        // NOTE: 0% 时显示当前基线（Ao100 trimmed mean）
+        if (ao100Arr) {
+            infoEl.textContent = '0% (' + (ao100Arr[p] / 100).toFixed(2) + 's)';
         } else {
             infoEl.textContent = '0%';
         }
