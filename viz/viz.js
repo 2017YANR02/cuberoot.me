@@ -1510,15 +1510,26 @@ function setupControls() {
     });
   });
 
-  // NOTE: 视图模式切换（KDE / 直方图 / 叠加）
-  document.querySelectorAll('.view-btn').forEach(btn => {
+  // NOTE: 视图模式切换（KDE / 直方图 / 叠加 / 折线）
+  // NOTE: 排除 resetRangeBtn，它没有 data-view 属性
+  document.querySelectorAll('.view-btn[data-view]').forEach(btn => {
     btn.addEventListener('click', e => {
-      document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.view-btn[data-view]').forEach(b => b.classList.remove('active'));
       e.target.classList.add('active');
       viewMode = e.target.dataset.view;
       drawFrame();
     });
   });
+
+  // NOTE: 一键重置缩放/平移范围 — 四种视图均使用 userXMin/userXMax，统一清空
+  const resetBtn = document.getElementById('resetRangeBtn');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+      userXMin = null;
+      userXMax = null;
+      drawFrame();
+    });
+  }
 
   // NOTE: 图例说明 ⓘ 按钮 + 药丸开关
   const legendBtn = document.getElementById('legendInfoBtn');
