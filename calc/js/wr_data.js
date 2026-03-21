@@ -6,7 +6,7 @@
 var wrData = null; // { eventId: { single, average, ..., ao100_1, ao100_2, times_1: [...], times_2: [...] } }
 
 // NOTE: 个人数据覆盖 — playerOverride[0/1] = { times: [...], ao100: N, name, country } | null
-// 设置后，sampleKDE / getAo100 / getKdeMean 自动使用个人数据
+// 设置后，sampleKDE / getAo100 自动使用个人数据
 var playerOverride = [null, null];
 
 /** 覆盖指定 player 的 KDE 数据源为用户个人数据 */
@@ -102,30 +102,6 @@ export function getAo100(eventId) {
     return [a1, a2];
 }
 
-/**
- * NOTE: 获取 KDE 分布的期望值（ao100 times 数组的算术均值）
- * 这是 KDE 采样的真正 μ，反映选手当前日常水平
- * @returns {[number, number]|null} [mean_1, mean_2] centiseconds
- */
-export function getKdeMean(eventId) {
-    var result = [];
-    for (var p = 0; p < 2; p++) {
-        // NOTE: 支持混合源 — 每个 player 独立判断 override
-        var times;
-        if (playerOverride[p]) {
-            times = playerOverride[p].times;
-        } else if (wrData && wrData[eventId]) {
-            times = wrData[eventId][p === 0 ? 'times_1' : 'times_2'];
-        } else {
-            return null;
-        }
-        if (!times || times.length < 10) return null;
-        var sum = 0;
-        for (var i = 0; i < times.length; i++) sum += times[i];
-        result.push(sum / times.length);
-    }
-    return result;
-}
 
 // NOTE: Silverman 带宽缓存 — key = "eventId_playerIdx"
 var bandwidthCache = {};
