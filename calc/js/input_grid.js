@@ -128,14 +128,7 @@ export function init(gridContainer) {
         meBtn.appendChild(meImg);
         meBtn.addEventListener('click', (function(idx) {
             return function() {
-                if (idx === 0) {
-                    // NOTE: Row A — 未登录则跳转登录；已登录则用自己的数据
-                    if (typeof WcaAuth !== 'undefined' && !WcaAuth.isLoggedIn()) {
-                        WcaAuth.login();
-                        return;
-                    }
-                }
-                // NOTE: Row A 和 Row B 都 dispatch 同一事件，app.js 处理差异
+                // NOTE: A 和 B 统一 dispatch 事件 — app.js 处理搜索逻辑
                 document.dispatchEvent(new CustomEvent('player-override', { detail: { player: idx, btnEl: meBtn } }));
             };
         })(p));

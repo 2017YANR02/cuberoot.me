@@ -325,20 +325,11 @@ document.addEventListener('DOMContentLoaded', () => {
         var wcaId = null;
         var avatarUrl = '';
 
-        if (p === 0) {
-            // NOTE: Row A — 用登录用户自己的 ID
-            if (typeof WcaAuth === 'undefined' || !WcaAuth.isLoggedIn()) return;
-            var user = WcaAuth.getUser();
-            if (!user || !user.wcaId) return;
-            wcaId = user.wcaId;
-            avatarUrl = user.avatar || '';
-        } else {
-            // NOTE: Row B — 打开搜索模态框让用户搜索选手
-            var selected = await openPersonSearch(e.detail.btnEl);
-            if (!selected) return;
-            wcaId = selected.wcaId;
-            avatarUrl = selected.avatarUrl || '';
-        }
+        // NOTE: A/B 统一用搜索模态框选择选手
+        var selected = await openPersonSearch(e.detail.btnEl);
+        if (!selected) return;
+        wcaId = selected.wcaId;
+        avatarUrl = selected.avatarUrl || '';
 
         // NOTE: loading 状态 — 按钮显示 ⏳
         inputGrid.setMeButtonState(p, false, '⏳');
@@ -355,8 +346,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (data.averagePR && !isMbf()) {
             setTargetAvg(state.seedOn + p, data.averagePR);
         }
-        // NOTE: 获取选手头像 — Row A 用登录头像，Row B 用搜索结果中的头像
-        if (p === 1 && !avatarUrl) {
+        // NOTE: 获取选手头像（搜索结果可能无头像，需跟 WCA API 查询）
+        if (!avatarUrl) {
             avatarUrl = await wcaApi.fetchPersonAvatar(wcaId);
         }
         inputGrid.setMeButtonState(p, true, null, avatarUrl);
@@ -463,13 +454,19 @@ function getMuKde() {
     return wrData.getAo100(state.event) || wrData.getKdeMean(state.event);
 }
 
-// NOTE: 计算 Target 锚定缩放因子
-// α = 1 − (progress/100) × (1 − T/μ_kde)
-// μ_kde = Ao100 trimmed mean（选手日常水平，高于 WR average = best Ao5）
-// progress=0 → α=1（不变），progress=100 → α=T/μ_kde（avg≈T）
+// NOTE: 计算进度缩放因子
+// 正值（进步）：α = 1 − (progress/100) × (1 − T/μ_kde) — 朝 Target 锚定
+// 负值（退步）：α = 1 − progress/100 — 直接百分比（-50% → α=1.5，慢 50%）
 function getScaleFactor(p) {
     var progress = playerProgress[p] / 100;
     if (progress === 0) return 1;
+
+    // NOTE: 负值方向用直接百分比 — 不受 Target 约束，变化幅度足够大
+    if (progress < 0) {
+        return 1 - progress; // -0.5 → 1.5, -1.0 → 2.0
+    }
+
+    // NOTE: 正值方向保留 Target 锚定公式
     var target = getTargetAvg(state.seedOn + p);
     var muArr = getMuKde();
     if (!muArr || !target || target <= 0) return 1;
@@ -497,14 +494,25 @@ function updateProgressInfo(p, val) {
     var alpha = getScaleFactor(p);
     if (muArr) {
         var estAvg = muArr[p] * alpha / 100;
-        // NOTE: ↓ 箭头表示成绩降低（进步）
-        infoEl.textContent = '+' + pct + '% (↓' + estAvg.toFixed(2) + 's)';
-        // NOTE: 预估 avg 低于 Target 时变绿（代表能赢）
+        if (pct > 0) {
+            // NOTE: 正值 = 进步 — ↓ 箭头表示成绩降低（时间变短）
+            infoEl.textContent = '+' + pct + '% (↓' + estAvg.toFixed(2) + 's)';
+        } else {
+            // NOTE: 负值 = 退步 — ↑ 箭头表示成绩升高（时间变长）
+            infoEl.textContent = pct + '% (↑' + estAvg.toFixed(2) + 's)';
+        }
+        // NOTE: 预估 avg 低于 Target 时变绿（能赢），高于基线时变红（退步）
         var target = getTargetAvg(state.seedOn + p);
-        infoEl.style.color = (target && estAvg * 100 < target) ? '#2e7d32' : '';
+        if (pct < 0) {
+            infoEl.style.color = '#c62828'; // 退步 = 红色
+        } else if (target && estAvg * 100 < target) {
+            infoEl.style.color = '#2e7d32'; // 能赢 = 绿色
+        } else {
+            infoEl.style.color = '';
+        }
     } else {
-        infoEl.textContent = '+' + pct + '%';
-        infoEl.style.color = '';
+        infoEl.textContent = (pct > 0 ? '+' : '') + pct + '%';
+        infoEl.style.color = pct < 0 ? '#c62828' : '';
     }
 }
 
@@ -528,8 +536,8 @@ function sampleOneSolve(p) {
     if (state.event === '333fm') cs = Math.round(cs / 100) * 100;
     if (isMbf()) cs = (Math.floor(Math.random() * 50) + 10) * 100;
 
-    // NOTE: 应用进步幅度缩放（非 mbf 时）
-    if (!isMbf() && playerProgress[p] > 0) {
+    // NOTE: 应用进步/退步幅度缩放（非 mbf 时）
+    if (!isMbf() && playerProgress[p] !== 0) {
         var alpha = getScaleFactor(p);
         cs = clampValue(Math.round(cs * alpha));
     }
@@ -656,6 +664,11 @@ function simulateForPlayer(p) {
 function simulateRace() {
     if (!state.playerEnabled[0] || !state.playerEnabled[1]) {
         alert('Both players must be enabled.');
+        return;
+    }
+    // NOTE: Race 要求双方都已加载个人数据（通过搜索或登录）
+    if (!wrData.getPlayerOverride(0) || !wrData.getPlayerOverride(1)) {
+        alert('Please load both players first (click the avatar buttons).');
         return;
     }
 
