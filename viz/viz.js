@@ -417,6 +417,8 @@ function rebuildAllChannels() {
 
 /**
  * NOTE: 根据 dataMode 从某个 player 的数据构建 channelData
+ * channelData[j] = [value, compDateIndex, originalSolveIndex(1-based)]
+ * 第三个元素仅 AoN 模式有，用于 tooltip 显示正确的把数序号
  */
 function buildChannelDataForPlayer(player) {
   player.channelData = [];
@@ -428,7 +430,7 @@ function buildChannelDataForPlayer(player) {
   if (!arr) return;
   for (let i = 0; i < arr.length; i++) {
     if (arr[i] !== null) {
-      player.channelData.push([arr[i], player.solveData[i][1]]);
+      player.channelData.push([arr[i], player.solveData[i][1], i + 1]);
     }
   }
 }
@@ -1024,18 +1026,21 @@ function drawFrameLine(mt, mr, mb, ml, pw, ph) {
   drawLineGrid(lsx, lsy, ml, mt, pw, ph, viewYMin, viewYMax, totalSolves);
 
   // 2. 绘制每位选手的全量折线
-  const allPlayerTimes = [];  // NOTE: 保存各选手全量数据用于 hover
+  const allPlayerTimes = [];  // NOTE: [{ times: number[], indices: number[] }]
   const meanPositions = [];
   for (let pi = 0; pi < players.length; pi++) {
     const p = players[pi];
-    // NOTE: 提取全量有效成绩
+    // NOTE: 提取全量有效成绩 + 原始 solve 序号
     const fullTimes = [];
+    const origIndices = [];
     for (let i = 0; i < p.channelData.length; i++) {
       const v = rawToVal(p.channelData[i][0]);
       if (v > 0) fullTimes.push(v);
       else fullTimes.push(null);  // DNF 等无效值
+      // 第三个元素是原始索引（AoN 模式），Singles 模式用 i+1
+      origIndices.push(p.channelData[i][2] || (i + 1));
     }
-    allPlayerTimes.push(fullTimes);
+    allPlayerTimes.push({ times: fullTimes, indices: origIndices });
 
     // 绘制折线
     drawLineChart(fullTimes, lsx, lsy, pi, totalSolves);
@@ -1097,7 +1102,7 @@ function drawFrameLine(mt, mr, mb, ml, pw, ph) {
 
       let tooltipY = _lineHoverY - 8;
       for (let pi = 0; pi < allPlayerTimes.length; pi++) {
-        const ft = allPlayerTimes[pi];
+        const { times: ft, indices: origIdx } = allPlayerTimes[pi];
         if (solveIdx < ft.length && ft[solveIdx] !== null) {
           const val = ft[solveIdx];
           const dotY = lsy(val);
@@ -1107,9 +1112,10 @@ function drawFrameLine(mt, mr, mb, ml, pw, ph) {
           ctx.arc(tooltipX, dotY, 3, 0, Math.PI * 2);
           ctx.fill();
 
-          // 标签
+          // NOTE: 显示原始 solve 序号（而非 channelData 索引，后者因跳过 null 会偏移）
+          const dispIdx = origIdx[solveIdx];
           const namePrefix = players.length > 1 ? (players[pi].nameZh || players[pi].name).slice(0, 3) + ' ' : '';
-          const label = `#${solveIdx + 1}  ${namePrefix}${fmtVal(val)}`;
+          const label = `#${dispIdx}  ${namePrefix}${fmtVal(val)}`;
           ctx.fillStyle = playerHSL(pi, 0.95);
           ctx.textAlign = tooltipX > ml + pw / 2 ? 'right' : 'left';
           const labelX = tooltipX > ml + pw / 2 ? tooltipX - 8 : tooltipX + 8;
