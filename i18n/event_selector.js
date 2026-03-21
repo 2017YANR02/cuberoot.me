@@ -468,6 +468,8 @@
       attachHashTracking();
       restoreFromHash();
       setupPopstate();
+      // NOTE: 防闪烁——所有 UI 初始化完成后才显示内容
+      document.body.classList.add('ui-ready');
       return;
     }
 
@@ -487,6 +489,8 @@
         setupPopstate();
       }
     }
+    // NOTE: 防闪烁
+    document.body.classList.add('ui-ready');
   }
 
   // NOTE: 注入选择器样式

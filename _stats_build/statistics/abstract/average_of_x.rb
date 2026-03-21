@@ -55,12 +55,14 @@ class AverageOfX < GroupedStatistic
             "Top N varies by event: 333 top 15, most events top 30, " \
             "333fm/pyram/clock/444bf/555bf/magic/mmagic top 300, " \
             "333bf top 2000. " \
-            "WR History candidates also include all single and average WR holders."
+            "WR History candidates also include all single and average WR holders. " \
+            "Tied results are not shown in WR History."
     @note_zh = "考虑连续 #{@solve_count} 次官方还原。" \
               "各项目 Top N：333 前 15，多数项目前 30，" \
               "333fm/pyram/clock/444bf/555bf/magic/mmagic 前 300，" \
               "333bf 前 2000。" \
-              "WR 历史的候选人仅包括所有单次和平均 WR 获得者。"
+              "WR 历史的候选人仅包括所有单次和平均 WR 获得者。" \
+              "WR 历史不显示持平的成绩。"
     @table_header = RANKING_HEADER_AOX
   end
 
