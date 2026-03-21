@@ -16,7 +16,7 @@ MERGED_INTO_METRIC = %w[
 MERGED_INTO_AOXR = %w[wr_ao1r wr_ao2r wr_ao3r wr_ao4r].freeze
 
 MERGED_INTO_AVERAGE_OF = %w[
-  average_of_3 average_of_5 average_of_12 average_of_25 average_of_50 average_of_100
+  average_of_3 average_of_5 average_of_12 average_of_25 average_of_50 average_of_100 average_of_1000
 ].freeze
 
 ALL_MERGED = (MERGED_INTO_METRIC + MERGED_INTO_AOXR + MERGED_INTO_AVERAGE_OF).freeze
