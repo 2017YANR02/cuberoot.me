@@ -303,3 +303,40 @@ td > .solve-list {
   gap: 0 6px;
   font-size: 0.85em
 }
+
+/* ── 天数 0 行隐藏 toggle（average_of 专用）────────────────── */
+/* NOTE: 默认隐藏 toggle，仅当 History tab 可见时显示 */
+.days-filter {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #8ab4f8;
+  user-select: none;
+  white-space: nowrap;
+  border: 1px solid rgba(138, 180, 248, 0.2);
+  border-radius: 6px;
+  transition: background .15s;
+  margin-left: 12px
+}
+
+.days-filter:hover {
+  background: rgba(138, 180, 248, 0.08)
+}
+
+.days-filter input[type="checkbox"] {
+  accent-color: #8ab4f8;
+  width: 14px;
+  height: 14px;
+  cursor: pointer
+}
+
+/* NOTE: 当任一 history 面板可见时显示 toggle */
+/* stat-panel[id$="-history"].active 存在时，通过 JS 显示（CSS 无法跨兄弟检测） */
+
+/* NOTE: 天数 0 行隐藏——body 上有 hide-zero-days 时隐藏 .zero-days 行 */
+.hide-zero-days .zero-days {
+  display: none
+}
