@@ -1112,7 +1112,14 @@ function updateStats(times, currentMean, currentDate, apFrame) {
   const ap = players[activePlayerIdx];
   if (!ap) return;
   const s = stddev(times);
-  const delta = currentMean - ap.ghostMean;
+  // NOTE: 和 10 帧前比较，避免逐帧噪声
+  if (!updateStats._history) updateStats._history = [];
+  updateStats._history.push(currentMean);
+  const DELTA_LAG = 30;
+  const prevMean = updateStats._history.length > DELTA_LAG
+    ? updateStats._history[updateStats._history.length - 1 - DELTA_LAG]
+    : updateStats._history[0];
+  const delta = currentMean - prevMean;
   const endIdx = Math.min(apFrame + windowSize - 1, ap.channelData.length - 1);
   const compIdx = ap.channelData[endIdx][1];
   const compName = ap.competitions[compIdx] || '';
@@ -1133,8 +1140,15 @@ function updateStats(times, currentMean, currentDate, apFrame) {
   document.getElementById('statComp').textContent = formatCompName(compName);
 
   const deltaEl = document.getElementById('statDelta');
-  deltaEl.textContent = (delta >= 0 ? '+' : '') + delta.toFixed(2) + 's';
+  deltaEl.textContent = Math.abs(delta).toFixed(2) + 's';
   deltaEl.classList.toggle('improving', delta < 0);
+  deltaEl.classList.toggle('regressing', delta > 0);
+  // NOTE: 成绩变小 = 进步，变大 = 退步
+  const deltaLabel = deltaEl.closest('.stat-item')?.querySelector('.stat-label');
+  if (deltaLabel) {
+    deltaLabel.textContent = delta <= 0 ? '进步' : '退步';
+    deltaLabel.title = '与 30 帧前的窗口均值相比';
+  }
 }
 
 /**
@@ -1349,11 +1363,13 @@ function setupControls() {
     drawFrame();
   });
 
-  // 触摸 pinch 缩放
+  // 触摸：单指拖拽平移 + 双指 pinch 缩放
   let pinchState = null;
+  let touchDrag = null;
   canvas.addEventListener('touchstart', e => {
     if (e.touches.length === 2) {
       e.preventDefault();
+      touchDrag = null;
       const rect = canvas.getBoundingClientRect();
       const ratio = canvas.width / rect.width;
       const t0 = (e.touches[0].clientX - rect.left) * ratio;
@@ -1364,22 +1380,45 @@ function setupControls() {
         xMin: userXMin !== null ? userXMin : xMin,
         xMax: userXMax !== null ? userXMax : xMax
       };
+    } else if (e.touches.length === 1) {
+      // NOTE: 单指拖拽平移
+      pinchState = null;
+      const rect = canvas.getBoundingClientRect();
+      const ratio = canvas.width / rect.width;
+      touchDrag = {
+        startPx: (e.touches[0].clientX - rect.left) * ratio,
+        startXMin: userXMin !== null ? userXMin : xMin,
+        startXMax: userXMax !== null ? userXMax : xMax
+      };
     }
   }, { passive: false });
   canvas.addEventListener('touchmove', e => {
-    if (!pinchState || e.touches.length !== 2) return;
-    e.preventDefault();
-    const rect = canvas.getBoundingClientRect();
-    const ratio = canvas.width / rect.width;
-    const t0 = (e.touches[0].clientX - rect.left) * ratio;
-    const t1 = (e.touches[1].clientX - rect.left) * ratio;
-    const dist = Math.abs(t1 - t0);
-    const scale = pinchState.dist / dist;
-    userXMin = pinchState.mid - (pinchState.mid - pinchState.xMin) * scale;
-    userXMax = pinchState.mid + (pinchState.xMax - pinchState.mid) * scale;
-    drawFrame();
+    if (pinchState && e.touches.length === 2) {
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const ratio = canvas.width / rect.width;
+      const t0 = (e.touches[0].clientX - rect.left) * ratio;
+      const t1 = (e.touches[1].clientX - rect.left) * ratio;
+      const dist = Math.abs(t1 - t0);
+      const scale = pinchState.dist / dist;
+      userXMin = pinchState.mid - (pinchState.mid - pinchState.xMin) * scale;
+      userXMax = pinchState.mid + (pinchState.xMax - pinchState.mid) * scale;
+      drawFrame();
+    } else if (touchDrag && e.touches.length === 1) {
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const ratio = canvas.width / rect.width;
+      const dx = ((e.touches[0].clientX - rect.left) * ratio - touchDrag.startPx);
+      const { left: ml, right: mr } = MARGIN;
+      const pw = cw - ml - mr;
+      const range = touchDrag.startXMax - touchDrag.startXMin;
+      const dVal = -(dx / pw) * range;
+      userXMin = touchDrag.startXMin + dVal;
+      userXMax = touchDrag.startXMax + dVal;
+      drawFrame();
+    }
   }, { passive: false });
-  canvas.addEventListener('touchend', () => { pinchState = null; });
+  canvas.addEventListener('touchend', () => { pinchState = null; touchDrag = null; });
 
   // 响应窗口大小变化
   let resizeTimer;
