@@ -118,7 +118,7 @@ export function init(gridContainer) {
         // NOTE: 头像按钮 — Row A: 自己的数据(需登录), Row B: 任意 WCA ID
         var meBtn = document.createElement('button');
         meBtn.className = 'me-btn';
-        meBtn.title = p === 0 ? 'Login to use your data' : 'Enter a WCA ID';
+        meBtn.title = 'Search for a player';
         meBtn.dataset.player = p;
         // NOTE: 内部 img 元素 — 默认显示通用头像 SVG
         var meImg = document.createElement('img');
@@ -657,7 +657,9 @@ function onKeyDown(e) {
             el.select();
         }
     } else if (e.key === ' ') {
-        // NOTE: 空格键触发秒表（逻辑在 app.js 中注册）
+        // NOTE: 空格键触发秒表 — 但焦点在非 grid 的 input 上时（如搜索框）不拦截
+        var ae = document.activeElement;
+        if (ae && ae.tagName === 'INPUT' && !ae.classList.contains('time-cell')) return;
         e.preventDefault();
         if (stopwatchCallback) stopwatchCallback();
     }
