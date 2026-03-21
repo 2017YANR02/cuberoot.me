@@ -12,9 +12,12 @@ var playerOverride = [null, null];
 /** 覆盖指定 player 的 KDE 数据源为用户个人数据 */
 export function setPlayerOverride(playerIdx, data) {
     playerOverride[playerIdx] = data;
-    // NOTE: 清除该 player 的带宽缓存 — 新数据需要重新计算
+    // NOTE: 清除该 player 的带宽和衰减权重缓存 — 新数据需要重新计算
     for (var key in bandwidthCache) {
         if (key.endsWith('_' + playerIdx)) delete bandwidthCache[key];
+    }
+    for (var key in decayCache) {
+        if (key.endsWith('_' + playerIdx)) delete decayCache[key];
     }
 }
 
@@ -23,6 +26,9 @@ export function clearPlayerOverride(playerIdx) {
     playerOverride[playerIdx] = null;
     for (var key in bandwidthCache) {
         if (key.endsWith('_' + playerIdx)) delete bandwidthCache[key];
+    }
+    for (var key in decayCache) {
+        if (key.endsWith('_' + playerIdx)) delete decayCache[key];
     }
 }
 
@@ -124,11 +130,20 @@ export function getKdeMean(eventId) {
 // NOTE: Silverman 带宽缓存 — key = "eventId_playerIdx"
 var bandwidthCache = {};
 
+// NOTE: 衰减权重累积和缓存 — 用于加权采样，避免重复计算
+// key = "eventId_playerIdx"，value = { cumWeights: Float64Array, total: number }
+var decayCache = {};
+
+// NOTE: 衰减因子 — λ=0.97 时，第 30 把权重 ≈ 40%，第 100 把权重 ≈ 5%
+var DECAY_LAMBDA = 0.97;
+
 export function sampleKDE(eventId, playerIdx) {
     // NOTE: 优先使用 playerOverride，fallback 到 wrData
     var times;
+    var useDecay = false;
     if (playerOverride[playerIdx]) {
         times = playerOverride[playerIdx].times;
+        useDecay = true; // NOTE: 个人数据按时间倒序排列，可用衰减加权
     } else if (wrData && wrData[eventId]) {
         times = wrData[eventId][playerIdx === 0 ? 'times_1' : 'times_2'];
     }
@@ -150,11 +165,40 @@ export function sampleKDE(eventId, playerIdx) {
         bandwidthCache[cacheKey] = h;
     }
 
-    // NOTE: 随机选一个真实成绩 + 高斯核扰动
-    var baseTime = times[Math.floor(Math.random() * times.length)];
+    // NOTE: 选择基准成绩 — 个人数据用衰减加权（近期偏重），WR 数据均匀随机
+    var baseTime;
+    if (useDecay) {
+        // NOTE: 预计算累积权重并缓存 — 500K 次采样只算一次
+        var dc = decayCache[cacheKey];
+        if (!dc || dc.n !== times.length) {
+            var cumWeights = new Float64Array(times.length);
+            var cum = 0;
+            var w = 1;
+            for (var i = 0; i < times.length; i++) {
+                cum += w;
+                cumWeights[i] = cum;
+                w *= DECAY_LAMBDA;
+            }
+            dc = { cumWeights: cumWeights, total: cum, n: times.length };
+            decayCache[cacheKey] = dc;
+        }
+        // NOTE: 二分查找加权随机索引 — O(log n) per sample
+        var r = Math.random() * dc.total;
+        var lo = 0, hi = times.length - 1;
+        while (lo < hi) {
+            var mid = (lo + hi) >> 1;
+            if (dc.cumWeights[mid] < r) lo = mid + 1;
+            else hi = mid;
+        }
+        baseTime = times[lo];
+    } else {
+        baseTime = times[Math.floor(Math.random() * times.length)];
+    }
+
     // Box-Muller 生成标准正态随机数
     var u1 = Math.random(), u2 = Math.random();
     var z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
     var result = Math.round(baseTime + h * z);
     return Math.max(30, result); // NOTE: 下限 0.30s，避免极端采样产生不合理成绩
 }
+

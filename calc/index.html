@@ -78,29 +78,26 @@
 					</p>
 
 					<p><strong>⚔️ Race</strong> — Simulates 100,000 head-to-head Ao5 rounds between A and B.
-						Each round, both players independently generate an Ao5 from their KDE distributions; the
-						lower Ao5 wins that round. After all rounds, the win rate for each player is displayed
-						(draws excluded). The player with the higher win rate appears in green.</p>
+					Each round, both players independently generate an Ao5 from their KDE distributions; the
+					lower Ao5 wins that round. After all rounds, the win rate for each player is displayed
+					(draws excluded). The player with the higher win rate appears in green.<br>
+					<strong>Requires both players to be loaded</strong> — click the avatar buttons to search
+					for WCA players first. Personal data uses <em>decay-weighted</em> KDE sampling
+					(λ = 0.97): recent solves are sampled more frequently, naturally reflecting current form.</p>
 
-					<p><strong>📈 Improvement Slider (A / B)</strong> — Models player progress beyond their Ao100
-						baseline.<br>
-						• 0% = Current level (Ao100 mean from official results)<br>
-						• 100% = Improved enough that expected average ≈ Target Avg<br>
-						• &gt;100% = Surpassed the target<br>
-						Each sampled solve is scaled by α = 1 − (progress ÷ 100) × (1 − Target ÷ μ), where μ = Ao100
-						mean. This preserves the coefficient of variation (CV) — both mean and standard deviation shrink
-						proportionally, consistent with how real cubers improve.</p>
+				<p><strong>📊 Decay-weighted KDE</strong> — When personal data is loaded, each solve's sampling
+					weight decays exponentially by recency (index 0 = newest).<br>
+					• λ = 0.97 → solve #30 has ~40% weight, solve #100 has ~5%<br>
+					• This automatically emphasizes recent performance without manual adjustment<br>
+					• When both players are loaded, the manual improvement slider is hidden (no longer needed)</p>
 
-					<p><strong>👤 Avatar Buttons (right of checkbox)</strong> — Replace world record data with personal
-						WCA data.<br>
-						<strong>Row A (top):</strong> Click the avatar to use your own data. If not logged in, you'll be
-						redirected to WCA login first. After login, the avatar shows your WCA profile photo.<br>
-						<strong>Row B (bottom):</strong> Click to enter any WCA ID (e.g. 2017GENG01). This lets you
-						compare any two cubers head-to-head — no login required.<br>
-						When activated (orange glow), that row's #1–#5 solves are sampled from the selected cuber's
-						recent official singles (up to 100, KDE-smoothed), and the Target Avg is automatically set to
-						their official average PR. Click again to switch back to world record data.
-					</p>
+				<p><strong>👤 Avatar Buttons (right of checkbox)</strong> — Search for any WCA player to load
+					their personal data.<br>
+					Click the avatar on either row to open the search modal. Type a name or WCA ID to find
+					a player. Their recent official singles (up to 100) are loaded for KDE sampling, and the
+					Target Avg is set to their official average PR.<br>
+					When activated (orange glow), that row uses the selected player's data.
+					Click again to switch back to world record data.</p>
 
 					<p><strong>⌫ Long press</strong> = Clear All (resets all cells and Target Avg).</p>
 				</div>
