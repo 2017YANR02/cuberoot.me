@@ -39,7 +39,7 @@ let currentEventId = '333';
 
 // NOTE: 7 种数据模式
 let dataMode = 'singles';
-let viewMode = 'kde';  // NOTE: 'kde' | 'histogram' | 'both'
+let viewMode = 'kde';  // NOTE: 'kde' | 'histogram' | 'both' | 'line'
 
 // NOTE: FMC 成绩是步数（整数），非厘秒
 function isFMC() { return currentEventId === '333fm'; }
@@ -850,6 +850,214 @@ function drawHistogram(bins, sx, sy, pi, useDensity) {
 }
 
 // ═══════════════════════════════════════
+// 折线图
+// ═══════════════════════════════════════
+
+/**
+ * NOTE: 折线图专用网格 — X=把数，Y=成绩值
+ * 和 drawGrid 不同：X 轴是离散把数，Y 轴是成绩（而非密度）
+ */
+function drawLineGrid(lsx, lsy, ml, mt, pw, ph, yMin, yMax) {
+  ctx.save();
+
+  // Y 轴网格线（成绩刻度）
+  const yRange = yMax - yMin;
+  const yRawStep = yRange / 6;
+  const yMag = Math.pow(10, Math.floor(Math.log10(yRawStep)));
+  const yRes = yRawStep / yMag;
+  const yStep = yRes <= 1.5 ? yMag : yRes <= 3.5 ? 2 * yMag : yRes <= 7.5 ? 5 * yMag : 10 * yMag;
+  const yStart = Math.ceil(yMin / yStep) * yStep;
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  for (let y = yStart; y <= yMax; y += yStep) {
+    const py = Math.round(lsy(y)) + 0.5;
+    ctx.beginPath();
+    ctx.moveTo(ml, py);
+    ctx.lineTo(ml + pw, py);
+    ctx.stroke();
+  }
+
+  // Y 轴标签（成绩值）
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.font = '12px "JetBrains Mono", monospace';
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  for (let y = yStart; y <= yMax; y += yStep) {
+    const label = isFMC() || isMBLD()
+      ? Math.round(y) + ''
+      : (yStep >= 1 ? Math.round(y) + 's' : y.toFixed(1) + 's');
+    ctx.fillText(label, ml - 6, lsy(y));
+  }
+
+  // X 轴底线
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.beginPath();
+  ctx.moveTo(ml, mt + ph + 0.5);
+  ctx.lineTo(ml + pw, mt + ph + 0.5);
+  ctx.stroke();
+
+  // X 轴标签（把数）
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.font = '12px "JetBrains Mono", monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  // NOTE: 目标 5~10 个刻度
+  const xStep = windowSize <= 50 ? 10 : windowSize <= 200 ? 25 : 50;
+  for (let x = xStep; x <= windowSize; x += xStep) {
+    ctx.fillText(x + '', lsx(x), mt + ph + 10);
+  }
+
+  // 轴标签
+  ctx.save();
+  ctx.translate(16, mt + ph / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillStyle = 'rgba(255,255,255,0.2)';
+  ctx.font = '11px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(isFMC() ? 'Moves' : isMBLD() ? 'Score (pts)' : 'Solve time', 0, 0);
+  ctx.restore();
+
+  ctx.fillStyle = 'rgba(255,255,255,0.2)';
+  ctx.font = '11px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Solve #', ml + pw / 2, mt + ph + 35);
+
+  ctx.restore();
+}
+
+/**
+ * NOTE: 折线图绘制 — 每位选手一条折线
+ * times: 窗口内成绩数组（已转秒），lsx/lsy: 坐标映射
+ */
+function drawLineChart(times, lsx, lsy, pi) {
+  if (!times || times.length < 2) return;
+  ctx.save();
+
+  const color = getShiftedHSL(pi, 0.85, mean(times));
+  const fillColor = getShiftedHSL(pi, 0.08, mean(times));
+
+  // 半透明填充区域
+  const { top: _mt, bottom: _mb } = MARGIN;
+  const _ph = ch - _mt - _mb;
+  const bottomPy = _mt + _ph; // NOTE: 画布底部像素坐标
+  ctx.beginPath();
+  ctx.moveTo(lsx(1), lsy(times[0]));
+  for (let i = 1; i < times.length; i++) {
+    ctx.lineTo(lsx(i + 1), lsy(times[i]));
+  }
+  ctx.lineTo(lsx(times.length), bottomPy);
+  ctx.lineTo(lsx(1), bottomPy);
+  ctx.closePath();
+  ctx.fillStyle = fillColor;
+  ctx.fill();
+
+  // 折线描边
+  ctx.beginPath();
+  ctx.moveTo(lsx(1), lsy(times[0]));
+  for (let i = 1; i < times.length; i++) {
+    ctx.lineTo(lsx(i + 1), lsy(times[i]));
+  }
+
+  if (pi === activePlayerIdx) {
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 6;
+  }
+  ctx.strokeStyle = color;
+  ctx.lineWidth = pi === activePlayerIdx ? 1.8 : 1.2;
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+// ═══════════════════════════════════════
+// 折线图帧渲染（独立路径）
+// ═══════════════════════════════════════
+
+/**
+ * NOTE: 折线图的完整渲染 — 和 KDE/直方图坐标系完全不同
+ * X 轴: 窗口内把数 (1 ~ windowSize)
+ * Y 轴: 成绩值 (xMin ~ xMax，复用分布图的成绩范围)
+ */
+function drawFrameLine(mt, mr, mb, ml, pw, ph) {
+  const progress = maxFrame > 0 ? currentFrame / maxFrame : 0;
+
+  // NOTE: Y 轴范围 — 复用 xMin/xMax（成绩范围），支持用户缩放
+  let viewYMin = userXMin !== null ? userXMin : xMin;
+  let viewYMax = userXMax !== null ? userXMax : xMax;
+
+  // 坐标映射：X=把数(1~windowSize)，Y=成绩值
+  const lsx = n => ml + ((n - 1) / (windowSize - 1)) * pw;
+  const lsy = v => mt + ph - ((v - viewYMin) / (viewYMax - viewYMin)) * ph;
+
+  // 1. 网格
+  drawLineGrid(lsx, lsy, ml, mt, pw, ph, viewYMin, viewYMax);
+
+  // 2. 绘制每位选手的折线
+  const meanPositions = [];
+  for (let pi = 0; pi < players.length; pi++) {
+    const p = players[pi];
+    const pFrame = computePlayerFrame(pi, progress);
+    const times = getWindowTimes(pi, pFrame);
+    if (times.length < 2) continue;
+
+    const currentMean = mean(times);
+    meanPositions.push({ pi, mean: currentMean, name: p.nameZh || p.name });
+
+    drawLineChart(times, lsx, lsy, pi);
+
+    // 均值水平线
+    if (showLayers.meanLine) {
+      const meanPy = lsy(currentMean);
+      ctx.save();
+      ctx.strokeStyle = getShiftedHSL(pi, 0.4, currentMean);
+      ctx.lineWidth = 1;
+      ctx.setLineDash([6, 4]);
+      ctx.beginPath();
+      ctx.moveTo(ml, meanPy);
+      ctx.lineTo(ml + pw, meanPy);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  // 3. 均值标签（右侧）
+  ctx.save();
+  ctx.textBaseline = 'middle';
+  ctx.font = '600 11px "JetBrains Mono", monospace';
+  for (const mp of meanPositions) {
+    const py = lsy(mp.mean);
+    const namePrefix = players.length > 1 ? mp.name.slice(0, 3) + ' ' : '';
+    ctx.fillStyle = playerHSL(mp.pi, 0.8);
+    ctx.textAlign = 'left';
+    ctx.fillText(namePrefix + fmtVal(mp.mean), ml + pw + 4, py);
+  }
+  ctx.restore();
+
+  // 4. 更新 DOM 统计面板
+  const ap = players[activePlayerIdx];
+  if (ap) {
+    const apFrame = computePlayerFrame(activePlayerIdx, progress);
+    const apTimes = getWindowTimes(activePlayerIdx, apFrame);
+    if (apTimes.length > 0) {
+      const apEndIdx = Math.min(apFrame + windowSize - 1, ap.channelData.length - 1);
+      const apDate = ap.compDates[ap.channelData[apEndIdx][1]];
+      updateStats(apTimes, mean(apTimes), apDate, apFrame);
+    }
+  }
+
+  // 5. 进度条
+  updateProgressUI();
+
+  // 6. 脊线图联动
+  if (typeof highlightRidgeRow === 'function' && ap) {
+    const apFrame = computePlayerFrame(activePlayerIdx, progress);
+    const apEndIdx = Math.min(apFrame + windowSize - 1, ap.channelData.length - 1);
+    highlightRidgeRow(apEndIdx);
+  }
+}
+
+// ═══════════════════════════════════════
 // 绘制引擎
 // ═══════════════════════════════════════
 
@@ -861,6 +1069,12 @@ function drawFrame() {
 
   ctx.fillStyle = '#0c0c18';
   ctx.fillRect(0, 0, cw, ch);
+
+  // NOTE: 折线图模式走独立渲染路径
+  if (viewMode === 'line') {
+    drawFrameLine(mt, mr, mb, ml, pw, ph);
+    return;
+  }
 
   // NOTE: 用户缩放/平移覆盖自动范围
   let viewXMin = userXMin !== null ? userXMin : xMin;
