@@ -135,7 +135,7 @@ var bandwidthCache = {};
 var decayCache = {};
 
 // NOTE: 衰减因子 — λ=0.97 时，第 30 把权重 ≈ 40%，第 100 把权重 ≈ 5%
-var DECAY_LAMBDA = 0.97;
+var DECAY_LAMBDA = 1;
 
 export function sampleKDE(eventId, playerIdx) {
     // NOTE: 优先使用 playerOverride，fallback 到 wrData
