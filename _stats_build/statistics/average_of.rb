@@ -9,12 +9,13 @@ require_relative "average_of_12"
 require_relative "average_of_25"
 require_relative "average_of_50"
 require_relative "average_of_100"
+require_relative "average_of_1000"
 
 class AverageOf < Statistic
   include StatPanel
   include MetricLayout
 
-  AOX_CLASSES = [AverageOf3, AverageOf5, AverageOf12, AverageOf25, AverageOf50, AverageOf100].freeze
+  AOX_CLASSES = [AverageOf3, AverageOf5, AverageOf12, AverageOf25, AverageOf50, AverageOf100, AverageOf1000].freeze
 
   # NOTE: 按钮标签和 HTML ID 前缀
   AOX_META = {
@@ -23,7 +24,8 @@ class AverageOf < Statistic
     AverageOf12  => { label: "Ao12",  id: "ao12" },
     AverageOf25  => { label: "Ao25",  id: "ao25" },
     AverageOf50  => { label: "Ao50",  id: "ao50" },
-    AverageOf100 => { label: "Ao100", id: "ao100" },
+    AverageOf100  => { label: "Ao100",  id: "ao100" },
+    AverageOf1000 => { label: "Ao1000", id: "ao1000" },
   }.freeze
 
   def initialize
