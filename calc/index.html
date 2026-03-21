@@ -82,14 +82,8 @@
 					lower Ao5 wins that round. After all rounds, the win rate for each player is displayed
 					(draws excluded). The player with the higher win rate appears in green.<br>
 					<strong>Requires both players to be loaded</strong> — click the avatar buttons to search
-					for WCA players first. Personal data uses <em>decay-weighted</em> KDE sampling
-					(λ = 0.97): recent solves are sampled more frequently, naturally reflecting current form.</p>
-
-				<p><strong>📊 Decay-weighted KDE</strong> — When personal data is loaded, each solve's sampling
-					weight decays exponentially by recency (index 0 = newest).<br>
-					• λ = 0.97 → solve #30 has ~40% weight, solve #100 has ~5%<br>
-					• This automatically emphasizes recent performance without manual adjustment<br>
-					• When both players are loaded, the manual improvement slider is hidden (no longer needed)</p>
+					for WCA players first. KDE uses each player's most recent 100 official singles.<br>
+					When both players are loaded, the manual improvement slider is hidden.</p>
 
 				<p><strong>👤 Avatar Buttons (right of checkbox)</strong> — Search for any WCA player to load
 					their personal data.<br>
@@ -108,13 +102,13 @@
 		<div class="progress-controls" id="progress-controls">
 			<div class="progress-row progress-a">
 				<span class="progress-label">A</span>
-				<input type="range" id="progress-slider-a" class="progress-slider slider-a" min="-50" max="150" value="0"
+				<input type="range" id="progress-slider-a" class="progress-slider slider-a" min="-20" max="100" value="0"
 					step="1">
 				<span id="progress-info-a" class="progress-info">0%</span>
 			</div>
 			<div class="progress-row progress-b">
 				<span class="progress-label">B</span>
-				<input type="range" id="progress-slider-b" class="progress-slider slider-b" min="-50" max="150" value="0"
+				<input type="range" id="progress-slider-b" class="progress-slider slider-b" min="-20" max="100" value="0"
 					step="1">
 				<span id="progress-info-b" class="progress-info">0%</span>
 			</div>
