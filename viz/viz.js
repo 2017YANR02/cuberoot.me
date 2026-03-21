@@ -41,6 +41,13 @@ let currentEventId = '333';
 let dataMode = 'singles';
 let viewMode = 'kde';  // NOTE: 'kde' | 'histogram' | 'both'
 
+// NOTE: FMC 成绩是步数（整数），非厘秒
+function isFMC() { return currentEventId === '333fm'; }
+// NOTE: 原始值 → 显示值（FMC 直接用，其他项目 /100）
+function rawToVal(v) { return isFMC() ? v : v / 100; }
+// NOTE: 格式化显示值（FMC 无小数无单位，其他 2位小数+s）
+function fmtVal(v) { return isFMC() ? Math.round(v) + ' moves' : v.toFixed(2) + 's'; }
+
 // NOTE: 全局日期时间线 — 所有选手比赛日期的并集，排序后作为帧序列
 // currentFrame 映射到 dateTimeline[currentFrame]
 let dateTimeline = [];
@@ -631,7 +638,7 @@ function getWindowTimes(playerIdx, frame) {
   const times = [];
   for (let i = frame; i < end; i++) {
     const v = cd[i][0];
-    if (v > 0) times.push(v / 100);
+    if (v > 0) times.push(rawToVal(v));
   }
   return times;
 }
@@ -892,7 +899,7 @@ function drawFrame() {
     let currentVal = null;
     if (dataMode !== 'singles') {
       const endIdx = Math.min(pFrame + windowSize - 1, p.channelData.length - 1);
-      const v = p.channelData[endIdx][0] / 100;
+      const v = rawToVal(p.channelData[endIdx][0]);
       if (v > 0) currentVal = v;
     }
     meanPositions.push({ pi, mean: currentMean, currentVal, name: p.nameZh || p.name });
@@ -1025,7 +1032,9 @@ function drawGrid(sx, sy, ml, mt, pw, ph) {
 
   for (let x = gridStart; x <= xMax; x += niceStep) {
     // NOTE: 大数值用整数，小数值保留小数
-    const label = niceStep >= 1 ? Math.round(x) + 's' : x.toFixed(1) + 's';
+    const label = isFMC()
+      ? Math.round(x) + ''
+      : (niceStep >= 1 ? Math.round(x) + 's' : x.toFixed(1) + 's');
     ctx.fillText(label, sx(x), mt + ph + 10);
   }
 
@@ -1050,7 +1059,7 @@ function drawGrid(sx, sy, ml, mt, pw, ph) {
   ctx.fillStyle = 'rgba(255,255,255,0.2)';
   ctx.font = '11px Inter, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('Solve time', ml + pw / 2, mt + ph + 35);
+  ctx.fillText(isFMC() ? 'Moves' : 'Solve time', ml + pw / 2, mt + ph + 35);
 
   ctx.restore();
 }
@@ -1124,8 +1133,10 @@ function updateStats(times, currentMean, currentDate, apFrame) {
   const compIdx = ap.channelData[endIdx][1];
   const compName = ap.competitions[compIdx] || '';
 
-  document.getElementById('statMean').textContent = currentMean.toFixed(2) + 's';
-  document.getElementById('statStd').textContent = 'σ ' + s.toFixed(2) + 's';
+  document.getElementById('statMean').textContent = fmtVal(currentMean);
+  document.getElementById('statStd').textContent = isFMC()
+    ? 'σ ' + s.toFixed(1)
+    : 'σ ' + s.toFixed(2) + 's';
 
   // NOTE: 把数/日期列根据 syncMode 动态切换
   const syncLabel = document.getElementById('statSyncLabel');
@@ -1140,7 +1151,9 @@ function updateStats(times, currentMean, currentDate, apFrame) {
   document.getElementById('statComp').textContent = formatCompName(compName);
 
   const deltaEl = document.getElementById('statDelta');
-  deltaEl.textContent = Math.abs(delta).toFixed(2) + 's';
+  deltaEl.textContent = isFMC()
+    ? Math.round(Math.abs(delta)) + ' moves'
+    : Math.abs(delta).toFixed(2) + 's';
   deltaEl.classList.toggle('improving', delta < 0);
   deltaEl.classList.toggle('regressing', delta > 0);
   // NOTE: 成绩变小 = 进步，变大 = 退步
@@ -1167,7 +1180,7 @@ function drawMeanLabelsOnCanvas(sx, mt, meanPositions) {
     // 1. 均值线标签 —— 圆形贴在均值线顶端
     if (showLayers.meanLine) {
       const meanPx = sx(mp.mean);
-      const meanLabel = namePrefix + mp.mean.toFixed(2) + 's';
+      const meanLabel = namePrefix + fmtVal(mp.mean);
       const meanY = mt - 10 - row;
       ctx.fillStyle = playerHSL(mp.pi, 0.7);
       ctx.beginPath();
@@ -1180,7 +1193,7 @@ function drawMeanLabelsOnCanvas(sx, mt, meanPositions) {
     // 2. 当前值标签 —— 菱形贴在当前值线顶端
     if (showLayers.currentVal && mp.currentVal !== null && mp.currentVal !== undefined) {
       const valPx = sx(mp.currentVal);
-      const valLabel = namePrefix + mp.currentVal.toFixed(2) + 's';
+      const valLabel = namePrefix + fmtVal(mp.currentVal);
       const valY = mt - 26 - row;
       ctx.fillStyle = playerHSL(mp.pi, 0.95);
       ctx.beginPath();
@@ -1494,7 +1507,7 @@ function recalcModeParams() {
   const vals = [];
   for (const p of players) {
     for (const d of p.channelData) {
-      const v = d[0] / 100;
+      const v = rawToVal(d[0]);
       if (v > 0) vals.push(v);
     }
   }
