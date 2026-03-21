@@ -206,9 +206,12 @@ h1 {
   text-overflow: ellipsis;
 }
 
-/* 进步值高亮 */
+/* 进退步高亮 */
 .stat-value.improving {
   color: #4ade80;
+}
+.stat-value.regressing {
+  color: #f87171;
 }
 
 /* ─── 播放控制 ─── */
@@ -597,6 +600,9 @@ kbd {
   line-height: 1.8;
   color: rgba(255,255,255,0.8);
   backdrop-filter: blur(8px);
+  /* NOTE: 防止溢出 canvas-wrapper 的 overflow:hidden 被裁切 */
+  max-height: calc(100% - 48px);
+  overflow-y: auto;
 }
 .legend-tooltip.visible { display: block; }
 .legend-toggle {
