@@ -470,7 +470,7 @@ kbd {
   backdrop-filter: blur(12px);
   /* NOTE: 创建 stacking context，让内部 dropdown (z-index:1000) 浮于 canvas 之上 */
   position: relative;
-  z-index: 10;
+  z-index: 100;
 }
 
 .toolbar-btn {

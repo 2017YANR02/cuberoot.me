@@ -110,6 +110,16 @@ async function init() {
         if (person && person.wcaId) {
           await addPlayer(person.wcaId, currentEventId);
         }
+        // NOTE: viz 用 chip 展示选手，不需要 picker 的名片卡
+        // 隐藏名片、清空并显示输入框，方便继续搜索下一位
+        const container = document.getElementById('personPickerContainer');
+        const selected = container.querySelector('.wca-pp-selected');
+        const pickerInput = container.querySelector('.wca-pp-input');
+        if (selected) selected.style.display = 'none';
+        if (pickerInput) {
+          pickerInput.value = '';
+          pickerInput.style.display = '';
+        }
       }
     }
   );
