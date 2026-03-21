@@ -111,7 +111,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         inputGrid.setMeButtonState(p, true, null, user.avatar || '');
         updateProgressInfo(p, playerProgress[p]);
-        syncProgressVisibility();
         // NOTE: 个人数据就绪后重新 rand-fill — 用个人 KDE 分布采样
         document.getElementById('rand-fill').click();
     }
@@ -318,7 +317,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (wr12) setTargetAvg(state.seedOn + p, wr12[p]);
             }
             updateProgressInfo(p, playerProgress[p]);
-            syncProgressVisibility();
             document.getElementById('rand-fill').click();
             return;
         }
@@ -354,7 +352,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         inputGrid.setMeButtonState(p, true, null, avatarUrl);
         updateProgressInfo(p, playerProgress[p]);
-        syncProgressVisibility();
         document.getElementById('rand-fill').click();
     });
 });
@@ -452,22 +449,6 @@ var SIM_ESTIMATE_N = 100000;
 // NOTE: 选手进步幅度 — 滑杆值 -50~150，代表百分比
 var playerProgress = [0, 0];
 
-// NOTE: 双方都已加载个人数据时隐藏 slider（数据已实时，不需要手动补偿）
-function syncProgressVisibility() {
-    var el = document.getElementById('progress-controls');
-    if (!el) return;
-    var bothLoaded = wrData.getPlayerOverride(0) && wrData.getPlayerOverride(1);
-    el.style.display = bothLoaded ? 'none' : '';
-    // NOTE: 隐藏时重置 slider 到 0% — 避免隐藏状态下非零值影响采样
-    if (bothLoaded) {
-        for (var i = 0; i < 2; i++) {
-            playerProgress[i] = 0;
-            var slider = document.getElementById(i === 0 ? 'progress-slider-a' : 'progress-slider-b');
-            if (slider) slider.value = 0;
-            updateProgressInfo(i, 0);
-        }
-    }
-}
 
 
 
