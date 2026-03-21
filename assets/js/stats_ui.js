@@ -49,6 +49,8 @@ function switchTab(e, id) {
     // NOTE: 同步 tab suffix 到 URL hash（如 type=ranking）
     var suffix = id.split('-').pop();
     updateHashParam('type', suffix);
+    // NOTE: 同步天数 0 toggle 可见性（仅 history tab 时显示）
+    syncDaysFilterVisibility(suffix === 'history');
 }
 
 // ── Tab 切换（全局，遍历所有 metric-panel）────────────────
@@ -69,6 +71,8 @@ function switchGlobalTab(e, suffix) {
     });
     // NOTE: 同步 tab suffix 到 URL hash（如 type=history）
     updateHashParam('type', suffix);
+    // NOTE: 同步天数 0 toggle 可见性（仅 history tab 时显示）
+    syncDaysFilterVisibility(suffix === 'history');
 }
 
 // ── Source 切换（wr_newcomer 三级嵌套）─────────────────────
@@ -372,9 +376,119 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!getHashParam('type') && document.querySelector('.stat-tab')) {
         updateHashParam('type', 'ranking');
     }
+    // NOTE: average_of 专用——天数 0 行隐藏 toggle
+    initHideDays0();
     // NOTE: 防 FOUC 完成——移除 head 中设置的隐藏 class
     document.documentElement.classList.remove('stats-hash-loading');
 });
+
+// ── average_of 专用：隐藏天数为 0 的行 ─────────────────────
+// NOTE: 仅在 /stats/average_of 页面生效
+// 默认隐藏天数 0 行，用户可通过 checkbox 切换，状态通过 URL hash 持久化
+function initHideDays0() {
+    // NOTE: 仅 average_of 页面生效
+    if (!/\/stats\/average_of\b/.test(location.pathname)) return;
+
+    // NOTE: 找到所有 history 面板（ID 以 -history 结尾）
+    var historyPanels = document.querySelectorAll('.stat-panel[id$="-history"]');
+    if (!historyPanels.length) return;
+
+    // NOTE: 扫描每个 history 面板，标记天数 0 的行
+    historyPanels.forEach(function(panel) {
+        panel.querySelectorAll('table').forEach(function(table) {
+            // 找到 Days 列索引
+            var daysIdx = -1;
+            table.querySelectorAll('thead tr th, tr:first-child th').forEach(function(th, i) {
+                // NOTE: 匹配英文 "Days" 或中文 "天数"（i18n 后表头可能已翻译）
+                var txt = th.textContent.trim();
+                if (txt === 'Days' || txt === '天数') daysIdx = i;
+            });
+            if (daysIdx === -1) return;
+
+            // NOTE: 标记天数为 0 的行
+            table.querySelectorAll('tr').forEach(function(tr) {
+                var tds = tr.querySelectorAll('td');
+                if (tds.length > daysIdx && tds[daysIdx].textContent.trim() === '0') {
+                    tr.classList.add('zero-days');
+                }
+            });
+        });
+    });
+
+    // NOTE: 创建 checkbox 控件，插入到第一个 history 面板前
+    // 因为 metric-panel 用 display:contents，toggle 视觉上在所有 history 表的上方
+    var firstPanel = historyPanels[0];
+    var wrap = document.createElement('label');
+    wrap.className = 'days-filter';
+    wrap.setAttribute('data-i18n-en', 'Hide 0-day rows');
+    wrap.setAttribute('data-i18n-zh', '隐藏天数为 0 的行');
+
+    var cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.id = 'hide-zero-days';
+
+    var span = document.createElement('span');
+    // NOTE: 根据当前语言设置标签文本
+    var isZh = (getHashParam('lang') === 'zh') ||
+               (new URLSearchParams(location.search).get('lang') === 'zh');
+    span.textContent = isZh ? '隐藏天数为 0 的行' : 'Hide 0-day rows';
+
+    wrap.appendChild(cb);
+    wrap.appendChild(span);
+
+    // NOTE: 将 toggle 插入到所有 history 面板中（每个 metric-panel 的 history 区域）
+    // 但实际只需一个 DOM 元素，放在 metric-tab-wrap 内、stat-tabs 之后
+    var tabsContainer = document.querySelector('.stat-tabs');
+    if (tabsContainer && tabsContainer.parentNode) {
+        tabsContainer.parentNode.insertBefore(wrap, tabsContainer.nextSibling);
+    } else {
+        firstPanel.parentNode.insertBefore(wrap, firstPanel);
+    }
+
+    // NOTE: 读取 URL hash 中的 hide0 参数，默认隐藏（hide0 不为 "0" 时都隐藏）
+    var hide0Param = getHashParam('hide0');
+    // NOTE: 默认隐藏 — 只有显式设置 hide0=0 才显示
+    var shouldHide = (hide0Param !== '0');
+    cb.checked = shouldHide;
+
+    // NOTE: 通过在 document.body 上切换 class 来控制 CSS 隐藏
+    if (shouldHide) document.body.classList.add('hide-zero-days');
+
+    // NOTE: 初始可见性——检查当前是否在 history tab
+    var currentType = getHashParam('type');
+    syncDaysFilterVisibility(currentType === 'history');
+
+    cb.addEventListener('change', function() {
+        if (cb.checked) {
+            document.body.classList.add('hide-zero-days');
+            // NOTE: 默认就是隐藏，删除 hash 参数（保持 URL 简洁）
+            removeHashParam('hide0');
+        } else {
+            document.body.classList.remove('hide-zero-days');
+            updateHashParam('hide0', '0');
+        }
+    });
+}
+
+// NOTE: 同步天数过滤 toggle 的可见性——仅 history tab 可见时显示
+function syncDaysFilterVisibility(isHistory) {
+    var filter = document.querySelector('.days-filter');
+    if (filter) {
+        filter.style.display = isHistory ? 'inline-flex' : 'none';
+    }
+}
+
+// NOTE: 从 URL hash 中删除指定参数
+function removeHashParam(key) {
+    var hash = window.location.hash.replace(/^#/, '');
+    var params = {};
+    hash.split('&').forEach(function(part) {
+        var kv = part.split('=');
+        if (kv[0] && kv[0] !== key) params[kv[0]] = kv[1] || '';
+    });
+    var newHash = Object.keys(params).map(function(k) { return k + '=' + params[k]; }).join('&');
+    history.replaceState(null, '', newHash ? '#' + newHash : location.pathname + location.search);
+}
 
 // ── URL hash 参数工具函数 ─────────────────────────────────
 
