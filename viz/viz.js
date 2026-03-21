@@ -83,6 +83,10 @@ let syncMode = 'solve';  // NOTE: 'solve' = 按把数比例，'date' = 按日期
 // NOTE: 图层显隐控制（药丸开关）
 const showLayers = { currentVal: true, meanLine: true, ghost: true, trail: true, bimodal: true, followMean: false };
 
+// NOTE: 折线图 hover 状态（像素坐标，null 表示鼠标不在画布上）
+let _lineHoverX = null;
+let _lineHoverY = null;
+
 // NOTE: globalMaxY 需要在所有选手中取最大
 let globalMaxY = 0;
 
@@ -857,7 +861,7 @@ function drawHistogram(bins, sx, sy, pi, useDensity) {
  * NOTE: 折线图专用网格 — X=把数，Y=成绩值
  * 和 drawGrid 不同：X 轴是离散把数，Y 轴是成绩（而非密度）
  */
-function drawLineGrid(lsx, lsy, ml, mt, pw, ph, yMin, yMax) {
+function drawLineGrid(lsx, lsy, ml, mt, pw, ph, yMin, yMax, totalSolves) {
   ctx.save();
 
   // Y 轴网格线（成绩刻度）
@@ -878,7 +882,7 @@ function drawLineGrid(lsx, lsy, ml, mt, pw, ph, yMin, yMax) {
     ctx.stroke();
   }
 
-  // Y 轴标签（成绩值）
+  // Y 轴标签
   ctx.fillStyle = 'rgba(255,255,255,0.4)';
   ctx.font = '12px "JetBrains Mono", monospace';
   ctx.textAlign = 'right';
@@ -897,14 +901,15 @@ function drawLineGrid(lsx, lsy, ml, mt, pw, ph, yMin, yMax) {
   ctx.lineTo(ml + pw, mt + ph + 0.5);
   ctx.stroke();
 
-  // X 轴标签（把数）
+  // X 轴标签（把数）— 使用 totalSolves 而非 windowSize
   ctx.fillStyle = 'rgba(255,255,255,0.4)';
   ctx.font = '12px "JetBrains Mono", monospace';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
-  // NOTE: 目标 5~10 个刻度
-  const xStep = windowSize <= 50 ? 10 : windowSize <= 200 ? 25 : 50;
-  for (let x = xStep; x <= windowSize; x += xStep) {
+  // NOTE: 根据总把数动态调整刻度间距
+  const n = totalSolves || windowSize;
+  const xStep = n <= 50 ? 10 : n <= 200 ? 25 : n <= 500 ? 50 : n <= 1500 ? 100 : 200;
+  for (let x = xStep; x <= n; x += xStep) {
     ctx.fillText(x + '', lsx(x), mt + ph + 10);
   }
 
@@ -928,35 +933,55 @@ function drawLineGrid(lsx, lsy, ml, mt, pw, ph, yMin, yMax) {
 
 /**
  * NOTE: 折线图绘制 — 每位选手一条折线
- * times: 窗口内成绩数组（已转秒），lsx/lsy: 坐标映射
+ * times: 成绩数组（已转秒，可含 null 表示 DNF），lsx/lsy: 坐标映射
+ * totalSolves: X 轴总把数（用于计算填充底部）
  */
-function drawLineChart(times, lsx, lsy, pi) {
+function drawLineChart(times, lsx, lsy, pi, totalSolves) {
   if (!times || times.length < 2) return;
   ctx.save();
 
-  const color = getShiftedHSL(pi, 0.85, mean(times));
-  const fillColor = getShiftedHSL(pi, 0.08, mean(times));
+  // 过滤有效值用于计算均值颜色
+  const validTimes = times.filter(t => t !== null);
+  if (validTimes.length === 0) { ctx.restore(); return; }
+  const m = mean(validTimes);
+  const color = getShiftedHSL(pi, 0.85, m);
+  const fillColor = getShiftedHSL(pi, 0.08, m);
 
-  // 半透明填充区域
+  // 半透明填充区域（跳过 null 段）
   const { top: _mt, bottom: _mb } = MARGIN;
   const _ph = ch - _mt - _mb;
-  const bottomPy = _mt + _ph; // NOTE: 画布底部像素坐标
+  const bottomPy = _mt + _ph;
   ctx.beginPath();
-  ctx.moveTo(lsx(1), lsy(times[0]));
-  for (let i = 1; i < times.length; i++) {
-    ctx.lineTo(lsx(i + 1), lsy(times[i]));
+  let started = false;
+  for (let i = 0; i < times.length; i++) {
+    if (times[i] === null) continue;
+    const px = lsx(i + 1);
+    const py = lsy(times[i]);
+    if (!started) { ctx.moveTo(px, py); started = true; }
+    else ctx.lineTo(px, py);
   }
-  ctx.lineTo(lsx(times.length), bottomPy);
-  ctx.lineTo(lsx(1), bottomPy);
-  ctx.closePath();
-  ctx.fillStyle = fillColor;
-  ctx.fill();
+  // 闭合到底部
+  if (started) {
+    // 找最后一个有效值索引和第一个有效值索引
+    let lastValid = -1, firstValid = -1;
+    for (let i = times.length - 1; i >= 0; i--) { if (times[i] !== null) { lastValid = i; break; } }
+    for (let i = 0; i < times.length; i++) { if (times[i] !== null) { firstValid = i; break; } }
+    ctx.lineTo(lsx(lastValid + 1), bottomPy);
+    ctx.lineTo(lsx(firstValid + 1), bottomPy);
+    ctx.closePath();
+    ctx.fillStyle = fillColor;
+    ctx.fill();
+  }
 
-  // 折线描边
+  // 折线描边（跳过 null 段）
   ctx.beginPath();
-  ctx.moveTo(lsx(1), lsy(times[0]));
-  for (let i = 1; i < times.length; i++) {
-    ctx.lineTo(lsx(i + 1), lsy(times[i]));
+  started = false;
+  for (let i = 0; i < times.length; i++) {
+    if (times[i] === null) continue;
+    const px = lsx(i + 1);
+    const py = lsy(times[i]);
+    if (!started) { ctx.moveTo(px, py); started = true; }
+    else ctx.lineTo(px, py);
   }
 
   if (pi === activePlayerIdx) {
@@ -975,9 +1000,10 @@ function drawLineChart(times, lsx, lsy, pi) {
 // ═══════════════════════════════════════
 
 /**
- * NOTE: 折线图的完整渲染 — 和 KDE/直方图坐标系完全不同
- * X 轴: 窗口内把数 (1 ~ windowSize)
- * Y 轴: 成绩值 (xMin ~ xMax，复用分布图的成绩范围)
+ * NOTE: 折线图的完整渲染 — 展示全量成绩（非滑窗）
+ * X 轴: 全部把数 (1 ~ n)
+ * Y 轴: 成绩值 (xMin ~ xMax)
+ * 进度条位置用竖线高亮标记
  */
 function drawFrameLine(mt, mr, mb, ml, pw, ph) {
   const progress = maxFrame > 0 ? currentFrame / maxFrame : 0;
@@ -986,38 +1012,52 @@ function drawFrameLine(mt, mr, mb, ml, pw, ph) {
   let viewYMin = userXMin !== null ? userXMin : xMin;
   let viewYMax = userXMax !== null ? userXMax : xMax;
 
-  // 坐标映射：X=把数(1~windowSize)，Y=成绩值
-  const lsx = n => ml + ((n - 1) / (windowSize - 1)) * pw;
+  // 全量数据：取主选手的总把数确定 X 轴范围
+  const ap = players[activePlayerIdx];
+  const totalSolves = ap ? ap.channelData.length : 100;
+
+  // 坐标映射：X=全部把数(1~totalSolves)，Y=成绩值
+  const lsx = n => ml + ((n - 1) / Math.max(1, totalSolves - 1)) * pw;
   const lsy = v => mt + ph - ((v - viewYMin) / (viewYMax - viewYMin)) * ph;
 
-  // 1. 网格
-  drawLineGrid(lsx, lsy, ml, mt, pw, ph, viewYMin, viewYMax);
+  // 1. 网格（传入总把数用于 X 轴刻度）
+  drawLineGrid(lsx, lsy, ml, mt, pw, ph, viewYMin, viewYMax, totalSolves);
 
-  // 2. 绘制每位选手的折线
+  // 2. 绘制每位选手的全量折线
+  const allPlayerTimes = [];  // NOTE: 保存各选手全量数据用于 hover
   const meanPositions = [];
   for (let pi = 0; pi < players.length; pi++) {
     const p = players[pi];
-    const pFrame = computePlayerFrame(pi, progress);
-    const times = getWindowTimes(pi, pFrame);
-    if (times.length < 2) continue;
+    // NOTE: 提取全量有效成绩
+    const fullTimes = [];
+    for (let i = 0; i < p.channelData.length; i++) {
+      const v = rawToVal(p.channelData[i][0]);
+      if (v > 0) fullTimes.push(v);
+      else fullTimes.push(null);  // DNF 等无效值
+    }
+    allPlayerTimes.push(fullTimes);
 
-    const currentMean = mean(times);
-    meanPositions.push({ pi, mean: currentMean, name: p.nameZh || p.name });
+    // 绘制折线
+    drawLineChart(fullTimes, lsx, lsy, pi, totalSolves);
 
-    drawLineChart(times, lsx, lsy, pi);
+    // 均值水平线（用全量数据的均值）
+    const validTimes = fullTimes.filter(t => t !== null);
+    if (validTimes.length > 0) {
+      const currentMean = mean(validTimes);
+      meanPositions.push({ pi, mean: currentMean, name: p.nameZh || p.name });
 
-    // 均值水平线
-    if (showLayers.meanLine) {
-      const meanPy = lsy(currentMean);
-      ctx.save();
-      ctx.strokeStyle = getShiftedHSL(pi, 0.4, currentMean);
-      ctx.lineWidth = 1;
-      ctx.setLineDash([6, 4]);
-      ctx.beginPath();
-      ctx.moveTo(ml, meanPy);
-      ctx.lineTo(ml + pw, meanPy);
-      ctx.stroke();
-      ctx.restore();
+      if (showLayers.meanLine) {
+        const meanPy = lsy(currentMean);
+        ctx.save();
+        ctx.strokeStyle = getShiftedHSL(pi, 0.4, currentMean);
+        ctx.lineWidth = 1;
+        ctx.setLineDash([6, 4]);
+        ctx.beginPath();
+        ctx.moveTo(ml, meanPy);
+        ctx.lineTo(ml + pw, meanPy);
+        ctx.stroke();
+        ctx.restore();
+      }
     }
   }
 
@@ -1034,8 +1074,54 @@ function drawFrameLine(mt, mr, mb, ml, pw, ph) {
   }
   ctx.restore();
 
-  // 4. 更新 DOM 统计面板
-  const ap = players[activePlayerIdx];
+  // 5. hover tooltip（鼠标在画布上时显示 把数 + 成绩值）
+  if (_lineHoverX !== null && allPlayerTimes.length > 0) {
+    // 像素 → 把数索引
+    const solveIdx = Math.round(1 + (_lineHoverX - ml) / pw * (totalSolves - 1)) - 1;
+    if (solveIdx >= 0 && solveIdx < totalSolves) {
+      const tooltipX = lsx(solveIdx + 1);
+      // 十字线（竖线）
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(tooltipX, mt);
+      ctx.lineTo(tooltipX, mt + ph);
+      ctx.stroke();
+      ctx.restore();
+
+      // 各选手在该把数的成绩
+      ctx.save();
+      ctx.font = '600 11px "JetBrains Mono", monospace';
+      ctx.textBaseline = 'bottom';
+
+      let tooltipY = _lineHoverY - 8;
+      for (let pi = 0; pi < allPlayerTimes.length; pi++) {
+        const ft = allPlayerTimes[pi];
+        if (solveIdx < ft.length && ft[solveIdx] !== null) {
+          const val = ft[solveIdx];
+          const dotY = lsy(val);
+          // 数据点圆圈
+          ctx.fillStyle = playerHSL(pi, 0.9);
+          ctx.beginPath();
+          ctx.arc(tooltipX, dotY, 3, 0, Math.PI * 2);
+          ctx.fill();
+
+          // 标签
+          const namePrefix = players.length > 1 ? (players[pi].nameZh || players[pi].name).slice(0, 3) + ' ' : '';
+          const label = `#${solveIdx + 1}  ${namePrefix}${fmtVal(val)}`;
+          ctx.fillStyle = playerHSL(pi, 0.95);
+          ctx.textAlign = tooltipX > ml + pw / 2 ? 'right' : 'left';
+          const labelX = tooltipX > ml + pw / 2 ? tooltipX - 8 : tooltipX + 8;
+          ctx.fillText(label, labelX, tooltipY);
+          tooltipY -= 16;
+        }
+      }
+      ctx.restore();
+    }
+  }
+
+  // 6. 更新 DOM 统计面板（仍用滑窗数据）
   if (ap) {
     const apFrame = computePlayerFrame(activePlayerIdx, progress);
     const apTimes = getWindowTimes(activePlayerIdx, apFrame);
@@ -1046,10 +1132,10 @@ function drawFrameLine(mt, mr, mb, ml, pw, ph) {
     }
   }
 
-  // 5. 进度条
+  // 7. 进度条
   updateProgressUI();
 
-  // 6. 脊线图联动
+  // 8. 脊线图联动
   if (typeof highlightRidgeRow === 'function' && ap) {
     const apFrame = computePlayerFrame(activePlayerIdx, progress);
     const apEndIdx = Math.min(apFrame + windowSize - 1, ap.channelData.length - 1);
@@ -1724,6 +1810,28 @@ function setupControls() {
     }
   }, { passive: false });
   canvas.addEventListener('touchend', () => { pinchState = null; touchDrag = null; });
+
+  // NOTE: 折线图 hover — 追踪鼠标位置触发 tooltip 刷新
+  canvas.addEventListener('mousemove', e => {
+    if (viewMode !== 'line') {
+      if (_lineHoverX !== null) { _lineHoverX = null; _lineHoverY = null; }
+      return;
+    }
+    // NOTE: 拖拽中不显示 hover（避免干扰）
+    if (dragState) return;
+    const rect = canvas.getBoundingClientRect();
+    // NOTE: 不乘 DPR ratio — 绘制坐标系经 ctx.scale(dpr) 后用 CSS 像素
+    _lineHoverX = e.clientX - rect.left;
+    _lineHoverY = e.clientY - rect.top;
+    drawFrame();
+  });
+  canvas.addEventListener('mouseleave', () => {
+    if (_lineHoverX !== null) {
+      _lineHoverX = null;
+      _lineHoverY = null;
+      if (viewMode === 'line') drawFrame();
+    }
+  });
 
   // 响应窗口大小变化
   let resizeTimer;
