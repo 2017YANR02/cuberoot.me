@@ -469,10 +469,7 @@ function syncProgressVisibility() {
     }
 }
 
-// NOTE: 获取 μ_kde（KDE 分布期望值）— 优先 wr.json 的 ao100，fallback 到 times 均值
-function getMuKde() {
-    return wrData.getAo100(state.event) || wrData.getKdeMean(state.event);
-}
+
 
 // NOTE: 计算进度缩放因子
 // 正值（进步）：α = 1 − (progress/100) × (1 − T/μ_kde) — 朝 Target 锚定
@@ -486,23 +483,22 @@ function getScaleFactor(p) {
         return 1 - progress; // -0.5 → 1.5, -1.0 → 2.0
     }
 
-    // NOTE: 正值方向保留 Target 锚定公式
+    // NOTE: 正值方向保留 Target 锚定公式 — μ 统一用 Ao100 trimmed mean
     var target = getTargetAvg(state.seedOn + p);
-    var muArr = getMuKde();
-    if (!muArr || !target || target <= 0) return 1;
-    var muKde = muArr[p]; // centiseconds
-    if (muKde <= 0) return 1;
-    return 1 - progress * (1 - target / muKde);
+    var ao100 = wrData.getAo100(state.event);
+    if (!ao100 || !target || target <= 0) return 1;
+    var mu = ao100[p]; // centiseconds
+    if (mu <= 0) return 1;
+    return 1 - progress * (1 - target / mu);
 }
 
 // NOTE: 更新滑杆旁的 info 标签（百分比 + 预估 avg）
+// NOTE: μ 统一用 Ao100 trimmed mean — 与 Target（Ao5）口径对齐，消除 0%→1% 跳变
 function updateProgressInfo(p, val) {
     playerProgress[p] = parseInt(val);
     var pct = playerProgress[p];
     var infoEl = document.getElementById(p === 0 ? 'progress-info-a' : 'progress-info-b');
-    var muArr = getMuKde();
-    // NOTE: 显示用 Ao100 trimmed mean（WCA 官方定义），计算缩放仍用 KDE 均值
-    var ao100Arr = getAo100(state.seedOn);
+    var ao100Arr = wrData.getAo100(state.event);
     if (pct === 0) {
         // NOTE: 0% 时显示当前基线（Ao100 trimmed mean）
         if (ao100Arr) {
@@ -514,8 +510,8 @@ function updateProgressInfo(p, val) {
         return;
     }
     var alpha = getScaleFactor(p);
-    if (muArr) {
-        var estAvg = muArr[p] * alpha / 100;
+    if (ao100Arr) {
+        var estAvg = ao100Arr[p] * alpha / 100;
         if (pct > 0) {
             // NOTE: 正值 = 进步 — ↓ 箭头表示成绩降低（时间变短）
             infoEl.textContent = '+' + pct + '% (↓' + estAvg.toFixed(2) + 's)';
