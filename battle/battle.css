@@ -472,6 +472,11 @@ body.solo .scramble-img {
     color: #999;
 }
 
+/* NOTE: Player 2（左侧）的比分+罚时旋转 180°，让对面的人能正着读 */
+.middle-bar > .score-section:first-child {
+    transform: rotate(180deg);
+}
+
 .score-value {
     font-family: 'Segment7Standard', 'JetBrains Mono', monospace;
     font-weight: 700;
