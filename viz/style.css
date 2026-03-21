@@ -225,6 +225,16 @@ h1 {
   border: 1px solid var(--border-subtle);
   border-radius: 12px;
   backdrop-filter: blur(12px);
+  flex-wrap: wrap;
+}
+/* NOTE: 手机端进度条独占一整行 */
+@media (max-width: 600px) {
+  .controls { gap: 10px 14px; }
+  .controls .progress-wrapper {
+    order: -1;
+    width: 100%;
+    flex-shrink: 1;
+  }
 }
 
 .ctrl-btn {
