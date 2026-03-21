@@ -43,10 +43,30 @@ let viewMode = 'kde';  // NOTE: 'kde' | 'histogram' | 'both'
 
 // NOTE: FMC 成绩是步数（整数），非厘秒
 function isFMC() { return currentEventId === '333fm'; }
-// NOTE: 原始值 → 显示值（FMC 直接用，其他项目 /100）
-function rawToVal(v) { return isFMC() ? v : v / 100; }
-// NOTE: 格式化显示值（FMC 无小数无单位，其他 2位小数+s）
-function fmtVal(v) { return isFMC() ? Math.round(v) + ' moves' : v.toFixed(2) + 's'; }
+function isMBLD() { return currentEventId === '333mbf'; }
+// NOTE: MBLD 得分越高越好（和时间/步数相反）
+function isHigherBetter() { return isMBLD(); }
+
+// NOTE: 原始值 → 显示值
+function rawToVal(v) {
+  if (isFMC()) return v;
+  if (isMBLD()) {
+    // 编码: 0DDTTTTTMM → score = 99 - DD
+    const s = String(v).padStart(10, '0');
+    const dd = parseInt(s.slice(1, 3), 10);
+    const mm = parseInt(s.slice(8, 10), 10);
+    const diff = 99 - dd;
+    const solved = diff + mm;
+    return solved - mm;  // = diff = 99 - DD
+  }
+  return v / 100;
+}
+// NOTE: 格式化显示值
+function fmtVal(v) {
+  if (isFMC()) return Math.round(v) + ' moves';
+  if (isMBLD()) return Math.round(v) + ' pts';
+  return v.toFixed(2) + 's';
+}
 
 // NOTE: 全局日期时间线 — 所有选手比赛日期的并集，排序后作为帧序列
 // currentFrame 映射到 dateTimeline[currentFrame]
@@ -189,7 +209,9 @@ function getShiftedHSL(pi, alpha, currentMean) {
   }
   const c = PLAYER_COLORS[pi % PLAYER_COLORS.length];
   // delta 占初始均值的比例，clamp 到 [-0.3, 0.3]
-  const ratio = Math.max(-0.3, Math.min(0.3, (currentMean - p.ghostMean) / p.ghostMean));
+  let ratio = Math.max(-0.3, Math.min(0.3, (currentMean - p.ghostMean) / p.ghostMean));
+  // NOTE: MBLD 得分越高越好，ratio 反转使正方向=绿色
+  if (isHigherBetter()) ratio = -ratio;
   // ratio < 0 → 改善 → hue 往绿(130)偏；ratio > 0 → 退步 → hue 往红(0)偏
   const t = ratio / 0.3;  // [-1, 1]
   let targetHue;
@@ -1032,7 +1054,7 @@ function drawGrid(sx, sy, ml, mt, pw, ph) {
 
   for (let x = gridStart; x <= xMax; x += niceStep) {
     // NOTE: 大数值用整数，小数值保留小数
-    const label = isFMC()
+    const label = isFMC() || isMBLD()
       ? Math.round(x) + ''
       : (niceStep >= 1 ? Math.round(x) + 's' : x.toFixed(1) + 's');
     ctx.fillText(label, sx(x), mt + ph + 10);
@@ -1059,7 +1081,7 @@ function drawGrid(sx, sy, ml, mt, pw, ph) {
   ctx.fillStyle = 'rgba(255,255,255,0.2)';
   ctx.font = '11px Inter, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText(isFMC() ? 'Moves' : 'Solve time', ml + pw / 2, mt + ph + 35);
+  ctx.fillText(isFMC() ? 'Moves' : isMBLD() ? 'Score (pts)' : 'Solve time', ml + pw / 2, mt + ph + 35);
 
   ctx.restore();
 }
@@ -1134,7 +1156,7 @@ function updateStats(times, currentMean, currentDate, apFrame) {
   const compName = ap.competitions[compIdx] || '';
 
   document.getElementById('statMean').textContent = fmtVal(currentMean);
-  document.getElementById('statStd').textContent = isFMC()
+  document.getElementById('statStd').textContent = isFMC() || isMBLD()
     ? 'σ ' + s.toFixed(1)
     : 'σ ' + s.toFixed(2) + 's';
 
@@ -1151,15 +1173,18 @@ function updateStats(times, currentMean, currentDate, apFrame) {
   document.getElementById('statComp').textContent = formatCompName(compName);
 
   const deltaEl = document.getElementById('statDelta');
-  deltaEl.textContent = isFMC()
-    ? Math.round(Math.abs(delta)) + ' moves'
+  deltaEl.textContent = isFMC() || isMBLD()
+    ? Math.round(Math.abs(delta)) + (isMBLD() ? ' pts' : ' moves')
     : Math.abs(delta).toFixed(2) + 's';
-  deltaEl.classList.toggle('improving', delta < 0);
-  deltaEl.classList.toggle('regressing', delta > 0);
-  // NOTE: 成绩变小 = 进步，变大 = 退步
+  // NOTE: MBLD 得分越高越好，其他项目越低越好
+  const improved = isHigherBetter() ? delta > 0 : delta < 0;
+  const regressed = isHigherBetter() ? delta < 0 : delta > 0;
+  deltaEl.classList.toggle('improving', improved);
+  deltaEl.classList.toggle('regressing', regressed);
+  // NOTE: 成绩变小 = 进步，变大 = 退步（MBLD 反转）
   const deltaLabel = deltaEl.closest('.stat-item')?.querySelector('.stat-label');
   if (deltaLabel) {
-    deltaLabel.textContent = delta <= 0 ? '进步' : '退步';
+    deltaLabel.textContent = improved ? '进步' : (regressed ? '退步' : '进步');
     deltaLabel.title = '与 30 帧前的窗口均值相比';
   }
 }
