@@ -23,7 +23,7 @@
     var groups = CsvColumns.all();
 
     // NOTE: 表头——固定列 + 注册列
-    var headers = ['index', 'date', 'competition', 'round', 'attempt', 'single_s', 'single_pb'];
+    var headers = ['index', 'date', 'competition', 'round', 'attempt', 'single_s', 'single_pb', 'avg', 'avg_pb'];
     for (var g = 0; g < groups.length; g++) {
       var configs = groups[g].configs;
       for (var c = 0; c < configs.length; c++) {
@@ -35,6 +35,7 @@
     }
 
     var rows = [headers.join(',')];
+    var bestAvg = Infinity;  // NOTE: avg PB 追踪
 
     for (var i = 0; i < entries.length; i++) {
       var e = entries[i];
@@ -49,6 +50,21 @@
       row.push(formatCs(e.cs));
       // NOTE: 单次 PB 从第一个注册组（RollingStats）的 pbFlags.singles 取
       row.push(params.stats && params.stats.pbFlags.singles[i] ? 'PB' : '');
+
+      // NOTE: avg 列 — WCA 官方 average（轮次第一把填值，其余空）
+      var avgCs = e.average;
+      row.push(avgCs !== null && avgCs !== undefined ? formatCs(avgCs) : '');
+      // avg PB 判定（需要追踪全局最佳 avg）
+      if (avgCs !== null && avgCs !== undefined && avgCs > 0) {
+        if (avgCs < bestAvg) {
+          bestAvg = avgCs;
+          row.push('PB');
+        } else {
+          row.push('');
+        }
+      } else {
+        row.push('');
+      }
 
       // 注册列
       for (var g2 = 0; g2 < groups.length; g2++) {
