@@ -1,0 +1,12 @@
+{
+  "name": "cuberoot-toolkit",
+  "private": true,
+  "scripts": {
+    "dev:client": "pnpm --filter @cuberoot/client dev",
+    "dev:server": "pnpm --filter @cuberoot/server dev",
+    "build:client": "pnpm --filter @cuberoot/client build",
+    "build:server": "pnpm --filter @cuberoot/server build",
+    "build": "pnpm build:client && pnpm build:server",
+    "typecheck": "pnpm -r run typecheck"
+  }
+}
