@@ -27,12 +27,12 @@
     var groups = CsvColumns.all();
 
     // NOTE: 表头——固定列 + 注册列
-    var headers = ['序号', '日期', '比赛', '轮次', '把数', '单次(秒)', '是否单次PB'];
+    var headers = ['Index', 'Date', 'Competition', 'Round', 'Attempt', 'Single(s)', 'SinglePB'];
     for (var g = 0; g < groups.length; g++) {
       var configs = groups[g].configs;
       for (var c = 0; c < configs.length; c++) {
         headers.push(configs[c].label);
-        headers.push('是否' + configs[c].label + 'PB');
+        headers.push(configs[c].label + 'PB');
       }
     }
 
@@ -73,7 +73,7 @@
 
     var a = document.createElement('a');
     a.href = url;
-    a.download = params.wcaId + '_' + params.eventId + '_stats.csv';
+    a.download = params.wcaId + '_' + params.eventId + '_distribution.csv';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
