@@ -1,4 +1,4 @@
-<h2 data-i18n-en="Non-PR WR" data-i18n-zh="非 PR 世界纪录">Non-PR WR</h2>
+<h2 data-i18n-en="Non-PR WR" data-i18n-zh="非 PR">Non-PR WR</h2>
 
 <p><em data-i18n-en="Best results that are NOT a personal record — the competitor already had a faster result before." data-i18n-zh="不是个人纪录的最佳成绩——选手之前已经有过更快的成绩。">Best results that are NOT a personal record — the competitor already had a faster result before.</em></p>
 
@@ -2244,3 +2244,4 @@
 </div>
 </div>
 </div><!-- metric-tab-wrap -->
+
