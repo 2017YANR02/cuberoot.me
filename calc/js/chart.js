@@ -410,7 +410,13 @@ function drawGhostBars() {
         if (!state.playerEnabled[p]) continue;
         var tavg = getTargetAvg(state.seedOn + p);
         var ghost = CalcEngine.getGhostBar(state.times[state.seedOn + p], tavg);
-        if (!ghost) continue;
+        if (!ghost) {
+            // NOTE: ghost 为 null 时也需清除旧 skull — 否则 clearAll 后骷髅残留
+            var oldSkull = topTextGroup.querySelector('.chart-skull[data-player="' + p + '"]');
+            if (oldSkull) oldSkull.remove();
+            prevGhostType[p] = null;
+            continue;
+        }
 
         // NOTE: 检测类型是否变化，决定是否加渐入动画
         var typeChanged = (prevGhostType[p] !== null && prevGhostType[p] !== ghost.type);

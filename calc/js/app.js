@@ -208,10 +208,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ── 一键清空（由 numpad ⌫ 长按触发） ──
     document.addEventListener('clearAll', () => {
+        // NOTE: 先断开 activeCell — 否则 navigateTo(0,0) 触发旧格子的 saveCell，
+        // 把 DOM 中残留的旧值回写到刚清空的 state（refresh 跳过 activeCell 导致 DOM 未清）
+        inputGrid.deactivate();
         resetAll();
         clearTargetAvgs(); // NOTE: 清空 calc_table 的 targetAvgs
         initTargetDefaults(); // NOTE: 清空后重填 WR 默认值
         history.replaceState(null, '', window.location.pathname);
+        // NOTE: 再触发一次 notify — resetAll 内部的 notify 在 clearTargetAvgs 之前执行，
+        // 导致 emoji 用旧 Target 值计算（💀 残留）。此处确保最终状态同步到 UI
+        notify();
         // NOTE: 清空后自动激活第一个输入格
         inputGrid.navigateTo(0, 0);
     });
