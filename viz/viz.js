@@ -54,7 +54,7 @@ let currentEventId = '333';
 
 // NOTE: 7 种数据模式
 let dataMode = 'singles';
-let viewMode = 'kde';  // NOTE: 'kde' | 'histogram' | 'line' | 'cumHist'
+let viewMode = 'histogram';  // NOTE: 'line' | 'histogram' | 'cumHist'
 
 // NOTE: FMC 成绩是步数（整数），非厘秒
 function isFMC() { return currentEventId === '333fm'; }
@@ -97,7 +97,7 @@ let syncMode = 'solve';  // NOTE: 'solve' = 按把数比例，'date' = 按日期
 
 // NOTE: 图层显隐控制（药丸开关）
 // NOTE: 默认隐藏当前值和均值竖线，减少视觉噪音
-const showLayers = { currentVal: false, meanLine: false, ghost: true, trail: true, bimodal: true, followMean: false };
+const showLayers = { currentVal: false, meanLine: false, ghost: true, trail: true, bimodal: true, followMean: false, histBars: true };
 
 // NOTE: 折线图 hover 状态（像素坐标，null 表示鼠标不在画布上）
 let _lineHoverX = null;
@@ -1463,7 +1463,8 @@ function drawFrameCumHist(mt, mr, mb, ml, pw, ph) {
     const cumMean = mean(cumTimes);
     meanPositions.push({ pi, mean: cumMean, currentVal: null, name: players[pi].nameZh || players[pi].name });
 
-    // 直方图柱子（用 density）
+    // 直方图柱子（受"直方柱"开关控制）
+    if (showLayers.histBars) {
     ctx.save();
     const midVal = (bins[0].xStart + bins[bins.length - 1].xEnd) / 2;
     ctx.fillStyle = getShiftedHSL(pi, 0.25, midVal);
@@ -1492,6 +1493,7 @@ function drawFrameCumHist(mt, mr, mb, ml, pw, ph) {
       }
     }
     ctx.restore();
+    }
 
     // KDE 叠加
     const kde = computeKDE(cumTimes);
@@ -1615,8 +1617,8 @@ function drawFrame() {
     const p = players[pi];
     const pFrame = computePlayerFrame(pi, progress);
 
-    // NOTE: 幽灵残影仅在 KDE 相关视图中显示，纯直方图无对应 ghost 柱子会显得突兀
-    if (showLayers.ghost && p.ghostKDE && currentFrame > 0 && viewMode !== 'histogram') {
+    // 幽灵残影（可关闭）
+    if (showLayers.ghost && p.ghostKDE && currentFrame > 0) {
       drawCurve(p.ghostKDE, sx, sy, {
         fill: playerHSL(pi, 0.03),
         stroke: playerHSL(pi, 0.12),
@@ -1664,12 +1666,12 @@ function drawFrame() {
     }
 
     // NOTE: 根据 viewMode 绘制直方图和/或 KDE
-    if (viewMode === 'histogram') {
+    if (viewMode === 'histogram' && showLayers.histBars) {
       const bins = computeHistogram(times, viewXMax - viewXMin);
       // 叠加模式用 density（和 KDE 共享 Y 轴），纯直方图也用 density
       drawHistogram(bins, sx, sy, pi, true);
     }
-    if (viewMode === 'kde' || viewMode === 'histogram') {
+    if (viewMode === 'histogram') {
       drawCurve(kde, sx, sy, {
         fill: getShiftedHSL(pi, 0.15, currentMean),
         stroke: getShiftedHSL(pi, 0.85, currentMean),

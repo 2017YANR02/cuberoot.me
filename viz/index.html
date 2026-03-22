@@ -88,10 +88,9 @@
         </div>
         <!-- 视图模式切换 -->
         <div class="view-mode-group">
-          <button class="view-btn active" data-view="kde">KDE</button>
-          <button class="view-btn" data-view="histogram">分布图</button>
           <button class="view-btn" data-view="line">折线</button>
-          <button class="view-btn" data-view="cumHist">累积图</button>
+          <button class="view-btn active" data-view="histogram">滑窗</button>
+          <button class="view-btn" data-view="cumHist">累积</button>
           <button class="view-btn" id="resetRangeBtn" title="重置缩放范围 (双击画布也可重置)">⊡</button>
         </div>
         <!-- 图例说明按钮 -->
@@ -127,6 +126,12 @@
           <label class="legend-toggle">
             <span class="legend-follow">⊙</span> 均值居中
             <input type="checkbox" data-layer="followMean">
+            <span class="toggle-pill"></span>
+          </label>
+          <!-- NOTE: 滑窗模式下控制是否显示直方柱 -->
+          <label class="legend-toggle">
+            <span style="color:#5cf">▮</span> 直方柱
+            <input type="checkbox" checked data-layer="histBars">
             <span class="toggle-pill"></span>
           </label>
         </div>
