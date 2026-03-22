@@ -1411,118 +1411,102 @@ function drawFrameLine(mt, mr, mb, ml, pw, ph) {
 }
 
 /**
- * NOTE: 累积直方图模式
+ * NOTE: 累积直方图模式（支持多选手）
  * 从第 1 把到当前进度位置的全部成绩一起累积到直方图中。
  * 播放时柱子不断增高，最终显示全部成绩的完整分布。
  */
 function drawFrameCumHist(mt, mr, mb, ml, pw, ph) {
-  const ap = players[activePlayerIdx];
-  if (!ap) return;
+  if (players.length === 0) return;
 
   const progress = maxFrame > 0 ? currentFrame / maxFrame : 1;
-  // NOTE: 累积到哪一把 — 基于 progress 线性映射
-  const totalSolves = ap.channelData.length;
-  const cumEnd = Math.min(
-    Math.round(progress * totalSolves),
-    totalSolves
-  );
-  // 至少显示 1 把
-  const endIdx = Math.max(cumEnd, 1);
-
-  // 收集 [0, endIdx) 范围的全部有效成绩
-  const cumTimes = [];
-  for (let i = 0; i < endIdx; i++) {
-    const v = rawToVal(ap.channelData[i][0]);
-    if (v > 0) cumTimes.push(v);
-  }
-  if (cumTimes.length < 1) {
-    updateProgressUI();
-    return;
-  }
-
   // 可见 X 范围（支持用户缩放）
   let viewXMin = userXMin !== null ? userXMin : xMin;
   let viewXMax = userXMax !== null ? userXMax : xMax;
+  const viewRange = viewXMax - viewXMin;
 
-  // 计算直方图 bins
-  const bins = computeHistogram(cumTimes, viewXMax - viewXMin);
-  if (bins.length === 0) { updateProgressUI(); return; }
+  // NOTE: 预计算所有选手的累积数据，确定全局 Y 轴最大值
+  const allCumData = [];
+  let globalMaxDensity = 0;
+  for (let pi = 0; pi < players.length; pi++) {
+    const p = players[pi];
+    const totalSolves = p.channelData.length;
+    const endIdx = Math.max(Math.min(Math.round(progress * totalSolves), totalSolves), 1);
 
-  // Y 轴 — 用频次（count），不用 density
-  let maxCount = 0;
-  for (const b of bins) {
-    if (b.count > maxCount) maxCount = b.count;
+    const cumTimes = [];
+    for (let i = 0; i < endIdx; i++) {
+      const v = rawToVal(p.channelData[i][0]);
+      if (v > 0) cumTimes.push(v);
+    }
+    if (cumTimes.length < 2) { allCumData.push(null); continue; }
+
+    const bins = computeHistogram(cumTimes, viewRange);
+    for (const b of bins) {
+      if (b.density > globalMaxDensity) globalMaxDensity = b.density;
+    }
+    allCumData.push({ cumTimes, bins, endIdx });
   }
-  maxCount = Math.max(maxCount, 1) * 1.15;
+  globalMaxDensity = Math.max(globalMaxDensity, 0.01) * 1.15;
 
-  // 坐标映射
+  // 坐标映射（Y 轴用 density，多选手共享比例）
   const sx = x => ml + ((x - viewXMin) / (viewXMax - viewXMin)) * pw;
-  const sy = y => mt + ph - (y / maxCount) * ph;
+  const sy = y => mt + ph - (y / globalMaxDensity) * ph;
 
   // 1. 网格
   drawGrid(sx, sy, ml, mt, pw, ph, viewXMin, viewXMax);
 
-  // 2. 绘制柱子（用 count 而非 density）
-  ctx.save();
-  const midVal = (bins[0].xStart + bins[bins.length - 1].xEnd) / 2;
-  const fillColor = getShiftedHSL(activePlayerIdx, 0.25, midVal);
-  const strokeColor = getShiftedHSL(activePlayerIdx, 0.5, midVal);
-  ctx.fillStyle = fillColor;
-  ctx.strokeStyle = strokeColor;
-  ctx.lineWidth = 1;
+  // 2. 循环所有选手：绘制直方图 + KDE
+  const meanPositions = [];
+  for (let pi = 0; pi < players.length; pi++) {
+    const d = allCumData[pi];
+    if (!d) continue;
+    const { cumTimes, bins, endIdx } = d;
+    const cumMean = mean(cumTimes);
+    meanPositions.push({ pi, mean: cumMean, currentVal: null, name: players[pi].nameZh || players[pi].name });
 
-  const baseline = sy(0);
-  for (const b of bins) {
-    if (b.count === 0) continue;
-    const x1 = sx(b.xStart);
-    const x2 = sx(b.xEnd);
-    const yTop = sy(b.count);
-    // 跳过完全不可见的柱子
-    if (x2 < ml || x1 > ml + pw) continue;
-    ctx.fillRect(x1, yTop, x2 - x1, baseline - yTop);
-    ctx.strokeRect(x1, yTop, x2 - x1, baseline - yTop);
+    // 直方图柱子（用 density）
+    ctx.save();
+    const midVal = (bins[0].xStart + bins[bins.length - 1].xEnd) / 2;
+    ctx.fillStyle = getShiftedHSL(pi, 0.25, midVal);
+    ctx.strokeStyle = getShiftedHSL(pi, 0.5, midVal);
+    ctx.lineWidth = 1;
+    const baseline = sy(0);
+    for (const b of bins) {
+      if (b.count === 0) continue;
+      const x1 = sx(b.xStart);
+      const x2 = sx(b.xEnd);
+      const yTop = sy(b.density);
+      if (x2 < ml || x1 > ml + pw) continue;
+      ctx.fillRect(x1, yTop, x2 - x1, baseline - yTop);
+      ctx.strokeRect(x1, yTop, x2 - x1, baseline - yTop);
 
-    // 柱子顶部显示计数
-    const barW = x2 - x1;
-    if (barW > 12 && b.count > 0) {
-      ctx.save();
-      ctx.fillStyle = 'rgba(255,255,255,0.85)';
-      ctx.font = '600 11px "JetBrains Mono", monospace';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'bottom';
-      ctx.fillText(b.count, (x1 + x2) / 2, yTop - 3);
-      ctx.restore();
+      // 柱子顶部显示计数（仅单选手或主选手时显示，避免多选手文字重叠）
+      const barW = x2 - x1;
+      if (barW > 12 && b.count > 0 && (players.length === 1 || pi === activePlayerIdx)) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.font = '600 11px "JetBrains Mono", monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(b.count, (x1 + x2) / 2, yTop - 3);
+        ctx.restore();
+      }
     }
-  }
-  ctx.restore();
+    ctx.restore();
 
-  // 2.5 叠加 KDE 曲线（density 缩放到频次空间）
-  const cumMean = mean(cumTimes);
-  const kde = computeKDE(cumTimes);
-  if (kde && kde.length > 0) {
-    // NOTE: 将 KDE density 转换为 count 空间：count = density × n × binWidth
-    const binWidth = bins[0].xEnd - bins[0].xStart;
-    const n = cumTimes.length;
-    const scaleFactor = n * binWidth;
-    // 用单独的 syKDE 映射，把 density 缩放后映射到同一 Y 轴
-    const syKDE = y => mt + ph - ((y * scaleFactor) / maxCount) * ph;
-    drawCurve(kde, sx, syKDE, {
-      fill: getShiftedHSL(activePlayerIdx, 0.08, cumMean),
-      stroke: getShiftedHSL(activePlayerIdx, 0.7, cumMean),
-      lineWidth: 2
-    });
-  }
-  // 3. 均值线
-  drawMeanLine(sx, sy, mt, ph, cumMean,
-    getShiftedHSL(activePlayerIdx, 0.5, cumMean), false);
+    // KDE 叠加
+    const kde = computeKDE(cumTimes);
+    if (kde && kde.length > 0) {
+      drawCurve(kde, sx, sy, {
+        fill: getShiftedHSL(pi, 0.08, cumMean),
+        stroke: getShiftedHSL(pi, 0.7, cumMean),
+        lineWidth: pi === activePlayerIdx ? 2.5 : 1.8
+      });
+    }
 
-  // 4. 均值标签
-  drawMeanLabelsOnCanvas(sx, mt, [{
-    pi: activePlayerIdx,
-    mean: cumMean,
-    currentVal: null,
-    name: ap.nameZh || ap.name
-  }]);
+  }
+
+  // 3. 均值标签
+  drawMeanLabelsOnCanvas(sx, mt, meanPositions);
 
   // 5. Y 轴标签改为 "Count"
   ctx.save();
@@ -1534,13 +1518,17 @@ function drawFrameCumHist(mt, mr, mb, ml, pw, ph) {
   ctx.fillText('Count', 0, 0);
   ctx.restore();
 
-  // 6. 统计面板 — 显示累积统计
-  const lastCompIdx = ap.channelData[endIdx - 1][1];
-  const lastDate = ap.compDates[lastCompIdx];
-  updateStats(cumTimes, cumMean, lastDate, 0);
-  // NOTE: 覆盖把数显示为 "1~N"
-  const syncEl = document.getElementById('statSync');
-  if (syncEl) syncEl.textContent = `#1-#${endIdx}`;
+  // 6. 统计面板 — 显示主选手累积统计
+  const apData = allCumData[activePlayerIdx];
+  if (apData) {
+    const ap = players[activePlayerIdx];
+    const lastCompIdx = ap.channelData[apData.endIdx - 1][1];
+    const lastDate = ap.compDates[lastCompIdx];
+    updateStats(apData.cumTimes, mean(apData.cumTimes), lastDate, 0);
+    // NOTE: 覆盖把数显示为 "1~N"
+    const syncEl = document.getElementById('statSync');
+    if (syncEl) syncEl.textContent = `#1-#${apData.endIdx}`;
+  }
 
   // 7. 隐藏旧 DOM 均值标签
   const oldLabel = document.getElementById('meanLabel');
@@ -1627,8 +1615,8 @@ function drawFrame() {
     const p = players[pi];
     const pFrame = computePlayerFrame(pi, progress);
 
-    // 幽灵残影（可关闭）
-    if (showLayers.ghost && p.ghostKDE && currentFrame > 0) {
+    // NOTE: 幽灵残影仅在 KDE 相关视图中显示，纯直方图无对应 ghost 柱子会显得突兀
+    if (showLayers.ghost && p.ghostKDE && currentFrame > 0 && viewMode !== 'histogram') {
       drawCurve(p.ghostKDE, sx, sy, {
         fill: playerHSL(pi, 0.03),
         stroke: playerHSL(pi, 0.12),
