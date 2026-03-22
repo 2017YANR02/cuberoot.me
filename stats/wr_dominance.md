@@ -357,7 +357,7 @@
 </table>
 </div>
 </div>
-<div class="metric-panel" id="metric-average" data-label-en="Average" data-label-zh="平均">
+<div class="metric-panel" id="metric-average" data-label-en="Avg" data-label-zh="平均">
 <div id="average-ranking" class="stat-panel active" data-label-en="Ranking" data-label-zh="排名">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
