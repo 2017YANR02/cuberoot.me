@@ -93,39 +93,71 @@ class WrDominance < Statistic
       average: { ranking: [], history: [] }
     }
 
-    puts "  Dominance: querying all results..."
-    all_rows = fetch_all_results
+    client = Database.client
 
-    # Single: 所有项目
+    # NOTE: Single 基于所有 individual attempts（每轮最多 5 个单次成绩）
+    # 逐 event 查询 result_attempts，避免一次加载 30M 行导致 OOM
     Events::ALL.each do |event_id, event_name|
-      rows = all_rows.select { |r| r["event_id"] == event_id && r["best"] > 0 }
-      next if rows.empty?
+      t = Time.now
+      $stdout.write "  Dominance single: #{event_id}..."
+      rows = fetch_single_attempts_for(client, event_id)
+      if rows.empty?
+        puts " skip"
+        next
+      end
 
-      dom = compute_dominance(rows, "best")
+      dom = compute_dominance(rows, "value")
+      rows = nil  # 释放内存
       result[:single][:history] << [event_name, dom[:history]] unless dom[:history].empty?
       result[:single][:ranking] << [event_name, dom[:ranking]] unless dom[:ranking].empty?
+      puts " #{dom[:history].size} records (#{(Time.now - t).round(1)}s)"
     end
 
-    # Average: 所有项目
+    # NOTE: Average 基于每轮的 average 值，逐 event 查询
     Events::ALL.each do |event_id, event_name|
-      rows = all_rows.select { |r| r["event_id"] == event_id && r["average"] > 0 }
-      next if rows.empty?
+      t = Time.now
+      $stdout.write "  Dominance average: #{event_id}..."
+      rows = fetch_average_results_for(client, event_id)
+      if rows.empty?
+        puts " skip"
+        next
+      end
 
       dom = compute_dominance(rows, "average")
+      rows = nil
       result[:average][:history] << [event_name, dom[:history]] unless dom[:history].empty?
       result[:average][:ranking] << [event_name, dom[:ranking]] unless dom[:ranking].empty?
+      puts " #{dom[:history].size} records (#{(Time.now - t).round(1)}s)"
     end
 
     result
   end
 
-  # NOTE: 一次查询同时取 best 和 average，由调用方按需使用对应列
-  def fetch_all_results
+  # NOTE: Single 用——逐 event 查询 result_attempts（扁平化）
+  # 每个 attempt 贡献一行，value > 0 排除 DNF/DNS
+  def fetch_single_attempts_for(client, event_id)
     sql = <<-SQL
       SELECT
-        result.event_id,
         result.person_id,
-        result.best,
+        ra.value,
+        CONCAT('[', person.name, '](https://www.worldcubeassociation.org/persons/', person.wca_id, ')') person_link,
+        CONCAT('[', competition.cell_name, '](https://www.worldcubeassociation.org/competitions/', competition.id, ')') comp_link,
+        competition.start_date
+      FROM result_attempts ra
+      JOIN results result ON result.id = ra.result_id
+      JOIN persons person ON person.wca_id = result.person_id AND person.sub_id = 1
+      JOIN competitions competition ON competition.id = result.competition_id
+      WHERE ra.value > 0 AND result.event_id = '#{event_id}'
+      ORDER BY competition.start_date
+    SQL
+    client.query(sql).to_a
+  end
+
+  # NOTE: Average 用——逐 event 查询每轮 average
+  def fetch_average_results_for(client, event_id)
+    sql = <<-SQL
+      SELECT
+        result.person_id,
         result.average,
         CONCAT('[', person.name, '](https://www.worldcubeassociation.org/persons/', person.wca_id, ')') person_link,
         CONCAT('[', competition.cell_name, '](https://www.worldcubeassociation.org/competitions/', competition.id, ')') comp_link,
@@ -133,10 +165,10 @@ class WrDominance < Statistic
       FROM results result
       JOIN persons person ON person.wca_id = result.person_id AND person.sub_id = 1
       JOIN competitions competition ON competition.id = result.competition_id
-      WHERE result.best > 0 OR result.average > 0
-      ORDER BY result.event_id, competition.start_date
+      WHERE result.average > 0 AND result.event_id = '#{event_id}'
+      ORDER BY competition.start_date
     SQL
-    Database.client.query(sql).to_a
+    client.query(sql).to_a
   end
 
   # NOTE: 统一计算 dominance 的 历史和排名（共享 pv/pb 数据结构，单次遍历）
