@@ -1076,6 +1076,26 @@ function drawFrameLine(mt, mr, mb, ml, pw, ph) {
   // NOTE: X 轴可见范围（支持横向缩放/平移）
   const visStart = lineXStart !== null ? lineXStart : 1;
   const visEnd = lineXEnd !== null ? lineXEnd : totalSolves;
+
+  // NOTE: 横向缩放时 Y 轴自适应可见数据范围（用户未手动设置 Y 时才启用）
+  if (userXMin === null && lineXStart !== null) {
+    let dataMin = Infinity, dataMax = -Infinity;
+    for (let pi = 0; pi < players.length; pi++) {
+      const data = players[pi].channelData;
+      for (let i = 0; i < data.length; i++) {
+        const solveNo = i + 1;
+        if (solveNo < visStart - 1 || solveNo > visEnd + 1) continue;
+        const v = rawToVal(data[i][0]);
+        if (v > 0) { dataMin = Math.min(dataMin, v); dataMax = Math.max(dataMax, v); }
+      }
+    }
+    if (dataMin < dataMax) {
+      const pad = (dataMax - dataMin) * 0.05;
+      viewYMin = dataMin - pad;
+      viewYMax = dataMax + pad;
+    }
+  }
+
   // 坐标映射：X=可见范围(visStart~visEnd)，Y=成绩值
   const lsx = n => ml + ((n - visStart) / Math.max(1, visEnd - visStart)) * pw;
   const lsy = v => mt + ph - ((v - viewYMin) / (viewYMax - viewYMin)) * ph;
