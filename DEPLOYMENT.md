@@ -32,7 +32,7 @@ GitHub Pages（Jekyll）
 | Workflow | 触发条件 | 执行内容 | 耗时 |
 |----------|----------|----------|------|
 | **Update Stats** | 定时（每周）/ 手动 | 下载 WCA 数据库 + 计算统计 | ~47 分钟 |
-| **Deploy Trainer** | push main 且 `trainer/` 有变更 | pnpm build client → commit dist 到 `trainer_app/` | ~1 分钟 |
+| **Deploy Trainer** | push main 且 `trainer/` 有变更 | pnpm build client → commit dist 到 `app/` | ~1 分钟 |
 | **Deploy Mirror** | push main / 其他 CI 完成 | Jekyll 构建 + rsync 到阿里云 | ~45 秒 |
 | **Backup Recon Data** | 定时（每周一凌晨 4:00）/ 手动 | 从 API 拉取复盘数据备份到 git + 增量构建 WCA 成绩数据 | ~10 秒（增量） |
 | **Update Upcoming Comps** | 定时（每日）/ 手动 | 拉取顶尖选手近期比赛 | ~15 分钟 |
@@ -100,7 +100,7 @@ ruiminyan.github.io/
 │   ├── packages/client/        # React 前端（sr-puzzlegen-pll 渲染 + Zustand 状态管理 + i18n）
 │   ├── packages/shared/        # 共享类型 + PLL/OLL 数据
 │   └── README.md               # 完整文档（结构 / 开发 / 部署 / 技术栈）
-├── trainer_app/                # 🤖 Trainer 构建产物（由 deploy_trainer.yml CI 自动生成，勿手动修改）
+├── app/                        # 🤖 Trainer 构建产物（由 deploy_trainer.yml CI 自动生成，勿手动修改）
 │   └── ...                     # Vite build 输出的静态文件（HTML/JS/CSS/SVG）
 ├── src/                        # 运行时模块（WASM、Worker、Solver 等，100% 上游）
 ├── icons/                     # PWA 图标
