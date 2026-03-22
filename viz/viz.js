@@ -1446,7 +1446,7 @@ function drawFrame() {
   const sy = y => mt + ph - (y / frameMaxY) * ph;
 
   // 1. 网格和坐标轴
-  drawGrid(sx, sy, ml, mt, pw, ph);
+  drawGrid(sx, sy, ml, mt, pw, ph, viewXMin, viewXMax);
 
   // 2. 循环绘制每位选手
   const meanPositions = [];
@@ -1465,7 +1465,7 @@ function drawFrame() {
       // 重绘网格以反映新范围
       ctx.fillStyle = '#0c0c18';
       ctx.fillRect(0, 0, cw, ch);
-      drawGrid(sx, sy, ml, mt, pw, ph);
+      drawGrid(sx, sy, ml, mt, pw, ph, viewXMin, viewXMax);
     }
   }
   for (let pi = 0; pi < players.length; pi++) {
@@ -1592,21 +1592,22 @@ function drawFrame() {
   }
 }
 
-function drawGrid(sx, sy, ml, mt, pw, ph) {
+function drawGrid(sx, sy, ml, mt, pw, ph, viewXMin, viewXMax) {
   ctx.save();
 
-  // NOTE: 自适应刻度间距 — 目标 5~10 个刻度
-  // 候选步长序列: 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, ...
-  const range = xMax - xMin;
+  // NOTE: 基于可见范围（用户缩放后）计算刻度步长，使放大时刻度加密
+  const vMin = viewXMin !== undefined ? viewXMin : xMin;
+  const vMax = viewXMax !== undefined ? viewXMax : xMax;
+  const range = vMax - vMin;
   const rawStep = range / 8;
   const niceStep = pickNiceStep(rawStep);
 
-  const gridStart = Math.ceil(xMin / niceStep) * niceStep;
+  const gridStart = Math.ceil(vMin / niceStep) * niceStep;
 
   // X 轴网格线
   ctx.strokeStyle = 'rgba(255,255,255,0.05)';
   ctx.lineWidth = 1;
-  for (let x = gridStart; x <= xMax; x += niceStep) {
+  for (let x = gridStart; x <= vMax; x += niceStep) {
     const px = Math.round(sx(x)) + 0.5;
     ctx.beginPath();
     ctx.moveTo(px, mt);
@@ -1620,10 +1621,12 @@ function drawGrid(sx, sy, ml, mt, pw, ph) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
 
-  for (let x = gridStart; x <= xMax; x += niceStep) {
+  // NOTE: 根据步长决定小数位数
+  const decimals = niceStep < 0.1 ? 2 : niceStep < 1 ? 1 : 0;
+  for (let x = gridStart; x <= vMax; x += niceStep) {
     const label = isFMC() || isMBLD()
       ? Math.round(x) + ''
-      : (niceStep >= 1 ? Math.round(x) + '' : x.toFixed(1));
+      : (decimals === 0 ? Math.round(x) + '' : x.toFixed(decimals));
     ctx.fillText(label, sx(x), mt + ph + 10);
   }
 
