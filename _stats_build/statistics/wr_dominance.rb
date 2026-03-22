@@ -72,7 +72,7 @@ class WrDominance < Statistic
     md += "</div>\n"
 
     # NOTE: Average 面板
-    md += "<div class=\"metric-panel\" id=\"metric-average\" data-label-en=\"Average\" data-label-zh=\"平均\">\n"
+    md += "<div class=\"metric-panel\" id=\"metric-average\" data-label-en=\"Avg\" data-label-zh=\"平均\">\n"
     md += grouped_panel("average-ranking", true, data[:average][:ranking].to_h, RANKING_HEADER,
                         label_en: "Ranking", label_zh: "排名")
     md += grouped_panel("average-history", false, data[:average][:history].to_h, HISTORY_HEADER,
