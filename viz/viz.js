@@ -958,36 +958,41 @@ function drawLineGrid(lsx, lsy, ml, mt, pw, ph, yMin, yMax, totalSolves) {
  * times: 成绩数组（已转秒，可含 null 表示 DNF），lsx/lsy: 坐标映射
  * totalSolves: X 轴总把数（用于计算填充底部）
  */
-function drawLineChart(times, lsx, lsy, pi, totalSolves) {
+/**
+ * NOTE: cutoff >= 0 时分两段绘制：[0, cutoff] 亮色，(cutoff, end] 淡色
+ * cutoff < 0 表示全量高亮（未在播放或已播完）
+ */
+function drawLineChart(times, lsx, lsy, pi, totalSolves, cutoff) {
   if (!times || times.length < 2) return;
   ctx.save();
 
-  // 过滤有效值用于计算均值颜色
   const validTimes = times.filter(t => t !== null);
   if (validTimes.length === 0) { ctx.restore(); return; }
   const m = mean(validTimes);
   const color = getShiftedHSL(pi, 0.85, m);
+  const dimColor = getShiftedHSL(pi, 0.2, m);
   const fillColor = getShiftedHSL(pi, 0.08, m);
+  // NOTE: cutoff < 0 表示全量高亮
+  const effectiveCutoff = cutoff >= 0 ? cutoff : times.length;
 
-  // 半透明填充区域（跳过 null 段）
+  // 半透明填充区域（只填充到 cutoff）
   const { top: _mt, bottom: _mb } = MARGIN;
   const _ph = ch - _mt - _mb;
   const bottomPy = _mt + _ph;
   ctx.beginPath();
   let started = false;
-  for (let i = 0; i < times.length; i++) {
+  const fillEnd = Math.min(effectiveCutoff, times.length);
+  for (let i = 0; i < fillEnd; i++) {
     if (times[i] === null) continue;
     const px = lsx(i + 1);
     const py = lsy(times[i]);
     if (!started) { ctx.moveTo(px, py); started = true; }
     else ctx.lineTo(px, py);
   }
-  // 闭合到底部
   if (started) {
-    // 找最后一个有效值索引和第一个有效值索引
     let lastValid = -1, firstValid = -1;
-    for (let i = times.length - 1; i >= 0; i--) { if (times[i] !== null) { lastValid = i; break; } }
-    for (let i = 0; i < times.length; i++) { if (times[i] !== null) { firstValid = i; break; } }
+    for (let i = fillEnd - 1; i >= 0; i--) { if (times[i] !== null) { lastValid = i; break; } }
+    for (let i = 0; i < fillEnd; i++) { if (times[i] !== null) { firstValid = i; break; } }
     ctx.lineTo(lsx(lastValid + 1), bottomPy);
     ctx.lineTo(lsx(firstValid + 1), bottomPy);
     ctx.closePath();
@@ -995,17 +1000,16 @@ function drawLineChart(times, lsx, lsy, pi, totalSolves) {
     ctx.fill();
   }
 
-  // 折线描边（跳过 null 段）
+  // 前段折线（亮色）
   ctx.beginPath();
   started = false;
-  for (let i = 0; i < times.length; i++) {
+  for (let i = 0; i < fillEnd; i++) {
     if (times[i] === null) continue;
     const px = lsx(i + 1);
     const py = lsy(times[i]);
     if (!started) { ctx.moveTo(px, py); started = true; }
     else ctx.lineTo(px, py);
   }
-
   if (pi === activePlayerIdx) {
     ctx.shadowColor = color;
     ctx.shadowBlur = 6;
@@ -1013,6 +1017,25 @@ function drawLineChart(times, lsx, lsy, pi, totalSolves) {
   ctx.strokeStyle = color;
   ctx.lineWidth = pi === activePlayerIdx ? 1.8 : 1.2;
   ctx.stroke();
+
+  // 后段折线（淡色，只在播放中且有未播放数据时绘制）
+  if (cutoff >= 0 && effectiveCutoff < times.length) {
+    ctx.beginPath();
+    started = false;
+    // 从 cutoff 开始继续（不断开）
+    for (let i = Math.max(0, effectiveCutoff - 1); i < times.length; i++) {
+      if (times[i] === null) continue;
+      const px = lsx(i + 1);
+      const py = lsy(times[i]);
+      if (!started) { ctx.moveTo(px, py); started = true; }
+      else ctx.lineTo(px, py);
+    }
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = dimColor;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
 
   ctx.restore();
 }
@@ -1028,15 +1051,16 @@ function drawLineChart(times, lsx, lsy, pi, totalSolves) {
  * 进度条位置用竖线高亮标记
  */
 function drawFrameLine(mt, mr, mb, ml, pw, ph) {
-  const progress = maxFrame > 0 ? currentFrame / maxFrame : 0;
+  // NOTE: 播放进度映射到数据索引（-1 表示全量高亮）
+  const ap = players[activePlayerIdx];
+  const totalSolves = ap ? ap.channelData.length : 100;
+  const progressIdx = maxFrame > 0
+    ? Math.round((currentFrame / maxFrame) * (totalSolves - 1))
+    : -1;
 
   // NOTE: Y 轴范围 — 复用 xMin/xMax（成绩范围），支持用户缩放
   let viewYMin = userXMin !== null ? userXMin : xMin;
   let viewYMax = userXMax !== null ? userXMax : xMax;
-
-  // 全量数据：取主选手的总把数确定 X 轴范围
-  const ap = players[activePlayerIdx];
-  const totalSolves = ap ? ap.channelData.length : 100;
 
   // 坐标映射：X=全部把数(1~totalSolves)，Y=成绩值
   const lsx = n => ml + ((n - 1) / Math.max(1, totalSolves - 1)) * pw;
@@ -1063,7 +1087,7 @@ function drawFrameLine(mt, mr, mb, ml, pw, ph) {
     allPlayerTimes.push({ times: fullTimes, indices: origIndices });
 
     // 绘制折线
-    drawLineChart(fullTimes, lsx, lsy, pi, totalSolves);
+    drawLineChart(fullTimes, lsx, lsy, pi, totalSolves, progressIdx);
 
     // 均值水平线（用全量数据的均值）
     const validTimes = fullTimes.filter(t => t !== null);
@@ -1084,6 +1108,20 @@ function drawFrameLine(mt, mr, mb, ml, pw, ph) {
         ctx.restore();
       }
     }
+  }
+
+  // NOTE: 播放进度竖线
+  if (progressIdx >= 0) {
+    const curPx = lsx(progressIdx + 1);
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 3]);
+    ctx.beginPath();
+    ctx.moveTo(curPx, mt);
+    ctx.lineTo(curPx, mt + ph);
+    ctx.stroke();
+    ctx.restore();
   }
 
   // 3. 均值标签（右侧）
