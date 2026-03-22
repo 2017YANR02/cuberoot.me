@@ -5,12 +5,8 @@
 (function () {
   'use strict';
 
-  // NOTE: 轮次类型 ID → 可读名称
-  var ROUND_NAMES = {
-    '1': 'Round 1', 'd': 'Combined R1',
-    '2': 'Round 2', 'b': 'Combined R2',
-    '3': 'Semi Final', 'c': 'Combined Final', 'f': 'Final'
-  };
+  // NOTE: 轮次类型 ID → 可读名称 — 引用 viz.js 中的全局 ROUND_NAMES
+  // （如果独立使用此模块且全局不存在，则 fallback 到 roundType 原始值）
 
   /**
    * NOTE: 生成并下载 CSV
