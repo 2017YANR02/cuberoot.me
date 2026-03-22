@@ -1669,7 +1669,7 @@ function drawFrame() {
       // 叠加模式用 density（和 KDE 共享 Y 轴），纯直方图也用 density
       drawHistogram(bins, sx, sy, pi, true);
     }
-    if (viewMode === 'kde' || viewMode === 'both') {
+    if (viewMode === 'kde' || viewMode === 'both' || viewMode === 'histogram') {
       drawCurve(kde, sx, sy, {
         fill: getShiftedHSL(pi, 0.15, currentMean),
         stroke: getShiftedHSL(pi, 0.85, currentMean),
