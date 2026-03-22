@@ -590,6 +590,21 @@ body {
     font-size: 22px;
 }
 
+/* NOTE: 长按 ⌫ 时的 Clear 模式 — 纯 CSS 切换，避免替换 innerHTML 破坏触摸事件 */
+.np-clear-mode {
+    background: #c62828 !important;
+}
+
+.np-clear-mode svg {
+    display: none;
+}
+
+.np-clear-mode::after {
+    content: 'Clear';
+    font-size: 14px;
+    color: #fff;
+}
+
 /* NOTE: 回车键跨两行 */
 .np-enter {
     grid-row: span 2;

@@ -169,27 +169,25 @@ export function init(gridContainer) {
     }
 
     // NOTE: 长按 ⌫ = Clear All — 500ms 后按钮变红提示，松手执行清空
+    // HACK: 用 CSS class 切换外观而非替换 innerHTML — 替换 innerHTML 会销毁 SVG 子元素，
+    // 导致部分移动浏览器触发 touchcancel 或 touchend 不正常触发，使 Clear 功能失效
     var bkspBtn = document.querySelector('[data-key="backspace"]');
     if (bkspBtn) {
         var longPressTimer = null;
         var isClearMode = false;
-        var origHTML = bkspBtn.innerHTML;
 
         function startLongPress(e) {
             isClearMode = false;
             longPressTimer = setTimeout(function () {
                 isClearMode = true;
-                bkspBtn.style.background = '#c62828';
-                bkspBtn.innerHTML = '<span style="font-size:14px;color:#fff">Clear</span>';
+                bkspBtn.classList.add('np-clear-mode');
             }, 500);
         }
 
         function endLongPress(e) {
             clearTimeout(longPressTimer);
             if (isClearMode) {
-                // NOTE: 恢复按钮外观后 dispatch clearAll 事件
-                bkspBtn.style.background = '';
-                bkspBtn.innerHTML = origHTML;
+                bkspBtn.classList.remove('np-clear-mode');
                 document.dispatchEvent(new CustomEvent('clearAll'));
                 isClearMode = false;
                 e.preventDefault();
@@ -200,8 +198,7 @@ export function init(gridContainer) {
         function cancelLongPress() {
             clearTimeout(longPressTimer);
             if (isClearMode) {
-                bkspBtn.style.background = '';
-                bkspBtn.innerHTML = origHTML;
+                bkspBtn.classList.remove('np-clear-mode');
                 isClearMode = false;
             }
         }
