@@ -1,0 +1,37 @@
+{
+  "home": {
+    "title": "CubeRoot Trainer",
+    "subtitle": "Algorithm Trainer"
+  },
+  "caseSelect": {
+    "back": "← Back",
+    "selectAll": "Select All",
+    "deselectAll": "Deselect All",
+    "startTraining": "Start Training",
+    "notFound": "Algorithm set not found"
+  },
+  "training": {
+    "exit": "✕ Exit",
+    "pressSpace": "Press Space to start",
+    "pressStop": "Press Space to stop",
+    "pressNext": "Press Space for next",
+    "complete": "🎉 Training Complete!",
+    "casesCount": "{{count}} cases",
+    "avgTime": "Average {{time}}s",
+    "viewStats": "View Stats",
+    "backToSelect": "Back to Select"
+  },
+  "stats": {
+    "title": "{{name}} Stats",
+    "clearData": "Clear Data",
+    "clearConfirm": "Are you sure you want to clear all stats?",
+    "case": "Case",
+    "count": "Count",
+    "recent": "Recent",
+    "best": "Best",
+    "noData": "—"
+  },
+  "common": {
+    "cases": "{{count}} cases"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "home": {
+    "title": "CubeRoot Trainer",
+    "subtitle": "公式训练器"
+  },
+  "caseSelect": {
+    "back": "← 返回",
+    "selectAll": "全选",
+    "deselectAll": "取消全选",
+    "startTraining": "开始训练",
+    "notFound": "公式集未找到"
+  },
+  "training": {
+    "exit": "✕ 退出",
+    "pressSpace": "按 空格 开始计时",
+    "pressStop": "按 空格 停止",
+    "pressNext": "按 空格 下一个",
+    "complete": "🎉 训练完成！",
+    "casesCount": "{{count}} 个 case",
+    "avgTime": "平均 {{time}}s",
+    "viewStats": "查看统计",
+    "backToSelect": "返回选择"
+  },
+  "stats": {
+    "title": "{{name}} 统计",
+    "clearData": "清除数据",
+    "clearConfirm": "确定清除所有统计数据？",
+    "case": "Case",
+    "count": "次数",
+    "recent": "最近",
+    "best": "最佳",
+    "noData": "—"
+  },
+  "common": {
+    "cases": "{{count}} cases"
+  }
+}
