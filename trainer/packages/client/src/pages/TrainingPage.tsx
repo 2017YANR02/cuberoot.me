@@ -4,6 +4,7 @@ import { useSessionStore } from '../stores/sessionStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useStatsStore } from '../stores/statsStore';
 import { useKeyboard } from '../hooks/useKeyboard';
+import { CubeView } from '../components/CubeView';
 import pllData from '../../../shared/data/pll.json';
 import type { AlgCase } from '@cuberoot/shared';
 
@@ -136,10 +137,10 @@ export function TrainingPage() {
       </header>
 
       <div className="training-content">
-        {/* 魔方图占位——阶段 5 集成 cubing.js */}
-        <div className="cube-placeholder">
-          <div className="case-label">{currentCase?.name ?? '?'}</div>
-        </div>
+        {/* cubing.js 魔方渲染 */}
+        {currentCase && (
+          <CubeView scramble={currentCase.scramble} size={200} />
+        )}
 
         {/* 计时器 */}
         <div className={`timer ${state === 'timing' ? 'running' : ''} ${state === 'stopped' ? 'stopped' : ''}`}>
