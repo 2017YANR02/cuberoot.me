@@ -12,6 +12,18 @@ const KDE_POINTS = 200;    // 密度曲线采样点数
 const MARGIN = { top: 50, right: 40, bottom: 55, left: 65 };
 const MAX_PLAYERS = 4;     // 最大对比选手数
 
+// NOTE: WCA 轮次类型 ID → 英文/中文名称，供 tooltip 和 CSV 导出共用
+const ROUND_NAMES = {
+  '1': 'Round 1', 'd': 'Combined R1',
+  '2': 'Round 2', 'b': 'Combined R2',
+  '3': 'Semi Final', 'c': 'Combined Final', 'f': 'Final'
+};
+const ROUND_ZH = {
+  '1': '初赛', 'd': '初赛(联合)',
+  '2': '复赛', 'b': '复赛(联合)',
+  '3': '半决赛', 'c': '决赛(联合)', 'f': '决赛'
+};
+
 // NOTE: 4 色方案 — HSL 基色，用于 KDE 曲线、均值线、chip 标签
 const PLAYER_COLORS = [
   { h: 190, s: 90, l: 55, label: '青' },   // 青色（主色调，延续原风格）
@@ -1104,7 +1116,7 @@ function drawFrameLine(mt, mr, mb, ml, pw, ph) {
   drawLineGrid(lsx, lsy, ml, mt, pw, ph, viewYMin, viewYMax, totalSolves, visStart, visEnd);
 
   // 2. 绘制每位选手的全量折线
-  const allPlayerTimes = [];  // NOTE: [{ times: number[], indices: number[] }]
+  const allPlayerTimes = [];  // NOTE: [{ times, indices, pbFlags, entries }]
   const meanPositions = [];
   for (let pi = 0; pi < players.length; pi++) {
     const p = players[pi];
@@ -1118,7 +1130,19 @@ function drawFrameLine(mt, mr, mb, ml, pw, ph) {
       // 第三个元素是原始索引（AoN 模式），Singles 模式用 i+1
       origIndices.push(p.channelData[i][2] || (i + 1));
     }
-    allPlayerTimes.push({ times: fullTimes, indices: origIndices });
+    // NOTE: PB 标记 — 根据 dataMode 从对应数据源获取
+    //   singles → statsData.pbFlags.singles
+    //   mo3/ao5/ao12/ao25/ao50/ao100 → statsData.pbFlags[dataMode]
+    //   bao5/wao5 等轮次指标 → roundMetrics.pbFlags[dataMode]
+    let pbArr = null;
+    if (dataMode === 'singles' && p.statsData && p.statsData.pbFlags) {
+      pbArr = p.statsData.pbFlags.singles;
+    } else if (p.statsData && p.statsData.pbFlags && p.statsData.pbFlags[dataMode]) {
+      pbArr = p.statsData.pbFlags[dataMode];
+    } else if (p.roundMetrics && p.roundMetrics.pbFlags && p.roundMetrics.pbFlags[dataMode]) {
+      pbArr = p.roundMetrics.pbFlags[dataMode];
+    }
+    allPlayerTimes.push({ times: fullTimes, indices: origIndices, pbFlags: pbArr, entries: p.solveEntries });
 
     // 绘制折线
     drawLineChart(fullTimes, lsx, lsy, pi, totalSolves, progressIdx);
@@ -1171,10 +1195,33 @@ function drawFrameLine(mt, mr, mb, ml, pw, ph) {
   }
   ctx.restore();
 
-  // 5. hover tooltip（鼠标在画布上时显示 把数 + 成绩值）
+  // 4.5 PB 红色标记点 — 主选手所有模式
+  {
+    const apData = allPlayerTimes[activePlayerIdx];
+    if (apData && apData.pbFlags) {
+      ctx.save();
+      for (let i = 0; i < apData.times.length; i++) {
+        if (apData.times[i] === null) continue;
+        // NOTE: origIndices 保存了 1-based 原始索引，pbFlags 基于原始数组
+        const origI = apData.indices[i] - 1;
+        if (!apData.pbFlags[origI]) continue;
+        const px = lsx(i + 1);
+        const py = lsy(apData.times[i]);
+        // NOTE: 可见范围外的点跳过
+        if (px < ml - 5 || px > ml + pw + 5) continue;
+        ctx.fillStyle = 'rgba(230, 50, 50, 0.85)';
+        ctx.beginPath();
+        ctx.arc(px, py, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+  }
+
+  // 5. hover tooltip — 卡片式（比赛名+轮次、单次/平均+进步百分比）
   if (_lineHoverX !== null && allPlayerTimes.length > 0) {
-    // 像素 → 把数索引
-    const solveIdx = Math.round(1 + (_lineHoverX - ml) / pw * (totalSolves - 1)) - 1;
+    // 像素 → 把数索引（考虑可见范围）
+    const solveIdx = Math.round(visStart + (_lineHoverX - ml) / pw * (visEnd - visStart)) - 1;
     if (solveIdx >= 0 && solveIdx < totalSolves) {
       const tooltipX = lsx(solveIdx + 1);
       // 十字线（竖线）
@@ -1187,35 +1234,121 @@ function drawFrameLine(mt, mr, mb, ml, pw, ph) {
       ctx.stroke();
       ctx.restore();
 
-      // 各选手在该把数的成绩
-      ctx.save();
-      ctx.font = '600 11px "JetBrains Mono", monospace';
-      ctx.textBaseline = 'bottom';
-
-      let tooltipY = _lineHoverY - 8;
+      // 高亮各选手在该把数的数据点
       for (let pi = 0; pi < allPlayerTimes.length; pi++) {
-        const { times: ft, indices: origIdx } = allPlayerTimes[pi];
+        const { times: ft } = allPlayerTimes[pi];
         if (solveIdx < ft.length && ft[solveIdx] !== null) {
-          const val = ft[solveIdx];
-          const dotY = lsy(val);
-          // 数据点圆圈
+          const dotY = lsy(ft[solveIdx]);
+          ctx.save();
           ctx.fillStyle = playerHSL(pi, 0.9);
           ctx.beginPath();
-          ctx.arc(tooltipX, dotY, 3, 0, Math.PI * 2);
+          ctx.arc(tooltipX, dotY, 4, 0, Math.PI * 2);
           ctx.fill();
-
-          // NOTE: 显示原始 solve 序号（而非 channelData 索引，后者因跳过 null 会偏移）
-          const dispIdx = origIdx[solveIdx];
-          const namePrefix = players.length > 1 ? (players[pi].nameZh || players[pi].name).slice(0, 3) + ' ' : '';
-          const label = `#${dispIdx}  ${namePrefix}${fmtVal(val)}`;
-          ctx.fillStyle = playerHSL(pi, 0.95);
-          ctx.textAlign = tooltipX > ml + pw / 2 ? 'right' : 'left';
-          const labelX = tooltipX > ml + pw / 2 ? tooltipX - 8 : tooltipX + 8;
-          ctx.fillText(label, labelX, tooltipY);
-          tooltipY -= 16;
+          ctx.restore();
         }
       }
-      ctx.restore();
+
+      // NOTE: 构建卡片内容行
+      const cardLines = [];  // [{ text, color, bold }]
+      for (let pi = 0; pi < allPlayerTimes.length; pi++) {
+        const { times: ft, indices: origIdx, entries } = allPlayerTimes[pi];
+        if (solveIdx >= ft.length || ft[solveIdx] === null) continue;
+        const val = ft[solveIdx];
+        const dispIdx = origIdx[solveIdx];
+
+        // NOTE: 比赛名 + 轮次（从 solveEntries 获取，用原始索引映射）
+        const origSolveI = dispIdx - 1;  // origIndices 是 1-based
+        const entry = entries ? entries[origSolveI] : null;
+        if (entry) {
+          const roundLabel = ROUND_ZH[entry.roundType] || ROUND_NAMES[entry.roundType] || entry.roundType;
+          // NOTE: 多选手时在比赛名前加选手名
+          const prefix = players.length > 1 ? (players[pi].nameZh || players[pi].name) + ' — ' : '';
+          cardLines.push({ text: prefix + entry.compName + ' | ' + roundLabel, color: 'rgba(255,255,255,0.7)', bold: false });
+        }
+
+        // NOTE: 成绩 + 进步百分比
+        let progressStr = '';
+        // 查找前一个有效成绩来计算进步百分比
+        for (let prev = solveIdx - 1; prev >= 0; prev--) {
+          if (ft[prev] !== null) {
+            const delta = (ft[prev] - val) / ft[prev] * 100;
+            if (isMBLD()) {
+              // 得分高更好
+              const d2 = (val - ft[prev]) / ft[prev] * 100;
+              progressStr = d2 > 0
+                ? `（进步 ${d2.toFixed(1)}%）`
+                : d2 < 0 ? `（退步 ${(-d2).toFixed(1)}%）` : '';
+            } else {
+              progressStr = delta > 0
+                ? `（进步 ${delta.toFixed(1)}%）`
+                : delta < 0 ? `（退步 ${(-delta).toFixed(1)}%）` : '';
+            }
+            break;
+          }
+        }
+        // NOTE: PB 判断用原始索引映射（非 singles 时 channelData 跳过了 null）
+        const pbOrigI = dispIdx - 1;
+        const isPB = allPlayerTimes[pi].pbFlags && allPlayerTimes[pi].pbFlags[pbOrigI];
+        const pbTag = isPB ? ' 🏆' : '';
+        const modeLabel = dataMode === 'singles' ? '单次' : dataMode.toUpperCase();
+        cardLines.push({
+          text: `● ${modeLabel}: ${fmtVal(val)}${pbTag}  ${progressStr}`,
+          color: playerHSL(pi, 0.95),
+          bold: true
+        });
+      }
+
+      // NOTE: 卡片绘制 — 半透明深色背景 + 圆角
+      if (cardLines.length > 0) {
+        ctx.save();
+        const lineH = 18;  // 行高
+        const padX = 10, padY = 8;
+        ctx.font = '600 11px "JetBrains Mono", Inter, sans-serif';
+        // 计算卡片宽度（取最长行）
+        let maxW = 0;
+        for (const ln of cardLines) {
+          const w = ctx.measureText(ln.text).width;
+          if (w > maxW) maxW = w;
+        }
+        const cardW = maxW + padX * 2;
+        const cardH = cardLines.length * lineH + padY * 2;
+        // 卡片位置（在竖线旁边，避免超出画布）
+        let cx = tooltipX + 12;
+        if (cx + cardW > ml + pw) cx = tooltipX - cardW - 12;
+        let cy = _lineHoverY - cardH / 2;
+        if (cy < mt) cy = mt;
+        if (cy + cardH > mt + ph) cy = mt + ph - cardH;
+
+        // 圆角背景
+        const r = 6;
+        ctx.fillStyle = 'rgba(12, 12, 30, 0.88)';
+        ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(cx + r, cy);
+        ctx.lineTo(cx + cardW - r, cy);
+        ctx.arcTo(cx + cardW, cy, cx + cardW, cy + r, r);
+        ctx.lineTo(cx + cardW, cy + cardH - r);
+        ctx.arcTo(cx + cardW, cy + cardH, cx + cardW - r, cy + cardH, r);
+        ctx.lineTo(cx + r, cy + cardH);
+        ctx.arcTo(cx, cy + cardH, cx, cy + cardH - r, r);
+        ctx.lineTo(cx, cy + r);
+        ctx.arcTo(cx, cy, cx + r, cy, r);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // 文字行
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        for (let li = 0; li < cardLines.length; li++) {
+          const ln = cardLines[li];
+          ctx.font = ln.bold ? '600 11px "JetBrains Mono", Inter, sans-serif' : '11px Inter, sans-serif';
+          ctx.fillStyle = ln.color;
+          ctx.fillText(ln.text, cx + padX, cy + padY + li * lineH);
+        }
+        ctx.restore();
+      }
     }
   }
 
