@@ -76,7 +76,6 @@ ruiminyan.github.io/
 ├── calc/                       # HTH 成绩计算器（Head-to-Head Ao5 模拟 + PA 计算）
 │   ├── index.html              # 📌 页面结构（tooltip 说明、进度滑杆、控件）
 │   ├── style.css               # 📌 页面样式（深色主题 + 头像按钮 + 响应式）
-│   ├── data/wr.json            # 📌 WR 数据（centiseconds，由 CI gen_wr_json.rb 每周自动刷新）
 │   └── js/                     # ES module 架构
 │       ├── app.js              # 📌 主入口：初始化 + 事件协调 + 个人数据切换逻辑
 │       ├── state.js            # 📌 全局状态管理（event、seedOn、progress 等）
@@ -545,7 +544,6 @@ git push
 
 | 脚本 | 输出 | 用途 |
 |------|------|------|
-| `bin/gen_wr_json.rb` | `calc/data/wr.json` | 提取各项目 WR 值（single/average/bpa/wpa），供 calc 页面显示 WR 徽章 |
 | `bin/compute_index.rb` | `stats/index.md` | 统计首页索引 |
 
 
