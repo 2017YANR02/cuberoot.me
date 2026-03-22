@@ -1410,6 +1410,133 @@ function drawFrameLine(mt, mr, mb, ml, pw, ph) {
   }
 }
 
+/**
+ * NOTE: 累积直方图模式
+ * 从第 1 把到当前进度位置的全部成绩一起累积到直方图中。
+ * 播放时柱子不断增高，最终显示全部成绩的完整分布。
+ */
+function drawFrameCumHist(mt, mr, mb, ml, pw, ph) {
+  const ap = players[activePlayerIdx];
+  if (!ap) return;
+
+  const progress = maxFrame > 0 ? currentFrame / maxFrame : 1;
+  // NOTE: 累积到哪一把 — 基于 progress 线性映射
+  const totalSolves = ap.channelData.length;
+  const cumEnd = Math.min(
+    Math.round(progress * totalSolves),
+    totalSolves
+  );
+  // 至少显示 1 把
+  const endIdx = Math.max(cumEnd, 1);
+
+  // 收集 [0, endIdx) 范围的全部有效成绩
+  const cumTimes = [];
+  for (let i = 0; i < endIdx; i++) {
+    const v = rawToVal(ap.channelData[i][0]);
+    if (v > 0) cumTimes.push(v);
+  }
+  if (cumTimes.length < 1) {
+    updateProgressUI();
+    return;
+  }
+
+  // 可见 X 范围（支持用户缩放）
+  let viewXMin = userXMin !== null ? userXMin : xMin;
+  let viewXMax = userXMax !== null ? userXMax : xMax;
+
+  // 计算直方图 bins
+  const bins = computeHistogram(cumTimes, viewXMax - viewXMin);
+  if (bins.length === 0) { updateProgressUI(); return; }
+
+  // Y 轴 — 用频次（count），不用 density
+  let maxCount = 0;
+  for (const b of bins) {
+    if (b.count > maxCount) maxCount = b.count;
+  }
+  maxCount = Math.max(maxCount, 1) * 1.15;
+
+  // 坐标映射
+  const sx = x => ml + ((x - viewXMin) / (viewXMax - viewXMin)) * pw;
+  const sy = y => mt + ph - (y / maxCount) * ph;
+
+  // 1. 网格
+  drawGrid(sx, sy, ml, mt, pw, ph, viewXMin, viewXMax);
+
+  // 2. 绘制柱子（用 count 而非 density）
+  ctx.save();
+  const midVal = (bins[0].xStart + bins[bins.length - 1].xEnd) / 2;
+  const fillColor = getShiftedHSL(activePlayerIdx, 0.25, midVal);
+  const strokeColor = getShiftedHSL(activePlayerIdx, 0.5, midVal);
+  ctx.fillStyle = fillColor;
+  ctx.strokeStyle = strokeColor;
+  ctx.lineWidth = 1;
+
+  const baseline = sy(0);
+  for (const b of bins) {
+    if (b.count === 0) continue;
+    const x1 = sx(b.xStart);
+    const x2 = sx(b.xEnd);
+    const yTop = sy(b.count);
+    // 跳过完全不可见的柱子
+    if (x2 < ml || x1 > ml + pw) continue;
+    ctx.fillRect(x1, yTop, x2 - x1, baseline - yTop);
+    ctx.strokeRect(x1, yTop, x2 - x1, baseline - yTop);
+
+    // 柱子顶部显示计数
+    const barW = x2 - x1;
+    if (barW > 12 && b.count > 0) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.font = '600 11px "JetBrains Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText(b.count, (x1 + x2) / 2, yTop - 3);
+      ctx.restore();
+    }
+  }
+  ctx.restore();
+
+  // 3. 均值线
+  const cumMean = mean(cumTimes);
+  drawMeanLine(sx, sy, mt, ph, cumMean,
+    getShiftedHSL(activePlayerIdx, 0.5, cumMean), false);
+
+  // 4. 均值标签
+  drawMeanLabelsOnCanvas(sx, mt, [{
+    pi: activePlayerIdx,
+    mean: cumMean,
+    currentVal: null,
+    name: ap.nameZh || ap.name
+  }]);
+
+  // 5. Y 轴标签改为 "Count"
+  ctx.save();
+  ctx.translate(16, mt + ph / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillStyle = 'rgba(255,255,255,0.2)';
+  ctx.font = '11px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Count', 0, 0);
+  ctx.restore();
+
+  // 6. 统计面板 — 显示累积统计
+  const lastCompIdx = ap.channelData[endIdx - 1][1];
+  const lastDate = ap.compDates[lastCompIdx];
+  updateStats(cumTimes, cumMean, lastDate, 0);
+  // NOTE: 覆盖把数显示为 "1~N"
+  const syncEl = document.getElementById('statSync');
+  if (syncEl) syncEl.textContent = `#1-#${endIdx}`;
+
+  // 7. 隐藏旧 DOM 均值标签
+  const oldLabel = document.getElementById('meanLabel');
+  if (oldLabel) oldLabel.style.display = 'none';
+  const oldGhost = document.getElementById('ghostMeanLabel');
+  if (oldGhost) oldGhost.style.display = 'none';
+
+  // 8. 进度条
+  updateProgressUI();
+}
+
 // ═══════════════════════════════════════
 // 绘制引擎
 // ═══════════════════════════════════════
@@ -1422,6 +1549,12 @@ function drawFrame() {
 
   ctx.fillStyle = '#0c0c18';
   ctx.fillRect(0, 0, cw, ch);
+
+  // NOTE: 累积直方图模式 — 从第 1 把到当前进度位置的全部数据
+  if (viewMode === 'cumHist') {
+    drawFrameCumHist(mt, mr, mb, ml, pw, ph);
+    return;
+  }
 
   // NOTE: 折线图模式走独立渲染路径
   if (viewMode === 'line') {
