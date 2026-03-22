@@ -2015,7 +2015,7 @@ function setupControls() {
       var ridgeSection = document.querySelector('.section-divider');
       var ridgeTitle = document.querySelector('.section-title');
       var ridgeWrapper = document.querySelector('.ridgeline-wrapper');
-      var hidden = viewMode === 'line' ? 'none' : '';
+      var hidden = (viewMode === 'line' || viewMode === 'cumHist') ? 'none' : '';
       if (ridgeSection) ridgeSection.style.display = hidden;
       if (ridgeTitle) ridgeTitle.style.display = hidden;
       if (ridgeWrapper) ridgeWrapper.style.display = hidden;
