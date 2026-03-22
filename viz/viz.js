@@ -29,6 +29,9 @@ let minBandwidth = 0;      // KDE 带宽下限（滚动统计需要）
 // NOTE: 用户缩放/平移覆盖（null 表示使用自动范围）
 let userXMin = null;
 let userXMax = null;
+// NOTE: 折线图 X 轴可见范围（solve 序号，1-based；null = 全量）
+let lineXStart = null;
+let lineXEnd = null;
 
 // ─── 多选手数据 ───
 // NOTE: players[i] = { wcaId, name, nameZh, color, solveData, channelData,
@@ -930,11 +933,17 @@ function drawLineGrid(lsx, lsy, ml, mt, pw, ph, yMin, yMax, totalSolves) {
   ctx.font = '12px "JetBrains Mono", monospace';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
-  // NOTE: 根据总把数动态调整刻度间距
-  const n = totalSolves || windowSize;
-  const xStep = n <= 50 ? 10 : n <= 200 ? 25 : n <= 500 ? 50 : n <= 1500 ? 100 : 200;
-  for (let x = xStep; x <= n; x += xStep) {
-    ctx.fillText(x + '', lsx(x), mt + ph + 10);
+  // NOTE: 根据可见范围动态调整刻度间距
+  const visStart = arguments[9] || 1;
+  const visEnd = arguments[10] || totalSolves || windowSize;
+  const visRange = visEnd - visStart;
+  const xRawStep = visRange / 8;
+  const xMag = Math.pow(10, Math.floor(Math.log10(Math.max(1, xRawStep))));
+  const xRes = xRawStep / xMag;
+  const xStep = xRes <= 1.5 ? xMag : xRes <= 3.5 ? 2 * xMag : xRes <= 7.5 ? 5 * xMag : 10 * xMag;
+  const xTickStart = Math.ceil(visStart / xStep) * xStep;
+  for (let x = xTickStart; x <= visEnd; x += xStep) {
+    ctx.fillText(Math.round(x) + '', lsx(x), mt + ph + 10);
   }
 
   // 轴标签
@@ -1064,12 +1073,15 @@ function drawFrameLine(mt, mr, mb, ml, pw, ph) {
   let viewYMin = userXMin !== null ? userXMin : xMin;
   let viewYMax = userXMax !== null ? userXMax : xMax;
 
-  // 坐标映射：X=全部把数(1~totalSolves)，Y=成绩值
-  const lsx = n => ml + ((n - 1) / Math.max(1, totalSolves - 1)) * pw;
+  // NOTE: X 轴可见范围（支持横向缩放/平移）
+  const visStart = lineXStart !== null ? lineXStart : 1;
+  const visEnd = lineXEnd !== null ? lineXEnd : totalSolves;
+  // 坐标映射：X=可见范围(visStart~visEnd)，Y=成绩值
+  const lsx = n => ml + ((n - visStart) / Math.max(1, visEnd - visStart)) * pw;
   const lsy = v => mt + ph - ((v - viewYMin) / (viewYMax - viewYMin)) * ph;
 
-  // 1. 网格（传入总把数用于 X 轴刻度）
-  drawLineGrid(lsx, lsy, ml, mt, pw, ph, viewYMin, viewYMax, totalSolves);
+  // 1. 网格（传入可见范围用于 X 轴刻度）
+  drawLineGrid(lsx, lsy, ml, mt, pw, ph, viewYMin, viewYMax, totalSolves, visStart, visEnd);
 
   // 2. 绘制每位选手的全量折线
   const allPlayerTimes = [];  // NOTE: [{ times: number[], indices: number[] }]
@@ -1687,6 +1699,8 @@ function setupControls() {
     resetBtn.addEventListener('click', () => {
       userXMin = null;
       userXMax = null;
+      lineXStart = null;
+      lineXEnd = null;
       drawFrame();
     });
   }
@@ -1754,28 +1768,57 @@ function setupControls() {
     e.preventDefault();
     const rect = canvas.getBoundingClientRect();
     const ratio = canvas.width / rect.width;  // DPR 校正
-
-    const vMin = userXMin !== null ? userXMin : xMin;
-    const vMax = userXMax !== null ? userXMax : xMax;
     const factor = e.deltaY > 0 ? 1.15 : 1 / 1.15;
 
-    // NOTE: 折线图模式用 Y 轴作为锚点，其他模式用 X 轴
-    let anchor;
     if (viewMode === 'line') {
-      const py = (e.clientY - rect.top) * ratio;
-      anchor = pyToVal(py);
+      // NOTE: 折线图 — 默认缩放 X 轴，Shift 缩放 Y 轴
+      if (e.shiftKey) {
+        // Y 轴缩放
+        const vMin = userXMin !== null ? userXMin : xMin;
+        const vMax = userXMax !== null ? userXMax : xMax;
+        const py = (e.clientY - rect.top) * ratio;
+        const anchor = pyToVal(py);
+        userXMin = anchor - (anchor - vMin) * factor;
+        userXMax = anchor + (vMax - anchor) * factor;
+        if (userXMax - userXMin < 0.5) {
+          const mid = (userXMin + userXMax) / 2;
+          userXMin = mid - 0.25;
+          userXMax = mid + 0.25;
+        }
+      } else {
+        // X 轴缩放（以鼠标 X 位置对应的 solve 序号为锚点）
+        const ap = players[activePlayerIdx];
+        const total = ap ? ap.channelData.length : 100;
+        const vs = lineXStart !== null ? lineXStart : 1;
+        const ve = lineXEnd !== null ? lineXEnd : total;
+        const { left: ml2 } = MARGIN;
+        const pw2 = cw - ml2 - MARGIN.right;
+        const px = (e.clientX - rect.left) * ratio;
+        const anchor = vs + ((px - ml2) / pw2) * (ve - vs);
+        let newStart = anchor - (anchor - vs) * factor;
+        let newEnd = anchor + (ve - anchor) * factor;
+        // 最小范围限制（至少 10 把）
+        if (newEnd - newStart < 10) {
+          const mid = (newStart + newEnd) / 2;
+          newStart = mid - 5;
+          newEnd = mid + 5;
+        }
+        lineXStart = newStart;
+        lineXEnd = newEnd;
+      }
     } else {
+      // KDE/直方图 — X 轴缩放
+      const vMin = userXMin !== null ? userXMin : xMin;
+      const vMax = userXMax !== null ? userXMax : xMax;
       const px = (e.clientX - rect.left) * ratio;
-      anchor = pxToVal(px);
-    }
-
-    userXMin = anchor - (anchor - vMin) * factor;
-    userXMax = anchor + (vMax - anchor) * factor;
-    // 最小范围限制
-    if (userXMax - userXMin < 0.5) {
-      const mid = (userXMin + userXMax) / 2;
-      userXMin = mid - 0.25;
-      userXMax = mid + 0.25;
+      const anchor = pxToVal(px);
+      userXMin = anchor - (anchor - vMin) * factor;
+      userXMax = anchor + (vMax - anchor) * factor;
+      if (userXMax - userXMin < 0.5) {
+        const mid = (userXMin + userXMax) / 2;
+        userXMin = mid - 0.25;
+        userXMax = mid + 0.25;
+      }
     }
     drawFrame();
   }, { passive: false });
@@ -1785,11 +1828,16 @@ function setupControls() {
   canvas.addEventListener('mousedown', e => {
     const rect = canvas.getBoundingClientRect();
     const ratio = canvas.width / rect.width;
+    const ap = players[activePlayerIdx];
+    const total = ap ? ap.channelData.length : 100;
     dragState = {
       startPx: (e.clientX - rect.left) * ratio,
-      startPy: (e.clientY - rect.top) * ratio,  // NOTE: 折线图用
+      startPy: (e.clientY - rect.top) * ratio,
       startXMin: userXMin !== null ? userXMin : xMin,
-      startXMax: userXMax !== null ? userXMax : xMax
+      startXMax: userXMax !== null ? userXMax : xMax,
+      // NOTE: 折线图 X 轴拖拽支持
+      startLineXS: lineXStart !== null ? lineXStart : 1,
+      startLineXE: lineXEnd !== null ? lineXEnd : total
     };
   });
   window.addEventListener('mousemove', e => {
@@ -1798,15 +1846,22 @@ function setupControls() {
     const ratio = canvas.width / rect.width;
 
     if (viewMode === 'line') {
-      // NOTE: 折线图 — 垂直方向拖拽平移 Y 轴（成绩范围）
-      const dy = ((e.clientY - rect.top) * ratio - dragState.startPy);
-      const { top: mt, bottom: mb } = MARGIN;
+      // NOTE: 折线图 — 同时平移两轴
+      const { top: mt, bottom: mb, left: ml, right: mr } = MARGIN;
       const ph = ch - mt - mb;
-      const range = dragState.startXMax - dragState.startXMin;
-      // Y 轴反向：鼠标下拖 = 数值上升
-      const dVal = (dy / ph) * range;
-      userXMin = dragState.startXMin + dVal;
-      userXMax = dragState.startXMax + dVal;
+      const pw = cw - ml - mr;
+      // Y 轴平移
+      const dy = ((e.clientY - rect.top) * ratio - dragState.startPy);
+      const yRange = dragState.startXMax - dragState.startXMin;
+      const dyVal = (dy / ph) * yRange;
+      userXMin = dragState.startXMin + dyVal;
+      userXMax = dragState.startXMax + dyVal;
+      // X 轴平移
+      const dx = ((e.clientX - rect.left) * ratio - dragState.startPx);
+      const xRange = dragState.startLineXE - dragState.startLineXS;
+      const dxVal = -(dx / pw) * xRange;
+      lineXStart = dragState.startLineXS + dxVal;
+      lineXEnd = dragState.startLineXE + dxVal;
     } else {
       // NOTE: 其他模式 — 水平方向拖拽平移 X 轴
       const dx = ((e.clientX - rect.left) * ratio - dragState.startPx);
@@ -1825,6 +1880,8 @@ function setupControls() {
   canvas.addEventListener('dblclick', () => {
     userXMin = null;
     userXMax = null;
+    lineXStart = null;
+    lineXEnd = null;
     drawFrame();
   });
 
@@ -1832,6 +1889,8 @@ function setupControls() {
   let pinchState = null;
   let touchDrag = null;
   canvas.addEventListener('touchstart', e => {
+    const ap = players[activePlayerIdx];
+    const total = ap ? ap.channelData.length : 100;
     if (e.touches.length === 2) {
       e.preventDefault();
       touchDrag = null;
@@ -1839,21 +1898,36 @@ function setupControls() {
       const ratio = canvas.width / rect.width;
       const t0 = (e.touches[0].clientX - rect.left) * ratio;
       const t1 = (e.touches[1].clientX - rect.left) * ratio;
-      pinchState = {
-        dist: Math.abs(t1 - t0),
-        mid: pxToVal((t0 + t1) / 2),
-        xMin: userXMin !== null ? userXMin : xMin,
-        xMax: userXMax !== null ? userXMax : xMax
-      };
+      if (viewMode === 'line') {
+        // NOTE: 折线图双指 — X 轴缩放
+        const { left: ml2 } = MARGIN;
+        const pw2 = cw - ml2 - MARGIN.right;
+        const vs = lineXStart !== null ? lineXStart : 1;
+        const ve = lineXEnd !== null ? lineXEnd : total;
+        pinchState = {
+          dist: Math.abs(t1 - t0),
+          mid: vs + (((t0 + t1) / 2 - ml2) / pw2) * (ve - vs),
+          lineXS: vs, lineXE: ve, isLine: true
+        };
+      } else {
+        pinchState = {
+          dist: Math.abs(t1 - t0),
+          mid: pxToVal((t0 + t1) / 2),
+          xMin: userXMin !== null ? userXMin : xMin,
+          xMax: userXMax !== null ? userXMax : xMax
+        };
+      }
     } else if (e.touches.length === 1) {
-      // NOTE: 单指拖拽平移
       pinchState = null;
       const rect = canvas.getBoundingClientRect();
       const ratio = canvas.width / rect.width;
       touchDrag = {
         startPx: (e.touches[0].clientX - rect.left) * ratio,
+        startPy: (e.touches[0].clientY - rect.top) * ratio,
         startXMin: userXMin !== null ? userXMin : xMin,
-        startXMax: userXMax !== null ? userXMax : xMax
+        startXMax: userXMax !== null ? userXMax : xMax,
+        startLineXS: lineXStart !== null ? lineXStart : 1,
+        startLineXE: lineXEnd !== null ? lineXEnd : total
       };
     }
   }, { passive: false });
@@ -1866,20 +1940,37 @@ function setupControls() {
       const t1 = (e.touches[1].clientX - rect.left) * ratio;
       const dist = Math.abs(t1 - t0);
       const scale = pinchState.dist / dist;
-      userXMin = pinchState.mid - (pinchState.mid - pinchState.xMin) * scale;
-      userXMax = pinchState.mid + (pinchState.xMax - pinchState.mid) * scale;
+      if (pinchState.isLine) {
+        // NOTE: 折线图双指 — X 轴缩放
+        lineXStart = pinchState.mid - (pinchState.mid - pinchState.lineXS) * scale;
+        lineXEnd = pinchState.mid + (pinchState.lineXE - pinchState.mid) * scale;
+      } else {
+        userXMin = pinchState.mid - (pinchState.mid - pinchState.xMin) * scale;
+        userXMax = pinchState.mid + (pinchState.xMax - pinchState.mid) * scale;
+      }
       drawFrame();
     } else if (touchDrag && e.touches.length === 1) {
       e.preventDefault();
       const rect = canvas.getBoundingClientRect();
       const ratio = canvas.width / rect.width;
-      const dx = ((e.touches[0].clientX - rect.left) * ratio - touchDrag.startPx);
-      const { left: ml, right: mr } = MARGIN;
-      const pw = cw - ml - mr;
-      const range = touchDrag.startXMax - touchDrag.startXMin;
-      const dVal = -(dx / pw) * range;
-      userXMin = touchDrag.startXMin + dVal;
-      userXMax = touchDrag.startXMax + dVal;
+      if (viewMode === 'line') {
+        // NOTE: 折线图单指 — X 轴平移
+        const dx = ((e.touches[0].clientX - rect.left) * ratio - touchDrag.startPx);
+        const { left: ml, right: mr } = MARGIN;
+        const pw = cw - ml - mr;
+        const xRange = touchDrag.startLineXE - touchDrag.startLineXS;
+        const dxVal = -(dx / pw) * xRange;
+        lineXStart = touchDrag.startLineXS + dxVal;
+        lineXEnd = touchDrag.startLineXE + dxVal;
+      } else {
+        const dx = ((e.touches[0].clientX - rect.left) * ratio - touchDrag.startPx);
+        const { left: ml, right: mr } = MARGIN;
+        const pw = cw - ml - mr;
+        const range = touchDrag.startXMax - touchDrag.startXMin;
+        const dVal = -(dx / pw) * range;
+        userXMin = touchDrag.startXMin + dVal;
+        userXMax = touchDrag.startXMax + dVal;
+      }
       drawFrame();
     }
   }, { passive: false });
@@ -1997,6 +2088,8 @@ function recalcModeParams() {
   // NOTE: 切换模式时重置用户缩放
   userXMin = null;
   userXMax = null;
+  lineXStart = null;
+  lineXEnd = null;
 
   // NOTE: Round Metrics 的 key 集合（用于判断窗口大小）
   var ROUND_KEYS = { bao5:1, wao5:1, mo5:1, bpa:1, wpa:1, median:1, bestc:1, worstc:1, worst:1 };
