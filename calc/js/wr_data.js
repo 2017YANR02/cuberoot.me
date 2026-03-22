@@ -1,9 +1,9 @@
-// NOTE: WR 数据加载模块 — fetch calc/data/wr.json 并提供查询 API
-// JSON 由 CI 每周自动刷新（_stats_build/bin/gen_wr_json.rb）
-// 包含：WR 值、Ao100 trimmed average、100 个原始成绩（KDE 采样用）
-// 支持 playerOverride — 登录用户可用个人数据替代世界 #1/#2
+// NOTE: WR 数据模块 — 通过 WCA Rankings API 实时获取世界排名数据 + KDE 采样
+// 页面初始化时 UI 瞬间就绪（load() 同步返回空壳），数据在后台异步加载
+// 支持 playerOverride — 用户可用个人数据替代世界 #1/#2
 
-var wrData = null; // { eventId: { single, average, ..., ao100_1, ao100_2, times_1: [...], times_2: [...] } }
+// NOTE: 每个 eventId 的缓存结构 { single, average, average_2, ao100_1, ao100_2, times_1, times_2 }
+var wrData = {};
 
 // NOTE: 个人数据覆盖 — playerOverride[0/1] = { times: [...], ao100: N, name, country } | null
 // 设置后，sampleKDE / getAo100 自动使用个人数据
@@ -37,18 +37,93 @@ export function getPlayerOverride(playerIdx) {
     return playerOverride[playerIdx];
 }
 
+// NOTE: wr_ids.json 全局缓存 — 所有 event 共享一份文件
+var _wrIdsCache = null;
+
 /**
- * NOTE: 加载 WR 数据
- * 只在第一次调用时 fetch，后续使用缓存
+ * NOTE: 同步初始化 — 仅创建空壳，不阻塞 UI
+ * 保持向后兼容：app.js 中 wrData.load().then(...) 仍然有效
  */
 export async function load() {
-    if (wrData) return;
+    // NOTE: 预加载 wr_ids.json — 同源请求，极快
+    if (!_wrIdsCache) {
+        try {
+            var resp = await fetch('/stats/wr_ids.json');
+            if (resp.ok) _wrIdsCache = await resp.json();
+        } catch (e) {
+            console.warn('wr_ids.json load failed:', e);
+        }
+    }
+}
+
+/**
+ * NOTE: 异步加载指定项目的世界排名数据（fire-and-forget）
+ * 1. 从 wr_ids.json 获取 WCA ID + WR 值（同源静态文件，秒级）
+ * 2. fetchUserTimes → 100 把 singles + ao100（WCA API，有 CORS 支持）
+ * @param {string} eventId - 项目 ID
+ * @param {Function} onReady - 数据就绪后的回调，参数为 players 数组
+ */
+export async function loadDefaults(eventId, onReady) {
+    // NOTE: 已有缓存直接回调（传递缓存的选手信息）
+    if (wrData[eventId] && wrData[eventId]._loaded) {
+        if (onReady) onReady(wrData[eventId]._players || []);
+        return;
+    }
+
+    var ids = _wrIdsCache && _wrIdsCache[eventId];
+    if (!ids) {
+        // NOTE: 该项目没有 WR 数据（如 333mbf）
+        if (onReady) onReady([]);
+        return;
+    }
+
+    wrData[eventId] = wrData[eventId] || {};
+
+    // NOTE: 存储 WR 值（用于 isWR / getWR / getAvgWR12）
+    if (ids.single) wrData[eventId].single = ids.single;
+    if (ids.avg_1) wrData[eventId].average = ids.avg_1;
+    if (ids.avg_2) wrData[eventId].average_2 = ids.avg_2;
+
     try {
-        var resp = await fetch('data/wr.json');
-        wrData = await resp.json();
+        // NOTE: 并行加载前 2 名选手的 100 把 singles（WCA API，有 CORS 支持）
+        var wcaIds = [ids.avg_id_1, ids.avg_id_2].filter(Boolean);
+        var timesPromises = wcaIds.map(function (id) {
+            return WcaSearch.fetchUserTimes(id, eventId);
+        });
+        var timesResults = await Promise.all(timesPromises);
+
+        // NOTE: 存入 wrData 缓存 + 设置 playerOverride
+        var players = [];
+        for (var i = 0; i < timesResults.length; i++) {
+            var d = timesResults[i];
+            if (d) {
+                var suffix = i === 0 ? '1' : '2';
+                wrData[eventId]['ao100_' + suffix] = d.ao100;
+                wrData[eventId]['times_' + suffix] = d.times;
+                // NOTE: 用选手真实 averagePR 覆盖 wr_ids 中的值（更准确）
+                if (d.averagePR) {
+                    if (i === 0) wrData[eventId].average = d.averagePR;
+                    else wrData[eventId].average_2 = d.averagePR;
+                }
+                setPlayerOverride(i, d);
+                players.push({
+                    name: d.name,
+                    country: d.country,
+                    wca_id: wcaIds[i]
+                });
+            } else {
+                players.push(null);
+            }
+        }
+
+        wrData[eventId]._loaded = true;
+        wrData[eventId]._players = players;
+        if (onReady) onReady(players);
     } catch (e) {
-        console.warn('WR data load failed:', e);
-        wrData = wrData || {};
+        console.warn('loadDefaults failed for', eventId, e);
+        // NOTE: 即使 API 失败，WR 值已从 wr_ids.json 加载，isWR 仍可用
+        wrData[eventId]._loaded = true;
+        if (onReady) onReady([]);
     }
 }
 
@@ -60,7 +135,7 @@ export async function load() {
  * @returns {boolean} value ≤ WR 则返回 true
  */
 export function isWR(eventId, metric, value) {
-    if (!wrData || !wrData[eventId]) return false;
+    if (!wrData[eventId]) return false;
     var wr = wrData[eventId][metric];
     if (wr === undefined || wr <= 0) return false;
     // NOTE: ≤ 而非 < — 平 WR 也算
@@ -72,7 +147,7 @@ export function isWR(eventId, metric, value) {
  * @returns {number|null} centiseconds，无数据返回 null
  */
 export function getWR(eventId, metric) {
-    if (!wrData || !wrData[eventId]) return null;
+    if (!wrData[eventId]) return null;
     return wrData[eventId][metric] || null;
 }
 
@@ -81,7 +156,7 @@ export function getWR(eventId, metric) {
  * @returns {[number, number]|null} [average_1, average_2] centiseconds，无数据返回 null
  */
 export function getAvgWR12(eventId) {
-    if (!wrData || !wrData[eventId]) return null;
+    if (!wrData[eventId]) return null;
     var a1 = wrData[eventId]['average'];
     var a2 = wrData[eventId]['average_2'];
     if (!a1 || !a2) return null;
@@ -95,9 +170,9 @@ export function getAvgWR12(eventId) {
 export function getAo100(eventId) {
     // NOTE: 支持混合源 — 每个 player 独立判断 override
     var a1 = playerOverride[0] ? playerOverride[0].ao100
-        : (wrData && wrData[eventId] ? wrData[eventId]['ao100_1'] : null);
+        : (wrData[eventId] ? wrData[eventId]['ao100_1'] : null);
     var a2 = playerOverride[1] ? playerOverride[1].ao100
-        : (wrData && wrData[eventId] ? wrData[eventId]['ao100_2'] : null);
+        : (wrData[eventId] ? wrData[eventId]['ao100_2'] : null);
     if (!a1 || !a2) return null;
     return [a1, a2];
 }
@@ -110,7 +185,7 @@ var bandwidthCache = {};
 // key = "eventId_playerIdx"，value = { cumWeights: Float64Array, total: number }
 var decayCache = {};
 
-// NOTE: 衰减因子 — λ=0.97 时，第 30 把权重 ≈ 40%，第 100 把权重 ≈ 5%
+// NOTE: 衰减因子 — λ=1 即均匀采样
 var DECAY_LAMBDA = 1;
 
 export function sampleKDE(eventId, playerIdx) {
@@ -120,7 +195,7 @@ export function sampleKDE(eventId, playerIdx) {
     if (playerOverride[playerIdx]) {
         times = playerOverride[playerIdx].times;
         useDecay = true; // NOTE: 个人数据按时间倒序排列，可用衰减加权
-    } else if (wrData && wrData[eventId]) {
+    } else if (wrData[eventId]) {
         times = wrData[eventId][playerIdx === 0 ? 'times_1' : 'times_2'];
     }
     if (!times || times.length < 10) return null;
@@ -177,4 +252,3 @@ export function sampleKDE(eventId, playerIdx) {
     var result = Math.round(baseTime + h * z);
     return Math.max(30, result); // NOTE: 下限 0.30s，避免极端采样产生不合理成绩
 }
-

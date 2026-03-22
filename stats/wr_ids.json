@@ -1,0 +1,137 @@
+{
+  "333": {
+    "avg_id_1": "2023GENG02",
+    "avg_1": 384,
+    "avg_id_2": "2019WANY36",
+    "avg_2": 390,
+    "single": 276
+  },
+  "222": {
+    "avg_id_1": "2016FEIS01",
+    "avg_1": 86,
+    "avg_id_2": "2019WANY36",
+    "avg_2": 87,
+    "single": 39
+  },
+  "444": {
+    "avg_id_1": "2016KOLA02",
+    "avg_1": 1856,
+    "avg_id_2": "2012PARK03",
+    "avg_2": 1874,
+    "single": 1518
+  },
+  "555": {
+    "avg_id_1": "2016KOLA02",
+    "avg_1": 3431,
+    "avg_id_2": "2012PARK03",
+    "avg_2": 3476,
+    "single": 3045
+  },
+  "666": {
+    "avg_id_1": "2012PARK03",
+    "avg_1": 6504,
+    "avg_id_2": "2013NAHM01",
+    "avg_2": 6646,
+    "single": 5769
+  },
+  "777": {
+    "avg_id_1": "2012PARK03",
+    "avg_1": 9686,
+    "avg_id_2": "2013NAHM01",
+    "avg_2": 10096,
+    "single": 9348
+  },
+  "333bf": {
+    "avg_id_1": "2015CHER07",
+    "avg_1": 1405,
+    "avg_id_2": "2019EGGI02",
+    "avg_2": 1405,
+    "single": 1167
+  },
+  "333fm": {
+    "avg_id_1": "2020BARA02",
+    "avg_1": 1967,
+    "avg_id_2": "2013BROW04",
+    "avg_2": 2000,
+    "single": 1600
+  },
+  "333oh": {
+    "avg_id_1": "2017GARR05",
+    "avg_1": 772,
+    "avg_id_2": "2012PARK03",
+    "avg_2": 794,
+    "single": 566
+  },
+  "minx": {
+    "avg_id_1": "2019TARA09",
+    "avg_1": 2438,
+    "avg_id_2": "2016WUZI04",
+    "avg_2": 2476,
+    "single": 2199
+  },
+  "pyram": {
+    "avg_id_1": "2019JIAN54",
+    "avg_1": 114,
+    "avg_id_2": "2021LEES01",
+    "avg_2": 115,
+    "single": 73
+  },
+  "clock": {
+    "avg_id_1": "2021DUNA01",
+    "avg_1": 224,
+    "avg_id_2": "2022GIBS04",
+    "avg_2": 226,
+    "single": 153
+  },
+  "skewb": {
+    "avg_id_1": "2022SAMS03",
+    "avg_1": 137,
+    "avg_id_2": "2015KUCA01",
+    "avg_2": 152,
+    "single": 73
+  },
+  "sq1": {
+    "avg_id_1": "2017AGGA01",
+    "avg_1": 463,
+    "avg_id_2": "2018KHAN26",
+    "avg_2": 480,
+    "single": 340
+  },
+  "444bf": {
+    "avg_id_1": "2016CHAP04",
+    "avg_1": 5939,
+    "avg_id_2": "2013LINK01",
+    "avg_2": 8008,
+    "single": 5196
+  },
+  "555bf": {
+    "avg_id_1": "2016CHAP04",
+    "avg_1": 14763,
+    "avg_id_2": "2013LINK01",
+    "avg_2": 16917,
+    "single": 11859
+  },
+  "333ft": {
+    "avg_id_1": "2016HUNG08",
+    "avg_1": 1990,
+    "avg_id_2": "2015ROSE01",
+    "avg_2": 2058,
+    "single": 1556
+  },
+  "magic": {
+    "avg_id_1": "2009WANG13",
+    "avg_1": 76,
+    "avg_id_2": "2009DICK01",
+    "avg_2": 82,
+    "single": 69
+  },
+  "mmagic": {
+    "avg_id_1": "2010PULC01",
+    "avg_1": 175,
+    "avg_id_2": "2010WANG52",
+    "avg_2": 193,
+    "single": 166
+  },
+  "333mbf": {},
+  "333mbo": {}
+}

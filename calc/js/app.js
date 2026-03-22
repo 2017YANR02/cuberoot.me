@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
     inputGrid.init(document.getElementById('input-grid-container'));
     calcTable.init();
     wrData.load().then(function () {
-        initTargetDefaults();
+        // NOTE: UI 立即就绪（无数据时 Target 空、slider 显示 N/A）
         updateProgressInfo(0, 0);
         updateProgressInfo(1, 0);
         notify();
@@ -80,6 +80,25 @@ document.addEventListener('DOMContentLoaded', () => {
             var user = WcaAuth.getUser();
             if (user && user.avatar) inputGrid.setMeAvatarUrl(user.avatar);
         }
+        // NOTE: 异步加载世界排名数据（fire-and-forget） — 完成后刷新 Target + slider + 头像
+        wrData.loadDefaults(state.event, function (players) {
+            initTargetDefaults();
+            updateProgressInfo(0, 0);
+            updateProgressInfo(1, 0);
+            notify();
+            // NOTE: 加载世界前 2 选手头像 — 已登录用户的 reloadActiveOverrides 会后续覆盖 Row A
+            if (players) {
+                players.forEach(function (p, i) {
+                    if (!p) return;
+                    wcaApi.fetchPersonAvatar(p.wca_id).then(function (url) {
+                        // NOTE: 竞态保护 — 如果用户已手动加载选手，不覆盖
+                        if (wrData.getPlayerOverride(i) && wrData.getPlayerOverride(i).name === p.name) {
+                            inputGrid.setMeButtonState(i, true, null, url || '');
+                        }
+                    });
+                });
+            }
+        });
     });
 
     // NOTE: 异步重载已登录用户的个人数据 — 切换项目后自动激活 Row A
@@ -132,9 +151,25 @@ document.addEventListener('DOMContentLoaded', () => {
         resizeTimes(n);
         inputGrid.updateVisibleCells();
         clearTargetAvgs();
-        initTargetDefaults();
-        document.getElementById('rand-fill').click();
-        // NOTE: 立即刷新进度条 info 文字 — 用新项目的 KDE μ 重算
+        // NOTE: 异步加载新项目的世界排名数据 — 数据就绪后填 Target + rand-fill + 头像
+        wrData.loadDefaults(eventId, function (players) {
+            initTargetDefaults();
+            document.getElementById('rand-fill').click();
+            updateProgressInfo(0, playerProgress[0]);
+            updateProgressInfo(1, playerProgress[1]);
+            // NOTE: 加载世界前 2 选手头像
+            if (players) {
+                players.forEach(function (p, i) {
+                    if (!p) return;
+                    wcaApi.fetchPersonAvatar(p.wca_id).then(function (url) {
+                        if (wrData.getPlayerOverride(i) && wrData.getPlayerOverride(i).name === p.name) {
+                            inputGrid.setMeButtonState(i, true, null, url || '');
+                        }
+                    });
+                });
+            }
+        });
+        // NOTE: 立即刷新进度条 info 文字（数据未到时显示 N/A）
         updateProgressInfo(0, playerProgress[0]);
         updateProgressInfo(1, playerProgress[1]);
         // NOTE: 异步重载个人数据（fire-and-forget）— 完成后覆盖 Target + 重新 rand-fill
