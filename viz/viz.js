@@ -1378,6 +1378,8 @@ function drawFrameLine(mt, mr, mb, ml, pw, ph) {
   }
 
   // 6. 更新 DOM 统计面板（仍用滑窗数据）
+  // NOTE: progress 必须在此声明 — drawFrame 的 progress 变量在 return 之后，不在此作用域
+  const progress = maxFrame > 0 ? currentFrame / maxFrame : 0;
   if (ap) {
     const apFrame = computePlayerFrame(activePlayerIdx, progress);
     const apTimes = getWindowTimes(activePlayerIdx, apFrame);
