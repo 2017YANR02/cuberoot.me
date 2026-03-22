@@ -4,7 +4,7 @@
  * PLL: 按首字母分组，使用 scrambleForCase 生成缩略图打乱
  * OLL: 按形状分组，使用公式反转生成缩略图打乱
  */
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import CubeView from '../components/CubeView';
 import { scrambleForCase, inverseScramble } from '../utils/scrambleGenerator';
@@ -152,7 +152,6 @@ export function CaseSelectPage() {
             <h3 className="group-title">{groupName}</h3>
             <div className="case-grid">
               {cases.map((caseName) => {
-                const thumbScramble = config.getScramble(caseName);
                 const isSelected = selected.has(caseName);
                 // OLL 显示短名（"OLL 1" → "1"），PLL 显示全名
                 const displayName = caseName.startsWith('OLL ') ? caseName.slice(4) : caseName;
@@ -163,7 +162,17 @@ export function CaseSelectPage() {
                     style={{ flexDirection: 'column', gap: '4px' }}
                     onClick={() => toggleCase(caseName)}
                   >
-                    <CubeView scramble={thumbScramble} viewType="cube-top" size={60} />
+                    {algSetId === 'oll' ? (
+                      // NOTE: OLL 使用原版 2D 顶面朝向 SVG 图片（从 bestsiteever/oll/pic/ 复制）
+                      <img
+                        src={`${import.meta.env.BASE_URL}oll_pic/${displayName}.svg`}
+                        alt={caseName}
+                        width={60}
+                        height={60}
+                      />
+                    ) : (
+                      <CubeView scramble={config.getScramble(caseName)} viewType="cube-top" size={60} />
+                    )}
                     <span className="case-name">{displayName}</span>
                   </div>
                 );
