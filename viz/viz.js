@@ -81,7 +81,8 @@ let driverIdx = 0;  // NOTE: 帧驱动选手索引（channelData 最长者，自
 let syncMode = 'solve';  // NOTE: 'solve' = 按把数比例，'date' = 按日期同步
 
 // NOTE: 图层显隐控制（药丸开关）
-const showLayers = { currentVal: true, meanLine: true, ghost: true, trail: true, bimodal: true, followMean: false };
+// NOTE: 默认隐藏当前值和均值竖线，减少视觉噪音
+const showLayers = { currentVal: false, meanLine: false, ghost: true, trail: true, bimodal: true, followMean: false };
 
 // NOTE: 折线图 hover 状态（像素坐标，null 表示鼠标不在画布上）
 let _lineHoverX = null;
@@ -430,7 +431,9 @@ function buildChannelDataForPlayer(player) {
     player.channelData = player.solveData;
     return;
   }
-  const arr = player.statsData[dataMode];
+  // NOTE: Round Metrics 的 key 从 roundMetrics 取，Rolling Stats 从 statsData 取
+  const isRound = player.roundMetrics && player.roundMetrics[dataMode] !== undefined;
+  const arr = isRound ? player.roundMetrics[dataMode] : player.statsData[dataMode];
   if (!arr) return;
   for (let i = 0; i < arr.length; i++) {
     if (arr[i] !== null) {
@@ -698,6 +701,19 @@ function getFrameCompInfo(playerIdx, frame) {
 }
 
 // ─── 工具函数 ───
+
+/**
+ * NOTE: 自适应刻度步长选择
+ * 从 [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, ...] 序列中
+ * 选择最接近 rawStep 的"美观"步长
+ */
+function pickNiceStep(rawStep) {
+  const mag = Math.pow(10, Math.floor(Math.log10(rawStep)));
+  const r = rawStep / mag;  // r 在 [1, 10) 区间
+  const nice = r <= 1.5 ? 1 : r <= 3.5 ? 2 : r <= 7.5 ? 5 : 10;
+  return nice * mag;
+}
+
 function mean(arr) {
   return arr.reduce((a, b) => a + b, 0) / arr.length;
 }
@@ -896,7 +912,7 @@ function drawLineGrid(lsx, lsy, ml, mt, pw, ph, yMin, yMax, totalSolves) {
   for (let y = yStart; y <= yMax; y += yStep) {
     const label = isFMC() || isMBLD()
       ? Math.round(y) + ''
-      : (yStep >= 1 ? Math.round(y) + 's' : y.toFixed(1) + 's');
+      : (yStep >= 1 ? Math.round(y) + '' : y.toFixed(1));
     ctx.fillText(label, ml - 6, lsy(y));
   }
 
@@ -926,7 +942,7 @@ function drawLineGrid(lsx, lsy, ml, mt, pw, ph, yMin, yMax, totalSolves) {
   ctx.fillStyle = 'rgba(255,255,255,0.2)';
   ctx.font = '11px Inter, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText(isFMC() ? 'Moves' : isMBLD() ? 'Score (pts)' : 'Solve time', 0, 0);
+  ctx.fillText(isFMC() ? 'Moves' : isMBLD() ? 'Score (pts)' : 'Solve time (s)', 0, 0);
   ctx.restore();
 
   ctx.fillStyle = 'rgba(255,255,255,0.2)';
@@ -1345,13 +1361,11 @@ function drawFrame() {
 function drawGrid(sx, sy, ml, mt, pw, ph) {
   ctx.save();
 
-  // NOTE: 动态刻度间距 — 目标 5~8 个刻度
+  // NOTE: 自适应刻度间距 — 目标 5~10 个刻度
+  // 候选步长序列: 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, ...
   const range = xMax - xMin;
-  const rawStep = range / 6;
-  // niceStep: 从 [1, 2, 5, 10, 20, 50, ...] 中选最近的
-  const mag = Math.pow(10, Math.floor(Math.log10(rawStep)));
-  const residual = rawStep / mag;
-  const niceStep = residual <= 1.5 ? mag : residual <= 3.5 ? 2 * mag : residual <= 7.5 ? 5 * mag : 10 * mag;
+  const rawStep = range / 8;
+  const niceStep = pickNiceStep(rawStep);
 
   const gridStart = Math.ceil(xMin / niceStep) * niceStep;
 
@@ -1366,17 +1380,16 @@ function drawGrid(sx, sy, ml, mt, pw, ph) {
     ctx.stroke();
   }
 
-  // X 轴标签
+  // X 轴标签（纯数字，单位放在轴标题）
   ctx.fillStyle = 'rgba(255,255,255,0.4)';
   ctx.font = '12px "JetBrains Mono", monospace';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
 
   for (let x = gridStart; x <= xMax; x += niceStep) {
-    // NOTE: 大数值用整数，小数值保留小数
     const label = isFMC() || isMBLD()
       ? Math.round(x) + ''
-      : (niceStep >= 1 ? Math.round(x) + 's' : x.toFixed(1) + 's');
+      : (niceStep >= 1 ? Math.round(x) + '' : x.toFixed(1));
     ctx.fillText(label, sx(x), mt + ph + 10);
   }
 
@@ -1401,7 +1414,7 @@ function drawGrid(sx, sy, ml, mt, pw, ph) {
   ctx.fillStyle = 'rgba(255,255,255,0.2)';
   ctx.font = '11px Inter, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText(isFMC() ? 'Moves' : isMBLD() ? 'Score (pts)' : 'Solve time', ml + pw / 2, mt + ph + 35);
+  ctx.fillText(isFMC() ? 'Moves' : isMBLD() ? 'Score (pts)' : 'Solve time (s)', ml + pw / 2, mt + ph + 35);
 
   ctx.restore();
 }
@@ -1934,9 +1947,16 @@ function recalcModeParams() {
   userXMin = null;
   userXMax = null;
 
+  // NOTE: Round Metrics 的 key 集合（用于判断窗口大小）
+  var ROUND_KEYS = { bao5:1, wao5:1, mo5:1, bpa:1, wpa:1, median:1, bestc:1, worstc:1, worst:1 };
+
   if (dataMode === 'singles') {
     windowSize = 100;
     minBandwidth = 0;
+  } else if (ROUND_KEYS[dataMode]) {
+    // NOTE: Round Metrics 数据点稀疏（~200 点），窗口调小
+    windowSize = 50;
+    minBandwidth = Math.max(0.15, (hi - lo) * 0.03);
   } else {
     windowSize = 400;
     minBandwidth = Math.max(0.15, (hi - lo) * 0.03);
