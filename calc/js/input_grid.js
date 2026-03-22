@@ -854,11 +854,12 @@ export function refresh() {
                 }
                 cells[p][t].value = display;
                 fitFont(cells[p][t]);
-                cells[p][t].style.display = '';
+                cells[p][t].parentElement.style.display = '';
             } else {
                 cells[p][t].value = '';
                 cells[p][t].style.fontSize = '';
-                cells[p][t].style.display = 'none';
+                // NOTE: 隐藏 wrapper 而非仅 input — 否则 flex 仍为不可见格留出空间（手机端空白 bug）
+                cells[p][t].parentElement.style.display = 'none';
             }
         }
         // Target Avg 格始终可见
@@ -918,7 +919,8 @@ export function updateVisibleCells() {
     var n = solveCount();
     for (var p = 0; p < 2; p++) {
         for (var t = 0; t < 5; t++) {
-            cells[p][t].style.display = (t < n) ? '' : 'none';
+            // NOTE: 隐藏 wrapper 而非仅 input — wrapper 参与 flex 布局，只隐藏 input 会留空白
+            cells[p][t].parentElement.style.display = (t < n) ? '' : 'none';
         }
         // tavg 始终可见
         tavgCells[p].style.display = '';
