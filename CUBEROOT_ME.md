@@ -15,6 +15,10 @@
 | **HTTPS** | ✅ 已启用（HSTS + QUIC/h3，SSL 由宝塔管理，Let's Encrypt 自动续签） |
 | **多语言** | Polylang 插件（中/英双语，`/zh/` 路径） |
 | **磁盘** | 40GB 总量，约 17GB 可用 |
+| **Node.js** | v24.14.0（通过 nvm 安装，路径 `~/.nvm/versions/node/v24.14.0/`） |
+| **npm** | v11.9.0 |
+| **pm2** | v6.0.14（进程守护，`pm2 startup` 已配置开机自启） |
+| **pnpm** | v10.32.1（monorepo 包管理器） |
 
 ## 国内镜像站 toolkit.cuberoot.me
 

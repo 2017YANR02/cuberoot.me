@@ -6,8 +6,9 @@ import path from 'path'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  // NOTE: 部署到 /trainer/ 子路径，所有静态资源引用都基于此前缀
-  base: '/trainer/',
+  // NOTE: 部署到 /trainer_app/ 子路径（CI build → commit 到 trainer_app/ 目录）
+  // 开发环境仍用 /trainer/（通过 dev server 的 base 覆盖无关）
+  base: '/trainer_app/',
   resolve: {
     alias: {
       // HACK: sr-puzzlegen-pll 的 package.json main 指向 dist/lib/index.js（只有 .d.ts 没有 .js）

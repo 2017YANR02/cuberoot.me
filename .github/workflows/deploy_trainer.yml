@@ -1,5 +1,6 @@
-# 训练器前端 + 后端部署
-# 仅当 trainer/ 目录有变更时触发
+# 训练器前端部署（GitHub Pages）
+# 仅当 trainer/ 源码有变更时触发
+# 构建 Vite 产物 → 提交到 trainer_app/ → GitHub Pages + deploy_mirror 自动 serve
 name: Deploy Trainer
 
 on:
@@ -7,6 +8,10 @@ on:
     branches: [main]
     paths:
       - 'trainer/**'
+      - '!trainer_app/**'
+
+permissions:
+  contents: write
 
 jobs:
   deploy:
@@ -34,38 +39,20 @@ jobs:
         working-directory: trainer
         run: pnpm --filter @cuberoot/client build
 
-      # 构建后端
-      - name: Build server
-        working-directory: trainer
-        run: pnpm --filter @cuberoot/server build
-
-      # 部署到 ECS
-      - name: Deploy via rsync
-        env:
-          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-          HOST: ${{ secrets.DEPLOY_HOST }}
-          USER: ${{ secrets.DEPLOY_USER }}
-          PATH_REMOTE: ${{ secrets.DEPLOY_PATH }}
+      # 将 dist/ 产物复制到仓库根目录的 trainer_app/
+      # Jekyll 不排除此目录，会直接当静态文件 serve
+      - name: Copy dist to trainer_app/
         run: |
-          mkdir -p ~/.ssh
-          echo "$SSH_KEY" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H "$HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          rm -rf trainer_app
+          cp -r trainer/packages/client/dist trainer_app
 
-          # 前端静态文件 → /trainer/ 子路径
-          rsync -rltz --delete --chmod=D755,F644 \
-            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
-            trainer/packages/client/dist/ \
-            "${USER}@${HOST}:${PATH_REMOTE}/trainer/"
-
-          # 后端代码 → trainer-api 目录
-          rsync -rltz --delete --chmod=D755,F644 \
-            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
-            trainer/packages/server/dist/ \
-            trainer/packages/server/package.json \
-            trainer/packages/server/node_modules/ \
-            "${USER}@${HOST}:/www/wwwroot/trainer-api/"
-
-          # 重启后端服务
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
-            "${USER}@${HOST}" "cd /www/wwwroot/trainer-api && pm2 restart trainer-api || pm2 start dist/index.js --name trainer-api"
+      # 提交并推送（deploy_mirror.yml 会自动同步到国内镜像）
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add trainer_app/
+          # 仅在有变化时才提交
+          git diff --cached --quiet || git commit -m "ci: rebuild trainer_app from trainer/ [skip ci]"
+          git pull --rebase origin main
+          git push
