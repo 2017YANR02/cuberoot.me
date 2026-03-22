@@ -241,7 +241,7 @@ class WrNewcomer < GroupedStatistic
         .each_with_index.map do |r, i|
           result_str = SolveTime.new(event_id, metric[:type], r["first_result"]).clock_format
           date_str = fmt_date(r["start_date"])
-          details = (r["attempts"] || "").split(",").map { |v| SolveTime.new(event_id, :single, v.to_i).clock_format }.reject(&:empty?).join(', ')
+          details = (r["attempts"] || "").split(",").map { |v| SolveTime.new(event_id, :single, v.to_i).clock_format }.reject(&:empty?).join(' ')
           [i + 1, r["person_link"], result_str, r["country_id"], date_str, r["competition_link"], details]
         end
       [event_name, event_rows]
