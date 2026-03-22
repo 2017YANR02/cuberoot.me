@@ -1669,6 +1669,14 @@ function setupControls() {
       document.querySelectorAll('.view-btn[data-view]').forEach(b => b.classList.remove('active'));
       e.target.classList.add('active');
       viewMode = e.target.dataset.view;
+      // NOTE: 折线模式下隐藏分布全景（ridgeline 对折线无意义）
+      var ridgeSection = document.querySelector('.section-divider');
+      var ridgeTitle = document.querySelector('.section-title');
+      var ridgeWrapper = document.querySelector('.ridgeline-wrapper');
+      var hidden = viewMode === 'line' ? 'none' : '';
+      if (ridgeSection) ridgeSection.style.display = hidden;
+      if (ridgeTitle) ridgeTitle.style.display = hidden;
+      if (ridgeWrapper) ridgeWrapper.style.display = hidden;
       drawFrame();
     });
   });
