@@ -97,6 +97,12 @@ export async function loadDefaults(eventId, onReady) {
         for (var i = 0; i < timesResults.length; i++) {
             var d = timesResults[i];
             if (d) {
+                // NOTE: FMC 的 WCA API 返回原始步数（26），
+                // 但 calc 内部用 步数×100（2600）。这里对齐格式。
+                if (eventId === '333fm') {
+                    d.times = d.times.map(function (v) { return v * 100; });
+                    d.ao100 = d.ao100 * 100;
+                }
                 var suffix = i === 0 ? '1' : '2';
                 wrData[eventId]['ao100_' + suffix] = d.ao100;
                 wrData[eventId]['times_' + suffix] = d.times;
