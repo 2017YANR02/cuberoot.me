@@ -6,23 +6,26 @@
  * - 计时模式：显示打乱 → 空格/触摸启停计时器
  */
 import { useEffect, useCallback, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import CubeView from '../components/CubeView';
 import OnScreenKeyboard from '../components/OnScreenKeyboard';
 import { useSessionStore } from '../stores/sessionStore';
-import { scrambleForCase } from '../utils/scrambleGenerator';
+import { scrambleForCase, inverseScramble } from '../utils/scrambleGenerator';
 import {
   isPllLetter,
   isSingleLetterPll,
   isTwoLetterPllPrefix,
   validPllSuffixes,
   isHelpKey,
-
 } from '../utils/pllHelpers';
 import pllMap from '@cuberoot/shared/data/pll.json';
+import ollMap from '@cuberoot/shared/data/oll.json';
+
+const typedOllMap = ollMap as Record<string, { name: string; alg: string; alg2: string; group: string }>;
 
 export function TrainingPage() {
   const navigate = useNavigate();
+  const { algSetId } = useParams<{ algSetId: string }>();
 
   const gameState = useSessionStore((s) => s.gameState);
   const trainMode = useSessionStore((s) => s.trainMode);
@@ -48,10 +51,15 @@ export function TrainingPage() {
   const completed = results.length;
   const progressPercent = totalCases > 0 ? (completed / totalCases) * 100 : 0;
 
-  // NOTE: 使用 sr-puzzlegen 格式生成打乱
+  // NOTE: PLL 用 scrambleForCase，OLL 用公式反转
   const scramble = currentCase
-    ? scrambleForCase(currentCase, pllMap as Record<string, Record<string, string>>)
+    ? algSetId === 'oll'
+      ? inverseScramble(typedOllMap[currentCase.name]?.alg || '')
+      : scrambleForCase(currentCase, pllMap as Record<string, Record<string, string>>)
     : '';
+
+  // OLL case 编号（"OLL 1" → "1"）
+  const ollNumber = currentCase?.name.startsWith('OLL ') ? currentCase.name.slice(4) : '';
 
   // 初始化
   useEffect(() => {
@@ -236,11 +244,22 @@ export function TrainingPage() {
 
       {/* 魔方图 */}
       <div style={{ margin: '1rem 0' }}>
-        <CubeView
-          scramble={scramble}
-          viewType={mistake ? 'cube-pll' : 'cube'}
-          size={350}
-        />
+        {algSetId === 'oll' ? (
+          // NOTE: OLL 使用原版 2D 顶面朝向 SVG 图片
+          <img
+            src={`${import.meta.env.BASE_URL}oll_pic/${ollNumber}.svg`}
+            alt={currentCase?.name}
+            width={200}
+            height={200}
+            style={{ filter: gameState === 'paused' ? 'brightness(0.15)' : 'none' }}
+          />
+        ) : (
+          <CubeView
+            scramble={scramble}
+            viewType={mistake ? 'cube-pll' : 'cube'}
+            size={350}
+          />
+        )}
       </div>
 
       {/* 提示文字 */}
