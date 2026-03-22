@@ -1234,7 +1234,9 @@ function drawFrameLine(mt, mr, mb, ml, pw, ph) {
         const py = lsy(apData.times[i]);
         // NOTE: 可见范围外的点跳过
         if (px < ml - 5 || px > ml + pw + 5) continue;
-        ctx.fillStyle = 'rgba(230, 50, 50, 0.85)';
+        // NOTE: progressIdx 之后（未到达）的 PB 点显示为淡色
+        const isFuture = progressIdx >= 0 && i > progressIdx;
+        ctx.fillStyle = isFuture ? 'rgba(230, 50, 50, 0.22)' : 'rgba(230, 50, 50, 0.85)';
         ctx.beginPath();
         ctx.arc(px, py, 3, 0, Math.PI * 2);
         ctx.fill();
