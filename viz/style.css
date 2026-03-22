@@ -493,12 +493,15 @@ kbd {
     display: none;
   }
   .toolbar {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    gap: 4px;
+    padding: 6px 8px;
   }
-  /* NOTE: 手机端搜索框限宽，防止 CSV 按钮换行 */
+  /* NOTE: 手机端搜索框自适应收缩，确保整行不换行 */
   .toolbar-search {
-    min-width: 60px;
-    max-width: 120px;
+    flex: 1;
+    min-width: 0;
+    max-width: none;
   }
   /* NOTE: 手机端第二行模式按钮默认收起 */
   .mode-row-round {

@@ -2071,22 +2071,23 @@ function setupControls() {
     });
   }
 
-  // NOTE: 全屏按钮 — 对 canvas-wrapper 使用 Fullscreen API
+  // NOTE: 全屏按钮 — 兼容 webkit 前缀（iOS Safari 等）
   const fsBtn = document.getElementById('fullscreenBtn');
   const canvasWrap = document.querySelector('.canvas-wrapper');
   if (fsBtn && canvasWrap) {
+    const reqFS = canvasWrap.requestFullscreen || canvasWrap.webkitRequestFullscreen;
+    const exitFS = () => (document.exitFullscreen || document.webkitExitFullscreen || (() => {})).call(document);
+    const getFS = () => document.fullscreenElement || document.webkitFullscreenElement;
     fsBtn.addEventListener('click', () => {
-      if (!document.fullscreenElement) {
-        canvasWrap.requestFullscreen().catch(() => {});
+      if (!getFS()) {
+        if (reqFS) reqFS.call(canvasWrap);
       } else {
-        document.exitFullscreen();
+        exitFS();
       }
     });
-    document.addEventListener('fullscreenchange', () => {
-      // NOTE: 全屏后需要重新计算 canvas 尺寸并重绘
-      setupCanvas();
-      drawFrame();
-    });
+    const onFSChange = () => { setupCanvas(); drawFrame(); };
+    document.addEventListener('fullscreenchange', onFSChange);
+    document.addEventListener('webkitfullscreenchange', onFSChange);
   }
 
   // 键盘快捷键
