@@ -2017,7 +2017,8 @@ function recalcModeParams() {
 
   // NOTE: maxFrame 基于 driver 的 solve 数（大量帧 = 丝滑）
   maxFrame = Math.max(0, maxLen - windowSize);
-  currentFrame = 0;
+  // NOTE: 默认显示最新成绩（拉到末尾）
+  currentFrame = maxFrame;
 
   // 为每位选手预计算 ghostKDE + ghostMean
   globalMaxY = 0;
