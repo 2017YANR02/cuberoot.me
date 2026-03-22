@@ -1496,8 +1496,23 @@ function drawFrameCumHist(mt, mr, mb, ml, pw, ph) {
   }
   ctx.restore();
 
-  // 3. 均值线
+  // 2.5 叠加 KDE 曲线（density 缩放到频次空间）
   const cumMean = mean(cumTimes);
+  const kde = computeKDE(cumTimes);
+  if (kde && kde.length > 0) {
+    // NOTE: 将 KDE density 转换为 count 空间：count = density × n × binWidth
+    const binWidth = bins[0].xEnd - bins[0].xStart;
+    const n = cumTimes.length;
+    const scaleFactor = n * binWidth;
+    // 用单独的 syKDE 映射，把 density 缩放后映射到同一 Y 轴
+    const syKDE = y => mt + ph - ((y * scaleFactor) / maxCount) * ph;
+    drawCurve(kde, sx, syKDE, {
+      fill: getShiftedHSL(activePlayerIdx, 0.08, cumMean),
+      stroke: getShiftedHSL(activePlayerIdx, 0.7, cumMean),
+      lineWidth: 2
+    });
+  }
+  // 3. 均值线
   drawMeanLine(sx, sy, mt, ph, cumMean,
     getShiftedHSL(activePlayerIdx, 0.5, cumMean), false);
 
