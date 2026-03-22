@@ -131,10 +131,10 @@ class ConsecutiveSub5Average < Statistic
     # NOTE: 使用 top() 统一输出标题/Note/日期，自动带 data-i18n-* 翻译属性
     md = top
     # NOTE: tab 按钮由 JS 根据 data-label-* 自动生成，无需 Ruby 输出
-    md += "<div id=\"ranking\" class=\"stat-panel active\" data-label-en=\"Current Ranking\" data-label-zh=\"排名\">\n"
+    md += "<div id=\"ranking\" class=\"stat-panel active\" data-label-en=\"Ranking\" data-label-zh=\"排名\">\n"
     md += ranking_table(ranking)
     md += "</div>\n"
-    md += "<div id=\"history\" class=\"stat-panel\" data-label-en=\"WR History\" data-label-zh=\"历史\">\n"
+    md += "<div id=\"history\" class=\"stat-panel\" data-label-en=\"History\" data-label-zh=\"历史\">\n"
     md += history_table(wr_history)
     md += "</div>\n"
     md

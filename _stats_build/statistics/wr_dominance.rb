@@ -66,17 +66,17 @@ class WrDominance < Statistic
     # NOTE: Single 面板——内含 Tab 双视图（排名 + 历史）
     md += "<div class=\"metric-panel active\" id=\"metric-single\" data-label-en=\"Single\" data-label-zh=\"单次\">\n"
     md += grouped_panel("single-ranking", true, data[:single][:ranking].to_h, RANKING_HEADER,
-                        label_en: "Current Ranking", label_zh: "排名")
+                        label_en: "Ranking", label_zh: "排名")
     md += grouped_panel("single-history", false, data[:single][:history].to_h, HISTORY_HEADER,
-                        label_en: "WR History", label_zh: "历史")
+                        label_en: "History", label_zh: "历史")
     md += "</div>\n"
 
     # NOTE: Average 面板
     md += "<div class=\"metric-panel\" id=\"metric-average\" data-label-en=\"Average\" data-label-zh=\"平均\">\n"
     md += grouped_panel("average-ranking", true, data[:average][:ranking].to_h, RANKING_HEADER,
-                        label_en: "Current Ranking", label_zh: "排名")
+                        label_en: "Ranking", label_zh: "排名")
     md += grouped_panel("average-history", false, data[:average][:history].to_h, HISTORY_HEADER,
-                        label_en: "WR History", label_zh: "历史")
+                        label_en: "History", label_zh: "历史")
     md += "</div>\n"
 
     md += metric_tab_wrap_end

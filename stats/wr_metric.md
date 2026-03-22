@@ -34,7 +34,7 @@
   </div>
 </div>
 <div class="metric-panel active" id="metric-single" data-label-en="Single">
-<div id="single-ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
+<div id="single-ranking" class="stat-panel active" data-label-en="Ranking" data-label-zh="排名">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Result</th><th>Country</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -330,7 +330,7 @@
 <tr><td style="text-align:right">10</td><td><a href="https://www.worldcubeassociation.org/persons/2007GOTA01">Ángel de Jaén Gotarredona</a></td><td style="text-align:right">9/12 1:55:58</td><td>Spain</td><td>2008-12-19</td><td><a href="https://www.worldcubeassociation.org/competitions/Spain2008">Spanish Championship 2008</a></td><td>9/12 1:55:58</td></tr>
 </table>
 </div>
-<div id="single-history" class="stat-panel" data-label-en="WR History" data-label-zh="历史">
+<div id="single-history" class="stat-panel" data-label-en="History" data-label-zh="历史">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -1050,7 +1050,7 @@
 </div>
 </div>
 <div class="metric-panel" id="metric-average" data-label-en="Average">
-<div id="average-ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
+<div id="average-ranking" class="stat-panel active" data-label-en="Ranking" data-label-zh="排名">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Result</th><th>Country</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -1337,7 +1337,7 @@
 <tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2003CEAU01">Constantin Ceausu</a></td><td style="text-align:right">3/4 ?:??:??</td><td>Romania</td><td>2006-09-23</td><td><a href="https://www.worldcubeassociation.org/competitions/Euro2006">European Championship 2006</a></td></tr>
 </table>
 </div>
-<div id="average-history" class="stat-panel" data-label-en="WR History" data-label-zh="历史">
+<div id="average-history" class="stat-panel" data-label-en="History" data-label-zh="历史">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -2120,7 +2120,7 @@
 </div>
 </div>
 <div class="metric-panel" id="metric-bao5" data-label-en="BAo5">
-<div id="bao5-ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
+<div id="bao5-ranking" class="stat-panel active" data-label-en="Ranking" data-label-zh="排名">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Result</th><th>Country</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -2304,7 +2304,7 @@
 <tr><td style="text-align:right">10</td><td><a href="https://www.worldcubeassociation.org/persons/2010FUGU01">Guanda Fu (符冠达)</a></td><td style="text-align:right">1.94</td><td>USA</td><td>2011-02-13</td><td><a href="https://www.worldcubeassociation.org/competitions/XinXiangSpring2011">XinXiang Spring 2011</a></td><td>3.84, 3.91, 1.94, 1.93, 1.96</td></tr>
 </table>
 </div>
-<div id="bao5-history" class="stat-panel" data-label-en="WR History" data-label-zh="历史">
+<div id="bao5-history" class="stat-panel" data-label-en="History" data-label-zh="历史">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -2721,7 +2721,7 @@
 </div>
 </div>
 <div class="metric-panel" id="metric-wao5" data-label-en="WAo5">
-<div id="wao5-ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
+<div id="wao5-ranking" class="stat-panel active" data-label-en="Ranking" data-label-zh="排名">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Result</th><th>Country</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -2905,7 +2905,7 @@
 <tr><td style="text-align:right">10</td><td><a href="https://www.worldcubeassociation.org/persons/2009TANX01">Xiao Tan (谭啸)</a></td><td style="text-align:right">2.34</td><td>China</td><td>2010-05-09</td><td><a href="https://www.worldcubeassociation.org/competitions/BUAAOpen2010">BUAA Open 2010</a></td><td>2.38, 2.11, 2.43, 2.21, 2.02</td></tr>
 </table>
 </div>
-<div id="wao5-history" class="stat-panel" data-label-en="WR History" data-label-zh="历史">
+<div id="wao5-history" class="stat-panel" data-label-en="History" data-label-zh="历史">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -3270,7 +3270,7 @@
 </div>
 </div>
 <div class="metric-panel" id="metric-mo5" data-label-en="Mo5">
-<div id="mo5-ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
+<div id="mo5-ranking" class="stat-panel active" data-label-en="Ranking" data-label-zh="排名">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Result</th><th>Country</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -3454,7 +3454,7 @@
 <tr><td style="text-align:right">10</td><td><a href="https://www.worldcubeassociation.org/persons/2009TANX01">Xiao Tan (谭啸)</a></td><td style="text-align:right">2.23</td><td>China</td><td>2010-05-09</td><td><a href="https://www.worldcubeassociation.org/competitions/BUAAOpen2010">BUAA Open 2010</a></td><td>2.38, 2.11, 2.43, 2.21, 2.02</td></tr>
 </table>
 </div>
-<div id="mo5-history" class="stat-panel" data-label-en="WR History" data-label-zh="历史">
+<div id="mo5-history" class="stat-panel" data-label-en="History" data-label-zh="历史">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -3789,7 +3789,7 @@
 </div>
 </div>
 <div class="metric-panel" id="metric-bpa" data-label-en="BPA">
-<div id="bpa-ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
+<div id="bpa-ranking" class="stat-panel active" data-label-en="Ranking" data-label-zh="排名">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Result</th><th>Country</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -3973,7 +3973,7 @@
 <tr><td style="text-align:right">10</td><td><a href="https://www.worldcubeassociation.org/persons/2012FIED01">Kamil Fiedoruk</a></td><td style="text-align:right">1.98</td><td>Poland</td><td>2012-10-12</td><td><a href="https://www.worldcubeassociation.org/competitions/Euro2012">Euro 2012</a></td><td>1.88, 2.53, 1.93, 2.13, 1.75</td></tr>
 </table>
 </div>
-<div id="bpa-history" class="stat-panel" data-label-en="WR History" data-label-zh="历史">
+<div id="bpa-history" class="stat-panel" data-label-en="History" data-label-zh="历史">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -4383,7 +4383,7 @@
 </div>
 </div>
 <div class="metric-panel" id="metric-wpa" data-label-en="WPA">
-<div id="wpa-ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
+<div id="wpa-ranking" class="stat-panel active" data-label-en="Ranking" data-label-zh="排名">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Result</th><th>Country</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -4567,7 +4567,7 @@
 <tr><td style="text-align:right">10</td><td><a href="https://www.worldcubeassociation.org/persons/2007BODO01">Bertalan Bodor</a></td><td style="text-align:right">2.23</td><td>Hungary</td><td>2008-04-19</td><td><a href="https://www.worldcubeassociation.org/competitions/GermanOpen2008">German Open 2008</a></td><td>2.13, 2.22, 2.31, 2.15, DNF</td></tr>
 </table>
 </div>
-<div id="wpa-history" class="stat-panel" data-label-en="WR History" data-label-zh="历史">
+<div id="wpa-history" class="stat-panel" data-label-en="History" data-label-zh="历史">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -4948,7 +4948,7 @@
 </div>
 </div>
 <div class="metric-panel" id="metric-median" data-label-en="Median">
-<div id="median-ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
+<div id="median-ranking" class="stat-panel active" data-label-en="Ranking" data-label-zh="排名">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Result</th><th>Country</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -5132,7 +5132,7 @@
 <tr><td style="text-align:right">10</td><td><a href="https://www.worldcubeassociation.org/persons/2010XUEF01">Fei Xue (薛非)</a></td><td style="text-align:right">1.97</td><td>China</td><td>2011-04-23</td><td><a href="https://www.worldcubeassociation.org/competitions/BeijingSpring2011">Beijing Spring 2011</a></td><td>1.90, 2.33, 1.96, 1.97, 2.15</td></tr>
 </table>
 </div>
-<div id="median-history" class="stat-panel" data-label-en="WR History" data-label-zh="历史">
+<div id="median-history" class="stat-panel" data-label-en="History" data-label-zh="历史">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -5545,7 +5545,7 @@
 </div>
 </div>
 <div class="metric-panel" id="metric-bestc" data-label-en="Best Counting">
-<div id="bestc-ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
+<div id="bestc-ranking" class="stat-panel active" data-label-en="Ranking" data-label-zh="排名">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Result</th><th>Country</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -5729,7 +5729,7 @@
 <tr><td style="text-align:right">10</td><td><a href="https://www.worldcubeassociation.org/persons/2005BATI01">Milán Baticz</a></td><td style="text-align:right">1.91</td><td>Hungary</td><td>2011-10-29</td><td><a href="https://www.worldcubeassociation.org/competitions/DutchOpen2011">Dutch Open 2011</a></td><td>2.31, 1.90, 1.91, 2.11, 2.33</td></tr>
 </table>
 </div>
-<div id="bestc-history" class="stat-panel" data-label-en="WR History" data-label-zh="历史">
+<div id="bestc-history" class="stat-panel" data-label-en="History" data-label-zh="历史">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -6117,7 +6117,7 @@
 </div>
 </div>
 <div class="metric-panel" id="metric-worstc" data-label-en="Worst Counting">
-<div id="worstc-ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
+<div id="worstc-ranking" class="stat-panel active" data-label-en="Ranking" data-label-zh="排名">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Result</th><th>Country</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -6301,7 +6301,7 @@
 <tr><td style="text-align:right">10</td><td><a href="https://www.worldcubeassociation.org/persons/2012FIED01">Kamil Fiedoruk</a></td><td style="text-align:right">2.13</td><td>Poland</td><td>2012-10-12</td><td><a href="https://www.worldcubeassociation.org/competitions/Euro2012">Euro 2012</a></td><td>1.88, 2.53, 1.93, 2.13, 1.75</td></tr>
 </table>
 </div>
-<div id="worstc-history" class="stat-panel" data-label-en="WR History" data-label-zh="历史">
+<div id="worstc-history" class="stat-panel" data-label-en="History" data-label-zh="历史">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -6660,7 +6660,7 @@
 </div>
 </div>
 <div class="metric-panel" id="metric-worst" data-label-en="Worst">
-<div id="worst-ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
+<div id="worst-ranking" class="stat-panel active" data-label-en="Ranking" data-label-zh="排名">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Result</th><th>Country</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -6844,7 +6844,7 @@
 <tr><td style="text-align:right">10</td><td><a href="https://www.worldcubeassociation.org/persons/2010JIMO01">Mo Ji (季默)</a></td><td style="text-align:right">2.50</td><td>China</td><td>2012-08-05</td><td><a href="https://www.worldcubeassociation.org/competitions/HefeiSummer2012">Hefei Summer 2012</a></td><td>2.21, 2.22, 2.15, 2.50, 2.08</td></tr>
 </table>
 </div>
-<div id="worst-history" class="stat-panel" data-label-en="WR History" data-label-zh="历史">
+<div id="worst-history" class="stat-panel" data-label-en="History" data-label-zh="历史">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -7127,7 +7127,7 @@
 </div>
 </div>
 <div class="metric-panel" id="metric-variance" data-label-en="Variance">
-<div id="variance-ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
+<div id="variance-ranking" class="stat-panel active" data-label-en="Ranking" data-label-zh="排名">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Result</th><th>Country</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -7311,7 +7311,7 @@
 <tr><td style="text-align:right">10</td><td><a href="https://www.worldcubeassociation.org/persons/2009KASU01">Sanio Kasumovic</a></td><td style="text-align:right">0.010</td><td>Austria</td><td>2012-06-30</td><td><a href="https://www.worldcubeassociation.org/competitions/SilesiaOpen2012">Silesia Open 2012</a></td><td>2.38, 2.31, 2.46, 2.31, 2.19</td></tr>
 </table>
 </div>
-<div id="variance-history" class="stat-panel" data-label-en="WR History" data-label-zh="历史">
+<div id="variance-history" class="stat-panel" data-label-en="History" data-label-zh="历史">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -7448,7 +7448,7 @@
 </div>
 </div>
 <div class="metric-panel" id="metric-ratio" data-label-en="Best/Avg">
-<div id="ratio-ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
+<div id="ratio-ranking" class="stat-panel active" data-label-en="Ranking" data-label-zh="排名">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Result</th><th>Country</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -7632,7 +7632,7 @@
 <tr><td style="text-align:right">10</td><td><a href="https://www.worldcubeassociation.org/persons/2007LOGA01">Bryan Logan</a></td><td style="text-align:right">0.36</td><td>USA</td><td>2010-04-24</td><td><a href="https://www.worldcubeassociation.org/competitions/IowaOpen2010">Iowa Open 2010</a></td><td>56.25, 6.21, 26.99, 10.47, 14.06</td></tr>
 </table>
 </div>
-<div id="ratio-history" class="stat-panel" data-label-en="WR History" data-label-zh="历史">
+<div id="ratio-history" class="stat-panel" data-label-en="History" data-label-zh="历史">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Date</th><th>Competition</th><th>Details</th></tr>

@@ -4,7 +4,7 @@
 
 <div class="metric-tab-wrap">
 <div class="metric-panel active" id="metric-ao1r" data-label-en="Ao1R">
-<div id="ao1r-ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
+<div id="ao1r-ranking" class="stat-panel active" data-label-en="Ranking" data-label-zh="排名">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Result</th><th>Country</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -272,7 +272,7 @@
 <tr><td style="text-align:right">10</td><td><a href="https://www.worldcubeassociation.org/persons/2011NIAP02">Parsa Saeed Nia (پارسا سعیدنیا)</a></td><td style="text-align:right">2.20</td><td>Iran</td><td>2012-10-24</td><td><a href="https://www.worldcubeassociation.org/competitions/IranOpen2012">Iran Open 2012</a></td><td>2.20</td></tr>
 </table>
 </div>
-<div id="ao1r-history" class="stat-panel" data-label-en="WR History" data-label-zh="历史">
+<div id="ao1r-history" class="stat-panel" data-label-en="History" data-label-zh="历史">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -967,7 +967,7 @@
 </div>
 </div>
 <div class="metric-panel" id="metric-ao2r" data-label-en="Ao2R">
-<div id="ao2r-ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
+<div id="ao2r-ranking" class="stat-panel active" data-label-en="Ranking" data-label-zh="排名">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Result</th><th>Country</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -1228,7 +1228,7 @@
 <tr><td style="text-align:right">10</td><td><a href="https://www.worldcubeassociation.org/persons/2010KRYU01">Dmitry Kryuzban</a></td><td style="text-align:right">2.39</td><td>Russia</td><td>2012-10-12</td><td><a href="https://www.worldcubeassociation.org/competitions/Euro2012">Euro 2012</a></td><td>2.23, 2.55</td></tr>
 </table>
 </div>
-<div id="ao2r-history" class="stat-panel" data-label-en="WR History" data-label-zh="历史">
+<div id="ao2r-history" class="stat-panel" data-label-en="History" data-label-zh="历史">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -1902,7 +1902,7 @@
 </div>
 </div>
 <div class="metric-panel" id="metric-ao3r" data-label-en="Ao3R">
-<div id="ao3r-ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
+<div id="ao3r-ranking" class="stat-panel active" data-label-en="Ranking" data-label-zh="排名">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Result</th><th>Country</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -2142,7 +2142,7 @@
 <tr><td style="text-align:right">10</td><td><a href="https://www.worldcubeassociation.org/persons/2007MING01">Ming Gao (高鸣)</a></td><td style="text-align:right">2.73</td><td>China</td><td>2012-12-23</td><td><a href="https://www.worldcubeassociation.org/competitions/TianjinWinter2012">Tianjin Winter 2012</a></td><td>2.89, 2.61, 2.68</td></tr>
 </table>
 </div>
-<div id="ao3r-history" class="stat-panel" data-label-en="WR History" data-label-zh="历史">
+<div id="ao3r-history" class="stat-panel" data-label-en="History" data-label-zh="历史">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -2702,7 +2702,7 @@
 </div>
 </div>
 <div class="metric-panel" id="metric-ao4r" data-label-en="Ao4R">
-<div id="ao4r-ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
+<div id="ao4r-ranking" class="stat-panel active" data-label-en="Ranking" data-label-zh="排名">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Result</th><th>Country</th><th>Date</th><th>Competition</th><th>Details</th></tr>
@@ -2830,7 +2830,7 @@
 <tr><td style="text-align:right">10</td><td><a href="https://www.worldcubeassociation.org/persons/2016CHAP04">Stanley Chapel</a></td><td style="text-align:right">9.51</td><td>USA</td><td>2022-05-27</td><td><a href="https://www.worldcubeassociation.org/competitions/NortheastChampionship2022">Northeast Championship 2022</a></td><td>10.06, 9.06, 9.65, 9.26</td></tr>
 </table>
 </div>
-<div id="ao4r-history" class="stat-panel" data-label-en="WR History" data-label-zh="历史">
+<div id="ao4r-history" class="stat-panel" data-label-en="History" data-label-zh="历史">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">Result</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Date</th><th>Competition</th><th>Details</th></tr>

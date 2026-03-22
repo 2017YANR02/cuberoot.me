@@ -4,7 +4,7 @@
 
 <div class="metric-tab-wrap">
 <div class="metric-panel active" id="metric-single" data-label-en="Single" data-label-zh="单次">
-<div id="single-ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
+<div id="single-ranking" class="stat-panel active" data-label-en="Ranking" data-label-zh="排名">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Count</th><th>Date</th><th>Competition</th></tr>
@@ -106,7 +106,7 @@
 <tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2007HABE01">Tim Habermaas</a></td><td style="text-align:right">1</td><td>2009-01-10</td><td><a href="https://www.worldcubeassociation.org/competitions/AachenOpen2009">Aachen Open 2009</a></td></tr>
 </table>
 </div>
-<div id="single-history" class="stat-panel" data-label-en="WR History" data-label-zh="历史">
+<div id="single-history" class="stat-panel" data-label-en="History" data-label-zh="历史">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Start Date</th><th>Start Comp</th><th>Date</th><th>Competition</th></tr>
@@ -358,7 +358,7 @@
 </div>
 </div>
 <div class="metric-panel" id="metric-average" data-label-en="Average" data-label-zh="平均">
-<div id="average-ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
+<div id="average-ranking" class="stat-panel active" data-label-en="Ranking" data-label-zh="排名">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">#</th><th>Person</th><th style="text-align:right">Count</th><th>Date</th><th>Competition</th></tr>
@@ -450,7 +450,7 @@
 <tr><td style="text-align:right">1</td><td><a href="https://www.worldcubeassociation.org/persons/2010PULC01">Ernie Pulchny</a></td><td style="text-align:right">1</td><td>2012-12-15</td><td><a href="https://www.worldcubeassociation.org/competitions/LibertyScience2012">Liberty Science 2012</a></td></tr>
 </table>
 </div>
-<div id="average-history" class="stat-panel" data-label-en="WR History" data-label-zh="历史">
+<div id="average-history" class="stat-panel" data-label-en="History" data-label-zh="历史">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
 <tr><th style="text-align:right">Count</th><th style="text-align:right">Improvement</th><th style="text-align:right">Days</th><th>Person</th><th>Start Date</th><th>Start Comp</th><th>Date</th><th>Competition</th></tr>
