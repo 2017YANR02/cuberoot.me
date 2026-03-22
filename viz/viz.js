@@ -104,6 +104,8 @@ async function init() {
   setupCanvas();
   setupControls();
   setupModeSwitcher();
+  // NOTE: 后台预加载比赛国家数据，updateStats 中国旗展示依赖此缓存
+  WcaCompData.load();
 
   // ── 搜索框（inline 模式，嵌入 toolbar）──
   WcaPersonPicker.create(
@@ -1541,7 +1543,10 @@ function updateStats(times, currentMean, currentDate, apFrame) {
     syncLabel.textContent = '日期';
     syncValue.textContent = currentDate || '--';
   }
-  document.getElementById('statComp').textContent = formatCompName(compName);
+  // NOTE: 国旗需要 innerHTML；WcaCompData.getCountry 同步读缓存，首次加载前为空字符串（无国旗，降级为纯文本）
+  const compEl = document.getElementById('statComp');
+  const iso2 = WcaCompData.isLoaded() ? WcaCompData.getCountry(compName) : '';
+  compEl.innerHTML = (iso2 ? '<span class="fi fi-' + iso2 + '"></span> ' : '') + formatCompName(compName);
 
   const deltaEl = document.getElementById('statDelta');
   deltaEl.textContent = isFMC() || isMBLD()
