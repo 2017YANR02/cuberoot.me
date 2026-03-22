@@ -11,6 +11,7 @@ MERGED_INTO_METRIC = %w[
   wr_bao5 wr_wao5 wr_mo5 wr_bpa wr_wpa
   wr_median wr_best_counting wr_worst_counting wr_worst
   wr_variance wr_best_average_ratio
+  mbf_average
 ].freeze
 
 MERGED_INTO_AOXR = %w[wr_ao1r wr_ao2r wr_ao3r wr_ao4r].freeze
