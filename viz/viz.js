@@ -54,7 +54,7 @@ let currentEventId = '333';
 
 // NOTE: 7 种数据模式
 let dataMode = 'singles';
-let viewMode = 'kde';  // NOTE: 'kde' | 'histogram' | 'both' | 'line'
+let viewMode = 'kde';  // NOTE: 'kde' | 'histogram' | 'line' | 'cumHist'
 
 // NOTE: FMC 成绩是步数（整数），非厘秒
 function isFMC() { return currentEventId === '333fm'; }
@@ -1571,7 +1571,7 @@ function drawFrame() {
 
   // NOTE: 动态 Y 轴上限 — 直方图/叠加模式需要考虑 histogram density
   let frameMaxY = globalMaxY;
-  if (viewMode === 'histogram' || viewMode === 'both') {
+  if (viewMode === 'histogram') {
     const progress0 = maxFrame > 0 ? currentFrame / maxFrame : 0;
     for (let pi = 0; pi < players.length; pi++) {
       const pf = computePlayerFrame(pi, progress0);
@@ -1664,12 +1664,12 @@ function drawFrame() {
     }
 
     // NOTE: 根据 viewMode 绘制直方图和/或 KDE
-    if (viewMode === 'histogram' || viewMode === 'both') {
+    if (viewMode === 'histogram') {
       const bins = computeHistogram(times, viewXMax - viewXMin);
       // 叠加模式用 density（和 KDE 共享 Y 轴），纯直方图也用 density
       drawHistogram(bins, sx, sy, pi, true);
     }
-    if (viewMode === 'kde' || viewMode === 'both' || viewMode === 'histogram') {
+    if (viewMode === 'kde' || viewMode === 'histogram') {
       drawCurve(kde, sx, sy, {
         fill: getShiftedHSL(pi, 0.15, currentMean),
         stroke: getShiftedHSL(pi, 0.85, currentMean),
