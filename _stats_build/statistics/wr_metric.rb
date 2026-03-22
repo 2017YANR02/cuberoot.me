@@ -75,9 +75,9 @@ class WrMetric < Statistic
 
     md += aggregate_panels(METRIC_CLASSES, METRIC_META) do |inst, prefix|
       panel = grouped_panel("#{prefix}-ranking", true, inst.ranking_data, RANKING_HEADER.merge("Details" => :left),
-                            label_en: "Current Ranking", label_zh: "排名")
+                            label_en: "Ranking", label_zh: "排名")
       panel += grouped_panel("#{prefix}-history", false, inst.data, inst.table_header,
-                             label_en: "WR History", label_zh: "历史")
+                             label_en: "History", label_zh: "历史")
       panel
     end
 

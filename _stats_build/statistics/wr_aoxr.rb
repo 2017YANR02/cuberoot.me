@@ -40,9 +40,9 @@ class WrAoxr < Statistic
         .transform_values { |rows| ranking_to_arrays(rows, keys: ao_keys) }
 
       panel = grouped_panel("#{prefix}-ranking", true, ranking, ranking_header,
-                            label_en: "Current Ranking", label_zh: "排名")
+                            label_en: "Ranking", label_zh: "排名")
       panel += grouped_panel("#{prefix}-history", false, history, inst.table_header,
-                             label_en: "WR History", label_zh: "历史")
+                             label_en: "History", label_zh: "历史")
       panel
     end
 

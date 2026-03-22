@@ -95,9 +95,9 @@ class WrNewcomer < GroupedStatistic
         puts " done (#{(Time.now - t3).round(1)}s)"
 
         md += grouped_panel("#{s_prefix}-ranking", true, ranking, RANKING_HEADER.merge("Details" => :left),
-                            label_en: "Current Ranking", label_zh: "排名")
+                            label_en: "Ranking", label_zh: "排名")
         md += grouped_panel("#{s_prefix}-history", false, history, HISTORY_HEADER,
-                            label_en: "WR History", label_zh: "历史")
+                            label_en: "History", label_zh: "历史")
 
         md += "</div>\n"
       end
