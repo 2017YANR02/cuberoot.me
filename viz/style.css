@@ -84,8 +84,15 @@ h1 {
 /* ─── 模式切换按钮 ─── */
 .mode-toggle {
   display: flex;
+  flex-direction: column;
   gap: 4px;
   flex-shrink: 0;
+}
+
+.mode-row {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
 }
 
 .mode-btn {
@@ -107,6 +114,21 @@ h1 {
   background: rgba(0, 230, 255, 0.12);
   border-color: var(--accent-cyan);
   color: var(--accent-cyan);
+}
+
+/* NOTE: 第二行 Round Metrics 按钮——紫色调区分 */
+.mode-btn-round {
+  padding: 4px 10px;
+  font-size: 11px;
+}
+.mode-btn-round:hover {
+  border-color: var(--accent-purple);
+  color: var(--text-primary);
+}
+.mode-btn-round.active {
+  background: rgba(176, 64, 255, 0.12);
+  border-color: var(--accent-purple);
+  color: var(--accent-purple);
 }
 
 /* ─── Canvas 容器 ─── */
