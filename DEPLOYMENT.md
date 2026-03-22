@@ -124,6 +124,9 @@ ruiminyan.github.io/
 │   └── card.css               # 落地页入口卡片样式
 ├── assets/js/                 # Stats 前端交互逻辑（前后端分离）
 │   ├── stats_ui.js            # Metric/Tab/Source/Dropdown 交互函数 + initStatsUI() 自动生成按钮
+│   ├── wr_history_chart.js    # WR 历史折线图：自动扫描 history 面板，从 DOM 表格提取数据绘制 Canvas 折线图
+│   ├── distribution_chart.js  # 选手成绩分布图（viz 页面 Stats 侧边栏）
+│   ├── logo_nav.js            # 顶部 Logo 导航
 │   ├── particles_stats.js     # Stats 页面粒子背景动画（当前使用版本）
 │   ├── particles.js           # 粒子动画库
 │   ├── particles_v2.0.js      # 粒子动画历史版本
