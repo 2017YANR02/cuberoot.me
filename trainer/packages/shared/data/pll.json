@@ -1,0 +1,155 @@
+{
+  "id": "3x3-pll",
+  "name": "3×3 PLL",
+  "puzzle": "3x3x3",
+  "groups": ["Adjacent", "Opposite", "Solved"],
+  "cases": [
+    {
+      "id": "Aa",
+      "name": "Aa",
+      "group": "Adjacent",
+      "algorithms": ["x R' U R' D2 R U' R' D2 R2", "R' B' R2 D R' U' R D' R' U R' B R"],
+      "scramble": "F' U F' R2 F U' F U F2 R2 F2"
+    },
+    {
+      "id": "Ab",
+      "name": "Ab",
+      "group": "Adjacent",
+      "algorithms": ["x R2 D2 R U R' D2 R U' R x'", "R' B' R U' R D R' U R D' R2' B R"],
+      "scramble": "F2 R2 F2 U' F' U F' R2 F U' F"
+    },
+    {
+      "id": "F",
+      "name": "F",
+      "group": "Adjacent",
+      "algorithms": ["R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R", "U' R' U R U' R2 F' U' F U R F R' F' R2"],
+      "scramble": "F U' F' U F2 R U R' U' F' R' F R F2"
+    },
+    {
+      "id": "Ga",
+      "name": "Ga",
+      "group": "Adjacent",
+      "algorithms": ["R2 U R' U R' U' R U' R2 D U' R' U R D'", "R2 u R' U R' U' R u' R2 F' U F"],
+      "scramble": "F2 U' F2 U2 R2 U F2 U F2 U' R2 F2 U2 F2"
+    },
+    {
+      "id": "Gb",
+      "name": "Gb",
+      "group": "Adjacent",
+      "algorithms": ["R' U' R U D' R2 U R' U R U' R U' R2 D", "y F' U' F R2 u R' U R U' R u' R2"],
+      "scramble": "F2 R2 U F2 U F2 U' R U' R F2 R' U R"
+    },
+    {
+      "id": "Gc",
+      "name": "Gc",
+      "group": "Adjacent",
+      "algorithms": ["y2 R2 F2 R U2 R U2 R' F R U R' U' R' F R2", "R2 U' R U' R U R' U R2 D' U R U' R' D"],
+      "scramble": "F U F' R2 F U' F U' R2 U R2 U F2 R2"
+    },
+    {
+      "id": "Gd",
+      "name": "Gd",
+      "group": "Adjacent",
+      "algorithms": ["R U R' U' D R2 U' R U' R' U R' U R2 D'"],
+      "scramble": "F2 R2 U' F2 R' U' R F2 R' U R U R2 F2"
+    },
+    {
+      "id": "Ja",
+      "name": "Ja",
+      "group": "Adjacent",
+      "algorithms": ["y2 x R2 F R F' R U2 r' U r U2 x'", "y R' U L' U2 R U' R' U2 R L"],
+      "scramble": "F' U R' U F U F' U' R U2 F"
+    },
+    {
+      "id": "Jb",
+      "name": "Jb",
+      "group": "Adjacent",
+      "algorithms": ["R U R' F' R U R' U' R' F R2 U' R'"],
+      "scramble": "R U F' R' F U F' R F U2 R'"
+    },
+    {
+      "id": "Ra",
+      "name": "Ra",
+      "group": "Adjacent",
+      "algorithms": ["R U' R' U' R U R D R' U' R D' R' U2 R'", "R U R' F' R U2 R' U2 R' F R U R U2 R'"],
+      "scramble": "F U2 F' U2 F R' F' U' F U F R F2"
+    },
+    {
+      "id": "Rb",
+      "name": "Rb",
+      "group": "Adjacent",
+      "algorithms": ["R' U2 R U2 R' F R U R' U' R' F' R2", "R' U2 R' D' R U' R' D R U R U' R' U' R"],
+      "scramble": "F' U F' R2 U' F' U' F' U F U R2 F2"
+    },
+    {
+      "id": "T",
+      "name": "T",
+      "group": "Adjacent",
+      "algorithms": ["R U R' U' R' F R2 U' R' U' R U R' F'"],
+      "scramble": "F R U' R' U R U R2 F' R U R U' R'"
+    },
+    {
+      "id": "E",
+      "name": "E",
+      "group": "Opposite",
+      "algorithms": ["x' R U' R' D R U R' D' R U R' D R U' R' D'"],
+      "scramble": "F2 U' F2 U2 R2 U R2 U F2 R2 U2 R2 U F2"
+    },
+    {
+      "id": "Na",
+      "name": "Na",
+      "group": "Opposite",
+      "algorithms": ["R F U' R' U R U F' R2' F' R U R U' R' F", "F' R U R' U' R' F R2 F U' R' U' R U F' R'"],
+      "scramble": "F' U F2 R2 U F' R2 F U' R2 F2 U' F"
+    },
+    {
+      "id": "Nb",
+      "name": "Nb",
+      "group": "Opposite",
+      "algorithms": ["r' D' F r U' r' F' D r2 U r' U' r' F r F'", "z U' R D' R2' U R' D U' R D' R2 U R' D z'"],
+      "scramble": "R U' R2 F2 U' R F2 R' U F2 R2 U R'"
+    },
+    {
+      "id": "V",
+      "name": "V",
+      "group": "Opposite",
+      "algorithms": ["R' U R' d' R' F' R2 U' R' U R' F R F"],
+      "scramble": "F' R' F' R U' R U R2 F R U F U' F"
+    },
+    {
+      "id": "Y",
+      "name": "Y",
+      "group": "Opposite",
+      "algorithms": ["F R U' R' U' R U R' F' R U R' U' R' F R F'"],
+      "scramble": "F U F' R2 F U' F' U' R2 U R2 U R2"
+    },
+    {
+      "id": "Ua",
+      "name": "Ua",
+      "group": "Solved",
+      "algorithms": ["M2 U M U2 M' U M2", "U2 M2 U M' U2 M U M2"],
+      "scramble": "F' U F' U' F' U' F' U F U F2"
+    },
+    {
+      "id": "Ub",
+      "name": "Ub",
+      "group": "Solved",
+      "algorithms": ["M2 U' M U2 M' U' M2", "U2 M2 U' M' U2 M U' M2"],
+      "scramble": "F U' F U F U F U' F' U' F2"
+    },
+    {
+      "id": "H",
+      "name": "H",
+      "group": "Solved",
+      "algorithms": ["M2 U' M2 U2 M2 U' M2", "M2 U M2 U2 M2 U M2"],
+      "scramble": "F2 U2 F U2 F2 U2 F2 U2 F U2 F2"
+    },
+    {
+      "id": "Z",
+      "name": "Z",
+      "group": "Solved",
+      "algorithms": ["M2 U2 M U' M2 U' M2 U' M", "M2 U2 M U M2 U M2 U M"],
+      "scramble": "F2 R2 U' F2 U R2 F2 R2 U R2 U' R2"
+    }
+  ]
+}
