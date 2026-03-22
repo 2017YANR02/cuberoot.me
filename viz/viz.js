@@ -406,8 +406,25 @@ async function fetchPlayerData(wcaId, eventId) {
 
   const singlesCs = solveEntries.map(e => e.cs);
   const statsData = RollingStats.compute(singlesCs);
-  // NOTE: 轮次衍生指标（BAo5/WAo5 等），供 CSV 导出使用
+  // NOTE: 轮次衍生指标（BAo5/WAo5 等），供 CSV 导出和折线图使用
   const roundMetricsData = RoundMetrics.compute(solveEntries);
+
+  // NOTE: 构建 WCA 官方 avg 数组（从 solveEntries.average 取，轮次第一把有值）
+  const avgArr = new Array(solveEntries.length).fill(null);
+  const avgPb = new Array(solveEntries.length).fill(false);
+  let bestAvgVal = Infinity;
+  for (let i = 0; i < solveEntries.length; i++) {
+    const av = solveEntries[i].average;
+    if (av !== null && av !== undefined && av > 0) {
+      avgArr[i] = av;
+      if (av < bestAvgVal) {
+        bestAvgVal = av;
+        avgPb[i] = true;
+      }
+    }
+  }
+  roundMetricsData.avg = avgArr;
+  roundMetricsData.pbFlags.avg = avgPb;
 
   const firstResult = eventResults[0];
   const personName = firstResult ? firstResult.name : wcaId;
@@ -2253,7 +2270,7 @@ function recalcModeParams() {
   lineXEnd = null;
 
   // NOTE: Round Metrics 的 key 集合（用于判断窗口大小）
-  var ROUND_KEYS = { bao5:1, wao5:1, mo5:1, bpa:1, wpa:1, median:1, bestc:1, worstc:1, worst:1 };
+  var ROUND_KEYS = { avg:1, bao5:1, wao5:1, mo5:1, bpa:1, wpa:1, median:1, bestc:1, worstc:1, worst:1 };
 
   if (dataMode === 'singles') {
     windowSize = 100;
