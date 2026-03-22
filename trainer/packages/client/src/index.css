@@ -305,6 +305,83 @@ body {
   color: var(--text-secondary);
 }
 
+/* ===== 通用按钮 ===== */
+.btn-primary {
+  padding: 0.5rem 1.5rem;
+  border-radius: 8px;
+  border: none;
+  background: var(--accent);
+  color: white;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+
+.btn-primary:hover {
+  background: #4f46e5;
+  box-shadow: 0 0 20px var(--accent-glow);
+}
+
+.btn-secondary {
+  padding: 0.5rem 1.5rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.15s;
+}
+
+.btn-secondary:hover {
+  border-color: var(--accent);
+}
+
+/* ===== 屏幕键盘（移植自 pll_recognition_trainer） ===== */
+.on-screen-keyboard {
+  margin: 0.75rem 0;
+  padding: 0 1rem;
+  max-width: 500px;
+}
+
+.kbd-btn {
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid var(--accent);
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+
+.kbd-btn:hover {
+  background: rgba(99, 102, 241, 0.15);
+}
+
+.kbd-btn:active {
+  transform: scale(0.95);
+}
+
+/* NOTE: 触摸设备上避免 :hover 粘滞（和原版 OnScreenKeyboard.vue 一样） */
+@media (hover: none) {
+  .kbd-btn:not(:active):hover {
+    background: transparent;
+  }
+}
+
+/* ===== headShake 动画（从 animate.css 移植） ===== */
+@keyframes headShake {
+  0% { transform: translateX(0); }
+  6.5% { transform: translateX(-6px) rotateY(-9deg); }
+  18.5% { transform: translateX(5px) rotateY(7deg); }
+  31.5% { transform: translateX(-3px) rotateY(-5deg); }
+  43.5% { transform: translateX(2px) rotateY(3deg); }
+  50% { transform: translateX(0); }
+}
+
 /* ===== 完成画面 ===== */
 .complete-screen {
   text-align: center;
