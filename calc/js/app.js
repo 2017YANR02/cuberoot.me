@@ -155,6 +155,16 @@ document.addEventListener('DOMContentLoaded', () => {
         wrData.loadDefaults(eventId, function (players) {
             initTargetDefaults();
             document.getElementById('rand-fill').click();
+            // NOTE: 切换项目后也预填未勾选的行（与初始加载一致）
+            var sc2 = solveCount();
+            for (var pi2 = 0; pi2 < 2; pi2++) {
+                if (state.playerEnabled[pi2]) continue;
+                for (var ti2 = 0; ti2 < sc2; ti2++) {
+                    if (!state.times[state.seedOn + pi2][ti2]) {
+                        updateTime(state.seedOn + pi2, ti2, sampleOneSolve(pi2));
+                    }
+                }
+            }
             updateProgressInfo(0, playerProgress[0]);
             updateProgressInfo(1, playerProgress[1]);
             // NOTE: 加载世界前 2 选手头像
@@ -256,6 +266,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // NOTE: URL 无数据时自动随机填充，避免空白页面
     if (!window.location.search.includes('t0=')) {
         document.getElementById('rand-fill').click();
+        // NOTE: rand-fill 只填 playerEnabled 的行，初始加载时也预填未勾选的行
+        // 让用户勾选 Row B 后立即可见数据，而非空白
+        var sc = solveCount();
+        for (var pi = 0; pi < 2; pi++) {
+            if (state.playerEnabled[pi]) continue; // 已由 rand-fill 填充
+            for (var ti = 0; ti < sc; ti++) {
+                if (!state.times[state.seedOn + pi][ti]) {
+                    updateTime(state.seedOn + pi, ti, sampleOneSolve(pi));
+                }
+            }
+        }
     }
     // NOTE: 默认激活第一个输入格
     inputGrid.navigateTo(0, 0);
