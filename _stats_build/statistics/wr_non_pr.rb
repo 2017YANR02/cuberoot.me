@@ -37,7 +37,7 @@ class WrNonPr < Statistic
 
   def initialize
     @title = "Non-PR WR"
-    @title_zh = "非 PR 世界纪录"
+    @title_zh = "非 PR"
     @note = "Best results that are NOT a personal record — the competitor already had a faster result before."
     @note_zh = "不是个人纪录的最佳成绩——选手之前已经有过更快的成绩。"
   end
