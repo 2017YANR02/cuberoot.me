@@ -1168,16 +1168,9 @@
         // NOTE: 提升到闭包作用域，供 buildCompHtml 使用
         var compNamesZh = {};
 
-        // NOTE: 共享 HTML 构建——下拉项和选中态 display 复用（DRY）
+        // NOTE: 共享 HTML 构建——委托 WcaCompData（DRY）
         function buildCompHtml(name, date, iso2) {
-            var flag = iso2 ? '<span class="fi fi-' + iso2 + '"></span> ' : '';
-            var zhName = compNamesZh[name];
-            var displayName = (isZh() && zhName) ? zhName : name;
-            // NOTE: 有中文名时加 data-i18n 属性，使切换语言后 i18n 自动更新文本
-            var nameSpan = zhName
-                ? '<span data-i18n-en="' + name + '" data-i18n-zh="' + zhName + '">' + displayName + '</span>'
-                : '<span>' + displayName + '</span>';
-            return '<small>' + date + '</small>' + flag + nameSpan;
+            return WcaCompData.buildHtml(name, date, iso2, { useZh: isZh() });
         }
 
         // NOTE: 选中比赛后显示富内容 div，隐藏 input
@@ -1194,79 +1187,21 @@
             compInput.style.display = '';
         }
 
-        // NOTE: 从 allComps 查找比赛信息（编辑模式加载和 blur 恢复用）
-        function findComp(name) {
-            for (var i = 0; i < allComps.length; i++) {
-                if (allComps[i].name === name) return allComps[i];
-            }
-            return null;
-        }
 
-        Promise.all([
-            fetch('/stats/comp_dates.json').then(function (r) { return r.json(); }),
-            fetch('/stats/comp_name_countries.json').then(function (r) { return r.json(); }),
-            fetch('/recon/comp_names_zh.json').then(function (r) { return r.json(); }).catch(function () { return {}; }),
-            fetch('/stats/comp_name_to_wca_id.json').then(function (r) { return r.json(); }).catch(function () { return {}; })
-        ]).then(function (results) {
-            var compDateMap = results[0];
-            compCountryMap = results[1];
-            compNamesZh = results[2];
-            compWcaIdMap = results[3];
-
-            // NOTE: 构建 cell_name → name 反向映射（用于搜索时匹配全称）
-            // comp_name_to_wca_id 包含两种键：cell_name 和 name，映射到同一个 WCA ID
-            var wcaIdToCellName = {};
-            var wcaIdToFullName = {};
-            Object.keys(compWcaIdMap).forEach(function (k) {
-                var wcaId = compWcaIdMap[k];
-                // cell_name 已存在于 compDateMap 中；name 不在 compDateMap 中
-                if (compDateMap[k]) {
-                    wcaIdToCellName[wcaId] = k;
-                } else {
-                    wcaIdToFullName[wcaId] = k;
-                }
-            });
-            // cell_name → name 别名映射
-            var compAliases = {};
-            Object.keys(wcaIdToCellName).forEach(function (wcaId) {
-                if (wcaIdToFullName[wcaId]) {
-                    compAliases[wcaIdToCellName[wcaId]] = wcaIdToFullName[wcaId];
-                }
-            });
-
-            // NOTE: 30 天内的比赛
-            var cutoff = new Date();
-            cutoff.setDate(cutoff.getDate() - 30);
-            var cutoffStr = cutoff.toISOString().split('T')[0];
-            var today = new Date().toISOString().split('T')[0];
-
-            // NOTE: 全量比赛列表（关键字搜索用）
-            allComps = Object.keys(compDateMap)
-                .filter(function (name) { return name.indexOf('?') < 0; })
-                .map(function (name) {
-                    return {
-                        name: name,
-                        nameZh: compNamesZh[name] || '',
-                        nameAlt: compAliases[name] || '',  // NOTE: 全称别名（搜索用）
-                        date: compDateMap[name],
-                        iso2: (compCountryMap[name] || '').toLowerCase()
-                    };
-                })
-                .sort(function (a, b) {
-                    var dc = b.date.localeCompare(a.date);
-                    return dc !== 0 ? dc : a.name.localeCompare(b.name);
-                });
-
-            recentComps = allComps.filter(function (c) {
-                return c.date >= cutoffStr && c.date <= today;
-            });
+        // NOTE: 使用共享模块加载比赛数据（取代内联 fetch）
+        WcaCompData.load().then(function () {
+            compCountryMap = WcaCompData.getCountryMap();
+            compNamesZh = WcaCompData.getNamesZh();
+            compWcaIdMap = WcaCompData.getWcaIdMap();
+            allComps = WcaCompData.getAll();
+            recentComps = WcaCompData.getRecent(30);
 
             renderCompDropdown(recentComps, '');
 
             // NOTE: 时序安全——若 populateForm 已先于 fetch 完成，此时 input 有值但 display 未显示
             var prefilledComp = compInput.value.trim();
             if (prefilledComp) {
-                var found = findComp(prefilledComp);
+                var found = WcaCompData.find(prefilledComp);
                 if (found) showCompDisplay(found.name, found.date, found.iso2);
             }
         }).catch(function (e) {
@@ -1377,7 +1312,7 @@
                 // NOTE: blur 保护——若 input 有值且匹配已知比赛，自动恢复 display
                 var val = compInput.value.trim();
                 if (val && compDisplay.style.display === 'none') {
-                    var found = findComp(val);
+                    var found = WcaCompData.find(val);
                     if (found) showCompDisplay(found.name, found.date, found.iso2);
                 }
             }, 200);
