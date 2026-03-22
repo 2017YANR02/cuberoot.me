@@ -34,7 +34,8 @@
 		<div id="input-grid-container"></div>
 
 		<div class="controls" id="controls">
-			<button id="rand-fill">Rand</button>
+			<!-- NOTE: 隐藏但保留 DOM — numpad Rand 和 app.js 通过 .click() 触发此按钮 -->
+		<button id="rand-fill" style="display:none">Rand</button>
 			<button id="sim-a" class="sim-btn sim-a">🎯 A</button>
 			<span id="sim-count-a" class="sim-count"></span>
 			<button id="sim-b" class="sim-btn sim-b">🎯 B</button>
@@ -133,7 +134,7 @@
 					<button class="np-btn np-digit" data-key="4">4</button>
 					<button class="np-btn np-digit" data-key="5">5</button>
 					<button class="np-btn np-digit" data-key="6">6</button>
-					<button class="np-btn np-op" data-key="dnf">DNF</button>
+					<button class="np-btn np-op" data-key="rand">Rand</button>
 					<button class="np-btn np-digit" data-key="7">7</button>
 					<button class="np-btn np-digit" data-key="8">8</button>
 					<button class="np-btn np-digit" data-key="9">9</button>
@@ -145,7 +146,7 @@
 						</svg></button>
 					<button class="np-btn np-digit" data-key="dotcolon">·:</button>
 					<button class="np-btn np-digit" data-key="0">0</button>
-					<button class="np-btn np-action-alt" data-key="tab">TAB</button>
+					<button class="np-btn np-op" data-key="dnf">DNF</button>
 				</div>
 			</div>
 		</div>

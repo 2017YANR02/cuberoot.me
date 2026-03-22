@@ -676,6 +676,13 @@ function numpadPress(key) {
     // NOTE: 箭头键由滚筒处理，此处跳过
     if (key === 'arrow-up' || key === 'arrow-down') return;
 
+    // NOTE: Rand 不需要活跃单元格 — 必须在 activeCell 守卫之前处理
+    // 否则所有格子填满后 p < 0 直接 return，永远到不了此分支
+    if (key === 'rand') {
+        document.getElementById('rand-fill').click();
+        return;
+    }
+
     var p = activeCell[0];
     var t = activeCell[1];
 
@@ -703,19 +710,6 @@ function numpadPress(key) {
         var nxt = nextCell(p, t);
         if (nxt) {
             navigateTo(nxt[0], nxt[1]);
-        } else {
-            saveCell(p, t);
-            v.blur();
-            activeCell = [-1, -1];
-        }
-    } else if (key === 'tab') {
-        // NOTE: Tab 始终按列 zigzag，包含 tavg
-        if (p === 0 && state.playerEnabled[1]) {
-            navigateTo(1, t);
-        } else if (!isTavg(t) && t < solveCount() - 1) {
-            navigateTo(state.playerEnabled[0] ? 0 : 1, t + 1);
-        } else if (!isTavg(t)) {
-            navigateTo(state.playerEnabled[0] ? 0 : 1, TAVG_T);
         } else {
             saveCell(p, t);
             v.blur();
