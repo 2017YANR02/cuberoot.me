@@ -5,9 +5,9 @@
 | Parts | People | Countries of origin |
 | :--: | ---: | :--- |
 | 1 | 468 | India *(29.06 %)*, Indonesia *(21.79 %)*, United States *(9.62 %)*, China *(6.20 %)*, Australia *(2.78 %)* |
-| 2 | 206670 | United States *(25.39 %)*, China *(13.48 %)*, India *(7.58 %)*, Australia *(5.04 %)*, Canada *(4.55 %)* |
-| 3 | 47572 | United States *(12.02 %)*, India *(9.49 %)*, Spain *(8.16 %)*, Brazil *(7.18 %)*, Philippines *(5.50 %)* |
-| 4 | 24041 | Brazil *(14.64 %)*, Colombia *(13.16 %)*, Peru *(10.05 %)*, Mexico *(9.85 %)*, Philippines *(6.76 %)* |
+| 2 | 206736 | United States *(25.40 %)*, China *(13.48 %)*, India *(7.58 %)*, Australia *(5.04 %)*, Canada *(4.55 %)* |
+| 3 | 47584 | United States *(12.03 %)*, India *(9.49 %)*, Spain *(8.16 %)*, Brazil *(7.18 %)*, Philippines *(5.50 %)* |
+| 4 | 24046 | Brazil *(14.64 %)*, Colombia *(13.15 %)*, Peru *(10.05 %)*, Mexico *(9.84 %)*, Philippines *(6.75 %)* |
 | 5 | 3185 | Brazil *(54.25 %)*, Malaysia *(11.77 %)*, Philippines *(4.99 %)*, Peru *(4.84 %)*, Mexico *(3.11 %)* |
 | 6 | 680 | Brazil *(42.06 %)*, Malaysia *(32.79 %)*, Mexico *(4.41 %)*, Peru *(4.41 %)*, Spain *(1.47 %)* |
 | 7 | 78 | Brazil *(43.59 %)*, Malaysia *(37.18 %)*, Portugal *(8.97 %)*, Egypt *(2.56 %)*, Spain *(1.28 %)* |

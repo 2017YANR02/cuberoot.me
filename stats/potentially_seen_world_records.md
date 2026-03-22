@@ -30,7 +30,7 @@
 | 106 | [Tomasz Żołnowski](https://www.worldcubeassociation.org/persons/2005ZOLN01) |
 | 104 | [Henrik Buus Aagaard](https://www.worldcubeassociation.org/persons/2006BUUS01) |
 | 104 | [Lucas Garron](https://www.worldcubeassociation.org/persons/2006GARR01) |
-| 103 | [Jayden McNeill](https://www.worldcubeassociation.org/persons/2012MCNE01) |
+| 104 | [Jayden McNeill](https://www.worldcubeassociation.org/persons/2012MCNE01) |
 | 102 | [Milán Baticz](https://www.worldcubeassociation.org/persons/2005BATI01) |
 | 100 | [Andrea Javier](https://www.worldcubeassociation.org/persons/2010JAVI01) |
 | 100 | [Cameron Stollery](https://www.worldcubeassociation.org/persons/2010STOL01) |
@@ -71,8 +71,8 @@
 | 80 | [Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04) |
 | 79 | [Dene Beardsley](https://www.worldcubeassociation.org/persons/2009BEAR01) |
 | 79 | [Daniel Sheppard](https://www.worldcubeassociation.org/persons/2009SHEP01) |
+| 79 | [Ming Zheng (郑鸣)](https://www.worldcubeassociation.org/persons/2009ZHEN11) |
 | 79 | [Jan Bentlage](https://www.worldcubeassociation.org/persons/2010BENT01) |
-| 78 | [Ming Zheng (郑鸣)](https://www.worldcubeassociation.org/persons/2009ZHEN11) |
 | 78 | [Kit Clement](https://www.worldcubeassociation.org/persons/2008CLEM01) |
 | 77 | [Mark Boyanowski](https://www.worldcubeassociation.org/persons/2014BOYA01) |
 | 76 | [Guus Razoux Schultz](https://www.worldcubeassociation.org/persons/1982RAZO01) |
@@ -100,7 +100,7 @@
 | 68 | [Yuhei Takagi (高木佑平)](https://www.worldcubeassociation.org/persons/2008TAKA01) |
 | 68 | [Graham Siggins](https://www.worldcubeassociation.org/persons/2016SIGG01) |
 | 67 | [Fumiki Koseki (古関章記)](https://www.worldcubeassociation.org/persons/2005KOSE01) |
+| 67 | [Baiqiang Dong (董百强)](https://www.worldcubeassociation.org/persons/2008DONG06) |
 | 67 | [Nora Akkersdijk](https://www.worldcubeassociation.org/persons/2009CHRI03) |
 | 67 | [James Hildreth](https://www.worldcubeassociation.org/persons/2009HILD01) |
 | 67 | [Laura Ohrndorf](https://www.worldcubeassociation.org/persons/2009OHRN01) |
-| 67 | [Blake Thompson](https://www.worldcubeassociation.org/persons/2010THOM03) |

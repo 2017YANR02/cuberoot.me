@@ -20,8 +20,8 @@
 | [Martin Vædele Egdal](https://www.worldcubeassociation.org/persons/2013EGDA02) | **149** | 76 | 43 | 268 |
 | [Patrick Ponce](https://www.worldcubeassociation.org/persons/2012PONC02) | **136** | 45 | 15 | 196 |
 | [Daniel Wallin](https://www.worldcubeassociation.org/persons/2013WALL03) | **133** | 106 | 85 | 324 |
-| [Yi-Fan Wu (吳亦凡)](https://www.worldcubeassociation.org/persons/2010WUIF01) | **131** | 67 | 48 | 246 |
-| [Firstian Fushada (符逢城)](https://www.worldcubeassociation.org/persons/2015FUSH01) | **130** | 134 | 83 | 347 |
+| [Yi-Fan Wu (吳亦凡)](https://www.worldcubeassociation.org/persons/2010WUIF01) | **133** | 68 | 48 | 249 |
+| [Firstian Fushada (符逢城)](https://www.worldcubeassociation.org/persons/2015FUSH01) | **130** | 134 | 84 | 348 |
 | [Milán Baticz](https://www.worldcubeassociation.org/persons/2005BATI01) | **124** | 117 | 63 | 304 |
 | [Evan Liu](https://www.worldcubeassociation.org/persons/2009LIUE01) | **116** | 125 | 76 | 317 |
 | [István Kocza](https://www.worldcubeassociation.org/persons/2005KOCZ01) | **116** | 107 | 101 | 324 |
@@ -30,17 +30,17 @@
 | [Reto Bubendorf](https://www.worldcubeassociation.org/persons/2012BUBE01) | **109** | 122 | 108 | 339 |
 | [Juliette Sébastien](https://www.worldcubeassociation.org/persons/2014SEBA01) | **107** | 68 | 35 | 210 |
 | [Ianis Costin Chele](https://www.worldcubeassociation.org/persons/2021CHEL01) | **104** | 71 | 57 | 232 |
-| [Wong Chong Wen (黄崇文)](https://www.worldcubeassociation.org/persons/2014WENW01) | **100** | 70 | 95 | 265 |
+| [Wong Chong Wen (黄崇文)](https://www.worldcubeassociation.org/persons/2014WENW01) | **101** | 70 | 95 | 266 |
 | [Ivan Li Ka Leong (李嘉亮)](https://www.worldcubeassociation.org/persons/2015LEON02) | **98** | 81 | 63 | 242 |
 | [Gergely Novotni](https://www.worldcubeassociation.org/persons/2016NOVO01) | **97** | 49 | 25 | 171 |
 | [Sébastien Auroux](https://www.worldcubeassociation.org/persons/2008AURO01) | **95** | 103 | 87 | 285 |
+| [Kyeongmin Choi (최경민)](https://www.worldcubeassociation.org/persons/2017CHOI07) | **95** | 54 | 47 | 196 |
 | [Anyu Zhang (张安宇)](https://www.worldcubeassociation.org/persons/2012ZHAN08) | **94** | 106 | 61 | 261 |
 | [Takao Hashimoto (橋本貴夫)](https://www.worldcubeassociation.org/persons/2007HASH01) | **94** | 34 | 27 | 155 |
 | [Hunor Bózsing](https://www.worldcubeassociation.org/persons/2009BOZS01) | **92** | 99 | 67 | 258 |
 | [Timofei Tarasenko](https://www.worldcubeassociation.org/persons/2019TARA09) | **92** | 31 | 19 | 142 |
-| [Kyeongmin Choi (최경민)](https://www.worldcubeassociation.org/persons/2017CHOI07) | **91** | 53 | 46 | 190 |
 | [János Bereczki](https://www.worldcubeassociation.org/persons/2018BERE01) | **88** | 31 | 27 | 146 |
-| [Niko Ronkainen](https://www.worldcubeassociation.org/persons/2010RONK01) | **87** | 67 | 62 | 216 |
+| [Niko Ronkainen](https://www.worldcubeassociation.org/persons/2010RONK01) | **87** | 67 | 64 | 218 |
 | [Burno Li Chak Kwan (李澤堃)](https://www.worldcubeassociation.org/persons/2017KWAN05) | **87** | 61 | 37 | 185 |
 | [Lim Hung (林弘)](https://www.worldcubeassociation.org/persons/2016HUNG08) | **86** | 56 | 56 | 198 |
 | [Seung Hyuk Nahm (남승혁)](https://www.worldcubeassociation.org/persons/2013NAHM01) | **84** | 36 | 23 | 143 |
@@ -74,7 +74,7 @@
 | [Oscar Roth Andersen](https://www.worldcubeassociation.org/persons/2008ANDE02) | **54** | 24 | 18 | 96 |
 | [Anthony Brooks](https://www.worldcubeassociation.org/persons/2008SEAR01) | **54** | 16 | 5 | 75 |
 | [Tobias Peter](https://www.worldcubeassociation.org/persons/2014PETE03) | **52** | 68 | 67 | 187 |
-| [Jayden McNeill](https://www.worldcubeassociation.org/persons/2012MCNE01) | **52** | 51 | 39 | 142 |
+| [Jayden McNeill](https://www.worldcubeassociation.org/persons/2012MCNE01) | **52** | 52 | 39 | 143 |
 | [Arthur Garcin](https://www.worldcubeassociation.org/persons/2014GARC27) | **52** | 41 | 21 | 114 |
 | [Twan Dullemond](https://www.worldcubeassociation.org/persons/2018DULL01) | **51** | 28 | 13 | 92 |
 | [Olivier Vos](https://www.worldcubeassociation.org/persons/2016VOSO01) | **50** | 26 | 24 | 100 |
