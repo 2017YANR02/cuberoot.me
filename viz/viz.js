@@ -2026,16 +2026,9 @@ function setupControls() {
     const ratio = canvas.width / rect.width;
 
     if (viewMode === 'line') {
-      // NOTE: 折线图 — 同时平移两轴
-      const { top: mt, bottom: mb, left: ml, right: mr } = MARGIN;
-      const ph = ch - mt - mb;
+      // NOTE: 折线图 — 仅水平平移 X 轴，Y 轴自适应可见数据范围
+      const { left: ml, right: mr } = MARGIN;
       const pw = cw - ml - mr;
-      // Y 轴平移
-      const dy = ((e.clientY - rect.top) * ratio - dragState.startPy);
-      const yRange = dragState.startXMax - dragState.startXMin;
-      const dyVal = (dy / ph) * yRange;
-      userXMin = dragState.startXMin + dyVal;
-      userXMax = dragState.startXMax + dyVal;
       // X 轴平移
       const dx = ((e.clientX - rect.left) * ratio - dragState.startPx);
       const xRange = dragState.startLineXE - dragState.startLineXS;
