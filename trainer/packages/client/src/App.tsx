@@ -7,7 +7,7 @@ import { StatsPage } from './pages/StatsPage';
 
 function App() {
   return (
-    <BrowserRouter basename="/trainer">
+    <BrowserRouter basename="/trainer_app">
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/select/:algSetId" element={<CaseSelectPage />} />
