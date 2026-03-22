@@ -134,11 +134,11 @@ class RoundMetric < GroupedStatistic
     end
   end
 
-  # NOTE: 统一使用完整 6 列 RANKING_HEADER
+  # NOTE: 统一使用 RANKING_HEADER + Details 列（7 列）
   def markdown
     top + tabbed_grouped_markdown(
       ranking_data: ranking_data,
-      ranking_header: RANKING_HEADER,
+      ranking_header: RANKING_HEADER.merge("Details" => :left),
       history_data: data,
       history_header: @table_header
     )
@@ -192,7 +192,8 @@ class RoundMetric < GroupedStatistic
                 metric: metric, person_link: r["person_link"],
                 country: r["country_id"],
                 competition_link: r["competition_link"],
-                start_date: r["start_date"]
+                start_date: r["start_date"],
+                attempts: r["attempts"]
               }
             end
           end
@@ -203,7 +204,8 @@ class RoundMetric < GroupedStatistic
             .each_with_index.map do |v, i|
               metric_str = instance.format_metric(v[:metric], event_id)
               date_str = v[:start_date].respond_to?(:strftime) ? v[:start_date].strftime("%Y-%m-%d") : v[:start_date].to_s
-              [i + 1, v[:person_link], metric_str, v[:country], date_str, v[:competition_link]]
+              details = (v[:attempts] || "").split(",").map { |a| SolveTime.new(event_id, :single, a.to_i).clock_format }.reject(&:empty?).join(', ')
+              [i + 1, v[:person_link], metric_str, v[:country], date_str, v[:competition_link], details]
             end
 
           @@precomputed_rankings[class_name] << [event_name, top]
@@ -244,9 +246,11 @@ class RoundMetric < GroupedStatistic
 
       person_ids = top_persons.map { |r| "'#{r["person_id"]}'" }.join(",")
 
-      # Step 2: 仅对 top 10 取详细信息（person name, country, competition, date）
+      # Step 2: 仅对 top 10 取详细信息（person name, country, competition, date, attempts）
+      # NOTE: ATTEMPTS_SUBQUERY 要求别名为 result，此处用 r，故内联子查询并用 r.id
       details = Database.client.query(
         "SELECT r.person_id, r.#{vc},
+         (SELECT GROUP_CONCAT(ra.value ORDER BY ra.attempt_number) FROM result_attempts ra WHERE ra.result_id = r.id) AS attempts,
          CONCAT('[', p.name, '](https://www.worldcubeassociation.org/persons/', p.wca_id, ')') person_link,
          p.country_id,
          CONCAT('[', c.cell_name, '](https://www.worldcubeassociation.org/competitions/', c.id, ')') competition_link,
@@ -273,7 +277,8 @@ class RoundMetric < GroupedStatistic
         .each_with_index.map do |r, i|
           val_str = format_metric(r[vc], event_id)
           date_str = r["start_date"].respond_to?(:strftime) ? r["start_date"].strftime("%Y-%m-%d") : r["start_date"].to_s
-          [i + 1, r["person_link"], val_str, r["country_id"], date_str, r["competition_link"]]
+          details_str = (r["attempts"] || "").split(",").map { |a| SolveTime.new(event_id, :single, a.to_i).clock_format }.reject(&:empty?).join(', ')
+          [i + 1, r["person_link"], val_str, r["country_id"], date_str, r["competition_link"], details_str]
         end
 
       [event_name, top]
