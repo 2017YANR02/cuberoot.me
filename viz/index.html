@@ -32,7 +32,7 @@
           <button class="mode-btn" data-mode="ao50">Ao50</button>
           <button class="mode-btn" data-mode="ao100">Ao100</button>
         </div>
-        <div class="mode-row mode-row-round">
+        <div class="mode-row mode-row-round" id="modeRowRound">
           <button class="mode-btn mode-btn-round" data-mode="avg">Avg</button>
           <button class="mode-btn mode-btn-round" data-mode="bao5">BAo5</button>
           <button class="mode-btn mode-btn-round" data-mode="wao5">WAo5</button>
@@ -44,6 +44,8 @@
           <button class="mode-btn mode-btn-round" data-mode="worstc">WorstC</button>
           <button class="mode-btn mode-btn-round" data-mode="worst">Worst</button>
         </div>
+        <!-- NOTE: 手机端折叠/展开第二行按钮 -->
+        <button class="mode-expand-btn" id="modeExpandBtn" title="展开/收起更多模式">▾ 更多</button>
       </div>
     </header>
 
@@ -94,6 +96,8 @@
         </div>
         <!-- 图例说明按钮 -->
         <button class="legend-info-btn" id="legendInfoBtn" title="图例说明">ⓘ</button>
+        <!-- NOTE: 全屏按钮 -->
+        <button class="fullscreen-btn" id="fullscreenBtn" title="全屏">⛶</button>
         <div class="legend-tooltip" id="legendTooltip">
           <label class="legend-toggle">
             <span class="legend-diamond">◆</span> 当前值

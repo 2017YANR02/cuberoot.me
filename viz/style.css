@@ -131,6 +131,24 @@ h1 {
   color: var(--accent-purple);
 }
 
+/* NOTE: 折叠/展开按钮 — 手机端可见，桌面端隐藏 */
+.mode-expand-btn {
+  display: none;
+  padding: 3px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+  align-self: flex-start;
+}
+.mode-expand-btn:hover {
+  color: var(--text-secondary);
+  border-color: var(--accent-purple);
+}
+
 /* ─── Canvas 容器 ─── */
 .canvas-wrapper {
   position: relative;
@@ -477,6 +495,21 @@ kbd {
   .toolbar {
     flex-wrap: wrap;
   }
+  /* NOTE: 手机端搜索框限宽，防止 CSV 按钮换行 */
+  .toolbar-search {
+    min-width: 60px;
+    max-width: 120px;
+  }
+  /* NOTE: 手机端第二行模式按钮默认收起 */
+  .mode-row-round {
+    display: none;
+  }
+  .mode-row-round.expanded {
+    display: flex;
+  }
+  .mode-expand-btn {
+    display: inline-block;
+  }
 }
 
 /* ─── 工具栏 (搜索 + 项目 + CSV) ─── */
@@ -617,6 +650,31 @@ kbd {
 }
 .legend-info-btn:hover {
   color: rgba(255,255,255,0.8);
+}
+
+/* NOTE: 全屏按钮 */
+.fullscreen-btn {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 6px;
+  background: rgba(0,0,0,0.4);
+  color: rgba(255,255,255,0.4);
+  font-size: 16px;
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.fullscreen-btn:hover {
+  color: rgba(255,255,255,0.8);
+  border-color: var(--accent-cyan);
+  background: rgba(0,230,255,0.1);
 }
 .legend-tooltip {
   display: none;
