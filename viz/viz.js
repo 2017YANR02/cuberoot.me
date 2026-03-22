@@ -388,11 +388,19 @@ async function fetchPlayerData(wcaId, eventId) {
     }
     const compIdx = compNameSet.get(compName);
     const attempts = r.attempts || [];
+    // NOTE: WCA 官方 average（厘秒），仅填入轮次第一把，供 CSV 导出使用
+    const roundAvg = (r.average && r.average > 0) ? r.average : null;
+    let isFirstAttempt = true;  // 轮内第一个有效 attempt
     for (let a = 0; a < attempts.length; a++) {
       const cs = attempts[a];
       if (cs === 0) continue;
       solveData.push([cs, compIdx]);
-      solveEntries.push({ cs, compName, compDate: compMap[r.competition_id].date, roundType: r.round_type_id, attemptIdx: a });
+      solveEntries.push({
+        cs, compName, compDate: compMap[r.competition_id].date,
+        roundType: r.round_type_id, attemptIdx: a,
+        average: isFirstAttempt ? roundAvg : null
+      });
+      isFirstAttempt = false;
     }
   }
 
