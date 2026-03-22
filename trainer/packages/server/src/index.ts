@@ -1,5 +1,8 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import { authRoutes } from './routes/auth.js';
+import { progressRoutes } from './routes/progress.js';
+import { healthRoutes } from './routes/health.js';
 
 const server = Fastify({ logger: true });
 
@@ -11,12 +14,10 @@ await server.register(cors, {
   ],
 });
 
-// 健康检查
-server.get('/health', async () => ({ status: 'ok', timestamp: Date.now() }));
-
-// TODO: 后续添加路由
-// - /api/auth（WCA OAuth + JWT）
-// - /api/progress（训练进度 CRUD）
+// 注册路由
+await server.register(authRoutes);
+await server.register(progressRoutes);
+await server.register(healthRoutes);
 
 const PORT = Number(process.env.PORT) || 3001;
 
