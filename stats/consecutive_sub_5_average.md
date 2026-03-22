@@ -2,7 +2,7 @@
 
 <p><em data-i18n-en="Only official 3x3x3 averages are considered. Computed across all rounds in chronological order." data-i18n-zh="仅考虑官方 3x3x3 平均成绩。按时间顺序统计所有轮次。">Only official 3x3x3 averages are considered. Computed across all rounds in chronological order.</em></p>
 
-<div id="ranking" class="stat-panel active" data-label-en="Ranking" data-label-zh="排名">
+<div id="ranking" class="stat-panel active" data-label-en="Current Ranking" data-label-zh="排名">
 <table>
 <tr><th style="text-align:right">Streak</th><th>Person</th><th>Started at</th><th>Ended at</th></tr>
 <tr><td style="text-align:right">23</td><td><a href="https://www.worldcubeassociation.org/persons/2023GENG02">Xuanyi Geng (耿暄一)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/JiangmenOpen2025">Jiangmen Open 2025</a></td><td><a href="https://www.worldcubeassociation.org/competitions/GuangzhouSmallCubes2025">Guangzhou Small Cubes 2025</a></td></tr>
@@ -12,7 +12,7 @@
 <tr><td style="text-align:right">2</td><td><a href="https://www.worldcubeassociation.org/persons/2017XURU04">Ruihang Xu (许瑞航)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/GuangdongRevivalRival2026">Guangdong Revival & Rival 2026</a></td><td><a href="https://www.worldcubeassociation.org/competitions/GuangdongRevivalRival2026">Guangdong Revival & Rival 2026</a></td></tr>
 </table>
 </div>
-<div id="history" class="stat-panel" data-label-en="History" data-label-zh="历史">
+<div id="history" class="stat-panel" data-label-en="WR History" data-label-zh="历史">
 <table>
 <tr><th style="text-align:right">Streak</th><th>Person</th><th>Period</th></tr>
 <tr><td style="text-align:right">23</td><td><a href="https://www.worldcubeassociation.org/persons/2023GENG02">Xuanyi Geng (耿暄一)</a></td><td><a href="https://www.worldcubeassociation.org/competitions/JiangmenOpen2025">Jiangmen Open 2025</a> → <a href="https://www.worldcubeassociation.org/competitions/GuangzhouSmallCubes2025">Guangzhou Small Cubes 2025</a></td></tr>

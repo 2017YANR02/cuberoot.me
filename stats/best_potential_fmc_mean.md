@@ -5,6 +5,7 @@
 | Mean | Attempt 1 | Attempt 2 | Attempt 3 | Competition |
 | :--: | :--: | :--: | :--: | :--- |
 | 19.33 | 18 | 21 | 19 | [WCA European Championship 2024](https://www.worldcubeassociation.org/competitions/Euro2024/results/all#e333fm_f) |
+| 19.33 | 18 | 19 | 21 | [FMCanton Nansha 2026](https://www.worldcubeassociation.org/competitions/FMCantonNansha2026/results/all#e333fm_f) |
 | 19.33 | 20 | 19 | 19 | [Please Be Quiet Shanghai 2025](https://www.worldcubeassociation.org/competitions/PleaseBeQuietShanghai2025/results/all#e333fm_1) |
 | 19.67 | 22 | 20 | 17 | [5BLD Masters Opole 2025](https://www.worldcubeassociation.org/competitions/5BLDMastersOpole2025/results/all#e333fm_f) |
 | 19.67 | 21 | 20 | 18 | [Buckeye Big Brain OH 2025](https://www.worldcubeassociation.org/competitions/BuckeyeBigBrainOhioState2025/results/all#e333fm_f) |
@@ -103,4 +104,3 @@
 | 21.00 | 20 | 22 | 21 | [Jogjakarta FMC Masters 2024](https://www.worldcubeassociation.org/competitions/JogjakartaFMCMasters2024/results/all#e333fm_1) |
 | 21.00 | 21 | 22 | 20 | [Korean FMC Championship 2025](https://www.worldcubeassociation.org/competitions/KoreanFMCChampionship2025/results/all#e333fm_f) |
 | 21.00 | 20 | 21 | 22 | [Malaysia FMC Championship 2024](https://www.worldcubeassociation.org/competitions/MalaysiaFMCChampionship2024/results/all#e333fm_f) |
-| 21.00 | 18 | 23 | 22 | [Malaysia FMC Championship 2025](https://www.worldcubeassociation.org/competitions/MalaysiaFMCChampionship2025/results/all#e333fm_f) |

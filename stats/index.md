@@ -2,7 +2,7 @@
 
 <h2 data-i18n-en="WCA Statistics" data-i18n-zh="WCA 统计数据">WCA Statistics</h2>
 
-<p><em data-i18n-en="Updated on 19 March 2026" data-i18n-zh="更新于 2026 年 3 月 19 日">Updated on 19 March 2026</em></p>
+<p><em data-i18n-en="Updated on 22 March 2026" data-i18n-zh="更新于 2026 年 3 月 22 日">Updated on 22 March 2026</em></p>
 
 <div class="stats-dashboard">
 
@@ -14,7 +14,7 @@
 <a href="wr_aoxr" data-i18n-en="AoXR" data-i18n-zh="多轮均值（AoXR）">AoXR</a>
 <a href="wr_dominance" data-i18n-en="Dominance" data-i18n-zh="屠榜">Dominance</a>
 <a href="wr_newcomer" data-i18n-en="Newcomer" data-i18n-zh="新人">Newcomer</a>
-<a href="average_of#event=333&type=ranking" data-i18n-en="Rolling Average" data-i18n-zh="滚动平均">Rolling Average</a>
+<a href="average_of" data-i18n-en="Rolling Average" data-i18n-zh="滚动平均">Rolling Average</a>
 <a href="consecutive_sub_5_average" data-i18n-en="Most consecutive sub-5 averages in 3x3x3" data-i18n-zh="最多连续 sub-5 三阶平均">Most consecutive sub-5 averages in 3x3x3</a>
 </div>
 </div>
