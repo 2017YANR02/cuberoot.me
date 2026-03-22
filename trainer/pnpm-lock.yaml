@@ -31,6 +31,9 @@ importers:
       react-router-dom:
         specifier: ^7.0.0
         version: 7.13.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      sr-puzzlegen-pll:
+        specifier: 1.0.4
+        version: 1.0.4
       zustand:
         specifier: ^5.0.0
         version: 5.0.12(@types/react@19.2.14)(react@19.2.4)
@@ -1406,6 +1409,9 @@ packages:
   split2@4.2.0:
     resolution: {integrity: sha512-UcjcJOWknrNkF6PLX83qcHM6KHgVKNkV62Y8a5uYDVv9ydGQVwAHMKqHdJje1VTWpljG0WYpCDhrCdAOYH4TWg==}
     engines: {node: '>= 10.x'}
+
+  sr-puzzlegen-pll@1.0.4:
+    resolution: {integrity: sha512-FlPWVbY4IpFtaN7zumUrKvouV3TSTg8L+t1Z1SZ+3QyIh4FQEsdXFdXiKRkNBdzrBawndp4i0TtHQRAf2wAg6A==}
 
   strip-json-comments@3.1.1:
     resolution: {integrity: sha512-6fPc+R4ihwqP6N/aIv2f1gMH8lOVtWQHoqC4yK6oSDVVocumAsfCqjkXnqiYMhmMwS/mEHLp7Vehlt3ql6lEig==}
@@ -2788,6 +2794,8 @@ snapshots:
   source-map-js@1.2.1: {}
 
   split2@4.2.0: {}
+
+  sr-puzzlegen-pll@1.0.4: {}
 
   strip-json-comments@3.1.1: {}
 

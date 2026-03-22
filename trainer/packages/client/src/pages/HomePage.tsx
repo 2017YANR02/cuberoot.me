@@ -1,8 +1,15 @@
 import { Link } from 'react-router-dom';
-import pllData from '../../../shared/data/pll.json';
+import pllMap from '@cuberoot/shared/data/pll.json';
 
-// NOTE: 目前只有 PLL，后续会加 OLL/ZBLL 等
-const algSets = [pllData];
+// NOTE: 从原版 pll.json 动态生成 algSet 元数据
+const algSets = [
+  {
+    id: 'pll',
+    name: 'PLL',
+    icon: '🎯',
+    count: Object.keys(pllMap).length, // 21 cases
+  },
+];
 
 export function HomePage() {
   return (
@@ -19,9 +26,9 @@ export function HomePage() {
             to={`/select/${set.id}`}
             className="alg-set-card"
           >
-            <div className="card-icon">🎯</div>
+            <div className="card-icon">{set.icon}</div>
             <h2>{set.name}</h2>
-            <p>{set.cases.length} cases</p>
+            <p>{set.count} cases</p>
           </Link>
         ))}
       </div>
