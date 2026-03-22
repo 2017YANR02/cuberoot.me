@@ -157,7 +157,8 @@ function downloadCsvForPlayer(idx) {
     wcaId: p.wcaId,
     eventId: currentEventId,
     solveEntries: p.solveEntries,
-    stats: p.statsData
+    stats: p.statsData,
+    roundMetrics: p.roundMetrics
   });
 }
 
@@ -379,6 +380,8 @@ async function fetchPlayerData(wcaId, eventId) {
 
   const singlesCs = solveEntries.map(e => e.cs);
   const statsData = RollingStats.compute(singlesCs);
+  // NOTE: 轮次衍生指标（BAo5/WAo5 等），供 CSV 导出使用
+  const roundMetricsData = RoundMetrics.compute(solveEntries);
 
   const firstResult = eventResults[0];
   const personName = firstResult ? firstResult.name : wcaId;
@@ -393,6 +396,7 @@ async function fetchPlayerData(wcaId, eventId) {
     competitions,
     compDates,
     statsData,
+    roundMetrics: roundMetricsData,
     solveEntries,
     ghostKDE: null,
     ghostMean: 0,

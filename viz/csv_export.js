@@ -1,6 +1,6 @@
 // NOTE: CSV 导出模块
-// 生成全量统计 CSV 并触发浏览器下载
-// 依赖：rolling_stats.js（RollingStats 全局对象）
+// 通过 CsvColumns 注册表动态获取所有列定义，生成全量统计 CSV 并触发浏览器下载
+// 依赖：csv_columns.js（CsvColumns 全局对象）
 
 (function () {
   'use strict';
@@ -18,19 +18,22 @@
    * @param {string} params.wcaId - 选手 WCA ID
    * @param {string} params.eventId - 项目 ID
    * @param {Array}  params.solveEntries - 扁平 solve 列表（按时间正序）
-   *   每项: { cs: number, compName: string, roundType: string, attemptIdx: number }
    * @param {Object} params.stats - RollingStats.compute() 的返回值
+   * @param {Object} params.roundMetrics - RoundMetrics.compute() 的返回值
+   *   （其他模块注册的 dataKey 也应在 params 中提供对应数据）
    */
   function download(params) {
     var entries = params.solveEntries;
-    var stats = params.stats;
-    var configs = RollingStats.getConfigs();
+    var groups = CsvColumns.all();
 
-    // NOTE: 表头
+    // NOTE: 表头——固定列 + 注册列
     var headers = ['序号', '日期', '比赛', '轮次', '把数', '单次(秒)', '是否单次PB'];
-    for (var c = 0; c < configs.length; c++) {
-      headers.push(configs[c].label);
-      headers.push('是否' + configs[c].label + 'PB');
+    for (var g = 0; g < groups.length; g++) {
+      var configs = groups[g].configs;
+      for (var c = 0; c < configs.length; c++) {
+        headers.push(configs[c].label);
+        headers.push('是否' + configs[c].label + 'PB');
+      }
     }
 
     var rows = [headers.join(',')];
@@ -39,27 +42,26 @@
       var e = entries[i];
       var row = [];
 
-      // 序号
+      // 固定列
       row.push(i + 1);
-      // 日期
       row.push(e.compDate || '');
-      // 比赛（含逗号时加引号）
       row.push(csvField(e.compName));
-      // 轮次
       row.push(csvField(ROUND_NAMES[e.roundType] || e.roundType));
-      // 把数
       row.push(e.attemptIdx + 1);
-      // 单次（秒）
       row.push(formatCs(e.cs));
-      // 是否单次 PB
-      row.push(stats.pbFlags.singles[i] ? 'PB' : '');
+      // NOTE: 单次 PB 从第一个注册组（RollingStats）的 pbFlags.singles 取
+      row.push(params.stats && params.stats.pbFlags.singles[i] ? 'PB' : '');
 
-      // 各 average
-      for (var j = 0; j < configs.length; j++) {
-        var key = configs[j].key;
-        var val = stats[key][i];
-        row.push(val === null ? '' : formatCs(val));
-        row.push(stats.pbFlags[key][i] ? 'PB' : '');
+      // 注册列
+      for (var g2 = 0; g2 < groups.length; g2++) {
+        var data = params[groups[g2].dataKey];
+        var cfgs = groups[g2].configs;
+        for (var c2 = 0; c2 < cfgs.length; c2++) {
+          var key = cfgs[c2].key;
+          var val = data ? data[key][i] : null;
+          row.push(val === null ? '' : formatCs(val));
+          row.push(data && data.pbFlags[key][i] ? 'PB' : '');
+        }
       }
 
       rows.push(row.join(','));
