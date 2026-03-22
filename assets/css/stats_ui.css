@@ -366,3 +366,31 @@ input:checked + .toggle-pill::after {
 .hide-zero-days .zero-days {
   display: none
 }
+
+/* ── WR 历史折线图 ──────────────────────────────────────── */
+/* NOTE: wr_history_chart.js 自动插入到每个 history 表格上方 */
+.wr-chart-wrap {
+  position: relative;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  overflow: hidden
+}
+
+.wr-chart-wrap canvas {
+  display: block
+}
+
+.wr-chart-tooltip {
+  position: absolute;
+  display: none;
+  padding: 3px 8px;
+  background: rgba(0, 0, 0, 0.8);
+  border-radius: 4px;
+  font-size: 12px;
+  color: #fff;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 5
+}
