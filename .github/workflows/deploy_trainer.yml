@@ -1,0 +1,71 @@
+# 训练器前端 + 后端部署
+# 仅当 trainer/ 目录有变更时触发
+name: Deploy Trainer
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'trainer/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+          cache-dependency-path: trainer/pnpm-lock.yaml
+
+      # 安装依赖
+      - name: Install dependencies
+        working-directory: trainer
+        run: pnpm install --frozen-lockfile
+
+      # 构建前端
+      - name: Build client
+        working-directory: trainer
+        run: pnpm --filter @cuberoot/client build
+
+      # 构建后端
+      - name: Build server
+        working-directory: trainer
+        run: pnpm --filter @cuberoot/server build
+
+      # 部署到 ECS
+      - name: Deploy via rsync
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          PATH_REMOTE: ${{ secrets.DEPLOY_PATH }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+          # 前端静态文件 → /trainer/ 子路径
+          rsync -rltz --delete --chmod=D755,F644 \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            trainer/packages/client/dist/ \
+            "${USER}@${HOST}:${PATH_REMOTE}/trainer/"
+
+          # 后端代码 → trainer-api 目录
+          rsync -rltz --delete --chmod=D755,F644 \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            trainer/packages/server/dist/ \
+            trainer/packages/server/package.json \
+            trainer/packages/server/node_modules/ \
+            "${USER}@${HOST}:/www/wwwroot/trainer-api/"
+
+          # 重启后端服务
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            "${USER}@${HOST}" "cd /www/wwwroot/trainer-api && pm2 restart trainer-api || pm2 start dist/index.js --name trainer-api"
