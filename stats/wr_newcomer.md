@@ -4,7 +4,7 @@
 
 <div class="metric-tab-wrap">
 <div class="metric-panel active" id="metric-single" data-label-en="Single" data-label-zh="单次">
-<div class="source-panel active" id="source-single-1st-solve" data-label-en="First Solve" data-label-zh="首次还原">
+<div class="source-panel active" id="source-single-1st-solve" data-label-en="1st Solve" data-label-zh="首次还原">
 <div id="single-1st-solve-ranking" class="stat-panel active" data-label-en="Ranking" data-label-zh="排名">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
@@ -648,7 +648,7 @@
 </table>
 </div>
 </div>
-<div class="source-panel" id="source-single-1st-comp" data-label-en="First Competition" data-label-zh="首场比赛">
+<div class="source-panel" id="source-single-1st-comp" data-label-en="1st Comp" data-label-zh="首场比赛">
 <div id="single-1st-comp-ranking" class="stat-panel active" data-label-en="Ranking" data-label-zh="排名">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
@@ -1329,8 +1329,8 @@
 </div>
 </div>
 </div>
-<div class="metric-panel" id="metric-average" data-label-en="Average" data-label-zh="平均">
-<div class="source-panel active" id="source-average-1st-solve" data-label-en="First Solve" data-label-zh="首次还原">
+<div class="metric-panel" id="metric-average" data-label-en="Avg" data-label-zh="平均">
+<div class="source-panel active" id="source-average-1st-solve" data-label-en="1st Solve" data-label-zh="首次还原">
 <div id="average-1st-solve-ranking" class="stat-panel active" data-label-en="Ranking" data-label-zh="排名">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
@@ -1922,7 +1922,7 @@
 </table>
 </div>
 </div>
-<div class="source-panel" id="source-average-1st-comp" data-label-en="First Competition" data-label-zh="首场比赛">
+<div class="source-panel" id="source-average-1st-comp" data-label-en="1st Comp" data-label-zh="首场比赛">
 <div id="average-1st-comp-ranking" class="stat-panel active" data-label-en="Ranking" data-label-zh="排名">
 <h3 data-i18n-en="Rubik's Cube" data-i18n-zh="三阶魔方">Rubik's Cube</h3>
 <table>
