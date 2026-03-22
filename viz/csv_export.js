@@ -27,12 +27,14 @@
     var groups = CsvColumns.all();
 
     // NOTE: 表头——固定列 + 注册列
-    var headers = ['Index', 'Date', 'Competition', 'Round', 'Attempt', 'Single(s)', 'SinglePB'];
+    var headers = ['index', 'date', 'competition', 'round', 'attempt', 'single_s', 'single_pb'];
     for (var g = 0; g < groups.length; g++) {
       var configs = groups[g].configs;
       for (var c = 0; c < configs.length; c++) {
-        headers.push(configs[c].label);
-        headers.push(configs[c].label + 'PB');
+        // NOTE: label 转蛇形（如 BAo5 → bao5, WorstC → worstc）
+        var snake = configs[c].label.replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase();
+        headers.push(snake);
+        headers.push(snake + '_pb');
       }
     }
 
