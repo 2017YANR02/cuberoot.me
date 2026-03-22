@@ -152,7 +152,15 @@ ruiminyan.github.io/
 ├── 404.html                   # 自定义 404 页面（GitHub Pages / Jekyll serve 路由）
 │                              # 检测 /recon/数字 URL → JS 重定向到 /recon/detail/?id=数字
 │                              # NOTE: GitHub Pages 无服务端路由，这是支持 /recon/2263 干净 URL 的唯一方式
-├── recon/                     # 魔方还原复盘页面（数据统一由阿里云 PHP 后端管理）
+├── viz/                       # 选手成绩分布演化可视化页面
+│   ├── index.html             # 页面入口（引入所有 JS 模块）
+│   ├── viz.js                 # 核心：KDE / 折线图 / 直方图渲染 + 播放控制 + 多选手同步
+│   ├── style.css              # 可视化页面样式
+│   ├── rolling_stats.js       # 滑动窗口统计（Ao5/Ao12/Ao25/Ao50/Ao100/Mo3）
+│   ├── round_metrics.js       # 轮次指标（BAo5/WAo5/Mo5/BPA/WPA/Median/BestC/WorstC/Worst）
+│   ├── csv_columns.js         # CSV 列注册表（各模块注册自己的列，csv_export.js 据此动态生成）
+│   ├── csv_export.js          # CSV 导出（动态读取 CsvColumns 注册表生成标题行和数据行）
+│   └── ridgeline.js           # 脊线图渲染（按比赛分组的密度叠加图）
 │   ├── index.md               # 列表页入口（Jekyll Markdown，引入 WCA Auth）
 │   ├── recon.js               # 列表页逻辑：表格渲染、筛选搜索、排序、点击跳转详情页
 │   ├── recon.css              # 页面样式（含社区行标记、WCA 登录、比赛搜索下拉、提交页/详情页布局）
@@ -169,8 +177,8 @@ ruiminyan.github.io/
 │   │   ├── index.md           # 详情页 HTML（Jekyll Markdown，引入共享模块）
 │   │   └── recon_detail.js    # 详情页逻辑：单条加载、渲染、twisty 动画、同轮次成绩、管理员操作
 │   ├── submit/                # 独立提交页面
-│   │   ├── index.html         # 提交/编辑复盘表单 HTML（两列布局：表单+预览）
-│   │   └── recon_submit_page.js # 提交页逻辑（表单交互、编辑预填充、提交处理）
+│   │   ├── index.html         # 提交/编辑复盘表单 HTML（引入 shared/wca_comp_data.js）
+│   │   └── recon_submit_page.js # 提交页逻辑（表单交互、编辑预填充、提交处理；比赛数据从 WcaCompData 取）
 │   ├── build_wca_attempts.py  # CI 脚本：增量构建 WCA 成绩（同轮次 siblings 数据源）
 │   ├── data/                  # 预构建数据文件
 │   │   └── wca_attempts.json  # WCA 成绩数据（CI 增量构建，详情页 siblings 用）
@@ -178,6 +186,11 @@ ruiminyan.github.io/
 │       └── recons_backup.json # 全量复盘数据备份
 ├── wca_auth.js                # 🌐 全局 WCA OAuth 模块（Implicit Grant；callback → /callback.html；被根/recon/battle 共享）
 ├── callback.html              # 🌐 全局 WCA OAuth 回调页（从 URL hash 解析 access_token → 返回来源页）
+├── shared/                    # 跨页面共享 JS 模块（recon / viz / calc 三方复用）
+│   ├── wca_search.js          # WCA API 搜索引擎（选手搜索、成绩/比赛/头像 fetch，sessionStorage 缓存）
+│   ├── wca_person_picker.js   # 选手选择器 UI 组件（modal / inline 两种模式，依赖 wca_search.js）
+│   ├── wca_comp_data.js       # 比赛数据模块（加载 comp_dates/countries/namesZh/wcaId JSON，提供 getAll/search/buildHtml 等 API）
+│   └── wca_search.css         # wca_person_picker 共享样式
 
 #### Recon 详情页路由架构
 
