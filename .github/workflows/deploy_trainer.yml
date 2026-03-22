@@ -8,7 +8,7 @@ on:
     branches: [main]
     paths:
       - 'trainer/**'
-      - '!trainer_app/**'
+      - '!app/**'
 
 permissions:
   contents: write
@@ -39,20 +39,20 @@ jobs:
         working-directory: trainer
         run: pnpm --filter @cuberoot/client build
 
-      # 将 dist/ 产物复制到仓库根目录的 trainer_app/
+      # 将 dist/ 产物复制到仓库根目录的 app/
       # Jekyll 不排除此目录，会直接当静态文件 serve
-      - name: Copy dist to trainer_app/
+      - name: Copy dist to app/
         run: |
-          rm -rf trainer_app
-          cp -r trainer/packages/client/dist trainer_app
+          rm -rf app
+          cp -r trainer/packages/client/dist app
 
       # 提交并推送（deploy_mirror.yml 会自动同步到国内镜像）
       - name: Commit and push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add trainer_app/
+          git add app/
           # 仅在有变化时才提交
-          git diff --cached --quiet || git commit -m "ci: rebuild trainer_app from trainer/"
+          git diff --cached --quiet || git commit -m "ci: rebuild app/ from trainer/"
           git pull --rebase origin main
           git push
