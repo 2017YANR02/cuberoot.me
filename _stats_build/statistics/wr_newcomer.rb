@@ -21,13 +21,13 @@ class WrNewcomer < GroupedStatistic
   # NOTE: 指标维度
   METRICS = [
     { label: "Single",  label_zh: "单次",  id: "single",  type: :single },
-    { label: "Average", label_zh: "平均",  id: "average", type: :average },
+    { label: "Avg",     label_zh: "平均",  id: "average", type: :average },
   ].freeze
 
   # NOTE: 数据源维度
   SOURCES = [
-    { label: "First Solve",       label_zh: "首次还原",  id: "1st-solve" },
-    { label: "First Competition", label_zh: "首场比赛",  id: "1st-comp" },
+    { label: "1st Solve",  label_zh: "首次还原",  id: "1st-solve" },
+    { label: "1st Comp",   label_zh: "首场比赛",  id: "1st-comp" },
   ].freeze
 
   # NOTE: History 表头
