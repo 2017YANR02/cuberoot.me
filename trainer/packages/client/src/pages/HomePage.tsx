@@ -1,13 +1,20 @@
 import { Link } from 'react-router-dom';
 import pllMap from '@cuberoot/shared/data/pll.json';
+import ollMap from '@cuberoot/shared/data/oll.json';
 
-// NOTE: 从原版 pll.json 动态生成 algSet 元数据
+// NOTE: 从 JSON keys 动态生成 algSet 元数据
 const algSets = [
   {
     id: 'pll',
     name: 'PLL',
     icon: '🎯',
-    count: Object.keys(pllMap).length, // 21 cases
+    count: Object.keys(pllMap).length,
+  },
+  {
+    id: 'oll',
+    name: 'OLL',
+    icon: '🟨',
+    count: Object.keys(ollMap).length,
   },
 ];
 
