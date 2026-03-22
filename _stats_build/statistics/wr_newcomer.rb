@@ -94,7 +94,7 @@ class WrNewcomer < GroupedStatistic
         history = build_history(grouped, metric)
         puts " done (#{(Time.now - t3).round(1)}s)"
 
-        md += grouped_panel("#{s_prefix}-ranking", true, ranking, RANKING_HEADER,
+        md += grouped_panel("#{s_prefix}-ranking", true, ranking, RANKING_HEADER.merge("Details" => :left),
                             label_en: "Current Ranking", label_zh: "排名")
         md += grouped_panel("#{s_prefix}-history", false, history, HISTORY_HEADER,
                             label_en: "WR History", label_zh: "历史")
@@ -174,12 +174,13 @@ class WrNewcomer < GroupedStatistic
       SELECT
         fr.event_id,
         fr.first_result,
+        (SELECT GROUP_CONCAT(ra.value ORDER BY ra.attempt_number) FROM result_attempts ra WHERE ra.result_id = fr.result_id) AS attempts,
         CONCAT('[', p.name, '](https://www.worldcubeassociation.org/persons/', p.wca_id, ')') person_link,
         p.country_id,
         CONCAT('[', c.cell_name, '](https://www.worldcubeassociation.org/competitions/', c.id, ')') competition_link,
         c.start_date
       FROM (
-        SELECT r.person_id, r.event_id, #{col} AS first_result, r.competition_id,
+        SELECT r.person_id, r.event_id, #{col} AS first_result, r.competition_id, r.id AS result_id,
                ROW_NUMBER() OVER (PARTITION BY r.person_id, r.event_id ORDER BY
                  CASE WHEN r.round_type_id IN ('1','0','d') THEN 0 ELSE 1 END
                ) AS rn
@@ -208,12 +209,13 @@ class WrNewcomer < GroupedStatistic
       SELECT
         fr.event_id,
         fr.first_result,
+        (SELECT GROUP_CONCAT(ra.value ORDER BY ra.attempt_number) FROM result_attempts ra WHERE ra.result_id = fr.result_id) AS attempts,
         CONCAT('[', p.name, '](https://www.worldcubeassociation.org/persons/', p.wca_id, ')') person_link,
         p.country_id,
         CONCAT('[', c.cell_name, '](https://www.worldcubeassociation.org/competitions/', c.id, ')') competition_link,
         c.start_date
       FROM (
-        SELECT r.person_id, r.event_id, r.#{col} AS first_result, r.competition_id,
+        SELECT r.person_id, r.event_id, r.#{col} AS first_result, r.competition_id, r.id AS result_id,
                ROW_NUMBER() OVER (PARTITION BY r.person_id, r.event_id ORDER BY r.#{col}) AS rn
         FROM results r
         JOIN competitions c1 ON c1.id = r.competition_id
@@ -239,7 +241,8 @@ class WrNewcomer < GroupedStatistic
         .each_with_index.map do |r, i|
           result_str = SolveTime.new(event_id, metric[:type], r["first_result"]).clock_format
           date_str = fmt_date(r["start_date"])
-          [i + 1, r["person_link"], result_str, r["country_id"], date_str, r["competition_link"]]
+          details = (r["attempts"] || "").split(",").map { |v| SolveTime.new(event_id, :single, v.to_i).clock_format }.reject(&:empty?).join(', ')
+          [i + 1, r["person_link"], result_str, r["country_id"], date_str, r["competition_link"], details]
         end
       [event_name, event_rows]
     end
