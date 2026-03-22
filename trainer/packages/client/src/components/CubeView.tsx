@@ -48,7 +48,7 @@ export function CubeView({
       // 创建新 twisty-player 元素
       const player = document.createElement('twisty-player');
       player.setAttribute('puzzle', puzzle);
-      player.setAttribute('visualization', '2D');
+      player.setAttribute('visualization', 'experimental-2D-LL');
       player.setAttribute('experimental-setup-alg', scramble);
       player.setAttribute('alg', '');
       player.setAttribute('background', 'none');
