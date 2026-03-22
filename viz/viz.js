@@ -1906,6 +1906,41 @@ function setupControls() {
     });
   }
 
+  // NOTE: 手机端折叠/展开第二行模式按钮
+  const modeExpandBtn = document.getElementById('modeExpandBtn');
+  const modeRowRound = document.getElementById('modeRowRound');
+  if (modeExpandBtn && modeRowRound) {
+    modeExpandBtn.addEventListener('click', () => {
+      const expanded = modeRowRound.classList.toggle('expanded');
+      modeExpandBtn.textContent = expanded ? '▴ 收起' : '▾ 更多';
+    });
+    // NOTE: 当 round 模式按钮被激活时，自动展开第二行
+    modeRowRound.querySelectorAll('.mode-btn-round').forEach(btn => {
+      btn.addEventListener('click', () => {
+        modeRowRound.classList.add('expanded');
+        modeExpandBtn.textContent = '▴ 收起';
+      });
+    });
+  }
+
+  // NOTE: 全屏按钮 — 对 canvas-wrapper 使用 Fullscreen API
+  const fsBtn = document.getElementById('fullscreenBtn');
+  const canvasWrap = document.querySelector('.canvas-wrapper');
+  if (fsBtn && canvasWrap) {
+    fsBtn.addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        canvasWrap.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen();
+      }
+    });
+    document.addEventListener('fullscreenchange', () => {
+      // NOTE: 全屏后需要重新计算 canvas 尺寸并重绘
+      setupCanvas();
+      drawFrame();
+    });
+  }
+
   // 键盘快捷键
   document.addEventListener('keydown', e => {
     // NOTE: 焦点在 input/textarea 时不拦截键盘事件
