@@ -847,7 +847,7 @@ function detectPeaks(kde) {
  * 返回 [{ xStart, xEnd, count, density }]
  * density = count / (n × binWidth)，用于和 KDE 叠加时共享 Y 轴
  */
-function computeHistogram(times) {
+function computeHistogram(times, viewRange) {
   if (!times || times.length < 2) return [];
   const sorted = [...times].sort((a, b) => a - b);
   const n = sorted.length;
@@ -861,6 +861,13 @@ function computeHistogram(times) {
   if (binWidth <= 0 || range / binWidth > 30) binWidth = range / 30;
   if (range / binWidth < 5) binWidth = range / 5;
   if (binWidth <= 0) binWidth = 0.1;
+
+  // NOTE: 放大时基于可见范围缩小 bin 宽度（目标 ~20 个可见 bin）
+  if (viewRange && viewRange > 0 && viewRange < range) {
+    const zoomedBinWidth = viewRange / 20;
+    // 选择美观步长（对齐到 0.05, 0.1, 0.2, 0.5 等）
+    binWidth = pickNiceStep(zoomedBinWidth);
+  }
 
   const bins = [];
   const start = sorted[0] - binWidth * 0.5;
@@ -1434,7 +1441,7 @@ function drawFrame() {
       const pf = computePlayerFrame(pi, progress0);
       const t = getWindowTimes(pi, pf);
       if (t.length < 2) continue;
-      const bins = computeHistogram(t);
+      const bins = computeHistogram(t, viewXMax - viewXMin);
       for (const b of bins) {
         if (b.density > frameMaxY) frameMaxY = b.density;
       }
@@ -1522,7 +1529,7 @@ function drawFrame() {
 
     // NOTE: 根据 viewMode 绘制直方图和/或 KDE
     if (viewMode === 'histogram' || viewMode === 'both') {
-      const bins = computeHistogram(times);
+      const bins = computeHistogram(times, viewXMax - viewXMin);
       // 叠加模式用 density（和 KDE 共享 Y 轴），纯直方图也用 density
       drawHistogram(bins, sx, sy, pi, true);
     }
