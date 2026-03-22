@@ -1,8 +1,9 @@
 # 🔄 Trainer 迁移 Handoff 文档
 
-> 上一轮对话结束时间：2026-03-23 03:13
+> 上一轮对话结束时间：2026-03-23 04:00
 > 项目位置：`D:\cube\ruiminyan.github.io\trainer\`
-> Dev server: `pnpm --filter @cuberoot/client dev` → `http://localhost:5176/trainer/`
+> 线上地址：`https://ruiminyan.github.io/app/`（GitHub Pages）
+> Dev server: `pnpm --filter @cuberoot/client dev` → `http://localhost:5176/app/`
 
 ---
 
