@@ -3,9 +3,13 @@ plugins:
   - jekyll-sitemap
   - jekyll-optional-front-matter
 
-# NOTE: 排除 trainer/ React monorepo，由独立 CI 构建部署
+# NOTE: 排除 trainer/ React monorepo 源码，由独立 CI 构建部署
 exclude:
   - trainer
+
+# NOTE: 显式包含 trainer_app/（CI 构建产物），防止被 exclude 意外匹配
+include:
+  - trainer_app
 
 # stats 子目录的 Markdown 由 GitHub Actions 自动生成
 defaults:
