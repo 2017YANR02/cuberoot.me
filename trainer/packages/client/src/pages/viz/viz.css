@@ -582,6 +582,7 @@ kbd {
   gap: 6px;
   flex-wrap: wrap;
   align-items: center;
+  margin-left: auto;
 }
 
 .player-chip {

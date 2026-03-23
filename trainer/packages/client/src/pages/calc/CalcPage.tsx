@@ -75,6 +75,16 @@ export function CalcPage() {
 
     loadWrIds().then(() => {
       loadDefaults(eventId, (players) => {
+        // NOTE: 用 WR Average #1/#2 填充空的 Target（原版 app.js#425-435）
+        const wr12 = getAvgWR12(eventId);
+        if (wr12) {
+          const s0 = useCalcStore.getState();
+          for (let p = 0; p < 2; p++) {
+            if (s0.getTargetAvg(s0.seedOn + p) === 0) {
+              s0.setTargetAvg(s0.seedOn + p, wr12[p]);
+            }
+          }
+        }
         // NOTE: URL 无数据时自动随机填充（原版 app.js#272-286）
         if (!window.location.search.includes('t0=')) {
           const s = useCalcStore.getState();
