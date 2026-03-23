@@ -4,6 +4,7 @@
  */
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useZbllSessionStore, TimerState, type ZbllResult } from '../stores/zbllSessionStore';
 import { useZbllSelectedStore } from '../stores/zbllSelectedStore';
 import { useZbllSettingsStore, FONTS_LIST } from '../stores/zbllSettingsStore';
@@ -16,54 +17,55 @@ import '../zbll.css';
 
 // ===== ZBLL 设置面板 =====
 function ZbllSettings({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation();
   const { settings, updateSetting, resetDefaults } = useZbllSettingsStore();
 
   return (
     <div className="zbll-settings-panel">
       <div className="zbll-settings-header">
-        <h3>Settings</h3>
+        <h3>{t('zbll.settings.title')}</h3>
         <div>
-          <button className="zbll-btn zbll-btn-warning" onClick={() => { if (confirm('Reset?')) { resetDefaults(); onClose(); } }}>
-            Reset
+          <button className="zbll-btn zbll-btn-warning" onClick={() => { if (confirm(t('zbll.settings.resetConfirm'))) { resetDefaults(); onClose(); } }}>
+            {t('zbll.settings.reset')}
           </button>
-          <button className="zbll-btn zbll-btn-primary" onClick={onClose}>Done</button>
+          <button className="zbll-btn zbll-btn-primary" onClick={onClose}>{t('zbll.settings.done')}</button>
         </div>
       </div>
       <hr />
       <div className="zbll-settings-form">
         <label>
-          Scramble size
+          {t('zbll.settings.scrambleSize')}
           <input type="number" min={1} max={999} value={settings.scrambleFontSize}
             onChange={(e) => updateSetting('scrambleFontSize', Number(e.target.value))} />
         </label>
         <label>
-          Timer size
+          {t('zbll.settings.timerSize')}
           <input type="number" min={1} max={999} value={settings.timerFontSize}
             onChange={(e) => updateSetting('timerFontSize', Number(e.target.value))} />
         </label>
         <label>
-          Timer font
+          {t('zbll.settings.timerFont')}
           <select value={settings.timerFont} onChange={(e) => updateSetting('timerFont', e.target.value)}>
             {FONTS_LIST.map((f) => <option key={f} value={f} style={{ fontFamily: f, fontWeight: 700 }}>{f}</option>)}
           </select>
         </label>
         <label>
-          Picture view
+          {t('zbll.settings.pictureView')}
           <select value={settings.pictureView} onChange={(e) => updateSetting('pictureView', e.target.value as 'top' | '3D')}>
-            <option value="top">Top</option>
-            <option value="3D">Side</option>
+            <option value="top">{t('zbll.settings.pictureTop')}</option>
+            <option value="3D">{t('zbll.settings.pictureSide')}</option>
           </select>
         </label>
         <label>
-          Timer update
+          {t('zbll.settings.timerUpdate')}
           <select value={settings.timerUpdate} onChange={(e) => updateSetting('timerUpdate', e.target.value as 'on' | 'seconds' | 'off')}>
-            <option value="on">On</option>
-            <option value="seconds">Seconds only</option>
-            <option value="off">Off</option>
+            <option value="on">{t('zbll.settings.timerUpdateOn')}</option>
+            <option value="seconds">{t('zbll.settings.timerUpdateSeconds')}</option>
+            <option value="off">{t('zbll.settings.timerUpdateOff')}</option>
           </select>
         </label>
         <label>
-          Timer precision
+          {t('zbll.settings.timerPrecision')}
           <select value={settings.timerPrecision} onChange={(e) => updateSetting('timerPrecision', Number(e.target.value) as 1 | 2 | 3)}>
             <option value={1}>1/10</option>
             <option value={2}>1/100</option>
@@ -71,13 +73,13 @@ function ZbllSettings({ onClose }: { onClose: () => void }) {
           </select>
         </label>
         <label>
-          Timer start delay (ms)
+          {t('zbll.settings.timerStartDelay')}
           <select value={settings.timerStartDelayMs} onChange={(e) => updateSetting('timerStartDelayMs', Number(e.target.value))}>
             {[0, 100, 300, 500, 1000].map((v) => <option key={v} value={v}>{v}</option>)}
           </select>
         </label>
         <label>
-          Scramble appendix
+          {t('zbll.settings.scrambleAppendix')}
           <select value={settings.scrambleAppendix} onChange={(e) => updateSetting('scrambleAppendix', e.target.value)}>
             {["None", "R U' R'", "R U R'", "L U L'", "L U' L'"].map((v) => (
               <option key={v} value={v}>{v}</option>
@@ -91,6 +93,7 @@ function ZbllSettings({ onClose }: { onClose: () => void }) {
 
 // ===== ZbllNote（计时页内联版） =====
 function ZbllNote({ zbllKey }: { zbllKey: string }) {
+  const { t } = useTranslation();
   const { notes, setNote } = useZbllNotesStore();
   const [editing, setEditing] = useState(false);
   const note = notes[zbllKey] || '';
@@ -108,7 +111,7 @@ function ZbllNote({ zbllKey }: { zbllKey: string }) {
 
   return (
     <span className="zbll-note-display">
-      <span className={note ? '' : 'zbll-note-placeholder'}>{note || 'Add note'}</span>
+      <span className={note ? '' : 'zbll-note-placeholder'}>{note || t('zbll.result.addNote')}</span>
       <button className="zbll-note-edit-btn" onClick={() => setEditing(true)}>✏️</button>
     </span>
   );
@@ -116,12 +119,13 @@ function ZbllNote({ zbllKey }: { zbllKey: string }) {
 
 // ===== SetupAndAlgs =====
 function SetupAndAlgs({ zbllKey, maxAmount }: { zbllKey: string; maxAmount: number }) {
+  const { t } = useTranslation();
   const entry = (zbllMap as Record<string, ZbllEntry>)[zbllKey];
   if (!entry?.algs?.length) return null;
   return (
     <div>
-      <div>Setup: <strong>{inverseScramble(entry.algs[0])}</strong></div>
-      <div>Algs:</div>
+      <div>{t('zbll.result.setup')} <strong>{inverseScramble(entry.algs[0])}</strong></div>
+      <div>{t('zbll.result.algs')}</div>
       <ul className="zbll-alg-list">
         {entry.algs.slice(0, maxAmount).map((alg, i) => (
           <li key={alg} className={i === 0 ? 'zbll-alg-bold' : ''}>· {alg}</li>
@@ -133,6 +137,7 @@ function SetupAndAlgs({ zbllKey, maxAmount }: { zbllKey: string; maxAmount: numb
 
 // ===== ResultCard =====
 function ResultCard() {
+  const { t } = useTranslation();
   const session = useZbllSessionStore();
   const selected = useZbllSelectedStore();
   const { settings } = useZbllSettingsStore();
@@ -147,7 +152,7 @@ function ResultCard() {
   const isBookmarked = presets.hasCase(STARRED_NAME, result.key);
 
   const onDelete = () => {
-    if (isValid && confirm('Delete this result?')) {
+    if (isValid && confirm(t('zbll.result.deleteConfirm'))) {
       session.deleteResult(idx);
     }
   };
@@ -166,7 +171,7 @@ function ResultCard() {
   return (
     <div className="zbll-result-card">
       <div className="zbll-result-header">
-        <span>Result #{result.i + 1}&nbsp;
+        <span>{t('zbll.result.title', { n: result.i + 1 })}&nbsp;
           <span className="zbll-badge">{msToHumanReadable(result.ms, settings.timerPrecision)}</span>
         </span>
         <button className="zbll-btn-danger-sm" onClick={onDelete}
@@ -174,9 +179,9 @@ function ResultCard() {
       </div>
       <hr />
       <p>
-        Case: {formatZbllKey(result.key)}
+        {t('zbll.result.case')} {formatZbllKey(result.key)}
         <span className={`zbll-star ${isBookmarked ? 'zbll-star-filled' : ''}`}
-          onClick={toggleStar} title="Add to ⭐ (Alt+A)">
+          onClick={toggleStar} title={t('zbll.result.addToStarred')}>
           {isBookmarked ? '★' : '☆'}
         </span>
       </p>
@@ -184,19 +189,20 @@ function ResultCard() {
       <label className="zbll-checkbox-label">
         <input type="checkbox" checked={isKeySelected} onChange={toggleSelected}
           disabled={session.timerState !== TimerState.NOT_RUNNING} />
-        Selected
+        {t('zbll.result.selected')}
       </label>
       {result.key && (
         <img className="zbll-result-img" src={getZbllImg(result.key, settings.pictureView)} alt={result.key} />
       )}
       <SetupAndAlgs zbllKey={result.key} maxAmount={3} />
-      <p className="zbll-result-scramble">Scramble: {result.scramble}</p>
+      <p className="zbll-result-scramble">{t('zbll.result.scramble')} {result.scramble}</p>
     </div>
   );
 }
 
 // ===== StatsCard =====
 function StatsCard() {
+  const { t } = useTranslation();
   const session = useZbllSessionStore();
   const { settings } = useZbllSettingsStore();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -210,21 +216,21 @@ function StatsCard() {
   }, [stats.length]);
 
   const onClear = () => {
-    if (confirm('Clear session?')) session.clearSession();
+    if (confirm(t('zbll.stats.clearConfirm'))) session.clearSession();
   };
 
   return (
     <div className="zbll-stats-card">
       <div className="zbll-stats-header">
-        <span>Stats: {stats.length} solves</span>
+        <span>{t('zbll.stats.title', { count: stats.length })}</span>
         {stats.length > 0 && (
-          <button className="zbll-btn-danger-sm" onClick={onClear} title="Clear (Shift+Delete)">clear</button>
+          <button className="zbll-btn-danger-sm" onClick={onClear} title="Shift+Delete">{t('zbll.stats.clear')}</button>
         )}
       </div>
       <hr />
       <div className="zbll-stats-container" ref={containerRef}>
         {stats.length === 0 && session.timerState !== TimerState.RUNNING && (
-          <div>Hold spacebar to start the timer</div>
+          <div>{t('zbll.stats.holdSpace')}</div>
         )}
         {stats.map((stat, index) => (
           <span key={index}>
@@ -244,6 +250,7 @@ function StatsCard() {
 
 // ===== 主页面 =====
 export function ZbllTimerPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const session = useZbllSessionStore();
   const selected = useZbllSelectedStore();
@@ -316,10 +323,10 @@ export function ZbllTimerPage() {
       switch (e.key) {
         case 't': navigate('/select/zbll'); break;
         case 'r': session.startRecap(); break;
-        case 'd': if (confirm('Clear session?')) session.clearSession(); break;
+        case 'd': if (confirm(t('zbll.stats.clearConfirm'))) session.clearSession(); break;
         case 'z': {
           const stats = session.data.stats;
-          if (stats.length > 0 && confirm('Delete?')) {
+          if (stats.length > 0 && confirm(t('zbll.result.deleteConfirm'))) {
             session.deleteResult(session.observingResult);
           }
           break;
@@ -345,10 +352,10 @@ export function ZbllTimerPage() {
     if (e.key === 'Delete') {
       e.preventDefault();
       if (e.shiftKey) {
-        if (confirm('Clear session?')) session.clearSession();
+        if (confirm(t('zbll.stats.clearConfirm'))) session.clearSession();
       } else {
         const stats = session.data.stats;
-        if (stats.length > 0 && confirm('Delete?')) {
+        if (stats.length > 0 && confirm(t('zbll.result.deleteConfirm'))) {
           session.deleteResult(session.observingResult);
         }
       }
@@ -361,7 +368,7 @@ export function ZbllTimerPage() {
     if (e.key === 'ArrowRight') session.setObservingResult(Math.min(stats.length - 1, session.observingResult + 1));
     if (e.key === 'Home') session.setObservingResult(0);
     if (e.key === 'End') session.setObservingResult(Math.max(0, stats.length - 1));
-  }, [session, selected, settings, showSettings, navigate, presets]);
+  }, [session, selected, settings, showSettings, navigate, presets, t]);
 
   const handleKeyUp = useCallback((e: KeyboardEvent) => {
     if (e.code === 'Space') {
@@ -412,11 +419,11 @@ export function ZbllTimerPage() {
   }, [handleKeyDown, handleKeyUp]);
 
   // 打乱显示
-  const scramble = session.data.currentScramble ?? 'no scramble available';
+  const scramble = session.data.currentScramble ?? t('zbll.timer.noScramble');
   const appendix = settings.scrambleAppendix === 'None' ? '' : ' ' + settings.scrambleAppendix;
 
   const recapInfo = session.data.recapMode
-    ? `(Recap: ${session.casesWithZeroCount().length}/${selected.totalSelected()} remaining)`
+    ? `(${t('zbll.nav.nToRecap', { count: session.casesWithZeroCount().length })})`
     : '';
 
   return (
@@ -425,7 +432,7 @@ export function ZbllTimerPage() {
       <div className="zbll-timer-nav">
         <div className="zbll-timer-nav-left">
           <button className="zbll-btn zbll-btn-primary" onClick={() => navigate('/select/zbll')}>
-            Select ({selected.totalSelected()})
+            {t('zbll.nav.selectBtn')} ({selected.totalSelected()})
           </button>
           {recapInfo && <span className="zbll-recap-info">{recapInfo}</span>}
         </div>
@@ -440,7 +447,7 @@ export function ZbllTimerPage() {
 
       {/* 打乱 */}
       <div className="zbll-scramble" style={{ fontSize: settings.scrambleFontSize }}>
-        <span className="zbll-scramble-label">Scramble&nbsp;</span>
+        <span className="zbll-scramble-label">{t('zbll.timer.scramble')}&nbsp;</span>
         <span>{scramble}<span className="zbll-scramble-appendix">{appendix}</span></span>
       </div>
 
