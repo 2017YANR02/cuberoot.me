@@ -3,6 +3,7 @@
  * 完整复刻自上游 SelectView.vue
  */
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useZbllSelectedStore } from '../stores/zbllSelectedStore';
 import { useZbllSessionStore } from '../stores/zbllSessionStore';
 import { useZbllSettingsStore } from '../stores/zbllSettingsStore';
@@ -16,6 +17,7 @@ import '../zbll.css';
 
 // ===== 组件：ZbllNote =====
 function ZbllNote({ zbllKey }: { zbllKey: string }) {
+  const { t } = useTranslation();
   const { notes, setNote } = useZbllNotesStore();
   const [isEditing, setIsEditing] = useState(false);
   const note = notes[zbllKey] || '';
@@ -41,9 +43,9 @@ function ZbllNote({ zbllKey }: { zbllKey: string }) {
   return (
     <div className="zbll-note-display">
       <span className={note ? '' : 'zbll-note-placeholder'}>
-        {note || 'Add your note'}
+        {note || t('zbll.result.addNote')}
       </span>
-      <button className="zbll-note-edit-btn" onClick={() => setIsEditing(true)} title="Edit note">
+      <button className="zbll-note-edit-btn" onClick={() => setIsEditing(true)} title={t('zbll.result.addNote')}>
         ✏️
       </button>
     </div>
@@ -52,6 +54,7 @@ function ZbllNote({ zbllKey }: { zbllKey: string }) {
 
 // ===== 组件：SetupAndAlgs =====
 function SetupAndAlgs({ zbllKey, maxAmount }: { zbllKey: string; maxAmount: number }) {
+  const { t } = useTranslation();
   const entry = (zbllMap as Record<string, ZbllEntry>)[zbllKey];
   if (!entry || !entry.algs.length) return null;
   const setup = inverseScramble(entry.algs[0]);
@@ -59,8 +62,8 @@ function SetupAndAlgs({ zbllKey, maxAmount }: { zbllKey: string; maxAmount: numb
 
   return (
     <div>
-      <div>Setup: <strong>{setup}</strong></div>
-      <div className="mt-1">Algs:</div>
+      <div>{t('zbll.result.setup')} <strong>{setup}</strong></div>
+      <div className="mt-1">{t('zbll.result.algs')}</div>
       <ul className="zbll-alg-list">
         {algs.map((alg, i) => (
           <li key={alg} className={i === 0 ? 'zbll-alg-bold' : ''}>
@@ -118,6 +121,7 @@ function ZbllCaseCard({ zbllKey }: { zbllKey: string }) {
 
 // ===== 组件：ZbllsModal（COLL 详情弹窗） =====
 function ZbllsModal({ oll, coll, onClose }: { oll: string; coll: string; onClose: () => void }) {
+  const { t } = useTranslation();
   const { numInCollSelected, addColl, removeColl } = useZbllSelectedStore();
   const zbllKeys = allZbllKeys.filter((k) => k.startsWith(`${oll} ${coll}`));
   const zbllNames = zbllKeys.map((k) => k.split(' ')[2]);
@@ -160,9 +164,9 @@ function ZbllsModal({ oll, coll, onClose }: { oll: string; coll: string; onClose
           </div>
         </div>
         <div className="zbll-modal-footer">
-          <button className="zbll-btn zbll-btn-secondary" onClick={allBtnClicked}>All</button>
-          <button className="zbll-btn zbll-btn-secondary" onClick={() => removeColl(oll, coll)}>None</button>
-          <button className="zbll-btn zbll-btn-primary" onClick={onClose}>Done</button>
+          <button className="zbll-btn zbll-btn-secondary" onClick={allBtnClicked}>{t('zbll.select.all')}</button>
+          <button className="zbll-btn zbll-btn-secondary" onClick={() => removeColl(oll, coll)}>{t('zbll.select.none')}</button>
+          <button className="zbll-btn zbll-btn-primary" onClick={onClose}>{t('zbll.select.done')}</button>
         </div>
         {inspectingKey && <ZbllCaseInfo zbllKey={inspectingKey} />}
       </div>
@@ -248,6 +252,7 @@ function OllCard({ oll }: { oll: string }) {
 
 // ===== 组件：Presets =====
 function Presets() {
+  const { t } = useTranslation();
   const presets = useZbllPresetStore();
   const selected = useZbllSelectedStore();
   const [name, setName] = useState('');
@@ -267,18 +272,18 @@ function Presets() {
   return (
     <div>
       <div className="zbll-preset-input-group">
-        <span className="zbll-preset-label">{isEditing ? 'Edit' : 'New'}</span>
+        <span className="zbll-preset-label">{isEditing ? t('zbll.presets.edit') : t('zbll.presets.new')}</span>
         <input
           type="text"
           className="zbll-preset-input"
           value={name}
           onChange={(e) => setName(e.target.value.trim())}
           onKeyDown={(e) => e.key === 'Enter' && save()}
-          placeholder="to learn"
+          placeholder={t('zbll.presets.placeholder')}
           maxLength={20}
         />
         <button className="zbll-btn zbll-btn-primary" onClick={save} disabled={!name || isSame}>
-          Save
+          {t('zbll.presets.save')}
         </button>
       </div>
       {showList && Object.keys(presets.map).map((pName) => {
@@ -306,6 +311,7 @@ function Presets() {
 
 // ===== 组件：SideAccordion（手风琴） =====
 function SideAccordion() {
+  const { t } = useTranslation();
   const { settings, updateSetting } = useZbllSettingsStore();
   const [openSection, setOpenSection] = useState<string | null>(settings.showHowTo ? 'howto' : 'presets');
 
@@ -316,18 +322,18 @@ function SideAccordion() {
       {settings.showHowTo && (
         <div className="zbll-accordion-item">
           <div className="zbll-accordion-header" onClick={() => toggle('howto')}>
-            How to use {openSection === 'howto' ? '▲' : '▼'}
+            {t('zbll.howto.title')} {openSection === 'howto' ? '▲' : '▼'}
           </div>
           {openSection === 'howto' && (
             <div className="zbll-accordion-body">
               <ul className="zbll-howto-list">
-                <li>🖱️ Click on the picture to select / deselect all cases in the group</li>
-                <li>🔽 Click on the item header to expand / collapse the group</li>
-                <li>🟢 Green = all selected; 🟡 yellow = some; ⚪ none</li>
-                <li>✅ When cases are selected, click "start"</li>
+                <li>{t('zbll.howto.step1')}</li>
+                <li>{t('zbll.howto.step2')}</li>
+                <li>{t('zbll.howto.step3')}</li>
+                <li>{t('zbll.howto.step4')}</li>
               </ul>
               <button className="zbll-link-btn" onClick={() => updateSetting('showHowTo', false)}>
-                dismiss this section
+                {t('zbll.howto.dismiss')}
               </button>
             </div>
           )}
@@ -335,7 +341,7 @@ function SideAccordion() {
       )}
       <div className="zbll-accordion-item">
         <div className="zbll-accordion-header" onClick={() => toggle('presets')}>
-          Presets {openSection === 'presets' ? '▲' : '▼'}
+          {t('zbll.presets.title')} {openSection === 'presets' ? '▲' : '▼'}
         </div>
         {openSection === 'presets' && (
           <div className="zbll-accordion-body">
@@ -345,18 +351,18 @@ function SideAccordion() {
       </div>
       <div className="zbll-accordion-item">
         <div className="zbll-accordion-header" onClick={() => toggle('hotkeys')}>
-          Hotkeys {openSection === 'hotkeys' ? '▲' : '▼'}
+          {t('zbll.hotkeys.title')} {openSection === 'hotkeys' ? '▲' : '▼'}
         </div>
         {openSection === 'hotkeys' && (
           <div className="zbll-accordion-body">
             <ul className="zbll-hotkey-list">
-              <li><kbd>Alt</kbd>+<kbd>T</kbd> Toggle Timer/Select</li>
-              <li><kbd>Delete</kbd> / <kbd>Alt</kbd>+<kbd>Z</kbd> Delete result</li>
-              <li><kbd>Shift</kbd>+<kbd>Delete</kbd> / <kbd>Alt</kbd>+<kbd>D</kbd> Clear session</li>
-              <li><kbd>Alt</kbd>+<kbd>S</kbd> Select/deselect case</li>
-              <li><kbd>Alt</kbd>+<kbd>R</kbd> Start recap</li>
-              <li><kbd>Alt</kbd>+<kbd>A</kbd> Add to ⭐</li>
-              <li><kbd>←</kbd>/<kbd>→</kbd>/<kbd>Home</kbd>/<kbd>End</kbd> Navigate results</li>
+              <li><kbd>Alt</kbd>+<kbd>T</kbd> {t('zbll.hotkeys.toggleView')}</li>
+              <li><kbd>Delete</kbd> / <kbd>Alt</kbd>+<kbd>Z</kbd> {t('zbll.hotkeys.deleteResult')}</li>
+              <li><kbd>Shift</kbd>+<kbd>Delete</kbd> / <kbd>Alt</kbd>+<kbd>D</kbd> {t('zbll.hotkeys.clearSession')}</li>
+              <li><kbd>Alt</kbd>+<kbd>S</kbd> {t('zbll.hotkeys.selectDeselect')}</li>
+              <li><kbd>Alt</kbd>+<kbd>R</kbd> {t('zbll.hotkeys.startRecap')}</li>
+              <li><kbd>Alt</kbd>+<kbd>A</kbd> {t('zbll.hotkeys.addToStarred')}</li>
+              <li><kbd>←</kbd>/<kbd>→</kbd>/<kbd>Home</kbd>/<kbd>End</kbd> {t('zbll.hotkeys.navigate')}</li>
             </ul>
           </div>
         )}
@@ -367,6 +373,7 @@ function SideAccordion() {
 
 // ===== 主页面 =====
 export function ZbllSelectPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const selected = useZbllSelectedStore();
   const session = useZbllSessionStore();
@@ -405,10 +412,10 @@ export function ZbllSelectPage() {
         <div className="zbll-side-panel">
           <div className="zbll-side-card">
             <button className="zbll-btn zbll-btn-primary zbll-btn-full" disabled={disabled} onClick={startPractice}>
-              Start
+              {t('zbll.select.practice')}
             </button>
             <button className="zbll-btn zbll-btn-outline zbll-btn-full" disabled={disabled} onClick={startRecap}>
-              Recap each case once
+              {t('zbll.select.recap')}
             </button>
             <SideAccordion />
           </div>
