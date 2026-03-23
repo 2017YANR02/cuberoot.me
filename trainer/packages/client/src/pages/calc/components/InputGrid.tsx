@@ -1,6 +1,6 @@
-// NOTE: 输入网格组件 — 从 input_grid.js 迁移
-// 每行 = checkbox + 5(或3)个成绩输入框 + targetAvg 框 + Me 按钮
-// 功能：zigzag 跳格、WR badge、排名标签、Target Avg emoji 状态
+// NOTE: 输入网格组件 — 从 input_grid.js 1:1 迁移
+// 每行 = checkbox + 5(或3)个成绩输入框 + targetAvg 框
+// 功能：zigzag 跳格、WR badge、排名标签、Ao5 括号标注、fitFont 自适应字号
 
 import { useCallback, useRef } from 'react';
 import { useCalcStore, isMbfForEvent } from '../stores/calc_store';
@@ -11,14 +11,22 @@ import {
 } from '../engine/calc_engine';
 import { isWR } from '../engine/wr_data';
 
-// NOTE: 排名颜色 — 1(绿) → 5(红)
-const RANK_COLORS = ['#2e7d32', '#558b2f', '#9e9e9e', '#e65100', '#c62828'];
+// NOTE: 根据文字长度自适应缩小字号，防止长时间格式（如 1:10.10）溢出
+// 原版 input_grid.js#31-42
+function fitFontStyle(displayVal: string): React.CSSProperties | undefined {
+  // NOTE: 去掉括号计算长度，避免 Ao5 括号标注影响字号
+  const len = displayVal.replace(/[()]/g, '').length;
+  if (len <= 5) return undefined;
+  if (len === 6) return { fontSize: '20px' };
+  return { fontSize: '17px' };
+}
 
 export function InputGrid() {
   const state = useCalcStore();
   const sc = state.solveCount();
   const isMbf = isMbfForEvent(state.event);
   const isMove = state.event === '333fm';
+  const isMo3 = sc === 3;
 
   // NOTE: 当前聚焦的输入框 [playerIdx, solveIdx]
   const inputRefs = useRef<(HTMLInputElement | null)[][]>([[], []]);
@@ -47,14 +55,14 @@ export function InputGrid() {
       // NOTE: zigzag 跳格 — 先同列另一选手，再下一列
       let nextP = p;
       let nextT = t;
-      nextP = 1 - p; // 先跳到另一选手
-      if (nextP <= p) nextT++; // 如果回到第一个选手，列号+1
-      if (nextT >= sc) return; // 已到末尾
+      nextP = 1 - p;
+      if (nextP <= p) nextT++;
+      if (nextT >= sc) return;
 
       // NOTE: 跳过未启用的选手
       if (!state.playerEnabled[nextP]) {
         nextP = 1 - nextP;
-        if (p === 0) nextT++; // 如果原来是 A，跳过 B 后要到下一列的 A
+        if (p === 0) nextT++;
       }
       if (nextT >= sc) return;
 
@@ -66,70 +74,121 @@ export function InputGrid() {
     }
   }, [state, handleBlur, sc]);
 
-  // NOTE: 获取显示值 — centiseconds → 格式化字符串
-  const getDisplayValue = useCallback((val: number): string => {
-    if (val === 0) return '';
-    if (val >= DNF_VALUE) return 'DNF';
-    return formatTime(val, false, isMove);
-  }, [isMove]);
-
   // NOTE: ghost bar 状态（用于 emoji 显示）
+  // 原版 input_grid.js#861-875 Target Avg 状态 emoji
   const getGhostEmoji = useCallback((p: number): string => {
-    const tavg = state.getTargetAvg(state.seedOn);
-    if (!tavg || tavg <= 0) return '';
+    const tavg = state.getTargetAvg(state.seedOn + p);
+    if (!tavg || tavg <= 0) return '🎯'; // NOTE: 默认（数据不足）
+    if (tavg >= DNF_VALUE) return '🎯';
     const row = state.times[state.seedOn + p];
     const ghost = CalcEngine.getGhostBar(row, tavg);
-    if (!ghost) return '';
+    if (!ghost) return '🎯';
     switch (ghost.type) {
-      case 'safe': return '🎯';
-      case 'conditional': return '🎲';
-      case 'impossible': return '💀';
-      case 'any': return '🔒';
-      default: return '';
+      case 'safe':
+      case 'any':
+        return '🔒';
+      case 'conditional':
+        return '🎲';
+      case 'impossible':
+        return '💀';
+      default:
+        return '🎯';
     }
   }, [state]);
 
   return (
     <div className="input-grid">
       {[0, 1].map(p => {
-        if (!state.playerEnabled[p] && p === 1) return null;
+        const enabled = state.playerEnabled[p];
         const absIdx = state.seedOn + p;
         const playerClass = p === 0 ? 'player-a' : 'player-b';
 
-        // NOTE: 当前选手的成绩排名
         const row = state.times[absIdx];
-        const validVals = row.slice(0, sc).filter(v => v > 0 && v < DNF_VALUE);
-        const sortedVals = [...validVals].sort((a, b) => isMbf ? b - a : a - b);
+
+        // NOTE: Ao5 括号标注 — 标记最好/最坏成绩的索引（仅当所有 solve 都有值时）
+        // 原版 input_grid.js#810-829
+        let bestIdx = -1;
+        let worstIdx = -1;
+        if (enabled && !isMo3) {
+          let allFilled = true;
+          for (let c = 0; c < sc; c++) {
+            if (row[c] <= 0) { allFilled = false; break; }
+          }
+          if (allFilled) {
+            let bestVal = Infinity;
+            let worstVal = -1;
+            for (let c = 0; c < sc; c++) {
+              const v = row[c];
+              if (v < bestVal) { bestVal = v; bestIdx = c; }
+              if (v > worstVal) { worstVal = v; worstIdx = c; }
+            }
+          }
+        }
+
+        // NOTE: 排名计算 — 收集有效成绩按值排序后分配排名 1~n
+        // 原版 input_grid.js#879-904
+        const ranked: { idx: number; val: number }[] = [];
+        if (enabled) {
+          for (let t = 0; t < sc; t++) {
+            const v = row[t];
+            if (v > 0) ranked.push({ idx: t, val: v });
+          }
+          // NOTE: DNF 值排最后
+          ranked.sort((a, b) => a.val - b.val);
+        }
 
         return (
-          <div key={p} className={`input-row ${playerClass}`}>
-            {/* 选手启用 checkbox */}
-            {p === 1 && (
+          <div
+            key={p}
+            className={`input-row ${playerClass}${!enabled ? ' disabled' : ''}`}
+            style={!enabled ? { opacity: 0.3 } : undefined}
+          >
+            {/* 选手启用 checkbox — B 行始终显示，A 行用空占位 */}
+            {p === 1 ? (
               <input
                 type="checkbox"
                 className="player-toggle"
-                checked={state.playerEnabled[1]}
+                checked={enabled}
                 onChange={() => state.togglePlayer(1)}
               />
+            ) : (
+              <div style={{ width: 20 }} />
             )}
-            {p === 0 && <div style={{ width: 20 }} />}
 
             {/* 成绩输入框 */}
             {Array.from({ length: sc }, (_, t) => {
               const val = row[t];
-              const rank = val > 0 && val < DNF_VALUE ? sortedVals.indexOf(val) : -1;
-              const wrSingle = val > 0 && val < DNF_VALUE && isWR(state.event, 'single', val);
+
+              // NOTE: 格式化显示值 + Ao5 括号标注
+              let displayVal = '';
+              if (enabled && val > 0 && val < DNF_VALUE) {
+                displayVal = formatTime(val, false, isMove);
+                // NOTE: Ao5 括号标注 — 最好和最坏成绩加括号（WCA 惯例）
+                if (t === bestIdx || t === worstIdx) {
+                  displayVal = '(' + displayVal + ')';
+                }
+              } else if (enabled && val >= DNF_VALUE) {
+                displayVal = 'DNF';
+                // NOTE: DNF 也可能是 worst
+                if (t === worstIdx) {
+                  displayVal = '(DNF)';
+                }
+              }
+
+              // NOTE: 排名位置
+              const rankPos = ranked.findIndex(r => r.idx === t);
+              const wrSingle = enabled && val > 0 && val < DNF_VALUE && isWR(state.event, 'single', val);
 
               return (
                 <div key={t} className="time-cell-wrapper">
-                  {/* 排名标签 */}
-                  {rank >= 0 && (
+                  {/* 排名标签 — 原版 input_grid.js#892-904 */}
+                  {rankPos >= 0 && (
                     <span
                       className="sort-rank"
-                      data-rank={rank + 1}
-                      style={{ color: RANK_COLORS[Math.min(rank, RANK_COLORS.length - 1)] }}
+                      data-rank={rankPos + 1}
+                      data-total={ranked.length}
                     >
-                      {rank + 1}
+                      {rankPos + 1}
                     </span>
                   )}
                   {/* WR badge */}
@@ -142,9 +201,11 @@ export function InputGrid() {
                     className="time-cell"
                     type="text"
                     inputMode="decimal"
-                    defaultValue={getDisplayValue(val)}
-                    key={`${absIdx}_${t}_${val}`}
-                    placeholder={t < sc ? String(t + 1) : ''}
+                    disabled={!enabled}
+                    defaultValue={displayVal}
+                    key={`${absIdx}_${t}_${val}_${enabled}`}
+                    placeholder={`#${t + 1}`}
+                    style={fitFontStyle(displayVal)}
                     onBlur={(e) => {
                       handleBlur(p, t, e.target.value);
                     }}
@@ -154,25 +215,27 @@ export function InputGrid() {
               );
             })}
 
-            {/* Target Avg 输入框 */}
+            {/* Target Avg 输入框 — 每行独立（原版 input_grid.js 行 103-107）*/}
             <div className="time-cell-wrapper">
               <span className="tavg-emoji">{getGhostEmoji(p)}</span>
               <input
                 className="time-cell tavg-cell"
                 type="text"
                 inputMode="decimal"
-                placeholder="Avg"
+                disabled={!enabled}
+                placeholder="Target"
                 defaultValue={(() => {
-                  const ta = state.getTargetAvg(state.seedOn);
+                  const ta = state.getTargetAvg(state.seedOn + p);
                   return ta > 0 ? formatTime(ta, false, isMove, true) : '';
                 })()}
-                key={`tavg_${state.seedOn}_${state.getTargetAvg(state.seedOn)}`}
+                key={`tavg_${absIdx}_${state.getTargetAvg(absIdx)}_${enabled}`}
+                style={!enabled ? { opacity: 0.3 } : undefined}
                 onBlur={(e) => {
                   const raw = e.target.value.trim();
                   if (raw === '') {
-                    state.setTargetAvg(state.seedOn, 0);
+                    state.setTargetAvg(absIdx, 0);
                   } else {
-                    state.setTargetAvg(state.seedOn, textToTime(raw));
+                    state.setTargetAvg(absIdx, textToTime(raw));
                   }
                   state.saveToUrl();
                 }}
