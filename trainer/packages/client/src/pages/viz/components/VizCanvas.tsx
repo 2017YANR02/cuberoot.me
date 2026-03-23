@@ -47,6 +47,11 @@ export default function VizCanvas({ onStats, onRidgeHighlight }: VizCanvasProps)
   const onRidgeRef = useRef(onRidgeHighlight);
   onRidgeRef.current = onRidgeHighlight;
 
+  // NOTE: rAF 节流 — 防止 subscribe 回调在一帧内触发多次 drawFrame
+  const rafPendingRef = useRef(false);
+  // NOTE: delta 历史放在 ref 里而不是 store 里，避免写 store 触发 subscribe 循环
+  const deltaHistRef = useRef<number[]>([]);
+
   // ─── Canvas 尺寸适配 ───
   // NOTE: 不依赖 React state，只用 ref + getState，因此不会触发重渲染循环
   const setupCanvas = useCallback(() => {
@@ -115,11 +120,12 @@ export default function VizCanvas({ onStats, onRidgeHighlight }: VizCanvasProps)
       const currentMean = result.apMean!;
       const sd = stddev(result.apTimes);
 
-      // delta 计算 — 与 30 帧前比较
-      s.pushDeltaHistory(currentMean);
-      const hist = useVizStore.getState().deltaHistory;
+      // NOTE: delta 计算 — 用本地 ref，不写 store，避免触发 subscribe 循环
+      const dh = deltaHistRef.current;
+      dh.push(currentMean);
+      if (dh.length > 200) dh.splice(0, dh.length - 200);
       const DELTA_LAG = 30;
-      const prevMean = hist.length > DELTA_LAG ? hist[hist.length - 1 - DELTA_LAG] : hist[0];
+      const prevMean = dh.length > DELTA_LAG ? dh[dh.length - 1 - DELTA_LAG] : dh[0];
       const delta = currentMean - prevMean;
       const improved = isHigherBetter(eventId) ? delta > 0 : delta < 0;
       const regressed = isHigherBetter(eventId) ? delta < 0 : delta > 0;
@@ -169,10 +175,18 @@ export default function VizCanvas({ onStats, onRidgeHighlight }: VizCanvasProps)
     const onResize = () => { setupCanvas(); drawFrame(); };
     window.addEventListener('resize', onResize);
 
-    // NOTE: 用 zustand subscribe 监听状态变化触发重绘，
-    // 替代之前的 useEffect + 全 store 订阅，避免 React 重渲染开销
+    // NOTE: 用 zustand subscribe + rAF 节流监听状态变化触发重绘
+    // FIXME: 之前每次 subscribe 都直接调 drawFrame，而 drawFrame 内部
+    // pushDeltaHistory 又写 store，导致 subscribe 再次触发 → 无限循环
+    // 修复：用 rAF 合并同一帧内的多次 subscribe 通知
     const unsub = useVizStore.subscribe(() => {
-      drawFrame();
+      if (!rafPendingRef.current) {
+        rafPendingRef.current = true;
+        requestAnimationFrame(() => {
+          rafPendingRef.current = false;
+          drawFrame();
+        });
+      }
     });
 
     return () => {
