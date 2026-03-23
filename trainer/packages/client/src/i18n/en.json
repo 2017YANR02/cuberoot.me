@@ -112,5 +112,45 @@
       "clearConfirm": "Clear session?",
       "holdSpace": "Hold spacebar to start the timer"
     }
+  },
+  "zbls": {
+    "nav": {
+      "back": "← Back",
+      "selectBtn": "Select",
+      "nToRecap": "Recap: {{count}} remaining"
+    },
+    "select": {
+      "practice": "Start",
+      "recap": "Recap each case once",
+      "all": "Select All",
+      "none": "Deselect All",
+      "expandAll": "Expand All",
+      "collapseAll": "Collapse All"
+    },
+    "presets": {
+      "title": "Presets",
+      "placeholder": "New Preset",
+      "save": "Save",
+      "apply": "Apply",
+      "delete": "Delete"
+    },
+    "timer": {
+      "scramble": "Scramble",
+      "noScramble": "no scramble available",
+      "again": "Again"
+    },
+    "result": {
+      "title": "Result #{{n}}",
+      "case": "Case:",
+      "scramble": "Scramble:",
+      "algs": "Algs:",
+      "deleteConfirm": "Delete this result?"
+    },
+    "stats": {
+      "title": "Stats: {{count}} solves",
+      "clear": "clear",
+      "clearConfirm": "Clear session?",
+      "holdSpace": "Hold spacebar to start the timer"
+    }
   }
 }
