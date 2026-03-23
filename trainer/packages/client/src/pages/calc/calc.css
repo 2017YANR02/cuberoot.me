@@ -193,12 +193,14 @@ body {
 #chart-container {
     max-width: 800px;
     margin: 0 auto;
+    position: relative;
 }
 
 .hth-chart {
     display: block;
     width: 100%;
     height: auto;
+    max-height: 45vh;
     max-width: 1600px;
     margin: 0 auto;
 }
