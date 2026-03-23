@@ -13,7 +13,6 @@ import { Drum } from './Drum';
 export function Numpad() {
   const state = useCalcStore();
   const [display, setDisplay] = useState('');
-  const [label, setLabel] = useState('');
   // NOTE: 当前编辑目标 [playerIdx, solveIdx]，-1 表示无目标
   const [target, setTarget] = useState<[number, number]>([-1, -1]);
 
@@ -31,13 +30,10 @@ export function Numpad() {
       setTarget([p, t]);
       const val = state.times[state.seedOn + p][t];
       setDisplay(val > 0 ? formatTime(val, false, isMove) : '');
-      const name = state.names[state.seedOn + p] || '';
-      setLabel(`${name} #${t + 1}`);
     } else {
       // NOTE: 全满时 target=[-1,-1] — Rand 需要此标志判断全量覆盖
       setTarget([-1, -1]);
       setDisplay('');
-      setLabel('');
     }
   }, [state, isMove]);
 
@@ -161,33 +157,44 @@ export function Numpad() {
 
   // NOTE: 按钮配置 — 与原版 index.html#128-149 布局一致
   // 行1: 1 2 3 ⌫   行2: 4 5 6 Rand   行3: 7 8 9 ↵   行4: ·: 0 DNF
+  // NOTE: backspace SVG — 与原版 /assets/icons.svg#icon-backspace 一致
+  const backspaceIcon = (
+    <svg viewBox="0 0 33 22" width="33" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M11 1h19a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H11L1 11z"/>
+      <line x1="17" y1="7" x2="25" y2="15"/>
+      <line x1="25" y1="7" x2="17" y2="15"/>
+    </svg>
+  );
+
+  // NOTE: enter SVG — 与原版 index.html#141-146 一致
+  const enterIcon = (
+    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="9 10 4 15 9 20" />
+      <path d="M20 4v7a4 4 0 0 1-4 4H4" />
+    </svg>
+  );
+
   const buttons = [
-    { text: '1', action: () => pressDigit('1'), cls: 'np-digit' },
-    { text: '2', action: () => pressDigit('2'), cls: 'np-digit' },
-    { text: '3', action: () => pressDigit('3'), cls: 'np-digit' },
-    { text: clearMode ? '\u2715Clear' : '⌫', action: () => {}, cls: `np-op${clearMode ? ' np-clear-mode' : ''}`, isBackspace: true },
-    { text: '4', action: () => pressDigit('4'), cls: 'np-digit' },
-    { text: '5', action: () => pressDigit('5'), cls: 'np-digit' },
-    { text: '6', action: () => pressDigit('6'), cls: 'np-digit' },
-    { text: 'Rand', action: pressRand, cls: 'np-op' },
-    { text: '7', action: () => pressDigit('7'), cls: 'np-digit' },
-    { text: '8', action: () => pressDigit('8'), cls: 'np-digit' },
-    { text: '9', action: () => pressDigit('9'), cls: 'np-digit' },
-    { text: '⏎', action: pressEnter, cls: 'np-action np-enter' },
-    { text: '·:', action: pressDot, cls: 'np-digit' },
-    { text: '0', action: () => pressDigit('0'), cls: 'np-digit' },
-    { text: 'DNF', action: pressDnf, cls: 'np-op' },
+    { content: '1', action: () => pressDigit('1'), cls: 'np-digit' },
+    { content: '2', action: () => pressDigit('2'), cls: 'np-digit' },
+    { content: '3', action: () => pressDigit('3'), cls: 'np-digit' },
+    { content: backspaceIcon, action: () => {}, cls: `np-op${clearMode ? ' np-clear-mode' : ''}`, isBackspace: true },
+    { content: '4', action: () => pressDigit('4'), cls: 'np-digit' },
+    { content: '5', action: () => pressDigit('5'), cls: 'np-digit' },
+    { content: '6', action: () => pressDigit('6'), cls: 'np-digit' },
+    { content: 'Rand', action: pressRand, cls: 'np-op' },
+    { content: '7', action: () => pressDigit('7'), cls: 'np-digit' },
+    { content: '8', action: () => pressDigit('8'), cls: 'np-digit' },
+    { content: '9', action: () => pressDigit('9'), cls: 'np-digit' },
+    { content: enterIcon, action: pressEnter, cls: 'np-action np-enter' },
+    { content: '·:', action: pressDot, cls: 'np-digit' },
+    { content: '0', action: () => pressDigit('0'), cls: 'np-digit' },
+    { content: 'DNF', action: pressDnf, cls: 'np-op' },
   ];
 
   return (
     <div id="numpad">
-      {/* 显示区 */}
-      <div id="numpad-display">
-        <span id="numpad-label">{label}</span>
-        {display || '\u00A0'}
-      </div>
-
-      {/* 按钮区 */}
+      {/* 按钮区 — 原版无 display 行 */}
       <div id="numpad-body">
         {/* iOS 滚筒精调 */}
         <Drum activeCell={target} />
@@ -208,7 +215,7 @@ export function Numpad() {
                 setClearMode(false);
               } : undefined}
             >
-              {btn.text}
+              {btn.content}
             </button>
           ))}
         </div>
