@@ -830,8 +830,8 @@ function drawAverages(): void {
       const m = 10;       // 菱形半高
       const jm = 14;      // 左尖到文字区的水平距离
 
-      // NOTE: 左尖 X = PA 竖柱右侧（或最后柱子右侧偏移）
-      const lx = getBarX(sc - 1, pSlot) + gp.barW + 14;
+      // NOTE: 左尖 X = PA 竖柱右边缘（barCx=+30, paBarW=20, 右边缘=+40）
+      const lx = getBarX(sc - 1, pSlot) + gp.barW + 40;
       const rx = lx + jm + tw;
       const cy = avgY; // 菱形垂直中心 = avg Y 坐标
 
