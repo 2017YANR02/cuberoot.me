@@ -8,10 +8,9 @@ import {
   computeKDE, mean, computeHistogram, detectPeaks,
 } from '../engine/kde';
 import {
-  rawToVal, playerHSL, getShiftedHSL, fmtVal, isFMC, isMBLD,
+  rawToVal, playerHSL, getShiftedHSL,
   KDE_POINTS,
 } from '../engine/data_fetch';
-import type { PlayerData, ShowLayers } from '../engine/data_fetch';
 import { computePlayerFrame, getWindowTimes } from '../engine/sync';
 import {
   drawGrid, drawCurve, drawMeanLine, drawHistogramBars,

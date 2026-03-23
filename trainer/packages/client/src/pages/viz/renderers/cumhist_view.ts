@@ -8,7 +8,7 @@ import { computeKDE, mean, computeHistogram } from '../engine/kde';
 import {
   rawToVal, getShiftedHSL, KDE_POINTS,
 } from '../engine/data_fetch';
-import type { PlayerData, ShowLayers } from '../engine/data_fetch';
+
 import { drawGrid, drawCurve, drawMeanLabelsOnCanvas } from './draw_utils';
 import type { MeanPosition } from './draw_utils';
 
@@ -90,7 +90,7 @@ export function drawCumHistView(
   for (let pi = 0; pi < players.length; pi++) {
     const d = allCumData[pi];
     if (!d) continue;
-    const { cumTimes, bins, endIdx } = d;
+    const { cumTimes, bins } = d;
     const cumMean = mean(cumTimes);
     meanPositions.push({ pi, mean: cumMean, currentVal: null, name: players[pi].nameZh || players[pi].name });
 
