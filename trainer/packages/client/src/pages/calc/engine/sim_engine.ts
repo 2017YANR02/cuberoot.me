@@ -2,7 +2,7 @@
 // 蒙特卡洛估计、几何分布中位数、KDE 采样 + 进步幅度缩放
 // 对应原版 app.js#505-795
 
-import { useCalcStore, solveCountForEvent, isMo3ForEvent, isMbfForEvent } from '../stores/calc_store';
+import { useCalcStore, solveCountForEvent, isMbfForEvent } from '../stores/calc_store';
 import { getAverage, clampValue } from '../engine/calc_engine';
 import { sampleKDE, getAo100, getWR } from '../engine/wr_data';
 
