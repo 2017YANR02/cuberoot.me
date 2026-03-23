@@ -224,35 +224,40 @@ function reapplySelection(): void {
 
 // ── drag handle ──
 
-function createHandle(bar: SelectedBar): void {
+// ── 通用 handle 工具函数（DRY） ──
+
+/** NOTE: 创建 overlay pill handle DOM 元素 */
+function spawnHandle(playerIdx: number): HTMLDivElement | null {
   removeHandle();
   const overlay = getOverlay();
-  if (!overlay) return;
+  if (!overlay) return null;
 
   handleEl = document.createElement('div');
-  handleEl.className = 'bar-drag-handle' + (bar.playerIdx === 1 ? ' player-b' : '');
+  handleEl.className = 'bar-drag-handle' + (playerIdx === 1 ? ' player-b' : '');
   handleEl.style.pointerEvents = 'auto';
   handleEl.style.cursor = 'ns-resize';
   overlay.appendChild(handleEl);
+  return handleEl;
+}
 
-  // NOTE: handle 上独立注册 pointerdown — 原版 chart_drag.js 的核心交互入口
-  // setPointerCapture 确保指针离开元素后仍跟踪，实现流畅拖动
-  handleEl.addEventListener('pointerdown', (e: PointerEvent) => {
-    if (!selected) return;
-    e.preventDefault();
-    e.stopPropagation(); // 阻止冒泡到 SVG pointerdown 引起重复选中
+/** NOTE: 定位 handle 到任意 SVG 坐标 (cx, cy) + 宽度 svgW */
+function positionHandleAt(svgX: number, svgY: number, svgW: number): void {
+  if (!handleEl) return;
+  const svgEl = getSvgEl();
+  if (!svgEl) return;
+  const ctm = svgEl.getScreenCTM();
+  if (!ctm) return;
+  const overlay = getOverlay();
+  if (!overlay) return;
+  const overlayRect = overlay.getBoundingClientRect();
 
-    const state = useCalcStore.getState();
-    dragStartY = e.clientY;
-    dragStartVal = state.times[state.seedOn + selected.playerIdx][selected.solveIdx];
-    isPointerDown = true;
-    isDragging = true;
-
-    // NOTE: 捕获 pointer — 指针离开 handle 后仍跟踪（原版关键机制）
-    handleEl!.setPointerCapture(e.pointerId);
-  });
-
-  positionHandle();
+  handleEl.style.left = (svgX * ctm.a + ctm.e - overlayRect.left) + 'px';
+  handleEl.style.top = (svgY * ctm.d + ctm.f - overlayRect.top) + 'px';
+  handleEl.style.display = '';
+  handleEl.style.width = Math.max(svgW * ctm.a, 24) + 'px';
+  handleEl.style.height = '16px';
+  handleEl.style.borderRadius = '8px';
+  handleEl.style.transform = 'translate(-50%, -50%)';
 }
 
 function removeHandle(): void {
@@ -262,12 +267,32 @@ function removeHandle(): void {
   }
 }
 
+// ── 柱子 handle ──
+
+function createHandle(bar: SelectedBar): void {
+  const el = spawnHandle(bar.playerIdx);
+  if (!el) return;
+
+  // NOTE: handle 上独立注册 pointerdown — setPointerCapture 实现流畅拖动
+  el.addEventListener('pointerdown', (e: PointerEvent) => {
+    if (!selected) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    const state = useCalcStore.getState();
+    dragStartY = e.clientY;
+    dragStartVal = state.times[state.seedOn + selected.playerIdx][selected.solveIdx];
+    isPointerDown = true;
+    isDragging = true;
+    el.setPointerCapture(e.pointerId);
+  });
+
+  positionHandle();
+}
+
 /** NOTE: 同步 handle 位置到选中柱子顶部 */
 function positionHandle(): void {
   if (!handleEl || !selected) return;
-  const svgEl = getSvgEl();
-  if (!svgEl) return;
-
   const state = useCalcStore.getState();
   const val = state.times[state.seedOn + selected.playerIdx][selected.solveIdx];
   if (val <= 0 || val >= DNF_VALUE) {
@@ -276,42 +301,22 @@ function positionHandle(): void {
   }
 
   const barW = getBarW();
-
-  // NOTE: SVG 坐标 → 屏幕坐标 → overlay 相对坐标
   const x = getBarX(selected.solveIdx, 0) + barW / 2;
   const y = valToYCap(val);
 
-  const ctm = svgEl.getScreenCTM();
-  if (!ctm) return;
-  const overlay = getOverlay();
-  if (!overlay) return;
-  const overlayRect = overlay.getBoundingClientRect();
-
-  const screenX = x * ctm.a + ctm.e - overlayRect.left;
-  const screenY = y * ctm.d + ctm.f - overlayRect.top;
-
-  // NOTE: Both 模式下内侧柱子宽度缩窄为 barW * 0.55，handle 跟随
+  // NOTE: Both 模式下内侧柱子宽度缩窄
   const pe = state.playerEnabled;
   const bothOn = pe[state.seedOn] && pe[state.seedOn + 1];
   let effectiveW = barW;
   if (bothOn) {
-    // NOTE: 检查另一选手对应 slot 是否也有值 — 有值才是重叠模式
     const otherP = selected.playerIdx === 0 ? 1 : 0;
     const otherVal = state.times[state.seedOn + otherP]?.[selected.solveIdx] ?? 0;
-    if (otherVal > 0 && otherVal < DNF_VALUE) {
-      // NOTE: 较矮柱子（值更小 = 更矮）用缩窄宽度
-      if (val < otherVal) {
-        effectiveW = barW * 0.55;
-      }
+    if (otherVal > 0 && otherVal < DNF_VALUE && val < otherVal) {
+      effectiveW = barW * 0.55;
     }
   }
 
-  handleEl.style.left = screenX + 'px';
-  handleEl.style.top = screenY + 'px';
-  handleEl.style.display = '';
-  handleEl.style.width = Math.max(effectiveW * ctm.a, 24) + 'px';
-  handleEl.style.height = '16px';
-  handleEl.style.borderRadius = '8px';
+  positionHandleAt(x, y, effectiveW);
 }
 
 // ── 输入格联动 ──
@@ -617,31 +622,11 @@ function startPaDrag(e: PointerEvent, p: number, paEnd: string): void {
     fixedSum = fixed[1] + fixed[2];
   }
 
-  // NOTE: 创建 overlay pill handle（复用 bar-drag-handle 样式）
-  const overlay = getOverlay();
-  if (!overlay) return;
-  const paHandle = document.createElement('div');
-  paHandle.className = 'bar-drag-handle' + (p === 1 ? ' player-b' : '');
-  paHandle.style.pointerEvents = 'auto';
-  paHandle.style.cursor = 'ns-resize';
-  overlay.appendChild(paHandle);
-
-  // NOTE: 定位 handle 到 PA 端点
-  const svgEl = getSvgEl();
-  if (!svgEl) { paHandle.remove(); return; }
-  const ctm = svgEl.getScreenCTM();
-  if (!ctm) { paHandle.remove(); return; }
-  const overlayRect = overlay.getBoundingClientRect();
+  // NOTE: 复用通用 handle 创建 + 定位
+  const paHandle = spawnHandle(p);
+  if (!paHandle) return;
   const endY = paEnd === 'wpa' ? paInfo.wpaY : paInfo.bpaY;
-  const screenX = paInfo.cx * ctm.a + ctm.e - overlayRect.left;
-  const screenY = endY * ctm.d + ctm.f - overlayRect.top;
-  paHandle.style.left = screenX + 'px';
-  paHandle.style.top = screenY + 'px';
-  paHandle.style.display = '';
-  paHandle.style.width = Math.max(paInfo.w * ctm.a, 24) + 'px';
-  paHandle.style.height = '16px';
-  paHandle.style.borderRadius = '8px';
-  paHandle.style.transform = 'translate(-50%, -50%)';
+  positionHandleAt(paInfo.cx, endY, paInfo.w);
 
   document.body.style.userSelect = 'none';
 
@@ -661,15 +646,11 @@ function startPaDrag(e: PointerEvent, p: number, paEnd: string): void {
     state.times[state.seedOn + p][targetSlot] = clamped;
     chartRender({ skipViewBox: true });
 
-    // NOTE: 更新 handle 位置
+    // NOTE: 更新 handle 位置（复用通用定位）
     const newPaInfo = getPaBarData().find(info => info.playerIdx === p);
-    if (newPaInfo && svgEl) {
-      const newCtm = svgEl.getScreenCTM();
-      if (newCtm) {
-        const newOverlayRect = overlay.getBoundingClientRect();
-        const newEndY = paEnd === 'wpa' ? newPaInfo.wpaY : newPaInfo.bpaY;
-        paHandle.style.top = (newEndY * newCtm.d + newCtm.f - newOverlayRect.top) + 'px';
-      }
+    if (newPaInfo) {
+      const newEndY = paEnd === 'wpa' ? newPaInfo.wpaY : newPaInfo.bpaY;
+      positionHandleAt(newPaInfo.cx, newEndY, newPaInfo.w);
     }
   };
 
@@ -677,7 +658,7 @@ function startPaDrag(e: PointerEvent, p: number, paEnd: string): void {
     document.removeEventListener('pointermove', onMove);
     document.removeEventListener('pointerup', onUp);
     document.body.style.userSelect = '';
-    paHandle.remove();
+    removeHandle();
 
     const currentVal = state.times[state.seedOn + p][targetSlot];
     if (currentVal !== targetOrigVal && currentVal > 0) {
