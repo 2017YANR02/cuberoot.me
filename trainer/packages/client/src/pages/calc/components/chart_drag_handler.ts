@@ -18,7 +18,6 @@ import {
 interface SelectedBar {
   playerIdx: number;
   solveIdx: number;
-  pSlot: number;   // 在启用选手中的序号
 }
 
 let selected: SelectedBar | null = null;
@@ -83,7 +82,9 @@ function screenToSvg(clientX: number, clientY: number): { x: number; y: number }
 
 // ── hit test ──
 
-/** NOTE: 通过 SVG 坐标查找对应的柱子 */
+/** NOTE: 原版使用 SVG DOM 事件委托（e.target.closest('.chart-bar')）
+ *  但这里无法直接用 DOM 事件（因为 pointerdown 监听器在 SVG 上），
+ *  所以用坐标计算 + 重叠 Y 消歧来模拟 */
 function hitTestBar(svgX: number, svgY: number): SelectedBar | null {
   const state = useCalcStore.getState();
   const sc = solveCountForEvent(state.event);
@@ -92,22 +93,46 @@ function hitTestBar(svgX: number, svgY: number): SelectedBar | null {
   // NOTE: 检查点击位置在绘图区域内
   if (svgY < gp.chartTop || svgY > gp.chartTop + gp.chartH) return null;
 
-  let pSlot = 0;
+  // NOTE: 1. 先通过 x 坐标确定 solveIdx（slot）
+  let solveIdx = -1;
+  for (let t = 0; t < sc; t++) {
+    const x = getBarX(t, 0);
+    if (svgX >= x && svgX <= x + gp.barW) {
+      solveIdx = t;
+      break;
+    }
+  }
+  if (solveIdx < 0) return null;
+
+  // NOTE: 2. 找出此 slot 中有值的选手
+  const candidates: { p: number; val: number }[] = [];
   for (let p = 0; p < 2; p++) {
     if (!state.playerEnabled[p]) continue;
-    for (let t = 0; t < sc; t++) {
-      const val = state.times[state.seedOn + p][t];
-      if (val <= 0) continue; // 空格不可选
-
-      const x = getBarX(t, pSlot);
-      if (svgX >= x && svgX <= x + gp.barW) {
-        // NOTE: 对于有值的柱子，只要 X 在范围内就算命中（不限 Y）
-        return { playerIdx: p, solveIdx: t, pSlot };
-      }
-    }
-    pSlot++;
+    const val = state.times[state.seedOn + p][solveIdx];
+    if (val > 0) candidates.push({ p, val });
   }
-  return null;
+  if (candidates.length === 0) return null;
+  if (candidates.length === 1) {
+    return { playerIdx: candidates[0].p, solveIdx };
+  }
+
+  // NOTE: 3. 两个选手都有值 → 重叠 Y 消歧（原版 resolveBarAtY）
+  // 较矮柱子（值较小/较好）在上层，如果点击 Y 在较矮柱顶以下 → 命中较矮柱
+  const valA = state.times[state.seedOn + 0][solveIdx];
+  const valB = state.times[state.seedOn + 1][solveIdx];
+  const isMbf = isMbfForEvent(state.event);
+  // NOTE: 在多盲模式下 higher=better（柱子更高），普通模式下 lower=better（柱子更矮）
+  const shorterP = isMbf ? (valA < valB ? 0 : 1) : (valA < valB ? 0 : 1);
+  const tallerP = 1 - shorterP;
+  const shorterVal = state.times[state.seedOn + shorterP][solveIdx];
+  const shorterTop = valToYCap(shorterVal);
+
+  // NOTE: 如果点击 Y 在较矮柱顶以下（加 5px 容差）→ 命中较矮（上层）柱子
+  if (svgY >= shorterTop - 3) {
+    return { playerIdx: shorterP, solveIdx };
+  }
+  // NOTE: 否则命中较高（底层）柱子
+  return { playerIdx: tallerP, solveIdx };
 }
 
 // ── 选中/取消选中 ──
@@ -186,11 +211,10 @@ function positionHandle(): void {
     return;
   }
 
-  const _gp = getGp();
   const barW = getBarW();
 
   // NOTE: SVG 坐标 → 屏幕坐标 → overlay 相对坐标
-  const x = getBarX(selected.solveIdx, selected.pSlot) + barW / 2;
+  const x = getBarX(selected.solveIdx, 0) + barW / 2;
   const y = valToYCap(val);
 
   const ctm = svgEl.getScreenCTM();
