@@ -157,7 +157,8 @@ function calcViewBox(): void {
   const barW = 50;
   const stride = barW + STRIDE_GAP;
 
-  const vbW = BAR_START + stride * sc + 20;
+  // NOTE: 右侧留白 80 — 给 PA 竖柱 + 菱形标签 + Ao5 文字留空间
+  const vbW = BAR_START + stride * sc + 80;
 
   // NOTE: 数据范围计算 — 遍历当前 seed 对的所有值
   let minVal = Infinity;
@@ -226,6 +227,7 @@ export function render(opts?: RenderOptions): void {
   drawBars();
   drawBarLabels();
   drawStats();
+  drawNeedBadges();
   drawAverages();
 
   // NOTE: 每次 render 完成后调用注册的回调（如 reapplySelection）
@@ -561,11 +563,30 @@ function drawPlayerLabels(): void {
   }
 }
 
-// ── 统计指标可视化（BPA/WPA 横线） ──
+// ── 统计指标可视化（BPA/WPA 横线 + PA 竖柱 + 数值标签） ──
+
+/** NOTE: 颜色变暗工具 — 原版 chart.js 的 darken() */
+function darken(rgba: string, factor: number): string {
+  const m = rgba.match(/[\d.]+/g);
+  if (!m || m.length < 3) return rgba;
+  const r = Math.round(parseFloat(m[0]) * factor);
+  const g = Math.round(parseFloat(m[1]) * factor);
+  const b = Math.round(parseFloat(m[2]) * factor);
+  const a = m.length >= 4 ? parseFloat(m[3]) : 1;
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+/** NOTE: 颜色降透明工具 — 原版 chart.js 的 fade() */
+function fade(rgba: string, alpha: number): string {
+  const m = rgba.match(/[\d.]+/g);
+  if (!m || m.length < 3) return rgba;
+  return `rgba(${m[0]},${m[1]},${m[2]},${alpha})`;
+}
 
 function drawStats(): void {
   if (!gStats) return;
   const state = useCalcStore.getState();
+  const sc = solveCountForEvent(state.event);
   const mo3 = isMo3ForEvent(state.event);
 
   let pSlot = 0;
@@ -584,6 +605,57 @@ function drawStats(): void {
       if (!mo3 && result.wpa !== null && result.wpa !== undefined && result.wpa < DNF_VALUE) {
         const wy = valToYCap(result.wpa);
         drawStatLine(wy, pSlot, 'wpa', p);
+      }
+
+      // NOTE: PA 竖柱 — BPA→WPA 范围可视化（原版 chart.js#936-957）
+      // 仅 Ao5 模式且 BPA/WPA 都有有效值时绘制
+      if (!mo3 && result.bpa !== null && result.bpa !== undefined && result.bpa < DNF_VALUE
+        && result.wpa !== null && result.wpa !== undefined && result.wpa < DNF_VALUE) {
+        const col = SHADES[p] || SHADES[0];
+        const darkCol = darken(col, 0.7);
+        const fadedCol = fade(col, 0.25);
+
+        // 竖柱位置 — 放在最后一根柱子右侧
+        const barCx = getBarX(sc - 1, pSlot) + gp.barW + 30;
+        const paBarW = 20; // 竖柱宽度（SVG 坐标系）
+        const paTopY = valToYCap(result.wpa); // WPA（较差 = 较高位置 = 较小 Y）
+        const paBotY = valToYCap(result.bpa); // BPA（较好 = 较低位置 = 较大 Y）
+        const paBarH = Math.max(3, paBotY - paTopY);
+
+        // 半透明填充 + 描边矩形
+        const paRect = createSvgElement('rect', {
+          x: barCx - paBarW / 2, y: paTopY,
+          width: paBarW, height: paBarH,
+          fill: fadedCol, stroke: darkCol,
+          'stroke-width': 1.5, rx: 3,
+          class: 'chart-pa-bar',
+          'data-player': p,
+          'data-pa-cx': barCx,
+          'data-pa-w': paBarW,
+          'data-wpa-y': paTopY,
+          'data-bpa-y': paBotY,
+        });
+        gStats.appendChild(paRect);
+
+        // NOTE: WPA 数值标签（竖柱上方）
+        const wpaLabel = createSvgElement('text', {
+          x: barCx, y: paTopY - 5,
+          'text-anchor': 'middle', fill: darkCol,
+          'font-size': 10, 'font-weight': '600',
+          'font-family': 'Helvetica, Arial, sans-serif',
+        });
+        wpaLabel.textContent = formatTime(result.wpa);
+        gStats.appendChild(wpaLabel);
+
+        // NOTE: BPA 数值标签（竖柱下方）
+        const bpaLabel = createSvgElement('text', {
+          x: barCx, y: paBotY + 12,
+          'text-anchor': 'middle', fill: darkCol,
+          'font-size': 10, 'font-weight': '600',
+          'font-family': 'Helvetica, Arial, sans-serif',
+        });
+        bpaLabel.textContent = formatTime(result.bpa);
+        gStats.appendChild(bpaLabel);
       }
     }
     pSlot++;
@@ -606,6 +678,159 @@ function drawStatLine(y: number, pSlot: number, type: string, _playerIdx: number
     opacity: '0.5',
   });
   gStats.appendChild(line);
+}
+
+// ── Need Badge（阈值指示标签）── 原版 chart.js#516-676 ──
+
+/** NOTE: 重叠排斥算法 — 推开相互重叠的标签 */
+function resolveOverlaps(items: { origY: number; y: number; h: number }[], gap: number): void {
+  items.sort((a, b) => a.y - b.y);
+  for (let pass = 0; pass < 10; pass++) {
+    let moved = false;
+    for (let i = 1; i < items.length; i++) {
+      const overlap = items[i - 1].y + items[i - 1].h + gap - items[i].y;
+      if (overlap > 0) {
+        items[i - 1].y -= overlap / 2;
+        items[i].y += overlap / 2;
+        moved = true;
+      }
+    }
+    if (!moved) break;
+  }
+}
+
+function drawNeedBadges(): void {
+  if (!gStats) return;
+  const state = useCalcStore.getState();
+  const mo3 = isMo3ForEvent(state.event);
+  if (mo3) return; // Mo3 无 Need Badge
+
+  for (let p = 0; p < 2; p++) {
+    if (!state.playerEnabled[p]) continue;
+    const tavg = state.getTargetAvg(state.seedOn);
+    if (!tavg || tavg <= 0 || tavg >= DNF_VALUE) continue;
+
+    const times = state.times[state.seedOn + p];
+    const filled = times.filter((t: number) => t > 0 && t < DNF_VALUE);
+    if (filled.length < 4) continue;
+
+    const th = CalcEngine.computeThresholds(times, tavg);
+    if (!th) continue;
+
+    // NOTE: 收集要显示的 badge
+    const BADGE_COLORS = {
+      t4wpa: '#1976D2',   // 蓝色 — WPA
+      t4bpa: '#388E3C',   // 绿色 — BPA
+      t5: '#D32F2F',      // 红色 — 第 5 把
+    };
+
+    interface Badge {
+      line1: string;
+      line2: string;
+      color: string;
+      y: number;
+      skull?: boolean;
+    }
+    const badges: Badge[] = [];
+
+    // NOTE: t#4 WPA 和 BPA
+    const hasWpa = th.t4wpa !== undefined && th.t4wpa !== null;
+    const hasBpa = th.t4bpa !== undefined && th.t4bpa !== null;
+    const wpaIsAny = hasWpa && th.t4wpa! >= DNF_VALUE;
+    const bpaIsAny = hasBpa && th.t4bpa! >= DNF_VALUE;
+    const showWpa = hasWpa && !(wpaIsAny && hasBpa && !bpaIsAny);
+    const showBpa = hasBpa && !(bpaIsAny && hasWpa && !wpaIsAny);
+
+    if (showWpa) {
+      const v = th.t4wpa! >= DNF_VALUE ? 'ANY ✓' : '≤ ' + formatTime(th.t4wpa!);
+      badges.push({
+        line1: 'Need 4th', line2: v, color: BADGE_COLORS.t4wpa,
+        y: th.t4wpa! < DNF_VALUE ? valToYCap(th.t4wpa!) : valToYCap(tavg) - 20
+      });
+    }
+    if (showBpa) {
+      const v = th.t4bpa! >= DNF_VALUE ? 'ANY ✓' : '≤ ' + formatTime(th.t4bpa!);
+      badges.push({
+        line1: 'Need 4th', line2: v, color: BADGE_COLORS.t4bpa,
+        y: th.t4bpa! < DNF_VALUE ? valToYCap(th.t4bpa!) : valToYCap(tavg) + 10
+      });
+    }
+    // t#4 impossible
+    if (th.t4wpa === null && th.t4bpa === null) {
+      badges.push({
+        line1: '4th', line2: '💀', color: '#D32F2F', skull: true,
+        y: valToYCap(tavg)
+      });
+    }
+    // t#5（仅当填了 5 把时）
+    if (filled.length >= 5 && th.t5 !== undefined) {
+      if (th.t5 !== null) {
+        const v = th.t5 >= DNF_VALUE ? 'ANY ✓' : '≤ ' + formatTime(th.t5);
+        badges.push({
+          line1: 'Need 5th', line2: v, color: BADGE_COLORS.t5,
+          y: th.t5 < DNF_VALUE ? valToYCap(th.t5) : valToYCap(tavg) + 30
+        });
+      } else {
+        badges.push({
+          line1: '5th', line2: '💀', color: '#D32F2F', skull: true,
+          y: valToYCap(tavg) + 20
+        });
+      }
+    }
+
+    if (badges.length === 0) continue;
+
+    // 排斥重叠
+    const badgeH = 22;
+    const badgeItems = badges.map(b => ({ origY: b.y, y: b.y, h: badgeH }));
+    if (badgeItems.length > 1) resolveOverlaps(badgeItems, 4);
+    for (let bi = 0; bi < badges.length; bi++) badges[bi].y = badgeItems[bi].y;
+
+    // NOTE: 绘制 badge — 图表左侧，带右箭头的圆角矩形
+    const bw = 42, bh = 22, br = 4, arrowW = 5;
+    const badgeRight = BAR_START - 6;
+    const badgeLeft = badgeRight - arrowW - bw;
+
+    for (let bi = 0; bi < badges.length; bi++) {
+      const b = badges[bi];
+      const by = b.y - bh / 2;
+
+      // 圆角矩形 + 右箭头 path
+      const lx = badgeLeft;
+      const d = `M${lx},${by + br}` +
+        ` Q${lx},${by} ${lx + br},${by}` +
+        ` L${badgeRight - arrowW},${by}` +
+        ` L${badgeRight},${b.y}` +
+        ` L${badgeRight - arrowW},${by + bh}` +
+        ` L${lx + br},${by + bh}` +
+        ` Q${lx},${by + bh} ${lx},${by + bh - br}` +
+        ` Z`;
+      const pathEl = createSvgElement('path', {
+        d, fill: b.color, opacity: '0.9',
+      });
+      gStats.appendChild(pathEl);
+
+      // 文字内容
+      const tx = lx + (bw + br) / 2;
+      const text1 = createSvgElement('text', {
+        x: tx, y: by + 9, fill: '#fff',
+        'font-size': 7, 'font-weight': 'bold',
+        'font-family': 'Helvetica, Arial, sans-serif',
+        'text-anchor': 'middle',
+      });
+      text1.textContent = b.line1;
+      gStats.appendChild(text1);
+
+      const text2 = createSvgElement('text', {
+        x: tx, y: by + 19, fill: '#fff',
+        'font-size': 8, 'font-weight': 'bold',
+        'font-family': 'Helvetica, Arial, sans-serif',
+        'text-anchor': 'middle',
+      });
+      text2.textContent = b.line2;
+      gStats.appendChild(text2);
+    }
+  }
 }
 
 // ── 平均值和菱形标记 ──
