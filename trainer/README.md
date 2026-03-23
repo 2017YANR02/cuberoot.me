@@ -23,20 +23,29 @@ trainer/
 │   │   │   │   ├── HomePage.tsx       # 首页：公式集卡片列表
 │   │   │   │   ├── CaseSelectPage.tsx # Case 选择：分组网格 + 全选/单选
 │   │   │   │   ├── TrainingPage.tsx   # 训练页：魔方图 + 计时 + 键盘控制
-│   │   │   │   └── StatsPage.tsx      # 统计页：表格（次数/最近/Ao5/Ao12/最佳）
+│   │   │   │   ├── StatsPage.tsx      # 统计页：表格（次数/最近/Ao5/Ao12/最佳）
+│   │   │   │   ├── ZbllSelectPage.tsx # ZBLL 选择页：3 级网格（OLL→COLL→ZBLL）+ Modal + 预设
+│   │   │   │   └── ZbllTimerPage.tsx  # ZBLL 计时页：5 状态计时器 + 结果/统计/设置
 │   │   │   ├── stores/
 │   │   │   │   ├── sessionStore.ts    # 训练状态机（idle→caseShown→timing→stopped→complete）
 │   │   │   │   ├── settingsStore.ts   # 用户设置（localStorage 持久化）
-│   │   │   │   └── statsStore.ts      # 训练统计（Ao5/Ao12 计算 + 持久化）
+│   │   │   │   ├── statsStore.ts      # 训练统计（Ao5/Ao12 计算 + 持久化）
+│   │   │   │   ├── zbllSelectedStore.ts  # ZBLL 已选 case 管理（OLL/COLL/ZBLL 三级增删）
+│   │   │   │   ├── zbllSessionStore.ts   # ZBLL 计时状态机（5 状态 + recap 模式）
+│   │   │   │   ├── zbllPresetStore.ts    # ZBLL 预设 + 收藏（localStorage）
+│   │   │   │   ├── zbllSettingsStore.ts  # ZBLL 设置（字号/字体/精度/延迟/视角）
+│   │   │   │   └── zbllNotesStore.ts     # ZBLL per-case 笔记（localStorage）
 │   │   │   ├── hooks/
 │   │   │   │   ├── useTimer.ts        # 高精度计时器（performance.now + rAF）
 │   │   │   │   └── useKeyboard.ts     # 键盘事件（keydown/keyup 分离）
 │   │   │   ├── utils/
-│   │   │   │   └── adaptiveQueue.ts   # 自适应队列（慢的 case 重复更多次）
+│   │   │   │   ├── adaptiveQueue.ts   # 自适应队列（慢的 case 重复更多次）
+│   │   │   │   └── zbllHelpers.ts     # ZBLL 工具函数（打乱生成/时间格式化/SVG 路径/数据操作）
+│   │   │   ├── zbll.css               # ZBLL 专用样式（选择页 + 计时页 + 响应式）
 │   │   │   └── i18n/
 │   │   │       ├── index.ts           # i18n 初始化（URL > localStorage > 浏览器语言）
-│   │   │       ├── zh.json            # 中文翻译
-│   │   │       └── en.json            # 英文翻译
+│   │   │       ├── zh.json            # 中文翻译（含 ZBLL 翻译 keys）
+│   │   │       └── en.json            # 英文翻译（含 ZBLL 翻译 keys）
 │   │   └── vite.config.ts             # Vite 配置（base=/trainer/, API 代理）
 │   │
 │   ├── server/                # Fastify + MariaDB 后端
@@ -56,7 +65,8 @@ trainer/
 │       │   ├── types.ts               # AlgCase, TrainResult, UserProgress, UserSettings
 │       │   └── index.ts               # 导出入口
 │       └── data/
-│           └── pll.json               # 21 个 PLL case（name/group/algorithms/scramble）
+│           ├── pll.json               # 21 个 PLL case（name/group/algorithms/scramble）
+│           └── zbll.json              # 493 个 ZBLL case（algs/scrambles，1.5MB）
 ```
 
 ## 本地开发
@@ -78,7 +88,7 @@ pnpm approve-builds esbuild   # 首次需要批准 esbuild 构建脚本
 ```powershell
 # 启动前端 dev server（HMR 自动热更新，改代码后无需重启）
 pnpm --filter @cuberoot/client dev
-# → http://localhost:5173/trainer/
+# → http://localhost:5173/app/
 
 # TypeScript 类型检查
 pnpm --filter @cuberoot/client typecheck
@@ -169,3 +179,28 @@ idle → caseShown → timing → stopped → caseShown → ... → complete
 |------|------|
 | 未登录用户 | localStorage（完整功能） |
 | 已登录用户 | localStorage + 后端 MariaDB 同步 |
+
+## ZBLL Trainer
+
+完整复刻自 [bestsiteever.net/zbll](https://bestsiteever.net/zbll/)（Vue 3 → React 19 + TypeScript + Zustand）。
+
+### 功能清单
+
+| 功能 | 说明 |
+|------|------|
+| 三级选择网格 | OLL → COLL → ZBLL，点击图片全选/取消 |
+| 计时器 | 5 状态（idle/awaiting/ready/running/stopping），Space 启停 |
+| Recap 模式 | 每个 case 只出一次，直到全部完成 |
+| 预设系统 | 用户自定义预设 + ⭐ 收藏预设 |
+| 笔记 | 每个 case 可添加文字笔记 |
+| 设置面板 | 字号/字体/精度/延迟/视角/打乱附录 |
+| 键盘快捷键 | Alt+T/R/S/A/D/Z、Delete、箭头导航 |
+| i18n | 中英文切换（`?lang=zh`） |
+| 555 SVG 资源 | `client/public/zbll_svg/`（top + 3D 视角）|
+
+### 数据来源
+
+`zbll.json`（1.5MB）包含 493 个 ZBLL case，每个含：
+- `name`：case 标识（如 `"H BBFF AsA"`）
+- `algs`：算法列表（第一个为推荐算法）
+- `scrambles`：打乱列表（随机选取）
