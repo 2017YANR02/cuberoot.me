@@ -162,11 +162,11 @@ export function Drum({ activeCell, onCellValueChange }: DrumProps) {
         }
       }
       if (val <= 0 || val >= DNF_VALUE) {
-        drumEl.classList.add('empty');
+        drumEl!.classList.add('empty');
         fillDrumSlots(0);
         return;
       }
-      drumEl.classList.remove('empty');
+      drumEl!.classList.remove('empty');
       drumValue = val;
       // NOTE: 同步 activeCellRef 以便 drumAdjust 写回正确的格子
       activeCellRef.current = [cellP, cellT];
@@ -318,14 +318,14 @@ export function Drum({ activeCell, onCellValueChange }: DrumProps) {
     }
 
     // ── 注册事件 ──
-    drumEl.addEventListener('mousedown', onStart);
+    drumEl!.addEventListener('mousedown', onStart);
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup', onEnd);
-    drumEl.addEventListener('touchstart', onStart, { passive: false });
+    drumEl!.addEventListener('touchstart', onStart, { passive: false });
     document.addEventListener('touchmove', onMove, { passive: false });
     document.addEventListener('touchend', onEnd);
     document.addEventListener('touchcancel', onEnd);
-    drumEl.addEventListener('wheel', onWheel, { passive: false });
+    drumEl!.addEventListener('wheel', onWheel, { passive: false });
 
     // NOTE: 暴露 syncDrum 给外部 effect 调用
     syncDrumRef.current = syncDrum;

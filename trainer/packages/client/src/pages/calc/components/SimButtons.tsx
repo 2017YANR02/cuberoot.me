@@ -122,6 +122,8 @@ export function SimButtons() {
       <div className="controls">
         {/* NOTE: 隐藏 rand-fill 按钮 — numpad Rand 和此处都触发 */}
         <button id="rand-fill" style={{ display: 'none' }} onClick={handleRandFill}>Rand</button>
+        {/* NOTE: 隐藏 clear-all 按钮 — Numpad 长按 ⌫ 联动触发 */}
+        <button id="clear-all" style={{ display: 'none' }} onClick={clearAll}>Clear</button>
 
         <button className="sim-btn sim-a" onClick={() => handleSimPlayer(0)}>
           🎯 A
