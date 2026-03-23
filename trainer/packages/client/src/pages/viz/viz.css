@@ -821,3 +821,71 @@ input:checked + .toggle-pill::after {
   color: var(--text-secondary);
   font-size: 14px;
 }
+
+/* ─── WcaPersonPicker 深色主题覆盖 ───
+   NOTE: 共享组件默认亮色，这里强制覆盖为 viz 深色主题 */
+
+/* 输入框 — 与 toolbar 风格统一 */
+.viz-page .wca-pp-input {
+  background: rgba(20, 20, 40, 0.8);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  border-radius: 8px;
+  font-size: 13px;
+  padding: 7px 12px;
+}
+.viz-page .wca-pp-input::placeholder {
+  color: var(--text-muted);
+}
+.viz-page .wca-pp-input:focus {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 0 2px rgba(0, 230, 255, 0.12);
+}
+
+/* 输入框包裹 — 去掉 inline 面板的亮色边框 */
+.viz-page .wca-pp-input-wrap {
+  padding: 0;
+  border-bottom: none;
+}
+
+/* Inline 面板 — 深色弹窗 */
+.viz-page .wca-pp-inline .wca-pp-panel {
+  background: rgba(16, 16, 32, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(16px);
+  width: 360px;
+}
+
+/* 结果项 */
+.viz-page .wca-pp-item {
+  color: var(--text-primary);
+  transition: background 0.15s;
+}
+.viz-page .wca-pp-item:hover {
+  background: rgba(0, 230, 255, 0.08);
+}
+
+/* 选手信息文字 */
+.viz-page .wca-pp-name {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+.viz-page .wca-pp-id {
+  color: var(--text-muted);
+}
+
+/* 状态/加载提示 */
+.viz-page .wca-pp-status {
+  color: var(--text-secondary);
+}
+.viz-page .wca-pp-spinner {
+  border-color: rgba(255, 255, 255, 0.15);
+  border-top-color: var(--accent-cyan);
+}
+
+/* 头像圈背景 */
+.viz-page .wca-pp-avatar {
+  background: rgba(255, 255, 255, 0.08);
+}

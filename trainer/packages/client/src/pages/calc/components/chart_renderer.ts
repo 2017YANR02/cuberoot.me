@@ -504,14 +504,21 @@ function drawBarLabels(): void {
       label.textContent = labelText;
       gLabels.appendChild(label);
 
-      // NOTE: WR badge
+      // NOTE: WR badge — 白字红底圆角框
       if (isWR(state.event, 'single', val)) {
+        const wrY = Math.max(Y_MARGIN_TOP, y) - 14;
+        const wrW = 22, wrH = 12, wrR = 3;
+        gLabels.appendChild(createSvgElement('rect', {
+          x: x - wrW / 2, y: wrY - wrH / 2,
+          width: wrW, height: wrH, rx: wrR,
+          fill: '#D32F2F',
+        }));
         const badge = createSvgElement('text', {
-          x, y: Math.max(Y_MARGIN_TOP, y) - 10,
-          'text-anchor': 'middle', fill: '#D32F2F',
-          'font-size': 9, 'font-weight': '700',
+          x, y: wrY + 3.5,
+          'text-anchor': 'middle', fill: '#fff',
+          'font-size': 8, 'font-weight': '700',
         });
-        badge.textContent = 'WR!';
+        badge.textContent = 'WR';
         gLabels.appendChild(badge);
       }
     }
@@ -896,13 +903,21 @@ function drawAverages(): void {
 
       gAvg.appendChild(avgBadgeGroup);
 
-      // NOTE: WR badge
+      // NOTE: WR badge — 白字红底圆角框
       if (isWR(state.event, 'average', result.avg)) {
+        const wrX = rx + 4, wrY = cy - fontSize / 2 - 4;
+        const wrW = 22, wrH = 12, wrR = 3;
+        gAvg.appendChild(createSvgElement('rect', {
+          x: wrX, y: wrY - wrH / 2,
+          width: wrW, height: wrH, rx: wrR,
+          fill: '#D32F2F',
+        }));
         const wrLabel = createSvgElement('text', {
-          x: rx + 4, y: cy - fontSize / 2 - 2,
-          fill: '#D32F2F', 'font-size': 9, 'font-weight': '700',
+          x: wrX + wrW / 2, y: wrY + 3.5,
+          'text-anchor': 'middle', fill: '#fff',
+          'font-size': 8, 'font-weight': '700',
         });
-        wrLabel.textContent = 'WR!';
+        wrLabel.textContent = 'WR';
         gAvg.appendChild(wrLabel);
       }
     } else if (result && result.complete && result.avg !== undefined && result.avg >= DNF_VALUE) {
