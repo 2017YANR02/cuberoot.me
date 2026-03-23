@@ -143,17 +143,13 @@ export function InputGrid() {
             className={`input-row ${playerClass}${!enabled ? ' disabled' : ''}`}
             style={!enabled ? { opacity: 0.3 } : undefined}
           >
-            {/* 选手启用 checkbox — B 行始终显示，A 行用空占位 */}
-            {p === 1 ? (
-              <input
-                type="checkbox"
-                className="player-toggle"
-                checked={enabled}
-                onChange={() => state.togglePlayer(1)}
-              />
-            ) : (
-              <div style={{ width: 20 }} />
-            )}
+            {/* 选手启用 checkbox — 原版 input_grid.js#109-116 两行都有 */}
+            <input
+              type="checkbox"
+              className="player-toggle"
+              checked={enabled}
+              onChange={() => state.togglePlayer(p)}
+            />
 
             {/* 成绩输入框 */}
             {Array.from({ length: sc }, (_, t) => {
