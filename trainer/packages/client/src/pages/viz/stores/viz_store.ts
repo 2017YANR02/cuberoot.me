@@ -20,7 +20,6 @@ import {
 } from '../engine/kde';
 import {
   buildDateTimeline,
-  computePlayerFrame,
   getWindowTimes,
 } from '../engine/sync';
 
