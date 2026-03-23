@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 /* NOTE: 暗色系魔方训练器主题，参考 ruiminyan.github.io 主站风格 */
 
 :root {
@@ -47,6 +49,7 @@ body {
   font-weight: 700;
   background: linear-gradient(135deg, #6366f1, #a855f7);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   margin-bottom: 0.5rem;
 }
