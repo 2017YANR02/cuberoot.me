@@ -4,6 +4,8 @@ import { CaseSelectPage } from './pages/CaseSelectPage';
 import { TrainingPage } from './pages/TrainingPage';
 import { OllTrainingPage } from './pages/OllTrainingPage';
 import { StatsPage } from './pages/StatsPage';
+import { ZbllSelectPage } from './pages/ZbllSelectPage';
+import { ZbllTimerPage } from './pages/ZbllTimerPage';
 
 function App() {
   return (
@@ -15,6 +17,9 @@ function App() {
         <Route path="/train/oll" element={<OllTrainingPage />} />
         <Route path="/train/:algSetId" element={<TrainingPage />} />
         <Route path="/stats/:algSetId" element={<StatsPage />} />
+        {/* ZBLL Trainer — 独立的选择+计时页面 */}
+        <Route path="/select/zbll" element={<ZbllSelectPage />} />
+        <Route path="/train/zbll" element={<ZbllTimerPage />} />
       </Routes>
     </BrowserRouter>
   );
