@@ -20,6 +20,10 @@ import {
 interface SelectedBar {
   playerIdx: number;
   solveIdx: number;
+  // PA 拖动模式
+  isPa?: boolean;
+  paEnd?: string;       // 'wpa' | 'bpa'
+  paFixedSum?: number;  // 固定 counting 值之和
 }
 
 let selected: SelectedBar | null = null;
@@ -290,9 +294,21 @@ function createHandle(bar: SelectedBar): void {
   positionHandle();
 }
 
-/** NOTE: 同步 handle 位置到选中柱子顶部 */
+/** NOTE: 同步 handle 位置到选中柱子顶部，或 PA 端点 */
 function positionHandle(): void {
   if (!handleEl || !selected) return;
+
+  // NOTE: PA 模式 → 定位到 PA 柱端点
+  if (selected.isPa) {
+    const paInfo = getPaBarData().find(info => info.playerIdx === selected!.playerIdx);
+    if (paInfo) {
+      const endY = selected.paEnd === 'wpa' ? paInfo.wpaY : paInfo.bpaY;
+      positionHandleAt(paInfo.cx, endY, paInfo.w);
+    }
+    return;
+  }
+
+  // NOTE: 普通柱子模式 → 定位到柱子顶部
   const state = useCalcStore.getState();
   const val = state.times[state.seedOn + selected.playerIdx][selected.solveIdx];
   if (val <= 0 || val >= DNF_VALUE) {
@@ -304,7 +320,6 @@ function positionHandle(): void {
   const x = getBarX(selected.solveIdx, 0) + barW / 2;
   const y = valToYCap(val);
 
-  // NOTE: Both 模式下内侧柱子宽度缩窄
   const pe = state.playerEnabled;
   const bothOn = pe[state.seedOn] && pe[state.seedOn + 1];
   let effectiveW = barW;
@@ -338,17 +353,46 @@ function handlePointerDown(e: PointerEvent): void {
   // NOTE: 先检测是否点击了 PA 柱或 Avg 菱形 badge（DOM 事件委托）
   const target = e.target as Element;
 
-  // PA 柱点击 → 创建 overlay pill handle + 启动 PA 拖动
+  // PA 柱点击 → 和普通柱子一样的 select → handle → drag 流程
   const paBarEl = target.closest('.chart-pa-bar') as SVGRectElement | null;
   if (paBarEl) {
     e.preventDefault();
     const p = parseInt(paBarEl.getAttribute('data-player') || '0');
-    // 判断点击靠近 WPA 端还是 BPA 端
     const svgPt = screenToSvg(e.clientX, e.clientY);
     const wpaY = parseFloat(paBarEl.getAttribute('data-wpa-y') || '0');
     const bpaY = parseFloat(paBarEl.getAttribute('data-bpa-y') || '0');
     const paEnd = Math.abs(svgPt.y - wpaY) < Math.abs(svgPt.y - bpaY) ? 'wpa' : 'bpa';
-    startPaDrag(e, p, paEnd);
+
+    // NOTE: 计算 PA 拖动所需的参数
+    const state = useCalcStore.getState();
+    const sc = solveCountForEvent(state.event);
+    const times = state.times[state.seedOn + p];
+    let emptyIdx = -1;
+    for (let i = 0; i < sc; i++) {
+      if (times[i] === 0) { emptyIdx = i; break; }
+    }
+    const targetSlot = emptyIdx > 0 ? emptyIdx - 1 : sc - 2;
+    const fixed: number[] = [];
+    for (let i = 0; i < sc; i++) {
+      if (i !== targetSlot && i !== emptyIdx && times[i] > 0 && times[i] < DNF_VALUE) {
+        fixed.push(times[i]);
+      }
+    }
+    if (fixed.length < 3) return;
+    fixed.sort((a, b) => a - b);
+    let fixedSum: number;
+    if (fixed.length === 3) {
+      fixedSum = paEnd === 'wpa' ? fixed[1] + fixed[2] : fixed[0] + fixed[1];
+    } else {
+      fixedSum = fixed[1] + fixed[2];
+    }
+
+    const paSelection: SelectedBar = {
+      playerIdx: p, solveIdx: targetSlot,
+      isPa: true, paEnd, paFixedSum: fixedSum,
+    };
+    deselect();
+    selectBar(paSelection);
     return;
   }
 
@@ -412,29 +456,41 @@ function handlePointerMove(e: PointerEvent): void {
   if (!isDragging || !selected) return;
   e.preventDefault();
 
-  // NOTE: 屏幕 Y 偏移 → SVG Y 偏移 → centiseconds 偏移
-  const svgEl = getSvgEl();
-  if (!svgEl) return;
-  const ctm = svgEl.getScreenCTM();
-  if (!ctm) return;
+  if (selected.isPa) {
+    // NOTE: PA 拖动 — Y → PA 值 → 反向推算 target 柱
+    const pt = screenToSvg(e.clientX, e.clientY);
+    const targetPA = Math.round(yToVal(pt.y));
+    const x = 3 * targetPA - (selected.paFixedSum || 0);
+    if (x <= 0) return;
+    const clamped = clampValue(Math.round(x));
 
-  const dyScreen = e.clientY - dragStartY;
-  const dySvg = dyScreen / ctm.d;
-  const gp = getGp();
-  // NOTE: 向上拖 = 值变大（因为 SVG Y 轴向下，但成绩 Y 轴向上）
-  const dVal = -dySvg * (gp.yRange / gp.chartH);
-  const newVal = clampValue(Math.round(dragStartVal + dVal));
-
-  if (newVal > 0 && newVal < DNF_VALUE) {
-    useCalcStore.getState().updateTime(
-      useCalcStore.getState().seedOn + selected.playerIdx,
-      selected.solveIdx,
-      newVal,
-    );
-    // NOTE: 重新渲染图表 + 更新 handle 位置
+    const state = useCalcStore.getState();
+    state.times[state.seedOn + selected.playerIdx][selected.solveIdx] = clamped;
     chartRender({ skipViewBox: true });
-    reapplySelection();
     positionHandle();
+  } else {
+    // NOTE: 普通柱子拖动 — 屏幕 Y 偏移 → centiseconds 偏移
+    const svgEl = getSvgEl();
+    if (!svgEl) return;
+    const ctm = svgEl.getScreenCTM();
+    if (!ctm) return;
+
+    const dyScreen = e.clientY - dragStartY;
+    const dySvg = dyScreen / ctm.d;
+    const gp = getGp();
+    const dVal = -dySvg * (gp.yRange / gp.chartH);
+    const newVal = clampValue(Math.round(dragStartVal + dVal));
+
+    if (newVal > 0 && newVal < DNF_VALUE) {
+      useCalcStore.getState().updateTime(
+        useCalcStore.getState().seedOn + selected.playerIdx,
+        selected.solveIdx,
+        newVal,
+      );
+      chartRender({ skipViewBox: true });
+      reapplySelection();
+      positionHandle();
+    }
   }
 }
 
@@ -576,101 +632,6 @@ export function forceDeselect(): void {
   deselect();
 }
 
-// ── PA 柱拖动 — 拖动 PA 端反向推算第 4 把 ──
-// NOTE: 原版 chart_drag.js#746-846
-
-function startPaDrag(e: PointerEvent, p: number, paEnd: string): void {
-  deselect();
-  const state = useCalcStore.getState();
-  const sc = solveCountForEvent(state.event);
-  const times = state.times[state.seedOn + p];
-
-  // NOTE: 从缓存获取 PA 柱位置数据
-  const paInfo = getPaBarData().find(info => info.playerIdx === p);
-  if (!paInfo) return;
-
-  // NOTE: 找到空缺 slot
-  let emptyIdx = -1;
-  for (let i = 0; i < sc; i++) {
-    if (times[i] === 0) { emptyIdx = i; break; }
-  }
-  // NOTE: 有空缺 → target = 空缺前一个；全填满 → target = 第 4 把（sc-2）
-  const targetSlot = emptyIdx > 0 ? emptyIdx - 1 : sc - 2;
-  const targetOrigVal = times[targetSlot];
-  if (targetOrigVal <= 0 || targetOrigVal >= DNF_VALUE) return;
-
-  // NOTE: 收集除 target 和空缺外的固定值
-  const fixed: number[] = [];
-  for (let i = 0; i < sc; i++) {
-    if (i !== targetSlot && i !== emptyIdx && times[i] > 0 && times[i] < DNF_VALUE) {
-      fixed.push(times[i]);
-    }
-  }
-  if (fixed.length < 3) return;
-  fixed.sort((a, b) => a - b);
-
-  // NOTE: fixedSum = 不变的两个 counting 值之和
-  // 3 固定值（4 把填充）: WPA → fixed[1]+fixed[2], BPA → fixed[0]+fixed[1]
-  // 4 固定值（5 把全填）: WPA(5th=DNF,去best+DNF) → fixed[1]+fixed[2], BPA(5th=0,去0+worst) → fixed[1]+fixed[2]
-  // 区别在于 4 值时 BPA 端也是 [1]+[2]（因为加了 0 后去掉 0 和 fixed[3]）
-  let fixedSum: number;
-  if (fixed.length === 3) {
-    fixedSum = paEnd === 'wpa' ? fixed[1] + fixed[2] : fixed[0] + fixed[1];
-  } else {
-    // 4 固定值: WPA 去最好(fixed[0])和DNF → counting = fixed[1],fixed[2],target
-    //           BPA 去 0 和最差(fixed[3]) → counting = fixed[1],fixed[2],target
-    fixedSum = fixed[1] + fixed[2];
-  }
-
-  // NOTE: 复用通用 handle 创建 + 定位
-  const paHandle = spawnHandle(p);
-  if (!paHandle) return;
-  const endY = paEnd === 'wpa' ? paInfo.wpaY : paInfo.bpaY;
-  positionHandleAt(paInfo.cx, endY, paInfo.w);
-
-  document.body.style.userSelect = 'none';
-
-  // NOTE: 注册拖动事件
-  const startSvgY = screenToSvg(e.clientX, e.clientY).y;
-  const dragOffsetY = startSvgY - endY;
-
-  const onMove = (em: PointerEvent) => {
-    em.preventDefault();
-    const pt = screenToSvg(em.clientX, em.clientY);
-    const adjustedY = pt.y - dragOffsetY;
-    const targetPA = Math.round(yToVal(adjustedY));
-    const x = 3 * targetPA - fixedSum;
-    if (x <= 0) return;
-    const clamped = clampValue(Math.round(x));
-
-    state.times[state.seedOn + p][targetSlot] = clamped;
-    chartRender({ skipViewBox: true });
-
-    // NOTE: 更新 handle 位置（复用通用定位）
-    const newPaInfo = getPaBarData().find(info => info.playerIdx === p);
-    if (newPaInfo) {
-      const newEndY = paEnd === 'wpa' ? newPaInfo.wpaY : newPaInfo.bpaY;
-      positionHandleAt(newPaInfo.cx, newEndY, newPaInfo.w);
-    }
-  };
-
-  const onUp = () => {
-    document.removeEventListener('pointermove', onMove);
-    document.removeEventListener('pointerup', onUp);
-    document.body.style.userSelect = '';
-    removeHandle();
-
-    const currentVal = state.times[state.seedOn + p][targetSlot];
-    if (currentVal !== targetOrigVal && currentVal > 0) {
-      state.updateTime(state.seedOn + p, targetSlot, currentVal);
-    }
-    chartRender();
-    state.saveToUrl();
-  };
-
-  document.addEventListener('pointermove', onMove);
-  document.addEventListener('pointerup', onUp);
-}
 
 // ── Avg 菱形 badge 拖动 — 反向推算 #5 ──
 // NOTE: 原版 chart_drag.js#852-944
