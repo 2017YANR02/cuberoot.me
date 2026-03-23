@@ -4,7 +4,14 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>client</title>
+    <title>CubeRoot Trainer</title>
+    <!-- NOTE: GitHub Pages SPA 路由恢复 — 404.html 重定向后还原原始路径 -->
+    <script>
+      (function(){
+        var r = sessionStorage.getItem('spa-redirect');
+        if (r) { sessionStorage.removeItem('spa-redirect'); history.replaceState(null, '', r); }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
