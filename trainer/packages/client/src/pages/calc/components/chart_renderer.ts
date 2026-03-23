@@ -14,20 +14,11 @@ import { isWR, getAvgWR12 } from '../engine/wr_data';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
-// NOTE: 选手颜色渐变 — 每个选手 5 个色阶（从暗到亮，柱内按排名着色）
-export const SHADES: string[][] = [
-  // Player A (橙色系)
-  ['#CC6600', '#E07700', '#FF8800', '#FFaa44', '#FFcc88'],
-  // Player B (蓝色系)
-  ['#1565C0', '#1976D2', '#2196F3', '#64B5F6', '#90CAF9'],
-  // Player C (绿色系)
-  ['#2E7D32', '#388E3C', '#4CAF50', '#81C784', '#A5D6A7'],
-  // Player D (紫色系)
-  ['#6A1B9A', '#7B1FA2', '#9C27B0', '#CE93D8', '#E1BEE7'],
-  // Player E (红色系)
-  ['#C62828', '#D32F2F', '#F44336', '#EF9A9A', '#FFCDD2'],
-  // Player F (青色系)
-  ['#00838F', '#0097A7', '#00BCD4', '#80DEEA', '#B2EBF2'],
+// NOTE: 选手颜色 — 原版 chart.js#29-34，每个选手统一纯色
+export const SHADES: string[] = [
+  'rgba(255,128,0,1.0)',    // Player A (橙色)
+  'rgba(50,130,255,1.0)',   // Player B (蓝色)
+  'rgba(190,190,190,1.0)',  // tie (灰色)
 ];
 
 // NOTE: 图表布局参数（坐标系单位，映射到 viewBox）
@@ -262,6 +253,9 @@ export function render(opts?: RenderOptions): void {
   drawBarLabels();
   drawStats();
   drawAverages();
+
+  // NOTE: 每次 render 完成后调用注册的回调（如 reapplySelection）
+  for (const cb of postRenderCallbacks) cb();
 }
 
 // ── 网格线 ──
@@ -403,14 +397,9 @@ function drawBars(): void {
       const bw = isTop ? fullW * INNER_BAR_RATIO : fullW;
       const bx = barX + bm + (fullW - bw) / 2;
 
-      // NOTE: 色阶 — 在排序数组中的位置决定深浅
-      const rank = sortedVals[p].indexOf(val);
-      const colorIdx = Math.min(rank, (SHADES[p] || SHADES[0]).length - 1);
-      const shade = (SHADES[p] || SHADES[0])[colorIdx];
-
       const bar = createSvgElement('rect', {
         x: bx, y, width: bw, height: Math.max(0, barH),
-        rx: 3, fill: shade,
+        rx: 3, fill: SHADES[p] || SHADES[0],
         class: 'chart-bar',
         'data-player': p,
         'data-slot': t,
@@ -423,8 +412,8 @@ function drawBars(): void {
         try {
           bar.animate(
             [
-              { height: String(prevH), y: String(baseY - prevH) },
-              { height: String(barH), y: String(y) },
+              { height: prevH + 'px', y: (baseY - prevH) + 'px' },
+              { height: barH + 'px', y: y + 'px' },
             ],
             { duration: ANIM_MS, easing: 'ease-out', fill: 'none' },
           );
@@ -589,7 +578,7 @@ function drawPlayerLabels(): void {
     const label = createSvgElement('text', {
       x, y,
       'text-anchor': 'middle',
-      fill: (SHADES[p] || SHADES[0])[2],
+      fill: SHADES[p] || SHADES[0],
       'font-size': 11, 'font-weight': '600',
     });
     label.textContent = state.names[state.seedOn + p] || '';
@@ -668,7 +657,7 @@ function drawAverages(): void {
       const size = 5;
       const diamond = createSvgElement('polygon', {
         points: `${lastBarX},${avgY - size} ${lastBarX + size},${avgY} ${lastBarX},${avgY + size} ${lastBarX - size},${avgY}`,
-        fill: (SHADES[p] || SHADES[0])[2],
+        fill: SHADES[p] || SHADES[0],
         class: 'chart-avg-diamond',
         'data-player': p,
       });
@@ -677,7 +666,7 @@ function drawAverages(): void {
       // NOTE: 平均值标签
       const avgLabel = createSvgElement('text', {
         x: lastBarX + size + 4, y: avgY + 3,
-        fill: (SHADES[p] || SHADES[0])[1],
+        fill: SHADES[p] || SHADES[0],
         'font-size': 10, 'font-weight': '700',
       });
       const avgText = (mo3 ? 'Mo3: ' : 'Ao5: ') + formatTime(result.avg, false, isMove, true);
@@ -708,27 +697,33 @@ function drawAverages(): void {
   }
 }
 
-// ── confetti（WR 庆祝） ──
+// ── confetti（WR 庆祝）— 原版 chart.js#192-215 ──
+
+// NOTE: 连发 3 波，期间吞掉新触发
+let confettiActive = false;
 
 export function showConfetti(): void {
-  if (!gOverlay) return;
-  for (let i = 0; i < CONFETTI_COUNT; i++) {
-    const piece = document.createElement('div');
-    const x = Math.random() * 100;
-    const delay = Math.random() * 0.5;
-    const hue = Math.random() * 360;
-    const size = 4 + Math.random() * 6;
-    piece.style.cssText = `
-      position:absolute; left:${x}%; top:-${size}px;
-      width:${size}px; height:${size * 0.6}px;
-      background: hsl(${hue}, 90%, 55%);
-      border-radius:1px; pointer-events:none;
-      animation: confettiFall ${1.5 + Math.random()}s ease-in ${delay}s forwards;
-    `;
-    gOverlay.appendChild(piece);
-    // NOTE: 动画结束后自动移除
-    piece.addEventListener('animationend', () => piece.remove());
-  }
+  if (confettiActive) return;
+  confettiActive = true;
+
+  import('canvas-confetti').then(({ default: confetti }) => {
+    for (let i = 0; i < 3; i++) {
+      setTimeout(() => {
+        confetti({
+          particleCount: 100,
+          spread: 80,
+          origin: { x: 0.5, y: 0.4 },
+          angle: 90,
+          colors: ['#FFD700', '#FF6B35', '#FF0000', '#00FF00', '#00BFFF', '#FF69B4'],
+          gravity: 1.2,
+          ticks: 200,
+          disableForReducedMotion: true,
+        });
+      }, i * 250);
+    }
+    // NOTE: 最后一波发出后约 3s 动画结束，解锁
+    setTimeout(() => { confettiActive = false; }, 500 + 3000);
+  });
 }
 
 /** NOTE: overlay div 引用 — 供 ChartDrag 创建 drag handle 使用 */
@@ -736,3 +731,9 @@ export function getOverlay(): HTMLDivElement | null { return gOverlay; }
 
 /** NOTE: 获取当前 bar 的宽度（供 ChartDrag 定位 handle） */
 export function getBarW(): number { return gp.barW; }
+
+// NOTE: post-render 回调注册 — chartRender 重建 DOM 后重新标记选中柱子等
+const postRenderCallbacks: (() => void)[] = [];
+export function registerPostRenderCallback(cb: () => void): void {
+  postRenderCallbacks.push(cb);
+}

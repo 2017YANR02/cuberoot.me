@@ -34,6 +34,7 @@ export function Numpad() {
       const name = state.names[state.seedOn + p] || '';
       setLabel(`${name} #${t + 1}`);
     } else {
+      // NOTE: 全满时 target=[-1,-1] — Rand 需要此标志判断全量覆盖
       setTarget([-1, -1]);
       setDisplay('');
       setLabel('');
@@ -104,18 +105,34 @@ export function Numpad() {
     setTimeout(updateTarget, 50);
   }, [state, target, updateTarget]);
 
-  // NOTE: Rand — KDE 采样随机填充
+  // NOTE: Rand — 全量 KDE 采样填充（原版 app.js#227-260）
+  // 有空格时只填空格子；全满时覆盖所有已启用行
   const pressRand = useCallback(() => {
-    if (target[0] < 0) return;
-    const val = sampleKDE(state.event, target[0]);
-    if (val && val > 0) {
-      const absIdx = state.seedOn + target[0];
-      state.updateTime(absIdx, target[1], val);
-      state.saveToUrl();
-      setDisplay(formatTime(val, false, isMove));
-      setTimeout(updateTarget, 50);
+    const sc = state.solveCount();
+    // NOTE: 先判断已启用行是否全满
+    let allFilled = true;
+    for (let p = 0; p < 2; p++) {
+      if (!state.playerEnabled[p]) continue;
+      for (let t = 0; t < sc; t++) {
+        if (!state.times[state.seedOn + p][t]) { allFilled = false; break; }
+      }
+      if (!allFilled) break;
     }
-  }, [state, target, updateTarget, isMove]);
+    // NOTE: 全量填充/覆盖
+    for (let p = 0; p < 2; p++) {
+      if (!state.playerEnabled[p]) continue;
+      for (let t = 0; t < sc; t++) {
+        // 有空格时跳过已填格子
+        if (!allFilled && state.times[state.seedOn + p][t]) continue;
+        const val = sampleKDE(state.event, p);
+        if (val && val > 0) {
+          state.updateTime(state.seedOn + p, t, val);
+        }
+      }
+    }
+    state.saveToUrl();
+    setTimeout(updateTarget, 50);
+  }, [state, updateTarget]);
 
   // NOTE: Enter — 确认输入
   const pressEnter = useCallback(() => {
