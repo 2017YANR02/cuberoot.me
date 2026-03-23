@@ -333,12 +333,16 @@ function handlePointerDown(e: PointerEvent): void {
   // NOTE: 先检测是否点击了 PA 柱或 Avg 菱形 badge（DOM 事件委托）
   const target = e.target as Element;
 
-  // PA handle 点击 → 启动 PA 拖动
-  const paHandleEl = target.closest('.chart-pa-handle') as SVGRectElement | null;
-  if (paHandleEl) {
+  // PA 柱点击 → 创建 overlay pill handle + 启动 PA 拖动
+  const paBarEl = target.closest('.chart-pa-bar') as SVGRectElement | null;
+  if (paBarEl) {
     e.preventDefault();
-    const p = parseInt(paHandleEl.getAttribute('data-player') || '0');
-    const paEnd = paHandleEl.getAttribute('data-pa-end') || 'wpa';
+    const p = parseInt(paBarEl.getAttribute('data-player') || '0');
+    // 判断点击靠近 WPA 端还是 BPA 端
+    const svgPt = screenToSvg(e.clientX, e.clientY);
+    const wpaY = parseFloat(paBarEl.getAttribute('data-wpa-y') || '0');
+    const bpaY = parseFloat(paBarEl.getAttribute('data-bpa-y') || '0');
+    const paEnd = Math.abs(svgPt.y - wpaY) < Math.abs(svgPt.y - bpaY) ? 'wpa' : 'bpa';
     startPaDrag(e, p, paEnd);
     return;
   }
@@ -585,12 +589,10 @@ function startPaDrag(e: PointerEvent, p: number, paEnd: string): void {
   for (let i = 0; i < sc; i++) {
     if (times[i] === 0) { emptyIdx = i; break; }
   }
-  // NOTE: 目标柱子 = 空缺前一个（第 4 把）
   const targetSlot = emptyIdx > 0 ? emptyIdx - 1 : sc - 1;
   const targetOrigVal = times[targetSlot];
   if (targetOrigVal <= 0 || targetOrigVal >= DNF_VALUE) return;
 
-  // NOTE: 收集非目标、非空缺的固定值，用于反向推算
   const fixed: number[] = [];
   for (let i = 0; i < sc; i++) {
     if (i !== targetSlot && i !== emptyIdx && times[i] > 0 && times[i] < DNF_VALUE) {
@@ -600,20 +602,44 @@ function startPaDrag(e: PointerEvent, p: number, paEnd: string): void {
   if (fixed.length < 3) return;
   fixed.sort((a, b) => a - b);
 
-  // NOTE: WPA counting = [1]+[2], BPA counting = [0]+[1]
   const fixedSum = paEnd === 'wpa' ? fixed[1] + fixed[2] : fixed[0] + fixed[1];
 
-  const svgPt = screenToSvg(e.clientX, e.clientY);
+  // NOTE: 创建 overlay pill handle（复用 bar-drag-handle 样式）
+  const overlay = getOverlay();
+  if (!overlay) return;
+  const paHandle = document.createElement('div');
+  paHandle.className = 'bar-drag-handle' + (p === 1 ? ' player-b' : '');
+  paHandle.style.pointerEvents = 'auto';
+  paHandle.style.cursor = 'ns-resize';
+  overlay.appendChild(paHandle);
+
+  // NOTE: 定位 handle 到 PA 端点
+  const svgEl = getSvgEl();
+  if (!svgEl) { paHandle.remove(); return; }
+  const ctm = svgEl.getScreenCTM();
+  if (!ctm) { paHandle.remove(); return; }
+  const overlayRect = overlay.getBoundingClientRect();
   const endY = paEnd === 'wpa' ? paInfo.wpaY : paInfo.bpaY;
-  const dragOffsetY = svgPt.y - endY;
+  const screenX = paInfo.cx * ctm.a + ctm.e - overlayRect.left;
+  const screenY = endY * ctm.d + ctm.f - overlayRect.top;
+  paHandle.style.left = screenX + 'px';
+  paHandle.style.top = screenY + 'px';
+  paHandle.style.display = '';
+  paHandle.style.width = Math.max(paInfo.w * ctm.a, 24) + 'px';
+  paHandle.style.height = '16px';
+  paHandle.style.borderRadius = '8px';
+  paHandle.style.transform = 'translate(-50%, -50%)';
+
   document.body.style.userSelect = 'none';
+
+  // NOTE: 注册拖动事件
+  const startSvgY = screenToSvg(e.clientX, e.clientY).y;
+  const dragOffsetY = startSvgY - endY;
 
   const onMove = (em: PointerEvent) => {
     em.preventDefault();
     const pt = screenToSvg(em.clientX, em.clientY);
     const adjustedY = pt.y - dragOffsetY;
-
-    // NOTE: Y → 目标 PA 值 → 反向推算第 4 柱
     const targetPA = Math.round(yToVal(adjustedY));
     const x = 3 * targetPA - fixedSum;
     if (x <= 0) return;
@@ -621,13 +647,24 @@ function startPaDrag(e: PointerEvent, p: number, paEnd: string): void {
 
     state.times[state.seedOn + p][targetSlot] = clamped;
     chartRender({ skipViewBox: true });
-    reapplySelection();
+
+    // NOTE: 更新 handle 位置
+    const newPaInfo = getPaBarData().find(info => info.playerIdx === p);
+    if (newPaInfo && svgEl) {
+      const newCtm = svgEl.getScreenCTM();
+      if (newCtm) {
+        const newOverlayRect = overlay.getBoundingClientRect();
+        const newEndY = paEnd === 'wpa' ? newPaInfo.wpaY : newPaInfo.bpaY;
+        paHandle.style.top = (newEndY * newCtm.d + newCtm.f - newOverlayRect.top) + 'px';
+      }
+    }
   };
 
   const onUp = () => {
     document.removeEventListener('pointermove', onMove);
     document.removeEventListener('pointerup', onUp);
     document.body.style.userSelect = '';
+    paHandle.remove();
 
     const currentVal = state.times[state.seedOn + p][targetSlot];
     if (currentVal !== targetOrigVal && currentVal > 0) {

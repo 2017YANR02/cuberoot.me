@@ -621,6 +621,8 @@ function drawStats(): void {
           'data-pa-w': paBarW,
           'data-wpa-y': paTopY,
           'data-bpa-y': paBotY,
+          cursor: 'ns-resize',
+          'pointer-events': 'all',
         });
         gStats.appendChild(paRect);
 
@@ -630,30 +632,6 @@ function drawStats(): void {
           wpaY: paTopY, bpaY: paBotY,
           bpa: result.bpa, wpa: result.wpa,
         });
-
-        // NOTE: SVG handle rects at WPA/BPA ends（视觉 + 鼠标光标提示）
-        const handleH = 4;
-        const handleW = paBarW + 6;
-        // WPA 端 handle（顶部）
-        gStats.appendChild(createSvgElement('rect', {
-          x: barCx - handleW / 2, y: paTopY - handleH / 2,
-          width: handleW, height: handleH,
-          fill: darkCol, rx: 2, opacity: '0.8',
-          class: 'chart-pa-handle',
-          'data-player': p, 'data-pa-end': 'wpa',
-          cursor: 'ns-resize',
-          'pointer-events': 'all',
-        }));
-        // BPA 端 handle（底部）
-        gStats.appendChild(createSvgElement('rect', {
-          x: barCx - handleW / 2, y: paBotY - handleH / 2,
-          width: handleW, height: handleH,
-          fill: darkCol, rx: 2, opacity: '0.8',
-          class: 'chart-pa-handle',
-          'data-player': p, 'data-pa-end': 'bpa',
-          cursor: 'ns-resize',
-          'pointer-events': 'all',
-        }));
 
         // NOTE: WPA 数值标签（竖柱上方）
         const wpaLabel = createSvgElement('text', {
