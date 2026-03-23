@@ -33,5 +33,84 @@
   },
   "common": {
     "cases": "{{count}} cases"
+  },
+  "zbll": {
+    "nav": {
+      "selectBtn": "选择",
+      "nCases": "已选择 {{count}} 个情况",
+      "nToRecap": "待复习: {{count}}"
+    },
+    "select": {
+      "practice": "开始",
+      "recap": "逐个复习每个情况",
+      "all": "全部",
+      "none": "无",
+      "done": "完成"
+    },
+    "howto": {
+      "title": "使用说明",
+      "dismiss": "关闭本节",
+      "step1": "🖱️ 点击图片选择/取消选择该组中的所有情况",
+      "step2": "🔽 点击项目标题展开/折叠该组",
+      "step3": "🟢 绿色 = 全部选择；🟡 黄色 = 部分；⚪ 无",
+      "step4": "✅ 当情况已选择时，点击「开始」"
+    },
+    "presets": {
+      "title": "预设",
+      "new": "新预设",
+      "edit": "编辑预设",
+      "placeholder": "以学习",
+      "save": "保存"
+    },
+    "hotkeys": {
+      "title": "热键",
+      "toggleView": "切换计时器/选择视图",
+      "deleteResult": "删除当前结果",
+      "clearSession": "清除会话",
+      "selectDeselect": "选择/取消选择当前情况",
+      "startRecap": "开始复习",
+      "addToStarred": "添加到 ⭐ 收藏",
+      "navigate": "导航到上/下/首/末结果"
+    },
+    "settings": {
+      "title": "设置",
+      "reset": "重置",
+      "done": "完成",
+      "scrambleSize": "打乱字号",
+      "timerSize": "计时器字号",
+      "timerFont": "计时器字体",
+      "pictureView": "图片视角",
+      "pictureTop": "顶部",
+      "pictureSide": "侧面",
+      "timerUpdate": "计时器更新",
+      "timerUpdateOn": "开启",
+      "timerUpdateOff": "关闭",
+      "timerUpdateSeconds": "仅秒",
+      "timerPrecision": "计时器精度",
+      "timerStartDelay": "启动延迟（毫秒）",
+      "scrambleAppendix": "打乱附录",
+      "resetConfirm": "确定重置所有设置？"
+    },
+    "timer": {
+      "scramble": "打乱",
+      "noScramble": "无可用打乱"
+    },
+    "result": {
+      "title": "结果 #{{n}}",
+      "case": "情况：",
+      "scramble": "打乱：",
+      "selected": "已选择",
+      "addNote": "添加笔记",
+      "setup": "设置：",
+      "algs": "算法：",
+      "deleteConfirm": "删除此结果？",
+      "addToStarred": "添加到 ⭐ (Alt+A)"
+    },
+    "stats": {
+      "title": "统计：{{count}} 次",
+      "clear": "清除",
+      "clearConfirm": "清除会话？",
+      "holdSpace": "按住空格键启动计时器"
+    }
   }
 }

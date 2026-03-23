@@ -33,5 +33,84 @@
   },
   "common": {
     "cases": "{{count}} cases"
+  },
+  "zbll": {
+    "nav": {
+      "selectBtn": "Select",
+      "nCases": "{{count}} cases selected",
+      "nToRecap": "Recap: {{count}} remaining"
+    },
+    "select": {
+      "practice": "Start",
+      "recap": "Recap each case once",
+      "all": "All",
+      "none": "None",
+      "done": "Done"
+    },
+    "howto": {
+      "title": "How to use",
+      "dismiss": "dismiss this section",
+      "step1": "🖱️ Click on the picture to select / deselect all cases in the group",
+      "step2": "🔽 Click on the item header to expand / collapse the group",
+      "step3": "🟢 Green = all selected; 🟡 yellow = some; ⚪ none",
+      "step4": "✅ When cases are selected, click \"start\""
+    },
+    "presets": {
+      "title": "Presets",
+      "new": "New",
+      "edit": "Edit",
+      "placeholder": "to learn",
+      "save": "Save"
+    },
+    "hotkeys": {
+      "title": "Hotkeys",
+      "toggleView": "Toggle Timer/Select",
+      "deleteResult": "Delete result",
+      "clearSession": "Clear session",
+      "selectDeselect": "Select/deselect case",
+      "startRecap": "Start recap",
+      "addToStarred": "Add to ⭐",
+      "navigate": "Navigate results"
+    },
+    "settings": {
+      "title": "Settings",
+      "reset": "Reset",
+      "done": "Done",
+      "scrambleSize": "Scramble size",
+      "timerSize": "Timer size",
+      "timerFont": "Timer font",
+      "pictureView": "Picture view",
+      "pictureTop": "Top",
+      "pictureSide": "Side",
+      "timerUpdate": "Timer update",
+      "timerUpdateOn": "On",
+      "timerUpdateOff": "Off",
+      "timerUpdateSeconds": "Seconds only",
+      "timerPrecision": "Timer precision",
+      "timerStartDelay": "Timer start delay (ms)",
+      "scrambleAppendix": "Scramble appendix",
+      "resetConfirm": "Reset all settings?"
+    },
+    "timer": {
+      "scramble": "Scramble",
+      "noScramble": "no scramble available"
+    },
+    "result": {
+      "title": "Result #{{n}}",
+      "case": "Case:",
+      "scramble": "Scramble:",
+      "selected": "Selected",
+      "addNote": "Add note",
+      "setup": "Setup:",
+      "algs": "Algs:",
+      "deleteConfirm": "Delete this result?",
+      "addToStarred": "Add to ⭐ (Alt+A)"
+    },
+    "stats": {
+      "title": "Stats: {{count}} solves",
+      "clear": "clear",
+      "clearConfirm": "Clear session?",
+      "holdSpace": "Hold spacebar to start the timer"
+    }
   }
 }
