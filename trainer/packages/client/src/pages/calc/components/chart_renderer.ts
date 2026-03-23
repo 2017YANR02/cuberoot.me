@@ -32,11 +32,13 @@ export const SHADES: string[][] = [
 
 // NOTE: 图表布局参数（坐标系单位，映射到 viewBox）
 export const BAR_START = 48;   // Y 轴标签占用的左侧空间
-const BAR_GAP = 3;             // 柱间距
-const BAR_GAP_PLAYER = 6;     // 选手间距
+const BAR_GAP = 3;             // 柱间距（同一 slot 内 margin）
+const STRIDE_GAP = 15;         // slot 间距（原版 STRIDE - BAR_W = 15）
 const Y_MARGIN_TOP = 25;      // 顶部留白
 const Y_MARGIN_BOTTOM = 30;   // 底部留白（放选手名标签）
 const GRID_LINE_COUNT = 6;    // 网格线数量
+// NOTE: 重叠模式下 inner bar 的宽度缩放比（原版 chart.js#707 = 0.55）
+const INNER_BAR_RATIO = 0.55;
 const LABEL_FONT = 11;        // 标签字号
 
 // NOTE: 动画控制
@@ -186,10 +188,9 @@ interface RenderOptions {
 function calcViewBox(): void {
   const state = useCalcStore.getState();
   const sc = solveCountForEvent(state.event);
-  const enabledCount = state.playerEnabled.filter(Boolean).length;
-  // NOTE: stride = 一组柱子（含间隙）的总宽度
-  const barW = enabledCount <= 1 ? 50 : 40;
-  const stride = barW * enabledCount + BAR_GAP * (enabledCount - 1) + BAR_GAP_PLAYER;
+  // NOTE: 原版重叠模式 — 柱宽和 stride 不随选手数变化（chart.js#16-17）
+  const barW = 50;
+  const stride = barW + STRIDE_GAP;
 
   const vbW = BAR_START + stride * sc + 20;
 
@@ -339,17 +340,17 @@ function drawGrid(): void {
 
 // ── 柱状图 ──
 
-/** NOTE: 获取柱子 stride（一组柱子的总宽度+间距） */
+/** NOTE: 获取柱子 stride — 原版重叠模式下不随选手数变化 */
 export function getStride(): number {
-  const state = useCalcStore.getState();
-  const enabledCount = state.playerEnabled.filter(Boolean).length;
-  return gp.barW * enabledCount + BAR_GAP * (enabledCount - 1) + BAR_GAP_PLAYER;
+  return gp.barW + STRIDE_GAP;
 }
 
-/** NOTE: 获取某柱子左边缘的 X 坐标 */
-export function getBarX(solveIdx: number, pSlot: number): number {
+/** NOTE: 获取某柱子左边缘的 X 坐标
+ *  原版重叠模式 — 所有选手在同一 x 位置（chart.js#699）
+ *  _pSlot 不影响 x 位置（保留参数以兼容 drag handler） */
+export function getBarX(solveIdx: number, _pSlot: number): number {
   const stride = getStride();
-  return BAR_START + stride * solveIdx + (gp.barW + BAR_GAP) * pSlot;
+  return BAR_START + stride * solveIdx;
 }
 
 function drawBars(): void {
@@ -357,33 +358,58 @@ function drawBars(): void {
   const state = useCalcStore.getState();
   const sc = solveCountForEvent(state.event);
   const isMbf = isMbfForEvent(state.event);
+  const bothEnabled = state.playerEnabled[0] && state.playerEnabled[1];
+  const bm = BAR_GAP; // bar margin
 
-  // NOTE: 当前 seed 对的 5 个成绩排序（用于内部色阶 shading）
-  let pSlot = 0;
+  // NOTE: 准备排序数据（用于色阶 shading）
+  const sortedVals: number[][] = [];
   for (let p = 0; p < 2; p++) {
-    if (!state.playerEnabled[p]) continue;
-
     const row = state.times[state.seedOn + p];
-    // NOTE: 排序用于色阶（最好→最差 = 深色→浅色）
-    const sortedVals = [...row.slice(0, sc)].filter(v => v > 0 && v < DNF_VALUE).sort((a, b) => a - b);
-    if (isMbf) sortedVals.reverse();
+    const sv = [...row.slice(0, sc)].filter(v => v > 0 && v < DNF_VALUE).sort((a, b) => a - b);
+    if (isMbf) sv.reverse();
+    sortedVals.push(sv);
+  }
 
-    for (let t = 0; t < sc; t++) {
-      const val = row[t];
+  // NOTE: 原版重叠逻辑 — 逐 slot 绘制，较高柱子先画（底层全宽），较矮柱子后画（缩窄居中）
+  // chart.js#688-760
+  for (let t = 0; t < sc; t++) {
+    // NOTE: 确定两个选手在此 slot 的 Y 值（越小 = 柱子越高）
+    const minYs: [number, number] = [999999, 999999];
+    for (let p = 0; p < 2; p++) {
+      if (!state.playerEnabled[p]) continue;
+      const val = state.times[state.seedOn + p][t];
+      if (val > 0 && val < DNF_VALUE) {
+        minYs[p] = valToYCap(val);
+      }
+    }
+
+    // NOTE: 较高柱子（minY 越小）先画 → 底层，较矮柱子后画 → 上层
+    const pOrder: number[] = (minYs[0] < minYs[1]) ? [0, 1] : [1, 0];
+
+    for (let i = 0; i < 2; i++) {
+      const p = pOrder[i];
+      if (!state.playerEnabled[p]) continue;
+      const val = state.times[state.seedOn + p][t];
       if (val <= 0 || val >= DNF_VALUE) continue;
 
-      const x = getBarX(t, pSlot);
+      const barX = getBarX(t, 0);
       const y = valToYCap(val);
       const baseY = gp.chartTop + gp.chartH;
       const barH = baseY - y;
 
+      // NOTE: 原版重叠宽度逻辑 — 较矮柱子（后画的 i===1）在 Both 模式下缩窄 55% 居中
+      const fullW = gp.barW - 2 * bm;
+      const isTop = bothEnabled && i === 1 && minYs[0] !== 999999 && minYs[1] !== 999999;
+      const bw = isTop ? fullW * INNER_BAR_RATIO : fullW;
+      const bx = barX + bm + (fullW - bw) / 2;
+
       // NOTE: 色阶 — 在排序数组中的位置决定深浅
-      const rank = sortedVals.indexOf(val);
+      const rank = sortedVals[p].indexOf(val);
       const colorIdx = Math.min(rank, (SHADES[p] || SHADES[0]).length - 1);
       const shade = (SHADES[p] || SHADES[0])[colorIdx];
 
       const bar = createSvgElement('rect', {
-        x, y, width: gp.barW, height: Math.max(0, barH),
+        x: bx, y, width: bw, height: Math.max(0, barH),
         rx: 3, fill: shade,
         class: 'chart-bar',
         'data-player': p,
@@ -410,7 +436,6 @@ function drawBars(): void {
 
       gBars.appendChild(bar);
     }
-    pSlot++;
   }
 
   // NOTE: ghost bar（Target Avg 幽灵柱）
