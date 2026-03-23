@@ -49,6 +49,7 @@ export interface CalcState {
   timeLiveStart: number;     // 秒表开始时间戳
   sortedCache: number[];     // 按平均值排序的选手索引
   playerEnabled: boolean[];  // 选手启用状态
+  targetAvgs: Record<number, number>; // 每个 seed 的目标平均值
 
   // ── 派生查询 ──
   solveCount: () => number;
@@ -68,6 +69,9 @@ export interface CalcState {
   resizeTimes: (newLen: number) => void;
   setTimeLive: (player: number, solve: number) => void;
   setTimeLiveStart: (ts: number) => void;
+  getTargetAvg: (seedIdx: number) => number;
+  setTargetAvg: (seedIdx: number, val: number) => void;
+  clearTargetAvgs: () => void;
 
   // ── URL Sync ──
   saveToUrl: () => void;
@@ -95,6 +99,7 @@ export const useCalcStore = create<CalcState>((set, get) => ({
   timeLiveStart: -1,
   sortedCache: [],
   playerEnabled: [true, false],
+  targetAvgs: {},
 
   // ── 派生查询 ──
   solveCount: () => solveCountForEvent(get().event),
@@ -169,6 +174,7 @@ export const useCalcStore = create<CalcState>((set, get) => ({
       seedOn: 0,
       timeLive: [-1, -1],
       timeLiveStart: -1,
+      targetAvgs: {},
     });
     get().updateSort();
   },
@@ -190,6 +196,12 @@ export const useCalcStore = create<CalcState>((set, get) => ({
 
   setTimeLive: (player, solve) => set({ timeLive: [player, solve] }),
   setTimeLiveStart: (ts) => set({ timeLiveStart: ts }),
+
+  getTargetAvg: (seedIdx) => get().targetAvgs[seedIdx] || 0,
+  setTargetAvg: (seedIdx, val) => {
+    set(s => ({ targetAvgs: { ...s.targetAvgs, [seedIdx]: val } }));
+  },
+  clearTargetAvgs: () => set({ targetAvgs: {} }),
 
   // ── URL Sync ──
 

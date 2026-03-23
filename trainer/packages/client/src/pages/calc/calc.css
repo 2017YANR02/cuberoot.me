@@ -1,0 +1,1239 @@
+/* NOTE: HTH Grapher 全局样式
+   从原 index.html <style> 提取 + 新增 DOM/SVG 布局样式 */
+
+/* ── 基础布局 ── */
+
+* {
+    box-sizing: border-box;
+    /* NOTE: pan-y = 只允许纵向滚动，同时禁用双击缩放和双指缩放 */
+    touch-action: pan-y;
+}
+
+html {
+    overflow-x: hidden;
+    /* NOTE: 阻止 iOS 横向弹性滚动 */
+    overscroll-behavior-x: none;
+}
+
+body {
+    margin: 0;
+    font-family: Helvetica, Arial, sans-serif;
+    background: #E7DFD5;
+    overflow-x: hidden;
+    overscroll-behavior-x: none;
+    /* NOTE: iOS Safari 底部地址栏安全区 */
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.hth-app {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 0 8px;
+}
+
+/* ── 语言切换按钮 ── */
+/* NOTE: 设计参考 i18n/i18n.js 的 .lang-toggle-fixed，浅色主题适配，定位改为右上角 */
+
+.lang-toggle {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    z-index: 9999;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border-radius: 6px;
+    padding: 4px 10px;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: #666;
+    font-size: 0.78rem;
+    transition: color 0.2s, border-color 0.2s, background 0.2s;
+    user-select: none;
+}
+
+.lang-toggle:hover {
+    color: #333;
+    border-color: #999;
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.lang-toggle .globe-icon {
+    font-size: 0.95rem;
+    line-height: 1;
+}
+
+/* ── 比赛名称输入 ── */
+
+.comp-name {
+    display: block;
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 4px 16px;
+    font-size: 20px;
+    font-weight: 600;
+    text-align: center;
+    border: none;
+    background: transparent;
+    color: #000;
+    outline: none;
+}
+
+.comp-name:focus {
+    border-bottom-color: #FF8080;
+}
+
+/* ── 项目选择器（浅色主题适配） ── */
+
+.event-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    padding: 10px;
+    margin: 0 auto 12px;
+    max-width: 800px;
+    background: rgba(0, 0, 0, 0.04);
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-sizing: border-box;
+    justify-content: center;
+}
+
+.event-btn {
+    position: relative;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.event-btn .cubing-icon {
+    font-size: 20px;
+    color: #666;
+    transition: color 0.2s ease;
+}
+
+.event-btn:hover {
+    background: rgba(0, 0, 0, 0.10);
+    border-color: rgba(0, 0, 0, 0.15);
+}
+
+.event-btn:hover .cubing-icon {
+    color: #333;
+}
+
+.event-btn.active {
+    background: #2e7d32;
+    border-color: #4caf50;
+}
+
+.event-btn.active .cubing-icon {
+    color: #fff;
+}
+
+/* NOTE: CSS tooltip 悬浮提示 */
+.event-btn::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s;
+    z-index: 100;
+}
+
+.event-btn:hover::after {
+    opacity: 1;
+}
+
+/* ── SVG 图表容器 ── */
+
+#chart-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.hth-chart {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+/* ── 输入网格 ── */
+
+.input-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    margin: 4px 0;
+}
+
+.player-toggle {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #3B6978;
+    align-self: center;
+}
+
+.time-cell {
+    width: 90px;
+    padding: 10px 6px;
+    font-size: 24px;
+    font-weight: 600;
+    text-align: center;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fff;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+/* NOTE: wrapper 容器 — 为 WR badge 提供定位参考 */
+.time-cell-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+/* NOTE: WR 徽章 — 黑底白字，定位在 input 右上角 */
+.wr-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: #D32F2F;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 4px;
+    border-radius: 3px;
+    line-height: 1.3;
+    pointer-events: none;
+    z-index: 5;
+}
+
+/* NOTE: Target Avg 状态 emoji — 左上角显示 🎯/🔒/🎲/💀 */
+.tavg-emoji {
+    position: absolute;
+    top: 1px;
+    left: 3px;
+    font-size: 11px;
+    line-height: 1;
+    pointer-events: none;
+    z-index: 5;
+}
+
+/* NOTE: 排名标签 — 左上角小字，显示从快到慢的序号 */
+/* 颜色编码：1(绿) → 5(红) 渐变 */
+.sort-rank {
+    position: absolute;
+    top: 1px;
+    left: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    pointer-events: none;
+    z-index: 4;
+    line-height: 1;
+    color: rgba(0, 0, 0, 0.35);
+}
+
+.sort-rank[data-rank="1"] {
+    color: #2e7d32;
+}
+
+.sort-rank[data-rank="2"] {
+    color: #558b2f;
+}
+
+.sort-rank[data-rank="3"] {
+    color: #9e9e9e;
+}
+
+.sort-rank[data-rank="4"] {
+    color: #e65100;
+}
+
+.sort-rank[data-rank="5"] {
+    color: #c62828;
+}
+
+.time-cell:focus {
+    border-color: #FF8080;
+    box-shadow: 0 0 0 2px rgba(255, 128, 128, 0.3);
+}
+
+/* NOTE: 选手 A 橙色系高亮，选手 B 蓝色系高亮 */
+.player-a .time-cell:focus {
+    border-color: rgba(255, 128, 0, 0.8);
+    box-shadow: 0 0 0 2px rgba(255, 128, 0, 0.2);
+}
+
+.player-b .time-cell:focus {
+    border-color: rgba(50, 130, 255, 0.8);
+    box-shadow: 0 0 0 2px rgba(50, 130, 255, 0.2);
+}
+
+/* NOTE: Target Avg 格 — 继承 time-cell 样式，覆盖背景色与选手一致 */
+.tavg-cell {
+    border: none;
+}
+
+.player-a .tavg-cell {
+    background: rgba(255, 128, 0, 1.0);
+    color: #fff;
+}
+
+.player-b .tavg-cell {
+    background: rgba(50, 130, 255, 1.0);
+    color: #fff;
+}
+
+.tavg-cell::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* ── 控制按钮区 ── */
+
+.controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 0;
+    flex-wrap: wrap;
+}
+
+.controls button {
+    padding: 6px 14px;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    background: #3B6978;
+    color: #fff;
+    transition: background 0.2s;
+}
+
+.controls button:hover {
+    background: #4a8a9c;
+}
+
+.controls button:disabled {
+    background: #808080;
+    cursor: not-allowed;
+}
+
+.sim-btn {
+    padding: 6px 14px;
+    font-size: 14px;
+    font-weight: 700;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #fff;
+    transition: background 0.2s, opacity 0.2s;
+}
+
+.sim-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+/* NOTE: 选手颜色对应 — A 橙色、B 蓝色、Race 渐变 */
+.sim-btn.sim-a {
+    background: rgba(255, 128, 0, 0.9);
+}
+
+.sim-btn.sim-a:hover:not(:disabled) {
+    background: rgba(255, 128, 0, 1);
+}
+
+.sim-btn.sim-b {
+    background: rgba(50, 130, 255, 0.9);
+}
+
+.sim-btn.sim-b:hover:not(:disabled) {
+    background: rgba(50, 130, 255, 1);
+}
+
+.sim-btn.sim-race {
+    background: linear-gradient(135deg, rgba(255, 128, 0, 0.9), rgba(50, 130, 255, 0.9));
+}
+
+.sim-btn.sim-race:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(255, 128, 0, 1), rgba(50, 130, 255, 1));
+}
+
+/* NOTE: 计数徽章 — 淡入动画 */
+.sim-count {
+    font-size: 13px;
+    font-weight: 700;
+    color: #555;
+    opacity: 0;
+    transition: opacity 0.3s;
+    /* NOTE: 隐藏时不占位，可见后因 textContent 自动撑开 */
+    padding: 0 4px;
+}
+
+.sim-count.visible {
+    opacity: 1;
+}
+
+/* ── 进步幅度滑杆 ── */
+
+.progress-controls {
+    max-width: 500px;
+    margin: 0 auto 6px;
+    padding: 0 16px;
+}
+
+.progress-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 2px 0;
+}
+
+.progress-label {
+    font-size: 14px;
+    font-weight: 700;
+    width: 16px;
+    text-align: center;
+}
+
+.progress-a .progress-label {
+    color: rgba(255, 128, 0, 1);
+}
+
+.progress-b .progress-label {
+    color: rgba(50, 130, 255, 1);
+}
+
+.progress-slider {
+    flex: 1;
+    height: 6px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: #ccc;
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+}
+
+/* NOTE: 滑块样式 — Webkit */
+.slider-a::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: rgba(255, 128, 0, 1);
+    cursor: pointer;
+}
+
+.slider-b::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: rgba(50, 130, 255, 1);
+    cursor: pointer;
+}
+
+/* NOTE: Firefox */
+.slider-a::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 128, 0, 1);
+    cursor: pointer;
+}
+
+.slider-b::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(50, 130, 255, 1);
+    cursor: pointer;
+}
+
+.progress-info {
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+    min-width: 110px;
+    text-align: left;
+}
+
+#seed-label {
+    font-size: 16px;
+    font-weight: 600;
+    padding: 0 8px;
+}
+
+/* ── 数字键盘（保持原设计） ── */
+
+#numpad {
+    display: block;
+    max-width: 400px;
+    margin: 10px auto;
+    margin-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    padding: 12px;
+    background: #222;
+    border-radius: 16px;
+}
+
+#numpad-display {
+    color: #fff;
+    font-size: 28px;
+    font-family: 'Helvetica Neue', Helvetica, sans-serif;
+    text-align: right;
+    padding: 8px 16px;
+    margin-bottom: 10px;
+    background: #333;
+    border-radius: 10px;
+    min-height: 40px;
+    line-height: 40px;
+    overflow: hidden;
+}
+
+#numpad-label {
+    color: #aaa;
+    font-size: 14px;
+    float: left;
+    line-height: 40px;
+}
+
+#numpad-body {
+    display: flex;
+    gap: 6px;
+    /* NOTE: 相对定位 — 作为 drum 绝对定位的参考 */
+    position: relative;
+}
+
+#numpad-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    flex: 1;
+    /* NOTE: 为 drum 留出左侧空间 */
+    margin-left: 78px;
+}
+
+.np-btn {
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    width: 100%;
+    padding: 14px 0;
+    font-size: 30px;
+    font-family: 'Helvetica Neue', Helvetica, sans-serif;
+    font-weight: 700;
+    cursor: pointer;
+    outline: none;
+    position: relative;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    transition: background 0.25s ease-out, transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+/* NOTE: 按下时放大 + 阴影 */
+.np-btn:active {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    z-index: 10;
+    transition: none;
+}
+
+.np-digit:active,
+.np-op:active,
+.np-action:active,
+.np-action-alt:active {
+    background: #7a7a7e;
+}
+
+.np-digit,
+.np-op,
+.np-action,
+.np-action-alt {
+    background: #636366;
+    color: #fff;
+}
+
+.np-op,
+.np-action,
+.np-action-alt {
+    font-size: 22px;
+}
+
+/* NOTE: 长按 ⌫ 时的 Clear 模式 — 纯 CSS 切换，避免替换 innerHTML 破坏触摸事件 */
+.np-clear-mode {
+    background: #c62828 !important;
+}
+
+.np-clear-mode svg {
+    display: none;
+}
+
+.np-clear-mode::after {
+    content: 'Clear';
+    font-size: 14px;
+    color: #fff;
+}
+
+/* NOTE: 回车键跨两行 */
+.np-enter {
+    grid-row: span 2;
+}
+
+#np-drum {
+    /* NOTE: 绝对定位 — 脱离文档流，不撑高 numpad */
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 72px;
+    overflow: hidden;
+    border-radius: 10px;
+    background: #1c1c1e;
+    /* NOTE: 上下渐隐遮罩 — iOS 风格边缘淡出 */
+    -webkit-mask-image: linear-gradient(to bottom,
+            transparent 0%, rgba(0, 0, 0, 0.4) 12%, black 30%, black 70%, rgba(0, 0, 0, 0.4) 88%, transparent 100%);
+    mask-image: linear-gradient(to bottom,
+            transparent 0%, rgba(0, 0, 0, 0.4) 12%, black 30%, black 70%, rgba(0, 0, 0, 0.4) 88%, transparent 100%);
+    touch-action: none;
+    cursor: ns-resize;
+    user-select: none;
+}
+
+/* NOTE: 空态 — 无值可调时半透明 */
+#np-drum.empty {
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+/* NOTE: 灰色底层 + 白色裁剪层共用的 flex 布局 */
+#np-drum-list,
+.np-drum-list-white {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    /* NOTE: GPU 加速 + 3D 滚筒透视 */
+    will-change: transform;
+    transform: translateZ(0);
+    transform-style: preserve-3d;
+    perspective: 300px;
+}
+
+/* NOTE: 静态裁剪窗口 — clip-path 在不动的容器上，列表在窗口内滑动 */
+.np-drum-white-window {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    /* NOTE: 裁剪到高亮条区域（中心 34px），实现 split-rendering */
+    clip-path: inset(calc(50% - 17px) 0 calc(50% - 17px) 0);
+    pointer-events: none;
+    z-index: 2;
+    overflow: hidden;
+}
+
+/* NOTE: 白色裁剪层 — 在静态窗口内随 transform 滑动 */
+.np-drum-list-white {
+    height: 100%;
+}
+
+/* NOTE: 灰色底层所有项统一灰色 */
+#np-drum-list .np-drum-item {
+    color: rgba(255, 255, 255, 0.45);
+}
+
+/* NOTE: 白色裁剪层所有项统一白色 */
+.np-drum-list-white .np-drum-item {
+    color: #fff;
+}
+
+/* NOTE: iOS 风格 — 所有项统一基础样式 */
+.np-drum-item {
+    width: 100%;
+    text-align: center;
+    font-size: 18px;
+    font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+    padding: 6px 0;
+    line-height: 1.3;
+    flex-shrink: 0;
+}
+
+/* NOTE: 灰色层颜色渐变 — 距中心越远越暗（rotateX/scale 由 JS 动态计算） */
+
+/* ±2 */
+#np-drum-list .np-drum-item:nth-child(3),
+#np-drum-list .np-drum-item:nth-child(7) {
+    color: rgba(255, 255, 255, 0.35);
+}
+
+/* ±3 */
+#np-drum-list .np-drum-item:nth-child(2),
+#np-drum-list .np-drum-item:nth-child(8) {
+    color: rgba(255, 255, 255, 0.25);
+}
+
+/* ±4（最外层缓冲区） */
+#np-drum-list .np-drum-item:nth-child(1),
+#np-drum-list .np-drum-item:nth-child(9) {
+    color: rgba(255, 255, 255, 0.15);
+}
+
+/* NOTE: iOS 高亮条 — 比背景稍亮的圆角矩形 */
+.np-drum-highlight {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 34px;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    pointer-events: none;
+}
+
+/* ── 指标对比表格 ── */
+
+#calc-section {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 8px 20px;
+}
+
+.stats-toggle {
+    display: block;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+    color: #3B6978;
+    cursor: pointer;
+    padding: 6px 16px;
+    border-radius: 6px;
+    background: rgba(59, 105, 120, 0.08);
+    transition: background 0.2s;
+    user-select: none;
+    list-style: none;
+    /* 移除默认三角 */
+}
+
+.stats-toggle::-webkit-details-marker {
+    display: none;
+}
+
+.stats-toggle:hover {
+    background: rgba(59, 105, 120, 0.15);
+}
+
+#calc-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 18px;
+}
+
+#calc-table th {
+    background: #3B6978;
+    color: #fff;
+    padding: 10px 16px;
+    text-align: center;
+    font-weight: 600;
+}
+
+#calc-table td {
+    padding: 8px 16px;
+    text-align: center;
+    border-bottom: 1px solid #ccc;
+}
+
+#calc-table tr:nth-child(even) {
+    background: #f0ece4;
+}
+
+#calc-table tr:nth-child(odd) {
+    background: #E7DFD5;
+}
+
+#calc-table td:first-child {
+    font-weight: 600;
+    text-align: left;
+}
+
+.calc-better {
+    color: #006400;
+    font-weight: 700;
+}
+
+.calc-nan {
+    color: #999;
+    font-style: italic;
+}
+
+.tavg-input {
+    width: 80px;
+    padding: 4px 8px;
+    font-size: 16px;
+    text-align: center;
+    border: 1px solid #999;
+    border-radius: 4px;
+    background: #fff;
+}
+
+
+
+/* ── 隐藏媒体元素 ── */
+
+audio,
+video {
+    display: none;
+}
+
+/* ── 移动端适配 ── */
+
+/* NOTE: 输入格改弹性宽度，手机端自动缩小 */
+@media (max-width: 640px) {
+
+    /* NOTE: 图表撑满屏幕左右 — 取消 max-width 并用负边距抵消 .hth-app 的 8px padding */
+    #chart-container {
+        max-width: none;
+        margin-left: -8px;
+        margin-right: -8px;
+    }
+
+    .input-row {
+        gap: 2px;
+    }
+
+    /* NOTE: 移动端 wrapper 参与 flex 弹性分配 */
+    .time-cell-wrapper {
+        flex: 1;
+        min-width: 0;
+    }
+
+    /* NOTE: Target Avg wrapper 固定宽度，不被挤压 */
+    .time-cell-wrapper:has(.tavg-cell) {
+        flex: 0 0 60px;
+    }
+
+    .time-cell {
+        width: 100%;
+        min-width: 0;
+        padding: 6px 1px;
+        /* NOTE: clamp 让字号根据屏幕宽度自适应，避免截断 */
+        font-size: clamp(12px, 4vw, 18px);
+    }
+
+    .tavg-cell {
+        width: 100%;
+        min-width: 0;
+        padding: 6px 1px;
+        font-size: clamp(12px, 4vw, 18px);
+    }
+
+    .player-toggle {
+        width: 16px;
+        height: 16px;
+    }
+
+    .comp-name {
+        font-size: 18px;
+        padding: 6px 8px;
+    }
+
+    .controls button {
+        padding: 6px 12px;
+        font-size: 14px;
+    }
+
+    #seed-label {
+        font-size: 14px;
+    }
+
+    #calc-table {
+        font-size: 14px;
+    }
+
+    #calc-table th,
+    #calc-table td {
+        padding: 6px 8px;
+    }
+
+}
+
+/* ── 方法说明图标 ── */
+
+.rand-info {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    font-size: 14px;
+    line-height: 1;
+    color: #666;
+    cursor: pointer;
+    vertical-align: middle;
+    margin-left: 2px;
+    transition: color 0.2s;
+}
+
+.rand-info:hover {
+    color: #333;
+}
+
+/* ── 方法说明弹窗 ── */
+
+/* NOTE: 半透明遮罩 — 点击关闭 */
+.info-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+}
+
+.info-modal-overlay.visible {
+    display: flex;
+}
+
+/* NOTE: 弹窗主体 — 明亮圆角卡片 */
+.info-modal {
+    position: relative;
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px 28px;
+    max-width: 440px;
+    width: calc(100% - 32px);
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.05);
+    animation: modalSlideIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* NOTE: 关闭按钮 — 右上角 × */
+.info-modal-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: rgba(0, 0, 0, 0.06);
+    border-radius: 50%;
+    font-size: 18px;
+    line-height: 1;
+    color: #999;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, color 0.2s;
+}
+
+.info-modal-close:hover {
+    background: rgba(0, 0, 0, 0.12);
+    color: #333;
+}
+
+/* NOTE: 弹窗内容 — 段落间距 + 可读排版 */
+.info-modal-body {
+    font-size: 13px;
+    line-height: 1.6;
+    color: #333;
+}
+
+.info-modal-body p {
+    margin: 0 0 12px;
+}
+
+.info-modal-body p:last-child {
+    margin-bottom: 0;
+}
+
+.info-modal-body strong {
+    color: #111;
+}
+
+
+
+/* ── 柱子拖动交互 ── */
+
+/* NOTE: 拖动时标签可能超出 viewBox 上边界，需要可见；禁止文字选中；禁止触摸滚动 */
+.hth-chart {
+    overflow: visible;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+}
+
+
+
+/* NOTE: 选中态 — SVG 根加 .bar-selected 后，非活跃柱子降暗 */
+.hth-chart.bar-selected .chart-bar:not(.bar-active) {
+    opacity: 0.35;
+    transition: opacity 0.2s;
+}
+
+/* NOTE: 选中柱子发光（使用选手颜色的 drop-shadow） */
+.chart-bar.bar-active {
+    filter: drop-shadow(0 0 8px rgba(255, 128, 0, 0.6));
+    transition: filter 0.2s;
+}
+
+/* NOTE: B 选手用蓝色发光 */
+.chart-bar.bar-active[data-player="1"] {
+    filter: drop-shadow(0 0 8px rgba(50, 130, 255, 0.6));
+}
+
+/* NOTE: 柱子选中时对应单元格的联动高亮 — 复用聚焦时的实线边框 */
+.time-cell.cell-synced {
+    outline: 2px solid rgba(255, 128, 0, 0.7);
+    outline-offset: -2px;
+}
+
+/* NOTE: Handle — 水平 pill 形，可拖拽 */
+.bar-drag-handle {
+    position: absolute;
+    /* NOTE: width/height/border-radius 由 JS positionHandle() 动态设置，跟随柱子宽度 */
+    background: rgba(255, 128, 0, 1);
+    border: 2px solid #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    cursor: ns-resize;
+    z-index: 100;
+    /* NOTE: transform 居中定位 — left/top 指向柱顶中心 */
+    transform: translate(-50%, -50%);
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    /* NOTE: 弹性出现动画 */
+    animation: handleBounce 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.bar-drag-handle:active {
+    cursor: grabbing;
+}
+
+/* NOTE: B 选手蓝色 */
+.bar-drag-handle.player-b {
+    background: rgba(50, 130, 255, 1);
+}
+
+/* NOTE: grip lines — 三条细横线暗示可拖拽 */
+.bar-drag-handle::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 18px;
+    height: 10px;
+    border-top: 2px solid rgba(255, 255, 255, 0.5);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.5);
+    /* NOTE: 中间线用 box-shadow 模拟 */
+    box-shadow: 0 0 0 0 transparent, inset 0 0 0 0 transparent;
+    background: linear-gradient(transparent 0px, transparent 3px,
+            rgba(255, 255, 255, 0.5) 3px, rgba(255, 255, 255, 0.5) 5px,
+            transparent 5px);
+}
+
+
+@keyframes handleBounce {
+    0% {
+        transform: translate(-50%, -50%) scale(0);
+    }
+
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+/* NOTE: 幽灵柱渐入 — 仅类型切换（如黄→绿）时播放，值变化不触发 */
+.chart-ghost-anim {
+    animation: ghostFadeIn 0.3s ease;
+}
+
+@keyframes ghostFadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* ── 头像按钮 ── */
+.me-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 2px solid #ccc;
+    border-radius: 50%;
+    background: #f0f0f0;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    margin-left: 2px;
+    position: relative;
+}
+
+/* NOTE: 头像图片铺满圆形 */
+.me-avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    border-radius: 50%;
+}
+
+/* NOTE: hover 效果 */
+.me-btn:hover {
+    border-color: #e65100;
+    box-shadow: 0 0 6px rgba(230, 81, 0, 0.3);
+}
+
+/* NOTE: 激活态 — 使用个人数据时橙色边框发光 */
+.me-btn.me-active {
+    border-color: #e65100;
+    box-shadow: 0 0 8px rgba(230, 81, 0, 0.5);
+}
+
+/* NOTE: 加载中 — 用 ::after 覆盖显示 ⏳ */
+.me-btn[data-loading]::after {
+    content: attr(data-loading);
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f0f0f0;
+    font-size: 16px;
+    border-radius: 50%;
+}
+
+/* ── 选手搜索模态框 ── */
+
+.person-search-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(0, 0, 0, 0.6);
+}
+
+.person-search-modal {
+    position: absolute;
+    background: #1a1a2e;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 380px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+}
+
+.person-search-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 16px;
+    border: none;
+    border-bottom: 1px solid #333;
+    background: #16213e;
+    color: #eee;
+    font-size: 15px;
+    outline: none;
+}
+.person-search-input::placeholder { color: #666; }
+
+.person-search-results {
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+.person-search-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.person-search-item:hover { background: #0f3460; }
+
+/* NOTE: WCA ID 用等宽字体，便于视觉对齐 */
+.person-search-item .ps-wcaid {
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 12px;
+    color: #8899aa;
+    min-width: 90px;
+}
+.person-search-item .ps-name {
+    color: #eee;
+    font-size: 14px;
+}
+
+.person-search-empty,
+.person-search-loading {
+    padding: 16px;
+    text-align: center;
+    color: #666;
+    font-size: 14px;
+}
+
+.person-search-loading .ps-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid #444;
+    border-top-color: #eee;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    margin-right: 6px;
+    vertical-align: middle;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }

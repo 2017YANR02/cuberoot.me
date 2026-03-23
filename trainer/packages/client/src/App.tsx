@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Suspense, lazy } from 'react';
 import { HomePage } from './pages/HomePage';
 import { CaseSelectPage } from './pages/CaseSelectPage';
 import { TrainingPage } from './pages/TrainingPage';
@@ -8,6 +9,9 @@ import { ZbllSelectPage } from './pages/ZbllSelectPage';
 import { ZbllTimerPage } from './pages/ZbllTimerPage';
 import { ZblsSelectPage } from './pages/ZblsSelectPage';
 import { ZblsTimerPage } from './pages/ZblsTimerPage';
+
+// NOTE: Calc 模块懒加载 — 体积较大，按需加载
+const CalcPage = lazy(() => import('./pages/calc/CalcPage'));
 
 function App() {
   return (
@@ -25,6 +29,8 @@ function App() {
         {/* ZBLS Trainer — 独立的选择+计时页面 */}
         <Route path="/select/zbls" element={<ZblsSelectPage />} />
         <Route path="/train/zbls" element={<ZblsTimerPage />} />
+        {/* Calc — 成绩计算器 */}
+        <Route path="/calc" element={<Suspense fallback={<div>Loading...</div>}><CalcPage /></Suspense>} />
       </Routes>
     </BrowserRouter>
   );
