@@ -583,75 +583,78 @@ function drawStats(): void {
     const result = CalcEngine.compute(row, mo3);
 
     if (result && result.complete && result.avg !== undefined && result.avg < DNF_VALUE) {
-      // NOTE: BPA 横线（虚线）
+      // NOTE: BPA/WPA 横线（虚线）— 仅 5 把全部填完时
       if (!mo3 && result.bpa !== null && result.bpa !== undefined && result.bpa < DNF_VALUE) {
-        const by = valToYCap(result.bpa);
-        drawStatLine(by, pSlot, 'bpa', p);
+        drawStatLine(valToYCap(result.bpa), pSlot, 'bpa', p);
       }
-      // NOTE: WPA 横线（虚线）
       if (!mo3 && result.wpa !== null && result.wpa !== undefined && result.wpa < DNF_VALUE) {
-        const wy = valToYCap(result.wpa);
-        drawStatLine(wy, pSlot, 'wpa', p);
+        drawStatLine(valToYCap(result.wpa), pSlot, 'wpa', p);
       }
+    }
 
-      // NOTE: PA 竖柱 — BPA→WPA 范围可视化（原版 chart.js#936-957）
-      // 仅 Ao5 模式且 BPA/WPA 都有有效值时绘制
-      if (!mo3 && result.bpa !== null && result.bpa !== undefined && result.bpa < DNF_VALUE
-        && result.wpa !== null && result.wpa !== undefined && result.wpa < DNF_VALUE) {
-        const col = SHADES[p] || SHADES[0];
-        const darkCol = darken(col, 0.7);
-        const fadedCol = fade(col, 0.25);
+    // NOTE: PA 竖柱 — 填了 4+ 把时内联计算 BPA/WPA（原版 chart.js#936-957）
+    // 不依赖 result.complete，4 把时就显示
+    if (!mo3) {
+      const filled = row.filter((t: number) => t > 0 && t < DNF_VALUE);
+      const filledCount = filled.length;
+      if (filledCount >= 4) {
+        // NOTE: 内联计算 BPA/WPA — 假设第 5 把 = 0（最好）和 = DNF（最差）
+        const sorted4 = [...filled.slice(0, 4)].sort((a: number, b: number) => a - b);
+        const bpaArr = [...sorted4, 0].sort((a: number, b: number) => a - b);
+        const wpaArr = [...sorted4, DNF_VALUE].sort((a: number, b: number) => a - b);
+        const bpa = Math.round((bpaArr[1] + bpaArr[2] + bpaArr[3]) / 3);
+        const wpaDnf = wpaArr.filter((t: number) => t >= DNF_VALUE).length;
+        const wpa = wpaDnf >= 2 ? DNF_VALUE : Math.round((wpaArr[1] + wpaArr[2] + wpaArr[3]) / 3);
 
-        // 竖柱位置 — 放在最后一根柱子右侧
-        const barCx = getBarX(sc - 1, pSlot) + gp.barW + 30;
-        const paBarW = 20; // 竖柱宽度（SVG 坐标系）
-        const paTopY = valToYCap(result.wpa); // WPA（较差 = 较高位置 = 较小 Y）
-        const paBotY = valToYCap(result.bpa); // BPA（较好 = 较低位置 = 较大 Y）
-        const paBarH = Math.max(3, paBotY - paTopY);
+        if (bpa < DNF_VALUE && wpa < DNF_VALUE) {
+          const col = SHADES[p] || SHADES[0];
+          const darkCol = darken(col, 0.7);
+          const fadedCol = fade(col, 0.25);
 
-        // 半透明填充 + 描边矩形
-        const paRect = createSvgElement('rect', {
-          x: barCx - paBarW / 2, y: paTopY,
-          width: paBarW, height: paBarH,
-          fill: fadedCol, stroke: darkCol,
-          'stroke-width': 1.5, rx: 3,
-          class: 'chart-pa-bar',
-          'data-player': p,
-          'data-pa-cx': barCx,
-          'data-pa-w': paBarW,
-          'data-wpa-y': paTopY,
-          'data-bpa-y': paBotY,
-          cursor: 'ns-resize',
-          'pointer-events': 'all',
-        });
-        gStats.appendChild(paRect);
+          const barCx = getBarX(sc - 1, pSlot) + gp.barW + 30;
+          const paBarW = 20;
+          const paTopY = valToYCap(wpa);
+          const paBotY = valToYCap(bpa);
+          const paBarH = Math.max(3, paBotY - paTopY);
 
-        // NOTE: 缓存 PA 柱位置供 drag handler 使用
-        paBarInfos.push({
-          playerIdx: p, cx: barCx, w: paBarW,
-          wpaY: paTopY, bpaY: paBotY,
-          bpa: result.bpa, wpa: result.wpa,
-        });
+          const paRect = createSvgElement('rect', {
+            x: barCx - paBarW / 2, y: paTopY,
+            width: paBarW, height: paBarH,
+            fill: fadedCol, stroke: darkCol,
+            'stroke-width': 1.5, rx: 3,
+            class: 'chart-pa-bar',
+            'data-player': p,
+            'data-pa-cx': barCx, 'data-pa-w': paBarW,
+            'data-wpa-y': paTopY, 'data-bpa-y': paBotY,
+            cursor: 'ns-resize', 'pointer-events': 'all',
+          });
+          gStats.appendChild(paRect);
 
-        // NOTE: WPA 数值标签（竖柱上方）
-        const wpaLabel = createSvgElement('text', {
-          x: barCx, y: paTopY - 5,
-          'text-anchor': 'middle', fill: darkCol,
-          'font-size': 10, 'font-weight': '600',
-          'font-family': 'Helvetica, Arial, sans-serif',
-        });
-        wpaLabel.textContent = formatTime(result.wpa);
-        gStats.appendChild(wpaLabel);
+          paBarInfos.push({
+            playerIdx: p, cx: barCx, w: paBarW,
+            wpaY: paTopY, bpaY: paBotY, bpa, wpa,
+          });
 
-        // NOTE: BPA 数值标签（竖柱下方）
-        const bpaLabel = createSvgElement('text', {
-          x: barCx, y: paBotY + 12,
-          'text-anchor': 'middle', fill: darkCol,
-          'font-size': 10, 'font-weight': '600',
-          'font-family': 'Helvetica, Arial, sans-serif',
-        });
-        bpaLabel.textContent = formatTime(result.bpa);
-        gStats.appendChild(bpaLabel);
+          // WPA 数值标签（竖柱上方）
+          const wpaLabel = createSvgElement('text', {
+            x: barCx, y: paTopY - 5,
+            'text-anchor': 'middle', fill: darkCol,
+            'font-size': 10, 'font-weight': '600',
+            'font-family': 'Helvetica, Arial, sans-serif',
+          });
+          wpaLabel.textContent = formatTime(wpa);
+          gStats.appendChild(wpaLabel);
+
+          // BPA 数值标签（竖柱下方）
+          const bpaLabel = createSvgElement('text', {
+            x: barCx, y: paBotY + 12,
+            'text-anchor': 'middle', fill: darkCol,
+            'font-size': 10, 'font-weight': '600',
+            'font-family': 'Helvetica, Arial, sans-serif',
+          });
+          bpaLabel.textContent = formatTime(bpa);
+          gStats.appendChild(bpaLabel);
+        }
       }
     }
     pSlot++;
