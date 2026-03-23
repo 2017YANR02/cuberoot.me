@@ -565,6 +565,15 @@ kbd {
 .toolbar-search {
   flex: 1;
   min-width: 120px;
+  max-width: 300px;
+}
+/* NOTE: inline picker 不设置额外宽度，由 toolbar-search 的 flex 控制 */
+.viz-page .toolbar-search .wca-pp-inline {
+  width: 100%;
+}
+.viz-page .toolbar-search .wca-pp-input {
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* ─── 多选手 Chip 标签 ─── */
