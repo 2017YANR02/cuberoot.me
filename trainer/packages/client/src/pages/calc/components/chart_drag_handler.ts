@@ -584,16 +584,17 @@ function startPaDrag(e: PointerEvent, p: number, paEnd: string): void {
   const paInfo = getPaBarData().find(info => info.playerIdx === p);
   if (!paInfo) return;
 
-  // NOTE: 找到空缺 slot（未填的那一把）— PA 拖动仅在有空缺时生效
+  // NOTE: 找到空缺 slot
   let emptyIdx = -1;
   for (let i = 0; i < sc; i++) {
     if (times[i] === 0) { emptyIdx = i; break; }
   }
-  if (emptyIdx < 0) return; // 5 把全填完 → 不可 PA 拖动，应使用 Avg badge 拖动
-  const targetSlot = emptyIdx - 1;
+  // NOTE: 有空缺 → target = 空缺前一个；全填满 → target = 第 4 把（sc-2）
+  const targetSlot = emptyIdx > 0 ? emptyIdx - 1 : sc - 2;
   const targetOrigVal = times[targetSlot];
   if (targetOrigVal <= 0 || targetOrigVal >= DNF_VALUE) return;
 
+  // NOTE: 收集除 target 和空缺外的固定值
   const fixed: number[] = [];
   for (let i = 0; i < sc; i++) {
     if (i !== targetSlot && i !== emptyIdx && times[i] > 0 && times[i] < DNF_VALUE) {
@@ -603,7 +604,18 @@ function startPaDrag(e: PointerEvent, p: number, paEnd: string): void {
   if (fixed.length < 3) return;
   fixed.sort((a, b) => a - b);
 
-  const fixedSum = paEnd === 'wpa' ? fixed[1] + fixed[2] : fixed[0] + fixed[1];
+  // NOTE: fixedSum = 不变的两个 counting 值之和
+  // 3 固定值（4 把填充）: WPA → fixed[1]+fixed[2], BPA → fixed[0]+fixed[1]
+  // 4 固定值（5 把全填）: WPA(5th=DNF,去best+DNF) → fixed[1]+fixed[2], BPA(5th=0,去0+worst) → fixed[1]+fixed[2]
+  // 区别在于 4 值时 BPA 端也是 [1]+[2]（因为加了 0 后去掉 0 和 fixed[3]）
+  let fixedSum: number;
+  if (fixed.length === 3) {
+    fixedSum = paEnd === 'wpa' ? fixed[1] + fixed[2] : fixed[0] + fixed[1];
+  } else {
+    // 4 固定值: WPA 去最好(fixed[0])和DNF → counting = fixed[1],fixed[2],target
+    //           BPA 去 0 和最差(fixed[3]) → counting = fixed[1],fixed[2],target
+    fixedSum = fixed[1] + fixed[2];
+  }
 
   // NOTE: 创建 overlay pill handle（复用 bar-drag-handle 样式）
   const overlay = getOverlay();
