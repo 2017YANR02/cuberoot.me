@@ -60,6 +60,19 @@ let gAvg: SVGGElement | null = null;
 let gOverlay: HTMLDivElement | null = null;
 let gp: GraphParams = { vbW: 800, vbH: 350, barW: 40, yMin: 0, yMax: 100, yRange: 100, chartH: 295, chartTop: Y_MARGIN_TOP };
 
+// NOTE: PA 柱位置缓存 — 每次 drawStats 后更新，供 drag handler 创建 overlay handle
+export interface PaBarInfo {
+  playerIdx: number;
+  cx: number;      // SVG X 中心
+  w: number;       // 宽度
+  wpaY: number;    // WPA 端 SVG Y
+  bpaY: number;    // BPA 端 SVG Y
+  bpa: number;     // BPA centiseconds
+  wpa: number;     // WPA centiseconds
+}
+let paBarInfos: PaBarInfo[] = [];
+export function getPaBarData(): PaBarInfo[] { return paBarInfos; }
+
 // NOTE: 上一帧柱子高度 — 用于 WAAPI 动画 from→to
 const prevBarHeights: Map<string, number> = new Map();
 
@@ -560,6 +573,9 @@ function drawStats(): void {
   const sc = solveCountForEvent(state.event);
   const mo3 = isMo3ForEvent(state.event);
 
+  // NOTE: 清空上一帧的 PA 柱位置缓存
+  paBarInfos = [];
+
   let pSlot = 0;
   for (let p = 0; p < 2; p++) {
     if (!state.playerEnabled[p]) continue;
@@ -607,6 +623,37 @@ function drawStats(): void {
           'data-bpa-y': paBotY,
         });
         gStats.appendChild(paRect);
+
+        // NOTE: 缓存 PA 柱位置供 drag handler 使用
+        paBarInfos.push({
+          playerIdx: p, cx: barCx, w: paBarW,
+          wpaY: paTopY, bpaY: paBotY,
+          bpa: result.bpa, wpa: result.wpa,
+        });
+
+        // NOTE: SVG handle rects at WPA/BPA ends（视觉 + 鼠标光标提示）
+        const handleH = 4;
+        const handleW = paBarW + 6;
+        // WPA 端 handle（顶部）
+        gStats.appendChild(createSvgElement('rect', {
+          x: barCx - handleW / 2, y: paTopY - handleH / 2,
+          width: handleW, height: handleH,
+          fill: darkCol, rx: 2, opacity: '0.8',
+          class: 'chart-pa-handle',
+          'data-player': p, 'data-pa-end': 'wpa',
+          cursor: 'ns-resize',
+          'pointer-events': 'all',
+        }));
+        // BPA 端 handle（底部）
+        gStats.appendChild(createSvgElement('rect', {
+          x: barCx - handleW / 2, y: paBotY - handleH / 2,
+          width: handleW, height: handleH,
+          fill: darkCol, rx: 2, opacity: '0.8',
+          class: 'chart-pa-handle',
+          'data-player': p, 'data-pa-end': 'bpa',
+          cursor: 'ns-resize',
+          'pointer-events': 'all',
+        }));
 
         // NOTE: WPA 数值标签（竖柱上方）
         const wpaLabel = createSvgElement('text', {

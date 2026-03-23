@@ -12,6 +12,7 @@ import {
   getBarX, getOverlay, getBarW,
   render as chartRender,
   registerPostRenderCallback,
+  getPaBarData,
 } from './chart_renderer';
 
 // ── 拖动状态 ──
@@ -332,12 +333,13 @@ function handlePointerDown(e: PointerEvent): void {
   // NOTE: 先检测是否点击了 PA 柱或 Avg 菱形 badge（DOM 事件委托）
   const target = e.target as Element;
 
-  // PA 柱点击 → 启动 PA 拖动
-  const paBarEl = target.closest('.chart-pa-bar') as SVGRectElement | null;
-  if (paBarEl) {
+  // PA handle 点击 → 启动 PA 拖动
+  const paHandleEl = target.closest('.chart-pa-handle') as SVGRectElement | null;
+  if (paHandleEl) {
     e.preventDefault();
-    const p = parseInt(paBarEl.getAttribute('data-player') || '0');
-    startPaDrag(e, p, paBarEl);
+    const p = parseInt(paHandleEl.getAttribute('data-player') || '0');
+    const paEnd = paHandleEl.getAttribute('data-pa-end') || 'wpa';
+    startPaDrag(e, p, paEnd);
     return;
   }
 
@@ -568,11 +570,15 @@ export function forceDeselect(): void {
 // ── PA 柱拖动 — 拖动 PA 端反向推算第 4 把 ──
 // NOTE: 原版 chart_drag.js#746-846
 
-function startPaDrag(e: PointerEvent, p: number, paBarEl: SVGRectElement): void {
+function startPaDrag(e: PointerEvent, p: number, paEnd: string): void {
   deselect();
   const state = useCalcStore.getState();
   const sc = solveCountForEvent(state.event);
   const times = state.times[state.seedOn + p];
+
+  // NOTE: 从缓存获取 PA 柱位置数据
+  const paInfo = getPaBarData().find(info => info.playerIdx === p);
+  if (!paInfo) return;
 
   // NOTE: 找到空缺 slot（未填的那一把）
   let emptyIdx = -1;
@@ -594,16 +600,12 @@ function startPaDrag(e: PointerEvent, p: number, paBarEl: SVGRectElement): void 
   if (fixed.length < 3) return;
   fixed.sort((a, b) => a - b);
 
-  // NOTE: 判断拖动的是 WPA 端还是 BPA 端（取距离鼠标更近的端）
-  const svgPt = screenToSvg(e.clientX, e.clientY);
-  const wpaY = parseFloat(paBarEl.getAttribute('data-wpa-y') || '0');
-  const bpaY = parseFloat(paBarEl.getAttribute('data-bpa-y') || '0');
-  const paEnd = Math.abs(svgPt.y - wpaY) < Math.abs(svgPt.y - bpaY) ? 'wpa' : 'bpa';
-
   // NOTE: WPA counting = [1]+[2], BPA counting = [0]+[1]
   const fixedSum = paEnd === 'wpa' ? fixed[1] + fixed[2] : fixed[0] + fixed[1];
 
-  const dragOffsetY = svgPt.y - (paEnd === 'wpa' ? wpaY : bpaY);
+  const svgPt = screenToSvg(e.clientX, e.clientY);
+  const endY = paEnd === 'wpa' ? paInfo.wpaY : paInfo.bpaY;
+  const dragOffsetY = svgPt.y - endY;
   document.body.style.userSelect = 'none';
 
   const onMove = (em: PointerEvent) => {
