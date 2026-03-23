@@ -4,10 +4,11 @@
 // 比赛名 → 图表 → 输入网格 → 控制按钮 → 进度滑杆 → 数字键盘 → 项目选择器 → 统计表
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { useCalcStore, isMbfForEvent } from './stores/calc_store';
-import { setCurrentEvent, setMoveCntMode, setMbfMode } from './engine/calc_engine';
-import { load as loadWrIds, loadDefaults, setPlayerOverride, clearPlayerOverride, getPlayerOverride, getAvgWR12 } from './engine/wr_data';
+import { useCalcStore, isMbfForEvent, solveCountForEvent } from './stores/calc_store';
+import { setCurrentEvent, setMoveCntMode, setMbfMode, getAverage, DNF_VALUE } from './engine/calc_engine';
+import { load as loadWrIds, loadDefaults, setPlayerOverride, clearPlayerOverride, getPlayerOverride, getAvgWR12, isWR } from './engine/wr_data';
 import { sampleOneSolve } from './engine/sim_engine';
+import { render as chartRender, showConfetti } from './components/chart_renderer';
 import { WcaPersonPicker, fetchUserTimes, fetchAvatar } from '@cuberoot/shared';
 import { Chart } from './components/Chart';
 import { InputGrid } from './components/InputGrid';
@@ -18,6 +19,26 @@ import { EventSelector } from './components/EventSelector';
 import { SimButtons } from './components/SimButtons';
 import { ProgressSliders } from './components/ProgressSliders';
 import './calc.css';
+
+// ── confetti WR 重复检测 — 原版 chart.js#50 ──
+let lastConfettiKey = '';
+let suppressConfetti = false;
+
+/** NOTE: 外部调用 — 抑制 confetti（rand-fill 期间防误触）— 原版 chart.js#143 */
+export function setSuppressConfetti(flag: boolean): void { suppressConfetti = flag; }
+
+// ── Wake Lock — 原版 app.js#20-31 ──
+let wakeLock: WakeLockSentinel | null = null;
+async function requestWakeLock(): Promise<void> {
+  if (!('wakeLock' in navigator)) return;
+  try {
+    wakeLock = await navigator.wakeLock.request('screen');
+    wakeLock.addEventListener('release', () => { wakeLock = null; });
+  } catch (e) {
+    // NOTE: 用户拒绝或系统不支持时静默失败
+    console.log('Wake Lock request failed:', (e as Error).message);
+  }
+}
 
 export function CalcPage() {
   const event = useCalcStore(s => s.event);
@@ -63,7 +84,7 @@ export function CalcPage() {
     setMbfMode(eventId === '333mbf' || eventId === '333mbo');
 
     loadWrIds().then(() => {
-      loadDefaults(eventId, () => {
+      loadDefaults(eventId, (players) => {
         // NOTE: URL 无数据时自动随机填充（原版 app.js#272-286）
         if (!window.location.search.includes('t0=')) {
           const s = useCalcStore.getState();
@@ -76,12 +97,34 @@ export function CalcPage() {
             }
           }
         }
+        // NOTE: 加载世界前 2 选手头像 — 原版 app.js#90-99
+        if (players) {
+          players.forEach((pl, i) => {
+            if (!pl) return;
+            fetchAvatar(pl.wca_id).then(url => {
+              const ov = getPlayerOverride(i);
+              if (ov && ov.name === pl.name) {
+                setAvatarState(prev => {
+                  const next = [...prev];
+                  next[i] = { active: true, avatarUrl: url || '' };
+                  return next;
+                });
+              }
+            });
+          });
+        }
       });
     });
+
+    // NOTE: Wake Lock 防息屏 — 原版 app.js#318-323
+    requestWakeLock();
+    const onVisChange = () => { if (document.visibilityState === 'visible') requestWakeLock(); };
+    document.addEventListener('visibilitychange', onVisChange);
 
     return () => {
       document.head.removeChild(iconLink);
       document.head.removeChild(flagLink);
+      document.removeEventListener('visibilitychange', onVisChange);
     };
   }, [loadFromUrl]);
 
@@ -90,8 +133,124 @@ export function CalcPage() {
     setCurrentEvent(event);
     setMoveCntMode(event === '333fm');
     setMbfMode(event === '333mbf' || event === '333mbo');
+    // NOTE: 清除 confetti key — 原版 chart.js#147-151
+    lastConfettiKey = '';
     loadDefaults(event);
   }, [event]);
+
+  // ── 秒表 — 原版 app.js#441-503 ──
+
+  const animFrameRef = useRef<number | null>(null);
+
+  const tickStopwatch = useCallback(() => {
+    const s = useCalcStore.getState();
+    if (s.timeLiveStart < 0) return;
+
+    const elapsed = performance.now() - s.timeLiveStart;
+    const cs = Math.round(elapsed / 10);
+    const p = s.timeLive[0];
+    const t = s.timeLive[1];
+
+    // NOTE: 临时写入 state 以便图表渲染（不触发完整 onChange）— 原版 app.js#494
+    s.times[s.seedOn + p][t] = cs;
+
+    // NOTE: 重绘图表 — 原版 app.js#500
+    chartRender({ skipViewBox: true });
+
+    animFrameRef.current = requestAnimationFrame(tickStopwatch);
+  }, []);
+
+  const stopStopwatch = useCallback(() => {
+    const s = useCalcStore.getState();
+    const elapsed = performance.now() - s.timeLiveStart;
+    const cs = Math.round(elapsed / 10);
+    const p = s.timeLive[0];
+    const t = s.timeLive[1];
+
+    if (animFrameRef.current) {
+      cancelAnimationFrame(animFrameRef.current);
+      animFrameRef.current = null;
+    }
+
+    s.setTimeLive(-1, -1);
+    s.setTimeLiveStart(-1);
+    s.updateTime(s.seedOn + p, t, cs);
+  }, []);
+
+  const startStopwatch = useCallback(() => {
+    const s = useCalcStore.getState();
+    if (isMbfForEvent(s.event)) return;
+    const target = s.getFirstUnfilledTime(true);
+    if (target[0] < 0) return;
+
+    s.setTimeLive(target[0], target[1]);
+    s.setTimeLiveStart(performance.now());
+    tickStopwatch();
+  }, [tickStopwatch]);
+
+  const toggleStopwatch = useCallback(() => {
+    const s = useCalcStore.getState();
+    if (s.timeLiveStart >= 0) {
+      stopStopwatch();
+    } else {
+      startStopwatch();
+    }
+  }, [startStopwatch, stopStopwatch]);
+
+  // NOTE: 空格键触发秒表 — 原版 app.js#190
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.code === 'Space' && !(e.target instanceof HTMLInputElement)) {
+        e.preventDefault();
+        toggleStopwatch();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [toggleStopwatch]);
+
+  // ── WR confetti 检测 — 原版 chart.js#154-190 ──
+
+  // NOTE: 订阅 store 变更，检测 WR 并触发 confetti
+  useEffect(() => {
+    const unsub = useCalcStore.subscribe((state) => {
+      if (suppressConfetti) return;
+      if (isMbfForEvent(state.event)) return;
+
+      const sc = solveCountForEvent(state.event);
+      for (let p = 0; p < 2; p++) {
+        if (!state.playerEnabled[p]) continue;
+        const times = state.times[state.seedOn + p];
+
+        // 检测单次 WR
+        for (let si = 0; si < sc; si++) {
+          const t = times[si];
+          if (t > 0 && t < DNF_VALUE && isWR(state.event, 'single', t)) {
+            const sKey = `single-${state.seedOn}-${state.event}-${p}-${si}-${t}`;
+            if (sKey !== lastConfettiKey) {
+              lastConfettiKey = sKey;
+              showConfetti();
+              return;
+            }
+          }
+        }
+
+        // 检测 avg WR — 全部填完
+        const filled = times.slice(0, sc).filter(t => t > 0 && t < DNF_VALUE);
+        if (filled.length < sc) continue;
+        const avg = getAverage(times.slice(0, sc), false);
+        if (!avg || avg <= 0 || avg >= DNF_VALUE) continue;
+        if (!isWR(state.event, 'average', avg)) continue;
+
+        const aKey = `avg-${state.seedOn}-${state.event}-${p}-${avg}`;
+        if (aKey === lastConfettiKey) continue;
+        lastConfettiKey = aKey;
+        showConfetti();
+        return;
+      }
+    });
+    return unsub;
+  }, []);
 
   // NOTE: rand-fill 辅助 — 只填空格子，原版 app.js#226-260
   const doRandFill = useCallback(() => {
