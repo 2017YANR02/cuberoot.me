@@ -1237,3 +1237,17 @@ video {
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── confetti 庆祝动画 ── */
+
+/* NOTE: showConfetti() 生成的彩纸 div 使用此动画 — 从顶部掉落到底部 */
+@keyframes confettiFall {
+    0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(400px) rotate(720deg);
+        opacity: 0;
+    }
+}
