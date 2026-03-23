@@ -584,12 +584,13 @@ function startPaDrag(e: PointerEvent, p: number, paEnd: string): void {
   const paInfo = getPaBarData().find(info => info.playerIdx === p);
   if (!paInfo) return;
 
-  // NOTE: 找到空缺 slot（未填的那一把）
+  // NOTE: 找到空缺 slot（未填的那一把）— PA 拖动仅在有空缺时生效
   let emptyIdx = -1;
   for (let i = 0; i < sc; i++) {
     if (times[i] === 0) { emptyIdx = i; break; }
   }
-  const targetSlot = emptyIdx > 0 ? emptyIdx - 1 : sc - 1;
+  if (emptyIdx < 0) return; // 5 把全填完 → 不可 PA 拖动，应使用 Avg badge 拖动
+  const targetSlot = emptyIdx - 1;
   const targetOrigVal = times[targetSlot];
   if (targetOrigVal <= 0 || targetOrigVal >= DNF_VALUE) return;
 
