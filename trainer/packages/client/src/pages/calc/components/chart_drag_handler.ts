@@ -5,10 +5,10 @@
 import { useCalcStore } from '../stores/calc_store';
 import { solveCountForEvent, isMbfForEvent } from '../stores/calc_store';
 import {
-  DNF_VALUE, clampValue,
+  DNF_VALUE, clampValue, getAverage, reverseAvgToTime,
 } from '../engine/calc_engine';
 import {
-  getSvgEl, getGp, valToYCap,
+  getSvgEl, getGp, valToYCap, yToVal,
   getBarX, getOverlay, getBarW,
   render as chartRender,
   registerPostRenderCallback,
@@ -329,6 +329,27 @@ function syncInputHighlight(bar: SelectedBar, on: boolean): void {
 // ── 事件处理 ──
 
 function handlePointerDown(e: PointerEvent): void {
+  // NOTE: 先检测是否点击了 PA 柱或 Avg 菱形 badge（DOM 事件委托）
+  const target = e.target as Element;
+
+  // PA 柱点击 → 启动 PA 拖动
+  const paBarEl = target.closest('.chart-pa-bar') as SVGRectElement | null;
+  if (paBarEl) {
+    e.preventDefault();
+    const p = parseInt(paBarEl.getAttribute('data-player') || '0');
+    startPaDrag(e, p, paBarEl);
+    return;
+  }
+
+  // Avg 菱形 badge 点击 → 启动 Avg 拖动
+  const avgBadgeEl = target.closest('.chart-avg-badge') as SVGGElement | null;
+  if (avgBadgeEl) {
+    e.preventDefault();
+    const p = parseInt(avgBadgeEl.getAttribute('data-player') || '0');
+    startAvgDrag(e, p, avgBadgeEl);
+    return;
+  }
+
   const svgPt = screenToSvg(e.clientX, e.clientY);
   const hit = hitTestBar(svgPt.x, svgPt.y);
 
@@ -542,4 +563,145 @@ export function getSelected(): SelectedBar | null {
 /** NOTE: 外部强制取消选中 */
 export function forceDeselect(): void {
   deselect();
+}
+
+// ── PA 柱拖动 — 拖动 PA 端反向推算第 4 把 ──
+// NOTE: 原版 chart_drag.js#746-846
+
+function startPaDrag(e: PointerEvent, p: number, paBarEl: SVGRectElement): void {
+  deselect();
+  const state = useCalcStore.getState();
+  const sc = solveCountForEvent(state.event);
+  const times = state.times[state.seedOn + p];
+
+  // NOTE: 找到空缺 slot（未填的那一把）
+  let emptyIdx = -1;
+  for (let i = 0; i < sc; i++) {
+    if (times[i] === 0) { emptyIdx = i; break; }
+  }
+  // NOTE: 目标柱子 = 空缺前一个（第 4 把）
+  const targetSlot = emptyIdx > 0 ? emptyIdx - 1 : sc - 1;
+  const targetOrigVal = times[targetSlot];
+  if (targetOrigVal <= 0 || targetOrigVal >= DNF_VALUE) return;
+
+  // NOTE: 收集非目标、非空缺的固定值，用于反向推算
+  const fixed: number[] = [];
+  for (let i = 0; i < sc; i++) {
+    if (i !== targetSlot && i !== emptyIdx && times[i] > 0 && times[i] < DNF_VALUE) {
+      fixed.push(times[i]);
+    }
+  }
+  if (fixed.length < 3) return;
+  fixed.sort((a, b) => a - b);
+
+  // NOTE: 判断拖动的是 WPA 端还是 BPA 端（取距离鼠标更近的端）
+  const svgPt = screenToSvg(e.clientX, e.clientY);
+  const wpaY = parseFloat(paBarEl.getAttribute('data-wpa-y') || '0');
+  const bpaY = parseFloat(paBarEl.getAttribute('data-bpa-y') || '0');
+  const paEnd = Math.abs(svgPt.y - wpaY) < Math.abs(svgPt.y - bpaY) ? 'wpa' : 'bpa';
+
+  // NOTE: WPA counting = [1]+[2], BPA counting = [0]+[1]
+  const fixedSum = paEnd === 'wpa' ? fixed[1] + fixed[2] : fixed[0] + fixed[1];
+
+  const dragOffsetY = svgPt.y - (paEnd === 'wpa' ? wpaY : bpaY);
+  document.body.style.userSelect = 'none';
+
+  const onMove = (em: PointerEvent) => {
+    em.preventDefault();
+    const pt = screenToSvg(em.clientX, em.clientY);
+    const adjustedY = pt.y - dragOffsetY;
+
+    // NOTE: Y → 目标 PA 值 → 反向推算第 4 柱
+    const targetPA = Math.round(yToVal(adjustedY));
+    const x = 3 * targetPA - fixedSum;
+    if (x <= 0) return;
+    const clamped = clampValue(Math.round(x));
+
+    state.times[state.seedOn + p][targetSlot] = clamped;
+    chartRender({ skipViewBox: true });
+    reapplySelection();
+  };
+
+  const onUp = () => {
+    document.removeEventListener('pointermove', onMove);
+    document.removeEventListener('pointerup', onUp);
+    document.body.style.userSelect = '';
+
+    const currentVal = state.times[state.seedOn + p][targetSlot];
+    if (currentVal !== targetOrigVal && currentVal > 0) {
+      state.updateTime(state.seedOn + p, targetSlot, currentVal);
+    }
+    chartRender();
+    state.saveToUrl();
+  };
+
+  document.addEventListener('pointermove', onMove);
+  document.addEventListener('pointerup', onUp);
+}
+
+// ── Avg 菱形 badge 拖动 — 反向推算 #5 ──
+// NOTE: 原版 chart_drag.js#852-944
+
+function startAvgDrag(e: PointerEvent, p: number, avgBadgeEl: SVGGElement): void {
+  deselect();
+  const state = useCalcStore.getState();
+  const sc = solveCountForEvent(state.event);
+  const times = state.times[state.seedOn + p];
+
+  // NOTE: 目标 slot = 最后一把（#5, index=sc-1）
+  const targetSlot = sc - 1;
+  const targetOrigVal = times[targetSlot];
+
+  // NOTE: 收集前 sc-1 个值
+  const filled: number[] = [];
+  for (let i = 0; i < sc - 1; i++) {
+    if (times[i] > 0 && times[i] < DNF_VALUE) filled.push(times[i]);
+  }
+  if (filled.length < sc - 1) return;
+  filled.sort((a, b) => a - b);
+
+  // NOTE: 计算 BPA/WPA 范围限制
+  const bpa = getAverage([...filled, 0], true);
+  const wpa = getAverage([...filled, DNF_VALUE], true);
+  if (bpa >= DNF_VALUE || wpa >= DNF_VALUE) return;
+
+  const badgeAvgY = parseFloat(avgBadgeEl.getAttribute('data-avg-y') || '0');
+  const svgPt = screenToSvg(e.clientX, e.clientY);
+  const dragOffsetY = svgPt.y - badgeAvgY;
+  document.body.style.userSelect = 'none';
+
+  const onMove = (em: PointerEvent) => {
+    em.preventDefault();
+    const pt = screenToSvg(em.clientX, em.clientY);
+    const adjustedY = pt.y - dragOffsetY;
+
+    // NOTE: Y → 目标 avg → clamp 到 BPA~WPA 范围
+    let targetAvg = Math.round(yToVal(adjustedY));
+    const lo = Math.min(bpa, wpa);
+    const hi = Math.max(bpa, wpa);
+    targetAvg = Math.max(lo, Math.min(hi, targetAvg));
+
+    // NOTE: 反向推算 #5
+    const x = reverseAvgToTime(filled, targetAvg);
+    if (x === null || x <= 0) return;
+
+    state.times[state.seedOn + p][targetSlot] = x;
+    chartRender({ skipViewBox: true });
+  };
+
+  const onUp = () => {
+    document.removeEventListener('pointermove', onMove);
+    document.removeEventListener('pointerup', onUp);
+    document.body.style.userSelect = '';
+
+    const currentVal = state.times[state.seedOn + p][targetSlot];
+    if (currentVal !== targetOrigVal && currentVal > 0) {
+      state.updateTime(state.seedOn + p, targetSlot, currentVal);
+    }
+    chartRender();
+    state.saveToUrl();
+  };
+
+  document.addEventListener('pointermove', onMove);
+  document.addEventListener('pointerup', onUp);
 }
