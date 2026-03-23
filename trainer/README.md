@@ -25,7 +25,9 @@ trainer/
 │   │   │   │   ├── TrainingPage.tsx   # 训练页：魔方图 + 计时 + 键盘控制
 │   │   │   │   ├── StatsPage.tsx      # 统计页：表格（次数/最近/Ao5/Ao12/最佳）
 │   │   │   │   ├── ZbllSelectPage.tsx # ZBLL 选择页：3 级网格（OLL→COLL→ZBLL）+ Modal + 预设
-│   │   │   │   └── ZbllTimerPage.tsx  # ZBLL 计时页：5 状态计时器 + 结果/统计/设置
+│   │   │   │   ├── ZbllTimerPage.tsx  # ZBLL 计时页：5 状态计时器 + 结果/统计/设置
+│   │   │   │   ├── ZblsSelectPage.tsx # ZBLS 选择页：F2L 分组列表 + 折叠 + 预设
+│   │   │   │   └── ZblsTimerPage.tsx  # ZBLS 计时页：计时器 + Recap + Again
 │   │   │   ├── stores/
 │   │   │   │   ├── sessionStore.ts    # 训练状态机（idle→caseShown→timing→stopped→complete）
 │   │   │   │   ├── settingsStore.ts   # 用户设置（localStorage 持久化）
@@ -34,18 +36,23 @@ trainer/
 │   │   │   │   ├── zbllSessionStore.ts   # ZBLL 计时状态机（5 状态 + recap 模式）
 │   │   │   │   ├── zbllPresetStore.ts    # ZBLL 预设 + 收藏（localStorage）
 │   │   │   │   ├── zbllSettingsStore.ts  # ZBLL 设置（字号/字体/精度/延迟/视角）
-│   │   │   │   └── zbllNotesStore.ts     # ZBLL per-case 笔记（localStorage）
+│   │   │   │   ├── zbllNotesStore.ts     # ZBLL per-case 笔记（localStorage）
+│   │   │   │   ├── zbls_selected_store.ts  # ZBLS 已选 case 管理（F2L 组级 + case 级）
+│   │   │   │   ├── zbls_session_store.ts   # ZBLS 计时状态机（5 状态 + recap + again）
+│   │   │   │   └── zbls_preset_store.ts    # ZBLS 预设（localStorage）
 │   │   │   ├── hooks/
 │   │   │   │   ├── useTimer.ts        # 高精度计时器（performance.now + rAF）
 │   │   │   │   └── useKeyboard.ts     # 键盘事件（keydown/keyup 分离）
 │   │   │   ├── utils/
 │   │   │   │   ├── adaptiveQueue.ts   # 自适应队列（慢的 case 重复更多次）
-│   │   │   │   └── zbllHelpers.ts     # ZBLL 工具函数（打乱生成/时间格式化/SVG 路径/数据操作）
+│   │   │   │   ├── zbllHelpers.ts     # ZBLL 工具函数（打乱生成/时间格式化/SVG 路径/数据操作）
+│   │   │   │   └── zbls_helpers.ts    # ZBLS 工具函数（打乱+AUF/PNG 路径/分组数据）
 │   │   │   ├── zbll.css               # ZBLL 专用样式（选择页 + 计时页 + 响应式）
+│   │   │   ├── zbls.css               # ZBLS 专用样式（F2L 组列表 + 计时页 + 响应式）
 │   │   │   └── i18n/
 │   │   │       ├── index.ts           # i18n 初始化（URL > localStorage > 浏览器语言）
-│   │   │       ├── zh.json            # 中文翻译（含 ZBLL 翻译 keys）
-│   │   │       └── en.json            # 英文翻译（含 ZBLL 翻译 keys）
+│   │   │       ├── zh.json            # 中文翻译（含 ZBLL/ZBLS 翻译 keys）
+│   │   │       └── en.json            # 英文翻译（含 ZBLL/ZBLS 翻译 keys）
 │   │   └── vite.config.ts             # Vite 配置（base=/trainer/, API 代理）
 │   │
 │   ├── server/                # Fastify + MariaDB 后端
@@ -66,7 +73,8 @@ trainer/
 │       │   └── index.ts               # 导出入口
 │       └── data/
 │           ├── pll.json               # 21 个 PLL case（name/group/algorithms/scramble）
-│           └── zbll.json              # 493 个 ZBLL case（algs/scrambles，1.5MB）
+│           ├── zbll.json              # 493 个 ZBLL case（algs/scrambles，1.5MB）
+│           └── zbls.json              # 302 个 ZBLS case（f2lGroup/algs/scrambles）
 ```
 
 ## 本地开发
@@ -204,3 +212,28 @@ idle → caseShown → timing → stopped → caseShown → ... → complete
 - `name`：case 标识（如 `"H BBFF AsA"`）
 - `algs`：算法列表（第一个为推荐算法）
 - `scrambles`：打乱列表（随机选取）
+
+## ZBLS Trainer
+
+完整复刻自 [zbls-trainer](https://github.com/MorganYeh/zbls-trainer)（纯 HTML/CSS/JS → React 19 + TypeScript + Zustand）。
+
+### 功能清单
+
+| 功能 | 说明 |
+|------|------|
+| 两级选择列表 | F2L 组（41 组）→ ZBLS Case（302 个），可折叠 |
+| 组级颜色标识 | 全选=绿 / 部分=金 / 无=默认 |
+| 计时器 | 5 状态（idle/awaiting/ready/running/stopping），Space 启停 |
+| Recap 模式 | 每个 case 只出一次，直到全部完成 |
+| Again 功能 | Recap 模式下可重做上一个 case（按钮 + Backspace 快捷键） |
+| 预设系统 | Save / Apply / Delete 用户自定义预设 |
+| 打乱 + AUF | 随机选取 setup scramble + 随机 AUF（U/U'/U2/无） |
+| i18n | 中英文切换（`?lang=zh`） |
+| 302 PNG 资源 | `client/public/zbls_img/`（case 图片） |
+
+### 数据来源
+
+`zbls.json` 包含 302 个 ZBLS case，每个含：
+- `f2lGroup`：所属 F2L 组号（1~41）
+- `algs`：算法列表
+- `scrambles`：setup scramble 列表（随机选取 + 随机 AUF）

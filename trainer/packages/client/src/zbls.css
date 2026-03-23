@@ -1,0 +1,430 @@
+/**
+ * ZBLS Trainer 专用样式
+ * 选择页: F2L 组列表（垂直排列，可折叠）+ 右侧面板
+ * 计时页: 复用 zbll.css 的计时器/结果/统计布局模式
+ */
+
+/* ===== 选择页布局 ===== */
+.zbls-select-page {
+  padding: 1rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.zbls-top-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.zbls-top-bar h2 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.zbls-select-layout {
+  display: flex;
+  gap: 1rem;
+}
+
+.zbls-groups-area {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.zbls-side-panel {
+  min-width: 280px;
+  max-width: 320px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.zbls-side-card {
+  background: var(--card-bg, #1e1e2e);
+  border: 1px solid var(--border-color, #333);
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* ===== F2L 组卡片 ===== */
+.zbls-group-card {
+  border: 1px solid #555;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.zbls-group-header {
+  padding: 8px 12px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95rem;
+  transition: background-color 0.2s;
+}
+
+.zbls-group-header:hover {
+  filter: brightness(1.1);
+}
+
+.zbls-group-title {
+  cursor: pointer;
+}
+
+.zbls-group-count {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+/* 选中状态颜色 */
+.zbls-none-selected {
+  background: transparent;
+}
+
+.zbls-some-selected {
+  background-color: #b8860b !important;
+  color: #000;
+}
+
+.zbls-all-selected {
+  background-color: #2e7d32 !important;
+  color: #fff;
+}
+
+/* 折叠箭头 */
+.zbls-caret {
+  transition: transform 0.2s;
+  font-size: 0.7rem;
+  opacity: 0.7;
+}
+
+.zbls-caret-up {
+  transform: rotate(180deg);
+}
+
+/* Case 网格 — 与上游一致的 4 列网格 */
+.zbls-group-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  padding: 6px;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+/* 单个 case 卡片 */
+.zbls-case-card {
+  border: 2px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: center;
+  padding: 4px;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+
+.zbls-case-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.zbls-case-selected {
+  border-color: #4caf50;
+  background: rgba(76, 175, 80, 0.15);
+}
+
+.zbls-case-img {
+  width: 100%;
+  max-width: 90px;
+  display: block;
+  margin: 0 auto;
+}
+
+/* ===== 预设 ===== */
+.zbls-preset-input-group {
+  display: flex;
+  gap: 4px;
+}
+
+.zbls-preset-input {
+  flex: 1;
+  padding: 4px 8px;
+  background: var(--input-bg, #2a2a3a);
+  color: inherit;
+  border: 1px solid #555;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.zbls-preset-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.zbls-preset-name {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  flex: 1;
+}
+
+.zbls-preset-active {
+  background: var(--accent-color, #6366f1);
+  color: #fff;
+}
+
+.zbls-preset-apply-btn,
+.zbls-preset-delete-btn {
+  background: none;
+  border: 1px solid #555;
+  border-radius: 4px;
+  color: inherit;
+  cursor: pointer;
+  padding: 2px 6px;
+  font-size: 0.8rem;
+}
+
+.zbls-preset-apply-btn:hover {
+  border-color: #4caf50;
+}
+.zbls-preset-delete-btn:hover {
+  border-color: #f44336;
+}
+
+/* ===== 通用按钮 ===== */
+.zbls-btn {
+  padding: 6px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: opacity 0.2s;
+}
+
+.zbls-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.zbls-btn-primary {
+  background: var(--accent-color, #6366f1);
+  color: #fff;
+}
+
+.zbls-btn-secondary {
+  background: #555;
+  color: #fff;
+}
+
+.zbls-btn-outline {
+  background: transparent;
+  border: 1px solid var(--accent-color, #6366f1);
+  color: var(--accent-color, #6366f1);
+}
+
+.zbls-btn-warning {
+  background: #b8860b;
+  color: #000;
+}
+
+.zbls-btn-full {
+  width: 100%;
+  margin-bottom: 0.25rem;
+}
+
+.zbls-btn-danger-sm {
+  background: transparent;
+  border: 1px solid #f44336;
+  color: #f44336;
+  padding: 2px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+/* ===== 计时页布局 ===== */
+.zbls-timer-page {
+  padding: 0.5rem 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.zbls-timer-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  margin-bottom: 0.5rem;
+}
+
+.zbls-timer-nav-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.zbls-timer-nav-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.zbls-recap-info {
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
+/* ===== 打乱显示 ===== */
+.zbls-scramble {
+  border-bottom: 1px solid #555;
+  padding: 4px;
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.zbls-scramble-label {
+  opacity: 0.5;
+}
+
+/* ===== 计时器显示 ===== */
+.zbls-timer-display {
+  font-weight: 700;
+  text-align: center;
+  padding: 1.5rem;
+  font-size: 72px;
+  font-family: 'Roboto Mono', monospace;
+  transition: color 0.1s;
+}
+
+.zbls-timer-idle {
+  color: var(--text-color, #e0e0e0);
+}
+.zbls-timer-running {
+  color: var(--text-color, #e0e0e0);
+}
+.zbls-timer-awaiting {
+  color: #ffc107;
+}
+.zbls-timer-ready {
+  color: #4caf50;
+}
+.zbls-timer-stopping {
+  color: #f44336;
+}
+
+/* ===== 计时页底部（结果 + 统计） ===== */
+.zbls-timer-bottom {
+  display: flex;
+  gap: 1rem;
+}
+
+.zbls-timer-result-col {
+  flex: 1;
+}
+
+.zbls-timer-stats-col {
+  flex: 1;
+}
+
+.zbls-result-card,
+.zbls-stats-card {
+  background: var(--card-bg, #1e1e2e);
+  border: 1px solid var(--border-color, #333);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.zbls-result-header,
+.zbls-stats-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+}
+
+.zbls-badge {
+  background: var(--accent-color, #6366f1);
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.zbls-result-img {
+  max-width: 200px;
+  margin: 0.5rem 0;
+}
+
+.zbls-result-scramble {
+  font-size: 0.85rem;
+  opacity: 0.7;
+  margin-top: 0.5rem;
+}
+
+/* ===== 算法列表 ===== */
+.zbls-alg-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.zbls-alg-bold {
+  font-weight: 700;
+}
+
+/* ===== 统计容器 ===== */
+.zbls-stats-container {
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 0.5rem;
+}
+
+.zbls-stat-time {
+  cursor: pointer;
+  transition: color 0.1s;
+}
+
+.zbls-stat-time:hover,
+.zbls-stat-active {
+  color: #29b6f6;
+}
+
+/* ===== 响应式 ===== */
+@media (max-width: 768px) {
+  .zbls-select-layout {
+    flex-direction: column;
+  }
+
+  .zbls-side-panel {
+    max-width: 100%;
+  }
+
+  .zbls-timer-bottom {
+    flex-direction: column;
+  }
+
+  .zbls-group-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .zbls-group-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

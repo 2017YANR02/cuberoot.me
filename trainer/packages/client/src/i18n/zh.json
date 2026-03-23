@@ -112,5 +112,45 @@
       "clearConfirm": "清除会话？",
       "holdSpace": "按住空格键启动计时器"
     }
+  },
+  "zbls": {
+    "nav": {
+      "back": "← 返回",
+      "selectBtn": "选择",
+      "nToRecap": "待复习: {{count}}"
+    },
+    "select": {
+      "practice": "开始",
+      "recap": "逐个复习每个情况",
+      "all": "全选",
+      "none": "取消全选",
+      "expandAll": "展开全部",
+      "collapseAll": "折叠全部"
+    },
+    "presets": {
+      "title": "预设",
+      "placeholder": "新预设",
+      "save": "保存",
+      "apply": "应用",
+      "delete": "删除"
+    },
+    "timer": {
+      "scramble": "打乱",
+      "noScramble": "无可用打乱",
+      "again": "重做"
+    },
+    "result": {
+      "title": "结果 #{{n}}",
+      "case": "情况：",
+      "scramble": "打乱：",
+      "algs": "算法：",
+      "deleteConfirm": "删除此结果？"
+    },
+    "stats": {
+      "title": "统计：{{count}} 次",
+      "clear": "清除",
+      "clearConfirm": "清除会话？",
+      "holdSpace": "按住空格键启动计时器"
+    }
   }
 }
