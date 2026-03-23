@@ -507,9 +507,6 @@ function drawBarLabels(): void {
 
   // NOTE: ghost bar 标签
   drawGhostLabels();
-
-  // NOTE: 底部选手名标签
-  drawPlayerLabels();
 }
 
 function drawGhostLabels(): void {
@@ -533,32 +530,6 @@ function drawGhostLabels(): void {
       label.textContent = formatTime(ghost.value);
       gLabels.appendChild(label);
     }
-    pSlot++;
-  }
-}
-
-function drawPlayerLabels(): void {
-  if (!gLabels) return;
-  const state = useCalcStore.getState();
-  const sc = solveCountForEvent(state.event);
-
-  let pSlot = 0;
-  for (let p = 0; p < 2; p++) {
-    if (!state.playerEnabled[p]) continue;
-
-    // NOTE: 选手名标签放在柱群下方居中位置
-    const midSolve = (sc - 1) / 2;
-    const x = getBarX(Math.floor(midSolve), pSlot) + gp.barW / 2;
-    const y = gp.chartTop + gp.chartH + 15;
-
-    const label = createSvgElement('text', {
-      x, y,
-      'text-anchor': 'middle',
-      fill: SHADES[p] || SHADES[0],
-      'font-size': 11, 'font-weight': '600',
-    });
-    label.textContent = state.names[state.seedOn + p] || '';
-    gLabels.appendChild(label);
     pSlot++;
   }
 }
