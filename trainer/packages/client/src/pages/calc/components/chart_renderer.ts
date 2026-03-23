@@ -850,39 +850,64 @@ function drawAverages(): void {
 
     if (result && result.complete && result.avg !== undefined && result.avg < DNF_VALUE) {
       const avgY = valToYCap(result.avg);
-      const lastBarX = getBarX(sc - 1, pSlot) + gp.barW + 8;
+      const col = SHADES[p] || SHADES[0];
 
-      // NOTE: 菱形标记
-      const size = 5;
-      const diamond = createSvgElement('polygon', {
-        points: `${lastBarX},${avgY - size} ${lastBarX + size},${avgY} ${lastBarX},${avgY + size} ${lastBarX - size},${avgY}`,
-        fill: SHADES[p] || SHADES[0],
-        class: 'chart-avg-diamond',
+      // NOTE: 菱形 badge 参数 — 原版 chart.js#1173-1178 的左尖右方形状
+      const labelText = formatTime(result.avg, false, isMove, true);
+      const fontSize = 12;
+      const tw = labelText.length * fontSize * 0.55 + 12; // 文字宽度近似
+      const m = 10;       // 菱形半高
+      const jm = 14;      // 左尖到文字区的水平距离
+
+      // NOTE: 左尖 X = PA 竖柱右侧（或最后柱子右侧偏移）
+      const lx = getBarX(sc - 1, pSlot) + gp.barW + 14;
+      const rx = lx + jm + tw;
+      const cy = avgY; // 菱形垂直中心 = avg Y 坐标
+
+      // 菱形路径（左尖右方）— 原版 chart.js#1174-1178
+      const d = `M${lx},${cy}` +
+        ` L${lx + jm},${cy - m}` +
+        ` L${rx},${cy - m}` +
+        ` L${rx},${cy + m}` +
+        ` L${lx + jm},${cy + m} Z`;
+
+      // NOTE: 用 <g> 包裹，添加 class 供拖动系统检测
+      const avgBadgeGroup = createSvgElement('g', {
+        class: 'chart-avg-badge',
         'data-player': p,
+        'data-avg-y': cy,
+        cursor: 'ns-resize',
       });
-      gAvg.appendChild(diamond);
 
-      // NOTE: 平均值标签
-      const avgLabel = createSvgElement('text', {
-        x: lastBarX + size + 4, y: avgY + 3,
-        fill: SHADES[p] || SHADES[0],
-        'font-size': 10, 'font-weight': '700',
+      // 菱形背景
+      avgBadgeGroup.appendChild(createSvgElement('path', {
+        d, fill: col,
+      }));
+
+      // 白色文字
+      const text = createSvgElement('text', {
+        x: lx + jm + 3, y: cy,
+        'font-size': fontSize, 'font-family': 'Helvetica, Arial, sans-serif',
+        fill: '#fff', 'text-anchor': 'start',
+        'dominant-baseline': 'central',
+        'font-weight': '700',
       });
-      const avgText = (mo3 ? 'Mo3: ' : 'Ao5: ') + formatTime(result.avg, false, isMove, true);
-      avgLabel.textContent = avgText;
-      gAvg.appendChild(avgLabel);
+      text.textContent = labelText;
+      avgBadgeGroup.appendChild(text);
 
-      // NOTE: Avg WR badge
+      gAvg.appendChild(avgBadgeGroup);
+
+      // NOTE: WR badge
       if (isWR(state.event, 'average', result.avg)) {
         const wrLabel = createSvgElement('text', {
-          x: lastBarX + size + 4, y: avgY - 7,
+          x: rx + 4, y: cy - fontSize / 2 - 2,
           fill: '#D32F2F', 'font-size': 9, 'font-weight': '700',
         });
         wrLabel.textContent = 'WR!';
         gAvg.appendChild(wrLabel);
       }
     } else if (result && result.complete && result.avg !== undefined && result.avg >= DNF_VALUE) {
-      // DNF average
+      // DNF average — 纯文字
       const lastBarX = getBarX(sc - 1, pSlot) + gp.barW + 8;
       const avgY = gp.chartTop + gp.chartH / 2;
       const avgLabel = createSvgElement('text', {
