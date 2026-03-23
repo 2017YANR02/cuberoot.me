@@ -231,7 +231,26 @@ function createHandle(bar: SelectedBar): void {
   handleEl = document.createElement('div');
   handleEl.className = 'bar-drag-handle' + (bar.playerIdx === 1 ? ' player-b' : '');
   handleEl.style.pointerEvents = 'auto';
+  handleEl.style.cursor = 'ns-resize';
   overlay.appendChild(handleEl);
+
+  // NOTE: handle 上独立注册 pointerdown — 原版 chart_drag.js 的核心交互入口
+  // setPointerCapture 确保指针离开元素后仍跟踪，实现流畅拖动
+  handleEl.addEventListener('pointerdown', (e: PointerEvent) => {
+    if (!selected) return;
+    e.preventDefault();
+    e.stopPropagation(); // 阻止冒泡到 SVG pointerdown 引起重复选中
+
+    const state = useCalcStore.getState();
+    dragStartY = e.clientY;
+    dragStartVal = state.times[state.seedOn + selected.playerIdx][selected.solveIdx];
+    isPointerDown = true;
+    isDragging = true;
+
+    // NOTE: 捕获 pointer — 指针离开 handle 后仍跟踪（原版关键机制）
+    handleEl!.setPointerCapture(e.pointerId);
+  });
+
   positionHandle();
 }
 
