@@ -132,23 +132,24 @@ export function Numpad() {
     setTimeout(updateTarget, 50);
   }, [state, target, display, isMbf, updateTarget]);
 
-  // NOTE: 按钮配置
+  // NOTE: 按钮配置 — 与原版 index.html#128-149 布局一致
+  // 行1: 1 2 3 ⌫   行2: 4 5 6 Rand   行3: 7 8 9 ↵   行4: ·: 0 DNF
   const buttons = [
-    { text: '7', action: () => pressDigit('7'), cls: 'np-digit' },
-    { text: '8', action: () => pressDigit('8'), cls: 'np-digit' },
-    { text: '9', action: () => pressDigit('9'), cls: 'np-digit' },
-    { text: 'DNF', action: pressDnf, cls: 'np-action' },
-    { text: '4', action: () => pressDigit('4'), cls: 'np-digit' },
-    { text: '5', action: () => pressDigit('5'), cls: 'np-digit' },
-    { text: '6', action: () => pressDigit('6'), cls: 'np-digit' },
-    { text: 'Rand', action: pressRand, cls: 'np-action' },
     { text: '1', action: () => pressDigit('1'), cls: 'np-digit' },
     { text: '2', action: () => pressDigit('2'), cls: 'np-digit' },
     { text: '3', action: () => pressDigit('3'), cls: 'np-digit' },
+    { text: '⌫', action: () => {}, cls: `np-op${clearMode ? ' np-clear-mode' : ''}`, isBackspace: true },
+    { text: '4', action: () => pressDigit('4'), cls: 'np-digit' },
+    { text: '5', action: () => pressDigit('5'), cls: 'np-digit' },
+    { text: '6', action: () => pressDigit('6'), cls: 'np-digit' },
+    { text: 'Rand', action: pressRand, cls: 'np-op' },
+    { text: '7', action: () => pressDigit('7'), cls: 'np-digit' },
+    { text: '8', action: () => pressDigit('8'), cls: 'np-digit' },
+    { text: '9', action: () => pressDigit('9'), cls: 'np-digit' },
     { text: '⏎', action: pressEnter, cls: 'np-action np-enter' },
+    { text: '·:', action: pressDot, cls: 'np-digit' },
     { text: '0', action: () => pressDigit('0'), cls: 'np-digit' },
-    { text: '.', action: pressDot, cls: 'np-op' },
-    { text: '⌫', action: () => {}, cls: `np-action${clearMode ? ' np-clear-mode' : ''}`, isBackspace: true },
+    { text: 'DNF', action: pressDnf, cls: 'np-op' },
   ];
 
   return (
