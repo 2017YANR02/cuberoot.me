@@ -11,6 +11,7 @@ import { Numpad } from './components/Numpad';
 import { CalcTable } from './components/CalcTable';
 import { EventSelector } from './components/EventSelector';
 import { SimButtons } from './components/SimButtons';
+import { ProgressSliders } from './components/ProgressSliders';
 import './calc.css';
 
 export function CalcPage() {
@@ -68,6 +69,9 @@ export function CalcPage() {
 
       {/* 控制按钮 */}
       <SimButtons />
+
+      {/* 进步幅度滑杆 */}
+      <ProgressSliders />
 
       {/* 数字键盘 */}
       <Numpad />
