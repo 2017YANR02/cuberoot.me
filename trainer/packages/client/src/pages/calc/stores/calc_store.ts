@@ -143,6 +143,9 @@ export const useCalcStore = create<CalcState>((set, get) => ({
   togglePlayer: (p) => {
     set(s => {
       const newEnabled = [...s.playerEnabled];
+      // NOTE: 不允许两行都不选 — 至少保留一个（原版 input_grid.js#403-409）
+      const enabledCount = newEnabled.filter(v => v).length;
+      if (newEnabled[p] && enabledCount <= 1) return s; // 还原勾选
       newEnabled[p] = !newEnabled[p];
       return { playerEnabled: newEnabled };
     });
