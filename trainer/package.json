@@ -1,12 +1,15 @@
 {
   "name": "cuberoot-toolkit",
   "private": true,
+  "packageManager": "pnpm@10.32.1",
   "scripts": {
-    "dev:client": "pnpm --filter @cuberoot/client dev",
-    "dev:server": "pnpm --filter @cuberoot/server dev",
-    "build:client": "pnpm --filter @cuberoot/client build",
-    "build:server": "pnpm --filter @cuberoot/server build",
-    "build": "pnpm build:client && pnpm build:server",
-    "typecheck": "pnpm -r run typecheck"
+    "dev:client": "turbo dev --filter=@cuberoot/client",
+    "dev:server": "turbo dev --filter=@cuberoot/server",
+    "build": "turbo build",
+    "typecheck": "turbo typecheck",
+    "lint": "turbo lint"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.0"
   }
 }
