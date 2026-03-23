@@ -8,6 +8,9 @@ import {
   setMoveCntMode, setMbfMode,
 } from '../engine/calc_engine';
 
+// NOTE: re-export 供其他模块统一从 calc_store 导入
+export { DNF_VALUE };
+
 // ── 常量 ──
 
 // NOTE: Mo3 项目 — 一轮 3 把，算术均值（不去掉任何成绩）

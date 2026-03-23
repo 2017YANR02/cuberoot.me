@@ -79,8 +79,8 @@ export function Drum({ activeCell, onCellValueChange }: DrumProps) {
     // ── 辅助函数 ──
 
     function setDrumStyle(prop: string, val: string) {
-      (drumList.style as any)[prop] = val;
-      (drumListWhite.style as any)[prop] = val;
+      (drumList!.style as any)[prop] = val;
+      (drumListWhite!.style as any)[prop] = val;
     }
 
     function updateDrumTransforms(scrollOffset: number) {
@@ -129,7 +129,7 @@ export function Drum({ activeCell, onCellValueChange }: DrumProps) {
       setDrumStyle('transition', 'none');
       setDrumStyle('transform', `translateY(${startOffset}px)`);
       updateDrumTransforms(startOffset);
-      void drumList.offsetHeight;
+      void drumList!.offsetHeight;
       setDrumStyle('transition', 'transform 0.12s cubic-bezier(0.22, 1, 0.36, 1)');
       setDrumStyle('transform', 'translateY(0px)');
     }
@@ -197,7 +197,7 @@ export function Drum({ activeCell, onCellValueChange }: DrumProps) {
     }
 
     // ── 初始化 ──
-    drumEl.classList.add('empty');
+    drumEl!.classList.add('empty');
     fillDrumSlots(0);
     // NOTE: 测量 slot 实际高度（CSS 渲染后）
     const firstSlot = slotRefs.current[0];
@@ -339,14 +339,14 @@ export function Drum({ activeCell, onCellValueChange }: DrumProps) {
     // ── 清理 — React 管理 DOM 销毁，这里只清理事件/定时器 ──
     return () => {
       unsub();
-      drumEl.removeEventListener('mousedown', onStart);
+      drumEl!.removeEventListener('mousedown', onStart);
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onEnd);
-      drumEl.removeEventListener('touchstart', onStart);
+      drumEl!.removeEventListener('touchstart', onStart);
       document.removeEventListener('touchmove', onMove);
       document.removeEventListener('touchend', onEnd);
       document.removeEventListener('touchcancel', onEnd);
-      drumEl.removeEventListener('wheel', onWheel);
+      drumEl!.removeEventListener('wheel', onWheel);
       if (inertiaRaf) cancelAnimationFrame(inertiaRaf);
       if (drumAnimTimer) clearTimeout(drumAnimTimer);
     };

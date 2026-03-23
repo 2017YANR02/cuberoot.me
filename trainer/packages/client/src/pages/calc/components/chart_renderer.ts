@@ -34,7 +34,6 @@ const LABEL_FONT = 11;        // 标签字号
 
 // NOTE: 动画控制
 const ANIM_MS = 250;          // 柱子高度动画时长
-const CONFETTI_COUNT = 60;    // WR 庆祝时彩纸数量
 
 // ── 渲染状态 ──
 
@@ -83,31 +82,6 @@ function createSvgElement<K extends keyof SVGElementTagNameMap>(
     }
   }
   return el;
-}
-
-// NOTE: 预留工具函数 — 颜色变暗
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function _darken(hex: string, factor: number): string {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  const f = 1 - factor;
-  return '#' + [r, g, b].map(c => Math.round(c * f).toString(16).padStart(2, '0')).join('');
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function _fade(hex: string, alpha: number): string {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgba(${r},${g},${b},${alpha})`;
-}
-
-// NOTE: 余弦插值 — 用于柱间过渡的平滑变化
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function _coslerp(a: number, b: number, t: number): number {
-  const ct = (1 - Math.cos(t * Math.PI)) / 2;
-  return a * (1 - ct) + b * ct;
 }
 
 // ── 坐标映射 ──
@@ -264,7 +238,7 @@ function drawGrid(): void {
   if (!gGrid) return;
   const state = useCalcStore.getState();
   const isMove = state.event === '333fm';
-  const _isMbf = isMbfForEvent(state.event);
+  // TODO: MBF 赛事的 Y 轴标签和格式化待实现（需要 isMbfForEvent）
 
   // NOTE: 水平网格线 + Y 轴标签
   for (let i = 0; i <= GRID_LINE_COUNT; i++) {
