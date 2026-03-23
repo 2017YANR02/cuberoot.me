@@ -64,3 +64,34 @@ export interface UserSettings {
   /** 主题 ("light" | "dark") */
   theme: 'light' | 'dark';
 }
+
+// ── WCA 共享类型（calc / viz / recon 通用） ──
+
+/** WCA 选手搜索结果 */
+export interface WcaPerson {
+  wcaId: string;
+  name: string;
+  /** ISO 3166-1 alpha-2 小写国家代码 */
+  iso2: string;
+  avatarUrl: string;
+}
+
+/** WCA OAuth 登录用户信息 */
+export interface WcaAuthUser {
+  wcaId: string;
+  name: string;
+  avatar: string;
+  country: string;
+}
+
+/** 选手在某项目的成绩摘要（fetchUserTimes 返回值） */
+export interface WcaUserTimes {
+  /** 最近有效单次成绩（centiseconds），最多 100 个 */
+  times: number[];
+  /** Ao100 trimmed average (centiseconds) */
+  ao100: number;
+  /** 官方最佳 average (centiseconds)，无则 null */
+  averagePR: number | null;
+  name: string;
+  country: string;
+}
