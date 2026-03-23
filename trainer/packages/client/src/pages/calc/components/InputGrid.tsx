@@ -220,6 +220,7 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
                     onBlur={(e) => {
                       handleBlur(p, t, e.target.value);
                     }}
+                    onFocus={() => state.setFocusedCell(p, t)}
                     onKeyDown={(e) => handleKeyDown(e, p, t)}
                   />
                 </div>

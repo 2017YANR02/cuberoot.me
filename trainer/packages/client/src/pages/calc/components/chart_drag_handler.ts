@@ -11,6 +11,7 @@ import {
   getSvgEl, getGp, valToYCap,
   getBarX, getOverlay, getBarW,
   render as chartRender,
+  registerPostRenderCallback,
 } from './chart_renderer';
 
 // ── 拖动状态 ──
@@ -22,6 +23,8 @@ interface SelectedBar {
 
 let selected: SelectedBar | null = null;
 let isDragging = false;
+let isPointerDown = false;  // NOTE: 防止松手后 pointermove 误触发拖拽
+let wasAlreadySelected = false; // NOTE: 区分"再次 tap 已选中柱子"和"首次选中"
 let dragStartY = 0;
 let dragStartVal = 0;
 let tapStartTime = 0;
@@ -40,6 +43,9 @@ export function initDrag(): (() => void) {
   const svgEl = getSvgEl();
   if (!svgEl) return () => {};
 
+  // NOTE: 注册 post-render 回调 — chartRender 重建 DOM 后自动重新标记选中柱子
+  registerPostRenderCallback(reapplySelection);
+
   const onPointerDown = (e: PointerEvent) => handlePointerDown(e);
   const onPointerMove = (e: PointerEvent) => handlePointerMove(e);
   const onPointerUp = (e: PointerEvent) => handlePointerUp(e);
@@ -55,6 +61,25 @@ export function initDrag(): (() => void) {
   // NOTE: hover 检测
   svgEl.addEventListener('pointermove', handleHover);
 
+  // NOTE: 订阅 focusedCell — InputGrid 单元格被选中时联动高亮对应柱子
+  let prevFocused = useCalcStore.getState().focusedCell;
+  const unsubFocus = useCalcStore.subscribe((state) => {
+    const [p, t] = state.focusedCell;
+    if (p === prevFocused[0] && t === prevFocused[1]) return;
+    prevFocused = state.focusedCell;
+
+    const seedOn = state.seedOn;
+    if (p >= 0 && t >= 0) {
+      const relP = p - seedOn;
+      if (relP >= 0) {
+        deselect();
+        selectBar({ playerIdx: relP, solveIdx: t });
+      }
+    } else {
+      deselect();
+    }
+  });
+
   return () => {
     svgEl.removeEventListener('pointerdown', onPointerDown);
     window.removeEventListener('pointermove', onPointerMove);
@@ -62,6 +87,7 @@ export function initDrag(): (() => void) {
     svgEl.removeEventListener('wheel', onWheel);
     window.removeEventListener('keydown', onKeyDown);
     svgEl.removeEventListener('pointermove', handleHover);
+    unsubFocus();
     deselect();
   };
 }
@@ -159,6 +185,9 @@ function selectBar(bar: SelectedBar): void {
 
   // NOTE: 联动输入格高亮
   syncInputHighlight(bar, true);
+
+  // NOTE: 联动 Drum — 通过 store.focusedCell 通知滚筒显示对应格子的值
+  useCalcStore.getState().setFocusedCell(bar.playerIdx, bar.solveIdx);
 }
 
 function deselect(): void {
@@ -175,6 +204,21 @@ function deselect(): void {
   removeHandle();
   selected = null;
   isDragging = false;
+}
+
+/** NOTE: chartRender 重建 DOM 后重新标记选中柱子（bar-active + bar-selected） */
+function reapplySelection(): void {
+  if (!selected) return;
+  const svgEl = getSvgEl();
+  if (!svgEl) return;
+  svgEl.classList.add('bar-selected');
+  svgEl.querySelectorAll('.chart-bar').forEach(el => {
+    const dp = parseInt(el.getAttribute('data-player') || '-1');
+    const ds = parseInt(el.getAttribute('data-slot') || '-1');
+    if (dp === selected!.playerIdx && ds === selected!.solveIdx) {
+      el.classList.add('bar-active');
+    }
+  });
 }
 
 // ── drag handle ──
@@ -226,10 +270,26 @@ function positionHandle(): void {
   const screenX = x * ctm.a + ctm.e - overlayRect.left;
   const screenY = y * ctm.d + ctm.f - overlayRect.top;
 
+  // NOTE: Both 模式下内侧柱子宽度缩窄为 barW * 0.55，handle 跟随
+  const pe = state.playerEnabled;
+  const bothOn = pe[state.seedOn] && pe[state.seedOn + 1];
+  let effectiveW = barW;
+  if (bothOn) {
+    // NOTE: 检查另一选手对应 slot 是否也有值 — 有值才是重叠模式
+    const otherP = selected.playerIdx === 0 ? 1 : 0;
+    const otherVal = state.times[state.seedOn + otherP]?.[selected.solveIdx] ?? 0;
+    if (otherVal > 0 && otherVal < DNF_VALUE) {
+      // NOTE: 较矮柱子（值更小 = 更矮）用缩窄宽度
+      if (val < otherVal) {
+        effectiveW = barW * 0.55;
+      }
+    }
+  }
+
   handleEl.style.left = screenX + 'px';
   handleEl.style.top = screenY + 'px';
   handleEl.style.display = '';
-  handleEl.style.width = Math.max(barW * ctm.a, 24) + 'px';
+  handleEl.style.width = Math.max(effectiveW * ctm.a, 24) + 'px';
   handleEl.style.height = '16px';
   handleEl.style.borderRadius = '8px';
 }
@@ -255,6 +315,7 @@ function handlePointerDown(e: PointerEvent): void {
 
   tapStartTime = Date.now();
   tapStartPos = { x: e.clientX, y: e.clientY };
+  isPointerDown = true;
 
   if (hit) {
     e.preventDefault();
@@ -262,12 +323,14 @@ function handlePointerDown(e: PointerEvent): void {
     const val = state.times[state.seedOn + hit.playerIdx][hit.solveIdx];
 
     if (selected && selected.playerIdx === hit.playerIdx && selected.solveIdx === hit.solveIdx) {
-      // NOTE: 再次点击已选中的柱子 → 开始拖动
-      isDragging = true;
+      // NOTE: 再次按下已选中柱子 → 准备拖拽消歧，deselect 延迟到 pointerup
+      wasAlreadySelected = true;
+      isDragging = false;
       dragStartY = e.clientY;
       dragStartVal = val;
     } else {
-      // NOTE: 选中新柱子
+      // NOTE: 选中新柱子 + 准备拖拽消歧
+      wasAlreadySelected = false;
       deselect();
       selectBar(hit);
       isDragging = false;
@@ -278,7 +341,7 @@ function handlePointerDown(e: PointerEvent): void {
 }
 
 function handlePointerMove(e: PointerEvent): void {
-  if (!selected) return;
+  if (!selected || !isPointerDown) return;
 
   // NOTE: tap/drag 消歧
   if (!isDragging) {
@@ -319,25 +382,34 @@ function handlePointerMove(e: PointerEvent): void {
     );
     // NOTE: 重新渲染图表 + 更新 handle 位置
     chartRender({ skipViewBox: true });
+    reapplySelection();
     positionHandle();
   }
 }
 
 function handlePointerUp(_e: PointerEvent): void {
+  isPointerDown = false;
   if (!selected) return;
 
-  if (!isDragging) {
-    // NOTE: 这是一个 tap（非 drag） — 柱子已被 selectBar 选中，无需额外操作
+  if (isDragging) {
+    // NOTE: drag 结束后重算 viewBox（可能范围已变）
+    chartRender();
+    reapplySelection();
+    positionHandle();
+
+    // NOTE: 同步到 URL
+    useCalcStore.getState().saveToUrl();
+
+    // NOTE: 拖拽完成后取消选中
+    deselect();
+  } else if (wasAlreadySelected) {
+    // NOTE: 对已选中柱子的快速单击（tap）→ toggle 取消选中
+    deselect();
   }
+  // NOTE: 首次选中柱子的 tap → 保持选中（不做任何事）
 
   isDragging = false;
-
-  // NOTE: drag 结束后重算 viewBox（可能范围已变）
-  chartRender();
-  positionHandle();
-
-  // NOTE: 同步到 URL
-  useCalcStore.getState().saveToUrl();
+  wasAlreadySelected = false;
 }
 
 function handleWheel(e: WheelEvent): void {

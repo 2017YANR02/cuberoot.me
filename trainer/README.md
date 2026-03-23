@@ -237,3 +237,50 @@ idle → caseShown → timing → stopped → caseShown → ... → complete
 - `f2lGroup`：所属 F2L 组号（1~41）
 - `algs`：算法列表
 - `scrambles`：setup scramble 列表（随机选取 + 随机 AUF）
+
+## Calc（HTH 成绩计算器）
+
+从 `calc/` 目录迁移的 Head-to-Head Average of 5 模拟 + PA 计算器。
+原版为纯 ES module 架构（`calc/js/*.js`），React 版复刻全部功能。
+
+### 文件结构
+
+```
+pages/calc/
+├── CalcPage.tsx              # 页面容器（挂载 chart/drag/drum 的 useEffect 生命周期）
+├── calc.css                  # 全量样式（深色输入格 + SVG 图表 + bar 交互 + handle 动画）
+├── components/
+│   ├── chart_renderer.ts     # SVG 图表渲染（柱状图 + 标签 + 网格 + Ao 菱形 + confetti）
+│   ├── chart_drag_handler.ts # 柱子交互（tap 选中 / 长按拖拽 / 滚轮 / 键盘 / focusedCell 联动）
+│   ├── InputGrid.tsx         # 输入网格（时间格 + Target + checkbox + 头像按钮）
+│   ├── Numpad.tsx            # 数字键盘（Rand / Clear / DNF）
+│   └── Drum.tsx              # 滚筒选择器（数值滚动 + 惯性 + 吸附）
+├── engine/
+│   └── calc_engine.ts        # 计算引擎（KDE 采样 + Monte Carlo + Ao5 排名）
+└── stores/
+    └── calc_store.ts         # Zustand 状态（times/focusedCell/playerEnabled/event/URL 同步）
+```
+
+### 柱子交互行为
+
+| 操作 | 效果 |
+|------|------|
+| 单击柱子 | 选中高亮（其他柱子 opacity 0.35），松手保持 |
+| 再次单击同一柱子（tap） | toggle 取消选中 |
+| 对已选中柱子按住+拖动 | 进入拖拽模式，实时改值 |
+| 对新柱子按住+拖动 | 选中并立即拖拽 |
+| 拖拽松手 | 取消选中，恢复正常 |
+| 选中 InputGrid 单元格 | 联动激活对应图表柱子 |
+
+### 关键依赖
+
+| 依赖 | 用途 |
+|------|------|
+| `canvas-confetti` | WR 庆祝烟花效果（向上喷射） |
+
+### 与原版差异
+
+- 原版用命令式 DOM 操作，React 版用 Zustand 状态 + 命令式 SVG 渲染（chart_renderer/chart_drag_handler 保持命令式）
+- `registerPostRenderCallback` 机制：chartRender 重建 DOM 后自动重新标记 `bar-active` + `bar-selected`
+- Both 模式下 drag handle 宽度跟随实际柱子宽度（内侧矮柱子 × 0.55）
+

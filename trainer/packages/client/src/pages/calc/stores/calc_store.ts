@@ -50,6 +50,9 @@ export interface CalcState {
   sortedCache: number[];     // 按平均值排序的选手索引
   playerEnabled: boolean[];  // 选手启用状态
   targetAvgs: Record<number, number>; // 每个 seed 的目标平均值
+  // NOTE: 用户当前聚焦的输入格 [playerIdx, solveIdx]，[-1,-1] 表示无聚焦
+  // InputGrid focus 事件写入，Numpad/Drum 读取
+  focusedCell: [number, number];
 
   // ── 派生查询 ──
   solveCount: () => number;
@@ -82,6 +85,7 @@ export interface CalcState {
   getFirstUnfilledTime: (countLiveTime: boolean) => [number, number];
   getRankOf: (p: number) => number;
   getValidsCount: () => number;
+  setFocusedCell: (p: number, t: number) => void;
 }
 
 // NOTE: URL 数据同步 debounce
@@ -98,6 +102,7 @@ export const useCalcStore = create<CalcState>((set, get) => ({
   timeLive: [-1, -1],
   timeLiveStart: -1,
   sortedCache: [],
+  focusedCell: [-1, -1] as [number, number],
   playerEnabled: [true, false],
   targetAvgs: {},
 
@@ -329,6 +334,8 @@ export const useCalcStore = create<CalcState>((set, get) => ({
     }
     return count;
   },
+
+  setFocusedCell: (p: number, t: number) => set({ focusedCell: [p, t] as [number, number] }),
 }));
 
 // NOTE: 初始化排序
