@@ -26,6 +26,10 @@ export default defineConfig({
         target: 'http://localhost:3001',
         rewrite: (path) => path.replace(/^\/trainer\/api/, ''),
       },
+      // NOTE: calc 模块需要从 Jekyll 站点获取 WR 数据
+      '/stats': {
+        target: 'http://localhost:4000',
+      },
     },
   },
 })

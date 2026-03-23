@@ -20,13 +20,23 @@ export function CalcPage() {
   const loadFromUrl = useCalcStore(s => s.loadFromUrl);
   const saveToUrl = useCalcStore(s => s.saveToUrl);
 
-  // NOTE: 初始化 — 加载 URL 参数 + WR 数据
+  // NOTE: 初始化 — 加载 URL 参数 + WR 数据 + cubing-icons 字体
   useEffect(() => {
+    // NOTE: 动态注入 cubing-icons CDN CSS（WCA 项目图标字体）
+    const iconLink = document.createElement('link');
+    iconLink.rel = 'stylesheet';
+    iconLink.href = 'https://cdn.cubing.net/v0/css/@cubing/icons/css';
+    document.head.appendChild(iconLink);
+
     loadFromUrl();
     setCurrentEvent(useCalcStore.getState().event);
     loadWrIds().then(() => {
       loadDefaults(useCalcStore.getState().event);
     });
+
+    return () => {
+      document.head.removeChild(iconLink);
+    };
   }, [loadFromUrl]);
 
   // NOTE: 项目切换时重新加载 WR 默认数据
