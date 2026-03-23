@@ -1,5 +1,5 @@
 // NOTE: 输入网格组件 — 从 input_grid.js 1:1 迁移
-// 每行 = checkbox + 5(或3)个成绩输入框 + targetAvg 框
+// 每行 = checkbox + 5(或3)个成绩输入框 + targetAvg 框 + 头像按钮
 // 功能：zigzag 跳格、WR badge、排名标签、Ao5 括号标注、fitFont 自适应字号
 
 import { useCallback, useRef } from 'react';
@@ -11,6 +11,21 @@ import {
 } from '../engine/calc_engine';
 import { isWR } from '../engine/wr_data';
 
+// NOTE: 头像按钮状态 — 由 CalcPage 管理，通过 props 传入
+export interface AvatarState {
+  active: boolean;       // 是否处于个人数据模式
+  loading?: string;      // 加载中文字（如 '⏳'）
+  avatarUrl?: string;    // 激活时的头像 URL
+}
+
+// NOTE: 默认头像 SVG（通用人像轮廓）— 原版 input_grid.js#1365
+const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%23ddd'/%3E%3Ccircle cx='16' cy='12' r='5' fill='%23999'/%3E%3Cpath d='M6 28c0-6 4-9 10-9s10 3 10 9' fill='%23999'/%3E%3C/svg%3E";
+
+interface InputGridProps {
+  avatarState?: AvatarState[];
+  onPlayerOverride?: (playerIdx: number) => void;
+}
+
 // NOTE: 根据文字长度自适应缩小字号，防止长时间格式（如 1:10.10）溢出
 // 原版 input_grid.js#31-42
 function fitFontStyle(displayVal: string): React.CSSProperties | undefined {
@@ -21,7 +36,7 @@ function fitFontStyle(displayVal: string): React.CSSProperties | undefined {
   return { fontSize: '17px' };
 }
 
-export function InputGrid() {
+export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
   const state = useCalcStore();
   const sc = state.solveCount();
   const isMbf = isMbfForEvent(state.event);
@@ -237,6 +252,30 @@ export function InputGrid() {
                 }}
               />
             </div>
+
+            {/* 头像按钮 — 原版 input_grid.js#118-136 */}
+            <button
+              className={`me-btn${avatarState?.[p]?.active ? ' me-active' : ''}`}
+              title={avatarState?.[p]?.active
+                ? `Switch back to World #${p + 1}`
+                : 'Search for a player'}
+              data-loading={avatarState?.[p]?.loading && !avatarState[p].active
+                ? avatarState[p].loading
+                : undefined}
+              onClick={() => onPlayerOverride?.(p)}
+            >
+              {/* NOTE: loading 时 img 隐藏，由 CSS ::after 显示 data-loading 文字 */}
+              <img
+                className="me-avatar"
+                src={avatarState?.[p]?.active
+                  ? (avatarState[p].avatarUrl || DEFAULT_AVATAR)
+                  : DEFAULT_AVATAR}
+                alt="avatar"
+                style={avatarState?.[p]?.loading && !avatarState[p].active
+                  ? { display: 'none' }
+                  : undefined}
+              />
+            </button>
           </div>
         );
       })}
