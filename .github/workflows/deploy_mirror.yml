@@ -6,7 +6,7 @@ on:
   push:
     branches: [main]
   workflow_run:
-    workflows: ["Update Stats", "Update Upcoming Comps"]
+    workflows: ["Update Stats", "Update Upcoming Comps", "Deploy Trainer"]
     types: [completed]
     branches: [main]
 
