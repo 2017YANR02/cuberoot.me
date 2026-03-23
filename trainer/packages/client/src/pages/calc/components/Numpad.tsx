@@ -63,7 +63,16 @@ export function Numpad() {
   // NOTE: 退格 / 清空
   const pressBackspace = useCallback(() => {
     if (clearMode) {
-      // NOTE: 长按触发的 Clear All
+      // NOTE: 长按触发的 Clear All — 清空所有已启用行的数据
+      const s = useCalcStore.getState();
+      const sc = s.solveCount();
+      for (let p = 0; p < 2; p++) {
+        if (!s.playerEnabled[p]) continue;
+        for (let t = 0; t < sc; t++) {
+          s.updateTime(s.seedOn + p, t, 0);
+        }
+      }
+      s.saveToUrl();
       setDisplay('');
       setClearMode(false);
       return;
@@ -156,7 +165,7 @@ export function Numpad() {
     { text: '1', action: () => pressDigit('1'), cls: 'np-digit' },
     { text: '2', action: () => pressDigit('2'), cls: 'np-digit' },
     { text: '3', action: () => pressDigit('3'), cls: 'np-digit' },
-    { text: '⌫', action: () => {}, cls: `np-op${clearMode ? ' np-clear-mode' : ''}`, isBackspace: true },
+    { text: clearMode ? '\u2715Clear' : '⌫', action: () => {}, cls: `np-op${clearMode ? ' np-clear-mode' : ''}`, isBackspace: true },
     { text: '4', action: () => pressDigit('4'), cls: 'np-digit' },
     { text: '5', action: () => pressDigit('5'), cls: 'np-digit' },
     { text: '6', action: () => pressDigit('6'), cls: 'np-digit' },
