@@ -8,6 +8,7 @@ import {
   DNF_VALUE, formatTime, textToTime, textToMbfScore,
 } from '../engine/calc_engine';
 import { sampleKDE } from '../engine/wr_data';
+import { Drum } from './Drum';
 
 export function Numpad() {
   const state = useCalcStore();
@@ -162,6 +163,9 @@ export function Numpad() {
 
       {/* 按钮区 */}
       <div id="numpad-body">
+        {/* iOS 滚筒精调 */}
+        <Drum activeCell={target} />
+
         <div id="numpad-grid">
           {buttons.map((btn, i) => (
             <button
