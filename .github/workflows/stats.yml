@@ -106,6 +106,15 @@ jobs:
             echo "No changes to commit"
           else
             git commit -m "chore: update WCA statistics [skip ci]"
-            git pull --rebase origin main
+            # NOTE: rebase 可能因 upcoming_comps.json 等文件冲突而失败
+            # CI 刚生成的数据是最新的，冲突时直接用我们的版本覆盖
+            if ! git pull --rebase origin main; then
+              echo "Rebase conflict detected, resolving with ours..."
+              git diff --name-only --diff-filter=U | while read f; do
+                git checkout --theirs "$f"
+                git add "$f"
+              done
+              git rebase --continue || git rebase --skip
+            fi
             git push
           fi
