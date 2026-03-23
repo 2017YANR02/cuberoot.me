@@ -59,22 +59,12 @@ export function CalcPage() {
   // NOTE: 当前搜索目标 player 索引（0 或 1）
   const pickerTargetRef = useRef(0);
 
-  // NOTE: 初始化 — 加载 URL 参数 + WR 数据 + cubing-icons 字体 + 初始 rand-fill
+  // NOTE: 初始化 — 加载 URL 参数 + WR 数据 + 初始 rand-fill
+  // CDN CSS（cubing-icons + flag-icons）已移至 index.html 静态加载，
+  // 避免 React StrictMode 下 initDone 守卫导致 cleanup 后不再注入的 bug
   useEffect(() => {
     if (initDone.current) return;
     initDone.current = true;
-
-    // NOTE: 动态注入 cubing-icons CDN CSS（WCA 项目图标字体）
-    const iconLink = document.createElement('link');
-    iconLink.rel = 'stylesheet';
-    iconLink.href = 'https://cdn.cubing.net/v0/css/@cubing/icons/css';
-    document.head.appendChild(iconLink);
-
-    // NOTE: 国旗图标（选手搜索下拉用）
-    const flagLink = document.createElement('link');
-    flagLink.rel = 'stylesheet';
-    flagLink.href = 'https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.3.2/css/flag-icons.min.css';
-    document.head.appendChild(flagLink);
 
     loadFromUrl();
     const state = useCalcStore.getState();
@@ -122,8 +112,6 @@ export function CalcPage() {
     document.addEventListener('visibilitychange', onVisChange);
 
     return () => {
-      document.head.removeChild(iconLink);
-      document.head.removeChild(flagLink);
       document.removeEventListener('visibilitychange', onVisChange);
     };
   }, [loadFromUrl]);
