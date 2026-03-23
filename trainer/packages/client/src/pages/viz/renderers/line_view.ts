@@ -6,9 +6,8 @@ import type { VizState } from '../stores/viz_store';
 import { MARGIN } from '../stores/viz_store';
 import { mean } from '../engine/kde';
 import {
-  rawToVal, playerHSL, getShiftedHSL, fmtVal, isFMC, isMBLD,
+  rawToVal, playerHSL, getShiftedHSL, fmtVal, isMBLD,
 } from '../engine/data_fetch';
-import type { PlayerData, DataMode, ShowLayers } from '../engine/data_fetch';
 import { ROUND_NAMES, ROUND_ZH } from '../engine/data_fetch';
 import { computePlayerFrame, getWindowTimes } from '../engine/sync';
 import { drawLineGrid, drawLineChart } from './draw_utils';

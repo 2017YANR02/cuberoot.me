@@ -7,9 +7,9 @@ import { useVizStore, MARGIN } from '../stores/viz_store';
 import { drawHistogramView } from '../renderers/histogram_view';
 import { drawLineView } from '../renderers/line_view';
 import { drawCumHistView } from '../renderers/cumhist_view';
-import { mean, stddev } from '../engine/kde';
-import { rawToVal, fmtVal, isFMC, isMBLD, isHigherBetter, formatCompName } from '../engine/data_fetch';
-import { computePlayerFrame, getWindowTimes } from '../engine/sync';
+import { stddev } from '../engine/kde';
+import { fmtVal, isFMC, isMBLD, isHigherBetter, formatCompName } from '../engine/data_fetch';
+
 
 // NOTE: 对外暴露统计回调类型
 export type StatsCallback = (stats: {

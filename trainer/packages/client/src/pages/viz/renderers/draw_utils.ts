@@ -34,7 +34,7 @@ export interface MeanPosition {
 export function drawGrid(
   ctx: CanvasRenderingContext2D,
   sx: (x: number) => number,
-  sy: (y: number) => number,
+  _sy: (y: number) => number,
   ml: number, mt: number, pw: number, ph: number,
   viewXMin: number, viewXMax: number,
   eventId: string,
