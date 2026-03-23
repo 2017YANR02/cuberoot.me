@@ -1,6 +1,8 @@
 // NOTE: 主 Canvas 组件 — 承载 KDE/折线/累积三种视图
-// Canvas 内容用命令式渲染（useEffect + drawFrame），React 仅管理 DOM 壳
+// Canvas 内容用命令式渲染（zustand subscribe + drawFrame），React 仅管理 DOM 壳
 // 交互事件：滚轮缩放、拖拽平移、双击重置、hover（折线图 tooltip）
+// FIXME: 之前用 useVizStore() 订阅整个 store 导致 setupCanvas → setCanvasSize →
+//        重渲染 → setupCanvas 无限循环。改为 zustand subscribe + getState 模式。
 
 import { useRef, useEffect, useCallback } from 'react';
 import { useVizStore, MARGIN } from '../stores/viz_store';
@@ -9,7 +11,6 @@ import { drawLineView } from '../renderers/line_view';
 import { drawCumHistView } from '../renderers/cumhist_view';
 import { stddev } from '../engine/kde';
 import { fmtVal, isFMC, isMBLD, isHigherBetter, formatCompName } from '../engine/data_fetch';
-
 
 // NOTE: 对外暴露统计回调类型
 export type StatsCallback = (stats: {
@@ -40,10 +41,14 @@ export default function VizCanvas({ onStats, onRidgeHighlight }: VizCanvasProps)
     origLineXStart: number; origLineXEnd: number;
   } | null>(null);
 
-  // NOTE: 从 store 订阅状态（浅比较优化）
-  const state = useVizStore();
+  // NOTE: 把 props 回调存到 ref 里，避免 drawFrame 闭包过时
+  const onStatsRef = useRef(onStats);
+  onStatsRef.current = onStats;
+  const onRidgeRef = useRef(onRidgeHighlight);
+  onRidgeRef.current = onRidgeHighlight;
 
   // ─── Canvas 尺寸适配 ───
+  // NOTE: 不依赖 React state，只用 ref + getState，因此不会触发重渲染循环
   const setupCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     const wrapper = wrapperRef.current;
@@ -53,6 +58,10 @@ export default function VizCanvas({ onStats, onRidgeHighlight }: VizCanvasProps)
     const w = wrapper.clientWidth;
     const h = Math.min(Math.round(w * 0.5), 480);
 
+    const s = useVizStore.getState();
+    // NOTE: 只在尺寸实际变化时写入 store，打破无限循环
+    if (s.cw === w && s.ch === h) return;
+
     canvas.style.width = w + 'px';
     canvas.style.height = h + 'px';
     canvas.width = w * dpr;
@@ -61,8 +70,8 @@ export default function VizCanvas({ onStats, onRidgeHighlight }: VizCanvasProps)
     const ctx = canvas.getContext('2d');
     if (ctx) ctx.scale(dpr, dpr);
 
-    state.setCanvasSize(w, h);
-  }, [state]);
+    useVizStore.getState().setCanvasSize(w, h);
+  }, []);
 
   // ─── 渲染帧 ───
   const drawFrame = useCallback(() => {
@@ -72,6 +81,12 @@ export default function VizCanvas({ onStats, onRidgeHighlight }: VizCanvasProps)
     if (!ctx) return;
 
     const s = useVizStore.getState();
+    if (s.cw === 0 || s.ch === 0) return;
+
+    // NOTE: DPI 重建 — 每次绘制前重置 transform 确保尺寸正确
+    const dpr = window.devicePixelRatio || 1;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
     if (s.players.length === 0) {
       ctx.fillStyle = '#0c0c18';
       ctx.fillRect(0, 0, s.cw, s.ch);
@@ -94,7 +109,8 @@ export default function VizCanvas({ onStats, onRidgeHighlight }: VizCanvasProps)
     }
 
     // 更新统计面板
-    if (result && result.apTimes && result.apTimes.length > 0 && onStats) {
+    const cbStats = onStatsRef.current;
+    if (result && result.apTimes && result.apTimes.length > 0 && cbStats) {
       const eventId = s.currentEventId;
       const currentMean = result.apMean!;
       const sd = stddev(result.apTimes);
@@ -125,7 +141,7 @@ export default function VizCanvas({ onStats, onRidgeHighlight }: VizCanvasProps)
       const compIdx = ap.channelData[apEndIdx]?.[1] ?? 0;
       const compName = ap.competitions[compIdx] || '';
 
-      onStats({
+      cbStats({
         mean: fmtVal(currentMean, eventId),
         std: isFMC(eventId) || isMBLD(eventId) ? 'σ ' + sd.toFixed(1) : 'σ ' + sd.toFixed(2) + 's',
         syncLabel,
@@ -137,51 +153,74 @@ export default function VizCanvas({ onStats, onRidgeHighlight }: VizCanvasProps)
       });
 
       // 脊线图联动
-      if (onRidgeHighlight && ap && s.viewMode === 'histogram') {
-        onRidgeHighlight(apEndIdx);
+      const cbRidge = onRidgeRef.current;
+      if (cbRidge && ap && s.viewMode === 'histogram') {
+        cbRidge(apEndIdx);
       }
     }
-  }, [onStats, onRidgeHighlight]);
+  }, []);
 
-  // ─── 初始化 + resize ───
+  // ─── 初始化 + resize + store 订阅 ───
   useEffect(() => {
     setupCanvas();
+    // NOTE: 初始化后立即绘制一帧
+    drawFrame();
+
     const onResize = () => { setupCanvas(); drawFrame(); };
     window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
+
+    // NOTE: 用 zustand subscribe 监听状态变化触发重绘，
+    // 替代之前的 useEffect + 全 store 订阅，避免 React 重渲染开销
+    const unsub = useVizStore.subscribe(() => {
+      drawFrame();
+    });
+
+    return () => {
+      window.removeEventListener('resize', onResize);
+      unsub();
+    };
   }, [setupCanvas, drawFrame]);
 
-  // ─── 状态变化时重绘 ───
-  useEffect(() => {
-    if (state.cw > 0 && state.ch > 0) {
-      drawFrame();
-    }
-  }, [
-    state.players, state.activePlayerIdx, state.currentFrame,
-    state.viewMode, state.dataMode, state.syncMode,
-    state.userXMin, state.userXMax, state.lineXStart, state.lineXEnd,
-    state.showLayers, state.windowSize, state.cw, state.ch,
-    state.lineHoverX, state.lineHoverY,
-    drawFrame,
-  ]);
-
   // ─── 动画循环 ───
+  // NOTE: 用独立 subscribe 监听 isPlaying 变化
   useEffect(() => {
-    if (!state.isPlaying) return;
+    let rafId = 0;
+    let isRunning = false;
 
-    let id: number;
     const tick = () => {
       const s = useVizStore.getState();
       if (s.currentFrame >= s.maxFrame) {
         s.setPlaying(false);
+        isRunning = false;
         return;
       }
       s.setFrame(s.currentFrame + s.playSpeed);
-      id = requestAnimationFrame(tick);
+      rafId = requestAnimationFrame(tick);
     };
-    id = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(id);
-  }, [state.isPlaying, state.playSpeed]);
+
+    const unsub = useVizStore.subscribe(
+      (state) => {
+        if (state.isPlaying && !isRunning) {
+          isRunning = true;
+          rafId = requestAnimationFrame(tick);
+        } else if (!state.isPlaying && isRunning) {
+          cancelAnimationFrame(rafId);
+          isRunning = false;
+        }
+      },
+    );
+
+    // 如果初始状态就是播放中，启动动画
+    if (useVizStore.getState().isPlaying) {
+      isRunning = true;
+      rafId = requestAnimationFrame(tick);
+    }
+
+    return () => {
+      unsub();
+      cancelAnimationFrame(rafId);
+    };
+  }, []);
 
   // ─── 交互事件 ───
 
