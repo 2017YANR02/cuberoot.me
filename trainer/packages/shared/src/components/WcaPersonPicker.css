@@ -1,0 +1,171 @@
+/* NOTE: WcaPersonPicker 样式 — 从 shared/wca_search.css 迁移
+   保持视觉一致性，使用与旧版相同的 glassmorphism 和布局 */
+
+/* ── Modal 遮罩 ── */
+.wca-pp-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 12vh;
+  animation: wca-pp-fade-in 0.2s ease-out;
+}
+
+@keyframes wca-pp-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ── 搜索面板 ── */
+.wca-pp-panel {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  width: 380px;
+  max-width: 92vw;
+  max-height: 70vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: wca-pp-slide-in 0.25s ease-out;
+}
+
+@keyframes wca-pp-slide-in {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* ── 搜索输入框 ── */
+.wca-pp-input-wrap {
+  padding: 14px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.wca-pp-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.wca-pp-input:focus {
+  border-color: #4a90d9;
+  box-shadow: 0 0 0 3px rgba(74, 144, 217, 0.15);
+}
+
+/* ── 搜索结果列表 ── */
+.wca-pp-results {
+  overflow-y: auto;
+  max-height: 50vh;
+  padding: 4px 0;
+}
+
+.wca-pp-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.wca-pp-item:hover {
+  background: rgba(74, 144, 217, 0.08);
+}
+
+/* ── 头像 ── */
+.wca-pp-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #eee;
+  flex-shrink: 0;
+}
+
+/* ── 选手信息 ── */
+.wca-pp-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.wca-pp-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wca-pp-id {
+  font-size: 12px;
+  color: #888;
+}
+
+/* ── 国旗 ── */
+.wca-pp-flag {
+  width: 22px;
+  height: 16px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* ── 加载和提示状态 ── */
+.wca-pp-status {
+  padding: 20px 14px;
+  text-align: center;
+  color: #999;
+  font-size: 14px;
+}
+
+/* ── 加载指示器 ── */
+.wca-pp-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #ddd;
+  border-top-color: #4a90d9;
+  border-radius: 50%;
+  animation: wca-pp-spin 0.6s linear infinite;
+}
+
+@keyframes wca-pp-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Inline 模式 ── */
+.wca-pp-inline {
+  position: relative;
+}
+
+.wca-pp-inline .wca-pp-panel {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 100;
+  width: 320px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.wca-pp-inline .wca-pp-results {
+  max-height: 250px;
+}
