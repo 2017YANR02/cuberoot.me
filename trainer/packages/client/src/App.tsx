@@ -12,6 +12,8 @@ import { ZblsTimerPage } from './pages/ZblsTimerPage';
 
 // NOTE: Calc 模块懒加载 — 体积较大，按需加载
 const CalcPage = lazy(() => import('./pages/calc/CalcPage'));
+// NOTE: Viz 模块懒加载 — 分布演变可视化
+const VizPage = lazy(() => import('./pages/viz/VizPage'));
 
 function App() {
   return (
@@ -31,6 +33,8 @@ function App() {
         <Route path="/train/zbls" element={<ZblsTimerPage />} />
         {/* Calc — 成绩计算器 */}
         <Route path="/calc" element={<Suspense fallback={<div>Loading...</div>}><CalcPage /></Suspense>} />
+        {/* Viz — 分布演变可视化 */}
+        <Route path="/viz" element={<Suspense fallback={<div>Loading...</div>}><VizPage /></Suspense>} />
       </Routes>
     </BrowserRouter>
   );

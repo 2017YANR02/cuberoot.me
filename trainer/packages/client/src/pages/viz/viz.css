@@ -1,0 +1,823 @@
+/* ─── 基础重置 ─── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg-primary: #0a0a14;
+  --bg-card: rgba(20, 20, 40, 0.7);
+  --bg-glass: rgba(30, 30, 60, 0.5);
+  --accent-cyan: #00e6ff;
+  --accent-purple: #b040ff;
+  --accent-blue: #5078ff;
+  --text-primary: rgba(255, 255, 255, 0.92);
+  --text-secondary: rgba(255, 255, 255, 0.55);
+  --text-muted: rgba(255, 255, 255, 0.3);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --glow-cyan: rgba(0, 230, 255, 0.3);
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  /* 微妙的径向渐变背景 */
+  background-image:
+    radial-gradient(ellipse at 20% 50%, rgba(0, 100, 180, 0.08) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(120, 40, 200, 0.06) 0%, transparent 50%);
+}
+
+.mono {
+  font-family: 'JetBrains Mono', 'Cascadia Code', monospace;
+}
+
+/* ─── 页面布局 ─── */
+.page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 20px 24px 40px;
+}
+
+/* ─── 顶部标题 ─── */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 28px;
+}
+
+.back-link {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.2s;
+  white-space: nowrap;
+}
+.back-link:hover {
+  color: var(--accent-cyan);
+}
+
+.title-block {
+  flex: 1;
+}
+
+h1 {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  /* 标题渐变文字 */
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue), var(--accent-purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+/* ─── 模式切换按钮 ─── */
+.mode-toggle {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.mode-row {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.mode-btn {
+  padding: 6px 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-family: 'JetBrains Mono', monospace;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.mode-btn:hover {
+  border-color: var(--accent-cyan);
+  color: var(--text-primary);
+}
+.mode-btn.active {
+  background: rgba(0, 230, 255, 0.12);
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+}
+
+/* NOTE: 第二行 Round Metrics 按钮——紫色调区分 */
+.mode-btn-round {
+  padding: 4px 10px;
+  font-size: 11px;
+}
+.mode-btn-round:hover {
+  border-color: var(--accent-purple);
+  color: var(--text-primary);
+}
+.mode-btn-round.active {
+  background: rgba(176, 64, 255, 0.12);
+  border-color: var(--accent-purple);
+  color: var(--accent-purple);
+}
+
+/* NOTE: 折叠/展开按钮 — 手机端可见，桌面端隐藏 */
+.mode-expand-btn {
+  display: none;
+  padding: 3px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+  align-self: flex-start;
+}
+.mode-expand-btn:hover {
+  color: var(--text-secondary);
+  border-color: var(--accent-purple);
+}
+
+/* ─── Canvas 容器 ─── */
+.canvas-wrapper {
+  position: relative;
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  overflow: hidden;
+  /* 玻璃态边框光晕 */
+  box-shadow:
+    0 0 0 1px rgba(0, 230, 255, 0.05),
+    0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+#kdeCanvas {
+  display: block;
+  width: 100%;
+  cursor: crosshair;
+}
+
+/* 均值指示标签 */
+.mean-label, .ghost-mean-label {
+  position: absolute;
+  top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  pointer-events: none;
+  transition: left 0.15s ease-out;
+}
+
+.mean-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent-cyan);
+  box-shadow: 0 0 6px var(--glow-cyan);
+}
+.mean-text {
+  color: var(--accent-cyan);
+}
+
+.ghost-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+}
+.ghost-text {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+/* ─── 统计面板 ─── */
+.stats-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 12px;
+  padding: 14px 18px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  backdrop-filter: blur(12px);
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  min-width: 100px;
+  flex: 1;
+}
+
+.stat-comp {
+  flex: 2;
+  min-width: 180px;
+}
+
+.stat-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.stat-value {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 进退步高亮 */
+.stat-value.improving {
+  color: #4ade80;
+}
+.stat-value.regressing {
+  color: #f87171;
+}
+
+/* ─── 播放控制 ─── */
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 16px;
+  padding: 10px 16px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  backdrop-filter: blur(12px);
+  flex-wrap: wrap;
+}
+/* NOTE: 手机端进度条独占一整行 */
+@media (max-width: 600px) {
+  .controls { gap: 10px 14px; }
+  .controls .progress-wrapper {
+    order: -1;
+    width: 100%;
+    flex-shrink: 1;
+  }
+}
+
+.ctrl-btn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s, box-shadow 0.15s;
+  flex-shrink: 0;
+}
+.ctrl-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 0 16px var(--glow-cyan);
+}
+.ctrl-btn:active {
+  transform: scale(0.95);
+}
+
+.ctrl-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: white;
+}
+
+/* ─── 进度条 ─── */
+.progress-wrapper {
+  position: relative;
+  flex: 1;
+  height: 32px;
+  display: flex;
+  align-items: center;
+}
+
+#progress {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  outline: none;
+  position: relative;
+  z-index: 2;
+  cursor: pointer;
+}
+
+#progress::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent-cyan);
+  box-shadow: 0 0 8px var(--glow-cyan);
+  cursor: grab;
+  transition: transform 0.1s;
+}
+#progress::-webkit-slider-thumb:hover {
+  transform: scale(1.3);
+}
+#progress::-webkit-slider-thumb:active {
+  cursor: grabbing;
+}
+
+#progress::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: none;
+  background: var(--accent-cyan);
+  box-shadow: 0 0 8px var(--glow-cyan);
+  cursor: grab;
+}
+
+.progress-fill {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue));
+  pointer-events: none;
+  z-index: 1;
+  width: 0%;
+}
+
+/* ─── 速度按钮 ─── */
+.speed-group {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.speed-btn {
+  padding: 5px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.speed-btn:hover {
+  border-color: var(--accent-cyan);
+  color: var(--text-primary);
+}
+.speed-btn.active {
+  background: rgba(0, 230, 255, 0.12);
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+}
+
+/* ─── 快捷键提示 ─── */
+.shortcuts-hint {
+  text-align: center;
+  margin-top: 14px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+kbd {
+  display: inline-block;
+  padding: 1px 5px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* ─── 脊线图区域 ─── */
+.section-divider {
+  height: 1px;
+  margin: 32px 0 8px;
+  background: linear-gradient(90deg, transparent, var(--border-subtle), transparent);
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 14px;
+  letter-spacing: 0.02em;
+}
+
+.ridgeline-wrapper {
+  position: relative;
+  width: 100%;
+  max-height: 500px;
+  overflow-y: auto;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  box-shadow:
+    0 0 0 1px rgba(180, 60, 255, 0.04),
+    0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* 自定义滚动条 */
+.ridgeline-wrapper::-webkit-scrollbar {
+  width: 6px;
+}
+.ridgeline-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+.ridgeline-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
+}
+.ridgeline-wrapper::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+#ridgelineCanvas {
+  display: block;
+  width: 100%;
+  cursor: pointer;
+}
+
+/* ─── 响应式 ─── */
+@media (max-width: 640px) {
+  .page {
+    padding: 12px 12px 30px;
+  }
+  h1 {
+    font-size: 18px;
+  }
+  .header {
+    flex-wrap: wrap;
+  }
+  .mode-toggle {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+  .mode-btn {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+  .stats-bar {
+    padding: 10px 12px;
+  }
+  .stat-item {
+    min-width: 80px;
+  }
+  .speed-group {
+    flex-wrap: wrap;
+  }
+  .shortcuts-hint {
+    display: none;
+  }
+  .toolbar {
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 6px 8px;
+  }
+  /* NOTE: 手机端搜索框独占一行 */
+  .toolbar-search {
+    flex-basis: 100%;
+    min-width: 0;
+    max-width: none;
+  }
+  /* NOTE: 手机端第二行模式按钮默认收起 */
+  .mode-row-round {
+    display: none;
+  }
+  .mode-row-round.expanded {
+    display: flex;
+  }
+  .mode-expand-btn {
+    display: inline-block;
+  }
+}
+
+/* ─── 工具栏 (搜索 + 项目 + CSV) ─── */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 8px 12px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  backdrop-filter: blur(12px);
+  /* NOTE: 创建 stacking context，让内部 dropdown (z-index:1000) 浮于 canvas 之上 */
+  position: relative;
+  z-index: 100;
+}
+
+.toolbar-btn {
+  padding: 6px 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.toolbar-btn:hover {
+  border-color: var(--accent-cyan);
+  color: var(--text-primary);
+}
+
+.toolbar-select {
+  padding: 6px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: rgba(20, 20, 40, 0.8);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  outline: none;
+}
+.toolbar-select:focus {
+  border-color: var(--accent-cyan);
+}
+
+.toolbar-search {
+  flex: 1;
+  min-width: 120px;
+}
+
+/* ─── 多选手 Chip 标签 ─── */
+.player-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.player-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border: 1px solid;
+  border-radius: 16px;
+  font-size: 12px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.player-chip.active {
+  font-weight: 600;
+}
+
+.player-chip .chip-remove {
+  margin-left: 2px;
+  font-size: 10px;
+  opacity: 0.4;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.player-chip .chip-remove:hover {
+  opacity: 1;
+}
+/* ─── 视图模式切换 ─── */
+.view-mode-group {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: flex;
+  gap: 2px;
+  z-index: 10;
+}
+.view-btn {
+  padding: 3px 8px;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 6px;
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.4);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.view-btn:hover {
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.7);
+}
+.view-btn.active {
+  background: rgba(0,230,255,0.15);
+  border-color: rgba(0,230,255,0.4);
+  color: rgba(0,230,255,0.9);
+}
+
+/* ─── 图例说明 ─── */
+.legend-info-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: rgba(255,255,255,0.4);
+  font-size: 18px;
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+.legend-info-btn:hover {
+  color: rgba(255,255,255,0.8);
+}
+
+/* NOTE: 全屏按钮 */
+.fullscreen-btn {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 6px;
+  background: rgba(0,0,0,0.4);
+  color: rgba(255,255,255,0.4);
+  font-size: 16px;
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.fullscreen-btn:hover {
+  color: rgba(255,255,255,0.8);
+  border-color: var(--accent-cyan);
+  background: rgba(0,230,255,0.1);
+}
+.legend-tooltip {
+  display: none;
+  position: absolute;
+  top: 38px;
+  right: 8px;
+  background: rgba(12, 12, 24, 0.95);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  padding: 10px 14px;
+  z-index: 20;
+  font-size: 12px;
+  line-height: 1.8;
+  color: rgba(255,255,255,0.8);
+  backdrop-filter: blur(8px);
+  /* NOTE: 防止溢出 canvas-wrapper 的 overflow:hidden 被裁切 */
+  max-height: calc(100% - 48px);
+  overflow-y: auto;
+}
+.legend-tooltip.visible { display: block; }
+.legend-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  cursor: pointer;
+  font-size: 12px;
+  white-space: nowrap;
+  user-select: none;
+}
+.legend-toggle input[type="checkbox"] {
+  display: none;
+}
+/* iOS 药丸开关 */
+.toggle-pill {
+  position: relative;
+  width: 38px;
+  height: 16px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 8px;
+  margin-left: auto;
+  transition: background 0.25s;
+  flex-shrink: 0;
+}
+.toggle-pill::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 12px;
+  background: white;
+  border-radius: 6px;
+  transition: all 0.25s;
+}
+input:checked + .toggle-pill {
+  background: #34c759;
+}
+input:checked + .toggle-pill::after {
+  width: 22px;
+  transform: translateX(12px);
+}
+.legend-diamond { color: #00e6ff; }
+.legend-circle  { color: rgba(0,230,255,0.7); }
+.legend-ghost   { color: rgba(0,230,255,0.3); }
+
+/* ─── 同步模式切换 ─── */
+.sync-group {
+  display: flex;
+  gap: 2px;
+  margin-left: 8px;
+}
+.sync-btn {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.15);
+  color: var(--text-secondary);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.sync-btn.active {
+  background: rgba(0, 230, 255, 0.15);
+  border-color: rgba(0, 230, 255, 0.4);
+  color: var(--text-primary);
+}
+
+/* ─── CSV 选人菜单 ─── */
+.csv-player-menu {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  margin-bottom: 6px;
+  background: rgba(20, 20, 40, 0.95);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px;
+  padding: 4px 0;
+  min-width: 200px;
+  z-index: 2000;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+.csv-menu-item {
+  padding: 8px 14px;
+  font-size: 13px;
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: background 0.15s;
+}
+.csv-menu-item:hover {
+  background: rgba(255,255,255,0.08);
+}
+
+/* ─── Loading Overlay ─── */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  background: rgba(10, 10, 20, 0.85);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.15);
+  border-top-color: var(--accent-cyan);
+  border-radius: 50%;
+  animation: spinLoader 0.7s linear infinite;
+}
+
+@keyframes spinLoader { to { transform: rotate(360deg); } }
+
+.loading-text {
+  color: var(--text-secondary);
+  font-size: 14px;
+}

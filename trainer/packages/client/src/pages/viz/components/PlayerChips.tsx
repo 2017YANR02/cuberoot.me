@@ -2,7 +2,7 @@
 // 1:1 翻译自 viz.js updatePlayerChips()
 
 import { useVizStore } from '../stores/viz_store';
-import { playerHSL, escapeHtml } from '../engine/data_fetch';
+import { playerHSL } from '../engine/data_fetch';
 
 export default function PlayerChips() {
   const players = useVizStore(s => s.players);

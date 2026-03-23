@@ -25,8 +25,6 @@ export default function RidgelineCanvas({ highlightSolveIdx }: RidgelineCanvasPr
   const xMin = useVizStore(s => s.xMin);
   const xMax = useVizStore(s => s.xMax);
   const minBandwidth = useVizStore(s => s.minBandwidth);
-  const windowSize = useVizStore(s => s.windowSize);
-  const maxFrame = useVizStore(s => s.maxFrame);
   const viewMode = useVizStore(s => s.viewMode);
 
   // NOTE: 状态缓存 — groups 和 KDEs
