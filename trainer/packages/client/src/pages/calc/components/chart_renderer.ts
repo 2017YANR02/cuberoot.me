@@ -293,11 +293,11 @@ function drawGrid(): void {
 
     // 标签
     const tLabel = createSvgElement('text', {
-      x: gp.vbW - 2, y: ty - 4,
+      x: BAR_START - 2, y: ty - 4,
       'text-anchor': 'end', fill: '#E91E63',
       'font-size': 10, 'font-weight': '600',
     });
-    tLabel.textContent = 'Target: ' + formatTime(tavg, false, false, true);
+    tLabel.textContent = formatTime(tavg, false, false, true);
     gGrid.appendChild(tLabel);
   }
 
