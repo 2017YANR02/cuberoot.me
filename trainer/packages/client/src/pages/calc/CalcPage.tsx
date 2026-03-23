@@ -133,7 +133,18 @@ export function CalcPage() {
     setMbfMode(event === '333mbf' || event === '333mbo');
     // NOTE: 清除 confetti key — 原版 chart.js#147-151
     lastConfettiKey = '';
-    loadDefaults(event);
+    loadDefaults(event, () => {
+      // NOTE: 项目切换后也用 WR Average 填充 Target（原版 app.js#155-157）
+      const wr12 = getAvgWR12(event);
+      if (wr12) {
+        const s = useCalcStore.getState();
+        for (let p = 0; p < 2; p++) {
+          if (s.getTargetAvg(s.seedOn + p) === 0) {
+            s.setTargetAvg(s.seedOn + p, wr12[p]);
+          }
+        }
+      }
+    });
   }, [event]);
 
   // ── 秒表 — 原版 app.js#441-503 ──
