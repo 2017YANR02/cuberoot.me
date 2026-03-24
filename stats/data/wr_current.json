@@ -1,0 +1,399 @@
+{
+  "id": "wr_current",
+  "title": "Current world records",
+  "titleZh": "当前世界纪录",
+  "note": "Shows the current world record single and average for each official event.",
+  "noteZh": "显示每个官方项目的当前世界纪录单次和平均。",
+  "header": [
+    {
+      "key": "event",
+      "label": "Event",
+      "labelZh": "项目",
+      "align": "left"
+    },
+    {
+      "key": "type",
+      "label": "Type",
+      "labelZh": "类型",
+      "align": "left"
+    },
+    {
+      "key": "result",
+      "label": "Result",
+      "labelZh": "成绩",
+      "align": "right"
+    },
+    {
+      "key": "person",
+      "label": "Person",
+      "labelZh": "选手",
+      "align": "left"
+    },
+    {
+      "key": "date",
+      "label": "Date",
+      "labelZh": "日期",
+      "align": "left"
+    },
+    {
+      "key": "competition",
+      "label": "Competition",
+      "labelZh": "比赛",
+      "align": "left"
+    }
+  ],
+  "rows": [
+    [
+      "2x2x2 Cube",
+      "Single",
+      "0.39",
+      "[Ziyu Ye (叶梓渝)](https://www.worldcubeassociation.org/persons/2021YEZI01)",
+      "2025-10-25",
+      "[Hefei Open 2025](https://www.worldcubeassociation.org/competitions/HefeiOpen2025)"
+    ],
+    [
+      "2x2x2 Cube",
+      "Average",
+      "0.86",
+      "[Sujan Feist](https://www.worldcubeassociation.org/persons/2016FEIS01)",
+      "2025-12-13",
+      "[Kids America Christmas OH 2025](https://www.worldcubeassociation.org/competitions/KidsAmericaChristmasOH2025)"
+    ],
+    [
+      "Rubik's Cube",
+      "Single",
+      "2.76",
+      "[Teodor Zajder](https://www.worldcubeassociation.org/persons/2021ZAJD03)",
+      "2026-02-07",
+      "[GLS Big Cubes Gdańsk 2026](https://www.worldcubeassociation.org/competitions/GLSBigCubesGdansk2026)"
+    ],
+    [
+      "Rubik's Cube",
+      "Average",
+      "3.84",
+      "[Xuanyi Geng (耿暄一)](https://www.worldcubeassociation.org/persons/2023GENG02)",
+      "2026-01-10",
+      "[Beijing Winter 2026](https://www.worldcubeassociation.org/competitions/BeijingWinter2026)"
+    ],
+    [
+      "4x4x4 Cube",
+      "Single",
+      "15.18",
+      "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
+      "2025-12-06",
+      "[Spanish Championship 2025](https://www.worldcubeassociation.org/competitions/SpanishChampionship2025)"
+    ],
+    [
+      "4x4x4 Cube",
+      "Average",
+      "18.56",
+      "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
+      "2026-01-17",
+      "[Seoul Winter 2026](https://www.worldcubeassociation.org/competitions/SeoulWinter2026)"
+    ],
+    [
+      "5x5x5 Cube",
+      "Single",
+      "30.45",
+      "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
+      "2024-11-01",
+      "[WCA Asian Championship 2024](https://www.worldcubeassociation.org/competitions/RubiksWCAAsianChampionship2024)"
+    ],
+    [
+      "5x5x5 Cube",
+      "Average",
+      "34.31",
+      "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
+      "2025-07-03",
+      "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025)"
+    ],
+    [
+      "6x6x6 Cube",
+      "Single",
+      "57.69",
+      "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+      "2025-04-26",
+      "[Burbank Big Cubes 2025](https://www.worldcubeassociation.org/competitions/BurbankBigCubes2025)"
+    ],
+    [
+      "6x6x6 Cube",
+      "Average",
+      "1:05.04",
+      "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+      "2025-10-04",
+      "[Nub Open Trabuco Hills Fall 2025](https://www.worldcubeassociation.org/competitions/NubOpenTrabucoHillsFall2025)"
+    ],
+    [
+      "7x7x7 Cube",
+      "Single",
+      "1:33.48",
+      "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+      "2025-10-04",
+      "[Nub Open Trabuco Hills Fall 2025](https://www.worldcubeassociation.org/competitions/NubOpenTrabucoHillsFall2025)"
+    ],
+    [
+      "7x7x7 Cube",
+      "Average",
+      "1:36.86",
+      "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+      "2025-10-04",
+      "[Nub Open Trabuco Hills Fall 2025](https://www.worldcubeassociation.org/competitions/NubOpenTrabucoHillsFall2025)"
+    ],
+    [
+      "3x3x3 Blindfolded",
+      "Single",
+      "11.67",
+      "[Charlie Eggins](https://www.worldcubeassociation.org/persons/2019EGGI02)",
+      "2026-01-10",
+      "[Cubing at The Cube 2026](https://www.worldcubeassociation.org/competitions/CubingatTheCube2026)"
+    ],
+    [
+      "3x3x3 Blindfolded",
+      "Average",
+      "14.05",
+      "[Tommy Cherry](https://www.worldcubeassociation.org/persons/2015CHER07)",
+      "2024-07-25",
+      "[WCA European Championship 2024](https://www.worldcubeassociation.org/competitions/Euro2024)"
+    ],
+    [
+      "3x3x3 Blindfolded",
+      "Average",
+      "14.05",
+      "[Charlie Eggins](https://www.worldcubeassociation.org/persons/2019EGGI02)",
+      "2026-01-10",
+      "[Cubing at The Cube 2026](https://www.worldcubeassociation.org/competitions/CubingatTheCube2026)"
+    ],
+    [
+      "3x3x3 Fewest Moves",
+      "Single",
+      "16",
+      "[Sebastiano Tronto](https://www.worldcubeassociation.org/persons/2011TRON02)",
+      "2019-06-15",
+      "[FMC 2019](https://www.worldcubeassociation.org/competitions/FMC2019)"
+    ],
+    [
+      "3x3x3 Fewest Moves",
+      "Single",
+      "16",
+      "[Levi Gibson](https://www.worldcubeassociation.org/persons/2018GIBS04)",
+      "2024-06-23",
+      "[Ashfield Summer Challenge 2024](https://www.worldcubeassociation.org/competitions/AshfieldSummerChallenge2024)"
+    ],
+    [
+      "3x3x3 Fewest Moves",
+      "Single",
+      "16",
+      "[Aedan Bryant](https://www.worldcubeassociation.org/persons/2017BRYA06)",
+      "2024-06-23",
+      "[Ashfield Summer Challenge 2024](https://www.worldcubeassociation.org/competitions/AshfieldSummerChallenge2024)"
+    ],
+    [
+      "3x3x3 Fewest Moves",
+      "Single",
+      "16",
+      "[Jacob Sherwen Brown](https://www.worldcubeassociation.org/persons/2022BROW01)",
+      "2024-10-26",
+      "[Rubik's UK Championship FMC 2024](https://www.worldcubeassociation.org/competitions/RubiksUKChampionshipFMC2024)"
+    ],
+    [
+      "3x3x3 Fewest Moves",
+      "Average",
+      "19.67",
+      "[Radomił Baran](https://www.worldcubeassociation.org/persons/2020BARA02)",
+      "2025-03-01",
+      "[5BLD Masters Opole 2025](https://www.worldcubeassociation.org/competitions/5BLDMastersOpole2025)"
+    ],
+    [
+      "3x3x3 One-Handed",
+      "Single",
+      "5.66",
+      "[Dhruva Sai Meruva](https://www.worldcubeassociation.org/persons/2021MERU01)",
+      "2024-10-04",
+      "[Swiss Nationals 2024](https://www.worldcubeassociation.org/competitions/SwissNationals2024)"
+    ],
+    [
+      "3x3x3 One-Handed",
+      "Average",
+      "7.72",
+      "[Luke Garrett](https://www.worldcubeassociation.org/persons/2017GARR05)",
+      "2025-03-09",
+      "[Chicagoland Newcomers 2025](https://www.worldcubeassociation.org/competitions/ChicagolandNewcomers2025)"
+    ],
+    [
+      "Megaminx",
+      "Single",
+      "21.99",
+      "[Timofei Tarasenko](https://www.worldcubeassociation.org/persons/2019TARA09)",
+      "2025-12-06",
+      "[Tashkent Open 2025](https://www.worldcubeassociation.org/competitions/TashkentOpen2025)"
+    ],
+    [
+      "Megaminx",
+      "Average",
+      "24.38",
+      "[Timofei Tarasenko](https://www.worldcubeassociation.org/persons/2019TARA09)",
+      "2025-12-06",
+      "[Tashkent Open 2025](https://www.worldcubeassociation.org/competitions/TashkentOpen2025)"
+    ],
+    [
+      "Pyraminx",
+      "Single",
+      "0.73",
+      "[Simon Kellum](https://www.worldcubeassociation.org/persons/2016KELL12)",
+      "2023-12-21",
+      "[Middleton Meetup Thursday 2023](https://www.worldcubeassociation.org/competitions/MiddletonMeetupThursday2023)"
+    ],
+    [
+      "Pyraminx",
+      "Average",
+      "1.14",
+      "[Lingkun Jiang (姜凌坤)](https://www.worldcubeassociation.org/persons/2019JIAN54)",
+      "2025-12-27",
+      "[Zhengzhou Zest 2025](https://www.worldcubeassociation.org/competitions/ZhengzhouZest2025)"
+    ],
+    [
+      "Rubik's Clock",
+      "Single",
+      "1.53",
+      "[Lachlan Gibson](https://www.worldcubeassociation.org/persons/2022GIBS04)",
+      "2025-09-27",
+      "[Hasty Hastings 2025](https://www.worldcubeassociation.org/competitions/HastyHastings2025)"
+    ],
+    [
+      "Rubik's Clock",
+      "Average",
+      "2.24",
+      "[Brendyn Dunagan](https://www.worldcubeassociation.org/persons/2021DUNA01)",
+      "2025-12-13",
+      "[Temecula Valley Winter 2025](https://www.worldcubeassociation.org/competitions/TemeculaValleyWinter2025)"
+    ],
+    [
+      "Skewb",
+      "Single",
+      "0.73",
+      "[Vojtěch Grohmann](https://www.worldcubeassociation.org/persons/2021GROH01)",
+      "2026-03-07",
+      "[Głuszyca Open 2026](https://www.worldcubeassociation.org/competitions/GluszycaOpen2026)"
+    ],
+    [
+      "Skewb",
+      "Average",
+      "1.37",
+      "[Ignacy Samselski](https://www.worldcubeassociation.org/persons/2022SAMS03)",
+      "2025-06-14",
+      "[CFL Justynów 2025](https://www.worldcubeassociation.org/competitions/CFLJustynow2025)"
+    ],
+    [
+      "Square-1",
+      "Single",
+      "3.40",
+      "[Hassan Khanani](https://www.worldcubeassociation.org/persons/2018KHAN26)",
+      "2026-01-24",
+      "[Steel City Sprint PA 2026](https://www.worldcubeassociation.org/competitions/SteelCitySprint2026)"
+    ],
+    [
+      "Square-1",
+      "Average",
+      "4.63",
+      "[Sameer Aggarwal](https://www.worldcubeassociation.org/persons/2017AGGA01)",
+      "2025-02-01",
+      "[Cubing in Southern Oregon 2025](https://www.worldcubeassociation.org/competitions/CubinginSouthernOregon2025)"
+    ],
+    [
+      "4x4x4 Blindfolded",
+      "Single",
+      "51.96",
+      "[Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04)",
+      "2023-01-28",
+      "[4BLD in a Madison Hall 2023](https://www.worldcubeassociation.org/competitions/4BLDinaMadisonHall2023)"
+    ],
+    [
+      "4x4x4 Blindfolded",
+      "Average",
+      "59.39",
+      "[Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04)",
+      "2025-06-13",
+      "[New York Multimate PBQ II 2025](https://www.worldcubeassociation.org/competitions/NewYorkMultimatePBQII2025)"
+    ],
+    [
+      "5x5x5 Blindfolded",
+      "Single",
+      "1:58.59",
+      "[Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04)",
+      "2026-01-02",
+      "[Multi Mayhem VA 2026](https://www.worldcubeassociation.org/competitions/MultiMayhemVA2026)"
+    ],
+    [
+      "5x5x5 Blindfolded",
+      "Average",
+      "2:27.63",
+      "[Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04)",
+      "2019-12-15",
+      "[MCC Epsilon 2019](https://www.worldcubeassociation.org/competitions/MichiganCubingClubEpsilon2019)"
+    ],
+    [
+      "3x3x3 Multi-Blind",
+      "Single",
+      "63/65 58:23",
+      "[Graham Siggins](https://www.worldcubeassociation.org/persons/2016SIGG01)",
+      "2025-10-18",
+      "[Please Be Quiet Reno 2025](https://www.worldcubeassociation.org/competitions/PleaseBeQuietReno2025)"
+    ],
+    [
+      "3x3x3 With Feet",
+      "Single",
+      "15.56",
+      "[Mohammed Aiman Koli](https://www.worldcubeassociation.org/persons/2017KOLI01)",
+      "2019-12-27",
+      "[VJTI Mumbai Cube Open 2019](https://www.worldcubeassociation.org/competitions/VJTIMumbaiCubeOpen2019)"
+    ],
+    [
+      "3x3x3 With Feet",
+      "Average",
+      "19.90",
+      "[Lim Hung (林弘)](https://www.worldcubeassociation.org/persons/2016HUNG08)",
+      "2019-12-21",
+      "[Medan 10th Anniversary 2019](https://www.worldcubeassociation.org/competitions/Medan10thAnniversary2019)"
+    ],
+    [
+      "Rubik's Magic",
+      "Single",
+      "0.69",
+      "[Yuxuan Wang (王宇轩)](https://www.worldcubeassociation.org/persons/2009WANG13)",
+      "2011-04-23",
+      "[Beijing Spring 2011](https://www.worldcubeassociation.org/competitions/BeijingSpring2011)"
+    ],
+    [
+      "Rubik's Magic",
+      "Average",
+      "0.76",
+      "[Yuxuan Wang (王宇轩)](https://www.worldcubeassociation.org/persons/2009WANG13)",
+      "2011-07-31",
+      "[Beijing Summer Open 2011](https://www.worldcubeassociation.org/competitions/BeijingSummer2011)"
+    ],
+    [
+      "Master Magic",
+      "Single",
+      "1.66",
+      "[Yuxuan Wang (王宇轩)](https://www.worldcubeassociation.org/persons/2009WANG13)",
+      "2012-12-23",
+      "[Tianjin Winter 2012](https://www.worldcubeassociation.org/competitions/TianjinWinter2012)"
+    ],
+    [
+      "Master Magic",
+      "Average",
+      "1.75",
+      "[Ernie Pulchny](https://www.worldcubeassociation.org/persons/2010PULC01)",
+      "2011-08-12",
+      "[US Nationals 2011](https://www.worldcubeassociation.org/competitions/USNationals2011)"
+    ],
+    [
+      "Rubik's Cube: Multiple blind old style",
+      "Single",
+      "24/24 2:15:57",
+      "[Tim Habermaas](https://www.worldcubeassociation.org/persons/2007HABE01)",
+      "2008-04-19",
+      "[German Open 2008](https://www.worldcubeassociation.org/competitions/GermanOpen2008)"
+    ]
+  ]
+}

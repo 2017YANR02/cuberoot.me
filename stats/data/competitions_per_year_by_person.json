@@ -1,0 +1,633 @@
+{
+  "id": "competitions_per_year_by_person",
+  "title": "Competitions per year by person",
+  "titleZh": "每年每人比赛数",
+  "header": [
+    {
+      "key": "competitions_per_year",
+      "label": "Competitions per year",
+      "labelZh": "年均比赛数",
+      "align": "right"
+    },
+    {
+      "key": "competitions",
+      "label": "Competitions",
+      "labelZh": "比赛",
+      "align": "right"
+    },
+    {
+      "key": "years",
+      "label": "Years",
+      "labelZh": "年数",
+      "align": "right"
+    },
+    {
+      "key": "person",
+      "label": "Person",
+      "labelZh": "选手",
+      "align": "left"
+    }
+  ],
+  "rows": [
+    [
+      "76.05",
+      243,
+      "3.20",
+      "[Filip Åström](https://www.worldcubeassociation.org/persons/2023ASTR01)"
+    ],
+    [
+      "62.10",
+      347,
+      "5.59",
+      "[Kacper Paweł Dworak](https://www.worldcubeassociation.org/persons/2020DWOR01)"
+    ],
+    [
+      "56.83",
+      262,
+      "4.61",
+      "[Peter Hugosson-Miller](https://www.worldcubeassociation.org/persons/2021HUGO01)"
+    ],
+    [
+      "40.89",
+      179,
+      "4.38",
+      "[Achim Spies](https://www.worldcubeassociation.org/persons/2021SPIE01)"
+    ],
+    [
+      "37.22",
+      96,
+      "2.58",
+      "[Erland Flodman](https://www.worldcubeassociation.org/persons/2023FLOD01)"
+    ],
+    [
+      "36.92",
+      47,
+      "1.27",
+      "[Leon Granér](https://www.worldcubeassociation.org/persons/2024GRAN16)"
+    ],
+    [
+      "36.70",
+      125,
+      "3.41",
+      "[Ludwig Ivarsson](https://www.worldcubeassociation.org/persons/2022IVAR01)"
+    ],
+    [
+      "34.94",
+      88,
+      "2.52",
+      "[Axel Juan Pablo Moreno Rodriguez](https://www.worldcubeassociation.org/persons/2023RODR80)"
+    ],
+    [
+      "34.74",
+      111,
+      "3.20",
+      "[Dante Tellechea Hultmark](https://www.worldcubeassociation.org/persons/2023HULT01)"
+    ],
+    [
+      "33.88",
+      73,
+      "2.15",
+      "[Matteo Rodríguez Colorado](https://www.worldcubeassociation.org/persons/2024COLO04)"
+    ],
+    [
+      "33.84",
+      296,
+      "8.75",
+      "[Luke Garrett](https://www.worldcubeassociation.org/persons/2017GARR05)"
+    ],
+    [
+      "33.67",
+      79,
+      "2.35",
+      "[Juan Miguel Y. Magallanes](https://www.worldcubeassociation.org/persons/2023MAGA09)"
+    ],
+    [
+      "33.54",
+      145,
+      "4.32",
+      "[Saisabari Ramesh](https://www.worldcubeassociation.org/persons/2021RAME01)"
+    ],
+    [
+      "33.46",
+      119,
+      "3.56",
+      "[Rex Ozsvath](https://www.worldcubeassociation.org/persons/2022OZSV04)"
+    ],
+    [
+      "33.18",
+      118,
+      "3.56",
+      "[Nico Ozsvath](https://www.worldcubeassociation.org/persons/2022OZSV03)"
+    ],
+    [
+      "32.88",
+      110,
+      "3.35",
+      "[Kyle Capiral](https://www.worldcubeassociation.org/persons/2022CAPI02)"
+    ],
+    [
+      "32.34",
+      112,
+      "3.46",
+      "[Ruby Lu (卢红)](https://www.worldcubeassociation.org/persons/2022LURU01)"
+    ],
+    [
+      "32.03",
+      109,
+      "3.40",
+      "[Eli Rogers](https://www.worldcubeassociation.org/persons/2022ROGE05)"
+    ],
+    [
+      "31.32",
+      103,
+      "3.29",
+      "[Zoei Principe](https://www.worldcubeassociation.org/persons/2022PRIN09)"
+    ],
+    [
+      "31.02",
+      102,
+      "3.29",
+      "[Zian Principe](https://www.worldcubeassociation.org/persons/2022PRIN08)"
+    ],
+    [
+      "30.95",
+      380,
+      "12.28",
+      "[Przemysław Rogalski](https://www.worldcubeassociation.org/persons/2013ROGA02)"
+    ],
+    [
+      "30.57",
+      77,
+      "2.52",
+      "[Jacob Goossens Celis](https://www.worldcubeassociation.org/persons/2023CELI06)"
+    ],
+    [
+      "30.06",
+      40,
+      "1.33",
+      "[Yili Yi](https://www.worldcubeassociation.org/persons/2024YIYI01)"
+    ],
+    [
+      "29.78",
+      75,
+      "2.52",
+      "[Thomas Cabezas](https://www.worldcubeassociation.org/persons/2023CASA08)"
+    ],
+    [
+      "29.25",
+      90,
+      "3.08",
+      "[Lucy Grace Bryson](https://www.worldcubeassociation.org/persons/2023BRYS01)"
+    ],
+    [
+      "28.98",
+      93,
+      "3.21",
+      "[Carson Clark (张卡森)](https://www.worldcubeassociation.org/persons/2023CLAR02)"
+    ],
+    [
+      "28.74",
+      89,
+      "3.10",
+      "[Jacob Bennett](https://www.worldcubeassociation.org/persons/2023BENN04)"
+    ],
+    [
+      "28.39",
+      52,
+      "1.83",
+      "[Ge Shi (石歌)](https://www.worldcubeassociation.org/persons/2024GESH01)"
+    ],
+    [
+      "27.94",
+      290,
+      "10.38",
+      "[AJ Nicholls](https://www.worldcubeassociation.org/persons/2015NICH04)"
+    ],
+    [
+      "27.78",
+      102,
+      "3.67",
+      "[Michael Amarello](https://www.worldcubeassociation.org/persons/2022AMAR09)"
+    ],
+    [
+      "27.32",
+      261,
+      "9.56",
+      "[Simon Kellum](https://www.worldcubeassociation.org/persons/2016KELL12)"
+    ],
+    [
+      "27.19",
+      92,
+      "3.38",
+      "[Shanty Rodríguez](https://www.worldcubeassociation.org/persons/2022CUBI01)"
+    ],
+    [
+      "27.01",
+      109,
+      "4.04",
+      "[Maksymilian Gala](https://www.worldcubeassociation.org/persons/2022GALA01)"
+    ],
+    [
+      "26.96",
+      82,
+      "3.04",
+      "[Luis Tan Hong Yi (陈宏溢)](https://www.worldcubeassociation.org/persons/2023YILU01)"
+    ],
+    [
+      "26.90",
+      337,
+      "12.53",
+      "[Daniel Wallin](https://www.worldcubeassociation.org/persons/2013WALL03)"
+    ],
+    [
+      "26.78",
+      279,
+      "10.42",
+      "[Carter Kucala](https://www.worldcubeassociation.org/persons/2015KUCA01)"
+    ],
+    [
+      "26.66",
+      126,
+      "4.73",
+      "[Maksymilian Kulas](https://www.worldcubeassociation.org/persons/2021KULA02)"
+    ],
+    [
+      "26.40",
+      103,
+      "3.90",
+      "[Imanuel Müller](https://www.worldcubeassociation.org/persons/2022MULL02)"
+    ],
+    [
+      "26.32",
+      81,
+      "3.08",
+      "[Dominic Shoji](https://www.worldcubeassociation.org/persons/2023SHOJ01)"
+    ],
+    [
+      "26.18",
+      379,
+      "14.48",
+      "[Eduard Esteban García Domínguez](https://www.worldcubeassociation.org/persons/2011EDUA01)"
+    ],
+    [
+      "26.06",
+      235,
+      "9.02",
+      "[Braden Richards](https://www.worldcubeassociation.org/persons/2017RICH02)"
+    ],
+    [
+      "25.82",
+      74,
+      "2.87",
+      "[Antoni Szcześniak](https://www.worldcubeassociation.org/persons/2023SZCZ04)"
+    ],
+    [
+      "25.72",
+      90,
+      "3.50",
+      "[Cristhian Damián Fernández Pineda](https://www.worldcubeassociation.org/persons/2022PINE05)"
+    ],
+    [
+      "25.69",
+      114,
+      "4.44",
+      "[Niklas Aasen Eliasson](https://www.worldcubeassociation.org/persons/2021ELIA01)"
+    ],
+    [
+      "25.59",
+      87,
+      "3.40",
+      "[Darshan Bhavanasi](https://www.worldcubeassociation.org/persons/2022BHAV01)"
+    ],
+    [
+      "25.31",
+      72,
+      "2.84",
+      "[Jack Hamilton](https://www.worldcubeassociation.org/persons/2023HAMI08)"
+    ],
+    [
+      "25.16",
+      75,
+      "2.98",
+      "[Jayden Clark](https://www.worldcubeassociation.org/persons/2023CLAR13)"
+    ],
+    [
+      "25.13",
+      190,
+      "7.56",
+      "[Hassan Khanani](https://www.worldcubeassociation.org/persons/2018KHAN26)"
+    ],
+    [
+      "25.12",
+      85,
+      "3.38",
+      "[August Barnard](https://www.worldcubeassociation.org/persons/2022BARN21)"
+    ],
+    [
+      "25.04",
+      221,
+      "8.83",
+      "[Catalina Herrera López](https://www.worldcubeassociation.org/persons/2017LOPE31)"
+    ],
+    [
+      "25.04",
+      90,
+      "3.59",
+      "[Sebastian Stone](https://www.worldcubeassociation.org/persons/2022STON09)"
+    ],
+    [
+      "24.94",
+      93,
+      "3.73",
+      "[Ayden Dincher](https://www.worldcubeassociation.org/persons/2022DINC01)"
+    ],
+    [
+      "24.92",
+      79,
+      "3.17",
+      "[Kenji Gipson-Nahman](https://www.worldcubeassociation.org/persons/2023GIPS01)"
+    ],
+    [
+      "24.80",
+      63,
+      "2.54",
+      "[Xuanyi Geng (耿暄一)](https://www.worldcubeassociation.org/persons/2023GENG02)"
+    ],
+    [
+      "24.76",
+      52,
+      "2.10",
+      "[Jalen Shareef](https://www.worldcubeassociation.org/persons/2024SHAR07)"
+    ],
+    [
+      "24.66",
+      48,
+      "1.95",
+      "[Gabriel Vasconcellos Zavrisko dos Santos](https://www.worldcubeassociation.org/persons/2024SANT39)"
+    ],
+    [
+      "24.62",
+      54,
+      "2.19",
+      "[Robert Alan Marks](https://www.worldcubeassociation.org/persons/2024MARK03)"
+    ],
+    [
+      "24.61",
+      322,
+      "13.08",
+      "[Chris Martin](https://www.worldcubeassociation.org/persons/2013MART03)"
+    ],
+    [
+      "24.55",
+      115,
+      "4.68",
+      "[Jonathan Dammann](https://www.worldcubeassociation.org/persons/2021DAMM01)"
+    ],
+    [
+      "24.37",
+      153,
+      "6.28",
+      "[Keenan Darkins](https://www.worldcubeassociation.org/persons/2019DARK02)"
+    ],
+    [
+      "24.18",
+      67,
+      "2.77",
+      "[Dorian Chan](https://www.worldcubeassociation.org/persons/2023DORI01)"
+    ],
+    [
+      "24.14",
+      369,
+      "15.29",
+      "[Dennis Rosero](https://www.worldcubeassociation.org/persons/2010ROSE03)"
+    ],
+    [
+      "24.13",
+      268,
+      "11.11",
+      "[Glen Goh Wee Zhuan (吴洧全)](https://www.worldcubeassociation.org/persons/2015ZHUA01)"
+    ],
+    [
+      "24.08",
+      82,
+      "3.41",
+      "[Leo Johansson](https://www.worldcubeassociation.org/persons/2022JOHA08)"
+    ],
+    [
+      "24.00",
+      227,
+      "9.46",
+      "[Daniel Mullen](https://www.worldcubeassociation.org/persons/2016MULL04)"
+    ],
+    [
+      "23.64",
+      75,
+      "3.17",
+      "[Taj Bressert](https://www.worldcubeassociation.org/persons/2023BRES01)"
+    ],
+    [
+      "23.64",
+      75,
+      "3.17",
+      "[Taj Bressert](https://www.worldcubeassociation.org/persons/2023BRES01)"
+    ],
+    [
+      "23.42",
+      177,
+      "7.56",
+      "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)"
+    ],
+    [
+      "23.36",
+      88,
+      "3.77",
+      "[Majk Tomas](https://www.worldcubeassociation.org/persons/2022TOMA05)"
+    ],
+    [
+      "23.28",
+      102,
+      "4.38",
+      "[Paolo Marino](https://www.worldcubeassociation.org/persons/2021MARI04)"
+    ],
+    [
+      "23.22",
+      63,
+      "2.71",
+      "[David Nesiba](https://www.worldcubeassociation.org/persons/2023NESI01)"
+    ],
+    [
+      "23.03",
+      175,
+      "7.60",
+      "[Łukasz Dubicki](https://www.worldcubeassociation.org/persons/2018DUBI01)"
+    ],
+    [
+      "22.96",
+      101,
+      "4.40",
+      "[Chiara Marcucci](https://www.worldcubeassociation.org/persons/2021MARC03)"
+    ],
+    [
+      "22.95",
+      57,
+      "2.48",
+      "[Manuel Francisco Beltrán](https://www.worldcubeassociation.org/persons/2023BELT07)"
+    ],
+    [
+      "22.92",
+      78,
+      "3.40",
+      "[Clem Tucker](https://www.worldcubeassociation.org/persons/2022TUCK09)"
+    ],
+    [
+      "22.92",
+      78,
+      "3.40",
+      "[Tommy Stady](https://www.worldcubeassociation.org/persons/2022STAD01)"
+    ],
+    [
+      "22.91",
+      67,
+      "2.92",
+      "[Rahul Bollini](https://www.worldcubeassociation.org/persons/2023BOLL01)"
+    ],
+    [
+      "22.90",
+      56,
+      "2.44",
+      "[Sid Shivnath](https://www.worldcubeassociation.org/persons/2023SHIV05)"
+    ],
+    [
+      "22.52",
+      36,
+      "1.60",
+      "[Ramanujan Srinivasan](https://www.worldcubeassociation.org/persons/2024SRIN06)"
+    ],
+    [
+      "22.49",
+      58,
+      "2.58",
+      "[Ankit A](https://www.worldcubeassociation.org/persons/2023AANK01)"
+    ],
+    [
+      "22.42",
+      78,
+      "3.48",
+      "[Tomasz Szubert](https://www.worldcubeassociation.org/persons/2022SZUB02)"
+    ],
+    [
+      "22.41",
+      47,
+      "2.10",
+      "[Gabriel Subion](https://www.worldcubeassociation.org/persons/2024SUBI01)"
+    ],
+    [
+      "22.29",
+      75,
+      "3.36",
+      "[Liv Coverdale](https://www.worldcubeassociation.org/persons/2022COVE02)"
+    ],
+    [
+      "22.02",
+      218,
+      "9.90",
+      "[Wilfrid Py](https://www.worldcubeassociation.org/persons/2016PYWI01)"
+    ],
+    [
+      "21.98",
+      189,
+      "8.60",
+      "[Harsha Paladugu](https://www.worldcubeassociation.org/persons/2017PALA08)"
+    ],
+    [
+      "21.89",
+      29,
+      "1.33",
+      "[Martin König](https://www.worldcubeassociation.org/persons/2024KONI03)"
+    ],
+    [
+      "21.85",
+      89,
+      "4.07",
+      "[Oliwier Szubert](https://www.worldcubeassociation.org/persons/2022SZUB01)"
+    ],
+    [
+      "21.81",
+      60,
+      "2.75",
+      "[Dereck Samuel Marin Suarez](https://www.worldcubeassociation.org/persons/2023SUAR08)"
+    ],
+    [
+      "21.80",
+      103,
+      "4.73",
+      "[Dominika Warchoł](https://www.worldcubeassociation.org/persons/2021WARC01)"
+    ],
+    [
+      "21.77",
+      67,
+      "3.08",
+      "[Evan Wilson](https://www.worldcubeassociation.org/persons/2023WILS11)"
+    ],
+    [
+      "21.73",
+      74,
+      "3.41",
+      "[Jack Belloni Sahlin](https://www.worldcubeassociation.org/persons/2022SAHL02)"
+    ],
+    [
+      "21.64",
+      84,
+      "3.88",
+      "[Daniel Partridge](https://www.worldcubeassociation.org/persons/2022PART02)"
+    ],
+    [
+      "21.62",
+      57,
+      "2.64",
+      "[Leland Pak](https://www.worldcubeassociation.org/persons/2023PAKL02)"
+    ],
+    [
+      "21.57",
+      44,
+      "2.04",
+      "[Riccardo Fiumefreddo](https://www.worldcubeassociation.org/persons/2024RICC01)"
+    ],
+    [
+      "21.55",
+      63,
+      "2.92",
+      "[Alexander Pastirčák](https://www.worldcubeassociation.org/persons/2023PAST01)"
+    ],
+    [
+      "21.47",
+      250,
+      "11.65",
+      "[Chris Chi](https://www.worldcubeassociation.org/persons/2014CHIC01)"
+    ],
+    [
+      "21.44",
+      89,
+      "4.15",
+      "[Blue James](https://www.worldcubeassociation.org/persons/2022JAME01)"
+    ],
+    [
+      "21.43",
+      73,
+      "3.41",
+      "[Klas Klöfver](https://www.worldcubeassociation.org/persons/2022KLOF01)"
+    ],
+    [
+      "21.42",
+      82,
+      "3.83",
+      "[Curtis Chai](https://www.worldcubeassociation.org/persons/2022CHAI02)"
+    ],
+    [
+      "21.36",
+      69,
+      "3.23",
+      "[Kyle Kayden Renatus](https://www.worldcubeassociation.org/persons/2022HAYL02)"
+    ]
+  ]
+}
