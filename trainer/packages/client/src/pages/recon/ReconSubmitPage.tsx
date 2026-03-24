@@ -1,9 +1,8 @@
 /**
  * 复盘提交/编辑页——迁移自 recon/submit/recon_submit_page.js（2432 行）
- * NOTE: 简化版，保留核心功能：表单字段、实时统计、重复检测
- * 虚拟键盘将在后续版本实现
+ * NOTE: 表单字段、实时统计、重复检测、虚拟键盘
  */
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import type { ReconSolve } from '@cuberoot/shared';
 import { getRecon, addRecon, updateRecon, checkDuplicate, searchSolvers } from '../../utils/recon_api';
@@ -11,6 +10,7 @@ import { computeAllStats } from '../../utils/recon_stats';
 import { parseTimeInput, formatTime, getEventDisplayName, t, RECORD_OPTIONS } from '../../utils/recon_utils';
 import '../../recon.css';
 import './recon_submit.css';
+import CubeVirtualKeyboard from './components/CubeVirtualKeyboard';
 
 // ── 常量 ──
 
@@ -24,6 +24,8 @@ export default function ReconSubmitPage() {
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
   const [loadingEdit, setLoadingEdit] = useState(isEditing);
+  // NOTE: solution textarea ref——虚拟键盘通过 ref 直接操作 DOM
+  const solutionRef = useRef<HTMLTextAreaElement>(null);
 
   // NOTE: 表单字段——与 ReconSolve 字段对齐
   const [form, setForm] = useState<Partial<ReconSolve>>({
@@ -343,13 +345,23 @@ export default function ReconSubmitPage() {
         <label className="submit-field submit-block">
           <span className="submit-label">{t('解法', 'Solution')} *</span>
           <textarea
+            ref={solutionRef}
             rows={12}
-            value={form.solution || ''}
-            onChange={e => setField('solution', e.target.value)}
+            defaultValue={form.solution || ''}
+            onInput={e => setField('solution', (e.target as HTMLTextAreaElement).value)}
             placeholder={`// Cross (5)\nD R2 D' F D F'\n// F2L 1 (8)\nU R U' R' U' F' U F\n...`}
             className="submit-solution-textarea"
           />
         </label>
+        {/* NOTE: 虚拟键盘——紧贴在 solution textarea 下方 */}
+        <CubeVirtualKeyboard
+          textareaRef={solutionRef}
+          onInput={() => {
+            if (solutionRef.current) {
+              setField('solution', solutionRef.current.value);
+            }
+          }}
+        />
 
         {/* 实时统计 */}
         {stats && (
