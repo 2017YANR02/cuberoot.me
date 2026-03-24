@@ -44,6 +44,13 @@ export const BLD_EVENTS: Record<string, string> = Object.fromEntries(
   Object.entries(EVENTS).filter(([id]) => ['333bf', '444bf', '555bf', '333mbf'].includes(id))
 );
 
+// NOTE: 当前官方项目 ID 列表（rank < 900，排除已退役项目 333ft/magic/mmagic/333mbo）
+// 与 Ruby Events::OFFICIAL 对应
+const RETIRED_EVENTS = ['333ft', 'magic', 'mmagic', '333mbo'] as const;
+export const OFFICIAL_EVENTS: string[] = Object.keys(EVENTS).filter(
+  id => !(RETIRED_EVENTS as readonly string[]).includes(id)
+);
+
 // NOTE: 英文名 → 中文名
 export const NAMES_ZH: Record<string, string> = {
   "Rubik's Cube":       '三阶魔方',

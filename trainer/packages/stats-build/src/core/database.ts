@@ -52,3 +52,8 @@ export async function closePool(): Promise<void> {
     pool = null;
   }
 }
+
+// NOTE: 与 Ruby Database::ATTEMPTS_SUBQUERY 对应
+// 从 result_attempts 表中获取各次成绩值（逗号分隔）
+export const ATTEMPTS_SUBQUERY = '(SELECT GROUP_CONCAT(ra.value ORDER BY ra.attempt_number) FROM result_attempts ra WHERE ra.result_id = result.id)';
+
