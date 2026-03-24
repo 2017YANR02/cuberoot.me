@@ -69,13 +69,6 @@ function useScrambleScript() {
     script.async = true;
     document.head.appendChild(script);
 
-    // NOTE: 加载 confetti 特效库（里程碑庆祝用）
-    if (!(window as any).confetti) {
-      const confettiScript = document.createElement('script');
-      confettiScript.src = '/app/confetti.min.js';
-      confettiScript.async = true;
-      document.head.appendChild(confettiScript);
-    }
 
     return () => {
       // NOTE: 不移除 script — 加载后全局持久化
@@ -665,12 +658,6 @@ export default function BattlePage() {
     const handler = (e: Event) => {
       const msg = (e as CustomEvent).detail as string;
       setToastMsg(msg);
-      // NOTE: 触发 confetti（如果已加载）
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const confetti = (window as any).confetti;
-      if (typeof confetti === 'function') {
-        confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
-      }
     };
     window.addEventListener('battle-milestone', handler);
     return () => window.removeEventListener('battle-milestone', handler);
