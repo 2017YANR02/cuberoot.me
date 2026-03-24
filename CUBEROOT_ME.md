@@ -125,6 +125,20 @@ rsync -rltz --delete --exclude='.user.ini' --chmod=D755,F644 ...
 - 宝塔默认自动续签，通常无需操作
 - 手动续签：宝塔面板 → 网站 → `toolkit.cuberoot.me` → SSL → 续签
 
+## Hono 后端（Trainer API）
+
+| 项目 | 值 |
+|------|------|
+| **框架** | Hono 4.x + @hono/node-server |
+| **部署目录** | `/root/trainer-api/` |
+| **端口** | 3001 |
+| **进程管理** | PM2（`trainer-api`，`pm2 startup` 已配置开机自启） |
+| **凭据文件** | `/root/trainer-api/.env`（DB_*, JWT_SECRET） |
+| **API 入口** | `https://toolkit.cuberoot.me/trainer/api/recon/list` 等 |
+| **CI 部署** | `deploy_trainer.yml` → build server dist → rsync → `pm2 restart` |
+
+> Nginx 反代配置：`location /trainer/api/` → `proxy_pass http://127.0.0.1:3001/api/`
+
 ## MariaDB 数据库（Recon 复盘）
 
 | 项目 | 值 |
@@ -132,8 +146,8 @@ rsync -rltz --delete --exclude='.user.ini' --chmod=D755,F644 ...
 | **数据库** | MariaDB 10.5.27 |
 | **数据库名** | `recon_db` |
 | **用户** | `recon_user`（仅限 localhost 连接，外网不可直连） |
-| **凭据文件** | 服务端：`/www/wwwroot/toolkit/recon/api/db_config.php`；本地：`.secrets.md`（均不在 git 中） |
-| **表** | `recons`（复盘数据）、`edits`（编辑覆盖）、`edit_history`（编辑历史） |
+| **凭据文件** | PHP：`/www/wwwroot/toolkit/recon/api/db_config.php`；Hono：`/root/trainer-api/.env`；本地：`.secrets.md`（均不在 git 中） |
+| **表** | `recons`（复盘数据）、`edits`（编辑覆盖）、`edit_history`（编辑历史）、`wca_users`（认证）、`timer_sessions`（计时器同步）、`train_results`（训练记录） |
 
 ### 备份策略
 
