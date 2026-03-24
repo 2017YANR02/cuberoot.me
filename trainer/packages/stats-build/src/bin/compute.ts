@@ -11,8 +11,24 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // NOTE: 统计文件注册表——手动添加新统计
 // 后续可改为自动扫描 statistics/ 目录
 const REGISTRY: Record<string, () => Promise<Record<string, unknown>>> = {
+  'best_medal_collection_from_abroad_by_country': () => import('../statistics/best_medal_collection_from_abroad_by_country.js'),
+  'best_medal_collection_from_abroad_by_person': () => import('../statistics/best_medal_collection_from_abroad_by_person.js'),
+  'complete_competition_winners': () => import('../statistics/complete_competition_winners.js'),
   'current_world_records_by_country': () => import('../statistics/current_world_records_by_country.js'),
+  'fewest_competitors_contest': () => import('../statistics/fewest_competitors_contest.js'),
+  'most_4th_places': () => import('../statistics/most_4th_places.js'),
+  'most_attended_competitions_in_single_month': () => import('../statistics/most_attended_competitions_in_single_month.js'),
+  'most_competitions_abroad': () => import('../statistics/most_competitions_abroad.js'),
+  'most_delegated_competitions': () => import('../statistics/most_delegated_competitions.js'),
+  'most_finals': () => import('../statistics/most_finals.js'),
+  'most_podiums_at_single_competition': () => import('../statistics/most_podiums_at_single_competition.js'),
+  'most_visited_continents': () => import('../statistics/most_visited_continents.js'),
+  'most_visited_countries': () => import('../statistics/most_visited_countries.js'),
+  'potentially_seen_world_records': () => import('../statistics/potentially_seen_world_records.js'),
+  'world_championship_podiums_by_country': () => import('../statistics/world_championship_podiums_by_country.js'),
   'world_championship_podiums_by_person': () => import('../statistics/world_championship_podiums_by_person.js'),
+  'world_records_by_country': () => import('../statistics/world_records_by_country.js'),
+  'world_records_by_person': () => import('../statistics/world_records_by_person.js'),
 };
 
 async function main() {
