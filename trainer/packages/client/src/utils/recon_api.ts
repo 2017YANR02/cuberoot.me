@@ -2,15 +2,17 @@
  * Recon API 客户端——1:1 移植自 recon/recon_api.js（161 行）
  * NOTE: 封装所有复盘后端 API 调用，使用 fetch + Bearer token 认证
  *
- * 当前指向原有 PHP 后端，后续迁移到 Fastify 只需改 API_BASE
+ * 已迁移到 Fastify RESTful 风格（/api/recon/xxx）
  */
 import type {
   ReconSolve, ReconComment, EditHistoryItem,
 } from '@cuberoot/shared';
 import { getWcaId } from '../stores/auth_store';
 
-// NOTE: 开发环境使用相对路径（走 Vite proxy），生产环境直连后端
-const API_BASE = import.meta.env.VITE_RECON_API_BASE || '/recon/api/';
+// NOTE: API 基础路径
+// 开发环境走 Vite proxy（/trainer/api/recon → localhost:3001/api/recon）
+// 生产环境可通过环境变量覆盖
+const API_BASE = import.meta.env.VITE_RECON_API_BASE || '/trainer/api/recon';
 
 // ── 认证 ──
 
@@ -20,29 +22,23 @@ function getToken(): string | null {
 }
 
 /** 构建带 Bearer token 的 headers */
-function authHeaders(): HeadersInit {
+function authHeaders(json = true): HeadersInit {
   const token = getToken();
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
+  const headers: Record<string, string> = {};
+  if (json) headers['Content-Type'] = 'application/json';
+  if (token) headers['Authorization'] = `Bearer ${token}`;
   return headers;
 }
 
 // ── 通用请求 ──
 
-/** GET 请求 */
-async function apiGet<T>(action: string, params: Record<string, string> = {}): Promise<T> {
-  const url = new URL(API_BASE, window.location.origin);
-  url.searchParams.set('action', action);
+/** GET 请求（路径段 + query params） */
+async function apiGet<T>(path: string, params: Record<string, string> = {}): Promise<T> {
+  const url = new URL(`${API_BASE}/${path}`, window.location.origin);
   for (const [k, v] of Object.entries(params)) {
     if (v) url.searchParams.set(k, v);
   }
-  const resp = await fetch(url.toString(), {
-    headers: authHeaders(),
-  });
+  const resp = await fetch(url.toString(), { headers: authHeaders(false) });
   if (!resp.ok) {
     const err = await resp.json().catch(() => ({ error: resp.statusText }));
     throw new Error(err.error || `API error ${resp.status}`);
@@ -51,16 +47,41 @@ async function apiGet<T>(action: string, params: Record<string, string> = {}): P
 }
 
 /** POST 请求 */
-async function apiPost<T>(action: string, body: unknown, params: Record<string, string> = {}): Promise<T> {
-  const url = new URL(API_BASE, window.location.origin);
-  url.searchParams.set('action', action);
-  for (const [k, v] of Object.entries(params)) {
-    if (v) url.searchParams.set(k, v);
-  }
+async function apiPost<T>(path: string, body: unknown): Promise<T> {
+  const url = new URL(`${API_BASE}/${path}`, window.location.origin);
   const resp = await fetch(url.toString(), {
     method: 'POST',
     headers: authHeaders(),
     body: JSON.stringify(body),
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({ error: resp.statusText }));
+    throw new Error(err.error || `API error ${resp.status}`);
+  }
+  return resp.json();
+}
+
+/** PUT 请求 */
+async function apiPut<T>(path: string, body: unknown): Promise<T> {
+  const url = new URL(`${API_BASE}/${path}`, window.location.origin);
+  const resp = await fetch(url.toString(), {
+    method: 'PUT',
+    headers: authHeaders(),
+    body: JSON.stringify(body),
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({ error: resp.statusText }));
+    throw new Error(err.error || `API error ${resp.status}`);
+  }
+  return resp.json();
+}
+
+/** DELETE 请求 */
+async function apiDelete<T>(path: string): Promise<T> {
+  const url = new URL(`${API_BASE}/${path}`, window.location.origin);
+  const resp = await fetch(url.toString(), {
+    method: 'DELETE',
+    headers: authHeaders(false),
   });
   if (!resp.ok) {
     const err = await resp.json().catch(() => ({ error: resp.statusText }));
@@ -78,25 +99,25 @@ export async function listRecons(wcaId?: string): Promise<ReconSolve[]> {
 
 /** 获取单条复盘（含编辑覆盖层合并） */
 export async function getRecon(id: number): Promise<ReconSolve> {
-  return apiGet<ReconSolve>('get', { id: String(id) });
+  return apiGet<ReconSolve>(String(id));
 }
 
 /** 新增复盘 */
 export async function addRecon(solve: Partial<ReconSolve>): Promise<ReconSolve> {
-  return apiPost<ReconSolve>('add', solve);
+  return apiPost<ReconSolve>('', solve);
 }
 
 /** 更新复盘指定字段 */
 export async function updateRecon(id: number, fields: Partial<ReconSolve>): Promise<{ ok: boolean }> {
-  return apiPost<{ ok: boolean }>('update', fields, { id: String(id) });
+  return apiPut<{ ok: boolean }>(String(id), fields);
 }
 
 /** 删除复盘 */
 export async function deleteRecon(id: number): Promise<{ ok: boolean }> {
-  return apiGet<{ ok: boolean }>('delete', { id: String(id) });
+  return apiDelete<{ ok: boolean }>(String(id));
 }
 
-// ── 编辑覆盖层 ──
+// ── 编辑覆盖层（阶段 3 迁移，暂用 PHP） ──
 
 /** 加载所有编辑覆盖 */
 export async function loadEdits(): Promise<Record<string, Record<string, unknown>>> {
@@ -105,15 +126,15 @@ export async function loadEdits(): Promise<Record<string, Record<string, unknown
 
 /** 保存编辑覆盖 */
 export async function saveEdit(solveId: string, fields: Record<string, unknown>): Promise<{ ok: boolean }> {
-  return apiPost('saveEdit', { solveId, fields });
+  return apiPost('save-edit', { solveId, fields });
 }
 
 /** 删除编辑覆盖 */
 export async function deleteEdit(solveId: string): Promise<{ ok: boolean }> {
-  return apiGet('deleteEdit', { id: solveId });
+  return apiDelete(`edit/${solveId}`);
 }
 
-// ── 编辑历史 ──
+// ── 编辑历史（阶段 3 迁移） ──
 
 /** 保存编辑历史快照 */
 export async function saveEditHistory(
@@ -121,7 +142,7 @@ export async function saveEditHistory(
   before: Record<string, unknown>,
   after: Record<string, unknown>,
 ): Promise<{ ok: boolean }> {
-  return apiPost('saveHistory', {
+  return apiPost('save-history', {
     solveId,
     before,
     after,
@@ -131,29 +152,29 @@ export async function saveEditHistory(
 
 /** 获取编辑历史 */
 export async function getEditHistory(solveId: string): Promise<EditHistoryItem[]> {
-  return apiGet<EditHistoryItem[]>('getHistory', { id: solveId });
+  return apiGet<EditHistoryItem[]>('history', { id: solveId });
 }
 
-// ── 评论 ──
+// ── 评论（阶段 2 迁移） ──
 
 /** 获取复盘的评论列表 */
 export async function listComments(reconId: number): Promise<ReconComment[]> {
-  return apiGet<ReconComment[]>('listComments', { reconId: String(reconId) });
+  return apiGet<ReconComment[]>('comments', { reconId: String(reconId) });
 }
 
 /** 新增评论 */
 export async function addComment(reconId: number, content: string): Promise<{ ok: boolean; id: number }> {
-  return apiPost('addComment', { reconId, content });
+  return apiPost('comments', { reconId, content });
 }
 
 /** 更新评论 */
 export async function updateComment(commentId: number, content: string): Promise<{ ok: boolean }> {
-  return apiPost('updateComment', { content }, { id: String(commentId) });
+  return apiPut(`comments/${commentId}`, { content });
 }
 
 /** 删除评论 */
 export async function deleteComment(commentId: number): Promise<{ ok: boolean }> {
-  return apiGet('deleteComment', { id: String(commentId) });
+  return apiDelete(`comments/${commentId}`);
 }
 
 // ── 重复检测 ──
@@ -182,7 +203,7 @@ export async function checkDuplicate(params: {
   if (params.personId) queryParams.personId = params.personId;
   if (params.person) queryParams.person = params.person;
   if (params.excludeId) queryParams.excludeId = String(params.excludeId);
-  return apiGet<DuplicateResult>('checkDuplicate', queryParams);
+  return apiGet<DuplicateResult>('check-duplicate', queryParams);
 }
 
 // ── 选手/比赛搜索 ──
@@ -196,7 +217,7 @@ interface SolverResult {
 /** 搜索选手（通过后端代理 WCA API） */
 export async function searchSolvers(query: string): Promise<SolverResult[]> {
   if (query.length < 2) return [];
-  return apiGet<SolverResult[]>('searchSolvers', { q: query });
+  return apiGet<SolverResult[]>('search-solvers', { q: query });
 }
 
 interface PersonRecord {
@@ -207,25 +228,25 @@ interface PersonRecord {
 
 /** 获取已有选手列表（数据库中有 WCA ID 的选手） */
 export async function listPersons(): Promise<PersonRecord[]> {
-  return apiGet<PersonRecord[]>('listPersons');
+  return apiGet<PersonRecord[]>('list-persons');
 }
 
 /** 获取用户统计 */
 export async function getUserStats(wcaId: string): Promise<{ reconCount: number; addedCount: number }> {
-  return apiGet('userStats', { wcaId });
+  return apiGet('user-stats', { wcaId });
 }
 
-// ── WCA 代理 ──
+// ── WCA 代理（阶段 4 迁移） ──
 
 /** 获取同轮次成绩（通过后端代理 WCA API） */
 export async function getWcaAttempts(
   compId: string,
   personId: string,
 ): Promise<Record<string, { a: number[] }>> {
-  return apiGet('wcaAttempts', { compId, personId });
+  return apiGet('wca-attempts', { compId, personId });
 }
 
 /** 获取 Bilibili 视频封面（通过后端代理） */
 export async function getBiliCover(bvid: string): Promise<{ pic: string }> {
-  return apiGet('biliCover', { bvid });
+  return apiGet('bili-cover', { bvid });
 }
