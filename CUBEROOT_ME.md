@@ -76,6 +76,20 @@ toolkit.cuberoot.me 更新（约 40 秒）
 宝塔自动生成的站点配置在 `/www/server/panel/vhost/nginx/toolkit.cuberoot.me.conf`，其中有一条**关键规则**：
 
 ```nginx
+# Trainer SPA 路由 — 所有 /app/ 子路径 fallback 到 index.html
+location /app/ {
+    try_files $uri $uri/ /app/index.html;
+}
+
+# Trainer Hono API 反代
+location /trainer/api/ {
+    proxy_pass http://127.0.0.1:3001/api/;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+}
+
 # Jekyll 生成的 .html 文件在 GitHub Pages 上无需扩展名访问
 # 例如 /stats/wr_current 实际对应 /stats/wr_current.html
 location / {
@@ -89,7 +103,7 @@ location ~ ^/recon/(\d+)/?$ {
 }
 ```
 
-> 如果通过宝塔面板重新配置站点（如改 SSL），可能会覆盖此文件，需要重新加上 `$uri.html` 规则。
+> 如果通过宝塔面板重新配置站点（如改 SSL），可能会覆盖此文件，需要重新加上这些规则。
 
 ### rsync 参数说明
 
