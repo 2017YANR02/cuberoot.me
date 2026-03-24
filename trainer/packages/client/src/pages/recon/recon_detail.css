@@ -264,6 +264,76 @@
   white-space: pre-wrap;
 }
 
+/* --- 评论 CRUD --- */
+.detail-comment-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.recon-btn-sm {
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  color: #93bbfc;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.recon-btn-sm:hover {
+  background: rgba(147, 187, 252, 0.12);
+}
+
+.recon-btn-danger-sm {
+  color: #f87171 !important;
+  border-color: rgba(248, 113, 113, 0.2) !important;
+}
+
+.recon-btn-danger-sm:hover {
+  background: rgba(248, 113, 113, 0.12) !important;
+}
+
+.detail-comment-edit textarea {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  color: #d0d8e0;
+  font-size: 0.85rem;
+  padding: 6px 10px;
+  resize: vertical;
+}
+
+.detail-comment-edit-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.detail-comment-add {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.detail-comment-add textarea {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  color: #d0d8e0;
+  font-size: 0.85rem;
+  padding: 8px 12px;
+  resize: vertical;
+}
+
+.detail-comment-add textarea::placeholder {
+  color: #555;
+}
+
 /* --- 盲拧时间 --- */
 .detail-bld-times {
   display: flex;

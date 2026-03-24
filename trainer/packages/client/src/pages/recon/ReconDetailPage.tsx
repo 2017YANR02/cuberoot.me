@@ -5,7 +5,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import type { ReconSolve, ReconComment, EditHistoryItem } from '@cuberoot/shared';
-import { getRecon, listComments, getEditHistory, deleteRecon } from '../../utils/recon_api';
+import { getRecon, listComments, getEditHistory, deleteRecon, addComment, updateComment, deleteComment } from '../../utils/recon_api';
 import {
   formatTime, countryFlag, getEventDisplayName, getRoundDisplay,
   isBldEvent, getPuzzleId, t, wcaCompUrl, wcaPersonUrl,
@@ -407,20 +407,61 @@ function VideoEmbed({ url }: { url: string }) {
   );
 }
 
-/** 评论区 */
+/** 评论区——CRUD 完整功能 */
 function CommentsView({
-  comments, reconId: _reconId, onUpdate: _onUpdate,
+  comments, reconId, onUpdate,
 }: {
   comments: ReconComment[];
   reconId: number;
   onUpdate: () => void;
 }) {
-  if (comments.length === 0) return null;
+  const [newComment, setNewComment] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editText, setEditText] = useState('');
+
+  // NOTE: 当前登录用户 WCA ID（从 localStorage 获取）
+  const currentWcaId = localStorage.getItem('wca_wcaId') || '';
+
+  const handleAdd = async () => {
+    if (!newComment.trim() || submitting) return;
+    setSubmitting(true);
+    try {
+      await addComment(reconId, newComment.trim());
+      setNewComment('');
+      onUpdate();
+    } catch (err) {
+      alert(`Error: ${(err as Error).message}`);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleEdit = async (commentId: number) => {
+    if (!editText.trim()) return;
+    try {
+      await updateComment(commentId, editText.trim());
+      setEditingId(null);
+      onUpdate();
+    } catch (err) {
+      alert(`Error: ${(err as Error).message}`);
+    }
+  };
+
+  const handleDelete = async (commentId: number) => {
+    if (!confirm(t('确定删除评论？', 'Delete this comment?'))) return;
+    try {
+      await deleteComment(commentId);
+      onUpdate();
+    } catch (err) {
+      alert(`Error: ${(err as Error).message}`);
+    }
+  };
 
   return (
     <div className="detail-section">
       <div className="detail-section-label">
-        {t('评论', 'Comments')} ({comments.length})
+        💬 {t('评论', 'Comments')} ({comments.length})
       </div>
       <div className="detail-comments">
         {comments.map(comment => (
@@ -429,12 +470,66 @@ function CommentsView({
               <strong>{comment.authorName}</strong>
               <span className="detail-comment-time">
                 {new Date(comment.createdAt * 1000).toLocaleDateString()}
+                {comment.updatedAt && ` (${t('已编辑', 'edited')})`}
               </span>
             </div>
-            <div className="detail-comment-body">{comment.content}</div>
+            {editingId === comment.id ? (
+              <div className="detail-comment-edit">
+                <textarea
+                  value={editText}
+                  onChange={e => setEditText(e.target.value)}
+                  rows={3}
+                />
+                <div className="detail-comment-edit-actions">
+                  <button className="recon-btn-sm" onClick={() => handleEdit(comment.id)}>
+                    {t('保存', 'Save')}
+                  </button>
+                  <button className="recon-btn-sm" onClick={() => setEditingId(null)}>
+                    {t('取消', 'Cancel')}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="detail-comment-body">{comment.content}</div>
+                {/* NOTE: 仅本人可编辑/删除自己的评论 */}
+                {currentWcaId && currentWcaId === comment.authorId && (
+                  <div className="detail-comment-actions">
+                    <button className="recon-btn-sm" onClick={() => {
+                      setEditingId(comment.id);
+                      setEditText(comment.content);
+                    }}>
+                      {t('编辑', 'Edit')}
+                    </button>
+                    <button className="recon-btn-sm recon-btn-danger-sm" onClick={() => handleDelete(comment.id)}>
+                      {t('删除', 'Delete')}
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         ))}
       </div>
+
+      {/* NOTE: 添加评论——需登录后显示 */}
+      {currentWcaId && (
+        <div className="detail-comment-add">
+          <textarea
+            value={newComment}
+            onChange={e => setNewComment(e.target.value)}
+            placeholder={t('写评论...', 'Write a comment...')}
+            rows={2}
+          />
+          <button
+            className="recon-btn"
+            onClick={handleAdd}
+            disabled={submitting || !newComment.trim()}
+          >
+            {submitting ? t('提交中...', 'Posting...') : t('发送', 'Post')}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
