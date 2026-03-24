@@ -98,6 +98,8 @@ const REGISTRY: Record<string, () => Promise<Record<string, unknown>>> = {
   // NOTE: 阶段 D-1 — 简单剩余
   'consecutive_sub_5_average': () => import('../statistics/consecutive_sub_5_average.js'),
   'mbf_average': () => import('../statistics/mbf_average.js'),
+  // NOTE: 阶段 D-2 — Rankings 基类
+  'yearly_rankings': () => import('../statistics/yearly_rankings.js'),
 };
 
 async function main() {
