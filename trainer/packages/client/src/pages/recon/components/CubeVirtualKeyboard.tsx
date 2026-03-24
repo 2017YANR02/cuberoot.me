@@ -442,6 +442,14 @@ export default function CubeVirtualKeyboard({ textareaRef, onInput }: Props) {
     }
   }, []);
 
+  // NOTE: pointerleave——手指离开键盘区域时取消长按计时器
+  const handlePointerLeave = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }, []);
+
   // NOTE: 全局 pointerup——popup 外松开时关闭
   useEffect(() => {
     const handler = () => {
@@ -497,6 +505,7 @@ export default function CubeVirtualKeyboard({ textareaRef, onInput }: Props) {
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
+        onPointerLeave={handlePointerLeave}
         onTouchStart={handleTouchStart}
       >
         {/* 第 0 页——魔方公式符号 */}
