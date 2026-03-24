@@ -2,7 +2,7 @@
  * 复盘详情页——迁移自 recon/detail/recon_detail.js（1586 行）
  * NOTE: 展示单条复盘的完整信息，含 twisty 动画、视频、统计、评论
  */
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import type { ReconSolve, ReconComment, EditHistoryItem } from '@cuberoot/shared';
 import { getRecon, listComments, getEditHistory, deleteRecon } from '../../utils/recon_api';
@@ -235,31 +235,37 @@ function SolutionView({ text }: { text: string }) {
   );
 }
 
-/** 统计网格 */
+/** 统计网格——对齐原版 3列2行（方法/步数/手速 + 执行/记忆/y转体 + 换手/卡顿/S转动） */
 function StatsGrid({ solve }: { solve: ReconSolve }) {
+  // NOTE: 使用原版的中英文标签和 3 列布局
   const items: [string, string | number | undefined][] = [
-    ['STM', solve.stm],
-    ['TPS', solve.tps],
-    ['Cross', solve.crossStm != null ? `${solve.crossStm} STM` : undefined],
-    ['F2L', solve.f2l != null ? `${solve.f2l} STM` : undefined],
-    ['LL', solve.ll != null ? `${solve.ll} STM` : undefined],
-    ['OLL', solve.oll || solve.ollShort],
-    ['PLL', solve.pll || solve.pllShort],
-    ['Cross Color', solve.crossColor],
-    ['Free Pair', solve.freePair],
-    ['Y Rot', solve.yRot],
-    ['Regrip', solve.regrip],
-    ['Lockup', solve.lockup],
-    ['S Move', solve.sMove],
+    [t('方法', 'Method'), solve.method],
+    [t('步数', 'STM'), solve.stm],
+    [t('手速', 'TPS'), solve.tps],
   ];
 
-  // NOTE: 过滤掉空值
+  // NOTE: 盲拧项目显示执行/记忆时间
+  if (isBldEvent(solve.event)) {
+    items.push(
+      [t('执行', 'Exec'), solve.execTime != null ? formatTime(solve.execTime) : undefined],
+      [t('记忆', 'Memo'), solve.memoTime != null ? formatTime(solve.memoTime) : undefined],
+    );
+  }
+
+  items.push(
+    [t('y 转体', 'Y Rot'), solve.yRot],
+    [t('换手', 'Regrip'), solve.regrip],
+    [t('卡顿', 'Lockup'), solve.lockup],
+    ['S' + t('转动', ' Move'), solve.sMove],
+  );
+
+  // NOTE: 过滤掉空值和零值
   const validItems = items.filter(([, v]) => v != null && v !== '' && v !== 0);
   if (validItems.length === 0) return null;
 
   return (
     <div className="detail-section">
-      <div className="detail-section-label">{t('统计', 'Statistics')}</div>
+      <div className="detail-section-label">📊 {t('统计', 'Statistics')}</div>
       <div className="detail-stats-grid">
         {validItems.map(([label, value]) => (
           <div key={label} className="stat-item">
@@ -314,15 +320,21 @@ function VideoEmbed({ url }: { url: string }) {
     );
   }
 
-  // NOTE: Bilibili
+  // NOTE: Bilibili — 使用品牌 logo 作为 facade
   const bvMatch = url.match(/(BV[A-Za-z0-9]+)/);
   if (bvMatch) {
     const bvId = bvMatch[1];
     if (!loaded) {
       return (
         <div className="detail-video-wrap detail-video-facade" onClick={() => setLoaded(true)}>
-          <div style={{ position: 'absolute', inset: 0, background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888' }}>
-            ▶️ Bilibili
+          <div style={{ position: 'absolute', inset: 0, background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {/* NOTE: B站品牌 logo — 与原版一致 */}
+            <img
+              className="detail-video-play-bili"
+              src="https://www.bilibili.com/favicon.ico"
+              alt="Bilibili"
+              style={{ width: 68, height: 68, opacity: 0.85, filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.5))' }}
+            />
           </div>
         </div>
       );
@@ -377,7 +389,7 @@ function CommentsView({
   );
 }
 
-/** Twisty 播放器区域 */
+/** Twisty 播放器区域——动态导入 cubing 库 */
 function TwistySection({
   puzzle, scramble, alg,
 }: {
@@ -386,23 +398,49 @@ function TwistySection({
   alg: string;
 }) {
   const [visible, setVisible] = useState(false);
+  const [cubingLoaded, setCubingLoaded] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // NOTE: 点击后动态导入 cubing 库并创建 twisty-player
+  const handleToggle = useCallback(async () => {
+    const next = !visible;
+    setVisible(next);
+    if (next && !cubingLoaded) {
+      try {
+        // NOTE: 动态导入 cubing 库——首次约 1MB
+        await import('cubing/twisty');
+        setCubingLoaded(true);
+      } catch (err) {
+        console.warn('Failed to load cubing library:', err);
+      }
+    }
+  }, [visible, cubingLoaded]);
+
+  // NOTE: cubing 库加载后，手动创建 twisty-player 元素
+  useEffect(() => {
+    if (!visible || !cubingLoaded || !containerRef.current) return;
+    const container = containerRef.current;
+    // NOTE: 清空旧的 player
+    container.innerHTML = '';
+    const player = document.createElement('twisty-player');
+    player.setAttribute('puzzle', puzzle);
+    player.setAttribute('experimental-setup-alg', scramble);
+    player.setAttribute('alg', alg);
+    player.style.width = '100%';
+    player.style.maxWidth = '400px';
+    player.style.margin = '12px 0';
+    // NOTE: 深色背景适配
+    player.setAttribute('background', 'none');
+    player.setAttribute('control-panel', 'bottom');
+    container.appendChild(player);
+  }, [visible, cubingLoaded, puzzle, scramble, alg]);
 
   return (
     <div className="detail-section">
-      <button className="recon-btn" onClick={() => setVisible(!visible)}>
+      <button className="recon-btn" onClick={handleToggle}>
         {visible ? t('隐藏动画', 'Hide Animation') : t('查看动画', 'View Animation')}
       </button>
-      {visible && (
-        <div className="detail-twisty-container">
-          {/* NOTE: twisty-player Web Component 需要动态导入 cubing.js */}
-          <twisty-player
-            puzzle={puzzle}
-            experimental-setup-alg={scramble}
-            alg={alg}
-            style={{ width: '100%', maxWidth: '400px', margin: '12px 0' }}
-          />
-        </div>
-      )}
+      {visible && <div ref={containerRef} className="detail-twisty-container" />}
     </div>
   );
 }
