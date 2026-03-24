@@ -9,10 +9,10 @@
  * - Bottom Nav（Solo 模式 tab 导航）
  */
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { useBattleStore } from './engine/battle_store';
 import { KEY_MAP, PUZZLES, PENALTY, I18N_TEXT } from './engine/constants';
-import { formatTime, formatTimePlain } from './engine/format_time';
+import { formatTime } from './engine/format_time';
 import { computeAo5 } from './engine/stats';
 import type { PenaltyType } from './engine/constants';
 import HistoryPanel from './HistoryPanel';
@@ -20,9 +20,48 @@ import HistoryPanel from './HistoryPanel';
 import './battle.css';
 
 // NOTE: 加载 scramble_module.js 全局脚本（打乱引擎）
+// scramble_module.js 是 csTimer 打包代码，依赖 jQuery 子集 + kernel 配色
 function useScrambleScript() {
   useEffect(() => {
     if (typeof window.scrMgr !== 'undefined') return;
+
+    // NOTE: 1:1 翻译自 battle/index.html 行 308~328
+    // scramble_module.js 内部使用 jQuery 的 $.isArray / $.now / $.noop / $.map / $.fn 等
+    // 提供最小 shim 而非引入完整 jQuery（原版方案）
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const w = window as any;
+    if (!w.$) {
+      const jqShim: Record<string, unknown> = {
+        isArray: Array.isArray,
+        now: Date.now,
+        noop: () => {},
+        map: (arr: unknown[], fn: (item: unknown, i: number) => unknown) =>
+          Array.prototype.map.call(arr, fn),
+        fn: {},
+      };
+      w.$ = jqShim;
+    }
+    // NOTE: kernel.getProp 为 image.js 提供 WCA 标准配色（默认值），不读取 localStorage
+    if (!w.kernel) {
+      w.kernel = {
+        getProp: (key: string): string | null => {
+          const defaults: Record<string, string> = {
+            'colcube': '#ff0#fa0#00f#fff#f00#0d0',
+            'colclk': '#f00#37b#5cf#ff0#850',
+            'colsq1': '#ff0#f80#0f0#fff#f00#00f',
+            'colpyr': '#0f0#f00#00f#ff0',
+            'colskb': '#ff0#fa0#00f#fff#f00#0d0',
+            'colmgm': '#fff#d00#060#81f#fc0#00b#ffb#8df#f83#7e0#f9f#999',
+            'colfto': '#fff#808#0d0#f00#00f#bbb#ff0#fa0',
+            'colico': '#fff#084#b36#a85#088#811#e71#b9b#05a#ed1#888#6a3#e8b#a52#6cb#c10#fa0#536#49c#ec9',
+            'col15p': '#f00#fa0#ff0#0d0#00f#fff#888#000',
+            'col-font': '#fff',
+            'col-board': '#000',
+          };
+          return defaults[key] !== undefined ? defaults[key] : null;
+        },
+      };
+    }
 
     const script = document.createElement('script');
     script.src = '/app/scramble_module.js';
@@ -361,7 +400,7 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
 // ===== MiddleBar 组件 =====
 // 1:1 翻译自 battle/index.html middle-bar 结构
 
-function MiddleBar() {
+function MiddleBar({ onSettingsClick }: { onSettingsClick: () => void }) {
   const store = useBattleStore();
   const { players, mode } = store;
 
@@ -374,12 +413,7 @@ function MiddleBar() {
 
       {/* 中间操作按钮 */}
       <div className="middle-actions">
-        <button className="middle-btn" title="Settings" onClick={() => {
-          // NOTE: 设置面板由 tab 或 overlay 控制
-          if (mode === 'solo') {
-            store.switchTab('settings');
-          }
-        }}>⚙️</button>
+        <button className="middle-btn" title="Settings" onClick={onSettingsClick}>⚙️</button>
         <button className="middle-btn" title="Fullscreen" onClick={() => {
           if (!document.fullscreenElement) {
             document.documentElement.requestFullscreen().catch(() => {});
@@ -613,7 +647,7 @@ export default function BattlePage() {
 
   const store = useBattleStore();
   const { mode } = store;
-  const settingsVisible = useRef(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   // NOTE: 初始化 store — 加载历史 + 生成第一个打乱
   useEffect(() => {
@@ -639,26 +673,25 @@ export default function BattlePage() {
   // NOTE: 竖屏锁定
   useEffect(() => {
     try {
-      screen.orientation.lock('portrait').catch(() => {});
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (screen.orientation as any).lock('portrait').catch(() => {});
     } catch (_) {}
   }, []);
 
-  // NOTE: 设置面板控制（1v1 用 overlay，Solo 用 tab）
-  const openSettings = useCallback(() => {
+  // NOTE: 设置面板关闭回调
+  const closeSettings = useCallback(() => {
+    setSettingsOpen(false);
     if (mode === 'solo') {
-      store.switchTab('settings');
-    } else {
-      settingsVisible.current = true;
-      // NOTE: 强制重渲染来显示设置面板
-      document.getElementById('settings-overlay-1v1')?.classList.add('visible');
+      store.switchTab('timer');
     }
   }, [mode, store]);
 
-  const closeSettings = useCallback(() => {
-    settingsVisible.current = false;
-    document.getElementById('settings-overlay-1v1')?.classList.remove('visible');
+  // NOTE: 设置面板打开（1v1 用 state，Solo 用 tab）
+  const handleSettingsClick = useCallback(() => {
     if (mode === 'solo') {
-      store.switchTab('timer');
+      store.switchTab('settings');
+    } else {
+      setSettingsOpen(true);
     }
   }, [mode, store]);
 
@@ -673,7 +706,7 @@ export default function BattlePage() {
       )}
 
       {/* 中间栏 */}
-      <MiddleBar />
+      <MiddleBar onSettingsClick={handleSettingsClick} />
 
       {/* Player 1 (下方) */}
       <TimerArea playerId={0} />
@@ -698,9 +731,7 @@ export default function BattlePage() {
 
       {/* 设置面板 — 1v1 overlay 模式 */}
       {mode === '1v1' && (
-        <div id="settings-overlay-1v1">
-          <SettingsPanel visible={false} onClose={closeSettings} />
-        </div>
+        <SettingsPanel visible={settingsOpen} onClose={closeSettings} />
       )}
 
       {/* 设置面板 — Solo tab 模式 */}
@@ -717,3 +748,4 @@ export default function BattlePage() {
     </div>
   );
 }
+
