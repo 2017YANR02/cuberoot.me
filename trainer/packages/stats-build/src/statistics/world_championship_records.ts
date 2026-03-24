@@ -1,7 +1,7 @@
 // NOTE: 世锦赛纪录
 // 与 Ruby _stats_build/statistics/world_championship_records.rb 1:1 对应
 import { GroupedStatistic } from '../core/grouped_statistic.js';
-import { EVENTS } from '../core/events.js';
+import { EVENTS, EVENTS_ENTRIES } from '../core/events.js';
 import { SolveTime } from '../core/solve_time.js';
 import type { RowDataPacket } from 'mysql2';
 
@@ -65,7 +65,7 @@ export class WorldChampionshipRecords extends GroupedStatistic {
       }
 
       // NOTE: 按官方项目顺序输出
-      const records = Object.entries(EVENTS)
+      const records = EVENTS_ENTRIES
         .map(([eventId, eventName]) => {
           const entry = recordsByEvent.get(eventId);
           if (!entry || !entry.result.isComplete()) return null;

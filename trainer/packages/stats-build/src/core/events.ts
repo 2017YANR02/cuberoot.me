@@ -2,29 +2,41 @@
 // 与 Ruby _stats_build/core/events.rb 1:1 对应
 // 包含所有项目 ID、子集常量（WITH_AVERAGE/MO3 等）和翻译表
 
-export const EVENTS: Record<string, string> = {
-  '333':    "Rubik's Cube",
-  '222':    '2x2x2 Cube',
-  '444':    '4x4x4 Cube',
-  '555':    '5x5x5 Cube',
-  '666':    '6x6x6 Cube',
-  '777':    '7x7x7 Cube',
-  '333bf':  '3x3x3 Blindfolded',
-  '333fm':  '3x3x3 Fewest Moves',
-  '333oh':  '3x3x3 One-Handed',
-  'minx':   'Megaminx',
-  'pyram':  'Pyraminx',
-  'clock':  "Rubik's Clock",
-  'skewb':  'Skewb',
-  'sq1':    'Square-1',
-  '444bf':  '4x4x4 Blindfolded',
-  '555bf':  '5x5x5 Blindfolded',
-  '333mbf': '3x3x3 Multi-Blind',
-  '333ft':  '3x3x3 With Feet',
-  'magic':  "Rubik's Magic",
-  'mmagic': 'Master Magic',
-  '333mbo': 'Rubik\'s Cube: Multiple blind old style',
-};
+// HACK: JS Object 对纯数字 key（如 '222','333'）按升序排列，
+// 导致 Object.entries(EVENTS) 顺序与 Ruby Hash 不一致。
+// 用固定数组保证插入顺序——所有需要按顺序遍历的地方都用此数组
+export const EVENTS_ENTRIES: [string, string][] = [
+  ['333',    "Rubik's Cube"],
+  ['222',    '2x2x2 Cube'],
+  ['444',    '4x4x4 Cube'],
+  ['555',    '5x5x5 Cube'],
+  ['666',    '6x6x6 Cube'],
+  ['777',    '7x7x7 Cube'],
+  ['333bf',  '3x3x3 Blindfolded'],
+  ['333fm',  '3x3x3 Fewest Moves'],
+  ['333oh',  '3x3x3 One-Handed'],
+  ['minx',   'Megaminx'],
+  ['pyram',  'Pyraminx'],
+  ['clock',  "Rubik's Clock"],
+  ['skewb',  'Skewb'],
+  ['sq1',    'Square-1'],
+  ['444bf',  '4x4x4 Blindfolded'],
+  ['555bf',  '5x5x5 Blindfolded'],
+  ['333mbf', '3x3x3 Multi-Blind'],
+  ['333ft',  '3x3x3 With Feet'],
+  ['magic',  "Rubik's Magic"],
+  ['mmagic', 'Master Magic'],
+  ['333mbo', "Rubik's Cube: Multiple blind old style"],
+];
+
+// NOTE: 兼容旧代码——用于 key 查 value 的场景（顺序不重要）
+export const EVENTS: Record<string, string> = Object.fromEntries(EVENTS_ENTRIES);
+
+// NOTE: 按指定子集过滤并保持 Ruby 定义顺序
+export function eventsEntries(subset?: Record<string, string>): [string, string][] {
+  if (!subset) return EVENTS_ENTRIES;
+  return EVENTS_ENTRIES.filter(([id]) => id in subset);
+}
 
 // NOTE: 所有有官方平均/mo3 的项目（去掉 333mbf 和 333mbo——它们无平均）
 export const EVENTS_WITH_AVERAGE: Record<string, string> = Object.fromEntries(

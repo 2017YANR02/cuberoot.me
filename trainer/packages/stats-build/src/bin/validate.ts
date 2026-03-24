@@ -60,7 +60,10 @@ function parseMdTables(mdContent: string): { rows: string[][] }[] {
 // --- 从 markdown link 中提取显示文本 ---
 // [Daniel Vædele Egdal](https://...) → Daniel Vædele Egdal
 function stripMdLink(text: string): string {
-  return text.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').trim();
+  return text
+    .replace(/\*\*/g, '')           // NOTE: strip bold markers
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')  // strip markdown links
+    .trim();
 }
 
 // --- 从 JSON rows 中提取文本值 ---

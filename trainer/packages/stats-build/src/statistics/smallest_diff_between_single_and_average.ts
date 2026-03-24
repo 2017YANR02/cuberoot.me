@@ -1,7 +1,7 @@
 // NOTE: 最小的单次与平均差距
 // 与 Ruby _stats_build/statistics/smallest_diff_between_single_and_average.rb 1:1 对应
 import { GroupedStatistic } from '../core/grouped_statistic.js';
-import { EVENTS } from '../core/events.js';
+import { EVENTS, EVENTS_ENTRIES } from '../core/events.js';
 import { SolveTime } from '../core/solve_time.js';
 import type { RowDataPacket } from 'mysql2';
 
@@ -38,7 +38,7 @@ export class SmallestDiffBetweenSingleAndAverage extends GroupedStatistic {
 
   // NOTE: 与 Ruby transform 1:1 对应
   transform(rows: RowDataPacket[]): [string, unknown[][]][] {
-    return Object.entries(EVENTS).map(([eventId, eventName]) => {
+    return EVENTS_ENTRIES.map(([eventId, eventName]) => {
       const withDiff = rows
         .filter(r => r['event_id'] === eventId)
         .map(r => ({ row: r, diff: Number(r['average']) - Number(r['single']) }));

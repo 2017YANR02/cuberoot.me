@@ -6,7 +6,7 @@
 //   3. dominance = P 的成绩中严格 < others_best 的数量（二分搜索）
 // 双维度（Single + Average）× 双视图（Ranking + History）
 import { Statistic } from '../core/statistic.js';
-import { EVENTS, headerZh, eventZh } from '../core/events.js';
+import { EVENTS, EVENTS_ENTRIES, headerZh, eventZh } from '../core/events.js';
 import { query as dbQuery } from '../core/database.js';
 import type { StatJson, MetricPanel, TableHeader } from '../core/statistic.js';
 import type { RowDataPacket } from 'mysql2';
@@ -90,7 +90,7 @@ export class WrDominance extends Statistic {
 
     // NOTE: Single 基于所有 individual attempts（每轮最多 5 个单次成绩）
     // 逐 event 查询避免一次加载全部 result_attempts OOM
-    for (const [eventId, eventName] of Object.entries(EVENTS)) {
+    for (const [eventId, eventName] of EVENTS_ENTRIES) {
       console.log(`  Dominance single: ${eventId}...`);
       let rows = await this.fetchSingleAttemptsFor(eventId);
       if (rows.length === 0) continue;
@@ -102,7 +102,7 @@ export class WrDominance extends Statistic {
     }
 
     // NOTE: Average 基于每轮的 average 值
-    for (const [eventId, eventName] of Object.entries(EVENTS)) {
+    for (const [eventId, eventName] of EVENTS_ENTRIES) {
       console.log(`  Dominance average: ${eventId}...`);
       let rows = await this.fetchAverageResultsFor(eventId);
       if (rows.length === 0) continue;

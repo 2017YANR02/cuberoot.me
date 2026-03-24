@@ -1,7 +1,7 @@
 // NOTE: 当前世界纪录
 // 与 Ruby _stats_build/statistics/wr_current.rb 1:1 对应
 import { Statistic } from '../core/statistic.js';
-import { EVENTS } from '../core/events.js';
+import { EVENTS, EVENTS_ENTRIES } from '../core/events.js';
 import { SolveTime } from '../core/solve_time.js';
 import type { RowDataPacket } from 'mysql2';
 
@@ -47,7 +47,7 @@ export class WrCurrent extends Statistic {
   transform(rows: RowDataPacket[]): unknown[][] {
     const result: unknown[][] = [];
 
-    for (const [eventId, eventName] of Object.entries(EVENTS)) {
+    for (const [eventId, eventName] of EVENTS_ENTRIES) {
       // NOTE: 当前 WR single
       const singleRecords = rows.filter(
         r => r['event_id'] === eventId && r['regional_single_record'] === 'WR' && Number(r['single']) > 0
