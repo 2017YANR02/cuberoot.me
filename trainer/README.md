@@ -284,3 +284,48 @@ pages/calc/
 - `registerPostRenderCallback` 机制：chartRender 重建 DOM 后自动重新标记 `bar-active` + `bar-selected`
 - Both 模式下 drag handle 宽度跟随实际柱子宽度（内侧矮柱子 × 0.55）
 
+## Viz（分布演变可视化）
+
+从 `viz/` 目录迁移的选手成绩分布演变可视化工具。
+原版为纯 ES module 架构（`viz/viz.js` 等 6 文件），React 版 1:1 复刻全部功能。
+
+### 文件结构
+
+```
+pages/viz/
+├── VizPage.tsx                # 页面容器（toolbar + canvas + ridgeline + stats）
+├── viz.css                    # 全量样式（深色主题 + glassmorphism + 控件 + WcaPersonPicker 覆盖）
+├── components/
+│   ├── VizCanvas.tsx          # 主 Canvas 组件（setupCanvas + drawFrame + subscribe throttle）
+│   ├── RidgelineCanvas.tsx    # 山脊图 Canvas 组件
+│   ├── ModeSelector.tsx       # 数据模式选择器（17 种：Singles/Mo3/Ao5/…/BestC/WorstC/Worst）
+│   ├── PlayControls.tsx       # 播放控制（Play/Pause + 速度 + 帧滑块）
+│   ├── PlayerChips.tsx        # 选手标签 chips（多选手颜色标识 + 删除）
+│   ├── StatsBar.tsx           # 底部统计信息栏
+│   └── LegendPanel.tsx        # 图例面板
+├── engine/
+│   ├── data_fetch.ts          # WCA API 数据抓取 + 缓存
+│   ├── kde.ts                 # 核密度估计（Gaussian KDE）
+│   ├── sync.ts                # 帧同步 + 动画引擎
+│   ├── rolling_stats.ts       # 滚动统计（Mo3/Ao5/…/Ao100）
+│   ├── round_metrics.ts       # 轮次指标（Avg/BPA/WPA/Median/BestC/WorstC）
+│   └── csv_export.ts          # CSV 导出
+├── renderers/
+│   ├── histogram_view.ts      # 直方图渲染
+│   ├── cumhist_view.ts        # 累积直方图渲染
+│   ├── line_view.ts           # 折线图渲染
+│   ├── ridgeline_renderer.ts  # 山脊图渲染
+│   └── draw_utils.ts          # 绘图工具函数（网格/标签/色彩）
+└── stores/
+    └── viz_store.ts           # Zustand 状态（选手/帧/模式/播放/canvas 尺寸）
+```
+
+### 关键设计
+
+| 设计点 | 说明 |
+|--------|------|
+| 状态订阅 | 使用 `useVizStore.subscribe()` + `requestAnimationFrame` 节流，避免 React re-render 循环 |
+| Delta 历史 | 用 `useRef` 本地跟踪 mean 历史，不写入 store，防止无限渲染 |
+| 字体 | Google Fonts（Inter + JetBrains Mono），在 `index.html` 全局加载 |
+| WcaPersonPicker | 共享组件，viz 内通过 CSS 覆盖为深色主题（`position:static` 覆盖 inline 模式的 absolute 定位） |
+
