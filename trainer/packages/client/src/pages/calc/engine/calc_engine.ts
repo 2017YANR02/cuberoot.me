@@ -72,8 +72,11 @@ export function formatTime(
   // forceDecimal = true 时强制保留 2 位小数（用于平均值/Target Avg）
   if (isMoveCnt || moveCntMode) {
     const moves = cs / 100;
-    // NOTE: axisLabel 模式下整数步数不加 .00（如 Y 轴 "5" 而非 "5.00"）
-    if (forceDecimal || (!Number.isInteger(moves) && !axisLabel)) {
+    // NOTE: axisLabel 模式下保留 1 位小数，防止浮点精度显示长小数
+    if (axisLabel) {
+      return Number.isInteger(moves) ? String(moves) : moves.toFixed(1);
+    }
+    if (forceDecimal || !Number.isInteger(moves)) {
       return moves.toFixed(2);
     }
     return String(moves);
@@ -82,7 +85,11 @@ export function formatTime(
   // NOTE: 多盲得分模式 — 单次显示整数("56")，平均值显示小数("35.67")
   if (mbfMode) {
     const score = cs / 100;
-    if (forceDecimal || (!Number.isInteger(score) && !axisLabel)) {
+    // NOTE: axisLabel 模式下保留 1 位小数，防止浮点精度显示长小数
+    if (axisLabel) {
+      return Number.isInteger(score) ? String(Math.round(score)) : score.toFixed(1);
+    }
+    if (forceDecimal || !Number.isInteger(score)) {
       return score.toFixed(2);
     }
     return String(Math.round(score));
