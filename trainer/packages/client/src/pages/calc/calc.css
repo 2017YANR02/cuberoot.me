@@ -1077,19 +1077,18 @@ video {
 /* NOTE: Handle — 水平 pill 形，可拖拽 */
 .bar-drag-handle {
     position: absolute;
-    /* NOTE: width/height/border-radius 由 JS positionHandle() 动态设置，跟随柱子宽度 */
+    /* NOTE: width/height/border-radius 由 JS positionHandle() 动态设置 */
     background: rgba(255, 128, 0, 1);
-    border: 2px solid #fff;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    border: 1px solid #fff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
     cursor: ns-resize;
     z-index: 100;
-    /* NOTE: transform 居中定位 — left/top 指向柱顶中心 */
-    transform: translate(-50%, -50%);
+    /* NOTE: transform 水平居中，顶部对齐柱顶 — 不使用 -50% Y 避免遮挡标签 */
+    transform: translate(-50%, 0);
     touch-action: none;
     user-select: none;
     -webkit-user-select: none;
-    /* NOTE: 弹性出现动画 */
-    animation: handleBounce 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    /* NOTE: 移除弹跳动画，防止出现时跳动 */
 }
 
 .bar-drag-handle:active {
@@ -1101,22 +1100,16 @@ video {
     background: rgba(50, 130, 255, 1);
 }
 
-/* NOTE: grip lines — 三条细横线暗示可拖拽 */
+/* NOTE: grip line — 单条横线暗示可拖拽（适配 8px 高度） */
 .bar-drag-handle::before {
     content: '';
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 18px;
-    height: 10px;
-    border-top: 2px solid rgba(255, 255, 255, 0.5);
-    border-bottom: 2px solid rgba(255, 255, 255, 0.5);
-    /* NOTE: 中间线用 box-shadow 模拟 */
-    box-shadow: 0 0 0 0 transparent, inset 0 0 0 0 transparent;
-    background: linear-gradient(transparent 0px, transparent 3px,
-            rgba(255, 255, 255, 0.5) 3px, rgba(255, 255, 255, 0.5) 5px,
-            transparent 5px);
+    width: 14px;
+    height: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.6);
 }
 
 
@@ -1302,47 +1295,4 @@ video {
     outline-offset: -2px;
 }
 
-/* NOTE: Handle — 水平 pill 形，可拖拽 */
-.bar-drag-handle {
-    position: absolute;
-    background: rgba(255, 128, 0, 1);
-    border: 2px solid #fff;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    cursor: ns-resize;
-    z-index: 100;
-    transform: translate(-50%, -50%);
-    touch-action: none;
-    user-select: none;
-    -webkit-user-select: none;
-    animation: handleBounce 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.bar-drag-handle:active {
-    cursor: grabbing;
-}
-
-/* NOTE: B 选手蓝色 */
-.bar-drag-handle.player-b {
-    background: rgba(50, 130, 255, 1);
-}
-
-/* NOTE: grip lines — 三条细横线暗示可拖拽 */
-.bar-drag-handle::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 18px;
-    height: 10px;
-    border-top: 2px solid rgba(255, 255, 255, 0.5);
-    border-bottom: 2px solid rgba(255, 255, 255, 0.5);
-    background: linear-gradient(transparent 0px, transparent 3px,
-            rgba(255, 255, 255, 0.5) 3px, rgba(255, 255, 255, 0.5) 5px,
-            transparent 5px);
-}
-
-@keyframes handleBounce {
-    0% { transform: translate(-50%, -50%) scale(0); }
-    100% { transform: translate(-50%, -50%) scale(1); }
-}
+/* NOTE: Handle — 第二处定义已合并到上方，此处仅保留 @keyframes 占位（已不再使用） */

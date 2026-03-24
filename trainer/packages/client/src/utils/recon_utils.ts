@@ -186,3 +186,63 @@ export function getLocale(): string {
 export function t(zh: string, en: string): string {
   return getLocale() === 'zh' ? zh : en;
 }
+
+// ── 外部链接 ──
+
+/** 项目 → cubedb puzzle ID（格式与 twisty 不同） */
+const CUBEDB_PUZZLE_MAP: Record<string, string> = {
+  '3x3': '3x3x3', '2x2': '2x2x2', '4x4': '4x4x4', '5x5': '5x5x5',
+  '6x6': '6x6x6', '7x7': '7x7x7', '3bld': '3x3x3', '4bld': '4x4x4',
+  '5bld': '5x5x5', oh: '3x3x3', sq1: 'sq1',
+  pyra: 'pyraminx', mega: 'megaminx', clock: 'clock', skewb: 'skewb',
+};
+
+/** 获取 cubedb puzzle ID */
+export function getCubedbPuzzle(event: string): string {
+  return CUBEDB_PUZZLE_MAP[event] ?? '3x3x3';
+}
+
+/**
+ * 构建 alg.cubing.net 和 cubedb.net 链接
+ * NOTE: alg.cubing.net 只支持 NxNxN，非正阶用 alpha.twizzle.net
+ */
+export function buildExternalLinks(
+  event: string,
+  scramble: string,
+  alg: string,
+): { algUrl: string; algSiteName: string; cubedbUrl: string } {
+  const puzzle = getPuzzleId(event);
+  const setupStr = encodeURIComponent(scramble);
+  const algStr = encodeURIComponent(alg);
+  const isCube = /^\d+x\d+x\d+$/.test(puzzle);
+  const algUrl = isCube
+    ? `https://alg.cubing.net/?setup=${setupStr}&alg=${algStr}&puzzle=${puzzle}`
+    : `https://alpha.twizzle.net/edit/?puzzle=${puzzle}&setup-alg=${setupStr}&alg=${algStr}`;
+  const algSiteName = isCube ? 'alg.cubing.net' : 'twizzle.net';
+  const cubedbPuzzle = getCubedbPuzzle(event);
+  const cubedbUrl = `https://cubedb.net/?puzzle=${cubedbPuzzle}&scramble=${setupStr}&alg=${algStr}`;
+  return { algUrl, algSiteName, cubedbUrl };
+}
+
+/** 显示选手名（解析 "English Name (中文名)" 格式） */
+export function displaySolverName(person: string): string {
+  if (!person) return '';
+  // NOTE: WCA 格式 "Ruimin Yan (颜瑞民)"
+  const match = person.match(/^(.+?)\s*\((.+?)\)$/);
+  if (match) {
+    return getLocale() === 'zh' ? match[2] : match[1];
+  }
+  return person;
+}
+
+// ── 面颜色 ──
+
+/** 魔方面颜色映射（用于 Cross Color 着色） */
+export const FACE_COLORS: Record<string, string> = {
+  W: '#e8e8e8',
+  Y: '#facc15',
+  R: '#ef4444',
+  O: '#f97316',
+  G: '#22c55e',
+  B: '#3b82f6',
+};

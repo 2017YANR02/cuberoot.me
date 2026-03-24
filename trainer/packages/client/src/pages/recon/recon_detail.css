@@ -275,38 +275,113 @@
 
 /* --- Twisty 容器 --- */
 .detail-twisty-container {
-  margin-top: 8px;
+  margin-bottom: 12px;
 }
 
-/* --- 底部 --- */
-.detail-footer {
+/* --- 打乱+解法融合块——原版风格 --- */
+.detail-solution-block {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.detail-solution-block .detail-scramble-text {
+  border-radius: 0;
+  border: none;
+  border-bottom: none;
+}
+
+.detail-block-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 0 14px;
+}
+
+.detail-solution-block .detail-solution-text {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+/* --- 外部链接 --- */
+.recon-external-links {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+  font-size: 0.82rem;
+}
+
+.recon-external-links a {
+  color: #93bbfc;
+  text-decoration: none;
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.recon-external-links a:hover {
+  background: rgba(147, 187, 252, 0.15);
+  color: #fff;
+}
+
+/* --- 元数据区 --- */
+.detail-meta {
   display: flex;
   flex-wrap: wrap;
   gap: 16px;
-  margin-top: 24px;
-  padding-top: 16px;
+  margin-top: 20px;
+  padding: 12px 0;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
-  font-size: 0.8rem;
-  color: #888;
 }
 
-.detail-footer-item {
+.detail-meta-item {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  font-size: 0.82rem;
 }
 
+.detail-meta-label {
+  font-size: 1rem;
+}
+
+.detail-meta-value {
+  color: #b0b8c4;
+}
+
+.detail-meta-value a {
+  color: #93bbfc;
+  text-decoration: none;
+}
+
+.detail-meta-value a:hover {
+  text-decoration: underline;
+}
+
+/* --- 操作按钮 --- */
 .detail-actions {
   display: flex;
   gap: 8px;
   margin-top: 16px;
 }
 
-.detail-delete-btn {
+.recon-btn-edit {
+  color: #93bbfc !important;
+  border-color: rgba(147, 187, 252, 0.3) !important;
+}
+
+.recon-btn-edit:hover {
+  background: rgba(147, 187, 252, 0.12) !important;
+}
+
+.recon-btn-danger {
   color: #f87171 !important;
   border-color: rgba(248, 113, 113, 0.3) !important;
 }
 
-.detail-delete-btn:hover {
+.recon-btn-danger:hover {
   background: rgba(248, 113, 113, 0.15) !important;
 }
