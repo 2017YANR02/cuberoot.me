@@ -54,6 +54,27 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
     state.saveToUrl();
   }, [state, isMbf]);
 
+  // NOTE: 鼠标滚轮微调 — 每步 ±1 centisecond（0.01秒）
+  // 必须用原生事件（非 passive）才能阻止页面滚动，React onWheel 默认 passive
+  const wheelHandlers = useRef<Map<HTMLInputElement, (e: WheelEvent) => void>>(new Map());
+  const bindWheel = useCallback((el: HTMLInputElement | null, p: number, t: number) => {
+    // NOTE: 清理旧监听器
+    if (!el) return;
+    const prev = wheelHandlers.current.get(el);
+    if (prev) return; // 已绑定
+    const handler = (e: WheelEvent) => {
+      e.preventDefault();
+      const absIdx = state.seedOn + p;
+      const cur = state.times[absIdx]?.[t];
+      if (!cur || cur <= 0 || cur >= DNF_VALUE) return;
+      const delta = e.deltaY > 0 ? 1 : -1;
+      state.updateTime(absIdx, t, Math.max(1, cur + delta));
+      state.saveToUrl();
+    };
+    el.addEventListener('wheel', handler, { passive: false });
+    wheelHandlers.current.set(el, handler);
+  }, [state]);
+
   // NOTE: 键盘导航 — Enter/Tab → zigzag 跳格
   const handleKeyDown = useCallback((e: React.KeyboardEvent, p: number, t: number) => {
     if (e.key === 'Enter' || e.key === 'Tab') {
@@ -203,6 +224,7 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
                     ref={el => {
                       if (!inputRefs.current[p]) inputRefs.current[p] = [];
                       inputRefs.current[p][t] = el;
+                      bindWheel(el, p, t);
                     }}
                     className="time-cell"
                     type="text"
