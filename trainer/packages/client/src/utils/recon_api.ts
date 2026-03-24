@@ -1,16 +1,15 @@
 /**
  * Recon API 客户端
- * NOTE: 当前指向 PHP 后端（/recon/api/?action=xxx），
- * Hono 后端代码已就绪，待部署到 ECS 后切换 API_BASE
+ * NOTE: 已切换到 Hono 后端（/trainer/api/recon/xxx）
  */
 import type {
   ReconSolve, ReconComment, EditHistoryItem,
 } from '@cuberoot/shared';
 import { getWcaId } from '../stores/auth_store';
 
-// NOTE: 开发环境走 Vite proxy（/recon/api → toolkit.cuberoot.me）
-// 部署 Hono 后改为 '/trainer/api/recon'
-const API_BASE = import.meta.env.VITE_RECON_API_BASE || '/recon/api/';
+// NOTE: 生产环境走 Nginx 反代到 Hono（/trainer/api/recon/xxx）
+// 开发环境走 Vite proxy（相同路径，proxy 到 localhost:3001）
+const API_BASE = import.meta.env.VITE_RECON_API_BASE || '/trainer/api/recon';
 
 // ── 认证 ──
 
@@ -33,10 +32,9 @@ function authHeaders(): HeadersInit {
 
 // ── 通用请求 ──
 
-/** GET 请求 */
+/** GET 请求（REST 路径拼接：API_BASE/action?params） */
 async function apiGet<T>(action: string, params: Record<string, string> = {}): Promise<T> {
-  const url = new URL(API_BASE, window.location.origin);
-  url.searchParams.set('action', action);
+  const url = new URL(`${API_BASE}/${action}`, window.location.origin);
   for (const [k, v] of Object.entries(params)) {
     if (v) url.searchParams.set(k, v);
   }
@@ -50,10 +48,9 @@ async function apiGet<T>(action: string, params: Record<string, string> = {}): P
   return resp.json();
 }
 
-/** POST 请求 */
+/** POST 请求（REST 路径拼接：API_BASE/action?params） */
 async function apiPost<T>(action: string, body: unknown, params: Record<string, string> = {}): Promise<T> {
-  const url = new URL(API_BASE, window.location.origin);
-  url.searchParams.set('action', action);
+  const url = new URL(`${API_BASE}/${action}`, window.location.origin);
   for (const [k, v] of Object.entries(params)) {
     if (v) url.searchParams.set(k, v);
   }
