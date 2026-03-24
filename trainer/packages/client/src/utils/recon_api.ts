@@ -8,8 +8,8 @@ import type {
   ReconSolve, ReconComment, EditHistoryItem,
 } from '@cuberoot/shared';
 
-// NOTE: API 基地址——开发环境通过 Vite proxy 转发，生产环境直接指向后端
-const API_BASE = import.meta.env.VITE_RECON_API_BASE || 'https://toolkit.cuberoot.me/recon/api/';
+// NOTE: 开发环境使用相对路径（走 Vite proxy），生产环境直连后端
+const API_BASE = import.meta.env.VITE_RECON_API_BASE || '/recon/api/';
 
 // ── 认证 ──
 
@@ -34,7 +34,7 @@ function authHeaders(): HeadersInit {
 
 /** GET 请求 */
 async function apiGet<T>(action: string, params: Record<string, string> = {}): Promise<T> {
-  const url = new URL(API_BASE);
+  const url = new URL(API_BASE, window.location.origin);
   url.searchParams.set('action', action);
   for (const [k, v] of Object.entries(params)) {
     if (v) url.searchParams.set(k, v);
@@ -51,7 +51,7 @@ async function apiGet<T>(action: string, params: Record<string, string> = {}): P
 
 /** POST 请求 */
 async function apiPost<T>(action: string, body: unknown, params: Record<string, string> = {}): Promise<T> {
-  const url = new URL(API_BASE);
+  const url = new URL(API_BASE, window.location.origin);
   url.searchParams.set('action', action);
   for (const [k, v] of Object.entries(params)) {
     if (v) url.searchParams.set(k, v);
