@@ -57,8 +57,19 @@ export const HEADER_ZH: Record<string, string> = {
   'Count': '次数',
   'Competition': '比赛',
   'Competitions': '比赛',
+  'Competitors': '参赛人数',
+  'Continents': '大洲数',
+  'Countries': '国家数',
+  'Citizen of': '国籍',
   'Date': '日期',
   'Country': '国家',
+  'Delegated': '代表次数',
+  'Events count': '项目数',
+  'Finals': '决赛次数',
+  'List': '列表',
+  'List on WCA': 'WCA 列表',
+  'Month': '月份',
+  'Podiums': '登台次数',
   'Rank': '排名',
   'Result': '成绩',
   'Details': '详情',
@@ -71,6 +82,8 @@ export const HEADER_ZH: Record<string, string> = {
   'Total': '总计',
   'WRs': '世界纪录数',
   'People': '选手',
+  'Year': '年份',
+  '4th places': '第四名次数',
 };
 
 export function eventZh(name: string): string {
