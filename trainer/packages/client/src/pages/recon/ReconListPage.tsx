@@ -2,11 +2,12 @@
  * 复盘列表页——迁移自 recon/recon.js（718 行）
  * NOTE: 包含数据加载、表格、筛选、排序、分页功能
  */
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useReconStore } from '../../stores/recon_store';
 import type { SortKey } from '../../stores/recon_store';
 import type { ReconSolve } from '@cuberoot/shared';
+import { useAuthStore } from '../../stores/auth_store';
 import { formatTime, countryFlag, getEventDisplayName, t } from '../../utils/recon_utils';
 import '../../recon.css';
 
@@ -136,6 +137,7 @@ export default function ReconListPage() {
         <Link to="/recon/submit" className="recon-add-btn">
           + {t('添加', 'Add')}
         </Link>
+        <WcaLoginButton />
       </div>
 
       {/* 加载状态 */}
@@ -225,6 +227,64 @@ export default function ReconListPage() {
             </div>
           )}
         </>
+      )}
+    </div>
+  );
+}
+
+/** WCA 登录按钮——未登录显示 Login，已登录显示头像+下拉菜单 */
+function WcaLoginButton() {
+  const user = useAuthStore(s => s.user);
+  const login = useAuthStore(s => s.login);
+  const logout = useAuthStore(s => s.logout);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // NOTE: 点击外部关闭下拉菜单
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [menuOpen]);
+
+  if (!user) {
+    return (
+      <button className="recon-btn recon-login-btn" onClick={login}>
+        🔑 {t('WCA 登录', 'WCA Login')}
+      </button>
+    );
+  }
+
+  return (
+    <div className="recon-user-menu" ref={menuRef}>
+      <button
+        className="recon-user-trigger"
+        onClick={() => setMenuOpen(!menuOpen)}
+      >
+        {user.avatar ? (
+          <img src={user.avatar} alt="" className="recon-user-avatar" />
+        ) : (
+          <span className="recon-user-avatar-placeholder">
+            {user.name.charAt(0).toUpperCase()}
+          </span>
+        )}
+        <span className="recon-user-name">{user.name}</span>
+      </button>
+      {menuOpen && (
+        <div className="recon-user-dropdown">
+          <div className="recon-user-dropdown-id">{user.wcaId}</div>
+          <button
+            className="recon-user-dropdown-item"
+            onClick={() => { logout(); setMenuOpen(false); }}
+          >
+            {t('退出登录', 'Logout')}
+          </button>
+        </div>
       )}
     </div>
   );
