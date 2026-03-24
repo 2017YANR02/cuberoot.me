@@ -68,6 +68,20 @@ const REGISTRY: Record<string, () => Promise<Record<string, unknown>>> = {
   'smallest_diff_between_single_and_average': () => import('../statistics/smallest_diff_between_single_and_average.js'),
   'winned_week_count': () => import('../statistics/winned_week_count.js'),
   'world_championship_records': () => import('../statistics/world_championship_records.js'),
+  // NOTE: 阶段 C — RoundMetric 子类
+  'wr_bao5': () => import('../statistics/wr_bao5.js'),
+  'wr_wao5': () => import('../statistics/wr_wao5.js'),
+  'wr_mo5': () => import('../statistics/wr_mo5.js'),
+  'wr_bpa': () => import('../statistics/wr_bpa.js'),
+  'wr_wpa': () => import('../statistics/wr_wpa.js'),
+  'wr_median': () => import('../statistics/wr_median.js'),
+  'wr_variance': () => import('../statistics/wr_variance.js'),
+  'wr_best_counting': () => import('../statistics/wr_best_counting.js'),
+  'wr_worst_counting': () => import('../statistics/wr_worst_counting.js'),
+  'wr_worst': () => import('../statistics/wr_worst.js'),
+  'wr_best_average_ratio': () => import('../statistics/wr_best_average_ratio.js'),
+  'wr_single_history': () => import('../statistics/wr_single_history.js'),
+  'wr_average_history': () => import('../statistics/wr_average_history.js'),
 };
 
 async function main() {
