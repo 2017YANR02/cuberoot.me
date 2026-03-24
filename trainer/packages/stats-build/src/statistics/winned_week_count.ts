@@ -1,7 +1,7 @@
 // NOTE: 获胜周数
 // 与 Ruby _stats_build/statistics/winned_week_count.rb 1:1 对应
 import { GroupedStatistic } from '../core/grouped_statistic.js';
-import { EVENTS } from '../core/events.js';
+import { EVENTS, EVENTS_ENTRIES } from '../core/events.js';
 import type { RowDataPacket } from 'mysql2';
 
 export class WinnedWeekCount extends GroupedStatistic {
@@ -49,7 +49,7 @@ export class WinnedWeekCount extends GroupedStatistic {
   }
 
   transform(rows: RowDataPacket[]): [string, unknown[][]][] {
-    return Object.entries(EVENTS).map(([eventId, eventName]) => {
+    return EVENTS_ENTRIES.map(([eventId, eventName]) => {
       const results = rows
         .filter(r => r['event_id'] === eventId)
         .sort((a, b) => Number(b['winned_weeks']) - Number(a['winned_weeks']))

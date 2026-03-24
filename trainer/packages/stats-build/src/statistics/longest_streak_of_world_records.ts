@@ -1,7 +1,7 @@
 // NOTE: 最长连续世界纪录
 // 与 Ruby _stats_build/statistics/longest_streak_of_world_records.rb 1:1 对应
 import { Statistic } from '../core/statistic.js';
-import { EVENTS } from '../core/events.js';
+import { EVENTS, EVENTS_ENTRIES } from '../core/events.js';
 import type { RowDataPacket } from 'mysql2';
 
 export class LongestStreakOfWorldRecords extends Statistic {
@@ -49,7 +49,7 @@ export class LongestStreakOfWorldRecords extends Statistic {
     const today = new Date();
     const allStreaks: WrStreak[] = [];
 
-    for (const [eventId, eventName] of Object.entries(EVENTS)) {
+    for (const [eventId, eventName] of EVENTS_ENTRIES) {
       for (const type of ['single', 'average']) {
         const recordField = type === 'single' ? 'regional_single_record' : 'regional_average_record';
 
