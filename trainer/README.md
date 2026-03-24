@@ -27,7 +27,13 @@ trainer/
 │   │   │   │   ├── ZbllSelectPage.tsx # ZBLL 选择页：3 级网格（OLL→COLL→ZBLL）+ Modal + 预设
 │   │   │   │   ├── ZbllTimerPage.tsx  # ZBLL 计时页：5 状态计时器 + 结果/统计/设置
 │   │   │   │   ├── ZblsSelectPage.tsx # ZBLS 选择页：F2L 分组列表 + 折叠 + 预设
-│   │   │   │   └── ZblsTimerPage.tsx  # ZBLS 计时页：计时器 + Recap + Again
+│   │   │   │   ├── ZblsTimerPage.tsx  # ZBLS 计时页：计时器 + Recap + Again
+│   │   │   │   └── recon/             # Recon 复盘模块
+│   │   │   │       ├── ReconListPage.tsx    # 列表页（表格+筛选+排序+分页）
+│   │   │   │       ├── ReconDetailPage.tsx  # 详情页（twisty+视频+统计+评论）
+│   │   │   │       ├── ReconSubmitPage.tsx  # 提交/编辑页（表单+搜索+实时统计）
+│   │   │   │       ├── recon_detail.css     # 详情页样式
+│   │   │   │       └── recon_submit.css     # 提交页样式
 │   │   │   ├── stores/
 │   │   │   │   ├── sessionStore.ts    # 训练状态机（idle→caseShown→timing→stopped→complete）
 │   │   │   │   ├── settingsStore.ts   # 用户设置（localStorage 持久化）
@@ -39,14 +45,21 @@ trainer/
 │   │   │   │   ├── zbllNotesStore.ts     # ZBLL per-case 笔记（localStorage）
 │   │   │   │   ├── zbls_selected_store.ts  # ZBLS 已选 case 管理（F2L 组级 + case 级）
 │   │   │   │   ├── zbls_session_store.ts   # ZBLS 计时状态机（5 状态 + recap + again）
-│   │   │   │   └── zbls_preset_store.ts    # ZBLS 预设（localStorage）
+│   │   │   │   ├── zbls_preset_store.ts    # ZBLS 预设（localStorage）
+│   │   │   │   └── recon_store.ts           # Recon 列表缓存 + 筛选/排序/分页
 │   │   │   ├── hooks/
 │   │   │   │   ├── useTimer.ts        # 高精度计时器（performance.now + rAF）
 │   │   │   │   └── useKeyboard.ts     # 键盘事件（keydown/keyup 分离）
 │   │   │   ├── utils/
 │   │   │   │   ├── adaptiveQueue.ts   # 自适应队列（慢的 case 重复更多次）
 │   │   │   │   ├── zbllHelpers.ts     # ZBLL 工具函数（打乱生成/时间格式化/SVG 路径/数据操作）
-│   │   │   │   └── zbls_helpers.ts    # ZBLS 工具函数（打乱+AUF/PNG 路径/分组数据）
+│   │   │   │   ├── zbls_helpers.ts    # ZBLS 工具函数（打乱+AUF/PNG 路径/分组数据）
+│   │   │   │   ├── recon_stats.ts     # Recon 统计引擎（STM/TPS/阶段解析）
+│   │   │   │   ├── recon_norm_cross.ts # Recon Cross 标准化
+│   │   │   │   ├── recon_alg_utils.ts # Recon 公式工具（twisty-player 清洗）
+│   │   │   │   ├── recon_utils.ts     # Recon 格式化工具（国旗/时间/事件/i18n）
+│   │   │   │   └── recon_api.ts       # Recon API 客户端（20+ 端点）
+│   │   │   ├── recon.css               # Recon 列表页样式
 │   │   │   ├── zbll.css               # ZBLL 专用样式（选择页 + 计时页 + 响应式）
 │   │   │   ├── zbls.css               # ZBLS 专用样式（F2L 组列表 + 计时页 + 响应式）
 │   │   │   └── i18n/
@@ -361,3 +374,61 @@ pages/battle/
 | 底部导航 | Solo 模式：Timer / Results / Settings 三 tab 切换（原版 icon_timer.png + SVG 图标） |
 | 中间栏 | 1v1 模式：比分 + 键盘提示 + 全屏 + CubeRoot logo + 设置 |
 
+## Recon（复盘数据库）
+
+从 `recon/` 目录迁移的复盘（Reconstruction）系统。
+原版为 PHP 后端 + 纯 JS 前端（`recon_detail.js` 1586 行 + `recon_submit_page.js` 2432 行 + 共享模块），React 版移植核心功能。
+
+### 文件结构
+
+```
+utils/
+├── recon_stats.ts             # 统计引擎（STM/TPS/阶段解析 Cross/F2L/LL/OLL/PLL）
+├── recon_norm_cross.ts        # Cross 标准化（宽转动分解 + 旋转吸收）
+├── recon_alg_utils.ts         # 公式工具（twisty-player 清洗 + 光标磁吸）
+├── recon_utils.ts             # 格式化工具（国旗/时间/事件映射/纪录徽章/i18n）
+└── recon_api.ts               # API 客户端（20+ 端点，fetch + Bearer token）
+
+stores/
+└── recon_store.ts             # Zustand Store（列表缓存 + 多维度筛选/排序/分页）
+
+pages/recon/
+├── ReconListPage.tsx          # 列表页（表格 + 工具栏 + 纪录徽章 + 分页）
+├── ReconDetailPage.tsx        # 详情页（twisty 动画 + YouTube/Bilibili 视频 + 统计 + 评论）
+├── ReconSubmitPage.tsx        # 提交/编辑页（表单 + 选手搜索 + 实时统计 + 重复检测）
+├── recon_detail.css           # 详情页样式（两列布局 + 视频 facade + 统计网格）
+└── recon_submit.css           # 提交页样式（表单 + 搜索下拉 + 实时统计预览）
+
+recon.css                      # 列表页样式（表格 + 工具栏 + 纪录徽章）
+```
+
+### 路由
+
+| 路径 | 组件 | 说明 |
+|------|------|------|
+| `/recon` | ReconListPage | 列表页（筛选/排序/分页） |
+| `/recon/:id` | ReconDetailPage | 详情页（twisty/视频/评论） |
+| `/recon/submit` | ReconSubmitPage | 新增复盘 |
+| `/recon/submit/:editId` | ReconSubmitPage | 编辑已有复盘 |
+
+### 关键设计
+
+| 设计点 | 说明 |
+|--------|------|
+| API 兼容 | 前端直连现有 PHP 后端，通过 `VITE_RECON_API_BASE` 环境变量切换；开发环境走 Vite proxy |
+| twisty-player | 动态 `import('cubing/twisty')` + `useRef` DOM 注入，按需加载（~1MB） |
+| 视频 facade | YouTube 用缩略图 + 播放按钮，Bilibili 用品牌 logo，点击后才加载 iframe |
+| 实时统计 | 提交页输入解法时即时计算 STM/TPS/OLL/PLL 并预览 |
+| 重复检测 | 提交时自动检查相同比赛+轮次+选手是否已有复盘 |
+| 统计引擎 | 纯函数实现，支持 STM/TPS/阶段 STM/OLL/PLL 提取/注解计数 |
+
+### 待完成
+
+| 功能 | 说明 |
+|------|------|
+| Fastify 后端 | 迁移 PHP API 到 Fastify（需部署环境） |
+| 虚拟键盘 | 原版 2432 行的触摸键盘 + 长按 + 公式联想 |
+| 同轮次成绩 | 「本轮单次」区域（#1 ✓, #2, #3 导航） |
+| 评论编辑/删除 | 当前评论区仅显示 |
+| 编辑历史 | Layered Editing 前端合并逻辑 |
+| 配色/字体/布局完全对齐 | 细节打磨，与原版视觉完全一致 |
