@@ -26,6 +26,28 @@ export interface StatPanel {
   sections: StatSection[];
 }
 
+// NOTE: 数据源面板（wr_newcomer 的第二层：1st-solve / 1st-comp）
+// 与 Ruby source-panel div 对应
+export interface SourcePanel {
+  id: string;         // 如 'single-1st-solve'
+  labelEn: string;    // 如 '1st Solve'
+  labelZh: string;    // 如 '首次还原'
+  panels: StatPanel[];  // ranking + history
+}
+
+// NOTE: 指标面板（最外层：Single / Average）
+// 与 Ruby metric-panel div 对应
+// 两种模式：
+//   1. 直接包含 panels（2 级：wr_non_pr / wr_dominance）
+//   2. 包含 sourcePanels（3 级：wr_newcomer）
+export interface MetricPanel {
+  id: string;         // 如 'single' / 'average'
+  labelEn: string;    // 如 'Single'
+  labelZh: string;    // 如 '单次'
+  panels?: StatPanel[];        // 2 级结构（直接 ranking/history）
+  sourcePanels?: SourcePanel[]; // 3 级结构（source → ranking/history）
+}
+
 // NOTE: 表头对齐方向
 export type Alignment = 'left' | 'right' | 'center';
 
@@ -46,9 +68,10 @@ export interface StatJson {
     labelZh: string;
     align: Alignment;
   }>;
-  rows?: unknown[][];       // NOTE: 普通统计（Statistic）
-  sections?: StatSection[]; // NOTE: 分组统计（GroupedStatistic）
-  panels?: StatPanel[];     // NOTE: 双视图统计（RoundMetric/AverageOfX/AoRounds）
+  rows?: unknown[][];           // NOTE: 普通统计（Statistic）
+  sections?: StatSection[];     // NOTE: 分组统计（GroupedStatistic）
+  panels?: StatPanel[];         // NOTE: 双视图统计（RoundMetric/AverageOfX/AoRounds）
+  metricPanels?: MetricPanel[]; // NOTE: 多指标统计（wr_non_pr/wr_dominance/wr_newcomer/聚合页面）
 }
 
 export abstract class Statistic {
