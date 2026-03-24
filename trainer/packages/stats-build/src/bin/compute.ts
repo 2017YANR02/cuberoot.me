@@ -100,6 +100,10 @@ const REGISTRY: Record<string, () => Promise<Record<string, unknown>>> = {
   'mbf_average': () => import('../statistics/mbf_average.js'),
   // NOTE: 阶段 D-2 — Rankings 基类
   'yearly_rankings': () => import('../statistics/yearly_rankings.js'),
+  // NOTE: 阶段 D-3 — 多维面板统计
+  'wr_non_pr': () => import('../statistics/wr_non_pr.js'),
+  'wr_dominance': () => import('../statistics/wr_dominance.js'),
+  'wr_newcomer': () => import('../statistics/wr_newcomer.js'),
 };
 
 async function main() {
