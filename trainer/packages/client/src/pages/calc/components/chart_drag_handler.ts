@@ -332,6 +332,11 @@ function positionHandle(): void {
     if (paInfo) {
       const endY = selected.paEnd === 'wpa' ? paInfo.wpaY : paInfo.bpaY;
       positionHandleAt(paInfo.cx, endY, paInfo.w);
+      // NOTE: BPA（下端）handle 往上偏移（柱内方向），WPA（上端）往下
+      if (handleEl) {
+        handleEl.style.transform = selected.paEnd === 'bpa'
+          ? 'translate(-50%, -100%)' : 'translate(-50%, 0)';
+      }
     }
     return;
   }

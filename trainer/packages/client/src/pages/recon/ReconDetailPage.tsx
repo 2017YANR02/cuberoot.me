@@ -9,6 +9,7 @@ import { getRecon, listComments, getEditHistory, deleteRecon } from '../../utils
 import {
   formatTime, countryFlag, getEventDisplayName, getRoundDisplay,
   isBldEvent, getPuzzleId, t, wcaCompUrl, wcaPersonUrl,
+  buildExternalLinks, displaySolverName, FACE_COLORS,
 } from '../../utils/recon_utils';
 import { cleanForPlayer } from '../../utils/recon_alg_utils';
 import '../../recon.css';
@@ -106,28 +107,10 @@ export default function ReconDetailPage() {
         )}
       </div>
 
-      {/* 主体 */}
+      {/* 主体——两列布局 */}
       <div className="detail-body">
-        {/* 左列：打乱 + 解法 + twisty */}
+        {/* 左列：twisty → 外部链接 → 打乱+解法融合块 */}
         <div className="detail-left">
-          {/* 打乱 */}
-          {scramble && (
-            <div className="detail-section">
-              <div className="detail-section-label">
-                {t('打乱', 'Scramble')}
-              </div>
-              <div className="detail-scramble-text">{scramble}</div>
-            </div>
-          )}
-
-          {/* 解法 */}
-          <div className="detail-section">
-            <div className="detail-section-label">
-              {t('解法', 'Solution')}
-            </div>
-            <SolutionView text={solutionText} />
-          </div>
-
           {/* Twisty Player */}
           {scramble && solutionText && (
             <TwistySection
@@ -137,80 +120,110 @@ export default function ReconDetailPage() {
             />
           )}
 
-          {/* 盲拧附加信息 */}
-          {isBldEvent(solve.event) && (solve.execTime || solve.memoTime) && (
-            <div className="detail-bld-times">
-              {solve.memoTime != null && (
-                <span>🧠 Memo: {formatTime(solve.memoTime)}</span>
-              )}
-              {solve.execTime != null && (
-                <span>⚡ Exec: {formatTime(solve.execTime)}</span>
-              )}
+          {/* NOTE: 外部链接——与原版一致（alg.cubing.net / cubedb.net / 链接） */}
+          {scramble && solutionText && (
+            <ExternalLinks event={solve.event} scramble={scramble} alg={cleanForPlayer(solutionText)} solveId={solve.id} />
+          )}
+
+          {/* NOTE: 打乱+解法融合块——原版风格（打乱和解法共享一个视觉框体） */}
+          {scramble && solutionText ? (
+            <div className="detail-solution-block">
+              <div className="detail-scramble-text">{scramble}</div>
+              <div className="detail-block-divider" />
+              <SolutionView text={solutionText} />
             </div>
+          ) : (
+            <>
+              {scramble && (
+                <div className="detail-section">
+                  <div className="detail-section-label">{t('打乱', 'Scramble')}</div>
+                  <div className="detail-scramble-text">{scramble}</div>
+                </div>
+              )}
+              {solutionText && (
+                <div className="detail-section">
+                  <div className="detail-section-label">{t('解法', 'Solution')}</div>
+                  <SolutionView text={solutionText} />
+                </div>
+              )}
+            </>
           )}
         </div>
 
-        {/* 右列：统计 + 视频 + 评论 */}
+        {/* 右列：视频 → 统计 → 备注 */}
         <div className="detail-right">
-          {/* 统计网格 */}
-          <StatsGrid solve={solve} />
-
           {/* 视频 */}
           {solve.videoUrl && <VideoSection videoUrl={solve.videoUrl} />}
+
+          {/* 统计网格 */}
+          <StatsGrid solve={solve} />
 
           {/* 备注 */}
           {solve.note && (
             <div className="detail-section">
-              <div className="detail-section-label">{t('备注', 'Note')}</div>
+              <div className="detail-section-label">📝 {t('备注', 'Note')}</div>
               <div className="detail-note">{solve.note}</div>
             </div>
           )}
-
-          {/* 评论 */}
-          <CommentsView
-            comments={comments}
-            reconId={solve.id}
-            onUpdate={loadData}
-          />
         </div>
       </div>
 
-      {/* 底部元信息 */}
-      <div className="detail-footer">
-        {solve.addedBy && (
-          <span className="detail-footer-item">
-            {t('添加者', 'Added by')}: {solve.addedBy}
-          </span>
+      {/* NOTE: 元数据区——原版 emoji + 链接化 */}
+      <div className="detail-meta">
+        {solve.cube && (
+          <div className="detail-meta-item">
+            <span className="detail-meta-label">🧳</span>
+            <span className="detail-meta-value">{solve.cube}</span>
+          </div>
         )}
         {solve.reconer && (
-          <span className="detail-footer-item">
-            {t('复盘者', 'Reconstructor')}: {solve.reconer}
-          </span>
+          <div className="detail-meta-item">
+            <span className="detail-meta-label">✍️</span>
+            <span className="detail-meta-value">
+              {solve.reconerId ? (
+                <a href={wcaPersonUrl(solve.reconerId)} target="_blank" rel="noopener noreferrer">
+                  {displaySolverName(solve.reconer)}
+                </a>
+              ) : displaySolverName(solve.reconer)}
+            </span>
+          </div>
         )}
-        {solve.cube && (
-          <span className="detail-footer-item">
-            🧊 {solve.cube}
-          </span>
+        {solve.reconDate && (
+          <div className="detail-meta-item">
+            <span className="detail-meta-label">📅</span>
+            <span className="detail-meta-value">{solve.reconDate}</span>
+          </div>
         )}
-        {solve.createdAt && (
-          <span className="detail-footer-item">
-            {new Date(solve.createdAt * 1000).toLocaleDateString()}
-          </span>
+        {solve.addedBy && (
+          <div className="detail-meta-item">
+            <span className="detail-meta-label">➕</span>
+            <span className="detail-meta-value">
+              {solve.addedById ? (
+                <a href={wcaPersonUrl(solve.addedById)} target="_blank" rel="noopener noreferrer">
+                  {displaySolverName(solve.addedBy)}
+                </a>
+              ) : displaySolverName(solve.addedBy)}
+            </span>
+          </div>
         )}
         {history.length > 0 && (
-          <span className="detail-footer-item">
-            ✏️ {history.length} {t('次编辑', 'edits')}
-          </span>
+          <div className="detail-meta-item">
+            <span className="detail-meta-label">✏️</span>
+            <span className="detail-meta-value">{history.length} {t('次编辑', 'edits')}</span>
+          </div>
         )}
       </div>
 
+      {/* 评论 */}
+      <CommentsView comments={comments} reconId={solve.id} onUpdate={loadData} />
+
       {/* 操作按钮 */}
       <div className="detail-actions">
-        <Link to={`/recon/submit/${solve.id}`} className="recon-btn">
-          ✏️ {t('编辑', 'Edit')}
+        <Link to={`/recon/submit/${solve.id}`} className="recon-btn recon-btn-edit">
+          {t('编辑', 'Edit')}
         </Link>
-        <button className="recon-btn detail-delete-btn" onClick={handleDelete}>
-          🗑 {t('删除', 'Delete')}
+        <button className="recon-btn recon-btn-danger" onClick={handleDelete}>
+          {t('删除', 'Delete')}
         </button>
       </div>
     </div>
@@ -235,13 +248,40 @@ function SolutionView({ text }: { text: string }) {
   );
 }
 
+/** 外部链接——alg.cubing.net / cubedb.net / 分享链接 */
+function ExternalLinks({ event, scramble, alg, solveId }: {
+  event: string; scramble: string; alg: string; solveId: number;
+}) {
+  const { algUrl, algSiteName, cubedbUrl } = buildExternalLinks(event, scramble, alg);
+  const shareUrl = `${window.location.origin}/recon/detail/?id=${solveId}`;
+
+  const handleCopyLink = (e: React.MouseEvent) => {
+    e.preventDefault();
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      const btn = e.currentTarget as HTMLElement;
+      const orig = btn.textContent;
+      btn.textContent = t('已复制', 'copied');
+      setTimeout(() => { btn.textContent = orig; }, 1500);
+    });
+  };
+
+  return (
+    <div className="recon-external-links">
+      <a href={algUrl} target="_blank" rel="noopener noreferrer">{algSiteName}</a>
+      <a href={cubedbUrl} target="_blank" rel="noopener noreferrer">cubedb.net</a>
+      <a href="#" onClick={handleCopyLink}>{t('链接', 'link')}</a>
+    </div>
+  );
+}
+
 // NOTE: Cross type 数字→文本映射
 const CROSS_LABELS: Record<number, string> = { 0: 'cross', 1: 'xcross', 2: 'xxcross', 3: 'xxxcross', 4: 'xxxxcross' };
 
 /** 统计网格——完全对齐原版 17 项字段 */
 function StatsGrid({ solve }: { solve: ReconSolve }) {
   // NOTE: 完整字段列表，与原版 buildStatsGrid 一致
-  const items: [string, string | number | undefined][] = [
+  // NOTE: 值类型为 React.ReactNode 以支持 crossColor 着色
+  const items: [string, React.ReactNode | undefined][] = [
     [t('方法', 'Method'), solve.method],
     [t('步数', 'STM'), solve.stm],
     [t('手速', 'TPS'), solve.tps],
@@ -259,7 +299,12 @@ function StatsGrid({ solve }: { solve: ReconSolve }) {
     [t('换手', 'Regrip'), solve.regrip],
     [t('卡顿', 'Lockup'), solve.lockup],
     ['S' + t('转动', ' move'), solve.sMove],
-    [t('底色', 'Color'), solve.crossColor],
+    // NOTE: crossColor 使用 FACE_COLORS 着色，与原版一致
+    [t('底色', 'Color'), solve.crossColor ? (
+      FACE_COLORS[solve.crossColor as string]
+        ? <span style={{ color: FACE_COLORS[solve.crossColor as string], fontWeight: 600 }}>{String(solve.crossColor)}</span>
+        : String(solve.crossColor)
+    ) : undefined],
     ['OLL', solve.ollShort || solve.oll],
     ['PLL', solve.pllShort || solve.pll],
   ];
