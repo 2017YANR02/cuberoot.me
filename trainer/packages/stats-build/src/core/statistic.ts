@@ -11,6 +11,21 @@ export interface StatSection {
   rows: unknown[][];
 }
 
+// NOTE: 双视图面板（Ranking + History）——RoundMetric/AverageOfX/AoRounds 使用
+// 与 Ruby StatPanel#tabbed_grouped_markdown 对应
+export interface StatPanel {
+  id: string;       // 'ranking' | 'history'
+  labelEn: string;  // Tab 按钮英文标签
+  labelZh: string;  // Tab 按钮中文标签
+  header: Array<{
+    key: string;
+    label: string;
+    labelZh: string;
+    align: Alignment;
+  }>;
+  sections: StatSection[];
+}
+
 // NOTE: 表头对齐方向
 export type Alignment = 'left' | 'right' | 'center';
 
@@ -18,7 +33,7 @@ export type Alignment = 'left' | 'right' | 'center';
 export type TableHeader = Record<string, Alignment>;
 
 // NOTE: JSON 输出格式——React 前端消费
-// 普通统计使用 rows，分组统计使用 sections
+// 普通统计使用 rows，分组统计使用 sections，双视图使用 panels
 export interface StatJson {
   id: string;
   title: string;
@@ -33,6 +48,7 @@ export interface StatJson {
   }>;
   rows?: unknown[][];       // NOTE: 普通统计（Statistic）
   sections?: StatSection[]; // NOTE: 分组统计（GroupedStatistic）
+  panels?: StatPanel[];     // NOTE: 双视图统计（RoundMetric/AverageOfX/AoRounds）
 }
 
 export abstract class Statistic {

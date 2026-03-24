@@ -51,6 +51,18 @@ export const OFFICIAL_EVENTS: string[] = Object.keys(EVENTS).filter(
   id => !(RETIRED_EVENTS as readonly string[]).includes(id)
 );
 
+// NOTE: 官方项目 Record（id → name），与 Ruby Events::OFFICIAL 对应
+export const OFFICIAL_EVENTS_RECORD: Record<string, string> = Object.fromEntries(
+  Object.entries(EVENTS).filter(([id]) => OFFICIAL_EVENTS.includes(id))
+);
+
+// NOTE: WITH_AVERAGE + 333mbf/333mbo（用于 wr_average_history 的 Mo3 展示）
+export const EVENTS_WITH_AVERAGE_MBF: Record<string, string> = {
+  ...EVENTS_WITH_AVERAGE,
+  '333mbf': EVENTS['333mbf'],
+  '333mbo': EVENTS['333mbo'],
+};
+
 // NOTE: 英文名 → 中文名
 export const NAMES_ZH: Record<string, string> = {
   "Rubik's Cube":       '三阶魔方',
