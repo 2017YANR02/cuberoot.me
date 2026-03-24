@@ -413,6 +413,18 @@
     border-color: #555;
 }
 
+/* NOTE: CubeRoot logo — 限制尺寸与中间按钮对齐 */
+.middle-logo {
+    display: flex;
+    align-items: center;
+    height: 32px;
+}
+
+.middle-logo img {
+    height: 24px;
+    width: auto;
+}
+
 /* NOTE: 桌面端键盘快捷键提示（触摸设备隐藏） */
 .key-hint {
     font-size: 0.65rem;
