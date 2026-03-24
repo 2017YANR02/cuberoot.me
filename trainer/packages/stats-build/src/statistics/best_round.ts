@@ -2,7 +2,7 @@
 // 与 Ruby _stats_build/statistics/best_round.rb 1:1 对应
 // 特殊性：逐项目执行参数化 SQL（query 含 %s 占位符），333mbf 用 points 之和降序排
 import { GroupedStatistic } from '../core/grouped_statistic.js';
-import { EVENTS, BLD_EVENTS } from '../core/events.js';
+import { EVENTS, EVENTS_ENTRIES, BLD_EVENTS } from '../core/events.js';
 import { SolveTime } from '../core/solve_time.js';
 import { query as dbQuery } from '../core/database.js';
 import type { RowDataPacket } from 'mysql2';
@@ -89,7 +89,7 @@ export class BestRound extends GroupedStatistic {
 
   // NOTE: 与 Ruby transform 1:1 对应
   transform(rows: RowDataPacket[]): [string, unknown[][]][] {
-    return Object.entries(EVENTS).map(([eventId, eventName]) => {
+    return EVENTS_ENTRIES.map(([eventId, eventName]) => {
       let eventRows = rows.filter(r => r['event_id'] === eventId);
       if (eventRows.length === 0 && eventId !== '333mbf') {
         return [eventName, []] as [string, unknown[][]];
@@ -182,7 +182,7 @@ export class BestRound extends GroupedStatistic {
 
   // NOTE: 在 toJson 中调用——333mbf 行已按 points 排好序
   private transformWithMbf(allRows: RowDataPacket[], mbfRows: RowDataPacket[]): [string, unknown[][]][] {
-    return Object.entries(EVENTS).map(([eventId, eventName]) => {
+    return EVENTS_ENTRIES.map(([eventId, eventName]) => {
       const eventRows = eventId === '333mbf' ? mbfRows : allRows.filter(r => r['event_id'] === eventId);
       if (eventRows.length === 0) return [eventName, []] as [string, unknown[][]];
 

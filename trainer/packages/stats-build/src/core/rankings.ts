@@ -2,7 +2,7 @@
 // 与 Ruby _stats_build/statistics/abstract/rankings.rb 1:1 对应
 // 子类通过 constructor 传入 WHERE 条件来过滤数据
 import { GroupedStatistic } from './grouped_statistic.js';
-import { EVENTS } from './events.js';
+import { EVENTS, EVENTS_ENTRIES } from './events.js';
 import { SolveTime } from './solve_time.js';
 import { ATTEMPTS_SUBQUERY } from './database.js';
 import type { RowDataPacket } from 'mysql2';
@@ -44,7 +44,7 @@ export abstract class Rankings extends GroupedStatistic {
   // NOTE: 与 Ruby transform 1:1 对应
   // 对每个 event × {single, average}，筛选、排序、去重、top 10
   transform(rows: RowDataPacket[]): [string, unknown[][]][] {
-    return Object.entries(EVENTS).flatMap(([eventId, eventName]) => {
+    return EVENTS_ENTRIES.flatMap(([eventId, eventName]) => {
       return (['single', 'average'] as const).map(type => {
         // NOTE: 筛选该项目且该类型值 > 0 的行，同步计算 SolveTime
         // 避免 spread RowDataPacket（会丢失 index signature）

@@ -3,7 +3,7 @@
 // 算法：滑动窗口，每人所有 attempt 按时间排列，窗口长度 = solveCount
 // 支持双视图 JSON：Current Ranking + WR History
 import { GroupedStatistic } from './grouped_statistic.js';
-import { EVENTS, headerZh, eventZh } from './events.js';
+import { EVENTS, EVENTS_ENTRIES, headerZh, eventZh } from './events.js';
 import { SolveTime } from './solve_time.js';
 import { ATTEMPTS_SUBQUERY, query as dbQuery } from './database.js';
 import type { StatJson, StatPanel } from './statistic.js';
@@ -234,7 +234,7 @@ export abstract class AverageOfX extends GroupedStatistic {
     const rankingDataAll: [string, unknown[][]][] = [];
     const historyDataAll: [string, unknown[][]][] = [];
 
-    for (const [eventId, eventName] of Object.entries(EVENTS)) {
+    for (const [eventId, eventName] of EVENTS_ENTRIES) {
       if (['333mbf', '333mbo'].includes(eventId)) continue;
       const persons = this.slidingWindowPerPerson(rawRows, eventId);
 

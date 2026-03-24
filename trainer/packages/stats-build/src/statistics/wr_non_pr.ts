@@ -3,7 +3,7 @@
 // 算法：逐行扫描维护每人 PB，value > PB → Non-PR 结果
 // 双维度（Single + Average）× 双视图（Ranking + History）→ 4 个 MetricPanel 内嵌 panels
 import { Statistic } from '../core/statistic.js';
-import { EVENTS, headerZh, eventZh } from '../core/events.js';
+import { EVENTS, EVENTS_ENTRIES, headerZh, eventZh } from '../core/events.js';
 import { SolveTime } from '../core/solve_time.js';
 import { query as dbQuery } from '../core/database.js';
 import type { StatJson, StatPanel, MetricPanel, StatSection, TableHeader } from '../core/statistic.js';
@@ -86,7 +86,7 @@ export class WrNonPr extends Statistic {
       average: { ranking: [] as [string, unknown[][]][], history: [] as [string, unknown[][]][] },
     };
 
-    for (const [eventId, eventName] of Object.entries(EVENTS)) {
+    for (const [eventId, eventName] of EVENTS_ENTRIES) {
       const rows = await this.fetchResultsFor(eventId);
       if (rows.length === 0) continue;
 
