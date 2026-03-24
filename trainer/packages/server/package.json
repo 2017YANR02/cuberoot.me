@@ -11,8 +11,8 @@
   },
   "dependencies": {
     "@cuberoot/shared": "workspace:*",
-    "fastify": "^5.0.0",
-    "@fastify/cors": "^10.0.0",
+    "hono": "^4.0.0",
+    "@hono/node-server": "^1.0.0",
     "mariadb": "^3.4.0",
     "jsonwebtoken": "^9.0.0"
   },
