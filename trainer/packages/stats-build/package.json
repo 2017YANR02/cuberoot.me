@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "compute": "tsx src/bin/compute.ts"
+    "compute": "tsx src/bin/compute.ts",
+    "validate": "tsx src/bin/validate.ts"
   },
   "dependencies": {
     "mysql2": "^3.11.0",
