@@ -329,3 +329,35 @@ pages/viz/
 | 字体 | Google Fonts（Inter + JetBrains Mono），在 `index.html` 全局加载 |
 | WcaPersonPicker | 共享组件，viz 内通过 CSS 覆盖为深色主题（`position:static` 覆盖 inline 模式的 absolute 定位） |
 
+## Battle（对战计时器）
+
+从 `battle/` 目录迁移的双人对战 / 单人计时器。
+原版为 `battle.js`（3596 行）+ `scramble_module.js`（567 行），React 版 1:1 复刻全部功能。
+
+### 文件结构
+
+```
+pages/battle/
+├── BattlePage.tsx              # 页面容器（TimerArea × 2 + MiddleBar + BottomNav + Settings + History）
+├── battle.css                  # 全量样式（AMOLED 黑 + Segment7 字体 + 响应式 + 底部导航）
+├── HistoryPanel.tsx            # 历史面板（趋势图 + 分布图 + 成绩列表 + 工具按钮）
+├── AdvancedFeatures.tsx        # 高级功能（里程碑 Toast / Ao 详情 / 手动输入 / 模拟赛 / 热力图 / 导入导出 / 分享）
+└── engine/
+    ├── battle_store.ts         # Zustand 状态机（1v1/Solo 模式 + WCA Inspection + 罚时 + 多阶段计时 + 持久化）
+    ├── scramble_engine.ts      # 打乱引擎封装（通过 public/scramble_module.js 加载）
+    └── stats.ts                # 统计计算（Ao5/Ao12/Mo3 + PB 检测 + 趋势分析）
+```
+
+### 关键设计
+
+| 设计点 | 说明 |
+|--------|------|
+| 计时动画 | `useRef` + `requestAnimationFrame` 直接操作 DOM，避免 React re-render |
+| 触控隔离 | `setPointerCapture` 确保多点触控独立计时 |
+| 打乱引擎 | 全局 `window.scrMgr` + jQuery shim + kernel 配色注入 |
+| 字体 | Segment7Standard.otf 七段 LCD 字体（`/app/fonts/`） |
+| 里程碑通知 | `window` 自定义事件 `battle-milestone`，UI 组件监听 Toast |
+| 数据持久化 | localStorage 存储 Session 列表 + 成绩记录 |
+| 底部导航 | Solo 模式：Timer / Results / Settings 三 tab 切换（原版 icon_timer.png + SVG 图标） |
+| 中间栏 | 1v1 模式：比分 + 键盘提示 + 全屏 + CubeRoot logo + 设置 |
+
