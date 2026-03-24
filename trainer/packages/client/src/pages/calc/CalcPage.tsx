@@ -47,6 +47,8 @@ export function CalcPage() {
   const loadFromUrl = useCalcStore(s => s.loadFromUrl);
   const saveToUrl = useCalcStore(s => s.saveToUrl);
   const initDone = useRef(false);
+  // NOTE: 防止 event useEffect 在首次挂载时清空 URL 恢复的数据
+  const eventInitRef = useRef(false);
 
   // NOTE: 头像按钮状态 — 原版 input_grid.js 的 setMeButtonState 逻辑转为 React state
   const [avatarState, setAvatarState] = useState<AvatarState[]>([
@@ -87,6 +89,7 @@ export function CalcPage() {
         }
         // NOTE: URL 无数据时自动随机填充（原版 app.js#272-286）
         if (!window.location.search.includes('t0=')) {
+          suppressConfetti = true;
           const s = useCalcStore.getState();
           const sc = s.solveCount();
           for (let p = 0; p < 2; p++) {
@@ -96,6 +99,7 @@ export function CalcPage() {
               }
             }
           }
+          suppressConfetti = false;
         }
         // NOTE: 加载世界前 2 选手头像 — 原版 app.js#90-99
         if (players) {
@@ -127,10 +131,16 @@ export function CalcPage() {
   }, [loadFromUrl]);
 
   // NOTE: 项目切换时重置数据 + 重新加载 WR 默认数据（原版 app.js#138-187）
+  // 首次挂载跳过 — 此时 loadFromUrl 已恢复 URL 数据，不应被清空
   useEffect(() => {
     setCurrentEvent(event);
     setMoveCntMode(event === '333fm');
     setMbfMode(event === '333mbf' || event === '333mbo');
+
+    if (!eventInitRef.current) {
+      eventInitRef.current = true;
+      return;
+    }
 
     // NOTE: 清除个人数据覆盖 — 不同项目的 KDE 数据不通用
     for (let pi = 0; pi < 2; pi++) {
@@ -167,6 +177,8 @@ export function CalcPage() {
         }
       }
       // NOTE: rand-fill — 原版 app.js#157
+      // NOTE: 抑制 confetti — rand-fill 的数据来自 WR 选手 KDE，值本身处于 WR 水平，不应触发
+      suppressConfetti = true;
       const s = useCalcStore.getState();
       const sc2 = s.solveCount();
       for (let p = 0; p < 2; p++) {
@@ -176,6 +188,7 @@ export function CalcPage() {
           }
         }
       }
+      suppressConfetti = false;
       // NOTE: 加载世界前 2 选手头像
       if (players) {
         players.forEach((pl, i) => {

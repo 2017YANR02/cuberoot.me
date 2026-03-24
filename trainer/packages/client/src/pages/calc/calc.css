@@ -224,27 +224,24 @@ body {
 }
 
 .time-cell {
-    width: 90px;
-    min-width: 90px;
-    max-width: 90px;
+    width: 100%;
     padding: 10px 4px;
-    font-size: 24px;
+    /* NOTE: 17px 确保最长 7 字符格式（如 1:13.01）在 90px 内完整显示，所有格子字号统一 */
+    font-size: 17px;
     font-weight: 600;
     text-align: center;
     border: 1px solid #ccc;
     border-radius: 4px;
     background: #fff;
     outline: none;
-    overflow: hidden;
-    text-overflow: ellipsis;
     box-sizing: border-box;
     transition: border-color 0.2s;
 }
 
-/* NOTE: wrapper 容器 — 为 WR badge 提供定位参考 */
+/* NOTE: wrapper 容器 — 固定宽度确保所有格子等宽 */
 .time-cell-wrapper {
     position: relative;
-    display: inline-block;
+    flex: 0 0 90px;
 }
 
 /* NOTE: WR 徽章 — 黑底白字，定位在 input 右上角 */
@@ -324,9 +321,9 @@ body {
     box-shadow: 0 0 0 2px rgba(50, 130, 255, 0.2);
 }
 
-/* NOTE: Target Avg 格 — 继承 time-cell 样式，覆盖背景色与选手一致 */
+/* NOTE: Target Avg 格 — 透明边框保持与普通格子完全相同的盒模型 */
 .tavg-cell {
-    border: none;
+    border: 1px solid transparent;
 }
 
 .player-a .tavg-cell {
@@ -875,9 +872,9 @@ video {
         min-width: 0;
     }
 
-    /* NOTE: Target Avg wrapper 固定宽度，不被挤压 */
+    /* NOTE: Target Avg wrapper 与其他格子统一大小 */
     .time-cell-wrapper:has(.tavg-cell) {
-        flex: 0 0 60px;
+        flex: 1;
     }
 
     .time-cell {
@@ -896,6 +893,8 @@ video {
         min-width: 0;
         padding: 6px 1px;
         font-size: clamp(12px, 4vw, 18px);
+        box-sizing: border-box;
+        overflow: hidden;
     }
 
     .player-toggle {
