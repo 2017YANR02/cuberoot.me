@@ -36,7 +36,12 @@ export default defineConfig({
       '/stats': {
         target: 'http://localhost:4000',
       },
-      // NOTE: Recon API 代理到远端 PHP 后端（绕过 CORS）
+      // NOTE: Recon API 代理到 Fastify（localhost:3001）
+      '/trainer/api/recon': {
+        target: 'http://localhost:3001',
+        rewrite: (path) => path.replace(/^\/trainer\/api\/recon/, '/api/recon'),
+      },
+      // NOTE: 旧 PHP 代理（保留兼容，后续阶段迁移完成后可删除）
       '/recon/api': {
         target: 'https://toolkit.cuberoot.me',
         changeOrigin: true,
