@@ -30,13 +30,11 @@ export default function ReconDetailPage() {
     if (!id) return;
     setLoading(true);
     try {
-      const [solveData, commentsData] = await Promise.all([
-        getRecon(Number(id)),
-        listComments(Number(id)),
-      ]);
+      // NOTE: 主数据独立加载——不被评论/历史 API 的失败拖累
+      const solveData = await getRecon(Number(id));
       setSolve(solveData);
-      setComments(commentsData);
-      // NOTE: 编辑历史延迟加载（非关键路径）
+      // NOTE: 评论和历史延迟加载（非关键路径，失败静默）
+      listComments(Number(id)).then(setComments).catch(() => {});
       getEditHistory(String(id)).then(setHistory).catch(() => {});
     } catch (err) {
       setError((err as Error).message);
