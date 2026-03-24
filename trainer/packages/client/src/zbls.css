@@ -180,7 +180,7 @@
 }
 
 .zbls-preset-active {
-  background: var(--accent-color, #6366f1);
+  background: var(--accent-color, #58a6ff);
   color: #fff;
 }
 
@@ -219,7 +219,7 @@
 }
 
 .zbls-btn-primary {
-  background: var(--accent-color, #6366f1);
+  background: var(--accent-color, #58a6ff);
   color: #fff;
 }
 
@@ -230,8 +230,8 @@
 
 .zbls-btn-outline {
   background: transparent;
-  border: 1px solid var(--accent-color, #6366f1);
-  color: var(--accent-color, #6366f1);
+  border: 1px solid var(--accent-color, #58a6ff);
+  color: var(--accent-color, #58a6ff);
 }
 
 .zbls-btn-warning {
@@ -357,7 +357,7 @@
 }
 
 .zbls-badge {
-  background: var(--accent-color, #6366f1);
+  background: var(--accent-color, #58a6ff);
   color: #fff;
   padding: 2px 8px;
   border-radius: 4px;

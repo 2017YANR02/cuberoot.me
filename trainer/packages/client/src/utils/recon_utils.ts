@@ -105,9 +105,99 @@ export function isBldEvent(event: string): boolean {
   return ['3bld', '4bld', '5bld', 'mbld'].includes(event);
 }
 
+// ── 成绩格式化（原版 formatResult / formatAvg 1:1 移植） ──
+
+/**
+ * 成绩格式化（三位小数）
+ * NOTE: 与原版 recon_utils.js formatResult 一致
+ * ≥9999 → DNF, null → ''
+ */
+export function formatResult(val: number | undefined | null): string {
+  if (val == null) return '';
+  if (val >= 9999) return 'DNF';
+  if (typeof val !== 'number') return String(val);
+  return val.toFixed(3);
+}
+
+/**
+ * 平均成绩格式化（两位小数）
+ * NOTE: 与原版 recon_utils.js formatAvg 一致
+ * ≥60 秒 → m:ss.xx 格式
+ */
+export function formatAvg(val: number | string | undefined | null): string {
+  if (val == null) return '';
+  const n = typeof val === 'number' ? val : parseFloat(String(val));
+  if (isNaN(n)) return String(val);
+  if (n >= 9999) return 'DNF';
+  if (n >= 60) {
+    const m = Math.floor(n / 60);
+    const s = (n % 60).toFixed(2);
+    return m + ':' + (parseFloat(s) < 10 ? '0' : '') + s;
+  }
+  return n.toFixed(2);
+}
+
+/**
+ * AoXR 列紧凑格式
+ * NOTE: "4.24 Ao4R" → "4.24(4)"，"Ao3R" → "(3)"
+ */
+export function formatAoXR(aoType: string | undefined): string {
+  if (!aoType) return '';
+  // NOTE: 完整格式 "4.24 Ao4R" — 提取平均值和轮数
+  const m = aoType.match(/^([\d.]+)\s+Ao(\d)R$/);
+  if (m) return m[1] + '(' + m[2] + ')';
+  // NOTE: 仅轮数 "Ao3R"
+  const m2 = aoType.match(/^Ao(\d)R$/);
+  if (m2) return '(' + m2[1] + ')';
+  return aoType;
+}
+
+/**
+ * 轮次 + 把数格式化
+ * NOTE: 与原版 createSolveRow 中的 round 列渲染一致
+ * round="R2", solveNum=1 → "R2#1"
+ * round="Fi", solveNum=null → "Fi"
+ */
+export function formatRound(round: string | undefined, solveNum: number | undefined): string {
+  if (!round) return '';
+  return round + (round && solveNum ? '#' + solveNum : '');
+}
+
 // ── 纪录徽章 ──
 
-/** 纪录等级与显示配色 */
+/**
+ * 纪录分类——返回 CSS className 后缀
+ * NOTE: 1:1 移植自原版 recon_utils.js getRecordClass
+ * 用正则匹配各种纪录前缀（F/X/U/YT/1st/R 前缀 + WR/CR/NR/PR 后缀）
+ */
+export function getRecordClass(val: string): string {
+  const v = val.toUpperCase();
+  if (/^[FXU]?W[RB]$|^1STWR$|^RWR$|^YTW[RB]$|^XWR$/.test(v)) return 'wr';
+  if (v === 'WCR') return 'wcr';
+  if (/(?:AS|E)[RB]$/.test(v) || /^(?:F|YT|X|U)?(?:SAR|SAB|NAR|NAB|OCR|OCB|AFR|AFB|ANR|ANB|ASR|ASB)$/.test(v)) return 'cr';
+  if (/^[FXU]?N[RB]$|^NWR$|^ANR$|^YTN[RB]$/.test(v)) return 'nr';
+  if (/[PU]?[RB]$/.test(v) && (v.endsWith('PR') || v.endsWith('PB')
+    || v === 'YTPR' || v === 'YTPB' || v === 'UPR' || v === 'UPB')) return 'pr';
+  return 'other';
+}
+
+/**
+ * 纪录 badge——返回结构化对象供 React 渲染
+ * NOTE: 支持 cancelled 前缀，与原版 formatRecord 一致
+ */
+export function formatRecord(val: string | undefined): { text: string; className: string } | null {
+  if (!val) return null;
+  const s = String(val);
+  // NOTE: 匹配多种取消写法：cancel/cancelled/取消
+  const cancelled = /\bcancell?ed?\b|取消/i.test(s);
+  const recordType = cancelled
+    ? s.replace(/\s*\bcancell?ed?\b\s*|\s*取消\s*/gi, '').trim()
+    : s;
+  const cls = cancelled ? 'cancelled' : getRecordClass(recordType);
+  return { text: recordType, className: `record-badge record-${cls}` };
+}
+
+/** 纪录等级与显示配色（保留向后兼容） */
 const RECORD_COLORS: Record<string, string> = {
   WR: '#e74c3c',
   CR: '#e67e22',
@@ -116,8 +206,7 @@ const RECORD_COLORS: Record<string, string> = {
 };
 
 /**
- * 生成纪录徽章 HTML
- * NOTE: 用于列表页/详情页的纪录标签显示
+ * 生成纪录徽章 HTML（向后兼容，详情页仍在使用）
  */
 export function recordBadgeHtml(record: string | undefined): string {
   if (!record) return '';
