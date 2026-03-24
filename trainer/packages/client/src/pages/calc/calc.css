@@ -225,7 +225,9 @@ body {
 
 .time-cell {
     width: 90px;
-    padding: 10px 6px;
+    min-width: 90px;
+    max-width: 90px;
+    padding: 10px 4px;
     font-size: 24px;
     font-weight: 600;
     text-align: center;
@@ -233,6 +235,9 @@ body {
     border-radius: 4px;
     background: #fff;
     outline: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-sizing: border-box;
     transition: border-color 0.2s;
 }
 
@@ -878,9 +883,12 @@ video {
     .time-cell {
         width: 100%;
         min-width: 0;
+        max-width: unset;
         padding: 6px 1px;
         /* NOTE: clamp 让字号根据屏幕宽度自适应，避免截断 */
         font-size: clamp(12px, 4vw, 18px);
+        box-sizing: border-box;
+        overflow: hidden;
     }
 
     .tavg-cell {
