@@ -3,7 +3,7 @@
  * 功能：JSON↔SQL 字段映射、白名单、数据校验、WCA 认证、速率限制
  * NOTE: 1:1 移植自 PHP db.php + index.php 的工具函数
  */
-import type { FastifyRequest } from 'fastify';
+import type { Context } from 'hono';
 
 // ── JSON camelCase ↔ SQL snake_case 映射 ──
 
@@ -254,32 +254,26 @@ export async function authenticateUser(authHeader: string | undefined): Promise<
 }
 
 /**
- * 要求登录——失败抛异常（供 Fastify 路由 handler 使用）
+ * 要求登录——从 Hono Context 取 Authorization header
  */
-export async function requireAuth(request: FastifyRequest): Promise<WcaUser> {
-  const user = await authenticateUser(request.headers.authorization);
+export async function requireAuth(c: Context): Promise<WcaUser> {
+  const user = await authenticateUser(c.req.header('Authorization'));
   if (!user) {
-    const err = new Error('Authentication required') as Error & { statusCode: number };
-    err.statusCode = 401;
-    throw err;
+    throw new Error('Authentication required');
   }
   if (BANNED_WCA_IDS.includes(user.wcaId)) {
-    const err = new Error('Your account has been suspended') as Error & { statusCode: number };
-    err.statusCode = 403;
-    throw err;
+    throw new Error('Your account has been suspended');
   }
   return user;
 }
 
 /**
- * 要求管理员权限——失败抛异常
+ * 要求管理员权限
  */
-export async function requireAdmin(request: FastifyRequest): Promise<WcaUser> {
-  const user = await requireAuth(request);
+export async function requireAdmin(c: Context): Promise<WcaUser> {
+  const user = await requireAuth(c);
   if (!ADMIN_WCA_IDS.includes(user.wcaId)) {
-    const err = new Error('Admin access required') as Error & { statusCode: number };
-    err.statusCode = 403;
-    throw err;
+    throw new Error('Admin access required');
   }
   return user;
 }
@@ -298,9 +292,7 @@ export function checkRateLimit(ip: string): void {
   timestamps = timestamps.filter(t => t > now - RATE_WINDOW);
 
   if (timestamps.length >= RATE_MAX) {
-    const err = new Error('Rate limit exceeded') as Error & { statusCode: number };
-    err.statusCode = 429;
-    throw err;
+    throw new Error('Rate limit exceeded');
   }
 
   timestamps.push(now);
