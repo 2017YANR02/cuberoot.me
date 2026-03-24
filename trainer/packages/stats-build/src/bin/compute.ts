@@ -29,6 +29,13 @@ const REGISTRY: Record<string, () => Promise<Record<string, unknown>>> = {
   'world_championship_podiums_by_person': () => import('../statistics/world_championship_podiums_by_person.js'),
   'world_records_by_country': () => import('../statistics/world_records_by_country.js'),
   'world_records_by_person': () => import('../statistics/world_records_by_person.js'),
+  // NOTE: 阶段 A — Statistic + transform
+  'dnf_rate_by_event': () => import('../statistics/dnf_rate_by_event.js'),
+  'name_parts_count': () => import('../statistics/name_parts_count.js'),
+  'competitions_count_by_week': () => import('../statistics/competitions_count_by_week.js'),
+  // NOTE: 阶段 B — GroupedStatistic 子类
+  'most_completed_solves': () => import('../statistics/most_completed_solves.js'),
+  'worst_result_on_podium': () => import('../statistics/worst_result_on_podium.js'),
 };
 
 async function main() {
