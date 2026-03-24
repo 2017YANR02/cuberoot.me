@@ -592,11 +592,6 @@ function drawStats(): void {
   for (let p = 0; p < 2; p++) {
     if (!state.playerEnabled[p]) continue;
     const row = state.times[state.seedOn + p];
-    const result = CalcEngine.compute(row, mo3);
-
-    if (result && result.complete && result.avg !== undefined && result.avg < DNF_VALUE) {
-      // NOTE: BPA/WPA 横线已移除 — 用户不需要
-    }
 
     // NOTE: PA 竖柱 — 填了 4+ 把时内联计算 BPA/WPA（原版 chart.js#936-957）
     // 不依赖 result.complete，4 把时就显示
@@ -667,23 +662,7 @@ function drawStats(): void {
   }
 }
 
-function drawStatLine(y: number, pSlot: number, type: string, _playerIdx: number): void {
-  if (!gStats) return;
-  const state = useCalcStore.getState();
-  const sc = solveCountForEvent(state.event);
 
-  const x1 = getBarX(0, pSlot);
-  const x2 = getBarX(sc - 1, pSlot) + gp.barW;
-  const color = type === 'bpa' ? '#4CAF50' : '#FF5722';
-
-  const line = createSvgElement('line', {
-    x1, y1: y, x2, y2: y,
-    stroke: color, 'stroke-width': 1,
-    'stroke-dasharray': '3,2',
-    opacity: '0.5',
-  });
-  gStats.appendChild(line);
-}
 
 // ── Need Badge（阈值指示标签）── 原版 chart.js#516-676 ──
 
