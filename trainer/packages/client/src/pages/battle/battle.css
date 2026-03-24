@@ -9,7 +9,7 @@
 /* NOTE: Segment7 Standard — 等宽七段 LCD 字体（SIL OFL 开源，自托管） */
 @font-face {
     font-family: 'Segment7Standard';
-    src: url('/fonts/Segment7Standard.otf') format('opentype');
+    src: url('/app/fonts/Segment7Standard.otf') format('opentype');
     font-weight: normal;
     font-style: normal;
     font-display: swap;
@@ -756,7 +756,7 @@ body.solo .bottom-nav {
     background: none;
     border: none;
     color: #666;
-    font-size: 1.2rem;
+    font-size: 0.65rem;
     cursor: pointer;
     padding: 6px 0;
     transition: color 0.15s;
