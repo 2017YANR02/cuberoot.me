@@ -10,7 +10,7 @@ import type { PlayerState, SolveEntry, Session, WinnerValue, BattleMode, TabName
 import { PENALTY, LS_PREFIX, MIN_SOLVE_TIME } from './constants';
 import type { PenaltyType } from './constants';
 import { generateScramble, generateScrambleImageUrl } from './scramble_engine';
-import { getEffectiveTimeFromEntry } from './stats';
+import { getEffectiveTimeFromEntry, computeAo5, computeAverage } from './stats';
 
 // NOTE: createPlayer 工厂函数 — 1:1 翻译自 battle.js（行 143~171）
 function createPlayer(id: number): PlayerState {
@@ -1045,13 +1045,104 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     set({ players: newPlayers });
   },
 
-  // NOTE: 里程碑检测 — 占位（后续子任务填充完整逻辑）
+  // NOTE: 里程碑检测 — 通过自定义事件通知 UI 组件
+  // 1:1 翻译自 battle.js checkMilestone()（行 2719~2788）
   checkMilestone: () => {
-    // TODO: 从 battle.js 迁移里程碑检测逻辑
+    const s = get();
+    const h = s.players[0].solveHistory;
+    if (h.length === 0) return;
+
+    const lastEntry = h[h.length - 1];
+    const effTime = getEffectiveTimeFromEntry(lastEntry);
+    const messages: string[] = [];
+
+    // NOTE: PB single 检测
+    if (effTime !== Infinity) {
+      let isPB = true;
+      for (let i = 0; i < h.length - 1; i++) {
+        if (getEffectiveTimeFromEntry(h[i]) <= effTime) { isPB = false; break; }
+      }
+      if (isPB) messages.push('🏆 New PB!');
+    }
+
+    // NOTE: PB ao5 检测
+    if (h.length >= 5) {
+      const ao5 = computeAo5(h);
+      if (ao5 !== null && ao5 !== Infinity) {
+        if (h.length === 5) {
+          messages.push('🥇 New PB Ao5!');
+        } else {
+          let prevBest: number | null = null;
+          for (let i = 5; i <= h.length - 1; i++) {
+            const val = computeAo5(h.slice(0, i));
+            if (val !== null && val !== Infinity) {
+              if (prevBest === null || val < prevBest) prevBest = val;
+            }
+          }
+          if (prevBest === null || ao5 < prevBest) {
+            messages.push('🥇 New PB Ao5!');
+          }
+        }
+      }
+    }
+
+    // NOTE: PB ao12 检测
+    if (h.length >= 12) {
+      const ao12 = computeAverage(h, 12);
+      if (ao12 !== null && ao12 !== Infinity) {
+        if (h.length === 12) {
+          messages.push('🥇 New PB Ao12!');
+        } else {
+          let prevBest: number | null = null;
+          for (let i = 12; i <= h.length - 1; i++) {
+            const val = computeAverage(h.slice(0, i), 12);
+            if (val !== null && val !== Infinity) {
+              if (prevBest === null || val < prevBest) prevBest = val;
+            }
+          }
+          if (prevBest === null || ao12 < prevBest) {
+            messages.push('🥇 New PB Ao12!');
+          }
+        }
+      }
+    }
+
+    // NOTE: 整数里程碑
+    const count = h.length;
+    if ([100, 200, 500, 1000, 2000, 5000, 10000].includes(count)) {
+      messages.push(`🎯 ${count} solves!`);
+    }
+
+    if (messages.length > 0) {
+      // NOTE: 通过自定义事件通知 UI 组件（避免 store 直接操作 DOM）
+      window.dispatchEvent(new CustomEvent('battle-milestone', { detail: messages.join(' ') }));
+      // 触觉反馈
+      if (navigator.vibrate) navigator.vibrate([50, 50, 100]);
+    }
   },
 
-  // NOTE: 疲劳预警 — 占位（后续子任务填充完整逻辑）
+  // NOTE: 疲劳预警 — 1:1 翻译自 battle.js checkFatigue()（行 2812~2834）
   checkFatigue: () => {
-    // TODO: 从 battle.js 迁移疲劳预警逻辑
+    const s = get();
+    const h = s.players[0].solveHistory;
+    if (h.length < 15) return;
+
+    const times = h.slice(-10).map(getEffectiveTimeFromEntry).filter(t => t !== Infinity);
+    if (times.length < 8) return;
+
+    let rising = 0;
+    for (let i = 0; i <= times.length - 5; i++) {
+      const avg = (times[i] + times[i + 1] + times[i + 2] + times[i + 3] + times[i + 4]) / 5;
+      if (i > 0) {
+        const prevAvg = (times[i - 1] + times[i] + times[i + 1] + times[i + 2] + times[i + 3]) / 5;
+        if (avg > prevAvg) rising++;
+      }
+    }
+
+    if (rising >= 4) {
+      const locale = s.locale;
+      const msg = locale === 'zh' ? '建议休息一下 🍵' : 'Take a break? 🍵';
+      window.dispatchEvent(new CustomEvent('battle-milestone', { detail: msg }));
+    }
   },
 }));
