@@ -273,7 +273,26 @@ export default function ReconSubmitPage() {
           </label>
         </div>
 
-        {/* 第四行：成绩 + 平均 */}
+        {/* 第三行续：WCA ID / 国家 / 分组 */}
+        <div className="submit-row">
+          <label className="submit-field">
+            <span className="submit-label">Comp WCA ID</span>
+            <input type="text" value={form.compWcaId || ''} onChange={e => setField('compWcaId', e.target.value)}
+              placeholder="e.g. WC2025" />
+          </label>
+          <label className="submit-field">
+            <span className="submit-label">{t('国家', 'Country')}</span>
+            <input type="text" value={form.country || ''} onChange={e => setField('country', e.target.value)}
+              placeholder="ISO2 (cn/us)" maxLength={2} />
+          </label>
+          <label className="submit-field">
+            <span className="submit-label">{t('分组', 'Group')}</span>
+            <input type="text" value={form.groupId || ''} onChange={e => setField('groupId', e.target.value)}
+              placeholder="A/B/C" maxLength={1} />
+          </label>
+        </div>
+
+        {/* 第四行：成绩 + 平均 + 日期 */}
         <div className="submit-row">
           <label className="submit-field">
             <span className="submit-label">{t('成绩', 'Time')}</span>
@@ -362,6 +381,24 @@ export default function ReconSubmitPage() {
           <label className="submit-field submit-field-wide">
             <span className="submit-label">{t('备注', 'Note')}</span>
             <input type="text" value={form.note || ''} onChange={e => setField('note', e.target.value)} />
+          </label>
+        </div>
+
+        {/* 复盘者信息 */}
+        <div className="submit-row">
+          <label className="submit-field">
+            <span className="submit-label">{t('复盘者', 'Reconstructor')}</span>
+            <input type="text" value={form.reconer || ''} onChange={e => setField('reconer', e.target.value)}
+              placeholder={t('复盘者姓名', 'Reconstructor name')} />
+          </label>
+          <label className="submit-field">
+            <span className="submit-label">{t('复盘者 WCA ID', 'Recon WCA ID')}</span>
+            <input type="text" value={form.reconerId || ''} onChange={e => setField('reconerId', e.target.value)}
+              placeholder="2019XXXX01" />
+          </label>
+          <label className="submit-field">
+            <span className="submit-label">{t('复盘日期', 'Recon Date')}</span>
+            <input type="date" value={form.reconDate || ''} onChange={e => setField('reconDate', e.target.value)} />
           </label>
         </div>
 
