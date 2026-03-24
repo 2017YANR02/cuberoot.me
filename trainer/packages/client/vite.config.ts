@@ -30,6 +30,12 @@ export default defineConfig({
       '/stats': {
         target: 'http://localhost:4000',
       },
+      // NOTE: Recon API 代理到远端 PHP 后端（绕过 CORS）
+      '/recon/api': {
+        target: 'https://toolkit.cuberoot.me',
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
 })
