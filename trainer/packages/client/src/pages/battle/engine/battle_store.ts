@@ -7,10 +7,10 @@
 
 import { create } from 'zustand';
 import type { PlayerState, SolveEntry, Session, WinnerValue, BattleMode, TabName } from './types';
-import { PENALTY, LS_PREFIX, MIN_SOLVE_TIME, EVENT_TO_CSTIMER, I18N_TEXT } from './constants';
+import { PENALTY, LS_PREFIX, MIN_SOLVE_TIME } from './constants';
 import type { PenaltyType } from './constants';
 import { generateScramble, generateScrambleImageUrl } from './scramble_engine';
-import { computeAo5, computeAverage, getEffectiveTimeFromEntry, computeBasicStats, computeStreak } from './stats';
+import { getEffectiveTimeFromEntry } from './stats';
 
 // NOTE: createPlayer 工厂函数 — 1:1 翻译自 battle.js（行 143~171）
 function createPlayer(id: number): PlayerState {
@@ -190,6 +190,13 @@ export interface BattleState {
   // NOTE: inspection
   startInspection: (playerId: number) => void;
   clearInspection: (playerId: number) => void;
+  // NOTE: 内部辅助方法（状态机内部调用）
+  resetForNextRound: () => void;
+  checkBothReady: () => void;
+  checkBothFinished: () => void;
+  cancelReadyTimer: () => void;
+  computeWinner: () => void;
+  removeLastWinner: () => void;
 }
 
 // ===== Store 实现 =====

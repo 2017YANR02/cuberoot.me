@@ -15,6 +15,7 @@ import { KEY_MAP, PUZZLES, PENALTY, I18N_TEXT } from './engine/constants';
 import { formatTime, formatTimePlain } from './engine/format_time';
 import { computeAo5 } from './engine/stats';
 import type { PenaltyType } from './engine/constants';
+import HistoryPanel from './HistoryPanel';
 
 import './battle.css';
 
@@ -705,6 +706,13 @@ export default function BattlePage() {
       {/* 设置面板 — Solo tab 模式 */}
       {mode === 'solo' && store.activeTab === 'settings' && (
         <SettingsPanel visible={true} onClose={() => store.switchTab('timer')} />
+      )}
+
+      {/* 历史面板 — Solo results tab */}
+      {mode === 'solo' && store.activeTab === 'results' && (
+        <div className="history-overlay visible">
+          <HistoryPanel />
+        </div>
       )}
     </div>
   );
