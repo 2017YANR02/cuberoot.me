@@ -1,0 +1,312 @@
+/* ============================================================
+   Recon 详情页专用样式
+   ============================================================ */
+
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.detail-back {
+  color: #93bbfc;
+  text-decoration: none;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.detail-back:hover {
+  color: #fff;
+}
+
+.detail-title {
+  flex: 1;
+  font-size: 1.3rem;
+  color: #f1f5f9;
+}
+
+/* --- 元数据标签栏 --- */
+.detail-meta-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.detail-meta-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  font-size: 0.82rem;
+  color: #b0b8c4;
+  text-decoration: none;
+}
+
+.detail-meta-tag a {
+  color: #93bbfc;
+  text-decoration: none;
+}
+
+.detail-meta-tag a:hover {
+  text-decoration: underline;
+}
+
+/* --- 主体两列布局 --- */
+.detail-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.detail-body > div {
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .detail-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --- 区块 --- */
+.detail-section {
+  margin-bottom: 16px;
+}
+
+.detail-section-label {
+  font-size: 0.75rem;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+/* --- 解法文本 --- */
+.detail-solution-text {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.82rem;
+  line-height: 1.7;
+  color: #d0d8e0;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 12px 14px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-x: auto;
+  margin: 0;
+}
+
+.detail-scramble-text {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.82rem;
+  line-height: 1.7;
+  color: #b0b8c4;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 10px 14px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  word-break: break-all;
+}
+
+/* NOTE: 阶段标签高亮 */
+.recon-step-label {
+  color: #93bbfc;
+  font-weight: 500;
+}
+
+/* --- 统计网格 --- */
+.detail-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 10px 14px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: #666;
+  white-space: nowrap;
+}
+
+.stat-value {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.82rem;
+  color: #d0d8e0;
+  text-align: right;
+}
+
+@media (max-width: 768px) {
+  .detail-stats-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 480px) {
+  .detail-stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* --- 视频嵌入 --- */
+.detail-video-wrap {
+  position: relative;
+  padding-top: 56.25%;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.detail-video-wrap iframe {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  border: none;
+}
+
+.detail-video-facade {
+  cursor: pointer;
+}
+
+.detail-video-facade img:not(.detail-video-play-yt):not(.detail-video-play-bili) {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+}
+
+.detail-video-play-yt {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 68px; height: 48px;
+  opacity: 0.85;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+
+.detail-video-facade:hover .detail-video-play-yt {
+  opacity: 1;
+}
+
+.detail-video-link {
+  color: #93bbfc;
+  font-size: 0.85rem;
+  text-decoration: none;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.detail-video-link:hover {
+  text-decoration: underline;
+}
+
+/* --- 备注 --- */
+.detail-note {
+  font-size: 0.85rem;
+  color: #b0b8c4;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 10px 14px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  white-space: pre-wrap;
+}
+
+/* --- 评论区 --- */
+.detail-comments {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.detail-comment {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  padding: 10px 14px;
+}
+
+.detail-comment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.detail-comment-header strong {
+  color: #d0d8e0;
+  font-size: 0.85rem;
+}
+
+.detail-comment-time {
+  color: #666;
+  font-size: 0.75rem;
+}
+
+.detail-comment-body {
+  color: #b0b8c4;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+/* --- 盲拧时间 --- */
+.detail-bld-times {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: #b0b8c4;
+}
+
+/* --- Twisty 容器 --- */
+.detail-twisty-container {
+  margin-top: 8px;
+}
+
+/* --- 底部 --- */
+.detail-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.detail-footer-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.detail-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.detail-delete-btn {
+  color: #f87171 !important;
+  border-color: rgba(248, 113, 113, 0.3) !important;
+}
+
+.detail-delete-btn:hover {
+  background: rgba(248, 113, 113, 0.15) !important;
+}
