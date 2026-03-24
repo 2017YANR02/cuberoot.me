@@ -22,6 +22,8 @@ const ReconDetailPage = lazy(() => import('./pages/recon/ReconDetailPage'));
 const ReconSubmitPage = lazy(() => import('./pages/recon/ReconSubmitPage'));
 // NOTE: OAuth 回调页——处理 WCA OAuth Implicit Grant 返回
 const AuthCallbackPage = lazy(() => import('./pages/AuthCallbackPage'));
+// NOTE: WCA Stats 模块懒加载 — 统计数据展示
+const WcaStatsPage = lazy(() => import('./pages/wca_stats/WcaStatsPage'));
 
 function App() {
   return (
@@ -50,6 +52,8 @@ function App() {
         <Route path="/recon/submit" element={<Suspense fallback={<div>Loading...</div>}><ReconSubmitPage /></Suspense>} />
         <Route path="/recon/submit/:editId" element={<Suspense fallback={<div>Loading...</div>}><ReconSubmitPage /></Suspense>} />
         <Route path="/recon/:id" element={<Suspense fallback={<div>Loading...</div>}><ReconDetailPage /></Suspense>} />
+        {/* WCA Stats — 统计数据展示 */}
+        <Route path="/wca-stats/:statId" element={<Suspense fallback={<div>Loading...</div>}><WcaStatsPage /></Suspense>} />
         {/* Auth — WCA OAuth 回调 */}
         <Route path="/auth/callback" element={<Suspense fallback={<div>Loading...</div>}><AuthCallbackPage /></Suspense>} />
       </Routes>

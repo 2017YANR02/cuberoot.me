@@ -1,0 +1,162 @@
+/* NOTE: WCA 统计页样式 — 暗色主题 + 现代表格 */
+
+.wca-stats-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 16px;
+  min-height: 100vh;
+  color: #e0e0e0;
+}
+
+/* 页面头部 */
+.wca-stats-header {
+  margin-bottom: 24px;
+}
+
+.wca-stats-back {
+  color: #7eb8ff;
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.2s;
+}
+
+.wca-stats-back:hover {
+  color: #a6d0ff;
+}
+
+.wca-stats-header h1 {
+  margin: 12px 0 8px;
+  font-size: 28px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.wca-stats-note {
+  font-size: 14px;
+  color: #999;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+/* 工具栏 */
+.wca-stats-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.wca-stats-search {
+  flex: 1;
+  max-width: 400px;
+  padding: 8px 14px;
+  border: 1px solid #444;
+  border-radius: 8px;
+  background: #1e1e2e;
+  color: #e0e0e0;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.wca-stats-search:focus {
+  border-color: #7eb8ff;
+}
+
+.wca-stats-search::placeholder {
+  color: #666;
+}
+
+.wca-stats-count {
+  font-size: 13px;
+  color: #888;
+  white-space: nowrap;
+}
+
+/* 表格容器 */
+.wca-stats-table-wrapper {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid #333;
+  background: #1a1a2e;
+}
+
+/* 表格 */
+.wca-stats-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.wca-stats-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.wca-stats-table th {
+  padding: 12px 16px;
+  background: #252540;
+  color: #b0b0c0;
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid #3a3a5a;
+  white-space: nowrap;
+}
+
+.wca-stats-table td {
+  padding: 10px 16px;
+  border-bottom: 1px solid #2a2a3e;
+  white-space: nowrap;
+}
+
+/* 斑马纹 */
+.wca-stats-table tbody tr:nth-child(even) {
+  background: #1e1e32;
+}
+
+.wca-stats-table tbody tr:hover {
+  background: #2a2a4e;
+}
+
+/* 链接 */
+.wca-stats-table a {
+  color: #7eb8ff;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.wca-stats-table a:hover {
+  color: #a6d0ff;
+  text-decoration: underline;
+}
+
+/* 金牌数加粗 */
+.wca-stats-table strong {
+  color: #ffd700;
+  font-weight: 700;
+}
+
+/* 加载 / 错误状态 */
+.wca-stats-loading,
+.wca-stats-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  color: #888;
+  font-size: 16px;
+}
+
+.wca-stats-error h2 {
+  color: #ff6b6b;
+  margin-bottom: 8px;
+}
+
+.wca-stats-error a {
+  color: #7eb8ff;
+  margin-top: 16px;
+}
