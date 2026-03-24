@@ -7,6 +7,7 @@
 import type {
   ReconSolve, ReconComment, EditHistoryItem,
 } from '@cuberoot/shared';
+import { getWcaId } from '../stores/auth_store';
 
 // NOTE: 开发环境使用相对路径（走 Vite proxy），生产环境直连后端
 const API_BASE = import.meta.env.VITE_RECON_API_BASE || '/recon/api/';
@@ -15,7 +16,7 @@ const API_BASE = import.meta.env.VITE_RECON_API_BASE || '/recon/api/';
 
 /** 获取 WCA OAuth token（从 localStorage） */
 function getToken(): string | null {
-  return localStorage.getItem('wca_token');
+  return localStorage.getItem('wca_access_token');
 }
 
 /** 构建带 Bearer token 的 headers */
@@ -124,7 +125,7 @@ export async function saveEditHistory(
     solveId,
     before,
     after,
-    editedBy: localStorage.getItem('wca_wcaId') || '',
+    editedBy: getWcaId(),
   });
 }
 
