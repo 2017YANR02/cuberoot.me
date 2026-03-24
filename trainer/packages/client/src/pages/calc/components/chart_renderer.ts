@@ -595,13 +595,7 @@ function drawStats(): void {
     const result = CalcEngine.compute(row, mo3);
 
     if (result && result.complete && result.avg !== undefined && result.avg < DNF_VALUE) {
-      // NOTE: BPA/WPA 横线（虚线）— 仅 5 把全部填完时
-      if (!mo3 && result.bpa !== null && result.bpa !== undefined && result.bpa < DNF_VALUE) {
-        drawStatLine(valToYCap(result.bpa), pSlot, 'bpa', p);
-      }
-      if (!mo3 && result.wpa !== null && result.wpa !== undefined && result.wpa < DNF_VALUE) {
-        drawStatLine(valToYCap(result.wpa), pSlot, 'wpa', p);
-      }
+      // NOTE: BPA/WPA 横线已移除 — 用户不需要
     }
 
     // NOTE: PA 竖柱 — 填了 4+ 把时内联计算 BPA/WPA（原版 chart.js#936-957）

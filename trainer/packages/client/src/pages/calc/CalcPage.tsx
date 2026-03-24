@@ -5,10 +5,10 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useCalcStore, isMbfForEvent, solveCountForEvent } from './stores/calc_store';
-import { setCurrentEvent, setMoveCntMode, setMbfMode, getAverage, DNF_VALUE } from './engine/calc_engine';
-import { load as loadWrIds, loadDefaults, setPlayerOverride, clearPlayerOverride, getPlayerOverride, getAvgWR12, isWR } from './engine/wr_data';
+import { setCurrentEvent, setMoveCntMode, setMbfMode } from './engine/calc_engine';
+import { load as loadWrIds, loadDefaults, setPlayerOverride, clearPlayerOverride, getPlayerOverride, getAvgWR12 } from './engine/wr_data';
 import { sampleOneSolve } from './engine/sim_engine';
-import { render as chartRender, showConfetti } from './components/chart_renderer';
+import { render as chartRender } from './components/chart_renderer';
 import { WcaPersonPicker, fetchUserTimes, fetchAvatar } from '@cuberoot/shared';
 import { Chart } from './components/Chart';
 import { InputGrid } from './components/InputGrid';
@@ -20,12 +20,7 @@ import { SimButtons } from './components/SimButtons';
 import { ProgressSliders } from './components/ProgressSliders';
 import './calc.css';
 
-// ── confetti WR 重复检测 — 原版 chart.js#50 ──
-let lastConfettiKey = '';
-let suppressConfetti = false;
 
-/** NOTE: 外部调用 — 抑制 confetti（rand-fill 期间防误触）— 原版 chart.js#143 */
-export function setSuppressConfetti(flag: boolean): void { suppressConfetti = flag; }
 
 // ── Wake Lock — 原版 app.js#20-31 ──
 let wakeLock: WakeLockSentinel | null = null;
@@ -89,7 +84,6 @@ export function CalcPage() {
         }
         // NOTE: URL 无数据时自动随机填充（原版 app.js#272-286）
         if (!window.location.search.includes('t0=')) {
-          suppressConfetti = true;
           const s = useCalcStore.getState();
           const sc = s.solveCount();
           for (let p = 0; p < 2; p++) {
@@ -99,7 +93,6 @@ export function CalcPage() {
               }
             }
           }
-          suppressConfetti = false;
         }
         // NOTE: 加载世界前 2 选手头像 — 原版 app.js#90-99
         if (players) {
@@ -142,6 +135,8 @@ export function CalcPage() {
       return;
     }
 
+
+
     // NOTE: 清除个人数据覆盖 — 不同项目的 KDE 数据不通用
     for (let pi = 0; pi < 2; pi++) {
       clearPlayerOverride(pi);
@@ -151,9 +146,6 @@ export function CalcPage() {
         return next;
       });
     }
-
-    // NOTE: 清除 confetti key — 原版 chart.js#147-151
-    lastConfettiKey = '';
 
     // NOTE: 清空成绩并 resize — 原版 app.js#147-152
     const s0 = useCalcStore.getState();
@@ -177,8 +169,6 @@ export function CalcPage() {
         }
       }
       // NOTE: rand-fill — 原版 app.js#157
-      // NOTE: 抑制 confetti — rand-fill 的数据来自 WR 选手 KDE，值本身处于 WR 水平，不应触发
-      suppressConfetti = true;
       const s = useCalcStore.getState();
       const sc2 = s.solveCount();
       for (let p = 0; p < 2; p++) {
@@ -188,7 +178,7 @@ export function CalcPage() {
           }
         }
       }
-      suppressConfetti = false;
+
       // NOTE: 加载世界前 2 选手头像
       if (players) {
         players.forEach((pl, i) => {
@@ -281,48 +271,7 @@ export function CalcPage() {
     return () => window.removeEventListener('keydown', handler);
   }, [toggleStopwatch]);
 
-  // ── WR confetti 检测 — 原版 chart.js#154-190 ──
 
-  // NOTE: 订阅 store 变更，检测 WR 并触发 confetti
-  useEffect(() => {
-    const unsub = useCalcStore.subscribe((state) => {
-      if (suppressConfetti) return;
-      if (isMbfForEvent(state.event)) return;
-
-      const sc = solveCountForEvent(state.event);
-      for (let p = 0; p < 2; p++) {
-        if (!state.playerEnabled[p]) continue;
-        const times = state.times[state.seedOn + p];
-
-        // 检测单次 WR
-        for (let si = 0; si < sc; si++) {
-          const t = times[si];
-          if (t > 0 && t < DNF_VALUE && isWR(state.event, 'single', t)) {
-            const sKey = `single-${state.seedOn}-${state.event}-${p}-${si}-${t}`;
-            if (sKey !== lastConfettiKey) {
-              lastConfettiKey = sKey;
-              showConfetti();
-              return;
-            }
-          }
-        }
-
-        // 检测 avg WR — 全部填完
-        const filled = times.slice(0, sc).filter(t => t > 0 && t < DNF_VALUE);
-        if (filled.length < sc) continue;
-        const avg = getAverage(times.slice(0, sc), false);
-        if (!avg || avg <= 0 || avg >= DNF_VALUE) continue;
-        if (!isWR(state.event, 'average', avg)) continue;
-
-        const aKey = `avg-${state.seedOn}-${state.event}-${p}-${avg}`;
-        if (aKey === lastConfettiKey) continue;
-        lastConfettiKey = aKey;
-        showConfetti();
-        return;
-      }
-    });
-    return unsub;
-  }, []);
 
   // NOTE: rand-fill 辅助 — 只填空格子，原版 app.js#226-260
   const doRandFill = useCallback(() => {
