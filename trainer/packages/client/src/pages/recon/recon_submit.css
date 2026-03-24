@@ -48,8 +48,8 @@
 .submit-field input:focus,
 .submit-field select:focus,
 .submit-field textarea:focus {
-  border-color: rgba(99, 102, 241, 0.5);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  border-color: rgba(88, 166, 255, 0.5);
+  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
 }
 
 .submit-solution-textarea {
@@ -83,7 +83,7 @@
 }
 
 .submit-dropdown li:hover {
-  background: rgba(99, 102, 241, 0.2);
+  background: rgba(88, 166, 255, 0.2);
   color: #fff;
 }
 
@@ -109,8 +109,8 @@
   flex-wrap: wrap;
   gap: 12px;
   padding: 10px 16px;
-  background: rgba(99, 102, 241, 0.08);
-  border: 1px solid rgba(99, 102, 241, 0.2);
+  background: rgba(88, 166, 255, 0.08);
+  border: 1px solid rgba(88, 166, 255, 0.2);
   border-radius: 8px;
   margin-bottom: 16px;
   font-size: 0.82rem;
@@ -136,13 +136,13 @@
 }
 
 .submit-btn-primary {
-  background: rgba(99, 102, 241, 0.25);
+  background: rgba(88, 166, 255, 0.25);
   color: #93bbfc;
-  border: 1px solid rgba(99, 102, 241, 0.4);
+  border: 1px solid rgba(88, 166, 255, 0.4);
 }
 
 .submit-btn-primary:hover {
-  background: rgba(99, 102, 241, 0.45);
+  background: rgba(88, 166, 255, 0.45);
   color: #fff;
 }
 

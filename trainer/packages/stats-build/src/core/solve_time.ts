@@ -145,4 +145,7 @@ export class SolveTime {
   static multibldAttemptToPoints(attemptResult: number): number {
     return new SolveTime('333mbf', 'single', attemptResult).points;
   }
+
+  // NOTE: DNF 哨兵对象——用于 AverageOfX 等基类中的 sentinel 比较
+  static readonly DNF_INSTANCE = new SolveTime(null, null, DNF_VALUE);
 }

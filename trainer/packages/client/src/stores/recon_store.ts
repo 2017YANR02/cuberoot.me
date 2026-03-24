@@ -1,6 +1,6 @@
 /**
  * Recon 模块 Zustand Store
- * NOTE: 管理复盘列表、筛选状态、当前操作的数据
+ * NOTE: 管理复盘列表、筛选状态、排序、搜索
  */
 import { create } from 'zustand';
 import type { ReconSolve } from '@cuberoot/shared';
@@ -8,9 +8,11 @@ import { listRecons } from '../utils/recon_api';
 
 // ── 排序 ──
 
+// NOTE: 'result' 映射到 rawTime（三位小数列），'aoType' 排序按 aoType 字段
 export type SortKey =
   | 'id' | 'rawTime' | 'person' | 'event' | 'method'
-  | 'comp' | 'date' | 'stm' | 'tps' | 'average';
+  | 'comp' | 'date' | 'stm' | 'tps' | 'average'
+  | 'round' | 'aoType' | 'result';
 
 export type SortDir = 'asc' | 'desc';
 
@@ -20,51 +22,41 @@ export interface ReconFilters {
   event: string;       // '' = 全部
   method: string;      // '' = 全部
   official: string;    // '' = 全部, '1' = WCA, '0' = non-WCA
+  solver: string;      // '' = 全部
   search: string;      // 全文搜索
 }
 
 // ── Store ──
 
 interface ReconStoreState {
-  /** 全量数据（从 API 加载后缓存） */
   allSolves: ReconSolve[];
-  /** 是否正在加载 */
   loading: boolean;
-  /** 加载错误 */
   error: string | null;
-  /** 筛选条件 */
   filters: ReconFilters;
-  /** 排序 */
   sortKey: SortKey;
   sortDir: SortDir;
-  /** 分页——当前显示数量 */
   displayCount: number;
-  /** 每次加载更多的增量 */
   pageSize: number;
 }
 
 interface ReconStoreActions {
-  /** 从 API 加载全量数据 */
   loadAll: (wcaId?: string) => Promise<void>;
-  /** 更新筛选条件 */
   setFilter: <K extends keyof ReconFilters>(key: K, value: ReconFilters[K]) => void;
-  /** 设置排序（点击同一列切换方向） */
   setSort: (key: SortKey) => void;
-  /** 加载更多 */
   loadMore: () => void;
-  /** 重置显示数量 */
   resetPaging: () => void;
-  /** 获取筛选+排序后的数据 */
   getFilteredSolves: () => ReconSolve[];
-  /** 获取可用的事件和方法列表 */
   getAvailableEvents: () => string[];
   getAvailableMethods: () => string[];
+  /** 按频率排序的选手列表 */
+  getAvailableSolvers: () => { name: string; count: number }[];
 }
 
 const DEFAULT_FILTERS: ReconFilters = {
   event: '',
   method: '',
   official: '',
+  solver: '',
   search: '',
 };
 
@@ -102,7 +94,9 @@ export const useReconStore = create<ReconStoreState & ReconStoreActions>()((set,
       if (state.sortKey === key) {
         return { sortDir: state.sortDir === 'asc' ? 'desc' : 'asc' };
       }
-      return { sortKey: key, sortDir: 'desc' };
+      // NOTE: 成绩/平均默认升序（小的在前），其他默认降序
+      const defaultAsc = ['rawTime', 'average', 'result'].includes(key);
+      return { sortKey: key, sortDir: defaultAsc ? 'asc' : 'desc' };
     });
   },
 
@@ -125,27 +119,56 @@ export const useReconStore = create<ReconStoreState & ReconStoreActions>()((set,
     if (filters.method) {
       result = result.filter(s => s.method === filters.method);
     }
+    if (filters.solver) {
+      result = result.filter(s => s.person === filters.solver);
+    }
     if (filters.official === '1') {
       result = result.filter(s => s.official);
     } else if (filters.official === '0') {
       result = result.filter(s => !s.official);
     }
+
     if (filters.search) {
-      const q = filters.search.toLowerCase();
-      result = result.filter(s =>
-        (s.person?.toLowerCase().includes(q)) ||
-        (s.comp?.toLowerCase().includes(q)) ||
-        (s.event?.toLowerCase().includes(q)) ||
-        (s.method?.toLowerCase().includes(q)) ||
-        (s.personId?.toLowerCase().includes(q)) ||
-        (String(s.id).includes(q)),
-      );
+      const q = filters.search.toLowerCase().trim();
+
+      // NOTE: #编号精确匹配（如 #2026 只匹配 id=2026，不会误中 2026 年比赛）
+      if (q.startsWith('#')) {
+        const numStr = q.slice(1);
+        result = result.filter(s => String(s.id) === numStr);
+      } else {
+        // NOTE: "取消"/"cancel" 映射为 "cancelled" 以匹配被取消纪录
+        const normalizedQ = (q === '取消' || q === 'cancel') ? 'cancelled' : q;
+        const qUpper = normalizedQ.toUpperCase();
+
+        result = result.filter(s => {
+          // NOTE: 搜索范围：选手名、比赛名、成绩、打乱、OLL/PLL、备注
+          const haystack = [
+            s.person, s.comp, s.optimalScramble,
+            s.oll, s.pll, s.country, s.note,
+            s.value,
+            s.rawTime != null && typeof s.rawTime === 'number' ? s.rawTime.toFixed(3) : '',
+          ].filter(Boolean).join(' ').toLowerCase();
+
+          // NOTE: 纪录字段精确匹配（大小写不敏感），搜 WR 不误中 FWR
+          const recordMatch =
+            (s.regionalAverageRecord && String(s.regionalAverageRecord).toUpperCase() === qUpper) ||
+            (s.regionalSingleRecord && String(s.regionalSingleRecord).toUpperCase() === qUpper) ||
+            (s.regionalAoxrRecord && String(s.regionalAoxrRecord).toUpperCase() === qUpper);
+
+          return haystack.includes(normalizedQ) || recordMatch;
+        });
+      }
     }
 
-    // NOTE: 排序
+    // NOTE: 排序——'result' 实际排 rawTime
+    const actualKey = sortKey === 'result' ? 'rawTime' : sortKey;
     result.sort((a, b) => {
-      const aVal = a[sortKey] ?? '';
-      const bVal = b[sortKey] ?? '';
+      const aVal = (a as Record<string, unknown>)[actualKey] ?? '';
+      const bVal = (b as Record<string, unknown>)[actualKey] ?? '';
+      // NOTE: null/空值排到最后
+      if (aVal == null && bVal == null) return 0;
+      if (aVal == null || aVal === '') return 1;
+      if (bVal == null || bVal === '') return -1;
       let cmp: number;
       if (typeof aVal === 'number' && typeof bVal === 'number') {
         cmp = aVal - bVal;
@@ -172,5 +195,16 @@ export const useReconStore = create<ReconStoreState & ReconStoreActions>()((set,
       if (s.method) methods.add(s.method);
     }
     return Array.from(methods).sort();
+  },
+
+  // NOTE: 按频率排序的选手列表（出现次数多的在前）
+  getAvailableSolvers: () => {
+    const counts: Record<string, number> = {};
+    for (const s of get().allSolves) {
+      if (s.person) counts[s.person] = (counts[s.person] || 0) + 1;
+    }
+    return Object.entries(counts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
   },
 }));

@@ -1,54 +1,56 @@
 /**
- * 复盘列表页——迁移自 recon/recon.js（718 行）
- * NOTE: 包含数据加载、表格、筛选、排序、分页功能
+ * 复盘列表页——1:1 对齐原版 recon/recon.js（718 行）
+ * NOTE: 列结构、格式化、工具栏、交互完全忠于原版
  */
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useReconStore } from '../../stores/recon_store';
 import type { SortKey } from '../../stores/recon_store';
 import type { ReconSolve } from '@cuberoot/shared';
 import { useAuthStore } from '../../stores/auth_store';
-import { formatTime, countryFlag, getEventDisplayName, t } from '../../utils/recon_utils';
+import {
+  countryFlag, displaySolverName, t,
+  formatResult, formatAvg, formatAoXR, formatRound,
+  formatRecord, wcaPersonUrl, wcaCompUrl,
+} from '../../utils/recon_utils';
 import '../../recon.css';
 
-// ── 纪录徽章 ──
+// ── 纪录 Badge 组件 ──
 
-/** 生成纪录 badge 的 className */
-function recordClass(record: string | undefined): string {
-  if (!record) return '';
-  const lc = record.toLowerCase();
-  if (lc.startsWith('cancelled')) return 'record-badge record-cancelled';
-  if (lc === 'wr') return 'record-badge record-wr';
-  if (lc === 'cr') return 'record-badge record-cr';
-  if (lc === 'nr') return 'record-badge record-nr';
-  if (lc === 'pr') return 'record-badge record-pr';
-  return 'record-badge';
+/** 渲染纪录 badge（WR/CR/NR/PR/cancelled） */
+function RecordBadge({ record }: { record: string | undefined }) {
+  const badge = formatRecord(record);
+  if (!badge) return null;
+  return <span className={badge.className}>{badge.text}</span>;
 }
 
-// ── 列配置 ──
+// ── 列配置——原版顺序 ──
 
 interface Column {
   key: SortKey | '';
   label: string;
   className?: string;
-  /** 是否可排序 */
   sortable: boolean;
 }
 
+// NOTE: 完全对齐原版列顺序：Single→Solver→Date→Comp→Rnd#→Avg→AoXR→Result→STM→TPS→Event→Method→#
 const COLUMNS: Column[] = [
-  { key: 'id', label: '#', className: 'col-idx', sortable: true },
-  { key: '', label: '🏴', className: 'col-official', sortable: false },
+  { key: 'rawTime', label: 'Single', className: 'col-dsingle', sortable: true },
   { key: 'person', label: t('选手', 'Solver'), className: 'col-solver', sortable: true },
-  { key: 'rawTime', label: t('成绩', 'Time'), className: 'col-single', sortable: true },
-  { key: 'event', label: t('项目', 'Event'), sortable: true },
-  { key: 'method', label: t('方法', 'Method'), sortable: true },
+  { key: 'date', label: t('日期', 'Date'), className: 'col-date', sortable: true },
   { key: 'comp', label: t('比赛', 'Competition'), className: 'col-comp', sortable: true },
-  { key: 'date', label: t('日期', 'Date'), sortable: true },
-  { key: 'stm', label: 'STM', sortable: true },
-  { key: 'tps', label: 'TPS', sortable: true },
+  { key: 'round', label: 'Rnd#', className: 'col-round', sortable: true },
+  { key: 'average', label: 'Avg', className: 'col-avg', sortable: true },
+  { key: 'aoType', label: 'AoXR', className: 'col-aoxr', sortable: true },
+  { key: 'result', label: 'Result', className: 'col-single mono', sortable: true },
+  { key: 'stm', label: 'STM', className: 'col-stm mono', sortable: true },
+  { key: 'tps', label: 'TPS', className: 'col-tps mono', sortable: true },
+  { key: 'event', label: t('项目', 'Event'), className: 'col-event', sortable: true },
+  { key: 'method', label: t('方法', 'Method'), className: 'col-method', sortable: true },
+  { key: 'id', label: '#', className: 'col-idx', sortable: true },
 ];
 
-// ── 组件 ──
+// ── 主组件 ──
 
 export default function ReconListPage() {
   const navigate = useNavigate();
@@ -56,8 +58,8 @@ export default function ReconListPage() {
     loading, error, filters,
     sortKey, sortDir,
     displayCount,
-    loadAll, setFilter, setSort, loadMore,
-    getFilteredSolves, getAvailableEvents, getAvailableMethods,
+    loadAll, setFilter, setSort,
+    getFilteredSolves, getAvailableEvents, getAvailableMethods, getAvailableSolvers,
   } = useReconStore();
 
   // NOTE: 页面加载时获取数据
@@ -66,7 +68,6 @@ export default function ReconListPage() {
   }, [loadAll]);
 
   const filtered = useMemo(() => getFilteredSolves(), [
-    // NOTE: 需要在 store 变化时重新计算
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useReconStore.getState().allSolves,
     filters, sortKey, sortDir,
@@ -74,43 +75,241 @@ export default function ReconListPage() {
 
   const events = useMemo(() => getAvailableEvents(), [getAvailableEvents]);
   const methods = useMemo(() => getAvailableMethods(), [getAvailableMethods]);
+  const solvers = useMemo(() => getAvailableSolvers(), [getAvailableSolvers]);
 
   const displayed = filtered.slice(0, displayCount);
   const hasMore = filtered.length > displayCount;
 
-  // NOTE: 点击行跳转详情
-  const handleRowClick = (solve: ReconSolve) => {
-    navigate(`/recon/${solve.id}`);
-  };
+  // ── 无限滚动（callback ref 确保条件渲染时 observer 正确绑定） ──
 
-  // NOTE: 表头点击排序
-  const handleSort = (col: Column) => {
+  const observerRef = useRef<IntersectionObserver | null>(null);
+
+  const sentinelRef = useCallback((el: HTMLDivElement | null) => {
+    // NOTE: 清理旧 observer
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+      observerRef.current = null;
+    }
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          // NOTE: 直接从 store 读取最新状态，避免闭包陈旧
+          useReconStore.getState().loadMore();
+        }
+      },
+      { rootMargin: '200px' },
+    );
+    observer.observe(el);
+    observerRef.current = observer;
+  }, []);
+
+  // ── 行点击（支持 Ctrl/Meta + 中键） ──
+
+  // NOTE: basename="/app" 已由 Router 处理，此处只需相对路径
+  const getDetailUrl = useCallback((id: number) => `/recon/${id}`, []);
+
+  const handleRowClick = useCallback((e: React.MouseEvent, solve: ReconSolve) => {
+    // NOTE: <a> 标签让浏览器原生处理
+    if ((e.target as HTMLElement).closest('a')) return;
+    const url = getDetailUrl(solve.id);
+    if (e.ctrlKey || e.metaKey) {
+      window.open(url, '_blank');
+    } else {
+      navigate(url);
+    }
+  }, [navigate, getDetailUrl]);
+
+  // NOTE: 中键点击 → 新标签打开
+  const handleRowMouseDown = useCallback((e: React.MouseEvent) => {
+    if (e.button === 1 && !(e.target as HTMLElement).closest('a')) {
+      e.preventDefault();
+    }
+  }, []);
+
+  const handleRowMouseUp = useCallback((e: React.MouseEvent, solve: ReconSolve) => {
+    if (e.button === 1) {
+      if ((e.target as HTMLElement).closest('a')) return;
+      e.preventDefault();
+      window.open(getDetailUrl(solve.id), '_blank');
+    }
+  }, [getDetailUrl]);
+
+  // ── 表头排序 ──
+
+  const handleSort = useCallback((col: Column) => {
     if (col.sortable && col.key) {
       setSort(col.key as SortKey);
     }
-  };
+  }, [setSort]);
+
+  // ── WCA / non-WCA toggle 状态 ──
+  // NOTE: 原版逻辑——两个按钮都激活=显示全部；只激活一个=筛选对应类型
+  const [showWca, setShowWca] = useState(true);
+  const [showNonWca, setShowNonWca] = useState(true);
+
+  // NOTE: 同步 toggle 状态到 store filter
+  useEffect(() => {
+    if (showWca && showNonWca) {
+      setFilter('official', '');
+    } else if (showWca) {
+      setFilter('official', '1');
+    } else if (showNonWca) {
+      setFilter('official', '0');
+    }
+    // NOTE: 不允许两个都取消（原版逻辑）
+  }, [showWca, showNonWca, setFilter]);
+
+  const handleToggleWca = useCallback(() => {
+    // NOTE: 不允许两个都取消
+    if (showWca && !showNonWca) return;
+    setShowWca(!showWca);
+  }, [showWca, showNonWca]);
+
+  const handleToggleNonWca = useCallback(() => {
+    if (!showWca && showNonWca) return;
+    setShowNonWca(!showNonWca);
+  }, [showWca, showNonWca]);
+
+  // ── 渲染单元格内容 ──
+
+  const renderCell = useCallback((col: Column, solve: ReconSolve) => {
+    switch (col.key) {
+      case 'rawTime':
+        // NOTE: Single 列——显示 value 字段（含 DNF/(5.09) 括号格式）+ 纪录 badge
+        return (
+          <>
+            {solve.value || ''}
+            {solve.regionalSingleRecord && (
+              <> <RecordBadge record={solve.regionalSingleRecord} /></>
+            )}
+          </>
+        );
+      case 'person': {
+        // NOTE: 国旗 + 选手名（中英文切换），有 WCA ID 时为链接
+        const flag = solve.personCountry ? countryFlag(solve.personCountry) : '';
+        const name = displaySolverName(solve.person || '');
+        if (solve.personId) {
+          return (
+            <>
+              {flag}{' '}
+              <a
+                href={wcaPersonUrl(solve.personId)}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {name}
+              </a>
+            </>
+          );
+        }
+        return <>{flag} {name}</>;
+      }
+      case 'date':
+        // NOTE: 截取 YYYY-MM-DD 部分
+        return solve.date ? solve.date.slice(0, 10) : '';
+      case 'comp': {
+        // NOTE: 国旗 + 比赛名，有 compWcaId 时为链接
+        const flag = solve.country ? countryFlag(solve.country) : '';
+        const compName = solve.comp || '';
+        if (solve.compWcaId) {
+          return (
+            <>
+              {flag}{' '}
+              <a
+                href={wcaCompUrl(solve.compWcaId)}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {compName}
+              </a>
+            </>
+          );
+        }
+        return <>{flag} {compName}</>;
+      }
+      case 'round':
+        return formatRound(solve.round, solve.solveNum);
+      case 'average':
+        return (
+          <>
+            {formatAvg(solve.average)}
+            {solve.regionalAverageRecord && (
+              <> <RecordBadge record={solve.regionalAverageRecord} /></>
+            )}
+          </>
+        );
+      case 'aoType':
+        return (
+          <>
+            {formatAoXR(solve.aoType)}
+            {solve.regionalAoxrRecord && (
+              <> <RecordBadge record={solve.regionalAoxrRecord} /></>
+            )}
+          </>
+        );
+      case 'result':
+        return formatResult(solve.rawTime);
+      case 'stm':
+        return solve.stm || '';
+      case 'tps':
+        return solve.tps && typeof solve.tps === 'number' ? solve.tps.toFixed(2) : '';
+      case 'event':
+        return solve.event || '';
+      case 'method':
+        return solve.method || '';
+      case 'id':
+        // NOTE: ID 列渲染为链接（原版行为）
+        return (
+          <a
+            href={getDetailUrl(solve.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              navigate(getDetailUrl(solve.id));
+            }}
+          >
+            {solve.id}
+          </a>
+        );
+      default:
+        return '';
+    }
+  }, [getDetailUrl, navigate]);
 
   return (
     <div className="recon-page">
-      <h1>🔍 {t('复盘数据库', 'Reconstruction Database')}</h1>
+      {/* NOTE: 原版标题 + 副标题 */}
+      <h1>{t('还原复盘', 'Solve Reconstructions')}</h1>
+      <p className="recon-subtitle">
+        {t(
+          '魔方比赛的还原复盘与分析',
+          'Competition solve reconstructions and analysis for top cubers',
+        )}
+      </p>
 
       {/* 工具栏 */}
       <div className="recon-toolbar">
         <input
           className="recon-search"
           type="text"
-          placeholder={t('搜索选手、比赛、ID...', 'Search solver, competition, ID...')}
+          placeholder={t('搜索选手、比赛、记录...', 'Search solver, competition, record...')}
           value={filters.search}
           onChange={(e) => setFilter('search', e.target.value)}
         />
         <div className="recon-filters">
+          {/* NOTE: All Solvers 下拉——按频率排序 */}
           <select
-            value={filters.event}
-            onChange={(e) => setFilter('event', e.target.value)}
+            value={filters.solver}
+            onChange={(e) => setFilter('solver', e.target.value)}
           >
-            <option value="">{t('全部项目', 'All Events')}</option>
-            {events.map(ev => (
-              <option key={ev} value={ev}>{getEventDisplayName(ev)}</option>
+            <option value="">{t('全部选手', 'All Solvers')}</option>
+            {solvers.map(({ name, count }) => (
+              <option key={name} value={name}>
+                {displaySolverName(name)} ({count})
+              </option>
             ))}
           </select>
           <select
@@ -123,21 +322,38 @@ export default function ReconListPage() {
             ))}
           </select>
           <select
-            value={filters.official}
-            onChange={(e) => setFilter('official', e.target.value)}
+            value={filters.event}
+            onChange={(e) => setFilter('event', e.target.value)}
           >
-            <option value="">{t('全部', 'All')}</option>
-            <option value="1">WCA</option>
-            <option value="0">Non-WCA</option>
+            <option value="">{t('全部项目', 'All Events')}</option>
+            {events.map(ev => (
+              <option key={ev} value={ev}>{ev}</option>
+            ))}
           </select>
         </div>
         <span className="recon-stats-count">
-          {filtered.length} {t('条记录', 'records')}
+          {filtered.length} {t('条复盘', 'recons')}
         </span>
         <Link to="/recon/submit" className="recon-add-btn">
           + {t('添加', 'Add')}
         </Link>
         <WcaLoginButton />
+      </div>
+
+      {/* WCA / non-WCA toggle 按钮组 */}
+      <div className="recon-type-toggle">
+        <button
+          className={`toggle-btn${showWca ? ' active' : ''}`}
+          onClick={handleToggleWca}
+        >
+          WCA
+        </button>
+        <button
+          className={`toggle-btn${showNonWca ? ' active' : ''}`}
+          onClick={handleToggleNonWca}
+        >
+          non-WCA
+        </button>
       </div>
 
       {/* 加载状态 */}
@@ -170,34 +386,16 @@ export default function ReconListPage() {
                 {displayed.map((solve) => (
                   <tr
                     key={solve.id}
-                    className={solve.official ? '' : 'community-row'}
-                    onClick={() => handleRowClick(solve)}
+                    className={solve.personId ? 'community-row' : ''}
+                    onClick={(e) => handleRowClick(e, solve)}
+                    onMouseDown={handleRowMouseDown}
+                    onMouseUp={(e) => handleRowMouseUp(e, solve)}
                   >
-                    <td className="col-idx">{solve.id}</td>
-                    <td className="col-official">
-                      {solve.official ? '🏆' : ''}
-                    </td>
-                    <td className="col-solver">
-                      {solve.personCountry && countryFlag(solve.personCountry)}{' '}
-                      {solve.person}
-                    </td>
-                    <td className="col-single">
-                      {formatTime(solve.rawTime)}
-                      {solve.regionalSingleRecord && (
-                        <span className={recordClass(solve.regionalSingleRecord)}>
-                          {solve.regionalSingleRecord}
-                        </span>
-                      )}
-                    </td>
-                    <td>{getEventDisplayName(solve.event)}</td>
-                    <td>{solve.method || ''}</td>
-                    <td className="col-comp">
-                      {solve.country && countryFlag(solve.country)}{' '}
-                      {solve.comp || ''}
-                    </td>
-                    <td>{solve.date || ''}</td>
-                    <td>{solve.stm ?? ''}</td>
-                    <td>{solve.tps ?? ''}</td>
+                    {COLUMNS.map((col) => (
+                      <td key={col.label} className={col.className || ''}>
+                        {renderCell(col, solve)}
+                      </td>
+                    ))}
                   </tr>
                 ))}
               </tbody>
@@ -212,20 +410,26 @@ export default function ReconListPage() {
             </div>
           )}
 
-          {/* 分页 */}
-          {hasMore && (
-            <div className="recon-pagination">
-              <button className="recon-btn" onClick={loadMore}>
-                {t('加载更多', 'Load More')}
-              </button>
+          {/* 无限滚动 sentinel + 分页信息 */}
+          <div className="recon-pagination">
+            {hasMore ? (
               <span className="recon-showing">
                 {t(
-                  `显示 ${displayed.length} / ${filtered.length}`,
-                  `Showing ${displayed.length} / ${filtered.length}`,
+                  `已显示 ${displayed.length} / ${filtered.length}`,
+                  `Showing ${displayed.length} of ${filtered.length}`,
                 )}
               </span>
-            </div>
-          )}
+            ) : (
+              <span className="recon-showing">
+                {t(
+                  `共 ${filtered.length} 条`,
+                  `${filtered.length} total`,
+                )}
+              </span>
+            )}
+          </div>
+          {/* NOTE: sentinel 元素——仅 hasMore 时存在，确保 Observer 重触发 */}
+          {hasMore && <div ref={sentinelRef} style={{ height: 1 }} />}
         </>
       )}
     </div>
