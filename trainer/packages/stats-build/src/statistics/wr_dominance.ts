@@ -91,26 +91,35 @@ export class WrDominance extends Statistic {
     // NOTE: Single 基于所有 individual attempts（每轮最多 5 个单次成绩）
     // 逐 event 查询避免一次加载全部 result_attempts OOM
     for (const [eventId, eventName] of EVENTS_ENTRIES) {
-      console.log(`  Dominance single: ${eventId}...`);
+      const t = Date.now();
+      process.stdout.write(`  Dominance single: ${eventId}...`);
       let rows = await this.fetchSingleAttemptsFor(eventId);
-      if (rows.length === 0) continue;
+      if (rows.length === 0) { console.log(' skip'); continue; }
 
       const dom = this.computeDominance(rows, 'value');
       rows = null as unknown as RowDataPacket[]; // NOTE: 释放内存（与 Ruby rows = nil 对应）
+      // NOTE: 显式触发 GC（需要 --expose-gc），与 Ruby 的 GC.start 等效
+      if (typeof globalThis.gc === 'function') globalThis.gc();
       if (dom.history.length > 0) result.single.history.push([eventName, dom.history]);
       if (dom.ranking.length > 0) result.single.ranking.push([eventName, dom.ranking]);
+      const mem = Math.round(process.memoryUsage.rss() / 1024 / 1024);
+      console.log(` ${dom.history.length} records (${((Date.now() - t) / 1000).toFixed(1)}s) [${mem}MB]`);
     }
 
     // NOTE: Average 基于每轮的 average 值
     for (const [eventId, eventName] of EVENTS_ENTRIES) {
-      console.log(`  Dominance average: ${eventId}...`);
+      const t = Date.now();
+      process.stdout.write(`  Dominance average: ${eventId}...`);
       let rows = await this.fetchAverageResultsFor(eventId);
-      if (rows.length === 0) continue;
+      if (rows.length === 0) { console.log(' skip'); continue; }
 
       const dom = this.computeDominance(rows, 'average');
       rows = null as unknown as RowDataPacket[];
+      if (typeof globalThis.gc === 'function') globalThis.gc();
       if (dom.history.length > 0) result.average.history.push([eventName, dom.history]);
       if (dom.ranking.length > 0) result.average.ranking.push([eventName, dom.ranking]);
+      const mem = Math.round(process.memoryUsage.rss() / 1024 / 1024);
+      console.log(` ${dom.history.length} records (${((Date.now() - t) / 1000).toFixed(1)}s) [${mem}MB]`);
     }
 
     return result;
