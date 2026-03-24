@@ -54,6 +54,7 @@ const REGISTRY: Record<string, () => Promise<Record<string, unknown>>> = {
   'most_completed_solves': () => import('../statistics/most_completed_solves.js'),
   'worst_result_on_podium': () => import('../statistics/worst_result_on_podium.js'),
   'best_result_off_podium': () => import('../statistics/best_result_off_podium.js'),
+  'best_round': () => import('../statistics/best_round.js'),
   'competition_days_count_by_region': () => import('../statistics/competition_days_count_by_region.js'),
   'longest_standing_records': () => import('../statistics/longest_standing_records.js'),
   'most_competitions_before_winning': () => import('../statistics/most_competitions_before_winning.js'),
