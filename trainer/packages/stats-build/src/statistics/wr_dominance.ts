@@ -89,21 +89,26 @@ export class WrDominance extends Statistic {
     };
 
     // NOTE: Single 基于所有 individual attempts（每轮最多 5 个单次成绩）
+    // 逐 event 查询避免一次加载全部 result_attempts OOM
     for (const [eventId, eventName] of Object.entries(EVENTS)) {
-      const rows = await this.fetchSingleAttemptsFor(eventId);
+      console.log(`  Dominance single: ${eventId}...`);
+      let rows = await this.fetchSingleAttemptsFor(eventId);
       if (rows.length === 0) continue;
 
       const dom = this.computeDominance(rows, 'value');
+      rows = null as unknown as RowDataPacket[]; // NOTE: 释放内存（与 Ruby rows = nil 对应）
       if (dom.history.length > 0) result.single.history.push([eventName, dom.history]);
       if (dom.ranking.length > 0) result.single.ranking.push([eventName, dom.ranking]);
     }
 
     // NOTE: Average 基于每轮的 average 值
     for (const [eventId, eventName] of Object.entries(EVENTS)) {
-      const rows = await this.fetchAverageResultsFor(eventId);
+      console.log(`  Dominance average: ${eventId}...`);
+      let rows = await this.fetchAverageResultsFor(eventId);
       if (rows.length === 0) continue;
 
       const dom = this.computeDominance(rows, 'average');
+      rows = null as unknown as RowDataPacket[];
       if (dom.history.length > 0) result.average.history.push([eventName, dom.history]);
       if (dom.ranking.length > 0) result.average.ranking.push([eventName, dom.ranking]);
     }
