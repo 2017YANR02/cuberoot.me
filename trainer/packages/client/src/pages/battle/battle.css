@@ -534,7 +534,7 @@
 }
 
 .mode-seg-btn.active {
-    background: rgba(99, 102, 241, 0.25);
+    background: rgba(88, 166, 255, 0.25);
     color: #fff;
 }
 
@@ -605,8 +605,8 @@
 }
 
 .puzzle-btn.active {
-    background: rgba(99, 102, 241, 0.2);
-    border-color: #6366f1;
+    background: rgba(88, 166, 255, 0.2);
+    border-color: #58a6ff;
     color: #fff;
 }
 

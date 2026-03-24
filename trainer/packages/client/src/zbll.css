@@ -217,7 +217,7 @@
 }
 
 .zbll-preset-active {
-  background: var(--accent-color, #6366f1);
+  background: var(--accent-color, #58a6ff);
   color: #fff;
 }
 
@@ -304,7 +304,7 @@
 }
 
 .zbll-btn-primary {
-  background: var(--accent-color, #6366f1);
+  background: var(--accent-color, #58a6ff);
   color: #fff;
 }
 
@@ -315,8 +315,8 @@
 
 .zbll-btn-outline {
   background: transparent;
-  border: 1px solid var(--accent-color, #6366f1);
-  color: var(--accent-color, #6366f1);
+  border: 1px solid var(--accent-color, #58a6ff);
+  color: var(--accent-color, #58a6ff);
 }
 
 .zbll-btn-warning {
@@ -343,7 +343,7 @@
 .zbll-link-btn {
   background: none;
   border: none;
-  color: var(--accent-color, #6366f1);
+  color: var(--accent-color, #58a6ff);
   cursor: pointer;
   padding: 0;
   font-size: 0.85rem;
@@ -394,7 +394,7 @@
 }
 
 .zbll-settings-active {
-  background: var(--accent-color, #6366f1);
+  background: var(--accent-color, #58a6ff);
 }
 
 /* ===== 打乱显示 ===== */
@@ -457,7 +457,7 @@
 }
 
 .zbll-badge {
-  background: var(--accent-color, #6366f1);
+  background: var(--accent-color, #58a6ff);
   color: #fff;
   padding: 2px 8px;
   border-radius: 4px;
@@ -513,7 +513,7 @@
 /* ===== 设置面板 ===== */
 .zbll-settings-panel {
   background: var(--card-bg, #1e1e2e);
-  border: 2px solid var(--accent-color, #6366f1);
+  border: 2px solid var(--accent-color, #58a6ff);
   border-radius: 12px;
   padding: 1.5rem;
   margin-bottom: 1rem;

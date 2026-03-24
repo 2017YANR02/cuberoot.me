@@ -21,10 +21,11 @@ export default defineConfig({
   server: {
     // 开发环境反代后端 API，避免 CORS 问题
     proxy: {
-      // NOTE: Hono API 代理（localhost:3001）
+      // NOTE: Hono API 代理到 ECS 线上后端（本地无 recon_db，无法运行 Hono 后端）
       '/trainer/api': {
-        target: 'http://localhost:3001',
-        rewrite: (path) => path.replace(/^\/trainer\/api/, '/api'),
+        target: 'https://toolkit.cuberoot.me',
+        changeOrigin: true,
+        secure: true,
       },
       // NOTE: calc 模块需要从 Jekyll 站点获取 WR 数据
       '/stats': {

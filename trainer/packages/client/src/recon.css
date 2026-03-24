@@ -41,8 +41,8 @@
 }
 
 .recon-search:focus {
-  border-color: rgba(99, 102, 241, 0.5);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  border-color: rgba(88, 166, 255, 0.5);
+  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
 }
 
 .recon-search::placeholder {
@@ -69,7 +69,7 @@
 }
 
 .recon-filters select:focus {
-  border-color: rgba(99, 102, 241, 0.5);
+  border-color: rgba(88, 166, 255, 0.5);
 }
 
 .recon-filters select option {
@@ -87,8 +87,8 @@
 .recon-add-btn {
   padding: 7px 16px;
   border-radius: 8px;
-  border: 1px solid rgba(99, 102, 241, 0.4);
-  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(88, 166, 255, 0.4);
+  background: rgba(88, 166, 255, 0.15);
   color: #93bbfc;
   font-size: 0.85rem;
   cursor: pointer;
@@ -98,7 +98,7 @@
 }
 
 .recon-add-btn:hover {
-  background: rgba(99, 102, 241, 0.3);
+  background: rgba(88, 166, 255, 0.3);
   color: #fff;
 }
 
@@ -232,6 +232,112 @@
   pointer-events: none;
 }
 
+/* WCR — 橙色 */
+.record-wcr { background: #f97316; color: #fff; }
+
+/* 其他 — 灰色 */
+.record-other { background: #6b7280; color: #fff; }
+
+/* --- Mono 列样式 --- */
+.mono { font-family: 'Roboto Mono', monospace; }
+
+/* NOTE: dsingle 列加粗+截断 */
+.col-dsingle {
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+/* --- WCA/non-WCA toggle 按钮组 --- */
+.recon-type-toggle {
+  display: flex;
+  gap: 0;
+  margin-bottom: 0.8rem;
+}
+
+.toggle-btn {
+  padding: 5px 14px;
+  font-size: 0.82rem;
+  font-family: 'Inter', Arial, sans-serif;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: #666;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  outline: none;
+}
+
+.toggle-btn:first-child {
+  border-radius: 6px 0 0 6px;
+}
+
+.toggle-btn:last-child {
+  border-radius: 0 6px 6px 0;
+  border-left: none;
+}
+
+.toggle-btn.active {
+  background: rgba(88, 166, 255, 0.2);
+  color: #93c5fd;
+  border-color: rgba(88, 166, 255, 0.4);
+}
+
+.toggle-btn.active + .toggle-btn.active {
+  border-left: 1px solid rgba(88, 166, 255, 0.4);
+}
+
+.toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ccc;
+}
+
+.toggle-btn.active:hover {
+  background: rgba(88, 166, 255, 0.3);
+  color: #bfdbfe;
+}
+
+/* --- 副标题 --- */
+.recon-subtitle {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 0.8rem;
+}
+
+/* --- 链接样式 --- */
+.recon-table a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.recon-table a:hover {
+  color: #58a6ff;
+  text-decoration: underline;
+}
+
+/* --- Tooltip --- */
+td[data-tip] {
+  position: relative;
+}
+
+td[data-tip-show]:hover::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: 0;
+  bottom: 100%;
+  z-index: 100;
+  padding: 4px 8px;
+  background: #1e1e2e;
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  font-size: 0.78rem;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
 /* --- 社区标记 --- */
 .community-row td:first-child {
   border-left: 2px solid rgba(59, 130, 246, 0.4);
@@ -260,7 +366,7 @@
 .recon-btn:hover {
   background: rgba(255, 255, 255, 0.12);
   color: #fff;
-  border-color: rgba(99, 102, 241, 0.4);
+  border-color: rgba(88, 166, 255, 0.4);
 }
 
 .recon-showing {
@@ -367,7 +473,7 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: rgba(99, 102, 241, 0.3);
+  background: rgba(88, 166, 255, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;

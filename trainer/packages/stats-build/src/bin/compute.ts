@@ -82,6 +82,19 @@ const REGISTRY: Record<string, () => Promise<Record<string, unknown>>> = {
   'wr_best_average_ratio': () => import('../statistics/wr_best_average_ratio.js'),
   'wr_single_history': () => import('../statistics/wr_single_history.js'),
   'wr_average_history': () => import('../statistics/wr_average_history.js'),
+  // NOTE: 阶段 C — AoRounds 子类
+  'wr_ao1r': () => import('../statistics/wr_ao1r.js'),
+  'wr_ao2r': () => import('../statistics/wr_ao2r.js'),
+  'wr_ao3r': () => import('../statistics/wr_ao3r.js'),
+  'wr_ao4r': () => import('../statistics/wr_ao4r.js'),
+  // NOTE: 阶段 C — AverageOfX 子类
+  'average_of_3': () => import('../statistics/average_of_3.js'),
+  'average_of_5': () => import('../statistics/average_of_5.js'),
+  'average_of_12': () => import('../statistics/average_of_12.js'),
+  'average_of_25': () => import('../statistics/average_of_25.js'),
+  'average_of_50': () => import('../statistics/average_of_50.js'),
+  'average_of_100': () => import('../statistics/average_of_100.js'),
+  'average_of_1000': () => import('../statistics/average_of_1000.js'),
 };
 
 async function main() {
