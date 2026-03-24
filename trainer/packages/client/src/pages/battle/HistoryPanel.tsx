@@ -16,6 +16,15 @@ import { useBattleStore } from './engine/battle_store';
 import { formatTimePlain } from './engine/format_time';
 import { computeAo5, computeAverage, getEffectiveTimeFromEntry, computeSubXBreakdown } from './engine/stats';
 import type { SolveEntry } from './engine/types';
+import {
+  ManualInputDialog,
+  SimulationPopup,
+  AoDetailPopup,
+  HeatmapCalendar,
+  triggerCsTimerImport,
+  exportToJson,
+  shareResultCard,
+} from './AdvancedFeatures';
 
 // NOTE: 渐进式加载每批数量
 const BATCH_SIZE = 100;
@@ -148,6 +157,9 @@ function exportCSV(history: SolveEntry[], puzzleId: string, precision: number) {
   URL.revokeObjectURL(url);
 }
 
+// ===== 弹窗类型 =====
+type PopupType = null | 'manual' | 'simulation' | { type: 'ao-detail'; aoN: number };
+
 // ===== 主组件 =====
 
 export default function HistoryPanel() {
@@ -161,6 +173,10 @@ export default function HistoryPanel() {
   const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
   // NOTE: 展开的条目索引集合
   const [expandedSet, setExpandedSet] = useState<Set<number>>(new Set());
+  // NOTE: 弹窗状态
+  const [popup, setPopup] = useState<PopupType>(null);
+  // NOTE: Toast 消息（用于导入反馈等）
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   const ftp = useCallback((ms: number) => formatTimePlain(ms, precision), [precision]);
 
@@ -205,7 +221,21 @@ export default function HistoryPanel() {
           <span className="history-title">📋 History</span>
           <span className="history-stats"></span>
         </div>
+        {/* 工具按钮（即使空列表也能手动输入/导入） */}
+        <div className="history-tools">
+          <button className="history-tool-btn" onClick={() => setPopup('manual')}>
+            ✏️ {locale === 'zh' ? '手动' : 'Manual'}
+          </button>
+          <button className="history-tool-btn" onClick={() => triggerCsTimerImport(useBattleStore.getState(), (msg) => {
+            setToastMsg(msg);
+            setTimeout(() => setToastMsg(null), 3000);
+          })}>
+            📂 {locale === 'zh' ? '导入' : 'Import'}
+          </button>
+        </div>
         <div className="history-empty">No solves yet</div>
+        {popup === 'manual' && <ManualInputDialog onClose={() => setPopup(null)} />}
+        {toastMsg && <div className="milestone-toast show">{toastMsg}</div>}
       </div>
     );
   }
@@ -245,12 +275,33 @@ export default function HistoryPanel() {
           </button>
         )}
         <button className="history-tool-btn" onClick={() => exportCSV(history, puzzleId, precision)}>
-          📥 Export CSV
+          📥 CSV
+        </button>
+        <button className="history-tool-btn" onClick={() => exportToJson(history, puzzleId)}>
+          📦 JSON
+        </button>
+        <button className="history-tool-btn" onClick={() => setPopup('manual')}>
+          ✏️ {locale === 'zh' ? '手动' : 'Manual'}
+        </button>
+        <button className="history-tool-btn" onClick={() => triggerCsTimerImport(useBattleStore.getState(), (msg) => {
+          setToastMsg(msg);
+          setTimeout(() => setToastMsg(null), 3000);
+        })}>
+          📂 {locale === 'zh' ? '导入' : 'Import'}
+        </button>
+        <button className="history-tool-btn" onClick={() => setPopup('simulation')}>
+          🎲 {locale === 'zh' ? '模拟' : 'Sim'}
+        </button>
+        <button className="history-tool-btn" onClick={() => shareResultCard(history, puzzleId, locale, precision)}>
+          📤 {locale === 'zh' ? '分享' : 'Share'}
         </button>
       </div>
 
       {/* 趋势图 */}
       <TrendChart history={history} />
+
+      {/* 热力图日历 */}
+      <HeatmapCalendar history={history} locale={locale} />
 
       {/* 百分位 chip 栏 */}
       {subXData.length > 0 && (
@@ -327,6 +378,14 @@ export default function HistoryPanel() {
           </div>
         )}
       </div>
+
+      {/* 弹窗层 */}
+      {popup === 'manual' && <ManualInputDialog onClose={() => setPopup(null)} />}
+      {popup === 'simulation' && <SimulationPopup onClose={() => setPopup(null)} />}
+      {popup !== null && typeof popup === 'object' && popup.type === 'ao-detail' && (
+        <AoDetailPopup aoN={popup.aoN} onClose={() => setPopup(null)} />
+      )}
+      {toastMsg && <div className="milestone-toast show">{toastMsg}</div>}
     </div>
   );
 }
