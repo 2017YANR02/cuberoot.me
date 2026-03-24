@@ -149,8 +149,10 @@ async function main() {
     const outputPath = resolve(outputDir, `${statId}.json`);
     writeFileSync(outputPath, JSON.stringify(json, null, 2), 'utf-8');
 
-    const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-    console.log(`完成: ${outputPath} (${duration}s)`);
+    const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+    // NOTE: 与 Ruby 日志格式对齐——显示 RSS 内存使用
+    const mem = Math.round(process.memoryUsage.rss() / 1024 / 1024);
+    console.log(`完成: ${outputPath} (${duration}s)  [${mem}MB]`);
   } catch (err) {
     console.error('错误:', err);
     process.exit(1);
