@@ -1,6 +1,5 @@
 // NOTE: 各国当前世界纪录数量
 // 与 Ruby _stats_build/statistics/current_world_records_by_country.rb 1:1 对应
-// SQL 查询完全相同
 import { Statistic } from '../core/statistic.js';
 
 export class CurrentWorldRecordsByCountry extends Statistic {
@@ -8,11 +7,15 @@ export class CurrentWorldRecordsByCountry extends Statistic {
     super();
     this.title = 'Current world records count by country';
     this.titleZh = '各国当前世界纪录数量';
-    this.tableHeader = { 'WRs': 'right', 'Country': 'left', 'People': 'left' };
+    this.tableHeader = {
+      'WRs': 'right',
+      'Country': 'left',
+      'People': 'left',
+    };
   }
 
   // NOTE: SQL 与 Ruby 版完全一致
-  // 从 results 表直接计算每个项目的 WR 持有者（WCA Developer Dump 不含 ranks 数据行）
+  // 从 results 表直接计算每个项目的 WR 持有者
   query(): string {
     return `
       SELECT
