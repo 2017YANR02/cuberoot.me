@@ -126,15 +126,37 @@ export function CalcPage() {
     };
   }, [loadFromUrl]);
 
-  // NOTE: 项目切换时重新加载 WR 默认数据 + 同步模式标志
+  // NOTE: 项目切换时重置数据 + 重新加载 WR 默认数据（原版 app.js#138-187）
   useEffect(() => {
     setCurrentEvent(event);
     setMoveCntMode(event === '333fm');
     setMbfMode(event === '333mbf' || event === '333mbo');
+
+    // NOTE: 清除个人数据覆盖 — 不同项目的 KDE 数据不通用
+    for (let pi = 0; pi < 2; pi++) {
+      clearPlayerOverride(pi);
+      setAvatarState(prev => {
+        const next = [...prev];
+        next[pi] = { active: false, avatarUrl: '' };
+        return next;
+      });
+    }
+
     // NOTE: 清除 confetti key — 原版 chart.js#147-151
     lastConfettiKey = '';
-    loadDefaults(event, () => {
-      // NOTE: 项目切换后也用 WR Average 填充 Target（原版 app.js#155-157）
+
+    // NOTE: 清空成绩并 resize — 原版 app.js#147-152
+    const s0 = useCalcStore.getState();
+    const sc = solveCountForEvent(event);
+    for (let p = 0; p < s0.times.length; p++) {
+      for (let t = 0; t < s0.times[p].length; t++) s0.updateTime(p, t, 0);
+    }
+    s0.resizeTimes(sc);
+    s0.clearTargetAvgs();
+
+    // NOTE: 加载 WR 默认数据 + 填充 Target + rand-fill
+    loadDefaults(event, (players) => {
+      // 填充 Target
       const wr12 = getAvgWR12(event);
       if (wr12) {
         const s = useCalcStore.getState();
@@ -144,7 +166,35 @@ export function CalcPage() {
           }
         }
       }
+      // NOTE: rand-fill — 原版 app.js#157
+      const s = useCalcStore.getState();
+      const sc2 = s.solveCount();
+      for (let p = 0; p < 2; p++) {
+        for (let t = 0; t < sc2; t++) {
+          if (!s.times[s.seedOn + p][t]) {
+            s.updateTime(s.seedOn + p, t, sampleOneSolve(p));
+          }
+        }
+      }
+      // NOTE: 加载世界前 2 选手头像
+      if (players) {
+        players.forEach((pl, i) => {
+          if (!pl) return;
+          fetchAvatar(pl.wca_id).then(url => {
+            const ov = getPlayerOverride(i);
+            if (ov && ov.name === pl.name) {
+              setAvatarState(prev => {
+                const next = [...prev];
+                next[i] = { active: true, avatarUrl: url || '' };
+                return next;
+              });
+            }
+          });
+        });
+      }
     });
+    // NOTE: 同步 URL 中的 event= 参数
+    useCalcStore.getState().saveToUrl();
   }, [event]);
 
   // ── 秒表 — 原版 app.js#441-503 ──

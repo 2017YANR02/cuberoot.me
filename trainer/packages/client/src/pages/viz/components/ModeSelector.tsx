@@ -9,7 +9,7 @@ import type { DataMode } from '../engine/data_fetch';
 
 // NOTE: 第一行按钮配置
 const ROW1_MODES: { key: DataMode; label: string }[] = [
-  { key: 'singles', label: '单次' },
+  { key: 'singles', label: 'Singles' },
   { key: 'mo3', label: 'Mo3' },
   { key: 'ao5', label: 'Ao5' },
   { key: 'ao12', label: 'Ao12' },
@@ -26,9 +26,9 @@ const ROW2_MODES: { key: DataMode; label: string }[] = [
   { key: 'mo5', label: 'Mo5' },
   { key: 'bpa', label: 'BPA' },
   { key: 'wpa', label: 'WPA' },
-  { key: 'median', label: 'Med' },
-  { key: 'bestc', label: 'BC' },
-  { key: 'worstc', label: 'WC' },
+  { key: 'median', label: 'Median' },
+  { key: 'bestc', label: 'BestC' },
+  { key: 'worstc', label: 'WorstC' },
   { key: 'worst', label: 'Worst' },
 ];
 

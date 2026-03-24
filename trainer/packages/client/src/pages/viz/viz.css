@@ -858,14 +858,36 @@ input:checked + .toggle-pill::after {
   border-bottom: none;
 }
 
-/* Inline 面板 — 深色弹窗 */
-.viz-page .wca-pp-inline .wca-pp-panel {
+/* NOTE: toolbar 内的 panel 不需要自己的背景/边框，直接裸露在 toolbar 里
+   关键：WcaPersonPicker.css 的 inline 模式给 .wca-pp-panel 设了 position:absolute + top:100%，
+   导致整个面板（含输入框）脱离文档流。这里必须覆盖回 static */
+.viz-page .toolbar-search .wca-pp-panel {
+  position: static;
+  background: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  width: auto;
+}
+
+/* Inline 面板 — 弹出的搜索结果用深色弹窗，absolute 定位 */
+.viz-page .wca-pp-inline .wca-pp-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1000;
+  width: 360px;
   background: rgba(16, 16, 32, 0.97);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 10px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(16px);
-  width: 360px;
+  max-height: 300px;
+}
+/* NOTE: 初始状态没搜索时 results 为空，隐藏避免显示空边框 */
+.viz-page .wca-pp-inline .wca-pp-results:empty {
+  display: none;
 }
 
 /* 结果项 */
