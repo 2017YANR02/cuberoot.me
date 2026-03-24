@@ -486,20 +486,25 @@ function drawBarLabels(): void {
         const label = createSvgElement('text', {
           x, y: gp.chartTop + gp.chartH - 5,
           'text-anchor': 'middle', fill: '#c62828',
-          'font-size': 10, 'font-weight': '700',
+          'font-size': 16, 'font-weight': '700',
+          class: 'chart-bar-label',
+          'data-player': String(p), 'data-solve': String(t),
         });
         label.textContent = 'DNF';
         gLabels.appendChild(label);
         continue;
       }
 
-      // NOTE: 柱顶值标签
+      // NOTE: 柱顶值标签 — 颜色跟随柱子
       const y = valToYCap(val) - 5;
       const labelText = formatTime(val, false, isMove);
+      const labelCol = darken(SHADES[p] || SHADES[0], 0.7);
       const label = createSvgElement('text', {
         x, y: Math.max(Y_MARGIN_TOP, y),
-        'text-anchor': 'middle', fill: '#333',
-        'font-size': 10, 'font-weight': '600',
+        'text-anchor': 'middle', fill: labelCol,
+        'font-size': 16, 'font-weight': '600',
+        class: 'chart-bar-label',
+        'data-player': String(p), 'data-solve': String(t),
       });
       label.textContent = labelText;
       gLabels.appendChild(label);
@@ -646,7 +651,7 @@ function drawStats(): void {
           const wpaLabel = createSvgElement('text', {
             x: barCx, y: paTopY - 5,
             'text-anchor': 'middle', fill: darkCol,
-            'font-size': 10, 'font-weight': '600',
+            'font-size': 16, 'font-weight': '600',
             'font-family': 'Helvetica, Arial, sans-serif',
           });
           wpaLabel.textContent = formatTime(wpa);
@@ -656,7 +661,7 @@ function drawStats(): void {
           const bpaLabel = createSvgElement('text', {
             x: barCx, y: paBotY + 12,
             'text-anchor': 'middle', fill: darkCol,
-            'font-size': 10, 'font-weight': '600',
+            'font-size': 16, 'font-weight': '600',
             'font-family': 'Helvetica, Arial, sans-serif',
           });
           bpaLabel.textContent = formatTime(bpa);
@@ -860,7 +865,7 @@ function drawAverages(): void {
 
       // NOTE: 菱形 badge 参数 — 原版 chart.js#1173-1178 的左尖右方形状
       const labelText = formatTime(result.avg, false, isMove, true);
-      const fontSize = 12;
+      const fontSize = 16;
       const tw = labelText.length * fontSize * 0.55 + 12; // 文字宽度近似
       const m = 10;       // 菱形半高
       const jm = 14;      // 左尖到文字区的水平距离
