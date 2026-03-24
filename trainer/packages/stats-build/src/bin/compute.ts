@@ -53,6 +53,20 @@ const REGISTRY: Record<string, () => Promise<Record<string, unknown>>> = {
   // NOTE: 阶段 B — GroupedStatistic 子类
   'most_completed_solves': () => import('../statistics/most_completed_solves.js'),
   'worst_result_on_podium': () => import('../statistics/worst_result_on_podium.js'),
+  'best_result_off_podium': () => import('../statistics/best_result_off_podium.js'),
+  'competition_days_count_by_region': () => import('../statistics/competition_days_count_by_region.js'),
+  'longest_standing_records': () => import('../statistics/longest_standing_records.js'),
+  'most_competitions_before_winning': () => import('../statistics/most_competitions_before_winning.js'),
+  'most_frequent_results': () => import('../statistics/most_frequent_results.js'),
+  'most_podiums_together': () => import('../statistics/most_podiums_together.js'),
+  'most_records_at_single_competition': () => import('../statistics/most_records_at_single_competition.js'),
+  'most_solves_before_bld_success': () => import('../statistics/most_solves_before_bld_success.js'),
+  'moving_average': () => import('../statistics/moving_average.js'),
+  'records_in_most_events': () => import('../statistics/records_in_most_events.js'),
+  'shortest_time_to_reach_milestone_in_comps_count': () => import('../statistics/shortest_time_to_reach_milestone_in_comps_count.js'),
+  'smallest_diff_between_single_and_average': () => import('../statistics/smallest_diff_between_single_and_average.js'),
+  'winned_week_count': () => import('../statistics/winned_week_count.js'),
+  'world_championship_records': () => import('../statistics/world_championship_records.js'),
 };
 
 async function main() {
