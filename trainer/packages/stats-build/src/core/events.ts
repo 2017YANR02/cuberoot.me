@@ -136,6 +136,22 @@ export const HEADER_ZH: Record<string, string> = {
   '2nd': '第二名',
   '3rd': '第三名',
   'Times': '成绩',
+  // NOTE: 阶段 A 续——新统计需要的表头
+  'Average event count': '平均参赛项目数',
+  'Competitions per year': '年均比赛数',
+  'Mean': '平均',
+  'Attempt 1': '尝试 1',
+  'Attempt 2': '尝试 2',
+  'Attempt 3': '尝试 3',
+  '#': '#',
+  'Type': '类型',
+  'Distance': '距离',
+  'Missed': '错过',
+  'Start date': '开始日期',
+  'End date': '结束日期',
+  'Dates': '日期数',
+  'Improvement': '进步',
+  'Mo3': 'Mo3',
 };
 
 export function eventZh(name: string): string {
