@@ -95,6 +95,9 @@ const REGISTRY: Record<string, () => Promise<Record<string, unknown>>> = {
   'average_of_50': () => import('../statistics/average_of_50.js'),
   'average_of_100': () => import('../statistics/average_of_100.js'),
   'average_of_1000': () => import('../statistics/average_of_1000.js'),
+  // NOTE: 阶段 D-1 — 简单剩余
+  'consecutive_sub_5_average': () => import('../statistics/consecutive_sub_5_average.js'),
+  'mbf_average': () => import('../statistics/mbf_average.js'),
 };
 
 async function main() {

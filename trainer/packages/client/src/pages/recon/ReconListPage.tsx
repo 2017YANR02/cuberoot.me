@@ -9,7 +9,7 @@ import type { SortKey } from '../../stores/recon_store';
 import type { ReconSolve } from '@cuberoot/shared';
 import { useAuthStore } from '../../stores/auth_store';
 import {
-  countryFlag, displaySolverName, t,
+  flagClass, displaySolverName, t,
   formatResult, formatAvg, formatAoXR, formatRound,
   formatRecord, wcaPersonUrl, wcaCompUrl,
 } from '../../utils/recon_utils';
@@ -186,13 +186,13 @@ export default function ReconListPage() {
           </>
         );
       case 'person': {
-        // NOTE: 国旗 + 选手名（中英文切换），有 WCA ID 时为链接
-        const flag = solve.personCountry ? countryFlag(solve.personCountry) : '';
+        // NOTE: CSS 国旗 + 选手名（中英文切换），有 WCA ID 时为链接
+        const fc = flagClass(solve.personCountry);
         const name = displaySolverName(solve.person || '');
         if (solve.personId) {
           return (
             <>
-              {flag}{' '}
+              {fc && <span className={fc} />}{' '}
               <a
                 href={wcaPersonUrl(solve.personId)}
                 target="_blank"
@@ -204,19 +204,19 @@ export default function ReconListPage() {
             </>
           );
         }
-        return <>{flag} {name}</>;
+        return <>{fc && <span className={fc} />} {name}</>;
       }
       case 'date':
         // NOTE: 截取 YYYY-MM-DD 部分
         return solve.date ? solve.date.slice(0, 10) : '';
       case 'comp': {
-        // NOTE: 国旗 + 比赛名，有 compWcaId 时为链接
-        const flag = solve.country ? countryFlag(solve.country) : '';
+        // NOTE: CSS 国旗 + 比赛名，有 compWcaId 时为链接
+        const fc = flagClass(solve.country);
         const compName = solve.comp || '';
         if (solve.compWcaId) {
           return (
             <>
-              {flag}{' '}
+              {fc && <span className={fc} />}{' '}
               <a
                 href={wcaCompUrl(solve.compWcaId)}
                 target="_blank"
@@ -228,7 +228,7 @@ export default function ReconListPage() {
             </>
           );
         }
-        return <>{flag} {compName}</>;
+        return <>{fc && <span className={fc} />} {compName}</>;
       }
       case 'round':
         return formatRound(solve.round, solve.solveNum);
@@ -391,11 +391,32 @@ export default function ReconListPage() {
                     onMouseDown={handleRowMouseDown}
                     onMouseUp={(e) => handleRowMouseUp(e, solve)}
                   >
-                    {COLUMNS.map((col) => (
-                      <td key={col.label} className={col.className || ''}>
-                        {renderCell(col, solve)}
-                      </td>
-                    ))}
+                    {COLUMNS.map((col) => {
+                      // NOTE: col-solver 和 col-comp 需要溢出 tooltip
+                      const needsTip = col.className?.includes('col-solver') || col.className?.includes('col-comp');
+                      const tipText = col.key === 'person' ? (solve.person || '') : col.key === 'comp' ? (solve.comp || '') : '';
+                      return (
+                        <td
+                          key={col.label}
+                          className={col.className || ''}
+                          {...(needsTip ? { 'data-tip': tipText } : {})}
+                          onMouseOver={needsTip ? (e) => {
+                            // NOTE: 原版 Tooltip 溢出检测——scrollWidth > clientWidth 时才显示
+                            const td = e.currentTarget;
+                            if (td.scrollWidth > td.clientWidth) {
+                              td.setAttribute('data-tip-show', '');
+                            } else {
+                              td.removeAttribute('data-tip-show');
+                            }
+                          } : undefined}
+                          onMouseLeave={needsTip ? (e) => {
+                            e.currentTarget.removeAttribute('data-tip-show');
+                          } : undefined}
+                        >
+                          {renderCell(col, solve)}
+                        </td>
+                      );
+                    })}
                   </tr>
                 ))}
               </tbody>
