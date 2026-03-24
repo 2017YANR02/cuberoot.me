@@ -109,129 +109,10 @@ reconRoutes.get('/api/recon/search-solvers', async (c) => {
   }
 });
 
-// ==================== GET /api/recon/:id ====================
+// NOTE: /:id 动态路由移到文件末尾——防止具名路由（/comments, /edits 等）被 :id 捕获
+// （Hono LinearRouter 按注册顺序匹配，动态参数路由必须后于所有具名路由）
 
-reconRoutes.get('/api/recon/:id', async (c) => {
-  const id = c.req.param('id');
-
-  const rows = await query('SELECT * FROM recons WHERE id = ?', [id]);
-  if (rows.length === 0) {
-    return c.json({ error: 'Not found' }, 404);
-  }
-
-  const result = rowToJson(rows[0] as Record<string, unknown>);
-
-  // NOTE: 合并编辑覆盖层（与 PHP get action 一致）
-  const edits = await query<{ fields: string }>(
-    'SELECT fields FROM edits WHERE solve_id = ?', [id]
-  );
-  if (edits.length > 0) {
-    const fields = JSON.parse(String(edits[0].fields)) as Record<string, unknown>;
-    for (const [k, v] of Object.entries(fields)) {
-      if (!k.startsWith('_')) result[k] = v;
-    }
-    result._edited = true;
-  }
-
-  return c.json(result);
-});
-
-// ==================== POST /api/recon ====================
-
-reconRoutes.post('/api/recon', async (c) => {
-  c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
-  checkRateLimit(getIp(c));
-  const authUser = await requireAuth(c);
-  const body = await c.req.json<Record<string, unknown>>();
-
-  // NOTE: 服务端覆盖身份字段（不信任前端传值）
-  body.addedBy = authUser.name;
-  body.addedById = authUser.wcaId;
-  body.createdAt = Math.floor(Date.now() / 1000);
-  delete body.id; // NOTE: 由数据库 AUTO_INCREMENT 分配
-
-  const row = jsonToRow(body);
-
-  // NOTE: 校验
-  const errors = validateRow(row);
-  if (errors.length > 0) {
-    return c.json({ error: 'Validation failed', fields: errors }, 400);
-  }
-
-  const { sql, values } = buildInsert('recons', row);
-  const result = await query(sql, values) as unknown as { insertId: bigint };
-  body.id = Number(result.insertId);
-
-  return c.json(body);
-});
-
-// ==================== PUT /api/recon/:id ====================
-
-reconRoutes.put('/api/recon/:id', async (c) => {
-  c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
-  checkRateLimit(getIp(c));
-  const authUser = await requireAuth(c);
-  const id = c.req.param('id');
-  const body = await c.req.json<Record<string, unknown>>();
-
-  // NOTE: 查找目标记录，验证权限
-  const existing = await query<{ added_by_id: string }>(
-    'SELECT added_by_id FROM recons WHERE id = ?', [id]
-  );
-  if (existing.length === 0) {
-    return c.json({ error: 'Not found' }, 404);
-  }
-
-  // NOTE: 非管理员只能更新自己的复盘
-  if (!ADMIN_WCA_IDS.includes(authUser.wcaId)) {
-    if ((existing[0].added_by_id ?? '') !== authUser.wcaId) {
-      return c.json({ error: 'Cannot edit others recon' }, 403);
-    }
-  }
-
-  const row = jsonToRow(body);
-  if (Object.keys(row).length === 0) {
-    return c.json({ error: 'No valid fields to update' }, 400);
-  }
-
-  const errs = validateRow(row);
-  if (errs.length > 0) {
-    return c.json({ error: 'Validation failed', fields: errs }, 400);
-  }
-
-  const { sql, values } = buildUpdate('recons', row, 'id', id);
-  await query(sql, values);
-
-  return c.json({ ok: true });
-});
-
-// ==================== DELETE /api/recon/:id ====================
-
-reconRoutes.delete('/api/recon/:id', async (c) => {
-  c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
-  checkRateLimit(getIp(c));
-  const authUser = await requireAuth(c);
-  const id = c.req.param('id');
-
-  const existing = await query<{ added_by_id: string }>(
-    'SELECT added_by_id FROM recons WHERE id = ?', [id]
-  );
-  if (existing.length === 0) {
-    return c.json({ error: 'Not found' }, 404);
-  }
-
-  // NOTE: 非管理员只能删自己的复盘
-  if (!ADMIN_WCA_IDS.includes(authUser.wcaId)) {
-    if ((existing[0].added_by_id ?? '') !== authUser.wcaId) {
-      return c.json({ error: 'Cannot delete others recon' }, 403);
-    }
-  }
-
-  await query('DELETE FROM recons WHERE id = ?', [id]);
-  return c.json({ ok: true });
-});
-
-// ==================== 阶段 2：评论系统 ====================
+// ==================== 阶段 2：评论系统 ==
 
 // GET /api/recon/comments?reconId=xxx
 reconRoutes.get('/api/recon/comments', async (c) => {
@@ -584,5 +465,115 @@ reconRoutes.post('/api/recon/timer-sync', async (c) => {
     [authUser.wcaId, body.sessionId, body.puzzleId, solvesJson, now]
   );
   return c.json({ ok: true, updatedAt: now });
+});
+
+// ==================== 动态参数路由（必须在所有具名路由之后注册） ====================
+// NOTE: /:id 会匹配任何 /api/recon/xxx 路径，所以具名路由必须先注册
+
+// GET /api/recon/:id — 获取单条复盘
+reconRoutes.get('/api/recon/:id', async (c) => {
+  const id = c.req.param('id');
+
+  const rows = await query('SELECT * FROM recons WHERE id = ?', [id]);
+  if (rows.length === 0) {
+    return c.json({ error: 'Not found' }, 404);
+  }
+
+  const result = rowToJson(rows[0] as Record<string, unknown>);
+
+  // NOTE: 合并编辑覆盖层（与 PHP get action 一致）
+  const edits = await query<{ fields: string }>(
+    'SELECT fields FROM edits WHERE solve_id = ?', [id]
+  );
+  if (edits.length > 0) {
+    const fields = JSON.parse(String(edits[0].fields)) as Record<string, unknown>;
+    for (const [k, v] of Object.entries(fields)) {
+      if (!k.startsWith('_')) result[k] = v;
+    }
+    result._edited = true;
+  }
+
+  return c.json(result);
+});
+
+// POST /api/recon — 新增复盘
+reconRoutes.post('/api/recon', async (c) => {
+  c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+  checkRateLimit(getIp(c));
+  const authUser = await requireAuth(c);
+  const body = await c.req.json<Record<string, unknown>>();
+
+  body.addedBy = authUser.name;
+  body.addedById = authUser.wcaId;
+  body.createdAt = Math.floor(Date.now() / 1000);
+  delete body.id;
+
+  const row = jsonToRow(body);
+  const errors = validateRow(row);
+  if (errors.length > 0) {
+    return c.json({ error: 'Validation failed', fields: errors }, 400);
+  }
+
+  const { sql, values } = buildInsert('recons', row);
+  const result = await query(sql, values) as unknown as { insertId: bigint };
+  body.id = Number(result.insertId);
+  return c.json(body);
+});
+
+// PUT /api/recon/:id — 更新复盘
+reconRoutes.put('/api/recon/:id', async (c) => {
+  c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+  checkRateLimit(getIp(c));
+  const authUser = await requireAuth(c);
+  const id = c.req.param('id');
+  const body = await c.req.json<Record<string, unknown>>();
+
+  const existing = await query<{ added_by_id: string }>(
+    'SELECT added_by_id FROM recons WHERE id = ?', [id]
+  );
+  if (existing.length === 0) {
+    return c.json({ error: 'Not found' }, 404);
+  }
+  if (!ADMIN_WCA_IDS.includes(authUser.wcaId)) {
+    if ((existing[0].added_by_id ?? '') !== authUser.wcaId) {
+      return c.json({ error: 'Cannot edit others recon' }, 403);
+    }
+  }
+
+  const row = jsonToRow(body);
+  if (Object.keys(row).length === 0) {
+    return c.json({ error: 'No valid fields to update' }, 400);
+  }
+  const errs = validateRow(row);
+  if (errs.length > 0) {
+    return c.json({ error: 'Validation failed', fields: errs }, 400);
+  }
+
+  const { sql, values } = buildUpdate('recons', row, 'id', id);
+  await query(sql, values);
+  return c.json({ ok: true });
+});
+
+// DELETE /api/recon/:id — 删除复盘
+reconRoutes.delete('/api/recon/:id', async (c) => {
+  c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+  checkRateLimit(getIp(c));
+  const authUser = await requireAuth(c);
+  const id = c.req.param('id');
+
+  const existing = await query<{ added_by_id: string }>(
+    'SELECT added_by_id FROM recons WHERE id = ?', [id]
+  );
+  if (existing.length === 0) {
+    return c.json({ error: 'Not found' }, 404);
+  }
+  if (!ADMIN_WCA_IDS.includes(authUser.wcaId)) {
+    if ((existing[0].added_by_id ?? '') !== authUser.wcaId) {
+      return c.json({ error: 'Cannot delete others recon' }, 403);
+    }
+  }
+
+  await query('DELETE FROM recons WHERE id = ?', [id]);
+  return c.json({ ok: true });
 });
 
