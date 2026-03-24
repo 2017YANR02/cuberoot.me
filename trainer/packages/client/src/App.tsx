@@ -16,6 +16,8 @@ const CalcPage = lazy(() => import('./pages/calc/CalcPage'));
 const VizPage = lazy(() => import('./pages/viz/VizPage'));
 // NOTE: Battle 模块懒加载 — 对战计时器
 const BattlePage = lazy(() => import('./pages/battle/BattlePage'));
+// NOTE: Recon 模块懒加载 — 复盘数据库
+const ReconListPage = lazy(() => import('./pages/recon/ReconListPage'));
 
 function App() {
   return (
@@ -39,6 +41,8 @@ function App() {
         <Route path="/viz" element={<Suspense fallback={<div>Loading...</div>}><VizPage /></Suspense>} />
         {/* Battle — 对战计时器 */}
         <Route path="/battle" element={<Suspense fallback={<div>Loading...</div>}><BattlePage /></Suspense>} />
+        {/* Recon — 复盘数据库 */}
+        <Route path="/recon" element={<Suspense fallback={<div>Loading...</div>}><ReconListPage /></Suspense>} />
       </Routes>
     </BrowserRouter>
   );
