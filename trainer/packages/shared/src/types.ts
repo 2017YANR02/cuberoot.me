@@ -95,3 +95,169 @@ export interface WcaUserTimes {
   name: string;
   country: string;
 }
+
+// ── Recon 复盘模块类型 ──
+
+/**
+ * 复盘记录主体——对齐数据库 recons 表（40+ 列）
+ * NOTE: 字段名 camelCase，与后端 rowToJson 输出一致
+ */
+export interface ReconSolve {
+  id: number;
+  /** 是否 WCA 官方比赛 */
+  official: boolean;
+  /** 项目（如 "3x3", "2x2", "3bld"） */
+  event: string;
+  /** 解法方法（如 "CFOP", "Roux", "ZB"） */
+  method?: string;
+  /** 比赛日期 YYYY-MM-DD */
+  date?: string;
+  /** 比赛名称 */
+  comp?: string;
+  /** 比赛 WCA ID（如 "WC2025"） */
+  compWcaId?: string;
+  /** 比赛所在国家 */
+  country?: string;
+  /** 轮次（如 "f" = 决赛, "1" = 第一轮） */
+  round?: string;
+  /** 第几把（1-5） */
+  solveNum?: number;
+  /** 选手名 */
+  person?: string;
+  /** 选手 WCA ID */
+  personId?: string;
+  /** 选手国籍 ISO 3166-1 alpha-2 小写 */
+  personCountry?: string;
+  /** 单次成绩（秒） */
+  rawTime?: number;
+  /** 盲拧执行时间（秒） */
+  execTime?: number;
+  /** 盲拧记忆时间（秒） */
+  memoTime?: number;
+  /** 平均成绩（秒） */
+  average?: number;
+  /** 单次成绩显示值（截断后） */
+  value?: string;
+  /** 单次纪录标记（如 "WR", "CR", "NR"） */
+  regionalSingleRecord?: string;
+  /** 平均纪录标记 */
+  regionalAverageRecord?: string;
+  /** Ao 类型（如 "Ao5", "Mo3"） */
+  aoType?: string;
+  /** AoXR 纪录标记 */
+  regionalAoxrRecord?: string;
+  /** 原始 recon 文本（含统计行+打乱+解法，旧格式） */
+  recon?: string;
+  /** 纯解法文本（新格式） */
+  solution?: string;
+  /** 优化打乱 */
+  optimalScramble?: string;
+  /** WCA 官方打乱 */
+  wcaScramble?: string;
+  /** 描述/标题 */
+  caption?: string;
+  /** 备注 */
+  note?: string;
+  /** STM 步数 */
+  stm?: number;
+  /** TPS (Turns Per Second) */
+  tps?: number;
+  /** OLL 全名 */
+  oll?: string;
+  /** PLL 全名 */
+  pll?: string;
+  /** OLL 缩写 */
+  ollShort?: string;
+  /** PLL 缩写 */
+  pllShort?: string;
+  /** Free pair 数量 */
+  freePair?: number;
+  /** Y 旋转次数 */
+  yRot?: number;
+  /** Regrip 次数 */
+  regrip?: number;
+  /** Lockup 次数 */
+  lockup?: number;
+  /** Cross 类型编码 */
+  crossType?: number;
+  /** Cross STM */
+  crossStm?: number;
+  /** F2L STM */
+  f2l?: number;
+  /** LL STM */
+  ll?: number;
+  /** S 系列转动次数 */
+  sMove?: number;
+  /** Cross 颜色单字符（W/Y/R/O/G/B） */
+  crossColor?: string;
+  /** 魔方型号 */
+  cube?: string;
+  /** 复盘者名 */
+  reconer?: string;
+  /** 复盘者 WCA ID */
+  reconerId?: string;
+  /** 分组 ID */
+  groupId?: string;
+  /** 复盘日期 YYYY-MM-DD */
+  reconDate?: string;
+  /** 创建时间（Unix timestamp） */
+  createdAt?: number;
+  /** 添加者名 */
+  addedBy?: string;
+  /** 添加者 WCA ID */
+  addedById?: string;
+  /** 视频链接（多行，每行一个 URL） */
+  videoUrl?: string;
+  /** 前端标记：是否有编辑覆盖层 */
+  _edited?: boolean;
+  /** 前端标记：本地未同步数据 */
+  _local?: boolean;
+}
+
+/** 评论 */
+export interface ReconComment {
+  id: number;
+  reconId: number;
+  authorId: string;
+  authorName: string;
+  content: string;
+  /** Unix timestamp */
+  createdAt: number;
+  /** Unix timestamp，未编辑则 null */
+  updatedAt: number | null;
+}
+
+/** 编辑历史条目 */
+export interface EditHistoryItem {
+  id: string;
+  solveId: string;
+  before: Record<string, unknown> | null;
+  after: Record<string, unknown> | null;
+  editedBy: string;
+  /** Unix timestamp */
+  editedAt: number;
+}
+
+/** computeAllStats 返回值 */
+export interface ReconStatsResult {
+  stm: number;
+  tps: number;
+  /** OLL 全名（如 "OLL 21"） */
+  ollFull: string;
+  /** PLL 全名（如 "T-Perm"） */
+  pllFull: string;
+  ollShort: string;
+  pllShort: string;
+  freePair: number;
+  yRot: number;
+  regrip: number;
+  lockup: number;
+  /** Cross 类型：0=无, 1=xCross, 2=xxCross... */
+  crossType: number;
+  crossStm: number;
+  f2l: number;
+  ll: number;
+  sMove: number;
+  /** Cross 颜色单字符 */
+  crossColor: string;
+}
