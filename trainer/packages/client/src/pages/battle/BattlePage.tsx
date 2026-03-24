@@ -404,7 +404,7 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
 
 function MiddleBar({ onSettingsClick }: { onSettingsClick: () => void }) {
   const store = useBattleStore();
-  const { players, mode } = store;
+  const { players } = store;
 
   return (
     <div className="middle-bar">
@@ -413,9 +413,10 @@ function MiddleBar({ onSettingsClick }: { onSettingsClick: () => void }) {
         <span className="score-value">{players[1].points}</span>
       </div>
 
-      {/* 中间操作按钮 */}
+      {/* 中间操作按钮 — 1:1 翻译自 battle/index.html 行 78~89 */}
       <div className="middle-actions">
-        <button className="middle-btn" title="Settings" onClick={onSettingsClick}>⚙️</button>
+        {/* NOTE: 桌面端键盘提示 */}
+        <span className="key-hint">Enter ↑ · ↓ Space</span>
         <button className="middle-btn" title="Fullscreen" onClick={() => {
           if (!document.fullscreenElement) {
             document.documentElement.requestFullscreen().catch(() => {});
@@ -423,19 +424,11 @@ function MiddleBar({ onSettingsClick }: { onSettingsClick: () => void }) {
             document.exitFullscreen();
           }
         }}>⛶</button>
-        {/* NOTE: 历史按钮仅 Solo 模式 */}
-        {mode === 'solo' && (
-          <button className="middle-btn" title="History" onClick={() => {
-            store.switchTab('results');
-          }}>📋</button>
-        )}
-        {/* 键盘提示 */}
-        {mode === '1v1' && (
-          <span className="key-hint">⌨ P1:Space P2:Enter</span>
-        )}
-        {mode === 'solo' && (
-          <span className="key-hint">⌨ Space</span>
-        )}
+        {/* NOTE: CubeRoot logo，点击回首页 */}
+        <a href="/app/" className="middle-logo" aria-label="Home">
+          <img src="/app/CubeRoot-dark.png" alt="CubeRoot" height="24" />
+        </a>
+        <button className="middle-btn" title="Settings" onClick={onSettingsClick}>⚙️</button>
       </div>
 
       {/* Player 1 (右侧) 比分 + 罚时 */}
