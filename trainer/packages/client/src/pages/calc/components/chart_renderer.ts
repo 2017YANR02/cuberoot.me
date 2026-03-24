@@ -229,9 +229,8 @@ export function render(opts?: RenderOptions): void {
     calcViewBox();
   }
 
-  // 清空所有分层 group
+  // 清空所有分层 group（gBars 除外 — drawBars 内部复用 rect 以支持过渡动画）
   gGrid.innerHTML = '';
-  gBars.innerHTML = '';
   gLabels.innerHTML = '';
   gStats.innerHTML = '';
   gAvg.innerHTML = '';
@@ -343,6 +342,7 @@ function drawBars(): void {
   const isMbf = isMbfForEvent(state.event);
   const bothEnabled = state.playerEnabled[0] && state.playerEnabled[1];
   const bm = BAR_GAP; // bar margin
+  const usedKeys: Record<string, boolean> = {}; // NOTE: 追踪本轮使用的 rect key
 
   // NOTE: 准备排序数据（用于色阶 shading）
   const sortedVals: number[][] = [];
@@ -386,35 +386,58 @@ function drawBars(): void {
       const bw = isTop ? fullW * INNER_BAR_RATIO : fullW;
       const bx = barX + bm + (fullW - bw) / 2;
 
-      const bar = createSvgElement('rect', {
-        x: bx, y, width: bw, height: Math.max(0, barH),
-        rx: 3, fill: SHADES[p] || SHADES[0],
-        class: 'chart-bar',
-        'data-player': p,
-        'data-slot': t,
-      });
-
-      // NOTE: WAAPI 柱子高度动画
       const key = `${p}_${t}`;
-      const prevH = prevBarHeights.get(key) ?? 0;
-      if (Math.abs(prevH - barH) > 1) {
-        try {
-          bar.animate(
-            [
-              { height: prevH + 'px', y: (baseY - prevH) + 'px' },
-              { height: barH + 'px', y: y + 'px' },
-            ],
-            { duration: ANIM_MS, easing: 'ease-out', fill: 'none' },
-          );
-        } catch {
-          // NOTE: WAAPI 在某些浏览器不支持 SVG 动画，静默降级
-        }
-      }
-      prevBarHeights.set(key, barH);
+      usedKeys[key] = true;
 
-      gBars.appendChild(bar);
+      // NOTE: 复用已有 rect — appendChild 移到末尾维持 pOrder 决定的 z-order
+      let bar = gBars.querySelector(`.chart-bar[data-player="${p}"][data-slot="${t}"]`) as SVGRectElement | null;
+      if (bar) {
+        const oldX = parseFloat(bar.getAttribute('x') || '0');
+        const oldY = parseFloat(bar.getAttribute('y') || '0');
+        const oldW = parseFloat(bar.getAttribute('width') || '0');
+        const oldH = parseFloat(bar.getAttribute('height') || '0');
+        bar.setAttribute('x', String(bx));
+        bar.setAttribute('y', String(y));
+        bar.setAttribute('width', String(bw));
+        bar.setAttribute('height', String(Math.max(0, barH)));
+        gBars.appendChild(bar); // 移到末尾维持 z-order
+
+        // NOTE: 属性变化时用 WAAPI 播放过渡动画（原版 chart.js#731-741）
+        const wxChanged = Math.abs(oldW - bw) > 0.5 || Math.abs(oldX - bx) > 0.5;
+        const yhChanged = Math.abs(oldY - y) > 0.5 || Math.abs(oldH - barH) > 0.5;
+        if (wxChanged || yhChanged) {
+          try {
+            bar.animate(
+              [
+                { x: oldX + 'px', y: oldY + 'px', width: oldW + 'px', height: oldH + 'px' },
+                { x: bx + 'px', y: y + 'px', width: bw + 'px', height: Math.max(0, barH) + 'px' },
+              ],
+              { duration: ANIM_MS, easing: 'ease', fill: 'none' },
+            );
+          } catch {
+            // NOTE: WAAPI 在某些浏览器不支持 SVG 动画，静默降级
+          }
+        }
+      } else {
+        bar = createSvgElement('rect', {
+          x: bx, y, width: bw, height: Math.max(0, barH),
+          rx: 3, fill: SHADES[p] || SHADES[0],
+          class: 'chart-bar',
+          'data-player': p,
+          'data-slot': t,
+        }) as unknown as SVGRectElement;
+        gBars.appendChild(bar);
+      }
     }
   }
+
+  // NOTE: 清理本轮不再需要的旧 rect（如选手被禁用或值被清空）
+  gBars.querySelectorAll('.chart-bar').forEach(el => {
+    const k = el.getAttribute('data-player') + '_' + el.getAttribute('data-slot');
+    if (!usedKeys[k]) el.remove();
+  });
+  // NOTE: 幽灵柱每次重建，先清理旧的
+  gBars.querySelectorAll('.chart-ghost').forEach(el => el.remove());
 
   // NOTE: ghost bar（Target Avg 幽灵柱）
   drawGhostBars();
