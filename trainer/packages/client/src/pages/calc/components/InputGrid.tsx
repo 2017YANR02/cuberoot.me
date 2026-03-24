@@ -26,15 +26,9 @@ interface InputGridProps {
   onPlayerOverride?: (playerIdx: number) => void;
 }
 
-// NOTE: 根据文字长度自适应缩小字号，防止长时间格式（如 1:10.10）溢出
-// 原版 input_grid.js#31-42
-function fitFontStyle(displayVal: string): React.CSSProperties | undefined {
-  // NOTE: 去掉括号计算长度，避免 Ao5 括号标注影响字号
-  const len = displayVal.replace(/[()]/g, '').length;
-  if (len <= 4) return undefined; // 默认 24px
-  if (len === 5) return { fontSize: '20px' };
-  if (len === 6) return { fontSize: '17px' };
-  return { fontSize: '14px' }; // ≥7 字符（如 1:14.80）
+// NOTE: 不再需要动态字号缩放 — CSS 统一用 17px 确保最长格式也能在 90px 内完整显示
+function fitFontStyle(_displayVal: string): React.CSSProperties | undefined {
+  return undefined;
 }
 
 export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {

@@ -767,6 +767,22 @@ body.solo .bottom-nav {
     color: #4fc3f7;
 }
 
+/* NOTE: PNG 图标模拟 iOS tab bar template rendering — 1:1 翻译自原版 battle.css 行 1384~1393 */
+.nav-tab .nav-tab-icon {
+    /* NOTE: grayscale + brightness 将黄色底变为灰色轮廓 */
+    filter: grayscale(1) brightness(0.6);
+    transition: filter 0.15s;
+}
+
+.nav-tab.active .nav-tab-icon {
+    /* NOTE: active 状态：hue-rotate 148deg 精确映射黄色(51°)→目标天蓝(199°)，匹配 #4fc3f7 */
+    filter: grayscale(0) brightness(0.85) hue-rotate(148deg) saturate(1.8);
+}
+
+.nav-tab svg {
+    transition: color 0.15s;
+}
+
 /* NOTE: Solo 模式下为底部导航栏留出空间 */
 body.solo .player-area {
     padding-bottom: 56px;
@@ -862,13 +878,11 @@ body.solo .scramble-img {
 .history-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.7);
+    /* NOTE: 全屏铺满，纯黑背景（与原版一致） */
+    background: #111;
     z-index: 200;
     display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
+    flex-direction: column;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.2s ease;
@@ -880,22 +894,15 @@ body.solo .scramble-img {
 }
 
 .history-panel {
-    background: #1a1a1a;
+    background: #111;
     width: 100%;
-    max-width: 500px;
-    max-height: 70vh;
-    border-radius: 16px 16px 0 0;
+    /* NOTE: 全屏高度，底部为导航栏留 56px 空间 */
+    height: calc(100vh - 56px);
     display: flex;
     flex-direction: column;
-    transform: translateY(100%);
-    transition: transform 0.3s ease;
-    border: 1px solid #333;
-    border-bottom: none;
+    overflow: hidden;
 }
 
-.history-overlay.visible .history-panel {
-    transform: translateY(0);
-}
 
 .history-header {
     display: flex;

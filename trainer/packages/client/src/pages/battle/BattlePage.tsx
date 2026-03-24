@@ -745,14 +745,8 @@ export default function BattlePage() {
             className={`nav-tab${store.activeTab === 'timer' ? ' active' : ''}`}
             onClick={() => store.switchTab('timer')}
           >
-            {/* NOTE: 计时器图标 — 翻译自原版 icon_timer.png，改用 SVG */}
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="13" r="8"/>
-              <line x1="12" y1="9" x2="12" y2="13"/>
-              <line x1="16.24" y1="7.76" x2="14.12" y2="9.12"/>
-              <line x1="10" y1="2" x2="14" y2="2"/>
-              <line x1="12" y1="2" x2="12" y2="5"/>
-            </svg>
+            {/* NOTE: 1:1 翻译自原版 icon_timer.png — 不擅自替换为 SVG */}
+            <img src="/app/icon_timer.png" width="22" height="22" alt="Timer" className="nav-tab-icon" />
             <span>Timer</span>
           </button>
           <button
