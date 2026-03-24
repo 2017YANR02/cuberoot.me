@@ -175,11 +175,10 @@ function selectBar(bar: SelectedBar): void {
   selected = bar;
   svgEl.classList.add('bar-selected');
 
-  // NOTE: 高亮选中柱子
-  const barEls = svgEl.querySelectorAll('.chart-bar');
-  barEls.forEach(el => {
+  // NOTE: 高亮选中柱子 + 对应标签
+  svgEl.querySelectorAll('.chart-bar, .chart-bar-label').forEach(el => {
     const dp = parseInt(el.getAttribute('data-player') || '-1');
-    const ds = parseInt(el.getAttribute('data-slot') || '-1');
+    const ds = parseInt(el.getAttribute('data-slot') || el.getAttribute('data-solve') || '-1');
     if (dp === bar.playerIdx && ds === bar.solveIdx) {
       el.classList.add('bar-active');
     }
@@ -217,9 +216,9 @@ function reapplySelection(): void {
   const svgEl = getSvgEl();
   if (!svgEl) return;
   svgEl.classList.add('bar-selected');
-  svgEl.querySelectorAll('.chart-bar').forEach(el => {
+  svgEl.querySelectorAll('.chart-bar, .chart-bar-label').forEach(el => {
     const dp = parseInt(el.getAttribute('data-player') || '-1');
-    const ds = parseInt(el.getAttribute('data-slot') || '-1');
+    const ds = parseInt(el.getAttribute('data-slot') || el.getAttribute('data-solve') || '-1');
     if (dp === selected!.playerIdx && ds === selected!.solveIdx) {
       el.classList.add('bar-active');
     }
