@@ -35,11 +35,6 @@ jobs:
         working-directory: trainer
         run: pnpm install --frozen-lockfile
 
-      # 构建共享包（server 和 client 都依赖）
-      - name: Build shared
-        working-directory: trainer
-        run: pnpm --filter @cuberoot/shared build
-
       # 构建前端
       - name: Build client
         working-directory: trainer
