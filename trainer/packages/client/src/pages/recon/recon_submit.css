@@ -1,0 +1,168 @@
+/* ============================================================
+   Submit / Edit 页面样式
+   ============================================================ */
+
+.submit-form {
+  max-width: 800px;
+}
+
+.submit-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.submit-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 120px;
+  flex: 1;
+}
+
+.submit-field-wide { flex: 2; }
+.submit-block { width: 100%; margin-bottom: 12px; }
+
+.submit-label {
+  font-size: 0.75rem;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.submit-field input,
+.submit-field select,
+.submit-field textarea {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: #e0e0e0;
+  font-size: 0.88rem;
+  font-family: 'Inter', Arial, sans-serif;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.submit-field input:focus,
+.submit-field select:focus,
+.submit-field textarea:focus {
+  border-color: rgba(99, 102, 241, 0.5);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.submit-solution-textarea {
+  font-family: 'Roboto Mono', monospace !important;
+  font-size: 0.85rem !important;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+/* --- 搜索下拉 --- */
+.submit-dropdown {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  background: #2a2a2e;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  position: absolute;
+  z-index: 10;
+  width: 100%;
+}
+
+.submit-dropdown li {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #ccc;
+  transition: background 0.15s;
+}
+
+.submit-dropdown li:hover {
+  background: rgba(99, 102, 241, 0.2);
+  color: #fff;
+}
+
+.submit-hint {
+  font-size: 0.75rem;
+  color: #666;
+}
+
+/* --- 重复警告 --- */
+.submit-warning {
+  padding: 10px 16px;
+  background: rgba(234, 179, 8, 0.1);
+  border: 1px solid rgba(234, 179, 8, 0.3);
+  border-radius: 8px;
+  color: #eab308;
+  font-size: 0.85rem;
+  margin-bottom: 16px;
+}
+
+/* --- 实时统计预览 --- */
+.submit-stats-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 10px 16px;
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 0.82rem;
+  color: #b0b8c4;
+  font-family: 'Roboto Mono', monospace;
+}
+
+/* --- 提交按钮 --- */
+.submit-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.submit-btn {
+  padding: 10px 28px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+  border: none;
+}
+
+.submit-btn-primary {
+  background: rgba(99, 102, 241, 0.25);
+  color: #93bbfc;
+  border: 1px solid rgba(99, 102, 241, 0.4);
+}
+
+.submit-btn-primary:hover {
+  background: rgba(99, 102, 241, 0.45);
+  color: #fff;
+}
+
+.submit-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.submit-btn-cancel {
+  background: rgba(255, 255, 255, 0.06);
+  color: #888;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.submit-btn-cancel:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ccc;
+}
+
+/* --- 选手搜索 — 相对定位容器 --- */
+.submit-field {
+  position: relative;
+}
