@@ -3,7 +3,7 @@
  * 端点：list, get, add, update, delete, checkDuplicate, searchSolvers,
  *       comments CRUD, edits, history, wca-attempts, bili-cover, user-stats,
  *       list-persons, timer-sync
- * NOTE: 1:1 移植自 Fastify 版（原 PHP recon/api/index.php 的移植）
+ * NOTE: 迁移自 PHP recon/api/index.php → Hono
  */
 import { Hono } from 'hono';
 import { query } from '../db/connection.js';

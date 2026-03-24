@@ -36,7 +36,7 @@ export default defineConfig({
       '/stats': {
         target: 'http://localhost:4000',
       },
-      // NOTE: Recon API 代理到 Fastify（localhost:3001）
+      // NOTE: Recon API 代理到 Hono（localhost:3001）
       '/trainer/api/recon': {
         target: 'http://localhost:3001',
         rewrite: (path) => path.replace(/^\/trainer\/api\/recon/, '/api/recon'),
