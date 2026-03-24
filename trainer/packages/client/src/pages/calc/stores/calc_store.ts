@@ -227,8 +227,12 @@ export const useCalcStore = create<CalcState>((set, get) => ({
       params.set('comp', s.compName);
       if (s.event) params.set('event', s.event);
 
-      for (let i = 0; i < s.names.length; i++) {
-        params.set('n' + i, s.names[i]);
+      // NOTE: 保存 Target Avg（centiseconds），替代原来的 n0/n1 名字
+      for (let i = 0; i < 2; i++) {
+        const ta = s.targetAvgs[s.seedOn + i];
+        if (ta && ta > 0) {
+          params.set('target' + i, String(ta));
+        }
       }
       // NOTE: 只保存 solveCount 个值，避免尾部多余的 0
       const sc = solveCountForEvent(s.event);
@@ -253,15 +257,6 @@ export const useCalcStore = create<CalcState>((set, get) => ({
       compName = DEFAULT_TITLES.has(comp) ? getDefaultCompName() : comp;
     }
 
-    // 恢复名字
-    const names = [...get().names];
-    let i = 0;
-    while (params.has('n' + i)) {
-      if (i >= names.length) names.push('Name ' + String.fromCharCode(65 + i));
-      names[i] = params.get('n' + i)!;
-      i++;
-    }
-
     // 恢复事件
     let event = get().event;
     if (params.has('event')) event = params.get('event')!;
@@ -278,7 +273,19 @@ export const useCalcStore = create<CalcState>((set, get) => ({
       j++;
     }
 
-    set({ compName, names, event, times });
+    set({ compName, event, times });
+
+    // NOTE: 恢复 Target Avg（centiseconds）
+    const seedOn = get().seedOn;
+    const newTargetAvgs = { ...get().targetAvgs };
+    for (let i = 0; i < 2; i++) {
+      if (params.has('target' + i)) {
+        const ta = parseInt(params.get('target' + i)!, 10);
+        if (ta > 0) newTargetAvgs[seedOn + i] = ta;
+      }
+    }
+    set({ targetAvgs: newTargetAvgs });
+
     // NOTE: Mo3 项目 times 数组必须截断为 3 元素
     get().resizeTimes(solveCountForEvent(event));
   },
