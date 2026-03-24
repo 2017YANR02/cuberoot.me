@@ -37,12 +37,12 @@ interface Column {
 const COLUMNS: Column[] = [
   { key: 'id', label: '#', className: 'col-idx', sortable: true },
   { key: '', label: '🏴', className: 'col-official', sortable: false },
-  { key: 'person', label: 'Solver', className: 'col-solver', sortable: true },
-  { key: 'rawTime', label: 'Time', className: 'col-single', sortable: true },
-  { key: 'event', label: 'Event', sortable: true },
-  { key: 'method', label: 'Method', sortable: true },
-  { key: 'comp', label: 'Competition', className: 'col-comp', sortable: true },
-  { key: 'date', label: 'Date', sortable: true },
+  { key: 'person', label: t('选手', 'Solver'), className: 'col-solver', sortable: true },
+  { key: 'rawTime', label: t('成绩', 'Time'), className: 'col-single', sortable: true },
+  { key: 'event', label: t('项目', 'Event'), sortable: true },
+  { key: 'method', label: t('方法', 'Method'), sortable: true },
+  { key: 'comp', label: t('比赛', 'Competition'), className: 'col-comp', sortable: true },
+  { key: 'date', label: t('日期', 'Date'), sortable: true },
   { key: 'stm', label: 'STM', sortable: true },
   { key: 'tps', label: 'TPS', sortable: true },
 ];
