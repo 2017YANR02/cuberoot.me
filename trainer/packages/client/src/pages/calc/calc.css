@@ -1043,8 +1043,9 @@ video {
 
 
 
-/* NOTE: 选中态 — SVG 根加 .bar-selected 后，非活跃柱子降暗 */
-.hth-chart.bar-selected .chart-bar:not(.bar-active) {
+/* NOTE: 选中态 — SVG 根加 .bar-selected 后，非活跃柱子和标签降暗 */
+.hth-chart.bar-selected .chart-bar:not(.bar-active),
+.hth-chart.bar-selected .chart-bar-label:not(.bar-active) {
     opacity: 0.35;
     transition: opacity 0.2s;
 }
@@ -1270,8 +1271,9 @@ video {
 
 /* ── 柱子选中交互 — 原版 style.css#1016-1093 ── */
 
-/* NOTE: 选中态 — SVG 根加 .bar-selected 后，非活跃柱子降暗 */
-.hth-chart.bar-selected .chart-bar:not(.bar-active) {
+/* NOTE: 选中态 — SVG 根加 .bar-selected 后，非活跃柱子和标签降暗 */
+.hth-chart.bar-selected .chart-bar:not(.bar-active),
+.hth-chart.bar-selected .chart-bar-label:not(.bar-active) {
     opacity: 0.35;
     transition: opacity 0.2s;
 }
