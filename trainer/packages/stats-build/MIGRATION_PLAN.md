@@ -1,152 +1,246 @@
 # Stats Ruby → TypeScript + React 完整迁移计划
 
+> **本文档是面向下一个 AI 的移交文档，包含完整上下文、已完成进度和后续任务。**
+
 ## 一、背景与现状
 
 ### 1.1 项目概述
 
-本项目（[ruiminyan.github.io](https://ruiminyan.github.io)）是一个 Jekyll 静态站 + React SPA 的混合架构。其中 WCA 统计模块由 Ruby 脚本生成 Markdown 文件，再由 Jekyll 渲染为 HTML。
+本项目（[ruiminyan.github.io](https://ruiminyan.github.io)）是一个 Jekyll 静态站 + React SPA 的混合架构。WCA 统计模块由 93 个 Ruby 脚本生成 Markdown 文件，再由 Jekyll 渲染为 HTML。
 
-**最终目标**：用 TypeScript 完全替代 Ruby — TS 直连 MySQL 生成数据，React 渲染页面，Ruby 退役。
+**最终目标**：用 TypeScript 完全替代 Ruby — TS 直连 MySQL 生成 JSON，React 渲染页面，Ruby 退役。
 
-### 1.2 当前架构
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│                    现有 Ruby 管线（每周 CI 运行）                │
-│                                                              │
-│  _stats_build/statistics/*.rb (93 个 Ruby 脚本)               │
-│      ↓ SQL 查询 MySQL (wca_statistics)                       │
-│      ↓ 格式化为 Markdown                                     │
-│  stats/*.md (71 个 Markdown 文件，去重后)                      │
-│      ↓ Jekyll 渲染                                           │
-│  _site/stats/*.html                                          │
-│      ↓ GitHub Pages 部署                                     │
-│  https://ruiminyan.github.io/stats/*                         │
-└──────────────────────────────────────────────────────────────┘
-```
-
-### 1.3 目标架构
+### 1.2 当前架构 → 目标架构
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│                    新 TS 管线                                  │
-│                                                              │
-│  stats-build/src/statistics/*.ts (逐个替代 Ruby)              │
-│      ↓ SQL 查询 MySQL (wca_statistics)                       │
-│      ↓ 输出 JSON                                             │
-│  stats/data/*.json                                           │
-│      ↓ React SPA 渲染                                        │
-│  http://localhost:5173/app/wca-stats/:statId                 │
-│      ↓ 部署                                                  │
-│  https://ruiminyan.github.io/app/wca-stats/:statId           │
-└──────────────────────────────────────────────────────────────┘
+┌── 现有 Ruby 管线（每周 CI，继续运行）──────────────────────┐
+│  _stats_build/statistics/*.rb (93 个)                       │
+│      ↓ SQL → Markdown                                      │
+│  stats/*.md → Jekyll → _site/stats/*.html                   │
+│      ↓ GitHub Pages                                        │
+│  ruiminyan.github.io/stats/*                                │
+└─────────────────────────────────────────────────────────────┘
+
+┌── 新 TS 管线（逐步替代上方）───────────────────────────────┐
+│  stats-build/src/statistics/*.ts (逐个替代 Ruby)            │
+│      ↓ SQL → JSON                                          │
+│  stats/data/*.json                                          │
+│      ↓ React SPA 渲染                                      │
+│  /app/wca-stats/:statId                                     │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-### 1.4 已完成的试点
+### 1.3 数据库信息
 
-**试点统计：`world_championship_podiums_by_person`**
+凭据在 `_stats_build/database.yml`（不在 git 中），核心表见 `_stats_build/SCHEMA.md`。
 
-已成功建立 TS 管线，证明可行性：
+---
+
+## 二、已完成进度
+
+### 2.1 基础架构（✅ 已完成）
 
 | 组件 | 文件 | 说明 |
 |------|------|------|
-| MySQL 连接 | `stats-build/src/core/database.ts` | mysql2 连接池，配置从环境变量或默认值读取 |
-| 基类 | `stats-build/src/core/statistic.ts` | 抽象 SQL → JSON 管线 |
-| 项目映射 | `stats-build/src/core/events.ts` | WCA 项目 ID → 中英文名映射 |
-| 试点统计 | `stats-build/src/statistics/world_championship_podiums_by_person.ts` | 完整重写 Ruby SQL |
-| CLI | `stats-build/src/bin/compute.ts` | `npx tsx src/bin/compute.ts <stat_id>` |
+| MySQL 连接 | `src/core/database.ts` | mysql2 连接池，配置从 `_stats_build/database.yml` 读取 |
+| 基类 | `src/core/statistic.ts` | 抽象 `Statistic` 类：`query()` → SQL → `toJson()` 管线 |
+| 项目映射 | `src/core/events.ts` | WCA 项目 ID → 中英文名映射 + `HEADER_ZH` 表头翻译字典 |
+| CLI | `src/bin/compute.ts` | `npx tsx src/bin/compute.ts <stat_id>` → 输出 JSON |
 | React 页面 | `client/src/pages/wca_stats/WcaStatsPage.tsx` | 通用统计表格组件 |
-| 样式 | `client/src/pages/wca_stats/wca_stats.css` | 暗色主题 + 搜索 |
-| 路由 | `App.tsx` 中 `/app/wca-stats/:statId` | 懒加载 |
+| 路由 | `client/src/App.tsx` 中 `/app/wca-stats/:statId` | 懒加载 |
 
-### 1.5 数据库信息
+### 2.2 已改写的统计（✅ 18 个纯 SQL 类）
 
-```yaml
-database: wca_statistics
-host: 127.0.0.1
-username: root
-password: yrm31415926
-```
+以下全部继承 `Statistic` 基类，只需实现 `query()` 返回 SQL 字符串：
 
-核心表：`Results`, `Persons`, `Competitions`, `RanksSingle`, `RanksAverage`
-详细 schema 见 `_stats_build/SCHEMA.md`
+| # | stat_id | Ruby 继承 | 说明 |
+|---|---------|-----------|------|
+| 1 | `world_championship_podiums_by_person` | Statistic | 世锦赛领奖台（按选手） |
+| 2 | `world_championship_podiums_by_country` | Statistic | 世锦赛领奖台（按国家） |
+| 3 | `world_records_by_person` | Statistic | 世界纪录数（按选手） |
+| 4 | `world_records_by_country` | Statistic | 世界纪录数（按国家） |
+| 5 | `current_world_records_by_country` | Statistic | 当前世界纪录（按国家） |
+| 6 | `most_4th_places` | Statistic | 最多第四名 |
+| 7 | `fewest_competitors_contest` | Statistic | 参赛人数最少的比赛 |
+| 8 | `best_medal_collection_from_abroad_by_country` | Statistic | 海外奖牌（按国家） |
+| 9 | `best_medal_collection_from_abroad_by_person` | Statistic | 海外奖牌（按选手） |
+| 10 | `complete_competition_winners` | Statistic | 完全比赛冠军 |
+| 11 | `most_attended_competitions_in_single_month` | Statistic | 单月参赛最多 |
+| 12 | `most_competitions_abroad` | Statistic | 海外参赛最多 |
+| 13 | `most_delegated_competitions` | Statistic | 代表比赛最多 |
+| 14 | `most_finals` | Statistic | 进入决赛最多 |
+| 15 | `most_podiums_at_single_competition` | Statistic | 单场比赛登台最多 |
+| 16 | `most_visited_continents` | Statistic | 去过最多大洲 |
+| 17 | `most_visited_countries` | Statistic | 去过最多国家 |
+| 18 | `potentially_seen_world_records` | Statistic | 可能目击过的世界纪录 |
 
----
-
-## 二、迁移策略
-
-**直接逐个将 93 个 Ruby 统计改写为 TypeScript**。
-
-- 每改写一个 → 跑 `compute.ts` 生成 JSON → React 前端自动可用
-- 未改写的统计继续走 Jekyll 渲染（已有且正常工作）
-- 索引页可混合链接：已改写的指向 React，未改写的指向 Jekyll
-
-> ~~曾考虑过先写 Markdown 解析器，将现有 .md 批量转 JSON，让 React 立即覆盖全部统计。但这是临时代码，最终会被 TS 改写替代，故跳过。~~
-
----
-
-## 三、.md 文件格式分析（参考）
-
-> 虽然不再做 Markdown 解析器，但这些格式分析对理解 Ruby 输出和对比验证仍有价值。
-
-### 3.1 统计概览
-
-| 分类 | 数量 | 特征 |
-|------|------|------|
-| 纯 Markdown 表格 | ~46 | 用 `\| col \| col \|` 管道语法 |
-| 混合型 | ~12 | `<h3>` HTML 分节标题 + Markdown 管道表格 |
-| HTML 面板型 | 12 | `<div class="stat-panel">` + `<table>` HTML 标签 |
-| 索引页 | 1 | `index.md`，分类卡片链接 |
-
-### 3.2 共有结构
-
-```html
-<h2 data-i18n-en="English Title" data-i18n-zh="中文标题">English Title</h2>
-<p><em data-i18n-en="English description" data-i18n-zh="中文描述">English description</em></p>
-<!-- 可选：分节标题 -->
-<h3 data-i18n-en="Section" data-i18n-zh="分节">Section</h3>
-<!-- 表格内容（Markdown 或 HTML） -->
-```
-
-### 3.3 HTML 面板型文件清单（12 个，复杂度最高）
-
-```
-consecutive_sub_5_average     wr_metric
-wr_current                    wr_newcomer
-wr_dominance                  wr_non_pr
-wr_aoxr                       average_of
-yearly_rankings                best_round
-moving_average                 longest_standing_records
-```
-
-这些文件含嵌套面板 + tab 切换，React 前端需要额外组件支持。
+所有 SQL 与 Ruby 原版 **完全一致**（1:1 复制），包括 `CONCAT('**', ...)` 等 Markdown 格式化。
 
 ---
 
-## 四、JSON Schema 设计
+## 三、剩余工作（70 个统计文件）
 
-### 4.1 现有 schema（试点产出的格式）
+### 3.1 Ruby 基类分类
 
-```typescript
-interface StatData {
-  id: string;               // 如 "world_championship_podiums_by_person"
-  title: string;             // 英文标题
-  titleZh: string;           // 中文标题
-  note?: string;             // 英文描述
-  noteZh?: string;           // 中文描述
-  header: StatHeader[];      // 表头
-  rows: unknown[][];         // 数据行
-}
+93 个 Ruby 文件继承 6 种基类。`index.rb` 是注册表无需改写。分类如下：
 
-interface StatHeader {
-  key: string;               // 列键名
-  label: string;             // 英文列名
-  labelZh: string;           // 中文列名
-  align: 'left' | 'right' | 'center';
-}
+| Ruby 基类 | 总数 | 已完成 | 剩余 | 需要创建 TS 基类 |
+|-----------|------|--------|------|-----------------|
+| **Statistic（无 transform）** | 22 | ✅ 18 | **4** | ❌ 已有 |
+| **Statistic（有 transform）** | 22 | 0 | **22** | ❌ 已有，需在子类实现 `transform()` |
+| **GroupedStatistic** | 17 | 0 | **17** | ✅ 需创建 `grouped_statistic.ts` |
+| **RoundMetric** | 12 | 0 | **12** | ✅ 需创建 `round_metric.ts` |
+| **AverageOfX** | 7 | 0 | **7** | ✅ 需创建 `average_of_x.ts` |
+| **AoRounds** | 4 | 0 | **4** | ✅ 需创建 `ao_rounds.ts` |
+| **Rankings** | 1 | 0 | **1** | ✅ 需创建 `rankings.ts` |
+
+另有 4 个**聚合页面**（`wr_metric`/`wr_aoxr`/`average_of`/`wr_dominance`），它们继承 `Statistic` 但使用 `StatPanel` + `MetricLayout` mixin，不走标准 `query()` 管线，有自定义 `markdown()` 方法。这些最复杂，建议最后处理。
+
+### 3.2 剩余 4 个纯 SQL（Statistic 无 transform）
+
+这些最简单，直接复制 SQL 即可（与已完成的 18 个完全相同模式）：
+
+```
+wr_non_pr                ← 注意：继承 Statistic 但有 StatPanel mixin
+wr_metric                ← 聚合页面，含 StatPanel + MetricLayout
+wr_aoxr                  ← 聚合页面
+average_of               ← 聚合页面
 ```
 
-### 4.2 扩展 schema（支持多分节和多面板）
+> ⚠️ 虽然这 4 个标记为 `Statistic|N`（无 transform），但它们是聚合页面，有完全自定义的 `markdown()` 方法和多面板布局，复杂度远高于普通统计。
+
+### 3.3 Statistic + 自定义 transform（22 个）
+
+这些继承 `Statistic`，有 `query()` 返回 SQL，但还有 `def transform(rows)` 在 Ruby 侧对数据做后处理（排序、聚合、格式化等）。改写时需要阅读每个文件的 `transform` 逻辑并用 TS 实现。
+
+```
+average_event_count_by_competition    best_potential_fmc_mean
+competitions_count_by_week            competitions_per_year_by_country
+competitions_per_year_by_person       consecutive_sub_5_average
+delegated_competition_per_year        dnf_rate_by_event
+first_r_is_wr                         longest_competitions_path
+longest_streak_of_competitions_in_own_country
+longest_streak_of_personal_records    longest_streak_of_podiums
+longest_streak_of_world_records       longest_time_to_sub_10
+mbf_average                           most_attended_competitions_in_single_week
+most_distinct_dates_competed_on       name_parts_count
+shortest_time_to_get_all_singles      shortest_time_to_get_all_singles_and_averages
+wr_current
+```
+
+**改写模式**：在 TS 子类中覆写 `transform(rows: Record<string, unknown>[])` 方法。基类 `Statistic.toJson()` 会在 SQL 查询后调用 `this.transform(rows)`。
+
+> 当前 `statistic.ts` 基类可能需要添加 `transform()` 钩子。检查 `statistic.ts` 看是否已有。
+
+### 3.4 GroupedStatistic（17 个）
+
+Ruby 中 `GroupedStatistic` 继承 `Statistic`，特点是**按 WCA 项目分组**（如 333、222、444……），每个项目执行一次 SQL，输出按项目分组的 JSON。
+
+需要先阅读 `_stats_build/core/grouped_statistic.rb` 理解其 `def grouped_data` 和 `def transform` 模式，然后创建 TS 基类：
+
+```
+best_result_off_podium              best_round
+competition_days_count_by_region    longest_standing_records
+most_competitions_before_winning    most_completed_solves
+most_frequent_results               most_podiums_together
+most_records_at_single_competition  most_solves_before_bld_success
+moving_average                      records_in_most_events
+shortest_time_to_reach_milestone_in_comps_count
+smallest_diff_between_single_and_average
+winned_week_count                   world_championship_records
+worst_result_on_podium              wr_newcomer (此文件无 transform)
+```
+
+**JSON 输出需要 sections**：每个 event 是一个 section，对应扩展 schema 中的 `StatSection[]`。
+
+### 3.5 RoundMetric（12 个）
+
+继承自 `_stats_build/statistics/abstract/wr_round_history.rb`。特点：
+- 所有基于 WR 轮次 attempts 计算衍生指标（BAo5、WAo5、Mo5、BPA、WPA、Median 等）
+- 子类只需实现 `compute_metric(values, r)` 返回计算值
+- 共享基类缓存全量 results，避免重复查询
+
+```
+wr_bao5    wr_wao5    wr_mo5     wr_bpa
+wr_wpa     wr_median  wr_best_counting  wr_worst_counting
+wr_worst   wr_variance  wr_best_average_ratio
+wr_single_history  wr_average_history
+```
+
+> ⚠️ 这 12 个是 `wr_metric` 聚合页面的子统计。可以先独立实现每个 TS 类，最后再做聚合。
+
+### 3.6 AverageOfX（7 个）
+
+继承自 `_stats_build/statistics/abstract/average_of_x.rb`。计算连续 X 次官方成绩的滚动平均。
+
+```
+average_of_3    average_of_5    average_of_12
+average_of_25   average_of_50   average_of_100   average_of_1000
+```
+
+> 这 7 个是 `average_of` 聚合页面的子统计。
+
+### 3.7 AoRounds（4 个）
+
+继承自 `_stats_build/statistics/abstract/ao_rounds.rb`。跨轮次的 AoXR 计算。
+
+```
+wr_ao1r    wr_ao2r    wr_ao3r    wr_ao4r
+```
+
+> 这 4 个是 `wr_aoxr` 聚合页面的子统计。
+
+### 3.8 Rankings（1 个）
+
+```
+yearly_rankings
+```
+
+独立基类，需要阅读 `_stats_build/statistics/abstract/rankings.rb` 理解模式。
+
+---
+
+## 四、推荐改写顺序
+
+### 阶段 A：继续纯 SQL（最简单，立即可做）
+
+完成 §3.3 中 transform 逻辑较简单的几个：
+
+```
+dnf_rate_by_event          ← transform 只是格式化百分比
+name_parts_count           ← transform 只是字符串拆分计数
+competitions_count_by_week ← transform 简单聚合
+```
+
+> **操作步骤**：阅读 `.rb` 的 `transform` 方法 → 在 TS 子类中覆写 `transform()` → 注册到 REGISTRY → `npx tsc --noEmit`
+
+### 阶段 B：创建 GroupedStatistic 基类
+
+1. 阅读 `_stats_build/core/grouped_statistic.rb` 理解模式
+2. 创建 `src/core/grouped_statistic.ts`
+3. 从最简单的子类开始改写（如 `most_completed_solves`、`worst_result_on_podium`）
+
+### 阶段 C：创建 RoundMetric + AverageOfX + AoRounds 基类
+
+1. 阅读对应的 Ruby 抽象基类
+2. 创建 TS 基类
+3. 逐个改写子类
+
+### 阶段 D：聚合页面
+
+`wr_metric`、`wr_aoxr`、`average_of`、`wr_dominance` — 需要前端支持 `panels` + tab 切换。
+
+### 阶段 E：前端升级
+
+1. `WcaStatsPage.tsx` 支持 `sections`（多分节）
+2. `WcaStatsPage.tsx` 支持 `panels`（多面板 + tab）
+3. `WcaStatsIndex.tsx` 索引页
+
+---
+
+## 五、JSON Schema
+
+### 5.1 单表格（已实现）
 
 ```typescript
 interface StatData {
@@ -155,14 +249,26 @@ interface StatData {
   titleZh: string;
   note?: string;
   noteZh?: string;
-  // 单表格（向后兼容）
-  header?: StatHeader[];
-  rows?: unknown[][];
-  // 多分节（如 most_podiums_together: Pairs, Triples）
-  sections?: StatSection[];
-  // 多面板（如 wr_metric: Single/Average + Ranking/History）
-  panels?: StatPanel[];
+  header: StatHeader[];
+  rows: unknown[][];
 }
+
+interface StatHeader {
+  key: string;
+  label: string;
+  labelZh: string;
+  align: 'left' | 'right' | 'center';
+}
+```
+
+### 5.2 扩展（后续需要）
+
+```typescript
+// 多分节（GroupedStatistic 按 event 分组）
+sections?: StatSection[];
+
+// 多面板（wr_metric 的 Single/Average + Ranking/History）
+panels?: StatPanel[];
 
 interface StatSection {
   title: string;
@@ -172,278 +278,166 @@ interface StatSection {
 }
 
 interface StatPanel {
-  id: string;                // 如 "single", "average"
-  label: string;             // tab 标签英文
-  labelZh: string;           // tab 标签中文
-  sections: StatSection[];   // 面板内的子分节
+  id: string;
+  label: string;
+  labelZh: string;
+  sections: StatSection[];
 }
 ```
 
-### 4.3 JSON 输出位置
+---
 
-所有 JSON 文件输出到 `stats/data/<stat_id>.json`。
+## 六、关键文件快速索引
+
+| 用途 | 路径 |
+|------|------|
+| **TS 基类** | `trainer/packages/stats-build/src/core/statistic.ts` |
+| **数据库连接** | `trainer/packages/stats-build/src/core/database.ts` |
+| **项目映射+表头翻译** | `trainer/packages/stats-build/src/core/events.ts` |
+| **CLI 入口** | `trainer/packages/stats-build/src/bin/compute.ts` |
+| **已完成的 TS 统计** | `trainer/packages/stats-build/src/statistics/*.ts` |
+| **Ruby 统计源码（只读参考）** | `_stats_build/statistics/*.rb` |
+| **Ruby 基类** | `_stats_build/core/statistic.rb`、`grouped_statistic.rb` |
+| **Ruby 抽象类** | `_stats_build/statistics/abstract/*.rb` |
+| **JSON 输出** | `stats/data/*.json` |
+| **React 前端** | `trainer/packages/client/src/pages/wca_stats/` |
+| **数据库 Schema** | `_stats_build/SCHEMA.md` |
+| **数据库凭据** | `_stats_build/database.yml`（不在 git 中） |
 
 ---
 
-## 五、改写工作计划
+## 七、关键约束
 
-### 5.1 改写难度分类
-
-根据 Ruby 文件行数和 SQL 复杂度：
-
-| 难度 | 行数 | 数量 | 代表文件 |
-|------|------|------|----------|
-| 简单 | <50 行 | ~50 | `most_4th_places.rb`, `fewest_competitors_contest.rb` |
-| 中等 | 50-100 行 | ~25 | `most_distinct_dates_competed_on.rb`, `first_r_is_wr.rb` |
-| 复杂 | 100-200 行 | ~12 | `best_round.rb`, `consecutive_sub_5_average.rb` |
-| 极复杂 | 200+ 行 | ~6 | `wr_dominance.rb` (312行), `wr_newcomer.rb` (274行) |
-
-### 5.2 每个统计的改写步骤
-
-1. 阅读对应 `.rb` 文件的 SQL 和格式化逻辑
-2. 在 `stats-build/src/statistics/<stat_id>.ts` 创建新类（继承 `Statistic` 基类）
-3. 移植 SQL 到 TS（通常只需复制 SQL 字符串，修改结果处理代码）
-4. 在 `bin/compute.ts` 的 REGISTRY 注册
-5. 运行 `npx tsx src/bin/compute.ts <stat_id>` 生成 JSON
-6. **对比验证**：TS 输出的 JSON 数据与 Ruby 输出的 .md 中的数据一致
-7. 浏览器打开 `http://localhost:5173/app/wca-stats/<stat_id>` 预览
-8. Git commit
-
-### 5.3 改写优先级
-
-推荐顺序（由简到难，优先高流量页面）：
-
-**第一批（简单 SQL、单表格）：**
-```
-world_championship_podiums_by_country  ← 与已完成的 by_person 结构相似
-world_records_by_person
-world_records_by_country
-current_world_records_by_country
-most_completed_solves
-most_4th_places
-fewest_competitors_contest
-dnf_rate_by_event
-name_parts_count
-```
-
-**第二批（中等复杂度 / 多分节）：**
-```
-most_podiums_together              ← 多分节（Pairs / Triples）
-best_medal_collection_from_abroad_by_person
-best_medal_collection_from_abroad_by_country
-competitions_per_year_by_person
-competitions_per_year_by_country
-most_visited_countries
-most_visited_continents
-best_potential_fmc_mean
-```
-
-**第三批（复杂 SQL / 多面板）：**
-```
-wr_metric (87 行但多面板)
-wr_current
-wr_aoxr
-best_round
-moving_average
-consecutive_sub_5_average
-```
-
-**第四批（极复杂）：**
-```
-wr_dominance (312 行)
-wr_newcomer (274 行)
-wr_non_pr (226 行)
-mbf_average (205 行)
-```
-
-### 5.4 前端需要同步升级的点
-
-随着改写推进，React 前端需要逐步增强：
-
-| 改写批次 | 前端需要 | 说明 |
-|----------|----------|------|
-| 第一批 | 无 | 现有 `WcaStatsPage` 已支持单表格 |
-| 第二批 | `sections` 支持 | 多分节表格渲染，每个分节有标题 |
-| 第三批 | `panels` + tab 切换 | 面板切换 UI 组件 |
-| 全部完成后 | 索引页 `WcaStatsIndex` | 统计分类导航 |
+1. **Ruby 代码零修改**：所有 `.rb` 文件只读参考
+2. **SQL 逻辑零改动**：TS 版的 SQL 必须与 Ruby 完全一致
+3. **计算逻辑零改动**：`transform` 的数据处理逻辑必须与 Ruby 完全一致
+4. **i18n 双语**：标题、描述、列名都需要中英文
+5. **新表头翻译**：每增加新表头列名，在 `events.ts` 的 `HEADER_ZH` 添加
+6. **新统计注册**：每个新 TS 文件都要在 `compute.ts` 的 `REGISTRY` 中注册
+7. **编译检查**：每批完成后 `npx tsc --noEmit`
+8. **增量提交**：每完成一批就 `git commit`
 
 ---
 
-## 六、CI/CD 集成计划
+## 八、快速上手命令
 
-### 6.1 过渡期
+```powershell
+# 进入工作目录
+cd d:\cube\ruiminyan.github.io\trainer\packages\stats-build
 
-两套管线并行：
-- Ruby CI 继续生成 .md → Jekyll 渲染未改写的统计
-- TS CLI 手动运行或 CI 运行生成 JSON → React 渲染已改写的统计
+# TypeScript 编译检查
+npx tsc --noEmit
 
-### 6.2 迁移后 CI
+# 生成单个统计 JSON
+npx tsx src/bin/compute.ts world_championship_podiums_by_person
 
-```yaml
-# .github/workflows/stats-build.yml
-# 每周运行 TS 管线生成全部 JSON
-- run: cd trainer && npx tsx packages/stats-build/src/bin/compute.ts --all
-# 将 JSON 推送到 stats/data/
+# 查看所有已注册的统计
+npx tsx src/bin/compute.ts
+
+# 启动前端（在 trainer 根目录）
+cd d:\cube\ruiminyan.github.io\trainer
+pnpm --filter @cuberoot/client dev
+
+# 浏览器访问
+# http://localhost:5173/app/wca-stats/world_championship_podiums_by_person
 ```
 
 ---
 
-## 七、目录结构总览
-
-```
-trainer/packages/stats-build/
-├── package.json
-├── tsconfig.json
-├── MIGRATION_PLAN.md              ← 本文档
-├── src/
-│   ├── core/
-│   │   ├── database.ts            ← MySQL 连接（已完成）
-│   │   ├── statistic.ts           ← 统计基类（已完成）
-│   │   └── events.ts              ← WCA 项目映射（已完成）
-│   ├── statistics/
-│   │   ├── world_championship_podiums_by_person.ts  ← ✅ 已完成
-│   │   ├── world_championship_podiums_by_country.ts ← [待建]
-│   │   └── ...                                      ← 逐个改写
-│   └── bin/
-│       └── compute.ts             ← SQL → JSON CLI（已完成）
-
-stats/
-├── *.md                           ← Ruby 生成的 Markdown 文件（不动）
-└── data/
-    └── *.json                     ← TS 生成的 JSON 文件
-
-trainer/packages/client/src/pages/wca_stats/
-├── WcaStatsPage.tsx               ← 通用统计表格（已完成，需逐步扩展）
-├── WcaStatsIndex.tsx              ← [待建] 索引页
-└── wca_stats.css                  ← 样式（已完成）
-```
-
----
-
-## 八、关键约束与注意事项
-
-1. **Ruby 代码零修改**：所有 Ruby 文件只读不改，TS 完全平行重写
-2. **JSON 文件名一致性**：`stats/data/<stat_id>.json` 中的 `stat_id` 必须与 .md 文件名一致
-3. **i18n 支持**：所有标题、描述、列名都需要中英文双语
-4. **Vite proxy**：开发时 `/stats` 请求通过 Vite proxy 转发到 Jekyll `localhost:4000`（已配置）
-5. **数据对比验证**：每个 TS 改写的统计都必须与 Ruby 输出对比验证
-6. **MySQL 连接**：需要本地运行 MySQL 且导入 WCA 数据库（`wca_statistics`）
-7. **增量推进**：每完成一个统计就 git commit，不要攒批
-
----
-
-## 九、93 个 Ruby 文件完整清单
+## 九、完整 Ruby 文件清单与状态
 
 <details>
-<summary>点击展开完整列表</summary>
+<summary>点击展开（93 个文件，含继承关系和完成状态）</summary>
 
-```
-average_event_count_by_competition.rb
-average_of_100.rb
-average_of_1000.rb
-average_of_12.rb
-average_of_25.rb
-average_of_3.rb
-average_of_5.rb
-average_of_50.rb
-average_of.rb
-best_medal_collection_from_abroad_by_country.rb
-best_medal_collection_from_abroad_by_person.rb
-best_potential_fmc_mean.rb
-best_result_off_podium.rb
-best_round.rb
-competition_days_count_by_region.rb
-competitions_count_by_week.rb
-competitions_per_year_by_country.rb
-competitions_per_year_by_person.rb
-complete_competition_winners.rb
-consecutive_sub_5_average.rb
-current_world_records_by_country.rb
-delegated_competition_per_year.rb
-dnf_rate_by_event.rb
-fewest_competitors_contest.rb
-first_r_is_wr.rb
-index.rb
-longest_competitions_path.rb
-longest_standing_records.rb
-longest_streak_of_competitions_in_own_country.rb
-longest_streak_of_personal_records.rb
-longest_streak_of_podiums.rb
-longest_streak_of_world_records.rb
-longest_time_to_sub_10.rb
-mbf_average.rb
-most_4th_places.rb
-most_attended_competitions_in_single_month.rb
-most_attended_competitions_in_single_week.rb
-most_competitions_abroad.rb
-most_competitions_before_winning.rb
-most_completed_solves.rb
-most_delegated_competitions.rb
-most_distinct_dates_competed_on.rb
-most_finals.rb
-most_frequent_results.rb
-most_podiums_at_single_competition.rb
-most_podiums_together.rb
-most_records_at_single_competition.rb
-most_solves_before_bld_success.rb
-most_visited_continents.rb
-most_visited_countries.rb
-moving_average.rb
-name_parts_count.rb
-potentially_seen_world_records.rb
-records_in_most_events.rb
-shortest_time_to_get_all_singles_and_averages.rb
-shortest_time_to_get_all_singles.rb
-shortest_time_to_reach_milestone_in_comps_count.rb
-smallest_diff_between_single_and_average.rb
-winned_week_count.rb
-world_championship_podiums_by_country.rb
-world_championship_podiums_by_person.rb          ← ✅ 已完成
-world_championship_records.rb
-world_records_by_country.rb
-world_records_by_person.rb
-worst_result_on_podium.rb
-wr_ao1r.rb
-wr_ao2r.rb
-wr_ao3r.rb
-wr_ao4r.rb
-wr_aoxr.rb
-wr_average_history.rb
-wr_bao5.rb
-wr_best_average_ratio.rb
-wr_best_counting.rb
-wr_bpa.rb
-wr_current.rb
-wr_dominance.rb
-wr_median.rb
-wr_metric.rb
-wr_mo5.rb
-wr_newcomer.rb
-wr_non_pr.rb
-wr_single_history.rb
-wr_variance.rb
-wr_wao5.rb
-wr_worst_counting.rb
-wr_worst.rb
-wr_wpa.rb
-yearly_rankings.rb
-```
+| 文件 | Ruby 基类 | 有 transform | 状态 |
+|------|-----------|-------------|------|
+| `average_event_count_by_competition` | Statistic | ✅ | ⬜ |
+| `average_of_100` | AverageOfX | ❌ | ⬜ |
+| `average_of_1000` | AverageOfX | ❌ | ⬜ |
+| `average_of_12` | AverageOfX | ❌ | ⬜ |
+| `average_of_25` | AverageOfX | ❌ | ⬜ |
+| `average_of_3` | AverageOfX | ❌ | ⬜ |
+| `average_of_5` | AverageOfX | ❌ | ⬜ |
+| `average_of_50` | AverageOfX | ❌ | ⬜ |
+| `average_of` | Statistic+StatPanel | ❌ | ⬜ 聚合页面 |
+| `best_medal_collection_from_abroad_by_country` | Statistic | ❌ | ✅ |
+| `best_medal_collection_from_abroad_by_person` | Statistic | ❌ | ✅ |
+| `best_potential_fmc_mean` | Statistic | ✅ | ⬜ |
+| `best_result_off_podium` | GroupedStatistic | ✅ | ⬜ |
+| `best_round` | GroupedStatistic | ✅ | ⬜ |
+| `competition_days_count_by_region` | GroupedStatistic | ✅ | ⬜ |
+| `competitions_count_by_week` | Statistic | ✅ | ⬜ |
+| `competitions_per_year_by_country` | Statistic | ✅ | ⬜ |
+| `competitions_per_year_by_person` | Statistic | ✅ | ⬜ |
+| `complete_competition_winners` | Statistic | ❌ | ✅ |
+| `consecutive_sub_5_average` | Statistic | ✅ | ⬜ |
+| `current_world_records_by_country` | Statistic | ❌ | ✅ |
+| `delegated_competition_per_year` | Statistic | ✅ | ⬜ |
+| `dnf_rate_by_event` | Statistic | ✅ | ⬜ |
+| `fewest_competitors_contest` | Statistic | ❌ | ✅ |
+| `first_r_is_wr` | Statistic | ✅ | ⬜ |
+| `longest_competitions_path` | Statistic | ✅ | ⬜ |
+| `longest_standing_records` | GroupedStatistic | ✅ | ⬜ |
+| `longest_streak_of_competitions_in_own_country` | Statistic | ✅ | ⬜ |
+| `longest_streak_of_personal_records` | Statistic | ✅ | ⬜ |
+| `longest_streak_of_podiums` | Statistic | ✅ | ⬜ |
+| `longest_streak_of_world_records` | Statistic | ✅ | ⬜ |
+| `longest_time_to_sub_10` | Statistic | ✅ | ⬜ |
+| `mbf_average` | Statistic | ✅ | ⬜ |
+| `most_4th_places` | Statistic | ❌ | ✅ |
+| `most_attended_competitions_in_single_month` | Statistic | ❌ | ✅ |
+| `most_attended_competitions_in_single_week` | Statistic | ✅ | ⬜ |
+| `most_competitions_abroad` | Statistic | ❌ | ✅ |
+| `most_competitions_before_winning` | GroupedStatistic | ✅ | ⬜ |
+| `most_completed_solves` | GroupedStatistic | ✅ | ⬜ |
+| `most_delegated_competitions` | Statistic | ❌ | ✅ |
+| `most_distinct_dates_competed_on` | Statistic | ✅ | ⬜ |
+| `most_finals` | Statistic | ❌ | ✅ |
+| `most_frequent_results` | GroupedStatistic | ✅ | ⬜ |
+| `most_podiums_at_single_competition` | Statistic | ❌ | ✅ |
+| `most_podiums_together` | GroupedStatistic | ✅ | ⬜ |
+| `most_records_at_single_competition` | GroupedStatistic | ✅ | ⬜ |
+| `most_solves_before_bld_success` | GroupedStatistic | ✅ | ⬜ |
+| `most_visited_continents` | Statistic | ❌ | ✅ |
+| `most_visited_countries` | Statistic | ❌ | ✅ |
+| `moving_average` | GroupedStatistic | ✅ | ⬜ |
+| `name_parts_count` | Statistic | ✅ | ⬜ |
+| `potentially_seen_world_records` | Statistic | ❌ | ✅ |
+| `records_in_most_events` | GroupedStatistic | ✅ | ⬜ |
+| `shortest_time_to_get_all_singles` | Statistic | ✅ | ⬜ |
+| `shortest_time_to_get_all_singles_and_averages` | Statistic | ✅ | ⬜ |
+| `shortest_time_to_reach_milestone_in_comps_count` | GroupedStatistic | ✅ | ⬜ |
+| `smallest_diff_between_single_and_average` | GroupedStatistic | ✅ | ⬜ |
+| `winned_week_count` | GroupedStatistic | ✅ | ⬜ |
+| `world_championship_podiums_by_country` | Statistic | ❌ | ✅ |
+| `world_championship_podiums_by_person` | Statistic | ❌ | ✅ |
+| `world_championship_records` | GroupedStatistic | ✅ | ⬜ |
+| `world_records_by_country` | Statistic | ❌ | ✅ |
+| `world_records_by_person` | Statistic | ❌ | ✅ |
+| `worst_result_on_podium` | GroupedStatistic | ✅ | ⬜ |
+| `wr_ao1r` | AoRounds | ❌ | ⬜ |
+| `wr_ao2r` | AoRounds | ❌ | ⬜ |
+| `wr_ao3r` | AoRounds | ❌ | ⬜ |
+| `wr_ao4r` | AoRounds | ❌ | ⬜ |
+| `wr_aoxr` | Statistic+StatPanel | ❌ | ⬜ 聚合页面 |
+| `wr_average_history` | RoundMetric | ✅ | ⬜ |
+| `wr_bao5` | RoundMetric | ❌ | ⬜ |
+| `wr_best_average_ratio` | RoundMetric | ❌ | ⬜ |
+| `wr_best_counting` | RoundMetric | ❌ | ⬜ |
+| `wr_bpa` | RoundMetric | ❌ | ⬜ |
+| `wr_current` | Statistic | ✅ | ⬜ |
+| `wr_dominance` | Statistic+StatPanel | ❌ | ⬜ 聚合页面 |
+| `wr_median` | RoundMetric | ❌ | ⬜ |
+| `wr_metric` | Statistic+StatPanel | ❌ | ⬜ 聚合页面 |
+| `wr_mo5` | RoundMetric | ❌ | ⬜ |
+| `wr_newcomer` | GroupedStatistic | ❌ | ⬜ |
+| `wr_non_pr` | Statistic+StatPanel | ❌ | ⬜ |
+| `wr_single_history` | RoundMetric | ❌ | ⬜ |
+| `wr_variance` | RoundMetric | ❌ | ⬜ |
+| `wr_wao5` | RoundMetric | ❌ | ⬜ |
+| `wr_worst_counting` | RoundMetric | ❌ | ⬜ |
+| `wr_worst` | RoundMetric | ❌ | ⬜ |
+| `wr_wpa` | RoundMetric | ❌ | ⬜ |
+| `yearly_rankings` | Rankings | ❌ | ⬜ |
 
 </details>
-
----
-
-## 十、检验标准
-
-### 单个统计完成标准
-- [ ] TS SQL 输出与 Ruby Markdown 数据完全一致
-- [ ] `npx tsc --noEmit` 编译通过
-- [ ] 浏览器预览正常
-- [ ] Git commit
-
-### 最终完成标准
-- [ ] 全部 93 个 Ruby 统计改写为 TS
-- [ ] CI/CD 切换到 TS 管线
-- [ ] Ruby 相关代码标记为 deprecated
-- [ ] 索引页 `WcaStatsIndex.tsx` 完成
-- [ ] README 更新
