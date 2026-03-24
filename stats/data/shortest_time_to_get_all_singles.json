@@ -1,0 +1,22 @@
+{
+  "id": "shortest_time_to_get_all_singles",
+  "title": "Shortest time to get all singles",
+  "titleZh": "最短时间获得所有项目单次成绩",
+  "note": "Only current official events are taken into account.",
+  "noteZh": "仅考虑当前官方项目。",
+  "header": [
+    {
+      "key": "days",
+      "label": "Days",
+      "labelZh": "天数",
+      "align": "right"
+    },
+    {
+      "key": "person",
+      "label": "Person",
+      "labelZh": "选手",
+      "align": "left"
+    }
+  ],
+  "rows": []
+}
