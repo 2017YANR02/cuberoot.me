@@ -732,8 +732,8 @@ export default function BattlePage() {
         <TimerArea playerId={1} rotated />
       )}
 
-      {/* 中间栏 */}
-      <MiddleBar onSettingsClick={handleSettingsClick} />
+      {/* 中间栏 — 仅 1v1 模式（Solo 模式用底部导航栏代替） */}
+      {mode === '1v1' && <MiddleBar onSettingsClick={handleSettingsClick} />}
 
       {/* Player 1 (下方) */}
       <TimerArea playerId={0} />
