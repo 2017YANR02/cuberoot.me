@@ -5,7 +5,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import type { ReconSolve, ReconComment, EditHistoryItem } from '@cuberoot/shared';
-import { getRecon, listComments, getEditHistory, deleteRecon, addComment, updateComment, deleteComment } from '../../utils/recon_api';
+import { getRecon, listComments, getEditHistory, deleteRecon, addComment, updateComment, deleteComment, getBiliCover } from '../../utils/recon_api';
 import {
   formatTime, countryFlag, getEventDisplayName, getRoundDisplay,
   isBldEvent, getPuzzleId, t, wcaCompUrl, wcaPersonUrl,
@@ -370,24 +370,12 @@ function VideoEmbed({ url }: { url: string }) {
     );
   }
 
-  // NOTE: Bilibili — 使用品牌 logo 作为 facade
+  // NOTE: Bilibili — 异步获取封面图 + 品牌 logo overlay
   const bvMatch = url.match(/(BV[A-Za-z0-9]+)/);
   if (bvMatch) {
     const bvId = bvMatch[1];
     if (!loaded) {
-      return (
-        <div className="detail-video-wrap detail-video-facade" onClick={() => setLoaded(true)}>
-          <div style={{ position: 'absolute', inset: 0, background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            {/* NOTE: B站品牌 logo — 使用原版 /recon/assets/bilibili_logo.png */}
-            <img
-              className="detail-video-play-bili"
-              src="/recon/assets/bilibili_logo.png"
-              alt="Bilibili"
-              style={{ width: 68, height: 68, opacity: 0.85, filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.5))' }}
-            />
-          </div>
-        </div>
-      );
+      return <BilibiliFacade bvId={bvId} onLoad={() => setLoaded(true)} />;
     }
     return (
       <div className="detail-video-wrap">
@@ -404,6 +392,40 @@ function VideoEmbed({ url }: { url: string }) {
     <a href={url} target="_blank" rel="noopener noreferrer" className="detail-video-link">
       🎥 {url}
     </a>
+  );
+}
+
+/** B站视频 facade——异步获取封面图 */
+function BilibiliFacade({ bvId, onLoad }: { bvId: string; onLoad: () => void }) {
+  const [cover, setCover] = useState<string | null>(null);
+
+  // NOTE: 组件加载时异步获取封面
+  useEffect(() => {
+    getBiliCover(bvId).then(res => {
+      if (res.pic) setCover(res.pic);
+    }).catch(() => { /* 封面获取失败静默忽略，依然显示 logo */ });
+  }, [bvId]);
+
+  return (
+    <div className="detail-video-wrap detail-video-facade" onClick={onLoad}>
+      <div style={{ position: 'absolute', inset: 0, background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {/* NOTE: 有封面则显示缩略图，无则纯黑背景 */}
+        {cover && (
+          <img
+            src={cover}
+            alt=""
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6 }}
+          />
+        )}
+        {/* B站品牌 logo overlay */}
+        <img
+          className="detail-video-play-bili"
+          src="/recon/assets/bilibili_logo.png"
+          alt="Bilibili"
+          style={{ position: 'relative', width: 68, height: 68, opacity: 0.85, filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.5))' }}
+        />
+      </div>
+    </div>
   );
 }
 
