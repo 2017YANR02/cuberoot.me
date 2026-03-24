@@ -455,3 +455,103 @@
 .recon-btn-danger:hover {
   background: rgba(248, 113, 113, 0.15) !important;
 }
+
+/* --- 编辑历史 --- */
+.detail-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.detail-history-item {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+
+.detail-history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.82rem;
+  color: #b0b8c4;
+  margin-bottom: 6px;
+}
+
+.detail-history-diff {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.detail-history-field {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-family: 'Roboto Mono', monospace;
+}
+
+.detail-history-key {
+  color: #93bbfc;
+  min-width: 80px;
+}
+
+.detail-history-before {
+  color: #f87171;
+  text-decoration: line-through;
+  opacity: 0.7;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detail-history-arrow {
+  color: #555;
+}
+
+.detail-history-after {
+  color: #4ade80;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- 同轮次成绩导航 --- */
+.detail-same-round {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.same-round-item {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-family: 'Roboto Mono', monospace;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #93bbfc;
+  transition: background 0.15s;
+}
+
+.same-round-item:hover {
+  background: rgba(147, 187, 252, 0.12);
+  color: #fff;
+}
+
+.same-round-current {
+  background: rgba(147, 187, 252, 0.15);
+  border-color: rgba(147, 187, 252, 0.4);
+  color: #fff;
+  font-weight: 600;
+  cursor: default;
+}
