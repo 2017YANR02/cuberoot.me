@@ -560,6 +560,8 @@ git push
 
 ## 添加新统计
 
+### Ruby 方式（现有管线，CI 自动更新）
+
 1. 创建 `_stats_build/statistics/my_new_stat.rb`：
    ```ruby
    require_relative "../core/statistic"
@@ -585,6 +587,34 @@ git push
    - `_statsTitleZh`：添加页面标题的中文翻译
    - `_statsDescZh`：添加 Note 描述的中文翻译（如有）
    - `_headerZh`：添加新表头列名的中文翻译（如有新列名）
+
+### TypeScript 方式（新管线，输出 JSON 供 React 渲染）
+
+> ⚠️ 正在逐步迁移中，完整计划见 `trainer/packages/stats-build/MIGRATION_PLAN.md`
+
+1. 创建 `trainer/packages/stats-build/src/statistics/my_new_stat.ts`：
+   ```typescript
+   import { Statistic } from '../core/statistic.js';
+
+   export class MyNewStat extends Statistic {
+     constructor() {
+       super();
+       this.title = 'My New Statistic';
+       this.titleZh = '我的新统计';
+       this.tableHeader = { 'Rank': 'right', 'Name': 'left' };
+     }
+
+     query(): string {
+       return `SELECT ... FROM results ...`;
+     }
+   }
+   ```
+
+2. 在 `src/bin/compute.ts` 的 `REGISTRY` 中注册
+3. 如有新表头列名，在 `src/core/events.ts` 的 `HEADER_ZH` 中添加翻译
+4. 编译检查：`npx tsc --noEmit`
+5. 生成 JSON：`npx tsx src/bin/compute.ts my_new_stat`
+6. 输出到 `stats/data/my_new_stat.json`，React 前端通过 `/app/wca-stats/my_new_stat` 渲染
 
 # 故障排除与经验
 
