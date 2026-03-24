@@ -5,8 +5,8 @@
 $ErrorActionPreference = 'Continue'
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
-# NOTE: 全局增加 Node.js heap limit（wr_dominance 等 result_attempts 查询需要 > 4GB）
-$env:NODE_OPTIONS = '--max-old-space-size=8192'
+# NOTE: --expose-gc 让 wr_dominance 等统计可以显式调用 global.gc() 回收内存
+$env:NODE_OPTIONS = '--expose-gc'
 
 $statsDir = "d:\cube\ruiminyan.github.io\trainer\packages\stats-build"
 $reportFile = Join-Path $statsDir "test_report.txt"
@@ -143,8 +143,8 @@ for ($i = 0; $i -lt $total; $i++)
   {
     # NOTE: 用 Start-Process pwsh 隔离进程，防止一个崩溃影响整体
     # Windows 上 npx 是 .cmd 脚本，不能直接作为 Start-Process 的 FilePath
-    # NOTE: 全局传递 NODE_OPTIONS 到子进程（wr_dominance 等需要 > 4GB heap）
-    $cmd = "`$env:NODE_OPTIONS='--max-old-space-size=8192'; Set-Location -LiteralPath '$statsDir'; npx tsx src/bin/compute.ts $stat"
+    # NOTE: 子进程传递 --expose-gc，让 wr_dominance 等可显式回收内存
+    $cmd = "`$env:NODE_OPTIONS='--expose-gc'; Set-Location -LiteralPath '$statsDir'; npx tsx src/bin/compute.ts $stat"
     $proc = Start-Process -FilePath "pwsh" `
       -ArgumentList "-NoProfile", "-Command", $cmd `
       -NoNewWindow -Wait -PassThru `
@@ -156,9 +156,17 @@ for ($i = 0; $i -lt $total; $i++)
 
     if ($proc.ExitCode -eq 0)
     {
+      # NOTE: 读取子进程 stdout（含内存日志如 [xxxMB]）
+      $outFile = Join-Path $env:TEMP "stats_out_$stat.txt"
+      $outContent = if (Test-Path $outFile) { (Get-Content $outFile -Raw -ErrorAction SilentlyContinue) } else { '' }
       Write-Host "PASS (${duration}s)" -ForegroundColor Green
+      # NOTE: 显示子进程 stdout 中的内存数据等详细信息
+      if ($outContent -and $outContent.Trim()) {
+        $outContent.Trim() -split "`n" | ForEach-Object { Write-Host "    $_" -ForegroundColor DarkGray }
+      }
       $pass++
       $line = "[PASS] $stat (${duration}s)"
+      if ($outContent -and $outContent.Trim()) { $line += "`n  $($outContent.Trim())" }
     }
     else
     {
@@ -218,3 +226,8 @@ if ($fail -gt 0)
   $results | Where-Object { $_ -match '^\[FAIL\]|^\[ERROR\]' } | ForEach-Object { Write-Host "  $_" -ForegroundColor Red }
 }
 Write-Host "`nFull report: $reportFile"
+
+# NOTE: 跑完后自动休眠
+Write-Host "`n10 秒后电脑将进入休眠..." -ForegroundColor Yellow
+Start-Sleep -Seconds 10
+rundll32.exe powrprof.dll, SetSuspendState 0, 1, 0
