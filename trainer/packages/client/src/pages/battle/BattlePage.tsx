@@ -69,8 +69,16 @@ function useScrambleScript() {
     script.async = true;
     document.head.appendChild(script);
 
+    // NOTE: 加载 confetti 特效库（里程碑庆祝用）
+    if (!(window as any).confetti) {
+      const confettiScript = document.createElement('script');
+      confettiScript.src = '/app/confetti.min.js';
+      confettiScript.async = true;
+      document.head.appendChild(confettiScript);
+    }
+
     return () => {
-      // NOTE: 不移除 script — scramble_module.js 加载后全局持久化
+      // NOTE: 不移除 script — 加载后全局持久化
     };
   }, []);
 }
