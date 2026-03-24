@@ -73,6 +73,9 @@ export function initDrag(): (() => void) {
     if (p === prevFocused[0] && t === prevFocused[1]) return;
     prevFocused = state.focusedCell;
 
+    // NOTE: 如果当前已选中 PA 柱，不让 focusedCell 变更覆盖为普通 solve bar
+    if (selected?.isPa) return;
+
     const seedOn = state.seedOn;
     if (p >= 0 && t >= 0) {
       const relP = p - seedOn;
@@ -166,6 +169,26 @@ function hitTestBar(svgX: number, svgY: number): SelectedBar | null {
   return { playerIdx: tallerP, solveIdx };
 }
 
+/** NOTE: 基于坐标检测 PA 柱点击 — 不依赖 DOM closest，解决鼠标在 PA 柱附近但未精确点中 rect 的问题 */
+function hitTestPaBar(pt: { x: number; y: number }): SVGRectElement | null {
+  const paData = getPaBarData();
+  const PAD = 8; // 容差像素
+  for (const info of paData) {
+    const left = info.cx - info.w / 2 - PAD;
+    const right = info.cx + info.w / 2 + PAD;
+    const top = Math.min(info.wpaY, info.bpaY) - PAD;
+    const bottom = Math.max(info.wpaY, info.bpaY) + PAD;
+    if (pt.x >= left && pt.x <= right && pt.y >= top && pt.y <= bottom) {
+      // NOTE: 找到匹配的 SVG rect 元素（需要读取 data-* 属性）
+      const svgEl = getSvgEl();
+      if (!svgEl) return null;
+      const rects = svgEl.querySelectorAll(`.chart-pa-bar[data-player="${info.playerIdx}"]`);
+      return (rects[0] as SVGRectElement) ?? null;
+    }
+  }
+  return null;
+}
+
 // ── 选中/取消选中 ──
 
 function selectBar(bar: SelectedBar): void {
@@ -191,7 +214,10 @@ function selectBar(bar: SelectedBar): void {
   syncInputHighlight(bar, true);
 
   // NOTE: 联动 Drum — 通过 store.focusedCell 通知滚筒显示对应格子的值
-  useCalcStore.getState().setFocusedCell(bar.playerIdx, bar.solveIdx);
+  // PA 模式不联动，否则 focusedCell 订阅会把 PA 选中覆盖为普通 solve bar
+  if (!bar.isPa) {
+    useCalcStore.getState().setFocusedCell(bar.playerIdx, bar.solveIdx);
+  }
 }
 
 function deselect(): void {
@@ -353,13 +379,15 @@ function handlePointerDown(e: PointerEvent): void {
   const target = e.target as Element;
 
   // PA 柱点击 → 和普通柱子一样的 select → handle → drag 流程
+  // NOTE: 优先用 DOM 事件委托（精确点中 rect），再 fallback 到坐标 hit test
   const paBarEl = target.closest('.chart-pa-bar') as SVGRectElement | null;
-  if (paBarEl) {
+  const paHit = paBarEl ?? hitTestPaBar(screenToSvg(e.clientX, e.clientY));
+  if (paHit) {
     e.preventDefault();
-    const p = parseInt(paBarEl.getAttribute('data-player') || '0');
+    const p = parseInt(paHit.getAttribute('data-player') || '0');
     const svgPt = screenToSvg(e.clientX, e.clientY);
-    const wpaY = parseFloat(paBarEl.getAttribute('data-wpa-y') || '0');
-    const bpaY = parseFloat(paBarEl.getAttribute('data-bpa-y') || '0');
+    const wpaY = parseFloat(paHit.getAttribute('data-wpa-y') || '0');
+    const bpaY = parseFloat(paHit.getAttribute('data-bpa-y') || '0');
     const paEnd = Math.abs(svgPt.y - wpaY) < Math.abs(svgPt.y - bpaY) ? 'wpa' : 'bpa';
 
     // NOTE: 计算 PA 拖动所需的参数
@@ -588,13 +616,21 @@ function handleHover(e: PointerEvent): void {
   if (!svgEl) return;
 
   const svgPt = screenToSvg(e.clientX, e.clientY);
-  const hit = hitTestBar(svgPt.x, svgPt.y);
 
   // NOTE: 清除上一个 hover
   if (hoverBar) {
     hoverBar.style.filter = '';
     hoverBar = null;
   }
+
+  // NOTE: 优先检测 PA 柱 — 防止 PA 柱区域内误高亮旁边的 solve bar
+  const paHit = hitTestPaBar(svgPt);
+  if (paHit) {
+    svgEl.style.cursor = 'ns-resize';
+    return;
+  }
+
+  const hit = hitTestBar(svgPt.x, svgPt.y);
 
   if (hit) {
     const barEls = svgEl.querySelectorAll('.chart-bar');
