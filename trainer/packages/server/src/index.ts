@@ -3,6 +3,7 @@ import cors from '@fastify/cors';
 import { authRoutes } from './routes/auth.js';
 import { progressRoutes } from './routes/progress.js';
 import { healthRoutes } from './routes/health.js';
+import { reconRoutes } from './routes/recon.js';
 
 const server = Fastify({ logger: true });
 
@@ -18,6 +19,7 @@ await server.register(cors, {
 await server.register(authRoutes);
 await server.register(progressRoutes);
 await server.register(healthRoutes);
+await server.register(reconRoutes);
 
 const PORT = Number(process.env.PORT) || 3001;
 
