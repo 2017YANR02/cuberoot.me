@@ -4,6 +4,13 @@ import { query as dbQuery } from './database.js';
 import { headerZh } from './events.js';
 import type { RowDataPacket } from 'mysql2';
 
+// NOTE: 分组统计的 section 定义（GroupedStatistic 使用）
+export interface StatSection {
+  title: string;
+  titleZh: string;
+  rows: unknown[][];
+}
+
 // NOTE: 表头对齐方向
 export type Alignment = 'left' | 'right' | 'center';
 
@@ -11,6 +18,7 @@ export type Alignment = 'left' | 'right' | 'center';
 export type TableHeader = Record<string, Alignment>;
 
 // NOTE: JSON 输出格式——React 前端消费
+// 普通统计使用 rows，分组统计使用 sections
 export interface StatJson {
   id: string;
   title: string;
@@ -23,7 +31,8 @@ export interface StatJson {
     labelZh: string;
     align: Alignment;
   }>;
-  rows: unknown[][];
+  rows?: unknown[][];       // NOTE: 普通统计（Statistic）
+  sections?: StatSection[]; // NOTE: 分组统计（GroupedStatistic）
 }
 
 export abstract class Statistic {

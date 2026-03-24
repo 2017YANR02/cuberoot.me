@@ -1,0 +1,46 @@
+// NOTE: GroupedStatistic 基类——按项目（或其他维度）分组的统计
+// 与 Ruby _stats_build/core/grouped_statistic.rb 对应
+// 子类的 transform() 返回 [sectionTitle, rows][] 格式
+import { Statistic, type StatJson } from './statistic.js';
+import { headerZh, eventZh } from './events.js';
+import type { RowDataPacket } from 'mysql2';
+
+export abstract class GroupedStatistic extends Statistic {
+  // NOTE: 子类必须覆写——返回 [sectionTitle, rows][] 格式
+  // sectionTitle 通常是 WCA 项目英文名（如 "Rubik's Cube"）
+  abstract override transform(rows: RowDataPacket[]): [string, unknown[][]][];
+
+  // NOTE: 覆写 toJson()——输出 sections 而非 rows
+  // 与 Ruby grouped_statistic.rb 的 markdown 方法对应：
+  //   按 event 分组，每组一个 section，空 section 被跳过
+  async toJson(): Promise<StatJson> {
+    const rawRows = await this.queryResults();
+    const grouped = this.transform(rawRows);
+
+    const headerEntries = Object.entries(this.tableHeader);
+
+    // NOTE: 过滤掉空 section（与 Ruby 的 unless subdata.empty? 对应）
+    const sections = grouped
+      .filter(([, rows]) => rows.length > 0)
+      .map(([title, rows]) => ({
+        title,
+        titleZh: eventZh(title),
+        rows,
+      }));
+
+    return {
+      id: this.id,
+      title: this.title,
+      titleZh: this.titleZh || this.title,
+      ...(this.note ? { note: this.note } : {}),
+      ...(this.noteZh ? { noteZh: this.noteZh } : {}),
+      header: headerEntries.map(([label, align]) => ({
+        key: label.toLowerCase().replace(/\s+/g, '_'),
+        label,
+        labelZh: headerZh(label),
+        align,
+      })),
+      sections,
+    };
+  }
+}
