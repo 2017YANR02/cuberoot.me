@@ -5,6 +5,9 @@
 $ErrorActionPreference = 'Continue'
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
+# NOTE: 全局增加 Node.js heap limit（wr_dominance 等 result_attempts 查询需要 > 4GB）
+$env:NODE_OPTIONS = '--max-old-space-size=8192'
+
 $statsDir = "d:\cube\ruiminyan.github.io\trainer\packages\stats-build"
 $reportFile = Join-Path $statsDir "test_report.txt"
 $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
@@ -140,10 +143,8 @@ for ($i = 0; $i -lt $total; $i++)
   {
     # NOTE: 用 Start-Process pwsh 隔离进程，防止一个崩溃影响整体
     # Windows 上 npx 是 .cmd 脚本，不能直接作为 Start-Process 的 FilePath
-    # NOTE: 内存密集型统计需要更大的 heap（默认 4GB 不够）
-    $heavyStats = @('wr_dominance', 'wr_newcomer', 'wr_metric', 'average_of')
-    $nodeOpts = if ($heavyStats -contains $stat) { '$env:NODE_OPTIONS=\"--max-old-space-size=8192\"; ' } else { '' }
-    $cmd = "${nodeOpts}Set-Location -LiteralPath '$statsDir'; npx tsx src/bin/compute.ts $stat"
+    # NOTE: 全局传递 NODE_OPTIONS 到子进程（wr_dominance 等需要 > 4GB heap）
+    $cmd = "`$env:NODE_OPTIONS='--max-old-space-size=8192'; Set-Location -LiteralPath '$statsDir'; npx tsx src/bin/compute.ts $stat"
     $proc = Start-Process -FilePath "pwsh" `
       -ArgumentList "-NoProfile", "-Command", $cmd `
       -NoNewWindow -Wait -PassThru `
@@ -217,8 +218,3 @@ if ($fail -gt 0)
   $results | Where-Object { $_ -match '^\[FAIL\]|^\[ERROR\]' } | ForEach-Object { Write-Host "  $_" -ForegroundColor Red }
 }
 Write-Host "`nFull report: $reportFile"
-
-# NOTE: 跑完后自动休眠
-Write-Host "`n10 秒后电脑将进入休眠..." -ForegroundColor Yellow
-Start-Sleep -Seconds 10
-rundll32.exe powrprof.dll, SetSuspendState 0, 1, 0
