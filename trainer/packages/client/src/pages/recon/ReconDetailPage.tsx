@@ -5,7 +5,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import type { ReconSolve, ReconComment, EditHistoryItem } from '@cuberoot/shared';
-import { getRecon, listComments, getEditHistory, deleteRecon, addComment, updateComment, deleteComment, getBiliCover } from '../../utils/recon_api';
+import { getRecon, listComments, getEditHistory, deleteRecon, addComment, updateComment, deleteComment, getBiliCover, listRecons } from '../../utils/recon_api';
 import {
   formatTime, countryFlag, getEventDisplayName, getRoundDisplay,
   isBldEvent, getPuzzleId, t, wcaCompUrl, wcaPersonUrl,
@@ -214,6 +214,14 @@ export default function ReconDetailPage() {
         )}
       </div>
 
+      {/* 编辑历史 */}
+      {history.length > 0 && <EditHistoryPanel history={history} />}
+
+      {/* 同轮次成绩导航 */}
+      {solve.comp && solve.event && solve.round && (
+        <SameRoundNav solve={solve} />
+      )}
+
       {/* 评论 */}
       <CommentsView comments={comments} reconId={solve.id} onUpdate={loadData} />
 
@@ -392,6 +400,93 @@ function VideoEmbed({ url }: { url: string }) {
     <a href={url} target="_blank" rel="noopener noreferrer" className="detail-video-link">
       🎥 {url}
     </a>
+  );
+}
+
+/** 编辑历史折叠面板 */
+function EditHistoryPanel({ history }: { history: EditHistoryItem[] }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="detail-section">
+      <button
+        className="recon-btn"
+        onClick={() => setOpen(!open)}
+        style={{ fontSize: '0.82rem' }}
+      >
+        {open ? '▼' : '▶'} {t('编辑历史', 'Edit History')} ({history.length})
+      </button>
+      {open && (
+        <div className="detail-history-list">
+          {history.map((item, idx) => (
+            <div key={item.id || idx} className="detail-history-item">
+              <div className="detail-history-header">
+                <span>{item.editedBy || t('未知', 'unknown')}</span>
+                <span className="detail-comment-time">
+                  {new Date(item.editedAt * 1000).toLocaleString()}
+                </span>
+              </div>
+              {/* NOTE: 显示变更字段的 before/after diff */}
+              {item.after && (
+                <div className="detail-history-diff">
+                  {Object.keys(item.after).map(key => {
+                    const beforeVal = item.before?.[key];
+                    const afterVal = item.after![key];
+                    // NOTE: 跳过相同值
+                    if (JSON.stringify(beforeVal) === JSON.stringify(afterVal)) return null;
+                    return (
+                      <div key={key} className="detail-history-field">
+                        <span className="detail-history-key">{key}</span>
+                        <span className="detail-history-before">{String(beforeVal ?? '')}</span>
+                        <span className="detail-history-arrow">→</span>
+                        <span className="detail-history-after">{String(afterVal ?? '')}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** 同轮次成绩导航 */
+function SameRoundNav({ solve }: { solve: ReconSolve }) {
+  const [siblings, setSiblings] = useState<ReconSolve[]>([]);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    if (loaded) return;
+    // NOTE: 加载同比赛+项目+轮次的其他 solve
+    listRecons().then(all => {
+      const sameRound = all.filter(
+        s => s.comp === solve.comp && s.event === solve.event && s.round === solve.round && s.id !== solve.id
+      ).sort((a, b) => (a.solveNum ?? 0) - (b.solveNum ?? 0));
+      setSiblings(sameRound);
+      setLoaded(true);
+    }).catch(() => setLoaded(true));
+  }, [solve, loaded]);
+
+  if (siblings.length === 0) return null;
+
+  return (
+    <div className="detail-section">
+      <div className="detail-section-label">{t('同轮次复盘', 'Same Round')}</div>
+      <div className="detail-same-round">
+        {/* NOTE: 当前 solve */}
+        <span className="same-round-item same-round-current">
+          #{solve.solveNum ?? '?'} {formatTime(solve.rawTime)}
+        </span>
+        {siblings.map(s => (
+          <Link key={s.id} to={`/recon/${s.id}`} className="same-round-item">
+            #{s.solveNum ?? '?'} {formatTime(s.rawTime)}
+          </Link>
+        ))}
+      </div>
+    </div>
   );
 }
 
