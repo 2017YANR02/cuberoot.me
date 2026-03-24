@@ -3,19 +3,27 @@
  * NOTE: 提供国旗/格式化/事件名/puzzle 映射/纪录徽章/时间格式等
  */
 
-// ── 国旗 ──
+// ── 国旗（CSS flag-icons 方式，对齐原版 <span class="fi fi-cn"> ）──
 
 /**
- * 用 Unicode 区域指示符生成国旗 emoji
- * NOTE: ISO 3166-1 alpha-2 码转成对应的 emoji 国旗
+ * 返回 flag-icons CSS 类名
+ * NOTE: 对齐原版 recon.js 中的国旗渲染（CSS flag-icons 库）
  * @param iso2 小写两字母国家代码（如 "cn", "us"）
+ * @returns CSS 类名字符串（如 "fi fi-cn"），或空字符串
  */
-export function countryFlag(iso2: string): string {
+export function flagClass(iso2: string | undefined | null): string {
   if (!iso2 || iso2.length !== 2) return '';
-  // NOTE: 区域指示符 A 的码点 = 0x1F1E6，a 的 charCode = 97
-  const offset = 0x1F1E6 - 97; // 'a'.charCodeAt(0) = 97
-  const lc = iso2.toLowerCase();
-  return String.fromCodePoint(lc.charCodeAt(0) + offset, lc.charCodeAt(1) + offset);
+  return `fi fi-${iso2.toLowerCase()}`;
+}
+
+/**
+ * @deprecated 使用 flagClass() + <span> 代替
+ * 保留向后兼容——返回空字符串，国旗通过 CSS flag-icons 渲染
+ */
+export function countryFlag(_iso2: string): string {
+  // NOTE: 不再使用 emoji，返回空字符串
+  // 调用方应改用 flagClass() + JSX <span className={flagClass(iso2)}>
+  return '';
 }
 
 // ── 时间格式化 ──

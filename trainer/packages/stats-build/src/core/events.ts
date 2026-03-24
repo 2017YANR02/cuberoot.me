@@ -170,6 +170,7 @@ export const HEADER_ZH: Record<string, string> = {
   'End date': '结束日期',
   'Dates': '日期数',
   'Improvement': '进步',
+  'Period': '区间',
   'Mo3': 'Mo3',
 };
 
