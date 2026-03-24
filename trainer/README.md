@@ -492,3 +492,64 @@ cd packages/stats-ui
 .\build.ps1
 # 3. 刷新 http://localhost:4000/stats/ 验证
 ```
+
+## Stats Build（统计数据 TypeScript 生成）
+
+将 `_stats_build/statistics/*.rb` 中的 Ruby 统计脚本逐步改写为 TypeScript，直连 MySQL 输出 JSON，供 React 前端渲染。
+
+> 完整迁移计划见 [MIGRATION_PLAN.md](packages/stats-build/MIGRATION_PLAN.md)
+
+### 文件结构
+
+```
+packages/stats-build/
+├── MIGRATION_PLAN.md              # 完整迁移计划（移交文档）
+├── package.json                   # @cuberoot/stats-build
+├── tsconfig.json                  # ESNext + NodeNext
+├── src/
+│   ├── core/
+│   │   ├── database.ts            # MySQL 连接池（读取 _stats_build/database.yml）
+│   │   ├── statistic.ts           # 统计基类（SQL → JSON 管线）
+│   │   └── events.ts              # WCA 项目映射 + 中英文表头翻译
+│   ├── statistics/                # 各统计实现（1:1 对应 Ruby 文件）
+│   │   ├── world_championship_podiums_by_person.ts
+│   │   ├── world_records_by_person.ts
+│   │   └── ...                    # 共 18 个（持续增加中）
+│   └── bin/
+│       └── compute.ts             # CLI 入口：npx tsx src/bin/compute.ts <stat_id>
+```
+
+### 使用方式
+
+```powershell
+# 需要先启动 MySQL（见 DEPLOYMENT.md）
+cd trainer/packages/stats-build
+
+# 计算单个统计并输出 JSON 到 stats/data/
+npx tsx src/bin/compute.ts world_championship_podiums_by_person
+
+# 查看所有可用统计
+npx tsx src/bin/compute.ts
+
+# TypeScript 编译检查
+npx tsc --noEmit
+```
+
+### JSON 输出
+
+输出到 `stats/data/<stat_id>.json`，格式：
+
+```json
+{
+  "id": "world_championship_podiums_by_person",
+  "title": "World Championship podiums by person",
+  "titleZh": "世锦赛领奖台次数（按选手）",
+  "header": [{"key": "person", "label": "Person", "labelZh": "选手", "align": "left"}, ...],
+  "rows": [["[Feliks Zemdegs](https://...)", "**14**", 7, 5, 26], ...]
+}
+```
+
+### 前端路由
+
+React 前端已配置路由 `/app/wca-stats/:statId`，自动从 `stats/data/<statId>.json` 加载并渲染。
+
