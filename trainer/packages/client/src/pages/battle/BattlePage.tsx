@@ -16,6 +16,7 @@ import { formatTime } from './engine/format_time';
 import { computeAo5 } from './engine/stats';
 import type { PenaltyType } from './engine/constants';
 import HistoryPanel from './HistoryPanel';
+import { MilestoneToast } from './AdvancedFeatures';
 
 import './battle.css';
 
@@ -648,6 +649,24 @@ export default function BattlePage() {
   const store = useBattleStore();
   const { mode } = store;
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // NOTE: 里程碑 Toast 消息队列
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  // NOTE: 监听 checkMilestone/checkFatigue 派发的自定义事件
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const msg = (e as CustomEvent).detail as string;
+      setToastMsg(msg);
+      // NOTE: 触发 confetti（如果已加载）
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const confetti = (window as any).confetti;
+      if (typeof confetti === 'function') {
+        confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
+      }
+    };
+    window.addEventListener('battle-milestone', handler);
+    return () => window.removeEventListener('battle-milestone', handler);
+  }, []);
 
   // NOTE: 初始化 store — 加载历史 + 生成第一个打乱
   useEffect(() => {
@@ -744,6 +763,11 @@ export default function BattlePage() {
         <div className="history-overlay visible">
           <HistoryPanel />
         </div>
+      )}
+
+      {/* 里程碑 Toast */}
+      {toastMsg && (
+        <MilestoneToast message={toastMsg} onDone={() => setToastMsg(null)} />
       )}
     </div>
   );
