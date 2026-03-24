@@ -1,6 +1,7 @@
-# 训练器前端部署（GitHub Pages）
+# 训练器前端部署（GitHub Pages）+ 后端部署（ECS Hono API）
 # 仅当 trainer/ 源码有变更时触发
-# 构建 Vite 产物 → 提交到 trainer_app/ → GitHub Pages + deploy_mirror 自动 serve
+# 前端：构建 Vite 产物 → 提交到 app/ → GitHub Pages + deploy_mirror 自动 serve
+# 后端：构建 server dist → rsync 到 ECS → pm2 restart
 name: Deploy Trainer
 
 on:
@@ -34,12 +35,22 @@ jobs:
         working-directory: trainer
         run: pnpm install --frozen-lockfile
 
+      # 构建共享包（server 和 client 都依赖）
+      - name: Build shared
+        working-directory: trainer
+        run: pnpm --filter @cuberoot/shared build
+
       # 构建前端
       - name: Build client
         working-directory: trainer
         run: pnpm --filter @cuberoot/client build
 
-      # 将 dist/ 产物复制到仓库根目录的 app/
+      # 构建后端
+      - name: Build server
+        working-directory: trainer
+        run: pnpm --filter @cuberoot/server build
+
+      # 将 client dist 产物复制到仓库根目录的 app/
       # Jekyll 不排除此目录，会直接当静态文件 serve
       - name: Copy dist to app/
         run: |
@@ -56,3 +67,26 @@ jobs:
           git diff --cached --quiet || git commit -m "ci: rebuild app/ from trainer/"
           git pull --rebase origin main
           git push
+
+      # ── 后端部署到 ECS ──
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Install rsync
+        run: sudo apt-get update && sudo apt-get install -y rsync
+
+      - name: Deploy server to ECS
+        run: |
+          # rsync server dist 到 ECS
+          rsync -rltz --delete --chmod=D755,F644 \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            trainer/packages/server/dist/ "root@${{ secrets.DEPLOY_HOST }}:/root/trainer-api/dist/"
+
+          # pm2 重启（首次用 start，已有则 restart）
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no "root@${{ secrets.DEPLOY_HOST }}" \
+            'cd /root/trainer-api && (pm2 restart trainer-api 2>/dev/null || pm2 start dist/index.js --name trainer-api --node-args="--env-file=.env") && pm2 save'
