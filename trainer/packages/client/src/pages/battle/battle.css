@@ -1,0 +1,34 @@
+/**
+ * Battle 模块基础样式（骨架）
+ * NOTE: 后续子任务将从 battle.css 1:1 迁移完整样式
+ */
+
+.battle-container {
+  width: 100%;
+  height: 100dvh;
+  background: #000;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.battle-placeholder {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.battle-placeholder h1 {
+  font-size: 2rem;
+  margin: 0;
+}
+
+.battle-placeholder p {
+  color: #888;
+  font-size: 1rem;
+}

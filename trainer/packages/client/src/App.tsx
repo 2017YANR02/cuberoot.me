@@ -14,6 +14,8 @@ import { ZblsTimerPage } from './pages/ZblsTimerPage';
 const CalcPage = lazy(() => import('./pages/calc/CalcPage'));
 // NOTE: Viz 模块懒加载 — 分布演变可视化
 const VizPage = lazy(() => import('./pages/viz/VizPage'));
+// NOTE: Battle 模块懒加载 — 对战计时器
+const BattlePage = lazy(() => import('./pages/battle/BattlePage'));
 
 function App() {
   return (
@@ -35,6 +37,8 @@ function App() {
         <Route path="/calc" element={<Suspense fallback={<div>Loading...</div>}><CalcPage /></Suspense>} />
         {/* Viz — 分布演变可视化 */}
         <Route path="/viz" element={<Suspense fallback={<div>Loading...</div>}><VizPage /></Suspense>} />
+        {/* Battle — 对战计时器 */}
+        <Route path="/battle" element={<Suspense fallback={<div>Loading...</div>}><BattlePage /></Suspense>} />
       </Routes>
     </BrowserRouter>
   );
