@@ -235,29 +235,34 @@ function SolutionView({ text }: { text: string }) {
   );
 }
 
-/** 统计网格——对齐原版 3列2行（方法/步数/手速 + 执行/记忆/y转体 + 换手/卡顿/S转动） */
+// NOTE: Cross type 数字→文本映射
+const CROSS_LABELS: Record<number, string> = { 0: 'cross', 1: 'xcross', 2: 'xxcross', 3: 'xxxcross', 4: 'xxxxcross' };
+
+/** 统计网格——完全对齐原版 17 项字段 */
 function StatsGrid({ solve }: { solve: ReconSolve }) {
-  // NOTE: 使用原版的中英文标签和 3 列布局
+  // NOTE: 完整字段列表，与原版 buildStatsGrid 一致
   const items: [string, string | number | undefined][] = [
     [t('方法', 'Method'), solve.method],
     [t('步数', 'STM'), solve.stm],
     [t('手速', 'TPS'), solve.tps],
-  ];
-
-  // NOTE: 盲拧项目显示执行/记忆时间
-  if (isBldEvent(solve.event)) {
-    items.push(
-      [t('执行', 'Exec'), solve.execTime != null ? formatTime(solve.execTime) : undefined],
-      [t('记忆', 'Memo'), solve.memoTime != null ? formatTime(solve.memoTime) : undefined],
-    );
-  }
-
-  items.push(
-    [t('y 转体', 'Y Rot'), solve.yRot],
+    // NOTE: 盲拧专用
+    [t('执行', 'Exec'), isBldEvent(solve.event) && solve.execTime != null ? Number(solve.execTime).toFixed(2) : undefined],
+    [t('记忆', 'Memo'), isBldEvent(solve.event) && solve.memoTime != null ? Number(solve.memoTime).toFixed(2) : undefined],
+    // NOTE: CFOP 阶段统计
+    ['Cross', solve.crossStm != null ? `${solve.crossStm}` : undefined],
+    ['F2L', solve.f2l != null ? `${solve.f2l}` : undefined],
+    [t('顶层', 'LL'), solve.ll != null ? `${solve.ll}` : undefined],
+    // NOTE: XCross 类型
+    ['?x', solve.crossType != null ? (CROSS_LABELS[solve.crossType as number] || String(solve.crossType)) : undefined],
+    [t('基态', 'Free Pair'), solve.freePair],
+    [t('y 转体', 'y rot'), solve.yRot],
     [t('换手', 'Regrip'), solve.regrip],
     [t('卡顿', 'Lockup'), solve.lockup],
-    ['S' + t('转动', ' Move'), solve.sMove],
-  );
+    ['S' + t('转动', ' move'), solve.sMove],
+    [t('底色', 'Color'), solve.crossColor],
+    ['OLL', solve.ollShort || solve.oll],
+    ['PLL', solve.pllShort || solve.pll],
+  ];
 
   // NOTE: 过滤掉空值和零值
   const validItems = items.filter(([, v]) => v != null && v !== '' && v !== 0);
@@ -328,10 +333,10 @@ function VideoEmbed({ url }: { url: string }) {
       return (
         <div className="detail-video-wrap detail-video-facade" onClick={() => setLoaded(true)}>
           <div style={{ position: 'absolute', inset: 0, background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            {/* NOTE: B站品牌 logo — 与原版一致 */}
+            {/* NOTE: B站品牌 logo — 使用原版 /recon/assets/bilibili_logo.png */}
             <img
               className="detail-video-play-bili"
-              src="https://www.bilibili.com/favicon.ico"
+              src="/recon/assets/bilibili_logo.png"
               alt="Bilibili"
               style={{ width: 68, height: 68, opacity: 0.85, filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.5))' }}
             />

@@ -80,6 +80,8 @@ export function initDrag(): (() => void) {
     if (p >= 0 && t >= 0) {
       const relP = p - seedOn;
       if (relP >= 0) {
+        // NOTE: 如果当前选中的柱子已经匹配新 focusedCell，跳过重建（防止 handle 闪跳）
+        if (selected && selected.playerIdx === relP && selected.solveIdx === t && !selected.isPa) return;
         deselect();
         selectBar({ playerIdx: relP, solveIdx: t });
       }
