@@ -71,6 +71,11 @@ export default function ReconSubmitPage() {
       setForm(solve);
       if (solve.rawTime != null) setTimeInput(formatTime(solve.rawTime));
       if (solve.average != null) setAvgInput(formatTime(solve.average));
+      // NOTE: 同步 textarea DOM——defaultValue 只在 mount 时生效，编辑模式 API 返回后需手动同步
+      if (solutionRef.current && solve.solution) {
+        solutionRef.current.value = solve.solution;
+        autoResize(solutionRef.current);
+      }
       setLoadingEdit(false);
     }).catch(() => setLoadingEdit(false));
   }, [editId, isEditing]);
@@ -78,6 +83,12 @@ export default function ReconSubmitPage() {
   // NOTE: 更新表单字段
   const setField = useCallback(<K extends keyof ReconSolve>(key: K, value: ReconSolve[K]) => {
     setForm(prev => ({ ...prev, [key]: value }));
+  }, []);
+
+  /** textarea 自适应高度——先收缩到最小再擑开到 scrollHeight */
+  const autoResize = useCallback((el: HTMLTextAreaElement) => {
+    el.style.height = 'auto';
+    el.style.height = el.scrollHeight + 'px';
   }, []);
 
   // NOTE: 实时解法统计
@@ -346,11 +357,16 @@ export default function ReconSubmitPage() {
           <span className="submit-label">{t('解法', 'Solution')} *</span>
           <textarea
             ref={solutionRef}
-            rows={12}
+            rows={4}
             defaultValue={form.solution || ''}
-            onInput={e => setField('solution', (e.target as HTMLTextAreaElement).value)}
+            onInput={e => {
+              const el = e.target as HTMLTextAreaElement;
+              setField('solution', el.value);
+              autoResize(el);
+            }}
             placeholder={`// Cross (5)\nD R2 D' F D F'\n// F2L 1 (8)\nU R U' R' U' F' U F\n...`}
             className="submit-solution-textarea"
+            style={{ overflow: 'hidden' }}
           />
         </label>
         {/* NOTE: 虚拟键盘——紧贴在 solution textarea 下方 */}
@@ -359,6 +375,7 @@ export default function ReconSubmitPage() {
           onInput={() => {
             if (solutionRef.current) {
               setField('solution', solutionRef.current.value);
+              autoResize(solutionRef.current);
             }
           }}
         />
