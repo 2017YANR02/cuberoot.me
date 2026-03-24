@@ -1,8 +1,14 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
-
 import path from 'path'
+import https from 'node:https'
+
+// NOTE: 自定义 HTTPS agent——绕过远端 TLS 验证，避免 ECONNRESET
+const httpsAgent = new https.Agent({
+  rejectUnauthorized: false,
+  keepAlive: true,
+})
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -35,6 +41,17 @@ export default defineConfig({
         target: 'https://toolkit.cuberoot.me',
         changeOrigin: true,
         secure: false,
+        agent: httpsAgent,
+        // NOTE: 代理错误处理——防止 ECONNRESET 崩溃 dev server
+        configure: (proxy) => {
+          proxy.on('error', (err, _req, res) => {
+            console.warn('[recon-proxy] error:', err.message);
+            if (res && 'writeHead' in res && !res.headersSent) {
+              (res as import('http').ServerResponse).writeHead(502, { 'Content-Type': 'application/json' });
+              (res as import('http').ServerResponse).end(JSON.stringify({ error: `Proxy error: ${err.message}` }));
+            }
+          });
+        },
       },
     },
   },
