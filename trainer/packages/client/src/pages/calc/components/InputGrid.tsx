@@ -31,9 +31,10 @@ interface InputGridProps {
 function fitFontStyle(displayVal: string): React.CSSProperties | undefined {
   // NOTE: 去掉括号计算长度，避免 Ao5 括号标注影响字号
   const len = displayVal.replace(/[()]/g, '').length;
-  if (len <= 5) return undefined;
-  if (len === 6) return { fontSize: '20px' };
-  return { fontSize: '17px' };
+  if (len <= 4) return undefined; // 默认 24px
+  if (len === 5) return { fontSize: '20px' };
+  if (len === 6) return { fontSize: '17px' };
+  return { fontSize: '14px' }; // ≥7 字符（如 1:14.80）
 }
 
 export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
