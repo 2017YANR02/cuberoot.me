@@ -910,7 +910,7 @@ function drawAverages(): void {
 
       // NOTE: WR badge — 白字红底圆角框
       if (isWR(state.event, 'average', result.avg)) {
-        const wrX = rx + 4, wrY = cy - fontSize / 2 - 4;
+        const wrX = rx - 12, wrY = cy - fontSize / 2 - 4;
         const wrW = 22, wrH = 12, wrR = 3;
         gAvg.appendChild(createSvgElement('rect', {
           x: wrX, y: wrY - wrH / 2,
