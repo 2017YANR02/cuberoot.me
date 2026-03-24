@@ -284,9 +284,10 @@ function positionHandleAt(svgX: number, svgY: number, svgW: number): void {
   handleEl.style.top = (svgY * ctm.d + ctm.f - overlayRect.top) + 'px';
   handleEl.style.display = '';
   handleEl.style.width = Math.max(svgW * ctm.a, 24) + 'px';
-  handleEl.style.height = '16px';
-  handleEl.style.borderRadius = '8px';
-  handleEl.style.transform = 'translate(-50%, -50%)';
+  handleEl.style.height = '8px';
+  handleEl.style.borderRadius = '4px';
+  // NOTE: translate Y 偏移让 handle 往柱子内部靠（不遮挡顶部数值标签）
+  handleEl.style.transform = 'translate(-50%, 0)';
 }
 
 function removeHandle(): void {

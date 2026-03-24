@@ -18,6 +18,7 @@ const VizPage = lazy(() => import('./pages/viz/VizPage'));
 const BattlePage = lazy(() => import('./pages/battle/BattlePage'));
 // NOTE: Recon 模块懒加载 — 复盘数据库
 const ReconListPage = lazy(() => import('./pages/recon/ReconListPage'));
+const ReconDetailPage = lazy(() => import('./pages/recon/ReconDetailPage'));
 
 function App() {
   return (
@@ -43,6 +44,7 @@ function App() {
         <Route path="/battle" element={<Suspense fallback={<div>Loading...</div>}><BattlePage /></Suspense>} />
         {/* Recon — 复盘数据库 */}
         <Route path="/recon" element={<Suspense fallback={<div>Loading...</div>}><ReconListPage /></Suspense>} />
+        <Route path="/recon/:id" element={<Suspense fallback={<div>Loading...</div>}><ReconDetailPage /></Suspense>} />
       </Routes>
     </BrowserRouter>
   );
