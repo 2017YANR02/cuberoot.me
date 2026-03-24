@@ -1,7 +1,7 @@
 /**
  * Recon API 客户端
  * NOTE: 当前指向 PHP 后端（/recon/api/?action=xxx），
- * Fastify 后端代码已就绪，待部署到 ECS 后切换 API_BASE
+ * Hono 后端代码已就绪，待部署到 ECS 后切换 API_BASE
  */
 import type {
   ReconSolve, ReconComment, EditHistoryItem,
@@ -9,7 +9,7 @@ import type {
 import { getWcaId } from '../stores/auth_store';
 
 // NOTE: 开发环境走 Vite proxy（/recon/api → toolkit.cuberoot.me）
-// 部署 Fastify 后改为 '/trainer/api/recon'
+// 部署 Hono 后改为 '/trainer/api/recon'
 const API_BASE = import.meta.env.VITE_RECON_API_BASE || '/recon/api/';
 
 // ── 认证 ──
