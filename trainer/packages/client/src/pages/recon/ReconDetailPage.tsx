@@ -12,6 +12,7 @@ import {
   buildExternalLinks, displaySolverName, FACE_COLORS,
 } from '../../utils/recon_utils';
 import { cleanForPlayer } from '../../utils/recon_alg_utils';
+import { useAuthStore } from '../../stores/auth_store';
 import '../../recon.css';
 import './recon_detail.css';
 
@@ -537,8 +538,8 @@ function CommentsView({
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editText, setEditText] = useState('');
 
-  // NOTE: 当前登录用户 WCA ID（从 localStorage 获取）
-  const currentWcaId = localStorage.getItem('wca_wcaId') || '';
+  // NOTE: 当前登录用户 WCA ID（从 auth_store 获取）
+  const currentWcaId = useAuthStore(s => s.user?.wcaId) || '';
 
   const handleAdd = async () => {
     if (!newComment.trim() || submitting) return;
@@ -629,8 +630,8 @@ function CommentsView({
         ))}
       </div>
 
-      {/* NOTE: 添加评论——需登录后显示 */}
-      {currentWcaId && (
+      {/* NOTE: 添加评论——需登录后显示，未登录显示提示 */}
+      {currentWcaId ? (
         <div className="detail-comment-add">
           <textarea
             value={newComment}
@@ -645,6 +646,10 @@ function CommentsView({
           >
             {submitting ? t('提交中...', 'Posting...') : t('发送', 'Post')}
           </button>
+        </div>
+      ) : (
+        <div className="detail-comment-login-hint">
+          🔑 {t('登录 WCA 账号后可以发评论', 'Login with WCA to post comments')}
         </div>
       )}
     </div>
