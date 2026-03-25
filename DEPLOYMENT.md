@@ -18,20 +18,20 @@ GitHub Actions（ubuntu-latest, 2 核, 7GB 内存）
   ↓
 1. 下载 WCA 数据库（约 2GB）
 2. 导入 MySQL（约 9 分钟）
-3. 并行计算 60+ 项统计（约 37 分钟，4 worker）
-4. 生成 Markdown 文件
+3. TypeScript 串行计算 88 项统计（约 37 分钟，--expose-gc）
+4. 生成 JSON 数据文件
 5. 提交并推送到 main 分支
   ↓
-GitHub Pages（Jekyll）
+GitHub Pages（Jekyll）+ React SPA
   ↓
-上线：ruiminyan.github.io/stats/
+上线：ruiminyan.github.io/stats/ + /app/wca-stats/
 ```
 
 ## CI 策略
 
 | Workflow | 触发条件 | 执行内容 | 耗时 |
 |----------|----------|----------|------|
-| **Update Stats** | 定时（每周）/ 手动 | 下载 WCA 数据库 + 计算统计 | ~47 分钟 |
+| **Update Stats** | 定时（每周）/ 手动 | Node.js 下载 WCA 数据库 + TS 计算统计 | ~47 分钟 |
 | **Deploy Trainer** | push main 且 `trainer/` 有变更 | pnpm build client → commit dist 到 `app/` | ~1 分钟 |
 | **Deploy Mirror** | push main / 其他 CI 完成 | Jekyll 构建 + rsync 到阿里云 | ~45 秒 |
 | **Backup Recon Data** | 定时（每周一凌晨 4:00）/ 手动 | 从 API 拉取复盘数据备份到 git + 增量构建 WCA 成绩数据 | ~10 秒（增量） |
@@ -152,7 +152,7 @@ ruiminyan.github.io/
 │   ├── page_config.json       # 页面映射表：上游 HTML → 本地子目录，含 i18n title key 和需同步的根文件/目录列表
 │   └── menu_template.html     # 汉堡菜单模板：同步时替换上游菜单，加入 data-i18n 属性和本站专属链接
 ├── _layouts/                  # Jekyll 布局（Stats 深色主题框架，全局加载 stats_ui.js / i18n.js / event_selector.js）
-├── _stats_build/              # WCA 统计构建脚本（Ruby，只生成数据面板 + data-label-* 属性，UI 由 JS 驱动）
+├── _stats_build/              # WCA 统计构建脚本（Ruby legacy，已迁移到 trainer/packages/stats-build/ TypeScript）
 ├── stats/                     # 统计 Markdown 页面。由 CI 每周覆盖写入，也可本地生成后直接 push
 │   ├── upcoming_comp/         # 近期比赛追踪页面（前端 JS 从 upcoming_comps.json 渲染）
 │   └── upcoming_comps.json    # 选手比赛数据（由 scripts/fetch_upcoming_comps.py 生成）
@@ -216,7 +216,7 @@ ruiminyan.github.io/
 ├── .upcoming_cache/           # API 响应本地缓存（已在 .gitignore，24h TTL）
 ├── .comp_names_zh_cache/      # cubing.com + WCA API 缓存（已在 .gitignore）
 ├── .github/workflows/         # CI 配置
-│   ├── stats.yml              # 每周定时构建 WCA 统计
+│   ├── stats.yml              # 每周定时构建 WCA 统计（纯 Node.js/TypeScript，已移除 Ruby）
 │   ├── deploy_mirror.yml      # push/CI 完成后 rsync 到阿里云
 │   ├── backup_recon.yml       # 每日备份复盘数据到 git
 │   └── ...                    # 其他 workflow
@@ -302,7 +302,7 @@ sudo net start MySQL80
 
 > **为什么不用 Authorization Code 流程**：WCA 的 token endpoint 不开放 CORS，浏览器无法直接调用。Implicit Grant 将 token 直接放在 URL hash 中返回，完全绕过跨域问题。
 
-## Ruby（本地验证用）
+## Ruby（legacy，仅本地验证用，CI 已完全迁移到 TypeScript）
 
 | 配置 | 值 |
 |------|-----|
@@ -497,30 +497,22 @@ python scripts/fetch_upcoming_comps.py
 
 ## 本地发布统计（无需等待 CI）
 
-本地有 MySQL 数据库，可直接生成 `.md` 文件后 push，线上立刻生效。
+本地有 MySQL 数据库，可直接生成 JSON 数据文件后 push，线上立刻生效。
 
 ```powershell
-cd _stats_build
-
-# 查看所有可用统计名称 (ID)：
-ruby -e "$LOADED_FEATURES << 'bundler/setup'; require_relative 'statistics/index'; puts STATISTICS.keys.sort.join(', ')"
+cd trainer/packages/stats-build
+$env:NODE_OPTIONS='--expose-gc --max-old-space-size=6144'
 
 # Step 1：测试/生成单个或多个统计（使用 STATS_FILTER，逗号分隔）
-$env:STATS_FILTER="wr_bao5,average_of"
-ruby bin/compute_all.rb
+$env:STATS_FILTER='wr_bao5,average_of'
+npx tsx src/bin/compute_all.ts
 
-# Step 2：如果代码没改表结构和 SQL 查询只改了 UI 模板——用缓存跳过 MySQL（约 0.1 秒）
-$env:STATS_USE_CACHE="1"; ruby bin/compute_all.rb
-
-# 提交前可选：检查 Ruby 语法
-ruby -c statistics/wr_bao5.rb
-
-# Step 3：提交并 push，GitHub Pages 1-2 分钟内上线
-git add ../stats/wr_bao5.md
-git commit -m "chore: update wr_bao5"
+# Step 2：提交并 push，GitHub Pages 1-2 分钟内上线
+git add ../../stats/data/
+git commit -m "chore: update stats"
 
 # ⚠️ 关键步骤：由于 GitHub Actions (CI) 可能在后台推了 commit，
-# 必须先拉取合并远程的新 commit 到本地最新进展的下方，然后推。
+# 必须先拉取合并远程的新 commit
 git pull --rebase origin main
 git push
 ```
@@ -528,15 +520,15 @@ git push
 > 缓存文件存于 `.data_cache/`（已加入 `.gitignore`，不提交）。
 > 周 CI 运行时不设 `STATS_USE_CACHE`，始终从 MySQL 全量刷新，数据始终最新。
 
-### 统计计算架构（`compute_all.rb`）
+### 统计计算架构（`compute_all.ts`）
 
-62 个顶级统计 ID 分三阶段执行（详见 `_stats_build/bin/compute_all.rb`）：
+88 个统计串行执行（详见 `trainer/packages/stats-build/src/bin/compute_all.ts`）：
 
-| 阶段 | 模式 | 数量 | 说明 |
-|------|------|------|------|
-| Phase 1 | 串行 | 3 | 聚合统计，有类级缓存依赖，完成后立即释放 |
-| Phase 2 | 串行 fork 隔离 | 11 | 重量级（RSS > 3GB），每个独立进程执行后回收内存 |
-| Phase 3 | 4 worker 并行 | 48 | 轻量级（RSS < 2GB），可安全并行 |
+| 类别 | 数量 | 说明 |
+|------|------|------|
+| 优先聘合 | 3 | `wr_metric`/`wr_aoxr`/`average_of`，包含子统计，完成后立即 GC |
+| 重量级 | 11 | RSS > 3GB，每个计算后强制 `global.gc()` |
+| 轻量级 | 74 | 串行执行，定期 GC |
 
 **Phase 1 聚合统计**（输入子统计 ID 到 `STATS_FILTER` 无效，需输入聚合 ID）：
 
@@ -549,18 +541,19 @@ git push
 **Phase 2 重量级统计**（CI 内存调优时关注）：
 `wr_newcomer`, `wr_dominance`, `best_result_off_podium`, `consecutive_sub_5_average`, `longest_streak_of_personal_records`, `longest_streak_of_podiums`, `most_competitions_before_winning`, `most_completed_solves`, `most_frequent_results`, `moving_average`, `smallest_diff_between_single_and_average`
 
-**Phase 3 轻量级统计**：剩余 48 个，可通过命令查看完整列表（见上方 `ruby -e ...` 命令）。
+**轻量级统计**：剩余 74 个，可通过 `npx tsx src/bin/compute.ts` 查看完整列表。
 
-**附加构建步骤**（`compute_all.rb` 之后）：
+**附加构建步骤**（`compute_all.ts` 之后）：
 
 | 脚本 | 输出 | 用途 |
 |------|------|------|
-| `bin/compute_index.rb` | `stats/index.md` | 统计首页索引 |
+| `src/bin/gen_wr_ids.ts` | `stats/wr_ids.json` | Calc 页面 WR 数据 |
+| `src/bin/compute_index.ts` | `stats/data/index.json` | 统计索引页 |
 
 
 ## 添加新统计
 
-### Ruby 方式（现有管线，CI 自动更新）
+### Ruby 方式（legacy，CI 已不使用，仅本地参考）
 
 1. 创建 `_stats_build/statistics/my_new_stat.rb`：
    ```ruby
@@ -588,9 +581,7 @@ git push
    - `_statsDescZh`：添加 Note 描述的中文翻译（如有）
    - `_headerZh`：添加新表头列名的中文翻译（如有新列名）
 
-### TypeScript 方式（新管线，输出 JSON 供 React 渲染）
-
-> ⚠️ 正在逐步迁移中，完整计划见 `trainer/packages/stats-build/MIGRATION_PLAN.md`
+### TypeScript 方式（当前管线，CI 自动更新，输出 JSON 供 React 渲染）
 
 1. 创建 `trainer/packages/stats-build/src/statistics/my_new_stat.ts`：
    ```typescript

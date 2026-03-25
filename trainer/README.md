@@ -499,7 +499,7 @@ cd packages/stats-ui
 
 > 完整迁移文档见 [MIGRATION_PLAN.md](packages/stats-build/MIGRATION_PLAN.md)
 
-### 迁移进度
+### 迁移进度（✅ 全部完成）
 
 | 阶段 | 数量 | 状态 |
 |------|------|------|
@@ -508,8 +508,9 @@ cd packages/stats-ui
 | 批量执行 CLI (`compute_all.ts`) | — | ✅ |
 | WR ID 生成 (`gen_wr_ids.ts`) | — | ✅ |
 | 索引页生成 (`compute_index.ts`) | — | ✅ |
-| CI workflow 切换 | — | ❌ |
-| 前端 panels/sections 渲染 | — | ❌ |
+| 数据库导入 (`update_database.ts`) | — | ✅ |
+| CI workflow 切换（已完全移除 Ruby） | — | ✅ |
+| 前端 4 种渲染模式 + 索引页 | — | ✅ |
 
 ### 文件结构
 
@@ -521,7 +522,7 @@ packages/stats-build/
 ├── tsconfig.json                  # ESNext + NodeNext
 ├── src/
 │   ├── core/
-│   │   ├── database.ts            # MySQL 连接池
+│   │   ├── database.ts            # MySQL 连接池 + DB_CONFIG/REQUIRED_TABLES/INDICES 常量
 │   │   ├── statistic.ts           # Statistic 基类
 │   │   ├── grouped_statistic.ts   # GroupedStatistic 基类
 │   │   ├── round_metric.ts        # RoundMetric 基类（双视图 panels）
@@ -534,6 +535,10 @@ packages/stats-build/
 │   │   └── *.ts
 │   └── bin/
 │       ├── compute.ts             # CLI：npx tsx src/bin/compute.ts <stat_id>
+│       ├── compute_all.ts         # CLI：批量执行 88 个统计（串行 + GC）
+│       ├── gen_wr_ids.ts          # CLI：介 WR 排名提取 top2 ID
+│       ├── compute_index.ts       # CLI：生成 6 分类索引 JSON
+│       ├── update_database.ts     # CLI：下载 + 导入 WCA 数据库（替代 Ruby update_database.rb）
 │       └── validate.ts            # Ruby MD vs TS JSON 对比验证
 ```
 
@@ -550,6 +555,19 @@ npx tsx src/bin/compute.ts world_championship_podiums_by_person
 
 # 查看所有可用统计
 npx tsx src/bin/compute.ts
+
+# 批量执行所有统计（串行 + GC）
+npx tsx src/bin/compute_all.ts
+
+# 指定统计过滤
+$env:STATS_FILTER='wr_metric,wr_aoxr'
+npx tsx src/bin/compute_all.ts
+
+# 生成 WR ID（依赖 compute_all 输出）
+npx tsx src/bin/gen_wr_ids.ts
+
+# 生成索引页（依赖 compute_all 输出）
+npx tsx src/bin/compute_index.ts
 
 # TypeScript 编译检查
 npx tsc --noEmit
