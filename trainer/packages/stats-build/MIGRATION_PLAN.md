@@ -107,16 +107,17 @@ interface StatJson {
 
 ---
 
-## 三、剩余工作（CI 上线 + 前端）
+## 三、✅ 全部完成
 
 ### 3.1 CLI 工具（✅ 全部完成）
 
 | 工具 | Ruby 版 | TS 版 | 说明 |
 |------|---------|-------|------|
+| **数据库导入** | `bin/update_database.rb` | ✅ `src/bin/update_database.ts` | fetch + readline 解析 SQL dump + mysql CLI 导入 |
 | **批量执行** | `bin/compute_all.rb` | ✅ `src/bin/compute_all.ts` | 串行执行 + GC，PRIORITY_STATS/ALL_MERGED/HEAVY_STATS/STATS_FILTER |
 | **WR ID JSON** | `bin/gen_wr_ids.rb` | ✅ `src/bin/gen_wr_ids.ts` | 读取 wr_metric.json 提取 top2 WCA ID + centiseconds（无需 MySQL） |
 | **索引页** | `bin/compute_index.rb` | ✅ `src/bin/compute_index.ts` | 6 分类 63 统计 JSON（无需 MySQL） |
-| **CI workflow** | `.github/workflows/stats.yml` | ❌ 需修改为 Node.js | 加 `setup-node` + `--expose-gc --max-old-space-size=6144` |
+| **CI workflow** | `.github/workflows/stats.yml` | ✅ 已完全移除 Ruby | Node.js 22 + pnpm + tsx |
 
 ### 3.2 前端（✅ 全部完成）
 
