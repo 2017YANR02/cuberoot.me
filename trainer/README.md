@@ -530,6 +530,7 @@ packages/stats-build/
 │   │   ├── average_of_x.ts        # AverageOfX 基类（滑动窗口均值）
 │   │   ├── rankings.ts            # Rankings 基类（年度排名）
 │   │   ├── solve_time.ts          # WCA 成绩格式化
+│   │   ├── format_date.ts         # 共享日期格式化（统一输出 YYYY-MM-DD，修复 String(Date).slice(0,10) bug）
 │   │   └── events.ts              # 项目映射 + 表头翻译
 │   ├── statistics/                # 88 个统计实现（1:1 对应 Ruby）
 │   │   └── *.ts
