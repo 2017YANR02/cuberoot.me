@@ -10,26 +10,40 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // NOTE: database.yml 位于 _stats_build/ 目录（与 Ruby 共用）
 // NOTE: 路径：src/core → src → stats-build → packages → trainer → repo root
-const CONFIG_PATH = resolve(__dirname, '../../../../../_stats_build/database.yml');
+export const CONFIG_PATH = resolve(__dirname, '../../../../../_stats_build/database.yml');
 
-interface DbConfig {
+export interface DbConfig {
   database: string;
   username: string;
   password: string;
   host: string;
 }
 
-const config: DbConfig = parseYaml(readFileSync(CONFIG_PATH, 'utf-8'));
+// NOTE: 导出配置供 update_database.ts 复用
+export const DB_CONFIG: DbConfig = parseYaml(readFileSync(CONFIG_PATH, 'utf-8'));
+
+// NOTE: 与 Ruby Database::REQUIRED_TABLES 一致——CI 导入时仅保留这 15 张表
+export const REQUIRED_TABLES = [
+  'championships', 'competitions', 'competition_delegates', 'continents',
+  'countries', 'events', 'formats', 'persons', 'preferred_formats',
+  'ranks_single', 'ranks_average', 'result_attempts', 'results',
+  'round_types', 'users',
+] as const;
+
+// NOTE: 与 Ruby Database::INDICES 一致——导入后追加的自定义索引
+export const INDICES = [
+  'CREATE INDEX index_results_on_competition_id_person_id ON results (competition_id, person_id);',
+] as const;
 
 let pool: mysql.Pool | null = null;
 
 export function getPool(): mysql.Pool {
   if (!pool) {
     pool = mysql.createPool({
-      host: config.host,
-      user: config.username,
-      password: config.password,
-      database: config.database,
+      host: DB_CONFIG.host,
+      user: DB_CONFIG.username,
+      password: DB_CONFIG.password,
+      database: DB_CONFIG.database,
       // NOTE: 与 Ruby 版一致的 session 初始化
       connectionLimit: 4,
       multipleStatements: false,
