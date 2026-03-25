@@ -2,6 +2,10 @@
 // 与 Ruby _stats_build/statistics/abstract/average_of_x.rb 1:1 对应
 // 算法：滑动窗口，每人所有 attempt 按时间排列，窗口长度 = solveCount
 // 支持双视图 JSON：Current Ranking + WR History
+//
+// NOTE: 共享查询模式——7 个子类（Ao3~Ao1000）共用同一份大 SQL 查询结果
+// 第一个子类执行查询后缓存，后续 6 个子类直接复用
+// 与 Ruby @@query_results 对齐，避免 6 次重复查询（每次 ~60s）
 import { GroupedStatistic } from './grouped_statistic.js';
 import { EVENTS, EVENTS_ENTRIES, headerZh, eventZh } from './events.js';
 import { SolveTime } from './solve_time.js';
@@ -40,6 +44,10 @@ const SKIPPED_VALUE = 0;
 
 // NOTE: 懒加载阈值——超过此数量的 solves 用折叠方式展示
 const LAZY_THRESHOLD = 12;
+
+// --- 共享查询结果缓存（与 Ruby @@query_results 对齐） ---
+// NOTE: 7 个子类共享同一份大 SQL 查询结果，避免 6 次重复查询
+let sharedQueryRows: RowDataPacket[] | null = null;
 
 export abstract class AverageOfX extends GroupedStatistic {
   protected solveCount: number;
@@ -110,6 +118,20 @@ export abstract class AverageOfX extends GroupedStatistic {
       WHERE result.event_id NOT IN ('333mbf', '333mbo')
       ORDER BY competition.start_date, round_type.rank
     `;
+  }
+
+  // NOTE: 共享查询——第一个子类执行 SQL 后缓存，后续子类复用
+  // 与 Ruby @@query_results ||= begin ... end 一致
+  private async getSharedQueryRows(): Promise<RowDataPacket[]> {
+    if (!sharedQueryRows) {
+      sharedQueryRows = await this.queryResults();
+    }
+    return sharedQueryRows;
+  }
+
+  // NOTE: 缓存清理——average_of 聚合完成后调用
+  static clearSharedCache(): void {
+    sharedQueryRows = null;
   }
 
   // NOTE: Trimmed Mean（WCA 标准裁剪均值）
@@ -223,11 +245,10 @@ export abstract class AverageOfX extends GroupedStatistic {
     return `${formatted.length} solves`;
   }
 
-  // NOTE: 使用共享 formatDate（修复 Date→String 截断 bug）
-
   // NOTE: 覆写 toJson——双视图 panels
   async toJson(): Promise<StatJson> {
-    let rawRows: RowDataPacket[] | null = await this.queryResults();
+    // NOTE: 使用共享查询缓存——第一个子类查完后缓存，后续复用
+    const rawRows = await this.getSharedQueryRows();
 
     const rankingDataAll: [string, unknown[][]][] = [];
     const historyDataAll: [string, unknown[][]][] = [];
@@ -298,9 +319,7 @@ export abstract class AverageOfX extends GroupedStatistic {
       historyDataAll.push([eventName, historyRows.reverse()]);
     }
 
-    // NOTE: 照搬 Ruby 内存管理——所有 event 处理完后释放原始查询结果
-    rawRows = null;
-    if (global.gc) global.gc();
+    // NOTE: 不再释放 rawRows——它是共享缓存，由 clearSharedCache 统一清理
 
     // NOTE: 构建 panels
     const rankingHeaderEntries = Object.entries(RANKING_HEADER_AOX);
