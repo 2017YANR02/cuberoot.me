@@ -144,14 +144,18 @@ export class BestRound extends GroupedStatistic {
     });
 
     // NOTE: 获取非 333mbf 的所有行
-    const rawRows = await this.queryResults();
+    let rawRows: RowDataPacket[] | null = await this.queryResults();
 
     // NOTE: 合并 333mbf 数据（带 event_id 标记）
     const enrichedMbf = mbfRows.map(r => ({ ...r, event_id: '333mbf' }));
-    const allRows = [...rawRows, ...enrichedMbf] as RowDataPacket[];
+    let allRows: RowDataPacket[] | null = [...rawRows, ...enrichedMbf] as RowDataPacket[];
+    rawRows = null; // NOTE: rawRows 已被合并到 allRows，释放
 
     // NOTE: 调用 transform
     const grouped = this.transformWithMbf(allRows, mbfRows);
+    // NOTE: 照搬 Ruby 内存管理——transform 完成后释放原始数据
+    allRows = null;
+    if (global.gc) global.gc();
 
     const headerEntries = Object.entries(this.tableHeader);
 

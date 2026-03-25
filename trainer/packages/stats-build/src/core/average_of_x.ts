@@ -229,7 +229,7 @@ export abstract class AverageOfX extends GroupedStatistic {
 
   // NOTE: 覆写 toJson——双视图 panels
   async toJson(): Promise<StatJson> {
-    const rawRows = await this.queryResults();
+    let rawRows: RowDataPacket[] | null = await this.queryResults();
 
     const rankingDataAll: [string, unknown[][]][] = [];
     const historyDataAll: [string, unknown[][]][] = [];
@@ -299,6 +299,10 @@ export abstract class AverageOfX extends GroupedStatistic {
 
       historyDataAll.push([eventName, historyRows.reverse()]);
     }
+
+    // NOTE: 照搬 Ruby 内存管理——所有 event 处理完后释放原始查询结果
+    rawRows = null;
+    if (global.gc) global.gc();
 
     // NOTE: 构建 panels
     const rankingHeaderEntries = Object.entries(RANKING_HEADER_AOX);

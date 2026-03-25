@@ -32,8 +32,11 @@ export class AverageOf extends Statistic {
       const mod = await def.module();
       const StatClass = Object.values(mod).find(v => typeof v === 'function') as
         new () => Statistic;
-      const inst = new StatClass();
+      let inst: InstanceType<typeof StatClass> | null = new StatClass();
       const sub = await inst.toJson();
+      // NOTE: 照搬 Ruby — 子统计完成后释放实例
+      inst = null;
+      if (global.gc) global.gc();
 
       metricPanels.push({
         id: def.id,

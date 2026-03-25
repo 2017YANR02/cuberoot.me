@@ -94,7 +94,7 @@ export class MbfAverage extends Statistic {
   // NOTE: 执行核心计算——同时生成 ranking 和 history 数据
   private async computeData(): Promise<void> {
     if (this._computed) return;
-    const queryResults = await this.queryResults();
+    let queryResults: RowDataPacket[] | null = await this.queryResults();
 
     // --- 333mbf ---
     const computed: Array<{
@@ -110,6 +110,9 @@ export class MbfAverage extends Statistic {
       const mo3 = this.mbfMo3(v1, v2, v3);
       computed.push({ row: r, metric: mo3, v1, v2, v3 });
     }
+    // NOTE: 照搬 Ruby 内存管理——遍历完成后释放原始查询结果
+    queryResults = null;
+    if (global.gc) global.gc();
 
     // NOTE: 按日期排序
     computed.sort((a, b) => {
