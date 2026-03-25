@@ -14,8 +14,11 @@ export abstract class GroupedStatistic extends Statistic {
   // 与 Ruby grouped_statistic.rb 的 markdown 方法对应：
   //   按 event 分组，每组一个 section，空 section 被跳过
   async toJson(): Promise<StatJson> {
-    const rawRows = await this.queryResults();
+    let rawRows: RowDataPacket[] | null = await this.queryResults();
     const grouped = this.transform(rawRows);
+    // NOTE: 照搬 Ruby 内存管理——transform 完成后释放原始查询结果
+    rawRows = null;
+    if (global.gc) global.gc();
 
     const headerEntries = Object.entries(this.tableHeader);
 

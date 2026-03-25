@@ -47,11 +47,14 @@ export class WrMetric extends Statistic {
       const mod = await def.module();
       const StatClass = Object.values(mod).find(v => typeof v === 'function') as
         new () => Statistic;
-      const inst = new StatClass();
+      let inst: InstanceType<typeof StatClass> | null = new StatClass();
       const sub = await inst.toJson();
+      // NOTE: 照搬 Ruby — 子统计完成后释放实例
+      inst = null;
+      if (global.gc) global.gc();
 
-      const t = performance.now();
-      console.log(`  [WrMetric] ${def.label} done in ${((performance.now() - t) / 1000).toFixed(1)}s`);
+      const mem = Math.round(process.memoryUsage.rss() / 1024 / 1024);
+      console.log(`  [WrMetric] ${def.label} done [${mem}MB]`);
 
       // NOTE: 每个子统计的 panels 直接提升为 MetricPanel 的 panels
       metricPanels.push({
