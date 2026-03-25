@@ -30,6 +30,8 @@ const WcaStatsPage = lazy(() => import('./pages/wca_stats/WcaStatsPage'));
 const WcaStatsIndex = lazy(() => import('./pages/wca_stats/WcaStatsIndex'));
 // NOTE: Upcoming Comps 懒加载 — 顶尖选手近期比赛追踪
 const UpcomingCompsPage = lazy(() => import('./pages/UpcomingCompsPage'));
+// NOTE: iframe 包装页 — 嵌入未迁移的外部模块（Solver/Alg Trainer/csTimer）
+const IframePage = lazy(() => import('./pages/IframePage'));
 
 function App() {
   return (
@@ -63,6 +65,10 @@ function App() {
         <Route path="/recon/:id" element={<Suspense fallback={<div>Loading...</div>}><ReconDetailPage /></Suspense>} />
         {/* Upcoming Comps — 顶尖选手近期比赛追踪 */}
         <Route path="/upcoming-comps" element={<Suspense fallback={<div>Loading...</div>}><UpcomingCompsPage /></Suspense>} />
+        {/* NOTE: iframe 包装路由 — 嵌入未迁移模块，零改动上游代码 */}
+        <Route path="/solver" element={<Suspense fallback={<div>Loading...</div>}><IframePage src="/solver/" title="Solver" /></Suspense>} />
+        <Route path="/alg-trainers" element={<Suspense fallback={<div>Loading...</div>}><IframePage src="/alg_trainers/" title="Alg Trainer" /></Suspense>} />
+        <Route path="/cstimer" element={<Suspense fallback={<div>Loading...</div>}><IframePage src="/cstimer/" title="csTimer" /></Suspense>} />
         {/* WCA Stats — 统计数据展示 */}
         <Route path="/wca-stats" element={<Suspense fallback={<div>Loading...</div>}><WcaStatsIndex /></Suspense>} />
         <Route path="/wca-stats/:statId" element={<Suspense fallback={<div>Loading...</div>}><WcaStatsPage /></Suspense>} />
