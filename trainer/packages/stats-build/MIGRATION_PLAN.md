@@ -118,14 +118,13 @@ interface StatJson {
 | **索引页** | `bin/compute_index.rb` | ✅ `src/bin/compute_index.ts` | 6 分类 63 统计 JSON（无需 MySQL） |
 | **CI workflow** | `.github/workflows/stats.yml` | ❌ 需修改为 Node.js | 加 `setup-node` + `--expose-gc --max-old-space-size=6144` |
 
-### 3.2 前端（可独立于 CI）
+### 3.2 前端（✅ 全部完成）
 
 | 页面 | 说明 | 当前状态 |
 |------|------|---------|
-| `WcaStatsPage.tsx` | 支持 `panels`（Tab 切换双视图） | ❌ 仅支持 `rows` |
-| `WcaStatsPage.tsx` | 支持 `sections`（多分节展示） | ❌ |
-| `WcaStatsPage.tsx` | 支持 `metricPanels`（多级面板） | ❌ |
-| `WcaStatsIndex.tsx` | 索引页 | ❌ 不存在 |
+| `WcaStatsPage.tsx` | 支持 `rows`/`sections`/`panels`/`metricPanels` 4 种模式 | ✅ |
+| `WcaStatsIndex.tsx` | 索引页（6 分类卡片网格） | ✅ |
+| 路由 `/wca-stats` | 索引页路由 | ✅ |
 
 ### 3.3 验证工作
 
