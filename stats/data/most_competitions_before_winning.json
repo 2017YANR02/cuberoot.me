@@ -26,62 +26,6 @@
   ],
   "sections": [
     {
-      "title": "2x2x2 Cube",
-      "titleZh": "二阶魔方",
-      "rows": [
-        [
-          118,
-          "[Piotr Olszewski](https://www.worldcubeassociation.org/persons/2013OLSZ02)",
-          "[Kolla Winter Cup 2024](https://www.worldcubeassociation.org/competitions/KollaWinterCup2024)"
-        ],
-        [
-          114,
-          "[Alwin Rölz](https://www.worldcubeassociation.org/persons/2016ROLZ01)",
-          "[Swisscubing Cup IV 2024](https://www.worldcubeassociation.org/competitions/SwisscubingCupIV2024)"
-        ],
-        [
-          112,
-          "[Eduard Esteban García Domínguez](https://www.worldcubeassociation.org/persons/2011EDUA01)",
-          "[Belalcázar 2023](https://www.worldcubeassociation.org/competitions/Belalcazar2023)"
-        ],
-        [
-          104,
-          "[Anthony Lafourcade](https://www.worldcubeassociation.org/persons/2014LAFO01)",
-          "[Là C'est Gesté 2026](https://www.worldcubeassociation.org/competitions/LaCestGeste2026)"
-        ],
-        [
-          104,
-          "[Diego Alejandro Casas Jimenez](https://www.worldcubeassociation.org/persons/2014JIME05)",
-          "[San Gil Plaza 2023](https://www.worldcubeassociation.org/competitions/SanGilPlaza2023)"
-        ],
-        [
-          98,
-          "[Ron van Bruchem](https://www.worldcubeassociation.org/persons/2003BRUC01)",
-          "[Cuban Open 2016](https://www.worldcubeassociation.org/competitions/CubanOpen2016)"
-        ],
-        [
-          88,
-          "[Chao-Che Chung (鍾肇哲)](https://www.worldcubeassociation.org/persons/2012CHON03)",
-          "[Cambodia Championship 2024](https://www.worldcubeassociation.org/competitions/CambodiaChampionship2024)"
-        ],
-        [
-          88,
-          "[Billie Hammill](https://www.worldcubeassociation.org/persons/2015HAMM01)",
-          "[North Highlands Summer 2025](https://www.worldcubeassociation.org/competitions/NorthHighlandsSummer2025)"
-        ],
-        [
-          87,
-          "[Daniel Mullen](https://www.worldcubeassociation.org/persons/2016MULL04)",
-          "[Honolulu Hoʻoilo 2025](https://www.worldcubeassociation.org/competitions/HonoluluHooilo2025)"
-        ],
-        [
-          79,
-          "[Hassan Khanani](https://www.worldcubeassociation.org/persons/2018KHAN26)",
-          "[CMT Frisco 2023](https://www.worldcubeassociation.org/competitions/CMTFrisco2023)"
-        ]
-      ]
-    },
-    {
       "title": "Rubik's Cube",
       "titleZh": "三阶魔方",
       "rows": [
@@ -134,6 +78,62 @@
           97,
           "[Arthur Garcin](https://www.worldcubeassociation.org/persons/2014GARC27)",
           "[Basauri Open 2023](https://www.worldcubeassociation.org/competitions/BasauriOpen2023)"
+        ]
+      ]
+    },
+    {
+      "title": "2x2x2 Cube",
+      "titleZh": "二阶魔方",
+      "rows": [
+        [
+          118,
+          "[Piotr Olszewski](https://www.worldcubeassociation.org/persons/2013OLSZ02)",
+          "[Kolla Winter Cup 2024](https://www.worldcubeassociation.org/competitions/KollaWinterCup2024)"
+        ],
+        [
+          114,
+          "[Alwin Rölz](https://www.worldcubeassociation.org/persons/2016ROLZ01)",
+          "[Swisscubing Cup IV 2024](https://www.worldcubeassociation.org/competitions/SwisscubingCupIV2024)"
+        ],
+        [
+          112,
+          "[Eduard Esteban García Domínguez](https://www.worldcubeassociation.org/persons/2011EDUA01)",
+          "[Belalcázar 2023](https://www.worldcubeassociation.org/competitions/Belalcazar2023)"
+        ],
+        [
+          104,
+          "[Anthony Lafourcade](https://www.worldcubeassociation.org/persons/2014LAFO01)",
+          "[Là C'est Gesté 2026](https://www.worldcubeassociation.org/competitions/LaCestGeste2026)"
+        ],
+        [
+          104,
+          "[Diego Alejandro Casas Jimenez](https://www.worldcubeassociation.org/persons/2014JIME05)",
+          "[San Gil Plaza 2023](https://www.worldcubeassociation.org/competitions/SanGilPlaza2023)"
+        ],
+        [
+          98,
+          "[Ron van Bruchem](https://www.worldcubeassociation.org/persons/2003BRUC01)",
+          "[Cuban Open 2016](https://www.worldcubeassociation.org/competitions/CubanOpen2016)"
+        ],
+        [
+          88,
+          "[Chao-Che Chung (鍾肇哲)](https://www.worldcubeassociation.org/persons/2012CHON03)",
+          "[Cambodia Championship 2024](https://www.worldcubeassociation.org/competitions/CambodiaChampionship2024)"
+        ],
+        [
+          88,
+          "[Billie Hammill](https://www.worldcubeassociation.org/persons/2015HAMM01)",
+          "[North Highlands Summer 2025](https://www.worldcubeassociation.org/competitions/NorthHighlandsSummer2025)"
+        ],
+        [
+          87,
+          "[Daniel Mullen](https://www.worldcubeassociation.org/persons/2016MULL04)",
+          "[Honolulu Hoʻoilo 2025](https://www.worldcubeassociation.org/competitions/HonoluluHooilo2025)"
+        ],
+        [
+          79,
+          "[Hassan Khanani](https://www.worldcubeassociation.org/persons/2018KHAN26)",
+          "[CMT Frisco 2023](https://www.worldcubeassociation.org/competitions/CMTFrisco2023)"
         ]
       ]
     },

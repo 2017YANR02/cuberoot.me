@@ -38,82 +38,6 @@
   ],
   "sections": [
     {
-      "title": "2x2x2 Cube",
-      "titleZh": "二阶魔方",
-      "rows": [
-        [
-          "[Teodor Zajder](https://www.worldcubeassociation.org/persons/2021ZAJD03)",
-          "**0.95**",
-          "1.28",
-          "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/all#e222_f)",
-          4
-        ],
-        [
-          "[Ethan Zhuang](https://www.worldcubeassociation.org/persons/2018ZHUA10)",
-          "**0.98**",
-          "1.29",
-          "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/all#e222_f)",
-          5
-        ],
-        [
-          "[Luke Garrett](https://www.worldcubeassociation.org/persons/2017GARR05)",
-          "**1.03**",
-          "1.32",
-          "[Connecticut Championship 2025](https://www.worldcubeassociation.org/competitions/ConnecticutChampionship2025/results/all#e222_f)",
-          4
-        ],
-        [
-          "[Brian Johnson](https://www.worldcubeassociation.org/persons/2013JOHN10)",
-          "**1.17**",
-          "1.35",
-          "[CubingUSA All-Stars 2025](https://www.worldcubeassociation.org/competitions/CubingUSAAllStars2025/results/all#e222_f)",
-          4
-        ],
-        [
-          "[Ethan Zhuang](https://www.worldcubeassociation.org/persons/2018ZHUA10)",
-          "**0.90**",
-          "1.36",
-          "[Cincinnati Open 2025](https://www.worldcubeassociation.org/competitions/CincinnatiOpen2025/results/all#e222_f)",
-          4
-        ],
-        [
-          "[Ayden Dincher](https://www.worldcubeassociation.org/persons/2022DINC01)",
-          "**1.19**",
-          "1.37",
-          "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/all#e222_f)",
-          6
-        ],
-        [
-          "[Antonie Paterakis](https://www.worldcubeassociation.org/persons/2012PATE01)",
-          "**1.01**",
-          "1.38",
-          "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/all#e222_f)",
-          7
-        ],
-        [
-          "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
-          "**0.87**",
-          "1.39",
-          "[WCA World Championship 2023](https://www.worldcubeassociation.org/competitions/WC2023/results/all#e222_f)",
-          4
-        ],
-        [
-          "[Nicolás Sánchez](https://www.worldcubeassociation.org/persons/2015SANC11)",
-          "**1.20**",
-          "1.39",
-          "[Atlanta Algs at AIS Autumn 2025](https://www.worldcubeassociation.org/competitions/AtlantaAlgsatAISAutumn2025/results/all#e222_f)",
-          4
-        ],
-        [
-          "[Micah Heckerling](https://www.worldcubeassociation.org/persons/2023HECK01)",
-          "**1.02**",
-          "1.40",
-          "[Atlanta Algs at AIS Autumn 2025](https://www.worldcubeassociation.org/competitions/AtlantaAlgsatAISAutumn2025/results/all#e222_f)",
-          5
-        ]
-      ]
-    },
-    {
       "title": "Rubik's Cube",
       "titleZh": "三阶魔方",
       "rows": [
@@ -186,6 +110,82 @@
           "5.44",
           "[Hangzhou Open 2024](https://www.worldcubeassociation.org/competitions/HangzhouOpen2024/results/all#e333_f)",
           4
+        ]
+      ]
+    },
+    {
+      "title": "2x2x2 Cube",
+      "titleZh": "二阶魔方",
+      "rows": [
+        [
+          "[Teodor Zajder](https://www.worldcubeassociation.org/persons/2021ZAJD03)",
+          "**0.95**",
+          "1.28",
+          "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/all#e222_f)",
+          4
+        ],
+        [
+          "[Ethan Zhuang](https://www.worldcubeassociation.org/persons/2018ZHUA10)",
+          "**0.98**",
+          "1.29",
+          "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/all#e222_f)",
+          5
+        ],
+        [
+          "[Luke Garrett](https://www.worldcubeassociation.org/persons/2017GARR05)",
+          "**1.03**",
+          "1.32",
+          "[Connecticut Championship 2025](https://www.worldcubeassociation.org/competitions/ConnecticutChampionship2025/results/all#e222_f)",
+          4
+        ],
+        [
+          "[Brian Johnson](https://www.worldcubeassociation.org/persons/2013JOHN10)",
+          "**1.17**",
+          "1.35",
+          "[CubingUSA All-Stars 2025](https://www.worldcubeassociation.org/competitions/CubingUSAAllStars2025/results/all#e222_f)",
+          4
+        ],
+        [
+          "[Ethan Zhuang](https://www.worldcubeassociation.org/persons/2018ZHUA10)",
+          "**0.90**",
+          "1.36",
+          "[Cincinnati Open 2025](https://www.worldcubeassociation.org/competitions/CincinnatiOpen2025/results/all#e222_f)",
+          4
+        ],
+        [
+          "[Ayden Dincher](https://www.worldcubeassociation.org/persons/2022DINC01)",
+          "**1.19**",
+          "1.37",
+          "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/all#e222_f)",
+          6
+        ],
+        [
+          "[Antonie Paterakis](https://www.worldcubeassociation.org/persons/2012PATE01)",
+          "**1.01**",
+          "1.38",
+          "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/all#e222_f)",
+          7
+        ],
+        [
+          "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
+          "**0.87**",
+          "1.39",
+          "[WCA World Championship 2023](https://www.worldcubeassociation.org/competitions/WC2023/results/all#e222_f)",
+          4
+        ],
+        [
+          "[Nicolás Sánchez](https://www.worldcubeassociation.org/persons/2015SANC11)",
+          "**1.20**",
+          "1.39",
+          "[Atlanta Algs at AIS Autumn 2025](https://www.worldcubeassociation.org/competitions/AtlantaAlgsatAISAutumn2025/results/all#e222_f)",
+          4
+        ],
+        [
+          "[Micah Heckerling](https://www.worldcubeassociation.org/persons/2023HECK01)",
+          "**1.02**",
+          "1.40",
+          "[Atlanta Algs at AIS Autumn 2025](https://www.worldcubeassociation.org/competitions/AtlantaAlgsatAISAutumn2025/results/all#e222_f)",
+          5
         ]
       ]
     },

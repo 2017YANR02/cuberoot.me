@@ -38,158 +38,6 @@
   ],
   "sections": [
     {
-      "title": "2x2x2 Cube - Single",
-      "titleZh": "2x2x2 Cube - Single",
-      "rows": [
-        [
-          "[Jiazhou Li (李佳洲)](https://www.worldcubeassociation.org/persons/2016LIJI05)",
-          "**0.41**",
-          "China",
-          "[Beijing Winter 2026](https://www.worldcubeassociation.org/competitions/BeijingWinter2026)",
-          "0.41, 1.53, 1.13, 1.03, DNF"
-        ],
-        [
-          "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
-          "**0.45**",
-          "China",
-          "[Beijing Winter 2026](https://www.worldcubeassociation.org/competitions/BeijingWinter2026)",
-          "0.45, 1.17, 1.11, 0.97, 2.95"
-        ],
-        [
-          "[Kangze Wang (王康泽)](https://www.worldcubeassociation.org/persons/2021WANG25)",
-          "**0.52**",
-          "China",
-          "[Beijing Winter 2026](https://www.worldcubeassociation.org/competitions/BeijingWinter2026)",
-          "0.52, 3.34, 3.28, 1.52, 2.09"
-        ],
-        [
-          "[Jack Pan (潘杰康)](https://www.worldcubeassociation.org/persons/2012PANJ02)",
-          "**0.54**",
-          "China",
-          "[Beijing Winter 2026](https://www.worldcubeassociation.org/competitions/BeijingWinter2026)",
-          "0.54, 1.26, 2.10, DNF, 1.53"
-        ],
-        [
-          "[William Lavoie](https://www.worldcubeassociation.org/persons/2023LAVO01)",
-          "**0.55**",
-          "Canada",
-          "[Cubes Tranchés à Québec AM 2026](https://www.worldcubeassociation.org/competitions/CubesTranchesaQuebecAM2026)",
-          "1.59, 2.48, 3.20, 1.03, 0.55"
-        ],
-        [
-          "[Shubham Maharana](https://www.worldcubeassociation.org/persons/2016MAHA07)",
-          "**0.57**",
-          "India",
-          "[Pune Spring Open 2026](https://www.worldcubeassociation.org/competitions/PuneSpringOpen2026)",
-          "0.57, 3.40, 6.18, 2.20, 1.82"
-        ],
-        [
-          "[Dhruva Nikhil Jagtap](https://www.worldcubeassociation.org/persons/2023JAGT01)",
-          "**0.57**",
-          "India",
-          "[Pune Spring Open 2026](https://www.worldcubeassociation.org/competitions/PuneSpringOpen2026)",
-          "0.57, 1.28, 2.60, 2.18, 2.30"
-        ],
-        [
-          "[Erland Flodman](https://www.worldcubeassociation.org/persons/2023FLOD01)",
-          "**0.60**",
-          "Sweden",
-          "[Solvermalm 2026](https://www.worldcubeassociation.org/competitions/Solvermalm2026)",
-          "1.76, 1.04, 5.75, 0.60, 1.97"
-        ],
-        [
-          "[Benedikt Thurm](https://www.worldcubeassociation.org/persons/2023THUR01)",
-          "**0.62**",
-          "Germany",
-          "[Schwerin Open 2026](https://www.worldcubeassociation.org/competitions/SchwerinOpen2026)",
-          "1.95, 0.62, 1.70, 1.83, 1.98"
-        ],
-        [
-          "[Kaixi Guo (郭铠希)](https://www.worldcubeassociation.org/persons/2023GUOK01)",
-          "**0.63**",
-          "China",
-          "[Beijing Winter 2026](https://www.worldcubeassociation.org/competitions/BeijingWinter2026)",
-          "0.63, 1.60, 3.29, 1.26, 1.63"
-        ]
-      ]
-    },
-    {
-      "title": "2x2x2 Cube - Average",
-      "titleZh": "2x2x2 Cube - Average",
-      "rows": [
-        [
-          "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
-          "**0.87**",
-          "China",
-          "[Beijing Winter 2026](https://www.worldcubeassociation.org/competitions/BeijingWinter2026)",
-          "0.55, 0.78, 0.97, 1.28, 0.85"
-        ],
-        [
-          "[Nigel Phang](https://www.worldcubeassociation.org/persons/2022PHAN03)",
-          "**0.94**",
-          "Singapore",
-          "[Singapore Warm Up January 2026](https://www.worldcubeassociation.org/competitions/SingaporeWarmUpJanuary2026)",
-          "1.11, 0.78, 0.89, 0.83, 1.65"
-        ],
-        [
-          "[Sujan Feist](https://www.worldcubeassociation.org/persons/2016FEIS01)",
-          "**0.99**",
-          "United States",
-          "[Ohio University 2026](https://www.worldcubeassociation.org/competitions/OhioUniversity2026)",
-          "0.98, 0.91, 1.95, 1.09, 0.90"
-        ],
-        [
-          "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
-          "**0.99**",
-          "United States",
-          "[DFW Cubing Winter 2026](https://www.worldcubeassociation.org/competitions/DFWCubingWinter2026)",
-          "6.22, 0.85, 0.94, 0.75, 1.18"
-        ],
-        [
-          "[Teodor Zajder](https://www.worldcubeassociation.org/persons/2021ZAJD03)",
-          "**1.00**",
-          "Poland",
-          "[Amore Amorebieta Open 2026](https://www.worldcubeassociation.org/competitions/AmoreAmorebietaOpen2026)",
-          "1.10, 0.96, 0.93, 0.85, 1.56"
-        ],
-        [
-          "[Emanuel Schelin](https://www.worldcubeassociation.org/persons/2022SCHE13)",
-          "**1.01**",
-          "Sweden",
-          "[Alekuben 2026](https://www.worldcubeassociation.org/competitions/Alekuben2026)",
-          "0.81, 1.11, 0.85, 1.07, DNF"
-        ],
-        [
-          "[Olaf Kuźmiński](https://www.worldcubeassociation.org/persons/2018KUZM02)",
-          "**1.02**",
-          "Poland",
-          "[Cube4fun Lublin Winter 2026](https://www.worldcubeassociation.org/competitions/Cube4funLublinWinter2026)",
-          "1.20, 0.91, 1.39, 0.90, 0.94"
-        ],
-        [
-          "[Roman Rudakov](https://www.worldcubeassociation.org/persons/2022RUDA02)",
-          "**1.07**",
-          "Australia",
-          "[Don't Inverloch Up 2026](https://www.worldcubeassociation.org/competitions/DontInverlochUp2026)",
-          "1.14, 1.47, 1.17, 0.91, 0.72"
-        ],
-        [
-          "[Newken Nguyen (นิวเคน เหงียน)](https://www.worldcubeassociation.org/persons/2020NGUY04)",
-          "**1.12**",
-          "Canada",
-          "[Phitsanulok Big & Sides 2026](https://www.worldcubeassociation.org/competitions/PhitsanulokBigSides2026)",
-          "0.74, 0.99, DNF, 0.75, 1.63"
-        ],
-        [
-          "[Sebastian Lee](https://www.worldcubeassociation.org/persons/2021LEES01)",
-          "**1.17**",
-          "Australia",
-          "[Melbourne Summer 2026](https://www.worldcubeassociation.org/competitions/MelbourneSummer2026)",
-          "0.85, 1.31, 1.21, 1.00, 1.97"
-        ]
-      ]
-    },
-    {
       "title": "Rubik's Cube - Single",
       "titleZh": "Rubik's Cube - Single",
       "rows": [
@@ -338,6 +186,158 @@
           "China",
           "[Xianju NxN 2026](https://www.worldcubeassociation.org/competitions/XianjuNxN2026)",
           "4.93, 5.12, 5.77, 5.11, 5.13"
+        ]
+      ]
+    },
+    {
+      "title": "2x2x2 Cube - Single",
+      "titleZh": "2x2x2 Cube - Single",
+      "rows": [
+        [
+          "[Jiazhou Li (李佳洲)](https://www.worldcubeassociation.org/persons/2016LIJI05)",
+          "**0.41**",
+          "China",
+          "[Beijing Winter 2026](https://www.worldcubeassociation.org/competitions/BeijingWinter2026)",
+          "0.41, 1.53, 1.13, 1.03, DNF"
+        ],
+        [
+          "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
+          "**0.45**",
+          "China",
+          "[Beijing Winter 2026](https://www.worldcubeassociation.org/competitions/BeijingWinter2026)",
+          "0.45, 1.17, 1.11, 0.97, 2.95"
+        ],
+        [
+          "[Kangze Wang (王康泽)](https://www.worldcubeassociation.org/persons/2021WANG25)",
+          "**0.52**",
+          "China",
+          "[Beijing Winter 2026](https://www.worldcubeassociation.org/competitions/BeijingWinter2026)",
+          "0.52, 3.34, 3.28, 1.52, 2.09"
+        ],
+        [
+          "[Jack Pan (潘杰康)](https://www.worldcubeassociation.org/persons/2012PANJ02)",
+          "**0.54**",
+          "China",
+          "[Beijing Winter 2026](https://www.worldcubeassociation.org/competitions/BeijingWinter2026)",
+          "0.54, 1.26, 2.10, DNF, 1.53"
+        ],
+        [
+          "[William Lavoie](https://www.worldcubeassociation.org/persons/2023LAVO01)",
+          "**0.55**",
+          "Canada",
+          "[Cubes Tranchés à Québec AM 2026](https://www.worldcubeassociation.org/competitions/CubesTranchesaQuebecAM2026)",
+          "1.59, 2.48, 3.20, 1.03, 0.55"
+        ],
+        [
+          "[Shubham Maharana](https://www.worldcubeassociation.org/persons/2016MAHA07)",
+          "**0.57**",
+          "India",
+          "[Pune Spring Open 2026](https://www.worldcubeassociation.org/competitions/PuneSpringOpen2026)",
+          "0.57, 3.40, 6.18, 2.20, 1.82"
+        ],
+        [
+          "[Dhruva Nikhil Jagtap](https://www.worldcubeassociation.org/persons/2023JAGT01)",
+          "**0.57**",
+          "India",
+          "[Pune Spring Open 2026](https://www.worldcubeassociation.org/competitions/PuneSpringOpen2026)",
+          "0.57, 1.28, 2.60, 2.18, 2.30"
+        ],
+        [
+          "[Erland Flodman](https://www.worldcubeassociation.org/persons/2023FLOD01)",
+          "**0.60**",
+          "Sweden",
+          "[Solvermalm 2026](https://www.worldcubeassociation.org/competitions/Solvermalm2026)",
+          "1.76, 1.04, 5.75, 0.60, 1.97"
+        ],
+        [
+          "[Benedikt Thurm](https://www.worldcubeassociation.org/persons/2023THUR01)",
+          "**0.62**",
+          "Germany",
+          "[Schwerin Open 2026](https://www.worldcubeassociation.org/competitions/SchwerinOpen2026)",
+          "1.95, 0.62, 1.70, 1.83, 1.98"
+        ],
+        [
+          "[Kaixi Guo (郭铠希)](https://www.worldcubeassociation.org/persons/2023GUOK01)",
+          "**0.63**",
+          "China",
+          "[Beijing Winter 2026](https://www.worldcubeassociation.org/competitions/BeijingWinter2026)",
+          "0.63, 1.60, 3.29, 1.26, 1.63"
+        ]
+      ]
+    },
+    {
+      "title": "2x2x2 Cube - Average",
+      "titleZh": "2x2x2 Cube - Average",
+      "rows": [
+        [
+          "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
+          "**0.87**",
+          "China",
+          "[Beijing Winter 2026](https://www.worldcubeassociation.org/competitions/BeijingWinter2026)",
+          "0.55, 0.78, 0.97, 1.28, 0.85"
+        ],
+        [
+          "[Nigel Phang](https://www.worldcubeassociation.org/persons/2022PHAN03)",
+          "**0.94**",
+          "Singapore",
+          "[Singapore Warm Up January 2026](https://www.worldcubeassociation.org/competitions/SingaporeWarmUpJanuary2026)",
+          "1.11, 0.78, 0.89, 0.83, 1.65"
+        ],
+        [
+          "[Sujan Feist](https://www.worldcubeassociation.org/persons/2016FEIS01)",
+          "**0.99**",
+          "United States",
+          "[Ohio University 2026](https://www.worldcubeassociation.org/competitions/OhioUniversity2026)",
+          "0.98, 0.91, 1.95, 1.09, 0.90"
+        ],
+        [
+          "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
+          "**0.99**",
+          "United States",
+          "[DFW Cubing Winter 2026](https://www.worldcubeassociation.org/competitions/DFWCubingWinter2026)",
+          "6.22, 0.85, 0.94, 0.75, 1.18"
+        ],
+        [
+          "[Teodor Zajder](https://www.worldcubeassociation.org/persons/2021ZAJD03)",
+          "**1.00**",
+          "Poland",
+          "[Amore Amorebieta Open 2026](https://www.worldcubeassociation.org/competitions/AmoreAmorebietaOpen2026)",
+          "1.10, 0.96, 0.93, 0.85, 1.56"
+        ],
+        [
+          "[Emanuel Schelin](https://www.worldcubeassociation.org/persons/2022SCHE13)",
+          "**1.01**",
+          "Sweden",
+          "[Alekuben 2026](https://www.worldcubeassociation.org/competitions/Alekuben2026)",
+          "0.81, 1.11, 0.85, 1.07, DNF"
+        ],
+        [
+          "[Olaf Kuźmiński](https://www.worldcubeassociation.org/persons/2018KUZM02)",
+          "**1.02**",
+          "Poland",
+          "[Cube4fun Lublin Winter 2026](https://www.worldcubeassociation.org/competitions/Cube4funLublinWinter2026)",
+          "1.20, 0.91, 1.39, 0.90, 0.94"
+        ],
+        [
+          "[Roman Rudakov](https://www.worldcubeassociation.org/persons/2022RUDA02)",
+          "**1.07**",
+          "Australia",
+          "[Don't Inverloch Up 2026](https://www.worldcubeassociation.org/competitions/DontInverlochUp2026)",
+          "1.14, 1.47, 1.17, 0.91, 0.72"
+        ],
+        [
+          "[Newken Nguyen (นิวเคน เหงียน)](https://www.worldcubeassociation.org/persons/2020NGUY04)",
+          "**1.12**",
+          "Canada",
+          "[Phitsanulok Big & Sides 2026](https://www.worldcubeassociation.org/competitions/PhitsanulokBigSides2026)",
+          "0.74, 0.99, DNF, 0.75, 1.63"
+        ],
+        [
+          "[Sebastian Lee](https://www.worldcubeassociation.org/persons/2021LEES01)",
+          "**1.17**",
+          "Australia",
+          "[Melbourne Summer 2026](https://www.worldcubeassociation.org/competitions/MelbourneSummer2026)",
+          "0.85, 1.31, 1.21, 1.00, 1.97"
         ]
       ]
     },

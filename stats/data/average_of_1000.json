@@ -68,122 +68,6 @@
       ],
       "sections": [
         {
-          "title": "2x2x2 Cube",
-          "titleZh": "二阶魔方",
-          "rows": [
-            [
-              1,
-              "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
-              "1.41",
-              "USA",
-              "Sat Jun 11",
-              "[Bluegrass Spring 2022](https://www.worldcubeassociation.org/competitions/BluegrassSpring2022)",
-              "Sun Mar 01",
-              "[Liberty Science Center B 2026](https://www.worldcubeassociation.org/competitions/LibertyScienceCenterB2026)",
-              "1000 solves"
-            ],
-            [
-              2,
-              "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
-              "1.42",
-              "China",
-              "Fri Feb 17",
-              "[Singapore Championship 2023](https://www.worldcubeassociation.org/competitions/SingaporeChampionship2023)",
-              "Sat Mar 14",
-              "[Zhuhai Pi Day 2026](https://www.worldcubeassociation.org/competitions/ZhuhaiPiDay2026)",
-              "1000 solves"
-            ],
-            [
-              3,
-              "[Sujan Feist](https://www.worldcubeassociation.org/persons/2016FEIS01)",
-              "1.53",
-              "USA",
-              "Sun Apr 21",
-              "[Ohio State Spring 2024](https://www.worldcubeassociation.org/competitions/OhioStateSpring2024)",
-              "Sat Mar 07",
-              "[Ohio University 2026](https://www.worldcubeassociation.org/competitions/OhioUniversity2026)",
-              "1000 solves"
-            ],
-            [
-              4,
-              "[Alexey Tsvetkov](https://www.worldcubeassociation.org/persons/2017TSVE02)",
-              "1.57",
-              "Russia",
-              "Sat May 21",
-              "[Ponikva Open 2022](https://www.worldcubeassociation.org/competitions/PonikvaOpen2022)",
-              "Fri Aug 29",
-              "[Slovenian Nationals 2025](https://www.worldcubeassociation.org/competitions/SlovenianNationals2025)",
-              "1000 solves"
-            ],
-            [
-              5,
-              "[Antonie Paterakis](https://www.worldcubeassociation.org/persons/2012PATE01)",
-              "1.67",
-              "Netherlands",
-              "Sat Nov 18",
-              "[Belgian Open 2017](https://www.worldcubeassociation.org/competitions/BelgianOpen2017)",
-              "Sat Oct 18",
-              "[Take Your Time Ermelo 2025](https://www.worldcubeassociation.org/competitions/TakeYourTimeErmelo2025)",
-              "1000 solves"
-            ],
-            [
-              6,
-              "[Luke Garrett](https://www.worldcubeassociation.org/persons/2017GARR05)",
-              "1.82",
-              "USA",
-              "Sat Jul 01",
-              "[West Side Cube Clash 2023](https://www.worldcubeassociation.org/competitions/WestSideCubeClash2023)",
-              "Sat Dec 20",
-              "[Ohio Championship 2025](https://www.worldcubeassociation.org/competitions/OhioChampionship2025)",
-              "1000 solves"
-            ],
-            [
-              7,
-              "[Martin Vædele Egdal](https://www.worldcubeassociation.org/persons/2013EGDA02)",
-              "1.84",
-              "Denmark",
-              "Sat Aug 03",
-              "[SSL 3 Varberg 2019](https://www.worldcubeassociation.org/competitions/SSL3Varberg2019)",
-              "Wed Dec 31",
-              "[Festligt Farvel til 2025](https://www.worldcubeassociation.org/competitions/FestligtFarveltil2025)",
-              "1000 solves"
-            ],
-            [
-              8,
-              "[Olaf Kuźmiński](https://www.worldcubeassociation.org/persons/2018KUZM02)",
-              "2.10",
-              "Poland",
-              "Sat Nov 06",
-              "[Dragon Cubing 2021](https://www.worldcubeassociation.org/competitions/DragonCubing2021)",
-              "Sat Feb 28",
-              "[Cube4fun Lublin February 2026](https://www.worldcubeassociation.org/competitions/Cube4funLublinFebruary2026)",
-              "1000 solves"
-            ],
-            [
-              9,
-              "[Phoenix Patterson](https://www.worldcubeassociation.org/persons/2018PATT04)",
-              "2.18",
-              "Australia",
-              "Thu Jul 11",
-              "[WCA World Championship 2019](https://www.worldcubeassociation.org/competitions/WC2019)",
-              "Sat Mar 07",
-              "[NE Melbourne March Saturday 2026](https://www.worldcubeassociation.org/competitions/NEMelbourneMarchSaturday2026)",
-              "1000 solves"
-            ],
-            [
-              10,
-              "[Kevin Gerhardt](https://www.worldcubeassociation.org/persons/2013GERH01)",
-              "2.19",
-              "Germany",
-              "Sat Nov 14",
-              "[Franconia Winter 2015](https://www.worldcubeassociation.org/competitions/FranconiaWinter2015)",
-              "Thu Oct 09",
-              "[Rhein-Neckar Breakdown 2025](https://www.worldcubeassociation.org/competitions/RheinNeckarBreakdown2025)",
-              "1000 solves"
-            ]
-          ]
-        },
-        {
           "title": "Rubik's Cube",
           "titleZh": "三阶魔方",
           "rows": [
@@ -295,6 +179,122 @@
               "[Belgian Winter 2017](https://www.worldcubeassociation.org/competitions/BelgianWinter2017)",
               "Sun Apr 07",
               "[Lente Spring 2024](https://www.worldcubeassociation.org/competitions/LenteSpring2024)",
+              "1000 solves"
+            ]
+          ]
+        },
+        {
+          "title": "2x2x2 Cube",
+          "titleZh": "二阶魔方",
+          "rows": [
+            [
+              1,
+              "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
+              "1.41",
+              "USA",
+              "Sat Jun 11",
+              "[Bluegrass Spring 2022](https://www.worldcubeassociation.org/competitions/BluegrassSpring2022)",
+              "Sun Mar 01",
+              "[Liberty Science Center B 2026](https://www.worldcubeassociation.org/competitions/LibertyScienceCenterB2026)",
+              "1000 solves"
+            ],
+            [
+              2,
+              "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
+              "1.42",
+              "China",
+              "Fri Feb 17",
+              "[Singapore Championship 2023](https://www.worldcubeassociation.org/competitions/SingaporeChampionship2023)",
+              "Sat Mar 14",
+              "[Zhuhai Pi Day 2026](https://www.worldcubeassociation.org/competitions/ZhuhaiPiDay2026)",
+              "1000 solves"
+            ],
+            [
+              3,
+              "[Sujan Feist](https://www.worldcubeassociation.org/persons/2016FEIS01)",
+              "1.53",
+              "USA",
+              "Sun Apr 21",
+              "[Ohio State Spring 2024](https://www.worldcubeassociation.org/competitions/OhioStateSpring2024)",
+              "Sat Mar 07",
+              "[Ohio University 2026](https://www.worldcubeassociation.org/competitions/OhioUniversity2026)",
+              "1000 solves"
+            ],
+            [
+              4,
+              "[Alexey Tsvetkov](https://www.worldcubeassociation.org/persons/2017TSVE02)",
+              "1.57",
+              "Russia",
+              "Sat May 21",
+              "[Ponikva Open 2022](https://www.worldcubeassociation.org/competitions/PonikvaOpen2022)",
+              "Fri Aug 29",
+              "[Slovenian Nationals 2025](https://www.worldcubeassociation.org/competitions/SlovenianNationals2025)",
+              "1000 solves"
+            ],
+            [
+              5,
+              "[Antonie Paterakis](https://www.worldcubeassociation.org/persons/2012PATE01)",
+              "1.67",
+              "Netherlands",
+              "Sat Nov 18",
+              "[Belgian Open 2017](https://www.worldcubeassociation.org/competitions/BelgianOpen2017)",
+              "Sat Oct 18",
+              "[Take Your Time Ermelo 2025](https://www.worldcubeassociation.org/competitions/TakeYourTimeErmelo2025)",
+              "1000 solves"
+            ],
+            [
+              6,
+              "[Luke Garrett](https://www.worldcubeassociation.org/persons/2017GARR05)",
+              "1.82",
+              "USA",
+              "Sat Jul 01",
+              "[West Side Cube Clash 2023](https://www.worldcubeassociation.org/competitions/WestSideCubeClash2023)",
+              "Sat Dec 20",
+              "[Ohio Championship 2025](https://www.worldcubeassociation.org/competitions/OhioChampionship2025)",
+              "1000 solves"
+            ],
+            [
+              7,
+              "[Martin Vædele Egdal](https://www.worldcubeassociation.org/persons/2013EGDA02)",
+              "1.84",
+              "Denmark",
+              "Sat Aug 03",
+              "[SSL 3 Varberg 2019](https://www.worldcubeassociation.org/competitions/SSL3Varberg2019)",
+              "Wed Dec 31",
+              "[Festligt Farvel til 2025](https://www.worldcubeassociation.org/competitions/FestligtFarveltil2025)",
+              "1000 solves"
+            ],
+            [
+              8,
+              "[Olaf Kuźmiński](https://www.worldcubeassociation.org/persons/2018KUZM02)",
+              "2.10",
+              "Poland",
+              "Sat Nov 06",
+              "[Dragon Cubing 2021](https://www.worldcubeassociation.org/competitions/DragonCubing2021)",
+              "Sat Feb 28",
+              "[Cube4fun Lublin February 2026](https://www.worldcubeassociation.org/competitions/Cube4funLublinFebruary2026)",
+              "1000 solves"
+            ],
+            [
+              9,
+              "[Phoenix Patterson](https://www.worldcubeassociation.org/persons/2018PATT04)",
+              "2.18",
+              "Australia",
+              "Thu Jul 11",
+              "[WCA World Championship 2019](https://www.worldcubeassociation.org/competitions/WC2019)",
+              "Sat Mar 07",
+              "[NE Melbourne March Saturday 2026](https://www.worldcubeassociation.org/competitions/NEMelbourneMarchSaturday2026)",
+              "1000 solves"
+            ],
+            [
+              10,
+              "[Kevin Gerhardt](https://www.worldcubeassociation.org/persons/2013GERH01)",
+              "2.19",
+              "Germany",
+              "Sat Nov 14",
+              "[Franconia Winter 2015](https://www.worldcubeassociation.org/competitions/FranconiaWinter2015)",
+              "Thu Oct 09",
+              "[Rhein-Neckar Breakdown 2025](https://www.worldcubeassociation.org/competitions/RheinNeckarBreakdown2025)",
               "1000 solves"
             ]
           ]
@@ -966,166 +966,6 @@
       ],
       "sections": [
         {
-          "title": "2x2x2 Cube",
-          "titleZh": "二阶魔方",
-          "rows": [
-            [
-              "1.41",
-              "0.7%",
-              "24",
-              "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
-              "Sat Jun 11",
-              "[Bluegrass Spring 2022](https://www.worldcubeassociation.org/competitions/BluegrassSpring2022)",
-              "Sun Mar 01",
-              "[Liberty Science Center B 2026](https://www.worldcubeassociation.org/competitions/LibertyScienceCenterB2026)",
-              "1000 solves"
-            ],
-            [
-              "1.42",
-              "2.7%",
-              "204",
-              "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
-              "Sun Jan 09",
-              "[Gem City 2022](https://www.worldcubeassociation.org/competitions/GemCity2022)",
-              "Sat Aug 09",
-              "[Bucks County Cubing AM 2025](https://www.worldcubeassociation.org/competitions/BucksCountyCubingAM2025)",
-              "1000 solves"
-            ],
-            [
-              "1.46",
-              "0.7%",
-              "-195",
-              "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
-              "Sat May 01",
-              "[Guangdong Open 2021](https://www.worldcubeassociation.org/competitions/GuangdongOpen2021)",
-              "Fri Feb 20",
-              "[Singapore Championship 2026](https://www.worldcubeassociation.org/competitions/SingaporeChampionship2026)",
-              "1000 solves"
-            ],
-            [
-              "1.47",
-              "0.7%",
-              "0",
-              "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
-              "Sat May 01",
-              "[Guangdong Open 2021](https://www.worldcubeassociation.org/competitions/GuangdongOpen2021)",
-              "Fri Feb 20",
-              "[Singapore Championship 2026](https://www.worldcubeassociation.org/competitions/SingaporeChampionship2026)",
-              "1000 solves"
-            ],
-            [
-              "1.48",
-              "0.7%",
-              "0",
-              "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
-              "Sat May 01",
-              "[Guangdong Open 2021](https://www.worldcubeassociation.org/competitions/GuangdongOpen2021)",
-              "Fri Feb 20",
-              "[Singapore Championship 2026](https://www.worldcubeassociation.org/competitions/SingaporeChampionship2026)",
-              "1000 solves"
-            ],
-            [
-              "1.49",
-              "0.7%",
-              "0",
-              "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
-              "Sun Apr 04",
-              "[Beijing Spring AM 2021](https://www.worldcubeassociation.org/competitions/BeijingSpringAM2021)",
-              "Fri Feb 20",
-              "[Singapore Championship 2026](https://www.worldcubeassociation.org/competitions/SingaporeChampionship2026)",
-              "1000 solves"
-            ],
-            [
-              "1.50",
-              "0.7%",
-              "14",
-              "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
-              "Sun Mar 28",
-              "[Shenzhen Nanshan Morning 2021](https://www.worldcubeassociation.org/competitions/ShenzhenNanshanMorning2021)",
-              "Fri Feb 06",
-              "[Guangdong Revival & Rival 2026](https://www.worldcubeassociation.org/competitions/GuangdongRevivalRival2026)",
-              "1000 solves"
-            ],
-            [
-              "1.51",
-              "0.7%",
-              "0",
-              "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
-              "Sun Mar 28",
-              "[Shenzhen Nanshan Morning 2021](https://www.worldcubeassociation.org/competitions/ShenzhenNanshanMorning2021)",
-              "Fri Feb 06",
-              "[Guangdong Revival & Rival 2026](https://www.worldcubeassociation.org/competitions/GuangdongRevivalRival2026)",
-              "1000 solves"
-            ],
-            [
-              "1.52",
-              "3.2%",
-              "0",
-              "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
-              "Sun Mar 28",
-              "[Shenzhen Nanshan Morning 2021](https://www.worldcubeassociation.org/competitions/ShenzhenNanshanMorning2021)",
-              "Fri Feb 06",
-              "[Guangdong Revival & Rival 2026](https://www.worldcubeassociation.org/competitions/GuangdongRevivalRival2026)",
-              "1000 solves"
-            ],
-            [
-              "1.57",
-              "10.8%",
-              "161",
-              "[Alexey Tsvetkov](https://www.worldcubeassociation.org/persons/2017TSVE02)",
-              "Sat May 21",
-              "[Ponikva Open 2022](https://www.worldcubeassociation.org/competitions/PonikvaOpen2022)",
-              "Fri Aug 29",
-              "[Slovenian Nationals 2025](https://www.worldcubeassociation.org/competitions/SlovenianNationals2025)",
-              "1000 solves"
-            ],
-            [
-              "1.76",
-              "0.6%",
-              "14",
-              "[Sujan Feist](https://www.worldcubeassociation.org/persons/2016FEIS01)",
-              "Sat Sep 30",
-              "[Somerset September 2023](https://www.worldcubeassociation.org/competitions/SomersetSeptember2023)",
-              "Fri Aug 15",
-              "[Michigan Championship 2025](https://www.worldcubeassociation.org/competitions/MichiganChampionship2025)",
-              "1000 solves"
-            ],
-            [
-              "1.77",
-              "4.8%",
-              "0",
-              "[Sujan Feist](https://www.worldcubeassociation.org/persons/2016FEIS01)",
-              "Sat Sep 23",
-              "[Bulldog Fall 2023](https://www.worldcubeassociation.org/competitions/BulldogFall2023)",
-              "Fri Aug 15",
-              "[Michigan Championship 2025](https://www.worldcubeassociation.org/competitions/MichiganChampionship2025)",
-              "1000 solves"
-            ],
-            [
-              "1.86",
-              "20.5%",
-              "14",
-              "[Luke Garrett](https://www.worldcubeassociation.org/persons/2017GARR05)",
-              "Sat Apr 15",
-              "[The Legacy Begins 2023](https://www.worldcubeassociation.org/competitions/TheLegacyBegins2023)",
-              "Fri Aug 01",
-              "[Great Lakes Championship 2025](https://www.worldcubeassociation.org/competitions/GreatLakesChampionship2025)",
-              "1000 solves"
-            ],
-            [
-              "2.34",
-              "",
-              "0",
-              "[Kim Roger Haraldsen](https://www.worldcubeassociation.org/persons/2015LARS04)",
-              "Sat Nov 04",
-              "[Kjeller Open 2017](https://www.worldcubeassociation.org/competitions/KjellerOpen2017)",
-              "Fri Aug 01",
-              "[Norwegian Championship 2025](https://www.worldcubeassociation.org/competitions/NorwegianChampionship2025)",
-              "1000 solves"
-            ]
-          ]
-        },
-        {
           "title": "Rubik's Cube",
           "titleZh": "三阶魔方",
           "rows": [
@@ -1325,6 +1165,166 @@
               "[Husky Showdown 2018](https://www.worldcubeassociation.org/competitions/HuskyShowdown2018)",
               "Fri Apr 01",
               "[Ohio State Expo Open 2022](https://www.worldcubeassociation.org/competitions/OhioStateExpoOpen2022)",
+              "1000 solves"
+            ]
+          ]
+        },
+        {
+          "title": "2x2x2 Cube",
+          "titleZh": "二阶魔方",
+          "rows": [
+            [
+              "1.41",
+              "0.7%",
+              "24",
+              "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
+              "Sat Jun 11",
+              "[Bluegrass Spring 2022](https://www.worldcubeassociation.org/competitions/BluegrassSpring2022)",
+              "Sun Mar 01",
+              "[Liberty Science Center B 2026](https://www.worldcubeassociation.org/competitions/LibertyScienceCenterB2026)",
+              "1000 solves"
+            ],
+            [
+              "1.42",
+              "2.7%",
+              "204",
+              "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
+              "Sun Jan 09",
+              "[Gem City 2022](https://www.worldcubeassociation.org/competitions/GemCity2022)",
+              "Sat Aug 09",
+              "[Bucks County Cubing AM 2025](https://www.worldcubeassociation.org/competitions/BucksCountyCubingAM2025)",
+              "1000 solves"
+            ],
+            [
+              "1.46",
+              "0.7%",
+              "-195",
+              "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
+              "Sat May 01",
+              "[Guangdong Open 2021](https://www.worldcubeassociation.org/competitions/GuangdongOpen2021)",
+              "Fri Feb 20",
+              "[Singapore Championship 2026](https://www.worldcubeassociation.org/competitions/SingaporeChampionship2026)",
+              "1000 solves"
+            ],
+            [
+              "1.47",
+              "0.7%",
+              "0",
+              "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
+              "Sat May 01",
+              "[Guangdong Open 2021](https://www.worldcubeassociation.org/competitions/GuangdongOpen2021)",
+              "Fri Feb 20",
+              "[Singapore Championship 2026](https://www.worldcubeassociation.org/competitions/SingaporeChampionship2026)",
+              "1000 solves"
+            ],
+            [
+              "1.48",
+              "0.7%",
+              "0",
+              "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
+              "Sat May 01",
+              "[Guangdong Open 2021](https://www.worldcubeassociation.org/competitions/GuangdongOpen2021)",
+              "Fri Feb 20",
+              "[Singapore Championship 2026](https://www.worldcubeassociation.org/competitions/SingaporeChampionship2026)",
+              "1000 solves"
+            ],
+            [
+              "1.49",
+              "0.7%",
+              "0",
+              "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
+              "Sun Apr 04",
+              "[Beijing Spring AM 2021](https://www.worldcubeassociation.org/competitions/BeijingSpringAM2021)",
+              "Fri Feb 20",
+              "[Singapore Championship 2026](https://www.worldcubeassociation.org/competitions/SingaporeChampionship2026)",
+              "1000 solves"
+            ],
+            [
+              "1.50",
+              "0.7%",
+              "14",
+              "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
+              "Sun Mar 28",
+              "[Shenzhen Nanshan Morning 2021](https://www.worldcubeassociation.org/competitions/ShenzhenNanshanMorning2021)",
+              "Fri Feb 06",
+              "[Guangdong Revival & Rival 2026](https://www.worldcubeassociation.org/competitions/GuangdongRevivalRival2026)",
+              "1000 solves"
+            ],
+            [
+              "1.51",
+              "0.7%",
+              "0",
+              "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
+              "Sun Mar 28",
+              "[Shenzhen Nanshan Morning 2021](https://www.worldcubeassociation.org/competitions/ShenzhenNanshanMorning2021)",
+              "Fri Feb 06",
+              "[Guangdong Revival & Rival 2026](https://www.worldcubeassociation.org/competitions/GuangdongRevivalRival2026)",
+              "1000 solves"
+            ],
+            [
+              "1.52",
+              "3.2%",
+              "0",
+              "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
+              "Sun Mar 28",
+              "[Shenzhen Nanshan Morning 2021](https://www.worldcubeassociation.org/competitions/ShenzhenNanshanMorning2021)",
+              "Fri Feb 06",
+              "[Guangdong Revival & Rival 2026](https://www.worldcubeassociation.org/competitions/GuangdongRevivalRival2026)",
+              "1000 solves"
+            ],
+            [
+              "1.57",
+              "10.8%",
+              "161",
+              "[Alexey Tsvetkov](https://www.worldcubeassociation.org/persons/2017TSVE02)",
+              "Sat May 21",
+              "[Ponikva Open 2022](https://www.worldcubeassociation.org/competitions/PonikvaOpen2022)",
+              "Fri Aug 29",
+              "[Slovenian Nationals 2025](https://www.worldcubeassociation.org/competitions/SlovenianNationals2025)",
+              "1000 solves"
+            ],
+            [
+              "1.76",
+              "0.6%",
+              "14",
+              "[Sujan Feist](https://www.worldcubeassociation.org/persons/2016FEIS01)",
+              "Sat Sep 30",
+              "[Somerset September 2023](https://www.worldcubeassociation.org/competitions/SomersetSeptember2023)",
+              "Fri Aug 15",
+              "[Michigan Championship 2025](https://www.worldcubeassociation.org/competitions/MichiganChampionship2025)",
+              "1000 solves"
+            ],
+            [
+              "1.77",
+              "4.8%",
+              "0",
+              "[Sujan Feist](https://www.worldcubeassociation.org/persons/2016FEIS01)",
+              "Sat Sep 23",
+              "[Bulldog Fall 2023](https://www.worldcubeassociation.org/competitions/BulldogFall2023)",
+              "Fri Aug 15",
+              "[Michigan Championship 2025](https://www.worldcubeassociation.org/competitions/MichiganChampionship2025)",
+              "1000 solves"
+            ],
+            [
+              "1.86",
+              "20.5%",
+              "14",
+              "[Luke Garrett](https://www.worldcubeassociation.org/persons/2017GARR05)",
+              "Sat Apr 15",
+              "[The Legacy Begins 2023](https://www.worldcubeassociation.org/competitions/TheLegacyBegins2023)",
+              "Fri Aug 01",
+              "[Great Lakes Championship 2025](https://www.worldcubeassociation.org/competitions/GreatLakesChampionship2025)",
+              "1000 solves"
+            ],
+            [
+              "2.34",
+              "",
+              "0",
+              "[Kim Roger Haraldsen](https://www.worldcubeassociation.org/persons/2015LARS04)",
+              "Sat Nov 04",
+              "[Kjeller Open 2017](https://www.worldcubeassociation.org/competitions/KjellerOpen2017)",
+              "Fri Aug 01",
+              "[Norwegian Championship 2025](https://www.worldcubeassociation.org/competitions/NorwegianChampionship2025)",
               "1000 solves"
             ]
           ]

@@ -55,92 +55,6 @@
           ],
           "sections": [
             {
-              "title": "2x2x2 Cube",
-              "titleZh": "二阶魔方",
-              "rows": [
-                [
-                  1,
-                  "[Teodor Zajder](https://www.worldcubeassociation.org/persons/2021ZAJD03)",
-                  "0.47",
-                  "Poland",
-                  "2025-05-23",
-                  "[CFL Koluszki 2025](https://www.worldcubeassociation.org/competitions/CubeFactoryLeagueKoluszki2025)"
-                ],
-                [
-                  2,
-                  "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
-                  "0.50",
-                  "China",
-                  "2026-03-06",
-                  "[Xianju NxN 2026](https://www.worldcubeassociation.org/competitions/XianjuNxN2026)"
-                ],
-                [
-                  3,
-                  "[Luke Garrett](https://www.worldcubeassociation.org/persons/2017GARR05)",
-                  "0.55",
-                  "USA",
-                  "2025-08-08",
-                  "[Cincinnati Open 2025](https://www.worldcubeassociation.org/competitions/CincinnatiOpen2025)"
-                ],
-                [
-                  4,
-                  "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
-                  "0.58",
-                  "USA",
-                  "2024-07-05",
-                  "[Green Summer 2024](https://www.worldcubeassociation.org/competitions/GreenSummer2024)"
-                ],
-                [
-                  5,
-                  "[Sameer Aggarwal](https://www.worldcubeassociation.org/persons/2017AGGA01)",
-                  "0.59",
-                  "USA",
-                  "2025-04-18",
-                  "[Aldergrove Clock Fest 2025](https://www.worldcubeassociation.org/competitions/AldergroveClockFest2025)"
-                ],
-                [
-                  6,
-                  "[Jode Brewster](https://www.worldcubeassociation.org/persons/2016JONE04)",
-                  "0.60",
-                  "Australia",
-                  "2025-10-01",
-                  "[Australian Nationals 2025](https://www.worldcubeassociation.org/competitions/AustralianNationals2025)"
-                ],
-                [
-                  7,
-                  "[Jan Zych](https://www.worldcubeassociation.org/persons/2014ZYCH01)",
-                  "0.61",
-                  "Poland",
-                  "2021-09-30",
-                  "[Polish Championship 2021](https://www.worldcubeassociation.org/competitions/PolishChampionship2021)"
-                ],
-                [
-                  8,
-                  "[Chris Mills](https://www.worldcubeassociation.org/persons/2014MILL04)",
-                  "0.62",
-                  "New Zealand",
-                  "2025-10-01",
-                  "[Australian Nationals 2025](https://www.worldcubeassociation.org/competitions/AustralianNationals2025)"
-                ],
-                [
-                  9,
-                  "[Danny Morgan](https://www.worldcubeassociation.org/persons/2019MORG10)",
-                  "0.62",
-                  "United Kingdom",
-                  "2025-06-27",
-                  "[Bristol June 2025](https://www.worldcubeassociation.org/competitions/BristolJune2025)"
-                ],
-                [
-                  10,
-                  "[Kai-Wen Wang (王楷文)](https://www.worldcubeassociation.org/persons/2015WANG09)",
-                  "0.63",
-                  "Taiwan",
-                  "2025-08-01",
-                  "[Maru Cube Day Taiwan 2025](https://www.worldcubeassociation.org/competitions/MaruCubeDayTaiwan2025)"
-                ]
-              ]
-            },
-            {
               "title": "Rubik's Cube",
               "titleZh": "三阶魔方",
               "rows": [
@@ -223,6 +137,92 @@
                   "USA",
                   "2023-07-07",
                   "[Eugene Cubing 2023](https://www.worldcubeassociation.org/competitions/EugeneCubing2023)"
+                ]
+              ]
+            },
+            {
+              "title": "2x2x2 Cube",
+              "titleZh": "二阶魔方",
+              "rows": [
+                [
+                  1,
+                  "[Teodor Zajder](https://www.worldcubeassociation.org/persons/2021ZAJD03)",
+                  "0.47",
+                  "Poland",
+                  "2025-05-23",
+                  "[CFL Koluszki 2025](https://www.worldcubeassociation.org/competitions/CubeFactoryLeagueKoluszki2025)"
+                ],
+                [
+                  2,
+                  "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
+                  "0.50",
+                  "China",
+                  "2026-03-06",
+                  "[Xianju NxN 2026](https://www.worldcubeassociation.org/competitions/XianjuNxN2026)"
+                ],
+                [
+                  3,
+                  "[Luke Garrett](https://www.worldcubeassociation.org/persons/2017GARR05)",
+                  "0.55",
+                  "USA",
+                  "2025-08-08",
+                  "[Cincinnati Open 2025](https://www.worldcubeassociation.org/competitions/CincinnatiOpen2025)"
+                ],
+                [
+                  4,
+                  "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
+                  "0.58",
+                  "USA",
+                  "2024-07-05",
+                  "[Green Summer 2024](https://www.worldcubeassociation.org/competitions/GreenSummer2024)"
+                ],
+                [
+                  5,
+                  "[Sameer Aggarwal](https://www.worldcubeassociation.org/persons/2017AGGA01)",
+                  "0.59",
+                  "USA",
+                  "2025-04-18",
+                  "[Aldergrove Clock Fest 2025](https://www.worldcubeassociation.org/competitions/AldergroveClockFest2025)"
+                ],
+                [
+                  6,
+                  "[Jode Brewster](https://www.worldcubeassociation.org/persons/2016JONE04)",
+                  "0.60",
+                  "Australia",
+                  "2025-10-01",
+                  "[Australian Nationals 2025](https://www.worldcubeassociation.org/competitions/AustralianNationals2025)"
+                ],
+                [
+                  7,
+                  "[Jan Zych](https://www.worldcubeassociation.org/persons/2014ZYCH01)",
+                  "0.61",
+                  "Poland",
+                  "2021-09-30",
+                  "[Polish Championship 2021](https://www.worldcubeassociation.org/competitions/PolishChampionship2021)"
+                ],
+                [
+                  8,
+                  "[Chris Mills](https://www.worldcubeassociation.org/persons/2014MILL04)",
+                  "0.62",
+                  "New Zealand",
+                  "2025-10-01",
+                  "[Australian Nationals 2025](https://www.worldcubeassociation.org/competitions/AustralianNationals2025)"
+                ],
+                [
+                  9,
+                  "[Danny Morgan](https://www.worldcubeassociation.org/persons/2019MORG10)",
+                  "0.62",
+                  "United Kingdom",
+                  "2025-06-27",
+                  "[Bristol June 2025](https://www.worldcubeassociation.org/competitions/BristolJune2025)"
+                ],
+                [
+                  10,
+                  "[Kai-Wen Wang (王楷文)](https://www.worldcubeassociation.org/persons/2015WANG09)",
+                  "0.63",
+                  "Taiwan",
+                  "2025-08-01",
+                  "[Maru Cube Day Taiwan 2025](https://www.worldcubeassociation.org/competitions/MaruCubeDayTaiwan2025)"
                 ]
               ]
             },
@@ -1906,236 +1906,6 @@
           ],
           "sections": [
             {
-              "title": "2x2x2 Cube",
-              "titleZh": "二阶魔方",
-              "rows": [
-                [
-                  "0.47",
-                  "7.84%",
-                  "306",
-                  "[Teodor Zajder](https://www.worldcubeassociation.org/persons/2021ZAJD03)",
-                  "2025-05-23",
-                  "[CFL Koluszki 2025](https://www.worldcubeassociation.org/competitions/CubeFactoryLeagueKoluszki2025)"
-                ],
-                [
-                  "0.51",
-                  "8.93%",
-                  "329",
-                  "[Teodor Zajder](https://www.worldcubeassociation.org/persons/2021ZAJD03)",
-                  "2024-06-28",
-                  "[GLS IV 2024](https://www.worldcubeassociation.org/competitions/GdanskaLigaSpeedcubinguIV2024)"
-                ],
-                [
-                  "0.56",
-                  "8.20%",
-                  "447",
-                  "[Luke Garrett](https://www.worldcubeassociation.org/persons/2017GARR05)",
-                  "2023-04-08",
-                  "[Washtenaw Spring B 2023](https://www.worldcubeassociation.org/competitions/WashtenawSpringB2023)"
-                ],
-                [
-                  "0.61",
-                  "14.08%",
-                  "555",
-                  "[Jan Zych](https://www.worldcubeassociation.org/persons/2014ZYCH01)",
-                  "2021-09-30",
-                  "[Polish Championship 2021](https://www.worldcubeassociation.org/competitions/PolishChampionship2021)"
-                ],
-                [
-                  "0.71",
-                  "8.97%",
-                  "1393",
-                  "[Yu-Kai Chen (陳宇楷)](https://www.worldcubeassociation.org/persons/2015CHEN56)",
-                  "2017-12-07",
-                  "[Taiwan Championship 2017](https://www.worldcubeassociation.org/competitions/TaiwanChampionship2017)"
-                ],
-                [
-                  "0.78",
-                  "17.02%",
-                  "510",
-                  "[Christopher Olson](https://www.worldcubeassociation.org/persons/2009OLSO01)",
-                  "2016-07-15",
-                  "[Saint Mary Scramble 2016](https://www.worldcubeassociation.org/competitions/SaintMaryScramble2016)"
-                ],
-                [
-                  "0.94",
-                  "6.00%",
-                  "210",
-                  "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
-                  "2015-12-18",
-                  "[Sydney Summer 2015](https://www.worldcubeassociation.org/competitions/SydneySummer2015)"
-                ],
-                [
-                  "1.00",
-                  "5.66%",
-                  "940",
-                  "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
-                  "2013-05-22",
-                  "[Cupcake Cubing 2013](https://www.worldcubeassociation.org/competitions/CupcakeCubing2013)"
-                ],
-                [
-                  "1.06",
-                  "10.92%",
-                  "446",
-                  "[Rowe Hessler](https://www.worldcubeassociation.org/persons/2007HESS01)",
-                  "2012-03-02",
-                  "[SJC Winter 2012](https://www.worldcubeassociation.org/competitions/SJCWinter2012)"
-                ],
-                [
-                  "1.19",
-                  "2.46%",
-                  "441",
-                  "[Rowe Hessler](https://www.worldcubeassociation.org/persons/2007HESS01)",
-                  "2010-12-17",
-                  "[Liberty Science 2010](https://www.worldcubeassociation.org/competitions/LibertyScience2010)"
-                ],
-                [
-                  "1.22",
-                  "11.59%",
-                  "28",
-                  "[Erik Akkersdijk](https://www.worldcubeassociation.org/persons/2005AKKE01)",
-                  "2010-11-19",
-                  "[MPEI Open 2010](https://www.worldcubeassociation.org/competitions/MPEIOpen2010)"
-                ],
-                [
-                  "1.38",
-                  "16.36%",
-                  "133",
-                  "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
-                  "2010-07-09",
-                  "[New Zealand Champs 2010](https://www.worldcubeassociation.org/competitions/NewZealand2010)"
-                ],
-                [
-                  "1.65",
-                  "7.30%",
-                  "70",
-                  "[Rowe Hessler](https://www.worldcubeassociation.org/persons/2007HESS01)",
-                  "2010-04-30",
-                  "[Safe Haven 2010](https://www.worldcubeassociation.org/competitions/SafeHaven2010)"
-                ],
-                [
-                  "1.78",
-                  "11.44%",
-                  "196",
-                  "[Erik Akkersdijk](https://www.worldcubeassociation.org/persons/2005AKKE01)",
-                  "2009-10-16",
-                  "[Dutch Open 2009](https://www.worldcubeassociation.org/competitions/DutchOpen2009)"
-                ],
-                [
-                  "2.01",
-                  "23.57%",
-                  "259",
-                  "[Edouard Chambon](https://www.worldcubeassociation.org/persons/2004CHAM01)",
-                  "2009-01-30",
-                  "[Swiss Open 2009](https://www.worldcubeassociation.org/competitions/SwissOpen2009)"
-                ],
-                [
-                  "2.63",
-                  "8.04%",
-                  "266",
-                  "[Łukasz Ciałoń](https://www.worldcubeassociation.org/persons/2005CIAL02)",
-                  "2008-05-09",
-                  "[Pabianice Open 2008](https://www.worldcubeassociation.org/competitions/PabianiceOpen2008)"
-                ],
-                [
-                  "2.86",
-                  "9.21%",
-                  "8",
-                  "[Edouard Chambon](https://www.worldcubeassociation.org/persons/2004CHAM01)",
-                  "2008-05-01",
-                  "[Barcelona Open 2008](https://www.worldcubeassociation.org/competitions/BarcelonaOpen2008)"
-                ],
-                [
-                  "3.15",
-                  "1.87%",
-                  "21",
-                  "[Edouard Chambon](https://www.worldcubeassociation.org/persons/2004CHAM01)",
-                  "2008-04-10",
-                  "[France 2008](https://www.worldcubeassociation.org/competitions/France2008)"
-                ],
-                [
-                  "3.21",
-                  "1.83%",
-                  "47",
-                  "[Łukasz Ciałoń](https://www.worldcubeassociation.org/persons/2005CIAL02)",
-                  "2008-02-23",
-                  "[Gdansk Open 2008](https://www.worldcubeassociation.org/competitions/GdanskOpen2008)"
-                ],
-                [
-                  "3.27",
-                  "0.30%",
-                  "142",
-                  "[Łukasz Ciałoń](https://www.worldcubeassociation.org/persons/2005CIAL02)",
-                  "2007-10-04",
-                  "[World Championship 2007](https://www.worldcubeassociation.org/competitions/WC2007)"
-                ],
-                [
-                  "3.28",
-                  "2.38%",
-                  "20",
-                  "[Łukasz Ciałoń](https://www.worldcubeassociation.org/persons/2005CIAL02)",
-                  "2007-09-14",
-                  "[Polish Open 2007](https://www.worldcubeassociation.org/competitions/PolishOpen2007)"
-                ],
-                [
-                  "3.36",
-                  "22.94%",
-                  "21",
-                  "[Mátyás Kuti](https://www.worldcubeassociation.org/persons/2006KUTI01)",
-                  "2007-08-24",
-                  "[Swedish Open 2007](https://www.worldcubeassociation.org/competitions/SwedishOpen2007)"
-                ],
-                [
-                  "4.36",
-                  "1.13%",
-                  "0",
-                  "[Mátyás Kuti](https://www.worldcubeassociation.org/persons/2006KUTI01)",
-                  "2007-08-24",
-                  "[Swedish Open 2007](https://www.worldcubeassociation.org/competitions/SwedishOpen2007)"
-                ],
-                [
-                  "4.41",
-                  "2.65%",
-                  "315",
-                  "[Erik Akkersdijk](https://www.worldcubeassociation.org/persons/2005AKKE01)",
-                  "2006-10-13",
-                  "[Dutch Open 2006](https://www.worldcubeassociation.org/competitions/DutchOpen2006)"
-                ],
-                [
-                  "4.53",
-                  "15.17%",
-                  "210",
-                  "[Gunnar Kantare Krig](https://www.worldcubeassociation.org/persons/2004KRIG01)",
-                  "2006-03-17",
-                  "[SveKub 2006](https://www.worldcubeassociation.org/competitions/Svekub2006)"
-                ],
-                [
-                  "5.34",
-                  "21.93%",
-                  "133",
-                  "[Leyan Lo](https://www.worldcubeassociation.org/persons/2004LOLE01)",
-                  "2005-11-04",
-                  "[World Championship 2005](https://www.worldcubeassociation.org/competitions/WC2005)"
-                ],
-                [
-                  "6.84",
-                  "44.62%",
-                  "56",
-                  "[Gunnar Kantare Krig](https://www.worldcubeassociation.org/persons/2004KRIG01)",
-                  "2005-09-09",
-                  "[Swedish Open 2005](https://www.worldcubeassociation.org/competitions/SwedishOpen2005)"
-                ],
-                [
-                  "12.35",
-                  "",
-                  "0",
-                  "[Stefan Kodrnja](https://www.worldcubeassociation.org/persons/2004KODR01)",
-                  "2005-09-09",
-                  "[Swedish Open 2005](https://www.worldcubeassociation.org/competitions/SwedishOpen2005)"
-                ]
-              ]
-            },
-            {
               "title": "Rubik's Cube",
               "titleZh": "三阶魔方",
               "rows": [
@@ -2594,6 +2364,236 @@
                   "[David Allen](https://www.worldcubeassociation.org/persons/2003ALLE01)",
                   "2003-08-22",
                   "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)"
+                ]
+              ]
+            },
+            {
+              "title": "2x2x2 Cube",
+              "titleZh": "二阶魔方",
+              "rows": [
+                [
+                  "0.47",
+                  "7.84%",
+                  "306",
+                  "[Teodor Zajder](https://www.worldcubeassociation.org/persons/2021ZAJD03)",
+                  "2025-05-23",
+                  "[CFL Koluszki 2025](https://www.worldcubeassociation.org/competitions/CubeFactoryLeagueKoluszki2025)"
+                ],
+                [
+                  "0.51",
+                  "8.93%",
+                  "329",
+                  "[Teodor Zajder](https://www.worldcubeassociation.org/persons/2021ZAJD03)",
+                  "2024-06-28",
+                  "[GLS IV 2024](https://www.worldcubeassociation.org/competitions/GdanskaLigaSpeedcubinguIV2024)"
+                ],
+                [
+                  "0.56",
+                  "8.20%",
+                  "447",
+                  "[Luke Garrett](https://www.worldcubeassociation.org/persons/2017GARR05)",
+                  "2023-04-08",
+                  "[Washtenaw Spring B 2023](https://www.worldcubeassociation.org/competitions/WashtenawSpringB2023)"
+                ],
+                [
+                  "0.61",
+                  "14.08%",
+                  "555",
+                  "[Jan Zych](https://www.worldcubeassociation.org/persons/2014ZYCH01)",
+                  "2021-09-30",
+                  "[Polish Championship 2021](https://www.worldcubeassociation.org/competitions/PolishChampionship2021)"
+                ],
+                [
+                  "0.71",
+                  "8.97%",
+                  "1393",
+                  "[Yu-Kai Chen (陳宇楷)](https://www.worldcubeassociation.org/persons/2015CHEN56)",
+                  "2017-12-07",
+                  "[Taiwan Championship 2017](https://www.worldcubeassociation.org/competitions/TaiwanChampionship2017)"
+                ],
+                [
+                  "0.78",
+                  "17.02%",
+                  "510",
+                  "[Christopher Olson](https://www.worldcubeassociation.org/persons/2009OLSO01)",
+                  "2016-07-15",
+                  "[Saint Mary Scramble 2016](https://www.worldcubeassociation.org/competitions/SaintMaryScramble2016)"
+                ],
+                [
+                  "0.94",
+                  "6.00%",
+                  "210",
+                  "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+                  "2015-12-18",
+                  "[Sydney Summer 2015](https://www.worldcubeassociation.org/competitions/SydneySummer2015)"
+                ],
+                [
+                  "1.00",
+                  "5.66%",
+                  "940",
+                  "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+                  "2013-05-22",
+                  "[Cupcake Cubing 2013](https://www.worldcubeassociation.org/competitions/CupcakeCubing2013)"
+                ],
+                [
+                  "1.06",
+                  "10.92%",
+                  "446",
+                  "[Rowe Hessler](https://www.worldcubeassociation.org/persons/2007HESS01)",
+                  "2012-03-02",
+                  "[SJC Winter 2012](https://www.worldcubeassociation.org/competitions/SJCWinter2012)"
+                ],
+                [
+                  "1.19",
+                  "2.46%",
+                  "441",
+                  "[Rowe Hessler](https://www.worldcubeassociation.org/persons/2007HESS01)",
+                  "2010-12-17",
+                  "[Liberty Science 2010](https://www.worldcubeassociation.org/competitions/LibertyScience2010)"
+                ],
+                [
+                  "1.22",
+                  "11.59%",
+                  "28",
+                  "[Erik Akkersdijk](https://www.worldcubeassociation.org/persons/2005AKKE01)",
+                  "2010-11-19",
+                  "[MPEI Open 2010](https://www.worldcubeassociation.org/competitions/MPEIOpen2010)"
+                ],
+                [
+                  "1.38",
+                  "16.36%",
+                  "133",
+                  "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+                  "2010-07-09",
+                  "[New Zealand Champs 2010](https://www.worldcubeassociation.org/competitions/NewZealand2010)"
+                ],
+                [
+                  "1.65",
+                  "7.30%",
+                  "70",
+                  "[Rowe Hessler](https://www.worldcubeassociation.org/persons/2007HESS01)",
+                  "2010-04-30",
+                  "[Safe Haven 2010](https://www.worldcubeassociation.org/competitions/SafeHaven2010)"
+                ],
+                [
+                  "1.78",
+                  "11.44%",
+                  "196",
+                  "[Erik Akkersdijk](https://www.worldcubeassociation.org/persons/2005AKKE01)",
+                  "2009-10-16",
+                  "[Dutch Open 2009](https://www.worldcubeassociation.org/competitions/DutchOpen2009)"
+                ],
+                [
+                  "2.01",
+                  "23.57%",
+                  "259",
+                  "[Edouard Chambon](https://www.worldcubeassociation.org/persons/2004CHAM01)",
+                  "2009-01-30",
+                  "[Swiss Open 2009](https://www.worldcubeassociation.org/competitions/SwissOpen2009)"
+                ],
+                [
+                  "2.63",
+                  "8.04%",
+                  "266",
+                  "[Łukasz Ciałoń](https://www.worldcubeassociation.org/persons/2005CIAL02)",
+                  "2008-05-09",
+                  "[Pabianice Open 2008](https://www.worldcubeassociation.org/competitions/PabianiceOpen2008)"
+                ],
+                [
+                  "2.86",
+                  "9.21%",
+                  "8",
+                  "[Edouard Chambon](https://www.worldcubeassociation.org/persons/2004CHAM01)",
+                  "2008-05-01",
+                  "[Barcelona Open 2008](https://www.worldcubeassociation.org/competitions/BarcelonaOpen2008)"
+                ],
+                [
+                  "3.15",
+                  "1.87%",
+                  "21",
+                  "[Edouard Chambon](https://www.worldcubeassociation.org/persons/2004CHAM01)",
+                  "2008-04-10",
+                  "[France 2008](https://www.worldcubeassociation.org/competitions/France2008)"
+                ],
+                [
+                  "3.21",
+                  "1.83%",
+                  "47",
+                  "[Łukasz Ciałoń](https://www.worldcubeassociation.org/persons/2005CIAL02)",
+                  "2008-02-23",
+                  "[Gdansk Open 2008](https://www.worldcubeassociation.org/competitions/GdanskOpen2008)"
+                ],
+                [
+                  "3.27",
+                  "0.30%",
+                  "142",
+                  "[Łukasz Ciałoń](https://www.worldcubeassociation.org/persons/2005CIAL02)",
+                  "2007-10-04",
+                  "[World Championship 2007](https://www.worldcubeassociation.org/competitions/WC2007)"
+                ],
+                [
+                  "3.28",
+                  "2.38%",
+                  "20",
+                  "[Łukasz Ciałoń](https://www.worldcubeassociation.org/persons/2005CIAL02)",
+                  "2007-09-14",
+                  "[Polish Open 2007](https://www.worldcubeassociation.org/competitions/PolishOpen2007)"
+                ],
+                [
+                  "3.36",
+                  "22.94%",
+                  "21",
+                  "[Mátyás Kuti](https://www.worldcubeassociation.org/persons/2006KUTI01)",
+                  "2007-08-24",
+                  "[Swedish Open 2007](https://www.worldcubeassociation.org/competitions/SwedishOpen2007)"
+                ],
+                [
+                  "4.36",
+                  "1.13%",
+                  "0",
+                  "[Mátyás Kuti](https://www.worldcubeassociation.org/persons/2006KUTI01)",
+                  "2007-08-24",
+                  "[Swedish Open 2007](https://www.worldcubeassociation.org/competitions/SwedishOpen2007)"
+                ],
+                [
+                  "4.41",
+                  "2.65%",
+                  "315",
+                  "[Erik Akkersdijk](https://www.worldcubeassociation.org/persons/2005AKKE01)",
+                  "2006-10-13",
+                  "[Dutch Open 2006](https://www.worldcubeassociation.org/competitions/DutchOpen2006)"
+                ],
+                [
+                  "4.53",
+                  "15.17%",
+                  "210",
+                  "[Gunnar Kantare Krig](https://www.worldcubeassociation.org/persons/2004KRIG01)",
+                  "2006-03-17",
+                  "[SveKub 2006](https://www.worldcubeassociation.org/competitions/Svekub2006)"
+                ],
+                [
+                  "5.34",
+                  "21.93%",
+                  "133",
+                  "[Leyan Lo](https://www.worldcubeassociation.org/persons/2004LOLE01)",
+                  "2005-11-04",
+                  "[World Championship 2005](https://www.worldcubeassociation.org/competitions/WC2005)"
+                ],
+                [
+                  "6.84",
+                  "44.62%",
+                  "56",
+                  "[Gunnar Kantare Krig](https://www.worldcubeassociation.org/persons/2004KRIG01)",
+                  "2005-09-09",
+                  "[Swedish Open 2005](https://www.worldcubeassociation.org/competitions/SwedishOpen2005)"
+                ],
+                [
+                  "12.35",
+                  "",
+                  "0",
+                  "[Stefan Kodrnja](https://www.worldcubeassociation.org/persons/2004KODR01)",
+                  "2005-09-09",
+                  "[Swedish Open 2005](https://www.worldcubeassociation.org/competitions/SwedishOpen2005)"
                 ]
               ]
             },
@@ -8260,92 +8260,6 @@
           ],
           "sections": [
             {
-              "title": "2x2x2 Cube",
-              "titleZh": "二阶魔方",
-              "rows": [
-                [
-                  1,
-                  "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
-                  "0.89",
-                  "China",
-                  "2025-05-30",
-                  "[gateway KLIA2 Cube Open 2025](https://www.worldcubeassociation.org/competitions/gatewayKLIA2CubeOpen2025)"
-                ],
-                [
-                  2,
-                  "[Nigel Phang](https://www.worldcubeassociation.org/persons/2022PHAN03)",
-                  "0.94",
-                  "Singapore",
-                  "2026-01-02",
-                  "[Singapore Warm Up January 2026](https://www.worldcubeassociation.org/competitions/SingaporeWarmUpJanuary2026)"
-                ],
-                [
-                  3,
-                  "[Sujan Feist](https://www.worldcubeassociation.org/persons/2016FEIS01)",
-                  "0.95",
-                  "USA",
-                  "2025-12-19",
-                  "[Ohio Championship 2025](https://www.worldcubeassociation.org/competitions/OhioChampionship2025)"
-                ],
-                [
-                  4,
-                  "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
-                  "0.95",
-                  "USA",
-                  "2025-06-12",
-                  "[Southeast Championship 2025](https://www.worldcubeassociation.org/competitions/SoutheastChampionship2025)"
-                ],
-                [
-                  5,
-                  "[Teodor Zajder](https://www.worldcubeassociation.org/persons/2021ZAJD03)",
-                  "0.99",
-                  "Poland",
-                  "2025-10-17",
-                  "[CFL Final Łódź 2025](https://www.worldcubeassociation.org/competitions/CFLFinalLodz2025)"
-                ],
-                [
-                  6,
-                  "[Roman Rudakov](https://www.worldcubeassociation.org/persons/2022RUDA02)",
-                  "1.07",
-                  "Australia",
-                  "2026-02-06",
-                  "[Don't Inverloch Up 2026](https://www.worldcubeassociation.org/competitions/DontInverlochUp2026)"
-                ],
-                [
-                  7,
-                  "[Emanuel Schelin](https://www.worldcubeassociation.org/persons/2022SCHE13)",
-                  "1.13",
-                  "Sweden",
-                  "2025-12-12",
-                  "[Götalandsmästerskapet 2025](https://www.worldcubeassociation.org/competitions/Gotalandsmasterskapet2025)"
-                ],
-                [
-                  8,
-                  "[Antonie Paterakis](https://www.worldcubeassociation.org/persons/2012PATE01)",
-                  "1.14",
-                  "Netherlands",
-                  "2025-02-07",
-                  "[Leersum Squared 2025](https://www.worldcubeassociation.org/competitions/LeersumSquared2025)"
-                ],
-                [
-                  9,
-                  "[Olaf Kuźmiński](https://www.worldcubeassociation.org/persons/2018KUZM02)",
-                  "1.14",
-                  "Poland",
-                  "2025-12-12",
-                  "[Gdańska LS Final 2025](https://www.worldcubeassociation.org/competitions/GLSFinal2025)"
-                ],
-                [
-                  10,
-                  "[Antoni Stojek](https://www.worldcubeassociation.org/persons/2022STOJ03)",
-                  "1.14",
-                  "Poland",
-                  "2024-10-04",
-                  "[Gdańska Liga Speedcubingu V 2024](https://www.worldcubeassociation.org/competitions/GdanskaLigaSpeedcubinguV2024)"
-                ]
-              ]
-            },
-            {
               "title": "Rubik's Cube",
               "titleZh": "三阶魔方",
               "rows": [
@@ -8428,6 +8342,92 @@
                   "China",
                   "2026-02-05",
                   "[Guangdong Revival & Rival 2026](https://www.worldcubeassociation.org/competitions/GuangdongRevivalRival2026)"
+                ]
+              ]
+            },
+            {
+              "title": "2x2x2 Cube",
+              "titleZh": "二阶魔方",
+              "rows": [
+                [
+                  1,
+                  "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
+                  "0.89",
+                  "China",
+                  "2025-05-30",
+                  "[gateway KLIA2 Cube Open 2025](https://www.worldcubeassociation.org/competitions/gatewayKLIA2CubeOpen2025)"
+                ],
+                [
+                  2,
+                  "[Nigel Phang](https://www.worldcubeassociation.org/persons/2022PHAN03)",
+                  "0.94",
+                  "Singapore",
+                  "2026-01-02",
+                  "[Singapore Warm Up January 2026](https://www.worldcubeassociation.org/competitions/SingaporeWarmUpJanuary2026)"
+                ],
+                [
+                  3,
+                  "[Sujan Feist](https://www.worldcubeassociation.org/persons/2016FEIS01)",
+                  "0.95",
+                  "USA",
+                  "2025-12-19",
+                  "[Ohio Championship 2025](https://www.worldcubeassociation.org/competitions/OhioChampionship2025)"
+                ],
+                [
+                  4,
+                  "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
+                  "0.95",
+                  "USA",
+                  "2025-06-12",
+                  "[Southeast Championship 2025](https://www.worldcubeassociation.org/competitions/SoutheastChampionship2025)"
+                ],
+                [
+                  5,
+                  "[Teodor Zajder](https://www.worldcubeassociation.org/persons/2021ZAJD03)",
+                  "0.99",
+                  "Poland",
+                  "2025-10-17",
+                  "[CFL Final Łódź 2025](https://www.worldcubeassociation.org/competitions/CFLFinalLodz2025)"
+                ],
+                [
+                  6,
+                  "[Roman Rudakov](https://www.worldcubeassociation.org/persons/2022RUDA02)",
+                  "1.07",
+                  "Australia",
+                  "2026-02-06",
+                  "[Don't Inverloch Up 2026](https://www.worldcubeassociation.org/competitions/DontInverlochUp2026)"
+                ],
+                [
+                  7,
+                  "[Emanuel Schelin](https://www.worldcubeassociation.org/persons/2022SCHE13)",
+                  "1.13",
+                  "Sweden",
+                  "2025-12-12",
+                  "[Götalandsmästerskapet 2025](https://www.worldcubeassociation.org/competitions/Gotalandsmasterskapet2025)"
+                ],
+                [
+                  8,
+                  "[Antonie Paterakis](https://www.worldcubeassociation.org/persons/2012PATE01)",
+                  "1.14",
+                  "Netherlands",
+                  "2025-02-07",
+                  "[Leersum Squared 2025](https://www.worldcubeassociation.org/competitions/LeersumSquared2025)"
+                ],
+                [
+                  9,
+                  "[Olaf Kuźmiński](https://www.worldcubeassociation.org/persons/2018KUZM02)",
+                  "1.14",
+                  "Poland",
+                  "2025-12-12",
+                  "[Gdańska LS Final 2025](https://www.worldcubeassociation.org/competitions/GLSFinal2025)"
+                ],
+                [
+                  10,
+                  "[Antoni Stojek](https://www.worldcubeassociation.org/persons/2022STOJ03)",
+                  "1.14",
+                  "Poland",
+                  "2024-10-04",
+                  "[Gdańska Liga Speedcubingu V 2024](https://www.worldcubeassociation.org/competitions/GdanskaLigaSpeedcubinguV2024)"
                 ]
               ]
             },
@@ -9939,428 +9939,6 @@
           ],
           "sections": [
             {
-              "title": "2x2x2 Cube",
-              "titleZh": "二阶魔方",
-              "rows": [
-                [
-                  "0.89",
-                  "4.30%",
-                  "299",
-                  "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
-                  "2025-05-30",
-                  "[gateway KLIA2 Cube Open 2025](https://www.worldcubeassociation.org/competitions/gatewayKLIA2CubeOpen2025)"
-                ],
-                [
-                  "0.93",
-                  "3.13%",
-                  "323",
-                  "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
-                  "2024-07-11",
-                  "[Australian Nationals 2024](https://www.worldcubeassociation.org/competitions/AustralianNationals2024)"
-                ],
-                [
-                  "0.96",
-                  "3.03%",
-                  "76",
-                  "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
-                  "2024-04-26",
-                  "[It's About Time Bloomsburg 2024](https://www.worldcubeassociation.org/competitions/ItsAboutTimeBloomsburg2024)"
-                ],
-                [
-                  "0.99",
-                  "1.98%",
-                  "13",
-                  "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
-                  "2024-04-13",
-                  "[Kunshan Open 2024](https://www.worldcubeassociation.org/competitions/KunshanOpen2024)"
-                ],
-                [
-                  "1.01",
-                  "1.94%",
-                  "35",
-                  "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
-                  "2024-03-09",
-                  "[Luoyang Spring 2024](https://www.worldcubeassociation.org/competitions/LuoyangSpring2024)"
-                ],
-                [
-                  "1.03",
-                  "2.83%",
-                  "653",
-                  "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
-                  "2022-05-26",
-                  "[Northeast Championship 2022](https://www.worldcubeassociation.org/competitions/NortheastChampionship2022)"
-                ],
-                [
-                  "1.06",
-                  "0.93%",
-                  "13",
-                  "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
-                  "2022-05-13",
-                  "[River Hill Spring 2022](https://www.worldcubeassociation.org/competitions/RiverHillSpring2022)"
-                ],
-                [
-                  "1.07",
-                  "1.83%",
-                  "49",
-                  "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
-                  "2022-03-25",
-                  "[Port Huron Speedcubing 2022](https://www.worldcubeassociation.org/competitions/PortHuronSpeedcubing2022)"
-                ],
-                [
-                  "1.09",
-                  "1.80%",
-                  "120",
-                  "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
-                  "2021-11-25",
-                  "[CubingUSA Western Champs 2021](https://www.worldcubeassociation.org/competitions/CubingUSAWesternChampionship2021)"
-                ],
-                [
-                  "1.11",
-                  "0.89%",
-                  "6",
-                  "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
-                  "2021-11-19",
-                  "[Pittsburgh Fall 2021](https://www.worldcubeassociation.org/competitions/PittsburghFall2021)"
-                ],
-                [
-                  "1.12",
-                  "11.81%",
-                  "21",
-                  "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
-                  "2021-10-29",
-                  "[Finnish Championship 2021](https://www.worldcubeassociation.org/competitions/FinnishChampionship2021)"
-                ],
-                [
-                  "1.27",
-                  "4.51%",
-                  "209",
-                  "[Jiazhou Li (李佳洲)](https://www.worldcubeassociation.org/persons/2016LIJI05)",
-                  "2021-04-03",
-                  "[Beijing Spring AM 2021](https://www.worldcubeassociation.org/competitions/BeijingSpringAM2021)"
-                ],
-                [
-                  "1.33",
-                  "3.62%",
-                  "535",
-                  "[Martin Vædele Egdal](https://www.worldcubeassociation.org/persons/2013EGDA02)",
-                  "2019-10-16",
-                  "[Nordic Championship 2019](https://www.worldcubeassociation.org/competitions/NordicChampionship2019)"
-                ],
-                [
-                  "1.38",
-                  "2.82%",
-                  "103",
-                  "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
-                  "2019-07-05",
-                  "[Warm Up Sydney 2019](https://www.worldcubeassociation.org/competitions/WarmUpSydney2019)"
-                ],
-                [
-                  "1.42",
-                  "2.07%",
-                  "287",
-                  "[Kevin Gerhardt](https://www.worldcubeassociation.org/persons/2013GERH01)",
-                  "2018-09-21",
-                  "[Monnem City Cubing 2018](https://www.worldcubeassociation.org/competitions/MonnemCityCubing2018)"
-                ],
-                [
-                  "1.45",
-                  "1.36%",
-                  "168",
-                  "[Maciej Czapiewski](https://www.worldcubeassociation.org/persons/2014CZAP01)",
-                  "2018-04-06",
-                  "[GLS Cup II 2018](https://www.worldcubeassociation.org/competitions/GLSCupII2018)"
-                ],
-                [
-                  "1.47",
-                  "9.26%",
-                  "141",
-                  "[Maciej Czapiewski](https://www.worldcubeassociation.org/persons/2014CZAP01)",
-                  "2017-11-16",
-                  "[Polish Nationals 2017](https://www.worldcubeassociation.org/competitions/PolishNationals2017)"
-                ],
-                [
-                  "1.62",
-                  "0.61%",
-                  "0",
-                  "[Maciej Czapiewski](https://www.worldcubeassociation.org/persons/2014CZAP01)",
-                  "2017-11-16",
-                  "[Polish Nationals 2017](https://www.worldcubeassociation.org/competitions/PolishNationals2017)"
-                ],
-                [
-                  "1.63",
-                  "0.61%",
-                  "314",
-                  "[Lucas Etter](https://www.worldcubeassociation.org/persons/2011ETTE01)",
-                  "2017-01-06",
-                  "[Dayton Winter 2017](https://www.worldcubeassociation.org/competitions/DaytonWinter2017)"
-                ],
-                [
-                  "1.64",
-                  "2.38%",
-                  "287",
-                  "[Lucas Etter](https://www.worldcubeassociation.org/persons/2011ETTE01)",
-                  "2016-03-25",
-                  "[MCC Alpha 2016](https://www.worldcubeassociation.org/competitions/MichiganCubingClubAlpha2016)"
-                ],
-                [
-                  "1.68",
-                  "1.75%",
-                  "288",
-                  "[Lucas Etter](https://www.worldcubeassociation.org/persons/2011ETTE01)",
-                  "2015-06-11",
-                  "[Indiana 2015](https://www.worldcubeassociation.org/competitions/Indiana2015)"
-                ],
-                [
-                  "1.71",
-                  "1.16%",
-                  "258",
-                  "[Lucas Etter](https://www.worldcubeassociation.org/persons/2011ETTE01)",
-                  "2014-09-26",
-                  "[Mishawaka Fall 2014](https://www.worldcubeassociation.org/competitions/MishawakaFall2014)"
-                ],
-                [
-                  "1.73",
-                  "6.49%",
-                  "112",
-                  "[Christopher Olson](https://www.worldcubeassociation.org/persons/2009OLSO01)",
-                  "2014-06-06",
-                  "[Iowa Corn Lovers 2014](https://www.worldcubeassociation.org/competitions/IowaCornLovers2014)"
-                ],
-                [
-                  "1.85",
-                  "8.42%",
-                  "70",
-                  "[Christopher Olson](https://www.worldcubeassociation.org/persons/2009OLSO01)",
-                  "2014-03-28",
-                  "[Dixon Spring 2014](https://www.worldcubeassociation.org/competitions/DixonSpring2014)"
-                ],
-                [
-                  "2.02",
-                  "6.91%",
-                  "77",
-                  "[Jayden McNeill](https://www.worldcubeassociation.org/persons/2012MCNE01)",
-                  "2014-01-10",
-                  "[Lifestyle Seasons Summer 2014](https://www.worldcubeassociation.org/competitions/LifestyleSeasonsSummer2014)"
-                ],
-                [
-                  "2.17",
-                  "4.41%",
-                  "526",
-                  "[Christopher Olson](https://www.worldcubeassociation.org/persons/2009OLSO01)",
-                  "2012-08-02",
-                  "[US Nationals 2012](https://www.worldcubeassociation.org/competitions/USNationals2012)"
-                ],
-                [
-                  "2.27",
-                  "1.30%",
-                  "41",
-                  "[Christopher Olson](https://www.worldcubeassociation.org/persons/2009OLSO01)",
-                  "2012-06-22",
-                  "[Minnesota Open 2012](https://www.worldcubeassociation.org/competitions/MinnesotaOpen2012)"
-                ],
-                [
-                  "2.30",
-                  "8.37%",
-                  "301",
-                  "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
-                  "2011-08-26",
-                  "[Australian Nationals 2011](https://www.worldcubeassociation.org/competitions/AustralianNationals2011)"
-                ],
-                [
-                  "2.51",
-                  "2.33%",
-                  "15",
-                  "[Christopher Olson](https://www.worldcubeassociation.org/persons/2009OLSO01)",
-                  "2011-08-11",
-                  "[US Nationals 2011](https://www.worldcubeassociation.org/competitions/USNationals2011)"
-                ],
-                [
-                  "2.57",
-                  "5.51%",
-                  "195",
-                  "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
-                  "2011-01-28",
-                  "[Melbourne Summer 2011](https://www.worldcubeassociation.org/competitions/MelbourneSummer2011)"
-                ],
-                [
-                  "2.72",
-                  "1.81%",
-                  "0",
-                  "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
-                  "2011-01-28",
-                  "[Melbourne Summer 2011](https://www.worldcubeassociation.org/competitions/MelbourneSummer2011)"
-                ],
-                [
-                  "2.77",
-                  "4.81%",
-                  "176",
-                  "[Rowe Hessler](https://www.worldcubeassociation.org/persons/2007HESS01)",
-                  "2010-08-05",
-                  "[US Nationals 2010](https://www.worldcubeassociation.org/competitions/USNationals2010)"
-                ],
-                [
-                  "2.91",
-                  "6.73%",
-                  "83",
-                  "[Justin Jaffray](https://www.worldcubeassociation.org/persons/2008JAFF01)",
-                  "2010-05-14",
-                  "[CUBEcentric 2010](https://www.worldcubeassociation.org/competitions/CanadianCubingCubeCentric2010)"
-                ],
-                [
-                  "3.12",
-                  "2.50%",
-                  "49",
-                  "[Justin Jaffray](https://www.worldcubeassociation.org/persons/2008JAFF01)",
-                  "2010-03-26",
-                  "[Toronto Spring 2010](https://www.worldcubeassociation.org/competitions/TorontoSpring2010)"
-                ],
-                [
-                  "3.20",
-                  "0.93%",
-                  "105",
-                  "[Rowe Hessler](https://www.worldcubeassociation.org/persons/2007HESS01)",
-                  "2009-12-11",
-                  "[Brown Cubing Day 2009](https://www.worldcubeassociation.org/competitions/Brown2009)"
-                ],
-                [
-                  "3.23",
-                  "1.52%",
-                  "28",
-                  "[Rowe Hessler](https://www.worldcubeassociation.org/persons/2007HESS01)",
-                  "2009-11-13",
-                  "[MIT Fall 2009](https://www.worldcubeassociation.org/competitions/MITFall2009)"
-                ],
-                [
-                  "3.28",
-                  "7.34%",
-                  "36",
-                  "[Rowe Hessler](https://www.worldcubeassociation.org/persons/2007HESS01)",
-                  "2009-10-08",
-                  "[World Championship 2009](https://www.worldcubeassociation.org/competitions/WC2009)"
-                ],
-                [
-                  "3.54",
-                  "1.94%",
-                  "237",
-                  "[Edouard Chambon](https://www.worldcubeassociation.org/persons/2004CHAM01)",
-                  "2009-02-13",
-                  "[Montpellier Open 2009](https://www.worldcubeassociation.org/competitions/MontpellierOpen2009)"
-                ],
-                [
-                  "3.61",
-                  "5.99%",
-                  "63",
-                  "[Phil Thomas](https://www.worldcubeassociation.org/persons/2007THOM02)",
-                  "2008-12-12",
-                  "[Indiana Winter Open 2008](https://www.worldcubeassociation.org/competitions/IndianaWinterOpen2008)"
-                ],
-                [
-                  "3.84",
-                  "4.48%",
-                  "35",
-                  "[Edouard Chambon](https://www.worldcubeassociation.org/persons/2004CHAM01)",
-                  "2008-11-07",
-                  "[Geneva Open 2008](https://www.worldcubeassociation.org/competitions/GenevaOpen2008)"
-                ],
-                [
-                  "4.02",
-                  "0.25%",
-                  "14",
-                  "[Łukasz Ciałoń](https://www.worldcubeassociation.org/persons/2005CIAL02)",
-                  "2008-10-24",
-                  "[Poznan Open 2008](https://www.worldcubeassociation.org/competitions/PoznanOpen2008)"
-                ],
-                [
-                  "4.03",
-                  "5.40%",
-                  "70",
-                  "[Łukasz Ciałoń](https://www.worldcubeassociation.org/persons/2005CIAL02)",
-                  "2008-08-15",
-                  "[Wroclaw Open 2008](https://www.worldcubeassociation.org/competitions/WroclawOpen2008)"
-                ],
-                [
-                  "4.26",
-                  "3.40%",
-                  "174",
-                  "[Łukasz Ciałoń](https://www.worldcubeassociation.org/persons/2005CIAL02)",
-                  "2008-02-23",
-                  "[Gdansk Open 2008](https://www.worldcubeassociation.org/competitions/GdanskOpen2008)"
-                ],
-                [
-                  "4.41",
-                  "12.15%",
-                  "162",
-                  "[Mátyás Kuti](https://www.worldcubeassociation.org/persons/2006KUTI01)",
-                  "2007-09-14",
-                  "[Polish Open 2007](https://www.worldcubeassociation.org/competitions/PolishOpen2007)"
-                ],
-                [
-                  "5.02",
-                  "1.57%",
-                  "21",
-                  "[Mátyás Kuti](https://www.worldcubeassociation.org/persons/2006KUTI01)",
-                  "2007-08-24",
-                  "[Swedish Open 2007](https://www.worldcubeassociation.org/competitions/SwedishOpen2007)"
-                ],
-                [
-                  "5.10",
-                  "7.10%",
-                  "48",
-                  "[Łukasz Ciałoń](https://www.worldcubeassociation.org/persons/2005CIAL02)",
-                  "2007-07-07",
-                  "[Wroclaw Open 2007](https://www.worldcubeassociation.org/competitions/WroclawOpen2007)"
-                ],
-                [
-                  "5.49",
-                  "13.13%",
-                  "71",
-                  "[Milán Baticz](https://www.worldcubeassociation.org/persons/2005BATI01)",
-                  "2007-04-27",
-                  "[German Open 2007](https://www.worldcubeassociation.org/competitions/GermanOpen2007)"
-                ],
-                [
-                  "6.32",
-                  "10.48%",
-                  "217",
-                  "[Gunnar Kantare Krig](https://www.worldcubeassociation.org/persons/2004KRIG01)",
-                  "2006-09-22",
-                  "[Euro 2006](https://www.worldcubeassociation.org/competitions/Euro2006)"
-                ],
-                [
-                  "7.06",
-                  "11.86%",
-                  "189",
-                  "[Gunnar Kantare Krig](https://www.worldcubeassociation.org/persons/2004KRIG01)",
-                  "2006-03-17",
-                  "[SveKub 2006](https://www.worldcubeassociation.org/competitions/Svekub2006)"
-                ],
-                [
-                  "8.01",
-                  "3.61%",
-                  "0",
-                  "[Gunnar Kantare Krig](https://www.worldcubeassociation.org/persons/2004KRIG01)",
-                  "2006-03-17",
-                  "[SveKub 2006](https://www.worldcubeassociation.org/competitions/Svekub2006)"
-                ],
-                [
-                  "8.31",
-                  "49.08%",
-                  "189",
-                  "[Gunnar Kantare Krig](https://www.worldcubeassociation.org/persons/2004KRIG01)",
-                  "2005-09-09",
-                  "[Swedish Open 2005](https://www.worldcubeassociation.org/competitions/SwedishOpen2005)"
-                ],
-                [
-                  "16.32",
-                  "",
-                  "97",
-                  "[Stefan Kodrnja](https://www.worldcubeassociation.org/persons/2004KODR01)",
-                  "2005-06-04",
-                  "[Chalmers Open 2005](https://www.worldcubeassociation.org/competitions/ChalmersOpen2005)"
-                ]
-              ]
-            },
-            {
               "title": "Rubik's Cube",
               "titleZh": "三阶魔方",
               "rows": [
@@ -10851,6 +10429,428 @@
                   "[Ron van Bruchem](https://www.worldcubeassociation.org/persons/2003BRUC01)",
                   "2004-04-23",
                   "[German Open 2004](https://www.worldcubeassociation.org/competitions/GermanOpen2004)"
+                ]
+              ]
+            },
+            {
+              "title": "2x2x2 Cube",
+              "titleZh": "二阶魔方",
+              "rows": [
+                [
+                  "0.89",
+                  "4.30%",
+                  "299",
+                  "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
+                  "2025-05-30",
+                  "[gateway KLIA2 Cube Open 2025](https://www.worldcubeassociation.org/competitions/gatewayKLIA2CubeOpen2025)"
+                ],
+                [
+                  "0.93",
+                  "3.13%",
+                  "323",
+                  "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
+                  "2024-07-11",
+                  "[Australian Nationals 2024](https://www.worldcubeassociation.org/competitions/AustralianNationals2024)"
+                ],
+                [
+                  "0.96",
+                  "3.03%",
+                  "76",
+                  "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
+                  "2024-04-26",
+                  "[It's About Time Bloomsburg 2024](https://www.worldcubeassociation.org/competitions/ItsAboutTimeBloomsburg2024)"
+                ],
+                [
+                  "0.99",
+                  "1.98%",
+                  "13",
+                  "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
+                  "2024-04-13",
+                  "[Kunshan Open 2024](https://www.worldcubeassociation.org/competitions/KunshanOpen2024)"
+                ],
+                [
+                  "1.01",
+                  "1.94%",
+                  "35",
+                  "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
+                  "2024-03-09",
+                  "[Luoyang Spring 2024](https://www.worldcubeassociation.org/competitions/LuoyangSpring2024)"
+                ],
+                [
+                  "1.03",
+                  "2.83%",
+                  "653",
+                  "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
+                  "2022-05-26",
+                  "[Northeast Championship 2022](https://www.worldcubeassociation.org/competitions/NortheastChampionship2022)"
+                ],
+                [
+                  "1.06",
+                  "0.93%",
+                  "13",
+                  "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
+                  "2022-05-13",
+                  "[River Hill Spring 2022](https://www.worldcubeassociation.org/competitions/RiverHillSpring2022)"
+                ],
+                [
+                  "1.07",
+                  "1.83%",
+                  "49",
+                  "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
+                  "2022-03-25",
+                  "[Port Huron Speedcubing 2022](https://www.worldcubeassociation.org/competitions/PortHuronSpeedcubing2022)"
+                ],
+                [
+                  "1.09",
+                  "1.80%",
+                  "120",
+                  "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
+                  "2021-11-25",
+                  "[CubingUSA Western Champs 2021](https://www.worldcubeassociation.org/competitions/CubingUSAWesternChampionship2021)"
+                ],
+                [
+                  "1.11",
+                  "0.89%",
+                  "6",
+                  "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
+                  "2021-11-19",
+                  "[Pittsburgh Fall 2021](https://www.worldcubeassociation.org/competitions/PittsburghFall2021)"
+                ],
+                [
+                  "1.12",
+                  "11.81%",
+                  "21",
+                  "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
+                  "2021-10-29",
+                  "[Finnish Championship 2021](https://www.worldcubeassociation.org/competitions/FinnishChampionship2021)"
+                ],
+                [
+                  "1.27",
+                  "4.51%",
+                  "209",
+                  "[Jiazhou Li (李佳洲)](https://www.worldcubeassociation.org/persons/2016LIJI05)",
+                  "2021-04-03",
+                  "[Beijing Spring AM 2021](https://www.worldcubeassociation.org/competitions/BeijingSpringAM2021)"
+                ],
+                [
+                  "1.33",
+                  "3.62%",
+                  "535",
+                  "[Martin Vædele Egdal](https://www.worldcubeassociation.org/persons/2013EGDA02)",
+                  "2019-10-16",
+                  "[Nordic Championship 2019](https://www.worldcubeassociation.org/competitions/NordicChampionship2019)"
+                ],
+                [
+                  "1.38",
+                  "2.82%",
+                  "103",
+                  "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
+                  "2019-07-05",
+                  "[Warm Up Sydney 2019](https://www.worldcubeassociation.org/competitions/WarmUpSydney2019)"
+                ],
+                [
+                  "1.42",
+                  "2.07%",
+                  "287",
+                  "[Kevin Gerhardt](https://www.worldcubeassociation.org/persons/2013GERH01)",
+                  "2018-09-21",
+                  "[Monnem City Cubing 2018](https://www.worldcubeassociation.org/competitions/MonnemCityCubing2018)"
+                ],
+                [
+                  "1.45",
+                  "1.36%",
+                  "168",
+                  "[Maciej Czapiewski](https://www.worldcubeassociation.org/persons/2014CZAP01)",
+                  "2018-04-06",
+                  "[GLS Cup II 2018](https://www.worldcubeassociation.org/competitions/GLSCupII2018)"
+                ],
+                [
+                  "1.47",
+                  "9.26%",
+                  "141",
+                  "[Maciej Czapiewski](https://www.worldcubeassociation.org/persons/2014CZAP01)",
+                  "2017-11-16",
+                  "[Polish Nationals 2017](https://www.worldcubeassociation.org/competitions/PolishNationals2017)"
+                ],
+                [
+                  "1.62",
+                  "0.61%",
+                  "0",
+                  "[Maciej Czapiewski](https://www.worldcubeassociation.org/persons/2014CZAP01)",
+                  "2017-11-16",
+                  "[Polish Nationals 2017](https://www.worldcubeassociation.org/competitions/PolishNationals2017)"
+                ],
+                [
+                  "1.63",
+                  "0.61%",
+                  "314",
+                  "[Lucas Etter](https://www.worldcubeassociation.org/persons/2011ETTE01)",
+                  "2017-01-06",
+                  "[Dayton Winter 2017](https://www.worldcubeassociation.org/competitions/DaytonWinter2017)"
+                ],
+                [
+                  "1.64",
+                  "2.38%",
+                  "287",
+                  "[Lucas Etter](https://www.worldcubeassociation.org/persons/2011ETTE01)",
+                  "2016-03-25",
+                  "[MCC Alpha 2016](https://www.worldcubeassociation.org/competitions/MichiganCubingClubAlpha2016)"
+                ],
+                [
+                  "1.68",
+                  "1.75%",
+                  "288",
+                  "[Lucas Etter](https://www.worldcubeassociation.org/persons/2011ETTE01)",
+                  "2015-06-11",
+                  "[Indiana 2015](https://www.worldcubeassociation.org/competitions/Indiana2015)"
+                ],
+                [
+                  "1.71",
+                  "1.16%",
+                  "258",
+                  "[Lucas Etter](https://www.worldcubeassociation.org/persons/2011ETTE01)",
+                  "2014-09-26",
+                  "[Mishawaka Fall 2014](https://www.worldcubeassociation.org/competitions/MishawakaFall2014)"
+                ],
+                [
+                  "1.73",
+                  "6.49%",
+                  "112",
+                  "[Christopher Olson](https://www.worldcubeassociation.org/persons/2009OLSO01)",
+                  "2014-06-06",
+                  "[Iowa Corn Lovers 2014](https://www.worldcubeassociation.org/competitions/IowaCornLovers2014)"
+                ],
+                [
+                  "1.85",
+                  "8.42%",
+                  "70",
+                  "[Christopher Olson](https://www.worldcubeassociation.org/persons/2009OLSO01)",
+                  "2014-03-28",
+                  "[Dixon Spring 2014](https://www.worldcubeassociation.org/competitions/DixonSpring2014)"
+                ],
+                [
+                  "2.02",
+                  "6.91%",
+                  "77",
+                  "[Jayden McNeill](https://www.worldcubeassociation.org/persons/2012MCNE01)",
+                  "2014-01-10",
+                  "[Lifestyle Seasons Summer 2014](https://www.worldcubeassociation.org/competitions/LifestyleSeasonsSummer2014)"
+                ],
+                [
+                  "2.17",
+                  "4.41%",
+                  "526",
+                  "[Christopher Olson](https://www.worldcubeassociation.org/persons/2009OLSO01)",
+                  "2012-08-02",
+                  "[US Nationals 2012](https://www.worldcubeassociation.org/competitions/USNationals2012)"
+                ],
+                [
+                  "2.27",
+                  "1.30%",
+                  "41",
+                  "[Christopher Olson](https://www.worldcubeassociation.org/persons/2009OLSO01)",
+                  "2012-06-22",
+                  "[Minnesota Open 2012](https://www.worldcubeassociation.org/competitions/MinnesotaOpen2012)"
+                ],
+                [
+                  "2.30",
+                  "8.37%",
+                  "301",
+                  "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+                  "2011-08-26",
+                  "[Australian Nationals 2011](https://www.worldcubeassociation.org/competitions/AustralianNationals2011)"
+                ],
+                [
+                  "2.51",
+                  "2.33%",
+                  "15",
+                  "[Christopher Olson](https://www.worldcubeassociation.org/persons/2009OLSO01)",
+                  "2011-08-11",
+                  "[US Nationals 2011](https://www.worldcubeassociation.org/competitions/USNationals2011)"
+                ],
+                [
+                  "2.57",
+                  "5.51%",
+                  "195",
+                  "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+                  "2011-01-28",
+                  "[Melbourne Summer 2011](https://www.worldcubeassociation.org/competitions/MelbourneSummer2011)"
+                ],
+                [
+                  "2.72",
+                  "1.81%",
+                  "0",
+                  "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+                  "2011-01-28",
+                  "[Melbourne Summer 2011](https://www.worldcubeassociation.org/competitions/MelbourneSummer2011)"
+                ],
+                [
+                  "2.77",
+                  "4.81%",
+                  "176",
+                  "[Rowe Hessler](https://www.worldcubeassociation.org/persons/2007HESS01)",
+                  "2010-08-05",
+                  "[US Nationals 2010](https://www.worldcubeassociation.org/competitions/USNationals2010)"
+                ],
+                [
+                  "2.91",
+                  "6.73%",
+                  "83",
+                  "[Justin Jaffray](https://www.worldcubeassociation.org/persons/2008JAFF01)",
+                  "2010-05-14",
+                  "[CUBEcentric 2010](https://www.worldcubeassociation.org/competitions/CanadianCubingCubeCentric2010)"
+                ],
+                [
+                  "3.12",
+                  "2.50%",
+                  "49",
+                  "[Justin Jaffray](https://www.worldcubeassociation.org/persons/2008JAFF01)",
+                  "2010-03-26",
+                  "[Toronto Spring 2010](https://www.worldcubeassociation.org/competitions/TorontoSpring2010)"
+                ],
+                [
+                  "3.20",
+                  "0.93%",
+                  "105",
+                  "[Rowe Hessler](https://www.worldcubeassociation.org/persons/2007HESS01)",
+                  "2009-12-11",
+                  "[Brown Cubing Day 2009](https://www.worldcubeassociation.org/competitions/Brown2009)"
+                ],
+                [
+                  "3.23",
+                  "1.52%",
+                  "28",
+                  "[Rowe Hessler](https://www.worldcubeassociation.org/persons/2007HESS01)",
+                  "2009-11-13",
+                  "[MIT Fall 2009](https://www.worldcubeassociation.org/competitions/MITFall2009)"
+                ],
+                [
+                  "3.28",
+                  "7.34%",
+                  "36",
+                  "[Rowe Hessler](https://www.worldcubeassociation.org/persons/2007HESS01)",
+                  "2009-10-08",
+                  "[World Championship 2009](https://www.worldcubeassociation.org/competitions/WC2009)"
+                ],
+                [
+                  "3.54",
+                  "1.94%",
+                  "237",
+                  "[Edouard Chambon](https://www.worldcubeassociation.org/persons/2004CHAM01)",
+                  "2009-02-13",
+                  "[Montpellier Open 2009](https://www.worldcubeassociation.org/competitions/MontpellierOpen2009)"
+                ],
+                [
+                  "3.61",
+                  "5.99%",
+                  "63",
+                  "[Phil Thomas](https://www.worldcubeassociation.org/persons/2007THOM02)",
+                  "2008-12-12",
+                  "[Indiana Winter Open 2008](https://www.worldcubeassociation.org/competitions/IndianaWinterOpen2008)"
+                ],
+                [
+                  "3.84",
+                  "4.48%",
+                  "35",
+                  "[Edouard Chambon](https://www.worldcubeassociation.org/persons/2004CHAM01)",
+                  "2008-11-07",
+                  "[Geneva Open 2008](https://www.worldcubeassociation.org/competitions/GenevaOpen2008)"
+                ],
+                [
+                  "4.02",
+                  "0.25%",
+                  "14",
+                  "[Łukasz Ciałoń](https://www.worldcubeassociation.org/persons/2005CIAL02)",
+                  "2008-10-24",
+                  "[Poznan Open 2008](https://www.worldcubeassociation.org/competitions/PoznanOpen2008)"
+                ],
+                [
+                  "4.03",
+                  "5.40%",
+                  "70",
+                  "[Łukasz Ciałoń](https://www.worldcubeassociation.org/persons/2005CIAL02)",
+                  "2008-08-15",
+                  "[Wroclaw Open 2008](https://www.worldcubeassociation.org/competitions/WroclawOpen2008)"
+                ],
+                [
+                  "4.26",
+                  "3.40%",
+                  "174",
+                  "[Łukasz Ciałoń](https://www.worldcubeassociation.org/persons/2005CIAL02)",
+                  "2008-02-23",
+                  "[Gdansk Open 2008](https://www.worldcubeassociation.org/competitions/GdanskOpen2008)"
+                ],
+                [
+                  "4.41",
+                  "12.15%",
+                  "162",
+                  "[Mátyás Kuti](https://www.worldcubeassociation.org/persons/2006KUTI01)",
+                  "2007-09-14",
+                  "[Polish Open 2007](https://www.worldcubeassociation.org/competitions/PolishOpen2007)"
+                ],
+                [
+                  "5.02",
+                  "1.57%",
+                  "21",
+                  "[Mátyás Kuti](https://www.worldcubeassociation.org/persons/2006KUTI01)",
+                  "2007-08-24",
+                  "[Swedish Open 2007](https://www.worldcubeassociation.org/competitions/SwedishOpen2007)"
+                ],
+                [
+                  "5.10",
+                  "7.10%",
+                  "48",
+                  "[Łukasz Ciałoń](https://www.worldcubeassociation.org/persons/2005CIAL02)",
+                  "2007-07-07",
+                  "[Wroclaw Open 2007](https://www.worldcubeassociation.org/competitions/WroclawOpen2007)"
+                ],
+                [
+                  "5.49",
+                  "13.13%",
+                  "71",
+                  "[Milán Baticz](https://www.worldcubeassociation.org/persons/2005BATI01)",
+                  "2007-04-27",
+                  "[German Open 2007](https://www.worldcubeassociation.org/competitions/GermanOpen2007)"
+                ],
+                [
+                  "6.32",
+                  "10.48%",
+                  "217",
+                  "[Gunnar Kantare Krig](https://www.worldcubeassociation.org/persons/2004KRIG01)",
+                  "2006-09-22",
+                  "[Euro 2006](https://www.worldcubeassociation.org/competitions/Euro2006)"
+                ],
+                [
+                  "7.06",
+                  "11.86%",
+                  "189",
+                  "[Gunnar Kantare Krig](https://www.worldcubeassociation.org/persons/2004KRIG01)",
+                  "2006-03-17",
+                  "[SveKub 2006](https://www.worldcubeassociation.org/competitions/Svekub2006)"
+                ],
+                [
+                  "8.01",
+                  "3.61%",
+                  "0",
+                  "[Gunnar Kantare Krig](https://www.worldcubeassociation.org/persons/2004KRIG01)",
+                  "2006-03-17",
+                  "[SveKub 2006](https://www.worldcubeassociation.org/competitions/Svekub2006)"
+                ],
+                [
+                  "8.31",
+                  "49.08%",
+                  "189",
+                  "[Gunnar Kantare Krig](https://www.worldcubeassociation.org/persons/2004KRIG01)",
+                  "2005-09-09",
+                  "[Swedish Open 2005](https://www.worldcubeassociation.org/competitions/SwedishOpen2005)"
+                ],
+                [
+                  "16.32",
+                  "",
+                  "97",
+                  "[Stefan Kodrnja](https://www.worldcubeassociation.org/persons/2004KODR01)",
+                  "2005-06-04",
+                  "[Chalmers Open 2005](https://www.worldcubeassociation.org/competitions/ChalmersOpen2005)"
                 ]
               ]
             },
