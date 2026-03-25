@@ -5,8 +5,8 @@
 $ErrorActionPreference = 'Continue'
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
-# NOTE: --expose-gc 让 wr_dominance 等统计可以显式调用 global.gc() 回收内存
-$env:NODE_OPTIONS = '--expose-gc'
+# NOTE: --expose-gc 让 wr_dominance 可显式 GC；--max-old-space-size=6144 适配 GitHub Actions 7GB 环境
+$env:NODE_OPTIONS = '--expose-gc --max-old-space-size=6144'
 
 $statsDir = "d:\cube\ruiminyan.github.io\trainer\packages\stats-build"
 $reportFile = Join-Path $statsDir "test_report.txt"
@@ -143,8 +143,8 @@ for ($i = 0; $i -lt $total; $i++)
   {
     # NOTE: 用 Start-Process pwsh 隔离进程，防止一个崩溃影响整体
     # Windows 上 npx 是 .cmd 脚本，不能直接作为 Start-Process 的 FilePath
-    # NOTE: 子进程传递 --expose-gc，让 wr_dominance 等可显式回收内存
-    $cmd = "`$env:NODE_OPTIONS='--expose-gc'; Set-Location -LiteralPath '$statsDir'; npx tsx src/bin/compute.ts $stat"
+    # NOTE: 子进程传递 --expose-gc + --max-old-space-size=6144
+    $cmd = "`$env:NODE_OPTIONS='--expose-gc --max-old-space-size=6144'; Set-Location -LiteralPath '$statsDir'; npx tsx src/bin/compute.ts $stat"
     $proc = Start-Process -FilePath "pwsh" `
       -ArgumentList "-NoProfile", "-Command", $cmd `
       -NoNewWindow -Wait -PassThru `
