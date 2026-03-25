@@ -493,39 +493,59 @@ cd packages/stats-ui
 # 3. 刷新 http://localhost:4000/stats/ 验证
 ```
 
-## Stats Build（统计数据 TypeScript 生成）
+## Stats Build（WCA 统计数据生成 · Ruby → TypeScript 迁移）
 
-将 `_stats_build/statistics/*.rb` 中的 Ruby 统计脚本逐步改写为 TypeScript，直连 MySQL 输出 JSON，供 React 前端渲染。
+将 `_stats_build/statistics/*.rb` 中的 88 个 Ruby 统计脚本全部改写为 TypeScript，直连 MySQL 输出 JSON，供 React 前端渲染。
 
-> 完整迁移计划见 [MIGRATION_PLAN.md](packages/stats-build/MIGRATION_PLAN.md)
+> 完整迁移文档见 [MIGRATION_PLAN.md](packages/stats-build/MIGRATION_PLAN.md)
+
+### 迁移进度
+
+| 阶段 | 数量 | 状态 |
+|------|------|------|
+| 88/88 统计实现 | 88 | ✅ |
+| 内存管理与 Ruby 对齐 | — | ✅ |
+| 批量执行 CLI (`compute_all.ts`) | — | ❌ |
+| WR ID 生成 (`gen_wr_ids.ts`) | — | ❌ |
+| 索引页生成 (`compute_index.ts`) | — | ❌ |
+| CI workflow 切换 | — | ❌ |
+| 前端 panels/sections 渲染 | — | ❌ |
 
 ### 文件结构
 
 ```
 packages/stats-build/
-├── MIGRATION_PLAN.md              # 完整迁移计划（移交文档）
+├── MIGRATION_PLAN.md              # 完整迁移文档（AI 交接用）
+├── run_all_tests.ps1              # 批量测试脚本
 ├── package.json                   # @cuberoot/stats-build
 ├── tsconfig.json                  # ESNext + NodeNext
 ├── src/
 │   ├── core/
-│   │   ├── database.ts            # MySQL 连接池（读取 _stats_build/database.yml）
-│   │   ├── statistic.ts           # 统计基类（SQL → JSON 管线）
-│   │   └── events.ts              # WCA 项目映射 + 中英文表头翻译
-│   ├── statistics/                # 各统计实现（1:1 对应 Ruby 文件）
-│   │   ├── world_championship_podiums_by_person.ts
-│   │   ├── world_records_by_person.ts
-│   │   └── ...                    # 共 18 个（持续增加中）
+│   │   ├── database.ts            # MySQL 连接池
+│   │   ├── statistic.ts           # Statistic 基类
+│   │   ├── grouped_statistic.ts   # GroupedStatistic 基类
+│   │   ├── round_metric.ts        # RoundMetric 基类（双视图 panels）
+│   │   ├── ao_rounds.ts           # AoRounds 基类（跨轮次均值）
+│   │   ├── average_of_x.ts        # AverageOfX 基类（滑动窗口均值）
+│   │   ├── rankings.ts            # Rankings 基类（年度排名）
+│   │   ├── solve_time.ts          # WCA 成绩格式化
+│   │   └── events.ts              # 项目映射 + 表头翻译
+│   ├── statistics/                # 88 个统计实现（1:1 对应 Ruby）
+│   │   └── *.ts
 │   └── bin/
-│       └── compute.ts             # CLI 入口：npx tsx src/bin/compute.ts <stat_id>
+│       ├── compute.ts             # CLI：npx tsx src/bin/compute.ts <stat_id>
+│       └── validate.ts            # Ruby MD vs TS JSON 对比验证
 ```
 
 ### 使用方式
 
 ```powershell
-# 需要先启动 MySQL（见 DEPLOYMENT.md）
 cd trainer/packages/stats-build
 
-# 计算单个统计并输出 JSON 到 stats/data/
+# 需要设置 Node 参数（内存管理 + GC）
+$env:NODE_OPTIONS='--expose-gc --max-old-space-size=6144'
+
+# 计算单个统计
 npx tsx src/bin/compute.ts world_championship_podiums_by_person
 
 # 查看所有可用统计
@@ -533,23 +553,19 @@ npx tsx src/bin/compute.ts
 
 # TypeScript 编译检查
 npx tsc --noEmit
+
+# 批量测试（需要 MySQL 运行）
+.\run_all_tests.ps1
 ```
 
 ### JSON 输出
 
-输出到 `stats/data/<stat_id>.json`，格式：
+输出到 `stats/data/<stat_id>.json`，支持 4 种模式：
 
-```json
-{
-  "id": "world_championship_podiums_by_person",
-  "title": "World Championship podiums by person",
-  "titleZh": "世锦赛领奖台次数（按选手）",
-  "header": [{"key": "person", "label": "Person", "labelZh": "选手", "align": "left"}, ...],
-  "rows": [["[Feliks Zemdegs](https://...)", "**14**", 7, 5, 26], ...]
-}
-```
-
-### 前端路由
-
-React 前端已配置路由 `/app/wca-stats/:statId`，自动从 `stats/data/<statId>.json` 加载并渲染。
+| 模式 | 字段 | 使用者 |
+|------|------|--------|
+| 普通统计 | `rows` | `Statistic` |
+| 分组统计 | `sections` | `GroupedStatistic` |
+| 双视图 | `panels` (ranking + history) | `RoundMetric` / `AoRounds` / `AverageOfX` |
+| 聚合页面 | `metricPanels` | `wr_metric` / `wr_aoxr` / `average_of` |
 
