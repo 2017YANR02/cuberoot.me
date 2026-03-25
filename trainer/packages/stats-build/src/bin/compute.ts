@@ -10,7 +10,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // NOTE: 统计文件注册表——手动添加新统计
 // 后续可改为自动扫描 statistics/ 目录
-const REGISTRY: Record<string, () => Promise<Record<string, unknown>>> = {
+// NOTE: 导出供 compute_all.ts 复用
+export const REGISTRY: Record<string, () => Promise<Record<string, unknown>>> = {
   'best_medal_collection_from_abroad_by_country': () => import('../statistics/best_medal_collection_from_abroad_by_country.js'),
   'best_medal_collection_from_abroad_by_person': () => import('../statistics/best_medal_collection_from_abroad_by_person.js'),
   'complete_competition_winners': () => import('../statistics/complete_competition_winners.js'),
@@ -172,4 +173,8 @@ async function main() {
   }
 }
 
-main();
+// NOTE: 仅在直接执行时运行（被 compute_all.ts import 时不触发）
+const scriptName = process.argv[1]?.replace(/\\/g, '/') ?? '';
+if (scriptName.endsWith('/compute.ts') || scriptName.endsWith('/compute.js')) {
+  main();
+}
