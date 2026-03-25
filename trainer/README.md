@@ -505,9 +505,9 @@ cd packages/stats-ui
 |------|------|------|
 | 88/88 统计实现 | 88 | ✅ |
 | 内存管理与 Ruby 对齐 | — | ✅ |
-| 批量执行 CLI (`compute_all.ts`) | — | ❌ |
-| WR ID 生成 (`gen_wr_ids.ts`) | — | ❌ |
-| 索引页生成 (`compute_index.ts`) | — | ❌ |
+| 批量执行 CLI (`compute_all.ts`) | — | ✅ |
+| WR ID 生成 (`gen_wr_ids.ts`) | — | ✅ |
+| 索引页生成 (`compute_index.ts`) | — | ✅ |
 | CI workflow 切换 | — | ❌ |
 | 前端 panels/sections 渲染 | — | ❌ |
 
