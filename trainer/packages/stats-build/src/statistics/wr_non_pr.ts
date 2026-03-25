@@ -2,6 +2,7 @@
 // 与 Ruby _stats_build/statistics/wr_non_pr.rb 1:1 对应
 // 算法：逐行扫描维护每人 PB，value > PB → Non-PR 结果
 // 双维度（Single + Average）× 双视图（Ranking + History）→ 4 个 MetricPanel 内嵌 panels
+import { formatDate } from '../core/format_date.js';
 import { Statistic } from '../core/statistic.js';
 import { EVENTS, EVENTS_ENTRIES, headerZh, eventZh } from '../core/events.js';
 import { SolveTime } from '../core/solve_time.js';
@@ -166,7 +167,7 @@ export class WrNonPr extends Statistic {
           value: val,
           personLink: String(r['person_link']),
           compLink: String(r['comp_link']),
-          date: this.formatDate(r['start_date']),
+          date: formatDate(r['start_date']),
           country: String(r['country_id']),
         });
       }
@@ -178,7 +179,7 @@ export class WrNonPr extends Statistic {
           value: val,
           personLink: String(r['person_link']),
           compLink: String(r['comp_link']),
-          date: this.formatDate(r['start_date']),
+          date: formatDate(r['start_date']),
         });
       }
     }
@@ -215,10 +216,5 @@ export class WrNonPr extends Statistic {
       });
 
     return { history, ranking };
-  }
-
-  private formatDate(d: unknown): string {
-    if (d instanceof Date) return d.toISOString().slice(0, 10);
-    return String(d || '').slice(0, 10);
   }
 }

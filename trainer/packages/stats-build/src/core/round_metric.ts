@@ -6,6 +6,7 @@ import { GroupedStatistic } from './grouped_statistic.js';
 import { EVENTS_WITH_AVERAGE, EVENTS_WITH_AO5, OFFICIAL_EVENTS_RECORD, EVENTS, headerZh, eventZh } from './events.js';
 import { SolveTime } from './solve_time.js';
 import { ATTEMPTS_SUBQUERY, query as dbQuery } from './database.js';
+import { formatDate } from './format_date.js';
 import type { StatJson, StatPanel, Alignment, TableHeader } from './statistic.js';
 import type { RowDataPacket } from 'mysql2';
 
@@ -326,9 +327,8 @@ export abstract class RoundMetric extends GroupedStatistic {
     return result;
   }
 
-  // NOTE: 日期格式化辅助
+  // NOTE: 日期格式化——委托共享工具
   protected formatDate(d: unknown): string {
-    if (d instanceof Date) return d.toISOString().slice(0, 10);
-    return String(d || '').slice(0, 10);
+    return formatDate(d);
   }
 }
