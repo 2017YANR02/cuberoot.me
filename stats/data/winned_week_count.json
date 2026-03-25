@@ -20,92 +20,6 @@
   ],
   "sections": [
     {
-      "title": "2x2x2 Cube",
-      "titleZh": "二阶魔方",
-      "rows": [
-        [
-          "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
-          32
-        ],
-        [
-          "[Martin Vædele Egdal](https://www.worldcubeassociation.org/persons/2013EGDA02)",
-          20
-        ],
-        [
-          "[Rowe Hessler](https://www.worldcubeassociation.org/persons/2007HESS01)",
-          18
-        ],
-        [
-          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
-          18
-        ],
-        [
-          "[Mats Valk](https://www.worldcubeassociation.org/persons/2007VALK01)",
-          17
-        ],
-        [
-          "[Antonie Paterakis](https://www.worldcubeassociation.org/persons/2012PATE01)",
-          17
-        ],
-        [
-          "[Erik Akkersdijk](https://www.worldcubeassociation.org/persons/2005AKKE01)",
-          15
-        ],
-        [
-          "[Milán Baticz](https://www.worldcubeassociation.org/persons/2005BATI01)",
-          15
-        ],
-        [
-          "[Christopher Olson](https://www.worldcubeassociation.org/persons/2009OLSO01)",
-          13
-        ],
-        [
-          "[Kim Roger Haraldsen](https://www.worldcubeassociation.org/persons/2015LARS04)",
-          12
-        ],
-        [
-          "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
-          12
-        ],
-        [
-          "[Justin Jaffray](https://www.worldcubeassociation.org/persons/2008JAFF01)",
-          11
-        ],
-        [
-          "[Luke Garrett](https://www.worldcubeassociation.org/persons/2017GARR05)",
-          11
-        ],
-        [
-          "[Teodor Zajder](https://www.worldcubeassociation.org/persons/2021ZAJD03)",
-          11
-        ],
-        [
-          "[Jayden McNeill](https://www.worldcubeassociation.org/persons/2012MCNE01)",
-          10
-        ],
-        [
-          "[Carlos Méndez García-Barroso](https://www.worldcubeassociation.org/persons/2010GARC02)",
-          9
-        ],
-        [
-          "[Lucas Etter](https://www.worldcubeassociation.org/persons/2011ETTE01)",
-          9
-        ],
-        [
-          "[Brian Johnson](https://www.worldcubeassociation.org/persons/2013JOHN10)",
-          9
-        ],
-        [
-          "[Sujan Feist](https://www.worldcubeassociation.org/persons/2016FEIS01)",
-          9
-        ],
-        [
-          "[Edouard Chambon](https://www.worldcubeassociation.org/persons/2004CHAM01)",
-          8
-        ]
-      ]
-    },
-    {
       "title": "Rubik's Cube",
       "titleZh": "三阶魔方",
       "rows": [
@@ -188,6 +102,92 @@
         [
           "[Matty Hiroto Inaba](https://www.worldcubeassociation.org/persons/2016INAB01)",
           11
+        ]
+      ]
+    },
+    {
+      "title": "2x2x2 Cube",
+      "titleZh": "二阶魔方",
+      "rows": [
+        [
+          "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
+          32
+        ],
+        [
+          "[Martin Vædele Egdal](https://www.worldcubeassociation.org/persons/2013EGDA02)",
+          20
+        ],
+        [
+          "[Rowe Hessler](https://www.worldcubeassociation.org/persons/2007HESS01)",
+          18
+        ],
+        [
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          18
+        ],
+        [
+          "[Mats Valk](https://www.worldcubeassociation.org/persons/2007VALK01)",
+          17
+        ],
+        [
+          "[Antonie Paterakis](https://www.worldcubeassociation.org/persons/2012PATE01)",
+          17
+        ],
+        [
+          "[Erik Akkersdijk](https://www.worldcubeassociation.org/persons/2005AKKE01)",
+          15
+        ],
+        [
+          "[Milán Baticz](https://www.worldcubeassociation.org/persons/2005BATI01)",
+          15
+        ],
+        [
+          "[Christopher Olson](https://www.worldcubeassociation.org/persons/2009OLSO01)",
+          13
+        ],
+        [
+          "[Kim Roger Haraldsen](https://www.worldcubeassociation.org/persons/2015LARS04)",
+          12
+        ],
+        [
+          "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
+          12
+        ],
+        [
+          "[Justin Jaffray](https://www.worldcubeassociation.org/persons/2008JAFF01)",
+          11
+        ],
+        [
+          "[Luke Garrett](https://www.worldcubeassociation.org/persons/2017GARR05)",
+          11
+        ],
+        [
+          "[Teodor Zajder](https://www.worldcubeassociation.org/persons/2021ZAJD03)",
+          11
+        ],
+        [
+          "[Jayden McNeill](https://www.worldcubeassociation.org/persons/2012MCNE01)",
+          10
+        ],
+        [
+          "[Carlos Méndez García-Barroso](https://www.worldcubeassociation.org/persons/2010GARC02)",
+          9
+        ],
+        [
+          "[Lucas Etter](https://www.worldcubeassociation.org/persons/2011ETTE01)",
+          9
+        ],
+        [
+          "[Brian Johnson](https://www.worldcubeassociation.org/persons/2013JOHN10)",
+          9
+        ],
+        [
+          "[Sujan Feist](https://www.worldcubeassociation.org/persons/2016FEIS01)",
+          9
+        ],
+        [
+          "[Edouard Chambon](https://www.worldcubeassociation.org/persons/2004CHAM01)",
+          8
         ]
       ]
     },

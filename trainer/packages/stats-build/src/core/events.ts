@@ -56,12 +56,9 @@ export const BLD_EVENTS: Record<string, string> = Object.fromEntries(
   Object.entries(EVENTS).filter(([id]) => ['333bf', '444bf', '555bf', '333mbf'].includes(id))
 );
 
-// NOTE: 当前官方项目 ID 列表（rank < 900，排除已退役项目 333ft/magic/mmagic/333mbo）
-// 与 Ruby Events::OFFICIAL 对应
-const RETIRED_EVENTS = ['333ft', 'magic', 'mmagic', '333mbo'] as const;
-export const OFFICIAL_EVENTS: string[] = Object.keys(EVENTS).filter(
-  id => !(RETIRED_EVENTS as readonly string[]).includes(id)
-);
+// NOTE: Ruby Events::OFFICIAL = ALL.dup，包含所有项目（含退役项目）
+// 用于 longest_standing_records 等需要全量项目的统计
+export const OFFICIAL_EVENTS: string[] = Object.keys(EVENTS);
 
 // NOTE: 官方项目 Record（id → name），与 Ruby Events::OFFICIAL 对应
 export const OFFICIAL_EVENTS_RECORD: Record<string, string> = Object.fromEntries(

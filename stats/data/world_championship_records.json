@@ -42,18 +42,18 @@
       "titleZh": "Single",
       "rows": [
         [
-          "2x2x2 Cube",
-          "0.58",
-          "[Kyle Santucci](https://www.worldcubeassociation.org/persons/2016SANT08)",
-          "Canada",
-          "[WCA World Championship 2023](https://www.worldcubeassociation.org/competitions/WC2023)"
-        ],
-        [
           "Rubik's Cube",
           "3.46",
           "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
           "China",
           "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025)"
+        ],
+        [
+          "2x2x2 Cube",
+          "0.58",
+          "[Kyle Santucci](https://www.worldcubeassociation.org/persons/2016SANT08)",
+          "Canada",
+          "[WCA World Championship 2023](https://www.worldcubeassociation.org/competitions/WC2023)"
         ],
         [
           "4x4x4 Cube",
@@ -195,17 +195,17 @@
       "titleZh": "Average",
       "rows": [
         [
-          "2x2x2 Cube",
-          "1.05",
-          "[Teodor Zajder](https://www.worldcubeassociation.org/persons/2021ZAJD03)",
-          "Poland",
-          "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025)"
-        ],
-        [
           "Rubik's Cube",
           "4.23",
           "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
           "China",
+          "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025)"
+        ],
+        [
+          "2x2x2 Cube",
+          "1.05",
+          "[Teodor Zajder](https://www.worldcubeassociation.org/persons/2021ZAJD03)",
+          "Poland",
           "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025)"
         ],
         [

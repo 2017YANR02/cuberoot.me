@@ -62,122 +62,6 @@
   ],
   "sections": [
     {
-      "title": "2x2x2 Cube",
-      "titleZh": "二阶魔方",
-      "rows": [
-        [
-          "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/all#e222_1)",
-          "First round",
-          "3.29",
-          "[Teodor Zajder](https://www.worldcubeassociation.org/persons/2021ZAJD03)",
-          "1.05",
-          "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
-          "1.09",
-          "[Phoenix Patterson](https://www.worldcubeassociation.org/persons/2018PATT04)",
-          "1.15"
-        ],
-        [
-          "[CubingUSA All-Stars 2025](https://www.worldcubeassociation.org/competitions/CubingUSAAllStars2025/results/all#e222_1)",
-          "First round",
-          "3.40",
-          "[Sujan Feist](https://www.worldcubeassociation.org/persons/2016FEIS01)",
-          "1.01",
-          "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
-          "1.15",
-          "[Ezra Severson](https://www.worldcubeassociation.org/persons/2023SEVE03)",
-          "1.24"
-        ],
-        [
-          "[CubingUSA All-Stars 2025](https://www.worldcubeassociation.org/competitions/CubingUSAAllStars2025/results/all#e222_f)",
-          "Final",
-          "3.41",
-          "[Sujan Feist](https://www.worldcubeassociation.org/persons/2016FEIS01)",
-          "0.98",
-          "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
-          "1.10",
-          "[Ayden Dincher](https://www.worldcubeassociation.org/persons/2022DINC01)",
-          "1.33"
-        ],
-        [
-          "[Yancheng Open 2025](https://www.worldcubeassociation.org/competitions/YanchengOpen2025/results/all#e222_d)",
-          "First round",
-          "3.43",
-          "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
-          "1.00",
-          "[Ziyu Ye (叶梓渝)](https://www.worldcubeassociation.org/persons/2021YEZI01)",
-          "1.08",
-          "[Jack Pan (潘杰康)](https://www.worldcubeassociation.org/persons/2012PANJ02)",
-          "1.35"
-        ],
-        [
-          "[Zibo Open 2025](https://www.worldcubeassociation.org/competitions/ZiboOpen2025/results/all#e222_d)",
-          "First round",
-          "3.44",
-          "[Ziyu Ye (叶梓渝)](https://www.worldcubeassociation.org/persons/2021YEZI01)",
-          "1.07",
-          "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
-          "1.13",
-          "[Tian Xia (夏天)](https://www.worldcubeassociation.org/persons/2023XIAT01)",
-          "1.24"
-        ],
-        [
-          "[WCA Asian Championship 2024](https://www.worldcubeassociation.org/competitions/RubiksWCAAsianChampionship2024/results/all#e222_1)",
-          "First round",
-          "3.45",
-          "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
-          "0.93",
-          "[Ziyu Ye (叶梓渝)](https://www.worldcubeassociation.org/persons/2021YEZI01)",
-          "1.17",
-          "[Kyeongmin Choi (최경민)](https://www.worldcubeassociation.org/persons/2017CHOI07)",
-          "1.35"
-        ],
-        [
-          "[Cube4fun in Bełchatów 2025](https://www.worldcubeassociation.org/competitions/Cube4funinBelchatow2025/results/all#e222_2)",
-          "Second round",
-          "3.47",
-          "[Teodor Zajder](https://www.worldcubeassociation.org/persons/2021ZAJD03)",
-          "0.97",
-          "[Olaf Kuźmiński](https://www.worldcubeassociation.org/persons/2018KUZM02)",
-          "1.11",
-          "[Stefan Zajder](https://www.worldcubeassociation.org/persons/2021ZAJD02)",
-          "1.39"
-        ],
-        [
-          "[Southeast Championship 2025](https://www.worldcubeassociation.org/competitions/SoutheastChampionship2025/results/all#e222_2)",
-          "Second round",
-          "3.47",
-          "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
-          "0.95",
-          "[Sujan Feist](https://www.worldcubeassociation.org/persons/2016FEIS01)",
-          "1.17",
-          "[Alexey Tsvetkov](https://www.worldcubeassociation.org/persons/2017TSVE02)",
-          "1.35"
-        ],
-        [
-          "[Xi'an Cherry Blossom 2025](https://www.worldcubeassociation.org/competitions/XianCherryBlossom2025/results/all#e222_d)",
-          "First round",
-          "3.49",
-          "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
-          "1.08",
-          "[Ziyu Ye (叶梓渝)](https://www.worldcubeassociation.org/persons/2021YEZI01)",
-          "1.15",
-          "[Hansen Yu (余翰森)](https://www.worldcubeassociation.org/persons/2023YUHA01)",
-          "1.26"
-        ],
-        [
-          "[Pittsburgh Winter 2025](https://www.worldcubeassociation.org/competitions/PittsburghWinter2025/results/all#e222_f)",
-          "Final",
-          "3.52",
-          "[Sujan Feist](https://www.worldcubeassociation.org/persons/2016FEIS01)",
-          "1.08",
-          "[Luke Garrett](https://www.worldcubeassociation.org/persons/2017GARR05)",
-          "1.16",
-          "[Xavier Ye](https://www.worldcubeassociation.org/persons/2021YEXA01)",
-          "1.28"
-        ]
-      ]
-    },
-    {
       "title": "Rubik's Cube",
       "titleZh": "三阶魔方",
       "rows": [
@@ -290,6 +174,122 @@
           "4.66",
           "[Yufang Du (杜昱方)](https://www.worldcubeassociation.org/persons/2023DUYU01)",
           "5.27"
+        ]
+      ]
+    },
+    {
+      "title": "2x2x2 Cube",
+      "titleZh": "二阶魔方",
+      "rows": [
+        [
+          "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/all#e222_1)",
+          "First round",
+          "3.29",
+          "[Teodor Zajder](https://www.worldcubeassociation.org/persons/2021ZAJD03)",
+          "1.05",
+          "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
+          "1.09",
+          "[Phoenix Patterson](https://www.worldcubeassociation.org/persons/2018PATT04)",
+          "1.15"
+        ],
+        [
+          "[CubingUSA All-Stars 2025](https://www.worldcubeassociation.org/competitions/CubingUSAAllStars2025/results/all#e222_1)",
+          "First round",
+          "3.40",
+          "[Sujan Feist](https://www.worldcubeassociation.org/persons/2016FEIS01)",
+          "1.01",
+          "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
+          "1.15",
+          "[Ezra Severson](https://www.worldcubeassociation.org/persons/2023SEVE03)",
+          "1.24"
+        ],
+        [
+          "[CubingUSA All-Stars 2025](https://www.worldcubeassociation.org/competitions/CubingUSAAllStars2025/results/all#e222_f)",
+          "Final",
+          "3.41",
+          "[Sujan Feist](https://www.worldcubeassociation.org/persons/2016FEIS01)",
+          "0.98",
+          "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
+          "1.10",
+          "[Ayden Dincher](https://www.worldcubeassociation.org/persons/2022DINC01)",
+          "1.33"
+        ],
+        [
+          "[Yancheng Open 2025](https://www.worldcubeassociation.org/competitions/YanchengOpen2025/results/all#e222_d)",
+          "First round",
+          "3.43",
+          "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
+          "1.00",
+          "[Ziyu Ye (叶梓渝)](https://www.worldcubeassociation.org/persons/2021YEZI01)",
+          "1.08",
+          "[Jack Pan (潘杰康)](https://www.worldcubeassociation.org/persons/2012PANJ02)",
+          "1.35"
+        ],
+        [
+          "[Zibo Open 2025](https://www.worldcubeassociation.org/competitions/ZiboOpen2025/results/all#e222_d)",
+          "First round",
+          "3.44",
+          "[Ziyu Ye (叶梓渝)](https://www.worldcubeassociation.org/persons/2021YEZI01)",
+          "1.07",
+          "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
+          "1.13",
+          "[Tian Xia (夏天)](https://www.worldcubeassociation.org/persons/2023XIAT01)",
+          "1.24"
+        ],
+        [
+          "[WCA Asian Championship 2024](https://www.worldcubeassociation.org/competitions/RubiksWCAAsianChampionship2024/results/all#e222_1)",
+          "First round",
+          "3.45",
+          "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
+          "0.93",
+          "[Ziyu Ye (叶梓渝)](https://www.worldcubeassociation.org/persons/2021YEZI01)",
+          "1.17",
+          "[Kyeongmin Choi (최경민)](https://www.worldcubeassociation.org/persons/2017CHOI07)",
+          "1.35"
+        ],
+        [
+          "[Cube4fun in Bełchatów 2025](https://www.worldcubeassociation.org/competitions/Cube4funinBelchatow2025/results/all#e222_2)",
+          "Second round",
+          "3.47",
+          "[Teodor Zajder](https://www.worldcubeassociation.org/persons/2021ZAJD03)",
+          "0.97",
+          "[Olaf Kuźmiński](https://www.worldcubeassociation.org/persons/2018KUZM02)",
+          "1.11",
+          "[Stefan Zajder](https://www.worldcubeassociation.org/persons/2021ZAJD02)",
+          "1.39"
+        ],
+        [
+          "[Southeast Championship 2025](https://www.worldcubeassociation.org/competitions/SoutheastChampionship2025/results/all#e222_2)",
+          "Second round",
+          "3.47",
+          "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
+          "0.95",
+          "[Sujan Feist](https://www.worldcubeassociation.org/persons/2016FEIS01)",
+          "1.17",
+          "[Alexey Tsvetkov](https://www.worldcubeassociation.org/persons/2017TSVE02)",
+          "1.35"
+        ],
+        [
+          "[Xi'an Cherry Blossom 2025](https://www.worldcubeassociation.org/competitions/XianCherryBlossom2025/results/all#e222_d)",
+          "First round",
+          "3.49",
+          "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
+          "1.08",
+          "[Ziyu Ye (叶梓渝)](https://www.worldcubeassociation.org/persons/2021YEZI01)",
+          "1.15",
+          "[Hansen Yu (余翰森)](https://www.worldcubeassociation.org/persons/2023YUHA01)",
+          "1.26"
+        ],
+        [
+          "[Pittsburgh Winter 2025](https://www.worldcubeassociation.org/competitions/PittsburghWinter2025/results/all#e222_f)",
+          "Final",
+          "3.52",
+          "[Sujan Feist](https://www.worldcubeassociation.org/persons/2016FEIS01)",
+          "1.08",
+          "[Luke Garrett](https://www.worldcubeassociation.org/persons/2017GARR05)",
+          "1.16",
+          "[Xavier Ye](https://www.worldcubeassociation.org/persons/2021YEXA01)",
+          "1.28"
         ]
       ]
     },
