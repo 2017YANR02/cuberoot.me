@@ -5,6 +5,7 @@ on:
   push:
     paths:
       - '_stats_build/**/*.rb'
+      - 'trainer/packages/stats-build/src/**/*.ts'
   schedule:
     # 每周一凌晨 4:00（北京时间）= UTC 周日 20:00
     - cron: '0 20 * * 0'
@@ -30,11 +31,28 @@ jobs:
       - name: Check Ruby syntax
         run: find _stats_build -name '*.rb' -exec ruby -c {} +
 
+      # NOTE: TS 编译检查——确保统计代码无类型错误
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Install stats-build dependencies
+        working-directory: trainer
+        run: pnpm install --frozen-lockfile
+
+      - name: TypeScript compile check
+        working-directory: trainer/packages/stats-build
+        run: npx tsc --noEmit
+
   # 定时/手动触发时才跑完整计算（~47分钟）
   build:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    # NOTE: 确保 Ruby File.write 输出中文不乱码（ubuntu 默认 locale 可能非 UTF-8）
+    # NOTE: 确保输出中文不乱码（ubuntu 默认 locale 可能非 UTF-8）
     env:
       LANG: en_US.UTF-8
     permissions:
@@ -55,33 +73,63 @@ jobs:
       - name: Activate MySQL
         run: sudo systemctl start mysql.service
 
+      # NOTE: 仍需 Ruby 做数据库下载/导入（update_database.rb 包含复杂的 SQL dump 解析逻辑）
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.4'
           bundler-cache: true
           working-directory: _stats_build
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Install stats-build dependencies
+        working-directory: trainer
+        run: pnpm install --frozen-lockfile
+
       - name: Create stats output directory
-        run: mkdir -p stats
+        run: mkdir -p stats/data
 
       - name: Setup database
         working-directory: _stats_build
         run: |
           ruby bin/init.rb
-          printf 'database: "wca_statistics"\nusername: "root"\npassword: "root"' > database.yml
+          printf 'database: "wca_statistics"\nusername: "root"\npassword: "root"\nhost: "127.0.0.1"' > database.yml
           ruby bin/update_database.rb
 
-      - name: Compute all statistics
+      # NOTE: TS 管线——替代 Ruby compute_all.rb + gen_wr_ids.rb + compute_index.rb
+      - name: Compute all statistics (TypeScript)
+        working-directory: trainer/packages/stats-build
+        env:
+          STATS_FILTER: ${{ github.event.inputs.stats_filter || '' }}
+          NODE_OPTIONS: '--expose-gc --max-old-space-size=6144'
+        run: npx tsx src/bin/compute_all.ts
+
+      - name: Generate WR IDs for calc page
+        working-directory: trainer/packages/stats-build
+        run: npx tsx src/bin/gen_wr_ids.ts
+
+      - name: Compute index
+        working-directory: trainer/packages/stats-build
+        run: npx tsx src/bin/compute_index.ts
+
+      # NOTE: Ruby 管线仍并行运行——生成 Jekyll Markdown（过渡期保留，前端完成后移除）
+      - name: Compute all statistics (Ruby, legacy)
         working-directory: _stats_build
         env:
           STATS_FILTER: ${{ github.event.inputs.stats_filter || '' }}
         run: ruby bin/compute_all.rb
 
-      - name: Generate WR IDs for calc page
+      - name: Generate WR IDs (Ruby, legacy)
         working-directory: _stats_build
         run: ruby bin/gen_wr_ids.rb
 
-      - name: Compute index
+      - name: Compute index (Ruby, legacy)
         working-directory: _stats_build
         run: ruby bin/compute_index.rb
 
@@ -99,7 +147,7 @@ jobs:
                    wr_variance wr_best_average_ratio \
                    wr_ao1r wr_ao2r wr_ao3r wr_ao4r \
                    best_first_average best_first_single; do
-            rm -f "stats/${f}.md"
+              rm -f "stats/${f}.md"
           done
           git add -A stats/
           if git diff --cached --quiet; then
