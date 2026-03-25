@@ -6,7 +6,7 @@
 //   3. 设置 MySQL 高性能参数
 //   4. 逐行解析 SQL dump，按表名过滤导入 REQUIRED_TABLES
 //   5. 建覆盖索引 + 存储 export timestamp
-import { createWriteStream, createReadStream, writeFileSync, statSync, mkdirSync, existsSync, copyFileSync, unlinkSync } from 'fs';
+import { createWriteStream, createReadStream, writeFileSync, statSync, mkdirSync, existsSync, copyFileSync, unlinkSync, openSync, writeSync, closeSync } from 'fs';
 import { resolve, dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { createInterface } from 'readline';
@@ -104,18 +104,19 @@ async function importTables(sqlPath: string, workDir: string): Promise<Date> {
     let headerLines: string[] = [];  // NOTE: 第一个表之前的 SQL（SET 语句等），通常几十行
     let headerBuilt = false;
     let currentTable: string | null = null;
-    let ws: ReturnType<typeof createWriteStream> | null = null;
+    let fd: number | null = null;  // NOTE: 同步 fd，closeSync 保证写完再导入
     let lineCount = 0;
     let firstLine = true;
     const importedTables = new Set<string>();
 
-    // NOTE: 辅助函数——关闭 WriteStream，追加 INDICES，执行 mysql 导入
+    // NOTE: 辅助函数——关闭 fd，追加 INDICES，执行 mysql 导入
+    // 使用 closeSync 保证文件完整写入后才执行 mysql（消除竞态）
     const flushAndImport = (tableName: string, count: number) => {
-      if (!ws) return;
+      if (fd === null) return;
       // NOTE: 追加自定义索引语句
-      ws.write('\n' + INDICES.join('\n') + '\n');
-      ws.end();
-      ws = null;
+      writeSync(fd, '\n' + INDICES.join('\n') + '\n');
+      closeSync(fd);
+      fd = null;
 
       console.log(`  - Importing table ${tableName} (${count} lines)`);
       const f = join(workDir, `${tableName}.sql`);
@@ -128,13 +129,13 @@ async function importTables(sqlPath: string, workDir: string): Promise<Date> {
       importedTables.add(tableName);
     };
 
-    // NOTE: 辅助函数——为目标表创建新的 WriteStream 并写入 header
+    // NOTE: 辅助函数——为目标表创建同步 fd 并写入 header
     const startTable = (tableName: string): void => {
       const f = join(workDir, `${tableName}.sql`);
-      ws = createWriteStream(f, { encoding: 'utf-8' });
+      fd = openSync(f, 'w');
       // NOTE: header 包含 charset/encoding 等全局 SET 语句，每张表都需要
       for (const hl of headerLines) {
-        ws.write(hl + '\n');
+        writeSync(fd, hl + '\n');
       }
       lineCount = 0;
     };
@@ -158,7 +159,7 @@ async function importTables(sqlPath: string, workDir: string): Promise<Date> {
         if (!headerBuilt) {
           // NOTE: 第一个表之前的内容作为 header（与 Ruby L68-69 对应）
           headerBuilt = true;
-        } else if (currentTable && ws) {
+        } else if (currentTable && fd !== null) {
           // NOTE: 上一张目标表结束——立即 flush 并导入
           flushAndImport(currentTable, lineCount);
         }
@@ -175,16 +176,16 @@ async function importTables(sqlPath: string, workDir: string): Promise<Date> {
       if (!headerBuilt) {
         // NOTE: header 阶段——收集全局 SQL 语句
         headerLines.push(line);
-      } else if (currentTable && ws) {
-        // NOTE: 目标表行——直接写入 WriteStream，不存内存
-        ws!.write(line + '\n');
+      } else if (currentTable && fd !== null) {
+        // NOTE: 目标表行——writeSync 同步写入，不存内存
+        writeSync(fd, line + '\n');
         lineCount++;
       }
       // NOTE: 非目标表行被跳过，不占任何内存
     }
 
     // NOTE: 文件末尾残留的最后一个表
-    if (currentTable && ws) {
+    if (currentTable && fd !== null) {
       flushAndImport(currentTable, lineCount);
     }
 

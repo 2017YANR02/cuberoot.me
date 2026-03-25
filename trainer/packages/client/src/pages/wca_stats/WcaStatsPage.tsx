@@ -1,7 +1,7 @@
 // NOTE: WCA 统计数据页 — 通用渲染器
 // 支持 4 种 JSON 输出模式：rows / sections / panels / metricPanels
 // 路由：/app/wca-stats/:statId
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import WcaEventSelector from './WcaEventSelector';
