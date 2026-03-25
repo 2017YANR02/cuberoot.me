@@ -6,6 +6,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import WcaEventSelector from './WcaEventSelector';
 import { EVENT_NAME_TO_ID, ALL_EVENT_IDS } from './event_constants';
+import { countryFlagClass } from '../../utils/country_flags';
 import './wca_stats.css';
 
 // NOTE: JSON schema 与 stats-build 输出一致
@@ -151,11 +152,16 @@ function StatsTable({ header, rows, searchTerm, isZh }: {
         <tbody>
           {filtered.map((row, i) => (
             <tr key={i}>
-              {row.map((cell, j) => (
-                <td key={j} style={{ textAlign: header[j]?.align }}>
-                  {renderCell(cell)}
-                </td>
-              ))}
+              {row.map((cell, j) => {
+                const isCountryCol = header[j]?.key === 'country';
+                const flagCls = isCountryCol ? countryFlagClass(String(cell)) : '';
+                return (
+                  <td key={j} style={{ textAlign: header[j]?.align }}>
+                    {flagCls && <span className={flagCls} style={{ marginRight: 6 }} />}
+                    {renderCell(cell)}
+                  </td>
+                );
+              })}
             </tr>
           ))}
         </tbody>
@@ -174,6 +180,8 @@ function SectionsView({ header, sections, searchTerm, isZh, selectedEvent }: {
   selectedEvent?: string;
 }) {
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
+  // NOTE: 指标过滤——检测 sections 是否含 " - Single"/" - Average" 后缀
+  const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
 
   const toggleSection = useCallback((title: string) => {
     setCollapsedSections(prev => {
@@ -184,17 +192,69 @@ function SectionsView({ header, sections, searchTerm, isZh, selectedEvent }: {
     });
   }, []);
 
+  // NOTE: 检测可用指标后缀（如 Single, Average）
+  const availableMetrics = useMemo(() => {
+    const metrics = new Set<string>();
+    sections.forEach(s => {
+      if (s.title.includes(' - ')) {
+        const suffix = s.title.substring(s.title.lastIndexOf(' - ') + 3);
+        metrics.add(suffix);
+      }
+    });
+    return metrics;
+  }, [sections]);
+
+  // NOTE: 只有检测到 >= 2 种指标后缀时才显示切换器
+  const showMetricFilter = availableMetrics.size >= 2;
+
+  // NOTE: 默认选中第一个指标
+  useEffect(() => {
+    if (showMetricFilter && !selectedMetric) {
+      setSelectedMetric(Array.from(availableMetrics)[0]);
+    }
+  }, [showMetricFilter, availableMetrics, selectedMetric]);
+
   // NOTE: 按 selectedEvent 过滤 sections（无 selectedEvent 时显示全部）
+  // 支持纯项目名和含指标后缀（如 "Rubik's Cube - Single"）的 title
   const visibleSections = useMemo(() => {
-    if (!selectedEvent) return sections;
-    return sections.filter(s => EVENT_NAME_TO_ID[s.title] === selectedEvent);
-  }, [sections, selectedEvent]);
+    let result = sections;
+    // 按项目过滤
+    if (selectedEvent) {
+      result = result.filter(s => {
+        let eventId = EVENT_NAME_TO_ID[s.title];
+        if (!eventId && s.title.includes(' - ')) {
+          const eventName = s.title.substring(0, s.title.lastIndexOf(' - '));
+          eventId = EVENT_NAME_TO_ID[eventName];
+        }
+        return eventId === selectedEvent;
+      });
+    }
+    // 按指标过滤
+    if (selectedMetric) {
+      result = result.filter(s => s.title.endsWith(` - ${selectedMetric}`));
+    }
+    return result;
+  }, [sections, selectedEvent, selectedMetric]);
 
   // NOTE: 当项目选择器选中后只剩一个 section 时，标题冗余（对标 Legacy 删除 h3）
   const hideTitle = !!selectedEvent && visibleSections.length === 1;
 
   return (
     <div className="wca-stats-sections">
+      {/* NOTE: 指标药丸切换器（仅含 " - Single"/" - Average" 后缀时显示） */}
+      {showMetricFilter && (
+        <div className="wca-stats-tab-bar">
+          {Array.from(availableMetrics).map(metric => (
+            <button
+              key={metric}
+              className={`wca-stats-tab ${selectedMetric === metric ? 'active' : ''}`}
+              onClick={() => setSelectedMetric(selectedMetric === metric ? null : metric)}
+            >
+              {isZh ? (metric === 'Single' ? '单次' : metric === 'Average' ? '平均' : metric) : metric}
+            </button>
+          ))}
+        </div>
+      )}
       {visibleSections.map(section => {
         const sectionTitle = isZh ? (section.titleZh || section.title) : section.title;
         const isCollapsed = collapsedSections.has(section.title);
@@ -435,9 +495,15 @@ export default function WcaStatsPage() {
     if (!data) return new Set();
     const ids = new Set<string>();
     // NOTE: 从所有可能的层级提取 section title → event ID
+    // 支持两种 title 格式：纯项目名（"Rubik's Cube"）和含指标后缀（"Rubik's Cube - Single"）
     const extractFromSections = (sections: StatSection[]) => {
       sections.forEach(s => {
-        const eventId = EVENT_NAME_TO_ID[s.title];
+        let eventId = EVENT_NAME_TO_ID[s.title];
+        // NOTE: 模糊匹配——如 "Rubik's Cube - Single" 截取 " - " 前的项目名
+        if (!eventId && s.title.includes(' - ')) {
+          const eventName = s.title.substring(0, s.title.lastIndexOf(' - '));
+          eventId = EVENT_NAME_TO_ID[eventName];
+        }
         if (eventId) ids.add(eventId);
       });
     };
@@ -465,15 +531,10 @@ export default function WcaStatsPage() {
   // NOTE: 是否需要显示项目选择器（rows 模式不需要，或只有 0-1 个项目也不需要）
   const showEventSelector = renderMode !== 'rows' && renderMode !== 'empty' && availableEvents.size >= 2;
 
-  // NOTE: 计算总行数（用于显示搜索计数）
+  // NOTE: 计算总行数（仅 rows 模式显示，sections 有指标过滤后数字会错误）
   const totalRows = useMemo(() => {
-    if (!data) return 0;
-    switch (renderMode) {
-      case 'rows': return data.rows?.length ?? 0;
-      case 'sections': return data.sections?.reduce((s, sec) => s + sec.rows.length, 0) ?? 0;
-      // NOTE: panels 和 metricPanels 的行数计算较复杂，暂不显示
-      default: return 0;
-    }
+    if (!data || renderMode !== 'rows') return 0;
+    return data.rows?.length ?? 0;
   }, [data, renderMode]);
 
   if (loading) {
