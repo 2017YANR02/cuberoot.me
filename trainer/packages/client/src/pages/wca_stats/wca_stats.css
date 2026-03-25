@@ -385,3 +385,119 @@
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
+
+/* ==========================================================================
+   项目选择器（21 个 WCA 项目图标按钮）
+   对标 Legacy event_selector.ts 的深色主题
+   ========================================================================== */
+
+/* 选择器容器 */
+.wca-stats-event-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 12px;
+  margin: 12px 0;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* 单个按钮 */
+.wca-stats-event-selector .event-btn {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 0;
+}
+
+/* 图标默认色 */
+.wca-stats-event-selector .event-btn .cubing-icon {
+  font-size: 22px;
+  color: #aaa;
+  transition: color 0.2s;
+}
+
+/* hover */
+.wca-stats-event-selector .event-btn:hover {
+  background: rgba(255, 255, 255, 0.10);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.wca-stats-event-selector .event-btn:hover .cubing-icon {
+  color: #ddd;
+}
+
+/* active（绿色高亮） */
+.wca-stats-event-selector .event-btn.active {
+  background: #2e7d32;
+  border-color: #4caf50;
+}
+
+.wca-stats-event-selector .event-btn.active .cubing-icon {
+  color: #fff;
+}
+
+/* disabled（灰色半透明） */
+.wca-stats-event-selector .event-btn.disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+.wca-stats-event-selector .event-btn.disabled .cubing-icon {
+  color: #666;
+}
+
+/* CSS tooltip */
+.wca-stats-event-selector .event-btn::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fff;
+  color: #333;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+  z-index: 100;
+}
+
+.wca-stats-event-selector .event-btn:hover::after {
+  opacity: 1;
+}
+
+/* NOTE: disabled 按钮不显示 tooltip */
+.wca-stats-event-selector .event-btn.disabled::after {
+  display: none;
+}
+
+/* ==========================================================================
+   Metric 按钮 disabled 状态（metricPanels 模式下项目无数据时）
+   对标 Legacy stats_ui.css L266-280
+   ========================================================================== */
+
+.wca-stats-metric-btn.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  color: #666;
+}
+
+.wca-stats-tab.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  color: #666;
+}

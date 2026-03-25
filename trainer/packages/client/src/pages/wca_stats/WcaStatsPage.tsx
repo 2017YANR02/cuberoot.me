@@ -4,6 +4,8 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import WcaEventSelector from './WcaEventSelector';
+import { EVENT_NAME_TO_ID, ALL_EVENT_IDS } from './event_constants';
 import './wca_stats.css';
 
 // NOTE: JSON schema 与 stats-build 输出一致
@@ -134,11 +136,13 @@ function StatsTable({ header, rows, searchTerm, isZh }: {
 }
 
 // NOTE: Sections 渲染——按项目分节展示（每节可折叠）
-function SectionsView({ header, sections, searchTerm, isZh }: {
+// selectedEvent 可选：有值时只显示匹配的 section（项目选择器过滤）
+function SectionsView({ header, sections, searchTerm, isZh, selectedEvent }: {
   header: StatHeader[];
   sections: StatSection[];
   searchTerm: string;
   isZh: boolean;
+  selectedEvent?: string;
 }) {
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
 
@@ -151,9 +155,15 @@ function SectionsView({ header, sections, searchTerm, isZh }: {
     });
   }, []);
 
+  // NOTE: 按 selectedEvent 过滤 sections（无 selectedEvent 时显示全部）
+  const visibleSections = useMemo(() => {
+    if (!selectedEvent) return sections;
+    return sections.filter(s => EVENT_NAME_TO_ID[s.title] === selectedEvent);
+  }, [sections, selectedEvent]);
+
   return (
     <div className="wca-stats-sections">
-      {sections.map(section => {
+      {visibleSections.map(section => {
         const sectionTitle = isZh ? (section.titleZh || section.title) : section.title;
         const isCollapsed = collapsedSections.has(section.title);
         return (
@@ -177,10 +187,12 @@ function SectionsView({ header, sections, searchTerm, isZh }: {
 }
 
 // NOTE: Panels 渲染——Tab 切换（如 Ranking / History）
-function PanelsView({ panels, searchTerm, isZh }: {
+// selectedEvent 可选：透传到 SectionsView 进行过滤
+function PanelsView({ panels, searchTerm, isZh, selectedEvent }: {
   panels: StatPanel[];
   searchTerm: string;
   isZh: boolean;
+  selectedEvent?: string;
 }) {
   const [activePanel, setActivePanel] = useState(0);
   const panel = panels[activePanel];
@@ -204,19 +216,56 @@ function PanelsView({ panels, searchTerm, isZh }: {
         sections={panel.sections}
         searchTerm={searchTerm}
         isZh={isZh}
+        selectedEvent={selectedEvent}
       />
     </div>
   );
 }
 
 // NOTE: MetricPanels 渲染——多级面板（指标选择 + Ranking/History Tab）
-function MetricPanelsView({ metricPanels, metricGroups, searchTerm, isZh }: {
+// selectedEvent 可选：有值时计算每个 metric 是否有该项目的数据，无数据的 metric 灰掉
+function MetricPanelsView({ metricPanels, metricGroups, searchTerm, isZh, selectedEvent }: {
   metricPanels: MetricPanel[];
   metricGroups?: MetricGroup[];
   searchTerm: string;
   isZh: boolean;
+  selectedEvent?: string;
 }) {
   const [activeMetric, setActiveMetric] = useState(0);
+
+  // NOTE: 计算每个 metricPanel 是否有当前项目的数据（对标 Legacy handleMetricPage L417-430）
+  const metricHasData = useMemo(() => {
+    const map = new Map<number, boolean>();
+    metricPanels.forEach((mp, idx) => {
+      if (!selectedEvent) {
+        map.set(idx, true);
+        return;
+      }
+      // 遍历 metric 下所有 panels 的 sections，看有没有匹配项目的数据
+      const hasEvent = mp.panels.some(panel =>
+        panel.sections.some(sec => EVENT_NAME_TO_ID[sec.title] === selectedEvent)
+      );
+      map.set(idx, hasEvent);
+    });
+    return map;
+  }, [metricPanels, selectedEvent]);
+
+  // NOTE: 当前 metric 变为无数据时自动回退（对标 Legacy L460-467）
+  // 回退优先级：single > average > 第一个有数据的
+  useEffect(() => {
+    if (metricHasData.get(activeMetric) === false) {
+      // 优先找 single
+      const singleIdx = metricPanels.findIndex((mp, i) => mp.id === 'single' && metricHasData.get(i));
+      if (singleIdx !== -1) { setActiveMetric(singleIdx); return; }
+      // 其次找 average
+      const avgIdx = metricPanels.findIndex((mp, i) => mp.id === 'average' && metricHasData.get(i));
+      if (avgIdx !== -1) { setActiveMetric(avgIdx); return; }
+      // 兜底第一个有数据的
+      const firstValid = metricPanels.findIndex((_, i) => metricHasData.get(i));
+      if (firstValid !== -1) setActiveMetric(firstValid);
+    }
+  }, [metricHasData, activeMetric, metricPanels]);
+
   const metric = metricPanels[activeMetric];
 
   return (
@@ -234,11 +283,12 @@ function MetricPanelsView({ metricPanels, metricGroups, searchTerm, isZh }: {
                   const idx = metricPanels.findIndex(mp => mp.id === itemId);
                   if (idx === -1) return null;
                   const mp = metricPanels[idx];
+                  const disabled = metricHasData.get(idx) === false;
                   return (
                     <button
                       key={itemId}
-                      className={`wca-stats-metric-btn ${idx === activeMetric ? 'active' : ''}`}
-                      onClick={() => setActiveMetric(idx)}
+                      className={`wca-stats-metric-btn ${idx === activeMetric ? 'active' : ''}${disabled ? ' disabled' : ''}`}
+                      onClick={disabled ? undefined : () => setActiveMetric(idx)}
                     >
                       {isZh ? mp.labelZh : mp.labelEn}
                     </button>
@@ -250,21 +300,24 @@ function MetricPanelsView({ metricPanels, metricGroups, searchTerm, isZh }: {
         </div>
       ) : (
         <div className="wca-stats-tab-bar">
-          {metricPanels.map((mp, i) => (
-            <button
-              key={mp.id}
-              className={`wca-stats-tab ${i === activeMetric ? 'active' : ''}`}
-              onClick={() => setActiveMetric(i)}
-            >
-              {isZh ? mp.labelZh : mp.labelEn}
-            </button>
-          ))}
+          {metricPanels.map((mp, i) => {
+            const disabled = metricHasData.get(i) === false;
+            return (
+              <button
+                key={mp.id}
+                className={`wca-stats-tab ${i === activeMetric ? 'active' : ''}${disabled ? ' disabled' : ''}`}
+                onClick={disabled ? undefined : () => setActiveMetric(i)}
+              >
+                {isZh ? mp.labelZh : mp.labelEn}
+              </button>
+            );
+          })}
         </div>
       )}
 
       {/* NOTE: 选中指标的 Ranking/History Panels */}
       {metric && (
-        <PanelsView panels={metric.panels} searchTerm={searchTerm} isZh={isZh} />
+        <PanelsView panels={metric.panels} searchTerm={searchTerm} isZh={isZh} selectedEvent={selectedEvent} />
       )}
     </div>
   );
@@ -277,6 +330,7 @@ export default function WcaStatsPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedEvent, setSelectedEvent] = useState<string>('');
 
   const isZh = i18n.language === 'zh';
 
@@ -286,6 +340,7 @@ export default function WcaStatsPage() {
     setLoading(true);
     setError(null);
     setSearchTerm('');
+    setSelectedEvent(''); // NOTE: 切换统计时重置选中项目
 
     fetch(`/stats/data/${statId}.json`)
       .then(res => {
@@ -311,6 +366,39 @@ export default function WcaStatsPage() {
     if (data.rows && data.rows.length > 0) return 'rows';
     return 'empty';
   }, [data]);
+
+  // NOTE: 计算有数据的项目集合（对标 Legacy setupSelector L204-218）
+  const availableEvents = useMemo((): Set<string> => {
+    if (!data) return new Set();
+    const ids = new Set<string>();
+    // NOTE: 从所有可能的层级提取 section title → event ID
+    const extractFromSections = (sections: StatSection[]) => {
+      sections.forEach(s => {
+        const eventId = EVENT_NAME_TO_ID[s.title];
+        if (eventId) ids.add(eventId);
+      });
+    };
+    if (data.sections) extractFromSections(data.sections);
+    if (data.panels) data.panels.forEach(p => extractFromSections(p.sections));
+    if (data.metricPanels) {
+      data.metricPanels.forEach(mp =>
+        mp.panels.forEach(p => extractFromSections(p.sections))
+      );
+    }
+    return ids;
+  }, [data]);
+
+  // NOTE: 默认选中第一个有数据的项目
+  useEffect(() => {
+    if (availableEvents.size > 0 && !selectedEvent) {
+      // NOTE: 按标准顺序找第一个有数据的项目
+      const first = ALL_EVENT_IDS.find((id: string) => availableEvents.has(id));
+      if (first) setSelectedEvent(first);
+    }
+  }, [availableEvents, selectedEvent]);
+
+  // NOTE: 是否需要显示项目选择器（rows 模式不需要，或只有 0-1 个项目也不需要）
+  const showEventSelector = renderMode !== 'rows' && renderMode !== 'empty' && availableEvents.size >= 2;
 
   // NOTE: 计算总行数（用于显示搜索计数）
   const totalRows = useMemo(() => {
@@ -353,6 +441,16 @@ export default function WcaStatsPage() {
         )}
       </div>
 
+      {/* NOTE: 项目选择器——在三种模式下显示（rows 模式除外） */}
+      {showEventSelector && (
+        <WcaEventSelector
+          availableEvents={availableEvents}
+          selectedEvent={selectedEvent}
+          onSelect={setSelectedEvent}
+          isZh={isZh}
+        />
+      )}
+
       {/* NOTE: rows 和 sections 模式显示搜索栏 */}
       {(renderMode === 'rows' || renderMode === 'sections') && (
         <div className="wca-stats-toolbar">
@@ -380,11 +478,17 @@ export default function WcaStatsPage() {
           sections={data.sections}
           searchTerm={searchTerm}
           isZh={isZh}
+          selectedEvent={showEventSelector ? selectedEvent : undefined}
         />
       )}
 
       {renderMode === 'panels' && data.panels && (
-        <PanelsView panels={data.panels} searchTerm={searchTerm} isZh={isZh} />
+        <PanelsView
+          panels={data.panels}
+          searchTerm={searchTerm}
+          isZh={isZh}
+          selectedEvent={showEventSelector ? selectedEvent : undefined}
+        />
       )}
 
       {renderMode === 'metricPanels' && data.metricPanels && (
@@ -393,6 +497,7 @@ export default function WcaStatsPage() {
           metricGroups={data.metricGroups}
           searchTerm={searchTerm}
           isZh={isZh}
+          selectedEvent={showEventSelector ? selectedEvent : undefined}
         />
       )}
     </div>
