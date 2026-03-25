@@ -304,7 +304,7 @@ interface CardConfig {
 
 const CARDS: CardConfig[] = [
   { id: 'solver',   href: '/solver/',             internal: false, cssClass: 'card-solver',   icon: '🧩', nameKey: 'solver',     descKey: 'solverDesc' },
-  { id: 'stats',    href: '/stats/',              internal: false, cssClass: 'card-stats',    icon: '📊', nameKey: 'wcaStats',   descKey: 'statsDesc' },
+  { id: 'stats',    href: '/wca-stats',            internal: true,  cssClass: 'card-stats',    icon: '📊', nameKey: 'wcaStats',   descKey: 'statsDesc' },
   { id: 'recon',    href: '/recon',               internal: true,  cssClass: 'card-recon',    icon: '🔍', nameKey: 'recon',      descKey: 'reconDesc' },
   { id: 'trainer',  href: '/alg_trainers/',        internal: false, cssClass: 'card-trainer',  icon: '🎯', nameKey: 'algTrainer', descKey: 'algTrainerDesc' },
   { id: 'cuberoot', href: '/trainer',              internal: true,  cssClass: 'card-cuberoot', icon: '🧊', nameKey: 'cuberootTrainer', descKey: 'cuberootTrainerDesc' },
