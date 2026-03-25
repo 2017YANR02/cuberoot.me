@@ -14,20 +14,16 @@
 ### 1.2 当前架构
 
 ```
-┌── 现有 Ruby 管线（CI 仍在运行，每周日 UTC 20:00）────────┐
+┌── Ruby 管线（legacy，CI 已移除）─────────────────────────┐
 │  _stats_build/statistics/*.rb (88 个)                       │
-│      ↓ SQL → Markdown                                      │
-│  stats/*.md → Jekyll → _site/stats/*.html                   │
-│      ↓ GitHub Pages                                        │
-│  ruiminyan.github.io/stats/*                                │
+│      ↓ SQL → Markdown → Jekyll → GitHub Pages               │
 └─────────────────────────────────────────────────────────────┘
 
-┌── 新 TS 管线（✅ 88/88 统计已完成，CI 未接入）─────────────┐
+┌── TS 管线（✅ 全部完成，CI 已接入）─────────────────────┐
+│  stats-build/src/bin/update_database.ts  ← 下载+导入 DB     │
 │  stats-build/src/statistics/*.ts (88 个)                     │
-│      ↓ SQL → JSON                                          │
-│  stats/data/*.json                                          │
-│      ↓ React SPA 渲染（前端页面未完成）                     │
-│  /app/wca-stats/:statId                                     │
+│      ↓ SQL → JSON → React SPA（4 种渲染模式）               │
+│  /app/wca-stats/ (索引) + /app/wca-stats/:statId (详情)     │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -54,9 +50,12 @@
 | Rankings 基类 | `src/core/rankings.ts` | 年度排名 |
 | SolveTime 工具 | `src/core/solve_time.ts` | WCA 成绩值格式化（厘秒/FMC/多盲） |
 | 项目映射 | `src/core/events.ts` | WCA 项目 ID → 中英文名 + 表头翻译 |
-| CLI 入口 | `src/bin/compute.ts` | `npx tsx src/bin/compute.ts <stat_id>` |
+| CLI 入口 | `src/bin/compute.ts` | 单统计计算 + REGISTRY 注册表 |
+| 批量执行 | `src/bin/compute_all.ts` | 串行 88 统计 + GC + STATS_FILTER |
+| 数据库导入 | `src/bin/update_database.ts` | fetch + readline + mysql CLI 导入 |
+| WR ID / 索引 | `src/bin/gen_wr_ids.ts` / `compute_index.ts` | 从 JSON 生成（无需 MySQL） |
 | 验证脚本 | `src/bin/validate.ts` | Ruby MD vs TS JSON 自动对比 |
-| React 页面 | `client/.../WcaStatsPage.tsx` | 通用统计表格（仅支持 `rows`，不支持 `panels`/`sections`） |
+| React 页面 | `WcaStatsPage.tsx` / `WcaStatsIndex.tsx` | 4 种渲染模式 + 6 分类索引页 |
 
 ### 2.2 内存管理（✅ 已与 Ruby 对齐）
 
@@ -145,6 +144,9 @@ interface StatJson {
 | **数据库连接** | `src/core/database.ts` |
 | **项目映射+翻译** | `src/core/events.ts` |
 | **CLI + REGISTRY** | `src/bin/compute.ts`（88 条注册） |
+| **批量执行** | `src/bin/compute_all.ts` |
+| **数据库导入** | `src/bin/update_database.ts` |
+| **WR ID / 索引** | `src/bin/gen_wr_ids.ts` / `compute_index.ts` |
 | **验证脚本** | `src/bin/validate.ts` |
 | **88 个统计** | `src/statistics/*.ts` |
 | **批量测试** | `run_all_tests.ps1` |
@@ -197,12 +199,19 @@ cd d:\cube\ruiminyan.github.io\trainer\packages\stats-build
 # TypeScript 编译检查
 npx tsc --noEmit
 
-# 生成单个统计 JSON
+# 批量执行所有统计（串行 + GC）
 $env:NODE_OPTIONS='--expose-gc --max-old-space-size=6144'
+npx tsx src/bin/compute_all.ts
+
+# 生成单个统计 JSON
 npx tsx src/bin/compute.ts world_championship_podiums_by_person
 
 # 查看所有已注册的统计
 npx tsx src/bin/compute.ts
+
+# 生成 WR ID + 索引（依赖 compute_all 输出）
+npx tsx src/bin/gen_wr_ids.ts
+npx tsx src/bin/compute_index.ts
 
 # 批量测试（需要 MySQL 运行）
 .\run_all_tests.ps1
@@ -210,7 +219,8 @@ npx tsx src/bin/compute.ts
 # 启动前端（在 trainer 根目录）
 cd d:\cube\ruiminyan.github.io\trainer
 pnpm --filter @cuberoot/client dev
-# → http://localhost:5173/app/wca-stats/<stat_id>
+# → http://localhost:5173/app/wca-stats/       (索引页)
+# → http://localhost:5173/app/wca-stats/<statId> (详情页)
 ```
 
 ---
