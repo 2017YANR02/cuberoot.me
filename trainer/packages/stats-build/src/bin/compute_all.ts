@@ -8,6 +8,9 @@ import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { closePool } from '../core/database.js';
 import { REGISTRY } from './compute.js';
+import { RoundMetric } from '../core/round_metric.js';
+import { AoRounds } from '../core/ao_rounds.js';
+import { AverageOfX } from '../core/average_of_x.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -50,6 +53,23 @@ const HEAVY_STATS = new Set([
   'most_frequent_results',
   'moving_average',
 ]);
+
+// NOTE: 与 Ruby AGGREGATE_CACHE_CLEANUP 对应——聚合页面完成后清除基类缓存
+// 结构：statId -> 清理函数
+const AGGREGATE_CACHE_CLEANUP: Record<string, () => void> = {
+  'wr_metric':  () => {
+    RoundMetric.clearPrecomputed();
+    console.log('  [Memory] Cleared RoundMetric precomputed rankings');
+  },
+  'wr_aoxr':    () => {
+    AoRounds.clearPrecomputed();
+    console.log('  [Memory] Cleared AoRounds precomputed cache');
+  },
+  'average_of': () => {
+    AverageOfX.clearSharedCache();
+    console.log('  [Memory] Cleared AverageOfX shared query cache');
+  },
+};
 
 // NOTE: 构建执行顺序——优先统计 + 其余（排除 ALL_MERGED）
 function buildOrderedIds(): string[] {
@@ -117,6 +137,12 @@ async function main() {
       console.error(`  [${i + 1}/${orderedIds.length}] ${statId.padEnd(50)} ${duration.padStart(6)}s  FAILED`);
       console.error(`    ${err instanceof Error ? err.message : String(err)}`);
       failed++;
+    }
+
+    // NOTE: 聚合统计完成后清除基类缓存——与 Ruby AGGREGATE_CACHE_CLEANUP 对应
+    if (AGGREGATE_CACHE_CLEANUP[statId]) {
+      AGGREGATE_CACHE_CLEANUP[statId]();
+      if (global.gc) global.gc();
     }
   }
 
