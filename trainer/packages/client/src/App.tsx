@@ -10,6 +10,9 @@ import { ZbllTimerPage } from './pages/ZbllTimerPage';
 import { ZblsSelectPage } from './pages/ZblsSelectPage';
 import { ZblsTimerPage } from './pages/ZblsTimerPage';
 
+// NOTE: LandingPage 懒加载 — Toolkit 全站入口页（粒子系统 + 9 卡片）
+const LandingPage = lazy(() => import('./pages/LandingPage'));
+
 // NOTE: Calc 模块懒加载 — 体积较大，按需加载
 const CalcPage = lazy(() => import('./pages/calc/CalcPage'));
 // NOTE: Viz 模块懒加载 — 分布演变可视化
@@ -29,7 +32,10 @@ function App() {
   return (
     <BrowserRouter basename="/app">
       <Routes>
-        <Route path="/" element={<HomePage />} />
+        {/* NOTE: 全站入口页（复刻原版 index.html 的 9 卡片 Toolkit 主页） */}
+        <Route path="/" element={<Suspense fallback={<div>Loading...</div>}><LandingPage /></Suspense>} />
+        {/* NOTE: Trainer 首页（原来的 /，PLL/OLL/ZBLL/ZBLS 选择页） */}
+        <Route path="/trainer" element={<HomePage />} />
         <Route path="/select/:algSetId" element={<CaseSelectPage />} />
         {/* NOTE: OLL 走专用计时器训练页，PLL 走识别训练页 */}
         <Route path="/train/oll" element={<OllTrainingPage />} />
