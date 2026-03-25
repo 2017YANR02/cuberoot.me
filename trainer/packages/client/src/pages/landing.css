@@ -1,0 +1,387 @@
+/* ==========================================================================
+ * NOTE: LandingPage 专用样式
+ * 从原版 index.html <style> + assets/css/card.css 提取，保持 1:1 视觉一致
+ * ========================================================================== */
+
+/* ── 页面基础 ── */
+.landing-page {
+    font-family: 'Inter', Arial, sans-serif;
+    background-color: #0a0a0f;
+    color: #ffffff;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    /* NOTE: 亮点粒子背景，增加视觉层次 */
+    background-image:
+        radial-gradient(ellipse at 20% 50%, rgba(90, 90, 200, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 50%, rgba(200, 90, 90, 0.06) 0%, transparent 50%);
+}
+
+/* NOTE: 确保内容在粒子 Canvas (z-index:0) 上方 */
+.landing-page .landing-title,
+.landing-page .landing-subtitle,
+.landing-page .cards-container,
+.landing-page .credits,
+.landing-page .footer {
+    position: relative;
+    z-index: 1;
+}
+
+/* ── 标题 ── */
+.landing-page .landing-title {
+    font-size: clamp(1.5rem, 4vw, 2.4rem);
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #e0e0ff 0%, #ffffff 50%, #ffe0e0 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.landing-page .landing-subtitle {
+    font-size: clamp(0.85rem, 2vw, 1rem);
+    color: #888;
+    text-align: center;
+    margin-bottom: 3rem;
+    font-weight: 400;
+}
+
+/* ── 卡片网格 ── */
+.landing-page .cards-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+    max-width: 760px;
+    width: 100%;
+}
+
+/* NOTE: 移动端保持 2 列网格，缩小间距和卡片内容 */
+@media (max-width: 768px) {
+    .landing-page .cards-container {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+
+    .landing-page .card {
+        padding: 1.5rem 1rem;
+    }
+
+    .landing-page .card-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .landing-page .card-name {
+        font-size: 1rem;
+    }
+
+    .landing-page .card-desc {
+        font-size: 0.75rem;
+    }
+}
+
+/* ── 毛玻璃卡片基础（从 card.css 提取） ── */
+.landing-page .glass-card {
+    position: relative;
+    background: rgba(30, 30, 50, 0);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border-radius: 16px;
+    border: 1px solid rgba(100, 100, 180, 0.2);
+    overflow: hidden;
+    transition: transform 0.25s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* 顶部渐变光带 */
+.landing-page .glass-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    border-radius: 16px 16px 0 0;
+    background: var(--card-gradient, linear-gradient(90deg, #6366f1, #8b5cf6));
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+}
+
+.landing-page .glass-card:hover::before {
+    opacity: 1;
+}
+
+.landing-page .glass-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(130, 130, 220, 0.4);
+    box-shadow: 0 8px 32px rgba(80, 80, 160, 0.15);
+}
+
+/* ── 卡片内容布局 ── */
+.landing-page .card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2.5rem 2rem;
+    text-decoration: none;
+    color: #ffffff;
+}
+
+.landing-page .card-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    line-height: 1;
+}
+
+.landing-page .card-name {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.01em;
+}
+
+.landing-page .card-desc {
+    font-size: 0.85rem;
+    color: #aaa;
+    text-align: center;
+    line-height: 1.5;
+}
+
+/* ── 各卡片独特颜色 ── */
+.landing-page .card-solver {
+    --card-gradient: linear-gradient(90deg, #6366f1, #8b5cf6, #a78bfa);
+}
+.landing-page .card-stats {
+    --card-gradient: linear-gradient(90deg, #f59e0b, #ef4444, #ec4899);
+}
+.landing-page .card-recon {
+    --card-gradient: linear-gradient(90deg, #10b981, #06b6d4, #3b82f6);
+}
+.landing-page .card-trainer {
+    --card-gradient: linear-gradient(90deg, #f472b6, #c084fc, #818cf8);
+}
+.landing-page .card-hth {
+    --card-gradient: linear-gradient(90deg, #f59e0b, #f97316, #ef4444);
+}
+.landing-page .card-battle {
+    --card-gradient: linear-gradient(90deg, #8b5cf6, #6366f1, #3b82f6);
+}
+.landing-page .card-viz {
+    --card-gradient: linear-gradient(90deg, #06b6d4, #0ea5e9, #6366f1);
+}
+.landing-page .card-upcoming {
+    --card-gradient: linear-gradient(90deg, #f59e0b, #22c55e, #06b6d4);
+}
+.landing-page .card-cstimer {
+    --card-gradient: linear-gradient(90deg, #6366f1, #8b5cf6);
+}
+.landing-page .card-cuberoot {
+    --card-gradient: linear-gradient(90deg, #06b6d4, #8b5cf6, #ec4899);
+}
+.landing-page .card-cuberoot:hover {
+    border-color: rgba(6, 182, 212, 0.4);
+    box-shadow: 0 8px 32px rgba(139, 92, 246, 0.12);
+}
+
+/* ── 各卡片 hover 效果 ── */
+.landing-page .card-solver:hover {
+    border-color: rgba(99, 102, 241, 0.4);
+    box-shadow: 0 8px 32px rgba(99, 102, 241, 0.12);
+}
+.landing-page .card-stats:hover {
+    border-color: rgba(245, 158, 11, 0.4);
+    box-shadow: 0 8px 32px rgba(245, 158, 11, 0.12);
+}
+.landing-page .card-recon:hover {
+    border-color: rgba(16, 185, 129, 0.4);
+    box-shadow: 0 8px 32px rgba(16, 185, 129, 0.12);
+}
+.landing-page .card-trainer:hover {
+    border-color: rgba(196, 132, 252, 0.4);
+    box-shadow: 0 8px 32px rgba(196, 132, 252, 0.12);
+}
+.landing-page .card-hth:hover {
+    border-color: rgba(249, 115, 22, 0.4);
+    box-shadow: 0 8px 32px rgba(249, 115, 22, 0.12);
+}
+.landing-page .card-battle:hover {
+    border-color: rgba(99, 102, 241, 0.4);
+    box-shadow: 0 8px 32px rgba(99, 102, 241, 0.12);
+}
+.landing-page .card-viz:hover {
+    border-color: rgba(6, 182, 212, 0.4);
+    box-shadow: 0 8px 32px rgba(6, 182, 212, 0.12);
+}
+.landing-page .card-upcoming:hover {
+    border-color: rgba(34, 197, 94, 0.4);
+    box-shadow: 0 8px 32px rgba(34, 197, 94, 0.12);
+}
+
+/* ── 致谢 ── */
+.landing-page .credits {
+    margin-top: 2.5rem;
+    font-size: 0.72rem;
+    color: #555;
+    text-align: center;
+    padding: 0 1rem;
+}
+
+.landing-page .credits::before {
+    content: '';
+    display: block;
+    width: 60px;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+    margin: 0 auto 0.8rem;
+}
+
+.landing-page .credits a {
+    color: #777;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.landing-page .credits a:hover {
+    color: #aaa;
+}
+
+/* ── 页脚 ── */
+.landing-page .footer {
+    margin-top: 1rem;
+    font-size: 0.75rem;
+    color: #555;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.landing-page .footer a {
+    color: #777;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.landing-page .footer a:hover {
+    color: #aaa;
+}
+
+/* ── 语言切换按钮 ── */
+.landing-page .lang-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border-radius: 6px;
+    padding: 4px 10px;
+    cursor: pointer;
+    border: 1px solid #444;
+    background: transparent;
+    color: #999;
+    font-size: 0.75rem;
+    transition: color 0.2s, border-color 0.2s, background 0.2s;
+    user-select: none;
+}
+
+.landing-page .lang-toggle:hover {
+    color: #e8eeff;
+    border-color: rgba(100, 100, 180, 0.5);
+    background: rgba(100, 100, 180, 0.12);
+}
+
+/* ── 全局 WCA 登录区域（左上角） ── */
+.landing-page .global-auth {
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.landing-page .global-auth-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid #444;
+    border-radius: 8px;
+    color: #ccc;
+    padding: 6px 14px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: Inter, sans-serif;
+}
+
+.landing-page .global-auth-btn:hover {
+    background: rgba(99, 102, 241, 0.15);
+    border-color: rgba(99, 102, 241, 0.5);
+    color: #fff;
+}
+
+.landing-page .global-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.landing-page .global-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid #555;
+    object-fit: cover;
+}
+
+.landing-page .global-logout {
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 0.7rem;
+    cursor: pointer;
+    padding: 2px 6px;
+}
+
+.landing-page .global-logout:hover {
+    color: #f87171;
+}
+
+/* ── GitHub Corner ── */
+.landing-page .github-corner svg {
+    fill: #151513;
+    color: #fff;
+    position: absolute;
+    top: 0;
+    border: 0;
+    right: 0;
+}
+
+.landing-page .github-corner:hover .octo-arm {
+    animation: octocat-wave 560ms ease-in-out;
+}
+
+@keyframes octocat-wave {
+    0%, 100% { transform: rotate(0); }
+    20%, 60% { transform: rotate(-25deg); }
+    40%, 80% { transform: rotate(10deg); }
+}
+
+@media (max-width: 500px) {
+    .landing-page .github-corner:hover .octo-arm {
+        animation: none;
+    }
+    .landing-page .github-corner .octo-arm {
+        animation: octocat-wave 560ms ease-in-out;
+    }
+}
+
+/* ── csTimer 卡片 Logo 样式 ── */
+.landing-page .cstimer-logo {
+    width: 1em;
+    height: 1em;
+    border-radius: 6px;
+}
