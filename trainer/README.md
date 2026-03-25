@@ -14,7 +14,7 @@ trainer/
 ├── packages/
 │   ├── client/                # React 19 + Vite 8 前端
 │   │   ├── src/
-│   │   │   ├── App.tsx                # 路由配置（React Router, basename=/trainer）
+│   │   │   ├── App.tsx                # 路由配置（React Router, basename=/app）
 │   │   │   ├── main.tsx               # 入口（引入 CSS + i18n + App）
 │   │   │   ├── index.css              # 暗色系全局样式
 │   │   │   ├── components/
@@ -35,6 +35,13 @@ trainer/
 │   │   │   │       ├── ReconSubmitPage.tsx  # 提交/编辑页（表单+搜索+实时统计）
 │   │   │   │       ├── recon_detail.css     # 详情页样式
 │   │   │   │       └── recon_submit.css     # 提交页样式
+│   │   │   │   ├── wca_stats/         # WCA 统计模块
+│   │   │   │   │   ├── WcaStatsIndex.tsx    # 统计指标索引页（分组卡片导航）
+│   │   │   │   │   └── WcaStatsPage.tsx     # 单个统计详情页（Tab+图表）
+│   │   │   │   ├── LandingPage.tsx    # 全站入口主页（1:1 复刻原版 index.html，粒子+10卡片）
+│   │   │   │   ├── UpcomingCompsPage.tsx # 顶尖选手近期比赛（时间轴+搜索+国家过滤）
+│   │   │   │   ├── IframePage.tsx     # 通用 iframe 包装页（Solver/Alg Trainer/csTimer）
+│   │   │   │   └── landing.css        # 主页样式
 │   │   │   ├── stores/
 │   │   │   │   ├── sessionStore.ts    # 训练状态机（idle→caseShown→timing→stopped→complete）
 │   │   │   │   ├── settingsStore.ts   # 用户设置（localStorage 持久化）
@@ -68,7 +75,7 @@ trainer/
 │   │   │       ├── index.ts           # i18n 初始化（URL > localStorage > 浏览器语言）
 │   │   │       ├── zh.json            # 中文翻译（含 ZBLL/ZBLS 翻译 keys）
 │   │   │       └── en.json            # 英文翻译（含 ZBLL/ZBLS 翻译 keys）
-│   │   └── vite.config.ts             # Vite 配置（base=/trainer/, API 代理）
+│   │   └── vite.config.ts             # Vite 配置（base=/app/，API 代理 + Jekyll dev 路径代理）
 │   │
 │   ├── server/                # Hono + MariaDB 后端
 │   │   ├── src/
@@ -133,7 +140,8 @@ cd packages/stats-ui
 ```
 
 > **注意**：Recon API 通过 Vite proxy 转发到 ECS 线上后端（`toolkit.cuberoot.me`），本地开发**不需要**启动 Hono 后端。
-> 若需要 Calc 模块的 WR 数据，额外启动 `bundle exec jekyll serve`（`http://localhost:4000`）。
+> 
+> 若需要 Calc/Upcoming Comps 模块的 WR/比赛数据，或测试 Solver/Alg Trainer/csTimer 的 iframe 嵌入效果，需额外启动 `bundle exec jekyll serve`（`http://localhost:4000`）。Vite dev server 已配置 proxy 自动转发这些路径。
 
 ### 后端开发（需要 MariaDB）
 
