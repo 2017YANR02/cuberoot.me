@@ -486,11 +486,16 @@ reconRoutes.get('/api/recon/:id', async (c) => {
     'SELECT fields FROM edits WHERE solve_id = ?', [id]
   );
   if (edits.length > 0) {
-    const fields = JSON.parse(String(edits[0].fields)) as Record<string, unknown>;
-    for (const [k, v] of Object.entries(fields)) {
-      if (!k.startsWith('_')) result[k] = v;
+    try {
+      const fields = JSON.parse(String(edits[0].fields)) as Record<string, unknown>;
+      for (const [k, v] of Object.entries(fields)) {
+        if (!k.startsWith('_')) result[k] = v;
+      }
+      result._edited = true;
+    } catch {
+      // NOTE: edits.fields 解析失败——跳过覆盖层，不阻塞主数据
+      console.warn(`edits parse failed for solve_id=${id}`);
     }
-    result._edited = true;
   }
 
   return c.json(result);
