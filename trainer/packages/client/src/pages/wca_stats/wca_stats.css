@@ -43,11 +43,12 @@
    对标 Legacy stats_ui.css .segmented-btn（蓝色主题 #8ab4f8）
    ========================================================================== */
 
-/* Tab 按钮容器 */
+/* NOTE: Tab 按钮容器 — inline-flex 让多个 tab-bar 可在同一行流动 */
 .wca-stats-tab-bar {
-  display: flex;
+  display: inline-flex;
   gap: 0;
-  margin: 12px 0;
+  margin: 6px 12px 6px 0;
+  vertical-align: middle;
 }
 
 /* 通用分段按钮基础样式 */

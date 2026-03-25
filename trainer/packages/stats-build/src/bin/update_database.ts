@@ -6,7 +6,7 @@
 //   3. 设置 MySQL 高性能参数
 //   4. 逐行解析 SQL dump，按表名过滤导入 REQUIRED_TABLES
 //   5. 建覆盖索引 + 存储 export timestamp
-import { createWriteStream, createReadStream, writeFileSync, appendFileSync, statSync, mkdirSync, existsSync, copyFileSync, unlinkSync } from 'fs';
+import { createWriteStream, createReadStream, writeFileSync, statSync, mkdirSync, existsSync, copyFileSync, unlinkSync } from 'fs';
 import { resolve, dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { createInterface } from 'readline';
@@ -89,9 +89,8 @@ async function setMysqlPerformanceParams(): Promise<void> {
 }
 
 // NOTE: 步骤 4——逐行解析 SQL dump，按表名过滤导入
-// 与 Ruby 版相同的逐行读取逻辑，但改进为：每个目标表结束时立即写磁盘+导入+释放
-// Ruby 版将所有目标表 SQL 存在 table_sqls hash 中，JS 字符串数组 GC 开销更大，
-// 因此改为即时导入以降低峰值内存（单张最大表 ~1.5GB 而非 12 张同时在内存）
+// 全流式架构：readline 逐行 → WriteStream 直接写磁盘 → 表切换时导入
+// 内存峰值仅为当前行 + header（几十行），无论表多大都不会 OOM
 async function importTables(sqlPath: string, workDir: string): Promise<Date> {
   const requiredSet = new Set<string>(REQUIRED_TABLES);
   const mysql = mysqlCmd();
@@ -102,42 +101,42 @@ async function importTables(sqlPath: string, workDir: string): Promise<Date> {
   execSync(`${mysql} -e "CREATE DATABASE ${db}" 2>&1 | grep -v "Using a password" || true`, { stdio: 'pipe' });
 
   return timedTask(`Importing ${SQL_FILENAME} into ${db}`, async () => {
-    let header: string | null = null;
-    let lines: string[] = [];
+    let headerLines: string[] = [];  // NOTE: 第一个表之前的 SQL（SET 语句等），通常几十行
+    let headerBuilt = false;
     let currentTable: string | null = null;
+    let ws: ReturnType<typeof createWriteStream> | null = null;
+    let lineCount = 0;
     let firstLine = true;
     const importedTables = new Set<string>();
 
-    // NOTE: 辅助函数——将收集的表 SQL 流式写入磁盘并导入
-    // result_attempts 有约 3000 万行，join() 会超过 V8 字符串长度上限（~512MB）
-    // 因此改为逐批 appendFileSync 写入，每批 CHUNK_SIZE 行
-    const CHUNK_SIZE = 50_000;
-    const flushTable = (tableName: string, tableLines: string[]) => {
-      console.log(`  - Importing table ${tableName} (${tableLines.length} lines)`);
+    // NOTE: 辅助函数——关闭 WriteStream，追加 INDICES，执行 mysql 导入
+    const flushAndImport = (tableName: string, count: number) => {
+      if (!ws) return;
+      // NOTE: 追加自定义索引语句
+      ws.write('\n' + INDICES.join('\n') + '\n');
+      ws.end();
+      ws = null;
+
+      console.log(`  - Importing table ${tableName} (${count} lines)`);
       const f = join(workDir, `${tableName}.sql`);
-
-      // NOTE: 先写 header
-      writeFileSync(f, (header || '') + '\n', 'utf-8');
-
-      // NOTE: 逐批追加行内容，避免 join 整个数组
-      for (let i = 0; i < tableLines.length; i += CHUNK_SIZE) {
-        const chunk = tableLines.slice(i, i + CHUNK_SIZE).join('\n') + '\n';
-        appendFileSync(f, chunk, 'utf-8');
-      }
-
-      // NOTE: 与 Ruby 一致——去掉 CREATE TABLE 中的 KEY 定义，改为 CREATE INDEX
-      // 对于超大表，KEY 替换在写入后的文件上进行太昂贵
-      // 但实际 KEY 定义只在 CREATE TABLE 语句中（前几行），不会导致字符串溢出
-      // 直接追加 INDEX 语句即可
-      appendFileSync(f, '\n' + INDICES.join('\n') + '\n', 'utf-8');
-
       execSync(`${mysql} ${db} < "${f}" 2>&1 | grep -v "Using a password" || true`, {
         stdio: 'pipe',
         maxBuffer: 50 * 1024 * 1024,
       });
-      // NOTE: 删除临时 SQL 文件释放磁盘
+      // NOTE: 导入后删除临时文件释放磁盘
       try { unlinkSync(f); } catch { /* ignore */ }
       importedTables.add(tableName);
+    };
+
+    // NOTE: 辅助函数——为目标表创建新的 WriteStream 并写入 header
+    const startTable = (tableName: string): void => {
+      const f = join(workDir, `${tableName}.sql`);
+      ws = createWriteStream(f, { encoding: 'utf-8' });
+      // NOTE: header 包含 charset/encoding 等全局 SET 语句，每张表都需要
+      for (const hl of headerLines) {
+        ws.write(hl + '\n');
+      }
+      lineCount = 0;
     };
 
     const rl = createInterface({
@@ -156,33 +155,41 @@ async function importTables(sqlPath: string, workDir: string): Promise<Date> {
       if (tableMatch) {
         const tableName = tableMatch[1];
 
-        if (header === null) {
+        if (!headerBuilt) {
           // NOTE: 第一个表之前的内容作为 header（与 Ruby L68-69 对应）
-          header = lines.join('\n');
-        } else if (currentTable) {
-          // NOTE: 与 Ruby L70-72 对应，但立即导入+释放而非存入 hash
-          flushTable(currentTable, lines);
-          currentTable = null;
+          headerBuilt = true;
+        } else if (currentTable && ws) {
+          // NOTE: 上一张目标表结束——立即 flush 并导入
+          flushAndImport(currentTable, lineCount);
         }
 
         if (requiredSet.has(tableName)) {
           currentTable = tableName;
+          startTable(tableName);
+        } else {
+          currentTable = null;
         }
-
-        lines = [];
+        continue;
       }
 
-      // NOTE: 只收集 header 阶段或当前目标表的行，跳过非目标表以节省内存
-      if (header === null || currentTable !== null) {
-        lines.push(line);
+      if (!headerBuilt) {
+        // NOTE: header 阶段——收集全局 SQL 语句
+        headerLines.push(line);
+      } else if (currentTable && ws) {
+        // NOTE: 目标表行——直接写入 WriteStream，不存内存
+        ws!.write(line + '\n');
+        lineCount++;
       }
+      // NOTE: 非目标表行被跳过，不占任何内存
     }
 
     // NOTE: 文件末尾残留的最后一个表
-    if (currentTable && lines.length > 0) {
-      flushTable(currentTable, lines);
+    if (currentTable && ws) {
+      flushAndImport(currentTable, lineCount);
     }
-    lines = [];
+
+    // NOTE: 释放 header（已不再需要）
+    headerLines = [];
 
     for (const t of REQUIRED_TABLES) {
       if (!importedTables.has(t)) {
