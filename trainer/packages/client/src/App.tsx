@@ -28,6 +28,8 @@ const AuthCallbackPage = lazy(() => import('./pages/AuthCallbackPage'));
 // NOTE: WCA Stats 模块懒加载 — 统计数据展示
 const WcaStatsPage = lazy(() => import('./pages/wca_stats/WcaStatsPage'));
 const WcaStatsIndex = lazy(() => import('./pages/wca_stats/WcaStatsIndex'));
+// NOTE: Upcoming Comps 懒加载 — 顶尖选手近期比赛追踪
+const UpcomingCompsPage = lazy(() => import('./pages/UpcomingCompsPage'));
 
 function App() {
   return (
@@ -59,6 +61,8 @@ function App() {
         <Route path="/recon/submit" element={<Suspense fallback={<div>Loading...</div>}><ReconSubmitPage /></Suspense>} />
         <Route path="/recon/submit/:editId" element={<Suspense fallback={<div>Loading...</div>}><ReconSubmitPage /></Suspense>} />
         <Route path="/recon/:id" element={<Suspense fallback={<div>Loading...</div>}><ReconDetailPage /></Suspense>} />
+        {/* Upcoming Comps — 顶尖选手近期比赛追踪 */}
+        <Route path="/upcoming-comps" element={<Suspense fallback={<div>Loading...</div>}><UpcomingCompsPage /></Suspense>} />
         {/* WCA Stats — 统计数据展示 */}
         <Route path="/wca-stats" element={<Suspense fallback={<div>Loading...</div>}><WcaStatsIndex /></Suspense>} />
         <Route path="/wca-stats/:statId" element={<Suspense fallback={<div>Loading...</div>}><WcaStatsPage /></Suspense>} />
