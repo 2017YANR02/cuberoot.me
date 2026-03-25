@@ -163,8 +163,8 @@ export const useReconStore = create<ReconStoreState & ReconStoreActions>()((set,
     // NOTE: 排序——'result' 实际排 rawTime
     const actualKey = sortKey === 'result' ? 'rawTime' : sortKey;
     result.sort((a, b) => {
-      const aVal = (a as Record<string, unknown>)[actualKey] ?? '';
-      const bVal = (b as Record<string, unknown>)[actualKey] ?? '';
+      const aVal = (a as unknown as Record<string, unknown>)[actualKey] ?? '';
+      const bVal = (b as unknown as Record<string, unknown>)[actualKey] ?? '';
       // NOTE: null/空值排到最后
       if (aVal == null && bVal == null) return 0;
       if (aVal == null || aVal === '') return 1;
