@@ -2,6 +2,11 @@
 // 与 Ruby _stats_build/statistics/abstract/round_metric.rb 1:1 对应
 // 产出双视图 JSON：排名（ranking）+ WR 历史（history）
 // 子类只需实现 computeMetric(values, row) 方法即可
+//
+// NOTE: 一次性计算模式——第一个 batch 子类运行时，为所有 batch 子类
+// 按 (valueColumn, targetEvents) 分组，逐 event 查询一次 MySQL，
+// 同组每个子类的 computeMetric 共享同一份数据计算排名。
+// 与 Ruby compute_all_rankings / @@precomputed_rankings 完全对齐。
 import { GroupedStatistic } from './grouped_statistic.js';
 import { EVENTS_WITH_AVERAGE, EVENTS_WITH_AO5, OFFICIAL_EVENTS_RECORD, EVENTS, headerZh, eventZh } from './events.js';
 import { SolveTime } from './solve_time.js';
@@ -15,6 +20,27 @@ const RANKING_HEADER: TableHeader = {
   '#': 'right', 'Person': 'left', 'Result': 'right',
   'Country': 'left', 'Date': 'left', 'Competition': 'left', 'Details': 'left',
 };
+
+// --- 预计算排名缓存（与 Ruby @@precomputed_rankings 对齐） ---
+// 结构：className -> [eventName, top10Rows][]
+let precomputedRankings: Map<string, [string, unknown[][]][]> | null = null;
+
+// NOTE: 11 个 batchRanking=true 的子类定义
+// JS 无法像 Ruby 用 .subclasses 自动发现，硬编码 import 列表
+// 所有 11 个子类都使用 (valueColumn='average', targetEvents=EVENTS_WITH_AO5)
+const BATCH_SUBCLASS_IMPORTS = [
+  { name: 'WrBao5',             module: () => import('../statistics/wr_bao5.js') },
+  { name: 'WrWao5',             module: () => import('../statistics/wr_wao5.js') },
+  { name: 'WrMo5',              module: () => import('../statistics/wr_mo5.js') },
+  { name: 'WrBpa',              module: () => import('../statistics/wr_bpa.js') },
+  { name: 'WrWpa',              module: () => import('../statistics/wr_wpa.js') },
+  { name: 'WrMedian',           module: () => import('../statistics/wr_median.js') },
+  { name: 'WrBestCounting',     module: () => import('../statistics/wr_best_counting.js') },
+  { name: 'WrWorstCounting',    module: () => import('../statistics/wr_worst_counting.js') },
+  { name: 'WrWorst',            module: () => import('../statistics/wr_worst.js') },
+  { name: 'WrVariance',         module: () => import('../statistics/wr_variance.js') },
+  { name: 'WrBestAverageRatio', module: () => import('../statistics/wr_best_average_ratio.js') },
+] as const;
 
 export abstract class RoundMetric extends GroupedStatistic {
   // NOTE: 子类可覆写的钩子方法（提供默认值）
@@ -110,12 +136,97 @@ export abstract class RoundMetric extends GroupedStatistic {
     });
   }
 
-  // NOTE: 排名数据——batch = true 走批量计算，batch = false 走两步 SQL
+  // NOTE: 排名数据——batch = true 走缓存/批量计算，batch = false 走两步 SQL
   async rankingData(): Promise<[string, unknown[][]][]> {
     if (this.batchRanking()) {
+      // NOTE: 如果缓存为空，一次性为所有 batch 子类预计算排名
+      if (!precomputedRankings) {
+        await RoundMetric.precomputeAllRankings();
+      }
+      // NOTE: 从缓存取当前子类的排名数据
+      const className = this.constructor.name;
+      const cached = precomputedRankings!.get(className);
+      if (cached) return cached;
+      // NOTE: 缓存中没有（极端情况），回退到独立计算
       return this.computeBatchRanking();
     }
     return this.computeOwnRanking();
+  }
+
+  // NOTE: 一次性为所有 batch 子类预计算排名数据
+  // 与 Ruby compute_all_rankings 1:1 对应
+  // 每个 event 只查 MySQL 一次，同组所有子类共享查询结果
+  static async precomputeAllRankings(): Promise<void> {
+    precomputedRankings = new Map();
+
+    // NOTE: 动态导入所有 batch 子类，实例化用于 computeMetric
+    const instances: Array<{ name: string; inst: RoundMetric }> = [];
+    for (const def of BATCH_SUBCLASS_IMPORTS) {
+      const mod = await def.module();
+      const Cls = Object.values(mod).find(v => typeof v === 'function') as
+        new () => RoundMetric;
+      instances.push({ name: def.name, inst: new Cls() });
+    }
+
+    // NOTE: 初始化每个子类的结果容器
+    for (const { name } of instances) {
+      precomputedRankings.set(name, []);
+    }
+
+    // NOTE: 所有 11 个 batch 子类使用相同的 (valueColumn='average', targetEvents=EVENTS_WITH_AO5)
+    // 因此只有一个分组，每个 event 只查一次
+    const events = EVENTS_WITH_AO5;
+
+    for (const [eventId, eventName] of Object.entries(events)) {
+      // NOTE: 每个项目只查 MySQL 一次，11 个子类共享同一份数据
+      const eventRows = await dbQuery<RowDataPacket[]>(
+        `SELECT person_id, ${ATTEMPTS_SUBQUERY} AS attempts, average, best,
+         CONCAT('[', person.name, '](https://www.worldcubeassociation.org/persons/', person.wca_id, ')') person_link,
+         person.country_id,
+         CONCAT('[', c.cell_name, '](https://www.worldcubeassociation.org/competitions/', c.id, ')') competition_link,
+         c.start_date
+         FROM results result
+         JOIN persons person ON person.wca_id = person_id AND person.sub_id = 1
+         JOIN competitions c ON c.id = competition_id
+         WHERE average > 0 AND event_id = '${eventId}'`,
+      );
+
+      // NOTE: 遍历每个子类，用各自的 computeMetric 计算排名
+      for (const { name, inst } of instances) {
+        const bestByPerson = new Map<string, { metric: number; row: RowDataPacket }>();
+        for (const r of eventRows) {
+          const values = String(r['attempts'] || '').split(',').map(Number);
+          const metric = inst.computeMetric(values, r);
+          if (metric === null) continue;
+          const pid = String(r['person_id']);
+          const existing = bestByPerson.get(pid);
+          if (!existing || metric < existing.metric) {
+            bestByPerson.set(pid, { metric, row: r });
+          }
+        }
+
+        const top = [...bestByPerson.values()]
+          .sort((a, b) => a.metric - b.metric)
+          .slice(0, 10)
+          .map((v, i) => {
+            const metricStr = inst.formatMetric(v.metric, eventId);
+            const dateStr = formatDate(v.row['start_date']);
+            const details = String(v.row['attempts'] || '').split(',')
+              .map(a => new SolveTime(eventId, 'single', Number(a)).clockFormat())
+              .filter(s => s.length > 0)
+              .join(' ');
+            return [i + 1, v.row['person_link'], metricStr, v.row['country_id'], dateStr, v.row['competition_link'], details];
+          });
+
+        precomputedRankings!.get(name)!.push([eventName, top]);
+      }
+      // NOTE: eventRows 在此 block 结束后可被 GC 回收
+    }
+  }
+
+  // NOTE: 缓存清理——wr_metric 聚合完成后调用，与 Ruby AGGREGATE_CACHE_CLEANUP 对应
+  static clearPrecomputed(): void {
+    precomputedRankings = null;
   }
 
   // NOTE: 覆写 toJson——输出 panels 而非 sections
@@ -207,7 +318,7 @@ export abstract class RoundMetric extends GroupedStatistic {
     return [gainStr, daysStr, r.row['person_link'], dateStr, r.row['competition_link'], details];
   }
 
-  // NOTE: 批量排名计算——加载全量数据用 computeMetric 计算每人最佳
+  // NOTE: 独立批量排名计算——仅在缓存未命中时回退使用
   private async computeBatchRanking(): Promise<[string, unknown[][]][]> {
     const events = this.targetEvents();
     const result: [string, unknown[][]][] = [];
