@@ -107,43 +107,16 @@ interface StatJson {
 
 ---
 
-## 三、❌ 剩余工作（CI 上线 + 前端）
+## 三、剩余工作（CI 上线 + 前端）
 
-### 3.1 TS 侧缺失的 CLI 工具（CI 上线前必须做）
+### 3.1 CLI 工具（✅ 全部完成）
 
-当前 Ruby CI 流程（`.github/workflows/stats.yml`）有 5 个步骤：
-
-```yaml
-# 1. setup database
-ruby bin/init.rb && ruby bin/update_database.rb
-
-# 2. compute all statistics → stats/*.md
-ruby bin/compute_all.rb
-
-# 3. generate WR IDs for calc page → stats/wr_ids.json
-ruby bin/gen_wr_ids.rb
-
-# 4. generate index page → stats/index.md
-ruby bin/compute_index.rb
-
-# 5. commit and push
-git add -A stats/ && git commit && git push
-```
-
-TS 端需要创建等价工具：
-
-| 工具 | Ruby 版 | TS 等价 | 说明 | 预估工作量 |
-|------|---------|---------|------|-----------|
-| **批量执行** | `bin/compute_all.rb` | 需创建 `src/bin/compute_all.ts` | 串行执行 88 个统计 | ~1h |
-| **WR ID JSON** | `bin/gen_wr_ids.rb` | 需创建 `src/bin/gen_wr_ids.ts` | 从 ranking_data 提取 WR ID（calc 页面依赖） | ~30min |
-| **索引页** | `bin/compute_index.rb` | 需创建 `src/bin/compute_index.ts` | 生成索引 JSON（分类 + 统计列表） | ~20min |
-| **CI workflow** | `.github/workflows/stats.yml` | 需修改为 Node.js | 加 `setup-node` + `--expose-gc --max-old-space-size=6144` | ~30min |
-
-> **`bin/compute_all.rb` 参考**：Ruby 版将轻量级和重量级统计分组执行，每个统计完成后释放实例缓存 + `GC.start`。TS 版 `compute.ts` 已实现单统计执行，`compute_all.ts` 只需循环调用即可。
->
-> **`bin/gen_wr_ids.rb` 参考**：从 `WrAverageHistory` 和 `WrSingleHistory` 的 ranking_data 提取 top 2 WCA ID + 成绩（centiseconds），输出 `stats/wr_ids.json`。
->
-> **`bin/compute_index.rb` 参考**：定义 6 个分类（世界纪录分析/成绩与纪录/领奖台与荣誉/选手经历/赛事统计/纪录与国家），生成 `stats/index.md`。TS 版可改为输出 JSON 供 React 前端渲染。
+| 工具 | Ruby 版 | TS 版 | 说明 |
+|------|---------|-------|------|
+| **批量执行** | `bin/compute_all.rb` | ✅ `src/bin/compute_all.ts` | 串行执行 + GC，PRIORITY_STATS/ALL_MERGED/HEAVY_STATS/STATS_FILTER |
+| **WR ID JSON** | `bin/gen_wr_ids.rb` | ✅ `src/bin/gen_wr_ids.ts` | 读取 wr_metric.json 提取 top2 WCA ID + centiseconds（无需 MySQL） |
+| **索引页** | `bin/compute_index.rb` | ✅ `src/bin/compute_index.ts` | 6 分类 63 统计 JSON（无需 MySQL） |
+| **CI workflow** | `.github/workflows/stats.yml` | ❌ 需修改为 Node.js | 加 `setup-node` + `--expose-gc --max-old-space-size=6144` |
 
 ### 3.2 前端（可独立于 CI）
 
