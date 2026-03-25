@@ -89,7 +89,9 @@ async function setMysqlPerformanceParams(): Promise<void> {
 }
 
 // NOTE: 步骤 4——逐行解析 SQL dump，按表名过滤导入
-// 与 Ruby 版 1:1 对应：按 "-- Table structure for table `xxx`" 分段
+// 与 Ruby 版相同的逐行读取逻辑，但改进为：每个目标表结束时立即写磁盘+导入+释放
+// Ruby 版将所有目标表 SQL 存在 table_sqls hash 中，JS 字符串数组 GC 开销更大，
+// 因此改为即时导入以降低峰值内存（单张最大表 ~1.5GB 而非 12 张同时在内存）
 async function importTables(sqlPath: string, workDir: string): Promise<Date> {
   const requiredSet = new Set<string>(REQUIRED_TABLES);
   const mysql = mysqlCmd();
@@ -100,11 +102,34 @@ async function importTables(sqlPath: string, workDir: string): Promise<Date> {
   execSync(`${mysql} -e "CREATE DATABASE ${db}" 2>&1 | grep -v "Using a password" || true`, { stdio: 'pipe' });
 
   return timedTask(`Importing ${SQL_FILENAME} into ${db}`, async () => {
-    const tableSqls = new Map<string, string[]>();
-    let header: string[] | null = null;
+    let header: string | null = null;
     let lines: string[] = [];
     let currentTable: string | null = null;
     let firstLine = true;
+    const importedTables = new Set<string>();
+
+    // NOTE: 辅助函数——将收集的表 SQL 写磁盘并立即导入，然后释放内存
+    const flushTable = (tableName: string, tableLines: string[]) => {
+      console.log(`  - Importing table ${tableName}`);
+      let tableSql = (header || '') + '\n' + tableLines.join('\n');
+
+      // NOTE: 与 Ruby 一致——去掉 CREATE TABLE 中的 KEY 定义，改为 CREATE INDEX
+      let idxSql = '';
+      tableSql = tableSql.replace(/,\s*KEY\s+(\S+)\s+(\([^)]*\))/gm, (_m, k, d) => {
+        idxSql += `CREATE INDEX ${k} ON ${tableName} ${d};\n`;
+        return '';
+      });
+      tableSql += '\n' + idxSql + '\n' + INDICES.join('\n');
+
+      const f = join(workDir, `${tableName}.sql`);
+      writeFileSync(f, tableSql, 'utf-8');
+      tableSql = '';  // NOTE: 立即释放大字符串
+      execSync(`${mysql} ${db} < "${f}" 2>&1 | grep -v "Using a password" || true`, {
+        stdio: 'pipe',
+        maxBuffer: 50 * 1024 * 1024,
+      });
+      importedTables.add(tableName);
+    };
 
     const rl = createInterface({
       input: createReadStream(sqlPath, { encoding: 'utf-8' }),
@@ -112,7 +137,6 @@ async function importTables(sqlPath: string, workDir: string): Promise<Date> {
     });
 
     for await (const line of rl) {
-      // NOTE: 跳过 MariaDB 沙盒模式行（与 Ruby file.readline 对应）
       if (firstLine) {
         firstLine = false;
         if (line.includes('enable the sandbox mode')) continue;
@@ -124,10 +148,11 @@ async function importTables(sqlPath: string, workDir: string): Promise<Date> {
         const tableName = tableMatch[1];
 
         if (header === null) {
-          // NOTE: 第一个表之前的内容作为 header（包含 SET、charset 等全局语句）
-          header = [...lines];
+          // NOTE: 第一个表之前的内容作为 header（与 Ruby L68-69 对应）
+          header = lines.join('\n');
         } else if (currentTable) {
-          tableSqls.set(currentTable, [...lines]);
+          // NOTE: 与 Ruby L70-72 对应，但立即导入+释放而非存入 hash
+          flushTable(currentTable, lines);
           currentTable = null;
         }
 
@@ -138,44 +163,24 @@ async function importTables(sqlPath: string, workDir: string): Promise<Date> {
         lines = [];
       }
 
-      lines.push(line);
+      // NOTE: 只收集 header 阶段或当前目标表的行，跳过非目标表以节省内存
+      if (header === null || currentTable !== null) {
+        lines.push(line);
+      }
     }
 
     // NOTE: 文件末尾残留的最后一个表
     if (currentTable && lines.length > 0) {
-      tableSqls.set(currentTable, [...lines]);
+      flushTable(currentTable, lines);
     }
+    lines = [];
 
-    // NOTE: 逐表导入（与 Ruby 版逻辑完全一致）
-    for (const tableName of REQUIRED_TABLES) {
-      const tableLines = tableSqls.get(tableName);
-      if (!tableLines) {
-        console.log(`  - WARNING: table ${tableName} not found in dump`);
-        continue;
+    for (const t of REQUIRED_TABLES) {
+      if (!importedTables.has(t)) {
+        console.log(`  - WARNING: table ${t} not found in dump`);
       }
-
-      console.log(`  - Importing table ${tableName}`);
-      let tableSql = (header || []).join('\n') + '\n' + tableLines.join('\n');
-
-      // NOTE: 与 Ruby 一致——去掉 CREATE TABLE 中的 KEY 定义，改为 CREATE INDEX
-      let indexCreations = '';
-      tableSql = tableSql.replace(/,\s*KEY\s+(\S+)\s+(\([^)]*\))/gm, (_match, keyName, keyDef) => {
-        indexCreations += `CREATE INDEX ${keyName} ON ${tableName} ${keyDef};\n`;
-        return '';
-      });
-      tableSql += '\n' + indexCreations;
-      // NOTE: 追加自定义索引
-      tableSql += '\n' + INDICES.join('\n');
-
-      const tableFile = join(workDir, `${tableName}.sql`);
-      writeFileSync(tableFile, tableSql, 'utf-8');
-      execSync(`${mysql} ${db} < "${tableFile}" 2>&1 | grep -v "Using a password" || true`, {
-        stdio: 'pipe',
-        maxBuffer: 50 * 1024 * 1024,  // 50MB 缓冲区
-      });
     }
 
-    // NOTE: 返回 export 文件的修改时间作为 timestamp
     return statSync(sqlPath).mtime;
   });
 }
