@@ -126,7 +126,7 @@ ruiminyan.github.io/
 │   ├── js/twisty.js           # 魔方 3D 可视化（132KB）
 │   ├── js/jquery.min.js       # jQuery 依赖
 │   └── css/style.css          # 原版样式（60KB）
-├── index.html                 # 落地页（Solver / WCA Stats 入口卡片）
+├── index.html                 # 原版落地页（Jekyll 遗留，SPA 主页已迁移到 React `/app/`）
 ├── assets/css/                # Stats 页面统一 UI 样式
 │   ├── stats_ui.css           # 所有选择器/Tab/下拉菜单 CSS（从 Ruby 迁出，集中管理）
 │   └── card.css               # 落地页入口卡片样式
@@ -154,7 +154,7 @@ ruiminyan.github.io/
 ├── _layouts/                  # Jekyll 布局（Stats 深色主题框架，全局加载 stats_ui.js / i18n.js / event_selector.js）
 ├── _stats_build/              # WCA 统计构建脚本（Ruby legacy，已迁移到 trainer/packages/stats-build/ TypeScript）
 ├── stats/                     # 统计 Markdown 页面。由 CI 每周覆盖写入，也可本地生成后直接 push
-│   ├── upcoming_comp/         # 近期比赛追踪页面（前端 JS 从 upcoming_comps.json 渲染）
+│   ├── upcoming_comp/         # 近期比赛追踪（Jekyll 遗留，前端已迁到 React `/app/upcoming-comps`）
 │   └── upcoming_comps.json    # 选手比赛数据（由 scripts/fetch_upcoming_comps.py 生成）
 ├── scripts/                   # Python 数据脚本
 │   ├── fetch_upcoming_comps.py  # 从 WCA API 抓取 432 名顶尖选手的近期比赛
