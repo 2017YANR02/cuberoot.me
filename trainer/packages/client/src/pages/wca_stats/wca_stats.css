@@ -38,6 +38,135 @@
   line-height: 1.5;
 }
 
+/* ==========================================================================
+   分段按钮（Tab / Metric 切换）
+   对标 Legacy stats_ui.css .segmented-btn（蓝色主题 #8ab4f8）
+   ========================================================================== */
+
+/* Tab 按钮容器 */
+.wca-stats-tab-bar {
+  display: flex;
+  gap: 0;
+  margin: 12px 0;
+}
+
+/* 通用分段按钮基础样式 */
+.wca-stats-tab,
+.wca-stats-metric-btn {
+  padding: 8px 20px;
+  border: 1px solid #4a6785;
+  background: transparent;
+  color: #8ab4f8;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+  transition: all 0.2s;
+  border-radius: 0;
+}
+
+/* 首尾圆角 */
+.wca-stats-tab:first-child,
+.wca-stats-metric-btn:first-child {
+  border-radius: 6px 0 0 6px;
+}
+
+.wca-stats-tab:last-child,
+.wca-stats-metric-btn:last-child {
+  border-radius: 0 6px 6px 0;
+}
+
+/* NOTE: 相邻按钮消除重复边框 */
+.wca-stats-tab + .wca-stats-tab,
+.wca-stats-metric-btn + .wca-stats-metric-btn {
+  border-left: none;
+}
+
+/* active 状态 */
+.wca-stats-tab.active,
+.wca-stats-metric-btn.active {
+  background: #2c4a6e;
+  border-color: #8ab4f8;
+  color: #fff;
+}
+
+/* hover 状态 */
+.wca-stats-tab:hover:not(.active):not(.disabled),
+.wca-stats-metric-btn:hover:not(.active):not(.disabled) {
+  background: rgba(138, 180, 248, 0.08);
+}
+
+/* ==========================================================================
+   Metric Groups 下拉面板样式（metricPanels 分组模式）
+   对标 Legacy stats_ui.css .metric-dropdown-*
+   ========================================================================== */
+
+.wca-stats-metric-groups {
+  margin: 12px 0;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+}
+
+.wca-stats-metric-group {
+  margin-bottom: 8px;
+}
+
+.wca-stats-metric-group:last-child {
+  margin-bottom: 0;
+}
+
+.wca-stats-metric-group-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(138, 180, 248, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.wca-stats-metric-group-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.wca-stats-metric-group-items .wca-stats-metric-btn {
+  padding: 6px 14px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: #c0c8d8;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+
+.wca-stats-metric-group-items .wca-stats-metric-btn:first-child {
+  border-radius: 6px;
+}
+
+.wca-stats-metric-group-items .wca-stats-metric-btn:last-child {
+  border-radius: 6px;
+}
+
+.wca-stats-metric-group-items .wca-stats-metric-btn + .wca-stats-metric-btn {
+  border-left: 1px solid transparent;
+}
+
+.wca-stats-metric-group-items .wca-stats-metric-btn:hover:not(.active):not(.disabled) {
+  background: rgba(138, 180, 248, 0.12);
+  color: #fff;
+}
+
+.wca-stats-metric-group-items .wca-stats-metric-btn.active {
+  background: rgba(138, 180, 248, 0.18);
+  border-color: rgba(138, 180, 248, 0.3);
+  color: #8ab4f8;
+}
+
 /* 工具栏 */
 .wca-stats-toolbar {
   display: flex;
