@@ -6,6 +6,7 @@ import { GroupedStatistic } from './grouped_statistic.js';
 import { EVENTS, EVENTS_ENTRIES, headerZh, eventZh } from './events.js';
 import { SolveTime } from './solve_time.js';
 import { ATTEMPTS_SUBQUERY, query as dbQuery } from './database.js';
+import { formatDate } from './format_date.js';
 import type { StatJson, StatPanel } from './statistic.js';
 import type { RowDataPacket } from 'mysql2';
 
@@ -222,10 +223,7 @@ export abstract class AverageOfX extends GroupedStatistic {
     return `${formatted.length} solves`;
   }
 
-  private formatDate(d: unknown): string {
-    if (d instanceof Date) return d.toISOString().slice(0, 10);
-    return String(d || '').slice(0, 10);
-  }
+  // NOTE: 使用共享 formatDate（修复 Date→String 截断 bug）
 
   // NOTE: 覆写 toJson——双视图 panels
   async toJson(): Promise<StatJson> {
@@ -246,8 +244,8 @@ export abstract class AverageOfX extends GroupedStatistic {
           const b = p.best;
           return [
             i + 1, p.personLink, b.aox.clockFormat(), p.country,
-            this.formatDate(b.startMeta.date), b.startMeta.compLink,
-            this.formatDate(b.endMeta.date), b.endMeta.compLink,
+            formatDate(b.startMeta.date), b.startMeta.compLink,
+            formatDate(b.endMeta.date), b.endMeta.compLink,
             this.detailsHtml(b.solves, eventId),
           ];
         });
@@ -291,8 +289,8 @@ export abstract class AverageOfX extends GroupedStatistic {
 
         return [
           metricStr, gainStr, daysStr, r.personLink,
-          this.formatDate(r.startMeta.date), r.startMeta.compLink,
-          this.formatDate(r.endMeta.date), r.endMeta.compLink,
+          formatDate(r.startMeta.date), r.startMeta.compLink,
+          formatDate(r.endMeta.date), r.endMeta.compLink,
           this.detailsHtml(r.solves, eventId),
         ];
       });

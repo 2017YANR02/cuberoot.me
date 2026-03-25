@@ -3,6 +3,7 @@
 // 333mbf：从 DB 计算 Mo3，WCA 编码 0DDTTTTTMM，DD/TTTTT/MM 分别取均值（ROUND）后拼接
 // 333mbo：历史上仅 1 人完成过 3 轮，硬编码数据
 // 此类同时作为独立统计页面和数据提供者（供 WrAverageHistory 委托）
+import { formatDate } from '../core/format_date.js';
 import { Statistic } from '../core/statistic.js';
 import { EVENTS, headerZh, eventZh } from '../core/events.js';
 import { SolveTime } from '../core/solve_time.js';
@@ -151,7 +152,7 @@ export class MbfAverage extends Statistic {
         daysStr = String(Math.round((Date.now() - currDate.getTime()) / 86400000));
       }
 
-      const dateStr = this.formatDate(c.row['start_date']);
+      const dateStr = formatDate(c.row['start_date']);
       const details = [c.v1, c.v2, c.v3]
         .map(v => new SolveTime('333mbf', 'single', v).clockFormat())
         .join(', ');
@@ -174,7 +175,7 @@ export class MbfAverage extends Statistic {
       .slice(0, 10)
       .map((v, i) => {
         const mo3Str = this.formatMo3(v.metric);
-        const dateStr = this.formatDate(v.row['start_date']);
+        const dateStr = formatDate(v.row['start_date']);
         const details = [v.v1, v.v2, v.v3]
           .map(val => new SolveTime('333mbf', 'single', val).clockFormat())
           .join(', ');
@@ -259,10 +260,5 @@ export class MbfAverage extends Statistic {
       header: [],
       panels,
     };
-  }
-
-  private formatDate(d: unknown): string {
-    if (d instanceof Date) return d.toISOString().slice(0, 10);
-    return String(d || '').slice(0, 10);
   }
 }
