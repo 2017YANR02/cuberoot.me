@@ -119,8 +119,11 @@ export abstract class RoundMetric extends GroupedStatistic {
 
   // NOTE: 覆写 toJson——输出 panels 而非 sections
   async toJson(): Promise<StatJson> {
-    const rawRows = await this.queryResults();
+    let rawRows: RowDataPacket[] | null = await this.queryResults();
     const historyData = this.transform(rawRows);
+    // NOTE: 照搬 Ruby 内存管理——transform 后释放原始查询结果
+    rawRows = null;
+    if (global.gc) global.gc();
     const rankingData = await this.rankingData();
 
     const historyHeader = Object.entries(this.tableHeader);

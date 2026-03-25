@@ -107,8 +107,11 @@ export abstract class Statistic {
 
   // NOTE: 生成 JSON 结构——React 前端消费
   async toJson(): Promise<StatJson> {
-    const rawRows = await this.queryResults();
+    let rawRows: RowDataPacket[] | null = await this.queryResults();
     const data = this.transform(rawRows);
+    // NOTE: 照搬 Ruby 内存管理——transform 完成后立即释放查询结果
+    rawRows = null;
+    if (global.gc) global.gc();
 
     const headerEntries = Object.entries(this.tableHeader);
 

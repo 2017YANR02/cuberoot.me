@@ -63,8 +63,11 @@ export class ConsecutiveSub5Average extends Statistic {
 
   // NOTE: 覆写 toJson——输出 panels（Ranking + History）
   async toJson(): Promise<StatJson> {
-    const rawRows = await this.queryResults();
+    let rawRows: RowDataPacket[] | null = await this.queryResults();
     const allStreaks = this.collectAllStreaks(rawRows);
+    // NOTE: 照搬 Ruby 内存管理——collectAllStreaks 完成后释放原始查询结果
+    rawRows = null;
+    if (global.gc) global.gc();
 
     // 视图 1: Ranking（每人只取最长 streak，按 streak 降序，top 100）
     const bestByPerson = new Map<string, StreakInfo>();
