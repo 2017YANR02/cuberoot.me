@@ -160,3 +160,228 @@
   color: #7eb8ff;
   margin-top: 16px;
 }
+
+/* ==========================================
+   Sections 模式——按项目分节展示
+   ========================================== */
+
+.wca-stats-section {
+  margin-bottom: 20px;
+}
+
+.wca-stats-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #e0e0e0;
+  background: #1e1e2e;
+  border-radius: 8px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s;
+}
+
+.wca-stats-section-title:hover {
+  background: #252540;
+}
+
+.wca-stats-section-count {
+  font-size: 12px;
+  color: #888;
+  background: #333;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-left: auto;
+}
+
+/* 折叠箭头 */
+.wca-stats-chevron {
+  display: inline-block;
+  font-size: 10px;
+  color: #888;
+  transition: transform 0.2s;
+}
+
+.wca-stats-chevron.open {
+  transform: rotate(90deg);
+}
+
+/* ==========================================
+   Panels / Tab 模式——Tab 切换
+   ========================================== */
+
+.wca-stats-tab-bar {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #333;
+  padding-bottom: 0;
+}
+
+.wca-stats-tab {
+  padding: 10px 20px;
+  background: transparent;
+  color: #888;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 0.2s, border-color 0.2s;
+  margin-bottom: -2px;
+}
+
+.wca-stats-tab:hover {
+  color: #ccc;
+}
+
+.wca-stats-tab.active {
+  color: #7eb8ff;
+  border-bottom-color: #7eb8ff;
+}
+
+/* ==========================================
+   MetricPanels 模式——分组指标选择器
+   ========================================== */
+
+.wca-stats-metric-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: #1a1a2e;
+  border-radius: 12px;
+  border: 1px solid #333;
+}
+
+.wca-stats-metric-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.wca-stats-metric-group-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  min-width: 70px;
+  flex-shrink: 0;
+}
+
+.wca-stats-metric-group-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.wca-stats-metric-btn {
+  padding: 6px 14px;
+  background: #252540;
+  color: #b0b0c0;
+  border: 1px solid #3a3a5a;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.wca-stats-metric-btn:hover {
+  background: #2a2a50;
+  border-color: #5a5a7a;
+  color: #e0e0e0;
+}
+
+.wca-stats-metric-btn.active {
+  background: #3a3a6a;
+  border-color: #7eb8ff;
+  color: #7eb8ff;
+  font-weight: 600;
+}
+
+/* ==========================================
+   索引页——卡片网格
+   ========================================== */
+
+.wca-stats-index {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 16px;
+  min-height: 100vh;
+  color: #e0e0e0;
+}
+
+.wca-stats-index h1 {
+  font-size: 32px;
+  font-weight: 800;
+  margin-bottom: 32px;
+  text-align: center;
+  /* NOTE: 渐变文字效果 */
+  background: linear-gradient(90deg, #7eb8ff, #a78bfa, #f472b6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.wca-stats-category {
+  margin-bottom: 36px;
+}
+
+.wca-stats-category-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #333;
+}
+
+.wca-stats-category-icon {
+  font-size: 24px;
+}
+
+.wca-stats-category-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.wca-stats-category-count {
+  font-size: 13px;
+  color: #888;
+  margin-left: auto;
+}
+
+.wca-stats-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.wca-stats-card {
+  display: block;
+  padding: 14px 18px;
+  background: #1e1e2e;
+  border: 1px solid #333;
+  border-radius: 10px;
+  color: #e0e0e0;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+  line-height: 1.4;
+}
+
+.wca-stats-card:hover {
+  background: #252540;
+  border-color: #5a5a7a;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
