@@ -5,6 +5,7 @@
 //   2. 找到非 P 选手中的最佳成绩 others_best
 //   3. dominance = P 的成绩中严格 < others_best 的数量（二分搜索）
 // 双维度（Single + Average）× 双视图（Ranking + History）
+import { formatDate } from '../core/format_date.js';
 import { Statistic } from '../core/statistic.js';
 import { EVENTS, EVENTS_ENTRIES, headerZh, eventZh } from '../core/events.js';
 import { query as dbQuery } from '../core/database.js';
@@ -183,7 +184,7 @@ export class WrDominance extends Statistic {
     // --- 历史追踪：按日期分组逐步构建 pv/pb ---
     const byDate = new Map<string, RowDataPacket[]>();
     for (const r of rows) {
-      const dateStr = this.formatDate(r['start_date']);
+      const dateStr = formatDate(r['start_date']);
       const existing = byDate.get(dateStr);
       if (existing) existing.push(r);
       else byDate.set(dateStr, [r]);
@@ -321,10 +322,5 @@ export class WrDominance extends Statistic {
       else hi = mid;
     }
     return lo;
-  }
-
-  private formatDate(d: unknown): string {
-    if (d instanceof Date) return d.toISOString().slice(0, 10);
-    return String(d || '').slice(0, 10);
   }
 }

@@ -1,6 +1,7 @@
 // NOTE: 最多连续 sub-5 average（333 项目）
 // 与 Ruby _stats_build/statistics/consecutive_sub_5_average.rb 1:1 对应
 // 双视图：Ranking（每人最长 streak，top 100）+ History（WR 演变，倒序）
+import { formatDate } from '../core/format_date.js';
 import { Statistic } from '../core/statistic.js';
 import { headerZh } from '../core/events.js';
 import type { StatJson, StatPanel, Alignment, TableHeader } from '../core/statistic.js';
@@ -162,7 +163,7 @@ export class ConsecutiveSub5Average extends Statistic {
         current.count += 1;
         current.endComp = String(r['competition_name']);
         current.endCompId = String(r['competition_id']);
-        current.endDate = this.formatDate(r['start_date']);
+        current.endDate = formatDate(r['start_date']);
       } else {
         if (current.count > 1) {
           result.push({ ...current, personId, personLink });
@@ -209,10 +210,5 @@ export class ConsecutiveSub5Average extends Statistic {
   // NOTE: 构建比赛链接的 Markdown 格式
   private compLink(name: string, id: string): string {
     return `[${name}](https://www.worldcubeassociation.org/competitions/${id})`;
-  }
-
-  private formatDate(d: unknown): string {
-    if (d instanceof Date) return d.toISOString().slice(0, 10);
-    return String(d || '').slice(0, 10);
   }
 }

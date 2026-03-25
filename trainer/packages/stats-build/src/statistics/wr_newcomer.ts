@@ -5,6 +5,7 @@
 //   2) 数据源 (source): 首次还原 (1st-solve) / 首场比赛 (1st-comp)
 // 每种组合有 Current Ranking + History 双视图
 // 三层嵌套：MetricPanel → SourcePanel → StatPanel
+import { formatDate } from '../core/format_date.js';
 import { Statistic } from '../core/statistic.js';
 import { EVENTS, OFFICIAL_EVENTS_RECORD, headerZh, eventZh } from '../core/events.js';
 import { SolveTime } from '../core/solve_time.js';
@@ -224,7 +225,7 @@ export class WrNewcomer extends Statistic {
       const eventRows = (grouped.get(eventId) || []).slice(0, 10);
       const rows = eventRows.map((r, i) => {
         const resultStr = new SolveTime(eventId, metric.type, Number(r['first_result'])).clockFormat();
-        const dateStr = this.formatDate(r['start_date']);
+        const dateStr = formatDate(r['start_date']);
         const details = String(r['attempts'] || '').split(',')
           .map(v => new SolveTime(eventId, 'single', Number(v)).clockFormat())
           .filter(s => s.length > 0)
@@ -244,8 +245,8 @@ export class WrNewcomer extends Statistic {
     return Object.entries(OFFICIAL_EVENTS_RECORD).map(([eventId, eventName]) => {
       const all = [...(grouped.get(eventId) || [])]
         .sort((a, b) => {
-          const da = this.formatDate(a['start_date']);
-          const db = this.formatDate(b['start_date']);
+          const da = formatDate(a['start_date']);
+          const db = formatDate(b['start_date']);
           const dc = da.localeCompare(db);
           return dc !== 0 ? dc : Number(a['first_result']) - Number(b['first_result']);
         });
@@ -273,15 +274,15 @@ export class WrNewcomer extends Statistic {
 
         let daysStr: string;
         if (i < nwr.length - 1) {
-          const nextDate = new Date(this.formatDate(nwr[i + 1]['start_date']));
-          const currDate = new Date(this.formatDate(r['start_date']));
+          const nextDate = new Date(formatDate(nwr[i + 1]['start_date']));
+          const currDate = new Date(formatDate(r['start_date']));
           daysStr = String(Math.round((nextDate.getTime() - currDate.getTime()) / 86400000));
         } else {
-          const currDate = new Date(this.formatDate(r['start_date']));
+          const currDate = new Date(formatDate(r['start_date']));
           daysStr = String(Math.round((Date.now() - currDate.getTime()) / 86400000));
         }
 
-        const dateStr = this.formatDate(r['start_date']);
+        const dateStr = formatDate(r['start_date']);
         return [resultStr, gainStr, daysStr, r['person_link'], dateStr, r['competition_link']];
       }).reverse();
 
@@ -298,10 +299,5 @@ export class WrNewcomer extends Statistic {
       else map.set(k, [r]);
     }
     return map;
-  }
-
-  private formatDate(d: unknown): string {
-    if (d instanceof Date) return d.toISOString().slice(0, 10);
-    return String(d || '').slice(0, 10);
   }
 }

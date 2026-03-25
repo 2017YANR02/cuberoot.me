@@ -6,6 +6,7 @@ import { GroupedStatistic } from './grouped_statistic.js';
 import { EVENTS_WITH_AVERAGE, headerZh, eventZh } from './events.js';
 import { SolveTime } from './solve_time.js';
 import { query as dbQuery } from './database.js';
+import { formatDate } from './format_date.js';
 import type { StatJson, StatPanel, Alignment, TableHeader } from './statistic.js';
 import type { RowDataPacket } from 'mysql2';
 
@@ -111,7 +112,7 @@ export abstract class AoRounds extends GroupedStatistic {
           const details = v.roundValues
             .map(val => new SolveTime(eventId, 'average', val).clockFormat())
             .join(', ');
-          const dateStr = this.formatDate(v.meta['start_date']);
+          const dateStr = formatDate(v.meta['start_date']);
           return [i + 1, v.meta['person_link'], metricStr, v.meta['country_id'], dateStr, v.meta['competition_link'], details];
         });
 
@@ -157,7 +158,7 @@ export abstract class AoRounds extends GroupedStatistic {
           daysStr = String(Math.round((Date.now() - currDate.getTime()) / 86400000));
         }
 
-        const dateStr = this.formatDate(c.meta['start_date']);
+        const dateStr = formatDate(c.meta['start_date']);
         return [metricStr, gainStr, daysStr, c.meta['person_link'], dateStr, c.meta['competition_link'], roundDetails];
       });
 
@@ -202,8 +203,5 @@ export abstract class AoRounds extends GroupedStatistic {
     };
   }
 
-  private formatDate(d: unknown): string {
-    if (d instanceof Date) return d.toISOString().slice(0, 10);
-    return String(d || '').slice(0, 10);
-  }
+  // NOTE: 使用共享 formatDate（修复 Date→String 截断 bug）
 }
