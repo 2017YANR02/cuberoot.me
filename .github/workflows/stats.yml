@@ -4,7 +4,6 @@ name: Update Stats
 on:
   push:
     paths:
-      - '_stats_build/**/*.rb'
       - 'trainer/packages/stats-build/src/**/*.ts'
   schedule:
     # 每周一凌晨 4:00（北京时间）= UTC 周日 20:00
@@ -24,14 +23,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.4'
-
-      - name: Check Ruby syntax
-        run: find _stats_build -name '*.rb' -exec ruby -c {} +
-
-      # NOTE: TS 编译检查——确保统计代码无类型错误
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -73,13 +64,6 @@ jobs:
       - name: Activate MySQL
         run: sudo systemctl start mysql.service
 
-      # NOTE: 仍需 Ruby 做数据库下载/导入（update_database.rb 包含复杂的 SQL dump 解析逻辑）
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.4'
-          bundler-cache: true
-          working-directory: _stats_build
-
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -95,15 +79,17 @@ jobs:
       - name: Create stats output directory
         run: mkdir -p stats/data
 
-      - name: Setup database
-        working-directory: _stats_build
+      # NOTE: 写入 CI 专用数据库配置（TS database.ts 从此文件读取凭据）
+      - name: Setup database config
         run: |
-          ruby bin/init.rb
-          printf 'database: "wca_statistics"\nusername: "root"\npassword: "root"\nhost: "127.0.0.1"' > database.yml
-          ruby bin/update_database.rb
+          printf 'database: "wca_statistics"\nusername: "root"\npassword: "root"\nhost: "127.0.0.1"' > _stats_build/database.yml
 
-      # NOTE: TS 管线——替代 Ruby compute_all.rb + gen_wr_ids.rb + compute_index.rb
-      - name: Compute all statistics (TypeScript)
+      # NOTE: TS 管线——完全替代 Ruby
+      - name: Download and import WCA database
+        working-directory: trainer/packages/stats-build
+        run: npx tsx src/bin/update_database.ts
+
+      - name: Compute all statistics
         working-directory: trainer/packages/stats-build
         env:
           STATS_FILTER: ${{ github.event.inputs.stats_filter || '' }}
@@ -117,21 +103,6 @@ jobs:
       - name: Compute index
         working-directory: trainer/packages/stats-build
         run: npx tsx src/bin/compute_index.ts
-
-      # NOTE: Ruby 管线仍并行运行——生成 Jekyll Markdown（过渡期保留，前端完成后移除）
-      - name: Compute all statistics (Ruby, legacy)
-        working-directory: _stats_build
-        env:
-          STATS_FILTER: ${{ github.event.inputs.stats_filter || '' }}
-        run: ruby bin/compute_all.rb
-
-      - name: Generate WR IDs (Ruby, legacy)
-        working-directory: _stats_build
-        run: ruby bin/gen_wr_ids.rb
-
-      - name: Compute index (Ruby, legacy)
-        working-directory: _stats_build
-        run: ruby bin/compute_index.rb
 
       - name: Fetch upcoming comps
         run: python scripts/fetch_upcoming_comps.py --refresh
