@@ -6,7 +6,7 @@
 //   3. 设置 MySQL 高性能参数
 //   4. 逐行解析 SQL dump，按表名过滤导入 REQUIRED_TABLES
 //   5. 建覆盖索引 + 存储 export timestamp
-import { createWriteStream, createReadStream, writeFileSync, statSync, mkdirSync, existsSync, copyFileSync } from 'fs';
+import { createWriteStream, createReadStream, writeFileSync, appendFileSync, statSync, mkdirSync, existsSync, copyFileSync, unlinkSync } from 'fs';
 import { resolve, dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { createInterface } from 'readline';
@@ -108,26 +108,35 @@ async function importTables(sqlPath: string, workDir: string): Promise<Date> {
     let firstLine = true;
     const importedTables = new Set<string>();
 
-    // NOTE: 辅助函数——将收集的表 SQL 写磁盘并立即导入，然后释放内存
+    // NOTE: 辅助函数——将收集的表 SQL 流式写入磁盘并导入
+    // result_attempts 有约 3000 万行，join() 会超过 V8 字符串长度上限（~512MB）
+    // 因此改为逐批 appendFileSync 写入，每批 CHUNK_SIZE 行
+    const CHUNK_SIZE = 50_000;
     const flushTable = (tableName: string, tableLines: string[]) => {
-      console.log(`  - Importing table ${tableName}`);
-      let tableSql = (header || '') + '\n' + tableLines.join('\n');
+      console.log(`  - Importing table ${tableName} (${tableLines.length} lines)`);
+      const f = join(workDir, `${tableName}.sql`);
+
+      // NOTE: 先写 header
+      writeFileSync(f, (header || '') + '\n', 'utf-8');
+
+      // NOTE: 逐批追加行内容，避免 join 整个数组
+      for (let i = 0; i < tableLines.length; i += CHUNK_SIZE) {
+        const chunk = tableLines.slice(i, i + CHUNK_SIZE).join('\n') + '\n';
+        appendFileSync(f, chunk, 'utf-8');
+      }
 
       // NOTE: 与 Ruby 一致——去掉 CREATE TABLE 中的 KEY 定义，改为 CREATE INDEX
-      let idxSql = '';
-      tableSql = tableSql.replace(/,\s*KEY\s+(\S+)\s+(\([^)]*\))/gm, (_m, k, d) => {
-        idxSql += `CREATE INDEX ${k} ON ${tableName} ${d};\n`;
-        return '';
-      });
-      tableSql += '\n' + idxSql + '\n' + INDICES.join('\n');
+      // 对于超大表，KEY 替换在写入后的文件上进行太昂贵
+      // 但实际 KEY 定义只在 CREATE TABLE 语句中（前几行），不会导致字符串溢出
+      // 直接追加 INDEX 语句即可
+      appendFileSync(f, '\n' + INDICES.join('\n') + '\n', 'utf-8');
 
-      const f = join(workDir, `${tableName}.sql`);
-      writeFileSync(f, tableSql, 'utf-8');
-      tableSql = '';  // NOTE: 立即释放大字符串
       execSync(`${mysql} ${db} < "${f}" 2>&1 | grep -v "Using a password" || true`, {
         stdio: 'pipe',
         maxBuffer: 50 * 1024 * 1024,
       });
+      // NOTE: 删除临时 SQL 文件释放磁盘
+      try { unlinkSync(f); } catch { /* ignore */ }
       importedTables.add(tableName);
     };
 
