@@ -73,39 +73,52 @@ function getAllPanelsFromMetric(mp: MetricPanel): StatPanel[] {
   return [];
 }
 
-// NOTE: 解析 Markdown 链接 [text](url) 为 React 元素
+// NOTE: 解析 Markdown 链接 [text](url)、加粗 **text**、HTML <br /> 为 React 元素
 function renderCell(value: unknown): React.ReactNode {
   const str = String(value);
-  const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
-  const parts: React.ReactNode[] = [];
-  let lastIndex = 0;
-  let match: RegExpExecArray | null;
-
-  while ((match = linkRegex.exec(str)) !== null) {
-    if (match.index > lastIndex) {
-      parts.push(str.slice(lastIndex, match.index));
-    }
-    parts.push(
-      <a key={match.index} href={match[2]} target="_blank" rel="noopener noreferrer">
-        {match[1]}
-      </a>
-    );
-    lastIndex = match.index + match[0].length;
-  }
-
-  if (lastIndex < str.length) {
-    parts.push(str.slice(lastIndex));
-  }
 
   // NOTE: 处理 Markdown 加粗 **text**
-  if (parts.length === 1 && typeof parts[0] === 'string') {
-    const boldMatch = /^\*\*(.+)\*\*$/.exec(parts[0]);
-    if (boldMatch) {
-      return <strong>{boldMatch[1]}</strong>;
-    }
+  const boldMatch = /^\*\*(.+)\*\*$/.exec(str);
+  if (boldMatch) {
+    return <strong>{boldMatch[1]}</strong>;
   }
 
-  return parts.length === 1 ? parts[0] : <>{parts}</>;
+  // NOTE: 先按 <br /> 或 <br> 分割，再处理每段中的 Markdown 链接
+  const brParts = str.split(/<br\s*\/?>/i);
+  const hasBr = brParts.length > 1;
+
+  const renderSegment = (segment: string, segIdx: number): React.ReactNode => {
+    const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+    const parts: React.ReactNode[] = [];
+    let lastIndex = 0;
+    let match: RegExpExecArray | null;
+
+    while ((match = linkRegex.exec(segment)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push(segment.slice(lastIndex, match.index));
+      }
+      parts.push(
+        <a key={`${segIdx}-${match.index}`} href={match[2]} target="_blank" rel="noopener noreferrer">
+          {match[1]}
+        </a>
+      );
+      lastIndex = match.index + match[0].length;
+    }
+    if (lastIndex < segment.length) {
+      parts.push(segment.slice(lastIndex));
+    }
+    return parts.length === 1 ? parts[0] : <React.Fragment key={segIdx}>{parts}</React.Fragment>;
+  };
+
+  if (!hasBr) return renderSegment(str, 0);
+
+  // NOTE: <br /> 渲染为真正换行（对标 Legacy 表格中的多行数据）
+  const result: React.ReactNode[] = [];
+  brParts.forEach((part, i) => {
+    if (i > 0) result.push(<br key={`br-${i}`} />);
+    result.push(renderSegment(part, i));
+  });
+  return <>{result}</>;
 }
 
 // NOTE: 通用表格组件——在多处复用
@@ -325,33 +338,24 @@ function MetricPanelsView({ metricPanels, metricGroups, searchTerm, isZh, select
 
   return (
     <div className="wca-stats-metric-panels">
-      {/* NOTE: 指标选择器——下拉菜单或分组按钮 */}
+      {/* NOTE: 指标选择器——扁平药丸按钮，一行显示（对标 Legacy .segmented-btns） */}
       {metricGroups ? (
-        <div className="wca-stats-metric-groups">
-          {metricGroups.map(group => (
-            <div key={group.label} className="wca-stats-metric-group">
-              <span className="wca-stats-metric-group-label">
-                {isZh ? group.labelZh : group.label}
-              </span>
-              <div className="wca-stats-metric-group-items">
-                {group.items.map(itemId => {
-                  const idx = metricPanels.findIndex(mp => mp.id === itemId);
-                  if (idx === -1) return null;
-                  const mp = metricPanels[idx];
-                  const disabled = metricHasData.get(idx) === false;
-                  return (
-                    <button
-                      key={itemId}
-                      className={`wca-stats-metric-btn ${idx === activeMetric ? 'active' : ''}${disabled ? ' disabled' : ''}`}
-                      onClick={disabled ? undefined : () => setActiveMetric(idx)}
-                    >
-                      {isZh ? mp.labelZh : mp.labelEn}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
+        <div className="wca-stats-tab-bar">
+          {metricGroups.flatMap(group => group.items).map(itemId => {
+            const idx = metricPanels.findIndex(mp => mp.id === itemId);
+            if (idx === -1) return null;
+            const mp = metricPanels[idx];
+            const disabled = metricHasData.get(idx) === false;
+            return (
+              <button
+                key={itemId}
+                className={`wca-stats-tab ${idx === activeMetric ? 'active' : ''}${disabled ? ' disabled' : ''}`}
+                onClick={disabled ? undefined : () => setActiveMetric(idx)}
+              >
+                {isZh ? mp.labelZh : mp.labelEn}
+              </button>
+            );
+          })}
         </div>
       ) : (
         <div className="wca-stats-tab-bar">
