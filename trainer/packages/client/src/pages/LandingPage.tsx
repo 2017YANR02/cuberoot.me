@@ -303,16 +303,16 @@ interface CardConfig {
 }
 
 const CARDS: CardConfig[] = [
-  { id: 'solver',   href: '/solver/',             internal: false, cssClass: 'card-solver',   icon: '🧩', nameKey: 'solver',     descKey: 'solverDesc' },
+  { id: 'solver',   href: '/solver',              internal: true,  cssClass: 'card-solver',   icon: '🧩', nameKey: 'solver',     descKey: 'solverDesc' },
   { id: 'stats',    href: '/wca-stats',            internal: true,  cssClass: 'card-stats',    icon: '📊', nameKey: 'wcaStats',   descKey: 'statsDesc' },
   { id: 'recon',    href: '/recon',               internal: true,  cssClass: 'card-recon',    icon: '🔍', nameKey: 'recon',      descKey: 'reconDesc' },
-  { id: 'trainer',  href: '/alg_trainers/',        internal: false, cssClass: 'card-trainer',  icon: '🎯', nameKey: 'algTrainer', descKey: 'algTrainerDesc' },
+  { id: 'trainer',  href: '/alg-trainers',         internal: true,  cssClass: 'card-trainer',  icon: '🎯', nameKey: 'algTrainer', descKey: 'algTrainerDesc' },
   { id: 'cuberoot', href: '/trainer',              internal: true,  cssClass: 'card-cuberoot', icon: '🧊', nameKey: 'cuberootTrainer', descKey: 'cuberootTrainerDesc' },
   { id: 'hth',      href: '/calc',                internal: true,  cssClass: 'card-hth',      icon: '🧮', nameKey: 'hthGrapher', descKey: 'hthGrapherDesc' },
   { id: 'battle',   href: '/battle',              internal: true,  cssClass: 'card-battle',   icon: '⚔️', nameKey: 'battle',     descKey: 'battleDesc' },
   { id: 'viz',      href: '/viz',                 internal: true,  cssClass: 'card-viz',      icon: '📈', nameKey: 'viz',        descKey: 'vizDesc' },
   { id: 'upcoming', href: '/upcoming-comps',        internal: true,  cssClass: 'card-upcoming', icon: '🏅', nameKey: 'upcoming',   descKey: 'upcomingDesc' },
-  { id: 'cstimer',  href: '/cstimer/',            internal: false, cssClass: 'card-cstimer',  icon: '',   nameKey: 'cstimer',    descKey: 'cstimerDesc', iconImg: import.meta.env.BASE_URL + 'cstimer_logo.png' },
+  { id: 'cstimer',  href: '/cstimer',             internal: true,  cssClass: 'card-cstimer',  icon: '',   nameKey: 'cstimer',    descKey: 'cstimerDesc', iconImg: import.meta.env.BASE_URL + 'cstimer_logo.png' },
 ];
 
 // ── 组件 ─────────────────────────────────────────────────────────────────

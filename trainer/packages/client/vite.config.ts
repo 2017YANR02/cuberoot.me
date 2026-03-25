@@ -31,6 +31,20 @@ export default defineConfig({
       '/stats': {
         target: 'http://localhost:4000',
       },
+      // NOTE: iframe 用 — Solver/Alg Trainer/csTimer 及其共享依赖代理到 Jekyll
+      '/solver': { target: 'http://localhost:4000' },
+      '/alg_trainers': { target: 'http://localhost:4000' },
+      '/cstimer': { target: 'http://localhost:4000' },
+      // NOTE: 以下是这些模块引用的共享资源路径
+      '/i18n': { target: 'http://localhost:4000' },
+      '/assets': { target: 'http://localhost:4000' },
+      '/src': { target: 'http://localhost:4000' },
+      '/shared': { target: 'http://localhost:4000' },
+      '/custom_icons': { target: 'http://localhost:4000' },
+      '/url_params_compressor_simple.js': { target: 'http://localhost:4000' },
+      '/sw-register.js': { target: 'http://localhost:4000' },
+      '/callback.html': { target: 'http://localhost:4000' },
+      '/wca_auth.js': { target: 'http://localhost:4000' },
     },
   },
 })
