@@ -1,0 +1,386 @@
+/* ==========================================================================
+ * NOTE: Upcoming Comps 页面专用样式
+ * 从原版 stats/upcoming_comp/index.md 1:1 提取
+ * ========================================================================== */
+
+.upcoming-page {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 0 16px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #e8eaed;
+}
+
+/* ── 页头 ── */
+.upcoming-page .timeline-header {
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(138, 180, 248, 0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.upcoming-page .timeline-header h1 {
+    margin: 0;
+    font-size: 24px;
+    color: #e8eaed;
+}
+
+.upcoming-page .timeline-meta {
+    font-size: 13px;
+    color: #9aa0a6;
+}
+
+.upcoming-page .desc-text {
+    font-size: 13px;
+    color: #9aa0a6;
+    margin: 0 0 16px 0;
+    line-height: 1.6;
+}
+
+.upcoming-page .desc-text strong {
+    color: #e8eaed;
+}
+
+/* ── 工具栏 ── */
+.upcoming-page .toolbar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    align-items: center;
+}
+
+.upcoming-page .search-box {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1px solid rgba(138, 180, 248, 0.2);
+    border-radius: 8px;
+    background: rgba(25, 30, 45, 0.6);
+    color: #e8eaed;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+
+.upcoming-page .search-box:focus {
+    border-color: rgba(138, 180, 248, 0.5);
+}
+
+.upcoming-page .search-box::placeholder {
+    color: #6b7280;
+}
+
+.upcoming-page .country-filter {
+    padding: 10px 14px;
+    border: 1px solid rgba(138, 180, 248, 0.2);
+    border-radius: 8px;
+    background: rgba(25, 30, 45, 0.6);
+    color: #8ab4f8;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    outline: none;
+    min-width: 150px;
+}
+
+.upcoming-page .country-filter:hover,
+.upcoming-page .country-filter:focus {
+    border-color: rgba(138, 180, 248, 0.5);
+    background: rgba(138, 180, 248, 0.1);
+}
+
+.upcoming-page .country-filter option {
+    background: #1a1f2e;
+    color: #e8eaed;
+}
+
+.upcoming-page .toggle-btn {
+    white-space: nowrap;
+    padding: 10px 14px;
+    border: 1px solid rgba(138, 180, 248, 0.2);
+    border-radius: 8px;
+    background: rgba(25, 30, 45, 0.6);
+    color: #8ab4f8;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.upcoming-page .toggle-btn:hover {
+    border-color: rgba(138, 180, 248, 0.5);
+    background: rgba(138, 180, 248, 0.1);
+}
+
+/* ── 时间轴 ── */
+.upcoming-page .timeline {
+    position: relative;
+    padding-left: 20px;
+}
+
+.upcoming-page .timeline::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 4px;
+    width: 2px;
+    background: rgba(138, 180, 248, 0.15);
+}
+
+/* ── 比赛卡片 ── */
+.upcoming-page .comp-card {
+    position: relative;
+    background: rgba(25, 30, 45, 0.6);
+    border: 1px solid rgba(138, 180, 248, 0.1);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.upcoming-page .comp-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    border-color: rgba(138, 180, 248, 0.3);
+}
+
+/* 时间轴节点圆圈 */
+.upcoming-page .comp-card::before {
+    content: '';
+    position: absolute;
+    top: 24px;
+    left: -21px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #8ab4f8;
+    box-shadow: 0 0 0 4px rgba(20, 25, 40, 1);
+}
+
+/* 神仙打架高亮 */
+.upcoming-page .comp-card.highlight {
+    background: rgba(138, 180, 248, 0.05);
+    border: 1px solid rgba(138, 180, 248, 0.4);
+    box-shadow: 0 0 15px rgba(138, 180, 248, 0.1);
+}
+
+.upcoming-page .comp-card.highlight::before {
+    background: #fbbc04;
+    box-shadow: 0 0 0 4px rgba(20, 25, 40, 1), 0 0 8px #fbbc04;
+}
+
+/* 即将开始（7 天内）高亮 */
+.upcoming-page .comp-card.soon {
+    border-left: 3px solid #fbbc04;
+}
+
+.upcoming-page .comp-card.soon::before {
+    animation: upcoming-pulse 2s infinite;
+}
+
+@keyframes upcoming-pulse {
+    0%, 100% { box-shadow: 0 0 0 4px rgba(20, 25, 40, 1); }
+    50% { box-shadow: 0 0 0 4px rgba(20, 25, 40, 1), 0 0 12px rgba(251, 188, 4, 0.6); }
+}
+
+/* ── 卡片内容 ── */
+.upcoming-page .comp-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 4px;
+}
+
+.upcoming-page .comp-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.upcoming-page .comp-title a {
+    color: #8ab4f8;
+    text-decoration: none;
+}
+
+.upcoming-page .comp-title a:hover {
+    text-decoration: underline;
+}
+
+.upcoming-page .comp-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.upcoming-page .comp-location {
+    font-size: 14px;
+    color: #9aa0a6;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* ── 选手标签 ── */
+.upcoming-page .cuber-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+.upcoming-page .cuber-tag {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    background: rgba(138, 180, 248, 0.1);
+    border: 1px solid rgba(138, 180, 248, 0.2);
+    color: #e8eaed;
+    padding: 5px 10px;
+    border-radius: 16px;
+    font-size: 13px;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.upcoming-page .cuber-tag:hover {
+    background: rgba(138, 180, 248, 0.2);
+    border-color: rgba(138, 180, 248, 0.4);
+    color: #fff;
+}
+
+.upcoming-page .cuber-tag .event-label {
+    font-size: 11px;
+    color: #9aa0a6;
+    margin-left: 2px;
+}
+
+.upcoming-page .cuber-tag .event-label .cubing-icon {
+    font-size: 14px;
+    vertical-align: middle;
+}
+
+.upcoming-page .wr-current {
+    color: #d93025 !important;
+}
+
+.upcoming-page .wr-former {
+    color: #e8890c !important;
+}
+
+/* ── 月份分组折叠 ── */
+.upcoming-page .month-group summary {
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    color: #8ab4f8;
+    padding: 8px 0;
+    margin-bottom: 8px;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-variant-numeric: tabular-nums;
+}
+
+.upcoming-page .month-group summary::before {
+    content: '▶';
+    font-size: 10px;
+    transition: transform 0.2s;
+}
+
+.upcoming-page .month-group[open] summary::before {
+    transform: rotate(90deg);
+}
+
+.upcoming-page .month-group summary .comp-count {
+    font-size: 13px;
+    font-weight: 400;
+    color: #9aa0a6;
+}
+
+/* 月度统计 */
+.upcoming-page .month-stats {
+    display: inline-flex;
+    gap: 0;
+    font-size: 13px;
+    color: #9aa0a6;
+    margin-left: 12px;
+}
+
+.upcoming-page .month-stats span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 50px;
+}
+
+/* ── 状态信息 ── */
+.upcoming-page .state-message {
+    text-align: center;
+    padding: 40px;
+    color: #8ab4f8;
+    font-size: 16px;
+}
+
+.upcoming-page .state-error {
+    color: #f28b82;
+}
+
+/* ── 返回按钮 ── */
+.upcoming-page .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #8ab4f8;
+    text-decoration: none;
+    font-size: 14px;
+    margin-bottom: 16px;
+    transition: color 0.2s;
+}
+
+.upcoming-page .back-link:hover {
+    color: #aecbfa;
+}
+
+/* ── 响应式 ── */
+@media (max-width: 500px) {
+    .upcoming-page .timeline-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+
+    .upcoming-page .timeline-header h1 {
+        font-size: 20px;
+    }
+
+    .upcoming-page .comp-header {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 4px 0;
+    }
+
+    .upcoming-page .comp-title {
+        display: contents;
+    }
+
+    .upcoming-page .comp-title a {
+        flex-basis: 100%;
+    }
+
+    .upcoming-page .toolbar .search-box {
+        flex-basis: 100%;
+    }
+
+    .upcoming-page .country-filter {
+        min-width: 0;
+        flex: 1 1 0;
+    }
+}

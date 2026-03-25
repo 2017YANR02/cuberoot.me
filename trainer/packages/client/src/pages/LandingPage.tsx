@@ -311,7 +311,7 @@ const CARDS: CardConfig[] = [
   { id: 'hth',      href: '/calc',                internal: true,  cssClass: 'card-hth',      icon: '🧮', nameKey: 'hthGrapher', descKey: 'hthGrapherDesc' },
   { id: 'battle',   href: '/battle',              internal: true,  cssClass: 'card-battle',   icon: '⚔️', nameKey: 'battle',     descKey: 'battleDesc' },
   { id: 'viz',      href: '/viz',                 internal: true,  cssClass: 'card-viz',      icon: '📈', nameKey: 'viz',        descKey: 'vizDesc' },
-  { id: 'upcoming', href: '/stats/upcoming_comp/', internal: false, cssClass: 'card-upcoming', icon: '🏅', nameKey: 'upcoming',   descKey: 'upcomingDesc' },
+  { id: 'upcoming', href: '/upcoming-comps',        internal: true,  cssClass: 'card-upcoming', icon: '🏅', nameKey: 'upcoming',   descKey: 'upcomingDesc' },
   { id: 'cstimer',  href: '/cstimer/',            internal: false, cssClass: 'card-cstimer',  icon: '',   nameKey: 'cstimer',    descKey: 'cstimerDesc', iconImg: import.meta.env.BASE_URL + 'cstimer_logo.png' },
 ];
 
