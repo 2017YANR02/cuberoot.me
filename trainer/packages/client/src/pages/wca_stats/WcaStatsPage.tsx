@@ -232,8 +232,9 @@ function PanelsView({ panels, searchTerm, isZh, selectedEvent }: {
   const panel = panels[activePanel];
   if (!panel) return null;
 
+  // NOTE: 用 Fragment 替代 div，让 tab-bar 可以和上层按钮流在同一行
   return (
-    <div className="wca-stats-panels">
+    <>
       <div className="wca-stats-tab-bar">
         {panels.map((p, i) => (
           <button
@@ -252,7 +253,7 @@ function PanelsView({ panels, searchTerm, isZh, selectedEvent }: {
         isZh={isZh}
         selectedEvent={selectedEvent}
       />
-    </div>
+    </>
   );
 }
 
@@ -267,8 +268,9 @@ function SourcePanelsView({ sourcePanels, searchTerm, isZh, selectedEvent }: {
   const [activeSource, setActiveSource] = useState(0);
   const source = sourcePanels[activeSource];
 
+  // NOTE: 用 Fragment 替代 div，让 tab-bar 可以和上层按钮流在同一行
   return (
-    <div className="wca-stats-source-panels">
+    <>
       {/* NOTE: Source 选择按钮（如 "1st Solve" / "1st Comp"） */}
       <div className="wca-stats-tab-bar">
         {sourcePanels.map((sp, i) => (
@@ -285,7 +287,7 @@ function SourcePanelsView({ sourcePanels, searchTerm, isZh, selectedEvent }: {
       {source && (
         <PanelsView panels={source.panels} searchTerm={searchTerm} isZh={isZh} selectedEvent={selectedEvent} />
       )}
-    </div>
+    </>
   );
 }
 
