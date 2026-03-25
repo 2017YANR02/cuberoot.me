@@ -210,9 +210,8 @@
   background: #1a1a2e;
 }
 
-/* 表格 */
+/* NOTE: 表格自适应内容宽度，不强制撑满 */
 .wca-stats-table {
-  width: 100%;
   border-collapse: collapse;
   font-size: 14px;
 }
