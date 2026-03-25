@@ -177,6 +177,9 @@ function SectionsView({ header, sections, searchTerm, isZh, selectedEvent }: {
     return sections.filter(s => EVENT_NAME_TO_ID[s.title] === selectedEvent);
   }, [sections, selectedEvent]);
 
+  // NOTE: 当项目选择器选中后只剩一个 section 时，标题冗余（对标 Legacy 删除 h3）
+  const hideTitle = !!selectedEvent && visibleSections.length === 1;
+
   return (
     <div className="wca-stats-sections">
       {visibleSections.map(section => {
@@ -184,15 +187,17 @@ function SectionsView({ header, sections, searchTerm, isZh, selectedEvent }: {
         const isCollapsed = collapsedSections.has(section.title);
         return (
           <div key={section.title} className="wca-stats-section">
-            <h3
-              className="wca-stats-section-title"
-              onClick={() => toggleSection(section.title)}
-            >
-              <span className={`wca-stats-chevron ${isCollapsed ? '' : 'open'}`}>▶</span>
-              {sectionTitle}
-              <span className="wca-stats-section-count">{section.rows.length}</span>
-            </h3>
-            {!isCollapsed && (
+            {!hideTitle && (
+              <h3
+                className="wca-stats-section-title"
+                onClick={() => toggleSection(section.title)}
+              >
+                <span className={`wca-stats-chevron ${isCollapsed ? '' : 'open'}`}>▶</span>
+                {sectionTitle}
+                <span className="wca-stats-section-count">{section.rows.length}</span>
+              </h3>
+            )}
+            {(!isCollapsed || hideTitle) && (
               <StatsTable header={header} rows={section.rows} searchTerm={searchTerm} isZh={isZh} />
             )}
           </div>
