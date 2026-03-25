@@ -6,7 +6,7 @@
 //   3. 设置 MySQL 高性能参数
 //   4. 逐行解析 SQL dump，按表名过滤导入 REQUIRED_TABLES
 //   5. 建覆盖索引 + 存储 export timestamp
-import { createWriteStream, createReadStream, writeFileSync, statSync, mkdirSync, existsSync } from 'fs';
+import { createWriteStream, createReadStream, writeFileSync, statSync, mkdirSync, existsSync, copyFileSync } from 'fs';
 import { resolve, dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { createInterface } from 'readline';
@@ -61,15 +61,15 @@ async function downloadExport(destPath: string): Promise<void> {
 }
 
 // NOTE: 步骤 2——解压（ubuntu CI 自带 unzip）
-function unzipExport(zipPath: string, destDir: string): void {
-  timedTask(`Unzipping ${ZIP_FILENAME}`, () => {
+async function unzipExport(zipPath: string, destDir: string): Promise<void> {
+  await timedTask(`Unzipping ${ZIP_FILENAME}`, () => {
     execSync(`unzip -o "${zipPath}"`, { cwd: destDir, stdio: 'pipe' });
   });
 }
 
 // NOTE: 步骤 3——设置 MySQL 高性能参数（与 Ruby 版完全一致）
-function setMysqlPerformanceParams(): void {
-  timedTask('Setting MySQL performance parameters', () => {
+async function setMysqlPerformanceParams(): Promise<void> {
+  await timedTask('Setting MySQL performance parameters', () => {
     const mysql = mysqlCmd();
     const params = [
       'SET GLOBAL innodb_flush_log_at_trx_commit = 0',
@@ -79,10 +79,10 @@ function setMysqlPerformanceParams(): void {
       'SET GLOBAL innodb_io_capacity_max = 20000',
     ];
     for (const sql of params) {
-      execSync(`${mysql} -e "${sql}" 2>&1 | grep -v "Using a password"`, { stdio: 'pipe' });
+      execSync(`${mysql} -e "${sql}" 2>&1 | grep -v "Using a password" || true`, { stdio: 'pipe' });
     }
     // NOTE: DISABLE REDO_LOG 大幅加速批量写入（崩溃时需重新导入，CI 可接受）
-    execSync(`${mysql} -e "ALTER INSTANCE DISABLE INNODB REDO_LOG" 2>&1 | grep -v "Using a password"`, {
+    execSync(`${mysql} -e "ALTER INSTANCE DISABLE INNODB REDO_LOG" 2>&1 | grep -v "Using a password" || true`, {
       stdio: 'pipe',
     });
   });
@@ -96,8 +96,8 @@ async function importTables(sqlPath: string, workDir: string): Promise<Date> {
   const db = DB_CONFIG.database;
 
   // NOTE: 先删除并重建数据库
-  execSync(`${mysql} -e "DROP DATABASE IF EXISTS ${db}" 2>&1 | grep -v "Using a password"`, { stdio: 'pipe' });
-  execSync(`${mysql} -e "CREATE DATABASE ${db}" 2>&1 | grep -v "Using a password"`, { stdio: 'pipe' });
+  execSync(`${mysql} -e "DROP DATABASE IF EXISTS ${db}" 2>&1 | grep -v "Using a password" || true`, { stdio: 'pipe' });
+  execSync(`${mysql} -e "CREATE DATABASE ${db}" 2>&1 | grep -v "Using a password" || true`, { stdio: 'pipe' });
 
   return timedTask(`Importing ${SQL_FILENAME} into ${db}`, async () => {
     const tableSqls = new Map<string, string[]>();
@@ -169,7 +169,7 @@ async function importTables(sqlPath: string, workDir: string): Promise<Date> {
 
       const tableFile = join(workDir, `${tableName}.sql`);
       writeFileSync(tableFile, tableSql, 'utf-8');
-      execSync(`${mysql} ${db} < "${tableFile}" 2>&1 | grep -v "Using a password"`, {
+      execSync(`${mysql} ${db} < "${tableFile}" 2>&1 | grep -v "Using a password" || true`, {
         stdio: 'pipe',
         maxBuffer: 50 * 1024 * 1024,  // 50MB 缓冲区
       });
@@ -181,13 +181,13 @@ async function importTables(sqlPath: string, workDir: string): Promise<Date> {
 }
 
 // NOTE: 步骤 5——建覆盖索引 + 存储 metadata
-function postImport(exportTimestamp: Date): void {
+async function postImport(exportTimestamp: Date): Promise<void> {
   const mysql = mysqlCmd();
   const db = DB_CONFIG.database;
 
-  timedTask('Creating covering index on result_attempts', () => {
+  await timedTask('Creating covering index on result_attempts', () => {
     execSync(
-      `${mysql} ${db} -e "CREATE INDEX idx_ra_covering ON result_attempts(result_id, attempt_number, value)" 2>&1 | grep -v "Using a password"`,
+      `${mysql} ${db} -e "CREATE INDEX idx_ra_covering ON result_attempts(result_id, attempt_number, value)" 2>&1 | grep -v "Using a password" || true`,
       { stdio: 'pipe' },
     );
   });
@@ -195,7 +195,7 @@ function postImport(exportTimestamp: Date): void {
   // NOTE: 存储 export timestamp（与 Ruby 版一致）
   const ts = exportTimestamp.toISOString();
   const metaSql = `CREATE TABLE wca_statistics_metadata (field varchar(255), value varchar(255)); INSERT INTO wca_statistics_metadata (field, value) VALUES ('export_timestamp', '${ts}')`;
-  execSync(`${mysql} ${db} -e "${metaSql}" 2>&1 | grep -v "Using a password"`, { stdio: 'pipe' });
+  execSync(`${mysql} ${db} -e "${metaSql}" 2>&1 | grep -v "Using a password" || true`, { stdio: 'pipe' });
 }
 
 async function main() {
@@ -205,7 +205,6 @@ async function main() {
   const templatePath = resolve(statsDir, 'bin/templates/database.yml');
   const configDest = resolve(statsDir, 'database.yml');
   if (existsSync(templatePath) && !existsSync(configDest)) {
-    const { copyFileSync } = await import('fs');
     copyFileSync(templatePath, configDest);
     console.log(`Copied database.yml template to ${configDest}`);
   }
@@ -220,10 +219,10 @@ async function main() {
     const sqlPath = join(workDir, SQL_FILENAME);
 
     await downloadExport(zipPath);
-    unzipExport(zipPath, workDir);
-    setMysqlPerformanceParams();
+    await unzipExport(zipPath, workDir);
+    await setMysqlPerformanceParams();
     const exportTimestamp = await importTables(sqlPath, workDir);
-    postImport(exportTimestamp);
+    await postImport(exportTimestamp);
 
     console.log('\nDatabase update complete.');
   } finally {
