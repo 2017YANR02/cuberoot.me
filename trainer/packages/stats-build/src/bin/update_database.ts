@@ -89,8 +89,12 @@ async function setMysqlPerformanceParams(): Promise<void> {
 }
 
 // NOTE: 步骤 4——逐行解析 SQL dump，按表名过滤导入
-// 全流式架构：readline 逐行 → WriteStream 直接写磁盘 → 表切换时导入
-// 内存峰值仅为当前行 + header（几十行），无论表多大都不会 OOM
+// 全流式架构：readline 逐行 -> 8MB 写缓冲合并 I/O -> 表切换时导入
+// 性能优化（与 Ruby 版对齐）：
+//   1. 8MB 写缓冲：将 ~3600 万次 writeSync 合并为几百次，大幅减少 syscall
+//   2. 延迟建索引：从 CREATE TABLE 中剥离 KEY 定义，INSERT 完成后再一次性建索引
+//      避免每条 INSERT 都维护二级索引，这是 Ruby 版快 10 分钟的主因
+// 内存峰值：8MB 写缓冲 + header（几十行）+ CREATE TABLE 块（~20 行），安全可控
 async function importTables(sqlPath: string, workDir: string): Promise<Date> {
   const requiredSet = new Set<string>(REQUIRED_TABLES);
   const mysql = mysqlCmd();
@@ -109,14 +113,41 @@ async function importTables(sqlPath: string, workDir: string): Promise<Date> {
     let firstLine = true;
     const importedTables = new Set<string>();
 
-    // NOTE: 辅助函数——关闭 fd，追加 INDICES，执行 mysql 导入
-    // 使用 closeSync 保证文件完整写入后才执行 mysql（消除竞态）
+    // --- 写缓冲机制：减少 syscall ---
+    const FLUSH_SIZE = 8 * 1024 * 1024;  // 8MB
+    let writeBuf = '';
+
+    const bufWrite = (text: string): void => {
+      writeBuf += text;
+      if (writeBuf.length >= FLUSH_SIZE) {
+        writeSync(fd!, Buffer.from(writeBuf));
+        writeBuf = '';
+      }
+    };
+
+    const bufFlush = (): void => {
+      if (writeBuf.length > 0) {
+        writeSync(fd!, Buffer.from(writeBuf));
+        writeBuf = '';
+      }
+    };
+
+    // --- CREATE TABLE KEY 剥离（与 Ruby gsub! 逻辑一致）---
+    // CREATE TABLE 块很小（~20 行），缓冲在内存安全无 OOM 风险
+    let inCreateTable = false;
+    let createTableLines: string[] = [];
+    let deferredIndexes: string[] = [];  // NOTE: 从 CREATE TABLE 中剥离的 KEY -> INSERT 后建索引
+
+    // NOTE: 辅助函数——flush 缓冲 -> 追加延迟索引 + INDICES -> 关闭 fd -> mysql 导入
     const flushAndImport = (tableName: string, count: number) => {
       if (fd === null) return;
-      // NOTE: 追加自定义索引语句
-      writeSync(fd, '\n' + INDICES.join('\n') + '\n');
+      // NOTE: 追加从 CREATE TABLE 剥离的 KEY 索引 + 自定义 INDICES
+      const allIndexes = [...deferredIndexes, ...INDICES].join('\n');
+      bufWrite('\n' + allIndexes + '\n');
+      bufFlush();
       closeSync(fd);
       fd = null;
+      deferredIndexes = [];
 
       console.log(`  - Importing table ${tableName} (${count} lines)`);
       const f = join(workDir, `${tableName}.sql`);
@@ -138,6 +169,10 @@ async function importTables(sqlPath: string, workDir: string): Promise<Date> {
         writeSync(fd, hl + '\n');
       }
       lineCount = 0;
+      writeBuf = '';
+      inCreateTable = false;
+      createTableLines = [];
+      deferredIndexes = [];
     };
 
     const rl = createInterface({
@@ -177,9 +212,34 @@ async function importTables(sqlPath: string, workDir: string): Promise<Date> {
         // NOTE: header 阶段——收集全局 SQL 语句
         headerLines.push(line);
       } else if (currentTable && fd !== null) {
-        // NOTE: 目标表行——writeSync 同步写入，不存内存
-        writeSync(fd, line + '\n');
-        lineCount++;
+        // NOTE: 目标表行——区分 CREATE TABLE 块和 INSERT 数据行
+        if (!inCreateTable && line.startsWith('CREATE TABLE')) {
+          // NOTE: 进入 CREATE TABLE 块——缓冲到内存（~20 行，安全）
+          inCreateTable = true;
+          createTableLines = [line];
+        } else if (inCreateTable) {
+          createTableLines.push(line);
+          // NOTE: CREATE TABLE 闭合行以 ')' 开头（如 `) ENGINE=InnoDB ...;`）
+          if (line.startsWith(')')) {
+            inCreateTable = false;
+            const createSql = createTableLines.join('\n');
+            // NOTE: 与 Ruby gsub!(/,\s*KEY (.\w+.) (\([^)]*\))/m) 完全一致
+            // 移除 CREATE TABLE 内的 KEY 定义，收集为延迟 CREATE INDEX
+            const processed = createSql.replace(
+              /,\s*KEY (.\w+.) (\([^)]*\))/g,
+              (_match: string, name: string, cols: string) => {
+                deferredIndexes.push(`CREATE INDEX ${name} ON ${currentTable} ${cols};`);
+                return '';
+              },
+            );
+            bufWrite(processed + '\n');
+            createTableLines = [];
+          }
+        } else {
+          // NOTE: INSERT / LOCK / UNLOCK 等数据行——写入缓冲
+          bufWrite(line + '\n');
+          lineCount++;
+        }
       }
       // NOTE: 非目标表行被跳过，不占任何内存
     }
