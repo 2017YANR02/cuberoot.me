@@ -30,11 +30,20 @@ interface StatPanel {
   sections: StatSection[];
 }
 
-interface MetricPanel {
+// NOTE: 数据源面板（wr_newcomer 的第二层：1st-solve / 1st-comp）
+interface SourcePanel {
   id: string;
   labelEn: string;
   labelZh: string;
   panels: StatPanel[];
+}
+
+interface MetricPanel {
+  id: string;
+  labelEn: string;
+  labelZh: string;
+  panels?: StatPanel[];          // 2 级结构（直接 ranking/history）
+  sourcePanels?: SourcePanel[];  // 3 级结构（source → ranking/history）
 }
 
 interface MetricGroup {
@@ -55,6 +64,13 @@ interface StatData {
   panels?: StatPanel[];
   metricPanels?: MetricPanel[];
   metricGroups?: MetricGroup[];
+}
+
+// NOTE: 工具函数——从 MetricPanel 中统一提取所有 StatPanel（兼容 2 级和 3 级结构）
+function getAllPanelsFromMetric(mp: MetricPanel): StatPanel[] {
+  if (mp.panels) return mp.panels;
+  if (mp.sourcePanels) return mp.sourcePanels.flatMap(sp => sp.panels);
+  return [];
 }
 
 // NOTE: 解析 Markdown 链接 [text](url) 为 React 元素
@@ -222,6 +238,39 @@ function PanelsView({ panels, searchTerm, isZh, selectedEvent }: {
   );
 }
 
+// NOTE: SourcePanels 渲染——三级嵌套（如 wr_newcomer：metric → source → tab）
+// 对标 Legacy stats_ui.ts switchSource() + source-panel 切换
+function SourcePanelsView({ sourcePanels, searchTerm, isZh, selectedEvent }: {
+  sourcePanels: SourcePanel[];
+  searchTerm: string;
+  isZh: boolean;
+  selectedEvent?: string;
+}) {
+  const [activeSource, setActiveSource] = useState(0);
+  const source = sourcePanels[activeSource];
+
+  return (
+    <div className="wca-stats-source-panels">
+      {/* NOTE: Source 选择按钮（如 "1st Solve" / "1st Comp"） */}
+      <div className="wca-stats-tab-bar">
+        {sourcePanels.map((sp, i) => (
+          <button
+            key={sp.id}
+            className={`wca-stats-tab ${i === activeSource ? 'active' : ''}`}
+            onClick={() => setActiveSource(i)}
+          >
+            {isZh ? sp.labelZh : sp.labelEn}
+          </button>
+        ))}
+      </div>
+      {/* NOTE: 当前 source 的 Ranking/History Panels */}
+      {source && (
+        <PanelsView panels={source.panels} searchTerm={searchTerm} isZh={isZh} selectedEvent={selectedEvent} />
+      )}
+    </div>
+  );
+}
+
 // NOTE: MetricPanels 渲染——多级面板（指标选择 + Ranking/History Tab）
 // selectedEvent 可选：有值时计算每个 metric 是否有该项目的数据，无数据的 metric 灰掉
 function MetricPanelsView({ metricPanels, metricGroups, searchTerm, isZh, selectedEvent }: {
@@ -241,8 +290,9 @@ function MetricPanelsView({ metricPanels, metricGroups, searchTerm, isZh, select
         map.set(idx, true);
         return;
       }
-      // 遍历 metric 下所有 panels 的 sections，看有没有匹配项目的数据
-      const hasEvent = mp.panels.some(panel =>
+      // NOTE: 遍历 metric 下所有 panels 的 sections（兼容 2 级和 3 级结构）
+      const allPanels = getAllPanelsFromMetric(mp);
+      const hasEvent = allPanels.some(panel =>
         panel.sections.some(sec => EVENT_NAME_TO_ID[sec.title] === selectedEvent)
       );
       map.set(idx, hasEvent);
@@ -315,10 +365,12 @@ function MetricPanelsView({ metricPanels, metricGroups, searchTerm, isZh, select
         </div>
       )}
 
-      {/* NOTE: 选中指标的 Ranking/History Panels */}
-      {metric && (
+      {/* NOTE: 选中指标的渲染——支持 2 级（panels）和 3 级（sourcePanels）结构 */}
+      {metric && metric.sourcePanels ? (
+        <SourcePanelsView sourcePanels={metric.sourcePanels} searchTerm={searchTerm} isZh={isZh} selectedEvent={selectedEvent} />
+      ) : metric && metric.panels ? (
         <PanelsView panels={metric.panels} searchTerm={searchTerm} isZh={isZh} selectedEvent={selectedEvent} />
-      )}
+      ) : null}
     </div>
   );
 }
@@ -381,9 +433,11 @@ export default function WcaStatsPage() {
     if (data.sections) extractFromSections(data.sections);
     if (data.panels) data.panels.forEach(p => extractFromSections(p.sections));
     if (data.metricPanels) {
-      data.metricPanels.forEach(mp =>
-        mp.panels.forEach(p => extractFromSections(p.sections))
-      );
+      data.metricPanels.forEach(mp => {
+        // NOTE: 兼容 2 级和 3 级结构
+        const allPanels = getAllPanelsFromMetric(mp);
+        allPanels.forEach(p => extractFromSections(p.sections));
+      });
     }
     return ids;
   }, [data]);
