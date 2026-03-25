@@ -7,7 +7,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import type { ReconSolve, ReconComment, EditHistoryItem } from '@cuberoot/shared';
 import { getRecon, listComments, getEditHistory, deleteRecon, addComment, updateComment, deleteComment, getBiliCover, listRecons } from '../../utils/recon_api';
 import {
-  formatTime, countryFlag, getEventDisplayName, getRoundDisplay,
+  formatTime, flagClass, getEventDisplayName,
   isBldEvent, getPuzzleId, t, wcaCompUrl, wcaPersonUrl,
   buildExternalLinks, displaySolverName, FACE_COLORS,
 } from '../../utils/recon_utils';
@@ -66,43 +66,34 @@ export default function ReconDetailPage() {
 
   return (
     <div className="recon-page">
-      {/* 页头 */}
+      {/* NOTE: 页头——对齐原版格式: 时间 + 纪录 + 项目 + 选手名 + 国旗 */}
       <div className="detail-header">
         <Link to="/recon" className="detail-back">← {t('返回', 'Back')}</Link>
         <h1 className="detail-title">
-          {solve.personCountry && countryFlag(solve.personCountry)}{' '}
-          {solve.person}
-          {solve.rawTime != null && ` — ${formatTime(solve.rawTime)}`}
+          {solve.rawTime != null && formatTime(solve.rawTime)}
           {solve.regionalSingleRecord && (
             <span className={`record-badge record-${solve.regionalSingleRecord.toLowerCase().replace('cancelled ', 'cancelled')}`}>
               {solve.regionalSingleRecord}
             </span>
           )}
+          {solve.event && ` ${getEventDisplayName(solve.event)}`}
+          {' '}{solve.person}
+          {solve.personCountry && <>{' '}<span className={flagClass(solve.personCountry)} /></>}
         </h1>
       </div>
 
-      {/* 元数据 */}
+      {/* NOTE: 元数据——对齐原版（日期 + 国旗 + 比赛名链接） */}
       <div className="detail-meta-bar">
+        {solve.date && <span className="detail-meta-item">{solve.date.slice(0, 10)}</span>}
         {solve.comp && (
-          <span className="detail-meta-tag">
-            {solve.country && countryFlag(solve.country)}{' '}
+          <span className="detail-meta-item">
+            {solve.country && <><span className={flagClass(solve.country)} />{' '}</>}
             {solve.compWcaId ? (
               <a href={wcaCompUrl(solve.compWcaId)} target="_blank" rel="noopener noreferrer">
                 {solve.comp}
               </a>
             ) : solve.comp}
           </span>
-        )}
-        {solve.event && <span className="detail-meta-tag">{getEventDisplayName(solve.event)}</span>}
-        {solve.method && <span className="detail-meta-tag">{solve.method}</span>}
-        {solve.round && <span className="detail-meta-tag">{getRoundDisplay(solve.round)}</span>}
-        {solve.solveNum != null && <span className="detail-meta-tag">#{solve.solveNum}</span>}
-        {solve.date && <span className="detail-meta-tag">📅 {solve.date}</span>}
-        {solve.official && <span className="detail-meta-tag">🏆 WCA</span>}
-        {solve.personId && (
-          <a href={wcaPersonUrl(solve.personId)} target="_blank" rel="noopener noreferrer" className="detail-meta-tag">
-            {solve.personId}
-          </a>
         )}
       </div>
 
@@ -662,7 +653,8 @@ function TwistySection({
   scramble: string;
   alg: string;
 }) {
-  const [visible, setVisible] = useState(false);
+  // NOTE: 动画默认显示（对齐原版——原版默认展开 twisty-player）
+  const [visible, setVisible] = useState(true);
   const [cubingLoaded, setCubingLoaded] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
