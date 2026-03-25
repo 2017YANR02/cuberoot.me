@@ -202,12 +202,14 @@
   white-space: nowrap;
 }
 
-/* 表格容器 */
+/* NOTE: 表格容器跟随内容宽度，多列时 max-width 限制 + 横向滚动 */
 .wca-stats-table-wrapper {
   overflow-x: auto;
   border-radius: 12px;
   border: 1px solid #333;
   background: #1a1a2e;
+  width: fit-content;
+  max-width: 100%;
 }
 
 /* NOTE: 表格自适应内容宽度，不强制撑满 */
