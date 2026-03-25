@@ -27,6 +27,7 @@ const ReconSubmitPage = lazy(() => import('./pages/recon/ReconSubmitPage'));
 const AuthCallbackPage = lazy(() => import('./pages/AuthCallbackPage'));
 // NOTE: WCA Stats 模块懒加载 — 统计数据展示
 const WcaStatsPage = lazy(() => import('./pages/wca_stats/WcaStatsPage'));
+const WcaStatsIndex = lazy(() => import('./pages/wca_stats/WcaStatsIndex'));
 
 function App() {
   return (
@@ -59,6 +60,7 @@ function App() {
         <Route path="/recon/submit/:editId" element={<Suspense fallback={<div>Loading...</div>}><ReconSubmitPage /></Suspense>} />
         <Route path="/recon/:id" element={<Suspense fallback={<div>Loading...</div>}><ReconDetailPage /></Suspense>} />
         {/* WCA Stats — 统计数据展示 */}
+        <Route path="/wca-stats" element={<Suspense fallback={<div>Loading...</div>}><WcaStatsIndex /></Suspense>} />
         <Route path="/wca-stats/:statId" element={<Suspense fallback={<div>Loading...</div>}><WcaStatsPage /></Suspense>} />
         {/* Auth — WCA OAuth 回调 */}
         <Route path="/auth/callback" element={<Suspense fallback={<div>Loading...</div>}><AuthCallbackPage /></Suspense>} />
