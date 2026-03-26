@@ -188,7 +188,9 @@ export abstract class AverageOfX extends GroupedStatistic {
       for (const row of personRows) {
         const compMeta: CompMeta = {
           compLink: String(row['competition_link']),
-          date: String(row['start_date']),
+          // NOTE: ⚠️ 必须用 formatDate 而非 String —— mysql2 返回 JS Date 对象，
+          // String(Date) 产生 "Sat Jan 15 2005..." 非 ISO 格式，localeCompare 排序出错
+          date: formatDate(row['start_date']),
         };
         const attempts = String(row['attempts'] || '').split(',').map(Number);
         for (const value of attempts) {
@@ -232,12 +234,13 @@ export abstract class AverageOfX extends GroupedStatistic {
 
   // NOTE: Details 结构化输出——带类型判别器的对象
   // 前端通过 _type === 'solves' 识别并决定渲染方式（行内/折叠）
-  // items: 每个成绩的格式化字符串；csv: 逗号分隔（图表 parseFloat 用）
-  private detailsCell(solves: number[], eventId: string): { _type: 'solves'; items: string[]; csv: string } {
+  // csv: 逗号分隔的格式化成绩（前端 split 渲染 + 图表 parseFloat）
+  // ⚠️ 不存 items 数组——JSON 数组每元素有 ""+, 开销，Ao1000 会爆内存
+  private detailsCell(solves: number[], eventId: string): { _type: 'solves'; csv: string } {
     const formatted = solves.map(s =>
       s === Infinity ? 'DNF' : new SolveTime(eventId, 'single', s).clockFormat(),
     );
-    return { _type: 'solves', items: formatted, csv: formatted.join(',') };
+    return { _type: 'solves', csv: formatted.join(',') };
   }
 
   // NOTE: 覆写 toJson——双视图 panels
