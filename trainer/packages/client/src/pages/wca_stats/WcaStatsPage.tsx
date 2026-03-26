@@ -446,6 +446,34 @@ function AoxRankingSection({ header, rows, isZh }: {
   );
 }
 
+// NOTE: Dedup 过滤——与 Legacy stats_ui.ts initHideDays0 对应
+// 规则 1: Days 列 == '0' 的行
+// 规则 2: 相邻行（表格降序排列）Start Comp 相同时，标记下方行（更旧的记录）
+function dedupRows(rows: unknown[][], header: StatHeader[]): unknown[][] {
+  // 找 Days 和 Start Comp 列索引
+  let daysIdx = -1, startCompIdx = -1;
+  header.forEach((h, i) => {
+    if (h.key === 'days') daysIdx = i;
+    if (h.key === 'start_comp') startCompIdx = i;
+  });
+  if (daysIdx === -1 && startCompIdx === -1) return rows;
+
+  const result: unknown[][] = [];
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    // 规则 1: Days == '0'
+    if (daysIdx >= 0 && String(row[daysIdx] ?? '').trim() === '0') continue;
+    // 规则 2: 与上方行 Start Comp 相同（表降序：i 更大 = 更旧），跳过更旧的
+    if (startCompIdx >= 0 && i > 0) {
+      const prev = String(rows[i - 1]?.[startCompIdx] ?? '').trim();
+      const cur = String(row[startCompIdx] ?? '').trim();
+      if (cur && cur === prev) continue;
+    }
+    result.push(row);
+  }
+  return result;
+}
+
 // NOTE: Panels 渲染——Tab 切换（如 Ranking / History）
 // 增强：检测 AoX 面板，自动集成分布图（ranking）和折线图（history）
 function PanelsView({ panels, searchTerm, isZh, selectedEvent }: {
@@ -455,6 +483,8 @@ function PanelsView({ panels, searchTerm, isZh, selectedEvent }: {
   selectedEvent?: string;
 }) {
   const [activePanel, setActivePanel] = useState(0);
+  // NOTE: Dedup 开关——默认 ON（与 Legacy 一致）
+  const [dedup, setDedup] = useState(true);
   const panel = panels[activePanel];
   if (!panel) return null;
 
@@ -469,12 +499,25 @@ function PanelsView({ panels, searchTerm, isZh, selectedEvent }: {
     );
   }, [panels]);
 
+  // NOTE: 是否显示 dedup toggle——仅 AoX 的 history 面板
+  const showDedup = isAoxData && panel.id === 'history';
+
+  // NOTE: 对 history sections 应用 dedup 过滤
+  const dedupedSections = useMemo(() => {
+    if (!showDedup || !dedup) return panel.sections;
+    return panel.sections.map(s => ({
+      ...s,
+      rows: dedupRows(s.rows, panel.header),
+    }));
+  }, [panel, showDedup, dedup]);
+
   // NOTE: 为 history 面板收集当前可见 section 的 rows（供折线图用）
   const historyChartData = useMemo(() => {
     if (panel.id !== 'history' || !isAoxData) return null;
+    const sections = dedup ? dedupedSections : panel.sections;
     // 过滤出当前 selectedEvent 的 section rows
     const visibleSections = selectedEvent
-      ? panel.sections.filter(s => {
+      ? sections.filter(s => {
           let eventId = EVENT_NAME_TO_ID[s.title];
           if (!eventId && s.title.includes(' - ')) {
             const eventName = s.title.substring(0, s.title.lastIndexOf(' - '));
@@ -482,10 +525,13 @@ function PanelsView({ panels, searchTerm, isZh, selectedEvent }: {
           }
           return eventId === selectedEvent;
         })
-      : panel.sections;
+      : sections;
     const allRows = visibleSections.flatMap(s => s.rows);
     return allRows.length > 0 ? allRows : null;
-  }, [panel, isAoxData, selectedEvent]);
+  }, [panel, isAoxData, selectedEvent, dedup, dedupedSections]);
+
+  // NOTE: 当前面板实际使用的 sections（dedup 后的或原始的）
+  const activeSections = showDedup && dedup ? dedupedSections : panel.sections;
 
   return (
     <>
@@ -499,6 +545,14 @@ function PanelsView({ panels, searchTerm, isZh, selectedEvent }: {
             {isZh ? p.labelZh : p.labelEn}
           </button>
         ))}
+        {/* NOTE: Dedup toggle——与 Legacy iOS 药丸风格一致 */}
+        {showDedup && (
+          <label className="wca-stats-dedup-toggle">
+            <span>{isZh ? '日期去重' : 'Dedup'}</span>
+            <input type="checkbox" checked={dedup} onChange={() => setDedup(!dedup)} />
+            <span className="wca-stats-toggle-pill" />
+          </label>
+        )}
       </div>
       {/* NOTE: History 面板——折线图在 sections 之上 */}
       {historyChartData && (
@@ -515,7 +569,7 @@ function PanelsView({ panels, searchTerm, isZh, selectedEvent }: {
       ) : (
         <SectionsView
           header={panel.header}
-          sections={panel.sections}
+          sections={activeSections}
           searchTerm={searchTerm}
           isZh={isZh}
           selectedEvent={selectedEvent}
