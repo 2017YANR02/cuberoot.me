@@ -1,0 +1,230 @@
+@font-face {
+    font-family: "cubing-icons";
+    src: url("./cubing-icons.woff2?e137204355a6707272471108c5a353e5") format("woff2");
+}
+
+.cubing-icon:before {
+  vertical-align: -15%;
+    font-family: cubing-icons !important;
+    font-style: normal;
+    font-weight: normal !important;
+    font-variant: normal;
+    text-transform: none;
+    line-height: 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.cubing-icon.event-444:before {
+    content: "\f101";
+}
+.cubing-icon.event-sq1:before {
+    content: "\f102";
+}
+.cubing-icon.event-minx:before {
+    content: "\f103";
+}
+.cubing-icon.event-444bf:before {
+    content: "\f104";
+}
+.cubing-icon.event-skewb:before {
+    content: "\f105";
+}
+.cubing-icon.event-333:before {
+    content: "\f106";
+}
+.cubing-icon.event-333bf:before {
+    content: "\f107";
+}
+.cubing-icon.event-clock:before {
+    content: "\f108";
+}
+.cubing-icon.event-333mbo:before {
+    content: "\f109";
+}
+.cubing-icon.event-222:before {
+    content: "\f10a";
+}
+.cubing-icon.event-magic:before {
+    content: "\f10b";
+}
+.cubing-icon.event-555:before {
+    content: "\f10c";
+}
+.cubing-icon.event-333fm:before {
+    content: "\f10d";
+}
+.cubing-icon.event-333mbf:before {
+    content: "\f10e";
+}
+.cubing-icon.event-333ft:before {
+    content: "\f10f";
+}
+.cubing-icon.event-mmagic:before {
+    content: "\f110";
+}
+.cubing-icon.event-777:before {
+    content: "\f111";
+}
+.cubing-icon.event-pyram:before {
+    content: "\f112";
+}
+.cubing-icon.event-666:before {
+    content: "\f113";
+}
+.cubing-icon.event-555bf:before {
+    content: "\f114";
+}
+.cubing-icon.event-333oh:before {
+    content: "\f115";
+}
+.cubing-icon.penalty-A6c:before {
+    content: "\f116";
+}
+.cubing-icon.penalty-A6d:before {
+    content: "\f117";
+}
+.cubing-icon.penalty-A6e:before {
+    content: "\f118";
+}
+.cubing-icon.penalty-A4d1:before {
+    content: "\f119";
+}
+.cubing-icon.penalty-10e3:before {
+    content: "\f11a";
+}
+.cubing-icon.penalty-A4b1:before {
+    content: "\f11b";
+}
+.cubing-icon.penalty-A4b:before {
+    content: "\f11c";
+}
+.cubing-icon.penalty-A3d1:before {
+    content: "\f11d";
+}
+.cubing-icon.unofficial-222oh:before {
+    content: "\f11e";
+}
+.cubing-icon.unofficial-miniguild_bld:before {
+    content: "\f11f";
+}
+.cubing-icon.unofficial-333_oh_bld_relay:before {
+    content: "\f120";
+}
+.cubing-icon.unofficial-234567relay:before {
+    content: "\f121";
+}
+.cubing-icon.unofficial-baby_fto:before {
+    content: "\f122";
+}
+.cubing-icon.unofficial-234567relay_2_person:before {
+    content: "\f123";
+}
+.cubing-icon.unofficial-miniguild_2_person:before {
+    content: "\f124";
+}
+.cubing-icon.unofficial-miniguild:before {
+    content: "\f125";
+}
+.cubing-icon.unofficial-minx_bld:before {
+    content: "\f126";
+}
+.cubing-icon.unofficial-mpyram:before {
+    content: "\f127";
+}
+.cubing-icon.unofficial-2345relay:before {
+    content: "\f128";
+}
+.cubing-icon.unofficial-333bf_2_person_relay:before {
+    content: "\f129";
+}
+.cubing-icon.unofficial-redi:before {
+    content: "\f12a";
+}
+.cubing-icon.unofficial-23456relay:before {
+    content: "\f12b";
+}
+.cubing-icon.unofficial-333_team_bld:before {
+    content: "\f12c";
+}
+.cubing-icon.unofficial-666bf:before {
+    content: "\f12d";
+}
+.cubing-icon.unofficial-curvycopter:before {
+    content: "\f12e";
+}
+.cubing-icon.unofficial-mtetram:before {
+    content: "\f12f";
+}
+.cubing-icon.unofficial-234relay:before {
+    content: "\f130";
+}
+.cubing-icon.unofficial-333bf_8_person_relay:before {
+    content: "\f131";
+}
+.cubing-icon.unofficial-333_linear_fm:before {
+    content: "\f132";
+}
+.cubing-icon.unofficial-333mts:before {
+    content: "\f133";
+}
+.cubing-icon.unofficial-333bf_3_person_relay:before {
+    content: "\f134";
+}
+.cubing-icon.unofficial-fto:before {
+    content: "\f135";
+}
+.cubing-icon.unofficial-333_speed_bld:before {
+    content: "\f136";
+}
+.cubing-icon.unofficial-kilominx:before {
+    content: "\f137";
+}
+.cubing-icon.unofficial-magic_oh:before {
+    content: "\f138";
+}
+.cubing-icon.unofficial-333_oven_mitts:before {
+    content: "\f139";
+}
+.cubing-icon.unofficial-fisher:before {
+    content: "\f13a";
+}
+.cubing-icon.unofficial-333_siamese:before {
+    content: "\f13b";
+}
+.cubing-icon.unofficial-333bf_4_person_relay:before {
+    content: "\f13c";
+}
+.cubing-icon.unofficial-sq1_bld:before {
+    content: "\f13d";
+}
+.cubing-icon.unofficial-777bf:before {
+    content: "\f13e";
+}
+.cubing-icon.unofficial-444ft:before {
+    content: "\f13f";
+}
+.cubing-icon.unofficial-333_mirror_blocks_bld:before {
+    content: "\f140";
+}
+.cubing-icon.unofficial-333_mirror_blocks:before {
+    content: "\f141";
+}
+.cubing-icon.unofficial-222bf:before {
+    content: "\f142";
+}
+.cubing-icon.unofficial-helicopter:before {
+    content: "\f143";
+}
+.cubing-icon.unofficial-mskewb:before {
+    content: "\f144";
+}
+.cubing-icon.unofficial-pyramorphix:before {
+    content: "\f145";
+}
+.cubing-icon.unofficial-333_team_factory:before {
+    content: "\f146";
+}
+.cubing-icon.unofficial-333_oh_bld_team_relay:before {
+    content: "\f147";
+}
