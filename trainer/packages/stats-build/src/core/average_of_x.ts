@@ -42,8 +42,6 @@ const HISTORY_HEADER_AOX = {
 // NOTE: DNF 标记值
 const SKIPPED_VALUE = 0;
 
-// NOTE: 懒加载阈值——超过此数量的 solves 用折叠方式展示
-const LAZY_THRESHOLD = 12;
 
 // --- 共享查询结果缓存（与 Ruby @@query_results 对齐） ---
 // NOTE: 7 个子类共享同一份大 SQL 查询结果，避免 6 次重复查询
@@ -232,17 +230,14 @@ export abstract class AverageOfX extends GroupedStatistic {
     return results;
   }
 
-  // NOTE: Details 格式化
-  private detailsHtml(solves: number[], eventId: string): string {
+  // NOTE: Details 结构化输出——带类型判别器的对象
+  // 前端通过 _type === 'solves' 识别并决定渲染方式（行内/折叠）
+  // items: 每个成绩的格式化字符串；csv: 逗号分隔（图表 parseFloat 用）
+  private detailsCell(solves: number[], eventId: string): { _type: 'solves'; items: string[]; csv: string } {
     const formatted = solves.map(s =>
       s === Infinity ? 'DNF' : new SolveTime(eventId, 'single', s).clockFormat(),
     );
-
-    if (formatted.length <= LAZY_THRESHOLD) {
-      return formatted.join(' ');
-    }
-    // NOTE: 折叠展示
-    return `${formatted.length} solves`;
+    return { _type: 'solves', items: formatted, csv: formatted.join(',') };
   }
 
   // NOTE: 覆写 toJson——双视图 panels
@@ -267,7 +262,7 @@ export abstract class AverageOfX extends GroupedStatistic {
             i + 1, p.personLink, b.aox.clockFormat(), p.country,
             formatDate(b.startMeta.date), b.startMeta.compLink,
             formatDate(b.endMeta.date), b.endMeta.compLink,
-            this.detailsHtml(b.solves, eventId),
+            this.detailsCell(b.solves, eventId),
           ];
         });
       rankingDataAll.push([eventName, top10]);
@@ -312,7 +307,7 @@ export abstract class AverageOfX extends GroupedStatistic {
           metricStr, gainStr, daysStr, r.personLink,
           formatDate(r.startMeta.date), r.startMeta.compLink,
           formatDate(r.endMeta.date), r.endMeta.compLink,
-          this.detailsHtml(r.solves, eventId),
+          this.detailsCell(r.solves, eventId),
         ];
       });
 
