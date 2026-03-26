@@ -85,21 +85,22 @@ const LAZY_THRESHOLD = 12;
 function renderCell(value: unknown): React.ReactNode {
   // NOTE: 类型判别器——AverageOfX 的 Details 列输出结构化对象
   if (value && typeof value === 'object' && (value as Record<string, unknown>)._type === 'solves') {
-    const cell = value as { _type: 'solves'; items: string[]; csv: string };
-    if (cell.items.length <= LAZY_THRESHOLD) {
+    const cell = value as { _type: 'solves'; csv: string };
+    const items = cell.csv.split(',');
+    if (items.length <= LAZY_THRESHOLD) {
       // NOTE: ≤12 个成绩——行内展示
       return (
         <div className="solve-list">
-          {cell.items.map((s, i) => <span key={i}>{s}</span>)}
+          {items.map((s, i) => <span key={i}>{s}</span>)}
         </div>
       );
     }
     // NOTE: >12 个成绩——折叠展示（对标 Legacy <details data-solves>）
     return (
       <details className="solve-details">
-        <summary>{cell.items.length} solves</summary>
+        <summary>{items.length} solves</summary>
         <div className="solve-list">
-          {cell.items.map((s, i) => <span key={i}>{s}</span>)}
+          {items.map((s, i) => <span key={i}>{s}</span>)}
         </div>
       </details>
     );
@@ -320,10 +321,10 @@ function parseTimeValue(s: string): number {
 }
 
 // NOTE: 从行中提取 _type:'solves' 单元格
-function extractSolvesCell(row: unknown[]): { _type: 'solves'; items: string[]; csv: string } | null {
+function extractSolvesCell(row: unknown[]): { _type: 'solves'; csv: string } | null {
   for (const cell of row) {
     if (cell && typeof cell === 'object' && (cell as Record<string, unknown>)._type === 'solves') {
-      return cell as { _type: 'solves'; items: string[]; csv: string };
+      return cell as { _type: 'solves'; csv: string };
     }
   }
   return null;
