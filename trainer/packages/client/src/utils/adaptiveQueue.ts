@@ -1,3 +1,7 @@
+/**
+ * @module adaptiveQueue
+ * 自适应训练队列 — 基于上一轮表现分层重复（最慢→4次，次慢→3次…）。
+ */
 import type { AlgCase } from '@cuberoot/shared';
 
 interface CaseResult {
