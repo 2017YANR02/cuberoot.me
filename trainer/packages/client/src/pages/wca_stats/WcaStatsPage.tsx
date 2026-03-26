@@ -6,7 +6,8 @@ import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import WcaEventSelector from './WcaEventSelector';
 import { EVENT_NAME_TO_ID, ALL_EVENT_IDS } from './event_constants';
-import { countryFlagClass } from '../../utils/country_flags';
+import { countryFlagClass, loadFlagData, flagDataVersion, extractWcaId, extractCompId, personFlagIso2, compFlagIso2 } from '../../utils/country_flags';
+import { flagClass } from '../../utils/recon_utils';
 import DistributionChart from './DistributionChart';
 import type { DistDataset } from './DistributionChart';
 import WrHistoryChart from './WrHistoryChart';
@@ -128,8 +129,22 @@ function renderCell(value: unknown): React.ReactNode {
       if (match.index > lastIndex) {
         parts.push(segment.slice(lastIndex, match.index));
       }
+      // NOTE: 检测 WCA person/competition 链接，在 <a> 前注入国旗
+      const url = match[2];
+      const wcaId = extractWcaId(url);
+      const compId = extractCompId(url);
+      const iso2 = wcaId ? personFlagIso2(wcaId) : compId ? compFlagIso2(compId) : '';
+      if (iso2) {
+        if (iso2 === 'tw') {
+          // NOTE: Chinese Taipei 用 WCA 自定义梅花旗（对标 Legacy i18n.js）
+          parts.push(<img key={`flag-${segIdx}-${match.index}`} src="/assets/images/ChineseTaipei.svg" alt="Chinese Taipei" className="country-flag-ct" />);
+        } else {
+          parts.push(<span key={`flag-${segIdx}-${match.index}`} className={`${flagClass(iso2)} country-flag`} />);
+        }
+        parts.push(' ');
+      }
       parts.push(
-        <a key={`${segIdx}-${match.index}`} href={match[2]} target="_blank" rel="noopener noreferrer">
+        <a key={`${segIdx}-${match.index}`} href={url} target="_blank" rel="noopener noreferrer">
           {match[1]}
         </a>
       );
@@ -759,6 +774,13 @@ export default function WcaStatsPage() {
   const [selectedEvent, setSelectedEvent] = useState<string>('');
 
   const isZh = i18n.language === 'zh';
+
+  // NOTE: 异步加载国旗映射数据（person_countries.json + comp_countries.json）
+  // flagVer 变化时触发 re-render，使国旗 span 获得正确的 className
+  const [flagVer, setFlagVer] = useState(() => flagDataVersion());
+  useEffect(() => {
+    loadFlagData().then(v => { if (v !== flagVer) setFlagVer(v); });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // NOTE: 从 /stats/data/<statId>.json 加载数据
   useEffect(() => {

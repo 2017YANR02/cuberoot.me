@@ -104,3 +104,71 @@ export function countryFlagClass(country: string): string {
   const iso2 = countryToIso2(country);
   return flagClass(iso2);
 }
+
+// ── 选手 / 比赛国旗数据（异步加载，模块级缓存） ──
+
+// NOTE: 缓存——模块生命周期内只 fetch 一次
+let _personCountries: Record<string, string> | null = null; // WCA ID → iso2
+let _compCountries: Record<string, string> | null = null;   // comp ID → WCA country_id
+let _loadPromise: Promise<void> | null = null;
+// NOTE: 版本号——每次数据加载完成后递增，触发消费者 re-render
+let _flagDataVersion = 0;
+
+/**
+ * 异步加载 person_countries.json + comp_countries.json（幂等）
+ * NOTE: Vite dev 通过 proxy /stats → jekyll:4000 访问
+ * @returns 当前版本号（用于 useEffect 依赖）
+ */
+export function loadFlagData(): Promise<number> {
+  if (_personCountries && _compCountries) return Promise.resolve(_flagDataVersion);
+  if (!_loadPromise) {
+    _loadPromise = Promise.all([
+      fetch('/stats/person_countries.json').then(r => r.ok ? r.json() : {}).catch(() => ({})),
+      fetch('/stats/comp_countries.json').then(r => r.ok ? r.json() : {}).catch(() => ({})),
+    ]).then(([persons, comps]) => {
+      _personCountries = persons;
+      _compCountries = comps;
+      _flagDataVersion++;
+    });
+  }
+  return _loadPromise.then(() => _flagDataVersion);
+}
+
+/** 当前版本号（供 React state 对比） */
+export function flagDataVersion(): number {
+  return _flagDataVersion;
+}
+
+// ── URL 提取辅助 ──
+
+/** 从 WCA persons URL 提取 WCA ID（如 2023GENG02） */
+export function extractWcaId(url: string): string | null {
+  const m = url.match(/\/persons\/([A-Z0-9]+)/);
+  return m ? m[1] : null;
+}
+
+/** 从 WCA competitions URL 提取比赛 ID */
+export function extractCompId(url: string): string | null {
+  const m = url.match(/\/competitions\/([^/#?]+)/);
+  return m ? m[1] : null;
+}
+
+// ── 查询函数（同步，加载前返回空字符串） ──
+
+/**
+ * 根据 WCA ID 获取选手国籍的 ISO2 代码
+ * NOTE: person_countries.json 已是小写 iso2，直接返回
+ */
+export function personFlagIso2(wcaId: string): string {
+  return _personCountries?.[wcaId] ?? '';
+}
+
+/**
+ * 根据比赛 ID 获取比赛所在国家的 ISO2 代码
+ * NOTE: comp_countries.json 值是 WCA country_id（如 \"China\"），复用 countryToIso2 转换
+ */
+export function compFlagIso2(compId: string): string {
+  const countryId = _compCountries?.[compId] ?? '';
+  if (!countryId) return '';
+  return countryToIso2(countryId);
+}

@@ -66,8 +66,9 @@ trainer/
 │   │   │   │   ├── recon_stats.ts     # Recon 统计引擎（STM/TPS/阶段解析）
 │   │   │   │   ├── recon_norm_cross.ts # Recon Cross 标准化
 │   │   │   │   ├── recon_alg_utils.ts # Recon 公式工具（twisty-player 清洗）
-│   │   │   │   ├── recon_utils.ts     # Recon 格式化工具（国旗/时间/事件/i18n）
-│   │   │   │   └── recon_api.ts       # Recon API 客户端（20+ 端点）
+│   │   │   │   ├── recon_utils.ts     # Recon 格式化工具（flagClass/时间/事件/i18n）
+│   │   │   │   ├── recon_api.ts       # Recon API 客户端（20+ 端点）
+│   │   │   │   └── country_flags.ts   # WCA 国旗工具（country→ISO2 映射 + person/comp JSON 缓存加载）
 │   │   │   ├── recon.css               # Recon 列表页样式
 │   │   │   ├── zbll.css               # ZBLL 专用样式（选择页 + 计时页 + 响应式）
 │   │   │   ├── zbls.css               # ZBLS 专用样式（F2L 组列表 + 计时页 + 响应式）
