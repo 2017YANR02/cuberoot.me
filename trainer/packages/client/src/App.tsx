@@ -1,3 +1,8 @@
+/**
+ * @module App
+ * 路由配置 — React Router (basename=/app)，所有模块页面 lazy-load。
+ * @see index.html 全局加载的外部 CSS（cubing-icons / flag-icons / Google Fonts）
+ */
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Suspense, lazy } from 'react';
 import { HomePage } from './pages/HomePage';

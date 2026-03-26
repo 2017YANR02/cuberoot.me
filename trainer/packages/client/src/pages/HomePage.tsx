@@ -1,3 +1,7 @@
+/**
+ * @module HomePage
+ * Trainer 首页 — PLL / OLL / ZBLL / ZBLS 公式集卡片网格。
+ */
 import { Link } from 'react-router-dom';
 import pllMap from '@cuberoot/shared/data/pll.json';
 import ollMap from '@cuberoot/shared/data/oll.json';
