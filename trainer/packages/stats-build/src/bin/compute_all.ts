@@ -6,6 +6,7 @@
 import { writeFileSync, mkdirSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { fork } from 'child_process';
 import { closePool } from '../core/database.js';
 import { REGISTRY } from './compute.js';
 import { RoundMetric } from '../core/round_metric.js';
@@ -38,8 +39,9 @@ const PRIORITY_STATS = [
   'wr_current', 'first_r_is_wr', 'wr_dominance',
 ];
 
-// NOTE: 与 Ruby HEAVY_STATS 一致——这些统计 RSS > 3GB，但 TS 版串行执行不需分离
-// 保留此列表仅用于日志标记
+// NOTE: 与 Ruby HEAVY_STATS 一致——这些统计 RSS > 3GB
+// 在子进程（child_process.fork）中隔离执行，退出后 OS 回收全部内存
+// 与 Ruby compute_all.rb Phase 2 的 fork 隔离 1:1 对应
 const HEAVY_STATS = new Set([
   'longest_streak_of_podiums',
   'longest_streak_of_personal_records',
@@ -53,6 +55,26 @@ const HEAVY_STATS = new Set([
   'most_frequent_results',
   'moving_average',
 ]);
+
+
+// NOTE: fork 隔离执行——在独立子进程中运行统计，退出后 OS 回收全部内存
+// 与 Ruby compute_all.rb 的 run_isolated 1:1 对应
+// 复用 compute.ts 作为子进程入口（已具备独立运行任何统计的能力）
+function runIsolated(statId: string): Promise<{ success: boolean }> {
+  return new Promise((res) => {
+    const workerScript = resolve(__dirname, 'compute.ts');
+    const child = fork(workerScript, [statId], {
+      // NOTE: stdio 'inherit' 让子进程的 stdout/stderr 直接打印到主进程控制台
+      stdio: 'inherit',
+    });
+    child.on('exit', (code) => {
+      res({ success: code === 0 });
+    });
+    child.on('error', () => {
+      res({ success: false });
+    });
+  });
+}
 
 // NOTE: 与 Ruby AGGREGATE_CACHE_CLEANUP 对应——聚合页面完成后清除基类缓存
 // 结构：statId -> 清理函数
@@ -70,6 +92,9 @@ const AGGREGATE_CACHE_CLEANUP: Record<string, () => void> = {
     console.log('  [Memory] Cleared AverageOfX shared query cache');
   },
 };
+
+// NOTE: 聚合统计必须在主进程执行（有类级缓存依赖），即使被标记为 HEAVY 也不能隔离
+const AGGREGATE_IDS = new Set(Object.keys(AGGREGATE_CACHE_CLEANUP));
 
 // NOTE: 构建执行顺序——优先统计 + 其余（排除 ALL_MERGED）
 function buildOrderedIds(): string[] {
@@ -101,42 +126,56 @@ async function main() {
   for (let i = 0; i < orderedIds.length; i++) {
     const statId = orderedIds[i];
     const startTime = Date.now();
+    const isHeavy = HEAVY_STATS.has(statId);
+    const shouldIsolate = isHeavy && !AGGREGATE_IDS.has(statId);
 
-    try {
-      // NOTE: 动态导入统计模块，取第一个导出的类
-      const mod = await REGISTRY[statId]();
-      const StatClass = Object.values(mod).find(
-        (v): v is new () => import('../core/statistic.js').Statistic =>
-          typeof v === 'function' && v.prototype
-      );
-
-      if (!StatClass) throw new Error(`模块 ${statId} 中未找到统计类`);
-
-      let stat: InstanceType<typeof StatClass> | null = new StatClass();
-      let json: Record<string, unknown> | null = await stat.toJson() as unknown as Record<string, unknown>;
-
-      // NOTE: 照搬 Ruby — 释放实例 + GC
-      stat = null;
-      if (global.gc) global.gc();
-
-      const outputPath = resolve(outputDir, `${statId}.json`);
-      writeFileSync(outputPath, JSON.stringify(json, null, 2), 'utf-8');
-
-      // NOTE: JSON 字符串化完成后释放
-      json = null;
-      if (global.gc) global.gc();
-
+    if (shouldIsolate) {
+      // NOTE: 重量级统计——在子进程中隔离执行，退出后 OS 回收全部 RSS
+      // 与 Ruby run_isolated (Process.fork) 1:1 对应
+      const { success } = await runIsolated(statId);
       const duration = ((Date.now() - startTime) / 1000).toFixed(1);
       const mem = Math.round(process.memoryUsage.rss() / 1024 / 1024);
-      const tag = HEAVY_STATS.has(statId) ? ' [HEAVY]' : '';
-      // NOTE: 与 Ruby 日志格式对齐
-      console.log(`  [${i + 1}/${orderedIds.length}] ${statId.padEnd(50)} ${duration.padStart(6)}s  [${mem}MB]${tag}`);
-      passed++;
-    } catch (err) {
-      const duration = ((Date.now() - startTime) / 1000).toFixed(1);
-      console.error(`  [${i + 1}/${orderedIds.length}] ${statId.padEnd(50)} ${duration.padStart(6)}s  FAILED`);
-      console.error(`    ${err instanceof Error ? err.message : String(err)}`);
-      failed++;
+      if (success) {
+        console.log(`  [${i + 1}/${orderedIds.length}] ${statId.padEnd(50)} ${duration.padStart(6)}s  [${mem}MB] [HEAVY:isolated]`);
+        passed++;
+      } else {
+        console.error(`  [${i + 1}/${orderedIds.length}] ${statId.padEnd(50)} ${duration.padStart(6)}s  FAILED [HEAVY:isolated]`);
+        failed++;
+      }
+    } else {
+      // NOTE: 普通/聚合统计——在主进程内执行
+      try {
+        const mod = await REGISTRY[statId]();
+        const StatClass = Object.values(mod).find(
+          (v): v is new () => import('../core/statistic.js').Statistic =>
+            typeof v === 'function' && v.prototype
+        );
+
+        if (!StatClass) throw new Error(`模块 ${statId} 中未找到统计类`);
+
+        let stat: InstanceType<typeof StatClass> | null = new StatClass();
+        let json: Record<string, unknown> | null = await stat.toJson() as unknown as Record<string, unknown>;
+
+        stat = null;
+        if (global.gc) global.gc();
+
+        const outputPath = resolve(outputDir, `${statId}.json`);
+        writeFileSync(outputPath, JSON.stringify(json, null, 2), 'utf-8');
+
+        json = null;
+        if (global.gc) global.gc();
+
+        const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+        const mem = Math.round(process.memoryUsage.rss() / 1024 / 1024);
+        const tag = isHeavy ? ' [HEAVY]' : '';
+        console.log(`  [${i + 1}/${orderedIds.length}] ${statId.padEnd(50)} ${duration.padStart(6)}s  [${mem}MB]${tag}`);
+        passed++;
+      } catch (err) {
+        const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+        console.error(`  [${i + 1}/${orderedIds.length}] ${statId.padEnd(50)} ${duration.padStart(6)}s  FAILED`);
+        console.error(`    ${err instanceof Error ? err.message : String(err)}`);
+        failed++;
+      }
     }
 
     // NOTE: 聚合统计完成后清除基类缓存——与 Ruby AGGREGATE_CACHE_CLEANUP 对应
