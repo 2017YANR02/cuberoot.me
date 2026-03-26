@@ -19,6 +19,7 @@ export default defineConfig({
     },
   },
   server: {
+    host: '127.0.0.1',
     // 开发环境反代后端 API，避免 CORS 问题
     proxy: {
       // NOTE: Hono API 代理到 ECS 线上后端（本地无 recon_db，无法运行 Hono 后端）
