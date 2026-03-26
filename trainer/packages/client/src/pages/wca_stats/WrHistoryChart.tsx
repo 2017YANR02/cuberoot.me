@@ -66,7 +66,12 @@ function extractPoints(rows: unknown[][], header: { key: string; label: string }
     const k = h.key;
     if (k === 'result' && rIdx === -1) rIdx = i;
     if ((k === 'count') && rIdx === -1) { rIdx = i; isCount = true; }
-    if ((k === 'date' || k === 'start_date') && dIdx === -1) dIdx = i;
+    // NOTE: ⚠️ 优先用 'date'（达成日期）而非 'start_date'（窗口起点）
+    // average_of 的 History 表头同时有 start_date 和 date，
+    // 同一选手多条 PB 共享 start_date 但 end date 不同，用 start_date 会导致
+    // 多个不同 y 值映射到同一 x 坐标，折线图非单调
+    if (k === 'date') dIdx = i;
+    if (k === 'start_date' && dIdx === -1) dIdx = i;
     if (k === 'person') pIdx = i;
     if (k === 'improvement') impIdx = i;
   });
