@@ -129,6 +129,8 @@ pnpm approve-builds esbuild   # 首次需要批准 esbuild 构建脚本
 # 启动前端 dev server（HMR 自动热更新，改代码后无需重启）
 pnpm --filter @cuberoot/client dev
 # → http://localhost:5173/app/
+# NOTE: vite.config.ts 已设置 host: '127.0.0.1'，确保浏览器能通过 IPv4 访问
+# （Vite 默认只绑定 IPv6 [::1]，Windows Chrome 可能无法访问 localhost:5173）
 
 # TypeScript 类型检查
 pnpm --filter @cuberoot/client typecheck
