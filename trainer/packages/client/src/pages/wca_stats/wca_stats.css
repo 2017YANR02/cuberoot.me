@@ -537,3 +537,75 @@
   cursor: not-allowed;
   color: #666;
 }
+
+/* ==========================================================================
+   AverageOfX — Solve List + Details 折叠
+   对标 Legacy stats_ui.css 的 .solve-list / .solve-details
+   ========================================================================== */
+
+/* NOTE: 成绩标签——行内展示（≤12 个成绩） */
+.solve-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.solve-list span {
+  display: inline-block;
+  padding: 2px 5px;
+  background: rgba(138, 180, 248, 0.10);
+  border-radius: 3px;
+  font-size: 12px;
+  font-family: 'Roboto Mono', 'Consolas', monospace;
+  color: #c8d6e5;
+  white-space: nowrap;
+}
+
+/* NOTE: 折叠容器（>12 个成绩） */
+.solve-details {
+  cursor: pointer;
+}
+
+.solve-details summary {
+  color: #8ab4f8;
+  font-size: 13px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.solve-details summary:hover {
+  color: #a6d0ff;
+}
+
+.solve-details[open] .solve-list {
+  margin-top: 6px;
+}
+
+/* ==========================================================================
+   WR History 折线图
+   ========================================================================== */
+
+.wr-chart-wrap {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.wr-chart-wrap canvas {
+  width: 100%;
+  display: block;
+  border-radius: 6px;
+  background: #16213e;
+}
+
+.wr-chart-tooltip {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.85);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  pointer-events: none;
+  display: none;
+  white-space: nowrap;
+  z-index: 10;
+}

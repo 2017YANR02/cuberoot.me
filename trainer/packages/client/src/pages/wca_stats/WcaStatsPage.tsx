@@ -7,6 +7,9 @@ import { useTranslation } from 'react-i18next';
 import WcaEventSelector from './WcaEventSelector';
 import { EVENT_NAME_TO_ID, ALL_EVENT_IDS } from './event_constants';
 import { countryFlagClass } from '../../utils/country_flags';
+import DistributionChart from './DistributionChart';
+import type { DistDataset } from './DistributionChart';
+import WrHistoryChart from './WrHistoryChart';
 import './wca_stats.css';
 
 // NOTE: JSON schema 与 stats-build 输出一致
@@ -74,8 +77,34 @@ function getAllPanelsFromMetric(mp: MetricPanel): StatPanel[] {
   return [];
 }
 
+// NOTE: 懒加载阈值——超过此数量的 solves 用折叠方式展示
+const LAZY_THRESHOLD = 12;
+
 // NOTE: 解析 Markdown 链接 [text](url)、加粗 **text**、HTML <br /> 为 React 元素
+// 同时处理 _type: 'solves' 结构化对象（AverageOfX Details 列）
 function renderCell(value: unknown): React.ReactNode {
+  // NOTE: 类型判别器——AverageOfX 的 Details 列输出结构化对象
+  if (value && typeof value === 'object' && (value as Record<string, unknown>)._type === 'solves') {
+    const cell = value as { _type: 'solves'; items: string[]; csv: string };
+    if (cell.items.length <= LAZY_THRESHOLD) {
+      // NOTE: ≤12 个成绩——行内展示
+      return (
+        <div className="solve-list">
+          {cell.items.map((s, i) => <span key={i}>{s}</span>)}
+        </div>
+      );
+    }
+    // NOTE: >12 个成绩——折叠展示（对标 Legacy <details data-solves>）
+    return (
+      <details className="solve-details">
+        <summary>{cell.items.length} solves</summary>
+        <div className="solve-list">
+          {cell.items.map((s, i) => <span key={i}>{s}</span>)}
+        </div>
+      </details>
+    );
+  }
+
   const str = String(value);
 
   // NOTE: 处理 Markdown 加粗 **text**
@@ -280,8 +309,144 @@ function SectionsView({ header, sections, searchTerm, isZh, selectedEvent }: {
   );
 }
 
+// NOTE: 成绩解析——将格式化的秒数字符串转为数值（供分布图用）
+// 支持 "3.84", "1:23.45", DNF 返回 NaN
+function parseTimeValue(s: string): number {
+  if (!s || s === 'DNF' || s === 'DNS') return NaN;
+  const m = s.match(/^(\d+):(\d+\.\d+)$/);
+  if (m) return parseInt(m[1], 10) * 60 + parseFloat(m[2]);
+  const v = parseFloat(s);
+  return isNaN(v) ? NaN : v;
+}
+
+// NOTE: 从行中提取 _type:'solves' 单元格
+function extractSolvesCell(row: unknown[]): { _type: 'solves'; items: string[]; csv: string } | null {
+  for (const cell of row) {
+    if (cell && typeof cell === 'object' && (cell as Record<string, unknown>)._type === 'solves') {
+      return cell as { _type: 'solves'; items: string[]; csv: string };
+    }
+  }
+  return null;
+}
+
+// NOTE: 从 Markdown 链接中提取纯文本
+function extractTextFromMdLink(s: string): string {
+  const m = String(s).match(/^\[([^\]]+)\]\([^)]+\)$/);
+  return m ? m[1] : String(s);
+}
+
+// NOTE: AoX Ranking Section——加 checkbox + 分布图
+// 对标 Legacy distribution_chart.js 的 initStatsDistChart 行为
+function AoxRankingSection({ header, rows, isZh }: {
+  header: StatHeader[];
+  rows: unknown[][];
+  isZh: boolean;
+}) {
+  const [checkedRows, setCheckedRows] = useState<Set<number>>(() => new Set([0]));
+
+  // NOTE: 提取每行的 name 和 times
+  const rowData = useMemo(() => {
+    const personIdx = header.findIndex(h => h.key === 'person');
+    return rows.map(row => {
+      const solvesCell = extractSolvesCell(row);
+      const times = solvesCell
+        ? solvesCell.csv.split(',').map(parseTimeValue).filter(v => !isNaN(v) && v > 0)
+        : [];
+      const name = personIdx >= 0 ? extractTextFromMdLink(String(row[personIdx])) : `Row`;
+      return { name, times };
+    });
+  }, [rows, header]);
+
+  // NOTE: 构建分布图数据集——仅含勾选行
+  const datasets: DistDataset[] = useMemo(() => {
+    return Array.from(checkedRows)
+      .filter(i => i < rowData.length && rowData[i].times.length >= 5)
+      .map(i => ({ name: rowData[i].name, times: rowData[i].times }));
+  }, [checkedRows, rowData]);
+
+  const toggleRow = useCallback((idx: number) => {
+    setCheckedRows(prev => {
+      const next = new Set(prev);
+      if (next.has(idx)) {
+        // NOTE: 至少保留一个选中
+        if (next.size <= 1) return prev;
+        next.delete(idx);
+      } else {
+        next.add(idx);
+      }
+      return next;
+    });
+  }, []);
+
+  const toggleAll = useCallback(() => {
+    setCheckedRows(prev => {
+      if (prev.size === rows.length) {
+        // 全选 → 只保留第一个
+        return new Set([0]);
+      }
+      // 部分选中 → 全选
+      return new Set(rows.map((_, i) => i));
+    });
+  }, [rows]);
+
+  // NOTE: 检测是否有 solves 数据（只在 AoX ranking 表中才有）
+  const hasSolves = rowData.some(rd => rd.times.length > 0);
+
+  return (
+    <>
+      <div className="wca-stats-table-wrapper">
+        <table className="wca-stats-table">
+          <thead>
+            <tr>
+              {hasSolves && (
+                <th style={{ textAlign: 'center', cursor: 'pointer', width: 34 }}
+                  title={isZh ? '全选/取消' : 'Select all'}
+                  onClick={toggleAll}>📊</th>
+              )}
+              {header.map(h => (
+                <th key={h.key} style={{ textAlign: h.align }}>
+                  {isZh ? h.labelZh : h.label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, i) => (
+              <tr key={i}>
+                {hasSolves && (
+                  <td style={{ textAlign: 'center' }}>
+                    <input type="checkbox"
+                      checked={checkedRows.has(i)}
+                      onChange={() => toggleRow(i)}
+                      style={{ cursor: 'pointer', width: 16, height: 16 }}
+                    />
+                  </td>
+                )}
+                {row.map((cell, j) => {
+                  const isCountryCol = header[j]?.key === 'country';
+                  const flagCls = isCountryCol ? countryFlagClass(String(cell)) : '';
+                  return (
+                    <td key={j} style={{ textAlign: header[j]?.align }}>
+                      {flagCls && <span className={flagCls} style={{ marginRight: 6 }} />}
+                      {renderCell(cell)}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {/* NOTE: 分布图——在表格下方 */}
+      {datasets.length > 0 && (
+        <DistributionChart datasets={datasets} isZh={isZh} />
+      )}
+    </>
+  );
+}
+
 // NOTE: Panels 渲染——Tab 切换（如 Ranking / History）
-// selectedEvent 可选：透传到 SectionsView 进行过滤
+// 增强：检测 AoX 面板，自动集成分布图（ranking）和折线图（history）
 function PanelsView({ panels, searchTerm, isZh, selectedEvent }: {
   panels: StatPanel[];
   searchTerm: string;
@@ -292,7 +457,35 @@ function PanelsView({ panels, searchTerm, isZh, selectedEvent }: {
   const panel = panels[activePanel];
   if (!panel) return null;
 
-  // NOTE: 用 Fragment 替代 div，让 tab-bar 可以和上层按钮流在同一行
+  // NOTE: 检测是否为 AoX 数据——ranking panel 含 _type:'solves' 的 Details 列
+  const isAoxData = useMemo(() => {
+    const rankingPanel = panels.find(p => p.id === 'ranking');
+    if (!rankingPanel) return false;
+    return rankingPanel.sections.some(s =>
+      s.rows.some(row => row.some(cell =>
+        cell && typeof cell === 'object' && (cell as Record<string, unknown>)._type === 'solves'
+      ))
+    );
+  }, [panels]);
+
+  // NOTE: 为 history 面板收集当前可见 section 的 rows（供折线图用）
+  const historyChartData = useMemo(() => {
+    if (panel.id !== 'history' || !isAoxData) return null;
+    // 过滤出当前 selectedEvent 的 section rows
+    const visibleSections = selectedEvent
+      ? panel.sections.filter(s => {
+          let eventId = EVENT_NAME_TO_ID[s.title];
+          if (!eventId && s.title.includes(' - ')) {
+            const eventName = s.title.substring(0, s.title.lastIndexOf(' - '));
+            eventId = EVENT_NAME_TO_ID[eventName];
+          }
+          return eventId === selectedEvent;
+        })
+      : panel.sections;
+    const allRows = visibleSections.flatMap(s => s.rows);
+    return allRows.length > 0 ? allRows : null;
+  }, [panel, isAoxData, selectedEvent]);
+
   return (
     <>
       <div className="wca-stats-tab-bar">
@@ -306,14 +499,69 @@ function PanelsView({ panels, searchTerm, isZh, selectedEvent }: {
           </button>
         ))}
       </div>
-      <SectionsView
-        header={panel.header}
-        sections={panel.sections}
-        searchTerm={searchTerm}
-        isZh={isZh}
-        selectedEvent={selectedEvent}
-      />
+      {/* NOTE: History 面板——折线图在 sections 之上 */}
+      {historyChartData && (
+        <WrHistoryChart rows={historyChartData} header={panel.header} isZh={isZh} />
+      )}
+      {/* NOTE: Ranking 面板——用 AoxRankingSection 替代普通 SectionsView */}
+      {isAoxData && panel.id === 'ranking' ? (
+        <AoxSectionsView
+          header={panel.header}
+          sections={panel.sections}
+          isZh={isZh}
+          selectedEvent={selectedEvent}
+        />
+      ) : (
+        <SectionsView
+          header={panel.header}
+          sections={panel.sections}
+          searchTerm={searchTerm}
+          isZh={isZh}
+          selectedEvent={selectedEvent}
+        />
+      )}
     </>
+  );
+}
+
+// NOTE: AoX 专用 SectionsView——每个 section 用 AoxRankingSection（含 checkbox + 分布图）
+function AoxSectionsView({ header, sections, isZh, selectedEvent }: {
+  header: StatHeader[];
+  sections: StatSection[];
+  isZh: boolean;
+  selectedEvent?: string;
+}) {
+  const visibleSections = useMemo(() => {
+    if (!selectedEvent) return sections;
+    return sections.filter(s => {
+      let eventId = EVENT_NAME_TO_ID[s.title];
+      if (!eventId && s.title.includes(' - ')) {
+        const eventName = s.title.substring(0, s.title.lastIndexOf(' - '));
+        eventId = EVENT_NAME_TO_ID[eventName];
+      }
+      return eventId === selectedEvent;
+    });
+  }, [sections, selectedEvent]);
+
+  const hideTitle = !!selectedEvent && visibleSections.length === 1;
+
+  return (
+    <div className="wca-stats-sections">
+      {visibleSections.map(section => {
+        const sectionTitle = isZh ? (section.titleZh || section.title) : section.title;
+        return (
+          <div key={section.title} className="wca-stats-section">
+            {!hideTitle && (
+              <h3 className="wca-stats-section-title">
+                {sectionTitle}
+                <span className="wca-stats-section-count">{section.rows.length}</span>
+              </h3>
+            )}
+            <AoxRankingSection header={header} rows={section.rows} isZh={isZh} />
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
