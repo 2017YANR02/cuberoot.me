@@ -5,9 +5,14 @@
 //   2. 找到非 P 选手中的最佳成绩 others_best
 //   3. dominance = P 的成绩中严格 < others_best 的数量（二分搜索）
 // 双维度（Single + Average）× 双视图（Ranking + History）
+//
+// ⚠️ 内存优化（v2）——SQL 不返回 CONCAT 链接字符串
+//   原版每行 RowDataPacket 含 person_link (~80B) + comp_link (~100B) = ~180B 额外
+//   333 single ~500万行 × 180B = ~900MB 纯字符串。改为仅返 person_id + comp_id，
+//   最终结果行（几十条）才 resolveLinks 查出链接。
 import { formatDate } from '../core/format_date.js';
 import { Statistic } from '../core/statistic.js';
-import { EVENTS, EVENTS_ENTRIES, headerZh, eventZh } from '../core/events.js';
+import { EVENTS_ENTRIES, headerZh, eventZh } from '../core/events.js';
 import { query as dbQuery } from '../core/database.js';
 import type { StatJson, MetricPanel, TableHeader } from '../core/statistic.js';
 import type { RowDataPacket } from 'mysql2';
@@ -23,6 +28,15 @@ const HISTORY_HEADER: TableHeader = {
 const RANKING_HEADER: TableHeader = {
   '#': 'right', 'Person': 'left', 'Count': 'right',
   'Date': 'left', 'Competition': 'left',
+};
+
+// NOTE: computeDominance 的中间结果类型（ID only，无链接字符串）
+type DomHistoryEntry = {
+  count: number; improvement: string; days: string;
+  personId: string; firstCompId: string; firstDate: string; compId: string; date: string;
+};
+type DomRankingEntry = {
+  rank: number; personId: string; count: number; compId: string; date: string;
 };
 
 export class WrDominance extends Statistic {
@@ -84,13 +98,29 @@ export class WrDominance extends Statistic {
   }
 
   private async computeAll() {
-    const result = {
-      single:  { ranking: [] as [string, unknown[][]][], history: [] as [string, unknown[][]][] },
-      average: { ranking: [] as [string, unknown[][]][], history: [] as [string, unknown[][]][] },
+    // NOTE: 中间结果用 ID-only 类型，最终 resolveLinks 后转为 unknown[][]
+    const singleHistRaw: [string, DomHistoryEntry[]][] = [];
+    const singleRankRaw: [string, DomRankingEntry[]][] = [];
+    const avgHistRaw: [string, DomHistoryEntry[]][] = [];
+    const avgRankRaw: [string, DomRankingEntry[]][] = [];
+
+    // NOTE: 收集所有出现在结果中的 person/comp ID
+    const allPersonIds = new Set<string>();
+    const allCompIds = new Set<string>();
+
+    const collectIds = (hist: DomHistoryEntry[], rank: DomRankingEntry[]) => {
+      for (const h of hist) {
+        allPersonIds.add(h.personId);
+        allCompIds.add(h.compId);
+        allCompIds.add(h.firstCompId);
+      }
+      for (const r of rank) {
+        allPersonIds.add(r.personId);
+        allCompIds.add(r.compId);
+      }
     };
 
-    // NOTE: Single 基于所有 individual attempts（每轮最多 5 个单次成绩）
-    // 逐 event 查询避免一次加载全部 result_attempts OOM
+    // NOTE: Single 基于所有 individual attempts
     for (const [eventId, eventName] of EVENTS_ENTRIES) {
       const t = Date.now();
       process.stdout.write(`  Dominance single: ${eventId}...`);
@@ -98,11 +128,13 @@ export class WrDominance extends Statistic {
       if (rows.length === 0) { console.log(' skip'); continue; }
 
       const dom = this.computeDominance(rows, 'value');
-      rows = null as unknown as RowDataPacket[]; // NOTE: 释放内存（与 Ruby rows = nil 对应）
-      // NOTE: 显式触发 GC（需要 --expose-gc），与 Ruby 的 GC.start 等效
+      rows = null as unknown as RowDataPacket[];
       if (typeof globalThis.gc === 'function') globalThis.gc();
-      if (dom.history.length > 0) result.single.history.push([eventName, dom.history]);
-      if (dom.ranking.length > 0) result.single.ranking.push([eventName, dom.ranking]);
+
+      if (dom.history.length > 0) singleHistRaw.push([eventName, dom.history]);
+      if (dom.ranking.length > 0) singleRankRaw.push([eventName, dom.ranking]);
+      collectIds(dom.history, dom.ranking);
+
       const mem = Math.round(process.memoryUsage.rss() / 1024 / 1024);
       console.log(` ${dom.history.length} records (${((Date.now() - t) / 1000).toFixed(1)}s) [${mem}MB]`);
     }
@@ -117,141 +149,159 @@ export class WrDominance extends Statistic {
       const dom = this.computeDominance(rows, 'average');
       rows = null as unknown as RowDataPacket[];
       if (typeof globalThis.gc === 'function') globalThis.gc();
-      if (dom.history.length > 0) result.average.history.push([eventName, dom.history]);
-      if (dom.ranking.length > 0) result.average.ranking.push([eventName, dom.ranking]);
+
+      if (dom.history.length > 0) avgHistRaw.push([eventName, dom.history]);
+      if (dom.ranking.length > 0) avgRankRaw.push([eventName, dom.ranking]);
+      collectIds(dom.history, dom.ranking);
+
       const mem = Math.round(process.memoryUsage.rss() / 1024 / 1024);
       console.log(` ${dom.history.length} records (${((Date.now() - t) / 1000).toFixed(1)}s) [${mem}MB]`);
     }
 
-    return result;
+    // NOTE: 所有 event 完成后，一次性查出链接（几十个 person + 几十个 comp）
+    const { personMap, compMap } = await this.resolveLinks(allPersonIds, allCompIds);
+
+    const resolveHist = (raw: [string, DomHistoryEntry[]][]): [string, unknown[][]][] =>
+      raw.map(([name, entries]) => [name, entries.map(e => [
+        e.count, e.improvement, e.days,
+        personMap.get(e.personId) ?? e.personId,
+        e.firstDate, compMap.get(e.firstCompId) ?? e.firstCompId,
+        e.date, compMap.get(e.compId) ?? e.compId,
+      ])]);
+
+    const resolveRank = (raw: [string, DomRankingEntry[]][]): [string, unknown[][]][] =>
+      raw.map(([name, entries]) => [name, entries.map(e => [
+        e.rank, personMap.get(e.personId) ?? e.personId, e.count,
+        e.date, compMap.get(e.compId) ?? e.compId,
+      ])]);
+
+    return {
+      single:  { ranking: resolveRank(singleRankRaw), history: resolveHist(singleHistRaw) },
+      average: { ranking: resolveRank(avgRankRaw),     history: resolveHist(avgHistRaw) },
+    };
   }
 
-  // NOTE: Single——逐 event 查询 result_attempts（扁平化）
+  // NOTE: Single——逐 event 查询 result_attempts（瘦行，无 CONCAT 链接字符串）
+  // ⚠️ 不拼 person_link/comp_link——每行省 ~450 bytes，500万行省 ~2GB
   private async fetchSingleAttemptsFor(eventId: string): Promise<RowDataPacket[]> {
     return dbQuery(`
       SELECT
         result.person_id,
         ra.value,
-        CONCAT('[', person.name, '](https://www.worldcubeassociation.org/persons/', person.wca_id, ')') person_link,
-        CONCAT('[', competition.cell_name, '](https://www.worldcubeassociation.org/competitions/', competition.id, ')') comp_link,
+        result.competition_id AS comp_id,
         competition.start_date
       FROM result_attempts ra
       JOIN results result ON result.id = ra.result_id
-      JOIN persons person ON person.wca_id = result.person_id AND person.sub_id = 1
       JOIN competitions competition ON competition.id = result.competition_id
       WHERE ra.value > 0 AND result.event_id = '${eventId}'
       ORDER BY competition.start_date
     `);
   }
 
-  // NOTE: Average——逐 event 查询每轮 average
+  // NOTE: Average——逐 event 查询每轮 average（瘦行）
   private async fetchAverageResultsFor(eventId: string): Promise<RowDataPacket[]> {
     return dbQuery(`
       SELECT
         result.person_id,
         result.average,
-        CONCAT('[', person.name, '](https://www.worldcubeassociation.org/persons/', person.wca_id, ')') person_link,
-        CONCAT('[', competition.cell_name, '](https://www.worldcubeassociation.org/competitions/', competition.id, ')') comp_link,
+        result.competition_id AS comp_id,
         competition.start_date
       FROM results result
-      JOIN persons person ON person.wca_id = result.person_id AND person.sub_id = 1
       JOIN competitions competition ON competition.id = result.competition_id
       WHERE result.average > 0 AND result.event_id = '${eventId}'
       ORDER BY competition.start_date
     `);
   }
 
+  // NOTE: 仅为最终结果行（几十行）查询 person/competition 的链接字符串
+  private async resolveLinks(personIds: Set<string>, compIds: Set<string>): Promise<{
+    personMap: Map<string, string>;
+    compMap: Map<string, string>;
+  }> {
+    const personMap = new Map<string, string>();
+    const compMap = new Map<string, string>();
+
+    if (personIds.size > 0) {
+      const pids = [...personIds].map(id => `'${id}'`).join(',');
+      const rows = await dbQuery(`
+        SELECT wca_id,
+          CONCAT('[', name, '](https://www.worldcubeassociation.org/persons/', wca_id, ')') AS link
+        FROM persons WHERE wca_id IN (${pids}) AND sub_id = 1
+      `);
+      for (const r of rows) personMap.set(String(r['wca_id']), String(r['link']));
+    }
+
+    if (compIds.size > 0) {
+      const cids = [...compIds].map(id => `'${id}'`).join(',');
+      const rows = await dbQuery(`
+        SELECT id,
+          CONCAT('[', cell_name, '](https://www.worldcubeassociation.org/competitions/', id, ')') AS link
+        FROM competitions WHERE id IN (${cids})
+      `);
+      for (const r of rows) compMap.set(String(r['id']), String(r['link']));
+    }
+
+    return { personMap, compMap };
+  }
+
   // NOTE: 统一计算 dominance 的历史和排名——与 Ruby compute_dominance 1:1 对应
   // 性能优化：per-person 有序数组（二分插入 O(log n)）+ 二分搜索计数
+  // NOTE: 瘦行模式——rows 无 person_link/comp_link，返回 ID 以便后续 resolveLinks
   private computeDominance(
     rows: RowDataPacket[], valueCol: string,
-  ): { history: unknown[][]; ranking: unknown[][] } {
-    // per-person 排序值列表
-    const pv = new Map<string, number[]>();  // person_id → sorted values
-    // 每人最佳值
+  ): { history: DomHistoryEntry[]; ranking: DomRankingEntry[] } {
+    const pv = new Map<string, number[]>();
     const pb = new Map<string, number>();
-    // 每人最新的 link/date 信息
-    const pi = new Map<string, { personLink: string; compLink: string; date: string }>();
+    const pi = new Map<string, { compId: string; date: string }>();
 
     let maxDom = 0;
     const wrRecords: Array<{
-      count: number; personId: string; personLink: string;
-      compLink: string; date: string;
+      count: number; personId: string; compId: string; date: string;
     }> = [];
-    // NOTE: 追踪每位选手首次 dominance 的比赛信息
-    const firstDom = new Map<string, { compLink: string; date: string }>();
+    const firstDom = new Map<string, { compId: string; date: string }>();
 
-    // --- 历史追踪：按日期分组逐步构建 pv/pb ---
-    const byDate = new Map<string, RowDataPacket[]>();
+    // NOTE: rows 已按 start_date 排序，逐行处理
+    // ⚠️ 不建 byDate Map——避免持有全部 rows 引用
+    let currentDate = '';
+
     for (const r of rows) {
+      const pid = String(r['person_id']);
+      const val = Number(r[valueCol]);
       const dateStr = formatDate(r['start_date']);
-      const existing = byDate.get(dateStr);
-      if (existing) existing.push(r);
-      else byDate.set(dateStr, [r]);
+      const compId = String(r['comp_id']);
+
+      // 日期切换时检查前一日期组的 dominance
+      if (dateStr !== currentDate && currentDate !== '') {
+        this.checkDominance(pv, pb, pi, currentDate, maxDom, wrRecords, firstDom);
+        if (wrRecords.length > 0 && wrRecords[wrRecords.length - 1].count > maxDom) {
+          maxDom = wrRecords[wrRecords.length - 1].count;
+        }
+      }
+      currentDate = dateStr;
+
+      // 二分插入，保持有序
+      const arr = pv.get(pid) ?? [];
+      if (!pv.has(pid)) pv.set(pid, arr);
+      const idx = this.bisectLeft(arr, val);
+      arr.splice(idx, 0, val);
+
+      // 更新 best
+      const currentBest = pb.get(pid);
+      if (!currentBest || val < currentBest) pb.set(pid, val);
+
+      pi.set(pid, { compId, date: dateStr });
     }
-
-    for (const [date, compRows] of byDate) {
-      for (const r of compRows) {
-        const pid = String(r['person_id']);
-        const val = Number(r[valueCol]);
-
-        // 二分插入，保持有序
-        const arr = pv.get(pid) ?? [];
-        if (!pv.has(pid)) pv.set(pid, arr);
-        const idx = this.bisectLeft(arr, val);
-        arr.splice(idx, 0, val);
-
-        // 更新 best
-        const currentBest = pb.get(pid);
-        if (!currentBest || val < currentBest) pb.set(pid, val);
-
-        pi.set(pid, {
-          personLink: String(r['person_link']),
-          compLink: String(r['comp_link']),
-          date,
-        });
-      }
-
-      // 找 top person 和 second_best
-      let topPid: string | null = null;
-      let topBest = Infinity;
-      let secondBest = Infinity;
-
-      for (const [pid, best] of pb) {
-        if (best < topBest) {
-          secondBest = topBest;
-          topPid = pid;
-          topBest = best;
-        } else if (best < secondBest) {
-          secondBest = best;
-        }
-      }
-
-      if (secondBest === Infinity || !topPid) continue;
-
-      // 用 binary search 统计 top_person 有多少值 < second_best
-      const arr = pv.get(topPid)!;
-      const cnt = this.bisectLeft(arr, secondBest);
-
-      if (cnt > maxDom && cnt > 0) {
-        maxDom = cnt;
-        if (!firstDom.has(topPid)) {
-          firstDom.set(topPid, { compLink: pi.get(topPid)!.compLink, date });
-        }
-        wrRecords.push({
-          count: cnt,
-          personId: topPid,
-          personLink: pi.get(topPid)!.personLink,
-          compLink: pi.get(topPid)!.compLink,
-          date,
-        });
+    // 最后一个日期组
+    if (currentDate !== '') {
+      this.checkDominance(pv, pb, pi, currentDate, maxDom, wrRecords, firstDom);
+      if (wrRecords.length > 0 && wrRecords[wrRecords.length - 1].count > maxDom) {
+        maxDom = wrRecords[wrRecords.length - 1].count;
       }
     }
 
     // --- 历史：计算 improvement 和 days，然后倒序 ---
-    const history = wrRecords.map((r, i) => {
+    const history: DomHistoryEntry[] = wrRecords.map((r, i) => {
       const improvement = i > 0 ? `+${r.count - wrRecords[i - 1].count}` : '';
-
       let days: string;
       if (i < wrRecords.length - 1) {
         const nextDate = new Date(wrRecords[i + 1].date);
@@ -260,12 +310,13 @@ export class WrDominance extends Statistic {
       } else {
         days = String(Math.round((Date.now() - new Date(r.date).getTime()) / 86400000));
       }
-
       const first = firstDom.get(r.personId)!;
-      return [r.count, improvement, days,
-        r.personLink,
-        first.date, first.compLink,
-        r.date, r.compLink];
+      return {
+        count: r.count, improvement, days,
+        personId: r.personId,
+        firstCompId: first.compId, firstDate: first.date,
+        compId: r.compId, date: r.date,
+      };
     }).reverse();
 
     // --- 排名：复用 pv/pb 最终状态 ---
@@ -274,13 +325,54 @@ export class WrDominance extends Statistic {
     return { history, ranking };
   }
 
+  // NOTE: checkDominance——检查当前日期组的 dominance 并记录 WR
+  private checkDominance(
+    pv: Map<string, number[]>,
+    pb: Map<string, number>,
+    pi: Map<string, { compId: string; date: string }>,
+    date: string,
+    maxDom: number,
+    wrRecords: Array<{ count: number; personId: string; compId: string; date: string }>,
+    firstDom: Map<string, { compId: string; date: string }>,
+  ): void {
+    let topPid: string | null = null;
+    let topBest = Infinity;
+    let secondBest = Infinity;
+
+    for (const [pid, best] of pb) {
+      if (best < topBest) {
+        secondBest = topBest;
+        topPid = pid;
+        topBest = best;
+      } else if (best < secondBest) {
+        secondBest = best;
+      }
+    }
+
+    if (secondBest === Infinity || !topPid) return;
+
+    const arr = pv.get(topPid)!;
+    const cnt = this.bisectLeft(arr, secondBest);
+
+    if (cnt > maxDom && cnt > 0) {
+      if (!firstDom.has(topPid)) {
+        firstDom.set(topPid, { compId: pi.get(topPid)!.compId, date });
+      }
+      wrRecords.push({
+        count: cnt,
+        personId: topPid,
+        compId: pi.get(topPid)!.compId,
+        date,
+      });
+    }
+  }
+
   // NOTE: 从 pv/pb/pi 最终状态计算当前 dominance Top 10
-  // 与 Ruby compute_ranking_from_state 1:1 对应
   private computeRankingFromState(
     pv: Map<string, number[]>,
     pb: Map<string, number>,
-    pi: Map<string, { personLink: string; compLink: string; date: string }>,
-  ): unknown[][] {
+    pi: Map<string, { compId: string; date: string }>,
+  ): DomRankingEntry[] {
     let topPid: string | null = null;
     let topBest = Infinity;
     let secondBest = Infinity;
@@ -297,20 +389,19 @@ export class WrDominance extends Statistic {
 
     if (secondBest === Infinity) return [];
 
-    // 对每个 person 计算 dominance
-    const candidates: Array<{ count: number; personLink: string; date: string; compLink: string }> = [];
+    const candidates: Array<{ count: number; personId: string; compId: string; date: string }> = [];
     for (const [pid, values] of pv) {
       const othersBest = (pid === topPid) ? secondBest : topBest;
       const cnt = this.bisectLeft(values, othersBest);
       if (cnt <= 0) continue;
-
       const info = pi.get(pid)!;
-      candidates.push({ count: cnt, personLink: info.personLink, date: info.date, compLink: info.compLink });
+      candidates.push({ count: cnt, personId: pid, compId: info.compId, date: info.date });
     }
 
-    // 按 dominance 降序排序，取 Top 10
     candidates.sort((a, b) => b.count - a.count);
-    return candidates.slice(0, 10).map((c, i) => [i + 1, c.personLink, c.count, c.date, c.compLink]);
+    return candidates.slice(0, 10).map((c, i) => ({
+      rank: i + 1, personId: c.personId, count: c.count, date: c.date, compId: c.compId,
+    }));
   }
 
   // NOTE: 二分搜索——找到有序数组中第一个 >= target 的位置

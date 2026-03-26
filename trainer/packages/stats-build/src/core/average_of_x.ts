@@ -167,13 +167,22 @@ export abstract class AverageOfX extends GroupedStatistic {
       startMeta: CompMeta;
       endMeta: CompMeta;
     };
+    // NOTE: pbHistory 不存 solves 数组——Ao1000 每次 PB 拷贝 1000 numbers = 8KB，
+    // 2000 候选人 × 20 PB = 40000 份 = 320MB。改为预格式化 csv 字符串（~6KB 紧凑存储）。
+    type PbEntry = {
+      aox: SolveTime;
+      detailsCsv: string;
+      startMeta: CompMeta;
+      endMeta: CompMeta;
+      personLink: string;
+    };
 
     const results: Array<{
       personId: string;
       personLink: string;
       country: string;
       best: WindowResult;
-      pbHistory: Array<WindowResult & { personLink: string }>;
+      pbHistory: PbEntry[];
     }> = [];
 
     for (const [personId, personRows] of byPerson) {
@@ -183,7 +192,7 @@ export abstract class AverageOfX extends GroupedStatistic {
         aox: SolveTime.DNF_INSTANCE,
         solves: [], startMeta: { compLink: '', date: '' }, endMeta: { compLink: '', date: '' },
       };
-      const pbHistory: Array<WindowResult & { personLink: string }> = [];
+      const pbHistory: PbEntry[] = [];
 
       for (const row of personRows) {
         const compMeta: CompMeta = {
@@ -207,8 +216,15 @@ export abstract class AverageOfX extends GroupedStatistic {
                 startMeta: meta[0],
                 endMeta: meta[meta.length - 1],
               };
+              // NOTE: ⚠️ pbHistory 存 csv 而非 solves——立即格式化后 formatted 数组可被 GC
+              const formatted = solves.map(s =>
+                s === Infinity ? 'DNF' : new SolveTime(eventId, 'single', s).clockFormat(),
+              );
               pbHistory.push({
-                ...best,
+                aox: currentAox,
+                detailsCsv: formatted.join(','),
+                startMeta: meta[0],
+                endMeta: meta[meta.length - 1],
                 personLink: String(personRows[0]['person_link']),
               });
             }
@@ -310,7 +326,7 @@ export abstract class AverageOfX extends GroupedStatistic {
           metricStr, gainStr, daysStr, r.personLink,
           formatDate(r.startMeta.date), r.startMeta.compLink,
           formatDate(r.endMeta.date), r.endMeta.compLink,
-          this.detailsCell(r.solves, eventId),
+          { _type: 'solves' as const, csv: r.detailsCsv },
         ];
       });
 
