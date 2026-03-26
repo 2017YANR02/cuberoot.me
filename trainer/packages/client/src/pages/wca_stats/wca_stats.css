@@ -51,6 +51,55 @@
   vertical-align: middle;
 }
 
+/* ── Dedup toggle（iOS 药丸风格，与 Legacy stats_ui.css 对齐）───── */
+.wca-stats-dedup-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  margin-left: 12px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #8ab4f8;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.wca-stats-dedup-toggle input[type="checkbox"] {
+  display: none;
+}
+
+.wca-stats-toggle-pill {
+  position: relative;
+  width: 38px;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  transition: background 0.25s;
+  flex-shrink: 0;
+}
+
+.wca-stats-toggle-pill::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 12px;
+  background: white;
+  border-radius: 6px;
+  transition: all 0.25s;
+}
+
+input:checked + .wca-stats-toggle-pill {
+  background: #34c759;
+}
+
+input:checked + .wca-stats-toggle-pill::after {
+  width: 22px;
+  transform: translateX(12px);
+}
+
 /* 通用分段按钮基础样式 */
 .wca-stats-tab,
 .wca-stats-metric-btn {
