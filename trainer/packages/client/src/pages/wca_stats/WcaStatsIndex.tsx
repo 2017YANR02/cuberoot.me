@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { syncLangToUrl, getLangQuery } from '../../i18n';
 import './wca_stats.css';
 
 interface StatEntry {
@@ -30,6 +31,13 @@ export default function WcaStatsIndex() {
   const [loading, setLoading] = useState(true);
 
   const isZh = i18n.language === 'zh';
+
+  // NOTE: 切换语言——同步 i18n 实例 + URL + localStorage
+  const toggleLang = () => {
+    const next = isZh ? 'en' : 'zh';
+    i18n.changeLanguage(next);
+    syncLangToUrl(next);
+  };
 
   useEffect(() => {
     fetch('/stats/data/index.json')
@@ -66,6 +74,8 @@ export default function WcaStatsIndex() {
     );
   }
 
+  const langQuery = getLangQuery();
+
   return (
     <div className="wca-stats-index">
       <h1>{isZh ? 'WCA 统计数据' : 'WCA Statistics'}</h1>
@@ -83,7 +93,7 @@ export default function WcaStatsIndex() {
             {cat.stats.map(stat => (
               <Link
                 key={stat.id}
-                to={`/wca-stats/${stat.id}`}
+                to={`/wca-stats/${stat.id}${langQuery}`}
                 className="wca-stats-card"
               >
                 {isZh ? stat.titleZh : stat.titleEn}
@@ -92,6 +102,11 @@ export default function WcaStatsIndex() {
           </div>
         </div>
       ))}
+
+      {/* NOTE: 语言切换按钮——固定右下角（对标 Legacy i18n.js toggle） */}
+      <button className="wca-stats-lang-toggle" onClick={toggleLang}>
+        🌐 {isZh ? 'EN' : '中文'}
+      </button>
     </div>
   );
 }
