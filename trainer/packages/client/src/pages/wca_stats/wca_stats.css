@@ -60,7 +60,7 @@
   margin-left: 12px;
   cursor: pointer;
   font-size: 13px;
-  color: #8ab4f8;
+  color: #aaaaaa;
   white-space: nowrap;
   user-select: none;
 }
@@ -104,9 +104,9 @@ input:checked + .wca-stats-toggle-pill::after {
 .wca-stats-tab,
 .wca-stats-metric-btn {
   padding: 8px 20px;
-  border: 1px solid #4a6785;
+  border: 1px solid #444444;
   background: transparent;
-  color: #8ab4f8;
+  color: #ececec;
   cursor: pointer;
   font-size: 14px;
   font-weight: 600;
@@ -135,15 +135,15 @@ input:checked + .wca-stats-toggle-pill::after {
 /* active 状态 */
 .wca-stats-tab.active,
 .wca-stats-metric-btn.active {
-  background: #2c4a6e;
-  border-color: #8ab4f8;
-  color: #fff;
+  background: #3d3d3d;
+  border-color: #888888;
+  color: #ffffff;
 }
 
 /* hover 状态 */
 .wca-stats-tab:hover:not(.active):not(.disabled),
 .wca-stats-metric-btn:hover:not(.active):not(.disabled) {
-  background: rgba(138, 180, 248, 0.08);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 /* ==========================================================================
@@ -170,7 +170,7 @@ input:checked + .wca-stats-toggle-pill::after {
 .wca-stats-metric-group-label {
   font-size: 12px;
   font-weight: 600;
-  color: rgba(138, 180, 248, 0.7);
+  color: #8e8ea0;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 6px;
@@ -187,7 +187,7 @@ input:checked + .wca-stats-toggle-pill::after {
   border: 1px solid transparent;
   border-radius: 6px;
   background: transparent;
-  color: #c0c8d8;
+  color: #cccccc;
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
@@ -207,14 +207,14 @@ input:checked + .wca-stats-toggle-pill::after {
 }
 
 .wca-stats-metric-group-items .wca-stats-metric-btn:hover:not(.active):not(.disabled) {
-  background: rgba(138, 180, 248, 0.12);
+  background: rgba(255, 255, 255, 0.08);
   color: #fff;
 }
 
 .wca-stats-metric-group-items .wca-stats-metric-btn.active {
-  background: rgba(138, 180, 248, 0.18);
-  border-color: rgba(138, 180, 248, 0.3);
-  color: #8ab4f8;
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #ececec;
 }
 
 /* 工具栏 */
@@ -229,17 +229,17 @@ input:checked + .wca-stats-toggle-pill::after {
   flex: 1;
   max-width: 400px;
   padding: 8px 14px;
-  border: 1px solid #444;
+  border: 1px solid #444444;
   border-radius: 8px;
-  background: #1e1e2e;
-  color: #e0e0e0;
+  background: #2f2f2f;
+  color: #ececec;
   font-size: 14px;
   outline: none;
   transition: border-color 0.2s;
 }
 
 .wca-stats-search:focus {
-  border-color: #7eb8ff;
+  border-color: #888888;
 }
 
 .wca-stats-search::placeholder {
@@ -256,8 +256,8 @@ input:checked + .wca-stats-toggle-pill::after {
 .wca-stats-table-wrapper {
   overflow-x: auto;
   border-radius: 12px;
-  border: 1px solid #333;
-  background: #1a1a2e;
+  border: 1px solid #444444;
+  background: #212121;
   width: fit-content;
   max-width: 100%;
 }
@@ -276,28 +276,28 @@ input:checked + .wca-stats-toggle-pill::after {
 
 .wca-stats-table th {
   padding: 12px 16px;
-  background: #252540;
-  color: #b0b0c0;
+  background: #383838;
+  color: #8e8ea0;
   font-weight: 600;
   font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  border-bottom: 2px solid #3a3a5a;
+  border-bottom: 2px solid #444444;
   white-space: nowrap;
 }
 
 .wca-stats-table td {
   padding: 10px 16px;
-  border-bottom: 1px solid #2a2a3e;
+  border-bottom: 1px solid #333333;
 }
 
 /* 斑马纹 */
 .wca-stats-table tbody tr:nth-child(even) {
-  background: #1e1e32;
+  background: #292929;
 }
 
 .wca-stats-table tbody tr:hover {
-  background: #2a2a4e;
+  background: #3d3d3d;
 }
 
 /* 链接 */
@@ -356,8 +356,8 @@ input:checked + .wca-stats-toggle-pill::after {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
-  color: #e0e0e0;
-  background: #1e1e2e;
+  color: #ececec;
+  background: #2f2f2f;
   border-radius: 8px;
   cursor: pointer;
   user-select: none;
@@ -365,7 +365,7 @@ input:checked + .wca-stats-toggle-pill::after {
 }
 
 .wca-stats-section-title:hover {
-  background: #252540;
+  background: #383838;
 }
 
 .wca-stats-section-count {
@@ -408,11 +408,7 @@ input:checked + .wca-stats-toggle-pill::after {
   font-weight: 800;
   margin-bottom: 32px;
   text-align: center;
-  /* NOTE: 渐变文字效果 */
-  background: linear-gradient(90deg, #7eb8ff, #a78bfa, #f472b6);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #ececec;
 }
 
 .wca-stats-category {
@@ -453,8 +449,8 @@ input:checked + .wca-stats-toggle-pill::after {
 .wca-stats-card {
   display: block;
   padding: 14px 18px;
-  background: #1e1e2e;
-  border: 1px solid #333;
+  background: #2f2f2f;
+  border: 1px solid #444444;
   border-radius: 10px;
   color: #e0e0e0;
   text-decoration: none;
@@ -465,8 +461,8 @@ input:checked + .wca-stats-toggle-pill::after {
 }
 
 .wca-stats-card:hover {
-  background: #252540;
-  border-color: #5a5a7a;
+  background: #383838;
+  border-color: #555555;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
@@ -643,7 +639,7 @@ input:checked + .wca-stats-toggle-pill::after {
   width: 100%;
   display: block;
   border-radius: 6px;
-  background: #16213e;
+  background: #161b22;
 }
 
 .wr-chart-tooltip {
