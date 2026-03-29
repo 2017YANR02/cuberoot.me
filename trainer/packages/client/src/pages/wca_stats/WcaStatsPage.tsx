@@ -4,6 +4,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { syncLangToUrl, getLangQuery } from '../../i18n';
 import WcaEventSelector from './WcaEventSelector';
 import { EVENT_NAME_TO_ID, ALL_EVENT_IDS } from './event_constants';
 import { countryFlagClass, loadFlagData, flagDataVersion, extractWcaId, extractCompId, personFlagIso2, compFlagIso2 } from '../../utils/country_flags';
@@ -775,6 +776,13 @@ export default function WcaStatsPage() {
 
   const isZh = i18n.language === 'zh';
 
+  // NOTE: 切换语言——同步 i18n + URL + localStorage（对标 Legacy i18n.js setLocale）
+  const toggleLang = useCallback(() => {
+    const next = isZh ? 'en' : 'zh';
+    i18n.changeLanguage(next);
+    syncLangToUrl(next);
+  }, [isZh, i18n]);
+
   // NOTE: 异步加载国旗映射数据（person_countries.json + comp_countries.json）
   // flagVer 变化时触发 re-render，使国旗 span 获得正确的 className
   const [flagVer, setFlagVer] = useState(() => flagDataVersion());
@@ -868,9 +876,9 @@ export default function WcaStatsPage() {
     return (
       <div className="wca-stats-page">
         <div className="wca-stats-error">
-          <h2>加载失败</h2>
-          <p>{error || '未知错误'}</p>
-          <Link to="/wca-stats">← 返回统计列表</Link>
+          <h2>{isZh ? '加载失败' : 'Failed to load'}</h2>
+          <p>{error || (isZh ? '未知错误' : 'Unknown error')}</p>
+          <Link to={`/wca-stats${getLangQuery()}`}>← {isZh ? '返回统计列表' : 'Back to stats'}</Link>
         </div>
       </div>
     );
@@ -879,7 +887,7 @@ export default function WcaStatsPage() {
   return (
     <div className="wca-stats-page">
       <div className="wca-stats-header">
-        <Link to="/wca-stats" className="wca-stats-back">← {isZh ? '返回' : 'Back'}</Link>
+        <Link to={`/wca-stats${getLangQuery()}`} className="wca-stats-back">← {isZh ? '返回' : 'Back'}</Link>
         <h1>{isZh ? data.titleZh : data.title}</h1>
         {data.note && (
           <p className="wca-stats-note">{isZh ? (data.noteZh ?? data.note) : data.note}</p>
@@ -904,7 +912,8 @@ export default function WcaStatsPage() {
             className="wca-stats-search"
             placeholder={isZh ? '搜索...' : 'Search...'}
             value={searchTerm}
-            />
+            onChange={e => setSearchTerm(e.target.value)}
+          />
         </div>
       )}
 
@@ -941,6 +950,10 @@ export default function WcaStatsPage() {
           selectedEvent={showEventSelector ? selectedEvent : undefined}
         />
       )}
+      {/* NOTE: 语言切换按钮——固定右下角（对标 Legacy i18n.js toggle） */}
+      <button className="wca-stats-lang-toggle" onClick={toggleLang}>
+        🌐 {isZh ? 'EN' : '中文'}
+      </button>
     </div>
   );
 }

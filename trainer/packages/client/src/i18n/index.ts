@@ -4,6 +4,7 @@ import zh from './zh.json';
 import en from './en.json';
 
 // NOTE: 语言检测优先级：URL ?lang= > localStorage > 浏览器语言
+// 与 Legacy i18n.js init() 完全对齐
 function detectLanguage(): string {
   const params = new URLSearchParams(window.location.search);
   const urlLang = params.get('lang');
@@ -15,14 +16,43 @@ function detectLanguage(): string {
   return navigator.language.startsWith('zh') ? 'zh' : 'en';
 }
 
+const detectedLang = detectLanguage();
+
+// NOTE: 初始化时如果 URL 没有 ?lang=，自动追加（对标 Legacy i18n.js L453-461）
+// 使用 replaceState 不产生历史条目
+const initParams = new URLSearchParams(window.location.search);
+if (!initParams.get('lang')) {
+  initParams.set('lang', detectedLang);
+  const newUrl = `${window.location.pathname}?${initParams.toString()}${window.location.hash}`;
+  history.replaceState(null, '', newUrl);
+}
+
+// NOTE: 同步到 localStorage
+localStorage.setItem('trainer-lang', detectedLang);
+
 i18n.use(initReactI18next).init({
   resources: {
     zh: { translation: zh },
     en: { translation: en },
   },
-  lng: detectLanguage(),
+  lng: detectedLang,
   fallbackLng: 'en',
   interpolation: { escapeValue: false },
 });
+
+// NOTE: 切换语言时同步 URL（对标 Legacy i18n.js setLocale L704-722）
+export function syncLangToUrl(lang: string): void {
+  localStorage.setItem('trainer-lang', lang);
+  const url = new URL(window.location.href);
+  url.searchParams.set('lang', lang);
+  history.replaceState(null, '', url.toString());
+}
+
+// NOTE: 获取当前 ?lang= 查询串，供 <Link> 使用
+// 返回 "?lang=zh" 或 "?lang=en"
+export function getLangQuery(): string {
+  const params = new URLSearchParams(window.location.search);
+  return `?lang=${params.get('lang') || i18n.language || 'en'}`;
+}
 
 export default i18n;
