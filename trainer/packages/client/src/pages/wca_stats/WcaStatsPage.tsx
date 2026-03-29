@@ -856,12 +856,6 @@ export default function WcaStatsPage() {
   // NOTE: 是否需要显示项目选择器（rows 模式不需要，或只有 0-1 个项目也不需要）
   const showEventSelector = renderMode !== 'rows' && renderMode !== 'empty' && availableEvents.size >= 2;
 
-  // NOTE: 计算总行数（仅 rows 模式显示，sections 有指标过滤后数字会错误）
-  const totalRows = useMemo(() => {
-    if (!data || renderMode !== 'rows') return 0;
-    return data.rows?.length ?? 0;
-  }, [data, renderMode]);
-
   if (loading) {
     return (
       <div className="wca-stats-page">
@@ -910,11 +904,7 @@ export default function WcaStatsPage() {
             className="wca-stats-search"
             placeholder={isZh ? '搜索...' : 'Search...'}
             value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-          />
-          {totalRows > 0 && (
-            <span className="wca-stats-count">{totalRows}</span>
-          )}
+            />
         </div>
       )}
 
