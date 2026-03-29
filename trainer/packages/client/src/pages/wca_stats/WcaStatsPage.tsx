@@ -12,6 +12,7 @@ import { flagClass } from '../../utils/recon_utils';
 import DistributionChart from './DistributionChart';
 import type { DistDataset } from './DistributionChart';
 import WrHistoryChart from './WrHistoryChart';
+import { translateCellText, translatePersonLink, stripChineseParens } from './wca_translations';
 import './wca_stats.css';
 
 // NOTE: JSON schema 与 stats-build 输出一致
@@ -84,7 +85,7 @@ const LAZY_THRESHOLD = 12;
 
 // NOTE: 解析 Markdown 链接 [text](url)、加粗 **text**、HTML <br /> 为 React 元素
 // 同时处理 _type: 'solves' 结构化对象（AverageOfX Details 列）
-function renderCell(value: unknown): React.ReactNode {
+function renderCell(value: unknown, columnKey?: string, isZh?: boolean): React.ReactNode {
   // NOTE: 类型判别器——AverageOfX 的 Details 列输出结构化对象
   if (value && typeof value === 'object' && (value as Record<string, unknown>)._type === 'solves') {
     const cell = value as { _type: 'solves'; csv: string };
@@ -109,6 +110,13 @@ function renderCell(value: unknown): React.ReactNode {
   }
 
   const str = String(value);
+
+  // NOTE: 中文模式——纯文本单元格翻译（项目名、类型、等）
+  if (isZh && columnKey) {
+    // 对 event/type 等纯文本列，尝试整体翻译
+    const translated = translateCellText(str.trim(), columnKey);
+    if (translated && !str.includes('[')) return <>{translated}</>;
+  }
 
   // NOTE: 处理 Markdown 加粗 **text**
   const boldMatch = /^\*\*(.+)\*\*$/.exec(str);
@@ -144,9 +152,20 @@ function renderCell(value: unknown): React.ReactNode {
         }
         parts.push(' ');
       }
+      // NOTE: 中文模式——选手名提取括号内中文；英文模式——去掉括号内中文只留英文名
+      // 对标 Legacy i18n.js 两种语言的选手名显示行为
+      let displayText = match[1];
+      if (columnKey === 'person' || columnKey === 'name') {
+        if (isZh) {
+          const zhName = translatePersonLink(displayText);
+          if (zhName) displayText = zhName;
+        } else {
+          displayText = stripChineseParens(displayText);
+        }
+      }
       parts.push(
         <a key={`${segIdx}-${match.index}`} href={url} target="_blank" rel="noopener noreferrer">
-          {match[1]}
+          {displayText}
         </a>
       );
       lastIndex = match.index + match[0].length;
@@ -199,12 +218,13 @@ function StatsTable({ header, rows, searchTerm, isZh }: {
           {filtered.map((row, i) => (
             <tr key={i}>
               {row.map((cell, j) => {
-                const isCountryCol = header[j]?.key === 'country';
+                const colKey = header[j]?.key ?? '';
+                const isCountryCol = colKey === 'country';
                 const flagCls = isCountryCol ? countryFlagClass(String(cell)) : '';
                 return (
                   <td key={j} style={{ textAlign: header[j]?.align }}>
                     {flagCls && <span className={flagCls} style={{ marginRight: 6 }} />}
-                    {renderCell(cell)}
+                    {renderCell(cell, colKey, isZh)}
                   </td>
                 );
               })}
@@ -440,12 +460,13 @@ function AoxRankingSection({ header, rows, isZh }: {
                   </td>
                 )}
                 {row.map((cell, j) => {
-                  const isCountryCol = header[j]?.key === 'country';
+                  const colKey = header[j]?.key ?? '';
+                  const isCountryCol = colKey === 'country';
                   const flagCls = isCountryCol ? countryFlagClass(String(cell)) : '';
                   return (
                     <td key={j} style={{ textAlign: header[j]?.align }}>
                       {flagCls && <span className={flagCls} style={{ marginRight: 6 }} />}
-                      {renderCell(cell)}
+                      {renderCell(cell, colKey, isZh)}
                     </td>
                   );
                 })}
