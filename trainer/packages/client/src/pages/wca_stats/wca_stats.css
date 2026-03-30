@@ -135,8 +135,15 @@ input:checked + .wca-stats-toggle-pill::after {
 /* active 状态 */
 .wca-stats-tab.active,
 .wca-stats-metric-btn.active {
-  background: #3d3d3d;
-  border-color: #888888;
+  background: #1a6bc4;
+  border-color: #1a6bc4;
+  color: #ffffff;
+}
+
+/* panel-tab 专用——排名/历史用更蓝 */
+.wca-stats-panel-tab.active {
+  background: #2563eb;
+  border-color: #2563eb;
   color: #ffffff;
 }
 
@@ -147,9 +154,85 @@ input:checked + .wca-stats-toggle-pill::after {
 }
 
 /* ==========================================================================
-   Metric Groups 下拉面板样式（metricPanels 分组模式）
-   对标 Legacy stats_ui.css .metric-dropdown-*
+   指标下拉药丸（MetricPanelsView — 对标 Legacy .metric-pill）
    ========================================================================== */
+
+.wca-stats-metric-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1px solid #555555;
+  border-radius: 20px;
+  background: #2f2f2f;
+  color: #ececec;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s;
+  margin: 6px 12px 6px 0;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.wca-stats-metric-pill:hover {
+  background: #3d3d3d;
+}
+
+.wca-stats-metric-pill-arrow {
+  font-size: 10px;
+  color: #aaaaaa;
+  transition: transform 0.2s;
+}
+
+.wca-stats-metric-pill-arrow.open {
+  transform: rotate(180deg);
+}
+
+.wca-stats-metric-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 160px;
+  background: #2f2f2f;
+  border: 1px solid #555555;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  z-index: 200;
+  overflow: hidden;
+}
+
+.wca-stats-metric-option {
+  padding: 9px 16px;
+  font-size: 13px;
+  color: #e0e0e0;
+  cursor: pointer;
+  transition: background 0.15s;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  display: block;
+}
+
+.wca-stats-metric-option:hover {
+  background: #3d3d3d;
+}
+
+.wca-stats-metric-option.active {
+  color: #58a6ff;
+  font-weight: 600;
+  background: rgba(88, 166, 255, 0.08);
+}
+
+.wca-stats-metric-option.disabled {
+  color: #555555;
+  cursor: not-allowed;
+}
+
+/* Metric Groups 下拉面板样式（metricPanels 分组模式）*/
 
 .wca-stats-metric-groups {
   margin: 12px 0;
