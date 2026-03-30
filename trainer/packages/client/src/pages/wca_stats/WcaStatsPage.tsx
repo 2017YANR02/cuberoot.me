@@ -572,20 +572,17 @@ function PanelsView({ panels, searchTerm, isZh, selectedEvent }: {
 
   return (
     <>
-      {/* NOTE: tab-bar 和 dedup toggle 分开，避免 toggle 破坏 :last-child 圆角 */}
-      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0 }}>
-        <div className="wca-stats-tab-bar">
-          {panels.map((p, i) => (
-            <button
-              key={p.id}
-              className={`wca-stats-tab wca-stats-panel-tab ${i === activePanel ? 'active' : ''}`}
-              onClick={() => setActivePanel(i)}
-            >
-              {isZh ? p.labelZh : p.labelEn}
-            </button>
-          ))}
-        </div>
-        {/* NOTE: Dedup toggle——移出 tab-bar，避免破坏末尾按钮的圆角 */}
+      <div className="wca-stats-tab-bar">
+        {panels.map((p, i) => (
+          <button
+            key={p.id}
+            className={`wca-stats-tab wca-stats-panel-tab ${i === activePanel ? 'active' : ''}`}
+            onClick={() => setActivePanel(i)}
+          >
+            {isZh ? p.labelZh : p.labelEn}
+          </button>
+        ))}
+        {/* NOTE: Dedup toggle——与 Legacy iOS 药丸风格一致 */}
         {showDedup && (
           <label className="wca-stats-dedup-toggle">
             <span>{isZh ? '日期去重' : 'Dedup'}</span>
