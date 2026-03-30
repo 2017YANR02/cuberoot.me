@@ -572,17 +572,20 @@ function PanelsView({ panels, searchTerm, isZh, selectedEvent }: {
 
   return (
     <>
-      <div className="wca-stats-tab-bar">
-        {panels.map((p, i) => (
-          <button
-            key={p.id}
-            className={`wca-stats-tab ${i === activePanel ? 'active' : ''}`}
-            onClick={() => setActivePanel(i)}
-          >
-            {isZh ? p.labelZh : p.labelEn}
-          </button>
-        ))}
-        {/* NOTE: Dedup toggle——与 Legacy iOS 药丸风格一致 */}
+      {/* NOTE: tab-bar 和 dedup toggle 分开，避免 toggle 破坏 :last-child 圆角 */}
+      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0 }}>
+        <div className="wca-stats-tab-bar">
+          {panels.map((p, i) => (
+            <button
+              key={p.id}
+              className={`wca-stats-tab wca-stats-panel-tab ${i === activePanel ? 'active' : ''}`}
+              onClick={() => setActivePanel(i)}
+            >
+              {isZh ? p.labelZh : p.labelEn}
+            </button>
+          ))}
+        </div>
+        {/* NOTE: Dedup toggle——移出 tab-bar，避免破坏末尾按钮的圆角 */}
         {showDedup && (
           <label className="wca-stats-dedup-toggle">
             <span>{isZh ? '日期去重' : 'Dedup'}</span>
@@ -701,6 +704,20 @@ function MetricPanelsView({ metricPanels, metricGroups, searchTerm, isZh, select
   selectedEvent?: string;
 }) {
   const [activeMetric, setActiveMetric] = useState(0);
+  const [pillOpen, setPillOpen] = useState(false);
+  const pillRef = React.useRef<HTMLDivElement>(null);
+
+  // NOTE: 点击外部关闭下拉
+  useEffect(() => {
+    if (!pillOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (pillRef.current && !pillRef.current.contains(e.target as Node)) {
+        setPillOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [pillOpen]);
 
   // NOTE: 计算每个 metricPanel 是否有当前项目的数据（对标 Legacy handleMetricPage L417-430）
   const metricHasData = useMemo(() => {
@@ -737,42 +754,59 @@ function MetricPanelsView({ metricPanels, metricGroups, searchTerm, isZh, select
   }, [metricHasData, activeMetric, metricPanels]);
 
   const metric = metricPanels[activeMetric];
+  const currentLabel = isZh ? metric?.labelZh : metric?.labelEn;
+
+  // NOTE: 获取所有可选指标列表（metricGroups 模式或直接列表）
+  const allMetricItems: Array<{ idx: number; label: string; disabled: boolean }> = useMemo(() => {
+    if (metricGroups) {
+      return metricGroups.flatMap(g => g.items).map(itemId => {
+        const idx = metricPanels.findIndex(mp => mp.id === itemId);
+        if (idx === -1) return null;
+        const mp = metricPanels[idx];
+        return { idx, label: isZh ? mp.labelZh : mp.labelEn, disabled: metricHasData.get(idx) === false };
+      }).filter(Boolean) as Array<{ idx: number; label: string; disabled: boolean }>;
+    }
+    return metricPanels.map((mp, i) => ({
+      idx: i,
+      label: isZh ? mp.labelZh : mp.labelEn,
+      disabled: metricHasData.get(i) === false,
+    }));
+  }, [metricGroups, metricPanels, metricHasData, isZh]);
 
   return (
     <div className="wca-stats-metric-panels">
-      {/* NOTE: 指标选择器——扁平药丸按钮，一行显示（对标 Legacy .segmented-btns） */}
-      {metricGroups ? (
+      {/* NOTE: 指标 < 4 个用扁平 tab 按钮；≥ 4 个才折叠成下拉药丸 */}
+      {allMetricItems.length < 4 ? (
         <div className="wca-stats-tab-bar">
-          {metricGroups.flatMap(group => group.items).map(itemId => {
-            const idx = metricPanels.findIndex(mp => mp.id === itemId);
-            if (idx === -1) return null;
-            const mp = metricPanels[idx];
-            const disabled = metricHasData.get(idx) === false;
-            return (
-              <button
-                key={itemId}
-                className={`wca-stats-tab ${idx === activeMetric ? 'active' : ''}${disabled ? ' disabled' : ''}`}
-                onClick={disabled ? undefined : () => setActiveMetric(idx)}
-              >
-                {isZh ? mp.labelZh : mp.labelEn}
-              </button>
-            );
-          })}
+          {allMetricItems.map(({ idx, label, disabled }) => (
+            <button
+              key={idx}
+              className={`wca-stats-tab${idx === activeMetric ? ' active' : ''}${disabled ? ' disabled' : ''}`}
+              onClick={disabled ? undefined : () => setActiveMetric(idx)}
+            >
+              {label}
+            </button>
+          ))}
         </div>
       ) : (
-        <div className="wca-stats-tab-bar">
-          {metricPanels.map((mp, i) => {
-            const disabled = metricHasData.get(i) === false;
-            return (
-              <button
-                key={mp.id}
-                className={`wca-stats-tab ${i === activeMetric ? 'active' : ''}${disabled ? ' disabled' : ''}`}
-                onClick={disabled ? undefined : () => setActiveMetric(i)}
-              >
-                {isZh ? mp.labelZh : mp.labelEn}
-              </button>
-            );
-          })}
+        <div ref={pillRef} className="wca-stats-metric-pill" onClick={() => setPillOpen(o => !o)}>
+          <span>{currentLabel}</span>
+          <span className={`wca-stats-metric-pill-arrow${pillOpen ? ' open' : ''}`}>▼</span>
+          {pillOpen && (
+            <div className="wca-stats-metric-dropdown" onClick={e => e.stopPropagation()}>
+              {allMetricItems.map(({ idx, label, disabled }) => (
+                <button
+                  key={idx}
+                  className={`wca-stats-metric-option${idx === activeMetric ? ' active' : ''}${disabled ? ' disabled' : ''}`}
+                  onClick={() => {
+                    if (!disabled) { setActiveMetric(idx); setPillOpen(false); }
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
