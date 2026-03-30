@@ -5,8 +5,8 @@ import { AoRounds } from '../core/ao_rounds.js';
 export class WrAo2r extends AoRounds {
   constructor() {
     super();
-    this.title = 'Ao2R (Average of 2 Rounds)';
-    this.titleZh = 'Ao2R（两轮平均）';
+    this.title = 'Ao2R';
+    this.titleZh = 'Ao2R';
     this.note = 'Average of 2 Rounds: mean of averages when a person competed in exactly 2 rounds at a competition.';
     this.noteZh = '两轮平均：一场比赛中恰好参加 2 轮时各轮平均的均值。';
   }
