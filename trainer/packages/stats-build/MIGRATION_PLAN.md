@@ -98,7 +98,7 @@ interface StatJson {
 | B | 分组统计 | 17 | `GroupedStatistic` |
 | C-1 | 轮次指标 | 13 | `RoundMetric` |
 | C-2 | 跨轮次均值 | 4 | `AoRounds` |
-| C-3 | X 次均值 | 7 | `AverageOfX` |
+| C-3 | 滚动平均 | 7 | `AverageOfX` |
 | D-1 | 特殊统计 | 4 | 混合（`wr_newcomer`/`consecutive_sub_5_average`/`mbf_average`/`yearly_rankings`） |
 | D-2 | StatPanel 双视图 | 2 | `Statistic`（`wr_non_pr`/`wr_dominance`） |
 | D-3 | 聚合页面 | 3 | `Statistic`（`wr_metric`/`wr_aoxr`/`average_of`） |

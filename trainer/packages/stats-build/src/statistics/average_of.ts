@@ -17,8 +17,8 @@ const AOX_DEFS = [
 export class AverageOf extends Statistic {
   constructor() {
     super();
-    this.title = 'Average of X';
-    this.titleZh = 'X 次均值';
+    this.title = 'Rolling Average';
+    this.titleZh = '滚动平均';
     this.note = 'Trimmed mean averages computed over X consecutive official attempts.';
     this.noteZh = '从连续 X 次官方还原中计算的裁剪均值。';
   }
