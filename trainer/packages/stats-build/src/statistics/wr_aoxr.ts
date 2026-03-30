@@ -14,8 +14,8 @@ const AOXR_DEFS = [
 export class WrAoxr extends Statistic {
   constructor() {
     super();
-    this.title = 'Average of X Rounds';
-    this.titleZh = '跨轮次均值';
+    this.title = 'AoXR';
+    this.titleZh = 'AoXR';
     this.note = 'Averages computed across all rounds a competitor participated in during a single competition.';
     this.noteZh = '选手在单场比赛中参加的所有轮次的平均成绩。';
   }
@@ -38,7 +38,7 @@ export class WrAoxr extends Statistic {
       metricPanels.push({
         id: def.id,
         labelEn: def.label,
-        labelZh: sub.titleZh || def.label,
+        labelZh: def.label,
         panels: sub.panels || [],
       });
     }
