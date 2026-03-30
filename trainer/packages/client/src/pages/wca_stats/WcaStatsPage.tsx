@@ -83,6 +83,35 @@ function getAllPanelsFromMetric(mp: MetricPanel): StatPanel[] {
 // NOTE: 懒加载阈值——超过此数量的 solves 用折叠方式展示
 const LAZY_THRESHOLD = 12;
 
+// NOTE: 按每 10 个分组渲染 solves
+// ≤12 个单行展示（ao5/ao12 等），>12 个按 10 个一行分组
+function renderSolves(items: string[]): React.ReactNode {
+  if (items.length <= LAZY_THRESHOLD) {
+    // NOTE: ≤12 个——全部放一行
+    return (
+      <div className="solve-list">
+        <div className="solve-row">
+          {items.map((s, i) => <span key={i}>{s}</span>)}
+        </div>
+      </div>
+    );
+  }
+  // NOTE: >12 个——按 10 个一行分组
+  const rows: string[][] = [];
+  for (let i = 0; i < items.length; i += 10) {
+    rows.push(items.slice(i, i + 10));
+  }
+  return (
+    <div className="solve-list">
+      {rows.map((row, ri) => (
+        <div key={ri} className="solve-row">
+          {row.map((s, si) => <span key={si}>{s}</span>)}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // NOTE: 解析 Markdown 链接 [text](url)、加粗 **text**、HTML <br /> 为 React 元素
 // 同时处理 _type: 'solves' 结构化对象（AverageOfX Details 列）
 function renderCell(value: unknown, columnKey?: string, isZh?: boolean): React.ReactNode {
@@ -91,31 +120,43 @@ function renderCell(value: unknown, columnKey?: string, isZh?: boolean): React.R
     const cell = value as { _type: 'solves'; csv: string };
     const items = cell.csv.split(',');
     if (items.length <= LAZY_THRESHOLD) {
-      // NOTE: ≤12 个成绩——行内展示
-      return (
-        <div className="solve-list">
-          {items.map((s, i) => <span key={i}>{s}</span>)}
-        </div>
-      );
+      return renderSolves(items);
     }
     // NOTE: >12 个成绩——折叠展示（对标 Legacy <details data-solves>）
     return (
       <details className="solve-details">
         <summary>{items.length} solves</summary>
-        <div className="solve-list">
-          {items.map((s, i) => <span key={i}>{s}</span>)}
-        </div>
+        {renderSolves(items)}
+      </details>
+    );
+  }
+
+  // NOTE: 数组格式 details（wr_current 等输出字符串数组，解决多盲含空格的拆分问题）
+  if (Array.isArray(value)) {
+    const items = value.map(String);
+    if (items.length <= LAZY_THRESHOLD) {
+      return renderSolves(items);
+    }
+    return (
+      <details className="solve-details">
+        <summary>{items.length} solves</summary>
+        {renderSolves(items)}
       </details>
     );
   }
 
   const str = String(value);
 
-  // NOTE: 中文模式——纯文本单元格翻译（项目名、类型、等）
-  if (isZh && columnKey) {
-    // 对 event/type 等纯文本列，尝试整体翻译
-    const translated = translateCellText(str.trim(), columnKey);
-    if (translated && !str.includes('[')) return <>{translated}</>;
+  // NOTE: details 列普通字符串——空格分隔（旧格式兼容）
+  if (columnKey === 'details' && typeof value === 'string' && value.trim()) {
+    const items = value.trim().split(/\s+/);
+    if (items.length > 1) return renderSolves(items);
+  }
+
+  // NOTE: 中英文模式均尝试翻译（中文：项目名/类型，英文：event 列去 Cube 后缀）
+  if (columnKey && !str.includes('[')) {
+    const translated = translateCellText(str.trim(), columnKey, isZh);
+    if (translated) return <>{translated}</>;
   }
 
   // NOTE: 处理 Markdown 加粗 **text**

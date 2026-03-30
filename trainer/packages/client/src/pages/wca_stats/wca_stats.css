@@ -372,6 +372,7 @@ input:checked + .wca-stats-toggle-pill::after {
 .wca-stats-table td {
   padding: 10px 16px;
   border-bottom: 1px solid #333333;
+  white-space: nowrap;
 }
 
 /* 斑马纹 */
@@ -399,6 +400,53 @@ input:checked + .wca-stats-toggle-pill::after {
 .wca-stats-table strong {
   color: #ffd700;
   font-weight: 700;
+}
+
+/* ==========================================================================
+   Details 列——solve-list / solve-row
+   每 10 个成绩一行，等宽字体，对标 Legacy .solve-list
+   ========================================================================== */
+
+.solve-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.solve-row {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.solve-row span {
+  font-family: 'Roboto Mono', 'Courier New', monospace;
+  font-size: 12px;
+  color: #cccccc;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 2px 6px;
+  border-radius: 3px;
+  text-align: center;
+}
+
+/* 折叠展示（>12 个成绩） */
+.solve-details summary {
+  cursor: pointer;
+  font-size: 12px;
+  color: #888888;
+  margin-bottom: 4px;
+  user-select: none;
+  list-style: none;
+}
+
+.solve-details summary::before {
+  content: '▶ ';
+  font-size: 10px;
+}
+
+.solve-details[open] summary::before {
+  content: '▼ ';
 }
 
 /* 加载 / 错误状态 */
