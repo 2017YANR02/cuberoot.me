@@ -193,13 +193,12 @@ function renderCell(value: unknown, columnKey?: string, isZh?: boolean): React.R
         }
         parts.push(' ');
       }
-      // NOTE: 中文模式——选手名提取括号内中文；英文模式——去掉括号内中文只留英文名
-      // 对标 Legacy i18n.js 两种语言的选手名显示行为
+      // NOTE: 选手名——中文模式提取中文名，否则统一去掉括号
       let displayText = match[1];
       if (columnKey === 'person' || columnKey === 'name') {
         if (isZh) {
           const zhName = translatePersonLink(displayText);
-          if (zhName) displayText = zhName;
+          displayText = zhName || stripChineseParens(displayText);
         } else {
           displayText = stripChineseParens(displayText);
         }
