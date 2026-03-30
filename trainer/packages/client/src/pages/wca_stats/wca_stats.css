@@ -1,9 +1,11 @@
 /* NOTE: WCA 统计页样式 — 暗色主题 + 现代表格 */
 
 .wca-stats-page {
-  max-width: 1200px;
+  width: fit-content;
+  min-width: min(100%, 800px);
+  max-width: 100%;
   margin: 0 auto;
-  padding: 24px 16px;
+  padding: 24px 32px;
   min-height: 100vh;
   color: #e0e0e0;
 }
@@ -343,9 +345,37 @@ input:checked + .wca-stats-toggle-pill::after {
   background: #212121;
   width: fit-content;
   max-width: 100%;
+
+  /* Firefox: 细滚动条，默认透明 */
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
 }
 
-/* NOTE: 表格自适应内容宽度，不强制撑满 */
+/* hover 时 Firefox 显示半透明滚动条 */
+.wca-stats-table-wrapper:hover {
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+}
+
+/* Webkit (Chrome / Edge / Safari) */
+.wca-stats-table-wrapper::-webkit-scrollbar {
+  height: 6px;
+}
+
+.wca-stats-table-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.wca-stats-table-wrapper::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 3px;
+  transition: background 0.2s;
+}
+
+.wca-stats-table-wrapper:hover::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* NOTE: 表格自适应内容宽度 */
 .wca-stats-table {
   border-collapse: collapse;
   font-size: 14px;

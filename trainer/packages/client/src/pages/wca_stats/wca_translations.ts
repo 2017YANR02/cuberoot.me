@@ -89,7 +89,7 @@ export function translatePersonLink(linkText: string): string | null {
   return extractChineseName(linkText);
 }
 
-// NOTE: 英文模式——去掉括号内中文只保留英文名
+// NOTE: 去掉选手名中所有括号及其内容（中文、韩文、注音等）
 export function stripChineseParens(text: string): string {
-  return text.replace(/\s*\([^)]*[\u4e00-\u9fff][^)]*\)\s*$/, '').trim();
+  return text.replace(/\s*\([^)]*\)\s*/g, ' ').trim();
 }
