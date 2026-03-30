@@ -121,8 +121,8 @@ input:checked + .wca-stats-toggle-pill::after {
   border-radius: 6px 0 0 6px;
 }
 
-.wca-stats-tab:last-child,
-.wca-stats-metric-btn:last-child {
+.wca-stats-tab:last-of-type,
+.wca-stats-metric-btn:last-of-type {
   border-radius: 0 6px 6px 0;
 }
 
