@@ -19,6 +19,7 @@ export class WrCurrent extends Statistic {
       'Person': 'left',
       'Date': 'left',
       'Competition': 'left',
+      'Details': 'left',
     };
   }
 
@@ -30,6 +31,7 @@ export class WrCurrent extends Statistic {
         r.average,
         r.regional_single_record,
         r.regional_average_record,
+        (SELECT GROUP_CONCAT(ra.value ORDER BY ra.attempt_number) FROM result_attempts ra WHERE ra.result_id = r.id) AS attempts,
         CONCAT('[', p.name, '](https://www.worldcubeassociation.org/persons/', p.wca_id, ')') person_link,
         CONCAT('[', c.cell_name, '](https://www.worldcubeassociation.org/competitions/', c.id, ')') competition_link,
         c.start_date
@@ -61,7 +63,8 @@ export class WrCurrent extends Statistic {
           const st = new SolveTime(eventId, 'single', Number(best['single']));
           const d = best['start_date'] as Date;
           const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-          result.push([eventName, 'Single', st.clockFormat(), best['person_link'], dateStr, best['competition_link']]);
+          const details = this.formatDetails(best, eventId);
+          result.push([eventName, 'Single', st.clockFormat(), best['person_link'], dateStr, best['competition_link'], details]);
         }
       }
 
@@ -78,11 +81,19 @@ export class WrCurrent extends Statistic {
           const st = new SolveTime(eventId, 'average', Number(best['average']));
           const d = best['start_date'] as Date;
           const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-          result.push([eventName, 'Average', st.clockFormat(), best['person_link'], dateStr, best['competition_link']]);
+          const details = this.formatDetails(best, eventId);
+          result.push([eventName, 'Average', st.clockFormat(), best['person_link'], dateStr, best['competition_link'], details]);
         }
       }
     }
 
     return result;
+  }
+
+  // NOTE: 格式化 attempts 为字符串数组（避免多盲结果含空格导致拆分错误）
+  private formatDetails(row: RowDataPacket, eventId: string): string[] {
+    return String(row['attempts'] || '').split(',')
+      .map(v => new SolveTime(eventId, 'single', Number(v)).clockFormat())
+      .filter(s => s.length > 0);
   }
 }

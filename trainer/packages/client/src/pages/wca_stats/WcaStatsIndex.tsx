@@ -87,7 +87,7 @@ export default function WcaStatsIndex() {
             <span className="wca-stats-category-name">
               {isZh ? cat.nameZh : cat.nameEn}
             </span>
-            <span className="wca-stats-category-count">{cat.stats.length}</span>
+
           </div>
           <div className="wca-stats-card-grid">
             {cat.stats.map(stat => (
