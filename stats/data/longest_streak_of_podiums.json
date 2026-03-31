@@ -38,7 +38,7 @@
   ],
   "rows": [
     [
-      113,
+      114,
       "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
       "3x3x3 Cube",
       "[Cubing in Cill Chainnigh 2019](https://www.worldcubeassociation.org/competitions/CubinginCillChainnigh2019)",
@@ -66,7 +66,7 @@
       "[WCA World Championship 2023](https://www.worldcubeassociation.org/competitions/WC2023)"
     ],
     [
-      92,
+      93,
       "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
       "3x3x3 Cube",
       "[Guangdong Open 2021](https://www.worldcubeassociation.org/competitions/GuangdongOpen2021)",
@@ -101,18 +101,18 @@
       null
     ],
     [
+      81,
+      "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
+      "5x5x5 Cube",
+      "[Cubing in Cill Chainnigh 2019](https://www.worldcubeassociation.org/competitions/CubinginCillChainnigh2019)",
+      null
+    ],
+    [
       80,
       "[Bence Barát](https://www.worldcubeassociation.org/persons/2008BARA01)",
       "7x7x7 Cube",
       "[French Open 2009](https://www.worldcubeassociation.org/competitions/FrenchOpen2009)",
       "[Euro 2016](https://www.worldcubeassociation.org/competitions/Euro2016)"
-    ],
-    [
-      80,
-      "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
-      "5x5x5 Cube",
-      "[Cubing in Cill Chainnigh 2019](https://www.worldcubeassociation.org/competitions/CubinginCillChainnigh2019)",
-      null
     ],
     [
       78,
@@ -171,6 +171,13 @@
       "[WCA Asian Championship 2018](https://www.worldcubeassociation.org/competitions/AsianChampionship2018)"
     ],
     [
+      64,
+      "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
+      "4x4x4 Cube",
+      "[Kubsala Winter 2023](https://www.worldcubeassociation.org/competitions/KubsalaWinter2023)",
+      null
+    ],
+    [
       63,
       "[Michał Halczuk](https://www.worldcubeassociation.org/persons/2006HALC01)",
       "7x7x7 Cube",
@@ -186,17 +193,17 @@
     ],
     [
       63,
-      "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
-      "4x4x4 Cube",
-      "[Kubsala Winter 2023](https://www.worldcubeassociation.org/competitions/KubsalaWinter2023)",
-      null
-    ],
-    [
-      63,
       "[Luke Garrett](https://www.worldcubeassociation.org/persons/2017GARR05)",
       "3x3x3 One-Handed",
       "[Mishawaka Summer 2019](https://www.worldcubeassociation.org/competitions/MishawakaSummer2019)",
       "[CubingUSA Nationals 2023](https://www.worldcubeassociation.org/competitions/CubingUSANationals2023)"
+    ],
+    [
+      60,
+      "[Lim Hung (林弘)](https://www.worldcubeassociation.org/persons/2016HUNG08)",
+      "7x7x7 Cube",
+      "[YJ Malaysia Cube Open 2022](https://www.worldcubeassociation.org/competitions/YJMalaysiaCubeOpen2022)",
+      null
     ],
     [
       59,
@@ -206,13 +213,6 @@
       "[WCA Asian Championship 2018](https://www.worldcubeassociation.org/competitions/AsianChampionship2018)"
     ],
     [
-      59,
-      "[Lim Hung (林弘)](https://www.worldcubeassociation.org/persons/2016HUNG08)",
-      "7x7x7 Cube",
-      "[YJ Malaysia Cube Open 2022](https://www.worldcubeassociation.org/competitions/YJMalaysiaCubeOpen2022)",
-      null
-    ],
-    [
       58,
       "[Luke Garrett](https://www.worldcubeassociation.org/persons/2017GARR05)",
       "3x3x3 Cube",
@@ -220,7 +220,7 @@
       "[WCA World Championship 2023](https://www.worldcubeassociation.org/competitions/WC2023)"
     ],
     [
-      57,
+      58,
       "[Xuanyi Geng (耿暄一)](https://www.worldcubeassociation.org/persons/2023GENG02)",
       "3x3x3 Cube",
       "[Luoyang Spring 2024](https://www.worldcubeassociation.org/competitions/LuoyangSpring2024)",
@@ -367,7 +367,7 @@
       "[WCA European Championship 2024](https://www.worldcubeassociation.org/competitions/Euro2024)"
     ],
     [
-      51,
+      52,
       "[Damián Jail Campos](https://www.worldcubeassociation.org/persons/2015CAMP03)",
       "Megaminx",
       "[La Plata Open 2015](https://www.worldcubeassociation.org/competitions/LaPlataOpen2015)",
@@ -386,6 +386,13 @@
       "Pyraminx",
       "[Kristianstad Open 2009](https://www.worldcubeassociation.org/competitions/KristianstadOpen2009)",
       "[World Championship 2015](https://www.worldcubeassociation.org/competitions/WC2015)"
+    ],
+    [
+      49,
+      "[Nicole Jnus Macalalad](https://www.worldcubeassociation.org/persons/2018MACA02)",
+      "Megaminx",
+      "[Cube Ala-Eh V 2020](https://www.worldcubeassociation.org/competitions/CubeAlaEhV2020)",
+      null
     ],
     [
       49,
@@ -410,9 +417,9 @@
     ],
     [
       48,
-      "[Nicole Jnus Macalalad](https://www.worldcubeassociation.org/persons/2018MACA02)",
-      "Megaminx",
-      "[Cube Ala-Eh V 2020](https://www.worldcubeassociation.org/competitions/CubeAlaEhV2020)",
+      "[Andrés Hisashi Suzuki Cabrera](https://www.worldcubeassociation.org/persons/2016SUZU03)",
+      "Square-1",
+      "[Last Cubing Lima 2017](https://www.worldcubeassociation.org/competitions/LastCubingLima2017)",
       null
     ],
     [
@@ -421,13 +428,6 @@
       "3x3x3 Blindfolded",
       "[Guangdong Open 2014](https://www.worldcubeassociation.org/competitions/GuangdongOpen2014)",
       "[Chongqing Open 2017](https://www.worldcubeassociation.org/competitions/ChongqingOpen2017)"
-    ],
-    [
-      47,
-      "[Andrés Hisashi Suzuki Cabrera](https://www.worldcubeassociation.org/persons/2016SUZU03)",
-      "Square-1",
-      "[Last Cubing Lima 2017](https://www.worldcubeassociation.org/competitions/LastCubingLima2017)",
-      null
     ],
     [
       47,
@@ -486,16 +486,23 @@
       "[NAC 2024](https://www.worldcubeassociation.org/competitions/NAC2024)"
     ],
     [
+      44,
+      "[David Rendón Martínez](https://www.worldcubeassociation.org/persons/2018MART75)",
+      "Skewb",
+      "[San Juan III 2023](https://www.worldcubeassociation.org/competitions/SanJuanIII2023)",
+      null
+    ],
+    [
       43,
       "[Michał Halczuk](https://www.worldcubeassociation.org/persons/2006HALC01)",
-      "5x5x5 Cube",
+      "6x6x6 Cube",
       "[Full Steps in Brest 2016](https://www.worldcubeassociation.org/competitions/FullStepsinBrest2016)",
       "[Project Kedzierzyn-Kozle 2021](https://www.worldcubeassociation.org/competitions/ProjectKedzierzynKozle2021)"
     ],
     [
       43,
       "[Michał Halczuk](https://www.worldcubeassociation.org/persons/2006HALC01)",
-      "6x6x6 Cube",
+      "5x5x5 Cube",
       "[Full Steps in Brest 2016](https://www.worldcubeassociation.org/competitions/FullStepsinBrest2016)",
       "[Project Kedzierzyn-Kozle 2021](https://www.worldcubeassociation.org/competitions/ProjectKedzierzynKozle2021)"
     ],
@@ -539,13 +546,6 @@
       "[Hassan Khanani](https://www.worldcubeassociation.org/persons/2018KHAN26)",
       "Square-1",
       "[Bethesda Summer Showdown 2024](https://www.worldcubeassociation.org/competitions/BethesdaSummerShowdown2024)",
-      null
-    ],
-    [
-      43,
-      "[David Rendón Martínez](https://www.worldcubeassociation.org/persons/2018MART75)",
-      "Skewb",
-      "[San Juan III 2023](https://www.worldcubeassociation.org/competitions/SanJuanIII2023)",
       null
     ],
     [
@@ -690,6 +690,13 @@
     ],
     [
       38,
+      "[Louis Cormier](https://www.worldcubeassociation.org/persons/2010CORM02)",
+      "Megaminx",
+      "[MIT Spring 2012](https://www.worldcubeassociation.org/competitions/MITSpring2012)",
+      null
+    ],
+    [
+      38,
       "[Witali Bułatow](https://www.worldcubeassociation.org/persons/2015BUAT01)",
       "3x3x3 Multi-Blind",
       "[Full Steps in Brest 2016](https://www.worldcubeassociation.org/competitions/FullStepsinBrest2016)",
@@ -722,13 +729,6 @@
       "5x5x5 Cube",
       "[German Nationals 2017](https://www.worldcubeassociation.org/competitions/GermanNationals2017)",
       "[Warm Up Sydney 2019](https://www.worldcubeassociation.org/competitions/WarmUpSydney2019)"
-    ],
-    [
-      37,
-      "[Louis Cormier](https://www.worldcubeassociation.org/persons/2010CORM02)",
-      "Megaminx",
-      "[MIT Spring 2012](https://www.worldcubeassociation.org/competitions/MITSpring2012)",
-      null
     ],
     [
       37,
