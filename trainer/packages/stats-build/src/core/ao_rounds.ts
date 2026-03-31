@@ -272,11 +272,11 @@ function buildRanking(computed: ComputedEntry[], eventId: string): unknown[][] {
     .slice(0, 10)
     .map((v, i) => {
       const metricStr = new SolveTime(eventId, 'average', Math.round(v.metric)).clockFormat();
-      const details = v.roundValues
+      const detailsCsv = v.roundValues
         .map(val => new SolveTime(eventId, 'average', val).clockFormat())
-        .join(', ');
+        .join(',');
       const dateStr = formatDate(v.meta['start_date']);
-      return [i + 1, v.meta['person_link'], metricStr, v.meta['country_id'], dateStr, v.meta['competition_link'], details];
+      return [i + 1, v.meta['person_link'], metricStr, v.meta['country_id'], dateStr, v.meta['competition_link'], { _type: 'solves' as const, csv: detailsCsv }];
     });
 }
 
@@ -308,9 +308,9 @@ function buildWrHistory(computed: ComputedEntry[], eventId: string): unknown[][]
 
   const historyRows = wrRecords.map((c, i) => {
     const metricStr = new SolveTime(eventId, 'average', Math.round(c.metric)).clockFormat();
-    const roundDetails = c.roundValues
+    const detailsCsv = c.roundValues
       .map(v => new SolveTime(eventId, 'average', v).clockFormat())
-      .join(', ');
+      .join(',');
 
     // NOTE: 进步百分比
     let gainStr = '';
@@ -330,7 +330,7 @@ function buildWrHistory(computed: ComputedEntry[], eventId: string): unknown[][]
     }
 
     const dateStr = formatDate(c.meta['start_date']);
-    return [metricStr, gainStr, daysStr, c.meta['person_link'], dateStr, c.meta['competition_link'], roundDetails];
+    return [metricStr, gainStr, daysStr, c.meta['person_link'], dateStr, c.meta['competition_link'], { _type: 'solves' as const, csv: detailsCsv }];
   });
 
   return historyRows.reverse();
