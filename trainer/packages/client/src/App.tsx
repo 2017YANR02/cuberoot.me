@@ -37,6 +37,8 @@ const WcaStatsIndex = lazy(() => import('./pages/wca_stats/WcaStatsIndex'));
 const UpcomingCompsPage = lazy(() => import('./pages/UpcomingCompsPage'));
 // NOTE: iframe 包装页 — 嵌入未迁移的外部模块（Solver/Alg Trainer/csTimer）
 const IframePage = lazy(() => import('./pages/IframePage'));
+// NOTE: Pretext Canvas 表格 Demo
+const PretextDemo = lazy(() => import('./pages/pretext_demo/PretextDemo'));
 
 function App() {
   return (
@@ -77,6 +79,8 @@ function App() {
         {/* WCA Stats — 统计数据展示 */}
         <Route path="/wca-stats" element={<Suspense fallback={<div>Loading...</div>}><WcaStatsIndex /></Suspense>} />
         <Route path="/wca-stats/:statId" element={<Suspense fallback={<div>Loading...</div>}><WcaStatsPage /></Suspense>} />
+        {/* Pretext Demo — Canvas 表格渲染实验 */}
+        <Route path="/pretext-demo" element={<Suspense fallback={<div>Loading...</div>}><PretextDemo /></Suspense>} />
         {/* Auth — WCA OAuth 回调 */}
         <Route path="/auth/callback" element={<Suspense fallback={<div>Loading...</div>}><AuthCallbackPage /></Suspense>} />
       </Routes>
