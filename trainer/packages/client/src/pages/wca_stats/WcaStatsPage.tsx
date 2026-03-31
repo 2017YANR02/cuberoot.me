@@ -590,7 +590,7 @@ function PanelsView({ panels, searchTerm, isZh, selectedEvent }: {
 
   // NOTE: 为 history 面板收集当前可见 section 的 rows（供折线图用）
   const historyChartData = useMemo(() => {
-    if (panel.id !== 'history' || !isAoxData) return null;
+    if (panel.id !== 'history') return null;
     const sections = dedup ? dedupedSections : panel.sections;
     // 过滤出当前 selectedEvent 的 section rows
     const visibleSections = selectedEvent

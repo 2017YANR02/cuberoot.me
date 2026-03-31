@@ -91,6 +91,41 @@ function extractPoints(rows: unknown[][], header: { key: string; label: string }
   }
   // NOTE: rows 可能是降序（最新在上）→ 反转为时间正序
   points.sort((a, b) => a.x - b.x);
+
+  // NOTE: 强制单调性——WR history 可能含同日期多条记录（如同场赛事连续破 WR）
+  // 问题根源：running min 先处理同日最好成绩，会把同日其他台阶夹死。
+  // 修复：对同日期分组内的点按"最差优先"排序，再做 running min/max。
+  if (points.length >= 2) {
+    const firstY = points[0].y;
+    const lastY  = points[points.length - 1].y;
+    const decreasing = lastY < firstY;
+    const increasing = lastY > firstY;
+
+    if (decreasing || increasing) {
+      // --- Step 1: 同日期分组，组内按"最差优先"重排 ---
+      const result: DataPoint[] = [];
+      let i = 0;
+      while (i < points.length) {
+        let j = i + 1;
+        while (j < points.length && points[j].x === points[i].x) j++;
+        const group = points.slice(i, j);
+        if (group.length > 1) {
+          // 递减：同日 y 从大（差）到小（好）；递增：从小（差）到大（好）
+          group.sort((a, b) => decreasing ? b.y - a.y : a.y - b.y);
+        }
+        result.push(...group);
+        i = j;
+      }
+
+      // --- Step 2: 全局 running min / max ---
+      for (let k = 1; k < result.length; k++) {
+        if (decreasing && result[k].y > result[k - 1].y) result[k].y = result[k - 1].y;
+        if (increasing && result[k].y < result[k - 1].y) result[k].y = result[k - 1].y;
+      }
+      return result;
+    }
+  }
+
   return points;
 }
 
@@ -205,25 +240,47 @@ export default function WrHistoryChart({ rows, header, isZh: _isZh }: Props) {
     const scale = (canvas as any)._chartScale;
     if (!scale) return;
 
-    const mx = e.clientX - canvas.getBoundingClientRect().left;
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
     if (mx < PAD.left || mx > scale.w - PAD.right) {
       tipEl.style.display = 'none';
       return;
     }
 
+    // Step 1: 找最近 x 的点（确定悬停在哪个日期）
     let best = 0, bestDist = Infinity;
     for (let i = 0; i < scale.points.length; i++) {
       const d = Math.abs(scale.xPx(scale.points[i].x) - mx);
-      if (d < bestDist || (d === bestDist && scale.points[i].y > scale.points[best].y)) {
-        bestDist = d; best = i;
-      }
+      if (d < bestDist) { bestDist = d; best = i; }
     }
     if (bestDist > 30) { tipEl.style.display = 'none'; return; }
 
-    const p = scale.points[best];
-    let html = `<b>${p.label}</b>`;
-    if (p.person) html += ' ' + p.person;
-    if (p.imp) html += ` <span style="color:#6ee7b7">↓${p.imp}</span>`;
+    // Step 2: 同 x 候选里（1px 误差内），按 y 距离最近选最终点
+    // 解决同日期多个不同成绩（如 19 和 18 同在 2018-10-26）时的歧义
+    let bestY = best;
+    let bestYDist = Math.abs(scale.yPx(scale.points[best].y) - my);
+    for (let i = 0; i < scale.points.length; i++) {
+      if (i === best) continue;
+      if (Math.abs(scale.xPx(scale.points[i].x) - mx) > bestDist + 1) continue;
+      const dy = Math.abs(scale.yPx(scale.points[i].y) - my);
+      if (dy < bestYDist) { bestYDist = dy; bestY = i; }
+    }
+    const p = scale.points[bestY];
+
+    // NOTE: 收集同日期同成绩的所有点（如同场并列 WR：Szymon + Anonymous 都是 19）
+    const sameGroup = (scale.points as DataPoint[]).filter(
+      (pt: DataPoint) => pt.x === p.x && pt.y === p.y
+    );
+    let html = `<b>${p.label}</b> `;
+    html += sameGroup
+      .map((pt: DataPoint) => {
+        let line = pt.person || '';
+        if (pt.imp) line += ` <span style="color:#6ee7b7">↓${pt.imp}</span>`;
+        return line;
+      })
+      .filter(Boolean)
+      .join('<br>');
     tipEl.innerHTML = html;
     tipEl.style.display = 'block';
     const tipW = tipEl.offsetWidth || 100;
