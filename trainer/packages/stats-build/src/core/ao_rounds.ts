@@ -280,11 +280,20 @@ function buildRanking(computed: ComputedEntry[], eventId: string): unknown[][] {
     });
 }
 
+// NOTE: 辅助——安全提取 Date 时间戳（mysql2 返回 Date 对象或 ISO 字符串）
+function toTimestamp(d: unknown): number {
+  if (d instanceof Date) return d.getTime();
+  return new Date(String(d)).getTime();
+}
+
 // NOTE: WR 历史——按日期正序扫描，只保留刷新最小值的记录
 function buildWrHistory(computed: ComputedEntry[], eventId: string): unknown[][] {
+  // NOTE: ⚠️ mysql2 返回 JS Date 对象，String(Date) 产生 "Mon Apr 01 2022..."
+  // 不可用 localeCompare 排序（按首字母 Apr/Aug/Dec 乱序）。
+  // 改用 formatDate 输出 ISO "YYYY-MM-DD" 后再比较。
   computed.sort((a, b) => {
-    const da = String(a.meta['start_date']);
-    const db = String(b.meta['start_date']);
+    const da = formatDate(a.meta['start_date']);
+    const db = formatDate(b.meta['start_date']);
     return da.localeCompare(db) || b.metric - a.metric;
   });
 
@@ -310,15 +319,14 @@ function buildWrHistory(computed: ComputedEntry[], eventId: string): unknown[][]
       gainStr = `${((prev - c.metric) / prev * 100).toFixed(1)}%`;
     }
 
-    // NOTE: 保持天数
+    // NOTE: 天数——直接用 Date 原生 getTime() 避免 String(Date) 问题
     let daysStr: string;
+    const currTs = toTimestamp(c.meta['start_date']);
     if (i < wrRecords.length - 1) {
-      const nextDate = new Date(String(wrRecords[i + 1].meta['start_date']));
-      const currDate = new Date(String(c.meta['start_date']));
-      daysStr = String(Math.round((nextDate.getTime() - currDate.getTime()) / 86400000));
+      const nextTs = toTimestamp(wrRecords[i + 1].meta['start_date']);
+      daysStr = String(Math.round((nextTs - currTs) / 86400000));
     } else {
-      const currDate = new Date(String(c.meta['start_date']));
-      daysStr = String(Math.round((Date.now() - currDate.getTime()) / 86400000));
+      daysStr = String(Math.round((Date.now() - currTs) / 86400000));
     }
 
     const dateStr = formatDate(c.meta['start_date']);
