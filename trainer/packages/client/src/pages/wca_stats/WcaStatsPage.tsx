@@ -791,21 +791,27 @@ function MetricPanelsView({ metricPanels, metricGroups, searchTerm, isZh, select
   }, [metricHasData, activeMetric, metricPanels]);
 
   const metric = metricPanels[activeMetric];
-  const currentLabel = isZh ? metric?.labelZh : metric?.labelEn;
+  const METRIC_LABEL_OVERRIDE: Record<string, string> = { 'Ao3': 'Mo3' };
+  const _labelEn = metric?.labelEn ?? '';
+  const currentLabel = METRIC_LABEL_OVERRIDE[_labelEn] ?? _labelEn;
 
   // NOTE: 获取所有可选指标列表（metricGroups 模式或直接列表）
   const allMetricItems: Array<{ idx: number; label: string; disabled: boolean }> = useMemo(() => {
+    // NOTE: metricPanel label 统一用英文（Ao5/Ao12 等是技术缩写，无需翻译）
+    const LABEL_OVERRIDE: Record<string, string> = { 'Ao3': 'Mo3' };
+    const resolveLabel = (mp: MetricPanel) => LABEL_OVERRIDE[mp.labelEn] ?? mp.labelEn;
+
     if (metricGroups) {
       return metricGroups.flatMap(g => g.items).map(itemId => {
         const idx = metricPanels.findIndex(mp => mp.id === itemId);
         if (idx === -1) return null;
         const mp = metricPanels[idx];
-        return { idx, label: isZh ? mp.labelZh : mp.labelEn, disabled: metricHasData.get(idx) === false };
+        return { idx, label: resolveLabel(mp), disabled: metricHasData.get(idx) === false };
       }).filter(Boolean) as Array<{ idx: number; label: string; disabled: boolean }>;
     }
     return metricPanels.map((mp, i) => ({
       idx: i,
-      label: isZh ? mp.labelZh : mp.labelEn,
+      label: resolveLabel(mp),
       disabled: metricHasData.get(i) === false,
     }));
   }, [metricGroups, metricPanels, metricHasData, isZh]);
