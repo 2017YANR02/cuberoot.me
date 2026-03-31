@@ -343,7 +343,7 @@ function SectionsView({ header, sections, searchTerm, isZh, selectedEvent }: {
   }, [sections, selectedEvent, selectedMetric]);
 
   // NOTE: 当项目选择器选中后只剩一个 section 时，标题冗余（对标 Legacy 删除 h3）
-  const hideTitle = !!selectedEvent && visibleSections.length === 1;
+  const hideTitle = visibleSections.length === 1;
 
   return (
     <div className="wca-stats-sections">
@@ -996,18 +996,7 @@ export default function WcaStatsPage() {
         />
       )}
 
-      {/* NOTE: rows 和 sections 模式显示搜索栏 */}
-      {(renderMode === 'rows' || renderMode === 'sections') && (
-        <div className="wca-stats-toolbar">
-          <input
-            type="text"
-            className="wca-stats-search"
-            placeholder={isZh ? '搜索...' : 'Search...'}
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-          />
-        </div>
-      )}
+
 
       {/* NOTE: 根据渲染模式选择对应组件 */}
       {renderMode === 'rows' && data.rows && (
