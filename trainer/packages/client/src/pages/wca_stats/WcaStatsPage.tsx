@@ -227,6 +227,9 @@ function renderCell(value: unknown, columnKey?: string, isZh?: boolean): React.R
   return <>{result}</>;
 }
 
+// NOTE: 隐藏国家列——国旗已在 Person 列内嵌显示，单独的 Country 列冗余
+const HIDDEN_COLS = new Set(['country', 'country_id']);
+
 // NOTE: 通用表格组件——在多处复用
 function StatsTable({ header, rows, searchTerm, isZh }: {
   header: StatHeader[];
@@ -247,7 +250,7 @@ function StatsTable({ header, rows, searchTerm, isZh }: {
       <table className="wca-stats-table">
         <thead>
           <tr>
-            {header.map(h => (
+            {header.map(h => HIDDEN_COLS.has(h.key) ? null : (
               <th key={h.key} style={{ textAlign: h.align }}>
                 {isZh ? h.labelZh : h.label}
               </th>
@@ -259,6 +262,7 @@ function StatsTable({ header, rows, searchTerm, isZh }: {
             <tr key={i}>
               {row.map((cell, j) => {
                 const colKey = header[j]?.key ?? '';
+                if (HIDDEN_COLS.has(colKey)) return null;
                 const isCountryCol = colKey === 'country';
                 const flagCls = isCountryCol ? countryFlagClass(String(cell)) : '';
                 return (
@@ -553,16 +557,17 @@ function dedupRows(rows: unknown[][], header: StatHeader[]): unknown[][] {
 
 // NOTE: Panels 渲染——Tab 切换（如 Ranking / History）
 // 增强：检测 AoX 面板，自动集成分布图（ranking）和折线图（history）
-function PanelsView({ panels, searchTerm, isZh, selectedEvent }: {
+function PanelsView({ panels, searchTerm, isZh, selectedEvent, activePanel, onSetActivePanel }: {
   panels: StatPanel[];
   searchTerm: string;
   isZh: boolean;
   selectedEvent?: string;
+  activePanel: number;
+  onSetActivePanel: (idx: number) => void;
 }) {
-  const [activePanel, setActivePanel] = useState(0);
   // NOTE: Dedup 开关——默认 ON（与 Legacy 一致）
   const [dedup, setDedup] = useState(true);
-  const panel = panels[activePanel];
+  const panel = panels[activePanel] ?? panels[0];
   if (!panel) return null;
 
   // NOTE: 检测是否为 AoX 数据——ranking panel 含 _type:'solves' 的 Details 列
@@ -617,7 +622,7 @@ function PanelsView({ panels, searchTerm, isZh, selectedEvent }: {
           <button
             key={p.id}
             className={`wca-stats-tab wca-stats-panel-tab ${i === activePanel ? 'active' : ''}`}
-            onClick={() => setActivePanel(i)}
+            onClick={() => onSetActivePanel(i)}
           >
             {isZh ? p.labelZh : p.labelEn}
           </button>
@@ -699,11 +704,13 @@ function AoxSectionsView({ header, sections, isZh, selectedEvent }: {
 
 // NOTE: SourcePanels 渲染——三级嵌套（如 wr_newcomer：metric → source → tab）
 // 对标 Legacy stats_ui.ts switchSource() + source-panel 切换
-function SourcePanelsView({ sourcePanels, searchTerm, isZh, selectedEvent }: {
+function SourcePanelsView({ sourcePanels, searchTerm, isZh, selectedEvent, activePanel, onSetActivePanel }: {
   sourcePanels: SourcePanel[];
   searchTerm: string;
   isZh: boolean;
   selectedEvent?: string;
+  activePanel: number;
+  onSetActivePanel: (idx: number, panels: StatPanel[]) => void;
 }) {
   const [activeSource, setActiveSource] = useState(0);
   const source = sourcePanels[activeSource];
@@ -725,7 +732,8 @@ function SourcePanelsView({ sourcePanels, searchTerm, isZh, selectedEvent }: {
       </div>
       {/* NOTE: 当前 source 的 Ranking/History Panels */}
       {source && (
-        <PanelsView panels={source.panels} searchTerm={searchTerm} isZh={isZh} selectedEvent={selectedEvent} />
+        <PanelsView panels={source.panels} searchTerm={searchTerm} isZh={isZh} selectedEvent={selectedEvent}
+          activePanel={activePanel} onSetActivePanel={(idx) => onSetActivePanel(idx, source.panels)} />
       )}
     </>
   );
@@ -733,14 +741,17 @@ function SourcePanelsView({ sourcePanels, searchTerm, isZh, selectedEvent }: {
 
 // NOTE: MetricPanels 渲染——多级面板（指标选择 + Ranking/History Tab）
 // selectedEvent 可选：有值时计算每个 metric 是否有该项目的数据，无数据的 metric 灰掉
-function MetricPanelsView({ metricPanels, metricGroups, searchTerm, isZh, selectedEvent }: {
+function MetricPanelsView({ metricPanels, metricGroups, searchTerm, isZh, selectedEvent, activeMetric, onSetActiveMetric, onSetActivePanel, activePanel }: {
   metricPanels: MetricPanel[];
   metricGroups?: MetricGroup[];
   searchTerm: string;
   isZh: boolean;
   selectedEvent?: string;
+  activeMetric: number;
+  onSetActiveMetric: (idx: number) => void;
+  onSetActivePanel: (idx: number, panels: StatPanel[]) => void;
+  activePanel: number;
 }) {
-  const [activeMetric, setActiveMetric] = useState(0);
   const [pillOpen, setPillOpen] = useState(false);
   const pillRef = React.useRef<HTMLDivElement>(null);
 
@@ -778,28 +789,31 @@ function MetricPanelsView({ metricPanels, metricGroups, searchTerm, isZh, select
   // 回退优先级：single > average > 第一个有数据的
   useEffect(() => {
     if (metricHasData.get(activeMetric) === false) {
-      // 优先找 single
       const singleIdx = metricPanels.findIndex((mp, i) => mp.id === 'single' && metricHasData.get(i));
-      if (singleIdx !== -1) { setActiveMetric(singleIdx); return; }
-      // 其次找 average
+      if (singleIdx !== -1) { onSetActiveMetric(singleIdx); return; }
       const avgIdx = metricPanels.findIndex((mp, i) => mp.id === 'average' && metricHasData.get(i));
-      if (avgIdx !== -1) { setActiveMetric(avgIdx); return; }
-      // 兜底第一个有数据的
+      if (avgIdx !== -1) { onSetActiveMetric(avgIdx); return; }
       const firstValid = metricPanels.findIndex((_, i) => metricHasData.get(i));
-      if (firstValid !== -1) setActiveMetric(firstValid);
+      if (firstValid !== -1) onSetActiveMetric(firstValid);
     }
-  }, [metricHasData, activeMetric, metricPanels]);
+  }, [metricHasData, activeMetric, metricPanels, onSetActiveMetric]);
 
   const metric = metricPanels[activeMetric];
   const METRIC_LABEL_OVERRIDE: Record<string, string> = { 'Ao3': 'Mo3' };
   const _labelEn = metric?.labelEn ?? '';
-  const currentLabel = METRIC_LABEL_OVERRIDE[_labelEn] ?? _labelEn;
+  // NOTE: override 优先；无 override 时走正常中英文逻辑
+  const currentLabel = METRIC_LABEL_OVERRIDE[_labelEn] ?? (isZh ? metric?.labelZh : _labelEn) ?? _labelEn;
 
   // NOTE: 获取所有可选指标列表（metricGroups 模式或直接列表）
   const allMetricItems: Array<{ idx: number; label: string; disabled: boolean }> = useMemo(() => {
-    // NOTE: metricPanel label 统一用英文（Ao5/Ao12 等是技术缩写，无需翻译）
-    const LABEL_OVERRIDE: Record<string, string> = { 'Ao3': 'Mo3' };
-    const resolveLabel = (mp: MetricPanel) => LABEL_OVERRIDE[mp.labelEn] ?? mp.labelEn;
+    // NOTE: 只有明确列在 LABEL_OVERRIDE 里的 key 才跳过翻译（如 Ao3→Mo3）
+    // Ao5/Ao12 等 average_of 系列也在此强制用英文；其他统计（Single/Average...）正常走 isZh
+    const LABEL_OVERRIDE: Record<string, string> = {
+      'Ao3': 'Mo3', 'Ao5': 'Ao5', 'Ao12': 'Ao12',
+      'Ao25': 'Ao25', 'Ao50': 'Ao50', 'Ao100': 'Ao100', 'Ao1000': 'Ao1000',
+    };
+    const resolveLabel = (mp: MetricPanel) =>
+      LABEL_OVERRIDE[mp.labelEn] ?? (isZh ? mp.labelZh : mp.labelEn);
 
     if (metricGroups) {
       return metricGroups.flatMap(g => g.items).map(itemId => {
@@ -825,7 +839,7 @@ function MetricPanelsView({ metricPanels, metricGroups, searchTerm, isZh, select
             <button
               key={idx}
               className={`wca-stats-tab${idx === activeMetric ? ' active' : ''}${disabled ? ' disabled' : ''}`}
-              onClick={disabled ? undefined : () => setActiveMetric(idx)}
+              onClick={disabled ? undefined : () => onSetActiveMetric(idx)}
             >
               {label}
             </button>
@@ -842,7 +856,7 @@ function MetricPanelsView({ metricPanels, metricGroups, searchTerm, isZh, select
                   key={idx}
                   className={`wca-stats-metric-option${idx === activeMetric ? ' active' : ''}${disabled ? ' disabled' : ''}`}
                   onClick={() => {
-                    if (!disabled) { setActiveMetric(idx); setPillOpen(false); }
+                    if (!disabled) { onSetActiveMetric(idx); setPillOpen(false); }
                   }}
                 >
                   {label}
@@ -855,12 +869,34 @@ function MetricPanelsView({ metricPanels, metricGroups, searchTerm, isZh, select
 
       {/* NOTE: 选中指标的渲染——支持 2 级（panels）和 3 级（sourcePanels）结构 */}
       {metric && metric.sourcePanels ? (
-        <SourcePanelsView sourcePanels={metric.sourcePanels} searchTerm={searchTerm} isZh={isZh} selectedEvent={selectedEvent} />
+        <SourcePanelsView sourcePanels={metric.sourcePanels} searchTerm={searchTerm} isZh={isZh} selectedEvent={selectedEvent}
+          activePanel={activePanel} onSetActivePanel={onSetActivePanel} />
       ) : metric && metric.panels ? (
-        <PanelsView panels={metric.panels} searchTerm={searchTerm} isZh={isZh} selectedEvent={selectedEvent} />
+        <PanelsView panels={metric.panels} searchTerm={searchTerm} isZh={isZh} selectedEvent={selectedEvent}
+          activePanel={activePanel} onSetActivePanel={(idx) => onSetActivePanel(idx, metric.panels!)} />
       ) : null}
     </div>
   );
+}
+
+// NOTE: hash 辅助——读写 #event=333&type=ranking&metric=single
+function parseHash(): Record<string, string> {
+  const h = window.location.hash.slice(1);
+  return Object.fromEntries(h.split('&').filter(Boolean).map(s => s.split('=')));
+}
+function setHashParam(key: string, value: string) {
+  const p = parseHash();
+  p[key] = value;
+  const str = Object.entries(p).map(([k, v]) => `${k}=${v}`).join('&');
+  window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}#${str}`);
+}
+function clearHashParam(key: string) {
+  const p = parseHash();
+  delete p[key];
+  const str = Object.entries(p).map(([k, v]) => `${k}=${v}`).join('&');
+  const suffix = str ? `#${str}` : window.location.search;
+  window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}${str ? '#' + str : ''}`);
+  void suffix; // suppress lint
 }
 
 export default function WcaStatsPage() {
@@ -871,6 +907,9 @@ export default function WcaStatsPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedEvent, setSelectedEvent] = useState<string>('');
+  // NOTE: activePanel(ranking/history) 和 activeMetric(single/average) 提升到此处以便 hash 同步
+  const [activePanel, setActivePanel] = useState(0);
+  const [activeMetric, setActiveMetric] = useState(0);
 
   const isZh = i18n.language === 'zh';
 
@@ -888,13 +927,15 @@ export default function WcaStatsPage() {
     loadFlagData().then(v => { if (v !== flagVer) setFlagVer(v); });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // NOTE: 从 /stats/data/<statId>.json 加载数据
+  // NOTE: 从 /stats/data/<statId>.json 加载数据，切换时重置所有子状态
   useEffect(() => {
     if (!statId) return;
     setLoading(true);
     setError(null);
     setSearchTerm('');
-    setSelectedEvent(''); // NOTE: 切换统计时重置选中项目
+    setSelectedEvent('');
+    setActivePanel(0);
+    setActiveMetric(0);
 
     fetch(`/stats/data/${statId}.json`)
       .then(res => {
@@ -904,12 +945,44 @@ export default function WcaStatsPage() {
       .then((json: StatData) => {
         setData(json);
         setLoading(false);
+        // NOTE: 数据加载完成后从 hash 恢复状态
+        const h = parseHash();
+        if (h.type) {
+          // 找 panel index by id
+          const panels = json.panels ?? json.metricPanels?.[0]?.panels ?? [];
+          const idx = panels.findIndex((p: StatPanel) => p.id === h.type);
+          if (idx !== -1) setActivePanel(idx);
+        }
+        if (h.metric && json.metricPanels) {
+          const idx = json.metricPanels.findIndex((mp: MetricPanel) => mp.id === h.metric);
+          if (idx !== -1) setActiveMetric(idx);
+        }
       })
       .catch(err => {
         setError(err.message);
         setLoading(false);
       });
   }, [statId]);
+
+  // NOTE: selectedEvent 变化时写入 hash
+  const handleSelectEvent = useCallback((ev: string) => {
+    setSelectedEvent(ev);
+    if (ev) setHashParam('event', ev); else clearHashParam('event');
+  }, []);
+
+  // NOTE: activePanel 变化时写入 hash（只在数据加载完成后）
+  const handleSetActivePanel = useCallback((idx: number, panels: StatPanel[]) => {
+    setActivePanel(idx);
+    const id = panels[idx]?.id;
+    if (id) setHashParam('type', id);
+  }, []);
+
+  // NOTE: activeMetric 变化时写入 hash
+  const handleSetActiveMetric = useCallback((idx: number, metricPanels: MetricPanel[]) => {
+    setActiveMetric(idx);
+    const id = metricPanels[idx]?.id;
+    if (id) setHashParam('metric', id);
+  }, []);
 
   // NOTE: 判断当前数据使用哪种渲染模式
   const renderMode = useMemo(() => {
@@ -950,12 +1023,17 @@ export default function WcaStatsPage() {
     return ids;
   }, [data]);
 
-  // NOTE: 默认选中第一个有数据的项目
+  // NOTE: 默认选中第一个有数据的项目（优先用 hash #event=xxx）
   useEffect(() => {
     if (availableEvents.size > 0 && !selectedEvent) {
-      // NOTE: 按标准顺序找第一个有数据的项目
-      const first = ALL_EVENT_IDS.find((id: string) => availableEvents.has(id));
-      if (first) setSelectedEvent(first);
+      const hashEvent = parseHash().event;
+      const initial = (hashEvent && availableEvents.has(hashEvent))
+        ? hashEvent
+        : ALL_EVENT_IDS.find((id: string) => availableEvents.has(id));
+      if (initial) {
+        setSelectedEvent(initial);
+        setHashParam('event', initial);
+      }
     }
   }, [availableEvents, selectedEvent]);
 
@@ -997,7 +1075,7 @@ export default function WcaStatsPage() {
         <WcaEventSelector
           availableEvents={availableEvents}
           selectedEvent={selectedEvent}
-          onSelect={setSelectedEvent}
+          onSelect={handleSelectEvent}
           isZh={isZh}
         />
       )}
@@ -1025,6 +1103,8 @@ export default function WcaStatsPage() {
           searchTerm={searchTerm}
           isZh={isZh}
           selectedEvent={showEventSelector ? selectedEvent : undefined}
+          activePanel={activePanel}
+          onSetActivePanel={(idx) => handleSetActivePanel(idx, data.panels!)}
         />
       )}
 
@@ -1035,6 +1115,10 @@ export default function WcaStatsPage() {
           searchTerm={searchTerm}
           isZh={isZh}
           selectedEvent={showEventSelector ? selectedEvent : undefined}
+          activeMetric={activeMetric}
+          onSetActiveMetric={(idx) => handleSetActiveMetric(idx, data.metricPanels!)}
+          onSetActivePanel={(idx, panels) => handleSetActivePanel(idx, panels)}
+          activePanel={activePanel}
         />
       )}
       {/* NOTE: 语言切换按钮——固定右下角（对标 Legacy i18n.js toggle） */}
