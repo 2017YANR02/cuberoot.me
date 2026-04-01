@@ -3,7 +3,7 @@
 // 333mbf：从 DB 计算 Mo3，WCA 编码 0DDTTTTTMM，DD/TTTTT/MM 分别取均值（ROUND）后拼接
 // 333mbo：历史上仅 1 人完成过 3 轮，硬编码数据
 // 此类同时作为独立统计页面和数据提供者（供 WrAverageHistory 委托）
-import { formatDate } from '../core/format_date.js';
+import { formatDate, calcDays, filterWrHistory } from '../core/format_date.js';
 import { Statistic } from '../core/statistic.js';
 import { EVENTS, headerZh, eventZh } from '../core/events.js';
 import { SolveTime } from '../core/solve_time.js';
@@ -115,22 +115,12 @@ export class MbfAverage extends Statistic {
     queryResults = null;
     if (global.gc) global.gc();
 
-    // NOTE: 按日期排序
-    computed.sort((a, b) => {
-      const da = String(a.row['start_date']);
-      const db = String(b.row['start_date']);
-      return da.localeCompare(db);
-    });
-
-    // WR history：按日期正序扫描，值越小越好，保留刷新最小值的记录
-    let minSoFar = Infinity;
-    const wrRecords = computed.filter(c => {
-      if (c.metric <= minSoFar) {
-        minSoFar = c.metric;
-        return true;
-      }
-      return false;
-    });
+    // NOTE: filterWrHistory 内置日期排序 + <= minSoFar 过滤
+    const wrRecords = filterWrHistory(
+      computed,
+      c => c.row['start_date'],
+      c => c.metric,
+    );
 
     this._mbfHistory = wrRecords.map((c, i) => {
       const mo3Str = this.formatMo3(c.metric);
@@ -142,15 +132,8 @@ export class MbfAverage extends Statistic {
         gainStr = `+${currPts - prevPts} pts`;
       }
 
-      let daysStr: string;
-      if (i < wrRecords.length - 1) {
-        const nextDate = new Date(String(wrRecords[i + 1].row['start_date']));
-        const currDate = new Date(String(c.row['start_date']));
-        daysStr = String(Math.round((nextDate.getTime() - currDate.getTime()) / 86400000));
-      } else {
-        const currDate = new Date(String(c.row['start_date']));
-        daysStr = String(Math.round((Date.now() - currDate.getTime()) / 86400000));
-      }
+      const nextDateVal = i < wrRecords.length - 1 ? wrRecords[i + 1].row['start_date'] : null;
+      const daysStr = calcDays(c.row['start_date'], nextDateVal);
 
       const dateStr = formatDate(c.row['start_date']);
       const details = [c.v1, c.v2, c.v3]
