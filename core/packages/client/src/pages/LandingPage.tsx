@@ -458,6 +458,8 @@ export default function LandingPage() {
       <div className="footer">
         <span>v1.4.1</span>
         <a href="https://github.com/RuiminYan/ruiminyan.github.io" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <a href="/blog/">{lang === 'zh' ? '博客' : 'Blog'}</a>
+        <a href="/legacy/">{lang === 'zh' ? '旧版工具' : 'Legacy Tools'}</a>
         <button className="lang-toggle" onClick={toggleLang}>
           <span className="globe-icon">🌐</span>
           <span className="lang-label">{lang === 'zh' ? 'English' : '中文'}</span>
