@@ -128,7 +128,7 @@ export const msToHumanReadable = (
 
 // --- SVG 图片路径 ---
 
-const BASE = import.meta.env.BASE_URL; // Vite base: /app/
+const BASE = import.meta.env.BASE_URL; // Vite base: /
 
 /** OLL 组缩略图路径（如 H.svg） */
 export const getOllImg = (oll: string): string => {
