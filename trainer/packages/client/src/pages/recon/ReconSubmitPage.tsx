@@ -4,10 +4,12 @@
  */
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import type { ReconSolve } from '@cuberoot/shared';
 import { getRecon, addRecon, updateRecon, checkDuplicate, searchSolvers } from '../../utils/recon_api';
 import { computeAllStats } from '../../utils/recon_stats';
-import { parseTimeInput, formatTime, getEventDisplayName, t, RECORD_OPTIONS } from '../../utils/recon_utils';
+import { parseTimeInput, formatTime, getEventDisplayName, RECORD_OPTIONS } from '../../utils/recon_utils';
+import LangToggle from '../../components/LangToggle';
 import '../../recon.css';
 import './recon_submit.css';
 import CubeVirtualKeyboard from './components/CubeVirtualKeyboard';
@@ -22,6 +24,7 @@ export default function ReconSubmitPage() {
   const { editId } = useParams<{ editId: string }>();
   const isEditing = !!editId;
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [saving, setSaving] = useState(false);
   const [loadingEdit, setLoadingEdit] = useState(isEditing);
   // NOTE: solution textarea ref——虚拟键盘通过 ref 直接操作 DOM
@@ -139,10 +142,7 @@ export default function ReconSubmitPage() {
           excludeId: isEditing ? Number(editId) : undefined,
         });
         if (result.exists) {
-          setDupWarning(t(
-            `⚠️ 已存在相同复盘 (#${result.id})`,
-            `⚠️ Duplicate found (#${result.id})`,
-          ));
+          setDupWarning(`⚠️ Duplicate found (#${result.id})`);
         } else {
           setDupWarning('');
         }
@@ -163,7 +163,7 @@ export default function ReconSubmitPage() {
   // NOTE: 提交
   const handleSubmit = async () => {
     if (!form.event || !form.person) {
-      alert(t('请填写必填字段', 'Please fill required fields'));
+      alert(t('recon.fillRequired'));
       return;
     }
     setSaving(true);
@@ -207,8 +207,11 @@ export default function ReconSubmitPage() {
   return (
     <div className="recon-page">
       <div className="detail-header">
-        <Link to="/recon" className="detail-back">← {t('返回', 'Back')}</Link>
-        <h1>{isEditing ? t('编辑复盘', 'Edit Reconstruction') : t('添加复盘', 'Add Reconstruction')}</h1>
+        <div className="detail-header-nav">
+          <Link to="/recon" className="detail-back">← {t('common.back')}</Link>
+          <LangToggle />
+        </div>
+        <h1>{isEditing ? t('recon.editRecon') : t('recon.addRecon')}</h1>
       </div>
 
       {dupWarning && <div className="submit-warning">{dupWarning}</div>}
@@ -224,7 +227,7 @@ export default function ReconSubmitPage() {
             </select>
           </label>
           <label className="submit-field">
-            <span className="submit-label">{t('项目', 'Event')} *</span>
+            <span className="submit-label">{t('recon.event')} *</span>
             <select value={form.event} onChange={e => setField('event', e.target.value)}>
               {EVENTS.map(ev => (
                 <option key={ev} value={ev}>{getEventDisplayName(ev)}</option>
@@ -232,7 +235,7 @@ export default function ReconSubmitPage() {
             </select>
           </label>
           <label className="submit-field">
-            <span className="submit-label">{t('方法', 'Method')}</span>
+            <span className="submit-label">{t('recon.method')}</span>
             <select value={form.method} onChange={e => setField('method', e.target.value)}>
               {METHODS.map(m => <option key={m} value={m}>{m}</option>)}
             </select>
@@ -242,7 +245,7 @@ export default function ReconSubmitPage() {
         {/* 第二行：选手 */}
         <div className="submit-row">
           <div className="submit-field submit-field-wide">
-            <span className="submit-label">{t('选手', 'Solver')} *</span>
+            <span className="submit-label">{t('recon.solver')} *</span>
             <input
               type="text"
               value={solverQuery || form.person || ''}
@@ -250,7 +253,7 @@ export default function ReconSubmitPage() {
                 setSolverQuery(e.target.value);
                 if (!e.target.value) setField('person', '');
               }}
-              placeholder={t('搜索选手姓名或 WCA ID...', 'Search solver name or WCA ID...')}
+              placeholder={t('recon.searchSolver')}
             />
             {solverResults.length > 0 && (
               <ul className="submit-dropdown">
@@ -270,12 +273,12 @@ export default function ReconSubmitPage() {
         {/* 第三行：比赛 + 轮次 + 第 N 把 */}
         <div className="submit-row">
           <label className="submit-field submit-field-wide">
-            <span className="submit-label">{t('比赛', 'Competition')}</span>
+            <span className="submit-label">{t('recon.competition')}</span>
             <input type="text" value={form.comp || ''} onChange={e => setField('comp', e.target.value)}
-              placeholder={t('比赛名称', 'Competition name')} />
+              placeholder={t('recon.compName')} />
           </label>
           <label className="submit-field">
-            <span className="submit-label">{t('轮次', 'Round')}</span>
+            <span className="submit-label">{t('recon.round')}</span>
             <select value={form.round} onChange={e => setField('round', e.target.value)}>
               {ROUNDS.map(r => <option key={r} value={r}>{r === 'f' ? 'Final' : r === 'sf' ? 'Semi' : r === 'cf' ? 'Combined' : `Round ${r}`}</option>)}
             </select>
@@ -294,12 +297,12 @@ export default function ReconSubmitPage() {
               placeholder="e.g. WC2025" />
           </label>
           <label className="submit-field">
-            <span className="submit-label">{t('国家', 'Country')}</span>
+            <span className="submit-label">{t('recon.country')}</span>
             <input type="text" value={form.country || ''} onChange={e => setField('country', e.target.value)}
               placeholder="ISO2 (cn/us)" maxLength={2} />
           </label>
           <label className="submit-field">
-            <span className="submit-label">{t('分组', 'Group')}</span>
+            <span className="submit-label">{t('recon.group')}</span>
             <input type="text" value={form.groupId || ''} onChange={e => setField('groupId', e.target.value)}
               placeholder="A/B/C" maxLength={1} />
           </label>
@@ -308,17 +311,17 @@ export default function ReconSubmitPage() {
         {/* 第四行：成绩 + 平均 + 日期 */}
         <div className="submit-row">
           <label className="submit-field">
-            <span className="submit-label">{t('成绩', 'Time')}</span>
+            <span className="submit-label">{t('recon.time')}</span>
             <input type="text" value={timeInput} onChange={e => setTimeInput(e.target.value)}
               placeholder="12.34 / 1:12.34" />
           </label>
           <label className="submit-field">
-            <span className="submit-label">{t('平均', 'Average')}</span>
+            <span className="submit-label">{t('recon.average')}</span>
             <input type="text" value={avgInput} onChange={e => setAvgInput(e.target.value)}
               placeholder="Avg" />
           </label>
           <label className="submit-field">
-            <span className="submit-label">{t('日期', 'Date')}</span>
+            <span className="submit-label">{t('recon.date')}</span>
             <input type="date" value={form.date || ''} onChange={e => setField('date', e.target.value)} />
           </label>
         </div>
@@ -343,18 +346,18 @@ export default function ReconSubmitPage() {
 
         {/* 打乱 */}
         <label className="submit-field submit-block">
-          <span className="submit-label">{t('打乱', 'Scramble')}</span>
+          <span className="submit-label">{t('recon.scramble')}</span>
           <textarea
             rows={2}
             value={form.wcaScramble || ''}
             onChange={e => setField('wcaScramble', e.target.value)}
-            placeholder={t('WCA 官方打乱', 'WCA scramble')}
+            placeholder={t('recon.wcaScramble')}
           />
         </label>
 
         {/* 解法 */}
         <label className="submit-field submit-block">
-          <span className="submit-label">{t('解法', 'Solution')} *</span>
+          <span className="submit-label">{t('recon.solution')} *</span>
           <textarea
             ref={solutionRef}
             rows={4}
@@ -396,7 +399,7 @@ export default function ReconSubmitPage() {
         {/* 附加信息 */}
         <div className="submit-row">
           <label className="submit-field submit-field-wide">
-            <span className="submit-label">{t('视频链接', 'Video URL')}</span>
+            <span className="submit-label">{t('recon.videoUrl')}</span>
             <input type="text" value={form.videoUrl || ''} onChange={e => setField('videoUrl', e.target.value)}
               placeholder="https://www.youtube.com/watch?v=..." />
           </label>
@@ -404,11 +407,11 @@ export default function ReconSubmitPage() {
 
         <div className="submit-row">
           <label className="submit-field">
-            <span className="submit-label">{t('魔方型号', 'Cube')}</span>
+            <span className="submit-label">{t('recon.cube')}</span>
             <input type="text" value={form.cube || ''} onChange={e => setField('cube', e.target.value)} />
           </label>
           <label className="submit-field submit-field-wide">
-            <span className="submit-label">{t('备注', 'Note')}</span>
+            <span className="submit-label">{t('recon.note')}</span>
             <input type="text" value={form.note || ''} onChange={e => setField('note', e.target.value)} />
           </label>
         </div>
@@ -416,17 +419,17 @@ export default function ReconSubmitPage() {
         {/* 复盘者信息 */}
         <div className="submit-row">
           <label className="submit-field">
-            <span className="submit-label">{t('复盘者', 'Reconstructor')}</span>
+            <span className="submit-label">{t('recon.reconstructor')}</span>
             <input type="text" value={form.reconer || ''} onChange={e => setField('reconer', e.target.value)}
-              placeholder={t('复盘者姓名', 'Reconstructor name')} />
+              placeholder={t('recon.reconName')} />
           </label>
           <label className="submit-field">
-            <span className="submit-label">{t('复盘者 WCA ID', 'Recon WCA ID')}</span>
+            <span className="submit-label">{t('recon.reconWcaId')}</span>
             <input type="text" value={form.reconerId || ''} onChange={e => setField('reconerId', e.target.value)}
               placeholder="2019XXXX01" />
           </label>
           <label className="submit-field">
-            <span className="submit-label">{t('复盘日期', 'Recon Date')}</span>
+            <span className="submit-label">{t('recon.reconDate')}</span>
             <input type="date" value={form.reconDate || ''} onChange={e => setField('reconDate', e.target.value)} />
           </label>
         </div>
@@ -435,13 +438,13 @@ export default function ReconSubmitPage() {
         <div className="submit-actions">
           <button className="submit-btn submit-btn-primary" onClick={handleSubmit} disabled={saving}>
             {saving
-              ? t('提交中...', 'Submitting...')
+              ? t('recon.submitting')
               : isEditing
-                ? t('保存修改', 'Save Changes')
-                : t('提交复盘', 'Submit Reconstruction')}
+                ? t('recon.saveChanges')
+                : t('recon.submitRecon')}
           </button>
           <Link to="/recon" className="submit-btn submit-btn-cancel">
-            {t('取消', 'Cancel')}
+            {t('recon.cancel')}
           </Link>
         </div>
       </div>

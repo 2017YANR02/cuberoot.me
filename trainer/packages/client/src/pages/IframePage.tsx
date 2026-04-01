@@ -14,8 +14,7 @@ interface IframePageProps {
 }
 
 export default function IframePage({ src, title }: IframePageProps) {
-  const { i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh');
+  const { t } = useTranslation();
 
   return (
     <div style={{
@@ -45,7 +44,7 @@ export default function IframePage({ src, title }: IframePageProps) {
             gap: 4,
           }}
         >
-          ← {isZh ? '返回首页' : 'Back'}
+          ← {t('common.backToHome')}
         </Link>
         <span style={{ color: '#9aa0a6', fontSize: 14 }}>{title}</span>
       </div>

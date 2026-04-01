@@ -4,15 +4,18 @@
  */
 import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useReconStore } from '../../stores/recon_store';
 import type { SortKey } from '../../stores/recon_store';
 import type { ReconSolve } from '@cuberoot/shared';
 import { useAuthStore } from '../../stores/auth_store';
 import {
-  flagClass, displaySolverName, t,
+  flagClass, displaySolverName,
   formatResult, formatAvg, formatAoXR, formatRound,
   formatRecord, wcaPersonUrl, wcaCompUrl,
 } from '../../utils/recon_utils';
+import { compNameZh, loadFlagData, flagDataVersion } from '../../utils/country_flags';
+import LangToggle from '../../components/LangToggle';
 import '../../recon.css';
 
 // ── 纪录 Badge 组件 ──
@@ -28,32 +31,41 @@ function RecordBadge({ record }: { record: string | undefined }) {
 
 interface Column {
   key: SortKey | '';
-  label: string;
+  labelKey: string;
   className?: string;
   sortable: boolean;
 }
 
 // NOTE: 完全对齐原版列顺序：Single→Solver→Date→Comp→Rnd#→Avg→AoXR→Result→STM→TPS→Event→Method→#
+// 使用 labelKey 引用 i18n key；无翻译的列用空字符串
 const COLUMNS: Column[] = [
-  { key: 'rawTime', label: 'Single', className: 'col-dsingle', sortable: true },
-  { key: 'person', label: t('选手', 'Solver'), className: 'col-solver', sortable: true },
-  { key: 'date', label: t('日期', 'Date'), className: 'col-date', sortable: true },
-  { key: 'comp', label: t('比赛', 'Competition'), className: 'col-comp', sortable: true },
-  { key: 'round', label: 'Rnd#', className: 'col-round', sortable: true },
-  { key: 'average', label: 'Avg', className: 'col-avg', sortable: true },
-  { key: 'aoType', label: 'AoXR', className: 'col-aoxr', sortable: true },
-  { key: 'result', label: 'Result', className: 'col-single mono', sortable: true },
-  { key: 'stm', label: 'STM', className: 'col-stm mono', sortable: true },
-  { key: 'tps', label: 'TPS', className: 'col-tps mono', sortable: true },
-  { key: 'event', label: t('项目', 'Event'), className: 'col-event', sortable: true },
-  { key: 'method', label: t('方法', 'Method'), className: 'col-method', sortable: true },
-  { key: 'id', label: '#', className: 'col-idx', sortable: true },
+  { key: 'rawTime', labelKey: '', className: 'col-dsingle', sortable: true },
+  { key: 'person', labelKey: 'recon.solver', className: 'col-solver', sortable: true },
+  { key: 'date', labelKey: 'recon.date', className: 'col-date', sortable: true },
+  { key: 'comp', labelKey: 'recon.competition', className: 'col-comp', sortable: true },
+  { key: 'round', labelKey: '', className: 'col-round', sortable: true },
+  { key: 'average', labelKey: '', className: 'col-avg', sortable: true },
+  { key: 'aoType', labelKey: '', className: 'col-aoxr', sortable: true },
+  { key: 'result', labelKey: '', className: 'col-single mono', sortable: true },
+  { key: 'stm', labelKey: '', className: 'col-stm mono', sortable: true },
+  { key: 'tps', labelKey: '', className: 'col-tps mono', sortable: true },
+  { key: 'event', labelKey: 'recon.event', className: 'col-event', sortable: true },
+  { key: 'method', labelKey: 'recon.method', className: 'col-method', sortable: true },
+  { key: 'id', labelKey: '', className: 'col-idx', sortable: true },
 ];
+
+// NOTE: 不需要翻译的列使用固定英文标签
+const FIXED_LABELS: Record<string, string> = {
+  rawTime: 'Single', round: 'Rnd#', average: 'Avg', aoType: 'AoXR',
+  result: 'Result', stm: 'STM', tps: 'TPS', id: '#',
+};
 
 // ── 主组件 ──
 
 export default function ReconListPage() {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+  const isZh = i18n.language === 'zh';
   const {
     loading, error, filters,
     sortKey, sortDir,
@@ -66,6 +78,12 @@ export default function ReconListPage() {
   useEffect(() => {
     loadAll();
   }, [loadAll]);
+
+  // NOTE: 异步加载 compNameZh 映射
+  const [flagVer, setFlagVer] = useState(() => flagDataVersion());
+  useEffect(() => {
+    loadFlagData().then(v => { if (v !== flagVer) setFlagVer(v); });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const filtered = useMemo(() => getFilteredSolves(), [
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -171,6 +189,13 @@ export default function ReconListPage() {
     setShowNonWca(!showNonWca);
   }, [showWca, showNonWca]);
 
+  // ── 列标签（需要响应语言切换） ──
+
+  const getColumnLabel = useCallback((col: Column) => {
+    if (col.labelKey) return t(col.labelKey);
+    return FIXED_LABELS[col.key] ?? col.key;
+  }, [t]);
+
   // ── 渲染单元格内容 ──
 
   const renderCell = useCallback((col: Column, solve: ReconSolve) => {
@@ -188,7 +213,7 @@ export default function ReconListPage() {
       case 'person': {
         // NOTE: CSS 国旗 + 选手名（中英文切换），有 WCA ID 时为链接
         const fc = flagClass(solve.personCountry);
-        const name = displaySolverName(solve.person || '');
+        const name = displaySolverName(solve.person || '', isZh);
         if (solve.personId) {
           return (
             <>
@@ -210,9 +235,10 @@ export default function ReconListPage() {
         // NOTE: 截取 YYYY-MM-DD 部分
         return solve.date ? solve.date.slice(0, 10) : '';
       case 'comp': {
-        // NOTE: CSS 国旗 + 比赛名，有 compWcaId 时为链接
+        // NOTE: CSS 国旗 + 比赛名（中文模式查 compNameZh 映射），有 compWcaId 时为链接
         const fc = flagClass(solve.country);
-        const compName = solve.comp || '';
+        const rawName = solve.comp || '';
+        const displayName = isZh ? (compNameZh(rawName) || rawName) : rawName;
         if (solve.compWcaId) {
           return (
             <>
@@ -223,12 +249,12 @@ export default function ReconListPage() {
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
               >
-                {compName}
+                {displayName}
               </a>
             </>
           );
         }
-        return <>{fc && <span className={fc} />} {compName}</>;
+        return <>{fc && <span className={fc} />} {displayName}</>;
       }
       case 'round':
         return formatRound(solve.round, solve.solveNum);
@@ -277,25 +303,25 @@ export default function ReconListPage() {
       default:
         return '';
     }
-  }, [getDetailUrl, navigate]);
+  }, [getDetailUrl, navigate, isZh]);
 
   return (
     <div className="recon-page">
-      {/* NOTE: 原版标题 + 副标题 */}
-      <h1>{t('还原复盘', 'Solve Reconstructions')}</h1>
-      <p className="recon-subtitle">
-        {t(
-          '魔方比赛的还原复盘与分析',
-          'Competition solve reconstructions and analysis for top cubers',
-        )}
-      </p>
+      {/* NOTE: 标题行 — h1 + 语言切换（行业标准：header 右对齐） */}
+      <div className="recon-page-header">
+        <div>
+          <h1>{t('recon.title')}</h1>
+          <p className="recon-subtitle">{t('recon.subtitle')}</p>
+        </div>
+        <LangToggle />
+      </div>
 
       {/* 工具栏 */}
       <div className="recon-toolbar">
         <input
           className="recon-search"
           type="text"
-          placeholder={t('搜索选手、比赛、记录...', 'Search solver, competition, record...')}
+          placeholder={t('recon.search')}
           value={filters.search}
           onChange={(e) => setFilter('search', e.target.value)}
         />
@@ -305,10 +331,10 @@ export default function ReconListPage() {
             value={filters.solver}
             onChange={(e) => setFilter('solver', e.target.value)}
           >
-            <option value="">{t('全部选手', 'All Solvers')}</option>
+            <option value="">{t('recon.allSolvers')}</option>
             {solvers.map(({ name, count }) => (
               <option key={name} value={name}>
-                {displaySolverName(name)} ({count})
+                {displaySolverName(name, isZh)} ({count})
               </option>
             ))}
           </select>
@@ -316,7 +342,7 @@ export default function ReconListPage() {
             value={filters.method}
             onChange={(e) => setFilter('method', e.target.value)}
           >
-            <option value="">{t('全部方法', 'All Methods')}</option>
+            <option value="">{t('recon.allMethods')}</option>
             {methods.map(m => (
               <option key={m} value={m}>{m}</option>
             ))}
@@ -325,17 +351,17 @@ export default function ReconListPage() {
             value={filters.event}
             onChange={(e) => setFilter('event', e.target.value)}
           >
-            <option value="">{t('全部项目', 'All Events')}</option>
+            <option value="">{t('recon.allEvents')}</option>
             {events.map(ev => (
               <option key={ev} value={ev}>{ev}</option>
             ))}
           </select>
         </div>
         <span className="recon-stats-count">
-          {filtered.length} {t('条复盘', 'recons')}
+          {t('recon.count', { count: filtered.length })}
         </span>
         <Link to="/recon/submit" className="recon-add-btn">
-          + {t('添加', 'Add')}
+          + {t('recon.add')}
         </Link>
         <WcaLoginButton />
       </div>
@@ -357,7 +383,7 @@ export default function ReconListPage() {
       </div>
 
       {/* 加载状态 */}
-      {loading && <div className="recon-loading">Loading...</div>}
+      {loading && <div className="recon-loading">{t('common.loading')}</div>}
       {error && <div className="recon-error">⚠️ {error}</div>}
 
       {/* 表格 */}
@@ -369,7 +395,7 @@ export default function ReconListPage() {
                 <tr>
                   {COLUMNS.map((col) => (
                     <th
-                      key={col.label}
+                      key={col.key || col.labelKey}
                       className={`${col.className || ''} ${
                         col.sortable && col.key === sortKey
                           ? `sort-${sortDir}`
@@ -377,7 +403,7 @@ export default function ReconListPage() {
                       }`}
                       onClick={() => handleSort(col)}
                     >
-                      {col.label}
+                      {getColumnLabel(col)}
                     </th>
                   ))}
                 </tr>
@@ -397,7 +423,7 @@ export default function ReconListPage() {
                       const tipText = col.key === 'person' ? (solve.person || '') : col.key === 'comp' ? (solve.comp || '') : '';
                       return (
                         <td
-                          key={col.label}
+                          key={col.key || col.labelKey}
                           className={col.className || ''}
                           {...(needsTip ? { 'data-tip': tipText } : {})}
                           onMouseOver={needsTip ? (e) => {
@@ -427,7 +453,7 @@ export default function ReconListPage() {
           {filtered.length === 0 && (
             <div className="recon-empty">
               <div className="recon-empty-icon">📭</div>
-              <div>{t('没有找到匹配的复盘记录', 'No reconstructions found')}</div>
+              <div>{t('recon.noResults')}</div>
             </div>
           )}
 
@@ -435,17 +461,11 @@ export default function ReconListPage() {
           <div className="recon-pagination">
             {hasMore ? (
               <span className="recon-showing">
-                {t(
-                  `已显示 ${displayed.length} / ${filtered.length}`,
-                  `Showing ${displayed.length} of ${filtered.length}`,
-                )}
+                {t('recon.showing', { shown: displayed.length, total: filtered.length })}
               </span>
             ) : (
               <span className="recon-showing">
-                {t(
-                  `共 ${filtered.length} 条`,
-                  `${filtered.length} total`,
-                )}
+                {t('recon.total', { count: filtered.length })}
               </span>
             )}
           </div>
@@ -459,6 +479,7 @@ export default function ReconListPage() {
 
 /** WCA 登录按钮——未登录显示 Login，已登录显示头像+下拉菜单 */
 function WcaLoginButton() {
+  const { t } = useTranslation();
   const user = useAuthStore(s => s.user);
   const login = useAuthStore(s => s.login);
   const logout = useAuthStore(s => s.logout);
@@ -480,7 +501,7 @@ function WcaLoginButton() {
   if (!user) {
     return (
       <button className="recon-btn recon-login-btn" onClick={login}>
-        🔑 {t('WCA 登录', 'WCA Login')}
+        🔑 {t('recon.wcaLogin')}
       </button>
     );
   }
@@ -507,7 +528,7 @@ function WcaLoginButton() {
             className="recon-user-dropdown-item"
             onClick={() => { logout(); setMenuOpen(false); }}
           >
-            {t('退出登录', 'Logout')}
+            {t('recon.logout')}
           </button>
         </div>
       )}
