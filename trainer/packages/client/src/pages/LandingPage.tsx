@@ -342,7 +342,7 @@ export default function LandingPage() {
   }, [lang, i18n]);
 
   /** csTimer 链接：中文时追加 ?lang=zh-cn */
-  const cstimerHref = lang === 'zh' ? '/cstimer/?lang=zh-cn' : '/cstimer/';
+  const cstimerHref = lang === 'zh' ? '/legacy/cstimer/?lang=zh-cn' : '/legacy/cstimer/';
 
   return (
     <div className="landing-page">

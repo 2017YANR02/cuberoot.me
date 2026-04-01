@@ -6,8 +6,8 @@ import path from 'path'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  // NOTE: 部署到 /app/ 子路径（CI build → commit 到 app/ 目录）
-  base: '/app/',
+  // NOTE: 部署到根路径 /（React SPA 作为站点主入口）
+  base: '/',
   resolve: {
     alias: {
       // HACK: sr-puzzlegen-pll 的 package.json main 指向 dist/lib/index.js（只有 .d.ts 没有 .js）
@@ -28,24 +28,12 @@ export default defineConfig({
         changeOrigin: true,
         secure: true,
       },
-      // NOTE: calc 模块需要从 Jekyll 站点获取 WR 数据
+      // NOTE: stats 数据文件（JSON）— 保持在根路径，代理到 Jekyll
       '/stats': {
         target: 'http://localhost:4000',
       },
-      // NOTE: iframe 用 — Solver/Alg Trainer/csTimer 及其共享依赖代理到 Jekyll
-      '/solver': { target: 'http://localhost:4000' },
-      '/alg_trainers': { target: 'http://localhost:4000' },
-      '/cstimer': { target: 'http://localhost:4000' },
-      // NOTE: 以下是这些模块引用的共享资源路径
-      '/i18n': { target: 'http://localhost:4000' },
-      '/assets': { target: 'http://localhost:4000' },
-      '/src': { target: 'http://localhost:4000' },
-      '/shared': { target: 'http://localhost:4000' },
-      '/custom_icons': { target: 'http://localhost:4000' },
-      '/url_params_compressor_simple.js': { target: 'http://localhost:4000' },
-      '/sw-register.js': { target: 'http://localhost:4000' },
-      '/callback.html': { target: 'http://localhost:4000' },
-      '/wca_auth.js': { target: 'http://localhost:4000' },
+      // NOTE: legacy 内容统一前缀 — iframe 嵌入的 Solver/Alg Trainer/csTimer 及共享资源
+      '/legacy': { target: 'http://localhost:4000' },
     },
   },
 })

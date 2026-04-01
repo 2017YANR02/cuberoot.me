@@ -61,8 +61,8 @@ export default function AuthCallbackPage() {
       localStorage.setItem('wca_user', JSON.stringify(user));
       localStorage.setItem('wca_access_token', accessToken);
 
-      // NOTE: 跳回登录前的页面，无记录时 fallback 到 /app/recon
-      const returnUrl = sessionStorage.getItem('wca_return_url') || '/app/recon';
+      // NOTE: 跳回登录前的页面，无记录时 fallback 到 /recon
+      const returnUrl = sessionStorage.getItem('wca_return_url') || '/recon';
       sessionStorage.removeItem('wca_return_url');
       window.location.href = returnUrl;
     } catch (err) {
@@ -80,7 +80,7 @@ export default function AuthCallbackPage() {
         <div style={{ textAlign: 'center' }}>
           <div style={{ color: '#f87171', fontSize: '1.1rem' }}>❌ {errorMsg}</div>
           <div style={{ marginTop: 12 }}>
-            <a href="/app/recon" style={{ color: '#60a5fa' }}>返回复盘</a>
+            <a href="/recon" style={{ color: '#60a5fa' }}>返回复盘</a>
           </div>
         </div>
       </div>

@@ -65,7 +65,7 @@ function useScrambleScript() {
     }
 
     const script = document.createElement('script');
-    script.src = '/app/scramble_module.js';
+    script.src = import.meta.env.BASE_URL + 'scramble_module.js';
     script.async = true;
     document.head.appendChild(script);
 
@@ -425,8 +425,8 @@ function MiddleBar({ onSettingsClick }: { onSettingsClick: () => void }) {
           }
         }}>⛶</button>
         {/* NOTE: CubeRoot logo，点击回首页 */}
-        <a href="/app/" className="middle-logo" aria-label="Home">
-          <img src="/app/CubeRoot-dark.png" alt="CubeRoot" height="24" />
+        <a href="/" className="middle-logo" aria-label="Home">
+          <img src={import.meta.env.BASE_URL + 'CubeRoot-dark.png'} alt="CubeRoot" height="24" />
         </a>
         <button className="middle-btn" title="Settings" onClick={onSettingsClick}>⚙️</button>
       </div>
@@ -625,7 +625,7 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
 
         {/* 返回主页 */}
         <div className="settings-group">
-          <a href="/app/" className="settings-action-btn" style={{ display: 'block', textDecoration: 'none' }}>
+          <a href="/" className="settings-action-btn" style={{ display: 'block', textDecoration: 'none' }}>
             ← Back to Home
           </a>
         </div>
@@ -705,7 +705,7 @@ export default function BattlePage() {
   return (
     <div className="battle-container">
       {/* 返回按钮 */}
-      <a href="/app/" className="back-btn">←</a>
+      <a href="/" className="back-btn">←</a>
 
       {/* Player 2 (上方, rotated) — 1v1 模式 */}
       {mode === '1v1' && (
@@ -726,7 +726,7 @@ export default function BattlePage() {
             onClick={() => store.switchTab('timer')}
           >
             {/* NOTE: 1:1 翻译自原版 icon_timer.png — 不擅自替换为 SVG */}
-            <img src="/app/icon_timer.png" width="22" height="22" alt="Timer" className="nav-tab-icon" />
+            <img src={import.meta.env.BASE_URL + 'icon_timer.png'} width="22" height="22" alt="Timer" className="nav-tab-icon" />
             <span>Timer</span>
           </button>
           <button

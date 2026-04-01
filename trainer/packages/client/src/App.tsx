@@ -1,6 +1,6 @@
 /**
  * @module App
- * 路由配置 — React Router (basename=/app)，所有模块页面 lazy-load。
+ * 路由配置 — React Router (basename=/)，所有模块页面 lazy-load。
  * @see index.html 全局加载的外部 CSS（cubing-icons / flag-icons / Google Fonts）
  */
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
@@ -42,7 +42,7 @@ const PretextDemo = lazy(() => import('./pages/pretext_demo/PretextDemo'));
 
 function App() {
   return (
-    <BrowserRouter basename="/app">
+    <BrowserRouter basename="/">
       <Routes>
         {/* NOTE: 全站入口页（复刻原版 index.html 的 9 卡片 Toolkit 主页） */}
         <Route path="/" element={<Suspense fallback={<div>Loading...</div>}><LandingPage /></Suspense>} />
@@ -73,9 +73,9 @@ function App() {
         {/* Upcoming Comps — 顶尖选手近期比赛追踪 */}
         <Route path="/upcoming-comps" element={<Suspense fallback={<div>Loading...</div>}><UpcomingCompsPage /></Suspense>} />
         {/* NOTE: iframe 包装路由 — 嵌入未迁移模块，零改动上游代码 */}
-        <Route path="/solver" element={<Suspense fallback={<div>Loading...</div>}><IframePage src="/solver/" title="Solver" /></Suspense>} />
-        <Route path="/alg-trainers" element={<Suspense fallback={<div>Loading...</div>}><IframePage src="/alg_trainers/" title="Alg Trainer" /></Suspense>} />
-        <Route path="/cstimer" element={<Suspense fallback={<div>Loading...</div>}><IframePage src="/cstimer/" title="csTimer" /></Suspense>} />
+        <Route path="/solver" element={<Suspense fallback={<div>Loading...</div>}><IframePage src="/legacy/solver/" title="Solver" /></Suspense>} />
+        <Route path="/alg-trainers" element={<Suspense fallback={<div>Loading...</div>}><IframePage src="/legacy/alg_trainers/" title="Alg Trainer" /></Suspense>} />
+        <Route path="/cstimer" element={<Suspense fallback={<div>Loading...</div>}><IframePage src="/legacy/cstimer/" title="csTimer" /></Suspense>} />
         {/* WCA Stats — 统计数据展示 */}
         <Route path="/wca-stats" element={<Suspense fallback={<div>Loading...</div>}><WcaStatsIndex /></Suspense>} />
         <Route path="/wca-stats/:statId" element={<Suspense fallback={<div>Loading...</div>}><WcaStatsPage /></Suspense>} />
