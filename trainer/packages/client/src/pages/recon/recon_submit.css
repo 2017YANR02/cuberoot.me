@@ -26,7 +26,7 @@
 
 .submit-label {
   font-size: 0.75rem;
-  color: #888;
+  color: #8a7a6a;
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
@@ -36,9 +36,9 @@
 .submit-field textarea {
   padding: 8px 12px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.05);
-  color: #e0e0e0;
+  border: 1px solid rgba(255, 235, 220, 0.12);
+  background: rgba(255, 235, 220, 0.05);
+  color: #f0ebe3;
   font-size: 0.88rem;
   font-family: 'Inter', Arial, sans-serif;
   outline: none;
@@ -48,8 +48,8 @@
 .submit-field input:focus,
 .submit-field select:focus,
 .submit-field textarea:focus {
-  border-color: rgba(88, 166, 255, 0.5);
-  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
+  border-color: rgba(217, 119, 87, 0.5);
+  box-shadow: 0 0 0 3px rgba(217, 119, 87, 0.15);
 }
 
 .submit-solution-textarea {
@@ -64,8 +64,8 @@
   list-style: none;
   margin: 4px 0 0;
   padding: 0;
-  background: #2a2a2e;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #2f2925;
+  border: 1px solid rgba(255, 235, 220, 0.12);
   border-radius: 8px;
   max-height: 200px;
   overflow-y: auto;
@@ -78,12 +78,12 @@
   padding: 8px 12px;
   cursor: pointer;
   font-size: 0.85rem;
-  color: #ccc;
+  color: #d8c8b8;
   transition: background 0.15s;
 }
 
 .submit-dropdown li:hover {
-  background: rgba(88, 166, 255, 0.2);
+  background: rgba(217, 119, 87, 0.2);
   color: #fff;
 }
 
@@ -109,12 +109,12 @@
   flex-wrap: wrap;
   gap: 12px;
   padding: 10px 16px;
-  background: rgba(88, 166, 255, 0.08);
-  border: 1px solid rgba(88, 166, 255, 0.2);
+  background: rgba(217, 119, 87, 0.08);
+  border: 1px solid rgba(217, 119, 87, 0.2);
   border-radius: 8px;
   margin-bottom: 16px;
   font-size: 0.82rem;
-  color: #b0b8c4;
+  color: #b09880;
   font-family: 'Roboto Mono', monospace;
 }
 
@@ -136,13 +136,13 @@
 }
 
 .submit-btn-primary {
-  background: rgba(88, 166, 255, 0.25);
-  color: #93bbfc;
-  border: 1px solid rgba(88, 166, 255, 0.4);
+  background: rgba(217, 119, 87, 0.25);
+  color: #e8a27a;
+  border: 1px solid rgba(217, 119, 87, 0.4);
 }
 
 .submit-btn-primary:hover {
-  background: rgba(88, 166, 255, 0.45);
+  background: rgba(217, 119, 87, 0.45);
   color: #fff;
 }
 
@@ -152,14 +152,14 @@
 }
 
 .submit-btn-cancel {
-  background: rgba(255, 255, 255, 0.06);
-  color: #888;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 235, 220, 0.06);
+  color: #8a7a6a;
+  border: 1px solid rgba(255, 235, 220, 0.12);
 }
 
 .submit-btn-cancel:hover {
-  background: rgba(255, 255, 255, 0.12);
-  color: #ccc;
+  background: rgba(255, 235, 220, 0.12);
+  color: #d8c8b8;
 }
 
 /* --- 选手搜索 — 相对定位容器 --- */

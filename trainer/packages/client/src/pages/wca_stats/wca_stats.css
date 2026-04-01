@@ -7,7 +7,7 @@
   margin: 0 auto;
   padding: 24px 32px;
   min-height: 100vh;
-  color: #e0e0e0;
+  color: #f0ebe3;
 }
 
 /* 页面头部 */
@@ -32,37 +32,37 @@
   margin: 0;
   font-size: 28px;
   font-weight: 700;
-  color: #ffffff;
+  color: #f9f4ef;
 }
 
 .wca-stats-back {
-  color: #7eb8ff;
+  color: #e8a27a;
   text-decoration: none;
   font-size: 14px;
   transition: color 0.2s;
 }
 
 .wca-stats-back:hover {
-  color: #a6d0ff;
+  color: #f0c0a0;
 }
 
 .wca-stats-header h1 {
   margin: 12px 0 8px;
   font-size: 28px;
   font-weight: 700;
-  color: #ffffff;
+  color: #f9f4ef;
 }
 
 .wca-stats-note {
   font-size: 14px;
-  color: #999;
+  color: #8a7a6a;
   font-style: italic;
   line-height: 1.5;
 }
 
 /* ==========================================================================
    分段按钮（Tab / Metric 切换）
-   对标 Legacy stats_ui.css .segmented-btn（蓝色主题 #8ab4f8）
+   对标 Legacy stats_ui.css .segmented-btn（蓝色主题 #e8a27a）
    ========================================================================== */
 
 /* NOTE: Tab 按钮容器 — inline-flex 让多个 tab-bar 可在同一行流动 */
@@ -95,7 +95,7 @@
   position: relative;
   width: 38px;
   height: 16px;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 235, 220, 0.15);
   border-radius: 8px;
   transition: background 0.25s;
   flex-shrink: 0;
@@ -159,20 +159,20 @@ input:checked + .wca-stats-toggle-pill::after {
 .wca-stats-metric-btn.active {
   background: #1a6bc4;
   border-color: #1a6bc4;
-  color: #ffffff;
+  color: #f9f4ef;
 }
 
 /* panel-tab（排名/历史）与主 tab 统一同一蓝色 */
 .wca-stats-panel-tab.active {
   background: #1a6bc4;
   border-color: #1a6bc4;
-  color: #ffffff;
+  color: #f9f4ef;
 }
 
 /* hover 状态 */
 .wca-stats-tab:hover:not(.active):not(.disabled),
 .wca-stats-metric-btn:hover:not(.active):not(.disabled) {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 235, 220, 0.06);
 }
 
 /* ==========================================================================
@@ -229,7 +229,7 @@ input:checked + .wca-stats-toggle-pill::after {
 .wca-stats-metric-option {
   padding: 9px 16px;
   font-size: 13px;
-  color: #e0e0e0;
+  color: #f0ebe3;
   cursor: pointer;
   transition: background 0.15s;
   border: none;
@@ -244,9 +244,9 @@ input:checked + .wca-stats-toggle-pill::after {
 }
 
 .wca-stats-metric-option.active {
-  color: #58a6ff;
+  color: #d97757;
   font-weight: 600;
-  background: rgba(88, 166, 255, 0.08);
+  background: rgba(217, 119, 87, 0.08);
 }
 
 .wca-stats-metric-option.disabled {
@@ -260,7 +260,7 @@ input:checked + .wca-stats-toggle-pill::after {
   margin: 12px 0;
   padding: 12px;
   background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 235, 220, 0.06);
   border-radius: 8px;
 }
 
@@ -312,13 +312,13 @@ input:checked + .wca-stats-toggle-pill::after {
 }
 
 .wca-stats-metric-group-items .wca-stats-metric-btn:hover:not(.active):not(.disabled) {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 235, 220, 0.08);
   color: #fff;
 }
 
 .wca-stats-metric-group-items .wca-stats-metric-btn.active {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 235, 220, 0.12);
+  border-color: rgba(255, 235, 220, 0.2);
   color: #ececec;
 }
 
@@ -344,16 +344,16 @@ input:checked + .wca-stats-toggle-pill::after {
 }
 
 .wca-stats-search:focus {
-  border-color: #888888;
+  border-color: #8a7a6a888;
 }
 
 .wca-stats-search::placeholder {
-  color: #666;
+  color: #6e6050;
 }
 
 .wca-stats-count {
   font-size: 13px;
-  color: #888;
+  color: #8a7a6a;
   white-space: nowrap;
 }
 
@@ -436,13 +436,13 @@ input:checked + .wca-stats-toggle-pill::after {
 
 /* 链接 */
 .wca-stats-table a {
-  color: #7eb8ff;
+  color: #e8a27a;
   text-decoration: none;
   transition: color 0.2s;
 }
 
 .wca-stats-table a:hover {
-  color: #a6d0ff;
+  color: #f0c0a0;
   text-decoration: underline;
 }
 
@@ -474,7 +474,7 @@ input:checked + .wca-stats-toggle-pill::after {
   font-family: 'Roboto Mono', 'Courier New', monospace;
   font-size: 12px;
   color: #cccccc;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 235, 220, 0.06);
   padding: 2px 6px;
   border-radius: 3px;
   text-align: center;
@@ -484,7 +484,7 @@ input:checked + .wca-stats-toggle-pill::after {
 .solve-details summary {
   cursor: pointer;
   font-size: 12px;
-  color: #888888;
+  color: #8a7a6a888;
   margin-bottom: 4px;
   user-select: none;
   list-style: none;
@@ -507,7 +507,7 @@ input:checked + .wca-stats-toggle-pill::after {
   align-items: center;
   justify-content: center;
   min-height: 400px;
-  color: #888;
+  color: #8a7a6a;
   font-size: 16px;
 }
 
@@ -517,7 +517,7 @@ input:checked + .wca-stats-toggle-pill::after {
 }
 
 .wca-stats-error a {
-  color: #7eb8ff;
+  color: #e8a27a;
   margin-top: 16px;
 }
 
@@ -551,7 +551,7 @@ input:checked + .wca-stats-toggle-pill::after {
 
 .wca-stats-section-count {
   font-size: 12px;
-  color: #888;
+  color: #8a7a6a;
   background: #333;
   padding: 2px 8px;
   border-radius: 10px;
@@ -562,7 +562,7 @@ input:checked + .wca-stats-toggle-pill::after {
 .wca-stats-chevron {
   display: inline-block;
   font-size: 10px;
-  color: #888;
+  color: #8a7a6a;
   transition: transform 0.2s;
 }
 
@@ -581,7 +581,7 @@ input:checked + .wca-stats-toggle-pill::after {
   margin: 0 auto;
   padding: 24px 16px;
   min-height: 100vh;
-  color: #e0e0e0;
+  color: #f0ebe3;
 }
 
 .wca-stats-index h1 {
@@ -612,12 +612,12 @@ input:checked + .wca-stats-toggle-pill::after {
 .wca-stats-category-name {
   font-size: 20px;
   font-weight: 700;
-  color: #ffffff;
+  color: #f9f4ef;
 }
 
 .wca-stats-category-count {
   font-size: 13px;
-  color: #888;
+  color: #8a7a6a;
   margin-left: auto;
 }
 
@@ -633,7 +633,7 @@ input:checked + .wca-stats-toggle-pill::after {
   background: #2f2f2f;
   border: 1px solid #444444;
   border-radius: 10px;
-  color: #e0e0e0;
+  color: #f0ebe3;
   text-decoration: none;
   font-size: 14px;
   font-weight: 500;
@@ -660,9 +660,9 @@ input:checked + .wca-stats-toggle-pill::after {
   gap: 6px;
   padding: 12px;
   margin: 12px 0;
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 235, 220, 0.03);
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 235, 220, 0.06);
 }
 
 /* 单个按钮 */
@@ -675,7 +675,7 @@ input:checked + .wca-stats-toggle-pill::after {
   justify-content: center;
   border: 2px solid transparent;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 235, 220, 0.05);
   cursor: pointer;
   transition: all 0.2s;
   padding: 0;
@@ -691,7 +691,7 @@ input:checked + .wca-stats-toggle-pill::after {
 /* hover */
 .wca-stats-event-selector .event-btn:hover {
   background: rgba(255, 255, 255, 0.10);
-  border-color: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 235, 220, 0.12);
 }
 
 .wca-stats-event-selector .event-btn:hover .cubing-icon {
@@ -715,7 +715,7 @@ input:checked + .wca-stats-toggle-pill::after {
 }
 
 .wca-stats-event-selector .event-btn.disabled .cubing-icon {
-  color: #666;
+  color: #6e6050;
 }
 
 /* CSS tooltip */
@@ -755,13 +755,13 @@ input:checked + .wca-stats-toggle-pill::after {
 .wca-stats-metric-btn.disabled {
   opacity: 0.4;
   cursor: not-allowed;
-  color: #666;
+  color: #6e6050;
 }
 
 .wca-stats-tab.disabled {
   opacity: 0.4;
   cursor: not-allowed;
-  color: #666;
+  color: #6e6050;
 }
 
 /* ==========================================================================
@@ -793,14 +793,14 @@ input:checked + .wca-stats-toggle-pill::after {
 }
 
 .solve-details summary {
-  color: #8ab4f8;
+  color: #e8a27a;
   font-size: 13px;
   cursor: pointer;
   user-select: none;
 }
 
 .solve-details summary:hover {
-  color: #a6d0ff;
+  color: #f0c0a0;
 }
 
 .solve-details[open] .solve-list {
@@ -820,7 +820,7 @@ input:checked + .wca-stats-toggle-pill::after {
   width: 100%;
   display: block;
   border-radius: 6px;
-  background: #161b22;
+  background: #231f1c;
 }
 
 .wr-chart-tooltip {
@@ -882,5 +882,5 @@ input:checked + .wca-stats-toggle-pill::after {
 
 .wca-stats-lang-toggle:hover {
   background: #3d3d3d;
-  border-color: #888888;
+  border-color: #8a7a6a888;
 }

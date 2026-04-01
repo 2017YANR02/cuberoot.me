@@ -12,7 +12,7 @@
 }
 
 .calc-page {
-    color: #333;
+    color: #332e28;
 }
 
 /* NOTE: Tailwind v4 preflight 用 `::before, ::after { --tw-content: ''; content: var(--tw-content) }` 
@@ -71,15 +71,15 @@ body {
     background: rgba(255, 255, 255, 0.88);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-    color: #666;
+    color: #6e6050;
     font-size: 0.78rem;
     transition: color 0.2s, border-color 0.2s, background 0.2s;
     user-select: none;
 }
 
 .lang-toggle:hover {
-    color: #333;
-    border-color: #999;
+    color: #332e28;
+    border-color: #8a7a6a;
     background: rgba(255, 255, 255, 0.95);
 }
 
@@ -142,7 +142,7 @@ body {
 
 .event-btn .cubing-icon {
     font-size: 20px;
-    color: #666;
+    color: #6e6050;
     transition: color 0.2s ease;
 }
 
@@ -152,7 +152,7 @@ body {
 }
 
 .event-btn:hover .cubing-icon {
-    color: #333;
+    color: #332e28;
 }
 
 .event-btn.active {
@@ -161,7 +161,7 @@ body {
 }
 
 .event-btn.active .cubing-icon {
-    color: #fff;
+    color: #f0ebe3;
 }
 
 /* NOTE: CSS tooltip 悬浮提示 */
@@ -171,8 +171,8 @@ body {
     bottom: calc(100% + 8px);
     left: 50%;
     transform: translateX(-50%);
-    background: #333;
-    color: #fff;
+    background: #332e28;
+    color: #f0ebe3;
     padding: 4px 10px;
     border-radius: 6px;
     font-size: 12px;
@@ -250,7 +250,7 @@ body {
     top: -6px;
     right: -6px;
     background: #D32F2F;
-    color: #fff;
+    color: #f0ebe3;
     font-size: 10px;
     font-weight: 700;
     padding: 1px 4px;
@@ -328,12 +328,12 @@ body {
 
 .player-a .tavg-cell {
     background: rgba(255, 128, 0, 1.0);
-    color: #fff;
+    color: #f0ebe3;
 }
 
 .player-b .tavg-cell {
     background: rgba(50, 130, 255, 1.0);
-    color: #fff;
+    color: #f0ebe3;
 }
 
 .tavg-cell::placeholder {
@@ -359,7 +359,7 @@ body {
     border-radius: 6px;
     cursor: pointer;
     background: #3B6978;
-    color: #fff;
+    color: #f0ebe3;
     transition: background 0.2s;
 }
 
@@ -379,7 +379,7 @@ body {
     border: none;
     border-radius: 6px;
     cursor: pointer;
-    color: #fff;
+    color: #f0ebe3;
     transition: background 0.2s, opacity 0.2s;
 }
 
@@ -417,7 +417,7 @@ body {
 .sim-count {
     font-size: 13px;
     font-weight: 700;
-    color: #555;
+    color: #6e6050;
     opacity: 0;
     transition: opacity 0.3s;
     /* NOTE: 隐藏时不占位，可见后因 textContent 自动撑开 */
@@ -510,7 +510,7 @@ body {
 .progress-info {
     font-size: 12px;
     font-weight: 600;
-    color: #666;
+    color: #6e6050;
     min-width: 110px;
     text-align: left;
 }
@@ -529,18 +529,18 @@ body {
     margin: 10px auto;
     margin-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
     padding: 12px;
-    background: #222;
+    background: #231f1c;
     border-radius: 16px;
 }
 
 #numpad-display {
-    color: #fff;
+    color: #f0ebe3;
     font-size: 28px;
     font-family: 'Helvetica Neue', Helvetica, sans-serif;
     text-align: right;
     padding: 8px 16px;
     margin-bottom: 10px;
-    background: #333;
+    background: #332e28;
     border-radius: 10px;
     min-height: 40px;
     line-height: 40px;
@@ -571,8 +571,8 @@ body {
 }
 
 .np-btn {
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 235, 220, 0.15);
+    box-shadow: inset 0 1px 0 rgba(255, 235, 220, 0.2), inset 0 -1px 0 rgba(0, 0, 0, 0.2);
     border-radius: 10px;
     width: 100%;
     padding: 14px 0;
@@ -607,7 +607,7 @@ body {
 .calc-page .np-action,
 .calc-page .np-action-alt {
     background: #636366;
-    color: #fff;
+    color: #f0ebe3;
 }
 
 /* NOTE: SVG 图标（backspace/enter）在按键内居中 */
@@ -634,7 +634,7 @@ body {
 .np-clear-mode::after {
     content: 'Clear';
     font-size: 14px;
-    color: #fff;
+    color: #f0ebe3;
 }
 
 /* NOTE: 回车键跨两行 */
@@ -709,7 +709,7 @@ body {
 
 /* NOTE: 白色裁剪层所有项统一白色 */
 .np-drum-list-white .np-drum-item {
-    color: #fff;
+    color: #f0ebe3;
 }
 
 /* NOTE: iOS 风格 — 所有项统一基础样式 */
@@ -734,13 +734,13 @@ body {
 /* ±3 */
 #np-drum-list .np-drum-item:nth-child(2),
 #np-drum-list .np-drum-item:nth-child(8) {
-    color: rgba(255, 255, 255, 0.25);
+    color: rgba(255, 235, 220, 0.25);
 }
 
 /* ±4（最外层缓冲区） */
 #np-drum-list .np-drum-item:nth-child(1),
 #np-drum-list .np-drum-item:nth-child(9) {
-    color: rgba(255, 255, 255, 0.15);
+    color: rgba(255, 235, 220, 0.15);
 }
 
 /* NOTE: iOS 高亮条 — 比背景稍亮的圆角矩形 */
@@ -751,7 +751,7 @@ body {
     top: 50%;
     height: 34px;
     transform: translateY(-50%);
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 235, 220, 0.1);
     border-radius: 8px;
     pointer-events: none;
 }
@@ -796,7 +796,7 @@ body {
 
 #calc-table th {
     background: #3B6978;
-    color: #fff;
+    color: #f0ebe3;
     padding: 10px 16px;
     text-align: center;
     font-weight: 600;
@@ -827,7 +827,7 @@ body {
 }
 
 .calc-nan {
-    color: #999;
+    color: #8a7a6a;
     font-style: italic;
 }
 
@@ -937,7 +937,7 @@ video {
     height: 20px;
     font-size: 14px;
     line-height: 1;
-    color: #666;
+    color: #6e6050;
     cursor: pointer;
     vertical-align: middle;
     margin-left: 2px;
@@ -945,7 +945,7 @@ video {
 }
 
 .rand-info:hover {
-    color: #333;
+    color: #332e28;
 }
 
 /* ── 方法说明弹窗 ── */
@@ -1004,7 +1004,7 @@ video {
     border-radius: 50%;
     font-size: 18px;
     line-height: 1;
-    color: #999;
+    color: #8a7a6a;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -1014,14 +1014,14 @@ video {
 
 .info-modal-close:hover {
     background: rgba(0, 0, 0, 0.12);
-    color: #333;
+    color: #332e28;
 }
 
 /* NOTE: 弹窗内容 — 段落间距 + 可读排版 */
 .info-modal-body {
     font-size: 13px;
     line-height: 1.6;
-    color: #333;
+    color: #332e28;
 }
 
 .info-modal-body p {
@@ -1033,7 +1033,7 @@ video {
 }
 
 .info-modal-body strong {
-    color: #111;
+    color: #1c1917;
 }
 
 
@@ -1212,13 +1212,13 @@ video {
     box-sizing: border-box;
     padding: 12px 16px;
     border: none;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid #332e28;
     background: #16213e;
     color: #eee;
     font-size: 15px;
     outline: none;
 }
-.person-search-input::placeholder { color: #666; }
+.person-search-input::placeholder { color: #6e6050; }
 
 .person-search-results {
     max-height: 320px;
@@ -1251,7 +1251,7 @@ video {
 .person-search-loading {
     padding: 16px;
     text-align: center;
-    color: #666;
+    color: #6e6050;
     font-size: 14px;
 }
 
