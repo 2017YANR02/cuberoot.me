@@ -30,12 +30,12 @@ Write-Host "[3/4] 构建 scramble_module.js（无 IIFE，供 battle 用）..." -
 & $bash -c "$bashInit && cd '$csUnix' && mingw32-make battle_module"
 
 Write-Host "[4/6] 复制构建产物..." -ForegroundColor Cyan
-Copy-Item -Path "$CstimerDir\dist\local\*" -Destination "$ProjectDir\cstimer\" -Recurse -Force
-Copy-Item "$CstimerDir\dist\js\scramble_module.js" "$ProjectDir\battle\scramble_module.js" -Force
+Copy-Item -Path "$CstimerDir\dist\local\*" -Destination "$ProjectDir\legacy\cstimer\" -Recurse -Force
+Copy-Item "$CstimerDir\dist\js\scramble_module.js" "$ProjectDir\legacy\battle\scramble_module.js" -Force
 
 # NOTE: 复制上游编译后的语言 JS 文件（35 种语言），供客户端动态加载
 Write-Host "[5/6] 复制语言文件..." -ForegroundColor Cyan
-$langDir = "$ProjectDir\cstimer\lang"
+$langDir = "$ProjectDir\legacy\cstimer\lang"
 if (-not (Test-Path $langDir)) { New-Item -ItemType Directory -Path $langDir | Out-Null }
 Get-ChildItem "$CstimerDir\dist\lang\*.js" | Copy-Item -Destination $langDir -Force
 $langCount = (Get-ChildItem "$langDir\*.js").Count
@@ -45,7 +45,7 @@ Write-Host "  已复制 $langCount 个语言文件到 cstimer/lang/" -Foreground
 # 上游 make local 生成的静态 HTML 只含英文变量，语言切换 ?lang= 参数无效
 # 注入逻辑：在 LANG_CUR 定义之后插入一段 JS，解析 ?lang= 参数并同步加载对应语言文件
 Write-Host "[6/6] 注入语言切换引导脚本 + git commit..." -ForegroundColor Cyan
-$indexPath = "$ProjectDir\cstimer\index.html"
+$indexPath = "$ProjectDir\legacy\cstimer\index.html"
 # HACK: 用字节级操作避免 PowerShell 破坏编码或行尾符
 $bytes = [System.IO.File]::ReadAllBytes($indexPath)
 $html = [System.Text.Encoding]::UTF8.GetString($bytes)
@@ -76,7 +76,7 @@ if ($html.Contains($anchor)) {
 
 Push-Location $ProjectDir
 $version = git -C $CstimerDir describe --tags --always 2>$null
-git add cstimer/ battle/scramble_module.js
+git add legacy/cstimer/ legacy/battle/scramble_module.js
 git commit -m "chore: update csTimer to $version"
 Pop-Location
 

@@ -8,11 +8,13 @@ import { reconRoutes } from './routes/recon.js';
 
 const app = new Hono();
 
-// CORS 配置——允许前端 dev server 跨域请求
+// CORS 配置——允许前端跨域请求
 app.use('*', cors({
   origin: [
-    'http://localhost:5173',       // Vite dev server
-    'https://toolkit.cuberoot.me', // 生产环境
+    'http://localhost:5173',              // Vite dev server
+    'https://www.cuberoot.me',            // 生产环境（SPA）
+    'https://cuberoot.me',                // 裸域
+    'https://ruiminyan.github.io',        // GitHub Pages
   ],
 }));
 
