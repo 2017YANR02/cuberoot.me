@@ -9,7 +9,7 @@
 /* NOTE: Segment7 Standard — 等宽七段 LCD 字体（SIL OFL 开源，自托管） */
 @font-face {
     font-family: 'Segment7Standard';
-    src: url('/app/fonts/Segment7Standard.otf') format('opentype');
+    src: url('/fonts/Segment7Standard.otf') format('opentype');
     font-weight: normal;
     font-style: normal;
     font-display: swap;
