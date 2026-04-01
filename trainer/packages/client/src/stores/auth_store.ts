@@ -32,8 +32,8 @@ interface AuthActions {
 // NOTE: WCA OAuth 配置（与 wca_auth.js 保持一致）
 const WCA_CLIENT_ID = 'mPeg5FiAn7l0CcyQ9CdiSEn3XlBrcA7IMw6Vd9AOsz4';
 const WCA_AUTHORIZE_URL = 'https://www.worldcubeassociation.org/oauth/authorize';
-// NOTE: 回调地址使用 React 路由（/app/auth/callback），与 BrowserRouter basename 对齐
-const REDIRECT_URI = window.location.origin + '/app/auth/callback';
+// NOTE: 回调地址使用 React 路由（/auth/callback），与 BrowserRouter basename 对齐
+const REDIRECT_URI = window.location.origin + '/auth/callback';
 
 const SESSION_KEY = 'wca_user';
 const TOKEN_KEY = 'wca_access_token';

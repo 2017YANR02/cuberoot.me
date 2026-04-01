@@ -14,7 +14,7 @@ export interface ZblsEntry {
 
 // --- 常量 ---
 
-const BASE = import.meta.env.BASE_URL; // Vite base: /app/
+const BASE = import.meta.env.BASE_URL; // Vite base: /
 
 /** 所有 case key 列表（按 F2L 组和变体排序） */
 export const allZblsKeys: string[] = Object.keys(zblsMap);

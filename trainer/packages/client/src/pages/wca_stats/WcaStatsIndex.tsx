@@ -1,5 +1,5 @@
 // NOTE: WCA 统计索引页——从 /stats/data/index.json 加载分类卡片网格
-// 路由：/app/wca-stats
+// 路由：/wca-stats
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
