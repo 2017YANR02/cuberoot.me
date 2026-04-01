@@ -8,6 +8,10 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   // NOTE: 部署到根路径 /（React SPA 作为站点主入口）
   base: '/',
+  build: {
+    // NOTE: 使用 _assets 避免与 Jekyll 的 assets/（stats_ui.css 等）冲突
+    assetsDir: '_assets',
+  },
   resolve: {
     alias: {
       // HACK: sr-puzzlegen-pll 的 package.json main 指向 dist/lib/index.js（只有 .d.ts 没有 .js）
