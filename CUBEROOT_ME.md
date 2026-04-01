@@ -28,7 +28,7 @@
 https://www.cuberoot.me/             → React SPA（Vite 构建产物，/www/wwwroot/cuberoot-spa/）
 https://www.cuberoot.me/blog/        → WordPress（符号链接到 /www/wwwroot/wordpress/）
 https://www.cuberoot.me/legacy/       → Jekyll 静态镜像（/www/wwwroot/toolkit/legacy/）
-https://www.cuberoot.me/trainer/api/  → Hono API（Nginx 反代到 127.0.0.1:3001）
+https://www.cuberoot.me/core/api/  → Hono API（Nginx 反代到 127.0.0.1:3001）
 https://toolkit.cuberoot.me/*         → 301 重定向到 www.cuberoot.me/legacy/*
 ```
 
@@ -93,7 +93,7 @@ location / {
 }
 
 # Trainer Hono API 反代
-location /trainer/api/ {
+location /core/api/ {
     proxy_pass http://127.0.0.1:3001/api/;
     proxy_http_version 1.1;
     proxy_set_header Host $host;
@@ -177,15 +177,15 @@ rsync -rltz --delete --exclude='.user.ini' --chmod=D755,F644 ...
 | 项目 | 值 |
 |------|------|
 | **框架** | Hono 4.x + @hono/node-server |
-| **部署目录** | `/root/trainer-api/` |
+| **部署目录** | `/root/core-api/` |
 | **端口** | 3001 |
-| **进程管理** | PM2（`trainer-api`，`pm2 startup` 已配置开机自启） |
-| **凭据文件** | `/root/trainer-api/.env`（DB_*, JWT_SECRET） |
-| **API 入口** | `https://www.cuberoot.me/trainer/api/recon/list` 等 |
+| **进程管理** | PM2（`core-api`，`pm2 startup` 已配置开机自启） |
+| **凭据文件** | `/root/core-api/.env`（DB_*, JWT_SECRET） |
+| **API 入口** | `https://www.cuberoot.me/core/api/recon/list` 等 |
 | **CORS** | 允许 `ruiminyan.github.io`、`www.cuberoot.me`、`localhost:5173` |
 | **CI 部署** | `deploy_mirror.yml` rsync 后手动更新（非自动） |
 
-> Nginx 反代配置：`location /trainer/api/` → `proxy_pass http://127.0.0.1:3001/api/`
+> Nginx 反代配置：`location /core/api/` → `proxy_pass http://127.0.0.1:3001/api/`
 
 ## MariaDB 数据库（Recon 复盘）
 
@@ -194,7 +194,7 @@ rsync -rltz --delete --exclude='.user.ini' --chmod=D755,F644 ...
 | **数据库** | MariaDB 10.5.27 |
 | **数据库名** | `recon_db` |
 | **用户** | `recon_user`（仅限 localhost 连接，外网不可直连） |
-| **凭据文件** | PHP：`/www/wwwroot/toolkit/legacy/recon/api/db_config.php`；Hono：`/root/trainer-api/.env`；本地：`.secrets.md`（均不在 git 中） |
+| **凭据文件** | PHP：`/www/wwwroot/toolkit/legacy/recon/api/db_config.php`；Hono：`/root/core-api/.env`；本地：`.secrets.md`（均不在 git 中） |
 | **表** | `recons`（复盘数据）、`edits`（编辑覆盖）、`edit_history`（编辑历史）、`wca_users`（认证）、`timer_sessions`（计时器同步）、`train_results`（训练记录） |
 
 ### 备份策略
@@ -272,3 +272,5 @@ systemctl restart postfix
 # 5. 测试
 echo "Test" | mail -s "Postfix Test" yrmfxc@gmail.com
 ```
+
+
