@@ -1460,6 +1460,14 @@
                 ],
                 [
                   4,
+                  "[Andrew Tao](https://www.worldcubeassociation.org/persons/2022TAOA01)",
+                  "56/61 1:00:00",
+                  "USA",
+                  "2026-03-27",
+                  "[New York Multimate PBQ IV 2026](https://www.worldcubeassociation.org/competitions/NewYorkMultimatePBQIV2026)"
+                ],
+                [
+                  5,
                   "[Ezra Hirschi](https://www.worldcubeassociation.org/persons/2019HIRS01)",
                   "54/58 59:28",
                   "Switzerland",
@@ -1467,7 +1475,7 @@
                   "[Swiss Nationals 2025](https://www.worldcubeassociation.org/competitions/SwissNationals2025)"
                 ],
                 [
-                  5,
+                  6,
                   "[Yucheng Chen (陈裕铖)](https://www.worldcubeassociation.org/persons/2015CHEN49)",
                   "54/59 59:18",
                   "China",
@@ -1475,20 +1483,12 @@
                   "[Korean Championship 2025](https://www.worldcubeassociation.org/competitions/KoreanChampionship2025)"
                 ],
                 [
-                  6,
+                  7,
                   "[Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04)",
                   "49/51 58:06",
                   "USA",
                   "2023-09-16",
                   "[Swoop in Silence Oxford 2023](https://www.worldcubeassociation.org/competitions/SwoopinSilenceOxford2023)"
-                ],
-                [
-                  7,
-                  "[Andrew Tao](https://www.worldcubeassociation.org/persons/2022TAOA01)",
-                  "51/57 58:15",
-                  "USA",
-                  "2025-11-01",
-                  "[CubingUSA All-Stars 2025](https://www.worldcubeassociation.org/competitions/CubingUSAAllStars2025)"
                 ],
                 [
                   8,
@@ -8415,19 +8415,19 @@
                 ],
                 [
                   9,
+                  "[Luke Garrett](https://www.worldcubeassociation.org/persons/2017GARR05)",
+                  "1.14",
+                  "USA",
+                  "2026-03-29",
+                  "[Brown County Blitz 2026](https://www.worldcubeassociation.org/competitions/BrownCountyBlitz2026)"
+                ],
+                [
+                  10,
                   "[Olaf Kuźmiński](https://www.worldcubeassociation.org/persons/2018KUZM02)",
                   "1.14",
                   "Poland",
                   "2025-12-13",
                   "[Gdańska LS Final 2025](https://www.worldcubeassociation.org/competitions/GLSFinal2025)"
-                ],
-                [
-                  10,
-                  "[Antoni Stojek](https://www.worldcubeassociation.org/persons/2022STOJ03)",
-                  "1.14",
-                  "Poland",
-                  "2024-10-05",
-                  "[Gdańska Liga Speedcubingu V 2024](https://www.worldcubeassociation.org/competitions/GdanskaLigaSpeedcubinguV2024)"
                 ]
               ]
             },
@@ -9173,6 +9173,14 @@
                 ],
                 [
                   7,
+                  "[Aratz Larruzea](https://www.worldcubeassociation.org/persons/2022LARR02)",
+                  "1.54",
+                  "Spain",
+                  "2026-03-28",
+                  "[Urnieta Open 2026](https://www.worldcubeassociation.org/competitions/UrnietaOpen2026)"
+                ],
+                [
+                  8,
                   "[Simon Kellum](https://www.worldcubeassociation.org/persons/2016KELL12)",
                   "1.56",
                   "USA",
@@ -9180,20 +9188,12 @@
                   "[Naperville Fall 2025](https://www.worldcubeassociation.org/competitions/NapervilleFall2025)"
                 ],
                 [
-                  8,
+                  9,
                   "[Alexey Tsvetkov](https://www.worldcubeassociation.org/persons/2017TSVE02)",
                   "1.57",
                   "Russia",
                   "2025-11-22",
                   "[Medvode Open 2025](https://www.worldcubeassociation.org/competitions/MedvodeOpen2025)"
-                ],
-                [
-                  9,
-                  "[Aratz Larruzea](https://www.worldcubeassociation.org/persons/2022LARR02)",
-                  "1.58",
-                  "Spain",
-                  "2025-10-25",
-                  "[Sarriguren Open 2025](https://www.worldcubeassociation.org/competitions/SarrigurenOpen2025)"
                 ],
                 [
                   10,

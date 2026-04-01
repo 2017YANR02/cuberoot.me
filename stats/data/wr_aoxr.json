@@ -1074,6 +1074,18 @@
               "rows": [
                 [
                   1,
+                  "[Pranav Gadge](https://www.worldcubeassociation.org/persons/2017GADG01)",
+                  "8.01",
+                  "India",
+                  "2026-03-29",
+                  "[IISER Pune PARAM Open 2026](https://www.worldcubeassociation.org/competitions/IISERPunePARAMOpen2026)",
+                  {
+                    "_type": "solves",
+                    "csv": "8.01"
+                  }
+                ],
+                [
+                  2,
                   "[Radosław Marcinek](https://www.worldcubeassociation.org/persons/2022MARC05)",
                   "8.55",
                   "Poland",
@@ -1085,7 +1097,7 @@
                   }
                 ],
                 [
-                  2,
+                  3,
                   "[Nicholas Archer](https://www.worldcubeassociation.org/persons/2020ARCH01)",
                   "8.62",
                   "United Kingdom",
@@ -1097,7 +1109,7 @@
                   }
                 ],
                 [
-                  3,
+                  4,
                   "[Sean Patrick Villanueva](https://www.worldcubeassociation.org/persons/2017VILL41)",
                   "8.69",
                   "Philippines",
@@ -1109,7 +1121,7 @@
                   }
                 ],
                 [
-                  4,
+                  5,
                   "[Patrick Ponce](https://www.worldcubeassociation.org/persons/2012PONC02)",
                   "8.86",
                   "USA",
@@ -1121,7 +1133,7 @@
                   }
                 ],
                 [
-                  5,
+                  6,
                   "[Alexey Tsvetkov](https://www.worldcubeassociation.org/persons/2017TSVE02)",
                   "8.88",
                   "Russia",
@@ -1133,7 +1145,7 @@
                   }
                 ],
                 [
-                  6,
+                  7,
                   "[Crimson Arradaza](https://www.worldcubeassociation.org/persons/2023ARRA01)",
                   "8.91",
                   "Philippines",
@@ -1145,7 +1157,7 @@
                   }
                 ],
                 [
-                  7,
+                  8,
                   "[Fahmi Aulia Rachman](https://www.worldcubeassociation.org/persons/2016RACH01)",
                   "8.98",
                   "Indonesia",
@@ -1157,7 +1169,7 @@
                   }
                 ],
                 [
-                  8,
+                  9,
                   "[Luke Garrett](https://www.worldcubeassociation.org/persons/2017GARR05)",
                   "9.02",
                   "USA",
@@ -1169,7 +1181,7 @@
                   }
                 ],
                 [
-                  9,
+                  10,
                   "[Ianis Costin Chele](https://www.worldcubeassociation.org/persons/2021CHEL01)",
                   "9.05",
                   "Romania",
@@ -1178,18 +1190,6 @@
                   {
                     "_type": "solves",
                     "csv": "9.05"
-                  }
-                ],
-                [
-                  10,
-                  "[Juliette Sébastien](https://www.worldcubeassociation.org/persons/2014SEBA01)",
-                  "9.07",
-                  "France",
-                  "2024-04-27",
-                  "[Urnieta Open 2024](https://www.worldcubeassociation.org/competitions/UrnietaOpen2024)",
-                  {
-                    "_type": "solves",
-                    "csv": "9.07"
                   }
                 ]
               ]
@@ -6242,9 +6242,21 @@
               "titleZh": "三阶单手",
               "rows": [
                 [
+                  "8.01",
+                  "6.3%",
+                  "3",
+                  "[Pranav Gadge](https://www.worldcubeassociation.org/persons/2017GADG01)",
+                  "2026-03-29",
+                  "[IISER Pune PARAM Open 2026](https://www.worldcubeassociation.org/competitions/IISERPunePARAMOpen2026)",
+                  {
+                    "_type": "solves",
+                    "csv": "8.01"
+                  }
+                ],
+                [
                   "8.55",
                   "0.8%",
-                  "60",
+                  "57",
                   "[Radosław Marcinek](https://www.worldcubeassociation.org/persons/2022MARC05)",
                   "2026-01-31",
                   "[Żory Open 2026](https://www.worldcubeassociation.org/competitions/ZoryOpen2026)",
