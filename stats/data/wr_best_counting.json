@@ -1,9 +1,9 @@
 {
   "id": "wr_best_counting",
   "title": "Best counting solve",
-  "titleZh": "最佳计入成绩",
+  "titleZh": "最佳有效",
   "note": "Best counting solve: the best single that counts into the Ao5 (excluding the dropped best and worst).",
-  "noteZh": "最佳计入成绩：Ao5 去掉最好和最差后，剩余 3 次中的最小值。",
+  "noteZh": "最佳有效：Ao5 去掉最好和最差后，剩余 3 次中的最小值。",
   "header": [],
   "panels": [
     {

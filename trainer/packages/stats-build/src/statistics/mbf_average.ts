@@ -138,7 +138,7 @@ export class MbfAverage extends Statistic {
       const dateStr = formatDate(c.row['start_date']);
       const details = [c.v1, c.v2, c.v3]
         .map(v => new SolveTime('333mbf', 'single', v).clockFormat())
-        .join(', ');
+        .join(' ');
 
       return [mo3Str, gainStr, daysStr, c.row['person_link'], dateStr, c.row['competition_link'], details];
     }).reverse();
@@ -161,7 +161,7 @@ export class MbfAverage extends Statistic {
         const dateStr = formatDate(v.row['start_date']);
         const details = [v.v1, v.v2, v.v3]
           .map(val => new SolveTime('333mbf', 'single', val).clockFormat())
-          .join(', ');
+          .join(' ');
         return [i + 1, v.row['person_link'], mo3Str, v.row['country_id'], dateStr, v.row['competition_link'], details];
       });
 
