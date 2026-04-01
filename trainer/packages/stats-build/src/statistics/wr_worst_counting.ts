@@ -7,9 +7,9 @@ export class WrWorstCounting extends RoundMetric {
   constructor() {
     super();
     this.title = 'Worst counting solve';
-    this.titleZh = '最差计入成绩';
+    this.titleZh = '最差有效';
     this.note = 'Worst counting solve: the worst single that counts into the Ao5 (excluding the dropped best and worst).';
-    this.noteZh = '最差计入成绩：Ao5 去掉最好和最差后，剩余 3 次中的最大值。';
+    this.noteZh = '最差有效：Ao5 去掉最好和最差后，剩余 3 次中的最大值。';
     this.tableHeader = {
       'Result': 'right', 'Improvement': 'right', 'Days': 'right',
       'Person': 'left', 'Date': 'left', 'Competition': 'left', 'Details': 'left',
