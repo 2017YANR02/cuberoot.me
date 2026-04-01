@@ -4,26 +4,37 @@
  */
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import type { ReconSolve, ReconComment, EditHistoryItem } from '@cuberoot/shared';
 import { getRecon, listComments, getEditHistory, deleteRecon, addComment, updateComment, deleteComment, getBiliCover, listRecons } from '../../utils/recon_api';
 import {
   formatTime, flagClass, getEventDisplayName,
-  isBldEvent, getPuzzleId, t, wcaCompUrl, wcaPersonUrl,
+  isBldEvent, getPuzzleId, wcaCompUrl, wcaPersonUrl,
   buildExternalLinks, displaySolverName, FACE_COLORS,
 } from '../../utils/recon_utils';
+import { compNameZh, loadFlagData, flagDataVersion } from '../../utils/country_flags';
 import { cleanForPlayer } from '../../utils/recon_alg_utils';
 import { useAuthStore } from '../../stores/auth_store';
+import LangToggle from '../../components/LangToggle';
 import '../../recon.css';
 import './recon_detail.css';
 
 export default function ReconDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+  const isZh = i18n.language === 'zh';
   const [solve, setSolve] = useState<ReconSolve | null>(null);
   const [comments, setComments] = useState<ReconComment[]>([]);
   const [history, setHistory] = useState<EditHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // NOTE: 异步加载 compNameZh 映射
+  const [flagVer, setFlagVer] = useState(() => flagDataVersion());
+  useEffect(() => {
+    loadFlagData().then(v => { if (v !== flagVer) setFlagVer(v); });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // NOTE: 加载复盘数据
   const loadData = useCallback(async () => {
@@ -47,7 +58,7 @@ export default function ReconDetailPage() {
 
   // NOTE: 删除复盘
   const handleDelete = async () => {
-    if (!solve || !confirm(t('确定删除此复盘？', 'Delete this reconstruction?'))) return;
+    if (!solve || !confirm(t('recon.confirmDelete'))) return;
     try {
       await deleteRecon(solve.id);
       navigate('/recon');
@@ -68,7 +79,10 @@ export default function ReconDetailPage() {
     <div className="recon-page">
       {/* NOTE: 页头——对齐原版格式: 时间 + 纪录 + 项目 + 选手名 + 国旗 */}
       <div className="detail-header">
-        <Link to="/recon" className="detail-back">← {t('返回', 'Back')}</Link>
+        <div className="detail-header-nav">
+          <Link to="/recon" className="detail-back">← {t('common.back')}</Link>
+          <LangToggle />
+        </div>
         <h1 className="detail-title">
           {solve.rawTime != null && formatTime(solve.rawTime)}
           {solve.regionalSingleRecord && (
@@ -90,9 +104,9 @@ export default function ReconDetailPage() {
             {solve.country && <><span className={flagClass(solve.country)} />{' '}</>}
             {solve.compWcaId ? (
               <a href={wcaCompUrl(solve.compWcaId)} target="_blank" rel="noopener noreferrer">
-                {solve.comp}
+                {isZh ? (compNameZh(solve.comp) || solve.comp) : solve.comp}
               </a>
-            ) : solve.comp}
+            ) : (isZh ? (compNameZh(solve.comp) || solve.comp) : solve.comp)}
           </span>
         )}
       </div>
@@ -126,13 +140,13 @@ export default function ReconDetailPage() {
             <>
               {scramble && (
                 <div className="detail-section">
-                  <div className="detail-section-label">{t('打乱', 'Scramble')}</div>
+                  <div className="detail-section-label">{t('recon.scramble')}</div>
                   <div className="detail-scramble-text">{scramble}</div>
                 </div>
               )}
               {solutionText && (
                 <div className="detail-section">
-                  <div className="detail-section-label">{t('解法', 'Solution')}</div>
+                  <div className="detail-section-label">{t('recon.solution')}</div>
                   <SolutionView text={solutionText} />
                 </div>
               )}
@@ -151,7 +165,7 @@ export default function ReconDetailPage() {
           {/* 备注 */}
           {solve.note && (
             <div className="detail-section">
-              <div className="detail-section-label">📝 {t('备注', 'Note')}</div>
+              <div className="detail-section-label">📝 {t('recon.note')}</div>
               <div className="detail-note">{solve.note}</div>
             </div>
           )}
@@ -172,9 +186,9 @@ export default function ReconDetailPage() {
             <span className="detail-meta-value">
               {solve.reconerId ? (
                 <a href={wcaPersonUrl(solve.reconerId)} target="_blank" rel="noopener noreferrer">
-                  {displaySolverName(solve.reconer)}
+                  {displaySolverName(solve.reconer, isZh)}
                 </a>
-              ) : displaySolverName(solve.reconer)}
+              ) : displaySolverName(solve.reconer, isZh)}
             </span>
           </div>
         )}
@@ -190,16 +204,16 @@ export default function ReconDetailPage() {
             <span className="detail-meta-value">
               {solve.addedById ? (
                 <a href={wcaPersonUrl(solve.addedById)} target="_blank" rel="noopener noreferrer">
-                  {displaySolverName(solve.addedBy)}
+                  {displaySolverName(solve.addedBy, isZh)}
                 </a>
-              ) : displaySolverName(solve.addedBy)}
+              ) : displaySolverName(solve.addedBy, isZh)}
             </span>
           </div>
         )}
         {history.length > 0 && (
           <div className="detail-meta-item">
             <span className="detail-meta-label">✏️</span>
-            <span className="detail-meta-value">{history.length} {t('次编辑', 'edits')}</span>
+            <span className="detail-meta-value">{history.length} {t('recon.editCount', { count: history.length })}</span>
           </div>
         )}
       </div>
@@ -218,10 +232,10 @@ export default function ReconDetailPage() {
       {/* 操作按钮 */}
       <div className="detail-actions">
         <Link to={`/recon/submit/${solve.id}`} className="recon-btn recon-btn-edit">
-          {t('编辑', 'Edit')}
+          {t('recon.edit')}
         </Link>
         <button className="recon-btn recon-btn-danger" onClick={handleDelete}>
-          {t('删除', 'Delete')}
+          {t('recon.delete')}
         </button>
       </div>
     </div>
@@ -250,6 +264,7 @@ function SolutionView({ text }: { text: string }) {
 function ExternalLinks({ event, scramble, alg, solveId }: {
   event: string; scramble: string; alg: string; solveId: number;
 }) {
+  const { t } = useTranslation();
   const { algUrl, algSiteName, cubedbUrl } = buildExternalLinks(event, scramble, alg);
   const shareUrl = `${window.location.origin}/recon/detail/?id=${solveId}`;
 
@@ -258,7 +273,7 @@ function ExternalLinks({ event, scramble, alg, solveId }: {
     navigator.clipboard.writeText(shareUrl).then(() => {
       const btn = e.currentTarget as HTMLElement;
       const orig = btn.textContent;
-      btn.textContent = t('已复制', 'copied');
+      btn.textContent = t('recon.copied');
       setTimeout(() => { btn.textContent = orig; }, 1500);
     });
   };
@@ -267,7 +282,7 @@ function ExternalLinks({ event, scramble, alg, solveId }: {
     <div className="recon-external-links">
       <a href={algUrl} target="_blank" rel="noopener noreferrer">{algSiteName}</a>
       <a href={cubedbUrl} target="_blank" rel="noopener noreferrer">cubedb.net</a>
-      <a href="#" onClick={handleCopyLink}>{t('链接', 'link')}</a>
+      <a href="#" onClick={handleCopyLink}>{t('recon.link')}</a>
     </div>
   );
 }
@@ -277,28 +292,23 @@ const CROSS_LABELS: Record<number, string> = { 0: 'cross', 1: 'xcross', 2: 'xxcr
 
 /** 统计网格——完全对齐原版 17 项字段 */
 function StatsGrid({ solve }: { solve: ReconSolve }) {
-  // NOTE: 完整字段列表，与原版 buildStatsGrid 一致
-  // NOTE: 值类型为 React.ReactNode 以支持 crossColor 着色
+  const { t } = useTranslation();
   const items: [string, React.ReactNode | undefined][] = [
-    [t('方法', 'Method'), solve.method],
-    [t('步数', 'STM'), solve.stm],
-    [t('手速', 'TPS'), solve.tps],
-    // NOTE: 盲拧专用
-    [t('执行', 'Exec'), isBldEvent(solve.event) && solve.execTime != null ? Number(solve.execTime).toFixed(2) : undefined],
-    [t('记忆', 'Memo'), isBldEvent(solve.event) && solve.memoTime != null ? Number(solve.memoTime).toFixed(2) : undefined],
-    // NOTE: CFOP 阶段统计
+    [t('recon.method'), solve.method],
+    [t('recon.stm'), solve.stm],
+    [t('recon.tps'), solve.tps],
+    [t('recon.exec'), isBldEvent(solve.event) && solve.execTime != null ? Number(solve.execTime).toFixed(2) : undefined],
+    [t('recon.memo'), isBldEvent(solve.event) && solve.memoTime != null ? Number(solve.memoTime).toFixed(2) : undefined],
     ['Cross', solve.crossStm != null ? `${solve.crossStm}` : undefined],
     ['F2L', solve.f2l != null ? `${solve.f2l}` : undefined],
-    [t('顶层', 'LL'), solve.ll != null ? `${solve.ll}` : undefined],
-    // NOTE: XCross 类型
+    [t('recon.ll'), solve.ll != null ? `${solve.ll}` : undefined],
     ['?x', solve.crossType != null ? (CROSS_LABELS[solve.crossType as number] || String(solve.crossType)) : undefined],
-    [t('基态', 'Free Pair'), solve.freePair],
-    [t('y 转体', 'y rot'), solve.yRot],
-    [t('换手', 'Regrip'), solve.regrip],
-    [t('卡顿', 'Lockup'), solve.lockup],
-    ['S' + t('转动', ' move'), solve.sMove],
-    // NOTE: crossColor 使用 FACE_COLORS 着色，与原版一致
-    [t('底色', 'Color'), solve.crossColor ? (
+    [t('recon.freePair'), solve.freePair],
+    [t('recon.yRot'), solve.yRot],
+    [t('recon.regrip'), solve.regrip],
+    [t('recon.lockup'), solve.lockup],
+    [t('recon.sMove'), solve.sMove],
+    [t('recon.crossColor'), solve.crossColor ? (
       FACE_COLORS[solve.crossColor as string]
         ? <span style={{ color: FACE_COLORS[solve.crossColor as string], fontWeight: 600 }}>{String(solve.crossColor)}</span>
         : String(solve.crossColor)
@@ -307,13 +317,12 @@ function StatsGrid({ solve }: { solve: ReconSolve }) {
     ['PLL', solve.pllShort || solve.pll],
   ];
 
-  // NOTE: 过滤掉空值和零值
   const validItems = items.filter(([, v]) => v != null && v !== '' && v !== 0);
   if (validItems.length === 0) return null;
 
   return (
     <div className="detail-section">
-      <div className="detail-section-label">📊 {t('统计', 'Statistics')}</div>
+      <div className="detail-section-label">📊 {t('recon.statistics')}</div>
       <div className="detail-stats-grid">
         {validItems.map(([label, value]) => (
           <div key={label} className="stat-item">
@@ -328,10 +337,11 @@ function StatsGrid({ solve }: { solve: ReconSolve }) {
 
 /** 视频嵌入 */
 function VideoSection({ videoUrl }: { videoUrl: string }) {
+  const { t } = useTranslation();
   const urls = videoUrl.split('\n').filter(u => u.trim());
   return (
     <div className="detail-section">
-      <div className="detail-section-label">{t('视频', 'Video')}</div>
+      <div className="detail-section-label">{t('recon.video')}</div>
       {urls.map((url, i) => (
         <VideoEmbed key={i} url={url.trim()} />
       ))}
@@ -395,6 +405,7 @@ function VideoEmbed({ url }: { url: string }) {
 
 /** 编辑历史折叠面板 */
 function EditHistoryPanel({ history }: { history: EditHistoryItem[] }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
 
   return (
@@ -404,14 +415,14 @@ function EditHistoryPanel({ history }: { history: EditHistoryItem[] }) {
         onClick={() => setOpen(!open)}
         style={{ fontSize: '0.82rem' }}
       >
-        {open ? '▼' : '▶'} {t('编辑历史', 'Edit History')} ({history.length})
+        {open ? '▼' : '▶'} {t('recon.editHistory')} ({history.length})
       </button>
       {open && (
         <div className="detail-history-list">
           {history.map((item, idx) => (
             <div key={item.id || idx} className="detail-history-item">
               <div className="detail-history-header">
-                <span>{item.editedBy || t('未知', 'unknown')}</span>
+                <span>{item.editedBy || t('recon.unknown')}</span>
                 <span className="detail-comment-time">
                   {new Date(item.editedAt * 1000).toLocaleString()}
                 </span>
@@ -445,6 +456,7 @@ function EditHistoryPanel({ history }: { history: EditHistoryItem[] }) {
 
 /** 同轮次成绩导航 */
 function SameRoundNav({ solve }: { solve: ReconSolve }) {
+  const { t } = useTranslation();
   const [siblings, setSiblings] = useState<ReconSolve[]>([]);
   const [loaded, setLoaded] = useState(false);
 
@@ -464,7 +476,7 @@ function SameRoundNav({ solve }: { solve: ReconSolve }) {
 
   return (
     <div className="detail-section">
-      <div className="detail-section-label">{t('同轮次复盘', 'Same Round')}</div>
+      <div className="detail-section-label">{t('recon.sameRound')}</div>
       <div className="detail-same-round">
         {/* NOTE: 当前 solve */}
         <span className="same-round-item same-round-current">
@@ -527,8 +539,8 @@ function CommentsView({
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editText, setEditText] = useState('');
 
-  // NOTE: 当前登录用户 WCA ID（从 auth_store 获取）
   const currentWcaId = useAuthStore(s => s.user?.wcaId) || '';
+  const { t } = useTranslation();
 
   const handleAdd = async () => {
     if (!newComment.trim() || submitting) return;
@@ -556,7 +568,7 @@ function CommentsView({
   };
 
   const handleDelete = async (commentId: number) => {
-    if (!confirm(t('确定删除评论？', 'Delete this comment?'))) return;
+    if (!confirm(t('recon.confirmDeleteComment'))) return;
     try {
       await deleteComment(commentId);
       onUpdate();
@@ -568,7 +580,7 @@ function CommentsView({
   return (
     <div className="detail-section">
       <div className="detail-section-label">
-        💬 {t('评论', 'Comments')} ({comments.length})
+        💬 {t('recon.comments')} ({comments.length})
       </div>
       <div className="detail-comments">
         {comments.map(comment => (
@@ -577,7 +589,7 @@ function CommentsView({
               <strong>{comment.authorName}</strong>
               <span className="detail-comment-time">
                 {new Date(comment.createdAt * 1000).toLocaleDateString()}
-                {comment.updatedAt && ` (${t('已编辑', 'edited')})`}
+                {comment.updatedAt && ` (${t('recon.edited')})`}
               </span>
             </div>
             {editingId === comment.id ? (
@@ -589,10 +601,10 @@ function CommentsView({
                 />
                 <div className="detail-comment-edit-actions">
                   <button className="recon-btn-sm" onClick={() => handleEdit(comment.id)}>
-                    {t('保存', 'Save')}
+                    {t('recon.save')}
                   </button>
                   <button className="recon-btn-sm" onClick={() => setEditingId(null)}>
-                    {t('取消', 'Cancel')}
+                    {t('recon.cancel')}
                   </button>
                 </div>
               </div>
@@ -606,10 +618,10 @@ function CommentsView({
                       setEditingId(comment.id);
                       setEditText(comment.content);
                     }}>
-                      {t('编辑', 'Edit')}
+                      {t('recon.edit')}
                     </button>
                     <button className="recon-btn-sm recon-btn-danger-sm" onClick={() => handleDelete(comment.id)}>
-                      {t('删除', 'Delete')}
+                      {t('recon.delete')}
                     </button>
                   </div>
                 )}
@@ -625,7 +637,7 @@ function CommentsView({
           <textarea
             value={newComment}
             onChange={e => setNewComment(e.target.value)}
-            placeholder={t('写评论...', 'Write a comment...')}
+            placeholder={t('recon.writeComment')}
             rows={2}
           />
           <button
@@ -633,12 +645,12 @@ function CommentsView({
             onClick={handleAdd}
             disabled={submitting || !newComment.trim()}
           >
-            {submitting ? t('提交中...', 'Posting...') : t('发送', 'Post')}
+            {submitting ? t('recon.posting') : t('recon.post')}
           </button>
         </div>
       ) : (
         <div className="detail-comment-login-hint">
-          🔑 {t('登录 WCA 账号后可以发评论', 'Login with WCA to post comments')}
+          🔑 {t('recon.loginToComment')}
         </div>
       )}
     </div>
@@ -653,6 +665,7 @@ function TwistySection({
   scramble: string;
   alg: string;
 }) {
+  const { t } = useTranslation();
   // NOTE: 动画默认显示（对齐原版——原版默认展开 twisty-player）
   const [visible, setVisible] = useState(true);
   const [cubingLoaded, setCubingLoaded] = useState(false);
@@ -695,7 +708,7 @@ function TwistySection({
   return (
     <div className="detail-section">
       <button className="recon-btn" onClick={handleToggle}>
-        {visible ? t('隐藏动画', 'Hide Animation') : t('查看动画', 'View Animation')}
+        {visible ? t('recon.hideAnim') : t('recon.viewAnim')}
       </button>
       {visible && <div ref={containerRef} className="detail-twisty-container" />}
     </div>

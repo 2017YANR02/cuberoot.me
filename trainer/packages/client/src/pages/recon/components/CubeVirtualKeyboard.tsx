@@ -13,7 +13,7 @@
  * - 公式联想（前缀匹配 8 条触发器公式）
  */
 import { useState, useRef, useCallback, useEffect, type RefObject } from 'react';
-import { t } from '../../../utils/recon_utils';
+import { useTranslation } from 'react-i18next';
 import './cube_virtual_keyboard.css';
 
 interface Props {
@@ -98,6 +98,7 @@ function getSuggestions(inputStr: string) {
 type ShiftState = 'off' | 'single' | 'capslock';
 
 export default function CubeVirtualKeyboard({ textareaRef, onInput }: Props) {
+  const { t } = useTranslation();
   const [activePage, setActivePage] = useState(0);
   const [shiftState, setShiftState] = useState<ShiftState>('off');
   const [suggestions, setSuggestions] = useState<Array<{ label: string; formula: string; prefixLen: number }>>([]);
@@ -606,12 +607,12 @@ export default function CubeVirtualKeyboard({ textareaRef, onInput }: Props) {
 
       {/* 手势说明 */}
       <p className="vkb-gesture-hint">
-        <span><em>{t('点击', 'tap')}</em> R</span>
-        <span><em>{t('下滑', 'slide down')}</em> R&apos;</span>
-        <span><em>{t('上滑', 'slide up')}</em> r</span>
-        <span><em>{t('双击', 'double tap')}</em> R2</span>
-        <span><em>{t('长按', 'hold')}</em> R2&apos;</span>
-        <span><em>{t('()下滑/上滑', '() down/up')}</em> []/{'{ }'}</span>
+        <span><em>{t('recon.gestureTap', 'tap')}</em> R</span>
+        <span><em>{t('recon.gestureDown', 'slide down')}</em> R&apos;</span>
+        <span><em>{t('recon.gestureUp', 'slide up')}</em> r</span>
+        <span><em>{t('recon.gestureDouble', 'double tap')}</em> R2</span>
+        <span><em>{t('recon.gestureHold', 'hold')}</em> R2&apos;</span>
+        <span><em>{t('recon.gestureBracket', '() down/up')}</em> []/{'{ }'}</span>
       </p>
 
       {/* 长按弹出气泡（portal 到 body） */}

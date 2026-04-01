@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { syncLangToUrl, getLangQuery } from '../../i18n';
+import { getLangQuery } from '../../i18n';
 import WcaEventSelector from './WcaEventSelector';
 import { EVENT_NAME_TO_ID, ALL_EVENT_IDS } from './event_constants';
 import { countryFlagClass, loadFlagData, flagDataVersion, extractWcaId, extractCompId, personFlagIso2, compFlagIso2, compNameZh } from '../../utils/country_flags';
@@ -13,6 +13,7 @@ import DistributionChart from './DistributionChart';
 import type { DistDataset } from './DistributionChart';
 import WrHistoryChart from './WrHistoryChart';
 import { translateCellText, translatePersonLink, stripChineseParens } from './wca_translations';
+import LangToggle from '../../components/LangToggle';
 import './wca_stats.css';
 
 // NOTE: JSON schema 与 stats-build 输出一致
@@ -918,12 +919,7 @@ export default function WcaStatsPage() {
 
   const isZh = i18n.language === 'zh';
 
-  // NOTE: 切换语言——同步 i18n + URL + localStorage（对标 Legacy i18n.js setLocale）
-  const toggleLang = useCallback(() => {
-    const next = isZh ? 'en' : 'zh';
-    i18n.changeLanguage(next);
-    syncLangToUrl(next);
-  }, [isZh, i18n]);
+  // NOTE: 切换语言——已统一到 LangToggle 组件
 
   // NOTE: 异步加载国旗映射数据（person_countries.json + comp_countries.json）
   // flagVer 变化时触发 re-render，使国旗 span 获得正确的 className
@@ -1048,7 +1044,7 @@ export default function WcaStatsPage() {
   if (loading) {
     return (
       <div className="wca-stats-page">
-        <div className="wca-stats-loading">加载中...</div>
+        <div className="wca-stats-loading">{isZh ? '加载中...' : 'Loading...'}</div>
       </div>
     );
   }
@@ -1068,7 +1064,10 @@ export default function WcaStatsPage() {
   return (
     <div className="wca-stats-page">
       <div className="wca-stats-header">
-        <Link to={`/wca-stats${getLangQuery()}`} className="wca-stats-back">← {isZh ? '返回' : 'Back'}</Link>
+        <div className="wca-stats-header-nav">
+          <Link to={`/wca-stats${getLangQuery()}`} className="wca-stats-back">← {isZh ? '返回' : 'Back'}</Link>
+          <LangToggle />
+        </div>
         <h1>{isZh ? data.titleZh : data.title}</h1>
         {data.note && (
           <p className="wca-stats-note">{isZh ? (data.noteZh ?? data.note) : data.note}</p>
@@ -1126,10 +1125,6 @@ export default function WcaStatsPage() {
           activePanel={activePanel}
         />
       )}
-      {/* NOTE: 语言切换按钮——固定右下角（对标 Legacy i18n.js toggle） */}
-      <button className="wca-stats-lang-toggle" onClick={toggleLang}>
-        🌐 {isZh ? 'EN' : '中文'}
-      </button>
     </div>
   );
 }
