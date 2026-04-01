@@ -1,6 +1,6 @@
 # 训练器前端部署（GitHub Pages）+ 后端部署（ECS Hono API）
 # 仅当 trainer/ 源码有变更时触发
-# 前端：构建 Vite 产物 → 提交到 app/ → GitHub Pages + deploy_mirror 自动 serve
+# 前端：构建 Vite 产物 → 提交到根目录 → GitHub Pages + deploy_mirror 自动 serve
 # 后端：构建 server dist → rsync 到 ECS → pm2 restart
 name: Deploy Trainer
 
@@ -9,7 +9,7 @@ on:
     branches: [main]
     paths:
       - 'trainer/**'
-      - '!app/**'
+      - '!_assets/**'
 
 permissions:
   contents: write
@@ -45,21 +45,30 @@ jobs:
         working-directory: trainer
         run: pnpm --filter @cuberoot/server build
 
-      # 将 client dist 产物复制到仓库根目录的 app/
-      # Jekyll 不排除此目录，会直接当静态文件 serve
-      - name: Copy dist to app/
+      # 将 client dist 产物同步到仓库根目录
+      # NOTE: Vite 产出 index.html + _assets/ + public/ 静态文件
+      # 不能 rm -rf 根目录，只清理 Vite 管理的文件
+      - name: Sync dist to root
         run: |
+          # 清理旧的 Vite chunks（_assets/ 由 Vite assetsDir 配置）
+          rm -rf _assets
+          # 清理旧的 app/ 目录（迁移过渡期）
           rm -rf app
-          cp -r trainer/packages/client/dist app
+          # 复制 Vite 产物到根目录（merge，不覆盖 legacy/ stats/ 等）
+          cp -r trainer/packages/client/dist/* .
 
       # 提交并推送（deploy_mirror.yml 会自动同步到国内镜像）
       - name: Commit and push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add app/
+          git add -A _assets/ index.html favicon.svg CubeRoot-dark.png
+          git add -A oll_pic/ zbll_svg/ zbls_img/ vendor/ fonts/
+          git add -A scramble_module.js confetti.min.js icons.svg icon_timer.png cstimer_logo.png
+          # 清理已删除的 app/ 目录
+          git add -A app/
           # 仅在有变化时才提交
-          git diff --cached --quiet || git commit -m "ci: rebuild app/ from trainer/"
+          git diff --cached --quiet || git commit -m "ci: rebuild SPA from trainer/ [skip ci]"
           git pull --rebase origin main
           git push
 

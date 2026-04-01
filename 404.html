@@ -12,22 +12,26 @@ layout: null
 
 <body>
     <script>
-        // NOTE: SPA 子路由重定向 — /app/calc 等路径在 GitHub Pages 没有物理文件
-        // 存入 sessionStorage 后跳转到 /app/，SPA 加载后用 replaceState 恢复
+        // NOTE: SPA 路由 fallback — React SPA 部署在根路径 /
+        // 非静态文件路径全部重定向到 / 让 React Router 处理
         var p = location.pathname;
-        if (p.startsWith('/app/') && p !== '/app/' && p !== '/app/index.html') {
+
+        // 静态资源路径 — 不做 SPA 重定向，返回真实 404
+        var isStatic = p.startsWith('/stats/') || p.startsWith('/legacy/') || p.startsWith('/_assets/');
+
+        if (!isStatic && p !== '/' && p !== '/index.html') {
+            // NOTE: 存入 sessionStorage，SPA 加载后用 replaceState 恢复原始路径
             sessionStorage.setItem('spa-redirect', p + location.search + location.hash);
-            location.replace('/app/');
+            location.replace('/');
         }
-        // NOTE: /recon/数字 → 重定向到独立详情页
+        // 旧链接兼容 — /app/ 下的路径重定向到根路径（去掉 /app/ 前缀）
+        else if (p.startsWith('/app/')) {
+            var newPath = p.replace('/app/', '/');
+            location.replace(newPath || '/');
+        }
         else {
-            var m = p.match(/^\/recon\/(\d+)$/);
-            if (m) {
-                location.replace('/recon/detail/?id=' + m[1]);
-            } else {
-                document.body.style.cssText = 'font-family:system-ui;color:#888;text-align:center;padding:80px 20px';
-                document.body.innerHTML = '<h1>404</h1><p>Page not found</p><a href="/" style="color:#60a5fa">← Home</a>';
-            }
+            document.body.style.cssText = 'font-family:system-ui;color:#888;text-align:center;padding:80px 20px';
+            document.body.innerHTML = '<h1>404</h1><p>Page not found</p><a href="/" style="color:#60a5fa">← Home</a>';
         }
     </script>
     <noscript>
