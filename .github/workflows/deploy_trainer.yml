@@ -69,7 +69,7 @@ jobs:
           # 清理已删除的 app/ 目录
           git add -A app/
           # 仅在有变化时才提交
-          git diff --cached --quiet || git commit -m "ci: rebuild SPA from trainer/ [skip ci]"
+          git diff --cached --quiet || git commit -m "ci: rebuild SPA from trainer/"
           git pull --rebase origin main
           git push
 
