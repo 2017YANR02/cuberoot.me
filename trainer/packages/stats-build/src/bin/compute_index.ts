@@ -164,6 +164,29 @@ function main() {
   writeFileSync(OUTPUT_PATH, JSON.stringify(output, null, 2), 'utf-8');
   console.log(`Generated ${OUTPUT_PATH} (${categories.length} categories, ` +
     `${categories.reduce((s, c) => s + c.stats.length, 0)} stats)`);
+
+  // NOTE: 提取中文比赛名映射——从 recon_aux_data.json 中提取 compNamesZh
+  // 输出到 stats/data/comp_names_zh.json，使前端不依赖 Jekyll/recon 路径
+  extractCompNamesZh();
+}
+
+function extractCompNamesZh() {
+  const RECON_AUX_PATH = resolve(__dirname, '../../../../../recon/recon_aux_data.json');
+  const OUTPUT = resolve(DATA_DIR, 'comp_names_zh.json');
+
+  if (!existsSync(RECON_AUX_PATH)) {
+    console.warn('WARN: recon_aux_data.json not found, skipping comp_names_zh.json');
+    return;
+  }
+
+  try {
+    const auxData = JSON.parse(readFileSync(RECON_AUX_PATH, 'utf-8'));
+    const compNamesZh: Record<string, string> = auxData.compNamesZh || {};
+    writeFileSync(OUTPUT, JSON.stringify(compNamesZh), 'utf-8');
+    console.log(`Generated ${OUTPUT} (${Object.keys(compNamesZh).length} entries)`);
+  } catch (err) {
+    console.warn('WARN: failed to extract comp_names_zh:', err);
+  }
 }
 
 main();
