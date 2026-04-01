@@ -27,8 +27,8 @@ export default defineConfig({
     // 开发环境反代后端 API，避免 CORS 问题
     proxy: {
       // NOTE: Hono API 代理到 ECS 线上后端（本地无 recon_db，无法运行 Hono 后端）
-      '/trainer/api': {
-        target: 'https://toolkit.cuberoot.me',
+      '/api': {
+        target: 'https://www.cuberoot.me',
         changeOrigin: true,
         secure: true,
       },

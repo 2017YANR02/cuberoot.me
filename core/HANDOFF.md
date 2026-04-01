@@ -16,9 +16,9 @@
 | 项目 | 位置 | 公式集 | 训练模式 | 迁移状态 |
 |------|------|--------|----------|---------|
 | `bestsiteever/oll/` | D:\cube\bestsiteever\oll | OLL 57 cases | **计时器**（空格/触摸启停） | ⚠️ 基本完成，有 bug |
-| `trainer/pll_recognition_trainer/` | D:\cube\trainer\pll_recognition_trainer | PLL 21 cases | **识别**（看图选答案）| ⚠️ 基本完成，有 bug |
-| `trainer/zbll_trainer/` | D:\cube\trainer\zbll_trainer | ZBLL 493 cases | 计时器 + 预设集合 | ❌ 未开始 |
-| `trainer/zbls-trainer/` | D:\cube\trainer\zbls-trainer | ZBLS | 简单选择+训练 | ❌ 未开始 |
+| `core/pll_recognition_core/` | D:\cube\trainer\pll_recognition_trainer | PLL 21 cases | **识别**（看图选答案）| ⚠️ 基本完成，有 bug |
+| `core/zbll_core/` | D:\cube\trainer\zbll_trainer | ZBLL 493 cases | 计时器 + 预设集合 | ❌ 未开始 |
+| `core/zbls-core/` | D:\cube\trainer\zbls-trainer | ZBLS | 简单选择+训练 | ❌ 未开始 |
 
 ### 技术栈
 
@@ -34,7 +34,7 @@
 ## 二、当前文件结构
 
 ```
-trainer/packages/client/src/
+core/packages/client/src/
 ├── App.tsx                    # 路由：/train/oll → OllTrainingPage, /train/:id → TrainingPage
 ├── main.tsx
 ├── index.css                  # 全局样式（含 on-screen keyboard、按钮、headShake 动画）
@@ -61,7 +61,7 @@ trainer/packages/client/src/
 └── types/
     └── sr-puzzlegen-pll.d.ts  # sr-puzzlegen-pll 类型声明
 
-trainer/packages/shared/data/
+core/packages/shared/data/
 ├── pll.json                   # PLL 21 cases 的算法映射（Aa: {noAuf, U, U', U2}）
 ├── oll.json                   # OLL 57 cases（name, alg, alg2, group）
 └── oll_scrambles.json         # OLL 57 cases × 20 预生成打乱序列
@@ -110,7 +110,7 @@ trainer/packages/shared/data/
 ### P2
 
 - [ ] **ZBLL 493 cases 数据迁移**（from `D:\cube\trainer\zbll_trainer\src\assets\zbll_map_next.json`）
-- [ ] **ZBLL 预设集合系统**（from `zbll_trainer/src/stores/PresetStore.js`）
+- [ ] **ZBLL 预设集合系统**（from `zbll_core/src/stores/PresetStore.js`）
 - [ ] **ZBLS 数据迁移**（from `D:\cube\trainer\zbls-trainer\Classes and Data Files\`）
 - [ ] **i18n 国际化**（zh/en 语言切换，框架已搭好 `i18n/` 目录）
 - [ ] **深色/浅色主题切换**
@@ -190,7 +190,7 @@ a85b8fd feat(trainer): add backend API with MariaDB + WCA OAuth + JWT
 ```
 你要继续完成 D:\cube\ruiminyan.github.io\trainer\ 的魔方训练器迁移工作。
 
-请先阅读 trainer/HANDOFF.md 了解项目背景、当前状态、已知bug和剩余任务。
+请先阅读 core/HANDOFF.md 了解项目背景、当前状态、已知bug和剩余任务。
 
 关键规则：
 1. 必须按原版项目原汁原味迁移，不能自作主张改功能或 UI 流程
@@ -202,3 +202,4 @@ a85b8fd feat(trainer): add backend API with MariaDB + WCA OAuth + JWT
 当前最紧急的工作：修复 PLL 和 OLL 训练页的已知 bug（见 HANDOFF.md 第三节）。
 修完 bug 后继续 P2 任务（ZBLL 493 cases 迁移）。
 ```
+

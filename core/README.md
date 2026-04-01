@@ -5,7 +5,7 @@
 ## 项目结构
 
 ```
-trainer/
+core/
 ├── packages/
 │   ├── client/          # React 19 + Vite 8 前端
 │   │   ├── src/
@@ -63,7 +63,7 @@ cd packages/stats-ui
 
 > **注意**：Recon API 通过 Vite proxy 转发到 ECS 线上后端（`toolkit.cuberoot.me`），本地开发**不需要**启动 Hono 后端。
 > 
-> 若需要 Calc/Upcoming Comps 模块的 WR/比赛数据，或测试 Solver/Alg Trainer/csTimer 的 iframe 嵌入效果，需额外启动 `bundle exec jekyll serve`（`http://localhost:4000`）。Vite dev server 已配置 proxy 自动转发这些路径。
+> 若需要 Calc/Upcoming Comps 模块的 WR/比赛数据，或测试 Solver/Alg core/csTimer 的 iframe 嵌入效果，需额外启动 `bundle exec jekyll serve`（`http://localhost:4000`）。Vite dev server 已配置 proxy 自动转发这些路径。
 
 ### 后端开发（需要 MariaDB）
 
@@ -84,11 +84,11 @@ pnpm --filter @cuberoot/server dev
 
 | Workflow | 触发条件 | 执行内容 |
 |----------|----------|----------|
-| **Deploy Trainer** | push main 且 `trainer/` 有变更 | pnpm install → build client + server → rsync + pm2 restart |
-| **Deploy Mirror** | push main（已有） | Jekyll build + rsync（trainer/ 已在 `_config.yml` exclude 中排除）|
+| **Deploy Trainer** | push main 且 `core/` 有变更 | pnpm install → build client + server → rsync + pm2 restart |
+| **Deploy Mirror** | push main（已有） | Jekyll build + rsync（core/ 已在 `_config.yml` exclude 中排除）|
 
 ```
-push trainer/ 变更 → GitHub Actions → build → rsync → ECS
+push core/ 变更 → GitHub Actions → build → rsync → ECS
   ├── toolkit.cuberoot.me/app/        ← 前端
   └── toolkit.cuberoot.me:3001/api/   ← 后端 API
 ```
@@ -113,7 +113,7 @@ push trainer/ 变更 → GitHub Actions → build → rsync → ECS
 ## Stats Build 使用方式
 
 ```powershell
-cd trainer/packages/stats-build
+cd core/packages/stats-build
 
 # 需要设置 Node 参数（内存管理 + GC）
 $env:NODE_OPTIONS='--expose-gc --max-old-space-size=6144'
@@ -139,3 +139,4 @@ npx tsx src/bin/compute_index.ts
 ```
 
 > 完整迁移文档见 [MIGRATION_PLAN.md](packages/stats-build/MIGRATION_PLAN.md)
+

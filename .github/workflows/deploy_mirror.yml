@@ -1,12 +1,12 @@
 # 每次 push 或其他 CI 完成后，自动构建 Jekyll 并 rsync 到阿里云（国内镜像）
-# 目标：toolkit.cuberoot.me
+# 目标：www.cuberoot.me
 name: Deploy Mirror to China
 
 on:
   push:
     branches: [main]
   workflow_run:
-    workflows: ["Update Stats", "Update Upcoming Comps", "Deploy Trainer"]
+    workflows: ["Update Stats", "Update Upcoming Comps", "Deploy Core"]
     types: [completed]
     branches: [main]
 

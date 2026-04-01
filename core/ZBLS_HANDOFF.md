@@ -47,7 +47,7 @@ ZBLL Trainer 是同类移植的完整先例，结构和模式应直接复用：
 ### 文件结构
 
 ```
-zbls-trainer/
+zbls-core/
 ├── index.html                           # 选择页（111KB！全部 HTML 内联）
 ├── trainer.html                         # 训练页（1.7KB）
 ├── Scripts/
@@ -162,7 +162,7 @@ zbls-trainer/
 
 ### 8. README
 
-更新 `trainer/README.md` 添加 ZBLS 文件条目。
+更新 `core/README.md` 添加 ZBLS 文件条目。
 
 ---
 
@@ -185,3 +185,4 @@ zbls-trainer/
 1. `pnpm --filter @cuberoot/client build` 编译通过
 2. 用户自行在 `http://localhost:5173/app/select/zbls` 和 `/train/zbls` 验证
 3. 提交后 push，CI 自动部署
+

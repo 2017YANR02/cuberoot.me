@@ -1,19 +1,19 @@
 /**
  * Recon API 客户端
- * NOTE: 对齐 Hono 后端 RESTful 路由（/trainer/api/recon/xxx）
+ * NOTE: 对齐 Hono 后端 RESTful 路由（/api/recon/xxx）
  */
 import type {
   ReconSolve, ReconComment, EditHistoryItem,
 } from '@cuberoot/shared';
 import { getWcaId } from '../stores/auth_store';
 
-// NOTE: 生产环境走 Nginx 反代到 Hono（/trainer/api/recon/xxx）
+// NOTE: 生产环境走 Nginx 反代到 Hono（/api/recon/xxx）
 // GitHub Pages 无后端，跨域请求 cuberoot.me API
 // 开发环境走 Vite proxy（相同路径，proxy 到 cuberoot.me）
 const API_BASE = import.meta.env.VITE_RECON_API_BASE
   || (window.location.hostname.endsWith('cuberoot.me')
-    ? '/trainer/api/recon'
-    : 'https://www.cuberoot.me/trainer/api/recon');
+    ? '/api/recon'
+    : 'https://www.cuberoot.me/api/recon');
 
 // ── 认证 ──
 
