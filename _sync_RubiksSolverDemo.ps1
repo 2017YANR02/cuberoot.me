@@ -42,7 +42,7 @@ Write-Host ""
 Write-Host "Step 1: Syncing src/ directory..." -ForegroundColor Green
 
 $upstreamSrc = Join-Path $UpstreamDir "src"
-$localSrc = Join-Path $LocalDir "src"
+$localSrc = Join-Path $LocalDir "legacy" "src"
 
 # NOTE: i18n/ 已移至根目录，src/ 可以安全整体同步
 $excludePatterns = @('\.cpp$', '\.h$', '\.sh$', '\.txt$', '\.gitignore', 'README', 'PRODUCTION_GUIDE', 'CHANGELOG', 'build_', 'test_', 'docs', 'tools', 'tsl')
@@ -73,7 +73,7 @@ Write-Host "`nStep 2: Syncing root-level dependencies..." -ForegroundColor Green
 foreach ($file in $config.rootFiles)
 {
     $src = Join-Path $UpstreamDir $file
-    $dest = Join-Path $LocalDir $file
+    $dest = Join-Path $LocalDir "legacy" $file
 
     if (-not (Test-Path $src))
     {
@@ -94,7 +94,7 @@ if ($config.rootDirs)
     foreach ($dir in $config.rootDirs)
     {
         $srcDir = Join-Path $UpstreamDir $dir
-        $destDir = Join-Path $LocalDir $dir
+        $destDir = Join-Path $LocalDir "legacy" $dir
 
         if (-not (Test-Path $srcDir))
         {
@@ -113,7 +113,7 @@ if ($config.rootDirs)
 #       本站已重构为目录结构（如 2x2x2/index.html），且已用内联 GA 替代 analytics.js
 Write-Host "`nStep 2c: Patching sw.js cache lists..." -ForegroundColor Green
 
-$swPath = Join-Path $LocalDir "sw.js"
+$swPath = Join-Path $LocalDir "legacy" "sw.js"
 if (Test-Path $swPath)
 {
     $swContent = Read-Utf8File $swPath
@@ -142,7 +142,7 @@ if (Test-Path $swPath)
 # NOTE: 上游 manifest.json 的路径、名称和图标都需要适配本站
 Write-Host "`nStep 2d: Patching manifest.json..." -ForegroundColor Green
 
-$manifestPath = Join-Path $LocalDir "manifest.json"
+$manifestPath = Join-Path $LocalDir "legacy" "manifest.json"
 if (Test-Path $manifestPath)
 {
     $manifestContent = Read-Utf8File $manifestPath
@@ -174,7 +174,7 @@ $gaCode = Get-GaInlineCode $config.analytics.trackingId
 foreach ($page in $config.pages)
 {
     $srcFile = Join-Path $UpstreamDir $page.upstream
-    $destDir2 = Join-Path $LocalDir $page.subdir
+    $destDir2 = Join-Path $LocalDir "legacy" $page.subdir
     $destFile = Join-Path $destDir2 "index.html"
 
     if (-not (Test-Path $srcFile))
