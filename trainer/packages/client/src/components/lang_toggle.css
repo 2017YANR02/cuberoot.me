@@ -3,10 +3,10 @@
 /* ── inline 变体：嵌入页面 header，右对齐（行业标准） ── */
 .lang-toggle-inline {
   padding: 5px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 235, 220, 0.15);
   border-radius: 6px;
   background: transparent;
-  color: #9aa0a6;
+  color: #9c8c7e;
   font-size: 13px;
   cursor: pointer;
   transition: all 0.15s;
@@ -15,9 +15,9 @@
 }
 
 .lang-toggle-inline:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #e0e0e0;
-  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 235, 220, 0.08);
+  color: #f0ebe3;
+  border-color: rgba(255, 235, 220, 0.3);
 }
 
 /* ── fixed 变体：固定右下角（降级方案，不推荐） ── */
@@ -27,10 +27,10 @@
   right: 20px;
   z-index: 1000;
   padding: 8px 16px;
-  border: 1px solid #555555;
+  border: 1px solid #6e6050;
   border-radius: 20px;
-  background: #2f2f2f;
-  color: #ececec;
+  background: #2a2520;
+  color: #f0ebe3;
   font-size: 14px;
   cursor: pointer;
   transition: all 0.2s;
@@ -38,6 +38,6 @@
 }
 
 .lang-toggle-fixed:hover {
-  background: #3d3d3d;
-  border-color: #888888;
+  background: #332e28;
+  border-color: #8a7a6a;
 }

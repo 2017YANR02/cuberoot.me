@@ -3,10 +3,10 @@
 // 架构改进：数据从 props 传入（非 DOM 解析），类型安全
 import React, { useState, useRef, useCallback, useMemo } from 'react';
 
-// ── 颜色板 — 最多 10 名选手同时显示 ──
+// ── 颜色板 — 最多 10 名选手同时显示（Claude 暖色系）──
 const COLORS = [
-  '#00d2ff', '#ff6b6b', '#ffd93d', '#6bcb77', '#c084fc',
-  '#f97316', '#38bdf8', '#fb7185', '#a3e635', '#e879f9',
+  '#d97757', '#7eb8c4', '#e8b97a', '#6bcb8e', '#c084fc',
+  '#e85d75', '#5ab8d4', '#f0a060', '#a3e635', '#e879f9',
 ];
 
 export interface DistDataset {
@@ -149,7 +149,7 @@ export default function DistributionChart({ datasets, isZh }: Props) {
       const gy = PAD.t + chartH - (g / maxCount) * chartH;
       elements.push(
         <line key={`gy-${g}`} x1={PAD.l} y1={gy} x2={PAD.l + chartW} y2={gy}
-          stroke="rgba(255,255,255,0.08)" strokeWidth={1} />,
+          stroke="rgba(255,235,220,0.08)" strokeWidth={1} />,
         <text key={`gyl-${g}`} x={PAD.l - 6} y={gy + 4} fill="#aaa" fontSize={12}
           textAnchor="end">{g}</text>,
       );
@@ -177,7 +177,7 @@ export default function DistributionChart({ datasets, isZh }: Props) {
         if (subBarW > 8 && (bins[b] >= 3 || nP === 1)) {
           elements.push(
             <text key={`bt-${si}-${b}`} x={x + subBarW / 2} y={y - 3}
-              fill="#fff" fontSize={10} textAnchor="middle">{bins[b]}</text>,
+              fill="#f0ebe3" fontSize={10} textAnchor="middle">{bins[b]}</text>,
           );
         }
       }
@@ -198,8 +198,8 @@ export default function DistributionChart({ datasets, isZh }: Props) {
     // Axis labels
     elements.push(
       <text key="xlabel" x={PAD.l + chartW / 2} y={H - 5}
-        fill="#888" fontSize={13} textAnchor="middle">{isZh ? '时间 (秒)' : 'Time (s)'}</text>,
-      <text key="ylabel" x={0} y={0} fill="#888" fontSize={13} textAnchor="middle"
+        fill="#8a7a6a" fontSize={13} textAnchor="middle">{isZh ? '时间 (秒)' : 'Time (s)'}</text>,
+      <text key="ylabel" x={0} y={0} fill="#8a7a6a" fontSize={13} textAnchor="middle"
         transform={`translate(14,${PAD.t + chartH / 2}) rotate(-90)`}>{isZh ? '次数' : 'Count'}</text>,
     );
 
@@ -221,7 +221,7 @@ export default function DistributionChart({ datasets, isZh }: Props) {
       const gy = PAD.t + chartH - (g / 5) * chartH;
       elements.push(
         <line key={`kgy-${g}`} x1={PAD.l} y1={gy} x2={PAD.l + chartW} y2={gy}
-          stroke="rgba(255,255,255,0.08)" strokeWidth={1} />,
+          stroke="rgba(255,235,220,0.08)" strokeWidth={1} />,
       );
     }
 
@@ -286,8 +286,8 @@ export default function DistributionChart({ datasets, isZh }: Props) {
     // Axis labels
     elements.push(
       <text key="kxlabel" x={PAD.l + chartW / 2} y={H - 5}
-        fill="#888" fontSize={13} textAnchor="middle">{isZh ? '时间 (秒)' : 'Time (s)'}</text>,
-      <text key="kylabel" x={0} y={0} fill="#888" fontSize={13} textAnchor="middle"
+        fill="#8a7a6a" fontSize={13} textAnchor="middle">{isZh ? '时间 (秒)' : 'Time (s)'}</text>,
+      <text key="kylabel" x={0} y={0} fill="#8a7a6a" fontSize={13} textAnchor="middle"
         transform={`translate(14,${PAD.t + chartH / 2}) rotate(-90)`}>{isZh ? '密度' : 'Density'}</text>,
     );
 
@@ -313,9 +313,9 @@ export default function DistributionChart({ datasets, isZh }: Props) {
       const x = xScale(val);
       elements.push(
         <line key={`bxg-${val}`} x1={x} y1={PAD.t} x2={x} y2={PAD.t + chartH}
-          stroke="rgba(255,255,255,0.08)" strokeWidth={1} />,
+          stroke="rgba(255,235,220,0.08)" strokeWidth={1} />,
         <text key={`bxl-${val}`} x={x} y={PAD.t + chartH + 16}
-          fill="#aaa" fontSize={11} textAnchor="middle">{val.toFixed(1)}</text>,
+            fill="#9c8c7e" fontSize={11} textAnchor="middle">{val.toFixed(1)}</text>,
       );
     });
 
@@ -355,7 +355,7 @@ export default function DistributionChart({ datasets, isZh }: Props) {
           fill={color} fillOpacity={0.25} stroke={color} strokeWidth={1.5} rx={3} />,
         // Median
         <line key={`bmed-${si}`} x1={xScale(median)} y1={cy - boxHeight * 0.35}
-          x2={xScale(median)} y2={cy + boxHeight * 0.35} stroke="#fff" strokeWidth={2} />,
+          x2={xScale(median)} y2={cy + boxHeight * 0.35} stroke="#f0ebe3" strokeWidth={2} />,
       );
 
       // Outliers
@@ -372,9 +372,9 @@ export default function DistributionChart({ datasets, isZh }: Props) {
     // X axis
     elements.push(
       <line key="bxaxis" x1={PAD.l} y1={PAD.t + chartH} x2={PAD.l + chartW} y2={PAD.t + chartH}
-        stroke="#555" strokeWidth={1} />,
+        stroke="#6e6050" strokeWidth={1} />,
       <text key="bxlabel" x={PAD.l + chartW / 2} y={H - 6}
-        fill="#aaa" fontSize={13} textAnchor="middle">{isZh ? '时间 (秒)' : 'Time (s)'}</text>,
+        fill="#9c8c7e" fontSize={13} textAnchor="middle">{isZh ? '时间 (秒)' : 'Time (s)'}</text>,
     );
   }
 
@@ -390,11 +390,11 @@ export default function DistributionChart({ datasets, isZh }: Props) {
 
     elements.push(
       <rect key={`lr-${i}`} x={lx} y={ly} width={12} height={12} fill={p.color} rx={2} />,
-      <text key={`ln-${i}`} x={lx + 16} y={ly + 10} fill="#ccc" fontSize={12}
+      <text key={`ln-${i}`} x={lx + 16} y={ly + 10} fill="#e8ddd4" fontSize={12}
         textAnchor="start" fontWeight="bold">{label}</text>,
-      <text key={`lm-${i}`} x={lx + 2} y={ly + 10 + 16} fill="#aaa" fontSize={11}
+      <text key={`lm-${i}`} x={lx + 2} y={ly + 10 + 16} fill="#9c8c7e" fontSize={11}
         textAnchor="start">μ = {mean.toFixed(2)}s</text>,
-      <text key={`ls-${i}`} x={lx + 2} y={ly + 10 + 32} fill="#aaa" fontSize={11}
+      <text key={`ls-${i}`} x={lx + 2} y={ly + 10 + 32} fill="#9c8c7e" fontSize={11}
         textAnchor="start">σ = {std.toFixed(2)}s</text>,
     );
   });
@@ -418,7 +418,7 @@ export default function DistributionChart({ datasets, isZh }: Props) {
 
       {/* SVG Chart */}
       <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`}
-        style={{ background: '#16213e', borderRadius: 8, maxWidth: '100%', display: 'block', margin: '0 auto' }}
+        style={{ background: '#201c18', borderRadius: 8, maxWidth: '100%', display: 'block', margin: '0 auto' }}
         onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave}
       >
         {elements}
@@ -427,9 +427,9 @@ export default function DistributionChart({ datasets, isZh }: Props) {
       {/* Tooltip */}
       {tooltipInfo && (
         <div style={{
-          position: 'absolute', background: 'rgba(0,0,0,0.85)', color: '#fff',
+          position: 'absolute', background: 'rgba(28,25,23,0.92)', color: '#f0ebe3',
           padding: '6px 10px', borderRadius: 6, fontSize: 12, pointerEvents: 'none',
-          whiteSpace: 'nowrap', zIndex: 10, border: '1px solid rgba(255,255,255,0.15)',
+          whiteSpace: 'nowrap', zIndex: 10, border: '1px solid rgba(255,235,220,0.15)',
           left: tooltipInfo.x, top: tooltipInfo.y,
         }}>
           {tooltipInfo.text}

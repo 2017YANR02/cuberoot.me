@@ -47,7 +47,7 @@
 
 .zbls-side-card {
   background: var(--card-bg, #1e1e2e);
-  border: 1px solid var(--border-color, #333);
+  border: 1px solid var(--border-color, #332e28);
   border-radius: 8px;
   padding: 1rem;
   display: flex;
@@ -100,7 +100,7 @@
 
 .zbls-all-selected {
   background-color: #2e7d32 !important;
-  color: #fff;
+  color: #f0ebe3;
 }
 
 /* 折叠箭头 */
@@ -134,7 +134,7 @@
 }
 
 .zbls-case-card:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 235, 220, 0.05);
 }
 
 .zbls-case-selected {
@@ -180,8 +180,8 @@
 }
 
 .zbls-preset-active {
-  background: var(--accent-color, #58a6ff);
-  color: #fff;
+  background: var(--accent-color, #d97757);
+  color: #f0ebe3;
 }
 
 .zbls-preset-apply-btn,
@@ -219,19 +219,19 @@
 }
 
 .zbls-btn-primary {
-  background: var(--accent-color, #58a6ff);
-  color: #fff;
+  background: var(--accent-color, #d97757);
+  color: #f0ebe3;
 }
 
 .zbls-btn-secondary {
   background: #555;
-  color: #fff;
+  color: #f0ebe3;
 }
 
 .zbls-btn-outline {
   background: transparent;
-  border: 1px solid var(--accent-color, #58a6ff);
-  color: var(--accent-color, #58a6ff);
+  border: 1px solid var(--accent-color, #d97757);
+  color: var(--accent-color, #d97757);
 }
 
 .zbls-btn-warning {
@@ -311,10 +311,10 @@
 }
 
 .zbls-timer-idle {
-  color: var(--text-color, #e0e0e0);
+  color: var(--text-color, #f0ebe3);
 }
 .zbls-timer-running {
-  color: var(--text-color, #e0e0e0);
+  color: var(--text-color, #f0ebe3);
 }
 .zbls-timer-awaiting {
   color: #ffc107;
@@ -343,7 +343,7 @@
 .zbls-result-card,
 .zbls-stats-card {
   background: var(--card-bg, #1e1e2e);
-  border: 1px solid var(--border-color, #333);
+  border: 1px solid var(--border-color, #332e28);
   border-radius: 8px;
   padding: 1rem;
 }
@@ -357,8 +357,8 @@
 }
 
 .zbls-badge {
-  background: var(--accent-color, #58a6ff);
-  color: #fff;
+  background: var(--accent-color, #d97757);
+  color: #f0ebe3;
   padding: 2px 8px;
   border-radius: 4px;
   font-size: 0.9rem;

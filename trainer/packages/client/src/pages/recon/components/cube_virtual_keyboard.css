@@ -9,8 +9,8 @@
     align-items: center;
     background: #1c1c1e;
     border-radius: 10px;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid rgba(255, 235, 220, 0.08);
+    border-bottom: 1px solid rgba(255, 235, 220, 0.08);
     min-height: 36px;
 }
 
@@ -18,9 +18,9 @@
 .vkb-suggest-btn {
     flex: 1;
     background: none;
-    color: #fff;
+    color: #f0ebe3;
     border: none;
-    border-left: 1px solid rgba(255, 255, 255, 0.15);
+    border-left: 1px solid rgba(255, 235, 220, 0.15);
     padding: 8px 4px;
     font-size: 0.82rem;
     font-weight: 400;
@@ -37,7 +37,7 @@
 }
 
 .vkb-suggest-btn:active {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 235, 220, 0.1);
 }
 
 /* NOTE: 键盘容器——深色背景，顶部圆角，贴在 textarea 下方 */
@@ -74,8 +74,8 @@
 /* NOTE: 触发器按钮——Pill 样式 */
 .vkb-trigger-btn {
     flex: 0 0 auto;
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
+    background: rgba(255, 235, 220, 0.1);
+    color: #f0ebe3;
     border: none;
     border-radius: 12px;
     padding: 6px 12px;
@@ -88,7 +88,7 @@
 }
 
 .vkb-trigger-btn:active {
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 235, 220, 0.15);
     transform: scale(1.05);
 }
 
@@ -107,7 +107,7 @@
     border: none;
     border-radius: 6px;
     background: #3a3a3c;
-    color: #fff;
+    color: #f0ebe3;
     font-size: 1.05rem;
     font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', sans-serif;
     font-weight: 500;
@@ -194,7 +194,7 @@
 /* NOTE: 高亮态——蓝色背景白字 */
 .vkb-popup-item.active {
     background: #007AFF;
-    color: #fff;
+    color: #f0ebe3;
 }
 
 /* NOTE: 修饰键禁用态——光标前无英文字母时变灰 */
@@ -206,13 +206,13 @@
 /* NOTE: Shift 激活态——白底深色文字提示大写模式 */
 .vkb-shift-on {
     background: #fff !important;
-    color: #333 !important;
+    color: #332e28 !important;
 }
 
 /* NOTE: Capslock 态——蓝底白字 */
 .vkb-capslock {
     background: #007AFF !important;
-    color: #fff !important;
+    color: #f0ebe3 !important;
 }
 
 /* NOTE: QWERTY 行左右空白占位——复刻 iOS 键盘 ASDF 行缩进 */
@@ -232,10 +232,10 @@
 }
 
 .vkb-gesture-hint span {
-    color: rgba(255, 255, 255, 0.25);
+    color: rgba(255, 235, 220, 0.25);
     font-size: 0.68rem;
     padding: 0 10px;
-    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    border-right: 1px solid rgba(255, 235, 220, 0.1);
     line-height: 1.4;
     letter-spacing: 0.02em;
 }
@@ -247,5 +247,5 @@
 /* NOTE: 手势词——略暗，结果字符略亮 */
 .vkb-gesture-hint em {
     font-style: normal;
-    color: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 235, 220, 0.2);
 }

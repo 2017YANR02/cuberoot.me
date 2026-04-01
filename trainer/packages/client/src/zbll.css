@@ -23,7 +23,7 @@
 
 .zbll-side-card {
   background: var(--card-bg, #1e1e2e);
-  border: 1px solid var(--border-color, #333);
+  border: 1px solid var(--border-color, #332e28);
   border-radius: 8px;
   padding: 1rem;
   display: flex;
@@ -94,7 +94,7 @@
 
 .zbll-all-selected {
   background-color: #2e7d32 !important;
-  color: #fff;
+  color: #f0ebe3;
 }
 
 .zbll-card-img {
@@ -185,7 +185,7 @@
 
 .zbll-preset-label {
   padding: 4px 8px;
-  background: var(--card-bg, #333);
+  background: var(--card-bg, #332e28);
   border: 1px solid #555;
   border-radius: 4px 0 0 4px;
   font-size: 0.85rem;
@@ -217,8 +217,8 @@
 }
 
 .zbll-preset-active {
-  background: var(--accent-color, #58a6ff);
-  color: #fff;
+  background: var(--accent-color, #d97757);
+  color: #f0ebe3;
 }
 
 .zbll-preset-apply-btn,
@@ -304,19 +304,19 @@
 }
 
 .zbll-btn-primary {
-  background: var(--accent-color, #58a6ff);
-  color: #fff;
+  background: var(--accent-color, #d97757);
+  color: #f0ebe3;
 }
 
 .zbll-btn-secondary {
   background: #555;
-  color: #fff;
+  color: #f0ebe3;
 }
 
 .zbll-btn-outline {
   background: transparent;
-  border: 1px solid var(--accent-color, #58a6ff);
-  color: var(--accent-color, #58a6ff);
+  border: 1px solid var(--accent-color, #d97757);
+  color: var(--accent-color, #d97757);
 }
 
 .zbll-btn-warning {
@@ -343,7 +343,7 @@
 .zbll-link-btn {
   background: none;
   border: none;
-  color: var(--accent-color, #58a6ff);
+  color: var(--accent-color, #d97757);
   cursor: pointer;
   padding: 0;
   font-size: 0.85rem;
@@ -394,7 +394,7 @@
 }
 
 .zbll-settings-active {
-  background: var(--accent-color, #58a6ff);
+  background: var(--accent-color, #d97757);
 }
 
 /* ===== 打乱显示 ===== */
@@ -420,8 +420,8 @@
   transition: color 0.1s;
 }
 
-.zbll-timer-idle { color: var(--text-color, #e0e0e0); }
-.zbll-timer-running { color: var(--text-color, #e0e0e0); }
+.zbll-timer-idle { color: var(--text-color, #f0ebe3); }
+.zbll-timer-running { color: var(--text-color, #f0ebe3); }
 .zbll-timer-awaiting { color: #ffc107; }
 .zbll-timer-ready { color: #4caf50; }
 .zbll-timer-stopping { color: #f44336; }
@@ -443,7 +443,7 @@
 .zbll-result-card,
 .zbll-stats-card {
   background: var(--card-bg, #1e1e2e);
-  border: 1px solid var(--border-color, #333);
+  border: 1px solid var(--border-color, #332e28);
   border-radius: 8px;
   padding: 1rem;
 }
@@ -457,8 +457,8 @@
 }
 
 .zbll-badge {
-  background: var(--accent-color, #58a6ff);
-  color: #fff;
+  background: var(--accent-color, #d97757);
+  color: #f0ebe3;
   padding: 2px 8px;
   border-radius: 4px;
   font-size: 0.9rem;
@@ -513,7 +513,7 @@
 /* ===== 设置面板 ===== */
 .zbll-settings-panel {
   background: var(--card-bg, #1e1e2e);
-  border: 2px solid var(--accent-color, #58a6ff);
+  border: 2px solid var(--accent-color, #d97757);
   border-radius: 12px;
   padding: 1.5rem;
   margin-bottom: 1rem;
