@@ -10,9 +10,9 @@
 | **OS** | Alibaba Cloud Linux 3.2104 U10（基于 CentOS/RHEL，包管理用 `dnf`） |
 | **Web 服务器** | Nginx 1.26.2 |
 | **管理面板** | 宝塔面板（端口 8888） |
-| **WordPress 路径** | `/www/wwwroot/wordpress/` |
+| **WordPress 路径** | `/www/wwwroot/wordpress/`（通过 `/blog/` 符号链接访问） |
 | **Nginx 主配置** | `/www/server/nginx/conf/nginx.conf` |
-| **HTTPS** | ✅ 已启用（HSTS + QUIC/h3，SSL 由宝塔管理，Let's Encrypt 自动续签） |
+| **HTTPS** | ✅ 已启用（HSTS + QUIC/h3，certbot Let's Encrypt，expires 2026-06-30） |
 | **多语言** | Polylang 插件（中/英双语，`/zh/` 路径） |
 | **磁盘** | 40GB 总量，约 17GB 可用 |
 | **Node.js** | v24.14.0（通过 nvm 安装，路径 `~/.nvm/versions/node/v24.14.0/`） |
@@ -20,19 +20,29 @@
 | **pm2** | v6.0.14（进程守护，`pm2 startup` 已配置开机自启） |
 | **pnpm** | v10.32.1（monorepo 包管理器） |
 
-## 国内镜像站 toolkit.cuberoot.me
+## 国内镜像 www.cuberoot.me
+
+### URL 架构
+
+```
+https://www.cuberoot.me/             → React SPA（Vite 构建产物，/www/wwwroot/cuberoot-spa/）
+https://www.cuberoot.me/blog/        → WordPress（符号链接到 /www/wwwroot/wordpress/）
+https://www.cuberoot.me/legacy/       → Jekyll 静态镜像（/www/wwwroot/toolkit/legacy/）
+https://www.cuberoot.me/trainer/api/  → Hono API（Nginx 反代到 127.0.0.1:3001）
+https://toolkit.cuberoot.me/*         → 301 重定向到 www.cuberoot.me/legacy/*
+```
 
 ### 概述
 
-`ruiminyan.github.io`（GitHub Pages）在国内无法访问，因此在阿里云 ECS 上部署了静态镜像。
+`ruiminyan.github.io`（GitHub Pages）在国内无法访问，因此在阿里云 ECS 上部署了镜像。
 
 | 项目 | 值 |
 |------|-----|
-| **地址** | [toolkit.cuberoot.me](https://toolkit.cuberoot.me) |
-| **内容** | `ruiminyan.github.io` 的完整 1:1 镜像（Jekyll `_site/` 构建产物） |
-| **根目录** | `/www/wwwroot/toolkit/` |
-| **Nginx 站点配置** | `/www/server/panel/vhost/nginx/toolkit.cuberoot.me.conf` |
-| **SSL 证书** | `/www/server/panel/vhost/cert/toolkit.cuberoot.me/`（Let's Encrypt，自动续签） |
+| **地址** | [www.cuberoot.me](https://www.cuberoot.me) |
+| **SPA 根目录** | `/www/wwwroot/cuberoot-spa/`（入口 `index.html` + `_assets/`） |
+| **镜像根目录** | `/www/wwwroot/toolkit/`（Jekyll `_site/` 同步产物） |
+| **Nginx 站点配置** | `/www/server/panel/vhost/nginx/www.cuberoot.me.conf` |
+| **SSL 证书** | `/etc/letsencrypt/live/cuberoot.me/`（certbot，expires 2026-06-30） |
 | **CI 配置** | `.github/workflows/deploy_mirror.yml` |
 
 ### 同步机制
@@ -48,7 +58,7 @@ GitHub Actions（deploy_mirror.yml）
       └── 3. rsync 同步 _site/ → /www/wwwroot/toolkit/
       │
       ▼
-toolkit.cuberoot.me 更新（约 40 秒）
+www.cuberoot.me 更新（约 40 秒）
 ```
 
 **自动触发条件**：
@@ -73,12 +83,13 @@ toolkit.cuberoot.me 更新（约 40 秒）
 
 ### Nginx 关键配置
 
-宝塔自动生成的站点配置在 `/www/server/panel/vhost/nginx/toolkit.cuberoot.me.conf`，其中有一条**关键规则**：
+www.cuberoot.me 的站点配置在 `/www/server/panel/vhost/nginx/www.cuberoot.me.conf`：
 
 ```nginx
-# Trainer SPA 路由 — 所有 /app/ 子路径 fallback 到 index.html
-location /app/ {
-    try_files $uri $uri/ /app/index.html;
+# React SPA — 根路径 fallback 到 index.html
+root /www/wwwroot/cuberoot-spa;
+location / {
+    try_files $uri $uri/ /index.html;
 }
 
 # Trainer Hono API 反代
@@ -90,16 +101,38 @@ location /trainer/api/ {
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 }
 
-# Jekyll 生成的 .html 文件在 GitHub Pages 上无需扩展名访问
-# 例如 /stats/wr_current 实际对应 /stats/wr_current.html
-location / {
+# WordPress 博客（符号链接 cuberoot-spa/blog → /www/wwwroot/wordpress）
+location ^~ /blog {
+    index index.php index.html;
+    try_files $uri $uri/ /blog/index.php?$args;
+    location ~ \.php$ {
+        if (!-f $request_filename) { return 404; }
+        fastcgi_pass unix:/tmp/php-cgi-80.sock;
+        fastcgi_index index.php;
+        include fastcgi.conf;
+    }
+}
+
+# Legacy 静态镜像
+location /legacy/ {
+    alias /www/wwwroot/toolkit/legacy/;
     try_files $uri $uri/ $uri.html $uri/index.html =404;
 }
 
-# Recon 详情页旧链接兼容：/recon/2263 → 301 重定向到 /recon/detail/?id=2263
-# NOTE: 新链接统一使用 /recon/detail/?id=X，此规则仅兼容旧书签/分享链接
-location ~ ^/recon/(\d+)/?$ {
-    return 301 /recon/detail/?id=$1;
+# Stats 页面（.html 扩展名可省略）
+location /stats/ {
+    alias /www/wwwroot/toolkit/stats/;
+    try_files $uri $uri/ $uri.html $uri/index.html =404;
+}
+```
+
+toolkit.cuberoot.me 301 重定向配置（独立 server block）：
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name toolkit.cuberoot.me;
+    return 301 https://www.cuberoot.me/legacy$request_uri;
 }
 ```
 
@@ -148,8 +181,9 @@ rsync -rltz --delete --exclude='.user.ini' --chmod=D755,F644 ...
 | **端口** | 3001 |
 | **进程管理** | PM2（`trainer-api`，`pm2 startup` 已配置开机自启） |
 | **凭据文件** | `/root/trainer-api/.env`（DB_*, JWT_SECRET） |
-| **API 入口** | `https://toolkit.cuberoot.me/trainer/api/recon/list` 等 |
-| **CI 部署** | `deploy_trainer.yml` → build server dist → rsync → `pm2 restart` |
+| **API 入口** | `https://www.cuberoot.me/trainer/api/recon/list` 等 |
+| **CORS** | 允许 `ruiminyan.github.io`、`www.cuberoot.me`、`localhost:5173` |
+| **CI 部署** | `deploy_mirror.yml` rsync 后手动更新（非自动） |
 
 > Nginx 反代配置：`location /trainer/api/` → `proxy_pass http://127.0.0.1:3001/api/`
 
@@ -160,14 +194,14 @@ rsync -rltz --delete --exclude='.user.ini' --chmod=D755,F644 ...
 | **数据库** | MariaDB 10.5.27 |
 | **数据库名** | `recon_db` |
 | **用户** | `recon_user`（仅限 localhost 连接，外网不可直连） |
-| **凭据文件** | PHP：`/www/wwwroot/toolkit/recon/api/db_config.php`；Hono：`/root/trainer-api/.env`；本地：`.secrets.md`（均不在 git 中） |
+| **凭据文件** | PHP：`/www/wwwroot/toolkit/legacy/recon/api/db_config.php`；Hono：`/root/trainer-api/.env`；本地：`.secrets.md`（均不在 git 中） |
 | **表** | `recons`（复盘数据）、`edits`（编辑覆盖）、`edit_history`（编辑历史）、`wca_users`（认证）、`timer_sessions`（计时器同步）、`train_results`（训练记录） |
 
 ### 备份策略
 
 | 备份层 | 方式 | 频率 | 位置 |
 |--------|------|------|------|
-| API 备份 | `backup_recon.yml` CI | 每天 | GitHub 仓库（`recon/backup/recons_backup.json`） |
+| API 备份 | `backup_recon.yml` CI | 每天 | GitHub 仓库（`legacy/recon/backup/recons_backup.json`） |
 | 数据库备份 | 宝塔计划任务（Shell 脚本 `mysqldump`） | 每天 03:00 | ECS `/www/backup/recon_db_*.sql.gz`（保留 7 天） |
 
 > ⚠️ 宝塔内置的"备份数据库"任务**不会**备份命令行创建的数据库，必须用 Shell 脚本方式。
