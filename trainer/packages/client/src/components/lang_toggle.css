@@ -1,0 +1,43 @@
+/* NOTE: 共享语言切换按钮——两种变体 */
+
+/* ── inline 变体：嵌入页面 header，右对齐（行业标准） ── */
+.lang-toggle-inline {
+  padding: 5px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  background: transparent;
+  color: #9aa0a6;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.lang-toggle-inline:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e0e0e0;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* ── fixed 变体：固定右下角（降级方案，不推荐） ── */
+.lang-toggle-fixed {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+  padding: 8px 16px;
+  border: 1px solid #555555;
+  border-radius: 20px;
+  background: #2f2f2f;
+  color: #ececec;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.lang-toggle-fixed:hover {
+  background: #3d3d3d;
+  border-color: #888888;
+}

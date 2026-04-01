@@ -15,6 +15,26 @@
   margin-bottom: 24px;
 }
 
+/* NOTE: back 链接 + LangToggle 这一行：左 back，右 toggle */
+.wca-stats-header-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+/* WcaStatsIndex 标题行：h1 靠左，toggle 靠右 */
+.wca-stats-index-header {
+  margin-bottom: 28px;
+}
+
+.wca-stats-index-header h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
 .wca-stats-back {
   color: #7eb8ff;
   text-decoration: none;

@@ -4,9 +4,16 @@
 
 .detail-header {
   display: flex;
-  align-items: center;
-  gap: 16px;
+  flex-direction: column;
+  gap: 8px;
   margin-bottom: 16px;
+}
+
+/* NOTE: back 链接 + 语言切换按钮这一行（左 back 尾 toggle） */
+.detail-header-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .detail-back {

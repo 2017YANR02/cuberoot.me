@@ -6,6 +6,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import LangToggle from '../components/LangToggle';
 import './upcoming_comps.css';
 
 // ── 类型定义 ──────────────────────────────────────────────────────────────
@@ -215,7 +216,7 @@ function CompCard({ comp, isZh }: { comp: Competition; isZh: boolean }) {
 // ── 主组件 ────────────────────────────────────────────────────────────────
 
 export default function UpcomingCompsPage() {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
 
   const [data, setData] = useState<UpcomingData | null>(null);
@@ -235,8 +236,8 @@ export default function UpcomingCompsPage() {
       .catch(() => {
         setError(
           isZh
-            ? '加载近期比赛数据失败，请稍后重试。'
-            : 'Failed to load upcoming competitions data. Please try again later.'
+            ? t('upcoming.loadError')
+            : t('upcoming.loadError')
         );
       });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -288,7 +289,7 @@ export default function UpcomingCompsPage() {
   if (error) {
     return (
       <div className="upcoming-page">
-        <Link to="/" className="back-link">← {isZh ? '返回首页' : 'Back'}</Link>
+        <Link to="/" className="back-link">← {t('common.backToHome')}</Link>
         <div className="state-message state-error">{error}</div>
       </div>
     );
@@ -297,23 +298,21 @@ export default function UpcomingCompsPage() {
   if (!data) {
     return (
       <div className="upcoming-page">
-        <Link to="/" className="back-link">← {isZh ? '返回首页' : 'Back'}</Link>
-        <div className="state-message">{isZh ? '加载赛事数据...' : 'Loading schedule data...'}</div>
+        <Link to="/" className="back-link">← {t('common.backToHome')}</Link>
+        <div className="state-message">{t('upcoming.loading')}</div>
       </div>
     );
   }
 
   const timeStr = new Date(data.updated_at).toLocaleString();
-  const metaText = isZh
-    ? `更新于: ${timeStr} | 追踪 ${data.total_cubers_tracked} 位选手`
-    : `Updated: ${timeStr} | Tracking ${data.total_cubers_tracked} players`;
+  const metaText = t('upcoming.meta', { time: timeStr, count: data.total_cubers_tracked });
 
   return (
     <div className="upcoming-page">
-      <Link to="/" className="back-link">← {isZh ? '返回首页' : 'Back'}</Link>
+      <Link to="/" className="back-link">← {t('common.backToHome')}</Link>
 
       <div className="timeline-header">
-        <h1>{isZh ? '顶尖选手近期比赛' : "Top Cubers' Upcoming Comps"}</h1>
+        <h1>{t('upcoming.title')}</h1>
         <div className="timeline-meta">{metaText}</div>
       </div>
 
@@ -339,7 +338,7 @@ export default function UpcomingCompsPage() {
         <input
           type="text"
           className="search-box"
-          placeholder={isZh ? '搜索比赛、选手、WCA ID 或国家...' : 'Search by competition, cuber, WCA ID, or country...'}
+          placeholder={t('upcoming.search')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
@@ -348,7 +347,7 @@ export default function UpcomingCompsPage() {
           value={countryFilter}
           onChange={(e) => setCountryFilter(e.target.value)}
         >
-          <option value="">{isZh ? '所有国家' : 'All Countries'}</option>
+          <option value="">{t('upcoming.allCountries')}</option>
           {countryOptions.map((opt) => (
             <option key={opt.iso2} value={opt.iso2}>{opt.label}</option>
           ))}
@@ -358,8 +357,8 @@ export default function UpcomingCompsPage() {
           onClick={() => setAllExpanded(!allExpanded)}
         >
           {allExpanded
-            ? (isZh ? '▲ 全部折叠' : '▲ Collapse All')
-            : (isZh ? '▼ 全部展开' : '▼ Expand All')}
+            ? t('upcoming.collapseAll')
+            : t('upcoming.expandAll')}
         </button>
       </div>
 
@@ -367,7 +366,7 @@ export default function UpcomingCompsPage() {
       <div className="timeline">
         {data.competitions.length === 0 ? (
           <div className="state-message">
-            {isZh ? '未找到追踪选手的近期比赛。' : 'No upcoming competitions found for the tracked players.'}
+            {t('upcoming.noResults')}
           </div>
         ) : (
           Array.from(monthGroups.entries()).map(([monthKey, comps]) => {
@@ -404,6 +403,8 @@ export default function UpcomingCompsPage() {
           })
         )}
       </div>
+      {/* NOTE: 语言切换按钮 */}
+      <LangToggle />
     </div>
   );
 }

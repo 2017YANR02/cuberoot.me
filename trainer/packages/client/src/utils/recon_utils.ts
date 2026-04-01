@@ -270,19 +270,8 @@ export function wcaPersonUrl(personId: string): string {
 }
 
 // ── i18n ──
-
-/** 获取当前语言 */
-export function getLocale(): string {
-  if (typeof localStorage !== 'undefined') {
-    return localStorage.getItem('i18n_locale') || 'en';
-  }
-  return 'en';
-}
-
-/** 简单的中英文选择 */
-export function t(zh: string, en: string): string {
-  return getLocale() === 'zh' ? zh : en;
-}
+// NOTE: getLocale() 和 t(zh, en) 已废弃——统一使用 react-i18next 的 useTranslation() hook
+// 非组件函数通过接收 isZh 参数获取语言
 
 // ── 外部链接 ──
 
@@ -322,12 +311,12 @@ export function buildExternalLinks(
 }
 
 /** 显示选手名（解析 "English Name (中文名)" 格式） */
-export function displaySolverName(person: string): string {
+export function displaySolverName(person: string, isZh = false): string {
   if (!person) return '';
   // NOTE: WCA 格式 "Ruimin Yan (颜瑞民)"
   const match = person.match(/^(.+?)\s*\((.+?)\)$/);
   if (match) {
-    return getLocale() === 'zh' ? match[2] : match[1];
+    return isZh ? match[2] : match[1];
   }
   return person;
 }
