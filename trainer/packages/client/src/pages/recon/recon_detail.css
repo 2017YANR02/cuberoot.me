@@ -17,7 +17,7 @@
 }
 
 .detail-back {
-  color: #93bbfc;
+  color: #e8a27a;
   text-decoration: none;
   font-size: 0.9rem;
   white-space: nowrap;
@@ -30,7 +30,7 @@
 .detail-title {
   flex: 1;
   font-size: 1.3rem;
-  color: #f1f5f9;
+  color: #f0ebe3;
 }
 
 /* --- 元数据标签栏 --- */
@@ -46,16 +46,16 @@
   align-items: center;
   gap: 4px;
   padding: 4px 10px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 235, 220, 0.05);
+  border: 1px solid rgba(255, 235, 220, 0.08);
   border-radius: 6px;
   font-size: 0.82rem;
-  color: #b0b8c4;
+  color: #b09880;
   text-decoration: none;
 }
 
 .detail-meta-tag a {
-  color: #93bbfc;
+  color: #e8a27a;
   text-decoration: none;
 }
 
@@ -87,7 +87,7 @@
 
 .detail-section-label {
   font-size: 0.75rem;
-  color: #666;
+  color: #6e6050;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 6px;
@@ -98,11 +98,11 @@
   font-family: 'Roboto Mono', monospace;
   font-size: 0.82rem;
   line-height: 1.7;
-  color: #d0d8e0;
-  background: rgba(255, 255, 255, 0.04);
+  color: #e8ddd4;
+  background: rgba(255, 235, 220, 0.04);
   padding: 12px 14px;
   border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 235, 220, 0.06);
   white-space: pre-wrap;
   word-break: break-word;
   overflow-x: auto;
@@ -113,17 +113,17 @@
   font-family: 'Roboto Mono', monospace;
   font-size: 0.82rem;
   line-height: 1.7;
-  color: #b0b8c4;
-  background: rgba(255, 255, 255, 0.04);
+  color: #b09880;
+  background: rgba(255, 235, 220, 0.04);
   padding: 10px 14px;
   border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 235, 220, 0.06);
   word-break: break-all;
 }
 
 /* NOTE: 阶段标签高亮 */
 .recon-step-label {
-  color: #93bbfc;
+  color: #e8a27a;
   font-weight: 500;
 }
 
@@ -132,10 +132,10 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 6px 12px;
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 235, 220, 0.03);
   padding: 10px 14px;
   border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 235, 220, 0.06);
 }
 
 .stat-item {
@@ -148,14 +148,14 @@
 
 .stat-label {
   font-size: 0.75rem;
-  color: #666;
+  color: #6e6050;
   white-space: nowrap;
 }
 
 .stat-value {
   font-family: 'Roboto Mono', monospace;
   font-size: 0.82rem;
-  color: #d0d8e0;
+  color: #e8ddd4;
   text-align: right;
 }
 
@@ -174,8 +174,8 @@
   border-radius: 8px;
   overflow: hidden;
   margin-bottom: 8px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 235, 220, 0.03);
+  border: 1px solid rgba(255, 235, 220, 0.06);
 }
 
 .detail-video-wrap iframe {
@@ -211,7 +211,7 @@
 }
 
 .detail-video-link {
-  color: #93bbfc;
+  color: #e8a27a;
   font-size: 0.85rem;
   text-decoration: none;
   display: block;
@@ -225,11 +225,11 @@
 /* --- 备注 --- */
 .detail-note {
   font-size: 0.85rem;
-  color: #b0b8c4;
-  background: rgba(255, 255, 255, 0.03);
+  color: #b09880;
+  background: rgba(255, 235, 220, 0.03);
   padding: 10px 14px;
   border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 235, 220, 0.06);
   white-space: pre-wrap;
 }
 
@@ -241,8 +241,8 @@
 }
 
 .detail-comment {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 235, 220, 0.03);
+  border: 1px solid rgba(255, 235, 220, 0.06);
   border-radius: 6px;
   padding: 10px 14px;
 }
@@ -255,17 +255,17 @@
 }
 
 .detail-comment-header strong {
-  color: #d0d8e0;
+  color: #e8ddd4;
   font-size: 0.85rem;
 }
 
 .detail-comment-time {
-  color: #666;
+  color: #6e6050;
   font-size: 0.75rem;
 }
 
 .detail-comment-body {
-  color: #b0b8c4;
+  color: #b09880;
   font-size: 0.85rem;
   line-height: 1.5;
   white-space: pre-wrap;
@@ -281,16 +281,16 @@
 .recon-btn-sm {
   font-size: 0.72rem;
   padding: 2px 8px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 235, 220, 0.05);
+  border: 1px solid rgba(255, 235, 220, 0.1);
   border-radius: 4px;
-  color: #93bbfc;
+  color: #e8a27a;
   cursor: pointer;
   transition: background 0.15s;
 }
 
 .recon-btn-sm:hover {
-  background: rgba(147, 187, 252, 0.12);
+  background: rgba(232, 162, 122, 0.12);
 }
 
 .recon-btn-danger-sm {
@@ -304,10 +304,10 @@
 
 .detail-comment-edit textarea {
   width: 100%;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 235, 220, 0.06);
+  border: 1px solid rgba(255, 235, 220, 0.12);
   border-radius: 4px;
-  color: #d0d8e0;
+  color: #e8ddd4;
   font-size: 0.85rem;
   padding: 6px 10px;
   resize: vertical;
@@ -328,10 +328,10 @@
 
 .detail-comment-add textarea {
   flex: 1;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 235, 220, 0.06);
+  border: 1px solid rgba(255, 235, 220, 0.12);
   border-radius: 6px;
-  color: #d0d8e0;
+  color: #e8ddd4;
   font-size: 0.85rem;
   padding: 8px 12px;
   resize: vertical;
@@ -347,7 +347,7 @@
   gap: 16px;
   margin-top: 8px;
   font-size: 0.85rem;
-  color: #b0b8c4;
+  color: #b09880;
 }
 
 /* --- Twisty 容器 --- */
@@ -357,8 +357,8 @@
 
 /* --- 打乱+解法融合块——原版风格 --- */
 .detail-solution-block {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 235, 220, 0.04);
+  border: 1px solid rgba(255, 235, 220, 0.06);
   border-radius: 6px;
   overflow: hidden;
 }
@@ -371,7 +371,7 @@
 
 .detail-block-divider {
   height: 1px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 235, 220, 0.1);
   margin: 0 14px;
 }
 
@@ -390,17 +390,17 @@
 }
 
 .recon-external-links a {
-  color: #93bbfc;
+  color: #e8a27a;
   text-decoration: none;
   padding: 4px 10px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 235, 220, 0.05);
+  border: 1px solid rgba(255, 235, 220, 0.08);
   border-radius: 6px;
   transition: background 0.15s, color 0.15s;
 }
 
 .recon-external-links a:hover {
-  background: rgba(147, 187, 252, 0.15);
+  background: rgba(232, 162, 122, 0.15);
   color: #fff;
 }
 
@@ -411,7 +411,7 @@
   gap: 16px;
   margin-top: 20px;
   padding: 12px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid rgba(255, 235, 220, 0.06);
 }
 
 .detail-meta-item {
@@ -426,11 +426,11 @@
 }
 
 .detail-meta-value {
-  color: #b0b8c4;
+  color: #b09880;
 }
 
 .detail-meta-value a {
-  color: #93bbfc;
+  color: #e8a27a;
   text-decoration: none;
 }
 
@@ -446,12 +446,12 @@
 }
 
 .recon-btn-edit {
-  color: #93bbfc !important;
-  border-color: rgba(147, 187, 252, 0.3) !important;
+  color: #e8a27a !important;
+  border-color: rgba(232, 162, 122, 0.3) !important;
 }
 
 .recon-btn-edit:hover {
-  background: rgba(147, 187, 252, 0.12) !important;
+  background: rgba(232, 162, 122, 0.12) !important;
 }
 
 .recon-btn-danger {
@@ -472,8 +472,8 @@
 }
 
 .detail-history-item {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 235, 220, 0.03);
+  border: 1px solid rgba(255, 235, 220, 0.06);
   border-radius: 6px;
   padding: 8px 12px;
 }
@@ -483,7 +483,7 @@
   justify-content: space-between;
   align-items: center;
   font-size: 0.82rem;
-  color: #b0b8c4;
+  color: #b09880;
   margin-bottom: 6px;
 }
 
@@ -502,7 +502,7 @@
 }
 
 .detail-history-key {
-  color: #93bbfc;
+  color: #e8a27a;
   min-width: 80px;
 }
 
@@ -544,20 +544,20 @@
   font-size: 0.82rem;
   font-family: 'Roboto Mono', monospace;
   text-decoration: none;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #93bbfc;
+  background: rgba(255, 235, 220, 0.05);
+  border: 1px solid rgba(255, 235, 220, 0.08);
+  color: #e8a27a;
   transition: background 0.15s;
 }
 
 .same-round-item:hover {
-  background: rgba(147, 187, 252, 0.12);
+  background: rgba(232, 162, 122, 0.12);
   color: #fff;
 }
 
 .same-round-current {
-  background: rgba(147, 187, 252, 0.15);
-  border-color: rgba(147, 187, 252, 0.4);
+  background: rgba(232, 162, 122, 0.15);
+  border-color: rgba(232, 162, 122, 0.4);
   color: #fff;
   font-weight: 600;
   cursor: default;

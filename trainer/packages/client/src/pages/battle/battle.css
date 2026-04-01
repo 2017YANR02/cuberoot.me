@@ -22,7 +22,7 @@
 .battle-container {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background-color: #000;
-    color: #fff;
+    color: #f0ebe3;
     height: 100dvh;
     display: flex;
     flex-direction: column;
@@ -109,9 +109,9 @@
     width: 36px;
     height: 36px;
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 235, 220, 0.1);
     border: none;
-    color: #fff;
+    color: #f0ebe3;
     font-size: 1.2rem;
     display: flex;
     align-items: center;
@@ -122,7 +122,7 @@
 }
 
 .back-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 235, 220, 0.2);
 }
 
 /* ==========================================================
@@ -152,7 +152,7 @@
 }
 
 .scramble-text .loading {
-    color: #666;
+    color: #6e6050;
     font-style: italic;
 }
 
@@ -170,7 +170,7 @@
     object-fit: contain;
     opacity: 0.9;
     border-radius: 6px;
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 235, 220, 0.05);
     padding: 4px;
     pointer-events: none;
     user-select: none;
@@ -203,7 +203,7 @@
 .ao5-display {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     font-size: clamp(0.7rem, 2.5vw, 0.9rem);
-    color: #666;
+    color: #6e6050;
     text-align: center;
     min-height: 1.2em;
     letter-spacing: 0.02em;
@@ -212,7 +212,7 @@
 .opponent-display {
     font-family: 'Segment7Standard', 'JetBrains Mono', monospace;
     font-size: clamp(1.0rem, 3.5vw, 1.3rem);
-    color: #555;
+    color: #6e6050;
     text-align: center;
     min-height: 1.2em;
     letter-spacing: 0.02em;
@@ -278,9 +278,9 @@
 }
 
 .penalty-trigger:not(:disabled):hover {
-    background: rgba(255, 255, 255, 0.08);
-    color: #fff;
-    border-color: #888;
+    background: rgba(255, 235, 220, 0.08);
+    color: #f0ebe3;
+    border-color: #8a7a6a;
 }
 
 .penalty-trigger:disabled {
@@ -336,13 +336,13 @@
 }
 
 .penalty-option:hover {
-    background: rgba(255, 255, 255, 0.08);
-    color: #fff;
+    background: rgba(255, 235, 220, 0.08);
+    color: #f0ebe3;
 }
 
 .penalty-option.active {
-    color: #fff;
-    background: rgba(255, 255, 255, 0.12);
+    color: #f0ebe3;
+    background: rgba(255, 235, 220, 0.12);
 }
 
 /* ==========================================================
@@ -354,12 +354,12 @@
     align-items: center;
     justify-content: space-between;
     padding: 4px 12px;
-    --bar-color-left: #111;
-    --bar-color-right: #111;
-    --bar-text-color: #ccc;
-    background: linear-gradient(to right, var(--bar-color-left), #111, var(--bar-color-right));
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    --bar-color-left: #1c1917;
+    --bar-color-right: #1c1917;
+    --bar-text-color: #d8c8b8;
+    background: linear-gradient(to right, var(--bar-color-left), #1c1917, var(--bar-color-right));
+    border-top: 1px solid rgba(255, 235, 220, 0.08);
+    border-bottom: 1px solid rgba(255, 235, 220, 0.08);
     min-height: 40px;
     flex-shrink: 0;
     color: var(--bar-text-color);
@@ -370,7 +370,7 @@
     align-items: center;
     gap: 6px;
     font-size: 0.9rem;
-    color: #999;
+    color: #8a7a6a;
 }
 
 /* NOTE: Player 2（左侧）的比分旋转 180° */
@@ -396,9 +396,9 @@
     width: 32px;
     height: 32px;
     border-radius: 6px;
-    border: 1px solid #333;
+    border: 1px solid #332e28;
     background: transparent;
-    color: #999;
+    color: #8a7a6a;
     font-size: 1rem;
     display: flex;
     align-items: center;
@@ -408,9 +408,9 @@
 }
 
 .middle-btn:hover {
-    background: rgba(255, 255, 255, 0.08);
-    color: #fff;
-    border-color: #555;
+    background: rgba(255, 235, 220, 0.08);
+    color: #f0ebe3;
+    border-color: #6e6050;
 }
 
 /* NOTE: CubeRoot logo — 限制尺寸与中间按钮对齐 */
@@ -428,7 +428,7 @@
 /* NOTE: 桌面端键盘快捷键提示（触摸设备隐藏） */
 .key-hint {
     font-size: 0.65rem;
-    color: #555;
+    color: #6e6050;
     letter-spacing: 0.03em;
     white-space: nowrap;
 }
@@ -459,14 +459,14 @@
 }
 
 .settings-panel {
-    background: #1e1e1e;
+    background: #1e1a16;
     padding: 24px;
     position: fixed;
     inset: 0;
     overflow-y: auto;
     transform: translateY(100%);
     transition: transform 0.25s ease;
-    border-top: 1px solid #333;
+    border-top: 1px solid #332e28;
 }
 
 .settings-overlay.visible .settings-panel {
@@ -485,7 +485,7 @@
     font-size: 1.1rem;
     font-weight: 700;
     text-align: center;
-    color: #fff;
+    color: #f0ebe3;
 }
 
 .settings-x-btn {
@@ -496,7 +496,7 @@
     background: none;
     border: 1px solid #444;
     border-radius: 6px;
-    color: #888;
+    color: #8a7a6a;
     width: 32px;
     height: 32px;
     font-size: 1rem;
@@ -525,7 +525,7 @@
     padding: 8px 24px;
     background: transparent;
     border: none;
-    color: #888;
+    color: #8a7a6a;
     font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
@@ -534,12 +534,12 @@
 }
 
 .mode-seg-btn.active {
-    background: rgba(88, 166, 255, 0.25);
-    color: #fff;
+    background: rgba(217, 119, 87, 0.25);
+    color: #f0ebe3;
 }
 
 .mode-seg-btn:hover:not(.active) {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 235, 220, 0.05);
 }
 
 .settings-group {
@@ -548,7 +548,7 @@
 
 .settings-label {
     font-size: 0.9rem;
-    color: #666;
+    color: #6e6050;
     margin-bottom: 12px;
     letter-spacing: 1px;
     font-weight: 500;
@@ -575,7 +575,7 @@
 }
 
 .delay-value {
-    color: #888;
+    color: #8a7a6a;
     font-size: 0.85rem;
     min-width: 50px;
     text-align: right;
@@ -591,7 +591,7 @@
 .puzzle-btn {
     padding: 8px 4px;
     border-radius: 6px;
-    border: 1px solid #333;
+    border: 1px solid #332e28;
     background: transparent;
     color: #aaa;
     font-size: 0.8rem;
@@ -601,13 +601,13 @@
 }
 
 .puzzle-btn:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 235, 220, 0.05);
 }
 
 .puzzle-btn.active {
-    background: rgba(88, 166, 255, 0.2);
-    border-color: #58a6ff;
-    color: #fff;
+    background: rgba(217, 119, 87, 0.2);
+    border-color: #d97757;
+    color: #f0ebe3;
 }
 
 /* --- 设置操作按钮 --- */
@@ -615,9 +615,9 @@
     width: 100%;
     padding: 10px;
     border-radius: 8px;
-    border: 1px solid #333;
+    border: 1px solid #332e28;
     background: transparent;
-    color: #ccc;
+    color: #d8c8b8;
     font-size: 0.9rem;
     cursor: pointer;
     transition: all 0.15s ease;
@@ -626,7 +626,7 @@
 }
 
 .settings-action-btn:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 235, 220, 0.05);
 }
 
 .settings-action-btn.danger {
@@ -686,8 +686,8 @@ input:checked+.slider:before {
 
 /* NOTE: 设置面板下拉选择框 */
 .settings-select {
-    background: #222;
-    color: #fff;
+    background: #231f1c;
+    color: #f0ebe3;
     border: 1px solid #555;
     border-radius: 6px;
     padding: 4px 8px;
@@ -720,7 +720,7 @@ body.solo .key-hint {
 .solo-stats-display {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     font-size: clamp(0.65rem, 2.2vw, 0.85rem);
-    color: #888;
+    color: #8a7a6a;
     text-align: center;
     min-height: 1.2em;
     letter-spacing: 0.02em;
@@ -750,8 +750,8 @@ body.solo .bottom-nav {
     left: 0;
     right: 0;
     height: 56px;
-    background: #111;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: #1c1917;
+    border-top: 1px solid rgba(255, 235, 220, 0.1);
     z-index: 300;
     justify-content: space-around;
     align-items: center;
@@ -767,7 +767,7 @@ body.solo .bottom-nav {
     gap: 2px;
     background: none;
     border: none;
-    color: #666;
+    color: #6e6050;
     font-size: 0.65rem;
     cursor: pointer;
     padding: 6px 0;
@@ -812,7 +812,7 @@ body.solo .scramble-img {
 .goal-progress {
     position: relative;
     height: 18px;
-    background: rgba(255, 255, 255, 0.06);
+    background: rgba(255, 235, 220, 0.06);
     border-radius: 9px;
     margin-top: 6px;
     overflow: hidden;
@@ -832,7 +832,7 @@ body.solo .scramble-img {
     text-align: center;
     font-size: 11px;
     line-height: 18px;
-    color: #fff;
+    color: #f0ebe3;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
@@ -846,7 +846,7 @@ body.solo .scramble-img {
 }
 
 .stat-ao:hover {
-    color: #8ab4f8;
+    color: #e8a27a;
     text-decoration: underline;
 }
 
@@ -864,7 +864,7 @@ body.solo .scramble-img {
     left: 50%;
     transform: translateX(-50%) translateY(-100px);
     background: linear-gradient(135deg, #1a2332 0%, #2c4a6e 100%);
-    color: #fff;
+    color: #f0ebe3;
     padding: 12px 24px;
     border-radius: 24px;
     font-size: 16px;
@@ -891,7 +891,7 @@ body.solo .scramble-img {
     position: fixed;
     inset: 0;
     /* NOTE: 全屏铺满，纯黑背景（与原版一致） */
-    background: #111;
+    background: #1c1917;
     z-index: 200;
     display: flex;
     flex-direction: column;
@@ -906,7 +906,7 @@ body.solo .scramble-img {
 }
 
 .history-panel {
-    background: #111;
+    background: #1c1917;
     width: 100%;
     /* NOTE: 全屏高度，底部为导航栏留 56px 空间 */
     height: calc(100vh - 56px);
@@ -920,7 +920,7 @@ body.solo .scramble-img {
     display: flex;
     align-items: center;
     padding: 12px 16px;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid #332e28;
     flex-shrink: 0;
     gap: 8px;
 }
@@ -928,13 +928,13 @@ body.solo .scramble-img {
 .history-title {
     font-weight: 700;
     font-size: 1rem;
-    color: #fff;
+    color: #f0ebe3;
 }
 
 .history-stats {
     flex: 1;
     font-size: 0.75rem;
-    color: #888;
+    color: #8a7a6a;
     text-align: right;
     font-family: 'Inter', sans-serif;
 }
@@ -945,7 +945,7 @@ body.solo .scramble-img {
     border-radius: 6px;
     border: 1px solid #444;
     background: transparent;
-    color: #888;
+    color: #8a7a6a;
     font-size: 0.85rem;
     cursor: pointer;
     display: flex;
@@ -971,18 +971,18 @@ body.solo .scramble-img {
     align-items: baseline;
     padding: 6px 16px;
     font-size: 0.85rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    border-bottom: 1px solid rgba(255, 235, 220, 0.04);
     cursor: pointer;
     transition: background 0.1s;
     gap: 6px;
 }
 
 .history-item:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 235, 220, 0.05);
 }
 
 .history-item .h-idx {
-    color: #555;
+    color: #6e6050;
     font-size: 0.75rem;
     min-width: 28px;
     text-align: right;
@@ -990,7 +990,7 @@ body.solo .scramble-img {
 
 .history-item .h-time {
     font-family: 'Segment7Standard', 'JetBrains Mono', monospace;
-    color: #fff;
+    color: #f0ebe3;
     font-size: 0.95rem;
     min-width: 80px;
     text-align: right;
@@ -1013,7 +1013,7 @@ body.solo .scramble-img {
 }
 
 .history-item .h-ao5 {
-    color: #666;
+    color: #6e6050;
     font-size: 0.75rem;
     min-width: 60px;
 }
@@ -1036,7 +1036,7 @@ body.solo .scramble-img {
 .history-empty {
     padding: 32px 16px;
     text-align: center;
-    color: #555;
+    color: #6e6050;
     font-size: 0.85rem;
 }
 
@@ -1044,7 +1044,7 @@ body.solo .scramble-img {
     background: none;
     border: 1px solid #444;
     border-radius: 6px;
-    color: #ccc;
+    color: #d8c8b8;
     font-size: 0.85rem;
     padding: 2px 8px;
     cursor: pointer;
@@ -1052,8 +1052,8 @@ body.solo .scramble-img {
 }
 
 .history-action-btn:hover {
-    background: #333;
-    border-color: #888;
+    background: #332e28;
+    border-color: #8a7a6a;
 }
 
 .h-delete {
@@ -1094,7 +1094,7 @@ body.solo .scramble-img {
 
 .trend-chart {
     padding: 8px 12px;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid #332e28;
 }
 
 .trend-svg {
@@ -1108,7 +1108,7 @@ body.solo .scramble-img {
     gap: 12px;
     padding: 4px 0 2px;
     font-size: 0.7rem;
-    color: #888;
+    color: #8a7a6a;
 }
 
 .trend-legend span {
@@ -1130,7 +1130,7 @@ body.solo .scramble-img {
     background: transparent;
     border: 1px solid #444;
     border-radius: 12px;
-    color: #666;
+    color: #6e6050;
     font-size: 0.7rem;
     padding: 2px 10px;
     cursor: pointer;
@@ -1140,11 +1140,11 @@ body.solo .scramble-img {
 .ao-chip.active {
     border-color: var(--chip-color);
     color: var(--chip-color);
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 235, 220, 0.05);
 }
 
 .ao-chip:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 235, 220, 0.08);
 }
 
 /* ==========================================================
@@ -1164,7 +1164,7 @@ body.solo .scramble-img {
     padding: 3px 10px;
     border-radius: 12px;
     background: rgba(138, 180, 248, 0.12);
-    color: #8ab4f8;
+    color: #e8a27a;
     font-size: 12px;
     font-weight: 600;
     letter-spacing: 0.5px;
@@ -1207,7 +1207,7 @@ body.solo .scramble-img {
 
 .ao-detail-header h3 {
     margin: 0;
-    color: #8ab4f8;
+    color: #e8a27a;
     font-size: 18px;
 }
 
@@ -1221,7 +1221,7 @@ body.solo .scramble-img {
 }
 
 .ao-detail-close:hover {
-    color: #fff;
+    color: #f0ebe3;
 }
 
 .ao-detail-item {
@@ -1230,11 +1230,11 @@ body.solo .scramble-img {
     padding: 4px 8px;
     border-radius: 4px;
     font-size: 14px;
-    color: #ccc;
+    color: #d8c8b8;
 }
 
 .ao-detail-item:nth-child(odd) {
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(255, 235, 220, 0.03);
 }
 
 .ao-detail-idx {
@@ -1278,7 +1278,7 @@ body.solo .scramble-img {
     border: 1px solid #2c4a6e;
     border-radius: 8px;
     background: rgba(138, 180, 248, 0.08);
-    color: #8ab4f8;
+    color: #e8a27a;
     font-size: 11px;
     font-weight: 600;
     cursor: pointer;
@@ -1323,7 +1323,7 @@ body.solo .scramble-img {
     border: 2px solid #444;
     border-radius: 6px;
     background: none;
-    color: #888;
+    color: #8a7a6a;
     font-size: 0.85rem;
     cursor: pointer;
     transition: border-color 0.2s, color 0.2s;
@@ -1349,7 +1349,7 @@ body.solo .scramble-img {
     padding: 4px 14px;
     border: 1px solid #4a6785;
     background: transparent;
-    color: #8ab4f8;
+    color: #e8a27a;
     cursor: pointer;
     font-size: 13px;
     font-weight: 600;
@@ -1372,8 +1372,8 @@ body.solo .scramble-img {
 
 .segmented-btn.active {
     background: #2c4a6e;
-    border-color: #8ab4f8;
-    color: #fff;
+    border-color: #e8a27a;
+    color: #f0ebe3;
 }
 
 .segmented-btn:hover:not(.active) {
@@ -1393,16 +1393,16 @@ body.solo .scramble-img {
 }
 
 .sim-row:nth-child(odd) {
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(255, 235, 220, 0.03);
 }
 
 .sim-label {
-    color: #8ab4f8;
+    color: #e8a27a;
     font-size: 14px;
 }
 
 .sim-value {
-    color: #fff;
+    color: #f0ebe3;
     font-size: 18px;
     font-weight: 700;
 }
@@ -1426,7 +1426,7 @@ body.solo .scramble-img {
 }
 
 .session-overview-table th {
-    color: #8ab4f8;
+    color: #e8a27a;
     font-weight: 600;
     padding: 6px 8px;
     border-bottom: 1px solid #2c4a6e;
@@ -1435,8 +1435,8 @@ body.solo .scramble-img {
 
 .session-overview-table td {
     padding: 6px 8px;
-    color: #ccc;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    color: #d8c8b8;
+    border-bottom: 1px solid rgba(255, 235, 220, 0.05);
 }
 
 .session-overview-table tr:hover td {

@@ -1,21 +1,21 @@
 @import "tailwindcss";
 @import "flag-icons/css/flag-icons.min.css";
 
-/* NOTE: 暗色系魔方训练器主题 — GitHub 风格青灰系 */
+/* NOTE: 暗色系魔方训练器主题 — Claude 风格暖棕/珊瑚系 */
 
 :root {
-  --bg-primary: #0d1117;
-  --bg-secondary: #161b22;
-  --bg-card: #21262d;
-  --bg-card-hover: #30363d;
-  --text-primary: #e6edf3;
-  --text-secondary: #8b949e;
-  --accent: #58a6ff;
-  --accent-glow: rgba(88, 166, 255, 0.25);
-  --success: #3fb950;
-  --warning: #d29922;
-  --danger: #f85149;
-  --border: rgba(240, 246, 252, 0.1);
+  --bg-primary: #1c1917;
+  --bg-secondary: #231f1c;
+  --bg-card: #2a2520;
+  --bg-card-hover: #332e28;
+  --text-primary: #f0ebe3;
+  --text-secondary: #9c8c7e;
+  --accent: #d97757;
+  --accent-glow: rgba(217, 119, 87, 0.25);
+  --success: #5aac7e;
+  --warning: #d4a259;
+  --danger: #e05c5c;
+  --border: rgba(255, 235, 220, 0.1);
   --radius: 12px;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 }
@@ -48,7 +48,7 @@ body {
 .home-header h1 {
   font-size: 2.5rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #58a6ff, #3fb9cf);
+  background: linear-gradient(135deg, #d97757, #e8a27a);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -216,7 +216,7 @@ body {
 }
 
 .case-card.selected {
-  background: rgba(88, 166, 255, 0.15);
+  background: rgba(217, 119, 87, 0.15);
   border-color: var(--accent);
   box-shadow: 0 0 10px var(--accent-glow);
 }
@@ -323,7 +323,7 @@ body {
 }
 
 .btn-primary:hover {
-  background: #1f6feb;
+  background: #bf6644;
   box-shadow: 0 0 20px var(--accent-glow);
 }
 
@@ -362,7 +362,7 @@ body {
 }
 
 .kbd-btn:hover {
-  background: rgba(88, 166, 255, 0.15);
+  background: rgba(217, 119, 87, 0.15);
 }
 
 .kbd-btn:active {
