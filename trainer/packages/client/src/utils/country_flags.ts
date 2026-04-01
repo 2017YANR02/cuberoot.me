@@ -110,13 +110,14 @@ export function countryFlagClass(country: string): string {
 // NOTE: 缓存——模块生命周期内只 fetch 一次
 let _personCountries: Record<string, string> | null = null; // WCA ID → iso2
 let _compCountries: Record<string, string> | null = null;   // comp ID → WCA country_id
+let _compNamesZh: Record<string, string> | null = null;     // cell_name → 中文比赛名
 let _loadPromise: Promise<void> | null = null;
 // NOTE: 版本号——每次数据加载完成后递增，触发消费者 re-render
 let _flagDataVersion = 0;
 
 /**
- * 异步加载 person_countries.json + comp_countries.json（幂等）
- * NOTE: Vite dev 通过 proxy /stats → jekyll:4000 访问
+ * 异步加载 person_countries.json + comp_countries.json + comp_names_zh.json（幂等）
+ * NOTE: comp_names_zh.json 由 compute_index.ts 从 recon_aux_data.json 提取
  * @returns 当前版本号（用于 useEffect 依赖）
  */
 export function loadFlagData(): Promise<number> {
@@ -125,9 +126,11 @@ export function loadFlagData(): Promise<number> {
     _loadPromise = Promise.all([
       fetch('/stats/person_countries.json').then(r => r.ok ? r.json() : {}).catch(() => ({})),
       fetch('/stats/comp_countries.json').then(r => r.ok ? r.json() : {}).catch(() => ({})),
-    ]).then(([persons, comps]) => {
+      fetch('/stats/data/comp_names_zh.json').then(r => r.ok ? r.json() : {}).catch(() => ({})),
+    ]).then(([persons, comps, compZh]) => {
       _personCountries = persons;
       _compCountries = comps;
+      _compNamesZh = compZh as Record<string, string>;
       _flagDataVersion++;
     });
   }
@@ -171,4 +174,14 @@ export function compFlagIso2(compId: string): string {
   const countryId = _compCountries?.[compId] ?? '';
   if (!countryId) return '';
   return countryToIso2(countryId);
+}
+
+/**
+ * 根据英文比赛名（cell_name）获取中文比赛名
+ * NOTE: 数据源为 recon_aux_data.json 的 compNamesZh 映射表
+ * @param cellName 英文比赛名（如 "Beijing Winter 2026"）
+ * @returns 中文比赛名（如 "2026WCA北京冬季魔方赛"），未找到返回空字符串
+ */
+export function compNameZh(cellName: string): string {
+  return _compNamesZh?.[cellName] ?? '';
 }
