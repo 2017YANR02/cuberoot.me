@@ -8,8 +8,12 @@ import type {
 import { getWcaId } from '../stores/auth_store';
 
 // NOTE: 生产环境走 Nginx 反代到 Hono（/trainer/api/recon/xxx）
-// 开发环境走 Vite proxy（相同路径，proxy 到 toolkit.cuberoot.me）
-const API_BASE = import.meta.env.VITE_RECON_API_BASE || '/trainer/api/recon';
+// GitHub Pages 无后端，跨域请求 cuberoot.me API
+// 开发环境走 Vite proxy（相同路径，proxy 到 cuberoot.me）
+const API_BASE = import.meta.env.VITE_RECON_API_BASE
+  || (window.location.hostname.endsWith('cuberoot.me')
+    ? '/trainer/api/recon'
+    : 'https://www.cuberoot.me/trainer/api/recon');
 
 // ── 认证 ──
 
