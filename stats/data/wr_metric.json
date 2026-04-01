@@ -42563,7 +42563,7 @@
     {
       "id": "bestc",
       "labelEn": "Best Counting",
-      "labelZh": "最佳计入成绩",
+      "labelZh": "最佳有效",
       "panels": [
         {
           "id": "ranking",
@@ -46986,7 +46986,7 @@
     {
       "id": "worstc",
       "labelEn": "Worst Counting",
-      "labelZh": "最差计入成绩",
+      "labelZh": "最差有效",
       "panels": [
         {
           "id": "ranking",

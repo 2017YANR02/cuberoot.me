@@ -1,9 +1,9 @@
 {
   "id": "wr_worst_counting",
   "title": "Worst counting solve",
-  "titleZh": "最差计入成绩",
+  "titleZh": "最差有效",
   "note": "Worst counting solve: the worst single that counts into the Ao5 (excluding the dropped best and worst).",
-  "noteZh": "最差计入成绩：Ao5 去掉最好和最差后，剩余 3 次中的最大值。",
+  "noteZh": "最差有效：Ao5 去掉最好和最差后，剩余 3 次中的最大值。",
   "header": [],
   "panels": [
     {

@@ -69,7 +69,7 @@ export abstract class Rankings extends GroupedStatistic {
           const details = String(row['attempts'] || '').split(',')
             .map(v => new SolveTime(eventId, 'single', Number(v)).clockFormat())
             .filter(s => s.length > 0)
-            .join(', ');
+            .join(' ');
           return [
             row['person_link'],
             `**${st.clockFormat()}**`,

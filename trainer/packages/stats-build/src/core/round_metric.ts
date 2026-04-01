@@ -292,7 +292,7 @@ export abstract class RoundMetric extends GroupedStatistic {
     const details = customDetails ?? String(r.row['attempts'] || '').split(',')
       .map(v => new SolveTime(eventId, 'single', Number(v)).clockFormat())
       .filter(s => s.length > 0)
-      .join(', ');
+      .join(' ');
 
     return [gainStr, daysStr, r.row['person_link'], dateStr, r.row['competition_link'], details];
   }
