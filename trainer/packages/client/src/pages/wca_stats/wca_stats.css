@@ -142,10 +142,10 @@ input:checked + .wca-stats-toggle-pill::after {
   color: #ffffff;
 }
 
-/* panel-tab 专用——排名/历史用更蓝 */
+/* panel-tab（排名/历史）与主 tab 统一同一蓝色 */
 .wca-stats-panel-tab.active {
-  background: #2563eb;
-  border-color: #2563eb;
+  background: #1a6bc4;
+  border-color: #1a6bc4;
   color: #ffffff;
 }
 
