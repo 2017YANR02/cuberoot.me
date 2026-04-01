@@ -10,7 +10,7 @@ import { GroupedStatistic } from './grouped_statistic.js';
 import { EVENTS_WITH_AVERAGE, headerZh, eventZh } from './events.js';
 import { SolveTime } from './solve_time.js';
 import { query as dbQuery } from './database.js';
-import { formatDate } from './format_date.js';
+import { formatDate, calcDays, filterWrHistory } from './format_date.js';
 import type { StatJson, StatPanel, Alignment, TableHeader } from './statistic.js';
 import type { RowDataPacket } from 'mysql2';
 
@@ -280,31 +280,16 @@ function buildRanking(computed: ComputedEntry[], eventId: string): unknown[][] {
     });
 }
 
-// NOTE: 辅助——安全提取 Date 时间戳（mysql2 返回 Date 对象或 ISO 字符串）
-function toTimestamp(d: unknown): number {
-  if (d instanceof Date) return d.getTime();
-  return new Date(String(d)).getTime();
-}
-
 // NOTE: WR 历史——按日期正序扫描，只保留刷新最小值的记录
 function buildWrHistory(computed: ComputedEntry[], eventId: string): unknown[][] {
-  // NOTE: ⚠️ mysql2 返回 JS Date 对象，String(Date) 产生 "Mon Apr 01 2022..."
-  // 不可用 localeCompare 排序（按首字母 Apr/Aug/Dec 乱序）。
-  // 改用 formatDate 输出 ISO "YYYY-MM-DD" 后再比较。
-  computed.sort((a, b) => {
-    const da = formatDate(a.meta['start_date']);
-    const db = formatDate(b.meta['start_date']);
-    return da.localeCompare(db) || b.metric - a.metric;
-  });
-
-  let minSoFar = Infinity;
-  const wrRecords = computed.filter(c => {
-    if (c.metric < minSoFar) {
-      minSoFar = c.metric;
-      return true;
-    }
-    return false;
-  });
+  // NOTE: filterWrHistory 内置 formatDate 日期排序（YYYY-MM-DD）+ 同日期大值先扫描 + <= minSoFar
+  // strict: true 保持原来的 < minSoFar 语义（AoXR 不含平 WR）
+  const wrRecords = filterWrHistory(
+    computed,
+    c => c.meta['start_date'],
+    c => c.metric,
+    { strict: true },
+  );
 
   const historyRows = wrRecords.map((c, i) => {
     const metricStr = new SolveTime(eventId, 'average', Math.round(c.metric)).clockFormat();
@@ -319,15 +304,9 @@ function buildWrHistory(computed: ComputedEntry[], eventId: string): unknown[][]
       gainStr = `${((prev - c.metric) / prev * 100).toFixed(1)}%`;
     }
 
-    // NOTE: 天数——直接用 Date 原生 getTime() 避免 String(Date) 问题
-    let daysStr: string;
-    const currTs = toTimestamp(c.meta['start_date']);
-    if (i < wrRecords.length - 1) {
-      const nextTs = toTimestamp(wrRecords[i + 1].meta['start_date']);
-      daysStr = String(Math.round((nextTs - currTs) / 86400000));
-    } else {
-      daysStr = String(Math.round((Date.now() - currTs) / 86400000));
-    }
+    // NOTE: 天数——用共享 calcDays 工具
+    const nextDateVal = i < wrRecords.length - 1 ? wrRecords[i + 1].meta['start_date'] : null;
+    const daysStr = calcDays(c.meta['start_date'], nextDateVal);
 
     const dateStr = formatDate(c.meta['start_date']);
     return [metricStr, gainStr, daysStr, c.meta['person_link'], dateStr, c.meta['competition_link'], { _type: 'solves' as const, csv: detailsCsv }];
