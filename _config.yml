@@ -6,6 +6,7 @@ plugins:
 # NOTE: 排除 core/ React monorepo 源码，由独立 CI 构建部署
 exclude:
   - core
+  - docs
 
 # NOTE: Jekyll 默认排除 _ 开头目录，用 include 强制保留 Vite 产物
 include:

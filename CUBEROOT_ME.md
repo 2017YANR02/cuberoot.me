@@ -28,7 +28,7 @@
 https://www.cuberoot.me/             → React SPA（Vite 构建产物，/www/wwwroot/cuberoot-spa/）
 https://www.cuberoot.me/blog/        → WordPress（符号链接到 /www/wwwroot/wordpress/）
 https://www.cuberoot.me/legacy/       → Jekyll 静态镜像（/www/wwwroot/toolkit/legacy/）
-https://www.cuberoot.me/core/api/  → Hono API（Nginx 反代到 127.0.0.1:3001）
+https://www.cuberoot.me/api/        → Hono API（Nginx 反代到 127.0.0.1:3001）
 https://toolkit.cuberoot.me/*         → 301 重定向到 www.cuberoot.me/legacy/*
 ```
 
@@ -92,8 +92,8 @@ location / {
     try_files $uri $uri/ /index.html;
 }
 
-# Trainer Hono API 反代
-location /core/api/ {
+# Hono API 反代（^~ 防止 regex location 拦截）
+location ^~ /api/ {
     proxy_pass http://127.0.0.1:3001/api/;
     proxy_http_version 1.1;
     proxy_set_header Host $host;
@@ -113,15 +113,15 @@ location ^~ /blog {
     }
 }
 
-# Legacy 静态镜像
-location /legacy/ {
-    alias /www/wwwroot/toolkit/legacy/;
+# Legacy 静态镜像（^~ 防止 regex location 拦截静态资源）
+location ^~ /legacy/ {
+    root /www/wwwroot/toolkit;
     try_files $uri $uri/ $uri.html $uri/index.html =404;
 }
 
-# Stats 页面（.html 扩展名可省略）
-location /stats/ {
-    alias /www/wwwroot/toolkit/stats/;
+# Stats 页面（^~ 防止 regex location 拦截静态资源）
+location ^~ /stats/ {
+    root /www/wwwroot/toolkit;
     try_files $uri $uri/ $uri.html $uri/index.html =404;
 }
 ```
@@ -181,11 +181,11 @@ rsync -rltz --delete --exclude='.user.ini' --chmod=D755,F644 ...
 | **端口** | 3001 |
 | **进程管理** | PM2（`core-api`，`pm2 startup` 已配置开机自启） |
 | **凭据文件** | `/root/core-api/.env`（DB_*, JWT_SECRET） |
-| **API 入口** | `https://www.cuberoot.me/core/api/recon/list` 等 |
+| **API 入口** | `https://www.cuberoot.me/api/recon/list` 等 |
 | **CORS** | 允许 `ruiminyan.github.io`、`www.cuberoot.me`、`localhost:5173` |
 | **CI 部署** | `deploy_mirror.yml` rsync 后手动更新（非自动） |
 
-> Nginx 反代配置：`location /core/api/` → `proxy_pass http://127.0.0.1:3001/api/`
+> Nginx 反代配置：`location /api/` → `proxy_pass http://127.0.0.1:3001/api/`
 
 ## MariaDB 数据库（Recon 复盘）
 

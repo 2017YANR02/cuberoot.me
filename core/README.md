@@ -1,4 +1,4 @@
-# CubeRoot Trainer
+# CubeRoot Core
 
 公式识别训练器 · React + Vite + TypeScript
 
@@ -38,7 +38,7 @@ core/
 irm https://get.pnpm.io/install.ps1 | iex
 
 # 2. 安装依赖
-cd D:\cube\ruiminyan.github.io\trainer
+cd D:\cube\ruiminyan.github.io\core
 pnpm install
 pnpm approve-builds esbuild   # 首次需要批准 esbuild 构建脚本
 ```
@@ -48,7 +48,7 @@ pnpm approve-builds esbuild   # 首次需要批准 esbuild 构建脚本
 ```powershell
 # 启动前端 dev server（HMR 自动热更新，改代码后无需重启）
 pnpm --filter @cuberoot/client dev
-# → http://localhost:5173/app/
+# → http://localhost:5173/
 # NOTE: vite.config.ts 已设置 host: '127.0.0.1'，确保浏览器能通过 IPv4 访问
 # （Vite 默认只绑定 IPv6 [::1]，Windows Chrome 可能无法访问 localhost:5173）
 
@@ -61,9 +61,9 @@ cd packages/stats-ui
 .\build.ps1
 ```
 
-> **注意**：Recon API 通过 Vite proxy 转发到 ECS 线上后端（`toolkit.cuberoot.me`），本地开发**不需要**启动 Hono 后端。
+> **注意**：Recon API 通过 Vite proxy 转发到 ECS 线上后端（`www.cuberoot.me`），本地开发**不需要**启动 Hono 后端。
 > 
-> 若需要 Calc/Upcoming Comps 模块的 WR/比赛数据，或测试 Solver/Alg core/csTimer 的 iframe 嵌入效果，需额外启动 `bundle exec jekyll serve`（`http://localhost:4000`）。Vite dev server 已配置 proxy 自动转发这些路径。
+> 若需要 Calc/Upcoming Comps 模块的 WR/比赛数据，或测试 Solver/Alg Trainer/csTimer 的 iframe 嵌入效果，需额外启动 `bundle exec jekyll serve`（`http://localhost:4000`）。Vite dev server 已配置 proxy 自动转发这些路径。
 
 ### 后端开发（需要 MariaDB）
 
@@ -84,13 +84,13 @@ pnpm --filter @cuberoot/server dev
 
 | Workflow | 触发条件 | 执行内容 |
 |----------|----------|----------|
-| **Deploy Trainer** | push main 且 `core/` 有变更 | pnpm install → build client + server → rsync + pm2 restart |
+| **Deploy Core** | push main 且 `core/` 有变更 | pnpm install → build client + server → rsync + pm2 restart |
 | **Deploy Mirror** | push main（已有） | Jekyll build + rsync（core/ 已在 `_config.yml` exclude 中排除）|
 
 ```
 push core/ 变更 → GitHub Actions → build → rsync → ECS
-  ├── toolkit.cuberoot.me/app/        ← 前端
-  └── toolkit.cuberoot.me:3001/api/   ← 后端 API
+  ├── www.cuberoot.me/          ← 前端 SPA
+  └── www.cuberoot.me/api/      ← 后端 API
 ```
 
 ## 技术栈
