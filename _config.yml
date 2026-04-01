@@ -4,9 +4,11 @@ plugins:
   - jekyll-optional-front-matter
 
 # NOTE: 排除 trainer/ React monorepo 源码，由独立 CI 构建部署
-# NOTE: 排除 _assets/（Vite 产物），由 deploy_trainer CI 直接 commit
 exclude:
   - trainer
+
+# NOTE: Jekyll 默认排除 _ 开头目录，用 include 强制保留 Vite 产物
+include:
   - _assets
 
 # stats 子目录的 Markdown 由 GitHub Actions 自动生成
