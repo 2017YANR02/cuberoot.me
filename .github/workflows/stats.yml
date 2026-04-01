@@ -4,7 +4,7 @@ name: Update Stats
 on:
   push:
     paths:
-      - 'trainer/packages/stats-build/src/**/*.ts'
+      - 'core/packages/stats-build/src/**/*.ts'
   schedule:
     # 每周一凌晨 4:00（北京时间）= UTC 周日 20:00
     - cron: '0 20 * * 0'
@@ -32,11 +32,11 @@ jobs:
           version: 10
 
       - name: Install stats-build dependencies
-        working-directory: trainer
+        working-directory: core
         run: pnpm install --frozen-lockfile
 
       - name: TypeScript compile check
-        working-directory: trainer/packages/stats-build
+        working-directory: core/packages/stats-build
         run: npx tsc --noEmit
 
   # 定时/手动触发时才跑完整计算（~47分钟）
@@ -73,7 +73,7 @@ jobs:
           version: 10
 
       - name: Install stats-build dependencies
-        working-directory: trainer
+        working-directory: core
         run: pnpm install --frozen-lockfile
 
       - name: Create stats output directory
@@ -86,22 +86,22 @@ jobs:
 
       # NOTE: TS 管线——完全替代 Ruby
       - name: Download and import WCA database
-        working-directory: trainer/packages/stats-build
+        working-directory: core/packages/stats-build
         run: npx tsx src/bin/update_database.ts
 
       - name: Compute all statistics
-        working-directory: trainer/packages/stats-build
+        working-directory: core/packages/stats-build
         env:
           STATS_FILTER: ${{ github.event.inputs.stats_filter || '' }}
           NODE_OPTIONS: '--expose-gc --max-old-space-size=6144'
         run: npx tsx src/bin/compute_all.ts
 
       - name: Generate WR IDs for calc page
-        working-directory: trainer/packages/stats-build
+        working-directory: core/packages/stats-build
         run: npx tsx src/bin/gen_wr_ids.ts
 
       - name: Compute index
-        working-directory: trainer/packages/stats-build
+        working-directory: core/packages/stats-build
         run: npx tsx src/bin/compute_index.ts
 
       - name: Fetch upcoming comps

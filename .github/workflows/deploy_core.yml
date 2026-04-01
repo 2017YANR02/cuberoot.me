@@ -1,15 +1,15 @@
-# 训练器前端部署（GitHub Pages）+ 后端部署（ECS Hono API）
-# 仅当 trainer/ 源码有变更时触发
+# 前端部署（GitHub Pages）+ 后端部署（ECS Hono API）
+# 仅当 core/ 源码有变更时触发
 # 前端：构建 Vite 产物 → 提交到根目录 → GitHub Pages + deploy_mirror 自动 serve
 # 后端：构建 server dist → rsync 到 ECS → pm2 restart
-name: Deploy Trainer
+name: Deploy Core
 
 on:
   workflow_dispatch:
   push:
     branches: [main]
     paths:
-      - 'trainer/**'
+      - 'core/**'
       - '!_assets/**'
 
 permissions:
@@ -29,21 +29,21 @@ jobs:
         with:
           node-version: '22'
           cache: 'pnpm'
-          cache-dependency-path: trainer/pnpm-lock.yaml
+          cache-dependency-path: core/pnpm-lock.yaml
 
       # 安装依赖
       - name: Install dependencies
-        working-directory: trainer
+        working-directory: core
         run: pnpm install --frozen-lockfile
 
       # 构建前端
       - name: Build client
-        working-directory: trainer
+        working-directory: core
         run: pnpm --filter @cuberoot/client build
 
       # 构建后端
       - name: Build server
-        working-directory: trainer
+        working-directory: core
         run: pnpm --filter @cuberoot/server build
 
       # 将 client dist 产物同步到仓库根目录
@@ -56,7 +56,7 @@ jobs:
           # 清理旧的 app/ 目录（迁移过渡期）
           rm -rf app
           # 复制 Vite 产物到根目录（merge，不覆盖 legacy/ stats/ 等）
-          cp -r trainer/packages/client/dist/* .
+          cp -r core/packages/client/dist/* .
 
       # 提交并推送（deploy_mirror.yml 会自动同步到国内镜像）
       - name: Commit and push
@@ -69,7 +69,7 @@ jobs:
           # 清理已删除的 app/ 目录（首次迁移后不存在则忽略）
           git add -A app/ 2>/dev/null || true
           # 仅在有变化时才提交
-          git diff --cached --quiet || git commit -m "ci: rebuild SPA from trainer/"
+          git diff --cached --quiet || git commit -m "ci: rebuild SPA from core/"
           git pull --rebase origin main
           git push
 
@@ -90,8 +90,8 @@ jobs:
           # rsync server dist 到 ECS
           rsync -rltz --delete --chmod=D755,F644 \
             -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
-            trainer/packages/server/dist/ "root@${{ secrets.DEPLOY_HOST }}:/root/trainer-api/dist/"
+            core/packages/server/dist/ "root@${{ secrets.DEPLOY_HOST }}:/root/core-api/dist/"
 
           # pm2 重启（首次用 start，已有则 restart）
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no "root@${{ secrets.DEPLOY_HOST }}" \
-            'cd /root/trainer-api && (pm2 restart trainer-api 2>/dev/null || pm2 start dist/index.js --name trainer-api --node-args="--env-file=.env") && pm2 save'
+            'cd /root/core-api && (pm2 restart core-api 2>/dev/null || pm2 start dist/index.js --name core-api --node-args="--env-file=.env") && pm2 save'

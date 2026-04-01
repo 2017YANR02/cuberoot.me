@@ -8,7 +8,7 @@ export const wcaApi = axios.create({
 
 // NOTE: CubeRoot Trainer 后端 API（开发环境通过 Vite proxy 转发）
 export const trainerApi = axios.create({
-  baseURL: '/trainer/api',
+  baseURL: '/api',
   timeout: 5000,
 });
 

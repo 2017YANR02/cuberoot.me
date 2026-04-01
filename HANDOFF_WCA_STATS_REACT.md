@@ -46,12 +46,12 @@ WcaStatsPage.tsx                   ← 路由: /app/wca-stats/:statId
 
 | 文件 | 作用 |
 |------|------|
-| `trainer/packages/client/src/pages/wca_stats/WcaStatsPage.tsx` | 核心渲染逻辑（`SectionsView`, `PanelsView`, `StatsTable` 等全部在此文件） |
-| `trainer/packages/client/src/pages/wca_stats/WrHistoryChart.tsx` | AoX History 折线图（Canvas） |
-| `trainer/packages/client/src/pages/wca_stats/DistributionChart.tsx` | AoX Ranking 分布图 |
-| `trainer/packages/client/src/pages/wca_stats/WcaEventSelector.tsx` | 21 个项目图标过滤器 |
-| `trainer/packages/client/src/pages/wca_stats/wca_stats.css` | 统计页样式 |
-| `trainer/packages/client/src/pages/wca_stats/WcaStatsIndex.tsx` | 统计索引页（分组卡片导航）|
+| `core/packages/client/src/pages/wca_stats/WcaStatsPage.tsx` | 核心渲染逻辑（`SectionsView`, `PanelsView`, `StatsTable` 等全部在此文件） |
+| `core/packages/client/src/pages/wca_stats/WrHistoryChart.tsx` | AoX History 折线图（Canvas） |
+| `core/packages/client/src/pages/wca_stats/DistributionChart.tsx` | AoX Ranking 分布图 |
+| `core/packages/client/src/pages/wca_stats/WcaEventSelector.tsx` | 21 个项目图标过滤器 |
+| `core/packages/client/src/pages/wca_stats/wca_stats.css` | 统计页样式 |
+| `core/packages/client/src/pages/wca_stats/WcaStatsIndex.tsx` | 统计索引页（分组卡片导航）|
 
 ### JSON 渲染模式对应
 
@@ -98,11 +98,11 @@ Legacy 实现位置（只读参考，**不要修改**）：
 
 | 功能 | Legacy 文件 |
 |------|------------|
-| Tab/Metric 切换逻辑 | `trainer/packages/stats-ui/src/stats_ui.ts` |
-| WR 历史折线图 | `trainer/packages/stats-ui/src/wr_history_chart.ts` |
-| 分布图 | `trainer/packages/stats-ui/src/distribution_chart.ts` |
-| 项目选择器 | `trainer/packages/stats-ui/src/event_selector.ts` |
-| Dedup toggle（initHideDays0） | `trainer/packages/stats-ui/src/stats_ui.ts` L396-504 |
+| Tab/Metric 切换逻辑 | `core/packages/stats-ui/src/stats_ui.ts` |
+| WR 历史折线图 | `core/packages/stats-ui/src/wr_history_chart.ts` |
+| 分布图 | `core/packages/stats-ui/src/distribution_chart.ts` |
+| 项目选择器 | `core/packages/stats-ui/src/event_selector.ts` |
+| Dedup toggle（initHideDays0） | `core/packages/stats-ui/src/stats_ui.ts` L396-504 |
 | Ruby 统计实现（参考数据逻辑） | `_stats_build/statistics/*.rb` |
 
 ## 数据文件路径
@@ -135,3 +135,4 @@ React 版 `header` 数组中的 `key` 由 stats-build 生成（Ruby 表头转 sn
 - 单元格可能含 Markdown 链接 `[text](url)`，`renderCell()` 函数负责解析渲染为 `<a>` 标签。
 - 国旗通过 `countryFlagClass()` → `fi fi-xx` CSS 类渲染（flag-icons 库）。
 - `WrHistoryChart` 的数据点通过 `extractPoints()` 从表格 rows 提取，`header` 的 key 决定列解析。
+

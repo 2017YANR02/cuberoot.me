@@ -23,7 +23,7 @@ ruiminyan.github.io/
 │   ├── most_completed_solves.json  # sections 模式示例
 │   ├── wr_dominance.json   # panels 模式示例
 │   └── wr_metric.json      # metricPanels 模式示例
-└── trainer/                # React monorepo（pnpm workspace）
+└── core/                # React monorepo（pnpm workspace）
     └── packages/
         ├── client/         # React 19 前端（Vite + TypeScript）
         │   └── src/pages/wca_stats/
@@ -114,8 +114,8 @@ WcaStatsPage.tsx (React 通用渲染器)
 
 | 文件 | 说明 |
 |------|------|
-| `trainer/packages/client/src/pages/wca_stats/WcaStatsPage.tsx` | 添加 EventSelector 组件 |
-| `trainer/packages/client/src/pages/wca_stats/wca_stats.css` | 添加选择器样式 |
+| `core/packages/client/src/pages/wca_stats/WcaStatsPage.tsx` | 添加 EventSelector 组件 |
+| `core/packages/client/src/pages/wca_stats/wca_stats.css` | 添加选择器样式 |
 
 ### 原版 Legacy 参考文件（原始行为的唯一权威来源）
 
@@ -129,8 +129,8 @@ WcaStatsPage.tsx (React 通用渲染器)
 
 | 文件 | 说明 |
 |------|------|
-| `trainer/packages/client/src/pages/calc/components/EventSelector.tsx` | CalcPage 的项目选择器（与 calc_store 耦合，**不能直接 import**，但 JSX 结构可参考） |
-| `trainer/packages/client/src/pages/calc/calc.css` L115-165 | `.event-btn` + `.cubing-icon` 样式（浅色主题，注意 stats 页面是深色！） |
+| `core/packages/client/src/pages/calc/components/EventSelector.tsx` | CalcPage 的项目选择器（与 calc_store 耦合，**不能直接 import**，但 JSX 结构可参考） |
+| `core/packages/client/src/pages/calc/calc.css` L115-165 | `.event-btn` + `.cubing-icon` 样式（浅色主题，注意 stats 页面是深色！） |
 
 ### 外部依赖（已在 index.html 中加载，无需额外引入）
 
@@ -362,3 +362,4 @@ pnpm --filter @cuberoot/client dev
 2. 点击图标是否只显示该项目的数据
 3. metricPanels 模式下切换项目后，无数据的 metric 按钮是否灰掉
 4. 默认是否选中第一个有数据的项目
+
