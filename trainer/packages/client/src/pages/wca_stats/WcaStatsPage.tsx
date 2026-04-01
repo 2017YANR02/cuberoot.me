@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { syncLangToUrl, getLangQuery } from '../../i18n';
 import WcaEventSelector from './WcaEventSelector';
 import { EVENT_NAME_TO_ID, ALL_EVENT_IDS } from './event_constants';
-import { countryFlagClass, loadFlagData, flagDataVersion, extractWcaId, extractCompId, personFlagIso2, compFlagIso2 } from '../../utils/country_flags';
+import { countryFlagClass, loadFlagData, flagDataVersion, extractWcaId, extractCompId, personFlagIso2, compFlagIso2, compNameZh } from '../../utils/country_flags';
 import { flagClass } from '../../utils/recon_utils';
 import DistributionChart from './DistributionChart';
 import type { DistDataset } from './DistributionChart';
@@ -202,6 +202,11 @@ function renderCell(value: unknown, columnKey?: string, isZh?: boolean): React.R
         } else {
           displayText = stripChineseParens(displayText);
         }
+      }
+      // NOTE: 比赛名——中文模式查 compNamesZh 映射表（对标 Recon displayCompName）
+      if (compId && isZh) {
+        const zhComp = compNameZh(displayText);
+        if (zhComp) displayText = zhComp;
       }
       parts.push(
         <a key={`${segIdx}-${match.index}`} href={url} target="_blank" rel="noopener noreferrer">
