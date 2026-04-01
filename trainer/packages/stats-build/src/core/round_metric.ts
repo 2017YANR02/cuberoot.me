@@ -11,7 +11,7 @@ import { GroupedStatistic } from './grouped_statistic.js';
 import { EVENTS_WITH_AVERAGE, EVENTS_WITH_AO5, OFFICIAL_EVENTS_RECORD, EVENTS, headerZh, eventZh } from './events.js';
 import { SolveTime } from './solve_time.js';
 import { ATTEMPTS_SUBQUERY, query as dbQuery } from './database.js';
-import { formatDate } from './format_date.js';
+import { formatDate, calcDays, filterWrHistory } from './format_date.js';
 import type { StatJson, StatPanel, Alignment, TableHeader } from './statistic.js';
 import type { RowDataPacket } from 'mysql2';
 
@@ -95,12 +95,7 @@ export abstract class RoundMetric extends GroupedStatistic {
     const events = this.targetEvents();
     return Object.entries(events).map(([eventId, eventName]) => {
       const records = rows
-        .filter(r => r['event_id'] === eventId && Number(r[this.valueColumn]) > 0)
-        .sort((a, b) => {
-          const da = String(a['start_date']);
-          const db = String(b['start_date']);
-          return da.localeCompare(db);
-        });
+        .filter(r => r['event_id'] === eventId && Number(r[this.valueColumn]) > 0);
 
       // NOTE: 对每条记录计算指标值
       const computed: Array<{ row: RowDataPacket; metric: number }> = [];
@@ -110,21 +105,12 @@ export abstract class RoundMetric extends GroupedStatistic {
         if (metric !== null) computed.push({ row: r, metric });
       }
 
-      // NOTE: <= 包含平 WR，同日期加 -metric 降序确保不遗漏
-      computed.sort((a, b) => {
-        const da = String(a.row['start_date']);
-        const db = String(b.row['start_date']);
-        return da.localeCompare(db) || b.metric - a.metric;
-      });
-
-      let minSoFar = Infinity;
-      const wrRecords = computed.filter(c => {
-        if (c.metric <= minSoFar) {
-          minSoFar = c.metric;
-          return true;
-        }
-        return false;
-      });
+      // NOTE: filterWrHistory 内置日期排序（formatDate YYYY-MM-DD）+ <= minSoFar 过滤
+      const wrRecords = filterWrHistory(
+        computed,
+        c => c.row['start_date'],
+        c => c.metric,
+      );
 
       const results = wrRecords.map((c, i) => {
         const metricStr = this.formatMetric(c.metric, eventId);
@@ -298,16 +284,9 @@ export abstract class RoundMetric extends GroupedStatistic {
       gainStr = `${((prevVal - currVal) / prevVal * 100).toFixed(1)}%`;
     }
 
-    // NOTE: 天数——该纪录保持了多久
-    let daysStr: string;
-    if (i < records.length - 1) {
-      const nextDate = new Date(String(records[i + 1].row['start_date']));
-      const currDate = new Date(String(r.row['start_date']));
-      daysStr = String(Math.round((nextDate.getTime() - currDate.getTime()) / 86400000));
-    } else {
-      const currDate = new Date(String(r.row['start_date']));
-      daysStr = String(Math.round((Date.now() - currDate.getTime()) / 86400000));
-    }
+    // NOTE: 天数——用共享 calcDays 工具
+    const nextDateVal = i < records.length - 1 ? records[i + 1].row['start_date'] : null;
+    const daysStr = calcDays(r.row['start_date'], nextDateVal);
 
     const dateStr = this.formatDate(r.row['start_date']);
     const details = customDetails ?? String(r.row['attempts'] || '').split(',')
