@@ -1452,3 +1452,99 @@ body.solo .scramble-img {
     max-width: 100%;
     height: auto;
 }
+
+/* ==========================================================
+   Side-by-Side 布局（并排模式）
+   NOTE: 两人坐在相邻位置，共享打乱，左右各一个计时区
+   ========================================================== */
+
+/* 容器切换为网格布局 */
+.battle-container.side-layout {
+    display: grid;
+    grid-template-rows: auto auto 1fr;
+    grid-template-columns: 1fr;
+}
+
+/* 共享打乱区域 */
+.shared-scramble {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 16px 8px;
+    gap: 8px;
+    transition: opacity 0.2s ease;
+}
+
+.shared-scramble.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.shared-scramble .scramble-text {
+    font-size: clamp(0.85rem, 2.2vw, 1.1rem);
+    text-align: center;
+    max-width: 90%;
+}
+
+.shared-scramble .scramble-img {
+    display: flex;
+    justify-content: center;
+}
+
+.shared-scramble .scramble-svg-img {
+    max-height: 80px;
+}
+
+/* 左右双人区域容器 */
+.side-players {
+    display: flex;
+    flex-direction: row;
+    flex: 1;
+    min-height: 0;
+}
+
+/* side 布局下 player-area 样式覆盖 */
+.side-layout .player-area {
+    flex: 1;
+    min-width: 0;
+}
+
+/* side 布局下时间字体缩小以适应横屏 */
+.side-layout .time-display {
+    font-size: clamp(2.5rem, 10vw, 5rem);
+}
+
+/* 中间分隔线 — 细微的竖直线 */
+.side-divider {
+    width: 1px;
+    background: linear-gradient(
+        to bottom,
+        transparent 5%,
+        rgba(240, 235, 227, 0.15) 20%,
+        rgba(240, 235, 227, 0.15) 80%,
+        transparent 95%
+    );
+    align-self: stretch;
+    flex-shrink: 0;
+}
+
+/* side 布局中间栏保持水平 */
+.side-layout .middle-bar {
+    border-top: 1px solid rgba(240, 235, 227, 0.1);
+    border-bottom: 1px solid rgba(240, 235, 227, 0.1);
+}
+
+/* side 布局下 ao5 和 opponent 显示适配 */
+.side-layout .ao5-display {
+    font-size: clamp(0.65rem, 2vw, 0.85rem);
+}
+
+.side-layout .opponent-display {
+    font-size: clamp(0.8rem, 2.5vw, 1.1rem);
+}
+
+/* side 布局下隐藏键盘提示（横屏空间有限） */
+.side-layout .key-hint {
+    display: none;
+}

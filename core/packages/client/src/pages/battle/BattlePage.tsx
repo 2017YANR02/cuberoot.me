@@ -421,16 +421,21 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
     ? `<span class="loading">${I18N_TEXT.generating[store.locale]}</span>`
     : (store.scramble || '');
 
+  // NOTE: side 布局时打乱在共享区域显示，不在每个 TimerArea 重复
+  const hideScramble = store.mode === '1v1' && store.layout === 'side';
+
   return (
     <div
       className={areaClasses}
       ref={areaRef}
     >
-      {/* 打乱文字 */}
-      <div
-        className={`scramble-text${player.isTiming ? ' hidden' : ''}`}
-        dangerouslySetInnerHTML={{ __html: scrambleContent }}
-      />
+      {/* 打乱文字 — side 布局时隐藏（由共享区域显示） */}
+      {!hideScramble && (
+        <div
+          className={`scramble-text${player.isTiming ? ' hidden' : ''}`}
+          dangerouslySetInnerHTML={{ __html: scrambleContent }}
+        />
+      )}
 
       {/* 计时数字 */}
       <div
@@ -453,16 +458,18 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
       {/* 罚时下拉 */}
       <PenaltyDropdown playerId={playerId} />
 
-      {/* 打乱图 */}
-      <div className={`scramble-img${player.isTiming ? ' hidden' : ''}`}>
-        {store.scrambleImageUrl && store.showImage && (
-          <img
-            src={store.scrambleImageUrl}
-            className="scramble-svg-img"
-            alt="scramble"
-          />
-        )}
-      </div>
+      {/* 打乱图 — side 布局时隐藏 */}
+      {!hideScramble && (
+        <div className={`scramble-img${player.isTiming ? ' hidden' : ''}`}>
+          {store.scrambleImageUrl && store.showImage && (
+            <img
+              src={store.scrambleImageUrl}
+              className="scramble-svg-img"
+              alt="scramble"
+            />
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -537,6 +544,25 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
             >1v1</button>
           </div>
         </div>
+
+        {/* 1v1 布局选择 */}
+        {store.mode === '1v1' && (
+          <div className="settings-group">
+            <div className="settings-label">LAYOUT</div>
+            <div className="mode-seg">
+              <button
+                className={`mode-seg-btn${store.layout === 'versus' ? ' active' : ''}`}
+                onClick={() => store.setLayout('versus')}
+                title="Face-to-face: players sit across"
+              >↕️ Versus</button>
+              <button
+                className={`mode-seg-btn${store.layout === 'side' ? ' active' : ''}`}
+                onClick={() => store.setLayout('side')}
+                title="Side-by-side: players sit next to each other"
+              >↔️ Side</button>
+            </div>
+          </div>
+        )}
 
         {/* 项目选择 */}
         <div className="settings-group">
@@ -702,6 +728,36 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
   );
 }
 
+// ===== SharedScramble 组件（Side 布局专用） =====
+// NOTE: 在并排模式下，打乱文字和图在两个 TimerArea 上方共享显示
+
+function SharedScramble() {
+  const store = useBattleStore();
+  const anyTiming = store.players[0].isTiming || store.players[1].isTiming;
+
+  const scrambleContent = store.scrambleLoading
+    ? `<span class="loading">${I18N_TEXT.generating[store.locale]}</span>`
+    : (store.scramble || '');
+
+  return (
+    <div className={`shared-scramble${anyTiming ? ' hidden' : ''}`}>
+      <div
+        className="scramble-text"
+        dangerouslySetInnerHTML={{ __html: scrambleContent }}
+      />
+      {store.scrambleImageUrl && store.showImage && (
+        <div className="scramble-img">
+          <img
+            src={store.scrambleImageUrl}
+            className="scramble-svg-img"
+            alt="scramble"
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ===== 主组件 =====
 
 export default function BattlePage() {
@@ -745,13 +801,23 @@ export default function BattlePage() {
     };
   }, [mode]);
 
-  // NOTE: 竖屏锁定
+  // NOTE: 自动检测横竖屏 — 横屏自动切 side 布局，竖屏自动切 versus
   useEffect(() => {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (screen.orientation as any).lock('portrait').catch(() => {});
-    } catch (_) {}
-  }, []);
+    if (mode !== '1v1') return;
+
+    const mql = window.matchMedia('(orientation: landscape)');
+    const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
+      const s = useBattleStore.getState();
+      if (s.mode !== '1v1') return;
+      // NOTE: 用户横屏 → side；竖屏 → versus
+      s.setLayout(e.matches ? 'side' : 'versus');
+    };
+    // 初始化时也检查一次
+    handleChange(mql);
+
+    mql.addEventListener('change', handleChange);
+    return () => mql.removeEventListener('change', handleChange);
+  }, [mode]);
 
   // NOTE: 设置面板关闭回调
   const closeSettings = useCallback(() => {
@@ -771,20 +837,39 @@ export default function BattlePage() {
   }, [mode, store]);
 
   return (
-    <div className="battle-container">
+    <div className={`battle-container${mode === '1v1' && store.layout === 'side' ? ' side-layout' : ''}`}>
       {/* 返回按钮 */}
       <a href="/" className="back-btn">←</a>
 
-      {/* Player 2 (上方, rotated) — 1v1 模式 */}
-      {mode === '1v1' && (
-        <TimerArea playerId={1} rotated />
+      {/* === Side 布局：共享打乱 + 左右分屏 === */}
+      {mode === '1v1' && store.layout === 'side' && (
+        <>
+          {/* 共享打乱区域 */}
+          <SharedScramble />
+          {/* 中间栏 */}
+          <MiddleBar onSettingsClick={handleSettingsClick} />
+          {/* 左右计时区域 */}
+          <div className="side-players">
+            <TimerArea playerId={0} />
+            <div className="side-divider" />
+            <TimerArea playerId={1} />
+          </div>
+        </>
       )}
 
-      {/* 中间栏 — 仅 1v1 模式（Solo 模式用底部导航栏代替） */}
-      {mode === '1v1' && <MiddleBar onSettingsClick={handleSettingsClick} />}
+      {/* === Versus 布局：上下分屏 === */}
+      {mode === '1v1' && store.layout === 'versus' && (
+        <>
+          <TimerArea playerId={1} rotated />
+          <MiddleBar onSettingsClick={handleSettingsClick} />
+          <TimerArea playerId={0} />
+        </>
+      )}
 
-      {/* Player 1 (下方) */}
-      <TimerArea playerId={0} />
+      {/* === Solo 模式 === */}
+      {mode === 'solo' && (
+        <TimerArea playerId={0} />
+      )}
 
       {/* 底部导航栏 — Solo 模式，1:1 翻译自 battle/index.html 行 366~379 */}
       {mode === 'solo' && (
