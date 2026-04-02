@@ -175,6 +175,7 @@
         .card-viz {
             --card-gradient: linear-gradient(90deg, #06b6d4, #0ea5e9, #6366f1);
         }
+
         .card-viz:hover {
             border-color: rgba(6, 182, 212, 0.4);
             box-shadow: 0 8px 32px rgba(6, 182, 212, 0.12);
@@ -183,6 +184,7 @@
         .card-upcoming {
             --card-gradient: linear-gradient(90deg, #f59e0b, #22c55e, #06b6d4);
         }
+
         .card-upcoming:hover {
             border-color: rgba(34, 197, 94, 0.4);
             box-shadow: 0 8px 32px rgba(34, 197, 94, 0.12);
@@ -294,8 +296,9 @@
             align-items: center;
             gap: 8px;
         }
+
         .global-auth-btn {
-            background: rgba(255,255,255,0.06);
+            background: rgba(255, 255, 255, 0.06);
             border: 1px solid #444;
             border-radius: 8px;
             color: #ccc;
@@ -305,16 +308,19 @@
             transition: all 0.2s;
             font-family: Inter, sans-serif;
         }
+
         .global-auth-btn:hover {
-            background: rgba(99,102,241,0.15);
-            border-color: rgba(99,102,241,0.5);
+            background: rgba(99, 102, 241, 0.15);
+            border-color: rgba(99, 102, 241, 0.5);
             color: #fff;
         }
+
         .global-user {
             display: flex;
             align-items: center;
             gap: 6px;
         }
+
         .global-avatar {
             width: 28px;
             height: 28px;
@@ -322,6 +328,7 @@
             border: 1px solid #555;
             object-fit: cover;
         }
+
         .global-name {
             color: #ccc;
             font-size: 0.8rem;
@@ -330,6 +337,7 @@
             text-overflow: ellipsis;
             white-space: nowrap;
         }
+
         .global-logout {
             background: none;
             border: none;
@@ -338,7 +346,10 @@
             cursor: pointer;
             padding: 2px 6px;
         }
-        .global-logout:hover { color: #f87171; }
+
+        .global-logout:hover {
+            color: #f87171;
+        }
     </style>
 </head>
 
@@ -349,7 +360,8 @@
 
     <!-- NOTE: 全局 WCA 登录区域（左上角） -->
     <div class="global-auth" id="global-auth">
-        <button id="global-login-btn" class="global-auth-btn" onclick="WcaAuth.login()" style="display:none">🔐 Login</button>
+        <button id="global-login-btn" class="global-auth-btn" onclick="WcaAuth.login()" style="display:none">🔐
+            Login</button>
         <div id="global-user-info" class="global-user" style="display:none; gap:10px;">
             <img id="global-avatar" class="global-avatar" src="" alt="" title="">
             <button class="global-logout" onclick="WcaAuth.logout();location.reload()" title="Logout">❌</button>
@@ -430,49 +442,59 @@
         <a href="alg_trainers/" class="glass-card card card-trainer" id="card-trainer">
             <div class="card-icon">🎯</div>
             <div class="card-name" data-i18n="index.alg_trainer">Alg Trainer</div>
-            <div class="card-desc" data-i18n="index.alg_trainer_desc">OLL, PLL, ZBLL, CMLL, and algorithm trainers for various puzzles</div>
+            <div class="card-desc" data-i18n="index.alg_trainer_desc">OLL, PLL, ZBLL, CMLL, and algorithm trainers for
+                various puzzles</div>
         </a>
 
         <a href="calc/" class="glass-card card card-hth" id="card-hth">
             <div class="card-icon">🧮</div>
             <div class="card-name" data-i18n="index.hth_grapher">Score Calculator</div>
-            <div class="card-desc" data-i18n="index.hth_grapher_desc">Compare final round results and visualize WPA/BPA for WCA competitions</div>
+            <div class="card-desc" data-i18n="index.hth_grapher_desc">Compare final round results and visualize WPA/BPA
+                for WCA competitions</div>
         </a>
 
         <a href="battle/" class="glass-card card card-battle" id="card-battle">
             <div class="card-icon">⚔️</div>
             <div class="card-name" data-i18n="index.battle">1v1 Battle</div>
-            <div class="card-desc" data-i18n="index.battle_desc">Head-to-head cube battle timer, challenge your friends face to face</div>
+            <div class="card-desc" data-i18n="index.battle_desc">Head-to-head cube battle timer, challenge your friends
+                face to face</div>
         </a>
 
         <a href="viz/" class="glass-card card card-viz" id="card-viz">
             <div class="card-icon">📈</div>
             <div class="card-name" data-i18n="index.viz">Distribution</div>
-            <div class="card-desc" data-i18n="index.viz_desc">Visualize how solve time distributions evolve over competitions, compare multiple cubers</div>
+            <div class="card-desc" data-i18n="index.viz_desc">Visualize how solve time distributions evolve over
+                competitions, compare multiple cubers</div>
         </a>
 
         <a href="stats/upcoming_comp/" class="glass-card card card-upcoming" id="card-upcoming">
             <div class="card-icon">🏅</div>
             <div class="card-name" data-i18n="index.upcoming">Upcoming Comps</div>
-            <div class="card-desc" data-i18n="index.upcoming_desc">Track top cubers' upcoming WCA competitions with WR badges</div>
+            <div class="card-desc" data-i18n="index.upcoming_desc">Track top cubers' upcoming WCA competitions with WR
+                badges</div>
         </a>
 
         <a href="cstimer/" class="glass-card card card-cstimer" id="card-cstimer">
-            <div class="card-icon"><img src="cstimer/cstimer512x512.png" alt="csTimer Logo" style="width: 1em; height: 1em; border-radius: 6px;"></div>
+            <div class="card-icon"><img src="cstimer/cstimer512x512.png" alt="csTimer Logo"
+                    style="width: 1em; height: 1em; border-radius: 6px;"></div>
             <div class="card-name" data-i18n="index.cstimer">csTimer</div>
-            <div class="card-desc" data-i18n="index.cstimer_desc">Professional speedcubing timer with statistics, scrambles, and session management</div>
+            <div class="card-desc" data-i18n="index.cstimer_desc">Professional speedcubing timer with statistics,
+                scrambles, and session management</div>
         </a>
     </div>
 
     <!-- NOTE: 致谢：列出上游开源项目作者 -->
     <div class="credits">
-        <span data-i18n-en="Inspired by open-source projects from" data-i18n-zh="致谢">Inspired by open-source projects from</span>
-        <a href="https://github.com/or18/RubiksSolverDemo" target="_blank" rel="noopener noreferrer">or18</a> · 
-        <a href="https://github.com/jonatanklosko/wca_statistics" target="_blank" rel="noopener noreferrer">jonatanklosko</a> · 
-        <a href="https://github.com/mihlefeld/Alg-Trainers" target="_blank" rel="noopener noreferrer">mihlefeld</a> · 
-        <a href="https://github.com/carykh/hthgrapher" target="_blank" rel="noopener noreferrer">carykh</a> · 
-        <a href="https://github.com/MatteoColombo/cube_challenge_timer" target="_blank" rel="noopener noreferrer">MatteoColombo</a> · 
-        <a href="https://github.com/cs0x7f/cstimer" target="_blank" rel="noopener noreferrer">cs0x7f</a> · 
+        <span data-i18n-en="Inspired by open-source projects from" data-i18n-zh="致谢">Inspired by open-source projects
+            from</span>
+        <a href="https://github.com/or18/RubiksSolverDemo" target="_blank" rel="noopener noreferrer">or18</a> ·
+        <a href="https://github.com/jonatanklosko/wca_statistics" target="_blank"
+            rel="noopener noreferrer">jonatanklosko</a> ·
+        <a href="https://github.com/mihlefeld/Alg-Trainers" target="_blank" rel="noopener noreferrer">mihlefeld</a> ·
+        <a href="https://github.com/carykh/hthgrapher" target="_blank" rel="noopener noreferrer">carykh</a> ·
+        <a href="https://github.com/MatteoColombo/cube_challenge_timer" target="_blank"
+            rel="noopener noreferrer">MatteoColombo</a> ·
+        <a href="https://github.com/cs0x7f/cstimer" target="_blank" rel="noopener noreferrer">cs0x7f</a> ·
         <a href="https://github.com/MeigenChou/DCTimer-Android" target="_blank" rel="noopener noreferrer">MeigenChou</a>
     </div>
 
