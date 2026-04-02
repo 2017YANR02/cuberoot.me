@@ -138,3 +138,58 @@ export function snapToTokenBoundary(cursorPos: number, positions: TokenPosition[
   // NOTE: 在第一个 token 之前
   return 0;
 }
+
+/** 从文本前缀中提取纯公式（去注释行、行内注释、注解标记），用于计算步数
+ *  NOTE: 对齐 legacy extractAlgFromRecon — 先跳过统计行头（如 '41STM ...'），再 cleanForPlayer
+ */
+export function extractAlgFromText(text: string): string {
+  if (!text) return '';
+  const lines = text.split('\n');
+  let startIdx = 0;
+  // NOTE: 第一行如果是 "41STM ..." 格式的统计行，跳过
+  if (lines.length > 0 && /^\d+STM\s/i.test(lines[0])) {
+    startIdx = 1;
+    // NOTE: 第二行如果不含 '//'，也是头部行（打乱），跳过
+    if (lines.length > 1 && !lines[1].includes('//')) {
+      startIdx = 2;
+    }
+  }
+  const alg = lines.slice(startIdx)
+    .map(line => {
+      const idx = line.indexOf('//');
+      return (idx >= 0 ? line.substring(0, idx) : line).trim();
+    })
+    .filter(line => line.length > 0)
+    .join('\n');
+  return cleanForPlayer(alg);
+}
+
+/** 根据步数同步 twisty-player 到对应的魔方状态 */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function syncPlayerToMoveCount(player: any, moveCount: number) {
+  if (!player) return;
+  try {
+    const model = player.experimentalModel;
+    if (!model || !model.indexer) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    model.indexer.get().then((indexer: any) => { 
+      try {
+        if (typeof indexer.indexToMoveStartTimestamp === 'function') {
+          const totalMoves = typeof indexer.numAnimatedLeaves === 'function'
+            ? indexer.numAnimatedLeaves()
+            : (typeof indexer.numMoves === 'function' ? indexer.numMoves() : 0);
+          if (moveCount >= totalMoves && typeof indexer.algDuration === 'function') {
+            player.timestamp = indexer.algDuration();
+          } else {
+            player.timestamp = indexer.indexToMoveStartTimestamp(moveCount);
+          }
+        }
+      } catch (e) {
+        console.warn('[TwistySync] indexer callback error:', e);
+      }
+    }).catch((e: unknown) => console.warn('[TwistySync] indexer.get() rejected:', e));
+  } catch (e) {
+    console.warn('[TwistySync] experimentalModel access error:', e);
+  }
+}
+

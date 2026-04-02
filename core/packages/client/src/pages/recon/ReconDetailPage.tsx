@@ -13,9 +13,10 @@ import {
   buildExternalLinks, displaySolverName, FACE_COLORS,
 } from '../../utils/recon_utils';
 import { compNameZh, loadFlagData, flagDataVersion } from '../../utils/country_flags';
-import { cleanForPlayer, findTokenPositions, snapToTokenBoundary } from '../../utils/recon_alg_utils';
+import { cleanForPlayer, findTokenPositions, snapToTokenBoundary, extractAlgFromText, syncPlayerToMoveCount } from '../../utils/recon_alg_utils';
 import { useAuthStore } from '../../stores/auth_store';
 import LangToggle from '../../components/LangToggle';
+import TwistySection from './components/TwistySection';
 import '../../recon.css';
 import './recon_detail.css';
 
@@ -301,58 +302,6 @@ function insertVisualCursor(el: HTMLElement, textOffset: number) {
   afterNode.parentNode!.insertBefore(cursor, afterNode);
 }
 
-/** 从文本前缀中提取纯公式（去注释行、行内注释、注解标记），用于计算步数
- *  NOTE: 对齐 legacy extractAlgFromRecon — 先跳过统计行头（如 '41STM ...'），再 cleanForPlayer
- */
-function extractAlgFromText(text: string): string {
-  if (!text) return '';
-  const lines = text.split('\n');
-  let startIdx = 0;
-  // NOTE: 第一行如果是 "41STM ..." 格式的统计行，跳过
-  if (lines.length > 0 && /^\d+STM\s/i.test(lines[0])) {
-    startIdx = 1;
-    // NOTE: 第二行如果不含 '//'，也是头部行（打乱），跳过
-    if (lines.length > 1 && !lines[1].includes('//')) {
-      startIdx = 2;
-    }
-  }
-  const alg = lines.slice(startIdx)
-    .map(line => {
-      const idx = line.indexOf('//');
-      return (idx >= 0 ? line.substring(0, idx) : line).trim();
-    })
-    .filter(line => line.length > 0)
-    .join('\n');
-  return cleanForPlayer(alg);
-}
-
-/** 根据步数同步 twisty-player 到对应的魔方状态 */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function syncPlayerToMoveCount(player: any, moveCount: number) {
-  if (!player) return;
-  try {
-    const model = player.experimentalModel;
-    if (!model || !model.indexer) return;
-    model.indexer.get().then((indexer: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
-      try {
-        if (typeof indexer.indexToMoveStartTimestamp === 'function') {
-          const totalMoves = typeof indexer.numAnimatedLeaves === 'function'
-            ? indexer.numAnimatedLeaves()
-            : (typeof indexer.numMoves === 'function' ? indexer.numMoves() : 0);
-          if (moveCount >= totalMoves && typeof indexer.algDuration === 'function') {
-            player.timestamp = indexer.algDuration();
-          } else {
-            player.timestamp = indexer.indexToMoveStartTimestamp(moveCount);
-          }
-        }
-      } catch (e) {
-        console.warn('[TwistySync] indexer callback error:', e);
-      }
-    }).catch((e: unknown) => console.warn('[TwistySync] indexer.get() rejected:', e));
-  } catch (e) {
-    console.warn('[TwistySync] experimentalModel access error:', e);
-  }
-}
 
 /** 解法文本展示——高亮阶段注释 + 光标跟随 twisty-player（从 legacy 迁移） */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -853,74 +802,7 @@ function CommentsView({
   );
 }
 
-/** Twisty 播放器区域——动态导入 cubing 库，用构造函数 API 创建（对齐 legacy） */
-function TwistySection({
-  puzzle, scramble, alg, playerRef,
-}: {
-  puzzle: string;
-  scramble: string;
-  alg: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  playerRef: MutableRefObject<any>;
-}) {
-  const { t } = useTranslation();
-  // NOTE: 动画默认显示（对齐原版——原版默认展开 twisty-player）
-  const [visible, setVisible] = useState(true);
-  // NOTE: 用 state 而非 ref 存构造函数——确保 import 完成后触发重渲染
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [Ctor, setCtor] = useState<any>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
 
-  // NOTE: 点击后切换显示/隐藏
-  const handleToggle = useCallback(() => {
-    setVisible(v => !v);
-  }, []);
-
-  // NOTE: 自动加载 cubing 库——import 完成后 setCtor 触发重渲染
-  useEffect(() => {
-    if (visible && !Ctor) {
-      import('cubing/twisty').then((mod) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const C = (mod as any).TwistyPlayer || (mod as any).default;
-        setCtor(() => C); // NOTE: 用函数式 setState，避免 React 尝试调用构造函数
-      }).catch(err => console.warn('Failed to load cubing library:', err));
-    }
-  }, [visible, Ctor]);
-
-  // NOTE: 构造函数就绪后，用 new TwistyPlayer({...}) 创建（与 legacy 一致）
-  useEffect(() => {
-    if (!visible || !Ctor || !containerRef.current) return;
-    const container = containerRef.current;
-    // NOTE: 清空旧的 player
-    container.innerHTML = '';
-    // NOTE: 使用构造函数 API——setAttribute 方式无法正确初始化 alg 模型，播放按钮不响应
-    // NOTE: 不设置 background:'none'——保留默认棋盘格背景（与 legacy 一致）
-    const player = new Ctor({
-      puzzle,
-      experimentalSetupAlg: scramble,
-      alg,
-      controlPanel: 'bottom-row',
-    });
-    player.style.width = '100%';
-    player.style.maxWidth = '400px';
-    player.style.margin = '12px 0';
-    // NOTE: light colorScheme 让 scrubber 轨道右侧渲染为白色（对齐 legacy 图2样式）
-    player.style.colorScheme = 'light';
-    container.appendChild(player);
-    // NOTE: 暴露 player 引用给光标跟随功能
-    playerRef.current = player;
-    return () => { playerRef.current = null; };
-  }, [visible, Ctor, puzzle, scramble, alg, playerRef]);
-
-  return (
-    <div className="detail-section">
-      <button className="recon-btn" onClick={handleToggle}>
-        {visible ? t('recon.hideAnim') : t('recon.viewAnim')}
-      </button>
-      {visible && <div ref={containerRef} className="detail-twisty-container" />}
-    </div>
-  );
-}
 
 // NOTE: 声明 twisty-player 为自定义 HTML 元素（React 19 兼容写法）
 declare global {
