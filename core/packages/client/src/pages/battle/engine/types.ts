@@ -59,5 +59,10 @@ export type WinnerValue = -2 | -1 | 0 | 1;
 // NOTE: 模式类型
 export type BattleMode = 'solo' | '1v1';
 
+// NOTE: 布局类型（1v1 模式下）
+// versus = 面对面（上下分屏，上方旋转 180°）
+// side   = 并排（左右分屏，共享打乱，两人同向）
+export type BattleLayout = 'versus' | 'side';
+
 // NOTE: Tab 名称
 export type TabName = 'timer' | 'results' | 'settings';

@@ -6,7 +6,7 @@
  */
 
 import { create } from 'zustand';
-import type { PlayerState, SolveEntry, Session, WinnerValue, BattleMode, TabName } from './types';
+import type { PlayerState, SolveEntry, Session, WinnerValue, BattleMode, BattleLayout, TabName } from './types';
 import { PENALTY, LS_PREFIX, MIN_SOLVE_TIME } from './constants';
 import type { PenaltyType } from './constants';
 import { generateScramble, generateScrambleImageUrl } from './scramble_engine';
@@ -97,6 +97,8 @@ export function findBestAverage(
 export interface BattleState {
   // NOTE: Solo/1v1 模式（'solo' 或 '1v1'）
   mode: BattleMode;
+  // NOTE: 1v1 布局（versus=面对面, side=并排）
+  layout: BattleLayout;
   // 当前项目 ID
   puzzleId: string;
   // 是否显示计时中的时间
@@ -159,6 +161,7 @@ export interface BattleState {
   resetAll: () => void;
   changePuzzle: (puzzleId: string) => void;
   setMode: (mode: BattleMode) => void;
+  setLayout: (layout: BattleLayout) => void;
   setInspectionTime: (time: number) => void;
   setVoice: (voice: boolean) => void;
   setPhases: (phases: number) => void;
@@ -204,6 +207,7 @@ export interface BattleState {
 export const useBattleStore = create<BattleState>((set, get) => ({
   // NOTE: 初始值 — 1:1 翻译自 battle.js state 对象（行 99~141）
   mode: (localStorage.getItem(LS_PREFIX + 'mode') as BattleMode) || '1v1',
+  layout: (localStorage.getItem(LS_PREFIX + 'layout') as BattleLayout) || 'versus',
   puzzleId: localStorage.getItem(LS_PREFIX + 'puzzle') || '333',
   showTime: localStorage.getItem(LS_PREFIX + 'showTime') !== 'false',
   showImage: localStorage.getItem(LS_PREFIX + 'showImage') !== 'false',
@@ -749,6 +753,13 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     if (mode === 'solo') {
       get().loadSolveHistory();
     }
+  },
+
+  setLayout: (layout: BattleLayout) => {
+    localStorage.setItem(LS_PREFIX + 'layout', layout);
+    const newPlayers: [PlayerState, PlayerState] = [createPlayer(0), createPlayer(1)];
+    set({ layout, winner: -2, players: newPlayers });
+    get().loadNewScramble();
   },
 
   setInspectionTime: (time: number) => {
