@@ -1,44 +1,56 @@
 /**
- * Recon API 数据层（替代 Firebase Firestore）
- * 功能：社区复盘的 CRUD，通过 fetch 调用阿里云 PHP 后端
+ * Recon API 数据层（适配 Hono RESTful 后端）
+ * 功能：社区复盘的 CRUD，通过 fetch 调用 Hono API
  * NOTE: 变量名 ReconStore 保持不变，其他 JS 文件零改动
+ * NOTE: 原 PHP ?action=xxx 接口已下线，现对接 /api/recon/* RESTful 路由
  */
 var ReconStore = (function () {
     'use strict';
 
-    // NOTE: API 基址——始终指向阿里云后端（国内可达）
-    var API_BASE = 'https://toolkit.cuberoot.me/recon/api/';
+    // NOTE: API 基址——生产用 /api/recon（Nginx 反代到 Hono），
+    //       localhost 开发环境跨域到 cuberoot.me
+    var API_BASE = window.location.hostname.endsWith('cuberoot.me')
+        ? '/api/recon'
+        : 'https://www.cuberoot.me/api/recon';
+
+    /** 构建 Authorization headers */
+    function authHeaders(json) {
+        var headers = {};
+        if (json) headers['Content-Type'] = 'application/json';
+        if (typeof WcaAuth !== 'undefined') {
+            var token = WcaAuth.getAccessToken();
+            if (token) headers['Authorization'] = 'Bearer ' + token;
+        }
+        return headers;
+    }
 
     /** 通用 GET 请求 */
-    function apiGet(params) {
-        // NOTE: 加时间戳防止 Service Worker Cache API 命中旧缓存
-        params._t = Date.now();
-        var url = API_BASE + '?' + new URLSearchParams(params).toString();
-        return fetch(url).then(function (r) {
+    function apiGet(path, params) {
+        var url = new URL(API_BASE + path, window.location.origin);
+        if (params) {
+            for (var k in params) {
+                if (params[k] != null) url.searchParams.set(k, params[k]);
+            }
+        }
+        // NOTE: 加时间戳防缓存
+        url.searchParams.set('_t', Date.now());
+        return fetch(url.toString(), { headers: authHeaders(false) }).then(function (r) {
             if (!r.ok) throw new Error('API error: ' + r.status);
             return r.json();
         });
     }
 
-    /** 通用 POST 请求（自动携带 WCA access_token） */
-    function apiPost(params, body) {
-        var url = API_BASE + '?' + new URLSearchParams(params).toString();
-        var headers = { 'Content-Type': 'application/json' };
-        // NOTE: 携带 WCA access_token 供后端验证身份
-        if (typeof WcaAuth !== 'undefined') {
-            var token = WcaAuth.getAccessToken();
-            if (token) headers['Authorization'] = 'Bearer ' + token;
-        }
-        return fetch(url, {
+    /** 通用 POST 请求 */
+    function apiPost(path, body) {
+        return fetch(API_BASE + path, {
             method: 'POST',
-            headers: headers,
+            headers: authHeaders(true),
             body: JSON.stringify(body)
         }).then(function (r) {
             if (r.status === 401) {
                 if (typeof WcaAuth !== 'undefined') WcaAuth.logout();
                 throw new Error('登录已过期，请重新登录');
             }
-            // NOTE: 400 = 校验失败，解析后端返回的具体字段错误信息
             if (r.status === 400) {
                 return r.json().then(function (data) {
                     throw new Error(data.fields ? data.fields.join('; ') : (data.error || 'Validation failed'));
@@ -49,60 +61,83 @@ var ReconStore = (function () {
         });
     }
 
+    /** 通用 PUT 请求 */
+    function apiPut(path, body) {
+        return fetch(API_BASE + path, {
+            method: 'PUT',
+            headers: authHeaders(true),
+            body: JSON.stringify(body)
+        }).then(function (r) {
+            if (!r.ok) throw new Error('API error: ' + r.status);
+            return r.json();
+        });
+    }
+
+    /** 通用 DELETE 请求 */
+    function apiDelete(path) {
+        return fetch(API_BASE + path, {
+            method: 'DELETE',
+            headers: authHeaders(false)
+        }).then(function (r) {
+            if (!r.ok) throw new Error('API error: ' + r.status);
+            return r.json();
+        });
+    }
+
     // ==================== recons 集合 ====================
 
     /** 加载所有社区复盘（按创建时间降序） */
     function loadAll() {
-        return apiGet({ action: 'list' });
+        return apiGet('/list');
     }
 
     /** 加载单条复盘（含编辑覆盖合并） */
     function loadOne(id) {
-        return apiGet({ action: 'get', id: id });
+        return apiGet('/' + id);
     }
 
     /** 加载指定用户的社区复盘 */
     function loadByUser(wcaId) {
-        return apiGet({ action: 'list', wcaId: wcaId });
+        return apiGet('/list', { wcaId: wcaId });
     }
 
     /** 添加一条社区复盘 */
     function addRecon(solve) {
-        return apiPost({ action: 'add' }, solve);
+        return apiPost('', solve);
     }
 
     /** 删除一条社区复盘 */
     function deleteRecon(id) {
-        return apiPost({ action: 'delete', id: id }, {});
+        return apiDelete('/' + id);
     }
 
     /** 更新社区复盘的指定字段 */
     function updateRecon(id, fields) {
-        return apiPost({ action: 'update', id: id }, fields);
+        return apiPut('/' + id, fields);
     }
 
     // ==================== edits 集合 ====================
 
     /** 加载所有编辑覆盖 */
     function loadEdits() {
-        return apiGet({ action: 'edits' });
+        return apiGet('/edits');
     }
 
     /** 保存编辑覆盖（merge 模式） */
     function saveEdit(solveId, fields) {
-        return apiPost({ action: 'saveEdit' }, { solveId: String(solveId), fields: fields });
+        return apiPost('/save-edit', { solveId: String(solveId), fields: fields });
     }
 
     /** 删除编辑覆盖 */
     function deleteEdit(solveId) {
-        return apiPost({ action: 'deleteEdit', id: String(solveId) }, {});
+        return apiDelete('/edit/' + solveId);
     }
 
     // ==================== edit_history 集合 ====================
 
     /** 记录编辑历史 */
     function saveEditHistory(solveId, beforeSnapshot, afterFields) {
-        return apiPost({ action: 'saveHistory' }, {
+        return apiPost('/save-history', {
             solveId: String(solveId),
             before: beforeSnapshot,
             after: afterFields,
@@ -112,29 +147,29 @@ var ReconStore = (function () {
 
     /** 获取编辑历史 */
     function getEditHistory(solveId) {
-        return apiGet({ action: 'getHistory', id: String(solveId) });
+        return apiGet('/history', { id: String(solveId) });
     }
 
     // ==================== 评论 (comments) ====================
 
     /** 加载指定复盘的评论列表 */
     function loadComments(reconId) {
-        return apiGet({ action: 'listComments', reconId: reconId });
+        return apiGet('/comments', { reconId: reconId });
     }
 
     /** 添加评论（每人每复盘一条） */
     function addComment(reconId, content) {
-        return apiPost({ action: 'addComment' }, { reconId: String(reconId), content: content });
+        return apiPost('/comments', { reconId: Number(reconId), content: content });
     }
 
     /** 更新评论内容 */
     function updateComment(commentId, content) {
-        return apiPost({ action: 'updateComment', id: commentId }, { content: content });
+        return apiPut('/comments/' + commentId, { content: content });
     }
 
     /** 删除评论 */
     function deleteComment(commentId) {
-        return apiPost({ action: 'deleteComment', id: commentId }, {});
+        return apiDelete('/comments/' + commentId);
     }
 
     // NOTE: 导出公共 API

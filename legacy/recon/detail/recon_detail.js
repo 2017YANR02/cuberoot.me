@@ -123,7 +123,7 @@
             container.innerHTML = '<div style="text-align:center;padding:60px;color:#f87171">' +
                 '<p><span data-i18n-en="Recon #' + id + ' not found" data-i18n-zh="未找到复盘 #' + id + '">' +
                 (localStorage.getItem('i18n_locale') === 'zh' ? '未找到复盘 #' + id : 'Recon #' + id + ' not found') + '</span></p>' +
-                '<a href="/recon/" style="color:#60a5fa">←</a>' +
+                '<a href="/legacy/recon/" style="color:#60a5fa">←</a>' +
                 '</div>';
             console.error('Failed to load recon:', err);
         });
@@ -750,12 +750,12 @@
                 // NOTE: YouTube facade——缩略图 + YouTube logo 叠加
                 html += '<div class="detail-video-wrap detail-video-facade" data-embed-url="' + ReconUtils.escHtml(info.embedUrl) + '&autoplay=1">';
                 html += '<img src="https://img.youtube.com/vi/' + info.id + '/hqdefault.jpg" alt="YouTube" loading="lazy">';
-                html += '<img class="detail-video-play-yt" src="/recon/assets/youtube_logo.svg" alt="Play">';
+                html += '<img class="detail-video-play-yt" src="/legacy/recon/assets/youtube_logo.svg" alt="Play">';
                 html += '</div>';
             } else {
                 // NOTE: Bilibili facade——先渲染占位（灰色背景+B站logo），异步加载封面图
                 html += '<div class="detail-video-wrap detail-video-facade" data-embed-url="' + ReconUtils.escHtml(info.embedUrl) + '" data-bvid="' + info.id + '">';
-                html += '<img class="detail-video-play-bili" src="/recon/assets/bilibili_logo.png" alt="Bilibili">';
+                html += '<img class="detail-video-play-bili" src="/legacy/recon/assets/bilibili_logo.png" alt="Bilibili">';
                 html += '</div>';
             }
         }
@@ -1238,7 +1238,7 @@
 
             if (reconId && !isCurrent) {
                 // NOTE: 有复盘且不是当前页，显示为可点击链接
-                html += '<a href="/recon/detail/?id=' + reconId + '" class="sibling-time sibling-link">' + U.escHtml(timeStr) + '</a>';
+                html += '<a href="/legacy/recon/detail/?id=' + reconId + '" class="sibling-time sibling-link">' + U.escHtml(timeStr) + '</a>';
             } else if (!reconId && !isCurrent && attempts[k] > 0) {
                 // NOTE: 无复盘 + 非 DNF/DNS → 渲染为"添加复盘"预填链接
                 // 提交页已有登录守卫，未登录用户到达后会引导登录
@@ -1263,7 +1263,7 @@
                 prefillParams.set('solveNum', String(sn));
                 prefillParams.set('rawTime', String(rawTimeSec));
                 var addTitle = isZh ? '添加复盘' : 'Add recon';
-                html += '<a href="/recon/submit/?' + prefillParams.toString() + '" class="sibling-time sibling-add-link" title="' + addTitle + '">'
+                html += '<a href="/legacy/recon/submit/?' + prefillParams.toString() + '" class="sibling-time sibling-add-link" title="' + addTitle + '">'
                     + U.escHtml(timeStr) + '</a>';
             } else {
                 html += '<span class="sibling-time">' + U.escHtml(timeStr) + '</span>';

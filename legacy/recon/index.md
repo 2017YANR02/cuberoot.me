@@ -3,7 +3,7 @@ title: "Recon - Solve Reconstructions"
 layout: default
 ---
 
-<link rel="stylesheet" href="/recon/recon.css">
+<link rel="stylesheet" href="/legacy/recon/recon.css">
 
 <h1 data-i18n="recon.title">Solve Reconstructions</h1>
 <p class="recon-subtitle" data-i18n="recon.subtitle">Competition solve reconstructions and analysis for top cubers</p>
@@ -24,7 +24,7 @@ layout: default
         </select>
     </div>
     <div class="recon-stats" id="recon-stats"></div>
-    <a id="btn-add-recon" href="/recon/submit/" class="recon-btn recon-btn-add" data-i18n-en="➕" data-i18n-zh="➕">➕</a>
+    <a id="btn-add-recon" href="/legacy/recon/submit/" class="recon-btn recon-btn-add" data-i18n-en="➕" data-i18n-zh="➕">➕</a>
     <!-- NOTE: WCA 登录区域 -->
     <div class="wca-auth-area" id="wca-auth-area">
         <button id="btn-wca-login" class="recon-btn wca-login-btn" onclick="WcaAuth.login()" data-i18n-en="Login" data-i18n-zh="登录">
@@ -112,11 +112,11 @@ layout: default
     try { ensureTwisty().catch(() => {}); } catch(e) {}
 </script>
 
-<script src="/recon/recon_stats.js"></script>
-<script src="/wca_auth.js"></script>
-<script src="/recon/recon_api.js"></script>
-<script src="/recon/recon_local_store.js"></script>
-<script src="/recon/recon_alg_utils.js"></script>
-<script src="/recon/recon_utils.js"></script>
-<script src="/recon/recon.js" defer></script>
-<script src="/recon/recon_submit.js" defer></script>
+<script src="/legacy/recon/recon_stats.js"></script>
+<script src="/legacy/wca_auth.js"></script>
+<script src="/legacy/recon/recon_api.js"></script>
+<script src="/legacy/recon/recon_local_store.js"></script>
+<script src="/legacy/recon/recon_alg_utils.js"></script>
+<script src="/legacy/recon/recon_utils.js"></script>
+<script src="/legacy/recon/recon.js" defer></script>
+<script src="/legacy/recon/recon_submit.js" defer></script>
