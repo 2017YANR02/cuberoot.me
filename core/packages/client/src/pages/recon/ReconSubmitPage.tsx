@@ -20,6 +20,22 @@ const EVENTS = ['3x3', '2x2', '4x4', '5x5', '6x6', '7x7', '3bld', '4bld', '5bld'
 const METHODS = ['CFOP', 'Roux', 'ZZ', 'Petrus', 'LBL', 'Mehta', 'ZB', 'Other'];
 const ROUNDS = ['1', '2', '3', 'sf', 'cf', 'f'];
 
+/**
+ * 将任意日期字符串转为 yyyy-MM-dd 格式（<input type="date"> 要求）
+ * NOTE: 服务端 validateRow 也要求 yyyy-MM-dd，不能传 ISO 字符串
+ */
+function toDateInput(val: string | null | undefined): string {
+  if (!val) return '';
+  // NOTE: 已经是 yyyy-MM-dd 格式
+  if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
+  // NOTE: ISO 字符串（如 2026-02-05T16:00:00.000Z）——取前10位即可
+  if (val.length >= 10 && val[4] === '-') return val.slice(0, 10);
+  // NOTE: 其他格式尝试解析
+  const d = new Date(val);
+  if (isNaN(d.getTime())) return '';
+  return d.toISOString().slice(0, 10);
+}
+
 export default function ReconSubmitPage() {
   const { editId } = useParams<{ editId: string }>();
   const isEditing = !!editId;
@@ -71,7 +87,13 @@ export default function ReconSubmitPage() {
     if (!isEditing) return;
     setLoadingEdit(true);
     getRecon(Number(editId)).then(solve => {
-      setForm(solve);
+      // NOTE: 日期字段统一转成 yyyy-MM-dd，服务端 ISO 字符串会导致 <input type="date"> 无法拼配且 validateRow 报错
+      const normalized = {
+        ...solve,
+        date: toDateInput(solve.date),
+        reconDate: toDateInput(solve.reconDate),
+      };
+      setForm(normalized);
       if (solve.rawTime != null) setTimeInput(formatTime(solve.rawTime));
       if (solve.average != null) setAvgInput(formatTime(solve.average));
       // NOTE: 同步 textarea DOM——defaultValue 只在 mount 时生效，编辑模式 API 返回后需手动同步
@@ -168,8 +190,12 @@ export default function ReconSubmitPage() {
     }
     setSaving(true);
     try {
-      // NOTE: 合并统计结果到表单
-      const data: Partial<ReconSolve> = { ...form };
+      // NOTE: 合并统计结果到表单，日期再次确保为 yyyy-MM-dd
+      const data: Partial<ReconSolve> = {
+        ...form,
+        date: toDateInput(form.date),
+        reconDate: toDateInput(form.reconDate),
+      };
       if (stats) {
         data.stm = stats.stm;
         data.tps = stats.tps;
@@ -322,7 +348,8 @@ export default function ReconSubmitPage() {
           </label>
           <label className="submit-field">
             <span className="submit-label">{t('recon.date')}</span>
-            <input type="date" value={form.date || ''} onChange={e => setField('date', e.target.value)} />
+            <input type="text" value={form.date || ''} onChange={e => setField('date', e.target.value)}
+              placeholder="yyyy-MM-dd" pattern="\d{4}-\d{2}-\d{2}" />
           </label>
         </div>
 
@@ -430,7 +457,8 @@ export default function ReconSubmitPage() {
           </label>
           <label className="submit-field">
             <span className="submit-label">{t('recon.reconDate')}</span>
-            <input type="date" value={form.reconDate || ''} onChange={e => setField('reconDate', e.target.value)} />
+            <input type="text" value={form.reconDate || ''} onChange={e => setField('reconDate', e.target.value)}
+              placeholder="yyyy-MM-dd" pattern="\d{4}-\d{2}-\d{2}" />
           </label>
         </div>
 
