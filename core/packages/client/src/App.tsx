@@ -74,7 +74,19 @@ function App() {
         <Route path="/upcoming-comps" element={<Suspense fallback={<div>Loading...</div>}><UpcomingCompsPage /></Suspense>} />
         {/* NOTE: iframe 包装路由 — 嵌入未迁移模块，零改动上游代码 */}
         <Route path="/solver" element={<Suspense fallback={<div>Loading...</div>}><IframePage src="/legacy/solver/" title="Solver" /></Suspense>} />
+        <Route path="/2x2x2" element={<Suspense fallback={<div>Loading...</div>}><IframePage src="/legacy/2x2x2/" title="2x2x2 Solver" /></Suspense>} />
+        <Route path="/cross_trainer" element={<Suspense fallback={<div>Loading...</div>}><IframePage src="/legacy/cross_trainer/" title="Cross Trainer" /></Suspense>} />
+        <Route path="/xcross_trainer" element={<Suspense fallback={<div>Loading...</div>}><IframePage src="/legacy/xcross_trainer/" title="XCross Trainer" /></Suspense>} />
+        <Route path="/xxcross_trainer" element={<Suspense fallback={<div>Loading...</div>}><IframePage src="/legacy/xxcross_trainer/" title="XXCross Trainer" /></Suspense>} />
+        <Route path="/pairing_trainer" element={<Suspense fallback={<div>Loading...</div>}><IframePage src="/legacy/pairing_trainer/" title="Free Pair Trainer" /></Suspense>} />
+        <Route path="/xcross_pairing_trainer" element={<Suspense fallback={<div>Loading...</div>}><IframePage src="/legacy/xcross_pairing_trainer/" title="XCross Free Pair Trainer" /></Suspense>} />
+        <Route path="/pseudo_xcross_trainer" element={<Suspense fallback={<div>Loading...</div>}><IframePage src="/legacy/pseudo_xcross_trainer/" title="Pseudo XCross Trainer" /></Suspense>} />
+        <Route path="/pseudo_pairing_trainer" element={<Suspense fallback={<div>Loading...</div>}><IframePage src="/legacy/pseudo_pairing_trainer/" title="Pseudo Free Pair Trainer" /></Suspense>} />
+        <Route path="/eocross_trainer" element={<Suspense fallback={<div>Loading...</div>}><IframePage src="/legacy/eocross_trainer/" title="EOCross Trainer" /></Suspense>} />
+        <Route path="/algTrainer" element={<Suspense fallback={<div>Loading...</div>}><IframePage src="/legacy/algTrainer/" title="Alg Trainer" /></Suspense>} />
         <Route path="/alg-trainers" element={<Suspense fallback={<div>Loading...</div>}><IframePage src="/legacy/alg_trainers/" title="Alg Trainer" /></Suspense>} />
+        <Route path="/jsonEditor" element={<Suspense fallback={<div>Loading...</div>}><IframePage src="/legacy/jsonEditor/" title="JSON Editor" /></Suspense>} />
+        <Route path="/documentation" element={<Suspense fallback={<div>Loading...</div>}><IframePage src="/legacy/documentation/" title="Documentation" /></Suspense>} />
         <Route path="/cstimer" element={<Suspense fallback={<div>Loading...</div>}><IframePage src="/legacy/cstimer/" title="csTimer" /></Suspense>} />
         {/* WCA Stats — 统计数据展示 */}
         <Route path="/wca-stats" element={<Suspense fallback={<div>Loading...</div>}><WcaStatsIndex /></Suspense>} />

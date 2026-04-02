@@ -58,8 +58,28 @@ export default function IframePage({ src, title }: IframePageProps) {
           border: 'none',
           width: '100%',
         }}
-        // NOTE: 允许 iframe 中的脚本和表单操作
-        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+        // NOTE: 允许 iframe 中的脚本和表单操作，同时允许通过 target="_top" 导航顶层窗口
+        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-top-navigation allow-top-navigation-by-user-activation"
+        onLoad={(e) => {
+          try {
+            const iframe = e.target as HTMLIFrameElement;
+            const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+            if (iframeDoc) {
+              // NOTE: 防止在 iframe 内部通过 <a> 标签导航时，把 React SPA 加载到 iframe 里形成套娃。
+              // 自动将同源绝对路径的链接（如 href="/cross_trainer/"）设为 _top，交给外层的 React App 路由处理。
+              const links = iframeDoc.querySelectorAll('a');
+              links.forEach(a => {
+                const href = a.getAttribute('href');
+                if (href && href.startsWith('/')) {
+                  a.target = '_top';
+                }
+              });
+            }
+          } catch (err) {
+            // 跨域 iframe 可能会抛出 DOMException，由于 src 一般是同源的，极少发生。
+            console.warn('Failed to intercept iframe links (possibly cross-origin):', err);
+          }
+        }}
       />
     </div>
   );
