@@ -33,6 +33,11 @@
     /* NOTE: 禁止下拉刷新和弹性滚动 */
     overscroll-behavior: none;
     touch-action: none;
+    /* NOTE: iPhone 安全区 — 填充刘海/灵动岛两侧空白 */
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
 }
 
 /* ==========================================================
@@ -156,11 +161,10 @@
     font-style: italic;
 }
 
-/* NOTE: 打乱图固定在玩家区域右下角 */
+/* NOTE: 打乱图居中显示 */
 .scramble-img {
-    position: absolute;
-    right: 8px;
-    bottom: 8px;
+    display: flex;
+    justify-content: center;
     pointer-events: none;
 }
 
@@ -1496,12 +1500,38 @@ body.solo .scramble-img {
     max-height: 80px;
 }
 
+/* 打乱图——绝对居中浮层在分隔线上 */
+.shared-scramble-img {
+    position: absolute;
+    left: 50%;
+    bottom: 18%;
+    transform: translateX(-50%);
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+}
+
+.shared-scramble-img.hidden {
+    opacity: 0;
+}
+
+.shared-scramble-img .scramble-svg-img {
+    max-height: 280px;
+    border-radius: 10px;
+    background: rgba(0,0,0,0.6);
+    padding: 6px;
+}
+
 /* 左右双人区域容器 */
 .side-players {
     display: flex;
     flex-direction: row;
     flex: 1;
     min-height: 0;
+    position: relative;
 }
 
 /* side 布局下 player-area 样式覆盖 */

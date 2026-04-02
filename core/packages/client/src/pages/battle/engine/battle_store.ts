@@ -759,7 +759,10 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     localStorage.setItem(LS_PREFIX + 'layout', layout);
     const newPlayers: [PlayerState, PlayerState] = [createPlayer(0), createPlayer(1)];
     set({ layout, winner: -2, players: newPlayers });
-    get().loadNewScramble();
+    // NOTE: scrMgr 可能还没加载（自动横屏检测比脚本加载快）
+    if (typeof window.scrMgr !== 'undefined') {
+      get().loadNewScramble();
+    }
   },
 
   setInspectionTime: (time: number) => {
