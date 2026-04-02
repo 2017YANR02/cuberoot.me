@@ -195,6 +195,27 @@ function PenaltyDropdown({ playerId }: { playerId: number }) {
 
   const enabled = player.hasFinished && !player.isTiming && player.time > 0;
 
+  // NOTE: 原生事件阻止冒泡 — 必须用原生而非 React 合成事件
+  // 因为父级 TimerArea 现在使用原生 addEventListener，React stopPropagation 无法阻止原生监听器
+  useEffect(() => {
+    const el = dropdownRef.current;
+    if (!el) return;
+
+    const stop = (e: PointerEvent) => {
+      e.stopPropagation();
+    };
+
+    el.addEventListener('pointerdown', stop);
+    el.addEventListener('pointerup', stop);
+    el.addEventListener('pointercancel', stop);
+
+    return () => {
+      el.removeEventListener('pointerdown', stop);
+      el.removeEventListener('pointerup', stop);
+      el.removeEventListener('pointercancel', stop);
+    };
+  }, []);
+
   const toggleOpen = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     if (!enabled) return;
@@ -220,10 +241,7 @@ function PenaltyDropdown({ playerId }: { playerId: number }) {
   }, []);
 
   return (
-    <div className="penalty-dropdown" ref={dropdownRef}
-      onPointerDown={e => e.stopPropagation()}
-      onPointerUp={e => e.stopPropagation()}
-    >
+    <div className="penalty-dropdown" ref={dropdownRef}>
       <button className="penalty-trigger" disabled={!enabled} onClick={toggleOpen}>
         <span className="penalty-label">{player.penalty.toUpperCase()}</span>
         <span className="penalty-arrow">▼</span>
@@ -234,8 +252,6 @@ function PenaltyDropdown({ playerId }: { playerId: number }) {
             key={p}
             className={`penalty-option${player.penalty === p ? ' active' : ''}`}
             onClick={(e) => selectPenalty(p, e)}
-            onPointerDown={e => e.stopPropagation()}
-            onPointerUp={e => e.stopPropagation()}
           >
             {p.toUpperCase()}
           </div>
@@ -259,45 +275,59 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
   // NOTE: Inspection 倒计时显示
   useInspectionDisplay(playerId, timeRef);
 
-  // NOTE: pointer 事件处理 — 1:1 翻译自 battle.js handlePointerDown/Up/Cancel
-  const handlePointerDown = useCallback((e: React.PointerEvent) => {
-    const curr = useBattleStore.getState();
-    const p = curr.players[playerId];
-    if (p.pointerId !== null) return;
+  // NOTE: 原生 pointer 事件处理 — 使用 addEventListener 而非 React 合成事件
+  // React 的 onPointerDown 在移动端 Safari/Chrome 上不可靠，原生事件与 legacy 版一致且稳定
+  useEffect(() => {
+    const el = areaRef.current;
+    if (!el) return;
 
-    // 捕获此 pointer
-    areaRef.current?.setPointerCapture(e.pointerId);
+    const onDown = (e: PointerEvent) => {
+      const curr = useBattleStore.getState();
+      const p = curr.players[playerId];
+      if (p.pointerId !== null) return;
 
-    // NOTE: 写入 pointerId — 这个需要直接变异（高频触摸不适合走 immutable set）
-    const newPlayers = [...curr.players] as [typeof curr.players[0], typeof curr.players[1]];
-    newPlayers[playerId] = { ...p, pointerId: e.pointerId };
-    useBattleStore.setState({ players: newPlayers });
+      el.setPointerCapture(e.pointerId);
 
-    curr.playerDown(playerId);
-  }, [playerId]);
+      const newPlayers = [...curr.players] as [typeof curr.players[0], typeof curr.players[1]];
+      newPlayers[playerId] = { ...p, pointerId: e.pointerId };
+      useBattleStore.setState({ players: newPlayers });
 
-  const handlePointerUp = useCallback((e: React.PointerEvent) => {
-    const curr = useBattleStore.getState();
-    const p = curr.players[playerId];
-    if (p.pointerId !== e.pointerId) return;
+      curr.playerDown(playerId);
+    };
 
-    const newPlayers = [...curr.players] as [typeof curr.players[0], typeof curr.players[1]];
-    newPlayers[playerId] = { ...p, pointerId: null };
-    useBattleStore.setState({ players: newPlayers });
+    const onUp = (e: PointerEvent) => {
+      const curr = useBattleStore.getState();
+      const p = curr.players[playerId];
+      if (p.pointerId !== e.pointerId) return;
 
-    curr.playerUp(playerId);
-  }, [playerId]);
+      const newPlayers = [...curr.players] as [typeof curr.players[0], typeof curr.players[1]];
+      newPlayers[playerId] = { ...p, pointerId: null };
+      useBattleStore.setState({ players: newPlayers });
 
-  const handlePointerCancel = useCallback((e: React.PointerEvent) => {
-    const curr = useBattleStore.getState();
-    const p = curr.players[playerId];
-    if (p.pointerId !== e.pointerId) return;
+      curr.playerUp(playerId);
+    };
 
-    const newPlayers = [...curr.players] as [typeof curr.players[0], typeof curr.players[1]];
-    newPlayers[playerId] = { ...p, pointerId: null };
-    useBattleStore.setState({ players: newPlayers });
+    const onCancel = (e: PointerEvent) => {
+      const curr = useBattleStore.getState();
+      const p = curr.players[playerId];
+      if (p.pointerId !== e.pointerId) return;
 
-    curr.playerUp(playerId);
+      const newPlayers = [...curr.players] as [typeof curr.players[0], typeof curr.players[1]];
+      newPlayers[playerId] = { ...p, pointerId: null };
+      useBattleStore.setState({ players: newPlayers });
+
+      curr.playerUp(playerId);
+    };
+
+    el.addEventListener('pointerdown', onDown);
+    el.addEventListener('pointerup', onUp);
+    el.addEventListener('pointercancel', onCancel);
+
+    return () => {
+      el.removeEventListener('pointerdown', onDown);
+      el.removeEventListener('pointerup', onUp);
+      el.removeEventListener('pointercancel', onCancel);
+    };
   }, [playerId]);
 
   // NOTE: 获取区域 CSS 类名
@@ -354,9 +384,6 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
     <div
       className={areaClasses}
       ref={areaRef}
-      onPointerDown={handlePointerDown}
-      onPointerUp={handlePointerUp}
-      onPointerCancel={handlePointerCancel}
     >
       {/* 打乱文字 */}
       <div
