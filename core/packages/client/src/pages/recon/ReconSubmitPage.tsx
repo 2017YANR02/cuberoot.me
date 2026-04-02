@@ -13,6 +13,8 @@ import LangToggle from '../../components/LangToggle';
 import '../../recon.css';
 import './recon_submit.css';
 import CubeVirtualKeyboard from './components/CubeVirtualKeyboard';
+import TwistySection from './components/TwistySection';
+import { cleanForPlayer, extractAlgFromText, syncPlayerToMoveCount } from '../../utils/recon_alg_utils';
 
 // ── 常量 ──
 
@@ -181,6 +183,50 @@ export default function ReconSubmitPage() {
     setSolverQuery('');
     setSolverResults([]);
   };
+
+  // NOTE: 推断魔方类型
+  const puzzle = useMemo(() => {
+    if (!form.event) return '3x3x3';
+    const ev = form.event;
+    if (ev.includes('3x3') || ev.includes('3bld') || ev === 'fmc' || ev === 'oh') return '3x3x3';
+    if (ev.includes('2x2')) return '2x2x2';
+    if (ev.includes('4x4') || ev.includes('4bld')) return '4x4x4';
+    if (ev.includes('5x5') || ev.includes('5bld')) return '5x5x5';
+    if (ev.includes('6x6')) return '6x6x6';
+    if (ev.includes('7x7')) return '7x7x7';
+    if (ev === 'mega') return 'megaminx';
+    if (ev === 'pyra') return 'pyraminx';
+    if (ev === 'skewb') return 'skewb';
+    if (ev === 'sq1') return 'square1';
+    if (ev === 'clock') return 'clock';
+    return '3x3x3';
+  }, [form.event]);
+
+  // NOTE: 防抖延迟更新动画（避免打字时频繁销毁重建 Ctor）
+  const [debouncedScramble, setDebouncedScramble] = useState(form.wcaScramble || form.optimalScramble || '');
+  const [debouncedSolution, setDebouncedSolution] = useState(form.solution || '');
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedScramble(form.wcaScramble || form.optimalScramble || '');
+      setDebouncedSolution(form.solution || '');
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [form.wcaScramble, form.optimalScramble, form.solution]);
+
+  // NOTE: 获取 TwistyPlayer 实例以实现光标跟随
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const playerRef = useRef<any>(null);
+
+  const handleCursorSync = useCallback((el: HTMLTextAreaElement) => {
+    if (!playerRef.current) return;
+    const offset = el.selectionStart;
+    const fullText = el.value;
+    const textBefore = fullText.substring(0, offset);
+    const algBefore = extractAlgFromText(textBefore);
+    const moves = algBefore.trim().split(/\s+/).filter(s => s.length > 0);
+    syncPlayerToMoveCount(playerRef.current, moves.length);
+  }, [playerRef]);
 
   // NOTE: 提交
   const handleSubmit = async () => {
@@ -382,6 +428,19 @@ export default function ReconSubmitPage() {
           />
         </label>
 
+        {/* 动画预览 */}
+        {form.event && form.event !== 'sq1' && (
+          <div className="submit-field submit-block">
+            <span className="submit-label">{t('recon.viewAnim') || 'Animation Preview'}</span>
+            <TwistySection
+              puzzle={puzzle}
+              scramble={debouncedScramble}
+              alg={cleanForPlayer(debouncedSolution)}
+              playerRef={playerRef}
+            />
+          </div>
+        )}
+
         {/* 解法 */}
         <label className="submit-field submit-block">
           <span className="submit-label">{t('recon.solution')} *</span>
@@ -393,7 +452,10 @@ export default function ReconSubmitPage() {
               const el = e.target as HTMLTextAreaElement;
               setField('solution', el.value);
               autoResize(el);
+              handleCursorSync(el);
             }}
+            onClick={e => handleCursorSync(e.target as HTMLTextAreaElement)}
+            onKeyUp={e => handleCursorSync(e.target as HTMLTextAreaElement)}
             placeholder={`// Cross (5)\nD R2 D' F D F'\n// F2L 1 (8)\nU R U' R' U' F' U F\n...`}
             className="submit-solution-textarea"
             style={{ overflow: 'hidden' }}
@@ -406,6 +468,7 @@ export default function ReconSubmitPage() {
             if (solutionRef.current) {
               setField('solution', solutionRef.current.value);
               autoResize(solutionRef.current);
+              handleCursorSync(solutionRef.current);
             }
           }}
         />
