@@ -4,6 +4,9 @@
  * NOTE: 1:1 移植自 PHP db.php + index.php 的工具函数
  */
 import type { Context } from 'hono';
+import jwt from 'jsonwebtoken';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';
 
 // ── JSON camelCase ↔ SQL snake_case 映射 ──
 
@@ -223,18 +226,28 @@ interface WcaUser {
 const tokenCache = new Map<string, WcaUser>();
 
 /**
- * 验证 WCA access_token 并返回用户信息
- * NOTE: 内存缓存（永久），避免每次都调 WCA API
+ * 验证认证 token 并返回用户信息
+ * NOTE: 优先尝试 JWT 验证（快速，无网络调用），失败后回退到 WCA access_token 验证
  */
 export async function authenticateUser(authHeader: string | undefined): Promise<WcaUser | null> {
   if (!authHeader?.startsWith('Bearer ')) return null;
   const token = authHeader.slice(7);
 
-  // NOTE: 缓存命中
+  // NOTE: 优先尝试 JWT 验证（自签令牌，365 天有效期，无需网络调用）
+  try {
+    const payload = jwt.verify(token, JWT_SECRET) as { wcaId: string; name: string };
+    if (payload.wcaId) {
+      return { wcaId: payload.wcaId, name: payload.name ?? '' };
+    }
+  } catch {
+    // NOTE: 不是有效 JWT，继续尝试 WCA token
+  }
+
+  // NOTE: 缓存命中（WCA access_token）
   const cached = tokenCache.get(token);
   if (cached) return cached;
 
-  // NOTE: 调 WCA /me API 验证
+  // NOTE: 回退：调 WCA /me API 验证（WCA access_token 2 小时过期）
   try {
     const res = await fetch('https://www.worldcubeassociation.org/api/v0/me', {
       headers: { Authorization: `Bearer ${token}` },

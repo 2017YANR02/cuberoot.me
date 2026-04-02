@@ -81,6 +81,7 @@ export const useAuthStore = create<AuthState & AuthActions>()((set) => ({
   logout: () => {
     localStorage.removeItem(SESSION_KEY);
     localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem('cuberoot_jwt');
     set({ user: null });
   },
 
