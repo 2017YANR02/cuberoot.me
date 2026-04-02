@@ -137,9 +137,20 @@ function useTimerAnimation(playerId: number, timeRef: React.RefObject<HTMLDivEle
             return;
           }
           const elapsed = performance.now() - cp.startTime;
+          const timeStr = curr.showTime ? formatTime(elapsed, curr.timerPrecision) : '⏱️';
           if (timeRef.current) {
-            const timeStr = curr.showTime ? formatTime(elapsed, curr.timerPrecision) : '⏱️';
             timeRef.current.innerHTML = timeStr;
+          }
+          // NOTE: 对手已停表时，在对手区域实时显示此玩家还在跑的时间
+          // 1:1 翻译自 battle.js startTimerAnimation()（行 928~930）
+          if (curr.mode === '1v1') {
+            const oppId = 1 - playerId;
+            if (curr.players[oppId].hasFinished) {
+              const oppEl = document.getElementById(`opponent-${oppId}`);
+              if (oppEl) {
+                oppEl.innerHTML = '⚔️ ' + timeStr;
+              }
+            }
           }
           rafRef.current = requestAnimationFrame(tick);
         };
@@ -182,6 +193,34 @@ function useInspectionDisplay(playerId: number, timeRef: React.RefObject<HTMLDiv
     });
     return () => unsubscribe();
   }, [playerId, timeRef]);
+}
+
+// NOTE: 对手成绩显示 hook — 在本方区域显示对手的最终成绩
+// 1:1 翻译自 battle.js renderOpponent() 调用逻辑（行 616~618, 996~1001）
+function useOpponentDisplay(playerId: number) {
+  useEffect(() => {
+    const unsubscribe = useBattleStore.subscribe((state) => {
+      if (state.mode !== '1v1') return;
+
+      const el = document.getElementById(`opponent-${playerId}`);
+      if (!el) return;
+
+      const oppId = 1 - playerId;
+      const opp = state.players[oppId];
+
+      if (opp.hasFinished && !opp.isTiming) {
+        // NOTE: 对手已完成 → 显示对手的最终成绩（含罚时）
+        const effTime = opp.penalty === PENALTY.DNF ? Infinity
+          : (opp.penalty === PENALTY.PLUS2 ? opp.time + 2000 : opp.time);
+        const label = effTime === Infinity ? 'DNF' : formatTime(effTime, state.timerPrecision);
+        el.innerHTML = '⚔️ ' + label;
+      } else if (!opp.hasFinished && !opp.isTiming) {
+        // NOTE: 回合重置 → 清空对手成绩
+        el.innerHTML = '';
+      }
+    });
+    return () => unsubscribe();
+  }, [playerId]);
 }
 
 // ===== PenaltyDropdown 组件 =====
@@ -274,6 +313,8 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
   useTimerAnimation(playerId, timeRef);
   // NOTE: Inspection 倒计时显示
   useInspectionDisplay(playerId, timeRef);
+  // NOTE: 对手成绩显示（1v1 模式）
+  useOpponentDisplay(playerId);
 
   // NOTE: 原生 pointer 事件处理 — 使用 addEventListener 而非 React 合成事件
   // React 的 onPointerDown 在移动端 Safari/Chrome 上不可靠，原生事件与 legacy 版一致且稳定
