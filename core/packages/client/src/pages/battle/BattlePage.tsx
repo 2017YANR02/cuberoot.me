@@ -638,7 +638,6 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
               onChange={e => {
                 const val = parseFloat(e.target.value);
                 store.setScrambleScale(val);
-                document.documentElement.style.setProperty('--scramble-scale', String(val));
               }}
             />
           </div>
@@ -787,6 +786,11 @@ export default function BattlePage() {
     };
   }, [mode]);
 
+  // NOTE: 页面加载时同步 scrambleScale CSS 变量（localStorage 已保存值，但 CSS 变量需要手动初始化）
+  useEffect(() => {
+    document.documentElement.style.setProperty('--scramble-scale', String(store.scrambleScale));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // NOTE: 自动检测横竖屏 — 横屏自动切 side 布局，竖屏自动切 versus
   useEffect(() => {
     if (mode !== '1v1') return;
@@ -830,10 +834,10 @@ export default function BattlePage() {
       {/* === Side 布局：共享打乱 + 左右分屏 === */}
       {mode === '1v1' && store.layout === 'side' && (
         <>
-          {/* 打乱文字 */}
-          <SharedScramble />
           {/* 中间栏 */}
           <MiddleBar onSettingsClick={handleSettingsClick} />
+          {/* 打乱文字 */}
+          <SharedScramble />
           {/* 左右计时区域（打乱图浮在中心） */}
           <div className="side-players">
             <TimerArea playerId={0} />
