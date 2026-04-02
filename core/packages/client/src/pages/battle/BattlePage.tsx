@@ -450,8 +450,8 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
         dangerouslySetInnerHTML={{ __html: ao5Text }}
       />
 
-      {/* 对手成绩（1v1 模式） */}
-      {store.mode === '1v1' && (
+      {/* 对手成绩（仅 versus 布局，side 布局不需要——两人并排能直接看到对方） */}
+      {store.mode === '1v1' && store.layout === 'versus' && (
         <div className="opponent-display" id={`opponent-${playerId}`} />
       )}
 
@@ -544,25 +544,6 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
             >1v1</button>
           </div>
         </div>
-
-        {/* 1v1 布局选择 */}
-        {store.mode === '1v1' && (
-          <div className="settings-group">
-            <div className="settings-label">LAYOUT</div>
-            <div className="mode-seg">
-              <button
-                className={`mode-seg-btn${store.layout === 'versus' ? ' active' : ''}`}
-                onClick={() => store.setLayout('versus')}
-                title="Face-to-face: players sit across"
-              >↕️ Versus</button>
-              <button
-                className={`mode-seg-btn${store.layout === 'side' ? ' active' : ''}`}
-                onClick={() => store.setLayout('side')}
-                title="Side-by-side: players sit next to each other"
-              >↔️ Side</button>
-            </div>
-          </div>
-        )}
 
         {/* 项目选择 */}
         <div className="settings-group">
@@ -729,7 +710,7 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
 }
 
 // ===== SharedScramble 组件（Side 布局专用） =====
-// NOTE: 在并排模式下，打乱文字和图在两个 TimerArea 上方共享显示
+// NOTE: 在并排模式下，打乱文字在顶部共享显示，打乱图单独放在下方
 
 function SharedScramble() {
   const store = useBattleStore();
@@ -745,15 +726,20 @@ function SharedScramble() {
         className="scramble-text"
         dangerouslySetInnerHTML={{ __html: scrambleContent }}
       />
-      {store.scrambleImageUrl && store.showImage && (
-        <div className="scramble-img">
-          <img
-            src={store.scrambleImageUrl}
-            className="scramble-svg-img"
-            alt="scramble"
-          />
-        </div>
-      )}
+    </div>
+  );
+}
+
+// NOTE: 打乱图单独组件 — 放在中间栏与计时区域之间
+function SharedScrambleImage() {
+  const store = useBattleStore();
+  const anyTiming = store.players[0].isTiming || store.players[1].isTiming;
+
+  if (!store.scrambleImageUrl || !store.showImage) return null;
+
+  return (
+    <div className={`shared-scramble-img${anyTiming ? ' hidden' : ''}`}>
+      <img src={store.scrambleImageUrl} className="scramble-svg-img" alt="scramble" />
     </div>
   );
 }
@@ -844,15 +830,16 @@ export default function BattlePage() {
       {/* === Side 布局：共享打乱 + 左右分屏 === */}
       {mode === '1v1' && store.layout === 'side' && (
         <>
-          {/* 共享打乱区域 */}
+          {/* 打乱文字 */}
           <SharedScramble />
           {/* 中间栏 */}
           <MiddleBar onSettingsClick={handleSettingsClick} />
-          {/* 左右计时区域 */}
+          {/* 左右计时区域（打乱图浮在中心） */}
           <div className="side-players">
             <TimerArea playerId={0} />
             <div className="side-divider" />
             <TimerArea playerId={1} />
+            <SharedScrambleImage />
           </div>
         </>
       )}
