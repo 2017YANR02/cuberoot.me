@@ -40,7 +40,15 @@ export function cleanForPlayer(text: string): string {
       cleaned.push(tokens.join(' '));
     }
   }
-  return cleaned.join('\n');
+  let alg = cleaned.join('\n');
+  // NOTE: 从 legacy cleanForPlayer 迁移——删除 twisty-player 无法解析的特殊字符
+  // .·↑↓⅓⅔ 分别是卡顿标记、换手标记、分数标记等
+  alg = alg.replace(/[.·↑↓⅓⅔]/g, '');
+  // NOTE: 保留重复标记 (...)N（twisty-player 支持），仅删除纯分组括号
+  alg = alg.replace(/\(([^)]*)\)(?!\d)/g, '$1');
+  // NOTE: 在连写的步骤之间插入空格（如 UD → U D，twisty-player 无法解析连写步骤）
+  alg = alg.replace(/([RULDFBMESruldfbmesxyz][w]?2?'?)(?=[RULDFBMESruldfbmesxyz])/g, '$1 ');
+  return alg;
 }
 
 /**
@@ -64,68 +72,69 @@ export interface TokenPosition {
   text: string;
 }
 
+// NOTE: 魔方指令 token 正则（对齐 legacy TOKEN_RE）
+// 匹配: R, R', R2, R2', x, y2, Rw, Rw', Rw2 等
+const TOKEN_RE = /[RUFLDBrufldbxyzMSE]w?[2']?'?/g;
+
 /**
- * 扫描文本中的所有 token（步骤）位置
- * NOTE: 用于实现光标在 token 边界上跳转
+ * 扫描文本的非注释区域，返回所有 token 的位置数组
+ * NOTE: 对齐 legacy recon_alg_utils.js findTokenPositions
+ * - 只匹配魔方步骤 token（R, R', U2 等），不匹配注释文字
+ * - 跳过每行 // 之后的内容
  */
 export function findTokenPositions(text: string): TokenPosition[] {
   if (!text) return [];
-  const positions: TokenPosition[] = [];
-  // NOTE: 匹配所有非空白连续字符序列
-  const re = /\S+/g;
-  let match: RegExpExecArray | null;
-  while ((match = re.exec(text)) !== null) {
-    const token = match[0];
-    // NOTE: 跳过注解标记和注释行
-    if (STRIP_TOKENS.has(token)) continue;
-    if (token.startsWith('//')) {
-      // NOTE: 跳到行尾
-      const lineEnd = text.indexOf('\n', match.index);
-      if (lineEnd > 0) re.lastIndex = lineEnd;
-      continue;
+  const tokens: TokenPosition[] = [];
+  const lines = text.split('\n');
+  let offset = 0;
+  for (const line of lines) {
+    const commentIdx = line.indexOf('//');
+    // NOTE: 只扫描 // 之前的部分（非注释区）
+    const instrPart = commentIdx >= 0 ? line.substring(0, commentIdx) : line;
+    TOKEN_RE.lastIndex = 0;
+    let m: RegExpExecArray | null;
+    while ((m = TOKEN_RE.exec(instrPart)) !== null) {
+      tokens.push({
+        start: offset + m.index,
+        end: offset + m.index + m[0].length,
+        text: m[0],
+      });
     }
-    positions.push({
-      start: match.index,
-      end: match.index + token.length,
-      text: token,
-    });
+    offset += line.length + 1; // +1 for \n
   }
-  return positions;
+  return tokens;
 }
 
 /**
  * 将光标位置磁吸到最近的 token 边界
- * NOTE: 光标在两个 token 之间时，吸附到较近的一侧
- * @param cursorPos 当前光标位置
- * @param positions token 位置列表
- * @returns 磁吸后的光标位置
+ * NOTE: 对齐 legacy recon_alg_utils.js snapToTokenBoundary
+ * - 光标在 token 内部 → 吸附到该 token 的 end 或前一个 token 的 end（取更近的）
+ * - 光标不在任何 token 内部 → 吸附到前一个 token 的 end
+ * - 在第一个 token 之前 → 返回 0
+ * 语义：光标位置表示"已执行到此处"，所以停在 token 末尾
  */
 export function snapToTokenBoundary(cursorPos: number, positions: TokenPosition[]): number {
   if (positions.length === 0) return cursorPos;
 
-  // NOTE: 在第一个 token 之前
-  if (cursorPos <= positions[0].start) return positions[0].start;
-
-  // NOTE: 在最后一个 token 之后
-  const last = positions[positions.length - 1];
-  if (cursorPos >= last.end) return last.end;
-
-  // NOTE: 找到光标所在的 token 间隙
+  // NOTE: 光标在 token 内部 → 吸附到更近的 end（前进到执行完该步）或前一个 token 的 end
   for (let i = 0; i < positions.length; i++) {
-    const pos = positions[i];
-    // NOTE: 光标在 token 内——不磁吸
-    if (cursorPos >= pos.start && cursorPos <= pos.end) return cursorPos;
-
-    // NOTE: 光标在 token[i].end 和 token[i+1].start 之间
-    if (i < positions.length - 1) {
-      const next = positions[i + 1];
-      if (cursorPos > pos.end && cursorPos < next.start) {
-        // NOTE: 吸附到较近的一侧
-        const distToEnd = cursorPos - pos.end;
-        const distToNext = next.start - cursorPos;
-        return distToEnd <= distToNext ? pos.end : next.start;
-      }
+    const t = positions[i];
+    if (cursorPos > t.start && cursorPos < t.end) {
+      const prevEnd = i > 0 ? positions[i - 1].end : 0;
+      const distPrev = cursorPos - prevEnd;
+      const distEnd = t.end - cursorPos;
+      return distPrev <= distEnd ? prevEnd : t.end;
     }
   }
-  return cursorPos;
+
+  // NOTE: 不在任何 token 内部 → 吸附到前一个 token 的 end
+  // 语义：光标表示"已执行到此处"，所以停在前一步的末尾
+  for (let j = positions.length - 1; j >= 0; j--) {
+    if (cursorPos >= positions[j].end) {
+      return positions[j].end;
+    }
+  }
+
+  // NOTE: 在第一个 token 之前
+  return 0;
 }

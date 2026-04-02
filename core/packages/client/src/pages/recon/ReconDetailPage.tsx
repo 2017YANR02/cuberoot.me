@@ -2,7 +2,7 @@
  * 复盘详情页——迁移自 recon/detail/recon_detail.js（1586 行）
  * NOTE: 展示单条复盘的完整信息，含 twisty 动画、视频、统计、评论
  */
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, type MutableRefObject } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { ReconSolve, ReconComment, EditHistoryItem } from '@cuberoot/shared';
@@ -13,7 +13,7 @@ import {
   buildExternalLinks, displaySolverName, FACE_COLORS,
 } from '../../utils/recon_utils';
 import { compNameZh, loadFlagData, flagDataVersion } from '../../utils/country_flags';
-import { cleanForPlayer } from '../../utils/recon_alg_utils';
+import { cleanForPlayer, findTokenPositions, snapToTokenBoundary } from '../../utils/recon_alg_utils';
 import { useAuthStore } from '../../stores/auth_store';
 import LangToggle from '../../components/LangToggle';
 import '../../recon.css';
@@ -111,66 +111,7 @@ export default function ReconDetailPage() {
         )}
       </div>
 
-      {/* 主体——两列布局 */}
-      <div className="detail-body">
-        {/* 左列：twisty → 外部链接 → 打乱+解法融合块 */}
-        <div className="detail-left">
-          {/* Twisty Player */}
-          {scramble && solutionText && (
-            <TwistySection
-              puzzle={getPuzzleId(solve.event)}
-              scramble={scramble}
-              alg={cleanForPlayer(solutionText)}
-            />
-          )}
-
-          {/* NOTE: 外部链接——与原版一致（alg.cubing.net / cubedb.net / 链接） */}
-          {scramble && solutionText && (
-            <ExternalLinks event={solve.event} scramble={scramble} alg={cleanForPlayer(solutionText)} solveId={solve.id} />
-          )}
-
-          {/* NOTE: 打乱+解法融合块——原版风格（打乱和解法共享一个视觉框体） */}
-          {scramble && solutionText ? (
-            <div className="detail-solution-block">
-              <div className="detail-scramble-text">{scramble}</div>
-              <div className="detail-block-divider" />
-              <SolutionView text={solutionText} />
-            </div>
-          ) : (
-            <>
-              {scramble && (
-                <div className="detail-section">
-                  <div className="detail-section-label">{t('recon.scramble')}</div>
-                  <div className="detail-scramble-text">{scramble}</div>
-                </div>
-              )}
-              {solutionText && (
-                <div className="detail-section">
-                  <div className="detail-section-label">{t('recon.solution')}</div>
-                  <SolutionView text={solutionText} />
-                </div>
-              )}
-            </>
-          )}
-        </div>
-
-        {/* 右列：视频 → 统计 → 备注 */}
-        <div className="detail-right">
-          {/* 视频 */}
-          {solve.videoUrl && <VideoSection videoUrl={solve.videoUrl} />}
-
-          {/* 统计网格 */}
-          <StatsGrid solve={solve} />
-
-          {/* 备注 */}
-          {solve.note && (
-            <div className="detail-section">
-              <div className="detail-section-label">📝 {t('recon.note')}</div>
-              <div className="detail-note">{solve.note}</div>
-            </div>
-          )}
-        </div>
-      </div>
+      <TwistyPlayerContext scramble={scramble} solutionText={solutionText} solve={solve} />
 
       {/* NOTE: 元数据区——原版 emoji + 链接化 */}
       <div className="detail-meta">
@@ -195,7 +136,7 @@ export default function ReconDetailPage() {
         {solve.reconDate && (
           <div className="detail-meta-item">
             <span className="detail-meta-label">📅</span>
-            <span className="detail-meta-value">{solve.reconDate}</span>
+            <span className="detail-meta-value">{solve.reconDate.slice(0, 10)}</span>
           </div>
         )}
         {solve.addedBy && (
@@ -244,17 +185,272 @@ export default function ReconDetailPage() {
 
 // ── 子组件 ──
 
-/** 解法文本展示——高亮阶段注释 */
-function SolutionView({ text }: { text: string }) {
+/**
+ * 主体两列布局——包含 twisty player + 解法文本 + 光标跟随
+ * NOTE: 从 legacy 迁移的核心交互——player ref 在 twisty 和 solution 之间共享
+ */
+function TwistyPlayerContext({ scramble, solutionText, solve }: {
+  scramble: string; solutionText: string; solve: ReconSolve;
+}) {
+  const { t } = useTranslation();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const playerRef = useRef<any>(null);
+
+  return (
+    <div className="detail-body">
+      {/* 左列：twisty → 外部链接 → 打乱+解法融合块 */}
+      <div className="detail-left">
+        {/* Twisty Player */}
+        {scramble && solutionText && (
+          <TwistySection
+            puzzle={getPuzzleId(solve.event)}
+            scramble={scramble}
+            alg={cleanForPlayer(solutionText)}
+            playerRef={playerRef}
+          />
+        )}
+
+        {/* NOTE: 外部链接——与原版一致（alg.cubing.net / cubedb.net / 链接） */}
+        {scramble && solutionText && (
+          <ExternalLinks event={solve.event} scramble={scramble} alg={cleanForPlayer(solutionText)} solveId={solve.id} />
+        )}
+
+        {/* NOTE: 打乱+解法融合块——原版风格（打乱和解法共享一个视觉框体） */}
+        {scramble && solutionText ? (
+          <div className="detail-solution-block">
+            <div className="detail-scramble-text">{scramble}</div>
+            <div className="detail-block-divider" />
+            <SolutionView text={solutionText} playerRef={playerRef} />
+          </div>
+        ) : (
+          <>
+            {scramble && (
+              <div className="detail-section">
+                <div className="detail-section-label">{t('recon.scramble')}</div>
+                <div className="detail-scramble-text">{scramble}</div>
+              </div>
+            )}
+            {solutionText && (
+              <div className="detail-section">
+                <div className="detail-section-label">{t('recon.solution')}</div>
+                <SolutionView text={solutionText} playerRef={playerRef} />
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* 右列：视频 → 统计 → 备注 */}
+      <div className="detail-right">
+        {solve.videoUrl && <VideoSection videoUrl={solve.videoUrl} />}
+        <StatsGrid solve={solve} />
+        {solve.note && (
+          <div className="detail-section">
+            <div className="detail-section-label">📝 {t('recon.note')}</div>
+            <div className="detail-note">{solve.note}</div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── 光标跟随工具函数（从 legacy recon_detail.js 迁移） ──
+
+/** 获取点击在 DOM 元素纯文本中的绝对偏移 */
+function getTextOffsetInElement(el: HTMLElement): number {
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0) return -1;
+  const node = sel.anchorNode;
+  let offset = sel.anchorOffset;
+  if (!node || !el.contains(node)) return -1;
+  let current: Node | null = node;
+  while (current && current !== el) {
+    let prev = current.previousSibling;
+    while (prev) {
+      offset += (prev.textContent || '').length;
+      prev = prev.previousSibling;
+    }
+    current = current.parentNode;
+  }
+  return offset;
+}
+
+/** 在 DOM 元素的指定纯文本偏移处插入可视闪烁光标 */
+function insertVisualCursor(el: HTMLElement, textOffset: number) {
+  const old = el.querySelector('.detail-cursor');
+  if (old) old.remove();
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  let accumulated = 0;
+  let targetNode: Text | null = null;
+  let localOffset = 0;
+  while (walker.nextNode()) {
+    const nodeLen = (walker.currentNode as Text).textContent?.length || 0;
+    if (accumulated + nodeLen >= textOffset) {
+      targetNode = walker.currentNode as Text;
+      localOffset = textOffset - accumulated;
+      break;
+    }
+    accumulated += nodeLen;
+  }
+  if (!targetNode) return;
+  const cursor = document.createElement('span');
+  cursor.className = 'detail-cursor';
+  cursor.textContent = '\u200B';
+  const afterNode = targetNode.splitText(localOffset);
+  afterNode.parentNode!.insertBefore(cursor, afterNode);
+}
+
+/** 从文本前缀中提取纯公式（去注释行、行内注释、注解标记），用于计算步数
+ *  NOTE: 对齐 legacy extractAlgFromRecon — 先跳过统计行头（如 '41STM ...'），再 cleanForPlayer
+ */
+function extractAlgFromText(text: string): string {
+  if (!text) return '';
+  const lines = text.split('\n');
+  let startIdx = 0;
+  // NOTE: 第一行如果是 "41STM ..." 格式的统计行，跳过
+  if (lines.length > 0 && /^\d+STM\s/i.test(lines[0])) {
+    startIdx = 1;
+    // NOTE: 第二行如果不含 '//'，也是头部行（打乱），跳过
+    if (lines.length > 1 && !lines[1].includes('//')) {
+      startIdx = 2;
+    }
+  }
+  const alg = lines.slice(startIdx)
+    .map(line => {
+      const idx = line.indexOf('//');
+      return (idx >= 0 ? line.substring(0, idx) : line).trim();
+    })
+    .filter(line => line.length > 0)
+    .join('\n');
+  return cleanForPlayer(alg);
+}
+
+/** 根据步数同步 twisty-player 到对应的魔方状态 */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function syncPlayerToMoveCount(player: any, moveCount: number) {
+  if (!player) return;
+  try {
+    const model = player.experimentalModel;
+    if (!model || !model.indexer) return;
+    model.indexer.get().then((indexer: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+      try {
+        if (typeof indexer.indexToMoveStartTimestamp === 'function') {
+          const totalMoves = typeof indexer.numAnimatedLeaves === 'function'
+            ? indexer.numAnimatedLeaves()
+            : (typeof indexer.numMoves === 'function' ? indexer.numMoves() : 0);
+          if (moveCount >= totalMoves && typeof indexer.algDuration === 'function') {
+            player.timestamp = indexer.algDuration();
+          } else {
+            player.timestamp = indexer.indexToMoveStartTimestamp(moveCount);
+          }
+        }
+      } catch (e) {
+        console.warn('[TwistySync] indexer callback error:', e);
+      }
+    }).catch((e: unknown) => console.warn('[TwistySync] indexer.get() rejected:', e));
+  } catch (e) {
+    console.warn('[TwistySync] experimentalModel access error:', e);
+  }
+}
+
+/** 解法文本展示——高亮阶段注释 + 光标跟随 twisty-player（从 legacy 迁移） */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function SolutionView({ text, playerRef }: { text: string; playerRef: MutableRefObject<any> }) {
+  const preRef = useRef<HTMLPreElement>(null);
+  const cursorOffsetRef = useRef(0);
+
+  // NOTE: 点击解法文本——计算偏移 → 磁吸到 token 边界 → 插入光标 + 同步 player
+  const handleClick = useCallback(() => {
+    const el = preRef.current;
+    if (!el) return;
+    let offset = getTextOffsetInElement(el);
+    if (offset < 0) return;
+    const plainText = (el.textContent || '').replace(/\u200B/g, '');
+    const result = findTokenPositions(plainText);
+    offset = snapToTokenBoundary(offset, result);
+    cursorOffsetRef.current = offset;
+    insertVisualCursor(el, offset);
+    // NOTE: 计算光标前的步数并同步 player
+    const textBefore = plainText.substring(0, offset);
+    const algBefore = extractAlgFromText(textBefore);
+    const moves = algBefore.trim().split(/\s+/).filter(s => s.length > 0);
+    syncPlayerToMoveCount(playerRef.current, moves.length);
+  }, [playerRef]);
+
+  // NOTE: 方向键导航——左右按 token 跳转，上下按行跳转（从 legacy 迁移）
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (!['ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown'].includes(e.key)) return;
+    const el = preRef.current;
+    if (!el || !playerRef.current) return;
+    const fullText = (el.textContent || '').replace(/\u200B/g, '');
+    const tokens = findTokenPositions(fullText);
+    if (tokens.length === 0) return;
+    let newPos = cursorOffsetRef.current;
+
+    if (e.key === 'ArrowRight') {
+      for (const t of tokens) {
+        if (t.start >= cursorOffsetRef.current) { newPos = t.end; break; }
+      }
+    } else if (e.key === 'ArrowLeft') {
+      for (let j = tokens.length - 1; j >= 0; j--) {
+        if (tokens[j].end < cursorOffsetRef.current) { newPos = tokens[j].end; break; }
+      }
+    } else {
+      // NOTE: ArrowUp/ArrowDown — 按行跳转
+      const lines = fullText.split('\n');
+      const lineStarts: number[] = [];
+      let off = 0;
+      for (const line of lines) { lineStarts.push(off); off += line.length + 1; }
+      let curLine = 0;
+      for (let l = lineStarts.length - 1; l >= 0; l--) {
+        if (cursorOffsetRef.current >= lineStarts[l]) { curLine = l; break; }
+      }
+      const targetLine = e.key === 'ArrowDown' ? curLine + 1 : curLine - 1;
+      if (targetLine < 0 || targetLine >= lines.length) return;
+      const targetStart = lineStarts[targetLine];
+      const targetEnd = targetStart + lines[targetLine].length;
+      if (e.key === 'ArrowDown') {
+        for (const t of tokens) {
+          if (t.start >= targetStart && t.end <= targetEnd) { newPos = t.end; break; }
+        }
+      } else {
+        for (let n = tokens.length - 1; n >= 0; n--) {
+          if (tokens[n].start >= targetStart && tokens[n].end <= targetEnd) { newPos = tokens[n].end; break; }
+        }
+      }
+    }
+    if (newPos === cursorOffsetRef.current) return;
+    e.preventDefault();
+    cursorOffsetRef.current = newPos;
+    insertVisualCursor(el, newPos);
+    const textBefore = fullText.substring(0, newPos);
+    const algBefore = extractAlgFromText(textBefore);
+    const moves = algBefore.trim().split(/\s+/).filter(s => s.length > 0);
+    syncPlayerToMoveCount(playerRef.current, moves.length);
+  }, [playerRef]);
+
   const lines = text.split(/\r?\n/);
   return (
-    <pre className="detail-solution-text">
+    <pre
+      ref={preRef}
+      className="detail-solution-text"
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
+      style={{ cursor: 'text', outline: 'none' }}
+    >
+      {/* NOTE: 用 \n + <span> 而非 <div> 包裹每行
+        * <div> 是块级元素，el.textContent 不会在 <div> 之间插入 \n
+        * 导致 extractAlgFromText 的 split('\n') 只有一行，步数计算完全错误
+        * <pre> 天然保留 \n，所以手动插入 \n 确保 textContent 含正确换行 */}
       {lines.map((line, i) => {
         const trimmed = line.trim();
+        const nl = i > 0 ? '\n' : '';
         if (trimmed.startsWith('//')) {
-          return <div key={i} className="recon-step-label">{line}</div>;
+          return <span key={i}>{nl}<span className="recon-step-label">{line}</span></span>;
         }
-        return <div key={i}>{line}</div>;
+        return <span key={i}>{nl}{line}</span>;
       })}
     </pre>
   );
@@ -657,50 +853,64 @@ function CommentsView({
   );
 }
 
-/** Twisty 播放器区域——动态导入 cubing 库 */
+/** Twisty 播放器区域——动态导入 cubing 库，用构造函数 API 创建（对齐 legacy） */
 function TwistySection({
-  puzzle, scramble, alg,
+  puzzle, scramble, alg, playerRef,
 }: {
   puzzle: string;
   scramble: string;
   alg: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  playerRef: MutableRefObject<any>;
 }) {
   const { t } = useTranslation();
   // NOTE: 动画默认显示（对齐原版——原版默认展开 twisty-player）
   const [visible, setVisible] = useState(true);
-  const [cubingLoaded, setCubingLoaded] = useState(false);
+  // NOTE: 用 state 而非 ref 存构造函数——确保 import 完成后触发重渲染
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [Ctor, setCtor] = useState<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // NOTE: 点击后动态导入 cubing 库并创建 twisty-player
+  // NOTE: 点击后切换显示/隐藏
   const handleToggle = useCallback(() => {
     setVisible(v => !v);
   }, []);
 
-  // NOTE: 自动加载 cubing 库（visible 默认为 true，首次渲染即触发）
+  // NOTE: 自动加载 cubing 库——import 完成后 setCtor 触发重渲染
   useEffect(() => {
-    if (visible && !cubingLoaded) {
-      import('cubing/twisty').then(() => setCubingLoaded(true))
-        .catch(err => console.warn('Failed to load cubing library:', err));
+    if (visible && !Ctor) {
+      import('cubing/twisty').then((mod) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const C = (mod as any).TwistyPlayer || (mod as any).default;
+        setCtor(() => C); // NOTE: 用函数式 setState，避免 React 尝试调用构造函数
+      }).catch(err => console.warn('Failed to load cubing library:', err));
     }
-  }, [visible, cubingLoaded]);
+  }, [visible, Ctor]);
 
-  // NOTE: cubing 库加载后，手动创建 twisty-player 元素
+  // NOTE: 构造函数就绪后，用 new TwistyPlayer({...}) 创建（与 legacy 一致）
   useEffect(() => {
-    if (!visible || !cubingLoaded || !containerRef.current) return;
+    if (!visible || !Ctor || !containerRef.current) return;
     const container = containerRef.current;
     // NOTE: 清空旧的 player
     container.innerHTML = '';
-    const player = document.createElement('twisty-player');
-    player.setAttribute('puzzle', puzzle);
-    player.setAttribute('experimental-setup-alg', scramble);
-    player.setAttribute('alg', alg);
+    // NOTE: 使用构造函数 API——setAttribute 方式无法正确初始化 alg 模型，播放按钮不响应
+    // NOTE: 不设置 background:'none'——保留默认棋盘格背景（与 legacy 一致）
+    const player = new Ctor({
+      puzzle,
+      experimentalSetupAlg: scramble,
+      alg,
+      controlPanel: 'bottom-row',
+    });
     player.style.width = '100%';
     player.style.maxWidth = '400px';
     player.style.margin = '12px 0';
-    // NOTE: 浅色渐变背景——对齐 legacy 版外观
-    player.setAttribute('control-panel', 'bottom');
+    // NOTE: light colorScheme 让 scrubber 轨道右侧渲染为白色（对齐 legacy 图2样式）
+    player.style.colorScheme = 'light';
     container.appendChild(player);
-  }, [visible, cubingLoaded, puzzle, scramble, alg]);
+    // NOTE: 暴露 player 引用给光标跟随功能
+    playerRef.current = player;
+    return () => { playerRef.current = null; };
+  }, [visible, Ctor, puzzle, scramble, alg, playerRef]);
 
   return (
     <div className="detail-section">

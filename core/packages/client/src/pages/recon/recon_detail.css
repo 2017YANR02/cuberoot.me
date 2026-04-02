@@ -355,6 +355,21 @@
   margin-bottom: 12px;
 }
 
+/* NOTE: 解法文本中的可视闪烁光标（从 legacy recon.css 迁移） */
+.detail-cursor {
+  display: inline-block;
+  width: 1.5px;
+  height: 1.1em;
+  background: #e8a27a;
+  vertical-align: text-bottom;
+  animation: detail-cursor-blink 0.8s step-end infinite;
+  margin: 0 -0.5px;
+}
+@keyframes detail-cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
 /* --- 打乱+解法融合块——原版风格 --- */
 .detail-solution-block {
   background: rgba(255, 235, 220, 0.04);

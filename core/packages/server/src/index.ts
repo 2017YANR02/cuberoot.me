@@ -19,6 +19,20 @@ app.use('*', cors({
   ],
 }));
 
+// NOTE: 全局错误处理——把未捕获的 throw new Error(...) 转成 JSON 格式
+// requireAuth / requireAdmin / checkRateLimit 都用 throw，没有全局处理器会变成空 500
+app.onError((err, c) => {
+  const msg = err instanceof Error ? err.message : String(err);
+  // NOTE: 根据错误消息推断 HTTP 状态码
+  let status: 400 | 401 | 403 | 429 | 500 = 500;
+  if (msg.includes('Authentication required') || msg.includes('token')) status = 401;
+  else if (msg.includes('Admin access required') || msg.includes('Cannot edit') || msg.includes('Cannot delete') || msg.includes('suspended')) status = 403;
+  else if (msg.includes('Rate limit')) status = 429;
+  else if (msg.includes('Validation') || msg.includes('No valid')) status = 400;
+  console.error(`[${status}] ${msg}`);
+  return c.json({ error: msg }, status);
+});
+
 // 注册路由
 app.route('/', authRoutes);
 app.route('/', progressRoutes);
