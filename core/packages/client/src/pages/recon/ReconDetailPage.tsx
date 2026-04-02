@@ -649,7 +649,7 @@ function CommentsView({
           </button>
         </div>
       ) : (
-        <div className="detail-comment-login-hint">
+        <div className="detail-comment-login-hint" onClick={() => useAuthStore.getState().login()} style={{ cursor: 'pointer' }}>
           🔑 {t('recon.loginToComment')}
         </div>
       )}
