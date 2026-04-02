@@ -113,3 +113,57 @@ authRoutes.get('/api/auth/me', async (c) => {
     return c.json({ error: 'Invalid token' }, 401);
   }
 });
+
+// WCA access_token → 自签 JWT（365 天有效期）
+// NOTE: WCA Implicit Grant 的 token 2 小时过期，用此端点换取长效 JWT
+authRoutes.post('/api/auth/exchange', async (c) => {
+  const body = await c.req.json<{ accessToken?: string }>();
+  const accessToken = body.accessToken;
+
+  if (!accessToken) {
+    return c.json({ error: 'accessToken is required' }, 400);
+  }
+
+  // 用 WCA access_token 验证用户身份
+  try {
+    const res = await fetch('https://www.worldcubeassociation.org/api/v0/me', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!res.ok) {
+      return c.json({ error: 'Invalid or expired WCA token' }, 401);
+    }
+
+    const data = await res.json() as {
+      me: { id: number; wca_id: string; name: string; avatar: { url: string } };
+    };
+    const user = data.me;
+    if (!user?.wca_id) {
+      return c.json({ error: 'Failed to get user info' }, 401);
+    }
+
+    // 缓存用户信息到数据库
+    await query(
+      `INSERT INTO wca_users (wca_id, name, avatar_url, access_token, token_expires_at)
+       VALUES (?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 7200 SECOND))
+       ON DUPLICATE KEY UPDATE
+         name = VALUES(name),
+         avatar_url = VALUES(avatar_url),
+         access_token = VALUES(access_token),
+         token_expires_at = VALUES(token_expires_at),
+         updated_at = NOW()`,
+      [user.wca_id, user.name, user.avatar?.url, accessToken],
+    );
+
+    // 签发 JWT（365 天有效期）
+    const jwtToken = jwt.sign(
+      { wcaId: user.wca_id, name: user.name },
+      JWT_SECRET,
+      { expiresIn: '365d' },
+    );
+
+    return c.json({ token: jwtToken });
+  } catch {
+    return c.json({ error: 'WCA API unavailable' }, 502);
+  }
+});

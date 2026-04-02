@@ -15,9 +15,10 @@ const API_BASE = import.meta.env.VITE_RECON_API_BASE || '/api/recon';
 
 // ── 认证 ──
 
-/** 获取 WCA OAuth token（从 localStorage） */
+/** 获取认证 token（优先 JWT，回退 WCA access_token） */
 function getToken(): string | null {
-  return localStorage.getItem('wca_access_token');
+  // NOTE: 优先使用自签 JWT（365 天有效期），WCA access_token 仅 2 小时
+  return localStorage.getItem('cuberoot_jwt') || localStorage.getItem('wca_access_token');
 }
 
 /** 构建带 Bearer token 的 headers */
