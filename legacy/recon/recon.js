@@ -10,10 +10,10 @@
     const PAGE_SIZE = 50; // NOTE: 每次加载的行数
     const COMP_COUNTRIES_URL = '/stats/comp_name_countries.json';
     const PERSON_COUNTRIES_URL = '/stats/person_name_countries.json';
-    const COMP_NAMES_ZH_URL = '/recon/comp_names_zh.json';
+    const COMP_NAMES_ZH_URL = '/legacy/recon/comp_names_zh.json';
     const COMP_WCA_IDS_URL = '/stats/comp_name_to_wca_id.json';
     // NOTE: recon 专用精简映射（4 合 1，~21KB），替代上面 4 个 URL（共 ~9.6MB）
-    const RECON_AUX_URL = '/recon/recon_aux_data.json';
+    const RECON_AUX_URL = '/legacy/recon/recon_aux_data.json';
     const DEFAULT_SORT = { key: 'id', asc: false };
 
     // --- 状态 ---
@@ -223,7 +223,7 @@
      * NOTE: 统一用 /recon/detail/?id=ID（所有环境一致）
      */
     function getDetailUrl(id) {
-        return '/recon/detail/?id=' + id;
+        return '/legacy/recon/detail/?id=' + id;
     }
 
     /**
@@ -256,7 +256,7 @@
             // NOTE: 头像/名字可点击进入个人复盘页
             nameEl.style.cursor = 'pointer';
             nameEl.onclick = function () {
-                window.location.href = '/recon/?user=' + encodeURIComponent(user.wcaId);
+                window.location.href = '/legacy/recon/?user=' + encodeURIComponent(user.wcaId);
             };
             document.getElementById('wca-avatar').style.cursor = 'pointer';
             document.getElementById('wca-avatar').onclick = nameEl.onclick;
@@ -307,7 +307,7 @@
         var isZh = localStorage.getItem('i18n_locale') === 'zh';
 
         card.innerHTML =
-            '<a href="/recon/" class="user-profile-back" data-i18n-en="← Back" data-i18n-zh="← 返回">' +
+            '<a href="/legacy/recon/" class="user-profile-back" data-i18n-en="← Back" data-i18n-zh="← 返回">' +
                 (isZh ? '← 返回' : '← Back') + '</a>' +
             avatarHtml +
             '<div class="user-profile-info">' +
@@ -397,7 +397,7 @@
                     '</div>' : '');
 
                 // NOTE: 调 userStats API 获取全库的复盘者/添加者 COUNT（不限于 person_id 子集）
-                fetch(ReconStore._apiBase + '?action=userStats&wcaId=' + encodeURIComponent(wcaId))
+                fetch(ReconStore._apiBase + '/user-stats?wcaId=' + encodeURIComponent(wcaId))
                     .then(function (r) { return r.json(); })
                     .then(function (stats) {
                         var reconEl = document.getElementById('user-stat-recon');

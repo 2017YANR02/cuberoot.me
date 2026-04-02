@@ -232,7 +232,12 @@ reconRoutes.get('/api/recon/edits', async (c) => {
   // NOTE: 返回 {solveId: fields} 的 map（空时返回 {} 而非 []）
   const edits: Record<string, unknown> = {};
   for (const row of rows) {
-    edits[row.solve_id] = JSON.parse(String(row.fields));
+    try {
+      edits[row.solve_id] = JSON.parse(String(row.fields));
+    } catch {
+      // NOTE: fields 损坏时跳过该条，不阻塞整个请求
+      console.warn(`edits parse failed for solve_id=${row.solve_id}`);
+    }
   }
   return c.json(edits);
 });
@@ -315,14 +320,20 @@ reconRoutes.get('/api/recon/history', async (c) => {
     'SELECT * FROM edit_history WHERE solve_id = ? ORDER BY edited_at DESC LIMIT 20',
     [solveId]
   );
-  return c.json(rows.map(r => ({
-    id: r.id,
-    solveId: r.solve_id,
-    before: r.before_snapshot ? JSON.parse(r.before_snapshot) : null,
-    after: r.after_fields ? JSON.parse(r.after_fields) : null,
-    editedBy: r.edited_by,
-    editedAt: Number(r.edited_at),
-  })));
+  return c.json(rows.map(r => {
+    let before = null;
+    let after = null;
+    try { before = r.before_snapshot ? JSON.parse(r.before_snapshot) : null; } catch { /* skip */ }
+    try { after = r.after_fields ? JSON.parse(r.after_fields) : null; } catch { /* skip */ }
+    return {
+      id: r.id,
+      solveId: r.solve_id,
+      before,
+      after,
+      editedBy: r.edited_by,
+      editedAt: Number(r.edited_at),
+    };
+  }));
 });
 
 // ==================== 阶段 4：代理 + 统计 + Timer ====================

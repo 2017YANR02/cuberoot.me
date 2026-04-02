@@ -3,11 +3,11 @@ title: "Recon - Detail"
 layout: default
 ---
 
-<link rel="stylesheet" href="/recon/recon.css">
+<link rel="stylesheet" href="/legacy/recon/recon.css">
 
 <!-- NOTE: 详情页头部：返回按钮 + 标题 + WCA 登录 -->
 <div class="detail-page-header">
-    <a href="/recon/" class="detail-back-link"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></a>
+    <a href="/legacy/recon/" class="detail-back-link"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></a>
     <h1 id="detail-title"></h1>
     <!-- NOTE: WCA 登录区域（和列表页一致） -->
     <div class="wca-auth-area" id="wca-auth-area">
@@ -50,13 +50,13 @@ layout: default
     try { ensureTwisty().catch(() => {}); } catch(e) {}
 </script>
 
-<script src="/recon/recon_stats.js"></script>
-<script src="/wca_auth.js"></script>
-<script src="/recon/recon_api.js"></script>
-<script src="/recon/recon_utils.js"></script>
-<script src="/recon/recon_alg_utils.js"></script>
-<script src="/recon/recon_norm_cross.js"></script>
+<script src="/legacy/recon/recon_stats.js"></script>
+<script src="/legacy/wca_auth.js"></script>
+<script src="/legacy/recon/recon_api.js"></script>
+<script src="/legacy/recon/recon_utils.js"></script>
+<script src="/legacy/recon/recon_alg_utils.js"></script>
+<script src="/legacy/recon/recon_norm_cross.js"></script>
 <!-- NOTE: Markdown 渲染（评论区）——marked 转 HTML + DOMPurify 防 XSS -->
 <script src="https://cdn.jsdelivr.net/npm/marked@15.0.7/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.4/dist/purify.min.js"></script>
-<script src="/recon/detail/recon_detail.js" defer></script>
+<script src="/legacy/recon/detail/recon_detail.js" defer></script>
