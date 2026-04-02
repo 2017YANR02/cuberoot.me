@@ -5,7 +5,10 @@ if ('serviceWorker' in navigator) {
 		}
 	};
 	window.addEventListener('load', () => {
-		navigator.serviceWorker.register('sw.js').then(registration => {
+		// 使用当前脚本的 URL 来相对定位 sw.js，避免破坏上游兼容性
+		const basePath = document.currentScript ? document.currentScript.src : window.location.href;
+		const swPath = new URL('sw.js', basePath).href;
+		navigator.serviceWorker.register(swPath).then(registration => {
 			console.log('Service Worker registered successfully:', registration);
 			if (navigator.serviceWorker.controller) {
 				postSwMessage({ type: 'DP_PRECACHE' });
