@@ -672,17 +672,15 @@ function TwistySection({
   const containerRef = useRef<HTMLDivElement>(null);
 
   // NOTE: 点击后动态导入 cubing 库并创建 twisty-player
-  const handleToggle = useCallback(async () => {
-    const next = !visible;
-    setVisible(next);
-    if (next && !cubingLoaded) {
-      try {
-        // NOTE: 动态导入 cubing 库——首次约 1MB
-        await import('cubing/twisty');
-        setCubingLoaded(true);
-      } catch (err) {
-        console.warn('Failed to load cubing library:', err);
-      }
+  const handleToggle = useCallback(() => {
+    setVisible(v => !v);
+  }, []);
+
+  // NOTE: 自动加载 cubing 库（visible 默认为 true，首次渲染即触发）
+  useEffect(() => {
+    if (visible && !cubingLoaded) {
+      import('cubing/twisty').then(() => setCubingLoaded(true))
+        .catch(err => console.warn('Failed to load cubing library:', err));
     }
   }, [visible, cubingLoaded]);
 
@@ -699,8 +697,7 @@ function TwistySection({
     player.style.width = '100%';
     player.style.maxWidth = '400px';
     player.style.margin = '12px 0';
-    // NOTE: 深色背景适配
-    player.setAttribute('background', 'none');
+    // NOTE: 浅色渐变背景——对齐 legacy 版外观
     player.setAttribute('control-panel', 'bottom');
     container.appendChild(player);
   }, [visible, cubingLoaded, puzzle, scramble, alg]);
