@@ -798,6 +798,8 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   setScrambleScale: (scale: number) => {
     localStorage.setItem(LS_PREFIX + 'scrambleScale', String(scale));
     set({ scrambleScale: scale });
+    // NOTE: 同步更新 CSS 变量，确保 .scramble-text 的 calc() 立即生效
+    document.documentElement.style.setProperty('--scramble-scale', String(scale));
   },
 
   setBgOpacity: (opacity: number) => {

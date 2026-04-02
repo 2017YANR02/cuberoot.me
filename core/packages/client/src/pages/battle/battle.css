@@ -135,7 +135,7 @@
    ========================================================== */
 
 .scramble-text {
-    font-size: calc(clamp(1.4rem, 4.5vw, 2.0rem) * var(--scramble-scale));
+    font-size: calc(clamp(1.4rem, 4.5vw, 2.0rem) * var(--scramble-scale, 1));
     color: var(--scramble-color, var(--player-text-color, #ccc));
     text-shadow: none;
     text-align: center;
@@ -1486,7 +1486,7 @@ body.solo .scramble-img {
 }
 
 .shared-scramble .scramble-text {
-    font-size: clamp(0.85rem, 2.2vw, 1.1rem);
+    font-size: calc(clamp(0.85rem, 2.2vw, 1.1rem) * var(--scramble-scale, 1));
     text-align: center;
     max-width: 90%;
 }
