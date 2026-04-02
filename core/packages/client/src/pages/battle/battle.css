@@ -1519,10 +1519,11 @@ body.solo .scramble-img {
 }
 
 .shared-scramble-img .scramble-svg-img {
-    max-height: 280px;
+    max-height: clamp(80px, 25vh, 280px);
+    max-width: 40vw;
+    object-fit: contain;
     border-radius: 10px;
-    background: rgba(0,0,0,0.6);
-    padding: 6px;
+    padding: 4px;
 }
 
 /* 左右双人区域容器 */
