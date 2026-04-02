@@ -39,7 +39,7 @@
             }
         }
         if (!id) {
-            location.href = '/recon/';
+            location.href = '/legacy/recon/';
             return;
         }
 
@@ -50,7 +50,7 @@
 
         // NOTE: 并行加载辅助数据和复盘数据
         // 优先使用 recon 专用精简文件（~21KB），fallback 到全量文件（~9.6MB）
-        var auxPromise = fetch('/recon/recon_aux_data.json').then(function (r) { return r.json(); })
+        var auxPromise = fetch('/legacy/recon/recon_aux_data.json').then(function (r) { return r.json(); })
             .then(function (aux) {
                 return {
                     compCountries: aux.compCountries || {},
@@ -64,7 +64,7 @@
                 return Promise.all([
                     fetch('/stats/comp_name_countries.json').then(function (r) { return r.json(); }).catch(function () { return {}; }),
                     fetch('/stats/person_name_countries.json').then(function (r) { return r.json(); }).catch(function () { return {}; }),
-                    fetch('/recon/comp_names_zh.json').then(function (r) { return r.json(); }).catch(function () { return {}; }),
+                    fetch('/legacy/recon/comp_names_zh.json').then(function (r) { return r.json(); }).catch(function () { return {}; }),
                     fetch('/stats/comp_name_to_wca_id.json').then(function (r) { return r.json(); }).catch(function () { return {}; })
                 ]).then(function (results) {
                     return {
@@ -1134,7 +1134,7 @@
         // NOTE: 前置条件检查——缺任何必要字段则不显示
         if (!wcaCompId || !solve.personId || !solve.round || !wcaEventId) return;
 
-        fetch('/recon/data/wca_attempts.json')
+        fetch('/legacy/recon/data/wca_attempts.json')
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 var compData = data[wcaCompId];
