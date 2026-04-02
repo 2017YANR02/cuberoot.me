@@ -61,6 +61,22 @@ export default function AuthCallbackPage() {
       localStorage.setItem('wca_user', JSON.stringify(user));
       localStorage.setItem('wca_access_token', accessToken);
 
+      // NOTE: 用 WCA access_token 换取长效 JWT（365 天有效期）
+      // WCA token 2 小时过期，JWT 可以长期使用
+      try {
+        const exchangeRes = await fetch('/api/auth/exchange', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ accessToken }),
+        });
+        if (exchangeRes.ok) {
+          const { token: jwtToken } = await exchangeRes.json();
+          localStorage.setItem('cuberoot_jwt', jwtToken);
+        }
+      } catch {
+        // NOTE: JWT 换取失败不阻塞登录流程，回退到 WCA token（2 小时有效）
+      }
+
       // NOTE: 跳回登录前的页面，无记录时 fallback 到 /recon
       const returnUrl = sessionStorage.getItem('wca_return_url') || '/recon';
       sessionStorage.removeItem('wca_return_url');
