@@ -7,7 +7,7 @@ Head-to-Head Average of 5 Calculator — 魔方比赛两位选手五次平均对
 ## 使用方式
 
 - **在线**：`www.cuberoot.me/calc/`
-- **本地**：`bundle exec jekyll serve` → `localhost:4000/calc/`
+- **本地**：`pnpm --filter @cuberoot/client dev` → `localhost:5173/legacy/calc/`
 
 ## 功能
 
