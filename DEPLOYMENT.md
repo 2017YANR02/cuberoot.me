@@ -4,7 +4,7 @@
 
 ✅ **WCA 统计自动更新已上线**（每周一凌晨 3:00 北京时间）
 
-- **地址**：[ruiminyan.github.io/stats/](https://ruiminyan.github.io/stats/)
+- **地址**：[ruiminyan.github.io/wca-stats/](https://ruiminyan.github.io/wca-stats/)
 - **国内镜像**：[www.cuberoot.me](https://www.cuberoot.me)（自动同步）
 
 ## CI 策略
@@ -13,7 +13,7 @@
 |----------|----------|------|------|
 | **Update Stats** | 定时（每周）/ 手动 | TS 下载 WCA 数据库 + 计算统计 | ~47 分钟 |
 | **Deploy Core** | push main 且 `core/` 有变更 / 手动 | pnpm build → commit dist → rsync ECS | ~1 分钟 |
-| **Deploy Mirror** | push main / 其他 CI 完成 | Jekyll build + rsync 到阿里云 | ~45 秒 |
+| **Deploy Mirror** | push main / 其他 CI 完成 | 组装静态文件 + rsync 到阿里云 | ~15 秒 |
 | **Backup Recon** | 定时（每周一凌晨 4:00）/ 手动 | API 拉取复盘备份 + 增量 WCA 成绩 | ~10 秒 |
 | **Update Upcoming** | 定时（每日）/ 手动 | 拉取顶尖选手近期比赛 | ~15 分钟 |
 
@@ -24,7 +24,7 @@
 ```
 push main
   ├── core/ 有变更 → Deploy Core → build + rsync ECS → pm2 restart core-api
-  └── 任何 push  → Deploy Mirror → Jekyll build → rsync toolkit/
+  └── 任何 push  → Deploy Mirror → 组装 _deploy/ → rsync ECS
 ```
 
 ## GitHub Secrets
@@ -48,13 +48,4 @@ push main
 | ECS 运维手册 | [CUBEROOT_ME.md](CUBEROOT_ME.md) |
 | Monorepo 开发 | [core/README.md](core/README.md) |
 
-## PHP 后端（legacy）
 
-| 配置 | 值 |
-|------|------|
-| 服务器 | 阿里云 ECS |
-| API 入口 | `www.cuberoot.me/api/recon/...`（Hono）· `www.cuberoot.me/legacy/recon/api/?action=...`（PHP） |
-| 数据库 | MariaDB 10.5 · `recon_db` · 6 张表 |
-| 部署 | push main → CI rsync（`db_config.php` 排除） |
-
-> 数据库凭据不受部署影响（在 rsync `--exclude` 中）。

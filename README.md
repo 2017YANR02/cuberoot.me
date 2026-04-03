@@ -29,7 +29,7 @@ A collection of Rubik's Cube solvers, trainers, and statistics tools — all run
 
 ### WCA Statistics
 
-Auto-generated rankings and statistics from the [WCA database](https://www.worldcubeassociation.org/), accessible at [ruiminyan.github.io/stats/](https://ruiminyan.github.io/stats/).
+Auto-generated rankings and statistics from the [WCA database](https://www.worldcubeassociation.org/), accessible at [ruiminyan.github.io/wca-stats/](https://ruiminyan.github.io/wca-stats/).
 
 Includes 60+ statistics such as:
 - World records count by person / country
@@ -48,7 +48,7 @@ Originally forked from [or18/RubiksSolverDemo](https://github.com/or18/RubiksSol
 
 ### WCA Statistics Pipeline
 
-The statistics pages are auto-generated from the [WCA database](https://www.worldcubeassociation.org/) via GitHub Actions + Ruby + MySQL, updated weekly.
+The statistics pages are auto-generated from the [WCA database](https://www.worldcubeassociation.org/) via GitHub Actions + TypeScript + MySQL, updated weekly.
 
 For deployment details, CI strategy, local development setup, and how to add new statistics, see [DEPLOYMENT.md](DEPLOYMENT.md).
 
@@ -69,9 +69,9 @@ The site supports **English** and **中文** bilingual switching. Default langua
 | Component | Technology |
 |-----------|------------|
 | Solvers & Trainers | HTML + JavaScript (client-side) |
-| Statistics Engine | Ruby + MySQL |
+| Statistics Engine | TypeScript + MySQL |
 | CI/CD | GitHub Actions |
-| Hosting | GitHub Pages (Jekyll) |
+| Hosting | GitHub Pages + Alibaba Cloud ECS |
 | PWA | Service Worker (`sw.js`) |
 
 ## Credits

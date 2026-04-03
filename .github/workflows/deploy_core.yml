@@ -57,13 +57,16 @@ jobs:
           rm -rf app
           # 复制 Vite 产物到根目录（merge，不覆盖 legacy/ stats/ 等）
           cp -r core/packages/client/dist/* .
+          # NOTE: GitHub Pages SPA fallback — 404.html = index.html 副本
+          # GitHub Pages 对未知路径返回 404.html，SPA 直接加载无需跳转
+          cp index.html 404.html
 
       # 提交并推送（deploy_mirror.yml 会自动同步到国内镜像）
       - name: Commit and push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -A _assets/ index.html favicon.svg CubeRoot-dark.png
+          git add -A _assets/ index.html 404.html favicon.svg CubeRoot-dark.png
           git add -A oll_pic/ zbll_svg/ zbls_img/ vendor/ fonts/
           git add -A scramble_module.js confetti.min.js icons.svg icon_timer.png cstimer_logo.png
           # 清理已删除的 app/ 目录（首次迁移后不存在则忽略）

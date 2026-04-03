@@ -64,7 +64,10 @@ export default function AuthCallbackPage() {
       // NOTE: 用 WCA access_token 换取长效 JWT（365 天有效期）
       // WCA token 2 小时过期，JWT 可以长期使用
       try {
-        const exchangeRes = await fetch('/api/auth/exchange', {
+        // NOTE: GitHub Pages 无后端，跨域到 cuberoot.me（CORS 已开）
+        const apiOrigin = window.location.hostname === 'ruiminyan.github.io'
+          ? 'https://www.cuberoot.me' : '';
+        const exchangeRes = await fetch(`${apiOrigin}/api/auth/exchange`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ accessToken }),

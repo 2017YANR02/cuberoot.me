@@ -31,9 +31,8 @@ const MIME: Record<string, string> = {
 
 /**
  * Vite 插件：从仓库根目录直接 serve /legacy/ 和 /stats/ 路径的静态文件。
- * 替代原来的 Jekyll proxy（localhost:4000），开发环境不再依赖 Jekyll。
  *
- * NOTE: 生产环境中这些文件由 deploy_mirror.yml 的 Jekyll build rsync 到 ECS。
+ * NOTE: 生产环境中这些文件由 deploy_mirror.yml rsync 到 ECS。
  */
 function serveRepoRoot(): Plugin {
   const repoRoot = path.resolve(__dirname, '../../..');
@@ -86,7 +85,7 @@ export default defineConfig({
   // NOTE: 部署到根路径 /（React SPA 作为站点主入口）
   base: '/',
   build: {
-    // NOTE: 使用 _assets 避免与 Jekyll 的 assets/（stats_ui.css 等）冲突
+    // NOTE: 使用 _assets 避免与根目录 assets/（stats CSS 等）冲突
     assetsDir: '_assets',
   },
   resolve: {
