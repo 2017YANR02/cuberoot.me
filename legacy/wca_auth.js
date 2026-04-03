@@ -12,7 +12,7 @@ var WcaAuth = (function () {
         authorizeUrl: 'https://www.worldcubeassociation.org/oauth/authorize',
         meUrl: 'https://www.worldcubeassociation.org/api/v0/me',
         scope: 'public',
-        // NOTE: 根据当前域名自动构建回调地址（支持 github.io / toolkit.cuberoot.me / localhost）
+        // NOTE: 根据当前域名自动构建回调地址（支持 github.io / cuberoot.me / localhost）
         redirectUri: window.location.origin + '/callback.html'
     };
 

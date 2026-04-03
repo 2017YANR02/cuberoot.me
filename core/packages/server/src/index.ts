@@ -12,7 +12,6 @@ const app = new Hono();
 app.use('*', cors({
   origin: [
     'http://localhost:5173',              // Vite dev server
-    'http://localhost:4000',              // Jekyll dev server
     'https://www.cuberoot.me',            // 生产环境（SPA）
     'https://cuberoot.me',                // 裸域
     'https://ruiminyan.github.io',        // GitHub Pages

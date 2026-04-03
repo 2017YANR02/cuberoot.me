@@ -1,5 +1,5 @@
-# 每天自动备份 Recon 复盘数据到 git
-# NOTE: 数据源是阿里云 PHP 后端，备份到仓库作为灾备
+# 每周自动备份 Recon 复盘数据到 git
+# NOTE: 数据源是阿里云 Hono API，备份到仓库作为灾备
 name: Backup Recon Data
 
 on:
@@ -19,19 +19,19 @@ jobs:
 
       - name: Fetch recon data from API
         run: |
-          mkdir -p recon/backup
-          curl -s "https://toolkit.cuberoot.me/recon/api/?action=list" | python3 -m json.tool > recon/backup/recons_backup.json
-          echo "Fetched $(python3 -c "import json; print(len(json.load(open('recon/backup/recons_backup.json'))))" ) recons"
+          mkdir -p data/recon_backup
+          curl -s "https://www.cuberoot.me/api/recon/list" | python3 -m json.tool > data/recon_backup/recons_backup.json
+          echo "Fetched $(python3 -c "import json; print(len(json.load(open('data/recon_backup/recons_backup.json'))))" ) recons"
 
       # NOTE: 从 WCA 公开 API 预构建同轮次成绩数据（只含有复盘的选手）
       - name: Build WCA attempts data
-        run: python3 recon/build_wca_attempts.py
+        run: python3 scripts/build_wca_attempts.py
 
       - name: Commit if changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add recon/backup/recons_backup.json recon/data/wca_attempts.json
+          git add data/recon_backup/recons_backup.json data/recon_backup/wca_attempts.json
           # NOTE: 没有变化时 git diff --cached 为空，跳过 commit
           if git diff --cached --quiet; then
             echo "No changes, skip commit"

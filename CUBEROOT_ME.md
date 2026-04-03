@@ -29,7 +29,6 @@ https://www.cuberoot.me/             → React SPA（Vite 构建产物，/www/ww
 https://www.cuberoot.me/blog/        → WordPress（符号链接到 /www/wwwroot/wordpress/）
 https://www.cuberoot.me/legacy/       → Jekyll 静态镜像（/www/wwwroot/toolkit/legacy/）
 https://www.cuberoot.me/api/        → Hono API（Nginx 反代到 127.0.0.1:3001）
-https://toolkit.cuberoot.me/*         → 301 重定向到 www.cuberoot.me/legacy/*
 ```
 
 ### 概述
@@ -126,15 +125,7 @@ location ^~ /stats/ {
 }
 ```
 
-toolkit.cuberoot.me 301 重定向配置（独立 server block）：
 
-```nginx
-server {
-    listen 443 ssl;
-    server_name toolkit.cuberoot.me;
-    return 301 https://www.cuberoot.me/legacy$request_uri;
-}
-```
 
 > 如果通过宝塔面板重新配置站点（如改 SSL），可能会覆盖此文件，需要重新加上这些规则。
 
@@ -170,7 +161,7 @@ rsync -rltz --delete --exclude='.user.ini' --chmod=D755,F644 ...
 
 ### SSL 证书过期？
 - 宝塔默认自动续签，通常无需操作
-- 手动续签：宝塔面板 → 网站 → `toolkit.cuberoot.me` → SSL → 续签
+- 手动续签：宝塔面板 → 网站 → `www.cuberoot.me` → SSL → 续签
 
 ## Hono 后端（Trainer API）
 
@@ -216,7 +207,7 @@ rsync -rltz --delete --exclude='.user.ini' --chmod=D755,F644 ...
 4. **在已登录的 Recon 页面控制台执行**：
 
 ```javascript
-fetch('https://toolkit.cuberoot.me/recon/api/?action=renameColumns2', {
+fetch('https://www.cuberoot.me/api/recon/renameColumns2', {
   method: 'GET',
   headers: { 'Authorization': 'Bearer ' + WcaAuth.getAccessToken() }
 }).then(r => r.json()).then(console.log)
