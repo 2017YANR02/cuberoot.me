@@ -1,4 +1,4 @@
-# NOTE: Stats UI 构建脚本 — 编译 TypeScript 并复制产物到 Jekyll 路径
+# NOTE: Stats UI 构建脚本 — 编译 TypeScript 并复制产物到仓库根目录静态资源路径
 # 用法: .\build.ps1
 
 $ErrorActionPreference = "Stop"
@@ -17,8 +17,8 @@ if ($LASTEXITCODE -ne 0) {
 }
 Write-Host "Compilation OK" -ForegroundColor Green
 
-# 2. 复制产物到 Jekyll 目标路径
-# NOTE: 文件名 → 目标路径映射
+# 2. 复制产物到目标路径
+# NOTE: 文件名 → 目标路径映射（仓库根目录）
 $copyMap = @{
     "stats_ui.js"           = "assets\js\stats_ui.js"
     "wr_history_chart.js"   = "assets\js\wr_history_chart.js"

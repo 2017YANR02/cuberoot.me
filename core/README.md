@@ -54,7 +54,7 @@ pnpm --filter @cuberoot/client dev
 pnpm --filter @cuberoot/client typecheck
 pnpm --filter @cuberoot/server typecheck
 
-# Stats UI 构建（编译 TS → 复制到 Jekyll 路径）
+# Stats UI 构建（编译 TS → 复制到 assets/ 静态资源路径）
 cd packages/stats-ui
 .\build.ps1
 ```

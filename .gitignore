@@ -1,5 +1,4 @@
 # 大型数据文件
-# 大型数据文件
 _stats_build/WCADB.xlsx
 _stats_build/WCADB_preview.txt
 # 参考 SQL 文件（不需要版本控制）
@@ -35,6 +34,10 @@ __pycache__/
 CubeAlgWB*.csv
 CubeAlgWB*.xlsx
 
+# Python/Ruby 本地调试产物
+recon_dump.txt
+.bundle/
+
 .comp_names_zh_cache/
 
 
@@ -42,7 +45,6 @@ CubeAlgWB*.xlsx
 # 比赛名对照文件（本地参考用）
 comp_name_diff.txt
 
-__pycache__/
 .gitnexus
 AGENTS.md
 CLAUDE.md

@@ -1,5 +1,5 @@
 // NOTE: 生成统计索引 JSON——与 Ruby compute_index.rb 等价
-// Ruby 版输出 stats/index.md（Jekyll Markdown + data-i18n），
+// Ruby 版输出 stats/index.md（Markdown + data-i18n），
 // TS 版输出 stats/data/index.json（供 React 前端渲染）
 //
 // 无需 MySQL 连接——从已生成的统计 JSON 中读取标题
