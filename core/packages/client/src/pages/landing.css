@@ -187,6 +187,13 @@
     border-color: rgba(6, 182, 212, 0.4);
     box-shadow: 0 8px 32px rgba(139, 92, 246, 0.12);
 }
+.landing-page .card-blog {
+    --card-gradient: linear-gradient(90deg, #f59e0b, #fb923c, #f43f5e);
+}
+.landing-page .card-blog:hover {
+    border-color: rgba(251, 146, 60, 0.4);
+    box-shadow: 0 8px 32px rgba(245, 158, 11, 0.12);
+}
 
 /* ── 各卡片 hover 效果 ── */
 .landing-page .card-solver:hover {

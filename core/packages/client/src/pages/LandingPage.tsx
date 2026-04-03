@@ -285,6 +285,8 @@ const TEXTS: Record<string, { en: string; zh: string }> = {
   upcomingDesc:    { en: "Track top cubers' upcoming WCA competitions with WR badges", zh: '追踪顶尖选手的近期 WCA 比赛与 WR 标记' },
   cstimer:         { en: 'csTimer', zh: 'csTimer' },
   cstimerDesc:     { en: 'Professional speedcubing timer with statistics, scrambles, and session management', zh: '专业速拧计时器，含统计、打乱与成绩管理' },
+  blog:            { en: 'Blog', zh: '博客' },
+  blogDesc:        { en: 'Cubing insights, competition reviews, and technique deep-dives', zh: '魔方心得、比赛复盘与技术深度解析' },
   creditsPrefix:   { en: 'Inspired by open-source projects from', zh: '致谢' },
 };
 
@@ -313,6 +315,7 @@ const CARDS: CardConfig[] = [
   { id: 'viz',      href: '/viz',                 internal: true,  cssClass: 'card-viz',      icon: '📈', nameKey: 'viz',        descKey: 'vizDesc' },
   { id: 'upcoming', href: '/upcoming-comps',        internal: true,  cssClass: 'card-upcoming', icon: '🏅', nameKey: 'upcoming',   descKey: 'upcomingDesc' },
   { id: 'cstimer',  href: '/cstimer',             internal: true,  cssClass: 'card-cstimer',  icon: '',   nameKey: 'cstimer',    descKey: 'cstimerDesc', iconImg: import.meta.env.BASE_URL + 'cstimer_logo.png' },
+  { id: 'blog',     href: window.location.hostname.endsWith('cuberoot.me') ? '/blog/' : 'https://www.cuberoot.me/blog/', internal: false, cssClass: 'card-blog', icon: '📝', nameKey: 'blog', descKey: 'blogDesc' },
 ];
 
 // ── 组件 ─────────────────────────────────────────────────────────────────
@@ -435,6 +438,8 @@ export default function LandingPage() {
               href={href}
               className={`glass-card card ${card.cssClass}`}
               id={`card-${card.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
             >
               {content}
             </a>
@@ -457,7 +462,6 @@ export default function LandingPage() {
       <div className="footer">
         <span>v1.4.1</span>
         <a href="https://github.com/RuiminYan/ruiminyan.github.io" target="_blank" rel="noopener noreferrer">GitHub</a>
-        <a href={window.location.hostname.endsWith('cuberoot.me') ? '/blog/' : 'https://www.cuberoot.me/blog/'} target="_blank" rel="noopener noreferrer">{lang === 'zh' ? '博客' : 'Blog'}</a>
 
         <button className="lang-toggle" onClick={toggleLang}>
           <span className="globe-icon">🌐</span>
