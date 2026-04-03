@@ -50,7 +50,6 @@ ruiminyan.github.io/
 | `cuberoot.me/legacy/` | Jekyll 静态 | 上游同步的工具页面 |
 | `cuberoot.me/stats/` | Jekyll 静态 | WCA 统计 HTML 页面（legacy 渲染方式） |
 | `cuberoot.me/api/` | Hono API | Nginx 反代到 127.0.0.1:3001 |
-| `toolkit.cuberoot.me` | 301 重定向 | → `www.cuberoot.me/legacy/*` |
 
 ## Recon 详情页路由
 

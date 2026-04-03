@@ -341,8 +341,7 @@ export default function LandingPage() {
     localStorage.setItem('trainer-lang', newLang);
   }, [lang, i18n]);
 
-  /** csTimer 链接：中文时追加 ?lang=zh-cn */
-  const cstimerHref = lang === 'zh' ? '/legacy/cstimer/?lang=zh-cn' : '/legacy/cstimer/';
+
 
   return (
     <div className="landing-page">
@@ -404,7 +403,7 @@ export default function LandingPage() {
 
       <div className="cards-container">
         {CARDS.map((card) => {
-          const href = card.id === 'cstimer' ? cstimerHref : card.href;
+          const href = card.href;
           const content = (
             <>
               <div className="card-icon">
@@ -459,7 +458,7 @@ export default function LandingPage() {
         <span>v1.4.1</span>
         <a href="https://github.com/RuiminYan/ruiminyan.github.io" target="_blank" rel="noopener noreferrer">GitHub</a>
         <a href={window.location.hostname.endsWith('cuberoot.me') ? '/blog/' : 'https://www.cuberoot.me/blog/'} target="_blank" rel="noopener noreferrer">{lang === 'zh' ? '博客' : 'Blog'}</a>
-        <a href="/legacy/">{lang === 'zh' ? '旧版工具' : 'Legacy Tools'}</a>
+
         <button className="lang-toggle" onClick={toggleLang}>
           <span className="globe-icon">🌐</span>
           <span className="lang-label">{lang === 'zh' ? 'English' : '中文'}</span>

@@ -1,11 +1,88 @@
-import { defineConfig } from 'vite'
+import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
+import fs from 'fs'
+
+// ── 静态文件 MIME 映射 ────────────────────────────────────────────────────
+const MIME: Record<string, string> = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'application/javascript; charset=utf-8',
+  '.mjs': 'application/javascript; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.md': 'text/markdown; charset=utf-8',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon',
+  '.webp': 'image/webp',
+  '.woff': 'font/woff',
+  '.woff2': 'font/woff2',
+  '.ttf': 'font/ttf',
+  '.eot': 'application/vnd.ms-fontobject',
+  '.wasm': 'application/wasm',
+  '.xml': 'application/xml; charset=utf-8',
+  '.txt': 'text/plain; charset=utf-8',
+  '.map': 'application/json',
+};
+
+/**
+ * Vite 插件：从仓库根目录直接 serve /legacy/ 和 /stats/ 路径的静态文件。
+ * 替代原来的 Jekyll proxy（localhost:4000），开发环境不再依赖 Jekyll。
+ *
+ * NOTE: 生产环境中这些文件由 deploy_mirror.yml 的 Jekyll build rsync 到 ECS。
+ */
+function serveRepoRoot(): Plugin {
+  const repoRoot = path.resolve(__dirname, '../../..');
+
+  return {
+    name: 'serve-repo-root',
+    configureServer(server) {
+      // NOTE: 必须用 return 让中间件在 Vite 内部中间件之前执行，
+      // 否则 Vite 的 SPA fallback 会把 /stats/data/index.json 当成 HTML 路由处理
+      server.middlewares.use((req, res, next) => {
+        const url = (req.url || '').split('?')[0];
+
+        // 只处理 /legacy/ 和 /stats/ 前缀
+        if (!url.startsWith('/legacy/') && !url.startsWith('/stats/') && url !== '/stats') {
+          return next();
+        }
+
+        // 候选文件路径：精确路径 → 目录下的 index.html
+        const candidates = [
+          path.join(repoRoot, url),
+          path.join(repoRoot, url, 'index.html'),
+        ];
+
+        for (const filePath of candidates) {
+          try {
+            const stat = fs.statSync(filePath);
+            if (stat.isFile()) {
+              const ext = path.extname(filePath).toLowerCase();
+              const contentType = MIME[ext] || 'application/octet-stream';
+              res.setHeader('Content-Type', contentType);
+              res.setHeader('Cache-Control', 'no-cache');
+              fs.createReadStream(filePath).pipe(res);
+              return;
+            }
+          } catch {
+            // 文件不存在，继续下一个候选
+          }
+        }
+
+        // 所有候选都不存在，交给下一个中间件
+        next();
+      });
+    },
+  };
+}
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), serveRepoRoot()],
   // NOTE: 部署到根路径 /（React SPA 作为站点主入口）
   base: '/',
   build: {
@@ -24,7 +101,6 @@ export default defineConfig({
   },
   server: {
     host: '127.0.0.1',
-    // 开发环境反代后端 API，避免 CORS 问题
     proxy: {
       // NOTE: Hono API 代理到 ECS 线上后端（本地无 recon_db，无法运行 Hono 后端）
       '/api': {
@@ -32,12 +108,6 @@ export default defineConfig({
         changeOrigin: true,
         secure: true,
       },
-      // NOTE: stats 数据文件（JSON）— 保持在根路径，代理到 Jekyll
-      '/stats': {
-        target: 'http://localhost:4000',
-      },
-      // NOTE: legacy 内容统一前缀 — iframe 嵌入的 Solver/Alg Trainer/csTimer 及共享资源
-      '/legacy': { target: 'http://localhost:4000' },
     },
   },
 })
