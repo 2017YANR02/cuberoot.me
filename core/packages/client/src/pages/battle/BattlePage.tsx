@@ -20,6 +20,15 @@ import { MilestoneToast } from './AdvancedFeatures';
 
 import './battle.css';
 
+// NOTE: 根据打乱字符串长度自动计算字号缩放因子
+// ≤100 字符（2x2~3x3）= 1.0，更长则 sqrt 曲线平滑缩小，最小 0.7
+function getScrambleAutoScale(scramble: string): number {
+  if (!scramble) return 1;
+  const len = scramble.length;
+  if (len <= 100) return 1;
+  return Math.max(0.7, Math.sqrt(100 / len));
+}
+
 // NOTE: 加载 scramble_module.js 全局脚本（打乱引擎）
 // scramble_module.js 是 csTimer 打包代码，依赖 jQuery 子集 + kernel 配色
 function useScrambleScript() {
@@ -433,6 +442,7 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
       {!hideScramble && (
         <div
           className={`scramble-text${player.isTiming ? ' hidden' : ''}`}
+          style={{ '--scramble-auto': getScrambleAutoScale(store.scramble || '') } as React.CSSProperties}
           dangerouslySetInnerHTML={{ __html: scrambleContent }}
         />
       )}
@@ -723,6 +733,7 @@ function SharedScramble() {
     <div className={`shared-scramble${anyTiming ? ' hidden' : ''}`}>
       <div
         className="scramble-text"
+        style={{ '--scramble-auto': getScrambleAutoScale(store.scramble || '') } as React.CSSProperties}
         dangerouslySetInnerHTML={{ __html: scrambleContent }}
       />
     </div>
@@ -828,8 +839,7 @@ export default function BattlePage() {
 
   return (
     <div className={`battle-container${mode === '1v1' && store.layout === 'side' ? ' side-layout' : ''}`}>
-      {/* 返回按钮 */}
-      <a href="/" className="back-btn">←</a>
+
 
       {/* === Side 布局：共享打乱 + 左右分屏 === */}
       {mode === '1v1' && store.layout === 'side' && (
