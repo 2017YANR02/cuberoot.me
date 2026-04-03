@@ -43,46 +43,15 @@ sudo net stop MySQL80   # ⚠️ 绝对不要强杀 mysqld.exe，否则损坏 In
 
 > Implicit Grant 因为 WCA token endpoint 不开放 CORS。
 
-## Jekyll 本地服务器
+## 前端开发服务器
 
 ```powershell
-cd D:\cube\ruiminyan.github.io
-bundle exec jekyll serve
-# → http://localhost:4000/
+cd D:\cube\ruiminyan.github.io\core
+pnpm --filter @cuberoot/client dev
+# → http://localhost:5173/
 ```
 
-### UI 快速测试（无需数据库）
-
-| 页面 | 地址 |
-|------|------|
-| 测试导航入口 | http://127.0.0.1:4000/stats/test_ui |
-| Mode A-E | http://127.0.0.1:4000/stats/test_ui_{a,b,c,d,e} |
-
-> 改 JS/CSS 后只需刷新浏览器，无需重跑统计。
-
-## Ruby（legacy，仅本地验证用）
-
-> CI 已完全迁移到 TypeScript，Ruby 仅用于本地跑旧版统计脚本对比验证。
-
-| 配置 | 值 |
-|------|-----|
-| Ruby 版本 | 3.4.8 (`x64-mingw-ucrt`) |
-| mysql2 gem | 0.5.7 |
-| bigdecimal gem | 4.0.1（Ruby 3.4 不再内置） |
-
-<details>
-<summary>首次安装步骤（展开）</summary>
-
-```powershell
-winget install RubyInstallerTeam.RubyWithDevKit.3.4
-$env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
-ridk exec bash -c "pacman-key --init && pacman-key --populate msys2 && pacman -Syu --noconfirm"
-ridk exec bash -c "pacman -Syu --noconfirm"   # 核心升级后终端关闭，再运行一次
-gem install mysql2 bigdecimal --no-document
-bundle config set mirror.https://rubygems.org https://gems.ruby-china.com  # 国内镜像
-```
-
-</details>
+> Vite `serveRepoRoot` 插件直接从仓库根目录 serve `/legacy/` 和 `/stats/` 静态文件，无需额外服务器。
 
 ## 上游同步脚本
 

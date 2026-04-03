@@ -1,5 +1,6 @@
-# 每次 push 或其他 CI 完成后，自动构建 Jekyll 并 rsync 到阿里云（国内镜像）
+# 每次 push 或其他 CI 完成后，直接 rsync 仓库静态文件到阿里云（国内镜像）
 # 目标：www.cuberoot.me
+# NOTE: 不再依赖 Jekyll —— 直接组装 _deploy/ 目录并 rsync
 name: Deploy Mirror to China
 
 on:
@@ -20,15 +21,34 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.4'
-          bundler-cache: true
+      # 组装部署目录（替代 Jekyll build）
+      - name: Assemble deploy directory
+        run: |
+          mkdir -p _deploy
 
-      - name: Build Jekyll site
-        run: bundle exec jekyll build
-        env:
-          JEKYLL_ENV: production
+          # 1. SPA 产物（deploy_core 已提交到根目录）
+          cp -f index.html _deploy/
+          [ -f 404.html ] && cp -f 404.html _deploy/
+          [ -d _assets ] && cp -r _assets _deploy/
+
+          # 2. Legacy iframe 工具（原封不动）
+          [ -d legacy ] && cp -r legacy _deploy/
+
+          # 3. Stats 数据（JSON + md 保留）
+          [ -d stats ] && cp -r stats _deploy/
+
+          # 4. 静态资源目录
+          for d in icons fonts oll_pic zbll_svg zbls_img vendor data; do
+            [ -d "$d" ] && cp -r "$d" _deploy/
+          done
+
+          # 5. 根目录散落的静态文件
+          for f in favicon.svg CubeRoot-dark.png manifest.json \
+                   scramble_module.js confetti.min.js icons.svg \
+                   icon_timer.png cstimer_logo.png callback.html \
+                   robots.txt sitemap.xml; do
+            [ -f "$f" ] && cp -f "$f" _deploy/
+          done
 
       - name: Install rsync
         run: sudo apt-get update && sudo apt-get install -y rsync
@@ -47,4 +67,4 @@ jobs:
 
           rsync -rltz --delete --exclude='.user.ini' --exclude='blog' --chmod=D755,F644 \
             -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
-            _site/ "${USER}@${HOST}:${PATH_REMOTE}/"
+            _deploy/ "${USER}@${HOST}:${PATH_REMOTE}/"

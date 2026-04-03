@@ -27,7 +27,7 @@
 ```
 https://www.cuberoot.me/             → React SPA（Vite 构建产物，/www/wwwroot/cuberoot-spa/）
 https://www.cuberoot.me/blog/        → WordPress（符号链接到 /www/wwwroot/wordpress/）
-https://www.cuberoot.me/legacy/       → Jekyll 静态镜像（/www/wwwroot/toolkit/legacy/）
+https://www.cuberoot.me/legacy/       → 静态文件镜像（/www/wwwroot/toolkit/legacy/）
 https://www.cuberoot.me/api/        → Hono API（Nginx 反代到 127.0.0.1:3001）
 ```
 
@@ -39,7 +39,7 @@ https://www.cuberoot.me/api/        → Hono API（Nginx 反代到 127.0.0.1:300
 |------|-----|
 | **地址** | [www.cuberoot.me](https://www.cuberoot.me) |
 | **SPA 根目录** | `/www/wwwroot/cuberoot-spa/`（入口 `index.html` + `_assets/`） |
-| **镜像根目录** | `/www/wwwroot/toolkit/`（Jekyll `_site/` 同步产物） |
+| **镜像根目录** | `/www/wwwroot/toolkit/`（deploy_mirror rsync 同步产物） |
 | **Nginx 站点配置** | `/www/server/panel/vhost/nginx/www.cuberoot.me.conf` |
 | **SSL 证书** | `/etc/letsencrypt/live/cuberoot.me/`（certbot，expires 2026-06-30） |
 | **CI 配置** | `.github/workflows/deploy_mirror.yml` |
@@ -52,12 +52,12 @@ push 到 main 分支
       ▼
 GitHub Actions（deploy_mirror.yml）
       │
-      ├── 1. Jekyll build（生成 _site/）
+      ├── 1. 组装 _deploy/ 目录（静态文件）
       ├── 2. SSH 连接阿里云
-      └── 3. rsync 同步 _site/ → /www/wwwroot/toolkit/
+      └── 3. rsync 同步 _deploy/ → /www/wwwroot/toolkit/
       │
       ▼
-www.cuberoot.me 更新（约 40 秒）
+www.cuberoot.me 更新（约 15 秒）
 ```
 
 **自动触发条件**：
@@ -138,7 +138,7 @@ rsync -rltz --delete --exclude='.user.ini' --chmod=D755,F644 ...
 | 参数 | 说明 |
 |------|------|
 | `-rltz` | 递归(r) + 保留软链接(l) + 保留时间戳(t) + 压缩传输(z) |
-| `--delete` | 删除远程有但本地 `_site/` 中没有的文件 |
+| `--delete` | 删除远程有但本地 `_deploy/` 中没有的文件 |
 | `--exclude='.user.ini'` | 排除宝塔自动创建的不可删除文件（设了 `chattr +i`） |
 | `--chmod=D755,F644` | 目录 755、文件 644，避免权限错误 |
 

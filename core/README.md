@@ -21,8 +21,6 @@ core/
 │   │
 │   ├── stats-build/         # WCA 统计数据生成管道（88 个统计，TypeScript 实现）
 │   │
-│   ├── stats-ui/            # [Legacy] Jekyll 前端 TS 源码（React 迁移完成后移除）
-│   │
 │   └── shared/              # 共享类型与算法数据（PLL/ZBLL/ZBLS JSON）
 ```
 
@@ -63,7 +61,7 @@ cd packages/stats-ui
 
 > **注意**：Recon API 通过 Vite proxy 转发到 ECS 线上后端（`www.cuberoot.me`），本地开发**不需要**启动 Hono 后端。
 > 
-> 若需要 Calc/Upcoming Comps 模块的 WR/比赛数据，或测试 Solver/Alg Trainer/csTimer 的 iframe 嵌入效果，需额外启动 `bundle exec jekyll serve`（`http://localhost:4000`）。Vite dev server 已配置 proxy 自动转发这些路径。
+> Vite `serveRepoRoot` 插件直接从仓库根目录 serve `/legacy/` 和 `/stats/` 静态文件，无需额外服务器。
 
 ### 后端开发（需要 MariaDB）
 
@@ -85,7 +83,7 @@ pnpm --filter @cuberoot/server dev
 | Workflow | 触发条件 | 执行内容 |
 |----------|----------|----------|
 | **Deploy Core** | push main 且 `core/` 有变更 | pnpm install → build client + server → rsync + pm2 restart |
-| **Deploy Mirror** | push main（已有） | Jekyll build + rsync（core/ 已在 `_config.yml` exclude 中排除）|
+| **Deploy Mirror** | push main | 组装 _deploy/ 目录 → rsync 静态文件到 ECS |
 
 ```
 push core/ 变更 → GitHub Actions → build → rsync → ECS
