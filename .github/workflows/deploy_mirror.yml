@@ -28,18 +28,18 @@ jobs:
 
           # 1. SPA 产物（deploy_core 已提交到根目录）
           cp -f index.html _deploy/
-          [ -f 404.html ] && cp -f 404.html _deploy/
-          [ -d _assets ] && cp -r _assets _deploy/
+          [ -f 404.html ] && cp -f 404.html _deploy/ || true
+          [ -d _assets ] && cp -r _assets _deploy/ || true
 
           # 2. Legacy iframe 工具（原封不动）
-          [ -d legacy ] && cp -r legacy _deploy/
+          [ -d legacy ] && cp -r legacy _deploy/ || true
 
           # 3. Stats 数据（JSON + md 保留）
-          [ -d stats ] && cp -r stats _deploy/
+          [ -d stats ] && cp -r stats _deploy/ || true
 
           # 4. 静态资源目录
           for d in icons fonts oll_pic zbll_svg zbls_img vendor data; do
-            [ -d "$d" ] && cp -r "$d" _deploy/
+            [ -d "$d" ] && cp -r "$d" _deploy/ || true
           done
 
           # 5. 根目录散落的静态文件
@@ -47,7 +47,7 @@ jobs:
                    scramble_module.js confetti.min.js icons.svg \
                    icon_timer.png cstimer_logo.png callback.html \
                    robots.txt sitemap.xml; do
-            [ -f "$f" ] && cp -f "$f" _deploy/
+            [ -f "$f" ] && cp -f "$f" _deploy/ || true
           done
 
       - name: Install rsync
