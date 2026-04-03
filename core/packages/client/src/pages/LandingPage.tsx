@@ -416,7 +416,7 @@ export default function LandingPage() {
             </>
           );
 
-          // NOTE: 已迁移模块用 React Router Link（SPA 导航），未迁移模块用 <a>（跳转 Jekyll 路径）
+          // NOTE: 已迁移模块用 React Router Link（SPA 导航），未迁移模块用 <a>（跳转 legacy/ 路径）
           if (card.internal) {
             return (
               <Link
