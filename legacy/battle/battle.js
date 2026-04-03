@@ -2905,13 +2905,13 @@ function debouncePushCloud() {
 
 /**
  * NOTE: 构建 API 基地址
- * localhost 时直接用 toolkit.cuberoot.me（PHP API 不在本地）
+ * localhost 时使用线上 API（本地无数据库）
  */
 function getApiBase() {
     if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
-        return 'https://toolkit.cuberoot.me/recon/api/';
+        return 'https://www.cuberoot.me/api/recon/';
     }
-    return '/recon/api/';
+    return '/api/recon/';
 }
 
 /** NOTE: 推送当前 session + puzzle 的成绩到云端 */

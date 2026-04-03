@@ -47,7 +47,7 @@ comp_names_zh.json（英文→中文比赛名映射，CI 每日更新）
 
 ```javascript
 // 在已登录的 Recon 页面控制台执行
-fetch('https://toolkit.cuberoot.me/recon/api/?action=renameColumns2', {
+fetch('https://www.cuberoot.me/api/recon/renameColumns2', {
   method: 'GET',
   headers: { 'Authorization': 'Bearer ' + WcaAuth.getAccessToken() }
 }).then(r => r.json()).then(console.log)

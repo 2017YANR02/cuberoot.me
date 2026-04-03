@@ -13,14 +13,9 @@ include:
   - _assets
 
 # stats 子目录的 Markdown 由 GitHub Actions 自动生成
-# recon 已迁移到 legacy/recon/，由 legacy 下继承 default layout
 defaults:
   - scope:
       path: "stats"
-    values:
-      layout: "default"
-  - scope:
-      path: "legacy/recon"
     values:
       layout: "default"
 

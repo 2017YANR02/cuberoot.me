@@ -25,7 +25,7 @@ from pathlib import Path
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", line_buffering=True)
 
 ROOT_DIR = Path(__file__).parent.parent
-OUTPUT_PATH = ROOT_DIR / "recon" / "comp_names_zh.json"
+OUTPUT_PATH = ROOT_DIR / "stats" / "data" / "comp_names_zh.json"
 CACHE_DIR = ROOT_DIR / ".comp_names_zh_cache"
 
 CUBING_CHINA_URL = "https://cubing.com/competition"

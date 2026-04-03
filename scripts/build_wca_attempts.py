@@ -3,8 +3,8 @@
 从 WCA 公开 API 预构建 wca_attempts.json（增量更新）
 只保留有复盘的选手的 attempts 数据 + 复盘 ID 映射，实现详情页秒加载。
 
-输入：recon/backup/recons_backup.json, recon/recon_aux_data.json
-输出：recon/data/wca_attempts.json
+输入：data/recon_backup/recons_backup.json
+输出：data/recon_backup/wca_attempts.json
 
 增量策略：
   - 读取已有的 wca_attempts.json
@@ -20,9 +20,9 @@ import sys
 import urllib.request
 import time
 
-BACKUP_PATH = os.path.join(os.path.dirname(__file__), "backup", "recons_backup.json")
-AUX_PATH = os.path.join(os.path.dirname(__file__), "recon_aux_data.json")
-OUTPUT_PATH = os.path.join(os.path.dirname(__file__), "data", "wca_attempts.json")
+ROOT = os.path.dirname(os.path.dirname(__file__))
+BACKUP_PATH = os.path.join(ROOT, "data", "recon_backup", "recons_backup.json")
+OUTPUT_PATH = os.path.join(ROOT, "data", "recon_backup", "wca_attempts.json")
 WCA_API_BASE = "https://www.worldcubeassociation.org/api/v0"
 
 # NOTE: Recon event → WCA event_id（和前端 recon_utils.js 保持一致）
@@ -45,15 +45,9 @@ def main():
     with open(BACKUP_PATH, "r", encoding="utf-8") as f:
         recons = json.load(f)
 
-    # NOTE: 加载 comp 显示名 → WCA ID 映射（fallback 用）
+    # NOTE: comp 显示名 → WCA ID 映射不再需要外部 aux 文件
+    # 现在所有 recon 条目都包含 compWcaId 字段
     comp_name_map = {}
-    try:
-        with open(AUX_PATH, "r", encoding="utf-8") as f:
-            aux = json.load(f)
-        comp_name_map = aux.get("compWcaIds", {})
-        print(f"Loaded {len(comp_name_map)} comp name mappings from aux data")
-    except Exception as e:
-        print(f"Warning: could not load aux data: {e}")
 
     # NOTE: 加载已有数据（增量更新基础）
     existing = {}
