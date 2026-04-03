@@ -54,9 +54,9 @@
     touch-action: none;
     -webkit-tap-highlight-color: transparent;
     cursor: pointer;
-    padding: 12px;
+    padding: 6px 12px;
     transition: background-color 0.2s ease;
-    gap: 8px;
+    gap: 4px;
     overflow: hidden;
 }
 
@@ -75,7 +75,7 @@
 }
 
 /* NOTE: 确保前景内容在伪元素之上 */
-.player-area > * {
+.player-area>* {
     position: relative;
     z-index: 1;
 }
@@ -135,18 +135,18 @@
    ========================================================== */
 
 .scramble-text {
-    font-size: calc(clamp(1.4rem, 4.5vw, 2.0rem) * var(--scramble-scale, 1));
+    font-size: calc(clamp(0.8rem, 2.8vw, 1.1rem) * var(--scramble-scale, 1) * var(--scramble-auto, 1));
     color: var(--scramble-color, var(--player-text-color, #ccc));
     text-shadow: none;
     text-align: center;
-    line-height: 1.4;
-    padding: 0 16px;
+    line-height: 1.35;
+    padding: 0 12px;
     word-break: break-word;
     max-width: 100%;
-    min-height: 2.8em;
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 1;
     pointer-events: none;
     user-select: none;
     -webkit-user-select: none;
@@ -169,7 +169,7 @@
 }
 
 .scramble-svg-img {
-    max-height: clamp(80px, 14vh, 140px);
+    max-height: clamp(140px, 22vh, 260px);
     max-width: 90%;
     object-fit: contain;
     opacity: 0.9;
@@ -190,6 +190,7 @@
    ========================================================== */
 
 .time-display {
+    margin-top: 14px;
     font-family: 'Segment7Standard', 'JetBrains Mono', monospace;
     font-size: clamp(2.5rem, 12vw, 5rem);
     font-weight: 700;
@@ -220,6 +221,7 @@
     text-align: center;
     min-height: 1.2em;
     letter-spacing: 0.02em;
+    margin-top: -50px;
 }
 
 /* NOTE: 专门针对冒号的样式 */
@@ -262,6 +264,7 @@
     position: relative;
     display: inline-flex;
     touch-action: manipulation;
+    margin-top: -4px;
 }
 
 .penalty-trigger {
@@ -378,7 +381,7 @@
 }
 
 /* NOTE: Player 2（左侧）的比分旋转 180° */
-.middle-bar > .score-section:first-child {
+.middle-bar>.score-section:first-child {
     transform: rotate(180deg);
 }
 
@@ -1259,8 +1262,13 @@ body.solo .scramble-img {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 /* ==========================================================
@@ -1486,7 +1494,7 @@ body.solo .scramble-img {
 }
 
 .shared-scramble .scramble-text {
-    font-size: calc(clamp(0.85rem, 2.2vw, 1.1rem) * var(--scramble-scale, 1));
+    font-size: calc(clamp(0.85rem, 2.2vw, 1.1rem) * var(--scramble-scale, 1) * var(--scramble-auto, 1));
     text-align: center;
     max-width: 90%;
 }
@@ -1549,13 +1557,11 @@ body.solo .scramble-img {
 /* 中间分隔线 — 细微的竖直线 */
 .side-divider {
     width: 1px;
-    background: linear-gradient(
-        to bottom,
-        transparent 5%,
-        rgba(240, 235, 227, 0.15) 20%,
-        rgba(240, 235, 227, 0.15) 80%,
-        transparent 95%
-    );
+    background: linear-gradient(to bottom,
+            transparent 5%,
+            rgba(240, 235, 227, 0.15) 20%,
+            rgba(240, 235, 227, 0.15) 80%,
+            transparent 95%);
     align-self: stretch;
     flex-shrink: 0;
 }
