@@ -77,7 +77,7 @@ ruiminyan.github.io/
 
 ### 国旗数据文件
 
-由 `_stats_build/generate_comp_countries.rb` 从 WCA 数据库生成：
+由 `core/packages/stats-build` 统计管线从 WCA 数据库生成：
 
 | 文件 | 用途 | 大小 |
 |------|------|------|
@@ -86,6 +86,6 @@ ruiminyan.github.io/
 | `stats/person_name_countries.json` | 选手全名 → ISO2（recon 用）| ~7MB |
 | `stats/person_countries.json` | 选手 WCA ID → ISO2（stats 用）| 各异 |
 
-运行：`cd _stats_build; bundle exec ruby generate_comp_countries.rb`（需要 MySQL）
+运行：`npx tsx core/packages/stats-build/src/bin/compute_all.ts`（需要 MySQL）
 
 > Recon 页面中国选手国旗查找：先用 `solver + ' (' + solverZh + ')'` WCA 格式全名，匹配不到再用纯英文名兜底。

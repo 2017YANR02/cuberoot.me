@@ -281,11 +281,11 @@ async function postImport(exportTimestamp: Date): Promise<void> {
 }
 
 async function main() {
-  // NOTE: 替代 init.rb——确保 database.yml 存在
+  // NOTE: 确保 database.yml 存在（位于 stats-build/ 包根目录）
   const repoRoot = resolve(__dirname, '../../../../..');
-  const statsDir = resolve(repoRoot, '_stats_build');
-  const templatePath = resolve(statsDir, 'bin/templates/database.yml');
-  const configDest = resolve(statsDir, 'database.yml');
+  const statsPackageDir = resolve(repoRoot, 'core/packages/stats-build');
+  const templatePath = resolve(statsPackageDir, 'database.yml.example');
+  const configDest = resolve(statsPackageDir, 'database.yml');
   if (existsSync(templatePath) && !existsSync(configDest)) {
     copyFileSync(templatePath, configDest);
     console.log(`Copied database.yml template to ${configDest}`);

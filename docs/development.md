@@ -9,16 +9,15 @@
 | 数据目录 | `E:\mysql_data\` |
 | 数据库 | `wca_statistics`（121 张表） |
 | Dump 文件 | `D:\cube\wca-developer-database\wca-developer-database-dump.sql` |
-| 连接凭据 | `_stats_build/database.yml`（已在 `.gitignore`） |
+| 连接凭据 | `core/packages/stats-build/database.yml`（已在 `.gitignore`） |
 
-**统计脚本只用到 12 张表**，完整列定义见 [`_stats_build/SCHEMA.md`](../_stats_build/SCHEMA.md)。
+**统计管线只用到 12 张表**，列定义见 [`MIGRATION_PLAN.md`](../core/packages/stats-build/MIGRATION_PLAN.md)。
 
 ### 导入数据库
 
 ```powershell
-.\_stats_build\bin\import_wca_database.ps1
-# 或指定自定义 dump 文件路径
-.\_stats_build\bin\import_wca_database.ps1 -DumpFile "D:\path\to\dump.sql"
+# TypeScript 版一键导入（下载 + 解压 + 过滤导入 + 建索引）
+npx tsx core/packages/stats-build/src/bin/update_database.ts
 ```
 
 > **关键优化**：`innodb_flush_log_at_trx_commit = 0` 导入（9 小时 → ~10 分钟），完毕后自动恢复为 1。

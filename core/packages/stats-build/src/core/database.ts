@@ -1,5 +1,5 @@
 // NOTE: MySQL 数据库连接
-// 从 _stats_build/database.yml 读取凭据，与 Ruby 管线共用同一配置
+// 从 database.yml 读取凭据
 import mysql from 'mysql2/promise';
 import { readFileSync } from 'fs';
 import { parse as parseYaml } from 'yaml';
@@ -8,9 +8,9 @@ import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-// NOTE: database.yml 位于 _stats_build/ 目录（与 Ruby 共用）
-// NOTE: 路径：src/core → src → stats-build → packages → trainer → repo root
-export const CONFIG_PATH = resolve(__dirname, '../../../../../_stats_build/database.yml');
+// NOTE: database.yml 位于 stats-build/ 包根目录（已在 .gitignore 中排除，含数据库密码）
+// NOTE: 路径：src/core → src → stats-build/database.yml
+export const CONFIG_PATH = resolve(__dirname, '../../database.yml');
 
 export interface DbConfig {
   database: string;

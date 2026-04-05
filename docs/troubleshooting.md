@@ -38,9 +38,9 @@
 - `GITHUB_TOKEN` 默认只读（2023 年后的新仓库）
 - 解决：workflow 中声明 `permissions: contents: write`
 
-### Ruby 语法检查
+### TypeScript 类型检查
 ```powershell
-Get-ChildItem _stats_build/statistics/*.rb | ForEach-Object { ruby -c $_.FullName }
+pnpm --filter @cuberoot/stats-build typecheck
 ```
 
 ## 自动化测试（Playwright）
