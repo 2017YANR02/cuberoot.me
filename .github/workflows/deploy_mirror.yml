@@ -30,8 +30,8 @@ jobs:
           [ -f 404.html ] && cp -f 404.html _deploy/ || true
           [ -d _assets ] && cp -r _assets _deploy/ || true
 
-          # 2. Legacy iframe 工具（原封不动）
-          [ -d legacy ] && cp -r legacy _deploy/ || true
+          # 2. 独立 HTML/JS 工具模块（iframe 嵌入，原封不动）
+          [ -d tools ] && cp -r tools _deploy/ || true
 
           # 3. Stats 数据（JSON + md 保留）
           [ -d stats ] && cp -r stats _deploy/ || true

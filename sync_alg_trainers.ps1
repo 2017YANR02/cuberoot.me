@@ -19,7 +19,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $syncDir = Join-Path $LocalDir ".sync"
-$destBase = Join-Path $LocalDir "legacy" "alg_trainers"
+$destBase = Join-Path $LocalDir "tools" "alg_trainers"
 
 # NOTE: 引入公共工具函数（Sync-FileIfChanged / Sync-Directory / Get-GaInlineCode / Read-Utf8File / Write-Utf8File）
 . (Join-Path $syncDir "sync_utils.ps1")
