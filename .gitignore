@@ -1,18 +1,8 @@
-# 大型数据文件
-_stats_build/WCADB.xlsx
-_stats_build/WCADB_preview.txt
-# 参考 SQL 文件（不需要版本控制）
-_stats_build/WCA-Statistics/
-# 本地数据库配置（含密码）
-_stats_build/database.yml
-# 本地测试脚本和输出
-_stats_build/test_stat.rb
-_stats_build/test_output.html
+# 已删除的 Ruby 统计管线（本地可能残留数据文件）
+_stats_build/
 
 # 部署产物（deploy_mirror.yml 临时目录）
 _deploy/
-# 本地数据缓存（UI-only 重新渲染用，不提交）
-_stats_build/.data_cache/
 
 # Gemini agent data
 .data_cache/
