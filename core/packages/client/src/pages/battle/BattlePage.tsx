@@ -406,10 +406,6 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
       : '';
     let html = formatTime(displayTime, store.timerPrecision) + suffix;
 
-    // NOTE: 赢家高亮 + 🏆
-    if (store.winner === playerId) {
-      html += ' <span class="trophy-icon">🏆</span>';
-    }
     return html;
   };
 
