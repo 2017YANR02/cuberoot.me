@@ -535,6 +535,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       }
       set({ players: newPlayers });
       get().computeWinner();
+      get().saveSolveHistory();
       get().loadNewScramble();
     }
   },
@@ -648,6 +649,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     if (newPlayers[0].hasFinished && newPlayers[1].hasFinished) {
       get().removeLastWinner();
       get().computeWinner();
+      get().saveSolveHistory();
     }
   },
 
@@ -699,6 +701,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       };
     }
     set({ players: newPlayers });
+    get().saveSolveHistory();
   },
 
   toggleShowTime: () => {
@@ -717,9 +720,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       undoStack: [],
     });
     const s = get();
-    if (s.mode === 'solo') {
-      s.saveSolveHistory();
-    }
+    s.saveSolveHistory();
     s.loadNewScramble();
   },
 
@@ -727,7 +728,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   changePuzzle: (newPuzzleId: string) => {
     const s = get();
     if (newPuzzleId === s.puzzleId) return;
-    if (s.mode === 'solo') s.saveSolveHistory();
+    s.saveSolveHistory();
     localStorage.setItem(LS_PREFIX + 'puzzle', newPuzzleId);
     const newPlayers: [PlayerState, PlayerState] = [createPlayer(0), createPlayer(1)];
     set({
@@ -735,13 +736,12 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       winner: -2,
       players: newPlayers,
     });
-    if (get().mode === 'solo') {
-      get().loadSolveHistory();
-    }
+    get().loadSolveHistory();
     get().loadNewScramble();
   },
 
   setMode: (mode: BattleMode) => {
+    get().saveSolveHistory();
     localStorage.setItem(LS_PREFIX + 'mode', mode);
     const newPlayers: [PlayerState, PlayerState] = [createPlayer(0), createPlayer(1)];
     set({
@@ -750,9 +750,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       players: newPlayers,
       activeTab: 'timer',
     });
-    if (mode === 'solo') {
-      get().loadSolveHistory();
-    }
+    get().loadSolveHistory();
   },
 
   setLayout: (layout: BattleLayout) => {
@@ -840,7 +838,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   // 1:1 翻译自 battle.js（行 3118~3210 大致区间）
   switchSession: (newSessionId: string) => {
     const s = get();
-    if (s.mode === 'solo') s.saveSolveHistory();
+    s.saveSolveHistory();
     localStorage.setItem(LS_PREFIX + 'sessionId', newSessionId);
     const newPlayers: [PlayerState, PlayerState] = [createPlayer(0), createPlayer(1)];
     set({
@@ -848,15 +846,13 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       winner: -2,
       players: newPlayers,
     });
-    if (get().mode === 'solo') {
-      get().loadSolveHistory();
-    }
+    get().loadSolveHistory();
     get().loadNewScramble();
   },
 
   newSession: () => {
     const s = get();
-    if (s.mode === 'solo') s.saveSolveHistory();
+    s.saveSolveHistory();
     const newId = String(Date.now());
     const name = `Session ${s.sessions.length + 1}`;
     const newSessions = [...s.sessions, { id: newId, name }];
@@ -889,11 +885,12 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     const s = get();
     if (s.sessions.length <= 1) return;
     if (!confirm('Delete this session and all its data?')) return;
-    // NOTE: 删除当前 session 的所有 localStorage 数据
-    const prefix = `${LS_PREFIX}solo_history_${s.sessionId}_`;
+    // NOTE: 删除当前 session 的所有 localStorage 数据（solo + 1v1）
+    const soloPrefix = `${LS_PREFIX}solo_history_${s.sessionId}_`;
+    const vsPrefix = `${LS_PREFIX}1v1_history_${s.sessionId}_`;
     for (let i = localStorage.length - 1; i >= 0; i--) {
       const key = localStorage.key(i);
-      if (key && key.startsWith(prefix)) {
+      if (key && (key.startsWith(soloPrefix) || key.startsWith(vsPrefix))) {
         localStorage.removeItem(key);
       }
     }
@@ -908,9 +905,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       winner: -2,
       players: newPlayers,
     });
-    if (get().mode === 'solo') {
-      get().loadSolveHistory();
-    }
+    get().loadSolveHistory();
   },
 
   // ===== 历史操作 =====
@@ -946,15 +941,26 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     get().saveSolveHistory();
   },
 
-  // ===== Solo 数据持久化 =====
-  // 1:1 翻译自 battle.js saveSolveHistory()/loadSolveHistory()（行 2173~2198）
+  // ===== 数据持久化（Solo + 1v1 共用） =====
+  // NOTE: Solo 用 key = solo_history_{session}_{puzzle}，只存 player[0]
+  //       1v1  用 key = 1v1_history_{session}_{puzzle}_{0|1}，存两个玩家
   saveSolveHistory: () => {
     const s = get();
-    const key = `${LS_PREFIX}solo_history_${s.sessionId}_${s.puzzleId}`;
-    const h = s.players[0].solveHistory;
-    const toSave = h.length > 1000 ? h.slice(-1000) : h;
     try {
-      localStorage.setItem(key, JSON.stringify(toSave));
+      if (s.mode === 'solo') {
+        const key = `${LS_PREFIX}solo_history_${s.sessionId}_${s.puzzleId}`;
+        const h = s.players[0].solveHistory;
+        const toSave = h.length > 1000 ? h.slice(-1000) : h;
+        localStorage.setItem(key, JSON.stringify(toSave));
+      } else {
+        // NOTE: 1v1 — 分别保存两个玩家
+        for (let i = 0; i < 2; i++) {
+          const key = `${LS_PREFIX}1v1_history_${s.sessionId}_${s.puzzleId}_${i}`;
+          const h = s.players[i].solveHistory;
+          const toSave = h.length > 1000 ? h.slice(-1000) : h;
+          localStorage.setItem(key, JSON.stringify(toSave));
+        }
+      }
     } catch (e) {
       console.warn('Failed to save solve history:', e);
     }
@@ -962,13 +968,25 @@ export const useBattleStore = create<BattleState>((set, get) => ({
 
   loadSolveHistory: () => {
     const s = get();
-    if (s.mode !== 'solo') return;
-    const key = `${LS_PREFIX}solo_history_${s.sessionId}_${s.puzzleId}`;
     try {
-      const data = localStorage.getItem(key);
-      if (data) {
+      if (s.mode === 'solo') {
+        const key = `${LS_PREFIX}solo_history_${s.sessionId}_${s.puzzleId}`;
+        const data = localStorage.getItem(key);
+        if (data) {
+          const newPlayers = [...s.players] as [PlayerState, PlayerState];
+          newPlayers[0] = { ...s.players[0], solveHistory: JSON.parse(data) };
+          set({ players: newPlayers });
+        }
+      } else {
+        // NOTE: 1v1 — 分别加载两个玩家
         const newPlayers = [...s.players] as [PlayerState, PlayerState];
-        newPlayers[0] = { ...s.players[0], solveHistory: JSON.parse(data) };
+        for (let i = 0; i < 2; i++) {
+          const key = `${LS_PREFIX}1v1_history_${s.sessionId}_${s.puzzleId}_${i}`;
+          const data = localStorage.getItem(key);
+          if (data) {
+            newPlayers[i] = { ...s.players[i], solveHistory: JSON.parse(data) };
+          }
+        }
         set({ players: newPlayers });
       }
     } catch (e) {

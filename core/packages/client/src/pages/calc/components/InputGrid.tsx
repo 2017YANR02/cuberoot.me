@@ -228,7 +228,7 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
                     }}
                     className="time-cell"
                     type="text"
-                    inputMode="decimal"
+                    inputMode="none"
                     disabled={!enabled}
                     defaultValue={displayVal}
                     key={`${absIdx}_${t}_${val}_${enabled}`}
@@ -250,7 +250,7 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
               <input
                 className="time-cell tavg-cell"
                 type="text"
-                inputMode="decimal"
+                inputMode="none"
                 disabled={!enabled}
                 placeholder="Target"
                 defaultValue={(() => {
