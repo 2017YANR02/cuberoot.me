@@ -18,7 +18,7 @@ ruiminyan.github.io/
 │   ├── packages/stats-build/  #    WCA 统计数据生成管道（88 个统计）
 │   └── README.md              #    开发文档
 │
-├── legacy/                    # 🔄 迁移自根目录的上游同步内容
+├── tools/                     # 🔧 独立 HTML/JS 工具模块（iframe 嵌入）
 │   ├── solver/                #    3x3x3 Solver
 │   ├── *_trainer/             #    各类训练器（cross/xcross/eocross/...）
 │   ├── alg_trainers/          #    公式训练器（mihlefeld/Alg-Trainers）
@@ -46,7 +46,7 @@ ruiminyan.github.io/
 |-----|------|------|
 | `cuberoot.me/` | React SPA | Vite 构建，GitHub Pages + ECS 双部署 |
 | `cuberoot.me/blog/` | WordPress | ECS 专有，符号链接到 `/www/wwwroot/wordpress/` |
-| `cuberoot.me/legacy/` | 静态文件 | 上游同步的工具页面（iframe 嵌入 SPA） |
+| `cuberoot.me/tools/` | 静态文件 | 独立 HTML/JS 工具模块（iframe 嵌入 SPA） |
 | `cuberoot.me/wca-stats/` | React SPA | WCA 统计数据展示（SPA 路由） |
 | `cuberoot.me/stats/data/` | 静态 JSON | WCA 统计数据文件（SPA fetch） |
 | `cuberoot.me/api/` | Hono API | Nginx 反代到 127.0.0.1:3001 |

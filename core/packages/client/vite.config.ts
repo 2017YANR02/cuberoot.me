@@ -45,8 +45,8 @@ function serveRepoRoot(): Plugin {
       server.middlewares.use((req, res, next) => {
         const url = (req.url || '').split('?')[0];
 
-        // 只处理 /legacy/ 和 /stats/ 前缀
-        if (!url.startsWith('/legacy/') && !url.startsWith('/stats/') && url !== '/stats') {
+        // 只处理 /tools/ 和 /stats/ 前缀
+        if (!url.startsWith('/tools/') && !url.startsWith('/stats/') && url !== '/stats') {
           return next();
         }
 

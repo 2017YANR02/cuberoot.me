@@ -27,7 +27,7 @@
 ```
 https://www.cuberoot.me/             → React SPA（Vite 构建产物，/www/wwwroot/cuberoot-spa/）
 https://www.cuberoot.me/blog/        → WordPress（符号链接到 /www/wwwroot/wordpress/）
-https://www.cuberoot.me/legacy/       → 静态文件镜像（/www/wwwroot/toolkit/legacy/）
+https://www.cuberoot.me/tools/       → 静态文件镜像（/www/wwwroot/toolkit/tools/）
 https://www.cuberoot.me/api/        → Hono API（Nginx 反代到 127.0.0.1:3001）
 ```
 
@@ -112,8 +112,8 @@ location ^~ /blog {
     }
 }
 
-# Legacy 静态镜像（^~ 防止 regex location 拦截静态资源）
-location ^~ /legacy/ {
+# 工具模块静态镜像（^~ 防止 regex location 拦截静态资源）
+location ^~ /tools/ {
     root /www/wwwroot/toolkit;
     try_files $uri $uri/ $uri.html $uri/index.html =404;
 }
@@ -185,14 +185,14 @@ rsync -rltz --delete --exclude='.user.ini' --chmod=D755,F644 ...
 | **数据库** | MariaDB 10.5.27 |
 | **数据库名** | `recon_db` |
 | **用户** | `recon_user`（仅限 localhost 连接，外网不可直连） |
-| **凭据文件** | PHP：`/www/wwwroot/toolkit/legacy/recon/api/db_config.php`；Hono：`/root/core-api/.env`；本地：`.secrets.md`（均不在 git 中） |
+| **凭据文件** | Hono：`/root/core-api/.env`；本地：`.secrets.md`（均不在 git 中） |
 | **表** | `recons`（复盘数据）、`edits`（编辑覆盖）、`edit_history`（编辑历史）、`wca_users`（认证）、`timer_sessions`（计时器同步）、`train_results`（训练记录） |
 
 ### 备份策略
 
 | 备份层 | 方式 | 频率 | 位置 |
 |--------|------|------|------|
-| API 备份 | `backup_recon.yml` CI | 每天 | GitHub 仓库（`legacy/recon/backup/recons_backup.json`） |
+| API 备份 | `backup_recon.yml` CI | 每天 | GitHub 仓库 |
 | 数据库备份 | 宝塔计划任务（Shell 脚本 `mysqldump`） | 每天 03:00 | ECS `/www/backup/recon_db_*.sql.gz`（保留 7 天） |
 
 > ⚠️ 宝塔内置的"备份数据库"任务**不会**备份命令行创建的数据库，必须用 Shell 脚本方式。
