@@ -50,7 +50,7 @@ pnpm --filter @cuberoot/client dev
 # → http://localhost:5173/
 ```
 
-> Vite `serveRepoRoot` 插件直接从仓库根目录 serve `/legacy/` 和 `/stats/` 静态文件，无需额外服务器。
+> Vite `serveRepoRoot` 插件直接从仓库根目录 serve `/tools/` 和 `/stats/` 静态文件，无需额外服务器。
 
 ## 上游同步脚本
 

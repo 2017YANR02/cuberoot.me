@@ -61,7 +61,7 @@ cd packages/stats-ui
 
 > **注意**：Recon API 通过 Vite proxy 转发到 ECS 线上后端（`www.cuberoot.me`），本地开发**不需要**启动 Hono 后端。
 > 
-> Vite `serveRepoRoot` 插件直接从仓库根目录 serve `/legacy/` 和 `/stats/` 静态文件，无需额外服务器。
+> Vite `serveRepoRoot` 插件直接从仓库根目录 serve `/tools/` 和 `/stats/` 静态文件，无需额外服务器。
 
 ### 后端开发（需要 MariaDB）
 
