@@ -352,6 +352,21 @@
     background: rgba(255, 235, 220, 0.12);
 }
 
+/* NOTE: 中间栏内的罚时菜单 — 向下弹出（朝各自玩家区域）
+   player2 score-section 已 rotate(180°)，top 在屏幕上=朝上=朝玩家2区域 ✓
+   player1 score-section 未旋转，top=朝下=朝玩家1区域 ✓ */
+.middle-bar .penalty-menu {
+    bottom: auto;
+    top: calc(100% + 6px);
+    transform-origin: top center;
+    transform: translateX(-50%) scaleY(0.8);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+}
+
+.middle-bar .penalty-dropdown.open .penalty-menu {
+    transform: translateX(-50%) scaleY(1);
+}
+
 /* ==========================================================
    中间栏（比分 + 设置）
    ========================================================== */
@@ -391,6 +406,15 @@
     font-size: 1rem;
     color: var(--bar-text-color, #fff);
     font-variant-numeric: tabular-nums;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.score-trophy {
+    font-family: sans-serif;
+    font-size: 0.75rem;
+    line-height: 1;
 }
 
 .middle-actions {
@@ -920,6 +944,44 @@ body.solo .scramble-img {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+}
+
+/* NOTE: 1v1 对战历史面板 — 全屏（无底部导航栏） */
+.vs-history-panel {
+    height: 100vh;
+}
+
+.vs-history-panel .history-header {
+    position: relative;
+}
+
+.vs-history-panel .settings-x-btn {
+    position: static;
+    transform: none;
+    margin-left: auto;
+}
+
+/* NOTE: 对战轮次行 — P1 vs P2 */
+.vs-round {
+    display: grid;
+    grid-template-columns: 2rem 1fr auto 1fr 5rem;
+    align-items: center;
+    gap: 4px;
+}
+
+.vs-separator {
+    font-size: 0.7rem;
+    color: #6e6050;
+    text-align: center;
+}
+
+.vs-p1, .vs-p2 {
+    text-align: center;
+}
+
+/* NOTE: 展开时打乱占满整行 */
+.vs-round .h-scramble {
+    grid-column: 1 / -1;
 }
 
 

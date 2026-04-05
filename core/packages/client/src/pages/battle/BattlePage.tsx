@@ -16,6 +16,7 @@ import { formatTime } from './engine/format_time';
 import { computeAo5 } from './engine/stats';
 import type { PenaltyType } from './engine/constants';
 import HistoryPanel from './HistoryPanel';
+import VsHistoryPanel from './VsHistoryPanel';
 import { MilestoneToast } from './AdvancedFeatures';
 
 import './battle.css';
@@ -465,9 +466,6 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
         <div className="opponent-display" id={`opponent-${playerId}`} />
       )}
 
-      {/* 罚时下拉 */}
-      <PenaltyDropdown playerId={playerId} />
-
       {/* 打乱图 — side 布局时隐藏 */}
       {!hideScramble && (
         <div className={`scramble-img${player.isTiming ? ' hidden' : ''}`}>
@@ -487,42 +485,49 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
 // ===== MiddleBar 组件 =====
 // 1:1 翻译自 battle/index.html middle-bar 结构
 
-function MiddleBar({ onSettingsClick }: { onSettingsClick: () => void }) {
+function MiddleBar({ onSettingsClick, onHistoryClick }: { onSettingsClick: () => void; onHistoryClick?: () => void }) {
   const store = useBattleStore();
   const { players } = store;
+  const p0pts = players[0].points;
+  const p1pts = players[1].points;
+  const p1Leading = p1pts > p0pts;
+  const p0Leading = p0pts > p1pts;
 
   return (
     <div className="middle-bar">
       {/* Player 2 (左侧, 旋转 180°) 比分 + 罚时 */}
       <div className="score-section">
-        <span className="score-value">{players[1].points}</span>
+        <span className="score-value">
+          {p1Leading && <span className="score-trophy">🏆</span>}
+          {players[1].points}
+        </span>
+        <PenaltyDropdown playerId={1} />
       </div>
 
       {/* 中间操作按钮 — 1:1 翻译自 battle/index.html 行 78~89 */}
       <div className="middle-actions">
         {/* NOTE: 桌面端键盘提示 */}
         <span className="key-hint">Enter ↑ · ↓ Space</span>
-        <button className="middle-btn" title="Fullscreen" onClick={() => {
-          if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen().catch(() => {});
-          } else {
-            document.exitFullscreen();
-          }
-        }}>⛶</button>
         {/* NOTE: CubeRoot logo，点击回首页 */}
         <a href="/" className="middle-logo" aria-label="Home">
           <img src={import.meta.env.BASE_URL + 'CubeRoot-dark.png'} alt="CubeRoot" height="24" />
         </a>
+        <button className="middle-btn" title="History" onClick={onHistoryClick}>📋</button>
         <button className="middle-btn" title="Settings" onClick={onSettingsClick}>⚙️</button>
       </div>
 
       {/* Player 1 (右侧) 比分 + 罚时 */}
       <div className="score-section">
-        <span className="score-value">{players[0].points}</span>
+        <span className="score-value">
+          {players[0].points}
+          {p0Leading && <span className="score-trophy">🏆</span>}
+        </span>
+        <PenaltyDropdown playerId={0} />
       </div>
     </div>
   );
 }
+
 
 // ===== SettingsPanel 组件 =====
 // 1:1 翻译自 battle/index.html settings-panel 结构
@@ -763,6 +768,8 @@ export default function BattlePage() {
   const store = useBattleStore();
   const { mode } = store;
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // NOTE: 1v1 历史面板
+  const [vsHistoryOpen, setVsHistoryOpen] = useState(false);
   // NOTE: 里程碑 Toast 消息队列
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
@@ -845,7 +852,7 @@ export default function BattlePage() {
       {mode === '1v1' && store.layout === 'side' && (
         <>
           {/* 中间栏 */}
-          <MiddleBar onSettingsClick={handleSettingsClick} />
+          <MiddleBar onSettingsClick={handleSettingsClick} onHistoryClick={() => setVsHistoryOpen(true)} />
           {/* 打乱文字 */}
           <SharedScramble />
           {/* 左右计时区域（打乱图浮在中心） */}
@@ -862,7 +869,7 @@ export default function BattlePage() {
       {mode === '1v1' && store.layout === 'versus' && (
         <>
           <TimerArea playerId={1} rotated />
-          <MiddleBar onSettingsClick={handleSettingsClick} />
+          <MiddleBar onSettingsClick={handleSettingsClick} onHistoryClick={() => setVsHistoryOpen(true)} />
           <TimerArea playerId={0} />
         </>
       )}
@@ -908,9 +915,13 @@ export default function BattlePage() {
         </nav>
       )}
 
-      {/* 设置面板 — 1v1 overlay 模式 */}
       {mode === '1v1' && (
         <SettingsPanel visible={settingsOpen} onClose={closeSettings} />
+      )}
+
+      {/* 1v1 对战历史面板 */}
+      {mode === '1v1' && vsHistoryOpen && (
+        <VsHistoryPanel onClose={() => setVsHistoryOpen(false)} />
       )}
 
       {/* 设置面板 — Solo tab 模式 */}
