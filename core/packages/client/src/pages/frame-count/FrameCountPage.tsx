@@ -347,9 +347,26 @@ export default function FrameCountPage() {
     const video = videoRef.current;
     if (!video || videoFps <= 0) return;
     const f = Math.max(0, frame);
-    video.currentTime = f / videoFps;
-    setCurrentFrame(f);
+    // 立即更新 UI
     currentFrameRef.current = f;
+    setCurrentFrame(f);
+    // 节流 seek：上一次完成后才执行下一次
+    if (!seekingRef.current) {
+      seekingRef.current = true;
+      const doSeek = () => {
+        const target = currentFrameRef.current;
+        video.addEventListener('seeked', () => {
+          seekingRef.current = false;
+          // 如果拖动期间帧又变了，继续 seek
+          if (currentFrameRef.current !== target) {
+            seekingRef.current = true;
+            doSeek();
+          }
+        }, { once: true });
+        video.currentTime = target / videoFps;
+      };
+      doSeek();
+    }
   }, [videoFps]);
 
   // 用 ref 追踪帧号，避免快速连按时闭包中 currentFrame 过时
