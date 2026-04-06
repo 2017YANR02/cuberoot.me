@@ -234,26 +234,20 @@ export function Numpad() {
     const end = input.selectionEnd ?? input.value.length;
     const isFullSel = start === 0 && end === input.value.length && input.value.length > 0;
 
-    if (isFullSel) {
-      // NOTE: 全选 → 清空当前格并写 state 0
-      const [p, t] = getFocusedPT();
-      if (p >= 0) recordAndUpdate(state.seedOn + p, t, 0);
-      input.value = '';
-    } else if (input.value.length > 0) {
-      input.value = input.value.slice(0, -1);
-    } else {
-      // NOTE: 当前格为空 → 反向 zigzag 跳到上一格并清空（原版 L743-751）
+    if (isFullSel || input.value.length === 0) {
+      // NOTE: 直接保存空值到 store，延迟导航避免 React re-render 竞争
       const [p, t] = getFocusedPT();
       if (p >= 0) {
-        // 先保存当前格
-        recordAndUpdate(state.seedOn + p, t, 0);
+        const absIdx = state.seedOn + p;
+        state.updateTime(absIdx, t, 0);
         state.saveToUrl();
         const prv = prevCell(p, t);
         if (prv) {
-          recordAndUpdate(state.seedOn + prv[0], prv[1], 0);
-          navigateToCell(prv[0], prv[1]);
+          requestAnimationFrame(() => navigateToCell(prv[0], prv[1]));
         }
       }
+    } else {
+      input.value = input.value.slice(0, -1);
     }
   }, [clearMode, getFocusedInput, getFocusedPT, state]);
 
