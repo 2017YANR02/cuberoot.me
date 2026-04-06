@@ -5,14 +5,13 @@
 import { useCallback, useRef, useState, useEffect } from 'react';
 import { useCalcStore, isMbfForEvent } from '../stores/calc_store';
 import {
-  DNF_VALUE, formatTime, textToTime, textToMbfScore,
+  DNF_VALUE, textToTime, textToMbfScore,
 } from '../engine/calc_engine';
 import { sampleKDE } from '../engine/wr_data';
 import { Drum } from './Drum';
 
 export function Numpad() {
   const state = useCalcStore();
-  const [display, setDisplay] = useState('');
   // NOTE: 当前编辑目标 [playerIdx, solveIdx]，-1 表示无目标
   const [target, setTarget] = useState<[number, number]>([-1, -1]);
 
@@ -21,45 +20,66 @@ export function Numpad() {
   const [clearMode, setClearMode] = useState(false);
 
   const isMbf = isMbfForEvent(state.event);
-  const isMove = state.event === '333fm';
 
-  // NOTE: 聚焦到 numpad 对应的输入格（来自 InputGrid 的 focus 事件触发）
+  // NOTE: 获取当前聚焦的 time-cell input 元素
+  const getFocusedInput = useCallback((): HTMLInputElement | null => {
+    const el = document.activeElement;
+    if (el instanceof HTMLInputElement && el.classList.contains('time-cell')) {
+      return el;
+    }
+    // NOTE: fallback — 用 store.focusedCell 找对应的 DOM input
+    const [fp, ft] = useCalcStore.getState().focusedCell;
+    if (fp >= 0 && ft >= 0) {
+      const cells = document.querySelectorAll<HTMLInputElement>('.input-row .time-cell:not(.tavg-cell)');
+      const sc = useCalcStore.getState().solveCount();
+      const idx = fp * sc + ft;
+      if (cells[idx]) {
+        cells[idx].focus();
+        return cells[idx];
+      }
+    }
+    return null;
+  }, []);
+
+  // NOTE: 聚焦到 numpad 对应的输入格
   const updateTarget = useCallback(() => {
     const [p, t] = state.getFirstUnfilledTime(false);
     if (p >= 0 && t >= 0) {
       setTarget([p, t]);
-      const val = state.times[state.seedOn + p][t];
-      setDisplay(val > 0 ? formatTime(val, false, isMove) : '');
     } else {
-      // NOTE: 全满时 target=[-1,-1] — Rand 需要此标志判断全量覆盖
       setTarget([-1, -1]);
-      setDisplay('');
     }
-  }, [state, isMove]);
+  }, [state]);
 
   // NOTE: 初始化 + times 变更时更新目标
   useEffect(() => {
     updateTarget();
   }, [state.times, state.seedOn, state.playerEnabled, updateTarget]);
 
-  // NOTE: 数字键点击
+  // NOTE: 数字键点击 — 直接写入 DOM input
   const pressDigit = useCallback((digit: string) => {
-    setDisplay(prev => {
-      // NOTE: 限长 — 最多 7 位（如 "1:23.45"）
-      if (prev.replace(/\D/g, '').length >= 7) return prev;
-      return prev + digit;
-    });
-  }, []);
+    const input = getFocusedInput();
+    if (!input) return;
+    const start = input.selectionStart ?? input.value.length;
+    const end = input.selectionEnd ?? input.value.length;
+    if (input.value.replace(/\D/g, '').length >= 7 && start === end) return;
+    input.value = input.value.slice(0, start) + digit + input.value.slice(end);
+    input.selectionStart = input.selectionEnd = start + 1;
+  }, [getFocusedInput]);
 
   // NOTE: 小数点
   const pressDot = useCallback(() => {
-    setDisplay(prev => prev.includes('.') ? prev : prev + '.');
-  }, []);
+    const input = getFocusedInput();
+    if (!input || input.value.includes('.')) return;
+    const pos = input.selectionStart ?? input.value.length;
+    const end = input.selectionEnd ?? input.value.length;
+    input.value = input.value.slice(0, pos) + '.' + input.value.slice(end);
+    input.selectionStart = input.selectionEnd = pos + 1;
+  }, [getFocusedInput]);
 
   // NOTE: 退格 / 清空
   const pressBackspace = useCallback(() => {
     if (clearMode) {
-      // NOTE: 长按触发的 Clear All — 清空所有已启用行的数据
       const s = useCalcStore.getState();
       const sc = s.solveCount();
       for (let p = 0; p < 2; p++) {
@@ -69,12 +89,21 @@ export function Numpad() {
         }
       }
       s.saveToUrl();
-      setDisplay('');
       setClearMode(false);
       return;
     }
-    setDisplay(prev => prev.slice(0, -1));
-  }, [clearMode]);
+    const input = getFocusedInput();
+    if (!input) return;
+    const start = input.selectionStart ?? input.value.length;
+    const end = input.selectionEnd ?? input.value.length;
+    if (start !== end) {
+      input.value = input.value.slice(0, start) + input.value.slice(end);
+      input.selectionStart = input.selectionEnd = start;
+    } else if (start > 0) {
+      input.value = input.value.slice(0, start - 1) + input.value.slice(start);
+      input.selectionStart = input.selectionEnd = start - 1;
+    }
+  }, [clearMode, getFocusedInput]);
 
   // NOTE: 长按 ⌫ → Clear 模式
   const startLongPress = useCallback(() => {
@@ -93,7 +122,6 @@ export function Numpad() {
     if (!isLongPress.current) {
       pressBackspace();
     }
-    // NOTE: 短按时不在 clearMode，直接退格
     if (clearMode) {
       pressBackspace();
     }
@@ -101,20 +129,21 @@ export function Numpad() {
 
   // NOTE: DNF
   const pressDnf = useCallback(() => {
-    if (target[0] < 0) return;
-    const absIdx = state.seedOn + target[0];
-    state.updateTime(absIdx, target[1], DNF_VALUE);
+    const [fp, ft] = useCalcStore.getState().focusedCell;
+    const p = fp >= 0 ? fp : target[0];
+    const t = ft >= 0 ? ft : target[1];
+    if (p < 0) return;
+    const absIdx = state.seedOn + p;
+    state.updateTime(absIdx, t, DNF_VALUE);
     state.saveToUrl();
-    setDisplay('DNF');
-    // NOTE: 自动跳到下一格
+    const input = getFocusedInput();
+    if (input) input.value = 'DNF';
     setTimeout(updateTarget, 50);
-  }, [state, target, updateTarget]);
+  }, [state, target, updateTarget, getFocusedInput]);
 
-  // NOTE: Rand — 全量 KDE 采样填充（原版 app.js#227-260）
-  // 有空格时只填空格子；全满时覆盖所有已启用行
+  // NOTE: Rand — KDE 采样填充
   const pressRand = useCallback(() => {
     const sc = state.solveCount();
-    // NOTE: 先判断已启用行是否全满
     let allFilled = true;
     for (let p = 0; p < 2; p++) {
       if (!state.playerEnabled[p]) continue;
@@ -123,11 +152,9 @@ export function Numpad() {
       }
       if (!allFilled) break;
     }
-    // NOTE: 全量填充/覆盖
     for (let p = 0; p < 2; p++) {
       if (!state.playerEnabled[p]) continue;
       for (let t = 0; t < sc; t++) {
-        // 有空格时跳过已填格子
         if (!allFilled && state.times[state.seedOn + p][t]) continue;
         const val = sampleKDE(state.event, p);
         if (val && val > 0) {
@@ -139,25 +166,52 @@ export function Numpad() {
     setTimeout(updateTarget, 50);
   }, [state, updateTarget]);
 
-  // NOTE: Enter — 确认输入
+  // NOTE: Enter — 确认输入并跳到下一格
   const pressEnter = useCallback(() => {
-    if (target[0] < 0 || display.trim() === '') return;
-    const absIdx = state.seedOn + target[0];
-    let val: number;
-    if (isMbf) {
-      val = textToMbfScore(display);
+    const input = getFocusedInput();
+    if (!input) return;
+    const raw = input.value.trim();
+    const [fp, ft] = useCalcStore.getState().focusedCell;
+    const p = fp >= 0 ? fp : target[0];
+    const t = ft >= 0 ? ft : target[1];
+    if (p < 0) return;
+    const absIdx = state.seedOn + p;
+    if (raw === '' || raw === '-') {
+      state.updateTime(absIdx, t, 0);
+    } else if (raw.toUpperCase() === 'DNF') {
+      state.updateTime(absIdx, t, DNF_VALUE);
+    } else if (isMbf) {
+      state.updateTime(absIdx, t, textToMbfScore(raw));
     } else {
-      val = textToTime(display);
+      state.updateTime(absIdx, t, textToTime(raw));
     }
-    state.updateTime(absIdx, target[1], val);
     state.saveToUrl();
-    setDisplay('');
+    // NOTE: zigzag 跳到下一格
+    const sc = state.solveCount();
+    let nextP = 1 - p;
+    let nextT = t;
+    if (nextP <= p) nextT++;
+    if (!state.playerEnabled[nextP]) {
+      nextP = 1 - nextP;
+      if (p === 0) nextT++;
+    }
+    if (nextT < sc) {
+      const cells = document.querySelectorAll<HTMLInputElement>('.input-row .time-cell:not(.tavg-cell)');
+      const idx = nextP * sc + nextT;
+      if (cells[idx]) {
+        cells[idx].focus();
+        cells[idx].select();
+      }
+    }
     setTimeout(updateTarget, 50);
-  }, [state, target, display, isMbf, updateTarget]);
+  }, [state, target, isMbf, updateTarget, getFocusedInput]);
 
-  // NOTE: 按钮配置 — 与原版 index.html#128-149 布局一致
-  // 行1: 1 2 3 ⌫   行2: 4 5 6 Rand   行3: 7 8 9 ↵   行4: ·: 0 DNF
-  // NOTE: backspace SVG — 与原版 /assets/icons.svg#icon-backspace 一致
+  // NOTE: 防止按钮点击抢走 input 焦点
+  const preventFocusSteal = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+  }, []);
+
+  // NOTE: backspace SVG
   const backspaceIcon = (
     <svg viewBox="0 0 33 22" width="33" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M11 1h19a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H11L1 11z"/>
@@ -166,7 +220,7 @@ export function Numpad() {
     </svg>
   );
 
-  // NOTE: enter SVG — 与原版 index.html#141-146 一致
+  // NOTE: enter SVG
   const enterIcon = (
     <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="9 10 4 15 9 20" />
@@ -194,7 +248,6 @@ export function Numpad() {
 
   return (
     <div id="numpad">
-      {/* 按钮区 — 原版无 display 行 */}
       <div id="numpad-body">
         {/* iOS 滚筒精调 */}
         <Drum activeCell={target} />
@@ -204,8 +257,9 @@ export function Numpad() {
             <button
               key={i}
               className={`np-btn ${btn.cls}`}
+              onMouseDown={preventFocusSteal}
               onClick={btn.isBackspace ? undefined : btn.action}
-              onPointerDown={btn.isBackspace ? startLongPress : undefined}
+              onPointerDown={btn.isBackspace ? (e) => { e.preventDefault(); startLongPress(); } : undefined}
               onPointerUp={btn.isBackspace ? endLongPress : undefined}
               onPointerLeave={btn.isBackspace ? () => {
                 if (longPressTimer.current) {
