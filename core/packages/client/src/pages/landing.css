@@ -187,6 +187,13 @@
     border-color: rgba(6, 182, 212, 0.4);
     box-shadow: 0 8px 32px rgba(139, 92, 246, 0.12);
 }
+.landing-page .card-frame-count {
+    --card-gradient: linear-gradient(90deg, #14b8a6, #06b6d4, #3b82f6);
+}
+.landing-page .card-frame-count:hover {
+    border-color: rgba(20, 184, 166, 0.4);
+    box-shadow: 0 8px 32px rgba(20, 184, 166, 0.12);
+}
 .landing-page .card-blog {
     --card-gradient: linear-gradient(90deg, #f59e0b, #fb923c, #f43f5e);
 }
