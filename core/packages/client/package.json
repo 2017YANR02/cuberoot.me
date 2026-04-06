@@ -17,6 +17,7 @@
     "cubing": "^0.50.0",
     "flag-icons": "^7.5.0",
     "i18next": "^24.0.0",
+    "mediainfo.js": "^0.3.7",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-i18next": "^15.0.0",

@@ -5,6 +5,7 @@
  */
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import mediaInfoFactory from 'mediainfo.js';
 import './frame-count.css';
 
 // ── SVG Icons ────────────────────────────────────────────────────────────────
@@ -125,169 +126,46 @@ function formatTime(seconds: number): string {
 }
 
 /**
- * 自动检测视频帧率。
- * 优先使用 getVideoPlaybackQuality().totalVideoFrames — 该计数器包含
- * 所有解码帧（含被丢弃的帧），不受显示器刷新率限制，
- * 因此能正确检测 120fps / 240fps 等高帧率视频。
- * 若 Quality API 不可用则 fallback 到 requestVideoFrameCallback 帧间隔分析。
+ * 使用 MediaInfo.js (WASM) 直接解析文件容器元数据，获取精确帧率。
+ * 不依赖浏览器播放采样，直接读取 MP4/MKV 容器内的 FrameRate 字段。
  */
-function detectFps(video: HTMLVideoElement): Promise<number | null> {
-  return new Promise((resolve) => {
-    const wasMuted = video.muted;
-    const savedTime = video.currentTime;
-    let resolved = false;
-
-    const finish = (fps: number | null) => {
-      if (resolved) return;
-      resolved = true;
-      video.pause();
-      video.muted = wasMuted;
-      video.currentTime = savedTime;
-      resolve(fps);
+async function detectFpsFromFile(file: File): Promise<number | null> {
+  try {
+    const mi = await mediaInfoFactory({
+      locateFile: () => '/MediaInfoModule.wasm',
+    });
+    const getSize = () => file.size;
+    const readChunk = async (chunkSize: number, offset: number) => {
+      const buf = await file.slice(offset, offset + chunkSize).arrayBuffer();
+      return new Uint8Array(buf);
     };
 
-    // 超时保护
-    const timeout = setTimeout(() => finish(null), 4000);
+    const result = await mi.analyzeData(getSize, readChunk);
+    mi.close();
 
-    /** 吸附到常见帧率 — NTSC 优先 */
-    const snapFps = (rawFps: number): number => {
-      // NTSC 标准帧率放前面，整数放后面
-      // 当两个候选距离差 < 0.5 时优先选 NTSC（因为现实相机几乎都用 NTSC）
-      const commonFps = [29.97, 59.94, 119.88, 239.76, 24, 25, 30, 48, 50, 60, 120, 240];
-      const candidates = commonFps
-        .map(cf => ({ fps: cf, dist: Math.abs(rawFps - cf) }))
-        .filter(c => c.dist < 2)
-        .sort((a, b) => a.dist - b.dist);
+    if (!result || typeof result === 'string') return null;
 
-      if (candidates.length === 0) return Math.round(rawFps * 100) / 100;
+    const videoTrack = result.media?.track?.find(
+      (t: { '@type': string }) => t['@type'] === 'Video'
+    ) as { FrameRate?: number; FrameRate_Num?: number; FrameRate_Den?: number } | undefined;
 
-      // 如果最近的两个候选差距很小（如 119.88 vs 120，距离差 < 0.5），
-      // 优先选 NTSC（带小数的），因为绝大多数摄像设备用的是 NTSC
-      if (candidates.length >= 2 && candidates[1].dist - candidates[0].dist < 0.5) {
-        const ntsc = candidates.find(c => c.fps % 1 !== 0);
-        if (ntsc) return ntsc.fps;
-      }
+    if (!videoTrack) return null;
 
-      return candidates[0].fps;
-    };
-
-    /** 方案 A：getVideoPlaybackQuality — 计数所有解码帧，不受刷新率限制 */
-    const detectViaQuality = () => {
-      if (typeof video.getVideoPlaybackQuality !== 'function') {
-        detectViaRVFC();
-        return;
-      }
-
-      video.muted = true;
-      video.currentTime = 0;
-      video.playbackRate = 1;
-
-      const startQuality = video.getVideoPlaybackQuality();
-      const startTotal = startQuality.totalVideoFrames;
-      const startTime = video.currentTime;
-
-      // NOTE: 用 requestVideoFrameCallback 追踪播放进度，播放 ~0.5 秒后采样
-      let sampleCount = 0;
-      const SAMPLE_WAIT = 30; // 等待约 30 个显示帧（~0.5s @60Hz）
-
-      const onFrame = () => {
-        sampleCount++;
-        if (sampleCount < SAMPLE_WAIT) {
-          video.requestVideoFrameCallback(onFrame);
-          return;
-        }
-
-        const endQuality = video.getVideoPlaybackQuality();
-        const endTotal = endQuality.totalVideoFrames;
-        const endTime = video.currentTime;
-        const elapsed = endTime - startTime;
-        const totalDecoded = endTotal - startTotal;
-
-        if (elapsed > 0.1 && totalDecoded > 5) {
-          const rawFps = totalDecoded / elapsed;
-          clearTimeout(timeout);
-          finish(snapFps(rawFps));
-        } else {
-          // 数据不足，fallback
-          detectViaRVFC();
-        }
-      };
-
-      video.play().then(() => {
-        if (typeof video.requestVideoFrameCallback === 'function') {
-          video.requestVideoFrameCallback(onFrame);
-        } else {
-          // 没有 RVFC，用 setTimeout 等 500ms
-          setTimeout(() => {
-            const endQuality = video.getVideoPlaybackQuality();
-            const elapsed = video.currentTime - startTime;
-            const totalDecoded = endQuality.totalVideoFrames - startTotal;
-            if (elapsed > 0.1 && totalDecoded > 5) {
-              clearTimeout(timeout);
-              finish(snapFps(totalDecoded / elapsed));
-            } else {
-              finish(null);
-            }
-          }, 600);
-        }
-      }).catch(() => finish(null));
-    };
-
-    /** 方案 B（Fallback）：requestVideoFrameCallback 帧间隔分析 */
-    const detectViaRVFC = () => {
-      if (typeof video.requestVideoFrameCallback !== 'function') {
-        finish(null);
-        return;
-      }
-
-      video.muted = true;
-      video.currentTime = 0;
-
-      const timestamps: number[] = [];
-      const SAMPLES = 15;
-
-      const onFrame = (_now: number, metadata: VideoFrameCallbackMetadata) => {
-        timestamps.push(metadata.mediaTime);
-        if (timestamps.length < SAMPLES) {
-          video.requestVideoFrameCallback(onFrame);
-        } else {
-          const deltas: number[] = [];
-          for (let i = 1; i < timestamps.length; i++) {
-            const d = timestamps[i] - timestamps[i - 1];
-            if (d > 0) deltas.push(d);
-          }
-          if (deltas.length < 3) { clearTimeout(timeout); finish(null); return; }
-          deltas.sort((a, b) => a - b);
-          const median = deltas[Math.floor(deltas.length / 2)];
-          clearTimeout(timeout);
-          finish(snapFps(1 / median));
-        }
-      };
-
-      video.play().then(() => {
-        video.requestVideoFrameCallback(onFrame);
-      }).catch(() => finish(null));
-    };
-
-    // 开始检测
-    const start = () => {
-      clearTimeout(timeout);
-      // 重新设超时
-      const t2 = setTimeout(() => finish(null), 4000);
-      const origFinish = finish;
-      // patch finish 清除新 timeout
-      const wrappedFinish = (fps: number | null) => { clearTimeout(t2); origFinish(fps); };
-      // 替换 — 但因为 finish 已有 resolved 保护，直接用即可
-      void t2; void wrappedFinish;
-      detectViaQuality();
-    };
-
-    if (video.readyState >= 3) {
-      start();
-    } else {
-      video.addEventListener('canplay', () => start(), { once: true });
+    // 优先用 Num/Den 精确计算（如 120000/1001 = 119.880…）
+    if (videoTrack.FrameRate_Num && videoTrack.FrameRate_Den) {
+      return Math.round((videoTrack.FrameRate_Num / videoTrack.FrameRate_Den) * 100) / 100;
     }
-  });
+
+    // 否则用 FrameRate 字段（float）
+    if (videoTrack.FrameRate && videoTrack.FrameRate > 0) {
+      return Math.round(videoTrack.FrameRate * 100) / 100;
+    }
+
+    return null;
+  } catch (err) {
+    console.warn('[FrameCount] MediaInfo detection failed:', err);
+    return null;
+  }
 }
 
 // ── 快捷键数据 ────────────────────────────────────────────────────────────
@@ -471,17 +349,12 @@ export default function FrameCountPage() {
     setIsPlaying(false);
     setFpsAutoDetected(false);
 
-    // 自动检测 FPS
-    // NOTE: 需要等 video 元素更新 src 后再检测，用 setTimeout 延迟
-    setTimeout(async () => {
-      const video = videoRef.current;
-      if (!video) return;
-      const detected = await detectFps(video);
-      if (detected && detected > 0) {
-        setVideoFps(detected);
-        setFpsAutoDetected(true);
-      }
-    }, 100);
+    // 自动检测 FPS（用 MediaInfo WASM 解析文件元数据，精确读取容器帧率）
+    const detected = await detectFpsFromFile(file);
+    if (detected && detected > 0) {
+      setVideoFps(detected);
+      setFpsAutoDetected(true);
+    }
   }, [videoSrc]);
 
   // ── 拖放处理 ────────────────────────────────────────────────────────
