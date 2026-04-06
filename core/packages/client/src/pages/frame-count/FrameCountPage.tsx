@@ -75,7 +75,7 @@ const IconFrameForward = () => (
 );
 
 const IconCrop = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
     <path d="M6.13 1L6 16a2 2 0 002 2h15" />
     <path d="M1 6.13L16 6a2 2 0 012 2v15" />
   </svg>
@@ -94,19 +94,10 @@ interface Solve {
 
 
 
-type BottomTab = 'setup' | 'image' | 'wca';
 
-/** 图像变换选项 */
-const IMAGE_TRANSFORMS = [
-  { value: 'none', label: 'No Rotation' },
-  { value: 'cw90', label: '90° CW' },
-  { value: 'ccw90', label: '90° CCW' },
-  { value: '180', label: '180°' },
-  { value: 'flipH', label: 'Flip Horizontal' },
-  { value: 'flipV', label: 'Flip Vertical' },
-] as const;
-
-type TransformValue = typeof IMAGE_TRANSFORMS[number]['value'];
+/** 旋转角度循环: 0 → 90 → 180 → 270 → 0 */
+type RotationDeg = 0 | 90 | 180 | 270;
+const NEXT_ROTATION: Record<RotationDeg, RotationDeg> = { 0: 90, 90: 180, 180: 270, 270: 0 };
 
 /** WCA 时间→帧数公式 */
 function timeToFrames(time: number, fps: number): number {
@@ -210,10 +201,12 @@ export default function FrameCountPage() {
   // UI 状态
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<BottomTab>('setup');
 
-  // 图像变换
-  const [imageTransform, setImageTransform] = useState<TransformValue>('none');
+
+  // 图像变换（独立状态）
+  const [rotation, setRotation] = useState<RotationDeg>(0);
+  const [flipH, setFlipH] = useState(false);
+  const [flipV, setFlipV] = useState(false);
   const [cropMode, setCropMode] = useState(false);
   const [cropRect, setCropRect] = useState<{ top: number; left: number; bottom: number; right: number } | null>(null);
   const cropStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -323,20 +316,16 @@ export default function FrameCountPage() {
         transforms.push(`scale(${scale}) translate(${50 - centerX}%, ${50 - centerY}%)`);
       }
     }
-    switch (imageTransform) {
-      case 'cw90': transforms.push('rotate(90deg)'); break;
-      case 'ccw90': transforms.push('rotate(-90deg)'); break;
-      case '180': transforms.push('rotate(180deg)'); break;
-      case 'flipH': transforms.push('scaleX(-1)'); break;
-      case 'flipV': transforms.push('scaleY(-1)'); break;
-    }
+    if (rotation !== 0) transforms.push(`rotate(${rotation}deg)`);
+    if (flipH) transforms.push('scaleX(-1)');
+    if (flipV) transforms.push('scaleY(-1)');
     return {
       transform: transforms.length > 0 ? transforms.join(' ') : 'none',
       clipPath: cropRect
         ? `inset(${cropRect.top}% ${cropRect.right}% ${cropRect.bottom}% ${cropRect.left}%)`
         : undefined,
     };
-  }, [imageTransform, cropRect, cropMode]);
+  }, [rotation, flipH, flipV, cropRect, cropMode]);
 
 
 
@@ -360,17 +349,80 @@ export default function FrameCountPage() {
     const f = Math.max(0, frame);
     video.currentTime = f / videoFps;
     setCurrentFrame(f);
+    currentFrameRef.current = f;
   }, [videoFps]);
+
+  // 用 ref 追踪帧号，避免快速连按时闭包中 currentFrame 过时
+  const currentFrameRef = useRef(0);
+  const stepRafRef = useRef(0);
+  const seekingRef = useRef(false);
+
+  // 同步 ref（播放、拖动等路径更新帧号时）
+  useEffect(() => { currentFrameRef.current = currentFrame; }, [currentFrame]);
 
   const stepFrames = useCallback((n: number) => {
     const video = videoRef.current;
     if (!video || videoFps <= 0) return;
-    video.pause();
-    setIsPlaying(false);
-    const newFrame = Math.max(0, currentFrame + n);
-    video.currentTime = newFrame / videoFps;
-    setCurrentFrame(newFrame);
-  }, [currentFrame, videoFps]);
+
+    if (n > 0 && n <= 2) {
+      // ── 向前小步：play + requestVideoFrameCallback 暂停
+      // 顺序解码比 seek 快 10-100 倍
+      video.pause();
+      setIsPlaying(false);
+      let framesLeft = n;
+      video.muted = true; // play-pause stepping 不出声
+      const onFrame = () => {
+        framesLeft--;
+        const f = Math.round(video.currentTime * videoFps);
+        currentFrameRef.current = f;
+        if (framesLeft <= 0) {
+          video.pause();
+          setCurrentFrame(f);
+        } else {
+          video.requestVideoFrameCallback(onFrame);
+        }
+      };
+      if (typeof video.requestVideoFrameCallback === 'function') {
+        video.requestVideoFrameCallback(onFrame);
+        video.play();
+      } else {
+        // 回退：直接 seek（旧浏览器）
+        const newFrame = Math.max(0, currentFrameRef.current + n);
+        video.currentTime = newFrame / videoFps;
+        currentFrameRef.current = newFrame;
+        setCurrentFrame(newFrame);
+      }
+    } else {
+      // ── 向后 或 大步跳转：必须 seek，但用 throttle 防堆积
+      video.pause();
+      setIsPlaying(false);
+      currentFrameRef.current = Math.max(0, currentFrameRef.current + n);
+      if (!seekingRef.current) {
+        seekingRef.current = true;
+        cancelAnimationFrame(stepRafRef.current);
+        stepRafRef.current = requestAnimationFrame(() => {
+          const f = currentFrameRef.current;
+          const onSeeked = () => {
+            video.removeEventListener('seeked', onSeeked);
+            seekingRef.current = false;
+            setCurrentFrame(f);
+            // 如果在 seek 期间帧号又变了，继续 seek
+            if (currentFrameRef.current !== f) {
+              const ff = currentFrameRef.current;
+              seekingRef.current = true;
+              video.currentTime = ff / videoFps;
+              video.addEventListener('seeked', () => {
+                seekingRef.current = false;
+                setCurrentFrame(ff);
+              }, { once: true });
+            }
+          };
+          video.addEventListener('seeked', onSeeked, { once: true });
+          video.currentTime = f / videoFps;
+        });
+      }
+    }
+  }, [videoFps]);
 
   const stepSeconds = useCallback((s: number) => {
     const video = videoRef.current;
@@ -383,7 +435,7 @@ export default function FrameCountPage() {
   const togglePlay = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
-    if (video.paused) { video.play(); setIsPlaying(true); }
+    if (video.paused) { video.muted = false; video.play(); setIsPlaying(true); }
     else { video.pause(); setIsPlaying(false); }
   }, []);
 
@@ -609,10 +661,65 @@ export default function FrameCountPage() {
           <div className={`fc-panel fc-video-zone ${dragging ? 'dragging' : ''}`}>
             {videoSrc ? (
               <>
-                <span className="fc-video-label">{videoName}</span>
-                <button className="fc-change-video" onClick={() => fileInputRef.current?.click()}>
-                  Change Video
-                </button>
+                {/* 顶部工具栏：文件名 + FPS/Crop/Image 设置 */}
+                <div className="fc-video-toolbar">
+                  <span className="fc-video-label">{videoName}</span>
+
+                  <div className="fc-toolbar-controls">
+                    {/* FPS */}
+                    <input
+                      className="fc-tab-input fc-toolbar-input"
+                      type="number" min={1} step="any" value={videoFps}
+                      onChange={(e) => { setVideoFps(parseFloat(e.target.value) || 0); setFpsAutoDetected(false); }}
+                    />
+                    <span className="fc-toolbar-label">FPS</span>
+
+                    <div className="fc-toolbar-sep" />
+
+                    {/* 图像变换按钮 */}
+                    <button
+                      className={`fc-toolbar-icon ${flipV ? 'active' : ''}`}
+                      title="倒放 (Flip Vertical)"
+                      onClick={() => setFlipV(v => !v)}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 3v18M17 8l-5-5-5 5M17 16l-5 5-5-5"/></svg>
+                    </button>
+                    <button
+                      className={`fc-toolbar-icon ${flipH ? 'active' : ''}`}
+                      title="镜像 (Flip Horizontal)"
+                      onClick={() => setFlipH(v => !v)}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12h18M8 7l-5 5 5 5M16 7l5 5-5 5"/></svg>
+                    </button>
+                    <button
+                      className="fc-toolbar-icon"
+                      title={`旋转 90° (${rotation}°)`}
+                      onClick={() => setRotation(prev => NEXT_ROTATION[prev])}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                    </button>
+
+                    {/* Crop — 切换裁切模式 */}
+                    <button
+                      className={`fc-toolbar-icon ${cropMode ? 'active' : ''}`}
+                      title={cropMode ? 'Exit Crop' : 'Crop'}
+                      onClick={() => {
+                        if (cropMode) { setCropMode(false); }
+                        else { setCropMode(true); setCropRect(null); }
+                      }}
+                    >
+                      <IconCrop />
+                    </button>
+                    {cropRect && !cropMode && (
+                      <button className="fc-toolbar-icon" title="Clear Crop" onClick={() => { setCropRect(null); showToast('Crop cleared'); }}>✕</button>
+                    )}
+
+                  </div>
+
+                  <button className="fc-change-video" onClick={() => fileInputRef.current?.click()}>
+                    New
+                  </button>
+                </div>
                 {/* 视频 wrapper — 紧贴视频尺寸，crop overlay / zoom / pan 都在这里 */}
                 <div
                   className={`fc-video-wrapper${cropMode ? '' : (zoom > 1 ? ' fc-panning' : ' fc-pannable')}`}
@@ -661,7 +768,11 @@ export default function FrameCountPage() {
                           bottom: 100 - Math.max(s.y, y), right: 100 - Math.max(s.x, x),
                         });
                       }}
-                      onMouseUp={() => { cropStartRef.current = null; }}
+                      onMouseUp={() => {
+                        cropStartRef.current = null;
+                        // 鼠标松开立即生效，自动退出 cropMode
+                        setCropMode(false);
+                      }}
                     >
                       {cropRect && (
                         <div className="fc-crop-selection" style={{
@@ -785,108 +896,55 @@ export default function FrameCountPage() {
         )}
       </div>
 
-      {/* ── 底部标签面板 ── */}
+      {/* ── 底部 WCA 面板 ── */}
       {videoSrc && (
         <div className="fc-bottom-panel">
           <div className="fc-tab-bar">
-            <button className={`fc-tab ${activeTab === 'setup' ? 'active' : ''}`} onClick={() => setActiveTab('setup')}>Setup</button>
-            <button className={`fc-tab ${activeTab === 'image' ? 'active' : ''}`} onClick={() => setActiveTab('image')}>Image</button>
-            <button className={`fc-tab ${activeTab === 'wca' ? 'active' : ''}`} onClick={() => setActiveTab('wca')}>WCA</button>
+            <button className={`fc-tab active`}>WCA</button>
           </div>
 
           <div className="fc-tab-content">
-            {activeTab === 'setup' && (
-              <div className="fc-tab-row">
-                <span className="fc-tab-label">FPS</span>
+            <div className="fc-wca-grid">
+              <span className="fc-tab-label">Solve Time</span>
+              <div className="fc-wca-field">
                 <input
                   className="fc-tab-input"
-                  type="number" min={1} step="any" value={videoFps}
-                  onChange={(e) => { setVideoFps(parseFloat(e.target.value) || 0); setFpsAutoDetected(false); }}
+                  type="number" step="0.01" min={0} placeholder="e.g. 4.89"
+                  value={solveTime}
+                  onChange={(e) => setSolveTime(e.target.value)}
                 />
-                {fpsAutoDetected && <span className="fc-fps-auto">Auto</span>}
+                <span className="fc-tab-unit">sec</span>
+              </div>
 
-                <div className="fc-tab-sep" />
+              <span className="fc-tab-label">Frames</span>
+              <div className="fc-wca-field">
+                <span className="fc-tab-value">{wcaFrames}</span>
+                <span className="fc-tab-unit">⌈(⌊t⌋₂+.009)×fps⌉+1</span>
+              </div>
 
-                <button
-                  className={`fc-tab-btn ${cropMode ? 'active' : ''}`}
-                  onClick={() => {
-                    if (cropMode) { setCropMode(false); if (cropRect) showToast('Crop applied'); }
-                    else { setCropMode(true); setCropRect(null); }
-                  }}
-                >
-                  <IconCrop /> {cropMode ? 'Apply Crop' : 'Set Crop'}
+              <span className="fc-tab-label">End Frame</span>
+              <div className="fc-wca-field">
+                <input
+                  className="fc-tab-input"
+                  type="number" min={0} value={wcaEndFrame}
+                  onChange={(e) => setWcaEndFrame(parseInt(e.target.value) || 0)}
+                />
+                <button className="fc-tab-btn" onClick={() => setWcaEndFrame(currentFrame)} title="Mark current frame as end">
+                  ] Mark
                 </button>
-                {cropRect && !cropMode && (
-                  <button className="fc-tab-btn" onClick={() => { setCropRect(null); showToast('Crop cleared'); }}>✕ Clear</button>
-                )}
+                <button className="fc-tab-btn" onClick={() => seekToFrame(wcaEndFrame)} title="Go to end frame">
+                  Go
+                </button>
               </div>
-            )}
 
-            {activeTab === 'image' && (
-              <div className="fc-tab-row">
-                <select
-                  className="fc-tab-select"
-                  value={imageTransform}
-                  onChange={(e) => setImageTransform(e.target.value as TransformValue)}
-                >
-                  {IMAGE_TRANSFORMS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                </select>
-
-                <div className="fc-tab-sep" />
-
-                {(imageTransform !== 'none' || cropRect) && (
-                  <button className="fc-tab-btn reset" onClick={() => {
-                    setImageTransform('none');
-                    setCropRect(null); setCropMode(false);
-                    showToast('Image settings reset');
-                  }}>Reset All</button>
-                )}
+              <span className="fc-tab-label">Start Frame</span>
+              <div className="fc-wca-field">
+                <span className="fc-tab-value">{wcaStartFrame}</span>
+                <button className="fc-tab-btn" onClick={() => seekToFrame(wcaStartFrame)} title="Go to start frame">
+                  Go
+                </button>
               </div>
-            )}
-
-            {activeTab === 'wca' && (
-              <div className="fc-wca-grid">
-                <span className="fc-tab-label">Solve Time</span>
-                <div className="fc-wca-field">
-                  <input
-                    className="fc-tab-input"
-                    type="number" step="0.01" min={0} placeholder="e.g. 4.89"
-                    value={solveTime}
-                    onChange={(e) => setSolveTime(e.target.value)}
-                  />
-                  <span className="fc-tab-unit">sec</span>
-                </div>
-
-                <span className="fc-tab-label">Frames</span>
-                <div className="fc-wca-field">
-                  <span className="fc-tab-value">{wcaFrames}</span>
-                  <span className="fc-tab-unit">⌈(⌊t⌋₂+.009)×fps⌉+1</span>
-                </div>
-
-                <span className="fc-tab-label">End Frame</span>
-                <div className="fc-wca-field">
-                  <input
-                    className="fc-tab-input"
-                    type="number" min={0} value={wcaEndFrame}
-                    onChange={(e) => setWcaEndFrame(parseInt(e.target.value) || 0)}
-                  />
-                  <button className="fc-tab-btn" onClick={() => setWcaEndFrame(currentFrame)} title="Mark current frame as end">
-                    ] Mark
-                  </button>
-                  <button className="fc-tab-btn" onClick={() => seekToFrame(wcaEndFrame)} title="Go to end frame">
-                    Go
-                  </button>
-                </div>
-
-                <span className="fc-tab-label">Start Frame</span>
-                <div className="fc-wca-field">
-                  <span className="fc-tab-value">{wcaStartFrame}</span>
-                  <button className="fc-tab-btn" onClick={() => seekToFrame(wcaStartFrame)} title="Go to start frame">
-                    Go
-                  </button>
-                </div>
-              </div>
-            )}
+            </div>
           </div>
         </div>
       )}
