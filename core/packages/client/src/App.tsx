@@ -39,6 +39,8 @@ const UpcomingCompsPage = lazy(() => import('./pages/UpcomingCompsPage'));
 const IframePage = lazy(() => import('./pages/IframePage'));
 // NOTE: Pretext Canvas 表格 Demo
 const PretextDemo = lazy(() => import('./pages/pretext_demo/PretextDemo'));
+// NOTE: Frame Count 数帧工具懒加载
+const FrameCountPage = lazy(() => import('./pages/frame-count/FrameCountPage'));
 
 function App() {
   return (
@@ -91,6 +93,8 @@ function App() {
         {/* WCA Stats — 统计数据展示 */}
         <Route path="/wca-stats" element={<Suspense fallback={<div>Loading...</div>}><WcaStatsIndex /></Suspense>} />
         <Route path="/wca-stats/:statId" element={<Suspense fallback={<div>Loading...</div>}><WcaStatsPage /></Suspense>} />
+        {/* Frame Count — 数帧工具 */}
+        <Route path="/frame-count" element={<Suspense fallback={<div>Loading...</div>}><FrameCountPage /></Suspense>} />
         {/* Pretext Demo — Canvas 表格渲染实验 */}
         <Route path="/pretext-demo" element={<Suspense fallback={<div>Loading...</div>}><PretextDemo /></Suspense>} />
         {/* Auth — WCA OAuth 回调 */}
