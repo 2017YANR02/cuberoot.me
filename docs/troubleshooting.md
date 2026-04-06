@@ -8,7 +8,7 @@
 3. 确保提交信息包含 `[skip ci]` 避免递归触发
 
 ### 镜像未更新？
-1. 检查 "Deploy Mirror to China" 是否全绿
+1. 检查 "Deploy Mirror to cuberoot" 是否全绿
 2. 查看日志定位错误（通常是 SSH 连接或 rsync 问题）
 
 ### 页面 404？
