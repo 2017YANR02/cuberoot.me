@@ -483,28 +483,27 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
 
 function MiddleBar({ onSettingsClick, onHistoryClick }: { onSettingsClick: () => void; onHistoryClick?: () => void }) {
   const store = useBattleStore();
-  const { players } = store;
-  const p0pts = players[0].points;
-  const p1pts = players[1].points;
-  const p1Leading = p1pts > p0pts;
-  const p0Leading = p0pts > p1pts;
+  const { players, winner, layout } = store;
+
+  // NOTE: versus 布局 → P1(上方/旋转180°) 在左，P0(下方) 在右
+  //       side   布局 → P0(左) 在左，P1(右) 在右 — 与计时区域位置一致
+  const leftId  = layout === 'side' ? 0 : 1;
+  const rightId = layout === 'side' ? 1 : 0;
 
   return (
     <div className="middle-bar">
-      {/* Player 2 (左侧, 旋转 180°) 比分 + 罚时 */}
+      {/* 左侧比分 + 罚时 */}
       <div className="score-section">
         <span className="score-value">
-          {p1Leading && <span className="score-trophy">🏆</span>}
-          {players[1].points}
+          {players[leftId].points}
+          {(winner === leftId || winner === -1) && <span className="score-trophy">🏆</span>}
         </span>
-        <PenaltyDropdown playerId={1} />
+        <PenaltyDropdown playerId={leftId} />
       </div>
 
-      {/* 中间操作按钮 — 1:1 翻译自 battle/index.html 行 78~89 */}
+      {/* 中间操作按钮 */}
       <div className="middle-actions">
-        {/* NOTE: 桌面端键盘提示 */}
         <span className="key-hint">Enter ↑ · ↓ Space</span>
-        {/* NOTE: CubeRoot logo，点击回首页 */}
         <a href="/" className="middle-logo" aria-label="Home">
           <img src={import.meta.env.BASE_URL + 'CubeRoot-dark.png'} alt="CubeRoot" height="24" />
         </a>
@@ -512,13 +511,13 @@ function MiddleBar({ onSettingsClick, onHistoryClick }: { onSettingsClick: () =>
         <button className="middle-btn" title="Settings" onClick={onSettingsClick}>⚙️</button>
       </div>
 
-      {/* Player 1 (右侧) 比分 + 罚时 */}
+      {/* 右侧比分 + 罚时 */}
       <div className="score-section">
         <span className="score-value">
-          {players[0].points}
-          {p0Leading && <span className="score-trophy">🏆</span>}
+          {(winner === rightId || winner === -1) && <span className="score-trophy">🏆</span>}
+          {players[rightId].points}
         </span>
-        <PenaltyDropdown playerId={0} />
+        <PenaltyDropdown playerId={rightId} />
       </div>
     </div>
   );

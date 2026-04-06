@@ -395,9 +395,13 @@
     color: #8a7a6a;
 }
 
-/* NOTE: Player 2（左侧）的比分旋转 180° */
+/* NOTE: Player 2（左侧）的比分旋转 180° — 仅 versus 布局（side 布局不旋转） */
 .middle-bar>.score-section:first-child {
     transform: rotate(180deg);
+}
+
+.side-layout .middle-bar>.score-section:first-child {
+    transform: none;
 }
 
 .score-value {
