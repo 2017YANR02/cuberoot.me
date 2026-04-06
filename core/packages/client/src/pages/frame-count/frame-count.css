@@ -572,6 +572,20 @@
   text-transform: uppercase;
 }
 
+/* ── WCA 模式 grid ── */
+.fc-wca-grid {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 8px 12px;
+  align-items: center;
+}
+
+.fc-wca-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 /* ── Toast 通知 ── */
 .fc-toast {
   position: fixed;
