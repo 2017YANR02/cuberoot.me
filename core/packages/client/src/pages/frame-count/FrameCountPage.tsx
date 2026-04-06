@@ -92,7 +92,7 @@ interface Solve {
   marks: Mark[];
 }
 
-type Rotation = 0 | 90 | 180 | 270;
+
 
 type BottomTab = 'setup' | 'image' | 'wca';
 
@@ -218,14 +218,16 @@ export default function FrameCountPage() {
   const [cropRect, setCropRect] = useState<{ top: number; left: number; bottom: number; right: number } | null>(null);
   const cropStartRef = useRef<{ x: number; y: number } | null>(null);
 
-  // WCA 模式
+  // WCA 模式（sliding 违规检测）
   const [solveTime, setSolveTime] = useState('');
+  const [wcaEndFrame, setWcaEndFrame] = useState(0);
 
   // ── 计算值 ──
 
   const activeSolve = solves[activeSolveIdx] || solves[0];
   const solveTimeNum = parseFloat(solveTime) || 0;
   const wcaFrames = solveTimeNum > 0 && videoFps > 0 ? timeToFrames(solveTimeNum, videoFps) : 0;
+  const wcaStartFrame = Math.max(0, wcaEndFrame - wcaFrames);
 
   // 图像 transform CSS
   const getVideoStyle = useCallback((): React.CSSProperties => {
@@ -739,25 +741,46 @@ export default function FrameCountPage() {
             )}
 
             {activeTab === 'wca' && (
-              <div className="fc-tab-row">
+              <div className="fc-wca-grid">
                 <span className="fc-tab-label">Solve Time</span>
-                <input
-                  className="fc-tab-input"
-                  type="number" step="0.01" min={0} placeholder="e.g. 4.89"
-                  value={solveTime}
-                  onChange={(e) => setSolveTime(e.target.value)}
-                />
-                <span className="fc-tab-unit">sec</span>
-
-                <div className="fc-tab-sep" />
+                <div className="fc-wca-field">
+                  <input
+                    className="fc-tab-input"
+                    type="number" step="0.01" min={0} placeholder="e.g. 4.89"
+                    value={solveTime}
+                    onChange={(e) => setSolveTime(e.target.value)}
+                  />
+                  <span className="fc-tab-unit">sec</span>
+                </div>
 
                 <span className="fc-tab-label">Frames</span>
-                <span className="fc-tab-value">{wcaFrames}</span>
+                <div className="fc-wca-field">
+                  <span className="fc-tab-value">{wcaFrames}</span>
+                  <span className="fc-tab-unit">⌈(⌊t⌋₂+.009)×fps⌉+1</span>
+                </div>
 
-                <div className="fc-tab-sep" />
+                <span className="fc-tab-label">End Frame</span>
+                <div className="fc-wca-field">
+                  <input
+                    className="fc-tab-input"
+                    type="number" min={0} value={wcaEndFrame}
+                    onChange={(e) => setWcaEndFrame(parseInt(e.target.value) || 0)}
+                  />
+                  <button className="fc-tab-btn" onClick={() => setWcaEndFrame(currentFrame)} title="Mark current frame as end">
+                    ] Mark
+                  </button>
+                  <button className="fc-tab-btn" onClick={() => seekToFrame(wcaEndFrame)} title="Go to end frame">
+                    Go
+                  </button>
+                </div>
 
-                <span className="fc-tab-label">Formula</span>
-                <span className="fc-tab-unit">⌈(⌊t⌋₂+.009)×fps⌉+1</span>
+                <span className="fc-tab-label">Start Frame</span>
+                <div className="fc-wca-field">
+                  <span className="fc-tab-value">{wcaStartFrame}</span>
+                  <button className="fc-tab-btn" onClick={() => seekToFrame(wcaStartFrame)} title="Go to start frame">
+                    Go
+                  </button>
+                </div>
               </div>
             )}
           </div>
