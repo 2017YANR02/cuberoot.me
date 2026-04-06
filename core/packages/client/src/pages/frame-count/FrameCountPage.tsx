@@ -223,6 +223,9 @@ export default function FrameCountPage() {
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const isPanningRef = useRef(false);
   const lastPanPosRef = useRef({ x: 0, y: 0 });
+  // Ref 跟踪最新值，避免快速滚轮事件中闭包捕获的值过时
+  const zoomRef = useRef(1);
+  const panRef = useRef({ x: 0, y: 0 });
 
   // wrapper 的 transform（translate 在 scale 之前，translate 单位是屏幕像素）
   const getZoomStyle = useCallback((): React.CSSProperties => {
@@ -233,30 +236,43 @@ export default function FrameCountPage() {
     };
   }, [zoom, pan]);
 
-  // 滚轮缩放 — 以鼠标位置为中心（map 风格）
+  // 滚轮缩放 — 鼠标位置为不动点
   const handleVideoZoom = useCallback((e: React.WheelEvent) => {
     if (e.shiftKey || cropMode) return;
     e.preventDefault();
     e.stopPropagation();
     const target = e.currentTarget as HTMLElement;
     const rect = target.getBoundingClientRect();
-    // 鼠标相对于元素中心的偏移（屏幕像素）
-    const mx = e.clientX - rect.left - rect.width / 2;
-    const my = e.clientY - rect.top - rect.height / 2;
+
+    // getBoundingClientRect() 返回的是变换后的 rect
+    // rect center = naturalCenter + panX（因为 translate 在 scale 之前）
+    // 所以要减去当前 pan 才能得到鼠标相对于未变换中心的偏移
+    const curPan = panRef.current;
+    const curZoom = zoomRef.current;
+    const mx = e.clientX - (rect.left + rect.width / 2) + curPan.x;
+    const my = e.clientY - (rect.top + rect.height / 2) + curPan.y;
+
     const factor = e.deltaY > 0 ? 1 / 1.18 : 1.18;
-    setZoom(prevZoom => {
-      const newZoom = Math.max(1, Math.min(8, prevZoom * factor));
-      if (newZoom <= 1) {
-        setPan({ x: 0, y: 0 });
-        return 1;
-      }
-      // 保持鼠标位置不变：平移补偿
-      setPan(prevPan => ({
-        x: prevPan.x + mx * (1 - newZoom / prevZoom),
-        y: prevPan.y + my * (1 - newZoom / prevZoom),
-      }));
-      return newZoom;
-    });
+    const newZoom = Math.max(1, Math.min(8, curZoom * factor));
+
+    if (newZoom <= 1) {
+      zoomRef.current = 1;
+      panRef.current = { x: 0, y: 0 };
+      setZoom(1);
+      setPan({ x: 0, y: 0 });
+      return;
+    }
+
+    // 不动点公式：newPan = mx*(1-r) + prevPan*r，其中 r = newZoom/prevZoom
+    const r = newZoom / curZoom;
+    const newPan = {
+      x: mx * (1 - r) + curPan.x * r,
+      y: my * (1 - r) + curPan.y * r,
+    };
+    zoomRef.current = newZoom;
+    panRef.current = newPan;
+    setZoom(newZoom);
+    setPan(newPan);
   }, [cropMode]);
 
   // 拖动开始（鼠标 + 触摸）
@@ -272,7 +288,11 @@ export default function FrameCountPage() {
     const dx = clientX - lastPanPosRef.current.x;
     const dy = clientY - lastPanPosRef.current.y;
     lastPanPosRef.current = { x: clientX, y: clientY };
-    setPan(prev => ({ x: prev.x + dx, y: prev.y + dy }));
+    setPan(prev => {
+      const next = { x: prev.x + dx, y: prev.y + dy };
+      panRef.current = next;
+      return next;
+    });
   }, []);
 
   // 拖动结束
