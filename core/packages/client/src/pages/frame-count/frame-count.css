@@ -1,18 +1,15 @@
 /* ==========================================================================
  * NOTE: FrameCountPage 专用样式
- * 暗色主题 + 毛玻璃面板，与 CubeRoot landing.css 设计语言一致
+ * 灰白中性配色 — 参考 ReconViewer 风格
  * ========================================================================== */
 
 /* ── 页面基础 ── */
 .frame-count-page {
   font-family: 'Inter', Arial, sans-serif;
-  background-color: #0a0a0f;
-  color: #f0ebe3;
+  background-color: #3a3a3a;
+  color: #e8e8e8;
   min-height: 100vh;
   padding: 1rem;
-  background-image:
-    radial-gradient(ellipse at 20% 50%, rgba(20, 184, 166, 0.06) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 50%, rgba(59, 130, 246, 0.05) 0%, transparent 50%);
 }
 
 /* ── 顶部导航栏 ── */
@@ -29,7 +26,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #8a9ab5;
+  color: #b0b0b0;
   text-decoration: none;
   font-size: 0.85rem;
   padding: 6px 12px;
@@ -39,9 +36,9 @@
 }
 
 .fc-back:hover {
-  color: #e0e8ff;
-  background: rgba(99, 102, 241, 0.1);
-  border-color: rgba(99, 102, 241, 0.3);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 .fc-back svg {
@@ -52,30 +49,27 @@
 .fc-title {
   font-size: 1.3rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #14b8a6, #06b6d4, #3b82f6);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #e0e0e0;
 }
 
 .fc-shortcuts-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #8a9ab5;
+  color: #b0b0b0;
   font-size: 0.8rem;
   padding: 6px 12px;
   border-radius: 8px;
-  border: 1px solid rgba(100, 100, 180, 0.25);
-  background: rgba(30, 30, 50, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .fc-shortcuts-btn:hover {
-  color: #e0e8ff;
-  border-color: rgba(100, 100, 180, 0.5);
-  background: rgba(99, 102, 241, 0.12);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .fc-shortcuts-btn svg {
@@ -92,19 +86,17 @@
   gap: 1rem;
 }
 
-/* ── 毛玻璃面板 ── */
+/* ── 面板 ── */
 .fc-panel {
-  background: rgba(20, 22, 35, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(100, 100, 180, 0.15);
-  border-radius: 14px;
+  background: #4a4a4a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
   padding: 1.25rem;
   transition: border-color 0.3s;
 }
 
 .fc-panel:hover {
-  border-color: rgba(100, 100, 180, 0.25);
+  border-color: rgba(255, 255, 255, 0.14);
 }
 
 /* ── 视频区域 ── */
@@ -115,12 +107,13 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  background: #2e2e2e;
 }
 
 .fc-video-zone video {
   width: 100%;
   max-height: 65vh;
-  border-radius: 8px;
+  border-radius: 6px;
   background: #000;
   display: block;
 }
@@ -132,25 +125,25 @@
   align-items: center;
   justify-content: center;
   gap: 1rem;
-  color: #6a7a9a;
+  color: #888;
   min-height: 300px;
   width: 100%;
-  border: 2px dashed rgba(100, 100, 180, 0.2);
-  border-radius: 12px;
+  border: 2px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
   cursor: pointer;
   transition: all 0.3s;
 }
 
 .fc-drop-hint:hover {
-  border-color: rgba(20, 184, 166, 0.4);
-  color: #8a9ab5;
-  background: rgba(20, 184, 166, 0.03);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #bbb;
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .fc-drop-hint.dragging {
-  border-color: rgba(20, 184, 166, 0.6);
-  background: rgba(20, 184, 166, 0.06);
-  color: #14b8a6;
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.05);
+  color: #ddd;
 }
 
 .fc-drop-hint svg {
@@ -178,9 +171,8 @@
   position: absolute;
   top: 8px;
   left: 12px;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(8px);
-  color: #a0b0c8;
+  background: rgba(0, 0, 0, 0.55);
+  color: #ccc;
   font-size: 0.72rem;
   padding: 3px 10px;
   border-radius: 6px;
@@ -196,9 +188,8 @@
   position: absolute;
   top: 8px;
   right: 12px;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(8px);
-  color: #a0b0c8;
+  background: rgba(0, 0, 0, 0.55);
+  color: #ccc;
   font-size: 0.72rem;
   padding: 4px 10px;
   border-radius: 6px;
@@ -209,9 +200,9 @@
 }
 
 .fc-change-video:hover {
-  color: #e0e8ff;
-  border-color: rgba(99, 102, 241, 0.5);
-  background: rgba(99, 102, 241, 0.25);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(0, 0, 0, 0.7);
 }
 
 /* ── 控制栏 ── */
@@ -230,19 +221,19 @@
   justify-content: center;
   width: 36px;
   height: 36px;
-  border-radius: 8px;
-  border: 1px solid rgba(100, 100, 180, 0.2);
-  background: rgba(30, 30, 50, 0.6);
-  color: #a0b0c8;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: #bbb;
   cursor: pointer;
   transition: all 0.2s;
   flex-shrink: 0;
 }
 
 .fc-ctrl-btn:hover {
-  color: #e0e8ff;
-  border-color: rgba(99, 102, 241, 0.4);
-  background: rgba(99, 102, 241, 0.15);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .fc-ctrl-btn:active {
@@ -253,15 +244,15 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: rgba(20, 184, 166, 0.15);
-  border-color: rgba(20, 184, 166, 0.3);
-  color: #14b8a6;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #ddd;
 }
 
 .fc-ctrl-btn.play-btn:hover {
-  background: rgba(20, 184, 166, 0.25);
-  border-color: rgba(20, 184, 166, 0.5);
-  color: #2dd4bf;
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #fff;
 }
 
 .fc-ctrl-btn svg {
@@ -289,7 +280,7 @@
   height: 4px;
   -webkit-appearance: none;
   appearance: none;
-  background: rgba(100, 100, 180, 0.15);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 2px;
   outline: none;
   cursor: pointer;
@@ -301,23 +292,23 @@
   border-radius: 2px;
   background: linear-gradient(
     to right,
-    rgba(20, 184, 166, 0.6) 0%,
-    rgba(20, 184, 166, 0.6) var(--progress, 0%),
-    rgba(100, 100, 180, 0.15) var(--progress, 0%),
-    rgba(100, 100, 180, 0.15) 100%
+    rgba(200, 200, 200, 0.5) 0%,
+    rgba(200, 200, 200, 0.5) var(--progress, 0%),
+    rgba(255, 255, 255, 0.1) var(--progress, 0%),
+    rgba(255, 255, 255, 0.1) 100%
   );
 }
 
 .fc-progress-slider::-moz-range-track {
   height: 4px;
   border-radius: 2px;
-  background: rgba(100, 100, 180, 0.15);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .fc-progress-slider::-moz-range-progress {
   height: 4px;
   border-radius: 2px;
-  background: rgba(20, 184, 166, 0.6);
+  background: rgba(200, 200, 200, 0.5);
 }
 
 .fc-progress-slider::-webkit-slider-thumb {
@@ -326,8 +317,8 @@
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: #14b8a6;
-  border: 2px solid #0a0a0f;
+  background: #ccc;
+  border: 2px solid #3a3a3a;
   cursor: pointer;
   margin-top: -5px;
   transition: transform 0.15s;
@@ -341,8 +332,8 @@
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: #14b8a6;
-  border: 2px solid #0a0a0f;
+  background: #ccc;
+  border: 2px solid #3a3a3a;
   cursor: pointer;
 }
 
@@ -359,18 +350,18 @@
 }
 
 .fc-marker-start {
-  background: #4ade80;
+  background: #8bc34a;
 }
 
 .fc-marker-end {
-  background: #f87171;
+  background: #e57373;
 }
 
 /* ── 播放速率按钮组 ── */
 .fc-rate-group {
   display: flex;
   gap: 2px;
-  background: rgba(30, 30, 50, 0.4);
+  background: rgba(0, 0, 0, 0.15);
   border-radius: 6px;
   padding: 2px;
 }
@@ -380,7 +371,7 @@
   border: none;
   border-radius: 4px;
   background: transparent;
-  color: #6a7a9a;
+  color: #888;
   font-size: 0.68rem;
   font-weight: 600;
   cursor: pointer;
@@ -389,32 +380,32 @@
 }
 
 .fc-rate-btn:hover {
-  color: #a0b0c8;
-  background: rgba(100, 100, 180, 0.1);
+  color: #ccc;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .fc-rate-btn.active {
-  color: #14b8a6;
-  background: rgba(20, 184, 166, 0.15);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .fc-ctrl-sep {
   width: 1px;
   height: 24px;
-  background: rgba(100, 100, 180, 0.15);
+  background: rgba(255, 255, 255, 0.1);
   margin: 0 0.25rem;
 }
 
 .fc-ctrl-info {
   font-size: 0.8rem;
-  color: #8a9ab5;
+  color: #aaa;
   margin-left: 0.75rem;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
 .fc-ctrl-info strong {
-  color: #e0e8ff;
+  color: #fff;
   font-weight: 600;
 }
 
@@ -428,12 +419,15 @@
 .fc-panel-title {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #8a9ab5;
+  color: #aaa;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 1rem;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid rgba(100, 100, 180, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 /* ── 表单字段 ── */
@@ -450,17 +444,17 @@
 
 .fc-label {
   font-size: 0.8rem;
-  color: #7a8a9a;
+  color: #999;
   min-width: 100px;
   flex-shrink: 0;
 }
 
 .fc-input {
   flex: 1;
-  background: rgba(10, 10, 20, 0.5);
-  border: 1px solid rgba(100, 100, 180, 0.2);
-  border-radius: 8px;
-  color: #e0e8ff;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  color: #e0e0e0;
   font-size: 0.9rem;
   padding: 8px 12px;
   font-family: 'Inter', monospace;
@@ -471,8 +465,8 @@
 }
 
 .fc-input:focus {
-  border-color: rgba(20, 184, 166, 0.5);
-  box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.1);
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.06);
 }
 
 .fc-input::-webkit-inner-spin-button,
@@ -488,10 +482,10 @@
 
 .fc-go-btn {
   padding: 8px 14px;
-  border-radius: 8px;
-  border: 1px solid rgba(20, 184, 166, 0.3);
-  background: rgba(20, 184, 166, 0.1);
-  color: #14b8a6;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+  color: #ccc;
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
@@ -501,9 +495,9 @@
 }
 
 .fc-go-btn:hover {
-  background: rgba(20, 184, 166, 0.2);
-  border-color: rgba(20, 184, 166, 0.5);
-  color: #2dd4bf;
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #fff;
 }
 
 .fc-go-btn:active {
@@ -524,7 +518,7 @@
 
 .fc-result-label {
   font-size: 0.8rem;
-  color: #7a8a9a;
+  color: #999;
   min-width: 100px;
   flex-shrink: 0;
 }
@@ -532,30 +526,27 @@
 .fc-result-value {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #e0e8ff;
+  color: #e0e0e0;
   font-variant-numeric: tabular-nums;
 }
 
 .fc-result-value.highlight {
   font-size: 1.4rem;
-  background: linear-gradient(135deg, #14b8a6, #06b6d4);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #fff;
 }
 
 .fc-result-unit {
   font-size: 0.75rem;
-  color: #6a7a9a;
+  color: #888;
 }
 
 /* 起止帧标记按钮 */
 .fc-mark-btn {
   padding: 6px 10px;
   border-radius: 6px;
-  border: 1px solid rgba(100, 100, 180, 0.2);
-  background: rgba(30, 30, 50, 0.6);
-  color: #8a9ab5;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: #aaa;
   font-size: 0.72rem;
   cursor: pointer;
   transition: all 0.2s;
@@ -564,30 +555,30 @@
 }
 
 .fc-mark-btn:hover {
-  color: #e0e8ff;
-  border-color: rgba(99, 102, 241, 0.4);
-  background: rgba(99, 102, 241, 0.15);
+  color: #ddd;
+  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .fc-mark-btn.start-mark:hover {
-  border-color: rgba(34, 197, 94, 0.4);
-  background: rgba(34, 197, 94, 0.12);
-  color: #4ade80;
+  border-color: rgba(139, 195, 74, 0.4);
+  background: rgba(139, 195, 74, 0.1);
+  color: #8bc34a;
 }
 
 .fc-mark-btn.end-mark:hover {
-  border-color: rgba(239, 68, 68, 0.4);
-  background: rgba(239, 68, 68, 0.12);
-  color: #f87171;
+  border-color: rgba(229, 115, 115, 0.4);
+  background: rgba(229, 115, 115, 0.1);
+  color: #e57373;
 }
 
 /* FPS 检测标签 */
 .fc-fps-auto {
   font-size: 0.7rem;
-  color: #14b8a6;
+  color: #8bc34a;
   padding: 2px 8px;
   border-radius: 4px;
-  background: rgba(20, 184, 166, 0.1);
+  background: rgba(139, 195, 74, 0.1);
   flex-shrink: 0;
 }
 
@@ -595,7 +586,7 @@
 .fc-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(4px);
   z-index: 1000;
   display: flex;
@@ -610,9 +601,9 @@
 }
 
 .fc-modal {
-  background: rgba(20, 22, 35, 0.95);
-  border: 1px solid rgba(100, 100, 180, 0.25);
-  border-radius: 16px;
+  background: #4a4a4a;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
   padding: 1.5rem;
   max-width: 480px;
   width: 90%;
@@ -629,7 +620,7 @@
 .fc-modal h2 {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #e0e8ff;
+  color: #e0e0e0;
   margin: 0 0 1rem;
 }
 
@@ -637,7 +628,7 @@
   float: right;
   background: none;
   border: none;
-  color: #6a7a9a;
+  color: #888;
   font-size: 1.2rem;
   cursor: pointer;
   padding: 4px;
@@ -645,7 +636,7 @@
 }
 
 .fc-modal-close:hover {
-  color: #e0e8ff;
+  color: #fff;
 }
 
 .fc-shortcut-row {
@@ -653,7 +644,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 6px 0;
-  border-bottom: 1px solid rgba(100, 100, 180, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .fc-shortcut-row:last-child {
@@ -662,7 +653,7 @@
 
 .fc-shortcut-action {
   font-size: 0.82rem;
-  color: #a0b0c8;
+  color: #bbb;
 }
 
 .fc-shortcut-keys {
@@ -675,9 +666,9 @@
   display: inline-block;
   padding: 2px 8px;
   border-radius: 4px;
-  background: rgba(50, 50, 80, 0.6);
-  border: 1px solid rgba(100, 100, 180, 0.2);
-  color: #c0d0e8;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #ddd;
   font-size: 0.72rem;
   font-family: 'Inter', monospace;
   min-width: 22px;
@@ -687,16 +678,218 @@
 .fc-shortcut-section {
   font-size: 0.75rem;
   font-weight: 600;
-  color: #6a7a9a;
+  color: #888;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin: 1rem 0 0.5rem;
   padding-bottom: 0.25rem;
-  border-bottom: 1px solid rgba(100, 100, 180, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .fc-shortcut-section:first-child {
   margin-top: 0;
+}
+
+/* ── Image Settings 面板 ── */
+
+/* 裁切覆盖层 */
+.fc-crop-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  cursor: crosshair;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.fc-crop-selection {
+  position: absolute;
+  border: 2px solid #fff;
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+
+.fc-crop-hint {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.7);
+  color: #ccc;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  pointer-events: none;
+}
+
+/* 旋转按钮组 */
+.fc-rotation-group {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.fc-rot-btn {
+  padding: 4px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #999;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.fc-rot-btn:hover {
+  color: #ccc;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.fc-rot-btn.active {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* 翻转按钮 */
+.fc-flip-btn {
+  padding: 4px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #999;
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.fc-flip-btn:hover {
+  color: #ccc;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.fc-flip-btn.active {
+  color: #f5c542;
+  border-color: rgba(245, 197, 66, 0.35);
+  background: rgba(245, 197, 66, 0.08);
+}
+
+/* 裁切按钮 */
+.fc-crop-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #999;
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.fc-crop-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.fc-crop-btn:hover {
+  color: #ccc;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.fc-crop-btn.active {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* Reset All 按钮 */
+.fc-reset-btn {
+  width: 100%;
+  padding: 6px;
+  margin-top: 0.5rem;
+  border: 1px solid rgba(229, 115, 115, 0.2);
+  border-radius: 6px;
+  background: rgba(229, 115, 115, 0.06);
+  color: #e57373;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.fc-reset-btn:hover {
+  background: rgba(229, 115, 115, 0.12);
+  border-color: rgba(229, 115, 115, 0.35);
+}
+
+/* ── Time → Frames Calculator ── */
+.fc-t2f-panel {
+  grid-column: 1 / -1;
+}
+
+.fc-t2f-desc {
+  font-size: 0.78rem;
+  color: #999;
+  margin: 0 0 1rem;
+  line-height: 1.5;
+}
+
+.fc-formula {
+  display: inline-block;
+  margin-left: 0.25rem;
+  padding: 1px 8px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #ccc;
+  font-size: 0.78rem;
+  font-family: 'Inter', monospace;
+}
+
+.fc-t2f-table-wrap {
+  margin-top: 0.75rem;
+  overflow-x: auto;
+}
+
+.fc-t2f-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.fc-t2f-table th {
+  text-align: left;
+  padding: 6px 12px;
+  color: #999;
+  font-weight: 600;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.fc-t2f-table td {
+  padding: 5px 12px;
+  color: #ccc;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.fc-t2f-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.fc-t2f-table tr.fc-t2f-active {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.fc-t2f-table tr.fc-t2f-active td {
+  color: #fff;
+  font-weight: 600;
 }
 
 /* ── 响应式 ── */
@@ -743,28 +936,22 @@
 }
 
 /* ── Copy All 按钮 ── */
-.fc-panel-title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
 .fc-copy-all-btn {
   font-size: 0.7rem;
   padding: 3px 10px;
   border-radius: 6px;
-  border: 1px solid rgba(100, 100, 180, 0.2);
-  background: rgba(30, 30, 50, 0.6);
-  color: #8a9ab5;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: #aaa;
   cursor: pointer;
   transition: all 0.2s;
   font-weight: 500;
 }
 
 .fc-copy-all-btn:hover {
-  color: #14b8a6;
-  border-color: rgba(20, 184, 166, 0.4);
-  background: rgba(20, 184, 166, 0.1);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .fc-copy-all-btn:active {
@@ -777,7 +964,7 @@
   bottom: 2rem;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(20, 184, 166, 0.9);
+  background: rgba(80, 80, 80, 0.95);
   color: #fff;
   padding: 8px 20px;
   border-radius: 8px;
@@ -786,7 +973,8 @@
   z-index: 2000;
   pointer-events: none;
   animation: fc-toast-in 0.2s ease, fc-toast-out 0.3s ease 1.2s forwards;
-  box-shadow: 0 4px 16px rgba(20, 184, 166, 0.3);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 @keyframes fc-toast-in {

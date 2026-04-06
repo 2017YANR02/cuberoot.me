@@ -87,6 +87,31 @@ const IconFrameForward = () => (
   </svg>
 );
 
+const IconCrop = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M6.13 1L6 16a2 2 0 002 2h15" />
+    <path d="M1 6.13L16 6a2 2 0 012 2v15" />
+  </svg>
+);
+
+// ── 常量类型 ──────────────────────────────────────────────────────────────
+
+type Rotation = 0 | 90 | 180 | 270;
+const ROTATION_OPTIONS: { value: Rotation; label: string }[] = [
+  { value: 0, label: 'No Rotation' },
+  { value: 90, label: '90° CW' },
+  { value: 270, label: '90° CCW' },
+  { value: 180, label: '180°' },
+];
+
+/** WCA 时间→帧数公式: ROUNDUP((ROUNDDOWN(time, 2) + 0.009) * fps) + 1 */
+function timeToFrames(time: number, fps: number): number {
+  const truncated = Math.floor(time * 100) / 100; // ROUNDDOWN(time, 2)
+  return Math.ceil((truncated + 0.009) * fps) + 1;
+}
+
+const COMMON_FPS = [29.97, 59.94, 119.88, 239.76, 60, 120, 240, 30, 50, 48, 25, 24] as const;
+
 // ── 时间格式化 ────────────────────────────────────────────────────────────
 
 function formatTime(seconds: number): string {
@@ -124,16 +149,26 @@ function detectFps(video: HTMLVideoElement): Promise<number | null> {
     // 超时保护
     const timeout = setTimeout(() => finish(null), 4000);
 
-    /** 吸附到常见帧率 */
+    /** 吸附到常见帧率 — NTSC 优先 */
     const snapFps = (rawFps: number): number => {
-      const commonFps = [24, 25, 29.97, 30, 48, 50, 59.94, 60, 119.88, 120, 239.76, 240];
-      let best = rawFps;
-      let bestDist = Infinity;
-      for (const cf of commonFps) {
-        const dist = Math.abs(rawFps - cf);
-        if (dist < bestDist) { bestDist = dist; best = cf; }
+      // NTSC 标准帧率放前面，整数放后面
+      // 当两个候选距离差 < 0.5 时优先选 NTSC（因为现实相机几乎都用 NTSC）
+      const commonFps = [29.97, 59.94, 119.88, 239.76, 24, 25, 30, 48, 50, 60, 120, 240];
+      const candidates = commonFps
+        .map(cf => ({ fps: cf, dist: Math.abs(rawFps - cf) }))
+        .filter(c => c.dist < 2)
+        .sort((a, b) => a.dist - b.dist);
+
+      if (candidates.length === 0) return Math.round(rawFps * 100) / 100;
+
+      // 如果最近的两个候选差距很小（如 119.88 vs 120，距离差 < 0.5），
+      // 优先选 NTSC（带小数的），因为绝大多数摄像设备用的是 NTSC
+      if (candidates.length >= 2 && candidates[1].dist - candidates[0].dist < 0.5) {
+        const ntsc = candidates.find(c => c.fps % 1 !== 0);
+        if (ntsc) return ntsc.fps;
       }
-      return bestDist < 2 ? best : Math.round(rawFps * 100) / 100;
+
+      return candidates[0].fps;
     };
 
     /** 方案 A：getVideoPlaybackQuality — 计数所有解码帧，不受刷新率限制 */
@@ -305,9 +340,27 @@ export default function FrameCountPage() {
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
+  // 时间→帧数计算器
+  const [solveTime, setSolveTime] = useState('');
+
+  // 图像变换
+  const [rotation, setRotation] = useState<Rotation>(0);
+  const [flipH, setFlipH] = useState(false);
+  const [flipV, setFlipV] = useState(false);
+  const [cropMode, setCropMode] = useState(false);
+  const [cropRect, setCropRect] = useState<{ top: number; left: number; bottom: number; right: number } | null>(null);
+  const cropStartRef = useRef<{ x: number; y: number } | null>(null);
+
   // NOTE: 计算结果
   const frameCount = Math.max(0, endFrame - startFrame);
   const videoTime = videoFps > 0 ? frameCount / videoFps : 0;
+
+  // NOTE: CSS transform 字符串
+  const videoTransform = [
+    rotation !== 0 ? `rotate(${rotation}deg)` : '',
+    flipH ? 'scaleX(-1)' : '',
+    flipV ? 'scaleY(-1)' : '',
+  ].filter(Boolean).join(' ') || 'none';
 
   /** 显示短暂 Toast */
   const showToast = useCallback((msg: string) => {
@@ -580,7 +633,57 @@ export default function FrameCountPage() {
               <button className="fc-change-video" onClick={() => fileInputRef.current?.click()}>
                 Change Video
               </button>
-              <video ref={videoRef} src={videoSrc} preload="auto" />
+              <video
+                ref={videoRef}
+                src={videoSrc}
+                preload="auto"
+                style={{
+                  transform: videoTransform,
+                  clipPath: cropRect
+                    ? `inset(${cropRect.top}% ${cropRect.right}% ${cropRect.bottom}% ${cropRect.left}%)`
+                    : undefined,
+                }}
+              />
+              {/* Crop overlay */}
+              {cropMode && (
+                <div
+                  className="fc-crop-overlay"
+                  onMouseDown={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const x = ((e.clientX - rect.left) / rect.width) * 100;
+                    const y = ((e.clientY - rect.top) / rect.height) * 100;
+                    cropStartRef.current = { x, y };
+                    setCropRect(null);
+                  }}
+                  onMouseMove={(e) => {
+                    if (!cropStartRef.current) return;
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const x = Math.min(100, Math.max(0, ((e.clientX - rect.left) / rect.width) * 100));
+                    const y = Math.min(100, Math.max(0, ((e.clientY - rect.top) / rect.height) * 100));
+                    const s = cropStartRef.current;
+                    setCropRect({
+                      top: Math.min(s.y, y),
+                      left: Math.min(s.x, x),
+                      bottom: 100 - Math.max(s.y, y),
+                      right: 100 - Math.max(s.x, x),
+                    });
+                  }}
+                  onMouseUp={() => { cropStartRef.current = null; }}
+                >
+                  {cropRect && (
+                    <div
+                      className="fc-crop-selection"
+                      style={{
+                        top: `${cropRect.top}%`,
+                        left: `${cropRect.left}%`,
+                        right: `${cropRect.right}%`,
+                        bottom: `${cropRect.bottom}%`,
+                      }}
+                    />
+                  )}
+                  <span className="fc-crop-hint">Drag to select crop area</span>
+                </div>
+              )}
             </>
           ) : (
             <div
@@ -739,6 +842,86 @@ export default function FrameCountPage() {
             </div>
           </div>
 
+          {/* Image Settings */}
+          <div className="fc-panel fc-image-panel">
+            <div className="fc-panel-title">Image Settings</div>
+
+            <div className="fc-field">
+              <span className="fc-label">Rotation</span>
+              <div className="fc-rotation-group">
+                {ROTATION_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    className={`fc-rot-btn ${rotation === opt.value ? 'active' : ''}`}
+                    onClick={() => setRotation(opt.value)}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="fc-field">
+              <span className="fc-label">Flip</span>
+              <button
+                className={`fc-flip-btn ${flipH ? 'active' : ''}`}
+                onClick={() => setFlipH(!flipH)}
+              >
+                ↔ Horizontal
+              </button>
+              <button
+                className={`fc-flip-btn ${flipV ? 'active' : ''}`}
+                onClick={() => setFlipV(!flipV)}
+              >
+                ↕ Vertical
+              </button>
+            </div>
+
+            <div className="fc-field">
+              <span className="fc-label">Crop</span>
+              <button
+                className={`fc-crop-btn ${cropMode ? 'active' : ''}`}
+                onClick={() => {
+                  if (cropMode) {
+                    // Apply: 退出裁切模式
+                    setCropMode(false);
+                    if (cropRect) showToast('Crop applied');
+                  } else {
+                    // Enter crop mode
+                    setCropMode(true);
+                    setCropRect(null);
+                  }
+                }}
+              >
+                <IconCrop /> {cropMode ? 'Apply Crop' : 'Set Crop'}
+              </button>
+              {cropRect && !cropMode && (
+                <button
+                  className="fc-crop-btn"
+                  onClick={() => { setCropRect(null); showToast('Crop cleared'); }}
+                >
+                  ✕ Clear
+                </button>
+              )}
+            </div>
+
+            {(rotation !== 0 || flipH || flipV || cropRect) && (
+              <button
+                className="fc-reset-btn"
+                onClick={() => {
+                  setRotation(0);
+                  setFlipH(false);
+                  setFlipV(false);
+                  setCropRect(null);
+                  setCropMode(false);
+                  showToast('Image settings reset');
+                }}
+              >
+                Reset All
+              </button>
+            )}
+          </div>
+
           {/* Results */}
           <div className="fc-panel">
             <div className="fc-panel-title">
@@ -782,6 +965,53 @@ export default function FrameCountPage() {
               <span className="fc-result-value">{formatTime(endFrame / videoFps)}</span>
             </div>
           </div>
+
+          {/* Time → Frames 计算器 */}
+          <div className="fc-panel fc-t2f-panel">
+            <div className="fc-panel-title">Time → Frames</div>
+            <p className="fc-t2f-desc">
+              Enter a solve time (seconds). Frame count is calculated using WCA convention:
+              <code className="fc-formula">⌈(⌊time⌋₂ + 0.009) × fps⌉ + 1</code>
+            </p>
+
+            <div className="fc-field">
+              <span className="fc-label">Solve Time (s)</span>
+              <input
+                className="fc-input"
+                type="number"
+                step="0.01"
+                min={0}
+                placeholder="e.g. 4.89"
+                value={solveTime}
+                onChange={(e) => setSolveTime(e.target.value)}
+              />
+            </div>
+
+            {solveTime && parseFloat(solveTime) > 0 && (
+              <div className="fc-t2f-table-wrap">
+                <table className="fc-t2f-table">
+                  <thead>
+                    <tr>
+                      <th>FPS</th>
+                      <th>Frames</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {COMMON_FPS.map((fps) => {
+                      const frames = timeToFrames(parseFloat(solveTime), fps);
+                      const isActive = Math.abs(fps - videoFps) < 0.5;
+                      return (
+                        <tr key={fps} className={isActive ? 'fc-t2f-active' : ''}>
+                          <td>{fps}</td>
+                          <td>{frames}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -803,7 +1033,7 @@ export default function FrameCountPage() {
                   <span className="fc-shortcut-keys">
                     {item.keys.map((k, j) => (
                       <span key={j}>
-                        {j > 0 && <span style={{ color: '#6a7a9a', margin: '0 2px' }}>+</span>}
+                        {j > 0 && <span style={{ color: '#888', margin: '0 2px' }}>+</span>}
                         <kbd className="fc-kbd">{k}</kbd>
                       </span>
                     ))}
