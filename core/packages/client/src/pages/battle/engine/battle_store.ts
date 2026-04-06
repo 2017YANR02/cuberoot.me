@@ -754,8 +754,21 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   },
 
   setLayout: (layout: BattleLayout) => {
+    const s = get();
+    if (s.layout === layout) return; // NOTE: 避免重复设置
     localStorage.setItem(LS_PREFIX + 'layout', layout);
-    const newPlayers: [PlayerState, PlayerState] = [createPlayer(0), createPlayer(1)];
+    // NOTE: 保留玩家累积数据（solveHistory, points），仅重置当前回合状态
+    const newPlayers = [...s.players] as [PlayerState, PlayerState];
+    for (let i = 0; i < 2; i++) {
+      newPlayers[i] = {
+        ...s.players[i],
+        isReady: false,
+        canStart: false,
+        isTiming: false,
+        hasFinished: false,
+        pointerId: null,
+      };
+    }
     set({ layout, winner: -2, players: newPlayers });
     // NOTE: scrMgr 可能还没加载（自动横屏检测比脚本加载快）
     if (typeof window.scrMgr !== 'undefined') {
