@@ -238,7 +238,72 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
                       handleBlur(p, t, e.target.value);
                     }}
                     onFocus={(e) => { state.setFocusedCell(p, t); e.target.select(); }}
-                    onKeyDown={(e) => handleKeyDown(e, p, t)}
+                    onKeyDown={(e) => {
+                      // NOTE: inputMode="none" 阻止了浏览器原生键盘输入，需手动处理
+                      const input = e.target as HTMLInputElement;
+                      if (/^[0-9]$/.test(e.key)) {
+                        e.preventDefault();
+                        // NOTE: 如果输入框有选中文本，替换选中内容
+                        const start = input.selectionStart ?? input.value.length;
+                        const end = input.selectionEnd ?? input.value.length;
+                        const before = input.value.slice(0, start);
+                        const after = input.value.slice(end);
+                        input.value = before + e.key + after;
+                        input.selectionStart = input.selectionEnd = start + 1;
+                        return;
+                      }
+                      if (e.key === '.' || e.code === 'NumpadDecimal') {
+                        e.preventDefault();
+                        if (!input.value.includes('.')) {
+                          const pos = input.selectionStart ?? input.value.length;
+                          const endPos = input.selectionEnd ?? input.value.length;
+                          input.value = input.value.slice(0, pos) + '.' + input.value.slice(endPos);
+                          input.selectionStart = input.selectionEnd = pos + 1;
+                        }
+                        return;
+                      }
+                      if (e.key === ':') {
+                        e.preventDefault();
+                        if (!input.value.includes(':')) {
+                          const pos = input.selectionStart ?? input.value.length;
+                          const endPos = input.selectionEnd ?? input.value.length;
+                          input.value = input.value.slice(0, pos) + ':' + input.value.slice(endPos);
+                          input.selectionStart = input.selectionEnd = pos + 1;
+                        }
+                        return;
+                      }
+                      if (e.key === 'Backspace') {
+                        e.preventDefault();
+                        const start = input.selectionStart ?? input.value.length;
+                        const end = input.selectionEnd ?? input.value.length;
+                        if (start !== end) {
+                          input.value = input.value.slice(0, start) + input.value.slice(end);
+                          input.selectionStart = input.selectionEnd = start;
+                        } else if (start > 0) {
+                          input.value = input.value.slice(0, start - 1) + input.value.slice(start);
+                          input.selectionStart = input.selectionEnd = start - 1;
+                        }
+                        return;
+                      }
+                      if (e.key === 'Delete') {
+                        e.preventDefault();
+                        const start = input.selectionStart ?? 0;
+                        const end = input.selectionEnd ?? 0;
+                        if (start !== end) {
+                          input.value = input.value.slice(0, start) + input.value.slice(end);
+                        } else if (start < input.value.length) {
+                          input.value = input.value.slice(0, start) + input.value.slice(start + 1);
+                        }
+                        input.selectionStart = input.selectionEnd = start;
+                        return;
+                      }
+                      if (e.key === 'd' || e.key === 'D') {
+                        e.preventDefault();
+                        input.value = 'DNF';
+                        return;
+                      }
+                      handleKeyDown(e, p, t);
+                    }}
                   />
                 </div>
               );
