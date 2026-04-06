@@ -133,27 +133,24 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
       return;
     }
 
-    // NOTE: Backspace — 空格时反向 zigzag
+    // NOTE: Backspace — 全选/空格时一步清空+跳前一格
     if (e.key === 'Backspace') {
       e.preventDefault();
+      e.stopPropagation(); // 阻止冒泡到 Numpad 全局 handler
       const start = input.selectionStart ?? input.value.length;
       const end = input.selectionEnd ?? input.value.length;
       const isFullSel = start === 0 && end === input.value.length && input.value.length > 0;
-      if (isFullSel) {
-        recordAndUpdate(absIdx, t, 0);
-        input.value = '';
-      } else if (input.value.length > 0) {
-        input.value = input.value.slice(0, start > 0 ? start - 1 : 0) + input.value.slice(end);
-        input.selectionStart = input.selectionEnd = Math.max(0, start - 1);
-      } else {
-        // 空格 → 反向跳格
-        recordAndUpdate(absIdx, t, 0);
-        state.saveToUrl();
+      if (isFullSel || input.value.length === 0) {
+        // NOTE: 手动保存空值到 store（而非等 onBlur，避免异步竞争）
+        handleBlur(p, t, '');
         const prv = prevCell(p, t);
         if (prv) {
-          recordAndUpdate(state.seedOn + prv[0], prv[1], 0);
-          navigateToCell(prv[0], prv[1]);
+          // NOTE: 延迟导航 — 等 React re-render（key 变化重建 input）完成后再 focus
+          requestAnimationFrame(() => navigateToCell(prv[0], prv[1]));
         }
+      } else {
+        input.value = input.value.slice(0, start > 0 ? start - 1 : 0) + input.value.slice(end);
+        input.selectionStart = input.selectionEnd = Math.max(0, start - 1);
       }
       return;
     }
