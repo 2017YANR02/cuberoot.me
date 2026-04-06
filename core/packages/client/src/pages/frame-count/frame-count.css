@@ -1,6 +1,6 @@
 /* ==========================================================================
  * NOTE: FrameCountPage 专用样式
- * 灰白中性配色 — 参考 ReconViewer 风格
+ * ReconViewer 风格 — 灰白中性配色
  * ========================================================================== */
 
 /* ── 页面基础 ── */
@@ -9,7 +9,9 @@
   background-color: #3a3a3a;
   color: #e8e8e8;
   min-height: 100vh;
-  padding: 1rem;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
 }
 
 /* ── 顶部导航栏 ── */
@@ -17,9 +19,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  max-width: 1100px;
-  margin: 0 auto 1rem;
-  padding: 0 0.5rem;
+  margin-bottom: 0.75rem;
+  padding: 0 0.25rem;
 }
 
 .fc-back {
@@ -34,20 +35,11 @@
   transition: all 0.2s;
   border: 1px solid transparent;
 }
-
-.fc-back:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.15);
-}
-
-.fc-back svg {
-  width: 16px;
-  height: 16px;
-}
+.fc-back:hover { color: #fff; background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); }
+.fc-back svg { width: 16px; height: 16px; }
 
 .fc-title {
-  font-size: 1.3rem;
+  font-size: 1.2rem;
   font-weight: 700;
   color: #e0e0e0;
 }
@@ -60,44 +52,45 @@
   font-size: 0.8rem;
   padding: 6px 12px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
   cursor: pointer;
   transition: all 0.2s;
 }
+.fc-shortcuts-btn:hover { color: #fff; border-color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.1); }
+.fc-shortcuts-btn svg { width: 14px; height: 14px; }
 
-.fc-shortcuts-btn:hover {
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.25);
-  background: rgba(255, 255, 255, 0.1);
+/* ── 主体布局：视频 + 右侧面板 ── */
+.fc-main {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 0.75rem;
+  flex: 1;
+  min-height: 0;
 }
 
-.fc-shortcuts-btn svg {
-  width: 14px;
-  height: 14px;
-}
-
-/* ── 主内容区域 ── */
-.fc-content {
-  max-width: 1100px;
-  margin: 0 auto;
+.fc-video-col {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.fc-solve-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
 }
 
 /* ── 面板 ── */
 .fc-panel {
   background: #4a4a4a;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
-  padding: 1.25rem;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
   transition: border-color 0.3s;
 }
-
-.fc-panel:hover {
-  border-color: rgba(255, 255, 255, 0.14);
-}
+.fc-panel:hover { border-color: rgba(255,255,255,0.14); }
 
 /* ── 视频区域 ── */
 .fc-video-zone {
@@ -108,14 +101,86 @@
   justify-content: center;
   overflow: hidden;
   background: #2e2e2e;
+  flex: 1;
 }
 
 .fc-video-zone video {
   width: 100%;
   max-height: 65vh;
-  border-radius: 6px;
   background: #000;
   display: block;
+}
+
+.fc-video-label {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  font-size: 0.72rem;
+  color: #ccc;
+  background: rgba(0,0,0,0.5);
+  padding: 3px 8px;
+  border-radius: 4px;
+  z-index: 5;
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fc-change-video {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  font-size: 0.72rem;
+  color: #ccc;
+  background: rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.15);
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  z-index: 5;
+  transition: all 0.2s;
+}
+.fc-change-video:hover { background: rgba(0,0,0,0.7); color: #fff; border-color: rgba(255,255,255,0.3); }
+
+/* 视频 overlay — 帧号/时间 */
+.fc-video-overlay {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.85);
+  text-shadow: 0 2px 8px rgba(0,0,0,0.8), 0 0 2px rgba(0,0,0,0.9);
+  z-index: 5;
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+/* 裁切相关 */
+.fc-crop-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  cursor: crosshair;
+  background: rgba(0,0,0,0.3);
+}
+
+.fc-crop-selection {
+  position: absolute;
+  border: 2px dashed rgba(255,255,255,0.7);
+  background: rgba(255,255,255,0.08);
+}
+
+.fc-crop-hint {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: rgba(255,255,255,0.6);
+  font-size: 0.85rem;
+  pointer-events: none;
 }
 
 /* 拖放提示 */
@@ -128,90 +193,62 @@
   color: #888;
   min-height: 300px;
   width: 100%;
-  border: 2px dashed rgba(255, 255, 255, 0.15);
-  border-radius: 10px;
   cursor: pointer;
   transition: all 0.3s;
 }
-
-.fc-drop-hint:hover {
-  border-color: rgba(255, 255, 255, 0.3);
-  color: #bbb;
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.fc-drop-hint.dragging {
-  border-color: rgba(255, 255, 255, 0.5);
-  background: rgba(255, 255, 255, 0.05);
-  color: #ddd;
-}
-
-.fc-drop-hint svg {
-  width: 48px;
-  height: 48px;
-  opacity: 0.5;
-}
-
-.fc-drop-hint .fc-drop-text {
-  font-size: 1rem;
-  font-weight: 500;
-}
-
-.fc-drop-hint .fc-drop-sub {
-  font-size: 0.8rem;
-  opacity: 0.6;
-}
-
-.fc-file-input {
-  display: none;
-}
-
-/* 视频上方的文件名标签 */
-.fc-video-label {
-  position: absolute;
-  top: 8px;
-  left: 12px;
-  background: rgba(0, 0, 0, 0.55);
-  color: #ccc;
-  font-size: 0.72rem;
-  padding: 3px 10px;
-  border-radius: 6px;
-  z-index: 2;
-  max-width: 60%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* 重新选择文件按钮 */
-.fc-change-video {
-  position: absolute;
-  top: 8px;
-  right: 12px;
-  background: rgba(0, 0, 0, 0.55);
-  color: #ccc;
-  font-size: 0.72rem;
-  padding: 4px 10px;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  cursor: pointer;
-  z-index: 2;
-  transition: all 0.2s;
-}
-
-.fc-change-video:hover {
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.35);
-  background: rgba(0, 0, 0, 0.7);
-}
+.fc-drop-hint:hover { color: #bbb; }
+.fc-drop-hint.dragging { background: rgba(255,255,255,0.06); color: #ccc; }
+.fc-drop-hint svg { width: 48px; height: 48px; opacity: 0.5; }
+.fc-drop-text { font-size: 1rem; font-weight: 600; }
+.fc-drop-sub { font-size: 0.8rem; opacity: 0.6; }
+.fc-file-input { display: none; }
 
 /* ── 控制栏 ── */
+.fc-controls-wrap {
+  padding: 0.75rem 1rem;
+}
+
+/* Progress bar */
+.fc-progress-bar {
+  position: relative;
+  margin-bottom: 0.5rem;
+}
+
+.fc-progress-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(to right, #888 var(--progress, 0%), #555 var(--progress, 0%));
+  outline: none;
+  cursor: pointer;
+}
+.fc-progress-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: #ccc;
+  cursor: pointer;
+}
+
+/* Mark indicators */
+.fc-marker-mark {
+  position: absolute;
+  top: -2px;
+  width: 2px;
+  height: 8px;
+  background: #e8c44a;
+  transform: translateX(-50%);
+  pointer-events: none;
+  border-radius: 1px;
+}
+
+/* Controls */
 .fc-controls {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.75rem;
+  gap: 4px;
   flex-wrap: wrap;
 }
 
@@ -219,770 +256,436 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 32px; height: 32px;
   border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
-  color: #bbb;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.06);
+  color: #ccc;
   cursor: pointer;
-  transition: all 0.2s;
-  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.fc-ctrl-btn:hover { background: rgba(255,255,255,0.12); color: #fff; border-color: rgba(255,255,255,0.2); }
+.fc-ctrl-btn:active { transform: scale(0.92); }
+.fc-ctrl-btn svg { width: 14px; height: 14px; }
+.fc-ctrl-btn.play-btn { width: 38px; height: 38px; border-radius: 50%; }
+.fc-ctrl-btn.play-btn svg { width: 16px; height: 16px; }
+
+.fc-ctrl-sep {
+  width: 1px; height: 20px;
+  background: rgba(255,255,255,0.1);
+  margin: 0 6px;
 }
 
-.fc-ctrl-btn:hover {
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.12);
-}
-
-.fc-ctrl-btn:active {
-  transform: scale(0.93);
-}
-
-.fc-ctrl-btn.play-btn {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
-  color: #ddd;
-}
-
-.fc-ctrl-btn.play-btn:hover {
-  background: rgba(255, 255, 255, 0.18);
-  border-color: rgba(255, 255, 255, 0.35);
-  color: #fff;
-}
-
-.fc-ctrl-btn svg {
-  width: 18px;
-  height: 18px;
-}
-
-/* ── 控制栏容器 ── */
-.fc-controls-wrap {
-  padding: 0.75rem 1.25rem 0.5rem;
-}
-
-/* ── 进度条 ── */
-.fc-progress-bar {
-  position: relative;
-  width: 100%;
-  height: 20px;
-  margin-bottom: 0.5rem;
-  display: flex;
-  align-items: center;
-}
-
-.fc-progress-slider {
-  width: 100%;
-  height: 4px;
-  -webkit-appearance: none;
-  appearance: none;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 2px;
-  outline: none;
-  cursor: pointer;
-  position: relative;
-}
-
-.fc-progress-slider::-webkit-slider-runnable-track {
-  height: 4px;
-  border-radius: 2px;
-  background: linear-gradient(
-    to right,
-    rgba(200, 200, 200, 0.5) 0%,
-    rgba(200, 200, 200, 0.5) var(--progress, 0%),
-    rgba(255, 255, 255, 0.1) var(--progress, 0%),
-    rgba(255, 255, 255, 0.1) 100%
-  );
-}
-
-.fc-progress-slider::-moz-range-track {
-  height: 4px;
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.fc-progress-slider::-moz-range-progress {
-  height: 4px;
-  border-radius: 2px;
-  background: rgba(200, 200, 200, 0.5);
-}
-
-.fc-progress-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: #ccc;
-  border: 2px solid #3a3a3a;
-  cursor: pointer;
-  margin-top: -5px;
-  transition: transform 0.15s;
-}
-
-.fc-progress-slider::-webkit-slider-thumb:hover {
-  transform: scale(1.3);
-}
-
-.fc-progress-slider::-moz-range-thumb {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: #ccc;
-  border: 2px solid #3a3a3a;
-  cursor: pointer;
-}
-
-/* 起止帧标记 */
-.fc-marker {
-  position: absolute;
-  top: 50%;
-  width: 3px;
-  height: 14px;
-  transform: translate(-50%, -50%);
-  border-radius: 1px;
-  pointer-events: none;
-  z-index: 2;
-}
-
-.fc-marker-start {
-  background: #8bc34a;
-}
-
-.fc-marker-end {
-  background: #e57373;
-}
-
-/* ── 播放速率按钮组 ── */
 .fc-rate-group {
   display: flex;
   gap: 2px;
-  background: rgba(0, 0, 0, 0.15);
-  border-radius: 6px;
-  padding: 2px;
 }
 
 .fc-rate-btn {
-  padding: 3px 8px;
-  border: none;
+  padding: 4px 8px;
   border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.08);
   background: transparent;
-  color: #888;
-  font-size: 0.68rem;
-  font-weight: 600;
+  color: #999;
+  font-size: 0.7rem;
   cursor: pointer;
   transition: all 0.15s;
-  font-family: 'Inter', monospace;
 }
-
-.fc-rate-btn:hover {
-  color: #ccc;
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.fc-rate-btn.active {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.fc-ctrl-sep {
-  width: 1px;
-  height: 24px;
-  background: rgba(255, 255, 255, 0.1);
-  margin: 0 0.25rem;
-}
+.fc-rate-btn:hover { color: #ccc; border-color: rgba(255,255,255,0.2); }
+.fc-rate-btn.active { color: #fff; background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); font-weight: 600; }
 
 .fc-ctrl-info {
   font-size: 0.8rem;
   color: #aaa;
-  margin-left: 0.75rem;
+  margin-left: auto;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
+.fc-ctrl-info strong { color: #fff; font-weight: 600; }
 
-.fc-ctrl-info strong {
-  color: #fff;
-  font-weight: 600;
-}
+/* ── 右侧 Solve 面板 ── */
 
-/* ── 数据面板区域 ── */
-.fc-data-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-}
-
-.fc-panel-title {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #aaa;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+/* Solve 选择器 */
+.fc-solve-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 4px;
+  padding: 8px;
 }
 
-/* ── 表单字段 ── */
-.fc-field {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-}
-
-.fc-field:last-child {
-  margin-bottom: 0;
-}
-
-.fc-label {
-  font-size: 0.8rem;
-  color: #999;
-  min-width: 100px;
-  flex-shrink: 0;
-}
-
-.fc-input {
+.fc-solve-select {
   flex: 1;
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0,0,0,0.2);
+  border: 1px solid rgba(255,255,255,0.12);
   border-radius: 6px;
   color: #e0e0e0;
-  font-size: 0.9rem;
-  padding: 8px 12px;
-  font-family: 'Inter', monospace;
-  font-variant-numeric: tabular-nums;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  font-size: 0.85rem;
+  padding: 6px 10px;
   outline: none;
-  min-width: 0;
+  cursor: pointer;
 }
+.fc-solve-select:focus { border-color: rgba(255,255,255,0.35); }
 
-.fc-input:focus {
-  border-color: rgba(255, 255, 255, 0.35);
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.06);
-}
-
-.fc-input::-webkit-inner-spin-button,
-.fc-input::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-.fc-input[type=number] {
-  -moz-appearance: textfield;
-  appearance: textfield;
-}
-
-.fc-go-btn {
-  padding: 8px 14px;
+.fc-solve-btn {
+  width: 32px; height: 32px;
   border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
   color: #ccc;
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+.fc-solve-btn:hover { background: rgba(255,255,255,0.12); color: #fff; border-color: rgba(255,255,255,0.25); }
+.fc-solve-btn:active { transform: scale(0.92); }
+
+/* Marks 面板 */
+.fc-marks-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.fc-marks-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  min-height: 100px;
+}
+
+.fc-marks-empty {
+  color: #888;
+  font-size: 0.8rem;
+  text-align: center;
+  padding: 2rem 1rem;
+}
+.fc-marks-empty kbd {
+  background: rgba(255,255,255,0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  border: 1px solid rgba(255,255,255,0.15);
+}
+
+.fc-mark-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  transition: background 0.15s;
+}
+.fc-mark-row:hover { background: rgba(255,255,255,0.06); }
+.fc-mark-row.selected { background: rgba(255,255,255,0.12); }
+
+.fc-mark-idx {
+  color: #888;
+  min-width: 20px;
+}
+
+.fc-mark-time {
+  color: #ddd;
+  font-weight: 500;
+}
+
+.fc-mark-frame {
+  color: #999;
+}
+
+.fc-mark-diff {
+  margin-left: auto;
+  color: #e8c44a;
+  font-weight: 500;
+  font-size: 0.75rem;
+}
+
+.fc-mark-total {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 8px 4px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  margin-top: 4px;
+  font-size: 0.78rem;
+}
+.fc-mark-total .fc-mark-idx { font-weight: 600; color: #aaa; }
+.fc-mark-total .fc-mark-diff { color: #e8c44a; font-weight: 600; }
+
+/* Mark 操作按钮 */
+.fc-mark-actions {
+  display: flex;
+  gap: 4px;
+  padding: 8px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.fc-action-btn {
+  flex: 1;
+  padding: 7px 0;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  color: #ccc;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.fc-action-btn:hover:not(:disabled) { background: rgba(255,255,255,0.12); color: #fff; border-color: rgba(255,255,255,0.25); }
+.fc-action-btn:active:not(:disabled) { transform: scale(0.95); }
+.fc-action-btn:disabled { opacity: 0.4; cursor: default; }
+
+/* ── 底部标签面板 ── */
+.fc-bottom-panel {
+  margin-top: 0.75rem;
+  background: #4a4a4a;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.fc-tab-bar {
+  display: flex;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.fc-tab {
+  padding: 8px 20px;
+  border: none;
+  background: transparent;
+  color: #999;
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  white-space: nowrap;
-  flex-shrink: 0;
+  border-bottom: 2px solid transparent;
 }
-
-.fc-go-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.3);
+.fc-tab:hover { color: #ccc; }
+.fc-tab.active {
   color: #fff;
+  border-bottom-color: #e8c44a;
 }
 
-.fc-go-btn:active {
-  transform: scale(0.95);
+.fc-tab-content {
+  padding: 10px 16px;
 }
 
-/* ── 结果展示 ── */
-.fc-result {
+.fc-tab-row {
   display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
-.fc-result:last-child {
-  margin-bottom: 0;
-}
-
-.fc-result-label {
+.fc-tab-label {
   font-size: 0.8rem;
   color: #999;
-  min-width: 100px;
   flex-shrink: 0;
 }
 
-.fc-result-value {
-  font-size: 1.1rem;
+.fc-tab-input {
+  background: rgba(0,0,0,0.2);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px;
+  color: #e0e0e0;
+  font-size: 0.85rem;
+  padding: 6px 10px;
+  font-variant-numeric: tabular-nums;
+  outline: none;
+  width: 100px;
+  transition: border-color 0.2s;
+}
+.fc-tab-input:focus { border-color: rgba(255,255,255,0.35); }
+.fc-tab-input::-webkit-inner-spin-button,
+.fc-tab-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.fc-tab-input[type=number] { -moz-appearance: textfield; appearance: textfield; }
+
+.fc-tab-select {
+  background: rgba(0,0,0,0.2);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px;
+  color: #e0e0e0;
+  font-size: 0.85rem;
+  padding: 6px 10px;
+  outline: none;
+  cursor: pointer;
+}
+.fc-tab-select:focus { border-color: rgba(255,255,255,0.35); }
+
+.fc-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  color: #ccc;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.fc-tab-btn:hover { background: rgba(255,255,255,0.12); color: #fff; border-color: rgba(255,255,255,0.25); }
+.fc-tab-btn:active { transform: scale(0.95); }
+.fc-tab-btn.active { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); color: #fff; }
+.fc-tab-btn.reset { color: #e87c7c; border-color: rgba(232,124,124,0.3); }
+.fc-tab-btn.reset:hover { background: rgba(232,124,124,0.15); }
+.fc-tab-btn svg { width: 14px; height: 14px; }
+
+.fc-tab-sep {
+  width: 1px; height: 24px;
+  background: rgba(255,255,255,0.1);
+  flex-shrink: 0;
+}
+
+.fc-tab-unit {
+  font-size: 0.75rem;
+  color: #888;
+  flex-shrink: 0;
+}
+
+.fc-tab-value {
+  font-size: 1rem;
   font-weight: 700;
   color: #e0e0e0;
   font-variant-numeric: tabular-nums;
 }
 
-.fc-result-value.highlight {
-  font-size: 1.4rem;
-  color: #fff;
-}
-
-.fc-result-unit {
-  font-size: 0.75rem;
-  color: #888;
-}
-
-/* 起止帧标记按钮 */
-.fc-mark-btn {
-  padding: 6px 10px;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
-  color: #aaa;
-  font-size: 0.72rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.fc-mark-btn:hover {
-  color: #ddd;
-  border-color: rgba(255, 255, 255, 0.25);
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.fc-mark-btn.start-mark:hover {
-  border-color: rgba(139, 195, 74, 0.4);
-  background: rgba(139, 195, 74, 0.1);
-  color: #8bc34a;
-}
-
-.fc-mark-btn.end-mark:hover {
-  border-color: rgba(229, 115, 115, 0.4);
-  background: rgba(229, 115, 115, 0.1);
-  color: #e57373;
-}
-
-/* FPS 检测标签 */
 .fc-fps-auto {
-  font-size: 0.7rem;
-  color: #8bc34a;
-  padding: 2px 8px;
+  display: inline-block;
+  font-size: 0.65rem;
+  color: #6cc070;
+  background: rgba(108,192,112,0.1);
+  border: 1px solid rgba(108,192,112,0.3);
+  padding: 2px 6px;
   border-radius: 4px;
-  background: rgba(139, 195, 74, 0.1);
-  flex-shrink: 0;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+/* ── Toast 通知 ── */
+.fc-toast {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 24px;
+  background: rgba(30,30,30,0.92);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  z-index: 1000;
+  animation: fc-fade-in 0.2s;
+  pointer-events: none;
+}
+
+@keyframes fc-fade-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
 /* ── 快捷键弹窗 ── */
 .fc-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(4px);
-  z-index: 1000;
+  background: rgba(0,0,0,0.6);
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: fc-fade-in 0.2s ease;
-}
-
-@keyframes fc-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  z-index: 900;
+  animation: fc-fade-in 0.15s;
 }
 
 .fc-modal {
   background: #4a4a4a;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255,255,255,0.12);
   border-radius: 12px;
   padding: 1.5rem;
-  max-width: 480px;
-  width: 90%;
+  width: 360px;
   max-height: 80vh;
   overflow-y: auto;
-  animation: fc-slide-up 0.25s ease;
-}
-
-@keyframes fc-slide-up {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  position: relative;
 }
 
 .fc-modal h2 {
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 700;
   color: #e0e0e0;
   margin: 0 0 1rem;
 }
 
 .fc-modal-close {
-  float: right;
-  background: none;
-  border: none;
-  color: #888;
-  font-size: 1.2rem;
+  position: absolute;
+  top: 12px; right: 12px;
+  background: none; border: none;
+  color: #999; font-size: 1rem;
   cursor: pointer;
   padding: 4px;
-  line-height: 1;
 }
+.fc-modal-close:hover { color: #fff; }
 
-.fc-modal-close:hover {
-  color: #fff;
+.fc-shortcut-section {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: #888;
+  letter-spacing: 0.08em;
+  margin-top: 1rem;
+  margin-bottom: 0.4rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
 }
+.fc-shortcut-section:first-child { margin-top: 0; }
 
 .fc-shortcut-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-}
-
-.fc-shortcut-row:last-child {
-  border-bottom: none;
+  padding: 5px 0;
 }
 
 .fc-shortcut-action {
   font-size: 0.82rem;
-  color: #bbb;
+  color: #ccc;
 }
 
 .fc-shortcut-keys {
   display: flex;
-  gap: 4px;
   align-items: center;
+  gap: 2px;
 }
 
 .fc-kbd {
   display: inline-block;
-  padding: 2px 8px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #ddd;
+  padding: 2px 8px;
   font-size: 0.72rem;
   font-family: 'Inter', monospace;
-  min-width: 22px;
+  color: #ddd;
+  min-width: 20px;
   text-align: center;
 }
 
-.fc-shortcut-section {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #888;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin: 1rem 0 0.5rem;
-  padding-bottom: 0.25rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.fc-shortcut-section:first-child {
-  margin-top: 0;
-}
-
-/* ── Image Settings 面板 ── */
-
-/* 裁切覆盖层 */
-.fc-crop-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 5;
-  cursor: crosshair;
-  background: rgba(0, 0, 0, 0.3);
-}
-
-.fc-crop-selection {
-  position: absolute;
-  border: 2px solid #fff;
-  background: rgba(255, 255, 255, 0.05);
-  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
-  pointer-events: none;
-}
-
-.fc-crop-hint {
-  position: absolute;
-  bottom: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.7);
-  color: #ccc;
-  padding: 4px 12px;
-  border-radius: 6px;
-  font-size: 0.72rem;
-  pointer-events: none;
-}
-
-/* 旋转按钮组 */
-.fc-rotation-group {
-  display: flex;
-  gap: 3px;
-  flex-wrap: wrap;
-  flex: 1;
-}
-
-.fc-rot-btn {
-  padding: 4px 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 5px;
-  background: rgba(255, 255, 255, 0.06);
-  color: #999;
-  font-size: 0.7rem;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.fc-rot-btn:hover {
-  color: #ccc;
-  border-color: rgba(255, 255, 255, 0.25);
-}
-
-.fc-rot-btn.active {
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.35);
-  background: rgba(255, 255, 255, 0.12);
-}
-
-/* 翻转按钮 */
-.fc-flip-btn {
-  padding: 4px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 5px;
-  background: rgba(255, 255, 255, 0.06);
-  color: #999;
-  font-size: 0.72rem;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.fc-flip-btn:hover {
-  color: #ccc;
-  border-color: rgba(255, 255, 255, 0.25);
-}
-
-.fc-flip-btn.active {
-  color: #f5c542;
-  border-color: rgba(245, 197, 66, 0.35);
-  background: rgba(245, 197, 66, 0.08);
-}
-
-/* 裁切按钮 */
-.fc-crop-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 5px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 5px;
-  background: rgba(255, 255, 255, 0.06);
-  color: #999;
-  font-size: 0.72rem;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.fc-crop-btn svg {
-  width: 14px;
-  height: 14px;
-}
-
-.fc-crop-btn:hover {
-  color: #ccc;
-  border-color: rgba(255, 255, 255, 0.25);
-}
-
-.fc-crop-btn.active {
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.35);
-  background: rgba(255, 255, 255, 0.12);
-}
-
-/* Reset All 按钮 */
-.fc-reset-btn {
-  width: 100%;
-  padding: 6px;
-  margin-top: 0.5rem;
-  border: 1px solid rgba(229, 115, 115, 0.2);
-  border-radius: 6px;
-  background: rgba(229, 115, 115, 0.06);
-  color: #e57373;
-  font-size: 0.72rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.fc-reset-btn:hover {
-  background: rgba(229, 115, 115, 0.12);
-  border-color: rgba(229, 115, 115, 0.35);
-}
-
-/* ── Time → Frames Calculator ── */
-.fc-t2f-panel {
-  grid-column: 1 / -1;
-}
-
-.fc-t2f-desc {
-  font-size: 0.78rem;
-  color: #999;
-  margin: 0 0 1rem;
-  line-height: 1.5;
-}
-
-.fc-formula {
-  display: inline-block;
-  margin-left: 0.25rem;
-  padding: 1px 8px;
-  border-radius: 4px;
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #ccc;
-  font-size: 0.78rem;
-  font-family: 'Inter', monospace;
-}
-
-.fc-t2f-table-wrap {
-  margin-top: 0.75rem;
-  overflow-x: auto;
-}
-
-.fc-t2f-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.82rem;
-  font-variant-numeric: tabular-nums;
-}
-
-.fc-t2f-table th {
-  text-align: left;
-  padding: 6px 12px;
-  color: #999;
-  font-weight: 600;
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.fc-t2f-table td {
-  padding: 5px 12px;
-  color: #ccc;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-}
-
-.fc-t2f-table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.fc-t2f-table tr.fc-t2f-active {
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.fc-t2f-table tr.fc-t2f-active td {
-  color: #fff;
-  font-weight: 600;
-}
-
-/* ── 响应式 ── */
-@media (max-width: 700px) {
-  .fc-data-row {
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .fc-main {
     grid-template-columns: 1fr;
   }
-
-  .fc-header {
-    flex-wrap: wrap;
-    gap: 0.5rem;
+  .fc-solve-col {
+    order: -1;
   }
-
-  .fc-title {
-    font-size: 1.1rem;
+  .fc-video-overlay {
+    font-size: 1rem;
   }
-
-  .fc-controls {
-    gap: 0.25rem;
-  }
-
-  .fc-ctrl-info {
-    width: 100%;
-    text-align: center;
-    margin-left: 0;
-    margin-top: 0.5rem;
-  }
-
-  .fc-field {
-    flex-wrap: wrap;
-  }
-
-  .fc-label {
-    min-width: auto;
-    width: 100%;
-  }
-
-  .fc-rate-group {
-    order: 10;
-    width: 100%;
-    justify-content: center;
-    margin-top: 0.25rem;
-  }
-}
-
-/* ── Copy All 按钮 ── */
-.fc-copy-all-btn {
-  font-size: 0.7rem;
-  padding: 3px 10px;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
-  color: #aaa;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-weight: 500;
-}
-
-.fc-copy-all-btn:hover {
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.fc-copy-all-btn:active {
-  transform: scale(0.95);
-}
-
-/* ── Toast 通知 ── */
-.fc-toast {
-  position: fixed;
-  bottom: 2rem;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(80, 80, 80, 0.95);
-  color: #fff;
-  padding: 8px 20px;
-  border-radius: 8px;
-  font-size: 0.82rem;
-  font-weight: 500;
-  z-index: 2000;
-  pointer-events: none;
-  animation: fc-toast-in 0.2s ease, fc-toast-out 0.3s ease 1.2s forwards;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-}
-
-@keyframes fc-toast-in {
-  from { opacity: 0; transform: translateX(-50%) translateY(10px); }
-  to { opacity: 1; transform: translateX(-50%) translateY(0); }
-}
-
-@keyframes fc-toast-out {
-  from { opacity: 1; }
-  to { opacity: 0; transform: translateX(-50%) translateY(-10px); }
 }
