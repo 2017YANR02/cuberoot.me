@@ -354,8 +354,8 @@ export default function FrameCountPage() {
 
   // 用 ref 追踪帧号，避免快速连按时闭包中 currentFrame 过时
   const currentFrameRef = useRef(0);
-  const stepRafRef = useRef(0);
   const seekingRef = useRef(false);
+  const holdPlayingRef = useRef(false); // 长按 D/A 时播放中
 
   // 同步 ref（播放、拖动等路径更新帧号时）
   useEffect(() => { currentFrameRef.current = currentFrame; }, [currentFrame]);
@@ -364,63 +364,29 @@ export default function FrameCountPage() {
     const video = videoRef.current;
     if (!video || videoFps <= 0) return;
 
-    if (n > 0 && n <= 2) {
-      // ── 向前小步：play + requestVideoFrameCallback 暂停
-      // 顺序解码比 seek 快 10-100 倍
-      video.pause();
-      setIsPlaying(false);
-      let framesLeft = n;
-      video.muted = true; // play-pause stepping 不出声
-      const onFrame = () => {
-        framesLeft--;
-        const f = Math.round(video.currentTime * videoFps);
-        currentFrameRef.current = f;
-        if (framesLeft <= 0) {
-          video.pause();
+    // 统一用 seek — play+pause 方式在高帧率视频下不精确
+    video.pause();
+    setIsPlaying(false);
+    currentFrameRef.current = Math.max(0, currentFrameRef.current + n);
+    // 立即更新 UI 帧号（不等 seek 完成）
+    setCurrentFrame(currentFrameRef.current);
+    // 用 seeked 事件节流：上一次 seek 完成后再执行下一次
+    if (!seekingRef.current) {
+      seekingRef.current = true;
+      const doSeek = () => {
+        const f = currentFrameRef.current;
+        video.addEventListener('seeked', () => {
+          seekingRef.current = false;
           setCurrentFrame(f);
-        } else {
-          video.requestVideoFrameCallback(onFrame);
-        }
+          // 如果在 seek 期间帧号又变了，继续 seek
+          if (currentFrameRef.current !== f) {
+            seekingRef.current = true;
+            doSeek();
+          }
+        }, { once: true });
+        video.currentTime = f / videoFps;
       };
-      if (typeof video.requestVideoFrameCallback === 'function') {
-        video.requestVideoFrameCallback(onFrame);
-        video.play();
-      } else {
-        // 回退：直接 seek（旧浏览器）
-        const newFrame = Math.max(0, currentFrameRef.current + n);
-        video.currentTime = newFrame / videoFps;
-        currentFrameRef.current = newFrame;
-        setCurrentFrame(newFrame);
-      }
-    } else {
-      // ── 向后 或 大步跳转：必须 seek，但用 throttle 防堆积
-      video.pause();
-      setIsPlaying(false);
-      currentFrameRef.current = Math.max(0, currentFrameRef.current + n);
-      if (!seekingRef.current) {
-        seekingRef.current = true;
-        cancelAnimationFrame(stepRafRef.current);
-        stepRafRef.current = requestAnimationFrame(() => {
-          const f = currentFrameRef.current;
-          const onSeeked = () => {
-            video.removeEventListener('seeked', onSeeked);
-            seekingRef.current = false;
-            setCurrentFrame(f);
-            // 如果在 seek 期间帧号又变了，继续 seek
-            if (currentFrameRef.current !== f) {
-              const ff = currentFrameRef.current;
-              seekingRef.current = true;
-              video.currentTime = ff / videoFps;
-              video.addEventListener('seeked', () => {
-                seekingRef.current = false;
-                setCurrentFrame(ff);
-              }, { once: true });
-            }
-          };
-          video.addEventListener('seeked', onSeeked, { once: true });
-          video.currentTime = f / videoFps;
-        });
-      }
+      doSeek();
     }
   }, [videoFps]);
 
@@ -573,8 +539,35 @@ export default function FrameCountPage() {
     const onKeyDown = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
       if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+      const key = e.key.toLowerCase();
 
-      switch (e.key.toLowerCase()) {
+      // 长按 D/A：顺序播放（极致流畅）
+      if (e.repeat && (key === 'd' || key === '.' || key === 'a' || key === ',')) {
+        e.preventDefault();
+        const video = videoRef.current;
+        if (video && !holdPlayingRef.current) {
+          holdPlayingRef.current = true;
+          video.muted = true;
+          // 向后长按：设负倍速（浏览器不支持就用快速 seek）
+          if (key === 'a' || key === ',') {
+            // 浏览器不支持负倍速，用定时 seek 模拟
+            const intervalId = setInterval(() => {
+              if (!holdPlayingRef.current) { clearInterval(intervalId); return; }
+              const f = Math.max(0, Math.round(video.currentTime * videoFps) - 1);
+              video.currentTime = f / videoFps;
+              currentFrameRef.current = f;
+              setCurrentFrame(f);
+            }, 1000 / 30); // 30fps 的回退速度
+            (holdPlayingRef as any)._intervalId = intervalId;
+          } else {
+            video.play();
+            setIsPlaying(true);
+          }
+        }
+        return;
+      }
+
+      switch (key) {
         case 'k': e.preventDefault(); togglePlay(); break;
         case 'd': case '.': e.preventDefault(); stepFrames(1); break;
         case 'a': case ',': e.preventDefault(); stepFrames(-1); break;
@@ -587,9 +580,35 @@ export default function FrameCountPage() {
         case 'escape': setShowShortcuts(false); break;
       }
     };
+
+    const onKeyUp = (e: KeyboardEvent) => {
+      const key = e.key.toLowerCase();
+      if ((key === 'd' || key === '.' || key === 'a' || key === ',') && holdPlayingRef.current) {
+        holdPlayingRef.current = false;
+        const video = videoRef.current;
+        if (video) {
+          // 清理后退定时器
+          if ((holdPlayingRef as any)._intervalId) {
+            clearInterval((holdPlayingRef as any)._intervalId);
+            (holdPlayingRef as any)._intervalId = null;
+          }
+          video.pause();
+          video.muted = true;
+          setIsPlaying(false);
+          const f = Math.round(video.currentTime * videoFps);
+          currentFrameRef.current = f;
+          setCurrentFrame(f);
+        }
+      }
+    };
+
     window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [togglePlay, stepFrames, stepSeconds, currentFrame, addMark, addSolve, copyToClipboard]);
+    window.addEventListener('keyup', onKeyUp);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+    };
+  }, [togglePlay, stepFrames, stepSeconds, currentFrame, addMark, addSolve, copyToClipboard, videoFps]);
 
   // Shift+滚轮逐帧
   useEffect(() => {
