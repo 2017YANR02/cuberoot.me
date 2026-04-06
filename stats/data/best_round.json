@@ -66,6 +66,17 @@
       "titleZh": "三阶魔方",
       "rows": [
         [
+          "[Yancheng Spring Open 2026](https://www.worldcubeassociation.org/competitions/YanchengSpringOpen2026/results/all#e333_3)",
+          "Semi Final",
+          "13.00",
+          "[Xuanyi Geng (耿暄一)](https://www.worldcubeassociation.org/persons/2023GENG02)",
+          "4.06",
+          "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
+          "4.31",
+          "[Yufang Du (杜昱方)](https://www.worldcubeassociation.org/persons/2023DUYU01)",
+          "4.63"
+        ],
+        [
           "[Taizhou Open 2025](https://www.worldcubeassociation.org/competitions/TaizhouOpen2025/results/all#e333_2)",
           "Second round",
           "13.08",
@@ -77,6 +88,17 @@
           "4.76"
         ],
         [
+          "[Yancheng Spring Open 2026](https://www.worldcubeassociation.org/competitions/YanchengSpringOpen2026/results/all#e333_2)",
+          "Second round",
+          "13.09",
+          "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
+          "3.96",
+          "[Xuanyi Geng (耿暄一)](https://www.worldcubeassociation.org/persons/2023GENG02)",
+          "4.11",
+          "[Zhaokun Li (李昭昆)](https://www.worldcubeassociation.org/persons/2024LIZH03)",
+          "5.02"
+        ],
+        [
           "[Hangzhou Winter 2025](https://www.worldcubeassociation.org/competitions/HangzhouWinter2025/results/all#e333_2)",
           "Second round",
           "13.20",
@@ -86,6 +108,17 @@
           "4.40",
           "[Yufang Du (杜昱方)](https://www.worldcubeassociation.org/persons/2023DUYU01)",
           "4.69"
+        ],
+        [
+          "[Yancheng Spring Open 2026](https://www.worldcubeassociation.org/competitions/YanchengSpringOpen2026/results/all#e333_1)",
+          "First round",
+          "13.30",
+          "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
+          "4.22",
+          "[Xuanyi Geng (耿暄一)](https://www.worldcubeassociation.org/persons/2023GENG02)",
+          "4.38",
+          "[Zhaokun Li (李昭昆)](https://www.worldcubeassociation.org/persons/2024LIZH03)",
+          "4.70"
         ],
         [
           "[Guangdong Revival & Rival 2026](https://www.worldcubeassociation.org/competitions/GuangdongRevivalRival2026/results/all#e333_2)",
@@ -141,39 +174,6 @@
           "4.38",
           "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
           "4.91"
-        ],
-        [
-          "[Xianju NxN 2026](https://www.worldcubeassociation.org/competitions/XianjuNxN2026/results/all#e333_f)",
-          "Final",
-          "13.68",
-          "[Xuanyi Geng (耿暄一)](https://www.worldcubeassociation.org/persons/2023GENG02)",
-          "4.26",
-          "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
-          "4.33",
-          "[Yufang Du (杜昱方)](https://www.worldcubeassociation.org/persons/2023DUYU01)",
-          "5.09"
-        ],
-        [
-          "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/all#e333_f)",
-          "Final",
-          "13.70",
-          "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
-          "4.23",
-          "[Xuanyi Geng (耿暄一)](https://www.worldcubeassociation.org/persons/2023GENG02)",
-          "4.49",
-          "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
-          "4.98"
-        ],
-        [
-          "[Zhengzhou Zest 2025](https://www.worldcubeassociation.org/competitions/ZhengzhouZest2025/results/all#e333_1)",
-          "First round",
-          "13.71",
-          "[Xuanyi Geng (耿暄一)](https://www.worldcubeassociation.org/persons/2023GENG02)",
-          "4.25",
-          "[Zhaokun Li (李昭昆)](https://www.worldcubeassociation.org/persons/2024LIZH03)",
-          "4.59",
-          "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
-          "4.87"
         ]
       ]
     },
@@ -883,7 +883,7 @@
           "1:02.00",
           "[Radomił Baran](https://www.worldcubeassociation.org/persons/2020BARA02)",
           "20.00",
-          "[Jaye Sloan](https://www.worldcubeassociation.org/persons/2022SLOA01)",
+          "[Louis-Marie Ratto](https://www.worldcubeassociation.org/persons/2019RATT02)",
           "21.00",
           "[Wojciech Rogoziński](https://www.worldcubeassociation.org/persons/2019ROGO04)",
           "21.00"
@@ -892,11 +892,11 @@
           "[Fun with FM in Kraków 2025](https://www.worldcubeassociation.org/competitions/FunwithFMinKrakow2025/results/all#e333fm_1)",
           "First round",
           "1:02.01",
+          "[Enrico Tenuti](https://www.worldcubeassociation.org/persons/2017TENU01)",
+          "20.67",
           "[Radomił Baran](https://www.worldcubeassociation.org/persons/2020BARA02)",
           "20.67",
           "[Krzysztof Pietrusiak](https://www.worldcubeassociation.org/persons/2019PIET01)",
-          "20.67",
-          "[Wojciech Rogoziński](https://www.worldcubeassociation.org/persons/2019ROGO04)",
           "20.67"
         ],
         [
@@ -1270,6 +1270,17 @@
           "1.79"
         ],
         [
+          "[Yancheng Spring Open 2026](https://www.worldcubeassociation.org/competitions/YanchengSpringOpen2026/results/all#epyram_d)",
+          "First round",
+          "5.00",
+          "[Lingkun Jiang (姜凌坤)](https://www.worldcubeassociation.org/persons/2019JIAN54)",
+          "1.37",
+          "[Shuda Huang (黄黍达)](https://www.worldcubeassociation.org/persons/2021HUAN02)",
+          "1.55",
+          "[Bofu Cao (曹柏辅)](https://www.worldcubeassociation.org/persons/2024CAOB02)",
+          "2.08"
+        ],
+        [
           "[Prague Open 2024](https://www.worldcubeassociation.org/competitions/PragueOpen2024/results/all#epyram_2)",
           "Second round",
           "5.16",
@@ -1303,17 +1314,6 @@
           "1.80"
         ],
         [
-          "[CubingUSA Nationals 2023](https://www.worldcubeassociation.org/competitions/CubingUSANationals2023/results/all#epyram_2)",
-          "Second round",
-          "5.20",
-          "[Ezra Shere](https://www.worldcubeassociation.org/persons/2019SHER10)",
-          "1.67",
-          "[Michael Nielsen](https://www.worldcubeassociation.org/persons/2017NIEL03)",
-          "1.75",
-          "[Harsha Paladugu](https://www.worldcubeassociation.org/persons/2017PALA08)",
-          "1.78"
-        ],
-        [
           "[North Carolina Championship 2025](https://www.worldcubeassociation.org/competitions/NorthCarolinaChampionship2025/results/all#epyram_1)",
           "First round",
           "5.20",
@@ -1325,15 +1325,15 @@
           "1.94"
         ],
         [
-          "[Guangzhou Special 2025](https://www.worldcubeassociation.org/competitions/GuangzhouSpecial2025/results/all#epyram_2)",
+          "[CubingUSA Nationals 2023](https://www.worldcubeassociation.org/competitions/CubingUSANationals2023/results/all#epyram_2)",
           "Second round",
-          "5.21",
-          "[Kaixi Guo (郭铠希)](https://www.worldcubeassociation.org/persons/2023GUOK01)",
-          "1.61",
-          "[Lingkun Jiang (姜凌坤)](https://www.worldcubeassociation.org/persons/2019JIAN54)",
-          "1.71",
-          "[Shengze Tang (唐圣泽)](https://www.worldcubeassociation.org/persons/2021TANG03)",
-          "1.89"
+          "5.20",
+          "[Ezra Shere](https://www.worldcubeassociation.org/persons/2019SHER10)",
+          "1.67",
+          "[Michael Nielsen](https://www.worldcubeassociation.org/persons/2017NIEL03)",
+          "1.75",
+          "[Harsha Paladugu](https://www.worldcubeassociation.org/persons/2017PALA08)",
+          "1.78"
         ]
       ]
     },
@@ -1494,9 +1494,9 @@
           "[Szansa Cubing Open Warsaw 2024](https://www.worldcubeassociation.org/competitions/SzansaCubingOpenWarsaw2024/results/all#eskewb_f)",
           "Final",
           "5.59",
-          "[Vojtěch Grohmann](https://www.worldcubeassociation.org/persons/2021GROH01)",
-          "1.79",
           "[Ignacy Samselski](https://www.worldcubeassociation.org/persons/2022SAMS03)",
+          "1.79",
+          "[Vojtěch Grohmann](https://www.worldcubeassociation.org/persons/2021GROH01)",
           "1.79",
           "[Michał Denkiewicz](https://www.worldcubeassociation.org/persons/2021DENK01)",
           "2.01"
