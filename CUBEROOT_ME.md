@@ -147,7 +147,7 @@ rsync -rltz --delete --exclude='.user.ini' --chmod=D755,F644 ...
 ## 故障排除
 
 ### 镜像未更新？
-1. 检查 [Actions 页面](https://github.com/RuiminYan/ruiminyan.github.io/actions) → "Deploy Mirror to China" 是否全绿
+1. 检查 [Actions 页面](https://github.com/RuiminYan/ruiminyan.github.io/actions) → "Deploy Mirror to cuberoot" 是否全绿
 2. 如果红叉，查看日志定位错误（通常是 SSH 连接或 rsync 问题）
 
 ### 页面 404？
