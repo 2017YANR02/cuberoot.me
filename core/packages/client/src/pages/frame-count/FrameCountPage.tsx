@@ -218,7 +218,67 @@ export default function FrameCountPage() {
   const [cropRect, setCropRect] = useState<{ top: number; left: number; bottom: number; right: number } | null>(null);
   const cropStartRef = useRef<{ x: number; y: number } | null>(null);
 
-  // WCA 模式（sliding 违规检测）
+  // 缩放 + 平移（鼠标滚轮缩放，鼠标/触摸拖动平移）
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const isPanningRef = useRef(false);
+  const lastPanPosRef = useRef({ x: 0, y: 0 });
+
+  // wrapper 的 transform（translate 在 scale 之前，translate 单位是屏幕像素）
+  const getZoomStyle = useCallback((): React.CSSProperties => {
+    if (zoom <= 1 && pan.x === 0 && pan.y === 0) return {};
+    return {
+      transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+      transformOrigin: 'center center',
+    };
+  }, [zoom, pan]);
+
+  // 滚轮缩放 — 以鼠标位置为中心（map 风格）
+  const handleVideoZoom = useCallback((e: React.WheelEvent) => {
+    if (e.shiftKey || cropMode) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const target = e.currentTarget as HTMLElement;
+    const rect = target.getBoundingClientRect();
+    // 鼠标相对于元素中心的偏移（屏幕像素）
+    const mx = e.clientX - rect.left - rect.width / 2;
+    const my = e.clientY - rect.top - rect.height / 2;
+    const factor = e.deltaY > 0 ? 1 / 1.18 : 1.18;
+    setZoom(prevZoom => {
+      const newZoom = Math.max(1, Math.min(8, prevZoom * factor));
+      if (newZoom <= 1) {
+        setPan({ x: 0, y: 0 });
+        return 1;
+      }
+      // 保持鼠标位置不变：平移补偿
+      setPan(prevPan => ({
+        x: prevPan.x + mx * (1 - newZoom / prevZoom),
+        y: prevPan.y + my * (1 - newZoom / prevZoom),
+      }));
+      return newZoom;
+    });
+  }, [cropMode]);
+
+  // 拖动开始（鼠标 + 触摸）
+  const handlePanStart = useCallback((clientX: number, clientY: number) => {
+    if (cropMode) return;
+    isPanningRef.current = true;
+    lastPanPosRef.current = { x: clientX, y: clientY };
+  }, [cropMode]);
+
+  // 拖动移动
+  const handlePanMove = useCallback((clientX: number, clientY: number) => {
+    if (!isPanningRef.current) return;
+    const dx = clientX - lastPanPosRef.current.x;
+    const dy = clientY - lastPanPosRef.current.y;
+    lastPanPosRef.current = { x: clientX, y: clientY };
+    setPan(prev => ({ x: prev.x + dx, y: prev.y + dy }));
+  }, []);
+
+  // 拖动结束
+  const handlePanEnd = useCallback(() => {
+    isPanningRef.current = false;
+  }, []);
   const [solveTime, setSolveTime] = useState('');
   const [wcaEndFrame, setWcaEndFrame] = useState(0);
 
@@ -229,7 +289,7 @@ export default function FrameCountPage() {
   const wcaFrames = solveTimeNum > 0 && videoFps > 0 ? timeToFrames(solveTimeNum, videoFps) : 0;
   const wcaStartFrame = Math.max(0, wcaEndFrame - wcaFrames);
 
-  // 图像 transform CSS
+  // 图像 transform CSS（应用到 video 元素）
   const getVideoStyle = useCallback((): React.CSSProperties => {
     const transforms: string[] = [];
     // 裁切放大
@@ -257,6 +317,9 @@ export default function FrameCountPage() {
         : undefined,
     };
   }, [imageTransform, cropRect, cropMode]);
+
+
+
 
   // ── Toast ──
 
@@ -475,6 +538,10 @@ export default function FrameCountPage() {
     const onPause = () => setIsPlaying(false);
     const onLoaded = () => {
       if (videoFps > 0 && isFinite(video.duration)) setTotalFrames(Math.round(video.duration * videoFps));
+      // Safari/iOS 不会自动渲染第一帧，需要主动 seek 触发解码
+      if (video.paused && video.currentTime === 0) {
+        video.currentTime = 0.001;
+      }
     };
     video.addEventListener('play', onPlay);
     video.addEventListener('pause', onPause);
@@ -526,49 +593,66 @@ export default function FrameCountPage() {
                 <button className="fc-change-video" onClick={() => fileInputRef.current?.click()}>
                   Change Video
                 </button>
-                <video
-                  ref={videoRef}
-                  src={videoSrc}
-                  preload="auto"
-                  style={getVideoStyle()}
-                />
-                {/* 视频 overlay — 帧号/时间 */}
-                <div className="fc-video-overlay">
-                  {formatTime(currentFrame / videoFps)} ({currentFrame})
-                </div>
-                {/* Crop overlay */}
-                {cropMode && (
+                {/* 视频 wrapper — 紧贴视频尺寸，crop overlay / zoom / pan 都在这里 */}
+                <div
+                  className={`fc-video-wrapper${cropMode ? '' : (zoom > 1 ? ' fc-panning' : ' fc-pannable')}`}
+                  onWheel={handleVideoZoom}
+                  style={getZoomStyle()}
+                  onMouseDown={(e) => { if (!cropMode) { e.preventDefault(); handlePanStart(e.clientX, e.clientY); } }}
+                  onMouseMove={(e) => handlePanMove(e.clientX, e.clientY)}
+                  onMouseUp={handlePanEnd}
+                  onMouseLeave={handlePanEnd}
+                  onTouchStart={(e) => { if (!cropMode) handlePanStart(e.touches[0].clientX, e.touches[0].clientY); }}
+                  onTouchMove={(e) => { e.preventDefault(); handlePanMove(e.touches[0].clientX, e.touches[0].clientY); }}
+                  onTouchEnd={handlePanEnd}
+                >
+                  <video
+                    ref={videoRef}
+                    src={videoSrc}
+                    preload="auto"
+                    style={getVideoStyle()}
+                  />
+                  {/* 视频 overlay — 帧号/时间，字号恒定（抵消 zoom） */}
                   <div
-                    className="fc-crop-overlay"
-                    onMouseDown={(e) => {
-                      const rect = e.currentTarget.getBoundingClientRect();
-                      const x = ((e.clientX - rect.left) / rect.width) * 100;
-                      const y = ((e.clientY - rect.top) / rect.height) * 100;
-                      cropStartRef.current = { x, y };
-                      setCropRect(null);
-                    }}
-                    onMouseMove={(e) => {
-                      if (!cropStartRef.current) return;
-                      const rect = e.currentTarget.getBoundingClientRect();
-                      const x = Math.min(100, Math.max(0, ((e.clientX - rect.left) / rect.width) * 100));
-                      const y = Math.min(100, Math.max(0, ((e.clientY - rect.top) / rect.height) * 100));
-                      const s = cropStartRef.current;
-                      setCropRect({
-                        top: Math.min(s.y, y), left: Math.min(s.x, x),
-                        bottom: 100 - Math.max(s.y, y), right: 100 - Math.max(s.x, x),
-                      });
-                    }}
-                    onMouseUp={() => { cropStartRef.current = null; }}
+                    className="fc-video-overlay"
+                    style={zoom !== 1 ? { transform: `scale(${1 / zoom})`, transformOrigin: 'bottom right' } : undefined}
                   >
-                    {cropRect && (
-                      <div className="fc-crop-selection" style={{
-                        top: `${cropRect.top}%`, left: `${cropRect.left}%`,
-                        right: `${cropRect.right}%`, bottom: `${cropRect.bottom}%`,
-                      }} />
-                    )}
-                    <span className="fc-crop-hint">Drag to select crop area</span>
+                    {formatTime(currentFrame / videoFps)} ({currentFrame})
                   </div>
-                )}
+                  {/* Crop overlay — 现在相对于视频而非容器 */}
+                  {cropMode && (
+                    <div
+                      className="fc-crop-overlay"
+                      onMouseDown={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const x = ((e.clientX - rect.left) / rect.width) * 100;
+                        const y = ((e.clientY - rect.top) / rect.height) * 100;
+                        cropStartRef.current = { x, y };
+                        setCropRect(null);
+                      }}
+                      onMouseMove={(e) => {
+                        if (!cropStartRef.current) return;
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const x = Math.min(100, Math.max(0, ((e.clientX - rect.left) / rect.width) * 100));
+                        const y = Math.min(100, Math.max(0, ((e.clientY - rect.top) / rect.height) * 100));
+                        const s = cropStartRef.current;
+                        setCropRect({
+                          top: Math.min(s.y, y), left: Math.min(s.x, x),
+                          bottom: 100 - Math.max(s.y, y), right: 100 - Math.max(s.x, x),
+                        });
+                      }}
+                      onMouseUp={() => { cropStartRef.current = null; }}
+                    >
+                      {cropRect && (
+                        <div className="fc-crop-selection" style={{
+                          top: `${cropRect.top}%`, left: `${cropRect.left}%`,
+                          right: `${cropRect.right}%`, bottom: `${cropRect.bottom}%`,
+                        }} />
+                      )}
+                      <span className="fc-crop-hint">Drag to select crop area</span>
+                    </div>
+                  )}
+                </div>
               </>
             ) : (
               <div className={`fc-drop-hint ${dragging ? 'dragging' : ''}`} onClick={() => fileInputRef.current?.click()}>
