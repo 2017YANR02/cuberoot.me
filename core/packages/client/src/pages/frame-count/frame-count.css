@@ -12,6 +12,7 @@
   padding: 0.75rem;
   display: flex;
   flex-direction: column;
+  touch-action: manipulation; /* 移动端禁用 pinch-zoom */
 }
 
 /* ── 顶部导航栏 ── */
@@ -105,10 +106,28 @@
 }
 
 .fc-video-zone video {
+  display: none; /* video 现在在 fc-video-wrapper 内 */
+}
+
+/* 视频包装器 — 紧贴视频尺寸，crop/zoom 基准 */
+.fc-video-wrapper {
+  position: relative;
+  width: 100%;
+  line-height: 0; /* 消除 inline 元素底部空白 */
+  overflow: hidden;
+  touch-action: none; /* 允许自定义触摸事件（pan/zoom） */
+  user-select: none;
+}
+
+.fc-video-wrapper.fc-pannable { cursor: grab; }
+.fc-video-wrapper.fc-panning  { cursor: grabbing; }
+
+
+.fc-video-wrapper video {
   width: 100%;
   max-height: 65vh;
-  background: #000;
   display: block;
+  background: #000;
 }
 
 .fc-video-label {
