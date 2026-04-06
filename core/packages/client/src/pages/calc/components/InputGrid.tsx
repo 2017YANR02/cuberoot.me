@@ -10,6 +10,7 @@ import {
   CalcEngine,
 } from '../engine/calc_engine';
 import { isWR } from '../engine/wr_data';
+import { recordAndUpdate, nextCell, prevCell, navigateToCell, tryAutoAdvance } from './Numpad';
 
 // NOTE: 头像按钮状态 — 由 CalcPage 管理，通过 props 传入
 export interface AvatarState {
@@ -75,35 +76,114 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
     wheelHandlers.current.set(el, handler);
   }, [state]);
 
-  // NOTE: 键盘导航 — Enter/Tab → zigzag 跳格
+  // NOTE: 键盘导航 — Enter/Tab zigzag、数字输入 + autoAdvance（inputMode="none" 需手动处理）
   const handleKeyDown = useCallback((e: React.KeyboardEvent, p: number, t: number) => {
+    const input = e.target as HTMLInputElement;
+    const absIdx = state.seedOn + p;
+
     if (e.key === 'Enter' || e.key === 'Tab') {
       e.preventDefault();
-      // NOTE: 先提交当前值
-      const input = e.target as HTMLInputElement;
       handleBlur(p, t, input.value);
-
-      // NOTE: zigzag 跳格 — 先同列另一选手，再下一列
-      let nextP = p;
-      let nextT = t;
-      nextP = 1 - p;
-      if (nextP <= p) nextT++;
-      if (nextT >= sc) return;
-
-      // NOTE: 跳过未启用的选手
-      if (!state.playerEnabled[nextP]) {
-        nextP = 1 - nextP;
-        if (p === 0) nextT++;
-      }
-      if (nextT >= sc) return;
-
-      const ref = inputRefs.current[nextP]?.[nextT];
-      if (ref) {
-        ref.focus();
-        ref.select();
-      }
+      const nxt = nextCell(p, t);
+      if (nxt) navigateToCell(nxt[0], nxt[1]);
+      else input.blur();
+      return;
     }
-  }, [state, handleBlur, sc]);
+
+    // NOTE: 数字键 — inputMode="none" 不会自动输入，需手动写入
+    if (/^[0-9]$/.test(e.key)) {
+      e.preventDefault();
+      const start = input.selectionStart ?? input.value.length;
+      const end = input.selectionEnd ?? input.value.length;
+      const isFullSel = start === 0 && end === input.value.length && input.value.length > 0;
+      if (isFullSel) {
+        input.value = e.key;
+        input.selectionStart = input.selectionEnd = 1;
+      } else {
+        if (input.value.replace(/\D/g, '').length >= 7) return;
+        input.value = input.value.slice(0, start) + e.key + input.value.slice(end);
+        input.selectionStart = input.selectionEnd = start + 1;
+      }
+      // NOTE: 自动跳格
+      if (!input.classList.contains('tavg-cell')) {
+        tryAutoAdvance(input.value, p, t);
+      }
+      return;
+    }
+
+    // 小数点 / 冒号
+    if (e.key === '.' || e.code === 'NumpadDecimal') {
+      e.preventDefault();
+      if (!input.value.includes('.')) {
+        const pos = input.selectionStart ?? input.value.length;
+        const endPos = input.selectionEnd ?? input.value.length;
+        input.value = input.value.slice(0, pos) + '.' + input.value.slice(endPos);
+        input.selectionStart = input.selectionEnd = pos + 1;
+      }
+      return;
+    }
+    if (e.key === ':') {
+      e.preventDefault();
+      if (!input.value.includes(':')) {
+        const pos = input.selectionStart ?? input.value.length;
+        const endPos = input.selectionEnd ?? input.value.length;
+        input.value = input.value.slice(0, pos) + ':' + input.value.slice(endPos);
+        input.selectionStart = input.selectionEnd = pos + 1;
+      }
+      return;
+    }
+
+    // NOTE: Backspace — 空格时反向 zigzag
+    if (e.key === 'Backspace') {
+      e.preventDefault();
+      const start = input.selectionStart ?? input.value.length;
+      const end = input.selectionEnd ?? input.value.length;
+      const isFullSel = start === 0 && end === input.value.length && input.value.length > 0;
+      if (isFullSel) {
+        recordAndUpdate(absIdx, t, 0);
+        input.value = '';
+      } else if (input.value.length > 0) {
+        input.value = input.value.slice(0, start > 0 ? start - 1 : 0) + input.value.slice(end);
+        input.selectionStart = input.selectionEnd = Math.max(0, start - 1);
+      } else {
+        // 空格 → 反向跳格
+        recordAndUpdate(absIdx, t, 0);
+        state.saveToUrl();
+        const prv = prevCell(p, t);
+        if (prv) {
+          recordAndUpdate(state.seedOn + prv[0], prv[1], 0);
+          navigateToCell(prv[0], prv[1]);
+        }
+      }
+      return;
+    }
+
+    if (e.key === 'Delete') {
+      e.preventDefault();
+      const start = input.selectionStart ?? 0;
+      const end = input.selectionEnd ?? 0;
+      if (start !== end) {
+        input.value = input.value.slice(0, start) + input.value.slice(end);
+      } else if (start < input.value.length) {
+        input.value = input.value.slice(0, start) + input.value.slice(start + 1);
+      }
+      input.selectionStart = input.selectionEnd = start;
+      return;
+    }
+
+    // NOTE: D → DNF + 自动跳格
+    if (e.key === 'd' || e.key === 'D') {
+      e.preventDefault();
+      recordAndUpdate(absIdx, t, DNF_VALUE);
+      state.saveToUrl();
+      input.value = 'DNF';
+      const nxt = nextCell(p, t);
+      if (nxt) navigateToCell(nxt[0], nxt[1]);
+      return;
+    }
+
+    // Arrow/Escape/Ctrl+Z 由 Numpad 的全局 keydown 处理
+  }, [state, handleBlur]);
 
   // NOTE: ghost bar 状态（用于 emoji 显示）
   // 原版 input_grid.js#861-875 Target Avg 状态 emoji
@@ -238,72 +318,7 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
                       handleBlur(p, t, e.target.value);
                     }}
                     onFocus={(e) => { state.setFocusedCell(p, t); e.target.select(); }}
-                    onKeyDown={(e) => {
-                      // NOTE: inputMode="none" 阻止了浏览器原生键盘输入，需手动处理
-                      const input = e.target as HTMLInputElement;
-                      if (/^[0-9]$/.test(e.key)) {
-                        e.preventDefault();
-                        // NOTE: 如果输入框有选中文本，替换选中内容
-                        const start = input.selectionStart ?? input.value.length;
-                        const end = input.selectionEnd ?? input.value.length;
-                        const before = input.value.slice(0, start);
-                        const after = input.value.slice(end);
-                        input.value = before + e.key + after;
-                        input.selectionStart = input.selectionEnd = start + 1;
-                        return;
-                      }
-                      if (e.key === '.' || e.code === 'NumpadDecimal') {
-                        e.preventDefault();
-                        if (!input.value.includes('.')) {
-                          const pos = input.selectionStart ?? input.value.length;
-                          const endPos = input.selectionEnd ?? input.value.length;
-                          input.value = input.value.slice(0, pos) + '.' + input.value.slice(endPos);
-                          input.selectionStart = input.selectionEnd = pos + 1;
-                        }
-                        return;
-                      }
-                      if (e.key === ':') {
-                        e.preventDefault();
-                        if (!input.value.includes(':')) {
-                          const pos = input.selectionStart ?? input.value.length;
-                          const endPos = input.selectionEnd ?? input.value.length;
-                          input.value = input.value.slice(0, pos) + ':' + input.value.slice(endPos);
-                          input.selectionStart = input.selectionEnd = pos + 1;
-                        }
-                        return;
-                      }
-                      if (e.key === 'Backspace') {
-                        e.preventDefault();
-                        const start = input.selectionStart ?? input.value.length;
-                        const end = input.selectionEnd ?? input.value.length;
-                        if (start !== end) {
-                          input.value = input.value.slice(0, start) + input.value.slice(end);
-                          input.selectionStart = input.selectionEnd = start;
-                        } else if (start > 0) {
-                          input.value = input.value.slice(0, start - 1) + input.value.slice(start);
-                          input.selectionStart = input.selectionEnd = start - 1;
-                        }
-                        return;
-                      }
-                      if (e.key === 'Delete') {
-                        e.preventDefault();
-                        const start = input.selectionStart ?? 0;
-                        const end = input.selectionEnd ?? 0;
-                        if (start !== end) {
-                          input.value = input.value.slice(0, start) + input.value.slice(end);
-                        } else if (start < input.value.length) {
-                          input.value = input.value.slice(0, start) + input.value.slice(start + 1);
-                        }
-                        input.selectionStart = input.selectionEnd = start;
-                        return;
-                      }
-                      if (e.key === 'd' || e.key === 'D') {
-                        e.preventDefault();
-                        input.value = 'DNF';
-                        return;
-                      }
-                      handleKeyDown(e, p, t);
-                    }}
+                    onKeyDown={(e) => handleKeyDown(e, p, t)}
                   />
                 </div>
               );
