@@ -394,7 +394,7 @@ export default function FrameCountPage() {
         const f = currentFrameRef.current;
         video.addEventListener('seeked', () => {
           seekingRef.current = false;
-          setCurrentFrame(f);
+          // 不要 setCurrentFrame(f) — UI 已由上方的立即更新驱动
           // 如果在 seek 期间帧号又变了，继续 seek
           if (currentFrameRef.current !== f) {
             seekingRef.current = true;
@@ -558,24 +558,27 @@ export default function FrameCountPage() {
       if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
       const key = e.key.toLowerCase();
 
-      // 长按 D/A：顺序播放（极致流畅）
+      // 长按 D/A：流畅播放
       if (e.repeat && (key === 'd' || key === '.' || key === 'a' || key === ',')) {
         e.preventDefault();
         const video = videoRef.current;
         if (video && !holdPlayingRef.current) {
           holdPlayingRef.current = true;
           video.muted = true;
-          // 向后长按：设负倍速（浏览器不支持就用快速 seek）
           if (key === 'a' || key === ',') {
-            // 浏览器不支持负倍速，用定时 seek 模拟
-            const intervalId = setInterval(() => {
-              if (!holdPlayingRef.current) { clearInterval(intervalId); return; }
+            // 向后：seeked 事件链式调用（每次 seek 完成再 seek 下一帧）
+            const stepBack = () => {
+              if (!holdPlayingRef.current) return;
               const f = Math.max(0, Math.round(video.currentTime * videoFps) - 1);
-              video.currentTime = f / videoFps;
               currentFrameRef.current = f;
               setCurrentFrame(f);
-            }, 1000 / 30); // 30fps 的回退速度
-            (holdPlayingRef as any)._intervalId = intervalId;
+              video.addEventListener('seeked', () => {
+                // seeked 完成后继续下一帧
+                requestAnimationFrame(() => stepBack());
+              }, { once: true });
+              video.currentTime = f / videoFps;
+            };
+            stepBack();
           } else {
             video.play();
             setIsPlaying(true);
@@ -604,11 +607,6 @@ export default function FrameCountPage() {
         holdPlayingRef.current = false;
         const video = videoRef.current;
         if (video) {
-          // 清理后退定时器
-          if ((holdPlayingRef as any)._intervalId) {
-            clearInterval((holdPlayingRef as any)._intervalId);
-            (holdPlayingRef as any)._intervalId = null;
-          }
           video.pause();
           video.muted = true;
           setIsPlaying(false);
