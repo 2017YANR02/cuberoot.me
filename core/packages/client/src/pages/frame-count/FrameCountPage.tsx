@@ -338,7 +338,7 @@ export default function FrameCountPage() {
     setSolves(prev => {
       const next = [...prev];
       const solve = { ...next[activeSolveIdx] };
-      solve.marks = [...solve.marks, { frame: currentFrame }];
+      solve.marks = [...solve.marks, { frame: currentFrame }].sort((a, b) => a.frame - b.frame);
       next[activeSolveIdx] = solve;
       return next;
     });
@@ -361,7 +361,7 @@ export default function FrameCountPage() {
     setSolves(prev => {
       const next = [...prev];
       const solve = { ...next[activeSolveIdx] };
-      solve.marks = solve.marks.map((m, i) => i === selectedMarkIdx ? { frame: currentFrame } : m);
+      solve.marks = solve.marks.map((m, i) => i === selectedMarkIdx ? { frame: currentFrame } : m).sort((a, b) => a.frame - b.frame);
       next[activeSolveIdx] = solve;
       return next;
     });
