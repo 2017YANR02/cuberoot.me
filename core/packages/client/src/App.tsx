@@ -4,7 +4,7 @@
  * @see index.html 全局加载的外部 CSS（cubing-icons / flag-icons / Google Fonts）
  */
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { HomePage } from './pages/HomePage';
 import { CaseSelectPage } from './pages/CaseSelectPage';
 import { TrainingPage } from './pages/TrainingPage';
@@ -41,6 +41,17 @@ const IframePage = lazy(() => import('./pages/IframePage'));
 const PretextDemo = lazy(() => import('./pages/pretext_demo/PretextDemo'));
 // NOTE: Frame Count 数帧工具懒加载
 const FrameCountPage = lazy(() => import('./pages/frame-count/FrameCountPage'));
+
+/**
+ * Catch-all 重定向：未匹配 SPA 路由的路径 → /blog/ 前缀（WordPress 处理）。
+ * 使用 window.location 全页跳转（WordPress 不在 SPA 内）。
+ */
+function BlogRedirect() {
+  useEffect(() => {
+    window.location.replace('/blog' + window.location.pathname + window.location.search);
+  }, []);
+  return <div style={{ padding: '2rem', textAlign: 'center', color: '#888' }}>Redirecting…</div>;
+}
 
 function App() {
   return (
@@ -100,6 +111,8 @@ function App() {
         {/* Auth — WCA OAuth 回调 */}
         <Route path="/auth/callback" element={<Suspense fallback={<div>Loading...</div>}><AuthCallbackPage /></Suspense>} />
         <Route path="/callback.html" element={<Suspense fallback={<div>Loading...</div>}><AuthCallbackPage /></Suspense>} />
+        {/* Catch-all — 未匹配的路径重定向到 /blog/ 前缀（旧 WordPress 页面） */}
+        <Route path="*" element={<BlogRedirect />} />
       </Routes>
     </BrowserRouter>
   );
