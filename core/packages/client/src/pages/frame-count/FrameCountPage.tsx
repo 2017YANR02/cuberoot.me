@@ -846,7 +846,8 @@ export default function FrameCountPage() {
         ff.on('log', ({ message }) => console.log('[ffmpeg]', message));
         const coreURL = await toBlobURL('/ffmpeg/ffmpeg-core.js', 'text/javascript');
         const wasmURL = await toBlobURL('/ffmpeg/ffmpeg-core.wasm', 'application/wasm');
-        await ff.load({ coreURL, wasmURL });
+        const workerURL = await toBlobURL('/ffmpeg/ffmpeg-core.worker.js', 'text/javascript');
+        await ff.load({ coreURL, wasmURL, workerURL });
         ffmpegRef.current = ff;
       }
       const ff = ffmpegRef.current;
@@ -855,13 +856,18 @@ export default function FrameCountPage() {
       console.log('[Export] Input file size:', inputData.length, 'bytes');
       await ff.writeFile(inputName, inputData);
 
-      const ffArgs: string[] = ['-i', inputName];
+      // Build args — put -ss BEFORE -i for input-level seeking (avoids frozen keyframe gap)
+      const ffArgs: string[] = [];
       const es = trimStart;
       const ee = trimEnd || totalFrames;
       const hasTrim = es > 0 || (trimEnd > 0 && trimEnd < totalFrames);
       if (hasTrim && videoFps > 0) {
         ffArgs.push('-ss', (es / videoFps).toFixed(4));
-        ffArgs.push('-to', (ee / videoFps).toFixed(4));
+      }
+      ffArgs.push('-i', inputName);
+      if (hasTrim && videoFps > 0) {
+        // Duration from start to end (since -ss already seeked the input)
+        ffArgs.push('-t', ((ee - es) / videoFps).toFixed(4));
       }
 
       if (cropRect) {
@@ -874,7 +880,7 @@ export default function FrameCountPage() {
         const cw2 = Math.round(((100 - cropRect.left - cropRect.right) / 100) * vw);
         const ch2 = Math.round(((100 - cropRect.top - cropRect.bottom) / 100) * vh);
         ffArgs.push('-vf', `crop=${cw2}:${ch2}:${cx}:${cy}`);
-        ffArgs.push('-c:v', 'libx264', '-preset', 'fast', '-crf', '18');
+        ffArgs.push('-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '18');
         ffArgs.push('-c:a', 'aac');
       } else {
         ffArgs.push('-c', 'copy');
