@@ -134,6 +134,20 @@
   background: #000;
 }
 
+/* WebCodecs 帧缓冲 canvas — 覆盖在 video 上，后退时显示 */
+.fc-canvas-overlay {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  display: none;
+  z-index: 2;
+  object-fit: contain;
+}
+.fc-canvas-overlay.active {
+  display: block;
+}
+
 /* 视频顶部工具栏 — 文件名 + 设置 + Change Video */
 .fc-video-toolbar {
   display: flex;

@@ -6,6 +6,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import mediaInfoFactory from 'mediainfo.js';
+import { useFrameBuffer } from './useFrameBuffer';
 
 import './frame-count.css';
 
@@ -182,11 +183,16 @@ export default function FrameCountPage() {
 
   // 视频状态
   const [videoSrc, setVideoSrc] = useState<string | null>(null);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
 
   const [videoName, setVideoName] = useState('');
   const [isPlaying, setIsPlaying] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [totalFrames, setTotalFrames] = useState(0);
+
+  // WebCodecs 帧缓冲 canvas
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [useCanvasDisplay, setUseCanvasDisplay] = useState(false);
 
 
 
@@ -299,6 +305,9 @@ export default function FrameCountPage() {
   }, []);
   const [solveTime, setSolveTime] = useState('');
   const [wcaEndFrame, setWcaEndFrame] = useState(0);
+
+  // ── WebCodecs 帧缓冲 ──
+  const { getFrame, prefetch, isReady: frameBufferReady } = useFrameBuffer(videoFile, videoFps);
 
   // ── 计算值 ──
 
@@ -521,10 +530,12 @@ export default function FrameCountPage() {
     if (videoSrc) URL.revokeObjectURL(videoSrc);
     const url = URL.createObjectURL(file);
     setVideoSrc(url);
+    setVideoFile(file);
 
     setVideoName(file.name);
     setCurrentFrame(0);
     setIsPlaying(false);
+    setUseCanvasDisplay(false);
 
 
     setSolves([{ name: 'Solve 1', marks: [] }]);
@@ -575,14 +586,60 @@ export default function FrameCountPage() {
           // 打断 stepFrames 的 seeked 链，避免冲突
           seekingRef.current = false;
           if (key === 'a' || key === ',') {
-            // 向后：seeked 链逐帧回退（浏览器不支持原生倒放）
+            // 向后：WebCodecs 帧缓冲 + seeked 链 fallback
+            // 关键：保持统一节奏，不在 rAF 和 seeked 之间交替
+            let hitCount = 0, missCount = 0;
+
+            // prefetch 全偏后退方向
+            console.log(`[StepBack] START frame=${currentFrameRef.current}, bufferReady=${frameBufferReady}`);
+            if (frameBufferReady) {
+              prefetch(currentFrameRef.current, 60, 'backward');
+            }
+
             const stepBack = () => {
-              if (!holdPlayingRef.current) return;
-              const f = Math.max(0, Math.round(video.currentTime * videoFps) - 1);
-              currentFrameRef.current = f;
-              setCurrentFrame(f);
-              video.addEventListener('seeked', stepBack, { once: true });
-              video.currentTime = f / videoFps;
+              if (!holdPlayingRef.current) {
+                console.log(`[StepBack] STOP — hits: ${hitCount}, misses: ${missCount}`);
+                return;
+              }
+              const f = Math.max(0, currentFrameRef.current - 1);
+
+              const bitmap = frameBufferReady ? getFrame(f) : null;
+              if (bitmap) {
+                // 缓冲命中 — 渲染到 canvas
+                currentFrameRef.current = f;
+                setCurrentFrame(f);
+                hitCount++;
+                const canvas = canvasRef.current;
+                const ctx = canvas?.getContext('2d');
+                if (ctx && canvas) {
+                  canvas.width = bitmap.width;
+                  canvas.height = bitmap.height;
+                  ctx.drawImage(bitmap, 0, 0);
+                }
+                setUseCanvasDisplay(true);
+
+                // 每消费 10 帧，触发新一轮 prefetch 补充缓存
+                if (hitCount % 10 === 0) {
+                  prefetch(f, 60, 'backward');
+                }
+                requestAnimationFrame(stepBack);
+              } else if (frameBufferReady) {
+                // 缓冲 READY 但当前帧还没解码 — 不走 seeked 链
+                // 保持当前画面冻住，rAF 下一帧重试（等 prefetch 完成）
+                missCount++;
+                if (missCount <= 3) {
+                  console.log(`[StepBack] WAIT frame=${f}, prefetch in progress...`);
+                }
+                requestAnimationFrame(stepBack);
+              } else {
+                // WebCodecs 不可用 — 传统 seeked 链 fallback
+                currentFrameRef.current = f;
+                setCurrentFrame(f);
+                missCount++;
+                setUseCanvasDisplay(false);
+                video.addEventListener('seeked', stepBack, { once: true });
+                video.currentTime = f / videoFps;
+              }
             };
             stepBack();
           } else {
@@ -616,9 +673,22 @@ export default function FrameCountPage() {
           video.pause();
           video.muted = true;
           setIsPlaying(false);
-          const f = Math.round(video.currentTime * videoFps);
-          currentFrameRef.current = f;
-          setCurrentFrame(f);
+
+          if (useCanvasDisplay) {
+            // 从 canvas 回到 video：同步 video.currentTime 到当前帧
+            const f = currentFrameRef.current;
+            video.currentTime = f / videoFps;
+            setUseCanvasDisplay(false);
+          } else {
+            const f = Math.round(video.currentTime * videoFps);
+            currentFrameRef.current = f;
+            setCurrentFrame(f);
+          }
+
+          // 触发 prefetch 以备下次后退
+          if (frameBufferReady) {
+            prefetch(currentFrameRef.current, 30);
+          }
         }
       }
     };
@@ -629,7 +699,7 @@ export default function FrameCountPage() {
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
     };
-  }, [togglePlay, stepFrames, stepSeconds, currentFrame, addMark, addSolve, copyToClipboard, videoFps, totalFrames]);
+  }, [togglePlay, stepFrames, stepSeconds, currentFrame, addMark, addSolve, copyToClipboard, videoFps, totalFrames, frameBufferReady, getFrame, prefetch, useCanvasDisplay]);
 
   // Shift+滚轮逐帧
   useEffect(() => {
@@ -654,13 +724,17 @@ export default function FrameCountPage() {
       if (video.paused && video.currentTime === 0) {
         video.currentTime = 0.001;
       }
+      // 首次加载：prefetch 起始帧
+      if (frameBufferReady) {
+        prefetch(0, 30);
+      }
     };
     video.addEventListener('play', onPlay);
     video.addEventListener('pause', onPause);
     video.addEventListener('loadedmetadata', onLoaded);
     if (video.duration && isFinite(video.duration) && videoFps > 0) setTotalFrames(Math.round(video.duration * videoFps));
     return () => { video.removeEventListener('play', onPlay); video.removeEventListener('pause', onPause); video.removeEventListener('loadedmetadata', onLoaded); };
-  }, [videoSrc, videoFps]);
+  }, [videoSrc, videoFps, frameBufferReady, prefetch]);
 
   // ── Marks 计算 ──
 
@@ -779,6 +853,16 @@ export default function FrameCountPage() {
                     ref={videoRef}
                     src={videoSrc}
                     preload="auto"
+                    style={{
+                      ...getVideoStyle(),
+                      ...(useCanvasDisplay ? { visibility: 'hidden' as const } : {}),
+                    }}
+                  />
+
+                  {/* WebCodecs 帧缓冲 canvas — 后退时覆盖 video */}
+                  <canvas
+                    ref={canvasRef}
+                    className={`fc-canvas-overlay${useCanvasDisplay ? ' active' : ''}`}
                     style={getVideoStyle()}
                   />
 
