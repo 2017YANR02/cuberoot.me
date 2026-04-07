@@ -187,7 +187,7 @@ export default function FrameCountPage() {
 
   // 帧计数状态
   const [videoFps, setVideoFps] = useState(60);
-  const [fpsAutoDetected, setFpsAutoDetected] = useState(false);
+
   const [currentFrame, setCurrentFrame] = useState(0);
 
   // 播放速率
@@ -518,14 +518,13 @@ export default function FrameCountPage() {
     setVideoName(file.name);
     setCurrentFrame(0);
     setIsPlaying(false);
-    setFpsAutoDetected(false);
+
     setSolves([{ name: 'Solve 1', marks: [] }]);
     setActiveSolveIdx(0);
     setSelectedMarkIdx(null);
     const detected = await detectFpsFromFile(file);
     if (detected && detected > 0) {
       setVideoFps(detected);
-      setFpsAutoDetected(true);
     }
   }, [videoSrc]);
 
@@ -704,7 +703,7 @@ export default function FrameCountPage() {
                     <input
                       className="fc-tab-input fc-toolbar-input"
                       type="number" min={1} step="any" value={videoFps}
-                      onChange={(e) => { setVideoFps(parseFloat(e.target.value) || 0); setFpsAutoDetected(false); }}
+                      onChange={(e) => setVideoFps(parseFloat(e.target.value) || 0)}
                     />
                     <span className="fc-toolbar-label">FPS</span>
 
