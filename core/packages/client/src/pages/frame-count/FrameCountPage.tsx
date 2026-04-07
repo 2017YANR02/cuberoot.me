@@ -6,6 +6,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import mediaInfoFactory from 'mediainfo.js';
+import { FFmpeg } from '@ffmpeg/ffmpeg';
+import { fetchFile, toBlobURL } from '@ffmpeg/util';
 import { useFrameBuffer } from './useFrameBuffer';
 
 import './frame-count.css';
@@ -82,6 +84,16 @@ const IconCrop = () => (
     <path d="M1 6.13L16 6a2 2 0 012 2v15" />
   </svg>
 );
+
+const IconExport = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <polyline points="7 10 12 15 17 10" />
+    <line x1="12" y1="15" x2="12" y2="3" />
+  </svg>
+);
+
+const THUMBNAIL_COUNT = 25;
 
 // ── 类型定义 ──────────────────────────────────────────────────────────────
 
@@ -231,6 +243,18 @@ export default function FrameCountPage() {
   // Ref 跟踪最新值，避免快速滚轮事件中闭包捕获的值过时
   const zoomRef = useRef(1);
   const panRef = useRef({ x: 0, y: 0 });
+
+  // Timeline trimmer
+  const [thumbnails, setThumbnails] = useState<string[]>([]);
+  const [trimStart, setTrimStart] = useState(0);
+  const [trimEnd, setTrimEnd] = useState(0);
+  const trimTrackRef = useRef<HTMLDivElement>(null);
+  const trimDragRef = useRef<{ side: 'left' | 'right' | 'seek'; startX: number; startVal: number } | null>(null);
+
+  // FFmpeg export
+  const ffmpegRef = useRef<FFmpeg | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState(0);
 
   // wrapper 的 transform（translate 在 scale 之前，translate 单位是屏幕像素）
   const getZoomStyle = useCallback((): React.CSSProperties => {
@@ -738,6 +762,158 @@ export default function FrameCountPage() {
     return () => el.removeEventListener('wheel', handler);
   }, [handleVideoZoom, videoSrc]);
 
+  // ── 生成缩略图 ──
+  useEffect(() => {
+    if (!videoSrc || totalFrames <= 0 || videoFps <= 0) return;
+    const video = document.createElement('video');
+    video.muted = true;
+    video.preload = 'auto';
+    video.src = videoSrc;
+    const canvas = document.createElement('canvas');
+    const ctx2 = canvas.getContext('2d')!;
+    const thumbArr: string[] = [];
+    let cancelled = false;
+
+    video.addEventListener('loadedmetadata', () => {
+      const dur = video.duration;
+      if (!dur || dur <= 0) return;
+      canvas.width = 120;
+      canvas.height = Math.round(120 * (video.videoHeight / video.videoWidth) || 68);
+      let idx = 0;
+      const times = Array.from({ length: THUMBNAIL_COUNT }, (_, i) => (i / (THUMBNAIL_COUNT - 1)) * dur);
+
+      const grabNext = () => {
+        if (cancelled || idx >= times.length) {
+          if (!cancelled) setThumbnails([...thumbArr]);
+          video.src = '';
+          return;
+        }
+        video.currentTime = times[idx];
+      };
+
+      video.addEventListener('seeked', () => {
+        ctx2.drawImage(video, 0, 0, canvas.width, canvas.height);
+        thumbArr.push(canvas.toDataURL('image/jpeg', 0.5));
+        idx++;
+        grabNext();
+      });
+      grabNext();
+    });
+
+    return () => { cancelled = true; };
+  }, [videoSrc, totalFrames, videoFps]);
+
+  // ── Timeline trim 拖拽 ──
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      const d = trimDragRef.current;
+      const track = trimTrackRef.current;
+      if (!d || !track || totalFrames <= 0) return;
+      e.preventDefault();
+      const rect = track.getBoundingClientRect();
+      const dx = e.clientX - d.startX;
+      const frameDelta = Math.round((dx / rect.width) * totalFrames);
+      if (d.side === 'left') {
+        const raw = Math.max(0, Math.min(d.startVal + frameDelta, (trimEnd || totalFrames) - 1));
+        setTrimStart(raw);
+        seekToFrame(raw);
+      } else if (d.side === 'right') {
+        const raw = Math.max(trimStart + 1, Math.min(d.startVal + frameDelta, totalFrames));
+        setTrimEnd(raw);
+        seekToFrame(raw);
+      } else {
+        const frac = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        const frame = Math.round(frac * totalFrames);
+        seekToFrame(frame);
+      }
+    };
+    const onUp = () => { trimDragRef.current = null; };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
+  }, [totalFrames, trimStart, trimEnd, seekToFrame]);
+
+  // ── Export logic ──
+  const handleExport = useCallback(async () => {
+    if (!videoFile || exporting) return;
+    setExporting(true);
+    setExportProgress(0);
+    try {
+      if (!ffmpegRef.current) {
+        showToast('Loading FFmpeg engine...');
+        const ff = new FFmpeg();
+        ff.on('progress', ({ progress }) => setExportProgress(Math.round(progress * 100)));
+        ff.on('log', ({ message }) => console.log('[ffmpeg]', message));
+        const coreURL = await toBlobURL('/ffmpeg/ffmpeg-core.js', 'text/javascript');
+        const wasmURL = await toBlobURL('/ffmpeg/ffmpeg-core.wasm', 'application/wasm');
+        await ff.load({ coreURL, wasmURL });
+        ffmpegRef.current = ff;
+      }
+      const ff = ffmpegRef.current;
+      const inputName = 'input' + (videoFile.name.substring(videoFile.name.lastIndexOf('.')) || '.mp4');
+      const inputData = await fetchFile(videoFile);
+      console.log('[Export] Input file size:', inputData.length, 'bytes');
+      await ff.writeFile(inputName, inputData);
+
+      const ffArgs: string[] = ['-i', inputName];
+      const es = trimStart;
+      const ee = trimEnd || totalFrames;
+      const hasTrim = es > 0 || (trimEnd > 0 && trimEnd < totalFrames);
+      if (hasTrim && videoFps > 0) {
+        ffArgs.push('-ss', (es / videoFps).toFixed(4));
+        ffArgs.push('-to', (ee / videoFps).toFixed(4));
+      }
+
+      if (cropRect) {
+        const vid = videoRef.current;
+        const vw = vid?.videoWidth || 1920;
+        const vh = vid?.videoHeight || 1080;
+        // cropRect is CSS inset %: {top, left, bottom, right} where bottom/right are distances from bottom/right edge
+        const cx = Math.round((cropRect.left / 100) * vw);
+        const cy = Math.round((cropRect.top / 100) * vh);
+        const cw2 = Math.round(((100 - cropRect.left - cropRect.right) / 100) * vw);
+        const ch2 = Math.round(((100 - cropRect.top - cropRect.bottom) / 100) * vh);
+        ffArgs.push('-vf', `crop=${cw2}:${ch2}:${cx}:${cy}`);
+        ffArgs.push('-c:v', 'libx264', '-preset', 'fast', '-crf', '18');
+        ffArgs.push('-c:a', 'aac');
+      } else {
+        ffArgs.push('-c', 'copy');
+      }
+
+      ffArgs.push('-movflags', '+faststart', 'output.mp4');
+
+      console.log('[Export] ffmpeg args:', ffArgs.join(' '));
+      const exitCode = await ff.exec(ffArgs);
+      console.log('[Export] ffmpeg exit code:', exitCode);
+
+      if (exitCode !== 0) {
+        throw new Error(`FFmpeg exited with code ${exitCode}. Check console for [ffmpeg] logs.`);
+      }
+
+      const outData = await ff.readFile('output.mp4');
+      const buf = outData instanceof Uint8Array ? new Uint8Array(outData) : new TextEncoder().encode(outData as string);
+      console.log('[Export] Output file size:', buf.length, 'bytes');
+      const blob = new Blob([buf], { type: 'video/mp4' });
+      const downloadUrl = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      const baseName = videoFile.name.replace(/\.[^.]+$/, '');
+      anchor.href = downloadUrl;
+      anchor.download = `${baseName}_export.mp4`;
+      anchor.click();
+      URL.revokeObjectURL(downloadUrl);
+
+      await ff.deleteFile(inputName);
+      await ff.deleteFile('output.mp4');
+      showToast('Export complete!');
+    } catch (err) {
+      console.error('Export failed:', err);
+      showToast(`Export failed: ${err instanceof Error ? err.message : err}`);
+    } finally {
+      setExporting(false);
+      setExportProgress(0);
+    }
+  }, [videoFile, exporting, trimStart, trimEnd, totalFrames, videoFps, cropRect, showToast]);
+
   // 总帧数
   useEffect(() => {
     const video = videoRef.current;
@@ -804,21 +980,27 @@ export default function FrameCountPage() {
                 {/* 顶部工具栏：文件名 + FPS/Crop/Image 设置 */}
                 <div className="fc-video-toolbar">
                   <span className="fc-video-label">{videoName}</span>
-                  <input
-                    className="fc-tab-input fc-toolbar-time"
-                    type="number" step="0.01" min={0} placeholder="Time"
-                    value={solveTime}
-                    onChange={(e) => setSolveTime(e.target.value)}
-                  />
+                  <div className="fc-input-unit-wrap">
+                    <input
+                      className="fc-tab-input fc-toolbar-time"
+                      type="number" step="0.01" min={0} placeholder="Time"
+                      value={solveTime}
+                      onChange={(e) => setSolveTime(e.target.value)}
+                    />
+                    {solveTime && <span className="fc-input-suffix">s</span>}
+                  </div>
 
                   <div className="fc-toolbar-controls">
                     {/* FPS */}
-                    <input
-                      className="fc-tab-input fc-toolbar-input"
-                      type="number" min={1} step="any" value={videoFps}
-                      onChange={(e) => setVideoFps(parseFloat(e.target.value) || 0)}
-                    />
-                    <span className="fc-toolbar-label">FPS</span>
+                    <div className="fc-input-unit-wrap">
+                      <input
+                        className="fc-tab-input fc-toolbar-time"
+                        type="number" min={1} step="any" value={videoFps}
+                        onChange={(e) => setVideoFps(parseFloat(e.target.value) || 0)}
+                        placeholder="FPS"
+                      />
+                      {videoFps > 0 && <span className="fc-input-suffix">fps</span>}
+                    </div>
 
                     <div className="fc-toolbar-sep" />
 
@@ -862,10 +1044,12 @@ export default function FrameCountPage() {
 
                   </div>
 
-
-
                   <button className="fc-change-video" onClick={() => fileInputRef.current?.click()}>
                     New
+                  </button>
+                  <button className="fc-export-btn" onClick={handleExport} disabled={exporting} title="Export as MP4">
+                    <IconExport />
+                    {exporting ? `${exportProgress}%` : 'Export'}
                   </button>
                 </div>
                 {/* 视频 wrapper — 紧贴视频尺寸，crop overlay / zoom / pan 都在这里 */}
@@ -957,22 +1141,80 @@ export default function FrameCountPage() {
           {/* ── 控制栏 ── */}
           {videoSrc && (
             <div className="fc-panel fc-controls-wrap">
-              <div className="fc-progress-bar">
-                <input
-                  type="range" className="fc-progress-slider"
-                  min={0} max={totalFrames || 1} value={currentFrame}
-                  onChange={(e) => seekToFrame(parseInt(e.target.value))}
-                  onMouseUp={(e) => (e.target as HTMLElement).blur()}
-                  style={{
-                    '--progress': totalFrames > 0 ? `${(currentFrame / totalFrames) * 100}%` : '0%',
-                  } as React.CSSProperties}
+              {/* iOS-style timeline trimmer */}
+              <div className="fc-timeline-trimmer" ref={trimTrackRef}>
+                {/* Thumbnail filmstrip */}
+                <div className="fc-timeline-filmstrip">
+                  {thumbnails.map((src, i) => (
+                    <img key={i} src={src} className="fc-timeline-thumb" alt="" draggable={false} />
+                  ))}
+                </div>
+
+                {/* Dimmed areas outside trim range */}
+                {(() => {
+                  const effEnd = trimEnd || totalFrames;
+                  const leftPct = totalFrames > 0 ? (trimStart / totalFrames) * 100 : 0;
+                  const rightPct = totalFrames > 0 ? ((totalFrames - effEnd) / totalFrames) * 100 : 0;
+                  return (
+                    <>
+                      <div className="fc-timeline-dim fc-timeline-dim-left" style={{ width: `${leftPct}%` }} />
+                      <div className="fc-timeline-dim fc-timeline-dim-right" style={{ width: `${rightPct}%` }} />
+                      {/* Yellow border between handles */}
+                      <div className="fc-trim-border" style={{ left: `${leftPct}%`, width: `${100 - leftPct - rightPct}%` }} />
+                    </>
+                  );
+                })()}
+
+                {/* Left trim handle */}
+                <div
+                  className="fc-trim-handle fc-trim-handle-left"
+                  style={{ left: `calc(${totalFrames > 0 ? (trimStart / totalFrames) * 100 : 0}% - 14px)` }}
+                  onMouseDown={(e) => {
+                    e.preventDefault(); e.stopPropagation();
+                    trimDragRef.current = { side: 'left', startX: e.clientX, startVal: trimStart };
+                  }}
+                >
+                  <span className="fc-trim-chevron">‹</span>
+                </div>
+
+                {/* Right trim handle */}
+                <div
+                  className="fc-trim-handle fc-trim-handle-right"
+                  style={{ left: `${totalFrames > 0 ? ((trimEnd || totalFrames) / totalFrames) * 100 : 100}%` }}
+                  onMouseDown={(e) => {
+                    e.preventDefault(); e.stopPropagation();
+                    trimDragRef.current = { side: 'right', startX: e.clientX, startVal: trimEnd || totalFrames };
+                  }}
+                >
+                  <span className="fc-trim-chevron">›</span>
+                </div>
+
+                {/* Playhead */}
+                {totalFrames > 0 && (
+                  <div className="fc-timeline-playhead" style={{ left: `${(currentFrame / totalFrames) * 100}%` }} />
+                )}
+
+                {/* Click/drag to seek overlay */}
+                <div
+                  className="fc-timeline-seek-area"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    const track = trimTrackRef.current;
+                    if (!track || totalFrames <= 0) return;
+                    const rect = track.getBoundingClientRect();
+                    const frac = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                    const frame = Math.round(frac * totalFrames);
+                    seekToFrame(frame);
+                    trimDragRef.current = { side: 'seek', startX: e.clientX, startVal: frame };
+                  }}
                 />
-                {/* Mark indicators on progress bar */}
+
+                {/* Mark indicators */}
                 {activeSolve.marks.map((m, i) => {
                   if (totalFrames <= 0) return null;
-                  const frac = m.frame / totalFrames;
+                  const pct = (m.frame / totalFrames) * 100;
                   return (
-                    <div key={i} className="fc-marker fc-marker-mark" style={{ left: `calc(${frac * 100}% - ${frac * 12}px + 6px)` }} title={`Mark ${i}: ${m.frame}`} />
+                    <div key={i} className="fc-marker fc-marker-mark" style={{ left: `${pct}%` }} title={`Mark ${i}: ${m.frame}`} />
                   );
                 })}
               </div>

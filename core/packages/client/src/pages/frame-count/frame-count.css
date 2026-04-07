@@ -180,20 +180,25 @@
   min-width: 0;
 }
 
-.fc-toolbar-label {
-  font-size: 0.72rem;
-  color: #999;
+/* 单位后缀包裹器 */
+.fc-input-unit-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
   flex-shrink: 0;
 }
-
-.fc-toolbar-input {
-  width: 60px !important;
-  border: none !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  border-bottom: 1px solid rgba(255,255,255,0.2) !important;
-  padding: 4px 2px !important;
-  font-size: 0.8rem !important;
+.fc-input-suffix {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.65rem;
+  color: #888;
+  pointer-events: none;
+  font-weight: 500;
+}
+.fc-input-unit-wrap .fc-toolbar-time {
+  padding-right: 22px !important;
 }
 
 .fc-toolbar-sep {
@@ -215,6 +220,25 @@
   margin-left: auto;
 }
 .fc-change-video:hover { color: #fff; }
+
+/* Export 按钮 */
+.fc-export-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  color: #b0b0b0;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.fc-export-btn:hover { color: #fff; border-color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.1); }
+.fc-export-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.fc-export-btn svg { width: 12px; height: 12px; }
 
 /* 工具栏图标按钮 */
 .fc-toolbar-icon {
@@ -299,31 +323,106 @@
   padding: 0.75rem 1rem;
 }
 
-/* Progress bar */
-.fc-progress-bar {
+/* ── iOS-style Timeline Trimmer ── */
+.fc-timeline-trimmer {
   position: relative;
+  height: 44px;
+  border-radius: 6px;
+  overflow: visible;
   margin-bottom: 0.5rem;
+  background: #2a2a2a;
+  user-select: none;
 }
 
-.fc-progress-slider {
-  -webkit-appearance: none;
-  appearance: none;
+.fc-timeline-filmstrip {
+  display: flex;
   width: 100%;
-  height: 4px;
-  border-radius: 2px;
-  background: linear-gradient(to right, #888 var(--progress, 0%), #555 var(--progress, 0%));
-  outline: none;
-  cursor: pointer;
-}
-.fc-progress-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 12px; height: 12px;
-  border-radius: 50%;
-  background: #ccc;
-  cursor: pointer;
+  height: 100%;
+  border-radius: 6px;
+  overflow: hidden;
 }
 
-/* Mark indicators */
+.fc-timeline-thumb {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+/* Dimmed overlay outside trim */
+.fc-timeline-dim {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  pointer-events: none;
+  z-index: 2;
+}
+.fc-timeline-dim-left { left: 0; border-radius: 6px 0 0 6px; }
+.fc-timeline-dim-right { right: 0; border-radius: 0 6px 6px 0; }
+
+/* Trim handles */
+.fc-trim-handle {
+  position: absolute;
+  top: 0;
+  width: 14px;
+  height: 100%;
+  background: #e8c44a;
+  cursor: ew-resize;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.fc-trim-handle:hover { background: #f0d060; }
+.fc-trim-handle-left { border-radius: 6px 0 0 6px; }
+.fc-trim-handle-right { border-radius: 0 6px 6px 0; }
+.fc-trim-chevron {
+  color: #333;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+  user-select: none;
+}
+
+/* Top/bottom border between handles */
+.fc-trim-border {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border-top: 2px solid #e8c44a;
+  border-bottom: 2px solid #e8c44a;
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* Playhead */
+.fc-timeline-playhead {
+  position: absolute;
+  top: -2px;
+  width: 2px;
+  height: calc(100% + 4px);
+  background: #fff;
+  box-shadow: 0 0 4px rgba(0,0,0,0.6);
+  z-index: 6;
+  pointer-events: none;
+  transform: translateX(-50%);
+  border-radius: 1px;
+}
+
+/* Seek overlay */
+.fc-timeline-seek-area {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  z-index: 3;
+}
+
+/* Mark indicators on timeline */
 .fc-marker-mark {
   position: absolute;
   top: 50%;
@@ -333,6 +432,7 @@
   transform: translate(-50%, -50%);
   pointer-events: none;
   border-radius: 1px;
+  z-index: 5;
 }
 
 /* Controls */
@@ -665,7 +765,7 @@
 
 /* Toolbar Time 输入框 */
 .fc-toolbar-time {
-  width: 52px !important;
+  width: 72px !important;
   border-radius: 6px !important;
   border: 1px solid rgba(255,255,255,0.15) !important;
   background: rgba(0,0,0,0.2) !important;
