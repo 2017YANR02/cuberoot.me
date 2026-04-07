@@ -1,0 +1,381 @@
+/**
+ * @module useFrameBuffer
+ * WebCodecs 帧缓冲 — mp4box.js 解复用 + VideoDecoder + LRU ImageBitmap 缓存。
+ * 长按 A 后退时，直接从缓存取帧渲染到 Canvas，无需 seek。
+ *
+ * 浏览器兼容：WebCodecs 仅 Chrome 94+/Edge 94+，其余浏览器 isReady=false，
+ * 调用方 fallback 到 seeked 链。
+ */
+
+import { useEffect, useRef, useCallback, useState } from 'react';
+import {
+  createFile,
+  DataStream,
+  Endianness,
+  type ISOFile,
+  type MP4BoxBuffer,
+  type Movie,
+  type Track,
+  type Sample,
+} from 'mp4box';
+
+// ── 常量 ─────────────────────────────────────────────────────────────────────
+
+/** 缓冲区最大帧数（1080p 每帧 ~8MB RGBA → 60帧 ≈ 480MB） */
+const MAX_CACHE = 60;
+
+/** WebCodecs 是否可用 */
+const HAS_WEBCODECS = typeof VideoDecoder !== 'undefined';
+
+// ── 类型 ─────────────────────────────────────────────────────────────────────
+
+interface SampleInfo {
+  /** 帧在视频中的序号（0-based） */
+  index: number;
+  /** 是否关键帧（I帧） */
+  isSync: boolean;
+  /** 对应的编码数据 */
+  data: Uint8Array;
+  /** 时间戳 μs */
+  timestamp: number;
+  /** 持续时间 μs */
+  duration: number;
+}
+
+export interface FrameBufferHook {
+  /** 取已解码的帧，无则返回 null */
+  getFrame(frameIndex: number): ImageBitmap | null;
+  /** 预解码 center ± range, direction 可偏向 'backward' 或 'forward' */
+  prefetch(center: number, range: number, direction?: 'backward' | 'forward'): void;
+  /** WebCodecs 是否可用且初始化完成 */
+  isReady: boolean;
+  /** 释放所有资源 */
+  dispose(): void;
+}
+
+// ── LRU 帧缓存 ──────────────────────────────────────────────────────────────
+
+class FrameCache {
+  private cache = new Map<number, ImageBitmap>();
+  private accessOrder: number[] = [];
+
+  get(index: number): ImageBitmap | null {
+    const bmp = this.cache.get(index);
+    if (!bmp) return null;
+    // 移到末尾（最近访问）
+    this.accessOrder = this.accessOrder.filter(i => i !== index);
+    this.accessOrder.push(index);
+    return bmp;
+  }
+
+  set(index: number, bmp: ImageBitmap): void {
+    if (this.cache.has(index)) {
+      // 已有则替换
+      this.cache.get(index)!.close();
+      this.cache.set(index, bmp);
+      this.accessOrder = this.accessOrder.filter(i => i !== index);
+      this.accessOrder.push(index);
+      return;
+    }
+    // 超容量：淘汰最久未访问的
+    while (this.cache.size >= MAX_CACHE && this.accessOrder.length > 0) {
+      const evict = this.accessOrder.shift()!;
+      const old = this.cache.get(evict);
+      if (old) { old.close(); this.cache.delete(evict); }
+    }
+    this.cache.set(index, bmp);
+    this.accessOrder.push(index);
+  }
+
+  has(index: number): boolean {
+    return this.cache.has(index);
+  }
+
+  clear(): void {
+    for (const bmp of this.cache.values()) bmp.close();
+    this.cache.clear();
+    this.accessOrder = [];
+  }
+}
+
+// ── Hook ─────────────────────────────────────────────────────────────────────
+
+export function useFrameBuffer(
+  videoFile: File | null,
+  fps: number,
+): FrameBufferHook {
+  const [isReady, setIsReady] = useState(false);
+
+  const cacheRef = useRef<FrameCache>(new FrameCache());
+  const samplesRef = useRef<SampleInfo[]>([]);
+  const configRef = useRef<VideoDecoderConfig | null>(null);
+
+  // 防止重叠的 prefetch
+  const prefetchSeqRef = useRef(0);
+  const decodingRef = useRef(false);
+
+  // ── 初始化：mp4box 解析文件 → 提取 samples → 配置 decoder ──
+
+  useEffect(() => {
+    if (!HAS_WEBCODECS || !videoFile || fps <= 0) {
+      setIsReady(false);
+      return;
+    }
+
+    let cancelled = false;
+    const cache = cacheRef.current;
+    cache.clear();
+    samplesRef.current = [];
+    configRef.current = null;
+    setIsReady(false);
+
+    const mp4File = createFile() as ISOFile;
+    let videoTrackId: number | null = null;
+    let sampleIndex = 0;
+
+    // mp4box onReady：提取 codec 配置
+    mp4File.onReady = (info: Movie) => {
+      if (cancelled) return;
+
+      const vTrack = info.videoTracks?.[0] as Track | undefined;
+      if (!vTrack) {
+        console.warn('[FrameBuffer] No video track found');
+        return;
+      }
+
+      videoTrackId = vTrack.id;
+      const codecStr = vTrack.codec;
+
+      // 提取 description（SPS/PPS extradata）从 trakBox
+      const trak = mp4File.getTrackById(videoTrackId);
+      let description: Uint8Array | undefined;
+      if (trak) {
+        // mp4box v2: trak.mdia.minf.stbl.stsd.entries[0].avcC/hvcC/vpcC
+        const entries = (trak as any).mdia?.minf?.stbl?.stsd?.entries;
+        if (entries && entries.length > 0) {
+          const entry = entries[0];
+          const box = entry.avcC || entry.hvcC || entry.vpcC;
+          if (box) {
+            const stream = new DataStream(
+              undefined,
+              0,
+              Endianness.BIG_ENDIAN,
+            );
+            box.write(stream);
+            description = new Uint8Array(stream.buffer, 8); // 跳过 box header
+          }
+        }
+      }
+
+      const config: VideoDecoderConfig = {
+        codec: codecStr,
+        codedWidth: vTrack.video?.width ?? 1920,
+        codedHeight: vTrack.video?.height ?? 1080,
+        ...(description ? { description } : {}),
+      };
+
+      configRef.current = config;
+
+      // 请求所有 samples
+      mp4File.setExtractionOptions(videoTrackId);
+      mp4File.start();
+    };
+
+    // mp4box onSamples：收集所有帧信息
+    mp4File.onSamples = (_trackId: number, _user: unknown, samples: Sample[]) => {
+      if (cancelled) return;
+      for (const s of samples) {
+        if (!s.data) continue;
+        samplesRef.current.push({
+          index: sampleIndex++,
+          isSync: s.is_sync,
+          data: new Uint8Array(s.data),
+          timestamp: (s.cts * 1_000_000) / s.timescale,
+          duration: (s.duration * 1_000_000) / s.timescale,
+        });
+      }
+    };
+
+    // 读取文件 → 送入 mp4box
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (cancelled || !reader.result) return;
+      const buf = reader.result as ArrayBuffer;
+      const mp4Buf = buf as MP4BoxBuffer;
+      mp4Buf.fileStart = 0;
+      mp4File.appendBuffer(mp4Buf);
+      mp4File.flush();
+
+      // samples 收集完毕后标记 ready
+      if (configRef.current && samplesRef.current.length > 0) {
+        console.log(`[FrameBuffer] READY — ${samplesRef.current.length} samples, codec=${configRef.current.codec}, ${configRef.current.codedWidth}x${configRef.current.codedHeight}`);
+        setIsReady(true);
+      } else {
+        console.warn('[FrameBuffer] NOT READY — config:', !!configRef.current, 'samples:', samplesRef.current.length);
+      }
+    };
+    reader.readAsArrayBuffer(videoFile);
+
+    return () => {
+      cancelled = true;
+      mp4File.stop();
+      cache.clear();
+    };
+  }, [videoFile, fps]);
+
+  // ── 解码一段帧范围 [from, to] ──
+
+  const decodeRange = useCallback(async (from: number, to: number, seq: number) => {
+    const config = configRef.current;
+    const samples = samplesRef.current;
+    if (!config || samples.length === 0) return;
+
+    // 边界裁剪
+    const start = Math.max(0, from);
+    const end = Math.min(samples.length - 1, to);
+    if (start > end) return;
+
+    const cache = cacheRef.current;
+
+    // 找最近的 I 帧（≤ start）
+    let iFrameIdx = start;
+    while (iFrameIdx > 0 && !samples[iFrameIdx].isSync) {
+      iFrameIdx--;
+    }
+
+    // 创建临时 decoder，收集解码结果
+    const pendingFrames: { index: number; bitmap: ImageBitmap }[] = [];
+    let frameOutputCount = 0;
+
+    const decoder = new VideoDecoder({
+      output: async (frame: VideoFrame) => {
+        // seq 检查，避免过期解码浪费
+        if (seq !== prefetchSeqRef.current) {
+          frame.close();
+          return;
+        }
+        try {
+          const bitmap = await createImageBitmap(frame);
+          // VideoDecoder output 按输入顺序输出
+          const globalIdx = iFrameIdx + frameOutputCount;
+          frameOutputCount++;
+          pendingFrames.push({ index: globalIdx, bitmap });
+        } catch {
+          // createImageBitmap 失败（极罕见）
+        } finally {
+          frame.close();
+        }
+      },
+      error: (e: DOMException) => {
+        console.warn('[FrameBuffer] Decoder error:', e);
+      },
+    });
+
+    try {
+      decoder.configure(config);
+
+      // 从 I 帧顺序送入到 end
+      for (let i = iFrameIdx; i <= end; i++) {
+        if (seq !== prefetchSeqRef.current) break;
+        const s = samples[i];
+
+        const chunk = new EncodedVideoChunk({
+          type: s.isSync ? 'key' : 'delta',
+          timestamp: s.timestamp,
+          duration: s.duration,
+          data: s.data,
+        });
+        decoder.decode(chunk);
+      }
+
+      await decoder.flush();
+
+      // 只缓存 [start, end] 范围内的帧
+      if (seq === prefetchSeqRef.current) {
+        for (const pf of pendingFrames) {
+          if (pf.index >= start && pf.index <= end && !cache.has(pf.index)) {
+            cache.set(pf.index, pf.bitmap);
+          } else {
+            // 不需要的帧（I帧到 start 之间），释放
+            pf.bitmap.close();
+          }
+        }
+      } else {
+        // 已过期，全部释放
+        for (const pf of pendingFrames) pf.bitmap.close();
+      }
+    } catch (e) {
+      console.warn('[FrameBuffer] Decode range failed:', e);
+      for (const pf of pendingFrames) pf.bitmap.close();
+    } finally {
+      if (decoder.state !== 'closed') {
+        decoder.close();
+      }
+    }
+  }, []);
+
+  // ── prefetch ──
+
+  const prefetch = useCallback((center: number, range: number, direction?: 'backward' | 'forward') => {
+    if (!isReady) {
+      console.log(`[FrameBuffer] prefetch BLOCKED — not ready`);
+      return;
+    }
+    if (decodingRef.current) {
+      console.log(`[FrameBuffer] prefetch BLOCKED — already decoding`);
+      return;
+    }
+
+    // 方向偏移：backward 全部向左，forward 全部向右
+    let from: number, to: number;
+    if (direction === 'backward') {
+      from = center - range;
+      to = center;
+    } else if (direction === 'forward') {
+      from = center;
+      to = center + range;
+    } else {
+      from = center - range;
+      to = center + range;
+    }
+
+    // 检查是否已经全部缓存
+    const cache = cacheRef.current;
+    const samples = samplesRef.current;
+    const actualFrom = Math.max(0, from);
+    const actualTo = Math.min(samples.length - 1, to);
+
+    let allCached = true;
+    for (let i = actualFrom; i <= actualTo; i++) {
+      if (!cache.has(i)) { allCached = false; break; }
+    }
+    if (allCached) return;
+
+    console.log(`[FrameBuffer] prefetch START center=${center} range=${range} → decode [${actualFrom}, ${actualTo}]`);
+    const seq = ++prefetchSeqRef.current;
+    decodingRef.current = true;
+
+    // 异步解码，不阻塞 UI
+    decodeRange(from, to, seq).finally(() => {
+      decodingRef.current = false;
+      console.log(`[FrameBuffer] prefetch DONE, cacheSize=${cacheRef.current.has(center) ? 'HIT' : 'MISS'} center=${center}`);
+    });
+  }, [isReady, decodeRange]);
+
+  // ── getFrame ──
+
+  const getFrame = useCallback((frameIndex: number): ImageBitmap | null => {
+    if (!isReady) return null;
+    return cacheRef.current.get(frameIndex);
+  }, [isReady]);
+
+  // ── dispose ──
+
+  const dispose = useCallback(() => {
+    prefetchSeqRef.current++;
+    cacheRef.current.clear();
+    setIsReady(false);
+  }, []);
+
+  return { getFrame, prefetch, isReady, dispose };
+}
