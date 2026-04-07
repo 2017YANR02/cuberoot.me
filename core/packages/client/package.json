@@ -13,6 +13,8 @@
   "dependencies": {
     "@chenglou/pretext": "^0.0.3",
     "@cuberoot/shared": "workspace:*",
+    "@ffmpeg/ffmpeg": "^0.12.15",
+    "@ffmpeg/util": "^0.12.2",
     "canvas-confetti": "^1.9.4",
     "cubing": "^0.50.0",
     "flag-icons": "^7.5.0",
