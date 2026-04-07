@@ -29,7 +29,7 @@ const HAS_WEBCODECS = typeof VideoDecoder !== 'undefined';
 
 // ── 类型 ─────────────────────────────────────────────────────────────────────
 
-interface SampleInfo {
+export interface SampleInfo {
   /** 帧在视频中的序号（0-based） */
   index: number;
   /** 是否关键帧（I帧） */
@@ -51,6 +51,10 @@ export interface FrameBufferHook {
   isReady: boolean;
   /** 释放所有资源 */
   dispose(): void;
+  /** 所有帧的编码数据（供导出使用） */
+  samples: SampleInfo[];
+  /** VideoDecoder 配置（供导出使用） */
+  decoderConfig: VideoDecoderConfig | null;
 }
 
 // ── LRU 帧缓存 ──────────────────────────────────────────────────────────────
@@ -377,5 +381,9 @@ export function useFrameBuffer(
     setIsReady(false);
   }, []);
 
-  return { getFrame, prefetch, isReady, dispose };
+  return {
+    getFrame, prefetch, isReady, dispose,
+    samples: samplesRef.current,
+    decoderConfig: configRef.current,
+  };
 }
