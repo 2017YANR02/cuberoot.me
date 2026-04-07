@@ -88,6 +88,9 @@ export default defineConfig({
     // NOTE: 使用 _assets 避免与根目录 assets/（stats CSS 等）冲突
     assetsDir: '_assets',
   },
+  optimizeDeps: {
+    exclude: ['@ffmpeg/ffmpeg', '@ffmpeg/util'],
+  },
   resolve: {
     alias: {
       // HACK: sr-puzzlegen-pll 的 package.json main 指向 dist/lib/index.js（只有 .d.ts 没有 .js）
@@ -102,6 +105,11 @@ export default defineConfig({
     host: '127.0.0.1',
     port: 5173,
     strictPort: true,
+    headers: {
+      // NOTE: @ffmpeg/ffmpeg 多线程需要 SharedArrayBuffer，这两个 header 是必须的
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+      'Cross-Origin-Opener-Policy': 'same-origin',
+    },
     proxy: {
       // NOTE: Hono API 代理到 ECS 线上后端（本地无 recon_db，无法运行 Hono 后端）
       '/api': {

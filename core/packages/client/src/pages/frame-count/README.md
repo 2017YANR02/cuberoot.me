@@ -40,7 +40,7 @@ frame-count/
 
 **WCA 帧数公式**（来源：WCA 官方规则）：
 ```
-Frames = ROUNDUP((ROUNDDOWN(time, 2) + 0.009) × fps) + 1
+Frames = ROUNDUP((ROUNDDOWN(time, 2) + 0.009) × fps)
 ```
 
 ## 关键技术实现
