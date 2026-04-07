@@ -361,7 +361,7 @@ export default function FrameCountPage() {
     if (flipV) transforms.push('scaleY(-1)');
     return {
       transform: transforms.length > 0 ? transforms.join(' ') : 'none',
-      clipPath: cropRect
+      clipPath: (cropRect && !cropMode)
         ? `inset(${cropRect.top}% ${cropRect.right}% ${cropRect.bottom}% ${cropRect.left}%)`
         : undefined,
     };
@@ -1167,9 +1167,7 @@ export default function FrameCountPage() {
                     >
                       <IconCrop />
                     </button>
-                    {cropRect && !cropMode && (
-                      <button className="fc-toolbar-icon" title="Clear Crop" onClick={() => { setCropRect(null); showToast('Crop cleared'); }}>✕</button>
-                    )}
+
 
                   </div>
 
@@ -1211,13 +1209,7 @@ export default function FrameCountPage() {
                     style={getVideoStyle()}
                   />
 
-                  {/* 视频 overlay — 帧号/时间，字号恒定（抵消 zoom） */}
-                  <div
-                    className="fc-video-overlay"
-                    style={zoom !== 1 ? { transform: `scale(${1 / zoom})`, transformOrigin: 'bottom right' } : undefined}
-                  >
-                    {formatTime(currentFrame / videoFps)} ({currentFrame})
-                  </div>
+
                   {/* Crop overlay — 现在相对于视频而非容器 */}
                   {cropMode && (
                     <div
