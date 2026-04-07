@@ -580,6 +580,7 @@ export default function FrameCountPage() {
             // 向后：如果倒放视频可用且已加载，用它 play()（丝滑）
             const revVideo = reversedVideoRef.current;
             if (revVideo && reversedSrc && reversedReady) {
+              console.log('[FrameCount] Using reversed video for hold-A');
               usingReversedRef.current = true;
               // 映射帧：原始帧 F → 倒放视频帧 (totalFrames - 1 - F)
               const revFrame = totalFrames - 1 - currentFrameRef.current;
@@ -607,6 +608,7 @@ export default function FrameCountPage() {
               }
             } else {
               usingReversedRef.current = false;
+              console.log('[FrameCount] Reversed video NOT ready, using seeked chain fallback');
               // 倒放视频未就绪，回退到 seeked 链
               const stepBack = () => {
                 if (!holdPlayingRef.current) return;
@@ -847,8 +849,8 @@ export default function FrameCountPage() {
                       src={reversedSrc}
                       preload="auto"
                       muted
-                      style={{ display: 'none' }}
-                      onCanPlay={() => setReversedReady(true)}
+                      style={{ position: 'absolute', width: 0, height: 0, opacity: 0, pointerEvents: 'none' as const }}
+                      onCanPlay={() => { console.log('[FrameCount] Reversed video canPlay fired'); setReversedReady(true); }}
                     />
                   )}
                   {/* 视频 overlay — 帧号/时间，字号恒定（抵消 zoom） */}

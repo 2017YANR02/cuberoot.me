@@ -82,14 +82,16 @@ export function useReversedVideo(file: File | null): ReversedVideoState {
         if (abortRef.current) return;
         await ffmpeg.writeFile('input.mp4', inputData);
 
-        // 生成倒放视频（仅反转视频轨道，不反转音频）
+        // 生成倒放视频（仅用作 timing 时钟，用户看不到画面）
+        // 160p 极低分辨率：WASM 内存 3.7GB → 25MB，帧数/时间轴完全一致
         await ffmpeg.exec([
           '-i', 'input.mp4',
-          '-vf', 'reverse',
-          '-an',              // 去掉音频（倒放不需要）
-          '-c:v', 'libx264',  // 重新编码
-          '-preset', 'ultrafast', // 最快速度
-          '-crf', '18',       // 高质量
+          '-vf', 'scale=160:-2,reverse',
+          '-an',
+          '-c:v', 'libx264',
+          '-preset', 'ultrafast',
+          '-crf', '28',
+          '-movflags', '+faststart',
           'reversed.mp4',
         ]);
 
@@ -99,13 +101,18 @@ export function useReversedVideo(file: File | null): ReversedVideoState {
         const data = await ffmpeg.readFile('reversed.mp4');
         if (abortRef.current) return;
 
-        const blob = new Blob([new Uint8Array(data as Uint8Array)], { type: 'video/mp4' });
+        const bytes = new Uint8Array(data as Uint8Array);
+        console.log(`[useReversedVideo] Reversed video size: ${(bytes.length / 1024 / 1024).toFixed(1)} MB`);
+        if (bytes.length < 1000) {
+          throw new Error(`Reversed video too small (${bytes.length} bytes), likely failed`);
+        }
+        const blob = new Blob([bytes], { type: 'video/mp4' });
         const url = URL.createObjectURL(blob);
         prevBlobUrl.current = url;
 
         // 清理 ffmpeg 虚拟文件系统
-        await ffmpeg.deleteFile('input.mp4').catch(() => {});
-        await ffmpeg.deleteFile('reversed.mp4').catch(() => {});
+        await ffmpeg.deleteFile('input.mp4').catch(() => { });
+        await ffmpeg.deleteFile('reversed.mp4').catch(() => { });
 
         setState({
           reversedSrc: url,
