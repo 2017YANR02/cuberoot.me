@@ -104,7 +104,7 @@ const NEXT_ROTATION: Record<RotationDeg, RotationDeg> = { 0: 90, 90: 180, 180: 2
 /** WCA 时间→帧数公式 */
 function timeToFrames(time: number, fps: number): number {
   const truncated = Math.floor(time * 100) / 100;
-  return Math.ceil((truncated + 0.009) * fps) + 1;
+  return Math.ceil((truncated + 0.009) * fps);
 }
 
 // ── 时间格式化 ────────────────────────────────────────────────────────────
@@ -192,6 +192,7 @@ export default function FrameCountPage() {
 
   // WebCodecs 帧缓冲 canvas
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const [useCanvasDisplay, setUseCanvasDisplay] = useState(false);
 
 
@@ -240,12 +241,13 @@ export default function FrameCountPage() {
     };
   }, [zoom, pan]);
 
-  // 滚轮缩放 — 鼠标位置为不动点
-  const handleVideoZoom = useCallback((e: React.WheelEvent) => {
+  // 滚轮缩放 — 鼠标位置为不动点（支持鼠标滚轮 + 触控板双指缩放）
+  const handleVideoZoom = useCallback((e: WheelEvent) => {
     if (e.shiftKey || cropMode) return;
     e.preventDefault();
     e.stopPropagation();
-    const target = e.currentTarget as HTMLElement;
+    const target = wrapperRef.current;
+    if (!target) return;
     const rect = target.getBoundingClientRect();
 
     // getBoundingClientRect() 返回的是变换后的 rect
@@ -478,7 +480,14 @@ export default function FrameCountPage() {
       return next;
     });
     showToast(`Mark added at frame ${currentFrame}`);
-  }, [activeSolveIdx, currentFrame, solves, showToast]);
+    // WCA 自动跳转：填写了 Time 时，M 标记 End Frame 后自动跳转到 Start Frame
+    if (solveTimeNum > 0 && videoFps > 0) {
+      setWcaEndFrame(currentFrame);
+      const frames = timeToFrames(solveTimeNum, videoFps);
+      const startFrame = Math.max(0, currentFrame - frames);
+      seekToFrame(startFrame);
+    }
+  }, [activeSolveIdx, currentFrame, solves, showToast, solveTimeNum, videoFps, seekToFrame]);
 
   const removeMark = useCallback((idx: number) => {
     setSolves(prev => {
@@ -714,6 +723,21 @@ export default function FrameCountPage() {
     return () => window.removeEventListener('wheel', onWheel);
   }, [stepFrames, videoSrc]);
 
+  // 视频区域缩放 — 非 passive 以阻止浏览器默认缩放（触控板双指缩放）+ 阻止页面滚动
+  useEffect(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+    const handler = (e: WheelEvent) => {
+      // 鼠标在视频上时，始终阻止页面滚动和浏览器缩放
+      e.preventDefault();
+      // shift+scroll 由 window 级别的 frame-stepping handler 处理
+      if (e.shiftKey) return;
+      handleVideoZoom(e);
+    };
+    el.addEventListener('wheel', handler, { passive: false });
+    return () => el.removeEventListener('wheel', handler);
+  }, [handleVideoZoom, videoSrc]);
+
   // 总帧数
   useEffect(() => {
     const video = videoRef.current;
@@ -780,6 +804,12 @@ export default function FrameCountPage() {
                 {/* 顶部工具栏：文件名 + FPS/Crop/Image 设置 */}
                 <div className="fc-video-toolbar">
                   <span className="fc-video-label">{videoName}</span>
+                  <input
+                    className="fc-tab-input fc-toolbar-time"
+                    type="number" step="0.01" min={0} placeholder="Time"
+                    value={solveTime}
+                    onChange={(e) => setSolveTime(e.target.value)}
+                  />
 
                   <div className="fc-toolbar-controls">
                     {/* FPS */}
@@ -840,8 +870,8 @@ export default function FrameCountPage() {
                 </div>
                 {/* 视频 wrapper — 紧贴视频尺寸，crop overlay / zoom / pan 都在这里 */}
                 <div
+                  ref={wrapperRef}
                   className={`fc-video-wrapper${cropMode ? '' : (zoom > 1 ? ' fc-panning' : ' fc-pannable')}`}
-                  onWheel={handleVideoZoom}
                   style={getZoomStyle()}
                   onMouseDown={(e) => { if (!cropMode) { e.preventDefault(); handlePanStart(e.clientX, e.clientY); } }}
                   onMouseMove={(e) => handlePanMove(e.clientX, e.clientY)}
@@ -1039,21 +1069,10 @@ export default function FrameCountPage() {
 
           <div className="fc-tab-content">
             <div className="fc-wca-grid">
-              <span className="fc-tab-label">Solve Time</span>
-              <div className="fc-wca-field">
-                <input
-                  className="fc-tab-input"
-                  type="number" step="0.01" min={0} placeholder="e.g. 4.89"
-                  value={solveTime}
-                  onChange={(e) => setSolveTime(e.target.value)}
-                />
-                <span className="fc-tab-unit">sec</span>
-              </div>
-
               <span className="fc-tab-label">Frames</span>
               <div className="fc-wca-field">
-                <span className="fc-tab-value">{wcaFrames}</span>
-                <span className="fc-tab-unit">⌈(⌊t⌋₂+.009)×fps⌉+1</span>
+                <span className="fc-tab-value">{wcaFrames || '—'}</span>
+                <span className="fc-tab-unit">⌈(⌊t⌋₂+.009)×fps⌉</span>
               </div>
 
               <span className="fc-tab-label">End Frame</span>
@@ -1070,8 +1089,11 @@ export default function FrameCountPage() {
 
               <span className="fc-tab-label">Start Frame</span>
               <div className="fc-wca-field">
-                <span className="fc-tab-value">{wcaStartFrame}</span>
-                <button className="fc-tab-btn" onClick={() => seekToFrame(wcaStartFrame)} title="Go to start frame">
+                <span className="fc-tab-value">{wcaEndFrame > 0 && wcaFrames > 0 ? wcaStartFrame : '—'}</span>
+                <span className="fc-wca-formula">
+                  = {wcaEndFrame > 0 ? wcaEndFrame : <em>End Frame</em>} − {wcaFrames > 0 ? wcaFrames : <em>Frames</em>}
+                </span>
+                <button className="fc-tab-btn" onClick={() => seekToFrame(wcaStartFrame)} title="Go to start frame" disabled={!(wcaEndFrame > 0 && wcaFrames > 0)}>
                   Go
                 </button>
               </div>
