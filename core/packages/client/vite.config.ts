@@ -89,7 +89,7 @@ export default defineConfig({
     assetsDir: '_assets',
   },
   optimizeDeps: {
-    exclude: ['@ffmpeg/ffmpeg', '@ffmpeg/util'],
+    exclude: ['@ffmpeg/ffmpeg', '@ffmpeg/util', '@ffmpeg/core-mt'],
   },
   resolve: {
     alias: {
