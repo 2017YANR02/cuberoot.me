@@ -663,6 +663,28 @@
   text-transform: uppercase;
 }
 
+/* Toolbar Time 输入框 */
+.fc-toolbar-time {
+  width: 52px !important;
+  border-radius: 6px !important;
+  border: 1px solid rgba(255,255,255,0.15) !important;
+  background: rgba(0,0,0,0.2) !important;
+  padding: 4px 6px !important;
+  font-size: 0.75rem !important;
+  flex-shrink: 0;
+}
+
+/* WCA Start Frame 公式 */
+.fc-wca-formula {
+  font-size: 0.78rem;
+  color: #999;
+  font-variant-numeric: tabular-nums;
+}
+.fc-wca-formula em {
+  font-style: italic;
+  color: #777;
+}
+
 /* ── WCA 模式 grid ── */
 .fc-wca-grid {
   display: grid;
