@@ -938,9 +938,13 @@ export default function FrameCountPage() {
                   } as React.CSSProperties}
                 />
                 {/* Mark indicators on progress bar */}
-                {activeSolve.marks.map((m, i) => totalFrames > 0 && (
-                  <div key={i} className="fc-marker fc-marker-mark" style={{ left: `${(m.frame / totalFrames) * 100}%` }} title={`Mark ${i}: ${m.frame}`} />
-                ))}
+                {activeSolve.marks.map((m, i) => {
+                  if (totalFrames <= 0) return null;
+                  const frac = m.frame / totalFrames;
+                  return (
+                    <div key={i} className="fc-marker fc-marker-mark" style={{ left: `calc(${frac * 100}% - ${frac * 12}px + 6px)` }} title={`Mark ${i}: ${m.frame}`} />
+                  );
+                })}
               </div>
 
               <div className="fc-controls">
