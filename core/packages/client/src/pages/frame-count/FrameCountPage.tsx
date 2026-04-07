@@ -468,6 +468,8 @@ export default function FrameCountPage() {
   }, [solves.length, activeSolveIdx, showToast]);
 
   const addMark = useCallback(() => {
+    // 防止重复标记同一帧
+    if (solves[activeSolveIdx]?.marks.some(m => m.frame === currentFrame)) return;
     setSolves(prev => {
       const next = [...prev];
       const solve = { ...next[activeSolveIdx] };
@@ -476,7 +478,7 @@ export default function FrameCountPage() {
       return next;
     });
     showToast(`Mark added at frame ${currentFrame}`);
-  }, [activeSolveIdx, currentFrame, showToast]);
+  }, [activeSolveIdx, currentFrame, solves, showToast]);
 
   const removeMark = useCallback((idx: number) => {
     setSolves(prev => {
@@ -1015,7 +1017,7 @@ export default function FrameCountPage() {
 
               {/* Mark 操作按钮 */}
               <div className="fc-mark-actions">
-                <button className="fc-action-btn" onClick={addMark}>Add</button>
+                <button className="fc-action-btn" onClick={addMark} disabled={activeSolve.marks.some(m => m.frame === currentFrame)}>Add</button>
                 <button className="fc-action-btn" onClick={() => selectedMarkIdx !== null && removeMark(selectedMarkIdx)} disabled={selectedMarkIdx === null}>Remove</button>
                 <button className="fc-action-btn" onClick={updateMark} disabled={selectedMarkIdx === null}>Update</button>
               </div>
@@ -1057,9 +1059,6 @@ export default function FrameCountPage() {
                   type="number" min={0} value={wcaEndFrame}
                   onChange={(e) => setWcaEndFrame(parseInt(e.target.value) || 0)}
                 />
-                <button className="fc-tab-btn" onClick={() => setWcaEndFrame(currentFrame)} title="Mark current frame as end">
-                  ] Mark
-                </button>
                 <button className="fc-tab-btn" onClick={() => seekToFrame(wcaEndFrame)} title="Go to end frame">
                   Go
                 </button>
