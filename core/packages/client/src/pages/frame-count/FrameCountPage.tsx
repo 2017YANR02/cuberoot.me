@@ -333,7 +333,7 @@ export default function FrameCountPage() {
   const [wcaEndFrame, setWcaEndFrame] = useState(0);
 
   // ── WebCodecs 帧缓冲 ──
-  const { getFrame, prefetch, isReady: frameBufferReady } = useFrameBuffer(videoFile, videoFps);
+  const { getFrame, prefetch, isReady: frameBufferReady, samples: fbSamples, decoderConfig: fbDecoderConfig } = useFrameBuffer(videoFile, videoFps);
 
   // ── 计算值 ──
 
@@ -835,81 +835,204 @@ export default function FrameCountPage() {
 
   // ── Export logic ──
   const handleExport = useCallback(async () => {
-    if (!videoFile || exporting) return;
+    if (!videoFile || !videoSrc || exporting) return;
     setExporting(true);
     setExportProgress(0);
+
+    const es = trimStart;
+    const ee = trimEnd || totalFrames;
+    const hasTrim = es > 0 || (trimEnd > 0 && trimEnd < totalFrames);
+    const startTime = hasTrim && videoFps > 0 ? es / videoFps : 0;
+    const endTime = hasTrim && videoFps > 0 ? ee / videoFps : (videoRef.current?.duration || 0);
+    const baseName = videoFile.name.replace(/\.[^.]+$/, '');
+
     try {
-      if (!ffmpegRef.current) {
-        showToast('Loading FFmpeg engine...');
-        const ff = new FFmpeg();
-        ff.on('progress', ({ progress }) => setExportProgress(Math.round(progress * 100)));
-        ff.on('log', ({ message }) => console.log('[ffmpeg]', message));
-        const coreURL = await toBlobURL('/ffmpeg/ffmpeg-core.js', 'text/javascript');
-        const wasmURL = await toBlobURL('/ffmpeg/ffmpeg-core.wasm', 'application/wasm');
-        const workerURL = await toBlobURL('/ffmpeg/ffmpeg-core.worker.js', 'text/javascript');
-        await ff.load({ coreURL, wasmURL, workerURL });
-        ffmpegRef.current = ff;
-      }
-      const ff = ffmpegRef.current;
-      const inputName = 'input' + (videoFile.name.substring(videoFile.name.lastIndexOf('.')) || '.mp4');
-      const inputData = await fetchFile(videoFile);
-      console.log('[Export] Input file size:', inputData.length, 'bytes');
-      await ff.writeFile(inputName, inputData);
-
-      // Build args — put -ss BEFORE -i for input-level seeking (avoids frozen keyframe gap)
-      const ffArgs: string[] = [];
-      const es = trimStart;
-      const ee = trimEnd || totalFrames;
-      const hasTrim = es > 0 || (trimEnd > 0 && trimEnd < totalFrames);
-      if (hasTrim && videoFps > 0) {
-        ffArgs.push('-ss', (es / videoFps).toFixed(4));
-      }
-      ffArgs.push('-i', inputName);
-      if (hasTrim && videoFps > 0) {
-        // Duration from start to end (since -ss already seeked the input)
-        ffArgs.push('-t', ((ee - es) / videoFps).toFixed(4));
-      }
-
       if (cropRect) {
-        const vid = videoRef.current;
-        const vw = vid?.videoWidth || 1920;
-        const vh = vid?.videoHeight || 1080;
-        // cropRect is CSS inset %: {top, left, bottom, right} where bottom/right are distances from bottom/right edge
+        // ── Crop export: WebCodecs pipeline (GPU hardware accelerated, frame-perfect) ──
+        // VideoDecoder (GPU HEVC decode) → OffscreenCanvas crop → VideoEncoder (GPU H.264) → mp4-muxer
+        // Zero frame drops, zero duplicates, original timestamps preserved, faster than realtime.
+        if (!frameBufferReady || fbSamples.length === 0 || !fbDecoderConfig) {
+          throw new Error('WebCodecs not ready. Please wait for video to fully load.');
+        }
+        showToast('Exporting (WebCodecs GPU)...');
+
+        const vid = videoRef.current!;
+        const vw = vid.videoWidth;
+        const vh = vid.videoHeight;
+        // Crop dimensions (must be even for H.264)
+        let cropW = Math.round(((100 - cropRect.left - cropRect.right) / 100) * vw);
+        let cropH = Math.round(((100 - cropRect.top - cropRect.bottom) / 100) * vh);
+        cropW = cropW & ~1;
+        cropH = cropH & ~1;
         const cx = Math.round((cropRect.left / 100) * vw);
         const cy = Math.round((cropRect.top / 100) * vh);
-        const cw2 = Math.round(((100 - cropRect.left - cropRect.right) / 100) * vw);
-        const ch2 = Math.round(((100 - cropRect.top - cropRect.bottom) / 100) * vh);
-        ffArgs.push('-vf', `crop=${cw2}:${ch2}:${cx}:${cy}`);
-        ffArgs.push('-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '18');
-        ffArgs.push('-c:a', 'aac');
+
+        // Frame range
+        const startIdx = Math.max(0, es);
+        const endIdx = Math.min(fbSamples.length - 1, ee - 1);
+        const exportCount = endIdx - startIdx + 1;
+        if (exportCount <= 0) throw new Error('No frames in selected range');
+
+        // Find nearest keyframe at or before startIdx (needed for decoder pre-roll)
+        let keyIdx = startIdx;
+        while (keyIdx > 0 && !fbSamples[keyIdx].isSync) keyIdx--;
+
+        // Set up mp4-muxer
+        const { Muxer, ArrayBufferTarget } = await import('mp4-muxer');
+        const muxTarget = new ArrayBufferTarget();
+        const muxer = new Muxer({
+          target: muxTarget,
+          video: {
+            codec: 'avc',
+            width: cropW,
+            height: cropH,
+          },
+          fastStart: 'in-memory',
+          firstTimestampBehavior: 'offset',
+        });
+
+        // OffscreenCanvas for crop drawing
+        const cvs = new OffscreenCanvas(cropW, cropH);
+        const ctx2d = cvs.getContext('2d')!;
+
+        // Base timestamp (output starts from 0)
+        const baseTs = Math.trunc(fbSamples[startIdx].timestamp);
+
+        // Timestamp → sample index map for robust frame identification
+        // Key must be Math.trunc() because SampleInfo.timestamp is float but
+        // VideoDecoder outputs integer μs timestamps — without rounding, ~2/3 of
+        // frames fail the Map lookup and get silently dropped.
+        const tsMap = new Map<number, number>();
+        for (let i = keyIdx; i <= endIdx; i++) {
+          tsMap.set(Math.trunc(fbSamples[i].timestamp), i);
+        }
+
+        // VideoEncoder → muxer
+        const encoder = new VideoEncoder({
+          output: (chunk, meta) => { muxer.addVideoChunk(chunk, meta ?? undefined); },
+          error: (e) => console.error('[Export] Encoder error:', e),
+        });
+        encoder.configure({
+          codec: 'avc1.640033', // H.264 High Profile Level 5.1 (supports up to 4K crop)
+          width: cropW,
+          height: cropH,
+          bitrate: 16_000_000,
+          framerate: videoFps,
+        });
+
+        // VideoDecoder → crop → encode
+        let processedCount = 0;
+        await new Promise<void>((resolveExport, rejectExport) => {
+          const decoder = new VideoDecoder({
+            output: (frame: VideoFrame) => {
+              try {
+                const idx = tsMap.get(frame.timestamp);
+                if (idx === undefined || idx < startIdx || idx > endIdx) {
+                  frame.close(); // pre-roll frame, skip
+                  return;
+                }
+                // Draw cropped region
+                ctx2d.drawImage(frame as any, cx, cy, cropW, cropH, 0, 0, cropW, cropH);
+                frame.close();
+
+                // Create new VideoFrame from cropped canvas with exact original timestamp
+                const croppedFrame = new VideoFrame(cvs, {
+                  timestamp: Math.trunc(fbSamples[idx].timestamp) - baseTs,
+                  duration: Math.trunc(fbSamples[idx].duration),
+                });
+                encoder.encode(croppedFrame, { keyFrame: processedCount % 60 === 0 });
+                croppedFrame.close();
+
+                processedCount++;
+                setExportProgress(Math.round((processedCount / exportCount) * 100));
+              } catch (e) {
+                rejectExport(e as Error);
+              }
+            },
+            error: (e) => rejectExport(new Error(`Decoder error: ${e.message}`)),
+          });
+
+          decoder.configure(fbDecoderConfig);
+
+          // Feed encoded samples from keyframe through end
+          for (let i = keyIdx; i <= endIdx; i++) {
+            const s = fbSamples[i];
+            decoder.decode(new EncodedVideoChunk({
+              type: s.isSync ? 'key' : 'delta',
+              timestamp: s.timestamp,
+              duration: s.duration,
+              data: s.data,
+            }));
+          }
+
+          decoder.flush().then(async () => {
+            decoder.close();
+            await encoder.flush();
+            encoder.close();
+            resolveExport();
+          }).catch(rejectExport);
+        });
+
+        // Finalize MP4 and download
+        muxer.finalize();
+        const mp4Buf = muxTarget.buffer;
+        console.log('[Export] WebCodecs output:', mp4Buf.byteLength, 'bytes,', processedCount, 'frames');
+        const blob = new Blob([mp4Buf], { type: 'video/mp4' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${baseName}_crop.mp4`;
+        a.click();
+        URL.revokeObjectURL(url);
       } else {
-        ffArgs.push('-c', 'copy');
+        // ── Trim-only: fast stream copy with ffmpeg.wasm ──
+        if (!ffmpegRef.current) {
+          showToast('Loading FFmpeg engine...');
+          const ff = new FFmpeg();
+          ff.on('progress', ({ progress }) => setExportProgress(Math.round(progress * 100)));
+          ff.on('log', ({ message }) => console.log('[ffmpeg]', message));
+          const coreURL = await toBlobURL('/ffmpeg/ffmpeg-core.js', 'text/javascript');
+          const wasmURL = await toBlobURL('/ffmpeg/ffmpeg-core.wasm', 'application/wasm');
+          const workerURL = await toBlobURL('/ffmpeg/ffmpeg-core.worker.js', 'text/javascript');
+          await ff.load({ coreURL, wasmURL, workerURL });
+          ffmpegRef.current = ff;
+        }
+        const ff = ffmpegRef.current;
+        const inputName = 'input' + (videoFile.name.substring(videoFile.name.lastIndexOf('.')) || '.mp4');
+        const inputData = await fetchFile(videoFile);
+        console.log('[Export] Input file size:', inputData.length, 'bytes');
+        await ff.writeFile(inputName, inputData);
+
+        // Build args — -ss BEFORE -i for input-level seeking (avoids frozen keyframe gap)
+        const ffArgs: string[] = [];
+        if (hasTrim && videoFps > 0) {
+          ffArgs.push('-ss', startTime.toFixed(4));
+        }
+        ffArgs.push('-i', inputName);
+        if (hasTrim && videoFps > 0) {
+          ffArgs.push('-t', (endTime - startTime).toFixed(4));
+        }
+        ffArgs.push('-c', 'copy', '-movflags', '+faststart', 'output.mp4');
+
+        console.log('[Export] ffmpeg args:', ffArgs.join(' '));
+        const exitCode = await ff.exec(ffArgs);
+        console.log('[Export] ffmpeg exit code:', exitCode);
+        if (exitCode !== 0) throw new Error(`FFmpeg exited with code ${exitCode}`);
+
+        const outData = await ff.readFile('output.mp4');
+        const buf = outData instanceof Uint8Array ? new Uint8Array(outData) : new TextEncoder().encode(outData as string);
+        console.log('[Export] Output file size:', buf.length, 'bytes');
+        const blob = new Blob([buf], { type: 'video/mp4' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${baseName}_export.mp4`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        await ff.deleteFile(inputName);
+        await ff.deleteFile('output.mp4');
       }
-
-      ffArgs.push('-movflags', '+faststart', 'output.mp4');
-
-      console.log('[Export] ffmpeg args:', ffArgs.join(' '));
-      const exitCode = await ff.exec(ffArgs);
-      console.log('[Export] ffmpeg exit code:', exitCode);
-
-      if (exitCode !== 0) {
-        throw new Error(`FFmpeg exited with code ${exitCode}. Check console for [ffmpeg] logs.`);
-      }
-
-      const outData = await ff.readFile('output.mp4');
-      const buf = outData instanceof Uint8Array ? new Uint8Array(outData) : new TextEncoder().encode(outData as string);
-      console.log('[Export] Output file size:', buf.length, 'bytes');
-      const blob = new Blob([buf], { type: 'video/mp4' });
-      const downloadUrl = URL.createObjectURL(blob);
-      const anchor = document.createElement('a');
-      const baseName = videoFile.name.replace(/\.[^.]+$/, '');
-      anchor.href = downloadUrl;
-      anchor.download = `${baseName}_export.mp4`;
-      anchor.click();
-      URL.revokeObjectURL(downloadUrl);
-
-      await ff.deleteFile(inputName);
-      await ff.deleteFile('output.mp4');
       showToast('Export complete!');
     } catch (err) {
       console.error('Export failed:', err);
@@ -918,7 +1041,7 @@ export default function FrameCountPage() {
       setExporting(false);
       setExportProgress(0);
     }
-  }, [videoFile, exporting, trimStart, trimEnd, totalFrames, videoFps, cropRect, showToast]);
+  }, [videoFile, videoSrc, exporting, trimStart, trimEnd, totalFrames, videoFps, cropRect, showToast, frameBufferReady, fbSamples, fbDecoderConfig]);
 
   // 总帧数
   useEffect(() => {
