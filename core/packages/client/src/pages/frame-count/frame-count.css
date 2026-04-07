@@ -326,11 +326,11 @@
 /* Mark indicators */
 .fc-marker-mark {
   position: absolute;
-  top: -2px;
+  top: 50%;
   width: 2px;
   height: 8px;
   background: #e8c44a;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
   pointer-events: none;
   border-radius: 1px;
 }
