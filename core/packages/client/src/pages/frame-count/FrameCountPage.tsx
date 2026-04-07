@@ -6,7 +6,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import mediaInfoFactory from 'mediainfo.js';
-import { useReversedVideo } from './useReversedVideo';
+
 import './frame-count.css';
 
 // ── SVG Icons ────────────────────────────────────────────────────────────────
@@ -177,20 +177,18 @@ const SHORTCUTS = [
 
 export default function FrameCountPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const reversedVideoRef = useRef<HTMLVideoElement>(null);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 视频状态
   const [videoSrc, setVideoSrc] = useState<string | null>(null);
-  const [videoFile, setVideoFile] = useState<File | null>(null);
+
   const [videoName, setVideoName] = useState('');
   const [isPlaying, setIsPlaying] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [totalFrames, setTotalFrames] = useState(0);
 
-  // 倒放视频（后台懒生成）
-  const { reversedSrc, isProcessing: isReversingVideo } = useReversedVideo(videoFile);
-  const [reversedReady, setReversedReady] = useState(false);
+
 
   // 帧计数状态
   const [videoFps, setVideoFps] = useState(60);
@@ -380,7 +378,7 @@ export default function FrameCountPage() {
   const currentFrameRef = useRef(0);
   const seekingRef = useRef(false);
   const holdPlayingRef = useRef(false); // 长按 D/A 时播放中
-  const usingReversedRef = useRef(false); // 长按A时是否使用倒放视频
+
 
   // 同步 ref（播放、拖动等路径更新帧号时）
   useEffect(() => { currentFrameRef.current = currentFrame; }, [currentFrame]);
@@ -523,11 +521,11 @@ export default function FrameCountPage() {
     if (videoSrc) URL.revokeObjectURL(videoSrc);
     const url = URL.createObjectURL(file);
     setVideoSrc(url);
-    setVideoFile(file);
+
     setVideoName(file.name);
     setCurrentFrame(0);
     setIsPlaying(false);
-    setReversedReady(false);
+
 
     setSolves([{ name: 'Solve 1', marks: [] }]);
     setActiveSolveIdx(0);
@@ -577,51 +575,16 @@ export default function FrameCountPage() {
           // 打断 stepFrames 的 seeked 链，避免冲突
           seekingRef.current = false;
           if (key === 'a' || key === ',') {
-            // 向后：如果倒放视频可用且已加载，用它 play()（丝滑）
-            const revVideo = reversedVideoRef.current;
-            if (revVideo && reversedSrc && reversedReady) {
-              console.log('[FrameCount] Using reversed video for hold-A');
-              usingReversedRef.current = true;
-              // 映射帧：原始帧 F → 倒放视频帧 (totalFrames - 1 - F)
-              const revFrame = totalFrames - 1 - currentFrameRef.current;
-              revVideo.currentTime = Math.max(0, revFrame / videoFps);
-              revVideo.muted = true;
-              // 等 seek 到位后再 play
-              const startRevPlay = () => {
-                if (!holdPlayingRef.current) return;
-                revVideo.play();
-                // 实时同步帧号
-                const syncFrame = () => {
-                  if (!holdPlayingRef.current) return;
-                  const revF = Math.round(revVideo.currentTime * videoFps);
-                  const origF = Math.max(0, totalFrames - 1 - revF);
-                  currentFrameRef.current = origF;
-                  setCurrentFrame(origF);
-                  requestAnimationFrame(syncFrame);
-                };
-                requestAnimationFrame(syncFrame);
-              };
-              if (revVideo.seeking) {
-                revVideo.addEventListener('seeked', startRevPlay, { once: true });
-              } else {
-                startRevPlay();
-              }
-            } else {
-              usingReversedRef.current = false;
-              console.log('[FrameCount] Reversed video NOT ready, using seeked chain fallback');
-              // 倒放视频未就绪，回退到 seeked 链
-              const stepBack = () => {
-                if (!holdPlayingRef.current) return;
-                const f = Math.max(0, Math.round(video.currentTime * videoFps) - 1);
-                currentFrameRef.current = f;
-                setCurrentFrame(f);
-                video.addEventListener('seeked', () => {
-                  requestAnimationFrame(() => stepBack());
-                }, { once: true });
-                video.currentTime = f / videoFps;
-              };
-              stepBack();
-            }
+            // 向后：seeked 链逐帧回退（浏览器不支持原生倒放）
+            const stepBack = () => {
+              if (!holdPlayingRef.current) return;
+              const f = Math.max(0, Math.round(video.currentTime * videoFps) - 1);
+              currentFrameRef.current = f;
+              setCurrentFrame(f);
+              video.addEventListener('seeked', stepBack, { once: true });
+              video.currentTime = f / videoFps;
+            };
+            stepBack();
           } else {
             video.play();
             setIsPlaying(true);
@@ -649,27 +612,13 @@ export default function FrameCountPage() {
       if ((key === 'd' || key === '.' || key === 'a' || key === ',') && holdPlayingRef.current) {
         holdPlayingRef.current = false;
         const video = videoRef.current;
-        const revVideo = reversedVideoRef.current;
-        // 停止倒放视频
-        if (revVideo) {
-          revVideo.pause();
-        }
         if (video) {
           video.pause();
           video.muted = true;
           setIsPlaying(false);
-          // 如果实际使用了倒放视频，从它同步帧号
-          if (usingReversedRef.current && revVideo && (key === 'a' || key === ',')) {
-            const revF = Math.round(revVideo.currentTime * videoFps);
-            const origF = Math.max(0, totalFrames - 1 - revF);
-            video.currentTime = origF / videoFps;
-            currentFrameRef.current = origF;
-            setCurrentFrame(origF);
-          } else {
-            const f = Math.round(video.currentTime * videoFps);
-            currentFrameRef.current = f;
-            setCurrentFrame(f);
-          }
+          const f = Math.round(video.currentTime * videoFps);
+          currentFrameRef.current = f;
+          setCurrentFrame(f);
         }
       }
     };
@@ -680,7 +629,7 @@ export default function FrameCountPage() {
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
     };
-  }, [togglePlay, stepFrames, stepSeconds, currentFrame, addMark, addSolve, copyToClipboard, videoFps, reversedSrc, reversedReady, totalFrames]);
+  }, [togglePlay, stepFrames, stepSeconds, currentFrame, addMark, addSolve, copyToClipboard, videoFps, totalFrames]);
 
   // Shift+滚轮逐帧
   useEffect(() => {
@@ -807,17 +756,7 @@ export default function FrameCountPage() {
 
                   </div>
 
-                  {/* 倒放视频处理进度 */}
-                  {isReversingVideo && (
-                    <span className="fc-toolbar-label" style={{ opacity: 0.5, fontSize: '0.7rem' }} title="Generating reverse video...">
-                      <span style={{ display: 'inline-block', animation: 'fc-spin 1s linear infinite' }}>⏳</span>
-                    </span>
-                  )}
-                  {!isReversingVideo && reversedSrc && (
-                    <span className="fc-toolbar-label" style={{ opacity: 0.3, fontSize: '0.7rem' }} title="Reverse video ready">
-                      ◀ ✓
-                    </span>
-                  )}
+
 
                   <button className="fc-change-video" onClick={() => fileInputRef.current?.click()}>
                     New
@@ -842,17 +781,7 @@ export default function FrameCountPage() {
                     preload="auto"
                     style={getVideoStyle()}
                   />
-                  {/* 倒放视频（隐藏，仅用于长按A时的音频轨道） */}
-                  {reversedSrc && (
-                    <video
-                      ref={reversedVideoRef}
-                      src={reversedSrc}
-                      preload="auto"
-                      muted
-                      style={{ position: 'absolute', width: 0, height: 0, opacity: 0, pointerEvents: 'none' as const }}
-                      onCanPlay={() => { console.log('[FrameCount] Reversed video canPlay fired'); setReversedReady(true); }}
-                    />
-                  )}
+
                   {/* 视频 overlay — 帧号/时间，字号恒定（抵消 zoom） */}
                   <div
                     className="fc-video-overlay"
