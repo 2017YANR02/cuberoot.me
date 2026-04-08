@@ -112,6 +112,8 @@ export function useFrameBuffer(
 
   const cacheRef = useRef<FrameCache>(new FrameCache());
   const samplesRef = useRef<SampleInfo[]>([]);
+  const decodeToPresentationRef = useRef<Int32Array>(new Int32Array(0));
+  const presentationToDecodeRef = useRef<Int32Array>(new Int32Array(0));
   const configRef = useRef<VideoDecoderConfig | null>(null);
 
   // 防止重叠的 prefetch
@@ -212,15 +214,26 @@ export function useFrameBuffer(
 
       // samples 收集完毕后标记 ready
       if (configRef.current && samplesRef.current.length > 0) {
-        // Sort samples by presentation time (CTS) — mp4box delivers in decode order,
-        // but HEVC B-frames cause decode order ≠ display order.
-        // Our frame index system assumes presentation order, so we must sort here.
-        samplesRef.current.sort((a, b) => a.timestamp - b.timestamp);
-        // Re-assign indices to match presentation order
-        for (let i = 0; i < samplesRef.current.length; i++) {
-          samplesRef.current[i].index = i;
+        // mp4box delivers samples in absolute Decode Order.
+        // We MUST retain this order for VideoDecoder.decode() to resolve B-frame dependencies properly. 
+        // We establish a two-way mapping between presentation (CTS timeline) and decode (physical).
+        const len = samplesRef.current.length;
+        const decodeToPres = new Int32Array(len);
+        const presToDecode = new Int32Array(len);
+
+        const sortedRefs = [...samplesRef.current].map((s, idx) => ({ dtsIdx: idx, cts: s.timestamp }))
+                                                  .sort((a,b) => a.cts - b.cts);
+        
+        for (let i = 0; i < len; i++) {
+          const dtsIdx = sortedRefs[i].dtsIdx;
+          presToDecode[i] = dtsIdx;      // presentation index -> decode index
+          decodeToPres[dtsIdx] = i;      // decode index -> presentation index
         }
-        console.log(`[FrameBuffer] READY — ${samplesRef.current.length} samples, codec=${configRef.current.codec}, ${configRef.current.codedWidth}x${configRef.current.codedHeight}`);
+
+        decodeToPresentationRef.current = decodeToPres;
+        presentationToDecodeRef.current = presToDecode;
+
+        console.log(`[FrameBuffer] READY — ${len} samples, codec=${configRef.current.codec}, ${configRef.current.codedWidth}x${configRef.current.codedHeight}`);
         setIsReady(true);
       } else {
         console.warn('[FrameBuffer] NOT READY — config:', !!configRef.current, 'samples:', samplesRef.current.length);
@@ -242,36 +255,35 @@ export function useFrameBuffer(
     const samples = samplesRef.current;
     if (!config || samples.length === 0) return;
 
-    // 边界裁剪
-    const start = Math.max(0, from);
-    const end = Math.min(samples.length - 1, to);
-    if (start > end) return;
+    // 边界裁剪 (针对用户感知的 Presentation Index)
+    const pStart = Math.max(0, from);
+    const pEnd = Math.min(samples.length - 1, to);
+    if (pStart > pEnd) return;
 
-    const cache = cacheRef.current;
+    const presToDecode = presentationToDecodeRef.current;
+    const decodeToPres = decodeToPresentationRef.current;
 
-    // 找最近的 I 帧（≤ start）
-    let iFrameIdx = start;
+    // 寻找这批显示帧所跨越的最宽泛的底层 Decode 指针范围
+    let minD = Infinity;
+    let maxD = -Infinity;
+    for (let p = pStart; p <= pEnd; p++) {
+      const d = presToDecode[p];
+      if (d < minD) minD = d;
+      if (d > maxD) maxD = d;
+    }
+
+    // 为了解压 minD 这个数据包，需要往前寻找离它最近的一阶 I-frame 参照物
+    let iFrameIdx = minD;
     while (iFrameIdx > 0 && !samples[iFrameIdx].isSync) {
       iFrameIdx--;
     }
 
-    // Build CTS-sorted index to map presentation order → sample index
-    // HEVC B-frames: decode order ≠ presentation order
-    // We need this to correctly assign frame indices from decoder output
-    const rangeSlice = samples.slice(iFrameIdx, end + 1);
-    // Map: truncated timestamp → original sample index (same trunc as WebIDL long long)
-    const tsToSampleIdx = new Map<number, number>();
-    for (let i = iFrameIdx; i <= end; i++) {
-      tsToSampleIdx.set(Math.trunc(samples[i].timestamp), i);
-    }
-    // Sorted by CTS to get presentation order indices
-    const sortedByCts = [...rangeSlice]
-      .map((s, localI) => ({ sampleIdx: iFrameIdx + localI, cts: s.timestamp }))
-      .sort((a, b) => a.cts - b.cts);
-    // Map: presentation order position (0-based from iFrameIdx) → actual sample index
-    const presentationToSample = new Map<number, number>();
-    for (let i = 0; i < sortedByCts.length; i++) {
-      presentationToSample.set(i, sortedByCts[i].sampleIdx);
+    const cache = cacheRef.current;
+
+    // 构建时钟映射：用于在输出回调里，把底层的 Timestamp 精准反推回用户的 Presentation Index
+    const tsToPresIdx = new Map<number, number>();
+    for (let d = iFrameIdx; d <= maxD; d++) {
+      tsToPresIdx.set(Math.trunc(samples[d].timestamp), decodeToPres[d]);
     }
 
     // 创建临时 decoder，收集解码结果
@@ -286,13 +298,11 @@ export function useFrameBuffer(
         }
         try {
           const bitmap = await createImageBitmap(frame);
-          // Use timestamp to find the correct sample index
-          // VideoDecoder outputs in presentation (display) order
-          const matchIdx = tsToSampleIdx.get(frame.timestamp);
-          if (matchIdx !== undefined) {
-            pendingFrames.push({ index: matchIdx, bitmap });
+          // Use timestamp to map back exactly to Presentation Index
+          const matchPIdx = tsToPresIdx.get(Math.trunc(frame.timestamp));
+          if (matchPIdx !== undefined) {
+            pendingFrames.push({ index: matchPIdx, bitmap });
           } else {
-            // Fallback: shouldn't happen, but don't leak
             bitmap.close();
           }
         } catch {
@@ -309,8 +319,8 @@ export function useFrameBuffer(
     try {
       decoder.configure(config);
 
-      // 从 I 帧顺序送入到 end
-      for (let i = iFrameIdx; i <= end; i++) {
+      // 从 I 帧顺序送入到 maxD (严格的底层物理顺序，保证所有 P/B 时域依赖完整)
+      for (let i = iFrameIdx; i <= maxD; i++) {
         if (seq !== prefetchSeqRef.current) break;
         const s = samples[i];
 
@@ -325,13 +335,12 @@ export function useFrameBuffer(
 
       await decoder.flush();
 
-      // 只缓存 [start, end] 范围内的帧
+      // 只缓存用户请求的 Presentation 范围 [pStart, pEnd]
       if (seq === prefetchSeqRef.current) {
         for (const pf of pendingFrames) {
-          if (pf.index >= start && pf.index <= end && !cache.has(pf.index)) {
+          if (pf.index >= pStart && pf.index <= pEnd && !cache.has(pf.index)) {
             cache.set(pf.index, pf.bitmap);
           } else {
-            // 不需要的帧（I帧到 start 之间），释放
             pf.bitmap.close();
           }
         }
