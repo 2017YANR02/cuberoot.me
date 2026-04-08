@@ -403,11 +403,15 @@ export default function FrameCountPage() {
             doSeek();
           }
         }, { once: true });
-        video.currentTime = target / videoFps;
+        if (fbSamples && fbSamples[target]) {
+          video.currentTime = fbSamples[target].timestamp / 1_000_000;
+        } else {
+          video.currentTime = target / videoFps;
+        }
       };
       doSeek();
     }
-  }, [videoFps]);
+  }, [videoFps, fbSamples]);
 
   // 用 ref 追踪帧号，避免快速连按时闭包中 currentFrame 过时
   const currentFrameRef = useRef(0);
@@ -447,11 +451,15 @@ export default function FrameCountPage() {
             doSeek();
           }
         }, { once: true });
-        video.currentTime = f / videoFps;
+        if (fbSamples && fbSamples[f]) {
+          video.currentTime = fbSamples[f].timestamp / 1_000_000;
+        } else {
+          video.currentTime = f / videoFps;
+        }
       };
       doSeek();
     }
-  }, [videoFps, trimStart, trimEnd, totalFrames]);
+  }, [videoFps, trimStart, trimEnd, totalFrames, fbSamples]);
 
   const stepSeconds = useCallback((s: number) => {
     const video = videoRef.current;

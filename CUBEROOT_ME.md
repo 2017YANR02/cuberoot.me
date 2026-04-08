@@ -6,7 +6,7 @@
 |------|-----|
 | **域名** | `cuberoot.me` → 301 到 `www.cuberoot.me` |
 | **服务器 IP** | `47.97.30.181` |
-| **托管** | 阿里云 ECS |
+| **托管** | 阿某里某云 ECS |
 | **OS** | Alibaba Cloud Linux 3.2104 U10（基于 CentOS/RHEL，包管理用 `dnf`） |
 | **Web 服务器** | Nginx 1.26.2 |
 | **管理面板** | 宝塔面板（端口 8888） |
@@ -20,8 +20,6 @@
 | **pm2** | v6.0.14（进程守护，`pm2 startup` 已配置开机自启） |
 | **pnpm** | v10.32.1（monorepo 包管理器） |
 
-## 国内镜像 www.cuberoot.me
-
 ### URL 架构
 
 ```
@@ -33,7 +31,7 @@ https://www.cuberoot.me/api/        → Hono API（Nginx 反代到 127.0.0.1:300
 
 ### 概述
 
-`ruiminyan.github.io`（GitHub Pages）在国内无法访问，因此在阿里云 ECS 上部署了镜像。
+阿某里某云 ECS 上部署了 `ruiminyan.github.io` 的镜像。
 
 | 项目 | 值 |
 |------|-----|
@@ -53,7 +51,7 @@ push 到 main 分支
 GitHub Actions（deploy_mirror.yml）
       │
       ├── 1. 组装 _deploy/ 目录（静态文件）
-      ├── 2. SSH 连接阿里云
+      ├── 2. SSH 连接阿某里某云
       └── 3. rsync 同步 _deploy/ → /www/wwwroot/toolkit/
       │
       ▼
@@ -155,7 +153,7 @@ rsync -rltz --delete --exclude='.user.ini' --chmod=D755,F644 ...
 - 宝塔面板修改站点后可能覆盖配置，需要重新添加
 
 ### SSH 连接失败？
-- 检查阿里云安全组是否放行了 22 端口
+- 检查阿某里某云安全组是否放行了 22 端口
 - 确认 `/root/.ssh/authorized_keys` 包含部署公钥
 - 如果密钥丢失，在服务器重新生成并更新 GitHub Secret `DEPLOY_SSH_KEY`
 
@@ -222,18 +220,18 @@ fetch('https://www.cuberoot.me/api/recon/renameColumns2', {
 ## SSH 登录方式
 
 ```bash
-# 密码登录（密码在阿里云控制台 → ECS → 重置密码）
+# 密码登录（密码在阿某里某云控制台 → ECS → 重置密码）
 ssh root@47.97.30.181
 
-# 或使用阿里云网页终端
-# 阿里云控制台 → ECS → 实例列表 → 远程连接 → Workbench
+# 或使用阿某里某云网页终端
+# 阿某里某云控制台 → ECS → 实例列表 → 远程连接 → Workbench
 ```
 
 ## 邮件发送（Postfix + Gmail SMTP 中继）
 
 PHP `mail()` 依赖 postfix 通过 Gmail SMTP 中继发送。用于复盘评论通知等场景。
 
-> 阿里云 ECS 封锁出站端口 25，必须通过 587 端口中继。
+> 阿某里某云 ECS 封锁出站端口 25，必须通过 587 端口中继。
 
 **迁移服务器时需重新执行以下命令：**
 
