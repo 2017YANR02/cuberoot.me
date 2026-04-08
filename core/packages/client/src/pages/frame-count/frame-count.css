@@ -412,6 +412,23 @@
   border-radius: 1px;
 }
 
+.fc-playhead-tooltip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(40,40,40,0.92);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+  letter-spacing: 0.02em;
+}
+
 /* Seek overlay */
 .fc-timeline-seek-area {
   position: absolute;
