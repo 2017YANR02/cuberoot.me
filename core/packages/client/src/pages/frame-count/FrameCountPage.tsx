@@ -383,6 +383,7 @@ export default function FrameCountPage() {
 
   // ── 视频控制 ──
 
+  const seekRafRef = useRef(0);
   const seekToFrame = useCallback((frame: number) => {
     const video = videoRef.current;
     if (!video || videoFps <= 0) return;
@@ -390,28 +391,51 @@ export default function FrameCountPage() {
     // 立即更新 UI
     currentFrameRef.current = f;
     setCurrentFrame(f);
-    // 节流 seek：上一次完成后才执行下一次
-    if (!seekingRef.current) {
-      seekingRef.current = true;
-      const doSeek = () => {
-        const target = currentFrameRef.current;
-        video.addEventListener('seeked', () => {
-          seekingRef.current = false;
-          // 如果拖动期间帧又变了，继续 seek
-          if (currentFrameRef.current !== target) {
-            seekingRef.current = true;
-            doSeek();
+    
+    cancelAnimationFrame(seekRafRef.current);
+
+    if (frameBufferReady) {
+      // Tier 1: WebCodecs 绝对索引渲染（无视底层游标）
+      prefetch(f, 30);
+      const tryRender = () => {
+        if (currentFrameRef.current !== f) return; // Superceded
+        const bmp = getFrame(f);
+        if (bmp) {
+          const canvas = canvasRef.current;
+          const ctx = canvas?.getContext('2d');
+          if (ctx && canvas) {
+            canvas.width = bmp.width;
+            canvas.height = bmp.height;
+            ctx.drawImage(bmp, 0, 0);
           }
-        }, { once: true });
-        if (fbSamples && fbSamples[target]) {
-          video.currentTime = fbSamples[target].timestamp / 1_000_000;
+          setUseCanvasDisplay(true);
+          // 仅兜底音轨和进度同步，采用 +0.5 半帧安全偏移
+          video.currentTime = (f + 0.5) / videoFps;
         } else {
-          video.currentTime = target / videoFps;
+          seekRafRef.current = requestAnimationFrame(tryRender);
         }
       };
-      doSeek();
+      tryRender();
+    } else {
+      // Tier 2: 纯 Video 降级方案容差策略 (A/V 同步偏移的最终防线)
+      if (!seekingRef.current) {
+        seekingRef.current = true;
+        const doSeek = () => {
+          const target = currentFrameRef.current;
+          video.addEventListener('seeked', () => {
+            seekingRef.current = false;
+            if (currentFrameRef.current !== target) {
+              seekingRef.current = true;
+              doSeek();
+            }
+          }, { once: true });
+          video.currentTime = (target + 0.5) / videoFps;
+          setUseCanvasDisplay(false);
+        };
+        doSeek();
+      }
     }
-  }, [videoFps, fbSamples]);
+  }, [videoFps, frameBufferReady, getFrame, prefetch]);
 
   // 用 ref 追踪帧号，避免快速连按时闭包中 currentFrame 过时
   const currentFrameRef = useRef(0);
@@ -437,29 +461,49 @@ export default function FrameCountPage() {
     }
     // 立即更新 UI 帧号（不等 seek 完成）
     setCurrentFrame(currentFrameRef.current);
-    // 用 seeked 事件节流：上一次 seek 完成后再执行下一次
-    if (!seekingRef.current) {
-      seekingRef.current = true;
-      const doSeek = () => {
-        const f = currentFrameRef.current;
-        video.addEventListener('seeked', () => {
-          seekingRef.current = false;
-          // 不要 setCurrentFrame(f) — UI 已由上方的立即更新驱动
-          // 如果在 seek 期间帧号又变了，继续 seek
-          if (currentFrameRef.current !== f) {
-            seekingRef.current = true;
-            doSeek();
+    
+    cancelAnimationFrame(seekRafRef.current);
+
+    if (frameBufferReady) {
+      const target = currentFrameRef.current;
+      prefetch(target, 30);
+      const tryRender = () => {
+        if (currentFrameRef.current !== target) return; 
+        const bmp = getFrame(target);
+        if (bmp) {
+          const canvas = canvasRef.current;
+          const ctx = canvas?.getContext('2d');
+          if (ctx && canvas) {
+            canvas.width = bmp.width;
+            canvas.height = bmp.height;
+            ctx.drawImage(bmp, 0, 0);
           }
-        }, { once: true });
-        if (fbSamples && fbSamples[f]) {
-          video.currentTime = fbSamples[f].timestamp / 1_000_000;
+          setUseCanvasDisplay(true);
+          video.currentTime = (target + 0.5) / videoFps;
         } else {
-          video.currentTime = f / videoFps;
+          seekRafRef.current = requestAnimationFrame(tryRender);
         }
       };
-      doSeek();
+      tryRender();
+    } else {
+      if (!seekingRef.current) {
+        seekingRef.current = true;
+        const doSeek = () => {
+          const target = currentFrameRef.current;
+          video.addEventListener('seeked', () => {
+            seekingRef.current = false;
+            if (currentFrameRef.current !== target) {
+              seekingRef.current = true;
+              doSeek();
+            }
+          }, { once: true });
+          video.currentTime = (target + 0.5) / videoFps;
+          setUseCanvasDisplay(false);
+        };
+        doSeek();
+      }
     }
-  }, [videoFps, trimStart, trimEnd, totalFrames, fbSamples]);
+  }, [videoFps, trimStart, trimEnd, totalFrames, frameBufferReady, getFrame, prefetch]);
 
   const stepSeconds = useCallback((s: number) => {
     const video = videoRef.current;
@@ -467,13 +511,22 @@ export default function FrameCountPage() {
     const newTime = Math.max(0, video.currentTime + s);
     video.currentTime = newTime;
     setCurrentFrame(Math.round(newTime * videoFps));
+    setUseCanvasDisplay(false);
   }, [videoFps]);
 
   const togglePlay = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
-    if (video.paused) { video.muted = false; video.play(); setIsPlaying(true); }
-    else { video.pause(); setIsPlaying(false); }
+    if (video.paused) { 
+      video.muted = false; 
+      video.play(); 
+      setIsPlaying(true); 
+      setUseCanvasDisplay(false);
+    }
+    else { 
+      video.pause(); 
+      setIsPlaying(false); 
+    }
   }, []);
 
   const changeRate = useCallback((rate: number) => {
@@ -703,6 +756,7 @@ export default function FrameCountPage() {
           } else {
             video.play();
             setIsPlaying(true);
+            setUseCanvasDisplay(false);
           }
         }
         return;
