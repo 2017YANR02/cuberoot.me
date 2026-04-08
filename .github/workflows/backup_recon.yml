@@ -1,5 +1,5 @@
 # 每周自动备份 Recon 复盘数据到 git
-# NOTE: 数据源是阿里云 Hono API，备份到仓库作为灾备
+# NOTE: 数据源是阿某里某云 Hono API，备份到仓库作为灾备
 name: Backup Recon Data
 
 on:

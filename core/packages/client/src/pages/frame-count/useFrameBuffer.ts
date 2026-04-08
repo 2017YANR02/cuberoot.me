@@ -212,6 +212,14 @@ export function useFrameBuffer(
 
       // samples 收集完毕后标记 ready
       if (configRef.current && samplesRef.current.length > 0) {
+        // Sort samples by presentation time (CTS) — mp4box delivers in decode order,
+        // but HEVC B-frames cause decode order ≠ display order.
+        // Our frame index system assumes presentation order, so we must sort here.
+        samplesRef.current.sort((a, b) => a.timestamp - b.timestamp);
+        // Re-assign indices to match presentation order
+        for (let i = 0; i < samplesRef.current.length; i++) {
+          samplesRef.current[i].index = i;
+        }
         console.log(`[FrameBuffer] READY — ${samplesRef.current.length} samples, codec=${configRef.current.codec}, ${configRef.current.codedWidth}x${configRef.current.codedHeight}`);
         setIsReady(true);
       } else {
@@ -247,9 +255,27 @@ export function useFrameBuffer(
       iFrameIdx--;
     }
 
+    // Build CTS-sorted index to map presentation order → sample index
+    // HEVC B-frames: decode order ≠ presentation order
+    // We need this to correctly assign frame indices from decoder output
+    const rangeSlice = samples.slice(iFrameIdx, end + 1);
+    // Map: truncated timestamp → original sample index (same trunc as WebIDL long long)
+    const tsToSampleIdx = new Map<number, number>();
+    for (let i = iFrameIdx; i <= end; i++) {
+      tsToSampleIdx.set(Math.trunc(samples[i].timestamp), i);
+    }
+    // Sorted by CTS to get presentation order indices
+    const sortedByCts = [...rangeSlice]
+      .map((s, localI) => ({ sampleIdx: iFrameIdx + localI, cts: s.timestamp }))
+      .sort((a, b) => a.cts - b.cts);
+    // Map: presentation order position (0-based from iFrameIdx) → actual sample index
+    const presentationToSample = new Map<number, number>();
+    for (let i = 0; i < sortedByCts.length; i++) {
+      presentationToSample.set(i, sortedByCts[i].sampleIdx);
+    }
+
     // 创建临时 decoder，收集解码结果
     const pendingFrames: { index: number; bitmap: ImageBitmap }[] = [];
-    let frameOutputCount = 0;
 
     const decoder = new VideoDecoder({
       output: async (frame: VideoFrame) => {
@@ -260,10 +286,15 @@ export function useFrameBuffer(
         }
         try {
           const bitmap = await createImageBitmap(frame);
-          // VideoDecoder output 按输入顺序输出
-          const globalIdx = iFrameIdx + frameOutputCount;
-          frameOutputCount++;
-          pendingFrames.push({ index: globalIdx, bitmap });
+          // Use timestamp to find the correct sample index
+          // VideoDecoder outputs in presentation (display) order
+          const matchIdx = tsToSampleIdx.get(frame.timestamp);
+          if (matchIdx !== undefined) {
+            pendingFrames.push({ index: matchIdx, bitmap });
+          } else {
+            // Fallback: shouldn't happen, but don't leak
+            bitmap.close();
+          }
         } catch {
           // createImageBitmap 失败（极罕见）
         } finally {

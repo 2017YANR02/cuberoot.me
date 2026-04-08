@@ -1,4 +1,4 @@
-# 每次 push 或其他 CI 完成后，直接 rsync 仓库静态文件到阿里云（国内镜像）
+# 每次 push 或其他 CI 完成后，直接 rsync 仓库静态文件到阿某里某云（镜像）
 # 目标：www.cuberoot.me（与 ruiminyan.github.io 内容保持一致）
 name: Deploy Mirror to cuberoot
 
