@@ -13,7 +13,7 @@
 |----------|----------|------|------|
 | **Update Stats** | 定时（每周）/ 手动 | TS 下载 WCA 数据库 + 计算统计 | ~47 分钟 |
 | **Deploy Core** | push main 且 `core/` 有变更 / 手动 | pnpm build → commit dist → rsync ECS | ~1 分钟 |
-| **Deploy Mirror** | push main / 其他 CI 完成 | 组装静态文件 + rsync 到阿里云 | ~15 秒 |
+| **Deploy Mirror** | push main / 其他 CI 完成 | 组装静态文件 + rsync 到阿某里某云 | ~15 秒 |
 | **Backup Recon** | 定时（每周一凌晨 4:00）/ 手动 | API 拉取复盘备份 + 增量 WCA 成绩 | ~10 秒 |
 | **Update Upcoming** | 定时（每日）/ 手动 | 拉取顶尖选手近期比赛 | ~15 分钟 |
 
