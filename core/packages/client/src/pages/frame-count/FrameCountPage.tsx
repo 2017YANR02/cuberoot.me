@@ -426,6 +426,11 @@ export default function FrameCountPage() {
     video.pause();
     setIsPlaying(false);
     currentFrameRef.current = Math.max(0, currentFrameRef.current + n);
+    // Clamp within trim range
+    const effEnd = trimEnd || totalFrames;
+    if (trimStart > 0 || effEnd < totalFrames) {
+      currentFrameRef.current = Math.max(trimStart, Math.min(currentFrameRef.current, effEnd));
+    }
     // 立即更新 UI 帧号（不等 seek 完成）
     setCurrentFrame(currentFrameRef.current);
     // 用 seeked 事件节流：上一次 seek 完成后再执行下一次
@@ -446,7 +451,7 @@ export default function FrameCountPage() {
       };
       doSeek();
     }
-  }, [videoFps]);
+  }, [videoFps, trimStart, trimEnd, totalFrames]);
 
   const stepSeconds = useCallback((s: number) => {
     const video = videoRef.current;
@@ -504,12 +509,22 @@ export default function FrameCountPage() {
       return next;
     });
     showToast(`Mark added at frame ${currentFrame}`);
-    // WCA 自动跳转：填写了 Time 时，M 标记 End Frame 后自动跳转到 Start Frame
+    // WCA 自动跳转：填写了 Time 时，M 标记 End Frame 后自动跳转到 Start Frame 并自动 Add
     if (solveTimeNum > 0 && videoFps > 0) {
       setWcaEndFrame(currentFrame);
       const frames = timeToFrames(solveTimeNum, videoFps);
       const startFrame = Math.max(0, currentFrame - frames);
       seekToFrame(startFrame);
+      // 自动添加 startFrame 的 mark（如果不重复）
+      setSolves(prev => {
+        const next = [...prev];
+        const solve = { ...next[activeSolveIdx] };
+        if (!solve.marks.some(m => m.frame === startFrame)) {
+          solve.marks = [...solve.marks, { frame: startFrame }].sort((a, b) => a.frame - b.frame);
+          next[activeSolveIdx] = solve;
+        }
+        return next;
+      });
     }
   }, [activeSolveIdx, currentFrame, solves, showToast, solveTimeNum, videoFps, seekToFrame]);
 
@@ -822,8 +837,10 @@ export default function FrameCountPage() {
         setTrimEnd(raw);
         seekToFrame(raw);
       } else {
+        // Clamp seek within trim range
         const frac = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-        const frame = Math.round(frac * totalFrames);
+        const effEnd = trimEnd || totalFrames;
+        const frame = Math.max(trimStart, Math.min(Math.round(frac * totalFrames), effEnd));
         seekToFrame(frame);
       }
     };
@@ -1310,10 +1327,17 @@ export default function FrameCountPage() {
                   <span className="fc-trim-chevron">›</span>
                 </div>
 
-                {/* Playhead */}
-                {totalFrames > 0 && (
-                  <div className="fc-timeline-playhead" style={{ left: `${(currentFrame / totalFrames) * 100}%` }} />
-                )}
+                {/* Playhead with time tooltip */}
+                {totalFrames > 0 && (() => {
+                  const effEnd = trimEnd || totalFrames;
+                  const clampedFrame = Math.max(trimStart, Math.min(currentFrame, effEnd));
+                  const pct = (clampedFrame / totalFrames) * 100;
+                  return (
+                    <div className="fc-timeline-playhead" style={{ left: `${pct}%` }}>
+                      <span className="fc-playhead-tooltip">{formatTime(currentFrame / videoFps)} ({currentFrame})</span>
+                    </div>
+                  );
+                })()}
 
                 {/* Click/drag to seek overlay */}
                 <div
@@ -1324,7 +1348,8 @@ export default function FrameCountPage() {
                     if (!track || totalFrames <= 0) return;
                     const rect = track.getBoundingClientRect();
                     const frac = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-                    const frame = Math.round(frac * totalFrames);
+                    const effEnd = trimEnd || totalFrames;
+                    const frame = Math.max(trimStart, Math.min(Math.round(frac * totalFrames), effEnd));
                     seekToFrame(frame);
                     trimDragRef.current = { side: 'seek', startX: e.clientX, startVal: frame };
                   }}
@@ -1357,11 +1382,7 @@ export default function FrameCountPage() {
                   ))}
                 </div>
 
-                <div className="fc-ctrl-sep" />
 
-                <span className="fc-ctrl-info">
-                  {formatTime(currentFrame / videoFps)} <strong>({currentFrame})</strong>
-                </span>
               </div>
             </div>
           )}
