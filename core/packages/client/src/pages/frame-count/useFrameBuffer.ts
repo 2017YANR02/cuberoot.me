@@ -399,6 +399,10 @@ export function useFrameBuffer(
         iFrameDecoder.configure(config);
         for (const di of keyIndices) {
           if (cancelled) break;
+          // 背压：防止硬件解码器队列溢出（4K HEVC 尤其敏感）
+          while (iFrameDecoder.decodeQueueSize > 8 && !cancelled) {
+            await new Promise(r => setTimeout(r, 4));
+          }
           const s = samples[di];
           iFrameDecoder.decode(new EncodedVideoChunk({
             type: 'key',
@@ -429,6 +433,10 @@ export function useFrameBuffer(
         strideDecoder.configure(config);
         for (let i = 0; i < samples.length; i++) {
           if (cancelled) break;
+          // 背压：防止硬件解码器队列溢出
+          while (strideDecoder.decodeQueueSize > 16 && !cancelled) {
+            await new Promise(r => setTimeout(r, 4));
+          }
           const s = samples[i];
           strideDecoder.decode(new EncodedVideoChunk({
             type: s.isSync ? 'key' : 'delta',
@@ -528,6 +536,10 @@ export function useFrameBuffer(
       // 从 I 帧顺序送入到 maxD (严格的底层物理顺序，保证所有 P/B 时域依赖完整)
       for (let i = iFrameIdx; i <= maxD; i++) {
         if (seq !== prefetchSeqRef.current) break;
+        // 背压：4K HEVC 解码器队列溢出会导致 EncodingError
+        while (decoder.decodeQueueSize > 16 && seq === prefetchSeqRef.current) {
+          await new Promise(r => setTimeout(r, 4));
+        }
         const s = samples[i];
 
         const chunk = new EncodedVideoChunk({

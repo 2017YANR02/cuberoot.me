@@ -1911,11 +1911,17 @@ export default function FrameCountPage() {
                       </button>
                     </div>
 
-                    <button className="fc-change-video" onClick={() => fileInputRef.current?.click()}>
-                      New
+                    <button className="fc-change-video fc-new-btn" onClick={() => fileInputRef.current?.click()} title="New video">
+                      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="9" cy="9" r="8" stroke="currentColor" strokeWidth="1.5"/>
+                        <line x1="9" y1="5" x2="9" y2="13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                        <line x1="5" y1="9" x2="13" y2="9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      </svg>
                     </button>
-                    <button className="fc-change-video fc-folder-btn" onClick={openFromFolder} title="Open video from folder (auto-load/save .splits.txt)">
-                      Folder
+                    <button className="fc-change-video fc-folder-btn fc-new-btn" onClick={openFromFolder} title="Open video from folder (auto-load/save .splits.txt)">
+                      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M2 5a1 1 0 0 1 1-1h4l1.5 2H15a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+                      </svg>
                     </button>
                     <div className="fc-export-wrap" ref={exportMenuRef}>
                     <button

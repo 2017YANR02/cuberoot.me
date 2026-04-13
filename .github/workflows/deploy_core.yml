@@ -67,8 +67,9 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add -A _assets/ index.html 404.html favicon.svg CubeRoot-dark.png
-          git add -A oll_pic/ zbll_svg/ zbls_img/ vendor/ fonts/
+          git add -A oll_pic/ zbll_svg/ zbls_img/ vendor/ fonts/ ffmpeg/ icons/
           git add -A scramble_module.js confetti.min.js icons.svg icon_timer.png cstimer_logo.png
+          git add -A MediaInfoModule.wasm manifest.json
           # 清理已删除的 app/ 目录（首次迁移后不存在则忽略）
           git add -A app/ 2>/dev/null || true
           # 仅在有变化时才提交
