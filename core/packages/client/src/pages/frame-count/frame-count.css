@@ -238,6 +238,7 @@
   margin-left: auto;
 }
 .fc-change-video:hover { color: #fff; }
+.fc-new-btn { padding: 4px; line-height: 0; }
 
 /* Export 按钮 */
 .fc-export-btn {
