@@ -21,8 +21,10 @@ import {
 
 // ── 常量 ─────────────────────────────────────────────────────────────────────
 
-/** 缓冲区最大帧数（1080p 每帧 ~8MB RGBA → 60帧 ≈ 480MB） */
-const MAX_CACHE = 60;
+/** 缓冲区最大帧数。stepBack 每轮 prefetch 60 帧,需要至少容纳"旧的未消费帧 + 新的整段",
+ *  否则 LRU 会把未消费帧淘汰(get 把已消费帧标记为最近,反而保留,不消费的反而被淘汰)。
+ *  150 帧:容纳 2 轮 prefetch + 30 帧余量。1080p ImageBitmap 通常用 GPU texture,实际占用远小于 RGBA 估算。 */
+const MAX_CACHE = 150;
 
 /** WebCodecs 是否可用 */
 const HAS_WEBCODECS = typeof VideoDecoder !== 'undefined';
@@ -118,7 +120,8 @@ export function useFrameBuffer(
 
   // 防止重叠的 prefetch
   const prefetchSeqRef = useRef(0);
-  const decodingRef = useRef(false);
+  // 链式串行执行 decode：新请求 supersede 旧请求(通过 seq),等旧 decoder close 后再启动新的
+  const prefetchChainRef = useRef<Promise<void>>(Promise.resolve());
 
   // ── 初始化：mp4box 解析文件 → 提取 samples → 配置 decoder ──
 
@@ -361,14 +364,7 @@ export function useFrameBuffer(
   // ── prefetch ──
 
   const prefetch = useCallback((center: number, range: number, direction?: 'backward' | 'forward') => {
-    if (!isReady) {
-      console.log(`[FrameBuffer] prefetch BLOCKED — not ready`);
-      return;
-    }
-    if (decodingRef.current) {
-      console.log(`[FrameBuffer] prefetch BLOCKED — already decoding`);
-      return;
-    }
+    if (!isReady) return;
 
     // 方向偏移：backward 全部向左，forward 全部向右
     let from: number, to: number;
@@ -395,15 +391,15 @@ export function useFrameBuffer(
     }
     if (allCached) return;
 
-    console.log(`[FrameBuffer] prefetch START center=${center} range=${range} → decode [${actualFrom}, ${actualTo}]`);
+    // 总是 bump seq —— 旧的 decodeRange 在循环里检查 seq 会立即 break,加快旧 decoder 释放
     const seq = ++prefetchSeqRef.current;
-    decodingRef.current = true;
 
-    // 异步解码，不阻塞 UI
-    decodeRange(from, to, seq).finally(() => {
-      decodingRef.current = false;
-      console.log(`[FrameBuffer] prefetch DONE, cacheSize=${cacheRef.current.has(center) ? 'HIT' : 'MISS'} center=${center}`);
-    });
+    // 串行链:等上一个 decode close 后再启动,避免多个 VideoDecoder 资源争抢
+    prefetchChainRef.current = prefetchChainRef.current.then(() => {
+      // 排队期间又来了更新的请求 → 跳过这次
+      if (seq !== prefetchSeqRef.current) return;
+      return decodeRange(from, to, seq);
+    }).catch(() => {});
   }, [isReady, decodeRange]);
 
   // ── getFrame ──

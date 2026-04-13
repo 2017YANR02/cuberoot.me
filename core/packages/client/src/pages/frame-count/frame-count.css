@@ -240,6 +240,45 @@
 .fc-export-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .fc-export-btn svg { width: 12px; height: 12px; }
 
+/* Export 下拉菜单 */
+.fc-export-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+.fc-export-caret {
+  font-size: 0.65rem;
+  margin-left: 2px;
+  opacity: 0.7;
+}
+.fc-export-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 170px;
+  background: #4a4a4a;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  z-index: 100;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.fc-export-menu-item {
+  background: none;
+  border: none;
+  color: #ddd;
+  font-size: 0.78rem;
+  padding: 7px 12px;
+  text-align: left;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.fc-export-menu-item:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
 /* 工具栏图标按钮 */
 .fc-toolbar-icon {
   display: flex;
