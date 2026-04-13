@@ -119,6 +119,83 @@ function timeToFrames(time: number, fps: number): number {
   return Math.ceil((truncated + 0.009) * fps);
 }
 
+// ── IndexedDB:持久化 FileSystemDirectoryHandle 列表(MRU,最多 N 个) ──
+// 让用户在多个不同目录之间切换时,无需每次重新选 Folder
+const FS_DB_NAME = 'frame-count-fs';
+const FS_STORE = 'handles';
+const FS_KEY = 'rememberedDirs';
+const MAX_REMEMBERED_DIRS = 20;
+
+function fsOpenDB(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(FS_DB_NAME, 1);
+    req.onupgradeneeded = () => req.result.createObjectStore(FS_STORE);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function fsSaveDirs(dirs: FileSystemDirectoryHandle[]): Promise<void> {
+  const db = await fsOpenDB();
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(FS_STORE, 'readwrite');
+    tx.objectStore(FS_STORE).put(dirs, FS_KEY);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+  db.close();
+}
+
+async function fsLoadDirs(): Promise<FileSystemDirectoryHandle[]> {
+  try {
+    const db = await fsOpenDB();
+    const result = await new Promise<FileSystemDirectoryHandle[]>((resolve, reject) => {
+      const tx = db.transaction(FS_STORE, 'readonly');
+      const req = tx.objectStore(FS_STORE).get(FS_KEY);
+      req.onsuccess = () => {
+        const v = req.result;
+        if (Array.isArray(v)) resolve(v as FileSystemDirectoryHandle[]);
+        else if (v) resolve([v as FileSystemDirectoryHandle]); // 兼容旧版单个 handle
+        else resolve([]);
+      };
+      req.onerror = () => reject(req.error);
+    });
+    db.close();
+    return result;
+  } catch {
+    return [];
+  }
+}
+
+/** 把 newDir 提到列表头去重,保留最近 N 个 */
+async function fsPromoteDir(
+  list: FileSystemDirectoryHandle[],
+  newDir: FileSystemDirectoryHandle,
+): Promise<FileSystemDirectoryHandle[]> {
+  const filtered: FileSystemDirectoryHandle[] = [];
+  for (const d of list) {
+    try {
+      if (!(await newDir.isSameEntry(d))) filtered.push(d);
+    } catch {
+      filtered.push(d); // isSameEntry 失败保留(罕见)
+    }
+  }
+  return [newDir, ...filtered].slice(0, MAX_REMEMBERED_DIRS);
+}
+
+/** 检查/请求目录的读写权限。返回是否最终拿到权限。 */
+async function fsEnsurePermission(handle: FileSystemDirectoryHandle, prompt: boolean): Promise<boolean> {
+  const h = handle as unknown as {
+    queryPermission(opts: { mode: 'readwrite' }): Promise<PermissionState>;
+    requestPermission(opts: { mode: 'readwrite' }): Promise<PermissionState>;
+  };
+  let perm = await h.queryPermission({ mode: 'readwrite' });
+  if (perm === 'granted') return true;
+  if (!prompt) return false;
+  perm = await h.requestPermission({ mode: 'readwrite' });
+  return perm === 'granted';
+}
+
 // ── 时间格式化 ────────────────────────────────────────────────────────────
 
 /** 格式化秒数为 mm:ss.mmm */
@@ -173,6 +250,11 @@ const SHORTCUTS = [
   { section: 'Marking' },
   { action: 'Add Split Mark', keys: ['M'] },
   { action: 'Add Solve', keys: ['+'] },
+  { action: 'Prev mark (cross-solve)', keys: ['↑'] },
+  { action: 'Next mark (cross-solve)', keys: ['↓'] },
+  { section: 'Navigation' },
+  { action: 'Prev Solve', keys: ['←'] },
+  { action: 'Next Solve', keys: ['→'] },
   { section: 'Playback' },
   { action: 'Play / Pause', keys: ['K'] },
   { action: 'Forward 1 frame', keys: ['D'] },
@@ -222,6 +304,14 @@ export default function FrameCountPage() {
   const [activeSolveIdx, setActiveSolveIdx] = useState(0);
   const [selectedMarkIdx, setSelectedMarkIdx] = useState<number | null>(null);
 
+  // File System Access — 通过 Folder 入口加载时,持有目录句柄以便自动读写 .splits.txt
+  const dirHandleRef = useRef<FileSystemDirectoryHandle | null>(null);
+  const videoNameInDirRef = useRef<string | null>(null);
+  const [folderPickerVideos, setFolderPickerVideos] = useState<{ name: string; handle: FileSystemFileHandle }[] | null>(null);
+  const folderPickerDirRef = useRef<FileSystemDirectoryHandle | null>(null);
+  // 持久化记忆的目录句柄列表(IndexedDB,MRU 顺序)。拖放/选文件时遍历查找同名视频。
+  const rememberedDirsRef = useRef<FileSystemDirectoryHandle[]>([]);
+
   // UI 状态
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -255,6 +345,8 @@ export default function FrameCountPage() {
   const ffmpegRef = useRef<FFmpeg | null>(null);
   const [exporting, setExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const exportMenuRef = useRef<HTMLDivElement>(null);
 
   // wrapper 的 transform（translate 在 scale 之前，translate 单位是屏幕像素）
   const getZoomStyle = useCallback((): React.CSSProperties => {
@@ -396,26 +488,43 @@ export default function FrameCountPage() {
 
     if (frameBufferReady) {
       // Tier 1: WebCodecs 绝对索引渲染（无视底层游标）
-      prefetch(f, 30);
-      const tryRender = () => {
-        if (currentFrameRef.current !== f) return; // Superceded
-        const bmp = getFrame(f);
-        if (bmp) {
-          const canvas = canvasRef.current;
-          const ctx = canvas?.getContext('2d');
-          if (ctx && canvas) {
-            canvas.width = bmp.width;
-            canvas.height = bmp.height;
-            ctx.drawImage(bmp, 0, 0);
-          }
-          setUseCanvasDisplay(true);
-          // 仅兜底音轨和进度同步，采用 +0.5 半帧安全偏移
-          video.currentTime = (f + 0.5) / videoFps;
-        } else {
-          seekRafRef.current = requestAnimationFrame(tryRender);
+      // 先看缓存:命中直接渲染;未命中先用 video 元素粗略 seek 提供即时反馈
+      const bmpNow = getFrame(f);
+      if (bmpNow) {
+        const canvas = canvasRef.current;
+        const ctx = canvas?.getContext('2d');
+        if (ctx && canvas) {
+          canvas.width = bmpNow.width;
+          canvas.height = bmpNow.height;
+          ctx.drawImage(bmpNow, 0, 0);
         }
-      };
-      tryRender();
+        setUseCanvasDisplay(true);
+        video.currentTime = (f + 0.5) / videoFps;
+      } else {
+        // 缓存未命中:立即让 video 元素显示粗略画面(浏览器原生 seek 很快)
+        // 拖动场景下用户能看到画面跟着移动,而不是卡死
+        setUseCanvasDisplay(false);
+        video.currentTime = (f + 0.5) / videoFps;
+        // 启动后台精确解码,完成后切回 canvas
+        prefetch(f, 30);
+        const tryRender = () => {
+          if (currentFrameRef.current !== f) return; // Superceded
+          const bmp = getFrame(f);
+          if (bmp) {
+            const canvas = canvasRef.current;
+            const ctx = canvas?.getContext('2d');
+            if (ctx && canvas) {
+              canvas.width = bmp.width;
+              canvas.height = bmp.height;
+              ctx.drawImage(bmp, 0, 0);
+            }
+            setUseCanvasDisplay(true);
+          } else {
+            seekRafRef.current = requestAnimationFrame(tryRender);
+          }
+        };
+        tryRender();
+      }
     } else {
       // Tier 2: 纯 Video 降级方案容差策略 (A/V 同步偏移的最终防线)
       if (!seekingRef.current) {
@@ -612,6 +721,36 @@ export default function FrameCountPage() {
     showToast(`Mark ${selectedMarkIdx} updated to frame ${currentFrame}`);
   }, [activeSolveIdx, selectedMarkIdx, currentFrame, showToast]);
 
+  // 上/下键跨 Solve 切换 mark
+  const navigateMarkGlobal = useCallback((dir: 1 | -1) => {
+    // 构建全局 mark 列表（按帧升序）
+    const allMarks: { solveIdx: number; markIdx: number; frame: number }[] = [];
+    for (let si = 0; si < solves.length; si++) {
+      solves[si].marks.forEach((m, mi) => {
+        allMarks.push({ solveIdx: si, markIdx: mi, frame: m.frame });
+      });
+    }
+    allMarks.sort((a, b) => a.frame - b.frame);
+    if (allMarks.length === 0) return;
+
+    // 找当前选中 mark 在全局列表的位置
+    let curGlobalIdx = -1;
+    if (selectedMarkIdx !== null) {
+      curGlobalIdx = allMarks.findIndex(
+        (x) => x.solveIdx === activeSolveIdx && x.markIdx === selectedMarkIdx,
+      );
+    }
+
+    const nextGlobalIdx = curGlobalIdx === -1
+      ? (dir === 1 ? 0 : allMarks.length - 1)
+      : Math.max(0, Math.min(allMarks.length - 1, curGlobalIdx + dir));
+
+    const target = allMarks[nextGlobalIdx];
+    setActiveSolveIdx(target.solveIdx);
+    setSelectedMarkIdx(target.markIdx);
+    seekToFrame(target.frame);
+  }, [solves, activeSolveIdx, selectedMarkIdx, seekToFrame]);
+
   // ── 视频帧同步 ──
 
   useEffect(() => {
@@ -642,7 +781,7 @@ export default function FrameCountPage() {
 
   // ── 文件加载 ──
 
-  const loadFile = useCallback(async (file: File) => {
+  const loadFile = useCallback(async (file: File, initialSolves?: Solve[], initialFps?: number) => {
     if (videoSrc) URL.revokeObjectURL(videoSrc);
     const url = URL.createObjectURL(file);
     setVideoSrc(url);
@@ -654,14 +793,189 @@ export default function FrameCountPage() {
     setUseCanvasDisplay(false);
 
 
-    setSolves([{ name: 'Solve 1', marks: [] }]);
+    setSolves(initialSolves && initialSolves.length > 0 ? initialSolves : [{ name: 'Solve 1', marks: [] }]);
     setActiveSolveIdx(0);
     setSelectedMarkIdx(null);
-    const detected = await detectFpsFromFile(file);
-    if (detected && detected > 0) {
-      setVideoFps(detected);
+    if (initialFps && initialFps > 0) {
+      setVideoFps(initialFps);
+    } else {
+      const detected = await detectFpsFromFile(file);
+      if (detected && detected > 0) setVideoFps(detected);
     }
   }, [videoSrc]);
+
+  // ── splits.txt 序列化 / 反序列化 ──
+  // 格式:
+  //   fps:59.94
+  //   Solve 1:867:1164:1179:1300
+  //   Solve 2:1580:1713:1845
+  const serializeSplits = useCallback((solvesArr: Solve[], fps: number): string => {
+    const lines: string[] = [];
+    if (fps > 0) lines.push(`fps:${fps}`);
+    for (const s of solvesArr) {
+      const frames = s.marks.map(m => m.frame).join(':');
+      lines.push(`${s.name}:${frames}`);
+    }
+    return lines.join('\n') + '\n';
+  }, []);
+
+  const parseSplits = useCallback((text: string): { solves: Solve[]; fps: number | null } => {
+    const out: Solve[] = [];
+    let fps: number | null = null;
+    for (const raw of text.split(/\r?\n/)) {
+      const line = raw.trim();
+      if (!line) continue;
+      const colonIdx = line.indexOf(':');
+      if (colonIdx <= 0) continue;
+      const key = line.slice(0, colonIdx);
+      const rest = line.slice(colonIdx + 1);
+      if (key === 'fps') {
+        const v = parseFloat(rest);
+        if (isFinite(v) && v > 0) fps = v;
+      } else {
+        // 兼容旧格式 `splits:...` → 名字降级为 Solve N;新格式直接用 key 作为 name
+        const name = key === 'splits' ? `Solve ${out.length + 1}` : key;
+        // 兼容旧的 `|` 分隔写法
+        const frames = rest.split(/[:|]/).map(s => s.trim()).filter(s => s.length > 0).map(Number).filter(n => isFinite(n));
+        out.push({ name, marks: frames.map(f => ({ frame: f })) });
+      }
+    }
+    return { solves: out, fps };
+  }, []);
+
+  // 写 splits.txt 到当前目录(若有授权)
+  const writeSplitsFile = useCallback(async (solvesArr: Solve[], fps: number) => {
+    const dir = dirHandleRef.current;
+    const name = videoNameInDirRef.current;
+    if (!dir || !name) return;
+    try {
+      const fh = await dir.getFileHandle(name + '.splits.txt', { create: true });
+      const writable = await fh.createWritable();
+      await writable.write(serializeSplits(solvesArr, fps));
+      await writable.close();
+    } catch (e) {
+      console.warn('[Splits] write failed:', e);
+    }
+  }, [serializeSplits]);
+
+  // 选完目录中的某个视频后:加载视频 + 同目录 splits.txt
+  const loadFromDirectoryEntry = useCallback(async (
+    dir: FileSystemDirectoryHandle,
+    videoEntry: { name: string; handle: FileSystemFileHandle },
+  ) => {
+    const file = await videoEntry.handle.getFile();
+    dirHandleRef.current = dir;
+    videoNameInDirRef.current = videoEntry.name;
+
+    let loadedSolves: Solve[] | undefined;
+    let loadedFps: number | undefined;
+    try {
+      const sh = await dir.getFileHandle(videoEntry.name + '.splits.txt');
+      const sf = await sh.getFile();
+      const parsed = parseSplits(await sf.text());
+      if (parsed.solves.length > 0) loadedSolves = parsed.solves;
+      if (parsed.fps && parsed.fps > 0) loadedFps = parsed.fps;
+    } catch { /* splits 文件不存在,跳过 */ }
+
+    await loadFile(file, loadedSolves, loadedFps);
+    if (loadedSolves) showToast(`Loaded ${loadedSolves.length} solve(s) from .splits.txt`);
+  }, [loadFile, parseSplits, showToast]);
+
+  // Folder 按钮:选目录 → 列视频 → (单选自动加载 / 多选弹 modal) + 持久化记忆
+  const openFromFolder = useCallback(async () => {
+    if (!('showDirectoryPicker' in window)) {
+      showToast('Browser does not support folder access (Chrome/Edge only)');
+      return;
+    }
+    try {
+      const dir = await (window as unknown as { showDirectoryPicker: (o?: { mode?: string }) => Promise<FileSystemDirectoryHandle> })
+        .showDirectoryPicker({ mode: 'readwrite' });
+      const videos: { name: string; handle: FileSystemFileHandle }[] = [];
+      for await (const [name, handle] of (dir as unknown as { entries(): AsyncIterable<[string, FileSystemHandle]> }).entries()) {
+        if (handle.kind === 'file' && /\.(mp4|mov|webm|mkv|avi|m4v)$/i.test(name)) {
+          videos.push({ name, handle: handle as FileSystemFileHandle });
+        }
+      }
+      if (videos.length === 0) {
+        showToast('No video files in folder');
+        return;
+      }
+      // 加入 MRU 列表(去重,提到头)
+      const promoted = await fsPromoteDir(rememberedDirsRef.current, dir);
+      rememberedDirsRef.current = promoted;
+      fsSaveDirs(promoted).catch(e => console.warn('[FS] save dirs failed', e));
+      videos.sort((a, b) => a.name.localeCompare(b.name));
+      if (videos.length === 1) {
+        await loadFromDirectoryEntry(dir, videos[0]);
+      } else {
+        folderPickerDirRef.current = dir;
+        setFolderPickerVideos(videos);
+      }
+    } catch (e) {
+      if ((e as { name?: string })?.name !== 'AbortError') console.warn(e);
+    }
+  }, [loadFromDirectoryEntry, showToast]);
+
+  // 拖放/选择文件时,遍历记忆目录列表(最近优先),找第一个含同名视频的目录
+  // 策略:
+  //  Pass 1 — 已 granted 的目录直接试匹配(无 prompt,瞬时)
+  //  Pass 2 — 未 granted 的目录里,只对最近一个 prompt 一次,避免连弹多框
+  const tryLoadViaRememberedDir = useCallback(async (file: File): Promise<boolean> => {
+    const dirs = rememberedDirsRef.current;
+    if (dirs.length === 0) return false;
+
+    const tryMatch = async (dir: FileSystemDirectoryHandle): Promise<boolean> => {
+      try {
+        const fh = await dir.getFileHandle(file.name);
+        // 命中:把该目录提到列表头持久化
+        const promoted = await fsPromoteDir(dirs, dir);
+        rememberedDirsRef.current = promoted;
+        fsSaveDirs(promoted).catch(e => console.warn('[FS] save dirs failed', e));
+        await loadFromDirectoryEntry(dir, { name: file.name, handle: fh });
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
+    // Pass 1: 已 granted 的目录
+    for (const dir of dirs) {
+      if (await fsEnsurePermission(dir, false)) {
+        if (await tryMatch(dir)) return true;
+      }
+    }
+
+    // Pass 2: 对最近一个未授权目录 prompt 一次
+    for (const dir of dirs) {
+      const queryOnly = await fsEnsurePermission(dir, false);
+      if (queryOnly) continue; // Pass 1 已试过
+      const granted = await fsEnsurePermission(dir, true);
+      if (!granted) return false; // 用户拒绝
+      return await tryMatch(dir); // 不管是否命中都不再 prompt 其他目录
+    }
+
+    return false;
+  }, [loadFromDirectoryEntry]);
+
+  // 启动时恢复记忆的目录列表(不 prompt 权限,等用户操作时再请求)
+  useEffect(() => {
+    fsLoadDirs().then((arr) => {
+      rememberedDirsRef.current = arr;
+      if (arr.length > 0) console.log(`[FS] restored ${arr.length} remembered dir(s)`);
+    });
+  }, []);
+
+  // 点击外部关闭 Export 下拉菜单
+  useEffect(() => {
+    if (!showExportMenu) return;
+    const onDocClick = (e: MouseEvent) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(e.target as Node)) {
+        setShowExportMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', onDocClick);
+    return () => document.removeEventListener('mousedown', onDocClick);
+  }, [showExportMenu]);
 
   // ── 拖放 / 文件选择 ──
 
@@ -673,16 +987,33 @@ export default function FrameCountPage() {
     e.preventDefault(); e.stopPropagation(); setDragging(false);
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
     e.preventDefault(); e.stopPropagation(); setDragging(false);
     const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith('video/')) loadFile(file);
-  }, [loadFile]);
+    if (!file || !file.type.startsWith('video/')) return;
+    // 优先用记忆的目录(如果同名文件存在,可自动读写 splits)
+    if (await tryLoadViaRememberedDir(file)) return;
+    // fallback: 普通加载,无目录权限
+    dirHandleRef.current = null;
+    videoNameInDirRef.current = null;
+    loadFile(file);
+  }, [loadFile, tryLoadViaRememberedDir]);
 
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) loadFile(file);
-  }, [loadFile]);
+    if (!file) return;
+    if (await tryLoadViaRememberedDir(file)) return;
+    dirHandleRef.current = null;
+    videoNameInDirRef.current = null;
+    loadFile(file);
+  }, [loadFile, tryLoadViaRememberedDir]);
+
+  // solves / fps 变更时,自动写回 splits.txt(只有通过 Folder 入口加载时才生效)
+  useEffect(() => {
+    if (!dirHandleRef.current || !videoNameInDirRef.current) return;
+    const t = setTimeout(() => writeSplitsFile(solves, videoFps), 200);
+    return () => clearTimeout(t);
+  }, [solves, videoFps, writeSplitsFile]);
 
   // ── 快捷键 ──
 
@@ -706,10 +1037,13 @@ export default function FrameCountPage() {
             // 关键：保持统一节奏，不在 rAF 和 seeked 之间交替
             let hitCount = 0, missCount = 0;
 
-            // prefetch 全偏后退方向
+            // prefetch 全偏后退方向。lowestPrefetched 跟踪已请求 prefetch 到的最低帧,
+            // 避免每 10 帧无脑触发,导致正在跑的 decode 反复被新请求 supersede。
             console.log(`[StepBack] START frame=${currentFrameRef.current}, bufferReady=${frameBufferReady}`);
+            let lowestPrefetched = currentFrameRef.current;
             if (frameBufferReady) {
               prefetch(currentFrameRef.current, 60, 'backward');
+              lowestPrefetched = currentFrameRef.current - 60;
             }
 
             const stepBack = () => {
@@ -734,9 +1068,11 @@ export default function FrameCountPage() {
                 }
                 setUseCanvasDisplay(true);
 
-                // 每消费 10 帧，触发新一轮 prefetch 补充缓存
-                if (hitCount % 10 === 0) {
-                  prefetch(f, 60, 'backward');
+                // 接近 prefetch 边界(还剩 ~20 帧)时触发下一段,留时间给后台解码
+                if (frameBufferReady && f - 20 <= lowestPrefetched && lowestPrefetched > 0) {
+                  const newCenter = lowestPrefetched;
+                  prefetch(newCenter, 60, 'backward');
+                  lowestPrefetched = newCenter - 60;
                 }
                 requestAnimationFrame(stepBack);
               } else if (frameBufferReady) {
@@ -745,6 +1081,11 @@ export default function FrameCountPage() {
                 missCount++;
                 if (missCount <= 3) {
                   console.log(`[StepBack] WAIT frame=${f}, prefetch in progress...`);
+                }
+                // 救场:连续 miss 时主动重 prefetch,防止 LRU 淘汰导致的死锁
+                if (missCount % 30 === 1) {
+                  prefetch(f, 60, 'backward');
+                  lowestPrefetched = Math.min(lowestPrefetched, f - 60);
                 }
                 requestAnimationFrame(stepBack);
               } else {
@@ -778,6 +1119,18 @@ export default function FrameCountPage() {
         case 'l': e.preventDefault(); stepSeconds(1); break;
         case 'c': e.preventDefault(); copyToClipboard(String(currentFrame), `frame ${currentFrame}`); break;
         case 'escape': setShowShortcuts(false); break;
+        case 'arrowup': e.preventDefault(); navigateMarkGlobal(-1); break;
+        case 'arrowdown': e.preventDefault(); navigateMarkGlobal(1); break;
+        case 'arrowleft':
+          e.preventDefault();
+          setActiveSolveIdx(i => Math.max(0, i - 1));
+          setSelectedMarkIdx(null);
+          break;
+        case 'arrowright':
+          e.preventDefault();
+          setActiveSolveIdx(i => Math.min(solves.length - 1, i + 1));
+          setSelectedMarkIdx(null);
+          break;
       }
     };
 
@@ -816,7 +1169,7 @@ export default function FrameCountPage() {
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
     };
-  }, [togglePlay, stepFrames, stepSeconds, currentFrame, addMark, addSolve, copyToClipboard, videoFps, totalFrames, frameBufferReady, getFrame, prefetch, useCanvasDisplay]);
+  }, [togglePlay, stepFrames, stepSeconds, currentFrame, addMark, addSolve, copyToClipboard, videoFps, totalFrames, frameBufferReady, getFrame, prefetch, useCanvasDisplay, navigateMarkGlobal, solves.length]);
 
   // Shift+滚轮逐帧
   useEffect(() => {
@@ -1127,6 +1480,54 @@ export default function FrameCountPage() {
     }
   }, [videoFile, videoSrc, exporting, trimStart, trimEnd, totalFrames, videoFps, cropRect, showToast, frameBufferReady, fbSamples, fbDecoderConfig]);
 
+  // 导出当前帧为 PNG。优先用 canvas(WebCodecs 解出的精确帧),fallback 到 video 元素截图。
+  const exportCurrentFrame = useCallback(async () => {
+    const video = videoRef.current;
+    if (!videoFile || !video) return;
+    let blob: Blob | null = null;
+
+    // Tier 1: 已经在 canvas 显示精确帧
+    if (useCanvasDisplay && canvasRef.current && canvasRef.current.width > 0) {
+      blob = await new Promise<Blob | null>((res) => canvasRef.current!.toBlob(res, 'image/png'));
+    }
+
+    // Tier 2: 从 video 元素截图
+    if (!blob) {
+      const w = video.videoWidth;
+      const h = video.videoHeight;
+      if (w === 0 || h === 0) {
+        showToast('Video not ready');
+        return;
+      }
+      const tmp = document.createElement('canvas');
+      tmp.width = w;
+      tmp.height = h;
+      const ctx = tmp.getContext('2d');
+      if (!ctx) return;
+      try {
+        ctx.drawImage(video, 0, 0, w, h);
+        blob = await new Promise<Blob | null>((res) => tmp.toBlob(res, 'image/png'));
+      } catch (e) {
+        showToast(`Frame capture failed: ${e instanceof Error ? e.message : e}`);
+        return;
+      }
+    }
+
+    if (!blob) {
+      showToast('Failed to encode PNG');
+      return;
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const baseName = videoFile.name.replace(/\.[^.]+$/, '');
+    a.href = url;
+    a.download = `${baseName}.frame_${currentFrame}.png`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }, [videoFile, useCanvasDisplay, currentFrame, showToast]);
+
   // 总帧数
   useEffect(() => {
     const video = videoRef.current;
@@ -1258,10 +1659,37 @@ export default function FrameCountPage() {
                   <button className="fc-change-video" onClick={() => fileInputRef.current?.click()}>
                     New
                   </button>
-                  <button className="fc-export-btn" onClick={handleExport} disabled={exporting} title="Export as MP4">
-                    <IconExport />
-                    {exporting ? `${exportProgress}%` : 'Export'}
+                  <button className="fc-change-video" onClick={openFromFolder} title="Open video from folder (auto-load/save .splits.txt)">
+                    Folder
                   </button>
+                  <div className="fc-export-wrap" ref={exportMenuRef}>
+                    <button
+                      className="fc-export-btn"
+                      onClick={() => exporting ? undefined : setShowExportMenu(v => !v)}
+                      disabled={exporting}
+                      title="Export"
+                    >
+                      <IconExport />
+                      {exporting ? `${exportProgress}%` : 'Export'}
+                      {!exporting && <span className="fc-export-caret">▾</span>}
+                    </button>
+                    {showExportMenu && !exporting && (
+                      <div className="fc-export-menu">
+                        <button
+                          className="fc-export-menu-item"
+                          onClick={() => { setShowExportMenu(false); handleExport(); }}
+                        >
+                          Export Video
+                        </button>
+                        <button
+                          className="fc-export-menu-item"
+                          onClick={() => { setShowExportMenu(false); exportCurrentFrame(); }}
+                        >
+                          Export Current Frame
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 {/* 视频 wrapper — 紧贴视频尺寸，crop overlay / zoom / pan 都在这里 */}
                 <div
@@ -1555,6 +1983,32 @@ export default function FrameCountPage() {
 
       {/* Toast */}
       {toast && <div className="fc-toast">{toast}</div>}
+
+      {/* Folder 选视频弹窗(目录中有多个视频时) */}
+      {folderPickerVideos && (
+        <div className="fc-modal-overlay" onClick={() => setFolderPickerVideos(null)}>
+          <div className="fc-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="fc-modal-close" onClick={() => setFolderPickerVideos(null)}>✕</button>
+            <h2>Select a video</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '60vh', overflowY: 'auto' }}>
+              {folderPickerVideos.map((v) => (
+                <button
+                  key={v.name}
+                  className="fc-tab-btn"
+                  style={{ justifyContent: 'flex-start', textAlign: 'left' }}
+                  onClick={async () => {
+                    const dir = folderPickerDirRef.current;
+                    setFolderPickerVideos(null);
+                    if (dir) await loadFromDirectoryEntry(dir, v);
+                  }}
+                >
+                  {v.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 快捷键弹窗 */}
       {showShortcuts && (
