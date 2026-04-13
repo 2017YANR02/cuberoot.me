@@ -13,6 +13,18 @@
   display: flex;
   flex-direction: column;
   touch-action: manipulation; /* 移动端禁用 pinch-zoom */
+  /* iOS 屏蔽长按放大镜 / 弹出菜单, 禁止文本选中 */
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+/* 输入框仍允许选中 */
+.frame-count-page input,
+.frame-count-page textarea {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
 }
 
 /* ── 顶部导航栏 ── */
@@ -420,6 +432,7 @@
   z-index: 5;
   display: flex;
   align-items: center;
+  touch-action: none;
   justify-content: center;
   transition: background 0.15s;
 }
@@ -484,6 +497,7 @@
   height: 100%;
   cursor: pointer;
   z-index: 3;
+  touch-action: none;
 }
 
 /* Mark indicators on timeline */

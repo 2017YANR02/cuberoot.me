@@ -1426,7 +1426,7 @@ export default function FrameCountPage() {
       // 拖动中走轻量路径,不 supersede 解码器
       seekToFrameRough(f);
     };
-    const onMove = (e: MouseEvent) => {
+    const onMove = (e: PointerEvent) => {
       const d = trimDragRef.current;
       const track = trimTrackRef.current;
       if (!d || !track || totalFrames <= 0) return;
@@ -1498,11 +1498,13 @@ export default function FrameCountPage() {
       pendingSide = null;
       scrubModeActive = false;
     };
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onUp);
     return () => {
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
       if (rafId) cancelAnimationFrame(rafId);
     };
   }, [totalFrames, trimStart, trimEnd, seekToFrame, seekToFrameRough, beginDragOverlay]);
@@ -1955,7 +1957,7 @@ export default function FrameCountPage() {
                   onMouseUp={handlePanEnd}
                   onMouseLeave={handlePanEnd}
                   onTouchStart={(e) => { if (!cropMode) handlePanStart(e.touches[0].clientX, e.touches[0].clientY); }}
-                  onTouchMove={(e) => { e.preventDefault(); handlePanMove(e.touches[0].clientX, e.touches[0].clientY); }}
+                  onTouchMove={(e) => handlePanMove(e.touches[0].clientX, e.touches[0].clientY)}
                   onTouchEnd={handlePanEnd}
                 >
                   <video
@@ -2060,7 +2062,7 @@ export default function FrameCountPage() {
                 <div
                   className="fc-trim-handle fc-trim-handle-left"
                   style={{ left: `calc(${totalFrames > 0 ? (trimStart / totalFrames) * 100 : 0}% - 14px)` }}
-                  onMouseDown={(e) => {
+                  onPointerDown={(e) => {
                     e.preventDefault(); e.stopPropagation();
                     trimDragRef.current = { side: 'left', startX: e.clientX, startVal: trimStart };
                   }}
@@ -2072,7 +2074,7 @@ export default function FrameCountPage() {
                 <div
                   className="fc-trim-handle fc-trim-handle-right"
                   style={{ left: `${totalFrames > 0 ? ((trimEnd || totalFrames) / totalFrames) * 100 : 100}%` }}
-                  onMouseDown={(e) => {
+                  onPointerDown={(e) => {
                     e.preventDefault(); e.stopPropagation();
                     trimDragRef.current = { side: 'right', startX: e.clientX, startVal: trimEnd || totalFrames };
                   }}
@@ -2095,7 +2097,7 @@ export default function FrameCountPage() {
                 {/* Click/drag to seek overlay */}
                 <div
                   className="fc-timeline-seek-area"
-                  onMouseDown={(e) => {
+                  onPointerDown={(e) => {
                     e.preventDefault();
                     const track = trimTrackRef.current;
                     if (!track || totalFrames <= 0) return;
