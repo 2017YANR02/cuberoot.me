@@ -288,8 +288,8 @@ export function useFrameBuffer(
       const stride = Math.max(1, Math.round(fps / targetDensity));
 
       // 下采样目标尺寸
-      const srcW = config.codedWidth;
-      const srcH = config.codedHeight;
+      const srcW = config.codedWidth ?? 1920;
+      const srcH = config.codedHeight ?? 1080;
       const maxDim = 320;
       const scale = Math.min(1, maxDim / Math.max(srcW, srcH));
       const thumbW = Math.round(srcW * scale);
