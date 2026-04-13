@@ -384,8 +384,10 @@
 .fc-timeline-thumb {
   flex: 1;
   min-width: 0;
+  width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
   pointer-events: none;
 }
 
@@ -664,6 +666,30 @@
 }
 .fc-mark-total .fc-mark-idx { font-weight: 600; color: #aaa; }
 .fc-mark-total .fc-mark-diff { color: #e8c44a; font-weight: 600; }
+
+/* WCA 公式提示 — 在 marks 列表底部 */
+.fc-wca-hint {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px 4px;
+  margin-top: 4px;
+  font-size: 0.72rem;
+  color: #888;
+  border-top: 1px dashed rgba(255,255,255,0.08);
+}
+.fc-wca-hint-label {
+  font-weight: 600;
+  color: #aaa;
+  letter-spacing: 0.5px;
+}
+.fc-wca-hint-formula {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: #bbb;
+}
+.fc-wca-hint-formula b {
+  color: #e8c44a;
+}
 
 /* Mark 操作按钮 */
 .fc-mark-actions {
