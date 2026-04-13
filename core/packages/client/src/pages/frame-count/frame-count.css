@@ -161,6 +161,12 @@
   z-index: 10;
 }
 
+/* 桌面端: row 容器不影响布局 (children 直接参与外层 flex) */
+.fc-toolbar-row1,
+.fc-toolbar-row2 {
+  display: contents;
+}
+
 .fc-video-label {
   font-size: 0.72rem;
   color: #ccc;
@@ -995,10 +1001,36 @@
   .fc-main {
     grid-template-columns: 1fr;
   }
-  .fc-solve-col {
-    order: -1;
-  }
+  /* solve 面板回到 DOM 自然顺序 — 放在视频下面 */
   .fc-video-overlay {
     font-size: 1rem;
+  }
+
+  /* 手机端: toolbar 变成纵向两行, 每行内部横向排列 */
+  .fc-video-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .fc-toolbar-row1,
+  .fc-toolbar-row2 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .fc-toolbar-row2 {
+    justify-content: flex-end;
+  }
+  .fc-video-label {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .fc-change-video {
+    margin-left: 0;
+  }
+  /* 手机端不需要 Folder — 本地文件系统 API 在移动浏览器基本不可用 */
+  .fc-folder-btn {
+    display: none;
   }
 }
