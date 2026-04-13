@@ -7,7 +7,7 @@
  * 调用方 fallback 到 seeked 链。
  */
 
-import { useEffect, useRef, useCallback, useState } from 'react';
+import { useEffect, useRef, useCallback, useState, useMemo } from 'react';
 import {
   createFile,
   DataStream,
@@ -51,6 +51,10 @@ export interface FrameBufferHook {
   getFrame(frameIndex: number): ImageBitmap | null;
   /** 预解码 center ± range, direction 可偏向 'backward' 或 'forward' */
   prefetch(center: number, range: number, direction?: 'backward' | 'forward'): void;
+  /** 取最接近的 I 帧缩略图 (专为拖动时丝滑 scrub 设计,全局持久缓存,不走 LRU) */
+  getKeyFrameThumb(frameIndex: number): ImageBitmap | null;
+  /** 按 presentation index 升序排列的全部已解码缩略图条目 (用于 timeline 展示) */
+  keyFrameThumbs: Array<{ frameIdx: number; bitmap: ImageBitmap }>;
   /** WebCodecs 是否可用且初始化完成 */
   isReady: boolean;
   /** 释放所有资源 */
@@ -113,6 +117,8 @@ export function useFrameBuffer(
   fps: number,
 ): FrameBufferHook {
   const [isReady, setIsReady] = useState(false);
+  // 缩略图版本号 — 新 thumb 加入时递增,供 consumer 重渲染 timeline 用
+  const [thumbVersion, setThumbVersion] = useState(0);
 
   const cacheRef = useRef<FrameCache>(new FrameCache());
   const samplesRef = useRef<SampleInfo[]>([]);
@@ -124,6 +130,11 @@ export function useFrameBuffer(
   const prefetchSeqRef = useRef(0);
   // 链式串行执行 decode：新请求 supersede 旧请求(通过 seq),等旧 decoder close 后再启动新的
   const prefetchChainRef = useRef<Promise<void>>(Promise.resolve());
+
+  // I 帧缩略图池 (专为拖动 scrub 设计,全局持久,不受 LRU 淘汰)
+  // 键:Presentation index, 值:下采样的 ImageBitmap 缩略图
+  const keyThumbsRef = useRef<Map<number, ImageBitmap>>(new Map());
+  const keyThumbIndicesRef = useRef<number[]>([]); // 排序的 I 帧 presentation index,便于二分查找
 
   // ── 初始化：mp4box 解析文件 → 提取 samples → 配置 decoder ──
 
@@ -250,8 +261,110 @@ export function useFrameBuffer(
       cancelled = true;
       mp4File.stop();
       cache.clear();
+      // 清理 I 帧缩略图
+      for (const bmp of keyThumbsRef.current.values()) bmp.close();
+      keyThumbsRef.current.clear();
+      keyThumbIndicesRef.current = [];
+      setThumbVersion(0);
     };
   }, [videoFile, fps]);
+
+  // ── 缩略图预解码 (按时间密度采样,~10 thumbs/秒) ──
+  // 不再只要 I 帧(稀疏,短视频只有几张,像幻灯片),而是解码所有帧,
+  // 按步长抽样后下采样存起来,scrub 时画面变化接近连续
+  useEffect(() => {
+    if (!isReady) return;
+    const samples = samplesRef.current;
+    const config = configRef.current;
+    const decodeToPres = decodeToPresentationRef.current;
+    if (!config || samples.length === 0) return;
+
+    let cancelled = false;
+    const thumbs = keyThumbsRef.current;
+
+    (async () => {
+      // 目标:每秒约 10 个缩略图。按 presentation index 跨度做步长
+      const targetDensity = 10;
+      const stride = Math.max(1, Math.round(fps / targetDensity));
+
+      // 下采样目标尺寸
+      const srcW = config.codedWidth;
+      const srcH = config.codedHeight;
+      const maxDim = 320;
+      const scale = Math.min(1, maxDim / Math.max(srcW, srcH));
+      const thumbW = Math.round(srcW * scale);
+      const thumbH = Math.round(srcH * scale);
+
+      // timestamp → presentation index 映射 (所有 samples)
+      const tsMap = new Map<number, number>();
+      for (let i = 0; i < samples.length; i++) {
+        tsMap.set(Math.trunc(samples[i].timestamp), decodeToPres[i]);
+      }
+
+      const decoder = new VideoDecoder({
+        output: async (frame) => {
+          if (cancelled) { frame.close(); return; }
+          const pIdx = tsMap.get(Math.trunc(frame.timestamp));
+          // 只保留步长采样位置的帧; 其余用来维持 P/B 依赖链的正确解码
+          if (pIdx === undefined || pIdx % stride !== 0) {
+            frame.close();
+            return;
+          }
+          try {
+            const bmp = await createImageBitmap(frame, {
+              resizeWidth: thumbW,
+              resizeHeight: thumbH,
+              resizeQuality: 'low',
+            });
+            if (cancelled) { bmp.close(); frame.close(); return; }
+            thumbs.set(pIdx, bmp);
+            // 增量有序插入索引,拖动时能立即用到已解码的 thumb
+            const arr = keyThumbIndicesRef.current;
+            let lo = 0, hi = arr.length;
+            while (lo < hi) {
+              const mid = (lo + hi) >> 1;
+              if (arr[mid] < pIdx) lo = mid + 1; else hi = mid;
+            }
+            arr.splice(lo, 0, pIdx);
+            // 每 5 张触发一次 React 重渲染,让 timeline 增量显示缩略图
+            if (arr.length % 5 === 0) setThumbVersion(v => v + 1);
+          } catch {
+            // ignore
+          } finally {
+            frame.close();
+          }
+        },
+        error: (e) => console.warn('[FrameBuffer] Thumb decoder error:', e),
+      });
+
+      try {
+        decoder.configure(config);
+        // 按 decode order 送入全部 samples; B 帧依赖需要完整前序
+        for (let i = 0; i < samples.length; i++) {
+          if (cancelled) break;
+          const s = samples[i];
+          decoder.decode(new EncodedVideoChunk({
+            type: s.isSync ? 'key' : 'delta',
+            timestamp: s.timestamp,
+            duration: s.duration,
+            data: s.data,
+          }));
+        }
+        await decoder.flush();
+      } catch (e) {
+        console.warn('[FrameBuffer] Thumb decode failed:', e);
+      } finally {
+        if (decoder.state !== 'closed') decoder.close();
+      }
+
+      if (!cancelled) {
+        console.log(`[FrameBuffer] Thumbs ready — ${thumbs.size} thumbs @ ${thumbW}x${thumbH}, stride=${stride}`);
+        setThumbVersion(v => v + 1); // 最终触发一次确保 UI 最新
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [isReady, fps]);
 
   // ── 解码一段帧范围 [from, to] ──
 
@@ -411,6 +524,19 @@ export function useFrameBuffer(
     return cacheRef.current.get(frameIndex);
   }, [isReady]);
 
+  // 二分查找 <= frameIndex 的最大 I 帧索引,返回对应的缩略图
+  const getKeyFrameThumb = useCallback((frameIndex: number): ImageBitmap | null => {
+    const indices = keyThumbIndicesRef.current;
+    if (indices.length === 0) return null;
+    let lo = 0, hi = indices.length - 1, best = indices[0];
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1;
+      if (indices[mid] <= frameIndex) { best = indices[mid]; lo = mid + 1; }
+      else hi = mid - 1;
+    }
+    return keyThumbsRef.current.get(best) ?? null;
+  }, []);
+
   // ── dispose ──
 
   const dispose = useCallback(() => {
@@ -419,8 +545,21 @@ export function useFrameBuffer(
     setIsReady(false);
   }, []);
 
+  // 按 pIdx 升序排列的 thumbs 数组,thumbVersion 变化时重新计算
+  const keyFrameThumbs = useMemo(() => {
+    const indices = keyThumbIndicesRef.current;
+    const thumbs = keyThumbsRef.current;
+    const out: Array<{ frameIdx: number; bitmap: ImageBitmap }> = [];
+    for (const idx of indices) {
+      const bmp = thumbs.get(idx);
+      if (bmp) out.push({ frameIdx: idx, bitmap: bmp });
+    }
+    return out;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [thumbVersion]);
+
   return {
-    getFrame, prefetch, isReady, dispose,
+    getFrame, prefetch, getKeyFrameThumb, keyFrameThumbs, isReady, dispose,
     samples: samplesRef.current,
     decoderConfig: configRef.current,
   };

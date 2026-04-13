@@ -268,6 +268,21 @@ const SHORTCUTS = [
   { action: 'Copy current frame', keys: ['C'] },
 ] as const;
 
+// ── Timeline 缩略图 canvas 小组件 ──
+// 把 ImageBitmap 画到 canvas, flex:1 让其自适应 filmstrip 宽度
+function ThumbnailCanvas({ bitmap }: { bitmap: ImageBitmap }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const c = ref.current;
+    if (!c || !bitmap) return;
+    if (c.width !== bitmap.width) c.width = bitmap.width;
+    if (c.height !== bitmap.height) c.height = bitmap.height;
+    const ctx = c.getContext('2d');
+    if (ctx) ctx.drawImage(bitmap, 0, 0);
+  }, [bitmap]);
+  return <canvas ref={ref} className="fc-timeline-thumb" />;
+}
+
 // ── 组件 ──────────────────────────────────────────────────────────────────
 
 export default function FrameCountPage() {
@@ -422,17 +437,15 @@ export default function FrameCountPage() {
     isPanningRef.current = false;
   }, []);
   const [solveTime, setSolveTime] = useState('');
-  const [wcaEndFrame, setWcaEndFrame] = useState(0);
 
   // ── WebCodecs 帧缓冲 ──
-  const { getFrame, prefetch, isReady: frameBufferReady, samples: fbSamples, decoderConfig: fbDecoderConfig } = useFrameBuffer(videoFile, videoFps);
+  const { getFrame, prefetch, getKeyFrameThumb, keyFrameThumbs, isReady: frameBufferReady, samples: fbSamples, decoderConfig: fbDecoderConfig } = useFrameBuffer(videoFile, videoFps);
 
   // ── 计算值 ──
 
   const activeSolve = solves[activeSolveIdx] || solves[0];
   const solveTimeNum = parseFloat(solveTime) || 0;
   const wcaFrames = solveTimeNum > 0 && videoFps > 0 ? timeToFrames(solveTimeNum, videoFps) : 0;
-  const wcaStartFrame = Math.max(0, wcaEndFrame - wcaFrames);
 
   // 图像 transform CSS（应用到 video 元素）
   const getVideoStyle = useCallback((): React.CSSProperties => {
@@ -476,6 +489,57 @@ export default function FrameCountPage() {
   // ── 视频控制 ──
 
   const seekRafRef = useRef(0);
+  const isDraggingRef = useRef(false);
+
+  // 拖动专用的"丝滑 scrub"路径 — PR/剪映式架构
+  // 核心纪律:
+  //   - canvas 在整个拖动过程中常亮,绝不切换 display (避免 layout thrashing)
+  //   - 完全不碰 video.currentTime (避免 decoder 争抢)
+  //   - 不 prefetch (避免 supersede 风暴)
+  //   - 每 rAF 只做一件事: drawImage 最接近的已解码帧
+  //   - 找不到帧就保留上一帧画面 (不黑屏、不闪烁)
+  const seekToFrameRough = useCallback((frame: number) => {
+    if (videoFps <= 0) return;
+    const f = Math.max(0, frame);
+    currentFrameRef.current = f;
+    setCurrentFrame(f);
+    // 拖动期间只走 I 帧缩略图一种源,避免高清/缩略图混用导致的分辨率跳变
+    const bmp = getKeyFrameThumb(f);
+    if (!bmp) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!ctx || !canvas || canvas.width === 0) return;
+    // canvas 尺寸在 beginDragOverlay 里已经固定,这里 drawImage 时拉伸填满,
+    // 不改 canvas.width/height 就不会触发后备缓冲重分配 → 零闪烁
+    ctx.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+  }, [videoFps, getKeyFrameThumb]);
+
+  // 拖动开始前的准备:把当前 video 元素上显示的帧抓拍到 canvas,并把 canvas 尺寸
+  // 锁定在 video 原生分辨率,整个拖动过程中 canvas 尺寸/显示状态都不再变化
+  const beginDragOverlay = useCallback(() => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    // 固定 canvas 为 video 原生分辨率 — 整个拖动过程不变
+    const w = video.videoWidth || 1920;
+    const h = video.videoHeight || 1080;
+    canvas.width = w;
+    canvas.height = h;
+    // 初始绘制: 优先精确帧,次选缩略图,再次 video 元素快照
+    const exact = getFrame(currentFrameRef.current);
+    const thumb = getKeyFrameThumb(currentFrameRef.current);
+    if (exact) {
+      ctx.drawImage(exact, 0, 0, w, h);
+    } else if (thumb) {
+      ctx.drawImage(thumb, 0, 0, w, h);
+    } else if (video.videoWidth > 0) {
+      ctx.drawImage(video, 0, 0, w, h);
+    }
+    setUseCanvasDisplay(true);
+  }, [getFrame, getKeyFrameThumb]);
+
   const seekToFrame = useCallback((frame: number) => {
     const video = videoRef.current;
     if (!video || videoFps <= 0) return;
@@ -501,12 +565,11 @@ export default function FrameCountPage() {
         setUseCanvasDisplay(true);
         video.currentTime = (f + 0.5) / videoFps;
       } else {
-        // 缓存未命中:立即让 video 元素显示粗略画面(浏览器原生 seek 很快)
-        // 拖动场景下用户能看到画面跟着移动,而不是卡死
-        setUseCanvasDisplay(false);
+        // 缓存未命中: 让 video 元素开始粗略 seek (作为背景 fallback)
+        // 但保持 useCanvasDisplay 现状 — 拖动时 canvas 上的旧帧比 "seek 中的黑屏 video" 观感更好
         video.currentTime = (f + 0.5) / videoFps;
-        // 启动后台精确解码,完成后切回 canvas
-        prefetch(f, 30);
+        // 启动后台精确解码,完成后在 canvas 上画新帧 (小批量,避免拖动时反复 supersede)
+        prefetch(f, 10);
         const tryRender = () => {
           if (currentFrameRef.current !== f) return; // Superceded
           const bmp = getFrame(f);
@@ -682,7 +745,6 @@ export default function FrameCountPage() {
     showToast(`Mark added at frame ${currentFrame}`);
     // WCA 自动跳转：填写了 Time 且当前 solve 尚无 mark 时，M 标记 End Frame 后自动跳转到 Start Frame 并自动 Add
     if (solveTimeNum > 0 && videoFps > 0 && solves[activeSolveIdx]?.marks.length === 0) {
-      setWcaEndFrame(currentFrame);
       const frames = timeToFrames(solveTimeNum, videoFps);
       const startFrame = Math.max(0, currentFrame - frames);
       seekToFrame(startFrame);
@@ -1249,9 +1311,10 @@ export default function FrameCountPage() {
     return () => el.removeEventListener('wheel', handler);
   }, [handleVideoZoom, videoSrc]);
 
-  // ── 生成缩略图 ──
+  // ── 生成缩略图 (仅在 WebCodecs 不可用时 fallback,否则走 useFrameBuffer 的 keyFrameThumbs) ──
   useEffect(() => {
     if (!videoSrc || totalFrames <= 0 || videoFps <= 0) return;
+    if (typeof VideoDecoder !== 'undefined') return; // WebCodecs 可用, 用 useFrameBuffer 产出的 thumbnails
     const video = document.createElement('video');
     video.muted = true;
     video.preload = 'auto';
@@ -1292,35 +1355,74 @@ export default function FrameCountPage() {
 
   // ── Timeline trim 拖拽 ──
   useEffect(() => {
+    // rAF 合并:mousemove 只记录最新位置,每个动画帧最多 seek 一次,避免 prefetch 频繁 supersede
+    let pendingFrame: number | null = null;
+    let pendingSide: 'left' | 'right' | 'seek' | null = null;
+    let rafId = 0;
+    let scrubModeActive = false; // 首次 mousemove 时才切到缩略图 scrub 模式(单击不触发)
+    const flush = () => {
+      rafId = 0;
+      if (pendingFrame === null) return;
+      const f = pendingFrame;
+      const side = pendingSide;
+      pendingFrame = null;
+      pendingSide = null;
+      if (side === 'left') setTrimStart(f);
+      else if (side === 'right') setTrimEnd(f);
+      // 拖动中走轻量路径,不 supersede 解码器
+      seekToFrameRough(f);
+    };
     const onMove = (e: MouseEvent) => {
       const d = trimDragRef.current;
       const track = trimTrackRef.current;
       if (!d || !track || totalFrames <= 0) return;
       e.preventDefault();
+      // 首次 mousemove — 进入缩略图 scrub 模式
+      if (!scrubModeActive) {
+        scrubModeActive = true;
+        beginDragOverlay();
+      }
       const rect = track.getBoundingClientRect();
       const dx = e.clientX - d.startX;
       const frameDelta = Math.round((dx / rect.width) * totalFrames);
       if (d.side === 'left') {
-        const raw = Math.max(0, Math.min(d.startVal + frameDelta, (trimEnd || totalFrames) - 1));
-        setTrimStart(raw);
-        seekToFrame(raw);
+        pendingFrame = Math.max(0, Math.min(d.startVal + frameDelta, (trimEnd || totalFrames) - 1));
+        pendingSide = 'left';
       } else if (d.side === 'right') {
-        const raw = Math.max(trimStart + 1, Math.min(d.startVal + frameDelta, totalFrames));
-        setTrimEnd(raw);
-        seekToFrame(raw);
+        pendingFrame = Math.max(trimStart + 1, Math.min(d.startVal + frameDelta, totalFrames));
+        pendingSide = 'right';
       } else {
-        // Clamp seek within trim range
         const frac = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
         const effEnd = trimEnd || totalFrames;
-        const frame = Math.max(trimStart, Math.min(Math.round(frac * totalFrames), effEnd));
-        seekToFrame(frame);
+        pendingFrame = Math.max(trimStart, Math.min(Math.round(frac * totalFrames), effEnd));
+        pendingSide = 'seek';
       }
+      if (!rafId) rafId = requestAnimationFrame(flush);
+      isDraggingRef.current = true;
     };
-    const onUp = () => { trimDragRef.current = null; };
+    const onUp = () => {
+      if (!trimDragRef.current) return;
+      trimDragRef.current = null;
+      isDraggingRef.current = false;
+      if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
+      // 只在真正 drag 过 (scrubModeActive) 才需要补一次精确 seek
+      // 单击的情况 mousedown 已经精确 seek,不用再做
+      if (scrubModeActive) {
+        const finalFrame = pendingFrame ?? currentFrameRef.current;
+        seekToFrame(finalFrame);
+      }
+      pendingFrame = null;
+      pendingSide = null;
+      scrubModeActive = false;
+    };
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
-    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
-  }, [totalFrames, trimStart, trimEnd, seekToFrame]);
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, [totalFrames, trimStart, trimEnd, seekToFrame, seekToFrameRough, beginDragOverlay]);
 
   // ── Export logic ──
   const handleExport = useCallback(async () => {
@@ -1603,11 +1705,11 @@ export default function FrameCountPage() {
   // 后台热身预取:暂停状态下,debounce 500ms 后解码当前帧后方的帧,
   // 这样按 A 倒退时第一帧立即命中缓存,避免首次延迟
   useEffect(() => {
-    if (!frameBufferReady || isPlaying || holdPlayingRef.current) return;
+    if (!frameBufferReady || isPlaying || holdPlayingRef.current || isDraggingRef.current) return;
     if (currentFrame <= 0) return;
     const warmupRange = Math.min(120, Math.max(60, Math.round(videoFps)));
     const t = setTimeout(() => {
-      if (holdPlayingRef.current) return;
+      if (holdPlayingRef.current || isDraggingRef.current) return;
       prefetch(currentFrame, warmupRange, 'backward');
     }, 500);
     return () => clearTimeout(t);
@@ -1844,11 +1946,15 @@ export default function FrameCountPage() {
             <div className="fc-panel fc-controls-wrap">
               {/* iOS-style timeline trimmer */}
               <div className="fc-timeline-trimmer" ref={trimTrackRef}>
-                {/* Thumbnail filmstrip */}
+                {/* Thumbnail filmstrip — 优先用 WebCodecs 增量缩略图 (视频加载后立即开始出现) */}
                 <div className="fc-timeline-filmstrip">
-                  {thumbnails.map((src, i) => (
-                    <img key={i} src={src} className="fc-timeline-thumb" alt="" draggable={false} />
-                  ))}
+                  {keyFrameThumbs.length > 0
+                    ? keyFrameThumbs.map(({ frameIdx, bitmap }) => (
+                        <ThumbnailCanvas key={frameIdx} bitmap={bitmap} />
+                      ))
+                    : thumbnails.map((src, i) => (
+                        <img key={i} src={src} className="fc-timeline-thumb" alt="" draggable={false} />
+                      ))}
                 </div>
 
                 {/* Dimmed areas outside trim range */}
@@ -1913,6 +2019,8 @@ export default function FrameCountPage() {
                     const frac = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
                     const effEnd = trimEnd || totalFrames;
                     const frame = Math.max(trimStart, Math.min(Math.round(frac * totalFrames), effEnd));
+                    // 先做一次精确 seek —— 纯单击(无 drag)时画面即为最高画质
+                    // 若用户继续拖动,onMove 首次触发时再切到 scrub 模式
                     seekToFrame(frame);
                     trimDragRef.current = { side: 'seek', startX: e.clientX, startVal: frame };
                   }}
@@ -1994,6 +2102,14 @@ export default function FrameCountPage() {
                     <span className="fc-mark-diff">{totalMarkFrames}f ({totalMarkTime.toFixed(3)}s)</span>
                   </div>
                 )}
+                {solveTimeNum > 0 && wcaFrames > 0 && (
+                  <div className="fc-wca-hint" title="WCA frames formula: ceil((floor(time, 2) + 0.009) * fps)">
+                    <span className="fc-wca-hint-label">frames =</span>
+                    <span className="fc-wca-hint-formula">
+                      ⌈(⌊{solveTimeNum.toFixed(2)}⌋₂+.009)×{videoFps.toFixed(2)}⌉ = <b>{wcaFrames}</b>f
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Mark 操作按钮 */}
@@ -2006,48 +2122,6 @@ export default function FrameCountPage() {
           </div>
         )}
       </div>
-
-      {/* ── 底部 WCA 面板 ── */}
-      {videoSrc && (
-        <div className="fc-bottom-panel">
-          <div className="fc-tab-bar">
-            <button className={`fc-tab active`}>WCA</button>
-          </div>
-
-          <div className="fc-tab-content">
-            <div className="fc-wca-grid">
-              <span className="fc-tab-label">Frames</span>
-              <div className="fc-wca-field">
-                <span className="fc-tab-value">{wcaFrames || '—'}</span>
-                <span className="fc-tab-unit">⌈(⌊t⌋₂+.009)×fps⌉</span>
-              </div>
-
-              <span className="fc-tab-label">End Frame</span>
-              <div className="fc-wca-field">
-                <input
-                  className="fc-tab-input"
-                  type="number" min={0} value={wcaEndFrame}
-                  onChange={(e) => setWcaEndFrame(parseInt(e.target.value) || 0)}
-                />
-                <button className="fc-tab-btn" onClick={() => seekToFrame(wcaEndFrame)} title="Go to end frame">
-                  Go
-                </button>
-              </div>
-
-              <span className="fc-tab-label">Start Frame</span>
-              <div className="fc-wca-field">
-                <span className="fc-tab-value">{wcaEndFrame > 0 && wcaFrames > 0 ? wcaStartFrame : '—'}</span>
-                <span className="fc-wca-formula">
-                  = {wcaEndFrame > 0 ? wcaEndFrame : <em>End Frame</em>} − {wcaFrames > 0 ? wcaFrames : <em>Frames</em>}
-                </span>
-                <button className="fc-tab-btn" onClick={() => seekToFrame(wcaStartFrame)} title="Go to start frame" disabled={!(wcaEndFrame > 0 && wcaFrames > 0)}>
-                  Go
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Toast */}
       {toast && <div className="fc-toast">{toast}</div>}
