@@ -510,7 +510,7 @@ export default function FrameCountPage() {
     if (!video || videoFps <= 0) return;
     const newTime = Math.max(0, video.currentTime + s);
     video.currentTime = newTime;
-    setCurrentFrame(Math.round(newTime * videoFps));
+    setCurrentFrame(Math.floor(newTime * videoFps));
     setUseCanvasDisplay(false);
   }, [videoFps]);
 
@@ -621,14 +621,20 @@ export default function FrameCountPage() {
     if (hasRVFC) {
       let handle: number;
       const onFrame = () => {
-        if (videoFps > 0) setCurrentFrame(Math.round(video.currentTime * videoFps));
+        // Only sync frame from video during playback — not during manual stepping
+        // (canvas display or hold-playing uses its own frame tracking)
+        if (videoFps > 0 && !video.paused && !holdPlayingRef.current) {
+          setCurrentFrame(Math.floor(video.currentTime * videoFps));
+        }
         handle = video.requestVideoFrameCallback(onFrame);
       };
       handle = video.requestVideoFrameCallback(onFrame);
       return () => video.cancelVideoFrameCallback(handle);
     } else {
       const onTimeUpdate = () => {
-        if (videoFps > 0) setCurrentFrame(Math.round(video.currentTime * videoFps));
+        if (videoFps > 0 && !video.paused && !holdPlayingRef.current) {
+          setCurrentFrame(Math.floor(video.currentTime * videoFps));
+        }
       };
       video.addEventListener('timeupdate', onTimeUpdate);
       return () => video.removeEventListener('timeupdate', onTimeUpdate);
@@ -792,7 +798,7 @@ export default function FrameCountPage() {
             video.currentTime = f / videoFps;
             setUseCanvasDisplay(false);
           } else {
-            const f = Math.round(video.currentTime * videoFps);
+            const f = Math.floor(video.currentTime * videoFps);
             currentFrameRef.current = f;
             setCurrentFrame(f);
           }

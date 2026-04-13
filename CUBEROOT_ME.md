@@ -6,8 +6,8 @@
 |------|-----|
 | **域名** | `cuberoot.me` → 301 到 `www.cuberoot.me` |
 | **服务器 IP** | `47.97.30.181` |
-| **托管** | 阿某里某云 ECS |
-| **OS** | Alibaba Cloud Linux 3.2104 U10（基于 CentOS/RHEL，包管理用 `dnf`） |
+| **托管** | ECS |
+| **OS** | Linux 3.2104 U10（基于 CentOS/RHEL，包管理用 `dnf`） |
 | **Web 服务器** | Nginx 1.26.2 |
 | **管理面板** | 宝塔面板（端口 8888） |
 | **WordPress 路径** | `/www/wwwroot/wordpress/`（通过 `/blog/` 符号链接访问） |
@@ -31,7 +31,7 @@ https://www.cuberoot.me/api/        → Hono API（Nginx 反代到 127.0.0.1:300
 
 ### 概述
 
-阿某里某云 ECS 上部署了 `ruiminyan.github.io` 的镜像。
+ECS 上部署了 `ruiminyan.github.io` 的镜像。
 
 | 项目 | 值 |
 |------|-----|
@@ -51,7 +51,7 @@ push 到 main 分支
 GitHub Actions（deploy_mirror.yml）
       │
       ├── 1. 组装 _deploy/ 目录（静态文件）
-      ├── 2. SSH 连接阿某里某云
+      ├── 2. SSH 连接ECS
       └── 3. rsync 同步 _deploy/ → /www/wwwroot/toolkit/
       │
       ▼
@@ -231,7 +231,7 @@ ssh root@47.97.30.181
 
 PHP `mail()` 依赖 postfix 通过 Gmail SMTP 中继发送。用于复盘评论通知等场景。
 
-> 阿某里某云 ECS 封锁出站端口 25，必须通过 587 端口中继。
+> ECS 封锁出站端口 25，必须通过 587 端口中继。
 
 **迁移服务器时需重新执行以下命令：**
 
