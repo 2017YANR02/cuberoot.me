@@ -131,7 +131,7 @@
   width: 100%;
   max-height: 65vh;
   display: block;
-  background: #000;
+  background: transparent;
 }
 
 /* WebCodecs 帧缓冲 canvas — 覆盖在 video 上，后退时显示 */
