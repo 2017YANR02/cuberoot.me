@@ -2,10 +2,10 @@
 
 ## 当前状态
 
-✅ **WCA 统计自动更新已上线**（每周一凌晨 3:00 北京时间）
+✅ **WCA 统计自动更新已上线**
 
 - **地址**：[ruiminyan.github.io/wca-stats/](https://ruiminyan.github.io/wca-stats/)
-- **国内镜像**：[www.cuberoot.me](https://www.cuberoot.me)（自动同步）
+- **镜像**：[www.cuberoot.me](https://www.cuberoot.me)（自动同步）
 
 ## CI 策略
 
