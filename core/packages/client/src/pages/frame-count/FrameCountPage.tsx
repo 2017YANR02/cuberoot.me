@@ -1599,7 +1599,14 @@ export default function FrameCountPage() {
                       className="fc-tab-input fc-toolbar-time"
                       type="number" step="0.01" min={0} placeholder="Time"
                       value={solveTime}
-                      onChange={(e) => setSolveTime(e.target.value)}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setSolveTime(v);
+                        // 输完小数点后两位后自动失焦
+                        if (/^\d+\.\d{2}$/.test(v)) {
+                          e.target.blur();
+                        }
+                      }}
                     />
                     {solveTime && <span className="fc-input-suffix">s</span>}
                   </div>
