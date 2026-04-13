@@ -621,9 +621,8 @@ export default function FrameCountPage() {
     if (hasRVFC) {
       let handle: number;
       const onFrame = () => {
-        // Only sync frame from video during playback — not during manual stepping
-        // (canvas display or hold-playing uses its own frame tracking)
-        if (videoFps > 0 && !video.paused && !holdPlayingRef.current) {
+        // 只在播放时由 video 驱动 currentFrame；手动 step 时 video 被 pause，RVFC 不会干扰
+        if (videoFps > 0 && !video.paused) {
           setCurrentFrame(Math.floor(video.currentTime * videoFps));
         }
         handle = video.requestVideoFrameCallback(onFrame);
@@ -632,7 +631,7 @@ export default function FrameCountPage() {
       return () => video.cancelVideoFrameCallback(handle);
     } else {
       const onTimeUpdate = () => {
-        if (videoFps > 0 && !video.paused && !holdPlayingRef.current) {
+        if (videoFps > 0 && !video.paused) {
           setCurrentFrame(Math.floor(video.currentTime * videoFps));
         }
       };
