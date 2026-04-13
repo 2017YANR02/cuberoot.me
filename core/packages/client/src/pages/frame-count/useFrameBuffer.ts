@@ -21,10 +21,12 @@ import {
 
 // ── 常量 ─────────────────────────────────────────────────────────────────────
 
-/** 缓冲区最大帧数。stepBack 每轮 prefetch 60 帧,需要至少容纳"旧的未消费帧 + 新的整段",
- *  否则 LRU 会把未消费帧淘汰(get 把已消费帧标记为最近,反而保留,不消费的反而被淘汰)。
- *  150 帧:容纳 2 轮 prefetch + 30 帧余量。1080p ImageBitmap 通常用 GPU texture,实际占用远小于 RGBA 估算。 */
-const MAX_CACHE = 150;
+/** 缓冲区最大帧数。stepBack 按 fps 自适应 prefetch (高 fps 视频需要更大缓冲),
+ *  需容纳"旧的未消费帧 + 新的整段",否则 LRU 会把未消费帧淘汰
+ *  (get 把已消费帧标记为最近,反而保留,不消费的反而被淘汰)。
+ *  360 帧:可支持到 240fps 视频 (2 批 × 240 帧) 的顺滑回放。
+ *  1080p ImageBitmap 通常用 GPU texture,实际占用远小于 RGBA 估算。 */
+const MAX_CACHE = 360;
 
 /** WebCodecs 是否可用 */
 const HAS_WEBCODECS = typeof VideoDecoder !== 'undefined';
