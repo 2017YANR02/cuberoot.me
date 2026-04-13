@@ -626,9 +626,9 @@ export default function FrameCountPage() {
   const togglePlay = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
-    if (video.paused) { 
-      video.muted = false; 
-      video.play(); 
+    if (video.paused) {
+      video.muted = video.playbackRate !== 1;
+      video.play();
       setIsPlaying(true); 
       setUseCanvasDisplay(false);
     }
@@ -642,6 +642,7 @@ export default function FrameCountPage() {
     const video = videoRef.current;
     if (!video) return;
     video.playbackRate = rate;
+    video.muted = rate !== 1;
     setPlaybackRate(rate);
   }, []);
 
@@ -679,8 +680,8 @@ export default function FrameCountPage() {
       return next;
     });
     showToast(`Mark added at frame ${currentFrame}`);
-    // WCA 自动跳转：填写了 Time 时，M 标记 End Frame 后自动跳转到 Start Frame 并自动 Add
-    if (solveTimeNum > 0 && videoFps > 0) {
+    // WCA 自动跳转：填写了 Time 且当前 solve 尚无 mark 时，M 标记 End Frame 后自动跳转到 Start Frame 并自动 Add
+    if (solveTimeNum > 0 && videoFps > 0 && solves[activeSolveIdx]?.marks.length === 0) {
       setWcaEndFrame(currentFrame);
       const frames = timeToFrames(solveTimeNum, videoFps);
       const startFrame = Math.max(0, currentFrame - frames);
@@ -704,9 +705,36 @@ export default function FrameCountPage() {
       const solve = { ...next[activeSolveIdx] };
       solve.marks = solve.marks.filter((_, i) => i !== idx);
       next[activeSolveIdx] = solve;
+      const remaining = solve.marks.length;
+      if (remaining > 0) {
+        // 当前 solve 还有 mark，停在同位置（或往前一格）
+        setSelectedMarkIdx(Math.min(idx, remaining - 1));
+      } else {
+        // 当前 solve 已空，跨 solve 找最近的 mark
+        // 优先往前（帧号更小）的 solve，再往后
+        let found = false;
+        for (let si = activeSolveIdx - 1; si >= 0; si--) {
+          if (next[si].marks.length > 0) {
+            setActiveSolveIdx(si);
+            setSelectedMarkIdx(next[si].marks.length - 1);
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          for (let si = activeSolveIdx + 1; si < next.length; si++) {
+            if (next[si].marks.length > 0) {
+              setActiveSolveIdx(si);
+              setSelectedMarkIdx(0);
+              found = true;
+              break;
+            }
+          }
+        }
+        if (!found) setSelectedMarkIdx(null);
+      }
       return next;
     });
-    setSelectedMarkIdx(null);
   }, [activeSolveIdx]);
 
   const updateMark = useCallback(() => {
@@ -792,6 +820,18 @@ export default function FrameCountPage() {
     setIsPlaying(false);
     setUseCanvasDisplay(false);
 
+    // 从文件名提取还原时间，截去扩展名后匹配最后一个 \d+\.\d+ 数字，截断至 2 位小数
+    const nameNoExt = file.name.replace(/\.[^.]+$/, '');
+    const timeMatches = nameNoExt.match(/\d+\.\d+/g);
+    if (timeMatches && timeMatches.length > 0) {
+      const raw = parseFloat(timeMatches[timeMatches.length - 1]);
+      if (!isNaN(raw)) {
+        const truncated = Math.floor(raw * 100) / 100;
+        setSolveTime(truncated.toFixed(2).replace(/\.?0+$/, '') || String(truncated));
+      }
+    } else {
+      setSolveTime('');
+    }
 
     setSolves(initialSolves && initialSolves.length > 0 ? initialSolves : [{ name: 'Solve 1', marks: [] }]);
     setActiveSolveIdx(0);
@@ -1040,22 +1080,38 @@ export default function FrameCountPage() {
             // prefetch 全偏后退方向。lowestPrefetched 跟踪已请求 prefetch 到的最低帧,
             // 避免每 10 帧无脑触发,导致正在跑的 decode 反复被新请求 supersede。
             console.log(`[StepBack] START frame=${currentFrameRef.current}, bufferReady=${frameBufferReady}`);
+            // 按 fps 自适应预取,但封顶 120 帧/批,防止单次 decode 过大导致首次响应慢
+            // triggerLead 设在 range 的 ~66%,较早触发下一批,给 decoder 充裕时间
+            const prefetchRange = Math.min(120, Math.max(60, Math.round(videoFps)));
+            const triggerLead = Math.round(prefetchRange * 0.66);
             let lowestPrefetched = currentFrameRef.current;
             if (frameBufferReady) {
-              prefetch(currentFrameRef.current, 60, 'backward');
-              lowestPrefetched = currentFrameRef.current - 60;
+              prefetch(currentFrameRef.current, prefetchRange, 'backward');
+              lowestPrefetched = currentFrameRef.current - prefetchRange;
             }
 
-            const stepBack = () => {
+            // 基于真实时间+累加器计算步进，保持 1x 速（高 FPS 视频在 60Hz 屏幕上会跳帧显示）
+            let lastTime = performance.now();
+            let frameBudget = 0; // 积累未消费的"帧数预算"，防止 floor 截断导致的长期速度偏差
+            const stepBack = (now?: number) => {
               if (!holdPlayingRef.current) {
                 console.log(`[StepBack] STOP — hits: ${hitCount}, misses: ${missCount}`);
                 return;
               }
-              const f = Math.max(0, currentFrameRef.current - 1);
+              const t = now ?? performance.now();
+              const elapsed = (t - lastTime) / 1000;
+              lastTime = t;
+              // 用 video.playbackRate 实时读取,支持长按中切换倍速
+              frameBudget += elapsed * videoFps * (video.playbackRate || 1);
+              // 限制上限防止切到后台后积攒过多帧预算
+              if (frameBudget > 4) frameBudget = 4;
+              const step = Math.max(1, Math.floor(frameBudget));
+              const f = Math.max(0, currentFrameRef.current - step);
 
               const bitmap = frameBufferReady ? getFrame(f) : null;
               if (bitmap) {
                 // 缓冲命中 — 渲染到 canvas
+                frameBudget -= step;
                 currentFrameRef.current = f;
                 setCurrentFrame(f);
                 hitCount++;
@@ -1068,33 +1124,29 @@ export default function FrameCountPage() {
                 }
                 setUseCanvasDisplay(true);
 
-                // 接近 prefetch 边界(还剩 ~20 帧)时触发下一段,留时间给后台解码
-                if (frameBufferReady && f - 20 <= lowestPrefetched && lowestPrefetched > 0) {
+                // 接近 prefetch 边界(剩余 triggerLead 帧)时触发下一段,留时间给后台解码
+                if (frameBufferReady && f - triggerLead <= lowestPrefetched && lowestPrefetched > 0) {
                   const newCenter = lowestPrefetched;
-                  prefetch(newCenter, 60, 'backward');
-                  lowestPrefetched = newCenter - 60;
+                  prefetch(newCenter, prefetchRange, 'backward');
+                  lowestPrefetched = newCenter - prefetchRange;
                 }
                 requestAnimationFrame(stepBack);
               } else if (frameBufferReady) {
-                // 缓冲 READY 但当前帧还没解码 — 不走 seeked 链
-                // 保持当前画面冻住，rAF 下一帧重试（等 prefetch 完成）
+                // 缓冲 READY 但当前帧还没解码 — 保持当前画面冻住，rAF 下一帧重试
+                // 不做救场 prefetch: supersede 会把正在跑的 decoder 重启,导致永远不完成
                 missCount++;
                 if (missCount <= 3) {
                   console.log(`[StepBack] WAIT frame=${f}, prefetch in progress...`);
                 }
-                // 救场:连续 miss 时主动重 prefetch,防止 LRU 淘汰导致的死锁
-                if (missCount % 30 === 1) {
-                  prefetch(f, 60, 'backward');
-                  lowestPrefetched = Math.min(lowestPrefetched, f - 60);
-                }
                 requestAnimationFrame(stepBack);
               } else {
                 // WebCodecs 不可用 — 传统 seeked 链 fallback
+                frameBudget -= step;
                 currentFrameRef.current = f;
                 setCurrentFrame(f);
                 missCount++;
                 setUseCanvasDisplay(false);
-                video.addEventListener('seeked', stepBack, { once: true });
+                video.addEventListener('seeked', () => stepBack(), { once: true });
                 video.currentTime = f / videoFps;
               }
             };
@@ -1145,10 +1197,10 @@ export default function FrameCountPage() {
           setIsPlaying(false);
 
           if (useCanvasDisplay) {
-            // 从 canvas 回到 video：同步 video.currentTime 到当前帧
+            // 从 canvas 回到 video：先 seek，等 seeked 后再切换，避免闪烁
             const f = currentFrameRef.current;
+            video.addEventListener('seeked', () => setUseCanvasDisplay(false), { once: true });
             video.currentTime = f / videoFps;
-            setUseCanvasDisplay(false);
           } else {
             const f = Math.floor(video.currentTime * videoFps);
             currentFrameRef.current = f;
@@ -1540,10 +1592,6 @@ export default function FrameCountPage() {
       if (video.paused && video.currentTime === 0) {
         video.currentTime = 0.001;
       }
-      // 首次加载：prefetch 起始帧
-      if (frameBufferReady) {
-        prefetch(0, 30);
-      }
     };
     video.addEventListener('play', onPlay);
     video.addEventListener('pause', onPause);
@@ -1551,6 +1599,19 @@ export default function FrameCountPage() {
     if (video.duration && isFinite(video.duration) && videoFps > 0) setTotalFrames(Math.round(video.duration * videoFps));
     return () => { video.removeEventListener('play', onPlay); video.removeEventListener('pause', onPause); video.removeEventListener('loadedmetadata', onLoaded); };
   }, [videoSrc, videoFps, frameBufferReady, prefetch]);
+
+  // 后台热身预取:暂停状态下,debounce 500ms 后解码当前帧后方的帧,
+  // 这样按 A 倒退时第一帧立即命中缓存,避免首次延迟
+  useEffect(() => {
+    if (!frameBufferReady || isPlaying || holdPlayingRef.current) return;
+    if (currentFrame <= 0) return;
+    const warmupRange = Math.min(120, Math.max(60, Math.round(videoFps)));
+    const t = setTimeout(() => {
+      if (holdPlayingRef.current) return;
+      prefetch(currentFrame, warmupRange, 'backward');
+    }, 500);
+    return () => clearTimeout(t);
+  }, [currentFrame, frameBufferReady, isPlaying, videoFps, prefetch]);
 
   // ── Marks 计算 ──
 
