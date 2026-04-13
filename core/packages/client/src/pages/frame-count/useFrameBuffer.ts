@@ -269,9 +269,10 @@ export function useFrameBuffer(
     };
   }, [videoFile, fps]);
 
-  // ── 缩略图预解码 (按时间密度采样,~10 thumbs/秒) ──
-  // 不再只要 I 帧(稀疏,短视频只有几张,像幻灯片),而是解码所有帧,
-  // 按步长抽样后下采样存起来,scrub 时画面变化接近连续
+  // ── 缩略图两阶段预解码 ──
+  // 阶段 1 (快): 只解码所有 I 帧 — 自包含、解码极快,几百 ms 内全部落盘,
+  //              足够 timeline 立即显示 5/7/10 张缩略图
+  // 阶段 2 (慢): 完整 decode 全部帧,按步长抽样加到缓存,供拖动 scrub 使用
   useEffect(() => {
     if (!isReady) return;
     const samples = samplesRef.current;
@@ -282,84 +283,171 @@ export function useFrameBuffer(
     let cancelled = false;
     const thumbs = keyThumbsRef.current;
 
+    // ── 自适应缩略图分辨率 ──
+    // 目标: 总内存 ~300MB 预算, 全部缩略图同分辨率(避免拖动闪烁),
+    // 按"短视频缩略图数少→可以更高清"的原则动态计算尺寸.
+    const srcW = config.codedWidth ?? 1920;
+    const srcH = config.codedHeight ?? 1080;
+    const NATIVE_DIM = Math.max(srcW, srcH);
+    const MIN_DIM = 640;
+    const TARGET_MEM_BYTES = 300 * 1024 * 1024;
+
+    // I 帧统计
+    let iFrameCount = 0;
+    for (let i = 0; i < samples.length; i++) {
+      if (samples[i].isSync) iFrameCount++;
+    }
+
+    // Phase 1 I 帧采样上限: 避免 MJPEG / 全 I 帧视频爆内存
+    // timeline 只需 5-10 张缩略图, 30 张已绰绰有余, 其余 I 帧被 Phase 2 stride 采样覆盖
+    const MAX_PHASE1_THUMBS = 30;
+    const phase1Count = Math.min(iFrameCount, MAX_PHASE1_THUMBS);
+    const iFrameSubsampleStep = iFrameCount > 0 ? Math.max(1, Math.ceil(iFrameCount / phase1Count)) : 1;
+
+    // 步长: 每秒 ~10 张; 若按目标分辨率仍超预算, 自动增大 stride
+    let stride = Math.max(1, Math.round(fps / 10));
+
+    // 短视频 (≤10s) 强制 1080p; 其余按 MIN_DIM 底线
+    const durationSec = samples.length / fps;
+    const desiredDim = durationSec <= 10
+      ? Math.min(NATIVE_DIM, 1920)
+      : MIN_DIM;
+
+    const minSideRatio = Math.min(srcW, srcH) / NATIVE_DIM;
+    const desiredBytesPerThumb = desiredDim * desiredDim * minSideRatio * 4;
+    const maxThumbsAtDesired = Math.max(1, Math.floor(TARGET_MEM_BYTES / desiredBytesPerThumb));
+    // 预算里算的是 phase1 采样后的 I 帧数, 不是原始 iFrameCount
+    const estThumbs = (s: number) => Math.ceil(samples.length / s) + phase1Count;
+    if (estThumbs(stride) > maxThumbsAtDesired) {
+      const denom = Math.max(1, maxThumbsAtDesired - phase1Count);
+      stride = Math.max(stride, Math.ceil(samples.length / denom));
+    }
+
+    // 按预期张数均分预算, 反推 maxDim
+    const expectedThumbs = estThumbs(stride);
+    const bytesPerThumb = TARGET_MEM_BYTES / expectedThumbs;
+    const pixelsPerThumb = bytesPerThumb / 4;
+    const longSideRatio = NATIVE_DIM / Math.min(srcW, srcH);
+    const computedMaxDim = Math.sqrt(pixelsPerThumb * longSideRatio);
+    const maxDim = Math.min(NATIVE_DIM, Math.max(desiredDim, Math.round(computedMaxDim)));
+
+    const scale = Math.min(1, maxDim / NATIVE_DIM);
+    const thumbW = Math.round(srcW * scale);
+    const thumbH = Math.round(srcH * scale);
+
+    console.log(`[FrameBuffer] thumb plan: stride=${stride}, phase1=${phase1Count}/${iFrameCount} I-frames, est=${expectedThumbs} @ ${thumbW}x${thumbH} (~${Math.round(expectedThumbs * bytesPerThumb / 1024 / 1024)}MB)`);
+
+    // timestamp → presentation index 映射 (所有 samples)
+    const tsMap = new Map<number, number>();
+    for (let i = 0; i < samples.length; i++) {
+      tsMap.set(Math.trunc(samples[i].timestamp), decodeToPres[i]);
+    }
+
+    // 增量插入 pIdx 到有序索引数组
+    const insertIdx = (pIdx: number) => {
+      const arr = keyThumbIndicesRef.current;
+      let lo = 0, hi = arr.length;
+      while (lo < hi) {
+        const mid = (lo + hi) >> 1;
+        if (arr[mid] < pIdx) lo = mid + 1; else hi = mid;
+      }
+      arr.splice(lo, 0, pIdx);
+    };
+
+    // 通用 output handler 工厂,按是否跳过已缓存索引来控制阶段 2
+    const makeOutputHandler = (filter: (pIdx: number) => boolean) =>
+      async (frame: VideoFrame) => {
+        if (cancelled) { frame.close(); return; }
+        const pIdx = tsMap.get(Math.trunc(frame.timestamp));
+        if (pIdx === undefined || !filter(pIdx)) {
+          frame.close();
+          return;
+        }
+        try {
+          const bmp = await createImageBitmap(frame, {
+            resizeWidth: thumbW,
+            resizeHeight: thumbH,
+            resizeQuality: 'medium',
+          });
+          if (cancelled) { bmp.close(); frame.close(); return; }
+          thumbs.set(pIdx, bmp);
+          insertIdx(pIdx);
+        } catch {
+          // ignore
+        } finally {
+          frame.close();
+        }
+      };
+
     (async () => {
-      // 目标:每秒约 10 个缩略图。按 presentation index 跨度做步长
-      const targetDensity = 10;
-      const stride = Math.max(1, Math.round(fps / targetDensity));
-
-      // 下采样目标尺寸
-      const srcW = config.codedWidth ?? 1920;
-      const srcH = config.codedHeight ?? 1080;
-      const maxDim = 320;
-      const scale = Math.min(1, maxDim / Math.max(srcW, srcH));
-      const thumbW = Math.round(srcW * scale);
-      const thumbH = Math.round(srcH * scale);
-
-      // timestamp → presentation index 映射 (所有 samples)
-      const tsMap = new Map<number, number>();
+      // ─ 阶段 1: I 帧独立解码 (均匀采样, 最多 MAX_PHASE1_THUMBS 张) ─
+      const keyIndices: number[] = [];
+      let iSeen = 0;
       for (let i = 0; i < samples.length; i++) {
-        tsMap.set(Math.trunc(samples[i].timestamp), decodeToPres[i]);
+        if (samples[i].isSync) {
+          if (iSeen % iFrameSubsampleStep === 0) keyIndices.push(i);
+          iSeen++;
+        }
       }
 
-      const decoder = new VideoDecoder({
-        output: async (frame) => {
-          if (cancelled) { frame.close(); return; }
-          const pIdx = tsMap.get(Math.trunc(frame.timestamp));
-          // 只保留步长采样位置的帧; 其余用来维持 P/B 依赖链的正确解码
-          if (pIdx === undefined || pIdx % stride !== 0) {
-            frame.close();
-            return;
-          }
-          try {
-            const bmp = await createImageBitmap(frame, {
-              resizeWidth: thumbW,
-              resizeHeight: thumbH,
-              resizeQuality: 'low',
-            });
-            if (cancelled) { bmp.close(); frame.close(); return; }
-            thumbs.set(pIdx, bmp);
-            // 增量有序插入索引,拖动时能立即用到已解码的 thumb
-            const arr = keyThumbIndicesRef.current;
-            let lo = 0, hi = arr.length;
-            while (lo < hi) {
-              const mid = (lo + hi) >> 1;
-              if (arr[mid] < pIdx) lo = mid + 1; else hi = mid;
-            }
-            arr.splice(lo, 0, pIdx);
-            // 每 5 张触发一次 React 重渲染,让 timeline 增量显示缩略图
-            if (arr.length % 5 === 0) setThumbVersion(v => v + 1);
-          } catch {
-            // ignore
-          } finally {
-            frame.close();
-          }
-        },
-        error: (e) => console.warn('[FrameBuffer] Thumb decoder error:', e),
+      const iFrameDecoder = new VideoDecoder({
+        output: makeOutputHandler(() => true), // 所有 I 帧都保留
+        error: (e) => console.warn('[FrameBuffer] iFrame decoder error:', e),
       });
 
       try {
-        decoder.configure(config);
-        // 按 decode order 送入全部 samples; B 帧依赖需要完整前序
+        iFrameDecoder.configure(config);
+        for (const di of keyIndices) {
+          if (cancelled) break;
+          const s = samples[di];
+          iFrameDecoder.decode(new EncodedVideoChunk({
+            type: 'key',
+            timestamp: s.timestamp,
+            duration: s.duration,
+            data: s.data,
+          }));
+        }
+        await iFrameDecoder.flush();
+      } catch (e) {
+        console.warn('[FrameBuffer] iFrame decode failed:', e);
+      } finally {
+        if (iFrameDecoder.state !== 'closed') iFrameDecoder.close();
+      }
+
+      if (cancelled) return;
+      console.log(`[FrameBuffer] Phase 1 done — ${thumbs.size} I-frame thumbs @ ${thumbW}x${thumbH}`);
+      setThumbVersion(v => v + 1); // timeline 立即渲染
+
+      // ─ 阶段 2: 完整 decode, 按 (上方算好的) stride 采样填补 scrub 缓存 ─
+      const strideDecoder = new VideoDecoder({
+        // 跳过已缓存的索引和非步长位置
+        output: makeOutputHandler((pIdx) => pIdx % stride === 0 && !thumbs.has(pIdx)),
+        error: (e) => console.warn('[FrameBuffer] Stride decoder error:', e),
+      });
+
+      try {
+        strideDecoder.configure(config);
         for (let i = 0; i < samples.length; i++) {
           if (cancelled) break;
           const s = samples[i];
-          decoder.decode(new EncodedVideoChunk({
+          strideDecoder.decode(new EncodedVideoChunk({
             type: s.isSync ? 'key' : 'delta',
             timestamp: s.timestamp,
             duration: s.duration,
             data: s.data,
           }));
         }
-        await decoder.flush();
+        await strideDecoder.flush();
       } catch (e) {
-        console.warn('[FrameBuffer] Thumb decode failed:', e);
+        console.warn('[FrameBuffer] Stride decode failed:', e);
       } finally {
-        if (decoder.state !== 'closed') decoder.close();
+        if (strideDecoder.state !== 'closed') strideDecoder.close();
       }
 
       if (!cancelled) {
-        console.log(`[FrameBuffer] Thumbs ready — ${thumbs.size} thumbs @ ${thumbW}x${thumbH}, stride=${stride}`);
-        setThumbVersion(v => v + 1); // 最终触发一次确保 UI 最新
+        console.log(`[FrameBuffer] Phase 2 done — ${thumbs.size} total thumbs, stride=${stride}`);
+        // 阶段 2 结束不再 bump thumbVersion: 避免 timeline 重新抽样抖动
+        // scrub 靠 getKeyFrameThumb 直读 ref, 无需 React 重渲染
       }
     })();
 

@@ -441,17 +441,54 @@ export default function FrameCountPage() {
   // ── WebCodecs 帧缓冲 ──
   const { getFrame, prefetch, getKeyFrameThumb, keyFrameThumbs, isReady: frameBufferReady, samples: fbSamples, decoderConfig: fbDecoderConfig } = useFrameBuffer(videoFile, videoFps);
 
-  // Timeline 显示层:从 keyFrameThumbs 均匀抽样,最多 40 张,防止短视频 timeline 塞满上百 canvas
-  const timelineThumbs = useMemo(() => {
-    const MAX = 40;
-    if (keyFrameThumbs.length <= MAX) return keyFrameThumbs;
-    const stride = keyFrameThumbs.length / MAX;
+  // Timeline 缩略图个数 — 按设备/方向自适应
+  // 移动端竖屏 5 / 移动端横屏 7 / 桌面 10
+  const [timelineThumbCount, setTimelineThumbCount] = useState(10);
+  useEffect(() => {
+    const computeCount = () => {
+      const h = window.innerHeight;
+      const isMobilePortrait = window.matchMedia('(max-width: 768px) and (orientation: portrait)').matches;
+      const isMobileLandscape = window.matchMedia('(max-width: 1024px) and (orientation: landscape)').matches && h <= 600;
+      if (isMobilePortrait) return 5;
+      if (isMobileLandscape) return 7;
+      return 10;
+    };
+    const update = () => setTimelineThumbCount(computeCount());
+    update();
+    window.addEventListener('resize', update);
+    window.addEventListener('orientationchange', update);
+    return () => {
+      window.removeEventListener('resize', update);
+      window.removeEventListener('orientationchange', update);
+    };
+  }, []);
+
+  // Timeline thumbnails —— 一次计算后锁定,避免 phase2 解码中抽样位置抖动
+  const [timelineThumbs, setTimelineThumbs] = useState<typeof keyFrameThumbs>([]);
+  // 视频切换或 count 改变时重置
+  useEffect(() => {
+    setTimelineThumbs([]);
+  }, [videoFile, timelineThumbCount]);
+  // 有 thumbs 时按目标帧位置挑最近的一张填充
+  useEffect(() => {
+    if (timelineThumbs.length >= timelineThumbCount) return;
+    if (keyFrameThumbs.length === 0 || totalFrames <= 0) return;
     const out: typeof keyFrameThumbs = [];
-    for (let i = 0; i < MAX; i++) {
-      out.push(keyFrameThumbs[Math.floor(i * stride)]);
+    for (let i = 0; i < timelineThumbCount; i++) {
+      const targetPIdx = Math.round(
+        (i / Math.max(1, timelineThumbCount - 1)) * (totalFrames - 1)
+      );
+      // 二分找最接近 targetPIdx 的缓存帧
+      let best = keyFrameThumbs[0];
+      let bestDist = Math.abs(best.frameIdx - targetPIdx);
+      for (const t of keyFrameThumbs) {
+        const d = Math.abs(t.frameIdx - targetPIdx);
+        if (d < bestDist) { bestDist = d; best = t; }
+      }
+      out.push(best);
     }
-    return out;
-  }, [keyFrameThumbs]);
+    setTimelineThumbs(out);
+  }, [keyFrameThumbs, totalFrames, timelineThumbCount, timelineThumbs.length]);
 
   // ── 计算值 ──
 
@@ -583,6 +620,8 @@ export default function FrameCountPage() {
         // 启动后台精确解码,完成后在 canvas 上画新帧 (小批量,避免拖动时反复 supersede)
         prefetch(f, 10);
         const tryRender = () => {
+          // 若用户已开始播放,canvas 必须让位给 video,绝不能在此再 setUseCanvasDisplay(true) 把 video 罩住
+          if (!video.paused) return;
           if (currentFrameRef.current !== f) return; // Superceded
           const bmp = getFrame(f);
           if (bmp) {
@@ -702,14 +741,16 @@ export default function FrameCountPage() {
     const video = videoRef.current;
     if (!video) return;
     if (video.paused) {
+      // 取消任何拖动遗留的精确帧 rAF, 防止它在播放后又 setUseCanvasDisplay(true) 罩住 video
+      cancelAnimationFrame(seekRafRef.current);
       video.muted = video.playbackRate !== 1;
       video.play();
-      setIsPlaying(true); 
+      setIsPlaying(true);
       setUseCanvasDisplay(false);
     }
-    else { 
-      video.pause(); 
-      setIsPlaying(false); 
+    else {
+      video.pause();
+      setIsPlaying(false);
     }
   }, []);
 
@@ -1372,6 +1413,7 @@ export default function FrameCountPage() {
     let pendingSide: 'left' | 'right' | 'seek' | null = null;
     let rafId = 0;
     let scrubModeActive = false; // 首次 mousemove 时才切到缩略图 scrub 模式(单击不触发)
+    let wasPlayingBeforeDrag = false;
     const flush = () => {
       rafId = 0;
       if (pendingFrame === null) return;
@@ -1392,6 +1434,14 @@ export default function FrameCountPage() {
       // 首次 mousemove — 进入缩略图 scrub 模式
       if (!scrubModeActive) {
         scrubModeActive = true;
+        // 拖动时必须暂停 video, 否则 RVFC 回调持续把 currentFrame 设为 video.currentTime,
+        // 与拖动位置打架; 同时记住"拖动前在播放"状态以便 mouseup 后恢复
+        const v = videoRef.current;
+        if (v && !v.paused) {
+          wasPlayingBeforeDrag = true;
+          v.pause();
+          setIsPlaying(false);
+        }
         beginDragOverlay();
       }
       const rect = track.getBoundingClientRect();
@@ -1422,7 +1472,28 @@ export default function FrameCountPage() {
       if (scrubModeActive) {
         const finalFrame = pendingFrame ?? currentFrameRef.current;
         seekToFrame(finalFrame);
+        // 拖动前在播放 → 恢复播放 (YouTube 风格)
+        if (wasPlayingBeforeDrag) {
+          const v = videoRef.current;
+          if (v) {
+            v.muted = v.playbackRate !== 1;
+            cancelAnimationFrame(seekRafRef.current);
+            // 关键: video.currentTime 是异步的, 若在 seek 未完成时切到 video 显示,
+            // 浏览器会出现短暂黑屏. 等 seeked 触发后再切, canvas 期间继续显示已画的帧
+            const startPlayback = () => {
+              v.play().catch(() => {});
+              setIsPlaying(true);
+              setUseCanvasDisplay(false);
+            };
+            if (v.seeking) {
+              v.addEventListener('seeked', startPlayback, { once: true });
+            } else {
+              startPlayback();
+            }
+          }
+        }
       }
+      wasPlayingBeforeDrag = false;
       pendingFrame = null;
       pendingSide = null;
       scrubModeActive = false;
@@ -1768,25 +1839,25 @@ export default function FrameCountPage() {
               <>
                 {/* 顶部工具栏：文件名 + FPS/Crop/Image 设置 */}
                 <div className="fc-video-toolbar">
-                  <span className="fc-video-label">{videoName}</span>
-                  <div className="fc-input-unit-wrap">
-                    <input
-                      className="fc-tab-input fc-toolbar-time"
-                      type="number" step="0.01" min={0} placeholder="Time"
-                      value={solveTime}
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        setSolveTime(v);
-                        // 输完小数点后两位后自动失焦
-                        if (/^\d+\.\d{2}$/.test(v)) {
-                          e.target.blur();
-                        }
-                      }}
-                    />
-                    {solveTime && <span className="fc-input-suffix">s</span>}
-                  </div>
-
-                  <div className="fc-toolbar-controls">
+                  {/* Row 1 (桌面端 display:contents 不影响布局;手机端变为独立一行) */}
+                  <div className="fc-toolbar-row1">
+                    <span className="fc-video-label">{videoName}</span>
+                    <div className="fc-input-unit-wrap">
+                      <input
+                        className="fc-tab-input fc-toolbar-time"
+                        type="number" step="0.01" min={0} placeholder="Time"
+                        value={solveTime}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setSolveTime(v);
+                          // 输完小数点后两位后自动失焦
+                          if (/^\d+\.\d{2}$/.test(v)) {
+                            e.target.blur();
+                          }
+                        }}
+                      />
+                      {solveTime && <span className="fc-input-suffix">s</span>}
+                    </div>
                     {/* FPS */}
                     <div className="fc-input-unit-wrap">
                       <input
@@ -1797,54 +1868,54 @@ export default function FrameCountPage() {
                       />
                       {videoFps > 0 && <span className="fc-input-suffix">fps</span>}
                     </div>
-
-                    <div className="fc-toolbar-sep" />
-
-                    {/* 图像变换按钮 */}
-                    <button
-                      className={`fc-toolbar-icon ${flipV ? 'active' : ''}`}
-                      title="倒放 (Flip Vertical)"
-                      onClick={() => setFlipV(v => !v)}
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 3v18M17 8l-5-5-5 5M17 16l-5 5-5-5"/></svg>
-                    </button>
-                    <button
-                      className={`fc-toolbar-icon ${flipH ? 'active' : ''}`}
-                      title="镜像 (Flip Horizontal)"
-                      onClick={() => setFlipH(v => !v)}
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12h18M8 7l-5 5 5 5M16 7l5 5-5 5"/></svg>
-                    </button>
-                    <button
-                      className="fc-toolbar-icon"
-                      title={`旋转 90° (${rotation}°)`}
-                      onClick={() => setRotation(prev => NEXT_ROTATION[prev])}
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-                    </button>
-
-                    {/* Crop — 切换裁切模式 */}
-                    <button
-                      className={`fc-toolbar-icon ${cropMode ? 'active' : ''}`}
-                      title={cropMode ? 'Exit Crop' : 'Crop'}
-                      onClick={() => {
-                        if (cropMode) { setCropMode(false); }
-                        else { setCropMode(true); setCropRect(null); }
-                      }}
-                    >
-                      <IconCrop />
-                    </button>
-
-
                   </div>
 
-                  <button className="fc-change-video" onClick={() => fileInputRef.current?.click()}>
-                    New
-                  </button>
-                  <button className="fc-change-video" onClick={openFromFolder} title="Open video from folder (auto-load/save .splits.txt)">
-                    Folder
-                  </button>
-                  <div className="fc-export-wrap" ref={exportMenuRef}>
+                  {/* Row 2: 图像变换 + New/Folder/Export */}
+                  <div className="fc-toolbar-row2">
+                    <div className="fc-toolbar-controls">
+                      {/* 图像变换按钮 */}
+                      <button
+                        className={`fc-toolbar-icon ${flipV ? 'active' : ''}`}
+                        title="倒放 (Flip Vertical)"
+                        onClick={() => setFlipV(v => !v)}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 3v18M17 8l-5-5-5 5M17 16l-5 5-5-5"/></svg>
+                      </button>
+                      <button
+                        className={`fc-toolbar-icon ${flipH ? 'active' : ''}`}
+                        title="镜像 (Flip Horizontal)"
+                        onClick={() => setFlipH(v => !v)}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12h18M8 7l-5 5 5 5M16 7l5 5-5 5"/></svg>
+                      </button>
+                      <button
+                        className="fc-toolbar-icon"
+                        title={`旋转 90° (${rotation}°)`}
+                        onClick={() => setRotation(prev => NEXT_ROTATION[prev])}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                      </button>
+
+                      {/* Crop — 切换裁切模式 */}
+                      <button
+                        className={`fc-toolbar-icon ${cropMode ? 'active' : ''}`}
+                        title={cropMode ? 'Exit Crop' : 'Crop'}
+                        onClick={() => {
+                          if (cropMode) { setCropMode(false); }
+                          else { setCropMode(true); setCropRect(null); }
+                        }}
+                      >
+                        <IconCrop />
+                      </button>
+                    </div>
+
+                    <button className="fc-change-video" onClick={() => fileInputRef.current?.click()}>
+                      New
+                    </button>
+                    <button className="fc-change-video fc-folder-btn" onClick={openFromFolder} title="Open video from folder (auto-load/save .splits.txt)">
+                      Folder
+                    </button>
+                    <div className="fc-export-wrap" ref={exportMenuRef}>
                     <button
                       className="fc-export-btn"
                       onClick={() => exporting ? undefined : setShowExportMenu(v => !v)}
@@ -1871,6 +1942,7 @@ export default function FrameCountPage() {
                         </button>
                       </div>
                     )}
+                  </div>
                   </div>
                 </div>
                 {/* 视频 wrapper — 紧贴视频尺寸，crop overlay / zoom / pan 都在这里 */}
