@@ -3,7 +3,7 @@
  * 数帧工具 — ReconViewer 风格，支持多 Solve 和 Split Mark。
  * 加载本地视频，逐帧控制，标记帧，计算精确时间差。
  */
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import mediaInfoFactory from 'mediainfo.js';
 import { FFmpeg } from '@ffmpeg/ffmpeg';
@@ -440,6 +440,18 @@ export default function FrameCountPage() {
 
   // ── WebCodecs 帧缓冲 ──
   const { getFrame, prefetch, getKeyFrameThumb, keyFrameThumbs, isReady: frameBufferReady, samples: fbSamples, decoderConfig: fbDecoderConfig } = useFrameBuffer(videoFile, videoFps);
+
+  // Timeline 显示层:从 keyFrameThumbs 均匀抽样,最多 40 张,防止短视频 timeline 塞满上百 canvas
+  const timelineThumbs = useMemo(() => {
+    const MAX = 40;
+    if (keyFrameThumbs.length <= MAX) return keyFrameThumbs;
+    const stride = keyFrameThumbs.length / MAX;
+    const out: typeof keyFrameThumbs = [];
+    for (let i = 0; i < MAX; i++) {
+      out.push(keyFrameThumbs[Math.floor(i * stride)]);
+    }
+    return out;
+  }, [keyFrameThumbs]);
 
   // ── 计算值 ──
 
@@ -1948,8 +1960,8 @@ export default function FrameCountPage() {
               <div className="fc-timeline-trimmer" ref={trimTrackRef}>
                 {/* Thumbnail filmstrip — 优先用 WebCodecs 增量缩略图 (视频加载后立即开始出现) */}
                 <div className="fc-timeline-filmstrip">
-                  {keyFrameThumbs.length > 0
-                    ? keyFrameThumbs.map(({ frameIdx, bitmap }) => (
+                  {timelineThumbs.length > 0
+                    ? timelineThumbs.map(({ frameIdx, bitmap }) => (
                         <ThumbnailCanvas key={frameIdx} bitmap={bitmap} />
                       ))
                     : thumbnails.map((src, i) => (
