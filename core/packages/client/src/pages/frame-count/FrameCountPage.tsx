@@ -2365,27 +2365,6 @@ export default function FrameCountPage() {
               <button className="fc-solve-btn" title="Remove Solve" onClick={removeSolve}>−</button>
             </div>
 
-            {/* 起表帧计算方法切换 — 决定 Add 时 auto-seek 用哪种方法 */}
-            <div className="fc-method-toggle" role="radiogroup" aria-label="Start-frame method">
-              <span className="fc-method-toggle-label">Start:</span>
-              <button
-                type="button"
-                role="radio"
-                aria-checked={startFrameMethod === 'fps'}
-                className={`fc-method-opt ${startFrameMethod === 'fps' ? 'active' : ''}`}
-                onClick={() => setStartFrameMethod('fps')}
-                title="Start frame = endFrame − ⌈(⌊time⌋₂+.009) × fps⌉"
-              >FPS <span className="fc-method-wca-badge">WCA</span></button>
-              <button
-                type="button"
-                role="radio"
-                aria-checked={startFrameMethod === 'timestamp'}
-                className={`fc-method-opt ${startFrameMethod === 'timestamp' ? 'active' : ''}`}
-                onClick={() => setStartFrameMethod('timestamp')}
-                title="Start frame = 距离 (end sample timestamp − time × 1e6μs) 最近的 sample"
-              >Timestamp</button>
-            </div>
-
             {/* Marks 列表 */}
             <div className="fc-panel fc-marks-panel">
               {/* Mark 操作按钮 */}
@@ -2421,7 +2400,25 @@ export default function FrameCountPage() {
                 )}
                 {startFramePreview && (
                   <div className="fc-start-suggest">
-                    <div className="fc-suggest-title">suggested start</div>
+                    <div className="fc-method-toggle" role="radiogroup" aria-label="Start-frame method">
+                      <span className="fc-method-toggle-label">Start:</span>
+                      <button
+                        type="button"
+                        role="radio"
+                        aria-checked={startFrameMethod === 'fps'}
+                        className={`fc-method-opt ${startFrameMethod === 'fps' ? 'active' : ''}`}
+                        onClick={() => setStartFrameMethod('fps')}
+                        title="Start frame = endFrame − ⌈(⌊time⌋₂+.009) × fps⌉"
+                      >FPS <span className="fc-method-wca-badge">WCA</span></button>
+                      <button
+                        type="button"
+                        role="radio"
+                        aria-checked={startFrameMethod === 'timestamp'}
+                        className={`fc-method-opt ${startFrameMethod === 'timestamp' ? 'active' : ''}`}
+                        onClick={() => setStartFrameMethod('timestamp')}
+                        title="Start frame = 距离 (end sample timestamp − time × 1e6μs) 最近的 sample"
+                      >Timestamp</button>
+                    </div>
                     <button
                       type="button"
                       className={`fc-suggest-row ${startFrameMethod === 'fps' ? 'active' : ''}`}
