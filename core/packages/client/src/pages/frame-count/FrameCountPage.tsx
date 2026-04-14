@@ -533,6 +533,23 @@ export default function FrameCountPage() {
   // ── WebCodecs 帧缓冲 ──
   const { getFrame, prefetch, getKeyFrameThumb, keyFrameThumbs, isReady: frameBufferReady, samples: fbSamples, decoderConfig: fbDecoderConfig, findStartFrameByTimestamp } = useFrameBuffer(videoFile, videoFps);
 
+  // ── 从 mp4box samples 反推 fps —— iOS Safari 上 MediaInfo WASM 加载失败时的兜底 ──
+  // FrameBuffer READY 后 samples 里每一帧都有精确 timestamp, 比 MediaInfo 读容器元数据更可靠。
+  // 命中任一情况都会同步 videoFps: (1) MediaInfo 失败 fps 仍为默认 60; (2) MediaInfo 给的值和 mp4box 计算值偏差 >0.01。
+  useEffect(() => {
+    if (!frameBufferReady || fbSamples.length === 0) return;
+    const last = fbSamples[fbSamples.length - 1];
+    const durSec = (last.timestamp + last.duration) / 1_000_000;
+    if (durSec <= 0) return;
+    const realFps = Math.round((fbSamples.length / durSec) * 100) / 100;
+    if (realFps > 0 && Math.abs(realFps - videoFps) > 0.01) {
+      console.log(`[FCLog] fps auto-corrected from mp4box samples: ${videoFps} → ${realFps}`);
+      setVideoFps(realFps);
+    }
+    // videoFps 故意不放进依赖 —— 只在 READY 或 sample 集变化时触发一次校正
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [frameBufferReady, fbSamples]);
+
   // Timeline 缩略图个数 — 按设备/方向自适应
   // 移动端竖屏 5 / 移动端横屏 7 / 桌面 10
   const [timelineThumbCount, setTimelineThumbCount] = useState(10);
@@ -930,20 +947,28 @@ export default function FrameCountPage() {
 
   // ── Solve 管理 ──
 
+  const renumberSolves = (list: Solve[]) => list.map((s, i) => ({ ...s, name: `Solve ${i + 1}` }));
+
   const addSolve = useCallback(() => {
     setSolves(prev => {
-      const newSolves = [...prev, { name: `Solve ${prev.length + 1}`, marks: [] }];
-      setActiveSolveIdx(newSolves.length - 1);
-      return newSolves;
+      const next = renumberSolves([...prev, { name: '', marks: [] }]);
+      setActiveSolveIdx(next.length - 1);
+      return next;
     });
     setSelectedMarkIdx(null);
     showToast('Solve added');
   }, [showToast]);
 
   const removeSolve = useCallback(() => {
-    if (solves.length <= 1) { showToast('Cannot remove last solve'); return; }
+    if (solves.length <= 1) {
+      setSolves(prev => [{ ...prev[0], name: 'Solve 1', marks: [] }]);
+      setSelectedMarkIdx(null);
+      showToast('Marks cleared');
+      return;
+    }
     setSolves(prev => {
-      const next = prev.filter((_, i) => i !== activeSolveIdx);
+      const filtered = prev.filter((_, i) => i !== activeSolveIdx);
+      const next = renumberSolves(filtered);
       setActiveSolveIdx(Math.min(activeSolveIdx, next.length - 1));
       return next;
     });
@@ -2234,6 +2259,25 @@ export default function FrameCountPage() {
           {/* ── 控制栏 ── */}
           {videoSrc && (
             <div className="fc-panel fc-controls-wrap">
+              {/* Mark 三角标,贴在时间轴上方,单击跳到对应帧 */}
+              {totalFrames > 0 && activeSolve.marks.length > 0 && (
+                <div className="fc-mark-tri-row">
+                  {activeSolve.marks.map((m, i) => {
+                    const pct = (m.frame / totalFrames) * 100;
+                    return (
+                      <button
+                        key={i}
+                        type="button"
+                        className={`fc-mark-tri ${selectedMarkIdx === i ? 'selected' : ''}`}
+                        style={{ left: `${pct}%` }}
+                        onClick={() => { setSelectedMarkIdx(i); seekToFrame(m.frame); }}
+                        title={`Mark ${i}: frame ${m.frame}`}
+                      >▼</button>
+                    );
+                  })}
+                </div>
+              )}
+
               {/* iOS-style timeline trimmer */}
               <div className="fc-timeline-trimmer" ref={trimTrackRef}>
                 {/* Thumbnail filmstrip — 优先用 WebCodecs 增量缩略图 (视频加载后立即开始出现) */}
@@ -2324,6 +2368,38 @@ export default function FrameCountPage() {
                     <div key={i} className="fc-marker fc-marker-mark" style={{ left: `${pct}%` }} title={`Mark ${i}: ${m.frame}`} />
                   );
                 })}
+
+                {/* Solve bands: 每个 solve 在其首尾 mark 之间画一条带,点击切换;
+                    active solve 显示各 mark 的序号,其他 solve 显示名字 */}
+                {totalFrames > 0 && solves.map((s, si) => {
+                  if (s.marks.length < 1) return null;
+                  const firstFrame = s.marks[0].frame;
+                  const lastFrame = s.marks[s.marks.length - 1].frame;
+                  const span = Math.max(1, lastFrame - firstFrame);
+                  const leftPct = (firstFrame / totalFrames) * 100;
+                  const widthPct = Math.max(0.4, (span / totalFrames) * 100);
+                  const isActive = si === activeSolveIdx;
+                  return (
+                    <div
+                      key={si}
+                      className={`fc-solve-band ${isActive ? 'active' : ''}`}
+                      style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
+                      onPointerDown={(e) => { e.stopPropagation(); if (!isActive) { setActiveSolveIdx(si); setSelectedMarkIdx(null); } }}
+                      title={`${s.name} — ${s.marks.length} marks`}
+                    >
+                      {isActive ? (
+                        s.marks.map((m, mi) => {
+                          const rel = span > 0 ? ((m.frame - firstFrame) / span) * 100 : 0;
+                          return (
+                            <span key={mi} className="fc-solve-band-mark" style={{ left: `${rel}%` }}>{mi}</span>
+                          );
+                        })
+                      ) : (
+                        <span className="fc-solve-band-label">{s.name}</span>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
 
               <div className="fc-controls">
@@ -2407,7 +2483,7 @@ export default function FrameCountPage() {
                         role="radio"
                         aria-checked={startFrameMethod === 'fps'}
                         className={`fc-method-opt ${startFrameMethod === 'fps' ? 'active' : ''}`}
-                        onClick={() => setStartFrameMethod('fps')}
+                        onClick={() => { setStartFrameMethod('fps'); if (startFramePreview) seekToFrame(startFramePreview.byFps); }}
                         title="Start frame = endFrame − ⌈(⌊time⌋₂+.009) × fps⌉"
                       >FPS <span className="fc-method-wca-badge">WCA</span></button>
                       <button
@@ -2415,64 +2491,52 @@ export default function FrameCountPage() {
                         role="radio"
                         aria-checked={startFrameMethod === 'timestamp'}
                         className={`fc-method-opt ${startFrameMethod === 'timestamp' ? 'active' : ''}`}
-                        onClick={() => setStartFrameMethod('timestamp')}
+                        onClick={() => { setStartFrameMethod('timestamp'); if (startFramePreview?.byTs != null) seekToFrame(startFramePreview.byTs); }}
                         title="Start frame = 距离 (end sample timestamp − time × 1e6μs) 最近的 sample"
                       >Timestamp</button>
                     </div>
-                    <button
-                      type="button"
-                      className={`fc-suggest-row ${startFrameMethod === 'fps' ? 'active' : ''}`}
-                      onClick={() => seekToFrame(startFramePreview.byFps)}
-                      title={`Jump to frame ${startFramePreview.byFps} (FPS method)`}
-                    >
-                      <span className="fc-suggest-main">
-                        <span className="fc-suggest-label">by fps</span>
-                        <span className="fc-suggest-arrow">→</span>
-                        <span className="fc-suggest-frame">{startFramePreview.byFps}</span>
-                      </span>
-                      <span className="fc-suggest-formula">
-                        ⌈(⌊{solveTimeNum.toFixed(2)}⌋₂+.009)×{videoFps.toFixed(2)}⌉ = <b>{startFramePreview.framesBack}</b>f
-                        <span className="fc-suggest-formula-sub"> · {startFramePreview.endFrame} − {startFramePreview.framesBack} = {startFramePreview.byFps}</span>
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      className={`fc-suggest-row ${startFrameMethod === 'timestamp' ? 'active' : ''} ${startFramePreview.byTs === null ? 'disabled' : ''}`}
-                      onClick={() => startFramePreview.byTs !== null && seekToFrame(startFramePreview.byTs)}
-                      disabled={startFramePreview.byTs === null}
-                      title={startFramePreview.byTs === null
-                        ? 'Samples not ready yet'
-                        : `Jump to frame ${startFramePreview.byTs} (timestamp method)`}
-                    >
-                      <span className="fc-suggest-main">
-                        <span className="fc-suggest-label">by timestamp</span>
-                        <span className="fc-suggest-arrow">→</span>
-                        <span className="fc-suggest-frame">
-                          {startFramePreview.byTs ?? '—'}
+                    {startFrameMethod === 'fps' && (
+                      <button
+                        type="button"
+                        className="fc-suggest-row active"
+                        onClick={() => seekToFrame(startFramePreview.byFps)}
+                        title={`Jump to frame ${startFramePreview.byFps} (FPS method)`}
+                      >
+                        <span className="fc-suggest-formula">
+                          frames = ⌈(⌊{solveTimeNum.toFixed(2)}⌋₂+.009)×{videoFps.toFixed(2)}⌉ = <b>{startFramePreview.framesBack}f</b>
                         </span>
-                        {startFramePreview.byTs !== null && startFramePreview.byTs !== startFramePreview.byFps && (
-                          <span className="fc-suggest-delta">
-                            Δ {startFramePreview.byTs - startFramePreview.byFps > 0 ? '+' : ''}
-                            {startFramePreview.byTs - startFramePreview.byFps}
-                          </span>
-                        )}
-                      </span>
-                      <span className="fc-suggest-formula">
+                        <span className="fc-suggest-formula-sub">
+                          start = {startFramePreview.endFrame} − {startFramePreview.framesBack}f = <b>{startFramePreview.byFps}f</b>
+                        </span>
+                      </button>
+                    )}
+                    {startFrameMethod === 'timestamp' && (
+                      <button
+                        type="button"
+                        className={`fc-suggest-row active ${startFramePreview.byTs === null ? 'disabled' : ''}`}
+                        onClick={() => startFramePreview.byTs !== null && seekToFrame(startFramePreview.byTs)}
+                        disabled={startFramePreview.byTs === null}
+                        title={startFramePreview.byTs === null
+                          ? 'Samples not ready yet'
+                          : `Jump to frame ${startFramePreview.byTs} (timestamp method)`}
+                      >
                         {startFramePreview.endSampleTs !== null && startFramePreview.targetTs !== null ? (
                           <>
-                            target = {startFramePreview.endSampleTs.toFixed(3)}s − (⌊{solveTimeNum.toFixed(2)}⌋₂+.009)s = <b>{startFramePreview.targetTs.toFixed(3)}s</b>
+                            <span className="fc-suggest-formula">
+                              target = {startFramePreview.endSampleTs.toFixed(3)} − (⌊{solveTimeNum.toFixed(2)}⌋₂+.009) = <b>{startFramePreview.targetTs.toFixed(3)}s</b>
+                            </span>
                             <span className="fc-suggest-formula-sub">
-                              {' · '}nearest sample #{startFramePreview.byTs ?? '—'}
+                              floor sample #<b>{startFramePreview.byTs ?? '—'}</b>
                               {startFramePreview.byTsSampleTs !== null && (
-                                <> (ts={startFramePreview.byTsSampleTs.toFixed(3)}s)</>
+                                <> (ts={startFramePreview.byTsSampleTs.toFixed(3)}s ≤ target)</>
                               )}
                             </span>
                           </>
                         ) : (
                           <span className="fc-suggest-formula-sub">samples not ready</span>
                         )}
-                      </span>
-                    </button>
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
