@@ -31,8 +31,8 @@ const IS_MOBILE = typeof navigator !== 'undefined' &&
  *  (get 把已消费帧标记为最近,反而保留,不消费的反而被淘汰)。
  *  360 帧:可支持到 240fps 视频 (2 批 × 240 帧) 的顺滑回放。
  *  1080p ImageBitmap 通常用 GPU texture,实际占用远小于 RGBA 估算。
- *  移动端降到 120 帧避免 iOS Safari 内存崩溃("a problem repeatedly occurred")。 */
-const MAX_CACHE = IS_MOBILE ? 120 : 360;
+ *  移动端 (iOS Safari 单页 GPU 内存极紧, 解码峰值瞬间能撑爆) 降到 60。 */
+const MAX_CACHE = IS_MOBILE ? 60 : 360;
 
 /** WebCodecs 是否可用 */
 const HAS_WEBCODECS = typeof VideoDecoder !== 'undefined';
@@ -295,9 +295,9 @@ export function useFrameBuffer(
     const srcW = config.codedWidth ?? 1920;
     const srcH = config.codedHeight ?? 1080;
     const NATIVE_DIM = Math.max(srcW, srcH);
-    const MIN_DIM = IS_MOBILE ? 480 : 640;
-    // 移动端 (尤其 iOS Safari) 内存上限严, 用 100MB 预算避免页面 crash
-    const TARGET_MEM_BYTES = (IS_MOBILE ? 100 : 300) * 1024 * 1024;
+    const MIN_DIM = IS_MOBILE ? 360 : 640;
+    // 移动端 (iOS Safari) 内存极紧, 50MB 预算避免页面 reload
+    const TARGET_MEM_BYTES = (IS_MOBILE ? 50 : 300) * 1024 * 1024;
 
     // I 帧统计
     let iFrameCount = 0;
@@ -307,16 +307,18 @@ export function useFrameBuffer(
 
     // Phase 1 I 帧采样上限: 避免 MJPEG / 全 I 帧视频爆内存
     // timeline 只需 5-10 张缩略图, 30 张已绰绰有余, 其余 I 帧被 Phase 2 stride 采样覆盖
-    const MAX_PHASE1_THUMBS = 30;
+    // 移动端只要 10 张 timeline 缩略图, 进一步省内存
+    const MAX_PHASE1_THUMBS = IS_MOBILE ? 10 : 30;
     const phase1Count = Math.min(iFrameCount, MAX_PHASE1_THUMBS);
     const iFrameSubsampleStep = iFrameCount > 0 ? Math.max(1, Math.ceil(iFrameCount / phase1Count)) : 1;
 
     // 步长: 每秒 ~10 张; 若按目标分辨率仍超预算, 自动增大 stride
     let stride = Math.max(1, Math.round(fps / 10));
 
-    // 短视频 (≤10s) 强制 1080p; 其余按 MIN_DIM 底线 (移动端封顶 720p 节省内存)
+    // 短视频 (≤10s) 强制高清; 其余按 MIN_DIM 底线
+    // 移动端封顶 540p, 因为 ImageBitmap 太大会被 iOS 强制 reload
     const durationSec = samples.length / fps;
-    const SHORT_VIDEO_DIM = IS_MOBILE ? 1280 : 1920;
+    const SHORT_VIDEO_DIM = IS_MOBILE ? 960 : 1920;
     const desiredDim = durationSec <= 10
       ? Math.min(NATIVE_DIM, SHORT_VIDEO_DIM)
       : MIN_DIM;
@@ -362,6 +364,13 @@ export function useFrameBuffer(
       arr.splice(lo, 0, pIdx);
     };
 
+    // 显式 canvas resize: iOS Safari 对 createImageBitmap(VideoFrame, {resizeWidth}) 支持不可靠,
+    // 可能创建全尺寸 bitmap 导致内存爆炸. 用 OffscreenCanvas 强制下采样.
+    const resizeCanvas = typeof OffscreenCanvas !== 'undefined'
+      ? new OffscreenCanvas(thumbW, thumbH)
+      : null;
+    const resizeCtx = resizeCanvas?.getContext('2d', { alpha: false }) ?? null;
+
     // 通用 output handler 工厂,按是否跳过已缓存索引来控制阶段 2
     const makeOutputHandler = (filter: (pIdx: number) => boolean) =>
       async (frame: VideoFrame) => {
@@ -372,11 +381,18 @@ export function useFrameBuffer(
           return;
         }
         try {
-          const bmp = await createImageBitmap(frame, {
-            resizeWidth: thumbW,
-            resizeHeight: thumbH,
-            resizeQuality: 'medium',
-          });
+          let bmp: ImageBitmap;
+          if (resizeCanvas && resizeCtx) {
+            // canvas 路径: 保证真实尺寸下采样, 用 transferToImageBitmap 同步快照避免并发竞态
+            resizeCtx.drawImage(frame, 0, 0, thumbW, thumbH);
+            bmp = resizeCanvas.transferToImageBitmap();
+          } else {
+            bmp = await createImageBitmap(frame, {
+              resizeWidth: thumbW,
+              resizeHeight: thumbH,
+              resizeQuality: 'medium',
+            });
+          }
           if (cancelled) { bmp.close(); frame.close(); return; }
           thumbs.set(pIdx, bmp);
           insertIdx(pIdx);
@@ -407,9 +423,9 @@ export function useFrameBuffer(
         iFrameDecoder.configure(config);
         for (const di of keyIndices) {
           if (cancelled) break;
-          // 背压：防止硬件解码器队列溢出（4K HEVC 尤其敏感）
-          while (iFrameDecoder.decodeQueueSize > 8 && !cancelled) {
-            await new Promise(r => setTimeout(r, 4));
+          // 背压：防止硬件解码器队列溢出（4K HEVC + iOS 尤其敏感）
+          while (iFrameDecoder.decodeQueueSize > (IS_MOBILE ? 2 : 8) && !cancelled) {
+            await new Promise(r => setTimeout(r, IS_MOBILE ? 16 : 4));
           }
           const s = samples[di];
           iFrameDecoder.decode(new EncodedVideoChunk({
@@ -441,9 +457,9 @@ export function useFrameBuffer(
         strideDecoder.configure(config);
         for (let i = 0; i < samples.length; i++) {
           if (cancelled) break;
-          // 背压：防止硬件解码器队列溢出
-          while (strideDecoder.decodeQueueSize > 16 && !cancelled) {
-            await new Promise(r => setTimeout(r, 4));
+          // 背压：防止硬件解码器队列溢出 (iOS 收紧)
+          while (strideDecoder.decodeQueueSize > (IS_MOBILE ? 4 : 16) && !cancelled) {
+            await new Promise(r => setTimeout(r, IS_MOBILE ? 16 : 4));
           }
           const s = samples[i];
           strideDecoder.decode(new EncodedVideoChunk({
@@ -511,6 +527,18 @@ export function useFrameBuffer(
     // 创建临时 decoder，收集解码结果
     const pendingFrames: { index: number; bitmap: ImageBitmap }[] = [];
 
+    // 移动端: LRU 缓存的精确帧也降到 720p 长边, 避免单帧 8MB × 60 = 480MB
+    const cfgW = config.codedWidth ?? 1920;
+    const cfgH = config.codedHeight ?? 1080;
+    const cacheMaxDim = IS_MOBILE ? 720 : Math.max(cfgW, cfgH);
+    const cacheScale = Math.min(1, cacheMaxDim / Math.max(cfgW, cfgH));
+    const cacheW = Math.round(cfgW * cacheScale);
+    const cacheH = Math.round(cfgH * cacheScale);
+    const cacheCanvas = IS_MOBILE && typeof OffscreenCanvas !== 'undefined'
+      ? new OffscreenCanvas(cacheW, cacheH)
+      : null;
+    const cacheCtx = cacheCanvas?.getContext('2d', { alpha: false }) ?? null;
+
     const decoder = new VideoDecoder({
       output: async (frame: VideoFrame) => {
         // seq 检查，避免过期解码浪费
@@ -519,7 +547,13 @@ export function useFrameBuffer(
           return;
         }
         try {
-          const bitmap = await createImageBitmap(frame);
+          let bitmap: ImageBitmap;
+          if (cacheCanvas && cacheCtx) {
+            cacheCtx.drawImage(frame, 0, 0, cacheW, cacheH);
+            bitmap = cacheCanvas.transferToImageBitmap();
+          } else {
+            bitmap = await createImageBitmap(frame);
+          }
           // Use timestamp to map back exactly to Presentation Index
           const matchPIdx = tsToPresIdx.get(Math.trunc(frame.timestamp));
           if (matchPIdx !== undefined) {
@@ -544,9 +578,9 @@ export function useFrameBuffer(
       // 从 I 帧顺序送入到 maxD (严格的底层物理顺序，保证所有 P/B 时域依赖完整)
       for (let i = iFrameIdx; i <= maxD; i++) {
         if (seq !== prefetchSeqRef.current) break;
-        // 背压：4K HEVC 解码器队列溢出会导致 EncodingError
-        while (decoder.decodeQueueSize > 16 && seq === prefetchSeqRef.current) {
-          await new Promise(r => setTimeout(r, 4));
+        // 背压：4K HEVC / iOS 解码器队列溢出会导致 EncodingError 或页面崩溃
+        while (decoder.decodeQueueSize > (IS_MOBILE ? 4 : 16) && seq === prefetchSeqRef.current) {
+          await new Promise(r => setTimeout(r, IS_MOBILE ? 16 : 4));
         }
         const s = samples[i];
 
