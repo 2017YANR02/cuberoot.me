@@ -445,8 +445,8 @@ export default function FrameCountPage() {
     isPanningRef.current = false;
   }, []);
 
-  // 双指 pinch 缩放处理 (移动端 video wrapper)
-  const handlePinchStart = useCallback((t1: Touch, t2: Touch) => {
+  // 双指 pinch 缩放处理 (移动端 video wrapper) — 用结构化类型避免 React.Touch vs DOM Touch 冲突
+  const handlePinchStart = useCallback((t1: { clientX: number; clientY: number }, t2: { clientX: number; clientY: number }) => {
     if (cropMode) return;
     const target = wrapperRef.current;
     if (!target) return;
@@ -468,7 +468,7 @@ export default function FrameCountPage() {
     isPanningRef.current = false;
   }, [cropMode]);
 
-  const handlePinchMove = useCallback((t1: Touch, t2: Touch) => {
+  const handlePinchMove = useCallback((t1: { clientX: number; clientY: number }, t2: { clientX: number; clientY: number }) => {
     const p = pinchRef.current;
     if (!p) return;
     const dx = t2.clientX - t1.clientX;
