@@ -2248,7 +2248,7 @@ export default function FrameCountPage() {
 
                 <div className="fc-rate-group">
                   {PLAYBACK_RATES.map((r) => (
-                    <button key={r} className={`fc-rate-btn ${playbackRate === r ? 'active' : ''}`} onClick={() => changeRate(r)}>{r}x</button>
+                    <button key={r} className={`fc-rate-btn ${playbackRate === r ? 'active' : ''}`} onClick={() => changeRate(r)}>{r === 1 ? '1x' : r}</button>
                   ))}
                 </div>
 
@@ -2276,6 +2276,12 @@ export default function FrameCountPage() {
 
             {/* Marks 列表 */}
             <div className="fc-panel fc-marks-panel">
+              {/* Mark 操作按钮 */}
+              <div className="fc-mark-actions">
+                <button className="fc-action-btn" onClick={addMark} disabled={activeSolve.marks.some(m => m.frame === currentFrame)}>Add</button>
+                <button className="fc-action-btn" onClick={() => selectedMarkIdx !== null && removeMark(selectedMarkIdx)} disabled={selectedMarkIdx === null}>Remove</button>
+                <button className="fc-action-btn" onClick={updateMark} disabled={selectedMarkIdx === null}>Update</button>
+              </div>
               <div className="fc-marks-list">
                 {marksWithDiffs.length === 0 && (
                   <div className="fc-marks-empty">No marks yet. Press <kbd>M</kbd> to add.</div>
@@ -2311,12 +2317,6 @@ export default function FrameCountPage() {
                 )}
               </div>
 
-              {/* Mark 操作按钮 */}
-              <div className="fc-mark-actions">
-                <button className="fc-action-btn" onClick={addMark} disabled={activeSolve.marks.some(m => m.frame === currentFrame)}>Add</button>
-                <button className="fc-action-btn" onClick={() => selectedMarkIdx !== null && removeMark(selectedMarkIdx)} disabled={selectedMarkIdx === null}>Remove</button>
-                <button className="fc-action-btn" onClick={updateMark} disabled={selectedMarkIdx === null}>Update</button>
-              </div>
             </div>
           </div>
         )}
