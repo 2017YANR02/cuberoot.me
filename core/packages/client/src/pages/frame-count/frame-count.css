@@ -800,6 +800,7 @@
 .fc-tab-input::-webkit-inner-spin-button,
 .fc-tab-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 .fc-tab-input[type=number] { -moz-appearance: textfield; appearance: textfield; }
+.fc-tab-input:disabled { opacity: 0.5; cursor: not-allowed; color: #888; }
 
 .fc-tab-select {
   background: rgba(0,0,0,0.2);
