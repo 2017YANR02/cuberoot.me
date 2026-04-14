@@ -109,6 +109,10 @@ class FrameCache {
     return this.cache.has(index);
   }
 
+  get size(): number {
+    return this.cache.size;
+  }
+
   clear(): void {
     for (const bmp of this.cache.values()) bmp.close();
     this.cache.clear();
@@ -137,8 +141,22 @@ export function useFrameBuffer(
 
   // 防止重叠的 prefetch
   const prefetchSeqRef = useRef(0);
-  // 链式串行执行 decode：新请求 supersede 旧请求(通过 seq),等旧 decoder close 后再启动新的
-  const prefetchChainRef = useRef<Promise<void>>(Promise.resolve());
+  // 桌面允许 2 路并发 decode,iOS/Android 强制串行避免硬件压垮
+  // 并发主要用途: A 倒退连续播放时,stepBack 到达 batch 底部时,下一 batch 正好解完 → 无边界停顿
+  const MAX_CONCURRENT_DECODES = IS_MOBILE ? 1 : 2;
+  const activeDecodesRef = useRef(0);
+  const decodeQueueRef = useRef<Array<() => Promise<void>>>([]);
+  const pumpQueue = useCallback(() => {
+    while (activeDecodesRef.current < MAX_CONCURRENT_DECODES && decodeQueueRef.current.length > 0) {
+      const job = decodeQueueRef.current.shift()!;
+      activeDecodesRef.current++;
+      job().finally(() => {
+        activeDecodesRef.current--;
+        pumpQueue();
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // I 帧缩略图池 (专为拖动 scrub 设计,全局持久,不受 LRU 淘汰)
   // 键:Presentation index, 值:下采样的 ImageBitmap 缩略图
@@ -149,6 +167,18 @@ export function useFrameBuffer(
   // 用户输入的 fps 可能与视频真实 fps 不一致 (e.g. 视频 59.94fps 但用户填 5fps 测试),
   // 此时 public API 收到的 frameIndex 是 user-fps 语义, 内部 pIdx 是 real-fps 语义, 必须转换
   const realDurationRef = useRef(0);
+
+  // 诊断计数器 — 挂到 window.__fcDiag 便于控制台查看
+  const diagRef = useRef({
+    getFrameHit: 0,
+    getFrameMiss: 0,
+    thumbHit: 0,
+    thumbMiss: 0,
+    iFrameDecoderDead: false,
+    strideDecoderDead: false,
+    decodeRangeDeadCount: 0,
+    lastDecodeRangeError: null as { msg: string; at: number } | null,
+  });
 
   // ── 初始化：mp4box 解析文件 → 提取 samples → 配置 decoder ──
 
@@ -283,6 +313,9 @@ export function useFrameBuffer(
       cancelled = true;
       mp4File.stop();
       cache.clear();
+      // 清空 decode 队列,避免残留任务在下一视频里跑
+      decodeQueueRef.current = [];
+      prefetchSeqRef.current++; // bump seq 让正在跑的 decoder 立即 break
       // 清理 I 帧缩略图
       for (const bmp of keyThumbsRef.current.values()) bmp.close();
       keyThumbsRef.current.clear();
@@ -434,7 +467,16 @@ export function useFrameBuffer(
 
       const iFrameDecoder = new VideoDecoder({
         output: makeOutputHandler(() => true), // 所有 I 帧都保留
-        error: (e) => console.warn('[FrameBuffer] iFrame decoder error:', e),
+        error: (e) => {
+          diagRef.current.iFrameDecoderDead = true;
+          console.warn('[FCLog] ⚠️ iFrame decoder DEAD — phase1 thumbs lost', {
+            msg: (e as DOMException).message,
+            name: (e as DOMException).name,
+            state: iFrameDecoder.state,
+            thumbsSoFar: thumbs.size,
+            keyIndicesPlanned: keyIndices.length,
+          });
+        },
       });
 
       try {
@@ -470,7 +512,15 @@ export function useFrameBuffer(
       const strideDecoder = new VideoDecoder({
         // 跳过已缓存的索引和非步长位置
         output: makeOutputHandler((pIdx) => pIdx % stride === 0 && !thumbs.has(pIdx)),
-        error: (e) => console.warn('[FrameBuffer] Stride decoder error:', e),
+        error: (e) => {
+          diagRef.current.strideDecoderDead = true;
+          console.warn('[FCLog] ⚠️ Stride decoder DEAD — phase2 scrub thumbs lost', {
+            msg: (e as DOMException).message,
+            name: (e as DOMException).name,
+            state: strideDecoder.state,
+            thumbsSoFar: thumbs.size,
+          });
+        },
       });
 
       try {
@@ -548,9 +598,6 @@ export function useFrameBuffer(
       tsToPresIdx.set(Math.trunc(samples[d].timestamp), decodeToPres[d]);
     }
 
-    // 创建临时 decoder，收集解码结果
-    const pendingFrames: { index: number; bitmap: ImageBitmap }[] = [];
-
     // 移动端: LRU 缓存的精确帧也降到 720p 长边, 避免单帧 8MB × 60 = 480MB
     const cfgW = config.codedWidth ?? 1920;
     const cfgH = config.codedHeight ?? 1080;
@@ -563,14 +610,21 @@ export function useFrameBuffer(
       : null;
     const cacheCtx = cacheCanvas?.getContext('2d', { alpha: false }) ?? null;
 
+    // 流式入缓存: 帧一解出来就进 cache, 不等整批 flush
+    // 这对 A 倒退播放至关重要 — stepBack 消费速度 >= decode 速度时,
+    // 若等 flush 才填 cache, stepBack 就会在 WAIT 分支卡住直到整批完成
     const decoder = new VideoDecoder({
       output: async (frame: VideoFrame) => {
-        // seq 检查，避免过期解码浪费
         if (seq !== prefetchSeqRef.current) {
           frame.close();
           return;
         }
         try {
+          const matchPIdx = tsToPresIdx.get(Math.trunc(frame.timestamp));
+          // 超出请求范围的帧(decoder 为了还原 P/B 依赖链必须多解一些) 直接丢弃
+          if (matchPIdx === undefined || matchPIdx < pStart || matchPIdx > pEnd || cache.has(matchPIdx)) {
+            return;
+          }
           let bitmap: ImageBitmap;
           if (cacheCanvas && cacheCtx) {
             cacheCtx.drawImage(frame, 0, 0, cacheW, cacheH);
@@ -578,13 +632,12 @@ export function useFrameBuffer(
           } else {
             bitmap = await createImageBitmap(frame);
           }
-          // Use timestamp to map back exactly to Presentation Index
-          const matchPIdx = tsToPresIdx.get(Math.trunc(frame.timestamp));
-          if (matchPIdx !== undefined) {
-            pendingFrames.push({ index: matchPIdx, bitmap });
-          } else {
+          // 入缓存前再 check 一次 seq —— createImageBitmap 是 await, 期间可能已被 supersede
+          if (seq !== prefetchSeqRef.current || cache.has(matchPIdx)) {
             bitmap.close();
+            return;
           }
+          cache.set(matchPIdx, bitmap);
         } catch {
           // createImageBitmap 失败（极罕见）
         } finally {
@@ -592,7 +645,19 @@ export function useFrameBuffer(
         }
       },
       error: (e: DOMException) => {
-        console.warn('[FrameBuffer] Decoder error:', e);
+        diagRef.current.decodeRangeDeadCount++;
+        diagRef.current.lastDecodeRangeError = { msg: e.message, at: Date.now() };
+        console.warn('[FCLog] ⚠️ decodeRange decoder DEAD — exact frames gone', {
+          msg: e.message,
+          name: e.name,
+          state: decoder.state,
+          seq,
+          pStart,
+          pEnd,
+          cacheSize: cache.size,
+          queueWas: decoder.decodeQueueSize,
+          deadCount: diagRef.current.decodeRangeDeadCount,
+        });
       },
     });
 
@@ -621,23 +686,14 @@ export function useFrameBuffer(
       }
 
       if (decoder.state === 'configured') await decoder.flush();
-
-      // 只缓存用户请求的 Presentation 范围 [pStart, pEnd]
-      if (seq === prefetchSeqRef.current) {
-        for (const pf of pendingFrames) {
-          if (pf.index >= pStart && pf.index <= pEnd && !cache.has(pf.index)) {
-            cache.set(pf.index, pf.bitmap);
-          } else {
-            pf.bitmap.close();
-          }
-        }
-      } else {
-        // 已过期，全部释放
-        for (const pf of pendingFrames) pf.bitmap.close();
-      }
+      // 流式入 cache, 无需在此做批量转移
     } catch (e) {
-      console.warn('[FrameBuffer] Decode range failed:', e);
-      for (const pf of pendingFrames) pf.bitmap.close();
+      const err = e as DOMException;
+      diagRef.current.decodeRangeDeadCount++;
+      diagRef.current.lastDecodeRangeError = { msg: err.message ?? String(e), at: Date.now() };
+      console.warn('[FCLog] ⚠️ decodeRange sync throw — likely configure() failure', {
+        msg: err.message, name: err.name, seq, pStart, pEnd,
+      });
     } finally {
       if (decoder.state !== 'closed') {
         decoder.close();
@@ -710,29 +766,29 @@ export function useFrameBuffer(
     }
     if (allCached) return;
 
-    // 总是 bump seq —— 旧的 decodeRange 在循环里检查 seq 会立即 break,加快旧 decoder 释放
-    const seq = ++prefetchSeqRef.current;
+    // 注意: 只有"会互相 supersede 的请求"才 bump seq (drag 场景). 播放期的 prefetch
+    // 是并排排队、互不替代的, 不能 bump 否则队列里前面的批次全被当过期跳过.
+    // 这里用 cache 命中率已经过滤了重复请求,直接沿用当前 seq 即可.
+    const seq = prefetchSeqRef.current;
 
-    // 串行链:等上一个 decode close 后再启动,避免多个 VideoDecoder 资源争抢
-    prefetchChainRef.current = prefetchChainRef.current.then(() => {
-      // 排队期间又来了更新的请求 → 跳过这次
-      if (seq !== prefetchSeqRef.current) return;
-      return decodeRange(from, to, seq);
-    }).catch(() => {});
-  }, [isReady, decodeRange, userToPIdx]);
+    decodeQueueRef.current.push(() => decodeRange(from, to, seq));
+    pumpQueue();
+  }, [isReady, decodeRange, userToPIdx, pumpQueue]);
 
   // ── getFrame ──
   // 入参 frameIndex 为 user-fps 语义, 内部转换为 real pIdx 查缓存
   const getFrame = useCallback((frameIndex: number): ImageBitmap | null => {
     if (!isReady) return null;
-    return cacheRef.current.get(userToPIdx(frameIndex));
+    const bmp = cacheRef.current.get(userToPIdx(frameIndex));
+    if (bmp) diagRef.current.getFrameHit++; else diagRef.current.getFrameMiss++;
+    return bmp;
   }, [isReady, userToPIdx]);
 
   // 二分查找 <= frameIndex 的最大 I 帧索引,返回对应的缩略图
   // 入参 frameIndex 为 user-fps 语义, 内部转换后再二分查找 (indices 是 real pIdx)
   const getKeyFrameThumb = useCallback((frameIndex: number): ImageBitmap | null => {
     const indices = keyThumbIndicesRef.current;
-    if (indices.length === 0) return null;
+    if (indices.length === 0) { diagRef.current.thumbMiss++; return null; }
     const pIdx = userToPIdx(frameIndex);
     let lo = 0, hi = indices.length - 1, best = indices[0];
     while (lo <= hi) {
@@ -740,8 +796,27 @@ export function useFrameBuffer(
       if (indices[mid] <= pIdx) { best = indices[mid]; lo = mid + 1; }
       else hi = mid - 1;
     }
-    return keyThumbsRef.current.get(best) ?? null;
+    const bmp = keyThumbsRef.current.get(best) ?? null;
+    if (bmp) diagRef.current.thumbHit++; else diagRef.current.thumbMiss++;
+    return bmp;
   }, [userToPIdx]);
+
+  // 把诊断快照挂到 window.__fcDiag(),控制台任意时刻调用可查看
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    (window as unknown as { __fcDiag?: () => unknown }).__fcDiag = () => ({
+      isReady,
+      samples: samplesRef.current.length,
+      realDuration: realDurationRef.current,
+      userFps: fpsRef.current,
+      realFps: realDurationRef.current > 0 ? samplesRef.current.length / realDurationRef.current : null,
+      keyThumbCount: keyThumbIndicesRef.current.length,
+      cacheSize: cacheRef.current.size,
+      prefetchSeq: prefetchSeqRef.current,
+      ...diagRef.current,
+    });
+    return () => { delete (window as unknown as { __fcDiag?: () => unknown }).__fcDiag; };
+  }, [isReady]);
 
   // ── dispose ──
 

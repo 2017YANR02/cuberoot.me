@@ -303,6 +303,14 @@ export default function FrameCountPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [useCanvasDisplay, setUseCanvasDisplay] = useState(false);
+  // 诊断: useCanvasDisplay 每次变化时,打印状态和 canvas 尺寸
+  useEffect(() => {
+    const c = canvasRef.current;
+    console.log('[FCLog] useCanvasDisplay →', useCanvasDisplay, {
+      canvasW: c?.width, canvasH: c?.height,
+      blackRisk: useCanvasDisplay && (!c || c.width === 0 || c.height === 0),
+    });
+  }, [useCanvasDisplay]);
 
 
 
@@ -547,6 +555,7 @@ export default function FrameCountPage() {
   const [timelineThumbs, setTimelineThumbs] = useState<typeof keyFrameThumbs>([]);
   // 视频切换/count 改变/fps 改变 (frameIdx 坐标重映射) 时重置
   useEffect(() => {
+    console.log('[FCLog] timelineThumbs RESET', { videoFile: !!videoFile, timelineThumbCount, videoFps });
     setTimelineThumbs([]);
   }, [videoFile, timelineThumbCount, videoFps]);
   // 有 thumbs 时按目标帧位置挑最近的一张填充
@@ -619,6 +628,7 @@ export default function FrameCountPage() {
 
   const seekRafRef = useRef(0);
   const isDraggingRef = useRef(false);
+  const thumbMissLoggedRef = useRef(false);
 
   // 拖动专用的"丝滑 scrub"路径 — PR/剪映式架构
   // 核心纪律:
@@ -635,7 +645,15 @@ export default function FrameCountPage() {
     setCurrentFrame(f);
     // 拖动期间只走 I 帧缩略图一种源,避免高清/缩略图混用导致的分辨率跳变
     const bmp = getKeyFrameThumb(f);
-    if (!bmp) return;
+    if (!bmp) {
+      // 拖动时 thumb miss 说明 iFrame decoder 挂了或被 supersede 空了 — canvas 会卡在旧帧
+      if (!thumbMissLoggedRef.current) {
+        console.warn('[FCLog] seekToFrameRough THUMB MISS — scrub frozen on last frame', { f });
+        thumbMissLoggedRef.current = true;
+      }
+      return;
+    }
+    thumbMissLoggedRef.current = false;
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
     if (!ctx || !canvas || canvas.width === 0) return;
@@ -660,14 +678,23 @@ export default function FrameCountPage() {
     // 初始绘制: 优先精确帧,次选缩略图,再次 video 元素快照
     const exact = getFrame(currentFrameRef.current);
     const thumb = getKeyFrameThumb(currentFrameRef.current);
+    let painted = false;
     if (exact) {
       ctx.drawImage(exact, 0, 0, w, h);
+      painted = true;
     } else if (thumb) {
       ctx.drawImage(thumb, 0, 0, w, h);
+      painted = true;
     } else if (video.videoWidth > 0) {
       ctx.drawImage(video, 0, 0, w, h);
+      painted = true;
     }
-    setUseCanvasDisplay(true);
+    // 没画成任何东西就不要切到 canvas 覆盖 <video> —— 否则黑屏
+    if (painted) {
+      setUseCanvasDisplay(true);
+    } else {
+      console.warn('[FCLog] beginDragOverlay FAILED to paint — keeping <video> visible');
+    }
   }, [getFrame, getKeyFrameThumb]);
 
   const seekToFrame = useCallback((frame: number) => {
@@ -698,17 +725,23 @@ export default function FrameCountPage() {
         setUseCanvasDisplay(true);
         video.currentTime = (f + 0.5) / videoFps;
       } else {
+        console.log('[FCLog] seekToFrame cache miss — entering tryRender loop (normal)', { f, totalFrames });
         // 缓存未命中: 让 video 元素开始粗略 seek (作为背景 fallback)
         // 但保持 useCanvasDisplay 现状 — 拖动时 canvas 上的旧帧比 "seek 中的黑屏 video" 观感更好
         video.currentTime = (f + 0.5) / videoFps;
         // 启动后台精确解码,完成后在 canvas 上画新帧 (小批量,避免拖动时反复 supersede)
         prefetch(f, 10);
+        let tries = 0;
+        const tryRenderStart = performance.now();
         const tryRender = () => {
+          tries++;
           // 若用户已开始播放,canvas 必须让位给 video,绝不能在此再 setUseCanvasDisplay(true) 把 video 罩住
-          if (!video.paused) return;
-          if (currentFrameRef.current !== f) return; // Superceded
+          if (!video.paused) { console.log('[FCLog] tryRender abort: video playing', { f, tries }); return; }
+          if (currentFrameRef.current !== f) { console.log('[FCLog] tryRender abort: superseded', { f, newF: currentFrameRef.current, tries }); return; }
           const bmp = getFrame(f);
           if (bmp) {
+            const elapsed = Math.round(performance.now() - tryRenderStart);
+            console.log('[FCLog] tryRender SUCCESS', { f, tries, elapsedMs: elapsed });
             const canvas = canvasRef.current;
             const ctx = canvas?.getContext('2d');
             if (ctx && canvas) {
@@ -718,6 +751,23 @@ export default function FrameCountPage() {
             }
             setUseCanvasDisplay(true);
           } else {
+            // 超时 fallback: decoder 可能已死,永远不会拿到 bitmap
+            // 放弃 canvas,交还给 <video> 元素 (至少不黑屏)
+            // 120 tries ≈ 2s @ 60fps — 足够正常 prefetch 跑完,超时就说明 decoder 炸了
+            if (tries > 120) {
+              const elapsed = Math.round(performance.now() - tryRenderStart);
+              console.warn('[FCLog] tryRender TIMEOUT — falling back to <video>', {
+                f, tries, elapsedMs: elapsed,
+                diag: (window as unknown as { __fcDiag?: () => unknown }).__fcDiag?.(),
+              });
+              setUseCanvasDisplay(false);
+              return;
+            }
+            if (tries === 60) {
+              console.log('[FCLog] tryRender taking a while — 60 tries (~1s)', {
+                f, elapsedMs: Math.round(performance.now() - tryRenderStart),
+              });
+            }
             seekRafRef.current = requestAnimationFrame(tryRender);
           }
         };
@@ -1280,13 +1330,18 @@ export default function FrameCountPage() {
             // 避免每 10 帧无脑触发,导致正在跑的 decode 反复被新请求 supersede。
             console.log(`[StepBack] START frame=${currentFrameRef.current}, bufferReady=${frameBufferReady}`);
             // 按 fps 自适应预取,但封顶 120 帧/批,防止单次 decode 过大导致首次响应慢
-            // triggerLead 设在 range 的 ~66%,较早触发下一批,给 decoder 充裕时间
+            // triggerLead 设在 range 的 ~80%,较早触发下一批,给 decoder 充裕时间
+            // 启动时并排派 2 批 —— useFrameBuffer 内部有 2 路并发 decoder 池,两批同时解
             const prefetchRange = Math.min(120, Math.max(60, Math.round(videoFps)));
-            const triggerLead = Math.round(prefetchRange * 0.66);
+            const triggerLead = Math.round(prefetchRange * 0.8);
             let lowestPrefetched = currentFrameRef.current;
             if (frameBufferReady) {
               prefetch(currentFrameRef.current, prefetchRange, 'backward');
               lowestPrefetched = currentFrameRef.current - prefetchRange;
+              if (lowestPrefetched > 0) {
+                prefetch(lowestPrefetched, prefetchRange, 'backward');
+                lowestPrefetched -= prefetchRange;
+              }
             }
 
             // 基于真实时间+累加器计算步进，保持 1x 速（高 FPS 视频在 60Hz 屏幕上会跳帧显示）
@@ -1308,18 +1363,21 @@ export default function FrameCountPage() {
               const f = Math.max(0, currentFrameRef.current - step);
 
               const bitmap = frameBufferReady ? getFrame(f) : null;
-              if (bitmap) {
-                // 缓冲命中 — 渲染到 canvas
+              // 精确帧命中 → 高清渲染; 未命中则尝试用最近 I 帧缩略图作为"低分辨率垫图"
+              // 让 playhead + 画面持续推进, 高 fps 视频下宁可画面颗粒也不要完全冻住
+              const thumb = !bitmap && frameBufferReady ? getKeyFrameThumb(f) : null;
+              const drawable: ImageBitmap | null = bitmap ?? thumb;
+              if (drawable) {
                 frameBudget -= step;
                 currentFrameRef.current = f;
                 setCurrentFrame(f);
-                hitCount++;
+                if (bitmap) hitCount++; else missCount++;
                 const canvas = canvasRef.current;
                 const ctx = canvas?.getContext('2d');
                 if (ctx && canvas) {
-                  canvas.width = bitmap.width;
-                  canvas.height = bitmap.height;
-                  ctx.drawImage(bitmap, 0, 0);
+                  canvas.width = drawable.width;
+                  canvas.height = drawable.height;
+                  ctx.drawImage(drawable, 0, 0);
                 }
                 setUseCanvasDisplay(true);
 
@@ -1331,11 +1389,10 @@ export default function FrameCountPage() {
                 }
                 requestAnimationFrame(stepBack);
               } else if (frameBufferReady) {
-                // 缓冲 READY 但当前帧还没解码 — 保持当前画面冻住，rAF 下一帧重试
-                // 不做救场 prefetch: supersede 会把正在跑的 decoder 重启,导致永远不完成
+                // 连缩略图都没有 (极早期还没解出任何 I 帧) — 保持当前画面,rAF 重试
                 missCount++;
                 if (missCount <= 3) {
-                  console.log(`[StepBack] WAIT frame=${f}, prefetch in progress...`);
+                  console.log(`[StepBack] WAIT frame=${f}, no thumb yet...`);
                 }
                 requestAnimationFrame(stepBack);
               } else {
@@ -2141,8 +2198,8 @@ export default function FrameCountPage() {
                 {/* Thumbnail filmstrip — 优先用 WebCodecs 增量缩略图 (视频加载后立即开始出现) */}
                 <div className="fc-timeline-filmstrip">
                   {timelineThumbs.length > 0
-                    ? timelineThumbs.map(({ frameIdx, bitmap }) => (
-                        <ThumbnailCanvas key={frameIdx} bitmap={bitmap} />
+                    ? timelineThumbs.map(({ bitmap }, i) => (
+                        <ThumbnailCanvas key={i} bitmap={bitmap} />
                       ))
                     : thumbnails.map((src, i) => (
                         <img key={i} src={src} className="fc-timeline-thumb" alt="" draggable={false} />
