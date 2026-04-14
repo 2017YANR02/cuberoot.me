@@ -827,7 +827,9 @@ export function useFrameBuffer(
   // ── 基于 sample timestamp 的起表帧定位 ──
   // WCA 公式 frames = ⌈(⌊time⌋₂+.009)×fps⌉ 依赖单一 fps 值, 容器读数漂移时 ±1 帧。
   // 这里直接用 mp4box 解析出的每个 sample 的 timestamp 做 ground truth:
-  // 从 end-frame 的 timestamp 往前减 secondsBack 秒, 二分查找最近的 sample。
+  // 从 end-frame 的 timestamp 往前减 secondsBack 秒, 取 timestamp ≤ target 的最大 sample。
+  // 注意: 这里故意用 floor 而非 nearest —— 取更小的 timestamp 意味着计算出的起表帧更早,
+  // 测出的 solve 区间更长, 与 FPS 公式里的 ⌈⌉ ceiling 同方向: 宁可错失判罚, 不冤枉选手。
   const findStartFrameByTimestamp = useCallback(
     (endUserFrame: number, secondsBack: number): number | null => {
       const samples = samplesRef.current;
@@ -844,10 +846,9 @@ export function useFrameBuffer(
         if (samples[mid].timestamp < targetTs) lo = mid + 1;
         else hi = mid;
       }
-      // 比较 lo 和 lo-1, 选时间戳更接近 targetTs 的那个
-      const cand = lo > 0 &&
-        Math.abs(samples[lo - 1].timestamp - targetTs) < Math.abs(samples[lo].timestamp - targetTs)
-        ? lo - 1 : lo;
+      // floor: 若 samples[lo].timestamp 严格大于 targetTs, 回退到 lo-1 (更早的 sample);
+      // 只有当 samples[lo].timestamp === targetTs 时才保留 lo。
+      const cand = samples[lo].timestamp > targetTs && lo > 0 ? lo - 1 : lo;
       return pIdxToUser(cand);
     },
     [userToPIdx, pIdxToUser],
