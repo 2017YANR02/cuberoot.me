@@ -348,6 +348,14 @@ export default function FrameCountPage() {
   // Ref 跟踪最新值，避免快速滚轮事件中闭包捕获的值过时
   const zoomRef = useRef(1);
   const panRef = useRef({ x: 0, y: 0 });
+  // 双指 pinch 状态: 记录起点距离 + zoom + 中心 + pan
+  const pinchRef = useRef<{
+    startDist: number;
+    startZoom: number;
+    startPan: { x: number; y: number };
+    midX: number;
+    midY: number;
+  } | null>(null);
 
   // Timeline trimmer
   const [thumbnails, setThumbnails] = useState<string[]>([]);
@@ -435,6 +443,74 @@ export default function FrameCountPage() {
   // 拖动结束
   const handlePanEnd = useCallback(() => {
     isPanningRef.current = false;
+  }, []);
+
+  // 双指 pinch 缩放处理 (移动端 video wrapper)
+  const handlePinchStart = useCallback((t1: Touch, t2: Touch) => {
+    if (cropMode) return;
+    const target = wrapperRef.current;
+    if (!target) return;
+    const rect = target.getBoundingClientRect();
+    const dx = t2.clientX - t1.clientX;
+    const dy = t2.clientY - t1.clientY;
+    const dist = Math.hypot(dx, dy);
+    const cx = (t1.clientX + t2.clientX) / 2;
+    const cy = (t1.clientY + t2.clientY) / 2;
+    // 中心相对 wrapper 未变换中心的偏移 (与 wheel zoom 一致的算法)
+    const midX = cx - (rect.left + rect.width / 2) + panRef.current.x;
+    const midY = cy - (rect.top + rect.height / 2) + panRef.current.y;
+    pinchRef.current = {
+      startDist: dist,
+      startZoom: zoomRef.current,
+      startPan: { ...panRef.current },
+      midX, midY,
+    };
+    isPanningRef.current = false;
+  }, [cropMode]);
+
+  const handlePinchMove = useCallback((t1: Touch, t2: Touch) => {
+    const p = pinchRef.current;
+    if (!p) return;
+    const dx = t2.clientX - t1.clientX;
+    const dy = t2.clientY - t1.clientY;
+    const dist = Math.hypot(dx, dy);
+    if (dist === 0 || p.startDist === 0) return;
+    const ratio = dist / p.startDist;
+    const newZoom = Math.max(1, Math.min(8, p.startZoom * ratio));
+    if (newZoom <= 1) {
+      zoomRef.current = 1;
+      panRef.current = { x: 0, y: 0 };
+      setZoom(1);
+      setPan({ x: 0, y: 0 });
+      return;
+    }
+    // 不动点公式: midX 在 startZoom/startPan 下的位置, 缩放后保持视觉位置不变
+    const r = newZoom / p.startZoom;
+    const newPan = {
+      x: p.midX * (1 - r) + p.startPan.x * r,
+      y: p.midY * (1 - r) + p.startPan.y * r,
+    };
+    zoomRef.current = newZoom;
+    panRef.current = newPan;
+    setZoom(newZoom);
+    setPan(newPan);
+  }, []);
+
+  const handlePinchEnd = useCallback(() => {
+    pinchRef.current = null;
+  }, []);
+
+  // iOS Safari 全局禁缩放: 拦截 gesture* 事件 (双指 pinch 和双击 zoom)
+  useEffect(() => {
+    const prevent = (e: Event) => e.preventDefault();
+    document.addEventListener('gesturestart', prevent);
+    document.addEventListener('gesturechange', prevent);
+    document.addEventListener('gestureend', prevent);
+    return () => {
+      document.removeEventListener('gesturestart', prevent);
+      document.removeEventListener('gesturechange', prevent);
+      document.removeEventListener('gestureend', prevent);
+    };
   }, []);
   const [solveTime, setSolveTime] = useState('');
 
@@ -1962,9 +2038,25 @@ export default function FrameCountPage() {
                   onMouseMove={(e) => handlePanMove(e.clientX, e.clientY)}
                   onMouseUp={handlePanEnd}
                   onMouseLeave={handlePanEnd}
-                  onTouchStart={(e) => { if (!cropMode) handlePanStart(e.touches[0].clientX, e.touches[0].clientY); }}
-                  onTouchMove={(e) => handlePanMove(e.touches[0].clientX, e.touches[0].clientY)}
-                  onTouchEnd={handlePanEnd}
+                  onTouchStart={(e) => {
+                    if (cropMode) return;
+                    if (e.touches.length >= 2) {
+                      handlePinchStart(e.touches[0], e.touches[1]);
+                    } else {
+                      handlePanStart(e.touches[0].clientX, e.touches[0].clientY);
+                    }
+                  }}
+                  onTouchMove={(e) => {
+                    if (e.touches.length >= 2 && pinchRef.current) {
+                      handlePinchMove(e.touches[0], e.touches[1]);
+                    } else if (e.touches.length === 1 && !pinchRef.current) {
+                      handlePanMove(e.touches[0].clientX, e.touches[0].clientY);
+                    }
+                  }}
+                  onTouchEnd={(e) => {
+                    if (e.touches.length < 2) handlePinchEnd();
+                    if (e.touches.length === 0) handlePanEnd();
+                  }}
                 >
                   <video
                     ref={videoRef}
