@@ -1021,7 +1021,7 @@
     font-size: 1rem;
   }
 
-  /* 手机端: toolbar 变成纵向两行, 每行内部横向排列 */
+  /* 手机端: toolbar 变成纵向两行, 每行内部横向排列 (不换行, 紧凑布局) */
   .fc-video-toolbar {
     flex-direction: column;
     align-items: stretch;
@@ -1032,20 +1032,46 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
   }
-  .fc-toolbar-row2 {
-    justify-content: flex-end;
-  }
+  /* 文件名吃剩余宽度, 超长省略号; inputs 固定宽度 */
   .fc-video-label {
-    flex: 1 1 auto;
+    flex: 1 1 0;
     min-width: 0;
+    max-width: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
-  .fc-change-video {
+  .fc-toolbar-row1 .fc-input-unit-wrap {
+    flex: 0 0 auto;
+  }
+  .fc-toolbar-row1 .fc-toolbar-time {
+    width: 100px !important;
+  }
+  /* Row 2: 图像变换按钮靠左, 其他紧随其后, Export 靠右 */
+  .fc-toolbar-row2 .fc-toolbar-controls {
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+  }
+  .fc-toolbar-row2 .fc-change-video {
     margin-left: 0;
+  }
+  .fc-toolbar-row2 .fc-export-wrap {
+    margin-left: auto;
   }
   /* 手机端不需要 Folder — 本地文件系统 API 在移动浏览器基本不可用 */
   .fc-folder-btn {
     display: none;
+  }
+  /* iOS Safari: input font-size < 16px 会触发自动放大整页. 强制 16px 防止 zoom. */
+  .frame-count-page input,
+  .frame-count-page input[type="text"],
+  .frame-count-page input[type="number"],
+  .frame-count-page select,
+  .frame-count-page textarea,
+  .fc-toolbar-time,
+  .fc-tab-input {
+    font-size: 16px !important;
   }
 }
