@@ -131,6 +131,9 @@ export function useFrameBuffer(
   const decodeToPresentationRef = useRef<Int32Array>(new Int32Array(0));
   const presentationToDecodeRef = useRef<Int32Array>(new Int32Array(0));
   const configRef = useRef<VideoDecoderConfig | null>(null);
+  // fps 用 ref 跟踪: 避免用户编辑 FPS 输入框触发整个缩略图解码流水线重跑 (OOM 风险)
+  const fpsRef = useRef(fps);
+  fpsRef.current = fps;
 
   // 防止重叠的 prefetch
   const prefetchSeqRef = useRef(0);
@@ -273,7 +276,7 @@ export function useFrameBuffer(
       keyThumbIndicesRef.current = [];
       setThumbVersion(0);
     };
-  }, [videoFile, fps]);
+  }, [videoFile]);
 
   // ── 缩略图两阶段预解码 ──
   // 阶段 1 (快): 只解码所有 I 帧 — 自包含、解码极快,几百 ms 内全部落盘,
@@ -312,12 +315,14 @@ export function useFrameBuffer(
     const phase1Count = Math.min(iFrameCount, MAX_PHASE1_THUMBS);
     const iFrameSubsampleStep = iFrameCount > 0 ? Math.max(1, Math.ceil(iFrameCount / phase1Count)) : 1;
 
+    // 读 fpsRef: 用户改 FPS 后不重跑本 effect, 仍按首次加载时的 fps 规划
+    const effectiveFps = Math.max(1, fpsRef.current);
     // 步长: 每秒 ~10 张; 若按目标分辨率仍超预算, 自动增大 stride
-    let stride = Math.max(1, Math.round(fps / 10));
+    let stride = Math.max(1, Math.round(effectiveFps / 10));
 
     // 短视频 (≤10s) 强制高清; 其余按 MIN_DIM 底线
     // 移动端封顶 540p, 因为 ImageBitmap 太大会被 iOS 强制 reload
-    const durationSec = samples.length / fps;
+    const durationSec = samples.length / effectiveFps;
     const SHORT_VIDEO_DIM = IS_MOBILE ? 960 : 1920;
     const desiredDim = durationSec <= 10
       ? Math.min(NATIVE_DIM, SHORT_VIDEO_DIM)
@@ -484,7 +489,7 @@ export function useFrameBuffer(
     })();
 
     return () => { cancelled = true; };
-  }, [isReady, fps]);
+  }, [isReady]);
 
   // ── 解码一段帧范围 [from, to] ──
 
