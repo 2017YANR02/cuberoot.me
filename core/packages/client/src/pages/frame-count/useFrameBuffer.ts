@@ -145,6 +145,11 @@ export function useFrameBuffer(
   const keyThumbsRef = useRef<Map<number, ImageBitmap>>(new Map());
   const keyThumbIndicesRef = useRef<number[]>([]); // 排序的 I 帧 presentation index,便于二分查找
 
+  // 视频实际时长 (秒), 用于 user-fps ↔ real pIdx 转换
+  // 用户输入的 fps 可能与视频真实 fps 不一致 (e.g. 视频 59.94fps 但用户填 5fps 测试),
+  // 此时 public API 收到的 frameIndex 是 user-fps 语义, 内部 pIdx 是 real-fps 语义, 必须转换
+  const realDurationRef = useRef(0);
+
   // ── 初始化：mp4box 解析文件 → 提取 samples → 配置 decoder ──
 
   useEffect(() => {
@@ -258,7 +263,15 @@ export function useFrameBuffer(
         decodeToPresentationRef.current = decodeToPres;
         presentationToDecodeRef.current = presToDecode;
 
-        console.log(`[FrameBuffer] READY — ${len} samples, codec=${configRef.current.codec}, ${configRef.current.codedWidth}x${configRef.current.codedHeight}`);
+        // 记录视频实际时长 (presentation 最后一帧的 end time)
+        let maxEnd = 0;
+        for (const s of samplesRef.current) {
+          const end = s.timestamp + s.duration;
+          if (end > maxEnd) maxEnd = end;
+        }
+        realDurationRef.current = maxEnd / 1_000_000;
+
+        console.log(`[FrameBuffer] READY — ${len} samples, codec=${configRef.current.codec}, ${configRef.current.codedWidth}x${configRef.current.codedHeight}, realDur=${realDurationRef.current.toFixed(3)}s, realFps=${(len / realDurationRef.current).toFixed(3)}`);
         setIsReady(true);
       } else {
         console.warn('[FrameBuffer] NOT READY — config:', !!configRef.current, 'samples:', samplesRef.current.length);
@@ -428,10 +441,12 @@ export function useFrameBuffer(
         iFrameDecoder.configure(config);
         for (const di of keyIndices) {
           if (cancelled) break;
+          if (iFrameDecoder.state !== 'configured') break;
           // 背压：防止硬件解码器队列溢出（4K HEVC + iOS 尤其敏感）
-          while (iFrameDecoder.decodeQueueSize > (IS_MOBILE ? 2 : 8) && !cancelled) {
+          while (iFrameDecoder.decodeQueueSize > (IS_MOBILE ? 2 : 8) && !cancelled && iFrameDecoder.state === 'configured') {
             await new Promise(r => setTimeout(r, IS_MOBILE ? 16 : 4));
           }
+          if (iFrameDecoder.state !== 'configured') break;
           const s = samples[di];
           iFrameDecoder.decode(new EncodedVideoChunk({
             type: 'key',
@@ -440,7 +455,7 @@ export function useFrameBuffer(
             data: s.data,
           }));
         }
-        await iFrameDecoder.flush();
+        if (iFrameDecoder.state === 'configured') await iFrameDecoder.flush();
       } catch (e) {
         console.warn('[FrameBuffer] iFrame decode failed:', e);
       } finally {
@@ -462,10 +477,14 @@ export function useFrameBuffer(
         strideDecoder.configure(config);
         for (let i = 0; i < samples.length; i++) {
           if (cancelled) break;
+          // decoder error 会把 state 切到 'closed', 继续 decode 必抛 InvalidStateError
+          // 级联噪音 → 直接退出循环
+          if (strideDecoder.state !== 'configured') break;
           // 背压：防止硬件解码器队列溢出 (iOS 收紧)
-          while (strideDecoder.decodeQueueSize > (IS_MOBILE ? 4 : 16) && !cancelled) {
+          while (strideDecoder.decodeQueueSize > (IS_MOBILE ? 4 : 16) && !cancelled && strideDecoder.state === 'configured') {
             await new Promise(r => setTimeout(r, IS_MOBILE ? 16 : 4));
           }
+          if (strideDecoder.state !== 'configured') break;
           const s = samples[i];
           strideDecoder.decode(new EncodedVideoChunk({
             type: s.isSync ? 'key' : 'delta',
@@ -474,7 +493,7 @@ export function useFrameBuffer(
             data: s.data,
           }));
         }
-        await strideDecoder.flush();
+        if (strideDecoder.state === 'configured') await strideDecoder.flush();
       } catch (e) {
         console.warn('[FrameBuffer] Stride decode failed:', e);
       } finally {
@@ -583,10 +602,13 @@ export function useFrameBuffer(
       // 从 I 帧顺序送入到 maxD (严格的底层物理顺序，保证所有 P/B 时域依赖完整)
       for (let i = iFrameIdx; i <= maxD; i++) {
         if (seq !== prefetchSeqRef.current) break;
+        // decoder error 会把 state 切到 'closed', 跳出避免 "closed codec" 级联噪音
+        if (decoder.state !== 'configured') break;
         // 背压：4K HEVC / iOS 解码器队列溢出会导致 EncodingError 或页面崩溃
-        while (decoder.decodeQueueSize > (IS_MOBILE ? 4 : 16) && seq === prefetchSeqRef.current) {
+        while (decoder.decodeQueueSize > (IS_MOBILE ? 4 : 16) && seq === prefetchSeqRef.current && decoder.state === 'configured') {
           await new Promise(r => setTimeout(r, IS_MOBILE ? 16 : 4));
         }
+        if (decoder.state !== 'configured') break;
         const s = samples[i];
 
         const chunk = new EncodedVideoChunk({
@@ -598,7 +620,7 @@ export function useFrameBuffer(
         decoder.decode(chunk);
       }
 
-      await decoder.flush();
+      if (decoder.state === 'configured') await decoder.flush();
 
       // 只缓存用户请求的 Presentation 范围 [pStart, pEnd]
       if (seq === prefetchSeqRef.current) {
@@ -623,27 +645,62 @@ export function useFrameBuffer(
     }
   }, []);
 
+  // ── user-fps ↔ real pIdx 转换 ──
+  // user 输入的 frameIndex 语义: frame N 对应时间 N / userFps 秒
+  // 内部 samples / cache / keyThumbs 用的 pIdx 语义: frame N 对应时间 samples[p2d[N]].timestamp 秒
+  // 当用户填的 fps 与视频真实 fps 不一致时, 必须在 public API 边界做转换
+  const userToPIdx = useCallback((userFrame: number): number => {
+    const samples = samplesRef.current;
+    if (samples.length === 0) return 0;
+    const dur = realDurationRef.current;
+    if (dur <= 0) return Math.max(0, Math.min(samples.length - 1, userFrame));
+    const userFps = Math.max(1e-6, fpsRef.current);
+    const realFps = samples.length / dur;
+    const pIdx = Math.round(userFrame * realFps / userFps);
+    return Math.max(0, Math.min(samples.length - 1, pIdx));
+  }, []);
+
+  const pIdxToUser = useCallback((pIdx: number): number => {
+    const samples = samplesRef.current;
+    if (samples.length === 0) return 0;
+    const dur = realDurationRef.current;
+    if (dur <= 0) return pIdx;
+    const userFps = Math.max(1e-6, fpsRef.current);
+    const realFps = samples.length / dur;
+    return Math.round(pIdx * userFps / realFps);
+  }, []);
+
   // ── prefetch ──
 
   const prefetch = useCallback((center: number, range: number, direction?: 'backward' | 'forward') => {
     if (!isReady) return;
 
+    // user-fps frame → real pIdx
+    const pCenter = userToPIdx(center);
+    // range 也要按 realFps/userFps 比例缩放 (保证预取同样的"时间窗口"),
+    // 但封顶防止 userFps << realFps 时一次预取整个视频 (OOM)
+    const samples = samplesRef.current;
+    const dur = realDurationRef.current;
+    const userFps = Math.max(1e-6, fpsRef.current);
+    const realFps = dur > 0 ? samples.length / dur : userFps;
+    const scaledRange = Math.ceil(range * realFps / userFps);
+    const pRange = Math.min(300, Math.max(1, scaledRange));
+
     // 方向偏移：backward 全部向左，forward 全部向右
     let from: number, to: number;
     if (direction === 'backward') {
-      from = center - range;
-      to = center;
+      from = pCenter - pRange;
+      to = pCenter;
     } else if (direction === 'forward') {
-      from = center;
-      to = center + range;
+      from = pCenter;
+      to = pCenter + pRange;
     } else {
-      from = center - range;
-      to = center + range;
+      from = pCenter - pRange;
+      to = pCenter + pRange;
     }
 
     // 检查是否已经全部缓存
     const cache = cacheRef.current;
-    const samples = samplesRef.current;
     const actualFrom = Math.max(0, from);
     const actualTo = Math.min(samples.length - 1, to);
 
@@ -662,27 +719,29 @@ export function useFrameBuffer(
       if (seq !== prefetchSeqRef.current) return;
       return decodeRange(from, to, seq);
     }).catch(() => {});
-  }, [isReady, decodeRange]);
+  }, [isReady, decodeRange, userToPIdx]);
 
   // ── getFrame ──
-
+  // 入参 frameIndex 为 user-fps 语义, 内部转换为 real pIdx 查缓存
   const getFrame = useCallback((frameIndex: number): ImageBitmap | null => {
     if (!isReady) return null;
-    return cacheRef.current.get(frameIndex);
-  }, [isReady]);
+    return cacheRef.current.get(userToPIdx(frameIndex));
+  }, [isReady, userToPIdx]);
 
   // 二分查找 <= frameIndex 的最大 I 帧索引,返回对应的缩略图
+  // 入参 frameIndex 为 user-fps 语义, 内部转换后再二分查找 (indices 是 real pIdx)
   const getKeyFrameThumb = useCallback((frameIndex: number): ImageBitmap | null => {
     const indices = keyThumbIndicesRef.current;
     if (indices.length === 0) return null;
+    const pIdx = userToPIdx(frameIndex);
     let lo = 0, hi = indices.length - 1, best = indices[0];
     while (lo <= hi) {
       const mid = (lo + hi) >> 1;
-      if (indices[mid] <= frameIndex) { best = indices[mid]; lo = mid + 1; }
+      if (indices[mid] <= pIdx) { best = indices[mid]; lo = mid + 1; }
       else hi = mid - 1;
     }
     return keyThumbsRef.current.get(best) ?? null;
-  }, []);
+  }, [userToPIdx]);
 
   // ── dispose ──
 
@@ -693,17 +752,18 @@ export function useFrameBuffer(
   }, []);
 
   // 按 pIdx 升序排列的 thumbs 数组,thumbVersion 变化时重新计算
+  // frameIdx 对外暴露 user-fps 语义 (供 FrameCountPage 与 totalFrames 坐标对齐)
   const keyFrameThumbs = useMemo(() => {
     const indices = keyThumbIndicesRef.current;
     const thumbs = keyThumbsRef.current;
     const out: Array<{ frameIdx: number; bitmap: ImageBitmap }> = [];
     for (const idx of indices) {
       const bmp = thumbs.get(idx);
-      if (bmp) out.push({ frameIdx: idx, bitmap: bmp });
+      if (bmp) out.push({ frameIdx: pIdxToUser(idx), bitmap: bmp });
     }
     return out;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [thumbVersion]);
+  }, [thumbVersion, fps, pIdxToUser]);
 
   return {
     getFrame, prefetch, getKeyFrameThumb, keyFrameThumbs, isReady, dispose,

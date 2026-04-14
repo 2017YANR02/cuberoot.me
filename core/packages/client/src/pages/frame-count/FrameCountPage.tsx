@@ -545,10 +545,10 @@ export default function FrameCountPage() {
 
   // Timeline thumbnails —— 一次计算后锁定,避免 phase2 解码中抽样位置抖动
   const [timelineThumbs, setTimelineThumbs] = useState<typeof keyFrameThumbs>([]);
-  // 视频切换或 count 改变时重置
+  // 视频切换/count 改变/fps 改变 (frameIdx 坐标重映射) 时重置
   useEffect(() => {
     setTimelineThumbs([]);
-  }, [videoFile, timelineThumbCount]);
+  }, [videoFile, timelineThumbCount, videoFps]);
   // 有 thumbs 时按目标帧位置挑最近的一张填充
   useEffect(() => {
     if (timelineThumbs.length >= timelineThumbCount) return;
@@ -629,7 +629,8 @@ export default function FrameCountPage() {
   //   - 找不到帧就保留上一帧画面 (不黑屏、不闪烁)
   const seekToFrameRough = useCallback((frame: number) => {
     if (videoFps <= 0) return;
-    const f = Math.max(0, frame);
+    const maxFrame = totalFrames > 0 ? totalFrames - 1 : frame;
+    const f = Math.max(0, Math.min(maxFrame, frame));
     currentFrameRef.current = f;
     setCurrentFrame(f);
     // 拖动期间只走 I 帧缩略图一种源,避免高清/缩略图混用导致的分辨率跳变
@@ -641,7 +642,7 @@ export default function FrameCountPage() {
     // canvas 尺寸在 beginDragOverlay 里已经固定,这里 drawImage 时拉伸填满,
     // 不改 canvas.width/height 就不会触发后备缓冲重分配 → 零闪烁
     ctx.drawImage(bmp, 0, 0, canvas.width, canvas.height);
-  }, [videoFps, getKeyFrameThumb]);
+  }, [videoFps, totalFrames, getKeyFrameThumb]);
 
   // 拖动开始前的准备:把当前 video 元素上显示的帧抓拍到 canvas,并把 canvas 尺寸
   // 锁定在 video 原生分辨率,整个拖动过程中 canvas 尺寸/显示状态都不再变化
@@ -672,7 +673,10 @@ export default function FrameCountPage() {
   const seekToFrame = useCallback((frame: number) => {
     const video = videoRef.current;
     if (!video || videoFps <= 0) return;
-    const f = Math.max(0, frame);
+    // 上界必须夹到 totalFrames-1: 否则 mark 在旧 fps 下记录(如 1478 帧 @60fps)
+    // 切到新 fps 后 currentTime 会超过 video.duration, 浏览器渲染黑屏
+    const maxFrame = totalFrames > 0 ? totalFrames - 1 : frame;
+    const f = Math.max(0, Math.min(maxFrame, frame));
     // 立即更新 UI
     currentFrameRef.current = f;
     setCurrentFrame(f);
@@ -738,7 +742,7 @@ export default function FrameCountPage() {
         doSeek();
       }
     }
-  }, [videoFps, frameBufferReady, getFrame, prefetch]);
+  }, [videoFps, totalFrames, frameBufferReady, getFrame, prefetch]);
 
   // 用 ref 追踪帧号，避免快速连按时闭包中 currentFrame 过时
   const currentFrameRef = useRef(0);
@@ -756,12 +760,12 @@ export default function FrameCountPage() {
     // 统一用 seek — play+pause 方式在高帧率视频下不精确
     video.pause();
     setIsPlaying(false);
-    currentFrameRef.current = Math.max(0, currentFrameRef.current + n);
-    // Clamp within trim range
+    // 上界: trim 激活时用 effEnd, 否则用 totalFrames-1 (防止越界黑屏)
     const effEnd = trimEnd || totalFrames;
-    if (trimStart > 0 || effEnd < totalFrames) {
-      currentFrameRef.current = Math.max(trimStart, Math.min(currentFrameRef.current, effEnd));
-    }
+    const hardMax = totalFrames > 0 ? totalFrames - 1 : Infinity;
+    const upperBound = (trimStart > 0 || effEnd < totalFrames) ? effEnd : hardMax;
+    const lowerBound = trimStart > 0 ? trimStart : 0;
+    currentFrameRef.current = Math.max(lowerBound, Math.min(upperBound, currentFrameRef.current + n));
     // 立即更新 UI 帧号（不等 seek 完成）
     setCurrentFrame(currentFrameRef.current);
     
@@ -1940,23 +1944,12 @@ export default function FrameCountPage() {
                       />
                       {solveTime && <span className="fc-input-suffix">s</span>}
                     </div>
-                    {/* FPS */}
+                    {/* FPS — 只读: MediaInfo 自动探测, 用户不可改 (错误 fps 会全局破坏帧映射) */}
                     <div className="fc-input-unit-wrap">
                       <input
                         className="fc-tab-input fc-toolbar-time"
-                        type="number" min={1} step="any" value={fpsInputText}
-                        onChange={(e) => {
-                          const text = e.target.value;
-                          setFpsInputText(text);
-                          const v = parseFloat(text);
-                          // 只有在输入有效正数时才更新 videoFps, 避免空串/0 触发全局除零
-                          if (isFinite(v) && v > 0) setVideoFps(v);
-                        }}
-                        onBlur={() => {
-                          // 失焦时如果是无效值, 回退到当前 videoFps
-                          const v = parseFloat(fpsInputText);
-                          if (!isFinite(v) || v <= 0) setFpsInputText(String(videoFps));
-                        }}
+                        type="number" value={fpsInputText}
+                        readOnly disabled
                         placeholder="FPS"
                       />
                       {videoFps > 0 && <span className="fc-input-suffix">fps</span>}
@@ -2022,7 +2015,7 @@ export default function FrameCountPage() {
                       title="Export"
                     >
                       <IconExport />
-                      {exporting ? `${exportProgress}%` : 'Export'}
+                      {exporting ? `${exportProgress}%` : ''}
                       {!exporting && <span className="fc-export-caret">▾</span>}
                     </button>
                     {showExportMenu && !exporting && (
