@@ -38,3 +38,6 @@ comp_name_diff.txt
 .gitnexus
 AGENTS.md
 CLAUDE.md
+
+# Claude Code 本机专属配置（权限白名单，不共享）
+.claude/settings.local.json
