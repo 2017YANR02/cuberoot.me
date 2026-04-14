@@ -3,7 +3,7 @@
  * 数帧工具 — ReconViewer 风格，支持多 Solve 和 Split Mark。
  * 加载本地视频，逐帧控制，标记帧，计算精确时间差。
  */
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import mediaInfoFactory from 'mediainfo.js';
 import { FFmpeg } from '@ffmpeg/ffmpeg';
@@ -323,6 +323,10 @@ export default function FrameCountPage() {
 
   const [currentFrame, setCurrentFrame] = useState(0);
 
+  // 起表帧计算方法: 'fps' = WCA 公式 (time × fps); 'timestamp' = 用 sample timestamps 精确定位。
+  // Add 钮 auto-seek 时选择哪一种;两种的预测结果始终并排显示以便对比。
+  const [startFrameMethod, setStartFrameMethod] = useState<'fps' | 'timestamp'>('fps');
+
   // 播放速率
   const [playbackRate, setPlaybackRate] = useState(1);
 
@@ -527,7 +531,7 @@ export default function FrameCountPage() {
   const [solveTime, setSolveTime] = useState('');
 
   // ── WebCodecs 帧缓冲 ──
-  const { getFrame, prefetch, getKeyFrameThumb, keyFrameThumbs, isReady: frameBufferReady, samples: fbSamples, decoderConfig: fbDecoderConfig } = useFrameBuffer(videoFile, videoFps);
+  const { getFrame, prefetch, getKeyFrameThumb, keyFrameThumbs, isReady: frameBufferReady, samples: fbSamples, decoderConfig: fbDecoderConfig, findStartFrameByTimestamp } = useFrameBuffer(videoFile, videoFps);
 
   // Timeline 缩略图个数 — 按设备/方向自适应
   // 移动端竖屏 5 / 移动端横屏 7 / 桌面 10
@@ -583,7 +587,35 @@ export default function FrameCountPage() {
 
   const activeSolve = solves[activeSolveIdx] || solves[0];
   const solveTimeNum = parseFloat(solveTime) || 0;
-  const wcaFrames = solveTimeNum > 0 && videoFps > 0 ? timeToFrames(solveTimeNum, videoFps) : 0;
+  // wcaFrames unused — superseded by startFramePreview.framesBack
+  // const wcaFrames = solveTimeNum > 0 && videoFps > 0 ? timeToFrames(solveTimeNum, videoFps) : 0;
+
+  // 起表帧预测: 两种方法并排给出预测, end frame 取"最新一个 mark"或当前 currentFrame
+  // 用于 UI 展示对比,实际 auto-seek 时再基于 startFrameMethod 选一个
+  // timestamp 方法使用和 FPS 公式相同的 (⌊time⌋₂ + 0.009) 调整时间, 保证两种方法查询同一个"目标时间点"
+  const startFramePreview = useMemo(() => {
+    if (solveTimeNum <= 0 || videoFps <= 0) return null;
+    const endFrame = activeSolve && activeSolve.marks.length > 0
+      ? activeSolve.marks[activeSolve.marks.length - 1].frame
+      : currentFrame;
+    if (endFrame <= 0) return null;
+    const truncatedTime = Math.floor(solveTimeNum * 100) / 100; // ⌊time⌋₂
+    const adjustedTime = truncatedTime + 0.009;                 // 和 WCA 公式一致的目标时差
+    const framesBack = timeToFrames(solveTimeNum, videoFps);
+    const byFps = Math.max(0, endFrame - framesBack);
+    const byTsRaw = fbSamples.length > 0 ? findStartFrameByTimestamp(endFrame, adjustedTime) : null;
+    const byTs = byTsRaw !== null ? Math.max(0, byTsRaw) : null;
+    // End sample 的 timestamp (秒), 用于 timestamp 方法的公式展示
+    const endSampleTs = fbSamples.length > endFrame && endFrame >= 0
+      ? fbSamples[endFrame].timestamp / 1_000_000
+      : null;
+    const targetTs = endSampleTs !== null ? endSampleTs - adjustedTime : null;
+    // byTs 这一帧的实际 timestamp, 展示它与 target 的贴合度
+    const byTsSampleTs = (byTs !== null && fbSamples.length > byTs)
+      ? fbSamples[byTs].timestamp / 1_000_000
+      : null;
+    return { endFrame, framesBack, byFps, byTs, truncatedTime, endSampleTs, targetTs, byTsSampleTs };
+  }, [solveTimeNum, videoFps, activeSolve, currentFrame, fbSamples, findStartFrameByTimestamp]);
 
   // 图像 transform CSS（应用到 video 元素）
   const getVideoStyle = useCallback((): React.CSSProperties => {
@@ -930,10 +962,19 @@ export default function FrameCountPage() {
       return next;
     });
     showToast(`Mark added at frame ${currentFrame}`);
-    // WCA 自动跳转：填写了 Time 且当前 solve 尚无 mark 时，M 标记 End Frame 后自动跳转到 Start Frame 并自动 Add
+    // WCA 自动跳转：填写了 Time 且当前 solve 尚无 mark 时，标记 End Frame 后自动跳转到 Start Frame 并自动 Add
     if (solveTimeNum > 0 && videoFps > 0 && solves[activeSolveIdx]?.marks.length === 0) {
-      const frames = timeToFrames(solveTimeNum, videoFps);
-      const startFrame = Math.max(0, currentFrame - frames);
+      let startFrame: number;
+      if (startFrameMethod === 'timestamp') {
+        // 和 WCA 公式 (⌊time⌋₂+.009) 对齐,两种方法查询同一个目标时间点
+        const truncated = Math.floor(solveTimeNum * 100) / 100;
+        const tsFrame = findStartFrameByTimestamp(currentFrame, truncated + 0.009);
+        // samples 未就绪时 fallback 到 fps 公式, 不让用户等
+        startFrame = tsFrame ?? Math.max(0, currentFrame - timeToFrames(solveTimeNum, videoFps));
+      } else {
+        startFrame = Math.max(0, currentFrame - timeToFrames(solveTimeNum, videoFps));
+      }
+      startFrame = Math.max(0, startFrame);
       seekToFrame(startFrame);
       // 自动添加 startFrame 的 mark（如果不重复）
       setSolves(prev => {
@@ -946,7 +987,7 @@ export default function FrameCountPage() {
         return next;
       });
     }
-  }, [activeSolveIdx, currentFrame, solves, showToast, solveTimeNum, videoFps, seekToFrame]);
+  }, [activeSolveIdx, currentFrame, solves, showToast, solveTimeNum, videoFps, seekToFrame, startFrameMethod, findStartFrameByTimestamp]);
 
   const removeMark = useCallback((idx: number) => {
     setSolves(prev => {
@@ -2324,6 +2365,27 @@ export default function FrameCountPage() {
               <button className="fc-solve-btn" title="Remove Solve" onClick={removeSolve}>−</button>
             </div>
 
+            {/* 起表帧计算方法切换 — 决定 Add 时 auto-seek 用哪种方法 */}
+            <div className="fc-method-toggle" role="radiogroup" aria-label="Start-frame method">
+              <span className="fc-method-toggle-label">Start:</span>
+              <button
+                type="button"
+                role="radio"
+                aria-checked={startFrameMethod === 'fps'}
+                className={`fc-method-opt ${startFrameMethod === 'fps' ? 'active' : ''}`}
+                onClick={() => setStartFrameMethod('fps')}
+                title="Start frame = endFrame − ⌈(⌊time⌋₂+.009) × fps⌉"
+              >FPS <span className="fc-method-wca-badge">WCA</span></button>
+              <button
+                type="button"
+                role="radio"
+                aria-checked={startFrameMethod === 'timestamp'}
+                className={`fc-method-opt ${startFrameMethod === 'timestamp' ? 'active' : ''}`}
+                onClick={() => setStartFrameMethod('timestamp')}
+                title="Start frame = 距离 (end sample timestamp − time × 1e6μs) 最近的 sample"
+              >Timestamp</button>
+            </div>
+
             {/* Marks 列表 */}
             <div className="fc-panel fc-marks-panel">
               {/* Mark 操作按钮 */}
@@ -2357,12 +2419,63 @@ export default function FrameCountPage() {
                     <span className="fc-mark-diff">{totalMarkFrames}f ({totalMarkTime.toFixed(3)}s)</span>
                   </div>
                 )}
-                {solveTimeNum > 0 && wcaFrames > 0 && (
-                  <div className="fc-wca-hint" title="WCA frames formula: ceil((floor(time, 2) + 0.009) * fps)">
-                    <span className="fc-wca-hint-label">frames =</span>
-                    <span className="fc-wca-hint-formula">
-                      ⌈(⌊{solveTimeNum.toFixed(2)}⌋₂+.009)×{videoFps.toFixed(2)}⌉ = <b>{wcaFrames}</b>f
-                    </span>
+                {startFramePreview && (
+                  <div className="fc-start-suggest">
+                    <div className="fc-suggest-title">suggested start</div>
+                    <button
+                      type="button"
+                      className={`fc-suggest-row ${startFrameMethod === 'fps' ? 'active' : ''}`}
+                      onClick={() => seekToFrame(startFramePreview.byFps)}
+                      title={`Jump to frame ${startFramePreview.byFps} (FPS method)`}
+                    >
+                      <span className="fc-suggest-main">
+                        <span className="fc-suggest-label">by fps</span>
+                        <span className="fc-suggest-arrow">→</span>
+                        <span className="fc-suggest-frame">{startFramePreview.byFps}</span>
+                      </span>
+                      <span className="fc-suggest-formula">
+                        ⌈(⌊{solveTimeNum.toFixed(2)}⌋₂+.009)×{videoFps.toFixed(2)}⌉ = <b>{startFramePreview.framesBack}</b>f
+                        <span className="fc-suggest-formula-sub"> · {startFramePreview.endFrame} − {startFramePreview.framesBack} = {startFramePreview.byFps}</span>
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      className={`fc-suggest-row ${startFrameMethod === 'timestamp' ? 'active' : ''} ${startFramePreview.byTs === null ? 'disabled' : ''}`}
+                      onClick={() => startFramePreview.byTs !== null && seekToFrame(startFramePreview.byTs)}
+                      disabled={startFramePreview.byTs === null}
+                      title={startFramePreview.byTs === null
+                        ? 'Samples not ready yet'
+                        : `Jump to frame ${startFramePreview.byTs} (timestamp method)`}
+                    >
+                      <span className="fc-suggest-main">
+                        <span className="fc-suggest-label">by timestamp</span>
+                        <span className="fc-suggest-arrow">→</span>
+                        <span className="fc-suggest-frame">
+                          {startFramePreview.byTs ?? '—'}
+                        </span>
+                        {startFramePreview.byTs !== null && startFramePreview.byTs !== startFramePreview.byFps && (
+                          <span className="fc-suggest-delta">
+                            Δ {startFramePreview.byTs - startFramePreview.byFps > 0 ? '+' : ''}
+                            {startFramePreview.byTs - startFramePreview.byFps}
+                          </span>
+                        )}
+                      </span>
+                      <span className="fc-suggest-formula">
+                        {startFramePreview.endSampleTs !== null && startFramePreview.targetTs !== null ? (
+                          <>
+                            target = {startFramePreview.endSampleTs.toFixed(3)}s − (⌊{solveTimeNum.toFixed(2)}⌋₂+.009)s = <b>{startFramePreview.targetTs.toFixed(3)}s</b>
+                            <span className="fc-suggest-formula-sub">
+                              {' · '}nearest sample #{startFramePreview.byTs ?? '—'}
+                              {startFramePreview.byTsSampleTs !== null && (
+                                <> (ts={startFramePreview.byTsSampleTs.toFixed(3)}s)</>
+                              )}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="fc-suggest-formula-sub">samples not ready</span>
+                        )}
+                      </span>
+                    </button>
                   </div>
                 )}
               </div>

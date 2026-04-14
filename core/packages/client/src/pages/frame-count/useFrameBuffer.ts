@@ -69,6 +69,12 @@ export interface FrameBufferHook {
   samples: SampleInfo[];
   /** VideoDecoder 配置（供导出使用） */
   decoderConfig: VideoDecoderConfig | null;
+  /**
+   * 基于 sample 时间戳的起表帧定位 — 用于魔方裁判场景下校准 WCA 公式。
+   * 给定 end user-frame 和向前回溯秒数, 返回距离 target timestamp 最近的 sample 对应的 user-frame。
+   * 不可用时 (samples 未就绪 / secondsBack<=0) 返回 null。
+   */
+  findStartFrameByTimestamp(endUserFrame: number, secondsBack: number): number | null;
 }
 
 // ── LRU 帧缓存 ──────────────────────────────────────────────────────────────
@@ -818,6 +824,35 @@ export function useFrameBuffer(
     return () => { delete (window as unknown as { __fcDiag?: () => unknown }).__fcDiag; };
   }, [isReady]);
 
+  // ── 基于 sample timestamp 的起表帧定位 ──
+  // WCA 公式 frames = ⌈(⌊time⌋₂+.009)×fps⌉ 依赖单一 fps 值, 容器读数漂移时 ±1 帧。
+  // 这里直接用 mp4box 解析出的每个 sample 的 timestamp 做 ground truth:
+  // 从 end-frame 的 timestamp 往前减 secondsBack 秒, 二分查找最近的 sample。
+  const findStartFrameByTimestamp = useCallback(
+    (endUserFrame: number, secondsBack: number): number | null => {
+      const samples = samplesRef.current;
+      if (samples.length === 0 || secondsBack <= 0) return null;
+      const endPIdx = userToPIdx(endUserFrame);
+      if (endPIdx < 0 || endPIdx >= samples.length) return null;
+      const endTs = samples[endPIdx].timestamp; // μs
+      const targetTs = endTs - secondsBack * 1_000_000;
+      if (targetTs <= samples[0].timestamp) return pIdxToUser(0);
+      // 二分: 找第一个 timestamp >= targetTs 的 sample
+      let lo = 0, hi = samples.length - 1;
+      while (lo < hi) {
+        const mid = (lo + hi) >> 1;
+        if (samples[mid].timestamp < targetTs) lo = mid + 1;
+        else hi = mid;
+      }
+      // 比较 lo 和 lo-1, 选时间戳更接近 targetTs 的那个
+      const cand = lo > 0 &&
+        Math.abs(samples[lo - 1].timestamp - targetTs) < Math.abs(samples[lo].timestamp - targetTs)
+        ? lo - 1 : lo;
+      return pIdxToUser(cand);
+    },
+    [userToPIdx, pIdxToUser],
+  );
+
   // ── dispose ──
 
   const dispose = useCallback(() => {
@@ -844,5 +879,6 @@ export function useFrameBuffer(
     getFrame, prefetch, getKeyFrameThumb, keyFrameThumbs, isReady, dispose,
     samples: samplesRef.current,
     decoderConfig: configRef.current,
+    findStartFrameByTimestamp,
   };
 }

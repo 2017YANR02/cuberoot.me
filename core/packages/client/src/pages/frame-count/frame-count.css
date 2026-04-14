@@ -712,6 +712,145 @@
   color: #e8c44a;
 }
 
+/* 起表帧方法切换 (FPS / Timestamp) */
+.fc-method-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  margin-top: 6px;
+  font-size: 0.72rem;
+}
+.fc-method-toggle-label {
+  color: #888;
+  margin-right: 4px;
+  letter-spacing: 0.3px;
+}
+.fc-method-opt {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #aaa;
+  padding: 3px 9px;
+  border-radius: 10px;
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.fc-method-opt:hover {
+  background: rgba(255,255,255,0.08);
+  color: #ddd;
+}
+.fc-method-opt.active {
+  background: rgba(232, 196, 74, 0.15);
+  border-color: rgba(232, 196, 74, 0.45);
+  color: #e8c44a;
+  font-weight: 600;
+}
+.fc-method-wca-badge {
+  display: inline-block;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  background: rgba(120, 200, 120, 0.18);
+  border: 1px solid rgba(120, 200, 120, 0.35);
+  color: #7ec87e;
+  border-radius: 4px;
+  padding: 0 4px;
+  margin-left: 3px;
+  vertical-align: middle;
+  line-height: 1.5;
+}
+
+/* 起表帧双方法预测展示 */
+.fc-start-suggest {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 8px;
+  margin-top: 4px;
+  border-top: 1px dashed rgba(255,255,255,0.08);
+}
+.fc-suggest-title {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #888;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+.fc-suggest-row {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 3px;
+  padding: 6px 8px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 4px;
+  color: #aaa;
+  font-size: 0.74rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, border-color 0.15s;
+}
+.fc-suggest-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.fc-suggest-formula {
+  font-size: 0.7rem;
+  color: #888;
+  padding-left: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fc-suggest-formula b {
+  color: #d1a838;
+}
+.fc-suggest-formula-sub {
+  color: #666;
+}
+.fc-suggest-row:hover:not(.disabled) {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.15);
+}
+.fc-suggest-row.active {
+  border-color: rgba(232, 196, 74, 0.45);
+  background: rgba(232, 196, 74, 0.08);
+}
+.fc-suggest-row.disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.fc-suggest-label {
+  flex: 1;
+  color: #999;
+}
+.fc-suggest-row.active .fc-suggest-label {
+  color: #e8c44a;
+  font-weight: 600;
+}
+.fc-suggest-arrow {
+  color: #666;
+}
+.fc-suggest-row.active .fc-suggest-arrow {
+  color: #e8c44a;
+}
+.fc-suggest-frame {
+  color: #e8c44a;
+  font-weight: 600;
+  min-width: 50px;
+  text-align: right;
+}
+.fc-suggest-delta {
+  color: #ff9680;
+  font-size: 0.7rem;
+  font-weight: 600;
+  margin-left: 4px;
+}
+
 /* Mark 操作按钮 */
 .fc-mark-actions {
   display: flex;
