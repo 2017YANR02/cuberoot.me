@@ -308,6 +308,10 @@ export default function FrameCountPage() {
 
   // 帧计数状态
   const [videoFps, setVideoFps] = useState(60);
+  // FPS 输入框文本状态: 允许用户清空/暂存无效值, 避免 videoFps 瞬间变 0 触发全局 NaN/Infinity
+  const [fpsInputText, setFpsInputText] = useState('60');
+  // videoFps 被外部改变 (MediaInfo 自动检测) 时同步输入框显示
+  useEffect(() => { setFpsInputText(String(videoFps)); }, [videoFps]);
 
   const [currentFrame, setCurrentFrame] = useState(0);
 
@@ -1940,8 +1944,19 @@ export default function FrameCountPage() {
                     <div className="fc-input-unit-wrap">
                       <input
                         className="fc-tab-input fc-toolbar-time"
-                        type="number" min={1} step="any" value={videoFps}
-                        onChange={(e) => setVideoFps(parseFloat(e.target.value) || 0)}
+                        type="number" min={1} step="any" value={fpsInputText}
+                        onChange={(e) => {
+                          const text = e.target.value;
+                          setFpsInputText(text);
+                          const v = parseFloat(text);
+                          // 只有在输入有效正数时才更新 videoFps, 避免空串/0 触发全局除零
+                          if (isFinite(v) && v > 0) setVideoFps(v);
+                        }}
+                        onBlur={() => {
+                          // 失焦时如果是无效值, 回退到当前 videoFps
+                          const v = parseFloat(fpsInputText);
+                          if (!isFinite(v) || v <= 0) setFpsInputText(String(videoFps));
+                        }}
                         placeholder="FPS"
                       />
                       {videoFps > 0 && <span className="fc-input-suffix">fps</span>}
