@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(pnpm --filter @cuberoot/client exec tsc --noEmit)",
+      "Bash(pnpm --filter @cuberoot/client build)"
     ]
   }
 }
