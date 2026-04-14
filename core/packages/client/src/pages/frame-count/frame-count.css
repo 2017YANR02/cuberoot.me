@@ -1214,4 +1214,26 @@
   .fc-tab-input {
     font-size: 16px !important;
   }
+
+  /* 播放控制 + 倍速 合并为一行 (原本会 flex-wrap 成两行) */
+  .fc-controls {
+    flex-wrap: nowrap;
+    justify-content: center;
+    gap: 2px;
+  }
+  .fc-controls .fc-ctrl-btn {
+    width: 28px;
+    height: 28px;
+  }
+  .fc-controls .fc-ctrl-btn.play-btn {
+    width: 34px;
+    height: 34px;
+  }
+  .fc-controls .fc-ctrl-sep {
+    margin: 0 3px;
+  }
+  .fc-controls .fc-rate-btn {
+    padding: 3px 5px;
+    font-size: 0.65rem;
+  }
 }
