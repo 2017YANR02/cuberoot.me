@@ -21,12 +21,18 @@ import {
 
 // ── 常量 ─────────────────────────────────────────────────────────────────────
 
+/** 移动端检测: iOS Safari 单页内存限制紧 (~1GB), 需要更保守的预算 */
+const IS_MOBILE = typeof navigator !== 'undefined' &&
+  (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
+   (typeof window !== 'undefined' && window.innerWidth <= 768));
+
 /** 缓冲区最大帧数。stepBack 按 fps 自适应 prefetch (高 fps 视频需要更大缓冲),
  *  需容纳"旧的未消费帧 + 新的整段",否则 LRU 会把未消费帧淘汰
  *  (get 把已消费帧标记为最近,反而保留,不消费的反而被淘汰)。
  *  360 帧:可支持到 240fps 视频 (2 批 × 240 帧) 的顺滑回放。
- *  1080p ImageBitmap 通常用 GPU texture,实际占用远小于 RGBA 估算。 */
-const MAX_CACHE = 360;
+ *  1080p ImageBitmap 通常用 GPU texture,实际占用远小于 RGBA 估算。
+ *  移动端降到 120 帧避免 iOS Safari 内存崩溃("a problem repeatedly occurred")。 */
+const MAX_CACHE = IS_MOBILE ? 120 : 360;
 
 /** WebCodecs 是否可用 */
 const HAS_WEBCODECS = typeof VideoDecoder !== 'undefined';
@@ -289,8 +295,9 @@ export function useFrameBuffer(
     const srcW = config.codedWidth ?? 1920;
     const srcH = config.codedHeight ?? 1080;
     const NATIVE_DIM = Math.max(srcW, srcH);
-    const MIN_DIM = 640;
-    const TARGET_MEM_BYTES = 300 * 1024 * 1024;
+    const MIN_DIM = IS_MOBILE ? 480 : 640;
+    // 移动端 (尤其 iOS Safari) 内存上限严, 用 100MB 预算避免页面 crash
+    const TARGET_MEM_BYTES = (IS_MOBILE ? 100 : 300) * 1024 * 1024;
 
     // I 帧统计
     let iFrameCount = 0;
@@ -307,10 +314,11 @@ export function useFrameBuffer(
     // 步长: 每秒 ~10 张; 若按目标分辨率仍超预算, 自动增大 stride
     let stride = Math.max(1, Math.round(fps / 10));
 
-    // 短视频 (≤10s) 强制 1080p; 其余按 MIN_DIM 底线
+    // 短视频 (≤10s) 强制 1080p; 其余按 MIN_DIM 底线 (移动端封顶 720p 节省内存)
     const durationSec = samples.length / fps;
+    const SHORT_VIDEO_DIM = IS_MOBILE ? 1280 : 1920;
     const desiredDim = durationSec <= 10
-      ? Math.min(NATIVE_DIM, 1920)
+      ? Math.min(NATIVE_DIM, SHORT_VIDEO_DIM)
       : MIN_DIM;
 
     const minSideRatio = Math.min(srcW, srcH) / NATIVE_DIM;
