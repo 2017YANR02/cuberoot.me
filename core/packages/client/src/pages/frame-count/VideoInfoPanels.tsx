@@ -67,17 +67,40 @@ function formatDuration(sec: number): string {
 export function VideoInfoButton({ info }: { info: VideoInfo }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const popRef = useRef<HTMLDivElement>(null);
+  const [popPos, setPopPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
 
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent | TouchEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+      const t = e.target as Node;
+      if (rootRef.current?.contains(t)) return;
+      if (popRef.current?.contains(t)) return;
+      setOpen(false);
     };
     document.addEventListener('mousedown', onDown);
     document.addEventListener('touchstart', onDown);
     return () => {
       document.removeEventListener('mousedown', onDown);
       document.removeEventListener('touchstart', onDown);
+    };
+  }, [open]);
+
+  // 打开时按按钮位置固定在视口 (position:fixed), 避开上游 overflow:hidden 裁剪
+  useEffect(() => {
+    if (!open) return;
+    const reposition = () => {
+      const r = btnRef.current?.getBoundingClientRect();
+      if (!r) return;
+      setPopPos({ top: r.bottom + 6, left: r.left });
+    };
+    reposition();
+    window.addEventListener('resize', reposition);
+    window.addEventListener('scroll', reposition, true);
+    return () => {
+      window.removeEventListener('resize', reposition);
+      window.removeEventListener('scroll', reposition, true);
     };
   }, [open]);
 
@@ -89,6 +112,7 @@ export function VideoInfoButton({ info }: { info: VideoInfo }) {
   return (
     <div className="fc-info-wrap" ref={rootRef}>
       <button
+        ref={btnRef}
         className="fc-info-btn"
         onClick={() => setOpen(v => !v)}
         title="视频信息"
@@ -101,7 +125,12 @@ export function VideoInfoButton({ info }: { info: VideoInfo }) {
         </svg>
       </button>
       {open && (
-        <div className="fc-info-popover" role="dialog">
+        <div
+          ref={popRef}
+          className="fc-info-popover"
+          role="dialog"
+          style={{ ['--popover-top' as string]: `${popPos.top}px`, ['--popover-left' as string]: `${popPos.left}px` }}
+        >
           <div className="fc-info-row"><span>分辨率</span><span>{info.width} × {info.height}</span></div>
           <div className="fc-info-row">
             <span>帧率</span>
