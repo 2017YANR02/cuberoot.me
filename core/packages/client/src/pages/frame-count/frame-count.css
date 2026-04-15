@@ -1274,13 +1274,17 @@
   transition: color 0.15s;
 }
 .fc-info-btn:hover { color: #fff; }
+/* 用 position: fixed 避开 .fc-video-zone 的 overflow:hidden 裁剪.
+   位置由 JS 根据按钮 getBoundingClientRect 动态算 top/left, 通过 --popover-top/--popover-left 传入. */
 .fc-info-popover {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  z-index: 50;
+  position: fixed;
+  top: var(--popover-top, 0px);
+  left: var(--popover-left, 0px);
+  z-index: 1000;
   min-width: 260px;
   max-width: min(360px, 90vw);
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
   background: #2a2a2a;
   border: 1px solid rgba(255,255,255,0.15);
   border-radius: 8px;
@@ -1288,6 +1292,7 @@
   box-shadow: 0 4px 16px rgba(0,0,0,0.5);
   font-size: 0.78rem;
   color: #ddd;
+  overscroll-behavior: contain;
 }
 .fc-info-row {
   display: flex;
