@@ -22,7 +22,7 @@ import {
 // ── 常量 ─────────────────────────────────────────────────────────────────────
 
 /** 移动端检测: iOS Safari 单页内存限制紧 (~1GB), 需要更保守的预算 */
-const IS_MOBILE = typeof navigator !== 'undefined' &&
+export const IS_MOBILE = typeof navigator !== 'undefined' &&
   (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
    (typeof window !== 'undefined' && window.innerWidth <= 768));
 

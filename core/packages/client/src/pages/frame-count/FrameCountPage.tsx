@@ -8,7 +8,7 @@ import { Link } from 'react-router-dom';
 import mediaInfoFactory from 'mediainfo.js';
 import { FFmpeg } from '@ffmpeg/ffmpeg';
 import { fetchFile, toBlobURL } from '@ffmpeg/util';
-import { useFrameBuffer } from './useFrameBuffer';
+import { useFrameBuffer, IS_MOBILE } from './useFrameBuffer';
 import { VideoInfoButton, DecodeErrorCard, LoadingProgressOverlay } from './VideoInfoPanels';
 
 import './frame-count.css';
@@ -1639,20 +1639,26 @@ export default function FrameCountPage() {
       pendingSide = null;
       if (side === 'left') setTrimStart(f);
       else if (side === 'right') setTrimEnd(f);
-      // seek 拖动: DOM-only 路径, 不触发 React re-render (避免 2500 行组件每帧重绘导致手机卡顿)
-      // trim 拖动: setTrimStart/End 本身已触发 re-render, 走原路径保持 React 状态同步
-      const domOnly = side === 'seek';
-      if (domOnly) {
-        const ph = playheadRef.current;
-        const tip = playheadTooltipRef.current;
-        if (ph && totalFrames > 0) {
-          const effEnd = trimEnd || totalFrames;
-          const clampedFrame = Math.max(trimStart, Math.min(f, effEnd));
-          ph.style.left = `${(clampedFrame / totalFrames) * 100}%`;
-        }
-        if (tip && videoFps > 0) tip.textContent = `${formatTime(f / videoFps)} (${f})`;
+      // playhead/tooltip 走 DOM 直改避免 React re-render (trim 拖动本身要 re-render, 这里也无害)
+      const ph = playheadRef.current;
+      const tip = playheadTooltipRef.current;
+      if (ph && totalFrames > 0) {
+        const effEnd = trimEnd || totalFrames;
+        const clampedFrame = Math.max(trimStart, Math.min(f, effEnd));
+        ph.style.left = `${(clampedFrame / totalFrames) * 100}%`;
       }
-      seekToFrameRough(f, domOnly);
+      if (tip && videoFps > 0) tip.textContent = `${formatTime(f / videoFps)} (${f})`;
+
+      if (side === 'seek' && IS_MOBILE) {
+        // 移动端 seek 拖动: <video> 硬件路径 (iOS Safari 硬件 H264 解码 + 合成, 丝滑)
+        currentFrameRef.current = f;
+        const v = videoRef.current;
+        if (v && videoFps > 0) v.currentTime = (f + 0.5) / videoFps;
+      } else {
+        // 桌面 seek 拖动 / 任意 trim 拖动: 走原 WebCodecs+canvas 路径 (桌面端帧精确)
+        // seek 拖动传 domOnly=true 跳过 setCurrentFrame, trim 拖动正常 setCurrentFrame
+        seekToFrameRough(f, side === 'seek');
+      }
     };
     const onMove = (e: PointerEvent) => {
       const d = trimDragRef.current;
@@ -1670,7 +1676,13 @@ export default function FrameCountPage() {
           v.pause();
           setIsPlaying(false);
         }
-        beginDragOverlay();
+        // 移动端 seek 拖动: 保持 <video> 可见, 浏览器硬件解码/合成接管(iOS Safari 丝滑, 类原生相册)
+        // 桌面端 seek 拖动 / trim 拖动: 切 canvas 覆盖走 WebCodecs 缓存路径(桌面端 CPU/GPU 富余, 这条路更精确)
+        if (d.side === 'seek' && IS_MOBILE) {
+          setUseCanvasDisplay(false);
+        } else {
+          beginDragOverlay();
+        }
       }
       const rect = track.getBoundingClientRect();
       const dx = e.clientX - d.startX;
