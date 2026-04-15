@@ -65,15 +65,16 @@
   gap: 4px;
   color: #b0b0b0;
   font-size: 0.72rem;
-  padding: 5px 8px;
+  padding: 4px;
   border-radius: 6px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.06);
+  border: none;
+  background: none;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: color 0.2s;
+  flex-shrink: 0;
 }
-.fc-shortcuts-btn:hover { color: #fff; border-color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.1); }
-.fc-shortcuts-btn svg { width: 12px; height: 12px; }
+.fc-shortcuts-btn:hover { color: #fff; }
+.fc-shortcuts-btn svg { width: 16px; height: 16px; }
 
 /* ── 主体布局：视频 + 右侧面板 ── */
 .fc-main {
@@ -207,25 +208,24 @@
   min-width: 0;
 }
 
-/* 单位后缀包裹器 */
+/* 单位后缀包裹器 — wrapper 作为视觉框, input 透明无边框, suffix 紧跟 */
 .fc-input-unit-wrap {
-  position: relative;
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
+  background: rgba(0,0,0,0.2);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 6px;
+  padding: 0 6px 0 0;
+  font-size: 0.75rem;
 }
+.fc-solve-header .fc-input-unit-wrap { font-size: 0.8rem; }
 .fc-input-suffix {
-  position: absolute;
-  right: 6px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 0.65rem;
+  font-size: inherit;
   color: #888;
   pointer-events: none;
   font-weight: 500;
-}
-.fc-input-unit-wrap .fc-toolbar-time {
-  padding-right: 22px !important;
+  line-height: 1;
 }
 
 .fc-toolbar-sep {
@@ -692,11 +692,11 @@
 
 .fc-solve-select {
   flex: 0 1 auto;
-  background: #2a2a2a;
+  background: rgba(0,0,0,0.2);
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 6px;
   color: #e0e0e0;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   padding: 6px 10px;
   outline: none;
   cursor: pointer;
@@ -710,6 +710,7 @@
 .fc-solve-header .fc-toolbar-time {
   height: 32px !important;
   box-sizing: border-box !important;
+  font-size: 0.8rem !important;
 }
 
 .fc-solve-btn {
@@ -1129,6 +1130,13 @@
   padding: 4px 6px !important;
   font-size: 0.75rem !important;
   flex-shrink: 0;
+}
+/* 在 fc-input-unit-wrap 内时, wrapper 承担视觉框, input 本身透明 */
+.fc-input-unit-wrap .fc-toolbar-time {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 4px 0 4px 6px !important;
 }
 
 /* WCA Start Frame 公式 */
@@ -1560,8 +1568,9 @@
   .fc-toolbar-row2 .fc-change-video {
     margin-left: 0;
   }
-  .fc-toolbar-row2 .fc-export-wrap {
-    margin-left: auto;
+  /* 把变换组 (flip/rotate/crop) 推开, 让后面 New/Export/键盘 整组贴右; 比给 export 单独 margin-left:auto 更不易挤换行 */
+  .fc-toolbar-row2 .fc-toolbar-controls {
+    margin-right: auto;
   }
   /* 手机端不需要 Folder — 本地文件系统 API 在移动浏览器基本不可用 */
   .fc-folder-btn {
