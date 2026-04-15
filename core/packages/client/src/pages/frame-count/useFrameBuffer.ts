@@ -63,6 +63,25 @@ export interface FrameBufferHook {
   keyFrameThumbs: Array<{ frameIdx: number; bitmap: ImageBitmap }>;
   /** WebCodecs 是否可用且初始化完成 */
   isReady: boolean;
+  /**
+   * 两个缩略图 decoder 是否都彻底失败 (configure 通过但 decode 第一帧就 EncodingError).
+   * 典型情况: 浏览器不支持该 codec profile (HEVC 4:2:2 RExt / HEVC Main 12 等专业格式).
+   */
+  decoderDead: boolean;
+  /**
+   * 文件流读取进度 — 仅在读取阶段非 null. 大视频 (>数百 MB) 需要几十秒读完,
+   * 期间画面全黑, 此字段给上层展示加载条避免用户以为卡死.
+   */
+  loadProgress: { bytes: number; total: number } | null;
+  /**
+   * mp4box 解析结束后 samples=0 或 config 缺失 (非标准 QuickTime / 私有 box 容器).
+   * 主播放可走 HTMLVideoElement, 但 WebCodecs 路径全废, 上层需切到 <video>+seek 回退产出缩略图.
+   */
+  parseFailed: boolean;
+  /** 音频轨信息 (从 mp4box onReady 提取). 无音频或解析失败时 null. */
+  audioInfo: { codec: string; sampleRate: number; channels: number; bitrate: number } | null;
+  /** 变帧率信息 (samples 就绪后计算). 定帧率或无数据时 null. */
+  vfrInfo: { isVFR: boolean; minFps: number; maxFps: number } | null;
   /** 释放所有资源 */
   dispose(): void;
   /** 所有帧的编码数据（供导出使用） */
@@ -133,6 +152,11 @@ export function useFrameBuffer(
   fps: number,
 ): FrameBufferHook {
   const [isReady, setIsReady] = useState(false);
+  const [decoderDead, setDecoderDead] = useState(false);
+  const [parseFailed, setParseFailed] = useState(false);
+  const [audioInfo, setAudioInfo] = useState<FrameBufferHook['audioInfo']>(null);
+  const [vfrInfo, setVfrInfo] = useState<FrameBufferHook['vfrInfo']>(null);
+  const [loadProgress, setLoadProgress] = useState<{ bytes: number; total: number } | null>(null);
   // 缩略图版本号 — 新 thumb 加入时递增,供 consumer 重渲染 timeline 用
   const [thumbVersion, setThumbVersion] = useState(0);
 
@@ -191,6 +215,11 @@ export function useFrameBuffer(
   useEffect(() => {
     if (!HAS_WEBCODECS || !videoFile || fps <= 0) {
       setIsReady(false);
+      setDecoderDead(false);
+      setLoadProgress(null);
+      setParseFailed(false);
+      setAudioInfo(null);
+      setVfrInfo(null);
       return;
     }
 
@@ -200,6 +229,14 @@ export function useFrameBuffer(
     samplesRef.current = [];
     configRef.current = null;
     setIsReady(false);
+    setDecoderDead(false);
+    setLoadProgress(null);
+    setParseFailed(false);
+    setAudioInfo(null);
+    setVfrInfo(null);
+    // 重置诊断, 新视频开始时 decoder 状态归零
+    diagRef.current.iFrameDecoderDead = false;
+    diagRef.current.strideDecoderDead = false;
 
     const mp4File = createFile() as ISOFile;
     let videoTrackId: number | null = null;
@@ -208,6 +245,17 @@ export function useFrameBuffer(
     // mp4box onReady：提取 codec 配置
     mp4File.onReady = (info: Movie) => {
       if (cancelled) return;
+
+      // 音频轨元数据 (mp4box 类型定义不含 audio 字段, 强转 any 读 sample_rate/channel_count)
+      const aTrack = info.audioTracks?.[0] as (Track & { audio?: { sample_rate: number; channel_count: number } }) | undefined;
+      if (aTrack) {
+        setAudioInfo({
+          codec: aTrack.codec,
+          sampleRate: aTrack.audio?.sample_rate ?? 0,
+          channels: aTrack.audio?.channel_count ?? 0,
+          bitrate: aTrack.bitrate ?? 0,
+        });
+      }
 
       const vTrack = info.videoTracks?.[0] as Track | undefined;
       if (!vTrack) {
@@ -268,20 +316,58 @@ export function useFrameBuffer(
       }
     };
 
-    // 读取文件 → 送入 mp4box
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (cancelled || !reader.result) return;
-      const buf = reader.result as ArrayBuffer;
-      const mp4Buf = buf as MP4BoxBuffer;
-      mp4Buf.fileStart = 0;
-      mp4File.appendBuffer(mp4Buf);
+    // 流式读取 → 分块喂给 mp4box
+    // 旧版 FileReader.readAsArrayBuffer 对 >2GB 文件会撞 V8 单 ArrayBuffer 上限,
+    // 直接 OOM 无声失败 (onload 不触发). 改用 ReadableStream 分块 appendBuffer,
+    // mp4box 内部支持多次 append. 注意: iPhone MP4 的 moov 常在文件尾部,
+    // onReady 只会在全部数据到齐后才触发, 不影响结果, 只是加载期间无画面.
+    (async () => {
+      const fileSize = videoFile.size;
+      const LOG_EVERY = 500 * 1024 * 1024;      // console 日志频率 (粗)
+      const PROGRESS_EVERY = 20 * 1024 * 1024;  // UI setState 频率 (细,但避免每 chunk 重渲)
+      let nextLogAt = LOG_EVERY;
+      let nextProgressAt = PROGRESS_EVERY;
+      let streamReader: ReadableStreamDefaultReader<Uint8Array> | null = null;
+      setLoadProgress({ bytes: 0, total: fileSize });
+      try {
+        console.log(`[FrameBuffer] reading START — size=${(fileSize / 1048576).toFixed(0)} MB`);
+        streamReader = videoFile.stream().getReader();
+        let fileOffset = 0;
+        while (true) {
+          const { done, value } = await streamReader.read();
+          if (cancelled) return;
+          if (done) break;
+          // mp4box 接受 ArrayBuffer + fileStart; value.buffer 可能是共享的 slab,
+          // 切片拷贝成独立 buffer 才能安全 append
+          const chunk = value.buffer.slice(value.byteOffset, value.byteOffset + value.byteLength) as MP4BoxBuffer;
+          chunk.fileStart = fileOffset;
+          mp4File.appendBuffer(chunk);
+          fileOffset += value.byteLength;
+          if (fileOffset >= nextProgressAt) {
+            setLoadProgress({ bytes: fileOffset, total: fileSize });
+            nextProgressAt = fileOffset + PROGRESS_EVERY;
+          }
+          if (fileOffset >= nextLogAt) {
+            console.log(`[FrameBuffer] reading ${(fileOffset / 1048576).toFixed(0)} MB / ${(fileSize / 1048576).toFixed(0)} MB`);
+            nextLogAt = fileOffset + LOG_EVERY;
+          }
+        }
+        // 循环出口 (done=true) 前可能没到 PROGRESS_EVERY 阈值, 最后补一次 100%
+        setLoadProgress({ bytes: fileOffset, total: fileSize });
+      } catch (e) {
+        console.error('[FrameBuffer] stream read FAILED', e);
+        setLoadProgress(null);
+        return;
+      } finally {
+        streamReader?.releaseLock();
+      }
+      if (cancelled) return;
       mp4File.flush();
 
       // samples 收集完毕后标记 ready
       if (configRef.current && samplesRef.current.length > 0) {
         // mp4box delivers samples in absolute Decode Order.
-        // We MUST retain this order for VideoDecoder.decode() to resolve B-frame dependencies properly. 
+        // We MUST retain this order for VideoDecoder.decode() to resolve B-frame dependencies properly.
         // We establish a two-way mapping between presentation (CTS timeline) and decode (physical).
         const len = samplesRef.current.length;
         const decodeToPres = new Int32Array(len);
@@ -289,7 +375,7 @@ export function useFrameBuffer(
 
         const sortedRefs = [...samplesRef.current].map((s, idx) => ({ dtsIdx: idx, cts: s.timestamp }))
                                                   .sort((a,b) => a.cts - b.cts);
-        
+
         for (let i = 0; i < len; i++) {
           const dtsIdx = sortedRefs[i].dtsIdx;
           presToDecode[i] = dtsIdx;      // presentation index -> decode index
@@ -308,12 +394,28 @@ export function useFrameBuffer(
         realDurationRef.current = maxEnd / 1_000_000;
 
         console.log(`[FrameBuffer] READY — ${len} samples, codec=${configRef.current.codec}, ${configRef.current.codedWidth}x${configRef.current.codedHeight}, realDur=${realDurationRef.current.toFixed(3)}s, realFps=${(len / realDurationRef.current).toFixed(3)}`);
+
+        // VFR 检测: 扫描 sample duration 的 min/max. iPhone VFR 典型 15-67fps 大幅波动,
+        // 阈值取 min/max < 0.8 判为变帧率 (容忍定帧率因编码器少量抖动).
+        let minDur = Infinity, maxDur = 0;
+        for (const s of samplesRef.current) {
+          if (s.duration <= 0) continue;
+          if (s.duration < minDur) minDur = s.duration;
+          if (s.duration > maxDur) maxDur = s.duration;
+        }
+        if (minDur !== Infinity && maxDur > 0) {
+          const minFps = 1_000_000 / maxDur;
+          const maxFps = 1_000_000 / minDur;
+          setVfrInfo({ isVFR: minDur / maxDur < 0.8, minFps, maxFps });
+        }
+
         setIsReady(true);
       } else {
         console.warn('[FrameBuffer] NOT READY — config:', !!configRef.current, 'samples:', samplesRef.current.length);
+        setParseFailed(true);
       }
-    };
-    reader.readAsArrayBuffer(videoFile);
+      setLoadProgress(null);
+    })();
 
     return () => {
       cancelled = true;
@@ -475,6 +577,7 @@ export function useFrameBuffer(
         output: makeOutputHandler(() => true), // 所有 I 帧都保留
         error: (e) => {
           diagRef.current.iFrameDecoderDead = true;
+          setDecoderDead(true);
           console.warn('[FCLog] ⚠️ iFrame decoder DEAD — phase1 thumbs lost', {
             msg: (e as DOMException).message,
             name: (e as DOMException).name,
@@ -520,6 +623,7 @@ export function useFrameBuffer(
         output: makeOutputHandler((pIdx) => pIdx % stride === 0 && !thumbs.has(pIdx)),
         error: (e) => {
           diagRef.current.strideDecoderDead = true;
+          setDecoderDead(true);
           console.warn('[FCLog] ⚠️ Stride decoder DEAD — phase2 scrub thumbs lost', {
             msg: (e as DOMException).message,
             name: (e as DOMException).name,
@@ -877,7 +981,7 @@ export function useFrameBuffer(
   }, [thumbVersion, fps, pIdxToUser]);
 
   return {
-    getFrame, prefetch, getKeyFrameThumb, keyFrameThumbs, isReady, dispose,
+    getFrame, prefetch, getKeyFrameThumb, keyFrameThumbs, isReady, decoderDead, loadProgress, parseFailed, audioInfo, vfrInfo, dispose,
     samples: samplesRef.current,
     decoderConfig: configRef.current,
     findStartFrameByTimestamp,
