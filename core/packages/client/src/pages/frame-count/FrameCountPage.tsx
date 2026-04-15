@@ -2520,7 +2520,7 @@ export default function FrameCountPage() {
                   className="fc-tab-input fc-toolbar-time"
                   type="number" step="0.01" min={0} placeholder="Time (s)"
                   inputMode="decimal"
-                  style={{ width: `${(solveTime.length > 0 ? solveTime.length + 1 : 8) + 3}ch` }}
+                  style={{ width: `${solveTime.length > 0 ? solveTime.length + 1 : 9}ch` }}
                   value={solveTime}
                   onChange={(e) => {
                     const v = e.target.value;
