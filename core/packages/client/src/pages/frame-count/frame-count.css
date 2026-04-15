@@ -374,7 +374,18 @@
 .fc-drop-hint svg { width: 48px; height: 48px; opacity: 0.5; }
 .fc-drop-text { font-size: 1rem; font-weight: 600; }
 .fc-drop-sub { font-size: 0.8rem; opacity: 0.6; }
-.fc-file-input { display: none; }
+/* iOS Safari 把弹出 picker 的"锚点"挂在 input 元素的位置上, display:none 时会
+   退化成屏幕底部带难看尾巴的形状. 把 input 摆成 1×1 透明并定位到画面正中,
+   iOS 就会在中央弹出干净的圆角 sheet. 不可见但 occupies layout. */
+.fc-file-input {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
 
 /* ── 控制栏 ── */
 .fc-controls-wrap {
