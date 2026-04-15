@@ -2135,8 +2135,9 @@ export default function FrameCountPage() {
                     <div className="fc-input-unit-wrap">
                       <input
                         className="fc-tab-input fc-toolbar-time"
-                        type="number" step="0.01" min={0} placeholder="Time"
+                        type="number" step="0.01" min={0} placeholder="Time (s)"
                         inputMode="decimal"
+                        style={{ width: `${(solveTime.length > 0 ? solveTime.length + 1 : 8) + 3}ch` }}
                         value={solveTime}
                         onChange={(e) => {
                           const v = e.target.value;
