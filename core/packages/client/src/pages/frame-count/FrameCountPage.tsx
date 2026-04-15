@@ -236,7 +236,8 @@ async function detectFpsFromFile(file: File): Promise<number | null> {
     }
     return null;
   } catch (err) {
-    console.warn('[FrameCount] MediaInfo detection failed:', err);
+    // 预期的 fallback: MediaInfo 失败后由 mp4box 兜底, 不是真错误, 用 info 不污染警告列表
+    console.info('[FrameCount] MediaInfo detection failed, falling back to mp4box:', err);
     return null;
   }
 }
@@ -374,6 +375,9 @@ export default function FrameCountPage() {
   const [trimEnd, setTrimEnd] = useState(0);
   const trimTrackRef = useRef<HTMLDivElement>(null);
   const trimDragRef = useRef<{ side: 'left' | 'right' | 'seek'; startX: number; startVal: number } | null>(null);
+  // 拖动 playhead 时绕过 React, 直接操作 DOM 避免 setCurrentFrame 触发整个组件重渲染
+  const playheadRef = useRef<HTMLDivElement>(null);
+  const playheadTooltipRef = useRef<HTMLSpanElement>(null);
 
   // FFmpeg export
   const ffmpegRef = useRef<FFmpeg | null>(null);
@@ -683,12 +687,13 @@ export default function FrameCountPage() {
   //     所有 drawImage 拉伸填满 → 精确帧/缩略图混用也不会闪
   //   - 优先精确帧,缩略图只作 cache miss 垫底 (I 帧间隔 ~60 帧, 单靠它颗粒度太粗)
   //   - 节流 prefetch 把 ±60 帧解码进缓存,大部分 mousemove 都能命中
-  const seekToFrameRough = useCallback((frame: number) => {
+  // domOnly=true: 拖动 scrub 模式, 跳过 setCurrentFrame (调用方负责用 ref 更新 playhead/tooltip DOM)
+  const seekToFrameRough = useCallback((frame: number, domOnly = false) => {
     if (videoFps <= 0) return;
     const maxFrame = totalFrames > 0 ? totalFrames - 1 : frame;
     const f = Math.max(0, Math.min(maxFrame, frame));
     currentFrameRef.current = f;
-    setCurrentFrame(f);
+    if (!domOnly) setCurrentFrame(f);
     // 优先精确帧,未命中用 I 帧缩略图垫底 (保证 playhead 跟随时画面也持续推进)
     const bmp = getFrame(f) ?? getKeyFrameThumb(f);
     if (!bmp) {
@@ -1634,8 +1639,20 @@ export default function FrameCountPage() {
       pendingSide = null;
       if (side === 'left') setTrimStart(f);
       else if (side === 'right') setTrimEnd(f);
-      // 拖动中走轻量路径,不 supersede 解码器
-      seekToFrameRough(f);
+      // seek 拖动: DOM-only 路径, 不触发 React re-render (避免 2500 行组件每帧重绘导致手机卡顿)
+      // trim 拖动: setTrimStart/End 本身已触发 re-render, 走原路径保持 React 状态同步
+      const domOnly = side === 'seek';
+      if (domOnly) {
+        const ph = playheadRef.current;
+        const tip = playheadTooltipRef.current;
+        if (ph && totalFrames > 0) {
+          const effEnd = trimEnd || totalFrames;
+          const clampedFrame = Math.max(trimStart, Math.min(f, effEnd));
+          ph.style.left = `${(clampedFrame / totalFrames) * 100}%`;
+        }
+        if (tip && videoFps > 0) tip.textContent = `${formatTime(f / videoFps)} (${f})`;
+      }
+      seekToFrameRough(f, domOnly);
     };
     const onMove = (e: PointerEvent) => {
       const d = trimDragRef.current;
@@ -1719,7 +1736,7 @@ export default function FrameCountPage() {
       window.removeEventListener('pointercancel', onUp);
       if (rafId) cancelAnimationFrame(rafId);
     };
-  }, [totalFrames, trimStart, trimEnd, seekToFrame, seekToFrameRough, beginDragOverlay]);
+  }, [totalFrames, trimStart, trimEnd, videoFps, seekToFrame, seekToFrameRough, beginDragOverlay]);
 
   // ── Export logic ──
   const handleExport = useCallback(async () => {
@@ -2370,8 +2387,8 @@ export default function FrameCountPage() {
                   const clampedFrame = Math.max(trimStart, Math.min(currentFrame, effEnd));
                   const pct = (clampedFrame / totalFrames) * 100;
                   return (
-                    <div className="fc-timeline-playhead" style={{ left: `${pct}%` }}>
-                      <span className="fc-playhead-tooltip">{formatTime(currentFrame / videoFps)} ({currentFrame})</span>
+                    <div ref={playheadRef} className="fc-timeline-playhead" style={{ left: `${pct}%` }}>
+                      <span ref={playheadTooltipRef} className="fc-playhead-tooltip">{formatTime(currentFrame / videoFps)} ({currentFrame})</span>
                     </div>
                   );
                 })()}
