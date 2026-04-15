@@ -9,6 +9,7 @@ import mediaInfoFactory from 'mediainfo.js';
 import { FFmpeg } from '@ffmpeg/ffmpeg';
 import { fetchFile, toBlobURL } from '@ffmpeg/util';
 import { useFrameBuffer } from './useFrameBuffer';
+import { VideoInfoButton, DecodeErrorCard, LoadingProgressOverlay } from './VideoInfoPanels';
 
 import './frame-count.css';
 
@@ -92,8 +93,6 @@ const IconExport = () => (
     <line x1="12" y1="15" x2="12" y2="3" />
   </svg>
 );
-
-const THUMBNAIL_COUNT = 25;
 
 // ── 类型定义 ──────────────────────────────────────────────────────────────
 
@@ -316,10 +315,6 @@ export default function FrameCountPage() {
 
   // 帧计数状态
   const [videoFps, setVideoFps] = useState(60);
-  // FPS 输入框文本状态: 允许用户清空/暂存无效值, 避免 videoFps 瞬间变 0 触发全局 NaN/Infinity
-  const [fpsInputText, setFpsInputText] = useState('60');
-  // videoFps 被外部改变 (MediaInfo 自动检测) 时同步输入框显示
-  useEffect(() => { setFpsInputText(String(videoFps)); }, [videoFps]);
 
   const [currentFrame, setCurrentFrame] = useState(0);
 
@@ -531,7 +526,7 @@ export default function FrameCountPage() {
   const [solveTime, setSolveTime] = useState('');
 
   // ── WebCodecs 帧缓冲 ──
-  const { getFrame, prefetch, getKeyFrameThumb, keyFrameThumbs, isReady: frameBufferReady, samples: fbSamples, decoderConfig: fbDecoderConfig, findStartFrameByTimestamp } = useFrameBuffer(videoFile, videoFps);
+  const { getFrame, prefetch, getKeyFrameThumb, keyFrameThumbs, isReady: frameBufferReady, decoderDead, loadProgress, parseFailed, audioInfo, vfrInfo, samples: fbSamples, decoderConfig: fbDecoderConfig, findStartFrameByTimestamp } = useFrameBuffer(videoFile, videoFps);
 
   // ── 从 mp4box samples 反推 fps —— iOS Safari 上 MediaInfo WASM 加载失败时的兜底 ──
   // FrameBuffer READY 后 samples 里每一帧都有精确 timestamp, 比 MediaInfo 读容器元数据更可靠。
@@ -678,38 +673,46 @@ export default function FrameCountPage() {
   const seekRafRef = useRef(0);
   const isDraggingRef = useRef(false);
   const thumbMissLoggedRef = useRef(false);
+  const dragPrefetchCenterRef = useRef<number | null>(null);
 
   // 拖动专用的"丝滑 scrub"路径 — PR/剪映式架构
   // 核心纪律:
   //   - canvas 在整个拖动过程中常亮,绝不切换 display (避免 layout thrashing)
   //   - 完全不碰 video.currentTime (避免 decoder 争抢)
-  //   - 不 prefetch (避免 supersede 风暴)
-  //   - 每 rAF 只做一件事: drawImage 最接近的已解码帧
-  //   - 找不到帧就保留上一帧画面 (不黑屏、不闪烁)
+  //   - canvas 尺寸锁死在 beginDragOverlay 里设定的 video 原生分辨率,
+  //     所有 drawImage 拉伸填满 → 精确帧/缩略图混用也不会闪
+  //   - 优先精确帧,缩略图只作 cache miss 垫底 (I 帧间隔 ~60 帧, 单靠它颗粒度太粗)
+  //   - 节流 prefetch 把 ±60 帧解码进缓存,大部分 mousemove 都能命中
   const seekToFrameRough = useCallback((frame: number) => {
     if (videoFps <= 0) return;
     const maxFrame = totalFrames > 0 ? totalFrames - 1 : frame;
     const f = Math.max(0, Math.min(maxFrame, frame));
     currentFrameRef.current = f;
     setCurrentFrame(f);
-    // 拖动期间只走 I 帧缩略图一种源,避免高清/缩略图混用导致的分辨率跳变
-    const bmp = getKeyFrameThumb(f);
+    // 优先精确帧,未命中用 I 帧缩略图垫底 (保证 playhead 跟随时画面也持续推进)
+    const bmp = getFrame(f) ?? getKeyFrameThumb(f);
     if (!bmp) {
-      // 拖动时 thumb miss 说明 iFrame decoder 挂了或被 supersede 空了 — canvas 会卡在旧帧
       if (!thumbMissLoggedRef.current) {
-        console.warn('[FCLog] seekToFrameRough THUMB MISS — scrub frozen on last frame', { f });
+        console.warn('[FCLog] seekToFrameRough MISS — scrub frozen on last frame', { f });
         thumbMissLoggedRef.current = true;
       }
-      return;
+    } else {
+      thumbMissLoggedRef.current = false;
+      const canvas = canvasRef.current;
+      const ctx = canvas?.getContext('2d');
+      if (ctx && canvas && canvas.width !== 0) {
+        ctx.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+      }
     }
-    thumbMissLoggedRef.current = false;
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext('2d');
-    if (!ctx || !canvas || canvas.width === 0) return;
-    // canvas 尺寸在 beginDragOverlay 里已经固定,这里 drawImage 时拉伸填满,
-    // 不改 canvas.width/height 就不会触发后备缓冲重分配 → 零闪烁
-    ctx.drawImage(bmp, 0, 0, canvas.width, canvas.height);
-  }, [videoFps, totalFrames, getKeyFrameThumb]);
+    // 节流 prefetch: 偏离上次中心超过半个范围才重派,
+    // 避免每次 mousemove rAF 都堆积 decode queue.
+    // prefetch 内部命中 cache 会立即 return, 且不 bump seq, 多次调用安全.
+    const lastCenter = dragPrefetchCenterRef.current;
+    if (lastCenter === null || Math.abs(f - lastCenter) > 30) {
+      prefetch(f, 60);
+      dragPrefetchCenterRef.current = f;
+    }
+  }, [videoFps, totalFrames, getFrame, getKeyFrameThumb, prefetch]);
 
   // 拖动开始前的准备:把当前 video 元素上显示的帧抓拍到 canvas,并把 canvas 尺寸
   // 锁定在 video 原生分辨率,整个拖动过程中 canvas 尺寸/显示状态都不再变化
@@ -1571,10 +1574,11 @@ export default function FrameCountPage() {
     return () => el.removeEventListener('wheel', handler);
   }, [handleVideoZoom, videoSrc]);
 
-  // ── 生成缩略图 (仅在 WebCodecs 不可用时 fallback,否则走 useFrameBuffer 的 keyFrameThumbs) ──
+  // ── 生成缩略图 (WebCodecs 不可用 或 mp4box 解析 0 samples 时 fallback 到 <video>+seek) ──
   useEffect(() => {
     if (!videoSrc || totalFrames <= 0 || videoFps <= 0) return;
-    if (typeof VideoDecoder !== 'undefined') return; // WebCodecs 可用, 用 useFrameBuffer 产出的 thumbnails
+    // WebCodecs 路径正常时 (mp4box 拿到 samples) 走 useFrameBuffer.keyFrameThumbs, 跳过
+    if (typeof VideoDecoder !== 'undefined' && !parseFailed) return;
     const video = document.createElement('video');
     video.muted = true;
     video.preload = 'auto';
@@ -1590,7 +1594,7 @@ export default function FrameCountPage() {
       canvas.width = 120;
       canvas.height = Math.round(120 * (video.videoHeight / video.videoWidth) || 68);
       let idx = 0;
-      const times = Array.from({ length: THUMBNAIL_COUNT }, (_, i) => (i / (THUMBNAIL_COUNT - 1)) * dur);
+      const times = Array.from({ length: timelineThumbCount }, (_, i) => (i / Math.max(1, timelineThumbCount - 1)) * dur);
 
       const grabNext = () => {
         if (cancelled || idx >= times.length) {
@@ -1611,7 +1615,7 @@ export default function FrameCountPage() {
     });
 
     return () => { cancelled = true; };
-  }, [videoSrc, totalFrames, videoFps]);
+  }, [videoSrc, totalFrames, videoFps, parseFailed, timelineThumbCount]);
 
   // ── Timeline trim 拖拽 ──
   useEffect(() => {
@@ -1673,6 +1677,7 @@ export default function FrameCountPage() {
       if (!trimDragRef.current) return;
       trimDragRef.current = null;
       isDraggingRef.current = false;
+      dragPrefetchCenterRef.current = null;
       if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
       // 只在真正 drag 过 (scrubModeActive) 才需要补一次精确 seek
       // 单击的情况 mousedown 已经精确 seek,不用再做
@@ -1974,7 +1979,9 @@ export default function FrameCountPage() {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }, [videoFile, useCanvasDisplay, currentFrame, showToast]);
 
-  // 总帧数
+  // 总帧数 + 首帧到达信号 (用于隐藏 loading overlay)
+  const [videoFirstFrameReady, setVideoFirstFrameReady] = useState(false);
+  useEffect(() => { setVideoFirstFrameReady(false); }, [videoSrc]);
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -1987,11 +1994,19 @@ export default function FrameCountPage() {
         video.currentTime = 0.001;
       }
     };
+    const onFirstFrame = () => setVideoFirstFrameReady(true);
     video.addEventListener('play', onPlay);
     video.addEventListener('pause', onPause);
     video.addEventListener('loadedmetadata', onLoaded);
+    video.addEventListener('loadeddata', onFirstFrame);
+    if (video.readyState >= 2) setVideoFirstFrameReady(true);
     if (video.duration && isFinite(video.duration) && videoFps > 0) setTotalFrames(Math.round(video.duration * videoFps));
-    return () => { video.removeEventListener('play', onPlay); video.removeEventListener('pause', onPause); video.removeEventListener('loadedmetadata', onLoaded); };
+    return () => {
+      video.removeEventListener('play', onPlay);
+      video.removeEventListener('pause', onPause);
+      video.removeEventListener('loadedmetadata', onLoaded);
+      video.removeEventListener('loadeddata', onFirstFrame);
+    };
   }, [videoSrc, videoFps, frameBufferReady, prefetch]);
 
   // 后台热身预取:暂停状态下,debounce 500ms 后解码当前帧后方的帧,
@@ -2035,7 +2050,7 @@ export default function FrameCountPage() {
         <Link to="/" className="fc-back"><IconBack /> Back</Link>
         <span className="fc-title">Frame Count</span>
         <button className="fc-shortcuts-btn" onClick={() => setShowShortcuts(true)}>
-          <IconKeyboard /> Shortcuts
+          <IconKeyboard />
         </button>
       </header>
 
@@ -2051,6 +2066,21 @@ export default function FrameCountPage() {
                   {/* Row 1 (桌面端 display:contents 不影响布局;手机端变为独立一行) */}
                   <div className="fc-toolbar-row1">
                     <span className="fc-video-label">{videoName}</span>
+                    {videoFile && (
+                      <VideoInfoButton
+                        info={{
+                          videoFile,
+                          videoFps,
+                          codec: fbDecoderConfig?.codec ?? null,
+                          width: fbDecoderConfig?.codedWidth ?? videoRef.current?.videoWidth ?? 0,
+                          height: fbDecoderConfig?.codedHeight ?? videoRef.current?.videoHeight ?? 0,
+                          durationSec: videoFps > 0 && totalFrames > 0 ? totalFrames / videoFps : (videoRef.current?.duration ?? 0),
+                          sampleCount: fbSamples.length > 0 ? fbSamples.length : null,
+                          audio: audioInfo,
+                          vfr: vfrInfo,
+                        }}
+                      />
+                    )}
                     <div className="fc-input-unit-wrap">
                       <input
                         className="fc-tab-input fc-toolbar-time"
@@ -2067,16 +2097,7 @@ export default function FrameCountPage() {
                       />
                       {solveTime && <span className="fc-input-suffix">s</span>}
                     </div>
-                    {/* FPS — 只读: MediaInfo 自动探测, 用户不可改 (错误 fps 会全局破坏帧映射) */}
-                    <div className="fc-input-unit-wrap">
-                      <input
-                        className="fc-tab-input fc-toolbar-time"
-                        type="number" value={fpsInputText}
-                        readOnly disabled
-                        placeholder="FPS"
-                      />
-                      {videoFps > 0 && <span className="fc-input-suffix">fps</span>}
-                    </div>
+                    {/* FPS 不再单独展示, 移入 VideoInfoButton tooltip */}
                   </div>
 
                   {/* Row 2: 图像变换 + New/Folder/Export */}
@@ -2206,6 +2227,19 @@ export default function FrameCountPage() {
                     style={getVideoStyle()}
                   />
 
+                  {/* 大视频文件读取进度 — 画面已出则隐藏, 避免遮挡 */}
+                  {loadProgress && !decoderDead && !videoFirstFrameReady && (
+                    <LoadingProgressOverlay bytes={loadProgress.bytes} total={loadProgress.total} />
+                  )}
+
+                  {/* Decoder 彻底失败时的友好提示 (HEVC 4:2:2 等浏览器不支持的 profile) */}
+                  {decoderDead && videoFile && (
+                    <DecodeErrorCard
+                      videoFile={videoFile}
+                      codec={fbDecoderConfig?.codec ?? null}
+                      onCopy={copyToClipboard}
+                    />
+                  )}
 
                   {/* Crop overlay — 现在相对于视频而非容器 */}
                   {cropMode && (
@@ -2249,8 +2283,6 @@ export default function FrameCountPage() {
             ) : (
               <div className={`fc-drop-hint ${dragging ? 'dragging' : ''}`} onClick={() => fileInputRef.current?.click()}>
                 <IconUpload />
-                <span className="fc-drop-text">Drop a video file here</span>
-                <span className="fc-drop-sub">or click to select a file</span>
               </div>
             )}
             <input ref={fileInputRef} type="file" accept="video/*" className="fc-file-input" onChange={handleFileSelect} />

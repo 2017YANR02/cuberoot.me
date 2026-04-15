@@ -1239,6 +1239,243 @@
   text-align: center;
 }
 
+/* ── Video Info Button + Popover ── */
+.fc-info-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.fc-info-btn {
+  background: transparent;
+  border: none;
+  color: #aaa;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s;
+}
+.fc-info-btn:hover { color: #fff; }
+.fc-info-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 50;
+  min-width: 260px;
+  max-width: min(360px, 90vw);
+  background: #2a2a2a;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  padding: 10px 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  font-size: 0.78rem;
+  color: #ddd;
+}
+.fc-info-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 3px 0;
+}
+.fc-info-row > span:first-child { color: #888; }
+.fc-info-row > span:last-child,
+.fc-info-row > code { color: #eee; text-align: right; }
+.fc-info-codec-str code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.72rem;
+  word-break: break-all;
+}
+.fc-info-sep {
+  height: 1px;
+  background: rgba(255,255,255,0.1);
+  margin: 6px -12px;
+}
+.fc-info-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 5px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  border-radius: 3px;
+  vertical-align: middle;
+  border: 1px solid;
+}
+.fc-info-badge-warn {
+  color: #ffb347;
+  background: rgba(255,179,71,0.14);
+  border-color: rgba(255,179,71,0.4);
+}
+.fc-info-badge-ok {
+  color: #7ed4a0;
+  background: rgba(126,212,160,0.12);
+  border-color: rgba(126,212,160,0.35);
+}
+.fc-info-hint {
+  margin-top: 6px;
+  padding: 6px 8px;
+  background: rgba(215,119,87,0.15);
+  border: 1px solid rgba(215,119,87,0.35);
+  border-radius: 4px;
+  color: #f4a98c;
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+/* ── Loading Progress Overlay ── */
+.fc-loading-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 15;
+  min-width: 280px;
+  max-width: 90%;
+  background: #2a2a2a;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  padding: 14px 18px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+  color: #ddd;
+  /* 父 .fc-video-wrapper 设了 line-height:0, 必须显式覆盖否则文字重叠 */
+  line-height: 1.4;
+}
+.fc-loading-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #eee;
+  margin-bottom: 6px;
+}
+.fc-loading-stats {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.76rem;
+  color: #bbb;
+  margin-bottom: 8px;
+}
+.fc-loading-bar {
+  height: 6px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.fc-loading-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #d77757, #e8a87c);
+  transition: width 0.2s linear;
+}
+
+/* ── Decode Error Card (overlay on video) ── */
+.fc-decode-error-card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 20;
+  max-width: min(560px, 92%);
+  background: #2a2a2a;
+  border: 1px solid rgba(215,119,87,0.4);
+  border-radius: 10px;
+  padding: 16px 18px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+  color: #ddd;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+.fc-decode-error-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #f4a98c;
+  margin-bottom: 8px;
+}
+.fc-decode-error-body {
+  margin-bottom: 6px;
+}
+.fc-decode-error-codec {
+  font-size: 0.72rem;
+  color: #999;
+  margin-bottom: 10px;
+}
+.fc-decode-error-codec code {
+  color: #ccc;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.fc-decode-error-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 12px;
+  padding: 8px 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  color: #ccc;
+  font-size: 0.76rem;
+  cursor: pointer;
+  user-select: none;
+}
+.fc-decode-error-toggle input {
+  accent-color: #d77757;
+  cursor: pointer;
+}
+.fc-decode-error-hint {
+  color: #aaa;
+  font-size: 0.76rem;
+  margin-bottom: 8px;
+}
+.fc-decode-error-cmds {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.fc-decode-error-cmd {
+  background: #1f1f1f;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+.fc-decode-error-cmd-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.fc-decode-error-cmd-label {
+  font-weight: 600;
+  color: #eee;
+  font-size: 0.8rem;
+}
+.fc-decode-error-cmd-desc {
+  color: #888;
+  font-size: 0.7rem;
+  margin-top: 2px;
+}
+.fc-decode-error-copy {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #ddd;
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.fc-decode-error-copy:hover { background: rgba(255,255,255,0.15); }
+.fc-decode-error-cmd-body {
+  display: block;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.7rem;
+  color: #b8d8b8;
+  word-break: break-all;
+  white-space: pre-wrap;
+  line-height: 1.35;
+}
+
 /* ── Responsive ── */
 @media (max-width: 768px) {
   .fc-main {
@@ -1324,4 +1561,18 @@
     padding: 3px 5px;
     font-size: 0.65rem;
   }
+
+  /* 手机窄屏: popover 改用视口定位, 避免被父容器 overflow 截断 / 右侧越界 */
+  .fc-info-popover {
+    left: auto;
+    right: 0;
+    min-width: 240px;
+    max-width: calc(100vw - 24px);
+  }
+  .fc-decode-error-card {
+    font-size: 0.75rem;
+    padding: 12px;
+  }
+  .fc-decode-error-title { font-size: 0.9rem; }
+  .fc-decode-error-cmd-body { font-size: 0.65rem; }
 }
