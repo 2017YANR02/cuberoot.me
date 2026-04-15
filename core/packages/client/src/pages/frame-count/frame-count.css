@@ -125,11 +125,13 @@
   justify-content: center;
 }
 
-/* 视频包装器 — 紧贴视频尺寸，crop/zoom 基准 */
+/* 视频包装器 — 填满 video-zone 剩余高度, 视频按 contain 居中, 只可能单轴有黑边 */
 .fc-video-wrapper {
   position: relative;
   width: 100%;
-  line-height: 0; /* 消除 inline 元素底部空白 */
+  flex: 1;
+  min-height: 0;
+  line-height: 0;
   overflow: hidden;
   touch-action: none; /* 允许自定义触摸事件（pan/zoom） */
   user-select: none;
@@ -141,7 +143,8 @@
 
 .fc-video-wrapper video {
   width: 100%;
-  max-height: 65vh;
+  height: 100%;
+  object-fit: contain;
   display: block;
   background: transparent;
 }
@@ -166,7 +169,7 @@
   align-items: center;
   gap: 8px;
   padding: 6px 10px;
-  background: rgba(0,0,0,0.15);
+  background: #3a3a3a;
   border-bottom: 1px solid rgba(255,255,255,0.06);
   flex-shrink: 0;
   position: relative;
@@ -356,7 +359,7 @@
   pointer-events: none;
 }
 
-/* 拖放提示 */
+/* 拖放提示 — 仅中间按钮可点, 外围区域只接受 drop, 不接 click */
 .fc-drop-hint {
   display: flex;
   flex-direction: column;
@@ -366,26 +369,26 @@
   color: #888;
   min-height: 300px;
   width: 100%;
-  cursor: pointer;
   transition: all 0.3s;
 }
-.fc-drop-hint:hover { color: #bbb; }
 .fc-drop-hint.dragging { background: rgba(255,255,255,0.06); color: #ccc; }
-.fc-drop-hint svg { width: 48px; height: 48px; opacity: 0.5; }
+.fc-drop-upload-btn {
+  background: transparent;
+  border: none;
+  padding: 12px;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: color 0.15s, background 0.15s;
+}
+.fc-drop-upload-btn:hover { color: #bbb; background: rgba(255,255,255,0.04); }
+.fc-drop-upload-btn svg { width: 48px; height: 48px; opacity: 0.5; }
 .fc-drop-text { font-size: 1rem; font-weight: 600; }
 .fc-drop-sub { font-size: 0.8rem; opacity: 0.6; }
-/* iOS Safari 把弹出 picker 的"锚点"挂在 input 元素的位置上, display:none 时会
-   退化成屏幕底部带难看尾巴的形状. 把 input 摆成 1×1 透明并定位到画面正中,
-   iOS 就会在中央弹出干净的圆角 sheet. 不可见但 occupies layout. */
-.fc-file-input {
-  position: fixed;
-  left: 50%;
-  top: 50%;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-  pointer-events: none;
-}
+.fc-file-input { display: none; }
 
 /* ── 控制栏 ── */
 .fc-controls-wrap {
