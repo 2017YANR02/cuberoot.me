@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 
 interface VideoInfo {
   videoFile: File;
@@ -70,6 +70,8 @@ export function VideoInfoButton({ info }: { info: VideoInfo }) {
   const btnRef = useRef<HTMLButtonElement>(null);
   const popRef = useRef<HTMLDivElement>(null);
   const [popPos, setPopPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+  // 初次渲染 popover 时宽度尚未确定, 先隐藏避免"错位闪现", useLayoutEffect 测完宽度同步居中后再显示
+  const [positioned, setPositioned] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -88,12 +90,24 @@ export function VideoInfoButton({ info }: { info: VideoInfo }) {
   }, [open]);
 
   // 打开时按按钮位置固定在视口 (position:fixed), 避开上游 overflow:hidden 裁剪
-  useEffect(() => {
-    if (!open) return;
+  // useLayoutEffect: popover 挂载后、浏览器绘制前同步测量宽度并定位, 避免错位闪现
+  useLayoutEffect(() => {
+    if (!open) {
+      setPositioned(false);
+      return;
+    }
     const reposition = () => {
       const r = btnRef.current?.getBoundingClientRect();
       if (!r) return;
-      setPopPos({ top: r.bottom + 6, left: r.left });
+      const popW = popRef.current?.offsetWidth ?? 0;
+      const cx = r.left + r.width / 2;
+      const margin = 8;
+      let left = cx - popW / 2;
+      if (popW > 0) {
+        left = Math.max(margin, Math.min(window.innerWidth - popW - margin, left));
+      }
+      setPopPos({ top: r.bottom + 6, left });
+      setPositioned(true);
     };
     reposition();
     window.addEventListener('resize', reposition);
@@ -129,7 +143,11 @@ export function VideoInfoButton({ info }: { info: VideoInfo }) {
           ref={popRef}
           className="fc-info-popover"
           role="dialog"
-          style={{ ['--popover-top' as string]: `${popPos.top}px`, ['--popover-left' as string]: `${popPos.left}px` }}
+          style={{
+            ['--popover-top' as string]: `${popPos.top}px`,
+            ['--popover-left' as string]: `${popPos.left}px`,
+            visibility: positioned ? 'visible' : 'hidden',
+          }}
         >
           <div className="fc-info-row"><span>分辨率</span><span>{info.width} × {info.height}</span></div>
           <div className="fc-info-row">

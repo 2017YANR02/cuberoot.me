@@ -103,6 +103,7 @@ interface Mark {
 interface Solve {
   name: string;
   marks: Mark[];
+  time: string;
 }
 
 
@@ -327,7 +328,7 @@ export default function FrameCountPage() {
   const [playbackRate, setPlaybackRate] = useState(1);
 
   // 多 Solve 管理
-  const [solves, setSolves] = useState<Solve[]>([{ name: 'Solve 1', marks: [] }]);
+  const [solves, setSolves] = useState<Solve[]>([{ name: 'Solve 1', marks: [], time: '' }]);
   const [activeSolveIdx, setActiveSolveIdx] = useState(0);
   const [selectedMarkIdx, setSelectedMarkIdx] = useState<number | null>(null);
 
@@ -527,7 +528,11 @@ export default function FrameCountPage() {
       document.removeEventListener('gestureend', prevent);
     };
   }, []);
-  const [solveTime, setSolveTime] = useState('');
+  // solveTime 派生自当前 active solve 的 time 字段 (每个 solve 自己的 time)
+  const solveTime = solves[activeSolveIdx]?.time ?? '';
+  const setSolveTime = useCallback((v: string) => {
+    setSolves(prev => prev.map((s, i) => i === activeSolveIdx ? { ...s, time: v } : s));
+  }, [activeSolveIdx]);
 
   // ── WebCodecs 帧缓冲 ──
   const { getFrame, prefetch, getKeyFrameThumb, keyFrameThumbs, isReady: frameBufferReady, decoderDead, loadProgress, parseFailed, audioInfo, vfrInfo, samples: fbSamples, decoderConfig: fbDecoderConfig, findStartFrameByTimestamp } = useFrameBuffer(videoFile, videoFps);
@@ -981,7 +986,7 @@ export default function FrameCountPage() {
 
   const addSolve = useCallback(() => {
     setSolves(prev => {
-      const next = renumberSolves([...prev, { name: '', marks: [] }]);
+      const next = renumberSolves([...prev, { name: '', marks: [], time: '' }]);
       setActiveSolveIdx(next.length - 1);
       return next;
     });
@@ -991,7 +996,7 @@ export default function FrameCountPage() {
 
   const removeSolve = useCallback(() => {
     if (solves.length <= 1) {
-      setSolves(prev => [{ ...prev[0], name: 'Solve 1', marks: [] }]);
+      setSolves(prev => [{ ...prev[0], name: 'Solve 1', marks: [], time: prev[0]?.time ?? '' }]);
       setSelectedMarkIdx(null);
       showToast('Marks cleared');
       return;
@@ -1165,20 +1170,22 @@ export default function FrameCountPage() {
     setIsPlaying(false);
     setUseCanvasDisplay(false);
 
-    // 从文件名提取还原时间，截去扩展名后匹配最后一个 \d+\.\d+ 数字，截断至 2 位小数
+    // 从文件名提取还原时间作为 Solve 1 的默认 time (仅 Solve 1, 其余 solve 留空)
+    let defaultTime = '';
     const nameNoExt = file.name.replace(/\.[^.]+$/, '');
     const timeMatches = nameNoExt.match(/\d+\.\d+/g);
     if (timeMatches && timeMatches.length > 0) {
       const raw = parseFloat(timeMatches[timeMatches.length - 1]);
       if (!isNaN(raw)) {
         const truncated = Math.floor(raw * 100) / 100;
-        setSolveTime(truncated.toFixed(2).replace(/\.?0+$/, '') || String(truncated));
+        defaultTime = truncated.toFixed(2).replace(/\.?0+$/, '') || String(truncated);
       }
-    } else {
-      setSolveTime('');
     }
 
-    setSolves(initialSolves && initialSolves.length > 0 ? initialSolves : [{ name: 'Solve 1', marks: [] }]);
+    const finalSolves = initialSolves && initialSolves.length > 0
+      ? initialSolves.map((s, i) => i === 0 && !s.time ? { ...s, time: defaultTime } : s)
+      : [{ name: 'Solve 1', marks: [], time: defaultTime }];
+    setSolves(finalSolves);
     setActiveSolveIdx(0);
     setSelectedMarkIdx(null);
     if (initialFps && initialFps > 0) {
@@ -1222,7 +1229,7 @@ export default function FrameCountPage() {
         const name = key === 'splits' ? `Solve ${out.length + 1}` : key;
         // 兼容旧的 `|` 分隔写法
         const frames = rest.split(/[:|]/).map(s => s.trim()).filter(s => s.length > 0).map(Number).filter(n => isFinite(n));
-        out.push({ name, marks: frames.map(f => ({ frame: f })) });
+        out.push({ name, marks: frames.map(f => ({ frame: f })), time: '' });
       }
     }
     return { solves: out, fps };
@@ -2100,9 +2107,6 @@ export default function FrameCountPage() {
       <header className="fc-header">
         <Link to="/" className="fc-back"><IconBack /> Back</Link>
         <span className="fc-title">Frame Count</span>
-        <button className="fc-shortcuts-btn" onClick={() => setShowShortcuts(true)}>
-          <IconKeyboard />
-        </button>
       </header>
 
       {/* ── 主体：视频 + 右侧面板 ── */}
@@ -2132,25 +2136,7 @@ export default function FrameCountPage() {
                         }}
                       />
                     )}
-                    <div className="fc-input-unit-wrap">
-                      <input
-                        className="fc-tab-input fc-toolbar-time"
-                        type="number" step="0.01" min={0} placeholder="Time (s)"
-                        inputMode="decimal"
-                        style={{ width: `${(solveTime.length > 0 ? solveTime.length + 1 : 8) + 3}ch` }}
-                        value={solveTime}
-                        onChange={(e) => {
-                          const v = e.target.value;
-                          setSolveTime(v);
-                          // 输完小数点后两位后自动失焦
-                          if (/^\d+\.\d{2}$/.test(v)) {
-                            e.target.blur();
-                          }
-                        }}
-                      />
-                      {solveTime && <span className="fc-input-suffix">s</span>}
-                    </div>
-                    {/* FPS 不再单独展示, 移入 VideoInfoButton tooltip */}
+                    {/* Time 已移到右侧 Solve header (按 Solve 维度记录 time); FPS 见 ⓘ */}
                   </div>
 
                   {/* Row 2: 图像变换 + New/Folder/Export */}
@@ -2232,6 +2218,9 @@ export default function FrameCountPage() {
                       </div>
                     )}
                   </div>
+                    <button className="fc-shortcuts-btn" onClick={() => setShowShortcuts(true)} title="Keyboard Shortcuts">
+                      <IconKeyboard />
+                    </button>
                   </div>
                 </div>
                 {/* 视频 wrapper — 紧贴视频尺寸，crop overlay / zoom / pan 都在这里 */}
@@ -2490,13 +2479,13 @@ export default function FrameCountPage() {
               </div>
 
               <div className="fc-controls">
-                <button className="fc-ctrl-btn" title="Back 10 frames (Q)" {...longPressProps(() => stepFrames(-10), 150)}><IconSkipBack /></button>
                 <button className="fc-ctrl-btn" title="Back 1 frame (A)" {...longPressProps(() => stepFrames(-1), 80)}><IconFrameBack /></button>
+                <button className="fc-ctrl-btn" title="Back 10 frames (Q)" {...longPressProps(() => stepFrames(-10), 150)}><IconSkipBack /></button>
                 <button className="fc-ctrl-btn play-btn" title="Play/Pause (K)" onClick={togglePlay}>
                   {isPlaying ? <IconPause /> : <IconPlay />}
                 </button>
-                <button className="fc-ctrl-btn" title="Forward 1 frame (D)" {...longPressProps(() => stepFrames(1), 80)}><IconFrameForward /></button>
                 <button className="fc-ctrl-btn" title="Forward 10 frames (E)" {...longPressProps(() => stepFrames(10), 150)}><IconSkipForward /></button>
+                <button className="fc-ctrl-btn" title="Forward 1 frame (D)" {...longPressProps(() => stepFrames(1), 80)}><IconFrameForward /></button>
 
                 <div className="fc-ctrl-sep" />
 
@@ -2517,6 +2506,8 @@ export default function FrameCountPage() {
           <div className="fc-solve-col">
             {/* Solve 选择器 */}
             <div className="fc-panel fc-solve-header">
+              <button className="fc-solve-btn" title="Add Solve (+)" onClick={addSolve}>+</button>
+              <button className="fc-solve-btn" title="Remove Solve" onClick={removeSolve}>−</button>
               <select
                 className="fc-solve-select"
                 value={activeSolveIdx}
@@ -2524,8 +2515,23 @@ export default function FrameCountPage() {
               >
                 {solves.map((s, i) => <option key={i} value={i}>{s.name}</option>)}
               </select>
-              <button className="fc-solve-btn" title="Add Solve (+)" onClick={addSolve}>+</button>
-              <button className="fc-solve-btn" title="Remove Solve" onClick={removeSolve}>−</button>
+              <div className="fc-input-unit-wrap">
+                <input
+                  className="fc-tab-input fc-toolbar-time"
+                  type="number" step="0.01" min={0} placeholder="Time (s)"
+                  inputMode="decimal"
+                  style={{ width: `${(solveTime.length > 0 ? solveTime.length + 1 : 8) + 3}ch` }}
+                  value={solveTime}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setSolveTime(v);
+                    if (/^\d+\.\d{2}$/.test(v)) {
+                      e.target.blur();
+                    }
+                  }}
+                />
+                {solveTime && <span className="fc-input-suffix">s</span>}
+              </div>
             </div>
 
             {/* Marks 列表 */}
@@ -2534,7 +2540,7 @@ export default function FrameCountPage() {
               <div className="fc-mark-actions">
                 <button className="fc-action-btn" onClick={addMark} disabled={activeSolve.marks.some(m => m.frame === currentFrame)}>Add</button>
                 <button className="fc-action-btn" onClick={() => selectedMarkIdx !== null && removeMark(selectedMarkIdx)} disabled={selectedMarkIdx === null}>Remove</button>
-                <button className="fc-action-btn" onClick={updateMark} disabled={selectedMarkIdx === null}>Update</button>
+                <button className="fc-action-btn" title="将选中 mark 的帧号更新为当前播放位置" onClick={updateMark} disabled={selectedMarkIdx === null}>Update</button>
               </div>
               <div className="fc-marks-list">
                 {marksWithDiffs.length === 0 && (
