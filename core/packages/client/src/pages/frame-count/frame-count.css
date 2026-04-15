@@ -8,10 +8,12 @@
   font-family: 'Inter', Arial, sans-serif;
   background-color: #3a3a3a;
   color: #e8e8e8;
-  min-height: 100vh;
+  height: 100vh;
+  box-sizing: border-box;
   padding: 0.75rem;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   touch-action: manipulation; /* 移动端禁用 pinch-zoom */
   /* iOS 屏蔽长按放大镜 / 弹出菜单, 禁止文本选中 */
   -webkit-user-select: none;
@@ -60,18 +62,18 @@
 .fc-shortcuts-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   color: #b0b0b0;
-  font-size: 0.8rem;
-  padding: 6px 12px;
-  border-radius: 8px;
+  font-size: 0.72rem;
+  padding: 5px 8px;
+  border-radius: 6px;
   border: 1px solid rgba(255,255,255,0.12);
   background: rgba(255,255,255,0.06);
   cursor: pointer;
   transition: all 0.2s;
 }
 .fc-shortcuts-btn:hover { color: #fff; border-color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.1); }
-.fc-shortcuts-btn svg { width: 14px; height: 14px; }
+.fc-shortcuts-btn svg { width: 12px; height: 12px; }
 
 /* ── 主体布局：视频 + 右侧面板 ── */
 .fc-main {
@@ -87,6 +89,7 @@
   flex-direction: column;
   gap: 0.75rem;
   min-width: 0;
+  min-height: 0;
 }
 
 .fc-solve-col {
@@ -94,6 +97,8 @@
   flex-direction: column;
   gap: 0.75rem;
   min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 /* ── 面板 ── */
@@ -109,6 +114,7 @@
 .fc-video-zone {
   position: relative;
   min-height: 300px;
+  max-height: calc(100vh - 180px);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -393,6 +399,7 @@
 /* ── 控制栏 ── */
 .fc-controls-wrap {
   padding: 0.75rem 1rem;
+  flex-shrink: 0;
 }
 
 /* ── iOS-style Timeline Trimmer ── */
@@ -617,6 +624,7 @@
 .fc-controls {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
   flex-wrap: wrap;
 }
@@ -683,7 +691,7 @@
 }
 
 .fc-solve-select {
-  flex: 1;
+  flex: 0 1 auto;
   background: #2a2a2a;
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 6px;
@@ -698,6 +706,11 @@
   color: #e0e0e0;
 }
 .fc-solve-select:focus { border-color: rgba(255,255,255,0.35); }
+
+.fc-solve-header .fc-toolbar-time {
+  height: 32px !important;
+  box-sizing: border-box !important;
+}
 
 .fc-solve-btn {
   width: 32px; height: 32px;
@@ -1178,7 +1191,12 @@
   align-items: center;
   justify-content: center;
   z-index: 900;
-  animation: fc-fade-in 0.15s;
+  animation: fc-modal-fade-in 0.15s;
+}
+
+@keyframes fc-modal-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .fc-modal {
@@ -1496,6 +1514,15 @@
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
+  /* 移动端恢复页面可滚动 (桌面端锁死 100vh, 手机端需竖排滚动) */
+  .frame-count-page {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+  .fc-solve-col {
+    overflow-y: visible;
+  }
   .fc-main {
     grid-template-columns: 1fr;
   }
@@ -1504,18 +1531,17 @@
     font-size: 1rem;
   }
 
-  /* 手机端: toolbar 变成纵向两行, 每行内部横向排列 (不换行, 紧凑布局) */
+  /* 手机端: Time 已移走, toolbar 合并为单行 (横向 flex + wrap), 不再分两行 */
   .fc-video-toolbar {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
-  }
-  .fc-toolbar-row1,
-  .fc-toolbar-row2 {
-    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
     align-items: center;
     gap: 8px;
-    flex-wrap: nowrap;
+  }
+  /* row 容器透明, 子元素直接参与外层 flex (与桌面端一致) */
+  .fc-toolbar-row1,
+  .fc-toolbar-row2 {
+    display: contents;
   }
   /* 文件名按内容宽度显示 (ⓘ 紧挨其右), 超长可 shrink 并省略号 */
   .fc-video-label {
@@ -1525,11 +1551,6 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-  }
-  /* 时间输入框推到行尾, 宽度由 JSX style 跟内容自适应 */
-  .fc-toolbar-row1 .fc-input-unit-wrap {
-    flex: 0 0 auto;
-    margin-left: auto;
   }
   /* Row 2: 图像变换按钮靠左, 其他紧随其后, Export 靠右 */
   .fc-toolbar-row2 .fc-toolbar-controls {
@@ -1581,8 +1602,6 @@
 
   /* 手机窄屏: popover 改用视口定位, 避免被父容器 overflow 截断 / 右侧越界 */
   .fc-info-popover {
-    left: auto;
-    right: 0;
     min-width: 240px;
     max-width: calc(100vw - 24px);
   }
