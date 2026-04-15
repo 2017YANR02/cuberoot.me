@@ -2281,8 +2281,10 @@ export default function FrameCountPage() {
                 </div>
               </>
             ) : (
-              <div className={`fc-drop-hint ${dragging ? 'dragging' : ''}`} onClick={() => fileInputRef.current?.click()}>
-                <IconUpload />
+              <div className={`fc-drop-hint ${dragging ? 'dragging' : ''}`}>
+                <button type="button" className="fc-drop-upload-btn" onClick={() => fileInputRef.current?.click()} aria-label="Upload video">
+                  <IconUpload />
+                </button>
               </div>
             )}
             <input ref={fileInputRef} type="file" accept="video/*" className="fc-file-input" onChange={handleFileSelect} />
