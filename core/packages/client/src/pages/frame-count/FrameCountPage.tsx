@@ -953,6 +953,28 @@ export default function FrameCountPage() {
     setPlaybackRate(rate);
   }, []);
 
+  // 长按重复: pointerdown 立即触发一次, 400ms 后每 intervalMs 重复, 离开/抬起停止
+  const longPressTimerRef = useRef<number | null>(null);
+  const longPressIntervalRef = useRef<number | null>(null);
+  const longPressClear = useCallback(() => {
+    if (longPressTimerRef.current !== null) { clearTimeout(longPressTimerRef.current); longPressTimerRef.current = null; }
+    if (longPressIntervalRef.current !== null) { clearInterval(longPressIntervalRef.current); longPressIntervalRef.current = null; }
+  }, []);
+  useEffect(() => longPressClear, [longPressClear]);
+  const longPressProps = useCallback((fn: () => void, intervalMs = 100) => ({
+    onPointerDown: (e: React.PointerEvent) => {
+      e.preventDefault();
+      fn();
+      longPressClear();
+      longPressTimerRef.current = window.setTimeout(() => {
+        longPressIntervalRef.current = window.setInterval(fn, intervalMs);
+      }, 400);
+    },
+    onPointerUp: longPressClear,
+    onPointerLeave: longPressClear,
+    onPointerCancel: longPressClear,
+  }), [longPressClear]);
+
   // ── Solve 管理 ──
 
   const renumberSolves = (list: Solve[]) => list.map((s, i) => ({ ...s, name: `Solve ${i + 1}` }));
@@ -2114,6 +2136,7 @@ export default function FrameCountPage() {
                       <input
                         className="fc-tab-input fc-toolbar-time"
                         type="number" step="0.01" min={0} placeholder="Time"
+                        inputMode="decimal"
                         value={solveTime}
                         onChange={(e) => {
                           const v = e.target.value;
@@ -2466,13 +2489,13 @@ export default function FrameCountPage() {
               </div>
 
               <div className="fc-controls">
-                <button className="fc-ctrl-btn" title="Back 10 frames (Q)" onClick={() => stepFrames(-10)}><IconSkipBack /></button>
-                <button className="fc-ctrl-btn" title="Back 1 frame (A)" onClick={() => stepFrames(-1)}><IconFrameBack /></button>
+                <button className="fc-ctrl-btn" title="Back 10 frames (Q)" {...longPressProps(() => stepFrames(-10), 150)}><IconSkipBack /></button>
+                <button className="fc-ctrl-btn" title="Back 1 frame (A)" {...longPressProps(() => stepFrames(-1), 80)}><IconFrameBack /></button>
                 <button className="fc-ctrl-btn play-btn" title="Play/Pause (K)" onClick={togglePlay}>
                   {isPlaying ? <IconPause /> : <IconPlay />}
                 </button>
-                <button className="fc-ctrl-btn" title="Forward 1 frame (D)" onClick={() => stepFrames(1)}><IconFrameForward /></button>
-                <button className="fc-ctrl-btn" title="Forward 10 frames (E)" onClick={() => stepFrames(10)}><IconSkipForward /></button>
+                <button className="fc-ctrl-btn" title="Forward 1 frame (D)" {...longPressProps(() => stepFrames(1), 80)}><IconFrameForward /></button>
+                <button className="fc-ctrl-btn" title="Forward 10 frames (E)" {...longPressProps(() => stepFrames(10), 150)}><IconSkipForward /></button>
 
                 <div className="fc-ctrl-sep" />
 
