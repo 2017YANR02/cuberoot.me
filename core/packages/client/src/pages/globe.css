@@ -457,6 +457,21 @@
     transition: background 0.15s;
 }
 .globe-page .bin-panel-item:hover { background: var(--accent-soft); }
+.globe-page .bin-panel-item + .bin-panel-item { border-top: 1px solid var(--border); }
+.globe-page .bin-panel-item-title {
+    display: inline-block;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.2rem;
+    color: var(--text);
+    text-decoration: none;
+}
+.globe-page .bin-panel-item-title:hover { color: var(--accent); }
+.globe-page .bin-panel-title-link {
+    color: inherit;
+    text-decoration: none;
+}
+.globe-page .bin-panel-title-link:hover { color: var(--accent); }
 .globe-page .bin-panel-meta {
     font-size: 0.75rem;
     color: var(--text-sub);
