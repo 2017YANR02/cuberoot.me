@@ -1,12 +1,14 @@
 /**
- * 顶尖选手近期比赛追踪页
- * NOTE: 从原版 stats/upcoming_comp/index.md 1:1 复刻
- * 数据源: stats/upcoming_comps.json（Python 脚本生成）
+ * 顶尖选手近期比赛追踪页 — 日历视图
+ * 数据源: stats/upcoming_comps.json（Top 模式） + WCA REST /competitions（All 模式）
  */
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { ChevronLeft, ChevronRight, Star, Globe as GlobeIcon } from 'lucide-react';
+import { fetchAllUpcomingCompetitions, type WcaUpcomingComp } from '@cuberoot/shared';
 import LangToggle from '../components/LangToggle';
+import { displayCuberName } from '../utils/name_utils';
 import './upcoming_comps.css';
 
 // ── 类型定义 ──────────────────────────────────────────────────────────────
@@ -46,7 +48,7 @@ interface UpcomingData {
 // ── 常量 ──────────────────────────────────────────────────────────────────
 
 const SOON_DAYS = 7;
-const SOON_MS = SOON_DAYS * 24 * 60 * 60 * 1000;
+const MAX_TRACKS = 3;
 
 // NOTE: 后端短名 → WCA eventId（用于 cubing-icon CSS class）
 const SHORT_TO_EVENT_ID: Record<string, string> = {
@@ -92,11 +94,15 @@ const COUNTRY_MAP: Record<string, string> = {
   'XO': 'Multiple Countries (Oceania)',
 };
 
-// NOTE: 常见别名 → ISO2 码（使搜索 "usa"/"uk" 也能匹配）
 const COUNTRY_ALIASES: Record<string, string> = {
   'usa': 'US', 'uk': 'GB', 'england': 'GB', 'britain': 'GB',
   'korea': 'KR', 'south korea': 'KR', 'uae': 'AE', 'czech': 'CZ', 'holland': 'NL',
 };
+
+const MONTH_EN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MONTH_ZH = ['1 月','2 月','3 月','4 月','5 月','6 月','7 月','8 月','9 月','10 月','11 月','12 月'];
+const WEEKDAY_EN = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const WEEKDAY_ZH = ['日','一','二','三','四','五','六'];
 
 // ── 工具函数 ──────────────────────────────────────────────────────────────
 
@@ -104,7 +110,6 @@ function getCountryName(iso2: string): string {
   return COUNTRY_MAP[iso2] || iso2;
 }
 
-/** 构建搜索用国家文本（ISO + 英文名 + 别名），全小写 */
 function buildCountrySearchText(iso2: string): string {
   const enName = getCountryName(iso2).toLowerCase();
   const aliases = Object.entries(COUNTRY_ALIASES)
@@ -113,104 +118,269 @@ function buildCountrySearchText(iso2: string): string {
   return [iso2.toLowerCase(), enName, ...aliases].filter(Boolean).join(' ');
 }
 
-function getMonthKey(dateStr: string): string {
-  const d = new Date(dateStr);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+/** 两个日期是否同一天（忽略时间） */
+function sameDay(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear()
+    && a.getMonth() === b.getMonth()
+    && a.getDate() === b.getDate();
 }
 
-// ── 子组件 ────────────────────────────────────────────────────────────────
+/** 把 YYYY-MM-DD 字符串解析为本地 Date（00:00 本地时间，避免 UTC 偏移） */
+function parseLocalDate(s: string): Date {
+  const [y, m, d] = s.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
 
-/** 单张比赛卡片 */
-function CompCard({ comp, isZh }: { comp: Competition; isZh: boolean }) {
-  const isClash = comp.top_cubers.length >= 3;
-  const now = new Date();
-  const startDate = new Date(comp.start_date + 'T00:00:00');
-  const endDate = new Date((comp.end_date || comp.start_date) + 'T23:59:59');
-  const daysUntil = startDate.getTime() - now.getTime();
-  const isSoon = now <= endDate && daysUntil <= SOON_MS;
+function addDays(d: Date, n: number): Date {
+  const r = new Date(d);
+  r.setDate(r.getDate() + n);
+  return r;
+}
 
-  const formatDate = (dateStr: string) => {
-    const d = new Date(dateStr);
-    if (isZh) return `${d.getMonth() + 1}月${d.getDate()}日`;
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  };
+function daysBetween(a: Date, b: Date): number {
+  const ms = b.getTime() - a.getTime();
+  return Math.round(ms / 86400000);
+}
 
-  let dateDisplay = formatDate(comp.start_date);
-  if (comp.end_date && comp.end_date !== comp.start_date) {
-    dateDisplay += ' - ' + formatDate(comp.end_date);
+/** 获取月历起始日（包含 month 第 1 日那一周的周日） */
+function monthGridStart(year: number, month: number): Date {
+  const first = new Date(year, month, 1);
+  return addDays(first, -first.getDay());
+}
+
+// ── 国旗 ──────────────────────────────────────────────────────────────────
+
+function Flag({ iso2 }: { iso2: string }) {
+  if (iso2.toLowerCase() === 'tw') {
+    return <img className="flag-img" src="/tools/assets/images/ChineseTaipei.svg" alt="Chinese Taipei" />;
   }
+  return <span className={`fi fi-${iso2.toLowerCase()} flag-span`} aria-label={iso2} />;
+}
+
+// ── 日历计算 ──────────────────────────────────────────────────────────────
+
+interface EventBar {
+  comp: Competition;
+  startCol: number; // 1-7
+  span: number;
+  track: number;
+  continuesFromPrev: boolean;
+  continuesToNext: boolean;
+  key: string;
+}
+
+interface WeekRow {
+  days: Date[];
+  bars: EventBar[];
+  overflowByCol: Map<number, Competition[]>;
+  maxTrack: number;
+}
+
+/** 计算一个月所有周行的事件布局 */
+function computeWeeks(
+  viewYear: number,
+  viewMonth: number,
+  comps: Competition[],
+): WeekRow[] {
+  const gridStart = monthGridStart(viewYear, viewMonth);
+  const weeks: WeekRow[] = [];
+
+  // NOTE: 生成最多 6 行，最后一行如果整行都是下月数据则省略
+  for (let w = 0; w < 6; w++) {
+    const weekStart = addDays(gridStart, w * 7);
+    const weekEnd = addDays(weekStart, 6);
+
+    // 如果 weekStart 已经超过当月末一周且整周都在下月，停
+    if (w >= 4) {
+      const lastDayOfMonth = new Date(viewYear, viewMonth + 1, 0);
+      if (weekStart > lastDayOfMonth) break;
+    }
+
+    const days: Date[] = [];
+    for (let i = 0; i < 7; i++) days.push(addDays(weekStart, i));
+
+    // 找出与本周相交的比赛，按开始日期排序
+    const overlaps: Competition[] = comps.filter((c) => {
+      const s = parseLocalDate(c.start_date);
+      const e = parseLocalDate(c.end_date || c.start_date);
+      return e >= weekStart && s <= weekEnd;
+    }).sort((a, b) => {
+      // NOTE: 优先显示有 top cubers 的比赛（All 模式下尤为重要）
+      const tcDiff = b.top_cubers.length - a.top_cubers.length;
+      if (tcDiff !== 0) return tcDiff;
+      return a.start_date.localeCompare(b.start_date);
+    });
+
+    // 贪心分配 track
+    const tracks: Competition[][] = [];
+    const compTrack = new Map<Competition, number>();
+    for (const c of overlaps) {
+      const s = parseLocalDate(c.start_date);
+      const e = parseLocalDate(c.end_date || c.start_date);
+      let placed = false;
+      for (let t = 0; t < tracks.length; t++) {
+        const conflict = tracks[t].some((o) => {
+          const os = parseLocalDate(o.start_date);
+          const oe = parseLocalDate(o.end_date || o.start_date);
+          return s <= oe && e >= os;
+        });
+        if (!conflict) {
+          tracks[t].push(c);
+          compTrack.set(c, t);
+          placed = true;
+          break;
+        }
+      }
+      if (!placed) {
+        tracks.push([c]);
+        compTrack.set(c, tracks.length - 1);
+      }
+    }
+
+    const bars: EventBar[] = [];
+    const overflowByCol = new Map<number, Competition[]>();
+    let maxTrack = -1;
+
+    for (const c of overlaps) {
+      const track = compTrack.get(c)!;
+      const s = parseLocalDate(c.start_date);
+      const e = parseLocalDate(c.end_date || c.start_date);
+      const clippedStart = s < weekStart ? weekStart : s;
+      const clippedEnd = e > weekEnd ? weekEnd : e;
+      const startCol = daysBetween(weekStart, clippedStart) + 1;
+      const span = daysBetween(clippedStart, clippedEnd) + 1;
+
+      if (track < MAX_TRACKS) {
+        bars.push({
+          comp: c,
+          startCol,
+          span,
+          track,
+          continuesFromPrev: s < weekStart,
+          continuesToNext: e > weekEnd,
+          key: `${c.id}-${w}`,
+        });
+        maxTrack = Math.max(maxTrack, track);
+      } else {
+        // 放进溢出区：从该事件起止每一天都 +1
+        for (let d = 0; d < span; d++) {
+          const col = startCol + d;
+          if (!overflowByCol.has(col)) overflowByCol.set(col, []);
+          overflowByCol.get(col)!.push(c);
+        }
+      }
+    }
+
+    weeks.push({ days, bars, overflowByCol, maxTrack });
+  }
+
+  return weeks;
+}
+
+// ── 详情模态框 ────────────────────────────────────────────────────────────
+
+function CompModal({ comp, isZh, onClose, t }: {
+  comp: Competition;
+  isZh: boolean;
+  onClose: () => void;
+  t: (k: string, o?: Record<string, unknown>) => string;
+}) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
 
   const displayName = isZh ? (comp.name_zh || comp.name) : comp.name;
   const displayCity = isZh ? (comp.city_zh || comp.city) : comp.city;
-  const countryDisplay = getCountryName(comp.country);
   const compUrl = comp.cubing_china_url || `https://www.worldcubeassociation.org/competitions/${comp.id}`;
 
-  const classes = ['comp-card', isClash ? 'highlight' : '', isSoon ? 'soon' : ''].filter(Boolean).join(' ');
+  const s = parseLocalDate(comp.start_date);
+  const e = parseLocalDate(comp.end_date || comp.start_date);
+  const formatDate = (d: Date) => isZh
+    ? `${d.getMonth() + 1} 月 ${d.getDate()} 日`
+    : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const dateStr = sameDay(s, e) ? formatDate(s) : `${formatDate(s)} — ${formatDate(e)}`;
 
   return (
-    <div className={classes}>
-      <div className="comp-header">
-        <h2 className="comp-title">
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-panel" onClick={(ev) => ev.stopPropagation()}>
+        <button className="modal-close" onClick={onClose} aria-label="Close">×</button>
+        <h2 className="modal-title">
           <a href={compUrl} target="_blank" rel="noopener noreferrer">
-            {comp.name.includes('Championship') ? '🏆 ' : ''}
-            <span className={`fi fi-${comp.country.toLowerCase()}`} style={{ marginRight: 6, fontSize: '0.8em' }} />
-            {displayName}
+            <Flag iso2={comp.country} />
+            <span>{displayName}</span>
           </a>
-          {isClash && <span className="badge-clash">🔥</span>}
-          {isSoon && <span className="badge-soon">⏰</span>}
         </h2>
-      </div>
-      <div className="comp-meta">
-        <div className="comp-location">
-          {dateDisplay}, {displayCity}, {countryDisplay}
+        <div className="modal-meta">
+          {dateStr} · {displayCity}, {getCountryName(comp.country)}
+          {comp.competitor_limit > 0 && <span> · {t('upcoming.competitorLimit', { count: comp.competitor_limit })}</span>}
         </div>
-        {comp.competitor_limit > 0 && (
-          <span style={{ color: '#9aa0a6', fontSize: 13, display: 'inline-block' }}>
-            👥{comp.competitor_limit}
-          </span>
-        )}
-        {comp.events && (
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: '#556070' }}>
-            {comp.events.map((e) => {
-              const eid = SHORT_TO_EVENT_ID[e] || e;
-              return <span key={e} className={`cubing-icon event-${eid}`} style={{ fontSize: 14 }} />;
+        {comp.events && comp.events.length > 0 && (
+          <div className="modal-events">
+            {comp.events.map((ev) => {
+              const eid = SHORT_TO_EVENT_ID[ev] || ev;
+              return <span key={ev} className={`cubing-icon event-${eid}`} />;
             })}
           </div>
         )}
-      </div>
-      <div className="cuber-list">
-        {comp.top_cubers.map((c) => {
-          // NOTE: 中文模式下简化选手姓名（"Yiheng Wang (王艺衡)" → "王艺衡"）
-          let displayCuberName = c.name;
-          if (isZh) {
-            const m = c.name.match(/^(.+?)\s*\(([^)]+)\)$/);
-            if (m && /[\u4e00-\u9fff]/.test(m[2])) displayCuberName = m[2];
-          }
-
-          return (
-            <a
-              key={c.id}
-              href={`https://www.worldcubeassociation.org/persons/${c.id}`}
-              className="cuber-tag"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {displayCuberName}
-              {c.events && c.events.length > 0 && (
-                <span className="event-label">
-                  {c.events.map((ev) => {
-                    const eid = SHORT_TO_EVENT_ID[ev.id] || ev.id;
-                    const wrClass = ev.wr === 'current' ? ' wr-current' : ev.wr === 'former' ? ' wr-former' : '';
-                    return <span key={ev.id} className={`cubing-icon event-${eid}${wrClass}`} />;
-                  })}
-                </span>
-              )}
-            </a>
-          );
-        })}
+        {comp.top_cubers.length > 0 && (
+          <div className="modal-cubers">
+            <div className="modal-cubers-title">{t('upcoming.topCubers', { count: comp.top_cubers.length })}</div>
+            <div className="wr-legend">
+              <span className="wr-legend-item"><span className="wr-swatch wr-current" />{t('upcoming.wrCurrent')}</span>
+              <span className="wr-legend-item"><span className="wr-swatch wr-former" />{t('upcoming.wrFormer')}</span>
+            </div>
+            <div className="modal-cuber-list">
+              {comp.top_cubers.map((c) => (
+                <a
+                  key={c.id}
+                  href={`https://www.worldcubeassociation.org/persons/${c.id}`}
+                  className="cuber-tag"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <span>{displayCuberName(c.name, isZh)}</span>
+                  {c.events && c.events.length > 0 && (
+                    <span className="event-label">
+                      {c.events.map((evt) => {
+                        const eid = SHORT_TO_EVENT_ID[evt.id] || evt.id;
+                        const wrClass = evt.wr === 'current' ? ' wr-current' : evt.wr === 'former' ? ' wr-former' : '';
+                        const wrTitle = evt.wr === 'current' ? t('upcoming.wrCurrent') : evt.wr === 'former' ? t('upcoming.wrFormer') : '';
+                        return (
+                          <span
+                            key={evt.id}
+                            className={`cubing-icon event-${eid}${wrClass}`}
+                            title={wrTitle || undefined}
+                          />
+                        );
+                      })}
+                    </span>
+                  )}
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
+}
+
+// NOTE: WCA API 返回的比赛 → 本组件 Competition 结构适配
+// 合并 top_cubers（从 Top 模式数据字典中反查）
+function adaptWcaComp(w: WcaUpcomingComp, topCuberMap: Map<string, TopCuber[]>): Competition {
+  return {
+    id: w.id,
+    name: w.name,
+    city: w.city,
+    country: w.country_iso2,
+    start_date: w.start_date,
+    end_date: w.end_date,
+    events: w.event_ids,
+    competitor_limit: w.competitor_limit ?? 0,
+    top_cubers: topCuberMap.get(w.id) ?? [],
+  };
 }
 
 // ── 主组件 ────────────────────────────────────────────────────────────────
@@ -223,66 +393,117 @@ export default function UpcomingCompsPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [countryFilter, setCountryFilter] = useState('');
-  const [allExpanded, setAllExpanded] = useState(true);
+  const [viewDate, setViewDate] = useState<Date>(() => new Date()); // 月份锚点（第 1 日无关紧要，只看 Year/Month）
+  const [selectedComp, setSelectedComp] = useState<Competition | null>(null);
+  const [dayListDate, setDayListDate] = useState<Date | null>(null);
+  const [mode, setMode] = useState<'top' | 'all'>('top');
+  const [allComps, setAllComps] = useState<Competition[] | null>(null);
+  const [allLoading, setAllLoading] = useState(false);
+  const [allError, setAllError] = useState<string | null>(null);
+  const [eventFilters, setEventFilters] = useState<string[]>([]);
 
-  // NOTE: 数据加载 — 从静态 JSON 文件获取
   useEffect(() => {
     fetch('/stats/upcoming_comps.json')
       .then((res) => {
         if (!res.ok) throw new Error('Failed to load JSON');
         return res.json();
       })
-      .then((d: UpcomingData) => setData(d))
-      .catch(() => {
-        setError(
-          isZh
-            ? t('upcoming.loadError')
-            : t('upcoming.loadError')
-        );
-      });
+      .then((d: UpcomingData) => {
+        setData(d);
+        // NOTE: 默认跳到包含最近一场比赛的月份（如果今天之后有比赛的话）
+        const now = new Date();
+        const upcoming = d.competitions
+          .map((c) => parseLocalDate(c.start_date))
+          .filter((dt) => dt >= new Date(now.getFullYear(), now.getMonth(), now.getDate()))
+          .sort((a, b) => a.getTime() - b.getTime());
+        if (upcoming.length > 0) {
+          const first = upcoming[0];
+          setViewDate(new Date(first.getFullYear(), first.getMonth(), 1));
+        }
+      })
+      .catch(() => setError(t('upcoming.loadError')));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // NOTE: 按月份分组
-  const monthGroups = useMemo(() => {
-    if (!data) return new Map<string, Competition[]>();
-    const groups = new Map<string, Competition[]>();
-    for (const comp of data.competitions) {
-      const key = getMonthKey(comp.start_date);
-      if (!groups.has(key)) groups.set(key, []);
-      groups.get(key)!.push(comp);
-    }
-    return groups;
-  }, [data]);
+  // NOTE: All 模式懒加载 — 用户切到 All 且还没数据时才请求 WCA API
+  useEffect(() => {
+    if (mode !== 'all' || allComps || allLoading || !data) return;
+    setAllLoading(true);
+    setAllError(null);
+    const today = new Date();
+    const fromDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`;
+    const topMap = new Map(data.competitions.map((c) => [c.id, c.top_cubers]));
+    fetchAllUpcomingCompetitions(fromDate)
+      .then((list) => setAllComps(list.map((w) => adaptWcaComp(w, topMap))))
+      .catch(() => setAllError(t('upcoming.allLoadFailed')))
+      .finally(() => setAllLoading(false));
+  }, [mode, allComps, allLoading, data, t]);
 
-  // NOTE: 提取所有国家用于下拉框
+  // NOTE: 当前激活的比赛列表——All 模式下数据未到时暂用 Top 数据
+  const activeComps: Competition[] = useMemo(() => {
+    if (mode === 'all' && allComps) return allComps;
+    return data?.competitions ?? [];
+  }, [mode, allComps, data]);
+
   const countryOptions = useMemo(() => {
-    if (!data) return [];
     const counts: Record<string, number> = {};
-    for (const c of data.competitions) {
-      counts[c.country] = (counts[c.country] || 0) + 1;
-    }
+    for (const c of activeComps) counts[c.country] = (counts[c.country] || 0) + 1;
     return Object.entries(counts)
       .sort((a, b) => b[1] - a[1])
       .map(([iso2, count]) => ({ iso2, label: `${getCountryName(iso2)} (${count})`, count }));
-  }, [data]);
+  }, [activeComps]);
 
-  // NOTE: 过滤函数 — 搜索框 + 国家下拉联动（AND 逻辑）
-  const isVisible = useCallback(
+  // NOTE: 过滤匹配判断（不匹配的事件仍渲染但置灰）
+  const isMatch = useCallback(
     (comp: Competition) => {
       const q = searchQuery.toLowerCase().trim();
       if (q) {
         const searchName = `${comp.name} ${comp.name_zh || ''} ${comp.city} ${comp.city_zh || ''}`.toLowerCase();
         const cuberNames = comp.top_cubers.map((c) => `${c.name.toLowerCase()} ${c.id.toLowerCase()}`).join(' ');
         const countrySearch = buildCountrySearchText(comp.country);
-        if (!searchName.includes(q) && !cuberNames.includes(q) && !countrySearch.includes(q)) {
-          return false;
-        }
+        if (!searchName.includes(q) && !cuberNames.includes(q) && !countrySearch.includes(q)) return false;
       }
       if (countryFilter && comp.country !== countryFilter) return false;
+      if (eventFilters.length > 0) {
+        const normalized = new Set((comp.events || []).map((e) => SHORT_TO_EVENT_ID[e] || e));
+        if (!eventFilters.some((f) => normalized.has(f))) return false;
+      }
       return true;
     },
-    [searchQuery, countryFilter]
+    [searchQuery, countryFilter, eventFilters],
   );
+
+  const weeks = useMemo(() => {
+    return computeWeeks(viewDate.getFullYear(), viewDate.getMonth(), activeComps);
+  }, [activeComps, viewDate]);
+
+  // NOTE: 当月摘要（基于开始日期在本月的比赛）
+  const monthStats = useMemo(() => {
+    const y = viewDate.getFullYear(), m = viewDate.getMonth();
+    const inMonth = activeComps.filter((c) => {
+      const s = parseLocalDate(c.start_date);
+      return s.getFullYear() === y && s.getMonth() === m;
+    });
+    const countries = new Set<string>();
+    const cubers = new Set<string>();
+    const now = new Date();
+    const soonCutoff = addDays(now, SOON_DAYS);
+    let soon = 0;
+    for (const c of inMonth) {
+      countries.add(c.country);
+      for (const p of c.top_cubers) cubers.add(p.id);
+      const s = parseLocalDate(c.start_date);
+      if (s >= new Date(now.getFullYear(), now.getMonth(), now.getDate()) && s <= soonCutoff) soon++;
+    }
+    return { comps: inMonth.length, countries: countries.size, cubers: cubers.size, soon };
+  }, [activeComps, viewDate]);
+
+  const gotoMonth = (delta: number) => {
+    setViewDate((d) => new Date(d.getFullYear(), d.getMonth() + delta, 1));
+  };
+  const gotoToday = () => {
+    const now = new Date();
+    setViewDate(new Date(now.getFullYear(), now.getMonth(), 1));
+  };
 
   // ── 渲染 ──
 
@@ -304,36 +525,30 @@ export default function UpcomingCompsPage() {
     );
   }
 
-  const timeStr = new Date(data.updated_at).toLocaleString();
-  const metaText = t('upcoming.meta', { time: timeStr, count: data.total_cubers_tracked });
+  const today = new Date();
+  const monthLabel = isZh
+    ? `${viewDate.getFullYear()} 年 ${MONTH_ZH[viewDate.getMonth()]}`
+    : `${MONTH_EN[viewDate.getMonth()]} ${viewDate.getFullYear()}`;
+  const weekdays = isZh ? WEEKDAY_ZH : WEEKDAY_EN;
+
+  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
   return (
     <div className="upcoming-page">
       <Link to="/" className="back-link">← {t('common.backToHome')}</Link>
 
-      <div className="timeline-header">
-        <h1>{t('upcoming.title')}</h1>
-        <div className="timeline-meta">{metaText}</div>
-      </div>
+      <header className="upcoming-header">
+        <h1 className="upcoming-title">{t('upcoming.title')}</h1>
+        <div className="upcoming-meta">
+          {isZh ? '追踪世界前 10 / 前 WR 保持者 · ' : 'Tracking world top 10 / former WR holders · '}
+          {t('upcoming.updatedAt', { time: new Date(data.updated_at).toLocaleString() })}
+          {' · '}
+          <Link to="/globe" className="globe-link">
+            <GlobeIcon size={12} strokeWidth={1.75} /> {t('upcoming.viewGlobe')}
+          </Link>
+        </div>
+      </header>
 
-      <p className="desc-text">
-        {isZh ? (
-          <>
-            追踪目前在任意官方项目中<strong>世界排名前 10</strong>（单次或平均）的选手，以及历史上<strong>曾保持过世界纪录</strong>的选手。
-            每位选手标签显示其上榜项目，<span style={{ color: '#d93025' }}>红色</span>图标表示该项目的现任世界纪录保持者，<span style={{ color: '#e8890c' }}>橙色</span>表示前任世界纪录保持者。
-            <br />月度统计：📋 比赛 · 🌍 国家 · 👤 选手 · 🔥 扎堆（3+ 位顶尖选手）· ⏰ 7 天内开赛。
-          </>
-        ) : (
-          <>
-            Tracking cubers who are currently <strong>ranked in the world top 10</strong> (single or average) in any official event,
-            or have <strong>held a World Record</strong> at any point in history.
-            Each cuber's tag shows their relevant events, with <span style={{ color: '#d93025' }}>red</span> icons indicating a current World Record holder, and <span style={{ color: '#e8890c' }}>orange</span> icons indicating a former one.
-            <br />Monthly stats: 📋 competitions · 🌍 countries · 👤 cubers · 🔥 clashing (3+ top cubers) · ⏰ starting within 7 days.
-          </>
-        )}
-      </p>
-
-      {/* 工具栏 */}
       <div className="toolbar">
         <input
           type="text"
@@ -352,58 +567,195 @@ export default function UpcomingCompsPage() {
             <option key={opt.iso2} value={opt.iso2}>{opt.label}</option>
           ))}
         </select>
-        <button
-          className="toggle-btn"
-          onClick={() => setAllExpanded(!allExpanded)}
-        >
-          {allExpanded
-            ? t('upcoming.collapseAll')
-            : t('upcoming.expandAll')}
-        </button>
+        <div className="mode-toggle" role="tablist">
+          <button
+            role="tab"
+            aria-selected={mode === 'top'}
+            className={`mode-btn ${mode === 'top' ? 'is-active' : ''}`}
+            onClick={() => setMode('top')}
+          >
+            <Star size={14} strokeWidth={1.75} />
+            <span>{t('upcoming.modeTop')}</span>
+          </button>
+          <button
+            role="tab"
+            aria-selected={mode === 'all'}
+            className={`mode-btn ${mode === 'all' ? 'is-active' : ''}`}
+            onClick={() => setMode('all')}
+          >
+            <GlobeIcon size={14} strokeWidth={1.75} />
+            <span>{t('upcoming.modeAll')}</span>
+          </button>
+        </div>
+        <div className="month-nav">
+          <button className="nav-btn" onClick={() => gotoMonth(-1)} aria-label="Previous month">
+            <ChevronLeft size={16} strokeWidth={1.75} />
+          </button>
+          <button className="nav-today" onClick={gotoToday}>{isZh ? '今天' : 'Today'}</button>
+          <button className="nav-btn" onClick={() => gotoMonth(1)} aria-label="Next month">
+            <ChevronRight size={16} strokeWidth={1.75} />
+          </button>
+          <span className="month-label">{monthLabel}</span>
+        </div>
       </div>
 
-      {/* 时间轴 */}
-      <div className="timeline">
-        {data.competitions.length === 0 ? (
-          <div className="state-message">
-            {t('upcoming.noResults')}
-          </div>
-        ) : (
-          Array.from(monthGroups.entries()).map(([monthKey, comps]) => {
-            const visibleComps = comps.filter(isVisible);
-            if (visibleComps.length === 0) return null;
+      {allLoading && mode === 'all' && (
+        <div className="mode-status">{t('upcoming.allLoading')}</div>
+      )}
+      {allError && mode === 'all' && (
+        <div className="mode-status is-error">{allError}</div>
+      )}
 
-            // NOTE: 月度统计摘要
-            const countrySet = new Set(comps.map((c) => c.country));
-            const cuberSet = new Set<string>();
-            let clashCount = 0;
-            for (const c of comps) {
-              if (c.top_cubers.length >= 3) clashCount++;
-              for (const p of c.top_cubers) cuberSet.add(p.id);
+      <div className="event-chips">
+        <span className="event-chips-label">{t('upcoming.eventFilter')}</span>
+        {(['333', '222', '444', '555', '333oh', 'pyram', 'skewb', 'sq1', '333bf', '333fm'] as const).map((eid) => (
+          <button
+            key={eid}
+            className={`event-chip ${eventFilters.includes(eid) ? 'is-active' : ''}`}
+            onClick={() =>
+              setEventFilters((prev) =>
+                prev.includes(eid) ? prev.filter((x) => x !== eid) : [...prev, eid]
+              )
             }
-
-            const pad = (n: number, w = 3) => String(n).padStart(w, '\u00a0');
-
-            return (
-              <details key={monthKey} className="month-group" open={allExpanded}>
-                <summary>
-                  {monthKey}
-                  <span className="month-stats">
-                    <span>📋 {pad(comps.length)}</span>
-                    <span>🌍 {pad(countrySet.size, 2)}</span>
-                    <span>👤 {pad(cuberSet.size)}</span>
-                    {clashCount > 0 && <span>🔥 {pad(clashCount, 2)}</span>}
-                  </span>
-                </summary>
-                {visibleComps.map((comp) => (
-                  <CompCard key={comp.id} comp={comp} isZh={isZh} />
-                ))}
-              </details>
-            );
-          })
+            aria-pressed={eventFilters.includes(eid)}
+          >
+            <span className={`cubing-icon event-${eid}`} />
+          </button>
+        ))}
+        {eventFilters.length > 0 && (
+          <button className="event-chip-clear" onClick={() => setEventFilters([])}>
+            {isZh ? '清除' : 'Clear'}
+          </button>
         )}
       </div>
-      {/* NOTE: 语言切换按钮 */}
+
+      <div className="calendar">
+        <div className="weekday-header">
+          {weekdays.map((d, i) => (
+            <div key={i} className={`weekday-cell ${i === 0 || i === 6 ? 'is-weekend' : ''}`}>
+              {d}
+            </div>
+          ))}
+        </div>
+        {weeks.map((week, wi) => (
+          <div
+            key={wi}
+            className="week-row"
+            style={{ ['--tracks' as string]: Math.max(1, week.maxTrack + 1 + (week.overflowByCol.size > 0 ? 1 : 0)) }}
+          >
+            {week.days.map((day, di) => {
+              const inView = day.getMonth() === viewDate.getMonth();
+              const isToday = sameDay(day, today);
+              const isWeekend = di === 0 || di === 6;
+              return (
+                <div
+                  key={di}
+                  className={`day-cell ${inView ? '' : 'out-of-month'} ${isToday ? 'is-today' : ''} ${isWeekend ? 'is-weekend' : ''}`}
+                  style={{ gridColumn: di + 1, gridRow: 1 }}
+                >
+                  <span className="day-number">{day.getDate()}</span>
+                </div>
+              );
+            })}
+            {week.bars.map((bar) => {
+              const isClash = bar.comp.top_cubers.length >= 3;
+              const hasTop = bar.comp.top_cubers.length > 0;
+              const dimmed = !isMatch(bar.comp);
+              const displayName = isZh ? (bar.comp.name_zh || bar.comp.name) : bar.comp.name;
+              const classes = [
+                'event-bar',
+                isClash ? 'is-clash' : '',
+                !hasTop ? 'is-none-top' : '',
+                dimmed ? 'is-dimmed' : '',
+                bar.continuesFromPrev ? 'continues-prev' : '',
+                bar.continuesToNext ? 'continues-next' : '',
+              ].filter(Boolean).join(' ');
+              return (
+                <button
+                  key={bar.key}
+                  className={classes}
+                  style={{
+                    gridColumn: `${bar.startCol} / span ${bar.span}`,
+                    gridRow: bar.track + 2,
+                  }}
+                  onClick={() => setSelectedComp(bar.comp)}
+                  title={`${displayName} — ${bar.comp.top_cubers.length} cubers`}
+                >
+                  <Flag iso2={bar.comp.country} />
+                  <span className="event-bar-name">{displayName}</span>
+                </button>
+              );
+            })}
+            {Array.from(week.overflowByCol.entries()).map(([col, overflowComps]) => (
+              <button
+                key={`of-${col}`}
+                className="more-btn"
+                style={{ gridColumn: col, gridRow: Math.min(MAX_TRACKS, week.maxTrack + 1) + 2 }}
+                onClick={() => setDayListDate(week.days[col - 1])}
+              >
+                +{overflowComps.length} more
+              </button>
+            ))}
+          </div>
+        ))}
+      </div>
+
+      <div className="month-stats">
+        <span title={t('upcoming.statComps')}>📋 {monthStats.comps}</span>
+        <span title={t('upcoming.statCountries')}>🌍 {monthStats.countries}</span>
+        <span title={t('upcoming.statCubers')}>👤 {monthStats.cubers}</span>
+        {monthStats.soon > 0 && (
+          <span className="stat-soon" title={t('upcoming.statSoon')}>⏰ {monthStats.soon}</span>
+        )}
+      </div>
+
+      <div className="legend">
+        {mode === 'all' && (
+          <span className="legend-item"><span className="legend-swatch swatch-none-top" /> {isZh ? '一般比赛' : 'No top cubers'}</span>
+        )}
+        <span className="legend-item"><span className="legend-swatch swatch-default" /> {isZh ? '有顶尖选手' : 'Has top cubers'}</span>
+        <span className="legend-item"><span className="legend-swatch swatch-clash" /> {isZh ? '扎堆 (3+)' : 'Clash (3+)'}</span>
+      </div>
+
+      {selectedComp && (
+        <CompModal comp={selectedComp} isZh={isZh} onClose={() => setSelectedComp(null)} t={t} />
+      )}
+
+      {dayListDate && (
+        <div className="modal-overlay" onClick={() => setDayListDate(null)}>
+          <div className="modal-panel day-list-panel" onClick={(ev) => ev.stopPropagation()}>
+            <button className="modal-close" onClick={() => setDayListDate(null)} aria-label="Close">×</button>
+            <h2 className="modal-title">
+              {isZh
+                ? `${dayListDate.getMonth() + 1} 月 ${dayListDate.getDate()} 日`
+                : dayListDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+            </h2>
+            <div className="day-list">
+              {activeComps
+                .filter((c) => {
+                  const s = parseLocalDate(c.start_date);
+                  const e = parseLocalDate(c.end_date || c.start_date);
+                  return s <= dayListDate && dayListDate <= e;
+                })
+                .map((c) => {
+                  const displayName = isZh ? (c.name_zh || c.name) : c.name;
+                  return (
+                    <button
+                      key={c.id}
+                      className="day-list-item"
+                      onClick={() => { setSelectedComp(c); setDayListDate(null); }}
+                    >
+                      <Flag iso2={c.country} />
+                      <span>{displayName}</span>
+                      <span className="day-list-count">{c.top_cubers.length}</span>
+                    </button>
+                  );
+                })}
+            </div>
+          </div>
+        </div>
+      )}
+
       <LangToggle />
     </div>
   );

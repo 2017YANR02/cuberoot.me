@@ -58,15 +58,9 @@ export const VALUE_ZH: Record<string, string> = {
   "Mo3": "三次平均",
 };
 
-// NOTE: 从带括号中文名中提取中文
-const CJK_REGEX = /[\u4e00-\u9fff]/;
-const PAREN_ZH_REGEX = /\(([^)]*[\u4e00-\u9fff][^)]*)\)\s*$/;
-
-export function extractChineseName(text: string): string | null {
-  const m = PAREN_ZH_REGEX.exec(text);
-  if (m && CJK_REGEX.test(m[1])) return m[1];
-  return null;
-}
+// NOTE: 选手名处理工具已抽到 src/utils/name_utils.ts，这里重新导出保持兼容
+export { extractChineseName, stripChineseParens } from '../../utils/name_utils';
+import { extractChineseName } from '../../utils/name_utils';
 
 // NOTE: 翻译表格单元格文本——同时支持中英文
 // isZh: true=中文映射, false=英文缩短映射
@@ -89,7 +83,3 @@ export function translatePersonLink(linkText: string): string | null {
   return extractChineseName(linkText);
 }
 
-// NOTE: 去掉选手名中所有括号及其内容（中文、韩文、注音等）
-export function stripChineseParens(text: string): string {
-  return text.replace(/\s*\([^)]*\)\s*/g, ' ').trim();
-}
