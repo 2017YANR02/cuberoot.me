@@ -18,8 +18,6 @@
     "@ffmpeg/ffmpeg": "^0.12.15",
     "@ffmpeg/util": "^0.12.2",
     "@mapbox/vector-tile": "^2.0.4",
-    "@turf/great-circle": "^7.3.4",
-    "@turf/helpers": "^7.3.4",
     "canvas-confetti": "^1.9.4",
     "cubing": "^0.50.0",
     "flag-icons": "^7.5.0",
