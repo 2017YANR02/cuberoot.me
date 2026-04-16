@@ -531,8 +531,6 @@ export default function UpcomingCompsPage() {
     : `${MONTH_EN[viewDate.getMonth()]} ${viewDate.getFullYear()}`;
   const weekdays = isZh ? WEEKDAY_ZH : WEEKDAY_EN;
 
-  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-
   return (
     <div className="upcoming-page">
       <Link to="/" className="back-link">← {t('common.backToHome')}</Link>
