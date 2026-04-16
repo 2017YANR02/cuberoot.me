@@ -26,11 +26,18 @@
   box-sizing: border-box;
 }
 
+/* NOTE: html 背景同步 body 色，避免 iOS Safari 工具栏区域露出黑边 */
+html {
+  background: var(--bg-primary);
+}
+
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   background: var(--bg-primary);
   color: var(--text-primary);
   min-height: 100vh;
+  /* NOTE: dvh 在 iOS Safari 里随工具栏伸缩，避免 vh 留空或溢出 */
+  min-height: 100dvh;
 }
 
 /* ===== 首页 ===== */

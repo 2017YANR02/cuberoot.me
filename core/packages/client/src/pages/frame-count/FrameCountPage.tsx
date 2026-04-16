@@ -2479,23 +2479,21 @@ export default function FrameCountPage() {
               </div>
 
               <div className="fc-controls">
-                <button className="fc-ctrl-btn" title="Back 1 frame (A)" {...longPressProps(() => stepFrames(-1), 80)}><IconFrameBack /></button>
-                <button className="fc-ctrl-btn" title="Back 10 frames (Q)" {...longPressProps(() => stepFrames(-10), 150)}><IconSkipBack /></button>
-                <button className="fc-ctrl-btn play-btn" title="Play/Pause (K)" onClick={togglePlay}>
-                  {isPlaying ? <IconPause /> : <IconPlay />}
-                </button>
-                <button className="fc-ctrl-btn" title="Forward 10 frames (E)" {...longPressProps(() => stepFrames(10), 150)}><IconSkipForward /></button>
-                <button className="fc-ctrl-btn" title="Forward 1 frame (D)" {...longPressProps(() => stepFrames(1), 80)}><IconFrameForward /></button>
-
-                <div className="fc-ctrl-sep" />
-
                 <div className="fc-rate-group">
                   {PLAYBACK_RATES.map((r) => (
                     <button key={r} className={`fc-rate-btn ${playbackRate === r ? 'active' : ''}`} onClick={() => changeRate(r)}>{r === 1 ? '1x' : r}</button>
                   ))}
                 </div>
 
+                <div className="fc-ctrl-sep" />
 
+                <button className="fc-ctrl-btn" title="Back 10 frames (Q)" {...longPressProps(() => stepFrames(-10), 150)}><IconSkipBack /></button>
+                <button className="fc-ctrl-btn" title="Back 1 frame (A)" {...longPressProps(() => stepFrames(-1), 80)}><IconFrameBack /></button>
+                <button className="fc-ctrl-btn play-btn" title="Play/Pause (K)" onClick={togglePlay}>
+                  {isPlaying ? <IconPause /> : <IconPlay />}
+                </button>
+                <button className="fc-ctrl-btn" title="Forward 1 frame (D)" {...longPressProps(() => stepFrames(1), 80)}><IconFrameForward /></button>
+                <button className="fc-ctrl-btn" title="Forward 10 frames (E)" {...longPressProps(() => stepFrames(10), 150)}><IconSkipForward /></button>
               </div>
             </div>
           )}
