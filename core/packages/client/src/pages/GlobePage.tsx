@@ -11,8 +11,10 @@ import { ArrowLeft, RotateCcw, Play, Pause, X, User } from 'lucide-react';
 import maplibregl from 'maplibre-gl';
 import type { GeoJSONSource, MapMouseEvent, MapGeoJSONFeature } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import greatCircle from '@turf/great-circle';
-import { point as turfPoint } from '@turf/helpers';
+import * as OpenCC from 'opencc-js';
+import { VectorTile } from '@mapbox/vector-tile';
+import Protobuf from 'pbf';
+import vtpbf from 'vt-pbf';
 import {
   fetchAllUpcomingCompetitions,
   fetchCompetitions,
@@ -29,12 +31,9 @@ type Mode = 'upcoming' | 'cuber';
 type RangeKey = 'month' | 'quarter' | 'year';
 type Speed = 0.5 | 1 | 2;
 
-// NOTE: 有 MapTiler key 就用 streets-v2（多语言瓦片）；无则降级 demotiles
-const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY as string | undefined;
-const MAP_STYLE_URL = MAPTILER_KEY
-  ? `https://api.maptiler.com/maps/streets-v2/style.json?key=${MAPTILER_KEY}`
-  : 'https://demotiles.maplibre.org/style.json';
-const USING_MAPTILER = !!MAPTILER_KEY;
+// NOTE: MapTiler streets-v2（多语言瓦片）
+const MAPTILER_KEY = (import.meta.env.VITE_MAPTILER_KEY as string | undefined) ?? 'mbOnOAsKyCQnhPFIGgZW';
+const MAP_STYLE_URL = `https://api.maptiler.com/maps/streets-v2/style.json?key=${MAPTILER_KEY}`;
 
 // NOTE: ISO alpha-2 → 国家名（英/中）；UI 展示用
 const COUNTRY_EN: Record<string, string> = {
@@ -70,86 +69,6 @@ const countryName = (iso2: string, isZh: boolean) => {
   return (isZh ? COUNTRY_ZH[up] : COUNTRY_EN[up]) ?? up;
 };
 
-// NOTE: demotiles centroids layer 用 NAME（英文全称）做 label；映射到中文
-const COUNTRY_NAME_ZH: Record<string, string> = {
-  'China': '中国', 'Taiwan': '中华台北', 'Hong Kong S.A.R.': '中国香港',
-  'United States of America': '美国', 'Japan': '日本',
-  'South Korea': '韩国', 'North Korea': '朝鲜',
-  'India': '印度', 'Germany': '德国', 'France': '法国',
-  'United Kingdom': '英国', 'Italy': '意大利', 'Spain': '西班牙',
-  'Poland': '波兰', 'Brazil': '巴西', 'Canada': '加拿大',
-  'Australia': '澳大利亚', 'Mexico': '墨西哥',
-  'Russia': '俄罗斯', 'Turkey': '土耳其', 'Indonesia': '印度尼西亚',
-  'Netherlands': '荷兰', 'Belgium': '比利时', 'Sweden': '瑞典',
-  'Norway': '挪威', 'Finland': '芬兰', 'Denmark': '丹麦',
-  'Switzerland': '瑞士', 'Austria': '奥地利', 'Czechia': '捷克',
-  'Czech Republic': '捷克', 'Slovakia': '斯洛伐克', 'Hungary': '匈牙利',
-  'Romania': '罗马尼亚', 'Bulgaria': '保加利亚', 'Greece': '希腊',
-  'Portugal': '葡萄牙', 'Ireland': '爱尔兰', 'New Zealand': '新西兰',
-  'Singapore': '新加坡', 'Malaysia': '马来西亚', 'Thailand': '泰国',
-  'Vietnam': '越南', 'Philippines': '菲律宾', 'Argentina': '阿根廷',
-  'Chile': '智利', 'Colombia': '哥伦比亚', 'Peru': '秘鲁',
-  'South Africa': '南非', 'Egypt': '埃及', 'United Arab Emirates': '阿联酋',
-  'Saudi Arabia': '沙特阿拉伯', 'Israel': '以色列', 'Iran': '伊朗',
-  'Pakistan': '巴基斯坦', 'Bangladesh': '孟加拉国', 'Sri Lanka': '斯里兰卡',
-  'Nepal': '尼泊尔', 'Ukraine': '乌克兰', 'Belarus': '白俄罗斯',
-  'Estonia': '爱沙尼亚', 'Latvia': '拉脱维亚', 'Lithuania': '立陶宛',
-  'Mongolia': '蒙古', 'Kazakhstan': '哈萨克斯坦', 'Uzbekistan': '乌兹别克斯坦',
-  'Kyrgyzstan': '吉尔吉斯斯坦', 'Turkmenistan': '土库曼斯坦',
-  'Tajikistan': '塔吉克斯坦', 'Afghanistan': '阿富汗', 'Iraq': '伊拉克',
-  'Jordan': '约旦', 'Lebanon': '黎巴嫩', 'Syria': '叙利亚', 'Yemen': '也门',
-  'Oman': '阿曼', 'Qatar': '卡塔尔', 'Kuwait': '科威特', 'Bahrain': '巴林',
-  'Morocco': '摩洛哥', 'Algeria': '阿尔及利亚', 'Tunisia': '突尼斯',
-  'Libya': '利比亚', 'Nigeria': '尼日利亚', 'Kenya': '肯尼亚',
-  'Ethiopia': '埃塞俄比亚', 'Tanzania': '坦桑尼亚', 'Uganda': '乌干达',
-  'Ghana': '加纳', 'Cameroon': '喀麦隆', "Côte d'Ivoire": '科特迪瓦',
-  'Ivory Coast': '科特迪瓦', 'Senegal': '塞内加尔', 'Sudan': '苏丹',
-  'South Sudan': '南苏丹', 'Somalia': '索马里',
-  'Somaliland': '索马里兰', 'Angola': '安哥拉', 'Zimbabwe': '津巴布韦',
-  'Mozambique': '莫桑比克', 'Madagascar': '马达加斯加', 'Cuba': '古巴',
-  'Dominican Republic': '多米尼加', 'Jamaica': '牙买加', 'Haiti': '海地',
-  'Venezuela': '委内瑞拉', 'Ecuador': '厄瓜多尔', 'Bolivia': '玻利维亚',
-  'Paraguay': '巴拉圭', 'Uruguay': '乌拉圭', 'Panama': '巴拿马',
-  'Costa Rica': '哥斯达黎加', 'Guatemala': '危地马拉', 'Honduras': '洪都拉斯',
-  'El Salvador': '萨尔瓦多', 'Nicaragua': '尼加拉瓜', 'Cambodia': '柬埔寨',
-  'Laos': '老挝', 'Myanmar': '缅甸', 'Brunei': '文莱',
-  'Macao S.A.R': '中国澳门', 'Iceland': '冰岛', 'Serbia': '塞尔维亚',
-  'Republic of Serbia': '塞尔维亚', 'Croatia': '克罗地亚',
-  'Slovenia': '斯洛文尼亚', 'Bosnia and Herzegovina': '波斯尼亚和黑塞哥维那',
-  'Montenegro': '黑山', 'North Macedonia': '北马其顿', 'Macedonia': '北马其顿',
-  'Albania': '阿尔巴尼亚', 'Malta': '马耳他',
-  'Cyprus': '塞浦路斯', 'N. Cyprus': '北塞浦路斯', 'Northern Cyprus': '北塞浦路斯',
-  'Luxembourg': '卢森堡', 'Moldova': '摩尔多瓦', 'Georgia': '格鲁吉亚',
-  'Armenia': '亚美尼亚', 'Azerbaijan': '阿塞拜疆', 'Greenland': '格陵兰',
-  'Western Sahara': '西撒哈拉', 'Palestine': '巴勒斯坦',
-  'Democratic Republic of the Congo': '刚果（金）', 'Republic of Congo': '刚果（布）',
-  'Chad': '乍得', 'Niger': '尼日尔', 'Mali': '马里', 'Mauritania': '毛里塔尼亚',
-  'Burkina Faso': '布基纳法索', 'Guinea': '几内亚', 'Liberia': '利比里亚',
-  'Sierra Leone': '塞拉利昂', 'Togo': '多哥', 'Benin': '贝宁',
-  'Central African Republic': '中非共和国', 'Gabon': '加蓬', 'Equatorial Guinea': '赤道几内亚',
-  'Rwanda': '卢旺达', 'Burundi': '布隆迪', 'Malawi': '马拉维',
-  'Zambia': '赞比亚', 'Botswana': '博茨瓦纳', 'Namibia': '纳米比亚',
-  'Lesotho': '莱索托', 'Eswatini': '埃斯瓦蒂尼', 'Swaziland': '斯威士兰',
-  'Djibouti': '吉布提', 'Eritrea': '厄立特里亚', 'Bhutan': '不丹',
-  'Timor-Leste': '东帝汶', 'East Timor': '东帝汶', 'Fiji': '斐济',
-  'Papua New Guinea': '巴布亚新几内亚', 'Solomon Islands': '所罗门群岛',
-  'Vanuatu': '瓦努阿图', 'Guyana': '圭亚那', 'Suriname': '苏里南',
-  'French Guiana': '法属圭亚那', 'Bahamas': '巴哈马', 'Trinidad and Tobago': '特立尼达和多巴哥',
-  'The Bahamas': '巴哈马', 'Puerto Rico': '波多黎各',
-  'Falkland Islands': '福克兰群岛', 'New Caledonia': '新喀里多尼亚',
-  'Antarctica': '南极洲',
-};
-
-// NOTE: 赤道 / 回归线等地理线标签中文
-const GEOLINE_ZH: Record<string, string> = {
-  'Arctic Circle': '北极圈',
-  'Antarctic Circle': '南极圈',
-  'Tropic of Cancer': '北回归线',
-  'Tropic of Capricorn': '南回归线',
-  'International Date Line': '国际日期变更线',
-  'Equator': '赤道',
-};
-
 const CUBER_SOURCE_POINTS = 'cuber-points';
 const CUBER_SOURCE_ARCS = 'cuber-arcs';
 const CUBER_LAYER_DOT = 'cuber-points-dot';
@@ -169,106 +88,283 @@ function fmtDate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-// NOTE: MapTiler 通用语言切换 —— 遍历所有 symbol 图层，把 text-field 的 name 字段换成 name:zh/name:en
-function patchMapTilerLang(map: maplibregl.Map, isZh: boolean) {
-  const targetLang = isZh ? 'name:zh' : 'name:en';
-  const layers = map.getStyle().layers ?? [];
-  for (const layer of layers) {
-    if (layer.type !== 'symbol') continue;
-    try {
-      // 用 coalesce 回退：name:lang → name:latin → name
-      map.setLayoutProperty(layer.id, 'text-field', [
-        'coalesce',
-        ['get', targetLang],
-        ['get', 'name:latin'],
-        ['get', 'name'],
-      ] as unknown as string);
-    } catch { /* 该 layer 无 text-field 或表达式不兼容 */ }
+// ─── 瓦片级 繁→简 转换（MapTiler 的 name:zh 对 TW/HK/JP 常是繁体；要稳定出简体必须在 MVT 层面换）
+// 注册自定义协议 zh-tile://，从 https 拉回瓦片，解码 MVT，把所有 name* 字段的繁体转简体，再编码回去
+const openccT2S = OpenCC.Converter({ from: 'tw', to: 'cn' });
+const CJK_RE = /[\u3400-\u9fff\uf900-\ufaff]/;
+const ZH_PROTOCOL = 'zh-tile';
+
+type MvtFeatureLike = {
+  type: number;
+  extent: number;
+  id: number | string | undefined;
+  properties: Record<string, unknown>;
+  loadGeometry: () => unknown;
+};
+type MvtLayerLike = {
+  version: number;
+  name: string;
+  extent: number;
+  length: number;
+  feature: (i: number) => MvtFeatureLike;
+};
+
+function transformNameProps(src: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const k of Object.keys(src)) {
+    const v = src[k];
+    if (
+      typeof v === 'string'
+      && (k === 'name' || k.startsWith('name:') || k.startsWith('name_'))
+      && CJK_RE.test(v)
+    ) {
+      try { out[k] = openccT2S(v); } catch { out[k] = v; }
+    } else {
+      out[k] = v;
+    }
   }
+  return out;
 }
 
-// NOTE: MapTiler 下给 TWN 强制显示 "Chinese Taipei"/「中华台北」
-function patchMapTilerTaiwan(map: maplibregl.Map, isZh: boolean) {
-  const twnLabel = isZh ? '中华台北' : 'Chinese Taipei';
+function wrapMvtLayer(layer: unknown): MvtLayerLike {
+  const l = layer as {
+    version: number; name: string; extent: number; length: number;
+    feature: (i: number) => {
+      type: number; extent?: number; id?: number | string;
+      properties: Record<string, unknown>; loadGeometry: () => unknown;
+    };
+  };
+  return {
+    version: l.version,
+    name: l.name,
+    extent: l.extent,
+    length: l.length,
+    feature(i: number) {
+      const f = l.feature(i);
+      return {
+        type: f.type,
+        extent: l.extent,
+        id: f.id,
+        properties: transformNameProps(f.properties),
+        loadGeometry: () => f.loadGeometry(),
+      };
+    },
+  };
+}
+
+let zhProtocolRegistered = false;
+function ensureZhTileProtocol() {
+  if (zhProtocolRegistered) return;
+  zhProtocolRegistered = true;
+  maplibregl.addProtocol(ZH_PROTOCOL, async (params, abortController) => {
+    const realUrl = params.url.replace(/^zh-tile:\/\//, 'https://');
+    const resp = await fetch(realUrl, { signal: abortController.signal });
+    if (!resp.ok) throw new Error(`zh-tile fetch ${resp.status}`);
+    const buf = await resp.arrayBuffer();
+    try {
+      const tile = new VectorTile(new Protobuf(buf));
+      const wrappedLayers: Record<string, MvtLayerLike> = {};
+      for (const name of Object.keys(tile.layers)) {
+        wrappedLayers[name] = wrapMvtLayer((tile.layers as Record<string, unknown>)[name]);
+      }
+      const outBuf = vtpbf({ layers: wrappedLayers } as unknown as Parameters<typeof vtpbf>[0]);
+      return { data: outBuf };
+    } catch {
+      // 转换失败退回原瓦片
+      return { data: buf };
+    }
+  });
+}
+
+// 把 MapTiler style.json 的 vector 源改成走 zh-tile:// 协议
+async function buildSimplifiedStyle(styleUrl: string): Promise<maplibregl.StyleSpecification> {
+  const style = await fetch(styleUrl).then(r => r.json()) as maplibregl.StyleSpecification;
+  const sources = style.sources as Record<string, Record<string, unknown>>;
+  await Promise.all(Object.keys(sources).map(async (id) => {
+    const src = sources[id];
+    if (src.type !== 'vector') return;
+    const refUrl = typeof src.url === 'string' ? src.url : null;
+    if (refUrl) {
+      try {
+        const tj = await fetch(refUrl).then(r => r.json()) as {
+          tiles?: string[]; minzoom?: number; maxzoom?: number; bounds?: number[]; attribution?: string;
+        };
+        if (Array.isArray(tj.tiles)) {
+          sources[id] = {
+            type: 'vector',
+            tiles: tj.tiles.map(u => u.replace(/^https:\/\//, `${ZH_PROTOCOL}://`)),
+            minzoom: tj.minzoom ?? 0,
+            maxzoom: tj.maxzoom ?? 14,
+            attribution: tj.attribution ?? src.attribution,
+            bounds: tj.bounds,
+          };
+        }
+      } catch { /* 保留原 url */ }
+    } else if (Array.isArray(src.tiles)) {
+      src.tiles = (src.tiles as string[]).map(u => u.replace(/^https:\/\//, `${ZH_PROTOCOL}://`));
+    }
+  }));
+  return style;
+}
+
+const TW_CUSTOM_LABEL = 'tw-custom-label';
+const TW_CUSTOM_SOURCE = 'tw-custom';
+
+// 自写大圆弧：3D slerp + 自适应二分，相邻样本 (unwrapped lng, lat) 欧氏距离 ≤ 1°
+// 原因：MapLibre globe 在两个相邻顶点之间做 mercator 线性插值再投回球面。若两端同 lat
+// 但 lng 差很大（跨极弧顶典型情况），渲染出来就是一条极区圆弧——这就是"半月"伪影。
+// 通过在弧顶附近密集二分，相邻对 lng 差被压到 ≤1° → 极区弧半径 < 2km 肉眼不可见。
+// （诊断数据：VA→Kunming maxLat=89.66，idx 56→57 lng 跳 163°→正是被二分消除的那种对。）
+function greatCircleCoords(
+  lng1: number, lat1: number, lng2: number, lat2: number,
+): [number, number][] {
+  const DEG = Math.PI / 180;
+  const RAD = 180 / Math.PI;
+  const BASE_N = 16;
+  const MAX_DEPTH = 12;
+  const THRESHOLD = 1.0; // 度
+
+  const toVec = (lng: number, lat: number): [number, number, number] => {
+    const la = lat * DEG, lo = lng * DEG;
+    const cl = Math.cos(la);
+    return [cl * Math.cos(lo), cl * Math.sin(lo), Math.sin(la)];
+  };
+  const v1 = toVec(lng1, lat1);
+  const v2 = toVec(lng2, lat2);
+  const dot = Math.max(-1, Math.min(1, v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2]));
+  const ang = Math.acos(dot);
+  if (ang < 1e-9) return [[lng1, lat1], [lng2, lat2]];
+  if (ang > Math.PI - 1e-6) return [[lng1, lat1], [lng2, lat2]];
+  const sinA = Math.sin(ang);
+
+  // slerp：归一化 + asin 防 ang≈π 时的浮点漂移
+  const slerp = (f: number): [number, number] => {
+    const A = Math.sin((1 - f) * ang) / sinA;
+    const B = Math.sin(f * ang) / sinA;
+    let x = A * v1[0] + B * v2[0];
+    let y = A * v1[1] + B * v2[1];
+    let z = A * v1[2] + B * v2[2];
+    const mag = Math.sqrt(x * x + y * y + z * z);
+    if (mag > 0) { x /= mag; y /= mag; z /= mag; }
+    const lat = Math.asin(Math.max(-1, Math.min(1, z))) * RAD;
+    const lng = Math.atan2(y, x) * RAD;
+    return [lng, lat];
+  };
+  const unwrap = (anchor: number, lng: number): number => {
+    let d = lng - anchor;
+    while (d > 180) d -= 360;
+    while (d < -180) d += 360;
+    return anchor + d;
+  };
+
+  // 16 个基础采样（确保弧顶附近至少有一个采样，后续二分从那里展开）
+  type Sample = { f: number; p: [number, number] };
+  const base: Sample[] = [];
+  for (let i = 0; i <= BASE_N; i++) {
+    const f = i / BASE_N;
+    const raw = slerp(f);
+    if (i === 0) base.push({ f, p: [raw[0], raw[1]] });
+    else {
+      const prev = base[i - 1].p;
+      base.push({ f, p: [unwrap(prev[0], raw[0]), raw[1]] });
+    }
+  }
+
+  // 自适应二分，按 (unwrapped_lng, lat) 欧氏距离阈值插中点
+  const coords: [number, number][] = [base[0].p];
+  const bisect = (fA: number, fB: number, pA: [number, number], pB: [number, number], depth: number) => {
+    const dLng = pB[0] - pA[0], dLat = pB[1] - pA[1];
+    if (dLng * dLng + dLat * dLat <= THRESHOLD * THRESHOLD) return;
+    if (depth >= MAX_DEPTH) return;
+    const fM = (fA + fB) * 0.5;
+    const raw = slerp(fM);
+    const pM: [number, number] = [unwrap(pA[0], raw[0]), raw[1]];
+    bisect(fA, fM, pA, pM, depth + 1);
+    coords.push(pM);
+    bisect(fM, fB, pM, pB, depth + 1);
+  };
+  for (let i = 0; i < base.length - 1; i++) {
+    bisect(base[i].f, base[i + 1].f, base[i].p, base[i + 1].p, 0);
+    coords.push(base[i + 1].p);
+  }
+  return coords;
+}
+
+// NOTE: MapTiler 通用语言切换 + Taiwan/HK override
+// - Taiwan 从 country layer 抹掉，用独立小字号 symbol 层（匹配省级样式）渲染"台湾省"/"Chinese Taipei"
+// - Hong Kong 从 country layer 抹掉，让城市层的 HK label（zoom 更高时）自然出现
+function patchMapTilerLang(map: maplibregl.Map, isZh: boolean) {
+  const twnLabel = isZh ? '台湾省' : 'Chinese Taipei';
+  const rawBase: unknown[] = isZh
+    ? ['coalesce', ['get', 'name:zh-Hans'], ['get', 'name:zh'], ['get', 'name:latin'], ['get', 'name']]
+    : ['coalesce', ['get', 'name:en'], ['get', 'name:latin'], ['get', 'name']];
+
+  // 中文下国家名短称（OSM name:zh 常给全称，手动缩短）
+  const countryCode: unknown[] = ['coalesce',
+    ['get', 'iso_a2'], ['get', 'iso_3166_1'], ['get', 'iso_3166_1_alpha_2'],
+    ['get', 'adm0_a3'], ['get', 'ADM0_A3'],
+  ];
+  const baseExpr: unknown[] = isZh
+    ? ['match', countryCode,
+        ['KP', 'PRK'], '朝鲜',
+        ['KR', 'KOR'], '韩国',
+        ['MN', 'MNG'], '蒙古',
+        rawBase,
+      ]
+    : rawBase;
+
+  const isTwn: unknown[] = ['any',
+    ['==', ['get', 'iso_a2'], 'TW'],
+    ['==', ['get', 'iso_3166_1'], 'TW'],
+    ['==', ['get', 'iso_3166_1_alpha_2'], 'TW'],
+    ['==', ['get', 'adm0_a3'], 'TWN'],
+    ['==', ['get', 'ADM0_A3'], 'TWN'],
+  ];
+  const isHK: unknown[] = ['any',
+    ['==', ['get', 'iso_a2'], 'HK'],
+    ['==', ['get', 'iso_3166_1'], 'HK'],
+    ['==', ['get', 'iso_3166_1_alpha_2'], 'HK'],
+    ['==', ['get', 'adm0_a3'], 'HKG'],
+    ['==', ['get', 'ADM0_A3'], 'HKG'],
+    ['==', ['get', 'name:en'], 'Hong Kong'],
+    ['==', ['get', 'name_en'], 'Hong Kong'],
+  ];
+  const isMacau: unknown[] = ['any',
+    ['==', ['get', 'iso_a2'], 'MO'],
+    ['==', ['get', 'iso_3166_1'], 'MO'],
+    ['==', ['get', 'iso_3166_1_alpha_2'], 'MO'],
+    ['==', ['get', 'adm0_a3'], 'MAC'],
+    ['==', ['get', 'ADM0_A3'], 'MAC'],
+    ['==', ['get', 'name:en'], 'Macau'],
+    ['==', ['get', 'name:en'], 'Macao'],
+    ['==', ['get', 'name_en'], 'Macau'],
+    ['==', ['get', 'name_en'], 'Macao'],
+  ];
+  const countryField: unknown[] = ['case', isHK, '', isMacau, '', isTwn, '', baseExpr];
+
+  const ownLayers = new Set<string>([...UPCOMING_LAYERS, ...CUBER_LAYERS, TW_CUSTOM_LABEL]);
   const layers = map.getStyle().layers ?? [];
   for (const layer of layers) {
     if (layer.type !== 'symbol') continue;
-    if (!layer.id.includes('country')) continue;
+    if (ownLayers.has(layer.id)) continue; // 不要覆盖自己的图层
+    const id = layer.id.toLowerCase();
+    const isCountryLayer = id.includes('country') || id.includes('place-country') || id.includes('place_country');
     try {
-      const current = map.getLayoutProperty(layer.id, 'text-field');
-      map.setLayoutProperty(layer.id, 'text-field', [
-        'case',
-        ['any',
-          ['==', ['get', 'iso_a2'], 'TW'],
-          ['==', ['get', 'iso_3166_1'], 'TW'],
-        ],
-        twnLabel,
-        current,
-      ] as unknown as string);
+      map.setLayoutProperty(layer.id, 'text-field', (isCountryLayer ? countryField : baseExpr) as unknown as string);
+    } catch { /* */ }
+  }
+
+  // 自定义 Taiwan 省级标签
+  if (map.getLayer(TW_CUSTOM_LABEL)) {
+    try {
+      map.setLayoutProperty(TW_CUSTOM_LABEL, 'text-field', twnLabel);
+      map.setLayoutProperty(TW_CUSTOM_LABEL, 'text-transform', isZh ? 'none' : 'uppercase');
     } catch { /* */ }
   }
 }
 
-// NOTE: demotiles 的 patch（降级路径用）
-function patchDemotiles(map: maplibregl.Map, isZh: boolean) {
-  // Fill: TWN 颜色 = CHN
-  try {
-    const fillExpr = map.getPaintProperty('countries-fill', 'fill-color');
-    let chnColor: string | null = null;
-    if (Array.isArray(fillExpr) && fillExpr[0] === 'match') {
-      for (let i = 2; i < fillExpr.length - 1; i += 2) {
-        const key = fillExpr[i];
-        const val = fillExpr[i + 1];
-        if (key === 'CHN' || (Array.isArray(key) && key.includes('CHN'))) {
-          chnColor = String(val);
-          break;
-        }
-      }
-    }
-    if (chnColor) {
-      map.setPaintProperty('countries-fill', 'fill-color', [
-        'case', ['==', ['get', 'ADM0_A3'], 'TWN'], chnColor, fillExpr,
-      ] as unknown as string);
-    }
-  } catch { /* */ }
-
-  // Country label
-  try {
-    if (isZh) {
-      const pairs: unknown[] = [];
-      for (const [en, zh] of Object.entries(COUNTRY_NAME_ZH)) pairs.push(en, zh);
-      const expr = ['match', ['get', 'NAME'], ...pairs, ['get', 'NAME']];
-      map.setLayoutProperty('countries-label', 'text-field', expr as unknown as string);
-    } else {
-      const twnCase = (field: string) => [
-        'case', ['==', ['get', 'NAME'], 'Taiwan'], 'Chinese Taipei', ['get', field],
-      ];
-      map.setLayoutProperty('countries-label', 'text-field', [
-        'step', ['zoom'], twnCase('ABBREV'), 2, twnCase('NAME'),
-      ] as unknown as string);
-    }
-  } catch { /* */ }
-
-  // Geoline labels
-  try {
-    if (isZh) {
-      const pairs: unknown[] = [];
-      for (const [en, zh] of Object.entries(GEOLINE_ZH)) pairs.push(en, zh);
-      const expr = ['match', ['get', 'name'], ...pairs, ['get', 'name']];
-      map.setLayoutProperty('geolines-label', 'text-field', expr as unknown as string);
-    } else {
-      map.setLayoutProperty('geolines-label', 'text-field', ['get', 'name'] as unknown as string);
-    }
-  } catch { /* */ }
-}
-
 function patchMapStyle(map: maplibregl.Map, isZh: boolean) {
-  if (USING_MAPTILER) {
-    patchMapTilerLang(map, isZh);
-    patchMapTilerTaiwan(map, isZh);
-  } else {
-    patchDemotiles(map, isZh);
-  }
+  patchMapTilerLang(map, isZh);
 }
 
 // NOTE: 简易并发池——不装 p-limit，限 N 个 worker 同时拉
@@ -411,20 +507,10 @@ export default function GlobePage() {
         out.push([]);
         continue;
       }
-      try {
-        const line = greatCircle(
-          turfPoint([a.longitude_degrees, a.latitude_degrees]),
-          turfPoint([b.longitude_degrees, b.latitude_degrees]),
-        );
-        if (line.geometry.type === 'LineString') {
-          out.push(line.geometry.coordinates as [number, number][]);
-        } else {
-          // MultiLineString (anti-meridian 穿越) — 合并
-          out.push(line.geometry.coordinates.flat() as [number, number][]);
-        }
-      } catch {
-        out.push([[a.longitude_degrees, a.latitude_degrees], [b.longitude_degrees, b.latitude_degrees]]);
-      }
+      out.push(greatCircleCoords(
+        a.longitude_degrees, a.latitude_degrees,
+        b.longitude_degrees, b.latitude_degrees,
+      ));
     }
     return out;
   }, [cuberComps]);
@@ -454,14 +540,24 @@ export default function GlobePage() {
   // ── Map 初始化 ──
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
-    const map = new maplibregl.Map({
-      container: containerRef.current,
-      style: MAP_STYLE_URL,
-      center: [30, 20],
-      zoom: 1.4,
-    });
-    mapRef.current = map;
+    ensureZhTileProtocol();
 
+    let cancelled = false;
+    let map: maplibregl.Map | null = null;
+    (async () => {
+      const style = await buildSimplifiedStyle(MAP_STYLE_URL).catch(() => MAP_STYLE_URL as unknown as maplibregl.StyleSpecification);
+      if (cancelled || !containerRef.current) return;
+      map = new maplibregl.Map({
+        container: containerRef.current,
+        style,
+        center: [30, 20],
+        zoom: 1.4,
+      });
+      mapRef.current = map;
+      wireMap(map);
+    })();
+
+    function wireMap(map: maplibregl.Map) {
     map.on('style.load', () => {
       try { map.setProjection({ type: 'globe' }); } catch { /* old */ }
       patchMapStyle(map, isZhRef.current);
@@ -494,6 +590,35 @@ export default function GlobePage() {
         paint: { 'circle-color': '#C15F3C', 'circle-radius': 7, 'circle-stroke-width': 2, 'circle-stroke-color': '#FFFFFF' },
       });
 
+      // 自定义 Taiwan "省级" label（替代被抹掉的 country label）
+      map.addSource(TW_CUSTOM_SOURCE, {
+        type: 'geojson',
+        data: {
+          type: 'FeatureCollection',
+          features: [{
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: [120.96, 23.69] },
+            properties: {},
+          }],
+        } as unknown as GeoJSON.FeatureCollection,
+      });
+      map.addLayer({
+        id: TW_CUSTOM_LABEL, type: 'symbol', source: TW_CUSTOM_SOURCE,
+        minzoom: 3,
+        layout: {
+          'text-field': isZhRef.current ? '台湾省' : 'Chinese Taipei',
+          'text-font': ['Noto Sans Regular'],
+          'text-size': ['interpolate', ['linear'], ['zoom'], 3, 10, 5, 12, 7, 14, 10, 16, 14, 19],
+          'text-transform': isZhRef.current ? 'none' : 'uppercase',
+          'text-letter-spacing': 0.06,
+          'text-anchor': 'center',
+          'text-allow-overlap': true,
+          'text-ignore-placement': true,
+        },
+        paint: {
+          'text-color': '#888884',
+        },
+      });
       // cuber source & layers
       map.addSource(CUBER_SOURCE_POINTS, { type: 'geojson', data: cuberPointsGeojson as unknown as GeoJSON.FeatureCollection });
       map.addSource(CUBER_SOURCE_ARCS, { type: 'geojson', data: cuberArcsGeojson as unknown as GeoJSON.FeatureCollection });
@@ -583,10 +708,12 @@ export default function GlobePage() {
         if (popupRef.current) { popupRef.current.remove(); popupRef.current = null; }
       });
     });
+    }
 
     return () => {
+      cancelled = true;
       if (popupRef.current) popupRef.current.remove();
-      map.remove();
+      if (map) map.remove();
       mapRef.current = null;
       mapLoadedRef.current = false;
     };
@@ -631,21 +758,24 @@ export default function GlobePage() {
   }, [mode]);
 
   // ── cuber 模式下：dot/label filter（按 index 显示）+ 高亮当前点 + flyTo ──
+  // NOTE: 动画中（arc 未到达终点）时，终点 B 还未显示，等弧线到达时才出现
+  const animating = animProgress < 1;
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapLoadedRef.current || mode !== 'cuber') return;
 
-    const filter: maplibregl.FilterSpecification = ['<=', ['get', 'index'], currentIndex];
+    const visibleMax = animating ? currentIndex - 1 : currentIndex;
+    const filter: maplibregl.FilterSpecification = ['<=', ['get', 'index'], visibleMax];
     try { map.setFilter(CUBER_LAYER_DOT, filter); } catch { /* */ }
     try { map.setFilter(CUBER_LAYER_LABEL, filter); } catch { /* */ }
 
     try {
       map.setPaintProperty(CUBER_LAYER_DOT, 'circle-color',
-        ['case', ['==', ['get', 'index'], currentIndex], '#C15F3C', '#8B3E1F'] as unknown as string);
+        ['case', ['==', ['get', 'index'], visibleMax], '#C15F3C', '#8B3E1F'] as unknown as string);
       map.setPaintProperty(CUBER_LAYER_DOT, 'circle-radius',
-        ['case', ['==', ['get', 'index'], currentIndex], 10, 5] as unknown as number);
+        ['case', ['==', ['get', 'index'], visibleMax], 10, 5] as unknown as number);
     } catch { /* */ }
-  }, [currentIndex, mode]);
+  }, [currentIndex, mode, animating]);
 
   // ── Arc 动画 + flyTo 同步 ──
   // 只在 currentIndex 恰好 +1（即 play loop 推进）时启动动画；scrub / 初始加载直接跳
@@ -817,7 +947,11 @@ export default function GlobePage() {
             <div className="cuber-timeline">
               <button
                 className="cuber-play"
-                onClick={() => setPlaying((p) => !p)}
+                onClick={() => {
+                  if (playing) { setPlaying(false); return; }
+                  if (currentIndex >= cuberComps.length - 1) setCurrentIndex(0);
+                  setPlaying(true);
+                }}
                 disabled={cuberComps.length < 2}
                 aria-label={playing ? t('globe.pause') : t('globe.play')}
               >
