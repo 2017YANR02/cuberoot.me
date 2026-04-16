@@ -106,8 +106,10 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     headers: {
-      // NOTE: @ffmpeg/ffmpeg 多线程需要 SharedArrayBuffer，这两个 header 是必须的
-      'Cross-Origin-Embedder-Policy': 'require-corp',
+      // NOTE: @ffmpeg/ffmpeg 多线程需要 SharedArrayBuffer。
+      // 用 credentialless 而不是 require-corp —— 前者允许跨源图片（flagcdn / WCA 头像）
+      // 在不带 credentials 的情况下直接加载，免得 WcaPersonPicker 的国旗/头像被 COEP 拦成破图。
+      'Cross-Origin-Embedder-Policy': 'credentialless',
       'Cross-Origin-Opener-Policy': 'same-origin',
     },
     proxy: {
