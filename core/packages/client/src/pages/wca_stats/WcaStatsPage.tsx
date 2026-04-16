@@ -188,7 +188,7 @@ function renderCell(value: unknown, columnKey?: string, isZh?: boolean): React.R
       if (iso2) {
         if (iso2 === 'tw') {
           // NOTE: Chinese Taipei 用 WCA 自定义梅花旗（对标 Legacy i18n.js）
-          parts.push(<img key={`flag-${segIdx}-${match.index}`} src="/assets/images/ChineseTaipei.svg" alt="Chinese Taipei" className="country-flag-ct" />);
+          parts.push(<img key={`flag-${segIdx}-${match.index}`} src="/tools/assets/images/ChineseTaipei.svg" alt="Chinese Taipei" className="country-flag-ct" />);
         } else {
           parts.push(<span key={`flag-${segIdx}-${match.index}`} className={`${flagClass(iso2)} country-flag`} />);
         }
