@@ -64,6 +64,10 @@ function serveRepoRoot(): Plugin {
               const contentType = MIME[ext] || 'application/octet-stream';
               res.setHeader('Content-Type', contentType);
               res.setHeader('Cache-Control', 'no-cache');
+              // NOTE: 同步父文档的 COEP/COOP，否则 IframePage 的 sandbox iframe 会崩成 chrome-error
+              res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');
+              res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+              res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
               fs.createReadStream(filePath).pipe(res);
               return;
             }
