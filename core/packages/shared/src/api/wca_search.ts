@@ -175,27 +175,36 @@ export async function fetchCompetitionDetail(id: string): Promise<WcaCompDetail 
   const cached = compDetailCacheGet(id);
   if (cached) return cached;
 
-  try {
-    const resp = await wcaApi.get(`/competitions/${id}`, { timeout: 15000 });
-    const d = resp.data;
-    if (!d?.id || typeof d.latitude_degrees !== 'number') return null;
-    const detail: WcaCompDetail = {
-      id: d.id,
-      name: d.name ?? d.id,
-      city: d.city ?? '',
-      country_iso2: d.country_iso2 ?? '',
-      start_date: d.start_date ?? '',
-      end_date: d.end_date ?? d.start_date ?? '',
-      latitude_degrees: d.latitude_degrees,
-      longitude_degrees: d.longitude_degrees,
-      url: d.url ?? `https://www.worldcubeassociation.org/competitions/${d.id}`,
-    };
-    compDetailCacheSet(id, detail);
-    return detail;
-  } catch (e) {
-    console.warn('WCA comp detail fetch failed:', id, e);
-    return null;
+  // 遇 429 最多重试两次（1.5s、4s 退避），避免并发打爆 WCA API
+  const delays = [0, 1500, 4000];
+  for (let attempt = 0; attempt < delays.length; attempt++) {
+    if (delays[attempt] > 0) await new Promise(r => setTimeout(r, delays[attempt]));
+    try {
+      const resp = await wcaApi.get(`/competitions/${id}`, { timeout: 15000 });
+      const d = resp.data;
+      if (!d?.id || typeof d.latitude_degrees !== 'number') return null;
+      const detail: WcaCompDetail = {
+        id: d.id,
+        name: d.name ?? d.id,
+        city: d.city ?? '',
+        country_iso2: d.country_iso2 ?? '',
+        start_date: d.start_date ?? '',
+        end_date: d.end_date ?? d.start_date ?? '',
+        latitude_degrees: d.latitude_degrees,
+        longitude_degrees: d.longitude_degrees,
+        url: d.url ?? `https://www.worldcubeassociation.org/competitions/${d.id}`,
+      };
+      compDetailCacheSet(id, detail);
+      return detail;
+    } catch (e) {
+      const status = (e as { response?: { status?: number } })?.response?.status;
+      // 仅对 429 / 5xx 重试
+      if (attempt < delays.length - 1 && (status === 429 || (status && status >= 500))) continue;
+      console.warn('WCA comp detail fetch failed:', id, status ?? e);
+      return null;
+    }
   }
+  return null;
 }
 
 /**
