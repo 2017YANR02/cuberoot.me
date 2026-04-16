@@ -85,6 +85,119 @@ export async function fetchCompetitions(
   }
 }
 
+// NOTE: WCA /competitions 列表返回的单场比赛原始结构（仅列我们用到的字段）
+export interface WcaUpcomingComp {
+  id: string;
+  name: string;
+  city: string;
+  country_iso2: string;
+  start_date: string;
+  end_date: string;
+  event_ids: string[];
+  competitor_limit: number | null;
+  latitude_degrees: number;
+  longitude_degrees: number;
+  url: string;
+  cancelled_at: string | null;
+  announced_at: string;
+}
+
+/**
+ * NOTE: 获取从 fromDate 起的全部进行中 + 未来 WCA 比赛（自动分页）
+ * 用 sessionStorage 缓存 1 小时；取消的比赛过滤掉
+ * @param fromDate - YYYY-MM-DD，传进 ongoing_and_future
+ */
+export async function fetchAllUpcomingCompetitions(
+  fromDate: string,
+): Promise<WcaUpcomingComp[]> {
+  const cacheKey = `upcoming_all_${fromDate}`;
+  const cached = cacheGet<{ at: number; data: WcaUpcomingComp[] }>(cacheKey);
+  if (cached && Date.now() - cached.at < 3600_000) return cached.data;
+
+  const out: WcaUpcomingComp[] = [];
+  const perPage = 100;
+  let hadSuccess = false;
+  for (let page = 1; page <= 20; page++) { // 20*100=2000 上限，足够
+    try {
+      const resp = await wcaApi.get('/competitions', {
+        params: { ongoing_and_future: fromDate, per_page: perPage, page },
+        timeout: 30000, // WCA /competitions 较慢，提高到 30s
+      });
+      const batch = Array.isArray(resp.data) ? resp.data as WcaUpcomingComp[] : [];
+      out.push(...batch);
+      hadSuccess = true;
+      if (batch.length < perPage) break;
+    } catch (e) {
+      console.warn('WCA upcoming fetch failed at page', page, e);
+      if (!hadSuccess) throw e; // 第一页就失败直接报错，不要缓存空结果
+      break;
+    }
+  }
+
+  const filtered = out.filter((c) => !c.cancelled_at);
+  cacheSet(cacheKey, { at: Date.now(), data: filtered });
+  return filtered;
+}
+
+// NOTE: 单场比赛详情——只保留前端用到的字段
+export interface WcaCompDetail {
+  id: string;
+  name: string;
+  city: string;
+  country_iso2: string;
+  start_date: string;
+  end_date: string;
+  latitude_degrees: number;
+  longitude_degrees: number;
+  url: string;
+}
+
+// NOTE: 坐标不会变，用 localStorage 永久缓存（超限概率极低，每条 < 200B）
+const COMP_DETAIL_LS_PREFIX = 'wca_comp_coord_';
+
+function compDetailCacheGet(id: string): WcaCompDetail | null {
+  try {
+    const raw = localStorage.getItem(COMP_DETAIL_LS_PREFIX + id);
+    return raw ? JSON.parse(raw) as WcaCompDetail : null;
+  } catch { return null; }
+}
+
+function compDetailCacheSet(id: string, detail: WcaCompDetail): void {
+  try { localStorage.setItem(COMP_DETAIL_LS_PREFIX + id, JSON.stringify(detail)); }
+  catch { /* quota exceeded 等静默 */ }
+}
+
+/**
+ * NOTE: 获取单场比赛详情（含经纬度）——永久缓存到 localStorage
+ * 用途：选手生涯轨迹图需要每场比赛的 lat/lng
+ */
+export async function fetchCompetitionDetail(id: string): Promise<WcaCompDetail | null> {
+  const cached = compDetailCacheGet(id);
+  if (cached) return cached;
+
+  try {
+    const resp = await wcaApi.get(`/competitions/${id}`, { timeout: 15000 });
+    const d = resp.data;
+    if (!d?.id || typeof d.latitude_degrees !== 'number') return null;
+    const detail: WcaCompDetail = {
+      id: d.id,
+      name: d.name ?? d.id,
+      city: d.city ?? '',
+      country_iso2: d.country_iso2 ?? '',
+      start_date: d.start_date ?? '',
+      end_date: d.end_date ?? d.start_date ?? '',
+      latitude_degrees: d.latitude_degrees,
+      longitude_degrees: d.longitude_degrees,
+      url: d.url ?? `https://www.worldcubeassociation.org/competitions/${d.id}`,
+    };
+    compDetailCacheSet(id, detail);
+    return detail;
+  } catch (e) {
+    console.warn('WCA comp detail fetch failed:', id, e);
+    return null;
+  }
+}
+
 /**
  * NOTE: 获取选手头像 URL（通过 /persons/{id} API）
  */

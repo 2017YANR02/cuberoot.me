@@ -1,6 +1,5 @@
 /* ==========================================================================
- * LandingPage — Claude 风配色，浅色主题
- * 参考 claude.com：奶油米白背景 + 近黑文字 + Claude 橙强调
+ * LandingPage — Claude 风浅色主题 + Bento Grid
  * ========================================================================== */
 
 :root {
@@ -19,14 +18,15 @@
     background-color: var(--bg);
     color: var(--text);
     min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 5rem 2rem 3rem;
+    padding: 4rem 2rem 2rem;
     box-sizing: border-box;
 }
 
-/* ── 品牌行（logo + CubeRoot） ── */
+/* ── 品牌行 ── */
 .landing-page .brand-line {
     display: flex;
     align-items: center;
@@ -35,7 +35,7 @@
     font-weight: 500;
     color: var(--text-sub);
     letter-spacing: 0.02em;
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
 }
 
 .landing-page .brand-logo {
@@ -51,49 +51,73 @@
 /* ── 大标语 ── */
 .landing-page .landing-tagline {
     font-family: 'Fraunces', 'Times New Roman', serif;
-    font-size: clamp(2.25rem, 6vw, 4rem);
+    font-size: clamp(2rem, 5vw, 3.5rem);
     font-weight: 400;
     line-height: 1.05;
     letter-spacing: -0.02em;
     text-align: center;
     color: var(--text);
-    margin: 0 0 4rem;
+    margin: 0 0 3rem;
     max-width: 900px;
 }
 
-/* ── 卡片网格：桌面 3 列 × 4 行 ── */
+/* ── Bento Grid（桌面 12 列） ── */
 .landing-page .cards-container {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(12, 1fr);
+    grid-auto-rows: minmax(90px, auto);
     gap: 1rem;
-    max-width: 960px;
+    max-width: 1100px;
     width: 100%;
 }
 
-@media (max-width: 768px) {
-    .landing-page {
-        padding: 3.5rem 1rem 2rem;
-    }
-    .landing-page .cards-container {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 0.75rem;
-    }
+/* Tier 分配 */
+.landing-page .card.tier-hero {
+    grid-column: span 6;
+    grid-row: span 2;
+    min-height: 320px;
 }
 
-/* ── 卡片 ── */
+.landing-page .card.tier-hero-side {
+    grid-column: span 6;
+    min-height: 152px;
+}
+
+.landing-page .card.tier-medium {
+    grid-column: span 4;
+    min-height: 140px;
+}
+
+.landing-page .card.tier-standard {
+    grid-column: span 3;
+    min-height: 120px;
+}
+
+.landing-page .card.tier-utility {
+    grid-column: span 6;
+    min-height: 72px;
+    flex-direction: row;
+    padding: 0.75rem 1.25rem;
+    gap: 0.75rem;
+    justify-content: flex-start;
+}
+
+/* ── 卡片基础 ── */
 .landing-page .card {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 0.75rem;
-    padding: 2rem 1rem;
+    padding: 1.5rem 1rem;
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 12px;
+    border-radius: 14px;
     text-decoration: none;
     color: var(--text);
     transition: border-color 0.18s ease, transform 0.18s ease, background 0.18s ease;
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
 .landing-page .card:hover {
@@ -102,23 +126,102 @@
     transform: translateY(-2px);
 }
 
+.landing-page .card:hover .card-icon,
+.landing-page .card:hover .card-name {
+    color: var(--accent);
+}
+
 .landing-page .card-icon {
-    font-size: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     line-height: 1;
+    color: var(--text);
+    transition: color 0.18s ease;
 }
 
 .landing-page .card-name {
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 600;
     letter-spacing: -0.01em;
+    transition: color 0.18s ease;
 }
 
-/* ── csTimer 卡片 logo ── */
+.landing-page .card.tier-hero-side .card-name { font-size: 1.1rem; }
+.landing-page .card.tier-utility .card-name { font-size: 0.9rem; }
+
+/* ── Trainer hero 卡：3D 魔方占满 ── */
+.landing-page .card.tier-hero .card-icon {
+    flex: 1;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+}
+
+.landing-page .card.tier-hero .cube-hero-slot {
+    width: 100%;
+    height: 100%;
+    min-height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.landing-page .card.tier-hero .cube-hero-slot twisty-player {
+    max-width: 320px;
+    max-height: 280px;
+}
+
+.landing-page .cube-hero-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 220px;
+    color: var(--text-sub);
+}
+
+/* ── csTimer logo ── */
 .landing-page .cstimer-logo {
-    width: 2rem;
-    height: 2rem;
-    border-radius: 6px;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 5px;
     display: block;
+}
+
+/* ── 响应式 ── */
+@media (max-width: 1024px) {
+    .landing-page .card.tier-hero { grid-column: span 12; grid-row: span 1; min-height: 260px; }
+    .landing-page .card.tier-hero-side { grid-column: span 6; }
+    .landing-page .card.tier-medium { grid-column: span 6; }
+    .landing-page .card.tier-standard { grid-column: span 6; }
+    .landing-page .card.tier-utility { grid-column: span 6; }
+}
+
+@media (max-width: 640px) {
+    .landing-page {
+        padding: 3rem 1rem 1.5rem;
+    }
+    .landing-page .cards-container {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+    .landing-page .card.tier-hero,
+    .landing-page .card.tier-hero-side,
+    .landing-page .card.tier-medium,
+    .landing-page .card.tier-standard,
+    .landing-page .card.tier-utility {
+        grid-column: span 1;
+        grid-row: auto;
+        min-height: 100px;
+        flex-direction: column;
+        justify-content: center;
+        padding: 1.25rem 0.75rem;
+    }
+    .landing-page .card.tier-hero {
+        grid-column: span 2;
+        min-height: 200px;
+    }
 }
 
 /* ── 致谢 ── */
@@ -170,6 +273,12 @@
 
 .landing-page .footer a:hover {
     color: var(--accent);
+}
+
+.landing-page .footer-github {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
 }
 
 /* ── 语言切换 ── */
@@ -248,33 +357,4 @@
 
 .landing-page .global-logout:hover {
     color: var(--accent);
-}
-
-/* ── GitHub Corner（浅色主题） ── */
-.landing-page .github-corner svg {
-    fill: var(--text);
-    color: var(--bg);
-    position: absolute;
-    top: 0;
-    right: 0;
-    border: 0;
-}
-
-.landing-page .github-corner:hover .octo-arm {
-    animation: octocat-wave 560ms ease-in-out;
-}
-
-@keyframes octocat-wave {
-    0%, 100% { transform: rotate(0); }
-    20%, 60% { transform: rotate(-25deg); }
-    40%, 80% { transform: rotate(10deg); }
-}
-
-@media (max-width: 500px) {
-    .landing-page .github-corner:hover .octo-arm {
-        animation: none;
-    }
-    .landing-page .github-corner .octo-arm {
-        animation: octocat-wave 560ms ease-in-out;
-    }
 }

@@ -5,7 +5,13 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import {
+  BarChart3, Film, ScanSearch, Calculator as CalculatorIcon, LineChart,
+  Swords, Target, CalendarDays, Puzzle, BookOpen, Globe as GlobeIcon,
+  type LucideIcon,
+} from 'lucide-react';
 import { useAuthStore } from '../stores/auth_store';
+import LandingCubeHero from './LandingCubeHero';
 import './landing.css';
 
 // NOTE: 粒子动画开关 — 当前落地页走浅色主题，不需要粒子背景
@@ -273,10 +279,11 @@ const TEXTS: Record<string, { en: string; zh: string }> = {
   recon:           { en: 'Recon', zh: '复盘' },
   algTrainer:      { en: 'Alg Trainer', zh: '公式训练器' },
   cuberootTrainer: { en: 'Trainer', zh: '训练器' },
-  hthGrapher:      { en: 'Score Calculator', zh: '成绩计算器' },
-  battle:          { en: '1v1 Battle', zh: '1v1 对战' },
+  hthGrapher:      { en: 'Calculator', zh: '成绩计算器' },
+  battle:          { en: 'Battle', zh: '1v1 对战' },
   viz:             { en: 'Distribution', zh: '分布演变' },
   upcoming:        { en: 'Upcoming Comps', zh: '近期比赛' },
+  globe:           { en: 'Globe', zh: '比赛地球' },
   cstimer:         { en: 'csTimer', zh: 'csTimer' },
   frameCount:      { en: 'Frame Count', zh: '数帧工具' },
   blog:            { en: 'Blog', zh: '博客' },
@@ -284,30 +291,40 @@ const TEXTS: Record<string, { en: string; zh: string }> = {
 };
 
 // ── 卡片配置 ──────────────────────────────────────────────────────────────
+type Tier = 'hero' | 'hero-side' | 'medium' | 'standard' | 'utility';
+
 interface CardConfig {
   id: string;
   /** 已迁移到 React 的模块用内部路由，否则为外部绝对路径 */
   href: string;
   internal: boolean;
-  icon: string;
+  tier: Tier;
+  /** Lucide 图标；Trainer 卡由 LandingCubeHero 接管，csTimer 用 iconImg */
+  Icon?: LucideIcon;
   /** csTimer 使用图片 logo */
   iconImg?: string;
   nameKey: keyof typeof TEXTS;
 }
 
+// NOTE: 按 Bento tier 顺序排列，渲染顺序决定 grid 布局
 const CARDS: CardConfig[] = [
-  { id: 'solver',   href: '/solver',              internal: true,  icon: '🧩', nameKey: 'solver' },
-  { id: 'stats',    href: '/wca-stats',           internal: true,  icon: '📊', nameKey: 'wcaStats' },
-  { id: 'recon',    href: '/recon',               internal: true,  icon: '🔍', nameKey: 'recon' },
-  { id: 'trainer',  href: '/alg-trainers',        internal: true,  icon: '🎯', nameKey: 'algTrainer' },
-  { id: 'cuberoot', href: '/trainer',             internal: true,  icon: '🧊', nameKey: 'cuberootTrainer' },
-  { id: 'hth',      href: '/calc',                internal: true,  icon: '🧮', nameKey: 'hthGrapher' },
-  { id: 'battle',   href: '/battle',              internal: true,  icon: '⚔️', nameKey: 'battle' },
-  { id: 'frame-count', href: '/frame-count',      internal: true,  icon: '🎬', nameKey: 'frameCount' },
-  { id: 'viz',      href: '/viz',                 internal: true,  icon: '📈', nameKey: 'viz' },
-  { id: 'upcoming', href: '/upcoming-comps',      internal: true,  icon: '🏅', nameKey: 'upcoming' },
-  { id: 'cstimer',  href: '/cstimer',             internal: true,  icon: '',   nameKey: 'cstimer', iconImg: import.meta.env.BASE_URL + 'cstimer_logo.png' },
-  { id: 'blog',     href: window.location.hostname.endsWith('cuberoot.me') ? '/blog/' : 'https://www.cuberoot.me/blog/', internal: false, icon: '📝', nameKey: 'blog' },
+  // Tier 1 — Hero / Hero-side
+  { id: 'cuberoot',    href: '/trainer',         internal: true,  tier: 'hero',      nameKey: 'cuberootTrainer' },
+  { id: 'stats',       href: '/wca-stats',       internal: true,  tier: 'hero-side', Icon: BarChart3,   nameKey: 'wcaStats' },
+  { id: 'frame-count', href: '/frame-count',     internal: true,  tier: 'hero-side', Icon: Film,        nameKey: 'frameCount' },
+  // Tier 2 — Medium
+  { id: 'recon',       href: '/recon',           internal: true,  tier: 'medium',    Icon: ScanSearch,     nameKey: 'recon' },
+  { id: 'hth',         href: '/calc',            internal: true,  tier: 'medium',    Icon: CalculatorIcon, nameKey: 'hthGrapher' },
+  { id: 'viz',         href: '/viz',             internal: true,  tier: 'medium',    Icon: LineChart,      nameKey: 'viz' },
+  // Tier 3 — Standard
+  { id: 'battle',      href: '/battle',          internal: true,  tier: 'standard',  Icon: Swords,         nameKey: 'battle' },
+  { id: 'trainer',     href: '/alg-trainers',    internal: true,  tier: 'standard',  Icon: Target,         nameKey: 'algTrainer' },
+  { id: 'upcoming',    href: '/upcoming-comps',  internal: true,  tier: 'standard',  Icon: CalendarDays,   nameKey: 'upcoming' },
+  { id: 'globe',       href: '/globe',           internal: true,  tier: 'standard',  Icon: GlobeIcon,      nameKey: 'globe' },
+  { id: 'solver',      href: '/solver',          internal: true,  tier: 'standard',  Icon: Puzzle,         nameKey: 'solver' },
+  // Tier 4 — Utility
+  { id: 'cstimer',     href: '/cstimer',         internal: true,  tier: 'utility',   nameKey: 'cstimer', iconImg: import.meta.env.BASE_URL + 'cstimer_logo.png' },
+  { id: 'blog',        href: window.location.hostname.endsWith('cuberoot.me') ? '/blog/' : 'https://www.cuberoot.me/blog/', internal: false, tier: 'utility', Icon: BookOpen, nameKey: 'blog' },
 ];
 
 // ── 组件 ─────────────────────────────────────────────────────────────────
@@ -373,28 +390,6 @@ export default function LandingPage() {
         )}
       </div>
 
-      {/* NOTE: GitHub Corner 角标 */}
-      <a
-        href="https://github.com/RuiminYan/ruiminyan.github.io"
-        className="github-corner"
-        aria-label="View source on Github"
-      >
-        <svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true">
-          <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z" />
-          <path
-            d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2"
-            fill="currentColor"
-            style={{ transformOrigin: '130px 106px' }}
-            className="octo-arm"
-          />
-          <path
-            d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z"
-            fill="currentColor"
-            className="octo-body"
-          />
-        </svg>
-      </a>
-
       <div className="brand-line">
         <img src="/icons/CubeRoot.png" alt="" className="brand-logo" />
         <span className="brand-name">{t('brand')}</span>
@@ -403,25 +398,34 @@ export default function LandingPage() {
 
       <div className="cards-container">
         {CARDS.map((card) => {
-          const href = card.href;
+          // NOTE: 不同 tier 图标尺寸不同（tier-hero 无图标，由 LandingCubeHero 接管）
+          const iconSize = card.tier === 'hero-side' ? 32
+            : card.tier === 'medium' ? 28
+            : card.tier === 'utility' ? 20
+            : 24;
           const content = (
             <>
               <div className="card-icon">
-                {card.iconImg
-                  ? <img src={card.iconImg} alt={`${t(card.nameKey)} Logo`} className="cstimer-logo" />
-                  : card.icon}
+                {card.tier === 'hero'
+                  ? <LandingCubeHero />
+                  : card.iconImg
+                    ? <img src={card.iconImg} alt={`${t(card.nameKey)} Logo`} className="cstimer-logo" />
+                    : card.Icon
+                      ? <card.Icon size={iconSize} strokeWidth={1.5} />
+                      : null}
               </div>
               <div className="card-name">{t(card.nameKey)}</div>
             </>
           );
 
-          // NOTE: 已迁移模块用 React Router Link（SPA 导航），未迁移模块用 <a>（跳转 legacy/ 路径）
+          const className = `card tier-${card.tier}`;
+          // NOTE: 已迁移模块用 React Router Link（SPA 导航），外链用 <a>
           if (card.internal) {
             return (
               <Link
                 key={card.id}
-                to={href}
-                className="card"
+                to={card.href}
+                className={className}
                 id={`card-${card.id}`}
               >
                 {content}
@@ -431,8 +435,8 @@ export default function LandingPage() {
           return (
             <a
               key={card.id}
-              href={href}
-              className="card"
+              href={card.href}
+              className={className}
               id={`card-${card.id}`}
               target="_blank"
               rel="noopener noreferrer"
@@ -457,7 +461,18 @@ export default function LandingPage() {
 
       <div className="footer">
         <span>v1.4.1</span>
-        <a href="https://github.com/RuiminYan/ruiminyan.github.io" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <a
+          href="https://github.com/RuiminYan/ruiminyan.github.io"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="footer-github"
+        >
+          {/* NOTE: GitHub 品牌图标 — lucide-react 已移除品牌图标，改用 inline SVG（Simple Icons） */}
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+          </svg>
+          <span>GitHub</span>
+        </a>
 
         <button className="lang-toggle" onClick={toggleLang}>
           <span className="globe-icon">🌐</span>

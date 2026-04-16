@@ -1,0 +1,522 @@
+/* ── Globe Page (浅色 Claude 调色板) ── */
+.globe-page {
+    --bg: #FAF9F5;
+    --surface: #FFFFFF;
+    --text: #181716;
+    --text-sub: #6F6E6B;
+    --border: #E5E4DF;
+    --accent: #C15F3C;
+    --accent-soft: rgba(193, 95, 60, 0.12);
+
+    position: relative;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 1.25rem 1.5rem 2rem;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', system-ui, sans-serif;
+    overflow-x: hidden;
+}
+
+.globe-page .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0.35rem 0.7rem;
+    margin-bottom: 0.75rem;
+    border-radius: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-sub);
+    text-decoration: none;
+    font-size: 0.8rem;
+    transition: all 0.15s;
+}
+.globe-page .back-link:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+.globe-page .globe-header {
+    margin-bottom: 1rem;
+}
+.globe-page .globe-title {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 2rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin: 0 0 0.35rem;
+    color: var(--text);
+}
+.globe-page .globe-meta {
+    color: var(--text-sub);
+    font-size: 0.85rem;
+}
+
+.globe-page .globe-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.6rem;
+}
+
+.globe-page .range-toggle,
+.globe-page .resolution-toggle {
+    display: inline-flex;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 2px;
+    gap: 2px;
+    align-items: center;
+}
+.globe-page .resolution-toggle { padding: 2px 2px 2px 8px; }
+.globe-page .res-label {
+    color: var(--text-sub);
+    font-size: 0.75rem;
+    margin-right: 2px;
+}
+.globe-page .range-btn,
+.globe-page .res-btn {
+    padding: 0.3rem 0.65rem;
+    border: none;
+    background: transparent;
+    color: var(--text-sub);
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.globe-page .range-btn:hover,
+.globe-page .res-btn:hover { color: var(--text); }
+.globe-page .range-btn.is-active,
+.globe-page .res-btn.is-active {
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+.globe-page .reset-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-sub);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.globe-page .reset-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.globe-page .globe-stats {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.82rem;
+    color: var(--text-sub);
+}
+
+/* ── WcaPersonPicker 搜索框 —— 强制黑字 ── */
+.wca-pp-input { color: #181716; background: #FFF; }
+.wca-pp-input::placeholder { color: #9B9994; }
+
+/* ── Cuber 模式 ── */
+.globe-page .mode-toggle {
+    display: inline-flex;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 2px;
+    gap: 2px;
+}
+.globe-page .cuber-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0.8rem;
+    margin-bottom: 0.75rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 0.82rem;
+}
+
+.globe-page .cuber-select-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0.4rem 0.9rem;
+    background: var(--accent);
+    color: #FFF;
+    border: none;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.globe-page .cuber-select-btn:hover { background: #AE5434; }
+
+.globe-page .cuber-change-btn {
+    padding: 0.3rem 0.7rem;
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 7px;
+    font-family: inherit;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.globe-page .cuber-change-btn:hover { background: var(--accent-soft); }
+
+.globe-page .cuber-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 0.35rem 0.65rem;
+    background: var(--accent-soft);
+    border-radius: 8px;
+    font-weight: 500;
+    color: var(--accent);
+}
+.globe-page .cuber-flag {
+    width: 18px;
+    height: 13.5px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+.globe-page .cuber-id {
+    font-family: ui-monospace, 'Menlo', monospace;
+    font-size: 0.72rem;
+    color: var(--text-sub);
+    background: var(--surface);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+.globe-page .cuber-clear {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px;
+    border: none;
+    background: transparent;
+    color: var(--text-sub);
+    cursor: pointer;
+    border-radius: 4px;
+}
+.globe-page .cuber-clear:hover { color: var(--accent); background: #FFF; }
+
+.globe-page .cuber-empty {
+    flex: 1;
+    color: var(--text-sub);
+    font-style: italic;
+}
+
+/* 进度 */
+.globe-page .cuber-progress {
+    flex: 1;
+    min-width: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.globe-page .cuber-progress-label {
+    color: var(--text-sub);
+    font-size: 0.75rem;
+}
+.globe-page .cuber-progress-bar {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+}
+.globe-page .cuber-progress-fill {
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.15s;
+}
+
+/* 时间轴 */
+.globe-page .cuber-timeline {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    min-width: 400px;
+}
+.globe-page .cuber-play {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #FFF;
+    border: none;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s;
+}
+.globe-page .cuber-play:hover { background: #AE5434; }
+.globe-page .cuber-play:disabled { background: var(--border); cursor: not-allowed; }
+
+.globe-page .cuber-scrub {
+    flex: 1;
+    height: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: var(--border);
+    border-radius: 2px;
+    cursor: pointer;
+    outline: none;
+}
+.globe-page .cuber-scrub::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 2px solid #FFF;
+    box-shadow: 0 0 0 1px var(--accent);
+}
+.globe-page .cuber-scrub::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 2px solid #FFF;
+    box-shadow: 0 0 0 1px var(--accent);
+}
+
+.globe-page .cuber-step-label {
+    min-width: 200px;
+    max-width: 280px;
+    line-height: 1.35;
+}
+.globe-page .cuber-step-count {
+    font-size: 0.7rem;
+    color: var(--text-sub);
+    font-family: ui-monospace, 'Menlo', monospace;
+}
+.globe-page .cuber-step-name {
+    font-weight: 500;
+    color: var(--text);
+    font-size: 0.82rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.globe-page .cuber-step-meta {
+    font-size: 0.72rem;
+    color: var(--text-sub);
+}
+
+.globe-page .cuber-speed {
+    display: inline-flex;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 2px;
+    gap: 2px;
+    flex-shrink: 0;
+}
+.globe-page .cuber-speed .speed-btn {
+    padding: 0.2rem 0.5rem;
+    border: none;
+    background: transparent;
+    color: var(--text-sub);
+    font-family: inherit;
+    font-size: 0.72rem;
+    font-weight: 500;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.globe-page .cuber-speed .speed-btn:hover { color: var(--text); }
+.globe-page .cuber-speed .speed-btn.is-active {
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+@media (max-width: 768px) {
+    .globe-page .cuber-timeline {
+        min-width: 100%;
+        flex-wrap: wrap;
+    }
+    .globe-page .cuber-step-label { max-width: 100%; }
+}
+
+.globe-page .globe-loading,
+.globe-page .globe-error {
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+    background: var(--accent-soft);
+    color: var(--accent);
+    margin-bottom: 0.75rem;
+}
+.globe-page .globe-error { background: #FCE9E3; color: #A04A2E; }
+
+.globe-page .map-canvas {
+    width: 100%;
+    height: calc(100vh - 280px);
+    min-height: 480px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    position: relative;
+}
+.globe-page .map-canvas canvas { outline: none; }
+
+/* MapLibre popup — hover tooltip */
+.maplibregl-popup .maplibregl-popup-content {
+    background: rgba(24, 23, 22, 0.96);
+    color: #FFF;
+    padding: 0.55rem 0.75rem;
+    border-radius: 8px;
+    font-family: 'Inter', system-ui, sans-serif;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+.maplibregl-popup .maplibregl-popup-tip { border-top-color: rgba(24, 23, 22, 0.96); }
+.maplibregl-popup .mlp-name {
+    font-weight: 600;
+    font-size: 0.82rem;
+    margin-bottom: 2px;
+    color: #F5C6B5;
+}
+.maplibregl-popup .mlp-meta {
+    font-size: 0.72rem;
+    color: #BFBFBC;
+}
+
+.globe-page .bin-panel-link {
+    display: inline-block;
+    margin-top: 0.5rem;
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 0.85rem;
+}
+.globe-page .bin-panel-link:hover { text-decoration: underline; }
+
+/* ── Tooltip (hexLabel HTML) ── */
+.globe-tooltip {
+    background: rgba(24, 23, 22, 0.95);
+    color: #FFF;
+    padding: 0.6rem 0.8rem;
+    border-radius: 8px;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 0.8rem;
+    max-width: 280px;
+    line-height: 1.4;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+.globe-tooltip .gt-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: #F5C6B5;
+}
+.globe-tooltip .gt-countries {
+    color: #BFBFBC;
+    font-size: 0.72rem;
+    margin-bottom: 4px;
+}
+.globe-tooltip .gt-comps {
+    color: #E5E4DF;
+    font-size: 0.75rem;
+    margin-bottom: 4px;
+}
+.globe-tooltip .gt-hint {
+    color: #8F8E8B;
+    font-size: 0.7rem;
+    margin-top: 4px;
+    padding-top: 4px;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* ── Click Panel ── */
+.globe-page .bin-panel-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(24, 23, 22, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 1rem;
+}
+.globe-page .bin-panel {
+    background: var(--surface);
+    border-radius: 12px;
+    max-width: 520px;
+    width: 100%;
+    max-height: 80vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+.globe-page .bin-panel-close {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.7rem;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-sub);
+    cursor: pointer;
+    line-height: 1;
+}
+.globe-page .bin-panel-close:hover { color: var(--text); }
+.globe-page .bin-panel-title {
+    margin: 0;
+    padding: 1rem 1.2rem;
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 1.2rem;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border);
+}
+.globe-page .bin-panel-list {
+    overflow-y: auto;
+    padding: 0.5rem;
+}
+.globe-page .bin-panel-item {
+    display: block;
+    padding: 0.65rem 0.75rem;
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--text);
+    transition: background 0.15s;
+}
+.globe-page .bin-panel-item:hover { background: var(--accent-soft); }
+.globe-page .bin-panel-name {
+    font-weight: 500;
+    font-size: 0.9rem;
+    margin-bottom: 2px;
+}
+.globe-page .bin-panel-meta {
+    font-size: 0.75rem;
+    color: var(--text-sub);
+}
+
+@media (max-width: 640px) {
+    .globe-page { padding: 1rem 1rem 2rem; }
+    .globe-page .globe-title { font-size: 1.5rem; }
+    .globe-page .globe-canvas {
+        height: calc(100vh - 320px);
+        min-height: 380px;
+    }
+}

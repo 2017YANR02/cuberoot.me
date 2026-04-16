@@ -35,6 +35,8 @@ const WcaStatsPage = lazy(() => import('./pages/wca_stats/WcaStatsPage'));
 const WcaStatsIndex = lazy(() => import('./pages/wca_stats/WcaStatsIndex'));
 // NOTE: Upcoming Comps 懒加载 — 顶尖选手近期比赛追踪
 const UpcomingCompsPage = lazy(() => import('./pages/UpcomingCompsPage'));
+// NOTE: Globe 懒加载 — 3D 地球 WCA 比赛地理分布（含 react-globe.gl + three ~500KB）
+const GlobePage = lazy(() => import('./pages/GlobePage'));
 // NOTE: iframe 包装页 — 嵌入未迁移的外部模块（Solver/Alg Trainer/csTimer）
 const IframePage = lazy(() => import('./pages/IframePage'));
 // NOTE: Pretext Canvas 表格 Demo
@@ -85,6 +87,8 @@ function App() {
         <Route path="/recon/:id" element={<Suspense fallback={<div>Loading...</div>}><ReconDetailPage /></Suspense>} />
         {/* Upcoming Comps — 顶尖选手近期比赛追踪 */}
         <Route path="/upcoming-comps" element={<Suspense fallback={<div>Loading...</div>}><UpcomingCompsPage /></Suspense>} />
+        {/* Globe — 3D 地球 WCA 比赛地理分布 */}
+        <Route path="/globe" element={<Suspense fallback={<div>Loading...</div>}><GlobePage /></Suspense>} />
         {/* NOTE: iframe 包装路由 — 嵌入未迁移模块，零改动上游代码 */}
         <Route path="/solver" element={<Suspense fallback={<div>Loading...</div>}><IframePage src="/tools/solver/" title="Solver" /></Suspense>} />
         <Route path="/2x2x2" element={<Suspense fallback={<div>Loading...</div>}><IframePage src="/tools/2x2x2/" title="2x2x2 Solver" /></Suspense>} />
