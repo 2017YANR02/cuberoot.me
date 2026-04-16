@@ -30,11 +30,8 @@ function hasChinese(s: string): boolean {
   return /[\u4e00-\u9fff]/.test(s);
 }
 
-// NOTE: 国旗 emoji 从 ISO 3166 alpha-2 转换
-function flagUrl(iso2: string): string {
-  if (!iso2) return '';
-  return `https://flagcdn.com/w40/${iso2}.png`;
-}
+// NOTE: 国旗渲染 — 用本地 flag-icons CSS 类（见 client/src/index.css 的 import）
+// Chinese Taipei (iso2=tw) 用 WCA 专用梅花旗 SVG，与 WcaStatsPage / tools/i18n 一致
 
 export function WcaPersonPicker({
   mode,
@@ -140,7 +137,9 @@ export function WcaPersonPicker({
               <span className="wca-pp-avatar" />
             )}
             {p.iso2 && (
-              <img className="wca-pp-flag" src={flagUrl(p.iso2)} alt={p.iso2} />
+              p.iso2 === 'tw'
+                ? <img className="wca-pp-flag" src="/tools/assets/images/ChineseTaipei.svg" alt="Chinese Taipei" />
+                : <span className={`fi fi-${p.iso2} wca-pp-flag`} aria-label={p.iso2} />
             )}
             <div className="wca-pp-info">
               <span className="wca-pp-name">{p.name}</span>
