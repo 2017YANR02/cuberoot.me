@@ -61,8 +61,7 @@
     margin-bottom: 0.6rem;
 }
 
-.globe-page .range-toggle,
-.globe-page .resolution-toggle {
+.globe-page .range-toggle {
     display: inline-flex;
     background: var(--surface);
     border: 1px solid var(--border);
@@ -71,14 +70,7 @@
     gap: 2px;
     align-items: center;
 }
-.globe-page .resolution-toggle { padding: 2px 2px 2px 8px; }
-.globe-page .res-label {
-    color: var(--text-sub);
-    font-size: 0.75rem;
-    margin-right: 2px;
-}
-.globe-page .range-btn,
-.globe-page .res-btn {
+.globe-page .range-btn {
     padding: 0.3rem 0.65rem;
     border: none;
     background: transparent;
@@ -90,10 +82,8 @@
     cursor: pointer;
     transition: all 0.15s;
 }
-.globe-page .range-btn:hover,
-.globe-page .res-btn:hover { color: var(--text); }
-.globe-page .range-btn.is-active,
-.globe-page .res-btn.is-active {
+.globe-page .range-btn:hover { color: var(--text); }
+.globe-page .range-btn.is-active {
     background: var(--accent-soft);
     color: var(--accent);
 }
@@ -411,41 +401,6 @@
 }
 .globe-page .bin-panel-link:hover { text-decoration: underline; }
 
-/* ── Tooltip (hexLabel HTML) ── */
-.globe-tooltip {
-    background: rgba(24, 23, 22, 0.95);
-    color: #FFF;
-    padding: 0.6rem 0.8rem;
-    border-radius: 8px;
-    font-family: 'Inter', system-ui, sans-serif;
-    font-size: 0.8rem;
-    max-width: 280px;
-    line-height: 1.4;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
-}
-.globe-tooltip .gt-title {
-    font-weight: 600;
-    margin-bottom: 4px;
-    color: #F5C6B5;
-}
-.globe-tooltip .gt-countries {
-    color: #BFBFBC;
-    font-size: 0.72rem;
-    margin-bottom: 4px;
-}
-.globe-tooltip .gt-comps {
-    color: #E5E4DF;
-    font-size: 0.75rem;
-    margin-bottom: 4px;
-}
-.globe-tooltip .gt-hint {
-    color: #8F8E8B;
-    font-size: 0.7rem;
-    margin-top: 4px;
-    padding-top: 4px;
-    border-top: 1px solid rgba(255, 255, 255, 0.15);
-}
-
 /* ── Click Panel ── */
 .globe-page .bin-panel-overlay {
     position: fixed;
@@ -502,11 +457,6 @@
     transition: background 0.15s;
 }
 .globe-page .bin-panel-item:hover { background: var(--accent-soft); }
-.globe-page .bin-panel-name {
-    font-weight: 500;
-    font-size: 0.9rem;
-    margin-bottom: 2px;
-}
 .globe-page .bin-panel-meta {
     font-size: 0.75rem;
     color: var(--text-sub);
@@ -515,8 +465,4 @@
 @media (max-width: 640px) {
     .globe-page { padding: 1rem 1rem 2rem; }
     .globe-page .globe-title { font-size: 1.5rem; }
-    .globe-page .globe-canvas {
-        height: calc(100vh - 320px);
-        min-height: 380px;
-    }
 }
