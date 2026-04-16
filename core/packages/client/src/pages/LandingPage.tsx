@@ -1,12 +1,15 @@
 /**
  * Toolkit 全站入口页
- * NOTE: 从原版 index.html 1:1 复刻，包含粒子系统、WCA 登录、9 卡片、语言切换、致谢
+ * NOTE: 粒子动画代码保留但不挂载（SHOW_PARTICLES=false），方便将来复用
  */
 import { useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../stores/auth_store';
 import './landing.css';
+
+// NOTE: 粒子动画开关 — 当前落地页走浅色主题，不需要粒子背景
+const SHOW_PARTICLES = false;
 
 // ── 粒子系统（从 assets/js/particles.js 1:1 移植） ──────────────────────
 
@@ -263,32 +266,20 @@ function useParticles(canvasRef: React.RefObject<HTMLCanvasElement | null>) {
 // NOTE: 原版 index.html 使用 data-i18n 属性 + i18n.js 全局翻译引擎
 // React 版使用 react-i18next，这里手动定义文本对照（与原版对齐）
 const TEXTS: Record<string, { en: string; zh: string }> = {
-  title:           { en: "Rubik's Cube Toolkit", zh: '魔方工具箱' },
-  subtitle:        { en: 'Solvers, trainers, and statistics', zh: '求解器、训练器与统计' },
+  brand:           { en: 'CubeRoot', zh: 'CubeRoot' },
+  tagline:         { en: 'Solve. Train. Analyze.', zh: '解法 · 训练 · 分析' },
   solver:          { en: 'Solver', zh: '求解器' },
-  solverDesc:      { en: 'Cross, XCross, EOCross, Free Pair, Pseudo F2L, Last Layer, and trainers', zh: 'Cross、XCross、EOCross、Free Pair、Pseudo F2L、Last Layer 训练器' },
   wcaStats:        { en: 'WCA Stats', zh: 'WCA 统计' },
-  statsDesc:       { en: '60+ statistics from the WCA database, updated weekly', zh: '60+ 项 WCA 数据库统计，每周更新' },
   recon:           { en: 'Recon', zh: '复盘' },
-  reconDesc:       { en: 'Competition solve reconstructions and analysis', zh: '比赛还原复盘与分析' },
   algTrainer:      { en: 'Alg Trainer', zh: '公式训练器' },
-  algTrainerDesc:  { en: 'OLL, PLL, ZBLL, CMLL, and algorithm trainers for various puzzles', zh: 'OLL、PLL、ZBLL、CMLL 等各类魔方公式训练器' },
-  cuberootTrainer:     { en: 'Trainer', zh: '训练器' },
-  cuberootTrainerDesc: { en: 'PLL, OLL, ZBLL, ZBLS recognition trainers with adaptive queue', zh: 'PLL、OLL、ZBLL、ZBLS 公式识别训练，自适应队列' },
+  cuberootTrainer: { en: 'Trainer', zh: '训练器' },
   hthGrapher:      { en: 'Score Calculator', zh: '成绩计算器' },
-  hthGrapherDesc:  { en: 'Compare final round results and visualize WPA/BPA for WCA competitions', zh: '对比决赛成绩，可视化 WCA 比赛的 WPA/BPA' },
   battle:          { en: '1v1 Battle', zh: '1v1 对战' },
-  battleDesc:      { en: 'Head-to-head cube battle timer, challenge your friends face to face', zh: '面对面魔方对战计时器，挑战你的朋友' },
   viz:             { en: 'Distribution', zh: '分布演变' },
-  vizDesc:         { en: 'Visualize how solve time distributions evolve over competitions, compare multiple cubers', zh: '可视化复原时间分布随比赛的演变，对比多位选手' },
   upcoming:        { en: 'Upcoming Comps', zh: '近期比赛' },
-  upcomingDesc:    { en: "Track top cubers' upcoming WCA competitions with WR badges", zh: '追踪顶尖选手的近期 WCA 比赛与 WR 标记' },
   cstimer:         { en: 'csTimer', zh: 'csTimer' },
-  cstimerDesc:     { en: 'Professional speedcubing timer with statistics, scrambles, and session management', zh: '专业速拧计时器，含统计、打乱与成绩管理' },
   frameCount:      { en: 'Frame Count', zh: '数帧工具' },
-  frameCountDesc:  { en: 'Load a video and count frames to calculate precise timing', zh: '加载视频逐帧分析，精确计算时间' },
   blog:            { en: 'Blog', zh: '博客' },
-  blogDesc:        { en: 'Cubing insights, competition reviews, and technique deep-dives', zh: '魔方心得、比赛复盘与技术深度解析' },
   creditsPrefix:   { en: 'Inspired by open-source projects from', zh: '致谢' },
 };
 
@@ -298,27 +289,25 @@ interface CardConfig {
   /** 已迁移到 React 的模块用内部路由，否则为外部绝对路径 */
   href: string;
   internal: boolean;
-  cssClass: string;
   icon: string;
   /** csTimer 使用图片 logo */
   iconImg?: string;
   nameKey: keyof typeof TEXTS;
-  descKey: keyof typeof TEXTS;
 }
 
 const CARDS: CardConfig[] = [
-  { id: 'solver',   href: '/solver',              internal: true,  cssClass: 'card-solver',   icon: '🧩', nameKey: 'solver',     descKey: 'solverDesc' },
-  { id: 'stats',    href: '/wca-stats',            internal: true,  cssClass: 'card-stats',    icon: '📊', nameKey: 'wcaStats',   descKey: 'statsDesc' },
-  { id: 'recon',    href: '/recon',               internal: true,  cssClass: 'card-recon',    icon: '🔍', nameKey: 'recon',      descKey: 'reconDesc' },
-  { id: 'trainer',  href: '/alg-trainers',         internal: true,  cssClass: 'card-trainer',  icon: '🎯', nameKey: 'algTrainer', descKey: 'algTrainerDesc' },
-  { id: 'cuberoot', href: '/trainer',              internal: true,  cssClass: 'card-cuberoot', icon: '🧊', nameKey: 'cuberootTrainer', descKey: 'cuberootTrainerDesc' },
-  { id: 'hth',      href: '/calc',                internal: true,  cssClass: 'card-hth',      icon: '🧮', nameKey: 'hthGrapher', descKey: 'hthGrapherDesc' },
-  { id: 'battle',   href: '/battle',              internal: true,  cssClass: 'card-battle',   icon: '⚔️', nameKey: 'battle',     descKey: 'battleDesc' },
-  { id: 'frame-count', href: '/frame-count',       internal: true,  cssClass: 'card-frame-count', icon: '🎬', nameKey: 'frameCount', descKey: 'frameCountDesc' },
-  { id: 'viz',      href: '/viz',                 internal: true,  cssClass: 'card-viz',      icon: '📈', nameKey: 'viz',        descKey: 'vizDesc' },
-  { id: 'upcoming', href: '/upcoming-comps',        internal: true,  cssClass: 'card-upcoming', icon: '🏅', nameKey: 'upcoming',   descKey: 'upcomingDesc' },
-  { id: 'cstimer',  href: '/cstimer',             internal: true,  cssClass: 'card-cstimer',  icon: '',   nameKey: 'cstimer',    descKey: 'cstimerDesc', iconImg: import.meta.env.BASE_URL + 'cstimer_logo.png' },
-  { id: 'blog',     href: window.location.hostname.endsWith('cuberoot.me') ? '/blog/' : 'https://www.cuberoot.me/blog/', internal: false, cssClass: 'card-blog', icon: '📝', nameKey: 'blog', descKey: 'blogDesc' },
+  { id: 'solver',   href: '/solver',              internal: true,  icon: '🧩', nameKey: 'solver' },
+  { id: 'stats',    href: '/wca-stats',           internal: true,  icon: '📊', nameKey: 'wcaStats' },
+  { id: 'recon',    href: '/recon',               internal: true,  icon: '🔍', nameKey: 'recon' },
+  { id: 'trainer',  href: '/alg-trainers',        internal: true,  icon: '🎯', nameKey: 'algTrainer' },
+  { id: 'cuberoot', href: '/trainer',             internal: true,  icon: '🧊', nameKey: 'cuberootTrainer' },
+  { id: 'hth',      href: '/calc',                internal: true,  icon: '🧮', nameKey: 'hthGrapher' },
+  { id: 'battle',   href: '/battle',              internal: true,  icon: '⚔️', nameKey: 'battle' },
+  { id: 'frame-count', href: '/frame-count',      internal: true,  icon: '🎬', nameKey: 'frameCount' },
+  { id: 'viz',      href: '/viz',                 internal: true,  icon: '📈', nameKey: 'viz' },
+  { id: 'upcoming', href: '/upcoming-comps',      internal: true,  icon: '🏅', nameKey: 'upcoming' },
+  { id: 'cstimer',  href: '/cstimer',             internal: true,  icon: '',   nameKey: 'cstimer', iconImg: import.meta.env.BASE_URL + 'cstimer_logo.png' },
+  { id: 'blog',     href: window.location.hostname.endsWith('cuberoot.me') ? '/blog/' : 'https://www.cuberoot.me/blog/', internal: false, icon: '📝', nameKey: 'blog' },
 ];
 
 // ── 组件 ─────────────────────────────────────────────────────────────────
@@ -330,7 +319,7 @@ export default function LandingPage() {
   const login = useAuthStore((s) => s.login);
   const logout = useAuthStore((s) => s.logout);
 
-  useParticles(canvasRef);
+  useParticles(SHOW_PARTICLES ? canvasRef : { current: null });
 
   // NOTE: 当前语言
   const lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
@@ -351,11 +340,13 @@ export default function LandingPage() {
 
   return (
     <div className="landing-page">
-      {/* NOTE: 粒子动画背景 Canvas，全屏覆盖但不拦截点击 */}
-      <canvas
-        ref={canvasRef}
-        style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0, pointerEvents: 'none' }}
-      />
+      {/* NOTE: 粒子动画 Canvas — SHOW_PARTICLES=true 时才挂载（当前关闭） */}
+      {SHOW_PARTICLES && (
+        <canvas
+          ref={canvasRef}
+          style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0, pointerEvents: 'none' }}
+        />
+      )}
 
       {/* NOTE: 全局 WCA 登录区域（左上角） */}
       <div className="global-auth">
@@ -404,8 +395,11 @@ export default function LandingPage() {
         </svg>
       </a>
 
-      <h1 className="landing-title">{t('title')}</h1>
-      <p className="landing-subtitle">{t('subtitle')}</p>
+      <div className="brand-line">
+        <img src="/icons/CubeRoot.png" alt="" className="brand-logo" />
+        <span className="brand-name">{t('brand')}</span>
+      </div>
+      <h1 className="landing-tagline">{t('tagline')}</h1>
 
       <div className="cards-container">
         {CARDS.map((card) => {
@@ -418,7 +412,6 @@ export default function LandingPage() {
                   : card.icon}
               </div>
               <div className="card-name">{t(card.nameKey)}</div>
-              <div className="card-desc">{t(card.descKey)}</div>
             </>
           );
 
@@ -428,7 +421,7 @@ export default function LandingPage() {
               <Link
                 key={card.id}
                 to={href}
-                className={`glass-card card ${card.cssClass}`}
+                className="card"
                 id={`card-${card.id}`}
               >
                 {content}
@@ -439,7 +432,7 @@ export default function LandingPage() {
             <a
               key={card.id}
               href={href}
-              className={`glass-card card ${card.cssClass}`}
+              className="card"
               id={`card-${card.id}`}
               target="_blank"
               rel="noopener noreferrer"
