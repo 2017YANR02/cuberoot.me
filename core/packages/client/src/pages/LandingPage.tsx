@@ -282,7 +282,7 @@ const TEXTS: Record<string, { en: string; zh: string }> = {
   hthGrapher:      { en: 'Calculator', zh: '成绩计算器' },
   battle:          { en: 'Battle', zh: '1v1 对战' },
   viz:             { en: 'Distribution', zh: '分布演变' },
-  upcoming:        { en: 'Upcoming Comps', zh: '近期比赛' },
+  upcoming:        { en: 'Competition', zh: '比赛' },
   globe:           { en: 'Globe', zh: '比赛地球' },
   cstimer:         { en: 'csTimer', zh: 'csTimer' },
   frameCount:      { en: 'Frame Count', zh: '数帧工具' },

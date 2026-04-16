@@ -601,11 +601,19 @@
 .upcoming-page .wr-swatch.wr-former { background: var(--wr-former); }
 
 /* ── Day List Panel ── */
-.upcoming-page .day-list-panel { max-width: 440px; }
+.upcoming-page .day-list-panel {
+    max-width: 440px;
+    max-height: calc(100vh - 10vh);
+    display: flex;
+    flex-direction: column;
+}
 .upcoming-page .day-list {
     display: flex;
     flex-direction: column;
     gap: 4px;
+    overflow-y: auto;
+    min-height: 0;
+    flex: 1 1 auto;
 }
 .upcoming-page .day-list-item {
     display: flex;
