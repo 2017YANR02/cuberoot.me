@@ -153,7 +153,7 @@ rsync -rltz --delete --exclude='.user.ini' --chmod=D755,F644 ...
 - 宝塔面板修改站点后可能覆盖配置，需要重新添加
 
 ### SSH 连接失败？
-- 检查阿某里某云安全组是否放行了 22 端口
+- 检查云安全组是否放行了 22 端口
 - 确认 `/root/.ssh/authorized_keys` 包含部署公钥
 - 如果密钥丢失，在服务器重新生成并更新 GitHub Secret `DEPLOY_SSH_KEY`
 
@@ -220,11 +220,11 @@ fetch('https://www.cuberoot.me/api/recon/renameColumns2', {
 ## SSH 登录方式
 
 ```bash
-# 密码登录（密码在阿某里某云控制台 → ECS → 重置密码）
+# 密码登录（密码在云控制台 → ECS → 重置密码）
 ssh root@47.97.30.181
 
-# 或使用阿某里某云网页终端
-# 阿某里某云控制台 → ECS → 实例列表 → 远程连接 → Workbench
+# 或用云网页终端
+# 云控制台 → ECS → 实例列表 → 远程连接 → Workbench
 ```
 
 ## 邮件发送（Postfix + Gmail SMTP 中继）
