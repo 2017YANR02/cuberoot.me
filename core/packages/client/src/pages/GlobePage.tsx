@@ -75,7 +75,7 @@ const CUBER_LAYER_DOT = 'cuber-points-dot';
 const CUBER_LAYER_LABEL = 'cuber-points-label';
 const CUBER_LAYER_ARC = 'cuber-arcs-line';
 
-const UPCOMING_LAYERS = ['clusters', 'cluster-count', 'unclustered-point'];
+const UPCOMING_LAYERS = ['clusters', 'cluster-count', 'unclustered-point', 'unclustered-count'];
 const CUBER_LAYERS = [CUBER_LAYER_ARC, CUBER_LAYER_DOT, CUBER_LAYER_LABEL];
 
 function addDays(d: Date, n: number): Date {
@@ -397,6 +397,7 @@ export default function GlobePage() {
   const mapRef = useRef<maplibregl.Map | null>(null);
   const popupRef = useRef<maplibregl.Popup | null>(null);
   const mapLoadedRef = useRef(false);
+  const [mapLoaded, setMapLoaded] = useState(false);
   const isZhRef = useRef(isZh);
   useEffect(() => { isZhRef.current = isZh; }, [isZh]);
 
@@ -407,7 +408,7 @@ export default function GlobePage() {
   // ── upcoming 模式 state ──
   const [comps, setComps] = useState<WcaUpcomingComp[] | null>(null);
   const [range, setRange] = useState<RangeKey>('quarter');
-  const [selectedComp, setSelectedComp] = useState<WcaUpcomingComp | null>(null);
+  const [selectedComps, setSelectedComps] = useState<WcaUpcomingComp[] | null>(null);
 
   // ── cuber 模式 state ──
   const [cuber, setCuber] = useState<WcaPerson | null>(null);
@@ -438,18 +439,32 @@ export default function GlobePage() {
     return { comps: filteredComps.length, countries: countries.size };
   }, [filteredComps]);
 
-  const upcomingGeojson = useMemo(() => ({
-    type: 'FeatureCollection' as const,
-    features: filteredComps.map((c) => ({
-      type: 'Feature' as const,
-      geometry: { type: 'Point' as const, coordinates: [c.longitude_degrees, c.latitude_degrees] },
-      properties: {
-        id: c.id, name: c.name, city: c.city,
-        country_iso2: c.country_iso2,
-        start_date: c.start_date, end_date: c.end_date, url: c.url,
-      },
-    })),
-  }), [filteredComps]);
+  // 同坐标比赛预合并为 1 个 feature：避免 zoom 超过 clusterMaxZoom 后两场完全重叠
+  // 只点到一场。stack_count>1 时 feature 属性里塞 stack_comps（JSON 字符串）供 click 展开。
+  const upcomingGeojson = useMemo(() => {
+    const groups = new Map<string, WcaUpcomingComp[]>();
+    for (const c of filteredComps) {
+      const key = `${c.longitude_degrees.toFixed(6)},${c.latitude_degrees.toFixed(6)}`;
+      const g = groups.get(key);
+      if (g) g.push(c); else groups.set(key, [c]);
+    }
+    const features = Array.from(groups.values()).map((group) => {
+      const head = group[0];
+      const props: Record<string, unknown> = {
+        id: head.id, name: head.name, city: head.city,
+        country_iso2: head.country_iso2,
+        start_date: head.start_date, end_date: head.end_date, url: head.url,
+        stack_count: group.length,
+      };
+      if (group.length > 1) props.stack_comps = JSON.stringify(group);
+      return {
+        type: 'Feature' as const,
+        geometry: { type: 'Point' as const, coordinates: [head.longitude_degrees, head.latitude_degrees] },
+        properties: props,
+      };
+    });
+    return { type: 'FeatureCollection' as const, features };
+  }, [filteredComps]);
 
   // ── cuber 数据加载 ──
   const loadCuberPath = useCallback(async (person: WcaPerson) => {
@@ -566,28 +581,45 @@ export default function GlobePage() {
 
     map.on('load', () => {
       mapLoadedRef.current = true;
+      setMapLoaded(true);
 
       // upcoming source & layers
+      // clusterProperties.stack_total 累加 feature 的 stack_count（同坐标预合并后的真实比赛数），
+      // 保证低 zoom 聚合时显示真实场数而不是 feature 数。
       map.addSource('comps', {
         type: 'geojson', data: upcomingGeojson as unknown as GeoJSON.FeatureCollection,
         cluster: true, clusterMaxZoom: 6, clusterRadius: 45,
+        clusterProperties: {
+          stack_total: ['+', ['get', 'stack_count']],
+        },
       });
       map.addLayer({
         id: 'clusters', type: 'circle', source: 'comps', filter: ['has', 'point_count'],
         paint: {
-          'circle-color': ['step', ['get', 'point_count'], '#E08B6C', 10, '#C15F3C', 50, '#8B3E1F'],
-          'circle-radius': ['step', ['get', 'point_count'], 15, 10, 22, 50, 30],
+          'circle-color': ['step', ['get', 'stack_total'], '#E08B6C', 10, '#C15F3C', 50, '#8B3E1F'],
+          'circle-radius': ['step', ['get', 'stack_total'], 15, 10, 22, 50, 30],
           'circle-stroke-width': 2, 'circle-stroke-color': '#FFFFFF',
         },
       });
       map.addLayer({
         id: 'cluster-count', type: 'symbol', source: 'comps', filter: ['has', 'point_count'],
-        layout: { 'text-field': '{point_count_abbreviated}', 'text-font': ['Noto Sans Regular'], 'text-size': 13 },
+        layout: { 'text-field': ['to-string', ['get', 'stack_total']], 'text-font': ['Noto Sans Regular'], 'text-size': 13 },
         paint: { 'text-color': '#FFFFFF' },
       });
       map.addLayer({
         id: 'unclustered-point', type: 'circle', source: 'comps', filter: ['!', ['has', 'point_count']],
-        paint: { 'circle-color': '#C15F3C', 'circle-radius': 7, 'circle-stroke-width': 2, 'circle-stroke-color': '#FFFFFF' },
+        paint: {
+          'circle-color': '#C15F3C',
+          'circle-radius': ['case', ['>', ['get', 'stack_count'], 1], 12, 7],
+          'circle-stroke-width': 2, 'circle-stroke-color': '#FFFFFF',
+        },
+      });
+      // stacked 单点：显示场数
+      map.addLayer({
+        id: 'unclustered-count', type: 'symbol', source: 'comps',
+        filter: ['all', ['!', ['has', 'point_count']], ['>', ['get', 'stack_count'], 1]],
+        layout: { 'text-field': ['to-string', ['get', 'stack_count']], 'text-font': ['Noto Sans Regular'], 'text-size': 12 },
+        paint: { 'text-color': '#FFFFFF' },
       });
 
       // 自定义 Taiwan "省级" label（替代被抹掉的 country label）
@@ -669,7 +701,16 @@ export default function GlobePage() {
       map.on('click', 'unclustered-point', (e: MapMouseEvent & { features?: MapGeoJSONFeature[] }) => {
         const f = e.features?.[0];
         if (!f) return;
-        setSelectedComp(f.properties as WcaUpcomingComp);
+        const p = f.properties as Record<string, unknown>;
+        if (typeof p.stack_comps === 'string') {
+          try {
+            setSelectedComps(JSON.parse(p.stack_comps) as WcaUpcomingComp[]);
+            return;
+          } catch { /* fall through to single */ }
+        }
+        // 单场比赛 → 直接新标签页打开 WCA page
+        const url = typeof p.url === 'string' ? p.url : '';
+        if (url) window.open(url, '_blank', 'noopener,noreferrer');
       });
       map.on('mouseenter', 'clusters', () => { map.getCanvas().style.cursor = 'pointer'; });
       map.on('mouseleave', 'clusters', () => { map.getCanvas().style.cursor = ''; });
@@ -677,12 +718,19 @@ export default function GlobePage() {
         map.getCanvas().style.cursor = 'pointer';
         const f = e.features?.[0];
         if (!f) return;
-        const p = f.properties as Record<string, string>;
+        const p = f.properties as Record<string, unknown>;
         const coords = (f.geometry as GeoJSON.Point).coordinates.slice() as [number, number];
         if (popupRef.current) popupRef.current.remove();
+        const stackCount = typeof p.stack_count === 'number' ? p.stack_count : 1;
+        const zh = isZhRef.current;
+        const city = String(p.city ?? '');
+        const country = countryName(String(p.country_iso2 ?? ''), zh);
+        const html = stackCount > 1
+          ? `<div class="mlp"><div class="mlp-name">${zh ? `${stackCount} 场比赛` : `${stackCount} competitions`}</div><div class="mlp-meta">${city}, ${country}</div></div>`
+          : `<div class="mlp"><div class="mlp-name">${p.name}</div><div class="mlp-meta">${city}, ${country} · ${p.start_date}${p.start_date !== p.end_date ? ` — ${p.end_date}` : ''}</div></div>`;
         popupRef.current = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 12 })
           .setLngLat(coords)
-          .setHTML(`<div class="mlp"><div class="mlp-name">${p.name}</div><div class="mlp-meta">${p.city ?? ''}, ${countryName(p.country_iso2, isZhRef.current)} · ${p.start_date}${p.start_date !== p.end_date ? ` — ${p.end_date}` : ''}</div></div>`)
+          .setHTML(html)
           .addTo(map);
       });
       map.on('mouseleave', 'unclustered-point', () => {
@@ -716,26 +764,28 @@ export default function GlobePage() {
       if (map) map.remove();
       mapRef.current = null;
       mapLoadedRef.current = false;
+      setMapLoaded(false);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── 推送 upcoming 数据 ──
+  // NOTE: mapLoaded 在 deps 里：若数据先于 map load 抵达，也会在 load 完后再推一次
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !mapLoadedRef.current) return;
+    if (!map || !mapLoaded) return;
     const src = map.getSource('comps') as GeoJSONSource | undefined;
     if (src) src.setData(upcomingGeojson as unknown as GeoJSON.FeatureCollection);
-  }, [upcomingGeojson]);
+  }, [upcomingGeojson, mapLoaded]);
 
   // ── 推送 cuber 数据 ──
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !mapLoadedRef.current) return;
+    if (!map || !mapLoaded) return;
     const ptsSrc = map.getSource(CUBER_SOURCE_POINTS) as GeoJSONSource | undefined;
     const arcSrc = map.getSource(CUBER_SOURCE_ARCS) as GeoJSONSource | undefined;
     if (ptsSrc) ptsSrc.setData(cuberPointsGeojson as unknown as GeoJSON.FeatureCollection);
     if (arcSrc) arcSrc.setData(cuberArcsGeojson as unknown as GeoJSON.FeatureCollection);
-  }, [cuberPointsGeojson, cuberArcsGeojson]);
+  }, [cuberPointsGeojson, cuberArcsGeojson, mapLoaded]);
 
   // ── 语言切换时重新 patch 地图 label ──
   useEffect(() => {
@@ -1001,21 +1051,29 @@ export default function GlobePage() {
 
       <div ref={containerRef} className="map-canvas" />
 
-      {selectedComp && (
-        <div className="bin-panel-overlay" onClick={() => setSelectedComp(null)}>
+      {selectedComps && selectedComps.length > 0 && (
+        <div className="bin-panel-overlay" onClick={() => setSelectedComps(null)}>
           <div className="bin-panel" onClick={(ev) => ev.stopPropagation()}>
-            <button className="bin-panel-close" onClick={() => setSelectedComp(null)} aria-label="Close">×</button>
-            <h2 className="bin-panel-title">{selectedComp.name}</h2>
+            <button className="bin-panel-close" onClick={() => setSelectedComps(null)} aria-label="Close">×</button>
+            <h2 className="bin-panel-title">
+              {selectedComps.length === 1
+                ? <a href={selectedComps[0].url} target="_blank" rel="noopener noreferrer" className="bin-panel-title-link">{selectedComps[0].name} ↗</a>
+                : (isZh ? `${selectedComps.length} 场比赛` : `${selectedComps.length} competitions`)}
+            </h2>
             <div className="bin-panel-list">
-              <div className="bin-panel-item">
-                <div className="bin-panel-meta">
-                  {selectedComp.city}, {countryName(selectedComp.country_iso2, isZh)} · {selectedComp.start_date}
-                  {selectedComp.start_date !== selectedComp.end_date ? ` — ${selectedComp.end_date}` : ''}
+              {selectedComps.map((c) => (
+                <div key={c.id} className="bin-panel-item">
+                  {selectedComps.length > 1 && (
+                    <a href={c.url} target="_blank" rel="noopener noreferrer" className="bin-panel-item-title">
+                      {c.name} ↗
+                    </a>
+                  )}
+                  <div className="bin-panel-meta">
+                    {c.city}, {countryName(c.country_iso2, isZh)} · {c.start_date}
+                    {c.start_date !== c.end_date ? ` — ${c.end_date}` : ''}
+                  </div>
                 </div>
-                <a href={selectedComp.url} target="_blank" rel="noopener noreferrer" className="bin-panel-link">
-                  WCA {isZh ? '官网' : 'page'} ↗
-                </a>
-              </div>
+              ))}
             </div>
           </div>
         </div>
