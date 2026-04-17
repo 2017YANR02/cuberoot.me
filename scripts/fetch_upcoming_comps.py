@@ -34,6 +34,8 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", line_bufferin
 ROOT_DIR = Path(__file__).parent.parent
 WR_METRIC_PATH = ROOT_DIR / "stats" / "wr_metric.md"
 OUTPUT_JSON_PATH = ROOT_DIR / "stats" / "upcoming_comps.json"
+# NOTE: Globe history/upcoming 模式 + UpcomingCompsPage All 模式共用，含全球全量 upcoming
+ALL_OUTPUT_JSON_PATH = ROOT_DIR / "stats" / "data" / "all_upcoming_comps.json"
 CACHE_DIR = ROOT_DIR / ".upcoming_cache"
 
 WCA_API_BASE = "https://www.worldcubeassociation.org/api/v0"
@@ -518,6 +520,63 @@ def build_upcoming_comps(cubers: CuberData) -> List[Dict[str, Any]]:
     return results
 
 
+def _shortify_events(event_ids):
+    """WCA 内部 event_id → 前端短名，按 WCA 官方顺序排序。"""
+    pairs = []
+    for eid in event_ids:
+        idx, short = EVENT_ORDER_MAP.get(eid, (999, eid))
+        pairs.append((idx, short))
+    pairs.sort(key=lambda p: p[0])
+    return [p[1] for p in pairs]
+
+
+def build_all_upcoming_comps():
+    """
+    从 WCA /competitions?ongoing_and_future=... 分页拉全球全量 upcoming 比赛。
+    与 top-cubers 那份 upcoming_comps.json 不同，这份不过滤选手，是"地图+日历 All 模式"的源数据。
+    """
+    today = time.strftime("%Y-%m-%d", time.gmtime())
+    per_page = 100
+    out = []
+    for page in range(1, 21):  # 20 * 100 = 2000 上限
+        url = (
+            f"{WCA_API_BASE}/competitions"
+            f"?ongoing_and_future={today}&per_page={per_page}&page={page}"
+        )
+        batch = fetch_with_retry(url)
+        # NOTE: fetch_with_retry 404/失败时返回 {}；list 端点正常返回 list
+        if not isinstance(batch, list):
+            if page == 1:
+                print("[ALL] 第一页就拿不到 list，放弃生成 all_upcoming_comps.json")
+                return None
+            break
+        out.extend(batch)
+        if len(batch) < per_page:
+            break
+        print(f"[ALL] 已取 {len(out)} 场（page {page}）")
+
+    # 过滤已取消 + 精简字段
+    result = []
+    for c in out:
+        if c.get("cancelled_at"):
+            continue
+        result.append({
+            "id": c["id"],
+            "name": c.get("name", ""),
+            "city": c.get("city", ""),
+            "country": c.get("country_iso2", ""),
+            "start_date": c.get("start_date", ""),
+            "end_date": c.get("end_date", ""),
+            "events": _shortify_events(c.get("event_ids", [])),
+            "competitor_limit": c.get("competitor_limit") or 0,
+            "latitude_degrees": c.get("latitude_degrees", 0),
+            "longitude_degrees": c.get("longitude_degrees", 0),
+            "url": c.get("url", f"https://www.worldcubeassociation.org/competitions/{c['id']}"),
+        })
+    result.sort(key=lambda x: x["start_date"])
+    return result
+
+
 def main():
     global CACHE_TTL_SEC
     print("=== 开始构建 Top Cubers 近期比赛追踪数据 ===")
@@ -557,6 +616,16 @@ def main():
 
     print(f"\n[INFO] 成功！共找到 {len(comps_data)} 场即将举行的比赛。")
     print(f"[INFO] 数据已写入: {OUTPUT_JSON_PATH.relative_to(ROOT_DIR)}")
+
+    # 4. 生成 all_upcoming_comps.json（全球全量 upcoming，Globe + All 模式消费）
+    print("\n[ALL] 开始拉取 WCA 全球全量 upcoming 比赛...")
+    all_comps = build_all_upcoming_comps()
+    if all_comps is not None:
+        ALL_OUTPUT_JSON_PATH.parent.mkdir(parents=True, exist_ok=True)
+        with ALL_OUTPUT_JSON_PATH.open("w", encoding="utf-8") as f:
+            json.dump(all_comps, f, ensure_ascii=False, separators=(',', ':'))
+        print(f"[ALL] 共 {len(all_comps)} 场 → {ALL_OUTPUT_JSON_PATH.relative_to(ROOT_DIR)}")
+
     print(f"[INFO] 总耗时: {time.time() - start_time:.2f} 秒")
 
 

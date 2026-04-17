@@ -6,7 +6,7 @@ on:
     paths:
       - 'core/packages/stats-build/src/**/*.ts'
   schedule:
-    # 每周一凌晨 4:00（北京时间）= UTC 周日 20:00
+    # UTC 周日 20:00
     - cron: '0 20 * * 0'
   workflow_dispatch:
     inputs:
@@ -103,6 +103,10 @@ jobs:
       - name: Compute index
         working-directory: core/packages/stats-build
         run: npx tsx src/bin/compute_index.ts
+
+      - name: Generate all past competitions JSON
+        working-directory: core/packages/stats-build
+        run: npx tsx src/bin/gen_all_comps.ts
 
       - name: Fetch upcoming comps
         run: python scripts/fetch_upcoming_comps.py --refresh
