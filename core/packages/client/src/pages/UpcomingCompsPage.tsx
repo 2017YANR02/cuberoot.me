@@ -1,12 +1,12 @@
 /**
  * 顶尖选手近期比赛追踪页 — 日历视图
- * 数据源: stats/upcoming_comps.json（Top 模式） + WCA REST /competitions（All 模式）
+ * 数据源: stats/upcoming_comps.json（Top 模式） + stats/data/all_upcoming_comps.json（All 模式）
  */
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, Star, Globe as GlobeIcon } from 'lucide-react';
-import { fetchAllUpcomingCompetitions, type WcaUpcomingComp } from '@cuberoot/shared';
+import { fetchAllUpcomingCompsJson, type UpcomingCompRecord } from '@cuberoot/shared';
 import LangToggle from '../components/LangToggle';
 import { displayCuberName } from '../utils/name_utils';
 import './upcoming_comps.css';
@@ -367,18 +367,18 @@ function CompModal({ comp, isZh, onClose, t }: {
   );
 }
 
-// NOTE: WCA API 返回的比赛 → 本组件 Competition 结构适配
+// NOTE: 预生成 all_upcoming_comps.json 记录 → 本组件 Competition 结构适配
 // 合并 top_cubers（从 Top 模式数据字典中反查）
-function adaptWcaComp(w: WcaUpcomingComp, topCuberMap: Map<string, TopCuber[]>): Competition {
+function adaptAllComp(w: UpcomingCompRecord, topCuberMap: Map<string, TopCuber[]>): Competition {
   return {
     id: w.id,
     name: w.name,
     city: w.city,
-    country: w.country_iso2,
+    country: w.country,
     start_date: w.start_date,
     end_date: w.end_date,
-    events: w.event_ids,
-    competitor_limit: w.competitor_limit ?? 0,
+    events: w.events,
+    competitor_limit: w.competitor_limit,
     top_cubers: topCuberMap.get(w.id) ?? [],
   };
 }
@@ -424,16 +424,14 @@ export default function UpcomingCompsPage() {
       .catch(() => setError(t('upcoming.loadError')));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // NOTE: All 模式懒加载 — 用户切到 All 且还没数据时才请求 WCA API
+  // NOTE: All 模式懒加载 — 切到 All 且还没数据时读预生成 JSON
   useEffect(() => {
     if (mode !== 'all' || allComps || allLoading || !data) return;
     setAllLoading(true);
     setAllError(null);
-    const today = new Date();
-    const fromDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`;
     const topMap = new Map(data.competitions.map((c) => [c.id, c.top_cubers]));
-    fetchAllUpcomingCompetitions(fromDate)
-      .then((list) => setAllComps(list.map((w) => adaptWcaComp(w, topMap))))
+    fetchAllUpcomingCompsJson()
+      .then((list) => setAllComps(list.map((w) => adaptAllComp(w, topMap))))
       .catch(() => setAllError(t('upcoming.allLoadFailed')))
       .finally(() => setAllLoading(false));
   }, [mode, allComps, allLoading, data, t]);

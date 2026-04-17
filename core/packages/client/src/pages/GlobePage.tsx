@@ -16,20 +16,24 @@ import { VectorTile } from '@mapbox/vector-tile';
 import Protobuf from 'pbf';
 import vtpbf from 'vt-pbf';
 import {
-  fetchAllUpcomingCompetitions,
+  fetchAllUpcomingCompsJson,
+  fetchAllPastCompsJson,
   fetchCompetitions,
   fetchCompetitionDetail,
   WcaPersonPicker,
-  type WcaUpcomingComp,
+  type UpcomingCompRecord,
+  type PastCompRecord,
   type WcaCompDetail,
   type WcaPerson,
 } from '@cuberoot/shared';
 import LangToggle from '../components/LangToggle';
 import './globe.css';
 
-type Mode = 'upcoming' | 'cuber';
+type Mode = 'upcoming' | 'history' | 'cuber';
 type RangeKey = 'month' | 'quarter' | 'year';
 type Speed = 0.5 | 1 | 2;
+
+const HISTORY_MIN_YEAR = 2003;
 
 // NOTE: MapTiler streets-v2（多语言瓦片）
 const MAPTILER_KEY = (import.meta.env.VITE_MAPTILER_KEY as string | undefined) ?? 'mbOnOAsKyCQnhPFIGgZW';
@@ -76,16 +80,13 @@ const CUBER_LAYER_LABEL = 'cuber-points-label';
 const CUBER_LAYER_ARC = 'cuber-arcs-line';
 
 const UPCOMING_LAYERS = ['clusters', 'cluster-count', 'unclustered-point', 'unclustered-count'];
+const PAST_LAYERS = ['past-clusters', 'past-cluster-count', 'past-unclustered-point'];
 const CUBER_LAYERS = [CUBER_LAYER_ARC, CUBER_LAYER_DOT, CUBER_LAYER_LABEL];
 
 function addDays(d: Date, n: number): Date {
   const c = new Date(d);
   c.setDate(c.getDate() + n);
   return c;
-}
-
-function fmtDate(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 // ─── 瓦片级 繁→简 转换（MapTiler 的 name:zh 对 TW/HK/JP 常是繁体；要稳定出简体必须在 MVT 层面换）
@@ -406,9 +407,15 @@ export default function GlobePage() {
   const [error, setError] = useState<string | null>(null);
 
   // ── upcoming 模式 state ──
-  const [comps, setComps] = useState<WcaUpcomingComp[] | null>(null);
+  const [comps, setComps] = useState<UpcomingCompRecord[] | null>(null);
   const [range, setRange] = useState<RangeKey>('quarter');
-  const [selectedComps, setSelectedComps] = useState<WcaUpcomingComp[] | null>(null);
+  const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(null);
+
+  // ── history 模式 state ──
+  const currentYear = new Date().getFullYear();
+  const [pastComps, setPastComps] = useState<PastCompRecord[] | null>(null);
+  const [pastLoading, setPastLoading] = useState(false);
+  const [yearRange, setYearRange] = useState<[number, number]>([currentYear - 4, currentYear]);
 
   // ── cuber 模式 state ──
   const [cuber, setCuber] = useState<WcaPerson | null>(null);
@@ -419,13 +426,22 @@ export default function GlobePage() {
   const [speed, setSpeed] = useState<Speed>(1);
   const [pickerOpen, setPickerOpen] = useState(false);
 
-  // ── 拉 upcoming 数据 ──
+  // ── 拉 upcoming 数据（读预生成 JSON） ──
   useEffect(() => {
-    const from = fmtDate(new Date());
-    fetchAllUpcomingCompetitions(from)
+    fetchAllUpcomingCompsJson()
       .then((list) => setComps(list.filter((c) => c.latitude_degrees != null && c.longitude_degrees != null)))
       .catch(() => setError(t('globe.loadFailed')));
   }, [t]);
+
+  // ── 拉 history 数据（懒加载，切到 history 模式才开始拉） ──
+  useEffect(() => {
+    if (mode !== 'history' || pastComps !== null || pastLoading) return;
+    setPastLoading(true);
+    fetchAllPastCompsJson()
+      .then((list) => setPastComps(list))
+      .catch(() => setError(t('globe.loadFailed')))
+      .finally(() => setPastLoading(false));
+  }, [mode, pastComps, pastLoading, t]);
 
   const filteredComps = useMemo(() => {
     if (!comps) return [];
@@ -435,14 +451,14 @@ export default function GlobePage() {
   }, [comps, range]);
 
   const upcomingStats = useMemo(() => {
-    const countries = new Set(filteredComps.map((c) => c.country_iso2));
+    const countries = new Set(filteredComps.map((c) => c.country));
     return { comps: filteredComps.length, countries: countries.size };
   }, [filteredComps]);
 
   // 同坐标比赛预合并为 1 个 feature：避免 zoom 超过 clusterMaxZoom 后两场完全重叠
   // 只点到一场。stack_count>1 时 feature 属性里塞 stack_comps（JSON 字符串）供 click 展开。
   const upcomingGeojson = useMemo(() => {
-    const groups = new Map<string, WcaUpcomingComp[]>();
+    const groups = new Map<string, UpcomingCompRecord[]>();
     for (const c of filteredComps) {
       const key = `${c.longitude_degrees.toFixed(6)},${c.latitude_degrees.toFixed(6)}`;
       const g = groups.get(key);
@@ -452,7 +468,7 @@ export default function GlobePage() {
       const head = group[0];
       const props: Record<string, unknown> = {
         id: head.id, name: head.name, city: head.city,
-        country_iso2: head.country_iso2,
+        country: head.country,
         start_date: head.start_date, end_date: head.end_date, url: head.url,
         stack_count: group.length,
       };
@@ -465,6 +481,37 @@ export default function GlobePage() {
     });
     return { type: 'FeatureCollection' as const, features };
   }, [filteredComps]);
+
+  // ── history 模式过滤 + 聚合 GeoJSON ──
+  const filteredPast = useMemo(() => {
+    if (!pastComps) return [];
+    const [y0, y1] = yearRange;
+    return pastComps.filter((c) => {
+      const y = Number(c.start_date.slice(0, 4));
+      return y >= y0 && y <= y1;
+    });
+  }, [pastComps, yearRange]);
+
+  const pastStats = useMemo(() => {
+    const countries = new Set(filteredPast.map((c) => c.country));
+    return { comps: filteredPast.length, countries: countries.size };
+  }, [filteredPast]);
+
+  const pastGeojson = useMemo(() => {
+    const features = filteredPast.map((c) => ({
+      type: 'Feature' as const,
+      geometry: { type: 'Point' as const, coordinates: [c.longitude_degrees, c.latitude_degrees] },
+      properties: {
+        id: c.id,
+        name: c.name,
+        city: c.city,
+        country: c.country,
+        start_date: c.start_date,
+        end_date: c.end_date,
+      },
+    }));
+    return { type: 'FeatureCollection' as const, features };
+  }, [filteredPast]);
 
   // ── cuber 数据加载 ──
   const loadCuberPath = useCallback(async (person: WcaPerson) => {
@@ -622,6 +669,36 @@ export default function GlobePage() {
         paint: { 'text-color': '#FFFFFF' },
       });
 
+      // past source & layers（history 模式）
+      // NOTE: 14k 点依赖 MapLibre cluster 性能；clusterMaxZoom/Radius 和 upcoming 保持一致
+      map.addSource('past-comps', {
+        type: 'geojson', data: pastGeojson as unknown as GeoJSON.FeatureCollection,
+        cluster: true, clusterMaxZoom: 6, clusterRadius: 45,
+      });
+      map.addLayer({
+        id: 'past-clusters', type: 'circle', source: 'past-comps', filter: ['has', 'point_count'],
+        layout: { 'visibility': 'none' },
+        paint: {
+          'circle-color': ['step', ['get', 'point_count'], '#7FA5D9', 50, '#4F7FBF', 500, '#2A5599'],
+          'circle-radius': ['step', ['get', 'point_count'], 15, 50, 22, 500, 30],
+          'circle-stroke-width': 2, 'circle-stroke-color': '#FFFFFF',
+        },
+      });
+      map.addLayer({
+        id: 'past-cluster-count', type: 'symbol', source: 'past-comps', filter: ['has', 'point_count'],
+        layout: { 'visibility': 'none', 'text-field': ['to-string', ['get', 'point_count']], 'text-font': ['Noto Sans Regular'], 'text-size': 13 },
+        paint: { 'text-color': '#FFFFFF' },
+      });
+      map.addLayer({
+        id: 'past-unclustered-point', type: 'circle', source: 'past-comps', filter: ['!', ['has', 'point_count']],
+        layout: { 'visibility': 'none' },
+        paint: {
+          'circle-color': '#4F7FBF',
+          'circle-radius': 6,
+          'circle-stroke-width': 1.5, 'circle-stroke-color': '#FFFFFF',
+        },
+      });
+
       // 自定义 Taiwan "省级" label（替代被抹掉的 country label）
       map.addSource(TW_CUSTOM_SOURCE, {
         type: 'geojson',
@@ -704,7 +781,7 @@ export default function GlobePage() {
         const p = f.properties as Record<string, unknown>;
         if (typeof p.stack_comps === 'string') {
           try {
-            setSelectedComps(JSON.parse(p.stack_comps) as WcaUpcomingComp[]);
+            setSelectedComps(JSON.parse(p.stack_comps) as UpcomingCompRecord[]);
             return;
           } catch { /* fall through to single */ }
         }
@@ -724,7 +801,7 @@ export default function GlobePage() {
         const stackCount = typeof p.stack_count === 'number' ? p.stack_count : 1;
         const zh = isZhRef.current;
         const city = String(p.city ?? '');
-        const country = countryName(String(p.country_iso2 ?? ''), zh);
+        const country = countryName(String(p.country ?? ''), zh);
         const html = stackCount > 1
           ? `<div class="mlp"><div class="mlp-name">${zh ? `${stackCount} 场比赛` : `${stackCount} competitions`}</div><div class="mlp-meta">${city}, ${country}</div></div>`
           : `<div class="mlp"><div class="mlp-name">${p.name}</div><div class="mlp-meta">${city}, ${country} · ${p.start_date}${p.start_date !== p.end_date ? ` — ${p.end_date}` : ''}</div></div>`;
@@ -734,6 +811,48 @@ export default function GlobePage() {
           .addTo(map);
       });
       map.on('mouseleave', 'unclustered-point', () => {
+        map.getCanvas().style.cursor = '';
+        if (popupRef.current) { popupRef.current.remove(); popupRef.current = null; }
+      });
+
+      // history 交互（cluster 点进放大；单点 hover + click 详情）
+      map.on('click', 'past-clusters', async (e: MapMouseEvent) => {
+        const features = map.queryRenderedFeatures(e.point, { layers: ['past-clusters'] });
+        if (!features.length) return;
+        const clusterId = features[0].properties?.cluster_id as number;
+        const src = map.getSource('past-comps') as GeoJSONSource;
+        try {
+          const zoom = await src.getClusterExpansionZoom(clusterId);
+          const geom = features[0].geometry as GeoJSON.Point;
+          map.easeTo({ center: geom.coordinates as [number, number], zoom });
+        } catch { /* */ }
+      });
+      map.on('click', 'past-unclustered-point', (e: MapMouseEvent & { features?: MapGeoJSONFeature[] }) => {
+        const f = e.features?.[0];
+        if (!f) return;
+        const p = f.properties as Record<string, unknown>;
+        const url = `https://www.worldcubeassociation.org/competitions/${String(p.id ?? '')}`;
+        if (p.id) window.open(url, '_blank', 'noopener,noreferrer');
+      });
+      map.on('mouseenter', 'past-clusters', () => { map.getCanvas().style.cursor = 'pointer'; });
+      map.on('mouseleave', 'past-clusters', () => { map.getCanvas().style.cursor = ''; });
+      map.on('mouseenter', 'past-unclustered-point', (e: MapMouseEvent & { features?: MapGeoJSONFeature[] }) => {
+        map.getCanvas().style.cursor = 'pointer';
+        const f = e.features?.[0];
+        if (!f) return;
+        const p = f.properties as Record<string, unknown>;
+        const coords = (f.geometry as GeoJSON.Point).coordinates.slice() as [number, number];
+        if (popupRef.current) popupRef.current.remove();
+        const zh = isZhRef.current;
+        const city = String(p.city ?? '');
+        const country = countryName(String(p.country ?? ''), zh);
+        const dateStr = p.start_date === p.end_date ? String(p.start_date) : `${p.start_date} — ${p.end_date}`;
+        popupRef.current = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 12 })
+          .setLngLat(coords)
+          .setHTML(`<div class="mlp"><div class="mlp-name">${p.name}</div><div class="mlp-meta">${city}, ${country} · ${dateStr}</div></div>`)
+          .addTo(map);
+      });
+      map.on('mouseleave', 'past-unclustered-point', () => {
         map.getCanvas().style.cursor = '';
         if (popupRef.current) { popupRef.current.remove(); popupRef.current = null; }
       });
@@ -777,6 +896,14 @@ export default function GlobePage() {
     if (src) src.setData(upcomingGeojson as unknown as GeoJSON.FeatureCollection);
   }, [upcomingGeojson, mapLoaded]);
 
+  // ── 推送 past 数据 ──
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapLoaded) return;
+    const src = map.getSource('past-comps') as GeoJSONSource | undefined;
+    if (src) src.setData(pastGeojson as unknown as GeoJSON.FeatureCollection);
+  }, [pastGeojson, mapLoaded]);
+
   // ── 推送 cuber 数据 ──
   useEffect(() => {
     const map = mapRef.current;
@@ -804,6 +931,7 @@ export default function GlobePage() {
       }
     };
     show(UPCOMING_LAYERS, mode === 'upcoming');
+    show(PAST_LAYERS, mode === 'history');
     show(CUBER_LAYERS, mode === 'cuber');
   }, [mode]);
 
@@ -930,6 +1058,9 @@ export default function GlobePage() {
           <button role="tab" aria-selected={mode === 'upcoming'} className={`range-btn ${mode === 'upcoming' ? 'is-active' : ''}`} onClick={() => setMode('upcoming')}>
             {t('globe.modeUpcoming')}
           </button>
+          <button role="tab" aria-selected={mode === 'history'} className={`range-btn ${mode === 'history' ? 'is-active' : ''}`} onClick={() => setMode('history')}>
+            {t('globe.modeHistory')}
+          </button>
           <button role="tab" aria-selected={mode === 'cuber'} className={`range-btn ${mode === 'cuber' ? 'is-active' : ''}`} onClick={() => setMode('cuber')}>
             {t('globe.modeCuber')}
           </button>
@@ -945,6 +1076,35 @@ export default function GlobePage() {
             </div>
           </>
         )}
+        {mode === 'history' && (
+          <div className="history-range">
+            <span className="history-range-label">{yearRange[0]} — {yearRange[1]}</span>
+            <input
+              type="range"
+              className="history-range-slider"
+              min={HISTORY_MIN_YEAR}
+              max={currentYear}
+              value={yearRange[0]}
+              onChange={(e) => {
+                const v = Math.min(Number(e.target.value), yearRange[1]);
+                setYearRange([v, yearRange[1]]);
+              }}
+              aria-label="Year from"
+            />
+            <input
+              type="range"
+              className="history-range-slider"
+              min={HISTORY_MIN_YEAR}
+              max={currentYear}
+              value={yearRange[1]}
+              onChange={(e) => {
+                const v = Math.max(Number(e.target.value), yearRange[0]);
+                setYearRange([yearRange[0], v]);
+              }}
+              aria-label="Year to"
+            />
+          </div>
+        )}
         <button className="reset-btn" onClick={resetView} title={isZh ? '复位视角' : 'Reset view'}>
           <RotateCcw size={14} strokeWidth={1.75} />
         </button>
@@ -954,6 +1114,18 @@ export default function GlobePage() {
         <div className="globe-stats">
           <span>📋 {t('globe.statComps', { count: upcomingStats.comps })}</span>
           <span>🌍 {t('globe.statCountries', { count: upcomingStats.countries })}</span>
+        </div>
+      )}
+
+      {mode === 'history' && (
+        <div className="globe-stats">
+          {pastLoading && !pastComps
+            ? <span>{t('globe.loading')}</span>
+            : <>
+                <span>📋 {t('globe.statComps', { count: pastStats.comps })}</span>
+                <span>🌍 {t('globe.statCountries', { count: pastStats.countries })}</span>
+              </>
+          }
         </div>
       )}
 
@@ -1069,7 +1241,7 @@ export default function GlobePage() {
                     </a>
                   )}
                   <div className="bin-panel-meta">
-                    {c.city}, {countryName(c.country_iso2, isZh)} · {c.start_date}
+                    {c.city}, {countryName(c.country, isZh)} · {c.start_date}
                     {c.start_date !== c.end_date ? ` — ${c.end_date}` : ''}
                   </div>
                 </div>
