@@ -87,6 +87,30 @@
     background: var(--accent-soft);
     color: var(--accent);
 }
+.globe-page .history-range {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem 0.65rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.78rem;
+    color: var(--text-sub);
+}
+.globe-page .history-range-label {
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+    font-weight: 500;
+    min-width: 5.2rem;
+    text-align: center;
+}
+.globe-page .history-range-slider {
+    width: 110px;
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
 .globe-page .reset-btn {
     display: inline-flex;
     align-items: center;
