@@ -977,6 +977,40 @@
     padding: 2px;
     gap: 2px;
 }
+
+/* ── 密度显示风格选择器（scale / heat / country）── */
+.globe-page .density-style-picker {
+    display: inline-flex;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--surface);
+}
+.globe-page .density-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 10px;
+    background: transparent;
+    color: var(--text-sub);
+    border: none;
+    cursor: pointer;
+    font-size: 0.78rem;
+    line-height: 1;
+    transition: background 0.15s, color 0.15s;
+}
+.globe-page .density-btn:hover { color: var(--text); }
+.globe-page .density-btn.is-active {
+    background: var(--accent);
+    color: #FFF;
+}
+.globe-page .density-btn:not(:last-child) { border-right: 1px solid var(--border); }
+.globe-page .density-btn-icon { flex-shrink: 0; }
+/* 手机端：只保留图标，文字隐藏 */
+@media (max-width: 720px) {
+    .globe-page .density-btn { padding: 6px 8px; }
+    .globe-page .density-btn-label { display: none; }
+}
 /* 注：cuber 模式下 topbar 直接用 globe-topbar 的 dark vars，cuber 控件内嵌其中 */
 .globe-page .globe-topbar.is-cuber { gap: 0.6rem; }
 .globe-page .cuber-back-btn {
@@ -1118,6 +1152,23 @@
 }
 .globe-page .cuber-play:hover { background: #AE5434; }
 .globe-page .cuber-play:disabled { background: var(--border); cursor: not-allowed; }
+
+.globe-page .cuber-step-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s, color 0.15s;
+}
+.globe-page .cuber-step-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.16); color: #FFF; }
+.globe-page .cuber-step-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
 .globe-page .cuber-scrub {
     flex: 1;
