@@ -710,7 +710,7 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
     for (const c of (pastComps ?? [])) {
       if (seen.has(c.id)) continue;
       if (c.name.toLowerCase().includes(q) || c.city.toLowerCase().includes(q)) {
-        matches.push({ id: c.id, name: c.name, city: c.city, country: c.country, lng: c.lng, lat: c.lat, date: c.start_date, tag: 'past' });
+        matches.push({ id: c.id, name: c.name, city: c.city, country: c.country, lng: c.longitude_degrees, lat: c.latitude_degrees, date: c.start_date, tag: 'past' });
       }
     }
     // upcoming 永远排前面，past 按日期倒序（最新的在上）
