@@ -11,6 +11,7 @@ on:
     paths:
       - 'core/**'
       - '!_assets/**'
+      - '.github/workflows/deploy_core.yml'
 
 permissions:
   contents: write
