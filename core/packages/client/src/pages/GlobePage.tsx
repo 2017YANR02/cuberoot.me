@@ -7,7 +7,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, RotateCcw, Play, Pause, X, Moon, Sun, Satellite, Plus, Minus, Navigation } from 'lucide-react';
+import { ArrowLeft, RotateCcw, Play, Pause, X, Moon, Sun, Satellite, Plus, Minus, Navigation, Compass } from 'lucide-react';
 import maplibregl from 'maplibre-gl';
 import type { GeoJSONSource, MapMouseEvent, MapGeoJSONFeature } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -555,6 +555,18 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
   const [cursorPos, setCursorPos] = useState<{ lat: number; lng: number } | null>(null);
   const [bearing, setBearing] = useState(0);
   const [pitch, setPitch] = useState(0);
+  const [navPopoverOpen, setNavPopoverOpen] = useState(false);
+  const navPopoverRef = useRef<HTMLDivElement | null>(null);
+
+  // ── nav popover 点击外关闭 ──
+  useEffect(() => {
+    if (!navPopoverOpen) return;
+    const onDocClick = (e: MouseEvent) => {
+      if (navPopoverRef.current && !navPopoverRef.current.contains(e.target as Node)) setNavPopoverOpen(false);
+    };
+    document.addEventListener('mousedown', onDocClick);
+    return () => document.removeEventListener('mousedown', onDocClick);
+  }, [navPopoverOpen]);
 
   // ── 拉 upcoming 数据（读预生成 JSON） ──
   useEffect(() => {
@@ -1347,7 +1359,39 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
             : <Moon size={16} strokeWidth={1.75} />}
       </button>
 
-      <div className="map-controls">
+      <div className="map-controls" ref={navPopoverRef}>
+        {navPopoverOpen && (
+          <div className="nav-popover">
+            <div className="nav-popover-row">
+              <label>{isZh ? '俯仰' : 'Tilt'}</label>
+              <input
+                type="range"
+                min={0}
+                max={85}
+                step={1}
+                value={Math.round(pitch)}
+                onChange={(e) => mapRef.current?.setPitch(Number(e.target.value))}
+              />
+              <span className="nav-popover-val">{Math.round(pitch)}°</span>
+            </div>
+            <div className="nav-popover-row">
+              <label>{isZh ? '朝向' : 'Heading'}</label>
+              <input
+                type="range"
+                min={-180}
+                max={180}
+                step={1}
+                value={Math.round(bearing)}
+                onChange={(e) => mapRef.current?.setBearing(Number(e.target.value))}
+              />
+              <span className="nav-popover-val">{Math.round(bearing)}°</span>
+            </div>
+            <button
+              className="nav-popover-reset"
+              onClick={() => mapRef.current?.easeTo({ bearing: 0, pitch: 0, duration: 400 })}
+            >{isZh ? '复位朝北' : 'Reset to north'}</button>
+          </div>
+        )}
         <div className="map-controls-bar">
           <button
             className={`map-ctrl-btn map-ctrl-3d ${pitch > 1 ? 'is-active' : ''}`}
@@ -1367,6 +1411,13 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
               fill="currentColor"
             />
           </button>
+          <button
+            className={`map-ctrl-btn ${navPopoverOpen ? 'is-active' : ''}`}
+            onClick={() => setNavPopoverOpen((v) => !v)}
+            title={isZh ? '朝向与俯仰' : 'Heading and tilt controls'}
+            aria-label="Heading and tilt"
+            aria-expanded={navPopoverOpen}
+          ><Compass size={14} strokeWidth={1.75} /></button>
           <button
             className="map-ctrl-btn"
             onClick={() => mapRef.current?.zoomOut()}
