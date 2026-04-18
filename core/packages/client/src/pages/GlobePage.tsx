@@ -7,7 +7,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, RotateCcw, Play, Pause, X, User } from 'lucide-react';
+import { ArrowLeft, RotateCcw, Play, Pause, X, User, Moon, Sun } from 'lucide-react';
 import maplibregl from 'maplibre-gl';
 import type { GeoJSONSource, MapMouseEvent, MapGeoJSONFeature } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -35,9 +35,11 @@ type Speed = 0.5 | 1 | 2;
 
 const HISTORY_MIN_YEAR = 2003;
 
-// NOTE: MapTiler streets-v2（多语言瓦片）
-const MAPTILER_KEY = (import.meta.env.VITE_MAPTILER_KEY as string | undefined) ?? 'mbOnOAsKyCQnhPFIGgZW';
-const MAP_STYLE_URL = `https://api.maptiler.com/maps/streets-v2/style.json?key=${MAPTILER_KEY}`;
+// NOTE: OpenFreeMap 风格（基于 OpenMapTiles schema，和 MapTiler streets-v2 结构兼容）
+// 全球 Cloudflare CDN，中国大陆可直连，无需 API key；如需回退改回 MapTiler，commit 一行即可
+type Theme = 'dark' | 'light';
+const mapStyleUrl = (theme: Theme) =>
+  `https://tiles.openfreemap.org/styles/${theme === 'dark' ? 'dark' : 'liberty'}`;
 
 // NOTE: ISO alpha-2 → 国家名（英/中）；UI 展示用
 const COUNTRY_EN: Record<string, string> = {
@@ -178,7 +180,7 @@ function ensureZhTileProtocol() {
 }
 
 // 把 MapTiler style.json 的 vector 源改成走 zh-tile:// 协议
-async function buildSimplifiedStyle(styleUrl: string): Promise<maplibregl.StyleSpecification> {
+async function buildSimplifiedStyle(styleUrl: string, theme: Theme): Promise<maplibregl.StyleSpecification> {
   const style = await fetch(styleUrl).then(r => r.json()) as maplibregl.StyleSpecification;
   const sources = style.sources as Record<string, Record<string, unknown>>;
   await Promise.all(Object.keys(sources).map(async (id) => {
@@ -205,6 +207,46 @@ async function buildSimplifiedStyle(styleUrl: string): Promise<maplibregl.StyleS
       src.tiles = (src.tiles as string[]).map(u => u.replace(/^https:\/\//, `${ZH_PROTOCOL}://`));
     }
   }));
+
+  // OFM dark 默认让 state、city、town 都从 zoom 0 起渲染，会同框堆叠
+  // 一画面只允许 country / state / city 之一占主：
+  //   country → 0–6（保留 OFM 默认）
+  //   state   → 4–6 互斥城市
+  //   city    → 6+
+  //   town    → 8+
+  //   village → 10+
+  type StyleLayer = { id: string; type?: string; minzoom?: number; maxzoom?: number; paint?: Record<string, unknown> };
+  const layers = (style.layers ?? []) as StyleLayer[];
+  for (const layer of layers) {
+    const id = layer.id.toLowerCase();
+    const isStateLabel = /(^|[-_])state([-_]|$)|province|admin1|region/.test(id);
+    const isCityLabel = /(^|[-_])city([-_]|$)/.test(id);
+    const isTownLabel = /(^|[-_])town([-_]|$)/.test(id);
+    const isVillageLabel = /(^|[-_])village([-_]|$)/.test(id);
+    if (isStateLabel) {
+      layer.minzoom = 4;
+      layer.maxzoom = 6;
+    } else if (isCityLabel) {
+      layer.minzoom = 6;
+    } else if (isTownLabel) {
+      layer.minzoom = 8;
+    } else if (isVillageLabel) {
+      layer.minzoom = 10;
+    }
+  }
+
+  // dark 主题：让 background 层透明（只影响球外区域，露出 CSS 星空）；
+  // 同时把水染稍亮一档。陆地不透明化由后续注入的 earth-base 多边形负责
+  if (theme === 'dark') {
+    for (const layer of layers) {
+      if (layer.type === 'background') {
+        layer.paint = { ...(layer.paint ?? {}), 'background-color': 'rgba(0,0,0,0)' };
+      } else if (layer.id === 'water' && layer.type === 'fill') {
+        layer.paint = { ...(layer.paint ?? {}), 'fill-color': '#0E1620' };
+      }
+    }
+  }
+
   return style;
 }
 
@@ -401,6 +443,16 @@ export default function GlobePage() {
   const [mapLoaded, setMapLoaded] = useState(false);
   const isZhRef = useRef(isZh);
   useEffect(() => { isZhRef.current = isZh; }, [isZh]);
+
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window === 'undefined') return 'dark';
+    return (window.localStorage.getItem('globeTheme') as Theme) ?? 'dark';
+  });
+  useEffect(() => {
+    if (typeof window !== 'undefined') window.localStorage.setItem('globeTheme', theme);
+  }, [theme]);
+  // 切主题时，下次 map 重建从这里恢复相机，不让视角跳回默认
+  const cameraRef = useRef<{ center: [number, number]; zoom: number; bearing: number; pitch: number } | null>(null);
 
   // ── 公共 state ──
   const [mode, setMode] = useState<Mode>('upcoming');
@@ -599,21 +651,25 @@ export default function GlobePage() {
     return { type: 'FeatureCollection' as const, features };
   }, [cuberArcFullCoords, currentIndex, animProgress]);
 
-  // ── Map 初始化 ──
+  // ── Map 初始化（theme 变化时重建，相机从 cameraRef 恢复）──
   useEffect(() => {
-    if (!containerRef.current || mapRef.current) return;
+    if (!containerRef.current) return;
     ensureZhTileProtocol();
 
+    const styleUrl = mapStyleUrl(theme);
     let cancelled = false;
     let map: maplibregl.Map | null = null;
     (async () => {
-      const style = await buildSimplifiedStyle(MAP_STYLE_URL).catch(() => MAP_STYLE_URL as unknown as maplibregl.StyleSpecification);
+      const style = await buildSimplifiedStyle(styleUrl, theme).catch(() => styleUrl as unknown as maplibregl.StyleSpecification);
       if (cancelled || !containerRef.current) return;
+      const cam = cameraRef.current;
       map = new maplibregl.Map({
         container: containerRef.current,
         style,
-        center: [30, 20],
-        zoom: 1.4,
+        center: cam?.center ?? [30, 20],
+        zoom: cam?.zoom ?? 1.4,
+        bearing: cam?.bearing ?? 0,
+        pitch: cam?.pitch ?? 0,
       });
       mapRef.current = map;
       wireMap(map);
@@ -629,6 +685,32 @@ export default function GlobePage() {
     map.on('load', () => {
       mapLoadedRef.current = true;
       setMapLoaded(true);
+
+      // dark 主题：注入一张全球覆盖的 earth-base 多边形作为不透明陆地基底
+      // 球外（背景已透明）→ 露出 CSS 星空；球面 → 这层兜底，水/陆细节叠加在它之上
+      if (theme === 'dark') {
+        map.addSource('earth-base', {
+          type: 'geojson',
+          data: {
+            type: 'Feature',
+            geometry: {
+              type: 'Polygon',
+              coordinates: [[
+                [-180, -85], [180, -85], [180, 85], [-180, 85], [-180, -85],
+              ]],
+            },
+            properties: {},
+          } as unknown as GeoJSON.Feature,
+        });
+        const styleLayers = map.getStyle().layers ?? [];
+        const firstNonBgId = styleLayers.find(l => l.type !== 'background')?.id;
+        map.addLayer({
+          id: 'earth-base',
+          type: 'fill',
+          source: 'earth-base',
+          paint: { 'fill-color': '#181D26', 'fill-antialias': false },
+        }, firstNonBgId);
+      }
 
       // upcoming source & layers
       // clusterProperties.stack_total 累加 feature 的 stack_count（同坐标预合并后的真实比赛数），
@@ -879,13 +961,24 @@ export default function GlobePage() {
 
     return () => {
       cancelled = true;
+      // 保留相机姿态供下一次重建恢复
+      const live = mapRef.current;
+      if (live) {
+        const c = live.getCenter();
+        cameraRef.current = {
+          center: [c.lng, c.lat],
+          zoom: live.getZoom(),
+          bearing: live.getBearing(),
+          pitch: live.getPitch(),
+        };
+      }
       if (popupRef.current) popupRef.current.remove();
       if (map) map.remove();
       mapRef.current = null;
       mapLoadedRef.current = false;
       setMapLoaded(false);
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [theme]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── 推送 upcoming 数据 ──
   // NOTE: mapLoaded 在 deps 里：若数据先于 map load 抵达，也会在 load 完后再推一次
@@ -1043,17 +1136,17 @@ export default function GlobePage() {
   const isTw = flagIso2 === 'tw';
 
   return (
-    <div className="globe-page">
-      <Link to="/upcoming-comps" className="back-link">
-        <ArrowLeft size={14} strokeWidth={1.75} /> {t('globe.backToCalendar')}
-      </Link>
+    <div className={`globe-page is-${theme}`}>
+      {theme === 'dark' && <div className="starfield" aria-hidden="true" />}
 
-      <header className="globe-header">
-        <h1 className="globe-title">{t('globe.title')}</h1>
-        <div className="globe-meta">{t('globe.subtitle')}</div>
-      </header>
+      <div className="globe-topbar">
+        <Link to="/upcoming-comps" className="back-link" title={t('globe.backToCalendar') as string}>
+          <ArrowLeft size={14} strokeWidth={1.75} />
+        </Link>
+        <h1 className="globe-title-compact">{t('globe.title')}</h1>
 
-      <div className="globe-toolbar">
+        <div className="globe-topbar-spacer" />
+
         <div className="mode-toggle" role="tablist">
           <button role="tab" aria-selected={mode === 'upcoming'} className={`range-btn ${mode === 'upcoming' ? 'is-active' : ''}`} onClick={() => setMode('upcoming')}>
             {t('globe.modeUpcoming')}
@@ -1079,55 +1172,74 @@ export default function GlobePage() {
         {mode === 'history' && (
           <div className="history-range">
             <span className="history-range-label">{yearRange[0]} — {yearRange[1]}</span>
-            <input
-              type="range"
-              className="history-range-slider"
-              min={HISTORY_MIN_YEAR}
-              max={currentYear}
-              value={yearRange[0]}
-              onChange={(e) => {
-                const v = Math.min(Number(e.target.value), yearRange[1]);
-                setYearRange([v, yearRange[1]]);
-              }}
-              aria-label="Year from"
-            />
-            <input
-              type="range"
-              className="history-range-slider"
-              min={HISTORY_MIN_YEAR}
-              max={currentYear}
-              value={yearRange[1]}
-              onChange={(e) => {
-                const v = Math.max(Number(e.target.value), yearRange[0]);
-                setYearRange([yearRange[0], v]);
-              }}
-              aria-label="Year to"
-            />
+            <div className="history-range-track">
+              <div
+                className="history-range-fill"
+                style={{
+                  left: `${((yearRange[0] - HISTORY_MIN_YEAR) / (currentYear - HISTORY_MIN_YEAR)) * 100}%`,
+                  right: `${100 - ((yearRange[1] - HISTORY_MIN_YEAR) / (currentYear - HISTORY_MIN_YEAR)) * 100}%`,
+                }}
+              />
+              <input
+                type="range"
+                className="history-range-slider"
+                min={HISTORY_MIN_YEAR}
+                max={currentYear}
+                value={yearRange[0]}
+                onChange={(e) => {
+                  const v = Math.min(Number(e.target.value), yearRange[1]);
+                  setYearRange([v, yearRange[1]]);
+                }}
+                aria-label="Year from"
+              />
+              <input
+                type="range"
+                className="history-range-slider"
+                min={HISTORY_MIN_YEAR}
+                max={currentYear}
+                value={yearRange[1]}
+                onChange={(e) => {
+                  const v = Math.max(Number(e.target.value), yearRange[0]);
+                  setYearRange([yearRange[0], v]);
+                }}
+                aria-label="Year to"
+              />
+            </div>
           </div>
         )}
+        {mode === 'upcoming' && (
+          <div className="globe-stats globe-stats-inline">
+            <span>{upcomingStats.comps} {isZh ? '比赛' : 'comps'}</span>
+            <span>·</span>
+            <span>{upcomingStats.countries} {isZh ? '国家' : 'countries'}</span>
+          </div>
+        )}
+        {mode === 'history' && (
+          <div className="globe-stats globe-stats-inline">
+            {pastLoading && !pastComps
+              ? <span>{t('globe.loading')}</span>
+              : <>
+                  <span>{pastStats.comps} {isZh ? '比赛' : 'comps'}</span>
+                  <span>·</span>
+                  <span>{pastStats.countries} {isZh ? '国家' : 'countries'}</span>
+                </>
+            }
+          </div>
+        )}
+
+        <LangToggle className="topbar-lang" />
+        <button
+          className="reset-btn"
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          title={theme === 'dark' ? (isZh ? '浅色' : 'Light') : (isZh ? '深色' : 'Dark')}
+          aria-label="Toggle theme"
+        >
+          {theme === 'dark' ? <Sun size={14} strokeWidth={1.75} /> : <Moon size={14} strokeWidth={1.75} />}
+        </button>
         <button className="reset-btn" onClick={resetView} title={isZh ? '复位视角' : 'Reset view'}>
           <RotateCcw size={14} strokeWidth={1.75} />
         </button>
       </div>
-
-      {mode === 'upcoming' && (
-        <div className="globe-stats">
-          <span>📋 {t('globe.statComps', { count: upcomingStats.comps })}</span>
-          <span>🌍 {t('globe.statCountries', { count: upcomingStats.countries })}</span>
-        </div>
-      )}
-
-      {mode === 'history' && (
-        <div className="globe-stats">
-          {pastLoading && !pastComps
-            ? <span>{t('globe.loading')}</span>
-            : <>
-                <span>📋 {t('globe.statComps', { count: pastStats.comps })}</span>
-                <span>🌍 {t('globe.statCountries', { count: pastStats.countries })}</span>
-              </>
-          }
-        </div>
-      )}
 
       {mode === 'cuber' && (
         <div className="cuber-bar">
@@ -1261,7 +1373,6 @@ export default function GlobePage() {
         />
       )}
 
-      <LangToggle />
     </div>
   );
 }
