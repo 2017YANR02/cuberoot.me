@@ -933,17 +933,6 @@
           "21.67"
         ],
         [
-          "[FMC West Melbourne 2024](https://www.worldcubeassociation.org/competitions/FMCWestMelbourne2024/results/all#e333fm_1)",
-          "First round",
-          "1:03.34",
-          "[Wong Chong Wen (黄崇文)](https://www.worldcubeassociation.org/persons/2014WENW01)",
-          "20.00",
-          "[Firstian Fushada (符逢城)](https://www.worldcubeassociation.org/persons/2015FUSH01)",
-          "20.67",
-          "[Max Parris](https://www.worldcubeassociation.org/persons/2022PARR10)",
-          "22.67"
-        ],
-        [
           "[FMC under the Mistletoe 2025](https://www.worldcubeassociation.org/competitions/FMCundertheMistletoe2025/results/all#e333fm_1)",
           "First round",
           "1:03.34",
@@ -953,6 +942,17 @@
           "21.00",
           "[Jibo Zhao (赵吉波)](https://www.worldcubeassociation.org/persons/2010ZHAO11)",
           "21.67"
+        ],
+        [
+          "[FMC West Melbourne 2024](https://www.worldcubeassociation.org/competitions/FMCWestMelbourne2024/results/all#e333fm_1)",
+          "First round",
+          "1:03.34",
+          "[Wong Chong Wen (黄崇文)](https://www.worldcubeassociation.org/persons/2014WENW01)",
+          "20.00",
+          "[Firstian Fushada (符逢城)](https://www.worldcubeassociation.org/persons/2015FUSH01)",
+          "20.67",
+          "[Max Parris](https://www.worldcubeassociation.org/persons/2022PARR10)",
+          "22.67"
         ],
         [
           "[WCA European Championship 2024](https://www.worldcubeassociation.org/competitions/Euro2024/results/all#e333fm_f)",
@@ -1229,9 +1229,9 @@
           "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/all#epyram_2)",
           "Second round",
           "4.64",
-          "[Parker Trager](https://www.worldcubeassociation.org/persons/2016TRAG01)",
-          "1.52",
           "[Sebastian Lee](https://www.worldcubeassociation.org/persons/2021LEES01)",
+          "1.52",
+          "[Parker Trager](https://www.worldcubeassociation.org/persons/2016TRAG01)",
           "1.52",
           "[Michael Nielsen](https://www.worldcubeassociation.org/persons/2017NIEL03)",
           "1.60"
@@ -1430,17 +1430,6 @@
           "3.12"
         ],
         [
-          "[Back to Downtown Singapore 2026](https://www.worldcubeassociation.org/competitions/BacktoDowntownSingapore2026/results/all#eclock_f)",
-          "Final",
-          "9.35",
-          "[Matthew Powell](https://www.worldcubeassociation.org/persons/2023POWE10)",
-          "2.82",
-          "[Nigel Phang](https://www.worldcubeassociation.org/persons/2022PHAN03)",
-          "2.86",
-          "[Akash Sreedharan (ஆகாஷ் ஸ்ரீதரன்)](https://www.worldcubeassociation.org/persons/2019SREE06)",
-          "3.67"
-        ],
-        [
           "[Back to Downtown Singapore 2026](https://www.worldcubeassociation.org/competitions/BacktoDowntownSingapore2026/results/all#eclock_d)",
           "First round",
           "9.35",
@@ -1450,6 +1439,17 @@
           "3.24",
           "[Nigel Phang](https://www.worldcubeassociation.org/persons/2022PHAN03)",
           "3.29"
+        ],
+        [
+          "[Back to Downtown Singapore 2026](https://www.worldcubeassociation.org/competitions/BacktoDowntownSingapore2026/results/all#eclock_f)",
+          "Final",
+          "9.35",
+          "[Matthew Powell](https://www.worldcubeassociation.org/persons/2023POWE10)",
+          "2.82",
+          "[Nigel Phang](https://www.worldcubeassociation.org/persons/2022PHAN03)",
+          "2.86",
+          "[Akash Sreedharan (ஆகாஷ் ஸ்ரீதரன்)](https://www.worldcubeassociation.org/persons/2019SREE06)",
+          "3.67"
         ]
       ]
     },
