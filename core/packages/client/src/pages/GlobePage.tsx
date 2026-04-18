@@ -620,6 +620,15 @@ export default function GlobePage() {
   const isZhRef = useRef(isZh);
   useEffect(() => { isZhRef.current = isZh; }, [isZh]);
 
+  // 移动端：禁止整个页面 pinch-zoom，只允许地图自身缩放
+  useEffect(() => {
+    const meta = document.querySelector('meta[name="viewport"]') as HTMLMetaElement | null;
+    if (!meta) return;
+    const original = meta.content;
+    meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover';
+    return () => { meta.content = original; };
+  }, []);
+
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window === 'undefined') return 'dark';
     return (window.localStorage.getItem('globeTheme') as Theme) ?? 'dark';
