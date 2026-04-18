@@ -7,7 +7,7 @@
 import { useState, useEffect, useLayoutEffect, useMemo, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { RotateCw, Play, Pause, X, Moon, Sun, Satellite, Plus, Minus, Compass, Ruler, Undo2, Search, ArrowLeft } from 'lucide-react';
+import { RotateCw, Play, Pause, X, Moon, Sun, Satellite, Plus, Minus, Compass, Ruler, Undo2, Search, ArrowLeft, ChevronLeft, ChevronRight, Layers, Flame, Globe } from 'lucide-react';
 import maplibregl from 'maplibre-gl';
 import type { GeoJSONSource, MapMouseEvent, MapGeoJSONFeature } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -33,6 +33,8 @@ import './globe.css';
 
 type Mode = 'upcoming' | 'cuber';
 type Speed = 0.5 | 1 | 2;
+// 密度可视化风格：scale=对数色阶 A / heat=热力图 B / country=国家 choropleth C
+type DensityStyle = 'scale' | 'heat' | 'country';
 type DrawMode = 'none' | 'measure' | 'path' | 'polygon';
 type SavedShape = {
   id: string;
@@ -247,6 +249,28 @@ const CUBER_LAYER_ARC_ARROW = 'cuber-arcs-arrow';
 const UPCOMING_LAYERS = ['clusters', 'cluster-count', 'unclustered-point', 'unclustered-count'];
 const PAST_LAYERS = ['past-clusters', 'past-cluster-count', 'past-unclustered-point'];
 const CUBER_LAYERS = [CUBER_LAYER_ARC, CUBER_LAYER_ARC_ARROW, CUBER_LAYER_DOT, CUBER_LAYER_CITY];
+
+// ── 密度可视化 A 模式：log10(count) 连续色 + 连续半径（感知均匀 YlOrRd 色带）──
+// 用作 'clusters' / 'unclustered-point' 的 paint；属性名由 makeCountRamp 注入
+function makeCountColorRamp(prop: string): unknown[] {
+  return ['interpolate', ['linear'], ['log10', ['max', 1, ['to-number', ['get', prop], 1]]],
+    0, '#FFEDA0',   // 1
+    1, '#FEB24C',   // 10
+    2, '#F03B20',   // 100
+    2.7, '#BD0026', // ~500
+    3.5, '#4A0000', // 3000+
+  ];
+}
+function makeCountRadiusRamp(prop: string): unknown[] {
+  return ['interpolate', ['linear'], ['log10', ['max', 1, ['to-number', ['get', prop], 1]]],
+    0, 10, 1, 18, 2, 30, 2.7, 45, 3.5, 60,
+  ];
+}
+// 原来的阶梯色（Scale 前的老样式，country 模式下恢复，避免 choropleth 下簇过于扎眼）
+const STEP_COLOR_CLUSTER: unknown[] = ['step', ['get', 'stack_total'], '#E08B6C', 10, '#C15F3C', 50, '#8B3E1F'];
+const STEP_RADIUS_CLUSTER: unknown[] = ['step', ['get', 'stack_total'], 15, 10, 22, 50, 30];
+const STEP_COLOR_POINT: unknown[] = ['step', ['get', 'stack_count'], '#E08B6C', 10, '#C15F3C', 50, '#8B3E1F'];
+const STEP_RADIUS_POINT: unknown[] = ['case', ['>', ['get', 'stack_count'], 1], 12, 7];
 
 // ── 球面几何工具（Haversine 距离 + 球面多边形面积）──
 const EARTH_R_KM = 6371;
@@ -636,6 +660,16 @@ export default function GlobePage() {
   useEffect(() => {
     if (typeof window !== 'undefined') window.localStorage.setItem('globeTheme', theme);
   }, [theme]);
+
+  // 密度可视化风格：A=scale / B=heat / C=country
+  const [densityStyle, setDensityStyle] = useState<DensityStyle>(() => {
+    if (typeof window === 'undefined') return 'scale';
+    const v = window.localStorage.getItem('globeDensityStyle');
+    return (v === 'heat' || v === 'country' || v === 'scale') ? v : 'scale';
+  });
+  useEffect(() => {
+    if (typeof window !== 'undefined') window.localStorage.setItem('globeDensityStyle', densityStyle);
+  }, [densityStyle]);
   // 切主题时，下次 map 重建从这里恢复相机，不让视角跳回默认
   const cameraRef = useRef<{ center: [number, number]; zoom: number; bearing: number; pitch: number } | null>(null);
 
@@ -896,6 +930,52 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
       return y >= effectiveMin && y <= y1;
     });
   }, [pastComps, yearRange]);
+
+  // 密度 C（country choropleth）：按 ISO_A2 聚合每国比赛数（含 past 叠加）
+  // 注：TW（Chinese Taipei）计入 CN，choropleth 着色时 TW 多边形也用 CN 同色
+  const countryCounts = useMemo(() => {
+    const m = new Map<string, number>();
+    const normalize = (cc: string) => cc === 'TW' ? 'CN' : cc;
+    for (const c of filteredComps) {
+      const cc = normalize(c.country);
+      m.set(cc, (m.get(cc) ?? 0) + 1);
+    }
+    if (includePast) for (const c of filteredPast) {
+      const cc = normalize(c.country);
+      m.set(cc, (m.get(cc) ?? 0) + 1);
+    }
+    return m;
+  }, [filteredComps, filteredPast, includePast]);
+
+  // 国家边界 geojson（懒加载，仅在 densityStyle === 'country' 时拉取）
+  const [countriesGeojson, setCountriesGeojson] = useState<GeoJSON.FeatureCollection | null>(null);
+  useEffect(() => {
+    if (densityStyle !== 'country' || countriesGeojson) return;
+    fetch('/countries-110m.geojson')
+      .then(r => r.json())
+      .then((d) => setCountriesGeojson(d))
+      .catch((e) => console.warn('countries-110m load failed', e));
+  }, [densityStyle, countriesGeojson]);
+
+  // 注入 _count 属性到国家 feature（给 fill-color interpolate 用）
+  // TW 多边形查 CN 的计数，视觉上与 CN 同色
+  const countriesEnriched = useMemo<GeoJSON.FeatureCollection | null>(() => {
+    if (!countriesGeojson) return null;
+    return {
+      ...countriesGeojson,
+      features: countriesGeojson.features.map((f) => {
+        const iso = (f.properties?.ISO_A2 as string) ?? '';
+        const lookupKey = iso === 'TW' ? 'CN' : iso;
+        return {
+          ...f,
+          properties: {
+            ...(f.properties ?? {}),
+            _count: countryCounts.get(lookupKey) ?? 0,
+          },
+        };
+      }),
+    };
+  }, [countriesGeojson, countryCounts]);
 
   // 同坐标比赛预合并为 1 个 feature：避免 zoom 超过 clusterMaxZoom 后两场完全重叠
   // 只点到一场。stack_count>1 时 feature 属性里塞 stack_comps（JSON 字符串）供 click 展开。
@@ -1318,6 +1398,36 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
           stack_total: ['+', ['get', 'stack_count']],
         },
       });
+      // 密度 B（heat）：独立的 raw source（不聚合），供 heatmap 层使用
+      map.addSource('comps-raw', {
+        type: 'geojson', data: upcomingGeojson as unknown as GeoJSON.FeatureCollection,
+        cluster: false,
+      });
+      map.addLayer({
+        id: 'comps-heatmap', type: 'heatmap', source: 'comps-raw',
+        maxzoom: 4,
+        layout: { 'visibility': 'none' },
+        paint: {
+          // 压低峰值：中等密度停在橙/黄区，不会全顶到饱和红
+          'heatmap-weight': ['interpolate', ['linear'],
+            ['log10', ['max', 1, ['to-number', ['get', 'stack_count'], 1]]],
+            0, 0.15, 1, 0.35, 2, 0.6, 3, 0.8,
+          ],
+          'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 0, 0.4, 2, 0.7, 4, 1.0],
+          // 纯暖色 + 透明渐变：低密度完全透明，不再蒙蓝雾
+          'heatmap-color': ['interpolate', ['linear'], ['heatmap-density'],
+            0,    'rgba(255, 237, 160, 0)',
+            0.1,  'rgba(255, 237, 160, 0.3)',
+            0.3,  'rgb(254, 217, 118)',
+            0.5,  'rgb(253, 141, 60)',
+            0.7,  'rgb(227, 26, 28)',
+            1,    'rgb(122, 0, 0)',
+          ],
+          // 缩小低 zoom 的扩散半径 + 加 zoom 2 转折防止单点糊一大团
+          'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 12, 2, 20, 4, 35],
+          'heatmap-opacity': ['interpolate', ['linear'], ['zoom'], 0, 0.85, 3.5, 0.7, 4, 0],
+        },
+      });
       map.addLayer({
         id: 'clusters', type: 'circle', source: 'comps', filter: ['has', 'point_count'],
         paint: {
@@ -1699,6 +1809,9 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
     if (!map || !mapLoaded) return;
     const src = map.getSource('comps') as GeoJSONSource | undefined;
     if (src) src.setData(upcomingGeojson as unknown as GeoJSON.FeatureCollection);
+    // heatmap 用的原始（未聚合）source 同步更新
+    const rawSrc = map.getSource('comps-raw') as GeoJSONSource | undefined;
+    if (rawSrc) rawSrc.setData(upcomingGeojson as unknown as GeoJSON.FeatureCollection);
   }, [upcomingGeojson, mapLoaded]);
 
   // ── 推送 past 数据 ──
@@ -1708,6 +1821,111 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
     const src = map.getSource('past-comps') as GeoJSONSource | undefined;
     if (src) src.setData(pastGeojson as unknown as GeoJSON.FeatureCollection);
   }, [pastGeojson, mapLoaded]);
+
+  // ── 密度风格切换：paint + visibility + zoom-range ──
+  // scale  : clusters 用 log 连续色阶 + 连续半径，unclustered 同理；heatmap/country 层隐藏
+  // heat   : zoom<4 只显 heatmap，zoom>=4 切回 clusters（同 scale 样式）
+  // country: choropleth 底色可见；clusters 恢复阶梯色（避免 cluster 太醒目盖过底色）
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapLoaded) return;
+
+    const safeSetPaint = (id: string, prop: string, val: unknown) => {
+      if (!map.getLayer(id)) return;
+      try { map.setPaintProperty(id, prop, val as string); } catch { /* */ }
+    };
+    const safeSetVis = (id: string, visible: boolean) => {
+      if (!map.getLayer(id)) return;
+      try { map.setLayoutProperty(id, 'visibility', visible ? 'visible' : 'none'); } catch { /* */ }
+    };
+    const safeSetZoomRange = (id: string, min: number, max: number) => {
+      if (!map.getLayer(id)) return;
+      try { map.setLayerZoomRange(id, min, max); } catch { /* */ }
+    };
+
+    if (densityStyle === 'scale' || densityStyle === 'heat') {
+      safeSetPaint('clusters', 'circle-color', makeCountColorRamp('stack_total'));
+      safeSetPaint('clusters', 'circle-radius', makeCountRadiusRamp('stack_total'));
+      safeSetPaint('unclustered-point', 'circle-color', makeCountColorRamp('stack_count'));
+      safeSetPaint('unclustered-point', 'circle-radius', makeCountRadiusRamp('stack_count'));
+    } else {
+      // country: 回到原阶梯色，不抢 choropleth 视觉
+      safeSetPaint('clusters', 'circle-color', STEP_COLOR_CLUSTER);
+      safeSetPaint('clusters', 'circle-radius', STEP_RADIUS_CLUSTER);
+      safeSetPaint('unclustered-point', 'circle-color', STEP_COLOR_POINT);
+      safeSetPaint('unclustered-point', 'circle-radius', STEP_RADIUS_POINT);
+    }
+
+    // heatmap 层可见性 + cluster 层 zoom range（非 upcoming 模式强制隐藏）
+    const isUpcoming = mode === 'upcoming';
+    safeSetVis('comps-heatmap', isUpcoming && densityStyle === 'heat');
+    if (isUpcoming && densityStyle === 'heat') {
+      UPCOMING_LAYERS.forEach((id) => safeSetZoomRange(id, 4, 24));
+    } else {
+      UPCOMING_LAYERS.forEach((id) => safeSetZoomRange(id, 0, 24));
+    }
+
+    // 数据稀疏（仅 upcoming，~500 点）时显著提升 weight/intensity，避免 heatmap 淡到看不见
+    // 含 past（~14k+）时回到温和配置，避免过度饱和
+    const dense = includePast;
+    safeSetPaint('comps-heatmap', 'heatmap-weight',
+      dense
+        ? ['interpolate', ['linear'], ['log10', ['max', 1, ['to-number', ['get', 'stack_count'], 1]]],
+            0, 0.15, 1, 0.35, 2, 0.6, 3, 0.8]
+        : ['interpolate', ['linear'], ['log10', ['max', 1, ['to-number', ['get', 'stack_count'], 1]]],
+            0, 0.5, 1, 0.9, 2, 1.2, 3, 1.4],
+    );
+    safeSetPaint('comps-heatmap', 'heatmap-intensity',
+      dense
+        ? ['interpolate', ['linear'], ['zoom'], 0, 0.4, 2, 0.7, 4, 1.0]
+        : ['interpolate', ['linear'], ['zoom'], 0, 1.0, 2, 1.4, 4, 1.8],
+    );
+    safeSetPaint('comps-heatmap', 'heatmap-radius',
+      dense
+        ? ['interpolate', ['linear'], ['zoom'], 0, 12, 2, 20, 4, 35]
+        : ['interpolate', ['linear'], ['zoom'], 0, 18, 2, 28, 4, 42],
+    );
+
+    // country fill 可见性 + 透明度（satellite 下降低避免过盖）
+    safeSetVis('country-fill', isUpcoming && densityStyle === 'country');
+    const fillOp = theme === 'satellite' ? 0.28 : theme === 'light' ? 0.42 : 0.4;
+    safeSetPaint('country-fill', 'fill-opacity', fillOp);
+  }, [densityStyle, mapLoaded, theme, mode, includePast]);
+
+  // ── 密度 C（country）：按需添加/更新 countries source + country-fill layer ──
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapLoaded || !countriesEnriched) return;
+    const existing = map.getSource('countries') as GeoJSONSource | undefined;
+    if (existing) {
+      existing.setData(countriesEnriched);
+      return;
+    }
+    map.addSource('countries', { type: 'geojson', data: countriesEnriched });
+    // 加在 clusters 下方（choropleth 是底色，cluster 圆点盖在上面）
+    const beforeId = map.getLayer('clusters') ? 'clusters' : undefined;
+    // 第一次添加时直接按当前 densityStyle 决定是否可见，避免等下一次 density effect 才生效
+    const initialVis = (mode === 'upcoming' && densityStyle === 'country') ? 'visible' : 'none';
+    map.addLayer({
+      id: 'country-fill',
+      type: 'fill',
+      source: 'countries',
+      layout: { 'visibility': initialVis },
+      paint: {
+        'fill-color': ['interpolate', ['linear'],
+          ['log10', ['max', 1, ['to-number', ['get', '_count'], 1]]],
+          0, 'rgba(255, 237, 160, 0)',  // 0 个 → 完全透明
+          0.3, '#FFEDA0',
+          1, '#FEB24C',
+          2, '#F03B20',
+          3, '#4A0000',
+        ] as unknown as maplibregl.ExpressionSpecification,
+        'fill-opacity': 0.4,
+        'fill-outline-color': 'rgba(255, 255, 255, 0.2)',
+      },
+    }, beforeId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [countriesEnriched, mapLoaded]);
 
   // ── 推送 cuber 数据 ──
   useEffect(() => {
@@ -2240,6 +2458,15 @@ const onSelectCuber = useCallback((person: WcaPerson) => {
             {!loadProgress && cuberComps.length > 0 && currentComp && (
               <div className="cuber-timeline">
                 <button
+                  className="cuber-step-btn"
+                  onClick={() => { setPlaying(false); setCurrentIndex((i) => Math.max(0, i - 1)); }}
+                  disabled={currentIndex <= 0}
+                  aria-label={isZh ? '上一场' : 'Previous'}
+                  title={isZh ? '上一场' : 'Previous'}
+                >
+                  <ChevronLeft size={14} strokeWidth={1.75} />
+                </button>
+                <button
                   className="cuber-play"
                   onClick={() => {
                     if (playing) { setPlaying(false); return; }
@@ -2250,6 +2477,15 @@ const onSelectCuber = useCallback((person: WcaPerson) => {
                   aria-label={playing ? t('globe.pause') : t('globe.play')}
                 >
                   {playing ? <Pause size={14} strokeWidth={1.75} /> : <Play size={14} strokeWidth={1.75} />}
+                </button>
+                <button
+                  className="cuber-step-btn"
+                  onClick={() => { setPlaying(false); setCurrentIndex((i) => Math.min(cuberComps.length - 1, i + 1)); }}
+                  disabled={currentIndex >= cuberComps.length - 1}
+                  aria-label={isZh ? '下一场' : 'Next'}
+                  title={isZh ? '下一场' : 'Next'}
+                >
+                  <ChevronRight size={14} strokeWidth={1.75} />
                 </button>
                 <input
                   type="range"
@@ -2409,6 +2645,27 @@ const onSelectCuber = useCallback((person: WcaPerson) => {
             {t('globe.modeComps')}
           </button>
         </div>
+        {mode === 'upcoming' && (
+          <div className="density-style-picker" role="tablist" title={isZh ? '密度显示风格' : 'Density style'}>
+            {(['scale', 'heat', 'country'] as DensityStyle[]).map((s) => {
+              const Icon = s === 'scale' ? Layers : s === 'heat' ? Flame : Globe;
+              return (
+                <button
+                  key={s}
+                  role="tab"
+                  aria-selected={densityStyle === s}
+                  className={`density-btn ${densityStyle === s ? 'is-active' : ''}`}
+                  onClick={() => setDensityStyle(s)}
+                  title={t(`globe.density_${s}`) as string}
+                  aria-label={t(`globe.density_${s}`) as string}
+                >
+                  <Icon size={14} strokeWidth={1.75} className="density-btn-icon" />
+                  <span className="density-btn-label">{t(`globe.density_${s}`)}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
         {mode === 'upcoming' && (
           <label className="include-past-toggle" title={isZh ? '在地图上叠加显示往期比赛（蓝色）' : 'Overlay past competitions (blue)'}>
             <input type="checkbox" checked={includePast} onChange={(e) => setIncludePast(e.target.checked)} />
