@@ -1,0 +1,74 @@
+# 轻量 workflow：只跑 gen_all_comps.ts 生成 stats/data/all_past_comps.json
+# 跳过 compute_all（~38min），整体 ~10min（DB 导入是大头）
+name: Generate All Past Comps JSON
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      LANG: en_US.UTF-8
+    permissions:
+      contents: write
+    steps:
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          df -h /
+
+      - uses: actions/checkout@v4
+
+      - name: Activate MySQL
+        run: sudo systemctl start mysql.service
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Install stats-build dependencies
+        working-directory: core
+        run: pnpm install --frozen-lockfile
+
+      - name: Create stats output directory
+        run: mkdir -p stats/data
+
+      - name: Setup database config
+        run: |
+          printf 'database: "wca_statistics"\nusername: "root"\npassword: "root"\nhost: "127.0.0.1"' > core/packages/stats-build/database.yml
+
+      - name: Download and import WCA database
+        working-directory: core/packages/stats-build
+        run: npx tsx src/bin/update_database.ts
+
+      - name: Generate all past competitions JSON
+        working-directory: core/packages/stats-build
+        run: npx tsx src/bin/gen_all_comps.ts
+
+      - name: Commit and push
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add stats/data/all_past_comps.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: update all_past_comps.json [skip ci]"
+            if ! git pull --rebase origin main; then
+              echo "Rebase conflict detected, resolving with ours..."
+              git diff --name-only --diff-filter=U | while read f; do
+                git checkout --theirs "$f"
+                git add "$f"
+              done
+              GIT_EDITOR=true git rebase --continue
+            fi
+            git push
+          fi
