@@ -175,12 +175,12 @@ export async function fetchCompetitionDetail(id: string): Promise<WcaCompDetail 
   const cached = compDetailCacheGet(id);
   if (cached) return cached;
 
-  // 遇 429 最多重试两次（1.5s、4s 退避），避免并发打爆 WCA API
-  const delays = [0, 1500, 4000];
+  // 重试：429/5xx/无 response（网络/超时/CORS）都重试，仅 4xx（除 429）直接放弃
+  const delays = [0, 1500, 4000, 9000, 18000];
   for (let attempt = 0; attempt < delays.length; attempt++) {
     if (delays[attempt] > 0) await new Promise(r => setTimeout(r, delays[attempt]));
     try {
-      const resp = await wcaApi.get(`/competitions/${id}`, { timeout: 15000 });
+      const resp = await wcaApi.get(`/competitions/${id}`, { timeout: 20000 });
       const d = resp.data;
       if (!d?.id || typeof d.latitude_degrees !== 'number') return null;
       const detail: WcaCompDetail = {
@@ -198,10 +198,13 @@ export async function fetchCompetitionDetail(id: string): Promise<WcaCompDetail 
       return detail;
     } catch (e) {
       const status = (e as { response?: { status?: number } })?.response?.status;
-      // 仅对 429 / 5xx 重试
-      if (attempt < delays.length - 1 && (status === 429 || (status && status >= 500))) continue;
-      console.warn('WCA comp detail fetch failed:', id, status ?? e);
-      return null;
+      const isLast = attempt === delays.length - 1;
+      // 4xx (非 429) 是真错误，不重试；其余（429 / 5xx / 网络超时无 status）都重试到最后一次
+      const isHardFail = !!status && status >= 400 && status < 500 && status !== 429;
+      if (isLast || isHardFail) {
+        console.warn('WCA comp detail fetch failed:', id, status ?? e);
+        return null;
+      }
     }
   }
   return null;
@@ -221,6 +224,29 @@ export async function fetchAvatar(wcaId: string): Promise<string> {
     return url;
   } catch {
     return '';
+  }
+}
+
+/**
+ * NOTE: 通过 WCA ID 直接拉一个 WcaPerson（用于 URL 状态恢复，没经过 search）
+ */
+export async function fetchPersonByWcaId(wcaId: string): Promise<WcaPerson | null> {
+  const cached = cacheGet<WcaPerson>('person_' + wcaId);
+  if (cached) return cached;
+  try {
+    const resp = await wcaApi.get(`/persons/${wcaId}`);
+    const p = resp.data?.person;
+    if (!p) return null;
+    const person: WcaPerson = {
+      wcaId: (p.wca_id as string) || wcaId,
+      name: (p.name as string) || wcaId,
+      iso2: ((p.country_iso2 as string) || '').toLowerCase(),
+      avatarUrl: (p.avatar && !p.avatar.is_default) ? (p.avatar.thumb_url || '') : '',
+    };
+    cacheSet('person_' + wcaId, person);
+    return person;
+  } catch {
+    return null;
   }
 }
 

@@ -20,6 +20,7 @@ import {
   fetchAllPastCompsJson,
   fetchCompetitions,
   fetchCompetitionDetail,
+  fetchPersonByWcaId,
   WcaPersonPicker,
   type UpcomingCompRecord,
   type PastCompRecord,
@@ -236,14 +237,16 @@ const localizeCity = (city: string, _country: string, isZh: boolean): string => 
 
 const CUBER_SOURCE_POINTS = 'cuber-points';
 const CUBER_SOURCE_ARCS = 'cuber-arcs';
+const CUBER_SOURCE_ARC_TIP = 'cuber-arc-tip';
 const CUBER_LAYER_DOT = 'cuber-points-dot';
 const CUBER_LAYER_LABEL = 'cuber-points-label';
 const CUBER_LAYER_CITY = 'cuber-points-city';
 const CUBER_LAYER_ARC = 'cuber-arcs-line';
+const CUBER_LAYER_ARC_ARROW = 'cuber-arcs-arrow';
 
 const UPCOMING_LAYERS = ['clusters', 'cluster-count', 'unclustered-point', 'unclustered-count'];
 const PAST_LAYERS = ['past-clusters', 'past-cluster-count', 'past-unclustered-point'];
-const CUBER_LAYERS = [CUBER_LAYER_ARC, CUBER_LAYER_DOT, CUBER_LAYER_LABEL, CUBER_LAYER_CITY];
+const CUBER_LAYERS = [CUBER_LAYER_ARC, CUBER_LAYER_ARC_ARROW, CUBER_LAYER_DOT, CUBER_LAYER_LABEL, CUBER_LAYER_CITY];
 
 // ── 球面几何工具（Haversine 距离 + 球面多边形面积）──
 const EARTH_R_KM = 6371;
@@ -646,6 +649,7 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
   // ── cuber 模式 state ──
   const [cuber, setCuber] = useState<WcaPerson | null>(null);
   const [cuberComps, setCuberComps] = useState<WcaCompDetail[]>([]);
+  const [skippedComps, setSkippedComps] = useState<{ id: string; name?: string }[]>([]);
   const [loadProgress, setLoadProgress] = useState<{ done: number; total: number } | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -660,6 +664,44 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
   const [pitch, setPitch] = useState(0);
   const [navPopoverOpen, setNavPopoverOpen] = useState(false);
   const navPopoverRef = useRef<HTMLDivElement | null>(null);
+
+  // ── 本地化映射 ──
+  // upcoming_comps.json: id → {name_zh, city_zh}（仅追踪选手参赛的未来 CN 比赛，~数百条）
+  // comp_names_zh.json: 英文名 → 中文名（cubing.com 爬的全部中国历史+未来 CN 比赛，~674 条）
+  const [nameZhMap, setNameZhMap] = useState<Map<string, { name_zh?: string; city_zh?: string }> | null>(null);
+  const [compNameEnToZh, setCompNameEnToZh] = useState<Record<string, string> | null>(null);
+  useEffect(() => {
+    if (!isZh) return;
+    if (!nameZhMap) {
+      fetch('/stats/upcoming_comps.json')
+        .then(r => r.ok ? r.json() : null)
+        .then((d: { competitions?: Array<{ id: string; name_zh?: string; city_zh?: string }> } | null) => {
+          if (!d?.competitions) return;
+          const m = new Map<string, { name_zh?: string; city_zh?: string }>();
+          for (const c of d.competitions) {
+            if (c.name_zh || c.city_zh) m.set(c.id, { name_zh: c.name_zh, city_zh: c.city_zh });
+          }
+          setNameZhMap(m);
+        }).catch(() => { /* */ });
+    }
+    if (!compNameEnToZh) {
+      fetch('/stats/data/comp_names_zh.json')
+        .then(r => r.ok ? r.json() : null)
+        .then((d: Record<string, string> | null) => { if (d) setCompNameEnToZh(d); })
+        .catch(() => { /* */ });
+    }
+  }, [isZh, nameZhMap, compNameEnToZh]);
+
+  // 中文页面下比赛名：1) upcoming_comps.json 的 id→name_zh；2) comp_names_zh.json 的英文名→中文名；3) OpenCC 简化已含 CJK 的名；4) 兜底英文
+  const localizeCompName = useCallback((id: string, name: string): string => {
+    if (!isZh || !name) return name;
+    const zh1 = nameZhMap?.get(id)?.name_zh;
+    if (zh1) return zh1;
+    const zh2 = compNameEnToZh?.[name];
+    if (zh2) return zh2;
+    if (CJK_RE.test(name)) { try { return openccT2S(name); } catch { /* */ } }
+    return name;
+  }, [isZh, nameZhMap, compNameEnToZh]);
 
   // ── 搜索（地点 via Nominatim / 比赛 via 本地 comps）──
   type GeoResult = { display_name: string; lat: string; lon: string; boundingbox?: [string, string, string, string] };
@@ -924,6 +966,7 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
   const loadCuberPath = useCallback(async (person: WcaPerson) => {
     setError(null);
     setCuberComps([]);
+    setSkippedComps([]);
     setCurrentIndex(0);
     setPlaying(false);
 
@@ -945,14 +988,77 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
       (done, total) => setLoadProgress({ done, total }),
     );
 
-    const valid = details
-      .filter((d): d is WcaCompDetail => !!d && typeof d.latitude_degrees === 'number')
-      .sort((a, b) => a.start_date.localeCompare(b.start_date));
+    const valid: WcaCompDetail[] = [];
+    const skipped: { id: string; name?: string }[] = [];
+    for (let i = 0; i < details.length; i++) {
+      const d = details[i];
+      if (d && typeof d.latitude_degrees === 'number') valid.push(d);
+      else skipped.push({ id: sorted[i].id, name: sorted[i].name });
+    }
+    valid.sort((a, b) => a.start_date.localeCompare(b.start_date));
 
-    setCuberComps(valid);
+    // WCA 对"多地比赛"（如 FMC 世界赛、部分线上赛）坐标记为 (0, 0) —— 用上一场的坐标顶上
+    // 第一场就是 (0,0) 时没得参考，扔到 skipped
+    const patched: WcaCompDetail[] = [];
+    let lastLat: number | null = null;
+    let lastLng: number | null = null;
+    for (const c of valid) {
+      const isZero = c.latitude_degrees === 0 && c.longitude_degrees === 0;
+      if (isZero) {
+        if (lastLat !== null && lastLng !== null) {
+          patched.push({ ...c, latitude_degrees: lastLat, longitude_degrees: lastLng });
+        } else {
+          skipped.push({ id: c.id, name: c.name });
+        }
+      } else {
+        patched.push(c);
+        lastLat = c.latitude_degrees;
+        lastLng = c.longitude_degrees;
+      }
+    }
+
+    setCuberComps(patched);
+    setSkippedComps(skipped);
     setLoadProgress(null);
-    setCurrentIndex(Math.max(0, valid.length - 1)); // 默认显示完整路径
+    // 如果 URL 里指定了 i= 且合法，用它；否则默认显示完整路径
+    const sp = new URLSearchParams(window.location.search);
+    const urlI = parseInt(sp.get('i') || '', 10);
+    if (Number.isFinite(urlI) && urlI >= 0 && urlI < patched.length) setCurrentIndex(urlI);
+    else setCurrentIndex(Math.max(0, patched.length - 1));
   }, []);
+
+  // ── URL 状态：?wcaId=2017WANG01&i=42 ──
+  // 首次加载：解析 wcaId → fetchPerson → 进入 cuber 模式（异步链结束前先压住同步效果，避免 URL 闪烁）
+  const [urlBootstrapDone, setUrlBootstrapDone] = useState(false);
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    const wcaId = sp.get('wcaId');
+    if (!wcaId) { setUrlBootstrapDone(true); return; }
+    setMode('cuber');
+    fetchPersonByWcaId(wcaId).then((p) => {
+      if (p) { setCuber(p); loadCuberPath(p); }
+    }).finally(() => setUrlBootstrapDone(true));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 同步 URL（cuber、currentIndex 变化时 replaceState，不污染历史栈）
+  useEffect(() => {
+    if (!urlBootstrapDone) return;
+    const sp = new URLSearchParams(window.location.search);
+    if (mode === 'cuber' && cuber?.wcaId) {
+      sp.set('wcaId', cuber.wcaId);
+      if (cuberComps.length > 0) sp.set('i', String(currentIndex));
+      else sp.delete('i');
+    } else {
+      sp.delete('wcaId');
+      sp.delete('i');
+    }
+    const qs = sp.toString();
+    const nextUrl = window.location.pathname + (qs ? '?' + qs : '') + window.location.hash;
+    if (nextUrl !== window.location.pathname + window.location.search + window.location.hash) {
+      window.history.replaceState(null, '', nextUrl);
+    }
+  }, [mode, cuber, currentIndex, cuberComps.length, urlBootstrapDone]);
 
   // ── cuber 图层数据 ──
   const cuberPointsGeojson = useMemo(() => ({
@@ -990,21 +1096,61 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
   const prevIndexRef = useRef(0);
 
   // NOTE: 基于 currentIndex + animProgress 动态构造 arc 特征——最后一条弧按进度 slice
+  // year_progress = i / (totalArcs - 1)，用作 line-color 渐变（早→晚 = 冷→暖）
+  // 防闪：play loop 推进 currentIndex 时会先渲染一次 "新 currentIndex + 旧 animProgress=1"，
+  //       layout effect 随后把 animProgress 拉回 0。为防止这个中间态把全长 leg 推到地图上，
+  //       用 prevIndexRef 检测"新 leg 首渲"，强制 p=0。
   const cuberArcsGeojson = useMemo(() => {
     const features: GeoJSON.Feature<GeoJSON.LineString>[] = [];
+    const totalArcs = Math.max(1, cuberArcFullCoords.length);
+    const isFreshLeg = currentIndex > prevIndexRef.current;
+    const safeProgress = isFreshLeg ? 0 : animProgress;
     for (let i = 0; i < currentIndex; i++) {
       const coords = cuberArcFullCoords[i];
       if (!coords || coords.length < 2) continue;
       const sliceEnd = i === currentIndex - 1
-        ? Math.max(2, Math.floor(coords.length * animProgress))
+        ? Math.max(2, Math.floor(coords.length * safeProgress))
         : coords.length;
       features.push({
         type: 'Feature',
         geometry: { type: 'LineString', coordinates: coords.slice(0, sliceEnd) },
-        properties: { index: i },
+        properties: {
+          index: i,
+          year_progress: totalArcs <= 1 ? 1 : i / (totalArcs - 1),
+        },
       });
     }
     return { type: 'FeatureCollection' as const, features };
+  }, [cuberArcFullCoords, currentIndex, animProgress]);
+
+  // 当前 leg 的"箭头点" —— 取 active 弧的最后一个坐标 + 相对前一个点的 bearing
+  const cuberArcTipGeojson = useMemo(() => {
+    if (currentIndex < 1) return { type: 'FeatureCollection' as const, features: [] };
+    const coords = cuberArcFullCoords[currentIndex - 1];
+    if (!coords || coords.length < 2) return { type: 'FeatureCollection' as const, features: [] };
+    const isFreshLeg = currentIndex > prevIndexRef.current;
+    const safeProgress = isFreshLeg ? 0 : animProgress;
+    const sliceEnd = Math.max(2, Math.floor(coords.length * safeProgress));
+    const tip = coords[sliceEnd - 1];
+    const prev = coords[sliceEnd - 2];
+    // bearing：从 prev 指向 tip 的真北方位角（0=北，顺时针）
+    const toRad = Math.PI / 180;
+    const lat1 = prev[1] * toRad, lat2 = tip[1] * toRad;
+    const dLng = (tip[0] - prev[0]) * toRad;
+    const y = Math.sin(dLng) * Math.cos(lat2);
+    const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+    const bearing = Math.atan2(y, x) * 180 / Math.PI;
+    let lng = tip[0];
+    while (lng > 180) lng -= 360;
+    while (lng < -180) lng += 360;
+    return {
+      type: 'FeatureCollection' as const,
+      features: [{
+        type: 'Feature' as const,
+        geometry: { type: 'Point' as const, coordinates: [lng, tip[1]] },
+        properties: { bearing },
+      }],
+    };
   }, [cuberArcFullCoords, currentIndex, animProgress]);
 
   // ── Map 初始化（theme 变化时重建，相机从 cameraRef 恢复）──
@@ -1221,9 +1367,32 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
         id: CUBER_LAYER_ARC, type: 'line', source: CUBER_SOURCE_ARCS,
         layout: { 'visibility': 'none', 'line-cap': 'round', 'line-join': 'round' },
         paint: {
-          'line-color': '#C15F3C',
+          'line-color': '#C15F3C', // 占位，真正的渐变在下方 effect 里 setPaintProperty
           'line-width': 2,
-          'line-opacity': 0.75,
+          'line-opacity': 0.85,
+        },
+      });
+      // 当前 leg 的"箭头" —— 落在弧的前端（跟随 animProgress 移动）
+      map.addSource(CUBER_SOURCE_ARC_TIP, { type: 'geojson', data: cuberArcTipGeojson as unknown as GeoJSON.FeatureCollection });
+      map.addLayer({
+        id: CUBER_LAYER_ARC_ARROW, type: 'symbol', source: CUBER_SOURCE_ARC_TIP,
+        layout: {
+          'visibility': 'none',
+          'symbol-placement': 'point',
+          'text-field': '▲',
+          'text-font': ['Noto Sans Regular'],
+          'text-size': 18,
+          'text-rotate': ['get', 'bearing'],
+          'text-rotation-alignment': 'map',
+          'text-pitch-alignment': 'map',
+          'text-keep-upright': false,
+          'text-allow-overlap': true,
+          'text-ignore-placement': true,
+        },
+        paint: {
+          'text-color': '#FFFFFF',
+          'text-halo-color': '#E63E1A',
+          'text-halo-width': 2.5,
         },
       });
       map.addLayer({
@@ -1528,9 +1697,43 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
     if (!map || !mapLoaded) return;
     const ptsSrc = map.getSource(CUBER_SOURCE_POINTS) as GeoJSONSource | undefined;
     const arcSrc = map.getSource(CUBER_SOURCE_ARCS) as GeoJSONSource | undefined;
+    const tipSrc = map.getSource(CUBER_SOURCE_ARC_TIP) as GeoJSONSource | undefined;
     if (ptsSrc) ptsSrc.setData(cuberPointsGeojson as unknown as GeoJSON.FeatureCollection);
     if (arcSrc) arcSrc.setData(cuberArcsGeojson as unknown as GeoJSON.FeatureCollection);
-  }, [cuberPointsGeojson, cuberArcsGeojson, mapLoaded]);
+    if (tipSrc) tipSrc.setData(cuberArcTipGeojson as unknown as GeoJSON.FeatureCollection);
+  }, [cuberPointsGeojson, cuberArcsGeojson, cuberArcTipGeojson, mapLoaded]);
+
+  // ── cuber 弧线渐变上色（按 year_progress）──
+  // 独立 effect 便于 HMR 调色，且确保 layer 存在后再 set
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapLoaded) return;
+    try {
+      map.setPaintProperty(CUBER_LAYER_ARC, 'line-color', [
+        'interpolate', ['linear'], ['to-number', ['get', 'year_progress'], 0],
+        0,    '#3F8FE0',  // 早期：亮蓝
+        0.33, '#7FBF6F',  // 早中：青绿
+        0.66, '#E8B23F',  // 中后：金黄
+        1,    '#E63E1A',  // 近期：火红
+      ] as unknown as string);
+    } catch { /* layer 还未加 */ }
+  }, [mapLoaded, mode]);
+
+  // ── 当前 leg（正在画的那条）加粗 + 轻微高亮 ──
+  // 箭头由独立 source 驱动（cuberArcTipGeojson），无需 setFilter
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapLoaded || mode !== 'cuber') return;
+    const activeIdx = currentIndex - 1; // 当前正在推进的弧 = 到达 currentIndex 的那条
+    try {
+      map.setPaintProperty(CUBER_LAYER_ARC, 'line-width', [
+        'case', ['==', ['get', 'index'], activeIdx], 4, 2,
+      ] as unknown as number);
+      map.setPaintProperty(CUBER_LAYER_ARC, 'line-opacity', [
+        'case', ['==', ['get', 'index'], activeIdx], 1, 0.7,
+      ] as unknown as number);
+    } catch { /* */ }
+  }, [mapLoaded, mode, currentIndex]);
 
   // ── 语言切换时重新 patch 地图 label ──
   useEffect(() => {
@@ -1637,6 +1840,21 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
       (!!prevComp && !isInComfortableView(prevComp.longitude_degrees, prevComp.latitude_degrees))
     );
 
+    // 长距离弧线：先抛物线缩小再放大，让两端在动画中段都能看到（类似 flyTo）
+    const startZoom = mapRef.current?.getZoom() ?? 2.4;
+    let dipZoom: number | null = null;
+    if (needTrack && cur && prevComp) {
+      const distKm = haversineKm(
+        [prevComp.longitude_degrees, prevComp.latitude_degrees],
+        [cur.longitude_degrees, cur.latitude_degrees],
+      );
+      // > 2500 km 才启用 zoom dip；映射 2500km→不变, 8000km→1.5, 18000km→0.7
+      if (distKm > 2500) {
+        const target = Math.max(0.7, Math.min(startZoom, 3 - Math.log10(distKm / 1000) * 1.4));
+        if (target < startZoom - 0.2) dipZoom = target;
+      }
+    }
+
     let rafId = 0;
     const tick = (t: number) => {
       const p = Math.min(1, (t - start) / duration);
@@ -1647,7 +1865,11 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
         const lat = arcCoords[ix][1];
         while (lng > 180) lng -= 360;
         while (lng < -180) lng += 360;
-        mapRef.current?.jumpTo({ center: [lng, lat] });
+        // 抛物线 zoom：sin(πp) 在中点最大（1），两端为 0
+        const zoom = dipZoom !== null
+          ? startZoom + (dipZoom - startZoom) * Math.sin(Math.PI * p)
+          : undefined;
+        mapRef.current?.jumpTo({ center: [lng, lat], ...(zoom !== undefined ? { zoom } : {}) });
       }
       if (p < 1) rafId = requestAnimationFrame(tick);
     };
@@ -1883,6 +2105,85 @@ const onSelectCuber = useCallback((person: WcaPerson) => {
   const flagIso2 = (cuber?.iso2 || '').toLowerCase();
   const isTw = flagIso2 === 'tw';
 
+  // ── 信息卡可拖动（pointer events 兼容鼠标 / 触屏，位置存 localStorage）──
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [cardPos, setCardPos] = useState<{ left: number; top: number } | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const raw = window.localStorage.getItem('globeCuberCardPos');
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  });
+  const cardDragRef = useRef<{ dx: number; dy: number; pid: number } | null>(null);
+  const onCardPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    const tgt = e.target as HTMLElement;
+    // 让 button / a / input 内部 pointer 不触发拖动
+    if (tgt.closest('button, a, input, select, textarea')) return;
+    // 点在 .is-selectable 文本段内：让浏览器正常处理选择/复制，不触发拖动
+    if (tgt.closest('.is-selectable')) return;
+    const card = cardRef.current;
+    if (!card) return;
+    const rect = card.getBoundingClientRect();
+    cardDragRef.current = {
+      dx: e.clientX - rect.left,
+      dy: e.clientY - rect.top,
+      pid: e.pointerId,
+    };
+    card.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  }, []);
+  const onCardPointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    const drag = cardDragRef.current;
+    if (!drag || drag.pid !== e.pointerId) return;
+    const card = cardRef.current;
+    if (!card) return;
+    const w = card.offsetWidth;
+    const h = card.offsetHeight;
+    let left = e.clientX - drag.dx;
+    let top = e.clientY - drag.dy;
+    // 钳到视口内（留 4px 边距）
+    left = Math.max(4, Math.min(window.innerWidth - w - 4, left));
+    top = Math.max(4, Math.min(window.innerHeight - h - 4, top));
+    setCardPos({ left, top });
+  }, []);
+  const onCardPointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    const drag = cardDragRef.current;
+    if (!drag || drag.pid !== e.pointerId) return;
+    cardDragRef.current = null;
+    cardRef.current?.releasePointerCapture(e.pointerId);
+  }, []);
+  // 持久化位置
+  useEffect(() => {
+    if (cardPos) {
+      try { window.localStorage.setItem('globeCuberCardPos', JSON.stringify(cardPos)); } catch { /* */ }
+    }
+  }, [cardPos]);
+  // 窗口缩放时把卡片钳回视口
+  useEffect(() => {
+    const onResize = () => {
+      const card = cardRef.current;
+      if (!card || !cardPos) return;
+      const w = card.offsetWidth, h = card.offsetHeight;
+      const left = Math.max(4, Math.min(window.innerWidth - w - 4, cardPos.left));
+      const top = Math.max(4, Math.min(window.innerHeight - h - 4, cardPos.top));
+      if (left !== cardPos.left || top !== cardPos.top) setCardPos({ left, top });
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [cardPos]);
+
+  // 当前 leg 故事数据：与上一场的距离 + 间隔天数
+  const prevComp = currentIndex > 0 ? cuberComps[currentIndex - 1] : null;
+  const legKm = prevComp && currentComp
+    ? haversineKm(
+        [prevComp.longitude_degrees, prevComp.latitude_degrees],
+        [currentComp.longitude_degrees, currentComp.latitude_degrees],
+      )
+    : 0;
+  const legDays = prevComp && currentComp
+    ? Math.max(0, Math.round((Date.parse(currentComp.start_date) - Date.parse(prevComp.start_date)) / 86400000))
+    : 0;
+
   return (
     <div className={`globe-page is-${theme}`}>
       <div className="starfield" aria-hidden="true" ref={starfieldRef} />
@@ -1943,11 +2244,6 @@ const onSelectCuber = useCallback((person: WcaPerson) => {
                     setCurrentIndex(Number(e.target.value));
                   }}
                 />
-                <div className="cuber-step-label">
-                  <div className="cuber-step-count">{t('globe.step', { current: currentIndex + 1, total: cuberComps.length })}</div>
-                  <div className="cuber-step-name">{currentComp.name}</div>
-                  <div className="cuber-step-meta">{localizeCity(currentComp.city, currentComp.country_iso2, isZh)}, {countryName(currentComp.country_iso2, isZh)} · {currentComp.start_date}</div>
-                </div>
                 <div className="cuber-speed">
                   {([0.5, 1, 2] as Speed[]).map((s) => (
                     <button
@@ -2266,6 +2562,44 @@ const onSelectCuber = useCallback((person: WcaPerson) => {
           </div>
         );
       })()}
+
+      {mode === 'cuber' && !loadProgress && cuberComps.length > 0 && currentComp && (
+        <div
+          className={`cuber-info-card ${cardPos ? 'is-dragged' : ''}`}
+          ref={cardRef}
+          onPointerDown={onCardPointerDown}
+          onPointerMove={onCardPointerMove}
+          onPointerUp={onCardPointerUp}
+          onPointerCancel={onCardPointerUp}
+          style={cardPos ? { left: cardPos.left, top: cardPos.top, right: 'auto', bottom: 'auto' } : undefined}
+        >
+          <div className="cuber-step-count">{t('globe.step', { current: currentIndex + 1, total: cuberComps.length })}</div>
+          <div className="cuber-step-name is-selectable">
+            {currentComp.country_iso2 === 'TW'
+              ? <img src="/tools/assets/images/ChineseTaipei.svg" className="cuber-step-flag" alt="Chinese Taipei" />
+              : currentComp.country_iso2 && <span className={`fi fi-${currentComp.country_iso2.toLowerCase()} cuber-step-flag`} aria-label={currentComp.country_iso2} />}
+            <span>{localizeCompName(currentComp.id, currentComp.name)}</span>
+          </div>
+          <div className="cuber-step-meta is-selectable">{(nameZhMap?.get(currentComp.id)?.city_zh && isZh) ? nameZhMap.get(currentComp.id)!.city_zh : localizeCity(currentComp.city, currentComp.country_iso2, isZh)}, {countryName(currentComp.country_iso2, isZh)} · {currentComp.start_date}</div>
+          {prevComp && (
+            <div className="cuber-step-leg is-selectable">
+              {fmtDistance(legKm, isZh)} · {isZh ? `距上场 ${legDays} 天` : `${legDays}d since prev`}
+            </div>
+          )}
+          {skippedComps.length > 0 && cuber && (
+            <div className="cuber-skipped">
+              <span title={skippedComps.map(s => s.name || s.id).join('\n')}>
+                {isZh ? `${skippedComps.length} 场未加载` : `${skippedComps.length} not loaded`}
+              </span>
+              <button
+                className="cuber-skipped-retry"
+                onClick={() => loadCuberPath(cuber)}
+                title={isZh ? '重试' : 'Retry'}
+              >↻</button>
+            </div>
+          )}
+        </div>
+      )}
 
       <button
         className="theme-toggle-floating"
