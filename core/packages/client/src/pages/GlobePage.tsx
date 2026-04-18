@@ -28,6 +28,7 @@ import {
   type WcaPerson,
 } from '@cuberoot/shared';
 import LangToggle from '../components/LangToggle';
+import { displayCuberName } from '../utils/name_utils';
 import './globe.css';
 
 type Mode = 'upcoming' | 'cuber';
@@ -2199,16 +2200,17 @@ const onSelectCuber = useCallback((person: WcaPerson) => {
                 {isTw
                   ? <img src="/tools/assets/images/ChineseTaipei.svg" className="cuber-flag" alt="Chinese Taipei" />
                   : flagIso2 && <span className={`fi fi-${flagIso2} cuber-flag`} />}
-                <span className="cuber-name">{cuber.name}</span>
-                <span className="cuber-id">{cuber.wcaId}</span>
+                <span className="cuber-name">{displayCuberName(cuber.name, isZh)}</span>
                 <button className="cuber-clear" onClick={clearCuber} aria-label="Clear">
                   <X size={14} strokeWidth={1.75} />
                 </button>
               </div>
             )}
-            <button className="cuber-change-btn" onClick={() => setPickerOpen(true)}>
-              {cuber ? t('globe.changeCuber') : t('globe.selectCuber')}
-            </button>
+            {!cuber && (
+              <button className="cuber-change-btn" onClick={() => setPickerOpen(true)}>
+                {t('globe.selectCuber')}
+              </button>
+            )}
             {loadProgress && (
               <div className="cuber-progress">
                 <div className="cuber-progress-label">
