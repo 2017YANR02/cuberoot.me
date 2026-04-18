@@ -37,7 +37,7 @@ jobs:
           [ -d stats ] && cp -r stats _deploy/ || true
 
           # 4. 静态资源目录
-          for d in icons fonts oll_pic zbll_svg zbls_img vendor data; do
+          for d in icons fonts oll_pic zbll_svg zbls_img vendor data ffmpeg textures; do
             [ -d "$d" ] && cp -r "$d" _deploy/ || true
           done
 
@@ -45,7 +45,8 @@ jobs:
           for f in favicon.svg CubeRoot-dark.png manifest.json \
                    scramble_module.js confetti.min.js icons.svg \
                    icon_timer.png cstimer_logo.png callback.html \
-                   robots.txt sitemap.xml; do
+                   robots.txt sitemap.xml MediaInfoModule.wasm \
+                   countries-110m.geojson; do
             [ -f "$f" ] && cp -f "$f" _deploy/ || true
           done
 
