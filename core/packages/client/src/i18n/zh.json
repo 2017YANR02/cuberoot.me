@@ -158,15 +158,15 @@
     "eventFilter": "项目筛选"
   },
   "globe": {
-    "title": "比赛地球",
+    "title": "WCA 地球",
     "subtitle": "WCA 近期比赛地理分布",
     "loading": "加载 WCA 比赛中...",
     "loadFailed": "加载比赛失败",
     "statComps": "{{count}} 场比赛",
     "statCountries": "{{count}} 个国家",
     "backToCalendar": "日历视图",
-    "modeUpcoming": "近期比赛",
-    "modeHistory": "历史比赛",
+    "modeComps": "比赛",
+    "includePast": "包含往期",
     "modeCuber": "选手生涯",
     "selectCuber": "选择选手",
     "changeCuber": "更换",
