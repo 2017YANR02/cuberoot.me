@@ -240,14 +240,13 @@ const CUBER_SOURCE_POINTS = 'cuber-points';
 const CUBER_SOURCE_ARCS = 'cuber-arcs';
 const CUBER_SOURCE_ARC_TIP = 'cuber-arc-tip';
 const CUBER_LAYER_DOT = 'cuber-points-dot';
-const CUBER_LAYER_LABEL = 'cuber-points-label';
 const CUBER_LAYER_CITY = 'cuber-points-city';
 const CUBER_LAYER_ARC = 'cuber-arcs-line';
 const CUBER_LAYER_ARC_ARROW = 'cuber-arcs-arrow';
 
 const UPCOMING_LAYERS = ['clusters', 'cluster-count', 'unclustered-point', 'unclustered-count'];
 const PAST_LAYERS = ['past-clusters', 'past-cluster-count', 'past-unclustered-point'];
-const CUBER_LAYERS = [CUBER_LAYER_ARC, CUBER_LAYER_ARC_ARROW, CUBER_LAYER_DOT, CUBER_LAYER_LABEL, CUBER_LAYER_CITY];
+const CUBER_LAYERS = [CUBER_LAYER_ARC, CUBER_LAYER_ARC_ARROW, CUBER_LAYER_DOT, CUBER_LAYER_CITY];
 
 // ── 球面几何工具（Haversine 距离 + 球面多边形面积）──
 const EARTH_R_KM = 6371;
@@ -264,6 +263,12 @@ function totalDistanceKm(points: [number, number][]): number {
   let s = 0;
   for (let i = 1; i < points.length; i++) s += haversineKm(points[i - 1], points[i]);
   return s;
+}
+// 恒定速度：距离决定时长（clamp 避免极短/极长 leg 过快或过慢）
+// 参考：2000km = 1000ms @ speed 1 → 2 km/ms
+function legDurationMs(distKm: number, speed: number): number {
+  const raw = distKm / (2 * speed);
+  return Math.max(250, Math.min(4500, raw));
 }
 // 大圆弧插值：在两点之间的球面短程线上均匀采样，输出 [lng, lat][] 含端点
 function greatCircleArc(a: [number, number], b: [number, number]): [number, number][] {
@@ -1268,7 +1273,7 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
       // NOTE: 14k 点依赖 MapLibre cluster 性能；clusterMaxZoom/Radius 和 upcoming 保持一致
       map.addSource('past-comps', {
         type: 'geojson', data: pastGeojson as unknown as GeoJSON.FeatureCollection,
-        cluster: true, clusterMaxZoom: 6, clusterRadius: 45,
+        cluster: true, clusterMaxZoom: 10, clusterRadius: 70,
       });
       map.addLayer({
         id: 'past-clusters', type: 'circle', source: 'past-comps', filter: ['has', 'point_count'],
@@ -1281,7 +1286,15 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
       });
       map.addLayer({
         id: 'past-cluster-count', type: 'symbol', source: 'past-comps', filter: ['has', 'point_count'],
-        layout: { 'visibility': 'none', 'text-field': ['to-string', ['get', 'point_count']], 'text-font': ['Noto Sans Regular'], 'text-size': 13 },
+        layout: {
+          'visibility': 'none',
+          'text-field': ['to-string', ['get', 'point_count']],
+          'text-font': ['Noto Sans Regular'],
+          'text-size': 13,
+          // 相邻簇数字重叠时：大数字优先，小数字被挤掉
+          'symbol-sort-key': ['-', 0, ['get', 'point_count']],
+          'text-padding': 40,
+        },
         paint: { 'text-color': '#FFFFFF' },
       });
       map.addLayer({
@@ -1297,7 +1310,7 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
       // 保证低 zoom 聚合时显示真实场数而不是 feature 数。
       map.addSource('comps', {
         type: 'geojson', data: upcomingGeojson as unknown as GeoJSON.FeatureCollection,
-        cluster: true, clusterMaxZoom: 6, clusterRadius: 45,
+        cluster: true, clusterMaxZoom: 10, clusterRadius: 70,
         clusterProperties: {
           stack_total: ['+', ['get', 'stack_count']],
         },
@@ -1312,7 +1325,14 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
       });
       map.addLayer({
         id: 'cluster-count', type: 'symbol', source: 'comps', filter: ['has', 'point_count'],
-        layout: { 'text-field': ['to-string', ['get', 'stack_total']], 'text-font': ['Noto Sans Regular'], 'text-size': 13 },
+        layout: {
+          'text-field': ['to-string', ['get', 'stack_total']],
+          'text-font': ['Noto Sans Regular'],
+          'text-size': 13,
+          // 相邻簇数字重叠时：大数字优先，小数字被挤掉
+          'symbol-sort-key': ['-', 0, ['get', 'stack_total']],
+          'text-padding': 40,
+        },
         paint: { 'text-color': '#FFFFFF' },
       });
       map.addLayer({
@@ -1328,7 +1348,13 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
       map.addLayer({
         id: 'unclustered-count', type: 'symbol', source: 'comps',
         filter: ['all', ['!', ['has', 'point_count']], ['>', ['get', 'stack_count'], 1]],
-        layout: { 'text-field': ['to-string', ['get', 'stack_count']], 'text-font': ['Noto Sans Regular'], 'text-size': 12 },
+        layout: {
+          'text-field': ['to-string', ['get', 'stack_count']],
+          'text-font': ['Noto Sans Regular'],
+          'text-size': 12,
+          'symbol-sort-key': ['-', 0, ['get', 'stack_count']],
+          'text-padding': 35,
+        },
         paint: { 'text-color': '#FFFFFF' },
       });
 
@@ -1405,18 +1431,6 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
           'circle-stroke-color': '#FFFFFF',
           'circle-stroke-width': 2,
         },
-      });
-      map.addLayer({
-        id: CUBER_LAYER_LABEL, type: 'symbol', source: CUBER_SOURCE_POINTS,
-        layout: {
-          'visibility': 'none',
-          'text-field': ['to-string', ['+', 1, ['get', 'index']]],
-          'text-font': ['Noto Sans Regular'],
-          'text-size': 10,
-          'text-offset': [0, 1.4],
-          'text-allow-overlap': true,
-        },
-        paint: { 'text-color': '#181716', 'text-halo-color': '#FFFFFF', 'text-halo-width': 1.5 },
       });
       // 当前比赛的城市名（强制显示，避免被其他 label 遮挡）
       map.addLayer({
@@ -1770,7 +1784,6 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
     const visibleMax = animating ? currentIndex - 1 : currentIndex;
     const filter: maplibregl.FilterSpecification = ['<=', ['get', 'index'], visibleMax];
     try { map.setFilter(CUBER_LAYER_DOT, filter); } catch { /* */ }
-    try { map.setFilter(CUBER_LAYER_LABEL, filter); } catch { /* */ }
     // 城市名仅显示在"当前"那一点
     try {
       map.setFilter(CUBER_LAYER_CITY,
@@ -1830,12 +1843,18 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
     // 前进一步 → 动画（立即更新 prev，防止 play loop 连发时 delta 漂移）
     prevIndexRef.current = currentIndex;
     setAnimProgress(0);
-    const duration = 500 / speed;
-    const start = performance.now();
 
     // 让相机沿着大圆弧同步走，避免 easeTo 直线插值导致的"超远距离时视角和路径分家"
     const arcCoords = cuberArcFullCoords[currentIndex - 1];
     const prevComp = cuberComps[currentIndex - 1];
+    const legDistKm = prevComp && cur
+      ? haversineKm(
+          [prevComp.longitude_degrees, prevComp.latitude_degrees],
+          [cur.longitude_degrees, cur.latitude_degrees],
+        )
+      : 0;
+    const duration = legDurationMs(legDistKm, speed);
+    const start = performance.now();
     const needTrack = !!cur && (
       !isInComfortableView(cur.longitude_degrees, cur.latitude_degrees) ||
       (!!prevComp && !isInComfortableView(prevComp.longitude_degrees, prevComp.latitude_degrees))
@@ -1844,16 +1863,10 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
     // 长距离弧线：先抛物线缩小再放大，让两端在动画中段都能看到（类似 flyTo）
     const startZoom = mapRef.current?.getZoom() ?? 2.4;
     let dipZoom: number | null = null;
-    if (needTrack && cur && prevComp) {
-      const distKm = haversineKm(
-        [prevComp.longitude_degrees, prevComp.latitude_degrees],
-        [cur.longitude_degrees, cur.latitude_degrees],
-      );
-      // > 2500 km 才启用 zoom dip；映射 2500km→不变, 8000km→1.5, 18000km→0.7
-      if (distKm > 2500) {
-        const target = Math.max(0.7, Math.min(startZoom, 3 - Math.log10(distKm / 1000) * 1.4));
-        if (target < startZoom - 0.2) dipZoom = target;
-      }
+    if (needTrack && legDistKm > 2500) {
+      // 映射 2500km→不变, 8000km→1.5, 18000km→0.7
+      const target = Math.max(0.7, Math.min(startZoom, 3 - Math.log10(legDistKm / 1000) * 1.4));
+      if (target < startZoom - 0.2) dipZoom = target;
     }
 
     let rafId = 0;
@@ -1886,21 +1899,20 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cuberComps]);
 
-  // ── Play loop ──
+  // ── Play loop ── 按"下一 leg 的距离"调度 setTimeout，保持每段恒定速度
   useEffect(() => {
-    if (!playing || mode !== 'cuber' || cuberComps.length === 0) return;
-    const step = 500 / speed;
-    const id = setInterval(() => {
-      setCurrentIndex((i) => {
-        if (i >= cuberComps.length - 1) {
-          setPlaying(false);
-          return i;
-        }
-        return i + 1;
-      });
-    }, step);
-    return () => clearInterval(id);
-  }, [playing, speed, mode, cuberComps.length]);
+    if (!playing || mode !== 'cuber' || cuberComps.length < 2) return;
+    if (currentIndex >= cuberComps.length - 1) { setPlaying(false); return; }
+    const from = cuberComps[currentIndex];
+    const to = cuberComps[currentIndex + 1];
+    const distKm = from && to
+      ? haversineKm([from.longitude_degrees, from.latitude_degrees], [to.longitude_degrees, to.latitude_degrees])
+      : 500;
+    const id = setTimeout(() => {
+      setCurrentIndex((i) => Math.min(cuberComps.length - 1, i + 1));
+    }, legDurationMs(distKm, speed));
+    return () => clearTimeout(id);
+  }, [playing, speed, mode, cuberComps, currentIndex]);
 
   // 拖动地球时星空跟着滚动：等距柱面贴图按经/纬度反向偏移 background-position
   // 视口宽 -> 经度 360° 完整跨度，所以 1° = vw/360 px
@@ -2650,11 +2662,6 @@ const onSelectCuber = useCallback((person: WcaPerson) => {
           </div>
         )}
         <div className="map-controls-bar">
-          <button
-            className={`map-ctrl-btn map-ctrl-3d ${pitch > 1 ? 'is-active' : ''}`}
-            onClick={() => mapRef.current?.easeTo({ pitch: pitch > 1 ? 0 : 60, duration: 400 })}
-            title={pitch > 1 ? (isZh ? '退出 3D' : 'Exit 3D') : (isZh ? '3D 视角' : '3D view')}
-          >3D</button>
           <button
             className={`map-ctrl-btn ${navPopoverOpen ? 'is-active' : ''}`}
             onClick={() => setNavPopoverOpen((v) => !v)}
