@@ -158,15 +158,15 @@
     "eventFilter": "Events"
   },
   "globe": {
-    "title": "Competitions Globe",
+    "title": "WCA Globe",
     "subtitle": "World map of upcoming WCA competitions",
     "loading": "Loading WCA competitions...",
     "loadFailed": "Failed to load competitions",
     "statComps": "{{count}} comps",
     "statCountries": "{{count}} countries",
     "backToCalendar": "Calendar",
-    "modeUpcoming": "Upcoming",
-    "modeHistory": "History",
+    "modeComps": "Comps",
+    "includePast": "Include past",
     "modeCuber": "Cuber Path",
     "selectCuber": "Select cuber",
     "changeCuber": "Change",

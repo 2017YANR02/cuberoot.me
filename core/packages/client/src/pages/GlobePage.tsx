@@ -7,7 +7,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, RotateCcw, Play, Pause, X, Moon, Sun, Satellite, Plus, Minus, Navigation, Compass } from 'lucide-react';
+import { RotateCcw, RotateCw, Play, Pause, X, Moon, Sun, Satellite, Plus, Minus, Navigation, Compass, Ruler, Undo2, Search } from 'lucide-react';
 import maplibregl from 'maplibre-gl';
 import type { GeoJSONSource, MapMouseEvent, MapGeoJSONFeature } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -29,8 +29,16 @@ import {
 import LangToggle from '../components/LangToggle';
 import './globe.css';
 
-type Mode = 'upcoming' | 'history' | 'cuber';
+type Mode = 'upcoming' | 'cuber';
 type Speed = 0.5 | 1 | 2;
+type DrawMode = 'none' | 'measure' | 'path' | 'polygon';
+type SavedShape = {
+  id: string;
+  type: 'measure' | 'path' | 'polygon';
+  name: string;
+  points: [number, number][];
+  createdAt: number;
+};
 
 // WCA 复办年份；slider 从 2003 开始（更紧凑，1982-2003 之间没有比赛）
 const HISTORY_MIN_YEAR = 2003;
@@ -51,6 +59,16 @@ function buildSatelliteStyle(): maplibregl.StyleSpecification {
     version: 8,
     glyphs: 'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf',
     sources: {
+      // 低 zoom 底图：NASA GIBS Blue Marble，真实深蓝海洋，全球 CDN 含中国都很快
+      // 单 tile ~30-50KB，全球视图 ~12 个 tile 就能覆盖
+      bluemarble: {
+        type: 'raster',
+        tiles: ['https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/BlueMarble_NextGeneration/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpeg'],
+        tileSize: 256,
+        maxzoom: 8,
+        attribution: 'NASA Earth Observatory · Blue Marble',
+      },
+      // 高 zoom 细节：Esri World Imagery，城市级别才会拉
       satellite: {
         type: 'raster',
         tiles: ['https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
@@ -64,7 +82,10 @@ function buildSatelliteStyle(): maplibregl.StyleSpecification {
       },
     },
     layers: [
-      { id: 'satellite-base', type: 'raster', source: 'satellite' },
+      // Blue Marble 永远在最底层做兜底色（避免 Esri 加载未完成时露白）
+      { id: 'bluemarble-base', type: 'raster', source: 'bluemarble', maxzoom: 9 },
+      // Esri 高清覆盖在上面，z 6+ 才开始拉，平滑接管
+      { id: 'satellite-base', type: 'raster', source: 'satellite', minzoom: 6 },
       // 国家边界淡白
       {
         id: 'country-boundary', type: 'line', source: 'labels', 'source-layer': 'boundary',
@@ -149,6 +170,90 @@ const CUBER_LAYER_ARC = 'cuber-arcs-line';
 const UPCOMING_LAYERS = ['clusters', 'cluster-count', 'unclustered-point', 'unclustered-count'];
 const PAST_LAYERS = ['past-clusters', 'past-cluster-count', 'past-unclustered-point'];
 const CUBER_LAYERS = [CUBER_LAYER_ARC, CUBER_LAYER_DOT, CUBER_LAYER_LABEL];
+
+// ── 球面几何工具（Haversine 距离 + 球面多边形面积）──
+const EARTH_R_KM = 6371;
+function haversineKm(a: [number, number], b: [number, number]): number {
+  const toRad = Math.PI / 180;
+  const dLat = (b[1] - a[1]) * toRad;
+  const dLng = (b[0] - a[0]) * toRad;
+  const lat1 = a[1] * toRad;
+  const lat2 = b[1] * toRad;
+  const x = Math.sin(dLat / 2) ** 2 + Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
+  return 2 * EARTH_R_KM * Math.asin(Math.sqrt(x));
+}
+function totalDistanceKm(points: [number, number][]): number {
+  let s = 0;
+  for (let i = 1; i < points.length; i++) s += haversineKm(points[i - 1], points[i]);
+  return s;
+}
+// 大圆弧插值：在两点之间的球面短程线上均匀采样，输出 [lng, lat][] 含端点
+function greatCircleArc(a: [number, number], b: [number, number]): [number, number][] {
+  const toRad = Math.PI / 180;
+  const toDeg = 180 / Math.PI;
+  const lat1 = a[1] * toRad, lng1 = a[0] * toRad;
+  const lat2 = b[1] * toRad, lng2 = b[0] * toRad;
+  const sinDLat = Math.sin((lat2 - lat1) / 2);
+  const sinDLng = Math.sin((lng2 - lng1) / 2);
+  const x = sinDLat * sinDLat + sinDLng * sinDLng * Math.cos(lat1) * Math.cos(lat2);
+  const d = 2 * Math.asin(Math.min(1, Math.sqrt(x)));
+  if (d < 1e-7) return [a, b];
+  // 步数随弧长自适应：每 ~150 km 一段，最少 32，最多 256
+  const steps = Math.min(256, Math.max(32, Math.ceil(d * EARTH_R_KM / 150)));
+  const cosLat1 = Math.cos(lat1), cosLat2 = Math.cos(lat2);
+  const sinD = Math.sin(d);
+  const out: [number, number][] = new Array(steps + 1);
+  let prevLng = a[0]; // 用来跨反子午线时把 lng "解卷绕" 成连续值
+  for (let i = 0; i <= steps; i++) {
+    const f = i / steps;
+    const A = Math.sin((1 - f) * d) / sinD;
+    const B = Math.sin(f * d) / sinD;
+    const xx = A * cosLat1 * Math.cos(lng1) + B * cosLat2 * Math.cos(lng2);
+    const yy = A * cosLat1 * Math.sin(lng1) + B * cosLat2 * Math.sin(lng2);
+    const zz = A * Math.sin(lat1) + B * Math.sin(lat2);
+    const lat = Math.atan2(zz, Math.sqrt(xx * xx + yy * yy)) * toDeg;
+    let lng = Math.atan2(yy, xx) * toDeg;
+    // 解卷绕：保持相邻 lng 差 < 180°，避免跨 ±180 时画一条横穿地图的回弹线
+    while (lng - prevLng > 180) lng -= 360;
+    while (prevLng - lng > 180) lng += 360;
+    prevLng = lng;
+    out[i] = [lng, lat];
+  }
+  return out;
+}
+// 把多个折点按相邻配对扩展成一条连续大圆弧 LineString 坐标
+function expandToGreatCircleLine(points: [number, number][]): [number, number][] {
+  if (points.length < 2) return points;
+  const out: [number, number][] = [];
+  for (let i = 0; i < points.length - 1; i++) {
+    const seg = greatCircleArc(points[i], points[i + 1]);
+    if (i === 0) out.push(...seg);
+    else out.push(...seg.slice(1)); // 去重端点
+  }
+  return out;
+}
+// 球面多边形面积（球面过剩公式）
+function polygonAreaKm2(points: [number, number][]): number {
+  if (points.length < 3) return 0;
+  const toRad = Math.PI / 180;
+  let sum = 0;
+  for (let i = 0; i < points.length; i++) {
+    const [lng1, lat1] = points[i];
+    const [lng2, lat2] = points[(i + 1) % points.length];
+    sum += (lng2 - lng1) * toRad * (2 + Math.sin(lat1 * toRad) + Math.sin(lat2 * toRad));
+  }
+  return Math.abs(sum * EARTH_R_KM * EARTH_R_KM / 2);
+}
+function fmtDistance(km: number, isZh: boolean): string {
+  if (km < 1) return `${(km * 1000).toFixed(1)} m`;
+  if (km < 100) return `${km.toFixed(2)} km`;
+  return `${km.toLocaleString(isZh ? 'zh-CN' : 'en-US', { maximumFractionDigits: 2 })} km`;
+}
+function fmtArea(km2: number, isZh: boolean): string {
+  if (km2 < 1) return `${Math.round(km2 * 1_000_000).toLocaleString()} m²`;
+  if (km2 < 100) return `${km2.toFixed(2)} km²`;
+  return `${km2.toLocaleString(isZh ? 'zh-CN' : 'en-US', { maximumFractionDigits: 2 })} km²`;
+}
 
 // 格式化经纬度为度分秒（Google Earth 风格：67°16'15.24"S 56°36'35.21"W）
 function formatDMS(lat: number, lng: number): string {
@@ -536,10 +641,12 @@ export default function GlobePage() {
   const [comps, setComps] = useState<UpcomingCompRecord[] | null>(null);
 const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(null);
 
-  // ── history 模式 state ──
+  // ── past 比赛叠加（Comps 模式下的可选层） ──
   const currentYear = new Date().getFullYear();
+  const [includePast, setIncludePast] = useState(false);
   const [pastComps, setPastComps] = useState<PastCompRecord[] | null>(null);
   const [pastLoading, setPastLoading] = useState(false);
+  // 默认从 1982（slider 拉到 HISTORY_MIN_YEAR=2003 时自动包含 1982 那一场）
   const [yearRange, setYearRange] = useState<[number, number]>([HISTORY_MIN_YEAR, currentYear]);
 
   // ── cuber 模式 state ──
@@ -558,6 +665,138 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
   const [navPopoverOpen, setNavPopoverOpen] = useState(false);
   const navPopoverRef = useRef<HTMLDivElement | null>(null);
 
+  // ── 搜索（地点 via Nominatim / 比赛 via 本地 comps）──
+  type GeoResult = { display_name: string; lat: string; lon: string; boundingbox?: [string, string, string, string] };
+  type SearchType = 'place' | 'comp';
+  const [searchType, setSearchType] = useState<SearchType>('place');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [placeResults, setPlaceResults] = useState<GeoResult[]>([]);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const searchWrapRef = useRef<HTMLDivElement | null>(null);
+  // 地点搜索：Nominatim
+  useEffect(() => {
+    if (searchType !== 'place') { setPlaceResults([]); setSearchLoading(false); return; }
+    const q = searchQuery.trim();
+    if (q.length < 2) { setPlaceResults([]); setSearchLoading(false); return; }
+    setSearchLoading(true);
+    const ctrl = new AbortController();
+    const timer = setTimeout(async () => {
+      try {
+        const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&q=${encodeURIComponent(q)}`;
+        const r = await fetch(url, { signal: ctrl.signal, headers: { Accept: 'application/json' } });
+        if (!r.ok) throw new Error('nominatim');
+        const data = await r.json() as GeoResult[];
+        setPlaceResults(data);
+      } catch { /* aborted or failed */ }
+      finally { setSearchLoading(false); }
+    }, 350);
+    return () => { ctrl.abort(); clearTimeout(timer); };
+  }, [searchQuery, searchType]);
+  // 比赛搜索：本地 comps + pastComps（同步，无网络请求）
+  type CompResult = { id: string; name: string; city: string; country: string; lng: number; lat: number; date: string; tag: 'upcoming' | 'past' };
+  const compResults = useMemo<CompResult[]>(() => {
+    if (searchType !== 'comp') return [];
+    const q = searchQuery.trim().toLowerCase();
+    if (q.length < 2) return [];
+    const seen = new Set<string>();
+    const matches: CompResult[] = [];
+    for (const c of (comps ?? [])) {
+      if (c.name.toLowerCase().includes(q) || c.city.toLowerCase().includes(q)) {
+        seen.add(c.id);
+        matches.push({ id: c.id, name: c.name, city: c.city, country: c.country, lng: c.longitude_degrees, lat: c.latitude_degrees, date: c.start_date, tag: 'upcoming' });
+      }
+    }
+    for (const c of (pastComps ?? [])) {
+      if (seen.has(c.id)) continue;
+      if (c.name.toLowerCase().includes(q) || c.city.toLowerCase().includes(q)) {
+        matches.push({ id: c.id, name: c.name, city: c.city, country: c.country, lng: c.lng, lat: c.lat, date: c.start_date, tag: 'past' });
+      }
+    }
+    // upcoming 永远排前面，past 按日期倒序（最新的在上）
+    matches.sort((a, b) => {
+      if (a.tag !== b.tag) return a.tag === 'upcoming' ? -1 : 1;
+      return b.date.localeCompare(a.date);
+    });
+    return matches.slice(0, 50);
+  }, [searchType, searchQuery, comps, pastComps]);
+  // 搜索 comp 模式下顺便把历史比赛 JSON 拉下来（即使当前不在 history 模式）
+  useEffect(() => {
+    if (searchType !== 'comp' || pastComps !== null || pastLoading) return;
+    setPastLoading(true);
+    fetchAllPastCompsJson()
+      .then((list) => setPastComps(list))
+      .catch(() => { /* 静默；history 模式还有第二次机会 */ })
+      .finally(() => setPastLoading(false));
+  }, [searchType, pastComps, pastLoading]);
+  useEffect(() => {
+    if (!searchOpen) return;
+    const onDoc = (e: MouseEvent) => {
+      if (searchWrapRef.current && !searchWrapRef.current.contains(e.target as Node)) setSearchOpen(false);
+    };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [searchOpen]);
+  const goToPlaceResult = useCallback((r: GeoResult) => {
+    const map = mapRef.current;
+    if (!map) return;
+    const lat = parseFloat(r.lat);
+    const lng = parseFloat(r.lon);
+    if (r.boundingbox) {
+      const [s, n, w, e] = r.boundingbox;
+      try {
+        map.fitBounds([[parseFloat(w), parseFloat(s)], [parseFloat(e), parseFloat(n)]], { padding: 60, duration: 800, maxZoom: 11 });
+      } catch {
+        map.easeTo({ center: [lng, lat], zoom: 8, duration: 800 });
+      }
+    } else {
+      map.easeTo({ center: [lng, lat], zoom: 8, duration: 800 });
+    }
+    setSearchOpen(false);
+    setSearchQuery(r.display_name.split(',')[0]);
+  }, []);
+  const goToCompResult = useCallback((c: CompResult) => {
+    const map = mapRef.current;
+    if (!map) return;
+    setMode('upcoming');
+    // past 比赛需要勾上 includePast 并撑开年份滑块
+    if (c.tag === 'past') {
+      setIncludePast(true);
+      const compYear = parseInt(c.date.slice(0, 4), 10);
+      if (Number.isFinite(compYear)) {
+        setYearRange(([lo, hi]) => [Math.min(lo, compYear), Math.max(hi, compYear)]);
+      }
+    }
+    map.easeTo({ center: [c.lng, c.lat], zoom: 8, duration: 800 });
+    setSearchOpen(false);
+    setSearchQuery(c.name);
+  }, []);
+
+  // ── 绘制 / 测量 state ──
+  const [drawMode, setDrawMode] = useState<DrawMode>('none');
+  const [drawPoints, setDrawPoints] = useState<[number, number][]>([]);
+  // cursor 跟随：地图坐标用 ref（高频更新走 DOM/source 直接刷，不触发 React 重渲染）
+  const cursorMapRef = useRef<[number, number] | null>(null);
+  const tooltipElRef = useRef<HTMLDivElement | null>(null);
+  const updateGhostLineRef = useRef<(() => void) | null>(null);
+  const drawPointsRef = useRef<[number, number][]>([]);
+  useEffect(() => { drawPointsRef.current = drawPoints; }, [drawPoints]);
+  // snap-target hover：cursor 是否贴近起点
+  const [snapHover, setSnapHover] = useState(false);
+  const snapHoverRef = useRef(false);
+  useEffect(() => { snapHoverRef.current = snapHover; }, [snapHover]);
+  const drawModeRef = useRef<DrawMode>('none');
+  useEffect(() => { drawModeRef.current = drawMode; }, [drawMode]);
+  const [savedShapes, setSavedShapes] = useState<SavedShape[]>(() => {
+    try {
+      const raw = localStorage.getItem('globe.shapes.v1');
+      return raw ? JSON.parse(raw) : [];
+    } catch { return []; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem('globe.shapes.v1', JSON.stringify(savedShapes)); } catch { /* */ }
+  }, [savedShapes]);
+
   // ── nav popover 点击外关闭 ──
   useEffect(() => {
     if (!navPopoverOpen) return;
@@ -575,15 +814,15 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
       .catch(() => setError(t('globe.loadFailed')));
   }, [t]);
 
-  // ── 拉 history 数据（懒加载，切到 history 模式才开始拉） ──
+  // ── 拉 history 数据（懒加载，勾选 includePast 才开始拉） ──
   useEffect(() => {
-    if (mode !== 'history' || pastComps !== null || pastLoading) return;
+    if (!includePast || pastComps !== null || pastLoading) return;
     setPastLoading(true);
     fetchAllPastCompsJson()
       .then((list) => setPastComps(list))
       .catch(() => setError(t('globe.loadFailed')))
       .finally(() => setPastLoading(false));
-  }, [mode, pastComps, pastLoading, t]);
+  }, [includePast, pastComps, pastLoading, t]);
 
   const filteredComps = useMemo(() => comps ?? [], [comps]);
 
@@ -592,34 +831,15 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
     return { comps: filteredComps.length, countries: countries.size };
   }, [filteredComps]);
 
-  // 同坐标比赛预合并为 1 个 feature：避免 zoom 超过 clusterMaxZoom 后两场完全重叠
-  // 只点到一场。stack_count>1 时 feature 属性里塞 stack_comps（JSON 字符串）供 click 展开。
-  const upcomingGeojson = useMemo(() => {
-    const groups = new Map<string, UpcomingCompRecord[]>();
-    for (const c of filteredComps) {
-      const key = `${c.longitude_degrees.toFixed(6)},${c.latitude_degrees.toFixed(6)}`;
-      const g = groups.get(key);
-      if (g) g.push(c); else groups.set(key, [c]);
-    }
-    const features = Array.from(groups.values()).map((group) => {
-      const head = group[0];
-      const props: Record<string, unknown> = {
-        id: head.id, name: head.name, city: head.city,
-        country: head.country,
-        start_date: head.start_date, end_date: head.end_date, url: head.url,
-        stack_count: group.length,
-      };
-      if (group.length > 1) props.stack_comps = JSON.stringify(group);
-      return {
-        type: 'Feature' as const,
-        geometry: { type: 'Point' as const, coordinates: [head.longitude_degrees, head.latitude_degrees] },
-        properties: props,
-      };
-    });
-    return { type: 'FeatureCollection' as const, features };
-  }, [filteredComps]);
+  // 合并的 countries 计数（upcoming + past 去重，仅在 includePast 时和 pastStats 联用）
+  const combinedCountries = useMemo(() => {
+    const s = new Set<string>();
+    for (const c of filteredComps) s.add(c.country);
+    if (includePast) for (const c of (pastComps ?? [])) s.add(c.country);
+    return s.size;
+  }, [filteredComps, includePast, pastComps]);
 
-  // ── history 模式过滤 + 聚合 GeoJSON ──
+  // ── history 模式过滤 ──
   const filteredPast = useMemo(() => {
     if (!pastComps) return [];
     const [y0, y1] = yearRange;
@@ -629,6 +849,59 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
       return y >= effectiveMin && y <= y1;
     });
   }, [pastComps, yearRange]);
+
+  // 同坐标比赛预合并为 1 个 feature：避免 zoom 超过 clusterMaxZoom 后两场完全重叠
+  // 只点到一场。stack_count>1 时 feature 属性里塞 stack_comps（JSON 字符串）供 click 展开。
+  // includePast 时把 past 也并入同一 source，由 MapLibre 一起聚合（视觉不区分新旧）
+  const upcomingGeojson = useMemo(() => {
+    type AnyComp = (UpcomingCompRecord | PastCompRecord) & { __past?: boolean };
+    const groups = new Map<string, AnyComp[]>();
+    for (const c of filteredComps) {
+      const key = `${c.longitude_degrees.toFixed(6)},${c.latitude_degrees.toFixed(6)}`;
+      const g = groups.get(key);
+      if (g) g.push(c); else groups.set(key, [c]);
+    }
+    if (includePast) {
+      for (const c of filteredPast) {
+        const key = `${c.longitude_degrees.toFixed(6)},${c.latitude_degrees.toFixed(6)}`;
+        const tagged: AnyComp = { ...c, __past: true };
+        const g = groups.get(key);
+        if (g) g.push(tagged); else groups.set(key, [tagged]);
+      }
+    }
+    const features = Array.from(groups.values()).map((group) => {
+      const head = group[0];
+      const isPastHead = (head as { __past?: boolean }).__past === true;
+      const url = isPastHead ? `https://www.worldcubeassociation.org/competitions/${head.id}` : (head as UpcomingCompRecord).url;
+      const props: Record<string, unknown> = {
+        id: head.id, name: head.name, city: head.city,
+        country: head.country,
+        start_date: head.start_date, end_date: head.end_date, url,
+        stack_count: group.length,
+      };
+      if (group.length > 1) {
+        // 给点击展开用：把每条都规范化（保留 url 字段，past 用 id 反推）
+        const normalized = group.map((c) => {
+          const past = (c as { __past?: boolean }).__past === true;
+          return {
+            id: c.id, name: c.name, city: c.city, country: c.country,
+            start_date: c.start_date, end_date: c.end_date,
+            latitude_degrees: c.latitude_degrees, longitude_degrees: c.longitude_degrees,
+            url: past ? `https://www.worldcubeassociation.org/competitions/${c.id}` : (c as UpcomingCompRecord).url,
+            events: c.events,
+            competitor_limit: past ? 0 : (c as UpcomingCompRecord).competitor_limit,
+          };
+        });
+        props.stack_comps = JSON.stringify(normalized);
+      }
+      return {
+        type: 'Feature' as const,
+        geometry: { type: 'Point' as const, coordinates: [head.longitude_degrees, head.latitude_degrees] },
+        properties: props,
+      };
+    });
+    return { type: 'FeatureCollection' as const, features };
+  }, [filteredComps, filteredPast, includePast]);
 
   const pastStats = useMemo(() => {
     const countries = new Set(filteredPast.map((c) => c.country));
@@ -755,7 +1028,7 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
         container: containerRef.current,
         style,
         center: cam?.center ?? [30, 20],
-        zoom: cam?.zoom ?? 1.4,
+        zoom: cam?.zoom ?? 2.4,
         bearing: cam?.bearing ?? 0,
         pitch: cam?.pitch ?? 0,
         attributionControl: false,
@@ -775,10 +1048,42 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
       const reproj = map.project(e.lngLat);
       const dx = reproj.x - e.point.x;
       const dy = reproj.y - e.point.y;
-      if (dx * dx + dy * dy > 4) setCursorPos(null);
-      else setCursorPos({ lat: e.lngLat.lat, lng: e.lngLat.lng });
+      const onGlobe = dx * dx + dy * dy <= 4;
+      if (onGlobe) setCursorPos({ lat: e.lngLat.lat, lng: e.lngLat.lng });
+      else setCursorPos(null);
+      // 绘制模式下，更新 cursorMapRef + 跟随 tooltip 位置 + 幽灵线 + snap 检测
+      if (drawModeRef.current !== 'none') {
+        cursorMapRef.current = onGlobe ? [e.lngLat.lng, e.lngLat.lat] : null;
+        const tip = tooltipElRef.current;
+        if (tip) {
+          if (onGlobe) {
+            tip.style.transform = `translate(${e.point.x + 14}px, ${e.point.y + 14}px)`;
+            tip.style.opacity = '1';
+          } else {
+            tip.style.opacity = '0';
+          }
+        }
+        // snap hover：path/polygon + ≥3 点 + 距起点 < 14px
+        const pts = drawPointsRef.current;
+        if ((drawModeRef.current === 'path' || drawModeRef.current === 'polygon') && pts.length >= 3 && onGlobe) {
+          const firstPx = map.project(pts[0]);
+          const dx = firstPx.x - e.point.x;
+          const dy = firstPx.y - e.point.y;
+          const isSnap = dx * dx + dy * dy <= 14 * 14;
+          if (isSnap !== snapHoverRef.current) setSnapHover(isSnap);
+        } else if (snapHoverRef.current) {
+          setSnapHover(false);
+        }
+        updateGhostLineRef.current?.();
+      }
     });
-    map.on('mouseout', () => setCursorPos(null));
+    map.on('mouseout', () => {
+      setCursorPos(null);
+      cursorMapRef.current = null;
+      const tip = tooltipElRef.current;
+      if (tip) tip.style.opacity = '0';
+      updateGhostLineRef.current?.();
+    });
     map.on('rotate', () => setBearing(map.getBearing()));
     map.on('pitch', () => setPitch(map.getPitch()));
 
@@ -815,6 +1120,36 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
 
       // upcoming source & layers
       // clusterProperties.stack_total 累加 feature 的 stack_count（同坐标预合并后的真实比赛数），
+      // past source & layers — 先加，渲染在底层；upcoming 总是叠在上面更醒目
+      // NOTE: 14k 点依赖 MapLibre cluster 性能；clusterMaxZoom/Radius 和 upcoming 保持一致
+      map.addSource('past-comps', {
+        type: 'geojson', data: pastGeojson as unknown as GeoJSON.FeatureCollection,
+        cluster: true, clusterMaxZoom: 6, clusterRadius: 45,
+      });
+      map.addLayer({
+        id: 'past-clusters', type: 'circle', source: 'past-comps', filter: ['has', 'point_count'],
+        layout: { 'visibility': 'none' },
+        paint: {
+          'circle-color': ['step', ['get', 'point_count'], '#E08B6C', 50, '#C15F3C', 500, '#8B3E1F'],
+          'circle-radius': ['step', ['get', 'point_count'], 15, 50, 22, 500, 30],
+          'circle-stroke-width': 2, 'circle-stroke-color': '#FFFFFF',
+        },
+      });
+      map.addLayer({
+        id: 'past-cluster-count', type: 'symbol', source: 'past-comps', filter: ['has', 'point_count'],
+        layout: { 'visibility': 'none', 'text-field': ['to-string', ['get', 'point_count']], 'text-font': ['Noto Sans Regular'], 'text-size': 13 },
+        paint: { 'text-color': '#FFFFFF' },
+      });
+      map.addLayer({
+        id: 'past-unclustered-point', type: 'circle', source: 'past-comps', filter: ['!', ['has', 'point_count']],
+        layout: { 'visibility': 'none' },
+        paint: {
+          'circle-color': '#C15F3C',
+          'circle-radius': 6,
+          'circle-stroke-width': 1.5, 'circle-stroke-color': '#FFFFFF',
+        },
+      });
+
       // 保证低 zoom 聚合时显示真实场数而不是 feature 数。
       map.addSource('comps', {
         type: 'geojson', data: upcomingGeojson as unknown as GeoJSON.FeatureCollection,
@@ -839,7 +1174,8 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
       map.addLayer({
         id: 'unclustered-point', type: 'circle', source: 'comps', filter: ['!', ['has', 'point_count']],
         paint: {
-          'circle-color': '#C15F3C',
+          // 与 clusters 图层 stack_total 同款 step，保证视觉一致
+          'circle-color': ['step', ['get', 'stack_count'], '#E08B6C', 10, '#C15F3C', 50, '#8B3E1F'],
           'circle-radius': ['case', ['>', ['get', 'stack_count'], 1], 12, 7],
           'circle-stroke-width': 2, 'circle-stroke-color': '#FFFFFF',
         },
@@ -850,36 +1186,6 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
         filter: ['all', ['!', ['has', 'point_count']], ['>', ['get', 'stack_count'], 1]],
         layout: { 'text-field': ['to-string', ['get', 'stack_count']], 'text-font': ['Noto Sans Regular'], 'text-size': 12 },
         paint: { 'text-color': '#FFFFFF' },
-      });
-
-      // past source & layers（history 模式）
-      // NOTE: 14k 点依赖 MapLibre cluster 性能；clusterMaxZoom/Radius 和 upcoming 保持一致
-      map.addSource('past-comps', {
-        type: 'geojson', data: pastGeojson as unknown as GeoJSON.FeatureCollection,
-        cluster: true, clusterMaxZoom: 6, clusterRadius: 45,
-      });
-      map.addLayer({
-        id: 'past-clusters', type: 'circle', source: 'past-comps', filter: ['has', 'point_count'],
-        layout: { 'visibility': 'none' },
-        paint: {
-          'circle-color': ['step', ['get', 'point_count'], '#7FA5D9', 50, '#4F7FBF', 500, '#2A5599'],
-          'circle-radius': ['step', ['get', 'point_count'], 15, 50, 22, 500, 30],
-          'circle-stroke-width': 2, 'circle-stroke-color': '#FFFFFF',
-        },
-      });
-      map.addLayer({
-        id: 'past-cluster-count', type: 'symbol', source: 'past-comps', filter: ['has', 'point_count'],
-        layout: { 'visibility': 'none', 'text-field': ['to-string', ['get', 'point_count']], 'text-font': ['Noto Sans Regular'], 'text-size': 13 },
-        paint: { 'text-color': '#FFFFFF' },
-      });
-      map.addLayer({
-        id: 'past-unclustered-point', type: 'circle', source: 'past-comps', filter: ['!', ['has', 'point_count']],
-        layout: { 'visibility': 'none' },
-        paint: {
-          'circle-color': '#4F7FBF',
-          'circle-radius': 6,
-          'circle-stroke-width': 1.5, 'circle-stroke-color': '#FFFFFF',
-        },
       });
 
       // 自定义 Taiwan "省级" label（替代被抹掉的 country label）
@@ -946,8 +1252,63 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
         paint: { 'text-color': '#181716', 'text-halo-color': '#FFFFFF', 'text-halo-width': 1.5 },
       });
 
+      // ── 绘制工具图层（测量 / 路径 / 多边形）──
+      const empty = { type: 'FeatureCollection', features: [] } as GeoJSON.FeatureCollection;
+      map.addSource('draw-line', { type: 'geojson', data: empty });
+      map.addSource('draw-fill', { type: 'geojson', data: empty });
+      map.addSource('draw-vert', { type: 'geojson', data: empty });
+      map.addSource('draw-ghost', { type: 'geojson', data: empty });
+      map.addLayer({
+        id: 'draw-fill', type: 'fill', source: 'draw-fill',
+        paint: { 'fill-color': '#E07752', 'fill-opacity': 0.18 },
+      });
+      map.addLayer({
+        id: 'draw-line-casing', type: 'line', source: 'draw-line',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: { 'line-color': '#FFFFFF', 'line-width': 5, 'line-opacity': 0.55 },
+      });
+      map.addLayer({
+        id: 'draw-line', type: 'line', source: 'draw-line',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: { 'line-color': '#E07752', 'line-width': 2.5 },
+      });
+      // 幽灵线：从最后一个落点到光标的预览线，细 / 半透明 / 虚线
+      map.addLayer({
+        id: 'draw-ghost', type: 'line', source: 'draw-ghost',
+        layout: { 'line-cap': 'round' },
+        paint: {
+          'line-color': '#FFFFFF',
+          'line-width': 1.4,
+          'line-opacity': 0.8,
+          'line-dasharray': [2, 2],
+        },
+      });
+      map.addLayer({
+        id: 'draw-vert', type: 'circle', source: 'draw-vert',
+        paint: {
+          'circle-color': ['case', ['==', ['get', 'active'], true], '#FFD24A', '#E07752'],
+          // snap-target（hover 在起点上）放大一倍提示用户可以闭合
+          'circle-radius': ['case', ['==', ['get', 'snap'], true], 9, 4.5],
+          'circle-stroke-color': '#FFFFFF',
+          'circle-stroke-width': ['case', ['==', ['get', 'snap'], true], 2.5, 1.5],
+        },
+      });
+      map.addLayer({
+        id: 'draw-vert-label', type: 'symbol', source: 'draw-vert',
+        layout: {
+          'text-field': ['coalesce', ['get', 'label'], ''],
+          'text-font': ['Noto Sans Regular'],
+          'text-size': 11,
+          'text-offset': [0, -1.4],
+          'text-anchor': 'bottom',
+          'text-allow-overlap': true,
+        },
+        paint: { 'text-color': '#FFFFFF', 'text-halo-color': '#000000', 'text-halo-width': 1.5 },
+      });
+
       // upcoming 交互
       map.on('click', 'clusters', async (e: MapMouseEvent) => {
+        if (drawModeRef.current !== 'none') return;
         const features = map.queryRenderedFeatures(e.point, { layers: ['clusters'] });
         if (!features.length) return;
         const clusterId = features[0].properties?.cluster_id as number;
@@ -959,6 +1320,7 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
         } catch { /* */ }
       });
       map.on('click', 'unclustered-point', (e: MapMouseEvent & { features?: MapGeoJSONFeature[] }) => {
+        if (drawModeRef.current !== 'none') return;
         const f = e.features?.[0];
         if (!f) return;
         const p = f.properties as Record<string, unknown>;
@@ -1000,6 +1362,7 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
 
       // history 交互（cluster 点进放大；单点 hover + click 详情）
       map.on('click', 'past-clusters', async (e: MapMouseEvent) => {
+        if (drawModeRef.current !== 'none') return;
         const features = map.queryRenderedFeatures(e.point, { layers: ['past-clusters'] });
         if (!features.length) return;
         const clusterId = features[0].properties?.cluster_id as number;
@@ -1011,6 +1374,7 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
         } catch { /* */ }
       });
       map.on('click', 'past-unclustered-point', (e: MapMouseEvent & { features?: MapGeoJSONFeature[] }) => {
+        if (drawModeRef.current !== 'none') return;
         const f = e.features?.[0];
         if (!f) return;
         const p = f.properties as Record<string, unknown>;
@@ -1125,9 +1489,10 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
       }
     };
     show(UPCOMING_LAYERS, mode === 'upcoming');
-    show(PAST_LAYERS, mode === 'history');
+    // past 已经合并进 upcoming source，past-* 图层不再单独显示
+    show(PAST_LAYERS, false);
     show(CUBER_LAYERS, mode === 'cuber');
-  }, [mode]);
+  }, [mode, includePast]);
 
   // ── cuber 模式下：dot/label filter（按 index 显示）+ 高亮当前点 + flyTo ──
   // NOTE: 动画中（arc 未到达终点）时，终点 B 还未显示，等弧线到达时才出现
@@ -1232,6 +1597,172 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
     return () => { map.off('move', apply); };
   }, [theme, mapLoaded]);
 
+  // ── 绘制：完成 / 取消 / 启动模式 ──
+  // 单形状策略：每次 finish 直接替换 savedShapes，不累积
+  const finishDrawing = useCallback((asPolygon = false) => {
+    const pts = drawPoints;
+    const mode = drawMode;
+    if (mode === 'measure' && pts.length >= 2) {
+      setSavedShapes([{ id: `m${Date.now()}`, type: 'measure', name: isZh ? '测距' : 'Measurement', points: pts, createdAt: Date.now() }]);
+    } else if ((mode === 'path' || mode === 'polygon')) {
+      if (asPolygon && pts.length >= 3) {
+        setSavedShapes([{ id: `g${Date.now()}`, type: 'polygon', name: isZh ? '多边形' : 'Polygon', points: pts, createdAt: Date.now() }]);
+      } else if (pts.length >= 2) {
+        setSavedShapes([{ id: `p${Date.now()}`, type: 'path', name: isZh ? '路径' : 'Path', points: pts, createdAt: Date.now() }]);
+      }
+    }
+    setDrawMode('none');
+    setDrawPoints([]);
+    setSnapHover(false);
+  }, [drawPoints, drawMode, isZh]);
+
+  const cancelDrawing = useCallback(() => {
+    setDrawMode('none');
+    setDrawPoints([]);
+    setSnapHover(false);
+  }, []);
+
+  const startDrawing = useCallback((m: DrawMode) => {
+    setNavPopoverOpen(false);
+    setDrawMode(m);
+    setDrawPoints([]);
+    setSavedShapes([]); // 新建时清掉旧形状
+    setSnapHover(false);
+  }, []);
+
+  // ── 绘制：地图事件绑定 ──
+  useEffect(() => {
+    if (drawMode === 'none') return;
+    const map = mapRef.current;
+    if (!map) return;
+    const canvas = map.getCanvas();
+    canvas.style.cursor = 'crosshair';
+    map.doubleClickZoom.disable();
+
+    const SNAP_PX = 14; // 距起点 < 14 像素时自动闭合
+    const onClick = (e: maplibregl.MapMouseEvent) => {
+      const pts = drawPointsRef.current;
+      // path/polygon 模式 + 已有 ≥3 点 + 点击位置贴近起点 → 闭合为多边形
+      if ((drawModeRef.current === 'path' || drawModeRef.current === 'polygon') && pts.length >= 3) {
+        const firstPx = map.project(pts[0]);
+        const dx = firstPx.x - e.point.x;
+        const dy = firstPx.y - e.point.y;
+        if (dx * dx + dy * dy <= SNAP_PX * SNAP_PX) {
+          finishDrawing(true);
+          return;
+        }
+      }
+      setDrawPoints((arr) => [...arr, [e.lngLat.lng, e.lngLat.lat]]);
+    };
+    const onDbl = (e: maplibregl.MapMouseEvent) => {
+      e.preventDefault();
+      finishDrawing();
+    };
+    const onCtx = (e: maplibregl.MapMouseEvent) => {
+      e.preventDefault();
+      setDrawPoints((arr) => arr.slice(0, -1));
+    };
+    const onKey = (ev: KeyboardEvent) => {
+      if (ev.key === 'Escape') cancelDrawing();
+      else if (ev.key === 'Enter') finishDrawing();
+    };
+    map.on('click', onClick);
+    map.on('dblclick', onDbl);
+    map.on('contextmenu', onCtx);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      canvas.style.cursor = '';
+      map.doubleClickZoom.enable();
+      map.off('click', onClick);
+      map.off('dblclick', onDbl);
+      map.off('contextmenu', onCtx);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [drawMode, finishDrawing, cancelDrawing]);
+
+  // ── 绘制：source 数据同步 ──
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapLoaded) return;
+    const lineSrc = map.getSource('draw-line') as maplibregl.GeoJSONSource | undefined;
+    const fillSrc = map.getSource('draw-fill') as maplibregl.GeoJSONSource | undefined;
+    const vertSrc = map.getSource('draw-vert') as maplibregl.GeoJSONSource | undefined;
+    if (!lineSrc || !fillSrc || !vertSrc) return;
+
+    const lineFeats: GeoJSON.Feature[] = [];
+    const fillFeats: GeoJSON.Feature[] = [];
+    const vertFeats: GeoJSON.Feature[] = [];
+
+    // 已保存形状（线段全部走大圆弧；不在地图上写文字标签——统计信息留给左上角卡片）
+    for (const s of savedShapes) {
+      if (s.points.length < 2) continue;
+      if (s.type === 'polygon' && s.points.length >= 3) {
+        const ring = [...s.points, s.points[0]];
+        const arc = expandToGreatCircleLine(ring);
+        fillFeats.push({ type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [arc] } });
+        lineFeats.push({ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: arc } });
+      } else {
+        const arc = expandToGreatCircleLine(s.points);
+        lineFeats.push({ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: arc } });
+      }
+      // 顶点：每个折点都画一个圆，匹配谷歌地球
+      for (const pt of s.points) {
+        vertFeats.push({ type: 'Feature', properties: { active: false }, geometry: { type: 'Point', coordinates: pt } });
+      }
+    }
+
+    // 当前正在绘制的形状（已落定的线段全部走大圆弧）
+    if (drawMode !== 'none' && drawPoints.length > 0) {
+      if (drawPoints.length >= 2) {
+        const arc = expandToGreatCircleLine(drawPoints);
+        lineFeats.push({ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: arc } });
+      }
+      let cum = 0;
+      for (let i = 0; i < drawPoints.length; i++) {
+        if (i > 0) cum += haversineKm(drawPoints[i - 1], drawPoints[i]);
+        vertFeats.push({
+          type: 'Feature',
+          properties: {
+            active: true,
+            label: i === 0 ? '' : fmtDistance(cum, isZh),
+            snap: i === 0 && snapHover,
+          },
+          geometry: { type: 'Point', coordinates: drawPoints[i] },
+        });
+      }
+    }
+
+    lineSrc.setData({ type: 'FeatureCollection', features: lineFeats });
+    fillSrc.setData({ type: 'FeatureCollection', features: fillFeats });
+    vertSrc.setData({ type: 'FeatureCollection', features: vertFeats });
+  }, [drawPoints, drawMode, savedShapes, mapLoaded, isZh, theme, snapHover]);
+
+  // ── 幽灵线：从最后一个落点 → 当前光标位置（高频，绕开 React state）──
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapLoaded) return;
+    const ghostSrc = map.getSource('draw-ghost') as maplibregl.GeoJSONSource | undefined;
+    if (!ghostSrc) return;
+    const update = () => {
+      const pts = drawPointsRef.current;
+      const cur = cursorMapRef.current;
+      const inDraw = drawModeRef.current !== 'none';
+      if (!inDraw || pts.length === 0 || !cur) {
+        ghostSrc.setData({ type: 'FeatureCollection', features: [] });
+        return;
+      }
+      const last = pts[pts.length - 1];
+      const arc = greatCircleArc(last, cur);
+      ghostSrc.setData({
+        type: 'FeatureCollection',
+        features: [{ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: arc } }],
+      });
+    };
+    updateGhostLineRef.current = update;
+    update();
+    return () => { updateGhostLineRef.current = null; };
+  }, [mapLoaded, drawMode, drawPoints]);
+
   const resetView = useCallback(() => {
     mapRef.current?.easeTo({ center: [30, 20], zoom: 1.4, duration: 800 });
   }, []);
@@ -1260,25 +1791,142 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
       <div className="starfield" aria-hidden="true" ref={starfieldRef} />
 
       <div className="globe-topbar">
-        <Link to="/upcoming-comps" className="back-link" title={t('globe.backToCalendar') as string}>
-          <ArrowLeft size={14} strokeWidth={1.75} />
+        <Link to="/upcoming-comps" className="globe-logo-link" title={t('globe.backToCalendar') as string} aria-label="Home">
+          <svg className="globe-logo" width={26} height={26} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <radialGradient id="earthGrad" cx="0.35" cy="0.35" r="0.85">
+                <stop offset="0" stopColor="#5BA3D6" />
+                <stop offset="1" stopColor="#1E5A8C" />
+              </radialGradient>
+            </defs>
+            <circle cx="16" cy="16" r="13" fill="url(#earthGrad)" stroke="#9CC6E5" strokeWidth="0.8" />
+            <ellipse cx="16" cy="16" rx="13" ry="4.5" stroke="#9CC6E5" strokeWidth="0.6" fill="none" opacity="0.55" />
+            <path d="M16 3 C13 8 13 24 16 29" stroke="#9CC6E5" strokeWidth="0.6" fill="none" opacity="0.55" />
+            <g transform="translate(20 20) rotate(20)">
+              <rect x="-6" y="-6" width="12" height="12" rx="1.4" fill="#1E2329" stroke="#FFFFFF" strokeWidth="0.9" />
+              <line x1="-6" y1="-2" x2="6" y2="-2" stroke="#FFFFFF" strokeWidth="0.7" />
+              <line x1="-6" y1="2" x2="6" y2="2" stroke="#FFFFFF" strokeWidth="0.7" />
+              <line x1="-2" y1="-6" x2="-2" y2="6" stroke="#FFFFFF" strokeWidth="0.7" />
+              <line x1="2" y1="-6" x2="2" y2="6" stroke="#FFFFFF" strokeWidth="0.7" />
+              <rect x="-6" y="-6" width="4" height="4" fill="#E07752" />
+              <rect x="-2" y="-6" width="4" height="4" fill="#FFD24A" />
+              <rect x="2" y="-6" width="4" height="4" fill="#5BA76B" />
+              <rect x="-6" y="-2" width="4" height="4" fill="#3F76C2" />
+              <rect x="-2" y="-2" width="4" height="4" fill="#F0EDE3" />
+              <rect x="2" y="-2" width="4" height="4" fill="#E07752" />
+              <rect x="-6" y="2" width="4" height="4" fill="#FFD24A" />
+              <rect x="-2" y="2" width="4" height="4" fill="#5BA76B" />
+              <rect x="2" y="2" width="4" height="4" fill="#3F76C2" />
+              <line x1="-6" y1="-2" x2="6" y2="-2" stroke="#1E2329" strokeWidth="0.5" />
+              <line x1="-6" y1="2" x2="6" y2="2" stroke="#1E2329" strokeWidth="0.5" />
+              <line x1="-2" y1="-6" x2="-2" y2="6" stroke="#1E2329" strokeWidth="0.5" />
+              <line x1="2" y1="-6" x2="2" y2="6" stroke="#1E2329" strokeWidth="0.5" />
+              <rect x="-6" y="-6" width="12" height="12" rx="1.4" fill="none" stroke="#FFFFFF" strokeWidth="0.9" />
+            </g>
+          </svg>
         </Link>
         <h1 className="globe-title-compact">{t('globe.title')}</h1>
+
+        <div className="globe-search" ref={searchWrapRef}>
+          <button
+            className="globe-search-type"
+            onClick={() => { setSearchType((t) => t === 'place' ? 'comp' : 'place'); setSearchOpen(true); }}
+            title={searchType === 'place' ? (isZh ? '当前：地点（点击切换到比赛）' : 'Currently: Places (click to switch to Comps)') : (isZh ? '当前：比赛（点击切换到地点）' : 'Currently: Comps (click to switch to Places)')}
+          >
+            {searchType === 'place'
+              ? (isZh ? '地点' : 'Places')
+              : (isZh ? '比赛' : 'Comps')}
+          </button>
+          <Search className="globe-search-icon" size={14} strokeWidth={1.75} />
+          <input
+            className="globe-search-input"
+            type="text"
+            placeholder={searchType === 'place' ? (isZh ? '搜索地点' : 'Search places') : (isZh ? '搜索比赛 / 城市' : 'Search comp / city')}
+            value={searchQuery}
+            onChange={(e) => { setSearchQuery(e.target.value); setSearchOpen(true); }}
+            onFocus={() => setSearchOpen(true)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                if (searchType === 'place' && placeResults[0]) goToPlaceResult(placeResults[0]);
+                else if (searchType === 'comp' && compResults[0]) goToCompResult(compResults[0]);
+              } else if (e.key === 'Escape') setSearchOpen(false);
+            }}
+          />
+          {searchQuery && (
+            <button
+              className="globe-search-clear"
+              onClick={() => { setSearchQuery(''); setPlaceResults([]); }}
+              aria-label="Clear"
+            ><X size={12} strokeWidth={2} /></button>
+          )}
+          {searchOpen && (() => {
+            const showLoading = searchType === 'place' && searchLoading;
+            const items = searchType === 'place' ? placeResults : compResults;
+            const hasContent = showLoading || items.length > 0;
+            const showEmpty = !showLoading && items.length === 0 && searchQuery.trim().length >= 2;
+            if (!hasContent && !showEmpty) return null;
+            return (
+              <div className="globe-search-results">
+                {showLoading && <div className="globe-search-empty">{isZh ? '搜索中…' : 'Searching…'}</div>}
+                {showEmpty && <div className="globe-search-empty">{isZh ? '无结果' : 'No results'}</div>}
+                {!showLoading && searchType === 'place' && placeResults.map((r, i) => (
+                  <button key={i} className="globe-search-item" onClick={() => goToPlaceResult(r)}>
+                    <span className="globe-search-item-main">{r.display_name.split(',')[0]}</span>
+                    <span className="globe-search-item-sub">{r.display_name.split(',').slice(1).join(',').trim()}</span>
+                  </button>
+                ))}
+                {searchType === 'comp' && compResults.map((c) => (
+                  <button key={c.id} className="globe-search-item" onClick={() => goToCompResult(c)}>
+                    <span className="globe-search-item-main">
+                      {c.name}
+                      <span className={`globe-search-item-tag globe-search-item-tag-${c.tag}`}>{c.tag === 'upcoming' ? (isZh ? '近期' : 'upcoming') : (isZh ? '历史' : 'past')}</span>
+                    </span>
+                    <span className="globe-search-item-sub">{c.city}, {countryName(c.country, isZh)} · {c.date}</span>
+                  </button>
+                ))}
+              </div>
+            );
+          })()}
+        </div>
+
+        <button
+          className={`topbar-tool-btn ${drawMode === 'path' || drawMode === 'polygon' ? 'is-active' : ''}`}
+          onClick={() => (drawMode === 'path' || drawMode === 'polygon') ? cancelDrawing() : startDrawing('path')}
+          title={isZh ? '添加路径或多边形' : 'Add path or polygon'}
+          aria-label="Add path or polygon"
+        >
+          <svg width={16} height={16} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <line x1="6.2" y1="17" x2="12" y2="9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+            <line x1="12" y1="9" x2="17.8" y2="14" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+            <circle cx="6.2" cy="17" r="2.2" fill="currentColor" />
+            <circle cx="12" cy="9" r="2.2" fill="currentColor" />
+            <circle cx="17.8" cy="14" r="2.2" fill="currentColor" />
+          </svg>
+        </button>
+        <button
+          className={`topbar-tool-btn ${drawMode === 'measure' ? 'is-active' : ''}`}
+          onClick={() => drawMode === 'measure' ? cancelDrawing() : startDrawing('measure')}
+          title={isZh ? '测距' : 'Measure distance'}
+          aria-label="Measure"
+        ><Ruler size={14} strokeWidth={1.75} /></button>
 
         <div className="globe-topbar-spacer" />
 
         <div className="mode-toggle" role="tablist">
-          <button role="tab" aria-selected={mode === 'upcoming'} className={`range-btn ${mode === 'upcoming' ? 'is-active' : ''}`} onClick={() => setMode('upcoming')}>
-            {t('globe.modeUpcoming')}
-          </button>
-          <button role="tab" aria-selected={mode === 'history'} className={`range-btn ${mode === 'history' ? 'is-active' : ''}`} onClick={() => setMode('history')}>
-            {t('globe.modeHistory')}
-          </button>
           <button role="tab" aria-selected={mode === 'cuber'} className={`range-btn ${mode === 'cuber' ? 'is-active' : ''}`} onClick={() => { setMode('cuber'); if (!cuber) setPickerOpen(true); }}>
             {t('globe.modeCuber')}
           </button>
+          <button role="tab" aria-selected={mode === 'upcoming'} className={`range-btn ${mode === 'upcoming' ? 'is-active' : ''}`} onClick={() => setMode('upcoming')}>
+            {t('globe.modeComps')}
+          </button>
         </div>
-        {mode === 'history' && (
+        {mode === 'upcoming' && (
+          <label className="include-past-toggle" title={isZh ? '在地图上叠加显示往期比赛（蓝色）' : 'Overlay past competitions (blue)'}>
+            <input type="checkbox" checked={includePast} onChange={(e) => setIncludePast(e.target.checked)} />
+            <span>{t('globe.includePast')}</span>
+          </label>
+        )}
+        {mode === 'upcoming' && includePast && (
           <div className="history-range">
             <span className="history-range-label">{yearRange[0] === HISTORY_MIN_YEAR ? HISTORY_ABSOLUTE_MIN : yearRange[0]} — {yearRange[1]}</span>
             <div className="history-range-track">
@@ -1316,31 +1964,135 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
             </div>
           </div>
         )}
-        {mode === 'upcoming' && (
-          <div className="globe-stats globe-stats-inline">
-            <span>{upcomingStats.comps} {isZh ? '比赛' : 'comps'}</span>
-            <span>·</span>
-            <span>{upcomingStats.countries} {isZh ? '国家' : 'countries'}</span>
-          </div>
-        )}
-        {mode === 'history' && (
-          <div className="globe-stats globe-stats-inline">
-            {pastLoading && !pastComps
-              ? <span>{t('globe.loading')}</span>
-              : <>
-                  <span>{pastStats.comps} {isZh ? '比赛' : 'comps'}</span>
-                  <span>·</span>
-                  <span>{pastStats.countries} {isZh ? '国家' : 'countries'}</span>
-                </>
-            }
-          </div>
-        )}
 
         <LangToggle className="topbar-lang" />
         <button className="reset-btn" onClick={resetView} title={isZh ? '复位视角' : 'Reset view'}>
           <RotateCcw size={14} strokeWidth={1.75} />
         </button>
       </div>
+
+      {drawMode !== 'none' && drawPoints.length === 0 && (
+        <div ref={tooltipElRef} className="draw-cursor-tip" style={{ opacity: 0 }}>
+          <span className="draw-cursor-tip-plus">+</span>
+          {isZh ? '添加第一个点' : 'Add first point'}
+        </div>
+      )}
+
+      {(() => {
+        const drawing = drawMode !== 'none';
+        const saved = !drawing && savedShapes.length > 0 ? savedShapes[0] : null;
+        if (!drawing && !saved) return null;
+
+        // 决定卡片显示的"形状种类"和点集
+        const kind: 'measure' | 'path' | 'polygon' = drawing
+          ? (drawMode === 'measure' ? 'measure' : drawMode as 'path' | 'polygon')
+          : saved!.type;
+        const isMeasure = kind === 'measure';
+        const points = drawing ? drawPoints : saved!.points;
+        // 周长/面积：保存的多边形按闭合环算；进行中按当前 drawPoints 算（>=3 点显示潜在面积）
+        const isPolygon = saved?.type === 'polygon';
+        const total = isPolygon
+          ? totalDistanceKm([...points, points[0]])
+          : totalDistanceKm(points);
+        const area = !drawing && isPolygon
+          ? polygonAreaKm2(points)
+          : (drawing && (kind === 'path' || kind === 'polygon') && points.length >= 3 ? polygonAreaKm2(points) : null);
+
+        const title = isMeasure
+          ? (isZh ? '测距' : 'Measure distance')
+          : (isZh ? '路径或多边形' : 'Path or polygon');
+        const subtitle = drawing
+          ? (isMeasure
+              ? (isZh ? '点击地图依次添加测量点' : 'Click points on the map to measure distance')
+              : (isZh ? '点击地图依次添加点来绘制路径或多边形' : 'Click points on the map to draw a path or polygon'))
+          : (isMeasure
+              ? (isZh ? '已保存的测量' : 'Saved measurement')
+              : (isPolygon ? (isZh ? '已保存的多边形' : 'Saved polygon') : (isZh ? '已保存的路径' : 'Saved path')));
+
+        const closeAction = drawing ? cancelDrawing : () => setSavedShapes([]);
+
+        return (
+          <div className="draw-card">
+            <div className="draw-card-header">
+              <span className="draw-card-icon" aria-hidden="true">
+                {isMeasure
+                  ? <Ruler size={16} strokeWidth={1.75} />
+                  : (
+                    <svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+                      <line x1="6.2" y1="17" x2="12" y2="9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                      <line x1="12" y1="9" x2="17.8" y2="14" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                      <circle cx="6.2" cy="17" r="2.2" fill="currentColor" />
+                      <circle cx="12" cy="9" r="2.2" fill="currentColor" />
+                      <circle cx="17.8" cy="14" r="2.2" fill="currentColor" />
+                    </svg>
+                  )}
+              </span>
+              <span className="draw-card-header-spacer" />
+              {drawing && (
+                <>
+                  <button
+                    className="draw-card-icon-btn"
+                    onClick={() => setDrawPoints([])}
+                    disabled={drawPoints.length === 0}
+                    title={isZh ? '清除当前所有点' : 'Restart'}
+                    aria-label="Restart"
+                  ><RotateCw size={14} strokeWidth={1.75} /></button>
+                  <button
+                    className="draw-card-icon-btn"
+                    onClick={() => setDrawPoints((arr) => arr.slice(0, -1))}
+                    disabled={drawPoints.length === 0}
+                    title={isZh ? '撤销' : 'Undo'}
+                    aria-label="Undo"
+                  ><Undo2 size={14} strokeWidth={1.75} /></button>
+                </>
+              )}
+              <button
+                className="draw-card-icon-btn"
+                onClick={closeAction}
+                title={isZh ? '关闭' : 'Close'}
+                aria-label="Close"
+              ><X size={14} strokeWidth={1.75} /></button>
+            </div>
+            <div className="draw-card-title">{title}</div>
+            <div className="draw-card-subtitle">{subtitle}</div>
+
+            <div className="draw-card-section">
+              <div className="draw-card-section-label">{isMeasure ? (isZh ? '总距离' : 'Total distance') : (isZh ? '周长' : 'Perimeter')}</div>
+              <div className="draw-card-section-value">{fmtDistance(total, isZh)}</div>
+            </div>
+            {!isMeasure && (
+              <div className="draw-card-section">
+                <div className="draw-card-section-label">{isZh ? '面积' : 'Area'}</div>
+                <div className="draw-card-section-value">{area !== null ? fmtArea(area, isZh) : '—'}</div>
+              </div>
+            )}
+
+            {drawing && !isMeasure && (
+              <div className="draw-card-actions">
+                <button
+                  className="draw-card-save"
+                  onClick={() => finishDrawing(false)}
+                  disabled={drawPoints.length < 2}
+                >{isZh ? '存为路径' : 'Save as path'}</button>
+                <button
+                  className="draw-card-save draw-card-save-secondary"
+                  onClick={() => finishDrawing(true)}
+                  disabled={drawPoints.length < 3}
+                >{isZh ? '存为多边形' : 'Save as polygon'}</button>
+              </div>
+            )}
+            {drawing && isMeasure && (
+              <div className="draw-card-actions">
+                <button
+                  className="draw-card-save"
+                  onClick={() => finishDrawing(false)}
+                  disabled={drawPoints.length < 2}
+                >{isZh ? '保存测距' : 'Save measurement'}</button>
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       <button
         className="theme-toggle-floating"
@@ -1451,9 +2203,26 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
             </span>
           </span>
         </div>
-        <span className="globe-statusbar-coords">
-          {cursorPos ? formatDMS(cursorPos.lat, cursorPos.lng) : ''}
-        </span>
+        <div className="globe-statusbar-right">
+          {mode === 'upcoming' && (
+            <span className="globe-statusbar-stats">
+              <span>{upcomingStats.comps} {isZh ? (includePast ? '近期' : '比赛') : (includePast ? 'upcoming' : 'comps')}</span>
+              {includePast && (
+                <>
+                  <span className="globe-statusbar-stats-sep">·</span>
+                  {pastLoading && !pastComps
+                    ? <span>{isZh ? '加载往期…' : 'loading past…'}</span>
+                    : <span>{pastStats.comps} {isZh ? '往期' : 'past'}</span>}
+                </>
+              )}
+              <span className="globe-statusbar-stats-sep">·</span>
+              <span>{includePast ? combinedCountries : upcomingStats.countries} {isZh ? '国家' : 'countries'}</span>
+            </span>
+          )}
+          <span className="globe-statusbar-coords">
+            {cursorPos ? formatDMS(cursorPos.lat, cursorPos.lng) : ''}
+          </span>
+        </div>
       </div>
 
       {mode === 'cuber' && (cuber || loadProgress) && (

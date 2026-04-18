@@ -114,6 +114,21 @@
 }
 .globe-page .globe-statusbar-attrib-tip a:hover { text-decoration: underline; }
 
+.globe-page .globe-statusbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: auto;
+}
+.globe-page .globe-statusbar-stats {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #ECEAE3;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+.globe-page .globe-statusbar-stats-sep { opacity: 0.45; }
 .globe-page .globe-statusbar-coords {
     font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
     font-variant-numeric: tabular-nums;
@@ -207,6 +222,272 @@
 .globe-page .map-ctrl-btn:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
 .globe-page .map-ctrl-btn.is-active { color: #E07752; }
 .globe-page .map-ctrl-3d { letter-spacing: 0.02em; }
+
+/* ── 跟随光标的"添加第一个点"提示（参考谷歌地球）── */
+.globe-page .draw-cursor-tip {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 11;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: #E07752;
+    color: #FFFFFF;
+    border-radius: 4px;
+    font-size: 0.74rem;
+    font-weight: 500;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    white-space: nowrap;
+    transition: opacity 0.12s;
+}
+.globe-page .draw-cursor-tip-plus {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    background: rgba(255, 255, 255, 0.22);
+    border-radius: 2px;
+    font-size: 0.85rem;
+    line-height: 1;
+    font-weight: 700;
+}
+
+/* ── 绘制卡片（参考谷歌地球：左上方垂直面板）── */
+.globe-page .draw-card {
+    position: absolute;
+    top: 60px;
+    right: 14px;
+    z-index: 11;
+    width: 280px;
+    background: rgba(28, 33, 41, 0.96);
+    border: 1px solid #2F3540;
+    border-radius: 10px;
+    color: #ECEAE3;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+}
+.globe-page .draw-card-header {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.globe-page .draw-card-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    color: #E07752;
+}
+.globe-page .draw-card-header-spacer { flex: 1; }
+.globe-page .draw-card-icon-btn {
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: #C9CDD4;
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s;
+}
+.globe-page .draw-card-icon-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.08);
+    color: #FFFFFF;
+}
+.globe-page .draw-card-icon-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.globe-page .draw-card-title {
+    padding: 14px 14px 4px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #ECEAE3;
+}
+.globe-page .draw-card-subtitle {
+    padding: 0 14px 14px;
+    font-size: 0.78rem;
+    color: #9CA0A8;
+    line-height: 1.4;
+}
+
+.globe-page .draw-card-section {
+    padding: 10px 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+.globe-page .draw-card-section-label {
+    font-size: 0.78rem;
+    color: #ECEAE3;
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+.globe-page .draw-card-section-value {
+    font-size: 0.85rem;
+    color: #C9CDD4;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+}
+
+.globe-page .draw-card-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 14px 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+.globe-page .draw-card-save {
+    width: 100%;
+    padding: 8px 12px;
+    background: #E07752;
+    border: 1px solid #E07752;
+    border-radius: 6px;
+    color: #FFFFFF;
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+.globe-page .draw-card-save:hover:not(:disabled) {
+    background: #D26840;
+    border-color: #D26840;
+}
+.globe-page .draw-card-save:disabled { opacity: 0.35; cursor: not-allowed; }
+.globe-page .draw-card-save-secondary {
+    background: transparent;
+    color: #E07752;
+}
+.globe-page .draw-card-save-secondary:hover:not(:disabled) {
+    background: rgba(224, 119, 82, 0.12);
+    color: #FFFFFF;
+}
+
+/* ── 已保存形状：左下角入口按钮 + 列表 panel ── */
+.globe-page .shapes-toggle-floating {
+    position: absolute;
+    left: 60px;
+    bottom: 38px;
+    z-index: 6;
+    height: 36px;
+    padding: 0 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 8px;
+    border: 1px solid #2F3540;
+    background: rgba(28, 33, 41, 0.78);
+    color: #ECEAE3;
+    cursor: pointer;
+    transition: all 0.15s;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    font-family: inherit;
+    font-size: 0.74rem;
+}
+.globe-page .shapes-toggle-floating:hover {
+    color: #E07752;
+    border-color: #E07752;
+}
+.globe-page .shapes-count {
+    font-variant-numeric: tabular-nums;
+    color: #E07752;
+    font-weight: 600;
+}
+.globe-page .shapes-panel {
+    position: absolute;
+    left: 14px;
+    bottom: 84px;
+    z-index: 7;
+    width: 280px;
+    max-height: 50vh;
+    background: rgba(28, 33, 41, 0.96);
+    border: 1px solid #2F3540;
+    border-radius: 10px;
+    color: #ECEAE3;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+}
+.globe-page .shapes-panel-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-bottom: 1px solid #2F3540;
+    font-size: 0.78rem;
+}
+.globe-page .shapes-panel-header > span { flex: 1; }
+.globe-page .shapes-panel-clear {
+    background: transparent;
+    border: 1px solid #3A4150;
+    border-radius: 4px;
+    color: #C9CDD4;
+    padding: 3px 8px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.globe-page .shapes-panel-clear:hover { color: #E07752; border-color: #E07752; }
+.globe-page .shapes-panel-close {
+    background: transparent;
+    border: none;
+    color: #9CA0A8;
+    cursor: pointer;
+    padding: 2px;
+    display: inline-flex;
+}
+.globe-page .shapes-panel-close:hover { color: #FFFFFF; }
+.globe-page .shapes-list {
+    list-style: none;
+    margin: 0;
+    padding: 4px 0;
+    overflow-y: auto;
+}
+.globe-page .shapes-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    transition: background 0.12s;
+}
+.globe-page .shapes-item:hover { background: rgba(255, 255, 255, 0.04); }
+.globe-page .shapes-item-main { flex: 1; min-width: 0; }
+.globe-page .shapes-item-name {
+    font-size: 0.78rem;
+    color: #ECEAE3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.globe-page .shapes-item-stats {
+    font-size: 0.7rem;
+    color: #9CA0A8;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+.globe-page .shapes-item-fly,
+.globe-page .shapes-item-delete {
+    background: transparent;
+    border: 1px solid transparent;
+    color: #9CA0A8;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    display: inline-flex;
+    transition: all 0.12s;
+}
+.globe-page .shapes-item-fly:hover { color: #E07752; border-color: #E07752; }
+.globe-page .shapes-item-delete:hover { color: #ff6b6b; border-color: #ff6b6b; }
 
 /* ── 朝向 / 俯仰 popover（参考谷歌地球） ── */
 .globe-page .nav-popover {
@@ -302,21 +583,178 @@
     color: var(--text);
 }
 
-.globe-page .back-link {
+.globe-page .globe-logo-link {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    padding: 0.3rem 0.5rem;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
     border-radius: 6px;
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--text-sub);
     text-decoration: none;
-    font-size: 0.78rem;
-    transition: all 0.15s;
+    transition: background 0.15s, transform 0.15s;
+    flex-shrink: 0;
 }
-.globe-page .back-link:hover {
+.globe-page .globe-logo-link:hover {
+    background: rgba(255, 255, 255, 0.06);
+    transform: scale(1.05);
+}
+.globe-page .globe-logo {
+    display: block;
+}
+
+/* ── 顶栏地点搜索 ── */
+.globe-page .globe-search {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    width: 320px;
+    max-width: 40vw;
+    margin-left: 0.25rem;
+}
+.globe-page .globe-search-type {
+    flex-shrink: 0;
+    padding: 4px 10px;
+    margin-right: 4px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid #2F3540;
+    border-radius: 6px;
+    color: #ECEAE3;
+    font-family: inherit;
+    font-size: 0.74rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    min-width: 50px;
+    text-align: center;
+}
+.globe-page .globe-search-type:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: #E07752;
+    color: #E07752;
+}
+.globe-page .globe-search-icon {
+    position: absolute;
+    left: 67px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9CA0A8;
+    pointer-events: none;
+}
+.globe-page .globe-search-input {
+    flex: 1;
+    min-width: 0;
+    padding: 5px 28px 5px 28px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid #2F3540;
+    border-radius: 6px;
+    color: #ECEAE3;
+    font-family: inherit;
+    font-size: 0.78rem;
+    outline: none;
+    transition: border-color 0.15s, background 0.15s;
+}
+.globe-page .globe-search-input::placeholder { color: #6F7480; }
+.globe-page .globe-search-input:focus {
+    border-color: #E07752;
+    background: rgba(255, 255, 255, 0.1);
+}
+.globe-page .globe-search-clear {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: #9CA0A8;
+    cursor: pointer;
+    padding: 4px;
+    display: inline-flex;
+    border-radius: 4px;
+}
+.globe-page .globe-search-clear:hover { color: #FFFFFF; background: rgba(255, 255, 255, 0.1); }
+.globe-page .globe-search-results {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% + 4px);
+    background: rgba(20, 24, 30, 0.97);
+    border: 1px solid #2F3540;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+    z-index: 20;
+    max-height: 320px;
+    overflow-y: auto;
+}
+.globe-page .globe-search-empty {
+    padding: 8px 12px;
+    font-size: 0.74rem;
+    color: #9CA0A8;
+}
+.globe-page .globe-search-item {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    align-items: flex-start;
+    padding: 7px 12px;
+    background: transparent;
+    border: none;
+    color: #ECEAE3;
+    font-family: inherit;
+    cursor: pointer;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    transition: background 0.12s;
+}
+.globe-page .globe-search-item:last-child { border-bottom: none; }
+.globe-page .globe-search-item:hover { background: rgba(255, 255, 255, 0.06); }
+.globe-page .globe-search-item-main {
+    font-size: 0.8rem;
+    color: #ECEAE3;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.globe-page .globe-search-item-tag {
+    font-size: 0.62rem;
+    padding: 1px 5px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+}
+.globe-page .globe-search-item-tag-upcoming { background: rgba(224, 119, 82, 0.2); color: #E07752; }
+.globe-page .globe-search-item-tag-past { background: rgba(120, 130, 150, 0.18); color: #9CA0A8; }
+.globe-page .globe-search-item-sub {
+    font-size: 0.7rem;
+    color: #9CA0A8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+/* ── 顶栏工具按钮（draw / measure） ── */
+.globe-page .topbar-tool-btn {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-sub);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+}
+.globe-page .topbar-tool-btn:hover {
     color: var(--accent);
+    border-color: var(--accent);
+}
+.globe-page .topbar-tool-btn.is-active {
+    color: var(--accent);
+    background: var(--accent-soft);
     border-color: var(--accent);
 }
 
@@ -359,6 +797,27 @@
 .globe-page .range-btn.is-active {
     background: var(--accent-soft);
     color: var(--accent);
+}
+.globe-page .include-past-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.65rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+    transition: color 0.15s, border-color 0.15s;
+}
+.globe-page .include-past-toggle:hover { color: var(--text); border-color: var(--border-strong, var(--border)); }
+.globe-page .include-past-toggle input[type="checkbox"] {
+    margin: 0;
+    accent-color: var(--accent);
+    cursor: pointer;
 }
 .globe-page .history-range {
     display: inline-flex;
