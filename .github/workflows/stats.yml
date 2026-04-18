@@ -130,14 +130,15 @@ jobs:
           else
             git commit -m "chore: update WCA statistics [skip ci]"
             # NOTE: rebase 可能因 upcoming_comps.json 等文件冲突而失败
-            # CI 刚生成的数据是最新的，冲突时直接用我们的版本覆盖
+            # CI 刚生成的数据是最新的，冲突时直接用我们的版本（rebase 中 --theirs 指被 rebase 的 commit）
+            # GIT_EDITOR=true 让 rebase --continue 不弹编辑器，否则 CI 上会失败导致整个 commit 被 --skip 丢弃
             if ! git pull --rebase origin main; then
               echo "Rebase conflict detected, resolving with ours..."
               git diff --name-only --diff-filter=U | while read f; do
                 git checkout --theirs "$f"
                 git add "$f"
               done
-              git rebase --continue || git rebase --skip
+              GIT_EDITOR=true git rebase --continue
             fi
             git push
           fi
