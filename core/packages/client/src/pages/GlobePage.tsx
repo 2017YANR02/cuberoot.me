@@ -4,7 +4,7 @@
  *   - upcoming: 近期全球比赛聚合点
  *   - cuber:    选手生涯足迹（按时间顺序画大圆弧，支持 play/scrub）
  */
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useState, useEffect, useLayoutEffect, useMemo, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { RotateCw, Play, Pause, X, Moon, Sun, Satellite, Plus, Minus, Compass, Ruler, Undo2, Search, ArrowLeft } from 'lucide-react';
@@ -161,15 +161,89 @@ const countryName = (iso2: string, isZh: boolean) => {
   return (isZh ? COUNTRY_ZH[up] : COUNTRY_EN[up]) ?? up;
 };
 
+// WCA 比赛城市英文 → 中文
+// 范围：覆盖 all_past_comps + all_upcoming_comps 中所有出现过的 CN/HK/MO/TW 城市，加少量耳熟能详的海外城市
+const CITY_ZH: Record<string, string> = {
+  // 直辖市 / 港澳
+  'Beijing': '北京', 'Shanghai': '上海', 'Tianjin': '天津', 'Chongqing': '重庆',
+  'Hong Kong': '香港', 'Macau': '澳门', 'Macao': '澳门',
+  // 中国大陆地级市（按拼音字母序）
+  'Anyang': '安阳', 'Baoji': '宝鸡', 'Changchun': '长春', 'ChangChun': '长春',
+  'Changsha': '长沙', 'Changzhou': '常州', 'Chaozhou': '潮州', 'Chengdu': '成都',
+  'Chifeng': '赤峰', 'Dalian': '大连', 'Dandong': '丹东', 'Dongguan': '东莞',
+  'Ezhou': '鄂州', 'Foshan': '佛山', 'Fushun': '抚顺', 'Fuzhou': '福州',
+  'Guangzhou': '广州', 'Guilin': '桂林', 'Guiyang': '贵阳', 'Haikou': '海口',
+  'Hangzhou': '杭州', 'Harbin': '哈尔滨', 'Hefei': '合肥', 'Hengyang': '衡阳',
+  'Heze': '菏泽', 'Hohhot': '呼和浩特', 'Huaibei': '淮北', 'Huizhou': '惠州',
+  'Huzhou': '湖州', 'Jiangmen': '江门', 'Jiaozuo': '焦作', 'Jiaxing': '嘉兴',
+  'Jieyang': '揭阳', 'Jinan': '济南', 'Jinhua': '金华', 'Jiujiang': '九江',
+  'Kaifeng': '开封', 'Kunming': '昆明', 'Lanzhou': '兰州', 'Lhasa': '拉萨',
+  'Linfen': '临汾', 'Linyi': '临沂', 'Lishui': '丽水', 'Liuzhou': '柳州',
+  'Longyan': '龙岩', 'Luoyang': '洛阳', 'Maoming': '茂名', 'Meizhou': '梅州',
+  'Mianyang': '绵阳', 'Mudanjiang': '牡丹江', 'Nanchang': '南昌', 'Nanjing': '南京',
+  'Nanning': '南宁', 'Nantong': '南通', 'Ningbo': '宁波', 'Ordos': '鄂尔多斯',
+  'Qianjiang': '潜江', 'Qingdao': '青岛', 'Qinhuangdao': '秦皇岛', 'Qinzhou': '钦州',
+  'Quanzhou': '泉州', 'Sanya': '三亚', 'Shantou': '汕头', 'Shaoxing': '绍兴',
+  'Shenyang': '沈阳', 'Shenzhen': '深圳', 'Shijiazhuang': '石家庄', 'Suzhou': '苏州',
+  'Taiyuan': '太原', 'Taizhou': '台州', 'Tangshan': '唐山', 'Urumqi': '乌鲁木齐',
+  'Weifang': '潍坊', 'Weihai': '威海', 'Wenzhou': '温州', 'Wuhan': '武汉',
+  'Wuhu': '芜湖', 'Wuxi': '无锡', "Xi'an": '西安', 'Xian': '西安',
+  'Xiamen': '厦门', 'Xianyang': '咸阳', 'Xinxiang': '新乡', 'Xining': '西宁',
+  'Xuchang': '许昌', 'Xuzhou': '徐州', 'Yancheng': '盐城', 'Yangjiang': '阳江',
+  'Yangzhou': '扬州', 'Yantai': '烟台', 'Yichang': '宜昌', 'Yinchuan': '银川',
+  'Yingkou': '营口', 'Zhangzhou': '漳州', 'Zhanjiang': '湛江', 'Zhengzhou': '郑州',
+  'Zhenjiang': '镇江', 'Zhongshan': '中山', 'Zhuhai': '珠海', 'Zibo': '淄博',
+  'Zunyi': '遵义',
+  // 多地占位
+  'Multiple Cities': '多地', 'Multiple cities in China': '中国多地',
+  // 台湾
+  'Chia-yi': '嘉义', 'Chiayi': '嘉义', 'Hsinchu': '新竹', 'Hualien': '花莲',
+  'Kaohsiung': '高雄', 'Lienchiang': '连江', 'New Taipei': '新北', 'Penghu': '澎湖',
+  'Pingtung': '屏东', 'Taichung': '台中', 'Tainan': '台南', 'Taipei': '台北',
+  'Taitung': '台东', 'Taoyuan': '桃园', 'Yilan': '宜兰', 'Yunlin': '云林',
+  // 部分国外耳熟能详
+  'Tokyo': '东京', 'Osaka': '大阪', 'Kyoto': '京都', 'Nagoya': '名古屋',
+  'Yokohama': '横滨', 'Sapporo': '札幌', 'Fukuoka': '福冈', 'Kobe': '神户',
+  'Seoul': '首尔', 'Busan': '釜山', 'Incheon': '仁川',
+  'Singapore': '新加坡', 'Bangkok': '曼谷', 'Kuala Lumpur': '吉隆坡',
+  'New York': '纽约', 'Los Angeles': '洛杉矶', 'San Francisco': '旧金山',
+  'Chicago': '芝加哥', 'Boston': '波士顿', 'Seattle': '西雅图',
+  'London': '伦敦', 'Paris': '巴黎', 'Berlin': '柏林', 'Munich': '慕尼黑',
+  'Rome': '罗马', 'Madrid': '马德里', 'Barcelona': '巴塞罗那',
+  'Amsterdam': '阿姆斯特丹', 'Brussels': '布鲁塞尔', 'Vienna': '维也纳',
+  'Moscow': '莫斯科', 'Sydney': '悉尼', 'Melbourne': '墨尔本',
+  'Toronto': '多伦多', 'Vancouver': '温哥华', 'Montreal': '蒙特利尔',
+};
+
+// 从 "City, Province" 形式里只取 city（第一段），并剥掉 " City" 后缀和尾部的邮编数字（处理 "Hsinchu City"、"Kaohsiung City 81157" 这类）
+const normalizeCityKey = (city: string): string => {
+  let s = city.split(/,\s*/)[0].trim();
+  s = s.replace(/\s+\d+$/, '');           // 去掉尾部数字（邮编）
+  s = s.replace(/\s+City$/i, '');          // 去掉 " City" 后缀
+  return s.trim();
+};
+
+// 中文走查表，已含 CJK（JP/HK/TW 比赛常见）走 OpenCC 简体化，命中不到保持原文
+const localizeCity = (city: string, _country: string, isZh: boolean): string => {
+  if (!city) return '';
+  const key = normalizeCityKey(city);
+  if (!isZh) return key;
+  if (CJK_RE.test(key)) {
+    try { return openccT2S(key); } catch { return key; }
+  }
+  return CITY_ZH[key] ?? key;
+};
+
 const CUBER_SOURCE_POINTS = 'cuber-points';
 const CUBER_SOURCE_ARCS = 'cuber-arcs';
 const CUBER_LAYER_DOT = 'cuber-points-dot';
 const CUBER_LAYER_LABEL = 'cuber-points-label';
+const CUBER_LAYER_CITY = 'cuber-points-city';
 const CUBER_LAYER_ARC = 'cuber-arcs-line';
 
 const UPCOMING_LAYERS = ['clusters', 'cluster-count', 'unclustered-point', 'unclustered-count'];
 const PAST_LAYERS = ['past-clusters', 'past-cluster-count', 'past-unclustered-point'];
-const CUBER_LAYERS = [CUBER_LAYER_ARC, CUBER_LAYER_DOT, CUBER_LAYER_LABEL];
+const CUBER_LAYERS = [CUBER_LAYER_ARC, CUBER_LAYER_DOT, CUBER_LAYER_LABEL, CUBER_LAYER_CITY];
 
 // ── 球面几何工具（Haversine 距离 + 球面多边形面积）──
 const EARTH_R_KM = 6371;
@@ -429,86 +503,6 @@ async function buildSimplifiedStyle(styleUrl: string, theme: Theme): Promise<map
 
 const TW_CUSTOM_LABEL = 'tw-custom-label';
 const TW_CUSTOM_SOURCE = 'tw-custom';
-
-// 自写大圆弧：3D slerp + 自适应二分，相邻样本 (unwrapped lng, lat) 欧氏距离 ≤ 1°
-// 原因：MapLibre globe 在两个相邻顶点之间做 mercator 线性插值再投回球面。若两端同 lat
-// 但 lng 差很大（跨极弧顶典型情况），渲染出来就是一条极区圆弧——这就是"半月"伪影。
-// 通过在弧顶附近密集二分，相邻对 lng 差被压到 ≤1° → 极区弧半径 < 2km 肉眼不可见。
-// （诊断数据：VA→Kunming maxLat=89.66，idx 56→57 lng 跳 163°→正是被二分消除的那种对。）
-function greatCircleCoords(
-  lng1: number, lat1: number, lng2: number, lat2: number,
-): [number, number][] {
-  const DEG = Math.PI / 180;
-  const RAD = 180 / Math.PI;
-  const BASE_N = 16;
-  const MAX_DEPTH = 12;
-  const THRESHOLD = 1.0; // 度
-
-  const toVec = (lng: number, lat: number): [number, number, number] => {
-    const la = lat * DEG, lo = lng * DEG;
-    const cl = Math.cos(la);
-    return [cl * Math.cos(lo), cl * Math.sin(lo), Math.sin(la)];
-  };
-  const v1 = toVec(lng1, lat1);
-  const v2 = toVec(lng2, lat2);
-  const dot = Math.max(-1, Math.min(1, v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2]));
-  const ang = Math.acos(dot);
-  if (ang < 1e-9) return [[lng1, lat1], [lng2, lat2]];
-  if (ang > Math.PI - 1e-6) return [[lng1, lat1], [lng2, lat2]];
-  const sinA = Math.sin(ang);
-
-  // slerp：归一化 + asin 防 ang≈π 时的浮点漂移
-  const slerp = (f: number): [number, number] => {
-    const A = Math.sin((1 - f) * ang) / sinA;
-    const B = Math.sin(f * ang) / sinA;
-    let x = A * v1[0] + B * v2[0];
-    let y = A * v1[1] + B * v2[1];
-    let z = A * v1[2] + B * v2[2];
-    const mag = Math.sqrt(x * x + y * y + z * z);
-    if (mag > 0) { x /= mag; y /= mag; z /= mag; }
-    const lat = Math.asin(Math.max(-1, Math.min(1, z))) * RAD;
-    const lng = Math.atan2(y, x) * RAD;
-    return [lng, lat];
-  };
-  const unwrap = (anchor: number, lng: number): number => {
-    let d = lng - anchor;
-    while (d > 180) d -= 360;
-    while (d < -180) d += 360;
-    return anchor + d;
-  };
-
-  // 16 个基础采样（确保弧顶附近至少有一个采样，后续二分从那里展开）
-  type Sample = { f: number; p: [number, number] };
-  const base: Sample[] = [];
-  for (let i = 0; i <= BASE_N; i++) {
-    const f = i / BASE_N;
-    const raw = slerp(f);
-    if (i === 0) base.push({ f, p: [raw[0], raw[1]] });
-    else {
-      const prev = base[i - 1].p;
-      base.push({ f, p: [unwrap(prev[0], raw[0]), raw[1]] });
-    }
-  }
-
-  // 自适应二分，按 (unwrapped_lng, lat) 欧氏距离阈值插中点
-  const coords: [number, number][] = [base[0].p];
-  const bisect = (fA: number, fB: number, pA: [number, number], pB: [number, number], depth: number) => {
-    const dLng = pB[0] - pA[0], dLat = pB[1] - pA[1];
-    if (dLng * dLng + dLat * dLat <= THRESHOLD * THRESHOLD) return;
-    if (depth >= MAX_DEPTH) return;
-    const fM = (fA + fB) * 0.5;
-    const raw = slerp(fM);
-    const pM: [number, number] = [unwrap(pA[0], raw[0]), raw[1]];
-    bisect(fA, fM, pA, pM, depth + 1);
-    coords.push(pM);
-    bisect(fM, fB, pM, pB, depth + 1);
-  };
-  for (let i = 0; i < base.length - 1; i++) {
-    bisect(base[i].f, base[i + 1].f, base[i].p, base[i + 1].p, 0);
-    coords.push(base[i + 1].p);
-  }
-  return coords;
-}
 
 // NOTE: MapTiler 通用语言切换 + Taiwan/HK override
 // - Taiwan 从 country layer 抹掉，用独立小字号 symbol 层（匹配省级样式）渲染"台湾省"/"Chinese Taipei"
@@ -968,10 +962,11 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
       geometry: { type: 'Point' as const, coordinates: [c.longitude_degrees, c.latitude_degrees] },
       properties: {
         index: i, id: c.id, name: c.name, city: c.city,
+        city_label: localizeCity(c.city, c.country_iso2, isZh),
         country_iso2: c.country_iso2, start_date: c.start_date, url: c.url,
       },
     })),
-  }), [cuberComps]);
+  }), [cuberComps, isZh]);
 
   // NOTE: 预计算每对相邻 comp 的大圆弧全量坐标（动画 slice 用）
   const cuberArcFullCoords = useMemo<Array<[number, number][]>>(() => {
@@ -982,9 +977,9 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
         out.push([]);
         continue;
       }
-      out.push(greatCircleCoords(
-        a.longitude_degrees, a.latitude_degrees,
-        b.longitude_degrees, b.latitude_degrees,
+      out.push(greatCircleArc(
+        [a.longitude_degrees, a.latitude_degrees],
+        [b.longitude_degrees, b.latitude_degrees],
       ));
     }
     return out;
@@ -1253,6 +1248,20 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
         },
         paint: { 'text-color': '#181716', 'text-halo-color': '#FFFFFF', 'text-halo-width': 1.5 },
       });
+      // 当前比赛的城市名（强制显示，避免被其他 label 遮挡）
+      map.addLayer({
+        id: CUBER_LAYER_CITY, type: 'symbol', source: CUBER_SOURCE_POINTS,
+        layout: {
+          'visibility': 'none',
+          'text-field': ['get', 'city_label'],
+          'text-font': ['Noto Sans Regular'],
+          'text-size': 13,
+          'text-offset': [0, -1.6],
+          'text-allow-overlap': true,
+          'text-ignore-placement': true,
+        },
+        paint: { 'text-color': '#C15F3C', 'text-halo-color': '#FFFFFF', 'text-halo-width': 2 },
+      });
 
       // ── 绘制工具图层（测量 / 路径 / 多边形）──
       const empty = { type: 'FeatureCollection', features: [] } as GeoJSON.FeatureCollection;
@@ -1441,7 +1450,7 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
         if (popupRef.current) popupRef.current.remove();
         popupRef.current = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 12 })
           .setLngLat(coords)
-          .setHTML(`<div class="mlp"><div class="mlp-name">#${Number(p.index) + 1} ${p.name}</div><div class="mlp-meta">${p.city ?? ''}, ${countryName(p.country_iso2, isZhRef.current)} · ${p.start_date}</div></div>`)
+          .setHTML(`<div class="mlp"><div class="mlp-name">#${Number(p.index) + 1} ${p.name}</div><div class="mlp-meta">${p.city_label ?? p.city ?? ''}, ${countryName(p.country_iso2, isZhRef.current)} · ${p.start_date}</div></div>`)
           .addTo(map);
       });
       map.on('mouseleave', CUBER_LAYER_DOT, () => {
@@ -1461,7 +1470,7 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
           const safeName = String(p.name ?? '').replace(/</g, '&lt;');
           const html = `<div class="mlp">
             <a class="mlp-name mlp-name-link" href="${url}" target="_blank" rel="noopener noreferrer">#${Number(p.index) + 1} ${safeName} ↗</a>
-            <div class="mlp-meta">${p.city ?? ''}, ${countryName(p.country_iso2, isZhRef.current)} · ${p.start_date}</div>
+            <div class="mlp-meta">${p.city_label ?? p.city ?? ''}, ${countryName(p.country_iso2, isZhRef.current)} · ${p.start_date}</div>
           </div>`;
           if (popupRef.current) popupRef.current.remove();
           popupRef.current = new maplibregl.Popup({ closeButton: true, closeOnClick: true, offset: 12 })
@@ -1558,6 +1567,11 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
     const filter: maplibregl.FilterSpecification = ['<=', ['get', 'index'], visibleMax];
     try { map.setFilter(CUBER_LAYER_DOT, filter); } catch { /* */ }
     try { map.setFilter(CUBER_LAYER_LABEL, filter); } catch { /* */ }
+    // 城市名仅显示在"当前"那一点
+    try {
+      map.setFilter(CUBER_LAYER_CITY,
+        ['==', ['get', 'index'], visibleMax] as unknown as maplibregl.FilterSpecification);
+    } catch { /* */ }
 
     try {
       map.setPaintProperty(CUBER_LAYER_DOT, 'circle-color',
@@ -1590,7 +1604,8 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
   // ── Arc 动画 + flyTo 同步 ──
   // 只在 currentIndex 恰好 +1（即 play loop 推进）时启动动画；scrub / 初始加载直接跳
   // 比赛点已在屏幕里时跳过 easeTo（防止头晕）
-  useEffect(() => {
+  // 用 useLayoutEffect 保证 setAnimProgress(0) 在 paint 前执行，避免新 arc 短暂闪现满长度
+  useLayoutEffect(() => {
     if (mode !== 'cuber') return;
     const prev = prevIndexRef.current;
     const delta = currentIndex - prev;
@@ -1613,23 +1628,33 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
     setAnimProgress(0);
     const duration = 500 / speed;
     const start = performance.now();
+
+    // 让相机沿着大圆弧同步走，避免 easeTo 直线插值导致的"超远距离时视角和路径分家"
+    const arcCoords = cuberArcFullCoords[currentIndex - 1];
+    const prevComp = cuberComps[currentIndex - 1];
+    const needTrack = !!cur && (
+      !isInComfortableView(cur.longitude_degrees, cur.latitude_degrees) ||
+      (!!prevComp && !isInComfortableView(prevComp.longitude_degrees, prevComp.latitude_degrees))
+    );
+
     let rafId = 0;
     const tick = (t: number) => {
       const p = Math.min(1, (t - start) / duration);
       setAnimProgress(p);
+      if (needTrack && arcCoords && arcCoords.length >= 2) {
+        const ix = Math.min(arcCoords.length - 1, Math.round(p * (arcCoords.length - 1)));
+        let lng = arcCoords[ix][0];
+        const lat = arcCoords[ix][1];
+        while (lng > 180) lng -= 360;
+        while (lng < -180) lng += 360;
+        mapRef.current?.jumpTo({ center: [lng, lat] });
+      }
       if (p < 1) rafId = requestAnimationFrame(tick);
     };
     rafId = requestAnimationFrame(tick);
 
-    if (cur && !isInComfortableView(cur.longitude_degrees, cur.latitude_degrees)) {
-      mapRef.current?.easeTo({
-        center: [cur.longitude_degrees, cur.latitude_degrees],
-        duration,
-      });
-    }
-
     return () => cancelAnimationFrame(rafId);
-  }, [currentIndex, mode, cuberComps, speed, isInComfortableView]);
+  }, [currentIndex, mode, cuberComps, speed, isInComfortableView, cuberArcFullCoords]);
 
   // NOTE: cuberComps 变化（新选手加载）时重置 prevIndexRef，避免误触发动画
   useEffect(() => {
@@ -1921,7 +1946,7 @@ const onSelectCuber = useCallback((person: WcaPerson) => {
                 <div className="cuber-step-label">
                   <div className="cuber-step-count">{t('globe.step', { current: currentIndex + 1, total: cuberComps.length })}</div>
                   <div className="cuber-step-name">{currentComp.name}</div>
-                  <div className="cuber-step-meta">{currentComp.city}, {countryName(currentComp.country_iso2, isZh)} · {currentComp.start_date}</div>
+                  <div className="cuber-step-meta">{localizeCity(currentComp.city, currentComp.country_iso2, isZh)}, {countryName(currentComp.country_iso2, isZh)} · {currentComp.start_date}</div>
                 </div>
                 <div className="cuber-speed">
                   {([0.5, 1, 2] as Speed[]).map((s) => (
