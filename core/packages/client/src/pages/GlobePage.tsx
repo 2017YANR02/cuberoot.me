@@ -7,7 +7,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, RotateCcw, Play, Pause, X, User, Moon, Sun } from 'lucide-react';
+import { ArrowLeft, RotateCcw, Play, Pause, X, Moon, Sun, Satellite, Plus, Minus, Navigation } from 'lucide-react';
 import maplibregl from 'maplibre-gl';
 import type { GeoJSONSource, MapMouseEvent, MapGeoJSONFeature } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -30,16 +30,81 @@ import LangToggle from '../components/LangToggle';
 import './globe.css';
 
 type Mode = 'upcoming' | 'history' | 'cuber';
-type RangeKey = 'month' | 'quarter' | 'year';
 type Speed = 0.5 | 1 | 2;
 
+// WCA 复办年份；slider 从 2003 开始（更紧凑，1982-2003 之间没有比赛）
 const HISTORY_MIN_YEAR = 2003;
+// WCA 第一场比赛 WC1982（世锦赛）；slider 拉到最左（2003）时自动把 1982 一并纳入
+const HISTORY_ABSOLUTE_MIN = 1982;
 
 // NOTE: OpenFreeMap 风格（基于 OpenMapTiles schema，和 MapTiler streets-v2 结构兼容）
 // 全球 Cloudflare CDN，中国大陆可直连，无需 API key；如需回退改回 MapTiler，commit 一行即可
-type Theme = 'dark' | 'light';
-const mapStyleUrl = (theme: Theme) =>
-  `https://tiles.openfreemap.org/styles/${theme === 'dark' ? 'dark' : 'liberty'}`;
+type Theme = 'dark' | 'light' | 'satellite';
+const mapStyleUrl = (theme: Theme) => {
+  if (theme === 'satellite') return null; // 卫星模式走自构造 style，下面单独处理
+  return `https://tiles.openfreemap.org/styles/${theme === 'dark' ? 'dark' : 'liberty'}`;
+};
+
+// 卫星模式：raster 底图（Esri World Imagery，多源聚合，z 0–19）+ OFM 矢量瓦片叠文字标签
+function buildSatelliteStyle(): maplibregl.StyleSpecification {
+  return {
+    version: 8,
+    glyphs: 'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf',
+    sources: {
+      satellite: {
+        type: 'raster',
+        tiles: ['https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+        tileSize: 256,
+        maxzoom: 19,
+        attribution: 'Esri, Maxar, GeoEye, Earthstar Geographics, CNES/Airbus DS, USDA, USGS, AeroGRID, IGN, and the GIS User Community',
+      },
+      labels: {
+        type: 'vector',
+        url: 'https://tiles.openfreemap.org/planet',
+      },
+    },
+    layers: [
+      { id: 'satellite-base', type: 'raster', source: 'satellite' },
+      // 国家边界淡白
+      {
+        id: 'country-boundary', type: 'line', source: 'labels', 'source-layer': 'boundary',
+        filter: ['==', ['get', 'admin_level'], 2],
+        paint: { 'line-color': 'rgba(255,255,255,0.55)', 'line-width': 0.7 },
+      },
+      // 国家名
+      {
+        id: 'place_country', type: 'symbol', source: 'labels', 'source-layer': 'place',
+        filter: ['==', ['get', 'class'], 'country'], maxzoom: 8,
+        layout: {
+          'text-field': ['coalesce', ['get', 'name:en'], ['get', 'name']],
+          'text-font': ['Noto Sans Regular'], 'text-size': 13,
+          'text-transform': 'uppercase', 'text-letter-spacing': 0.08,
+        },
+        paint: { 'text-color': '#FFFFFF', 'text-halo-color': 'rgba(0,0,0,0.65)', 'text-halo-width': 1.2 },
+      },
+      // 省/州
+      {
+        id: 'place_state', type: 'symbol', source: 'labels', 'source-layer': 'place',
+        filter: ['==', ['get', 'class'], 'state'], minzoom: 4, maxzoom: 6,
+        layout: {
+          'text-field': ['coalesce', ['get', 'name:en'], ['get', 'name']],
+          'text-font': ['Noto Sans Regular'], 'text-size': 11,
+        },
+        paint: { 'text-color': 'rgba(255,255,255,0.85)', 'text-halo-color': 'rgba(0,0,0,0.6)', 'text-halo-width': 1 },
+      },
+      // 城市
+      {
+        id: 'place_city', type: 'symbol', source: 'labels', 'source-layer': 'place',
+        filter: ['==', ['get', 'class'], 'city'], minzoom: 6,
+        layout: {
+          'text-field': ['coalesce', ['get', 'name:en'], ['get', 'name']],
+          'text-font': ['Noto Sans Regular'], 'text-size': 12,
+        },
+        paint: { 'text-color': '#FFFFFF', 'text-halo-color': 'rgba(0,0,0,0.6)', 'text-halo-width': 1.2 },
+      },
+    ],
+  } as unknown as maplibregl.StyleSpecification;
+}
 
 // NOTE: ISO alpha-2 → 国家名（英/中）；UI 展示用
 const COUNTRY_EN: Record<string, string> = {
@@ -85,11 +150,20 @@ const UPCOMING_LAYERS = ['clusters', 'cluster-count', 'unclustered-point', 'uncl
 const PAST_LAYERS = ['past-clusters', 'past-cluster-count', 'past-unclustered-point'];
 const CUBER_LAYERS = [CUBER_LAYER_ARC, CUBER_LAYER_DOT, CUBER_LAYER_LABEL];
 
-function addDays(d: Date, n: number): Date {
-  const c = new Date(d);
-  c.setDate(c.getDate() + n);
-  return c;
+// 格式化经纬度为度分秒（Google Earth 风格：67°16'15.24"S 56°36'35.21"W）
+function formatDMS(lat: number, lng: number): string {
+  const part = (deg: number, posChar: string, negChar: string) => {
+    const sign = deg >= 0 ? posChar : negChar;
+    const a = Math.abs(deg);
+    const d = Math.floor(a);
+    const mFloat = (a - d) * 60;
+    const m = Math.floor(mFloat);
+    const s = ((mFloat - m) * 60).toFixed(2);
+    return `${d}°${String(m).padStart(2, '0')}'${s.padStart(5, '0')}"${sign}`;
+  };
+  return `${part(lat, 'N', 'S')} ${part(lng, 'E', 'W')}`;
 }
+
 
 // ─── 瓦片级 繁→简 转换（MapTiler 的 name:zh 对 TW/HK/JP 常是繁体；要稳定出简体必须在 MVT 层面换）
 // 注册自定义协议 zh-tile://，从 https 拉回瓦片，解码 MVT，把所有 name* 字段的繁体转简体，再编码回去
@@ -235,15 +309,13 @@ async function buildSimplifiedStyle(styleUrl: string, theme: Theme): Promise<map
     }
   }
 
-  // dark 主题：让 background 层透明（只影响球外区域，露出 CSS 星空）；
-  // 同时把水染稍亮一档。陆地不透明化由后续注入的 earth-base 多边形负责
-  if (theme === 'dark') {
-    for (const layer of layers) {
-      if (layer.type === 'background') {
-        layer.paint = { ...(layer.paint ?? {}), 'background-color': 'rgba(0,0,0,0)' };
-      } else if (layer.id === 'water' && layer.type === 'fill') {
-        layer.paint = { ...(layer.paint ?? {}), 'fill-color': '#0E1620' };
-      }
+  // 两种主题都把 background 层透明（只影响球外区域，露出星空）；
+  // 陆地不透明化由后续注入的 earth-base 多边形负责
+  for (const layer of layers) {
+    if (layer.type === 'background') {
+      layer.paint = { ...(layer.paint ?? {}), 'background-color': 'rgba(0,0,0,0)' };
+    } else if (theme === 'dark' && layer.id === 'water' && layer.type === 'fill') {
+      layer.paint = { ...(layer.paint ?? {}), 'fill-color': '#0E1620' };
     }
   }
 
@@ -410,6 +482,7 @@ function patchMapStyle(map: maplibregl.Map, isZh: boolean) {
   patchMapTilerLang(map, isZh);
 }
 
+
 // NOTE: 简易并发池——不装 p-limit，限 N 个 worker 同时拉
 async function mapWithConcurrency<T, R>(
   items: T[],
@@ -441,6 +514,7 @@ export default function GlobePage() {
   const popupRef = useRef<maplibregl.Popup | null>(null);
   const mapLoadedRef = useRef(false);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const starfieldRef = useRef<HTMLDivElement>(null);
   const isZhRef = useRef(isZh);
   useEffect(() => { isZhRef.current = isZh; }, [isZh]);
 
@@ -460,14 +534,13 @@ export default function GlobePage() {
 
   // ── upcoming 模式 state ──
   const [comps, setComps] = useState<UpcomingCompRecord[] | null>(null);
-  const [range, setRange] = useState<RangeKey>('quarter');
-  const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(null);
+const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(null);
 
   // ── history 模式 state ──
   const currentYear = new Date().getFullYear();
   const [pastComps, setPastComps] = useState<PastCompRecord[] | null>(null);
   const [pastLoading, setPastLoading] = useState(false);
-  const [yearRange, setYearRange] = useState<[number, number]>([currentYear - 4, currentYear]);
+  const [yearRange, setYearRange] = useState<[number, number]>([HISTORY_MIN_YEAR, currentYear]);
 
   // ── cuber 模式 state ──
   const [cuber, setCuber] = useState<WcaPerson | null>(null);
@@ -477,6 +550,11 @@ export default function GlobePage() {
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState<Speed>(1);
   const [pickerOpen, setPickerOpen] = useState(false);
+
+  // ── 自定义控件 state ──
+  const [cursorPos, setCursorPos] = useState<{ lat: number; lng: number } | null>(null);
+  const [bearing, setBearing] = useState(0);
+  const [pitch, setPitch] = useState(0);
 
   // ── 拉 upcoming 数据（读预生成 JSON） ──
   useEffect(() => {
@@ -495,12 +573,7 @@ export default function GlobePage() {
       .finally(() => setPastLoading(false));
   }, [mode, pastComps, pastLoading, t]);
 
-  const filteredComps = useMemo(() => {
-    if (!comps) return [];
-    const daysMap: Record<RangeKey, number> = { month: 30, quarter: 90, year: 365 };
-    const cutoff = addDays(new Date(), daysMap[range]);
-    return comps.filter((c) => new Date(c.start_date) <= cutoff);
-  }, [comps, range]);
+  const filteredComps = useMemo(() => comps ?? [], [comps]);
 
   const upcomingStats = useMemo(() => {
     const countries = new Set(filteredComps.map((c) => c.country));
@@ -538,9 +611,10 @@ export default function GlobePage() {
   const filteredPast = useMemo(() => {
     if (!pastComps) return [];
     const [y0, y1] = yearRange;
+    const effectiveMin = y0 === HISTORY_MIN_YEAR ? HISTORY_ABSOLUTE_MIN : y0;
     return pastComps.filter((c) => {
       const y = Number(c.start_date.slice(0, 4));
-      return y >= y0 && y <= y1;
+      return y >= effectiveMin && y <= y1;
     });
   }, [pastComps, yearRange]);
 
@@ -660,7 +734,9 @@ export default function GlobePage() {
     let cancelled = false;
     let map: maplibregl.Map | null = null;
     (async () => {
-      const style = await buildSimplifiedStyle(styleUrl, theme).catch(() => styleUrl as unknown as maplibregl.StyleSpecification);
+      const style: maplibregl.StyleSpecification = theme === 'satellite'
+        ? buildSatelliteStyle()
+        : await buildSimplifiedStyle(styleUrl as string, theme).catch(() => styleUrl as unknown as maplibregl.StyleSpecification);
       if (cancelled || !containerRef.current) return;
       const cam = cameraRef.current;
       map = new maplibregl.Map({
@@ -670,6 +746,7 @@ export default function GlobePage() {
         zoom: cam?.zoom ?? 1.4,
         bearing: cam?.bearing ?? 0,
         pitch: cam?.pitch ?? 0,
+        attributionControl: false,
       });
       mapRef.current = map;
       wireMap(map);
@@ -680,15 +757,27 @@ export default function GlobePage() {
       try { map.setProjection({ type: 'globe' }); } catch { /* old */ }
       patchMapStyle(map, isZhRef.current);
     });
-    map.addControl(new maplibregl.NavigationControl({ visualizePitch: false }), 'top-right');
+    // 自定义控件接管，禁用默认 NavigationControl
+    // 鼠标在球外（黑色太空区）时，project(unproject(p)) 与 p 不匹配 → 视为离开球面
+    map.on('mousemove', (e) => {
+      const reproj = map.project(e.lngLat);
+      const dx = reproj.x - e.point.x;
+      const dy = reproj.y - e.point.y;
+      if (dx * dx + dy * dy > 4) setCursorPos(null);
+      else setCursorPos({ lat: e.lngLat.lat, lng: e.lngLat.lng });
+    });
+    map.on('mouseout', () => setCursorPos(null));
+    map.on('rotate', () => setBearing(map.getBearing()));
+    map.on('pitch', () => setPitch(map.getPitch()));
 
     map.on('load', () => {
       mapLoadedRef.current = true;
       setMapLoaded(true);
 
-      // dark 主题：注入一张全球覆盖的 earth-base 多边形作为不透明陆地基底
+      // 注入一张全球覆盖的 earth-base 多边形作为不透明陆地基底（仅 vector 主题）
       // 球外（背景已透明）→ 露出 CSS 星空；球面 → 这层兜底，水/陆细节叠加在它之上
-      if (theme === 'dark') {
+      // satellite 模式跳过：raster 影像本身就是不透明全覆盖
+      if (theme !== 'satellite') {
         map.addSource('earth-base', {
           type: 'geojson',
           data: {
@@ -708,7 +797,7 @@ export default function GlobePage() {
           id: 'earth-base',
           type: 'fill',
           source: 'earth-base',
-          paint: { 'fill-color': '#181D26', 'fill-antialias': false },
+          paint: { 'fill-color': theme === 'dark' ? '#181D26' : '#F5F2E8', 'fill-antialias': false },
         }, firstNonBgId);
       }
 
@@ -1112,6 +1201,25 @@ export default function GlobePage() {
     return () => clearInterval(id);
   }, [playing, speed, mode, cuberComps.length]);
 
+  // 拖动地球时星空跟着滚动：等距柱面贴图按经/纬度反向偏移 background-position
+  // 视口宽 -> 经度 360° 完整跨度，所以 1° = vw/360 px
+  useEffect(() => {
+    const map = mapRef.current;
+    const el = starfieldRef.current;
+    if (!map || !el) return;
+    const apply = () => {
+      const c = map.getCenter();
+      const w = el.clientWidth || window.innerWidth;
+      const h = el.clientHeight || window.innerHeight;
+      const px = (-c.lng / 360) * w;
+      const py = (c.lat / 180) * h;
+      el.style.backgroundPosition = `${px.toFixed(1)}px ${py.toFixed(1)}px`;
+    };
+    apply();
+    map.on('move', apply);
+    return () => { map.off('move', apply); };
+  }, [theme, mapLoaded]);
+
   const resetView = useCallback(() => {
     mapRef.current?.easeTo({ center: [30, 20], zoom: 1.4, duration: 800 });
   }, []);
@@ -1137,7 +1245,7 @@ export default function GlobePage() {
 
   return (
     <div className={`globe-page is-${theme}`}>
-      {theme === 'dark' && <div className="starfield" aria-hidden="true" />}
+      <div className="starfield" aria-hidden="true" ref={starfieldRef} />
 
       <div className="globe-topbar">
         <Link to="/upcoming-comps" className="back-link" title={t('globe.backToCalendar') as string}>
@@ -1154,24 +1262,13 @@ export default function GlobePage() {
           <button role="tab" aria-selected={mode === 'history'} className={`range-btn ${mode === 'history' ? 'is-active' : ''}`} onClick={() => setMode('history')}>
             {t('globe.modeHistory')}
           </button>
-          <button role="tab" aria-selected={mode === 'cuber'} className={`range-btn ${mode === 'cuber' ? 'is-active' : ''}`} onClick={() => setMode('cuber')}>
+          <button role="tab" aria-selected={mode === 'cuber'} className={`range-btn ${mode === 'cuber' ? 'is-active' : ''}`} onClick={() => { setMode('cuber'); if (!cuber) setPickerOpen(true); }}>
             {t('globe.modeCuber')}
           </button>
         </div>
-        {mode === 'upcoming' && (
-          <>
-            <div className="range-toggle" role="tablist">
-              {(['month', 'quarter', 'year'] as RangeKey[]).map((r) => (
-                <button key={r} role="tab" aria-selected={range === r} className={`range-btn ${range === r ? 'is-active' : ''}`} onClick={() => setRange(r)}>
-                  {t(`globe.range${r.charAt(0).toUpperCase() + r.slice(1)}`)}
-                </button>
-              ))}
-            </div>
-          </>
-        )}
         {mode === 'history' && (
           <div className="history-range">
-            <span className="history-range-label">{yearRange[0]} — {yearRange[1]}</span>
+            <span className="history-range-label">{yearRange[0] === HISTORY_MIN_YEAR ? HISTORY_ABSOLUTE_MIN : yearRange[0]} — {yearRange[1]}</span>
             <div className="history-range-track">
               <div
                 className="history-range-fill"
@@ -1228,22 +1325,89 @@ export default function GlobePage() {
         )}
 
         <LangToggle className="topbar-lang" />
-        <button
-          className="reset-btn"
-          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          title={theme === 'dark' ? (isZh ? '浅色' : 'Light') : (isZh ? '深色' : 'Dark')}
-          aria-label="Toggle theme"
-        >
-          {theme === 'dark' ? <Sun size={14} strokeWidth={1.75} /> : <Moon size={14} strokeWidth={1.75} />}
-        </button>
         <button className="reset-btn" onClick={resetView} title={isZh ? '复位视角' : 'Reset view'}>
           <RotateCcw size={14} strokeWidth={1.75} />
         </button>
       </div>
 
-      {mode === 'cuber' && (
+      <button
+        className="theme-toggle-floating"
+        onClick={() => setTheme(theme === 'dark' ? 'light' : theme === 'light' ? 'satellite' : 'dark')}
+        title={
+          theme === 'dark' ? (isZh ? '切到浅色' : 'Switch to light')
+          : theme === 'light' ? (isZh ? '切到卫星' : 'Switch to satellite')
+          : (isZh ? '切到深色' : 'Switch to dark')
+        }
+        aria-label="Toggle theme"
+      >
+        {theme === 'dark'
+          ? <Sun size={16} strokeWidth={1.75} />
+          : theme === 'light'
+            ? <Satellite size={16} strokeWidth={1.75} />
+            : <Moon size={16} strokeWidth={1.75} />}
+      </button>
+
+      <div className="map-controls">
+        <div className="map-controls-bar">
+          <button
+            className={`map-ctrl-btn map-ctrl-3d ${pitch > 1 ? 'is-active' : ''}`}
+            onClick={() => mapRef.current?.easeTo({ pitch: pitch > 1 ? 0 : 60, duration: 400 })}
+            title={pitch > 1 ? (isZh ? '退出 3D' : 'Exit 3D') : (isZh ? '3D 视角' : '3D view')}
+          >3D</button>
+          <button
+            className="map-ctrl-btn map-ctrl-compass"
+            onClick={() => mapRef.current?.easeTo({ bearing: 0, pitch: 0, duration: 400 })}
+            title={isZh ? '复位朝北' : 'Reset bearing'}
+            aria-label="Reset north"
+          >
+            <Navigation
+              size={14}
+              strokeWidth={1.75}
+              style={{ transform: `rotate(${-bearing}deg)`, transition: 'transform 0.2s' }}
+              fill="currentColor"
+            />
+          </button>
+          <button
+            className="map-ctrl-btn"
+            onClick={() => mapRef.current?.zoomOut()}
+            title={isZh ? '缩小' : 'Zoom out'}
+            aria-label="Zoom out"
+          ><Minus size={14} strokeWidth={2} /></button>
+          <button
+            className="map-ctrl-btn"
+            onClick={() => mapRef.current?.zoomIn()}
+            title={isZh ? '放大' : 'Zoom in'}
+            aria-label="Zoom in"
+          ><Plus size={14} strokeWidth={2} /></button>
+        </div>
+      </div>
+
+      <div className="globe-statusbar">
+        <div className="globe-statusbar-left">
+          <a
+            className="globe-statusbar-credit"
+            href="https://www.solarsystemscope.com/textures/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >stars: Solar System Scope · CC BY 4.0</a>
+          <span className="globe-statusbar-attrib">
+            <span className="globe-statusbar-attrib-trigger">ⓘ map data</span>
+            <span className="globe-statusbar-attrib-tip">
+              {theme === 'satellite'
+                ? <>© <a href="https://www.esri.com" target="_blank" rel="noopener noreferrer">Esri</a>, <a href="https://www.maxar.com" target="_blank" rel="noopener noreferrer">Maxar</a>, Earthstar Geographics · labels © <a href="https://openfreemap.org" target="_blank" rel="noopener noreferrer">OpenFreeMap</a> · <a href="https://openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors</>
+                : <>© <a href="https://openfreemap.org" target="_blank" rel="noopener noreferrer">OpenFreeMap</a> · <a href="https://openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors</>
+              }
+            </span>
+          </span>
+        </div>
+        <span className="globe-statusbar-coords">
+          {cursorPos ? formatDMS(cursorPos.lat, cursorPos.lng) : ''}
+        </span>
+      </div>
+
+      {mode === 'cuber' && (cuber || loadProgress) && (
         <div className="cuber-bar">
-          {cuber ? (
+          {cuber && (
             <div className="cuber-chip">
               {isTw
                 ? <img src="/tools/assets/images/ChineseTaipei.svg" className="cuber-flag" alt="Chinese Taipei" />
@@ -1254,11 +1418,6 @@ export default function GlobePage() {
                 <X size={14} strokeWidth={1.75} />
               </button>
             </div>
-          ) : (
-            <button className="cuber-select-btn" onClick={() => setPickerOpen(true)}>
-              <User size={14} strokeWidth={1.75} />
-              {t('globe.selectCuber')}
-            </button>
           )}
           {cuber && (
             <button className="cuber-change-btn" onClick={() => setPickerOpen(true)}>
@@ -1323,9 +1482,6 @@ export default function GlobePage() {
 
           {!loadProgress && cuber && cuberComps.length === 0 && (
             <div className="cuber-empty">{t('globe.noComps')}</div>
-          )}
-          {!loadProgress && !cuber && (
-            <div className="cuber-empty">{t('globe.noCuberSelected')}</div>
           )}
         </div>
       )}
