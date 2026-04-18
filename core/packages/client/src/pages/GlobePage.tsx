@@ -7,7 +7,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { RotateCcw, RotateCw, Play, Pause, X, Moon, Sun, Satellite, Plus, Minus, Navigation, Compass, Ruler, Undo2, Search } from 'lucide-react';
+import { RotateCw, Play, Pause, X, Moon, Sun, Satellite, Plus, Minus, Compass, Ruler, Undo2, Search } from 'lucide-react';
 import maplibregl from 'maplibre-gl';
 import type { GeoJSONSource, MapMouseEvent, MapGeoJSONFeature } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -660,6 +660,8 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
 
   // ── 自定义控件 state ──
   const [cursorPos, setCursorPos] = useState<{ lat: number; lng: number } | null>(null);
+  // 手机端状态栏槽位（stats / coords 二选一，点击切换；桌面端两者并排显示）
+  const [mobileSlot, setMobileSlot] = useState<'stats' | 'coords'>('stats');
   const [bearing, setBearing] = useState(0);
   const [pitch, setPitch] = useState(0);
   const [navPopoverOpen, setNavPopoverOpen] = useState(false);
@@ -1763,11 +1765,7 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
     return () => { updateGhostLineRef.current = null; };
   }, [mapLoaded, drawMode, drawPoints]);
 
-  const resetView = useCallback(() => {
-    mapRef.current?.easeTo({ center: [30, 20], zoom: 1.4, duration: 800 });
-  }, []);
-
-  const onSelectCuber = useCallback((person: WcaPerson) => {
+const onSelectCuber = useCallback((person: WcaPerson) => {
     setPickerOpen(false);
     setCuber(person);
     loadCuberPath(person);
@@ -1966,9 +1964,6 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
         )}
 
         <LangToggle className="topbar-lang" />
-        <button className="reset-btn" onClick={resetView} title={isZh ? '复位视角' : 'Reset view'}>
-          <RotateCcw size={14} strokeWidth={1.75} />
-        </button>
       </div>
 
       {drawMode !== 'none' && drawPoints.length === 0 && (
@@ -2138,10 +2133,6 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
               />
               <span className="nav-popover-val">{Math.round(bearing)}°</span>
             </div>
-            <button
-              className="nav-popover-reset"
-              onClick={() => mapRef.current?.easeTo({ bearing: 0, pitch: 0, duration: 400 })}
-            >{isZh ? '复位朝北' : 'Reset to north'}</button>
           </div>
         )}
         <div className="map-controls-bar">
@@ -2150,19 +2141,6 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
             onClick={() => mapRef.current?.easeTo({ pitch: pitch > 1 ? 0 : 60, duration: 400 })}
             title={pitch > 1 ? (isZh ? '退出 3D' : 'Exit 3D') : (isZh ? '3D 视角' : '3D view')}
           >3D</button>
-          <button
-            className="map-ctrl-btn map-ctrl-compass"
-            onClick={() => mapRef.current?.easeTo({ bearing: 0, pitch: 0, duration: 400 })}
-            title={isZh ? '复位朝北' : 'Reset bearing'}
-            aria-label="Reset north"
-          >
-            <Navigation
-              size={14}
-              strokeWidth={1.75}
-              style={{ transform: `rotate(${-bearing}deg)`, transition: 'transform 0.2s' }}
-              fill="currentColor"
-            />
-          </button>
           <button
             className={`map-ctrl-btn ${navPopoverOpen ? 'is-active' : ''}`}
             onClick={() => setNavPopoverOpen((v) => !v)}
@@ -2187,23 +2165,21 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
 
       <div className="globe-statusbar">
         <div className="globe-statusbar-left">
-          <a
-            className="globe-statusbar-credit"
-            href="https://www.solarsystemscope.com/textures/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >stars: Solar System Scope · CC BY 4.0</a>
           <span className="globe-statusbar-attrib">
-            <span className="globe-statusbar-attrib-trigger">ⓘ map data</span>
+            <span className="globe-statusbar-attrib-trigger">ⓘ {isZh ? '数据来源' : 'attributions'}</span>
             <span className="globe-statusbar-attrib-tip">
               {theme === 'satellite'
-                ? <>© <a href="https://www.esri.com" target="_blank" rel="noopener noreferrer">Esri</a>, <a href="https://www.maxar.com" target="_blank" rel="noopener noreferrer">Maxar</a>, Earthstar Geographics · labels © <a href="https://openfreemap.org" target="_blank" rel="noopener noreferrer">OpenFreeMap</a> · <a href="https://openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors</>
-                : <>© <a href="https://openfreemap.org" target="_blank" rel="noopener noreferrer">OpenFreeMap</a> · <a href="https://openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors</>
+                ? <>© <a href="https://nasa.gov" target="_blank" rel="noopener noreferrer">NASA</a> Blue Marble · <a href="https://www.esri.com" target="_blank" rel="noopener noreferrer">Esri</a>, <a href="https://www.maxar.com" target="_blank" rel="noopener noreferrer">Maxar</a>, Earthstar Geographics · labels © <a href="https://openfreemap.org" target="_blank" rel="noopener noreferrer">OpenFreeMap</a> · <a href="https://openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors · stars © <a href="https://www.solarsystemscope.com/textures/" target="_blank" rel="noopener noreferrer">Solar System Scope</a> CC BY 4.0</>
+                : <>© <a href="https://openfreemap.org" target="_blank" rel="noopener noreferrer">OpenFreeMap</a> · <a href="https://openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors · stars © <a href="https://www.solarsystemscope.com/textures/" target="_blank" rel="noopener noreferrer">Solar System Scope</a> CC BY 4.0</>
               }
             </span>
           </span>
         </div>
-        <div className="globe-statusbar-right">
+        <div
+          className={`globe-statusbar-right is-${mobileSlot}`}
+          onClick={() => setMobileSlot((s) => (s === 'stats' ? 'coords' : 'stats'))}
+          title={isZh ? '点击切换显示' : 'tap to switch'}
+        >
           {mode === 'upcoming' && (
             <span className="globe-statusbar-stats">
               <span>{upcomingStats.comps} {isZh ? (includePast ? '近期' : '比赛') : (includePast ? 'upcoming' : 'comps')}</span>

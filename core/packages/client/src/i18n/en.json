@@ -167,7 +167,7 @@
     "backToCalendar": "Calendar",
     "modeComps": "Comps",
     "includePast": "Include past",
-    "modeCuber": "Cuber Path",
+    "modeCuber": "Path",
     "selectCuber": "Select cuber",
     "changeCuber": "Change",
     "loadingPath": "Loading {{done}} / {{total}}...",
