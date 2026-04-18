@@ -208,6 +208,64 @@
 .globe-page .map-ctrl-btn.is-active { color: #E07752; }
 .globe-page .map-ctrl-3d { letter-spacing: 0.02em; }
 
+/* ── 朝向 / 俯仰 popover（参考谷歌地球） ── */
+.globe-page .nav-popover {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 8px);
+    width: 240px;
+    background: rgba(28, 33, 41, 0.96);
+    border: 1px solid #2F3540;
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: #ECEAE3;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+    pointer-events: auto;
+    z-index: 12;
+}
+.globe-page .nav-popover-row {
+    display: grid;
+    grid-template-columns: 48px 1fr 36px;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 0.78rem;
+}
+.globe-page .nav-popover-row label {
+    color: #9CA0A8;
+}
+.globe-page .nav-popover-row input[type='range'] {
+    width: 100%;
+    accent-color: #E07752;
+    margin: 0;
+}
+.globe-page .nav-popover-val {
+    font-variant-numeric: tabular-nums;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.72rem;
+    color: #ECEAE3;
+    text-align: right;
+}
+.globe-page .nav-popover-reset {
+    width: 100%;
+    margin-top: 4px;
+    padding: 6px 10px;
+    background: transparent;
+    border: 1px solid #2F3540;
+    border-radius: 6px;
+    color: #E07752;
+    font-family: inherit;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+.globe-page .nav-popover-reset:hover {
+    background: rgba(224, 119, 82, 0.12);
+    border-color: #E07752;
+}
+
 
 /* ── 左下角浮动主题切换按钮 ── */
 .globe-page .theme-toggle-floating {
