@@ -7,6 +7,7 @@ export {
   fetchAllUpcomingCompetitions,
   fetchCompetitionDetail,
   fetchAvatar,
+  fetchPersonByWcaId,
   fetchUserTimes,
 } from './api/wca_search';
 export type { WcaUpcomingComp, WcaCompDetail } from './api/wca_search';
