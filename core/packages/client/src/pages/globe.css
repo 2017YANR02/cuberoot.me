@@ -89,11 +89,18 @@
     font-size: 0.72rem;
     color: #ECEAE3;
     white-space: nowrap;
+    max-width: calc(100vw - 24px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.15s;
     z-index: 12;
+}
+@media (max-width: 720px) {
+    .globe-page .globe-statusbar-attrib-tip {
+        white-space: normal;
+        width: calc(100vw - 24px);
+    }
 }
 /* 透明"桥"覆盖 trigger 与 tip 之间 6px 的间隙，鼠标穿过时不会让 tip 消失 */
 .globe-page .globe-statusbar-attrib-tip::after {
