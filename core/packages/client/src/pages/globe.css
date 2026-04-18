@@ -240,7 +240,6 @@
 .globe-page .map-ctrl-btn:last-child { border-right: none; }
 .globe-page .map-ctrl-btn:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
 .globe-page .map-ctrl-btn.is-active { color: #E07752; }
-.globe-page .map-ctrl-3d { letter-spacing: 0.02em; }
 
 /* ── 跟随光标的"添加第一个点"提示（参考谷歌地球）── */
 .globe-page .draw-cursor-tip {
