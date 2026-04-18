@@ -2384,10 +2384,10 @@ const onSelectCuber = useCallback((person: WcaPerson) => {
         <div className="globe-topbar-spacer" />
 
         <div className="mode-toggle" role="tablist">
-          <button role="tab" aria-selected={mode === 'cuber'} className={`range-btn ${mode === 'cuber' ? 'is-active' : ''}`} onClick={() => { setMode('cuber'); if (!cuber) setPickerOpen(true); }}>
+          <button role="tab" aria-selected={false} className="range-btn" onClick={() => { setMode('cuber'); if (!cuber) setPickerOpen(true); }}>
             {t('globe.modeCuber')}
           </button>
-          <button role="tab" aria-selected={mode === 'upcoming'} className={`range-btn ${mode === 'upcoming' ? 'is-active' : ''}`} onClick={() => setMode('upcoming')}>
+          <button role="tab" aria-selected={true} className="range-btn is-active" onClick={() => setMode('upcoming')}>
             {t('globe.modeComps')}
           </button>
         </div>
