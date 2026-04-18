@@ -120,6 +120,25 @@
     gap: 12px;
     margin-left: auto;
 }
+/* 手机端：stats 与 coords 占同一槽位，点击切换 */
+@media (max-width: 640px) {
+    .globe-page .globe-statusbar-right {
+        cursor: pointer;
+        position: relative;
+        gap: 0;
+        min-width: 0;
+    }
+    .globe-page .globe-statusbar-right.is-stats .globe-statusbar-coords { display: none; }
+    .globe-page .globe-statusbar-right.is-coords .globe-statusbar-stats { display: none; }
+    .globe-page .globe-statusbar-coords { min-width: 0; }
+    /* 提示：active item 后跟一个细微的 ⇄ */
+    .globe-page .globe-statusbar-right::after {
+        content: '⇄';
+        margin-left: 6px;
+        opacity: 0.4;
+        font-size: 0.85em;
+    }
+}
 .globe-page .globe-statusbar-stats {
     display: inline-flex;
     align-items: center;
