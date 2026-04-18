@@ -7,7 +7,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { RotateCw, Play, Pause, X, Moon, Sun, Satellite, Plus, Minus, Compass, Ruler, Undo2, Search } from 'lucide-react';
+import { RotateCw, Play, Pause, X, Moon, Sun, Satellite, Plus, Minus, Compass, Ruler, Undo2, Search, ArrowLeft } from 'lucide-react';
 import maplibregl from 'maplibre-gl';
 import type { GeoJSONSource, MapMouseEvent, MapGeoJSONFeature } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -1321,6 +1321,9 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
           map.easeTo({ center: geom.coordinates as [number, number], zoom });
         } catch { /* */ }
       });
+      // 触屏检测：(hover: none) 在 iOS/Android 默认 true，在桌面（即使带触屏）默认 false
+      const isTouch = window.matchMedia('(hover: none)').matches;
+
       map.on('click', 'unclustered-point', (e: MapMouseEvent & { features?: MapGeoJSONFeature[] }) => {
         if (drawModeRef.current !== 'none') return;
         const f = e.features?.[0];
@@ -1332,13 +1335,33 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
             return;
           } catch { /* fall through to single */ }
         }
-        // 单场比赛 → 直接新标签页打开 WCA page
         const url = typeof p.url === 'string' ? p.url : '';
+        if (isTouch) {
+          // 手机端：第一次点 → 显示带可点击链接的 popup，不直接跳转
+          const coords = (f.geometry as GeoJSON.Point).coordinates.slice() as [number, number];
+          const zh = isZhRef.current;
+          const city = String(p.city ?? '');
+          const country = countryName(String(p.country ?? ''), zh);
+          const safeName = String(p.name ?? '').replace(/</g, '&lt;');
+          const html = `<div class="mlp">
+            <a class="mlp-name mlp-name-link" href="${url}" target="_blank" rel="noopener noreferrer">${safeName} ↗</a>
+            <div class="mlp-meta">${city}, ${country} · ${p.start_date}${p.start_date !== p.end_date ? ` — ${p.end_date}` : ''}</div>
+          </div>`;
+          if (popupRef.current) popupRef.current.remove();
+          popupRef.current = new maplibregl.Popup({ closeButton: true, closeOnClick: true, offset: 12 })
+            .setLngLat(coords)
+            .setHTML(html)
+            .addTo(map);
+          return;
+        }
+        // 桌面端：保持原行为，直接新标签页打开
         if (url) window.open(url, '_blank', 'noopener,noreferrer');
       });
       map.on('mouseenter', 'clusters', () => { map.getCanvas().style.cursor = 'pointer'; });
       map.on('mouseleave', 'clusters', () => { map.getCanvas().style.cursor = ''; });
       map.on('mouseenter', 'unclustered-point', (e: MapMouseEvent & { features?: MapGeoJSONFeature[] }) => {
+        // 触屏不显示 hover popup（避免和点击 popup 互相覆盖）
+        if (isTouch) return;
         map.getCanvas().style.cursor = 'pointer';
         const f = e.features?.[0];
         if (!f) return;
@@ -1358,6 +1381,7 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
           .addTo(map);
       });
       map.on('mouseleave', 'unclustered-point', () => {
+        if (isTouch) return;
         map.getCanvas().style.cursor = '';
         if (popupRef.current) { popupRef.current.remove(); popupRef.current = null; }
       });
@@ -1406,8 +1430,9 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
         if (popupRef.current) { popupRef.current.remove(); popupRef.current = null; }
       });
 
-      // cuber 交互（hover tooltip）
+      // cuber 交互（hover tooltip + click 跳转，行为与 unclustered-point 一致）
       map.on('mouseenter', CUBER_LAYER_DOT, (e: MapMouseEvent & { features?: MapGeoJSONFeature[] }) => {
+        if (isTouch) return;
         map.getCanvas().style.cursor = 'pointer';
         const f = e.features?.[0];
         if (!f) return;
@@ -1420,8 +1445,32 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
           .addTo(map);
       });
       map.on('mouseleave', CUBER_LAYER_DOT, () => {
+        if (isTouch) return;
         map.getCanvas().style.cursor = '';
         if (popupRef.current) { popupRef.current.remove(); popupRef.current = null; }
+      });
+      map.on('click', CUBER_LAYER_DOT, (e: MapMouseEvent & { features?: MapGeoJSONFeature[] }) => {
+        if (drawModeRef.current !== 'none') return;
+        const f = e.features?.[0];
+        if (!f) return;
+        const p = f.properties as Record<string, string>;
+        const url = p.url || `https://www.worldcubeassociation.org/competitions/${p.id ?? ''}`;
+        if (isTouch) {
+          // 手机端：第一次点 → 弹 popup，比赛名为可点击链接
+          const coords = (f.geometry as GeoJSON.Point).coordinates.slice() as [number, number];
+          const safeName = String(p.name ?? '').replace(/</g, '&lt;');
+          const html = `<div class="mlp">
+            <a class="mlp-name mlp-name-link" href="${url}" target="_blank" rel="noopener noreferrer">#${Number(p.index) + 1} ${safeName} ↗</a>
+            <div class="mlp-meta">${p.city ?? ''}, ${countryName(p.country_iso2, isZhRef.current)} · ${p.start_date}</div>
+          </div>`;
+          if (popupRef.current) popupRef.current.remove();
+          popupRef.current = new maplibregl.Popup({ closeButton: true, closeOnClick: true, offset: 12 })
+            .setLngLat(coords)
+            .setHTML(html)
+            .addTo(map);
+          return;
+        }
+        if (url) window.open(url, '_blank', 'noopener,noreferrer');
       });
     });
     }
@@ -1482,9 +1531,10 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
   }, [isZh]);
 
   // ── 图层可见性切换 + 当前高亮 / filter ──
+  // NOTE: mapLoaded 在 deps 里 — theme 切换会 setMapLoaded(false→true)，需要 re-run 把 cuber/upcoming layer 的 visibility 重新打开
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !mapLoadedRef.current) return;
+    if (!map || !mapLoaded) return;
     const show = (ids: string[], v: boolean) => {
       for (const id of ids) {
         try { map.setLayoutProperty(id, 'visibility', v ? 'visible' : 'none'); } catch { /* layer 还未添加 */ }
@@ -1494,14 +1544,15 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
     // past 已经合并进 upcoming source，past-* 图层不再单独显示
     show(PAST_LAYERS, false);
     show(CUBER_LAYERS, mode === 'cuber');
-  }, [mode, includePast]);
+  }, [mode, includePast, mapLoaded]);
 
   // ── cuber 模式下：dot/label filter（按 index 显示）+ 高亮当前点 + flyTo ──
   // NOTE: 动画中（arc 未到达终点）时，终点 B 还未显示，等弧线到达时才出现
+  // mapLoaded 在 deps 里 — theme 切换后需要重新 setFilter/setPaintProperty
   const animating = animProgress < 1;
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !mapLoadedRef.current || mode !== 'cuber') return;
+    if (!map || !mapLoaded || mode !== 'cuber') return;
 
     const visibleMax = animating ? currentIndex - 1 : currentIndex;
     const filter: maplibregl.FilterSpecification = ['<=', ['get', 'index'], visibleMax];
@@ -1514,10 +1565,31 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
       map.setPaintProperty(CUBER_LAYER_DOT, 'circle-radius',
         ['case', ['==', ['get', 'index'], visibleMax], 10, 5] as unknown as number);
     } catch { /* */ }
-  }, [currentIndex, mode, animating]);
+  }, [currentIndex, mode, animating, mapLoaded]);
+
+  // 判断坐标是否在当前视口的"安心可见区"（内缩 15%）—— 用于 cuber path 动画时避免不必要的转地球
+  const isInComfortableView = useCallback((lng: number, lat: number): boolean => {
+    const map = mapRef.current;
+    if (!map) return false;
+    try {
+      const b = map.getBounds();
+      const w = b.getEast() - b.getWest();
+      const h = b.getNorth() - b.getSouth();
+      // 跨 antimeridian 时 w 会为负，强制 flyTo
+      if (w <= 0) return false;
+      const m = 0.15;
+      return lng >= b.getWest() + w * m
+        && lng <= b.getEast() - w * m
+        && lat >= b.getSouth() + h * m
+        && lat <= b.getNorth() - h * m;
+    } catch {
+      return false;
+    }
+  }, []);
 
   // ── Arc 动画 + flyTo 同步 ──
   // 只在 currentIndex 恰好 +1（即 play loop 推进）时启动动画；scrub / 初始加载直接跳
+  // 比赛点已在屏幕里时跳过 easeTo（防止头晕）
   useEffect(() => {
     if (mode !== 'cuber') return;
     const prev = prevIndexRef.current;
@@ -1527,10 +1599,12 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
     if (delta !== 1) {
       setAnimProgress(1);
       prevIndexRef.current = currentIndex;
-      if (cur) mapRef.current?.easeTo({
-        center: [cur.longitude_degrees, cur.latitude_degrees],
-        duration: 400,
-      });
+      if (cur && !isInComfortableView(cur.longitude_degrees, cur.latitude_degrees)) {
+        mapRef.current?.easeTo({
+          center: [cur.longitude_degrees, cur.latitude_degrees],
+          duration: 400,
+        });
+      }
       return;
     }
 
@@ -1547,7 +1621,7 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
     };
     rafId = requestAnimationFrame(tick);
 
-    if (cur) {
+    if (cur && !isInComfortableView(cur.longitude_degrees, cur.latitude_degrees)) {
       mapRef.current?.easeTo({
         center: [cur.longitude_degrees, cur.latitude_degrees],
         duration,
@@ -1555,7 +1629,7 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
     }
 
     return () => cancelAnimationFrame(rafId);
-  }, [currentIndex, mode, cuberComps, speed]);
+  }, [currentIndex, mode, cuberComps, speed, isInComfortableView]);
 
   // NOTE: cuberComps 变化（新选手加载）时重置 prevIndexRef，避免误触发动画
   useEffect(() => {
@@ -1788,7 +1862,85 @@ const onSelectCuber = useCallback((person: WcaPerson) => {
     <div className={`globe-page is-${theme}`}>
       <div className="starfield" aria-hidden="true" ref={starfieldRef} />
 
-      <div className="globe-topbar">
+      <div className={`globe-topbar ${mode === 'cuber' ? 'is-cuber' : ''}`}>
+        {mode === 'cuber' ? (
+          <>
+            <button className="cuber-back-btn" onClick={() => { setPlaying(false); setMode('upcoming'); }} title={isZh ? '返回工具栏' : 'Back to toolbar'} aria-label="Back">
+              <ArrowLeft size={16} strokeWidth={1.75} />
+            </button>
+            {cuber && (
+              <div className="cuber-chip">
+                {isTw
+                  ? <img src="/tools/assets/images/ChineseTaipei.svg" className="cuber-flag" alt="Chinese Taipei" />
+                  : flagIso2 && <span className={`fi fi-${flagIso2} cuber-flag`} />}
+                <span className="cuber-name">{cuber.name}</span>
+                <span className="cuber-id">{cuber.wcaId}</span>
+                <button className="cuber-clear" onClick={clearCuber} aria-label="Clear">
+                  <X size={14} strokeWidth={1.75} />
+                </button>
+              </div>
+            )}
+            <button className="cuber-change-btn" onClick={() => setPickerOpen(true)}>
+              {cuber ? t('globe.changeCuber') : t('globe.selectCuber')}
+            </button>
+            {loadProgress && (
+              <div className="cuber-progress">
+                <div className="cuber-progress-label">
+                  {t('globe.loadingPath', { done: loadProgress.done, total: loadProgress.total })}
+                </div>
+                <div className="cuber-progress-bar">
+                  <div className="cuber-progress-fill" style={{ width: `${progressPct}%` }} />
+                </div>
+              </div>
+            )}
+            {!loadProgress && cuberComps.length > 0 && currentComp && (
+              <div className="cuber-timeline">
+                <button
+                  className="cuber-play"
+                  onClick={() => {
+                    if (playing) { setPlaying(false); return; }
+                    if (currentIndex >= cuberComps.length - 1) setCurrentIndex(0);
+                    setPlaying(true);
+                  }}
+                  disabled={cuberComps.length < 2}
+                  aria-label={playing ? t('globe.pause') : t('globe.play')}
+                >
+                  {playing ? <Pause size={14} strokeWidth={1.75} /> : <Play size={14} strokeWidth={1.75} />}
+                </button>
+                <input
+                  type="range"
+                  className="cuber-scrub"
+                  min={0}
+                  max={cuberComps.length - 1}
+                  value={currentIndex}
+                  onChange={(e) => {
+                    setPlaying(false);
+                    setCurrentIndex(Number(e.target.value));
+                  }}
+                />
+                <div className="cuber-step-label">
+                  <div className="cuber-step-count">{t('globe.step', { current: currentIndex + 1, total: cuberComps.length })}</div>
+                  <div className="cuber-step-name">{currentComp.name}</div>
+                  <div className="cuber-step-meta">{currentComp.city}, {countryName(currentComp.country_iso2, isZh)} · {currentComp.start_date}</div>
+                </div>
+                <div className="cuber-speed">
+                  {([0.5, 1, 2] as Speed[]).map((s) => (
+                    <button
+                      key={s}
+                      className={`speed-btn ${speed === s ? 'is-active' : ''}`}
+                      onClick={() => setSpeed(s)}
+                    >
+                      {s}x
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {!loadProgress && cuber && cuberComps.length === 0 && (
+              <div className="cuber-empty">{t('globe.noComps')}</div>
+            )}
+          </>
+        ) : (<>
         <Link to="/upcoming-comps" className="globe-logo-link" title={t('globe.backToCalendar') as string} aria-label="Home">
           <svg className="globe-logo" width={26} height={26} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
             <defs>
@@ -1964,6 +2116,7 @@ const onSelectCuber = useCallback((person: WcaPerson) => {
         )}
 
         <LangToggle className="topbar-lang" />
+        </>)}
       </div>
 
       {drawMode !== 'none' && drawPoints.length === 0 && (
@@ -2201,86 +2354,6 @@ const onSelectCuber = useCallback((person: WcaPerson) => {
         </div>
       </div>
 
-      {mode === 'cuber' && (cuber || loadProgress) && (
-        <div className="cuber-bar">
-          {cuber && (
-            <div className="cuber-chip">
-              {isTw
-                ? <img src="/tools/assets/images/ChineseTaipei.svg" className="cuber-flag" alt="Chinese Taipei" />
-                : flagIso2 && <span className={`fi fi-${flagIso2} cuber-flag`} />}
-              <span className="cuber-name">{cuber.name}</span>
-              <span className="cuber-id">{cuber.wcaId}</span>
-              <button className="cuber-clear" onClick={clearCuber} aria-label="Clear">
-                <X size={14} strokeWidth={1.75} />
-              </button>
-            </div>
-          )}
-          {cuber && (
-            <button className="cuber-change-btn" onClick={() => setPickerOpen(true)}>
-              {t('globe.changeCuber')}
-            </button>
-          )}
-
-          {loadProgress && (
-            <div className="cuber-progress">
-              <div className="cuber-progress-label">
-                {t('globe.loadingPath', { done: loadProgress.done, total: loadProgress.total })}
-              </div>
-              <div className="cuber-progress-bar">
-                <div className="cuber-progress-fill" style={{ width: `${progressPct}%` }} />
-              </div>
-            </div>
-          )}
-
-          {!loadProgress && cuberComps.length > 0 && currentComp && (
-            <div className="cuber-timeline">
-              <button
-                className="cuber-play"
-                onClick={() => {
-                  if (playing) { setPlaying(false); return; }
-                  if (currentIndex >= cuberComps.length - 1) setCurrentIndex(0);
-                  setPlaying(true);
-                }}
-                disabled={cuberComps.length < 2}
-                aria-label={playing ? t('globe.pause') : t('globe.play')}
-              >
-                {playing ? <Pause size={14} strokeWidth={1.75} /> : <Play size={14} strokeWidth={1.75} />}
-              </button>
-              <input
-                type="range"
-                className="cuber-scrub"
-                min={0}
-                max={cuberComps.length - 1}
-                value={currentIndex}
-                onChange={(e) => {
-                  setPlaying(false);
-                  setCurrentIndex(Number(e.target.value));
-                }}
-              />
-              <div className="cuber-step-label">
-                <div className="cuber-step-count">{t('globe.step', { current: currentIndex + 1, total: cuberComps.length })}</div>
-                <div className="cuber-step-name">{currentComp.name}</div>
-                <div className="cuber-step-meta">{currentComp.city}, {countryName(currentComp.country_iso2, isZh)} · {currentComp.start_date}</div>
-              </div>
-              <div className="cuber-speed">
-                {([0.5, 1, 2] as Speed[]).map((s) => (
-                  <button
-                    key={s}
-                    className={`speed-btn ${speed === s ? 'is-active' : ''}`}
-                    onClick={() => setSpeed(s)}
-                  >
-                    {s}x
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {!loadProgress && cuber && cuberComps.length === 0 && (
-            <div className="cuber-empty">{t('globe.noComps')}</div>
-          )}
-        </div>
-      )}
 
       {error && <div className="globe-error">{error}</div>}
       {mode === 'upcoming' && !comps && !error && <div className="globe-loading">{t('globe.loading')}</div>}
