@@ -69,24 +69,15 @@
     ],
     [
       3,
-      "[Andy Bellenir](https://www.worldcubeassociation.org/persons/2003BELL01)",
-      "Pyraminx",
+      "[Dror Vomberg](https://www.worldcubeassociation.org/persons/2003VOMB01)",
+      "3x3x3 Blindfolded",
       "Single",
-      "14.09",
+      "3:56.00",
       "2003-08-23",
       "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)"
     ],
     [
       4,
-      "[Jess Bonde](https://www.worldcubeassociation.org/persons/2003BOND01)",
-      "Rubik's Cube",
-      "Single",
-      "16.53",
-      "2003-08-23",
-      "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)"
-    ],
-    [
-      5,
       "[Dan Knights](https://www.worldcubeassociation.org/persons/2003KNIG01)",
       "Rubik's Cube",
       "Single",
@@ -95,11 +86,20 @@
       "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)"
     ],
     [
-      6,
-      "[Dror Vomberg](https://www.worldcubeassociation.org/persons/2003VOMB01)",
-      "3x3x3 Blindfolded",
+      5,
+      "[Jess Bonde](https://www.worldcubeassociation.org/persons/2003BOND01)",
+      "Rubik's Cube",
       "Single",
-      "3:56.00",
+      "16.53",
+      "2003-08-23",
+      "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)"
+    ],
+    [
+      6,
+      "[Andy Bellenir](https://www.worldcubeassociation.org/persons/2003BELL01)",
+      "Pyraminx",
+      "Single",
+      "14.09",
       "2003-08-23",
       "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)"
     ],
@@ -150,19 +150,19 @@
     ],
     [
       12,
-      "[Will Arnold](https://www.worldcubeassociation.org/persons/2005ARNO01)",
-      "3x3x3 With Feet",
-      "Single",
-      "4:06.68",
+      "[Ryan Patricio](https://www.worldcubeassociation.org/persons/2004PATR01)",
+      "3x3x3 One-Handed",
+      "Average",
+      "31.59",
       "2005-04-16",
       "[Caltech Spring 2005](https://www.worldcubeassociation.org/competitions/CaltechSpring2005)"
     ],
     [
       13,
-      "[Ryan Patricio](https://www.worldcubeassociation.org/persons/2004PATR01)",
-      "3x3x3 One-Handed",
-      "Average",
-      "31.59",
+      "[Will Arnold](https://www.worldcubeassociation.org/persons/2005ARNO01)",
+      "3x3x3 With Feet",
+      "Single",
+      "4:06.68",
       "2005-04-16",
       "[Caltech Spring 2005](https://www.worldcubeassociation.org/competitions/CaltechSpring2005)"
     ],
@@ -285,6 +285,15 @@
     ],
     [
       27,
+      "[Kang Ji-Jon](https://www.worldcubeassociation.org/persons/2007JIJO01)",
+      "Square-1",
+      "Average",
+      "17.77",
+      "2008-07-27",
+      "[Cheonan 2008](https://www.worldcubeassociation.org/competitions/Cheonan2008)"
+    ],
+    [
+      28,
       "[Claes Hedin](https://www.worldcubeassociation.org/persons/2009HEDI01)",
       "6x6x6 Cube",
       "Average",
@@ -293,7 +302,7 @@
       "[Norrköping Open 2009](https://www.worldcubeassociation.org/competitions/NorrkopingOpen2009)"
     ],
     [
-      28,
+      29,
       "[Oskar Åsbrink](https://www.worldcubeassociation.org/persons/2009ASBR01)",
       "Rubik's Magic",
       "Single",
@@ -302,7 +311,7 @@
       "[Kristianstad Open 2009](https://www.worldcubeassociation.org/competitions/KristianstadOpen2009)"
     ],
     [
-      29,
+      30,
       "[Yuxuan Wang (王宇轩)](https://www.worldcubeassociation.org/persons/2009WANG13)",
       "Rubik's Magic",
       "Single",
@@ -311,7 +320,7 @@
       "[Beijing Summer Open 2009](https://www.worldcubeassociation.org/competitions/BeijingSummerOpen2009)"
     ],
     [
-      30,
+      31,
       "[Tong Jiang (蒋彤)](https://www.worldcubeassociation.org/persons/2009JIAN03)",
       "3x3x3 Multi-Blind",
       "Single",
@@ -320,7 +329,7 @@
       "[Beijing Summer Open 2009](https://www.worldcubeassociation.org/competitions/BeijingSummerOpen2009)"
     ],
     [
-      31,
+      32,
       "[Yuhui Xu (许宇辉)](https://www.worldcubeassociation.org/persons/2007XUYU01)",
       "3x3x3 Blindfolded",
       "Average",
@@ -329,7 +338,16 @@
       "[Guangdong Open 2009](https://www.worldcubeassociation.org/competitions/GuangdongOpen2009)"
     ],
     [
-      32,
+      33,
+      "[Bálint Bodor](https://www.worldcubeassociation.org/persons/2008BODO01)",
+      "Megaminx",
+      "Single",
+      "57.94",
+      "2009-10-09",
+      "[World Championship 2009](https://www.worldcubeassociation.org/competitions/WC2009)"
+    ],
+    [
+      34,
       "[Henrik Bui](https://www.worldcubeassociation.org/persons/2009BUIH02)",
       "Rubik's Magic",
       "Average",
@@ -338,7 +356,7 @@
       "[Swedish Cube Day 2009](https://www.worldcubeassociation.org/competitions/SwedishCubeDay2009)"
     ],
     [
-      33,
+      35,
       "[Yu Sajima (佐島優)](https://www.worldcubeassociation.org/persons/2008SAJI01)",
       "Rubik's Clock",
       "Average",
@@ -347,7 +365,7 @@
       "[Japan Open 2010](https://www.worldcubeassociation.org/competitions/JapanOpen2010)"
     ],
     [
-      34,
+      36,
       "[Hong Zhang (张宏)](https://www.worldcubeassociation.org/persons/2008ZHAN13)",
       "3x3x3 Fewest Moves",
       "Average",
@@ -356,7 +374,7 @@
       "[PKU Fewest Moves 2010](https://www.worldcubeassociation.org/competitions/PKUFMC2010)"
     ],
     [
-      35,
+      37,
       "[Vincent Sheu](https://www.worldcubeassociation.org/persons/2006SHEU01)",
       "2x2x2 Cube",
       "Single",
@@ -365,7 +383,7 @@
       "[Berkeley Winter 2011](https://www.worldcubeassociation.org/competitions/BerkeleyWinter2011)"
     ],
     [
-      36,
+      38,
       "[Jibo Zhao (赵吉波)](https://www.worldcubeassociation.org/persons/2010ZHAO11)",
       "3x3x3 Fewest Moves",
       "Average",
@@ -374,7 +392,7 @@
       "[Beijing Footsteps 2011](https://www.worldcubeassociation.org/competitions/BeijingFootsteps2011)"
     ],
     [
-      37,
+      39,
       "[Piotr Tomczyk](https://www.worldcubeassociation.org/persons/2009TOMC01)",
       "3x3x3 One-Handed",
       "Single",
@@ -383,7 +401,7 @@
       "[Swierklany Open 2011](https://www.worldcubeassociation.org/competitions/SwierklanyOpen2011)"
     ],
     [
-      38,
+      40,
       "[Christian Kaserer](https://www.worldcubeassociation.org/persons/2009KASE02)",
       "2x2x2 Cube",
       "Single",
@@ -392,7 +410,7 @@
       "[Trentin Open 2011](https://www.worldcubeassociation.org/competitions/TrentinOpen2011)"
     ],
     [
-      39,
+      41,
       "[Lin Chen (陈霖)](https://www.worldcubeassociation.org/persons/2010CHEN20)",
       "7x7x7 Cube",
       "Average",
@@ -401,7 +419,16 @@
       "[Hefei Spring 2012](https://www.worldcubeassociation.org/competitions/HefeiSpring2012)"
     ],
     [
-      40,
+      42,
+      "[Jonathan Irvin Gunawan](https://www.worldcubeassociation.org/persons/2011GUNA02)",
+      "Rubik's Clock",
+      "Average",
+      "7.09",
+      "2012-05-26",
+      "[Bandung Open 2012](https://www.worldcubeassociation.org/competitions/BandungOpen2012)"
+    ],
+    [
+      43,
       "[Nevins Chan Pak Hoong (陈百鸿)](https://www.worldcubeassociation.org/persons/2010CHAN20)",
       "5x5x5 Blindfolded",
       "Average",
@@ -410,7 +437,7 @@
       "[Leicester Open 2013](https://www.worldcubeassociation.org/competitions/Leicester2013)"
     ],
     [
-      41,
+      44,
       "[Sameer Mahmood](https://www.worldcubeassociation.org/persons/2013MAHM02)",
       "2x2x2 Cube",
       "Average",
@@ -419,7 +446,7 @@
       "[Guildford Open 2013](https://www.worldcubeassociation.org/competitions/GuildfordOpen2013)"
     ],
     [
-      42,
+      45,
       "[Santosh Tantravahi](https://www.worldcubeassociation.org/persons/2013TANT02)",
       "Skewb",
       "Single",
@@ -428,7 +455,7 @@
       "[Telesis Open 2014](https://www.worldcubeassociation.org/competitions/TelesisOpen2014)"
     ],
     [
-      43,
+      46,
       "[Abhishek Sathyanarayanan](https://www.worldcubeassociation.org/persons/2012SATH01)",
       "Skewb",
       "Average",
@@ -437,7 +464,7 @@
       "[Telesis Open 2014](https://www.worldcubeassociation.org/competitions/TelesisOpen2014)"
     ],
     [
-      44,
+      47,
       "[Walker Welch](https://www.worldcubeassociation.org/persons/2011WELC01)",
       "Skewb",
       "Average",
@@ -446,7 +473,7 @@
       "[Houston Winter 2014](https://www.worldcubeassociation.org/competitions/HoustonWinterOpen2014)"
     ],
     [
-      45,
+      48,
       "[John Brechon](https://www.worldcubeassociation.org/persons/2010BREC01)",
       "Skewb",
       "Average",
@@ -455,7 +482,7 @@
       "[Blizzard Town 2014](https://www.worldcubeassociation.org/competitions/BlizzardTown2014)"
     ],
     [
-      46,
+      49,
       "[Mharr Justhinne Ampong](https://www.worldcubeassociation.org/persons/2012AMPO01)",
       "Skewb",
       "Single",
@@ -464,7 +491,7 @@
       "[PNExpress Open 2014](https://www.worldcubeassociation.org/competitions/PangasinanOpen2014)"
     ],
     [
-      47,
+      50,
       "[Lucas Etter](https://www.worldcubeassociation.org/persons/2011ETTE01)",
       "2x2x2 Cube",
       "Average",
@@ -473,7 +500,7 @@
       "[Michigan 2014](https://www.worldcubeassociation.org/competitions/Michigan2014)"
     ],
     [
-      48,
+      51,
       "[Haixin Yang (杨海鑫)](https://www.worldcubeassociation.org/persons/2014YANG11)",
       "3x3x3 One-Handed",
       "Single",
@@ -482,7 +509,7 @@
       "[Chengdu Open 2015](https://www.worldcubeassociation.org/competitions/ChengduOpen2015)"
     ],
     [
-      49,
+      52,
       "[Michał Rzewuski](https://www.worldcubeassociation.org/persons/2014RZEW01)",
       "Skewb",
       "Average",
@@ -491,7 +518,7 @@
       "[ŚLS Sosnowiec 2015](https://www.worldcubeassociation.org/competitions/SLSSosnowiec2015)"
     ],
     [
-      50,
+      53,
       "[Maciej Czapiewski](https://www.worldcubeassociation.org/persons/2014CZAP01)",
       "2x2x2 Cube",
       "Single",
@@ -500,7 +527,7 @@
       "[Grudziądz Open 2016](https://www.worldcubeassociation.org/competitions/GrudziadzOpen2016)"
     ],
     [
-      51,
+      54,
       "[Łukasz Burliga](https://www.worldcubeassociation.org/persons/2013BURL01)",
       "Skewb",
       "Average",
@@ -509,7 +536,7 @@
       "[Elektryk Cube Race 2016](https://www.worldcubeassociation.org/competitions/ElektrykCubeRace2016)"
     ],
     [
-      52,
+      55,
       "[Helmer Ewert](https://www.worldcubeassociation.org/persons/2015EWER01)",
       "Square-1",
       "Single",
@@ -518,7 +545,7 @@
       "[Swedish Decathlon Challenge 2017](https://www.worldcubeassociation.org/competitions/SwedishDecathlonChallenge2017)"
     ],
     [
-      53,
+      56,
       "[Benjamin Kyle](https://www.worldcubeassociation.org/persons/2016KYLE01)",
       "Pyraminx",
       "Single",
@@ -527,7 +554,7 @@
       "[Newmarket Open 2017](https://www.worldcubeassociation.org/competitions/NewmarketOpen2017)"
     ],
     [
-      54,
+      57,
       "[Patrick Ponce](https://www.worldcubeassociation.org/persons/2012PONC02)",
       "Rubik's Cube",
       "Single",
@@ -536,7 +563,7 @@
       "[Rally In The Valley 2017](https://www.worldcubeassociation.org/competitions/RallyInTheValley2017)"
     ],
     [
-      55,
+      58,
       "[Angelo Zhang](https://www.worldcubeassociation.org/persons/2014ZHAN01)",
       "3x3x3 Blindfolded",
       "Average",
@@ -545,7 +572,7 @@
       "[Longhorn Cube Day 2017](https://www.worldcubeassociation.org/competitions/LonghornCubeDay2017)"
     ],
     [
-      56,
+      59,
       "[Daniel Karnaukh](https://www.worldcubeassociation.org/persons/2014KARN02)",
       "Square-1",
       "Single",
@@ -554,16 +581,7 @@
       "[CubingUSA Nationals 2018](https://www.worldcubeassociation.org/competitions/CubingUSANationals2018)"
     ],
     [
-      57,
-      "[Anonymous](https://www.worldcubeassociation.org/persons/2017ANON13)",
-      "3x3x3 Fewest Moves",
-      "Single",
-      "19",
-      "2018-10-26",
-      "[Polish Championship 2018](https://www.worldcubeassociation.org/competitions/PolishChampionship2018)"
-    ],
-    [
-      58,
+      60,
       "[Chad Batten](https://www.worldcubeassociation.org/persons/2009BATT01)",
       "3x3x3 Fewest Moves",
       "Single",
@@ -572,7 +590,7 @@
       "[GA Cubers Mountain Trip 2018](https://www.worldcubeassociation.org/competitions/GACubersMountainTrip2018)"
     ],
     [
-      59,
+      61,
       "[Szymon Jeziorski](https://www.worldcubeassociation.org/persons/2013JEZI01)",
       "3x3x3 Fewest Moves",
       "Single",
@@ -581,7 +599,7 @@
       "[Polish Championship 2018](https://www.worldcubeassociation.org/competitions/PolishChampionship2018)"
     ],
     [
-      60,
+      62,
       "[Jackey Zheng](https://www.worldcubeassociation.org/persons/2017ZHEN10)",
       "Square-1",
       "Single",
@@ -590,7 +608,7 @@
       "[Brooklyn 2019](https://www.worldcubeassociation.org/competitions/Brooklyn2019)"
     ],
     [
-      61,
+      63,
       "[Andrew Huang](https://www.worldcubeassociation.org/persons/2016HUAN43)",
       "Skewb",
       "Single",
@@ -599,7 +617,7 @@
       "[WCA World Championship 2019](https://www.worldcubeassociation.org/competitions/WC2019)"
     ],
     [
-      62,
+      64,
       "[Simon Kellum](https://www.worldcubeassociation.org/persons/2016KELL12)",
       "Pyraminx",
       "Average",
@@ -608,7 +626,7 @@
       "[Gem City 2022](https://www.worldcubeassociation.org/competitions/GemCity2022)"
     ],
     [
-      63,
+      65,
       "[Hassan Khanani](https://www.worldcubeassociation.org/persons/2018KHAN26)",
       "Square-1",
       "Single",
@@ -617,7 +635,7 @@
       "[Rochester Fall 2022](https://www.worldcubeassociation.org/competitions/RochesterFall2022)"
     ],
     [
-      64,
+      66,
       "[Elijah Rain Phelps](https://www.worldcubeassociation.org/persons/2019PHEL01)",
       "Square-1",
       "Single",
@@ -626,7 +644,7 @@
       "[Naticube 2022](https://www.worldcubeassociation.org/competitions/Naticube2022)"
     ],
     [
-      65,
+      67,
       "[Guanbo Wang (王冠博)](https://www.worldcubeassociation.org/persons/2018WANG35)",
       "2x2x2 Cube",
       "Single",
@@ -635,7 +653,7 @@
       "[Northside Spring Saturday 2022](https://www.worldcubeassociation.org/competitions/NorthsideSpringSaturday2022)"
     ],
     [
-      66,
+      68,
       "[Elijah Brown](https://www.worldcubeassociation.org/persons/2015BROW03)",
       "Pyraminx",
       "Single",
@@ -644,7 +662,7 @@
       "[Berkeley Winter A 2023](https://www.worldcubeassociation.org/competitions/BerkeleyWinterA2023)"
     ],
     [
-      67,
+      69,
       "[Ryan Pilat](https://www.worldcubeassociation.org/persons/2016PILA03)",
       "Square-1",
       "Single",
@@ -653,7 +671,7 @@
       "[Heartland Championship 2023](https://www.worldcubeassociation.org/competitions/HeartlandChampionship2023)"
     ],
     [
-      68,
+      70,
       "[Aedan Bryant](https://www.worldcubeassociation.org/persons/2017BRYA06)",
       "3x3x3 Fewest Moves",
       "Single",
@@ -662,7 +680,7 @@
       "[Ashfield Summer Challenge 2024](https://www.worldcubeassociation.org/competitions/AshfieldSummerChallenge2024)"
     ],
     [
-      69,
+      71,
       "[Levi Gibson](https://www.worldcubeassociation.org/persons/2018GIBS04)",
       "3x3x3 Fewest Moves",
       "Single",
@@ -671,7 +689,7 @@
       "[Ashfield Summer Challenge 2024](https://www.worldcubeassociation.org/competitions/AshfieldSummerChallenge2024)"
     ],
     [
-      70,
+      72,
       "[Dylan Baumbach](https://www.worldcubeassociation.org/persons/2019BAUM02)",
       "Square-1",
       "Average",
@@ -680,7 +698,7 @@
       "[DFW Back to School 2024](https://www.worldcubeassociation.org/competitions/DFWBacktoSchool2024)"
     ],
     [
-      71,
+      73,
       "[Jacob Sherwen Brown](https://www.worldcubeassociation.org/persons/2022BROW01)",
       "3x3x3 Fewest Moves",
       "Single",
@@ -689,7 +707,7 @@
       "[Rubik's UK Championship FMC 2024](https://www.worldcubeassociation.org/competitions/RubiksUKChampionshipFMC2024)"
     ],
     [
-      72,
+      74,
       "[Xuanyi Geng (耿暄一)](https://www.worldcubeassociation.org/persons/2023GENG02)",
       "Rubik's Cube",
       "Single",
@@ -698,7 +716,7 @@
       "[Shenyang Spring 2025](https://www.worldcubeassociation.org/competitions/ShenyangSpring2025)"
     ],
     [
-      73,
+      75,
       "[Ziyu Ye (叶梓渝)](https://www.worldcubeassociation.org/persons/2021YEZI01)",
       "2x2x2 Cube",
       "Single",
@@ -707,7 +725,7 @@
       "[Hefei Open 2025](https://www.worldcubeassociation.org/competitions/HefeiOpen2025)"
     ],
     [
-      74,
+      76,
       "[Sujan Feist](https://www.worldcubeassociation.org/persons/2016FEIS01)",
       "2x2x2 Cube",
       "Average",
