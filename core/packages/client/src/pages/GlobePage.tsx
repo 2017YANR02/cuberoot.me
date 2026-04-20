@@ -989,63 +989,8 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
       fetch('/cn_disputed_patches.geojson').then(r => r.ok ? r.json() : { features: [] }).catch(() => ({ features: [] })),
     ])
       .then(([base, patches]: [GeoJSON.FeatureCollection, GeoJSON.FeatureCollection]) => {
-        const patchFeatures = patches.features ?? [];
-        // 把印度多边形里 patch 所在的那部分挖成"洞"——避免 patch 与 India 半透明叠加混色
-        // 步骤：对每个 patch，找 India 的包含它的那个子多边形，把 patch 外环作为内环（hole）加进去
-        const pointInRing = (pt: [number, number], ring: number[][]): boolean => {
-          let inside = false;
-          for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-            const xi = ring[i][0], yi = ring[i][1];
-            const xj = ring[j][0], yj = ring[j][1];
-            if (((yi > pt[1]) !== (yj > pt[1])) &&
-                (pt[0] < (xj - xi) * (pt[1] - yi) / (yj - yi) + xi)) {
-              inside = !inside;
-            }
-          }
-          return inside;
-        };
-        // 对 India 和 China 都打洞——Aksai Chin patch 同时与 India 多边形（NE 把它归印度）
-        // 和 China 大陆多边形（110m 边界在此区域略有重叠）相交，不打洞中国会双层叠加变深
-        const ringOverlapsPatches = (outer: number[][], patches: GeoJSON.Feature[]): number[][][] => {
-          const holes: number[][][] = [];
-          for (const patch of patches) {
-            const patchG = patch.geometry as GeoJSON.Geometry;
-            if (patchG.type !== 'Polygon') continue;
-            const patchRing = (patchG.coordinates as number[][][])[0];
-            if (!patchRing?.length) continue;
-            // 采样 patch 环上的多个点，任意一个在 outer 内就判定重叠
-            const step = Math.max(1, Math.floor(patchRing.length / 12));
-            let overlaps = false;
-            for (let i = 0; i < patchRing.length; i += step) {
-              if (pointInRing(patchRing[i] as [number, number], outer)) {
-                overlaps = true; break;
-              }
-            }
-            if (overlaps) holes.push(patchRing);
-          }
-          return holes;
-        };
-        const modifiedFeatures = base.features.map((f) => {
-          const iso = f.properties?.ISO_A2;
-          if (iso !== 'IN' && iso !== 'CN') return f;
-          const g = f.geometry as GeoJSON.Geometry;
-          if (g.type !== 'MultiPolygon' && g.type !== 'Polygon') return f;
-          const polys = (g.type === 'Polygon' ? [g.coordinates] : g.coordinates) as number[][][][];
-          const newPolys = polys.map((poly) => {
-            const outer = poly[0];
-            const holes = poly.slice(1);
-            const addedHoles = ringOverlapsPatches(outer, patchFeatures);
-            return [outer, ...holes, ...addedHoles];
-          });
-          return {
-            ...f,
-            geometry: g.type === 'Polygon'
-              ? { type: 'Polygon' as const, coordinates: newPolys[0] }
-              : { type: 'MultiPolygon' as const, coordinates: newPolys },
-          };
-        });
-        // patch 独立 feature 放末尾：印度区域已被挖洞，patch 渲染时不再叠加 India 半透明色
-        setCountriesGeojson({ ...base, features: [...modifiedFeatures, ...patchFeatures] });
+        // 补丁加到 features 末尾——MapLibre 同层内按顺序渲染，后画的盖前面
+        setCountriesGeojson({ ...base, features: [...base.features, ...(patches.features ?? [])] });
       })
       .catch((e) => console.warn('countries-110m load failed', e));
   }, [densityStyle, mode, countriesGeojson]);
