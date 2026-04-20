@@ -593,7 +593,7 @@ function patchMapTilerLang(map: maplibregl.Map, isZh: boolean) {
   ];
   const countryField: unknown[] = ['case', isHK, '', isMacau, '', isTwn, '', baseExpr];
 
-  const ownLayers = new Set<string>([...UPCOMING_LAYERS, ...CUBER_LAYERS, TW_CUSTOM_LABEL]);
+  const ownLayers = new Set<string>([...UPCOMING_LAYERS, ...CUBER_LAYERS, TW_CUSTOM_LABEL, 'country-wr-count']);
   const layers = map.getStyle().layers ?? [];
   for (const layer of layers) {
     if (layer.type !== 'symbol') continue;
@@ -977,13 +977,21 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
   }, [filteredComps, filteredPast, includePast]);
 
   // 国家边界 geojson（懒加载，country style 或 wr 模式时拉取）
+  // 注入 CN 领土主张补丁：藏南（Arunachal Pradesh）+ 阿克赛钦（Aksai Chin）
+  // Natural Earth 110m 把这两块归印度；国内视角按 PRC 立场合并上色
+  // 精确多边形来源：Natural Earth 10m disputed areas 数据集（public domain）
   const [countriesGeojson, setCountriesGeojson] = useState<GeoJSON.FeatureCollection | null>(null);
   useEffect(() => {
     const need = densityStyle === 'country' || mode === 'wr';
     if (!need || countriesGeojson) return;
-    fetch('/countries-110m.geojson')
-      .then(r => r.json())
-      .then((d) => setCountriesGeojson(d))
+    Promise.all([
+      fetch('/countries-110m.geojson').then(r => r.json()),
+      fetch('/cn_disputed_patches.geojson').then(r => r.ok ? r.json() : { features: [] }).catch(() => ({ features: [] })),
+    ])
+      .then(([base, patches]: [GeoJSON.FeatureCollection, GeoJSON.FeatureCollection]) => {
+        // 补丁加到 features 末尾——MapLibre 同层内按顺序渲染，后画的盖前面
+        setCountriesGeojson({ ...base, features: [...base.features, ...(patches.features ?? [])] });
+      })
       .catch((e) => console.warn('countries-110m load failed', e));
   }, [densityStyle, mode, countriesGeojson]);
 
@@ -1114,6 +1122,8 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
       const iso = (f.properties?.ISO_A2 as string) ?? '';
       // TW 的计数已合并到 CN，TW 多边形只染色不贴标签（避免 "Chinese Taipei" 上方重复数字）
       if (iso === 'TW') continue;
+      // CN 领土补丁（藏南 / 阿克赛钦）不单独贴标签——中国主岛已有一个总数
+      if (f.properties?._patch) continue;
       const count = source.get(iso) ?? 0;
       if (count <= 0) continue;
       const g = f.geometry as GeoJSON.Geometry;
@@ -2124,11 +2134,16 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
         'visibility': wrLabelInitialVis,
         'text-field': ['to-string', ['get', '_count']],
         'text-font': ['Noto Sans Regular'],
+        // MapLibre 限制：zoom 表达式必须是 text-size 顶层；在每个 zoom 站点内嵌一个按 _count 的 interpolate
+        // 效果：数值越大字号越大（log10 轴），整体再随 zoom 线性放大
         'text-size': [
           'interpolate', ['linear'], ['zoom'],
-          0, 10,
-          3, 13,
-          6, 18,
+          0, ['interpolate', ['linear'], ['log10', ['max', 1, ['to-number', ['get', '_count']]]],
+               0, 8, 1, 10, 2, 13, 3, 16],
+          3, ['interpolate', ['linear'], ['log10', ['max', 1, ['to-number', ['get', '_count']]]],
+               0, 10, 1, 13, 2, 17, 3, 22],
+          6, ['interpolate', ['linear'], ['log10', ['max', 1, ['to-number', ['get', '_count']]]],
+               0, 14, 1, 18, 2, 23, 3, 28],
         ],
         'text-allow-overlap': false,
         'text-ignore-placement': false,
@@ -2208,7 +2223,10 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
     if (!map || !mapLoaded) return;
     const show = (ids: string[], v: boolean) => {
       for (const id of ids) {
-        try { map.setLayoutProperty(id, 'visibility', v ? 'visible' : 'none'); } catch { /* layer 还未添加 */ }
+        // 先 getLayer 检查——有些层（country-fill / country-wr-count）是懒加载
+        // 否则 setLayoutProperty 会 console.error 再抛（虽然被 try 吞，但日志仍噪音）
+        if (!map.getLayer(id)) continue;
+        try { map.setLayoutProperty(id, 'visibility', v ? 'visible' : 'none'); } catch { /* */ }
       }
     };
     show(UPCOMING_LAYERS, mode === 'upcoming');
