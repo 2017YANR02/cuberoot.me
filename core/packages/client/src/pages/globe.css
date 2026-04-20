@@ -1011,6 +1011,49 @@
     .globe-page .density-btn { padding: 6px 8px; }
     .globe-page .density-btn-label { display: none; }
 }
+/* WR 模式：年份 slider + play/pause */
+.globe-page .wr-year-bar {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem 0.65rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.78rem;
+    color: var(--text-sub);
+}
+.globe-page .wr-year-play {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    border-radius: 6px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.globe-page .wr-year-play:hover { background: rgba(255, 255, 255, 0.06); }
+.globe-page .wr-year-slider {
+    width: 180px;
+    cursor: pointer;
+    accent-color: var(--accent);
+}
+.globe-page .wr-year-label {
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+    font-weight: 500;
+    min-width: 7rem;
+    white-space: nowrap;
+}
+@media (max-width: 720px) {
+    .globe-page .wr-year-slider { width: 110px; }
+    .globe-page .wr-year-label { min-width: 0; font-size: 0.72rem; }
+}
+
 /* 注：cuber 模式下 topbar 直接用 globe-topbar 的 dark vars，cuber 控件内嵌其中 */
 .globe-page .globe-topbar.is-cuber { gap: 0.6rem; }
 .globe-page .cuber-back-btn {

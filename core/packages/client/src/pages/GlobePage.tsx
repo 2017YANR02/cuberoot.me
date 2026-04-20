@@ -7,7 +7,7 @@
 import { useState, useEffect, useLayoutEffect, useMemo, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { RotateCw, Play, Pause, X, Moon, Sun, Satellite, Plus, Minus, Compass, Ruler, Undo2, Search, ArrowLeft, ChevronLeft, ChevronRight, Layers, Flame, Globe } from 'lucide-react';
+import { RotateCw, Play, Pause, X, Moon, Sun, Satellite, Plus, Minus, Compass, Ruler, Undo2, Search, ArrowLeft, ChevronLeft, ChevronRight, Layers, Flame, Globe, Map as MapIcon, Globe2 } from 'lucide-react';
 import maplibregl from 'maplibre-gl';
 import type { GeoJSONSource, MapMouseEvent, MapGeoJSONFeature } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -31,7 +31,7 @@ import LangToggle from '../components/LangToggle';
 import { displayCuberName } from '../utils/name_utils';
 import './globe.css';
 
-type Mode = 'upcoming' | 'cuber';
+type Mode = 'upcoming' | 'cuber' | 'wr';
 type Speed = 0.5 | 1 | 2;
 // 密度可视化风格：scale=对数色阶 A / heat=热力图 B / country=国家 choropleth C
 type DensityStyle = 'scale' | 'heat' | 'country';
@@ -48,6 +48,16 @@ type SavedShape = {
 const HISTORY_MIN_YEAR = 2003;
 // WCA 第一场比赛 WC1982（世锦赛）；slider 拉到最左（2003）时自动把 1982 一并纳入
 const HISTORY_ABSOLUTE_MIN = 1982;
+
+// MapLibre globe 投影要求 WebGL2，无 WebGL2 的老浏览器/设备只能走 mercator
+type MapProjection = 'globe' | 'mercator';
+const hasWebGL2 = (() => {
+  if (typeof document === 'undefined') return true;
+  try {
+    const c = document.createElement('canvas');
+    return !!(c.getContext('webgl2'));
+  } catch { return false; }
+})();
 
 // NOTE: OpenFreeMap 风格（基于 OpenMapTiles schema，和 MapTiler streets-v2 结构兼容）
 // 全球 Cloudflare CDN，中国大陆可直连，无需 API key；如需回退改回 MapTiler，commit 一行即可
@@ -661,6 +671,22 @@ export default function GlobePage() {
     if (typeof window !== 'undefined') window.localStorage.setItem('globeTheme', theme);
   }, [theme]);
 
+  // 地图投影：2D (mercator) / 3D (globe)。无 WebGL2 强制 mercator。
+  const [projection, setProjection] = useState<MapProjection>(() => {
+    if (typeof window === 'undefined') return 'globe';
+    const stored = window.localStorage.getItem('globeProjection');
+    if (stored === 'mercator' || stored === 'globe') {
+      if (stored === 'globe' && !hasWebGL2) return 'mercator';
+      return stored;
+    }
+    return hasWebGL2 ? 'globe' : 'mercator';
+  });
+  useEffect(() => {
+    if (typeof window !== 'undefined') window.localStorage.setItem('globeProjection', projection);
+  }, [projection]);
+  const projectionRef = useRef<MapProjection>(projection);
+  useEffect(() => { projectionRef.current = projection; }, [projection]);
+
   // 密度可视化风格：A=scale / B=heat / C=country
   const [densityStyle, setDensityStyle] = useState<DensityStyle>(() => {
     if (typeof window === 'undefined') return 'scale';
@@ -947,20 +973,103 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
     return m;
   }, [filteredComps, filteredPast, includePast]);
 
-  // 国家边界 geojson（懒加载，仅在 densityStyle === 'country' 时拉取）
+  // 国家边界 geojson（懒加载，country style 或 wr 模式时拉取）
   const [countriesGeojson, setCountriesGeojson] = useState<GeoJSON.FeatureCollection | null>(null);
   useEffect(() => {
-    if (densityStyle !== 'country' || countriesGeojson) return;
+    const need = densityStyle === 'country' || mode === 'wr';
+    if (!need || countriesGeojson) return;
     fetch('/countries-110m.geojson')
       .then(r => r.json())
       .then((d) => setCountriesGeojson(d))
       .catch((e) => console.warn('countries-110m load failed', e));
-  }, [densityStyle, countriesGeojson]);
+  }, [densityStyle, mode, countriesGeojson]);
+
+  // ── WR 模式数据（按国家 + 年份累计）──
+  type WrData = {
+    id: string;
+    years: number[];
+    cumulative: Record<string, number[]>;
+  };
+  const [wrData, setWrData] = useState<WrData | null>(null);
+  useEffect(() => {
+    if (mode !== 'wr' || wrData) return;
+    fetch('/stats/data/world_records_by_country.json')
+      .then(r => r.json())
+      .then((d: WrData) => setWrData(d))
+      .catch((e) => console.warn('wr data load failed', e));
+  }, [mode, wrData]);
+
+  // wrYear：null 表示"最新"（自动等于 years 末元素）
+  const [wrYear, setWrYear] = useState<number | null>(null);
+  const [wrPlaying, setWrPlaying] = useState(false);
+  // slider 左端固定从 2002 起（WCA 2003 复办前几乎无数据，拖到最左时 cumulative 仍含 1982 早年 WR）
+  const wrMinYear = 2002;
+  const wrMaxYear = wrData?.years[wrData.years.length - 1] ?? new Date().getFullYear();
+  const effectiveWrYear = wrYear ?? wrMaxYear;
+
+  // 名称 → ISO_A2 映射：先从 geojson NAME/NAME_LONG/FORMAL_EN/ADMIN 抽，再合并手工别名
+  const WR_NAME_ALIASES: Record<string, string> = useMemo(() => ({
+    'United States': 'US',
+    'Republic of Korea': 'KR',
+    'Korea, Republic of': 'KR',
+    'Chinese Taipei': 'CN',
+    'Hong Kong': 'HK',
+    'Hong Kong, China': 'HK',
+    'Singapore': 'SG',
+    'Macau': 'MO',
+    'Russia': 'RU',
+    'Vietnam': 'VN',
+    'Czech Republic': 'CZ',
+    'United Kingdom': 'GB',
+    'Iran': 'IR',
+    'Syria': 'SY',
+    'Laos': 'LA',
+    'Moldova': 'MD',
+    'Bolivia': 'BO',
+    'Venezuela': 'VE',
+    'Tanzania': 'TZ',
+    'Palestine': 'PS',
+    'Cote d\u2019Ivoire': 'CI',
+    'Ivory Coast': 'CI',
+  }), []);
+  const wrNameToIso = useMemo(() => {
+    const m = new Map<string, string>();
+    if (countriesGeojson) {
+      for (const f of countriesGeojson.features) {
+        const p = (f.properties ?? {}) as Record<string, unknown>;
+        const iso = typeof p.ISO_A2 === 'string' ? p.ISO_A2 : '';
+        if (!iso || iso === '-99') continue;
+        for (const k of ['NAME', 'NAME_LONG', 'FORMAL_EN', 'ADMIN', 'SOVEREIGNT']) {
+          const v = p[k];
+          if (typeof v === 'string' && !m.has(v)) m.set(v, iso);
+        }
+      }
+    }
+    for (const [name, iso] of Object.entries(WR_NAME_ALIASES)) m.set(name, iso);
+    return m;
+  }, [countriesGeojson, WR_NAME_ALIASES]);
+
+  // 当前年份下每 ISO_A2 的累计 WR 数（TW 归 CN）
+  const wrCountryCounts = useMemo<Map<string, number>>(() => {
+    if (!wrData) return new Map();
+    const idx = wrData.years.indexOf(effectiveWrYear);
+    if (idx < 0) return new Map();
+    const out = new Map<string, number>();
+    for (const [name, cum] of Object.entries(wrData.cumulative)) {
+      let iso = wrNameToIso.get(name);
+      if (!iso) continue;
+      if (iso === 'TW') iso = 'CN';
+      const val = cum[idx] ?? 0;
+      out.set(iso, (out.get(iso) ?? 0) + val);
+    }
+    return out;
+  }, [wrData, effectiveWrYear, wrNameToIso]);
 
   // 注入 _count 属性到国家 feature（给 fill-color interpolate 用）
-  // TW 多边形查 CN 的计数，视觉上与 CN 同色
+  // mode === 'wr' 用 WR 计数；否则用比赛数。TW 多边形查 CN 的计数，视觉上与 CN 同色
   const countriesEnriched = useMemo<GeoJSON.FeatureCollection | null>(() => {
     if (!countriesGeojson) return null;
+    const source = mode === 'wr' ? wrCountryCounts : countryCounts;
     return {
       ...countriesGeojson,
       features: countriesGeojson.features.map((f) => {
@@ -970,12 +1079,76 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
           ...f,
           properties: {
             ...(f.properties ?? {}),
-            _count: countryCounts.get(lookupKey) ?? 0,
+            _count: source.get(lookupKey) ?? 0,
           },
         };
       }),
     };
-  }, [countriesGeojson, countryCounts]);
+  }, [countriesGeojson, countryCounts, wrCountryCounts, mode]);
+
+  // 每国一个标签点：从 MultiPolygon 取最大多边形的质心，避免每个岛都挂一个数字
+  const countryLabelsGeojson = useMemo<GeoJSON.FeatureCollection | null>(() => {
+    if (!countriesGeojson) return null;
+    const source = mode === 'wr' ? wrCountryCounts : countryCounts;
+    // 注：TW 归 CN 后一个多边形一个点，但 TW 和 CN 作为不同 feature 各自会产出一个点；
+    // 两个点都写相同的 _count（CN 的计数），视觉上两块都显示同一数字 —— 可接受
+    const ringCentroid = (ring: number[][]): [number, number] => {
+      if (ring.length === 0) return [0, 0];
+      let sx = 0, sy = 0;
+      for (const [x, y] of ring) { sx += x; sy += y; }
+      return [sx / ring.length, sy / ring.length];
+    };
+    const ringBboxArea = (ring: number[][]): number => {
+      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+      for (const [x, y] of ring) {
+        if (x < minX) minX = x; if (x > maxX) maxX = x;
+        if (y < minY) minY = y; if (y > maxY) maxY = y;
+      }
+      return (maxX - minX) * (maxY - minY);
+    };
+    const features: GeoJSON.Feature[] = [];
+    for (const f of countriesGeojson.features) {
+      const iso = (f.properties?.ISO_A2 as string) ?? '';
+      // TW 的计数已合并到 CN，TW 多边形只染色不贴标签（避免 "Chinese Taipei" 上方重复数字）
+      if (iso === 'TW') continue;
+      const count = source.get(iso) ?? 0;
+      if (count <= 0) continue;
+      const g = f.geometry as GeoJSON.Geometry;
+      let pt: [number, number] | null = null;
+      if (g.type === 'Polygon') {
+        pt = ringCentroid(g.coordinates[0] as number[][]);
+      } else if (g.type === 'MultiPolygon') {
+        let bestArea = -1;
+        let bestRing: number[][] | null = null;
+        for (const poly of g.coordinates) {
+          const outer = poly[0] as number[][];
+          const area = ringBboxArea(outer);
+          if (area > bestArea) { bestArea = area; bestRing = outer; }
+        }
+        if (bestRing) pt = ringCentroid(bestRing);
+      }
+      if (!pt) continue;
+      features.push({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: pt },
+        properties: { _count: count, _iso: iso },
+      });
+    }
+    return { type: 'FeatureCollection', features };
+  }, [countriesGeojson, countryCounts, wrCountryCounts, mode]);
+
+  // WR 播放动画：每 500ms 递增一年，到顶后停止
+  useEffect(() => {
+    if (!wrPlaying || mode !== 'wr' || !wrData) return;
+    const tid = window.setInterval(() => {
+      setWrYear(y => {
+        const cur = y ?? wrMaxYear;
+        if (cur >= wrMaxYear) { setWrPlaying(false); return wrMaxYear; }
+        return cur + 1;
+      });
+    }, 500);
+    return () => window.clearInterval(tid);
+  }, [wrPlaying, mode, wrData, wrMaxYear]);
 
   // 同坐标比赛预合并为 1 个 feature：避免 zoom 超过 clusterMaxZoom 后两场完全重叠
   // 只点到一场。stack_count>1 时 feature 属性里塞 stack_comps（JSON 字符串）供 click 展开。
@@ -1271,7 +1444,7 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
 
     function wireMap(map: maplibregl.Map) {
     map.on('style.load', () => {
-      try { map.setProjection({ type: 'globe' }); } catch { /* old */ }
+      try { map.setProjection({ type: projectionRef.current }); } catch { /* old */ }
       patchMapStyle(map, isZhRef.current);
     });
     // 自定义控件接管，禁用默认 NavigationControl
@@ -1887,9 +2060,12 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
     );
 
     // country fill 可见性 + 透明度（satellite 下降低避免过盖）
-    safeSetVis('country-fill', isUpcoming && densityStyle === 'country');
+    // upcoming+country style 或 wr 模式都显示
+    safeSetVis('country-fill', (isUpcoming && densityStyle === 'country') || mode === 'wr');
     const fillOp = theme === 'satellite' ? 0.28 : theme === 'light' ? 0.42 : 0.4;
     safeSetPaint('country-fill', 'fill-opacity', fillOp);
+    // WR 数字标签：仅 wr 模式显示
+    safeSetVis('country-wr-count', mode === 'wr');
   }, [densityStyle, mapLoaded, theme, mode, includePast]);
 
   // ── 密度 C（country）：按需添加/更新 countries source + country-fill layer ──
@@ -1904,8 +2080,8 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
     map.addSource('countries', { type: 'geojson', data: countriesEnriched });
     // 加在 clusters 下方（choropleth 是底色，cluster 圆点盖在上面）
     const beforeId = map.getLayer('clusters') ? 'clusters' : undefined;
-    // 第一次添加时直接按当前 densityStyle 决定是否可见，避免等下一次 density effect 才生效
-    const initialVis = (mode === 'upcoming' && densityStyle === 'country') ? 'visible' : 'none';
+    // 第一次添加时直接按当前 mode/densityStyle 决定是否可见，避免等下一次 density effect 才生效
+    const initialVis = ((mode === 'upcoming' && densityStyle === 'country') || mode === 'wr') ? 'visible' : 'none';
     map.addLayer({
       id: 'country-fill',
       type: 'fill',
@@ -1924,8 +2100,48 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
         'fill-outline-color': 'rgba(255, 255, 255, 0.2)',
       },
     }, beforeId);
+    // WR 模式下每国显示 WR 数量（仅 _count > 0），在 country-fill 之上
+    // 用独立 Point source，每国只有一个标签点（取 MultiPolygon 最大子多边形的质心）
+    const wrLabelInitialVis = mode === 'wr' ? 'visible' : 'none';
+    if (!map.getSource('country-labels')) {
+      map.addSource('country-labels', {
+        type: 'geojson',
+        data: countryLabelsGeojson ?? { type: 'FeatureCollection', features: [] },
+      });
+    }
+    map.addLayer({
+      id: 'country-wr-count',
+      type: 'symbol',
+      source: 'country-labels',
+      layout: {
+        'visibility': wrLabelInitialVis,
+        'text-field': ['to-string', ['get', '_count']],
+        'text-font': ['Noto Sans Regular'],
+        'text-size': [
+          'interpolate', ['linear'], ['zoom'],
+          0, 10,
+          3, 13,
+          6, 18,
+        ],
+        'text-allow-overlap': false,
+        'text-ignore-placement': false,
+      },
+      paint: {
+        'text-color': '#FFFFFF',
+        'text-halo-color': 'rgba(0, 0, 0, 0.85)',
+        'text-halo-width': 1.5,
+      },
+    }, beforeId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [countriesEnriched, mapLoaded]);
+
+  // country-labels 源数据随 mode/年份 更新
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapLoaded) return;
+    const src = map.getSource('country-labels') as GeoJSONSource | undefined;
+    if (src && countryLabelsGeojson) src.setData(countryLabelsGeojson);
+  }, [countryLabelsGeojson, mapLoaded]);
 
   // ── 推送 cuber 数据 ──
   useEffect(() => {
@@ -1992,7 +2208,10 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
     // past 已经合并进 upcoming source，past-* 图层不再单独显示
     show(PAST_LAYERS, false);
     show(CUBER_LAYERS, mode === 'cuber');
-  }, [mode, includePast, mapLoaded]);
+    // country-fill：在 upcoming + country style 或 wr 模式下可见
+    show(['country-fill'], (mode === 'upcoming' && densityStyle === 'country') || mode === 'wr');
+    show(['country-wr-count'], mode === 'wr');
+  }, [mode, densityStyle, includePast, mapLoaded]);
 
   // ── cuber 模式下：dot/label filter（按 index 显示）+ 高亮当前点 + flyTo ──
   // NOTE: 动画中（arc 未到达终点）时，终点 B 还未显示，等弧线到达时才出现
@@ -2154,6 +2373,13 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
     map.on('move', apply);
     return () => { map.off('move', apply); };
   }, [theme, mapLoaded]);
+
+  // 投影切换：在已存在的 map 上 live 切换 mercator↔globe（保留 center/zoom/pitch/bearing）
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapLoaded) return;
+    try { map.setProjection({ type: projection }); } catch { /* */ }
+  }, [projection, mapLoaded]);
 
   // ── 绘制：完成 / 取消 / 启动模式 ──
   // 单形状策略：每次 finish 直接替换 savedShapes，不累积
@@ -2638,11 +2864,20 @@ const onSelectCuber = useCallback((person: WcaPerson) => {
         <div className="globe-topbar-spacer" />
 
         <div className="mode-toggle" role="tablist">
-          <button role="tab" aria-selected={false} className="range-btn" onClick={() => { setMode('cuber'); if (!cuber) setPickerOpen(true); }}>
+          <button role="tab" aria-selected={mode === 'cuber'}
+            className={`range-btn ${mode === 'cuber' ? 'is-active' : ''}`}
+            onClick={() => { setMode('cuber'); if (!cuber) setPickerOpen(true); }}>
             {t('globe.modeCuber')}
           </button>
-          <button role="tab" aria-selected={true} className="range-btn is-active" onClick={() => setMode('upcoming')}>
+          <button role="tab" aria-selected={mode === 'upcoming'}
+            className={`range-btn ${mode === 'upcoming' ? 'is-active' : ''}`}
+            onClick={() => setMode('upcoming')}>
             {t('globe.modeComps')}
+          </button>
+          <button role="tab" aria-selected={mode === 'wr'}
+            className={`range-btn ${mode === 'wr' ? 'is-active' : ''}`}
+            onClick={() => setMode('wr')}>
+            {t('globe.modeWr')}
           </button>
         </div>
         {mode === 'upcoming' && (
@@ -2708,6 +2943,35 @@ const onSelectCuber = useCallback((person: WcaPerson) => {
                 aria-label="Year to"
               />
             </div>
+          </div>
+        )}
+        {mode === 'wr' && wrData && (
+          <div className="wr-year-bar">
+            <button
+              type="button"
+              className="wr-year-play"
+              onClick={() => {
+                if (wrPlaying) { setWrPlaying(false); return; }
+                // 到头了按播放 → 从最左重新开始
+                if (effectiveWrYear >= wrMaxYear) setWrYear(wrMinYear);
+                setWrPlaying(true);
+              }}
+              title={t('globe.wrPlay') as string}
+              aria-label={t('globe.wrPlay') as string}
+            >
+              {wrPlaying ? <Pause size={14} strokeWidth={1.75} /> : <Play size={14} strokeWidth={1.75} />}
+            </button>
+            <input
+              type="range"
+              className="wr-year-slider"
+              min={wrMinYear}
+              max={wrMaxYear}
+              step={1}
+              value={effectiveWrYear}
+              onChange={(e) => { setWrPlaying(false); setWrYear(Number(e.target.value)); }}
+              aria-label="WR year"
+            />
+            <span className="wr-year-label">{t('globe.wrYearLabel', { year: effectiveWrYear })}</span>
           </div>
         )}
 
@@ -2930,6 +3194,22 @@ const onSelectCuber = useCallback((person: WcaPerson) => {
             aria-label="Heading and tilt"
             aria-expanded={navPopoverOpen}
           ><Compass size={14} strokeWidth={1.75} /></button>
+          <button
+            className="map-ctrl-btn"
+            disabled={!hasWebGL2 && projection === 'mercator'}
+            onClick={() => setProjection(p => p === 'globe' ? 'mercator' : 'globe')}
+            title={
+              !hasWebGL2 && projection === 'mercator'
+                ? (isZh ? '当前浏览器不支持 3D 地球（需要 WebGL2）' : '3D globe requires WebGL2 (unsupported)')
+                : projection === 'globe'
+                  ? (isZh ? '切换到 2D' : 'Switch to 2D')
+                  : (isZh ? '切换到 3D' : 'Switch to 3D')
+            }
+            aria-label={projection === 'globe' ? 'Switch to 2D' : 'Switch to 3D'}
+          >{projection === 'globe'
+            ? <MapIcon size={14} strokeWidth={1.75} />
+            : <Globe2 size={14} strokeWidth={1.75} />
+          }</button>
           <button
             className="map-ctrl-btn"
             onClick={() => mapRef.current?.zoomOut()}

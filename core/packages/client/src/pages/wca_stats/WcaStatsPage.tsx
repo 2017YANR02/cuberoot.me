@@ -72,6 +72,9 @@ interface StatData {
   panels?: StatPanel[];
   metricPanels?: MetricPanel[];
   metricGroups?: MetricGroup[];
+  // NOTE: 时间轴数据——world_records_by_country 专用
+  years?: number[];
+  cumulative?: Record<string, number[]>;
 }
 
 // NOTE: 工具函数——从 MetricPanel 中统一提取所有 StatPanel（兼容 2 级和 3 级结构）
@@ -233,8 +236,12 @@ function renderCell(value: unknown, columnKey?: string, isZh?: boolean): React.R
   return <>{result}</>;
 }
 
-// NOTE: 隐藏国家列——国旗已在 Person 列内嵌显示，单独的 Country 列冗余
-const HIDDEN_COLS = new Set(['country', 'country_id']);
+// NOTE: 国家列隐藏规则——只有当 header 里已有带国旗的 person/name 列时才隐藏 country（冗余）；
+// 否则（如 world_records_by_country 这类 country 为主维度的 stat）必须保留
+function shouldHideCountryCol(colKey: string, header: StatHeader[]): boolean {
+  if (colKey !== 'country' && colKey !== 'country_id') return false;
+  return header.some(h => h.key === 'person' || h.key === 'name');
+}
 
 // NOTE: 通用表格组件——在多处复用
 function StatsTable({ header, rows, searchTerm, isZh }: {
@@ -256,7 +263,7 @@ function StatsTable({ header, rows, searchTerm, isZh }: {
       <table className="wca-stats-table">
         <thead>
           <tr>
-            {header.map(h => HIDDEN_COLS.has(h.key) ? null : (
+            {header.map(h => shouldHideCountryCol(h.key, header) ? null : (
               <th key={h.key} style={{ textAlign: h.align }}>
                 {isZh ? h.labelZh : h.label}
               </th>
@@ -268,7 +275,7 @@ function StatsTable({ header, rows, searchTerm, isZh }: {
             <tr key={i}>
               {row.map((cell, j) => {
                 const colKey = header[j]?.key ?? '';
-                if (HIDDEN_COLS.has(colKey)) return null;
+                if (shouldHideCountryCol(colKey, header)) return null;
                 const isCountryCol = colKey === 'country';
                 const flagCls = isCountryCol ? countryFlagClass(String(cell)) : '';
                 return (
@@ -282,6 +289,73 @@ function StatsTable({ header, rows, searchTerm, isZh }: {
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+// NOTE: world_records_by_country 专用年份 slider 视图
+// 根据 cumulative[country][yearIdx] 动态生成"截至该年"的降序表
+function WrByCountryYearView({ header, years, cumulative, searchTerm, isZh }: {
+  header: StatHeader[];
+  years: number[];
+  cumulative: Record<string, number[]>;
+  searchTerm: string;
+  isZh: boolean;
+}) {
+  const maxYear = years[years.length - 1] ?? new Date().getFullYear();
+  const minYear = years[0] ?? 1982;
+  const [year, setYear] = useState<number>(maxYear);
+  const [playing, setPlaying] = useState(false);
+
+  // NOTE: 播放动画——每 500ms 自增一年，到顶后停止
+  useEffect(() => {
+    if (!playing) return;
+    const tid = window.setInterval(() => {
+      setYear(y => {
+        if (y >= maxYear) { setPlaying(false); return maxYear; }
+        return y + 1;
+      });
+    }, 500);
+    return () => window.clearInterval(tid);
+  }, [playing, maxYear]);
+
+  const rowsAtYear = useMemo(() => {
+    const idx = years.indexOf(year);
+    if (idx < 0) return [] as unknown[][];
+    return Object.entries(cumulative)
+      .map(([name, arr]) => [String(arr[idx] ?? 0), name] as unknown[])
+      .filter(r => Number(r[0]) > 0)
+      .sort((a, b) => {
+        const d = Number(b[0]) - Number(a[0]);
+        return d !== 0 ? d : String(a[1]).localeCompare(String(b[1]));
+      });
+  }, [year, years, cumulative]);
+
+  return (
+    <div className="wr-year-view">
+      <div className="wr-year-controls" style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '12px 0', flexWrap: 'wrap' }}>
+        <button
+          type="button"
+          onClick={() => setPlaying(p => !p)}
+          className="wr-year-play-btn"
+          style={{ padding: '4px 12px', cursor: 'pointer' }}
+        >
+          {playing ? (isZh ? '⏸ 暂停' : '⏸ Pause') : (isZh ? '▶ 播放' : '▶ Play')}
+        </button>
+        <input
+          type="range"
+          min={minYear}
+          max={maxYear}
+          step={1}
+          value={year}
+          onChange={e => { setPlaying(false); setYear(Number(e.target.value)); }}
+          style={{ flex: 1, minWidth: 200 }}
+        />
+        <span style={{ minWidth: 140, fontVariantNumeric: 'tabular-nums' }}>
+          {isZh ? `截至 ${year} 年` : `As of ${year}`}
+        </span>
+      </div>
+      <StatsTable header={header} rows={rowsAtYear} searchTerm={searchTerm} isZh={isZh} />
     </div>
   );
 }
@@ -1087,7 +1161,16 @@ export default function WcaStatsPage() {
 
 
       {/* NOTE: 根据渲染模式选择对应组件 */}
-      {renderMode === 'rows' && data.rows && (
+      {renderMode === 'rows' && data.rows && data.years && data.cumulative && (
+        <WrByCountryYearView
+          header={data.header}
+          years={data.years}
+          cumulative={data.cumulative}
+          searchTerm={searchTerm}
+          isZh={isZh}
+        />
+      )}
+      {renderMode === 'rows' && data.rows && !(data.years && data.cumulative) && (
         <StatsTable header={data.header} rows={data.rows} searchTerm={searchTerm} isZh={isZh} />
       )}
 
