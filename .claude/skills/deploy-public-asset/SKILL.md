@@ -1,0 +1,41 @@
+---
+name: deploy-public-asset
+description: "Use when adding new public/static files to the site — images, fonts, geojson, textures, WASM modules, or any file served from repo root. Two separate deploy workflows have independent whitelists that BOTH need updating, or production 404s. Triggers: \"new public asset\", \"404\", \"deploy_core\", \"deploy_mirror\", \"textures/\", \"白名单\", 加静态资源."
+---
+
+# 部署机制 + 新增 public 资源
+
+## Deploy Core 流程
+
+`Deploy Core` workflow 在 push `main` 且 `core/**` 变更时触发：
+
+1. `pnpm --filter @cuberoot/client build` 产出 `core/packages/client/dist/`
+2. CI 把 `dist/*` **复制回仓库根目录**（`index.html`、`_assets/` 等），commit 成 `ci: rebuild SPA from core/`
+3. GitHub Pages serve 根目录；`404.html = index.html` 做 SPA fallback
+4. 同一 workflow 顺带 rsync `packages/server/dist/` 到 ECS 并 `pm2 restart core-api`
+
+**不要手动改根目录的 `_assets/`、`index.html`、`404.html`** —— CI 会覆写。
+源码改 `core/`，构建产物由 CI 管理。
+`ci: rebuild SPA from core/` 提交就是这个流程产生的。
+
+## ⚠️ 新增 public 资源时必须同时改两处白名单
+
+1. **`.github/workflows/deploy_core.yml`**：`git add -A <dir>/` 行（新目录）或 `git add -A <file>`（新文件）
+2. **`.github/workflows/deploy_mirror.yml`**：`for d in ...`（目录）或 `for f in ...`（文件）
+
+**漏一处则 `ruiminyan.github.io` 和 `www.cuberoot.me` 有一个 404**。
+
+## 历史教训
+
+- `textures/stars_milky_way_2k.jpg` 加了之后只改 deploy_core 忘了 deploy_mirror → 镜像站 404
+- `countries-110m.geojson` 同样两处白名单
+- workflow 自身 edit 不会重触发部署，除非把 `.github/workflows/deploy_core.yml` 加进 `paths:` 过滤
+
+## 验证
+
+push 之前检查 2 个 workflow 都已加新路径；push 之后 GH Actions 看 Deploy Core 是否成功；浏览两个域名都打开新资源 URL 确认 200。
+
+## 不相关
+
+- `stats/data/**` 目录已整目录 `git add -A stats/`，新 JSON 自动包含，**不用**加白名单
+- `core/packages/client/src/**` 源码不需要白名单（CI build 后自动进 dist/）
