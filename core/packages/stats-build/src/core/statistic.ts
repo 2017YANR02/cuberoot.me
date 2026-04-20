@@ -72,6 +72,9 @@ export interface StatJson {
   sections?: StatSection[];     // NOTE: 分组统计（GroupedStatistic）
   panels?: StatPanel[];         // NOTE: 双视图统计（RoundMetric/AverageOfX/AoRounds）
   metricPanels?: MetricPanel[]; // NOTE: 多指标统计（wr_non_pr/wr_dominance/wr_newcomer/聚合页面）
+  // NOTE: 时间轴数据——world_records_by_country 用于 Globe WR 模式 + 年份 slider
+  years?: number[];
+  cumulative?: Record<string, number[]>;
 }
 
 export abstract class Statistic {
