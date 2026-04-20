@@ -55,10 +55,41 @@ def _detect_total_pages(html):
     return max(pages) if pages else 1
 
 
+def _alias_to_wca_id_candidates(alias):
+    """
+    从 cubing.com URL alias 推测可能的 WCA ID。
+    WCA 对比 cubing.com 的 alias 可能省略 'Open' 这类词（或 'Cubing' 前缀），
+    所以一个 alias 需要生成多个候选 ID 去匹配。
+    """
+    tokens = alias.split("-")
+    seen = set()
+
+    def yield_once(candidate):
+        if candidate and candidate not in seen:
+            seen.add(candidate)
+            return candidate
+        return None
+
+    # 1) 原始：全部 token 拼接
+    c = yield_once("".join(tokens))
+    if c: yield c
+    # 2) 去掉 "Open"（WCA ID 常省略）
+    if "Open" in tokens:
+        c = yield_once("".join(t for t in tokens if t != "Open"))
+        if c: yield c
+    # 3) 去掉 "Cubing" 前缀（cubing.com 给非 WCA 赛加的）
+    if tokens and tokens[0] == "Cubing":
+        c = yield_once("".join(tokens[1:]))
+        if c: yield c
+        if "Open" in tokens[1:]:
+            c = yield_once("".join(t for t in tokens[1:] if t != "Open"))
+            if c: yield c
+
+
 def scrape_cubing_china():
     """
     爬取 cubing.com 比赛列表全部页面（自动检测页数）。
-    返回 { wca_id: zh_name, ... }（wca_id = alias 去连字符）
+    返回 { alias: zh_name, ... }（alias 保留原 URL 路径，供后续匹配时生成多个 WCA ID 候选）
     """
     # NOTE: <a> 标签内含 <img> 子元素（WCA 赛事图标），需跨标签匹配
     comp_pattern = re.compile(
@@ -67,7 +98,7 @@ def scrape_cubing_china():
     )
     tag_strip = re.compile(r'<[^>]+>')
 
-    wca_id_to_zh = {}
+    alias_to_zh = {}
     CACHE_DIR.mkdir(exist_ok=True)
 
     # NOTE: 先抓首页，自动检测总页数
@@ -104,47 +135,58 @@ def scrape_cubing_china():
             alias = m.group(1)
             name = tag_strip.sub("", m.group(2)).strip()
             if name and not alias.startswith("?"):
-                wca_id = alias.replace("-", "")
-                wca_id_to_zh[wca_id] = name
+                alias_to_zh[alias] = name
                 count += 1
 
         print(f"  [{page}/{total_pages}] {count} 条 [{source}]")
 
-    print(f"[INFO] cubing.com: {len(wca_id_to_zh)} 条")
-    return wca_id_to_zh
+    print(f"[INFO] cubing.com: {len(alias_to_zh)} 条")
+    return alias_to_zh
 
 
 def fetch_wca_cn_comps():
     """
-    通过 WCA API 批量获取所有中国比赛的 WCA ID → 英文 short_name。
+    通过 WCA API 批量获取所有中国比赛的 WCA ID → {name, short_name}。
+    name 是完整名（如 "Beijing Winter Open 2013"），stats/data/all_past_comps.json 用此字段；
+    short_name 是 WCA 展示用的短名（如 "Beijing 2013"），部分地方用此字段。
+    输出英文 → 中文映射时两者都作为 key，提高命中率。
     ~721 条记录，每页 100 条 = ~8 次请求。
     """
     cache_file = CACHE_DIR / "wca_cn_comps.json"
     if cache_file.exists():
         data = json.loads(cache_file.read_text(encoding="utf-8"))
+        # 兼容旧缓存（值是字符串而非字典）
+        if data and isinstance(next(iter(data.values())), str):
+            data = None
+    else:
+        data = None
+
+    if data is not None:
         print(f"[INFO] WCA API: {len(data)} 条 [缓存]")
         return data
 
-    wca_id_to_en = {}
+    wca_id_to_names = {}
     page = 1
     while True:
         url = f"{WCA_API_BASE}/competitions?country_iso2=CN&per_page=100&page={page}"
-        data = fetch_url(url)
-        if not data:
+        resp = fetch_url(url)
+        if not resp:
             break
-        for c in data:
-            wca_id_to_en[c["id"]] = c.get("short_name") or c["name"]
-        print(f"  [WCA API page {page}] {len(data)} 条")
-        if len(data) < 100:
+        for c in resp:
+            name_full = c.get("name") or c.get("short_name") or ""
+            name_short = c.get("short_name") or name_full
+            wca_id_to_names[c["id"]] = {"name": name_full, "short_name": name_short}
+        print(f"  [WCA API page {page}] {len(resp)} 条")
+        if len(resp) < 100:
             break
         page += 1
 
     # 写入缓存
     cache_file.write_text(
-        json.dumps(wca_id_to_en, ensure_ascii=False), encoding="utf-8"
+        json.dumps(wca_id_to_names, ensure_ascii=False), encoding="utf-8"
     )
-    print(f"[INFO] WCA API: {len(wca_id_to_en)} 条")
-    return wca_id_to_en
+    print(f"[INFO] WCA API: {len(wca_id_to_names)} 条")
+    return wca_id_to_names
 
 
 def main():
@@ -161,26 +203,41 @@ def main():
             wca.unlink()
         print("[INFO] 增量模式：已清除第 1 页和 WCA API 缓存\n")
 
-    # Step 1: cubing.com → { wca_id: 中文名 }
+    # Step 1: cubing.com → { alias: 中文名 }
     print("[Step 1] 从 cubing.com 提取中文名...")
-    wca_id_to_zh = scrape_cubing_china()
+    alias_to_zh = scrape_cubing_china()
 
-    # Step 2: WCA API → { wca_id: 英文名 }
+    # Step 2: WCA API → { wca_id: {name, short_name} }
     print("\n[Step 2] 从 WCA API 获取英文名...")
-    wca_id_to_en = fetch_wca_cn_comps()
+    wca_id_to_names = fetch_wca_cn_comps()
 
-    # Step 3: 英文名 → 中文名（通过 wca_id 连接）
+    # Step 3: 英文名 → 中文名（alias → 多个 WCA ID 候选 → 英文 name/short_name 双键）
     en_to_zh = {}
     matched = 0
-    for wca_id, zh_name in wca_id_to_zh.items():
-        en_name = wca_id_to_en.get(wca_id)
-        if en_name:
-            en_to_zh[en_name] = zh_name
+    unmatched_samples = []
+    for alias, zh_name in alias_to_zh.items():
+        matched_id = None
+        for cand in _alias_to_wca_id_candidates(alias):
+            if cand in wca_id_to_names:
+                matched_id = cand
+                break
+        if matched_id:
+            # 同时用 full name 和 short_name 做 key——stats/data/all_past_comps.json 用 name（完整）,
+            # 其他地方可能用 short_name（简称），两者都覆盖避免查不到
+            names = wca_id_to_names[matched_id]
+            if names.get("name"):       en_to_zh[names["name"]] = zh_name
+            if names.get("short_name"): en_to_zh[names["short_name"]] = zh_name
             matched += 1
+        elif len(unmatched_samples) < 10:
+            unmatched_samples.append((alias, zh_name))
 
     # NOTE: cubing.com 有非 WCA 赛事（如校际赛），不在 WCA 数据库中，这些无英文名
-    unmatched = len(wca_id_to_zh) - matched
+    unmatched = len(alias_to_zh) - matched
     print(f"\n[INFO] 匹配成功: {matched}, 无英文名(非WCA): {unmatched}")
+    if unmatched_samples:
+        print("[INFO] 未匹配样例（前 10 条，多为非 WCA 赛事）:")
+        for a, n in unmatched_samples:
+            print(f"  - {a} → {n}")
 
     # Step 4: 输出 JSON（按英文名排序）
     sorted_map = dict(sorted(en_to_zh.items()))

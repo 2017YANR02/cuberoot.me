@@ -303,7 +303,8 @@ function WrByCountryYearView({ header, years, cumulative, searchTerm, isZh }: {
   isZh: boolean;
 }) {
   const maxYear = years[years.length - 1] ?? new Date().getFullYear();
-  const minYear = years[0] ?? 1982;
+  // slider 左端固定从 2002 起（WCA 2003 复办前几乎无数据；cumulative 仍含 1982 早年 WR）
+  const minYear = 2002;
   const [year, setYear] = useState<number>(maxYear);
   const [playing, setPlaying] = useState(false);
 
@@ -336,11 +337,18 @@ function WrByCountryYearView({ header, years, cumulative, searchTerm, isZh }: {
       <div className="wr-year-controls" style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '12px 0', flexWrap: 'wrap' }}>
         <button
           type="button"
-          onClick={() => setPlaying(p => !p)}
+          onClick={() => {
+            if (playing) { setPlaying(false); return; }
+            // 到头了按播放 → 从最左重新开始
+            if (year >= maxYear) setYear(minYear);
+            setPlaying(true);
+          }}
           className="wr-year-play-btn"
-          style={{ padding: '4px 12px', cursor: 'pointer' }}
+          style={{ padding: '4px 10px', cursor: 'pointer' }}
+          title={playing ? (isZh ? '暂停' : 'Pause') : (isZh ? '播放' : 'Play')}
+          aria-label={playing ? 'Pause' : 'Play'}
         >
-          {playing ? (isZh ? '⏸ 暂停' : '⏸ Pause') : (isZh ? '▶ 播放' : '▶ Play')}
+          {playing ? '⏸' : '▶'}
         </button>
         <input
           type="range"
