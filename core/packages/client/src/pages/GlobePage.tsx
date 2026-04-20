@@ -771,6 +771,9 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
     if (CJK_RE.test(name)) { try { return openccT2S(name); } catch { /* */ } }
     return name;
   }, [isZh, nameZhMap, compNameEnToZh]);
+  // MapLibre popup 回调是一次性注册的闭包——通过 ref 读最新 localizeCompName
+  const localizeCompNameRef = useRef(localizeCompName);
+  useEffect(() => { localizeCompNameRef.current = localizeCompName; }, [localizeCompName]);
 
   // ── 搜索（地点 via Nominatim / 比赛 via 本地 comps）──
   type GeoResult = { display_name: string; lat: string; lon: string; boundingbox?: [string, string, string, string] };
@@ -1821,7 +1824,8 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
           const zh = isZhRef.current;
           const city = String(p.city ?? '');
           const country = countryName(String(p.country ?? ''), zh);
-          const safeName = String(p.name ?? '').replace(/</g, '&lt;');
+          const localized = localizeCompNameRef.current(String(p.id ?? ''), String(p.name ?? ''));
+          const safeName = localized.replace(/</g, '&lt;');
           const html = `<div class="mlp">
             <a class="mlp-name mlp-name-link" href="${url}" target="_blank" rel="noopener noreferrer">${safeName} ↗</a>
             <div class="mlp-meta">${city}, ${country} · ${p.start_date}${p.start_date !== p.end_date ? ` — ${p.end_date}` : ''}</div>
@@ -1851,9 +1855,10 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
         const zh = isZhRef.current;
         const city = String(p.city ?? '');
         const country = countryName(String(p.country ?? ''), zh);
+        const localizedName = localizeCompNameRef.current(String(p.id ?? ''), String(p.name ?? '')).replace(/</g, '&lt;');
         const html = stackCount > 1
           ? `<div class="mlp"><div class="mlp-name">${zh ? `${stackCount} 场比赛` : `${stackCount} competitions`}</div><div class="mlp-meta">${city}, ${country}</div></div>`
-          : `<div class="mlp"><div class="mlp-name">${p.name}</div><div class="mlp-meta">${city}, ${country} · ${p.start_date}${p.start_date !== p.end_date ? ` — ${p.end_date}` : ''}</div></div>`;
+          : `<div class="mlp"><div class="mlp-name">${localizedName}</div><div class="mlp-meta">${city}, ${country} · ${p.start_date}${p.start_date !== p.end_date ? ` — ${p.end_date}` : ''}</div></div>`;
         popupRef.current = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 12 })
           .setLngLat(coords)
           .setHTML(html)
@@ -1899,9 +1904,10 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
         const city = String(p.city ?? '');
         const country = countryName(String(p.country ?? ''), zh);
         const dateStr = p.start_date === p.end_date ? String(p.start_date) : `${p.start_date} — ${p.end_date}`;
+        const pastLocalized = localizeCompNameRef.current(String(p.id ?? ''), String(p.name ?? '')).replace(/</g, '&lt;');
         popupRef.current = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 12 })
           .setLngLat(coords)
-          .setHTML(`<div class="mlp"><div class="mlp-name">${p.name}</div><div class="mlp-meta">${city}, ${country} · ${dateStr}</div></div>`)
+          .setHTML(`<div class="mlp"><div class="mlp-name">${pastLocalized}</div><div class="mlp-meta">${city}, ${country} · ${dateStr}</div></div>`)
           .addTo(map);
       });
       map.on('mouseleave', 'past-unclustered-point', () => {
@@ -1918,9 +1924,10 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
         const p = f.properties as Record<string, string>;
         const coords = (f.geometry as GeoJSON.Point).coordinates.slice() as [number, number];
         if (popupRef.current) popupRef.current.remove();
+        const cuberLocalized = localizeCompNameRef.current(String(p.id ?? ''), String(p.name ?? '')).replace(/</g, '&lt;');
         popupRef.current = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 12 })
           .setLngLat(coords)
-          .setHTML(`<div class="mlp"><div class="mlp-name">#${Number(p.index) + 1} ${p.name}</div><div class="mlp-meta">${p.city_label ?? p.city ?? ''}, ${countryName(p.country_iso2, isZhRef.current)} · ${p.start_date}</div></div>`)
+          .setHTML(`<div class="mlp"><div class="mlp-name">#${Number(p.index) + 1} ${cuberLocalized}</div><div class="mlp-meta">${p.city_label ?? p.city ?? ''}, ${countryName(p.country_iso2, isZhRef.current)} · ${p.start_date}</div></div>`)
           .addTo(map);
       });
       map.on('mouseleave', CUBER_LAYER_DOT, () => {
@@ -1937,7 +1944,7 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
         if (isTouch) {
           // 手机端：第一次点 → 弹 popup，比赛名为可点击链接
           const coords = (f.geometry as GeoJSON.Point).coordinates.slice() as [number, number];
-          const safeName = String(p.name ?? '').replace(/</g, '&lt;');
+          const safeName = localizeCompNameRef.current(String(p.id ?? ''), String(p.name ?? '')).replace(/</g, '&lt;');
           const html = `<div class="mlp">
             <a class="mlp-name mlp-name-link" href="${url}" target="_blank" rel="noopener noreferrer">#${Number(p.index) + 1} ${safeName} ↗</a>
             <div class="mlp-meta">${p.city_label ?? p.city ?? ''}, ${countryName(p.country_iso2, isZhRef.current)} · ${p.start_date}</div>
@@ -2829,7 +2836,7 @@ const onSelectCuber = useCallback((person: WcaPerson) => {
                 {searchType === 'comp' && compResults.map((c) => (
                   <button key={c.id} className="globe-search-item" onClick={() => goToCompResult(c)}>
                     <span className="globe-search-item-main">
-                      {c.name}
+                      {localizeCompName(c.id, c.name)}
                       <span className={`globe-search-item-tag globe-search-item-tag-${c.tag}`}>{c.tag === 'upcoming' ? (isZh ? '近期' : 'upcoming') : (isZh ? '历史' : 'past')}</span>
                     </span>
                     <span className="globe-search-item-sub">{c.city}, {countryName(c.country, isZh)} · {c.date}</span>
@@ -2864,8 +2871,9 @@ const onSelectCuber = useCallback((person: WcaPerson) => {
         <div className="globe-topbar-spacer" />
 
         <div className="mode-toggle" role="tablist">
-          <button role="tab" aria-selected={mode === 'cuber'}
-            className={`range-btn ${mode === 'cuber' ? 'is-active' : ''}`}
+          {/* 此分支里 mode !== 'cuber'（外层三元分支的 else），cuber 按钮恒不激活 */}
+          <button role="tab" aria-selected={false}
+            className="range-btn"
             onClick={() => { setMode('cuber'); if (!cuber) setPickerOpen(true); }}>
             {t('globe.modeCuber')}
           </button>
@@ -3275,7 +3283,7 @@ const onSelectCuber = useCallback((person: WcaPerson) => {
             <button className="bin-panel-close" onClick={() => setSelectedComps(null)} aria-label="Close">×</button>
             <h2 className="bin-panel-title">
               {selectedComps.length === 1
-                ? <a href={selectedComps[0].url} target="_blank" rel="noopener noreferrer" className="bin-panel-title-link">{selectedComps[0].name} ↗</a>
+                ? <a href={selectedComps[0].url} target="_blank" rel="noopener noreferrer" className="bin-panel-title-link">{localizeCompName(selectedComps[0].id, selectedComps[0].name)} ↗</a>
                 : (isZh ? `${selectedComps.length} 场比赛` : `${selectedComps.length} competitions`)}
             </h2>
             <div className="bin-panel-list">
@@ -3283,7 +3291,7 @@ const onSelectCuber = useCallback((person: WcaPerson) => {
                 <div key={c.id} className="bin-panel-item">
                   {selectedComps.length > 1 && (
                     <a href={c.url} target="_blank" rel="noopener noreferrer" className="bin-panel-item-title">
-                      {c.name} ↗
+                      {localizeCompName(c.id, c.name)} ↗
                     </a>
                   )}
                   <div className="bin-panel-meta">
