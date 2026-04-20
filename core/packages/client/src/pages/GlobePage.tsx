@@ -989,8 +989,52 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
       fetch('/cn_disputed_patches.geojson').then(r => r.ok ? r.json() : { features: [] }).catch(() => ({ features: [] })),
     ])
       .then(([base, patches]: [GeoJSON.FeatureCollection, GeoJSON.FeatureCollection]) => {
-        // 补丁加到 features 末尾——MapLibre 同层内按顺序渲染，后画的盖前面
-        setCountriesGeojson({ ...base, features: [...base.features, ...(patches.features ?? [])] });
+        const patchFeatures = patches.features ?? [];
+        // 把印度多边形里 patch 所在的那部分挖成"洞"——避免 patch 与 India 半透明叠加混色
+        // 步骤：对每个 patch，找 India 的包含它的那个子多边形，把 patch 外环作为内环（hole）加进去
+        const pointInRing = (pt: [number, number], ring: number[][]): boolean => {
+          let inside = false;
+          for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+            const xi = ring[i][0], yi = ring[i][1];
+            const xj = ring[j][0], yj = ring[j][1];
+            if (((yi > pt[1]) !== (yj > pt[1])) &&
+                (pt[0] < (xj - xi) * (pt[1] - yi) / (yj - yi) + xi)) {
+              inside = !inside;
+            }
+          }
+          return inside;
+        };
+        const modifiedFeatures = base.features.map((f) => {
+          const iso = f.properties?.ISO_A2;
+          if (iso !== 'IN') return f;
+          // India 通常是 MultiPolygon；遍历子多边形，看哪个包含 patch
+          const g = f.geometry as GeoJSON.Geometry;
+          if (g.type !== 'MultiPolygon' && g.type !== 'Polygon') return f;
+          const polys = (g.type === 'Polygon' ? [g.coordinates] : g.coordinates) as number[][][][];
+          const newPolys = polys.map((poly) => {
+            const outer = poly[0];
+            const holes = poly.slice(1);
+            const addedHoles: number[][][] = [];
+            for (const patch of patchFeatures) {
+              const patchG = patch.geometry as GeoJSON.Geometry;
+              if (patchG.type !== 'Polygon') continue;
+              const patchRing = (patchG.coordinates as number[][][])[0];
+              if (!patchRing?.length) continue;
+              if (pointInRing(patchRing[0] as [number, number], outer)) {
+                addedHoles.push(patchRing);
+              }
+            }
+            return [outer, ...holes, ...addedHoles];
+          });
+          return {
+            ...f,
+            geometry: g.type === 'Polygon'
+              ? { type: 'Polygon' as const, coordinates: newPolys[0] }
+              : { type: 'MultiPolygon' as const, coordinates: newPolys },
+          };
+        });
+        // patch 独立 feature 放末尾：印度区域已被挖洞，patch 渲染时不再叠加 India 半透明色
+        setCountriesGeojson({ ...base, features: [...modifiedFeatures, ...patchFeatures] });
       })
       .catch((e) => console.warn('countries-110m load failed', e));
   }, [densityStyle, mode, countriesGeojson]);
