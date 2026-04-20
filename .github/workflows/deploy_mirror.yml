@@ -46,7 +46,7 @@ jobs:
                    scramble_module.js confetti.min.js icons.svg \
                    icon_timer.png cstimer_logo.png callback.html \
                    robots.txt sitemap.xml MediaInfoModule.wasm \
-                   countries-110m.geojson; do
+                   countries-110m.geojson cn_disputed_patches.geojson; do
             [ -f "$f" ] && cp -f "$f" _deploy/ || true
           done
 
