@@ -1004,26 +1004,37 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
           }
           return inside;
         };
+        // 对 India 和 China 都打洞——Aksai Chin patch 同时与 India 多边形（NE 把它归印度）
+        // 和 China 大陆多边形（110m 边界在此区域略有重叠）相交，不打洞中国会双层叠加变深
+        const ringOverlapsPatches = (outer: number[][], patches: GeoJSON.Feature[]): number[][][] => {
+          const holes: number[][][] = [];
+          for (const patch of patches) {
+            const patchG = patch.geometry as GeoJSON.Geometry;
+            if (patchG.type !== 'Polygon') continue;
+            const patchRing = (patchG.coordinates as number[][][])[0];
+            if (!patchRing?.length) continue;
+            // 采样 patch 环上的多个点，任意一个在 outer 内就判定重叠
+            const step = Math.max(1, Math.floor(patchRing.length / 12));
+            let overlaps = false;
+            for (let i = 0; i < patchRing.length; i += step) {
+              if (pointInRing(patchRing[i] as [number, number], outer)) {
+                overlaps = true; break;
+              }
+            }
+            if (overlaps) holes.push(patchRing);
+          }
+          return holes;
+        };
         const modifiedFeatures = base.features.map((f) => {
           const iso = f.properties?.ISO_A2;
-          if (iso !== 'IN') return f;
-          // India 通常是 MultiPolygon；遍历子多边形，看哪个包含 patch
+          if (iso !== 'IN' && iso !== 'CN') return f;
           const g = f.geometry as GeoJSON.Geometry;
           if (g.type !== 'MultiPolygon' && g.type !== 'Polygon') return f;
           const polys = (g.type === 'Polygon' ? [g.coordinates] : g.coordinates) as number[][][][];
           const newPolys = polys.map((poly) => {
             const outer = poly[0];
             const holes = poly.slice(1);
-            const addedHoles: number[][][] = [];
-            for (const patch of patchFeatures) {
-              const patchG = patch.geometry as GeoJSON.Geometry;
-              if (patchG.type !== 'Polygon') continue;
-              const patchRing = (patchG.coordinates as number[][][])[0];
-              if (!patchRing?.length) continue;
-              if (pointInRing(patchRing[0] as [number, number], outer)) {
-                addedHoles.push(patchRing);
-              }
-            }
+            const addedHoles = ringOverlapsPatches(outer, patchFeatures);
             return [outer, ...holes, ...addedHoles];
           });
           return {
