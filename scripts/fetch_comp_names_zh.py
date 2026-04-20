@@ -89,16 +89,18 @@ def _alias_to_wca_id_candidates(alias):
 def scrape_cubing_china():
     """
     爬取 cubing.com 比赛列表全部页面（自动检测页数）。
-    返回 { alias: zh_name, ... }（alias 保留原 URL 路径，供后续匹配时生成多个 WCA ID 候选）
+    返回 [(alias, zh_name, start_date), ...] —— 保留 alias + 开始日期，供后续匹配用多种策略。
     """
-    # NOTE: <a> 标签内含 <img> 子元素（WCA 赛事图标），需跨标签匹配
-    comp_pattern = re.compile(
-        r'<a[^>]*href="https://cubing\.com/competition/([^"?]+)"[^>]*>(.*?)</a>',
+    # NOTE: 一行结构：<td>YYYY-MM-DD[~MM-DD]</td><td><a class="comp-type-*" href="...">...</a>...</td>
+    # 捕获: (start_date, alias, inner_html)
+    row_pattern = re.compile(
+        r'<td>(\d{4}-\d{2}-\d{2})(?:~\d{2}(?:-\d{2})?)?</td>\s*'
+        r'<td>\s*<a[^>]*class="comp-type-\w+"[^>]*href="https://cubing\.com/competition/([^"?]+)"[^>]*>(.*?)</a>',
         re.DOTALL
     )
     tag_strip = re.compile(r'<[^>]+>')
 
-    alias_to_zh = {}
+    rows = []
     CACHE_DIR.mkdir(exist_ok=True)
 
     # NOTE: 先抓首页，自动检测总页数
@@ -131,33 +133,37 @@ def scrape_cubing_china():
             source = "网络"
 
         count = 0
-        for m in comp_pattern.finditer(html):
-            alias = m.group(1)
-            name = tag_strip.sub("", m.group(2)).strip()
+        for m in row_pattern.finditer(html):
+            start_date = m.group(1)
+            alias = m.group(2)
+            name = tag_strip.sub("", m.group(3)).strip()
             if name and not alias.startswith("?"):
-                alias_to_zh[alias] = name
+                rows.append((alias, name, start_date))
                 count += 1
 
         print(f"  [{page}/{total_pages}] {count} 条 [{source}]")
 
-    print(f"[INFO] cubing.com: {len(alias_to_zh)} 条")
-    return alias_to_zh
+    print(f"[INFO] cubing.com: {len(rows)} 条")
+    return rows
 
 
 def fetch_wca_cn_comps():
     """
-    通过 WCA API 批量获取所有中国比赛的 WCA ID → {name, short_name}。
-    name 是完整名（如 "Beijing Winter Open 2013"），stats/data/all_past_comps.json 用此字段；
-    short_name 是 WCA 展示用的短名（如 "Beijing 2013"），部分地方用此字段。
-    输出英文 → 中文映射时两者都作为 key，提高命中率。
-    ~721 条记录，每页 100 条 = ~8 次请求。
+    通过 WCA API 批量获取所有中国比赛的 WCA ID → {name, short_name, start_date}。
+    - name 是完整名（如 "Beijing Winter Open 2013"），stats/data/all_past_comps.json 用此字段
+    - short_name 是 WCA 展示用的短名（如 "Beijing 2013"），部分地方用此字段
+    - start_date 用于 cubing.com URL alias 和 WCA ID 差异过大（如词序颠倒）时按日期回退匹配
+    输出英文 → 中文映射时 name + short_name 两者都作为 key，提高命中率。
+    ~738 条记录，每页 100 条 = ~8 次请求。
     """
     cache_file = CACHE_DIR / "wca_cn_comps.json"
     if cache_file.exists():
         data = json.loads(cache_file.read_text(encoding="utf-8"))
-        # 兼容旧缓存（值是字符串而非字典）
-        if data and isinstance(next(iter(data.values())), str):
-            data = None
+        # 兼容旧缓存：值须是字典且包含 start_date；否则丢弃缓存
+        if data:
+            first = next(iter(data.values()))
+            if not isinstance(first, dict) or "start_date" not in first:
+                data = None
     else:
         data = None
 
@@ -175,7 +181,11 @@ def fetch_wca_cn_comps():
         for c in resp:
             name_full = c.get("name") or c.get("short_name") or ""
             name_short = c.get("short_name") or name_full
-            wca_id_to_names[c["id"]] = {"name": name_full, "short_name": name_short}
+            wca_id_to_names[c["id"]] = {
+                "name": name_full,
+                "short_name": name_short,
+                "start_date": c.get("start_date", ""),
+            }
         print(f"  [WCA API page {page}] {len(resp)} 条")
         if len(resp) < 100:
             break
@@ -203,41 +213,56 @@ def main():
             wca.unlink()
         print("[INFO] 增量模式：已清除第 1 页和 WCA API 缓存\n")
 
-    # Step 1: cubing.com → { alias: 中文名 }
+    # Step 1: cubing.com → [(alias, zh_name, start_date), ...]
     print("[Step 1] 从 cubing.com 提取中文名...")
-    alias_to_zh = scrape_cubing_china()
+    rows = scrape_cubing_china()
 
-    # Step 2: WCA API → { wca_id: {name, short_name} }
+    # Step 2: WCA API → { wca_id: {name, short_name, start_date} }
     print("\n[Step 2] 从 WCA API 获取英文名...")
     wca_id_to_names = fetch_wca_cn_comps()
 
-    # Step 3: 英文名 → 中文名（alias → 多个 WCA ID 候选 → 英文 name/short_name 双键）
+    # 构建日期 → [wca_id, ...] 索引，作为 alias 匹配失败时的回退
+    wca_by_date = {}
+    for wca_id, info in wca_id_to_names.items():
+        d = info.get("start_date", "")
+        if d:
+            wca_by_date.setdefault(d, []).append(wca_id)
+
+    # Step 3: 英文名 → 中文名
+    # 匹配策略：(a) alias 生成多个候选 WCA ID 直接命中；(b) 回退到按 start_date + country=CN 唯一匹配
     en_to_zh = {}
-    matched = 0
+    matched_by_alias = 0
+    matched_by_date = 0
     unmatched_samples = []
-    for alias, zh_name in alias_to_zh.items():
+    for alias, zh_name, start_date in rows:
         matched_id = None
+        # (a) alias 候选直接命中
         for cand in _alias_to_wca_id_candidates(alias):
             if cand in wca_id_to_names:
                 matched_id = cand
                 break
         if matched_id:
-            # 同时用 full name 和 short_name 做 key——stats/data/all_past_comps.json 用 name（完整）,
-            # 其他地方可能用 short_name（简称），两者都覆盖避免查不到
+            matched_by_alias += 1
+        elif start_date and len(wca_by_date.get(start_date, [])) == 1:
+            # (b) 该日期在 WCA CN 里只有一个比赛 → 确定匹配
+            # 用于 cubing.com alias 和 WCA ID 差异过大的老比赛（如词序颠倒 WCA-2011-February-Beijing-Open → BeijingFebruary2011）
+            matched_id = wca_by_date[start_date][0]
+            matched_by_date += 1
+
+        if matched_id:
             names = wca_id_to_names[matched_id]
             if names.get("name"):       en_to_zh[names["name"]] = zh_name
             if names.get("short_name"): en_to_zh[names["short_name"]] = zh_name
-            matched += 1
         elif len(unmatched_samples) < 10:
-            unmatched_samples.append((alias, zh_name))
+            unmatched_samples.append((alias, zh_name, start_date))
 
-    # NOTE: cubing.com 有非 WCA 赛事（如校际赛），不在 WCA 数据库中，这些无英文名
-    unmatched = len(alias_to_zh) - matched
-    print(f"\n[INFO] 匹配成功: {matched}, 无英文名(非WCA): {unmatched}")
+    matched = matched_by_alias + matched_by_date
+    unmatched = len(rows) - matched
+    print(f"\n[INFO] 匹配成功: {matched} (alias 直接 {matched_by_alias} + 日期回退 {matched_by_date}), 无英文名(非WCA): {unmatched}")
     if unmatched_samples:
-        print("[INFO] 未匹配样例（前 10 条，多为非 WCA 赛事）:")
-        for a, n in unmatched_samples:
-            print(f"  - {a} → {n}")
+        print("[INFO] 未匹配样例（前 10 条，多为非 WCA 赛事或同日多场无法唯一匹配）:")
+        for a, n, d in unmatched_samples:
+            print(f"  - [{d}] {a} → {n}")
 
     # Step 4: 输出 JSON（按英文名排序）
     sorted_map = dict(sorted(en_to_zh.items()))
