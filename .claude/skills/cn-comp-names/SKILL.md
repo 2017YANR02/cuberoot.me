@@ -28,7 +28,9 @@ description: "Use when rendering or localizing Chinese competition names (in Chi
 由 `scripts/fetch_comp_names_zh.py` 生成：
 - **键**：WCA 英文 `name`（完整，如 "Beijing Open 2015"）**和** `short_name`（如 "Beijing 2015"），两者都作 key
 - **值**：cubing.com 中文名（如 "2015WCA北京魔方公开赛"）
-- **逻辑**：爬 cubing.com 全量中国比赛 → alias 生成多个 WCA ID 候选（原始 / 去掉 "Open" / 去掉 "Cubing" 前缀）→ 与 WCA API 返回的 `name`+`short_name` 双向匹配
+- **匹配策略**（两级）：
+  1. 主路径：cubing.com URL alias 生成多个 WCA ID 候选（原始 / 去掉 "Open" / 去掉 "Cubing" 前缀）→ 查 WCA API
+  2. 回退：候选都失败时，按 `start_date` + `country=CN` 在 WCA API 里唯一匹配（cubing.com list 已含开始日期；CN 同日极少多场，可靠）。专门处理老比赛词序反转的 alias（如 `WCA-2011-February-Beijing-Open` ↔ `BeijingFebruary2011`）。
 
 ## 更新数据
 
