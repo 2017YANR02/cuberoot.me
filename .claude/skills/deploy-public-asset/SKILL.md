@@ -25,15 +25,28 @@ description: "Use when adding new public/static files to the site — images, fo
 
 **漏一处则 `ruiminyan.github.io` 和 `www.cuberoot.me` 有一个 404**。
 
+## ⚠️ 本地 dev server 也要能访问 —— 根目录静态资源要**同时放 public/**
+
+本地 `pnpm dev` 时，Vite 默认从 `core/packages/client/public/` serve 根路径文件。`serveRepoRoot` 插件只处理 `/tools/` 和 `/stats/` 前缀。所以根目录静态资源（如 `countries-110m.geojson`）要**两份**：
+
+1. **仓库根**：`/countries-110m.geojson`（生产 GH Pages 直接 serve）
+2. **Vite publicDir**：`core/packages/client/public/countries-110m.geojson`（本地 dev 通过 Vite 默认 publicDir 机制 serve，也会被 build 复制进 dist/）
+
+**更新流程**：修改任一文件后，同步另一份。CI build 会把 public/ 的文件打进 dist/，然后 CI 再把 dist 复制回仓库根，最终两边的线上版本一致。
+
 ## 历史教训
 
 - `textures/stars_milky_way_2k.jpg` 加了之后只改 deploy_core 忘了 deploy_mirror → 镜像站 404
-- `countries-110m.geojson` 同样两处白名单
+- `countries-110m.geojson` 同样两处白名单 + 两处文件副本
+- `cn_disputed_patches.geojson` 漏掉 public/ 副本 → 线上 OK、本地 dev 404
 - workflow 自身 edit 不会重触发部署，除非把 `.github/workflows/deploy_core.yml` 加进 `paths:` 过滤
 
 ## 验证
 
-push 之前检查 2 个 workflow 都已加新路径；push 之后 GH Actions 看 Deploy Core 是否成功；浏览两个域名都打开新资源 URL 确认 200。
+1. 本地 dev：打开 `http://127.0.0.1:5173/<new-file>` 应 200（没放 public/ 就 404）
+2. push 之前：2 个 workflow 都已加新路径
+3. push 之后：GH Actions 看 Deploy Core 是否成功
+4. 线上：两个域名都打开新资源 URL 确认 200
 
 ## 不相关
 
