@@ -555,11 +555,17 @@ def build_all_upcoming_comps():
             break
         print(f"[ALL] 已取 {len(out)} 场（page {page}）")
 
-    # 过滤已取消 + 精简字段
+    # 过滤已取消 + 精简字段 + 按 id 去重
+    # NOTE: WCA API 分页期间排序可能漂移（新增 / cancel 状态变化），同一 id 会跨页重复出现
     result = []
+    seen_ids = set()
     for c in out:
         if c.get("cancelled_at"):
             continue
+        cid = c["id"]
+        if cid in seen_ids:
+            continue
+        seen_ids.add(cid)
         result.append({
             "id": c["id"],
             "name": c.get("name", ""),

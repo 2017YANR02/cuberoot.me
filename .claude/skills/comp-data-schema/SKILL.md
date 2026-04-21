@@ -32,3 +32,9 @@ description: "Use when touching WCA competition JSON data — upcoming_comps.jso
 - `country === 'TW'` 特判：旗子用 `/tools/assets/images/ChineseTaipei.svg`，不用 `flag-icons`
 - 事件短名约定见 `SHORT_TO_EVENT_ID`（UpcomingCompsPage） / `EVENT_DISPLAY_ORDER`（Python 脚本）
 - 在 GlobePage 的 choropleth / WR 模式里，TW 的计数合并进 CN（参考现有 `countryCounts` / `wrCountryCounts` 里的 `iso === 'TW' ? 'CN' : iso`）
+
+## 已知坑
+
+- **WCA `/competitions` 分页会出现跨页重复**：分页中途 WCA API 排序会漂移（新增 / cancel 状态改变），同一 id 跨页重复。`build_all_upcoming_comps` 必须按 id 去重（已在 `fetch_upcoming_comps.py` 处理）。新写任何分页聚合 WCA 数据的脚本都要记得这一点。
+- **单个 JSON 内不应该有同 id 重复**：如果 upcoming / past JSON 自身出现同 id 多条，**这就是上游数据 bug**，去生成脚本修，**不要在前端兜底** —— 前端静默去重会盖住 bug、让下次再出同类问题无从察觉。
+- **upcoming 和 past 数据源间的同 id 重叠是正常的**：年初刚结束 / 即将开赛的比赛在两个 JSON 里都出现 —— 这是两份独立数据源的自然交集，不是 bug。前端合并两源时按 id 去重（以 upcoming 为准）是合理行为，见 GlobePage `upcomingGeojson` 里的 `upcomingIds` 逻辑。

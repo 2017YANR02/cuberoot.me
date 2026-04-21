@@ -1456,7 +1456,15 @@
     font-family: 'Inter', system-ui, sans-serif;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
 }
-.maplibregl-popup .maplibregl-popup-tip { border-top-color: rgba(24, 23, 22, 0.96); }
+/* MapLibre popup tip：每个 anchor 只染对应方向那条 border，其他保持 transparent */
+.maplibregl-popup-anchor-top .maplibregl-popup-tip,
+.maplibregl-popup-anchor-top-left .maplibregl-popup-tip,
+.maplibregl-popup-anchor-top-right .maplibregl-popup-tip { border-bottom-color: rgba(24, 23, 22, 0.96); }
+.maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
+.maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
+.maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip { border-top-color: rgba(24, 23, 22, 0.96); }
+.maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color: rgba(24, 23, 22, 0.96); }
+.maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color: rgba(24, 23, 22, 0.96); }
 .maplibregl-popup .mlp-name {
     font-weight: 600;
     font-size: 0.82rem;
@@ -1473,6 +1481,26 @@
 .maplibregl-popup .mlp-meta {
     font-size: 0.72rem;
     color: #BFBFBC;
+}
+.maplibregl-popup .mlp-date {
+    white-space: nowrap;
+}
+/* popup 国旗：对齐 /upcoming-comps 的 .flag-span / .flag-img 尺寸 */
+.maplibregl-popup .flag-span {
+    display: inline-block;
+    width: 14px;
+    height: 10.5px;
+    border-radius: 2px;
+    vertical-align: -1px;
+    flex-shrink: 0;
+}
+.maplibregl-popup .flag-img {
+    display: inline-block;
+    width: 14px;
+    height: 10.5px;
+    object-fit: cover;
+    border-radius: 2px;
+    vertical-align: -1px;
 }
 
 .globe-page .bin-panel-link {
@@ -1555,6 +1583,16 @@
     text-decoration: none;
 }
 .globe-page .bin-panel-title-link:hover { color: var(--accent); }
+.globe-page .bin-panel-flag {
+    display: inline-block;
+    width: 16px;
+    height: 12px;
+    border-radius: 2px;
+    object-fit: cover;
+    vertical-align: -1px;
+    margin-right: 6px;
+    flex-shrink: 0;
+}
 .globe-page .bin-panel-meta {
     font-size: 0.75rem;
     color: var(--text-sub);
