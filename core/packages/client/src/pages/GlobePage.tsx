@@ -29,6 +29,8 @@ import {
 } from '@cuberoot/shared';
 import LangToggle from '../components/LangToggle';
 import { displayCuberName } from '../utils/name_utils';
+import { formatDateRangeIso } from '../utils/date_range';
+import { Flag, flagHtml } from '../utils/flag';
 import './globe.css';
 
 type Mode = 'upcoming' | 'cuber' | 'wr';
@@ -174,6 +176,9 @@ const countryName = (iso2: string, isZh: boolean) => {
   const up = (iso2 || '').toUpperCase();
   return (isZh ? COUNTRY_ZH[up] : COUNTRY_EN[up]) ?? up;
 };
+
+// NOTE: 国旗 HTML 统一在 utils/flag.tsx。popup 里 span 用 flag-span、img 用 flag-img（对齐 globe.css 样式）
+const popupFlagHtml = (iso2: string): string => flagHtml(iso2, { spanClassName: 'flag-span', imgClassName: 'flag-img' });
 
 // WCA 比赛城市英文 → 中文
 // 范围：覆盖 all_past_comps + all_upcoming_comps 中所有出现过的 CN/HK/MO/TW 城市，加少量耳熟能详的海外城市
@@ -451,7 +456,9 @@ function ensureZhTileProtocol() {
   zhProtocolRegistered = true;
   maplibregl.addProtocol(ZH_PROTOCOL, async (params, abortController) => {
     const realUrl = params.url.replace(/^zh-tile:\/\//, 'https://');
-    const resp = await fetch(realUrl, { signal: abortController.signal });
+    // MapLibre v5: 第二个参数可能是 undefined，signal 改到 params.signal 上
+    const signal = abortController?.signal ?? (params as { signal?: AbortSignal }).signal;
+    const resp = await fetch(realUrl, { signal });
     if (!resp.ok) throw new Error(`zh-tile fetch ${resp.status}`);
     const buf = await resp.arrayBuffer();
     try {
@@ -1184,13 +1191,20 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
   const upcomingGeojson = useMemo(() => {
     type AnyComp = (UpcomingCompRecord | PastCompRecord) & { __past?: boolean };
     const groups = new Map<string, AnyComp[]>();
+    const upcomingIds = new Set<string>();
     for (const c of filteredComps) {
+      // 不对 upcoming 自身去重：若 all_upcoming_comps.json 里出现同 id 重复，应在上游
+      // fetch_upcoming_comps.py 修复（前端静默去重会盖住数据 bug）。这里只记录 id 用于 past 兜底
+      upcomingIds.add(c.id);
       const key = `${c.longitude_degrees.toFixed(6)},${c.latitude_degrees.toFixed(6)}`;
       const g = groups.get(key);
       if (g) g.push(c); else groups.set(key, [c]);
     }
     if (includePast) {
       for (const c of filteredPast) {
+        // upcoming 和 past 是两个独立数据源，年初刚结束 / 即将开赛的比赛天然会两边都有
+        // 这层去重不是在掩盖 bug，而是两份源合并时的合理取舍（以 upcoming 为准）
+        if (upcomingIds.has(c.id)) continue;
         const key = `${c.longitude_degrees.toFixed(6)},${c.latitude_degrees.toFixed(6)}`;
         const tagged: AnyComp = { ...c, __past: true };
         const g = groups.get(key);
@@ -1443,18 +1457,25 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
     };
   }, [cuberArcFullCoords, currentIndex, animProgress]);
 
-  // ── Map 初始化（theme 变化时重建，相机从 cameraRef 恢复）──
+  // ── Map 初始化：实例只在挂载时建一次；theme 变化通过 setStyle 替换样式 ──
+  // 全局事件和 layer-scoped 事件只绑一次；addSource/addLayer 每次 style.load 重跑（setStyle 会清空）
+  const themeRef = useRef<Theme>(theme);
+  useEffect(() => { themeRef.current = theme; }, [theme]);
+  const appliedThemeRef = useRef<Theme | null>(null);
+  const themeSeqRef = useRef(0);
+
   useEffect(() => {
     if (!containerRef.current) return;
     ensureZhTileProtocol();
 
-    const styleUrl = mapStyleUrl(theme);
+    const initialTheme = themeRef.current;
+    const styleUrl = mapStyleUrl(initialTheme);
     let cancelled = false;
     let map: maplibregl.Map | null = null;
     (async () => {
-      const style: maplibregl.StyleSpecification = theme === 'satellite'
+      const style: maplibregl.StyleSpecification = initialTheme === 'satellite'
         ? buildSatelliteStyle()
-        : await buildSimplifiedStyle(styleUrl as string, theme).catch(() => styleUrl as unknown as maplibregl.StyleSpecification);
+        : await buildSimplifiedStyle(styleUrl as string, initialTheme).catch(() => styleUrl as unknown as maplibregl.StyleSpecification);
       if (cancelled || !containerRef.current) return;
       const cam = cameraRef.current;
       map = new maplibregl.Map({
@@ -1467,14 +1488,24 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
         attributionControl: false,
       });
       mapRef.current = map;
+      appliedThemeRef.current = initialTheme;
       wireMap(map);
     })();
 
     function wireMap(map: maplibregl.Map) {
-    map.on('style.load', () => {
+    let layerEventsWired = false;
+    const onStyleLoad = () => {
       try { map.setProjection({ type: projectionRef.current }); } catch { /* old */ }
       patchMapStyle(map, isZhRef.current);
-    });
+      addOverlays(map);
+      if (!layerEventsWired) {
+        wireLayerEvents(map);
+        layerEventsWired = true;
+      }
+      mapLoadedRef.current = true;
+      setMapLoaded(true);
+    };
+    map.on('style.load', onStyleLoad);
     // 自定义控件接管，禁用默认 NavigationControl
     // 鼠标在球外（黑色太空区）时，project(unproject(p)) 与 p 不匹配 → 视为离开球面
     map.on('mousemove', (e) => {
@@ -1520,14 +1551,14 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
     map.on('rotate', () => setBearing(map.getBearing()));
     map.on('pitch', () => setPitch(map.getPitch()));
 
-    map.on('load', () => {
-      mapLoadedRef.current = true;
-      setMapLoaded(true);
+    function addOverlays(map: maplibregl.Map) {
+      const curTheme = themeRef.current;
+      const empty = { type: 'FeatureCollection', features: [] } as GeoJSON.FeatureCollection;
 
       // 注入一张全球覆盖的 earth-base 多边形作为不透明陆地基底（仅 vector 主题）
       // 球外（背景已透明）→ 露出 CSS 星空；球面 → 这层兜底，水/陆细节叠加在它之上
       // satellite 模式跳过：raster 影像本身就是不透明全覆盖
-      if (theme !== 'satellite') {
+      if (curTheme !== 'satellite') {
         map.addSource('earth-base', {
           type: 'geojson',
           data: {
@@ -1547,7 +1578,7 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
         const ofmBg = (currentStyle.metadata as Record<string, unknown> | undefined)?.cuberootOfmBackground;
         const earthBaseColor = typeof ofmBg === 'string'
           ? ofmBg
-          : (theme === 'dark' ? '#272E3C' : '#F5F2E8');
+          : (curTheme === 'dark' ? '#272E3C' : '#F5F2E8');
         map.addLayer({
           id: 'earth-base',
           type: 'fill',
@@ -1561,7 +1592,7 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
       // past source & layers — 先加，渲染在底层；upcoming 总是叠在上面更醒目
       // NOTE: 14k 点依赖 MapLibre cluster 性能；clusterMaxZoom/Radius 和 upcoming 保持一致
       map.addSource('past-comps', {
-        type: 'geojson', data: pastGeojson as unknown as GeoJSON.FeatureCollection,
+        type: 'geojson', data: empty,
         cluster: true, clusterMaxZoom: 10, clusterRadius: 70,
       });
       map.addLayer({
@@ -1598,7 +1629,7 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
 
       // 保证低 zoom 聚合时显示真实场数而不是 feature 数。
       map.addSource('comps', {
-        type: 'geojson', data: upcomingGeojson as unknown as GeoJSON.FeatureCollection,
+        type: 'geojson', data: empty,
         cluster: true, clusterMaxZoom: 10, clusterRadius: 70,
         clusterProperties: {
           stack_total: ['+', ['get', 'stack_count']],
@@ -1606,7 +1637,7 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
       });
       // 密度 B（heat）：独立的 raw source（不聚合），供 heatmap 层使用
       map.addSource('comps-raw', {
-        type: 'geojson', data: upcomingGeojson as unknown as GeoJSON.FeatureCollection,
+        type: 'geojson', data: empty,
         cluster: false,
       });
       map.addLayer({
@@ -1707,8 +1738,8 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
         },
       });
       // cuber source & layers
-      map.addSource(CUBER_SOURCE_POINTS, { type: 'geojson', data: cuberPointsGeojson as unknown as GeoJSON.FeatureCollection });
-      map.addSource(CUBER_SOURCE_ARCS, { type: 'geojson', data: cuberArcsGeojson as unknown as GeoJSON.FeatureCollection });
+      map.addSource(CUBER_SOURCE_POINTS, { type: 'geojson', data: empty });
+      map.addSource(CUBER_SOURCE_ARCS, { type: 'geojson', data: empty });
       map.addLayer({
         id: CUBER_LAYER_ARC, type: 'line', source: CUBER_SOURCE_ARCS,
         layout: { 'visibility': 'none', 'line-cap': 'round', 'line-join': 'round' },
@@ -1719,7 +1750,7 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
         },
       });
       // 当前 leg 的"箭头" —— 落在弧的前端（跟随 animProgress 移动）
-      map.addSource(CUBER_SOURCE_ARC_TIP, { type: 'geojson', data: cuberArcTipGeojson as unknown as GeoJSON.FeatureCollection });
+      map.addSource(CUBER_SOURCE_ARC_TIP, { type: 'geojson', data: empty });
       map.addLayer({
         id: CUBER_LAYER_ARC_ARROW, type: 'symbol', source: CUBER_SOURCE_ARC_TIP,
         layout: {
@@ -1767,7 +1798,6 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
       });
 
       // ── 绘制工具图层（测量 / 路径 / 多边形）──
-      const empty = { type: 'FeatureCollection', features: [] } as GeoJSON.FeatureCollection;
       map.addSource('draw-line', { type: 'geojson', data: empty });
       map.addSource('draw-fill', { type: 'geojson', data: empty });
       map.addSource('draw-vert', { type: 'geojson', data: empty });
@@ -1819,6 +1849,12 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
         },
         paint: { 'text-color': '#FFFFFF', 'text-halo-color': '#000000', 'text-halo-width': 1.5 },
       });
+    }
+
+    // Layer-scoped 事件一次性绑定（setStyle 后对同名 layer 继续生效）
+    function wireLayerEvents(map: maplibregl.Map) {
+      // 触屏检测：(hover: none) 在 iOS/Android 默认 true，在桌面（即使带触屏）默认 false
+      const isTouch = window.matchMedia('(hover: none)').matches;
 
       // upcoming 交互
       map.on('click', 'clusters', async (e: MapMouseEvent) => {
@@ -1833,8 +1869,6 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
           map.easeTo({ center: geom.coordinates as [number, number], zoom });
         } catch { /* */ }
       });
-      // 触屏检测：(hover: none) 在 iOS/Android 默认 true，在桌面（即使带触屏）默认 false
-      const isTouch = window.matchMedia('(hover: none)').matches;
 
       map.on('click', 'unclustered-point', (e: MapMouseEvent & { features?: MapGeoJSONFeature[] }) => {
         if (drawModeRef.current !== 'none') return;
@@ -1851,17 +1885,15 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
         if (isTouch) {
           // 手机端：第一次点 → 显示带可点击链接的 popup，不直接跳转
           const coords = (f.geometry as GeoJSON.Point).coordinates.slice() as [number, number];
-          const zh = isZhRef.current;
           const city = String(p.city ?? '');
-          const country = countryName(String(p.country ?? ''), zh);
           const localized = localizeCompNameRef.current(String(p.id ?? ''), String(p.name ?? ''));
           const safeName = localized.replace(/</g, '&lt;');
           const html = `<div class="mlp">
-            <a class="mlp-name mlp-name-link" href="${url}" target="_blank" rel="noopener noreferrer">${safeName} ↗</a>
-            <div class="mlp-meta">${city}, ${country} · ${p.start_date}${p.start_date !== p.end_date ? ` — ${p.end_date}` : ''}</div>
+            <a class="mlp-name mlp-name-link" href="${url}" target="_blank" rel="noopener noreferrer">${popupFlagHtml(String(p.country ?? ''))} ${safeName}</a>
+            <div class="mlp-meta">${city}<br><span class="mlp-date">${formatDateRangeIso(String(p.start_date), String(p.end_date))}</span></div>
           </div>`;
           if (popupRef.current) popupRef.current.remove();
-          popupRef.current = new maplibregl.Popup({ closeButton: true, closeOnClick: true, offset: 12 })
+          popupRef.current = new maplibregl.Popup({ closeButton: false, closeOnClick: true, offset: 12 })
             .setLngLat(coords)
             .setHTML(html)
             .addTo(map);
@@ -1884,11 +1916,11 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
         const stackCount = typeof p.stack_count === 'number' ? p.stack_count : 1;
         const zh = isZhRef.current;
         const city = String(p.city ?? '');
-        const country = countryName(String(p.country ?? ''), zh);
+        const iso2 = String(p.country ?? '');
         const localizedName = localizeCompNameRef.current(String(p.id ?? ''), String(p.name ?? '')).replace(/</g, '&lt;');
         const html = stackCount > 1
-          ? `<div class="mlp"><div class="mlp-name">${zh ? `${stackCount} 场比赛` : `${stackCount} competitions`}</div><div class="mlp-meta">${city}, ${country}</div></div>`
-          : `<div class="mlp"><div class="mlp-name">${localizedName}</div><div class="mlp-meta">${city}, ${country} · ${p.start_date}${p.start_date !== p.end_date ? ` — ${p.end_date}` : ''}</div></div>`;
+          ? `<div class="mlp"><div class="mlp-name">${popupFlagHtml(iso2)} ${zh ? `${stackCount} 场比赛` : `${stackCount} competitions`}</div><div class="mlp-meta">${city}</div></div>`
+          : `<div class="mlp"><div class="mlp-name">${popupFlagHtml(iso2)} ${localizedName}</div><div class="mlp-meta">${city}<br><span class="mlp-date">${formatDateRangeIso(String(p.start_date), String(p.end_date))}</span></div></div>`;
         popupRef.current = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 12 })
           .setLngLat(coords)
           .setHTML(html)
@@ -1930,14 +1962,13 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
         const p = f.properties as Record<string, unknown>;
         const coords = (f.geometry as GeoJSON.Point).coordinates.slice() as [number, number];
         if (popupRef.current) popupRef.current.remove();
-        const zh = isZhRef.current;
         const city = String(p.city ?? '');
-        const country = countryName(String(p.country ?? ''), zh);
-        const dateStr = p.start_date === p.end_date ? String(p.start_date) : `${p.start_date} — ${p.end_date}`;
+        const iso2 = String(p.country ?? '');
+        const dateStr = formatDateRangeIso(String(p.start_date), String(p.end_date));
         const pastLocalized = localizeCompNameRef.current(String(p.id ?? ''), String(p.name ?? '')).replace(/</g, '&lt;');
         popupRef.current = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 12 })
           .setLngLat(coords)
-          .setHTML(`<div class="mlp"><div class="mlp-name">${pastLocalized}</div><div class="mlp-meta">${city}, ${country} · ${dateStr}</div></div>`)
+          .setHTML(`<div class="mlp"><div class="mlp-name">${popupFlagHtml(iso2)} ${pastLocalized}</div><div class="mlp-meta">${city}<br><span class="mlp-date">${dateStr}</span></div></div>`)
           .addTo(map);
       });
       map.on('mouseleave', 'past-unclustered-point', () => {
@@ -1957,7 +1988,7 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
         const cuberLocalized = localizeCompNameRef.current(String(p.id ?? ''), String(p.name ?? '')).replace(/</g, '&lt;');
         popupRef.current = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 12 })
           .setLngLat(coords)
-          .setHTML(`<div class="mlp"><div class="mlp-name">#${Number(p.index) + 1} ${cuberLocalized}</div><div class="mlp-meta">${p.city_label ?? p.city ?? ''}, ${countryName(p.country_iso2, isZhRef.current)} · ${p.start_date}</div></div>`)
+          .setHTML(`<div class="mlp"><div class="mlp-name">${popupFlagHtml(String(p.country_iso2 ?? ''))} #${Number(p.index) + 1} ${cuberLocalized}</div><div class="mlp-meta">${p.city_label ?? p.city ?? ''}<br><span class="mlp-date">${p.start_date}</span></div></div>`)
           .addTo(map);
       });
       map.on('mouseleave', CUBER_LAYER_DOT, () => {
@@ -1976,11 +2007,11 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
           const coords = (f.geometry as GeoJSON.Point).coordinates.slice() as [number, number];
           const safeName = localizeCompNameRef.current(String(p.id ?? ''), String(p.name ?? '')).replace(/</g, '&lt;');
           const html = `<div class="mlp">
-            <a class="mlp-name mlp-name-link" href="${url}" target="_blank" rel="noopener noreferrer">#${Number(p.index) + 1} ${safeName} ↗</a>
-            <div class="mlp-meta">${p.city_label ?? p.city ?? ''}, ${countryName(p.country_iso2, isZhRef.current)} · ${p.start_date}</div>
+            <a class="mlp-name mlp-name-link" href="${url}" target="_blank" rel="noopener noreferrer">${popupFlagHtml(String(p.country_iso2 ?? ''))} #${Number(p.index) + 1} ${safeName}</a>
+            <div class="mlp-meta">${p.city_label ?? p.city ?? ''}<br><span class="mlp-date">${p.start_date}</span></div>
           </div>`;
           if (popupRef.current) popupRef.current.remove();
-          popupRef.current = new maplibregl.Popup({ closeButton: true, closeOnClick: true, offset: 12 })
+          popupRef.current = new maplibregl.Popup({ closeButton: false, closeOnClick: true, offset: 12 })
             .setLngLat(coords)
             .setHTML(html)
             .addTo(map);
@@ -1988,7 +2019,7 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
         }
         if (url) window.open(url, '_blank', 'noopener,noreferrer');
       });
-    });
+    }
     }
 
     return () => {
@@ -2010,7 +2041,29 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
       mapLoadedRef.current = false;
       setMapLoaded(false);
     };
-  }, [theme]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── theme 切换：保留 map 实例，只替换样式（瓦片缓存 / 相机 / overlay 数据都不丢）──
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return; // 初次挂载时 map 尚未异步建好；init effect 会用正确 theme 创建
+    if (appliedThemeRef.current === theme) return;
+    const seq = ++themeSeqRef.current;
+    mapLoadedRef.current = false;
+    setMapLoaded(false);
+    (async () => {
+      const styleUrl = mapStyleUrl(theme);
+      const newStyle: maplibregl.StyleSpecification = theme === 'satellite'
+        ? buildSatelliteStyle()
+        : await buildSimplifiedStyle(styleUrl as string, theme).catch(() => styleUrl as unknown as maplibregl.StyleSpecification);
+      if (seq !== themeSeqRef.current) return;
+      const live = mapRef.current;
+      if (!live) return;
+      live.setStyle(newStyle, { diff: true });
+      appliedThemeRef.current = theme;
+      // style.load 会触发 onStyleLoad → 重加 overlay → mapLoaded flip true → 下游 effect 重跑
+    })();
+  }, [theme]);
 
   // ── 推送 upcoming 数据 ──
   // NOTE: mapLoaded 在 deps 里：若数据先于 map load 抵达，也会在 load 完后再推一次
@@ -2158,11 +2211,11 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
         // 效果：数值越大字号越大（log10 轴），整体再随 zoom 线性放大
         'text-size': [
           'interpolate', ['linear'], ['zoom'],
-          0, ['interpolate', ['linear'], ['log10', ['max', 1, ['to-number', ['get', '_count']]]],
+          0, ['interpolate', ['linear'], ['log10', ['max', 1, ['to-number', ['get', '_count'], 1]]],
                0, 8, 1, 10, 2, 13, 3, 16],
-          3, ['interpolate', ['linear'], ['log10', ['max', 1, ['to-number', ['get', '_count']]]],
+          3, ['interpolate', ['linear'], ['log10', ['max', 1, ['to-number', ['get', '_count'], 1]]],
                0, 10, 1, 13, 2, 17, 3, 22],
-          6, ['interpolate', ['linear'], ['log10', ['max', 1, ['to-number', ['get', '_count']]]],
+          6, ['interpolate', ['linear'], ['log10', ['max', 1, ['to-number', ['get', '_count'], 1]]],
                0, 14, 1, 18, 2, 23, 3, 28],
         ],
         'text-allow-overlap': false,
@@ -2609,7 +2662,6 @@ const onSelectCuber = useCallback((person: WcaPerson) => {
   const currentComp = cuberComps[currentIndex];
   const progressPct = loadProgress ? Math.round(loadProgress.done / loadProgress.total * 100) : 0;
   const flagIso2 = (cuber?.iso2 || '').toLowerCase();
-  const isTw = flagIso2 === 'tw';
 
   // ── 信息卡可拖动（pointer events 兼容鼠标 / 触屏，位置存 localStorage）──
   const cardRef = useRef<HTMLDivElement>(null);
@@ -2702,9 +2754,7 @@ const onSelectCuber = useCallback((person: WcaPerson) => {
             </button>
             {cuber && (
               <div className="cuber-chip">
-                {isTw
-                  ? <img src="/tools/assets/images/ChineseTaipei.svg" className="cuber-flag" alt="Chinese Taipei" />
-                  : flagIso2 && <span className={`fi fi-${flagIso2} cuber-flag`} />}
+                {flagIso2 && <Flag iso2={flagIso2} className="cuber-flag" />}
                 <span className="cuber-name">{displayCuberName(cuber.name, isZh)}</span>
                 <button className="cuber-clear" onClick={clearCuber} aria-label="Clear">
                   <X size={14} strokeWidth={1.75} />
@@ -3160,9 +3210,7 @@ const onSelectCuber = useCallback((person: WcaPerson) => {
         >
           <div className="cuber-step-count">{t('globe.step', { current: currentIndex + 1, total: cuberComps.length })}</div>
           <div className="cuber-step-name is-selectable">
-            {currentComp.country_iso2 === 'TW'
-              ? <img src="/tools/assets/images/ChineseTaipei.svg" className="cuber-step-flag" alt="Chinese Taipei" />
-              : currentComp.country_iso2 && <span className={`fi fi-${currentComp.country_iso2.toLowerCase()} cuber-step-flag`} aria-label={currentComp.country_iso2} />}
+            {currentComp.country_iso2 && <Flag iso2={currentComp.country_iso2} className="cuber-step-flag" />}
             <span>{localizeCompName(currentComp.id, currentComp.name)}</span>
           </div>
           <div className="cuber-step-meta is-selectable">{(nameZhMap?.get(currentComp.id)?.city_zh && isZh) ? nameZhMap.get(currentComp.id)!.city_zh : localizeCity(currentComp.city, currentComp.country_iso2, isZh)}, {countryName(currentComp.country_iso2, isZh)} · {currentComp.start_date}</div>
@@ -3321,20 +3369,22 @@ const onSelectCuber = useCallback((person: WcaPerson) => {
             <button className="bin-panel-close" onClick={() => setSelectedComps(null)} aria-label="Close">×</button>
             <h2 className="bin-panel-title">
               {selectedComps.length === 1
-                ? <a href={selectedComps[0].url} target="_blank" rel="noopener noreferrer" className="bin-panel-title-link">{localizeCompName(selectedComps[0].id, selectedComps[0].name)} ↗</a>
+                ? <a href={selectedComps[0].url} target="_blank" rel="noopener noreferrer" className="bin-panel-title-link"><Flag iso2={selectedComps[0].country} className="bin-panel-flag" />{localizeCompName(selectedComps[0].id, selectedComps[0].name)}</a>
                 : (isZh ? `${selectedComps.length} 场比赛` : `${selectedComps.length} competitions`)}
             </h2>
             <div className="bin-panel-list">
-              {selectedComps.map((c) => (
-                <div key={c.id} className="bin-panel-item">
+              {selectedComps.map((c, idx) => (
+                // NOTE: 故意用 idx 后缀 —— 上游若出现同 id 重复，React key 仍然唯一不报警，
+                // 但视觉上两行依然可见（数据重复本身是上游 bug，我们不在前端静默去重）
+                <div key={`${c.id}-${idx}`} className="bin-panel-item">
                   {selectedComps.length > 1 && (
                     <a href={c.url} target="_blank" rel="noopener noreferrer" className="bin-panel-item-title">
-                      {localizeCompName(c.id, c.name)} ↗
+                      <Flag iso2={c.country} className="bin-panel-flag" />
+                      {localizeCompName(c.id, c.name)}
                     </a>
                   )}
                   <div className="bin-panel-meta">
-                    {c.city}, {countryName(c.country, isZh)} · {c.start_date}
-                    {c.start_date !== c.end_date ? ` — ${c.end_date}` : ''}
+                    {c.city} · {formatDateRangeIso(c.start_date, c.end_date)}
                   </div>
                 </div>
               ))}
