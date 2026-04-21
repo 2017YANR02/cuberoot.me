@@ -8,7 +8,7 @@ import { getLangQuery } from '../../i18n';
 import WcaEventSelector from './WcaEventSelector';
 import { EVENT_NAME_TO_ID, ALL_EVENT_IDS } from './event_constants';
 import { countryFlagClass, loadFlagData, flagDataVersion, extractWcaId, extractCompId, personFlagIso2, compFlagIso2, compNameZh } from '../../utils/country_flags';
-import { flagClass } from '../../utils/recon_utils';
+import { Flag } from '../../utils/flag';
 import DistributionChart from './DistributionChart';
 import type { DistDataset } from './DistributionChart';
 import WrHistoryChart from './WrHistoryChart';
@@ -189,12 +189,8 @@ function renderCell(value: unknown, columnKey?: string, isZh?: boolean): React.R
       const compId = extractCompId(url);
       const iso2 = wcaId ? personFlagIso2(wcaId) : compId ? compFlagIso2(compId) : '';
       if (iso2) {
-        if (iso2 === 'tw') {
-          // NOTE: Chinese Taipei 用 WCA 自定义梅花旗（对标 Legacy i18n.js）
-          parts.push(<img key={`flag-${segIdx}-${match.index}`} src="/tools/assets/images/ChineseTaipei.svg" alt="Chinese Taipei" className="country-flag-ct" />);
-        } else {
-          parts.push(<span key={`flag-${segIdx}-${match.index}`} className={`${flagClass(iso2)} country-flag`} />);
-        }
+        // NOTE: TW 走 country-flag-ct（img 专用尺寸），其他走 country-flag（span 通过 line-height 对齐文字）
+        parts.push(<Flag key={`flag-${segIdx}-${match.index}`} iso2={iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />);
         parts.push(' ');
       }
       // NOTE: 选手名——中文模式提取中文名，否则统一去掉括号

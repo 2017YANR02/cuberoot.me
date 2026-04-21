@@ -9,6 +9,8 @@ import { ChevronLeft, ChevronRight, Star, Globe as GlobeIcon } from 'lucide-reac
 import { fetchAllUpcomingCompsJson, type UpcomingCompRecord } from '@cuberoot/shared';
 import LangToggle from '../components/LangToggle';
 import { displayCuberName } from '../utils/name_utils';
+import { formatDateRangeIso, toIsoDate } from '../utils/date_range';
+import { Flag as SharedFlag } from '../utils/flag';
 import './upcoming_comps.css';
 
 // ── 类型定义 ──────────────────────────────────────────────────────────────
@@ -150,11 +152,9 @@ function monthGridStart(year: number, month: number): Date {
 
 // ── 国旗 ──────────────────────────────────────────────────────────────────
 
+// NOTE: TW 特判和 flag-icons 类名统一在 utils/flag.tsx；这里只是个 span/img className 绑定的 thin wrapper
 function Flag({ iso2 }: { iso2: string }) {
-  if (iso2.toLowerCase() === 'tw') {
-    return <img className="flag-img" src="/tools/assets/images/ChineseTaipei.svg" alt="Chinese Taipei" />;
-  }
-  return <span className={`fi fi-${iso2.toLowerCase()} flag-span`} aria-label={iso2} />;
+  return <SharedFlag iso2={iso2} spanClassName="flag-span" imgClassName="flag-img" />;
 }
 
 // ── 日历计算 ──────────────────────────────────────────────────────────────
@@ -295,12 +295,7 @@ function CompModal({ comp, isZh, onClose, t }: {
   const displayCity = isZh ? (comp.city_zh || comp.city) : comp.city;
   const compUrl = comp.cubing_china_url || `https://www.worldcubeassociation.org/competitions/${comp.id}`;
 
-  const s = parseLocalDate(comp.start_date);
-  const e = parseLocalDate(comp.end_date || comp.start_date);
-  const formatDate = (d: Date) => isZh
-    ? `${d.getMonth() + 1} 月 ${d.getDate()} 日`
-    : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  const dateStr = sameDay(s, e) ? formatDate(s) : `${formatDate(s)} — ${formatDate(e)}`;
+  const dateStr = formatDateRangeIso(comp.start_date, comp.end_date || comp.start_date);
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -721,11 +716,7 @@ export default function UpcomingCompsPage() {
         <div className="modal-overlay" onClick={() => setDayListDate(null)}>
           <div className="modal-panel day-list-panel" onClick={(ev) => ev.stopPropagation()}>
             <button className="modal-close" onClick={() => setDayListDate(null)} aria-label="Close">×</button>
-            <h2 className="modal-title">
-              {isZh
-                ? `${dayListDate.getMonth() + 1} 月 ${dayListDate.getDate()} 日`
-                : dayListDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-            </h2>
+            <h2 className="modal-title">{toIsoDate(dayListDate)}</h2>
             <div className="day-list">
               {activeComps
                 .filter((c) => {
