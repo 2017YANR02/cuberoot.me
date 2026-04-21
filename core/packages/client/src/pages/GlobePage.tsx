@@ -526,14 +526,29 @@ async function buildSimplifiedStyle(styleUrl: string, theme: Theme): Promise<map
   }
 
   // 两种主题都把 background 层透明（只影响球外区域，露出星空）；
-  // 陆地不透明化由后续注入的 earth-base 多边形负责
+  // 陆地不透明化由后续注入的 earth-base 多边形负责。
+  // 在把 background 置空前，先把 OFM 自带的 background-color 存到 metadata，
+  // 供 earth-base 使用，保证和 OFM 默认观感一致。
+  const styleMeta = (style.metadata ?? {}) as Record<string, unknown>;
   for (const layer of layers) {
     if (layer.type === 'background') {
+      const bg = (layer.paint as Record<string, unknown> | undefined)?.['background-color'];
+      if (typeof bg === 'string') styleMeta.cuberootOfmBackground = bg;
       layer.paint = { ...(layer.paint ?? {}), 'background-color': 'rgba(0,0,0,0)' };
-    } else if (theme === 'dark' && layer.id === 'water' && layer.type === 'fill') {
-      layer.paint = { ...(layer.paint ?? {}), 'fill-color': '#0E1620' };
+    } else if (theme === 'dark' && layer.type === 'symbol') {
+      // OFM dark 自带的 text-color 太暗，统一提亮；halo 加深以保证在亮/暗地物上都可读
+      const paint = (layer.paint ?? {}) as Record<string, unknown>;
+      if ('text-color' in paint) {
+        layer.paint = {
+          ...paint,
+          'text-color': '#F0F3F6',
+          'text-halo-color': 'rgba(0,0,0,0.8)',
+          'text-halo-width': 1.3,
+        };
+      }
     }
   }
+  style.metadata = styleMeta;
 
   return style;
 }
@@ -1526,13 +1541,18 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
             properties: {},
           } as unknown as GeoJSON.Feature,
         });
-        const styleLayers = map.getStyle().layers ?? [];
+        const currentStyle = map.getStyle();
+        const styleLayers = currentStyle.layers ?? [];
         const firstNonBgId = styleLayers.find(l => l.type !== 'background')?.id;
+        const ofmBg = (currentStyle.metadata as Record<string, unknown> | undefined)?.cuberootOfmBackground;
+        const earthBaseColor = typeof ofmBg === 'string'
+          ? ofmBg
+          : (theme === 'dark' ? '#272E3C' : '#F5F2E8');
         map.addLayer({
           id: 'earth-base',
           type: 'fill',
           source: 'earth-base',
-          paint: { 'fill-color': theme === 'dark' ? '#181D26' : '#F5F2E8', 'fill-antialias': false },
+          paint: { 'fill-color': earthBaseColor, 'fill-antialias': false },
         }, firstNonBgId);
       }
 
