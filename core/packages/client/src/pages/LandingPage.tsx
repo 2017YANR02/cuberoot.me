@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import {
   BarChart3, Film, ScanSearch, Calculator as CalculatorIcon, LineChart,
   Swords, Target, CalendarDays, Puzzle, BookOpen, Globe as GlobeIcon,
+  Shuffle,
   type LucideIcon,
 } from 'lucide-react';
 import { useAuthStore } from '../stores/auth_store';
@@ -286,6 +287,7 @@ const TEXTS: Record<string, { en: string; zh: string }> = {
   globe:           { en: 'Globe', zh: '比赛地球' },
   cstimer:         { en: 'csTimer', zh: 'csTimer' },
   frameCount:      { en: 'Frame Count', zh: '数帧工具' },
+  scramble:        { en: 'Scramble', zh: '打乱' },
   blog:            { en: 'Blog', zh: '博客' },
   creditsPrefix:   { en: 'Inspired by open-source projects from', zh: '致谢' },
 };
@@ -322,6 +324,7 @@ const CARDS: CardConfig[] = [
   { id: 'upcoming',    href: '/upcoming-comps',  internal: true,  tier: 'standard',  Icon: CalendarDays,   nameKey: 'upcoming' },
   { id: 'globe',       href: '/globe',           internal: true,  tier: 'standard',  Icon: GlobeIcon,      nameKey: 'globe' },
   { id: 'solver',      href: '/solver',          internal: true,  tier: 'standard',  Icon: Puzzle,         nameKey: 'solver' },
+  { id: 'scramble',    href: '/scramble-stats',  internal: true,  tier: 'standard',  Icon: Shuffle,        nameKey: 'scramble' },
   // Tier 4 — Utility
   { id: 'cstimer',     href: '/cstimer',         internal: true,  tier: 'utility',   nameKey: 'cstimer', iconImg: import.meta.env.BASE_URL + 'cstimer_logo.png' },
   { id: 'blog',        href: window.location.hostname.endsWith('cuberoot.me') ? '/blog/' : 'https://www.cuberoot.me/blog/', internal: false, tier: 'utility', Icon: BookOpen, nameKey: 'blog' },
