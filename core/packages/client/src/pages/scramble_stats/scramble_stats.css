@@ -154,8 +154,10 @@
   border-radius: 14px;
   padding: 1rem 1.25rem;
   margin-bottom: 0.75rem;
-  overflow-x: auto;
 }
+
+.scramble-hist-wrapper { width: 100%; }
+.scramble-hist { width: 100%; height: auto; }
 
 .scramble-hist { display: block; }
 
@@ -241,6 +243,51 @@
 @media (max-width: 820px) {
   .scramble-stats-stat-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .scramble-stats-cn-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ── 移动端：控制区 2 列网格，指定哪几项占整行 ── */
+@media (max-width: 640px) {
+  .scramble-stats-page {
+    padding: 1.5rem 1rem;
+  }
+  .scramble-stats-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.625rem 0.75rem;
+    padding: 0.875rem 1rem;
+  }
+  .scramble-stats-controls > * {
+    min-width: 0;
+  }
+  .scramble-stats-controls label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .scramble-stats-controls label > span {
+    flex-shrink: 0;
+  }
+  .scramble-stats-controls select {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+  }
+  /* 打乱集独占一行（最长）、颜色中立独占一行（3 按钮） */
+  .scramble-stats-controls > :nth-child(1),
+  .scramble-stats-controls > :nth-child(4) {
+    grid-column: 1 / -1;
+  }
+  /* 变体 + 阶段一行、模式 + Y 一行（其他按 grid 自然排） */
+  .scramble-stats-toggle-group {
+    flex-wrap: wrap;
+  }
+  .scramble-stats-toggle-group button {
+    padding: 0.35rem 0.55rem;
+    font-size: 0.75rem;
+  }
+  .scramble-stats-stat-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .scramble-stats-cn-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .scramble-stats-stat-value { font-size: 1rem; }
 }
 
 /* ── 底部元信息 ── */
