@@ -4,6 +4,7 @@ export interface HistSeries {
   name: string;
   color: string;
   stroke?: string;
+  gradient?: 'wca6' | 'wy';  // NOTE: 用 WCA 6 色或白黄 2 色的竖向渐变填充
   counts: Record<string, number>;
 }
 
@@ -15,7 +16,8 @@ interface Props {
 }
 
 const W = 760, H = 400;
-const PAD = { l: 56, r: 180, t: 40, b: 44 };
+// NOTE: 图例放在图表左上空白区（0..low-count 的柱子永远很矮），不再占右边 pad
+const PAD = { l: 56, r: 20, t: 40, b: 44 };
 const chartW = W - PAD.l - PAD.r;
 const chartH = H - PAD.t - PAD.b;
 
@@ -102,7 +104,28 @@ export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percen
 
   return (
     <div className="scramble-hist-wrapper">
-      <svg width={W} height={H} className="scramble-hist">
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        preserveAspectRatio="xMidYMid meet"
+        width="100%"
+        className="scramble-hist"
+      >
+        <defs>
+          {/* WCA 6 色竖向渐变（白黄绿蓝红橙，顺序同单色底模式） */}
+          <linearGradient id="scramble-grad-wca6" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#FFFFFF" />
+            <stop offset="20%" stopColor="#FEFE00" />
+            <stop offset="40%" stopColor="#00D800" />
+            <stop offset="60%" stopColor="#0000F2" />
+            <stop offset="80%" stopColor="#EE0000" />
+            <stop offset="100%" stopColor="#FFA100" />
+          </linearGradient>
+          {/* 白黄双色渐变 */}
+          <linearGradient id="scramble-grad-wy" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#FFFFFF" />
+            <stop offset="100%" stopColor="#FEFE00" />
+          </linearGradient>
+        </defs>
         {/* Y grid + ticks */}
         {yTicks.map((v, i) => {
           const y = PAD.t + chartH - (v / yMax) * chartH;
@@ -134,6 +157,8 @@ export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percen
               if (yVal <= 0) return null;
               const h = (yVal / yMax) * chartH;
               const x = PAD.l + bi * slotW + slotPadL + si * barW;
+              const fill = s.gradient ? `url(#scramble-grad-${s.gradient})` : s.color;
+              const stroke = s.stroke ?? (s.gradient ? '#CCCAC2' : undefined);
               return (
                 <rect
                   key={`b${si}_${v}`}
@@ -141,9 +166,9 @@ export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percen
                   y={PAD.t + chartH - h}
                   width={Math.max(barW - 1, 0.5)}
                   height={h}
-                  fill={s.color}
-                  stroke={s.stroke}
-                  strokeWidth={s.stroke ? 1 : 0}
+                  fill={fill}
+                  stroke={stroke}
+                  strokeWidth={stroke ? 1 : 0}
                   opacity={series.length > 1 ? 0.82 : 0.92}
                 />
               );
@@ -177,15 +202,18 @@ export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percen
             </g>
           );
         })}
-        {/* Legend — name + avg / min / max */}
+        {/* Legend — 放在图表内左上空白区（0..low-count 柱永远矮） */}
         {series.map((s, i) => {
-          const rowH = 32;
-          const y0 = PAD.t + 4 + i * rowH;
+          const rowH = 28;
+          const x0 = PAD.l + 10;
+          const y0 = PAD.t + 6 + i * rowH;
+          const swFill = s.gradient ? `url(#scramble-grad-${s.gradient})` : s.color;
+          const swStroke = s.stroke ?? (s.gradient ? '#CCCAC2' : undefined);
           return (
             <g key={`lg${i}`}>
-              <rect x={PAD.l + chartW + 16} y={y0} width={12} height={12} fill={s.color} stroke={s.stroke} strokeWidth={s.stroke ? 1 : 0} />
-              <text x={PAD.l + chartW + 32} y={y0 + 10} fontSize="12" fill="#181716">{s.name}</text>
-              <text x={PAD.l + chartW + 32} y={y0 + 24} fontSize="11" fill="#6F6E6B">
+              <rect x={x0} y={y0} width={12} height={12} fill={swFill} stroke={swStroke} strokeWidth={swStroke ? 1 : 0} />
+              <text x={x0 + 18} y={y0 + 10} fontSize="12" fill="#181716">{s.name}</text>
+              <text x={x0 + 18} y={y0 + 22} fontSize="11" fill="#6F6E6B">
                 avg {means[i].toFixed(2)} · min {perMin[i]} · max {perMax[i]}
               </text>
             </g>
