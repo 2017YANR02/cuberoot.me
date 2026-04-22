@@ -87,6 +87,10 @@ const ANGLE_FACE: Record<string, { color: string; stroke?: string; zh: string; e
 const MIN_COLOR = '#D97757';     // NOTE: min 6色 用 Claude 珊瑚
 const MIN_WY_COLOR = '#B8935C';  // NOTE: min 白黄双色 用暖棕（区别于 6色 min）
 
+// NOTE: 6 色分开显示时的顺序 — WCA 标准 白 / 黄 / 绿 / 蓝 / 红 / 橙
+const DISPLAY_ORDER_STD: string[] = ['z2', 'z0', 'x3', 'x1', 'z1', 'z3'];
+const DISPLAY_ORDER_PAIR: string[] = ['z2', '', "x'", 'x', 'z', "z'"];
+
 const labelStage = (s: string, isZh: boolean) => STAGE_LABEL[s] ? STAGE_LABEL[s][isZh ? 'zh' : 'en'] : s;
 const labelAngle = (a: string, isZh: boolean) => ANGLE_FACE[a]?.[isZh ? 'zh' : 'en'] ?? a;
 const colorForAngle = (a: string) => ANGLE_FACE[a]?.color ?? '#8B7D72';
@@ -170,6 +174,7 @@ export default function ScrambleStatsPage() {
       return [{
         name: isZh ? '六色底' : 'CN',
         color: MIN_COLOR,
+        gradient: 'wca6' as const,
         counts: stageData.min_across.counts,
       }];
     }
@@ -177,10 +182,12 @@ export default function ScrambleStatsPage() {
       return [{
         name: isZh ? '双色底' : 'Dual',
         color: MIN_WY_COLOR,
+        gradient: 'wy' as const,
         counts: stageData.min_wy?.counts ?? {},
       }];
     }
-    return v.angles.map((a) => ({
+    const order = variant === 'pair' ? DISPLAY_ORDER_PAIR : DISPLAY_ORDER_STD;
+    return order.map((a) => ({
       name: labelAngle(a, isZh),
       color: colorForAngle(a),
       stroke: ANGLE_FACE[a]?.stroke,
