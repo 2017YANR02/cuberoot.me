@@ -1,0 +1,3 @@
+# 指向本地 5 个 CSV 所在目录
+# CSV 文件名必须是: std.csv / eo.csv / pair.csv / pseudo.csv / pseudo_pair.csv
+csv_dir: D:/cube/scramble/wca_scramble/stat
