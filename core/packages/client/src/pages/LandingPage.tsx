@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import {
   BarChart3, Film, ScanSearch, Calculator as CalculatorIcon, LineChart,
   Swords, Target, CalendarDays, Puzzle, BookOpen, Globe as GlobeIcon,
-  Shuffle,
+  Shuffle, Library,
   type LucideIcon,
 } from 'lucide-react';
 import { useAuthStore } from '../stores/auth_store';
@@ -288,6 +288,7 @@ const TEXTS: Record<string, { en: string; zh: string }> = {
   cstimer:         { en: 'csTimer', zh: 'csTimer' },
   frameCount:      { en: 'Frame Count', zh: '数帧工具' },
   scramble:        { en: 'Scramble', zh: '打乱' },
+  alg:             { en: 'Algorithms', zh: '公式教程' },
   blog:            { en: 'Blog', zh: '博客' },
   creditsPrefix:   { en: 'Inspired by open-source projects from', zh: '致谢' },
 };
@@ -319,6 +320,7 @@ const CARDS: CardConfig[] = [
   { id: 'hth',         href: '/calc',            internal: true,  tier: 'medium',    Icon: CalculatorIcon, nameKey: 'hthGrapher' },
   { id: 'viz',         href: '/viz',             internal: true,  tier: 'medium',    Icon: LineChart,      nameKey: 'viz' },
   // Tier 3 — Standard
+  { id: 'alg',         href: '/alg',             internal: true,  tier: 'standard',  Icon: Library,        nameKey: 'alg' },
   { id: 'battle',      href: '/battle',          internal: true,  tier: 'standard',  Icon: Swords,         nameKey: 'battle' },
   { id: 'trainer',     href: '/alg-trainers',    internal: true,  tier: 'standard',  Icon: Target,         nameKey: 'algTrainer' },
   { id: 'upcoming',    href: '/upcoming-comps',  internal: true,  tier: 'standard',  Icon: CalendarDays,   nameKey: 'upcoming' },
