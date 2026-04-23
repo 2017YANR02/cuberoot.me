@@ -1,11 +1,19 @@
-import { useMemo } from 'react';
+import { useId, useMemo } from 'react';
 
 export interface HistSeries {
   name: string;
-  color: string;
+  // NOTE: fillColors = 用于竖向渐变的色序（WCA 颜色自上而下）。长度 1 时退化为单色带描边
+  fillColors: string[];
   stroke?: string;
-  gradient?: 'wca6' | 'wy';  // NOTE: 用 WCA 6 色或白黄 2 色的竖向渐变填充
   counts: Record<string, number>;
+  // NOTE: 设置后图例可点击，用于循环切换颜色（single/dual/quad 模式）
+  onLegendClick?: () => void;
+  legendHint?: string;
+}
+
+export interface LegendMode {
+  key: string;
+  label: string;
 }
 
 interface Props {
@@ -13,6 +21,10 @@ interface Props {
   isZh?: boolean;
   yMode?: 'count' | 'percent';
   chartMode?: 'pdf' | 'cdf';
+  // NOTE: 模式切换 pills 画在图例上方；每个 pill 独立可点。不传则不渲染
+  modes?: LegendMode[];
+  activeMode?: string;
+  onModeChange?: (key: string) => void;
 }
 
 const W = 760, H = 400;
@@ -21,34 +33,25 @@ const PAD = { l: 56, r: 20, t: 40, b: 44 };
 const chartW = W - PAD.l - PAD.r;
 const chartH = H - PAD.t - PAD.b;
 
-export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percent', chartMode = 'pdf' }: Props) {
-  const { xMin, xMax, yMax, totals, values, means, perMin, perMax } = useMemo(() => {
+export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percent', chartMode = 'pdf', modes, activeMode, onModeChange }: Props) {
+  // NOTE: svg 内 <linearGradient> id 必须全局唯一，用 React 的 useId 前缀
+  const gradPrefix = useId().replace(/:/g, '_');
+
+  const { xMin, xMax, yMax, totals, values } = useMemo(() => {
     let mn = Infinity, mx = -Infinity;
     const totals: number[] = [];
-    const means: number[] = [];
-    const perMin: number[] = [];
-    const perMax: number[] = [];
     for (const s of series) {
       let tot = 0;
-      let sum = 0;
-      let smn = Infinity, smx = -Infinity;
       for (const k of Object.keys(s.counts)) {
         const v = Number(k);
         const c = s.counts[k];
         tot += c;
-        sum += v * c;
         if (v < mn) mn = v;
         if (v > mx) mx = v;
-        if (v < smn) smn = v;
-        if (v > smx) smx = v;
       }
       totals.push(tot);
-      means.push(tot > 0 ? sum / tot : 0);
-      perMin.push(Number.isFinite(smn) ? smn : 0);
-      perMax.push(Number.isFinite(smx) ? smx : 0);
     }
     if (!Number.isFinite(mn)) { mn = 0; mx = 0; }
-    // values[si][v] = PDF 值 or CDF 值，按 yMode(percent/count) 输出原始尺度
     const values = series.map((s, i) => {
       const tot = totals[i] || 1;
       const out: Record<number, number> = {};
@@ -69,7 +72,7 @@ export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percen
         for (const n of values) if ((n[v] ?? 0) > ymx) ymx = n[v] ?? 0;
       }
     }
-    return { xMin: mn, xMax: mx, yMax: ymx || 1, totals, values, means, perMin, perMax };
+    return { xMin: mn, xMax: mx, yMax: ymx || 1, totals, values };
   }, [series, yMode, chartMode]);
 
   if (series.length === 0 || !Number.isFinite(xMin)) {
@@ -102,6 +105,8 @@ export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percen
 
   const showLabels = series.length === 1;
 
+  const gradIdFor = (i: number) => `${gradPrefix}grad${i}`;
+
   return (
     <div className="scramble-hist-wrapper">
       <svg
@@ -111,20 +116,11 @@ export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percen
         className="scramble-hist"
       >
         <defs>
-          {/* WCA 6 色竖向渐变（白黄绿蓝红橙，顺序同单色底模式） */}
-          <linearGradient id="scramble-grad-wca6" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#FFFFFF" />
-            <stop offset="20%" stopColor="#FEFE00" />
-            <stop offset="40%" stopColor="#00D800" />
-            <stop offset="60%" stopColor="#0000F2" />
-            <stop offset="80%" stopColor="#EE0000" />
-            <stop offset="100%" stopColor="#FFA100" />
-          </linearGradient>
-          {/* 白黄双色渐变 */}
-          <linearGradient id="scramble-grad-wy" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#FFFFFF" />
-            <stop offset="100%" stopColor="#FEFE00" />
-          </linearGradient>
+          {series.map((s, i) => (
+            <linearGradient key={`gr${i}`} id={gradIdFor(i)} x1="0" y1="0" x2="0" y2="1">
+              {gradientStops(s.fillColors)}
+            </linearGradient>
+          ))}
         </defs>
         {/* Y grid + ticks */}
         {yTicks.map((v, i) => {
@@ -149,7 +145,7 @@ export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percen
         {/* X/Y 轴线 */}
         <line x1={PAD.l} x2={PAD.l + chartW} y1={PAD.t + chartH} y2={PAD.t + chartH} stroke="#CCCAC2" />
         <line x1={PAD.l} x2={PAD.l} y1={PAD.t} y2={PAD.t + chartH} stroke="#CCCAC2" />
-        {/* Bars (PDF 或 CDF 都用 rect — CDF 就是单调递增的 "楼梯" ) */}
+        {/* Bars */}
         {series.map((s, si) => (
           <g key={`s${si}`}>
             {Array.from({ length: nBins }, (_, i) => xMin + i).map((v, bi) => {
@@ -157,8 +153,8 @@ export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percen
               if (yVal <= 0) return null;
               const h = (yVal / yMax) * chartH;
               const x = PAD.l + bi * slotW + slotPadL + si * barW;
-              const fill = s.gradient ? `url(#scramble-grad-${s.gradient})` : s.color;
-              const stroke = s.stroke ?? (s.gradient ? '#CCCAC2' : undefined);
+              const fill = `url(#${gradIdFor(si)})`;
+              const stroke = s.stroke ?? (needsStroke(s.fillColors) ? '#CCCAC2' : undefined);
               return (
                 <rect
                   key={`b${si}_${v}`}
@@ -184,8 +180,6 @@ export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percen
           const cx = PAD.l + bi * slotW + slotW / 2;
           const topY = PAD.t + chartH - h - 6;
           const tot = totals[0] || 1;
-          // PDF: 这一格的 count / 这一格占比
-          // CDF: 累积 count / 累积占比
           let countDisp: number;
           let pctDisp: number;
           if (chartMode === 'cdf') {
@@ -202,26 +196,85 @@ export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percen
             </g>
           );
         })}
-        {/* Legend — 放在图表内左上空白区（0..low-count 柱永远矮） */}
-        {series.map((s, i) => {
-          const rowH = 28;
+        {/* Legend — 左上空白区。包含：模式下拉（cn/quad/dual/single）+ 色片 */}
+        {(() => {
           const x0 = PAD.l + 10;
-          const y0 = PAD.t + 6 + i * rowH;
-          const swFill = s.gradient ? `url(#scramble-grad-${s.gradient})` : s.color;
-          const swStroke = s.stroke ?? (s.gradient ? '#CCCAC2' : undefined);
+          const yPills = PAD.t + 6;
+          const pillH = 26;
+          const selectW = 78;
+          const hasModes = !!(modes && modes.length > 0);
           return (
-            <g key={`lg${i}`}>
-              <rect x={x0} y={y0} width={12} height={12} fill={swFill} stroke={swStroke} strokeWidth={swStroke ? 1 : 0} />
-              <text x={x0 + 18} y={y0 + 10} fontSize="12" fill="#181716">{s.name}</text>
-              <text x={x0 + 18} y={y0 + 22} fontSize="11" fill="#6F6E6B">
-                avg {means[i].toFixed(2)} · min {perMin[i]} · max {perMax[i]}
-              </text>
-            </g>
+            <>
+              {hasModes && (
+                <foreignObject x={x0} y={yPills} width={selectW} height={pillH}>
+                  <select
+                    className="scramble-hist-mode-select"
+                    value={activeMode}
+                    onChange={(e) => onModeChange?.(e.target.value)}
+                  >
+                    {modes!.map((m) => (
+                      <option key={m.key} value={m.key}>{m.label}</option>
+                    ))}
+                  </select>
+                </foreignObject>
+              )}
+              {/* 色片 + stats */}
+              {series.map((s, i) => {
+                const rowStart = hasModes ? (yPills + pillH + 8) : (PAD.t + 6);
+                const y0 = rowStart + i * 28;
+                const chipSize = 12, chipGap = 3;
+                const chips = s.fillColors.length > 0 ? s.fillColors : ['#8B7D72'];
+                const chipsW = chips.length * chipSize + Math.max(0, chips.length - 1) * chipGap;
+                const clickable = !!s.onLegendClick;
+                return (
+                  <g
+                    key={`lg${i}`}
+                    onClick={s.onLegendClick}
+                    style={clickable ? { cursor: 'pointer' } : undefined}
+                    className={clickable ? 'scramble-hist-legend-clickable' : undefined}
+                  >
+                    {clickable && <title>{s.legendHint ?? 'Click to cycle'}</title>}
+                    {clickable && <rect x={x0 - 4} y={y0 - 4} width={Math.max(220, chipsW + 160)} height={24} fill="transparent" />}
+                    {chips.map((c, ci) => {
+                      const cx = x0 + ci * (chipSize + chipGap);
+                      const needStroke = needsStroke([c]);
+                      return (
+                        <rect
+                          key={`chip${ci}`}
+                          x={cx} y={y0}
+                          width={chipSize} height={chipSize}
+                          fill={c}
+                          stroke={needStroke ? '#CCCAC2' : undefined}
+                          strokeWidth={needStroke ? 1 : 0}
+                        />
+                      );
+                    })}
+                  </g>
+                );
+              })}
+            </>
           );
-        })}
+        })()}
       </svg>
     </div>
   );
+}
+
+// NOTE: 渐变 stops —— 单色 → 一个 stop；多色 → 均分分布
+function gradientStops(colors: string[]) {
+  if (colors.length === 0) return <stop offset="0%" stopColor="#8B7D72" />;
+  if (colors.length === 1) {
+    return <stop offset="0%" stopColor={colors[0]} />;
+  }
+  return colors.map((c, i) => {
+    const offset = (i / (colors.length - 1)) * 100;
+    return <stop key={i} offset={`${offset}%`} stopColor={c} />;
+  });
+}
+
+// NOTE: 白色/极浅色填充在 cream 背景上需要灰描边
+function needsStroke(colors: string[]): boolean {
+  return colors.some((c) => c.toUpperCase() === '#FFFFFF' || c.toUpperCase() === '#FEFE00');
 }
 
 function niceStep(max: number, target: number): number {

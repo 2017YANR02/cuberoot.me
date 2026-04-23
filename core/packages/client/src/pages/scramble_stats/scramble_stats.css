@@ -147,6 +147,29 @@
   font-weight: 500;
 }
 
+/* 图例可点击反馈（single/dual/quad 循环切换） */
+.scramble-hist-legend-clickable:hover text {
+  fill: var(--accent) !important;
+}
+
+/* 图例里的模式下拉 —— 放在 SVG foreignObject 里，使用常规 HTML select 样式 */
+.scramble-hist-mode-select {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.2rem 0.4rem;
+  font-size: 0.8rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+.scramble-hist-mode-select:hover { border-color: var(--border-strong); }
+.scramble-hist-mode-select:focus { outline: none; border-color: var(--accent); }
+
 /* ── 图表容器 ── */
 .scramble-stats-chart-wrapper {
   background: var(--surface);
@@ -187,7 +210,7 @@
 
 .scramble-stats-stat-grid {
   display: grid;
-  grid-template-columns: repeat(8, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0.5rem;
 }
 
