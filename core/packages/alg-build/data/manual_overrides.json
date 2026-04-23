@@ -1,0 +1,4 @@
+{
+  "_schema": "slug -> { title?: {en?, zh?}, category?, subcategory?, hidden?, view?, order?, algset_groups? }",
+  "_doc": "手工 override，覆盖 build pipeline 的自动推断结果。key 为 slug，value 为部分字段。"
+}
