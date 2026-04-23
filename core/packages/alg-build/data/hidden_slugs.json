@@ -1,0 +1,4 @@
+{
+  "_schema": "slug -> reason (string)",
+  "_doc": "黑名单。hidden 项在 catalog 中标 hidden:true，列表页默认不展示，但详情页仍可访问。reason 是手写的隐藏理由，供回溯用。"
+}
