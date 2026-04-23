@@ -1287,14 +1287,14 @@
     "category": "3x3",
     "subcategory": null,
     "topDir": "3x3",
-    "thumb": "/stats/data/alg/media/eoll/en/image8.svg",
+    "thumb": "/stats/data/alg/media/eoll/en/image6.svg",
     "mtime": 1757387772057.9973,
     "hasEn": true,
     "hasZh": true,
     "order": 10,
     "hidden": false,
     "quality": "ok",
-    "algCount": 11
+    "algCount": 13
   },
   {
     "slug": "1lll1-sym",

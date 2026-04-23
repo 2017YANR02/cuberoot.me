@@ -8,8 +8,14 @@ interface AlgsetViewProps {
 }
 
 export function AlgsetView({ post }: AlgsetViewProps) {
-  const [activeGroup, setActiveGroup] = useState<string>('all');
+  const [activeGroup, setActiveGroupState] = useState<string>('all');
   const [modalIdx, setModalIdx] = useState<number | null>(null);
+
+  // 切换 group 时关闭 modal，避免 modalIdx 在新 filteredCases 里越界
+  const setActiveGroup = (g: string) => {
+    setActiveGroupState(g);
+    setModalIdx(null);
+  };
 
   const filteredCases = useMemo(() => {
     if (activeGroup === 'all') return post.cases;
