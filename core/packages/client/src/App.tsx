@@ -45,6 +45,9 @@ const PretextDemo = lazy(() => import('./pages/pretext_demo/PretextDemo'));
 const FrameCountPage = lazy(() => import('./pages/frame-count/FrameCountPage'));
 // NOTE: Scramble Stats — WCA 历史打乱难度分布
 const ScrambleStatsPage = lazy(() => import('./pages/scramble_stats/ScrambleStatsPage'));
+// NOTE: Alg — 公式教程目录（docx 源迁移）
+const AlgIndexPage = lazy(() => import('./pages/alg/AlgIndexPage'));
+const AlgPostPage = lazy(() => import('./pages/alg/AlgPostPage'));
 
 
 function App() {
@@ -104,6 +107,9 @@ function App() {
         <Route path="/frame-count" element={<Suspense fallback={<div>Loading...</div>}><FrameCountPage /></Suspense>} />
         {/* Scramble — WCA 历史打乱难度分布 */}
         <Route path="/scramble-stats" element={<Suspense fallback={<div>Loading...</div>}><ScrambleStatsPage /></Suspense>} />
+        {/* Alg — 公式教程目录 */}
+        <Route path="/alg" element={<Suspense fallback={<div>Loading...</div>}><AlgIndexPage /></Suspense>} />
+        <Route path="/alg/:slug" element={<Suspense fallback={<div>Loading...</div>}><AlgPostPage /></Suspense>} />
         {/* Pretext Demo — Canvas 表格渲染实验 */}
         <Route path="/pretext-demo" element={<Suspense fallback={<div>Loading...</div>}><PretextDemo /></Suspense>} />
         {/* Auth — WCA OAuth 回调 */}
