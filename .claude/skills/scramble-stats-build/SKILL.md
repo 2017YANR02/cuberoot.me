@@ -38,13 +38,18 @@ z3/z'   橙 #FFA100      x1/x    蓝 #0000F2      x3/x'   绿 #00D800
 
 ## JSON 每 stage 产出
 
-- 6 个 angle 直方图（原始 6 朝向）
-- `min_across`：逐行取 6 朝向 min 后的直方图（全 CN）
-- `min_wy`：逐行取黄+白两朝向 min 后的直方图（白黄双色 CN，速拧常用）
+颜色子集直方图，key = **按字母序排好的颜色字母串**（B<G<O<R<W<Y）。共 13 个 key：
+
+- size 1（6 个）：`B G O R W Y` —— single 模式 6 选 1
+- size 2（3 个）：`WY BG OR` —— dual 模式只允许 3 对相反色
+- size 4（3 个）：`BGOR ORWY BGWY` —— quad 模式排除一对相反色
+- size 6（1 个）：`BGORWY` —— cn 全中立
+
+每个直方图 = 逐行对选中颜色集合取 min 步数的计数分布。
 
 ## 关键文件
 
-- 聚合：`core/packages/scramble-stats-build/src/build.ts`（`VARIANTS` 数组）
-- 页：`…/pages/scramble_stats/ScrambleStatsPage.tsx`（`ANGLE_FACE` 映射在这里）
+- 聚合：`core/packages/scramble-stats-build/src/build.ts`（`VARIANTS` + `angleToColor` 映射；`SUBSET_KEYS` = sizes 1/2/4/6）
+- 页：`…/pages/scramble_stats/ScrambleStatsPage.tsx`（`COLOR_LETTERS` / `COLOR_HEX` / `DUAL_PAIRS` 在这里）
 - 图：`…/pages/scramble_stats/DiscreteHistogram.tsx`（自写的离散整数 SVG，**不要**改用 `wca_stats/DistributionChart.tsx`）
 - 样式：对齐 `landing.css` 的 Claude 浅色系；`wca_stats.css` 的暗棕**不要污染**
