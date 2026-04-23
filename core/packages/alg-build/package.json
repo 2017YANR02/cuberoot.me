@@ -1,0 +1,25 @@
+{
+  "name": "@cuberoot/alg-build",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsx src/cli.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.16",
+    "cheerio": "^1.0.0",
+    "fast-glob": "^3.3.2",
+    "fs-extra": "^11.2.0",
+    "mammoth": "^1.8.0",
+    "pinyin-pro": "^3.26.0"
+  },
+  "devDependencies": {
+    "@types/adm-zip": "^0.5.5",
+    "@types/fs-extra": "^11.0.4",
+    "@types/node": "^25.5.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.8.0"
+  }
+}
