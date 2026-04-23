@@ -23,6 +23,11 @@ import { extractDocx } from './extractDocx.js';
 import { detectAlgs, dedupeAlgs } from './detectAlgs.js';
 import { transformHtml } from './transformHtml.js';
 import {
+  extractAlgset,
+  isAlgsetSlug,
+  algsetExpectedCount,
+} from './extractAlgset.js';
+import {
   applyOverridesAndOrder,
   writeCatalogAndPosts,
   loadOverrides,
@@ -32,6 +37,7 @@ import {
 import type {
   CatalogEntry,
   ExtractedArticle,
+  ExtractedAlgset,
   ExtractedPost,
   Lang,
   SlugGroup,
@@ -154,14 +160,18 @@ async function main() {
   for (let i = 0; i < groups.length; i++) {
     const g = groups[i];
     try {
-      const post = await processGroup(g, outRoot, detectionLogLines);
+      const post = await processGroup(g, outRoot, detectionLogLines, overrides);
       if (!post) {
         addSkipped(g.slug, 'empty-content (<50 chars)');
         continue;
       }
 
       report.mammothWarnings += post.warningCount;
-      report.detectedAlgsCount += post.algs.length;
+      if (post.view === 'article') {
+        report.detectedAlgsCount += post.algs.length;
+      } else {
+        report.detectedAlgsCount += post.cases.reduce((s, c) => s + c.algs.length, 0);
+      }
 
       const { post: finalPost, entry } = applyOverridesAndOrder(
         post,
@@ -220,64 +230,101 @@ async function processGroup(
   g: SlugGroup,
   outRoot: string,
   detectionLog: string[],
-): Promise<ExtractedArticle | null> {
+  overrides: Record<string, import('./types.js').ManualOverride>,
+): Promise<ExtractedPost | null> {
+  const langs: Lang[] = [];
+  if (g.versions.en) langs.push('en');
+  if (g.versions.zh) langs.push('zh');
+
+  // 先 extract 所有语言（共享产物 — article / algset 都用得上）
+  const extractResults: Partial<Record<Lang, Awaited<ReturnType<typeof extractDocx>>>> = {};
+  let plainLenMax = 0;
+  let totalWarnings = 0;
+  let hasImages = false;
+  let hasTables = false;
+  for (const lang of langs) {
+    const ex = await extractDocx(g.versions[lang]!, lang, g.slug, outRoot);
+    extractResults[lang] = ex;
+    plainLenMax = Math.max(plainLenMax, ex.plainTextLen);
+    totalWarnings += ex.warningCount;
+    hasImages ||= ex.hasImages;
+    hasTables ||= ex.hasTables;
+  }
+  if (plainLenMax < 50) return null;
+
+  // 提取 title
+  const title: Partial<Record<Lang, string>> = {};
+  for (const lang of langs) {
+    const t = extractResults[lang]?.title;
+    if (t) title[lang] = t;
+  }
+  // fallback: 从 filename
+  if (!title.en && !title.zh) {
+    const src = g.versions.en ?? g.versions.zh;
+    if (src) {
+      const t = src.filename.replace(/\.docx$/i, '').replace(/[-_\s]?CHS\b/gi, '').trim();
+      if (langs.includes('en')) title.en = t;
+      if (langs.includes('zh')) title.zh = t;
+    }
+  }
+
+  const overrideEntry = overrides[g.slug];
+  const wantAlgset = isAlgsetSlug(g.slug, overrideEntry);
+
+  if (wantAlgset) {
+    // algset 视图 — 从 mammoth 原始 HTML 解析 case 结构
+    const htmlByLang: Partial<Record<Lang, string>> = {};
+    for (const lang of langs) htmlByLang[lang] = extractResults[lang]!.html;
+    const algset: ExtractedAlgset = extractAlgset(
+      htmlByLang,
+      g.slug,
+      g.category,
+      g.subcategory,
+      g.topDir,
+      overrideEntry,
+      title,
+    );
+    algset.warningCount = totalWarnings;
+    if (!algset.thumb) {
+      const firstLang = langs[0];
+      if (firstLang) algset.thumb = extractResults[firstLang]?.thumbSrc ?? null;
+    }
+    // algset log: 记录 case 数 + 期望值对比
+    const expected = algsetExpectedCount(g.slug);
+    const expectStr = expected !== null ? ` (expected ${expected})` : '';
+    detectionLog.push(`[algset] ${g.slug}: ${algset.cases.length} cases${expectStr}`);
+    return algset;
+  }
+
+  // article 视图
   const post: ExtractedArticle = {
     view: 'article',
     slug: g.slug,
     category: g.category,
     subcategory: g.subcategory,
     topDir: g.topDir,
-    title: {},
+    title,
     content: {},
     algs: [],
     thumb: null,
-    warningCount: 0,
-    hasImages: false,
-    hasTables: false,
+    warningCount: totalWarnings,
+    hasImages,
+    hasTables,
   };
 
-  const langs: Lang[] = [];
-  if (g.versions.en) langs.push('en');
-  if (g.versions.zh) langs.push('zh');
-
-  let plainLenMax = 0;
-
+  const allDetected: string[] = [];
   for (const lang of langs) {
-    const docx = g.versions[lang]!;
-    const ex = await extractDocx(docx, lang, g.slug, outRoot);
-    post.warningCount += ex.warningCount;
-    post.hasImages ||= ex.hasImages;
-    post.hasTables ||= ex.hasTables;
-    if (ex.title) post.title[lang] = ex.title;
+    const ex = extractResults[lang]!;
     if (ex.thumbSrc && !post.thumb) post.thumb = ex.thumbSrc;
-
-    // detectAlgs → chip 替换
     const { html: htmlWithChips, detected } = detectAlgs(ex.html, g.slug);
     for (const d of detected) {
       detectionLog.push(`${g.slug}[${lang}] ${d.context ?? ''}: ${d.alg}`);
     }
-
-    // transformHtml cleanup + see-also
     const finalHtml = transformHtml(htmlWithChips, g.slug);
     post.content[lang] = finalHtml;
-    post.algs.push(...detected.map(d => d.alg));
-    plainLenMax = Math.max(plainLenMax, ex.plainTextLen);
+    allDetected.push(...detected.map(d => d.alg));
   }
-
-  // 中间产物启发：plain text 太短 → 跳
-  if (plainLenMax < 50) return null;
-
-  post.algs = dedupeAlgs(post.algs.map(a => ({ alg: a, source: 'auto' as const })));
-
-  // fallback title: 从 filename 推（去 -CHS、去扩展名）
-  if (!post.title.en && !post.title.zh) {
-    const src = g.versions.en ?? g.versions.zh;
-    if (src) {
-      const t = src.filename.replace(/\.docx$/i, '').replace(/[-_\s]?CHS\b/gi, '').trim();
-      if (langs.includes('en')) post.title.en = t;
-      if (langs.includes('zh')) post.title.zh = t;
-    }
-  }
+  post.algs = dedupeAlgs(allDetected.map(a => ({ alg: a, source: 'auto' as const })));
 
   return post;
 }

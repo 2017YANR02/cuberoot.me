@@ -1,7 +1,6 @@
 import path from 'node:path';
 import fs from 'fs-extra';
 import type {
-  ExtractedArticle,
   ExtractedPost,
   CatalogEntry,
   ManualOverrides,
@@ -10,28 +9,20 @@ import { categoryOrder, slugOrder } from './inferCategory.js';
 
 /** 应用 manual_overrides，生成最终的 post + catalog entry */
 export function applyOverridesAndOrder(
-  post: ExtractedArticle,
+  post: ExtractedPost,
   overrides: ManualOverrides,
   titlesZh: Record<string, string>,
   hiddenSlugs: Record<string, string>,
 ): { post: ExtractedPost; entry: CatalogEntry } {
   const ov = overrides[post.slug];
 
-  // title override
-  if (ov?.title) {
-    post.title = { ...post.title, ...ov.title };
-  }
-  // zh title fallback from titles_zh.json
-  if (!post.title.zh && titlesZh[post.slug]) {
-    post.title.zh = titlesZh[post.slug];
-  }
-  // category override
+  if (ov?.title) post.title = { ...post.title, ...ov.title };
+  if (!post.title.zh && titlesZh[post.slug]) post.title.zh = titlesZh[post.slug];
   if (ov?.category) post.category = ov.category;
   if (ov?.subcategory !== undefined) post.subcategory = ov.subcategory;
 
   const hidden = !!(hiddenSlugs[post.slug] || ov?.hidden);
 
-  // 排序权重：manual > slug keyword > category
   let order: number;
   if (ov?.order !== undefined) order = ov.order;
   else {
@@ -39,11 +30,22 @@ export function applyOverridesAndOrder(
     order = skw !== null ? skw : categoryOrder(post.category);
   }
 
-  // quality: mammoth warnings > 10 → degraded
   const quality: 'ok' | 'degraded' = post.warningCount > 10 ? 'degraded' : 'ok';
 
-  // mtime 从 post 外部传入 (见 cli.ts)
-  // 此函数不处理 mtime；由调用者合并
+  // 根据 view 算 hasEn/hasZh/algCount
+  let hasEn: boolean;
+  let hasZh: boolean;
+  let algCount: number;
+  if (post.view === 'article') {
+    hasEn = !!post.content.en;
+    hasZh = !!post.content.zh;
+    algCount = post.algs.length;
+  } else {
+    // algset: 内容跨语言共享，只看 title 是否有
+    hasEn = !!post.title.en;
+    hasZh = !!post.title.zh;
+    algCount = post.cases.length;
+  }
 
   const entry: CatalogEntry = {
     slug: post.slug,
@@ -53,13 +55,13 @@ export function applyOverridesAndOrder(
     subcategory: post.subcategory,
     topDir: post.topDir,
     thumb: post.thumb,
-    mtime: 0, // 占位，由调用者填
-    hasEn: !!post.content.en,
-    hasZh: !!post.content.zh,
+    mtime: 0,
+    hasEn,
+    hasZh,
     order,
     hidden,
     quality,
-    algCount: post.algs.length,
+    algCount,
   };
 
   return { post, entry };
