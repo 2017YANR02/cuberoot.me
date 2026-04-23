@@ -172,13 +172,13 @@ export async function extractDocx(
     if (svgFilename) {
       const svgEntry = assets.media.get(svgFilename);
       if (svgEntry) {
-        // 写 SVG + PNG fallback
+        // 只写 SVG（PNG 是 Office 的 fallback，现代浏览器 SVG 兼容
+        // 性已 100% 覆盖，不需要；省 50% 磁盘 + 文件数）
         const svgSrc = await writeOnce(svgFilename, svgEntry.bytes);
-        await writeOnce(origEntry.filename, origEntry.bytes);
         return { src: svgSrc };
       }
     }
-    // 没配对 → 直接写原文件
+    // 没 SVG 配对 → 直接写原文件（PNG / JPG / GIF / EMF）
     const src = await writeOnce(origEntry.filename, origEntry.bytes);
     return { src };
   };
