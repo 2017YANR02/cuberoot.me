@@ -73,7 +73,7 @@ function extractLabelFromImageCell(text: string): string | null {
   return m[1].trim().slice(0, 30);
 }
 
-/** 从 alg cell 的 HTML 拆出候选 alg 字符串（按 <p>/<br>/换行） */
+/** 从 alg cell 的 HTML 拆出候选 alg 字符串（按 <p>/<br>/换行/等号） */
 function splitAlgCandidates(
   $cell: ReturnType<ReturnType<typeof cheerio.load>>,
   $: ReturnType<typeof cheerio.load>,
@@ -85,22 +85,30 @@ function splitAlgCandidates(
       ? ps.map(p => $(p).text())
       : [$cell.text()];
   for (const src of sources) {
-    // 再按 "//" / "或" / ";" / newline 拆
+    // 按 "=" / "//" / "或" / ";" / newline 拆
+    // 注意 "=" 是某些 docx（OLL / CMLL）的 alg 分隔符
     const parts = src
-      .split(/(?:\/\/|或|;|\n|\r)/)
+      .split(/(?:\/\/|或|;|\n|\r|=)/)
       .map(s => s.replace(/\s+/g, ' ').trim());
     for (const p of parts) {
       if (!p) continue;
-      // 去掉开头的 "*" 标记（表示推荐）、"1." "2." 编号、"[oh]" 注释
+      // 依次清理：
+      // - 开头 "*" / "·" 推荐标记
+      // - 开头 "1." "2)" 编号
+      // - 前缀箭头 "->" "<-" "=>" "⇒" "→" "←"（表示变体方向）
+      // - "[oh]" / "[lh]" / "[2h]" 等手位注释
+      // - "(8*)" "(12)" 等步数/作者角标
+      // - 结尾多余空格
       let cleaned = p
-        .replace(/^\s*[*·]\s*/, '')
-        .replace(/^\s*\d+\.?\)?\s*/, '')
-        .replace(/\[(?:oh|lh|mh|rh|2h|one-hand|two-hand|Nakaji|Feliks)\]/gi, '')
+        .replace(/^\s*[*·•]+\s*/, '')
+        .replace(/^\s*\d+[\.):)]?\s*/, '')
+        .replace(/^\s*(?:->|<-|=>|<=|→|←|⇒|⇐|\.\.\.)\s*/, '')
+        .replace(/\[(?:oh|lh|mh|rh|2h|one-hand|two-hand|Nakaji|Feliks|\w+)\]/gi, '')
+        .replace(/\(\s*\d+\s*\*?\s*\)/g, '')
         .trim();
       if (isAlgText(cleaned)) candidates.push(cleaned);
     }
   }
-  // 去重
   return [...new Set(candidates)];
 }
 
@@ -108,7 +116,6 @@ interface ParsedCase {
   image: string;
   label: string;
   algs: string[];
-  notes: string;
 }
 
 /** 从 <tr> 抽取 1+ 个 case（同行可能并排多个 case，每 "image cell + alg cell" 为一 case） */
@@ -134,24 +141,25 @@ function parseRow(
     const label = extractLabelFromImageCell(imgText) ?? `Case`;
 
     let algs: string[] = [];
-    let notesBits: string[] = [];
     const nextCell = cells[i + 1];
     if (nextCell) {
       const $next = $(nextCell);
       const nextImg = $next.find('img').length;
-      if (nextImg === 0) {
+      // 不管 alg cell 有没有 img 都 parse —— OLL 等 docx 的 alg cell 会嵌入变体 state 图
+      // 但如果 next cell 是"纯 img 无文字"（空文字 + 有图），那是下一 case 的 image cell，跳过
+      const nextText = $next.text().replace(/\s+/g, ' ').trim();
+      if (!(nextImg > 0 && nextText.length < 5)) {
         algs = splitAlgCandidates($next, $);
       }
     }
 
-    // 如果 alg cell 找不到 alg，尝试看 image cell 本身是否含 alg 段落
+    // alg cell 找不到 → image cell 本身也试一下（某些 docx 把 image 和 alg 放同 cell）
     if (algs.length === 0) {
       const selfAlgs = splitAlgCandidates($cell, $);
       if (selfAlgs.length) algs = selfAlgs;
     }
 
-    // 所有其他 non-img / non-alg 文本作为 notes
-    results.push({ image: imgSrc, label, algs, notes: notesBits.join(' | ').slice(0, 300) });
+    results.push({ image: imgSrc, label, algs });
 
     // 跳过：image cell + alg cell（即使 alg cell 没东西也跳过避免误识别）
     i += 2;
@@ -213,7 +221,6 @@ export function extractAlgset(
           group,
           image: p.image,
           algs: caseAlgs,
-          notes: p.notes || undefined,
         });
       }
     });

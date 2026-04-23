@@ -103,14 +103,17 @@ export function useAlgCatalog(): {
   error: string | null;
 } {
   const [catalog, setCatalog] = useState<CatalogEntry[] | null>(catalogCache);
-  const [loading, setLoading] = useState(!catalogCache);
+  const [loading, setLoading] = useState(catalogCache === null);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
-    if (catalogCache) return;
+    if (catalogCache) {
+      setCatalog(catalogCache);
+      setLoading(false);
+      return;
+    }
     fetchCatalog()
-      .then(setCatalog)
-      .catch(e => setError(e.message))
-      .finally(() => setLoading(false));
+      .then(c => { setCatalog(c); setLoading(false); })
+      .catch(e => { setError(e.message); setLoading(false); });
   }, []);
   return { catalog, loading, error };
 }

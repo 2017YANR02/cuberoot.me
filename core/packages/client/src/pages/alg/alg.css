@@ -638,6 +638,18 @@
   padding: 6px 12px;
 }
 
+/* ─── 键盘可访问性 (WCAG 2.4.7) ─── */
+.alg-chip:focus-visible,
+.alg-category-chip:focus-visible,
+.algset-group-chip:focus-visible,
+.alg-lang-chip:focus-visible,
+.case-card:focus-visible,
+.alg-card:focus-visible {
+  outline: 2px solid var(--alg-accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
 /* ─── 响应式 ─── */
 @media (max-width: 768px) {
   .alg-index-header {
@@ -648,6 +660,13 @@
   }
   .alg-category-bar {
     padding: 8px 16px;
+  }
+  /* 移动端触摸目标 ≥ 44px (WCAG 2.5.5) */
+  .alg-category-chip,
+  .algset-group-chip,
+  .alg-lang-chip {
+    min-height: 44px;
+    padding: 10px 14px;
   }
   .alg-card-grid {
     padding: 16px;
