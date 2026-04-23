@@ -38,14 +38,6 @@ const COLOR_HEX: Record<ColorLetter, string> = {
   B: '#0000F2',
   G: '#00D800',
 };
-const COLOR_LABEL: Record<ColorLetter, { zh: string; en: string }> = {
-  Y: { zh: '黄', en: 'Yellow' },
-  R: { zh: '红', en: 'Red' },
-  W: { zh: '白', en: 'White' },
-  O: { zh: '橙', en: 'Orange' },
-  B: { zh: '蓝', en: 'Blue' },
-  G: { zh: '绿', en: 'Green' },
-};
 // NOTE: 3 对相反色（U-D / F-B / R-L 轴），dual 模式里 3 选 1
 const DUAL_PAIRS: { key: string; letters: [ColorLetter, ColorLetter] }[] = [
   { key: 'WY', letters: ['W', 'Y'] },
@@ -92,7 +84,6 @@ const STAGE_LABEL: Record<string, { en: string; zh: string }> = {
 };
 
 const labelStage = (s: string, isZh: boolean) => STAGE_LABEL[s] ? STAGE_LABEL[s][isZh ? 'zh' : 'en'] : s;
-const labelColor = (c: ColorLetter, isZh: boolean) => COLOR_LABEL[c][isZh ? 'zh' : 'en'];
 
 // NOTE: subset key = sorted letter string (alphabet order B<G<O<R<W<Y)
 function subsetKeyFromLetters(letters: ColorLetter[]): string {
