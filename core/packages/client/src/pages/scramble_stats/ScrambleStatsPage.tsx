@@ -14,88 +14,96 @@ interface HistEntry {
 interface VariantData {
   sample_count: number;
   stages: string[];
-  angles: string[];
   data: Record<string, Record<string, HistEntry>>;
 }
 
 interface DistributionJson {
-  meta: { sample_count: number; source: string; generated_at: string };
+  meta: { sample_count: number; source: string; generated_at: string; subset_keys: string[] };
   variants: Record<string, VariantData>;
 }
 
 type VariantKey = 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair';
-type AngleMode = 'min' | 'min_wy' | 'all';
+type ColorMode = 'cn' | 'quad' | 'dual' | 'single';
 type YMode = 'percent' | 'count';
 type ChartMode = 'pdf' | 'cdf';
 
-// NOTE: Variant 名称 = 求解目标族。eo = ZZ 起手 EO+十字；pair = 十字+自由对（位置不限）；pseudo = 伪十字
+// NOTE: 6 种底色（颜色字母 = 字母序 B/G/O/R/W/Y）。WCA Regulations 3h1 官方色值
+type ColorLetter = 'B' | 'G' | 'O' | 'R' | 'W' | 'Y';
+const COLOR_LETTERS: ColorLetter[] = ['B', 'G', 'O', 'R', 'W', 'Y'];
+const COLOR_HEX: Record<ColorLetter, string> = {
+  Y: '#FEFE00',
+  R: '#EE0000',
+  W: '#FFFFFF',
+  O: '#FFA100',
+  B: '#0000F2',
+  G: '#00D800',
+};
+const COLOR_LABEL: Record<ColorLetter, { zh: string; en: string }> = {
+  Y: { zh: '黄', en: 'Yellow' },
+  R: { zh: '红', en: 'Red' },
+  W: { zh: '白', en: 'White' },
+  O: { zh: '橙', en: 'Orange' },
+  B: { zh: '蓝', en: 'Blue' },
+  G: { zh: '绿', en: 'Green' },
+};
+// NOTE: 3 对相反色（U-D / F-B / R-L 轴），dual 模式里 3 选 1
+const DUAL_PAIRS: { key: string; letters: [ColorLetter, ColorLetter] }[] = [
+  { key: 'WY', letters: ['W', 'Y'] },
+  { key: 'BG', letters: ['B', 'G'] },
+  { key: 'OR', letters: ['O', 'R'] },
+];
+// NOTE: single 模式循环顺序（点击图例依次切换）。用字母序与色选面板顺序一致
+const SINGLE_CYCLE: ColorLetter[] = ['B', 'G', 'O', 'R', 'W', 'Y'];
+const DUAL_PAIR_KEYS: string[] = DUAL_PAIRS.map((p) => p.key);
+// NOTE: 渐变色序按视觉自然顺序（浅→深）——跨多色混合时较均衡
+const GRADIENT_ORDER: ColorLetter[] = ['W', 'Y', 'G', 'B', 'R', 'O'];
+
 const VARIANT_LABEL: Record<VariantKey, { en: string; zh: string }> = {
   std: { en: 'Standard', zh: '标准' },
   eo: { en: 'EOCross', zh: 'EO十字' },
-  pair: { en: 'Cross + Pair', zh: '十字+对' },
+  pair: { en: 'Cross + Pair', zh: '十字+基态' },
   pseudo: { en: 'Pseudo', zh: '伪十字' },
-  pseudo_pair: { en: 'Pseudo + Pair', zh: '伪十字+对' },
+  pseudo_pair: { en: 'Pseudo + Pair', zh: '伪十字+基态' },
 };
 
-// NOTE: stage 在 variant 内的进度位（cross / XCross / XXCross / XXXCross / F2L）
-// 多个 variant 的不同 stage key 映射到同一个显示名，避免在 UI 里重复 variant 前缀
 const STAGE_LABEL: Record<string, { en: string; zh: string }> = {
-  // Cross 位
   cross: { en: 'Cross', zh: '十字' },
   eo_cross: { en: 'Cross', zh: '十字' },
   crossp: { en: 'Cross', zh: '十字' },
   pseudo_cross: { en: 'Cross', zh: '十字' },
   pseudo_cross_pseudo_pair: { en: 'Cross', zh: '十字' },
-  // XCross 位
   xcross: { en: 'XCross', zh: 'XCross' },
   eo_xcross: { en: 'XCross', zh: 'XCross' },
   xcp: { en: 'XCross', zh: 'XCross' },
   pseudo_xcross: { en: 'XCross', zh: 'XCross' },
   pseudo_xcross_pseudo_pair: { en: 'XCross', zh: 'XCross' },
-  // XXCross 位
   xxcross: { en: 'XXCross', zh: 'XXCross' },
   eo_xxcross: { en: 'XXCross', zh: 'XXCross' },
   xxcp: { en: 'XXCross', zh: 'XXCross' },
   pseudo_xxcross: { en: 'XXCross', zh: 'XXCross' },
   pseudo_xxcross_pseudo_pair: { en: 'XXCross', zh: 'XXCross' },
-  // XXXCross 位
   xxxcross: { en: 'XXXCross', zh: 'XXXCross' },
   eo_xxxcross: { en: 'XXXCross', zh: 'XXXCross' },
   xxxcp: { en: 'XXXCross', zh: 'XXXCross' },
   pseudo_xxxcross: { en: 'XXXCross', zh: 'XXXCross' },
   pseudo_xxxcross_pseudo_pair: { en: 'XXXCross', zh: 'XXXCross' },
-  // F2L 位（eo variant 的最末尾是 xxxxcross = EO 保持下的 F2L 完成）
   f2l: { en: 'F2L', zh: 'F2L' },
   eo_xxxxcross: { en: 'F2L', zh: 'F2L' },
 };
 
-// NOTE: 朝向 → 底色。std/eo/pseudo/pseudo_pair 用 z0..x3 键，pair 用 rotation 记号
-// 色值取自 WCA Regulations (Article 3h1) 官方配色
-const ANGLE_FACE: Record<string, { color: string; stroke?: string; zh: string; en: string }> = {
-  z0:   { color: '#FEFE00', zh: '黄', en: 'Yellow' },
-  z1:   { color: '#EE0000', zh: '红', en: 'Red' },
-  z2:   { color: '#FFFFFF', stroke: '#181716', zh: '白', en: 'White' },  // 白在 cream 底要加深边框
-  z3:   { color: '#FFA100', zh: '橙', en: 'Orange' },
-  x1:   { color: '#0000F2', zh: '蓝', en: 'Blue' },
-  x3:   { color: '#00D800', zh: '绿', en: 'Green' },
-  '':   { color: '#FEFE00', zh: '黄', en: 'Yellow' },
-  z:    { color: '#EE0000', zh: '红', en: 'Red' },
-  "z'": { color: '#FFA100', zh: '橙', en: 'Orange' },
-  x:    { color: '#0000F2', zh: '蓝', en: 'Blue' },
-  "x'": { color: '#00D800', zh: '绿', en: 'Green' },
-};
-const MIN_COLOR = '#D97757';     // NOTE: min 6色 用 Claude 珊瑚
-const MIN_WY_COLOR = '#B8935C';  // NOTE: min 白黄双色 用暖棕（区别于 6色 min）
-
-// NOTE: 6 色分开显示时的顺序 — WCA 标准 白 / 黄 / 绿 / 蓝 / 红 / 橙
-const DISPLAY_ORDER_STD: string[] = ['z2', 'z0', 'x3', 'x1', 'z1', 'z3'];
-const DISPLAY_ORDER_PAIR: string[] = ['z2', '', "x'", 'x', 'z', "z'"];
-
 const labelStage = (s: string, isZh: boolean) => STAGE_LABEL[s] ? STAGE_LABEL[s][isZh ? 'zh' : 'en'] : s;
-const labelAngle = (a: string, isZh: boolean) => ANGLE_FACE[a]?.[isZh ? 'zh' : 'en'] ?? a;
-const colorForAngle = (a: string) => ANGLE_FACE[a]?.color ?? '#8B7D72';
+const labelColor = (c: ColorLetter, isZh: boolean) => COLOR_LABEL[c][isZh ? 'zh' : 'en'];
 
-// NOTE: 从 counts 算统计量
+// NOTE: subset key = sorted letter string (alphabet order B<G<O<R<W<Y)
+function subsetKeyFromLetters(letters: ColorLetter[]): string {
+  return [...letters].sort().join('');
+}
+
+function fillColorsForSubset(letters: ColorLetter[]): string[] {
+  const set = new Set(letters);
+  return GRADIENT_ORDER.filter((c) => set.has(c)).map((c) => COLOR_HEX[c]);
+}
+
 function computeStats(counts: Record<string, number>) {
   const entries = Object.entries(counts)
     .map(([k, v]) => [Number(k), v] as [number, number])
@@ -139,7 +147,11 @@ export default function ScrambleStatsPage() {
   const [scrambleSet, setScrambleSet] = useState<string>('wca');
   const [variant, setVariant] = useState<VariantKey>('std');
   const [stage, setStage] = useState<string>('cross');
-  const [angleMode, setAngleMode] = useState<AngleMode>('min');
+  const [colorMode, setColorMode] = useState<ColorMode>('cn');
+  const [singleColor, setSingleColor] = useState<ColorLetter>('Y');
+  const [dualPairKey, setDualPairKey] = useState<string>('WY');
+  // NOTE: quad 只能排除一对相反色（WY / BG / OR），默认排除 BG → 保留黄白红橙（速拧常用）
+  const [quadExcludedPairKey, setQuadExcludedPairKey] = useState<string>('BG');
   const [yMode, setYMode] = useState<YMode>('percent');
   const [chartMode, setChartMode] = useState<ChartMode>('pdf');
 
@@ -164,54 +176,88 @@ export default function ScrambleStatsPage() {
     }
   }, [currentStages, stage]);
 
+  // NOTE: 当前选中的颜色子集 → subset key + 展示色序
+  const { subsetKey, selectedColors, modeLabel } = useMemo(() => {
+    let letters: ColorLetter[];
+    let label: string;
+    switch (colorMode) {
+      case 'cn':
+        letters = [...COLOR_LETTERS];
+        label = isZh ? '六色底' : 'CN';
+        break;
+      case 'quad': {
+        const pair = DUAL_PAIRS.find((p) => p.key === quadExcludedPairKey) ?? DUAL_PAIRS[0];
+        const excl = new Set<ColorLetter>(pair.letters);
+        letters = COLOR_LETTERS.filter((c) => !excl.has(c));
+        label = isZh ? '四色底' : 'Quad';
+        break;
+      }
+      case 'dual':
+        letters = [...(DUAL_PAIRS.find((p) => p.key === dualPairKey) ?? DUAL_PAIRS[0]).letters];
+        label = isZh ? '双色底' : 'Dual';
+        break;
+      case 'single':
+        letters = [singleColor];
+        label = isZh ? '单色底' : 'Single';
+        break;
+    }
+    return {
+      subsetKey: subsetKeyFromLetters(letters),
+      selectedColors: letters,
+      modeLabel: label,
+    };
+  }, [colorMode, singleColor, dualPairKey, quadExcludedPairKey, isZh]);
+
+  // NOTE: 点击图例：依次切换当前 mode 下的选项。cn 模式无需切换
+  const cycleSelection = () => {
+    if (colorMode === 'single') {
+      const idx = SINGLE_CYCLE.indexOf(singleColor);
+      setSingleColor(SINGLE_CYCLE[(idx + 1) % SINGLE_CYCLE.length]);
+    } else if (colorMode === 'dual') {
+      const idx = DUAL_PAIR_KEYS.indexOf(dualPairKey);
+      setDualPairKey(DUAL_PAIR_KEYS[(idx + 1) % DUAL_PAIR_KEYS.length]);
+    } else if (colorMode === 'quad') {
+      const idx = DUAL_PAIR_KEYS.indexOf(quadExcludedPairKey);
+      setQuadExcludedPairKey(DUAL_PAIR_KEYS[(idx + 1) % DUAL_PAIR_KEYS.length]);
+    }
+  };
+  const cyclable = colorMode === 'single' || colorMode === 'dual' || colorMode === 'quad';
+
   const series = useMemo<HistSeries[]>(() => {
     if (!data) return [];
     const v = data.variants[variant];
     if (!v) return [];
     const stageData = v.data[stage];
     if (!stageData) return [];
-    if (angleMode === 'min') {
-      return [{
-        name: isZh ? '六色底' : 'CN',
-        color: MIN_COLOR,
-        gradient: 'wca6' as const,
-        counts: stageData.min_across.counts,
-      }];
-    }
-    if (angleMode === 'min_wy') {
-      return [{
-        name: isZh ? '双色底' : 'Dual',
-        color: MIN_WY_COLOR,
-        gradient: 'wy' as const,
-        counts: stageData.min_wy?.counts ?? {},
-      }];
-    }
-    const order = variant === 'pair' ? DISPLAY_ORDER_PAIR : DISPLAY_ORDER_STD;
-    return order.map((a) => ({
-      name: labelAngle(a, isZh),
-      color: colorForAngle(a),
-      stroke: ANGLE_FACE[a]?.stroke,
-      counts: stageData[a]?.counts ?? {},
-    }));
-  }, [data, variant, stage, angleMode, isZh]);
+    const hist = stageData[subsetKey];
+    if (!hist) return [];
+    return [{
+      name: modeLabel,
+      fillColors: fillColorsForSubset(selectedColors),
+      counts: hist.counts,
+      onLegendClick: cyclable ? cycleSelection : undefined,
+      legendHint: cyclable ? (isZh ? '点击切换' : 'Click to cycle') : undefined,
+    }];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, variant, stage, subsetKey, selectedColors, modeLabel, cyclable, isZh,
+      colorMode, singleColor, dualPairKey, quadExcludedPairKey]);
 
-  // NOTE: 拓展统计 — 只在 single-series 时展示
   const extendedStats = useMemo(() => {
     if (series.length !== 1) return null;
     return computeStats(series[0].counts);
   }, [series]);
 
-  // NOTE: CN benefit — 拿纯白(z2)均值做基线，与 min_wy / min_across 对比
+  // NOTE: CN benefit — 黄/白单色 vs 双色底(黄白) vs 六色底，相对白底基线
   const cnBenefit = useMemo(() => {
     if (!data) return null;
     const v = data.variants[variant];
     if (!v) return null;
     const sd = v.data[stage];
     if (!sd) return null;
-    const white = computeStats(sd.z2?.counts ?? {});
-    const yellow = computeStats(sd[v.angles[0] === '' ? '' : 'z0']?.counts ?? {});
-    const wy = computeStats(sd.min_wy?.counts ?? {});
-    const all6 = computeStats(sd.min_across?.counts ?? {});
+    const white = computeStats(sd.W?.counts ?? {});
+    const yellow = computeStats(sd.Y?.counts ?? {});
+    const wy = computeStats(sd.WY?.counts ?? {});
+    const all6 = computeStats(sd.BGORWY?.counts ?? {});
     if (!white || !yellow || !wy || !all6) return null;
     return {
       whiteMean: white.mean,
@@ -296,18 +342,6 @@ export default function ScrambleStatsPage() {
           </select>
         </label>
         <div className="scramble-stats-toggle-group">
-          <span>{isZh ? '颜色中立' : 'CN'}</span>
-          <button className={angleMode === 'min' ? 'active' : ''} onClick={() => setAngleMode('min')}>
-            {isZh ? '六色底' : 'cn'}
-          </button>
-          <button className={angleMode === 'min_wy' ? 'active' : ''} onClick={() => setAngleMode('min_wy')}>
-            {isZh ? '双色底' : 'dual'}
-          </button>
-          <button className={angleMode === 'all' ? 'active' : ''} onClick={() => setAngleMode('all')}>
-            {isZh ? '单色底' : 'single'}
-          </button>
-        </div>
-        <div className="scramble-stats-toggle-group">
           <span>{isZh ? '模式' : 'Mode'}</span>
           <button className={chartMode === 'pdf' ? 'active' : ''} onClick={() => setChartMode('pdf')}>PDF</button>
           <button className={chartMode === 'cdf' ? 'active' : ''} onClick={() => setChartMode('cdf')}>CDF</button>
@@ -324,7 +358,20 @@ export default function ScrambleStatsPage() {
       </div>
 
       <div className="scramble-stats-chart-wrapper">
-        <DiscreteHistogram series={series} isZh={isZh} yMode={yMode} chartMode={chartMode} />
+        <DiscreteHistogram
+          series={series}
+          isZh={isZh}
+          yMode={yMode}
+          chartMode={chartMode}
+          modes={[
+            { key: 'cn', label: isZh ? '六色' : 'cn' },
+            { key: 'quad', label: isZh ? '四色' : 'quad' },
+            { key: 'dual', label: isZh ? '双色' : 'dual' },
+            { key: 'single', label: isZh ? '单色' : 'single' },
+          ]}
+          activeMode={colorMode}
+          onModeChange={(k) => setColorMode(k as ColorMode)}
+        />
       </div>
 
       {extendedStats && (
@@ -333,12 +380,9 @@ export default function ScrambleStatsPage() {
           <div className="scramble-stats-stat-grid">
             <StatCell label={isZh ? '均值' : 'mean'} value={extendedStats.mean.toFixed(2)} />
             <StatCell label={isZh ? '中位数' : 'median'} value={String(extendedStats.median)} />
-            <StatCell label={isZh ? '众数' : 'mode'} value={String(extendedStats.mode)} />
             <StatCell label="p10" value={String(extendedStats.p10)} />
             <StatCell label="p90" value={String(extendedStats.p90)} />
             <StatCell label="p99" value={String(extendedStats.p99)} />
-            <StatCell label="min" value={String(extendedStats.min)} />
-            <StatCell label="max" value={String(extendedStats.max)} />
           </div>
         </div>
       )}
