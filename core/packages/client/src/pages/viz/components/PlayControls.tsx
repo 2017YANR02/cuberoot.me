@@ -2,9 +2,12 @@
 // 1:1 映射 viz/index.html L164-190 的 DOM 结构 + viz.js setupControls() 的交互逻辑
 
 import { useCallback, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useVizStore } from '../stores/viz_store';
 
 export default function PlayControls() {
+  const { i18n } = useTranslation();
+  const isZh = i18n.language === 'zh';
   const isPlaying = useVizStore(s => s.isPlaying);
   const playSpeed = useVizStore(s => s.playSpeed);
   const currentFrame = useVizStore(s => s.currentFrame);
@@ -63,7 +66,7 @@ export default function PlayControls() {
   return (
     <div className="controls">
       {/* 播放/暂停按钮 */}
-      <button className="ctrl-btn" id="playBtn" title="播放/暂停 (Space)" onClick={togglePlay}>
+      <button className="ctrl-btn" id="playBtn" title={isZh ? '播放/暂停 (Space)' : 'Play/Pause (Space)'} onClick={togglePlay}>
         {isPlaying ? (
           <svg className="icon-pause" viewBox="0 0 24 24">
             <rect x="5" y="3" width="4" height="18" />
@@ -105,14 +108,16 @@ export default function PlayControls() {
 
       {/* 同步模式（多选手时显示） */}
       {players.length > 1 && (
-        <div className="sync-group" title="多选手同步模式">
+        <div className="sync-group" title={isZh ? '多选手同步模式' : 'Multi-cuber sync mode'}>
           {(['solve', 'date'] as const).map(mode => (
             <button
               key={mode}
               className={`sync-btn${syncMode === mode ? ' active' : ''}`}
               onClick={() => setSyncMode(mode)}
             >
-              {mode === 'solve' ? '把数' : '日期'}
+              {mode === 'solve'
+                ? (isZh ? '把数' : 'Solves')
+                : (isZh ? '日期' : 'Date')}
             </button>
           ))}
         </div>

@@ -69,9 +69,9 @@ export default function ReconDetailPage() {
     }
   };
 
-  if (loading) return <div className="recon-page"><div className="recon-loading">Loading...</div></div>;
+  if (loading) return <div className="recon-page"><div className="recon-loading">{t('common.loading')}</div></div>;
   if (error) return <div className="recon-page"><div className="recon-error">⚠️ {error}</div></div>;
-  if (!solve) return <div className="recon-page"><div className="recon-error">Not found</div></div>;
+  if (!solve) return <div className="recon-page"><div className="recon-error">{t('recon.notFound')}</div></div>;
 
   // NOTE: 解法文本：优先使用 solution 字段，fallback 到旧 recon 字段
   const solutionText = solve.solution || solve.recon || '';

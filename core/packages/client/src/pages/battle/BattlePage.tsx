@@ -10,6 +10,7 @@
  */
 
 import { useEffect, useRef, useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useBattleStore } from './engine/battle_store';
 import { KEY_MAP, PUZZLES, PENALTY, I18N_TEXT } from './engine/constants';
 import { formatTime } from './engine/format_time';
@@ -483,6 +484,8 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
 
 function MiddleBar({ onSettingsClick, onHistoryClick }: { onSettingsClick: () => void; onHistoryClick?: () => void }) {
   const store = useBattleStore();
+  const { i18n } = useTranslation();
+  const isZh = i18n.language === 'zh';
   const { players, winner, layout } = store;
 
   // NOTE: versus 布局 → P1(上方/旋转180°) 在左，P0(下方) 在右
@@ -504,11 +507,11 @@ function MiddleBar({ onSettingsClick, onHistoryClick }: { onSettingsClick: () =>
       {/* 中间操作按钮 */}
       <div className="middle-actions">
         <span className="key-hint">Enter ↑ · ↓ Space</span>
-        <a href="/" className="middle-logo" aria-label="Home">
+        <a href="/" className="middle-logo" aria-label={isZh ? '主页' : 'Home'}>
           <img src={import.meta.env.BASE_URL + 'CubeRoot-dark.png'} alt="CubeRoot" height="24" />
         </a>
-        <button className="middle-btn" title="History" onClick={onHistoryClick}>📋</button>
-        <button className="middle-btn" title="Settings" onClick={onSettingsClick}>⚙️</button>
+        <button className="middle-btn" title={isZh ? '历史' : 'History'} onClick={onHistoryClick}>📋</button>
+        <button className="middle-btn" title={isZh ? '设置' : 'Settings'} onClick={onSettingsClick}>⚙️</button>
       </div>
 
       {/* 右侧比分 + 罚时 */}
@@ -529,6 +532,8 @@ function MiddleBar({ onSettingsClick, onHistoryClick }: { onSettingsClick: () =>
 
 function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const store = useBattleStore();
+  const { i18n } = useTranslation();
+  const isZh = i18n.language === 'zh';
 
   return (
     <div className={`settings-overlay${visible ? ' visible' : ''}`} onClick={(e) => {
@@ -536,18 +541,18 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
     }}>
       <div className="settings-panel">
         <div className="settings-header-bar">
-          <span className="settings-title">⚙️ Settings</span>
+          <span className="settings-title">⚙️ {isZh ? '设置' : 'Settings'}</span>
           <button className="settings-x-btn" onClick={onClose}>✕</button>
         </div>
 
         {/* 模式选择 */}
         <div className="settings-group">
-          <div className="settings-label" data-i18n="mode">MODE</div>
+          <div className="settings-label" data-i18n="mode">{isZh ? '模式' : 'MODE'}</div>
           <div className="mode-seg">
             <button
               className={`mode-seg-btn${store.mode === 'solo' ? ' active' : ''}`}
               onClick={() => store.setMode('solo')}
-            >Solo</button>
+            >{isZh ? '单人' : 'Solo'}</button>
             <button
               className={`mode-seg-btn${store.mode === '1v1' ? ' active' : ''}`}
               onClick={() => store.setMode('1v1')}
@@ -557,7 +562,7 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
 
         {/* 项目选择 */}
         <div className="settings-group">
-          <div className="settings-label" data-i18n="puzzle">PUZZLE</div>
+          <div className="settings-label" data-i18n="puzzle">{isZh ? '项目' : 'PUZZLE'}</div>
           <div className="puzzle-grid">
             {PUZZLES.map(puz => (
               <button
@@ -565,7 +570,7 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
                 className={`puzzle-btn${puz.id === store.puzzleId ? ' active' : ''}`}
                 onClick={() => { store.changePuzzle(puz.id); onClose(); }}
               >
-                {puz.name[store.locale as 'en' | 'zh'] || puz.name.en}
+                {puz.name[isZh ? 'zh' : 'en'] || puz.name.en}
               </button>
             ))}
           </div>
@@ -574,7 +579,7 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
         {/* 计时器精确度 */}
         <div className="settings-group">
           <div className="setting-item">
-            <span data-i18n="precision">Precision</span>
+            <span data-i18n="precision">{isZh ? '精度' : 'Precision'}</span>
             <select
               className="settings-select"
               value={store.timerPrecision}
@@ -591,13 +596,13 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
         {/* Inspection */}
         <div className="settings-group solo-setting">
           <div className="setting-item">
-            <span data-i18n="inspection">Inspection</span>
+            <span data-i18n="inspection">{isZh ? '观察' : 'Inspection'}</span>
             <select
               className="settings-select"
               value={store.inspectionTime}
               onChange={e => store.setInspectionTime(parseInt(e.target.value))}
             >
-              <option value="0">OFF</option>
+              <option value="0">{isZh ? '关闭' : 'OFF'}</option>
               <option value="8">8s</option>
               <option value="15">15s (WCA)</option>
               <option value="9999">∞</option>
@@ -608,7 +613,7 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
         {/* Voice */}
         <div className="settings-group solo-setting">
           <div className="setting-item">
-            <span data-i18n="voice">Voice Alert</span>
+            <span data-i18n="voice">{isZh ? '语音提示' : 'Voice Alert'}</span>
             <label className="switch">
               <input
                 type="checkbox"
@@ -623,7 +628,7 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
         {/* Show Image */}
         <div className="settings-group">
           <div className="setting-item">
-            <span data-i18n="show_image">Show Image</span>
+            <span data-i18n="show_image">{isZh ? '显示打乱图' : 'Show Image'}</span>
             <label className="switch">
               <input
                 type="checkbox"
@@ -638,7 +643,7 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
         {/* Scramble Size */}
         <div className="settings-group">
           <div className="setting-item slider-row">
-            <span data-i18n="scramble_size">Scramble Size</span>
+            <span data-i18n="scramble_size">{isZh ? '打乱大小' : 'Scramble Size'}</span>
             <input
               type="range"
               min="0.5"
@@ -656,13 +661,13 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
         {/* Phases */}
         <div className="settings-group solo-setting">
           <div className="setting-item">
-            <span data-i18n="phases">Phases</span>
+            <span data-i18n="phases">{isZh ? '分段' : 'Phases'}</span>
             <select
               className="settings-select"
               value={store.phases}
               onChange={e => store.setPhases(parseInt(e.target.value))}
             >
-              <option value="1">1 (Normal)</option>
+              <option value="1">1 ({isZh ? '普通' : 'Normal'})</option>
               <option value="2">2 (BLD)</option>
               <option value="4">4 (CFOP)</option>
             </select>
@@ -672,7 +677,7 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
         {/* Start Delay */}
         <div className="settings-group">
           <div className="setting-item slider-row">
-            <span data-i18n="start_delay">Start Delay</span>
+            <span data-i18n="start_delay">{isZh ? '启动延迟' : 'Start Delay'}</span>
             <span className="delay-value">{(store.startDelay / 1000).toFixed(2)}s</span>
             <input
               type="range"
@@ -691,26 +696,26 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
             store.toggleShowTime();
             onClose();
           }}>
-            {I18N_TEXT[store.showTime ? 'hide_time' : 'show_time'][store.locale]}
+            {I18N_TEXT[store.showTime ? 'hide_time' : 'show_time'][isZh ? 'zh' : 'en']}
           </button>
           <button className="settings-action-btn" onClick={() => {
             store.deleteLast();
             onClose();
           }}>
-            🗑️ Delete Last
+            🗑️ {isZh ? '删除最后一条' : 'Delete Last'}
           </button>
           <button className="settings-action-btn danger" onClick={() => {
             store.resetAll();
             onClose();
           }}>
-            🔄 Reset All
+            🔄 {isZh ? '全部重置' : 'Reset All'}
           </button>
         </div>
 
         {/* 返回主页 */}
         <div className="settings-group">
           <a href="/" className="settings-action-btn" style={{ display: 'block', textDecoration: 'none' }}>
-            ← Back to Home
+            ← {isZh ? '返回主页' : 'Back to Home'}
           </a>
         </div>
       </div>
@@ -760,6 +765,8 @@ export default function BattlePage() {
   useScrambleScript();
   useKeyboardControls();
 
+  const { i18n } = useTranslation();
+  const isZh = i18n.language === 'zh';
   const store = useBattleStore();
   const { mode } = store;
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -767,6 +774,12 @@ export default function BattlePage() {
   const [vsHistoryOpen, setVsHistoryOpen] = useState(false);
   // NOTE: 里程碑 Toast 消息队列
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  // NOTE: 同步 i18n.language → store.locale. 以 i18n 为权威源(LangToggle 改它),
+  // 让 store 内部发双语消息(checkMilestone / speakAlert / fatigue toast)时用最新值.
+  useEffect(() => {
+    useBattleStore.getState().setLocale(i18n.language);
+  }, [i18n.language]);
 
   // NOTE: 监听 checkMilestone/checkFatigue 派发的自定义事件
   useEffect(() => {
@@ -883,7 +896,7 @@ export default function BattlePage() {
           >
             {/* NOTE: 1:1 翻译自原版 icon_timer.png — 不擅自替换为 SVG */}
             <img src={import.meta.env.BASE_URL + 'icon_timer.png'} width="22" height="22" alt="Timer" className="nav-tab-icon" />
-            <span>Timer</span>
+            <span>{isZh ? '计时' : 'Timer'}</span>
           </button>
           <button
             className={`nav-tab${store.activeTab === 'results' ? ' active' : ''}`}
@@ -894,7 +907,7 @@ export default function BattlePage() {
               <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
               <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
             </svg>
-            <span>Results</span>
+            <span>{isZh ? '成绩' : 'Results'}</span>
           </button>
           <button
             className={`nav-tab${store.activeTab === 'settings' ? ' active' : ''}`}
@@ -905,7 +918,7 @@ export default function BattlePage() {
               <circle cx="12" cy="12" r="3"/>
               <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
             </svg>
-            <span>Settings</span>
+            <span>{isZh ? '设置' : 'Settings'}</span>
           </button>
         </nav>
       )}

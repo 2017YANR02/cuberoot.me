@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { FileText } from 'lucide-react';
 import type { CatalogEntry, Lang } from './useAlgCatalog';
 
@@ -8,6 +9,8 @@ interface AlgCardProps {
 }
 
 export function AlgCard({ entry, lang }: AlgCardProps) {
+  const { i18n } = useTranslation();
+  const isZh = i18n.language.startsWith('zh');
   const title =
     entry.title[lang] ??
     entry.title[lang === 'zh' ? 'en' : 'zh'] ??
@@ -28,12 +31,12 @@ export function AlgCard({ entry, lang }: AlgCardProps) {
           <span className="alg-category-badge">{entry.category}</span>
           {entry.algCount > 0 && (
             <span className="alg-alg-count">
-              {entry.algCount} {entry.view === 'algset' ? 'cases' : 'algs'}
+              {entry.algCount} {entry.view === 'algset' ? (isZh ? '个情况' : 'cases') : (isZh ? '个公式' : 'algs')}
             </span>
           )}
         </div>
       </div>
-      {entry.view === 'algset' && <span className="alg-corner-badge">PUBLIC LIB</span>}
+      {entry.view === 'algset' && <span className="alg-corner-badge">{isZh ? '公共库' : 'PUBLIC LIB'}</span>}
     </Link>
   );
 }

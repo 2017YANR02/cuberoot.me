@@ -10,7 +10,8 @@ import './alg.css';
 export default function AlgCategoryPage() {
   const { catalog, loading, error } = useAlgCatalog();
   const { i18n } = useTranslation();
-  const pageLang: Lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
+  const isZh = i18n.language.startsWith('zh');
+  const pageLang: Lang = isZh ? 'zh' : 'en';
   const { category: rawCategory } = useParams<{ category: string }>();
   const category = rawCategory ? decodeURIComponent(rawCategory) : '';
   const [searchParams] = useSearchParams();
@@ -70,12 +71,12 @@ export default function AlgCategoryPage() {
           <div className="alg-breadcrumb">
             <Link to="/alg">
               <ArrowLeft size={14} />{' '}
-              {pageLang === 'zh' ? '返回分类' : 'Back to categories'}
+              {isZh ? '返回分类' : 'Back to categories'}
             </Link>
           </div>
           <h1 className="alg-index-title">{category}</h1>
           <p className="alg-index-subtitle">
-            {pageLang === 'zh'
+            {isZh
               ? `${inCategory.length} 个教程与公式库`
               : `${inCategory.length} tutorials & algorithm sets`}
           </p>
@@ -85,7 +86,7 @@ export default function AlgCategoryPage() {
           <input
             className="alg-search-input"
             type="search"
-            placeholder={pageLang === 'zh' ? '搜索…' : 'Search…'}
+            placeholder={isZh ? '搜索…' : 'Search…'}
             value={query}
             onChange={e => setQuery(e.target.value)}
           />
@@ -98,7 +99,7 @@ export default function AlgCategoryPage() {
             className={'alg-category-chip' + (activeSub === 'all' ? ' is-active' : '')}
             onClick={() => setActiveSub('all')}
           >
-            {pageLang === 'zh' ? '全部' : 'All'}
+            {isZh ? '全部' : 'All'}
             <span className="alg-category-chip-count">{inCategory.length}</span>
           </button>
           {subcategories.map(({ sc, count }) => (
@@ -107,7 +108,7 @@ export default function AlgCategoryPage() {
               className={'alg-category-chip' + (activeSub === sc ? ' is-active' : '')}
               onClick={() => setActiveSub(sc)}
             >
-              {sc || (pageLang === 'zh' ? '未分' : 'Uncategorized')}
+              {sc || (isZh ? '未分类' : 'Uncategorized')}
               <span className="alg-category-chip-count">{count}</span>
             </button>
           ))}
@@ -115,16 +116,16 @@ export default function AlgCategoryPage() {
       )}
 
       <div className="alg-card-grid">
-        {loading && <div className="alg-empty-state">Loading…</div>}
+        {loading && <div className="alg-empty-state">{isZh ? '加载中…' : 'Loading…'}</div>}
         {error && (
           <div className="alg-empty-state">
-            {pageLang === 'zh' ? '加载失败: ' : 'Load failed: '}
+            {isZh ? '加载失败: ' : 'Load failed: '}
             {error}
           </div>
         )}
         {!loading && !error && results.length === 0 && (
           <div className="alg-empty-state">
-            {pageLang === 'zh' ? '没有匹配的教程' : 'No matching tutorials'}
+            {isZh ? '没有匹配的教程' : 'No matching tutorials'}
           </div>
         )}
         {results.map(entry => (

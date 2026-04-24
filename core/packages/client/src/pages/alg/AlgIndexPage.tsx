@@ -61,7 +61,8 @@ const CATEGORY_CARDS: CategoryConfig[] = [
 export default function AlgIndexPage() {
   const { catalog, loading, error } = useAlgCatalog();
   const { i18n } = useTranslation();
-  const pageLang: Lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
+  const isZh = i18n.language.startsWith('zh');
+  const pageLang: Lang = isZh ? 'zh' : 'en';
   const [searchParams] = useSearchParams();
   const showHidden = searchParams.get('show') === 'hidden';
 
@@ -109,10 +110,10 @@ export default function AlgIndexPage() {
       <div className="alg-index-header">
         <div>
           <h1 className="alg-index-title">
-            {pageLang === 'zh' ? '公式教程' : 'Algorithms'}
+            {isZh ? '公式教程' : 'Algorithms'}
           </h1>
           <p className="alg-index-subtitle">
-            {pageLang === 'zh'
+            {isZh
               ? `${visible.length} 个教程与公式库`
               : `${visible.length} tutorials & algorithm sets`}
           </p>
@@ -122,17 +123,17 @@ export default function AlgIndexPage() {
           <input
             className="alg-search-input"
             type="search"
-            placeholder={pageLang === 'zh' ? '搜索全部…' : 'Search all…'}
+            placeholder={isZh ? '搜索全部…' : 'Search all…'}
             value={query}
             onChange={e => setQuery(e.target.value)}
           />
         </div>
       </div>
 
-      {loading && <div className="alg-empty-state">Loading…</div>}
+      {loading && <div className="alg-empty-state">{isZh ? '加载中…' : 'Loading…'}</div>}
       {error && (
         <div className="alg-empty-state">
-          {pageLang === 'zh' ? '加载失败: ' : 'Load failed: '}
+          {isZh ? '加载失败: ' : 'Load failed: '}
           {error}
         </div>
       )}
@@ -157,18 +158,18 @@ export default function AlgIndexPage() {
       {!loading && !error && searchResults !== null && (
         <>
           <div className="alg-search-meta">
-            {pageLang === 'zh'
+            {isZh
               ? `找到 ${searchResults.length} 个结果`
               : `${searchResults.length} result${searchResults.length === 1 ? '' : 's'}`}
             {' · '}
             <button className="alg-link-btn" onClick={() => setQuery('')}>
-              {pageLang === 'zh' ? '清空搜索' : 'clear search'}
+              {isZh ? '清空搜索' : 'clear search'}
             </button>
           </div>
           <div className="alg-card-grid">
             {searchResults.length === 0 && (
               <div className="alg-empty-state">
-                {pageLang === 'zh' ? '没有匹配的教程' : 'No matching tutorials'}
+                {isZh ? '没有匹配的教程' : 'No matching tutorials'}
               </div>
             )}
             {searchResults.map(entry => (

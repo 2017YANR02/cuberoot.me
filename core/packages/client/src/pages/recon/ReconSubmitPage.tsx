@@ -274,7 +274,7 @@ export default function ReconSubmitPage() {
     }
   };
 
-  if (loadingEdit) return <div className="recon-page"><div className="recon-loading">Loading...</div></div>;
+  if (loadingEdit) return <div className="recon-page"><div className="recon-loading">{t('common.loading')}</div></div>;
 
   return (
     <div className="recon-page">
@@ -295,7 +295,7 @@ export default function ReconSubmitPage() {
             <span className="submit-label">WCA</span>
             <select value={form.official ? '1' : '0'} onChange={e => setField('official', e.target.value === '1')}>
               <option value="1">✅ WCA</option>
-              <option value="0">❌ Non-WCA</option>
+              <option value="0">❌ {t('recon.badge.nonWca')}</option>
             </select>
           </label>
           <label className="submit-field">
@@ -352,7 +352,12 @@ export default function ReconSubmitPage() {
           <label className="submit-field">
             <span className="submit-label">{t('recon.round')}</span>
             <select value={form.round} onChange={e => setField('round', e.target.value)}>
-              {ROUNDS.map(r => <option key={r} value={r}>{r === 'f' ? 'Final' : r === 'sf' ? 'Semi' : r === 'cf' ? 'Combined' : `Round ${r}`}</option>)}
+              {ROUNDS.map(r => <option key={r} value={r}>{
+                r === 'f' ? t('recon.round.final')
+                  : r === 'sf' ? t('recon.round.semi')
+                  : r === 'cf' ? t('recon.round.combined')
+                  : t('recon.round.numbered', { n: r })
+              }</option>)}
             </select>
           </label>
           <label className="submit-field">
@@ -402,14 +407,14 @@ export default function ReconSubmitPage() {
         {/* 纪录标记 */}
         <div className="submit-row">
           <label className="submit-field">
-            <span className="submit-label">Single Record</span>
+            <span className="submit-label">{t('recon.badge.singleRecord')}</span>
             <select value={form.regionalSingleRecord || ''} onChange={e => setField('regionalSingleRecord', e.target.value)}>
               <option value="">-</option>
               {RECORD_OPTIONS.map(r => <option key={r} value={r}>{r}</option>)}
             </select>
           </label>
           <label className="submit-field">
-            <span className="submit-label">Average Record</span>
+            <span className="submit-label">{t('recon.badge.averageRecord')}</span>
             <select value={form.regionalAverageRecord || ''} onChange={e => setField('regionalAverageRecord', e.target.value)}>
               <option value="">-</option>
               {RECORD_OPTIONS.map(r => <option key={r} value={r}>{r}</option>)}

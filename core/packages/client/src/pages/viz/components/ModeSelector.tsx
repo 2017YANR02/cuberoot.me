@@ -4,6 +4,7 @@
 // 1:1 翻译自 viz.js setupModeSwitcher()
 
 import { useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useVizStore } from '../stores/viz_store';
 import type { DataMode } from '../engine/data_fetch';
 
@@ -33,6 +34,8 @@ const ROW2_MODES: { key: DataMode; label: string }[] = [
 ];
 
 export default function ModeSelector() {
+  const { i18n } = useTranslation();
+  const isZh = i18n.language === 'zh';
   const dataMode = useVizStore(s => s.dataMode);
   const setDataMode = useVizStore(s => s.setDataMode);
   const [expanded, setExpanded] = useState(false);
@@ -79,7 +82,9 @@ export default function ModeSelector() {
         id="modeExpandBtn"
         onClick={() => setExpanded(v => !v)}
       >
-        {expanded || isRoundActive ? '▴ 收起' : '▾ 更多'}
+        {expanded || isRoundActive
+          ? (isZh ? '▴ 收起' : '▴ Collapse')
+          : (isZh ? '▾ 更多' : '▾ More')}
       </button>
     </div>
   );

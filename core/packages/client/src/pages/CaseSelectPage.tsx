@@ -6,6 +6,7 @@
  */
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import CubeView from '../components/CubeView';
 import { scrambleForCase, inverseScramble } from '../utils/scrambleGenerator';
 import { useSessionStore } from '../stores/sessionStore';
@@ -80,6 +81,7 @@ const algSetConfigs: Record<string, AlgSetConfig> = {
 export function CaseSelectPage() {
   const { algSetId } = useParams<{ algSetId: string }>();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const config = algSetId ? algSetConfigs[algSetId] : undefined;
   const allCases = config?.allCases ?? [];
@@ -87,7 +89,7 @@ export function CaseSelectPage() {
   const [selected, setSelected] = useState<Set<string>>(() => new Set(allCases));
 
   if (!config) {
-    return <div className="error-page">公式集未找到</div>;
+    return <div className="error-page">{t('caseSelect.notFound')}</div>;
   }
 
   const toggleCase = (name: string) => {
@@ -133,16 +135,16 @@ export function CaseSelectPage() {
   return (
     <div className="case-select-page">
       <header className="page-header">
-        <button className="back-btn" onClick={() => navigate('/')}>← 返回</button>
+        <button className="back-btn" onClick={() => navigate('/')}>{t('caseSelect.back')}</button>
         <h1>{config.name}</h1>
         <span className="count-badge">{selected.size} / {allCases.length}</span>
       </header>
 
       <div className="select-actions">
-        <button onClick={selectAll}>全选</button>
-        <button onClick={deselectAll}>取消全选</button>
+        <button onClick={selectAll}>{t('caseSelect.selectAll')}</button>
+        <button onClick={deselectAll}>{t('caseSelect.deselectAll')}</button>
         <button className="start-btn" disabled={selected.size === 0} onClick={handleStartTraining}>
-          ▶ 开始识别训练 ({selected.size})
+          ▶ {t('caseSelect.startTraining')} ({selected.size})
         </button>
       </div>
 

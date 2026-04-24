@@ -3,6 +3,7 @@
 // 功能：zigzag 跳格、WR badge、排名标签、Ao5 括号标注、fitFont 自适应字号
 
 import { useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useCalcStore, isMbfForEvent } from '../stores/calc_store';
 import {
   DNF_VALUE,
@@ -33,6 +34,8 @@ function fitFontStyle(_displayVal: string): React.CSSProperties | undefined {
 }
 
 export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
+  const { i18n } = useTranslation();
+  const isZh = i18n.language === 'zh';
   const state = useCalcStore();
   const sc = state.solveCount();
   const isMbf = isMbfForEvent(state.event);
@@ -329,7 +332,7 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
                 type="text"
                 inputMode="none"
                 disabled={!enabled}
-                placeholder="Target"
+                placeholder={isZh ? '目标' : 'Target'}
                 defaultValue={(() => {
                   const ta = state.getTargetAvg(state.seedOn + p);
                   return ta > 0 ? formatTime(ta, false, isMove, true) : '';
@@ -352,8 +355,8 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
             <button
               className={`me-btn${avatarState?.[p]?.active ? ' me-active' : ''}`}
               title={avatarState?.[p]?.active
-                ? `Switch back to World #${p + 1}`
-                : 'Search for a player'}
+                ? (isZh ? `切换回世界第 ${p + 1} 名` : `Switch back to World #${p + 1}`)
+                : (isZh ? '搜索选手' : 'Search for a player')}
               data-loading={avatarState?.[p]?.loading && !avatarState[p].active
                 ? avatarState[p].loading
                 : undefined}
