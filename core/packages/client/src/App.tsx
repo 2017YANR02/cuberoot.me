@@ -33,6 +33,7 @@ const AuthCallbackPage = lazy(() => import('./pages/AuthCallbackPage'));
 // NOTE: WCA Stats 模块懒加载 — 统计数据展示
 const WcaStatsPage = lazy(() => import('./pages/wca_stats/WcaStatsPage'));
 const WcaStatsIndex = lazy(() => import('./pages/wca_stats/WcaStatsIndex'));
+const NemesizerPage = lazy(() => import('./pages/nemesizer/NemesizerPage'));
 // NOTE: Upcoming Comps 懒加载 — 顶尖选手近期比赛追踪
 const UpcomingCompsPage = lazy(() => import('./pages/UpcomingCompsPage'));
 // NOTE: Globe 懒加载 — 3D 地球 WCA 比赛地理分布（含 react-globe.gl + three ~500KB）
@@ -108,6 +109,8 @@ function App() {
         {/* WCA Stats — 统计数据展示 */}
         <Route path="/wca-stats" element={<Suspense fallback={<div>Loading...</div>}><WcaStatsIndex /></Suspense>} />
         <Route path="/wca-stats/:statId" element={<Suspense fallback={<div>Loading...</div>}><WcaStatsPage /></Suspense>} />
+        {/* Nemesizer — 宿敌查询（移植自 nemesizer.com） */}
+        <Route path="/nemesizer" element={<Suspense fallback={<div>Loading...</div>}><NemesizerPage /></Suspense>} />
         {/* Frame Count — 数帧工具 */}
         <Route path="/frame-count" element={<Suspense fallback={<div>Loading...</div>}><FrameCountPage /></Suspense>} />
         {/* Scramble — WCA 历史打乱难度分布 */}

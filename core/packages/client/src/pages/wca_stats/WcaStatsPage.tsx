@@ -1212,6 +1212,19 @@ export default function WcaStatsPage() {
           activePanel={activePanel}
         />
       )}
+
+      {renderMode === 'empty' && (
+        <div className="wca-stats-empty-state">
+          <div className="wca-stats-empty-title">
+            {isZh ? '暂无数据' : 'No data yet'}
+          </div>
+          <div className="wca-stats-empty-hint">
+            {isZh
+              ? '此统计项当前为空 —— 可能是下一次 stats-build 会补全，或该口径下无人达成。'
+              : 'This stat is currently empty — either no one meets the criteria, or it has yet to be computed.'}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

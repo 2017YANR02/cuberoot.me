@@ -1,13 +1,10 @@
 // NOTE: 最短时间获得所有项目的单次和平均成绩
 // 与 Ruby _stats_build/statistics/shortest_time_to_get_all_singles_and_averages.rb 1:1 对应
 import { Statistic } from '../core/statistic.js';
-import { EVENTS } from '../core/events.js';
 import type { RowDataPacket } from 'mysql2';
 
-// NOTE: 官方项目数和有平均的项目数（官方项目 - 333mbf）
-const OFFICIAL_EVENT_COUNT = Object.keys(EVENTS).length;
-const NUM_EVENTS_WITH_AVERAGES = OFFICIAL_EVENT_COUNT - 1;
-
+// NOTE: 项目数实时取自 `events` 表（rank < 900 = 当前官方项目）。
+// 单次用全部当前官方项目；平均额外扣 1（3x3x3 Multi-Blind 无平均）。
 export class ShortestTimeToGetAllSinglesAndAverages extends Statistic {
   constructor() {
     super();
@@ -35,7 +32,7 @@ export class ShortestTimeToGetAllSinglesAndAverages extends Statistic {
         JOIN events event ON event.id = event_id
         WHERE event.rank < 900 AND best > 0
         GROUP BY person_id
-        HAVING COUNT(DISTINCT event_id) = ${OFFICIAL_EVENT_COUNT}
+        HAVING COUNT(DISTINCT event_id) = (SELECT COUNT(*) FROM events WHERE rank < 900)
       ) AS all_events_people
       JOIN (
         SELECT person_id
@@ -43,7 +40,7 @@ export class ShortestTimeToGetAllSinglesAndAverages extends Statistic {
         JOIN events event ON event.id = event_id
         WHERE event.rank < 900 AND average > 0
         GROUP BY person_id
-        HAVING COUNT(DISTINCT event_id) = ${NUM_EVENTS_WITH_AVERAGES}
+        HAVING COUNT(DISTINCT event_id) = (SELECT COUNT(*) FROM events WHERE rank < 900) - 1
       ) AS all_average_people ON all_average_people.person_id = all_events_people.person_id
       JOIN results result ON result.person_id = all_events_people.person_id
       JOIN persons person ON person.wca_id = result.person_id and person.sub_id = 1
