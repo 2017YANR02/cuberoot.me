@@ -18,7 +18,7 @@ const COUNTRY_TO_ISO2: Record<string, string> = {
   'Algeria': 'dz', 'Angola': 'ao', 'Benin': 'bj', 'Botswana': 'bw',
   'Burkina Faso': 'bf', 'Burundi': 'bi', 'Cabo Verde': 'cv', 'Cameroon': 'cm',
   'Central African Republic': 'cf', 'Chad': 'td', 'Comoros': 'km',
-  'Congo': 'cg', 'Côte d\'Ivoire': 'ci', 'Democratic Republic of the Congo': 'cd',
+  'Congo': 'cg', 'Côte d\'Ivoire': 'ci', 'Cote d_Ivoire': 'ci', 'Democratic Republic of the Congo': 'cd',
   'Djibouti': 'dj', 'Egypt': 'eg', 'Equatorial Guinea': 'gq', 'Eritrea': 'er',
   'Eswatini': 'sz', 'Ethiopia': 'et', 'Gabon': 'ga', 'Gambia': 'gm',
   'Ghana': 'gh', 'Guinea': 'gn', 'Guinea-Bissau': 'gw', 'Ivory Coast': 'ci',
