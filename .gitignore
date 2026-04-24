@@ -42,10 +42,5 @@ CLAUDE.md
 # Claude Code 本机专属配置（权限白名单，不共享）
 .claude/settings.local.json
 
-# /alg 模块的图片资源：由 alg-build 从 D:\cube\CubeRoot docx 本地生成
-# ~640 MB / 53K files，不 commit；部署时单独 rsync 到云端
-# catalog.json 和 posts/*.json 照常 commit
-stats/data/alg/media/
-
 # alg-build 公式识别 log（2MB+，每次 build 全量重写，repo 膨胀快；需要时本地生成）
 core/packages/alg-build/data/alg_detections.log
