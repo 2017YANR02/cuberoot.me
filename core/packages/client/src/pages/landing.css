@@ -150,6 +150,37 @@
 .landing-page .card.tier-hero-side .card-name { font-size: 1.1rem; }
 .landing-page .card.tier-utility .card-name { font-size: 0.9rem; }
 
+/* ── 即将上线：灰显，不可点击 ── */
+.landing-page .card.is-disabled {
+    position: relative;
+    cursor: not-allowed;
+    opacity: 0.55;
+    background: var(--surface);
+}
+.landing-page .card.is-disabled:hover {
+    border-color: var(--border);
+    background: var(--surface);
+    transform: none;
+}
+.landing-page .card.is-disabled:hover .card-icon,
+.landing-page .card.is-disabled:hover .card-name {
+    color: var(--text);
+}
+.landing-page .card .coming-soon-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--border);
+    color: var(--text);
+    opacity: 0.85;
+    letter-spacing: 0.02em;
+    pointer-events: none;
+}
+
 /* ── Trainer hero 卡：3D 魔方占满 ── */
 .landing-page .card.tier-hero .card-icon {
     flex: 1;
