@@ -7,6 +7,7 @@
  */
 import { useEffect, useCallback, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import CubeView from '../components/CubeView';
 import OnScreenKeyboard from '../components/OnScreenKeyboard';
 import { useSessionStore } from '../stores/sessionStore';
@@ -26,6 +27,8 @@ const typedOllMap = ollMap as Record<string, { name: string; alg: string; alg2: 
 export function TrainingPage() {
   const navigate = useNavigate();
   const { algSetId } = useParams<{ algSetId: string }>();
+  const { t, i18n } = useTranslation();
+  const isZh = i18n.language === 'zh';
 
   const gameState = useSessionStore((s) => s.gameState);
   const trainMode = useSessionStore((s) => s.trainMode);
@@ -167,15 +170,17 @@ export function TrainingPage() {
       return `${pendingKey}_ ...`;
     }
     if (gameState === 'playing' && mistake) {
-      return `按 ${currentCase?.name} 继续，Esc 暂停`;
+      return isZh
+        ? `按 ${currentCase?.name} 继续，Esc 暂停`
+        : `Press ${currentCase?.name} to continue, Esc to pause`;
     }
     if (gameState === 'playing' && !mistake) {
-      return '这是哪个 PLL？输入公式名字';
+      return isZh ? '这是哪个 PLL？输入公式名字' : 'Which PLL is this? Type the algorithm name';
     }
     if (gameState === 'paused') {
       return results.length === 0
-        ? '按空格开始'
-        : '按空格继续';
+        ? t('training.pressSpace')
+        : (isZh ? '按空格继续' : 'Press Space to continue');
     }
     return '';
   };
@@ -186,25 +191,25 @@ export function TrainingPage() {
     const correctCount = results.filter((r) => r.mistake === '').length;
     return (
       <div className="training-page" style={{ padding: '2rem', textAlign: 'center' }}>
-        <h2>🎉 一轮完成！</h2>
+        <h2>{t('training.complete')}</h2>
         <p style={{ fontSize: '1.2rem', margin: '1rem 0' }}>
-          正确 <strong style={{ color: '#198754' }}>{correctCount}</strong> /{' '}
-          总计 <strong>{results.length}</strong>
+          {isZh ? '正确' : 'Correct'} <strong style={{ color: '#198754' }}>{correctCount}</strong> /{' '}
+          {isZh ? '总计' : 'Total'} <strong>{results.length}</strong>
         </p>
         {mistakeCount > 0 && (
           <p style={{ color: '#dc3545' }}>
-            错误 {mistakeCount} 次
+            {isZh ? `错误 ${mistakeCount} 次` : `${mistakeCount} mistake${mistakeCount > 1 ? 's' : ''}`}
           </p>
         )}
         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '2rem' }}>
           <button className="btn-primary" onClick={startPersonalized}>
-            🔄 个性化训练（弱项加强）
+            {isZh ? '🔄 个性化训练（弱项加强）' : '🔄 Personalized (focus weak cases)'}
           </button>
           <button className="btn-secondary" onClick={restartEvaluation}>
-            🔁 重新评估
+            {isZh ? '🔁 重新评估' : '🔁 Restart evaluation'}
           </button>
           <button className="btn-secondary" onClick={() => navigate('/')}>
-            🏠 返回首页
+            {isZh ? '🏠 返回首页' : '🏠 Home'}
           </button>
         </div>
       </div>
@@ -277,7 +282,9 @@ export function TrainingPage() {
       {/* 暂停/开始按钮 */}
       {gameState === 'paused' && (
         <button className="btn-primary" onClick={resumePlay} style={{ fontSize: '1.2rem', padding: '0.75rem 2rem' }}>
-          {results.length === 0 ? '▶ 开始' : '▶ 继续'} (Space)
+          {results.length === 0
+            ? (isZh ? '▶ 开始' : '▶ Start')
+            : (isZh ? '▶ 继续' : '▶ Continue')} (Space)
         </button>
       )}
 
@@ -290,11 +297,11 @@ export function TrainingPage() {
       {gameState === 'playing' && (
         <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
           <button className="btn-secondary" onClick={pausePlay}>
-            ⏸ 暂停 (Esc)
+            {isZh ? '⏸ 暂停 (Esc)' : '⏸ Pause (Esc)'}
           </button>
           {!mistake && (
             <button className="btn-secondary" onClick={giveUpOnCase} style={{ opacity: 0.7 }}>
-              🏳️ 放弃 (S/?)
+              {isZh ? '🏳️ 放弃 (S/?)' : '🏳️ Give up (S/?)'}
             </button>
           )}
         </div>

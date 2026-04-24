@@ -1,0 +1,319 @@
+/* Mosaic builder — scoped styles. */
+.mosaic-page {
+  --fg: #1a1a1a;
+  --muted: #6b7280;
+  --bg: #fafafa;
+  --surface: #fff;
+  --surface-2: #f3f4f6;
+  --border: #e5e7eb;
+  --border-strong: #9ca3af;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  color: var(--fg);
+  background: var(--bg);
+  min-height: 100vh;
+  padding: 16px;
+}
+
+.mosaic-page * { box-sizing: border-box; }
+
+.mosaic-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  max-width: 1200px;
+  margin: 0 auto 20px;
+  padding: 10px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.mosaic-topbar-left { display: flex; align-items: center; gap: 12px; }
+.mosaic-back {
+  background: transparent;
+  border: 1px solid var(--border);
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--fg);
+}
+.mosaic-back:hover { background: var(--surface-2); }
+
+.mosaic-title { font-size: 18px; font-weight: 600; margin: 0; }
+.mosaic-subtitle { font-size: 13px; color: var(--muted); margin: 0; }
+
+.mosaic-main {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Upload */
+.mosaic-dropzone {
+  border: 2px dashed var(--border-strong);
+  border-radius: 16px;
+  padding: 48px 24px;
+  text-align: center;
+  background: var(--surface);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.mosaic-dropzone.drag {
+  border-color: var(--accent);
+  background: #eff6ff;
+}
+.mosaic-dropzone-icon { font-size: 48px; margin-bottom: 12px; }
+.mosaic-dropzone-hint { font-size: 14px; color: var(--muted); margin-top: 8px; }
+
+.mosaic-faq {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-top: 24px;
+}
+.mosaic-faq h3 { font-size: 16px; font-weight: 600; margin: 16px 0 6px; }
+.mosaic-faq h3:first-child { margin-top: 0; }
+.mosaic-faq p { font-size: 14px; color: var(--fg); line-height: 1.6; margin: 0; }
+
+/* Crop */
+.mosaic-crop-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+.mosaic-crop-controls label { font-size: 14px; color: var(--muted); }
+.mosaic-crop-controls input[type="number"],
+.mosaic-crop-controls select {
+  width: 80px;
+  padding: 6px 8px;
+  font-size: 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--fg);
+}
+.mosaic-crop-controls select { width: auto; }
+.mosaic-crop-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  max-height: 75vh;
+  overflow: hidden;
+}
+.mosaic-crop-wrap img { max-width: 100%; display: block; }
+
+/* Buttons */
+.mosaic-btn {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--fg);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.mosaic-btn:hover { background: var(--surface-2); }
+.mosaic-btn-primary {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+.mosaic-btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+.mosaic-btn-success {
+  background: var(--success);
+  color: #fff;
+  border-color: var(--success);
+}
+.mosaic-btn-success:hover { filter: brightness(0.92); }
+.mosaic-btn-danger {
+  background: var(--surface);
+  color: var(--danger);
+  border-color: var(--danger);
+}
+.mosaic-btn-danger:hover { background: #fef2f2; }
+.mosaic-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Method/Variant stage — grid of canvases */
+.mosaic-method-section { margin-bottom: 28px; }
+.mosaic-method-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.mosaic-canvas-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+}
+.mosaic-canvas-card {
+  background: var(--surface);
+  border: 2px solid transparent;
+  border-radius: 10px;
+  padding: 6px;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.mosaic-canvas-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+.mosaic-canvas-card canvas {
+  image-rendering: pixelated;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  display: block;
+}
+.mosaic-canvas-card-caption {
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Adjust stage */
+.mosaic-adjust {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 16px;
+}
+@media (max-width: 900px) {
+  .mosaic-adjust { grid-template-columns: 1fr; }
+}
+.mosaic-adjust-preview {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+.mosaic-adjust-preview-row {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.mosaic-adjust-preview img,
+.mosaic-adjust-preview canvas {
+  max-width: 48%;
+  height: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: block;
+}
+.mosaic-adjust-preview canvas { image-rendering: pixelated; }
+
+.mosaic-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.mosaic-panel h4 { margin: 0 0 4px; font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; }
+.mosaic-panel hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
+
+.mosaic-fx-row {
+  display: grid;
+  grid-template-columns: 80px 46px 1fr 28px;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+.mosaic-fx-row span.fx-label { color: var(--muted); }
+.mosaic-fx-row span.fx-val { text-align: right; font-variant-numeric: tabular-nums; color: var(--fg); }
+.mosaic-fx-row input[type="range"] { width: 100%; }
+.mosaic-fx-row button.fx-reset {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 4px;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.mosaic-range-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.mosaic-range-row input[type="number"] {
+  width: 60px;
+  padding: 4px 6px;
+  font-size: 13px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  text-align: center;
+}
+.mosaic-range-swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  display: inline-block;
+  margin-right: 4px;
+  vertical-align: middle;
+  border: 1px solid var(--border);
+}
+
+.mosaic-progress {
+  height: 4px;
+  background: var(--surface-2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.mosaic-progress > div {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.2s;
+}
+
+/* Palette editor */
+.mosaic-palette-table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
+.mosaic-palette-table th, .mosaic-palette-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); text-align: left; font-size: 14px; }
+.mosaic-palette-table th { background: var(--surface-2); font-weight: 600; color: var(--muted); text-transform: uppercase; font-size: 11px; letter-spacing: 0.04em; }
+.mosaic-palette-table tr.disabled { opacity: 0.4; }
+.mosaic-palette-table input[type="text"] { width: 100%; padding: 4px 6px; border: 1px solid var(--border); border-radius: 4px; font-size: 14px; }
+.mosaic-palette-table input[type="color"] { width: 40px; height: 28px; border: 1px solid var(--border); border-radius: 4px; padding: 0; background: none; cursor: pointer; }
+.mosaic-palette-table input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
+
+/* FAQ list */
+.mosaic-checkbox-row { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; }
+.mosaic-checkbox-row input { cursor: pointer; }
+
+.mosaic-cropper-note {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 8px;
+  text-align: center;
+}

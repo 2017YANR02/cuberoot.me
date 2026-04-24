@@ -10,6 +10,7 @@
  */
 import { useEffect, useCallback, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import ollInfo from '@cuberoot/shared/data/oll.json';
 import ollScrambles from '@cuberoot/shared/data/oll_scrambles.json';
 import { useSessionStore } from '../stores/sessionStore';
@@ -96,6 +97,8 @@ function saveTimes(times: TimerResult[]) {
 
 export function OllTrainingPage() {
   const navigate = useNavigate();
+  const { i18n } = useTranslation();
+  const isZh = i18n.language === 'zh';
   const queue = useSessionStore((s) => s.queue);
 
   // 从 queue 中提取选中的 case 编号
@@ -154,7 +157,7 @@ export function OllTrainingPage() {
   const generateScramble = useCallback(() => {
     const cases = selectedCases.current;
     if (cases.length === 0) {
-      setScramble('请先选择 OLL case');
+      setScramble(isZh ? '请先选择 OLL case' : 'Select OLL cases first');
       allowStartRef.current = false;
       return;
     }
@@ -182,7 +185,7 @@ export function OllTrainingPage() {
     setLastCase(caseNum);
     setScramble(finalScramble);
     allowStartRef.current = true;
-  }, []);
+  }, [isZh]);
 
   // --- 计时器控制（原版 timerSetReady/timerStart/timerStop）---
   const timerSetReady = useCallback(() => {
@@ -287,13 +290,13 @@ export function OllTrainingPage() {
   const handleRemoveLast = () => {
     setTimes((prev) => {
       if (prev.length === 0) return prev;
-      if (confirm('删除最后一条记录？')) return prev.slice(0, -1);
+      if (confirm(isZh ? '删除最后一条记录？' : 'Delete the last record?')) return prev.slice(0, -1);
       return prev;
     });
   };
 
   const handleClear = () => {
-    if (confirm('确定清空所有记录？')) {
+    if (confirm(isZh ? '确定清空所有记录？' : 'Clear all records?')) {
       setTimes([]);
       casesWeights.current = selectedCases.current.map(() => 1);
     }
@@ -314,7 +317,9 @@ export function OllTrainingPage() {
       });
   })();
 
-  const timerText = displayMs < 0 ? '触摸或按空格开始' : msToDisplay(displayMs);
+  const timerText = displayMs < 0
+    ? (isZh ? '触摸或按空格开始' : 'Tap or press Space to start')
+    : msToDisplay(displayMs);
   const timerColorMap = { default: '#e0e0e0', green: '#008500', red: '#850000' };
 
   return (
@@ -322,11 +327,13 @@ export function OllTrainingPage() {
       {/* 顶部导航 */}
       <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
         <button className="back-btn" onClick={() => navigate('/select/oll')}>
-          ← 选择 case
+          {isZh ? '← 选择 case' : '← Select cases'}
         </button>
         <span style={{ color: '#adb5bd' }}>
           {selectedCases.current.length} cases |{' '}
-          {recapArray.current.length > 0 ? `Recap: ${recapArray.current.length} 剩余` : 'Train 模式'}
+          {recapArray.current.length > 0
+            ? (isZh ? `Recap: ${recapArray.current.length} 剩余` : `Recap: ${recapArray.current.length} remaining`)
+            : (isZh ? 'Train 模式' : 'Train mode')}
         </span>
       </div>
 
@@ -348,7 +355,7 @@ export function OllTrainingPage() {
         >
           {/* 打乱序列 */}
           <div style={{ fontSize: '1.2rem', color: '#adb5bd', textAlign: 'center', marginBottom: '2rem', lineHeight: 1.6 }}>
-            {scramble || '加载中...'}
+            {scramble || (isZh ? '加载中...' : 'Loading...')}
           </div>
 
           {/* 计时器 */}
@@ -368,7 +375,7 @@ export function OllTrainingPage() {
           {/* 上一个 case 信息 */}
           {lastCase > 0 && !running && (
             <div style={{ marginTop: '1.5rem', color: '#6c757d', fontSize: '0.9rem', textAlign: 'center' }}>
-              上一个:{' '}
+              {isZh ? '上一个:' : 'Last:'}{' '}
               <span
                 style={{ color: '#0d6efd', cursor: 'pointer' }}
                 onClick={() => setHintCase(lastCase)}
@@ -390,8 +397,8 @@ export function OllTrainingPage() {
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-            <strong>{times.length} 次</strong>
-            <a style={{ color: '#0d6efd', cursor: 'pointer' }} onClick={handleClear}>清空</a>
+            <strong>{isZh ? `${times.length} 次` : `${times.length} solves`}</strong>
+            <a style={{ color: '#0d6efd', cursor: 'pointer' }} onClick={handleClear}>{isZh ? '清空' : 'Clear'}</a>
           </div>
 
           {groupedResults.map(({ caseNum, times: ts, avg }) => (

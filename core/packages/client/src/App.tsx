@@ -51,6 +51,8 @@ const AlgCategoryPage = lazy(() => import('./pages/alg/AlgCategoryPage'));
 const AlgPostPage = lazy(() => import('./pages/alg/AlgPostPage'));
 // NOTE: Sites — 魔方网址导航
 const SitesPage = lazy(() => import('./pages/sites/SitesPage'));
+// NOTE: Mosaic — 魔方马赛克生成器（port of Roman-/mosaic）
+const MosaicPage = lazy(() => import('./pages/mosaic/MosaicPage'));
 
 
 function App() {
@@ -116,6 +118,8 @@ function App() {
         <Route path="/alg/:slug" element={<Suspense fallback={<div>Loading...</div>}><AlgPostPage /></Suspense>} />
         {/* Sites — 魔方网址导航 */}
         <Route path="/site" element={<Suspense fallback={<div>Loading...</div>}><SitesPage /></Suspense>} />
+        {/* Mosaic — 魔方马赛克生成器 */}
+        <Route path="/mosaic" element={<Suspense fallback={<div>Loading...</div>}><MosaicPage /></Suspense>} />
         {/* Pretext Demo — Canvas 表格渲染实验 */}
         <Route path="/pretext-demo" element={<Suspense fallback={<div>Loading...</div>}><PretextDemo /></Suspense>} />
         {/* Auth — WCA OAuth 回调 */}

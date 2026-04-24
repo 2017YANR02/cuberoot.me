@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { AlgsetPostContent } from './useAlgCatalog';
 import { CaseCard } from './CaseCard';
 import { CaseModal } from './CaseModal';
@@ -8,6 +9,8 @@ interface AlgsetViewProps {
 }
 
 export function AlgsetView({ post }: AlgsetViewProps) {
+  const { i18n } = useTranslation();
+  const isZh = i18n.language.startsWith('zh');
   const [activeGroup, setActiveGroupState] = useState<string>('all');
   const [modalIdx, setModalIdx] = useState<number | null>(null);
 
@@ -34,7 +37,7 @@ export function AlgsetView({ post }: AlgsetViewProps) {
             }
             onClick={() => setActiveGroup('all')}
           >
-            全部 · {post.cases.length}
+            {isZh ? '全部' : 'All'} · {post.cases.length}
           </button>
           {post.groups.map(g => (
             <button

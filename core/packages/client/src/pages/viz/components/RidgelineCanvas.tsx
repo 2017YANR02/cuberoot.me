@@ -3,6 +3,7 @@
 // 1:1 翻译自 ridgeline.js initRidgeline + onRidgeClick + resize 逻辑
 
 import { useRef, useEffect, useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useVizStore } from '../stores/viz_store';
 import {
   buildGroups, computeAllKDEs, drawRidgeline,
@@ -16,6 +17,8 @@ interface RidgelineCanvasProps {
 }
 
 export default function RidgelineCanvas({ highlightSolveIdx }: RidgelineCanvasProps) {
+  const { i18n } = useTranslation();
+  const isZh = i18n.language === 'zh';
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -139,7 +142,7 @@ export default function RidgelineCanvas({ highlightSolveIdx }: RidgelineCanvasPr
   return (
     <>
       <div className="section-divider" />
-      <h2 className="section-title">分布全景</h2>
+      <h2 className="section-title">{isZh ? '分布全景' : 'Distribution overview'}</h2>
       <div className="ridgeline-wrapper" ref={wrapperRef}>
         <canvas ref={canvasRef} id="ridgelineCanvas" onClick={onClick} />
       </div>

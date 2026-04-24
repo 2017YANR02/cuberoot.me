@@ -46,10 +46,10 @@ const COLUMNS: Column[] = [
   { key: 'id', labelKey: '', className: 'col-idx', sortable: true },
 ];
 
-// NOTE: 不需要翻译的列使用固定英文标签
-const FIXED_LABELS: Record<string, string> = {
-  rawTime: 'Single', round: 'Rnd#', average: 'Avg', aoType: 'AoXR',
-  result: 'Result', stm: 'STM', tps: 'TPS', id: '#',
+// NOTE: 需要 i18n 的列标签——按 col.key 映射到 recon.col.* i18n key
+const COL_I18N_KEY: Record<string, string> = {
+  rawTime: 'recon.col.single', round: 'recon.col.round', average: 'recon.col.average', aoType: 'recon.col.aoxr',
+  result: 'recon.col.result', stm: 'recon.col.stm', tps: 'recon.col.tps', id: 'recon.col.id',
 };
 
 // ── 主组件 ──
@@ -185,7 +185,8 @@ export default function ReconListPage() {
 
   const getColumnLabel = useCallback((col: Column) => {
     if (col.labelKey) return t(col.labelKey);
-    return FIXED_LABELS[col.key] ?? col.key;
+    const i18nKey = COL_I18N_KEY[col.key];
+    return i18nKey ? t(i18nKey) : col.key;
   }, [t]);
 
   // ── 渲染单元格内容 ──

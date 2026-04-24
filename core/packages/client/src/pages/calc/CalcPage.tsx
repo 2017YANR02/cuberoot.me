@@ -4,6 +4,7 @@
 // 比赛名 → 图表 → 输入网格 → 控制按钮 → 进度滑杆 → 数字键盘 → 项目选择器 → 统计表
 
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useCalcStore, isMbfForEvent, solveCountForEvent } from './stores/calc_store';
 import { setCurrentEvent, setMoveCntMode, setMbfMode } from './engine/calc_engine';
 import { load as loadWrIds, loadDefaults, setPlayerOverride, clearPlayerOverride, getPlayerOverride, getAvgWR12 } from './engine/wr_data';
@@ -36,6 +37,8 @@ async function requestWakeLock(): Promise<void> {
 }
 
 export function CalcPage() {
+  const { i18n } = useTranslation();
+  const isZh = i18n.language === 'zh';
   const event = useCalcStore(s => s.event);
   const compName = useCalcStore(s => s.compName);
   const setCompName = useCalcStore(s => s.setCompName);
@@ -344,7 +347,9 @@ export function CalcPage() {
         next[p] = { active: false };
         return next;
       });
-      alert('No data found for ' + person.wcaId + ' in this event.');
+      alert(isZh
+        ? `未找到 ${person.wcaId} 该项目的数据。`
+        : 'No data found for ' + person.wcaId + ' in this event.');
       return;
     }
 
@@ -394,7 +399,7 @@ export function CalcPage() {
         value={compName}
         onChange={(e) => setCompName(e.target.value)}
         onBlur={() => saveToUrl()}
-        placeholder="Result Calculator"
+        placeholder={isZh ? '成绩计算器' : 'Result Calculator'}
       />
 
       {/* SVG 图表 */}

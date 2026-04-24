@@ -1099,6 +1099,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     const h = s.players[0].solveHistory;
     if (h.length === 0) return;
 
+    const isZh = get().locale === 'zh';
     const lastEntry = h[h.length - 1];
     const effTime = getEffectiveTimeFromEntry(lastEntry);
     const messages: string[] = [];
@@ -1109,7 +1110,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       for (let i = 0; i < h.length - 1; i++) {
         if (getEffectiveTimeFromEntry(h[i]) <= effTime) { isPB = false; break; }
       }
-      if (isPB) messages.push('🏆 New PB!');
+      if (isPB) messages.push(isZh ? '🏆 新 PB!' : '🏆 New PB!');
     }
 
     // NOTE: PB ao5 检测
@@ -1117,7 +1118,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       const ao5 = computeAo5(h);
       if (ao5 !== null && ao5 !== Infinity) {
         if (h.length === 5) {
-          messages.push('🥇 New PB Ao5!');
+          messages.push(isZh ? '🥇 新 PB Ao5!' : '🥇 New PB Ao5!');
         } else {
           let prevBest: number | null = null;
           for (let i = 5; i <= h.length - 1; i++) {
@@ -1127,7 +1128,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
             }
           }
           if (prevBest === null || ao5 < prevBest) {
-            messages.push('🥇 New PB Ao5!');
+            messages.push(isZh ? '🥇 新 PB Ao5!' : '🥇 New PB Ao5!');
           }
         }
       }
@@ -1138,7 +1139,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       const ao12 = computeAverage(h, 12);
       if (ao12 !== null && ao12 !== Infinity) {
         if (h.length === 12) {
-          messages.push('🥇 New PB Ao12!');
+          messages.push(isZh ? '🥇 新 PB Ao12!' : '🥇 New PB Ao12!');
         } else {
           let prevBest: number | null = null;
           for (let i = 12; i <= h.length - 1; i++) {
@@ -1148,7 +1149,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
             }
           }
           if (prevBest === null || ao12 < prevBest) {
-            messages.push('🥇 New PB Ao12!');
+            messages.push(isZh ? '🥇 新 PB Ao12!' : '🥇 New PB Ao12!');
           }
         }
       }
@@ -1157,7 +1158,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     // NOTE: 整数里程碑
     const count = h.length;
     if ([100, 200, 500, 1000, 2000, 5000, 10000].includes(count)) {
-      messages.push(`🎯 ${count} solves!`);
+      messages.push(isZh ? `🎯 ${count} 次完成!` : `🎯 ${count} solves!`);
     }
 
     if (messages.length > 0) {

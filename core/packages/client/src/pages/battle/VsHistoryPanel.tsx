@@ -4,12 +4,13 @@
  */
 
 import { useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useBattleStore } from './engine/battle_store';
 import { formatTimePlain } from './engine/format_time';
 import { getEffectiveTimeFromEntry } from './engine/stats';
 import type { SolveEntry } from './engine/types';
 
-function formatRelativeDate(isoDate: string): string {
+function formatRelativeDate(isoDate: string, isZh: boolean): string {
   if (!isoDate) return '';
   const d = new Date(isoDate);
   const now = new Date();
@@ -18,12 +19,14 @@ function formatRelativeDate(isoDate: string): string {
   const diff = Math.round((today.getTime() - target.getTime()) / 86400000);
   const timeStr = d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
   if (diff === 0) return timeStr;
-  if (diff === 1) return 'Yesterday ' + timeStr;
+  if (diff === 1) return (isZh ? '昨天 ' : 'Yesterday ') + timeStr;
   return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + timeStr;
 }
 
 export default function VsHistoryPanel({ onClose }: { onClose: () => void }) {
   const store = useBattleStore();
+  const { i18n } = useTranslation();
+  const isZh = i18n.language === 'zh';
   const h0 = store.players[0].solveHistory;
   const h1 = store.players[1].solveHistory;
   const precision = store.timerPrecision;
@@ -90,8 +93,8 @@ export default function VsHistoryPanel({ onClose }: { onClose: () => void }) {
     }}>
       <div className="history-panel vs-history-panel">
         <div className="history-header">
-          <span className="history-title">⚔️ 1v1 History</span>
-          <span className="history-stats">{roundCount} rounds</span>
+          <span className="history-title">⚔️ 1v1 {isZh ? '历史' : 'History'}</span>
+          <span className="history-stats">{roundCount} {isZh ? '轮' : 'rounds'}</span>
           <button className="settings-x-btn" onClick={onClose}>✕</button>
         </div>
 
@@ -103,14 +106,14 @@ export default function VsHistoryPanel({ onClose }: { onClose: () => void }) {
         {/* 轮次列表 */}
         <div className="history-list">
           {roundCount === 0 && (
-            <div className="history-empty">No rounds yet</div>
+            <div className="history-empty">{isZh ? '暂无对战记录' : 'No rounds yet'}</div>
           )}
           {Array.from({ length: roundCount }, (_, i) => roundCount - 1 - i).map(i => {
             const e0 = h0[i];
             const e1 = h1[i];
             const winner = getWinner(e0, e1);
             const scramble = e0?.scramble || e1?.scramble || '';
-            const dateStr = e0?.date ? formatRelativeDate(e0.date) : '';
+            const dateStr = e0?.date ? formatRelativeDate(e0.date, isZh) : '';
             const isExpanded = expandedSet.has(i);
 
             return (

@@ -10,14 +10,15 @@ export default function AlgPostPage() {
   const { slug } = useParams<{ slug: string }>();
   const { post, loading, error } = usePostContent(slug);
   const { i18n } = useTranslation();
-  const pageLang = i18n.language.startsWith('zh') ? 'zh' : 'en';
+  const isZh = i18n.language.startsWith('zh');
+  const pageLang = isZh ? 'zh' : 'en';
   const [lang, setLang] = useState<Lang>(pageLang);
 
   if (loading) {
     return (
       <div className="alg-root">
         <div style={{ padding: 48, textAlign: 'center', color: 'var(--alg-text-muted)' }}>
-          Loading...
+          {isZh ? '加载中…' : 'Loading…'}
         </div>
       </div>
     );
@@ -26,9 +27,9 @@ export default function AlgPostPage() {
     return (
       <div className="alg-root">
         <div style={{ padding: 48, textAlign: 'center' }}>
-          <p>{error ?? '未找到此教程'}</p>
+          <p>{error ?? (isZh ? '未找到此教程' : 'Tutorial not found')}</p>
           <Link to="/alg" style={{ color: 'var(--alg-link)' }}>
-            ← 返回列表
+            {isZh ? '← 返回列表' : '← Back to list'}
           </Link>
         </div>
       </div>
@@ -44,7 +45,7 @@ export default function AlgPostPage() {
       <div className="alg-post-header">
         <div className="alg-breadcrumb">
           <Link to="/alg" className="alg-breadcrumb-back">
-            ← 公式教程
+            {isZh ? '← 公式教程' : '← Algorithms'}
           </Link>
           <span className="alg-breadcrumb-sep">/</span>
           <span>{post.category}</span>
@@ -62,7 +63,7 @@ export default function AlgPostPage() {
             className={'alg-lang-chip' + (lang === 'zh' ? ' is-active' : '')}
             onClick={() => setLang('zh')}
             disabled={!hasZh}
-            title={!hasZh ? '无中文版' : ''}
+            title={!hasZh ? (isZh ? '无中文版' : 'No Chinese version') : ''}
           >
             中
           </button>
@@ -70,7 +71,7 @@ export default function AlgPostPage() {
             className={'alg-lang-chip' + (lang === 'en' ? ' is-active' : '')}
             onClick={() => setLang('en')}
             disabled={!hasEn}
-            title={!hasEn ? 'no english version' : ''}
+            title={!hasEn ? (isZh ? '无英文版' : 'No English version') : ''}
           >
             EN
           </button>
