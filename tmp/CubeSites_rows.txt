@@ -1,0 +1,555 @@
+1|A=Event|B=Name|C=Link|D=Author|E=About|F=About (CHS)|G=YouTube|H=
+2|A=Stat|B=Cuber's Score|C=https://cuber-feng.github.io/cuberlevel/|D=Yuxiang Feng (奉于翔)|E=|F=|G=|H=
+3|A=|B=WCA Competition Predictor|C=https://odds.nmckee.org/|D=Nicholas McKee|E=|F=|G=|H=
+4|A=|B=duplex|C=http://duplex.kirjava.xyz/|D=|E=duplex is an experimental speedcubing method|F=|G=|H=
+5|A=|B=Pseudo F2L Missing Corner|C=https://docs.google.com/spreadsheets/d/1AbJ2EZm8l5vRG6WyLVo0IvBedz0wPHQ8yBrNlwfuaj0|D=|E=|F=|G=|H=
+6|A=|B=funcubing|C=http://funcubing.com/|D=|E=|F=历史上的今天|G=|H=
+7|A=|B=|C=https://mycube.club/tools/sq1-d|D=郭嘉|E=|F=|G=|H=
+8|A=|B=cubinghistory|C=https://www.cubinghistory.com/|D=|E=|F=|G=|H=
+9|A=|B=ZBLS Trainer|C=https://morganyeh06.github.io/zbls-trainer/|D=Morgan Yeh|E=|F=|G=https://youtu.be/amEKXGPV2as|H=
+10|A=|B=RelayCalculator|C=https://colab.research.google.com/drive/1NwOFAwFkXaTofk-rD7bikJoQDfJAGNFq|D=|E=https://youtu.be/5hGLsxaP07s|F=|G=|H=
+11|A=|B=WR Video Sheet|C=https://docs.google.com/spreadsheets/d/13QafkrAp3B3tAWoItuhRSs6EjjvtiUh4fmfLD8v4bSU|D=|E=|F=|G=|H=
+12|A=3x3|B=athefre|C=https://sites.google.com/site/athefre/|D=|E=|F=|G=|H=
+13|A=ZZ|B=crystalcube trainers|C=https://crystalcuber.com/|D=|E=improve the efficiency of your CFOP cross or ZZ EO|F=|G=https://youtu.be/s37aVtYOTfU|H=
+14|A=|B=|C=|D=|E=|F=|G=|H=
+15|A=|B=Head-to-head BPA/WPA calculator|C=https://htwins.net/hthgrapher/|D=Cary Huang|E=Head-to-head BPA/WPA calculator|F=1V1 BPA/WPA计算器|G=|H=
+16|A=|B=|C=|D=|E=|F=|G=|H=
+17|A=|B=SocialCubing|C=https://socialcubing.com/|D=Gil Zussman|E=Reviewing scrambles with Social Cubing!|F=|G=|H=
+18|A=|B=|C=|D=|E=|F=|G=|H=
+19|A=FTO|B=|C=|D=|E=|F=|G=|H=
+20|A=|B=Image Generator|C=https://lowcubes.com/fto/image-generator|D=|E=|F=|G=|H=
+21|A=|B=FTODrawer|C=https://github.com/Sixstringcal/FTODrawer?tab=readme-ov-file|D=|E=|F=|G=|H=
+22|A=|B=Ranking|C=https://bit.ly/ftorankings|D=Raul Low|E=|F=|G=|H=
+23|A=|B=|C=https://docs.google.com/document/d/e/2PACX-1vTDL7-XvpNrhIc2Q_1nHfeJyG7tIazgBCq88PE8ahqIbvPb3LPQsm3_vsdqX6y8sxte1n5jGk2J3c5V/pub|D=|E=|F=|G=|H=
+24|A=|B=3-Look L3T|C=https://lowcubes.com/fto/3look-l3t|D=Raul Low|E=|F=|G=|H=
+25|A=|B=TCP|C=https://docs.google.com/document/d/1EmygFPcfztXBNnm7WPAVreMLHsRbkOI589v4mESxBuQ|D=|E=|F=|G=|H=
+26|A=|B=FTO|C=https://docs.google.com/spreadsheets/d/11N8tEu0S8aXDUHAsDVJsrh3Uyr6YGn1Asvse4zfAzus|D=AB|E=|F=|G=|H=
+27|A=|B=|C=|D=|E=|F=|G=|H=
+28|A=How to improve|B=How to improve|C=reddit.com/r/Cubers/wiki/how_to_improve?v=100d8d6a-997f-11e9-ae60-0eceb7079eb8|D=|E=|F=|G=|H=
+29|A=|B=|C=|D=|E=|F=|G=|H=
+30|A=|B=CubeStat|C=https://bit.ly/cubestat|D=|E=|F=|G=|H=
+31|A=BLD 盲拧|B=BLDAlg|C=bit.ly/bldalg|D=CubeRoot|E=BLD algs|F=盲拧公式|G=|H=
+32|A=|B=|C=|D=|E=|F=|G=|H=
+33|A=FMC|B=DR State|C=alpha.twizzle.net/edit/?stickering=G1&setup-alg=B2+U2+L%27+B2+L%27+F2+R%27+D2+F2+R2+D%27+F%27+D2+R%27+U%27+F2+R+F2+L%27+D&alg=D%27+L%27+U%27+B+%2F%2F+EO%2C+4c4e%0AF2+U2+F2+D2+L2+U+D+F2+D+R%27+%2F%2F+4a2%2C4e&fbclid=IwAR2K3qMeS_wzpT3Bx_EukjmyECEPE023XoIyM-CDqhv5H8BlC6DCPHmu5NM|D=|E=|F=DR状态|G=|H=
+34|A=FMC|B=Block Trainer|C=cubegrass.appspot.com/block_trainer/|D=|E=|F=筑砖训练器|G=|H=
+35|A=FMC|B=EO Cases|C=http://cube.rider.biz/zz.php?p=eoline#eo_cases|D=|E=|F=|G=|H=
+36|A=FMC|B=FMC solves by GuidoDipietro|C=github.com/GuidoDipietro/FMC|D=GuidoDipietro|E=|F=|G=|H=
+37|A=FMC|B=FM Weekly Contest|C=fewest-moves.info|D=|E=|F=|G=|H=
+38|A=FMC|B=Cube Explorer|C=kociemba.org/cube.htm|D=|E=|F=|G=|H=
+39|A=FMC|B=HARCS Cube Solver (CFOP, ZZ, Petrus, Roux)|C=speedsolving.com/threads/harcs-jarcs-replacement-cube-solver.63241|D=|E=|F=|G=|H=
+40|A=FMC|B=Database FMC by Mauro Moises Ortega López|C=docs.google.com/spreadsheets/d/1WmnVh_-3J5IN26akcrQejNxB3A0JJAOz5TjZrT4VxE8|D=|E=|F=|G=|H=
+41|A=FMC|B=cube-solver|C=cube-solver.com/|D=|E=|F=|G=|H=
+42|A=FMC|B=FMC Workshop|C=https://fmcworkshop.com/|D=Gil Zussman|E=FMC reconstruction|F=|G=|H=
+43|A=FMC|B=HTR训练器|C=https://speedcubedb.com/htr|D=Gil Zussman|E=|F=|G=|H=
+44|A=FMC|B=HTR训练器|C=https://t.me/htrtrainerbot|D=|E=|F=|G=|H=
+45|A=FMC|B=DR/HTR解法生成器|C=https://joba.me/mallard/|D=Jonas Balsfulland|E=|F=|G=|H=
+46|A=FMC|B=DR/HTR解法生成器|C=https://github.com/Jobarion/cubelib|D=Jonas Balsfulland|E=|F=|G=|H=
+47|A=FMC|B=EoDr解法分析|C=https://github.com/enricotenuti/eodr|D=|E=|F=|G=|H=
+48|A=FMC|B=Web Nissy|C=https://cubingapp.com/nissy|D=spencerchubb|E=|F=|G=|H=
+49|A=FMC|B=Nissy|C=https://nissy.tronto.net/|D=SebastianoTronto|E=|F=|G=|H=
+50|A=FMC|B=Nissy|C=https://github.com/sebastianotronto/nissy|D=SebastianoTronto|E=|F=|G=|H=
+51|A=FMC|B=Nissy|C=https://speedsolving.com/threads/nissy-a-rubiks-cube-solver-and-fmc-assistant.86013|D=|E=|F=|G=|H=
+52|A=FMC|B=Google表格Nissy|C=https://docs.google.com/spreadsheets/d/1qu9hiJrgYAukP1w8FFYvTs3K_jHMl-HwG2ySWPT_CLg/|D=Rafael Rodriguez Santana|E=|F=|G=|H=
+53|A=FMC|B=FM Slicey Finder (插中层)|C=https://333.fm/sf|D=|E=|F=|G=|H=
+54|A=FMC|B=FM Insertion Finder (可插parity)|C=https://333.fm/if|D=|E=|F=|G=|H=
+55|A=FMC|B=A quicker way to reverse NISS a solved cube|C=https://speedsolving.com/threads/a-quicker-way-to-reverse-niss-a-solved-cube.77876/|D=Alexandre Henrique Afonso Campos|E=|F=|G=|H=
+56|A=FMC|B=|C=https://speedsolving.com/threads/fmc-a-guide-for-finding-drs-domino-reduction-guide.87402/|D=Jayden McNeill|E=|F=|G=|H=
+57|A=FMC|B=(FMC) A guide for finding HTR's once you've found a DR|C=https://speedsolving.com/threads/fmc-a-guide-for-finding-htrs-once-youve-found-a-dr.87220/|D=Jayden McNeill|E=|F=|G=|H=
+58|A=FMC|B=Updated HTR guide for FMC (Introduction to HTR subsets)|C=https://speedsolving.com/threads/updated-htr-guide-for-fmc-introduction-to-htr-subsets.88751/|D=Jayden McNeill|E=|F=|G=|H=
+59|A=FMC|B=FMC: My recommended approach for recognizing all 12 HTR corner subsets|C=https://speedsolving.com/threads/fmc-my-recommended-approach-for-recognizing-all-12-htr-corner-subsets.90515/|D=Jayden McNeill|E=|F=|G=|H=
+60|A=FMC|B=HTR subset|C=https://docs.google.com/document/d/1cQb_UMFvcVr4-SOR42u8gNMP9Ovx6WXxxUA5tolY8v0|D=Jayden McNeill|E=|F=|G=|H=
+61|A=FMC|B=HTR better smh (v2)|C=https://docs.google.com/spreadsheets/d/1ZhulzHeNgv2Hiy4x9R1MzsMRlPlI-E8DRiHFJlPlboM/|D=Wong Chong Wen (黄崇文)|E=|F=|G=|H=
+62|A=FMC|B=DR corners with just 7 algs|C=https://youtu.be/BelopwUXJAE|D=Wong Chong Wen (黄崇文)|E=|F=|G=|H=
+63|A=FMC|B=Domino Setup Theory|C=https://docs.google.com/document/d/1Z3O8BY1LbAMF6m55ufXtSdtBVwSJpMArtRrDT-p_CwM|D=Rodney Kinney|E=|F=|G=|H=
+64|A=FMC|B=DR Corner Case Generators|C=https://docs.google.com/spreadsheets/d/1UrOAMIpqV6_tYtZxnVxjucbqh1UaxCejOEPzbPmyh9E|D=Rodney Kinney|E=|F=|G=|H=
+65|A=FMC|B=Multi-Axis DR|C=https://docs.google.com/spreadsheets/d/1fYdYEGlBk3bv5x2WVSA0NtsPWVlNKbtyK-Iq-J6VjDY|D=Rodney Kinney|E=|F=|G=|H=
+66|A=FMC|B=Domino Reduction Corner Case Catalog|C=https://docs.google.com/spreadsheets/d/1eFKklsRcmYw3RPvsdJd5XqZl_pU-pEMblI4pFR2Q6SI|D=Rodney Kinney|E=|F=|G=|H=
+67|A=FMC|B=Hyper-Parity|C=https://docs.google.com/document/d/1Onc2lu5iW_ODnT71oN5lgpVVjVqbvUMzaylzxgykx0I|D=Rodney Kinney|E=|F=|G=|H=
+68|A=FMC|B=HTR Theory|C=https://docs.google.com/document/d/1HjS92UBCeCasbW44ezE0fjt5vmWQvlfkaC4rA113nmw|D=Rodney Kinney|E=|F=|G=|H=
+69|A=FMC|B=HTR Corner Funnel|C=https://docs.google.com/drawings/d/13YC_TQah9RZXC75vAhya0lruagiLDpXExuMgqCFCNTM|D=Rodney Kinney|E=|F=|G=|H=
+70|A=FMC|B=HTR Corner Maze|C=https://docs.google.com/drawings/d/1hS7kE1XnV5Tk5VkB7uffm_VJA-ZV7LDPaADaIm4tRCo|D=Rodney Kinney|E=|F=|G=|H=
+71|A=FMC|B=HTR Edge Maze|C=https://docs.google.com/drawings/d/1LzRB9oJFBsyFYMQPr_C7DjwY-psdJUbKspGrsHpTVBM|D=Rodney Kinney|E=|F=|G=|H=
+72|A=FMC|B=Floppy Reduction|C=https://docs.google.com/document/d/1ABI-7W5KpoSavKJuPx_5wlOMWdtgYNpNzCp8fDsEgEw/|D=Rodney Kinney|E=|F=|G=|H=
+73|A=FMC|B=Floppy Reduction|C=https://docs.google.com/spreadsheets/d/1mD_ogaVwWn1nWTQfTG8znaJ8EyeDvJJo89DIYf805iE/|D=Cale Schoon|E=|F=|G=|H=
+74|A=FMC|B=Corner Swap Insertions|C=https://docs.google.com/document/d/1DWHAr_19a3P2zlRJyXzmW-wefk5AV_kuy1kKCBP8j_c|D=Rodney Kinney|E=|F=|G=|H=
+75|A=FMC|B=DR PBL |C=https://docs.google.com/spreadsheets/d/1QRXIvCt5jigjxjJyfbfrITqyZViJyX2XRg0lkxQnXeU/|D=|E=|F=|G=|H=
+76|A=FMC|B=插中层|C=https://sebastiano.tronto.net/speedcubing/slice-theory/|D=SebastianoTronto|E=|F=|G=|H=
+77|A=FMC|B=棱换公式|C=https://github.com/xuanyan0x7c7/insertionfinder/blob/master/data/algorithms/2x2EP.txt|D=Yan Xuan|E=|F=|G=|H=
+78|A=FMC|B=Insertion Finder|C=https://github.com/xuanyan0x7c7/insertionfinder|D=Yan Xuan|E=|F=|G=|H=
+79|A=FMC|B=Sub-6 DR triggers|C=https://docs.google.com/spreadsheets/d/18WzVYhWRs7YfhMAx05lgkmMdPJROpGYVL8zmvmOo_qs|D=|E=|F=|G=|H=
+80|A=FMC|B=DR-xcye|C=https://docs.google.com/spreadsheets/d/11bTZ4Y7_6qKlIWo4a4TLW45M2ZkctQZAVxgQqEtlUs0/|D=Cale Schoon|E=|F=|G=|H=
+81|A=FMC|B=DR-xcye统计 The same thing but only allowing setups to common triggers (more realistic)|C=https://docs.google.com/spreadsheets/d/17vBxLZN9ePf9GzqMi0iAO9ZQq2eVObWSC7dVMkSMJM8|D=Cale Schoon|E=|F=|G=|H=
+82|A=FMC|B=DR setup stats allowing the last move to be inverted|C=https://docs.google.com/spreadsheets/d/1_2PmFv1KyBX335SjSb4oweS0sx804fIhbuP50D-gBj4/|D=|E=|F=|G=|H=
+83|A=FMC|B=Official 5 move EO counts (>4000 scrambles)|C=https://docs.google.com/spreadsheets/d/1jLDRWYn31ou-Br3ReNVH7EnDYPovMZLIpuCWWZEBCO8/|D=|E=|F=|G=|H=
+84|A=FMC|B=JZP setup stats|C=https://docs.google.com/spreadsheets/d/1gLzAG-8eu3PjEbugTZ_hTtlFXiZpqysiCAunI_nJgvI/|D=|E=|F=|G=|H=
+85|A=FMC|B=DR finish and leave slice stats|C=https://docs.google.com/document/d/1n_npbfRqZQEFJXu8p5Kb6GOw0jAn667MvWdw87HWhmE/|D=|E=|F=|G=|H=
+86|A=FMC|B=Extra QT stats for DR finishes|C=https://docs.google.com/spreadsheets/d/1fPCjS1ZQlP_Munut9MQkSbsL3CEdtT3LC5h3R8OMHGw/|D=|E=|F=|G=|H=
+87|A=FMC|B=EO bad edges distribution |C=https://speedsolving.com/threads/probability-thread.20384/page-96#post-1520621|D=|E=|F=|G=|H=
+88|A=FMC|B=HTR Subset Stats|C=https://docs.google.com/spreadsheets/d/17iChOoeB205t3wHTXMLrjM9si2vtxRgFeYR2z3pn1i0/|D=Aedan Bryant|E=|F=|G=|H=
+89|A=FMC|B=DR corner QT distribution|C=https://docs.google.com/spreadsheets/d/1tv8rwo2GF9IWuywFTnde_YlikIPBQvHqW9pysNG6BPM/|D=Rodney Kinney|E=|F=|G=|H=
+90|A=FMC|B=HTR -> double slice|C=https://docs.google.com/document/d/1cIftgL8ozyAlBGM3EZcXZy_hE5pNDHYIRDie5R1ocAk/|D=Cale Schoon|E=|F=|G=|H=
+91|A=|B=|C=|D=|E=|F=|G=|H=
+92|A=|B=|C=|D=|E=|F=|G=|H=
+93|A=|B=|C=|D=|E=|F=|G=|H=
+94|A=|B=|C=|D=|E=|F=|G=|H=
+95|A=|B=|C=|D=|E=|F=|G=|H=
+96|A=|B=|C=|D=|E=|F=|G=|H=
+97|A=competition & Statistics 魔方比赛和统计|B=WCA|C=worldcubeassociation.org|D=|E=World Cubing Association|F=世界魔方协会|G=|H=
+98|A=competition & Statistics 魔方比赛和统计|B=Competition Groups|C=https://competitiongroups.com/|D=|E=|F=|G=|H=
+99|A=competition & Statistics 魔方比赛和统计|B=WCA China com/p|C=cubing.com/|D=|E=|F=|G=|H=
+100|A=competition & Statistics 魔方比赛和统计|B=WCA Live|C=live.worldcubeassociation.org|D=|E=|F=赛事成绩直播|G=|H=
+101|A=competition & Statistics 魔方比赛和统计|B=WCA Statistics|C=statistics.worldcubeassociation.org|D=|E=|F=WCA数据|G=|H=
+102|A=competition & Statistics 魔方比赛和统计|B=Cubing Contest (Non-China)|C=cubingcontests.com/|D=|E=|F=unofficial Rubik's cube competitions, unofficial events 镜面魔方 趣味项目|G=|H=
+103|A=competition & Statistics 魔方比赛和统计|B=WCA API|C=https://wca-rest-api.robiningelbrecht.be/|D=|E=|F=|G=|H=
+104|A=competition & Statistics 魔方比赛和统计|B=Unofficial China com/p|C=topcubers.com/|D=|E=|F=中国魔方赛事共创平台|G=|H=
+105|A=competition & Statistics 魔方比赛和统计|B=Senior Rankings|C=logiqx.github.io/wca-ipy-www/Senior_Rankings.html|D=|E=|F=老年魔友|G=|H=
+106|A=competition & Statistics 魔方比赛和统计|B=WCA Statistics 数据统计|C=https://jonatanklosko.github.io/wca_statistics|D=|E=|F=|G=|H=
+107|A=competition & Statistics 魔方比赛和统计|B=WCA Statistics 数据统计|C=https://github.com/RuiminYan|D=|E=|F=|G=|H=
+108|A=competition & Statistics 魔方比赛和统计|B=Sam's WCA Statistics List|C=sam596.github.io/WCA-Stats|D=|E=|F=WCA数据|G=|H=
+109|A=competition & Statistics 魔方比赛和统计|B=Rankings by Group|C=jonatanklosko.github.io/rankings|D=|E=|F=自定义分组排名|G=|H=
+110|A=competition & Statistics 魔方比赛和统计|B=Top players for this weekend (average)|C=maxidragon.github.io/TopPlayers|D=|E=|F=|G=|H=
+111|A=competition & Statistics 魔方比赛和统计|B=脚拧|C=worldcubeassociation.org/results/rankings/333ft|D=|E=|F=|G=|H=
+112|A=competition & Statistics 魔方比赛和统计|B=八板|C=worldcubeassociation.org/results/rankings/magic|D=|E=|F=|G=|H=
+113|A=competition & Statistics 魔方比赛和统计|B=十二板|C=worldcubeassociation.org/results/rankings/mmagic|D=|E=|F=|G=|H=
+114|A=competition & Statistics 魔方比赛和统计|B=旧多盲|C=worldcubeassociation.org/results/rankings/333mbo|D=|E=|F=|G=|H=
+115|A=competition & Statistics 魔方比赛和统计|B=extraevents.org趣味项目|C=extraevents.org|D=not working|E=|F=|G=|H=
+116|A=competition & Statistics 魔方比赛和统计|B=锦标赛成绩|C=tim.cubing.net/statistics/champions.php?r=world|D=|E=|F=|G=|H=
+117|A=competition & Statistics 魔方比赛和统计|B=WCA analyzer|C=hmatthewmcmillan.me/wca-analyzer|D=|E=|F=|G=|H=
+118|A=competition & Statistics 魔方比赛和统计|B=CubingChina 粗饼网|C=cubingchina.com/|D=|E=|F=|G=|H=
+119|A=|B=粗饼抽奖|C=https://cubing.com/tools/luckyDraw|D=|E=|F=|G=|H=
+120|A=competition & Statistics 魔方比赛和统计|B=CubingUSA|C=cubingusa.org|D=|E=|F=|G=|H=
+121|A=competition & Statistics 魔方比赛和统计|B=Live com/petition App|C=Cubecomps App|D=|E=|F=|G=|H=
+122|A=competition & Statistics 魔方比赛和统计|B=Tnoodle online|C=https://tnoodle.cuber.pro/|D=Yunqi Ouyang|E=|F=|G=|H=
+123|A=competition & Statistics 魔方比赛和统计|B=线上比赛|C=cubers.io|D=|E=|F=|G=|H=
+124|A=competition & Statistics 魔方比赛和统计|B=Scramble Program 打乱程序|C=cubing.net/mark2|D=|E=|F=|G=|H=
+125|A=competition & Statistics 魔方比赛和统计|B=Scramble Program Prototype (UNOFFICIAL)|C=https://experiments.cubing.net/cubing.js/mark3/|D=|E=|F=|G=|H=
+126|A=competition & Statistics 魔方比赛和统计|B=WCA Analyzer|C=matthewmcmillan.me/wca-analyzer|D=|E=|F=|G=|H=
+127|A=competition & Statistics 魔方比赛和统计|B=Ranks 排名|C=wcadb.net/kinchranks.php|D=|E=|F=|G=|H=
+128|A=competition & Statistics 魔方比赛和统计|B=Nemesis 宿敌|C=nemesizer.com/|D=|E=|F=|G=|H=
+129|A=competition & Statistics 魔方比赛和统计|B=WB 世界最好|C=speedsolving.com/wiki/index.php/List_of_Unofficial_World_Records|D=|E=|F=|G=|H=
+130|A=competition & Statistics 魔方比赛和统计|B=WCA Statistics|C=campos20.github.io/wca-statistics|D=|E=|F=|G=|H=
+131|A=|B=|C=|D=|E=|F=|G=|H=
+132|A=|B=Monkey League 懒猴联盟线上比赛|C=monkeyleague.org|D=|E=|F=|G=|H=
+133|A=|B=|C=|D=|E=|F=|G=|H=
+134|A=|B=WCA Events Tier|C=tiermaker.com/create/ranking-wca-events-2019-42487|D=|E=|F=wca-events ranking|G=|H=
+135|A=|B=|C=|D=|E=|F=|G=|H=
+136|A=Timer 计时器|B=csTimer|C=cstimer.net|D=|E=|F=|G=|H=
+137|A=Timer 计时器|B=csTimer new|C=cstimer.net/new|D=Shuang Chen|E=|F=|G=|H=
+138|A=Timer 计时器|B=CubingTime|C=cubingtime.com/|D=|E=|F= 网络对战|G=|H=
+139|A=Timer 计时器|B=DCTimer|C=https://dctimer.cn/|D=Yuanming Zhang|E=|F=|G=|H=
+140|A=Timer 计时器|B=Cube Challenge|C=App Store & Google Play|D=|E=|F=1V1|G=|H=
+141|A=Timer 计时器|B=Twisty Timer|C=https://github.com/aricneto/TwistyTimer/releases/tag/v4.7.0
+https://play.google.com/store/apps/details?id=com.aricneto.twistytimer|D=|E=|F=|G=|H=
+142|A=Timer 计时器|B=qqTimer|C=qqtimer.net|D=Michael Gottlieb|E=|F=|G=|H=
+143|A=Timer 计时器|B=qqTimer (Custom Scrambler - Scramble for Any Subset)|C=gyroninja.net/timer/?customScramble=0,3,4,5,6,7%7C7,8,9,10,11%7C3,4,5,6,7%7C%7C%7C%7C%7C|D=|E=speedsolving.com/threads/custom-scrambler-scramble-for-any-subset-of-the-cube.61882|F=qqtimer镜像 可自定义打乱|G=|H=
+144|A=Timer 计时器|B=cubeast 魔东方|C=cubeast.com/|D=|E=|F=|G=|H=
+146|A=|B=|C=|D=|E=|F=|G=|H=
+147|A=|B=|C=|D=|E=|F=|G=|H=
+148|A=|B=|C=|D=|E=|F=|G=|H=
+149|A=|B=|C=|D=|E=|F=|G=|H=
+150|A=|B=|C=|D=|E=|F=|G=|H=
+151|A=|B=|C=|D=|E=|F=|G=|H=
+152|A=|B=|C=|D=|E=|F=|G=|H=
+153|A=|B=|C=|D=|E=|F=|G=|H=
+154|A=|B=Pixillion Image Converter Software|C=https://nchsoftware.com/imageconverter/|D=|E=|F=图片格式批量转换|G=|H=
+155|A=Non-cubing|B=Emoji|C=emojipedia.org|D=|E=|F=|G=|H=
+156|A=Non-cubing|B=识字体网 likfont|C=https://likefont.com/|D=|E=|F=|G=|H=
+157|A=Non-cubing|B=Wayback Machine|C=web.archive.org|D=|E=Internet Archive|F=网站历史记录|G=|H=
+158|A=Non-cubing|B=draw.io|C=draw.io|D=|E=Flowcharts|F=流程图 |G=|H=
+159|A=Non-cubing|B=壁纸|C=wallpapertip.com/|D=|E=|F=|G=|H=
+160|A=Non-cubing|B=OCR |C=onlineocr.net|D=|E=|F=|G=|H=
+161|A=Non-cubing|B=神奇海螺试验场 蒸汽波 |C=lab.magiconch.com/vaporwave|D=|E=|F=|G=|H=
+162|A=Non-cubing|B=录屏OBS|C=obsproject.com/|D=|E=|F=|G=|H=
+163|A=Non-cubing|B=抖音|C=douyin.com/|D=|E=|F=|G=|H=
+164|A=Non-cubing|B=TikTok|C=tiktok.com/|D=|E=|F=|G=|H=
+165|A=Non-cubing|B=抖音& TikTok Downloader|C=dlpanda.com/zh-CN|D=|E=|F=|G=|H=
+166|A=Non-cubing|B=TikTok Downloader|C=ssstiktok.io|D=|E=|F=|G=|H=
+167|A=Non-cubing|B=Instagram|C=snapinsta.app/|D=|E=|F=|G=|H=
+168|A=Non-cubing|B=facebook|C=facebook.com/|D=|E=|F=|G=|H=
+169|A=Non-cubing|B=facebook手机端 (用于视频下载)|C=m.facebook.com/
+mbasic.facebook.com/|D=|E=|F=|G=|H=
+170|A=Non-cubing|B=facebook视频下载|C=https://fdown.net/download.php|D=|E=|F=|G=|H=
+171|A=Non-cubing|B=facebook视频下载|C=getfvid.com/|D=|E=|F=|G=|H=
+172|A=Non-cubing|B=YouTube|C=youtube.com/|D=|E=|F=|G=|H=
+173|A=Non-cubing|B=Youtube Stats|C=socialblade.com/youtube/channel/UCbfpdplb0KchARDQKsrpfPA|D=|E=|F=|G=|H=
+174|A=Non-cubing|B=Live Youtube Subscriber Count|C=influencermarketinghub.com/live-sub-count|D=|E=|F=|G=|H=
+175|A=Non-cubing|B=Youtube数据分析|C=socialblade.com/youtube|D=|E=|F=|G=|H=
+176|A=Non-cubing|B=镜像Youtube视频|C=mirrorthevideo.com/|D=|E=|F=|G=|H=
+177|A=Non-cubing|B=Screenshot YouTube 截屏|C=chrome.google.com/webstore/detail/screenshot-youtube/gjoijpfmdhbjkkgnmahganhoinjjpohk|D=|E=|F=|G=|H=
+178|A=Non-cubing|B=YouTube Video - IDM|C=internetdownloadmanager.com/|D=|E=|F=|G=|H=
+179|A=Non-cubing|B=YouTube Download|C=loader.to/en94/1080p-video-downloader.html|D=|E=|F=|G=|H=
+180|A=Non-cubing|B=YouTube Video – yt5s.com/|C=yt5s.com/|D=|E=|F=|G=|H=
+181|A=Non-cubing|B=YouTube Audio - MP3 Pro|C=mp3offline.org|D=|E=|F=|G=|H=
+182|A=Non-cubing|B=|C=get-youtube-thumbnail.com/
+ getyoutubevideothumbnail.com/
+ youtube-thumbnail-grabber.com/
+ canva.com/create/youtube-thumbnails|D=|E=|F=YouTube Thumbnail Image|G=|H=
+183|A=Non-cubing|B=|C=downsub.com/ (字幕文件兼容, 可分P)
+ savesubs.com/ (网站无广告)|D=|E=|F=Youtube Subtitles字幕|G=|H=
+184|A=Non-cubing|B=|C=meersworld.net/2020/06/how-to-see-full-size-youtube-account-picture.html|D=|E=|F=Youtube Profile头像下载|G=|H=
+185|A=Non-cubing|B=|C=convert.jamack.net/zh/|D=|E=|F=字幕格式转换|G=|H=
+186|A=Non-cubing|B=|C=greasyfork.org/en/scripts/26654-netflix-subtitle-downloader|D=|E=|F=Netflix - subtitle downloader|G=|H=
+187|A=Non-cubing|B=|C=anatolt.ru/t/del-timestamp-srt.html|D=|E=|F=Extract Text only from subtitle and remove timestamps 移除时间戳|G=|H=
+188|A=Non-cubing|B=|C=space.bilibili.ooo/432490072|D=|E=|F=b站数据|G=|H=
+189|A=Non-cubing|B=|C=bilibili.com/|D=|E=|F=Bilibili 哔哩哔哩|G=|H=
+190|A=Non-cubing|B=|C=greasyfork.org/zh-CN/scripts/396288-原页面打开|D=|E=|F=强制哔哩哔哩的链接在原页面打开|G=|H=
+191|A=Non-cubing|B=|C=galmoe.com/|D=|E=|F=B站封面提取|G=|H=
+192|A=Non-cubing|B=|C=biliob.com/|D=|E=|F=哔哩哔哩数据|G=|H=
+193|A=Non-cubing|B=|C=greasyfork.org/en/scripts/398535-bv2av|D=|E=|F=BV号to AV号|G=|H=
+194|A=Non-cubing|B=|C=b2a.dreampsalm.top|D=|E=|F=BV号⇆AV号|G=|H=
+195|A=Non-cubing|B=|C=bilibili.com/blackboard/activity-BPU2019.html#/stage2|D=|E=|F=百大Up主|G=|H=
+196|A=Non-cubing|B=|C=v.ranks.xin|D=|E=|F=腾讯视频、秒拍视频、微博视频、今日头条、阳光宽频网、快手、微信、百度视频、梨视频、西瓜视频|G=|H=
+197|A=Non-cubing|B=|C=shipinhao.org/download|D=|E=|F=视频号视频下载|G=|H=
+198|A=Non-cubing|B=|C=wxmarkdown.com/|D=|E=|F=公众号 X 小程序助手
+ 帮你快速生成可以插入公众号文章中的小程序链接|G=|H=
+199|A=Non-cubing|B=|C=mediaarea.net/en/MediaInfo/Download/Windows|D=|E=|F=Mediainfo视频信息|G=|H=
+200|A=Non-cubing|B=remove bg|C= remove.bg/zh/upload|D=|E=youtu.be/AGomhH8dRfM|F=封面图抠图|G=|H=
+201|A=Non-cubing|B=|C=github.com/lltcggie/waifu2x-caffe/releases|D=|E=|F=图片放大|G=|H=
+202|A=Non-cubing|B=PNG|C=https://pngtree.com/so|D=|E=|F=|G=|H=
+203|A=|B=|C=|D=|E=|F=|G=|H=
+204|A=|B=|C=|D=|E=|F=|G=|H=
+205|A=|B=|C=|D=|E=|F=|G=|H=
+206|A=|B=|C=|D=|E=|F=|G=|H=
+207|A=|B=|C=|D=|E=|F=|G=|H=
+208|A=|B=|C=|D=|E=|F=|G=|H=
+209|A=|B=|C=|D=|E=|F=|G=|H=
+210|A=|B=|C=|D=|E=|F=|G=|H=
+211|A=|B=|C=|D=|E=|F=|G=|H=
+212|A=|B=|C=|D=|E=|F=|G=|H=
+213|A=|B=|C=|D=|E=|F=|G=|H=
+214|A=|B=|C=|D=|E=|F=|G=|H=
+215|A=|B=|C=|D=|E=|F=|G=|H=
+216|A=|B=|C=|D=|E=|F=|G=|H=
+217|A=|B=|C=|D=|E=|F=|G=|H=
+218|A=|B=|C=|D=|E=|F=|G=|H=
+219|A=|B=|C=|D=|E=|F=|G=|H=
+220|A=|B=|C=|D=|E=|F=Learning 学习|G=|H=
+221|A=|B=|C=speedsolving.com/wiki|D=|E=|F=encyclopedia 百科全书|G=|H=
+222|A=|B=|C=speedsolving.com/forum|D=|E=|F=Cubing Forum 魔方论坛|G=|H=
+223|A=|B=|C=ruwix.com/|D=|E=|F=Rubik's Cube & Twisty Puzzle Wiki|G=|H=
+224|A=|B=|C=cubing.net|D=|E=|F=cubing.net|G=|H=
+225|A=|B=|C=reddit.com/r/Cubers|D=|E=|F=Reddit|G=|H=
+226|A=|B=|C=mzrg.com/rubik|D=|E=|F=MZRG|G=|H=
+227|A=|B=|C=bbs.mf8-china.com/|D=|E=|F=China Cubing BBS 魔方吧|G=|H=
+228|A=|B=|C=github.com/Logiqx/cubing-docs|D=|E=|F=Cube PPT & PDF|G=|H=
+229|A=|B=|C=twistypuzzles.com/|D=|E=|F=Twisty Puzzles|G=|H=
+230|A=|B=|C=twistypedia.oskarvandeventer.nl|D=|E=|F=Twistypedia|G=|H=
+231|A=|B=|C=cube3x3.com/|D=|E=|F=cube3x3|G=|H=
+232|A=|B=|C=mf100.org|D=|E=|F=魔方乐园|G=|H=
+233|A=|B=|C=video.rubik.com/.cn|D=|E=|F=魔方小站|G=|H=
+234|A=|B=|C=|D=|E=|F=|G=|H=
+235|A=|B=|C=|D=|E=|F=|G=|H=
+236|A=Chat 聊天|B=|C=github.com/Cubeur-manchot/AlgBot|D=|E=|F=Discord Bot 机器人|G=|H=
+237|A=|B=|C=letscube.net/|D=|E=|F=线上聊天+玩魔方|G=|H=
+238|A=|B=|C=|D=|E=|F=|G=|H=
+239|A=|B=|C=|D=|E=|F=|G=|H=
+240|A=Algorithm Database 公式库|B=Speed Cube DB|C=speedcubedb.com/|D=Gil Zussman|E=|F=|G=|H=
+241|A=|B=3x3 Scramble Analyzer|C=https://speedcubedb.com/analyze|D=Gil Zussman|E=CFOP FMC, OLL/PLL/LL Skip Finder|F=|G=|H=
+242|A=|B=AlgDb|C=algdb.net|D=|E=|F=|G=|H=
+243|A=|B=eff|C=docs.google.com/spreadsheets/d/1BBFI6w03bg9PGOrzkUmcU-MleXokT73gjXPeyStDbqc/|D=|E=|F=|G=|H=
+244|A=|B=|C=|D=|E=|F=|G=|H=
+245|A=|B=|C=|D=|E=|F=|G=|H=
+246|A=|B=|C=|D=|E=|F=|G=|H=
+247|A=|B=|C=|D=|E=|F=|G=|H=
+248|A=Image & Algorithm Translator 图片和公式转换器|B=VisualCube|C=cube.rider.biz|D=|E=|F=|G=|H=
+249|A=|B=VisualCube (Mirror)|C=algs.cuber.pro/visualcube/visualcube.php|D=Yunqi Ouyang|E=|F=|G=|H=
+250|A=|B=Cubicle Algdb Image Gen|C=http://cubiclealgdbimagegen.azurewebsites.net/|D=|E=|F=|G=|H=
+251|A=|B=Algorithm Translator|C=cube.rider.biz/algtrans.html (在F12模式下使用)|D=|E=|F=公式转换|G=|H=
+252|A=|B=puzzle-gen|C=github.com/tdecker91/puzzle-gen|D=|E=|F=WCA图片生成|G=|H=
+253|A=|B=Rotation Remover 去转体|C=mzrg.com/rubik/rotations.shtml|D=|E=|F=|G=|H=
+254|A=|B=Order Calculator 公式的阶 / 周期 /循环|C=mzrg.com/rubik/ordercalc.shtml|D=|E=|F=|G=|H=
+255|A=|B=WCA Event Logo WCA项目Logo|C=github.com/cubing/icons/tree/master/svgs/event|D=|E=|F=|G=|H=
+256|A=|B=|C=|D=|E=|F=|G=|H=
+257|A=|B=|C=|D=|E=|F=|G=|H=
+258|A=Reconstructions 复盘|B=|C=|D=|E=|F=|G=|H=
+259|A=|B=|C=reco.nz/solve/index|D=|E=|F=复盘|G=|H=
+260|A=|B=|C=basilio.dev/cubing/|D=|E=|F=basilio.dev|G=|H=
+261|A=|B=|C=onionhoney.github.io/cubesplit/|D=|E=|F=cubesplit|G=|H=
+262|A=|B=|C=cubesolv.es|D=|E=|F=cubesolves|G=|H=
+263|A=|B=|C=reddit.com/user/Anonymous_
+ reddit.com/user/BrestCubing|D=|E=|F=Stuart Clark, BrestCubing|G=|H=
+264|A=|B=|C=reconstructions.jonatanklosko.com/|D=|E=|F=文字复盘工具|G=|H=
+265|A=|B=|C=speedsolving.com/forum/threads/the-reconstruction-thread.29123|D=|E=|F=Recon Thread|G=|H=
+266|A=|B=|C=speedsolving.com/forum/threads/feliks-6-44-3x3-avg100.62973/#post-1205208|D=|E=|F=Feliks 6.44 3x3 
+ avg100 reconstructions|G=|H=
+267|A=|B=|C=basilio.dev/cubing|D=|E=|F=Recon Viewer / Stat|G=|H=
+268|A=|B=|C=sourceforge.net/projects/mpc-hc|D=|E=|F=Media Player Classic 视频慢放|G=|H=
+269|A=|B=|C=https://huazhechen.github.io/cuber/dist/?mode=director|D=|E=|F=魔方栈|G=|H=
+270|A=|B=|C=|D=|E=|F=|G=|H=
+271|A=|B=|C=|D=|E=|F=|G=|H=
+272|A=3x3 三阶|B=|C=tao-yu.github.io/Alg-Trainer|D=|E=|F=Alg Trainer - Tao Yu (Trainyu)|G=|H=
+273|A=3x3 三阶|B=|C=cubezone.be/crossstudy.html|D=|E=|F=Cross 十字|G=|H=
+274|A=3x3 三阶|B=Cross Lookahead|C=https://bit.ly/CrossLookahead|D=|E=|F=|G=|H=
+275|A=3x3 三阶|B=Lookahead|C=https://app--cube-lookahead-24bc12e4.base44.app|D=DAN BOHARON|E=|F=|G=|H=
+276|A=3x3 三阶|B=|C=christianvaughn.net/C2F2L|D=|E=|F=Cross Trainer|G=|H=
+277|A=3x3 三阶|B=|C=ruffleduck.github.io/eocross|D=|E=x|F=EOcross solver|G=|H=
+278|A=3x3 三阶|B=|C=tiermaker.com/create/3x3-oll|D=|E=|F=OLL Tier List Maker|G=|H=
+279|A=3x3 三阶|B=|C=cubeskills.com/tools/pll-recognition-trainer|D=|E=|F=PLL Recognition Test|G=|H=
+280|A=3x3 三阶|B=|C=docs.google.com/spreadsheets/d/1cHGBn9H-QnRmaWFkufnNUxCysnr6ngi_f6BxkXEPnco|D=|E=|F=sub 1 PLL framecounts|G=|H=
+281|A=3x3 三阶|B=|C=docs.google.com/spreadsheets/d/1eaRnpSmZXsucUtkcTpDeM2WXU5PQ9K_d6GK42jTrBSI|D=|E=|F=Brian PLL Time Attack PLL连拧|G=|H=
+282|A=3x3 三阶|B=|C=cube.crider.co.uk/coracle.html|D=|E=|F=Corner Lookahead Trainer|G=|H=
+283|A=3x3 三阶|B=|C=briefcubing.com/|D=|E=|F=Brief Drills (Trainer) (AI Cube)|G=|H=
+284|A=3x3 三阶|B=|C=bestsiteever.net|D=|E=|F=OLL/PLL/ZBLL Trainer|G=|H=
+285|A=3x3 三阶|B=|C=https://docs.google.com/spreadsheets/d/1-uwmZHf4vwJxFgeB3-TiF8MQ0RFSS30d5CUK96PoIwk|D=|E=|F=Juju ZBLL|G=|H=
+286|A=3x3 三阶|B=|C=docs.google.com/spreadsheets/d/1Weq070eEdikNabuWA-x0NeE6quAHgZYkui1s6VjAaNA|D=|E=|F=Pure OLL Algorithms|G=|H=
+287|A=3x3 三阶|B=|C=goo.gl/LkuTmS|D=|E=|F=1LLL Algorithms|G=|H=
+288|A=3x3 三阶|B=|C=birdflu.lar5.com/|D=|E=|F=1LLL com/bo Algs|G=|H=
+289|A=3x3 三阶ZZ|B=ZZ Method|C=https://zzmethod.com/|D=|E=|F=|G=|H=
+290|A=|B=|C=|D=|E=|F=|G=|H=
+291|A=Roux 桥式|B=|C=docs.google.com/document/d/e/2PACX-1vQ6BonYsy6mpZyb0B1C56qWS7RBOdC_n63cFsx98b572yD_dYZsGU1DjpjfJtL1uA9Sk_wZUdN5b1zU/pub|D=|E=https://youtu.be/WUhbyET3Aig|F=资源合集|G=|H=
+292|A=Roux 桥式|B=|C=rouxl.es|D=|E=|F=by Anto Kam (甘浩東) Ho Tung 甘浩東|G=|H=
+293|A=Roux 桥式|B=|C=onionhoney.github.io/roux-trainers|D=|E=|F=Roux-Trainers – 
+ Zhouheng Sun (孙舟横) 孙舟横|G=|H=
+294|A=|B=|C=jeremyg.nl/EOLRb|D=|E=|F=EOLR Trainer|G=|H=
+295|A=|B=|C=|D=|E=|F=|G=|H=
+296|A=|B=|C=|D=|E=|F=|G=|H=
+297|A=2x2 二阶|B=|C=https://twoobytwoo.com/|D=|E=|F=|G=|H=
+298|A=2x2 二阶|B=Solver|C=https://www.jaapsch.net/puzzles/javascript/cube2j.htm|D=|E=|F=|G=|H=
+299|A=2x2 二阶|B=|C=two-tools.com/|D=|E=|F=2x2 Speedsolving by Will Callan|G=|H=
+300|A=2x2 二阶|B=2x2 Face/Layer|C=cubegrass.appspot.com/2x2face|D=|E=|F=2x2 Face Trainer|G=|H=
+301|A=2x2 二阶|B=Best 2x2 Algs|C=docs.google.com/spreadsheets/d/1OFXakCV85Mp2zsQBXMxiMX9a506JeAcLnUXZr8FgXAY/|D=|E=|F=2x2 EG Algorithms|G=|H=
+302|A=2x2 二阶|B=|C=fewestmov.es/cube/EGTrainer.cube|D=|E=|F=2×2 EG Trainer|G=|H=
+303|A=2x2 二阶|B=2x2 LS Trainer|C=https://mihlefeld.github.io/Alg-Trainers/2x2-LS-Trainer|D=|E=|F=LS Trainer|G=|H=
+304|A=|B=|C=|D=|E=|F=|G=|H=
+305|A=|B=|C=|D=|E=|F=|G=|H=
+306|A=Big 高阶|B=|C=|D=|E=|F=高阶虚拟魔方|G=|H=
+307|A=Big 高阶|B=|C=benwh.000webhostapp.com/software/cubesim|D=|E=|F=CubeSim - Ben Whitmore|G=|H=
+308|A=Big 高阶|B=|C=mzrg.com/rubik/iso|D=|E=|F=IsoCubeSim - Michael Gottlieb|G=|H=
+309|A=Big 高阶|B=|C=play.google.com/store/apps/details?id=com/.tao.tao.cubesim|D=|E=|F=Cube Sim - Tao Yu|G=|H=
+310|A=Big 高阶|B=|C=|D=|E=|F=|G=|H=
+311|A=Big 高阶|B=|C=|D=|E=|F=High Dimension 高维|G=|H=
+312|A=Big 高阶|B=|C=superliminal.com/cube/cube.htm|D=|E=|F=Magic Cube 4D|G=|H=
+313|A=Big 高阶|B=|C=gravitation3d.com/magiccube5d|D=|E=|F=MagicCube5D|G=|H=
+314|A=Big 高阶|B=|C=superliminal.com/andrey/mc7d|D=|E=|F=MagicCube7D|G=|H=
+315|A=|B=|C=|D=|E=|F=|G=|H=
+316|A=|B=|C=|D=|E=|F=|G=|H=
+317|A=BLD 盲拧|B=BLDDB|C=blddb.net/|D=|E=|F=三盲公式库|G=|H=
+318|A=BLD 盲拧|B=Commutator|C=nbwzx.github.io/com/mutator/index.html|D=Zixing Wang王子兴|E=|F=换位子书写和展开 |G=|H=
+319|A=BLD 盲拧|B=Dylan's 3-Style Learning Sheet|C=https://docs.google.com/spreadsheets/d/1rCpr-RVZVHq4S3ctRvuCfl37uy8A27okymzt5yqMPvk|D=Dylan Wang (J Perm)|E=|F=|G=|H=
+320|A=BLD 盲拧|B=|C=bit.ly/BLDresources|D=|E=|F=bit.ly/BLDresources|G=|H=
+321|A=BLD 盲拧|B=|C=elliottkobelansky.github.io/buffer-trainer|D=|E=|F=elliottkobelansky.github.io/buffer-trainer|G=|H=
+322|A=BLD 盲拧|B=|C=speedsolving.com/threads/bld-faq-do-yourself-a-favor-and-read-this.45162|D=|E=|F=BLD FAQ|G=|H=
+323|A=BLD 盲拧|B=|C=pgyer.com/3ZA8|D=|E=|F=三盲助手|G=|H=
+324|A=BLD 盲拧|B=|C=github.com/LuXiiiii/BLD-Master|D=|E=|F=3BLD Scramble - 鲁曦|G=|H=
+325|A=BLD 盲拧|B=|C=speedsolving.com/threads/noahs-bld-tutorials.38776/#post-787303|D=|E=|F=Noah's BLD Tutorials|G=|H=
+326|A=BLD 盲拧|B=|C=MemoGenerator (Android)|D=|E=|F=BLD App|G=|H=
+327|A=BLD 盲拧|B=|C=tobip.ch/letter_pair_generator|D=|E=|F=BLD Letter Pair Generator|G=|H=
+328|A=BLD 盲拧|B=|C=scrambld.cubing.net|D=|E=|F=BLD Trainer|G=|H=
+329|A=BLD 盲拧|B=|C=speedcubing.com/chris/memo-images.html|D=|E=|F=Letter Pair Images|G=|H=
+330|A=BLD 盲拧|B=|C=speedsolving.com/wiki/index.php/List_of_letter_pairs|D=|E=|F=List of Letter Pairs|G=|H=
+331|A=BLD 盲拧|B=|C=speedcubing.com/chris/memo-words.html|D=|E=|F=Letter Pair 1 Syllable 
+ Words/Sounds|G=|H=
+332|A=BLD 盲拧|B=|C=tobip.ch/letter_pair_generator|D=|E=|F=Letter Pair Generator|G=|H=
+333|A=BLD 盲拧|B=|C=antoine.ccantin.ca:8870/en/cubing/bld|D=|E=|F=BLD Letter Pair Trainer|G=|H=
+334|A=BLD 盲拧|B=|C=bestsiteever.ru/memotest|D=|E=|F=Letters Memo Test|G=|H=
+335|A=BLD 盲拧|B=|C=cram.com/|D=|E=|F=Flashcard|G=|H=
+336|A=BLD 盲拧|B=|C=bestsiteever.ru/tables|D=|E=|F=3BLD Algs Collection|G=|H=
+337|A=BLD 盲拧|B=|C=docs.google.com/spreadsheets/d/1pjVnLjaCopPaWnJM8UfwDHChfYt9xKvBqrbaapgeIAU/edit#gid=909686887|D=|E=|F=3BLD 3-Style Builder - Enoch Gray|G=|H=
+338|A=BLD 盲拧|B=|C=csclub.uwaterloo.ca/~krmatthe|D=|E=|F=3BLD Corner Generator, Corner Twist Generator, Memo Tools - Kevin Matthews|G=|H=
+339|A=BLD 盲拧|B=|C=bestsiteever.ru/tables|D=|E=|F=BLD Algs Lists|G=|H=
+340|A=BLD 盲拧|B=|C=docs.google.com/spreadsheets/d/1yl5Xwn2aDpXyHA0Rx1OUrDzec8nbg18wxis3I4uDoIw|D=|E=|F=Jack Cai's 3BLD Algs|G=|H=
+341|A=BLD 盲拧|B=|C=nbwzx.github.io/cube/index.html|D=|E=|F=Yifan Wang (王逸帆) 3BLD 王逸帆三盲全缓冲|G=|H=
+342|A=BLD 盲拧|B=|C=docs.google.com/spreadsheets/d/1yHyLJDvVbuEsoHONefUq7jAAFta9qM9wydwfSrJOZWQ|D=|E=|F=Daniel Lin's 5BLD Algs|G=|H=
+343|A=BLD 盲拧|B=|C=docs.google.com/spreadsheets/d/1-AnKGJMHN3SAOcZxem3XJ5tBm7Dk1dTRcZ7KcXYbGP4|D=|E=|F=Graham Siggins' Letter Pairs|G=|H=
+344|A=BLD 盲拧|B=|C=tobip.ch/pigen|D=|E=|F=Pi Generator|G=|H=
+345|A=BLD 盲拧|B=|C=bbs.mf8-china.com/misc.php?mod=mobile|D=|E=|F=盲拧方法大合集|G=|H=
+346|A=BLD 盲拧|B=|C=briefcubing.com/?enable-5-style|D=|E=|F=5-style|G=|H=
+347|A=BLD 盲拧|B=|C=docs.google.com/spreadsheets/d/158F-jyu8ld8kbdD4I_Lqy4fsX5vvp_MQOq7Ofg8NdSI|D=|E=|F=Abhi_Algs_Public (3-style and 5-style) - 5Algsolve|G=|H=
+348|A=|B=|C=|D=|E=|F=|G=|H=
+349|A=|B=|C=|D=|E=|F=|G=|H=
+350|A=|B=|C=|D=|E=|F=|G=|H=
+351|A=|B=|C=|D=|E=|F=|G=|H=
+352|A=Pyraminx 金字塔|B=|C=dom.patyki.waw.pl/piotrek/pyra|D=|E=|F=Optimal Solver|G=|H=
+353|A=Pyraminx 金字塔|B=|C=dgcubes.com/l4e|D=|E=|F=L4E Trainer|G=|H=
+354|A=Pyraminx 金字塔|B=Harsha Paladugu|C=https://docs.google.com/spreadsheets/d/12FH8MswpdBJxLJ_Eu_gopoxTCySPk9H_o7_yjN8_ECw/|D=|E=|F=|G=|H=
+355|A=|B=|C=|D=|E=|F=|G=|H=
+356|A=Skewb 斜转|B=skewbDB|C=https://skewbdb.com|D=|E=|F=|G=|H=
+357|A=Skewb 斜转|B=Skewb School|C=skewbschool.com|D=Elias Malomgré|E=|F=|G=|H=
+358|A=Skewb 斜转|B=Skewb Alg Trainer|C=https://mihlefeld.github.io/Alg-Trainers/Skewb-NS2-Trainer|D=|E=|F=|G=|H=
+359|A=Skewb 斜转|B=Skewb Resources
+|C=docs.google.com/spreadsheets/d/1j-SGlgZk20D3d2TyeiXhMWzeyTBuuix3Owgj9Q8rNbo|D=|E=|F=Skewb Resources|G=|H=
+360|A=Skewb 斜转|B=Skewb EG2|C=https://docs.google.com/spreadsheets/d/1wlNP1AxmvjXFfgI5Rckrpf9004byL5UKILvYCS4dFvc|D=|E=|F=Vojtěch Grohmann|G=|H=
+361|A=Skewb 斜转|B=|C=annikastein.github.io|D=|E=|F=SkewbSkills - Annika Stein|G=|H=
+362|A=Skewb 斜转|B=|C=ranzha.cubing.net/skewb/notation.html|D=|E=|F=Skewb|G=|H=
+363|A=Skewb 斜转|B=|C=grubiks.com/solvers/skewb|D=|E=|F=Skewb Solver|G=|H=
+364|A=|B=|C=|D=|E=|F=|G=|H=
+365|A=|B=|C=|D=|E=|F=|G=|H=
+366|A=Megaminx 五魔|B=|C=reinierschippers.nl/ll-scrambler/|D=|E=|F=LL Trainer|G=|H=
+367|A=Megaminx 五魔|B=|C=mihlefeld.github.io/Megaminx-PLL-Trainer/
+ mihlefeld.github.io/Megaminx-OLL-Trainer/|D=|E=|F=OLL, PLL Trainer|G=|H=
+368|A=Megaminx 五魔|B=|C=nogesma.github.io/megapll-trainer|D=|E=|F=Megaminx PLL Trainer|G=|H=
+369|A=Megaminx 五魔|B=|C=roudai.github.io/MegaminxImageEditor|D=|E=|F=Images - Akihiro Ishida|G=|H=
+370|A=|B=|C=hem.bredband.net/bunker7/llminxsolver-10.zip|D=|E=|F=Megaminx Last Layer Solver|G=|H=
+371|A=|B=|C=|D=|E=|F=|G=|H=
+372|A=|B=|C=|D=|E=|F=|G=|H=
+373|A=SQ1|B=SQ1 image Generator|C=https://sq1-img-gen-gold-grass.reflex.run/|D=Sebastian Amador|E=|F=|G=|H=
+374|A=SQ1|B=Best SQ1 website|C=derpycuber.com/|D=|E=|F=Many Trainers by Daniel Karnaukh|G=|H=
+375|A=|B=Image|C=https://cubiclealgdbimagegen.azurewebsites.net/generator?&puzzle=sq1&case=|D=|E=|F=|G=|H=
+376|A=|B=Image|C=https://wol4rwwr5d.execute-api.us-east-1.amazonaws.com/default/get_image?alg=60/3-3/30/-30/03/-30/-30|D=|E=|F=|G=|H=
+377|A=|B=Image|C=https://wol4rwwr5d.execute-api.us-east-1.amazonaws.com/default/get_image3?z2=true&mode=cs&case=|D=|E=|F=|G=|H=
+378|A=|B=SQ1 Solver|C=https://github.com/qqwref/sq1opt|D=qqwref|E=https://youtu.be/U3LTJx6CyJo|F=sq1opt|G=|H=
+379|A=SQ1|B=|C=speedsolving.com/forum/threads/the-square-1-help-alg-sharing-thread.37858|D=|E=|F=SQ1 Tutorial|G=|H=
+380|A=SQ1|B=|C=mzrg.com/js/cubeshape_trainer.html|D=|E=|F=SQ1 Cubeshape Trainer|G=|H=
+381|A=SQ1|B=|C=brandonlin.com/cubing|D=|E=|F=Brandon Lin's SQ1|G=|H=
+382|A=SQ1|B=|C=hashtagcuber.com/csp|D=|E=|F=CSP by Eva Kato|G=|H=
+383|A=SQ1|B=|C=csp.cuber.pro
+ sq1.cuber.pro/|D=|E=|F=CSP by 欧阳韵奇|G=|H=
+384|A=SQ1|B=|C=github.com/sp3ctum/squanmate|D=|E=|F=Squanmate CS/CSP Trainer|G=|H=
+385|A=SQ1|B=|C=docs.google.com/spreadsheets/d/1r0LN41RGKI4oAvD9rCmmc-A5UBpNPvsEOb7eWaEtIFo|D=|E=|F=Squanmate CSP|G=|H=
+386|A=SQ1|B=|C=oblp.cubegym.net/#/|D=|E=|F=OBL预判训练器|G=|H=
+387|A=SQ1|B=|C=ranzha.cubing.net/square-1/pll.html|D=|E=|F=SQ1 PLL|G=|H=
+388|A=SQ1|B=|C=speedsolving.com/threads/square-1-pbl-finder.68258|D=|E=|F=SQ1 PBL Finder|G=|H=
+389|A=SQ1|B=|C=bengottschalk.com/pblTrainer|D=|E=|F=SQ1 PBL Trainer|G=|H=
+390|A=SQ1|B=|C=goo.gl/8bWUcP|D=|E=|F=SQ1 PBL with no parity|G=|H=
+391|A=SQ1|B=|C=hughey.cubing.net/Square1BLD|D=|E=|F=SQ1 BLD|G=|H=
+392|A=SQ1|B=|C=karnvertor.brandonlin.com/|D=|E=|F=Karnvertor|G=|H=
+393|A=SQ1|B=|C=mzrg.com/rubik/ep_optimizer.html|D=|E=|F=SQ1 EP Optimizer|G=|H=
+394|A=SQ1|B=|C=github.com/cs0x7f/sq12phase|D=|E=|F=SQ1 Solver by 陈霜|G=|H=
+395|A=SQ1|B=|C=jaapsch.net/puzzles/square1.htm?#progs|D=|E=|F=SQ1 Solver by Jaap|G=|H=
+396|A=|B=|C=|D=|E=|F=|G=|H=
+397|A=|B=|C=|D=|E=|F=|G=|H=
+398|A=|B=|C=|D=|E=|F=|G=|H=
+399|A=Simulators 模拟器|B=|C=docs.google.com/spreadsheets/d/1HGxd-AasVyUqnHBiy9mN-PfneRBCH1Mh07FqjpmaTKk|D=|E=|F=Virtual Cube Rankings|G=|H=
+400|A=Simulators 模拟器|B=|C=alpha.twizzle.net
+ alg.cubing.net
+ algcubingnet.cuber.pro|D=|E=|F=algcubing by Lucas Garron|G=|H=
+401|A=Simulators 模拟器|B=|C=github.com/cubing/cubing.js/blob/main/src/cubing/puzzle-geometry/notation-mapping/PyraminxNotationMapper.tsv|D=|E=|F=转动记号|G=|H=
+402|A=Simulators 模拟器|B=|C=cubedb.net|D=|E=|F=cubedb by Gil Zussman|G=|H=
+403|A=Simulators 模拟器|B=|C=twistypuzzles.com/forum/viewtopic.php?f=1&t=27054
+ pmetro.su/pCubes.zip|D=|E=|F=pCubes|G=|H=
+404|A=Simulators 模拟器|B=|C=play.google.com/store/apps/details?id=magic.puzzle.pro|D=|E=|F=VISTALGY Cubes|G=|H=
+405|A=Simulators 模拟器|B=|C=randelshofer.ch/cubetwister|D=|E=|F=CubeTwister|G=|H=
+406|A=Simulators 模拟器|B=|C=ruwix.com/online-puzzle-simulators|D=|E=|F=Simulators|G=|H=
+407|A=Simulators 模拟器|B=|C=cyxin.cn/cube|D=|E=|F=Simulators by Sweet灬馨|G=|H=
+408|A=|B=|C=|D=|E=|F=|G=|H=
+409|A=|B=|C=|D=|E=|F=|G=|H=
+410|A=https://clockdb.net/|B=Virtual Clock|C=https://ultragames.nl/virtual-clock/|D=Mick Boekema|E=|F=|G=|H=
+411|A=Clock 魔表|B=ClockDB|C=https://clockdb.net/|D=|E=|F=Reconstruction 复盘|G=|H=
+412|A=Clock 魔表|B=7 Simul Trainer|C=https://sanya.sweetduet.info/cube/7simul_trainer/|D=|E=|F=|G=|H=
+413|A=Clock 魔表|B=7 Simul Method PDF|C=https://drive.google.com/file/d/1uqROrP4tHa5fv7dlrNsvw1RgwLj6VxmL/|D=|E=|F=|G=|H=
+414|A=Clock 魔表|B=7 Simul Memo Trainer|C=https://joshm2.github.io/7-Simul/|D=|E=|F=|G=|H=
+415|A=Clock 魔表|B=7 Simul Trainer|C=https://sanya.sweetduet.info/cube/7simul_trainer/|D=|E=|F=|G=|H=
+416|A=Clock 魔表|B=|C=Puzzle Clock iOS/Android app|D=|E=|F=Clock|G=|H=
+417|A=Clock 魔表|B=|C=speedsolving.com/threads/optclock-optimal-rubiks-clock-solver.47747/|D=|E=|F=最优魔表求解器|G=|H=
+418|A=Clock 魔表|B=|C=|D=|E=|F=|G=|H=
+419|A=Clock 魔表|B=|C=|D=|E=|F=|G=|H=
+420|A=Clock 魔表|B=|C=|D=|E=|F=|G=|H=
+421|A=Clock 魔表|B=|C=huazhechen.gitee.io/cuber
+ gitee.com/huazhechen/cuber|D=|E=|F=Simulators by 华哲辰|G=|H=
+422|A=Clock 魔表|B=|C=andy168.gitee.io/mofang/cube3|D=|E=|F=2x2~5x5|G=|H=
+423|A=Clock 魔表|B=|C=mzrg.com/js/qminx-v2.html|D=|E=|F=Minx|G=|H=
+424|A=Clock 魔表|B=|C=speedsolving.com/threads/ben-whitmore-square-1-sim.57372|D=|E=|F=sq1sim - Ben Whitmore|G=|H=
+425|A=Clock 魔表|B=|C=|D=|E=|F=|G=|H=
+426|A=Clock 魔表|B=|C=|D=|E=|F=|G=|H=
+427|A=|B=|C=docs.google.com/spreadsheets/d/1e93J7mqnMMOHFPHnGw6-I7JBHAlrqtssuUBJNcONasQ/|D=|E=|F=魔表数据|G=|H=
+428|A=|B=|C=|D=|E=|F=|G=|H=
+429|A=Hypercubing 高维|B=|C=hypercubing.xyz|D=|E=|F=|G=|H=
+430|A=|B=|C=|D=|E=|F=|G=|H=
+431|A=|B=|C=|D=|E=|F=|G=|H=
+432|A=|B=|C=|D=|E=|F=|G=|H=
+433|A=|B=|C=|D=|E=|F=|G=|H=
+434|A=|B=|C=|D=|E=|F=|G=|H=
+435|A=Cuber Web 魔友网站|B=|C=cubeskills.com/|D=|E=|F=Feliks Zemdegs|G=|H=
+436|A=Cuber Web 魔友网站|B=|C=cuberoot.me|D=|E=|F=Ruimin Yan (颜瑞民)魔方根官网|G=|H=
+437|A=Cuber Web 魔友网站|B=|C=jperm.net|D=|E=|F=Dylan Wang|G=|H=
+438|A=Cuber Web 魔友网站|B=|C=hem.bredband.net/_zlv_/rubiks|D=|E=|F=Stefan Lidström,
+ Kenneth Gustavsson|G=|H=
+439|A=Cuber Web 魔友网站|B=|C=speedcubingtips.eu|D=|E=|F=speedcubingtips|G=|H=
+440|A=Cuber Web 魔友网站|B=|C=cubingcheatsheet.com/|D=|E=|F=Daniel Racine|G=|H=
+441|A=Cuber Web 魔友网站|B=|C=kungfoomanchu.com/|D=|E=|F=Andy Klise|G=|H=
+442|A=Cuber Web 魔友网站|B=|C=cyotheking.com/|D=|E=|F=Christopher Olson|G=|H=
+443|A=Cuber Web 魔友网站|B=|C=sites.google.com/site/antoineccantin|D=|E=|F=Antoine Cantin|G=|H=
+444|A=Cuber Web 魔友网站|B=|C=sites.google.com/view/kianroux|D=|E=|F=Kian Mansour|G=|H=
+445|A=Cuber Web 魔友网站|B=|C=bestsiteever.ru|D=|E=|F=Roman Strakhov|G=|H=
+446|A=Cuber Web 魔友网站|B=|C=sarah.cubing.net|D=|E=|F=Sarah Strong|G=|H=
+447|A=Cuber Web 魔友网站|B=|C=brookscubing.com/speedcubing|D=|E=|F=Anthony Brooks|G=|H=
+448|A=Cuber Web 魔友网站|B=|C=jaapsch.net/puzzles|D=|E=|F=Jaap Scherphuis|G=|H=
+449|A=Cuber Web 魔友网站|B=|C=cubezone.be|D=|E=|F=Lars Vandenbergh|G=|H=
+450|A=Cuber Web 魔友网站|B=|C=jaydenmcneill.com/homepage|D=|E=|F=Jayden McNeill|G=|H=
+451|A=Cuber Web 魔友网站|B=|C=fanyiqun.com/|D=|E=|F=Yiqun Fan 樊轶群|G=|H=
+452|A=Cuber Web 魔友网站|B=|C=cubingcheatsheet.com/|D=|E=|F=Daniel Racine|G=|H=
+453|A=|B=|C=|D=|E=|F=|G=|H=
+454|A=|B=|C=|D=|E=|F=|G=|H=
+455|A=Cuber PB sheet 魔友PB表|B=|C=cubepb.com/|D=|E=|F=CubePB|G=|H=
+456|A=Cuber PB sheet 魔友PB表|B=|C=bit.ly/FAZPBS|D=|E=|F=Feliks Zemdegs|G=|H=
+457|A=Cuber PB sheet 魔友PB表|B=|C=docs.google.com/spreadsheets/d/1O28HJs3YR0gCXHYmjYd8Fcy34UmLrZ55WLDEjmHU3NA|D=|E=|F=Max Park|G=|H=
+458|A=Cuber PB sheet 魔友PB表|B=|C=bit.ly/KevinHaysPBs|D=|E=|F=Kevin Hays|G=|H=
+459|A=Cuber PB sheet 魔友PB表|B=|C=|D=|E=|F=|G=|H=
+460|A=Cuber PB sheet 魔友PB表|B=|C=|D=|E=|F=Patterns 图案|G=|H=
+461|A=Cuber PB sheet 魔友PB表|B=|C=randelshofer.ch/rubik/patterns
+ thedukeofcubes.com/|D=|E=|F=Pretty Patterns 花式图案|G=|H=
+462|A=拼图|B=|C=mosaic.twisttheweb.net
+bestsiteever.ru/mosaic
+youcandothecube.com/build-mosaics-with-rubiks-cubes/create-your-own-mosaics|D=|E=|F=Mosaic 马赛克 魔方墙|G=|H=
+463|A=|B=|C=|D=|E=|F=|G=|H=
+464|A=|B=|C=|D=|E=|F=|G=|H=
+465|A=Solver 求解器|B=|C=https://or18.github.io/RubiksSolverDemo/
+https://edogaki.github.io/RubiksSolverDemo/cross_trainer.html|D=|E=Rubik's Cube Solver|F=|G=|H=
+466|A=Solver 求解器|B=|C=experiments.cubing.net/cubing.js/twsearch/text-ui.html|D=|E=|F=twsearch|G=|H=
+467|A=Solver 求解器|B=|C=github.com/trangium/trangium.github.iotrangium.github.io|D=|E=|F=trangium.github.io 排序，双层公式等
+Batch Solver|G=|H=
+468|A=|B=|C=https://trangium.github.io/MovecountCoefficient/|D=|E=|F=MCC (MovecountCoefficient)|G=|H=
+469|A=Solver 求解器|B=|C=github.com/cubing|D=|E=|F=Various Cubing Projects|G=|H=
+470|A=Solver 求解器|B=|C=https://github.com/cubing/twsearch
+cubing.net/ksolve.js
+ github.com/cubing/ksolve
+ mzrg.com/rubik/ksolve+|D=|E=|F=ksolve+|G=|H=
+471|A=Solver 求解器|B=|C=reddit.com/r/Cubers/com/ments/873vzw/ksolve_a_new_fast_general_puzzle_solving_program
+ benwh1.github.io/web/software/ksolve++/index.html|D=|E=|F=ksolve++|G=|H=
+472|A=Solver 求解器|B=|C=cubing.net/f2lfast|D=|E=|F=LL skip Generator OP连跳生成器|G=|H=
+473|A=Solver 求解器|B=|C=speedsolving.com/threads/algexplorer-com/mand-line-utility-to-assist-in-alg-searching.65189|D=|E=|F=AlgExplorer|G=|H=
+474|A=Solver 求解器|B=|C=ultimatemagiccube.com/|D=|E=|F=Ultimate Magic Cube|G=|H=
+475|A=Solver 求解器|B=|C=github.com/cs0x7f/TPR-4x4x4-Solver|D=|E=|F=4x4 3-phase solver by Shuang Chen|G=|H=
+476|A=Solver 求解器|B=|C=github.com/cs0x7f/cube555|D=|E=|F=5x5 Solver by Shuang Chen|G=|H=
+477|A=Solver 求解器|B=|C=github.com/dwalton76/rubiks-cube-NxNxN-solver
+ speedsolving.com/threads/5x5x5-6x6x6-7x7x7-or-nxnxn-solvers.63592|D=|E=|F=NxNxN Solver|G=|H=
+478|A=Solver 求解器|B=|C=grubiks.com/solvers/professors-cube-5x5x5/|D=|E=|F=5x5 Solver|G=|H=
+479|A=Solver 求解器|B=|C=mazeyu.github.io/Cubing7|D=|E=|F=高阶求解器 (马泽余)|G=|H=
+480|A=|B=|C=|D=|E=|F=|G=|H=
+481|A=|B=|C=|D=|E=|F=|G=|H=
+482|A=|B=|C=|D=|E=|F=|G=|H=
+483|A=Developer 开发者|B=|C=github.com/cubing/cube-code|D=|E=|F=GitHub - Lucas Larron|G=|H=
+484|A=Developer 开发者|B=|C=codepen.io/search/pens?q=Rubik&page=1&order=popularity&depth=everything&show_forks=on|D=|E=|F=Codepen|G=|H=
+485|A=Developer 开发者|B=|C=chrome.com/cubelab#demo|D=|E=|F=Chrome Cube Lab|G=|H=
+486|A=|B=|C=|D=|E=|F=|G=|H=
+487|A=|B=|C=|D=|E=|F=Theory 理论|G=|H=
+488|A=|B=|C=kociemba.org/cube.htm|D=|E=|F=Cube Theory|G=|H=
+489|A=|B=|C=cube20.org|D=|E=|F=God Number|G=|H=
+490|A=|B=|C=forum.cubeman.org|D=|E=|F=Cube math|G=|H=
+491|A=|B=|C=bruce.cubing.net|D=|E=|F=Hamiltonian Circuit / Devil's Algorithm
+ 哈密顿回路 / 恶魔公式|G=|H=
+492|A=|B=|C=|D=|E=|F=|G=|H=
+493|A=|B=|C=|D=|E=|F=|G=|H=
+494|A=Shop 商店|B=|C=1688.com/|D=|E=|F=Alibaba 阿里巴巴|G=|H=
+495|A=Shop 商店|B=|C=taobao.com/|D=|E=|F=Taobao 淘宝|G=|H=
+496|A=Shop 商店|B=|C=thecubicle.com/|D=|E=|F=Cubicle Shop|G=|H=
+497|A=Shop 商店|B=|C=speedcubeshop.com/|D=|E=|F=Speedcubeshop|G=|H=
+498|A=Shop 商店|B=|C=mefferts.com/|D=|E=|F=Mefferts Shop|G=|H=
+499|A=Shop 商店|B=|C=shapeways.com/shops/oskarpuzzles|D=|E=|F=Oskarpuzzles Shop|G=|H=
+500|A=Shop 商店|B=|C=shop.gancube.com/|D=|E=|F=GAN|G=|H=
+501|A=Shop 商店|B=|C=qiyitoys.net|D=|E=|F=QiYi 奇艺|G=|H=
+502|A=Shop 商店|B=|C=moyucube.com/|D=|E=|F=MoYu 魔域|G=|H=
+503|A=Shop 商店|B=|C=verypuzzle.com/|D=|E=|F=VeryPuzzle|G=|H=
+504|A=Shop 商店|B=|C=puzzle15.herokuapp.com/|D=|E=|F=15p|G=|H=
+505|A=|B=|C=|D=|E=|F=|G=|H=
+506|A=Image Convertor|B=|C=|D=|E=|F=|G=|H=
+507|A=|B=|C=https://png2jpg.com/|D=|E=|F=|G=|H=
+508|A=|B=|C=https://svgtopng.com/|D=|E=|F=|G=|H=
+509|A=|B=|C=https://svgtojpg.com/|D=|E=|F=|G=|H=
+510|A=|B=|C=|D=|E=|F=|G=|H=
+511|A=|B=|C=|D=|E=|F=|G=|H=
+512|A=|B=|C=|D=|E=|F=|G=|H=
+513|A=|B=|C=|D=|E=|F=|G=|H=
+514|A=|B=|C=|D=|E=|F=|G=|H=
+515|A=|B=|C=|D=|E=|F=|G=|H=
+516|A=|B=|C=|D=|E=|F=|G=|H=
+517|A=|B=|C=|D=|E=|F=|G=|H=
+518|A=|B=|C=|D=|E=|F=|G=|H=
+519|A=|B=|C=|D=|E=|F=|G=|H=
+520|A=|B=|C=|D=|E=|F=|G=|H=
+521|A=|B=|C=|D=|E=|F=|G=|H=
+522|A=|B=|C=|D=|E=|F=|G=|H=
+523|A=|B=|C=|D=|E=|F=|G=|H=
+524|A=|B=|C=|D=|E=|F=|G=|H=
+525|A=|B=|C=|D=|E=|F=|G=|H=
+526|A=|B=|C=|D=|E=|F=|G=|H=

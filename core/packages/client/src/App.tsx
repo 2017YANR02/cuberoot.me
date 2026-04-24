@@ -47,6 +47,7 @@ const FrameCountPage = lazy(() => import('./pages/frame-count/FrameCountPage'));
 const ScrambleStatsPage = lazy(() => import('./pages/scramble_stats/ScrambleStatsPage'));
 // NOTE: Alg — 公式教程目录（docx 源迁移）
 const AlgIndexPage = lazy(() => import('./pages/alg/AlgIndexPage'));
+const AlgCategoryPage = lazy(() => import('./pages/alg/AlgCategoryPage'));
 const AlgPostPage = lazy(() => import('./pages/alg/AlgPostPage'));
 
 
@@ -109,6 +110,7 @@ function App() {
         <Route path="/scramble-stats" element={<Suspense fallback={<div>Loading...</div>}><ScrambleStatsPage /></Suspense>} />
         {/* Alg — 公式教程目录 */}
         <Route path="/alg" element={<Suspense fallback={<div>Loading...</div>}><AlgIndexPage /></Suspense>} />
+        <Route path="/alg/c/:category" element={<Suspense fallback={<div>Loading...</div>}><AlgCategoryPage /></Suspense>} />
         <Route path="/alg/:slug" element={<Suspense fallback={<div>Loading...</div>}><AlgPostPage /></Suspense>} />
         {/* Pretext Demo — Canvas 表格渲染实验 */}
         <Route path="/pretext-demo" element={<Suspense fallback={<div>Loading...</div>}><PretextDemo /></Suspense>} />
