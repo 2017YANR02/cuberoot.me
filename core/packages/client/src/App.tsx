@@ -49,6 +49,8 @@ const ScrambleStatsPage = lazy(() => import('./pages/scramble_stats/ScrambleStat
 const AlgIndexPage = lazy(() => import('./pages/alg/AlgIndexPage'));
 const AlgCategoryPage = lazy(() => import('./pages/alg/AlgCategoryPage'));
 const AlgPostPage = lazy(() => import('./pages/alg/AlgPostPage'));
+// NOTE: Sites — 魔方网址导航
+const SitesPage = lazy(() => import('./pages/sites/SitesPage'));
 
 
 function App() {
@@ -112,6 +114,8 @@ function App() {
         <Route path="/alg" element={<Suspense fallback={<div>Loading...</div>}><AlgIndexPage /></Suspense>} />
         <Route path="/alg/c/:category" element={<Suspense fallback={<div>Loading...</div>}><AlgCategoryPage /></Suspense>} />
         <Route path="/alg/:slug" element={<Suspense fallback={<div>Loading...</div>}><AlgPostPage /></Suspense>} />
+        {/* Sites — 魔方网址导航 */}
+        <Route path="/site" element={<Suspense fallback={<div>Loading...</div>}><SitesPage /></Suspense>} />
         {/* Pretext Demo — Canvas 表格渲染实验 */}
         <Route path="/pretext-demo" element={<Suspense fallback={<div>Loading...</div>}><PretextDemo /></Suspense>} />
         {/* Auth — WCA OAuth 回调 */}
