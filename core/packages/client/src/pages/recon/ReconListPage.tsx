@@ -12,20 +12,12 @@ import { useAuthStore } from '../../stores/auth_store';
 import {
   flagClass, displaySolverName,
   formatResult, formatAvg, formatAoXR, formatRound,
-  formatRecord, wcaPersonUrl, wcaCompUrl,
+  wcaPersonUrl, wcaCompUrl,
 } from '../../utils/recon_utils';
 import { compNameZh, loadFlagData, flagDataVersion } from '../../utils/country_flags';
 import LangToggle from '../../components/LangToggle';
+import { RecordBadge } from '../../components/RecordBadge';
 import '../../recon.css';
-
-// ── 纪录 Badge 组件 ──
-
-/** 渲染纪录 badge（WR/CR/NR/PR/cancelled） */
-function RecordBadge({ record }: { record: string | undefined }) {
-  const badge = formatRecord(record);
-  if (!badge) return null;
-  return <span className={badge.className}>{badge.text}</span>;
-}
 
 // ── 列配置——原版顺序 ──
 
@@ -206,7 +198,7 @@ export default function ReconListPage() {
           <>
             {solve.value || ''}
             {solve.regionalSingleRecord && (
-              <> <RecordBadge record={solve.regionalSingleRecord} /></>
+              <> <RecordBadge record={solve.regionalSingleRecord} variant="inline" /></>
             )}
           </>
         );
@@ -263,7 +255,7 @@ export default function ReconListPage() {
           <>
             {formatAvg(solve.average)}
             {solve.regionalAverageRecord && (
-              <> <RecordBadge record={solve.regionalAverageRecord} /></>
+              <> <RecordBadge record={solve.regionalAverageRecord} variant="inline" /></>
             )}
           </>
         );
@@ -272,7 +264,7 @@ export default function ReconListPage() {
           <>
             {formatAoXR(solve.aoType)}
             {solve.regionalAoxrRecord && (
-              <> <RecordBadge record={solve.regionalAoxrRecord} /></>
+              <> <RecordBadge record={solve.regionalAoxrRecord} variant="inline" /></>
             )}
           </>
         );

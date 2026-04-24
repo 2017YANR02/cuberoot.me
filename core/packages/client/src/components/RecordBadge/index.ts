@@ -1,0 +1,1 @@
+export { RecordBadge } from './RecordBadge';

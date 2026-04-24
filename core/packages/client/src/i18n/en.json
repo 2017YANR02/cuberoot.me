@@ -155,7 +155,10 @@
     "allLoading": "Loading global competitions from WCA...",
     "allLoadFailed": "Failed to load all competitions, showing top cubers only",
     "viewGlobe": "Globe view",
-    "eventFilter": "Events"
+    "eventFilter": "Events",
+    "records": "Records ({{count}})",
+    "single": "Single",
+    "average": "Average"
   },
   "globe": {
     "title": "WCA Globe",
