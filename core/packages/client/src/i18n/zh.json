@@ -304,5 +304,162 @@
       "clearConfirm": "清除会话？",
       "holdSpace": "按住空格键启动计时器"
     }
+  },
+  "frameCount": {
+    "title": "数帧",
+    "back": "返回",
+    "toolbar": {
+      "flipV": "垂直翻转",
+      "flipH": "水平翻转",
+      "rotate": "旋转 90° (当前 {{angle}}°)",
+      "crop": "裁切",
+      "cropExit": "退出裁切",
+      "newVideo": "新视频",
+      "folder": "从文件夹打开(自动读写 .splits.txt)",
+      "export": "导出",
+      "shortcuts": "快捷键"
+    },
+    "exportMenu": {
+      "video": "导出视频",
+      "frame": "导出当前帧"
+    },
+    "video": {
+      "cropHint": "拖动选择裁切区域",
+      "uploadAria": "上传视频"
+    },
+    "controls": {
+      "back10": "后退 10 帧 (Q)",
+      "back1": "后退 1 帧 (A)",
+      "play": "播放 / 暂停 (K)",
+      "forward1": "前进 1 帧 (D)",
+      "forward10": "前进 10 帧 (E)"
+    },
+    "solves": {
+      "add": "添加 Solve (+)",
+      "remove": "删除 Solve",
+      "timePlaceholder": "成绩 (秒)",
+      "bandTip": "{{name}} — {{count}} 个 mark"
+    },
+    "marks": {
+      "add": "添加",
+      "remove": "删除",
+      "update": "更新",
+      "updateTip": "将选中 mark 的帧号更新为当前播放位置",
+      "total": "总计：",
+      "triTip": "Mark {{i}}：第 {{frame}} 帧",
+      "markerTip": "Mark {{i}}：{{frame}}"
+    },
+    "empty": {
+      "heading": "怎么数帧",
+      "step1": "输入成绩",
+      "step2": "定位到拍表帧(手拍到计时器那一帧)",
+      "step3Prefix": "按",
+      "step3Suffix": "添加,自动反推并添加起表帧"
+    },
+    "start": {
+      "label": "起表：",
+      "method": "起表帧算法",
+      "fpsTip": "起表帧 = 停表帧 − ⌈(⌊成绩⌋₂+.009) × fps⌉",
+      "timestampTip": "起表帧 = 距离 (停表样本 timestamp − 成绩 × 1e6μs) 最近的样本",
+      "jumpFps": "跳到第 {{frame}} 帧 (FPS 方法)",
+      "jumpTs": "跳到第 {{frame}} 帧 (timestamp 方法)",
+      "samplesNotReady": "样本尚未加载完成",
+      "samplesNotReadyShort": "样本未就绪"
+    },
+    "folderModal": {
+      "title": "选择视频"
+    },
+    "shortcutsModal": {
+      "title": "快捷键",
+      "section": {
+        "marking": "标记",
+        "navigation": "导航",
+        "playback": "播放"
+      },
+      "action": {
+        "addSplitMark": "添加分段 Mark",
+        "addSolve": "添加 Solve",
+        "prevMarkCross": "上一个 mark (跨 solve)",
+        "nextMarkCross": "下一个 mark (跨 solve)",
+        "prevSolve": "上一个 Solve",
+        "nextSolve": "下一个 Solve",
+        "playPause": "播放 / 暂停",
+        "forward1": "前进 1 帧",
+        "back1": "后退 1 帧",
+        "forward10": "前进 10 帧",
+        "back10": "后退 10 帧",
+        "forward1Alt": "前进 1 帧 (备选键)",
+        "back1Alt": "后退 1 帧 (备选键)",
+        "scrollFrame": "滚轮 ±1 帧",
+        "forward1Sec": "前进 1 秒",
+        "copyFrame": "复制当前帧号"
+      }
+    },
+    "toast": {
+      "copied": "已复制{{label}}",
+      "labelFrame": "第 {{frame}} 帧",
+      "labelCommand": "命令",
+      "solveAdded": "已添加 Solve",
+      "marksCleared": "已清空 mark",
+      "solveRemoved": "已删除 Solve",
+      "markAdded": "已在第 {{frame}} 帧添加 mark",
+      "markUpdated": "Mark {{i}} 已更新为第 {{frame}} 帧",
+      "splitsLoaded": "从 .splits.txt 载入 {{count}} 个 solve",
+      "folderNotSupported": "浏览器不支持文件夹访问(仅 Chrome/Edge)",
+      "noVideoInFolder": "文件夹中没有视频文件",
+      "exportingGpu": "正在导出 (WebCodecs GPU)…",
+      "loadingFfmpeg": "正在加载 FFmpeg 引擎…",
+      "exportComplete": "导出完成!",
+      "exportFailed": "导出失败：{{msg}}",
+      "videoNotReady": "视频尚未就绪",
+      "frameCaptureFailed": "截帧失败：{{msg}}",
+      "encodePngFailed": "PNG 编码失败"
+    },
+    "error": {
+      "webcodecsNotReady": "WebCodecs 尚未就绪,请等视频完全加载。",
+      "noFramesInRange": "选定范围内没有帧",
+      "ffmpegExit": "FFmpeg 退出码 {{code}}"
+    },
+    "info": {
+      "title": "视频信息",
+      "resolution": "分辨率",
+      "framerate": "帧率",
+      "vfrTip": "变帧率 {{min}}–{{max}} fps",
+      "cfrTip": "定帧率",
+      "framerateRange": "帧率范围",
+      "duration": "时长",
+      "bitrate": "码率",
+      "filesize": "文件大小",
+      "totalFrames": "总帧数",
+      "codec": "编码",
+      "profile": "Profile",
+      "codecRaw": "Codec",
+      "audio": "音频",
+      "sampleRate": "采样率",
+      "channels": "声道",
+      "audioBitrate": "音频码率",
+      "channelsUnit": "{{n}} 声道",
+      "unknownFamily": "未知",
+      "hevcRangeExtHint": "浏览器不支持此 profile (含 4:2:2 / 4:4:4 / 高 bit-depth)"
+    },
+    "decode": {
+      "errorTitle": "无法解码此视频",
+      "errorBody": "浏览器不支持此 {{family}} profile{{suffix}}。Canon / Sony 专业机的 HEVC 4:2:2 10-bit、iPhone ProRes 常见此问题。",
+      "gpuToggle": "尝试 GPU 硬解 (RTX 40/50 系显卡勾选,最快)",
+      "hint": "请用 FFmpeg 转码后重试:",
+      "copy": "复制",
+      "cmd": {
+        "nvidiaFastLabel": "NVIDIA 快速 (推荐)",
+        "nvidiaFastDescGpu": "GPU 全程硬解硬编,1-2 分钟",
+        "nvidiaFastDescCpu": "CPU 解 HEVC,GPU 编 H.264,2-5 分钟",
+        "softwareLabel": "纯软件兼容",
+        "softwareDesc": "无 GPU 也可,10-30 分钟",
+        "keep10bitLabel": "NVIDIA 保留 10-bit HEVC",
+        "keep10bitDesc": "体积更小质量更好,Firefox 不支持"
+      }
+    },
+    "loading": {
+      "title": "加载视频中…"
+    }
   }
 }

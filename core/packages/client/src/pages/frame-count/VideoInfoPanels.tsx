@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface VideoInfo {
   videoFile: File;
@@ -23,8 +24,9 @@ function parseAudioCodec(codec: string): string {
   return codec;
 }
 
-function parseCodec(codec: string | null): { family: string; profile?: string; hint?: string } {
-  if (!codec) return { family: '未知' };
+// hintKey 是 i18n key 后缀 (frameCount.info.<hintKey>); family=null 表示未知, 渲染时翻译
+function parseCodec(codec: string | null): { family: string | null; profile?: string; hintKey?: string } {
+  if (!codec) return { family: null };
   const [prefix, ...rest] = codec.split('.');
   switch (prefix) {
     case 'avc1':
@@ -39,7 +41,7 @@ function parseCodec(codec: string | null): { family: string; profile?: string; h
       if (profileIdc === 4) return {
         family: 'HEVC',
         profile: 'Format Range Extensions',
-        hint: '浏览器不支持此 profile (含 4:2:2 / 4:4:4 / 高 bit-depth)',
+        hintKey: 'hevcRangeExtHint',
       };
       return { family: 'HEVC', profile: `profile_idc=${profileIdc}` };
     }
@@ -65,6 +67,7 @@ function formatDuration(sec: number): string {
 }
 
 export function VideoInfoButton({ info }: { info: VideoInfo }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -129,7 +132,7 @@ export function VideoInfoButton({ info }: { info: VideoInfo }) {
         ref={btnRef}
         className="fc-info-btn"
         onClick={() => setOpen(v => !v)}
-        title="视频信息"
+        title={t('frameCount.info.title')}
         type="button"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -149,46 +152,46 @@ export function VideoInfoButton({ info }: { info: VideoInfo }) {
             visibility: positioned ? 'visible' : 'hidden',
           }}
         >
-          <div className="fc-info-row"><span>分辨率</span><span>{info.width} × {info.height}</span></div>
+          <div className="fc-info-row"><span>{t('frameCount.info.resolution')}</span><span>{info.width} × {info.height}</span></div>
           <div className="fc-info-row">
-            <span>帧率</span>
+            <span>{t('frameCount.info.framerate')}</span>
             <span>
               {info.videoFps > 0 ? `${info.videoFps.toFixed(2)} fps` : '—'}
               {info.vfr && (
                 info.vfr.isVFR
-                  ? <span className="fc-info-badge fc-info-badge-warn" title={`变帧率 ${info.vfr.minFps.toFixed(1)}–${info.vfr.maxFps.toFixed(1)} fps`}>VFR</span>
-                  : <span className="fc-info-badge fc-info-badge-ok" title="定帧率">CFR</span>
+                  ? <span className="fc-info-badge fc-info-badge-warn" title={t('frameCount.info.vfrTip', { min: info.vfr.minFps.toFixed(1), max: info.vfr.maxFps.toFixed(1) })}>VFR</span>
+                  : <span className="fc-info-badge fc-info-badge-ok" title={t('frameCount.info.cfrTip')}>CFR</span>
               )}
             </span>
           </div>
           {info.vfr?.isVFR && (
-            <div className="fc-info-row"><span>帧率范围</span><span>{info.vfr.minFps.toFixed(1)} – {info.vfr.maxFps.toFixed(1)} fps</span></div>
+            <div className="fc-info-row"><span>{t('frameCount.info.framerateRange')}</span><span>{info.vfr.minFps.toFixed(1)} – {info.vfr.maxFps.toFixed(1)} fps</span></div>
           )}
-          <div className="fc-info-row"><span>时长</span><span>{formatDuration(info.durationSec)}</span></div>
-          <div className="fc-info-row"><span>码率</span><span>{bitrateMbps} Mb/s</span></div>
-          <div className="fc-info-row"><span>文件大小</span><span>{formatBytes(info.videoFile.size)}</span></div>
+          <div className="fc-info-row"><span>{t('frameCount.info.duration')}</span><span>{formatDuration(info.durationSec)}</span></div>
+          <div className="fc-info-row"><span>{t('frameCount.info.bitrate')}</span><span>{bitrateMbps} Mb/s</span></div>
+          <div className="fc-info-row"><span>{t('frameCount.info.filesize')}</span><span>{formatBytes(info.videoFile.size)}</span></div>
           {info.sampleCount !== null && (
-            <div className="fc-info-row"><span>总帧数</span><span>{info.sampleCount}</span></div>
+            <div className="fc-info-row"><span>{t('frameCount.info.totalFrames')}</span><span>{info.sampleCount}</span></div>
           )}
           <div className="fc-info-sep" />
-          <div className="fc-info-row"><span>编码</span><span>{codecInfo.family}</span></div>
+          <div className="fc-info-row"><span>{t('frameCount.info.codec')}</span><span>{codecInfo.family ?? t('frameCount.info.unknownFamily')}</span></div>
           {codecInfo.profile && (
-            <div className="fc-info-row"><span>Profile</span><span>{codecInfo.profile}</span></div>
+            <div className="fc-info-row"><span>{t('frameCount.info.profile')}</span><span>{codecInfo.profile}</span></div>
           )}
-          <div className="fc-info-row fc-info-codec-str"><span>Codec</span><code>{info.codec ?? '—'}</code></div>
-          {codecInfo.hint && <div className="fc-info-hint">⚠️ {codecInfo.hint}</div>}
+          <div className="fc-info-row fc-info-codec-str"><span>{t('frameCount.info.codecRaw')}</span><code>{info.codec ?? '—'}</code></div>
+          {codecInfo.hintKey && <div className="fc-info-hint">⚠️ {t(`frameCount.info.${codecInfo.hintKey}`)}</div>}
           {info.audio && (
             <>
               <div className="fc-info-sep" />
-              <div className="fc-info-row"><span>音频</span><span>{parseAudioCodec(info.audio.codec)}</span></div>
+              <div className="fc-info-row"><span>{t('frameCount.info.audio')}</span><span>{parseAudioCodec(info.audio.codec)}</span></div>
               {info.audio.sampleRate > 0 && (
-                <div className="fc-info-row"><span>采样率</span><span>{(info.audio.sampleRate / 1000).toFixed(1)} kHz</span></div>
+                <div className="fc-info-row"><span>{t('frameCount.info.sampleRate')}</span><span>{(info.audio.sampleRate / 1000).toFixed(1)} kHz</span></div>
               )}
               {info.audio.channels > 0 && (
-                <div className="fc-info-row"><span>声道</span><span>{info.audio.channels === 1 ? 'Mono' : info.audio.channels === 2 ? 'Stereo' : `${info.audio.channels} ch`}</span></div>
+                <div className="fc-info-row"><span>{t('frameCount.info.channels')}</span><span>{info.audio.channels === 1 ? 'Mono' : info.audio.channels === 2 ? 'Stereo' : t('frameCount.info.channelsUnit', { n: info.audio.channels })}</span></div>
               )}
               {info.audio.bitrate > 0 && (
-                <div className="fc-info-row"><span>音频码率</span><span>{Math.round(info.audio.bitrate / 1000)} kb/s</span></div>
+                <div className="fc-info-row"><span>{t('frameCount.info.audioBitrate')}</span><span>{Math.round(info.audio.bitrate / 1000)} kb/s</span></div>
               )}
             </>
           )}
@@ -202,13 +205,14 @@ export function VideoInfoButton({ info }: { info: VideoInfo }) {
 const LOADING_OVERLAY_MIN_BYTES = 200 * 1024 * 1024;
 
 export function LoadingProgressOverlay({ bytes, total }: { bytes: number; total: number }) {
+  const { t } = useTranslation();
   if (total < LOADING_OVERLAY_MIN_BYTES) return null;
   if (bytes >= total) return null;
   const pct = total > 0 ? (bytes / total) * 100 : 0;
   const mb = (n: number) => (n / 1048576).toFixed(0);
   return (
     <div className="fc-loading-overlay">
-      <div className="fc-loading-title">加载视频中…</div>
+      <div className="fc-loading-title">{t('frameCount.loading.title')}</div>
       <div className="fc-loading-stats">
         {mb(bytes)} MB / {mb(total)} MB · {pct.toFixed(1)}%
       </div>
@@ -230,6 +234,7 @@ export function DecodeErrorCard({
   codec: string | null;
   onCopy: (text: string, label: string) => void;
 }) {
+  const { t } = useTranslation();
   const filename = videoFile.name;
   const outName = filename.replace(/\.[^.]+$/, '_h264.mp4');
   const codecInfo = parseCodec(codec);
@@ -247,30 +252,32 @@ export function DecodeErrorCard({
   const hwaccel = gpuDecode ? '-hwaccel cuda ' : '';
   const commands: Array<{ label: string; desc: string; cmd: string }> = [
     {
-      label: 'NVIDIA 快速 (推荐)',
-      desc: gpuDecode
-        ? 'GPU 全程硬解硬编, 1-2 分钟'
-        : 'CPU 解 HEVC, GPU 编 H.264, 2-5 分钟',
+      label: t('frameCount.decode.cmd.nvidiaFastLabel'),
+      desc: t(gpuDecode
+        ? 'frameCount.decode.cmd.nvidiaFastDescGpu'
+        : 'frameCount.decode.cmd.nvidiaFastDescCpu'),
       cmd: `ffmpeg -y ${hwaccel}-i "${filename}" -c:v h264_nvenc -preset p4 -cq 20 -pix_fmt yuv420p -c:a aac -b:a 192k "${outName}"`,
     },
     {
-      label: '纯软件兼容',
-      desc: '无 GPU 也可, 10-30 分钟',
+      label: t('frameCount.decode.cmd.softwareLabel'),
+      desc: t('frameCount.decode.cmd.softwareDesc'),
       cmd: `ffmpeg -y -i "${filename}" -c:v libx264 -pix_fmt yuv420p -crf 20 -preset fast -c:a aac -b:a 192k "${outName}"`,
     },
     {
-      label: 'NVIDIA 保留 10-bit HEVC',
-      desc: '体积更小质量更好, Firefox 不支持',
+      label: t('frameCount.decode.cmd.keep10bitLabel'),
+      desc: t('frameCount.decode.cmd.keep10bitDesc'),
       cmd: `ffmpeg -y ${hwaccel}-i "${filename}" -c:v hevc_nvenc -preset p4 -cq 22 -pix_fmt p010le -c:a aac -b:a 192k "${outName}"`,
     },
   ];
 
+  const family = codecInfo.family ?? t('frameCount.info.unknownFamily');
+  const suffix = codecInfo.profile ? ` (${codecInfo.profile})` : '';
+
   return (
     <div className="fc-decode-error-card">
-      <div className="fc-decode-error-title">⚠️ 无法解码此视频</div>
+      <div className="fc-decode-error-title">⚠️ {t('frameCount.decode.errorTitle')}</div>
       <div className="fc-decode-error-body">
-        浏览器不支持此 {codecInfo.family} profile{codecInfo.profile ? ` (${codecInfo.profile})` : ''}。
-        Canon / Sony 专业机的 HEVC 4:2:2 10-bit、iPhone ProRes 常见此问题。
+        {t('frameCount.decode.errorBody', { family, suffix })}
       </div>
       {codec && <div className="fc-decode-error-codec">Codec: <code>{codec}</code></div>}
       <label className="fc-decode-error-toggle">
@@ -279,9 +286,9 @@ export function DecodeErrorCard({
           checked={gpuDecode}
           onChange={(e) => toggleGpu(e.target.checked)}
         />
-        <span>尝试 GPU 硬解 (RTX 40/50 系显卡勾选, 最快)</span>
+        <span>{t('frameCount.decode.gpuToggle')}</span>
       </label>
-      <div className="fc-decode-error-hint">请用 FFmpeg 转码后重试:</div>
+      <div className="fc-decode-error-hint">{t('frameCount.decode.hint')}</div>
       <div className="fc-decode-error-cmds">
         {commands.map((c, i) => (
           <div key={i} className="fc-decode-error-cmd">
@@ -292,10 +299,10 @@ export function DecodeErrorCard({
               </div>
               <button
                 className="fc-decode-error-copy"
-                onClick={() => onCopy(c.cmd, 'command')}
+                onClick={() => onCopy(c.cmd, t('frameCount.toast.labelCommand'))}
                 type="button"
               >
-                Copy
+                {t('frameCount.decode.copy')}
               </button>
             </div>
             <code className="fc-decode-error-cmd-body">{c.cmd}</code>
