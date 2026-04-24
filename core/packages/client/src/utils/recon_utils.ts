@@ -182,6 +182,8 @@ export function getRecordClass(val: string): string {
   const v = val.toUpperCase();
   if (/^[FXU]?W[RB]$|^1STWR$|^RWR$|^YTW[RB]$|^XWR$/.test(v)) return 'wr';
   if (v === 'WCR') return 'wcr';
+  // NOTE: 裸 CR（日历 summary 派生值）——放在洲际正则前
+  if (v === 'CR') return 'cr';
   if (/(?:AS|E)[RB]$/.test(v) || /^(?:F|YT|X|U)?(?:SAR|SAB|NAR|NAB|OCR|OCB|AFR|AFB|ANR|ANB|ASR|ASB)$/.test(v)) return 'cr';
   if (/^[FXU]?N[RB]$|^NWR$|^ANR$|^YTN[RB]$/.test(v)) return 'nr';
   if (/[PU]?[RB]$/.test(v) && (v.endsWith('PR') || v.endsWith('PB')

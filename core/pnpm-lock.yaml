@@ -194,9 +194,15 @@ importers:
         specifier: ^2.6.0
         version: 2.8.3
     devDependencies:
+      '@types/adm-zip':
+        specifier: ^0.5.8
+        version: 0.5.8
       '@types/node':
         specifier: ^25.5.0
         version: 25.5.0
+      adm-zip:
+        specifier: ^0.5.17
+        version: 0.5.17
       tsx:
         specifier: ^4.19.0
         version: 4.21.0

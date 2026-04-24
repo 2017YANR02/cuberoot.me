@@ -155,7 +155,10 @@
     "allLoading": "正在从 WCA 加载全球比赛...",
     "allLoadFailed": "加载全部比赛失败，仅显示顶尖选手比赛",
     "viewGlobe": "地球视图",
-    "eventFilter": "项目筛选"
+    "eventFilter": "项目筛选",
+    "records": "纪录 ({{count}})",
+    "single": "单次",
+    "average": "平均"
   },
   "globe": {
     "title": "WCA 地球",
