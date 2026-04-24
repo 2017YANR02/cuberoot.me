@@ -271,6 +271,9 @@ importers:
 
   packages/stats-build:
     dependencies:
+      '@cuberoot/shared':
+        specifier: workspace:*
+        version: link:../shared
       mysql2:
         specifier: ^3.11.0
         version: 3.20.0(@types/node@25.5.0)

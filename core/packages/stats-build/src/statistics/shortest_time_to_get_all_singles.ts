@@ -1,12 +1,11 @@
 // NOTE: 最短时间获得所有项目单次成绩
 // 与 Ruby _stats_build/statistics/shortest_time_to_get_all_singles.rb 1:1 对应
 import { Statistic } from '../core/statistic.js';
-import { EVENTS } from '../core/events.js';
 import type { RowDataPacket } from 'mysql2';
 
-// NOTE: 官方正式项目数（rank < 900 的项目）—— 与 Ruby Events::OFFICIAL.length 对应
-const OFFICIAL_EVENT_COUNT = Object.keys(EVENTS).length;
-
+// NOTE: 项目数取自数据库 `events` 表 (rank < 900) 的实时 count。
+// 之前用 `Object.keys(EVENTS).length` = 21（含退役项目），但 SQL 已用 rank<900 过滤掉退役项目，
+// HAVING 永远不满足 → 结果永远为空。改为子查询直接数当前官方项目。
 export class ShortestTimeToGetAllSingles extends Statistic {
   constructor() {
     super();
@@ -20,7 +19,6 @@ export class ShortestTimeToGetAllSingles extends Statistic {
     };
   }
 
-  // NOTE: SQL 中 Ruby 的 #{Events::OFFICIAL.length} 被硬编码为常量
   query(): string {
     return `
       SELECT
@@ -34,7 +32,7 @@ export class ShortestTimeToGetAllSingles extends Statistic {
         JOIN events event ON event.id = event_id
         WHERE event.rank < 900 AND best > 0
         GROUP BY person_id
-        HAVING COUNT(DISTINCT event_id) = ${OFFICIAL_EVENT_COUNT}
+        HAVING COUNT(DISTINCT event_id) = (SELECT COUNT(*) FROM events WHERE rank < 900)
       ) AS all_events_people
       JOIN results result ON result.person_id = all_events_people.person_id
       JOIN persons person ON person.wca_id = result.person_id and person.sub_id = 1

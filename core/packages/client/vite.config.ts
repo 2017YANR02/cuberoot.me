@@ -24,6 +24,8 @@ const MIME: Record<string, string> = {
   '.ttf': 'font/ttf',
   '.eot': 'application/vnd.ms-fontobject',
   '.wasm': 'application/wasm',
+  '.bin': 'application/octet-stream',
+  '.gz':  'application/octet-stream',
   '.xml': 'application/xml; charset=utf-8',
   '.txt': 'text/plain; charset=utf-8',
   '.map': 'application/json',
