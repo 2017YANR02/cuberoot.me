@@ -5,11 +5,13 @@
  */
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import mediaInfoFactory from 'mediainfo.js';
 import { FFmpeg } from '@ffmpeg/ffmpeg';
 import { fetchFile, toBlobURL } from '@ffmpeg/util';
 import { useFrameBuffer, IS_MOBILE } from './useFrameBuffer';
 import { VideoInfoButton, DecodeErrorCard, LoadingProgressOverlay } from './VideoInfoPanels';
+import LangToggle from '../../components/LangToggle';
 
 import './frame-count.css';
 
@@ -247,26 +249,27 @@ async function detectFpsFromFile(file: File): Promise<number | null> {
 
 const PLAYBACK_RATES = [0.25, 0.5, 1, 1.5, 2] as const;
 
+// action/section 字段是 i18n key 后缀, 在 'frameCount.shortcutsModal.section.*' / 'action.*' 下
 const SHORTCUTS = [
-  { section: 'Marking' },
-  { action: 'Add Split Mark', keys: ['M'] },
-  { action: 'Add Solve', keys: ['+'] },
-  { action: 'Prev mark (cross-solve)', keys: ['↑'] },
-  { action: 'Next mark (cross-solve)', keys: ['↓'] },
-  { section: 'Navigation' },
-  { action: 'Prev Solve', keys: ['←'] },
-  { action: 'Next Solve', keys: ['→'] },
-  { section: 'Playback' },
-  { action: 'Play / Pause', keys: ['K'] },
-  { action: 'Forward 1 frame', keys: ['D'] },
-  { action: 'Back 1 frame', keys: ['A'] },
-  { action: 'Forward 10 frames', keys: ['E'] },
-  { action: 'Back 10 frames', keys: ['Q'] },
-  { action: 'Forward 1 frame (alt)', keys: ['.'] },
-  { action: 'Back 1 frame (alt)', keys: [','] },
-  { action: 'Scroll ±1 frame', keys: ['Shift', 'Scroll'] },
-  { action: 'Forward 1 second', keys: ['L'] },
-  { action: 'Copy current frame', keys: ['C'] },
+  { section: 'marking' },
+  { action: 'addSplitMark', keys: ['M'] },
+  { action: 'addSolve', keys: ['+'] },
+  { action: 'prevMarkCross', keys: ['↑'] },
+  { action: 'nextMarkCross', keys: ['↓'] },
+  { section: 'navigation' },
+  { action: 'prevSolve', keys: ['←'] },
+  { action: 'nextSolve', keys: ['→'] },
+  { section: 'playback' },
+  { action: 'playPause', keys: ['K'] },
+  { action: 'forward1', keys: ['D'] },
+  { action: 'back1', keys: ['A'] },
+  { action: 'forward10', keys: ['E'] },
+  { action: 'back10', keys: ['Q'] },
+  { action: 'forward1Alt', keys: ['.'] },
+  { action: 'back1Alt', keys: [','] },
+  { action: 'scrollFrame', keys: ['Shift', 'Scroll'] },
+  { action: 'forward1Sec', keys: ['L'] },
+  { action: 'copyFrame', keys: ['C'] },
 ] as const;
 
 // ── Timeline 缩略图 canvas 小组件 ──
@@ -287,6 +290,8 @@ function ThumbnailCanvas({ bitmap }: { bitmap: ImageBitmap }) {
 // ── 组件 ──────────────────────────────────────────────────────────────────
 
 export default function FrameCountPage() {
+  const { t } = useTranslation();
+
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -674,8 +679,8 @@ export default function FrameCountPage() {
   }, []);
 
   const copyToClipboard = useCallback((text: string, label: string) => {
-    navigator.clipboard.writeText(text).then(() => showToast(`Copied ${label}`));
-  }, [showToast]);
+    navigator.clipboard.writeText(text).then(() => showToast(t('frameCount.toast.copied', { label })));
+  }, [showToast, t]);
 
   // ── 视频控制 ──
 
@@ -991,14 +996,14 @@ export default function FrameCountPage() {
       return next;
     });
     setSelectedMarkIdx(null);
-    showToast('Solve added');
-  }, [showToast]);
+    showToast(t('frameCount.toast.solveAdded'));
+  }, [showToast, t]);
 
   const removeSolve = useCallback(() => {
     if (solves.length <= 1) {
       setSolves(prev => [{ ...prev[0], name: 'Solve 1', marks: [], time: prev[0]?.time ?? '' }]);
       setSelectedMarkIdx(null);
-      showToast('Marks cleared');
+      showToast(t('frameCount.toast.marksCleared'));
       return;
     }
     setSolves(prev => {
@@ -1008,8 +1013,8 @@ export default function FrameCountPage() {
       return next;
     });
     setSelectedMarkIdx(null);
-    showToast('Solve removed');
-  }, [solves.length, activeSolveIdx, showToast]);
+    showToast(t('frameCount.toast.solveRemoved'));
+  }, [solves.length, activeSolveIdx, showToast, t]);
 
   const addMark = useCallback(() => {
     // 防止重复标记同一帧
@@ -1021,7 +1026,7 @@ export default function FrameCountPage() {
       next[activeSolveIdx] = solve;
       return next;
     });
-    showToast(`Mark added at frame ${currentFrame}`);
+    showToast(t('frameCount.toast.markAdded', { frame: currentFrame }));
     // WCA 自动跳转：填写了 Time 且当前 solve 尚无 mark 时，标记 End Frame 后自动跳转到 Start Frame 并自动 Add
     if (solveTimeNum > 0 && videoFps > 0 && solves[activeSolveIdx]?.marks.length === 0) {
       let startFrame: number;
@@ -1047,7 +1052,7 @@ export default function FrameCountPage() {
         return next;
       });
     }
-  }, [activeSolveIdx, currentFrame, solves, showToast, solveTimeNum, videoFps, seekToFrame, startFrameMethod, findStartFrameByTimestamp]);
+  }, [activeSolveIdx, currentFrame, solves, showToast, solveTimeNum, videoFps, seekToFrame, startFrameMethod, findStartFrameByTimestamp, t]);
 
   const removeMark = useCallback((idx: number) => {
     setSolves(prev => {
@@ -1096,8 +1101,8 @@ export default function FrameCountPage() {
       next[activeSolveIdx] = solve;
       return next;
     });
-    showToast(`Mark ${selectedMarkIdx} updated to frame ${currentFrame}`);
-  }, [activeSolveIdx, selectedMarkIdx, currentFrame, showToast]);
+    showToast(t('frameCount.toast.markUpdated', { i: selectedMarkIdx, frame: currentFrame }));
+  }, [activeSolveIdx, selectedMarkIdx, currentFrame, showToast, t]);
 
   // 上/下键跨 Solve 切换 mark
   const navigateMarkGlobal = useCallback((dir: 1 | -1) => {
@@ -1270,13 +1275,13 @@ export default function FrameCountPage() {
     } catch { /* splits 文件不存在,跳过 */ }
 
     await loadFile(file, loadedSolves, loadedFps);
-    if (loadedSolves) showToast(`Loaded ${loadedSolves.length} solve(s) from .splits.txt`);
-  }, [loadFile, parseSplits, showToast]);
+    if (loadedSolves) showToast(t('frameCount.toast.splitsLoaded', { count: loadedSolves.length }));
+  }, [loadFile, parseSplits, showToast, t]);
 
   // Folder 按钮:选目录 → 列视频 → (单选自动加载 / 多选弹 modal) + 持久化记忆
   const openFromFolder = useCallback(async () => {
     if (!('showDirectoryPicker' in window)) {
-      showToast('Browser does not support folder access (Chrome/Edge only)');
+      showToast(t('frameCount.toast.folderNotSupported'));
       return;
     }
     try {
@@ -1289,7 +1294,7 @@ export default function FrameCountPage() {
         }
       }
       if (videos.length === 0) {
-        showToast('No video files in folder');
+        showToast(t('frameCount.toast.noVideoInFolder'));
         return;
       }
       // 加入 MRU 列表(去重,提到头)
@@ -1306,7 +1311,7 @@ export default function FrameCountPage() {
     } catch (e) {
       if ((e as { name?: string })?.name !== 'AbortError') console.warn(e);
     }
-  }, [loadFromDirectoryEntry, showToast]);
+  }, [loadFromDirectoryEntry, showToast, t]);
 
   // 拖放/选择文件时,遍历记忆目录列表(最近优先),找第一个含同名视频的目录
   // 策略:
@@ -1528,7 +1533,7 @@ export default function FrameCountPage() {
         case 'm': e.preventDefault(); addMark(); break;
         case '+': case '=': e.preventDefault(); addSolve(); break;
         case 'l': e.preventDefault(); stepSeconds(1); break;
-        case 'c': e.preventDefault(); copyToClipboard(String(currentFrame), `frame ${currentFrame}`); break;
+        case 'c': e.preventDefault(); copyToClipboard(String(currentFrame), t('frameCount.toast.labelFrame', { frame: currentFrame })); break;
         case 'escape': setShowShortcuts(false); break;
         case 'arrowup': e.preventDefault(); navigateMarkGlobal(-1); break;
         case 'arrowdown': e.preventDefault(); navigateMarkGlobal(1); break;
@@ -1580,7 +1585,7 @@ export default function FrameCountPage() {
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
     };
-  }, [togglePlay, stepFrames, stepSeconds, currentFrame, addMark, addSolve, copyToClipboard, videoFps, totalFrames, frameBufferReady, getFrame, prefetch, useCanvasDisplay, navigateMarkGlobal, solves.length]);
+  }, [togglePlay, stepFrames, stepSeconds, currentFrame, addMark, addSolve, copyToClipboard, videoFps, totalFrames, frameBufferReady, getFrame, prefetch, useCanvasDisplay, navigateMarkGlobal, solves.length, t]);
 
   // Shift+滚轮逐帧
   useEffect(() => {
@@ -1798,9 +1803,9 @@ export default function FrameCountPage() {
         // VideoDecoder (GPU HEVC decode) → OffscreenCanvas crop → VideoEncoder (GPU H.264) → mp4-muxer
         // Zero frame drops, zero duplicates, original timestamps preserved, faster than realtime.
         if (!frameBufferReady || fbSamples.length === 0 || !fbDecoderConfig) {
-          throw new Error('WebCodecs not ready. Please wait for video to fully load.');
+          throw new Error(t('frameCount.error.webcodecsNotReady'));
         }
-        showToast('Exporting (WebCodecs GPU)...');
+        showToast(t('frameCount.toast.exportingGpu'));
 
         const vid = videoRef.current!;
         const vw = vid.videoWidth;
@@ -1817,7 +1822,7 @@ export default function FrameCountPage() {
         const startIdx = Math.max(0, es);
         const endIdx = Math.min(fbSamples.length - 1, ee - 1);
         const exportCount = endIdx - startIdx + 1;
-        if (exportCount <= 0) throw new Error('No frames in selected range');
+        if (exportCount <= 0) throw new Error(t('frameCount.error.noFramesInRange'));
 
         // Find nearest keyframe at or before startIdx (needed for decoder pre-roll)
         let keyIdx = startIdx;
@@ -1933,7 +1938,7 @@ export default function FrameCountPage() {
       } else {
         // ── Trim-only: fast stream copy with ffmpeg.wasm ──
         if (!ffmpegRef.current) {
-          showToast('Loading FFmpeg engine...');
+          showToast(t('frameCount.toast.loadingFfmpeg'));
           const ff = new FFmpeg();
           ff.on('progress', ({ progress }) => setExportProgress(Math.round(progress * 100)));
           ff.on('log', ({ message }) => console.log('[ffmpeg]', message));
@@ -1963,7 +1968,7 @@ export default function FrameCountPage() {
         console.log('[Export] ffmpeg args:', ffArgs.join(' '));
         const exitCode = await ff.exec(ffArgs);
         console.log('[Export] ffmpeg exit code:', exitCode);
-        if (exitCode !== 0) throw new Error(`FFmpeg exited with code ${exitCode}`);
+        if (exitCode !== 0) throw new Error(t('frameCount.error.ffmpegExit', { code: exitCode }));
 
         const outData = await ff.readFile('output.mp4');
         const buf = outData instanceof Uint8Array ? new Uint8Array(outData) : new TextEncoder().encode(outData as string);
@@ -1979,15 +1984,15 @@ export default function FrameCountPage() {
         await ff.deleteFile(inputName);
         await ff.deleteFile('output.mp4');
       }
-      showToast('Export complete!');
+      showToast(t('frameCount.toast.exportComplete'));
     } catch (err) {
       console.error('Export failed:', err);
-      showToast(`Export failed: ${err instanceof Error ? err.message : err}`);
+      showToast(t('frameCount.toast.exportFailed', { msg: err instanceof Error ? err.message : String(err) }));
     } finally {
       setExporting(false);
       setExportProgress(0);
     }
-  }, [videoFile, videoSrc, exporting, trimStart, trimEnd, totalFrames, videoFps, cropRect, showToast, frameBufferReady, fbSamples, fbDecoderConfig]);
+  }, [videoFile, videoSrc, exporting, trimStart, trimEnd, totalFrames, videoFps, cropRect, showToast, frameBufferReady, fbSamples, fbDecoderConfig, t]);
 
   // 导出当前帧为 PNG。优先用 canvas(WebCodecs 解出的精确帧),fallback 到 video 元素截图。
   const exportCurrentFrame = useCallback(async () => {
@@ -2005,7 +2010,7 @@ export default function FrameCountPage() {
       const w = video.videoWidth;
       const h = video.videoHeight;
       if (w === 0 || h === 0) {
-        showToast('Video not ready');
+        showToast(t('frameCount.toast.videoNotReady'));
         return;
       }
       const tmp = document.createElement('canvas');
@@ -2017,13 +2022,13 @@ export default function FrameCountPage() {
         ctx.drawImage(video, 0, 0, w, h);
         blob = await new Promise<Blob | null>((res) => tmp.toBlob(res, 'image/png'));
       } catch (e) {
-        showToast(`Frame capture failed: ${e instanceof Error ? e.message : e}`);
+        showToast(t('frameCount.toast.frameCaptureFailed', { msg: e instanceof Error ? e.message : String(e) }));
         return;
       }
     }
 
     if (!blob) {
-      showToast('Failed to encode PNG');
+      showToast(t('frameCount.toast.encodePngFailed'));
       return;
     }
     const url = URL.createObjectURL(blob);
@@ -2035,7 +2040,7 @@ export default function FrameCountPage() {
     a.click();
     document.body.removeChild(a);
     setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }, [videoFile, useCanvasDisplay, currentFrame, showToast]);
+  }, [videoFile, useCanvasDisplay, currentFrame, showToast, t]);
 
   // 总帧数 + 首帧到达信号 (用于隐藏 loading overlay)
   const [videoFirstFrameReady, setVideoFirstFrameReady] = useState(false);
@@ -2105,8 +2110,9 @@ export default function FrameCountPage() {
     >
       {/* Header */}
       <header className="fc-header">
-        <Link to="/" className="fc-back"><IconBack /> Back</Link>
-        <span className="fc-title">Frame Count</span>
+        <Link to="/" className="fc-back"><IconBack /> {t('frameCount.back')}</Link>
+        <span className="fc-title">{t('frameCount.title')}</span>
+        <LangToggle variant="inline" className="fc-lang-toggle" />
       </header>
 
       {/* ── 主体：视频 + 右侧面板 ── */}
@@ -2114,115 +2120,117 @@ export default function FrameCountPage() {
         {/* 左侧：视频区域 */}
         <div className="fc-video-col">
           <div className={`fc-panel fc-video-zone ${dragging ? 'dragging' : ''}`}>
+            {/* 顶部工具栏：总是显示; 视频相关按钮在无视频时 disabled */}
+            <div className="fc-video-toolbar">
+              {/* Row 1: filename + info (仅有视频时) */}
+              {videoSrc && (
+                <div className="fc-toolbar-row1">
+                  <span className="fc-video-label">{videoName}</span>
+                  {videoFile && (
+                    <VideoInfoButton
+                      info={{
+                        videoFile,
+                        videoFps,
+                        codec: fbDecoderConfig?.codec ?? null,
+                        width: fbDecoderConfig?.codedWidth ?? videoRef.current?.videoWidth ?? 0,
+                        height: fbDecoderConfig?.codedHeight ?? videoRef.current?.videoHeight ?? 0,
+                        durationSec: videoFps > 0 && totalFrames > 0 ? totalFrames / videoFps : (videoRef.current?.duration ?? 0),
+                        sampleCount: fbSamples.length > 0 ? fbSamples.length : null,
+                        audio: audioInfo,
+                        vfr: vfrInfo,
+                      }}
+                    />
+                  )}
+                </div>
+              )}
+
+              {/* Row 2: 图像变换 + New/Folder/Export + Shortcuts (New/Folder/Shortcuts 即便没视频也可用) */}
+              <div className="fc-toolbar-row2">
+                <div className="fc-toolbar-controls">
+                  <button
+                    className={`fc-toolbar-icon ${flipV ? 'active' : ''}`}
+                    title={t('frameCount.toolbar.flipV')}
+                    disabled={!videoSrc}
+                    onClick={() => setFlipV(v => !v)}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 3v18M17 8l-5-5-5 5M17 16l-5 5-5-5"/></svg>
+                  </button>
+                  <button
+                    className={`fc-toolbar-icon ${flipH ? 'active' : ''}`}
+                    title={t('frameCount.toolbar.flipH')}
+                    disabled={!videoSrc}
+                    onClick={() => setFlipH(v => !v)}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12h18M8 7l-5 5 5 5M16 7l5 5-5 5"/></svg>
+                  </button>
+                  <button
+                    className="fc-toolbar-icon"
+                    title={t('frameCount.toolbar.rotate', { angle: rotation })}
+                    disabled={!videoSrc}
+                    onClick={() => setRotation(prev => NEXT_ROTATION[prev])}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                  </button>
+                  <button
+                    className={`fc-toolbar-icon ${cropMode ? 'active' : ''}`}
+                    title={t(cropMode ? 'frameCount.toolbar.cropExit' : 'frameCount.toolbar.crop')}
+                    disabled={!videoSrc}
+                    onClick={() => {
+                      if (cropMode) { setCropMode(false); }
+                      else { setCropMode(true); setCropRect(null); }
+                    }}
+                  >
+                    <IconCrop />
+                  </button>
+                </div>
+
+                <button className="fc-change-video fc-new-btn" onClick={() => fileInputRef.current?.click()} title={t('frameCount.toolbar.newVideo')}>
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="9" cy="9" r="8" stroke="currentColor" strokeWidth="1.5"/>
+                    <line x1="9" y1="5" x2="9" y2="13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    <line x1="5" y1="9" x2="13" y2="9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                </button>
+                <button className="fc-change-video fc-folder-btn fc-new-btn" onClick={openFromFolder} title={t('frameCount.toolbar.folder')}>
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M2 5a1 1 0 0 1 1-1h4l1.5 2H15a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+                <div className="fc-export-wrap" ref={exportMenuRef}>
+                <button
+                  className="fc-export-btn"
+                  onClick={() => exporting ? undefined : setShowExportMenu(v => !v)}
+                  disabled={exporting || !videoSrc}
+                  title={t('frameCount.toolbar.export')}
+                >
+                  <IconExport />
+                  {exporting ? `${exportProgress}%` : ''}
+                  {!exporting && <span className="fc-export-caret">▾</span>}
+                </button>
+                {showExportMenu && !exporting && (
+                  <div className="fc-export-menu">
+                    <button
+                      className="fc-export-menu-item"
+                      onClick={() => { setShowExportMenu(false); handleExport(); }}
+                    >
+                      {t('frameCount.exportMenu.video')}
+                    </button>
+                    <button
+                      className="fc-export-menu-item"
+                      onClick={() => { setShowExportMenu(false); exportCurrentFrame(); }}
+                    >
+                      {t('frameCount.exportMenu.frame')}
+                    </button>
+                  </div>
+                )}
+              </div>
+                <button className="fc-shortcuts-btn" onClick={() => setShowShortcuts(true)} title={t('frameCount.toolbar.shortcuts')}>
+                  <IconKeyboard />
+                </button>
+              </div>
+            </div>
             {videoSrc ? (
               <>
-                {/* 顶部工具栏：文件名 + FPS/Crop/Image 设置 */}
-                <div className="fc-video-toolbar">
-                  {/* Row 1 (桌面端 display:contents 不影响布局;手机端变为独立一行) */}
-                  <div className="fc-toolbar-row1">
-                    <span className="fc-video-label">{videoName}</span>
-                    {videoFile && (
-                      <VideoInfoButton
-                        info={{
-                          videoFile,
-                          videoFps,
-                          codec: fbDecoderConfig?.codec ?? null,
-                          width: fbDecoderConfig?.codedWidth ?? videoRef.current?.videoWidth ?? 0,
-                          height: fbDecoderConfig?.codedHeight ?? videoRef.current?.videoHeight ?? 0,
-                          durationSec: videoFps > 0 && totalFrames > 0 ? totalFrames / videoFps : (videoRef.current?.duration ?? 0),
-                          sampleCount: fbSamples.length > 0 ? fbSamples.length : null,
-                          audio: audioInfo,
-                          vfr: vfrInfo,
-                        }}
-                      />
-                    )}
-                    {/* Time 已移到右侧 Solve header (按 Solve 维度记录 time); FPS 见 ⓘ */}
-                  </div>
-
-                  {/* Row 2: 图像变换 + New/Folder/Export */}
-                  <div className="fc-toolbar-row2">
-                    <div className="fc-toolbar-controls">
-                      {/* 图像变换按钮 */}
-                      <button
-                        className={`fc-toolbar-icon ${flipV ? 'active' : ''}`}
-                        title="倒放 (Flip Vertical)"
-                        onClick={() => setFlipV(v => !v)}
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 3v18M17 8l-5-5-5 5M17 16l-5 5-5-5"/></svg>
-                      </button>
-                      <button
-                        className={`fc-toolbar-icon ${flipH ? 'active' : ''}`}
-                        title="镜像 (Flip Horizontal)"
-                        onClick={() => setFlipH(v => !v)}
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12h18M8 7l-5 5 5 5M16 7l5 5-5 5"/></svg>
-                      </button>
-                      <button
-                        className="fc-toolbar-icon"
-                        title={`旋转 90° (${rotation}°)`}
-                        onClick={() => setRotation(prev => NEXT_ROTATION[prev])}
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-                      </button>
-
-                      {/* Crop — 切换裁切模式 */}
-                      <button
-                        className={`fc-toolbar-icon ${cropMode ? 'active' : ''}`}
-                        title={cropMode ? 'Exit Crop' : 'Crop'}
-                        onClick={() => {
-                          if (cropMode) { setCropMode(false); }
-                          else { setCropMode(true); setCropRect(null); }
-                        }}
-                      >
-                        <IconCrop />
-                      </button>
-                    </div>
-
-                    <button className="fc-change-video fc-new-btn" onClick={() => fileInputRef.current?.click()} title="New video">
-                      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="9" cy="9" r="8" stroke="currentColor" strokeWidth="1.5"/>
-                        <line x1="9" y1="5" x2="9" y2="13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                        <line x1="5" y1="9" x2="13" y2="9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                      </svg>
-                    </button>
-                    <button className="fc-change-video fc-folder-btn fc-new-btn" onClick={openFromFolder} title="Open video from folder (auto-load/save .splits.txt)">
-                      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M2 5a1 1 0 0 1 1-1h4l1.5 2H15a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
-                      </svg>
-                    </button>
-                    <div className="fc-export-wrap" ref={exportMenuRef}>
-                    <button
-                      className="fc-export-btn"
-                      onClick={() => exporting ? undefined : setShowExportMenu(v => !v)}
-                      disabled={exporting}
-                      title="Export"
-                    >
-                      <IconExport />
-                      {exporting ? `${exportProgress}%` : ''}
-                      {!exporting && <span className="fc-export-caret">▾</span>}
-                    </button>
-                    {showExportMenu && !exporting && (
-                      <div className="fc-export-menu">
-                        <button
-                          className="fc-export-menu-item"
-                          onClick={() => { setShowExportMenu(false); handleExport(); }}
-                        >
-                          Export Video
-                        </button>
-                        <button
-                          className="fc-export-menu-item"
-                          onClick={() => { setShowExportMenu(false); exportCurrentFrame(); }}
-                        >
-                          Export Current Frame
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                    <button className="fc-shortcuts-btn" onClick={() => setShowShortcuts(true)} title="Keyboard Shortcuts">
-                      <IconKeyboard />
-                    </button>
-                  </div>
-                </div>
                 {/* 视频 wrapper — 紧贴视频尺寸，crop overlay / zoom / pan 都在这里 */}
                 <div
                   ref={wrapperRef}
@@ -2317,14 +2325,14 @@ export default function FrameCountPage() {
                           right: `${cropRect.right}%`, bottom: `${cropRect.bottom}%`,
                         }} />
                       )}
-                      <span className="fc-crop-hint">Drag to select crop area</span>
+                      <span className="fc-crop-hint">{t('frameCount.video.cropHint')}</span>
                     </div>
                   )}
                 </div>
               </>
             ) : (
               <div className={`fc-drop-hint ${dragging ? 'dragging' : ''}`}>
-                <button type="button" className="fc-drop-upload-btn" onClick={() => fileInputRef.current?.click()} aria-label="Upload video">
+                <button type="button" className="fc-drop-upload-btn" onClick={() => fileInputRef.current?.click()} aria-label={t('frameCount.video.uploadAria')}>
                   <IconUpload />
                 </button>
               </div>
@@ -2332,9 +2340,8 @@ export default function FrameCountPage() {
             <input ref={fileInputRef} type="file" accept="video/*" className="fc-file-input" onChange={handleFileSelect} />
           </div>
 
-          {/* ── 控制栏 ── */}
-          {videoSrc && (
-            <div className="fc-panel fc-controls-wrap">
+          {/* ── 控制栏 ── 总是渲染; 无视频时交互按钮 disabled */}
+          <div className="fc-panel fc-controls-wrap">
               {/* Mark 三角标,贴在时间轴上方,单击跳到对应帧 */}
               {totalFrames > 0 && activeSolve.marks.length > 0 && (
                 <div className="fc-mark-tri-row">
@@ -2347,7 +2354,7 @@ export default function FrameCountPage() {
                         className={`fc-mark-tri ${selectedMarkIdx === i ? 'selected' : ''}`}
                         style={{ left: `${pct}%` }}
                         onClick={() => { setSelectedMarkIdx(i); seekToFrame(m.frame); }}
-                        title={`Mark ${i}: frame ${m.frame}`}
+                        title={t('frameCount.marks.triTip', { i, frame: m.frame })}
                       >▼</button>
                     );
                   })}
@@ -2441,7 +2448,7 @@ export default function FrameCountPage() {
                   if (totalFrames <= 0) return null;
                   const pct = (m.frame / totalFrames) * 100;
                   return (
-                    <div key={i} className="fc-marker fc-marker-mark" style={{ left: `${pct}%` }} title={`Mark ${i}: ${m.frame}`} />
+                    <div key={i} className="fc-marker fc-marker-mark" style={{ left: `${pct}%` }} title={t('frameCount.marks.markerTip', { i, frame: m.frame })} />
                   );
                 })}
 
@@ -2461,7 +2468,7 @@ export default function FrameCountPage() {
                       className={`fc-solve-band ${isActive ? 'active' : ''}`}
                       style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
                       onPointerDown={(e) => { e.stopPropagation(); if (!isActive) { setActiveSolveIdx(si); setSelectedMarkIdx(null); } }}
-                      title={`${s.name} — ${s.marks.length} marks`}
+                      title={t('frameCount.solves.bandTip', { name: s.name, count: s.marks.length })}
                     >
                       {isActive ? (
                         s.marks.map((m, mi) => {
@@ -2481,31 +2488,29 @@ export default function FrameCountPage() {
               <div className="fc-controls">
                 <div className="fc-rate-group">
                   {PLAYBACK_RATES.map((r) => (
-                    <button key={r} className={`fc-rate-btn ${playbackRate === r ? 'active' : ''}`} onClick={() => changeRate(r)}>{r === 1 ? '1x' : r}</button>
+                    <button key={r} className={`fc-rate-btn ${playbackRate === r ? 'active' : ''}`} disabled={!videoSrc} onClick={() => changeRate(r)}>{r === 1 ? '1x' : r}</button>
                   ))}
                 </div>
 
                 <div className="fc-ctrl-sep" />
 
-                <button className="fc-ctrl-btn" title="Back 10 frames (Q)" {...longPressProps(() => stepFrames(-10), 150)}><IconSkipBack /></button>
-                <button className="fc-ctrl-btn" title="Back 1 frame (A)" {...longPressProps(() => stepFrames(-1), 80)}><IconFrameBack /></button>
-                <button className="fc-ctrl-btn play-btn" title="Play/Pause (K)" onClick={togglePlay}>
+                <button className="fc-ctrl-btn" title={t('frameCount.controls.back10')} disabled={!videoSrc} {...longPressProps(() => stepFrames(-10), 150)}><IconSkipBack /></button>
+                <button className="fc-ctrl-btn" title={t('frameCount.controls.back1')} disabled={!videoSrc} {...longPressProps(() => stepFrames(-1), 80)}><IconFrameBack /></button>
+                <button className="fc-ctrl-btn play-btn" title={t('frameCount.controls.play')} disabled={!videoSrc} onClick={togglePlay}>
                   {isPlaying ? <IconPause /> : <IconPlay />}
                 </button>
-                <button className="fc-ctrl-btn" title="Forward 1 frame (D)" {...longPressProps(() => stepFrames(1), 80)}><IconFrameForward /></button>
-                <button className="fc-ctrl-btn" title="Forward 10 frames (E)" {...longPressProps(() => stepFrames(10), 150)}><IconSkipForward /></button>
+                <button className="fc-ctrl-btn" title={t('frameCount.controls.forward1')} disabled={!videoSrc} {...longPressProps(() => stepFrames(1), 80)}><IconFrameForward /></button>
+                <button className="fc-ctrl-btn" title={t('frameCount.controls.forward10')} disabled={!videoSrc} {...longPressProps(() => stepFrames(10), 150)}><IconSkipForward /></button>
               </div>
             </div>
-          )}
         </div>
 
-        {/* 右侧：Solve 面板 */}
-        {videoSrc && (
-          <div className="fc-solve-col">
+        {/* 右侧：Solve 面板 — 总是显示 (空视频时也展示指引与布局) */}
+        <div className="fc-solve-col">
             {/* Solve 选择器 */}
             <div className="fc-panel fc-solve-header">
-              <button className="fc-solve-btn" title="Add Solve (+)" onClick={addSolve}>+</button>
-              <button className="fc-solve-btn" title="Remove Solve" onClick={removeSolve}>−</button>
+              <button className="fc-solve-btn" title={t('frameCount.solves.add')} onClick={addSolve}>+</button>
+              <button className="fc-solve-btn" title={t('frameCount.solves.remove')} onClick={removeSolve}>−</button>
               <select
                 className="fc-solve-select"
                 value={activeSolveIdx}
@@ -2516,7 +2521,7 @@ export default function FrameCountPage() {
               <div className="fc-input-unit-wrap">
                 <input
                   className="fc-tab-input fc-toolbar-time"
-                  type="number" step="0.01" min={0} placeholder="Time (s)"
+                  type="number" step="0.01" min={0} placeholder={t('frameCount.solves.timePlaceholder')}
                   inputMode="decimal"
                   style={{ width: `${solveTime.length > 0 ? solveTime.length + 1 : 9}ch` }}
                   value={solveTime}
@@ -2536,13 +2541,20 @@ export default function FrameCountPage() {
             <div className="fc-panel fc-marks-panel">
               {/* Mark 操作按钮 */}
               <div className="fc-mark-actions">
-                <button className="fc-action-btn" onClick={addMark} disabled={activeSolve.marks.some(m => m.frame === currentFrame)}>Add</button>
-                <button className="fc-action-btn" onClick={() => selectedMarkIdx !== null && removeMark(selectedMarkIdx)} disabled={selectedMarkIdx === null}>Remove</button>
-                <button className="fc-action-btn" title="将选中 mark 的帧号更新为当前播放位置" onClick={updateMark} disabled={selectedMarkIdx === null}>Update</button>
+                <button className="fc-action-btn" onClick={addMark} disabled={!videoSrc || activeSolve.marks.some(m => m.frame === currentFrame)}>{t('frameCount.marks.add')}</button>
+                <button className="fc-action-btn" onClick={() => selectedMarkIdx !== null && removeMark(selectedMarkIdx)} disabled={selectedMarkIdx === null}>{t('frameCount.marks.remove')}</button>
+                <button className="fc-action-btn" title={t('frameCount.marks.updateTip')} onClick={updateMark} disabled={selectedMarkIdx === null}>{t('frameCount.marks.update')}</button>
               </div>
               <div className="fc-marks-list">
                 {marksWithDiffs.length === 0 && (
-                  <div className="fc-marks-empty">No marks yet. Press <kbd>M</kbd> to add.</div>
+                  <div className="fc-marks-empty">
+                    <div className="fc-marks-empty-heading">{t('frameCount.empty.heading')}</div>
+                    <ol className="fc-marks-empty-steps">
+                      <li>{t('frameCount.empty.step1')}</li>
+                      <li>{t('frameCount.empty.step2')}</li>
+                      <li>{t('frameCount.empty.step3Prefix')} <kbd>M</kbd> {t('frameCount.empty.step3Suffix')}</li>
+                    </ol>
+                  </div>
                 )}
                 {marksWithDiffs.map((m, i) => (
                   <div key={i}>
@@ -2561,21 +2573,21 @@ export default function FrameCountPage() {
                 ))}
                 {activeSolve.marks.length >= 2 && (
                   <div className="fc-mark-total">
-                    <span className="fc-mark-idx">Total:</span>
+                    <span className="fc-mark-idx">{t('frameCount.marks.total')}</span>
                     <span className="fc-mark-diff">{totalMarkFrames}f ({totalMarkTime.toFixed(3)}s)</span>
                   </div>
                 )}
                 {startFramePreview && (
                   <div className="fc-start-suggest">
-                    <div className="fc-method-toggle" role="radiogroup" aria-label="Start-frame method">
-                      <span className="fc-method-toggle-label">Start:</span>
+                    <div className="fc-method-toggle" role="radiogroup" aria-label={t('frameCount.start.method')}>
+                      <span className="fc-method-toggle-label">{t('frameCount.start.label')}</span>
                       <button
                         type="button"
                         role="radio"
                         aria-checked={startFrameMethod === 'fps'}
                         className={`fc-method-opt ${startFrameMethod === 'fps' ? 'active' : ''}`}
                         onClick={() => { setStartFrameMethod('fps'); if (startFramePreview) seekToFrame(startFramePreview.byFps); }}
-                        title="Start frame = endFrame − ⌈(⌊time⌋₂+.009) × fps⌉"
+                        title={t('frameCount.start.fpsTip')}
                       >FPS <span className="fc-method-wca-badge">WCA</span></button>
                       <button
                         type="button"
@@ -2583,7 +2595,7 @@ export default function FrameCountPage() {
                         aria-checked={startFrameMethod === 'timestamp'}
                         className={`fc-method-opt ${startFrameMethod === 'timestamp' ? 'active' : ''}`}
                         onClick={() => { setStartFrameMethod('timestamp'); if (startFramePreview?.byTs != null) seekToFrame(startFramePreview.byTs); }}
-                        title="Start frame = 距离 (end sample timestamp − time × 1e6μs) 最近的 sample"
+                        title={t('frameCount.start.timestampTip')}
                       >Timestamp</button>
                     </div>
                     {startFrameMethod === 'fps' && (
@@ -2591,7 +2603,7 @@ export default function FrameCountPage() {
                         type="button"
                         className="fc-suggest-row active"
                         onClick={() => seekToFrame(startFramePreview.byFps)}
-                        title={`Jump to frame ${startFramePreview.byFps} (FPS method)`}
+                        title={t('frameCount.start.jumpFps', { frame: startFramePreview.byFps })}
                       >
                         <span className="fc-suggest-formula">
                           frames = ⌈(⌊{solveTimeNum.toFixed(2)}⌋₂+.009)×{videoFps.toFixed(2)}⌉ = <b>{startFramePreview.framesBack}f</b>
@@ -2608,8 +2620,8 @@ export default function FrameCountPage() {
                         onClick={() => startFramePreview.byTs !== null && seekToFrame(startFramePreview.byTs)}
                         disabled={startFramePreview.byTs === null}
                         title={startFramePreview.byTs === null
-                          ? 'Samples not ready yet'
-                          : `Jump to frame ${startFramePreview.byTs} (timestamp method)`}
+                          ? t('frameCount.start.samplesNotReady')
+                          : t('frameCount.start.jumpTs', { frame: startFramePreview.byTs })}
                       >
                         {startFramePreview.endSampleTs !== null && startFramePreview.targetTs !== null ? (
                           <>
@@ -2624,7 +2636,7 @@ export default function FrameCountPage() {
                             </span>
                           </>
                         ) : (
-                          <span className="fc-suggest-formula-sub">samples not ready</span>
+                          <span className="fc-suggest-formula-sub">{t('frameCount.start.samplesNotReadyShort')}</span>
                         )}
                       </button>
                     )}
@@ -2634,7 +2646,6 @@ export default function FrameCountPage() {
 
             </div>
           </div>
-        )}
       </div>
 
       {/* Toast */}
@@ -2645,7 +2656,7 @@ export default function FrameCountPage() {
         <div className="fc-modal-overlay" onClick={() => setFolderPickerVideos(null)}>
           <div className="fc-modal" onClick={(e) => e.stopPropagation()}>
             <button className="fc-modal-close" onClick={() => setFolderPickerVideos(null)}>✕</button>
-            <h2>Select a video</h2>
+            <h2>{t('frameCount.folderModal.title')}</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '60vh', overflowY: 'auto' }}>
               {folderPickerVideos.map((v) => (
                 <button
@@ -2671,13 +2682,13 @@ export default function FrameCountPage() {
         <div className="fc-modal-overlay" onClick={() => setShowShortcuts(false)}>
           <div className="fc-modal" onClick={(e) => e.stopPropagation()}>
             <button className="fc-modal-close" onClick={() => setShowShortcuts(false)}>✕</button>
-            <h2>Keyboard Shortcuts</h2>
+            <h2>{t('frameCount.shortcutsModal.title')}</h2>
             {SHORTCUTS.map((item, i) =>
               'section' in item ? (
-                <div key={i} className="fc-shortcut-section">{item.section}</div>
+                <div key={i} className="fc-shortcut-section">{t(`frameCount.shortcutsModal.section.${item.section}`)}</div>
               ) : (
                 <div key={i} className="fc-shortcut-row">
-                  <span className="fc-shortcut-action">{item.action}</span>
+                  <span className="fc-shortcut-action">{t(`frameCount.shortcutsModal.action.${item.action}`)}</span>
                   <span className="fc-shortcut-keys">
                     {item.keys.map((k, j) => (
                       <span key={j}>

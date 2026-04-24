@@ -2,17 +2,27 @@
  * /site — 魔方网址导航页
  * sidebar 分组 + 右侧单行密集列表；搜索用 Fuse.js。
  */
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useState, useEffect, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Search, AlertTriangle } from 'lucide-react';
+
+function YouTubeBadge() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden focusable="false">
+      <rect x="1" y="5" width="22" height="14" rx="3" fill="#d13636" />
+      <polygon points="10,9 10,15 15,12" fill="#fff" />
+    </svg>
+  );
+}
 import Fuse from 'fuse.js';
 import { SITES } from './data/sites';
 import { GROUPS } from './data/categories';
 import type { GroupId, Site } from './data/types';
 import './sites.css';
 
-type GroupFilter = 'all' | GroupId;
+type GroupFilter = GroupId;
+const DEFAULT_GROUP: GroupId = 'competition';
 
 // 按分组给字母头像配色（hue 保证彼此有区分度）
 const GROUP_COLOR: Record<GroupId, string> = {
@@ -40,7 +50,6 @@ const TEXTS = {
   title:       { en: 'Web Directory', zh: '魔方导航' },
   subtitle:    { en: 'Curated cube-related sites',       zh: '精选魔方相关网站' },
   searchPh:    { en: 'Search name / description / URL…', zh: '搜索名称 / 描述 / 网址…' },
-  allGroup:    { en: 'All',              zh: '全部' },
   sites:       { en: 'sites',            zh: '个站点' },
   dead:        { en: 'Offline',          zh: '不可访问' },
   resultsFor:  { en: 'Results for',      zh: '搜索' },
@@ -48,6 +57,9 @@ const TEXTS = {
   back:        { en: 'Home',             zh: '首页' },
   altLink:     { en: 'mirrors',          zh: '其他镜像' },
   noResults:   { en: 'No matches.',      zh: '没有匹配结果。' },
+  colName:     { en: 'Name',             zh: '名称' },
+  colAuthor:   { en: 'Author',           zh: '作者' },
+  colDesc:     { en: 'Description',      zh: '简介' },
 } as const;
 
 function hostOf(url: string): string {
@@ -77,12 +89,10 @@ function SiteRow({ site, lang }: { site: Site; lang: 'en' | 'zh' }) {
       : site.name_en || site.name;
   const desc =
     lang === 'zh'
-      ? site.desc_zh || site.desc_en || site.author
-      : site.desc_en || site.desc_zh || site.author;
+      ? site.desc_zh || site.desc_en
+      : site.desc_en || site.desc_zh;
   const dead = site.status === 'dead';
 
-  // 不把整行做成 <a>（里面会嵌套 alt <a>，HTML 非法）。
-  // 主链接只包 icon + 文本块，alt_urls 作为兄弟节点放在同一容器。
   return (
     <div className={`site-row${dead ? ' is-dead' : ''}`}>
       <a
@@ -94,16 +104,31 @@ function SiteRow({ site, lang }: { site: Site; lang: 'en' | 'zh' }) {
         <div className="site-row-icon">
           {dead ? <AlertTriangle size={20} className="site-dead-icon" /> : <LetterAvatar name={name} group={site.group} />}
         </div>
-        <div className="site-row-body">
-          <div className="site-row-head">
-            <span className="site-row-name">{name}</span>
-            <span className="site-row-host">{hostOf(site.url)}</span>
-            {site.subgroup && <span className="site-row-subgroup">{site.subgroup}</span>}
-            {dead && <span className="site-row-dead-badge">{TEXTS.dead[lang]}</span>}
-          </div>
-          {desc && <div className="site-row-desc">{desc}</div>}
+        <div className="site-row-title">
+          <span className="site-row-name">{name}</span>
+          <span className="site-row-host">{hostOf(site.url)}</span>
+          {site.subgroup && <span className="site-row-subgroup">{site.subgroup}</span>}
+          {dead && <span className="site-row-dead-badge">{TEXTS.dead[lang]}</span>}
+        </div>
+        <div className="site-row-author" title={site.author || ''}>
+          {site.author || ''}
+        </div>
+        <div className="site-row-desc" title={desc || ''}>
+          {desc || ''}
         </div>
       </a>
+      {site.youtube && (
+        <a
+          href={site.youtube}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="site-row-yt"
+          title="YouTube"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <YouTubeBadge />
+        </a>
+      )}
       {site.alt_urls && site.alt_urls.length > 0 && (
         <div className="site-row-alts">
           <span className="site-row-alts-label">{TEXTS.altLink[lang]}:</span>
@@ -129,29 +154,41 @@ export default function SitesPage() {
   const lang: 'en' | 'zh' = i18n.language.startsWith('zh') ? 'zh' : 'en';
 
   const [params, setParams] = useSearchParams();
-  const group = (params.get('g') || 'all') as GroupFilter;
+  const group = ((params.get('g') as GroupId) || DEFAULT_GROUP) as GroupFilter;
   const query = params.get('q') || '';
   const crossGroup = params.get('cross') === '1';
 
   const setGroup = useCallback(
     (g: GroupFilter) => {
       const next = new URLSearchParams(params);
-      if (g === 'all') next.delete('g');
+      if (g === DEFAULT_GROUP) next.delete('g');
       else next.set('g', g);
       setParams(next, { replace: true });
     },
     [params, setParams],
   );
 
-  const setQuery = useCallback(
-    (q: string) => {
+  // 本地输入 state:避免每次按键都 setParams 导致中文 IME 组词错乱
+  const [inputValue, setInputValue] = useState(query);
+  const composingRef = useRef(false);
+
+  // URL 外部变化(例如浏览器返回)同步回本地 state
+  useEffect(() => {
+    setInputValue((prev) => (prev === query ? prev : query));
+  }, [query]);
+
+  // 本地输入变更 → 延迟写回 URL;组词期间不写
+  useEffect(() => {
+    if (inputValue === query) return;
+    if (composingRef.current) return;
+    const t = setTimeout(() => {
       const next = new URLSearchParams(params);
-      if (q) next.set('q', q);
+      if (inputValue) next.set('q', inputValue);
       else next.delete('q');
       setParams(next, { replace: true });
-    },
-    [params, setParams],
-  );
+    }, 150);
+    return () => clearTimeout(t);
+  }, [inputValue, query, params, setParams]);
 
   const toggleCross = useCallback(() => {
     const next = new URLSearchParams(params);
@@ -168,7 +205,7 @@ export default function SitesPage() {
 
   // 分组计数
   const counts = useMemo(() => {
-    const c: Record<string, number> = { all: SITES.length };
+    const c: Record<string, number> = {};
     for (const s of SITES) c[s.group] = (c[s.group] || 0) + 1;
     return c;
   }, []);
@@ -198,18 +235,16 @@ export default function SitesPage() {
     let list: Site[] = SITES;
     if (query.trim()) {
       const hits = fuse.search(query.trim()).map((r) => r.item);
-      list = crossGroup ? hits : hits.filter((s) => group === 'all' || s.group === group);
+      list = crossGroup ? hits : hits.filter((s) => s.group === group);
     } else {
-      list = group === 'all' ? SITES : SITES.filter((s) => s.group === group);
+      list = SITES.filter((s) => s.group === group);
     }
     return list;
   }, [query, group, crossGroup, fuse]);
 
   const headerLabel = query.trim()
     ? `${TEXTS.resultsFor[lang]} "${query.trim()}"`
-    : group === 'all'
-      ? TEXTS.allGroup[lang]
-      : GROUPS.find((g) => g.id === group)?.[lang === 'zh' ? 'label_zh' : 'label_en'] || group;
+    : GROUPS.find((g) => g.id === group)?.[lang === 'zh' ? 'label_zh' : 'label_en'] || group;
 
   return (
     <div className="sites-page">
@@ -225,8 +260,13 @@ export default function SitesPage() {
           <input
             className="sites-search-input"
             placeholder={TEXTS.searchPh[lang]}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onCompositionStart={() => { composingRef.current = true; }}
+            onCompositionEnd={(e) => {
+              composingRef.current = false;
+              setInputValue((e.target as HTMLInputElement).value);
+            }}
           />
         </div>
 
@@ -238,13 +278,6 @@ export default function SitesPage() {
         )}
 
         <nav className="sites-nav">
-          <button
-            className={`sites-nav-item${group === 'all' ? ' is-active' : ''}`}
-            onClick={() => setGroup('all')}
-          >
-            <span>{TEXTS.allGroup[lang]}</span>
-            <span className="sites-nav-count">{counts.all}</span>
-          </button>
           {GROUPS.map((g) => (
             <button
               key={g.id}
@@ -274,6 +307,12 @@ export default function SitesPage() {
           <div className="sites-empty">{TEXTS.noResults[lang]}</div>
         ) : (
           <div className="sites-list">
+            <div className="sites-list-head" aria-hidden>
+              <span />
+              <span>{TEXTS.colName[lang]}</span>
+              <span>{TEXTS.colAuthor[lang]}</span>
+              <span>{TEXTS.colDesc[lang]}</span>
+            </div>
             {filtered.map((s) => (
               <SiteRow key={s.id} site={s} lang={lang} />
             ))}
