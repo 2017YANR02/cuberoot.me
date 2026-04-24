@@ -9,7 +9,9 @@ export const SITES: Site[] = [
     "url": "https://cuber-feng.github.io/cuberlevel/",
     "group": "algorithms",
     "subgroup": "Stat",
-    "author": "Yuxiang Feng (奉于翔)"
+    "author": "Yuxiang Feng (奉于翔)",
+    "desc_en": "Lookup tool for WCA competitors by ID or name, showing their results and profile info.",
+    "desc_zh": "按 WCA ID 或姓名查询选手成绩与档案的工具。"
   },
   {
     "id": "r003",
@@ -17,7 +19,9 @@ export const SITES: Site[] = [
     "url": "https://odds.nmckee.org/",
     "group": "algorithms",
     "subgroup": "Stat",
-    "author": "Nicholas McKee"
+    "author": "Nicholas McKee",
+    "desc_en": "Calculates win/placement probabilities for competitors at WCA competitions.",
+    "desc_zh": "计算 WCA 比赛中选手获胜或进入名次的概率。"
   },
   {
     "id": "r004",
@@ -48,14 +52,19 @@ export const SITES: Site[] = [
     "url": "https://mycube.club/tools/sq1-d",
     "group": "algorithms",
     "subgroup": "Stat",
-    "author": "郭嘉"
+    "author": "郭嘉",
+    "desc_en": "Square-1 cube shape and solving tools hosted on mycube.club.",
+    "desc_zh": "mycube.club 上的 Square-1 还原辅助工具。"
   },
   {
     "id": "r008",
     "name": "cubinghistory",
     "url": "https://www.cubinghistory.com/",
     "group": "algorithms",
-    "subgroup": "Stat"
+    "subgroup": "Stat",
+    "author": "Michael James Straughan",
+    "desc_en": "Archive documenting the history of speedcubing methods, world records, and puzzle hardware since 2005.",
+    "desc_zh": "记录速拧方法、世界纪录与魔方硬件发展史的档案站。"
   },
   {
     "id": "r009",
@@ -64,7 +73,9 @@ export const SITES: Site[] = [
     "group": "algorithms",
     "subgroup": "Stat",
     "author": "Morgan Yeh",
-    "youtube": "https://youtu.be/amEKXGPV2as"
+    "youtube": "https://youtu.be/amEKXGPV2as",
+    "desc_en": "Interactive trainer for practicing ZBLS F2L cases with selectable variants.",
+    "desc_zh": "用于练习 ZBLS F2L 各情形的交互式训练器。"
   },
   {
     "id": "r010",
@@ -85,7 +96,10 @@ export const SITES: Site[] = [
     "name": "athefre",
     "url": "https://sites.google.com/site/athefre/",
     "group": "algorithms",
-    "subgroup": "3x3"
+    "subgroup": "3x3",
+    "author": "Athefre",
+    "desc_en": "Personal site documenting novel cube-solving methods and recognition systems including EOLR.",
+    "desc_zh": "记录原创魔方解法与识别体系（含 EOLR）的个人站点。"
   },
   {
     "id": "r013",
@@ -94,7 +108,9 @@ export const SITES: Site[] = [
     "group": "algorithms",
     "subgroup": "ZZ",
     "desc_en": "improve the efficiency of your CFOP cross or ZZ EO",
-    "youtube": "https://youtu.be/s37aVtYOTfU"
+    "youtube": "https://youtu.be/s37aVtYOTfU",
+    "author": "crystalcuber",
+    "desc_zh": "面向 CFOP cross 与 ZZ EO 的速拧训练工具集合。"
   },
   {
     "id": "r015",
@@ -103,7 +119,9 @@ export const SITES: Site[] = [
     "group": "algorithms",
     "subgroup": "ZZ",
     "name_zh": "1V1 BPA/WPA计算器",
-    "author": "Cary Huang"
+    "author": "Cary Huang",
+    "desc_en": "Head-to-head BPA/WPA calculator for speedcubing average of 5 rounds.",
+    "desc_zh": "速拧 ao5 的 1v1 BPA/WPA 计算器。"
   },
   {
     "id": "r017",
@@ -112,21 +130,28 @@ export const SITES: Site[] = [
     "group": "algorithms",
     "subgroup": "ZZ",
     "author": "Gil Zussman",
-    "desc_en": "Reviewing scrambles with Social Cubing!"
+    "desc_en": "Reviewing scrambles with Social Cubing!",
+    "desc_zh": "与朋友一起练习历届 WCA 比赛打乱的在线平台。"
   },
   {
     "id": "r020",
     "name": "Image Generator",
     "url": "https://lowcubes.com/fto/image-generator",
     "group": "events",
-    "subgroup": "FTO"
+    "subgroup": "FTO",
+    "author": "Raul Low",
+    "desc_en": "FTO (Face-Turning Octahedron) image generator that renders states from EIF notation.",
+    "desc_zh": "由 EIF 记号生成 FTO 状态图的工具。"
   },
   {
     "id": "r021",
     "name": "FTODrawer",
     "url": "https://github.com/Sixstringcal/FTODrawer?tab=readme-ov-file",
     "group": "events",
-    "subgroup": "FTO"
+    "subgroup": "FTO",
+    "author": "Sixstringcal",
+    "desc_en": "Application that draws FTO (Face-Turning Octahedron) states from scramble notation.",
+    "desc_zh": "根据打乱记号绘制 FTO 状态图的应用。"
   },
   {
     "id": "r022",
@@ -149,7 +174,9 @@ export const SITES: Site[] = [
     "url": "https://lowcubes.com/fto/3look-l3t",
     "group": "events",
     "subgroup": "FTO",
-    "author": "Raul Low"
+    "author": "Raul Low",
+    "desc_en": "Algorithms for the 3-Look L3T FTO last-three-triangles method across Pair, Top and Triangles stages.",
+    "desc_zh": "FTO 3-Look L3T 方法的三阶段公式表。"
   },
   {
     "id": "r025",
@@ -171,7 +198,9 @@ export const SITES: Site[] = [
     "name": "How to improve",
     "url": "https://reddit.com/r/Cubers/wiki/how_to_improve?v=100d8d6a-997f-11e9-ae60-0eceb7079eb8",
     "group": "algorithms",
-    "subgroup": "How to improve"
+    "subgroup": "How to improve",
+    "desc_en": "r/Cubers community wiki page with speedcubing improvement tips and resources.",
+    "desc_zh": "r/Cubers 社区提速经验与资源汇总 wiki。"
   },
   {
     "id": "r030",
@@ -196,7 +225,10 @@ export const SITES: Site[] = [
     "url": "https://alpha.twizzle.net/edit/?stickering=G1&setup-alg=B2+U2+L%27+B2+L%27+F2+R%27+D2+F2+R2+D%27+F%27+D2+R%27+U%27+F2+R+F2+L%27+D&alg=D%27+L%27+U%27+B+%2F%2F+EO%2C+4c4e%0AF2+U2+F2+D2+L2+U+D+F2+D+R%27+%2F%2F+4a2%2C4e&fbclid=IwAR2K3qMeS_wzpT3Bx_EukjmyECEPE023XoIyM-CDqhv5H8BlC6DCPHmu5NM",
     "group": "events",
     "subgroup": "FMC",
-    "name_zh": "DR状态"
+    "name_zh": "DR状态",
+    "author": "Lucas Garron",
+    "desc_en": "Twizzle Editor for visualizing, editing and analyzing cube algorithms including NISS and commutators.",
+    "desc_zh": "Twizzle 算法编辑与可视化工具，支持 NISS 与交换子。"
   },
   {
     "id": "r034",
@@ -212,7 +244,10 @@ export const SITES: Site[] = [
     "name": "EO Cases",
     "url": "http://cube.rider.biz/zz.php?p=eoline#eo_cases",
     "group": "events",
-    "subgroup": "FMC"
+    "subgroup": "FMC",
+    "author": "Conrad Rider",
+    "desc_en": "Tutorial and case list for the EOLine step of the ZZ method.",
+    "desc_zh": "ZZ 方法 EOLine 阶段的教程与 case 集。"
   },
   {
     "id": "r036",
@@ -220,28 +255,39 @@ export const SITES: Site[] = [
     "url": "https://github.com/GuidoDipietro/FMC",
     "group": "events",
     "subgroup": "FMC",
-    "author": "GuidoDipietro"
+    "author": "GuidoDipietro",
+    "desc_en": "Collection of FMC solutions, analysis scripts, and theory resources by Guido Dipietro.",
+    "desc_zh": "Guido Dipietro 的 FMC 解法、分析脚本与理论资料合集。"
   },
   {
     "id": "r037",
     "name": "FM Weekly Contest",
     "url": "https://fewest-moves.info",
     "group": "events",
-    "subgroup": "FMC"
+    "subgroup": "FMC",
+    "author": "devaka",
+    "desc_en": "Site hosting weekly Fewest Moves Challenge contests.",
+    "desc_zh": "每周 FMC 最少步挑战赛平台。"
   },
   {
     "id": "r038",
     "name": "Cube Explorer",
     "url": "https://kociemba.org/cube.htm",
     "group": "events",
-    "subgroup": "FMC"
+    "subgroup": "FMC",
+    "author": "Herbert Kociemba",
+    "desc_en": "Cube Explorer, a Windows program that finds near-optimal 3x3 solutions using the two-phase algorithm.",
+    "desc_zh": "Cube Explorer，用两阶段算法求 3x3 近最优解的 Windows 程序。"
   },
   {
     "id": "r039",
     "name": "HARCS Cube Solver (CFOP, ZZ, Petrus, Roux)",
     "url": "https://speedsolving.com/threads/harcs-jarcs-replacement-cube-solver.63241",
     "group": "events",
-    "subgroup": "FMC"
+    "subgroup": "FMC",
+    "author": "mDiPalma",
+    "desc_en": "Console cube solver (JARCS replacement) that optimally solves steps of major speedsolving methods with custom user methods.",
+    "desc_zh": "替代 JARCS 的命令行求解器，可对主流方法步骤做最优求解。"
   },
   {
     "id": "r040",
@@ -255,7 +301,9 @@ export const SITES: Site[] = [
     "name": "cube-solver",
     "url": "https://cube-solver.com/",
     "group": "events",
-    "subgroup": "FMC"
+    "subgroup": "FMC",
+    "desc_en": "Online NxN Rubik's cube solver and simulator.",
+    "desc_zh": "在线 NxN 魔方求解器与模拟器。"
   },
   {
     "id": "r042",
@@ -272,14 +320,18 @@ export const SITES: Site[] = [
     "url": "https://speedcubedb.com/htr",
     "group": "events",
     "subgroup": "FMC",
-    "author": "Gil Zussman"
+    "author": "Gil Zussman",
+    "desc_en": "SpeedCubeDB HTR algorithm trainer page.",
+    "desc_zh": "SpeedCubeDB 的 HTR 算法训练页。"
   },
   {
     "id": "r044",
     "name": "HTR训练器",
     "url": "https://t.me/htrtrainerbot",
     "group": "events",
-    "subgroup": "FMC"
+    "subgroup": "FMC",
+    "desc_en": "Telegram bot for FMC / HTR training drills.",
+    "desc_zh": "Telegram 上的 FMC / HTR 训练 bot。"
   },
   {
     "id": "r045",
@@ -287,7 +339,9 @@ export const SITES: Site[] = [
     "url": "https://joba.me/mallard/",
     "group": "events",
     "subgroup": "FMC",
-    "author": "Jonas Balsfulland"
+    "author": "Jonas Balsfulland",
+    "desc_en": "Mallard, a web FMC practice tool for EO, DR and HTR powered by cubelib.",
+    "desc_zh": "Mallard，基于 cubelib 的 EO/DR/HTR 在线 FMC 练习工具。"
   },
   {
     "id": "r046",
@@ -295,14 +349,19 @@ export const SITES: Site[] = [
     "url": "https://github.com/Jobarion/cubelib",
     "group": "events",
     "subgroup": "FMC",
-    "author": "Jonas Balsfulland"
+    "author": "Jonas Balsfulland",
+    "desc_en": "Rust library and CLI for 3x3 FMC solving with EO/DR/HTR subgroup transitions.",
+    "desc_zh": "面向 FMC 的 3x3 Rust 库与命令行工具，覆盖 EO/DR/HTR 子群转换。"
   },
   {
     "id": "r047",
     "name": "EoDr解法分析",
     "url": "https://github.com/enricotenuti/eodr",
     "group": "events",
-    "subgroup": "FMC"
+    "subgroup": "FMC",
+    "author": "Enrico Tenuti",
+    "desc_en": "FMC analysis program that runs edge orientation and domino reduction on a given scramble.",
+    "desc_zh": "对打乱执行 EO 与 DR 分析的 FMC 工具。"
   },
   {
     "id": "r048",
@@ -318,7 +377,9 @@ export const SITES: Site[] = [
     "url": "https://nissy.tronto.net/",
     "group": "events",
     "subgroup": "FMC",
-    "author": "SebastianoTronto"
+    "author": "SebastianoTronto",
+    "desc_en": "Homepage for Nissy, a command-line Rubik's cube solver and FMC assistant.",
+    "desc_zh": "Nissy 主页：命令行三阶求解器与 FMC 辅助工具。"
   },
   {
     "id": "r050",
@@ -326,14 +387,19 @@ export const SITES: Site[] = [
     "url": "https://github.com/sebastianotronto/nissy",
     "group": "events",
     "subgroup": "FMC",
-    "author": "SebastianoTronto"
+    "author": "SebastianoTronto",
+    "desc_en": "GitHub repository for Nissy, a Rubik's cube solver and FMC assistant.",
+    "desc_zh": "Nissy 的 GitHub 仓库：三阶求解器与 FMC 辅助。"
   },
   {
     "id": "r051",
     "name": "Nissy",
     "url": "https://speedsolving.com/threads/nissy-a-rubiks-cube-solver-and-fmc-assistant.86013",
     "group": "events",
-    "subgroup": "FMC"
+    "subgroup": "FMC",
+    "author": "Sebastiano Tronto",
+    "desc_en": "Speedsolving.com thread announcing and updating Nissy, a Rubik's cube solver and FMC assistant.",
+    "desc_zh": "Speedsolving 论坛 Nissy 发布与更新帖。"
   },
   {
     "id": "r052",
@@ -348,14 +414,18 @@ export const SITES: Site[] = [
     "name": "FM Slicey Finder (插中层)",
     "url": "https://333.fm/sf",
     "group": "events",
-    "subgroup": "FMC"
+    "subgroup": "FMC",
+    "desc_en": "Online tool to check optimal slice insertions for 3x3 Fewest Moves solves.",
+    "desc_zh": "在线工具：检查三阶 FMC 的中层插入。"
   },
   {
     "id": "r054",
     "name": "FM Insertion Finder (可插parity)",
     "url": "https://333.fm/if",
     "group": "events",
-    "subgroup": "FMC"
+    "subgroup": "FMC",
+    "desc_en": "Online tool to find optimal move insertions for 3x3 Fewest Moves solves.",
+    "desc_zh": "在线工具：查找三阶 FMC 的最优插入。"
   },
   {
     "id": "r055",
@@ -363,7 +433,9 @@ export const SITES: Site[] = [
     "url": "https://speedsolving.com/threads/a-quicker-way-to-reverse-niss-a-solved-cube.77876/",
     "group": "events",
     "subgroup": "FMC",
-    "author": "Alexandre Henrique Afonso Campos"
+    "author": "Alexandre Henrique Afonso Campos",
+    "desc_en": "Forum post on a faster reverse-NISS technique for checking slice insertions in FMC.",
+    "desc_zh": "论坛帖：更快的 reverse NISS 技巧用于检查中层插入。"
   },
   {
     "id": "r056",
@@ -371,7 +443,9 @@ export const SITES: Site[] = [
     "url": "https://speedsolving.com/threads/fmc-a-guide-for-finding-drs-domino-reduction-guide.87402/",
     "group": "events",
     "subgroup": "FMC",
-    "author": "Jayden McNeill"
+    "author": "Jayden McNeill",
+    "desc_en": "Forum guide on finding Domino Reductions (DR) in FMC, covering EO and DR triggers.",
+    "desc_zh": "论坛指南：FMC 中如何找到 DR（Domino Reduction）。"
   },
   {
     "id": "r057",
@@ -379,7 +453,9 @@ export const SITES: Site[] = [
     "url": "https://speedsolving.com/threads/fmc-a-guide-for-finding-htrs-once-youve-found-a-dr.87220/",
     "group": "events",
     "subgroup": "FMC",
-    "author": "Jayden McNeill"
+    "author": "Jayden McNeill",
+    "desc_en": "Forum guide on finding HTR once a DR has been found in FMC solves.",
+    "desc_zh": "论坛指南：FMC 中找到 DR 后如何继续找 HTR。"
   },
   {
     "id": "r058",
@@ -387,7 +463,9 @@ export const SITES: Site[] = [
     "url": "https://speedsolving.com/threads/updated-htr-guide-for-fmc-introduction-to-htr-subsets.88751/",
     "group": "events",
     "subgroup": "FMC",
-    "author": "Jayden McNeill"
+    "author": "Jayden McNeill",
+    "desc_en": "Forum guide introducing HTR subsets for FMC speedcubing.",
+    "desc_zh": "论坛指南：FMC 的 HTR 子集介绍。"
   },
   {
     "id": "r059",
@@ -395,7 +473,9 @@ export const SITES: Site[] = [
     "url": "https://speedsolving.com/threads/fmc-my-recommended-approach-for-recognizing-all-12-htr-corner-subsets.90515/",
     "group": "events",
     "subgroup": "FMC",
-    "author": "Jayden McNeill"
+    "author": "Jayden McNeill",
+    "desc_en": "Forum post on a recommended approach for recognizing the 12 HTR corner subsets.",
+    "desc_zh": "论坛帖：识别 12 种 HTR 角块子集的推荐方法。"
   },
   {
     "id": "r060",
@@ -403,7 +483,9 @@ export const SITES: Site[] = [
     "url": "https://docs.google.com/document/d/1cQb_UMFvcVr4-SOR42u8gNMP9Ovx6WXxxUA5tolY8v0",
     "group": "events",
     "subgroup": "FMC",
-    "author": "Jayden McNeill"
+    "author": "Jayden McNeill",
+    "desc_en": "Google Doc describing HTR subsets for FMC speedcubing.",
+    "desc_zh": "Google 文档：FMC 中的 HTR 子集说明。"
   },
   {
     "id": "r061",
@@ -411,7 +493,9 @@ export const SITES: Site[] = [
     "url": "https://docs.google.com/spreadsheets/d/1ZhulzHeNgv2Hiy4x9R1MzsMRlPlI-E8DRiHFJlPlboM/",
     "group": "events",
     "subgroup": "FMC",
-    "author": "Wong Chong Wen (黄崇文)"
+    "author": "Wong Chong Wen (黄崇文)",
+    "desc_en": "Google Sheet cataloging HTR cases and algorithms for FMC (v2).",
+    "desc_zh": "Google 表格：FMC 的 HTR 案例与公式清单（v2）。"
   },
   {
     "id": "r062",
@@ -419,7 +503,9 @@ export const SITES: Site[] = [
     "url": "https://youtu.be/BelopwUXJAE",
     "group": "events",
     "subgroup": "FMC",
-    "author": "Wong Chong Wen (黄崇文)"
+    "author": "Wong Chong Wen (黄崇文)",
+    "desc_en": "YouTube video on solving DR corners using only 7 algorithms.",
+    "desc_zh": "YouTube 视频：仅用 7 个公式解决 DR 角块。"
   },
   {
     "id": "r063",
@@ -427,7 +513,9 @@ export const SITES: Site[] = [
     "url": "https://docs.google.com/document/d/1Z3O8BY1LbAMF6m55ufXtSdtBVwSJpMArtRrDT-p_CwM",
     "group": "events",
     "subgroup": "FMC",
-    "author": "Rodney Kinney"
+    "author": "Rodney Kinney",
+    "desc_en": "Google Doc on Domino Setup theory for FMC.",
+    "desc_zh": "Google 文档：FMC 的 Domino Setup 理论。"
   },
   {
     "id": "r064",
@@ -435,7 +523,9 @@ export const SITES: Site[] = [
     "url": "https://docs.google.com/spreadsheets/d/1UrOAMIpqV6_tYtZxnVxjucbqh1UaxCejOEPzbPmyh9E",
     "group": "events",
     "subgroup": "FMC",
-    "author": "Rodney Kinney"
+    "author": "Rodney Kinney",
+    "desc_en": "Google Sheet of DR corner case generators for FMC.",
+    "desc_zh": "Google 表格：FMC 的 DR 角块案例生成器。"
   },
   {
     "id": "r065",
@@ -443,7 +533,9 @@ export const SITES: Site[] = [
     "url": "https://docs.google.com/spreadsheets/d/1fYdYEGlBk3bv5x2WVSA0NtsPWVlNKbtyK-Iq-J6VjDY",
     "group": "events",
     "subgroup": "FMC",
-    "author": "Rodney Kinney"
+    "author": "Rodney Kinney",
+    "desc_en": "Google Sheet covering multi-axis DR analysis for FMC.",
+    "desc_zh": "Google 表格：FMC 的多轴 DR 分析。"
   },
   {
     "id": "r066",
@@ -451,7 +543,9 @@ export const SITES: Site[] = [
     "url": "https://docs.google.com/spreadsheets/d/1eFKklsRcmYw3RPvsdJd5XqZl_pU-pEMblI4pFR2Q6SI",
     "group": "events",
     "subgroup": "FMC",
-    "author": "Rodney Kinney"
+    "author": "Rodney Kinney",
+    "desc_en": "Google Sheet catalog of Domino Reduction corner cases for FMC.",
+    "desc_zh": "Google 表格：FMC 的 DR 角块案例目录。"
   },
   {
     "id": "r067",
@@ -459,7 +553,9 @@ export const SITES: Site[] = [
     "url": "https://docs.google.com/document/d/1Onc2lu5iW_ODnT71oN5lgpVVjVqbvUMzaylzxgykx0I",
     "group": "events",
     "subgroup": "FMC",
-    "author": "Rodney Kinney"
+    "author": "Rodney Kinney",
+    "desc_en": "Google Doc on Hyper-Parity concept in FMC HTR solving.",
+    "desc_zh": "Google 文档：FMC HTR 求解中的 Hyper-Parity。"
   },
   {
     "id": "r068",
@@ -467,7 +563,9 @@ export const SITES: Site[] = [
     "url": "https://docs.google.com/document/d/1HjS92UBCeCasbW44ezE0fjt5vmWQvlfkaC4rA113nmw",
     "group": "events",
     "subgroup": "FMC",
-    "author": "Rodney Kinney"
+    "author": "Rodney Kinney",
+    "desc_en": "Google Doc presenting HTR theory for FMC speedcubing.",
+    "desc_zh": "Google 文档：FMC 的 HTR 理论。"
   },
   {
     "id": "r069",
@@ -530,7 +628,9 @@ export const SITES: Site[] = [
     "url": "https://sebastiano.tronto.net/speedcubing/slice-theory/",
     "group": "events",
     "subgroup": "FMC",
-    "author": "SebastianoTronto"
+    "author": "SebastianoTronto",
+    "desc_en": "Mathematical writeup on slice-move insertions in FMC for canceling moves without affecting the solve.",
+    "desc_zh": "FMC 插中层理论与技巧的数学说明。"
   },
   {
     "id": "r077",
@@ -538,7 +638,9 @@ export const SITES: Site[] = [
     "url": "https://github.com/xuanyan0x7c7/insertionfinder/blob/master/data/algorithms/2x2EP.txt",
     "group": "events",
     "subgroup": "FMC",
-    "author": "Yan Xuan"
+    "author": "Yan Xuan",
+    "desc_en": "Text file of 2-cycle edge permutation algorithms used as insertion candidates by insertionfinder.",
+    "desc_zh": "insertionfinder 使用的棱换公式文本数据。"
   },
   {
     "id": "r078",
@@ -546,7 +648,9 @@ export const SITES: Site[] = [
     "url": "https://github.com/xuanyan0x7c7/insertionfinder",
     "group": "events",
     "subgroup": "FMC",
-    "author": "Yan Xuan"
+    "author": "Yan Xuan",
+    "desc_en": "C++ tool that searches for optimal algorithm insertions to shorten FMC solutions.",
+    "desc_zh": "用于 FMC 寻找最优插入公式的 C++ 工具。"
   },
   {
     "id": "r079",
@@ -611,7 +715,9 @@ export const SITES: Site[] = [
     "name": "EO bad edges distribution",
     "url": "https://speedsolving.com/threads/probability-thread.20384/page-96#post-1520621",
     "group": "events",
-    "subgroup": "FMC"
+    "subgroup": "FMC",
+    "desc_en": "SpeedSolving forum post discussing the distribution of bad edges (EO) across scrambles.",
+    "desc_zh": "SpeedSolving 论坛帖讨论 EO 坏棱数量分布。"
   },
   {
     "id": "r088",
@@ -651,14 +757,19 @@ export const SITES: Site[] = [
     "name": "Competition Groups",
     "url": "https://competitiongroups.com/",
     "group": "competition",
-    "subgroup": "competition & Statistics 魔方比赛和统计"
+    "subgroup": "competition & Statistics 魔方比赛和统计",
+    "author": "Daniel Goodman (coder13)",
+    "desc_en": "Displays competitor and staff group assignments for WCA competitions generated by Groupifier, DelegateDashboard, or AGE.",
+    "desc_zh": "查看 WCA 比赛选手分组和工作人员安排。"
   },
   {
     "id": "r099",
     "name": "WCA China com/p",
     "url": "https://cubing.com/",
     "group": "competition",
-    "subgroup": "competition & Statistics 魔方比赛和统计"
+    "subgroup": "competition & Statistics 魔方比赛和统计",
+    "desc_en": "Chinese speedcubing competition management and results platform (Cubing China / 粗饼).",
+    "desc_zh": "粗饼中国魔方赛事管理与成绩查询平台。"
   },
   {
     "id": "r100",
@@ -666,7 +777,10 @@ export const SITES: Site[] = [
     "url": "https://live.worldcubeassociation.org",
     "group": "competition",
     "subgroup": "competition & Statistics 魔方比赛和统计",
-    "name_zh": "赛事成绩直播"
+    "name_zh": "赛事成绩直播",
+    "author": "Jonatan Klosko",
+    "desc_en": "Official platform for running WCA competitions and broadcasting live results.",
+    "desc_zh": "WCA 官方赛事运行与成绩直播平台。"
   },
   {
     "id": "r101",
@@ -674,7 +788,9 @@ export const SITES: Site[] = [
     "url": "https://statistics.worldcubeassociation.org",
     "group": "competition",
     "subgroup": "competition & Statistics 魔方比赛和统计",
-    "name_zh": "WCA数据"
+    "name_zh": "WCA数据",
+    "desc_en": "Official WCA statistics site with a collection of stats and a database query interface.",
+    "desc_zh": "WCA 官方统计数据与数据库查询页面。"
   },
   {
     "id": "r102",
@@ -682,14 +798,20 @@ export const SITES: Site[] = [
     "url": "https://cubingcontests.com/",
     "group": "competition",
     "subgroup": "competition & Statistics 魔方比赛和统计",
-    "name_zh": "unofficial Rubik's cube competitions, unofficial events 镜面魔方 趣味项目"
+    "name_zh": "unofficial Rubik's cube competitions, unofficial events 镜面魔方 趣味项目",
+    "author": "mintydev",
+    "desc_en": "Platform for hosting unofficial cubing competitions, side events at WCA comps, and speedcuber meetups.",
+    "desc_zh": "非官方魔方比赛、趣味项目和聚会举办平台。"
   },
   {
     "id": "r103",
     "name": "WCA API",
     "url": "https://wca-rest-api.robiningelbrecht.be/",
     "group": "competition",
-    "subgroup": "competition & Statistics 魔方比赛和统计"
+    "subgroup": "competition & Statistics 魔方比赛和统计",
+    "author": "Robin Ingelbrecht",
+    "desc_en": "Unofficial WCA public REST API serving competition data as static JSON files.",
+    "desc_zh": "非官方 WCA 公共 REST API,以静态 JSON 提供比赛数据。"
   },
   {
     "id": "r104",
@@ -697,7 +819,9 @@ export const SITES: Site[] = [
     "url": "https://topcubers.com/",
     "group": "competition",
     "subgroup": "competition & Statistics 魔方比赛和统计",
-    "name_zh": "中国魔方赛事共创平台"
+    "name_zh": "中国魔方赛事共创平台",
+    "desc_en": "Chinese unofficial speedcubing competition and event platform (魔竞 / Mo Jing).",
+    "desc_zh": "魔竞中国魔方赛事共创与运营平台。"
   },
   {
     "id": "r105",
@@ -705,21 +829,30 @@ export const SITES: Site[] = [
     "url": "https://logiqx.github.io/wca-ipy-www/Senior_Rankings.html",
     "group": "competition",
     "subgroup": "competition & Statistics 魔方比赛和统计",
-    "name_zh": "老年魔友"
+    "name_zh": "老年魔友",
+    "author": "Michael George (Logiqx)",
+    "desc_en": "Unofficial senior (age-based) speedcubing rankings compiled from official WCA results.",
+    "desc_zh": "基于 WCA 成绩的老年组非官方排名。"
   },
   {
     "id": "r106",
     "name": "WCA Statistics 数据统计",
     "url": "https://jonatanklosko.github.io/wca_statistics",
     "group": "competition",
-    "subgroup": "competition & Statistics 魔方比赛和统计"
+    "subgroup": "competition & Statistics 魔方比赛和统计",
+    "author": "Jonatan Klosko",
+    "desc_en": "Build kit that compiles WCA competition data into cubing-related ranking and statistics pages.",
+    "desc_zh": "基于 WCA 数据生成魔方排名与统计的工具。"
   },
   {
     "id": "r107",
     "name": "WCA Statistics 数据统计",
     "url": "https://github.com/RuiminYan",
     "group": "competition",
-    "subgroup": "competition & Statistics 魔方比赛和统计"
+    "subgroup": "competition & Statistics 魔方比赛和统计",
+    "author": "Ruimin Yan (闫睿敏)",
+    "desc_en": "GitHub profile of CubeRoot (Ruimin Yan), maintainer of this cubing tools site and related projects.",
+    "desc_zh": "CubeRoot(闫睿敏)的 GitHub 主页。"
   },
   {
     "id": "r108",
@@ -727,7 +860,10 @@ export const SITES: Site[] = [
     "url": "https://sam596.github.io/WCA-Stats",
     "group": "competition",
     "subgroup": "competition & Statistics 魔方比赛和统计",
-    "name_zh": "WCA数据"
+    "name_zh": "WCA数据",
+    "author": "Sam",
+    "desc_en": "Compilation of WCA statistics covering personal bests, streaks, and performance milestones.",
+    "desc_zh": "WCA 成绩、连胜和里程碑统计汇总。"
   },
   {
     "id": "r109",
@@ -735,42 +871,56 @@ export const SITES: Site[] = [
     "url": "https://jonatanklosko.github.io/rankings",
     "group": "competition",
     "subgroup": "competition & Statistics 魔方比赛和统计",
-    "name_zh": "自定义分组排名"
+    "name_zh": "自定义分组排名",
+    "author": "Jonatan Klosko",
+    "desc_en": "Customizable speedcubing rankings grouped by country, continent, or other criteria.",
+    "desc_zh": "按自定义分组查看魔方排名。"
   },
   {
     "id": "r110",
     "name": "Top players for this weekend (average)",
     "url": "https://maxidragon.github.io/TopPlayers",
     "group": "competition",
-    "subgroup": "competition & Statistics 魔方比赛和统计"
+    "subgroup": "competition & Statistics 魔方比赛和统计",
+    "author": "Maksymilian Gala (maxidragon)",
+    "desc_en": "Shows which top WCA cubers are competing at upcoming weekend competitions worldwide.",
+    "desc_zh": "展示本周末各比赛参赛的顶尖魔友。"
   },
   {
     "id": "r111",
     "name": "脚拧",
     "url": "https://worldcubeassociation.org/results/rankings/333ft",
     "group": "competition",
-    "subgroup": "competition & Statistics 魔方比赛和统计"
+    "subgroup": "competition & Statistics 魔方比赛和统计",
+    "desc_en": "Official WCA rankings page for 3x3x3 With Feet, a retired event solved using only the feet.",
+    "desc_zh": "WCA 官方脚拧(333ft)排名页。"
   },
   {
     "id": "r112",
     "name": "八板",
     "url": "https://worldcubeassociation.org/results/rankings/magic",
     "group": "competition",
-    "subgroup": "competition & Statistics 魔方比赛和统计"
+    "subgroup": "competition & Statistics 魔方比赛和统计",
+    "desc_en": "Official WCA rankings page for Magic, a retired 8-tile folding puzzle event.",
+    "desc_zh": "WCA 官方八板(Magic)排名页。"
   },
   {
     "id": "r113",
     "name": "十二板",
     "url": "https://worldcubeassociation.org/results/rankings/mmagic",
     "group": "competition",
-    "subgroup": "competition & Statistics 魔方比赛和统计"
+    "subgroup": "competition & Statistics 魔方比赛和统计",
+    "desc_en": "Official WCA rankings page for Master Magic, a retired 12-tile folding puzzle event.",
+    "desc_zh": "WCA 官方十二板(Master Magic)排名页。"
   },
   {
     "id": "r114",
     "name": "旧多盲",
     "url": "https://worldcubeassociation.org/results/rankings/333mbo",
     "group": "competition",
-    "subgroup": "competition & Statistics 魔方比赛和统计"
+    "subgroup": "competition & Statistics 魔方比赛和统计",
+    "desc_en": "Official WCA rankings page for 3x3 Multi-Blind Old Style, a retired multi-blindfolded format.",
+    "desc_zh": "WCA 官方旧式多盲(333mbo)排名页。"
   },
   {
     "id": "r115",
@@ -785,35 +935,49 @@ export const SITES: Site[] = [
     "name": "锦标赛成绩",
     "url": "https://tim.cubing.net/statistics/champions.php?r=world",
     "group": "competition",
-    "subgroup": "competition & Statistics 魔方比赛和统计"
+    "subgroup": "competition & Statistics 魔方比赛和统计",
+    "author": "Tim Reynolds",
+    "desc_en": "Lists world and regional champions across WCA events and years.",
+    "desc_zh": "按项目和年份列出各级锦标赛冠军。"
   },
   {
     "id": "r117",
     "name": "WCA analyzer",
     "url": "https://hmatthewmcmillan.me/wca-analyzer",
     "group": "competition",
-    "subgroup": "competition & Statistics 魔方比赛和统计"
+    "subgroup": "competition & Statistics 魔方比赛和统计",
+    "author": "Matthew McMillan",
+    "desc_en": "Desktop tool that analyzes a WCA profile's PBs, streaks and event stats.",
+    "desc_zh": "分析 WCA 成绩档案的 PB 与连胜统计的桌面工具。"
   },
   {
     "id": "r118",
     "name": "CubingChina 粗饼网",
     "url": "https://cubingchina.com/",
     "group": "competition",
-    "subgroup": "competition & Statistics 魔方比赛和统计"
+    "subgroup": "competition & Statistics 魔方比赛和统计",
+    "author": "Baiqiang Dong (董百强)",
+    "desc_en": "Official Chinese WCA competition portal for registration, results and records.",
+    "desc_zh": "中国 WCA 比赛官方站点，报名、成绩与记录。"
   },
   {
     "id": "r119",
     "name": "粗饼抽奖",
     "url": "https://cubing.com/tools/luckyDraw",
     "group": "competition",
-    "subgroup": "competition & Statistics 魔方比赛和统计"
+    "subgroup": "competition & Statistics 魔方比赛和统计",
+    "author": "Baiqiang Dong (董百强)",
+    "desc_en": "Lucky draw tool on Cubing China for raffling competitors at events.",
+    "desc_zh": "粗饼网比赛选手抽奖工具。"
   },
   {
     "id": "r120",
     "name": "CubingUSA",
     "url": "https://cubingusa.org",
     "group": "competition",
-    "subgroup": "competition & Statistics 魔方比赛和统计"
+    "subgroup": "competition & Statistics 魔方比赛和统计",
+    "desc_en": "Organizes US speedcubing competitions including the national championship.",
+    "desc_zh": "组织美国魔方比赛，含全美锦标赛。"
   },
   {
     "id": "r122",
@@ -821,84 +985,116 @@ export const SITES: Site[] = [
     "url": "https://tnoodle.cuber.pro/",
     "group": "competition",
     "subgroup": "competition & Statistics 魔方比赛和统计",
-    "author": "Yunqi Ouyang"
+    "author": "Yunqi Ouyang",
+    "desc_en": "Online build of TNoodle, the official WCA scramble generator.",
+    "desc_zh": "TNoodle 官方 WCA 打乱生成器的在线版。"
   },
   {
     "id": "r123",
     "name": "线上比赛",
     "url": "https://cubers.io",
     "group": "competition",
-    "subgroup": "competition & Statistics 魔方比赛和统计"
+    "subgroup": "competition & Statistics 魔方比赛和统计",
+    "author": "Eugene Richardson (euphwes)",
+    "desc_en": "Weekly WCA-style online speedcubing competitions with rotating bonus events.",
+    "desc_zh": "每周 WCA 风格线上比赛，含轮换附加项目。"
   },
   {
     "id": "r124",
     "name": "Scramble Program 打乱程序",
     "url": "https://cubing.net/mark2",
     "group": "competition",
-    "subgroup": "competition & Statistics 魔方比赛和统计"
+    "subgroup": "competition & Statistics 魔方比赛和统计",
+    "author": "Lucas Garron",
+    "desc_en": "Generates WCA-style scramble sheets with configurable events, rounds and groups.",
+    "desc_zh": "生成可配置项目、轮次与分组的 WCA 打乱纸。"
   },
   {
     "id": "r125",
     "name": "Scramble Program Prototype (UNOFFICIAL)",
     "url": "https://experiments.cubing.net/cubing.js/mark3/",
     "group": "competition",
-    "subgroup": "competition & Statistics 魔方比赛和统计"
+    "subgroup": "competition & Statistics 魔方比赛和统计",
+    "author": "Lucas Garron",
+    "desc_en": "Unofficial Mark 3 prototype scramble sheet tool built on cubing.js.",
+    "desc_zh": "基于 cubing.js 的非官方 Mark 3 打乱纸原型。"
   },
   {
     "id": "r126",
     "name": "WCA Analyzer",
     "url": "https://matthewmcmillan.me/wca-analyzer",
     "group": "competition",
-    "subgroup": "competition & Statistics 魔方比赛和统计"
+    "subgroup": "competition & Statistics 魔方比赛和统计",
+    "author": "Matthew McMillan",
+    "desc_en": "Java app that charts a WCA profile's PBs, streaks and event statistics.",
+    "desc_zh": "用图表展示 WCA 档案 PB 与统计的 Java 程序。"
   },
   {
     "id": "r127",
     "name": "Ranks 排名",
     "url": "https://wcadb.net/kinchranks.php",
     "group": "competition",
-    "subgroup": "competition & Statistics 魔方比赛和统计"
+    "subgroup": "competition & Statistics 魔方比赛和统计",
+    "author": "Daniel Sheppard (kinch2002)",
+    "desc_en": "Kinch Ranks all-around rankings computed from the WCA results database.",
+    "desc_zh": "基于 WCA 数据库的 Kinch 全能排名。"
   },
   {
     "id": "r128",
     "name": "Nemesis 宿敌",
     "url": "https://nemesizer.com/",
     "group": "competition",
-    "subgroup": "competition & Statistics 魔方比赛和统计"
+    "subgroup": "competition & Statistics 魔方比赛和统计",
+    "desc_en": "Finds WCA cubers whose results make them your nemeses across events.",
+    "desc_zh": "查找在各项目上压制你的 WCA 宿敌选手。"
   },
   {
     "id": "r129",
     "name": "WB 世界最好",
     "url": "https://speedsolving.com/wiki/index.php/List_of_Unofficial_World_Records",
     "group": "competition",
-    "subgroup": "competition & Statistics 魔方比赛和统计"
+    "subgroup": "competition & Statistics 魔方比赛和统计",
+    "desc_en": "Speedsolving wiki list of unofficial world records across cubing events.",
+    "desc_zh": "Speedsolving 维基收录的非官方世界最佳成绩。"
   },
   {
     "id": "r130",
     "name": "WCA Statistics",
     "url": "https://campos20.github.io/wca-statistics",
     "group": "competition",
-    "subgroup": "competition & Statistics 魔方比赛和统计"
+    "subgroup": "competition & Statistics 魔方比赛和统计",
+    "author": "Caio Campos",
+    "desc_en": "Collection of statistics computed over the WCA results database.",
+    "desc_zh": "基于 WCA 成绩数据库的统计合集。"
   },
   {
     "id": "r132",
     "name": "Monkey League 懒猴联盟线上比赛",
     "url": "https://monkeyleague.org",
     "group": "competition",
-    "subgroup": "competition & Statistics 魔方比赛和统计"
+    "subgroup": "competition & Statistics 魔方比赛和统计",
+    "author": "Phillip Lewicki (LaZer0MonKey)",
+    "desc_en": "Online 3x3 head-to-head speedcubing league between top world cubers.",
+    "desc_zh": "顶级选手的 3x3 线上对决联盟。"
   },
   {
     "id": "r134",
     "name": "WCA Events Tier",
     "url": "https://tiermaker.com/create/ranking-wca-events-2019-42487",
     "group": "competition",
-    "subgroup": "competition & Statistics 魔方比赛和统计"
+    "subgroup": "competition & Statistics 魔方比赛和统计",
+    "desc_en": "Tiermaker template for ranking WCA events into tier lists.",
+    "desc_zh": "用于给 WCA 项目排梯度的 Tiermaker 模板。"
   },
   {
     "id": "r136",
     "name": "csTimer",
     "url": "https://cstimer.net",
     "group": "timer",
-    "subgroup": "Timer 计时器"
+    "subgroup": "Timer 计时器",
+    "author": "Shuang Chen (陈霜)",
+    "desc_en": "Professional web timer with WCA scrambles, stats and trainers for speedcubers.",
+    "desc_zh": "专业魔方网页计时器，含打乱、统计与训练。"
   },
   {
     "id": "r137",
@@ -906,7 +1102,9 @@ export const SITES: Site[] = [
     "url": "https://cstimer.net/new",
     "group": "timer",
     "subgroup": "Timer 计时器",
-    "author": "Shuang Chen"
+    "author": "Shuang Chen",
+    "desc_en": "Newer UI build of csTimer with the same timing, scrambles and stats features.",
+    "desc_zh": "csTimer 新界面版本，功能与旧版一致。"
   },
   {
     "id": "r138",
@@ -914,7 +1112,10 @@ export const SITES: Site[] = [
     "url": "https://cubingtime.com/",
     "group": "timer",
     "subgroup": "Timer 计时器",
-    "name_zh": "网络对战"
+    "name_zh": "网络对战",
+    "author": "Aleksey Polyashov",
+    "desc_en": "Online speedcubing competitions and timer for WCA-event contests from home.",
+    "desc_zh": "线上 WCA 项目比赛与计时器平台。"
   },
   {
     "id": "r139",
@@ -922,7 +1123,9 @@ export const SITES: Site[] = [
     "url": "https://dctimer.cn/",
     "group": "timer",
     "subgroup": "Timer 计时器",
-    "author": "Yuanming Zhang"
+    "author": "Yuanming Zhang",
+    "desc_en": "Professional timing and training application for speedcubers with scramblers, stats, and solvers.",
+    "desc_zh": "速拧计时训练应用，含打乱、统计和解法工具。"
   },
   {
     "id": "r141",
@@ -932,7 +1135,10 @@ export const SITES: Site[] = [
     "subgroup": "Timer 计时器",
     "alt_urls": [
       "https://play.google.com/store/apps/details?id=com.aricneto.twistytimer"
-    ]
+    ],
+    "author": "Ari Ferreira de Noronha",
+    "desc_en": "Open-source Android app for timing and tracking Rubik's cube solving sessions.",
+    "desc_zh": "开源安卓魔方计时与记录应用。"
   },
   {
     "id": "r142",
@@ -940,7 +1146,9 @@ export const SITES: Site[] = [
     "url": "https://qqtimer.net",
     "group": "timer",
     "subgroup": "Timer 计时器",
-    "author": "Michael Gottlieb"
+    "author": "Michael Gottlieb",
+    "desc_en": "Web-based speedcubing timer with configurable scramblers, penalties, and session stats.",
+    "desc_zh": "网页速拧计时器，含打乱、罚时与单次统计。"
   },
   {
     "id": "r143",
@@ -949,14 +1157,18 @@ export const SITES: Site[] = [
     "group": "timer",
     "subgroup": "Timer 计时器",
     "name_zh": "qqtimer镜像 可自定义打乱",
-    "desc_en": "speedsolving.com/threads/custom-scrambler-scramble-for-any-subset-of-the-cube.61882"
+    "desc_en": "speedsolving.com/threads/custom-scrambler-scramble-for-any-subset-of-the-cube.61882",
+    "author": "gyroninja",
+    "desc_zh": "改版 qqTimer，可对任意子集生成打乱。"
   },
   {
     "id": "r144",
     "name": "cubeast 魔东方",
     "url": "https://cubeast.com/",
     "group": "timer",
-    "subgroup": "Timer 计时器"
+    "subgroup": "Timer 计时器",
+    "desc_en": "Web app for Bluetooth smart-cube users that records and analyzes solves to improve speedcubing.",
+    "desc_zh": "蓝牙智能魔方解法记录与分析网页应用。"
   },
   {
     "id": "r154",
@@ -964,112 +1176,152 @@ export const SITES: Site[] = [
     "url": "https://nchsoftware.com/imageconverter/",
     "group": "timer",
     "subgroup": "Timer 计时器",
-    "name_zh": "图片格式批量转换"
+    "name_zh": "图片格式批量转换",
+    "author": "NCH Software",
+    "desc_en": "Pixillion batch image file converter supporting 40+ formats with resize, watermark, and filter tools.",
+    "desc_zh": "Pixillion 批量图片格式转换工具，支持多种格式。"
   },
   {
     "id": "r221",
     "name": "encyclopedia 百科全书",
     "url": "https://speedsolving.com/wiki",
     "group": "learning",
-    "subgroup": "Learning 学习"
+    "subgroup": "Learning 学习",
+    "desc_en": "Community-maintained wiki covering speedsolving methods, algorithms, records, and twisty puzzles.",
+    "desc_zh": "速拧方法、公式、记录与扭计资料的社区百科。"
   },
   {
     "id": "r222",
     "name": "Cubing Forum 魔方论坛",
     "url": "https://speedsolving.com/forum",
     "group": "learning",
-    "subgroup": "Learning 学习"
+    "subgroup": "Learning 学习",
+    "desc_en": "Largest English-language discussion forum for speedcubing techniques, competitions, and hardware.",
+    "desc_zh": "最大的英文速拧讨论论坛。"
   },
   {
     "id": "r223",
     "name": "ruwix.com",
     "url": "https://ruwix.com/",
     "group": "learning",
-    "subgroup": "Learning 学习"
+    "subgroup": "Learning 学习",
+    "author": "Jae Morgan",
+    "desc_en": "Online wiki and learning platform with tutorials, solvers, timers and simulators for twisty puzzles.",
+    "desc_zh": "扭计教程、还原器、计时器与模拟器合集网站。"
   },
   {
     "id": "r224",
     "name": "cubing.net",
     "url": "https://cubing.net",
     "group": "learning",
-    "subgroup": "Learning 学习"
+    "subgroup": "Learning 学习",
+    "author": "Lucas Garron",
+    "desc_en": "Curated hub of web tools and community resources for speedcubing, including timers and trainers.",
+    "desc_zh": "速拧相关工具与资源聚合网站。"
   },
   {
     "id": "r225",
     "name": "reddit.com",
     "url": "https://reddit.com/r/Cubers",
     "group": "learning",
-    "subgroup": "Learning 学习"
+    "subgroup": "Learning 学习",
+    "desc_en": "Reddit community for twisty-puzzle enthusiasts, including Rubik's cubes, Square-1, and Pyraminx.",
+    "desc_zh": "Reddit 上的扭计爱好者社区。"
   },
   {
     "id": "r226",
     "name": "mzrg.com",
     "url": "https://mzrg.com/rubik",
     "group": "learning",
-    "subgroup": "Learning 学习"
+    "subgroup": "Learning 学习",
+    "author": "Michael Gottlieb",
+    "desc_en": "Personal cubing site with tutorials, patterns, methods, and notation for many twisty puzzles.",
+    "desc_zh": "魔方教程、花式、方法与记号的个人站。"
   },
   {
     "id": "r227",
     "name": "China Cubing BBS 魔方吧",
     "url": "https://bbs.mf8-china.com/",
     "group": "learning",
-    "subgroup": "Learning 学习"
+    "subgroup": "Learning 学习",
+    "desc_en": "Chinese-language Rubik's cube community forum covering solving methods, puzzles, and competitions.",
+    "desc_zh": "中文魔方俱乐部论坛，涵盖方法、新品与比赛。"
   },
   {
     "id": "r228",
     "name": "github.com",
     "url": "https://github.com/Logiqx/cubing-docs",
     "group": "learning",
-    "subgroup": "Learning 学习"
+    "subgroup": "Learning 学习",
+    "author": "Michael George",
+    "desc_en": "Repository of Rubik's cube teaching presentations for beginners and improving solvers.",
+    "desc_zh": "魔方入门与进阶教学演示资料库。"
   },
   {
     "id": "r229",
     "name": "twistypuzzles.com",
     "url": "https://twistypuzzles.com/",
     "group": "learning",
-    "subgroup": "Learning 学习"
+    "subgroup": "Learning 学习",
+    "desc_en": "Online since 2002, a comprehensive database and forum cataloging twisty puzzles and their makers.",
+    "desc_zh": "2002 年起的扭计资料库与论坛。"
   },
   {
     "id": "r230",
     "name": "twistypedia.oskarvandeventer.nl",
     "url": "https://twistypedia.oskarvandeventer.nl",
     "group": "learning",
-    "subgroup": "Learning 学习"
+    "subgroup": "Learning 学习",
+    "author": "Oskar van Deventer",
+    "desc_en": "MediaWiki-based encyclopedia of twisty puzzles hosted by puzzle designer Oskar van Deventer.",
+    "desc_zh": "Oskar van Deventer 主持的扭计百科维基。"
   },
   {
     "id": "r231",
     "name": "cube3x3.com",
     "url": "https://cube3x3.com/",
     "group": "learning",
-    "subgroup": "Learning 学习"
+    "subgroup": "Learning 学习",
+    "desc_en": "Beginner tutorial site teaching the layer-by-layer method for solving a 3x3 Rubik's cube.",
+    "desc_zh": "三阶魔方层先法入门教程网站。"
   },
   {
     "id": "r232",
     "name": "魔方乐园",
     "url": "https://mf100.org",
     "group": "learning",
-    "subgroup": "Learning 学习"
+    "subgroup": "Learning 学习",
+    "desc_en": "Chinese cubing site offering video tutorials, formula diagrams, and solving methods for many puzzles.",
+    "desc_zh": "魔方视频教程、公式图解与玩法大全的中文站。"
   },
   {
     "id": "r233",
     "name": "魔方小站",
     "url": "https://video.rubik.com/.cn",
     "group": "learning",
-    "subgroup": "Learning 学习"
+    "subgroup": "Learning 学习",
+    "desc_en": "Chinese video-tutorial site teaching step-by-step solving of 3x3 and many other Rubik's-style puzzles.",
+    "desc_zh": "三阶及多种魔方视频还原教程网站。"
   },
   {
     "id": "r236",
     "name": "Discord Bot 机器人",
     "url": "https://github.com/Cubeur-manchot/AlgBot",
     "group": "learning",
-    "subgroup": "Chat 聊天"
+    "subgroup": "Chat 聊天",
+    "author": "Cubeur-manchot",
+    "desc_en": "Discord bot that renders Rubik's cube images from move sequences entered by users.",
+    "desc_zh": "根据公式生成魔方图像的 Discord 机器人。"
   },
   {
     "id": "r237",
     "name": "线上聊天+玩魔方",
     "url": "https://letscube.net/",
     "group": "learning",
-    "subgroup": "Chat 聊天"
+    "subgroup": "Chat 聊天",
+    "author": "coder13",
+    "desc_en": "Realtime online room to race against other cubers with live scrambles and chat.",
+    "desc_zh": "实时在线多人魔方竞速房间。"
   },
   {
     "id": "r240",
@@ -1077,7 +1329,9 @@ export const SITES: Site[] = [
     "url": "https://speedcubedb.com/",
     "group": "algorithms",
     "subgroup": "Algorithm Database 公式库",
-    "author": "Gil Zussman"
+    "author": "Gil Zussman",
+    "desc_en": "Speedcubing algorithm database covering 2x2-6x6, Square-1, Pyraminx and Megaminx with training tools.",
+    "desc_zh": "速拧公式数据库与训练平台。"
   },
   {
     "id": "r241",
@@ -1093,7 +1347,10 @@ export const SITES: Site[] = [
     "name": "AlgDb",
     "url": "https://algdb.net",
     "group": "algorithms",
-    "subgroup": "Algorithm Database 公式库"
+    "subgroup": "Algorithm Database 公式库",
+    "author": "Conrad Rider",
+    "desc_en": "Community-maintained Rubik's cube algorithm database.",
+    "desc_zh": "社区维护的魔方公式数据库。"
   },
   {
     "id": "r243",
@@ -1107,7 +1364,10 @@ export const SITES: Site[] = [
     "name": "VisualCube",
     "url": "https://cube.rider.biz",
     "group": "algorithms",
-    "subgroup": "Image & Algorithm Translator 图片和公式转换器"
+    "subgroup": "Image & Algorithm Translator 图片和公式转换器",
+    "author": "Conrad Rider",
+    "desc_en": "VisualCube generates custom Rubik's cube images via URL parameters (size, alg, colors, view).",
+    "desc_zh": "通过 URL 参数生成魔方图片。"
   },
   {
     "id": "r249",
@@ -1115,14 +1375,18 @@ export const SITES: Site[] = [
     "url": "https://algs.cuber.pro/visualcube/visualcube.php",
     "group": "algorithms",
     "subgroup": "Image & Algorithm Translator 图片和公式转换器",
-    "author": "Yunqi Ouyang"
+    "author": "Yunqi Ouyang",
+    "desc_en": "Mirror of VisualCube that generates cube images from URL parameters.",
+    "desc_zh": "VisualCube 镜像,URL 参数生成图片。"
   },
   {
     "id": "r250",
     "name": "Cubicle Algdb Image Gen",
     "url": "http://cubiclealgdbimagegen.azurewebsites.net/",
     "group": "algorithms",
-    "subgroup": "Image & Algorithm Translator 图片和公式转换器"
+    "subgroup": "Image & Algorithm Translator 图片和公式转换器",
+    "desc_en": "Cubicle's hosted image generator for Rubik's cube algorithm diagrams.",
+    "desc_zh": "Cubicle 魔方公式图片生成器。"
   },
   {
     "id": "r251",
@@ -1130,7 +1394,10 @@ export const SITES: Site[] = [
     "url": "https://cube.rider.biz/algtrans.html",
     "group": "algorithms",
     "subgroup": "Image & Algorithm Translator 图片和公式转换器",
-    "name_zh": "公式转换"
+    "name_zh": "公式转换",
+    "author": "Conrad Rider",
+    "desc_en": "Rotates, inverts and mirrors Rubik's cube algorithms in standard notation.",
+    "desc_zh": "公式的旋转、反演和镜像转换。"
   },
   {
     "id": "r252",
@@ -1138,56 +1405,79 @@ export const SITES: Site[] = [
     "url": "https://github.com/tdecker91/puzzle-gen",
     "group": "algorithms",
     "subgroup": "Image & Algorithm Translator 图片和公式转换器",
-    "name_zh": "WCA图片生成"
+    "name_zh": "WCA图片生成",
+    "author": "Tyler Decker",
+    "desc_en": "TypeScript library rendering 3D images of WCA twisty puzzles (cube, pyraminx, skewb, megaminx, sq-1).",
+    "desc_zh": "渲染 WCA 魔方 3D 图像的 TS 库。"
   },
   {
     "id": "r253",
     "name": "Rotation Remover 去转体",
     "url": "https://mzrg.com/rubik/rotations.shtml",
     "group": "algorithms",
-    "subgroup": "Image & Algorithm Translator 图片和公式转换器"
+    "subgroup": "Image & Algorithm Translator 图片和公式转换器",
+    "author": "Michael Gottlieb",
+    "desc_en": "Converts a cube algorithm into an equivalent sequence without whole-cube rotations.",
+    "desc_zh": "把公式转换为无整体转体的等效序列。"
   },
   {
     "id": "r254",
     "name": "Order Calculator 公式的阶 / 周期 /循环",
     "url": "https://mzrg.com/rubik/ordercalc.shtml",
     "group": "algorithms",
-    "subgroup": "Image & Algorithm Translator 图片和公式转换器"
+    "subgroup": "Image & Algorithm Translator 图片和公式转换器",
+    "author": "Michael Gottlieb",
+    "desc_en": "Computes the order (repetitions needed to return to solved) of a cube algorithm for 2x2-5x5.",
+    "desc_zh": "计算公式的阶(复原所需重复次数)。"
   },
   {
     "id": "r255",
     "name": "WCA Event Logo WCA项目Logo",
     "url": "https://github.com/cubing/icons/tree/master/svgs/event",
     "group": "algorithms",
-    "subgroup": "Image & Algorithm Translator 图片和公式转换器"
+    "subgroup": "Image & Algorithm Translator 图片和公式转换器",
+    "desc_en": "SVG icons for WCA events, unofficial events and competition concepts.",
+    "desc_zh": "WCA 项目与比赛相关的 SVG 图标。"
   },
   {
     "id": "r259",
     "name": "复盘",
     "url": "https://reco.nz/solve/index",
     "group": "recon",
-    "subgroup": "Reconstructions 复盘"
+    "subgroup": "Reconstructions 复盘",
+    "author": "Jonatan Klosko",
+    "desc_en": "Browsable database of community-submitted Rubik's cube solve reconstructions.",
+    "desc_zh": "可筛选浏览的复盘数据库。"
   },
   {
     "id": "r260",
     "name": "basilio.dev",
     "url": "https://basilio.dev/cubing/",
     "group": "recon",
-    "subgroup": "Reconstructions 复盘"
+    "subgroup": "Reconstructions 复盘",
+    "author": "Basilio Noris",
+    "desc_en": "Personal hub for cubing tools, data analyses, reviews, and the Cubing Megasurvey.",
+    "desc_zh": "个人魔方工具、数据分析与大调查站点。"
   },
   {
     "id": "r261",
     "name": "onionhoney.github.io",
     "url": "https://onionhoney.github.io/cubesplit/",
     "group": "recon",
-    "subgroup": "Reconstructions 复盘"
+    "subgroup": "Reconstructions 复盘",
+    "author": "onionhoney",
+    "desc_en": "Animated speed-solve analysis tool that splits reconstructions stage-by-stage.",
+    "desc_zh": "分阶段动画复盘分析工具。"
   },
   {
     "id": "r262",
     "name": "cubesolv.es",
     "url": "https://cubesolv.es",
     "group": "recon",
-    "subgroup": "Reconstructions 复盘"
+    "subgroup": "Reconstructions 复盘",
+    "author": "Justin Jaffray",
+    "desc_en": "Database documenting and categorizing notable Rubik's cube solve reconstructions.",
+    "desc_zh": "记录著名速拧复盘的数据库。"
   },
   {
     "id": "r263",
@@ -1204,56 +1494,78 @@ export const SITES: Site[] = [
     "name": "文字复盘工具",
     "url": "https://reconstructions.jonatanklosko.com/",
     "group": "recon",
-    "subgroup": "Reconstructions 复盘"
+    "subgroup": "Reconstructions 复盘",
+    "author": "Jonatan Klosko",
+    "desc_en": "Web tool that simplifies building text-based Rubik's cube solve reconstructions.",
+    "desc_zh": "辅助制作文字复盘的工具。"
   },
   {
     "id": "r265",
     "name": "speedsolving.com",
     "url": "https://speedsolving.com/forum/threads/the-reconstruction-thread.29123",
     "group": "recon",
-    "subgroup": "Reconstructions 复盘"
+    "subgroup": "Reconstructions 复盘",
+    "desc_en": "Long-running Speedsolving forum thread for posting and requesting solve reconstructions.",
+    "desc_zh": "Speedsolving 论坛复盘讨论长帖。"
   },
   {
     "id": "r266",
     "name": "speedsolving.com",
     "url": "https://speedsolving.com/forum/threads/feliks-6-44-3x3-avg100.62973/#post-1205208",
     "group": "recon",
-    "subgroup": "Reconstructions 复盘"
+    "subgroup": "Reconstructions 复盘",
+    "author": "TheCoolMinxer",
+    "desc_en": "SpeedSolving forum thread with full reconstructions of Feliks Zemdegs' unofficial 6.44 average of 100.",
+    "desc_zh": "论坛帖，Feliks 6.44 av100 全部 100 次复盘。"
   },
   {
     "id": "r268",
     "name": "Media Player Classic 视频慢放",
     "url": "https://sourceforge.net/projects/mpc-hc",
     "group": "recon",
-    "subgroup": "Reconstructions 复盘"
+    "subgroup": "Reconstructions 复盘",
+    "author": "casimir666, xhmikosr",
+    "desc_en": "Lightweight open-source Windows media player, used by cubers for frame-accurate video slow playback.",
+    "desc_zh": "轻量 Windows 开源播放器，逐帧慢放复盘视频用。"
   },
   {
     "id": "r269",
     "name": "魔方栈",
     "url": "https://huazhechen.github.io/cuber/dist/?mode=director",
     "group": "recon",
-    "subgroup": "Reconstructions 复盘"
+    "subgroup": "Reconstructions 复盘",
+    "author": "Huazhe Chen",
+    "desc_en": "Three.js + Vue web-based Rubik's cube simulator with solve tutorials and animation authoring.",
+    "desc_zh": "基于 Three.js/Vue 的网页魔方模拟器，含动画编辑。"
   },
   {
     "id": "r272",
     "name": "tao-yu.github.io",
     "url": "https://tao-yu.github.io/Alg-Trainer",
     "group": "algorithms",
-    "subgroup": "3x3 三阶"
+    "subgroup": "3x3 三阶",
+    "author": "Tao Yu",
+    "desc_en": "Open-source algorithm trainer with scramble generator and smart-cube support.",
+    "desc_zh": "开源公式训练器，支持打乱生成与智能魔方。"
   },
   {
     "id": "r273",
     "name": "Cross 十字",
     "url": "https://cubezone.be/crossstudy.html",
     "group": "algorithms",
-    "subgroup": "3x3 三阶"
+    "subgroup": "3x3 三阶",
+    "author": "Lars Vandenbergh",
+    "desc_en": "Computer analysis of minimum-move cross solutions under different strategies.",
+    "desc_zh": "不同策略下最少步十字的计算机分析。"
   },
   {
     "id": "r274",
     "name": "Cross Lookahead",
     "url": "https://bit.ly/CrossLookahead",
     "group": "algorithms",
-    "subgroup": "3x3 三阶"
+    "subgroup": "3x3 三阶",
+    "desc_en": "Cross lookahead practice resource for speedcubers.",
+    "desc_zh": "十字预判练习资源。"
   },
   {
     "id": "r275",
@@ -1261,35 +1573,48 @@ export const SITES: Site[] = [
     "url": "https://app--cube-lookahead-24bc12e4.base44.app",
     "group": "algorithms",
     "subgroup": "3x3 三阶",
-    "author": "DAN BOHARON"
+    "author": "DAN BOHARON",
+    "desc_en": "3D puzzle predicting where cube pieces land after rotations, for lookahead training.",
+    "desc_zh": "预测转动后块位置的 3D 预判训练。"
   },
   {
     "id": "r276",
     "name": "christianvaughn.net",
     "url": "https://christianvaughn.net/C2F2L",
     "group": "algorithms",
-    "subgroup": "3x3 三阶"
+    "subgroup": "3x3 三阶",
+    "author": "Christian Vaughn",
+    "desc_en": "Cross-to-F2L practice tool with scrambles N moves from solved (modified from net13's program).",
+    "desc_zh": "Cross 到 F2L 过渡练习，可选离还原步数。"
   },
   {
     "id": "r277",
     "name": "x",
     "url": "https://ruffleduck.github.io/eocross",
     "group": "algorithms",
-    "subgroup": "3x3 三阶"
+    "subgroup": "3x3 三阶",
+    "author": "Ruffleduck",
+    "desc_en": "EOcross solver generating low-movecount intuitive EOcross solutions.",
+    "desc_zh": "EOcross 解法生成器，输出低步数直观解。"
   },
   {
     "id": "r278",
     "name": "tiermaker.com",
     "url": "https://tiermaker.com/create/3x3-oll",
     "group": "algorithms",
-    "subgroup": "3x3 三阶"
+    "subgroup": "3x3 三阶",
+    "desc_en": "TierMaker template for ranking the 57 3x3 OLL cases.",
+    "desc_zh": "3x3 OLL 57 公式排名模板。"
   },
   {
     "id": "r279",
     "name": "cubeskills.com",
     "url": "https://cubeskills.com/tools/pll-recognition-trainer",
     "group": "algorithms",
-    "subgroup": "3x3 三阶"
+    "subgroup": "3x3 三阶",
+    "author": "Feliks Zemdegs",
+    "desc_en": "Two-sided PLL recognition trainer on CubeSkills.",
+    "desc_zh": "CubeSkills 双面 PLL 识别训练器。"
   },
   {
     "id": "r280",
@@ -1310,21 +1635,29 @@ export const SITES: Site[] = [
     "name": "cube.crider.co.uk",
     "url": "https://cube.crider.co.uk/coracle.html",
     "group": "algorithms",
-    "subgroup": "3x3 三阶"
+    "subgroup": "3x3 三阶",
+    "author": "Conrad Rider",
+    "desc_en": "Coracle corner-lookahead drill: identify partially visible corners from two stickers.",
+    "desc_zh": "Coracle 角块预判训练：两面贴纸识别角块。"
   },
   {
     "id": "r283",
     "name": "briefcubing.com",
     "url": "https://briefcubing.com/",
     "group": "algorithms",
-    "subgroup": "3x3 三阶"
+    "subgroup": "3x3 三阶",
+    "author": "Ashley Nathan Feniello",
+    "desc_en": "Interactive Rubik's cube practice tool with keyboard controls and visual feedback.",
+    "desc_zh": "键盘操作的魔方交互练习工具。"
   },
   {
     "id": "r284",
     "name": "bestsiteever.net",
     "url": "https://bestsiteever.net",
     "group": "algorithms",
-    "subgroup": "3x3 三阶"
+    "subgroup": "3x3 三阶",
+    "desc_en": "Personal collection of speedcubing web apps (OLL/PLL/ZBLL trainers, mosaic tool, inverse scramble).",
+    "desc_zh": "个人 speedcubing 网页工具集合（OLL/PLL/ZBLL 训练、马赛克等）。"
   },
   {
     "id": "r285",
@@ -1353,14 +1686,20 @@ export const SITES: Site[] = [
     "name": "birdflu.lar5.com",
     "url": "https://birdflu.lar5.com/",
     "group": "algorithms",
-    "subgroup": "3x3 三阶"
+    "subgroup": "3x3 三阶",
+    "author": "Lars Petrus",
+    "desc_en": "Exhaustive last-layer algorithm database of all LL algs up to 17 moves.",
+    "desc_zh": "顶层公式库，收录所有 17 步以内 LL 算法。"
   },
   {
     "id": "r289",
     "name": "ZZ Method",
     "url": "https://zzmethod.com/",
     "group": "algorithms",
-    "subgroup": "3x3 三阶ZZ"
+    "subgroup": "3x3 三阶ZZ",
+    "author": "Yoruba & S1neWav_",
+    "desc_en": "ZZ method tutorial and improvement guide for 3x3 speedcubing.",
+    "desc_zh": "3x3 ZZ 法教程与进阶指南。"
   },
   {
     "id": "r291",
@@ -1375,42 +1714,59 @@ export const SITES: Site[] = [
     "name": "by Anto Kam (甘浩東) Ho Tung 甘浩東",
     "url": "https://rouxl.es",
     "group": "algorithms",
-    "subgroup": "Roux 桥式"
+    "subgroup": "Roux 桥式",
+    "author": "Rouxles",
+    "desc_en": "Resources and tips for the Roux method of solving the Rubik's cube.",
+    "desc_zh": "Roux 桥式解法资源与技巧合集。"
   },
   {
     "id": "r293",
     "name": "Roux-Trainers – \r\n Zhouheng Sun (孙舟横) 孙舟横",
     "url": "https://onionhoney.github.io/roux-trainers",
     "group": "algorithms",
-    "subgroup": "Roux 桥式"
+    "subgroup": "Roux 桥式",
+    "author": "Zhouheng Sun (孙舟横)",
+    "desc_en": "Roux-optimized trainer and solver with M/r moves as first-class citizens.",
+    "desc_zh": "面向 Roux 法的训练器与求解器。"
   },
   {
     "id": "r294",
     "name": "jeremyg.nl",
     "url": "https://jeremyg.nl/EOLRb",
     "group": "algorithms",
-    "subgroup": "Roux 桥式"
+    "subgroup": "Roux 桥式",
+    "author": "Jeremy G",
+    "desc_en": "EOLRb trainer for practicing any EO set on any color scheme in Roux LSE.",
+    "desc_zh": "Roux LSE 阶段 EOLRb 训练器。"
   },
   {
     "id": "r297",
     "name": "twoobytwoo.com",
     "url": "https://twoobytwoo.com/",
     "group": "events",
-    "subgroup": "2x2 二阶"
+    "subgroup": "2x2 二阶",
+    "author": "Álvaro Aguilar Salobreña & Andrés Rodríguez Galán",
+    "desc_en": "Database of optimal 2x2x2 algorithms searchable by scramble and solving method.",
+    "desc_zh": "二阶最优解算法库，按方法检索。"
   },
   {
     "id": "r298",
     "name": "Solver",
     "url": "https://www.jaapsch.net/puzzles/javascript/cube2j.htm",
     "group": "events",
-    "subgroup": "2x2 二阶"
+    "subgroup": "2x2 二阶",
+    "author": "Jaap Scherphuis",
+    "desc_en": "JavaScript 2x2x2 Rubik's cube simulator and solver.",
+    "desc_zh": "JavaScript 二阶魔方模拟与求解。"
   },
   {
     "id": "r299",
     "name": "two-tools.com",
     "url": "https://two-tools.com/",
     "group": "events",
-    "subgroup": "2x2 二阶"
+    "subgroup": "2x2 二阶",
+    "desc_en": "Finds the fastest human-style solution for any 2x2 Rubik's cube scramble.",
+    "desc_zh": "为任意二阶打乱寻找最快人类解法。"
   },
   {
     "id": "r300",
@@ -1432,14 +1788,19 @@ export const SITES: Site[] = [
     "name": "fewestmov.es",
     "url": "https://fewestmov.es/cube/EGTrainer.cube",
     "group": "events",
-    "subgroup": "2x2 二阶"
+    "subgroup": "2x2 二阶",
+    "desc_en": "2x2 EG algorithm trainer hosted on fewestmov.es.",
+    "desc_zh": "二阶 EG 算法训练器。"
   },
   {
     "id": "r303",
     "name": "2x2 LS Trainer",
     "url": "https://mihlefeld.github.io/Alg-Trainers/2x2-LS-Trainer",
     "group": "events",
-    "subgroup": "2x2 二阶"
+    "subgroup": "2x2 二阶",
+    "author": "Malte Ihlefeld",
+    "desc_en": "2x2 LS (last slot) algorithm trainer, part of Malte's Alg-Trainers PWA collection.",
+    "desc_zh": "二阶 LS 阶段算法训练器。"
   },
   {
     "id": "r307",
@@ -1454,35 +1815,49 @@ export const SITES: Site[] = [
     "name": "mzrg.com",
     "url": "https://mzrg.com/rubik/iso",
     "group": "events",
-    "subgroup": "Big 高阶"
+    "subgroup": "Big 高阶",
+    "author": "Michael Gottlieb",
+    "desc_en": "IsoCubeSim, a cuboid puzzle simulator supporting sizes from 1x1x2 up to 20x20x20.",
+    "desc_zh": "支持 1x1x2 至 20x20x20 的立方体模拟器。"
   },
   {
     "id": "r309",
     "name": "play.google.com",
     "url": "https://play.google.com/store/apps/details?id=com/.tao.tao.cubesim",
     "group": "events",
-    "subgroup": "Big 高阶"
+    "subgroup": "Big 高阶",
+    "desc_en": "Vistalgy Cubes: 3D twisty-puzzle simulator app for Android by Magic Dream Pro.",
+    "desc_zh": "Vistalgy Cubes 安卓 3D 魔方模拟器。"
   },
   {
     "id": "r312",
     "name": "superliminal.com",
     "url": "https://superliminal.com/cube/cube.htm",
     "group": "events",
-    "subgroup": "Big 高阶"
+    "subgroup": "Big 高阶",
+    "author": "Melinda Green & Don Hatch",
+    "desc_en": "MagicCube4D, a fully functional four-dimensional analogue of Rubik's cube.",
+    "desc_zh": "MagicCube4D，四维魔方模拟器。"
   },
   {
     "id": "r313",
     "name": "gravitation3d.com",
     "url": "https://gravitation3d.com/magiccube5d",
     "group": "events",
-    "subgroup": "Big 高阶"
+    "subgroup": "Big 高阶",
+    "author": "Roice Nelson",
+    "desc_en": "MagicCube5D, a 5D Rubik's cube analogue with adjustable perspective and sizes.",
+    "desc_zh": "MagicCube5D，五维魔方模拟器。"
   },
   {
     "id": "r314",
     "name": "superliminal.com",
     "url": "https://superliminal.com/andrey/mc7d",
     "group": "events",
-    "subgroup": "Big 高阶"
+    "subgroup": "Big 高阶",
+    "author": "Andrey Astrelin",
+    "desc_en": "Magic Cube 7D implements higher-dimensional Rubik's cube puzzles from 4D to 7D.",
+    "desc_zh": "4D 到 7D 的高维魔方程序。"
   },
   {
     "id": "r317",
@@ -1490,7 +1865,10 @@ export const SITES: Site[] = [
     "url": "https://blddb.net/",
     "group": "events",
     "subgroup": "BLD 盲拧",
-    "name_zh": "三盲公式库"
+    "name_zh": "三盲公式库",
+    "author": "Zixing Wang (王子兴)",
+    "desc_en": "Comprehensive 3BLD algorithm database covering 3-style corner/edge, twists, and flips.",
+    "desc_zh": "三盲 3-style、翻棱翻角公式库。"
   },
   {
     "id": "r318",
@@ -1499,7 +1877,9 @@ export const SITES: Site[] = [
     "group": "events",
     "subgroup": "BLD 盲拧",
     "name_zh": "换位子书写和展开",
-    "author": "Zixing Wang王子兴"
+    "author": "Zixing Wang王子兴",
+    "desc_en": "Commutator notation writer and expander for blindfolded solving.",
+    "desc_zh": "换位子书写与展开工具。"
   },
   {
     "id": "r319",
@@ -1521,14 +1901,20 @@ export const SITES: Site[] = [
     "name": "elliottkobelansky.github.io",
     "url": "https://elliottkobelansky.github.io/buffer-trainer",
     "group": "events",
-    "subgroup": "BLD 盲拧"
+    "subgroup": "BLD 盲拧",
+    "author": "Elliott Kobelansky",
+    "desc_en": "Buffer confirmation trainer for 3BLD, cycling scrambles to practice recognizing buffer piece targets.",
+    "desc_zh": "3BLD 缓冲块识别训练器，循环打乱练习缓冲块确认。"
   },
   {
     "id": "r322",
     "name": "speedsolving.com",
     "url": "https://speedsolving.com/threads/bld-faq-do-yourself-a-favor-and-read-this.45162",
     "group": "events",
-    "subgroup": "BLD 盲拧"
+    "subgroup": "BLD 盲拧",
+    "author": "Noah Arthurs (Noahaha)",
+    "desc_en": "SpeedSolving forum FAQ thread covering common beginner questions and misconceptions about blindfolded cubing.",
+    "desc_zh": "SpeedSolving 论坛盲拧常见问题解答贴。"
   },
   {
     "id": "r323",
@@ -1542,77 +1928,108 @@ export const SITES: Site[] = [
     "name": "3BLD Scramble - 鲁曦",
     "url": "https://github.com/LuXiiiii/BLD-Master",
     "group": "events",
-    "subgroup": "BLD 盲拧"
+    "subgroup": "BLD 盲拧",
+    "author": "鲁曦 (Lu Xi)",
+    "desc_en": "3BLD scramble generator and training tool repository.",
+    "desc_zh": "3BLD 打乱生成和训练工具仓库。"
   },
   {
     "id": "r325",
     "name": "speedsolving.com",
     "url": "https://speedsolving.com/threads/noahs-bld-tutorials.38776/#post-787303",
     "group": "events",
-    "subgroup": "BLD 盲拧"
+    "subgroup": "BLD 盲拧",
+    "author": "Noah Arthurs (Noahaha)",
+    "desc_en": "Index thread collecting Noah Arthurs' BLD video and written tutorials on 3-style, memo, 4BLD, and MBLD.",
+    "desc_zh": "Noah Arthurs 盲拧教程集合贴，涵盖 3-style、记忆、4BLD、MBLD。"
   },
   {
     "id": "r327",
     "name": "tobip.ch",
     "url": "https://tobip.ch/letter_pair_generator",
     "group": "events",
-    "subgroup": "BLD 盲拧"
+    "subgroup": "BLD 盲拧",
+    "author": "Tobias D. Peter",
+    "desc_en": "Letter-pair generator for BLD memo practice, with configurable buffers for edges and corners plus timetable tracking.",
+    "desc_zh": "盲拧字母对记忆练习生成器，可配置棱角缓冲块并记录成绩。"
   },
   {
     "id": "r328",
     "name": "scrambld.cubing.net",
     "url": "https://scrambld.cubing.net",
     "group": "events",
-    "subgroup": "BLD 盲拧"
+    "subgroup": "BLD 盲拧",
+    "author": "Alejandro Di Mare",
+    "desc_en": "Web tool for practicing 3-style corner and M2 edge solving on generated BLD scrambles.",
+    "desc_zh": "生成打乱、练习 3-style 角块与 M2 棱块盲拧的网页工具。"
   },
   {
     "id": "r329",
     "name": "speedcubing.com",
     "url": "https://speedcubing.com/chris/memo-images.html",
     "group": "events",
-    "subgroup": "BLD 盲拧"
+    "subgroup": "BLD 盲拧",
+    "author": "Chris Hardwick",
+    "desc_en": "Chris Hardwick's letter-pair image list used with the journey method for big-cube blindfolded memorization.",
+    "desc_zh": "Chris Hardwick 的字母对图像表，用于大盲地点法记忆。"
   },
   {
     "id": "r330",
     "name": "speedsolving.com",
     "url": "https://speedsolving.com/wiki/index.php/List_of_letter_pairs",
     "group": "events",
-    "subgroup": "BLD 盲拧"
+    "subgroup": "BLD 盲拧",
+    "desc_en": "SpeedSolving wiki reference listing mnemonic associations for all two-letter combinations used in BLD memo.",
+    "desc_zh": "SpeedSolving 维基盲拧字母对助记参考表。"
   },
   {
     "id": "r331",
     "name": "speedcubing.com",
     "url": "https://speedcubing.com/chris/memo-words.html",
     "group": "events",
-    "subgroup": "BLD 盲拧"
+    "subgroup": "BLD 盲拧",
+    "author": "Chris Hardwick",
+    "desc_en": "Chris Hardwick's one-syllable letter-pair word list for auditory BLD memorization on 2x2 and 3x3.",
+    "desc_zh": "Chris Hardwick 单音节字母对单词表，用于听觉记忆盲拧。"
   },
   {
     "id": "r333",
     "name": "antoine.ccantin.ca",
     "url": "https://antoine.ccantin.ca:8870/en/cubing/bld",
     "group": "events",
-    "subgroup": "BLD 盲拧"
+    "subgroup": "BLD 盲拧",
+    "author": "Antoine Cantin",
+    "desc_en": "Antoine Cantin's BLD resource page with algorithms and tutorials for blindfolded solving.",
+    "desc_zh": "Antoine Cantin 的盲拧算法与教程页面。"
   },
   {
     "id": "r334",
     "name": "bestsiteever.ru",
     "url": "https://bestsiteever.ru/memotest",
     "group": "events",
-    "subgroup": "BLD 盲拧"
+    "subgroup": "BLD 盲拧",
+    "author": "Roman Strakhov",
+    "desc_en": "Browser tool for practicing BLD memo speed by recalling random letter sequences.",
+    "desc_zh": "浏览器盲拧记忆练习工具，随机字母序列背诵测试。"
   },
   {
     "id": "r335",
     "name": "cram.com",
     "url": "https://cram.com/",
     "group": "events",
-    "subgroup": "BLD 盲拧"
+    "subgroup": "BLD 盲拧",
+    "desc_en": "General flashcard platform for creating, studying, and sharing user-made card sets across subjects.",
+    "desc_zh": "通用闪卡平台，创建与分享学习卡片集。"
   },
   {
     "id": "r336",
     "name": "bestsiteever.ru",
     "url": "https://bestsiteever.ru/tables",
     "group": "events",
-    "subgroup": "BLD 盲拧"
+    "subgroup": "BLD 盲拧",
+    "author": "Roman Strakhov",
+    "desc_en": "Collection of BLD algorithm tables hosted on Roman Strakhov's speedcubing web-app site.",
+    "desc_zh": "Roman Strakhov 站点上的盲拧公式表集合。"
   },
   {
     "id": "r337",
@@ -1626,7 +2043,10 @@ export const SITES: Site[] = [
     "name": "csclub.uwaterloo.ca",
     "url": "https://csclub.uwaterloo.ca/~krmatthe",
     "group": "events",
-    "subgroup": "BLD 盲拧"
+    "subgroup": "BLD 盲拧",
+    "author": "Kr Matthews",
+    "desc_en": "Personal page with cubing tools and University of Waterloo course notes.",
+    "desc_zh": "Kr Matthews 个人页，含魔方工具与滑铁卢课程笔记。"
   },
   {
     "id": "r340",
@@ -1640,7 +2060,10 @@ export const SITES: Site[] = [
     "name": "Yifan Wang (王逸帆) 3BLD 王逸帆三盲全缓冲",
     "url": "https://nbwzx.github.io/cube/index.html",
     "group": "events",
-    "subgroup": "BLD 盲拧"
+    "subgroup": "BLD 盲拧",
+    "author": "Yifan Wang (王逸帆)",
+    "desc_en": "All-buffer 3BLD algorithm reference compiled by Yifan Wang (processed by Zixing Wang).",
+    "desc_zh": "王逸帆整理的 3BLD 全缓冲公式参考。"
   },
   {
     "id": "r342",
@@ -1661,21 +2084,29 @@ export const SITES: Site[] = [
     "name": "tobip.ch",
     "url": "https://tobip.ch/pigen",
     "group": "events",
-    "subgroup": "BLD 盲拧"
+    "subgroup": "BLD 盲拧",
+    "author": "Tobias Peter",
+    "desc_en": "Pi digit memorization tool with time mode, guess mode, and image-based Pi visualization.",
+    "desc_zh": "圆周率数字记忆工具，含时间/猜测/图像模式。"
   },
   {
     "id": "r345",
     "name": "盲拧方法大合集",
     "url": "https://bbs.mf8-china.com/misc.php?mod=mobile",
     "group": "events",
-    "subgroup": "BLD 盲拧"
+    "subgroup": "BLD 盲拧",
+    "desc_en": "Chinese cubing forum (mf8) section dedicated to blindfolded solving methods and discussion.",
+    "desc_zh": "魔方吧 mf8 论坛盲拧专区方法汇总。"
   },
   {
     "id": "r346",
     "name": "briefcubing.com",
     "url": "https://briefcubing.com/?enable-5-style",
     "group": "events",
-    "subgroup": "BLD 盲拧"
+    "subgroup": "BLD 盲拧",
+    "author": "Ashley Nathan Feniello",
+    "desc_en": "Interactive Rubik's cube practice tool with keyboard controls and visual feedback.",
+    "desc_zh": "键盘操作的魔方交互练习工具。"
   },
   {
     "id": "r347",
@@ -1696,7 +2127,10 @@ export const SITES: Site[] = [
     "name": "dgcubes.com",
     "url": "https://dgcubes.com/l4e",
     "group": "events",
-    "subgroup": "Pyraminx 金字塔"
+    "subgroup": "Pyraminx 金字塔",
+    "author": "Daniel Goodman",
+    "desc_en": "Intuitive L4E trainer for Pyraminx that generates random cases with a built-in timer and averages.",
+    "desc_zh": "金字塔 Intuitive L4E 练习工具，含计时器和平均成绩。"
   },
   {
     "id": "r354",
@@ -1710,7 +2144,10 @@ export const SITES: Site[] = [
     "name": "skewbDB",
     "url": "https://skewbdb.com",
     "group": "events",
-    "subgroup": "Skewb 斜转"
+    "subgroup": "Skewb 斜转",
+    "author": "Dominic Redisi",
+    "desc_en": "Skewb algorithm database with reconstructions and solving resources.",
+    "desc_zh": "Skewb 公式库与解法复盘资源站。"
   },
   {
     "id": "r357",
@@ -1718,14 +2155,19 @@ export const SITES: Site[] = [
     "url": "https://skewbschool.com",
     "group": "events",
     "subgroup": "Skewb 斜转",
-    "author": "Elias Malomgré"
+    "author": "Elias Malomgré",
+    "desc_en": "Skewb tutorial hub with video lessons and algorithm resources by a Belgian Skewb specialist.",
+    "desc_zh": "比利时选手 Skewb 教学与公式资源集中站。"
   },
   {
     "id": "r358",
     "name": "Skewb Alg Trainer",
     "url": "https://mihlefeld.github.io/Alg-Trainers/Skewb-NS2-Trainer",
     "group": "events",
-    "subgroup": "Skewb 斜转"
+    "subgroup": "Skewb 斜转",
+    "author": "Malte Ihlefeld",
+    "desc_en": "Web trainer for practicing Skewb NS2 algorithms.",
+    "desc_zh": "Skewb NS2 公式练习工具。"
   },
   {
     "id": "r359",
@@ -1746,28 +2188,39 @@ export const SITES: Site[] = [
     "name": "annikastein.github.io",
     "url": "https://annikastein.github.io",
     "group": "events",
-    "subgroup": "Skewb 斜转"
+    "subgroup": "Skewb 斜转",
+    "author": "Annika Stein",
+    "desc_en": "Personal site hosting SkewbSkills trainers for first layer, L2L algorithms, and one-looking.",
+    "desc_zh": "Annika Stein 个人站，含 Skewb 首层、L2L、一眼法训练器。"
   },
   {
     "id": "r362",
     "name": "ranzha.cubing.net",
     "url": "https://ranzha.cubing.net/skewb/notation.html",
     "group": "events",
-    "subgroup": "Skewb 斜转"
+    "subgroup": "Skewb 斜转",
+    "author": "Ranzha Vining",
+    "desc_en": "Explanation of the Rubikskewb notation system for Skewb moves.",
+    "desc_zh": "Skewb 的 Rubikskewb 记号系统说明。"
   },
   {
     "id": "r363",
     "name": "grubiks.com",
     "url": "https://grubiks.com/solvers/skewb",
     "group": "events",
-    "subgroup": "Skewb 斜转"
+    "subgroup": "Skewb 斜转",
+    "desc_en": "Online optimal Skewb solver that produces solutions in at most 11 moves from a colored input.",
+    "desc_zh": "在线 Skewb 最优解算器，最多 11 步给出解法。"
   },
   {
     "id": "r366",
     "name": "reinierschippers.nl",
     "url": "https://reinierschippers.nl/ll-scrambler/",
     "group": "events",
-    "subgroup": "Megaminx 五魔"
+    "subgroup": "Megaminx 五魔",
+    "author": "Reinier Schippers",
+    "desc_en": "Megaminx last layer scrambler for drilling LL cases with timing and weighted selection.",
+    "desc_zh": "五魔末层打乱训练器，支持计时与加权出题。"
   },
   {
     "id": "r367",
@@ -1777,28 +2230,40 @@ export const SITES: Site[] = [
     "subgroup": "Megaminx 五魔",
     "alt_urls": [
       "https://mihlefeld.github.io/Megaminx-OLL-Trainer/"
-    ]
+    ],
+    "author": "Malte Ihlefeld",
+    "desc_en": "Web trainer for Megaminx PLL cases.",
+    "desc_zh": "五魔 PLL 公式练习工具。"
   },
   {
     "id": "r368",
     "name": "nogesma.github.io",
     "url": "https://nogesma.github.io/megapll-trainer",
     "group": "events",
-    "subgroup": "Megaminx 五魔"
+    "subgroup": "Megaminx 五魔",
+    "author": "Nogesma",
+    "desc_en": "Web-based Megaminx PLL trainer for drilling last-layer permutation cases.",
+    "desc_zh": "网页版五魔 PLL 末层排列练习工具。"
   },
   {
     "id": "r369",
     "name": "roudai.github.io",
     "url": "https://roudai.github.io/MegaminxImageEditor",
     "group": "events",
-    "subgroup": "Megaminx 五魔"
+    "subgroup": "Megaminx 五魔",
+    "author": "roudai",
+    "desc_en": "Web tool to generate customizable Megaminx puzzle images and download them as PNG/GIF/JPG.",
+    "desc_zh": "生成自定义五魔方图片并导出 PNG/GIF/JPG 的网页工具。"
   },
   {
     "id": "r370",
     "name": "hem.bredband.net",
     "url": "https://hem.bredband.net/bunker7/llminxsolver-10.zip",
     "group": "events",
-    "subgroup": "Megaminx 五魔"
+    "subgroup": "Megaminx 五魔",
+    "author": "Jaap Scherphuis",
+    "desc_en": "Download of llminxsolver v1.0, a Java solver for Megaminx last-layer algorithms.",
+    "desc_zh": "llminxsolver v1.0 下载，求解五魔顶层算法的 Java 程序。"
   },
   {
     "id": "r373",
@@ -1806,7 +2271,9 @@ export const SITES: Site[] = [
     "url": "https://sq1-img-gen-gold-grass.reflex.run/",
     "group": "events",
     "subgroup": "SQ1",
-    "author": "Sebastian Amador"
+    "author": "Sebastian Amador",
+    "desc_en": "Seby's Square-1 image generator rendering puzzle states from user-specified parameters.",
+    "desc_zh": "Seby 的 SQ1 图片生成器，按参数渲染方块状态。"
   },
   {
     "id": "r374",
@@ -1820,21 +2287,28 @@ export const SITES: Site[] = [
     "name": "Image",
     "url": "https://cubiclealgdbimagegen.azurewebsites.net/generator?&puzzle=sq1&case=",
     "group": "events",
-    "subgroup": "SQ1"
+    "subgroup": "SQ1",
+    "author": "The Cubicle",
+    "desc_en": "Image generator endpoint used by Cubicle's algdb to render Square-1 case diagrams.",
+    "desc_zh": "Cubicle algdb 用的 SQ1 图示生成接口。"
   },
   {
     "id": "r376",
     "name": "Image",
     "url": "https://wol4rwwr5d.execute-api.us-east-1.amazonaws.com/default/get_image?alg=60/3-3/30/-30/03/-30/-30",
     "group": "events",
-    "subgroup": "SQ1"
+    "subgroup": "SQ1",
+    "desc_en": "AWS Lambda endpoint returning a Square-1 state image for a given algorithm string.",
+    "desc_zh": "按算法字符串返回 SQ1 状态图的 AWS Lambda 接口。"
   },
   {
     "id": "r377",
     "name": "Image",
     "url": "https://wol4rwwr5d.execute-api.us-east-1.amazonaws.com/default/get_image3?z2=true&mode=cs&case=",
     "group": "events",
-    "subgroup": "SQ1"
+    "subgroup": "SQ1",
+    "desc_en": "AWS Lambda endpoint rendering Square-1 cubeshape case images with optional z2 rotation.",
+    "desc_zh": "渲染 SQ1 cubeshape 情况图的 AWS Lambda 接口（支持 z2）。"
   },
   {
     "id": "r378",
@@ -1842,35 +2316,48 @@ export const SITES: Site[] = [
     "url": "https://github.com/qqwref/sq1opt",
     "group": "events",
     "subgroup": "SQ1",
-    "author": "qqwref"
+    "author": "qqwref",
+    "desc_en": "Square-1 algorithm search program updated from Jaap Scherphuis's 2011 version.",
+    "desc_zh": "基于 Jaap 2011 版更新的 SQ1 算法搜索程序。"
   },
   {
     "id": "r379",
     "name": "speedsolving.com",
     "url": "https://speedsolving.com/forum/threads/the-square-1-help-alg-sharing-thread.37858",
     "group": "events",
-    "subgroup": "SQ1"
+    "subgroup": "SQ1",
+    "desc_en": "SpeedSolving forum thread for sharing Square-1 tips, algorithms, and methods.",
+    "desc_zh": "SpeedSolving 论坛的 SQ1 技巧与算法分享帖。"
   },
   {
     "id": "r380",
     "name": "mzrg.com",
     "url": "https://mzrg.com/js/cubeshape_trainer.html",
     "group": "events",
-    "subgroup": "SQ1"
+    "subgroup": "SQ1",
+    "author": "Michael Gottlieb",
+    "desc_en": "Square-1 cubeshape trainer that generates scrambles 1 to 7 slices from solved.",
+    "desc_zh": "SQ1 cubeshape 训练器，生成离还原 1 到 7 步的打乱。"
   },
   {
     "id": "r381",
     "name": "brandonlin.com",
     "url": "https://brandonlin.com/cubing",
     "group": "events",
-    "subgroup": "SQ1"
+    "subgroup": "SQ1",
+    "author": "Brandon Lin",
+    "desc_en": "Brandon Lin's cubing page covering his Square-1 and blindfolded records and resources.",
+    "desc_zh": "Brandon Lin 的魔方主页，含 SQ1 与盲拧成绩和资源。"
   },
   {
     "id": "r382",
     "name": "hashtagcuber.com",
     "url": "https://hashtagcuber.com/csp",
     "group": "events",
-    "subgroup": "SQ1"
+    "subgroup": "SQ1",
+    "author": "Eva Kato",
+    "desc_en": "Hashtag Cuber's reference list of Square-1 Cubeshape Parity (CSP) solutions and images.",
+    "desc_zh": "Hashtag Cuber 整理的 SQ1 CSP 解法与图示参考。"
   },
   {
     "id": "r383",
@@ -1880,14 +2367,19 @@ export const SITES: Site[] = [
     "subgroup": "SQ1",
     "alt_urls": [
       "https://sq1.cuber.pro/"
-    ]
+    ],
+    "desc_en": "Square-1 Cubeshape Parity trainer and algorithm reference site.",
+    "desc_zh": "SQ1 CSP（cubeshape parity）训练与算法参考站。"
   },
   {
     "id": "r384",
     "name": "github.com",
     "url": "https://github.com/sp3ctum/squanmate",
     "group": "events",
-    "subgroup": "SQ1"
+    "subgroup": "SQ1",
+    "author": "Mika Vilpas",
+    "desc_en": "Squanmate is a Square-1 trainer for cubeshape recognition, algorithms, and scramble inspection.",
+    "desc_zh": "Squanmate：SQ1 cubeshape 识别、算法与打乱分析训练器。"
   },
   {
     "id": "r385",
@@ -1909,21 +2401,30 @@ export const SITES: Site[] = [
     "name": "ranzha.cubing.net",
     "url": "https://ranzha.cubing.net/square-1/pll.html",
     "group": "events",
-    "subgroup": "SQ1"
+    "subgroup": "SQ1",
+    "author": "Ranzha Vachiratamporn",
+    "desc_en": "Ranzha's Square-1 PLL algorithm page with cases and solutions.",
+    "desc_zh": "Ranzha 整理的 SQ1 PLL 算法与情况页。"
   },
   {
     "id": "r388",
     "name": "speedsolving.com",
     "url": "https://speedsolving.com/threads/square-1-pbl-finder.68258",
     "group": "events",
-    "subgroup": "SQ1"
+    "subgroup": "SQ1",
+    "author": "LucasSousa",
+    "desc_en": "SpeedSolving thread introducing LucasSousa's Square-1 PBL Finder for fast two-layer algs.",
+    "desc_zh": "SpeedSolving 帖子，介绍 LucasSousa 的 SQ1 PBL Finder。"
   },
   {
     "id": "r389",
     "name": "bengottschalk.com",
     "url": "https://bengottschalk.com/pblTrainer",
     "group": "events",
-    "subgroup": "SQ1"
+    "subgroup": "SQ1",
+    "author": "Benjamin Gottschalk",
+    "desc_en": "Ben Gottschalk's Square-1 PBL trainer for practicing the last step of the solve.",
+    "desc_zh": "Ben Gottschalk 的 SQ1 PBL 最后一步训练器。"
   },
   {
     "id": "r390",
@@ -1938,35 +2439,50 @@ export const SITES: Site[] = [
     "name": "hughey.cubing.net",
     "url": "https://hughey.cubing.net/Square1BLD",
     "group": "events",
-    "subgroup": "SQ1"
+    "subgroup": "SQ1",
+    "author": "Mike Hughey",
+    "desc_en": "Guide to solving Square-1 blindfolded, with memorization, translation matrices, and case-by-case algorithms.",
+    "desc_zh": "Square-1 盲拧教程：记忆法与逐情况算法。"
   },
   {
     "id": "r392",
     "name": "karnvertor.brandonlin.com",
     "url": "https://karnvertor.brandonlin.com/",
     "group": "events",
-    "subgroup": "SQ1"
+    "subgroup": "SQ1",
+    "author": "Brandon Lin (林博浩)",
+    "desc_en": "Square-1 Kociemba-style notation converter by speedcuber Brandon Lin.",
+    "desc_zh": "Square-1 记号转换器。"
   },
   {
     "id": "r393",
     "name": "mzrg.com",
     "url": "https://mzrg.com/rubik/ep_optimizer.html",
     "group": "events",
-    "subgroup": "SQ1"
+    "subgroup": "SQ1",
+    "author": "Michael Gottlieb",
+    "desc_en": "Square-1 EP (edge permutation) optimizer that enumerates the most common unsolvable-in-one cases.",
+    "desc_zh": "Square-1 EP 优化器：列举常见难解情况。"
   },
   {
     "id": "r394",
     "name": "SQ1 Solver by 陈霜",
     "url": "https://github.com/cs0x7f/sq12phase",
     "group": "events",
-    "subgroup": "SQ1"
+    "subgroup": "SQ1",
+    "author": "Shuang Chen (陈霜)",
+    "desc_en": "Two-phase Square-1 solver (~50 random states/sec) that shapes then permutes the puzzle.",
+    "desc_zh": "两阶段 Square-1 求解器（约 50 状态/秒）。"
   },
   {
     "id": "r395",
     "name": "jaapsch.net",
     "url": "https://jaapsch.net/puzzles/square1.htm?#progs",
     "group": "events",
-    "subgroup": "SQ1"
+    "subgroup": "SQ1",
+    "author": "Jaap Scherphuis",
+    "desc_en": "Square-1 puzzle page with solutions, analysis, and JavaScript simulators.",
+    "desc_zh": "Square-1 解法与 JS 模拟器资源页。"
   },
   {
     "id": "r399",
@@ -1984,21 +2500,30 @@ export const SITES: Site[] = [
     "alt_urls": [
       "https://alg.cubing.net",
       "https://algcubingnet.cuber.pro"
-    ]
+    ],
+    "author": "Lucas Garron",
+    "desc_en": "Alpha Twizzle: edit algorithms and explore WCA and custom twisty puzzles in-browser.",
+    "desc_zh": "浏览器内编辑算法、探索各类扭动魔方的工具。"
   },
   {
     "id": "r401",
     "name": "转动记号",
     "url": "https://github.com/cubing/cubing.js/blob/main/src/cubing/puzzle-geometry/notation-mapping/PyraminxNotationMapper.tsv",
     "group": "simulators",
-    "subgroup": "Simulators 模拟器"
+    "subgroup": "Simulators 模拟器",
+    "author": "Lucas Garron",
+    "desc_en": "cubing.js notation-mapping TSV (e.g. Pyraminx) for the twisty-puzzle JavaScript library.",
+    "desc_zh": "cubing.js 中的 Pyraminx 记号映射表。"
   },
   {
     "id": "r402",
     "name": "cubedb.net",
     "url": "https://cubedb.net",
     "group": "simulators",
-    "subgroup": "Simulators 模拟器"
+    "subgroup": "Simulators 模拟器",
+    "author": "Gil Zussman",
+    "desc_en": "Interactive cube solver, visualizer, and algorithm trainer supporting CFOP, Roux, and multiple cube sizes.",
+    "desc_zh": "交互式魔方解算、可视化与算法训练器。"
   },
   {
     "id": "r403",
@@ -2015,21 +2540,28 @@ export const SITES: Site[] = [
     "name": "play.google.com",
     "url": "https://play.google.com/store/apps/details?id=magic.puzzle.pro",
     "group": "simulators",
-    "subgroup": "Simulators 模拟器"
+    "subgroup": "Simulators 模拟器",
+    "desc_en": "Vistalgy Cubes: 3D twisty-puzzle simulator app for Android by Magic Dream Pro.",
+    "desc_zh": "Vistalgy Cubes 安卓 3D 魔方模拟器。"
   },
   {
     "id": "r405",
     "name": "randelshofer.ch",
     "url": "https://randelshofer.ch/cubetwister",
     "group": "simulators",
-    "subgroup": "Simulators 模拟器"
+    "subgroup": "Simulators 模拟器",
+    "author": "Werner Randelshofer",
+    "desc_en": "CubeTwister: desktop app for 3D modeling, documenting, and analyzing Rubik's cube algorithms.",
+    "desc_zh": "CubeTwister：3D 魔方建模、记录与算法分析桌面软件。"
   },
   {
     "id": "r406",
     "name": "ruwix.com",
     "url": "https://ruwix.com/online-puzzle-simulators",
     "group": "simulators",
-    "subgroup": "Simulators 模拟器"
+    "subgroup": "Simulators 模拟器",
+    "desc_en": "Online 3D puzzle simulator collection covering 2x2 to 11x11 cubes and other twisty puzzles.",
+    "desc_zh": "在线 3D 扭动魔方模拟器合集（2x2~11x11 等）。"
   },
   {
     "id": "r407",
@@ -2052,14 +2584,20 @@ export const SITES: Site[] = [
     "url": "https://clockdb.net/",
     "group": "events",
     "subgroup": "Clock 魔表",
-    "name_zh": "Reconstruction 复盘"
+    "name_zh": "Reconstruction 复盘",
+    "author": "Joshua Marriott",
+    "desc_en": "Database of Rubik's Clock solving records with linked video reconstructions.",
+    "desc_zh": "魔表速解记录与复盘视频数据库。"
   },
   {
     "id": "r412",
     "name": "7 Simul Trainer",
     "url": "https://sanya.sweetduet.info/cube/7simul_trainer/",
     "group": "events",
-    "subgroup": "Clock 魔表"
+    "subgroup": "Clock 魔表",
+    "author": "kusano_k",
+    "desc_en": "Training tool for the Rubik's Clock 7-Simul method with customizable memo encodings.",
+    "desc_zh": "魔表 7-Simul 方法记忆训练器。"
   },
   {
     "id": "r413",
@@ -2073,14 +2611,20 @@ export const SITES: Site[] = [
     "name": "7 Simul Memo Trainer",
     "url": "https://joshm2.github.io/7-Simul/",
     "group": "events",
-    "subgroup": "Clock 魔表"
+    "subgroup": "Clock 魔表",
+    "author": "Joshua Marriott",
+    "desc_en": "Memo and execution trainer for the Rubik's Clock 7-Simul method.",
+    "desc_zh": "魔表 7-Simul 方法记忆与执行训练器。"
   },
   {
     "id": "r417",
     "name": "最优魔表求解器",
     "url": "https://speedsolving.com/threads/optclock-optimal-rubiks-clock-solver.47747/",
     "group": "events",
-    "subgroup": "Clock 魔表"
+    "subgroup": "Clock 魔表",
+    "author": "qqwref (Michael Gottlieb)",
+    "desc_en": "SpeedSolving thread introducing OptClock, an optimal Rubik's Clock solver averaging ~9.4 moves.",
+    "desc_zh": "最优魔表求解器 OptClock 的介绍贴（平均约 9.4 步）。"
   },
   {
     "id": "r421",
@@ -2090,7 +2634,10 @@ export const SITES: Site[] = [
     "subgroup": "Clock 魔表",
     "alt_urls": [
       "https://gitee.com/huazhechen/cuber"
-    ]
+    ],
+    "author": "华哲辰 (Hua Zhechen)",
+    "desc_en": "Online Rubik's cube toolbox built with Three.js/Vue, with formula playback and animation recording.",
+    "desc_zh": "基于 Three.js/Vue 的网页魔方工具箱，含公式回放。"
   },
   {
     "id": "r422",
@@ -2104,14 +2651,20 @@ export const SITES: Site[] = [
     "name": "mzrg.com",
     "url": "https://mzrg.com/js/qminx-v2.html",
     "group": "events",
-    "subgroup": "Clock 魔表"
+    "subgroup": "Clock 魔表",
+    "author": "Michael Gottlieb",
+    "desc_en": "qMinx, a JavaScript Megaminx-style puzzle simulator by Michael Gottlieb (qqwref).",
+    "desc_zh": "Michael Gottlieb 的 qMinx 五魔方模拟器。"
   },
   {
     "id": "r424",
     "name": "speedsolving.com",
     "url": "https://speedsolving.com/threads/ben-whitmore-square-1-sim.57372",
     "group": "events",
-    "subgroup": "Clock 魔表"
+    "subgroup": "Clock 魔表",
+    "author": "Ben Whitmore",
+    "desc_en": "Speedsolving forum thread for Ben Whitmore's downloadable Square-1 speedcubing simulator.",
+    "desc_zh": "Ben Whitmore 的 Square-1 模拟器论坛帖。"
   },
   {
     "id": "r427",
@@ -2125,28 +2678,40 @@ export const SITES: Site[] = [
     "name": "hypercubing.xyz",
     "url": "https://hypercubing.xyz",
     "group": "simulators",
-    "subgroup": "Hypercubing 高维"
+    "subgroup": "Hypercubing 高维",
+    "author": "Hypercubers community (Andrew Farkas et al.)",
+    "desc_en": "Community hub for solving higher-dimensional twisty puzzles, with guides, software and leaderboards.",
+    "desc_zh": "高维魔方社区站，含教程、软件与排行榜。"
   },
   {
     "id": "r435",
     "name": "cubeskills.com",
     "url": "https://cubeskills.com/",
     "group": "cubers",
-    "subgroup": "Cuber Web 魔友网站"
+    "subgroup": "Cuber Web 魔友网站",
+    "author": "Feliks Zemdegs",
+    "desc_en": "Speedcubing tutorials and algorithm trainers by two-time world champion Feliks Zemdegs.",
+    "desc_zh": "Feliks Zemdegs 的速拧教程与算法训练平台。"
   },
   {
     "id": "r436",
     "name": "Ruimin Yan (颜瑞民)魔方根官网",
     "url": "https://cuberoot.me",
     "group": "cubers",
-    "subgroup": "Cuber Web 魔友网站"
+    "subgroup": "Cuber Web 魔友网站",
+    "author": "颜瑞民 (Ruimin Yan)",
+    "desc_en": "Ruimin Yan's personal cubing hub with tools, trainers and WCA statistics.",
+    "desc_zh": "颜瑞民的魔方工具、训练与 WCA 统计主页。"
   },
   {
     "id": "r437",
     "name": "jperm.net",
     "url": "https://jperm.net",
     "group": "cubers",
-    "subgroup": "Cuber Web 魔友网站"
+    "subgroup": "Cuber Web 魔友网站",
+    "author": "Dylan Wang",
+    "desc_en": "Speedcubing tutorials and algorithm trainers by Dylan Wang (J Perm).",
+    "desc_zh": "Dylan Wang (J Perm) 的速拧教程与算法训练。"
   },
   {
     "id": "r438",
@@ -2160,98 +2725,139 @@ export const SITES: Site[] = [
     "name": "speedcubingtips.eu",
     "url": "https://speedcubingtips.eu",
     "group": "cubers",
-    "subgroup": "Cuber Web 魔友网站"
+    "subgroup": "Cuber Web 魔友网站",
+    "author": "Denis Scheehl",
+    "desc_en": "French-language tutorials and algorithm databases for 2x2 to 4x4+ and Square-1.",
+    "desc_zh": "法语速拧教程与 2x2–4x4、Square-1 算法库。"
   },
   {
     "id": "r440",
     "name": "cubingcheatsheet.com",
     "url": "https://cubingcheatsheet.com/",
     "group": "cubers",
-    "subgroup": "Cuber Web 魔友网站"
+    "subgroup": "Cuber Web 魔友网站",
+    "author": "Daniel Racine",
+    "desc_en": "Dan's Cubing Cheat Sheet app: algorithms and solutions for speedcubers across puzzle types.",
+    "desc_zh": "Daniel Racine 的速拧公式速查应用。"
   },
   {
     "id": "r441",
     "name": "kungfoomanchu.com",
     "url": "https://kungfoomanchu.com/",
     "group": "cubers",
-    "subgroup": "Cuber Web 魔友网站"
+    "subgroup": "Cuber Web 魔友网站",
+    "author": "Andy Klise",
+    "desc_en": "Andy Klise's printable one-page PDF algorithm guides for 2x2 through 5x5, Megaminx and Pyraminx.",
+    "desc_zh": "Andy Klise 的单页可打印魔方公式 PDF 指南。"
   },
   {
     "id": "r442",
     "name": "cyotheking.com",
     "url": "https://cyotheking.com/",
     "group": "cubers",
-    "subgroup": "Cuber Web 魔友网站"
+    "subgroup": "Cuber Web 魔友网站",
+    "author": "Christopher Olson",
+    "desc_en": "Christopher Olson's 2x2 and 3x3 speedcubing tutorials and algorithm resources.",
+    "desc_zh": "Christopher Olson 的 2x2/3x3 速拧教程与算法。"
   },
   {
     "id": "r443",
     "name": "sites.google.com",
     "url": "https://sites.google.com/site/antoineccantin",
     "group": "cubers",
-    "subgroup": "Cuber Web 魔友网站"
+    "subgroup": "Cuber Web 魔友网站",
+    "author": "Antoine Cantin",
+    "desc_en": "Antoine Cantin's page with OH PLL/OLL, 2GLL and Feet PLL algorithm sets.",
+    "desc_zh": "Antoine Cantin 的单手与脚拧算法集合页。"
   },
   {
     "id": "r444",
     "name": "sites.google.com",
     "url": "https://sites.google.com/view/kianroux",
     "group": "cubers",
-    "subgroup": "Cuber Web 魔友网站"
+    "subgroup": "Cuber Web 魔友网站",
+    "author": "Kian Mansour",
+    "desc_en": "Kian Mansour's guide to the Roux method with algorithms, techniques and tutorials.",
+    "desc_zh": "Kian Mansour 的 Roux 法教程与算法集。"
   },
   {
     "id": "r445",
     "name": "bestsiteever.ru",
     "url": "https://bestsiteever.ru",
     "group": "cubers",
-    "subgroup": "Cuber Web 魔友网站"
+    "subgroup": "Cuber Web 魔友网站",
+    "desc_en": "Cubing web apps including ZBLL/OLL/PLL trainers, a cube mosaic tool and a BLD memo trainer.",
+    "desc_zh": "ZBLL/OLL/PLL 训练器、马赛克与盲拧记忆工具。"
   },
   {
     "id": "r446",
     "name": "sarah.cubing.net",
     "url": "https://sarah.cubing.net",
     "group": "cubers",
-    "subgroup": "Cuber Web 魔友网站"
+    "subgroup": "Cuber Web 魔友网站",
+    "author": "Sarah Strong",
+    "desc_en": "Sarah Strong's collection of algorithms for 3x3, 5x5, Skewb and Square-1.",
+    "desc_zh": "Sarah Strong 的 3x3、5x5、Skewb、Square-1 算法集。"
   },
   {
     "id": "r447",
     "name": "brookscubing.com",
     "url": "https://brookscubing.com/speedcubing",
     "group": "cubers",
-    "subgroup": "Cuber Web 魔友网站"
+    "subgroup": "Cuber Web 魔友网站",
+    "author": "Anthony Brooks",
+    "desc_en": "Anthony Brooks's speedcubing tutorials and algorithms focused on the CFOP method.",
+    "desc_zh": "Anthony Brooks 的 CFOP 速拧教程与算法。"
   },
   {
     "id": "r448",
     "name": "jaapsch.net",
     "url": "https://jaapsch.net/puzzles",
     "group": "cubers",
-    "subgroup": "Cuber Web 魔友网站"
+    "subgroup": "Cuber Web 魔友网站",
+    "author": "Jaap Scherphuis",
+    "desc_en": "Jaap's Puzzle Page: detailed write-ups, JS simulations and group-theory analyses of hundreds of twisty puzzles.",
+    "desc_zh": "Jaap Scherphuis 的数百种魔方详解与模拟页。"
   },
   {
     "id": "r449",
     "name": "cubezone.be",
     "url": "https://cubezone.be",
     "group": "cubers",
-    "subgroup": "Cuber Web 魔友网站"
+    "subgroup": "Cuber Web 魔友网站",
+    "author": "Lars Vandenbergh",
+    "desc_en": "Speedcubing resource site with algorithms, methods, tools, and articles.",
+    "desc_zh": "速拧资源站，包含公式、方法、工具和文章。"
   },
   {
     "id": "r450",
     "name": "jaydenmcneill.com",
     "url": "https://jaydenmcneill.com/homepage",
     "group": "cubers",
-    "subgroup": "Cuber Web 魔友网站"
+    "subgroup": "Cuber Web 魔友网站",
+    "author": "Jayden McNeill",
+    "desc_en": "Personal site of Australian speedcuber Jayden McNeill with cubing tips and newsletter.",
+    "desc_zh": "澳大利亚速拧选手 Jayden McNeill 的个人站，含速拧技巧与邮件订阅。"
   },
   {
     "id": "r451",
     "name": "Yiqun Fan 樊轶群",
     "url": "https://fanyiqun.com/",
     "group": "cubers",
-    "subgroup": "Cuber Web 魔友网站"
+    "subgroup": "Cuber Web 魔友网站",
+    "author": "樊轶群 (Fan Yiqun)",
+    "desc_en": "Personal blog of speedcuber Fan Yiqun with articles on algorithms, philosophy, and music.",
+    "desc_zh": "速拧选手樊轶群个人博客，涉及算法、随笔与音乐。"
   },
   {
     "id": "r455",
     "name": "cubepb.com",
     "url": "https://cubepb.com/",
     "group": "cubers",
-    "subgroup": "Cuber PB sheet 魔友PB表"
+    "subgroup": "Cuber PB sheet 魔友PB表",
+    "author": "big213",
+    "desc_en": "Site for cubers to record and showcase personal bests across WCA events.",
+    "desc_zh": "记录和展示速拧各项目个人最佳成绩的网站。"
   },
   {
     "id": "r456",
@@ -2282,7 +2888,10 @@ export const SITES: Site[] = [
     "subgroup": "Cuber PB sheet 魔友PB表",
     "alt_urls": [
       "https://thedukeofcubes.com/"
-    ]
+    ],
+    "author": "Walter Randelshofer",
+    "desc_en": "Catalog of Rubik's Cube pretty patterns with algorithms and permutations.",
+    "desc_zh": "魔方花式图案与公式集锦。"
   },
   {
     "id": "r462",
@@ -2293,7 +2902,10 @@ export const SITES: Site[] = [
     "alt_urls": [
       "https://bestsiteever.ru/mosaic",
       "https://youcandothecube.com/build-mosaics-with-rubiks-cubes/create-your-own-mosaics"
-    ]
+    ],
+    "author": "Luis J. Iáñez",
+    "desc_en": "Generator that converts uploaded images into Rubik's Cube mosaic layouts.",
+    "desc_zh": "将图片转换为魔方马赛克拼图的生成器。"
   },
   {
     "id": "r465",
@@ -2303,14 +2915,20 @@ export const SITES: Site[] = [
     "subgroup": "Solver 求解器",
     "alt_urls": [
       "https://edogaki.github.io/RubiksSolverDemo/cross_trainer.html"
-    ]
+    ],
+    "author": "or18",
+    "desc_en": "Interactive 3x3 solver showing Cross, XCross, F2L, EOCross, and last layer steps.",
+    "desc_zh": "展示 Cross / XCross / F2L / EOCross / LL 步骤的交互式三阶求解器。"
   },
   {
     "id": "r466",
     "name": "experiments.cubing.net",
     "url": "https://experiments.cubing.net/cubing.js/twsearch/text-ui.html",
     "group": "solvers",
-    "subgroup": "Solver 求解器"
+    "subgroup": "Solver 求解器",
+    "author": "Lucas Garron",
+    "desc_en": "Text UI for twsearch, a tool for defining puzzles and searching for algorithms.",
+    "desc_zh": "twsearch 文本界面，用于定义拼图并搜索公式。"
   },
   {
     "id": "r467",
@@ -2320,21 +2938,30 @@ export const SITES: Site[] = [
     "subgroup": "Solver 求解器",
     "alt_urls": [
       "https://trangium.github.io"
-    ]
+    ],
+    "author": "Trangium",
+    "desc_en": "Collection of twisty puzzle algset generators and cubing tools by Trangium.",
+    "desc_zh": "Trangium 的扭动拼图公式集生成器与工具合集。"
   },
   {
     "id": "r468",
     "name": "trangium.github.io",
     "url": "https://trangium.github.io/MovecountCoefficient/",
     "group": "solvers",
-    "subgroup": "Solver 求解器"
+    "subgroup": "Solver 求解器",
+    "author": "Trangium",
+    "desc_en": "Calculator that scores speedcubing algorithms by move efficiency using weighted multipliers.",
+    "desc_zh": "按加权步数计算速拧公式流畅度的工具。"
   },
   {
     "id": "r469",
     "name": "github.com",
     "url": "https://github.com/cubing",
     "group": "solvers",
-    "subgroup": "Solver 求解器"
+    "subgroup": "Solver 求解器",
+    "author": "Lucas Garron",
+    "desc_en": "GitHub organization hosting open-source twisty puzzle community projects including cubing.js.",
+    "desc_zh": "托管 cubing.js 等扭动拼图开源项目的 GitHub 组织。"
   },
   {
     "id": "r470",
@@ -2346,7 +2973,10 @@ export const SITES: Site[] = [
       "https://cubing.net/ksolve.js",
       "https://github.com/cubing/ksolve",
       "https://mzrg.com/rubik/ksolve+"
-    ]
+    ],
+    "author": "Lucas Garron",
+    "desc_en": "Rust-based algorithm and scramble search tool for WCA and custom twisty puzzles.",
+    "desc_zh": "基于 Rust 的扭动拼图公式与打乱搜索工具。"
   },
   {
     "id": "r471",
@@ -2356,21 +2986,30 @@ export const SITES: Site[] = [
     "subgroup": "Solver 求解器",
     "alt_urls": [
       "https://benwh1.github.io/web/software/ksolve++/index.html"
-    ]
+    ],
+    "author": "Kåre Krig",
+    "desc_en": "Reddit post announcing ksolve, a fast general-purpose twisty puzzle solver.",
+    "desc_zh": "介绍通用扭动拼图求解器 ksolve 的 Reddit 帖子。"
   },
   {
     "id": "r472",
     "name": "LL skip Generator OP连跳生成器",
     "url": "https://cubing.net/f2lfast",
     "group": "solvers",
-    "subgroup": "Solver 求解器"
+    "subgroup": "Solver 求解器",
+    "author": "Lucas Garron",
+    "desc_en": "Interactive visualizer for Rubik's Cube moves and last-layer skip algorithms.",
+    "desc_zh": "魔方公式与末层连跳交互式可视化工具。"
   },
   {
     "id": "r473",
     "name": "speedsolving.com",
     "url": "https://speedsolving.com/threads/algexplorer-com/mand-line-utility-to-assist-in-alg-searching.65189",
     "group": "solvers",
-    "subgroup": "Solver 求解器"
+    "subgroup": "Solver 求解器",
+    "author": "Teoidus",
+    "desc_en": "SpeedSolving thread about AlgExplorer, a command-line tool using ML to rank cubing algorithms.",
+    "desc_zh": "SpeedSolving 论坛帖：用机器学习评价速拧公式的命令行工具 AlgExplorer。"
   },
   {
     "id": "r474",
@@ -2384,14 +3023,20 @@ export const SITES: Site[] = [
     "name": "github.com",
     "url": "https://github.com/cs0x7f/TPR-4x4x4-Solver",
     "group": "solvers",
-    "subgroup": "Solver 求解器"
+    "subgroup": "Solver 求解器",
+    "author": "Shuang Chen (陈霜)",
+    "desc_en": "Java 4x4x4 solver combining Tsai's three-phase reduction with min2phase, averaging 44.39 moves.",
+    "desc_zh": "基于 Tsai 三阶段归约与 min2phase 的 Java 四阶求解器，平均 44.39 步。"
   },
   {
     "id": "r476",
     "name": "github.com",
     "url": "https://github.com/cs0x7f/cube555",
     "group": "solvers",
-    "subgroup": "Solver 求解器"
+    "subgroup": "Solver 求解器",
+    "author": "Shuang Chen (陈霜)",
+    "desc_en": "5x5x5 Rubik's cube solver using a five-phase-reduction algorithm producing 51-52 move solutions.",
+    "desc_zh": "五阶魔方求解器，使用五阶段归约算法生成 51-52 步解。"
   },
   {
     "id": "r477",
@@ -2401,28 +3046,39 @@ export const SITES: Site[] = [
     "subgroup": "Solver 求解器",
     "alt_urls": [
       "https://speedsolving.com/threads/5x5x5-6x6x6-7x7x7-or-nxnxn-solvers.63592"
-    ]
+    ],
+    "author": "Daniel Walton",
+    "desc_en": "Generic NxNxN Rubik's cube solver tested up to 17x17x17, via reduction to 3x3x3.",
+    "desc_zh": "通用 NxNxN 魔方求解器，最高测试至 17 阶，归约到三阶求解。"
   },
   {
     "id": "r478",
     "name": "grubiks.com",
     "url": "https://grubiks.com/solvers/professors-cube-5x5x5/",
     "group": "solvers",
-    "subgroup": "Solver 求解器"
+    "subgroup": "Solver 求解器",
+    "desc_en": "Online 5x5x5 Professor's Cube solver that outputs step-by-step moves from a painted cube model.",
+    "desc_zh": "在线五阶魔方求解器，输入配色后输出分步解法。"
   },
   {
     "id": "r479",
     "name": "高阶求解器 (马泽余)",
     "url": "https://mazeyu.github.io/Cubing7",
     "group": "solvers",
-    "subgroup": "Solver 求解器"
+    "subgroup": "Solver 求解器",
+    "author": "Zeyu Ma (马泽余)",
+    "desc_en": "Browser-based solver for 4x4 through 7x7 cubes with scramble generation.",
+    "desc_zh": "浏览器端四到七阶魔方求解器，支持随机打乱。"
   },
   {
     "id": "r483",
     "name": "github.com",
     "url": "https://github.com/cubing/cube-code",
     "group": "solvers",
-    "subgroup": "Developer 开发者"
+    "subgroup": "Developer 开发者",
+    "author": "The Cubing organization (Lucas Garron et al.)",
+    "desc_en": "Curated directory of speedcubing software libraries across multiple programming languages.",
+    "desc_zh": "按编程语言整理的速拧开发库索引。"
   },
   {
     "id": "r484",
@@ -2443,63 +3099,90 @@ export const SITES: Site[] = [
     "name": "cube20.org",
     "url": "https://cube20.org",
     "group": "solvers",
-    "subgroup": "Theory 理论"
+    "subgroup": "Theory 理论",
+    "author": "Tomas Rokicki, Herbert Kociemba, Morley Davidson, John Dethridge",
+    "desc_en": "Documents the computational proof that God's Number for Rubik's Cube is 20 (half-turn metric).",
+    "desc_zh": "记录上帝之数为 20 的计算证明（半转度量）。"
   },
   {
     "id": "r490",
     "name": "forum.cubeman.org",
     "url": "https://forum.cubeman.org",
     "group": "solvers",
-    "subgroup": "Theory 理论"
+    "subgroup": "Theory 理论",
+    "author": "Mark Longridge",
+    "desc_en": "Domain of the Cube Forum, a long-running discussion board for Rubik's cube theory.",
+    "desc_zh": "Domain of the Cube 论坛，魔方理论长期讨论社区。"
   },
   {
     "id": "r491",
     "name": "Hamiltonian Circuit / Devil's Algorithm\r\n 哈密顿回路 / 恶魔公式",
     "url": "https://bruce.cubing.net",
     "group": "solvers",
-    "subgroup": "Theory 理论"
+    "subgroup": "Theory 理论",
+    "author": "Bruce Norskog",
+    "desc_en": "Constructions of Hamiltonian circuits through all 43 quintillion Rubik's cube positions.",
+    "desc_zh": "构造遍历全部 4.3e19 个魔方状态的哈密顿回路。"
   },
   {
     "id": "r494",
     "name": "Alibaba 阿里巴巴",
     "url": "https://1688.com/",
     "group": "shop",
-    "subgroup": "Shop 商店"
+    "subgroup": "Shop 商店",
+    "author": "Jack Ma (马云)",
+    "desc_en": "Alibaba's domestic Chinese B2B wholesale marketplace connecting buyers with factories.",
+    "desc_zh": "阿里巴巴旗下国内 B2B 批发采购平台。"
   },
   {
     "id": "r495",
     "name": "Taobao 淘宝",
     "url": "https://taobao.com/",
     "group": "shop",
-    "subgroup": "Shop 商店"
+    "subgroup": "Shop 商店",
+    "author": "Jack Ma (马云)",
+    "desc_en": "Alibaba's consumer-to-consumer online shopping marketplace launched in 2003.",
+    "desc_zh": "阿里巴巴旗下 C2C 网购平台，2003 年上线。"
   },
   {
     "id": "r496",
     "name": "thecubicle.com",
     "url": "https://thecubicle.com/",
     "group": "shop",
-    "subgroup": "Shop 商店"
+    "subgroup": "Shop 商店",
+    "author": "Phil Yu & James Chang",
+    "desc_en": "US-based speedcube retailer launched in 2011, known for custom-modded puzzles.",
+    "desc_zh": "2011 年创立的美国速拧商店，以定制调教魔方著称。"
   },
   {
     "id": "r497",
     "name": "speedcubeshop.com",
     "url": "https://speedcubeshop.com/",
     "group": "shop",
-    "subgroup": "Shop 商店"
+    "subgroup": "Shop 商店",
+    "author": "Cameron Brown",
+    "desc_en": "US speedcube e-commerce retailer founded in 2009 stocking major cube brands.",
+    "desc_zh": "2009 年成立的美国速拧电商，经销主流品牌。"
   },
   {
     "id": "r498",
     "name": "mefferts.com",
     "url": "https://mefferts.com/",
     "group": "shop",
-    "subgroup": "Shop 商店"
+    "subgroup": "Shop 商店",
+    "author": "Uwe Meffert",
+    "desc_en": "Direct-from-manufacturer store for twisty puzzles by Pyraminx inventor Uwe Meffert.",
+    "desc_zh": "金字塔魔方发明者 Uwe Meffert 的扭转谜题原厂商店。"
   },
   {
     "id": "r499",
     "name": "shapeways.com",
     "url": "https://shapeways.com/shops/oskarpuzzles",
     "group": "shop",
-    "subgroup": "Shop 商店"
+    "subgroup": "Shop 商店",
+    "author": "Oskar van Deventer",
+    "desc_en": "Shapeways shop selling 3D-printed mechanical puzzles designed by Oskar van Deventer.",
+    "desc_zh": "Oskar van Deventer 设计的 3D 打印机械谜题 Shapeways 店铺。"
   },
   {
     "id": "r500",
@@ -2513,21 +3196,29 @@ export const SITES: Site[] = [
     "name": "QiYi 奇艺",
     "url": "https://qiyitoys.net",
     "group": "shop",
-    "subgroup": "Shop 商店"
+    "subgroup": "Shop 商店",
+    "author": "Du Chaoyu (杜超宇)",
+    "desc_en": "Official site of QiYi MoFangGe, Chinese speedcube maker behind The Valk and X-Man lines.",
+    "desc_zh": "奇艺魔方格官网，旗下有 Valk 与 X-Man 等品牌。"
   },
   {
     "id": "r502",
     "name": "MoYu 魔域",
     "url": "https://moyucube.com/",
     "group": "shop",
-    "subgroup": "Shop 商店"
+    "subgroup": "Shop 商店",
+    "author": "Chen Yonghuang (陈永煌)",
+    "desc_en": "Official site of MoYu Culture, Chinese speedcube manufacturer founded in 2012-2013.",
+    "desc_zh": "魔域文化官网，2012-2013 年成立的速拧制造商。"
   },
   {
     "id": "r503",
     "name": "verypuzzle.com",
     "url": "https://verypuzzle.com/",
     "group": "shop",
-    "subgroup": "Shop 商店"
+    "subgroup": "Shop 商店",
+    "desc_en": "Online store specializing in mass-market and exotic twisty puzzles.",
+    "desc_zh": "扭转谜题在线商店，含大众与稀有款式。"
   },
   {
     "id": "r504",

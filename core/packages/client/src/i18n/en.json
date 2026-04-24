@@ -304,5 +304,162 @@
       "clearConfirm": "Clear session?",
       "holdSpace": "Hold spacebar to start the timer"
     }
+  },
+  "frameCount": {
+    "title": "Frame Count",
+    "back": "Back",
+    "toolbar": {
+      "flipV": "Flip Vertical",
+      "flipH": "Flip Horizontal",
+      "rotate": "Rotate 90° ({{angle}}°)",
+      "crop": "Crop",
+      "cropExit": "Exit Crop",
+      "newVideo": "New video",
+      "folder": "Open video from folder (auto-load/save .splits.txt)",
+      "export": "Export",
+      "shortcuts": "Keyboard Shortcuts"
+    },
+    "exportMenu": {
+      "video": "Export Video",
+      "frame": "Export Current Frame"
+    },
+    "video": {
+      "cropHint": "Drag to select crop area",
+      "uploadAria": "Upload video"
+    },
+    "controls": {
+      "back10": "Back 10 frames (Q)",
+      "back1": "Back 1 frame (A)",
+      "play": "Play/Pause (K)",
+      "forward1": "Forward 1 frame (D)",
+      "forward10": "Forward 10 frames (E)"
+    },
+    "solves": {
+      "add": "Add Solve (+)",
+      "remove": "Remove Solve",
+      "timePlaceholder": "Time (s)",
+      "bandTip": "{{name}} — {{count}} marks"
+    },
+    "marks": {
+      "add": "Add",
+      "remove": "Remove",
+      "update": "Update",
+      "updateTip": "Update selected mark to current frame",
+      "total": "Total:",
+      "triTip": "Mark {{i}}: frame {{frame}}",
+      "markerTip": "Mark {{i}}: {{frame}}"
+    },
+    "empty": {
+      "heading": "How to count frames",
+      "step1": "Enter the solve time",
+      "step2": "Navigate to the stop-timer frame (hand hits pad)",
+      "step3Prefix": "Press",
+      "step3Suffix": "to add; the start-timer frame is auto-derived and marked"
+    },
+    "start": {
+      "label": "Start:",
+      "method": "Start-frame method",
+      "fpsTip": "Start frame = endFrame − ⌈(⌊time⌋₂+.009) × fps⌉",
+      "timestampTip": "Start frame = sample closest to (end sample timestamp − time × 1e6μs)",
+      "jumpFps": "Jump to frame {{frame}} (FPS method)",
+      "jumpTs": "Jump to frame {{frame}} (timestamp method)",
+      "samplesNotReady": "Samples not ready yet",
+      "samplesNotReadyShort": "samples not ready"
+    },
+    "folderModal": {
+      "title": "Select a video"
+    },
+    "shortcutsModal": {
+      "title": "Keyboard Shortcuts",
+      "section": {
+        "marking": "Marking",
+        "navigation": "Navigation",
+        "playback": "Playback"
+      },
+      "action": {
+        "addSplitMark": "Add Split Mark",
+        "addSolve": "Add Solve",
+        "prevMarkCross": "Prev mark (cross-solve)",
+        "nextMarkCross": "Next mark (cross-solve)",
+        "prevSolve": "Prev Solve",
+        "nextSolve": "Next Solve",
+        "playPause": "Play / Pause",
+        "forward1": "Forward 1 frame",
+        "back1": "Back 1 frame",
+        "forward10": "Forward 10 frames",
+        "back10": "Back 10 frames",
+        "forward1Alt": "Forward 1 frame (alt)",
+        "back1Alt": "Back 1 frame (alt)",
+        "scrollFrame": "Scroll ±1 frame",
+        "forward1Sec": "Forward 1 second",
+        "copyFrame": "Copy current frame"
+      }
+    },
+    "toast": {
+      "copied": "Copied {{label}}",
+      "labelFrame": "frame {{frame}}",
+      "labelCommand": "command",
+      "solveAdded": "Solve added",
+      "marksCleared": "Marks cleared",
+      "solveRemoved": "Solve removed",
+      "markAdded": "Mark added at frame {{frame}}",
+      "markUpdated": "Mark {{i}} updated to frame {{frame}}",
+      "splitsLoaded": "Loaded {{count}} solve(s) from .splits.txt",
+      "folderNotSupported": "Browser does not support folder access (Chrome/Edge only)",
+      "noVideoInFolder": "No video files in folder",
+      "exportingGpu": "Exporting (WebCodecs GPU)...",
+      "loadingFfmpeg": "Loading FFmpeg engine...",
+      "exportComplete": "Export complete!",
+      "exportFailed": "Export failed: {{msg}}",
+      "videoNotReady": "Video not ready",
+      "frameCaptureFailed": "Frame capture failed: {{msg}}",
+      "encodePngFailed": "Failed to encode PNG"
+    },
+    "error": {
+      "webcodecsNotReady": "WebCodecs not ready. Please wait for video to fully load.",
+      "noFramesInRange": "No frames in selected range",
+      "ffmpegExit": "FFmpeg exited with code {{code}}"
+    },
+    "info": {
+      "title": "Video info",
+      "resolution": "Resolution",
+      "framerate": "Frame Rate",
+      "vfrTip": "Variable frame rate {{min}}–{{max}} fps",
+      "cfrTip": "Constant frame rate",
+      "framerateRange": "Frame Rate Range",
+      "duration": "Duration",
+      "bitrate": "Bitrate",
+      "filesize": "File Size",
+      "totalFrames": "Total Frames",
+      "codec": "Codec",
+      "profile": "Profile",
+      "codecRaw": "Codec",
+      "audio": "Audio",
+      "sampleRate": "Sample Rate",
+      "channels": "Channels",
+      "audioBitrate": "Audio Bitrate",
+      "channelsUnit": "{{n}} ch",
+      "unknownFamily": "Unknown",
+      "hevcRangeExtHint": "Browser does not support this profile (includes 4:2:2 / 4:4:4 / high bit-depth)"
+    },
+    "decode": {
+      "errorTitle": "Cannot decode this video",
+      "errorBody": "Browser does not support this {{family}} profile{{suffix}}. Canon / Sony pro HEVC 4:2:2 10-bit and iPhone ProRes commonly hit this.",
+      "gpuToggle": "Try GPU decode (check for RTX 40/50 GPUs, fastest)",
+      "hint": "Transcode with FFmpeg and retry:",
+      "copy": "Copy",
+      "cmd": {
+        "nvidiaFastLabel": "NVIDIA fast (recommended)",
+        "nvidiaFastDescGpu": "Full GPU decode & encode, 1–2 min",
+        "nvidiaFastDescCpu": "CPU decode HEVC, GPU encode H.264, 2–5 min",
+        "softwareLabel": "Pure software (compatible)",
+        "softwareDesc": "No GPU needed, 10–30 min",
+        "keep10bitLabel": "NVIDIA keep 10-bit HEVC",
+        "keep10bitDesc": "Smaller size, better quality; Firefox unsupported"
+      }
+    },
+    "loading": {
+      "title": "Loading video…"
+    }
   }
 }
