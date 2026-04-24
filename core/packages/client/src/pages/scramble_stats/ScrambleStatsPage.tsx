@@ -9,6 +9,8 @@ interface HistEntry {
   min: number;
   max: number;
   counts: Record<string, number>;
+  // NOTE: 稀有 bin (3 最小 + 1 最大) 的 bin 值，UI 把这些柱子标为可点击
+  example_bins?: number[];
 }
 
 interface VariantData {
@@ -20,6 +22,13 @@ interface VariantData {
 interface DistributionJson {
   meta: { sample_count: number; source: string; generated_at: string; subset_keys: string[] };
   variants: Record<string, VariantData>;
+}
+
+// NOTE: examples.json 懒加载；[id, scramble, bottomColorLetter]。id = wca_scrambles_no_wide_move.txt 里的编号
+type ExampleSample = [string, string, string];
+interface ExamplesJson {
+  meta: { generated_at: string };
+  variants: Record<string, Record<string, Record<string, Record<string, ExampleSample[]>>>>;
 }
 
 type VariantKey = 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair';
@@ -145,6 +154,11 @@ export default function ScrambleStatsPage() {
   const [quadExcludedPairKey, setQuadExcludedPairKey] = useState<string>('BG');
   const [yMode, setYMode] = useState<YMode>('percent');
   const [chartMode, setChartMode] = useState<ChartMode>('pdf');
+  // NOTE: examples 是懒加载的，首次点柱子才请求；selectedBin 是当前在示例面板里展示的 bin
+  const [examples, setExamples] = useState<ExamplesJson | null>(null);
+  const [examplesLoading, setExamplesLoading] = useState(false);
+  const [examplesError, setExamplesError] = useState<string | null>(null);
+  const [selectedBin, setSelectedBin] = useState<number | null>(null);
 
   useEffect(() => {
     fetch('/stats/data/scramble/distribution.json')
@@ -213,6 +227,50 @@ export default function ScrambleStatsPage() {
     }
   };
   const cyclable = colorMode === 'single' || colorMode === 'dual' || colorMode === 'quad';
+
+  // NOTE: 当前 (variant, stage, subset) 的直方图全部 bin = 预览可点击；4 个 picked bin 额外提供 ⬇ 下载
+  const previewBins = useMemo<number[]>(() => {
+    if (!data) return [];
+    const counts = data.variants[variant]?.data[stage]?.[subsetKey]?.counts ?? {};
+    return Object.keys(counts).map(Number).sort((a, b) => a - b);
+  }, [data, variant, stage, subsetKey]);
+  const downloadBins = useMemo<number[]>(() => {
+    if (!data) return [];
+    return data.variants[variant]?.data[stage]?.[subsetKey]?.example_bins ?? [];
+  }, [data, variant, stage, subsetKey]);
+
+  const ensureExamplesLoaded = () => {
+    if (examples || examplesLoading) return;
+    setExamplesLoading(true);
+    fetch('/stats/data/scramble/examples.json')
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then((j) => { setExamples(j); setExamplesLoading(false); })
+      .catch((e) => { setExamplesError(String(e)); setExamplesLoading(false); });
+  };
+
+  const handleBarClick = (bin: number) => {
+    setSelectedBin(bin);
+    ensureExamplesLoaded();
+  };
+
+  // NOTE: 页面打开 & 切 variant/stage/subset 时默认选中 min bin（downloadBins[0]）并懒加载 examples
+  useEffect(() => {
+    if (downloadBins.length > 0) {
+      setSelectedBin(downloadBins[0]);
+      ensureExamplesLoaded();
+    } else {
+      setSelectedBin(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [variant, stage, subsetKey, downloadBins.length]);
+
+  const currentSamples = useMemo<ExampleSample[] | null>(() => {
+    if (selectedBin === null || !examples) return null;
+    return examples.variants[variant]?.[stage]?.[subsetKey]?.[String(selectedBin)] ?? null;
+  }, [examples, variant, stage, subsetKey, selectedBin]);
 
   const series = useMemo<HistSeries[]>(() => {
     if (!data) return [];
@@ -307,16 +365,6 @@ export default function ScrambleStatsPage() {
 
       <div className="scramble-stats-controls">
         <label>
-          <span>{isZh ? '打乱集' : 'Scramble set'}</span>
-          <select value={scrambleSet} onChange={(e) => setScrambleSet(e.target.value)}>
-            <option value="wca">
-              {isZh
-                ? `WCA 打乱 (${data.meta.sample_count.toLocaleString()})`
-                : `WCA Scramble (${data.meta.sample_count.toLocaleString()})`}
-            </option>
-          </select>
-        </label>
-        <label>
           <span>{isZh ? '变体' : 'Variant'}</span>
           <select value={variant} onChange={(e) => setVariant(e.target.value as VariantKey)}>
             {(Object.keys(data.variants) as VariantKey[]).map((v) => (
@@ -332,20 +380,6 @@ export default function ScrambleStatsPage() {
             ))}
           </select>
         </label>
-        <div className="scramble-stats-toggle-group">
-          <span>{isZh ? '模式' : 'Mode'}</span>
-          <button className={chartMode === 'pdf' ? 'active' : ''} onClick={() => setChartMode('pdf')}>PDF</button>
-          <button className={chartMode === 'cdf' ? 'active' : ''} onClick={() => setChartMode('cdf')}>CDF</button>
-        </div>
-        <div className="scramble-stats-toggle-group">
-          <span>Y</span>
-          <button className={yMode === 'percent' ? 'active' : ''} onClick={() => setYMode('percent')}>
-            {isZh ? '百分比' : '%'}
-          </button>
-          <button className={yMode === 'count' ? 'active' : ''} onClick={() => setYMode('count')}>
-            {isZh ? '数量' : 'count'}
-          </button>
-        </div>
       </div>
 
       <div className="scramble-stats-chart-wrapper">
@@ -362,6 +396,20 @@ export default function ScrambleStatsPage() {
           ]}
           activeMode={colorMode}
           onModeChange={(k) => setColorMode(k as ColorMode)}
+          clickableBins={previewBins}
+          selectedBin={selectedBin}
+          onBarClick={handleBarClick}
+          onChartModeToggle={() => setChartMode(chartMode === 'pdf' ? 'cdf' : 'pdf')}
+          onYModeToggle={() => setYMode(yMode === 'percent' ? 'count' : 'percent')}
+          yModeLabel={yMode === 'percent' ? (isZh ? '百分比' : '%') : (isZh ? '数量' : 'count')}
+          setOptions={[{
+            value: 'wca',
+            label: isZh
+              ? `WCA (${data.meta.sample_count.toLocaleString()})`
+              : `WCA (${data.meta.sample_count.toLocaleString()})`,
+          }]}
+          activeSet={scrambleSet}
+          onSetChange={setScrambleSet}
         />
       </div>
 
@@ -377,6 +425,18 @@ export default function ScrambleStatsPage() {
           </div>
         </div>
       )}
+
+      <ExamplesPanel
+        isZh={isZh}
+        variant={variant}
+        stage={stage}
+        subsetKey={subsetKey}
+        downloadBins={downloadBins}
+        selectedBin={selectedBin}
+        loading={examplesLoading}
+        errorText={examplesError}
+        samples={currentSamples}
+      />
 
       {cnBenefit && (
         <div className="scramble-stats-panel">
@@ -425,6 +485,95 @@ function CnCell({ label, value, diff }: { label: string; value: string; diff?: n
         <div className={`scramble-stats-cn-diff ${diff < 0 ? 'good' : ''}`}>
           {diff >= 0 ? '+' : ''}{diff.toFixed(3)}
         </div>
+      )}
+    </div>
+  );
+}
+
+// NOTE: 下载图标（tray with down arrow），currentColor 让按钮 hover 时可换色
+function DownloadIcon() {
+  return (
+    <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false">
+      <path
+        d="M8 1.5v7.5M4.5 6.5L8 10l3.5-3.5M2.5 12.5h11"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+// NOTE: 打乱示例面板
+// 所有 bin 都有 K_PREVIEW=5 条预览；bin 的切换通过点击图表柱子完成
+// 下载按钮在标题下方一排，对应 min/2nd/3rd/max 4 个极端 bin
+function ExamplesPanel({
+  isZh,
+  variant,
+  stage,
+  subsetKey,
+  downloadBins,
+  selectedBin,
+  loading,
+  errorText,
+  samples,
+}: {
+  isZh: boolean;
+  variant: string;
+  stage: string;
+  subsetKey: string;
+  downloadBins: number[];
+  selectedBin: number | null;
+  loading: boolean;
+  errorText: string | null;
+  samples: ExampleSample[] | null;
+}) {
+  // NOTE: 单一下载按钮跟着 selectedBin 走；只有选中的 bin 落在 downloadBins（min/2nd/3rd/max）里时才显示
+  const selectedDownloadable = selectedBin !== null && downloadBins.includes(selectedBin);
+  return (
+    <div className="scramble-stats-panel scramble-stats-examples-panel">
+      <div className="scramble-stats-examples-header">
+        <div className="scramble-stats-panel-title">
+          {selectedBin !== null
+            ? (isZh ? `${selectedBin} 步示例` : `${selectedBin}-move examples`)
+            : (isZh ? '示例' : 'Examples')}
+        </div>
+        {selectedDownloadable && (
+          <a
+            className="scramble-stats-download-btn"
+            href={`/stats/data/scramble/downloads/${variant}/${stage}/${subsetKey}_${selectedBin}.txt`}
+            download={`${variant}_${stage}_${subsetKey}_${selectedBin}.txt`}
+            title={isZh ? `下载 ${selectedBin} 步完整 txt` : `Download full txt for ${selectedBin} moves`}
+            aria-label={isZh ? `下载 ${selectedBin} 步完整 txt` : `Download full txt for ${selectedBin} moves`}
+          >
+            <DownloadIcon />
+          </a>
+        )}
+      </div>
+      {selectedBin !== null && loading && (
+        <div className="scramble-stats-examples-hint">{isZh ? '加载中…' : 'Loading…'}</div>
+      )}
+      {selectedBin !== null && errorText && (
+        <div className="scramble-stats-examples-hint">{isZh ? '加载失败' : 'Load failed'}: {errorText}</div>
+      )}
+      {selectedBin !== null && !loading && !errorText && samples && samples.length > 0 && (
+        <ul className="scramble-stats-examples-list">
+          {samples.map(([, scr, color], i) => (
+            <li key={i}>
+              <span
+                className="scramble-stats-examples-chip"
+                style={{ background: COLOR_HEX[color as ColorLetter] ?? '#888' }}
+                title={isZh ? '朝下的底色' : 'Bottom color'}
+              />
+              <code className="scramble-stats-examples-scramble">{scr}</code>
+            </li>
+          ))}
+        </ul>
+      )}
+      {selectedBin !== null && !loading && !errorText && samples && samples.length === 0 && (
+        <div className="scramble-stats-examples-hint">{isZh ? '此 bin 无示例' : 'No examples for this bin'}</div>
       )}
     </div>
   );

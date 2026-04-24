@@ -642,118 +642,14 @@ body {
     grid-row: span 2;
 }
 
-#np-drum {
-    /* NOTE: 绝对定位 — 脱离文档流，不撑高 numpad */
+/* NOTE: WheelPicker 定位 — 脱离文档流，不撑高 numpad；外观由 wheel_picker.css 负责
+   用 .wheel-picker.calc-drum 组合选择器确保 specificity (0,2,0) 胜过 wheel_picker.css 的 .wheel-picker (0,1,0) */
+.wheel-picker.calc-drum {
     position: absolute;
     left: 0;
     top: 0;
     bottom: 0;
     width: 72px;
-    overflow: hidden;
-    border-radius: 10px;
-    background: #1c1c1e;
-    /* NOTE: 上下渐隐遮罩 — iOS 风格边缘淡出 */
-    -webkit-mask-image: linear-gradient(to bottom,
-            transparent 0%, rgba(0, 0, 0, 0.4) 12%, black 30%, black 70%, rgba(0, 0, 0, 0.4) 88%, transparent 100%);
-    mask-image: linear-gradient(to bottom,
-            transparent 0%, rgba(0, 0, 0, 0.4) 12%, black 30%, black 70%, rgba(0, 0, 0, 0.4) 88%, transparent 100%);
-    touch-action: none;
-    cursor: ns-resize;
-    user-select: none;
-}
-
-/* NOTE: 空态 — 无值可调时半透明 */
-#np-drum.empty {
-    opacity: 0.3;
-    pointer-events: none;
-}
-
-/* NOTE: 灰色底层 + 白色裁剪层共用的 flex 布局 */
-#np-drum-list,
-.np-drum-list-white {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    /* NOTE: GPU 加速 + 3D 滚筒透视 */
-    will-change: transform;
-    transform: translateZ(0);
-    transform-style: preserve-3d;
-    perspective: 300px;
-}
-
-/* NOTE: 静态裁剪窗口 — clip-path 在不动的容器上，列表在窗口内滑动 */
-.np-drum-white-window {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    /* NOTE: 裁剪到高亮条区域（中心 34px），实现 split-rendering */
-    clip-path: inset(calc(50% - 17px) 0 calc(50% - 17px) 0);
-    pointer-events: none;
-    z-index: 2;
-    overflow: hidden;
-}
-
-/* NOTE: 白色裁剪层 — 在静态窗口内随 transform 滑动 */
-.np-drum-list-white {
-    height: 100%;
-}
-
-/* NOTE: 灰色底层所有项统一灰色 */
-#np-drum-list .np-drum-item {
-    color: rgba(255, 255, 255, 0.45);
-}
-
-/* NOTE: 白色裁剪层所有项统一白色 */
-.np-drum-list-white .np-drum-item {
-    color: #f0ebe3;
-}
-
-/* NOTE: iOS 风格 — 所有项统一基础样式 */
-.np-drum-item {
-    width: 100%;
-    text-align: center;
-    font-size: 18px;
-    font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
-    padding: 6px 0;
-    line-height: 1.3;
-    flex-shrink: 0;
-}
-
-/* NOTE: 灰色层颜色渐变 — 距中心越远越暗（rotateX/scale 由 JS 动态计算） */
-
-/* ±2 */
-#np-drum-list .np-drum-item:nth-child(3),
-#np-drum-list .np-drum-item:nth-child(7) {
-    color: rgba(255, 255, 255, 0.35);
-}
-
-/* ±3 */
-#np-drum-list .np-drum-item:nth-child(2),
-#np-drum-list .np-drum-item:nth-child(8) {
-    color: rgba(255, 235, 220, 0.25);
-}
-
-/* ±4（最外层缓冲区） */
-#np-drum-list .np-drum-item:nth-child(1),
-#np-drum-list .np-drum-item:nth-child(9) {
-    color: rgba(255, 235, 220, 0.15);
-}
-
-/* NOTE: iOS 高亮条 — 比背景稍亮的圆角矩形 */
-.np-drum-highlight {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 50%;
-    height: 34px;
-    transform: translateY(-50%);
-    background: rgba(255, 235, 220, 0.1);
-    border-radius: 8px;
-    pointer-events: none;
 }
 
 /* ── 指标对比表格 ── */
