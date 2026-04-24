@@ -290,6 +290,7 @@ const TEXTS: Record<string, { en: string; zh: string }> = {
   scramble:        { en: 'Scramble', zh: '打乱' },
   alg:             { en: 'Algorithms', zh: '公式教程' },
   blog:            { en: 'Blog', zh: '博客' },
+  comingSoon:      { en: 'Coming soon', zh: '即将上线' },
   creditsPrefix:   { en: 'Inspired by open-source projects from', zh: '致谢' },
 };
 
@@ -307,6 +308,8 @@ interface CardConfig {
   /** csTimer 使用图片 logo */
   iconImg?: string;
   nameKey: keyof typeof TEXTS;
+  /** 即将上线：卡片灰显 + tooltip，不可点击 */
+  comingSoon?: boolean;
 }
 
 // NOTE: 按 Bento tier 顺序排列，渲染顺序决定 grid 布局
@@ -320,7 +323,7 @@ const CARDS: CardConfig[] = [
   { id: 'hth',         href: '/calc',            internal: true,  tier: 'medium',    Icon: CalculatorIcon, nameKey: 'hthGrapher' },
   { id: 'viz',         href: '/viz',             internal: true,  tier: 'medium',    Icon: LineChart,      nameKey: 'viz' },
   // Tier 3 — Standard
-  { id: 'alg',         href: '/alg',             internal: true,  tier: 'standard',  Icon: Library,        nameKey: 'alg' },
+  { id: 'alg',         href: '/alg',             internal: true,  tier: 'standard',  Icon: Library,        nameKey: 'alg', comingSoon: true },
   { id: 'battle',      href: '/battle',          internal: true,  tier: 'standard',  Icon: Swords,         nameKey: 'battle' },
   { id: 'trainer',     href: '/alg-trainers',    internal: true,  tier: 'standard',  Icon: Target,         nameKey: 'algTrainer' },
   { id: 'upcoming',    href: '/upcoming-comps',  internal: true,  tier: 'standard',  Icon: CalendarDays,   nameKey: 'upcoming' },
@@ -423,7 +426,23 @@ export default function LandingPage() {
             </>
           );
 
-          const className = `card tier-${card.tier}`;
+          const className = `card tier-${card.tier}${card.comingSoon ? ' is-disabled' : ''}`;
+          // NOTE: 即将上线的卡渲染为 div，禁止跳转
+          if (card.comingSoon) {
+            return (
+              <div
+                key={card.id}
+                className={className}
+                id={`card-${card.id}`}
+                title={t('comingSoon')}
+                aria-disabled="true"
+                role="link"
+              >
+                {content}
+                <span className="coming-soon-badge">{t('comingSoon')}</span>
+              </div>
+            );
+          }
           // NOTE: 已迁移模块用 React Router Link（SPA 导航），外链用 <a>
           if (card.internal) {
             return (
