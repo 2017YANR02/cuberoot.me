@@ -16,6 +16,7 @@ import { compNameZh, loadFlagData, flagDataVersion } from '../../utils/country_f
 import { cleanForPlayer, findTokenPositions, snapToTokenBoundary, extractAlgFromText, syncPlayerToMoveCount } from '../../utils/recon_alg_utils';
 import { useAuthStore } from '../../stores/auth_store';
 import LangToggle from '../../components/LangToggle';
+import { RecordBadge } from '../../components/RecordBadge';
 import TwistySection from './components/TwistySection';
 import '../../recon.css';
 import './recon_detail.css';
@@ -86,11 +87,7 @@ export default function ReconDetailPage() {
         </div>
         <h1 className="detail-title">
           {solve.rawTime != null && formatTime(solve.rawTime)}
-          {solve.regionalSingleRecord && (
-            <span className={`record-badge record-${solve.regionalSingleRecord.toLowerCase().replace('cancelled ', 'cancelled')}`}>
-              {solve.regionalSingleRecord}
-            </span>
-          )}
+          <RecordBadge record={solve.regionalSingleRecord} variant="inline" />
           {solve.event && ` ${getEventDisplayName(solve.event)}`}
           {' '}{solve.person}
           {solve.personCountry && <>{' '}<span className={flagClass(solve.personCountry)} /></>}

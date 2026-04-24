@@ -108,6 +108,10 @@ jobs:
         working-directory: core/packages/stats-build
         run: npx tsx src/bin/gen_all_comps.ts
 
+      - name: Generate competition records JSON
+        working-directory: core/packages/stats-build
+        run: npx tsx src/bin/gen_comp_records.ts
+
       - name: Fetch upcoming comps
         run: python scripts/fetch_upcoming_comps.py --refresh
 

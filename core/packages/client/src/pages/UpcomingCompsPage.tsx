@@ -17,6 +17,16 @@ import { displayCuberName } from '../utils/name_utils';
 import { formatDateRangeIso, toIsoDate } from '../utils/date_range';
 import { Flag as SharedFlag } from '../utils/flag';
 import { WheelPicker } from '../components/WheelPicker';
+import { RecordBadge } from '../components/RecordBadge';
+import {
+  loadCompRecordsSummary,
+  loadCompRecordsDetail,
+  getCompRecordTop,
+  getCompRecordEntries,
+  formatRecordValue,
+  type RecordEntry,
+} from '../utils/comp_records';
+import { loadFlagData, personFlagIso2 } from '../utils/country_flags';
 import './upcoming_comps.css';
 
 // ── 类型定义 ──────────────────────────────────────────────────────────────
@@ -306,6 +316,13 @@ function CompModal({ comp, isZh, onClose, t }: {
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
+  const [recordEntries, setRecordEntries] = useState<RecordEntry[]>([]);
+  useEffect(() => {
+    loadCompRecordsDetail().then(() => {
+      setRecordEntries(getCompRecordEntries(comp.id));
+    });
+  }, [comp.id]);
+
   const displayName = isZh ? (comp.name_zh || comp.name) : comp.name;
   const displayCity = isZh ? (comp.city_zh || comp.city) : comp.city;
   const compUrl = comp.cubing_china_url || `https://www.worldcubeassociation.org/competitions/${comp.id}`;
@@ -332,6 +349,30 @@ function CompModal({ comp, isZh, onClose, t }: {
               const eid = SHORT_TO_EVENT_ID[ev] || ev;
               return <span key={ev} className={`cubing-icon event-${eid}`} />;
             })}
+          </div>
+        )}
+        {recordEntries.length > 0 && (
+          <div className="modal-records">
+            <div className="modal-records-title">{t('upcoming.records', { count: recordEntries.length })}</div>
+            <ul className="modal-record-list">
+              {recordEntries.map((r, idx) => (
+                <li key={idx} className="modal-record-item">
+                  <RecordBadge record={r.t} />
+                  <span className={`cubing-icon event-${r.e}`} />
+                  <span className="record-kind">{r.k === 's' ? t('upcoming.single') : t('upcoming.average')}</span>
+                  <span className="record-value mono">{formatRecordValue(r.v, r.e, r.k)}</span>
+                  <a
+                    href={`https://www.worldcubeassociation.org/persons/${r.p}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="record-person"
+                  >
+                    <SharedFlag iso2={personFlagIso2(r.p)} />
+                    <span>{displayCuberName(r.n, isZh)}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
         {comp.top_cubers.length > 0 && (
@@ -547,6 +588,12 @@ export default function UpcomingCompsPage() {
   const [eventFilters, setEventFilters] = useState<string[]>([]);
   const [pickerOpen, setPickerOpen] = useState(false);
   const pickerBtnRef = useRef<HTMLButtonElement>(null);
+  const [, setRecordsVer] = useState(0);
+
+  useEffect(() => {
+    loadCompRecordsSummary().then((v) => setRecordsVer(v));
+    loadFlagData();
+  }, []);
 
   useEffect(() => {
     fetch('/stats/upcoming_comps.json')
@@ -866,6 +913,10 @@ export default function UpcomingCompsPage() {
                   onClick={() => setSelectedComp(bar.comp)}
                   title={`${displayName} — ${bar.comp.top_cubers.length} cubers`}
                 >
+                  {(() => {
+                    const top = getCompRecordTop(bar.comp.id);
+                    return top ? <RecordBadge record={top} /> : null;
+                  })()}
                   <Flag iso2={bar.comp.country} />
                   <span className="event-bar-name">{displayName}</span>
                 </button>
@@ -917,14 +968,16 @@ export default function UpcomingCompsPage() {
                 })
                 .map((c) => {
                   const displayName = isZh ? (c.name_zh || c.name) : c.name;
+                  const top = getCompRecordTop(c.id);
                   return (
                     <button
                       key={c.id}
                       className="day-list-item"
                       onClick={() => { setSelectedComp(c); setDayListDate(null); }}
                     >
+                      {top && <RecordBadge record={top} />}
                       <Flag iso2={c.country} />
-                      <span>{displayName}</span>
+                      <span className="day-list-item-name">{displayName}</span>
                       <span className="day-list-count">{c.top_cubers.length}</span>
                     </button>
                   );

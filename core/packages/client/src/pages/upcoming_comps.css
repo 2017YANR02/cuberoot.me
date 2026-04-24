@@ -571,6 +571,60 @@
     text-transform: uppercase;
     margin-bottom: 0.5rem;
 }
+
+.upcoming-page .modal-records {
+    margin-bottom: 1.25rem;
+}
+.upcoming-page .modal-records-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-sub);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+}
+.upcoming-page .modal-record-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.upcoming-page .modal-record-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: var(--surface-alt);
+    font-size: 0.82rem;
+}
+.upcoming-page .modal-record-item .cubing-icon {
+    font-size: 18px;
+    color: var(--text-sub);
+}
+.upcoming-page .modal-record-item .record-kind {
+    color: var(--text-sub);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.upcoming-page .modal-record-item .record-value {
+    font-weight: 600;
+    font-family: 'Roboto Mono', monospace;
+}
+.upcoming-page .modal-record-item .record-person {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: inherit;
+    text-decoration: none;
+}
+.upcoming-page .modal-record-item .record-person:hover {
+    color: var(--accent);
+}
 .upcoming-page .modal-cuber-list {
     display: flex;
     flex-wrap: wrap;
@@ -665,7 +719,7 @@
     border-color: var(--accent);
     background: var(--accent-soft);
 }
-.upcoming-page .day-list-item > span:nth-child(2) {
+.upcoming-page .day-list-item .day-list-item-name {
     flex: 1;
     overflow: hidden;
     text-overflow: ellipsis;
