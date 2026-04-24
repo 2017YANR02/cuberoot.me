@@ -5,7 +5,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, ChevronRight, Star, Globe as GlobeIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Star, Globe as GlobeIcon, List } from 'lucide-react';
 import {
   fetchAllUpcomingCompsJson,
   fetchAllPastCompsJson,
@@ -26,7 +26,7 @@ import {
   formatRecordValue,
   type RecordEntry,
 } from '../utils/comp_records';
-import { loadFlagData, personFlagIso2 } from '../utils/country_flags';
+import { loadFlagData, personFlagIso2, compNameZh, countryToIso2 } from '../utils/country_flags';
 import './upcoming_comps.css';
 
 // ── 类型定义 ──────────────────────────────────────────────────────────────
@@ -168,6 +168,12 @@ function monthGridStart(year: number, month: number): Date {
 // ── 国旗 ──────────────────────────────────────────────────────────────────
 
 // NOTE: TW 特判和 flag-icons 类名统一在 utils/flag.tsx；这里只是个 span/img className 绑定的 thin wrapper
+// 中文模式下比赛名本地化: upcoming JSON 的 name_zh（追踪选手近期赛）→ comp_names_zh.json 的英→中映射 → 兜底英文
+function localizeName(c: { name: string; name_zh?: string }, isZh: boolean): string {
+  if (!isZh) return c.name;
+  return c.name_zh || compNameZh(c.name) || c.name;
+}
+
 function Flag({ iso2 }: { iso2: string }) {
   return <SharedFlag iso2={iso2} spanClassName="flag-span" imgClassName="flag-img" />;
 }
@@ -196,6 +202,7 @@ function computeWeeks(
   viewYear: number,
   viewMonth: number,
   comps: Competition[],
+  priorityCountry: string = '',
 ): WeekRow[] {
   const gridStart = monthGridStart(viewYear, viewMonth);
   const monthStart = new Date(viewYear, viewMonth, 1);
@@ -225,6 +232,12 @@ function computeWeeks(
       const e = parseLocalDate(c.end_date || c.start_date);
       return e >= effStart && s <= effEnd;
     }).sort((a, b) => {
+      // 0. 选中国家的比赛绝对优先（保证被选国家的比赛不会因长赛事挤占而变 overflow）
+      if (priorityCountry) {
+        const am = a.country === priorityCountry ? 0 : 1;
+        const bm = b.country === priorityCountry ? 0 : 1;
+        if (am !== bm) return am - bm;
+      }
       // 1. 持续天数越多越靠前（长赛事优先占可见 track）
       const aDays = daysBetween(parseLocalDate(a.start_date), parseLocalDate(a.end_date || a.start_date));
       const bDays = daysBetween(parseLocalDate(b.start_date), parseLocalDate(b.end_date || b.start_date));
@@ -323,7 +336,7 @@ function CompModal({ comp, isZh, onClose, t }: {
     });
   }, [comp.id]);
 
-  const displayName = isZh ? (comp.name_zh || comp.name) : comp.name;
+  const displayName = localizeName(comp, isZh);
   const displayCity = isZh ? (comp.city_zh || comp.city) : comp.city;
   const compUrl = comp.cubing_china_url || `https://www.worldcubeassociation.org/competitions/${comp.id}`;
 
@@ -555,11 +568,13 @@ function adaptAllComp(w: UpcomingCompRecord, topCuberMap: Map<string, TopCuber[]
 }
 
 function adaptPastComp(w: PastCompRecord): Competition {
+  // NOTE: past JSON 的 country 是 WCA country_id 全名（"China"），统一转为大写 ISO2 与 upcoming JSON 对齐
+  const iso2 = countryToIso2(w.country).toUpperCase();
   return {
     id: w.id,
     name: w.name,
     city: w.city,
-    country: w.country,
+    country: iso2 || w.country,
     start_date: w.start_date,
     end_date: w.end_date,
     events: w.events,
@@ -581,7 +596,7 @@ export default function UpcomingCompsPage() {
   const [viewDate, setViewDate] = useState<Date>(() => new Date()); // 月份锚点（第 1 日无关紧要，只看 Year/Month）
   const [selectedComp, setSelectedComp] = useState<Competition | null>(null);
   const [dayListDate, setDayListDate] = useState<Date | null>(null);
-  const [mode, setMode] = useState<'top' | 'all'>('top');
+  const [mode, setMode] = useState<'top' | 'all'>('all');
   const [allComps, setAllComps] = useState<Competition[] | null>(null);
   const [allLoading, setAllLoading] = useState(false);
   const [allError, setAllError] = useState<string | null>(null);
@@ -592,7 +607,8 @@ export default function UpcomingCompsPage() {
 
   useEffect(() => {
     loadCompRecordsSummary().then((v) => setRecordsVer(v));
-    loadFlagData();
+    // NOTE: loadFlagData 加载 comp_names_zh.json，完成后触发重渲染以应用中文名
+    loadFlagData().then((v) => setRecordsVer(v));
   }, []);
 
   useEffect(() => {
@@ -655,7 +671,7 @@ export default function UpcomingCompsPage() {
     (comp: Competition) => {
       const q = searchQuery.toLowerCase().trim();
       if (q) {
-        const searchName = `${comp.name} ${comp.name_zh || ''} ${comp.city} ${comp.city_zh || ''}`.toLowerCase();
+        const searchName = `${comp.name} ${comp.name_zh || ''} ${compNameZh(comp.name)} ${comp.city} ${comp.city_zh || ''}`.toLowerCase();
         const cuberNames = comp.top_cubers.map((c) => `${c.name.toLowerCase()} ${c.id.toLowerCase()}`).join(' ');
         const countrySearch = buildCountrySearchText(comp.country);
         if (!searchName.includes(q) && !cuberNames.includes(q) && !countrySearch.includes(q)) return false;
@@ -671,8 +687,8 @@ export default function UpcomingCompsPage() {
   );
 
   const weeks = useMemo(() => {
-    return computeWeeks(viewDate.getFullYear(), viewDate.getMonth(), activeComps);
-  }, [activeComps, viewDate]);
+    return computeWeeks(viewDate.getFullYear(), viewDate.getMonth(), activeComps, countryFilter);
+  }, [activeComps, viewDate, countryFilter]);
 
   // NOTE: year → months with at least one comp；年月滚筒仅从这里取可选项，空年/空月天然不出
   const yearMonthsMap = useMemo(() => {
@@ -779,21 +795,21 @@ export default function UpcomingCompsPage() {
         <div className="mode-toggle" role="tablist">
           <button
             role="tab"
-            aria-selected={mode === 'top'}
-            className={`mode-btn ${mode === 'top' ? 'is-active' : ''}`}
-            onClick={() => setMode('top')}
-          >
-            <Star size={14} strokeWidth={1.75} />
-            <span>{t('upcoming.modeTop')}</span>
-          </button>
-          <button
-            role="tab"
             aria-selected={mode === 'all'}
             className={`mode-btn ${mode === 'all' ? 'is-active' : ''}`}
             onClick={() => setMode('all')}
           >
             <GlobeIcon size={14} strokeWidth={1.75} />
             <span>{t('upcoming.modeAll')}</span>
+          </button>
+          <button
+            role="tab"
+            aria-selected={mode === 'top'}
+            className={`mode-btn ${mode === 'top' ? 'is-active' : ''}`}
+            onClick={() => setMode('top')}
+          >
+            <Star size={14} strokeWidth={1.75} />
+            <span>{t('upcoming.modeTop')}</span>
           </button>
         </div>
       </div>
@@ -818,10 +834,27 @@ export default function UpcomingCompsPage() {
             <span className="month-label-month">{monthMm}</span>
           </button>
         </div>
-        <span className="month-stats">
-          <span title={t('upcoming.statComps')}>📋 {monthStats.comps}</span>
-          <span title={t('upcoming.statCountries')}>🌍 {monthStats.countries}</span>
-        </span>
+        <div className="event-chips">
+          {(['333', '222', '444', '555', '333oh', 'pyram', 'skewb', 'sq1', '333bf', '333fm'] as const).map((eid) => (
+            <button
+              key={eid}
+              className={`event-chip ${eventFilters.includes(eid) ? 'is-active' : ''}`}
+              onClick={() =>
+                setEventFilters((prev) =>
+                  prev.includes(eid) ? prev.filter((x) => x !== eid) : [...prev, eid]
+                )
+              }
+              aria-pressed={eventFilters.includes(eid)}
+            >
+              <span className={`cubing-icon event-${eid}`} />
+            </button>
+          ))}
+          {eventFilters.length > 0 && (
+            <button className="event-chip-clear" onClick={() => setEventFilters([])}>
+              {isZh ? '清除' : 'Clear'}
+            </button>
+          )}
+        </div>
       </div>
 
       {allLoading && mode === 'all' && (
@@ -831,35 +864,16 @@ export default function UpcomingCompsPage() {
         <div className="mode-status is-error">{allError}</div>
       )}
 
-      <div className="event-chips">
-        <span className="event-chips-label">{t('upcoming.eventFilter')}</span>
-        {(['333', '222', '444', '555', '333oh', 'pyram', 'skewb', 'sq1', '333bf', '333fm'] as const).map((eid) => (
-          <button
-            key={eid}
-            className={`event-chip ${eventFilters.includes(eid) ? 'is-active' : ''}`}
-            onClick={() =>
-              setEventFilters((prev) =>
-                prev.includes(eid) ? prev.filter((x) => x !== eid) : [...prev, eid]
-              )
-            }
-            aria-pressed={eventFilters.includes(eid)}
-          >
-            <span className={`cubing-icon event-${eid}`} />
-          </button>
-        ))}
-        {eventFilters.length > 0 && (
-          <button className="event-chip-clear" onClick={() => setEventFilters([])}>
-            {isZh ? '清除' : 'Clear'}
-          </button>
-        )}
-      </div>
-
       <div className="legend">
         {mode === 'all' && (
           <span className="legend-item"><span className="legend-swatch swatch-none-top" /> {isZh ? '一般比赛' : 'No top cubers'}</span>
         )}
         <span className="legend-item"><span className="legend-swatch swatch-default" /> {isZh ? '有顶尖选手' : 'Has top cubers'}</span>
         <span className="legend-item"><span className="legend-swatch swatch-clash" /> {isZh ? '扎堆 (3+)' : 'Clash (3+)'}</span>
+        <span className="month-stats">
+          <span title={t('upcoming.statComps')}><List size={14} strokeWidth={1.75} /> {monthStats.comps}</span>
+          <span title={t('upcoming.statCountries')}><GlobeIcon size={14} strokeWidth={1.75} /> {monthStats.countries}</span>
+        </span>
       </div>
 
       <div className="calendar">
@@ -893,7 +907,7 @@ export default function UpcomingCompsPage() {
               const isClash = bar.comp.top_cubers.length >= 3;
               const hasTop = bar.comp.top_cubers.length > 0;
               const dimmed = !isMatch(bar.comp);
-              const displayName = isZh ? (bar.comp.name_zh || bar.comp.name) : bar.comp.name;
+              const displayName = localizeName(bar.comp, isZh);
               const classes = [
                 'event-bar',
                 isClash ? 'is-clash' : '',
@@ -967,7 +981,7 @@ export default function UpcomingCompsPage() {
                   return s <= dayListDate && dayListDate <= e;
                 })
                 .map((c) => {
-                  const displayName = isZh ? (c.name_zh || c.name) : c.name;
+                  const displayName = localizeName(c, isZh);
                   const top = getCompRecordTop(c.id);
                   return (
                     <button
