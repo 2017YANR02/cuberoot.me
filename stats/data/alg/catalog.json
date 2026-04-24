@@ -46,14 +46,14 @@
     "category": "Megaminx",
     "subcategory": null,
     "topDir": "Megaminx",
-    "thumb": "/stats/data/alg/media/megaminx-pll/en/image6.svg",
+    "thumb": "/stats/data/alg/media/megaminx-pll/en/image34.svg",
     "mtime": 1702884109284.6533,
     "hasEn": true,
     "hasZh": true,
     "order": 2,
     "hidden": false,
     "quality": "ok",
-    "algCount": 72
+    "algCount": 67
   },
   {
     "slug": "pll-recognition",
@@ -72,7 +72,7 @@
     "order": 2,
     "hidden": false,
     "quality": "ok",
-    "algCount": 22
+    "algCount": 1
   },
   {
     "slug": "non-wca-domino-pll",
@@ -83,14 +83,14 @@
     "category": "Non-WCA",
     "subcategory": null,
     "topDir": "Non-WCA",
-    "thumb": "/stats/data/alg/media/non-wca-domino-pll/en/image6.svg",
+    "thumb": "/stats/data/alg/media/non-wca-domino-pll/en/image18.svg",
     "mtime": 1624701464214,
     "hasEn": true,
     "hasZh": false,
     "order": 2,
     "hidden": false,
     "quality": "ok",
-    "algCount": 22
+    "algCount": 24
   },
   {
     "slug": "pll-time-attack-for-brian-sun",
@@ -101,14 +101,14 @@
     "category": "3x3",
     "subcategory": null,
     "topDir": "3x3",
-    "thumb": "/stats/data/alg/media/pll-time-attack-for-brian-sun/en/image11.svg",
+    "thumb": "/stats/data/alg/media/pll-time-attack-for-brian-sun/en/image27.svg",
     "mtime": 1609628579638,
     "hasEn": true,
     "hasZh": false,
     "order": 2,
     "hidden": false,
     "quality": "ok",
-    "algCount": 11
+    "algCount": 13
   },
   {
     "slug": "pll-time-attack",
@@ -120,14 +120,14 @@
     "category": "3x3",
     "subcategory": null,
     "topDir": "3x3",
-    "thumb": "/stats/data/alg/media/pll-time-attack/en/image11.svg",
+    "thumb": "/stats/data/alg/media/pll-time-attack/en/image27.svg",
     "mtime": 1609586066578,
     "hasEn": true,
     "hasZh": true,
     "order": 2,
     "hidden": false,
     "quality": "ok",
-    "algCount": 11
+    "algCount": 13
   },
   {
     "slug": "domino-pll",
@@ -138,14 +138,14 @@
     "category": "CHS",
     "subcategory": null,
     "topDir": "CHS",
-    "thumb": "/stats/data/alg/media/domino-pll/zh/image6.svg",
+    "thumb": "/stats/data/alg/media/domino-pll/zh/image18.svg",
     "mtime": 1601078722551,
     "hasEn": false,
     "hasZh": true,
     "order": 2,
     "hidden": false,
     "quality": "ok",
-    "algCount": 22
+    "algCount": 24
   },
   {
     "slug": "cn-pll",
@@ -174,14 +174,14 @@
     "category": "CHS",
     "subcategory": null,
     "topDir": "CHS",
-    "thumb": "/stats/data/alg/media/pll-skip-1lll/zh/image2.svg",
+    "thumb": "/stats/data/alg/media/pll-skip-1lll/zh/image16.svg",
     "mtime": 1553216423049,
     "hasEn": false,
     "hasZh": true,
     "order": 2,
     "hidden": false,
     "quality": "ok",
-    "algCount": 0
+    "algCount": 70
   },
   {
     "slug": "3x3-oll",
@@ -230,14 +230,14 @@
     "category": "Megaminx",
     "subcategory": null,
     "topDir": "Megaminx",
-    "thumb": "/stats/data/alg/media/megaminx-oll/en/image10.svg",
+    "thumb": "/stats/data/alg/media/megaminx-oll/en/image48.svg",
     "mtime": 1696059665871.7434,
     "hasEn": true,
     "hasZh": true,
     "order": 3,
     "hidden": false,
     "quality": "ok",
-    "algCount": 89
+    "algCount": 50
   },
   {
     "slug": "cn-oll",
@@ -267,14 +267,14 @@
     "category": "3x3",
     "subcategory": null,
     "topDir": "3x3",
-    "thumb": "/stats/data/alg/media/pure-oll/en/image14.svg",
+    "thumb": "/stats/data/alg/media/pure-oll/en/image16.svg",
     "mtime": 1636815759277,
     "hasEn": true,
     "hasZh": true,
     "order": 3,
     "hidden": false,
     "quality": "ok",
-    "algCount": 9
+    "algCount": 39
   },
   {
     "slug": "oll-time-attack",
@@ -286,14 +286,14 @@
     "category": "3x3",
     "subcategory": null,
     "topDir": "3x3",
-    "thumb": "/stats/data/alg/media/oll-time-attack/en/image7.svg",
+    "thumb": "/stats/data/alg/media/oll-time-attack/en/image27.svg",
     "mtime": 1609496483229,
     "hasEn": true,
     "hasZh": true,
     "order": 3,
     "hidden": false,
     "quality": "ok",
-    "algCount": 0
+    "algCount": 48
   },
   {
     "slug": "oll-time-attack-for-brian-sun",
@@ -304,14 +304,14 @@
     "category": "3x3",
     "subcategory": null,
     "topDir": "3x3",
-    "thumb": "/stats/data/alg/media/oll-time-attack-for-brian-sun/en/image7.svg",
+    "thumb": "/stats/data/alg/media/oll-time-attack-for-brian-sun/en/image27.svg",
     "mtime": 1609496417820,
     "hasEn": true,
     "hasZh": false,
     "order": 3,
     "hidden": false,
     "quality": "ok",
-    "algCount": 0
+    "algCount": 48
   },
   {
     "slug": "oll-naming",
@@ -341,14 +341,14 @@
     "category": "Megaminx",
     "subcategory": null,
     "topDir": "Megaminx",
-    "thumb": "/stats/data/alg/media/megaminx-megaminx-dot-oll/en/image18.svg",
+    "thumb": "/stats/data/alg/media/megaminx-megaminx-dot-oll/en/image28.svg",
     "mtime": 1599168337106,
     "hasEn": true,
     "hasZh": false,
     "order": 3,
     "hidden": false,
     "quality": "ok",
-    "algCount": 16
+    "algCount": 70
   },
   {
     "slug": "oll-skip-prediction",
@@ -359,14 +359,14 @@
     "category": "3x3",
     "subcategory": null,
     "topDir": "3x3",
-    "thumb": "/stats/data/alg/media/oll-skip-prediction/en/image2.svg",
+    "thumb": "/stats/data/alg/media/oll-skip-prediction/en/image14.svg",
     "mtime": 1589331998102,
     "hasEn": true,
     "hasZh": false,
     "order": 3,
     "hidden": false,
     "quality": "ok",
-    "algCount": 0
+    "algCount": 31
   },
   {
     "slug": "megaminx-dot-oll",
@@ -377,14 +377,14 @@
     "category": "CHS",
     "subcategory": null,
     "topDir": "CHS",
-    "thumb": "/stats/data/alg/media/megaminx-dot-oll/zh/image18.svg",
+    "thumb": "/stats/data/alg/media/megaminx-dot-oll/zh/image28.svg",
     "mtime": 1583372888993,
     "hasEn": false,
     "hasZh": true,
     "order": 3,
     "hidden": false,
     "quality": "ok",
-    "algCount": 16
+    "algCount": 70
   },
   {
     "slug": "3x3-zbll",
@@ -395,14 +395,14 @@
     "category": "3x3",
     "subcategory": "1LLL",
     "topDir": "3x3",
-    "thumb": "/stats/data/alg/media/3x3-zbll/en/image24.svg",
+    "thumb": "/stats/data/alg/media/3x3-zbll/en/image8.svg",
     "mtime": 1760364094158.7854,
     "hasEn": true,
     "hasZh": false,
     "order": 4,
     "hidden": false,
     "quality": "ok",
-    "algCount": 141
+    "algCount": 292
   },
   {
     "slug": "zbll-s",
@@ -413,14 +413,14 @@
     "category": "3x3",
     "subcategory": "1LLL",
     "topDir": "3x3",
-    "thumb": "/stats/data/alg/media/zbll-s/en/image2.svg",
+    "thumb": "/stats/data/alg/media/zbll-s/en/image26.svg",
     "mtime": 1760284493792.378,
     "hasEn": true,
     "hasZh": false,
     "order": 4,
     "hidden": false,
     "quality": "ok",
-    "algCount": 20
+    "algCount": 134
   },
   {
     "slug": "zbll-pure",
@@ -431,14 +431,14 @@
     "category": "3x3",
     "subcategory": "1LLL",
     "topDir": "3x3",
-    "thumb": "/stats/data/alg/media/zbll-pure/en/image6.svg",
+    "thumb": "/stats/data/alg/media/zbll-pure/en/image134.svg",
     "mtime": 1756738079412.7214,
     "hasEn": true,
     "hasZh": false,
     "order": 4,
     "hidden": false,
     "quality": "ok",
-    "algCount": 225
+    "algCount": 372
   },
   {
     "slug": "3x3-easy-zbll",
@@ -449,14 +449,14 @@
     "category": "3x3",
     "subcategory": null,
     "topDir": "3x3",
-    "thumb": "/stats/data/alg/media/3x3-easy-zbll/en/image2.svg",
+    "thumb": "/stats/data/alg/media/3x3-easy-zbll/en/image14.svg",
     "mtime": 1580013088126,
     "hasEn": true,
     "hasZh": false,
     "order": 4,
     "hidden": false,
     "quality": "ok",
-    "algCount": 0
+    "algCount": 16
   },
   {
     "slug": "easy-zbll",
@@ -467,14 +467,14 @@
     "category": "CHS",
     "subcategory": null,
     "topDir": "CHS",
-    "thumb": "/stats/data/alg/media/easy-zbll/zh/image2.svg",
+    "thumb": "/stats/data/alg/media/easy-zbll/zh/image18.svg",
     "mtime": 1564148916657,
     "hasEn": false,
     "hasZh": true,
     "order": 4,
     "hidden": false,
     "quality": "ok",
-    "algCount": 0
+    "algCount": 8
   },
   {
     "slug": "zbll",
@@ -485,14 +485,14 @@
     "category": "CHS",
     "subcategory": null,
     "topDir": "CHS",
-    "thumb": "/stats/data/alg/media/zbll/zh/image24.svg",
+    "thumb": "/stats/data/alg/media/zbll/zh/image40.svg",
     "mtime": 1560055698569,
     "hasEn": false,
     "hasZh": true,
     "order": 4,
     "hidden": false,
     "quality": "ok",
-    "algCount": 164
+    "algCount": 216
   },
   {
     "slug": "zbls",
@@ -510,7 +510,7 @@
     "order": 5,
     "hidden": false,
     "quality": "ok",
-    "algCount": 178
+    "algCount": 268
   },
   {
     "slug": "zbls-pure",
@@ -528,7 +528,7 @@
     "order": 5,
     "hidden": false,
     "quality": "ok",
-    "algCount": 135
+    "algCount": 251
   },
   {
     "slug": "cuberoot-history-2",
@@ -665,14 +665,14 @@
     "category": "3x3",
     "subcategory": null,
     "topDir": "3x3",
-    "thumb": "/stats/data/alg/media/zbls-ols/en/image10.svg",
+    "thumb": "/stats/data/alg/media/zbls-ols/en/image420.svg",
     "mtime": 1682395353412.056,
     "hasEn": true,
     "hasZh": false,
     "order": 5,
     "hidden": false,
     "quality": "ok",
-    "algCount": 147
+    "algCount": 12
   },
   {
     "slug": "cuberoot-logo",
@@ -755,14 +755,14 @@
     "category": "FMC",
     "subcategory": null,
     "topDir": "FMC",
-    "thumb": "/stats/data/alg/media/10-htm-1lll/en/image2.svg",
+    "thumb": "/stats/data/alg/media/10-htm-1lll/en/image22.svg",
     "mtime": 1603163013690,
     "hasEn": true,
     "hasZh": false,
     "order": 6,
     "hidden": false,
     "quality": "ok",
-    "algCount": 0
+    "algCount": 142
   },
   {
     "slug": "fmc-6-9-htm-1lll",
@@ -773,14 +773,14 @@
     "category": "FMC",
     "subcategory": null,
     "topDir": "FMC",
-    "thumb": "/stats/data/alg/media/fmc-6-9-htm-1lll/en/image6.svg",
+    "thumb": "/stats/data/alg/media/fmc-6-9-htm-1lll/en/image24.svg",
     "mtime": 1597191618743,
     "hasEn": true,
     "hasZh": false,
     "order": 6,
     "hidden": false,
     "quality": "ok",
-    "algCount": 4
+    "algCount": 40
   },
   {
     "slug": "easy-1lll",
@@ -791,14 +791,14 @@
     "category": "3x3",
     "subcategory": null,
     "topDir": "3x3",
-    "thumb": "/stats/data/alg/media/easy-1lll/en/image2.svg",
+    "thumb": "/stats/data/alg/media/easy-1lll/en/image14.svg",
     "mtime": 1588026076323,
     "hasEn": true,
     "hasZh": false,
     "order": 6,
     "hidden": false,
     "quality": "ok",
-    "algCount": 0
+    "algCount": 65
   },
   {
     "slug": "more-1lll",
@@ -809,14 +809,14 @@
     "category": "3x3",
     "subcategory": null,
     "topDir": "3x3",
-    "thumb": "/stats/data/alg/media/more-1lll/en/image2.svg",
+    "thumb": "/stats/data/alg/media/more-1lll/en/image14.svg",
     "mtime": 1587603773497,
     "hasEn": true,
     "hasZh": false,
     "order": 6,
     "hidden": false,
     "quality": "ok",
-    "algCount": 0
+    "algCount": 32
   },
   {
     "slug": "1lll",
@@ -827,14 +827,14 @@
     "category": "CHS",
     "subcategory": null,
     "topDir": "CHS",
-    "thumb": "/stats/data/alg/media/1lll/zh/image148.svg",
+    "thumb": "/stats/data/alg/media/1lll/zh/image28.svg",
     "mtime": 1580843168951,
     "hasEn": false,
     "hasZh": true,
     "order": 6,
     "hidden": false,
     "quality": "ok",
-    "algCount": 287
+    "algCount": 3028
   },
   {
     "slug": "6-9-htm-1lll",
@@ -845,14 +845,14 @@
     "category": "CHS",
     "subcategory": null,
     "topDir": "CHS",
-    "thumb": "/stats/data/alg/media/6-9-htm-1lll/zh/image6.svg",
+    "thumb": "/stats/data/alg/media/6-9-htm-1lll/zh/image24.svg",
     "mtime": 1579266141426,
     "hasEn": false,
     "hasZh": true,
     "order": 6,
     "hidden": false,
     "quality": "ok",
-    "algCount": 4
+    "algCount": 38
   },
   {
     "slug": "f2l-orientation",
@@ -1140,14 +1140,14 @@
     "category": "CHS",
     "subcategory": null,
     "topDir": "CHS",
-    "thumb": "/stats/data/alg/media/2h-coll/zh/image6.svg",
+    "thumb": "/stats/data/alg/media/2h-coll/zh/image16.svg",
     "mtime": 1594224265210,
     "hasEn": false,
     "hasZh": true,
     "order": 8,
     "hidden": false,
     "quality": "ok",
-    "algCount": 7
+    "algCount": 34
   },
   {
     "slug": "roux-cmll",
@@ -1213,14 +1213,14 @@
     "category": "3x3",
     "subcategory": null,
     "topDir": "3x3",
-    "thumb": "/stats/data/alg/media/3x3-vls/en/image6.svg",
+    "thumb": "/stats/data/alg/media/3x3-vls/en/image26.svg",
     "mtime": 1770089427636.8398,
     "hasEn": true,
     "hasZh": false,
     "order": 10,
     "hidden": false,
     "quality": "ok",
-    "algCount": 89
+    "algCount": 143
   },
   {
     "slug": "3x3-xcross",
@@ -1268,14 +1268,14 @@
     "category": "3x3",
     "subcategory": null,
     "topDir": "3x3",
-    "thumb": "/stats/data/alg/media/ollcp/en/image323.svg",
+    "thumb": "/stats/data/alg/media/ollcp/en/image343.svg",
     "mtime": 1758822162932.936,
     "hasEn": true,
     "hasZh": true,
     "order": 10,
     "hidden": false,
     "quality": "ok",
-    "algCount": 76
+    "algCount": 134
   },
   {
     "slug": "eoll",
@@ -1287,14 +1287,14 @@
     "category": "3x3",
     "subcategory": null,
     "topDir": "3x3",
-    "thumb": "/stats/data/alg/media/eoll/en/image6.svg",
+    "thumb": "/stats/data/alg/media/eoll/en/image56.svg",
     "mtime": 1757387772057.9973,
     "hasEn": true,
     "hasZh": true,
     "order": 10,
     "hidden": false,
     "quality": "ok",
-    "algCount": 13
+    "algCount": 2
   },
   {
     "slug": "1lll1-sym",
@@ -1306,14 +1306,14 @@
     "category": "3x3",
     "subcategory": "1LLL",
     "topDir": "3x3",
-    "thumb": "/stats/data/alg/media/1lll1-sym/en/image30.svg",
+    "thumb": "/stats/data/alg/media/1lll1-sym/en/image78.svg",
     "mtime": 1756909427697.05,
     "hasEn": true,
     "hasZh": true,
     "order": 10,
     "hidden": false,
     "quality": "ok",
-    "algCount": 28
+    "algCount": 112
   },
   {
     "slug": "1lll5-t",
@@ -1324,14 +1324,14 @@
     "category": "3x3",
     "subcategory": "1LLL",
     "topDir": "3x3",
-    "thumb": "/stats/data/alg/media/1lll5-t/en/image40.svg",
+    "thumb": "/stats/data/alg/media/1lll5-t/en/image32.svg",
     "mtime": 1756809716796.136,
     "hasEn": true,
     "hasZh": false,
     "order": 10,
     "hidden": false,
     "quality": "ok",
-    "algCount": 17
+    "algCount": 192
   },
   {
     "slug": "1lll6-l",
@@ -1342,14 +1342,14 @@
     "category": "3x3",
     "subcategory": "1LLL",
     "topDir": "3x3",
-    "thumb": "/stats/data/alg/media/1lll6-l/en/image4.svg",
+    "thumb": "/stats/data/alg/media/1lll6-l/en/image32.svg",
     "mtime": 1756806162725.8567,
     "hasEn": true,
     "hasZh": false,
     "order": 10,
     "hidden": false,
     "quality": "ok",
-    "algCount": 21
+    "algCount": 180
   },
   {
     "slug": "1lll4-u",
@@ -1360,14 +1360,14 @@
     "category": "3x3",
     "subcategory": "1LLL",
     "topDir": "3x3",
-    "thumb": "/stats/data/alg/media/1lll4-u/en/image222.svg",
+    "thumb": "/stats/data/alg/media/1lll4-u/en/image30.svg",
     "mtime": 1756803354464.8196,
     "hasEn": true,
     "hasZh": false,
     "order": 10,
     "hidden": false,
     "quality": "ok",
-    "algCount": 15
+    "algCount": 216
   },
   {
     "slug": "1lll7-s",
@@ -1378,14 +1378,14 @@
     "category": "3x3",
     "subcategory": "1LLL",
     "topDir": "3x3",
-    "thumb": "/stats/data/alg/media/1lll7-s/en/image30.svg",
+    "thumb": "/stats/data/alg/media/1lll7-s/en/image32.svg",
     "mtime": 1756699188113.8945,
     "hasEn": true,
     "hasZh": false,
     "order": 10,
     "hidden": false,
     "quality": "ok",
-    "algCount": 58
+    "algCount": 408
   },
   {
     "slug": "1lll3-h-pi",
@@ -1396,14 +1396,14 @@
     "category": "3x3",
     "subcategory": "1LLL",
     "topDir": "3x3",
-    "thumb": "/stats/data/alg/media/1lll3-h-pi/en/image34.svg",
+    "thumb": "/stats/data/alg/media/1lll3-h-pi/en/image30.svg",
     "mtime": 1756697560137.6873,
     "hasEn": true,
     "hasZh": false,
     "order": 10,
     "hidden": false,
     "quality": "ok",
-    "algCount": 13
+    "algCount": 270
   },
   {
     "slug": "1lll2-dot",
@@ -1414,14 +1414,14 @@
     "category": "3x3",
     "subcategory": "1LLL",
     "topDir": "3x3",
-    "thumb": "/stats/data/alg/media/1lll2-dot/en/image54.svg",
+    "thumb": "/stats/data/alg/media/1lll2-dot/en/image30.svg",
     "mtime": 1756697341188.058,
     "hasEn": true,
     "hasZh": false,
     "order": 10,
     "hidden": false,
     "quality": "ok",
-    "algCount": 30
+    "algCount": 210
   },
   {
     "slug": "3x3-mf2l",
@@ -1705,14 +1705,14 @@
     "category": "3x3",
     "subcategory": null,
     "topDir": "3x3",
-    "thumb": "/stats/data/alg/media/wv/en/image2.svg",
+    "thumb": "/stats/data/alg/media/wv/en/image16.svg",
     "mtime": 1697455009511.0176,
     "hasEn": true,
     "hasZh": true,
     "order": 10,
     "hidden": false,
     "quality": "ok",
-    "algCount": 0
+    "algCount": 51
   },
   {
     "slug": "ell",
@@ -1743,7 +1743,7 @@
     "category": "3x3",
     "subcategory": null,
     "topDir": "3x3",
-    "thumb": "/stats/data/alg/media/3x3-cll/en/image6.svg",
+    "thumb": "/stats/data/alg/media/3x3-cll/en/image20.svg",
     "mtime": 1696611429485.4153,
     "hasEn": true,
     "hasZh": true,
@@ -1858,7 +1858,7 @@
     "order": 10,
     "hidden": false,
     "quality": "ok",
-    "algCount": 0
+    "algCount": 53
   },
   {
     "slug": "3x3-ools",
@@ -2216,14 +2216,14 @@
     "category": "3x3",
     "subcategory": null,
     "topDir": "3x3",
-    "thumb": "/stats/data/alg/media/aollcp/en/image16.svg",
+    "thumb": "/stats/data/alg/media/aollcp/en/image22.svg",
     "mtime": 1639749219662,
     "hasEn": true,
     "hasZh": true,
     "order": 10,
     "hidden": false,
     "quality": "ok",
-    "algCount": 11
+    "algCount": 2
   },
   {
     "slug": "classic-cfop",
@@ -2831,14 +2831,14 @@
     "category": "3BLD",
     "subcategory": "最核心文档",
     "topDir": "3BLD",
-    "thumb": "/stats/data/alg/media/3bld-3bld-eo/en/image6.svg",
+    "thumb": "/stats/data/alg/media/3bld-3bld-eo/en/image30.svg",
     "mtime": 1760233494660.0557,
     "hasEn": true,
     "hasZh": false,
     "order": 25,
     "hidden": false,
     "quality": "ok",
-    "algCount": 79
+    "algCount": 66
   },
   {
     "slug": "3bld-3bld-op-2",
@@ -2965,7 +2965,7 @@
     "order": 25,
     "hidden": false,
     "quality": "ok",
-    "algCount": 42
+    "algCount": 63
   },
   {
     "slug": "a-b-a2-b-a",
@@ -3615,14 +3615,14 @@
     "category": "2x2",
     "subcategory": null,
     "topDir": "2x2",
-    "thumb": "/stats/data/alg/media/2x2-ls/en/image4.svg",
+    "thumb": "/stats/data/alg/media/2x2-ls/en/image16.svg",
     "mtime": 1624331728830,
     "hasEn": true,
     "hasZh": false,
     "order": 30,
     "hidden": false,
     "quality": "ok",
-    "algCount": 9
+    "algCount": 48
   },
   {
     "slug": "2x2-pyramorphix",
@@ -3670,14 +3670,14 @@
     "category": "2x2",
     "subcategory": null,
     "topDir": "2x2",
-    "thumb": "/stats/data/alg/media/2x2-ols/en/image2.svg",
+    "thumb": "/stats/data/alg/media/2x2-ols/en/image16.svg",
     "mtime": 1589235030210,
     "hasEn": true,
     "hasZh": true,
     "order": 30,
     "hidden": false,
     "quality": "ok",
-    "algCount": 0
+    "algCount": 27
   },
   {
     "slug": "2x2-ls-teg2",
@@ -3688,14 +3688,14 @@
     "category": "2x2",
     "subcategory": null,
     "topDir": "2x2",
-    "thumb": "/stats/data/alg/media/2x2-ls-teg2/zh/image4.svg",
+    "thumb": "/stats/data/alg/media/2x2-ls-teg2/zh/image16.svg",
     "mtime": 1570506304963,
     "hasEn": false,
     "hasZh": true,
     "order": 30,
     "hidden": false,
     "quality": "ok",
-    "algCount": 9
+    "algCount": 48
   },
   {
     "slug": "4x4-4x4-ppll",
@@ -4827,14 +4827,14 @@
     "category": "SQ1",
     "subcategory": null,
     "topDir": "SQ1",
-    "thumb": "/stats/data/alg/media/sq1-pll-and-advanced-ep-control/en/image3.jpeg",
+    "thumb": "/stats/data/alg/media/sq1-pll-and-advanced-ep-control/en/image1.jpeg",
     "mtime": 1651923035340,
     "hasEn": true,
     "hasZh": false,
     "order": 70,
     "hidden": false,
     "quality": "ok",
-    "algCount": 12
+    "algCount": 0
   },
   {
     "slug": "sq1-csp-cale",
@@ -5336,14 +5336,14 @@
     "category": "FMC",
     "subcategory": "EO",
     "topDir": "FMC",
-    "thumb": "/stats/data/alg/media/fmc-eo-tutorial/en/image7.svg",
+    "thumb": "/stats/data/alg/media/fmc-eo-tutorial/en/image19.svg",
     "mtime": 1755219423254.407,
     "hasEn": true,
     "hasZh": false,
     "order": 85,
     "hidden": false,
     "quality": "ok",
-    "algCount": 21
+    "algCount": 9
   },
   {
     "slug": "niss",
@@ -5379,7 +5379,7 @@
     "order": 85,
     "hidden": false,
     "quality": "ok",
-    "algCount": 84
+    "algCount": 160
   },
   {
     "slug": "nissy",
@@ -5408,14 +5408,14 @@
     "category": "FMC",
     "subcategory": "EO",
     "topDir": "FMC",
-    "thumb": "/stats/data/alg/media/fmc-eo/en/image2.svg",
+    "thumb": "/stats/data/alg/media/fmc-eo/en/image42.svg",
     "mtime": 1722214363738.4233,
     "hasEn": true,
     "hasZh": false,
     "order": 85,
     "hidden": false,
     "quality": "ok",
-    "algCount": 0
+    "algCount": 91
   },
   {
     "slug": "fmc-solves",
@@ -5498,14 +5498,14 @@
     "category": "FMC",
     "subcategory": null,
     "topDir": "FMC",
-    "thumb": "/stats/data/alg/media/fmc-dr-stats/en/image2.svg",
+    "thumb": "/stats/data/alg/media/fmc-dr-stats/en/image68.svg",
     "mtime": 1699892573093.3823,
     "hasEn": true,
     "hasZh": false,
     "order": 85,
     "hidden": false,
     "quality": "ok",
-    "algCount": 0
+    "algCount": 41
   },
   {
     "slug": "hyper-parity-rodney-kinney",
@@ -5559,7 +5559,7 @@
     "order": 85,
     "hidden": false,
     "quality": "ok",
-    "algCount": 3
+    "algCount": 6
   },
   {
     "slug": "domino-setup-theory-rodney-kinney",
@@ -5751,14 +5751,14 @@
     "category": "FMC",
     "subcategory": null,
     "topDir": "FMC",
-    "thumb": "/stats/data/alg/media/dr-alexandros-fokianos/zh/image2.svg",
+    "thumb": "/stats/data/alg/media/dr-alexandros-fokianos/zh/image6.svg",
     "mtime": 1624347982068,
     "hasEn": false,
     "hasZh": true,
     "order": 85,
     "hidden": false,
     "quality": "ok",
-    "algCount": 0
+    "algCount": 2
   },
   {
     "slug": "fmc-psb",
@@ -8275,14 +8275,14 @@
     "category": "Misc",
     "subcategory": "OLS",
     "topDir": "Misc",
-    "thumb": "/stats/data/alg/media/ols-else/en/image2.svg",
+    "thumb": "/stats/data/alg/media/ols-else/en/image10.svg",
     "mtime": 1704082849116.028,
     "hasEn": true,
     "hasZh": false,
     "order": 150,
     "hidden": false,
     "quality": "ok",
-    "algCount": 0
+    "algCount": 20
   },
   {
     "slug": "ols-c",
@@ -9536,14 +9536,14 @@
     "category": "CHS",
     "subcategory": null,
     "topDir": "CHS",
-    "thumb": "/stats/data/alg/media/vls/zh/image6.svg",
+    "thumb": "/stats/data/alg/media/vls/zh/image26.svg",
     "mtime": 1615388331238,
     "hasEn": false,
     "hasZh": true,
     "order": 195,
     "hidden": false,
     "quality": "ok",
-    "algCount": 88
+    "algCount": 143
   },
   {
     "slug": "vhls",
@@ -9554,14 +9554,14 @@
     "category": "CHS",
     "subcategory": null,
     "topDir": "CHS",
-    "thumb": "/stats/data/alg/media/vhls/zh/image8.svg",
+    "thumb": "/stats/data/alg/media/vhls/zh/image18.svg",
     "mtime": 1601821025825,
     "hasEn": false,
     "hasZh": true,
     "order": 195,
     "hidden": false,
     "quality": "ok",
-    "algCount": 27
+    "algCount": 16
   },
   {
     "slug": "pyraminx-ml4e",
@@ -9788,14 +9788,14 @@
     "category": "CHS",
     "subcategory": null,
     "topDir": "CHS",
-    "thumb": "/stats/data/alg/media/2gll/zh/image8.svg",
+    "thumb": "/stats/data/alg/media/2gll/zh/image25.svg",
     "mtime": 1585428024030,
     "hasEn": false,
     "hasZh": true,
     "order": 195,
     "hidden": false,
     "quality": "ok",
-    "algCount": 34
+    "algCount": 36
   },
   {
     "slug": "sq-cs-csp",
@@ -10706,14 +10706,14 @@
     "category": "CHS",
     "subcategory": null,
     "topDir": "CHS",
-    "thumb": "/stats/data/alg/media/mirror-wv/zh/image2.svg",
+    "thumb": "/stats/data/alg/media/mirror-wv/zh/image14.svg",
     "mtime": 1555287399676,
     "hasEn": false,
     "hasZh": true,
     "order": 195,
     "hidden": false,
     "quality": "ok",
-    "algCount": 0
+    "algCount": 15
   },
   {
     "slug": "4x4-yau",
@@ -10742,14 +10742,14 @@
     "category": "CHS",
     "subcategory": null,
     "topDir": "CHS",
-    "thumb": "/stats/data/alg/media/sv/zh/image2.svg",
+    "thumb": "/stats/data/alg/media/sv/zh/image14.svg",
     "mtime": 1554949577684,
     "hasEn": false,
     "hasZh": true,
     "order": 195,
     "hidden": false,
     "quality": "ok",
-    "algCount": 0
+    "algCount": 15
   },
   {
     "slug": "ols",
@@ -10760,14 +10760,14 @@
     "category": "CHS",
     "subcategory": null,
     "topDir": "CHS",
-    "thumb": "/stats/data/alg/media/ols/zh/image2.svg",
+    "thumb": "/stats/data/alg/media/ols/zh/image22.svg",
     "mtime": 1554922532377,
     "hasEn": false,
     "hasZh": true,
     "order": 195,
     "hidden": false,
     "quality": "ok",
-    "algCount": 0
+    "algCount": 34
   },
   {
     "slug": "predict-oll-skip",
@@ -10778,14 +10778,14 @@
     "category": "CHS",
     "subcategory": null,
     "topDir": "CHS",
-    "thumb": "/stats/data/alg/media/predict-oll-skip/zh/image2.svg",
+    "thumb": "/stats/data/alg/media/predict-oll-skip/zh/image14.svg",
     "mtime": 1554479672985,
     "hasEn": false,
     "hasZh": true,
     "order": 195,
     "hidden": false,
     "quality": "ok",
-    "algCount": 0
+    "algCount": 26
   },
   {
     "slug": "4x4-l2e-l3e",
