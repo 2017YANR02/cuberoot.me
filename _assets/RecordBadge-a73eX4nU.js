@@ -1,0 +1,1 @@
+import{t as e}from"./jsx-runtime-BBZJfoOF.js";import{c as t}from"./recon_utils-BBlzczoV.js";var n=e();function r({record:e,variant:r=`standalone`}){let i=t(e??void 0);return i?(0,n.jsx)(`span`,{className:r===`inline`?`${i.className} record-badge--inline`:i.className,children:i.text}):null}export{r as t};
