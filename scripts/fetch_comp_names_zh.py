@@ -55,6 +55,41 @@ def _detect_total_pages(html):
     return max(pages) if pages else 1
 
 
+# NOTE: 硬编码映射——cubing.com alias 与 WCA ID 差异过大、规则救不回来的老比赛
+# 每年 update_upcoming.yml 会重新跑，新加的 alias 若走通规则就不需要进这里
+# 加新条目前用 WCA API (https://www.worldcubeassociation.org/api/v0/competitions/<ID>) 验证 ID 存在
+ALIAS_TO_WCA_ID_OVERRIDE = {
+    "Shenzhen-Cubing-10th-Anniversary-2019": "Shenzhen10thAnniversary2019",
+    "PKU-Spring-2019": "PekingUniversitySpring2019",
+    "Peking-University-2018": "PKU2018",
+    "Cross-strait-FMC-2018": "CrossstraitFMC2018",
+    "Nanchang-Medium-and-Small-Cubes-2018": "NanchangMediumnSmallCubes2018",
+    "FMC-Asia-2017": "FMCAsia2017",
+    "Qingdao-Cube-of-Prime-Numbers-2017": "QingdaoPrimeNumbers2017",
+    "FMC-Asia-2016": "FMCAsia2016",
+    "Cross-strait-Cubing-Exchange-2016": "CrossstraitCubing2016",
+    "Cross-strait-FMC-2016": "CrossstraitFMC2016",
+    "2015-Beijing-Long-Events-Open": "BeijingLongEvents2015",
+    "Cube-of-Prime-Numbers-2015": "CubeOfPrimeNumbers2015",
+    "Cross-strait-Cubing-Exchange-2014": "CrossstraitCubing2014",
+    "China-FM-2011-Beijing": "ChinaFMBeijing2011",
+    "China-FM-2011-Shanghai": "ChinaFMShanghai2011",
+    "China-FM-2011-Guangzhou": "ChinaFMGuangzhou2011",
+    "China-FM-2011-Xian": "ChinaFMXian2011",
+    "China-FM-2011-Shenyang": "ChinaFMShenyang2011",
+    "China-FM-2011-Zhengzhou": "ChinaFMZhengzhou2011",
+    "Hefei-After-Term-Open-2011": "HefeiOpen2011",
+    "Henan-University-of-Science-and-Technology-Open-2011": "HenanUniversityOpen2011",
+    "Shenyang-Cubing-Boxing-Day-2010": "ShenyangBoxingDay2010",
+    "Hong-Kong-Open-2010": "HongKongOpen2010",
+    "Hong-Kong-Cube-Day-2010": "HongKongCubeDay2010",
+    "Macau-Rubiks-Open-2009": "MacauOpen2009",
+    "Hong-Kong-Open-2009": "HongKongOpen2009",
+    "Hong-Kong-Open-2008": "HongKongOpen2008",
+    # NOTE: Hangzhou-open-2019 故意不加——cubing.com 中文名"杭州"与 WCA 里同日唯一的 HengyangOpen2019（衡阳）不一致，疑为 cubing.com 源数据错
+}
+
+
 def _alias_to_wca_id_candidates(alias):
     """
     从 cubing.com URL alias 推测可能的 WCA ID。
@@ -84,6 +119,14 @@ def _alias_to_wca_id_candidates(alias):
         if "Open" in tokens[1:]:
             c = yield_once("".join(t for t in tokens[1:] if t != "Open"))
             if c: yield c
+    # 4) 前 2 个 token（跳过 "Cubing" 前缀） + 年份 token
+    #    WCA short_name 常是 "地点 + 季节/类型 + 年份"，ID 把空格删掉；cubing.com alias 多含冗余词
+    #    例：Beijing-University-Cube-League-2025 → BeijingUniversity2025
+    start = 1 if tokens and tokens[0] == "Cubing" else 0
+    year_tokens = [t for t in tokens if re.match(r'^\d{4}$', t)]
+    if len(tokens) - start >= 2 and year_tokens:
+        c = yield_once(tokens[start] + tokens[start + 1] + year_tokens[0])
+        if c: yield c
 
 
 def scrape_cubing_china():
@@ -137,7 +180,8 @@ def scrape_cubing_china():
             start_date = m.group(1)
             alias = m.group(2)
             name = tag_strip.sub("", m.group(3)).strip()
-            if name and not alias.startswith("?"):
+            # NOTE: 只收 WCA 赛事——中文名里必含 "WCA"（非 WCA 比赛前端不会出现，抓了也是 noise）
+            if name and not alias.startswith("?") and "WCA" in name:
                 rows.append((alias, name, start_date))
                 count += 1
 
@@ -199,6 +243,28 @@ def fetch_wca_cn_comps():
     return wca_id_to_names
 
 
+def fetch_wca_comp_detail(wca_id):
+    """
+    单条拉 WCA API detail，用于 ALIAS_TO_WCA_ID_OVERRIDE 里指向非 CN 国家（HK/MO/XA 等）
+    的比赛。成功返回 {name, short_name, start_date}，否则 None。缓存到磁盘以免重复请求。
+    """
+    cache_file = CACHE_DIR / f"wca_comp_{wca_id}.json"
+    if cache_file.exists():
+        return json.loads(cache_file.read_text(encoding="utf-8"))
+
+    url = f"{WCA_API_BASE}/competitions/{wca_id}"
+    resp = fetch_url(url)
+    if not resp:
+        return None
+    info = {
+        "name": resp.get("name") or resp.get("short_name") or "",
+        "short_name": resp.get("short_name") or resp.get("name") or "",
+        "start_date": resp.get("start_date", ""),
+    }
+    cache_file.write_text(json.dumps(info, ensure_ascii=False), encoding="utf-8")
+    return info
+
+
 def main():
     print("=== 构建中国比赛英文名 → 中文名映射 ===\n")
     start = time.time()
@@ -229,38 +295,50 @@ def main():
             wca_by_date.setdefault(d, []).append(wca_id)
 
     # Step 3: 英文名 → 中文名
-    # 匹配策略：(a) alias 生成多个候选 WCA ID 直接命中；(b) 回退到按 start_date + country=CN 唯一匹配
+    # 匹配策略：(0) 硬编码 override；(a) alias 候选命中；(b) 按 start_date + country=CN 唯一回退
     en_to_zh = {}
+    matched_by_override = 0
     matched_by_alias = 0
     matched_by_date = 0
     unmatched_samples = []
     for alias, zh_name, start_date in rows:
-        matched_id = None
+        matched_names = None  # {name, short_name}
+
+        # (0) 硬编码 override——alias 与 WCA ID 差异大、规则救不回来的老比赛
+        if alias in ALIAS_TO_WCA_ID_OVERRIDE:
+            wid = ALIAS_TO_WCA_ID_OVERRIDE[alias]
+            if wid in wca_id_to_names:
+                matched_names = wca_id_to_names[wid]
+            else:
+                # 非 CN 国家（HK/MO/XA 等）批量拉取没有，单条 detail fetch
+                matched_names = fetch_wca_comp_detail(wid)
+            if matched_names:
+                matched_by_override += 1
+
         # (a) alias 候选直接命中
-        for cand in _alias_to_wca_id_candidates(alias):
-            if cand in wca_id_to_names:
-                matched_id = cand
-                break
-        if matched_id:
-            matched_by_alias += 1
-        elif start_date and len(wca_by_date.get(start_date, [])) == 1:
-            # (b) 该日期在 WCA CN 里只有一个比赛 → 确定匹配
-            # 用于 cubing.com alias 和 WCA ID 差异过大的老比赛（如词序颠倒 WCA-2011-February-Beijing-Open → BeijingFebruary2011）
-            matched_id = wca_by_date[start_date][0]
+        if not matched_names:
+            for cand in _alias_to_wca_id_candidates(alias):
+                if cand in wca_id_to_names:
+                    matched_names = wca_id_to_names[cand]
+                    matched_by_alias += 1
+                    break
+
+        # (b) 日期唯一回退
+        if not matched_names and start_date and len(wca_by_date.get(start_date, [])) == 1:
+            matched_names = wca_id_to_names[wca_by_date[start_date][0]]
             matched_by_date += 1
 
-        if matched_id:
-            names = wca_id_to_names[matched_id]
-            if names.get("name"):       en_to_zh[names["name"]] = zh_name
-            if names.get("short_name"): en_to_zh[names["short_name"]] = zh_name
-        elif len(unmatched_samples) < 10:
+        if matched_names:
+            if matched_names.get("name"):       en_to_zh[matched_names["name"]] = zh_name
+            if matched_names.get("short_name"): en_to_zh[matched_names["short_name"]] = zh_name
+        else:
             unmatched_samples.append((alias, zh_name, start_date))
 
-    matched = matched_by_alias + matched_by_date
+    matched = matched_by_override + matched_by_alias + matched_by_date
     unmatched = len(rows) - matched
-    print(f"\n[INFO] 匹配成功: {matched} (alias 直接 {matched_by_alias} + 日期回退 {matched_by_date}), 无英文名(非WCA): {unmatched}")
+    print(f"\n[INFO] 匹配成功: {matched} (override {matched_by_override} + alias {matched_by_alias} + 日期 {matched_by_date}), 未匹配: {unmatched}")
     if unmatched_samples:
-        print("[INFO] 未匹配样例（前 10 条，多为非 WCA 赛事或同日多场无法唯一匹配）:")
+        print(f"[INFO] 未匹配 {len(unmatched_samples)} 条（alias 与 WCA ID 差异大，需硬编码对应）:")
         for a, n, d in unmatched_samples:
             print(f"  - [{d}] {a} → {n}")
 
