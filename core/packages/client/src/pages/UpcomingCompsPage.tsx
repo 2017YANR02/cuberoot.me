@@ -2,15 +2,21 @@
  * 顶尖选手近期比赛追踪页 — 日历视图
  * 数据源: stats/upcoming_comps.json（Top 模式） + stats/data/all_upcoming_comps.json（All 模式）
  */
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, Star, Globe as GlobeIcon } from 'lucide-react';
-import { fetchAllUpcomingCompsJson, type UpcomingCompRecord } from '@cuberoot/shared';
+import {
+  fetchAllUpcomingCompsJson,
+  fetchAllPastCompsJson,
+  type UpcomingCompRecord,
+  type PastCompRecord,
+} from '@cuberoot/shared';
 import LangToggle from '../components/LangToggle';
 import { displayCuberName } from '../utils/name_utils';
 import { formatDateRangeIso, toIsoDate } from '../utils/date_range';
 import { Flag as SharedFlag } from '../utils/flag';
+import { WheelPicker } from '../components/WheelPicker';
 import './upcoming_comps.css';
 
 // ── 类型定义 ──────────────────────────────────────────────────────────────
@@ -101,10 +107,8 @@ const COUNTRY_ALIASES: Record<string, string> = {
   'korea': 'KR', 'south korea': 'KR', 'uae': 'AE', 'czech': 'CZ', 'holland': 'NL',
 };
 
-const MONTH_EN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const MONTH_ZH = ['1 月','2 月','3 月','4 月','5 月','6 月','7 月','8 月','9 月','10 月','11 月','12 月'];
-const WEEKDAY_EN = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-const WEEKDAY_ZH = ['日','一','二','三','四','五','六'];
+const WEEKDAY_EN = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const WEEKDAY_ZH = ['一','二','三','四','五','六','日'];
 
 // ── 工具函数 ──────────────────────────────────────────────────────────────
 
@@ -147,7 +151,8 @@ function daysBetween(a: Date, b: Date): number {
 /** 获取月历起始日（包含 month 第 1 日那一周的周日） */
 function monthGridStart(year: number, month: number): Date {
   const first = new Date(year, month, 1);
-  return addDays(first, -first.getDay());
+  // NOTE: Mon-first 布局 — JS getDay() 里 Sun=0, Mon=1, ..., Sat=6；(day+6)%7 映射为 Mon=0, Tue=1, ..., Sun=6
+  return addDays(first, -((first.getDay() + 6) % 7));
 }
 
 // ── 国旗 ──────────────────────────────────────────────────────────────────
@@ -183,6 +188,8 @@ function computeWeeks(
   comps: Competition[],
 ): WeekRow[] {
   const gridStart = monthGridStart(viewYear, viewMonth);
+  const monthStart = new Date(viewYear, viewMonth, 1);
+  const monthEnd = new Date(viewYear, viewMonth + 1, 0);
   const weeks: WeekRow[] = [];
 
   // NOTE: 生成最多 6 行，最后一行如果整行都是下月数据则省略
@@ -192,22 +199,30 @@ function computeWeeks(
 
     // 如果 weekStart 已经超过当月末一周且整周都在下月，停
     if (w >= 4) {
-      const lastDayOfMonth = new Date(viewYear, viewMonth + 1, 0);
-      if (weekStart > lastDayOfMonth) break;
+      if (weekStart > monthEnd) break;
     }
 
     const days: Date[] = [];
     for (let i = 0; i < 7; i++) days.push(addDays(weekStart, i));
 
-    // 找出与本周相交的比赛，按开始日期排序
+    // NOTE: 事件只在当月内显示 — 本周有效区间 = 本周 ∩ 本月
+    const effStart = weekStart < monthStart ? monthStart : weekStart;
+    const effEnd = weekEnd > monthEnd ? monthEnd : weekEnd;
+
+    // 找出与本周有效区间相交的比赛
     const overlaps: Competition[] = comps.filter((c) => {
       const s = parseLocalDate(c.start_date);
       const e = parseLocalDate(c.end_date || c.start_date);
-      return e >= weekStart && s <= weekEnd;
+      return e >= effStart && s <= effEnd;
     }).sort((a, b) => {
-      // NOTE: 优先显示有 top cubers 的比赛（All 模式下尤为重要）
+      // 1. 持续天数越多越靠前（长赛事优先占可见 track）
+      const aDays = daysBetween(parseLocalDate(a.start_date), parseLocalDate(a.end_date || a.start_date));
+      const bDays = daysBetween(parseLocalDate(b.start_date), parseLocalDate(b.end_date || b.start_date));
+      if (aDays !== bDays) return bDays - aDays;
+      // 2. top cubers 多的靠前
       const tcDiff = b.top_cubers.length - a.top_cubers.length;
       if (tcDiff !== 0) return tcDiff;
+      // 3. 开始日期早的靠前
       return a.start_date.localeCompare(b.start_date);
     });
 
@@ -245,8 +260,8 @@ function computeWeeks(
       const track = compTrack.get(c)!;
       const s = parseLocalDate(c.start_date);
       const e = parseLocalDate(c.end_date || c.start_date);
-      const clippedStart = s < weekStart ? weekStart : s;
-      const clippedEnd = e > weekEnd ? weekEnd : e;
+      const clippedStart = s < effStart ? effStart : s;
+      const clippedEnd = e > effEnd ? effEnd : e;
       const startCol = daysBetween(weekStart, clippedStart) + 1;
       const span = daysBetween(clippedStart, clippedEnd) + 1;
 
@@ -256,8 +271,8 @@ function computeWeeks(
           startCol,
           span,
           track,
-          continuesFromPrev: s < weekStart,
-          continuesToNext: e > weekEnd,
+          continuesFromPrev: s < effStart,
+          continuesToNext: e > effEnd,
           key: `${c.id}-${w}`,
         });
         maxTrack = Math.max(maxTrack, track);
@@ -362,6 +377,126 @@ function CompModal({ comp, isZh, onClose, t }: {
   );
 }
 
+// ── 年月选择浮层 ──────────────────────────────────────────────────────────
+
+function YearMonthPickerPopover({ year, month, yearMonthsMap, anchor, onCommit, isZh }: {
+  year: number;
+  month: number; // 1..12
+  /** 年 → 该年有比赛的月份集；滚筒按此表跳过空年/空月 */
+  yearMonthsMap: Map<number, Set<number>>;
+  anchor: DOMRect | null;
+  /** 关闭浮层时一次性提交 pending 值 + 关闭；拖拽中不调用 */
+  onCommit: (y: number, m: number) => void;
+  isZh: boolean;
+}) {
+  const validYears = useMemo(
+    () => [...yearMonthsMap.keys()].sort((a, b) => a - b),
+    [yearMonthsMap],
+  );
+
+  // NOTE: pending 本地态 — 拖拽只改本地，关闭浮层才 flush 给父
+  // 用索引存储：WheelPicker 连续整数步进，非连续真实年/月从对应数组反查
+  // 若 viewDate 的年不在 validYears（例如 Top 模式未加载数据、或打开到纯空年），fall back 到最近年
+  const [pendingYIdx, setPendingYIdx] = useState(() => {
+    const exact = validYears.indexOf(year);
+    if (exact >= 0) return exact;
+    if (validYears.length === 0) return 0;
+    let bestIdx = 0;
+    for (let i = 1; i < validYears.length; i++) {
+      if (Math.abs(validYears[i] - year) < Math.abs(validYears[bestIdx] - year)) bestIdx = i;
+    }
+    return bestIdx;
+  });
+  const [pendingM, setPendingM] = useState(month);
+
+  const currentYear = validYears[pendingYIdx] ?? year;
+
+  const validMonths = useMemo(() => {
+    const set = yearMonthsMap.get(currentYear);
+    if (!set || set.size === 0) return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+    return [...set].sort((a, b) => a - b);
+  }, [yearMonthsMap, currentYear]);
+
+  // NOTE: 当 validMonths 变化（切年）若 pendingM 越界，snap 到最近的合法月份
+  useEffect(() => {
+    if (validMonths.includes(pendingM)) return;
+    let closest = validMonths[0];
+    for (const m of validMonths) {
+      if (Math.abs(m - pendingM) < Math.abs(closest - pendingM)) closest = m;
+    }
+    setPendingM(closest);
+  }, [validMonths, pendingM]);
+
+  const pendingMIdx = Math.max(0, validMonths.indexOf(pendingM));
+
+  const yearRenderSlot = useCallback(
+    (i: number) => (i >= 0 && i < validYears.length) ? String(validYears[i]) : '',
+    [validYears],
+  );
+  const monthRenderSlot = useCallback(
+    (i: number) => (i >= 0 && i < validMonths.length) ? String(validMonths[i]).padStart(2, '0') : '',
+    [validMonths],
+  );
+  const monthOnChange = useCallback(
+    (i: number) => setPendingM(validMonths[i] ?? pendingM),
+    [validMonths, pendingM],
+  );
+
+  const pendingRef = useRef({ yIdx: pendingYIdx, mIdx: pendingMIdx });
+  pendingRef.current = { yIdx: pendingYIdx, mIdx: pendingMIdx };
+
+  const commit = useCallback(() => {
+    const y = validYears[pendingRef.current.yIdx] ?? year;
+    const monthsForY = yearMonthsMap.get(y);
+    const months = monthsForY && monthsForY.size > 0
+      ? [...monthsForY].sort((a, b) => a - b)
+      : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+    const m = months[pendingRef.current.mIdx] ?? months[0] ?? month;
+    onCommit(y, m);
+  }, [validYears, yearMonthsMap, year, month, onCommit]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') commit(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [commit]);
+
+  // NOTE: 根据按钮位置定位面板；贴在按钮下方偏右 8px，越界时夹到视口内
+  const panelStyle: React.CSSProperties = anchor
+    ? (() => {
+        const W = 220, H = 280;
+        const top = Math.min(anchor.bottom + 6, window.innerHeight - H - 8);
+        const left = Math.max(8, Math.min(anchor.left, window.innerWidth - W - 8));
+        return { top, left };
+      })()
+    : { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' };
+
+  return (
+    <div className="ym-popover-overlay" onClick={commit}>
+      <div className="ym-popover-panel" style={panelStyle} onClick={(e) => e.stopPropagation()}>
+        <WheelPicker
+          value={pendingYIdx}
+          minValue={0}
+          maxValue={Math.max(0, validYears.length - 1)}
+          renderSlot={yearRenderSlot}
+          onChange={setPendingYIdx}
+          width={96}
+          ariaLabel={isZh ? '年' : 'Year'}
+        />
+        <WheelPicker
+          value={pendingMIdx}
+          minValue={0}
+          maxValue={Math.max(0, validMonths.length - 1)}
+          renderSlot={monthRenderSlot}
+          onChange={monthOnChange}
+          width={80}
+          ariaLabel={isZh ? '月' : 'Month'}
+        />
+      </div>
+    </div>
+  );
+}
+
 // NOTE: 预生成 all_upcoming_comps.json 记录 → 本组件 Competition 结构适配
 // 合并 top_cubers（从 Top 模式数据字典中反查）
 function adaptAllComp(w: UpcomingCompRecord, topCuberMap: Map<string, TopCuber[]>): Competition {
@@ -375,6 +510,20 @@ function adaptAllComp(w: UpcomingCompRecord, topCuberMap: Map<string, TopCuber[]
     events: w.events,
     competitor_limit: w.competitor_limit,
     top_cubers: topCuberMap.get(w.id) ?? [],
+  };
+}
+
+function adaptPastComp(w: PastCompRecord): Competition {
+  return {
+    id: w.id,
+    name: w.name,
+    city: w.city,
+    country: w.country,
+    start_date: w.start_date,
+    end_date: w.end_date,
+    events: w.events,
+    competitor_limit: 0,
+    top_cubers: [],
   };
 }
 
@@ -396,6 +545,8 @@ export default function UpcomingCompsPage() {
   const [allLoading, setAllLoading] = useState(false);
   const [allError, setAllError] = useState<string | null>(null);
   const [eventFilters, setEventFilters] = useState<string[]>([]);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const pickerBtnRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     fetch('/stats/upcoming_comps.json')
@@ -419,14 +570,21 @@ export default function UpcomingCompsPage() {
       .catch(() => setError(t('upcoming.loadError')));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // NOTE: All 模式懒加载 — 切到 All 且还没数据时读预生成 JSON
+  // NOTE: All 模式懒加载 — 切到 All 且还没数据时读预生成 JSON（upcoming + past 合并，按 id 去重以 upcoming 为准）
   useEffect(() => {
     if (mode !== 'all' || allComps || allLoading || !data) return;
     setAllLoading(true);
     setAllError(null);
     const topMap = new Map(data.competitions.map((c) => [c.id, c.top_cubers]));
-    fetchAllUpcomingCompsJson()
-      .then((list) => setAllComps(list.map((w) => adaptAllComp(w, topMap))))
+    Promise.all([fetchAllUpcomingCompsJson(), fetchAllPastCompsJson()])
+      .then(([upcoming, past]) => {
+        const upcomingIds = new Set(upcoming.map((c) => c.id));
+        const merged: Competition[] = [
+          ...upcoming.map((w) => adaptAllComp(w, topMap)),
+          ...past.filter((p) => !upcomingIds.has(p.id)).map(adaptPastComp),
+        ];
+        setAllComps(merged);
+      })
       .catch(() => setAllError(t('upcoming.allLoadFailed')))
       .finally(() => setAllLoading(false));
   }, [mode, allComps, allLoading, data, t]);
@@ -468,6 +626,20 @@ export default function UpcomingCompsPage() {
   const weeks = useMemo(() => {
     return computeWeeks(viewDate.getFullYear(), viewDate.getMonth(), activeComps);
   }, [activeComps, viewDate]);
+
+  // NOTE: year → months with at least one comp；年月滚筒仅从这里取可选项，空年/空月天然不出
+  const yearMonthsMap = useMemo(() => {
+    const map = new Map<number, Set<number>>();
+    for (const c of activeComps) {
+      const d = parseLocalDate(c.start_date);
+      const y = d.getFullYear();
+      const mo = d.getMonth() + 1;
+      let set = map.get(y);
+      if (!set) { set = new Set(); map.set(y, set); }
+      set.add(mo);
+    }
+    return map;
+  }, [activeComps]);
 
   // NOTE: 当月摘要（基于开始日期在本月的比赛）
   const monthStats = useMemo(() => {
@@ -519,9 +691,8 @@ export default function UpcomingCompsPage() {
   }
 
   const today = new Date();
-  const monthLabel = isZh
-    ? `${viewDate.getFullYear()} 年 ${MONTH_ZH[viewDate.getMonth()]}`
-    : `${MONTH_EN[viewDate.getMonth()]} ${viewDate.getFullYear()}`;
+  const monthYear = String(viewDate.getFullYear());
+  const monthMm = String(viewDate.getMonth() + 1).padStart(2, '0');
   const weekdays = isZh ? WEEKDAY_ZH : WEEKDAY_EN;
 
   return (
@@ -532,7 +703,7 @@ export default function UpcomingCompsPage() {
         <h1 className="upcoming-title">{t('upcoming.title')}</h1>
         <div className="upcoming-meta">
           {isZh ? '追踪世界前 10 / 前 WR 保持者 · ' : 'Tracking world top 10 / former WR holders · '}
-          {t('upcoming.updatedAt', { time: new Date(data.updated_at).toLocaleString() })}
+          {t('upcoming.updatedAt', { time: toIsoDate(new Date(data.updated_at)) })}
           {' · '}
           <Link to="/globe" className="globe-link">
             <GlobeIcon size={12} strokeWidth={1.75} /> {t('upcoming.viewGlobe')}
@@ -578,6 +749,9 @@ export default function UpcomingCompsPage() {
             <span>{t('upcoming.modeAll')}</span>
           </button>
         </div>
+      </div>
+
+      <div className="month-bar">
         <div className="month-nav">
           <button className="nav-btn" onClick={() => gotoMonth(-1)} aria-label="Previous month">
             <ChevronLeft size={16} strokeWidth={1.75} />
@@ -586,8 +760,21 @@ export default function UpcomingCompsPage() {
           <button className="nav-btn" onClick={() => gotoMonth(1)} aria-label="Next month">
             <ChevronRight size={16} strokeWidth={1.75} />
           </button>
-          <span className="month-label">{monthLabel}</span>
+          <button
+            ref={pickerBtnRef}
+            className="month-label month-label-btn"
+            onClick={() => setPickerOpen((o) => !o)}
+            aria-label={isZh ? '选择年月' : 'Select year / month'}
+            aria-expanded={pickerOpen}
+          >
+            <span className="month-label-year">{monthYear}</span>
+            <span className="month-label-month">{monthMm}</span>
+          </button>
         </div>
+        <span className="month-stats">
+          <span title={t('upcoming.statComps')}>📋 {monthStats.comps}</span>
+          <span title={t('upcoming.statCountries')}>🌍 {monthStats.countries}</span>
+        </span>
       </div>
 
       {allLoading && mode === 'all' && (
@@ -620,10 +807,18 @@ export default function UpcomingCompsPage() {
         )}
       </div>
 
+      <div className="legend">
+        {mode === 'all' && (
+          <span className="legend-item"><span className="legend-swatch swatch-none-top" /> {isZh ? '一般比赛' : 'No top cubers'}</span>
+        )}
+        <span className="legend-item"><span className="legend-swatch swatch-default" /> {isZh ? '有顶尖选手' : 'Has top cubers'}</span>
+        <span className="legend-item"><span className="legend-swatch swatch-clash" /> {isZh ? '扎堆 (3+)' : 'Clash (3+)'}</span>
+      </div>
+
       <div className="calendar">
         <div className="weekday-header">
           {weekdays.map((d, i) => (
-            <div key={i} className={`weekday-cell ${i === 0 || i === 6 ? 'is-weekend' : ''}`}>
+            <div key={i} className="weekday-cell">
               {d}
             </div>
           ))}
@@ -636,15 +831,14 @@ export default function UpcomingCompsPage() {
           >
             {week.days.map((day, di) => {
               const inView = day.getMonth() === viewDate.getMonth();
-              const isToday = sameDay(day, today);
-              const isWeekend = di === 0 || di === 6;
+              const isToday = inView && sameDay(day, today);
               return (
                 <div
                   key={di}
-                  className={`day-cell ${inView ? '' : 'out-of-month'} ${isToday ? 'is-today' : ''} ${isWeekend ? 'is-weekend' : ''}`}
+                  className={`day-cell ${inView ? '' : 'out-of-month'} ${isToday ? 'is-today' : ''}`}
                   style={{ gridColumn: di + 1, gridRow: 1 }}
                 >
-                  <span className="day-number">{day.getDate()}</span>
+                  {inView && <span className="day-number">{day.getDate()}</span>}
                 </div>
               );
             })}
@@ -684,32 +878,29 @@ export default function UpcomingCompsPage() {
                 style={{ gridColumn: col, gridRow: Math.min(MAX_TRACKS, week.maxTrack + 1) + 2 }}
                 onClick={() => setDayListDate(week.days[col - 1])}
               >
-                +{overflowComps.length} more
+                +{overflowComps.length}
               </button>
             ))}
           </div>
         ))}
       </div>
 
-      <div className="month-stats">
-        <span title={t('upcoming.statComps')}>📋 {monthStats.comps}</span>
-        <span title={t('upcoming.statCountries')}>🌍 {monthStats.countries}</span>
-        <span title={t('upcoming.statCubers')}>👤 {monthStats.cubers}</span>
-        {monthStats.soon > 0 && (
-          <span className="stat-soon" title={t('upcoming.statSoon')}>⏰ {monthStats.soon}</span>
-        )}
-      </div>
-
-      <div className="legend">
-        {mode === 'all' && (
-          <span className="legend-item"><span className="legend-swatch swatch-none-top" /> {isZh ? '一般比赛' : 'No top cubers'}</span>
-        )}
-        <span className="legend-item"><span className="legend-swatch swatch-default" /> {isZh ? '有顶尖选手' : 'Has top cubers'}</span>
-        <span className="legend-item"><span className="legend-swatch swatch-clash" /> {isZh ? '扎堆 (3+)' : 'Clash (3+)'}</span>
-      </div>
-
       {selectedComp && (
         <CompModal comp={selectedComp} isZh={isZh} onClose={() => setSelectedComp(null)} t={t} />
+      )}
+
+      {pickerOpen && (
+        <YearMonthPickerPopover
+          year={viewDate.getFullYear()}
+          month={viewDate.getMonth() + 1}
+          yearMonthsMap={yearMonthsMap}
+          anchor={pickerBtnRef.current?.getBoundingClientRect() ?? null}
+          onCommit={(y, m) => {
+            setViewDate(new Date(y, m - 1, 1));
+            setPickerOpen(false);
+          }}
+          isZh={isZh}
+        />
       )}
 
       {dayListDate && (

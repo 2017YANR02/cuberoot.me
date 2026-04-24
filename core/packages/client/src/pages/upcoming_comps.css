@@ -193,11 +193,18 @@
 }
 .upcoming-page .globe-link:hover { text-decoration: underline; }
 
+.upcoming-page .month-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin: 0.5rem 0 0.75rem;
+}
 .upcoming-page .month-nav {
     display: flex;
     align-items: center;
     gap: 0.35rem;
-    margin-left: auto;
 }
 .upcoming-page .nav-btn {
     display: inline-flex;
@@ -234,12 +241,40 @@
     background: var(--accent-soft);
 }
 .upcoming-page .month-label {
-    font-size: 0.95rem;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-    margin-left: 0.5rem;
-    min-width: 8em;
-    text-align: left;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    margin-left: 0.75rem;
+    line-height: 1;
+}
+.upcoming-page .month-label-btn {
+    background: transparent;
+    border: none;
+    padding: 2px 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.upcoming-page .month-label-btn:hover,
+.upcoming-page .month-label-btn:focus-visible,
+.upcoming-page .month-label-btn[aria-expanded="true"] {
+    background: var(--accent-soft);
+    outline: none;
+}
+.upcoming-page .month-label-year {
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    color: var(--text-sub);
+    text-transform: uppercase;
+}
+.upcoming-page .month-label-month {
+    font-family: 'Fraunces', 'Times New Roman', serif;
+    font-size: 1.65rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    font-feature-settings: "tnum" 1;
 }
 
 /* ── Calendar Grid ── */
@@ -264,12 +299,12 @@
     text-transform: uppercase;
     text-align: center;
 }
-.upcoming-page .weekday-cell.is-weekend { color: var(--text-muted); }
 
 .upcoming-page .week-row {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    grid-template-rows: auto repeat(var(--tracks, 1), 26px) auto;
+    /* 第一行固定留给 day-number；末行 1fr 吸收 min-height 撑出的多余空间，保证 bar 紧贴 day-number 之下 */
+    grid-template-rows: 22px repeat(var(--tracks, 1), 26px) 1fr;
     grid-auto-rows: 26px;
     border-bottom: 1px solid var(--border);
     padding: 0 0 4px;
@@ -280,18 +315,15 @@
 
 .upcoming-page .day-cell {
     padding: 4px 6px 2px;
-    border-right: 1px solid var(--border);
     grid-row: 1 / -1;
     /* NOTE: day-cell 占满整行（layer 1 背景），事件条叠加在上方 */
     background: var(--surface);
     position: relative;
     min-width: 0;
 }
-.upcoming-page .day-cell:nth-child(7n),
-.upcoming-page .day-cell:last-child { border-right: none; }
-.upcoming-page .day-cell.is-weekend { background: var(--surface-alt); }
-.upcoming-page .day-cell.out-of-month { background: var(--bg); }
-.upcoming-page .day-cell.out-of-month .day-number { color: var(--text-muted); opacity: 0.6; }
+.upcoming-page .day-cell.out-of-month {
+    background: transparent;
+}
 .upcoming-page .day-cell.is-today {
     box-shadow: inset 0 0 0 2px var(--accent);
     z-index: 1;
@@ -304,9 +336,9 @@
 .upcoming-page .day-number {
     display: block;
     font-size: 0.78rem;
-    font-weight: 500;
+    font-weight: 700;
     color: var(--text-sub);
-    text-align: right;
+    text-align: center;
     padding: 0 2px;
 }
 
@@ -404,13 +436,12 @@
 
 /* ── Month Stats + Legend ── */
 .upcoming-page .month-stats {
-    margin: 1rem 0 0.5rem;
-    display: flex;
-    gap: 1.25rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 1rem;
     font-size: 0.82rem;
     color: var(--text-sub);
 }
-.upcoming-page .month-stats .stat-soon { color: var(--accent); }
 
 .upcoming-page .legend {
     display: flex;
@@ -653,7 +684,6 @@
 @media (max-width: 768px) {
     .upcoming-page .toolbar { gap: 0.4rem; }
     .upcoming-page .search-box { min-width: 100%; }
-    .upcoming-page .month-nav { margin-left: 0; flex-basis: 100%; justify-content: flex-start; }
     .upcoming-page .weekday-cell { font-size: 0.65rem; padding: 0.4rem 0.2rem; }
     .upcoming-page .day-cell { padding: 3px 3px 1px; min-width: 0; }
     .upcoming-page .week-row { min-height: 90px; }
@@ -661,6 +691,35 @@
     .upcoming-page .event-bar { font-size: 0.65rem; height: 18px; padding: 0 4px; gap: 3px; }
     .upcoming-page .event-bar .flag-span,
     .upcoming-page .event-bar .flag-img { width: 11px; height: 8px; }
-    .upcoming-page .week-row { grid-template-rows: auto repeat(var(--tracks, 1), 20px) auto; }
+    .upcoming-page .week-row { grid-template-rows: 18px repeat(var(--tracks, 1), 20px) 1fr; }
     .upcoming-page .more-btn { font-size: 0.62rem; height: 18px; padding: 0 4px; }
+}
+
+/* ── 年月选择浮层 ── */
+.upcoming-page .ym-popover-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background: transparent;
+}
+.upcoming-page .ym-popover-panel {
+    position: fixed;
+    display: flex;
+    gap: 8px;
+    padding: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+/* NOTE: 浅色主题覆盖（默认 dark） */
+.upcoming-page .ym-popover-panel .wheel-picker {
+    --wp-bg: var(--surface);
+    --wp-text: #a8a69c;
+    --wp-text-active: var(--text);
+    --wp-highlight: var(--accent-soft);
+    --wp-text-fade-2: #b8b6ac;
+    --wp-text-fade-3: #cccac2;
+    --wp-text-fade-4: #e5e4df;
+    min-height: 260px;
 }

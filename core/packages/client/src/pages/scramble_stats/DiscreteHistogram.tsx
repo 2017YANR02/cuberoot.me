@@ -25,6 +25,18 @@ interface Props {
   modes?: LegendMode[];
   activeMode?: string;
   onModeChange?: (key: string) => void;
+  // NOTE: 稀有 bin (极端步数) 可点击查看具体 scramble；当前选中的 bin 会被高亮
+  clickableBins?: number[];
+  selectedBin?: number | null;
+  onBarClick?: (bin: number) => void;
+  // NOTE: PDF/CDF 切换 & Y 轴 %/count 切换（挪进图例右上区的两个小按钮）
+  onChartModeToggle?: () => void;
+  onYModeToggle?: () => void;
+  yModeLabel?: string;
+  // NOTE: 图例最顶的 Set 下拉（通常只有 WCA 一项，留着给未来多打乱集）
+  setOptions?: { value: string; label: string }[];
+  activeSet?: string;
+  onSetChange?: (v: string) => void;
 }
 
 const W = 760, H = 400;
@@ -33,7 +45,8 @@ const PAD = { l: 56, r: 20, t: 40, b: 44 };
 const chartW = W - PAD.l - PAD.r;
 const chartH = H - PAD.t - PAD.b;
 
-export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percent', chartMode = 'pdf', modes, activeMode, onModeChange }: Props) {
+export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percent', chartMode = 'pdf', modes, activeMode, onModeChange, clickableBins, selectedBin, onBarClick, onChartModeToggle, onYModeToggle, yModeLabel, setOptions, activeSet, onSetChange }: Props) {
+  const clickableSet = useMemo(() => new Set(clickableBins ?? []), [clickableBins]);
   // NOTE: svg 内 <linearGradient> id 必须全局唯一，用 React 的 useId 前缀
   const gradPrefix = useId().replace(/:/g, '_');
 
@@ -154,23 +167,47 @@ export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percen
               const h = (yVal / yMax) * chartH;
               const x = PAD.l + bi * slotW + slotPadL + si * barW;
               const fill = `url(#${gradIdFor(si)})`;
-              const stroke = s.stroke ?? (needsStroke(s.fillColors) ? '#CCCAC2' : undefined);
+              const isClickable = clickableSet.has(v);
+              const isSelected = selectedBin === v;
+              const defaultStroke = s.stroke ?? (needsStroke(s.fillColors) ? '#CCCAC2' : undefined);
+              const stroke = isSelected ? '#C15F3C' : defaultStroke;
+              const strokeW = isSelected ? 2 : (defaultStroke ? 1 : 0);
+              const rectW = Math.max(barW - 1, 0.5);
               return (
                 <rect
                   key={`b${si}_${v}`}
                   x={x}
                   y={PAD.t + chartH - h}
-                  width={Math.max(barW - 1, 0.5)}
+                  width={rectW}
                   height={h}
                   fill={fill}
                   stroke={stroke}
-                  strokeWidth={stroke ? 1 : 0}
+                  strokeWidth={strokeW}
                   opacity={series.length > 1 ? 0.82 : 0.92}
+                  className={isClickable ? 'scramble-hist-bar-clickable' : undefined}
+                  style={isClickable && onBarClick ? { cursor: 'pointer' } : undefined}
+                  onClick={isClickable && onBarClick ? () => onBarClick(v) : undefined}
                 />
               );
             })}
           </g>
         ))}
+        {/* 稀有 bin 的透明 hit-rect，覆盖柱子及下方 x 轴，避免点 0 步极矮柱子难点 */}
+        {onBarClick && clickableBins && series.length === 1 && Array.from({ length: nBins }, (_, i) => xMin + i).map((v, bi) => {
+          if (!clickableSet.has(v)) return null;
+          return (
+            <rect
+              key={`hit${v}`}
+              x={PAD.l + bi * slotW + slotPadL}
+              y={PAD.t}
+              width={slotW - slotPadL * 2}
+              height={chartH + 18}
+              fill="transparent"
+              style={{ cursor: 'pointer' }}
+              onClick={() => onBarClick(v)}
+            />
+          );
+        })}
         {/* 柱上方标签（单 series）。PDF: 计数 + 百分比；CDF: 累积计数 + 累积百分比 */}
         {showLabels && Array.from({ length: nBins }, (_, i) => xMin + i).map((v, bi) => {
           const s = series[0];
@@ -196,66 +233,74 @@ export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percen
             </g>
           );
         })}
-        {/* Legend — 左上空白区。包含：模式下拉（cn/quad/dual/single）+ 色片 */}
-        {(() => {
-          const x0 = PAD.l + 10;
-          const yPills = PAD.t + 6;
-          const pillH = 26;
-          const selectW = 78;
-          const hasModes = !!(modes && modes.length > 0);
-          return (
-            <>
-              {hasModes && (
-                <foreignObject x={x0} y={yPills} width={selectW} height={pillH}>
-                  <select
-                    className="scramble-hist-mode-select"
-                    value={activeMode}
-                    onChange={(e) => onModeChange?.(e.target.value)}
-                  >
-                    {modes!.map((m) => (
-                      <option key={m.key} value={m.key}>{m.label}</option>
-                    ))}
-                  </select>
-                </foreignObject>
-              )}
-              {/* 色片 + stats */}
-              {series.map((s, i) => {
-                const rowStart = hasModes ? (yPills + pillH + 8) : (PAD.t + 6);
-                const y0 = rowStart + i * 28;
-                const chipSize = 12, chipGap = 3;
-                const chips = s.fillColors.length > 0 ? s.fillColors : ['#8B7D72'];
-                const chipsW = chips.length * chipSize + Math.max(0, chips.length - 1) * chipGap;
-                const clickable = !!s.onLegendClick;
-                return (
-                  <g
-                    key={`lg${i}`}
-                    onClick={s.onLegendClick}
-                    style={clickable ? { cursor: 'pointer' } : undefined}
-                    className={clickable ? 'scramble-hist-legend-clickable' : undefined}
-                  >
-                    {clickable && <title>{s.legendHint ?? 'Click to cycle'}</title>}
-                    {clickable && <rect x={x0 - 4} y={y0 - 4} width={Math.max(220, chipsW + 160)} height={24} fill="transparent" />}
-                    {chips.map((c, ci) => {
-                      const cx = x0 + ci * (chipSize + chipGap);
-                      const needStroke = needsStroke([c]);
-                      return (
-                        <rect
-                          key={`chip${ci}`}
-                          x={cx} y={y0}
-                          width={chipSize} height={chipSize}
-                          fill={c}
-                          stroke={needStroke ? '#CCCAC2' : undefined}
-                          strokeWidth={needStroke ? 1 : 0}
-                        />
-                      );
-                    })}
-                  </g>
-                );
-              })}
-            </>
-          );
-        })()}
       </svg>
+      {/* Legend 作为独立 HTML 叠在 SVG 左上；不放进 SVG 避免 viewBox 缩放导致字号变小 */}
+      <div className="scramble-hist-legend">
+        {setOptions && setOptions.length > 0 && (
+          <select
+            className="scramble-hist-legend-select"
+            value={activeSet}
+            onChange={(e) => onSetChange?.(e.target.value)}
+          >
+            {setOptions.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+        )}
+        {modes && modes.length > 0 && (
+          <select
+            className="scramble-hist-legend-select scramble-hist-legend-select-mode"
+            value={activeMode}
+            onChange={(e) => onModeChange?.(e.target.value)}
+          >
+            {modes.map((m) => (
+              <option key={m.key} value={m.key}>{m.label}</option>
+            ))}
+          </select>
+        )}
+        {series.map((s, i) => {
+          const chips = s.fillColors.length > 0 ? s.fillColors : ['#8B7D72'];
+          const clickable = !!s.onLegendClick;
+          return (
+            <div
+              key={`lg${i}`}
+              className={`scramble-hist-legend-chips${clickable ? ' clickable' : ''}`}
+              onClick={s.onLegendClick}
+              title={clickable ? s.legendHint : undefined}
+            >
+              {chips.map((c, ci) => (
+                <span
+                  key={`chip${ci}`}
+                  className={`scramble-hist-legend-chip${needsStroke([c]) ? ' with-stroke' : ''}`}
+                  style={{ background: c }}
+                />
+              ))}
+            </div>
+          );
+        })}
+        {(onChartModeToggle || onYModeToggle) && (
+          <div className="scramble-hist-legend-toggles">
+            {onChartModeToggle && (
+              <button
+                className="scramble-hist-legend-btn"
+                onClick={onChartModeToggle}
+                title={`Switch to ${chartMode === 'pdf' ? 'CDF' : 'PDF'}`}
+              >
+                {chartMode === 'pdf' ? 'PDF' : 'CDF'}
+              </button>
+            )}
+            {onYModeToggle && (
+              <button
+                className="scramble-hist-legend-btn"
+                onClick={onYModeToggle}
+                title={`Switch to ${yMode === 'percent' ? 'count' : '%'}`}
+              >
+                {yModeLabel ?? (yMode === 'percent' ? '%' : 'count')}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
