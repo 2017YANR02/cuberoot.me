@@ -3,6 +3,7 @@
  * Trainer 首页 — PLL / OLL / ZBLL / ZBLS 公式集卡片网格。
  */
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import pllMap from '@cuberoot/shared/data/pll.json';
 import ollMap from '@cuberoot/shared/data/oll.json';
 import zbllMap from '@cuberoot/shared/data/zbll.json';
@@ -37,11 +38,13 @@ const algSets = [
 ];
 
 export function HomePage() {
+  const { i18n } = useTranslation();
+  const isZh = i18n.language === 'zh';
   return (
     <div className="home-page">
       <header className="home-header">
         <h1>🧊 CubeRoot Trainer</h1>
-        <p className="subtitle">公式训练器 · Algorithm Trainer</p>
+        <p className="subtitle">{isZh ? '公式训练器' : 'Algorithm Trainer'}</p>
       </header>
 
       <div className="alg-set-grid">

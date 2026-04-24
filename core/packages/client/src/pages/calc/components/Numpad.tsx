@@ -4,6 +4,7 @@
 // 行为规则 1:1 还原自 D:\cube\副本\legacy\calc\js\input_grid.js
 
 import { useCallback, useRef, useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useCalcStore, isMbfForEvent } from '../stores/calc_store';
 import {
   DNF_VALUE, formatTime, textToTime, textToMbfScore, clampValue,
@@ -127,6 +128,8 @@ function tryAutoAdvance(rawVal: string, p: number, t: number) {
 }
 
 export function Numpad() {
+  const { i18n } = useTranslation();
+  const isZh = i18n.language === 'zh';
   const state = useCalcStore();
   const [target, setTarget] = useState<[number, number]>([-1, -1]);
 
@@ -509,7 +512,7 @@ export function Numpad() {
     { content: '4', action: () => pressDigit('4'), cls: 'np-digit' },
     { content: '5', action: () => pressDigit('5'), cls: 'np-digit' },
     { content: '6', action: () => pressDigit('6'), cls: 'np-digit' },
-    { content: 'Rand', action: pressRand, cls: 'np-op' },
+    { content: isZh ? '随机' : 'Rand', action: pressRand, cls: 'np-op' },
     { content: '7', action: () => pressDigit('7'), cls: 'np-digit' },
     { content: '8', action: () => pressDigit('8'), cls: 'np-digit' },
     { content: '9', action: () => pressDigit('9'), cls: 'np-digit' },

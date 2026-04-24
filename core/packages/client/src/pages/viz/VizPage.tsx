@@ -3,6 +3,7 @@
 // 1:1 翻译自 viz/index.html 的 DOM 结构 + viz.js init() 的初始化逻辑
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { WcaPersonPicker } from '@cuberoot/shared';
 import { useVizStore } from './stores/viz_store';
 import { download as downloadCsv } from './engine/csv_export';
@@ -39,6 +40,8 @@ const EVENTS = [
 ];
 
 export default function VizPage() {
+  const { i18n } = useTranslation();
+  const isZh = i18n.language === 'zh';
   const players = useVizStore(s => s.players);
   const currentEventId = useVizStore(s => s.currentEventId);
   const addPlayer = useVizStore(s => s.addPlayer);
@@ -123,14 +126,18 @@ export default function VizPage() {
 
   // NOTE: 标题文本
   const evLabel = currentEventId === '333' ? '3×3' : currentEventId;
-  let titleText = 'Distribution Evolution';
+  let titleText = isZh ? '分布演变' : 'Distribution Evolution';
   let metaText = '';
   if (players.length === 1) {
     const p = players[0];
-    titleText = `${p.nameZh} ${evLabel} 分布演变`;
+    titleText = isZh
+      ? `${p.nameZh} ${evLabel} 分布演变`
+      : `${p.name} ${evLabel} Distribution Evolution`;
     metaText = `${p.name} · ${p.wcaId} · ${p.solveData.length} solves`;
   } else if (players.length > 1) {
-    titleText = players.map(p => p.nameZh).join(' vs ') + ` ${evLabel} 分布对比`;
+    titleText = isZh
+      ? players.map(p => p.nameZh).join(' vs ') + ` ${evLabel} 分布对比`
+      : players.map(p => p.name).join(' vs ') + ` ${evLabel} Distribution Comparison`;
     metaText = players.map(p => `${p.name}(${p.solveData.length})`).join(' · ');
   }
 
@@ -150,7 +157,7 @@ export default function VizPage() {
         <div className="toolbar-search">
           <WcaPersonPicker
             mode="inline"
-            placeholder="搜索选手..."
+            placeholder={isZh ? '搜索选手...' : 'Search cuber...'}
             onSelect={handlePersonSelect}
           />
         </div>
@@ -165,7 +172,7 @@ export default function VizPage() {
           ))}
         </select>
         <div style={{ position: 'relative' }}>
-          <button className="toolbar-btn" title="下载 CSV" onClick={handleCsvDownload}>
+          <button className="toolbar-btn" title={isZh ? '下载 CSV' : 'Download CSV'} onClick={handleCsvDownload}>
             📥 CSV
           </button>
           {csvMenuOpen && players.length > 1 && (
@@ -192,9 +199,9 @@ export default function VizPage() {
         <PlayControls />
 
         <div className="shortcuts-hint">
-          <kbd>Space</kbd> 播放/暂停&nbsp;
-          <kbd>←</kbd><kbd>→</kbd> 步进&nbsp;
-          <kbd>Shift</kbd>+<kbd>←</kbd><kbd>→</kbd> 快进
+          <kbd>Space</kbd> {isZh ? '播放/暂停' : 'Play/Pause'}&nbsp;
+          <kbd>←</kbd><kbd>→</kbd> {isZh ? '步进' : 'Step'}&nbsp;
+          <kbd>Shift</kbd>+<kbd>←</kbd><kbd>→</kbd> {isZh ? '快进' : 'Fast-forward'}
         </div>
 
         <RidgelineCanvas highlightSolveIdx={ridgeHighlight} />

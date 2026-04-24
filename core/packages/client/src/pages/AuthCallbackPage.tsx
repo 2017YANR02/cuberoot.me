@@ -4,10 +4,13 @@
  * 替代根目录 callback.html，使 React 应用在所有环境下自包含处理 OAuth 回调
  */
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const ME_URL = 'https://www.worldcubeassociation.org/api/v0/me';
 
 export default function AuthCallbackPage() {
+  const { i18n } = useTranslation();
+  const isZh = i18n.language === 'zh';
   const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
@@ -23,19 +26,19 @@ export default function AuthCallbackPage() {
     const error = params.get('error');
 
     if (error) {
-      setErrorMsg(`授权被拒绝: ${error}`);
+      setErrorMsg(isZh ? `授权被拒绝: ${error}` : `Authorization denied: ${error}`);
       return;
     }
 
     if (!accessToken) {
-      setErrorMsg('未获取到 access_token');
+      setErrorMsg(isZh ? '未获取到 access_token' : 'No access_token received');
       return;
     }
 
     // NOTE: 验证 state 防 CSRF
     const savedState = sessionStorage.getItem('wca_oauth_state');
     if (!savedState || savedState !== state) {
-      setErrorMsg('OAuth state 不匹配，请重试');
+      setErrorMsg(isZh ? 'OAuth state 不匹配，请重试' : 'OAuth state mismatch, please retry');
       return;
     }
     sessionStorage.removeItem('wca_oauth_state');
@@ -85,7 +88,7 @@ export default function AuthCallbackPage() {
       sessionStorage.removeItem('wca_return_url');
       window.location.href = returnUrl;
     } catch (err) {
-      setErrorMsg(`登录失败: ${(err as Error).message}`);
+      setErrorMsg(isZh ? `登录失败: ${(err as Error).message}` : `Login failed: ${(err as Error).message}`);
     }
   }
 
@@ -99,7 +102,7 @@ export default function AuthCallbackPage() {
         <div style={{ textAlign: 'center' }}>
           <div style={{ color: '#f87171', fontSize: '1.1rem' }}>❌ {errorMsg}</div>
           <div style={{ marginTop: 12 }}>
-            <a href="/recon" style={{ color: '#60a5fa' }}>返回复盘</a>
+            <a href="/recon" style={{ color: '#60a5fa' }}>{isZh ? '返回复盘' : 'Back to Recon'}</a>
           </div>
         </div>
       </div>
@@ -119,7 +122,7 @@ export default function AuthCallbackPage() {
           borderTopColor: '#60a5fa', borderRadius: '50%',
           animation: 'spin 0.8s linear infinite', marginBottom: 12,
         }} />
-        <div>正在登录 WCA...</div>
+        <div>{isZh ? '正在登录 WCA...' : 'Signing in to WCA...'}</div>
       </div>
     </div>
   );

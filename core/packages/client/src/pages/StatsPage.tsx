@@ -4,6 +4,7 @@
  * 从 sessionStore 的识别结果中统计每个 case 的表现
  */
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useSessionStore } from '../stores/sessionStore';
 import { resultTimeMs, type RecognitionResult } from '../utils/pllHelpers';
 import pllMap from '@cuberoot/shared/data/pll.json';
@@ -17,10 +18,12 @@ const allCaseNames = Object.keys(pllMap);
 export function StatsPage() {
   const { algSetId } = useParams<{ algSetId: string }>();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+  const isZh = i18n.language === 'zh';
   const results = useSessionStore((s) => s.results);
 
   if (algSetId !== 'pll') {
-    return <div className="error-page">公式集未找到</div>;
+    return <div className="error-page">{t('caseSelect.notFound')}</div>;
   }
 
   // 按 case name 分组统计
@@ -42,24 +45,26 @@ export function StatsPage() {
     <div className="stats-page">
       <header className="page-header">
         <button className="back-btn" onClick={() => navigate(`/select/${algSetId}`)}>
-          ← 返回
+          {t('caseSelect.back')}
         </button>
-        <h1>PLL 统计</h1>
+        <h1>{isZh ? 'PLL 统计' : 'PLL Stats'}</h1>
       </header>
 
       {statsByCase.size === 0 ? (
         <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '3rem' }}>
-          还没有训练记录，开始训练后这里会显示统计数据。
+          {isZh
+            ? '还没有训练记录，开始训练后这里会显示统计数据。'
+            : 'No training records yet. Stats will appear here after you start training.'}
         </p>
       ) : (
         <table className="stats-table">
           <thead>
             <tr>
               <th>Case</th>
-              <th>次数</th>
-              <th>正确</th>
-              <th>平均</th>
-              <th>最佳</th>
+              <th>{isZh ? '次数' : 'Count'}</th>
+              <th>{isZh ? '正确' : 'Correct'}</th>
+              <th>{isZh ? '平均' : 'Avg'}</th>
+              <th>{isZh ? '最佳' : 'Best'}</th>
             </tr>
           </thead>
           <tbody>

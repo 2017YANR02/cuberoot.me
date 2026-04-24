@@ -218,7 +218,7 @@ export default function HistoryPanel() {
     return (
       <div className="history-panel">
         <div className="history-header">
-          <span className="history-title">📋 History</span>
+          <span className="history-title">📋 {locale === 'zh' ? '历史' : 'History'}</span>
           <span className="history-stats"></span>
         </div>
         {/* 工具按钮（即使空列表也能手动输入/导入） */}
@@ -233,7 +233,7 @@ export default function HistoryPanel() {
             📂 {locale === 'zh' ? '导入' : 'Import'}
           </button>
         </div>
-        <div className="history-empty">No solves yet</div>
+        <div className="history-empty">{locale === 'zh' ? '暂无成绩' : 'No solves yet'}</div>
         {popup === 'manual' && <ManualInputDialog onClose={() => setPopup(null)} />}
         {toastMsg && <div className="milestone-toast show">{toastMsg}</div>}
       </div>
@@ -264,7 +264,7 @@ export default function HistoryPanel() {
     <div className="history-panel">
       <div className="history-header">
         <span className="history-title">📋 History</span>
-        <span className="history-stats">{history.length} solves</span>
+        <span className="history-stats">{history.length} {locale === 'zh' ? '次' : 'solves'}</span>
       </div>
 
       {/* 功能按钮行 */}

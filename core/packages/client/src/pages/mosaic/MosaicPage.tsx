@@ -1,0 +1,87 @@
+import { lazy, Suspense } from 'react';
+import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { useMosaicStore } from './state/store';
+import type { Stage } from './state/types';
+import LangToggle from '../../components/LangToggle';
+import { getLangQuery } from '../../i18n';
+import './mosaic.css';
+
+const UploadStage = lazy(() => import('./stages/UploadStage'));
+const CropStage = lazy(() => import('./stages/CropStage'));
+const MethodChooseStage = lazy(() => import('./stages/MethodChooseStage'));
+const VariantChooseStage = lazy(() => import('./stages/VariantChooseStage'));
+const AdjustStage = lazy(() => import('./stages/AdjustStage'));
+const PaletteStage = lazy(() => import('./stages/PaletteStage'));
+
+const STAGE_TITLE_KEY: Record<Stage, string> = {
+  'upload': 'mosaic.topbar.upload',
+  'crop': 'mosaic.topbar.crop',
+  'choose-method': 'mosaic.topbar.chooseMethod',
+  'choose-variant': 'mosaic.topbar.chooseVariant',
+  'adjust': 'mosaic.topbar.adjust',
+  'palette': 'mosaic.topbar.palette',
+};
+
+function stageComponent(stage: Stage) {
+  switch (stage) {
+    case 'upload': return <UploadStage />;
+    case 'crop': return <CropStage />;
+    case 'choose-method': return <MethodChooseStage />;
+    case 'choose-variant': return <VariantChooseStage />;
+    case 'adjust': return <AdjustStage />;
+    case 'palette': return <PaletteStage />;
+  }
+}
+
+export default function MosaicPage() {
+  const { t } = useTranslation();
+  const stage = useMosaicStore(s => s.stage);
+  const resetAll = useMosaicStore(s => s.resetAll);
+  const goToStage = useMosaicStore(s => s.goToStage);
+  const openPalette = useMosaicStore(s => s.openPalette);
+  const closePalette = useMosaicStore(s => s.closePalette);
+
+  // Build back-button behavior based on stage
+  const backAction: { label: string; fn: () => void } | null = (() => {
+    if (stage === 'upload') return null;
+    if (stage === 'palette') return { label: t('mosaic.topbar.done'), fn: closePalette };
+    if (stage === 'crop') return { label: t('mosaic.topbar.newMosaic'), fn: resetAll };
+    if (stage === 'choose-method') return { label: t('mosaic.topbar.backCrop'), fn: () => goToStage('crop') };
+    if (stage === 'choose-variant') return { label: t('mosaic.topbar.backMethod'), fn: () => goToStage('choose-method') };
+    if (stage === 'adjust') return { label: t('mosaic.topbar.backVariant'), fn: () => goToStage('choose-variant') };
+    return null;
+  })();
+
+  return (
+    <div className="mosaic-page">
+      <div className="mosaic-topbar">
+        <div className="mosaic-topbar-left">
+          <Link to={`/${getLangQuery()}`} className="mosaic-back" title={t('common.backToHome')}>← {t('common.backToHome')}</Link>
+          {backAction && (
+            <button className="mosaic-back" onClick={backAction.fn}>{backAction.label}</button>
+          )}
+          <div>
+            <h1 className="mosaic-title">{t('mosaic.name')}</h1>
+            <p className="mosaic-subtitle">{t(STAGE_TITLE_KEY[stage])}</p>
+          </div>
+        </div>
+        <div className="mosaic-topbar-left">
+          {stage !== 'palette' && stage !== 'upload' && (
+            <button className="mosaic-btn" onClick={openPalette}>🎨 {t('mosaic.topbar.palette')}</button>
+          )}
+          {(stage === 'choose-method' || stage === 'choose-variant' || stage === 'adjust') && (
+            <button className="mosaic-btn" onClick={resetAll}>＋ {t('mosaic.topbar.newMosaic')}</button>
+          )}
+          <LangToggle variant="inline" />
+        </div>
+      </div>
+
+      <div className="mosaic-main">
+        <Suspense fallback={<div style={{ textAlign: 'center', padding: 40 }}>…</div>}>
+          {stageComponent(stage)}
+        </Suspense>
+      </div>
+    </div>
+  );
+}

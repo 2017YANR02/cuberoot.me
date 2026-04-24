@@ -1,45 +1,50 @@
 // NOTE: 指标对比表格 — 从 calc_table.js 迁移
 // 显示 Best/Worst/Average/BPA/WPA/Mo2~Mo4 等所有计算指标
 
+import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useCalcStore, isMo3ForEvent, isMbfForEvent } from '../stores/calc_store';
 import { DNF_VALUE, formatTime, CalcEngine } from '../engine/calc_engine';
 
-// NOTE: 指标行定义 — key 对应 ComputeResult 的属性
-const AO5_METRICS = [
-  { key: 'best', label: 'Best' },
-  { key: 'worst', label: 'Worst' },
-  { key: 'avg', label: 'Average' },
-  { key: 'bpa', label: 'BPA' },
-  { key: 'wpa', label: 'WPA' },
-  { key: 'bao5', label: 'BAo5' },
-  { key: 'wao5', label: 'WAo5' },
-  { key: 'mo5', label: 'Mo5' },
-  { key: 'mo4', label: 'Best Mo4' },
-  { key: 'mo3', label: 'Best Mo3' },
-  { key: 'mo2', label: 'Best Mo2' },
-  { key: 'bestC', label: 'Best Counting' },
-  { key: 'median', label: 'Median' },
-  { key: 'worstC', label: 'Worst Counting' },
-  { key: 'variance', label: 'Variance (s²)' },
-  { key: 'bestAvgRatio', label: 'Best/Avg' },
-];
-
-const MO3_METRICS = [
-  { key: 'best', label: 'Best' },
-  { key: 'worst', label: 'Worst' },
-  { key: 'avg', label: 'Mean' },
-  { key: 'mo3', label: 'Mo3' },
-  { key: 'mo2', label: 'Best Mo2' },
-  { key: 'variance', label: 'Variance (s²)' },
-  { key: 'bestAvgRatio', label: 'Best/Avg' },
-];
-
 export function CalcTable() {
+  const { i18n } = useTranslation();
+  const isZh = i18n.language === 'zh';
   const state = useCalcStore();
   const mo3 = isMo3ForEvent(state.event);
   const isMbf = isMbfForEvent(state.event);
   const isMove = state.event === '333fm';
-  const metrics = mo3 ? MO3_METRICS : AO5_METRICS;
+
+  // NOTE: 指标行定义 — key 对应 ComputeResult 的属性; 随语言变化, useMemo 稳定引用
+  const metrics = useMemo(() => {
+    const AO5_METRICS = [
+      { key: 'best', label: isZh ? '最好' : 'Best' },
+      { key: 'worst', label: isZh ? '最差' : 'Worst' },
+      { key: 'avg', label: isZh ? '平均' : 'Average' },
+      { key: 'bpa', label: 'BPA' },
+      { key: 'wpa', label: 'WPA' },
+      { key: 'bao5', label: 'BAo5' },
+      { key: 'wao5', label: 'WAo5' },
+      { key: 'mo5', label: 'Mo5' },
+      { key: 'mo4', label: isZh ? '最好 Mo4' : 'Best Mo4' },
+      { key: 'mo3', label: isZh ? '最好 Mo3' : 'Best Mo3' },
+      { key: 'mo2', label: isZh ? '最好 Mo2' : 'Best Mo2' },
+      { key: 'bestC', label: isZh ? '最好计入成绩' : 'Best Counting' },
+      { key: 'median', label: isZh ? '中位数' : 'Median' },
+      { key: 'worstC', label: isZh ? '最差计入成绩' : 'Worst Counting' },
+      { key: 'variance', label: isZh ? '方差 (s²)' : 'Variance (s²)' },
+      { key: 'bestAvgRatio', label: isZh ? '最好/平均' : 'Best/Avg' },
+    ];
+    const MO3_METRICS = [
+      { key: 'best', label: isZh ? '最好' : 'Best' },
+      { key: 'worst', label: isZh ? '最差' : 'Worst' },
+      { key: 'avg', label: isZh ? '均值' : 'Mean' },
+      { key: 'mo3', label: 'Mo3' },
+      { key: 'mo2', label: isZh ? '最好 Mo2' : 'Best Mo2' },
+      { key: 'variance', label: isZh ? '方差 (s²)' : 'Variance (s²)' },
+      { key: 'bestAvgRatio', label: isZh ? '最好/平均' : 'Best/Avg' },
+    ];
+    return mo3 ? MO3_METRICS : AO5_METRICS;
+  }, [isZh, mo3]);
 
   // NOTE: 计算两个选手的指标
   const results = [0, 1].map(p => {
@@ -73,12 +78,12 @@ export function CalcTable() {
   return (
     <details id="calc-section">
       <summary className="stats-toggle">
-        📊 Statistics
+        {isZh ? '📊 统计' : '📊 Statistics'}
       </summary>
       <table id="calc-table">
         <thead>
           <tr>
-            <th>Metric</th>
+            <th>{isZh ? '指标' : 'Metric'}</th>
             <th>{state.names[state.seedOn] || 'A'}</th>
             {state.playerEnabled[1] && (
               <th>{state.names[state.seedOn + 1] || 'B'}</th>

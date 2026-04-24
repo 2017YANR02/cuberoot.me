@@ -120,7 +120,29 @@
     "gestureUp": "slide up",
     "gestureDouble": "double tap",
     "gestureHold": "hold",
-    "gestureBracket": "() down/up"
+    "gestureBracket": "() down/up",
+    "notFound": "Not found",
+    "col": {
+      "single": "Single",
+      "round": "Rnd#",
+      "average": "Avg",
+      "aoxr": "AoXR",
+      "result": "Result",
+      "stm": "STM",
+      "tps": "TPS",
+      "id": "#"
+    },
+    "round": {
+      "final": "Final",
+      "semi": "Semi",
+      "combined": "Combined",
+      "numbered": "Round {{n}}"
+    },
+    "badge": {
+      "nonWca": "Non-WCA",
+      "singleRecord": "Single Record",
+      "averageRecord": "Average Record"
+    }
   },
   "wcaStats": {
     "title": "WCA Statistics",
@@ -460,6 +482,104 @@
     },
     "loading": {
       "title": "Loading video…"
+    }
+  },
+  "mosaic": {
+    "name": "Mosaic Builder",
+    "desc": "Turn any photo into a Rubik's-cube mosaic pattern + printable PDF",
+    "topbar": {
+      "upload": "Upload an image",
+      "crop": "Resize & crop",
+      "chooseMethod": "Pick a style",
+      "chooseVariant": "Pick a variation",
+      "adjust": "Fine-tune & export",
+      "palette": "Palette editor",
+      "done": "Done",
+      "newMosaic": "New mosaic",
+      "backCrop": "← Back to crop",
+      "backMethod": "← Back to styles",
+      "backVariant": "← Back to variations"
+    },
+    "upload": {
+      "title": "Drop an image here or click to choose",
+      "hint": "JPEG / PNG / WebP · max 15 MB",
+      "errNotImage": "File is not an image",
+      "errTooLarge": "File is too large (max 15 MB)",
+      "errRead": "Failed to read file"
+    },
+    "faq": {
+      "q1": "What is this?",
+      "a1": "Artists build Rubik's-cube mosaics from hundreds or thousands of cubes. The hardest part is converting a photo into a 6-color pixelated version. This tool does that for you and produces a printable PDF assembly guide.",
+      "q2": "Does it work with black stickers?",
+      "a2": "Yes. Open the Palette editor and enable black. You can add, remove, or recolor the palette however you like.",
+      "q3": "Can I upload a pre-made miniature?",
+      "a3": "Yes. If you already have a pixel-perfect miniature (e.g. 60x90 px for a 20x30 cube mosaic), rename it to start with 'miniature' and drop it in — the tool will skip straight to the export stage.",
+      "q4": "Why do some images work better than others?",
+      "a4": "High-contrast, well-lit source photos work best. Beauty filters that smooth facial features tend to destroy the information the dithering step needs. Grayscale photos are fine."
+    },
+    "crop": {
+      "width": "Width",
+      "height": "Height",
+      "cubeSize": "Cube size",
+      "cubes": "cubes",
+      "pixels": "pixels",
+      "pixelArt": "1 pixel (pixel art)",
+      "next": "Next",
+      "working": "Cropping…",
+      "hint": "Scroll to zoom, drag to move, drag corners to resize."
+    },
+    "method": {
+      "gradient": "Gradient",
+      "errorDiffusion": "Diffusion",
+      "ordered": "Ordered dither",
+      "closest": "Closest color",
+      "errorDiffusionWithout": "Diffusion (palette variations)",
+      "withDark": "With dark color: {{arg}}"
+    },
+    "adjust": {
+      "exportPdf": "Download PDF",
+      "params": "Method parameters",
+      "effects": "Image effects",
+      "resetEffects": "Reset all effects",
+      "pdfOptions": "PDF options",
+      "blockSize": "Block size",
+      "bottomToTop": "Output bottom-to-top",
+      "drawLetters": "Draw letters in squares",
+      "bwPrinter": "Black-and-white printer",
+      "preview": "Preview",
+      "plastic": "Plastic",
+      "plasticColor": "Colored (sticker)",
+      "plasticWhite": "White plastic",
+      "plasticBlack": "Black plastic",
+      "downloadPreview": "Download preview ({{size}})"
+    },
+    "fx": {
+      "sharpen": "Sharpen",
+      "brightness": "Brightness",
+      "contrast": "Contrast",
+      "saturation": "Saturation",
+      "vibrance": "Vibrance",
+      "hue": "Hue",
+      "noise": "Noise"
+    },
+    "palette": {
+      "available": "Use",
+      "name": "Name",
+      "color": "Color",
+      "letter": "Letter",
+      "grad": "Gradient",
+      "de": "DE",
+      "reset": "Reset to defaults",
+      "resetConfirm": "Reset palette? Unsaved changes will be lost.",
+      "simple": "Simple mode",
+      "advanced": "Advanced",
+      "addColor": "Add color",
+      "export": "Export JSON",
+      "import": "Import JSON",
+      "errParse": "Invalid JSON file",
+      "defaultNote": "Default palette matches standard Rubik's-cube sticker colors.",
+      "advancedNote": "Gradient: use this color in the gradient method. DE: also produce a diffusion variant without this color.",
+      "defaults": "See default colors"
     }
   }
 }
