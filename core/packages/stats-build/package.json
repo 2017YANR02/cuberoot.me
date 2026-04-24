@@ -5,9 +5,11 @@
   "type": "module",
   "scripts": {
     "compute": "tsx src/bin/compute.ts",
-    "validate": "tsx src/bin/validate.ts"
+    "validate": "tsx src/bin/validate.ts",
+    "nemesizer": "tsx src/bin/nemesizer.ts"
   },
   "dependencies": {
+    "@cuberoot/shared": "workspace:*",
     "mysql2": "^3.11.0",
     "yaml": "^2.6.0"
   },

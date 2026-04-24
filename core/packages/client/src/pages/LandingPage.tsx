@@ -484,7 +484,9 @@ export default function LandingPage() {
         <a href="https://github.com/carykh/hthgrapher" target="_blank" rel="noopener noreferrer">carykh</a> ·{' '}
         <a href="https://github.com/MatteoColombo/cube_challenge_timer" target="_blank" rel="noopener noreferrer">MatteoColombo</a> ·{' '}
         <a href="https://github.com/cs0x7f/cstimer" target="_blank" rel="noopener noreferrer">cs0x7f</a> ·{' '}
-        <a href="https://github.com/MeigenChou/DCTimer-Android" target="_blank" rel="noopener noreferrer">MeigenChou</a>
+        <a href="https://github.com/MeigenChou/DCTimer-Android" target="_blank" rel="noopener noreferrer">MeigenChou</a> ·{' '}
+        <a href="https://github.com/Roman-/mosaic" target="_blank" rel="noopener noreferrer">Roman-</a> ·{' '}
+        <a href="https://nemesizer.com" target="_blank" rel="noopener noreferrer">nemesizer.com</a>
       </div>
 
       <div className="footer">
