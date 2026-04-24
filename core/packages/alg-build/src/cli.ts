@@ -283,6 +283,7 @@ async function processGroup(
       g.topDir,
       overrideEntry,
       title,
+      outRoot,
     );
     algset.warningCount = totalWarnings;
     if (!algset.thumb) {
