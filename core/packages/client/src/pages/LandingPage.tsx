@@ -2,17 +2,18 @@
  * Toolkit 全站入口页
  * NOTE: 粒子动画代码保留但不挂载（SHOW_PARTICLES=false），方便将来复用
  */
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   BarChart3, Film, ScanSearch, Calculator as CalculatorIcon, LineChart,
   Swords, Target, CalendarDays, Puzzle, BookOpen, Globe as GlobeIcon,
-  Shuffle, Library, Compass, Grid2x2,
+  Shuffle, Library, Compass, Grid2x2, Heart,
   type LucideIcon,
 } from 'lucide-react';
 import { useAuthStore } from '../stores/auth_store';
 import LandingCubeHero from './LandingCubeHero';
+import DonateModal from './DonateModal';
 import './landing.css';
 
 // NOTE: 粒子动画开关 — 当前落地页走浅色主题，不需要粒子背景
@@ -347,6 +348,7 @@ export default function LandingPage() {
   const user = useAuthStore((s) => s.user);
   const login = useAuthStore((s) => s.login);
   const logout = useAuthStore((s) => s.logout);
+  const [donateOpen, setDonateOpen] = useState(false);
 
   useParticles(SHOW_PARTICLES ? canvasRef : { current: null });
 
@@ -538,6 +540,15 @@ export default function LandingPage() {
           <span>GitHub</span>
         </a>
 
+        <button
+          className="footer-donate"
+          onClick={() => setDonateOpen(true)}
+          title={lang === 'zh' ? '赞助' : 'Donate'}
+        >
+          <Heart size={14} strokeWidth={1.8} />
+          <span>{lang === 'zh' ? '赞助' : 'Donate'}</span>
+        </button>
+
         <button className="lang-toggle" onClick={toggleLang}>
           <span className="globe-icon">🌐</span>
           <span className="lang-label">{lang === 'zh' ? 'English' : '中文'}</span>
@@ -569,6 +580,8 @@ export default function LandingPage() {
           </div>
         );
       })()}
+
+      {donateOpen && <DonateModal lang={lang} onClose={() => setDonateOpen(false)} />}
     </div>
   );
 }
