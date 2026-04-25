@@ -4,6 +4,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { searchPersons } from '../api/wca_search';
+import { loadPersonsIndex, searchLocalPersons } from '../api/persons_index';
 import type { WcaPerson } from '../types';
 import './WcaPersonPicker.css';
 
@@ -46,6 +47,14 @@ export function WcaPersonPicker({
   const [hasSearched, setHasSearched] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
+  // 异步 API 回包到达时校验是否仍是最新 query —— 防止 typo→快速改回时被旧请求覆盖
+  const lastQueryRef = useRef('');
+
+  // 后台预拉本地 persons 索引（首次有效，之后命中 HTTP 缓存）
+  useEffect(() => {
+    if (!open) return;
+    loadPersonsIndex().catch(() => { /* 失败时 fallback 到 WCA API */ });
+  }, [open]);
 
   // NOTE: 面板打开时自动聚焦搜索框
   useEffect(() => {
@@ -66,9 +75,10 @@ export function WcaPersonPicker({
     return () => document.removeEventListener('keydown', handler);
   }, [open, mode, onClose]);
 
-  // NOTE: 搜索逻辑 — debounce + 最小字符数
+  // 搜索：本地索引命中即出，无命中或未加载完则 fallback WCA API（debounce 300ms）
   const doSearch = useCallback((q: string) => {
     const trimmed = q.trim();
+    lastQueryRef.current = trimmed;
     const minLen = hasChinese(trimmed) ? MIN_QUERY_LEN_ZH : MIN_QUERY_LEN_EN;
     if (trimmed.length < minLen) {
       setResults([]);
@@ -77,10 +87,20 @@ export function WcaPersonPicker({
     }
 
     if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    const local = searchLocalPersons(trimmed, 20);
+    if (local && local.length > 0) {
+      setLoading(false);
+      setHasSearched(true);
+      setResults(local);
+      return;
+    }
+
     debounceRef.current = setTimeout(async () => {
       setLoading(true);
       setHasSearched(true);
       const persons = await searchPersons(trimmed);
+      if (lastQueryRef.current !== trimmed) return;
       setResults(persons);
       setLoading(false);
     }, DEBOUNCE_MS);

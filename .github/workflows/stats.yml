@@ -106,6 +106,10 @@ jobs:
         working-directory: core/packages/stats-build
         run: npx tsx src/bin/gen_wr_ids.ts
 
+      - name: Generate persons search index
+        working-directory: core/packages/stats-build
+        run: npx tsx src/bin/gen_persons_search.ts
+
       - name: Compute index
         working-directory: core/packages/stats-build
         run: npx tsx src/bin/compute_index.ts
