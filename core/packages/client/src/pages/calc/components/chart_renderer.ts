@@ -138,7 +138,7 @@ export function initChart(container: HTMLDivElement): void {
   svgEl.appendChild(gLabels);
   svgEl.appendChild(gAvg);
 
-  // NOTE: overlay div — 用于 confetti 和 drag handle（在 SVG 上层）
+  // NOTE: overlay div — drag handle 容器（在 SVG 上层）
   gOverlay = document.createElement('div');
   gOverlay.style.cssText = 'position:relative;pointer-events:none;';
   container.appendChild(gOverlay);
@@ -934,35 +934,6 @@ function drawAverages(): void {
     }
     pSlot++;
   }
-}
-
-// ── confetti（WR 庆祝）— 原版 chart.js#192-215 ──
-
-// NOTE: 连发 3 波，期间吞掉新触发
-let confettiActive = false;
-
-export function showConfetti(): void {
-  if (confettiActive) return;
-  confettiActive = true;
-
-  import('canvas-confetti').then(({ default: confetti }) => {
-    for (let i = 0; i < 3; i++) {
-      setTimeout(() => {
-        confetti({
-          particleCount: 100,
-          spread: 80,
-          origin: { x: 0.5, y: 0.4 },
-          angle: 90,
-          colors: ['#FFD700', '#FF6B35', '#FF0000', '#00FF00', '#00BFFF', '#FF69B4'],
-          gravity: 1.2,
-          ticks: 200,
-          disableForReducedMotion: true,
-        });
-      }, i * 250);
-    }
-    // NOTE: 最后一波发出后约 3s 动画结束，解锁
-    setTimeout(() => { confettiActive = false; }, 500 + 3000);
-  });
 }
 
 /** NOTE: overlay div 引用 — 供 ChartDrag 创建 drag handle 使用 */
