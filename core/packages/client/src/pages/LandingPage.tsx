@@ -293,7 +293,7 @@ const TEXTS: Record<string, { en: string; zh: string }> = {
   mosaic:          { en: 'Mosaic', zh: '魔方马赛克' },
   blog:            { en: 'Blog', zh: '博客' },
   comingSoon:      { en: 'Coming soon', zh: '即将上线' },
-  creditsPrefix:   { en: 'Inspired by open-source projects from', zh: '致谢' },
+  creditsPrefix:   { en: 'Inspired by', zh: '致谢' },
 };
 
 // ── 卡片配置 ──────────────────────────────────────────────────────────────
