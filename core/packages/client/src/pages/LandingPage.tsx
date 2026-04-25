@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import {
   BarChart3, Film, ScanSearch, Calculator as CalculatorIcon, LineChart,
   Swords, Target, CalendarDays, Puzzle, BookOpen, Globe as GlobeIcon,
-  Shuffle, Library, Compass, Grid2x2, Heart,
+  Shuffle, Library, Compass, Grid2x2, Heart, Trophy,
   type LucideIcon,
 } from 'lucide-react';
 import { useAuthStore } from '../stores/auth_store';
@@ -292,6 +292,7 @@ const TEXTS: Record<string, { en: string; zh: string }> = {
   alg:             { en: 'Algorithms', zh: '公式教程' },
   sitesDirectory:  { en: 'Web Directory', zh: '魔方导航' },
   mosaic:          { en: 'Mosaic', zh: '魔方马赛克' },
+  worldBests:      { en: 'World Bests', zh: '非官方纪录' },
   blog:            { en: 'Blog', zh: '博客' },
   comingSoon:      { en: 'Coming soon', zh: '即将上线' },
   creditsPrefix:   { en: 'Inspired by', zh: '致谢' },
@@ -334,6 +335,7 @@ const CARDS: CardConfig[] = [
   { id: 'solver',      href: '/solver',          internal: true,  tier: 'standard',  Icon: Puzzle,         nameKey: 'solver' },
   { id: 'scramble',    href: '/scramble-stats',  internal: true,  tier: 'standard',  Icon: Shuffle,        nameKey: 'scramble' },
   { id: 'mosaic',      href: '/mosaic',          internal: true,  tier: 'standard',  Icon: Grid2x2,        nameKey: 'mosaic' },
+  { id: 'wb',          href: '/wb',              internal: true,  tier: 'standard',  Icon: Trophy,         nameKey: 'worldBests' },
   { id: 'site',        href: '/site',            internal: true,  tier: 'standard',  Icon: Compass,        nameKey: 'sitesDirectory' },
   // Tier 4 — Utility
   { id: 'cstimer',     href: '/cstimer',         internal: true,  tier: 'utility',   nameKey: 'cstimer', iconImg: import.meta.env.BASE_URL + 'cstimer_logo.png' },
