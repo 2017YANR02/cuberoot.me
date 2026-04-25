@@ -208,90 +208,6 @@ function buildRanks(
   return out;
 }
 
-// Precompute nemesis counts for every person.
-// nemesisCount[P] = |{Q : Q is nemesis of P}|
-// nemesizedCount[P] = |{Q : P is nemesis of Q}|
-function computeCounts(ranks: RankRecord[], personCount: number): { nemesisCount: Uint32Array; nemesizedCount: Uint32Array } {
-  console.log('[nemesizer] indexing ranks for counts...');
-  // Per (event, kind): sorted list of personIdx by worldRank asc
-  const byEk = new Array<number[]>(NEMESIZER_EVENTS.length * 2);
-  for (let i = 0; i < byEk.length; i++) byEk[i] = [];
-  const ranksByPerson: { ev: number; kind: number; rank: number }[][] = Array.from({ length: personCount }, () => []);
-  const rankOfPersonEk = new Map<number, number>();  // key = personIdx * 36 + ev*2 + kind
-  const ekKey = (p: number, ev: number, kind: number) => p * 36 + ev * 2 + kind;
-  const ekIdx = (ev: number, kind: number) => ev * 2 + kind;
-  for (const r of ranks) {
-    byEk[ekIdx(r.eventIdx, r.kind)].push(r.personIdx);
-    ranksByPerson[r.personIdx].push({ ev: r.eventIdx, kind: r.kind, rank: r.worldRank });
-    rankOfPersonEk.set(ekKey(r.personIdx, r.eventIdx, r.kind), r.worldRank);
-  }
-  // sort each ek list by rank
-  for (const ek of NEMESIZER_EVENTS) {
-    for (const kind of [KIND_SINGLE, KIND_AVERAGE]) {
-      const list = byEk[ekIdx(EVENT_INDEX[ek], kind)];
-      list.sort((a, b) => {
-        const ra = rankOfPersonEk.get(ekKey(a, EVENT_INDEX[ek], kind))!;
-        const rb = rankOfPersonEk.get(ekKey(b, EVENT_INDEX[ek], kind))!;
-        return ra - rb;
-      });
-    }
-  }
-  console.log('[nemesizer] computing nemesis counts...');
-  const nemesisCount = new Uint32Array(personCount);
-  const nemesizedCount = new Uint32Array(personCount);
-  const mark = new Uint8Array(personCount);
-  const touched: number[] = [];
-  let lastLog = Date.now();
-  for (let p = 0; p < personCount; p++) {
-    if (Date.now() - lastLog > 5000) {
-      console.log(`[nemesizer]   ${p}/${personCount}`);
-      lastLog = Date.now();
-    }
-    const eks = ranksByPerson[p];
-    if (eks.length === 0) continue;
-    // Compute nemesis list (people strictly better than p in every shared ek, AND share ≥ 1).
-    // Approach: initial candidates = union of "better prefix" across p's eks.
-    // Then filter out anyone who is WORSE-OR-EQUAL in any other shared ek of theirs with p.
-    for (const { ev, kind, rank } of eks) {
-      const list = byEk[ekIdx(ev, kind)];
-      // list is sorted; binary search for rank
-      let lo = 0, hi = list.length;
-      while (lo < hi) {
-        const mid = (lo + hi) >> 1;
-        const r = rankOfPersonEk.get(ekKey(list[mid], ev, kind))!;
-        if (r < rank) lo = mid + 1; else hi = mid;
-      }
-      for (let i = 0; i < lo; i++) {
-        const q = list[i];
-        if (mark[q] === 0) {
-          mark[q] = 1;
-          touched.push(q);
-        }
-      }
-    }
-    // Filter
-    let count = 0;
-    for (const q of touched) {
-      if (q === p) continue;
-      // check q is strictly better on every shared ek
-      let ok = true;
-      for (const { ev, kind, rank } of ranksByPerson[q]) {
-        const pr = rankOfPersonEk.get(ekKey(p, ev, kind));
-        if (pr === undefined) continue;  // not shared
-        if (rank >= pr) { ok = false; break; }
-      }
-      if (ok) {
-        count++;
-        nemesizedCount[q]++;
-      }
-    }
-    nemesisCount[p] = count;
-    for (const q of touched) mark[q] = 0;
-    touched.length = 0;
-  }
-  return { nemesisCount, nemesizedCount };
-}
-
 async function main() {
   const isMock = process.argv.includes('--mock');
   const raw = isMock ? makeMock() : await loadFromDb();
@@ -306,7 +222,12 @@ async function main() {
   const rankRecords = buildRanks(raw.ranks, personIdxByWcaId);
   console.log(`[nemesizer] ${rankRecords.length} rank records`);
 
-  const { nemesisCount, nemesizedCount } = computeCounts(rankRecords, personRecords.length);
+  // NOTE: precomputing per-person nemesis counts is O(N · prefix_size) and does not
+  // finish on the real WCA dataset (~286k persons). The reference impl at nemesizer.com
+  // computes the relation on-demand per query, and so does our client (nemesizerAlgo.ts).
+  // Counts are only consumed by StatsMode's leaderboards — leave them zeroed for now.
+  const nemesisCount = new Uint32Array(personRecords.length);
+  const nemesizedCount = new Uint32Array(personRecords.length);
 
   // Build meta
   const events = NEMESIZER_EVENTS.map(id => ({
