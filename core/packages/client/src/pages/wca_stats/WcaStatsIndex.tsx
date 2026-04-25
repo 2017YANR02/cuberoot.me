@@ -167,6 +167,19 @@ export default function WcaStatsIndex() {
       </div>
 
       <div className="wca-stats-index-body">
+        {(q === '' && activeCat === ALL) && (
+          <section className="wca-stats-index-section">
+            <div className="wca-stats-index-section-header">
+              <UserRound size={18} strokeWidth={1.75} />
+              <h2>{isZh ? '选手查询' : 'Persons'}</h2>
+            </div>
+            <div className="wca-stats-index-grid">
+              <Link to={`/wca-stats/persons${langQuery}`} className="wca-stats-index-card">
+                {isZh ? '查 WCA 个人成绩 / PR / 比赛历史' : 'Look up WCA results / PRs / competition history'}
+              </Link>
+            </div>
+          </section>
+        )}
         {(q === '' && (activeCat === ALL || activeCat === 'Nemesizer')) && (
           <section className="wca-stats-index-section">
             <div className="wca-stats-index-section-header">
