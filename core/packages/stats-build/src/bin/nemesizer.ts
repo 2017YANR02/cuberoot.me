@@ -36,6 +36,14 @@ const CONTINENT_ZH: Record<string, string> = {
   'South America': '南美洲',
 };
 
+async function phase<T>(label: string, fn: () => Promise<T> | T): Promise<T> {
+  console.log(`[nemesizer] ${label}...`);
+  const t0 = Date.now();
+  const r = await fn();
+  console.log(`[nemesizer]   ↳ ${label} done in ${((Date.now() - t0) / 1000).toFixed(2)}s`);
+  return r;
+}
+
 async function loadFromDb(): Promise<{
   persons: RawPerson[];
   countries: Map<string, RawCountry>;
@@ -43,11 +51,11 @@ async function loadFromDb(): Promise<{
 }> {
   // NOTE: dynamic import avoids loading database.yml at module-eval time (so --mock works without a DB)
   const { query } = await import('../core/database.js');
-  console.log('[nemesizer] loading countries...');
-  const countryRows = await query<any>(
+
+  const countryRows = await phase('SQL: countries', () => query<any>(
     `SELECT c.id, c.iso2, c.continent_id AS continent
      FROM countries c`,
-  );
+  ));
   const countries = new Map<string, RawCountry>();
   for (const r of countryRows) {
     const continent = String(r.continent).replace(/^_/, '');
@@ -60,25 +68,25 @@ async function loadFromDb(): Promise<{
     });
   }
 
-  console.log('[nemesizer] loading persons...');
-  const personRows = await query<any>(
+  const personRows = await phase('SQL: persons', () => query<any>(
     `SELECT wca_id, name, country_id
      FROM persons
      WHERE sub_id = 1`,
+  ));
+  const persons: RawPerson[] = await phase(`materialize ${personRows.length} persons`, () =>
+    personRows.map((r: any) => ({
+      wcaId: String(r.wca_id),
+      name: String(r.name),
+      countryId: String(r.country_id),
+    })),
   );
-  const persons: RawPerson[] = personRows.map((r: any) => ({
-    wcaId: String(r.wca_id),
-    name: String(r.name),
-    countryId: String(r.country_id),
-  }));
 
-  console.log(`[nemesizer] loading ranks (${persons.length} persons)...`);
   // NOTE: The public WCA developer dump ships ranks_single/ranks_average as empty
   // (table structure only — actual rows are computed in WCA's production env).
   // So we recompute per-person PBs from `results` and rank them with ROW_NUMBER.
   // ROW_NUMBER not DENSE_RANK: nemesis math only cares about strict ordering, and
   // ranks_single in the WCA dump is itself a stable ordering of equal-best persons.
-  const singleRows = await query<any>(
+  const singleRows = await phase('SQL: single ranks (results → MIN(best) → ROW_NUMBER)', () => query<any>(
     `SELECT person_id, event_id, best,
             ROW_NUMBER() OVER (PARTITION BY event_id ORDER BY best) AS world_rank
      FROM (
@@ -87,8 +95,10 @@ async function loadFromDb(): Promise<{
        WHERE best > 0
        GROUP BY person_id, event_id
      ) t`,
-  );
-  const averageRows = await query<any>(
+  ));
+  console.log(`[nemesizer]     got ${singleRows.length} single rows`);
+
+  const averageRows = await phase('SQL: average ranks (results → MIN(average) → ROW_NUMBER)', () => query<any>(
     `SELECT person_id, event_id, best,
             ROW_NUMBER() OVER (PARTITION BY event_id ORDER BY best) AS world_rank
      FROM (
@@ -97,28 +107,45 @@ async function loadFromDb(): Promise<{
        WHERE average > 0
        GROUP BY person_id, event_id
      ) t`,
-  );
-  const ranks: { personId: string; eventId: string; kind: number; worldRank: number; best: number }[] = [];
-  for (const r of singleRows) {
-    if (!(String(r.event_id) in EVENT_INDEX)) continue;
-    ranks.push({
-      personId: String(r.person_id),
-      eventId: String(r.event_id),
-      kind: KIND_SINGLE,
-      worldRank: Number(r.world_rank),
-      best: Number(r.best),
-    });
-  }
-  for (const r of averageRows) {
-    if (!(String(r.event_id) in EVENT_INDEX)) continue;
-    ranks.push({
-      personId: String(r.person_id),
-      eventId: String(r.event_id),
-      kind: KIND_AVERAGE,
-      worldRank: Number(r.world_rank),
-      best: Number(r.best),
-    });
-  }
+  ));
+  console.log(`[nemesizer]     got ${averageRows.length} average rows`);
+
+  const ranks = await phase(`build ranks array (${singleRows.length + averageRows.length} rows)`, () => {
+    const out: { personId: string; eventId: string; kind: number; worldRank: number; best: number }[] = [];
+    let lastLog = Date.now();
+    const total = singleRows.length + averageRows.length;
+    let i = 0;
+    for (const r of singleRows) {
+      if (++i % 100000 === 0 && Date.now() - lastLog > 2000) {
+        console.log(`[nemesizer]     ${i}/${total}`);
+        lastLog = Date.now();
+      }
+      if (!(String(r.event_id) in EVENT_INDEX)) continue;
+      out.push({
+        personId: String(r.person_id),
+        eventId: String(r.event_id),
+        kind: KIND_SINGLE,
+        worldRank: Number(r.world_rank),
+        best: Number(r.best),
+      });
+    }
+    for (const r of averageRows) {
+      if (++i % 100000 === 0 && Date.now() - lastLog > 2000) {
+        console.log(`[nemesizer]     ${i}/${total}`);
+        lastLog = Date.now();
+      }
+      if (!(String(r.event_id) in EVENT_INDEX)) continue;
+      out.push({
+        personId: String(r.person_id),
+        eventId: String(r.event_id),
+        kind: KIND_AVERAGE,
+        worldRank: Number(r.world_rank),
+        best: Number(r.best),
+      });
+    }
+    return out;
+  });
+
   return { persons, countries, ranks };
 }
 
@@ -216,11 +243,12 @@ async function main() {
     await closePool();
   }
 
-  const { records: personRecords, continents, personIdxByWcaId, countryOfPersonIdx } = buildPersons(raw.persons, raw.countries);
-  console.log(`[nemesizer] ${personRecords.length} persons, ${continents.length} continents`);
+  const { records: personRecords, continents, personIdxByWcaId, countryOfPersonIdx } =
+    await phase('buildPersons', () => buildPersons(raw.persons, raw.countries));
+  console.log(`[nemesizer]     ${personRecords.length} persons, ${continents.length} continents`);
 
-  const rankRecords = buildRanks(raw.ranks, personIdxByWcaId);
-  console.log(`[nemesizer] ${rankRecords.length} rank records`);
+  const rankRecords = await phase('buildRanks', () => buildRanks(raw.ranks, personIdxByWcaId));
+  console.log(`[nemesizer]     ${rankRecords.length} rank records`);
 
   // NOTE: precomputing per-person nemesis counts is O(N · prefix_size) and does not
   // finish on the real WCA dataset (~286k persons). The reference impl at nemesizer.com
@@ -268,12 +296,15 @@ async function main() {
 
   // Write
   mkdirSync(OUTPUT_DIR, { recursive: true });
-  const personsBin = encodePersons({ continents, persons: personRecords });
-  const ranksBin = encodeRanks(rankRecords);
-  const countsBin = encodeCounts(nemesisCount, nemesizedCount);
-  writeFileSync(resolve(OUTPUT_DIR, 'persons.bin.gz'), gzipSync(personsBin, { level: 9 }));
-  writeFileSync(resolve(OUTPUT_DIR, 'ranks.bin.gz'),   gzipSync(ranksBin,   { level: 9 }));
-  writeFileSync(resolve(OUTPUT_DIR, 'counts.bin.gz'),  gzipSync(countsBin,  { level: 9 }));
+  const personsBin = await phase('encode persons.bin', () => encodePersons({ continents, persons: personRecords }));
+  const ranksBin   = await phase('encode ranks.bin',   () => encodeRanks(rankRecords));
+  const countsBin  = await phase('encode counts.bin',  () => encodeCounts(nemesisCount, nemesizedCount));
+  const personsGz = await phase(`gzip persons.bin (${personsBin.length} → ?)`, () => gzipSync(personsBin, { level: 9 }));
+  const ranksGz   = await phase(`gzip ranks.bin (${ranksBin.length} → ?)`,     () => gzipSync(ranksBin,   { level: 9 }));
+  const countsGz  = await phase(`gzip counts.bin (${countsBin.length} → ?)`,   () => gzipSync(countsBin,  { level: 9 }));
+  writeFileSync(resolve(OUTPUT_DIR, 'persons.bin.gz'), personsGz);
+  writeFileSync(resolve(OUTPUT_DIR, 'ranks.bin.gz'),   ranksGz);
+  writeFileSync(resolve(OUTPUT_DIR, 'counts.bin.gz'),  countsGz);
   writeFileSync(resolve(OUTPUT_DIR, 'meta.json'), JSON.stringify(meta, null, 2));
   // Also write meta with continents embedded (saves client from parsing persons header)
   // Actually continents are already inside persons.bin; keep meta lean.
