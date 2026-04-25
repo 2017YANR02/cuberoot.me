@@ -39,6 +39,8 @@ export interface NemesizerDataset {
 const BASE = '/stats/data/nemesizer';
 
 async function fetchGz(url: string): Promise<Uint8Array> {
+  // NOTE: force-cache is safe because the URL itself carries an exportDate
+  // version tag — a fresh dataset gets a new URL and the browser refetches.
   const resp = await fetch(url, { cache: 'force-cache' });
   if (!resp.ok) throw new Error(`fetch ${url}: ${resp.status}`);
   const ds = new DecompressionStream('gzip');
@@ -53,15 +55,19 @@ export function loadNemesizerData(onProgress?: (phase: string) => void): Promise
   if (loading) return loading;
   const p = (async (): Promise<NemesizerDataset> => {
     onProgress?.('meta');
-    const metaResp = await fetch(`${BASE}/meta.json`, { cache: 'force-cache' });
+    // NOTE: meta.json must always revalidate so we pick up new exportDate
+    // (which versions the binary URLs below). no-cache returns 304 when the
+    // file is unchanged, so we don't pay for re-downloading the body.
+    const metaResp = await fetch(`${BASE}/meta.json`, { cache: 'no-cache' });
     if (!metaResp.ok) throw new Error(`fetch meta: ${metaResp.status}`);
     const meta: NemesizerMeta = await metaResp.json();
+    const v = encodeURIComponent(meta.exportDate || meta.generatedAt);
 
     onProgress?.('persons');
     const [personsBytes, ranksBytes, countsBytes] = await Promise.all([
-      fetchGz(`${BASE}/persons.bin.gz`),
-      fetchGz(`${BASE}/ranks.bin.gz`),
-      fetchGz(`${BASE}/counts.bin.gz`),
+      fetchGz(`${BASE}/persons.bin.gz?v=${v}`),
+      fetchGz(`${BASE}/ranks.bin.gz?v=${v}`),
+      fetchGz(`${BASE}/counts.bin.gz?v=${v}`),
     ]);
 
     onProgress?.('parsing');
