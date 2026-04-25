@@ -67,7 +67,7 @@ ruiminyan.github.io/
 ```
 
 - **Frontend**: React 19, Vite 8, TypeScript, react-i18next (EN/ZH), react-router
-- **Backend**: Hono on Alibaba Cloud ECS, MariaDB
+- **Backend**: Hono on Cloud ECS, MariaDB
 - **Pipeline**: TypeScript + MySQL via GitHub Actions, weekly refresh
 - **Hosting**: GitHub Pages for static assets + SPA
 
