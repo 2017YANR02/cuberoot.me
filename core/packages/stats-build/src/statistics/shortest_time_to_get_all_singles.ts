@@ -32,7 +32,7 @@ export class ShortestTimeToGetAllSingles extends Statistic {
         JOIN events event ON event.id = event_id
         WHERE event.rank < 900 AND best > 0
         GROUP BY person_id
-        HAVING COUNT(DISTINCT event_id) = (SELECT COUNT(*) FROM events WHERE rank < 900)
+        HAVING COUNT(DISTINCT event_id) = (SELECT COUNT(*) FROM events WHERE events.rank < 900)
       ) AS all_events_people
       JOIN results result ON result.person_id = all_events_people.person_id
       JOIN persons person ON person.wca_id = result.person_id and person.sub_id = 1
