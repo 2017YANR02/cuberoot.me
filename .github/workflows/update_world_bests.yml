@@ -1,0 +1,47 @@
+# Weekly refresh of stats/data/world_bests.json from speedsolving.com wiki
+name: Update World Bests
+
+on:
+  schedule:
+    # UTC Mon 20:00
+    - cron: '0 20 * * 1'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+          cache-dependency-path: core/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: core
+        run: pnpm install --frozen-lockfile
+
+      - name: Scrape wiki
+        working-directory: core
+        run: pnpm --filter @cuberoot/wb-build run scrape
+
+      - name: Commit and push
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add stats/data/world_bests.json
+          if git diff --cached --quiet; then
+            echo "No changes"
+          else
+            git commit -m "chore: update world bests [skip ci]"
+            git pull --rebase origin main
+            git push
+          fi

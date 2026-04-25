@@ -54,6 +54,8 @@ const AlgPostPage = lazy(() => import('./pages/alg/AlgPostPage'));
 const SitesPage = lazy(() => import('./pages/sites/SitesPage'));
 // NOTE: Mosaic — 魔方马赛克生成器（port of Roman-/mosaic）
 const MosaicPage = lazy(() => import('./pages/mosaic/MosaicPage'));
+// NOTE: WB — 非官方世界纪录（port of speedsolving.com wiki UWR list）
+const WbPage = lazy(() => import('./pages/wb/WbPage'));
 
 
 function App() {
@@ -123,6 +125,8 @@ function App() {
         <Route path="/site" element={<Suspense fallback={<div>Loading...</div>}><SitesPage /></Suspense>} />
         {/* Mosaic — 魔方马赛克生成器 */}
         <Route path="/mosaic" element={<Suspense fallback={<div>Loading...</div>}><MosaicPage /></Suspense>} />
+        {/* WB — 非官方世界纪录 */}
+        <Route path="/wb" element={<Suspense fallback={<div>Loading...</div>}><WbPage /></Suspense>} />
         {/* Pretext Demo — Canvas 表格渲染实验 */}
         <Route path="/pretext-demo" element={<Suspense fallback={<div>Loading...</div>}><PretextDemo /></Suspense>} />
         {/* Auth — WCA OAuth 回调 */}
