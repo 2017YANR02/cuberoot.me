@@ -1,93 +1,124 @@
-# Rubik's Cube Toolkit
+<div align="center">
 
-**Live site: [ruiminyan.github.io](https://ruiminyan.github.io/)**
+# 🧩 CubeRoot
 
-A collection of Rubik's Cube solvers, trainers, and statistics tools — all running as static pages on GitHub Pages.
+### Solve · Train · Analyze
 
+**A modern Rubik's Cube toolkit — solvers, trainers, analytics, and stats, all in your browser.**
 
+[**🌐 Open the site →**](https://ruiminyan.github.io/)
 
-## Features
+[English](./README.md) · [简体中文](./README.zh-CN.md)
 
-### Solvers
+</div>
 
-| Solver | Description |
-|--------|-------------|
-| [3x3x3 Solver](https://ruiminyan.github.io/solver/) | Cross, XCross, Free Pair, Pseudo F2L, EOCross, and Last Layer |
-| [2x2x2 Solver](https://ruiminyan.github.io/2x2x2.html) | Pocket cube solver |
+---
 
-### Trainers
+## ✨ What's inside
 
-| Trainer | Link |
-|---------|------|
-| Cross | [cross_trainer](https://ruiminyan.github.io/cross_trainer.html) |
-| XCross | [xcross_trainer](https://ruiminyan.github.io/xcross_trainer.html) |
-| Free Pair | [pairing_trainer](https://ruiminyan.github.io/pairing_trainer.html) |
-| Pseudo XCross | [pseudo_xcross_trainer](https://ruiminyan.github.io/pseudo_xcross_trainer.html) |
-| Pseudo Free Pair | [pseudo_pairing_trainer](https://ruiminyan.github.io/pseudo_pairing_trainer.html) |
-| EOCross | [eocross_trainer](https://ruiminyan.github.io/eocross_trainer.html) |
-| Algorithm Trainer | [algTrainer](https://ruiminyan.github.io/algTrainer.html) |
+A growing suite of speedcubing tools, organized as a single SPA on top of a pnpm + Turbo monorepo.
 
-### WCA Statistics
+### 🎯 Train & Analyze
 
-Auto-generated rankings and statistics from the [WCA database](https://www.worldcubeassociation.org/), accessible at [ruiminyan.github.io/wca-stats/](https://ruiminyan.github.io/wca-stats/).
+| Tool | Path | What it does |
+|---|---|---|
+| **Trainer** | [`/trainer`](https://ruiminyan.github.io/trainer) | PLL / OLL / ZBLL / ZBLS recognition trainers |
+| **Frame Count** | [`/frame-count`](https://ruiminyan.github.io/frame-count) | Frame-accurate timing from solve videos (WebCodecs + mp4box) |
+| **Recon** | [`/recon`](https://ruiminyan.github.io/recon) | Solve reconstruction with step-by-step playback |
+| **Calculator** | [`/calc`](https://ruiminyan.github.io/calc) | Head-to-Head Ao5 projection & visualization |
+| **Distribution** | [`/viz`](https://ruiminyan.github.io/viz) | Watch result distributions evolve over time |
+| **Battle** | [`/battle`](https://ruiminyan.github.io/battle) | 1v1 head-to-head timer with penalties & best-of-N |
 
-Includes 60+ statistics such as:
-- World records count by person / country
-- Longest streak of podiums
-- Most competitions attended
-- Best first single / average
-- And many more...
+### 🏆 Competition data
 
-## How It Works
+| Tool | Path | What it does |
+|---|---|---|
+| **WCA Stats** | [`/wca-stats`](https://ruiminyan.github.io/wca-stats) | 80+ auto-generated rankings from the WCA database, updated weekly |
+| **Upcoming Comps** | [`/upcoming-comps`](https://ruiminyan.github.io/upcoming-comps) | Worldwide competition calendar with event filters |
+| **Globe** | [`/globe`](https://ruiminyan.github.io/globe) | 3D globe view of past & upcoming competitions |
+| **Scramble** | [`/scramble-stats`](https://ruiminyan.github.io/scramble-stats) | Difficulty distribution of WCA scrambles by event & stage |
 
-### Static Pages (Solvers & Trainers)
+### 🛠️ Classics
 
-The solvers and trainers are self-contained HTML pages with embedded JavaScript. They run entirely in the browser — no server required. The site supports **PWA** (Progressive Web App) installation for offline use.
+| Tool | Path | Source |
+|---|---|---|
+| **Solver** | [`/solver`](https://ruiminyan.github.io/solver/) | Cross / XCross / F2L pair / EOCross / LL — fork of [or18/RubiksSolverDemo](https://github.com/or18/RubiksSolverDemo) |
+| **Alg Trainer** | [`/alg-trainers`](https://ruiminyan.github.io/alg-trainers) | Cross / XCross / Pseudo / EOCross — fork of [mihlefeld/Alg-Trainers](https://github.com/mihlefeld/Alg-Trainers) |
+| **csTimer** | [`/cstimer`](https://ruiminyan.github.io/cstimer/) | Integrated [cs0x7f/cstimer](https://github.com/cs0x7f/cstimer) |
+| **Mosaic** | [`/mosaic`](https://ruiminyan.github.io/mosaic) | Rubik's Cube mosaic generator — ported from [Roman-/mosaic](https://github.com/Roman-/mosaic) |
+| **Web Directory** | [`/site`](https://ruiminyan.github.io/site) | Curated links to the wider cubing web |
 
-Originally forked from [or18/RubiksSolverDemo](https://github.com/or18/RubiksSolverDemo).
+---
 
-### WCA Statistics Pipeline
+## 🏗️ Architecture
 
-The statistics pages are auto-generated from the [WCA database](https://www.worldcubeassociation.org/) via GitHub Actions + TypeScript + MySQL, updated weekly.
+```
+ruiminyan.github.io/
+├── core/                          # pnpm + Turbo monorepo (all new work lives here)
+│   └── packages/
+│       ├── client/                # React 19 + Vite 8 SPA
+│       ├── server/                # Hono + MariaDB (WCA OAuth + user data)
+│       ├── shared/                # Shared types + algorithm datasets
+│       ├── stats-build/           # WCA statistics pipeline (weekly CI)
+│       └── stats-ui/              # Stats page UI
+├── stats/data/                    # Generated stats JSON
+├── cstimer/                       # Integrated csTimer (upstream)
+└── *.html                         # Legacy static pages (upstream forks)
+```
 
-For deployment details, CI strategy, local development setup, and how to add new statistics, see [DEPLOYMENT.md](DEPLOYMENT.md).
+- **Frontend**: React 19, Vite 8, TypeScript, react-i18next (EN/ZH), react-router
+- **Backend**: Hono on Alibaba Cloud ECS, MariaDB
+- **Pipeline**: TypeScript + MySQL via GitHub Actions, weekly refresh
+- **Hosting**: GitHub Pages for static assets + SPA
 
-## Multi-language Support (i18n)
+---
 
-The site supports **English** and **中文** bilingual switching. Default language is English; Rubik's Cube terminology remains in English.
+## 🚀 Local development
 
-**How it works**:
-- `src/i18n/i18n.js` — lightweight language switching engine
-- `src/i18n/en.json` / `zh.json` — translation dictionaries
-- HTML elements marked with `data-i18n` attributes get translated at runtime
-- Stats pages use `data-i18n-en` / `data-i18n-zh` attributes (generated by Ruby engine)
-- JS dynamically-set text (e.g. Start/Stop button) auto-translated via `MutationObserver` + `_dynamicTextZh` mapping
-- Language preference saved via `localStorage`
+Requires **pnpm 10** and **Node 20+**.
 
-## Tech Stack
+```bash
+pnpm install
 
-| Component | Technology |
-|-----------|------------|
-| Solvers & Trainers | HTML + JavaScript (client-side) |
-| Statistics Engine | TypeScript + MySQL |
-| CI/CD | GitHub Actions |
-| Hosting | GitHub Pages + Alibaba Cloud ECS |
-| PWA | Service Worker (`sw.js`) |
+# Dev server at http://127.0.0.1:5173/
+pnpm --filter @cuberoot/client dev
 
-## Credits
+# Type check (fast, daily)
+pnpm --filter @cuberoot/client typecheck
 
-This project builds upon the work of:
+# Type check (CI-equivalent, before push)
+pnpm --filter @cuberoot/client typecheck:ci
 
-- **Solvers & Trainers**: Forked from [or18/RubiksSolverDemo](https://github.com/or18/RubiksSolverDemo) by [or18](https://github.com/or18). The original project provides the 3x3x3 and 2x2x2 solvers, all trainer pages, and the PWA infrastructure.
-- **WCA Statistics**: Based on [jonatanklosko/wca_statistics](https://github.com/jonatanklosko/wca_statistics) by [Jonatan Kłosko](https://github.com/jonatanklosko). The statistics engine, SQL queries, and the plugin framework are from the original project.
-- **Algorithm Trainers**: Forked from [mihlefeld/Alg-Trainers](https://github.com/mihlefeld/Alg-Trainers) by [mihlefeld](https://github.com/mihlefeld). The original project provides the algorithm trainer pages and the PWA infrastructure.
-- **HTH Grapher**: Forked from [carykh/hthgrapher](https://github.com/carykh/hthgrapher) by [carykh](https://github.com/carykh). The original project provides the Head-to-Head Average of 5 calculator and visualization tool.
-- **1v1 Battle Timer**: Ported from [MatteoColombo/cube_challenge_timer](https://github.com/MatteoColombo/cube_challenge_timer) by [MatteoColombo](https://github.com/MatteoColombo). The original project provides the 1v1 head-to-head battle timer logic and penalty system.
-- **csTimer**: Integrated from [cs0x7f/cstimer](https://github.com/cs0x7f/cstimer) by [cs0x7f](https://github.com/cs0x7f). Provides the professional speedcubing timer (available at `/cstimer/`) and the pure-JS scramble generation engine used in the 1v1 Battle Timer (WCA random-state, GPL-3.0).
-- **canvas-confetti**: [catdad/canvas-confetti](https://github.com/catdad/canvas-confetti) by [catdad](https://github.com/catdad). Lightweight confetti animation for winner celebration effects (ISC license, self-hosted).
-- **DCTimer-Android**: [MeigenChou/DCTimer-Android](https://github.com/MeigenChou/DCTimer-Android) by [MeigenChou](https://github.com/MeigenChou). Android timing app that inspired parts of the Battle Timer design.
+# Production build
+pnpm --filter @cuberoot/client build
+```
 
+The Recon API is proxied to production via Vite, so you can develop the full SPA without running the backend locally.
 
-## License
+---
 
-See [LICENSE](LICENSE) for details.
+## 🌏 Internationalization
+
+Every user-facing tool ships in **English** and **简体中文**, switchable from the footer on every page. Cubing notation (R, U, F2, y'…) stays in English by convention.
+
+---
+
+## 🙏 Credits
+
+This project stands on the shoulders of excellent open-source work:
+
+- [**or18/RubiksSolverDemo**](https://github.com/or18/RubiksSolverDemo) — 3×3 solver & trainer pages, PWA scaffolding
+- [**jonatanklosko/wca_statistics**](https://github.com/jonatanklosko/wca_statistics) — statistics engine, SQL queries, plugin framework (TS rewrite)
+- [**mihlefeld/Alg-Trainers**](https://github.com/mihlefeld/Alg-Trainers) — algorithm trainer pages
+- [**carykh/hthgrapher**](https://github.com/carykh/hthgrapher) — Head-to-Head Ao5 calculator (React port)
+- [**MatteoColombo/cube_challenge_timer**](https://github.com/MatteoColombo/cube_challenge_timer) — 1v1 battle timer logic (React port)
+- [**cs0x7f/cstimer**](https://github.com/cs0x7f/cstimer) — professional speedcubing timer & WCA random-state scramble engine
+- [**Roman-/mosaic**](https://github.com/Roman-/mosaic) — cube mosaic generator (React port)
+- [**MeigenChou/DCTimer-Android**](https://github.com/MeigenChou/DCTimer-Android) — design inspiration for the battle timer
+- [**catdad/canvas-confetti**](https://github.com/catdad/canvas-confetti) — celebration effects
+
+---
+
+## 📄 License
+
+See [LICENSE](./LICENSE). Individual upstream modules retain their original licenses.
