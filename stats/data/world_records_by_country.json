@@ -130,6 +130,10 @@
       "Czech Republic"
     ],
     [
+      "4",
+      "Singapore"
+    ],
+    [
       "3",
       "Indonesia"
     ],
@@ -140,10 +144,6 @@
     [
       "3",
       "Philippines"
-    ],
-    [
-      "3",
-      "Singapore"
     ],
     [
       "2",
@@ -1959,7 +1959,7 @@
       2,
       3,
       3,
-      3
+      4
     ],
     "Switzerland": [
       0,

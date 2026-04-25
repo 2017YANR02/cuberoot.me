@@ -45,7 +45,7 @@
       null
     ],
     [
-      104,
+      105,
       "[Chia-Leo Lin (林珈樂)](https://www.worldcubeassociation.org/persons/2006LINC01)",
       "Chinese Taipei",
       "[Maru Cube Day 2016](https://www.worldcubeassociation.org/competitions/MaruCubeDay2016)",
@@ -66,14 +66,14 @@
       null
     ],
     [
-      71,
+      72,
       "[Bence Barát](https://www.worldcubeassociation.org/persons/2008BARA01)",
       "Hungary",
       "[Hungarian Open 2008](https://www.worldcubeassociation.org/competitions/HungarianOpen2008)",
       null
     ],
     [
-      71,
+      72,
       "[Dániel Varga](https://www.worldcubeassociation.org/persons/2008VARG01)",
       "Hungary",
       "[Hungarian Open 2008](https://www.worldcubeassociation.org/competitions/HungarianOpen2008)",
@@ -94,7 +94,7 @@
       null
     ],
     [
-      60,
+      61,
       "[Szabolcs Szántai](https://www.worldcubeassociation.org/persons/2016SZAN01)",
       "Hungary",
       "[Hungarian Nationals 2016](https://www.worldcubeassociation.org/competitions/HungarianNationals2016)",
@@ -241,17 +241,17 @@
       null
     ],
     [
-      38,
-      "[Oliver Pällo](https://www.worldcubeassociation.org/persons/2020PALL01)",
-      "Estonia",
-      "[Estonian Open 2020](https://www.worldcubeassociation.org/competitions/EstonianOpen2020)",
+      39,
+      "[Vako Marchilashvili (ვაკო მარჩილაშვილი)](https://www.worldcubeassociation.org/persons/2013MARC05)",
+      "Georgia",
+      "[Georgian Open 2013](https://www.worldcubeassociation.org/competitions/GeorgianOpen2013)",
       null
     ],
     [
       38,
-      "[Vako Marchilashvili (ვაკო მარჩილაშვილი)](https://www.worldcubeassociation.org/persons/2013MARC05)",
-      "Georgia",
-      "[Georgian Open 2013](https://www.worldcubeassociation.org/competitions/GeorgianOpen2013)",
+      "[Oliver Pällo](https://www.worldcubeassociation.org/persons/2020PALL01)",
+      "Estonia",
+      "[Estonian Open 2020](https://www.worldcubeassociation.org/competitions/EstonianOpen2020)",
       null
     ],
     [
@@ -269,6 +269,13 @@
       null
     ],
     [
+      37,
+      "[Andro Gvaramadze](https://www.worldcubeassociation.org/persons/2018GVAR01)",
+      "Georgia",
+      "[Georgia Open 2018](https://www.worldcubeassociation.org/competitions/GeorgiaOpen2018)",
+      null
+    ],
+    [
       36,
       "[Ilkyoo Choi (최일규)](https://www.worldcubeassociation.org/persons/2008CHOI04)",
       "Republic of Korea",
@@ -280,13 +287,6 @@
       "[Joey Gouly](https://www.worldcubeassociation.org/persons/2007GOUL01)",
       "United Kingdom",
       "[WGC Open 2014](https://www.worldcubeassociation.org/competitions/WelwynGardenCity2014)",
-      null
-    ],
-    [
-      36,
-      "[Andro Gvaramadze](https://www.worldcubeassociation.org/persons/2018GVAR01)",
-      "Georgia",
-      "[Georgia Open 2018](https://www.worldcubeassociation.org/competitions/GeorgiaOpen2018)",
       null
     ],
     [
@@ -606,9 +606,23 @@
     ],
     [
       25,
+      "[Balázs Polyák](https://www.worldcubeassociation.org/persons/2017POLY02)",
+      "Hungary",
+      "[Budapest FMClvester 2024](https://www.worldcubeassociation.org/competitions/BudapestFMClvester2024)",
+      null
+    ],
+    [
+      25,
       "[Fabio Bini Graciose](https://www.worldcubeassociation.org/persons/2010GRAC02)",
       "Brazil",
       "[Mogi Open 2014](https://www.worldcubeassociation.org/competitions/MogiOpen2014)",
+      null
+    ],
+    [
+      25,
+      "[Kasparas Lienys](https://www.worldcubeassociation.org/persons/2018LIEN01)",
+      "Lithuania",
+      "[Kaunas Open 2018](https://www.worldcubeassociation.org/competitions/KaunasOpen2018)",
       null
     ],
     [
@@ -623,13 +637,6 @@
       "[Enrymar Cisneros](https://www.worldcubeassociation.org/persons/2013CISN01)",
       "Venezuela",
       "[Cojedes Cubing 2018](https://www.worldcubeassociation.org/competitions/CojedesCubing2018)",
-      null
-    ],
-    [
-      24,
-      "[Balázs Polyák](https://www.worldcubeassociation.org/persons/2017POLY02)",
-      "Hungary",
-      "[Budapest FMClvester 2024](https://www.worldcubeassociation.org/competitions/BudapestFMClvester2024)",
       null
     ],
     [
@@ -707,13 +714,6 @@
       "[Farid Fakhrian (فرید فخریان)](https://www.worldcubeassociation.org/persons/2017FHAK01)",
       "Iran",
       "[Iran Open 2017](https://www.worldcubeassociation.org/competitions/IranOpen2017)",
-      null
-    ],
-    [
-      24,
-      "[Kasparas Lienys](https://www.worldcubeassociation.org/persons/2018LIEN01)",
-      "Lithuania",
-      "[Kaunas Open 2018](https://www.worldcubeassociation.org/competitions/KaunasOpen2018)",
       null
     ],
     [
