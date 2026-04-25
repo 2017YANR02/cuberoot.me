@@ -83,12 +83,17 @@ async function loadFromDb(): Promise<{
 
   // NOTE: The public WCA developer dump ships ranks_single/ranks_average as empty
   // (table structure only — actual rows are computed in WCA's production env).
-  // So we recompute per-person PBs from `results` and rank them with ROW_NUMBER.
-  // ROW_NUMBER not DENSE_RANK: nemesis math only cares about strict ordering, and
-  // ranks_single in the WCA dump is itself a stable ordering of equal-best persons.
-  const singleRows = await phase('SQL: single ranks (results → MIN(best) → ROW_NUMBER)', () => query<any>(
+  // So we recompute per-person PBs from `results` and rank them.
+  //
+  // RANK() not ROW_NUMBER(): the nemesis algorithm uses `rank_Q < rank_P` to mean
+  // "Q strictly better than P". With ROW_NUMBER, tied bests get distinct ranks, so
+  // a person tied with P would compare as "better" purely by row order — that's a
+  // bug vs the Python reference (nemesizer.com) which compares by `best` directly.
+  // RANK() collapses ties to the same rank, making rank-comparison equivalent to
+  // strict-best-comparison.
+  const singleRows = await phase('SQL: single ranks (results → MIN(best) → RANK)', () => query<any>(
     `SELECT person_id, event_id, best,
-            ROW_NUMBER() OVER (PARTITION BY event_id ORDER BY best) AS world_rank
+            RANK() OVER (PARTITION BY event_id ORDER BY best) AS world_rank
      FROM (
        SELECT person_id, event_id, MIN(best) AS best
        FROM results
@@ -98,9 +103,9 @@ async function loadFromDb(): Promise<{
   ));
   console.log(`[nemesizer]     got ${singleRows.length} single rows`);
 
-  const averageRows = await phase('SQL: average ranks (results → MIN(average) → ROW_NUMBER)', () => query<any>(
+  const averageRows = await phase('SQL: average ranks (results → MIN(average) → RANK)', () => query<any>(
     `SELECT person_id, event_id, best,
-            ROW_NUMBER() OVER (PARTITION BY event_id ORDER BY best) AS world_rank
+            RANK() OVER (PARTITION BY event_id ORDER BY best) AS world_rank
      FROM (
        SELECT person_id, event_id, MIN(average) AS best
        FROM results
