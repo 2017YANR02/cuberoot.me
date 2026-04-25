@@ -117,7 +117,6 @@ This project stands on the shoulders of excellent open-source work:
 - [**cs0x7f/cstimer**](https://github.com/cs0x7f/cstimer) — professional speedcubing timer & WCA random-state scramble engine
 - [**Roman-/mosaic**](https://github.com/Roman-/mosaic) — cube mosaic generator (React port)
 - [**MeigenChou/DCTimer-Android**](https://github.com/MeigenChou/DCTimer-Android) — design inspiration for the battle timer
-- [**catdad/canvas-confetti**](https://github.com/catdad/canvas-confetti) — celebration effects
 
 ---
 
