@@ -110,6 +110,12 @@ jobs:
         working-directory: core/packages/stats-build
         run: npx tsx src/bin/gen_persons_search.ts
 
+      - name: Generate nemesizer dataset
+        working-directory: core/packages/stats-build
+        env:
+          NODE_OPTIONS: '--expose-gc --max-old-space-size=6144'
+        run: npx tsx src/bin/nemesizer.ts
+
       - name: Compute index
         working-directory: core/packages/stats-build
         run: npx tsx src/bin/compute_index.ts
