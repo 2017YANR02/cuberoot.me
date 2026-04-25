@@ -1,22 +1,31 @@
-// Nemesis computation algorithms.
+// Nemesis computation algorithms — strict definition matching nemesizer.com.
 //
-// Definition: Q is a nemesis of P iff:
-//   1. E_P ∩ E_Q ≠ ∅  (they share ≥ 1 event+kind)
-//   2. ∀ ek ∈ E_P ∩ E_Q : rank_Q(ek) < rank_P(ek)
+// Q is a nemesis of P iff:
+//   1. E_P ⊆ E_Q  (Q has rank in every event-kind P competes in)
+//   2. ∀ ek ∈ E_P : rank_Q(ek) < rank_P(ek)  (Q strictly better in each)
 //
-// Reverse: P nemesizes Q ⟺ Q is a nemesis of P with roles swapped
-// (E_P ∩ E_Q ≠ ∅ and ∀ shared ek: rank_P(ek) < rank_Q(ek)).
+// Reverse: P nemesizes Q ⟺ Q is a nemesis of P with roles swapped, i.e.
+// E_Q ⊆ E_P and ∀ ek ∈ E_Q : rank_P(ek) < rank_Q(ek). Note the asymmetry —
+// the *event-coverage* requirement flips with the roles.
 //
-// "Nearly nemesis": Q is better than P in all shared ek EXCEPT at most 1.
-// "Only just nemesis": Q is nemesis of P AND max(rank_P(ek) - rank_Q(ek)) == 1.
+// "Nearly nemesis" of P: same coverage requirement (E_P ⊆ E_Q), strictly better
+// in pRanks.length - 1 of P's eks, ties or loses in exactly 1.
+// Reverse "I nearly nemesize Q": E_Q ⊆ E_P, P wins on qRanks.length - 1, loses 1.
+//
+// "Only just nemesis": strict nemesis with min margin (P_rank - Q_rank over E_P)
+// equal to 1.
+//
+// IMPORTANT: rank comparison `rank_Q < rank_P` is equivalent to "Q's PB strictly
+// better than P's PB" only when the rank generator collapses ties (RANK / DENSE_RANK,
+// not ROW_NUMBER). The build pipeline in stats-build/bin/nemesizer.ts uses RANK().
 import type { NemesizerDataset, RankRef } from './nemesizerData';
 
 export type RelationView =
-  | 'myNem'        // who are my nemeses (people better than me in every shared ek)
-  | 'iNem'         // who I nemesize (I'm better than them in every shared ek)
-  | 'nearlyMe'     // who nearly nemesizes me (all except 1 shared ek)
-  | 'iNearly'      // who I nearly nemesize
-  | 'onlyJustMe'   // who only-just nemesizes me
+  | 'myNem'        // who are my nemeses (E_P ⊆ E_Q, Q strictly better in every E_P ek)
+  | 'iNem'         // who I nemesize (E_Q ⊆ E_P, P strictly better in every E_Q ek)
+  | 'nearlyMe'     // who nearly nemesizes me (E_P ⊆ E_Q, Q wins all but 1 E_P ek)
+  | 'iNearly'      // who I nearly nemesize (E_Q ⊆ E_P, P wins all but 1 E_Q ek)
+  | 'onlyJustMe'   // who only-just nemesizes me (strict nemesis with min margin == 1)
   | 'iOnlyJust';   // who I only-just nemesize
 
 export interface NemesisResult {
@@ -45,141 +54,206 @@ function getPersonRanks(ds: NemesizerDataset, p: number, override?: RankOverride
   return Array.from(overridden.values());
 }
 
-function getRankAt(ds: NemesizerDataset, person: number, ek: number, override?: RankOverride): number | undefined {
-  if (override?.has(ek)) {
-    const v = override.get(ek)!;
-    return v > 0 ? v : undefined;
-  }
-  return ds.rankOfPerson[ek].get(person);
+// Build "ek → P's rank" map from a (possibly overridden) pRanks list.
+function pEksMapOf(pRanks: RankRef[]): Map<number, number> {
+  const m = new Map<number, number>();
+  for (const r of pRanks) m.set(r.ev * 2 + r.kind, r.rank);
+  return m;
 }
 
-// Given a target person P, compute "who is better than P in every shared ek".
-// If invert=true, compute "who is worse than P in every shared ek" (= who P nemesizes).
-// Uses prefix / suffix of each ek's sorted list.
+// Forward strict nemesis: Q has rank in every E_P ek AND is strictly better in each.
+// Computed by intersecting "strict-better prefix" sets across E_P, smallest-first
+// for fast convergence (the Python ref's approach).
+function computeMyNem(
+  ds: NemesizerDataset,
+  p: number,
+  pRanks: RankRef[],
+): NemesisResult[] {
+  // Precompute (ek, prefix-split) per pRank, sorted by prefix size ascending.
+  const pEksWithSplit = pRanks.map(r => {
+    const ek = r.ev * 2 + r.kind;
+    const split = lowerBoundRank(ds.byEk[ek], ds.rankOfPerson[ek], r.rank);
+    return { ek, split };
+  });
+  pEksWithSplit.sort((a, b) => a.split - b.split);
+
+  let candidates: Set<number> | null = null;
+  for (const { ek, split } of pEksWithSplit) {
+    const list = ds.byEk[ek];
+    if (candidates === null) {
+      candidates = new Set();
+      for (let i = 0; i < split; i++) candidates.add(list[i]);
+    } else {
+      // Mark "this ek's strict-better" set, then intersect.
+      const mark = new Uint8Array(ds.persons.length);
+      for (let i = 0; i < split; i++) mark[list[i]] = 1;
+      const next = new Set<number>();
+      for (const q of candidates) if (mark[q]) next.add(q);
+      candidates = next;
+    }
+    if (candidates.size === 0) break;
+  }
+
+  if (!candidates) return [];
+  candidates.delete(p);
+  const out: NemesisResult[] = [];
+  for (const q of candidates) out.push({ personIdx: q, sharedEkCount: pRanks.length });
+  return out;
+}
+
+// Reverse strict nemesis: E_Q ⊆ E_P AND P strictly better in every E_Q ek.
+// Iterate persons; cheap rejection on the first non-conforming Q ek.
+function computeINem(
+  ds: NemesizerDataset,
+  p: number,
+  pRanks: RankRef[],
+): NemesisResult[] {
+  const pEksMap = pEksMapOf(pRanks);
+  const out: NemesisResult[] = [];
+  const ranksByPerson = ds.ranksByPerson;
+  for (let q = 0; q < ranksByPerson.length; q++) {
+    if (q === p) continue;
+    const qRanks = ranksByPerson[q];
+    if (qRanks.length === 0) continue;
+    let ok = true;
+    for (let i = 0; i < qRanks.length; i++) {
+      const r = qRanks[i];
+      const ek = r.ev * 2 + r.kind;
+      const pRank = pEksMap.get(ek);
+      if (pRank === undefined || pRank >= r.rank) { ok = false; break; }
+    }
+    if (ok) out.push({ personIdx: q, sharedEkCount: qRanks.length });
+  }
+  return out;
+}
+
+// Forward "nearly": Q has every E_P ek; wins all but 1; ties/loses exactly 1.
+function computeNearlyMe(
+  ds: NemesizerDataset,
+  p: number,
+  pRanks: RankRef[],
+): NemesisResult[] {
+  if (pRanks.length < 2) return [];  // need ≥ 2 eks to "miss by 1"
+  const pEksMap = pEksMapOf(pRanks);
+  const out: NemesisResult[] = [];
+  // Iterate all persons; for each Q check the strict coverage + 1-loss criterion over E_P.
+  for (let q = 0; q < ds.persons.length; q++) {
+    if (q === p) continue;
+    let coverage = 0;
+    let qWins = 0;
+    let qLoses = 0;
+    for (const r of pRanks) {
+      const ek = r.ev * 2 + r.kind;
+      const qRank = ds.rankOfPerson[ek].get(q);
+      if (qRank === undefined) break;  // Q lacks this E_P ek → not "nearly"
+      coverage++;
+      if (qRank < r.rank) qWins++;
+      else qLoses++;
+    }
+    if (coverage === pRanks.length && qLoses === 1 && qWins === pRanks.length - 1) {
+      out.push({ personIdx: q, sharedEkCount: pRanks.length });
+    }
+  }
+  return out;
+}
+
+// Reverse "nearly": E_Q ⊆ E_P; P wins all but 1; ties/loses exactly 1 over E_Q.
+function computeINearly(
+  ds: NemesizerDataset,
+  p: number,
+  pRanks: RankRef[],
+): NemesisResult[] {
+  const pEksMap = pEksMapOf(pRanks);
+  const out: NemesisResult[] = [];
+  const ranksByPerson = ds.ranksByPerson;
+  for (let q = 0; q < ranksByPerson.length; q++) {
+    if (q === p) continue;
+    const qRanks = ranksByPerson[q];
+    if (qRanks.length < 2) continue;
+    let coverage = 0;
+    let pWins = 0;
+    let pLoses = 0;
+    for (const r of qRanks) {
+      const ek = r.ev * 2 + r.kind;
+      const pRank = pEksMap.get(ek);
+      if (pRank === undefined) break;  // Q has ek P doesn't → not E_Q ⊆ E_P
+      coverage++;
+      if (pRank < r.rank) pWins++;
+      else pLoses++;
+    }
+    if (coverage === qRanks.length && pLoses === 1 && pWins === qRanks.length - 1) {
+      out.push({ personIdx: q, sharedEkCount: qRanks.length });
+    }
+  }
+  return out;
+}
+
+// Only-just: strict nemesis where min margin (over the relevant ek set) is 1.
+// For myNem: margins computed over E_P; for iNem: over E_Q.
+function computeOnlyJust(
+  ds: NemesizerDataset,
+  p: number,
+  pRanks: RankRef[],
+  invert: boolean,
+): NemesisResult[] {
+  const nemeses = invert ? computeINem(ds, p, pRanks) : computeMyNem(ds, p, pRanks);
+  const pEksMap = pEksMapOf(pRanks);
+  const out: NemesisResult[] = [];
+  for (const n of nemeses) {
+    let minMargin = Infinity;
+    if (!invert) {
+      // Margin = pRank - qRank over E_P
+      for (const r of pRanks) {
+        const ek = r.ev * 2 + r.kind;
+        const qRank = ds.rankOfPerson[ek].get(n.personIdx);
+        if (qRank === undefined) continue;  // shouldn't happen given strict nemesis
+        const m = r.rank - qRank;
+        if (m < minMargin) minMargin = m;
+      }
+    } else {
+      // Margin = qRank - pRank over E_Q
+      const qRanks = ds.ranksByPerson[n.personIdx];
+      for (const r of qRanks) {
+        const ek = r.ev * 2 + r.kind;
+        const pRank = pEksMap.get(ek);
+        if (pRank === undefined) continue;
+        const m = r.rank - pRank;
+        if (m < minMargin) minMargin = m;
+      }
+    }
+    if (minMargin === 1) out.push(n);
+  }
+  return out;
+}
+
 export function computeNemesisOf(
   ds: NemesizerDataset,
   p: number,
   opts: { invert?: boolean; override?: RankOverride } = {},
 ): NemesisResult[] {
-  const { invert = false, override } = opts;
-  const pRanks = getPersonRanks(ds, p, override);
+  const pRanks = getPersonRanks(ds, p, opts.override);
   if (pRanks.length === 0) return [];
-
-  // "Winning side": set of Q who have a rank in this ek on the winning side vs P.
-  // - Direct (invert=false): Q wins ⇔ rank_Q < rank_P → list prefix.
-  // - Reverse (invert=true): P wins ⇔ rank_P < rank_Q → list suffix after P.
-  // "Losing side": Q who have a rank in this ek on the losing side vs P.
-  //
-  // nemesis = (union of Q winning in ≥ 1 ek in E_P) \ (union of Q losing in ≥ 1 ek in E_P)
-
-  const candidates = new Set<number>();     // union of winners
-  const disqualified = new Uint8Array(ds.persons.length);  // union of losers
-
-  for (const { ev, kind, rank } of pRanks) {
-    const ek = ev * 2 + kind;
-    const list = ds.byEk[ek];
-    const rankMap = ds.rankOfPerson[ek];
-    // find index range where rank < our rank (prefix)
-    const splitBetter = lowerBoundRank(list, rankMap, rank);  // list[i].rank < rank for i<splitBetter
-    if (!invert) {
-      for (let i = 0; i < splitBetter; i++) candidates.add(list[i]);
-      for (let i = splitBetter; i < list.length; i++) disqualified[list[i]] = 1;
-    } else {
-      for (let i = splitBetter; i < list.length; i++) candidates.add(list[i]);
-      for (let i = 0; i < splitBetter; i++) disqualified[list[i]] = 1;
-    }
-  }
-
-  const out: NemesisResult[] = [];
-  for (const q of candidates) {
-    if (q === p) continue;
-    if (disqualified[q]) continue;
-    // count shared eks
-    let shared = 0;
-    for (const { ev, kind } of ds.ranksByPerson[q]) {
-      if (getRankAt(ds, p, ev * 2 + kind, override) !== undefined) shared++;
-    }
-    if (shared > 0) out.push({ personIdx: q, sharedEkCount: shared });
-  }
-  return out;
+  return opts.invert ? computeINem(ds, p, pRanks) : computeMyNem(ds, p, pRanks);
 }
 
-// Nearly: Q is better than P in all shared ek except exactly 1 (that 1 is strictly worse; rest strictly better).
-// invert: P is the one failing by exactly 1 vs Q (i.e. I nearly nemesize Q).
 export function computeNearlyNemesis(
   ds: NemesizerDataset,
   p: number,
   opts: { invert?: boolean; override?: RankOverride } = {},
 ): NemesisResult[] {
-  const { invert = false, override } = opts;
-  const pRanks = getPersonRanks(ds, p, override);
+  const pRanks = getPersonRanks(ds, p, opts.override);
   if (pRanks.length === 0) return [];
-
-  // Candidate pool = anyone who shares ≥ 1 ek with P and wins at least 1 shared ek (against P if invert=false, or P wins if invert=true).
-  const pool = new Set<number>();
-  for (const { ev, kind, rank } of pRanks) {
-    const ek = ev * 2 + kind;
-    const list = ds.byEk[ek];
-    const rankMap = ds.rankOfPerson[ek];
-    const split = lowerBoundRank(list, rankMap, rank);
-    if (!invert) {
-      for (let i = 0; i < split; i++) pool.add(list[i]);
-      for (let i = split; i < list.length; i++) pool.add(list[i]);
-    } else {
-      for (let i = 0; i < list.length; i++) pool.add(list[i]);
-    }
-  }
-
-  const out: NemesisResult[] = [];
-  for (const q of pool) {
-    if (q === p) continue;
-    let sharedTotal = 0;
-    let qLoses = 0;
-    let qWins = 0;
-    for (const { ev, kind, rank: qRank } of ds.ranksByPerson[q]) {
-      const ek = ev * 2 + kind;
-      const pRank = getRankAt(ds, p, ek, override);
-      if (pRank === undefined) continue;
-      sharedTotal++;
-      if (!invert) {
-        // Nearly nemesis of P: Q should win all but 1
-        if (qRank < pRank) qWins++;
-        else qLoses++;
-      } else {
-        // I nearly nemesize Q: P wins all but 1
-        if (pRank < qRank) qWins++;  // P wins
-        else qLoses++;                // P loses
-      }
-    }
-    if (sharedTotal >= 2 && qLoses === 1 && qWins === sharedTotal - 1) {
-      out.push({ personIdx: q, sharedEkCount: sharedTotal });
-    }
-  }
-  return out;
+  return opts.invert ? computeINearly(ds, p, pRanks) : computeNearlyMe(ds, p, pRanks);
 }
 
-// Only just nemesis: full nemesis relation AND the minimum margin is exactly 1 rank.
 export function computeOnlyJustNemesis(
   ds: NemesizerDataset,
   p: number,
   opts: { invert?: boolean; override?: RankOverride } = {},
 ): NemesisResult[] {
-  const { invert = false, override } = opts;
-  const nemeses = computeNemesisOf(ds, p, opts);
-  const out: NemesisResult[] = [];
-  for (const n of nemeses) {
-    const q = n.personIdx;
-    let minMargin = Infinity;
-    for (const { ev, kind, rank: qRank } of ds.ranksByPerson[q]) {
-      const ek = ev * 2 + kind;
-      const pRank = getRankAt(ds, p, ek, override);
-      if (pRank === undefined) continue;
-      const margin = invert ? qRank - pRank : pRank - qRank;
-      if (margin < minMargin) minMargin = margin;
-    }
-    if (minMargin === 1) out.push(n);
-  }
-  return out;
+  const pRanks = getPersonRanks(ds, p, opts.override);
+  if (pRanks.length === 0) return [];
+  return computeOnlyJust(ds, p, pRanks, opts.invert ?? false);
 }
 
 export function applyRelation(
