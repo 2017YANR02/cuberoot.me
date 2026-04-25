@@ -89,6 +89,12 @@ jobs:
         working-directory: core/packages/stats-build
         run: npx tsx src/bin/update_database.ts
 
+      # NOTE: 前置 EXPLAIN 校验所有 stat SQL —— 任何语法错(MySQL 保留字/列名错等)
+      # 在几秒内 fail-fast，避免等 compute_all 跑到中途才发现
+      - name: Validate stat queries (EXPLAIN preflight)
+        working-directory: core/packages/stats-build
+        run: npx tsx src/bin/validate_queries.ts
+
       - name: Compute all statistics
         working-directory: core/packages/stats-build
         env:
