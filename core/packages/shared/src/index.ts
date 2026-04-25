@@ -18,4 +18,9 @@ export {
 export type { UpcomingCompRecord, PastCompRecord } from './api/comps_json';
 export { useWcaAuth, WcaAuth } from './hooks/useWcaAuth';
 export { WcaPersonPicker } from './components/WcaPersonPicker';
+export {
+  loadPersonsIndex,
+  isPersonsIndexReady,
+  searchLocalPersons,
+} from './api/persons_index';
 export * from './nemesizer_format';
