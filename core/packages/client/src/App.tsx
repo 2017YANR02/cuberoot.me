@@ -33,6 +33,9 @@ const AuthCallbackPage = lazy(() => import('./pages/AuthCallbackPage'));
 // NOTE: WCA Stats 模块懒加载 — 统计数据展示
 const WcaStatsPage = lazy(() => import('./pages/wca_stats/WcaStatsPage'));
 const WcaStatsIndex = lazy(() => import('./pages/wca_stats/WcaStatsIndex'));
+// NOTE: WCA 选手成绩查询（/wca-stats 子模块）
+const PersonsSearchPage = lazy(() => import('./pages/wca_stats/persons/PersonsSearchPage'));
+const PersonDetailPage = lazy(() => import('./pages/wca_stats/persons/PersonDetailPage'));
 const NemesizerPage = lazy(() => import('./pages/nemesizer/NemesizerPage'));
 // NOTE: Upcoming Comps 懒加载 — 顶尖选手近期比赛追踪
 const UpcomingCompsPage = lazy(() => import('./pages/UpcomingCompsPage'));
@@ -110,6 +113,9 @@ function App() {
         <Route path="/cstimer" element={<Suspense fallback={<div>Loading...</div>}><IframePage src="/tools/cstimer/" title="csTimer" /></Suspense>} />
         {/* WCA Stats — 统计数据展示 */}
         <Route path="/wca-stats" element={<Suspense fallback={<div>Loading...</div>}><WcaStatsIndex /></Suspense>} />
+        {/* NOTE: persons 路由必须在 :statId 之前，否则会被 catch-all 当成 statId */}
+        <Route path="/wca-stats/persons" element={<Suspense fallback={<div>Loading...</div>}><PersonsSearchPage /></Suspense>} />
+        <Route path="/wca-stats/persons/:wcaId" element={<Suspense fallback={<div>Loading...</div>}><PersonDetailPage /></Suspense>} />
         <Route path="/wca-stats/:statId" element={<Suspense fallback={<div>Loading...</div>}><WcaStatsPage /></Suspense>} />
         {/* Nemesizer — 宿敌查询（移植自 nemesizer.com） */}
         <Route path="/nemesizer" element={<Suspense fallback={<div>Loading...</div>}><NemesizerPage /></Suspense>} />
