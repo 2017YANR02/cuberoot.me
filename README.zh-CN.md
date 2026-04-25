@@ -6,7 +6,9 @@
 
 **现代魔方工具集 —— 求解器、训练器、数据分析、WCA 统计，全部在浏览器里运行。**
 
-[**🌐 打开网站 →**](https://ruiminyan.github.io/)
+[**🌐 打开网站 →**](https://cuberoot.me/)
+
+中国大陆用户访问 [cuberoot.me](https://cuberoot.me/)，境外用户访问 [ruiminyan.github.io](https://ruiminyan.github.io/) — 两者是同一站点的镜像，内容完全一致。
 
 [English](./README.md) · [简体中文](./README.zh-CN.md)
 
