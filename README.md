@@ -8,6 +8,8 @@
 
 [**🌐 Open the site →**](https://ruiminyan.github.io/)
 
+Mirrored at [cuberoot.me](https://cuberoot.me/) for users in mainland China — same site, same content.
+
 [English](./README.md) · [简体中文](./README.zh-CN.md)
 
 </div>
