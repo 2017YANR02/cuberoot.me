@@ -73,11 +73,30 @@ async function loadFromDb(): Promise<{
   }));
 
   console.log(`[nemesizer] loading ranks (${persons.length} persons)...`);
+  // NOTE: The public WCA developer dump ships ranks_single/ranks_average as empty
+  // (table structure only — actual rows are computed in WCA's production env).
+  // So we recompute per-person PBs from `results` and rank them with ROW_NUMBER.
+  // ROW_NUMBER not DENSE_RANK: nemesis math only cares about strict ordering, and
+  // ranks_single in the WCA dump is itself a stable ordering of equal-best persons.
   const singleRows = await query<any>(
-    `SELECT person_id, event_id, best, world_rank FROM ranks_single`,
+    `SELECT person_id, event_id, best,
+            ROW_NUMBER() OVER (PARTITION BY event_id ORDER BY best) AS world_rank
+     FROM (
+       SELECT person_id, event_id, MIN(best) AS best
+       FROM results
+       WHERE best > 0
+       GROUP BY person_id, event_id
+     ) t`,
   );
   const averageRows = await query<any>(
-    `SELECT person_id, event_id, best, world_rank FROM ranks_average`,
+    `SELECT person_id, event_id, best,
+            ROW_NUMBER() OVER (PARTITION BY event_id ORDER BY best) AS world_rank
+     FROM (
+       SELECT person_id, event_id, MIN(average) AS best
+       FROM results
+       WHERE average > 0
+       GROUP BY person_id, event_id
+     ) t`,
   );
   const ranks: { personId: string; eventId: string; kind: number; worldRank: number; best: number }[] = [];
   for (const r of singleRows) {
