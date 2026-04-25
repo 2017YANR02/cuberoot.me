@@ -475,6 +475,41 @@ export default function LandingPage() {
         })}
       </div>
 
+      {/* NOTE: 镜像站提示 — 根据当前 host 提示用户访问另一镜像（cuberoot.me ↔ ruiminyan.github.io）。
+          dev / 其他 host 时同时列出两者。 */}
+      <div className="mirror-notice">
+        {(() => {
+          const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+          const onCuberootMe = /(^|\.)cuberoot\.me$/i.test(hostname);
+          const onGithubIo = /(^|\.)ruiminyan\.github\.io$/i.test(hostname);
+          if (onCuberootMe) {
+            return (
+              <>
+                {lang === 'zh' ? '境外用户：' : 'International: '}
+                <a href="https://ruiminyan.github.io/" target="_blank" rel="noopener noreferrer">ruiminyan.github.io</a>
+              </>
+            );
+          }
+          if (onGithubIo) {
+            return (
+              <>
+                {lang === 'zh' ? '中国大陆：' : 'Mainland China: '}
+                <a href="https://cuberoot.me/" target="_blank" rel="noopener noreferrer">cuberoot.me</a>
+              </>
+            );
+          }
+          return (
+            <>
+              {lang === 'zh' ? '中国大陆：' : 'Mainland China: '}
+              <a href="https://cuberoot.me/" target="_blank" rel="noopener noreferrer">cuberoot.me</a>
+              {' · '}
+              {lang === 'zh' ? '其他地区：' : 'Elsewhere: '}
+              <a href="https://ruiminyan.github.io/" target="_blank" rel="noopener noreferrer">ruiminyan.github.io</a>
+            </>
+          );
+        })()}
+      </div>
+
       {/* NOTE: 致谢：列出上游开源项目作者 */}
       <div className="credits">
         <span>{t('creditsPrefix')}</span>{' '}
@@ -490,7 +525,6 @@ export default function LandingPage() {
       </div>
 
       <div className="footer">
-        <span>v1.4.1</span>
         <a
           href="https://github.com/RuiminYan/ruiminyan.github.io"
           target="_blank"
@@ -509,6 +543,32 @@ export default function LandingPage() {
           <span className="lang-label">{lang === 'zh' ? 'English' : '中文'}</span>
         </button>
       </div>
+
+      {/* NOTE: 中国 ICP / 公安备案 — 仅在 cuberoot.me 域名（备案绑定该域名）和本地 dev 显示。
+          GitHub Pages 镜像（ruiminyan.github.io）由境外主机服务，无需中国备案，不显示。 */}
+      {(() => {
+        const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+        const onCuberootMe = /(^|\.)cuberoot\.me$/i.test(hostname);
+        const onLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+        if (!onCuberootMe && !onLocalhost) return null;
+        return (
+          <div className="beian">
+            <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">
+              沪ICP备2025130431号
+            </a>
+            <span className="beian-sep">|</span>
+            <a
+              href="https://beian.mps.gov.cn/#/query/webSearch?code=31010902100930"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="beian-mps"
+            >
+              <img src="/beian-badge.png" alt="" width="14" height="14" />
+              沪公网安备31010902100930号
+            </a>
+          </div>
+        );
+      })()}
     </div>
   );
 }
