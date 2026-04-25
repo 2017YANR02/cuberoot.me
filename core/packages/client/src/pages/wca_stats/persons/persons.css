@@ -1,0 +1,513 @@
+/* ──────────────────────────────────────────────────────────────────────────
+ *  /wca-stats/persons  —  WCA player results lookup
+ *  Modern Claude-light theme; aligned with /wb and LandingPage palette.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+.wca-persons-page {
+    --wp-bg: #FAF9F5;
+    --wp-surface: #FFFFFF;
+    --wp-text: #181716;
+    --wp-text-sub: #6F6E6B;
+    --wp-text-mute: #95938E;
+    --wp-border: #E5E4DF;
+    --wp-border-strong: #CCCAC2;
+    --wp-accent: #C15F3C;
+    --wp-accent-soft: rgba(193, 95, 60, 0.08);
+    --wp-gold: #C9A24E;
+    --wp-silver: #A6A8AB;
+    --wp-bronze: #B07051;
+    --wp-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.04);
+
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--wp-bg);
+    color: var(--wp-text);
+    min-height: 100vh;
+    min-height: 100dvh;
+}
+
+.wca-persons-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem 2rem 1rem;
+    border-bottom: 1px solid var(--wp-border);
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(8px);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.wca-persons-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px 6px 8px;
+    border-radius: 8px;
+    color: var(--wp-text-sub);
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: all 0.15s;
+}
+
+.wca-persons-back:hover {
+    color: var(--wp-text);
+    background: var(--wp-accent-soft);
+}
+
+.wca-persons-title {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.wca-persons-title-icon { color: var(--wp-accent); }
+
+.wca-persons-title h1 {
+    margin: 0;
+    font-family: 'Fraunces', 'Times New Roman', serif;
+    font-size: 1.4rem;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    color: var(--wp-text);
+}
+
+.wca-persons-source {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--wp-border);
+    color: var(--wp-text-sub);
+    text-decoration: none;
+    font-size: 0.78rem;
+    transition: all 0.15s;
+}
+
+.wca-persons-source:hover {
+    border-color: var(--wp-accent);
+    color: var(--wp-accent);
+    background: var(--wp-accent-soft);
+}
+
+.wca-persons-main {
+    padding: 1.5rem 2rem 4rem;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.wca-persons-loading,
+.wca-persons-empty,
+.wca-persons-error {
+    text-align: center;
+    color: var(--wp-text-sub);
+    padding: 2rem 1rem;
+    font-size: 0.9rem;
+}
+
+.wca-persons-error { color: #B71234; }
+
+.wca-persons-hint {
+    color: var(--wp-text-sub);
+    font-size: 0.88rem;
+    margin: 0 0 1rem;
+    text-align: center;
+}
+
+.wca-persons-picker-wrap {
+    max-width: 540px;
+    margin: 0 auto;
+}
+
+/* ── Hero card ── */
+
+.wca-person-hero {
+    display: flex;
+    gap: 1.25rem;
+    padding: 1.25rem;
+    background: var(--wp-surface);
+    border: 1px solid var(--wp-border);
+    border-radius: 14px;
+    box-shadow: var(--wp-shadow);
+    margin-bottom: 1.5rem;
+}
+
+.wca-person-avatar {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: var(--wp-bg);
+    border: 1px solid var(--wp-border);
+}
+
+.wca-person-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.wca-person-avatar-fallback {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: var(--wp-text-mute);
+    font-weight: 500;
+    background: linear-gradient(135deg, var(--wp-bg), var(--wp-accent-soft));
+}
+
+.wca-person-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.wca-person-name {
+    margin: 0;
+    font-family: 'Fraunces', 'Times New Roman', serif;
+    font-size: 1.6rem;
+    font-weight: 500;
+    color: var(--wp-text);
+    letter-spacing: -0.01em;
+}
+
+.wca-person-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.625rem 1rem;
+    align-items: center;
+    font-size: 0.85rem;
+    color: var(--wp-text-sub);
+}
+
+.wca-person-id {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.78rem;
+    background: var(--wp-bg);
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--wp-border);
+    color: var(--wp-text);
+}
+
+.wca-person-country {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.wca-person-flag {
+    width: 18px;
+    height: 13px;
+    border-radius: 2px;
+    box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.1);
+}
+
+.wca-person-comps {
+    color: var(--wp-text-sub);
+}
+
+.wca-person-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.wca-badge-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.wca-badge-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    color: var(--wp-text-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.wca-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--wp-bg);
+    border: 1px solid var(--wp-border);
+    font-size: 0.75rem;
+    color: var(--wp-text);
+}
+
+.wca-badge-tag {
+    font-weight: 600;
+    color: var(--wp-text-sub);
+    font-size: 0.7rem;
+}
+
+.wca-badge-n { font-variant-numeric: tabular-nums; }
+
+.wca-badge-gold   { border-color: var(--wp-gold);   background: rgba(201, 162, 78, 0.08); }
+.wca-badge-gold .wca-badge-tag   { color: var(--wp-gold); }
+.wca-badge-silver { border-color: var(--wp-silver); background: rgba(166, 168, 171, 0.10); }
+.wca-badge-silver .wca-badge-tag { color: var(--wp-silver); }
+.wca-badge-bronze { border-color: var(--wp-bronze); background: rgba(176, 112, 81, 0.08); }
+.wca-badge-bronze .wca-badge-tag { color: var(--wp-bronze); }
+.wca-badge-wr     { border-color: var(--wp-accent); background: var(--wp-accent-soft); }
+.wca-badge-wr .wca-badge-tag     { color: var(--wp-accent); }
+.wca-badge-cr     { border-color: var(--wp-border-strong); }
+.wca-badge-nr     { border-color: var(--wp-border-strong); }
+
+/* ── Section ── */
+
+.wca-section-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0 0.875rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--wp-text);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    padding: 0.625rem 0;
+    border-bottom: 1px solid var(--wp-border);
+}
+
+.wca-section-title svg { color: var(--wp-accent); }
+
+.wca-person-pr,
+.wca-person-comps-section {
+    margin-bottom: 2rem;
+}
+
+/* ── PR table ── */
+
+.wca-pr-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: var(--wp-surface);
+    border: 1px solid var(--wp-border);
+    border-radius: 12px;
+    overflow: hidden;
+    font-size: 0.85rem;
+}
+
+.wca-pr-table thead th {
+    background: var(--wp-bg);
+    color: var(--wp-text-sub);
+    font-weight: 500;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.5rem 0.875rem;
+    text-align: left;
+    border-bottom: 1px solid var(--wp-border);
+}
+
+.wca-pr-table tbody th {
+    text-align: left;
+    font-weight: 500;
+    padding: 0.5rem 0.875rem;
+    color: var(--wp-text);
+    border-bottom: 1px solid var(--wp-border);
+    background: var(--wp-surface);
+}
+
+.wca-pr-table tbody td {
+    padding: 0.5rem 0.875rem;
+    border-bottom: 1px solid var(--wp-border);
+    color: var(--wp-text);
+}
+
+.wca-pr-table tbody tr:last-child th,
+.wca-pr-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.wca-pr-table tbody tr:hover td,
+.wca-pr-table tbody tr:hover th {
+    background: rgba(0, 0, 0, 0.015);
+}
+
+.wca-pr-result {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum';
+    font-weight: 600;
+    color: var(--wp-text);
+}
+
+.wca-pr-rank {
+    color: var(--wp-text-sub);
+}
+
+.wca-rank-cell {
+    display: inline-flex;
+    gap: 4px;
+    align-items: center;
+    font-variant-numeric: tabular-nums;
+    font-size: 0.78rem;
+}
+
+.wca-rank {
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: var(--wp-bg);
+    border: 1px solid var(--wp-border);
+    color: var(--wp-text-sub);
+    min-width: 28px;
+    text-align: center;
+}
+
+.wca-rank-w { color: var(--wp-accent); border-color: var(--wp-accent); background: var(--wp-accent-soft); }
+
+/* ── Recent comps ── */
+
+.wca-comp-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.5rem;
+}
+
+.wca-comp {
+    background: var(--wp-surface);
+    border: 1px solid var(--wp-border);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.wca-comp:hover {
+    border-color: var(--wp-border-strong);
+    box-shadow: var(--wp-shadow);
+}
+
+.wca-comp-header {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    margin-bottom: 0.5rem;
+}
+
+.wca-comp-flag {
+    width: 16px;
+    height: 12px;
+    border-radius: 2px;
+    box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.1);
+    flex-shrink: 0;
+}
+
+.wca-comp-name {
+    flex: 1;
+    color: var(--wp-text);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.92rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.wca-comp-name:hover {
+    color: var(--wp-accent);
+}
+
+.wca-comp-date {
+    font-size: 0.75rem;
+    color: var(--wp-text-mute);
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+}
+
+.wca-comp-results {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.wca-comp-result-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 8px;
+    background: var(--wp-bg);
+    border: 1px solid var(--wp-border);
+    border-radius: 999px;
+    font-size: 0.74rem;
+}
+
+.wca-comp-event {
+    color: var(--wp-text-sub);
+}
+
+.wca-comp-best {
+    font-variant-numeric: tabular-nums;
+    color: var(--wp-text);
+    font-weight: 600;
+}
+
+.wca-comps-more {
+    margin-top: 0.875rem;
+    text-align: center;
+    color: var(--wp-text-mute);
+    font-size: 0.78rem;
+}
+
+.wca-comps-more a {
+    color: var(--wp-text-sub);
+    text-decoration: underline dotted;
+}
+
+.wca-comps-more a:hover { color: var(--wp-accent); }
+
+.wca-person-footer {
+    margin-top: 2.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--wp-border);
+    color: var(--wp-text-mute);
+    font-size: 0.75rem;
+    text-align: center;
+}
+
+.wca-person-footer a {
+    color: var(--wp-text-sub);
+    text-decoration: underline dotted;
+}
+
+.wca-person-footer a:hover { color: var(--wp-accent); }
+
+/* ── Mobile ── */
+
+@media (max-width: 720px) {
+    .wca-persons-header { padding: 0.875rem 1rem; }
+    .wca-persons-title h1 { font-size: 1.1rem; }
+    .wca-persons-main { padding: 1rem; }
+    .wca-person-hero {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 1rem;
+    }
+    .wca-person-avatar { width: 80px; height: 80px; }
+    .wca-person-meta { justify-content: center; }
+    .wca-person-badges { justify-content: center; }
+    .wca-pr-table { font-size: 0.78rem; }
+    .wca-pr-table thead th,
+    .wca-pr-table tbody th,
+    .wca-pr-table tbody td { padding: 6px 8px; }
+    .wca-rank { min-width: 22px; padding: 1px 4px; font-size: 0.72rem; }
+}
