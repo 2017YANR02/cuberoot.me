@@ -255,24 +255,70 @@
     }
 }
 
+/* ── 中国备案信息（仅 cuberoot.me 显示）── */
+.landing-page .beian {
+    margin-top: 0.5rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.75rem;
+    color: var(--text-sub);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    padding: 0 1rem;
+}
+
+.landing-page .beian a {
+    color: var(--text-sub);
+    text-decoration: none;
+    transition: color 0.15s;
+}
+
+.landing-page .beian a:hover {
+    color: var(--accent);
+}
+
+.landing-page .beian-mps {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.landing-page .beian-sep {
+    color: var(--border);
+}
+
+/* ── 镜像站点提示 ── */
+.landing-page .mirror-notice {
+    margin-top: 2rem;
+    font-size: 0.875rem;
+    color: var(--text-sub);
+    text-align: center;
+    padding: 0 1rem;
+}
+
+.landing-page .mirror-notice a {
+    color: var(--text);
+    text-decoration: none;
+    border-bottom: 1px dashed var(--border);
+    transition: color 0.15s, border-color 0.15s;
+}
+
+.landing-page .mirror-notice a:hover {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+}
+
 /* ── 致谢 ── */
 .landing-page .credits {
-    margin-top: 3rem;
+    margin-top: 0.5rem;
     font-size: 0.75rem;
     color: var(--text-sub);
     text-align: center;
     padding: 0 1rem;
     max-width: 720px;
-    line-height: 1.8;
-}
-
-.landing-page .credits::before {
-    content: '';
-    display: block;
-    width: 48px;
-    height: 1px;
-    background: var(--border);
-    margin: 0 auto 1rem;
+    line-height: 1.6;
 }
 
 .landing-page .credits a {
@@ -287,7 +333,7 @@
 
 /* ── 页脚 ── */
 .landing-page .footer {
-    margin-top: 1.25rem;
+    margin-top: 0.5rem;
     font-size: 0.75rem;
     color: var(--text-sub);
     display: flex;
