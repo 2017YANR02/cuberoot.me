@@ -103,6 +103,10 @@ function computeMyNem(
 
 // Reverse strict nemesis: E_Q ⊆ E_P AND P strictly better in every E_Q ek.
 // Iterate persons; cheap rejection on the first non-conforming Q ek.
+//
+// NOTE: a person with 0 ranks (registered but never had a positive `best`,
+// e.g. someone who DNF'd every attempt at their only competition) is included:
+// E_Q = ∅ ⊆ E_P trivially, ∀ ek ∈ E_Q is vacuous. Matches nemesizer.com.
 function computeINem(
   ds: NemesizerDataset,
   p: number,
@@ -114,7 +118,6 @@ function computeINem(
   for (let q = 0; q < ranksByPerson.length; q++) {
     if (q === p) continue;
     const qRanks = ranksByPerson[q];
-    if (qRanks.length === 0) continue;
     let ok = true;
     for (let i = 0; i < qRanks.length; i++) {
       const r = qRanks[i];
