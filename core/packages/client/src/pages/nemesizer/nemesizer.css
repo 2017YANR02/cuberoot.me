@@ -293,3 +293,26 @@
 }
 .nemesizer-footer a { color: #aaa; }
 .nemesizer-footer a:hover { color: #ec4899; }
+
+.nemesizer-sort {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 8px 0;
+  font-size: 14px;
+  flex-wrap: wrap;
+}
+.nemesizer-sort select {
+  background: #1a1a1a;
+  color: #ddd;
+  border: 1px solid #444;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 14px;
+}
+.nemesizer-sort label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}

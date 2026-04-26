@@ -56,13 +56,20 @@ export default function WhatIfMode({ ds, isZh }: Props) {
         {displayCuberName(p.name, isZh)} ({p.wcaId})
       </div>
       <PersonSearch ds={ds} isZh={isZh} initialQuery={person} onPick={id => setParam('person', id)} />
-      <div style={{ textAlign: 'center', margin: '10px' }}>
-        <label style={{ marginRight: 18 }}>
-          <input type="radio" checked={view === 'myNem'} onChange={() => setParam('view', 'myNem')} /> {isZh ? '我的宿敌' : 'My nemeses'}
-        </label>
-        <label>
-          <input type="radio" checked={view === 'iNem'} onChange={() => setParam('view', 'iNem')} /> {isZh ? '谁视我为宿敌' : 'Who I nemesize'}
-        </label>
+      <div className="nemesizer-view-group">
+        {([
+          ['myNem',      '显示我的宿敌',              'Show my nemeses'],
+          ['iNem',       '显示谁把我视为宿敌',         'Show who I nemesize'],
+          ['nearlyMe',   '显示差一步就成我宿敌的人',   'Show who nearly nemesizes me'],
+          ['iNearly',    '显示差一步就把我视为宿敌的人', 'Show who I nearly nemesize'],
+          ['onlyJustMe', '显示刚好成为我宿敌的人',     'Show who only just nemesizes me'],
+          ['iOnlyJust',  '显示刚好把我视为宿敌的人',   'Show who I only just nemesize'],
+        ] as const).map(([id, zh, en]) => (
+          <label key={id}>
+            <input type="radio" checked={view === id} onChange={() => setParam('view', id)} />
+            {isZh ? zh : en}
+          </label>
+        ))}
       </div>
       <div className="nemesizer-whatif-grid">
         <div className="nemesizer-whatif-row" style={{ fontWeight: 600, background: '#262626' }}>
