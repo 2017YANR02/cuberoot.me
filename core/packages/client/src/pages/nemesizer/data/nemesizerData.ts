@@ -143,6 +143,28 @@ export function findPersons(ds: NemesizerDataset, query: string): number[] {
   // Chinese name exact
   const zh = ds.zhNameIndex.get(q);
   if (zh !== undefined) return [zh];
+  // 4-digit year prefix → all WCA IDs starting with that year (e.g. "2017" → 2017XXXXNN)
+  if (/^\d{4}$/.test(q)) {
+    const out: number[] = [];
+    for (let i = 0; i < ds.persons.length && out.length < 200; i++) {
+      if (ds.persons[i].wcaId.startsWith(q)) out.push(i);
+    }
+    if (out.length > 0) return out;
+  }
+  // 2-letter ISO country code → all persons from that country
+  if (/^[A-Za-z]{2}$/.test(q)) {
+    const iso = q.toLowerCase();
+    const country = ds.countryIndex.get(iso);
+    if (country && country.length > 0) return country.slice(0, 200);
+  }
+  // Country name (English) — match via meta.countries
+  const qLower = q.toLowerCase();
+  for (const c of ds.meta.countries) {
+    if (c.nameEn.toLowerCase() === qLower || c.nameZh === q) {
+      const arr = ds.countryIndex.get(c.iso2);
+      if (arr && arr.length > 0) return arr.slice(0, 200);
+    }
+  }
   // Fuzzy substring on name (case-insensitive)
   const needle = stripParens(q).toLowerCase();
   const results: number[] = [];

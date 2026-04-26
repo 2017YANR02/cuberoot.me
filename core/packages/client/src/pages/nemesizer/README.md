@@ -2,50 +2,77 @@
 
 Route: `/nemesizer` — a client-side port of [nemesizer.com](https://nemesizer.com).
 
-Given a WCA competitor P, Nemesizer answers:
+The nemesis algorithm follows the open-source reference implementation at
+[huizhiLLL/WCA-Nemesizer-API](https://github.com/huizhiLLL/WCA-Nemesizer-API)
+(Python + sqlite). We reimplement it client-side in TypeScript against
+gzipped binary blobs, so queries are interactive (no per-request server hop)
+and the page works offline once loaded.
 
-- **My nemeses (我的宿敌)** — who is strictly better than P in every event they both hold a rank in (and shares ≥ 1 event).
-- **Who I nemesize (谁视我为宿敌)** — the reverse: P is strictly better than them in every shared event.
-- **Nearly nemesis** — same as nemesis except for exactly 1 shared event where the relation is flipped.
-- **Only just nemesis** — nemesis where the smallest margin is exactly 1 rank.
-- **Head to head** — two-person rank / result comparison (green = better).
-- **What if** — override your own ranks in any (event, kind) and recompute.
-- **Statistics** — most nemeses, fewest nemeses, biggest nemesizers, top countries.
+## Definitions
+
+Q is a **nemesis** of P iff:
+
+1. `E_P ⊆ E_Q` (Q has rank in every event-kind P competes in)
+2. `∀ ek ∈ E_P : rank_Q(ek) < rank_P(ek)` (Q strictly better in each)
+
+P **nemesizes** Q is the symmetric relation with roles swapped: `E_Q ⊆ E_P` and
+P strictly better in every E_Q ek. Note the asymmetry — the event-coverage
+direction flips with the roles. A person with 0 ranks satisfies E_Q = ∅ ⊆ E_P
+vacuously and is therefore counted in every iNem set.
+
+**Nearly nemesis** of P: E_P ⊆ E_Q (or E_Q ⊆ E_P for reverse), strict winner in
+all but exactly 1 ek of the relevant set, ties/loses in 1.
+
+**Only just nemesis**: strict nemesis with min margin (rank gap over the
+relevant ek set) equal to 1.
+
+## Modes
+
+- **Nemeses (宿敌)** — six relation views above + scope filter (world / continent / country) + people / countries display + CSV export
+- **Head to head (对决)** — two-person ranks + results comparison, color-coded by who's better
+- **What if (假设)** — override your own ranks in any (event, kind) and recompute the relation
+- **Statistics (统计)** — most / fewest nemeses, biggest nemesizers, top countries (world only; depends on precomputed counts)
 
 ## Data pipeline
 
 Binary files served from `stats/data/nemesizer/` (gzipped, decoded client-side via `DecompressionStream`):
 
-| file | what | size (mock 8-person) | size (full WCA export, approx) |
-|---|---|---|---|
-| `persons.bin.gz` | WCA ID / name / country / continent per person | 326 B | ~5 MB |
-| `ranks.bin.gz`   | `personIdx / eventIdx / kind / worldRank / best` per rank | 2.7 KB | ~8 MB |
-| `counts.bin.gz`  | precomputed `nemesisCount` / `nemesizedCount` per person | 76 B | ~1 MB |
-| `meta.json`      | events / countries / continents lookup | — | < 100 KB |
+| file | what | size (real WCA dump) |
+|---|---|---|
+| `persons.bin.gz` | WCA ID / name / country / continent per person | ~4 MB |
+| `ranks.bin.gz`   | `personIdx / eventIdx / kind / worldRank / best` per rank | ~10 MB |
+| `counts.bin.gz`  | `nemesisCount` / `nemesizedCount` per person (StatsMode) | ~2 MB |
+| `meta.json`      | events / countries / continents lookup | < 100 KB |
 
 Binary format defined in `@cuberoot/shared/nemesizer-format` (shared between Node builder and browser reader).
+
+The WCA developer dump publishes `ranks_single` / `ranks_average` as schema-only
+(actual rows are computed in WCA prod, never exported). So we recompute PBs from
+`results` and rank with `RANK()` (not `ROW_NUMBER()` — ties must collapse so
+rank-comparison is equivalent to strict best-comparison).
 
 ### Regenerating data
 
 ```bash
 # Real WCA MySQL data (needs stats-build/database.yml configured)
+# ~110s on a recent local SSD; the two ROW_NUMBER queries dominate.
 pnpm --filter @cuberoot/stats-build nemesizer
 
 # Mock 8-person dataset (no DB required, ~10 sec)
 pnpm --filter @cuberoot/stats-build nemesizer -- --mock
 ```
 
-Then commit the generated files under `stats/data/nemesizer/` to main. `deploy_mirror.yml` copies `stats/` wholesale so no whitelist change is needed.
-
-Full-export run computes nemesis counts for every person (O(N · avg-events · avg-rank-prefix)) — expect a few minutes on ~450 K persons.
+The CI workflow `stats.yml` reruns this weekly and commits the regenerated
+binaries. `deploy_mirror.yml` copies `stats/` wholesale, so no whitelist
+change is needed for new data files.
 
 ## URL state
 
 All four modes use query string so pages are shareable:
 
 ```
-/nemesizer                                         # search prompt
-/nemesizer?mode=standard&person=2025WANY02&view=iNem&scope=world&show=people
+/nemesizer                                                 # search prompt
+/nemesizer?mode=standard&person=2017YANR02&view=myNem&scope=world&show=people
 /nemesizer?mode=h2h&p1=2019WANY36&p2=2023GENG02&show=results
 /nemesizer?mode=whatif&person=2023GENG02&view=myNem
 /nemesizer?mode=stats&tab=biggest
@@ -59,7 +86,7 @@ pages/nemesizer/
 ├── nemesizer.css
 ├── data/
 │   ├── nemesizerData.ts   fetch + gunzip + build indexes (byEk, rankOfPerson, etc.)
-│   └── nemesizerAlgo.ts   nemesis / nearly / onlyJust / what-if
+│   └── nemesizerAlgo.ts   nemesis / nearly / onlyJust / scope filter
 ├── components/
 │   ├── NemesizerBrand.tsx
 │   ├── PersonCell.tsx
@@ -71,29 +98,29 @@ pages/nemesizer/
     └── StatsMode.tsx      most / few / people / biggest / countries (world only)
 ```
 
-### Algorithm sketch
+### Forward (myNem) algorithm
 
-For each person P:
+Smallest-prefix-first intersection (matches the Python ref's intersection loop):
 
-1. Gather P's rank entries `E_P` (one per event × kind).
-2. For each `ek ∈ E_P`, split that ek's globally-sorted list at `rank_P(ek)`:
-   - prefix = people better than P in that ek
-   - suffix = people worse (≥) than P in that ek
-3. `candidates = ⋃ prefix(ek)` (Q wins in ≥ 1 shared ek).
-4. `disqualified = ⋃ suffix(ek)` (Q loses in ≥ 1 shared ek).
-5. `nemeses(P) = candidates \ disqualified` (minus P himself).
+1. Gather P's rank entries E_P.
+2. For each `ek ∈ E_P`, compute `prefix(ek)` = persons with `rank < rank_P(ek)` in that ek (binary search).
+3. Sort E_P by `|prefix(ek)|` ascending.
+4. Initialize candidates = the smallest prefix.
+5. For each remaining ek in order: filter candidates → keep only those with strictly-better rank in that ek.
+6. Subtract P himself; the survivors are P's strict nemeses.
 
-`invert=true` swaps prefix/suffix to compute who P nemesizes.
+Per-query cost is O(min_prefix · |E_P|), sub-second in the browser even on the full WCA export.
 
-The algorithm runs per-person in time O(|E_P| · |prefix|), so a single person's nemesis list is sub-second in the browser even on the full WCA export. Global counts (`counts.bin`) are precomputed at build time for the Statistics tab to avoid N² in the browser.
+### Reverse (iNem) algorithm
 
-## Known deviations from nemesizer.com
+Iterate all persons; reject Q on the first non-conforming ek (Q has an ek not
+in E_P, or Q's rank in some E_Q ek is not strictly worse than P's). Persons
+with zero ranks pass vacuously.
 
-- No left-hand drawer navigation. The four tabs live inline.
-- Statistics tab is world-scope only (nemesizer.com has continent/country). Requires an anchor person, not in MVP.
-- No "About Nemesizer" page.
+## Numerical drift vs nemesizer.com
 
-## References
-
-- Original: https://nemesizer.com (client-side port; definitions and UI semantics match).
-- Design spec: `docs/superpowers/specs/2026-04-24-nemesizer-design.md`.
+We use the latest WCA dump (refreshed weekly by `stats.yml`); nemesizer.com
+publishes static snapshots roughly every two weeks. Across spot-checks this
+manifests as a 0.05–0.5 % drift in the larger counts (ours and theirs differ
+by ~100s of cubers in iNem) and a few-cuber drift in myNem. Same algorithm,
+different dump dates.
