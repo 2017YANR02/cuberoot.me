@@ -177,6 +177,18 @@
     font-weight: 500;
     color: var(--wp-text);
     letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.wca-person-name-flag {
+    display: inline-block;
+    width: 32px;
+    height: 24px;
+    border-radius: 3px;
+    box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.15);
+    flex-shrink: 0;
 }
 
 .wca-person-meta {

@@ -89,8 +89,8 @@ export default function ReconDetailPage() {
           {solve.rawTime != null && formatTime(solve.rawTime)}
           <RecordBadge record={solve.regionalSingleRecord} variant="inline" />
           {solve.event && ` ${getEventDisplayName(solve.event)}`}
-          {' '}{solve.person}
           {solve.personCountry && <>{' '}<span className={flagClass(solve.personCountry)} /></>}
+          {' '}{solve.person}
         </h1>
       </div>
 
