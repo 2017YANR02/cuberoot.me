@@ -117,6 +117,7 @@ This project stands on the shoulders of excellent open-source work:
 - [**cs0x7f/cstimer**](https://github.com/cs0x7f/cstimer) — professional speedcubing timer & WCA random-state scramble engine
 - [**Roman-/mosaic**](https://github.com/Roman-/mosaic) — cube mosaic generator (React port)
 - [**MeigenChou/DCTimer-Android**](https://github.com/MeigenChou/DCTimer-Android) — design inspiration for the battle timer
+- [**huizhiLLL/WCA-Nemesizer-API**](https://github.com/huizhiLLL/WCA-Nemesizer-API) — nemesis-relation algorithm reference (client-side TS reimplementation; UI inspired by [nemesizer.com](https://nemesizer.com))
 
 ---
 
