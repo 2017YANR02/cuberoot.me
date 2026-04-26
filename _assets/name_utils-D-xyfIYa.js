@@ -1,0 +1,1 @@
+var e=/[\u4e00-\u9fff]/,t=/\(([^)]*[\u4e00-\u9fff][^)]*)\)\s*$/;function n(n){let r=t.exec(n);return r&&e.test(r[1])?r[1]:null}function r(e){return e.replace(/\s*\([^)]*\)\s*/g,` `).trim()}function i(e,t){return t?n(e)??r(e):r(e)}export{n,r,i as t};
