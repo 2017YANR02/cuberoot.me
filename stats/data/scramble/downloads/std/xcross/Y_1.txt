@@ -1,0 +1,9 @@
+# Scramble Extremes — std / xcross / Y / bin 1 (min)
+# Population in this bin: 2
+# Samples listed: 2 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-04-26T04:37:30.356Z
+# Columns: id,scramble,bottom_color
+
+205892001,F2 D B2 R2 U' F2 L2 U' R' D2 B' F' L2 F' R' D2 U2 R B' L B2,Y
+2584817001,L2 D2 R' U2 L' U R' U2 L F' U' F D2,Y
