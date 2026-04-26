@@ -240,6 +240,137 @@ function buildRanks(
   return out;
 }
 
+// Strict per-person nemesis counts. For each P:
+//   nemesisCount[P]  = |{Q : E_P ⊆ E_Q AND Q strictly better in every E_P ek}|
+//   nemesizedCount[Q] = |{P : Q is in P's nemesis set above}|
+// Algorithm: smallest-prefix-first intersection (matches nemesizer.com Python ref).
+function computeCounts(N: number, rankRecords: RankRecord[]): {
+  nemesisCount: Uint32Array;
+  nemesizedCount: Uint32Array;
+} {
+  const nEk = NEMESIZER_EVENTS.length * 2;
+
+  // rankInEk[ek] = Uint32Array(N), 0 means "no rank in this ek".
+  const rankInEk: Uint32Array[] = new Array(nEk);
+  for (let ek = 0; ek < nEk; ek++) rankInEk[ek] = new Uint32Array(N);
+
+  const eksPerPerson: number[][] = Array.from({ length: N }, () => []);
+  for (const r of rankRecords) {
+    const ek = r.eventIdx * 2 + r.kind;
+    rankInEk[ek][r.personIdx] = r.worldRank;
+    eksPerPerson[r.personIdx].push(ek);
+  }
+
+  // byEk[ek] = personIdx sorted by ascending rank.
+  const byEk: Uint32Array[] = new Array(nEk);
+  {
+    const buckets: number[][] = Array.from({ length: nEk }, () => []);
+    for (let p = 0; p < N; p++) {
+      for (const ek of eksPerPerson[p]) buckets[ek].push(p);
+    }
+    for (let ek = 0; ek < nEk; ek++) {
+      const arr = buckets[ek];
+      const map = rankInEk[ek];
+      arr.sort((a, b) => map[a] - map[b]);
+      byEk[ek] = Uint32Array.from(arr);
+    }
+  }
+
+  function lowerBound(list: Uint32Array, ek: number, target: number): number {
+    const map = rankInEk[ek];
+    let lo = 0, hi = list.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (map[list[mid]] < target) lo = mid + 1; else hi = mid;
+    }
+    return lo;
+  }
+
+  const nemesisCount = new Uint32Array(N);
+  const nemesizedCount = new Uint32Array(N);
+  const mark = new Uint8Array(N);
+  const touched = new Uint32Array(N);
+  let touchedLen = 0;
+
+  let lastLog = Date.now();
+  const t0 = Date.now();
+  for (let p = 0; p < N; p++) {
+    if (Date.now() - lastLog > 5000) {
+      const elapsed = (Date.now() - t0) / 1000;
+      const rate = p / elapsed;
+      const eta = (N - p) / rate;
+      console.log(`[nemesizer]     ${p}/${N} (${elapsed.toFixed(1)}s, ${rate.toFixed(0)}/s, eta ${eta.toFixed(0)}s)`);
+      lastLog = Date.now();
+    }
+
+    const eks = eksPerPerson[p];
+    if (eks.length === 0) continue;
+
+    // Find smallest-prefix ek among E_P.
+    let minEk = -1;
+    let minSplit = Infinity;
+    for (const ek of eks) {
+      const split = lowerBound(byEk[ek], ek, rankInEk[ek][p]);
+      if (split < minSplit) { minSplit = split; minEk = ek; }
+    }
+    if (minSplit === 0) continue;
+
+    if (eks.length === 1) {
+      // No intersection needed — every prefix entry qualifies.
+      const list = byEk[minEk];
+      let count = 0;
+      for (let i = 0; i < minSplit; i++) {
+        const q = list[i];
+        if (q === p) continue;
+        count++;
+        nemesizedCount[q]++;
+      }
+      nemesisCount[p] = count;
+      continue;
+    }
+
+    // Initialize candidates from smallest prefix.
+    const firstList = byEk[minEk];
+    for (let i = 0; i < minSplit; i++) {
+      const q = firstList[i];
+      mark[q] = 1;
+      touched[touchedLen++] = q;
+    }
+
+    // Intersect with each remaining ek's strict-better prefix.
+    for (const ek of eks) {
+      if (ek === minEk) continue;
+      const targetRank = rankInEk[ek][p];
+      const ranks_ = rankInEk[ek];
+      let writePos = 0;
+      for (let i = 0; i < touchedLen; i++) {
+        const q = touched[i];
+        const rq = ranks_[q];
+        if (rq !== 0 && rq < targetRank) {
+          touched[writePos++] = q;
+        } else {
+          mark[q] = 0;
+        }
+      }
+      touchedLen = writePos;
+      if (touchedLen === 0) break;
+    }
+
+    let count = 0;
+    for (let i = 0; i < touchedLen; i++) {
+      const q = touched[i];
+      if (q === p) continue;
+      count++;
+      nemesizedCount[q]++;
+    }
+    nemesisCount[p] = count;
+    for (let i = 0; i < touchedLen; i++) mark[touched[i]] = 0;
+    touchedLen = 0;
+  }
+
+  return { nemesisCount, nemesizedCount };
+}
+
 async function main() {
   const isMock = process.argv.includes('--mock');
   const raw = isMock ? makeMock() : await loadFromDb();
@@ -255,12 +386,15 @@ async function main() {
   const rankRecords = await phase('buildRanks', () => buildRanks(raw.ranks, personIdxByWcaId));
   console.log(`[nemesizer]     ${rankRecords.length} rank records`);
 
-  // NOTE: precomputing per-person nemesis counts is O(N · prefix_size) and does not
-  // finish on the real WCA dataset (~286k persons). The reference impl at nemesizer.com
-  // computes the relation on-demand per query, and so does our client (nemesizerAlgo.ts).
-  // Counts are only consumed by StatsMode's leaderboards — leave them zeroed for now.
-  const nemesisCount = new Uint32Array(personRecords.length);
-  const nemesizedCount = new Uint32Array(personRecords.length);
+  // Precompute per-person counts for StatsMode leaderboards. The strict
+  // definition + smallest-prefix-first intersection is fast enough on the
+  // full WCA dataset (~7 min on a recent local SSD). Special-case k=1 (no
+  // intersection needed); use flat Uint32Array per ek instead of Map for
+  // hot-path lookups.
+  const { nemesisCount, nemesizedCount } = await phase(
+    `precompute counts (${personRecords.length} persons)`,
+    () => computeCounts(personRecords.length, rankRecords),
+  );
 
   // Build meta
   const events = NEMESIZER_EVENTS.map(id => ({
