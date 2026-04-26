@@ -4,7 +4,6 @@ import type { NemesizerDataset } from '../data/nemesizerData';
 import NemesizerPersonPicker from '../components/NemesizerPersonPicker';
 import PersonCell from '../components/PersonCell';
 import { applyRelation, filterByScope, type RelationView } from '../data/nemesizerAlgo';
-import { displayCuberName } from '../../../utils/name_utils';
 
 interface Props { ds: NemesizerDataset; isZh: boolean; }
 
@@ -69,7 +68,7 @@ export default function StandardMode({ ds, isZh }: Props) {
       <ShowPicker mode={showMode} onChange={m => setParam('show', m)} isZh={isZh} />
       {showMode === 'people' && <SortPicker order={order} direction={direction} onOrder={o => setParam('order', o)} onDirection={d => setParam('direction', d)} isZh={isZh} />}
       <SummaryLine
-        person={p.name}
+        person={p}
         isZh={isZh}
         count={results?.length ?? 0}
         view={view}
@@ -148,9 +147,8 @@ function ShowPicker({ mode, onChange, isZh }: { mode: 'people' | 'countries'; on
 }
 
 function SummaryLine({ person, isZh, count, view, ds, scopeRef, scope }: {
-  person: string; isZh: boolean; count: number; view: RelationView; ds: NemesizerDataset; scopeRef: number; scope: 'world' | 'continent' | 'country';
+  person: NemesizerDataset['persons'][number]; isZh: boolean; count: number; view: RelationView; ds: NemesizerDataset; scopeRef: number; scope: 'world' | 'continent' | 'country';
 }) {
-  const name = displayCuberName(person, isZh);
   const scopeText = (() => {
     if (scope === 'world') return isZh ? '世界' : 'the world';
     if (scope === 'country') {
@@ -172,9 +170,19 @@ function SummaryLine({ person, isZh, count, view, ds, scopeRef, scope }: {
     const tail = view === 'myNem' || view === 'nearlyMe' || view === 'onlyJustMe'
       ? `${count} 个） in ${scopeText}`
       : `${count} 个人 in ${scopeText}`;
-    return <div className="nemesizer-results-summary">{name}（{scopeText}）{verbZh[view]}{tail}</div>;
+    return (
+      <div className="nemesizer-results-summary">
+        <PersonCell person={person} isZh={isZh} />
+        （{scopeText}）{verbZh[view]}{tail}
+      </div>
+    );
   }
-  return <div className="nemesizer-results-summary">{name} {verbEn[view]} {count} people in {scopeText}</div>;
+  return (
+    <div className="nemesizer-results-summary">
+      <PersonCell person={person} isZh={isZh} />
+      {' '}{verbEn[view]} {count} people in {scopeText}
+    </div>
+  );
 }
 
 function PeopleTable({ ds, results, isZh, order, direction }: {

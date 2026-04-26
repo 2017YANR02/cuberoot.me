@@ -4,7 +4,6 @@ import type { NemesizerDataset } from '../data/nemesizerData';
 import NemesizerPersonPicker from '../components/NemesizerPersonPicker';
 import PersonCell from '../components/PersonCell';
 import { NEMESIZER_EVENTS } from '../data/nemesizerData';
-import { displayCuberName } from '../../../utils/name_utils';
 
 interface Props { ds: NemesizerDataset; isZh: boolean; }
 
@@ -47,7 +46,7 @@ export default function H2HMode({ ds, isZh }: Props) {
         </label>
       </div>
       <div className="nemesizer-results-summary">
-        {isZh ? '选手 1' : 'Compare'}: <b>{displayCuberName(ds.persons[idx1].name, isZh)}</b> ({ds.persons[idx1].wcaId})
+        {isZh ? '选手 1' : 'Compare'}: <PersonCell person={ds.persons[idx1]} isZh={isZh} /> ({ds.persons[idx1].wcaId})
       </div>
       <NemesizerPersonPicker ds={ds} isZh={isZh} initialQuery={p2} onPick={id => setParam('p2', id)}
         placeholder={isZh ? '对手：WCA ID 或姓名' : 'With: WCA ID or name'} />
