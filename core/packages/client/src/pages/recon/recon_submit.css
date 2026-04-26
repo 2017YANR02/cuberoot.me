@@ -166,3 +166,27 @@
 .submit-field {
   position: relative;
 }
+
+/* --- 已选选手 pill（替代旧 dropdown 的 hint 行）--- */
+.submit-solver-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: rgba(255, 235, 220, 0.06);
+  border: 1px solid rgba(255, 235, 220, 0.18);
+  border-radius: 8px;
+  font-size: 14px;
+  align-self: flex-start;
+}
+.submit-solver-pill .submit-solver-name { color: #f0e6dc; }
+.submit-solver-pill .submit-solver-id   { color: #998877; font-size: 12px; }
+.submit-solver-pill .submit-solver-clear {
+  background: transparent;
+  border: none;
+  color: #998877;
+  cursor: pointer;
+  padding: 0 4px;
+  font-size: 14px;
+}
+.submit-solver-pill .submit-solver-clear:hover { color: #ff8888; }

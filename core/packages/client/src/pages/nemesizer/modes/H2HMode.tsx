@@ -1,7 +1,7 @@
 import { useSearchParams } from 'react-router-dom';
 import { useMemo } from 'react';
 import type { NemesizerDataset } from '../data/nemesizerData';
-import PersonSearch from '../components/PersonSearch';
+import NemesizerPersonPicker from '../components/NemesizerPersonPicker';
 import PersonCell from '../components/PersonCell';
 import { NEMESIZER_EVENTS } from '../data/nemesizerData';
 import { displayCuberName } from '../../../utils/name_utils';
@@ -29,7 +29,7 @@ export default function H2HMode({ ds, isZh }: Props) {
     return (
       <div>
         <h2 style={{ textAlign: 'center' }}>{isZh ? '正面对决' : 'Head to head!'}</h2>
-        <PersonSearch ds={ds} isZh={isZh} initialQuery={p1} onPick={id => setParam('p1', id)} autoPickSingle
+        <NemesizerPersonPicker ds={ds} isZh={isZh} initialQuery={p1} onPick={id => setParam('p1', id)}
           placeholder={isZh ? '选手 1：WCA ID 或姓名' : 'Person 1: WCA ID or name'} />
       </div>
     );
@@ -49,7 +49,7 @@ export default function H2HMode({ ds, isZh }: Props) {
       <div className="nemesizer-results-summary">
         {isZh ? '选手 1' : 'Compare'}: <b>{displayCuberName(ds.persons[idx1].name, isZh)}</b> ({ds.persons[idx1].wcaId})
       </div>
-      <PersonSearch ds={ds} isZh={isZh} initialQuery={p2} onPick={id => setParam('p2', id)} autoPickSingle
+      <NemesizerPersonPicker ds={ds} isZh={isZh} initialQuery={p2} onPick={id => setParam('p2', id)}
         placeholder={isZh ? '对手：WCA ID 或姓名' : 'With: WCA ID or name'} />
       {idx2 !== undefined && <Comparison ds={ds} isZh={isZh} p1={idx1} p2={idx2} show={show} />}
     </div>
