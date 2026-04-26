@@ -137,7 +137,6 @@ function computeNearlyMe(
   pRanks: RankRef[],
 ): NemesisResult[] {
   if (pRanks.length < 2) return [];  // need ≥ 2 eks to "miss by 1"
-  const pEksMap = pEksMapOf(pRanks);
   const out: NemesisResult[] = [];
   // Iterate all persons; for each Q check the strict coverage + 1-loss criterion over E_P.
   for (let q = 0; q < ds.persons.length; q++) {
