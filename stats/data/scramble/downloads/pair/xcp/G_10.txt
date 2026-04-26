@@ -1,0 +1,22 @@
+# Scramble Extremes — pair / xcp / G / bin 10 (max)
+# Population in this bin: 15
+# Samples listed: 15 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-04-26T04:37:30.356Z
+# Columns: id,scramble,bottom_color
+
+83123001,L2 U' B2 U B2 F2 R2 U' L R D' B2 F' L B D B2 D2 L' U2,G
+98194001,D2 R' F2 U2 R' F2 L2 D2 F2 U2 B L R U' B2 R' B2 F L' U',G
+120752001,R2 U B2 U2 B2 R2 B2 U L2 F2 R B2 D' U B L U F' L2 B2 R',G
+124641001,B2 D' B' D R2 L U' B' D B R' B R2 L2 B' U2 F2 D2 R2 F',G
+128739001,F R2 F' L' D' R U B L' F D F D2 L2 F2 L2 F' U2 B D2,G
+168087001,R U2 F2 R' U2 L F2 L F2 L B2 U F D' F' D2 F L' D2 B D2,G
+185109001,D2 R' U2 R' D2 L' R2 D2 B' R' U2 B D' L2 B' U R2 U2 B',G
+196103001,F2 L2 U2 B2 R2 D L2 D' L2 D R U2 B' D' L' U L2 B L' F U,G
+198621001,D2 R2 F2 R D2 L2 B2 D2 F2 D' F' U' R B L2 B R' B' D2 R,G
+219859001,U L F' U' D R' U' B' U' L' D R2 L2 U F2 B2 U' B2 U',G
+222076001,L2 D2 U B2 R2 U R2 B2 L2 B2 D' B' U' R' D B F U B2 R F',G
+222180001,L2 F2 L2 F2 L' B2 D2 R D2 B2 D' F' L U L' U' R B L F',G
+243929001,F' D2 F' U2 F2 R2 U2 B' D2 R2 U F U B L D' F' R U B U2,G
+276935001,R U' F' R B D' B2 U F U' D2 R2 F2 L' U2 L' B2 R2 U2 B2,G
+321502001,R2 B2 R' D2 B2 R F2 R2 U2 R' D B D2 L R U2 B' L D' R F L' F,G

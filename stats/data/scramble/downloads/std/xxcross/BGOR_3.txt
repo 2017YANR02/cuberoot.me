@@ -1,0 +1,11 @@
+# Scramble Extremes — std / xxcross / BGOR / bin 3 (min)
+# Population in this bin: 4
+# Samples listed: 4 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-04-26T04:37:30.356Z
+# Columns: id,scramble,bottom_color
+
+661418191,D' U' B2 L2 U R U2 B2 L B D' B D B' F' U2 R2 D2,G
+1084160001,R2 L' U L' D2 F2 U2 R2 F L2 B D B2 L2 F2 L2 U F2 U2,B
+3115470026,D R U' R' F2 R2 D L D L' B R2 L2 D2 F' L2 B L2 D,O
+4821497001,D U2 L2 D R2 F2 D' F' D F2 R' F' R D' U' F' D2,R
