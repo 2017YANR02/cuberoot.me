@@ -3,6 +3,8 @@
 
 import { useVizStore } from '../stores/viz_store';
 import { playerHSL } from '../engine/data_fetch';
+import { Flag } from '../../../utils/flag';
+import { personFlagIso2 } from '../../../utils/country_flags';
 
 export default function PlayerChips() {
   const players = useVizStore(s => s.players);
@@ -17,6 +19,7 @@ export default function PlayerChips() {
     <div className="player-chips" id="playerChips">
       {players.map((p, i) => {
         const isActive = i === activePlayerIdx;
+        const iso2 = personFlagIso2(p.wcaId);
         return (
           <span
             key={p.wcaId}
@@ -32,6 +35,7 @@ export default function PlayerChips() {
               rebuildAllChannels();
             }}
           >
+            {iso2 && <Flag iso2={iso2} className="player-chip-flag" />}
             {p.nameZh || p.name}
             <span
               className="chip-remove"

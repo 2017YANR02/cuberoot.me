@@ -404,6 +404,7 @@ function CompModal({ comp, isZh, onClose, t }: {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
+                  <SharedFlag iso2={personFlagIso2(c.id)} />
                   <span>{displayCuberName(c.name, isZh)}</span>
                   {c.events && c.events.length > 0 && (
                     <span className="event-label">

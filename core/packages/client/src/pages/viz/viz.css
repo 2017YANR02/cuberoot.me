@@ -603,6 +603,22 @@ kbd {
 .player-chip.active {
   font-weight: 600;
 }
+.player-chip-flag {
+  display: inline-block;
+  width: 16px;
+  height: 12px;
+  vertical-align: middle;
+  margin-right: 4px;
+  border-radius: 2px;
+}
+.viz-title-flag {
+  display: inline-block;
+  width: 24px;
+  height: 18px;
+  vertical-align: middle;
+  margin-right: 6px;
+  border-radius: 3px;
+}
 
 .player-chip .chip-remove {
   margin-left: 2px;

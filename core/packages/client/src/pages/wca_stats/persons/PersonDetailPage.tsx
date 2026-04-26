@@ -110,12 +110,14 @@ export default function PersonDetailPage() {
               : <div className="wca-person-avatar-fallback">{(displayName[0] ?? '?').toUpperCase()}</div>}
           </div>
           <div className="wca-person-info">
-            <h1 className="wca-person-name">{displayName}</h1>
+            <h1 className="wca-person-name">
+              {p.country_iso2 && <Flag iso2={p.country_iso2} className="wca-person-name-flag" />}
+              {displayName}
+            </h1>
             <div className="wca-person-meta">
               <span className="wca-person-id">{p.wca_id}</span>
               {p.country_iso2 && (
                 <span className="wca-person-country">
-                  <Flag iso2={p.country_iso2} className="wca-person-flag" />
                   <span>{p.country_iso2.toUpperCase()}</span>
                 </span>
               )}

@@ -16,6 +16,8 @@ import ModeSelector from './components/ModeSelector';
 import PlayerChips from './components/PlayerChips';
 import LegendPanel from './components/LegendPanel';
 import RidgelineCanvas from './components/RidgelineCanvas';
+import { Flag } from '../../utils/flag';
+import { personFlagIso2 } from '../../utils/country_flags';
 import './viz.css';
 
 // NOTE: WCA 项目列表
@@ -124,21 +126,42 @@ export default function VizPage() {
     setCsvMenuOpen(false);
   }, [players, currentEventId]);
 
-  // NOTE: 标题文本
+  // NOTE: 标题文本（JSX 形式以便嵌国旗）
   const evLabel = currentEventId === '333' ? '3×3' : currentEventId;
-  let titleText = isZh ? '分布演变' : 'Distribution Evolution';
-  let metaText = '';
+  const noPlayerTitle = isZh ? '分布演变' : 'Distribution Evolution';
+  const renderName = (p: typeof players[number]) => {
+    const iso2 = personFlagIso2(p.wcaId);
+    const name = isZh ? p.nameZh : p.name;
+    return (
+      <>
+        {iso2 && <Flag iso2={iso2} className="viz-title-flag" />}
+        {name}
+      </>
+    );
+  };
+  let titleNode: React.ReactNode = noPlayerTitle;
+  let metaNode: React.ReactNode = '';
   if (players.length === 1) {
     const p = players[0];
-    titleText = isZh
-      ? `${p.nameZh} ${evLabel} 分布演变`
-      : `${p.name} ${evLabel} Distribution Evolution`;
-    metaText = `${p.name} · ${p.wcaId} · ${p.solveData.length} solves`;
+    titleNode = (
+      <>
+        {renderName(p)} {evLabel} {isZh ? '分布演变' : 'Distribution Evolution'}
+      </>
+    );
+    metaNode = `${p.name} · ${p.wcaId} · ${p.solveData.length} solves`;
   } else if (players.length > 1) {
-    titleText = isZh
-      ? players.map(p => p.nameZh).join(' vs ') + ` ${evLabel} 分布对比`
-      : players.map(p => p.name).join(' vs ') + ` ${evLabel} Distribution Comparison`;
-    metaText = players.map(p => `${p.name}(${p.solveData.length})`).join(' · ');
+    titleNode = (
+      <>
+        {players.map((p, i) => (
+          <span key={p.wcaId}>
+            {i > 0 ? ' vs ' : ''}
+            {renderName(p)}
+          </span>
+        ))}
+        {' '}{evLabel} {isZh ? '分布对比' : 'Distribution Comparison'}
+      </>
+    );
+    metaNode = players.map(p => `${p.name}(${p.solveData.length})`).join(' · ');
   }
 
   return (
@@ -146,8 +169,8 @@ export default function VizPage() {
       {/* 顶部标题区 */}
       <header className="header">
         <div className="title-block">
-          <h1 id="playerName">{titleText}</h1>
-          <div className="subtitle" id="playerMeta">{metaText}</div>
+          <h1 id="playerName">{titleNode}</h1>
+          <div className="subtitle" id="playerMeta">{metaNode}</div>
         </div>
         <ModeSelector />
       </header>
