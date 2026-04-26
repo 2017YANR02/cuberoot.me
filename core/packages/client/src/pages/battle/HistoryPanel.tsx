@@ -167,7 +167,7 @@ export default function HistoryPanel() {
   const history = store.players[0].solveHistory;
   const locale = store.locale;
   const precision = store.timerPrecision;
-  const puzzleId = store.puzzleId;
+  const puzzleId = store.puzzleIds[0];
 
   // NOTE: 渐进式加载状态
   const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);

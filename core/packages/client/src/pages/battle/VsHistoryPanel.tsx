@@ -5,9 +5,11 @@
 
 import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Swords, Trophy, Download } from 'lucide-react';
 import { useBattleStore } from './engine/battle_store';
 import { formatTimePlain } from './engine/format_time';
 import { getEffectiveTimeFromEntry } from './engine/stats';
+import { PUZZLES } from './engine/constants';
 import type { SolveEntry } from './engine/types';
 
 function formatRelativeDate(isoDate: string, isZh: boolean): string {
@@ -82,10 +84,19 @@ export default function VsHistoryPanel({ onClose }: { onClose: () => void }) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `1v1_${store.puzzleId}_${new Date().toISOString().slice(0, 10)}.csv`;
+    const puzTag = store.puzzleIds[0] === store.puzzleIds[1]
+      ? store.puzzleIds[0]
+      : `${store.puzzleIds[0]}-vs-${store.puzzleIds[1]}`;
+    a.download = `1v1_${puzTag}_${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
+
+  const puzzleName = (id: string) => {
+    const p = PUZZLES.find(x => x.id === id);
+    return p ? (p.name[isZh ? 'zh' : 'en'] || p.name.en) : id;
+  };
+  const puzzlesDiffer = store.puzzleIds[0] !== store.puzzleIds[1];
 
   return (
     <div className="history-overlay visible" onClick={(e) => {
@@ -93,14 +104,22 @@ export default function VsHistoryPanel({ onClose }: { onClose: () => void }) {
     }}>
       <div className="history-panel vs-history-panel">
         <div className="history-header">
-          <span className="history-title">⚔️ 1v1 {isZh ? '历史' : 'History'}</span>
+          <span className="history-title">
+            <Swords size={16} />
+            1v1 {isZh ? '历史' : 'History'}
+            {puzzlesDiffer && (
+              <span className="vs-puzzle-tag"> · P1: {puzzleName(store.puzzleIds[0])} · P2: {puzzleName(store.puzzleIds[1])}</span>
+            )}
+          </span>
           <span className="history-stats">{roundCount} {isZh ? '轮' : 'rounds'}</span>
           <button className="settings-x-btn" onClick={onClose}>✕</button>
         </div>
 
         {/* 工具按钮 */}
         <div className="history-tools">
-          <button className="history-tool-btn" onClick={exportCSV}>📥 CSV</button>
+          <button className="history-tool-btn" onClick={exportCSV}>
+            <Download size={14} /> CSV
+          </button>
         </div>
 
         {/* 轮次列表 */}
@@ -125,12 +144,12 @@ export default function VsHistoryPanel({ onClose }: { onClose: () => void }) {
                 <span className="h-idx">{i + 1}.</span>
                 <span className={`h-time vs-p1${winner === 0 ? ' h-best' : ''}`}>
                   {formatEntry(e0)}
-                  {winner === 0 && ' 🏆'}
+                  {winner === 0 && <Trophy size={12} className="vs-trophy" />}
                 </span>
                 <span className="vs-separator">vs</span>
                 <span className={`h-time vs-p2${winner === 1 ? ' h-best' : ''}`}>
                   {formatEntry(e1)}
-                  {winner === 1 && ' 🏆'}
+                  {winner === 1 && <Trophy size={12} className="vs-trophy" />}
                 </span>
                 <span className="h-date">{dateStr}</span>
                 <span className="h-scramble">{scramble}</span>

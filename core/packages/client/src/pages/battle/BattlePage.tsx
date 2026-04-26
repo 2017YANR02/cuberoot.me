@@ -11,6 +11,7 @@
 
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Settings as SettingsIcon, ClipboardList, Trophy, Trash2, RotateCcw, Eye, EyeOff } from 'lucide-react';
 import { useBattleStore } from './engine/battle_store';
 import { KEY_MAP, PUZZLES, PENALTY, I18N_TEXT } from './engine/constants';
 import { formatTime } from './engine/format_time';
@@ -19,6 +20,7 @@ import type { PenaltyType } from './engine/constants';
 import HistoryPanel from './HistoryPanel';
 import VsHistoryPanel from './VsHistoryPanel';
 import { MilestoneToast } from './AdvancedFeatures';
+import LangToggle from '../../components/LangToggle';
 
 import './battle.css';
 
@@ -423,27 +425,25 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
   const ao5 = computeAo5(player.solveHistory);
   const ao5Text = ao5 === null ? '' : (ao5 === Infinity ? 'ao5: DNF' : 'ao5: ' + formatTime(ao5, store.timerPrecision));
 
-  // NOTE: 打乱文字内容
-  const scrambleContent = store.scrambleLoading
+  // NOTE: 每位玩家用自己的 scramble / image / loading
+  const myScramble = store.scrambles[playerId];
+  const myImageUrl = store.scrambleImageUrls[playerId];
+  const myLoading = store.scrambleLoadings[playerId];
+  const scrambleContent = myLoading
     ? `<span class="loading">${I18N_TEXT.generating[store.locale]}</span>`
-    : (store.scramble || '');
-
-  // NOTE: side 布局时打乱在共享区域显示，不在每个 TimerArea 重复
-  const hideScramble = store.mode === '1v1' && store.layout === 'side';
+    : (myScramble || '');
 
   return (
     <div
       className={areaClasses}
       ref={areaRef}
     >
-      {/* 打乱文字 — side 布局时隐藏（由共享区域显示） */}
-      {!hideScramble && (
-        <div
-          className={`scramble-text${player.isTiming ? ' hidden' : ''}`}
-          style={{ '--scramble-auto': getScrambleAutoScale(store.scramble || '') } as React.CSSProperties}
-          dangerouslySetInnerHTML={{ __html: scrambleContent }}
-        />
-      )}
+      {/* 打乱文字 */}
+      <div
+        className={`scramble-text${player.isTiming ? ' hidden' : ''}`}
+        style={{ '--scramble-auto': getScrambleAutoScale(myScramble || '') } as React.CSSProperties}
+        dangerouslySetInnerHTML={{ __html: scrambleContent }}
+      />
 
       {/* 计时数字 */}
       <div
@@ -463,18 +463,16 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
         <div className="opponent-display" id={`opponent-${playerId}`} />
       )}
 
-      {/* 打乱图 — side 布局时隐藏 */}
-      {!hideScramble && (
-        <div className={`scramble-img${player.isTiming ? ' hidden' : ''}`}>
-          {store.scrambleImageUrl && store.showImage && (
-            <img
-              src={store.scrambleImageUrl}
-              className="scramble-svg-img"
-              alt="scramble"
-            />
-          )}
-        </div>
-      )}
+      {/* 打乱图 */}
+      <div className={`scramble-img${player.isTiming ? ' hidden' : ''}`}>
+        {myImageUrl && store.showImage && (
+          <img
+            src={myImageUrl}
+            className="scramble-svg-img"
+            alt="scramble"
+          />
+        )}
+      </div>
     </div>
   );
 }
@@ -499,7 +497,7 @@ function MiddleBar({ onSettingsClick, onHistoryClick }: { onSettingsClick: () =>
       <div className="score-section">
         <span className="score-value">
           {players[leftId].points}
-          {(winner === leftId || winner === -1) && <span className="score-trophy">🏆</span>}
+          {(winner === leftId || winner === -1) && <Trophy className="score-trophy" size={14} />}
         </span>
         <PenaltyDropdown playerId={leftId} />
       </div>
@@ -510,14 +508,18 @@ function MiddleBar({ onSettingsClick, onHistoryClick }: { onSettingsClick: () =>
         <a href="/" className="middle-logo" aria-label={isZh ? '主页' : 'Home'}>
           <img src={import.meta.env.BASE_URL + 'CubeRoot-dark.png'} alt="CubeRoot" height="24" />
         </a>
-        <button className="middle-btn" title={isZh ? '历史' : 'History'} onClick={onHistoryClick}>📋</button>
-        <button className="middle-btn" title={isZh ? '设置' : 'Settings'} onClick={onSettingsClick}>⚙️</button>
+        <button className="middle-btn" title={isZh ? '历史' : 'History'} onClick={onHistoryClick}>
+          <ClipboardList size={16} />
+        </button>
+        <button className="middle-btn" title={isZh ? '设置' : 'Settings'} onClick={onSettingsClick}>
+          <SettingsIcon size={16} />
+        </button>
       </div>
 
       {/* 右侧比分 + 罚时 */}
       <div className="score-section">
         <span className="score-value">
-          {(winner === rightId || winner === -1) && <span className="score-trophy">🏆</span>}
+          {(winner === rightId || winner === -1) && <Trophy className="score-trophy" size={14} />}
           {players[rightId].points}
         </span>
         <PenaltyDropdown playerId={rightId} />
@@ -541,7 +543,10 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
     }}>
       <div className="settings-panel">
         <div className="settings-header-bar">
-          <span className="settings-title">⚙️ {isZh ? '设置' : 'Settings'}</span>
+          <span className="settings-title">
+            <SettingsIcon size={16} />
+            {isZh ? '设置' : 'Settings'}
+          </span>
           <button className="settings-x-btn" onClick={onClose}>✕</button>
         </div>
 
@@ -562,18 +567,57 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
 
         {/* 项目选择 */}
         <div className="settings-group">
-          <div className="settings-label" data-i18n="puzzle">{isZh ? '项目' : 'PUZZLE'}</div>
-          <div className="puzzle-grid">
-            {PUZZLES.map(puz => (
-              <button
-                key={puz.id}
-                className={`puzzle-btn${puz.id === store.puzzleId ? ' active' : ''}`}
-                onClick={() => { store.changePuzzle(puz.id); onClose(); }}
-              >
-                {puz.name[isZh ? 'zh' : 'en'] || puz.name.en}
-              </button>
-            ))}
+          <div className="settings-label-row">
+            <span className="settings-label" data-i18n="puzzle">{isZh ? '项目' : 'PUZZLE'}</span>
+            {store.mode === '1v1' && (
+              <label className="split-puzzle-toggle">
+                <span>{isZh ? 'P1 / P2 分开' : 'Split P1 / P2'}</span>
+                <label className="switch">
+                  <input
+                    type="checkbox"
+                    checked={store.splitPuzzles}
+                    onChange={e => store.setSplitPuzzles(e.target.checked)}
+                  />
+                  <span className="slider"></span>
+                </label>
+              </label>
+            )}
           </div>
+          {store.mode === '1v1' && store.splitPuzzles ? (
+            <div className="puzzle-split-cols">
+              {[0, 1].map(idx => (
+                <div className="puzzle-split-col" key={idx}>
+                  <div className="puzzle-split-head">P{idx + 1}</div>
+                  <div className="puzzle-grid">
+                    {PUZZLES.map(puz => (
+                      <button
+                        key={puz.id}
+                        className={`puzzle-btn${puz.id === store.puzzleIds[idx] ? ' active' : ''}`}
+                        onClick={() => { store.changePuzzle(idx as 0 | 1, puz.id); }}
+                      >
+                        {puz.name[isZh ? 'zh' : 'en'] || puz.name.en}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="puzzle-grid">
+              {PUZZLES.map(puz => (
+                <button
+                  key={puz.id}
+                  className={`puzzle-btn${puz.id === store.puzzleIds[0] ? ' active' : ''}`}
+                  onClick={() => {
+                    store.changePuzzle(store.mode === 'solo' ? 0 : 'both', puz.id);
+                    onClose();
+                  }}
+                >
+                  {puz.name[isZh ? 'zh' : 'en'] || puz.name.en}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* 计时器精确度 */}
@@ -696,65 +740,33 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
             store.toggleShowTime();
             onClose();
           }}>
-            {I18N_TEXT[store.showTime ? 'hide_time' : 'show_time'][isZh ? 'zh' : 'en']}
+            {store.showTime ? <EyeOff size={16} /> : <Eye size={16} />}
+            {(store.showTime ? I18N_TEXT.hide_time : I18N_TEXT.show_time)[isZh ? 'zh' : 'en']}
           </button>
           <button className="settings-action-btn" onClick={() => {
             store.deleteLast();
             onClose();
           }}>
-            🗑️ {isZh ? '删除最后一条' : 'Delete Last'}
+            <Trash2 size={16} />
+            {isZh ? '删除最后一条' : 'Delete Last'}
           </button>
           <button className="settings-action-btn danger" onClick={() => {
             store.resetAll();
             onClose();
           }}>
-            🔄 {isZh ? '全部重置' : 'Reset All'}
+            <RotateCcw size={16} />
+            {isZh ? '全部重置' : 'Reset All'}
           </button>
         </div>
 
-        {/* 返回主页 */}
+        {/* 语言 + 返回主页 */}
         <div className="settings-group">
+          <LangToggle className="settings-action-btn" />
           <a href="/" className="settings-action-btn" style={{ display: 'block', textDecoration: 'none' }}>
             ← {isZh ? '返回主页' : 'Back to Home'}
           </a>
         </div>
       </div>
-    </div>
-  );
-}
-
-// ===== SharedScramble 组件（Side 布局专用） =====
-// NOTE: 在并排模式下，打乱文字在顶部共享显示，打乱图单独放在下方
-
-function SharedScramble() {
-  const store = useBattleStore();
-  const anyTiming = store.players[0].isTiming || store.players[1].isTiming;
-
-  const scrambleContent = store.scrambleLoading
-    ? `<span class="loading">${I18N_TEXT.generating[store.locale]}</span>`
-    : (store.scramble || '');
-
-  return (
-    <div className={`shared-scramble${anyTiming ? ' hidden' : ''}`}>
-      <div
-        className="scramble-text"
-        style={{ '--scramble-auto': getScrambleAutoScale(store.scramble || '') } as React.CSSProperties}
-        dangerouslySetInnerHTML={{ __html: scrambleContent }}
-      />
-    </div>
-  );
-}
-
-// NOTE: 打乱图单独组件 — 放在中间栏与计时区域之间
-function SharedScrambleImage() {
-  const store = useBattleStore();
-  const anyTiming = store.players[0].isTiming || store.players[1].isTiming;
-
-  if (!store.scrambleImageUrl || !store.showImage) return null;
-
-  return (
-    <div className={`shared-scramble-img${anyTiming ? ' hidden' : ''}`}>
-      <img src={store.scrambleImageUrl} className="scramble-svg-img" alt="scramble" />
     </div>
   );
 }
@@ -856,19 +868,14 @@ export default function BattlePage() {
     <div className={`battle-container${mode === '1v1' && store.layout === 'side' ? ' side-layout' : ''}`}>
 
 
-      {/* === Side 布局：共享打乱 + 左右分屏 === */}
+      {/* === Side 布局：左右分屏，每侧独立 scramble === */}
       {mode === '1v1' && store.layout === 'side' && (
         <>
-          {/* 中间栏 */}
           <MiddleBar onSettingsClick={handleSettingsClick} onHistoryClick={() => setVsHistoryOpen(true)} />
-          {/* 打乱文字 */}
-          <SharedScramble />
-          {/* 左右计时区域（打乱图浮在中心） */}
           <div className="side-players">
             <TimerArea playerId={0} />
             <div className="side-divider" />
             <TimerArea playerId={1} />
-            <SharedScrambleImage />
           </div>
         </>
       )}
