@@ -19,6 +19,8 @@ const VIEWS: { id: RelationView; en: string; zh: string }[] = [
 
 type Scope = 'world' | 'continent' | 'country';
 type ShowMode = 'people' | 'countries';
+type Order = 'id' | 'name' | 'nemeses' | 'nemesized';
+type Direction = 'up' | 'down';
 
 export default function StandardMode({ ds, isZh }: Props) {
   const [params, setParams] = useSearchParams();
@@ -26,6 +28,8 @@ export default function StandardMode({ ds, isZh }: Props) {
   const view = (params.get('view') as RelationView) || 'myNem';
   const scope = (params.get('scope') as Scope) || 'world';
   const showMode = (params.get('show') as ShowMode) || 'people';
+  const order = (params.get('order') as Order) || 'id';
+  const direction = (params.get('direction') as Direction) || 'up';
 
   const personIdx = person ? ds.wcaIdIndex.get(person.toUpperCase()) : undefined;
 
@@ -66,6 +70,7 @@ export default function StandardMode({ ds, isZh }: Props) {
       <ViewPicker view={view} onChange={v => setParam('view', v)} isZh={isZh} />
       <ScopePicker scope={scope} onChange={s => setParam('scope', s)} isZh={isZh} />
       <ShowPicker mode={showMode} onChange={m => setParam('show', m)} isZh={isZh} />
+      {showMode === 'people' && <SortPicker order={order} direction={direction} onOrder={o => setParam('order', o)} onDirection={d => setParam('direction', d)} isZh={isZh} />}
       <SummaryLine
         person={p.name}
         isZh={isZh}
@@ -83,7 +88,7 @@ export default function StandardMode({ ds, isZh }: Props) {
         </div>
       )}
       {results && (showMode === 'people'
-        ? <PeopleTable ds={ds} results={results} isZh={isZh} />
+        ? <PeopleTable ds={ds} results={results} isZh={isZh} order={order} direction={direction} />
         : <CountriesTable ds={ds} results={results} isZh={isZh} />
       )}
     </>
@@ -112,6 +117,25 @@ function ScopePicker({ scope, onChange, isZh }: { scope: 'world' | 'continent' |
           {isZh ? ({ world: '世界', continent: '大洲', country: '国家' })[s] : s[0].toUpperCase() + s.slice(1)}
         </label>
       ))}
+    </div>
+  );
+}
+
+function SortPicker({ order, direction, onOrder, onDirection, isZh }: {
+  order: Order; direction: Direction;
+  onOrder: (o: Order) => void; onDirection: (d: Direction) => void; isZh: boolean;
+}) {
+  return (
+    <div className="nemesizer-sort">
+      <strong>{isZh ? '排序：' : 'Sort by:'}</strong>
+      <select value={order} onChange={e => onOrder(e.target.value as Order)}>
+        <option value="id">{isZh ? 'WCA ID' : 'WCA ID'}</option>
+        <option value="name">{isZh ? '姓名' : 'Name'}</option>
+        <option value="nemeses">{isZh ? '宿敌数' : 'Nemeses'}</option>
+        <option value="nemesized">{isZh ? '被视为宿敌数' : 'Nemesized'}</option>
+      </select>
+      <label><input type="radio" checked={direction === 'up'} onChange={() => onDirection('up')} />{isZh ? '升序' : 'Up'}</label>
+      <label><input type="radio" checked={direction === 'down'} onChange={() => onDirection('down')} />{isZh ? '降序' : 'Down'}</label>
     </div>
   );
 }
@@ -156,8 +180,25 @@ function SummaryLine({ person, isZh, count, view, ds, scopeRef, scope }: {
   return <div className="nemesizer-results-summary">{name} {verbEn[view]} {count} people in {scopeText}</div>;
 }
 
-function PeopleTable({ ds, results, isZh }: { ds: NemesizerDataset; results: { personIdx: number; sharedEkCount: number }[]; isZh: boolean }) {
-  const sorted = [...results].sort((a, b) => ds.persons[a.personIdx].wcaId.localeCompare(ds.persons[b.personIdx].wcaId));
+function PeopleTable({ ds, results, isZh, order, direction }: {
+  ds: NemesizerDataset;
+  results: { personIdx: number; sharedEkCount: number }[];
+  isZh: boolean;
+  order: Order;
+  direction: Direction;
+}) {
+  const sign = direction === 'down' ? -1 : 1;
+  const cmp = (a: { personIdx: number }, b: { personIdx: number }): number => {
+    const pa = ds.persons[a.personIdx];
+    const pb = ds.persons[b.personIdx];
+    switch (order) {
+      case 'id':        return sign * pa.wcaId.localeCompare(pb.wcaId);
+      case 'name':      return sign * pa.name.localeCompare(pb.name);
+      case 'nemeses':   return sign * (ds.counts.nemesisCount[a.personIdx] - ds.counts.nemesisCount[b.personIdx]);
+      case 'nemesized': return sign * (ds.counts.nemesizedCount[a.personIdx] - ds.counts.nemesizedCount[b.personIdx]);
+    }
+  };
+  const sorted = [...results].sort(cmp);
   return (
     <div className="nemesizer-table-wrap">
       <table className="nemesizer-table">
