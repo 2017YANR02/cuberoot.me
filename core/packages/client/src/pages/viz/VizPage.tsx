@@ -17,7 +17,7 @@ import PlayerChips from './components/PlayerChips';
 import LegendPanel from './components/LegendPanel';
 import RidgelineCanvas from './components/RidgelineCanvas';
 import { Flag } from '../../utils/flag';
-import { personFlagIso2 } from '../../utils/country_flags';
+import { personFlagIso2, loadFlagData, flagDataVersion } from '../../utils/country_flags';
 import './viz.css';
 
 // NOTE: WCA 项目列表
@@ -51,6 +51,12 @@ export default function VizPage() {
 
   const [loading, setLoading] = useState(false);
   const [ridgeHighlight, setRidgeHighlight] = useState(-1);
+  // NOTE: country_flags.json 异步加载；ready 后触发重渲染让 chip / title 拿到 iso2
+  const [flagVer, setFlagVer] = useState(() => flagDataVersion());
+  useEffect(() => {
+    loadFlagData().then(v => { if (v !== flagVer) setFlagVer(v); });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // 统计面板数据
   const [stats, setStats] = useState({
