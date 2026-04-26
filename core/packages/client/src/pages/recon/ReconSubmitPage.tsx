@@ -6,7 +6,9 @@ import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { ReconSolve } from '@cuberoot/shared';
+import { WcaPersonPicker, type WcaPerson } from '@cuberoot/shared';
 import { getRecon, addRecon, updateRecon, checkDuplicate, searchSolvers } from '../../utils/recon_api';
+import { Flag } from '../../utils/flag';
 import { computeAllStats } from '../../utils/recon_stats';
 import { parseTimeInput, formatTime, getEventDisplayName, RECORD_OPTIONS } from '../../utils/recon_utils';
 import LangToggle from '../../components/LangToggle';
@@ -77,9 +79,7 @@ export default function ReconSubmitPage() {
     aoType: '',
   });
 
-  // NOTE: 搜索相关状态
-  const [solverQuery, setSolverQuery] = useState('');
-  const [solverResults, setSolverResults] = useState<{ name: string; iso2: string; wcaId: string }[]>([]);
+  // NOTE: 搜索状态由 WcaPersonPicker 内部管理；form.personId 为空时显示 picker，已选时显示 pill
   const [timeInput, setTimeInput] = useState('');
   const [avgInput, setAvgInput] = useState('');
   const [dupWarning, setDupWarning] = useState('');
@@ -125,18 +125,6 @@ export default function ReconSubmitPage() {
     return computeAllStats(form.solution, time);
   }, [form.solution, form.rawTime]);
 
-  // NOTE: 选手搜索
-  useEffect(() => {
-    if (solverQuery.length < 2) { setSolverResults([]); return; }
-    const timer = setTimeout(async () => {
-      try {
-        const results = await searchSolvers(solverQuery);
-        setSolverResults(results);
-      } catch { setSolverResults([]); }
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [solverQuery]);
-
   // NOTE: 成绩解析
   useEffect(() => {
     const parsed = parseTimeInput(timeInput);
@@ -175,14 +163,28 @@ export default function ReconSubmitPage() {
     return () => clearTimeout(timer);
   }, [form.comp, form.event, form.round, form.solveNum, form.personId, form.person, isEditing, editId]);
 
-  // NOTE: 选择选手
-  const selectSolver = (solver: { name: string; iso2: string; wcaId: string }) => {
-    setField('person', solver.name);
-    setField('personId', solver.wcaId);
-    setField('personCountry', solver.iso2);
-    setSolverQuery('');
-    setSolverResults([]);
-  };
+  // NOTE: WcaPersonPicker 选中回调
+  const handleSolverPick = useCallback((person: WcaPerson) => {
+    setField('person', person.name);
+    setField('personId', person.wcaId);
+    setField('personCountry', person.iso2 ?? '');
+  }, [setField]);
+
+  const clearSolver = useCallback(() => {
+    setField('person', '');
+    setField('personId', '');
+    setField('personCountry', '');
+  }, [setField]);
+
+  // NOTE: 适配 searchSolvers (后端 WCA 代理) 到 WcaPersonPicker 的 searchFn 接口
+  const solverSearchFn = useCallback(async (query: string): Promise<WcaPerson[]> => {
+    try {
+      const rows = await searchSolvers(query);
+      return rows.map(r => ({ wcaId: r.wcaId, name: r.name, iso2: r.iso2, avatarUrl: '' }));
+    } catch {
+      return [];
+    }
+  }, []);
 
   // NOTE: 推断魔方类型
   const puzzle = useMemo(() => {
@@ -318,26 +320,21 @@ export default function ReconSubmitPage() {
         <div className="submit-row">
           <div className="submit-field submit-field-wide">
             <span className="submit-label">{t('recon.solver')} *</span>
-            <input
-              type="text"
-              value={solverQuery || form.person || ''}
-              onChange={(e) => {
-                setSolverQuery(e.target.value);
-                if (!e.target.value) setField('person', '');
-              }}
-              placeholder={t('recon.searchSolver')}
-            />
-            {solverResults.length > 0 && (
-              <ul className="submit-dropdown">
-                {solverResults.map(s => (
-                  <li key={s.wcaId} onClick={() => selectSolver(s)}>
-                    {s.name} ({s.wcaId}) {s.iso2}
-                  </li>
-                ))}
-              </ul>
-            )}
-            {form.personId && (
-              <span className="submit-hint">{form.personId} · {form.personCountry}</span>
+            {form.personId ? (
+              <div className="submit-solver-pill">
+                <Flag iso2={form.personCountry || ''} />
+                <span className="submit-solver-name">{form.person}</span>
+                <span className="submit-solver-id">({form.personId})</span>
+                <button type="button" className="submit-solver-clear" onClick={clearSolver} aria-label="clear">✕</button>
+              </div>
+            ) : (
+              <WcaPersonPicker
+                mode="inline"
+                onSelect={handleSolverPick}
+                searchFn={solverSearchFn}
+                placeholder={t('recon.searchSolver')}
+                autoConfirmExact
+              />
             )}
           </div>
         </div>

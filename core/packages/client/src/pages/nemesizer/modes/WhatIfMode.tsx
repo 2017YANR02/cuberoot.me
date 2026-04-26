@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import type { NemesizerDataset } from '../data/nemesizerData';
-import PersonSearch from '../components/PersonSearch';
+import NemesizerPersonPicker from '../components/NemesizerPersonPicker';
 import PersonCell from '../components/PersonCell';
 import { NEMESIZER_EVENTS } from '../data/nemesizerData';
 import { applyRelation, type RelationView } from '../data/nemesizerAlgo';
@@ -30,7 +30,7 @@ export default function WhatIfMode({ ds, isZh }: Props) {
         <p className="nemesizer-results-summary">
           {isZh ? '假设你在某些项目上的排名不同，看看新的宿敌关系。' : 'Enter alternate ranks for one or more events to see the new you.'}
         </p>
-        <PersonSearch ds={ds} isZh={isZh} initialQuery={person} onPick={id => setParam('person', id)} autoPickSingle />
+        <NemesizerPersonPicker ds={ds} isZh={isZh} initialQuery={person} onPick={id => setParam('person', id)} />
       </div>
     );
   }
@@ -55,7 +55,7 @@ export default function WhatIfMode({ ds, isZh }: Props) {
       <div className="nemesizer-results-summary">
         {displayCuberName(p.name, isZh)} ({p.wcaId})
       </div>
-      <PersonSearch ds={ds} isZh={isZh} initialQuery={person} onPick={id => setParam('person', id)} />
+      <NemesizerPersonPicker ds={ds} isZh={isZh} initialQuery={person} onPick={id => setParam('person', id)} autoConfirmExact={false} />
       <div className="nemesizer-view-group">
         {([
           ['myNem',      '显示我的宿敌',              'Show my nemeses'],
