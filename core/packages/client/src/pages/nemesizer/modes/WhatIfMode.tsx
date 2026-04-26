@@ -5,7 +5,6 @@ import NemesizerPersonPicker from '../components/NemesizerPersonPicker';
 import PersonCell from '../components/PersonCell';
 import { NEMESIZER_EVENTS } from '../data/nemesizerData';
 import { applyRelation, type RelationView } from '../data/nemesizerAlgo';
-import { displayCuberName } from '../../../utils/name_utils';
 
 interface Props { ds: NemesizerDataset; isZh: boolean; }
 
@@ -53,7 +52,7 @@ export default function WhatIfMode({ ds, isZh }: Props) {
     <div>
       <h2 style={{ textAlign: 'center' }}>{isZh ? '假设…？' : 'What if…?'}</h2>
       <div className="nemesizer-results-summary">
-        {displayCuberName(p.name, isZh)} ({p.wcaId})
+        <PersonCell person={p} isZh={isZh} /> ({p.wcaId})
       </div>
       <NemesizerPersonPicker ds={ds} isZh={isZh} initialQuery={person} onPick={id => setParam('person', id)} autoConfirmExact={false} />
       <div className="nemesizer-view-group">
