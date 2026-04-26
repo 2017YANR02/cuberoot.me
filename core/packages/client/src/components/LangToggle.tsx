@@ -6,6 +6,7 @@
  * variant="fixed"  → 固定右下角（仅在无法嵌入 header 时使用）
  */
 import { useTranslation } from 'react-i18next';
+import { Globe } from 'lucide-react';
 import { syncLangToUrl } from '../i18n';
 import './lang_toggle.css';
 
@@ -30,7 +31,7 @@ export default function LangToggle({ variant = 'inline', className }: LangToggle
 
   return (
     <button className={cls} onClick={toggle} title={isZh ? 'Switch to English' : '切换为中文'}>
-      🌐 {t('common.langToggleLabel')}
+      <Globe size={14} /> {t('common.langToggleLabel')}
     </button>
   );
 }

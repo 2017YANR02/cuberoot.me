@@ -416,9 +416,9 @@
 }
 
 .score-trophy {
-    font-family: sans-serif;
-    font-size: 0.75rem;
-    line-height: 1;
+    color: #e8a27a;
+    margin: 0 4px;
+    vertical-align: middle;
 }
 
 .middle-actions {
@@ -521,6 +521,9 @@
     font-weight: 700;
     text-align: center;
     color: #f0ebe3;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .settings-x-btn {
@@ -623,6 +626,45 @@
     gap: 6px;
 }
 
+/* PUZZLE 标签行：标题 + 右侧 P1/P2 分开开关 */
+.settings-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.settings-label-row .settings-label {
+    margin-bottom: 0;
+}
+
+.split-puzzle-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: #6e6050;
+}
+
+/* 双列项目选择 */
+.puzzle-split-cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.puzzle-split-col .puzzle-grid {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.puzzle-split-head {
+    font-size: 0.8rem;
+    color: #8a7a6a;
+    margin-bottom: 6px;
+    text-align: center;
+    letter-spacing: 1px;
+}
+
 .puzzle-btn {
     padding: 8px 4px;
     border-radius: 6px;
@@ -658,6 +700,10 @@
     transition: all 0.15s ease;
     margin-bottom: 8px;
     text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
 .settings-action-btn:hover {
@@ -1002,6 +1048,15 @@ body.solo .scramble-img {
     font-weight: 700;
     font-size: 1rem;
     color: #f0ebe3;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.vs-trophy {
+    color: #e8a27a;
+    margin-left: 4px;
+    vertical-align: middle;
 }
 
 .history-stats {
@@ -1362,6 +1417,10 @@ body.solo .scramble-img {
     cursor: pointer;
     transition: background 0.15s;
     white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
 }
 
 .history-tool-btn:active {
@@ -1539,65 +1598,8 @@ body.solo .scramble-img {
 /* 容器切换为网格布局 */
 .battle-container.side-layout {
     display: grid;
-    grid-template-rows: auto auto 1fr;
+    grid-template-rows: auto 1fr;
     grid-template-columns: 1fr;
-}
-
-/* 共享打乱区域 */
-.shared-scramble {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 12px 16px 8px;
-    gap: 8px;
-    transition: opacity 0.2s ease;
-}
-
-.shared-scramble.hidden {
-    opacity: 0;
-    pointer-events: none;
-}
-
-.shared-scramble .scramble-text {
-    font-size: calc(clamp(0.85rem, 2.2vw, 1.1rem) * var(--scramble-scale, 1) * var(--scramble-auto, 1));
-    text-align: center;
-    max-width: 90%;
-}
-
-.shared-scramble .scramble-img {
-    display: flex;
-    justify-content: center;
-}
-
-.shared-scramble .scramble-svg-img {
-    max-height: 80px;
-}
-
-/* 打乱图——绝对居中浮层在分隔线上 */
-.shared-scramble-img {
-    position: absolute;
-    left: 50%;
-    bottom: 18%;
-    transform: translateX(-50%);
-    z-index: 10;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    transition: opacity 0.2s ease;
-    pointer-events: none;
-}
-
-.shared-scramble-img.hidden {
-    opacity: 0;
-}
-
-.shared-scramble-img .scramble-svg-img {
-    max-height: clamp(80px, 25vh, 280px);
-    max-width: 40vw;
-    object-fit: contain;
-    border-radius: 10px;
-    padding: 4px;
 }
 
 /* 左右双人区域容器 */
