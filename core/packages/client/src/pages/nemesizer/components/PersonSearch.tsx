@@ -42,7 +42,7 @@ export default function PersonSearch({ ds, isZh, initialQuery, onPick, autoPickS
         <input
           ref={inputRef}
           type="text"
-          placeholder={placeholder ?? (isZh ? '搜索 WCA ID 或姓名' : 'Search WCA ID or name')}
+          placeholder={placeholder ?? (isZh ? '搜索 WCA ID、姓名、国家或年份' : 'Search WCA ID, name, country or year')}
           value={query}
           onChange={e => setQuery(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') doSearch(); }}
