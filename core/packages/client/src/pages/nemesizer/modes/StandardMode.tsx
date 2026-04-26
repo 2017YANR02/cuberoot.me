@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import type { NemesizerDataset } from '../data/nemesizerData';
-import PersonSearch from '../components/PersonSearch';
+import NemesizerPersonPicker from '../components/NemesizerPersonPicker';
 import PersonCell from '../components/PersonCell';
 import { applyRelation, filterByScope, type RelationView } from '../data/nemesizerAlgo';
 import { displayCuberName } from '../../../utils/name_utils';
@@ -49,16 +49,13 @@ export default function StandardMode({ ds, isZh }: Props) {
 
   if (!person || personIdx === undefined) {
     return (
-      <>
-        <PersonSearch
-          ds={ds}
-          isZh={isZh}
-          initialQuery={person}
-          onPick={pick}
-          autoPickSingle
-          placeholder={isZh ? '输入 WCA ID 或姓名开始' : 'Enter WCA ID or name to begin'}
-        />
-      </>
+      <NemesizerPersonPicker
+        ds={ds}
+        isZh={isZh}
+        initialQuery={person}
+        onPick={pick}
+        placeholder={isZh ? '输入 WCA ID、姓名、国家或年份开始' : 'Enter WCA ID, name, country or year'}
+      />
     );
   }
 
@@ -66,7 +63,7 @@ export default function StandardMode({ ds, isZh }: Props) {
 
   return (
     <>
-      <PersonSearch ds={ds} isZh={isZh} initialQuery={person} onPick={pick} placeholder={isZh ? 'WCA ID 或姓名' : 'WCA ID or name'} />
+      <NemesizerPersonPicker ds={ds} isZh={isZh} onPick={pick} />
       <ViewPicker view={view} onChange={v => setParam('view', v)} isZh={isZh} />
       <ScopePicker scope={scope} onChange={s => setParam('scope', s)} isZh={isZh} />
       <ShowPicker mode={showMode} onChange={m => setParam('show', m)} isZh={isZh} />
