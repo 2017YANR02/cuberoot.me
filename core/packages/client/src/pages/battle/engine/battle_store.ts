@@ -48,6 +48,14 @@ function isBLD(puzzleId: string): boolean {
   return ['333bf', '444bf', '555bf'].includes(puzzleId);
 }
 
+// NOTE: 启动时载入两人的 puzzle。新 key (battle_puzzle_0/_1) 缺失时回退到旧 key (battle_puzzle)
+function loadInitialPuzzleIds(): [string, string] {
+  const legacy = localStorage.getItem(LS_PREFIX + 'puzzle');
+  const p0 = localStorage.getItem(LS_PREFIX + 'puzzle_0') ?? legacy ?? '333';
+  const p1 = localStorage.getItem(LS_PREFIX + 'puzzle_1') ?? legacy ?? '333';
+  return [p0, p1];
+}
+
 // NOTE: Web Speech API 语音播报（零依赖）— 1:1 翻译自 battle.js（行 1975~1990）
 function speakAlert(text: string, locale: string): void {
   try {
@@ -99,8 +107,10 @@ export interface BattleState {
   mode: BattleMode;
   // NOTE: 1v1 布局（versus=面对面, side=并排）
   layout: BattleLayout;
-  // 当前项目 ID
-  puzzleId: string;
+  // 每位玩家的项目 ID。Solo 只用 puzzleIds[0]
+  puzzleIds: [string, string];
+  // 1v1 设置面板：是否两侧分别选项目（默认关，两人同步）
+  splitPuzzles: boolean;
   // 是否显示计时中的时间
   showTime: boolean;
   // 是否显示打乱图
@@ -123,12 +133,12 @@ export interface BattleState {
   enabledAverages: number[];
   // NOTE: 目标 Ao5 时间（秒，用于进度条显示）
   goalTime: number;
-  // 当前打乱
-  scramble: string | null;
-  // 当前打乱图 data URL
-  scrambleImageUrl: string | null;
-  // 是否正在加载打乱
-  scrambleLoading: boolean;
+  // 每位玩家当前的打乱
+  scrambles: [string | null, string | null];
+  // 每位玩家当前的打乱图 data URL
+  scrambleImageUrls: [string | null, string | null];
+  // 每位玩家是否正在加载打乱
+  scrambleLoadings: [boolean, boolean];
   // 赢家标识
   winner: WinnerValue;
   // NOTE: 红灯→绿灯的延时计时器 ID
@@ -148,8 +158,8 @@ export interface BattleState {
   // ===== Actions =====
   // NOTE: 初始化 — 从 localStorage 加载所有设置
   init: () => void;
-  // NOTE: 打乱相关
-  loadNewScramble: () => void;
+  // NOTE: 打乱相关。playerId 不传则两人都重生
+  loadNewScramble: (playerId?: number) => void;
   // NOTE: 状态机核心
   playerDown: (playerId: number) => boolean;
   playerUp: (playerId: number) => void;
@@ -159,7 +169,9 @@ export interface BattleState {
   deleteLast: () => void;
   toggleShowTime: () => void;
   resetAll: () => void;
-  changePuzzle: (puzzleId: string) => void;
+  // target=0/1 只换该侧；'both' 同时换两侧。Solo 始终 target=0
+  changePuzzle: (target: 0 | 1 | 'both', puzzleId: string) => void;
+  setSplitPuzzles: (split: boolean) => void;
   setMode: (mode: BattleMode) => void;
   setLayout: (layout: BattleLayout) => void;
   setInspectionTime: (time: number) => void;
@@ -208,7 +220,8 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   // NOTE: 初始值 — 1:1 翻译自 battle.js state 对象（行 99~141）
   mode: (localStorage.getItem(LS_PREFIX + 'mode') as BattleMode) || '1v1',
   layout: (localStorage.getItem(LS_PREFIX + 'layout') as BattleLayout) || 'versus',
-  puzzleId: localStorage.getItem(LS_PREFIX + 'puzzle') || '333',
+  puzzleIds: loadInitialPuzzleIds(),
+  splitPuzzles: localStorage.getItem(LS_PREFIX + 'splitPuzzles') === 'true',
   showTime: localStorage.getItem(LS_PREFIX + 'showTime') !== 'false',
   showImage: localStorage.getItem(LS_PREFIX + 'showImage') !== 'false',
   inspectionTime: parseInt(localStorage.getItem(LS_PREFIX + 'inspectionTime') || '0') || 0,
@@ -220,9 +233,9 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   startDelay: (() => { const v = localStorage.getItem(LS_PREFIX + 'startDelay'); return v !== null ? parseInt(v) : 300; })(),
   enabledAverages: JSON.parse(localStorage.getItem(LS_PREFIX + 'enabledAverages') || '[5, 12]'),
   goalTime: parseFloat(localStorage.getItem(LS_PREFIX + 'goalTime') || '0') || 0,
-  scramble: null,
-  scrambleImageUrl: null,
-  scrambleLoading: false,
+  scrambles: [null, null],
+  scrambleImageUrls: [null, null],
+  scrambleLoadings: [false, false],
   winner: -2,
   readyTimer: null,
   players: [createPlayer(0), createPlayer(1)],
@@ -240,22 +253,39 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   },
 
   // ===== 打乱生成 =====
-  // 1:1 翻译自 battle.js loadNewScramble()（行 484~502）
-  loadNewScramble: () => {
-    set({ scramble: null, scrambleLoading: true, scrambleImageUrl: null });
-
+  // playerId 不传则两人都重生（Solo 始终只对 0 生效）
+  loadNewScramble: (playerId?: number) => {
     const s = get();
-    const scrambleText = generateScramble(s.puzzleId);
-    let imgUrl: string | null = null;
-    if (s.showImage && scrambleText && !scrambleText.startsWith('⚠️')) {
-      imgUrl = generateScrambleImageUrl(s.puzzleId, scrambleText);
-    }
+    const targets = playerId === undefined
+      ? (s.mode === 'solo' ? [0] : [0, 1])
+      : [playerId];
 
-    set({
-      scramble: scrambleText,
-      scrambleLoading: false,
-      scrambleImageUrl: imgUrl,
-    });
+    const loadings: [boolean, boolean] = [...s.scrambleLoadings];
+    const scramblesNext: [string | null, string | null] = [...s.scrambles];
+    const imagesNext: [string | null, string | null] = [...s.scrambleImageUrls];
+    for (const i of targets) {
+      loadings[i] = true;
+      scramblesNext[i] = null;
+      imagesNext[i] = null;
+    }
+    set({ scrambleLoadings: loadings, scrambles: scramblesNext, scrambleImageUrls: imagesNext });
+
+    const after = get();
+    const newScrambles: [string | null, string | null] = [...after.scrambles];
+    const newImages: [string | null, string | null] = [...after.scrambleImageUrls];
+    const newLoadings: [boolean, boolean] = [...after.scrambleLoadings];
+    for (const i of targets) {
+      const puzzleId = after.puzzleIds[i];
+      const text = generateScramble(puzzleId);
+      newScrambles[i] = text;
+      newLoadings[i] = false;
+      if (after.showImage && text && !text.startsWith('⚠️')) {
+        newImages[i] = generateScrambleImageUrl(puzzleId, text);
+      } else {
+        newImages[i] = null;
+      }
+    }
+    set({ scrambles: newScrambles, scrambleImageUrls: newImages, scrambleLoadings: newLoadings });
   },
 
   // ===== 状态机核心 =====
@@ -289,7 +319,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
         const elapsed = performance.now() - p.startTime;
         if (elapsed > MIN_SOLVE_TIME) {
           // NOTE: 多阶段计时 — 获取有效阶段数（BLD 强制 2 阶段）
-          const numPhases = isBLD(s.puzzleId) ? 2 : s.phases;
+          const numPhases = isBLD(s.puzzleIds[0]) ? 2 : s.phases;
           if (numPhases > 1 && p.phaseSplits.length < numPhases - 1) {
             // 记录分段时间（不停表）
             const newPlayers = [...s.players] as [PlayerState, PlayerState];
@@ -321,7 +351,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
         }
         return true;
       }
-      if (!p.hasFinished && !p.canStart && s.scramble) {
+      if (!p.hasFinished && !p.canStart && s.scrambles[0]) {
         // 空闲状态按下 → 准备
         const newPlayers = [...s.players] as [PlayerState, PlayerState];
         newPlayers[playerId] = { ...p, isReady: true };
@@ -357,7 +387,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
         get().checkBothFinished();
       }
       return true;
-    } else if (!ps.hasFinished && !ps.canStart && get().scramble) {
+    } else if (!ps.hasFinished && !ps.canStart && get().scrambles[playerId]) {
       const newPlayers = [...get().players] as [PlayerState, PlayerState];
       newPlayers[playerId] = { ...ps, isReady: true };
       set({ players: newPlayers });
@@ -499,7 +529,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
         const entry: SolveEntry = {
           time: p.time,
           penalty: p.penalty === PENALTY.DNF ? 'dnf' : (p.penalty === PENALTY.PLUS2 ? '+2' : 'ok'),
-          scramble: s.scramble || '',
+          scramble: s.scrambles[0] || '',
           date: new Date().toISOString(),
         };
         // NOTE: 多阶段分段记录
@@ -528,7 +558,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
           solveHistory: [...pi.solveHistory, {
             time: pi.time,
             penalty: pi.penalty === PENALTY.DNF ? 'dnf' : (pi.penalty === PENALTY.PLUS2 ? '+2' : 'ok'),
-            scramble: s.scramble || '',
+            scramble: s.scrambles[i] || '',
             date: new Date().toISOString(),
           }],
         };
@@ -724,20 +754,47 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     s.loadNewScramble();
   },
 
-  // 1:1 翻译自 battle.js changePuzzle()（行 1198~1236）
-  changePuzzle: (newPuzzleId: string) => {
+  // target=0/1 → 仅换该侧；'both' → 同时换两侧。Solo 始终 target=0
+  changePuzzle: (target: 0 | 'both' | 1, newPuzzleId: string) => {
     const s = get();
-    if (newPuzzleId === s.puzzleId) return;
+    const targets: number[] = target === 'both' ? [0, 1] : [target];
+    if (targets.every(i => s.puzzleIds[i] === newPuzzleId)) return;
+
     s.saveSolveHistory();
-    localStorage.setItem(LS_PREFIX + 'puzzle', newPuzzleId);
-    const newPlayers: [PlayerState, PlayerState] = [createPlayer(0), createPlayer(1)];
+
+    const newPuzzleIds: [string, string] = [...s.puzzleIds];
+    for (const i of targets) {
+      newPuzzleIds[i] = newPuzzleId;
+      localStorage.setItem(LS_PREFIX + `puzzle_${i}`, newPuzzleId);
+    }
+    if (newPuzzleIds[0] === newPuzzleIds[1]) {
+      localStorage.setItem(LS_PREFIX + 'puzzle', newPuzzleIds[0]);
+    }
+
+    // 重置受影响玩家的当前回合（保留 points，loadSolveHistory 会替换 history）
+    const newPlayers = [...s.players] as [PlayerState, PlayerState];
+    for (const i of targets) {
+      newPlayers[i] = createPlayer(i);
+      newPlayers[i].points = s.players[i].points;
+    }
     set({
-      puzzleId: newPuzzleId,
+      puzzleIds: newPuzzleIds,
       winner: -2,
       players: newPlayers,
     });
     get().loadSolveHistory();
-    get().loadNewScramble();
+    for (const i of targets) get().loadNewScramble(i);
+  },
+
+  setSplitPuzzles: (split: boolean) => {
+    const s = get();
+    if (s.splitPuzzles === split) return;
+    localStorage.setItem(LS_PREFIX + 'splitPuzzles', String(split));
+    set({ splitPuzzles: split });
+    // 关闭分开 → 把 P1 同步到 P0 的项目
+    if (!split && s.puzzleIds[0] !== s.puzzleIds[1]) {
+      get().changePuzzle(1, s.puzzleIds[0]);
+    }
   },
 
   setMode: (mode: BattleMode) => {
@@ -794,15 +851,19 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   setShowImage: (show: boolean) => {
     localStorage.setItem(LS_PREFIX + 'showImage', String(show));
     set({ showImage: show });
-    // NOTE: 切换后重新生成打乱图
     if (show) {
       const s = get();
-      if (s.scramble && !s.scramble.startsWith('⚠️')) {
-        const imgUrl = generateScrambleImageUrl(s.puzzleId, s.scramble);
-        set({ scrambleImageUrl: imgUrl });
+      const newImages: [string | null, string | null] = [...s.scrambleImageUrls];
+      const targets = s.mode === 'solo' ? [0] : [0, 1];
+      for (const i of targets) {
+        const sc = s.scrambles[i];
+        if (sc && !sc.startsWith('⚠️')) {
+          newImages[i] = generateScrambleImageUrl(s.puzzleIds[i], sc);
+        }
       }
+      set({ scrambleImageUrls: newImages });
     } else {
-      set({ scrambleImageUrl: null });
+      set({ scrambleImageUrls: [null, null] });
     }
   },
 
@@ -955,20 +1016,19 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   },
 
   // ===== 数据持久化（Solo + 1v1 共用） =====
-  // NOTE: Solo 用 key = solo_history_{session}_{puzzle}，只存 player[0]
-  //       1v1  用 key = 1v1_history_{session}_{puzzle}_{0|1}，存两个玩家
+  // NOTE: Solo  key = solo_history_{session}_{puzzleP0}
+  //       1v1   key = 1v1_history_{session}_{puzzleI}_{i}（每人各自的 puzzle）
   saveSolveHistory: () => {
     const s = get();
     try {
       if (s.mode === 'solo') {
-        const key = `${LS_PREFIX}solo_history_${s.sessionId}_${s.puzzleId}`;
+        const key = `${LS_PREFIX}solo_history_${s.sessionId}_${s.puzzleIds[0]}`;
         const h = s.players[0].solveHistory;
         const toSave = h.length > 1000 ? h.slice(-1000) : h;
         localStorage.setItem(key, JSON.stringify(toSave));
       } else {
-        // NOTE: 1v1 — 分别保存两个玩家
         for (let i = 0; i < 2; i++) {
-          const key = `${LS_PREFIX}1v1_history_${s.sessionId}_${s.puzzleId}_${i}`;
+          const key = `${LS_PREFIX}1v1_history_${s.sessionId}_${s.puzzleIds[i]}_${i}`;
           const h = s.players[i].solveHistory;
           const toSave = h.length > 1000 ? h.slice(-1000) : h;
           localStorage.setItem(key, JSON.stringify(toSave));
@@ -983,22 +1043,17 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     const s = get();
     try {
       if (s.mode === 'solo') {
-        const key = `${LS_PREFIX}solo_history_${s.sessionId}_${s.puzzleId}`;
+        const key = `${LS_PREFIX}solo_history_${s.sessionId}_${s.puzzleIds[0]}`;
         const data = localStorage.getItem(key);
-        if (data) {
-          const newPlayers = [...s.players] as [PlayerState, PlayerState];
-          newPlayers[0] = { ...s.players[0], solveHistory: JSON.parse(data) };
-          set({ players: newPlayers });
-        }
+        const newPlayers = [...s.players] as [PlayerState, PlayerState];
+        newPlayers[0] = { ...s.players[0], solveHistory: data ? JSON.parse(data) : [] };
+        set({ players: newPlayers });
       } else {
-        // NOTE: 1v1 — 分别加载两个玩家
         const newPlayers = [...s.players] as [PlayerState, PlayerState];
         for (let i = 0; i < 2; i++) {
-          const key = `${LS_PREFIX}1v1_history_${s.sessionId}_${s.puzzleId}_${i}`;
+          const key = `${LS_PREFIX}1v1_history_${s.sessionId}_${s.puzzleIds[i]}_${i}`;
           const data = localStorage.getItem(key);
-          if (data) {
-            newPlayers[i] = { ...s.players[i], solveHistory: JSON.parse(data) };
-          }
+          newPlayers[i] = { ...s.players[i], solveHistory: data ? JSON.parse(data) : [] };
         }
         set({ players: newPlayers });
       }

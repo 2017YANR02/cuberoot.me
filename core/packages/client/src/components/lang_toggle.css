@@ -12,6 +12,9 @@
   transition: all 0.15s;
   white-space: nowrap;
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .lang-toggle-inline:hover {
@@ -35,6 +38,9 @@
   cursor: pointer;
   transition: all 0.2s;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .lang-toggle-fixed:hover {

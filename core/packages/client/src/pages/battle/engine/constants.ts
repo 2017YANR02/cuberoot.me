@@ -86,8 +86,8 @@ export const KEY_MAP: Record<string, number> = {
 
 // NOTE: 双语文本映射（JS 动态设置的文本，无法用 data-i18n 属性）
 export const I18N_TEXT: Record<string, Record<string, string>> = {
-  hide_time:  { en: '👀 Hide time', zh: '👀 隐藏时间' },
-  show_time:  { en: '👀 Show time', zh: '👀 显示时间' },
+  hide_time:  { en: 'Hide time', zh: '隐藏时间' },
+  show_time:  { en: 'Show time', zh: '显示时间' },
   generating: { en: 'Generating scramble...',    zh: '正在生成打乱...' },
   // NOTE: WCA 观察倒计时状态文字
   inspecting: { en: 'Inspecting',                zh: '观察中' },
