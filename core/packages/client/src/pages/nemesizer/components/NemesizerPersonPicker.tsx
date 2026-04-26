@@ -30,13 +30,15 @@ export default function NemesizerPersonPicker({
   }, [onPick]);
 
   return (
-    <WcaPersonPicker
-      mode="inline"
-      onSelect={handleSelect}
-      placeholder={placeholder ?? (isZh ? '搜索 WCA ID、姓名、国家或年份' : 'Search WCA ID, name, country or year')}
-      searchFn={searchFn}
-      initialQuery={initialQuery}
-      autoConfirmExact={autoConfirmExact}
-    />
+    <div className="nemesizer-picker-wrap">
+      <WcaPersonPicker
+        mode="inline"
+        onSelect={handleSelect}
+        placeholder={placeholder ?? (isZh ? '搜索 WCA ID、姓名、国家或年份' : 'Search WCA ID, name, country or year')}
+        searchFn={searchFn}
+        initialQuery={initialQuery}
+        autoConfirmExact={autoConfirmExact}
+      />
+    </div>
   );
 }
