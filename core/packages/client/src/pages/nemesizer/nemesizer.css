@@ -316,3 +316,91 @@
   align-items: center;
   gap: 4px;
 }
+
+/* ─── WcaPersonPicker dark-theme overrides — 照搬 viz 的方案 ───
+   shared/WcaPersonPicker 默认浅色 + inline 模式整个 panel position:absolute，
+   在 nemesizer 深色页面里又丑又错位。这里：
+   - panel 改 static（输入框回到文档流）
+   - results 单独 absolute 浮在输入下方
+   - 颜色全部黑底浅字 */
+
+.nemesizer-picker-wrap {
+  position: relative;
+  margin: 20px auto;
+  max-width: 520px;
+  z-index: 10;
+}
+
+.nemesizer-page .nemesizer-picker-wrap .wca-pp-inline,
+.nemesizer-page .nemesizer-picker-wrap .wca-pp-panel {
+  position: static;
+  background: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  width: auto;
+  max-height: none;
+  overflow: visible;
+}
+
+.nemesizer-page .nemesizer-picker-wrap .wca-pp-input-wrap {
+  padding: 0;
+  border-bottom: none;
+}
+
+.nemesizer-page .nemesizer-picker-wrap .wca-pp-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 14px;
+  background: #2a2a2a;
+  border: 1px solid #444;
+  border-bottom: 2px solid #666;
+  border-radius: 0;
+  color: #fff;
+  font-size: 15px;
+}
+.nemesizer-page .nemesizer-picker-wrap .wca-pp-input::placeholder {
+  color: #888;
+}
+.nemesizer-page .nemesizer-picker-wrap .wca-pp-input:focus {
+  border-bottom-color: #ec4899;
+  box-shadow: none;
+}
+
+.nemesizer-page .nemesizer-picker-wrap .wca-pp-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  margin-top: 4px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+.nemesizer-page .nemesizer-picker-wrap .wca-pp-results:empty {
+  display: none;
+}
+
+.nemesizer-page .nemesizer-picker-wrap .wca-pp-item {
+  color: #ddd;
+  padding: 10px 14px;
+}
+.nemesizer-page .nemesizer-picker-wrap .wca-pp-item:hover {
+  background: rgba(236, 72, 153, 0.12);
+}
+.nemesizer-page .nemesizer-picker-wrap .wca-pp-name { color: #f0f0f0; }
+.nemesizer-page .nemesizer-picker-wrap .wca-pp-id   { color: #888; }
+.nemesizer-page .nemesizer-picker-wrap .wca-pp-status { color: #888; }
+.nemesizer-page .nemesizer-picker-wrap .wca-pp-spinner {
+  border-color: #333;
+  border-top-color: #ec4899;
+}
+.nemesizer-page .nemesizer-picker-wrap .wca-pp-avatar {
+  background: rgba(255, 255, 255, 0.06);
+}
