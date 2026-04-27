@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import type { EventId, Solve } from '../types';
 import { effectiveMs } from '../types';
 import { EVENTS } from '../types';
@@ -10,6 +10,7 @@ import {
   eventDefaultFormat,
   formatMs,
 } from '../stats';
+import { bucketStats, bucketBoundaries, type BucketStats } from '../stats_buckets';
 
 interface Props {
   event: EventId;
@@ -61,6 +62,21 @@ export default function StatsModal({ event, solves, isZh, onClose }: Props) {
   const streak = useMemo(() => longestStreak(solves), [solves]);
   const best = bestSingle(solves);
 
+  // Time-period buckets — current and previous period, computed once per render.
+  const periods = useMemo(() => {
+    const b = bucketBoundaries(new Date());
+    return {
+      today:     bucketStats(solves, b.todayStart, b.tomorrowStart),
+      yesterday: bucketStats(solves, b.yesterdayStart, b.todayStart),
+      week:      bucketStats(solves, b.weekStart, b.nextWeekStart),
+      prevWeek:  bucketStats(solves, b.prevWeekStart, b.weekStart),
+      month:     bucketStats(solves, b.monthStart, b.nextMonthStart),
+      prevMonth: bucketStats(solves, b.prevMonthStart, b.monthStart),
+      year:      bucketStats(solves, b.yearStart, b.nextYearStart),
+      prevYear:  bucketStats(solves, b.prevYearStart, b.yearStart),
+    };
+  }, [solves]);
+
   // Build the lines for both display and copy. Order mimics cstimer's BUTTON_OPTIONS.
   const lines: Array<[string, string]> = [];
   lines.push([isZh ? '项目' : 'Event', evName]);
@@ -90,6 +106,18 @@ export default function StatsModal({ event, solves, isZh, onClose }: Props) {
   lines.push([isZh ? '最佳 ao1000' : 'Best ao1000', summary.bestAo1000]);
   if (streak > 0) lines.push([isZh ? '最长连续天数' : 'Longest streak', `${streak} ${isZh ? '天' : 'days'}`]);
 
+  // Format helper for a single row of period stats (used by JSX + copy text).
+  const fmtBucketRow = (b: BucketStats): string =>
+    `n=${b.count}  best=${formatMs(b.best)}  ao5=${formatMs(b.ao5)}  ao12=${formatMs(b.ao12)}  mean=${formatMs(b.mean)}`;
+
+  // Period rows in the order shown in the UI.
+  const periodRows: Array<{ key: 'today' | 'week' | 'month' | 'year'; label: string; vsLabel: string; cur: BucketStats; prev: BucketStats }> = [
+    { key: 'today', label: isZh ? '今日' : 'Today',  vsLabel: isZh ? '昨日' : 'yesterday', cur: periods.today, prev: periods.yesterday },
+    { key: 'week',  label: isZh ? '本周' : 'Week',   vsLabel: isZh ? '上周' : 'last week', cur: periods.week,  prev: periods.prevWeek },
+    { key: 'month', label: isZh ? '本月' : 'Month',  vsLabel: isZh ? '上月' : 'last month', cur: periods.month, prev: periods.prevMonth },
+    { key: 'year',  label: isZh ? '今年' : 'Year',   vsLabel: isZh ? '去年' : 'last year', cur: periods.year,  prev: periods.prevYear },
+  ];
+
   const textVersion = useMemo(() => {
     const header = `${evName} — ${isZh ? '统计' : 'Stats'} (n=${summary.count})`;
     const body = lines.map(([k, v]) => `${k}: ${v}`).join('\n');
@@ -97,9 +125,11 @@ export default function StatsModal({ event, solves, isZh, onClose }: Props) {
       ? '\n\n' + (isZh ? 'sub-X 分布：' : 'Sub-X breakdown:') + '\n' +
           subX.map(s => `  ${s.label}: ${s.pct.toFixed(1)}%`).join('\n')
       : '';
-    return header + '\n' + body + subxBody;
+    const periodsBody = '\n\n' + (isZh ? '时间段：' : 'Time periods:') + '\n' +
+      periodRows.map(r => `  ${r.label}: ${fmtBucketRow(r.cur)}`).join('\n');
+    return header + '\n' + body + subxBody + periodsBody;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [evName, isZh, summary.count, subX, JSON.stringify(lines)]);
+  }, [evName, isZh, summary.count, subX, JSON.stringify(lines), JSON.stringify(periods)]);
 
   const onCopy = async () => {
     try {
@@ -111,10 +141,38 @@ export default function StatsModal({ event, solves, isZh, onClose }: Props) {
     }
   };
 
+  // Delta on time stats: lower is better (so cur < prev → improvement).
+  // Returns null when either side lacks the metric (no comparison possible).
+  const renderDelta = (cur: number | null, prev: number | null) => {
+    if (cur === null || prev === null) return null;
+    if (!Number.isFinite(cur) || !Number.isFinite(prev)) return null;
+    if (cur === prev) {
+      return <span style={{ color: '#888', marginLeft: 4 }}>=</span>;
+    }
+    const better = cur < prev;
+    const diff = Math.abs(cur - prev);
+    return (
+      <span style={{ color: better ? '#3aa757' : '#d04848', marginLeft: 4 }}>
+        {better ? '▲' : '▼'} {formatMs(diff)}
+      </span>
+    );
+  };
+
+  // Inline styles for the period table — kept here so we don't have to touch
+  // timer.css (cross-agent: another agent owns recon, avoid CSS file conflict).
+  const cellStyle: CSSProperties = { padding: '4px 8px', textAlign: 'left', whiteSpace: 'nowrap' };
+  const numCellStyle: CSSProperties = { ...cellStyle, fontVariantNumeric: 'tabular-nums' };
+
   return (
     <div className="timer-modal-overlay" onClick={onClose}>
-      <div className="timer-modal stats-modal" onClick={(e) => e.stopPropagation()}>
-        <h2>{isZh ? '完整统计' : 'Full stats'} — {evName}</h2>
+      <div
+        className="timer-modal stats-modal"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="stats-modal-title"
+      >
+        <h2 id="stats-modal-title">{isZh ? '完整统计' : 'Full stats'} — {evName}</h2>
 
         <div className="modal-section">
           <div className="stats-modal-grid">
@@ -136,6 +194,46 @@ export default function StatsModal({ event, solves, isZh, onClose }: Props) {
             </div>
           </div>
         )}
+
+        <div className="modal-section">
+          <h3 className="settings-h3">{isZh ? '时间段' : 'Time periods'}</h3>
+          <table style={{ borderCollapse: 'collapse', fontSize: '0.9em', width: '100%' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid #444', opacity: 0.75 }}>
+                <th style={cellStyle}>{isZh ? '段' : 'Period'}</th>
+                <th style={cellStyle}>n</th>
+                <th style={cellStyle}>best</th>
+                <th style={cellStyle}>ao5</th>
+                <th style={cellStyle}>ao12</th>
+                <th style={cellStyle}>mean</th>
+                <th style={cellStyle}>{isZh ? '对比' : 'vs prev'}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {periodRows.map(r => (
+                <tr key={r.key}>
+                  <td style={cellStyle}>{r.label}</td>
+                  <td style={numCellStyle}>{r.cur.count}</td>
+                  <td style={numCellStyle}>{formatMs(r.cur.best)}</td>
+                  <td style={numCellStyle}>{formatMs(r.cur.ao5)}</td>
+                  <td style={numCellStyle}>{formatMs(r.cur.ao12)}</td>
+                  <td style={numCellStyle}>{formatMs(r.cur.mean)}</td>
+                  <td style={{ ...cellStyle, fontSize: '0.85em' }}>
+                    <span style={{ opacity: 0.6, marginRight: 4 }}>vs {r.vsLabel}:</span>
+                    <span style={{ marginRight: 8 }}>
+                      <span style={{ opacity: 0.7 }}>best</span>
+                      {renderDelta(r.cur.best, r.prev.best)}
+                    </span>
+                    <span>
+                      <span style={{ opacity: 0.7 }}>ao5</span>
+                      {renderDelta(r.cur.ao5, r.prev.ao5)}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
         {subX.length > 0 && (
           <div className="modal-section">
