@@ -124,6 +124,23 @@
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
+/* event 列 cubing-icon + 文字对齐 */
+.recon-event-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.recon-event-cell .cubing-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+/* 工具栏 EventSelect 滤镜——固定宽度避免随选项变化跳动 */
+.recon-event-filter {
+  min-width: 130px;
+}
+
 .recon-table {
   width: auto;
   border-collapse: collapse;
