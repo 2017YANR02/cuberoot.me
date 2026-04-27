@@ -127,6 +127,13 @@
 .timer-display.running { color: #f0ebe3; }
 .timer-display.dnf     { color: #aaa; }
 
+/* Inspection countdown coloring — gentle yellow → amber → red as it elapses. */
+.timer-display.inspection         { color: #ffd54f; }
+.timer-display.inspection-warn-8  { color: #ffb74d; text-shadow: 0 0 20px rgba(255, 183, 77, 0.4); }
+.timer-display.inspection-warn-12 { color: #ff8a65; text-shadow: 0 0 20px rgba(255, 138, 101, 0.5); }
+.timer-display.inspection-plus2   { color: #ef5350; text-shadow: 0 0 25px rgba(239, 83, 80, 0.5); }
+.timer-display.inspection-dnf     { color: #b0bec5; }
+
 .timer-hint {
   margin-top: 14px;
   font-size: 13px;
@@ -349,3 +356,204 @@
 .timer-modal .modal-actions button.danger:hover { background: #4a1f1f; }
 .timer-modal .modal-actions button.primary { background: #2a3d4d; border-color: #4d7a99; color: #cde; }
 .timer-modal .modal-actions button.primary:hover { background: #345169; }
+
+/* --- SolveModal additions --- */
+.timer-modal .comment-textarea {
+  width: 100%;
+  margin-top: 4px;
+  padding: 8px 10px;
+  background: #0e0e10;
+  border: 1px solid #2a2a2e;
+  border-radius: 4px;
+  color: #f0ebe3;
+  font-family: inherit;
+  font-size: 13px;
+  resize: vertical;
+  box-sizing: border-box;
+}
+.timer-modal .comment-textarea:focus {
+  outline: none;
+  border-color: #4d7a99;
+}
+.timer-modal .modal-cube-row {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0;
+}
+
+/* --- SettingsPanel --- */
+.settings-modal { max-width: 540px; }
+.settings-modal .settings-h3 {
+  font-size: 13px;
+  color: #aaa;
+  margin: 0 0 8px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.settings-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 6px 0;
+  font-size: 13px;
+}
+.settings-row-label { flex: 1; color: #ccc; }
+.settings-row-control { display: flex; align-items: center; gap: 8px; }
+.settings-row-control input[type="number"],
+.settings-row-control select {
+  background: #0e0e10;
+  color: #f0ebe3;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 13px;
+}
+.settings-row-control input[type="number"] { width: 80px; }
+.settings-row-control input[type="range"] { width: 140px; }
+.settings-row-control .hint { color: #888; font-size: 12px; }
+.settings-row-control .hint-btn {
+  background: transparent;
+  border: 1px solid #333;
+  color: #aaa;
+  border-radius: 4px;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+.settings-row-control .hint-btn:hover { background: #25252a; color: #fff; }
+
+.color-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.color-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #aaa;
+}
+.color-cell input[type="color"] {
+  width: 40px; height: 28px;
+  background: transparent;
+  border: 1px solid #333;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 0;
+}
+.reset-btn {
+  background: #25252a;
+  color: #ccc;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.reset-btn:hover { background: #2f2f35; color: #fff; }
+
+/* --- Cube preview placement on main page --- */
+.timer-cube-preview {
+  display: flex;
+  justify-content: center;
+  padding: 4px 0 8px;
+  background: #131316;
+  border-bottom: 1px solid #1f1f23;
+  flex: 0 0 auto;
+}
+.timer-cube-preview svg { max-width: 100%; height: auto; max-height: 16dvh; }
+
+/* --- Charts in bottom panel --- */
+.charts-panel {
+  padding: 14px 18px;
+  overflow-y: auto;
+  border-right: 1px solid #1f1f23;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.charts-panel h3 {
+  font-size: 12px;
+  color: #888;
+  margin: 0;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.timer-bottom.with-charts {
+  grid-template-columns: minmax(200px, 1fr) minmax(0, 1.2fr) minmax(280px, 320px);
+}
+
+@media (max-width: 720px) {
+  .timer-bottom.with-charts {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+    max-height: 60dvh;
+  }
+}
+
+/* --- Light theme --- */
+:root[data-timer-theme="light"] .timer-root {
+  background: #f5f5f7;
+  color: #1d1d1f;
+}
+:root[data-timer-theme="light"] .timer-topbar {
+  background: #fff;
+  border-bottom-color: #e0e0e3;
+}
+:root[data-timer-theme="light"] .timer-topbar select,
+:root[data-timer-theme="light"] .timer-topbar button.tb-btn {
+  background: #f5f5f7;
+  color: #1d1d1f;
+  border-color: #d0d0d4;
+}
+:root[data-timer-theme="light"] .timer-topbar select:hover,
+:root[data-timer-theme="light"] .timer-topbar button.tb-btn:hover {
+  background: #e8e8eb;
+  border-color: #aab;
+}
+:root[data-timer-theme="light"] .scramble-strip {
+  background: #fafafb;
+  color: #333;
+  border-bottom-color: #e0e0e3;
+}
+:root[data-timer-theme="light"] .timer-display { color: #1d1d1f; text-shadow: none; }
+:root[data-timer-theme="light"] .timer-cube-preview {
+  background: #fafafb;
+  border-bottom-color: #e0e0e3;
+}
+:root[data-timer-theme="light"] .timer-bottom {
+  background: #fff;
+  border-top-color: #e0e0e3;
+}
+:root[data-timer-theme="light"] .stats-panel,
+:root[data-timer-theme="light"] .charts-panel {
+  border-right-color: #e0e0e3;
+}
+:root[data-timer-theme="light"] .stats-grid .row { border-bottom-color: #eee; }
+:root[data-timer-theme="light"] .stats-grid .row .lbl { color: #888; }
+:root[data-timer-theme="light"] .stats-grid .row .val { color: #1d1d1f; }
+:root[data-timer-theme="light"] .history-row { border-bottom-color: #eee; }
+:root[data-timer-theme="light"] .history-row:hover { background: #f0f0f3; }
+
+/* --- Mobile (touch + narrow) --- */
+@media (max-width: 540px) {
+  .timer-topbar { padding: 6px 8px; }
+  .timer-topbar .left, .timer-topbar .right { gap: 4px; }
+  .timer-topbar select { max-width: 110px; }
+  .scramble-strip { padding: 10px 12px; font-size: 14px; }
+  .scramble-strip.compact { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .timer-display { font-size: clamp(48px, 18vw, 120px) !important; }
+}
+
+/* --- Fullscreen mode --- */
+.timer-root.fullscreen .timer-topbar,
+.timer-root.fullscreen .timer-bottom {
+  display: none;
+}
+.timer-root.fullscreen .scramble-strip {
+  font-size: clamp(16px, 2.5vw, 22px);
+  padding: 18px 24px;
+}

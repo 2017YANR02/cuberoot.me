@@ -36,6 +36,9 @@ interface CubePreviewProps {
   scramble: string;
   size?: number;
   className?: string;
+  /** Optional override of the WCA color scheme. Currently passed through to
+   * the NxN renderer; other puzzles ignore it (they use solved-state stubs). */
+  colors?: Partial<Record<'U'|'D'|'F'|'B'|'L'|'R', string>>;
 }
 
 function NoPreview({ size = 14, className }: { size?: number; className?: string }): JSX.Element {
@@ -88,13 +91,13 @@ function firstNxnScramble(s: string): string {
 }
 
 export default function CubePreview(props: CubePreviewProps): JSX.Element {
-  const { event, scramble } = props;
+  const { event, scramble, colors } = props;
   const size = props.size;
   const className = props.className;
 
   // NxN cubes (including BLD / OH / FM / variants).
   if (nxnSizeForEvent(event) !== null) {
-    return <CubeNet event={event} scramble={scramble} size={size} className={className} />;
+    return <CubeNet event={event} scramble={scramble} size={size} className={className} colors={colors} />;
   }
 
   switch (event) {
@@ -111,10 +114,10 @@ export default function CubePreview(props: CubePreviewProps): JSX.Element {
     case 'r3':
     case 'r4':
     case 'r5':
-      return <CubeNet event="333" scramble={firstNxnScramble(scramble)} size={size} className={className} />;
+      return <CubeNet event="333" scramble={firstNxnScramble(scramble)} size={size} className={className} colors={colors} />;
     case 'custom':
       // Best-effort: try to render as 3x3.
-      return <CubeNet event="333" scramble={scramble} size={size} className={className} />;
+      return <CubeNet event="333" scramble={scramble} size={size} className={className} colors={colors} />;
     case 'magic':
     case 'mmagic':
       return <NoPreview size={size} className={className} />;

@@ -1,31 +1,65 @@
 import { formatMs } from '../stats';
 import type { TimerPhase } from '../useTimer';
+import { useSettings } from '../settings';
 
 interface Props {
   phase: TimerPhase;
   displayMs: number;
+  inspectionDisplayMs: number;
   /** Last solve's effective penalty for color hint after stop. */
   lastPenalty?: 'ok' | '+2' | 'DNF' | null;
 }
 
-export default function TimerDisplay({ phase, displayMs, lastPenalty }: Props) {
-  const cls =
-    phase === 'holding' ? 'holding' :
-    phase === 'ready'   ? 'ready' :
-    phase === 'running' ? 'running' :
-    lastPenalty === 'DNF' ? 'dnf' : '';
+export default function TimerDisplay({ phase, displayMs, inspectionDisplayMs, lastPenalty }: Props) {
+  const settings = useSettings();
+  const inspectionLimit = settings.inspection;
 
-  // While running, show shorter (no millis) for readability; while stopped show full precision.
+  const cls = (() => {
+    if (phase === 'holding') return 'holding';
+    if (phase === 'ready') return 'ready';
+    if (phase === 'running') return 'running';
+    if (phase === 'inspecting') {
+      const sec = Math.floor(inspectionDisplayMs / 1000);
+      if (sec >= inspectionLimit + 2) return 'inspection-dnf';
+      if (sec >= inspectionLimit) return 'inspection-plus2';
+      if (sec >= 12) return 'inspection-warn-12';
+      if (sec >= 8) return 'inspection-warn-8';
+      return 'inspection';
+    }
+    if (phase === 'stopped' && lastPenalty === 'DNF') return 'dnf';
+    return '';
+  })();
+
   let text: string;
-  if (phase === 'running') {
-    text = formatMs(displayMs, 2).replace(/\.\d+$/, ''); // drop sub-second while running
+  if (phase === 'inspecting') {
+    const remaining = Math.max(0, Math.ceil((inspectionLimit * 1000 - inspectionDisplayMs) / 1000));
+    if (inspectionDisplayMs > inspectionLimit * 1000 + 2000) {
+      text = 'DNF';
+    } else if (inspectionDisplayMs > inspectionLimit * 1000) {
+      text = '+2';
+    } else {
+      text = remaining.toString();
+    }
+  } else if (phase === 'running') {
+    if (settings.hideTime) {
+      text = '…';
+    } else {
+      // Show shorter precision while running for readability.
+      text = formatMs(displayMs, 2).replace(/\.\d+$/, '');
+    }
   } else if (phase === 'stopped' && lastPenalty === 'DNF') {
     text = 'DNF';
   } else if (phase === 'stopped' && lastPenalty === '+2') {
-    text = formatMs(displayMs + 2000, 2) + '+';
+    text = formatMs(displayMs + 2000, settings.precision) + '+';
   } else {
-    text = formatMs(displayMs, 2);
+    text = formatMs(displayMs, settings.precision);
   }
 
-  return <div className={`timer-display ${cls}`}>{text}</div>;
+  const fontSize = `calc(clamp(64px, 14vw, 192px) * ${settings.timerFontScale})`;
+
+  return (
+    <div className={`timer-display ${cls}`} style={{ fontSize }}>
+      {text}
+    </div>
+  );
 }
