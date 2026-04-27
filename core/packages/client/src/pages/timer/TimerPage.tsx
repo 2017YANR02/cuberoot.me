@@ -130,7 +130,11 @@ export default function TimerPage() {
 
   // ── Solve recording ─────────────────────────────────────────────
   const [lastPenalty, setLastPenalty] = useState<Penalty | null>(null);
+  // Snapshot taken whenever phase is NOT running. recordSolve reads these
+  // so changing event mid-solve doesn't desync solve.event / scramble / caseId.
   const scrambleAtStartRef = useRef<string>(scramble);
+  const eventAtStartRef = useRef<EventId>(event);
+  const caseIdAtStartRef = useRef<string | null>(null);
 
   // Multistage CFOP timer is created BELOW useTimer (so it can read the live
   // phase/displayMs), but recordSolve needs to call extractFinal() at stop
@@ -142,6 +146,7 @@ export default function TimerPage() {
   const bldMemoRef = useRef<ReturnType<typeof useBldMemo> | null>(null);
 
   const recordSolve = useCallback((res: { timeMs: number; inspectionMs: number; autoPenalty: 'ok' | '+2' | 'DNF' }) => {
+    const ev = eventAtStartRef.current;
     const stages = multiStageActive
       ? multiStageRef.current?.extractFinal(res.timeMs)
       : undefined;
@@ -151,22 +156,19 @@ export default function TimerPage() {
     const solve = makeSolve({
       timeMs: res.timeMs,
       scramble: scrambleAtStartRef.current,
-      event,
+      event: ev,
       penalty: res.autoPenalty,
     });
     if (stages) solve.stages = stages;
     if (bld) solve.bld = bld;
-    if (TRAINER_KINDS.has(event)) {
-      const caseId = getLastPickedCase(event as TrainerKind);
-      if (caseId) solve.caseId = caseId;
-    }
+    if (caseIdAtStartRef.current) solve.caseId = caseIdAtStartRef.current;
     setLastPenalty(res.autoPenalty);
     setByEvent(prev => ({
       ...prev,
-      [event]: [...(prev[event] ?? []), solve],
+      [ev]: [...(prev[ev] ?? []), solve],
     }));
     nextScramble();
-  }, [event, nextScramble, multiStageActive, bldMemoActive]);
+  }, [nextScramble, multiStageActive, bldMemoActive]);
 
   const timer = useTimer(recordSolve);
 
@@ -187,8 +189,12 @@ export default function TimerPage() {
   useEffect(() => {
     if (timer.phase !== 'running') {
       scrambleAtStartRef.current = scramble;
+      eventAtStartRef.current = event;
+      caseIdAtStartRef.current = TRAINER_KINDS.has(event)
+        ? getLastPickedCase(event as TrainerKind)
+        : null;
     }
-  }, [timer.phase, scramble]);
+  }, [timer.phase, scramble, event]);
 
   // ── Bluetooth smart cube: auto-stop timer when cube solved ──────
   const phaseSnapshotRef = useRef(timer.phase);
