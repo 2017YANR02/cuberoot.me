@@ -81,8 +81,10 @@ export interface BluetoothCubeHandle {
 }
 
 interface UseBluetoothCubeOpts {
-  /** Called for each move. */
-  onMove?: (move: string) => void;
+  /** Called for each move. `timestamp` is `performance.now()` captured when
+   * the BLE characteristic value arrived (absolute high-res ms). The caller
+   * is responsible for re-basing it against any "solve start" reference. */
+  onMove?: (move: string, timestamp: number) => void;
   /** Called when state transitions from unsolved → solved. */
   onSolved?: () => void;
 }
@@ -130,8 +132,12 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
   const wasSolvedRef = useRef<boolean>(true);
 
   const handleMove = useCallback((move: string) => {
+    // Capture timestamp as close to characteristic-value-changed as possible.
+    // Drivers call this synchronously from their notification handler, so
+    // this is the freshest reading the JS event loop affords us.
+    const ts = performance.now();
     setLastMove(move);
-    onMoveRef.current?.(move);
+    onMoveRef.current?.(move, ts);
     const isSolved = trackerRef.current.applyMove(move);
     if (isSolved && !wasSolvedRef.current) {
       wasSolvedRef.current = true;

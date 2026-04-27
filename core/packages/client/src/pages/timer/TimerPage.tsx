@@ -54,6 +54,7 @@ import StatsPanel from './components/StatsPanel';
 import CaseStatsPanel from './components/CaseStatsPanel';
 import HistoryPanel from './components/HistoryPanel';
 import SolveModal from './components/SolveModal';
+import ReconstructModal from './components/ReconstructModal';
 import SettingsPanel from './components/SettingsPanel';
 import ShortcutsModal from './components/ShortcutsModal';
 import BluetoothModal from './components/BluetoothModal';
@@ -142,6 +143,12 @@ export default function TimerPage() {
   const scrambleAtStartRef = useRef<string>(scramble);
   const eventAtStartRef = useRef<EventId>(event);
   const caseIdAtStartRef = useRef<string | null>(null);
+  // Bluetooth move recording: cleared on every solve start, populated by the
+  // bluetoothSubscribers fan-out below, and attached to the Solve in
+  // recordSolve. ts is rebased to (move.ts - solveStartTsRef) so it matches
+  // the solve's internal clock (0 = timer phase became 'running').
+  const movesRef = useRef<Array<{ m: string; ts: number }>>([]);
+  const solveStartTsRef = useRef<number>(0);
 
   // Multistage CFOP timer is created BELOW useTimer (so it can read the live
   // phase/displayMs), but recordSolve needs to call extractFinal() at stop
@@ -173,6 +180,7 @@ export default function TimerPage() {
     if (stages) solve.stages = stages;
     if (bld) solve.bld = bld;
     if (caseIdAtStartRef.current) solve.caseId = caseIdAtStartRef.current;
+    if (movesRef.current.length > 0) solve.moves = movesRef.current.slice();
     setLastPenalty(res.autoPenalty);
     setByEvent(prev => ({
       ...prev,
@@ -204,6 +212,12 @@ export default function TimerPage() {
       caseIdAtStartRef.current = TRAINER_KINDS.has(event)
         ? getLastPickedCase(event as TrainerKind)
         : null;
+    } else {
+      // Phase entered 'running' — reset bluetooth move recording so each
+      // solve starts with a fresh stream. solveStartTsRef rebases ts to
+      // "ms since timer start" (matches solve.timeMs's clock).
+      movesRef.current = [];
+      solveStartTsRef.current = performance.now();
     }
   }, [timer.phase, scramble, event]);
 
@@ -262,6 +276,20 @@ export default function TimerPage() {
   // closure. We populate it after the hook returns each render.
   const bluetoothCubeRef = useRef<typeof bluetoothCube | null>(null);
   useEffect(() => { bluetoothCubeRef.current = bluetoothCube; }, [bluetoothCube]);
+
+  // Record moves for solve reconstruction. We subscribe once on mount; the
+  // recorder gates on phase via phaseSnapshotRef so inspection-time / idle
+  // moves are dropped. ts is rebased to (now - solveStartTsRef) so it lives
+  // on the same clock as solve.timeMs.
+  useEffect(() => {
+    const subs = bluetoothSubscribersRef.current;
+    const recorder = (m: string, ts: number) => {
+      if (phaseSnapshotRef.current !== 'running') return;
+      movesRef.current.push({ m, ts: ts - solveStartTsRef.current });
+    };
+    subs.add(recorder);
+    return () => { subs.delete(recorder); };
+  }, []);
 
   // ── Stackmat: when external stop fires, record the solve directly ─
   const stackmatRecordRef = useRef<((ms: number) => void) | null>(null);
@@ -359,6 +387,7 @@ export default function TimerPage() {
 
   // ── Modal ───────────────────────────────────────────────────────
   const [modalSolve, setModalSolve] = useState<{ s: Solve; idx: number } | null>(null);
+  const [reconstructSolve, setReconstructSolve] = useState<Solve | null>(null);
 
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
@@ -400,7 +429,7 @@ export default function TimerPage() {
     settingsOpen || shortcutsOpen || bluetoothOpen ||
     trainerSubsetOpen !== null || statsModalOpen ||
     manualEntryOpen || solverOpen || bulkScrambleOpen ||
-    modalSolve !== null;
+    modalSolve !== null || reconstructSolve !== null;
   const anyModalOpenRef = useRef(anyModalOpen);
   useEffect(() => { anyModalOpenRef.current = anyModalOpen; }, [anyModalOpen]);
   useEffect(() => {
@@ -882,9 +911,19 @@ export default function TimerPage() {
               setModalSolve(null);
               if (isLatest) setLastPenalty(null);
             }}
+            onOpenReconstruct={() => setReconstructSolve(modalSolve.s)}
           />
         );
       })()}
+
+      {reconstructSolve && (
+        <ReconstructModal
+          key={reconstructSolve.id}
+          solve={reconstructSolve}
+          isZh={isZh}
+          onClose={() => setReconstructSolve(null)}
+        />
+      )}
 
       {settingsOpen && (
         <SettingsPanel isZh={isZh} onClose={() => setSettingsOpen(false)} />
