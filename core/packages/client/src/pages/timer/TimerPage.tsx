@@ -61,6 +61,7 @@ import StatsModal from './components/StatsModal';
 import ManualEntryModal from './components/ManualEntryModal';
 import SolverModal from './components/SolverModal';
 import BulkScrambleModal from './components/BulkScrambleModal';
+import SolverHints from './components/SolverHints';
 import { OLL_CASES } from './scramble/algs/oll_cases';
 import { PLL_CASES } from './scramble/algs/pll_cases';
 import HistogramChart from './components/HistogramChart';
@@ -589,7 +590,7 @@ export default function TimerPage() {
   const printEventName = eventInfoCurrent ? (isZh ? eventInfoCurrent.nameZh : eventInfoCurrent.nameEn) : event;
 
   return (
-    <div className={`timer-root ${fullscreen ? 'fullscreen' : ''}`}>
+    <div className={`timer-root ${fullscreen ? 'fullscreen' : ''} ${settings.hideAllUiWhileRunning && timer.phase === 'running' ? 'ui-hidden' : ''}`}>
       <div className="print-only-header">
         <h1>{isZh ? '魔方计时器 — ' : 'Cube Timer — '}{printEventName}</h1>
         <div className="print-meta">{new Date().toLocaleString()} · {solves.length} {isZh ? '次' : 'solves'}</div>
@@ -661,11 +662,27 @@ export default function TimerPage() {
 
       <div
         className={`scramble-strip ${settings.compactScramble ? 'compact' : ''}`}
-        onClick={nextScramble}
-        title={isZh ? '点击换一个打乱' : 'Click to refresh'}
+        onClick={() => {
+          const action = settings.scrambleClickAction;
+          if (action === 'none') return;
+          if (action === 'copy') {
+            try { void navigator.clipboard.writeText(scramble); } catch { /* ignore */ }
+            return;
+          }
+          nextScramble();
+        }}
+        title={
+          settings.scrambleClickAction === 'copy'
+            ? (isZh ? '点击复制打乱' : 'Click to copy')
+            : settings.scrambleClickAction === 'none'
+              ? (isZh ? '点击无操作' : 'Click disabled')
+              : (isZh ? '点击换一个打乱' : 'Click to refresh')
+        }
       >
         {scramble || <span className="scramble-empty">—</span>}
       </div>
+
+      {event === '333' && <SolverHints scramble={scramble} isZh={isZh} />}
 
       {(event === 'oll' || event === 'pll') && (() => {
         const total = event === 'oll' ? OLL_CASES.length : PLL_CASES.length;
