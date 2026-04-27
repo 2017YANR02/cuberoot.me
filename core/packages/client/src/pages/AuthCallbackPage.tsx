@@ -5,8 +5,13 @@
  */
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { X } from 'lucide-react';
 
 const ME_URL = 'https://www.worldcubeassociation.org/api/v0/me';
+
+// NOTE: 模块级守卫——React StrictMode 在开发模式下会让 useEffect 跑两次，
+// 一次性的 OAuth state 会被第一次消费掉，第二次就误报"state mismatch"。
+let callbackProcessed = false;
 
 export default function AuthCallbackPage() {
   const { i18n } = useTranslation();
@@ -14,6 +19,8 @@ export default function AuthCallbackPage() {
   const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
+    if (callbackProcessed) return;
+    callbackProcessed = true;
     handleOAuthCallback();
   }, []);
 
@@ -100,7 +107,7 @@ export default function AuthCallbackPage() {
         fontFamily: "'Inter', Arial, sans-serif",
       }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ color: '#f87171', fontSize: '1.1rem' }}>❌ {errorMsg}</div>
+          <div style={{ color: '#f87171', fontSize: '1.1rem', display: 'inline-flex', alignItems: 'center', gap: 6 }}><X size={18} /> {errorMsg}</div>
           <div style={{ marginTop: 12 }}>
             <a href="/recon" style={{ color: '#60a5fa' }}>{isZh ? '返回复盘' : 'Back to Recon'}</a>
           </div>

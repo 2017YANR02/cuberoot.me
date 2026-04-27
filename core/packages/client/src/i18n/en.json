@@ -57,7 +57,7 @@
     "noResults": "No reconstructions found",
     "showing": "Showing {{shown}} of {{total}}",
     "total": "{{count}} total",
-    "wcaLogin": "WCA Login",
+    "wcaLogin": "Login",
     "logout": "Logout",
     "confirmDelete": "Delete this reconstruction?",
     "scramble": "Scramble",
@@ -132,10 +132,8 @@
       "tps": "TPS",
       "id": "#"
     },
-    "round": {
+    "roundOption": {
       "final": "Final",
-      "semi": "Semi",
-      "combined": "Combined",
       "numbered": "Round {{n}}"
     },
     "badge": {

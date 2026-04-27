@@ -30,7 +30,7 @@
 .detail-title {
   flex: 1;
   font-size: 1.3rem;
-  color: #f0ebe3;
+  color: #e5e5e5;
 }
 
 /* --- 元数据标签栏 --- */
@@ -46,11 +46,11 @@
   align-items: center;
   gap: 4px;
   padding: 4px 10px;
-  background: rgba(255, 235, 220, 0.05);
-  border: 1px solid rgba(255, 235, 220, 0.08);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 6px;
   font-size: 0.82rem;
-  color: #b09880;
+  color: #a3a3a3;
   text-decoration: none;
 }
 
@@ -86,8 +86,11 @@
 }
 
 .detail-section-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 0.75rem;
-  color: #6e6050;
+  color: #5a5a5a;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 6px;
@@ -98,11 +101,11 @@
   font-family: 'Roboto Mono', monospace;
   font-size: 0.82rem;
   line-height: 1.7;
-  color: #e8ddd4;
-  background: rgba(255, 235, 220, 0.04);
+  color: #d4d4d4;
+  background: rgba(255, 255, 255, 0.04);
   padding: 12px 14px;
   border-radius: 6px;
-  border: 1px solid rgba(255, 235, 220, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   white-space: pre-wrap;
   word-break: break-word;
   overflow-x: auto;
@@ -113,11 +116,11 @@
   font-family: 'Roboto Mono', monospace;
   font-size: 0.82rem;
   line-height: 1.7;
-  color: #b09880;
-  background: rgba(255, 235, 220, 0.04);
+  color: #a3a3a3;
+  background: rgba(255, 255, 255, 0.04);
   padding: 10px 14px;
   border-radius: 6px;
-  border: 1px solid rgba(255, 235, 220, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   word-break: break-all;
 }
 
@@ -132,10 +135,10 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 6px 12px;
-  background: rgba(255, 235, 220, 0.03);
+  background: rgba(255, 255, 255, 0.03);
   padding: 10px 14px;
   border-radius: 6px;
-  border: 1px solid rgba(255, 235, 220, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .stat-item {
@@ -148,14 +151,14 @@
 
 .stat-label {
   font-size: 0.75rem;
-  color: #6e6050;
+  color: #5a5a5a;
   white-space: nowrap;
 }
 
 .stat-value {
   font-family: 'Roboto Mono', monospace;
   font-size: 0.82rem;
-  color: #e8ddd4;
+  color: #d4d4d4;
   text-align: right;
 }
 
@@ -174,8 +177,8 @@
   border-radius: 8px;
   overflow: hidden;
   margin-bottom: 8px;
-  background: rgba(255, 235, 220, 0.03);
-  border: 1px solid rgba(255, 235, 220, 0.06);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .detail-video-wrap iframe {
@@ -214,7 +217,9 @@
   color: #e8a27a;
   font-size: 0.85rem;
   text-decoration: none;
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   margin-bottom: 6px;
 }
 
@@ -225,11 +230,11 @@
 /* --- 备注 --- */
 .detail-note {
   font-size: 0.85rem;
-  color: #b09880;
-  background: rgba(255, 235, 220, 0.03);
+  color: #a3a3a3;
+  background: rgba(255, 255, 255, 0.03);
   padding: 10px 14px;
   border-radius: 6px;
-  border: 1px solid rgba(255, 235, 220, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   white-space: pre-wrap;
 }
 
@@ -241,8 +246,8 @@
 }
 
 .detail-comment {
-  background: rgba(255, 235, 220, 0.03);
-  border: 1px solid rgba(255, 235, 220, 0.06);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 6px;
   padding: 10px 14px;
 }
@@ -255,17 +260,17 @@
 }
 
 .detail-comment-header strong {
-  color: #e8ddd4;
+  color: #d4d4d4;
   font-size: 0.85rem;
 }
 
 .detail-comment-time {
-  color: #6e6050;
+  color: #5a5a5a;
   font-size: 0.75rem;
 }
 
 .detail-comment-body {
-  color: #b09880;
+  color: #a3a3a3;
   font-size: 0.85rem;
   line-height: 1.5;
   white-space: pre-wrap;
@@ -281,8 +286,8 @@
 .recon-btn-sm {
   font-size: 0.72rem;
   padding: 2px 8px;
-  background: rgba(255, 235, 220, 0.05);
-  border: 1px solid rgba(255, 235, 220, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 4px;
   color: #e8a27a;
   cursor: pointer;
@@ -304,10 +309,10 @@
 
 .detail-comment-edit textarea {
   width: 100%;
-  background: rgba(255, 235, 220, 0.06);
-  border: 1px solid rgba(255, 235, 220, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 4px;
-  color: #e8ddd4;
+  color: #d4d4d4;
   font-size: 0.85rem;
   padding: 6px 10px;
   resize: vertical;
@@ -328,10 +333,10 @@
 
 .detail-comment-add textarea {
   flex: 1;
-  background: rgba(255, 235, 220, 0.06);
-  border: 1px solid rgba(255, 235, 220, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 6px;
-  color: #e8ddd4;
+  color: #d4d4d4;
   font-size: 0.85rem;
   padding: 8px 12px;
   resize: vertical;
@@ -347,7 +352,7 @@
   gap: 16px;
   margin-top: 8px;
   font-size: 0.85rem;
-  color: #b09880;
+  color: #a3a3a3;
 }
 
 /* --- Twisty 容器 --- */
@@ -372,8 +377,8 @@
 
 /* --- 打乱+解法融合块——原版风格 --- */
 .detail-solution-block {
-  background: rgba(255, 235, 220, 0.04);
-  border: 1px solid rgba(255, 235, 220, 0.06);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 6px;
   overflow: hidden;
 }
@@ -386,7 +391,7 @@
 
 .detail-block-divider {
   height: 1px;
-  background: rgba(255, 235, 220, 0.1);
+  background: rgba(255, 255, 255, 0.1);
   margin: 0 14px;
 }
 
@@ -408,8 +413,8 @@
   color: #e8a27a;
   text-decoration: none;
   padding: 4px 10px;
-  background: rgba(255, 235, 220, 0.05);
-  border: 1px solid rgba(255, 235, 220, 0.08);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 6px;
   transition: background 0.15s, color 0.15s;
 }
@@ -426,7 +431,7 @@
   gap: 16px;
   margin-top: 20px;
   padding: 12px 0;
-  border-top: 1px solid rgba(255, 235, 220, 0.06);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .detail-meta-item {
@@ -437,11 +442,13 @@
 }
 
 .detail-meta-label {
-  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  color: #737373;
 }
 
 .detail-meta-value {
-  color: #b09880;
+  color: #a3a3a3;
 }
 
 .detail-meta-value a {
@@ -487,8 +494,8 @@
 }
 
 .detail-history-item {
-  background: rgba(255, 235, 220, 0.03);
-  border: 1px solid rgba(255, 235, 220, 0.06);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 6px;
   padding: 8px 12px;
 }
@@ -498,7 +505,7 @@
   justify-content: space-between;
   align-items: center;
   font-size: 0.82rem;
-  color: #b09880;
+  color: #a3a3a3;
   margin-bottom: 6px;
 }
 
@@ -559,8 +566,8 @@
   font-size: 0.82rem;
   font-family: 'Roboto Mono', monospace;
   text-decoration: none;
-  background: rgba(255, 235, 220, 0.05);
-  border: 1px solid rgba(255, 235, 220, 0.08);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   color: #e8a27a;
   transition: background 0.15s;
 }

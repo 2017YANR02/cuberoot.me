@@ -65,6 +65,7 @@ pnpm --filter @cuberoot/client lint
 - 响应简洁，不加多余注释，不做超出需求的抽象
 - 不新建文件除非必要，优先编辑已有文件
 - 改完跑 `pnpm --filter @cuberoot/client typecheck`（push 前 `typecheck:ci`）
+- UI 不用 emoji，用 lucide-react 图标
 
 ## 专题知识 — 查对应 Skill
 
