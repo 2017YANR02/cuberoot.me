@@ -71,6 +71,8 @@ export function useTimer(onSolve?: (result: SolveResult) => void): TimerHandle {
   const holdTimerRef = useRef<number | null>(null);
   const warned8Ref = useRef(false);
   const warned12Ref = useRef(false);
+  // inspectionTrigger='up': set on press-down in idle, consumed on press-up.
+  const pendingInspectionStartRef = useRef(false);
   const onSolveRef = useRef(onSolve);
   useEffect(() => { onSolveRef.current = onSolve; }, [onSolve]);
 
@@ -172,8 +174,12 @@ export function useTimer(onSolve?: (result: SolveResult) => void): TimerHandle {
 
     if (cur === 'idle' || cur === 'stopped') {
       if (settings.inspection > 0) {
-        // First tap = enter inspection.
-        beginInspection();
+        // First tap = enter inspection. If trigger='up', defer until release.
+        if (settings.inspectionTrigger === 'up') {
+          pendingInspectionStartRef.current = true;
+        } else {
+          beginInspection();
+        }
       } else {
         // No inspection: jump straight to hold cycle.
         startHoldCycle();
@@ -192,6 +198,14 @@ export function useTimer(onSolve?: (result: SolveResult) => void): TimerHandle {
 
   const onPressUp = useCallback(() => {
     const cur = phaseRef.current;
+    // inspectionTrigger='up': commit deferred inspection start now.
+    if (pendingInspectionStartRef.current) {
+      pendingInspectionStartRef.current = false;
+      if (cur === 'idle' || cur === 'stopped') {
+        beginInspection();
+        return;
+      }
+    }
     if (cur === 'ready') {
       stopHoldTimer();
       stopInspectionTick();
@@ -226,6 +240,7 @@ export function useTimer(onSolve?: (result: SolveResult) => void): TimerHandle {
     setInspectionDisplayMs(0);
     setLastMsSafe(null);
     inspectionStartRef.current = 0;
+    pendingInspectionStartRef.current = false;
     setPhaseSafe('idle');
   }, [setLastMsSafe, setPhaseSafe, stopHoldTimer, stopInspectionTick, stopTick]);
 

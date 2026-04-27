@@ -44,6 +44,7 @@ import {
 import { useApplyTheme, useSettings } from './settings';
 import { warmupSound } from './sound';
 import { useBluetoothCube } from './bluetooth';
+import { useAutoReady } from './bluetooth/auto_ready';
 import { useStackmat } from './stackmat';
 import { useMultiStage } from './multistage';
 import { useBldMemo } from './useBldMemo';
@@ -215,17 +216,46 @@ export default function TimerPage() {
   const consumeFacesRef = useRef<(faces: import('./cube/state').CubeFaces) => void>(() => {});
   useEffect(() => { consumeFacesRef.current = multiStage.consumeFromState; }, [multiStage.consumeFromState]);
 
+  // Local broadcast: any hook needing the bluetooth move stream registers
+  // here. We don't want to duplicate the bluetooth subscription itself
+  // (drivers only emit once per move), so the single onMove callback below
+  // fans out to every subscriber.
+  const bluetoothSubscribersRef = useRef<Set<(m: string, ts: number) => void>>(new Set());
+
   const bluetoothCube = useBluetoothCube({
-    onMove: () => {
+    onMove: (move: string, ts: number) => {
       // Pull live state from the bluetooth tracker and feed multistage.
       const faces = bluetoothCubeRef.current?.getFaces();
       if (faces) consumeFacesRef.current(faces);
+      // Broadcast to local subscribers (auto-ready, etc.).
+      for (const sub of bluetoothSubscribersRef.current) {
+        try { sub(move, ts); } catch (err) { console.error('[bt-broadcast]', err); }
+      }
     },
     onSolved: () => {
       if (phaseSnapshotRef.current === 'running') {
         // Press-down stops the timer (same code path as space-bar tap).
         timer.onPressDown();
       }
+    },
+  });
+
+  // Bluetooth auto-ready: when enabled, simulate a press-down to kick off the
+  // inspection / hold cycle without the user touching the spacebar.
+  useAutoReady({
+    enabled: settings.bluetoothAutoReady !== 'off' && bluetoothCube.status.connected,
+    mode: settings.bluetoothAutoReady === 'double-flick' ? 'double-flick' : 'still',
+    onReady: () => {
+      const ph = timer.phase;
+      if (ph === 'idle' || ph === 'inspecting' || ph === 'stopped') {
+        warmupSound();
+        timer.onPressDown();
+      }
+    },
+    onMoveSubscriber: (cb) => {
+      const subs = bluetoothSubscribersRef.current;
+      subs.add(cb);
+      return () => { subs.delete(cb); };
     },
   });
   // Self-ref so the onMove callback can reach getFaces() without a stale
