@@ -1,0 +1,15 @@
+# Scramble Extremes — pair / xxxcross_pair / O / bin 8 (min)
+# Population in this bin: 8
+# Samples listed: 8 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-04-27T02:18:06.033Z
+# Columns: id,scramble,bottom_color
+
+33876001,L D2 R U2 L F2 L2 U2 B2 D2 F' D U' R2 F L2 F U' R2 D',O
+80672001,B L F U' B2 R' D2 R2 B R' F R2 F' B2 L2 F B2,O
+93588001,F' R F' U B2 U D' B2 R2 L' F2 L2 F2 D R2 U' B2 U2,O
+149455001,D R2 U L2 D B2 F2 R' B' D U' L' D2 R F' L2 R',O
+215055001,L2 B2 F2 D2 U L2 U B' L R2 F' U' L2 B2 R2 U B' L U2,O
+254512001,R2 B2 D R2 B2 U F2 D' F2 U' R B' R' U2 R2 U2 B' U R' B',O
+265788001,F' U' F R U R' U F' U' F' D2 F2 U' R2 F2 D F2,O
+317276001,U2 B2 D' L2 R2 D' L2 B' U' L' B' U2 L2 D' B2 L B' D R',O
