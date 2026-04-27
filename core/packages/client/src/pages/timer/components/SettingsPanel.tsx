@@ -2,7 +2,7 @@
  * Settings panel — modal launched from the topbar gear button.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { resetSettings, updateSettings, useSettings } from '../settings';
 import { warmupSound, play } from '../sound';
 import { getMetronome } from '../sound/metronome';
@@ -19,6 +19,43 @@ export default function SettingsPanel({ isZh, onClose }: Props) {
   const s = useSettings();
   const [seedTick, setSeedTick] = useState(0);
   const [aoInput, setAoInput] = useState<string>(() => s.customAoWindows.join(','));
+
+  // Tap-to-BPM: rolling window of timestamps; reset after 3s of inactivity.
+  const tapTimesRef = useRef<number[]>([]);
+  const tapResetTimerRef = useRef<number | null>(null);
+  const [tapBpmHint, setTapBpmHint] = useState<number | null>(null);
+
+  function tapBpm(): void {
+    const now = performance.now();
+    const arr = tapTimesRef.current;
+    arr.push(now);
+    // Keep at most 4 taps for the rolling window.
+    if (arr.length > 4) arr.shift();
+    if (arr.length >= 2) {
+      const span = arr[arr.length - 1] - arr[0];
+      const avgIntervalMs = span / (arr.length - 1);
+      if (avgIntervalMs > 0) {
+        const bpm = Math.round(60000 / avgIntervalMs);
+        const clamped = Math.max(30, Math.min(240, bpm));
+        updateSettings({ metronomeBpm: clamped });
+        setTapBpmHint(clamped);
+      }
+    }
+    if (tapResetTimerRef.current !== null) {
+      window.clearTimeout(tapResetTimerRef.current);
+    }
+    tapResetTimerRef.current = window.setTimeout(() => {
+      tapTimesRef.current = [];
+      tapResetTimerRef.current = null;
+      setTapBpmHint(null);
+    }, 3000);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (tapResetTimerRef.current !== null) window.clearTimeout(tapResetTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -263,6 +300,16 @@ export default function SettingsPanel({ isZh, onClose }: Props) {
               value={s.metronomeBpm}
               onChange={(e) => updateSettings({ metronomeBpm: Math.max(30, Math.min(240, Number(e.target.value) || 60)) })}
             />
+            <button
+              className="hint-btn"
+              onClick={tapBpm}
+              title={isZh ? '连续敲击设定速度' : 'Tap repeatedly to set tempo'}
+            >
+              {isZh ? '敲击' : 'Tap'}
+            </button>
+            {tapBpmHint !== null && (
+              <span className="hint" style={{ fontVariantNumeric: 'tabular-nums' }}>→ {tapBpmHint}</span>
+            )}
             <span className="hint">{isZh ? '离开本页时自动停止' : 'auto-stops on page leave'}</span>
           </Row>
         </div>
