@@ -20,7 +20,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { Home, Download, Upload, Trash2, Settings as SettingsIcon, Maximize2, Minimize2, Bluetooth, Mic, HelpCircle } from 'lucide-react';
+import { Home, Download, Upload, Trash2, Settings as SettingsIcon, Maximize2, Minimize2, Bluetooth, Mic, HelpCircle, BarChart3, Plus, Wrench, ListPlus, Printer } from 'lucide-react';
 import LangToggle from '../../components/LangToggle';
 
 import { generateScramble, registerScramble } from './scramble';
@@ -56,6 +56,10 @@ import SettingsPanel from './components/SettingsPanel';
 import ShortcutsModal from './components/ShortcutsModal';
 import BluetoothModal from './components/BluetoothModal';
 import TrainerSubsetModal from './components/TrainerSubsetModal';
+import StatsModal from './components/StatsModal';
+import ManualEntryModal from './components/ManualEntryModal';
+import SolverModal from './components/SolverModal';
+import BulkScrambleModal from './components/BulkScrambleModal';
 import { OLL_CASES } from './scramble/algs/oll_cases';
 import { PLL_CASES } from './scramble/algs/pll_cases';
 import HistogramChart from './components/HistogramChart';
@@ -310,6 +314,10 @@ export default function TimerPage() {
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [bluetoothOpen, setBluetoothOpen] = useState(false);
   const [trainerSubsetOpen, setTrainerSubsetOpen] = useState<'oll' | 'pll' | null>(null);
+  const [statsModalOpen, setStatsModalOpen] = useState(false);
+  const [manualEntryOpen, setManualEntryOpen] = useState(false);
+  const [solverOpen, setSolverOpen] = useState(false);
+  const [bulkScrambleOpen, setBulkScrambleOpen] = useState(false);
 
   // ── Fullscreen ──────────────────────────────────────────────────
   const [fullscreen, setFullscreen] = useState(false);
@@ -495,8 +503,15 @@ export default function TimerPage() {
   }, [isZh]);
 
   // ── Render ──────────────────────────────────────────────────────
+  const eventInfoCurrent = EVENTS.find(e => e.id === event);
+  const printEventName = eventInfoCurrent ? (isZh ? eventInfoCurrent.nameZh : eventInfoCurrent.nameEn) : event;
+
   return (
     <div className={`timer-root ${fullscreen ? 'fullscreen' : ''}`}>
+      <div className="print-only-header">
+        <h1>{isZh ? '魔方计时器 — ' : 'Cube Timer — '}{printEventName}</h1>
+        <div className="print-meta">{new Date().toLocaleString()} · {solves.length} {isZh ? '次' : 'solves'}</div>
+      </div>
       <div className="timer-topbar">
         <div className="left">
           <Link className="home-link" to={`/${getLangQuery()}`} title={isZh ? '返回首页' : 'Home'}>
@@ -564,6 +579,21 @@ export default function TimerPage() {
               : (isZh ? '启用 Stackmat（麦克风）' : 'Enable Stackmat (microphone)')}
           >
             <Mic size={14} />
+          </button>
+          <button className="tb-btn" onClick={() => setStatsModalOpen(true)} title={isZh ? '完整统计' : 'Full stats'}>
+            <BarChart3 size={14} />
+          </button>
+          <button className="tb-btn" onClick={() => setManualEntryOpen(true)} title={isZh ? '手动录入' : 'Manual entry'}>
+            <Plus size={14} />
+          </button>
+          <button className="tb-btn" onClick={() => setSolverOpen(true)} title={isZh ? '通用求解器' : 'Solver'}>
+            <Wrench size={14} />
+          </button>
+          <button className="tb-btn" onClick={() => setBulkScrambleOpen(true)} title={isZh ? '批量打乱' : 'Bulk scrambles'}>
+            <ListPlus size={14} />
+          </button>
+          <button className="tb-btn" onClick={() => window.print()} title={isZh ? '打印' : 'Print'}>
+            <Printer size={14} />
           </button>
           <button className="tb-btn" onClick={() => setSettingsOpen(true)} title={isZh ? '设置' : 'Settings'}>
             <SettingsIcon size={14} />
@@ -784,6 +814,47 @@ export default function TimerPage() {
               // For NO_WEB_BLUETOOTH the modal already shows env advice — silent.
             }
           }}
+        />
+      )}
+
+      {statsModalOpen && (
+        <StatsModal
+          event={event}
+          solves={solves}
+          isZh={isZh}
+          onClose={() => setStatsModalOpen(false)}
+        />
+      )}
+
+      {manualEntryOpen && (
+        <ManualEntryModal
+          event={event}
+          currentScramble={scramble}
+          isZh={isZh}
+          onClose={() => setManualEntryOpen(false)}
+          onSubmit={(solve) => {
+            setByEvent(prev => ({
+              ...prev,
+              [solve.event]: [...(prev[solve.event] ?? []), solve],
+            }));
+            setLastPenalty(solve.penalty);
+            setManualEntryOpen(false);
+          }}
+        />
+      )}
+
+      {solverOpen && (
+        <SolverModal
+          isZh={isZh}
+          onClose={() => setSolverOpen(false)}
+        />
+      )}
+
+      {bulkScrambleOpen && (
+        <BulkScrambleModal
+          defaultEvent={event}
+          isZh={isZh}
+          onClose={() => setBulkScrambleOpen(false)}
         />
       )}
     </div>

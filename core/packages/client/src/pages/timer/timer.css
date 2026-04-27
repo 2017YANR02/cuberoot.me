@@ -950,3 +950,270 @@
 .trainer-case-chip-label {
   font-family: 'JetBrains Mono', monospace;
 }
+
+/* --- StatsModal --- */
+.stats-modal { max-width: 600px; }
+.stats-modal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 4px 14px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.stats-modal-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 4px 0;
+  border-bottom: 1px dashed #1f1f23;
+  font-size: 12px;
+}
+.stats-modal-lbl { color: #888; }
+.stats-modal-val { color: #f0ebe3; font-weight: 600; }
+.stats-modal-pb {
+  font-family: 'JetBrains Mono', monospace;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+  color: #ffd54f;
+}
+.stats-modal-pb .scramble-text {
+  background: #0e0e10;
+  border: 1px solid #2a2a2e;
+  border-radius: 4px;
+  padding: 6px 8px;
+  color: #ddd;
+  font-size: 12px;
+}
+:root[data-timer-theme="light"] .stats-modal-row { border-bottom-color: #eee; }
+:root[data-timer-theme="light"] .stats-modal-lbl { color: #777; }
+:root[data-timer-theme="light"] .stats-modal-val { color: #1d1d1f; }
+
+/* --- Manual entry / Solver / Bulk shared inputs --- */
+.manual-label {
+  display: block;
+  font-size: 12px;
+  color: #aaa;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.manual-label.inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-transform: none;
+  letter-spacing: normal;
+  margin-bottom: 0;
+  font-size: 12px;
+}
+.manual-input,
+.manual-textarea {
+  width: 100%;
+  margin-top: 4px;
+  padding: 8px 10px;
+  background: #0e0e10;
+  border: 1px solid #2a2a2e;
+  border-radius: 4px;
+  color: #f0ebe3;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  resize: vertical;
+  box-sizing: border-box;
+}
+.manual-input:focus,
+.manual-textarea:focus {
+  outline: none;
+  border-color: #4d7a99;
+}
+.manual-err {
+  color: #ef9a9a;
+  font-size: 12px;
+  margin-top: 6px;
+}
+.manual-radios {
+  display: flex;
+  gap: 16px;
+  margin-top: 6px;
+}
+.manual-radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #ccc;
+  cursor: pointer;
+}
+.manual-radio.disabled { color: #666; cursor: not-allowed; }
+.manual-radio input { cursor: inherit; }
+
+.manual-entry-modal { max-width: 480px; }
+
+/* --- Solver --- */
+.solver-modal { max-width: 520px; }
+.solver-radios {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.solver-input { font-family: 'JetBrains Mono', monospace; }
+.solver-loading {
+  text-align: center;
+  color: #888;
+  font-size: 12px;
+  font-style: italic;
+}
+.solver-rev { margin-top: 10px; }
+.solver-rev-lbl { color: #888; font-size: 11px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+/* --- Bulk scramble --- */
+.bulk-scramble-modal { max-width: 640px; }
+.bulk-controls {
+  display: flex;
+  gap: 12px;
+  align-items: end;
+  flex-wrap: wrap;
+}
+.bulk-controls select,
+.bulk-controls input[type="number"] {
+  background: #0e0e10;
+  color: #f0ebe3;
+  border: 1px solid #2a2a2e;
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 13px;
+}
+.bulk-controls input[type="number"] { width: 80px; }
+.bulk-controls .primary {
+  background: #2a3d4d;
+  border: 1px solid #4d7a99;
+  color: #cde;
+  border-radius: 6px;
+  padding: 7px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.bulk-controls .primary:hover { background: #345169; }
+.bulk-controls .primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.bulk-list {
+  max-height: 50dvh;
+  overflow-y: auto;
+  background: #0e0e10;
+  border: 1px solid #2a2a2e;
+  border-radius: 4px;
+  padding: 8px 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+}
+.bulk-row {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  gap: 6px;
+  padding: 3px 0;
+  border-bottom: 1px dashed #1f1f23;
+  align-items: baseline;
+}
+.bulk-row:last-child { border-bottom: 0; }
+.bulk-idx { color: #777; text-align: right; }
+.bulk-scramble { color: #ddd; word-break: break-word; }
+
+:root[data-timer-theme="light"] .manual-input,
+:root[data-timer-theme="light"] .manual-textarea,
+:root[data-timer-theme="light"] .bulk-list,
+:root[data-timer-theme="light"] .bulk-controls select,
+:root[data-timer-theme="light"] .bulk-controls input[type="number"] {
+  background: #fff;
+  color: #1d1d1f;
+  border-color: #d0d0d4;
+}
+
+/* --- Print-only header --- */
+.print-only-header { display: none; }
+
+/* --- Print styles --- */
+@media print {
+  .timer-root {
+    background: #fff !important;
+    color: #000 !important;
+    overflow: visible !important;
+    height: auto !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    user-select: text !important;
+  }
+  .timer-topbar,
+  .timer-cube-preview,
+  .timer-quick-actions,
+  .timer-stage-splits,
+  .timer-hint,
+  .charts-panel,
+  .timer-heatmap-row,
+  .case-stats-panel,
+  .trainer-subset-row,
+  .timer-modal-overlay {
+    display: none !important;
+  }
+  .print-only-header {
+    display: block;
+    padding: 12px 16px 4px;
+    border-bottom: 1px solid #ccc;
+  }
+  .print-only-header h1 {
+    margin: 0;
+    font-size: 20px;
+    color: #000;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  .print-only-header .print-meta {
+    color: #555;
+    font-size: 11px;
+    margin-top: 2px;
+  }
+  .scramble-strip {
+    background: #fff !important;
+    color: #000 !important;
+    border-bottom: 1px solid #ccc !important;
+    padding: 8px 16px !important;
+  }
+  .timer-center {
+    display: block !important;
+    padding: 10px 16px;
+  }
+  .timer-display {
+    color: #000 !important;
+    text-shadow: none !important;
+    font-size: 48px !important;
+  }
+  .timer-bottom {
+    display: block !important;
+    grid-template-columns: none !important;
+    grid-template-rows: none !important;
+    max-height: none !important;
+    overflow: visible !important;
+    border-top: 1px solid #ccc !important;
+    background: #fff !important;
+  }
+  .stats-panel,
+  .history-panel {
+    border: 0 !important;
+    overflow: visible !important;
+    page-break-inside: auto;
+    background: #fff !important;
+  }
+  .stats-grid .row .lbl { color: #555 !important; }
+  .stats-grid .row .val { color: #000 !important; }
+  .history-list {
+    overflow: visible !important;
+    max-height: none !important;
+    height: auto !important;
+  }
+  .history-row {
+    border-bottom: 1px solid #eee !important;
+    cursor: default !important;
+    background: #fff !important;
+    page-break-inside: avoid;
+  }
+  .history-row .actions { display: none !important; }
+  .history-row .idx { color: #888 !important; }
+  .history-row .time { color: #000 !important; }
+}
