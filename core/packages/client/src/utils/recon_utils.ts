@@ -312,17 +312,6 @@ export function buildExternalLinks(
   return { algUrl, algSiteName, cubedbUrl };
 }
 
-/** 显示选手名（解析 "English Name (中文名)" 格式） */
-export function displaySolverName(person: string, isZh = false): string {
-  if (!person) return '';
-  // NOTE: WCA 格式 "Ruimin Yan (颜瑞民)"
-  const match = person.match(/^(.+?)\s*\((.+?)\)$/);
-  if (match) {
-    return isZh ? match[2] : match[1];
-  }
-  return person;
-}
-
 // ── 面颜色 ──
 
 /** 魔方面颜色映射（用于 Cross Color 着色） */

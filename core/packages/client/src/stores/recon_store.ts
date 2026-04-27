@@ -5,6 +5,7 @@
 import { create } from 'zustand';
 import type { ReconSolve } from '@cuberoot/shared';
 import { listRecons } from '../utils/recon_api';
+import { loadCachedSolves, saveCachedSolves } from '../utils/recon_cache';
 
 // ── 排序 ──
 
@@ -73,12 +74,24 @@ export const useReconStore = create<ReconStoreState & ReconStoreActions>()((set,
   pageSize: PAGE_SIZE,
 
   loadAll: async (wcaId?: string) => {
-    set({ loading: true, error: null });
+    // NOTE: stale-while-revalidate——有缓存就先渲染，再后台 fetch 替换
+    const cached = loadCachedSolves(wcaId);
+    if (cached) {
+      set({ allSolves: cached, loading: false, error: null, displayCount: PAGE_SIZE });
+    } else {
+      set({ loading: true, error: null });
+    }
     try {
       const solves = await listRecons(wcaId);
-      set({ allSolves: solves, loading: false, displayCount: PAGE_SIZE });
+      set({ allSolves: solves, loading: false, error: null, displayCount: PAGE_SIZE });
+      saveCachedSolves(solves, wcaId);
     } catch (err) {
-      set({ error: (err as Error).message, loading: false });
+      // NOTE: 有缓存兜底就只静默失败；没缓存才 surface error
+      if (cached) {
+        // 保留缓存数据，不切换到 error 状态
+      } else {
+        set({ error: (err as Error).message, loading: false });
+      }
     }
   },
 

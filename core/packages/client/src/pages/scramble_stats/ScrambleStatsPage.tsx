@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import LangToggle from '../../components/LangToggle';
 import DiscreteHistogram, { type HistSeries } from './DiscreteHistogram';
@@ -345,7 +344,6 @@ export default function ScrambleStatsPage() {
       <div className="scramble-stats-page">
         <div className="scramble-stats-header">
           <div className="scramble-stats-header-nav">
-            <Link to="/" className="scramble-stats-back">← {isZh ? '返回' : 'Back'}</Link>
             <LangToggle />
           </div>
           <h1>{isZh ? '打乱难度分布' : 'Scramble Distribution'}</h1>
@@ -360,7 +358,6 @@ export default function ScrambleStatsPage() {
       <div className="scramble-stats-page">
         <div className="scramble-stats-header">
           <div className="scramble-stats-header-nav">
-            <Link to="/" className="scramble-stats-back">← {isZh ? '返回' : 'Back'}</Link>
             <LangToggle />
           </div>
           <h1>{isZh ? '打乱难度分布' : 'Scramble Distribution'}</h1>
@@ -398,7 +395,6 @@ export default function ScrambleStatsPage() {
     <div className="scramble-stats-page">
       <div className="scramble-stats-header">
         <div className="scramble-stats-header-nav">
-          <Link to="/" className="scramble-stats-back">← {isZh ? '返回' : 'Back'}</Link>
           <LangToggle />
         </div>
         <h1>{isZh ? '打乱难度分布' : 'Scramble Distribution'}</h1>

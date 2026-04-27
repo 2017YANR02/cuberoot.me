@@ -703,10 +703,6 @@
   outline: none;
   cursor: pointer;
 }
-.fc-solve-select option {
-  background: #2a2a2a;
-  color: #e0e0e0;
-}
 .fc-solve-select:focus { border-color: rgba(255,255,255,0.35); }
 
 .fc-solve-header .fc-toolbar-time {

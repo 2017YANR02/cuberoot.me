@@ -3,8 +3,6 @@
  * NOTE: 用于嵌入未迁移到 React 的外部模块（Solver/Alg Trainer/csTimer）
  * 零改动上游代码，通过 iframe 在 SPA 内展示原版页面
  */
-import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 
 interface IframePageProps {
   /** iframe 加载的 URL 路径（如 /solver/） */
@@ -14,8 +12,6 @@ interface IframePageProps {
 }
 
 export default function IframePage({ src, title }: IframePageProps) {
-  const { t } = useTranslation();
-
   return (
     <div style={{
       display: 'flex',
@@ -23,7 +19,7 @@ export default function IframePage({ src, title }: IframePageProps) {
       height: '100vh',
       background: '#0d1117',
     }}>
-      {/* NOTE: 顶部导航栏 — 提供返回首页的入口 */}
+      {/* NOTE: 顶部标题栏 */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
@@ -33,19 +29,6 @@ export default function IframePage({ src, title }: IframePageProps) {
         borderBottom: '1px solid rgba(138, 180, 248, 0.15)',
         flexShrink: 0,
       }}>
-        <Link
-          to="/"
-          style={{
-            color: '#8ab4f8',
-            textDecoration: 'none',
-            fontSize: 14,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 4,
-          }}
-        >
-          ← {t('common.backToHome')}
-        </Link>
         <span style={{ color: '#9aa0a6', fontSize: 14 }}>{title}</span>
       </div>
 

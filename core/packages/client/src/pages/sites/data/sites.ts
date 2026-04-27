@@ -1445,7 +1445,7 @@ export const SITES: Site[] = [
     "url": "https://reco.nz/solve/index",
     "group": "recon",
     "subgroup": "Reconstructions 复盘",
-    "author": "Jonatan Klosko",
+    "author": "Stewy",
     "desc_en": "Browsable database of community-submitted Rubik's cube solve reconstructions.",
     "desc_zh": "可筛选浏览的复盘数据库。"
   },

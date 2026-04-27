@@ -4,7 +4,6 @@
     "subtitle": "Algorithm Trainer"
   },
   "caseSelect": {
-    "back": "← Back",
     "selectAll": "Select All",
     "deselectAll": "Deselect All",
     "startTraining": "Start Training",
@@ -18,8 +17,7 @@
     "complete": "🎉 Training Complete!",
     "casesCount": "{{count}} cases",
     "avgTime": "Average {{time}}s",
-    "viewStats": "View Stats",
-    "backToSelect": "Back to Select"
+    "viewStats": "View Stats"
   },
   "stats": {
     "title": "{{name}} Stats",
@@ -33,8 +31,6 @@
   },
   "common": {
     "cases": "{{count}} cases",
-    "back": "Back",
-    "backToHome": "Back",
     "loading": "Loading...",
     "loadFailed": "Failed to load",
     "unknownError": "Unknown error",
@@ -144,7 +140,6 @@
   },
   "wcaStats": {
     "title": "WCA Statistics",
-    "backToStats": "Back to stats",
     "selectAll": "Select all",
     "dedup": "Dedup",
     "timeAxis": "Time (s)",
@@ -287,7 +282,6 @@
   },
   "zbls": {
     "nav": {
-      "back": "← Back",
       "selectBtn": "Select",
       "nToRecap": "Recap: {{count}} remaining"
     },
@@ -327,7 +321,6 @@
   },
   "frameCount": {
     "title": "Frame Count",
-    "back": "Back",
     "toolbar": {
       "flipV": "Flip Vertical",
       "flipH": "Flip Horizontal",

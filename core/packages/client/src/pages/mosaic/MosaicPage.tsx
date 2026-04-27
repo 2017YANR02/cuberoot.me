@@ -1,10 +1,8 @@
 import { lazy, Suspense } from 'react';
-import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useMosaicStore } from './state/store';
 import type { Stage } from './state/types';
 import LangToggle from '../../components/LangToggle';
-import { getLangQuery } from '../../i18n';
 import './mosaic.css';
 
 const UploadStage = lazy(() => import('./stages/UploadStage'));
@@ -57,7 +55,6 @@ export default function MosaicPage() {
     <div className="mosaic-page">
       <div className="mosaic-topbar">
         <div className="mosaic-topbar-left">
-          <Link to={`/${getLangQuery()}`} className="mosaic-back" title={t('common.backToHome')}>← {t('common.backToHome')}</Link>
           {backAction && (
             <button className="mosaic-back" onClick={backAction.fn}>{backAction.label}</button>
           )}

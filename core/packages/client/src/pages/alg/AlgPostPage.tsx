@@ -28,9 +28,6 @@ export default function AlgPostPage() {
       <div className="alg-root">
         <div style={{ padding: 48, textAlign: 'center' }}>
           <p>{error ?? (isZh ? '未找到此教程' : 'Tutorial not found')}</p>
-          <Link to="/alg" style={{ color: 'var(--alg-link)' }}>
-            {isZh ? '← 返回列表' : '← Back to list'}
-          </Link>
         </div>
       </div>
     );
@@ -45,7 +42,7 @@ export default function AlgPostPage() {
       <div className="alg-post-header">
         <div className="alg-breadcrumb">
           <Link to="/alg" className="alg-breadcrumb-back">
-            {isZh ? '← 公式教程' : '← Algorithms'}
+            {isZh ? '公式教程' : 'Algorithms'}
           </Link>
           <span className="alg-breadcrumb-sep">/</span>
           <span>{post.category}</span>

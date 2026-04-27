@@ -282,7 +282,6 @@ export default function ReconSubmitPage() {
     <div className="recon-page">
       <div className="detail-header">
         <div className="detail-header-nav">
-          <Link to="/recon" className="detail-back">← {t('common.back')}</Link>
           <LangToggle />
         </div>
         <h1>{isEditing ? t('recon.editRecon') : t('recon.addRecon')}</h1>

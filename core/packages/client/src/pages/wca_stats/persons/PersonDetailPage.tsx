@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, ExternalLink, Trophy, Medal, Award } from 'lucide-react';
+import { ExternalLink, Trophy, Medal, Award } from 'lucide-react';
 import { Flag } from '../../../utils/flag';
 import { displayCuberName } from '../../../utils/name_utils';
 import { ALL_EVENT_IDS, EVENT_ZH, EVENT_EN } from '../event_constants';
@@ -58,12 +58,6 @@ export default function PersonDetailPage() {
   if (error) {
     return (
       <div className="wca-persons-page">
-        <header className="wca-persons-header">
-          <Link to="/wca-stats/persons" className="wca-persons-back">
-            <ChevronLeft size={18} />
-            <span>{t('返回搜索', 'Back to search')}</span>
-          </Link>
-        </header>
         <div className="wca-persons-error">{t('加载失败', 'Failed to load')}: {error}</div>
       </div>
     );
@@ -72,12 +66,6 @@ export default function PersonDetailPage() {
   if (!profile) {
     return (
       <div className="wca-persons-page">
-        <header className="wca-persons-header">
-          <Link to="/wca-stats/persons" className="wca-persons-back">
-            <ChevronLeft size={18} />
-            <span>{t('返回搜索', 'Back to search')}</span>
-          </Link>
-        </header>
         <div className="wca-persons-loading">{t('加载中…', 'Loading…')}</div>
       </div>
     );
@@ -92,10 +80,6 @@ export default function PersonDetailPage() {
   return (
     <div className="wca-persons-page">
       <header className="wca-persons-header">
-        <Link to="/wca-stats/persons" className="wca-persons-back">
-          <ChevronLeft size={18} />
-          <span>{t('返回搜索', 'Back to search')}</span>
-        </Link>
         <a href={WCA_PROFILE_URL(p.wca_id)} target="_blank" rel="noopener noreferrer" className="wca-persons-source">
           <ExternalLink size={14} />
           <span>WCA</span>

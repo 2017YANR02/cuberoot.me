@@ -734,12 +734,58 @@ export default function UpcomingCompsPage() {
     setViewDate(new Date(now.getFullYear(), now.getMonth(), 1));
   };
 
+  // NOTE: 桌面端 ← / → 换月。输入框聚焦或弹层打开时让位
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      if (e.altKey || e.ctrlKey || e.metaKey) return;
+      if (selectedComp || dayListDate || pickerOpen) return;
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      const editable = (e.target as HTMLElement | null)?.isContentEditable;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || editable) return;
+      e.preventDefault();
+      gotoMonth(e.key === 'ArrowLeft' ? -1 : 1);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [selectedComp, dayListDate, pickerOpen]);
+
+  // NOTE: 手机端日历区横向滑动换月。touchstart/end 距离阈值 60px、水平占优、500ms 内即视为 swipe；
+  // swipe 后用 onClickCapture 吞掉合成 click，避免触发底下 event-bar 的弹窗。
+  const swipeStartRef = useRef<{ x: number; y: number; t: number } | null>(null);
+  const swipeFiredRef = useRef(false);
+  const onCalendarTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length !== 1) { swipeStartRef.current = null; return; }
+    const t = e.touches[0];
+    swipeStartRef.current = { x: t.clientX, y: t.clientY, t: Date.now() };
+  };
+  const onCalendarTouchEnd = (e: React.TouchEvent) => {
+    const start = swipeStartRef.current;
+    swipeStartRef.current = null;
+    if (!start) return;
+    const ch = e.changedTouches[0];
+    if (!ch) return;
+    const dx = ch.clientX - start.x;
+    const dy = ch.clientY - start.y;
+    const dt = Date.now() - start.t;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5 && dt < 500) {
+      gotoMonth(dx > 0 ? -1 : 1);
+      swipeFiredRef.current = true;
+    }
+  };
+  const onCalendarClickCapture = (e: React.MouseEvent) => {
+    if (swipeFiredRef.current) {
+      e.preventDefault();
+      e.stopPropagation();
+      swipeFiredRef.current = false;
+    }
+  };
+
   // ── 渲染 ──
 
   if (error) {
     return (
       <div className="upcoming-page">
-        <Link to="/" className="back-link">← {t('common.backToHome')}</Link>
         <div className="state-message state-error">{error}</div>
       </div>
     );
@@ -748,7 +794,6 @@ export default function UpcomingCompsPage() {
   if (!data) {
     return (
       <div className="upcoming-page">
-        <Link to="/" className="back-link">← {t('common.backToHome')}</Link>
         <div className="state-message">{t('upcoming.loading')}</div>
       </div>
     );
@@ -761,8 +806,6 @@ export default function UpcomingCompsPage() {
 
   return (
     <div className="upcoming-page">
-      <Link to="/" className="back-link">← {t('common.backToHome')}</Link>
-
       <header className="upcoming-header">
         <h1 className="upcoming-title">{t('upcoming.title')}</h1>
         <div className="upcoming-meta">
@@ -877,7 +920,12 @@ export default function UpcomingCompsPage() {
         </span>
       </div>
 
-      <div className="calendar">
+      <div
+        className="calendar"
+        onTouchStart={onCalendarTouchStart}
+        onTouchEnd={onCalendarTouchEnd}
+        onClickCapture={onCalendarClickCapture}
+      >
         <div className="weekday-header">
           {weekdays.map((d, i) => (
             <div key={i} className="weekday-cell">
