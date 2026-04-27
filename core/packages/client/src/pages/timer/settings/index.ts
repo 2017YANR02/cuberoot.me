@@ -63,6 +63,9 @@ export interface TimerSettings {
 
   /** PLL trainer case-id whitelist (e.g. ["T", "Y"]). undefined / [] = all 21. */
   pllSubset?: string[];
+
+  /** Color neutral scramble mode (3x3-shaped events only). */
+  cnMode: 'none' | 'single' | 'dual' | 'six';
 }
 
 export const DEFAULTS: TimerSettings = {
@@ -82,6 +85,7 @@ export const DEFAULTS: TimerSettings = {
   showHeatmap: true,
   multiStage: false,
   bldMemo: true,
+  cnMode: 'none',
 };
 
 let _cache: TimerSettings = load();

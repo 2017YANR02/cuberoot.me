@@ -23,6 +23,8 @@ import {
   scrambleMega,
   scrambleClock,
 } from './others';
+import { applyColorNeutral, isCnEligible } from './cn';
+import { getSettings } from '../settings';
 
 // Round 1B will export these — soft import via dynamic require so absent files
 // don't break the build. We use a runtime registry instead.
@@ -54,9 +56,11 @@ export function registerScramble(event: EventId, gen: Gen): void {
 
 export function generateScramble(event: EventId, rng: () => number = Math.random): string {
   const gen = REG[event];
-  if (gen) return gen(rng);
-  // Fallback: a 3x3 scramble keeps the UI sane for any unimplemented event.
-  return scramble333(rng);
+  const raw = gen ? gen(rng) : scramble333(rng);
+  // Apply color-neutral rotation prefix for 3x3-shaped events.
+  if (!isCnEligible(event)) return raw;
+  const mode = getSettings().cnMode;
+  return applyColorNeutral(raw, mode, rng);
 }
 
 /**
