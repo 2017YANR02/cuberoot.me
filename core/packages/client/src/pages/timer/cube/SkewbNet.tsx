@@ -1,15 +1,16 @@
-/**
- * Skewb net preview (stub).
- *
- * A skewb's faces are split into 5 stickers each: a central diamond and
- * four triangular corner stickers. Six faces total. We render a "T" net
- * like a 2x2 cube would have, but with the diamond+corner stickering for
- * each face. The state shown is solved (no scramble simulation).
- */
+/** Skewb net preview — applies scramble to render actual sticker state. */
 
 import type { JSX } from 'react';
-import { WCA_COLORS } from './colors.ts';
-import type { Face } from './moves.ts';
+import { applySkewbScramble, type SkewbFace, type SkewbSticker } from './skewb_state.ts';
+
+const COLORS: Record<SkewbFace, string> = {
+  U: '#FFFFFF', // white
+  D: '#FFD500', // yellow
+  F: '#009B48', // green
+  B: '#0046AD', // blue
+  L: '#FF5800', // orange
+  R: '#B71234', // red
+};
 
 interface SkewbNetProps {
   scramble?: string;
@@ -27,7 +28,7 @@ export default function SkewbNet(props: SkewbNetProps): JSX.Element {
   const totalW = cols * size + (cols - 1) * sectionGap + 2;
   const totalH = rows * size + (rows - 1) * sectionGap + 2;
 
-  function blockOrigin(face: Face): { x: number; y: number } {
+  function blockOrigin(face: SkewbFace): { x: number; y: number } {
     const col = face === 'L' ? 0 : face === 'F' ? 1 : face === 'R' ? 2 : face === 'B' ? 3 : 1;
     const row = face === 'U' ? 0 : face === 'D' ? 2 : 1;
     return {
@@ -36,26 +37,31 @@ export default function SkewbNet(props: SkewbNetProps): JSX.Element {
     };
   }
 
-  function skewbFace(face: Face): JSX.Element {
+  const state = applySkewbScramble(props.scramble ?? '');
+
+  function skewbFace(face: SkewbFace): JSX.Element {
     const o = blockOrigin(face);
-    const c = WCA_COLORS[face];
-    // Outer square as 4 corner triangles + central diamond, all the same
-    // colour for solved state.
+    const stickers: SkewbSticker[] = state[face];
+    // Sticker indices: 0=TL, 1=TR, 2=BR, 3=BL, 4=center diamond
     const x0 = o.x, y0 = o.y, x1 = o.x + size, y1 = o.y + size;
     const cx = o.x + size / 2, cy = o.y + size / 2;
     return (
       <g key={face}>
-        {/* corner triangles */}
-        <polygon points={`${x0},${y0} ${x1},${y0} ${cx},${cy}`} fill={c} stroke={STROKE} strokeWidth={1} />
-        <polygon points={`${x1},${y0} ${x1},${y1} ${cx},${cy}`} fill={c} stroke={STROKE} strokeWidth={1} />
-        <polygon points={`${x1},${y1} ${x0},${y1} ${cx},${cy}`} fill={c} stroke={STROKE} strokeWidth={1} />
-        <polygon points={`${x0},${y1} ${x0},${y0} ${cx},${cy}`} fill={c} stroke={STROKE} strokeWidth={1} />
+        {/* TL corner triangle */}
+        <polygon points={`${x0},${y0} ${cx},${y0} ${cx},${cy} ${x0},${cy}`} fill={COLORS[stickers[0]]} stroke={STROKE} strokeWidth={1} />
+        {/* TR corner triangle */}
+        <polygon points={`${cx},${y0} ${x1},${y0} ${x1},${cy} ${cx},${cy}`} fill={COLORS[stickers[1]]} stroke={STROKE} strokeWidth={1} />
+        {/* BR corner triangle */}
+        <polygon points={`${cx},${cy} ${x1},${cy} ${x1},${y1} ${cx},${y1}`} fill={COLORS[stickers[2]]} stroke={STROKE} strokeWidth={1} />
+        {/* BL corner triangle */}
+        <polygon points={`${x0},${cy} ${cx},${cy} ${cx},${y1} ${x0},${y1}`} fill={COLORS[stickers[3]]} stroke={STROKE} strokeWidth={1} />
+        {/* center diamond on top */}
+        <polygon points={`${cx},${y0} ${x1},${cy} ${cx},${y1} ${x0},${cy}`} fill={COLORS[stickers[4]]} stroke={STROKE} strokeWidth={1} />
       </g>
     );
   }
 
-  void props.scramble;
-  const order: Face[] = ['U', 'L', 'F', 'R', 'B', 'D'];
+  const order: SkewbFace[] = ['U', 'L', 'F', 'R', 'B', 'D'];
 
   return (
     <svg
