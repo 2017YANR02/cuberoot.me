@@ -389,10 +389,12 @@ export const qiyiDriver: CubeDriver = {
     try {
       const cmdChar = await service.getCharacteristic(QIYI_COMMAND_CHAR);
       const helloEnc = aesCbcEncryptSingleBlock(QIYI_HELLO, aesKey, aesIv);
+      const helloBuf = new ArrayBuffer(helloEnc.length);
+      new Uint8Array(helloBuf).set(helloEnc);
       if (cmdChar.writeValueWithResponse) {
-        await cmdChar.writeValueWithResponse(helloEnc);
+        await cmdChar.writeValueWithResponse(helloBuf);
       } else {
-        await cmdChar.writeValue(helloEnc);
+        await cmdChar.writeValue(helloBuf);
       }
     } catch {
       // Ignore.
