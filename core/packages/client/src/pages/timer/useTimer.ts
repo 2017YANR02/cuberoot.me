@@ -8,13 +8,12 @@
  *   running   — timer is running; any input stops it
  *   stopped   — timer was just stopped; visible until next input
  *
- * UI consumers:
- *   - state: drives styling (red while holding, green when ready)
- *   - displayMs: live elapsed ms (updated ~every 30ms while running)
- *   - lastMs: final time at moment of stop
- *   - { onPressDown, onPressUp }: bind to keydown/keyup or touchstart/touchend
- *
  * Hold threshold READY_MS = 550 ms (cstimer default).
+ *
+ * Implementation note: callback handles (`onPressDown`, `onPressUp`, `reset`)
+ * are *stable* (created once with empty deps) and read live state from refs.
+ * This keeps consumers' window-event listeners from being torn down and
+ * re-attached on every tick of `displayMs`.
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -44,15 +43,23 @@ export function useTimer(onSolve?: (timeMs: number) => void): TimerHandle {
   const [displayMs, setDisplayMs] = useState(0);
   const [lastMs, setLastMs] = useState<number | null>(null);
 
+  // Refs mirror reactive state so stable callbacks can read current values.
   const phaseRef = useRef<TimerPhase>('idle');
+  const lastMsRef = useRef<number | null>(null);
   const startTsRef = useRef(0);
-  const holdStartRef = useRef(0);
   const tickRef = useRef<number | null>(null);
   const holdTimerRef = useRef<number | null>(null);
+  const onSolveRef = useRef(onSolve);
+  onSolveRef.current = onSolve;
 
+  // ── helpers (stable) ────────────────────────────────────────────
   const setPhaseSafe = useCallback((p: TimerPhase) => {
     phaseRef.current = p;
     setPhase(p);
+  }, []);
+  const setLastMsSafe = useCallback((ms: number | null) => {
+    lastMsRef.current = ms;
+    setLastMs(ms);
   }, []);
 
   const stopTick = useCallback(() => {
@@ -61,7 +68,6 @@ export function useTimer(onSolve?: (timeMs: number) => void): TimerHandle {
       tickRef.current = null;
     }
   }, []);
-
   const stopHoldTimer = useCallback(() => {
     if (holdTimerRef.current !== null) {
       window.clearTimeout(holdTimerRef.current);
@@ -69,6 +75,7 @@ export function useTimer(onSolve?: (timeMs: number) => void): TimerHandle {
     }
   }, []);
 
+  // ── stable press handlers (empty deps; read from refs) ──────────
   const onPressDown = useCallback(() => {
     const cur = phaseRef.current;
     if (cur === 'running') {
@@ -76,39 +83,27 @@ export function useTimer(onSolve?: (timeMs: number) => void): TimerHandle {
       stopTick();
       const final = performance.now() - startTsRef.current;
       setDisplayMs(final);
-      setLastMs(final);
+      setLastMsSafe(final);
       setPhaseSafe('stopped');
-      onSolve?.(final);
+      onSolveRef.current?.(final);
       return;
     }
-    if (cur === 'stopped') {
-      // Restart hold cycle.
+    if (cur === 'idle' || cur === 'stopped') {
       setPhaseSafe('holding');
-      holdStartRef.current = performance.now();
-      stopHoldTimer();
-      holdTimerRef.current = window.setTimeout(() => {
-        if (phaseRef.current === 'holding') setPhaseSafe('ready');
-      }, READY_MS);
-      return;
-    }
-    if (cur === 'idle') {
-      setPhaseSafe('holding');
-      holdStartRef.current = performance.now();
       stopHoldTimer();
       holdTimerRef.current = window.setTimeout(() => {
         if (phaseRef.current === 'holding') setPhaseSafe('ready');
       }, READY_MS);
     }
     // While 'holding' or 'ready' we stay; user is still holding the key.
-  }, [onSolve, setPhaseSafe, stopHoldTimer, stopTick]);
+  }, [setLastMsSafe, setPhaseSafe, stopHoldTimer, stopTick]);
 
   const onPressUp = useCallback(() => {
     const cur = phaseRef.current;
     if (cur === 'ready') {
-      // Start the timer.
       stopHoldTimer();
       setDisplayMs(0);
-      setLastMs(null);
+      setLastMsSafe(null);
       startTsRef.current = performance.now();
       setPhaseSafe('running');
       stopTick();
@@ -118,19 +113,19 @@ export function useTimer(onSolve?: (timeMs: number) => void): TimerHandle {
       return;
     }
     if (cur === 'holding') {
-      // Released too early — back to idle (or stopped if a previous time exists).
+      // Released too early — fall back to idle if we never had a time, else stopped.
       stopHoldTimer();
-      setPhaseSafe(lastMs !== null ? 'stopped' : 'idle');
+      setPhaseSafe(lastMsRef.current !== null ? 'stopped' : 'idle');
     }
-  }, [lastMs, setPhaseSafe, stopHoldTimer, stopTick]);
+  }, [setLastMsSafe, setPhaseSafe, stopHoldTimer, stopTick]);
 
   const reset = useCallback(() => {
     stopTick();
     stopHoldTimer();
     setDisplayMs(0);
-    setLastMs(null);
+    setLastMsSafe(null);
     setPhaseSafe('idle');
-  }, [setPhaseSafe, stopHoldTimer, stopTick]);
+  }, [setLastMsSafe, setPhaseSafe, stopHoldTimer, stopTick]);
 
   const acknowledge = useCallback(() => {
     setPhaseSafe('idle');
