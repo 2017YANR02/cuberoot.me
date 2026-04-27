@@ -19,9 +19,15 @@ const TIMING: ShortcutRow[] = [
 
 const HISTORY: ShortcutRow[] = [
   { keys: ['Z'],         en: 'Delete the last solve (undo).',                   zh: '删除最近一次成绩（撤销）。' },
-  { keys: ['2'],         en: 'Toggle +2 on the last solve.',                    zh: '切换最近成绩的 +2 罚时。' },
-  { keys: ['D'],         en: 'Toggle DNF on the last solve.',                   zh: '切换最近成绩的 DNF。' },
+  { keys: ['2'],         en: 'Toggle +2 on the last solve (when stopped).',     zh: '已停止时切换最近成绩的 +2 罚时。' },
+  { keys: ['D'],         en: 'Toggle DNF on the last solve (when stopped).',    zh: '已停止时切换最近成绩的 DNF。' },
   { keys: ['1', '…', '9'], en: 'Open the Nth-most-recent solve detail.',         zh: '打开倒数第 N 次成绩的详情面板。' },
+];
+
+const MULTISTAGE: ShortcutRow[] = [
+  { keys: ['1'], en: 'During solve: mark Cross done.',          zh: '运行中：标记十字完成。' },
+  { keys: ['2'], en: 'During solve: mark F2L done.',            zh: '运行中：标记 F2L 完成。' },
+  { keys: ['3'], en: 'During solve: mark OLL done.',            zh: '运行中：标记 OLL 完成。' },
 ];
 
 const NAV: ShortcutRow[] = [
@@ -46,6 +52,7 @@ export default function ShortcutsModal({ isZh, onClose }: Props) {
 
         <Section title={isZh ? '计时' : 'Timing'} rows={TIMING} isZh={isZh} />
         <Section title={isZh ? '历史' : 'History'} rows={HISTORY} isZh={isZh} />
+        <Section title={isZh ? 'CFOP 分阶段（设置里开启）' : 'CFOP splits (enable in settings)'} rows={MULTISTAGE} isZh={isZh} />
         <Section title={isZh ? '导航' : 'Navigation'} rows={NAV} isZh={isZh} />
 
         <div className="modal-actions">

@@ -51,6 +51,9 @@ export interface TimerSettings {
 
   /** Show the GitHub-style practice heatmap in the bottom panel. */
   showHeatmap: boolean;
+
+  /** Track CFOP stage splits (cross / F2L / OLL / PLL) on NxN events. */
+  multiStage: boolean;
 }
 
 export const DEFAULTS: TimerSettings = {
@@ -68,6 +71,7 @@ export const DEFAULTS: TimerSettings = {
   compactScramble: false,
   use3D: false,
   showHeatmap: true,
+  multiStage: false,
 };
 
 let _cache: TimerSettings = load();

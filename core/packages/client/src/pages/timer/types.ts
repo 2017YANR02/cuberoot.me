@@ -40,6 +40,15 @@ export interface Solve {
   ts: number;
   /** User-supplied comment (optional, multi-line OK) */
   comment?: string;
+  /** CFOP stage splits in ms from solve start. PLL == timeMs by definition.
+   * Each split is the elapsed time at the moment that stage *completed*.
+   * Any subset may be present (a user may only mark F2L, etc.). */
+  stages?: {
+    cross?: number;
+    f2l?: number;
+    oll?: number;
+    pll: number;
+  };
 }
 
 /** Effective time after penalty (Infinity for DNF). */

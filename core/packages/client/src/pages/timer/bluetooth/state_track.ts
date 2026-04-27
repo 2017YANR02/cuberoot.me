@@ -48,4 +48,18 @@ export class CubeStateTracker {
   isSolved(): boolean {
     return facesEqual(this.state, this.solvedRef);
   }
+
+  /** Read-only snapshot of the current facelet state. Used by CFOP stage
+   *  detection. We return a shallow-cloned copy so the caller can't mutate
+   *  our internal state. */
+  getFaces(): CubeFaces {
+    return {
+      U: this.state.U.slice(),
+      D: this.state.D.slice(),
+      F: this.state.F.slice(),
+      B: this.state.B.slice(),
+      L: this.state.L.slice(),
+      R: this.state.R.slice(),
+    };
+  }
 }

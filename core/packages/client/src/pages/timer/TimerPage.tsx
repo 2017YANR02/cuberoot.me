@@ -26,6 +26,7 @@ import LangToggle from '../../components/LangToggle';
 import { generateScramble, registerScramble } from './scramble';
 import { warmup333, randomState333Sync } from './scramble/kociemba/random_state';
 import { useTimer } from './useTimer';
+import { formatMs } from './stats';
 import type { EventId, Penalty, Solve } from './types';
 import { EVENTS } from './types';
 import {
@@ -42,6 +43,7 @@ import { useApplyTheme, useSettings } from './settings';
 import { warmupSound } from './sound';
 import { useBluetoothCube } from './bluetooth';
 import { useStackmat } from './stackmat';
+import { useMultiStage } from './multistage';
 
 import TimerDisplay from './components/TimerDisplay';
 import StatsPanel from './components/StatsPanel';
@@ -122,22 +124,40 @@ export default function TimerPage() {
   const [lastPenalty, setLastPenalty] = useState<Penalty | null>(null);
   const scrambleAtStartRef = useRef<string>(scramble);
 
+  // Multistage CFOP timer is created BELOW useTimer (so it can read the live
+  // phase/displayMs), but recordSolve needs to call extractFinal() at stop
+  // time. Bridge with a ref that's filled after multiStage is constructed.
+  const isNxNEvent = ['222','333','444','555','666','777','333oh','333fm'].includes(event);
+  const multiStageActive = settings.multiStage && isNxNEvent;
+  const multiStageRef = useRef<ReturnType<typeof useMultiStage> | null>(null);
+
   const recordSolve = useCallback((res: { timeMs: number; inspectionMs: number; autoPenalty: 'ok' | '+2' | 'DNF' }) => {
+    const stages = multiStageActive
+      ? multiStageRef.current?.extractFinal(res.timeMs)
+      : undefined;
     const solve = makeSolve({
       timeMs: res.timeMs,
       scramble: scrambleAtStartRef.current,
       event,
       penalty: res.autoPenalty,
     });
+    if (stages) solve.stages = stages;
     setLastPenalty(res.autoPenalty);
     setByEvent(prev => ({
       ...prev,
       [event]: [...(prev[event] ?? []), solve],
     }));
     nextScramble();
-  }, [event, nextScramble]);
+  }, [event, nextScramble, multiStageActive]);
 
   const timer = useTimer(recordSolve);
+
+  const multiStage = useMultiStage({
+    phase: timer.phase,
+    displayMs: timer.displayMs,
+    enabled: multiStageActive,
+  });
+  useEffect(() => { multiStageRef.current = multiStage; }, [multiStage]);
 
   useEffect(() => {
     if (timer.phase !== 'running') {
@@ -148,7 +168,18 @@ export default function TimerPage() {
   // ── Bluetooth smart cube: auto-stop timer when cube solved ──────
   const phaseSnapshotRef = useRef(timer.phase);
   useEffect(() => { phaseSnapshotRef.current = timer.phase; }, [timer.phase]);
+  // Bluetooth move stream feeds CFOP stage detection: after each move, ask
+  // the cube for its current facelet state and let multistage decide if a
+  // stage just transitioned.
+  const consumeFacesRef = useRef<(faces: import('./cube/state').CubeFaces) => void>(() => {});
+  useEffect(() => { consumeFacesRef.current = multiStage.consumeFromState; }, [multiStage.consumeFromState]);
+
   const bluetoothCube = useBluetoothCube({
+    onMove: () => {
+      // Pull live state from the bluetooth tracker and feed multistage.
+      const faces = bluetoothCubeRef.current?.getFaces();
+      if (faces) consumeFacesRef.current(faces);
+    },
     onSolved: () => {
       if (phaseSnapshotRef.current === 'running') {
         // Press-down stops the timer (same code path as space-bar tap).
@@ -156,6 +187,10 @@ export default function TimerPage() {
       }
     },
   });
+  // Self-ref so the onMove callback can reach getFaces() without a stale
+  // closure. We populate it after the hook returns each render.
+  const bluetoothCubeRef = useRef<typeof bluetoothCube | null>(null);
+  useEffect(() => { bluetoothCubeRef.current = bluetoothCube; }, [bluetoothCube]);
 
   // ── Stackmat: when external stop fires, record the solve directly ─
   const stackmatRecordRef = useRef<((ms: number) => void) | null>(null);
@@ -285,8 +320,24 @@ export default function TimerPage() {
         return;
       }
 
-      // Block other shortcuts while the timer is mid-cycle.
+      // Multi-stage marks: 1/2/3 during a running solve.
       const ph = phaseRef.current;
+      if (ph === 'running' && multiStageActive) {
+        if (e.code === 'Digit1' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+          multiStageRef.current?.markStage('cross');
+          return;
+        }
+        if (e.code === 'Digit2' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+          multiStageRef.current?.markStage('f2l');
+          return;
+        }
+        if (e.code === 'Digit3' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+          multiStageRef.current?.markStage('oll');
+          return;
+        }
+      }
+
+      // Block other shortcuts while the timer is mid-cycle.
       if (ph === 'holding' || ph === 'ready' || ph === 'running' || ph === 'inspecting') return;
 
       const cur = solvesRef.current;
@@ -334,7 +385,7 @@ export default function TimerPage() {
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
     };
-  }, [onPressDown, onPressUp, reset, updateSolve, deleteSolve, nextScramble, toggleFullscreen]);
+  }, [onPressDown, onPressUp, reset, updateSolve, deleteSolve, nextScramble, toggleFullscreen, multiStageActive]);
 
   // ── Import / export ────────────────────────────────────────────
   const handleExport = useCallback(() => {
@@ -532,6 +583,19 @@ export default function TimerPage() {
         )}
         {timer.phase === 'ready' && (
           <div className="timer-hint">{isZh ? '准备好了！松开开始' : 'Ready! Release to go'}</div>
+        )}
+        {timer.phase === 'running' && multiStageActive && (
+          <div className="timer-stage-splits">
+            <span className={`stage-chip ${multiStage.liveStages.cross !== undefined ? 'done' : ''}`}>
+              {isZh ? '十字' : 'Cross'}{multiStage.liveStages.cross !== undefined ? ` ${formatMs(multiStage.liveStages.cross)}` : ''}
+            </span>
+            <span className={`stage-chip ${multiStage.liveStages.f2l !== undefined ? 'done' : ''}`}>
+              F2L{multiStage.liveStages.f2l !== undefined ? ` ${formatMs(multiStage.liveStages.f2l)}` : ''}
+            </span>
+            <span className={`stage-chip ${multiStage.liveStages.oll !== undefined ? 'done' : ''}`}>
+              OLL{multiStage.liveStages.oll !== undefined ? ` ${formatMs(multiStage.liveStages.oll)}` : ''}
+            </span>
+          </div>
         )}
         {timer.phase === 'stopped' && solves.length > 0 && (
           <div className="timer-quick-actions">

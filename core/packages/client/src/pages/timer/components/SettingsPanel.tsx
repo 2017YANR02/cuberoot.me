@@ -51,6 +51,16 @@ export default function SettingsPanel({ isZh, onClose }: Props) {
               onChange={(e) => updateSettings({ hideTime: e.target.checked })}
             />
           </Row>
+          <Row label={isZh ? 'CFOP 分阶段计时' : 'CFOP stage splits'}>
+            <input
+              type="checkbox"
+              checked={s.multiStage}
+              onChange={(e) => updateSettings({ multiStage: e.target.checked })}
+            />
+            <span className="hint">{isZh
+              ? '按 1=Cross 完成，2=F2L，3=OLL；蓝牙连接时自动检测'
+              : 'Press 1=Cross, 2=F2L, 3=OLL; auto-detected when bluetooth connected'}</span>
+          </Row>
           <Row label={isZh ? '精度' : 'Precision'}>
             <select
               value={s.precision}
