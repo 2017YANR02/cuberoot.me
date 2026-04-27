@@ -1,26 +1,16 @@
-/**
- * Pyraminx net preview.
- *
- * A pyraminx has 4 triangular faces (U, L, R, B) of 9 small triangles each
- * (4 up-pointing + 5 down-pointing for a side-3 triangle subdivided into
- * 9 = 3² sub-triangles).
- *
- * For a "preview" we don't simulate the full pyraminx. Instead we render
- * the net of a SOLVED pyraminx with each face in WCA-suggested colours
- * (U=yellow, F=green, R=red, L=blue per common convention; we keep our
- * WCA palette but assign Pyraminx-faces to it). This still gives the
- * user a visual stand-in for the puzzle. A future revision can hook this
- * up to a pyraminx state simulator.
- */
+/** Pyraminx net preview — applies scramble to render actual sticker state. */
 
 import type { JSX } from 'react';
+import { applyPyraScramble, type PyraFace, type PyraSticker } from './pyraminx_state.ts';
 
-const PYRAMINX_COLORS = {
-  U: '#FFD500', // yellow on top
-  F: '#009B48', // green front
-  L: '#0046AD', // blue left
-  R: '#B71234', // red right
+const COLORS: Record<PyraFace, string> = {
+  D: '#FFD500', // yellow
+  F: '#009B48', // green
+  L: '#0046AD', // blue
+  R: '#B71234', // red
 };
+
+const STROKE = '#1a1a1a';
 
 interface PyramidNetProps {
   scramble?: string;
@@ -28,71 +18,76 @@ interface PyramidNetProps {
   className?: string;
 }
 
-const STROKE = '#1a1a1a';
-
 export default function PyramidNet(props: PyramidNetProps): JSX.Element {
   const size = props.size ?? 18;
-  // Each face is an equilateral triangle with side N*size where N=3.
   const N = 3;
   const side = size * N;
   const h = side * Math.sqrt(3) / 2;
-
-  // Layout: F triangle in middle. L, R, U triangles flipped against F's
-  // edges to form the standard "petal" net (a bigger triangle with three
-  // little triangles folded in).
-  // Simpler: 4 triangles side by side in a row (A B C D).
   const padding = 4;
   const totalW = padding * 2 + 4 * side + 3 * 6;
   const totalH = padding * 2 + h + 4;
 
-  function triangle(x: number, y: number, color: string, label: string): JSX.Element {
-    // Equilateral triangle pointing up from (x, y+h) base.
-    const subTriangles: JSX.Element[] = [];
-    // Subdivide into N² = 9 sub-triangles. Use barycentric grid.
-    // Up-pointing sub-triangles indexed by (row, col).
+  const state = applyPyraScramble(props.scramble ?? '');
+
+  function triangle(x: number, y: number, stickers: PyraSticker[], label: string): JSX.Element {
+    const subs: JSX.Element[] = [];
     const dx = side / N;
     const dy = h / N;
+    // Walk in our index order: row 0 (1 up-tri), row 1 (up,down,up), row 2 (up,down,up,down,up).
+    let idx = 0;
     for (let row = 0; row < N; row++) {
-      // Row 'row' from the top. Number of up-tris in this row: N - row.
       const rowY = y + row * dy;
       for (let col = 0; col < N - row; col++) {
-        // Up-pointing sub-triangle at position (row, col) in this row.
         const xOffset = (row * dx) / 2 + col * dx;
         const ax = x + xOffset;
         const ay = rowY;
-        // Up-pointing: vertices (ax + dx/2, ay), (ax, ay + dy), (ax + dx, ay + dy).
-        subTriangles.push(
+        // Up-tri
+        subs.push(
           <polygon
             key={`u-${label}-${row}-${col}`}
             points={`${ax + dx / 2},${ay} ${ax},${ay + dy} ${ax + dx},${ay + dy}`}
-            fill={color}
+            fill={COLORS[stickers[idx]]}
             stroke={STROKE}
             strokeWidth={1}
           />,
         );
-        // Down-pointing sub-triangle to its right (only if col < N-row-1).
+        idx++;
         if (col < N - row - 1) {
-          subTriangles.push(
+          // Down-tri to its right
+          subs.push(
             <polygon
               key={`d-${label}-${row}-${col}`}
               points={`${ax + dx},${ay + dy} ${ax + dx / 2},${ay} ${ax + dx * 1.5},${ay}`}
-              fill={color}
+              fill={COLORS[stickers[idx]]}
               stroke={STROKE}
               strokeWidth={1}
             />,
           );
+          idx++;
         }
       }
     }
-    return <g key={label}>{subTriangles}</g>;
+    return <g key={label}>{subs}</g>;
   }
 
-  const faces: Array<[keyof typeof PYRAMINX_COLORS, number]> = [
-    ['L', 0], ['F', 1], ['R', 2], ['U', 3],
+  // Wait — the index order in my model is (per face):
+  //   row0:        [0]
+  //   row1:      [1 2 3]
+  //   row2:    [4 5 6 7 8]
+  // The render walks: row 0 emits up at idx 0; row 1 emits up(1), down(2), up(3); row 2: up(4), down(5), up(6), down(7), up(8).
+  // The render walk above emits up then down (if exists) per (row, col). Let me trace:
+  //   row=0, col=0: up-tri (idx 0). col < N-row-1 = 0-1 < 0 → false, no down.
+  //   row=1, col=0: up-tri (idx 1). col < 1 → 0<1 true: down-tri (idx 2).
+  //   row=1, col=1: up-tri (idx 3). col<1 → 1<1 false, no down.
+  //   row=2, col=0: up (4). col<2 → 0<2 true: down (5).
+  //   row=2, col=1: up (6). col<2 → 1<2 true: down (7).
+  //   row=2, col=2: up (8). col<2 → 2<2 false, no down.
+  // ✓ matches indexing.
+
+  // 4 faces in net: L, F, R, D (in row).
+  const faces: Array<[PyraFace, number]> = [
+    ['L', 0], ['F', 1], ['R', 2], ['D', 3],
   ];
-  // Suppress unused-var: we keep `scramble` in the prop signature for API
-  // parity, even though the simulator is a stub.
-  void props.scramble;
 
   return (
     <svg
@@ -104,10 +99,10 @@ export default function PyramidNet(props: PyramidNetProps): JSX.Element {
       role="img"
       aria-label="pyraminx net preview"
     >
-      {faces.map(([f, idx]) => {
-        const x = padding + idx * (side + 6);
+      {faces.map(([f, col]) => {
+        const x = padding + col * (side + 6);
         const y = padding;
-        return triangle(x, y, PYRAMINX_COLORS[f], f);
+        return triangle(x, y, state[f], f);
       })}
     </svg>
   );
