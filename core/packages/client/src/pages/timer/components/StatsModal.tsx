@@ -128,8 +128,16 @@ export default function StatsModal({ event, solves, isZh, onClose }: Props) {
     const periodsBody = '\n\n' + (isZh ? '时间段：' : 'Time periods:') + '\n' +
       periodRows.map(r => `  ${r.label}: ${fmtBucketRow(r.cur)}`).join('\n');
     return header + '\n' + body + subxBody + periodsBody;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [evName, isZh, summary.count, subX, JSON.stringify(lines), JSON.stringify(periods)]);
+    // `lines` is rebuilt every render but its content is fully determined by
+    // (summary, subX, best, streak, pbDate, fmt.kind, event, isZh). `periodRows`
+    // is determined by `periods` + isZh; `periods` is memoized on `solves`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    evName, isZh, event, fmt.kind,
+    summary, subX, best, streak,
+    pbDate ? pbDate.getTime() : 0,
+    periods,
+  ]);
 
   const onCopy = async () => {
     try {
