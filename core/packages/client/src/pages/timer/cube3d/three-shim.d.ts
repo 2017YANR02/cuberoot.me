@@ -16,6 +16,7 @@ declare module 'three' {
     z: number;
     constructor(x?: number, y?: number, z?: number);
     set(x: number, y: number, z: number): this;
+    setScalar(s: number): this;
     copy(v: Vector3): this;
     clone(): Vector3;
   }
