@@ -66,6 +66,7 @@ pnpm --filter @cuberoot/client lint
 - 不新建文件除非必要，优先编辑已有文件
 - 改完跑 `pnpm --filter @cuberoot/client typecheck`（push 前 `typecheck:ci`）
 - UI 不用 emoji，用 lucide-react 图标
+- 不放页面级"返回"按钮，浏览器自带 back 即可（wizard 步骤间 / 模式切换不算）
 
 ## 专题知识 — 查对应 Skill
 

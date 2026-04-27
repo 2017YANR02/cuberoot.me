@@ -12,11 +12,13 @@ import {
 import type { ReconSolve, ReconComment, EditHistoryItem } from '@cuberoot/shared';
 import { getRecon, listComments, getEditHistory, deleteRecon, addComment, updateComment, deleteComment, getBiliCover, listRecons } from '../../utils/recon_api';
 import {
-  formatTime, flagClass, getEventDisplayName,
+  formatTime, flagClass,
   isBldEvent, getPuzzleId, wcaCompUrl, wcaPersonUrl,
   buildExternalLinks, FACE_COLORS,
 } from '../../utils/recon_utils';
 import { displayCuberName } from '../../utils/name_utils';
+import { eventDisplayName } from '../../utils/wca_events';
+import { EventIcon } from '../../components/EventIcon';
 import { compNameZh, loadFlagData, flagDataVersion } from '../../utils/country_flags';
 import { cleanForPlayer, findTokenPositions, snapToTokenBoundary, extractAlgFromText, syncPlayerToMoveCount } from '../../utils/recon_alg_utils';
 import { useAuthStore } from '../../stores/auth_store';
@@ -92,7 +94,9 @@ export default function ReconDetailPage() {
         <h1 className="detail-title">
           {solve.rawTime != null && formatTime(solve.rawTime)}
           <RecordBadge record={solve.regionalSingleRecord} variant="inline" />
-          {solve.event && ` ${getEventDisplayName(solve.event)}`}
+          {solve.event && (
+            <>{' '}<EventIcon event={solve.event} />{' '}{eventDisplayName(solve.event, isZh)}</>
+          )}
           {solve.personCountry && <>{' '}<span className={flagClass(solve.personCountry)} /></>}
           {' '}{displayCuberName(solve.person || '', isZh)}
         </h1>

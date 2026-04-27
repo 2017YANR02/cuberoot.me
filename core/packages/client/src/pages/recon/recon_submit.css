@@ -109,7 +109,9 @@
   color: #737373;
 }
 
-.recon-page .wca-pp-input:focus {
+/* NOTE: focus 光晕打在外层 panel 上——input 无 border、panel overflow:hidden 会裁掉 input 自己的 box-shadow */
+.recon-page .wca-pp-inline .wca-pp-panel:focus-within {
+  border-color: rgba(217, 119, 87, 0.5);
   box-shadow: 0 0 0 3px rgba(217, 119, 87, 0.15);
 }
 
@@ -118,7 +120,7 @@
 }
 
 .recon-page .wca-pp-results:empty {
-  border-top: none;
+  display: none;
 }
 
 .recon-page .wca-pp-item {
@@ -286,7 +288,6 @@
   align-self: flex-start;
 }
 .submit-solver-pill .submit-solver-name { color: #dbdbdb; }
-.submit-solver-pill .submit-solver-id   { color: #888888; font-size: 12px; }
 .submit-solver-pill .submit-solver-clear {
   background: transparent;
   border: none;
