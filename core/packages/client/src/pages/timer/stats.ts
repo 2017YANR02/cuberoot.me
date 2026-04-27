@@ -132,6 +132,32 @@ export function formatMs(ms: number | null, precision: 2 | 3 = 2): string {
   return `${seconds}.${fracStr}`;
 }
 
+/** Standard deviation of all *valid* (non-DNF) effective times. */
+export function stdDev(solves: Solve[]): number | null {
+  const valid = solves.map(effectiveMs).filter(t => Number.isFinite(t));
+  if (valid.length < 2) return null;
+  const m = valid.reduce((a, b) => a + b, 0) / valid.length;
+  let sq = 0;
+  for (const t of valid) sq += (t - m) * (t - m);
+  return Math.sqrt(sq / valid.length);
+}
+
+/** Coefficient of variation (σ / μ) as a percentage (0..100+). */
+export function coefficientOfVariation(solves: Solve[]): number | null {
+  const valid = solves.map(effectiveMs).filter(t => Number.isFinite(t));
+  if (valid.length < 2) return null;
+  const m = valid.reduce((a, b) => a + b, 0) / valid.length;
+  const sd = stdDev(solves);
+  if (m <= 0 || sd === null) return null;
+  return (sd / m) * 100;
+}
+
+/** Format a percentage with one decimal place, "—" for null. */
+export function formatPct(p: number | null): string {
+  if (p === null) return '—';
+  return p.toFixed(1) + '%';
+}
+
 /** Compute a row of stats. Returns formatted strings ready for display. */
 export interface StatsSummary {
   count: number;
@@ -140,10 +166,16 @@ export interface StatsSummary {
   mean: string;
   ao5: string;
   ao12: string;
+  ao50: string;
   ao100: string;
+  ao1000: string;
   bestAo5: string;
   bestAo12: string;
+  bestAo50: string;
   bestAo100: string;
+  bestAo1000: string;
+  sd: string;
+  cv: string;
 }
 
 export function summarize(solves: Solve[]): StatsSummary {
@@ -154,9 +186,15 @@ export function summarize(solves: Solve[]): StatsSummary {
     mean: formatMs(meanOfAll(solves)),
     ao5: formatMs(averageOfN(solves, 5)),
     ao12: formatMs(averageOfN(solves, 12)),
+    ao50: formatMs(averageOfN(solves, 50)),
     ao100: formatMs(averageOfN(solves, 100)),
+    ao1000: formatMs(averageOfN(solves, 1000)),
     bestAo5: formatMs(bestAverageOfN(solves, 5)),
     bestAo12: formatMs(bestAverageOfN(solves, 12)),
+    bestAo50: formatMs(bestAverageOfN(solves, 50)),
     bestAo100: formatMs(bestAverageOfN(solves, 100)),
+    bestAo1000: formatMs(bestAverageOfN(solves, 1000)),
+    sd: stdDev(solves) === null ? '—' : formatMs(Math.round(stdDev(solves)!)),
+    cv: formatPct(coefficientOfVariation(solves)),
   };
 }
