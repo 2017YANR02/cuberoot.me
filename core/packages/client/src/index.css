@@ -4,6 +4,10 @@
 /* NOTE: 暗色系魔方训练器主题 — Claude 风格暖棕/珊瑚系 */
 
 :root {
+  /* NOTE: 告诉浏览器以暗色渲染 UA 控件（select 下拉、scrollbar、date/time picker 等）。
+     landing 页是 light theme，单独在 .landing-page 上覆写为 light。 */
+  color-scheme: dark;
+
   --bg-primary: #1c1917;
   --bg-secondary: #231f1c;
   --bg-card: #2a2520;
@@ -24,6 +28,34 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+}
+
+/* NOTE: 强制原生 UA 控件按暗色渲染（date/time picker、scrollbar）。
+   <select> 下拉浮层 Chromium 在 Windows 上不一定读 color-scheme，下面
+   单独通过 option 显式着色保证可读性。 */
+select,
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+input[type="month"],
+input[type="week"] {
+  color-scheme: dark;
+}
+
+.landing-page select,
+.landing-page input[type="date"],
+.landing-page input[type="time"],
+.landing-page input[type="datetime-local"],
+.landing-page input[type="month"],
+.landing-page input[type="week"] {
+  color-scheme: light;
+}
+
+/* NOTE: <option> 下拉项的颜色——OS 浮层背景多为白色，强制深色文字保证可读。
+   不依赖 color-scheme（Windows Chromium 对 <select> 下拉不一定生效）。 */
+option {
+  color: #1a1a1a;
+  background-color: #ffffff;
 }
 
 /* NOTE: html 背景同步 body 色，避免 iOS Safari 工具栏区域露出黑边 */

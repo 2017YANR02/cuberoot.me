@@ -8,7 +8,6 @@ import { useTranslation } from 'react-i18next';
 import { useReconStore } from '../../stores/recon_store';
 import type { SortKey } from '../../stores/recon_store';
 import type { ReconSolve } from '@cuberoot/shared';
-import { useAuthStore } from '../../stores/auth_store';
 import {
   flagClass, displaySolverName,
   formatResult, formatAvg, formatAoXR, formatRound,
@@ -17,6 +16,8 @@ import {
 import { compNameZh, loadFlagData, flagDataVersion } from '../../utils/country_flags';
 import LangToggle from '../../components/LangToggle';
 import { RecordBadge } from '../../components/RecordBadge';
+import WcaAuth from '../../components/WcaAuth';
+import { Plus } from 'lucide-react';
 import '../../recon.css';
 
 // ── 列配置——原版顺序 ──
@@ -353,10 +354,10 @@ export default function ReconListPage() {
         <span className="recon-stats-count">
           {t('recon.count', { count: filtered.length })}
         </span>
-        <Link to="/recon/submit" className="recon-add-btn">
-          + {t('recon.add')}
+        <Link to="/recon/submit" className="recon-add-btn" title={t('recon.add')} aria-label={t('recon.add')}>
+          <Plus size={18} />
         </Link>
-        <WcaLoginButton />
+        <WcaAuth />
       </div>
 
       {/* WCA / non-WCA toggle 按钮组 */}
@@ -470,61 +471,3 @@ export default function ReconListPage() {
   );
 }
 
-/** WCA 登录按钮——未登录显示 Login，已登录显示头像+下拉菜单 */
-function WcaLoginButton() {
-  const { t } = useTranslation();
-  const user = useAuthStore(s => s.user);
-  const login = useAuthStore(s => s.login);
-  const logout = useAuthStore(s => s.logout);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  // NOTE: 点击外部关闭下拉菜单
-  useEffect(() => {
-    if (!menuOpen) return;
-    const handleClick = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, [menuOpen]);
-
-  if (!user) {
-    return (
-      <button className="recon-btn recon-login-btn" onClick={login}>
-        🔑 {t('recon.wcaLogin')}
-      </button>
-    );
-  }
-
-  return (
-    <div className="recon-user-menu" ref={menuRef}>
-      <button
-        className="recon-user-trigger"
-        onClick={() => setMenuOpen(!menuOpen)}
-      >
-        {user.avatar ? (
-          <img src={user.avatar} alt="" className="recon-user-avatar" />
-        ) : (
-          <span className="recon-user-avatar-placeholder">
-            {user.name.charAt(0).toUpperCase()}
-          </span>
-        )}
-        <span className="recon-user-name">{user.name}</span>
-      </button>
-      {menuOpen && (
-        <div className="recon-user-dropdown">
-          <div className="recon-user-dropdown-id">{user.wcaId}</div>
-          <button
-            className="recon-user-dropdown-item"
-            onClick={() => { logout(); setMenuOpen(false); }}
-          >
-            {t('recon.logout')}
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}

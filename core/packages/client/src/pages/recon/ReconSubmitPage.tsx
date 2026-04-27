@@ -22,7 +22,7 @@ import { cleanForPlayer, extractAlgFromText, syncPlayerToMoveCount } from '../..
 
 const EVENTS = ['3x3', '2x2', '4x4', '5x5', '6x6', '7x7', '3bld', '4bld', '5bld', 'oh', 'sq1', 'pyra', 'mega', 'clock', 'skewb', 'fmc', 'mbld'];
 const METHODS = ['CFOP', 'Roux', 'ZZ', 'Petrus', 'LBL', 'Mehta', 'ZB', 'Other'];
-const ROUNDS = ['1', '2', '3', 'sf', 'cf', 'f'];
+const ROUNDS = ['1', '2', '3', 'f'];
 
 /**
  * 将任意日期字符串转为 yyyy-MM-dd 格式（<input type="date"> 要求）
@@ -296,8 +296,8 @@ export default function ReconSubmitPage() {
           <label className="submit-field">
             <span className="submit-label">WCA</span>
             <select value={form.official ? '1' : '0'} onChange={e => setField('official', e.target.value === '1')}>
-              <option value="1">✅ WCA</option>
-              <option value="0">❌ {t('recon.badge.nonWca')}</option>
+              <option value="1">WCA</option>
+              <option value="0">{t('recon.badge.nonWca')}</option>
             </select>
           </label>
           <label className="submit-field">
@@ -350,10 +350,8 @@ export default function ReconSubmitPage() {
             <span className="submit-label">{t('recon.round')}</span>
             <select value={form.round} onChange={e => setField('round', e.target.value)}>
               {ROUNDS.map(r => <option key={r} value={r}>{
-                r === 'f' ? t('recon.round.final')
-                  : r === 'sf' ? t('recon.round.semi')
-                  : r === 'cf' ? t('recon.round.combined')
-                  : t('recon.round.numbered', { n: r })
+                r === 'f' ? t('recon.roundOption.final')
+                  : t('recon.roundOption.numbered', { n: r })
               }</option>)}
             </select>
           </label>
@@ -372,8 +370,13 @@ export default function ReconSubmitPage() {
           </label>
           <label className="submit-field">
             <span className="submit-label">{t('recon.country')}</span>
-            <input type="text" value={form.country || ''} onChange={e => setField('country', e.target.value)}
-              placeholder="ISO2 (cn/us)" maxLength={2} />
+            <div className="submit-country-input">
+              <input type="text" value={form.country || ''} onChange={e => setField('country', e.target.value)}
+                placeholder="ISO2 (cn/us)" maxLength={2} />
+              {form.country && form.country.length === 2 && (
+                <Flag iso2={form.country} className="submit-country-flag" />
+              )}
+            </div>
           </label>
           <label className="submit-field">
             <span className="submit-label">{t('recon.group')}</span>
