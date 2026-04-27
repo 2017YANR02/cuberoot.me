@@ -628,13 +628,72 @@
 
 /* --- Mobile (touch + narrow) --- */
 @media (max-width: 540px) {
-  .timer-topbar { padding: 6px 8px; }
-  .timer-topbar .left, .timer-topbar .right { gap: 4px; }
-  .timer-topbar select { max-width: 110px; }
+  .timer-topbar { padding: 4px 6px; flex-wrap: wrap; gap: 4px; }
+  .timer-topbar .left, .timer-topbar .right { gap: 4px; flex-wrap: wrap; }
+  .timer-topbar select { max-width: 110px; padding: 8px 10px; }
+  /* iOS HIG / Material recommend ≥44px tap targets. */
+  .timer-topbar button.tb-btn { min-width: 40px; min-height: 36px; padding: 8px 10px; }
   .scramble-strip { padding: 10px 12px; font-size: 14px; }
   .scramble-strip.compact { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .timer-display { font-size: clamp(48px, 18vw, 120px) !important; }
+  .timer-cube-preview svg { max-height: 14dvh; }
+  .timer-bottom { max-height: 50dvh; }
+
+  /* Modals fill the screen on small phones. */
+  .timer-modal {
+    max-width: 100%;
+    max-height: 92dvh;
+    border-radius: 6px;
+    padding: 14px;
+  }
+  .settings-row { flex-wrap: wrap; }
+  .color-grid { grid-template-columns: repeat(3, 1fr); }
+
+  /* Wider tap target on history rows. */
+  .history-row { padding: 10px 14px; }
 }
+
+/* --- Bluetooth modal --- */
+.bluetooth-modal { max-width: 520px; }
+.bluetooth-modal h3 { margin: 0 0 8px; font-size: 14px; }
+.bluetooth-modal .bt-warn {
+  background: rgba(255, 138, 101, 0.08);
+  border: 1px solid rgba(255, 138, 101, 0.3);
+  border-radius: 6px;
+  padding: 12px 14px;
+}
+.bluetooth-modal .bt-warn-title { color: #ffb74d; }
+.bluetooth-modal .bt-tip {
+  background: rgba(91, 157, 217, 0.06);
+  border: 1px solid rgba(91, 157, 217, 0.2);
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 12px;
+  color: #aaa;
+}
+.bluetooth-modal .bt-status { display: grid; grid-template-columns: 100px 1fr; gap: 8px 12px; align-items: center; }
+.bluetooth-modal .bt-row { display: contents; }
+.bluetooth-modal .bt-label { color: #888; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
+.bluetooth-modal .bt-value { color: #f0ebe3; font-size: 13px; }
+.bluetooth-modal .bt-value.mono { font-family: 'JetBrains Mono', monospace; }
+.bluetooth-modal .bt-value.ok { color: #66bb6a; }
+.bluetooth-modal .bt-value.unsolved { color: #ef5350; }
+.bluetooth-modal .bt-install-btn,
+.bluetooth-modal .bt-connect-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #2a3d4d;
+  border: 1px solid #4d7a99;
+  color: #cde;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  text-decoration: none;
+}
+.bluetooth-modal .bt-install-btn:hover,
+.bluetooth-modal .bt-connect-btn:hover { background: #345169; }
 
 /* --- Practice heatmap row --- */
 .timer-heatmap-row {

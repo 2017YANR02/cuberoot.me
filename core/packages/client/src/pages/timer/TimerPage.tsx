@@ -49,6 +49,7 @@ import HistoryPanel from './components/HistoryPanel';
 import SolveModal from './components/SolveModal';
 import SettingsPanel from './components/SettingsPanel';
 import ShortcutsModal from './components/ShortcutsModal';
+import BluetoothModal from './components/BluetoothModal';
 import HistogramChart from './components/HistogramChart';
 import TrendChart from './components/TrendChart';
 import PracticeHeatmap from './components/PracticeHeatmap';
@@ -241,6 +242,7 @@ export default function TimerPage() {
 
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [bluetoothOpen, setBluetoothOpen] = useState(false);
 
   // ── Fullscreen ──────────────────────────────────────────────────
   const [fullscreen, setFullscreen] = useState(false);
@@ -447,20 +449,10 @@ export default function TimerPage() {
           </button>
           <button
             className={`tb-btn ${bluetoothCube.status.connected ? 'connected' : ''}`}
-            onClick={async () => {
-              if (bluetoothCube.status.connected) {
-                bluetoothCube.disconnect();
-              } else {
-                try {
-                  await bluetoothCube.connect();
-                } catch (err) {
-                  alert((err as Error).message ?? String(err));
-                }
-              }
-            }}
+            onClick={() => setBluetoothOpen(true)}
             title={bluetoothCube.status.connected
-              ? (isZh ? `已连接 ${bluetoothCube.status.deviceName}（点击断开）` : `Connected: ${bluetoothCube.status.deviceName} (click to disconnect)`)
-              : (isZh ? '连接智能魔方' : 'Connect smart cube')}
+              ? (isZh ? `已连接 ${bluetoothCube.status.deviceName}` : `Connected: ${bluetoothCube.status.deviceName}`)
+              : (isZh ? '智能魔方（iOS 用 Bluefy）' : 'Smart cube (use Bluefy on iOS)')}
           >
             <Bluetooth size={14} />
           </button>
@@ -618,6 +610,25 @@ export default function TimerPage() {
 
       {shortcutsOpen && (
         <ShortcutsModal isZh={isZh} onClose={() => setShortcutsOpen(false)} />
+      )}
+
+      {bluetoothOpen && (
+        <BluetoothModal
+          isZh={isZh}
+          cube={bluetoothCube}
+          onClose={() => setBluetoothOpen(false)}
+          onConnect={async () => {
+            try {
+              await bluetoothCube.connect();
+            } catch (err) {
+              const msg = (err as Error).message ?? String(err);
+              if (msg !== 'NO_WEB_BLUETOOTH') {
+                alert(isZh ? `连接失败：${msg}` : `Connection failed: ${msg}`);
+              }
+              // For NO_WEB_BLUETOOTH the modal already shows env advice — silent.
+            }
+          }}
+        />
       )}
     </div>
   );
