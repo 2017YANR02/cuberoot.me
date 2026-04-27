@@ -1,0 +1,32 @@
+# Scramble Extremes — eo / eo_xxxxcross / B / bin 12 (2nd-smallest)
+# Population in this bin: 25
+# Samples listed: 25 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-04-27T02:55:05.485Z
+# Columns: id,scramble,bottom_color
+
+29127,D' R2 D2 R2 B2 D' U' F2 L2 U2 L2 U' B' F' D' U' R' L' ,B
+29138,D' R2 U2 L2 F2 D U F2 L2 U2 L2 U' B' F' D' U' R' L' ,B
+218699,R2 U2 B2 R2 D U R2 L2 F2 L2 D' U' B' R' L' B' F' D' U' F' ,B
+218700,B2 R2 D U2 F2 D' B2 F2 R2 L2 U' F2 U' L2 B' R' L' B' F' D' U' F' ,B
+218714,R2 D' U' F2 L2 D2 U2 B2 R2 L2 B' F' U' B2 R L' U2 F' D2 U2 ,B
+250361,U' F2 L2 D F2 D' L2 D B2 D B2 R2 F2 U2 L2 B' F' R' B2 L2 D U' F' R' L' ,B
+250366,B2 U2 B2 D R2 B2 L2 F2 U' R2 D F2 D' F2 U' F' L D' R B2 R2 U B' F L' ,B
+250422,B2 D' F2 L2 U2 R2 U B2 D2 U' F2 R2 L2 B' D2 L D' F' U' F2 R' B L' ,B
+250424,U B2 L2 D R2 U L2 D R2 U2 L2 U' R2 F' L D' R B2 R2 U B' F L' ,B
+250433,B2 L2 D L2 U2 R2 F2 L2 B2 L2 U' L2 D' L2 U B' F' R' B2 L2 D U' F' R' L' ,B
+250438,U2 F2 R2 B2 D' L2 U' F2 U B2 U' B2 L2 B' F' R' B2 L2 D U' F' R' L' ,B
+250443,B2 F2 U' B2 R2 L2 D L2 D2 F2 U F2 L' B' D' F' R U L B' U ,B
+250455,U2 B2 U' F2 D' R2 F2 U' F2 U' R2 F' R D L B' U' F' R' ,B
+250470,L2 D B2 U B2 U' R2 F2 U' R2 D' L2 F2 U2 F' R' U' L' B D F R' U' ,B
+250474,F2 D' R2 U B2 U B2 U2 F2 D' B2 U R2 U B' L' U' R' F' D B' D2 U2 R' U2 ,B
+462830,U' R2 U2 L2 B2 D F2 U' L2 U R2 B2 U' L2 F' L' U R' F2 L2 U B' F L' ,B
+865876,B2 F2 L2 B2 F2 D' B2 F2 R2 L2 U' L2 D' U R' L' B' F' R' L' ,B
+865877,F2 R2 L2 D B2 F2 R2 L2 U F2 R2 L2 D U R' L' B' F' R' L' ,B
+896911,R2 L2 D2 U F2 D R2 D' F2 U' R2 U B2 F' U2 R' F2 U B D R F L' ,B
+896916,F2 D F2 D' B2 U F2 D' L2 D' U2 R2 L2 B' D2 R' B2 D F U R B L' ,B
+896934,U' R2 L2 D' U L2 B2 L2 U B2 U' R2 U' R' B2 F U B' L' D' R' F' U' ,B
+896972,U' B2 U' L2 F2 D2 B2 D' F2 R2 F2 L2 U R2 U2 F' U R' B' D L2 U L F' R' ,B
+897001,L2 U' L2 U2 B2 F2 R2 U R2 U R2 F2 U B2 U2 F' L B U B2 R2 D R' D F' L' ,B
+918268,U2 F2 U' R2 F2 U R2 D2 R2 F2 D' R2 U' F' L U R B' D' F' L' U' ,B
+1232767,B2 F2 D U F2 D U2 B2 F2 R2 L2 U' F2 R' L' B' F' R' L' ,B

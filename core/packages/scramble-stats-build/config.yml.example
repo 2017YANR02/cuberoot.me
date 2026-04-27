@@ -1,3 +1,16 @@
-# 指向本地 5 个 CSV 所在目录
-# CSV 文件名必须是: std.csv / eo.csv / pair.csv / pseudo.csv / pseudo_pair.csv
-csv_dir: D:/cube/scramble/wca_scramble/stat
+# 多 set 配置:每项一个数据来源,UI 上 dropdown 切换
+# 每个 set 的 CSV 目录里必须有 5 个文件:std.csv / eo.csv / pair.csv / pseudo.csv / pseudo_pair.csv
+sets:
+  - key: wca
+    label: WCA
+    label_zh: WCA
+    csv_dir: D:/cube/scramble/wca_scramble/stat
+    scrambles_txt: D:/cube/scramble/wca_scramble/wca_scrambles_no_wide_move.txt
+  - key: xcross_2_col_10f
+    label: 10-step XCross dual-color states
+    label_zh: 双色底 XCross 10步状态
+    csv_dir: D:/cube/state/xcross_2_col_10f/stat
+    scrambles_txt: D:/cube/state/xcross_2_col_10f/scrambles.txt
+
+# 老格式(单 set,等价于 sets: [{key: wca, ...}])仍兼容:
+# csv_dir: D:/cube/scramble/wca_scramble/stat

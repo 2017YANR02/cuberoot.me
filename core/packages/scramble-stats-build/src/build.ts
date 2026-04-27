@@ -31,7 +31,7 @@ const VARIANTS: VariantSpec[] = [
     key: 'std',
     file: 'std.csv',
     id_col: 'id',
-    stages: ['cross', 'xcross', 'xxcross', 'xxxcross', 'f2l'],
+    stages: ['cross', 'xcross', 'xxcross', 'xxxcross', 'xxxxcross'],
     angleToColor: ANGLE_COLOR_STD,
     colFor: (stage, angle) => `${stage}_${angle}`,
   },
@@ -342,6 +342,52 @@ function binRankLabel(bins: number[], idx: number): string {
   return `#${idx}`;
 }
 
+// NOTE: 配置支持两种格式:
+//   旧格式 (单 set): { csv_dir, scrambles_txt? } —— 视为 sets 数组里的单一 'wca' 项
+//   新格式 (多 set): { sets: [{ key, label, label_zh?, csv_dir, scrambles_txt }, ...] }
+interface SetSpec {
+  key: string;
+  label: string;
+  label_zh?: string;
+  csv_dir: string;
+  scrambles_txt: string;
+}
+
+interface RawConfig {
+  csv_dir?: string;
+  scrambles_txt?: string;
+  sets?: Array<{
+    key: string;
+    label: string;
+    label_zh?: string;
+    csv_dir: string;
+    scrambles_txt?: string;
+  }>;
+}
+
+function resolveSets(config: RawConfig): SetSpec[] {
+  if (config.sets && config.sets.length > 0) {
+    return config.sets.map((s) => ({
+      key: s.key,
+      label: s.label,
+      label_zh: s.label_zh,
+      csv_dir: s.csv_dir,
+      scrambles_txt: s.scrambles_txt
+        ?? path.join(path.dirname(s.csv_dir), 'wca_scrambles_no_wide_move.txt'),
+    }));
+  }
+  if (!config.csv_dir) {
+    throw new Error('config.yml must define either `sets:` or `csv_dir:`');
+  }
+  return [{
+    key: 'wca',
+    label: 'WCA',
+    csv_dir: config.csv_dir,
+    scrambles_txt: config.scrambles_txt
+      ?? path.join(path.dirname(config.csv_dir), 'wca_scrambles_no_wide_move.txt'),
+  }];
+}
+
 async function main() {
   const here = path.dirname(fileURLToPath(import.meta.url));
   const pkgRoot = path.resolve(here, '..');
@@ -352,16 +398,9 @@ async function main() {
     console.error(`config.yml not found at ${configPath}. Copy config.yml.example and edit.`);
     process.exit(1);
   }
-  const config = YAML.parse(fs.readFileSync(configPath, 'utf-8')) as { csv_dir: string; scrambles_txt?: string };
-  const csvDir = config.csv_dir;
-  // NOTE: 默认从 csv_dir 父目录找 wca_scrambles_no_wide_move.txt；也可在 config.yml 里显式覆盖
-  const scramblesTxt = config.scrambles_txt ?? path.join(path.dirname(csvDir), 'wca_scrambles_no_wide_move.txt');
-  if (!fs.existsSync(scramblesTxt)) {
-    throw new Error(`Missing scrambles txt: ${scramblesTxt}`);
-  }
-  console.log(`Loading scramble map from ${scramblesTxt}`);
-  const scrambleMap = await loadScrambleMap(scramblesTxt);
-  console.log(`  loaded ${scrambleMap.size} scrambles`);
+  const config = YAML.parse(fs.readFileSync(configPath, 'utf-8')) as RawConfig;
+  const sets = resolveSets(config);
+  console.log(`Configured ${sets.length} set(s): ${sets.map((s) => s.key).join(', ')}`);
 
   const outDir = path.join(repoRoot, 'stats', 'data', 'scramble');
   fs.mkdirSync(outDir, { recursive: true });
@@ -370,59 +409,78 @@ async function main() {
   if (fs.existsSync(downloadsDir)) fs.rmSync(downloadsDir, { recursive: true, force: true });
   fs.mkdirSync(downloadsDir, { recursive: true });
 
-  const variantsOut: Record<string, unknown> = {};
-  const examplesOut: Record<string, unknown> = {};
   const generatedAt = new Date().toISOString();
-  let maxCount = 0;
+  const setsOut: Record<string, unknown> = {};
+  const examplesSetsOut: Record<string, unknown> = {};
   let txtFilesWritten = 0;
   let txtTotalBytes = 0;
-  for (const spec of VARIANTS) {
-    const csvPath = path.join(csvDir, spec.file);
-    if (!fs.existsSync(csvPath)) {
-      throw new Error(`Missing CSV: ${csvPath}`);
-    }
-    console.log(`Aggregating ${spec.key} from ${csvPath}`);
-    const { sampleCount, json, previewExamples, pickedReservoirs } = await aggregateVariant(spec, csvPath, scrambleMap);
-    variantsOut[spec.key] = json;
-    examplesOut[spec.key] = previewExamples;
-    if (sampleCount > maxCount) maxCount = sampleCount;
 
-    // 写每 bin 一个 txt
-    for (const stage of Object.keys(pickedReservoirs)) {
-      for (const subsetKey of Object.keys(pickedReservoirs[stage])) {
-        const binMap = pickedReservoirs[stage][subsetKey];
-        const binsSorted = Object.keys(binMap).map(Number).sort((a, b) => a - b);
-        binsSorted.forEach((bin, idx) => {
-          const rank = binRankLabel(binsSorted, idx);
-          const txt = buildBinTxt(spec.key, stage, subsetKey, bin, rank, binMap[String(bin)], generatedAt);
-          const filePath = path.join(downloadsDir, spec.key, stage, `${subsetKey}_${bin}.txt`);
-          fs.mkdirSync(path.dirname(filePath), { recursive: true });
-          fs.writeFileSync(filePath, txt);
-          txtFilesWritten++;
-          txtTotalBytes += txt.length;
-        });
+  for (const setSpec of sets) {
+    console.log(`\n=== Set: ${setSpec.key} (${setSpec.label}) ===`);
+    if (!fs.existsSync(setSpec.scrambles_txt)) {
+      throw new Error(`Missing scrambles txt for set '${setSpec.key}': ${setSpec.scrambles_txt}`);
+    }
+    console.log(`Loading scramble map from ${setSpec.scrambles_txt}`);
+    const scrambleMap = await loadScrambleMap(setSpec.scrambles_txt);
+    console.log(`  loaded ${scrambleMap.size} scrambles`);
+
+    const variantsOut: Record<string, unknown> = {};
+    const examplesOut: Record<string, unknown> = {};
+    let maxCount = 0;
+    for (const spec of VARIANTS) {
+      const csvPath = path.join(setSpec.csv_dir, spec.file);
+      if (!fs.existsSync(csvPath)) {
+        throw new Error(`Missing CSV: ${csvPath}`);
+      }
+      console.log(`Aggregating ${spec.key} from ${csvPath}`);
+      const { sampleCount, json, previewExamples, pickedReservoirs } = await aggregateVariant(spec, csvPath, scrambleMap);
+      variantsOut[spec.key] = json;
+      examplesOut[spec.key] = previewExamples;
+      if (sampleCount > maxCount) maxCount = sampleCount;
+
+      // 写每 bin 一个 txt;路径含 setKey 隔离不同 set
+      for (const stage of Object.keys(pickedReservoirs)) {
+        for (const subsetKey of Object.keys(pickedReservoirs[stage])) {
+          const binMap = pickedReservoirs[stage][subsetKey];
+          const binsSorted = Object.keys(binMap).map(Number).sort((a, b) => a - b);
+          binsSorted.forEach((bin, idx) => {
+            const rank = binRankLabel(binsSorted, idx);
+            const txt = buildBinTxt(spec.key, stage, subsetKey, bin, rank, binMap[String(bin)], generatedAt);
+            const filePath = path.join(downloadsDir, setSpec.key, spec.key, stage, `${subsetKey}_${bin}.txt`);
+            fs.mkdirSync(path.dirname(filePath), { recursive: true });
+            fs.writeFileSync(filePath, txt);
+            txtFilesWritten++;
+            txtTotalBytes += txt.length;
+          });
+        }
       }
     }
+
+    setsOut[setSpec.key] = {
+      label: setSpec.label,
+      label_zh: setSpec.label_zh ?? null,
+      sample_count: maxCount,
+      variants: variantsOut,
+    };
+    examplesSetsOut[setSpec.key] = { variants: examplesOut };
   }
 
   const out = {
     meta: {
-      sample_count: maxCount,
-      source: 'wca_scrambles_no_wide_move',
       generated_at: generatedAt,
       subset_keys: SUBSET_KEYS,
     },
-    variants: variantsOut,
+    sets: setsOut,
   };
   const examplesFile = {
     meta: { generated_at: generatedAt },
-    variants: examplesOut,
+    sets: examplesSetsOut,
   };
 
   const outPath = path.join(outDir, 'distribution.json');
   fs.writeFileSync(outPath, JSON.stringify(out));
   const sizeKB = (fs.statSync(outPath).size / 1024).toFixed(1);
-  console.log(`Wrote ${outPath} (${sizeKB} KB)`);
+  console.log(`\nWrote ${outPath} (${sizeKB} KB)`);
 
   const exPath = path.join(outDir, 'examples.json');
   fs.writeFileSync(exPath, JSON.stringify(examplesFile));

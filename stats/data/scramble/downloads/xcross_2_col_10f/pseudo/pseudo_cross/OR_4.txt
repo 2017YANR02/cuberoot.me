@@ -1,0 +1,20 @@
+# Scramble Extremes — pseudo / pseudo_cross / OR / bin 4 (3rd-smallest)
+# Population in this bin: 13
+# Samples listed: 13 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-04-27T02:55:05.485Z
+# Columns: id,scramble,bottom_color
+
+1158,U L2 B2 R2 L2 U' B2 U' R2 U F2 L2 U2 B' F' R' B2 L2 D U' F' R' L' ,O
+1159,D' B2 L2 U' R2 F2 U R2 D' L2 F2 D' R2 U B' F' R' B2 L2 D U' F' R' L' ,O
+1160,D R2 U' F2 L2 U F2 U' B2 D' R2 D2 L2 B2 U' B' F' R' B2 L2 D U' F' R' L' ,O
+1161,F2 D' R2 F2 D B2 D B2 L2 U L2 F2 D' U' B' F' R' B2 L2 D U' F' R' L' ,O
+1162,L2 U L2 B2 D2 B2 L2 D2 L2 D' F2 R2 B' F' R' B2 L2 D U' F' R' L' ,O
+1163,B2 L2 U R2 D R2 L2 D' L2 U' B2 D2 F2 U2 B' F' R' B2 L2 D U' F' R' L' ,O
+1247,R2 D B2 L2 U' B2 U' F2 D' L2 U2 R2 B2 U' R' L' F' D2 F2 R L' U' ,O
+1267,L2 B2 R2 F2 U2 F2 D U' F2 U2 L2 R' L' D' L2 B F' U2 L' D2 U2 ,R
+1268,F2 D' B2 L2 U2 B2 F2 D' R2 D' R2 U B2 L2 F' U2 L' F R D' B L' F' L' D2 ,R
+4755,U' B2 L2 D F2 D L2 D' B2 D R2 F2 U B' F' R' B2 L2 D U' F' R' L' ,O
+4756,D' F2 U' L2 D' B2 R2 L2 D' U2 F2 R2 U2 B' F' R' B2 L2 D U' F' R' L' ,O
+6078,U2 F2 D' L2 D B2 U L2 D' B2 L2 U2 F2 R' B L2 U' L' F R L' B D' ,R
+6079,U' F2 D' L2 D B2 U L2 D' B2 L2 U2 F2 R' B L2 U' L' F R L' B ,R

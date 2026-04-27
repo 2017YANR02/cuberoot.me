@@ -1,0 +1,13 @@
+# Scramble Extremes — pseudo / pseudo_xcross / BGORWY / bin 0 (min)
+# Population in this bin: 6
+# Samples listed: 6 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-04-27T02:55:05.485Z
+# Columns: id,scramble,bottom_color
+
+1365955001,R D' F R F' L2 F2 R2 D' F B2 U' L2 F2 U2 F2 U B2 L2 D2,O
+1659466001,R2 U F2 L2 R2 D' B2 D F2 L2 R2 B R U' B2 U B R2,O
+1776277001,R U' B2 R2 D2 B D2 R2 U L' U' R2 F' D B' D2 R,R
+2893993001,B2 L' B' D' R2 U F2 U' F2 R2 U L B2 U' L R2 F2 L,R
+4852248001,U F2 L' U2 L2 R2 B2 L' F' D L2 D F L D B2 L,R
+5033358001,D B L' U B2 D' U' R2 U' R2 B2 R B2 R' D B' L U',Y

@@ -1,8 +1,0 @@
-# Scramble Extremes — eo / eo_xcross / Y / bin 2 (min)
-# Population in this bin: 1
-# Samples listed: 1 (all entries in this bin)
-# Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-04-27T02:18:06.033Z
-# Columns: id,scramble,bottom_color
-
-1176032001,R2 U' B2 D R2 U L2 U' L D' L' R B2 L R2 U',Y

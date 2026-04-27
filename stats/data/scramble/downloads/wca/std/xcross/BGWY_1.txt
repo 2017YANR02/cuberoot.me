@@ -1,0 +1,13 @@
+# Scramble Extremes — std / xcross / BGWY / bin 1 (min)
+# Population in this bin: 6
+# Samples listed: 6 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-04-27T02:55:05.485Z
+# Columns: id,scramble,bottom_color
+
+205892001,F2 D B2 R2 U' F2 L2 U' R' D2 B' F' L2 F' R' D2 U2 R B' L B2,Y
+238917001,F2 U B2 D' F2 D' L2 D2 R2 F D F L' R2 B L' B,G
+2584817001,L2 D2 R' U2 L' U R' U2 L F' U' F D2,Y
+3142148001,U R2 D' F2 U' F2 D' L' B2 D2 F D F' L' U2 L' F2 L',G
+3172485001,R U L' D L' D L2 B' R2 U L2 F D2 F2 D2 F' D2 L2,G
+4230218001,U2 B' D2 R2 D2 R2 B U2 F L F U' R2 D R2 F U L F',W

@@ -1,0 +1,18 @@
+# Scramble Extremes — std / xxcross / WY / bin 11 (max)
+# Population in this bin: 11
+# Samples listed: 11 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-04-27T02:55:05.485Z
+# Columns: id,scramble,bottom_color
+
+701330011,L2 B' D' B2 L F' U R2 F2 R' D' F2 D2 B' R2 U2 L2 F2 L2 B2,W
+923338025,L2 U F2 U' B2 D L2 R2 F2 U' R B' L U' B2 R2 U F L U' F2 L2 U',W
+948970001,D2 R F B2 L U B' R F2 U F L2 F' L2 F' U2 F L2 U2 D2,W
+1352268001,D2 B2 L U2 L2 U2 R' D2 R' B2 R2 B' L' F D L' U' R B' U',W
+2144563001,U' L F2 B' U' F' D R' U B' U2 D2 B L2 D2 F' L2 F2 U2 L2,W
+3758647001,R' U' F R' B D L' D' R2 U2 R2 B2 D2 U B L U2 L2 F' R D2 B R' U' F,W
+3944784001,B2 R F2 L B2 R' F2 U2 R B2 F' D B L D R D F U' F,W
+4335284001,U L' D' B R' U2 L U R2 U2 R2 B2 D' R2 B2 D' B U L F',W
+4816327001,R2 F2 U2 R2 B D R F' R2 F' B L2 B' D2 R2 L D R F2,W
+4924507001,R F' B2 D' B2 L' U' B' R' B2 R' D2 L2 D2 F2 R2 D B2 L',W
+5121416001,R2 L2 F U2 L' U B R' D' L F L2 F' U2 D2 R2 U2 F B,W

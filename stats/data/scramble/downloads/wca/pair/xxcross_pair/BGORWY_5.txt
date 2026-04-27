@@ -1,0 +1,17 @@
+# Scramble Extremes — pair / xxcross_pair / BGORWY / bin 5 (2nd-smallest)
+# Population in this bin: 10
+# Samples listed: 10 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-04-27T02:55:05.485Z
+# Columns: id,scramble,bottom_color
+
+26001,U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2,R
+39017001,D B2 R' U R' F U2 L' F' R2 B2 D2 B2 D F2 D' R2 L2 U,W
+52675001,B' R2 U' R D' R2 U D2 B U B2 D' F2 B2 D2 B2 D L2,O
+79422001,U' L2 U' F2 D' F2 U R2 D U2 R' B2 L F R2 U' F U2 L2,W
+166748001,L' D' F2 D2 R' L2 D' R F' R2 U2 F' R2 F' L2 U2 F U2 B',Y
+248902001,R' B' R2 B2 L2 F D' F D L' F2 L F2 B2 R B2 R,Y
+249035001,R' L U2 R' F L2 F L' B2 D2 R L2 U F2 D F2 U',R
+260889001,F' U2 B U2 F D2 U2 F U2 F D2 L' R' F' D' U2 L2 R2 U' R2,B
+272516001,L2 D2 F' B2 D2 L2 B D2 R' U2 R B2 U2 L D2 F2 L',W
+345892001,U2 D F2 D2 B R F' U D' L B2 U D L2 D B2 D B2 U',B
