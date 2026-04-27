@@ -21,6 +21,8 @@ export default function StatsPanel({ solves, isZh, event }: Props) {
   const primaryNow = formatPrimary(solves, fmt);
   const primaryBest = formatBestPrimary(solves, fmt);
   const pLabel = primaryLabel(fmt.kind, isZh);
+  const liveBpaWpa5 = s.bpa5 !== '-' || s.wpa5 !== '-';
+  const liveBpaWpa12 = s.bpa12 !== '-' || s.wpa12 !== '-';
   const rows: { lbl: string; val: string }[] = [
     { lbl: isZh ? '总数' : 'Count',     val: s.count.toString() },
     { lbl: isZh ? '最佳' : 'Best',      val: s.best },
@@ -29,7 +31,9 @@ export default function StatsPanel({ solves, isZh, event }: Props) {
     { lbl: 'σ',                         val: s.sd },
     { lbl: 'CV',                        val: s.cv },
     { lbl: 'Ao5',                       val: s.ao5 },
+    ...(liveBpaWpa5 ? [{ lbl: 'BPA/WPA(5)', val: `${s.bpa5} / ${s.wpa5}` }] : []),
     { lbl: 'Ao12',                      val: s.ao12 },
+    ...(liveBpaWpa12 ? [{ lbl: 'BPA/WPA(12)', val: `${s.bpa12} / ${s.wpa12}` }] : []),
     { lbl: 'Mo3',                       val: s.mo3 },
     { lbl: 'Bo3',                       val: s.bo3 },
     { lbl: 'Ao50',                      val: s.ao50 },
