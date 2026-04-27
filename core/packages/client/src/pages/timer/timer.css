@@ -699,6 +699,40 @@
 }
 .settings-row-control .hint-btn:disabled:hover { background: transparent; color: #aaa; }
 
+/* PB celebration toast */
+.pb-toast {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, #2a3d4d 0%, #345169 100%);
+  border: 1px solid #4d7a99;
+  border-radius: 6px;
+  color: #cde;
+  font-size: 14px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+  animation: pb-toast-in 220ms ease-out;
+}
+.pb-toast-icon { color: #ffd66b; flex-shrink: 0; }
+.pb-toast-title { font-weight: 600; color: #fff; }
+.pb-toast-value { font-variant-numeric: tabular-nums; color: #ffd66b; }
+@keyframes pb-toast-in {
+  from { opacity: 0; transform: translateX(40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+:root[data-timer-theme="light"] .pb-toast {
+  background: linear-gradient(135deg, #4f7baa 0%, #6a98c5 100%);
+  border-color: #3d5d80;
+  color: #fff;
+}
+:root[data-timer-theme="light"] .pb-toast-icon { color: #fff3a0; }
+:root[data-timer-theme="light"] .pb-toast-value { color: #fff3a0; }
+
 /* csTimer per-session import list */
 .cstimer-import-list {
   display: flex;

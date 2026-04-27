@@ -548,6 +548,16 @@ export default function SettingsPanel({ isZh, onClose }: Props) {
               onChange={(e) => updateSettings({ hideAllUiWhileRunning: e.target.checked })}
             />
           </Row>
+          <Row label={isZh ? 'PB 庆祝弹窗' : 'PB celebration toast'}>
+            <input
+              type="checkbox"
+              checked={s.pbToast}
+              onChange={(e) => updateSettings({ pbToast: e.target.checked })}
+            />
+            <span className="hint">{isZh
+              ? '刷新单次/Ao5/Ao12 最佳时显示 3 秒'
+              : 'shows for 3s when single/ao5/ao12 PB is broken'}</span>
+          </Row>
         </div>
 
         <div className="modal-section">

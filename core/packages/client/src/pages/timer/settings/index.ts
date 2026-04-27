@@ -104,6 +104,9 @@ export interface TimerSettings {
    *   'up'   — only on key release; matches stackmat habit
    */
   inspectionTrigger: 'down' | 'up';
+
+  /** Show a celebratory toast when a solve sets a new PB (single / ao5 / ao12). */
+  pbToast: boolean;
 }
 
 export const DEFAULTS: TimerSettings = {
@@ -134,6 +137,7 @@ export const DEFAULTS: TimerSettings = {
   autoBackupEvery: 10,
   bluetoothAutoReady: 'off',
   inspectionTrigger: 'down',
+  pbToast: true,
 };
 
 let _cache: TimerSettings = load();
