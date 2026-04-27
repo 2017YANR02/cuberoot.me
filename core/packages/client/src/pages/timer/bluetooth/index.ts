@@ -37,7 +37,7 @@ import type { BluetoothCubeStatus } from './types';
 
 export type { BluetoothCubeStatus, CubeBrand } from './types';
 export type { CubeDriver, CubeDriverStartResult } from './driver';
-export { detectBluetoothEnv, envAdvice } from './env';
+export { detectBluetoothEnv, envAdvice, isBluefy } from './env';
 export type { BluetoothEnv, EnvAdvice } from './env';
 
 /* ------------------------------------------------------------------ */

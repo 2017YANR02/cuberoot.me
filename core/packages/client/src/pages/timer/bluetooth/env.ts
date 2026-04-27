@@ -12,18 +12,25 @@
  */
 
 export type BluetoothEnv =
-  | 'available'           // navigator.bluetooth works — go ahead
+  | 'available'           // navigator.bluetooth works (generic Chromium / Android)
+  | 'available-bluefy'    // navigator.bluetooth works AND we're in Bluefy on iOS
   | 'ios-no-bluefy'       // iOS device, Safari / iOS Chrome — recommend Bluefy
   | 'safari-mac'          // macOS Safari — no Web Bluetooth at all
   | 'firefox'             // Firefox — needs a flag, not on by default
   | 'no-bluetooth-hw'     // device has no BLE adapter (rare to detect cleanly)
   | 'unknown';            // catch-all
 
+/** True when the current page is hosted inside the Bluefy iOS browser. */
+export function isBluefy(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  return /Bluefy/i.test(navigator.userAgent ?? '');
+}
+
 const BLUEFY_APP_URL = 'https://apps.apple.com/app/bluefy/id1492822055';
 
 export function detectBluetoothEnv(): BluetoothEnv {
   if (typeof navigator === 'undefined') return 'unknown';
-  if (navigator.bluetooth) return 'available';
+  if (navigator.bluetooth) return isBluefy() ? 'available-bluefy' : 'available';
 
   const ua = navigator.userAgent ?? '';
   const isIOS = /iPad|iPhone|iPod/.test(ua) ||
@@ -52,6 +59,7 @@ export interface EnvAdvice {
 export function envAdvice(env: BluetoothEnv): EnvAdvice | null {
   switch (env) {
     case 'available':
+    case 'available-bluefy':
       return null;
     case 'ios-no-bluefy':
       return {
