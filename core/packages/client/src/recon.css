@@ -14,7 +14,7 @@
 .recon-page h1 {
   font-size: 1.4rem;
   margin-bottom: 0.5rem;
-  color: #f0ebe3;
+  color: #e5e5e5;
 }
 
 /* NOTE: 标题区行布局 — h1+副标题靠左，LangToggle 靠右（行业标准：header 内联） */
@@ -48,9 +48,9 @@
   min-width: 200px;
   padding: 8px 14px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 235, 220, 0.12);
-  background: rgba(255, 235, 220, 0.05);
-  color: #f0ebe3;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: #e5e5e5;
   font-size: 0.9rem;
   font-family: 'Inter', Arial, sans-serif;
   outline: none;
@@ -63,7 +63,7 @@
 }
 
 .recon-search::placeholder {
-  color: #6e6050;
+  color: #5a5a5a;
 }
 
 .recon-filters {
@@ -75,9 +75,9 @@
 .recon-filters select {
   padding: 7px 12px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 235, 220, 0.12);
-  background: rgba(255, 235, 220, 0.05);
-  color: #d8c8b8;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: #c0c0c0;
   font-size: 0.85rem;
   font-family: 'Inter', Arial, sans-serif;
   cursor: pointer;
@@ -90,27 +90,29 @@
 }
 
 .recon-filters select option {
-  background: #332e28;
-  color: #d8c8b8;
+  background: #2a2a2a;
+  color: #c0c0c0;
 }
 
 .recon-stats-count {
   font-size: 0.8rem;
-  color: #6e6050;
+  color: #5a5a5a;
   white-space: nowrap;
 }
 
-/* NOTE: 添加按钮 */
+/* NOTE: 添加复盘按钮——纯图标圆形 */
 .recon-add-btn {
-  padding: 7px 16px;
-  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
   border: 1px solid rgba(217, 119, 87, 0.4);
   background: rgba(217, 119, 87, 0.15);
   color: #e8a27a;
-  font-size: 0.85rem;
   cursor: pointer;
   transition: all 0.2s;
-  white-space: nowrap;
   text-decoration: none;
 }
 
@@ -124,7 +126,7 @@
   overflow-x: auto;
   margin-bottom: 1rem;
   border-radius: 10px;
-  border: 1px solid rgba(255, 235, 220, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .recon-table {
@@ -139,10 +141,10 @@
   z-index: 2;
   background: rgba(22, 22, 22, 0.98);
   backdrop-filter: blur(8px);
-  color: #9c8c7e;
+  color: #8a8a8a;
   font-weight: 600;
   padding: 10px 6px;
-  border-bottom: 2px solid rgba(255, 235, 220, 0.08);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.08);
   text-align: left;
   white-space: nowrap;
   cursor: pointer;
@@ -151,7 +153,7 @@
 }
 
 .recon-table thead th:hover {
-  color: #b09880;
+  color: #a3a3a3;
 }
 
 /* NOTE: 排序指示器 */
@@ -165,12 +167,12 @@
 }
 
 .recon-table tbody tr:hover {
-  background: rgba(255, 235, 220, 0.07);
+  background: rgba(255, 255, 255, 0.07);
 }
 
 .recon-table tbody td {
   padding: 8px 6px;
-  border-bottom: 1px solid rgba(255, 235, 220, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   white-space: nowrap;
   vertical-align: middle;
 }
@@ -178,14 +180,14 @@
 /* --- 列样式 --- */
 .col-idx {
   font-size: 0.6rem;
-  color: #6e6050;
+  color: #5a5a5a;
   padding: 6px 4px;
 }
 
 .col-single {
   font-family: 'Roboto Mono', monospace;
   font-size: 0.85rem;
-  color: #f0ebe3;
+  color: #e5e5e5;
 }
 
 .col-avg, .col-dsingle { font-weight: 600; }
@@ -205,7 +207,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #a09080;
+  color: #909090;
   font-size: 0.8rem;
 }
 
@@ -232,9 +234,9 @@
   padding: 5px 14px;
   font-size: 0.82rem;
   font-family: 'Inter', Arial, sans-serif;
-  border: 1px solid rgba(255, 235, 220, 0.12);
-  background: rgba(255, 235, 220, 0.04);
-  color: #6e6050;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: #5a5a5a;
   cursor: pointer;
   transition: all 0.15s ease;
   outline: none;
@@ -260,8 +262,8 @@
 }
 
 .toggle-btn:hover {
-  background: rgba(255, 235, 220, 0.08);
-  color: #d8c8b8;
+  background: rgba(255, 255, 255, 0.08);
+  color: #c0c0c0;
 }
 
 .toggle-btn.active:hover {
@@ -271,7 +273,7 @@
 
 /* --- 副标题 --- */
 .recon-subtitle {
-  color: #6e6050;
+  color: #5a5a5a;
   font-size: 0.9rem;
   margin-bottom: 0.8rem;
 }
@@ -299,8 +301,8 @@ td[data-tip-show]:hover::after {
   bottom: 100%;
   z-index: 100;
   padding: 4px 8px;
-  background: #201c18;
-  color: #f0ebe3;
+  background: #1a1a1a;
+  color: #e5e5e5;
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 4px;
   font-size: 0.78rem;
@@ -326,34 +328,38 @@ td[data-tip-show]:hover::after {
 .recon-btn {
   padding: 8px 24px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 235, 220, 0.12);
-  background: rgba(255, 235, 220, 0.06);
-  color: #d8c8b8;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: #c0c0c0;
   font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .recon-btn:hover {
-  background: rgba(255, 235, 220, 0.12);
+  background: rgba(255, 255, 255, 0.12);
   color: #fff;
   border-color: rgba(217, 119, 87, 0.4);
 }
 
 .recon-showing {
   font-size: 0.8rem;
-  color: #6e6050;
+  color: #5a5a5a;
 }
 
 /* --- 加载 / 错误 --- */
 .recon-loading {
   text-align: center;
   padding: 40px 0;
-  color: #8a7a6a;
+  color: #737373;
   font-size: 0.95rem;
 }
 
 .recon-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   text-align: center;
   padding: 20px;
   color: #f87171;
@@ -390,7 +396,7 @@ td[data-tip-show]:hover::after {
 .recon-empty {
   text-align: center;
   padding: 60px 20px;
-  color: #6e6050;
+  color: #5a5a5a;
 }
 
 .recon-empty-icon {
@@ -398,115 +404,17 @@ td[data-tip-show]:hover::after {
   margin-bottom: 12px;
 }
 
-/* --- WCA 登录按钮 --- */
-.recon-login-btn {
-  background: rgba(217, 119, 87, 0.15) !important;
-  border-color: rgba(217, 119, 87, 0.4) !important;
-  color: #e8a27a !important;
-  white-space: nowrap;
-}
-
-.recon-login-btn:hover {
-  background: rgba(217, 119, 87, 0.3) !important;
-  color: #fff !important;
-}
-
-/* --- 用户头像菜单 --- */
-.recon-user-menu {
-  position: relative;
-}
-
-.recon-user-trigger {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 12px 4px 4px;
-  border-radius: 20px;
-  border: 1px solid rgba(255, 235, 220, 0.12);
-  background: rgba(255, 235, 220, 0.06);
-  color: #d8c8b8;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.recon-user-trigger:hover {
-  background: rgba(255, 235, 220, 0.12);
-}
-
-.recon-user-avatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.recon-user-avatar-placeholder {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: rgba(217, 119, 87, 0.3);
+/* --- 评论区登录提示 --- */
+.detail-comment-login-hint {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #e8b49a;
-}
-
-.recon-user-name {
-  font-size: 0.85rem;
-  max-width: 120px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.recon-user-dropdown {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  min-width: 160px;
-  background: #2a2520;
-  border: 1px solid rgba(255, 235, 220, 0.12);
-  border-radius: 10px;
-  padding: 8px 0;
-  z-index: 100;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-}
-
-.recon-user-dropdown-id {
-  padding: 6px 14px;
-  font-size: 0.75rem;
-  color: #8a7a6a;
-  border-bottom: 1px solid rgba(255, 235, 220, 0.06);
-  margin-bottom: 4px;
-}
-
-.recon-user-dropdown-item {
-  display: block;
-  width: 100%;
-  padding: 8px 14px;
-  background: none;
-  border: none;
-  color: #d8c8b8;
-  font-size: 0.85rem;
-  cursor: pointer;
-  text-align: left;
-  transition: background 0.15s;
-}
-
-.recon-user-dropdown-item:hover {
-  background: rgba(255, 235, 220, 0.08);
-  color: #fff;
-}
-
-/* --- 评论区登录提示 --- */
-.detail-comment-login-hint {
+  gap: 6px;
   padding: 12px 16px;
   border-radius: 8px;
-  background: rgba(255, 235, 220, 0.04);
-  border: 1px dashed rgba(255, 235, 220, 0.12);
-  color: #8a7a6a;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  color: #737373;
   font-size: 0.85rem;
   text-align: center;
   margin-top: 8px;

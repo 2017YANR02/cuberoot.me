@@ -26,7 +26,7 @@
 
 .submit-label {
   font-size: 0.75rem;
-  color: #8a7a6a;
+  color: #737373;
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
@@ -36,9 +36,9 @@
 .submit-field textarea {
   padding: 8px 12px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 235, 220, 0.12);
-  background: rgba(255, 235, 220, 0.05);
-  color: #f0ebe3;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: #e5e5e5;
   font-size: 0.88rem;
   font-family: 'Inter', Arial, sans-serif;
   outline: none;
@@ -52,6 +52,17 @@
   box-shadow: 0 0 0 3px rgba(217, 119, 87, 0.15);
 }
 
+/* NOTE: 隐藏 number 输入的上下箭头 spinner */
+.submit-field input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+.submit-field input[type="number"]::-webkit-outer-spin-button,
+.submit-field input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 .submit-solution-textarea {
   font-family: 'Roboto Mono', monospace !important;
   font-size: 0.85rem !important;
@@ -59,13 +70,108 @@
   resize: vertical;
 }
 
+/* NOTE: WcaPersonPicker (inline 模式) ——共享组件默认 light theme，
+   在 recon 暗色页里要覆盖成与其他表单字段一致的暗色样式 */
+.recon-page .wca-pp-inline {
+  flex: 1;
+  min-width: 200px;
+}
+
+.recon-page .wca-pp-inline .wca-pp-panel {
+  position: static;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.recon-page .wca-pp-input-wrap {
+  padding: 0;
+  border-bottom: none;
+}
+
+.recon-page .wca-pp-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #e5e5e5;
+  font-size: 0.88rem;
+  font-family: 'Inter', Arial, sans-serif;
+  outline: none;
+}
+
+.recon-page .wca-pp-input::placeholder {
+  color: #737373;
+}
+
+.recon-page .wca-pp-input:focus {
+  box-shadow: 0 0 0 3px rgba(217, 119, 87, 0.15);
+}
+
+.recon-page .wca-pp-results {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.recon-page .wca-pp-results:empty {
+  border-top: none;
+}
+
+.recon-page .wca-pp-item {
+  color: #e5e5e5;
+}
+
+.recon-page .wca-pp-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.recon-page .wca-pp-name {
+  color: #e5e5e5;
+}
+
+.recon-page .wca-pp-id {
+  color: #8a8a8a;
+}
+
+.recon-page .wca-pp-status {
+  color: #737373;
+}
+
+.recon-page .wca-pp-avatar {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* NOTE: 国家 ISO2 输入——左侧 prefix 国旗预览 */
+.submit-country-input {
+  position: relative;
+}
+
+.submit-country-input input {
+  padding-left: 38px !important;
+}
+
+.submit-country-flag {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 16px;
+  border-radius: 2px;
+  pointer-events: none;
+}
+
 /* --- 搜索下拉 --- */
 .submit-dropdown {
   list-style: none;
   margin: 4px 0 0;
   padding: 0;
-  background: #2f2925;
-  border: 1px solid rgba(255, 235, 220, 0.12);
+  background: #262626;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;
   max-height: 200px;
   overflow-y: auto;
@@ -78,7 +184,7 @@
   padding: 8px 12px;
   cursor: pointer;
   font-size: 0.85rem;
-  color: #d8c8b8;
+  color: #c0c0c0;
   transition: background 0.15s;
 }
 
@@ -114,7 +220,7 @@
   border-radius: 8px;
   margin-bottom: 16px;
   font-size: 0.82rem;
-  color: #b09880;
+  color: #a3a3a3;
   font-family: 'Roboto Mono', monospace;
 }
 
@@ -152,14 +258,14 @@
 }
 
 .submit-btn-cancel {
-  background: rgba(255, 235, 220, 0.06);
-  color: #8a7a6a;
-  border: 1px solid rgba(255, 235, 220, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: #737373;
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .submit-btn-cancel:hover {
-  background: rgba(255, 235, 220, 0.12);
-  color: #d8c8b8;
+  background: rgba(255, 255, 255, 0.12);
+  color: #c0c0c0;
 }
 
 /* --- 选手搜索 — 相对定位容器 --- */
@@ -173,18 +279,18 @@
   align-items: center;
   gap: 8px;
   padding: 6px 10px;
-  background: rgba(255, 235, 220, 0.06);
-  border: 1px solid rgba(255, 235, 220, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 8px;
   font-size: 14px;
   align-self: flex-start;
 }
-.submit-solver-pill .submit-solver-name { color: #f0e6dc; }
-.submit-solver-pill .submit-solver-id   { color: #998877; font-size: 12px; }
+.submit-solver-pill .submit-solver-name { color: #dbdbdb; }
+.submit-solver-pill .submit-solver-id   { color: #888888; font-size: 12px; }
 .submit-solver-pill .submit-solver-clear {
   background: transparent;
   border: none;
-  color: #998877;
+  color: #888888;
   cursor: pointer;
   padding: 0 4px;
   font-size: 14px;

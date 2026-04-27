@@ -57,7 +57,7 @@
     "noResults": "没有找到匹配的复盘记录",
     "showing": "已显示 {{shown}} / {{total}}",
     "total": "共 {{count}} 条",
-    "wcaLogin": "WCA 登录",
+    "wcaLogin": "登录",
     "logout": "退出登录",
     "confirmDelete": "确定删除此复盘？",
     "scramble": "打乱",
@@ -132,10 +132,8 @@
       "tps": "TPS",
       "id": "#"
     },
-    "round": {
+    "roundOption": {
       "final": "决赛",
-      "semi": "半决赛",
-      "combined": "合并轮",
       "numbered": "第{{n}}轮"
     },
     "badge": {

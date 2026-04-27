@@ -9,8 +9,8 @@
     align-items: center;
     background: #1c1c1e;
     border-radius: 10px;
-    border-top: 1px solid rgba(255, 235, 220, 0.08);
-    border-bottom: 1px solid rgba(255, 235, 220, 0.08);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     min-height: 36px;
 }
 
@@ -20,7 +20,7 @@
     background: none;
     color: #f0ebe3;
     border: none;
-    border-left: 1px solid rgba(255, 235, 220, 0.15);
+    border-left: 1px solid rgba(255, 255, 255, 0.15);
     padding: 8px 4px;
     font-size: 0.82rem;
     font-weight: 400;
@@ -37,7 +37,7 @@
 }
 
 .vkb-suggest-btn:active {
-    background: rgba(255, 235, 220, 0.1);
+    background: rgba(255, 255, 255, 0.1);
 }
 
 /* NOTE: 键盘容器——深色背景，顶部圆角，贴在 textarea 下方 */
@@ -74,7 +74,7 @@
 /* NOTE: 触发器按钮——Pill 样式 */
 .vkb-trigger-btn {
     flex: 0 0 auto;
-    background: rgba(255, 235, 220, 0.1);
+    background: rgba(255, 255, 255, 0.1);
     color: #f0ebe3;
     border: none;
     border-radius: 12px;
@@ -88,7 +88,7 @@
 }
 
 .vkb-trigger-btn:active {
-    background: rgba(255, 235, 220, 0.15);
+    background: rgba(255, 255, 255, 0.15);
     transform: scale(1.05);
 }
 
@@ -232,10 +232,10 @@
 }
 
 .vkb-gesture-hint span {
-    color: rgba(255, 235, 220, 0.25);
+    color: rgba(255, 255, 255, 0.25);
     font-size: 0.68rem;
     padding: 0 10px;
-    border-right: 1px solid rgba(255, 235, 220, 0.1);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
     line-height: 1.4;
     letter-spacing: 0.02em;
 }
@@ -247,5 +247,5 @@
 /* NOTE: 手势词——略暗，结果字符略亮 */
 .vkb-gesture-hint em {
     font-style: normal;
-    color: rgba(255, 235, 220, 0.2);
+    color: rgba(255, 255, 255, 0.2);
 }

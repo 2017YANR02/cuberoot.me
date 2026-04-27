@@ -11,9 +11,9 @@ import {
   Shuffle, Library, Compass, Grid2x2, Heart, Trophy, Timer as TimerIcon,
   type LucideIcon,
 } from 'lucide-react';
-import { useAuthStore } from '../stores/auth_store';
 import LandingCubeHero from './LandingCubeHero';
 import DonateModal from './DonateModal';
+import WcaAuth from '../components/WcaAuth';
 import './landing.css';
 
 // NOTE: 粒子动画开关 — 当前落地页走浅色主题，不需要粒子背景
@@ -349,9 +349,6 @@ const CARDS: CardConfig[] = [
 export default function LandingPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { i18n } = useTranslation();
-  const user = useAuthStore((s) => s.user);
-  const login = useAuthStore((s) => s.login);
-  const logout = useAuthStore((s) => s.logout);
   const [donateOpen, setDonateOpen] = useState(false);
 
   useParticles(SHOW_PARTICLES ? canvasRef : { current: null });
@@ -383,29 +380,9 @@ export default function LandingPage() {
         />
       )}
 
-      {/* NOTE: 全局 WCA 登录区域（左上角） */}
+      {/* NOTE: 全局 WCA 登录区域（左上角）——共享 WcaAuth 组件 */}
       <div className="global-auth">
-        {user ? (
-          <div className="global-user">
-            <img
-              className="global-avatar"
-              src={user.avatar || ''}
-              alt=""
-              title={user.name || user.wcaId}
-            />
-            <button
-              className="global-logout"
-              onClick={() => { logout(); location.reload(); }}
-              title={lang === 'zh' ? '退出登录' : 'Logout'}
-            >
-              ❌
-            </button>
-          </div>
-        ) : (
-          <button className="global-auth-btn" onClick={login}>
-            {lang === 'zh' ? '🔐 登录' : '🔐 Login'}
-          </button>
-        )}
+        <WcaAuth />
       </div>
 
       <div className="brand-line">

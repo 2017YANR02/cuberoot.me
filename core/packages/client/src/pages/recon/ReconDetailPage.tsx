@@ -5,6 +5,10 @@
 import { useEffect, useState, useCallback, useRef, type MutableRefObject } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import {
+  Box, PenLine, Calendar, UserPlus, Pencil, StickyNote,
+  ChartColumn, Video, MessageCircle, Key, TriangleAlert,
+} from 'lucide-react';
 import type { ReconSolve, ReconComment, EditHistoryItem } from '@cuberoot/shared';
 import { getRecon, listComments, getEditHistory, deleteRecon, addComment, updateComment, deleteComment, getBiliCover, listRecons } from '../../utils/recon_api';
 import {
@@ -70,7 +74,7 @@ export default function ReconDetailPage() {
   };
 
   if (loading) return <div className="recon-page"><div className="recon-loading">{t('common.loading')}</div></div>;
-  if (error) return <div className="recon-page"><div className="recon-error">⚠️ {error}</div></div>;
+  if (error) return <div className="recon-page"><div className="recon-error"><TriangleAlert size={16} /> {error}</div></div>;
   if (!solve) return <div className="recon-page"><div className="recon-error">{t('recon.notFound')}</div></div>;
 
   // NOTE: 解法文本：优先使用 solution 字段，fallback 到旧 recon 字段
@@ -115,13 +119,13 @@ export default function ReconDetailPage() {
       <div className="detail-meta">
         {solve.cube && (
           <div className="detail-meta-item">
-            <span className="detail-meta-label">🧳</span>
+            <span className="detail-meta-label"><Box size={16} /></span>
             <span className="detail-meta-value">{solve.cube}</span>
           </div>
         )}
         {solve.reconer && (
           <div className="detail-meta-item">
-            <span className="detail-meta-label">✍️</span>
+            <span className="detail-meta-label"><PenLine size={16} /></span>
             <span className="detail-meta-value">
               {solve.reconerId ? (
                 <a href={wcaPersonUrl(solve.reconerId)} target="_blank" rel="noopener noreferrer">
@@ -133,13 +137,13 @@ export default function ReconDetailPage() {
         )}
         {solve.reconDate && (
           <div className="detail-meta-item">
-            <span className="detail-meta-label">📅</span>
+            <span className="detail-meta-label"><Calendar size={16} /></span>
             <span className="detail-meta-value">{solve.reconDate.slice(0, 10)}</span>
           </div>
         )}
         {solve.addedBy && (
           <div className="detail-meta-item">
-            <span className="detail-meta-label">➕</span>
+            <span className="detail-meta-label"><UserPlus size={16} /></span>
             <span className="detail-meta-value">
               {solve.addedById ? (
                 <a href={wcaPersonUrl(solve.addedById)} target="_blank" rel="noopener noreferrer">
@@ -151,7 +155,7 @@ export default function ReconDetailPage() {
         )}
         {history.length > 0 && (
           <div className="detail-meta-item">
-            <span className="detail-meta-label">✏️</span>
+            <span className="detail-meta-label"><Pencil size={16} /></span>
             <span className="detail-meta-value">{history.length} {t('recon.editCount', { count: history.length })}</span>
           </div>
         )}
@@ -244,7 +248,7 @@ function TwistyPlayerContext({ scramble, solutionText, solve }: {
         <StatsGrid solve={solve} />
         {solve.note && (
           <div className="detail-section">
-            <div className="detail-section-label">📝 {t('recon.note')}</div>
+            <div className="detail-section-label"><StickyNote size={14} /> {t('recon.note')}</div>
             <div className="detail-note">{solve.note}</div>
           </div>
         )}
@@ -464,7 +468,7 @@ function StatsGrid({ solve }: { solve: ReconSolve }) {
 
   return (
     <div className="detail-section">
-      <div className="detail-section-label">📊 {t('recon.statistics')}</div>
+      <div className="detail-section-label"><ChartColumn size={14} /> {t('recon.statistics')}</div>
       <div className="detail-stats-grid">
         {validItems.map(([label, value]) => (
           <div key={label} className="stat-item">
@@ -540,7 +544,7 @@ function VideoEmbed({ url }: { url: string }) {
   // NOTE: 其他链接——显示为普通超链接
   return (
     <a href={url} target="_blank" rel="noopener noreferrer" className="detail-video-link">
-      🎥 {url}
+      <Video size={16} /> {url}
     </a>
   );
 }
@@ -722,7 +726,7 @@ function CommentsView({
   return (
     <div className="detail-section">
       <div className="detail-section-label">
-        💬 {t('recon.comments')} ({comments.length})
+        <MessageCircle size={14} /> {t('recon.comments')} ({comments.length})
       </div>
       <div className="detail-comments">
         {comments.map(comment => (
@@ -792,7 +796,7 @@ function CommentsView({
         </div>
       ) : (
         <div className="detail-comment-login-hint" onClick={() => useAuthStore.getState().login()} style={{ cursor: 'pointer' }}>
-          🔑 {t('recon.loginToComment')}
+          <Key size={16} /> {t('recon.loginToComment')}
         </div>
       )}
     </div>
