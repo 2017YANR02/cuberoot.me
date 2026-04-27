@@ -28,7 +28,7 @@ import { generateScramble, registerScramble } from './scramble';
 import { getLastPickedCase, type TrainerKind } from './scramble/training';
 import { warmup333, randomState333Sync } from './scramble/kociemba/random_state';
 import { useTimer } from './useTimer';
-import { formatMs } from './stats';
+import { formatMs, bestSingle, bestAverageOfN } from './stats';
 import type { EventId, Penalty, Solve } from './types';
 import { EVENTS, isBldEvent } from './types';
 import {
@@ -57,6 +57,7 @@ import SolveModal from './components/SolveModal';
 import ReconstructModal from './components/ReconstructModal';
 import { decodeReplayParam } from './share/decode';
 import SettingsPanel from './components/SettingsPanel';
+import PbToast, { type PbKind } from './components/PbToast';
 import ShortcutsModal from './components/ShortcutsModal';
 import BluetoothModal from './components/BluetoothModal';
 import TrainerSubsetModal from './components/TrainerSubsetModal';
@@ -139,6 +140,17 @@ export default function TimerPage() {
 
   // ── Solve recording ─────────────────────────────────────────────
   const [lastPenalty, setLastPenalty] = useState<Penalty | null>(null);
+  // PB celebration toast — set when a freshly recorded solve produces a new
+  // best single / ao5 / ao12 for the current event.
+  const [pbToast, setPbToast] = useState<{ kind: PbKind; value: string } | null>(null);
+  // Mirror byEvent into a ref so recordSolve can read pre-state without
+  // becoming dependent on byEvent (which would re-bind useTimer's callback
+  // every solve).
+  const byEventRef = useRef(byEvent);
+  useEffect(() => { byEventRef.current = byEvent; }, [byEvent]);
+  // Mirror pbToast setting too so recordSolve sees the live value.
+  const pbToastEnabledRef = useRef(settings.pbToast);
+  useEffect(() => { pbToastEnabledRef.current = settings.pbToast; }, [settings.pbToast]);
   // Snapshot taken whenever phase is NOT running. recordSolve reads these
   // so changing event mid-solve doesn't desync solve.event / scramble / caseId.
   const scrambleAtStartRef = useRef<string>(scramble);
@@ -183,12 +195,40 @@ export default function TimerPage() {
     if (caseIdAtStartRef.current) solve.caseId = caseIdAtStartRef.current;
     if (movesRef.current.length > 0) solve.moves = movesRef.current.slice();
     setLastPenalty(res.autoPenalty);
+
+    // PB detection — compare bestSingle / bestAo5 / bestAo12 before/after.
+    if (pbToastEnabledRef.current) {
+      const before = byEventRef.current[ev] ?? [];
+      const after = [...before, solve];
+      const beforeSingle = bestSingle(before);
+      const afterSingle = bestSingle(after);
+      const beforeAo5 = bestAverageOfN(before, 5);
+      const afterAo5 = bestAverageOfN(after, 5);
+      const beforeAo12 = bestAverageOfN(before, 12);
+      const afterAo12 = bestAverageOfN(after, 12);
+      // A "new PB" requires:
+      //   - the new value is finite, AND
+      //   - either there was no prior PB, or the new value is strictly better.
+      // Order of priority: ao12 > ao5 > single (broader windows are more
+      // significant — only one toast per solve).
+      const isNew = (b: number | null, a: number | null): boolean =>
+        a !== null && Number.isFinite(a) && (b === null || !Number.isFinite(b) || a < b);
+      let kind: PbKind | null = null;
+      let value: number | null = null;
+      if (isNew(beforeAo12, afterAo12))      { kind = 'ao12';   value = afterAo12; }
+      else if (isNew(beforeAo5, afterAo5))   { kind = 'ao5';    value = afterAo5; }
+      else if (isNew(beforeSingle, afterSingle)) { kind = 'single'; value = afterSingle; }
+      if (kind && value !== null) {
+        setPbToast({ kind, value: formatMs(value, settings.precision) });
+      }
+    }
+
     setByEvent(prev => ({
       ...prev,
       [ev]: [...(prev[ev] ?? []), solve],
     }));
     nextScramble();
-  }, [nextScramble, settings.multiStage, settings.bldMemo]);
+  }, [nextScramble, settings.multiStage, settings.bldMemo, settings.precision]);
 
   const timer = useTimer(recordSolve);
 
@@ -954,6 +994,13 @@ export default function TimerPage() {
       {settingsOpen && (
         <SettingsPanel isZh={isZh} onClose={() => setSettingsOpen(false)} />
       )}
+
+      <PbToast
+        kind={pbToast?.kind ?? null}
+        value={pbToast?.value ?? ''}
+        isZh={isZh}
+        onClose={() => setPbToast(null)}
+      />
 
       {shortcutsOpen && (
         <ShortcutsModal isZh={isZh} onClose={() => setShortcutsOpen(false)} />
