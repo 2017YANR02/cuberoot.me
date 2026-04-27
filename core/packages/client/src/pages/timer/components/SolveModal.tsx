@@ -71,9 +71,12 @@ interface Props {
   onChangePenalty: (p: Penalty) => void;
   onChangeComment: (text: string) => void;
   onDelete: () => void;
+  /** Open the bluetooth-reconstruct modal for this solve. Only shown when
+   * solve.moves is non-empty. */
+  onOpenReconstruct?: () => void;
 }
 
-export default function SolveModal({ solve, index, isZh, onClose, onChangePenalty, onChangeComment, onDelete }: Props) {
+export default function SolveModal({ solve, index, isZh, onClose, onChangePenalty, onChangeComment, onDelete, onOpenReconstruct }: Props) {
   // Comment state is initialized once per modal-mount; the parent passes
   // `key={solve.id}` so a different solve remounts (and re-initializes) us.
   const [comment, setComment] = useState(solve.comment ?? '');
@@ -173,6 +176,11 @@ export default function SolveModal({ solve, index, isZh, onClose, onChangePenalt
           >
             DNF
           </button>
+          {solve.moves && solve.moves.length > 0 && onOpenReconstruct && (
+            <button onClick={onOpenReconstruct}>
+              {isZh ? '查看复盘' : 'View reconstruct'}
+            </button>
+          )}
           <button className="danger" onClick={onDelete}>
             {isZh ? '删除' : 'Delete'}
           </button>
