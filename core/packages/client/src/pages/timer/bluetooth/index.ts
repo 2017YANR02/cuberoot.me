@@ -26,6 +26,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CubeDriver } from './driver';
+// detectBluetoothEnv re-exported above; the connect() helper uses it
+// indirectly via the env-tagged error and the surrounding consumer.
 import { ganV3Driver } from './gan_v3';
 import { ganV4Driver } from './gan_v4';
 import { gocubeDriver } from './gocube';
@@ -35,6 +37,8 @@ import type { BluetoothCubeStatus } from './types';
 
 export type { BluetoothCubeStatus, CubeBrand } from './types';
 export type { CubeDriver, CubeDriverStartResult } from './driver';
+export { detectBluetoothEnv, envAdvice } from './env';
+export type { BluetoothEnv, EnvAdvice } from './env';
 
 /* ------------------------------------------------------------------ */
 /*  Driver registry                                                    */
@@ -163,9 +167,10 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
 
   const connect = useCallback(async (): Promise<void> => {
     if (typeof navigator === 'undefined' || !navigator.bluetooth) {
-      throw new Error(
-        'Web Bluetooth is not available in this browser. Use Chrome, Edge, or Opera on desktop / Android.',
-      );
+      // Tagged error: TimerPage swaps in env-specific advice modal.
+      const err = new Error('NO_WEB_BLUETOOTH') as Error & { kind?: string };
+      err.kind = 'no-web-bluetooth';
+      throw err;
     }
 
     // Build a single requestDevice options blob from all known drivers.
