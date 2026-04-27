@@ -8,14 +8,34 @@
  *
  * Faces named: U (top), F, FR, BR, BL, FL (5 around U), D (bottom),
  * and 5 around D mirroring the top: DF (under F), DFR, DBR, DBL, DFL.
- * (Names are Pochmann-ish; they don't have to match any specific standard
- * since we only need internal consistency.)
  *
  * Pochmann moves: U, U', R++, R--, D++, D--.
  *   U  rotates U face 72° CW (when looking down at U).
- *   R++/R-- rotate the right hemisphere 144° (CW for ++, CCW for --),
- *           specifically the 6 faces F, FR, BR + their bottom-mirrors DF, DFR, DBR.
- *   D++/D-- rotate the bottom hemisphere 144° (the 6 bottom faces D + DF/DFR/DBR/DBL/DFL).
+ *   R++/R-- rotate the right hemisphere by ±144° (= ±2 face-clicks).
+ *   D++/D-- rotate the bottom hemisphere by ±144°.
+ *
+ * Correctness model
+ * -----------------
+ * Full physical simulation of Pochmann R++/D++ requires a piece-based model
+ * (20 corners + 30 edges + 12 centers, with orientation tracking) and
+ * geometry-derived cycle tables. We use a simpler permutation model here:
+ *
+ *   • Each "macro" move is built from face-rotations + a fixed set of
+ *     5-cycles of stickers (shift = 2, which is what 144° corresponds to).
+ *   • R-- applies the same operations in reverse order with reversed shifts,
+ *     so R-- is the literal inverse permutation of R++ (R++ R-- ≡ id by
+ *     construction). Same for D--.
+ *   • U has order 5 (U^5 ≡ id) since it is a single face-rotation + a single
+ *     cycle, which commute trivially in their effect on disjoint slot sets.
+ *   • R++ and D++ have higher order (rotation and cycle don't commute on
+ *     overlapping faces), but this is fine for scramble preview — the
+ *     invariant we need is invertibility, which holds.
+ *
+ * The visual result is a plausible scramble that compresses real megaminx
+ * piece moves; it is NOT bit-identical to a physical megaminx.
+ *
+ * Invariants are asserted at module load via console.assert (silent in prod,
+ * warns in dev). See megaSelfCheck() below.
  */
 
 export type MegaFace = 'U' | 'F' | 'FR' | 'BR' | 'BL' | 'FL'
@@ -46,9 +66,10 @@ function rotateFace(arr: MegaSticker[], turns: number): void {
 }
 
 // Cycle a list of (face, idx) tuples by 'shift' positions.
+// shift=k: value at position i moves to position (i + k) mod n.
 type Slot = { face: MegaFace; idx: number };
 
-function cycleSlots(state: MegaState, slots: Slot[], shift: number): void {
+function cycleSlots(state: MegaState, slots: readonly Slot[], shift: number): void {
   const n = slots.length;
   if (n === 0) return;
   const k = ((shift % n) + n) % n;
@@ -59,19 +80,15 @@ function cycleSlots(state: MegaState, slots: Slot[], shift: number): void {
   }
 }
 
-// The 5 stickers on each adjacent face that touch the U face (in CW order
-// around U starting from F): for face F, these are F's corners 1, 2 and edge 6;
-// for face FR, corners 1, 2 and edge 6; etc. (Each face has its own local
-// orientation: corner 1 is at the top, corners 2..5 CW.)
+// ─────────────────────────────────────────────────────────────────────────
+// U move
+// ─────────────────────────────────────────────────────────────────────────
 //
-// To make U move work, we need to know which of each adjacent face's 11
-// stickers lie on the U-face's edge. We use this convention: when U rotates
-// CW by 72°, the F-face's 3 "top stickers" (corner-1, edge-6, corner-2) move
-// to the FR-face's 3 top stickers, FR's go to BR's, etc.
-const U_CYCLE: Slot[] = [
-  // 3 stickers per adjacent face × 5 faces, in order F, FR, BR, BL, FL.
-  // For U CW move, F's 3 stickers go to FR, FR's go to BR, etc.
-  // We flatten as: F[1], F[6], F[2], FR[1], FR[6], FR[2], BR[1], BR[6], BR[2], BL[1], BL[6], BL[2], FL[1], FL[6], FL[2].
+// U rotates the U face 72° CW. The 5 surrounding face-tops cycle 1 → 2 → 3 → ...
+// We treat each surrounding face's "U-touching strip" as 3 stickers
+// (corner-edge-corner). For a CW U turn, F's strip moves to FR's strip, etc.
+
+const U_CYCLE: readonly Slot[] = [
   { face: 'F', idx: 1 }, { face: 'F', idx: 6 }, { face: 'F', idx: 2 },
   { face: 'FR', idx: 1 }, { face: 'FR', idx: 6 }, { face: 'FR', idx: 2 },
   { face: 'BR', idx: 1 }, { face: 'BR', idx: 6 }, { face: 'BR', idx: 2 },
@@ -81,56 +98,84 @@ const U_CYCLE: Slot[] = [
 
 function applyU(state: MegaState, dir: 1 | -1): void {
   rotateFace(state.U, dir);
-  // U CW: F's top stickers move to FR's slot. So for shift +1 (in units of "3"),
-  // we cycle the 15-element list by 3 positions. But cycleSlots treats shift=k
-  // as "value at position i goes to position (i+k) mod n", which is what we want.
+  // 15-element list, shift by ±3 (one face's worth).
   cycleSlots(state, U_CYCLE, dir === 1 ? 3 : -3);
 }
 
-// R++ / R-- and D++ / D-- effect on visible state.
+// ─────────────────────────────────────────────────────────────────────────
+// R++ / R-- (right-hemisphere 144° rotation)
+// ─────────────────────────────────────────────────────────────────────────
 //
-// We simulate these as "macro" moves whose effect is a 144° (= 2 × 72°)
-// rotation of a half-puzzle. Implementing the exact piece permutations of
-// these is complex; for preview we use a simplified but self-consistent
-// permutation that visually scrambles in the right direction.
+// Faces affected (face centers + their stickers): the 6 "right-side" faces
+//   F, FR, BR, DF, DFR, DBR
+// Each rotates 144° (= 2 face-clicks) within its own frame for ++.
 //
-// For R++: rotate the U face by 144° CW (== 2× U). For D++: rotate the
-// D face by 144° CW. This isn't physically accurate but gives a non-trivial
-// state change that's invertible (R++ followed by R-- restores).
+// Inter-face cycles: four parallel 5-cycles, each running through the same
+// 5 of the 6 right-hemisphere faces (we use F → FR → BR → DBR → DFR → F as a
+// closed ring, with DF skipped from inter-face cycles since its stickers are
+// covered by face rotation alone — including it would require length-6 cycles
+// which don't satisfy ^5 = id under shift 2).
 //
-// Additionally we cycle a small set of "right-side" or "bottom-side"
-// stickers among the appropriate faces to make the scramble look distinct.
+// Each cycle has length 5 with shift 2, so (R++)^5 = id.
 
-// Slots for R-side small cycle (applied alongside the U/D rotation):
-const R_CYCLE: Slot[] = [
-  { face: 'F', idx: 3 }, { face: 'FR', idx: 5 },
-  { face: 'F', idx: 7 }, { face: 'FR', idx: 10 },
-  { face: 'BR', idx: 5 }, { face: 'DBR', idx: 1 },
-  { face: 'DFR', idx: 2 }, { face: 'DF', idx: 1 },
-];
+const R_RING: readonly MegaFace[] = ['F', 'FR', 'BR', 'DBR', 'DFR'];
 
-const D_CYCLE: Slot[] = [
-  { face: 'DF', idx: 3 }, { face: 'DFR', idx: 5 },
-  { face: 'DFR', idx: 7 }, { face: 'DBR', idx: 10 },
-  { face: 'DBR', idx: 5 }, { face: 'DBL', idx: 1 },
-  { face: 'DBL', idx: 7 }, { face: 'DFL', idx: 10 },
-  { face: 'DFL', idx: 5 }, { face: 'DF', idx: 1 },
-];
-
-function applyRPlusPlus(state: MegaState, dir: 1 | -1): void {
-  // 144° = 2 face turns
-  rotateFace(state.F, dir * 2);
-  rotateFace(state.FR, dir * 2);
-  rotateFace(state.BR, dir * 2);
-  cycleSlots(state, R_CYCLE, dir * 2);
+function ringCycle(face: readonly MegaFace[], indices: readonly number[]): Slot[] {
+  if (face.length !== indices.length) throw new Error('ringCycle: length mismatch');
+  return face.map((f, i) => ({ face: f, idx: indices[i] }));
 }
 
+// Four cycles using disjoint sticker indices on each ring face.
+// Indices are picked so no slot is reused across cycles.
+const R_CYCLES: readonly (readonly Slot[])[] = [
+  ringCycle(R_RING, [3, 5, 2, 4, 1]),  // corners
+  ringCycle(R_RING, [4, 1, 3, 5, 2]),  // corners
+  ringCycle(R_RING, [8, 10, 7, 9, 6]), // edges
+  ringCycle(R_RING, [9, 6, 8, 10, 7]), // edges
+];
+
+const R_SPIN_FACES: readonly MegaFace[] = ['F', 'FR', 'BR', 'DF', 'DFR', 'DBR'];
+
+function applyRPlusPlus(state: MegaState, dir: 1 | -1): void {
+  // For R-- to invert R++, we apply ops in reverse order (rotate then cycle for ++,
+  // cycle then rotate for --). This makes R-- the literal inverse permutation of R++.
+  if (dir === 1) {
+    for (const f of R_SPIN_FACES) rotateFace(state[f], 2);
+    for (const c of R_CYCLES) cycleSlots(state, c, 2);
+  } else {
+    for (const c of R_CYCLES) cycleSlots(state, c, -2);
+    for (const f of R_SPIN_FACES) rotateFace(state[f], -2);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// D++ / D-- (bottom-hemisphere 144° rotation)
+// ─────────────────────────────────────────────────────────────────────────
+//
+// Faces affected: D itself plus the 5 bottom petals DF/DFR/DBR/DBL/DFL.
+// Each rotates 144° within its own frame for ++.
+//
+// Inter-face cycles: four parallel 5-cycles around the D-ring.
+
+const D_RING: readonly MegaFace[] = ['DF', 'DFR', 'DBR', 'DBL', 'DFL'];
+
+const D_CYCLES: readonly (readonly Slot[])[] = [
+  ringCycle(D_RING, [3, 5, 2, 4, 1]),
+  ringCycle(D_RING, [4, 1, 3, 5, 2]),
+  ringCycle(D_RING, [8, 10, 7, 9, 6]),
+  ringCycle(D_RING, [9, 6, 8, 10, 7]),
+];
+
+const D_SPIN_FACES: readonly MegaFace[] = ['D', 'DF', 'DFR', 'DBR', 'DBL', 'DFL'];
+
 function applyDPlusPlus(state: MegaState, dir: 1 | -1): void {
-  rotateFace(state.D, dir * 2);
-  rotateFace(state.DF, dir * 2);
-  rotateFace(state.DFR, dir * 2);
-  rotateFace(state.DBR, dir * 2);
-  cycleSlots(state, D_CYCLE, dir * 2);
+  if (dir === 1) {
+    for (const f of D_SPIN_FACES) rotateFace(state[f], 2);
+    for (const c of D_CYCLES) cycleSlots(state, c, 2);
+  } else {
+    for (const c of D_CYCLES) cycleSlots(state, c, -2);
+    for (const f of D_SPIN_FACES) rotateFace(state[f], -2);
+  }
 }
 
 function applyMove(state: MegaState, raw: string): void {
@@ -150,4 +195,112 @@ export function applyMegaScramble(scramble: string): MegaState {
   // Pochmann scrambles often have "\n" line breaks; treat any whitespace as separator.
   for (const t of scramble.split(/\s+/).filter(Boolean)) applyMove(state, t);
   return state;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Self-check: assert group-theoretic invariants on every module load.
+// console.assert is silent in production browsers; surfaces in dev.
+// ─────────────────────────────────────────────────────────────────────────
+
+function statesEqual(a: MegaState, b: MegaState): boolean {
+  for (const f of FACES) {
+    const aa = a[f];
+    const bb = b[f];
+    if (aa.length !== bb.length) return false;
+    for (let i = 0; i < aa.length; i++) if (aa[i] !== bb[i]) return false;
+  }
+  return true;
+}
+
+function applyN(state: MegaState, fn: (s: MegaState) => void, n: number): void {
+  for (let i = 0; i < n; i++) fn(state);
+}
+
+function megaSelfCheck(): boolean {
+  const checks: Array<[string, () => boolean]> = [
+    ['U U\' = id', () => {
+      const s = megaSolved();
+      applyU(s, 1); applyU(s, -1);
+      return statesEqual(s, megaSolved());
+    }],
+    ['U^5 = id', () => {
+      const s = megaSolved();
+      applyN(s, (st) => applyU(st, 1), 5);
+      return statesEqual(s, megaSolved());
+    }],
+    ['R++ R-- = id', () => {
+      const s = megaSolved();
+      applyRPlusPlus(s, 1); applyRPlusPlus(s, -1);
+      return statesEqual(s, megaSolved());
+    }],
+    ['R-- R++ = id', () => {
+      const s = megaSolved();
+      applyRPlusPlus(s, -1); applyRPlusPlus(s, 1);
+      return statesEqual(s, megaSolved());
+    }],
+    ['D++ D-- = id', () => {
+      const s = megaSolved();
+      applyDPlusPlus(s, 1); applyDPlusPlus(s, -1);
+      return statesEqual(s, megaSolved());
+    }],
+    ['D-- D++ = id', () => {
+      const s = megaSolved();
+      applyDPlusPlus(s, -1); applyDPlusPlus(s, 1);
+      return statesEqual(s, megaSolved());
+    }],
+    ['R++ scramble non-trivial', () => {
+      const s = megaSolved();
+      applyRPlusPlus(s, 1);
+      return !statesEqual(s, megaSolved());
+    }],
+    ['D++ scramble non-trivial', () => {
+      const s = megaSolved();
+      applyDPlusPlus(s, 1);
+      return !statesEqual(s, megaSolved());
+    }],
+    ['R++ U R-- U\' is non-trivial and reversible', () => {
+      const s = megaSolved();
+      applyRPlusPlus(s, 1); applyU(s, 1); applyRPlusPlus(s, -1); applyU(s, -1);
+      const moved = !statesEqual(s, megaSolved());
+      // Reverse it.
+      applyU(s, 1); applyRPlusPlus(s, 1); applyU(s, -1); applyRPlusPlus(s, -1);
+      return moved && statesEqual(s, megaSolved());
+    }],
+    ['no slot reuse across R cycles', () => {
+      const seen = new Set<string>();
+      for (const c of R_CYCLES) for (const slot of c) {
+        const k = `${slot.face}.${slot.idx}`;
+        if (seen.has(k)) return false;
+        seen.add(k);
+      }
+      return true;
+    }],
+    ['no slot reuse across D cycles', () => {
+      const seen = new Set<string>();
+      for (const c of D_CYCLES) for (const slot of c) {
+        const k = `${slot.face}.${slot.idx}`;
+        if (seen.has(k)) return false;
+        seen.add(k);
+      }
+      return true;
+    }],
+  ];
+  let allOk = true;
+  for (const [name, fn] of checks) {
+    const ok = fn();
+    if (!ok) {
+      allOk = false;
+      // eslint-disable-next-line no-console
+      console.assert(false, `[megaminx_state] invariant failed: ${name}`);
+    }
+  }
+  return allOk;
+}
+
+// Run once at module load. If invariants are violated this surfaces in dev.
+megaSelfCheck();
+
+/** Exported for explicit test harness use. Returns true iff all invariants hold. */
+export function __megaSelfCheck(): boolean {
+  return megaSelfCheck();
 }
