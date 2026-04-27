@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import {
   BarChart3, Film, ScanSearch, Calculator as CalculatorIcon, LineChart,
   Swords, Target, CalendarDays, Puzzle, BookOpen, Globe as GlobeIcon,
-  Shuffle, Library, Compass, Grid2x2, Heart, Trophy,
+  Shuffle, Library, Compass, Grid2x2, Heart, Trophy, Timer as TimerIcon,
   type LucideIcon,
 } from 'lucide-react';
 import { useAuthStore } from '../stores/auth_store';
@@ -287,6 +287,7 @@ const TEXTS: Record<string, { en: string; zh: string }> = {
   upcoming:        { en: 'Competition', zh: '比赛' },
   globe:           { en: 'Globe', zh: '比赛地球' },
   cstimer:         { en: 'csTimer', zh: 'csTimer' },
+  timer:           { en: 'Timer', zh: '计时器' },
   frameCount:      { en: 'Frame Count', zh: '数帧工具' },
   scramble:        { en: 'Scramble', zh: '打乱' },
   alg:             { en: 'Algorithms', zh: '公式教程' },
@@ -328,6 +329,7 @@ const CARDS: CardConfig[] = [
   { id: 'viz',         href: '/viz',             internal: true,  tier: 'medium',    Icon: LineChart,      nameKey: 'viz' },
   // Tier 3 — Standard
   { id: 'alg',         href: '/alg',             internal: true,  tier: 'standard',  Icon: Library,        nameKey: 'alg', comingSoon: true },
+  { id: 'timer',       href: '/timer',           internal: true,  tier: 'standard',  Icon: TimerIcon,      nameKey: 'timer' },
   { id: 'battle',      href: '/battle',          internal: true,  tier: 'standard',  Icon: Swords,         nameKey: 'battle' },
   { id: 'trainer',     href: '/alg-trainers',    internal: true,  tier: 'standard',  Icon: Target,         nameKey: 'algTrainer' },
   { id: 'upcoming',    href: '/upcoming-comps',  internal: true,  tier: 'standard',  Icon: CalendarDays,   nameKey: 'upcoming' },

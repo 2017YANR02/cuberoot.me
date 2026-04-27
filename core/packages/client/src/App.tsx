@@ -59,6 +59,8 @@ const SitesPage = lazy(() => import('./pages/sites/SitesPage'));
 const MosaicPage = lazy(() => import('./pages/mosaic/MosaicPage'));
 // NOTE: WB — 非官方世界纪录（port of speedsolving.com wiki UWR list）
 const WbPage = lazy(() => import('./pages/wb/WbPage'));
+// NOTE: Timer — 纯 TypeScript 重写的速拧计时器（替代 cstimer iframe 的核心流程）
+const TimerPage = lazy(() => import('./pages/timer/TimerPage'));
 
 
 function App() {
@@ -111,6 +113,8 @@ function App() {
         <Route path="/jsonEditor" element={<Suspense fallback={<div>Loading...</div>}><IframePage src="/tools/jsonEditor/" title="JSON Editor" /></Suspense>} />
         <Route path="/documentation" element={<Suspense fallback={<div>Loading...</div>}><IframePage src="/tools/documentation/" title="Documentation" /></Suspense>} />
         <Route path="/cstimer" element={<Suspense fallback={<div>Loading...</div>}><IframePage src="/tools/cstimer/" title="csTimer" /></Suspense>} />
+        {/* Timer — 纯 TypeScript 速拧计时器 */}
+        <Route path="/timer" element={<Suspense fallback={<div>Loading...</div>}><TimerPage /></Suspense>} />
         {/* WCA Stats — 统计数据展示 */}
         <Route path="/wca-stats" element={<Suspense fallback={<div>Loading...</div>}><WcaStatsIndex /></Suspense>} />
         {/* NOTE: persons 路由必须在 :statId 之前，否则会被 catch-all 当成 statId */}
