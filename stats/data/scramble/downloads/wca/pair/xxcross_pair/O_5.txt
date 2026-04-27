@@ -1,0 +1,8 @@
+# Scramble Extremes — pair / xxcross_pair / O / bin 5 (2nd-smallest)
+# Population in this bin: 1
+# Samples listed: 1 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-04-27T02:55:05.485Z
+# Columns: id,scramble,bottom_color
+
+52675001,B' R2 U' R D' R2 U D2 B U B2 D' F2 B2 D2 B2 D L2,O

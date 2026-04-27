@@ -1,0 +1,35 @@
+# Scramble Extremes — pair / xxcross_pair / BGORWY / bin 12 (max)
+# Population in this bin: 28
+# Samples listed: 28 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-04-27T02:55:05.485Z
+# Columns: id,scramble,bottom_color
+
+6002,D2 L2 D B2 F2 L2 B2 D' U2 F2 D F2 R2 U' B' F' R' B2 L2 D U' F' R' L' ,B
+7315,D' F2 L2 U2 R2 F2 R2 U2 F2 L2 U L2 B2 F' R L U B' F D' U F' D' U' L' ,B
+36957,F2 D F2 L2 U2 R2 F2 U2 F2 L2 U F2 U2 L' B F D R' L D U' L' D' U' F' ,B
+116406,U2 R2 U' B2 F2 U' L2 D L2 D L2 B2 D' R2 U' B' F' R' B2 L2 D U' F' R' L' ,B
+116411,L2 D F2 U' B2 U F2 R2 F2 D R2 L2 B' F' R' B2 L2 D U' F' R' L' ,B
+149603,R2 F2 U' R2 D2 F2 U B2 F2 D2 B2 L2 F2 U' R' D2 F2 D' B R2 D B U' L' ,B
+354678,U2 F2 R2 D F2 U2 R2 F2 U' F2 D2 L2 U2 R' B' L' F U F2 R' D2 B L' U' L' ,B
+355312,B2 F2 R2 D B2 U R2 B2 D2 B2 L2 U' F2 U' L' F' D2 B' D R U' F U2 B L' U' ,B
+526678,U' R2 U' B2 D2 R2 U' L2 F2 U2 L2 U' F2 L2 U' R' B L2 F U' R' B' L' D F' U' L' ,B
+526680,R2 U2 F2 D2 U L2 D' B2 F2 R2 L2 U' L2 U' L' B F D R' L D U' L' D' U' F' ,B
+526681,L2 D L2 D B2 L2 U2 B2 D F2 U' B2 U2 F2 U' R' B L U' F' D' R' B U2 F' ,B
+877756,U F2 R2 D' L2 D B2 F2 D2 U' R2 F2 L2 F' L D' B2 U' B' R F U' L' U' ,B
+888065,D' R2 F2 U B2 U' L2 D' B2 F2 U2 L2 B2 U2 B' L D' L2 U' L2 F' R B U L U' ,B
+888188,L2 D2 B2 D' R2 F2 U2 F2 L2 U2 R2 F2 U' F' R L U B' F D' U F' D' U' L' ,B
+891419,D B2 R2 D R2 F2 L2 D L2 B2 U' R2 U2 F' R L U B' F D' U F' D' U' L' ,B
+893277,D2 F2 R2 F2 D L2 U' R2 B2 U' L2 D F2 R2 L' B' U2 F' U R D' B D2 F L' U' ,B
+894299,D' R2 U' B2 U2 B2 L2 U2 L2 D F2 U2 B' R F D' L' U' B' R D2 L' ,B
+894300,D2 R2 L2 F2 D F2 D' R2 U R2 B2 D L2 D U' B' R L' F2 U' R2 F D B' L' ,B
+897488,L2 D2 B2 R2 D F2 L2 U' R2 L2 B2 D F2 L2 U' B' F' R' B2 L2 D U' F' R' L' ,B
+899950,R2 B2 L2 F2 D R2 U L2 U F2 D' U' R2 U2 B' L F' D2 R2 U' R' D' B' L' ,B
+918352,B2 D2 R2 D F2 U' R2 U' L2 F2 L2 B2 U B' L' F U2 R2 D R U B L' U' ,B
+928707,B2 U2 L2 D' B2 R2 U2 R2 F2 D2 F2 L2 U' L' B F D R' L D U' L' D' U' F' ,B
+1122515,D' F2 R2 L2 D R2 U B2 U2 B2 U' L2 D L2 R' B L2 F U' R' B' L' D F' U' L' ,B
+1173763,F2 L2 U R2 U2 B2 U' F2 U F2 U F2 R2 B' F' R' B2 L2 D U' F' R' L' ,B
+1173784,D2 B2 L2 B2 F2 U' B2 R2 D U2 R2 D' F2 U' B' F' R' B2 L2 D U' F' R' L' ,B
+1211506,B2 L2 D2 F2 R2 D F2 R2 D U2 F2 U' R2 U' B' F' R' B2 L2 D U' F' R' L' ,B
+1247952,D2 U' R2 D R2 B2 L2 F2 L2 D R2 U' B2 U2 B' F' R' B2 L2 D U' F' R' L' ,B
+1251320,U2 B2 D' R2 B2 U' B2 F2 R2 U L2 U' F2 L' D2 B' U' R' F L D B U' L' ,B
