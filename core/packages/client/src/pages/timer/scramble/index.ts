@@ -71,6 +71,14 @@ export function resetSeedCounter(): void {
   _seedCounter = 0;
 }
 
+/**
+ * Returns the user's preferred action when clicking the scramble strip.
+ * 'next' = generate a new scramble, 'copy' = copy to clipboard, 'none' = nothing.
+ */
+export function getScrambleClickAction(): 'none' | 'next' | 'copy' {
+  return getSettings().scrambleClickAction;
+}
+
 export function getSeedCounter(): number {
   return _seedCounter;
 }
