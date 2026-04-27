@@ -52,8 +52,7 @@ function main() {
   }
   console.log('[audio]  decoded =>', lastPkt);
   if (!lastPkt || lastPkt.totalMs !== 83456 || lastPkt.state !== 'S') {
-    console.error('FAIL: audio decode mismatch');
-    process.exit(1);
+    throw new Error('FAIL: audio decode mismatch');
   }
 
   // 3) Idle packet.
@@ -68,8 +67,7 @@ function main() {
   }
   console.log('[idle]   decoded =>', idlePkt);
   if (!idlePkt || idlePkt.state !== ' ' || idlePkt.totalMs !== 0) {
-    console.error('FAIL: idle decode mismatch');
-    process.exit(1);
+    throw new Error('FAIL: idle decode mismatch');
   }
 
   console.log('OK — all smoke checks passed.');
