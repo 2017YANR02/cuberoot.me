@@ -68,7 +68,16 @@ export interface TimerSettings {
   cnMode: 'none' | 'single' | 'dual' | 'six';
 
   /** Speech-synthesis voice for inspection cues. 'none' = beeps as before. */
-  voiceInspection: 'none' | 'en' | 'zh';
+  voiceInspection: 'none' | 'en-male' | 'en-female' | 'zh-male' | 'zh-female';
+
+  /** Custom average windows in addition to ao5/ao12 (e.g. [7, 25]). */
+  customAoWindows: number[];
+
+  /** Action when user clicks the scramble strip. */
+  scrambleClickAction: 'none' | 'next' | 'copy';
+
+  /** Hide entire UI (topbar / scramble / charts) while timer is running. */
+  hideAllUiWhileRunning: boolean;
 
   /** Metronome on/off and tempo. */
   metronomeEnabled: boolean;
@@ -100,6 +109,9 @@ export const DEFAULTS: TimerSettings = {
   bldMemo: true,
   cnMode: 'none',
   voiceInspection: 'none',
+  customAoWindows: [7],
+  scrambleClickAction: 'next',
+  hideAllUiWhileRunning: false,
   metronomeEnabled: false,
   metronomeBpm: 60,
   syncSeed: null,
