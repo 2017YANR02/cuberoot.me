@@ -1,0 +1,1 @@
+import{n as e}from"./index-BdjGL_pj.js";import{g as t}from"./country_flags-DpfD5PQ1.js";var n=e();function r({record:e,variant:r=`standalone`}){let i=t(e??void 0);return i?(0,n.jsx)(`span`,{className:r===`inline`?`${i.className} record-badge--inline`:i.className,children:i.text}):null}export{r as t};
