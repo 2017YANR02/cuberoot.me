@@ -14,7 +14,7 @@
  *   51+    → darkest
  */
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { Solve } from '../types';
 import './practice_heatmap.css';
 
@@ -79,7 +79,29 @@ export default function PracticeHeatmap({
   cellSize = 11,
   className,
 }: PracticeHeatmapProps) {
-  const targetYear = year ?? new Date().getFullYear();
+  const nowYear = new Date().getFullYear();
+  const [targetYear, setTargetYear] = useState<number>(year ?? nowYear);
+
+  const availableYears = useMemo(() => {
+    const set = new Set<number>();
+    for (const s of solves) set.add(new Date(s.ts).getFullYear());
+    if (set.size === 0) set.add(nowYear);
+    else set.add(nowYear);
+    return Array.from(set).sort((a, b) => b - a);
+  }, [solves, nowYear]);
+
+  const yearIdx = availableYears.indexOf(targetYear);
+  const safeIdx = yearIdx === -1 ? 0 : yearIdx;
+  // Note: availableYears sorted DESC. idx 0 = newest, last = oldest.
+  // ▶ goes to a more recent year (idx - 1); ◀ goes to an older year (idx + 1).
+  const canNewer = safeIdx > 0;
+  const canOlder = safeIdx < availableYears.length - 1;
+  const goNewer = () => {
+    if (canNewer) setTargetYear(availableYears[safeIdx - 1]);
+  };
+  const goOlder = () => {
+    if (canOlder) setTargetYear(availableYears[safeIdx + 1]);
+  };
 
   const { cells, columnCount, monthLabels, total } = useMemo(() => {
     // Bucket solves by local-tz day key.
@@ -162,10 +184,36 @@ export default function PracticeHeatmap({
     : `${total} ${total === 1 ? 'solve' : 'solves'} in ${targetYear}`;
   const emptyLabel = isZh ? '还没有成绩。' : 'No solves yet.';
 
+  const prevLabel = isZh ? '上一年' : 'Previous year';
+  const nextLabel = isZh ? '下一年' : 'Next year';
+
   return (
     <div className={`tc-heatmap ${className ?? ''}`.trim()}>
       <div className="tc-heatmap-header">
         <span className="tc-heatmap-total">{totalLabel}</span>
+        <div className="tc-heatmap-year-nav">
+          <button
+            type="button"
+            className="tc-heatmap-year-btn"
+            onClick={goOlder}
+            disabled={!canOlder}
+            aria-label={prevLabel}
+            title={prevLabel}
+          >
+            ◀
+          </button>
+          <span className="tc-heatmap-year-label">{targetYear}</span>
+          <button
+            type="button"
+            className="tc-heatmap-year-btn"
+            onClick={goNewer}
+            disabled={!canNewer}
+            aria-label={nextLabel}
+            title={nextLabel}
+          >
+            ▶
+          </button>
+        </div>
       </div>
       {total === 0 ? (
         <div className="tc-heatmap-empty">{emptyLabel}</div>
