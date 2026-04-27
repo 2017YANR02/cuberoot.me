@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import type { EventId, Penalty, Solve } from '../types';
 import { makeSolve } from '../storage/db';
 
@@ -41,7 +41,13 @@ function parseTimeStr(input: string): { ms: number; penalty: Penalty } | null {
   if (!isFinite(h) || !isFinite(m) || !isFinite(sec)) return null;
   if (h < 0 || m < 0 || sec < 0) return null;
   const total = h * 3600000 + m * 60000 + Math.round(sec * 1000);
-  if (penalty === '+2') return { ms: total - 2000, penalty: '+2' }; // store raw before +2
+  if (penalty === '+2') {
+    // Stored ms = displayed ms - 2000 (i.e. raw "before +2" time). If the user
+    // typed e.g. "+2 1.50" the raw becomes negative and would corrupt PB
+    // tracking — reject it here and let the caller surface a hint.
+    if (total < 2000) return null;
+    return { ms: total - 2000, penalty: '+2' };
+  }
   return { ms: total, penalty };
 }
 
@@ -51,6 +57,8 @@ export default function ManualEntryModal({ event, currentScramble, isZh, onClose
   const [penalty, setPenalty] = useState<Penalty>('ok');
   const [comment, setComment] = useState('');
   const [stepCount, setStepCount] = useState('');
+  const titleId = useId();
+  const firstInputRef = useRef<HTMLInputElement | null>(null);
 
   const isFmc = event === '333fm';
 
@@ -59,6 +67,11 @@ export default function ManualEntryModal({ event, currentScramble, isZh, onClose
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
+
+  // Initial focus → first input. Mount-only.
+  useEffect(() => {
+    firstInputRef.current?.focus();
+  }, []);
 
   let parsed: { ms: number; penalty: Penalty } | null = null;
   let parseErr: string | null = null;
@@ -76,7 +89,12 @@ export default function ManualEntryModal({ event, currentScramble, isZh, onClose
     if (timeStr.trim() === '') {
       parseErr = isZh ? '请输入时间' : 'Enter time';
     } else if (!r) {
-      parseErr = isZh ? '时间格式无效' : 'Invalid time';
+      // Surface +2 < 2s specially — parseTimeStr rejects it as null.
+      if (/^\+2\s+/i.test(timeStr.trim())) {
+        parseErr = isZh ? '+2 时间须 ≥ 2 秒' : '+2 time must be ≥ 2 seconds';
+      } else {
+        parseErr = isZh ? '时间格式无效' : 'Invalid time';
+      }
     } else {
       parsed = r;
     }
@@ -99,30 +117,36 @@ export default function ManualEntryModal({ event, currentScramble, isZh, onClose
 
   return (
     <div className="timer-modal-overlay" onClick={onClose}>
-      <div className="timer-modal manual-entry-modal" onClick={(e) => e.stopPropagation()}>
-        <h2>{isZh ? '手动录入成绩' : 'Manual entry'}</h2>
+      <div
+        className="timer-modal manual-entry-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 id={titleId}>{isZh ? '手动录入成绩' : 'Manual entry'}</h2>
 
         <div className="modal-section">
           <label className="manual-label">
             {isFmc ? (isZh ? '步数' : 'Move count') : (isZh ? '时间' : 'Time')}
             {isFmc ? (
               <input
+                ref={firstInputRef}
                 className="manual-input"
                 type="text"
                 inputMode="numeric"
                 placeholder={isZh ? '例如：26' : 'e.g. 26'}
                 value={stepCount}
                 onChange={(e) => setStepCount(e.target.value)}
-                autoFocus
               />
             ) : (
               <input
+                ref={firstInputRef}
                 className="manual-input"
                 type="text"
                 placeholder={isZh ? '例如：12.34 或 1:23.45 或 DNF' : 'e.g. 12.34 or 1:23.45 or DNF'}
                 value={timeStr}
                 onChange={(e) => setTimeStr(e.target.value)}
-                autoFocus
               />
             )}
           </label>

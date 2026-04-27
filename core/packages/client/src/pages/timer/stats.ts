@@ -48,6 +48,7 @@ function mean(times: number[]): number {
  */
 function truncToCs(ms: number): number {
   if (!Number.isFinite(ms)) return ms;
+  if (ms <= 0) return 0;
   return Math.floor(ms / 10) * 10;
 }
 

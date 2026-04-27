@@ -5,7 +5,7 @@
  * only the T / Y / E PLLs, or one OLL group). An empty subset means "all".
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { OLL_CASES } from '../scramble/algs/oll_cases';
 import { PLL_CASES } from '../scramble/algs/pll_cases';
 import { getSettings, updateSettings } from '../settings';
@@ -26,6 +26,9 @@ export default function TrainerSubsetModal({ kind, isZh, onClose }: Props) {
     return new Set(allIds);
   });
 
+  const titleId = useId();
+  const firstButtonRef = useRef<HTMLButtonElement | null>(null);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -33,6 +36,11 @@ export default function TrainerSubsetModal({ kind, isZh, onClose }: Props) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
+
+  // Initial focus → first toolbar button. Mount-only.
+  useEffect(() => {
+    firstButtonRef.current?.focus();
+  }, []);
 
   const toggle = (id: string) => {
     setSelected(prev => {
@@ -79,8 +87,14 @@ export default function TrainerSubsetModal({ kind, isZh, onClose }: Props) {
 
   return (
     <div className="timer-modal-overlay" onClick={onClose}>
-      <div className="timer-modal trainer-subset-modal" onClick={(e) => e.stopPropagation()}>
-        <h2>
+      <div
+        className="timer-modal trainer-subset-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 id={titleId}>
           {kind === 'oll'
             ? (isZh ? 'OLL 子集' : 'OLL subset')
             : (isZh ? 'PLL 子集' : 'PLL subset')}
@@ -88,7 +102,7 @@ export default function TrainerSubsetModal({ kind, isZh, onClose }: Props) {
         </h2>
 
         <div className="trainer-subset-toolbar">
-          <button type="button" onClick={selectAll}>{isZh ? '全选' : 'Select all'}</button>
+          <button ref={firstButtonRef} type="button" onClick={selectAll}>{isZh ? '全选' : 'Select all'}</button>
           <button type="button" onClick={selectNone}>{isZh ? '全不选' : 'Clear'}</button>
           <button type="button" onClick={disableSubset}>
             {isZh ? '关闭子集（随机所有）' : 'Disable subset (random all)'}

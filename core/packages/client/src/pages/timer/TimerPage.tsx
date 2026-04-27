@@ -261,15 +261,29 @@ export default function TimerPage() {
   const solvesRef = useRef(solves);
   useEffect(() => { solvesRef.current = solves; }, [solves]);
 
-  const onTouchStart = useCallback((e: React.TouchEvent) => {
-    e.preventDefault();
-    warmupSound();
-    onPressDown();
-  }, [onPressDown]);
-  const onTouchEnd = useCallback((e: React.TouchEvent) => {
-    e.preventDefault();
-    onPressUp();
-  }, [onPressUp]);
+  // Native touch listeners with { passive: false } — React 18 binds JSX
+  // onTouchStart/End as passive by default, so e.preventDefault() inside them
+  // is ignored on iOS and the page scrolls under the finger.
+  const timerCenterRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const el = timerCenterRef.current;
+    if (!el) return;
+    const handleTouchStart = (e: TouchEvent) => {
+      e.preventDefault();
+      warmupSound();
+      onPressDown();
+    };
+    const handleTouchEnd = (e: TouchEvent) => {
+      e.preventDefault();
+      onPressUp();
+    };
+    el.addEventListener('touchstart', handleTouchStart, { passive: false });
+    el.addEventListener('touchend', handleTouchEnd, { passive: false });
+    return () => {
+      el.removeEventListener('touchstart', handleTouchStart);
+      el.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [onPressDown, onPressUp]);
 
   // ── Solve mutators ──────────────────────────────────────────────
   const updateSolve = useCallback((solveId: string, patch: Partial<Solve>) => {
@@ -683,8 +697,7 @@ export default function TimerPage() {
 
       <div
         className="timer-center"
-        onTouchStart={onTouchStart}
-        onTouchEnd={onTouchEnd}
+        ref={timerCenterRef}
         onMouseDown={onPressDown}
         onMouseUp={onPressUp}
       >
@@ -795,29 +808,36 @@ export default function TimerPage() {
         </div>
       )}
 
-      {modalSolve && (
-        <SolveModal
-          key={modalSolve.s.id}
-          solve={modalSolve.s}
-          index={modalSolve.idx}
-          isZh={isZh}
-          onClose={() => setModalSolve(null)}
-          onChangePenalty={(p) => {
-            updateSolve(modalSolve.s.id, { penalty: p });
-            setModalSolve({ ...modalSolve, s: { ...modalSolve.s, penalty: p } });
-            if (modalSolve.idx === solves.length - 1) setLastPenalty(p);
-          }}
-          onChangeComment={(text) => {
-            updateSolve(modalSolve.s.id, { comment: text });
-            setModalSolve({ ...modalSolve, s: { ...modalSolve.s, comment: text } });
-          }}
-          onDelete={() => {
-            deleteSolve(modalSolve.s.id);
-            setModalSolve(null);
-            if (modalSolve.idx === solves.length - 1) setLastPenalty(null);
-          }}
-        />
-      )}
+      {modalSolve && (() => {
+        // Re-locate the solve by id so insert/delete elsewhere doesn't desync
+        // the captured idx — `isLatest` must reflect the current array.
+        const liveIdx = solves.findIndex(x => x.id === modalSolve.s.id);
+        const displayIdx = liveIdx >= 0 ? liveIdx : modalSolve.idx;
+        const isLatest = liveIdx >= 0 && liveIdx === solves.length - 1;
+        return (
+          <SolveModal
+            key={modalSolve.s.id}
+            solve={modalSolve.s}
+            index={displayIdx}
+            isZh={isZh}
+            onClose={() => setModalSolve(null)}
+            onChangePenalty={(p) => {
+              updateSolve(modalSolve.s.id, { penalty: p });
+              setModalSolve({ ...modalSolve, s: { ...modalSolve.s, penalty: p } });
+              if (isLatest) setLastPenalty(p);
+            }}
+            onChangeComment={(text) => {
+              updateSolve(modalSolve.s.id, { comment: text });
+              setModalSolve({ ...modalSolve, s: { ...modalSolve.s, comment: text } });
+            }}
+            onDelete={() => {
+              deleteSolve(modalSolve.s.id);
+              setModalSolve(null);
+              if (isLatest) setLastPenalty(null);
+            }}
+          />
+        );
+      })()}
 
       {settingsOpen && (
         <SettingsPanel isZh={isZh} onClose={() => setSettingsOpen(false)} />
