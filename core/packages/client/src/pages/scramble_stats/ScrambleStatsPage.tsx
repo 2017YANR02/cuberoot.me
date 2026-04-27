@@ -19,16 +19,27 @@ interface VariantData {
   data: Record<string, Record<string, HistEntry>>;
 }
 
-interface DistributionJson {
-  meta: { sample_count: number; source: string; generated_at: string; subset_keys: string[] };
+interface SetData {
+  label: string;
+  label_zh: string | null;
+  sample_count: number;
   variants: Record<string, VariantData>;
 }
 
-// NOTE: examples.json 懒加载；[id, scramble, bottomColorLetter]。id = wca_scrambles_no_wide_move.txt 里的编号
+interface DistributionJson {
+  meta: { generated_at: string; subset_keys: string[] };
+  sets: Record<string, SetData>;
+}
+
+// NOTE: examples.json 懒加载；[id, scramble, bottomColorLetter]
+// 路径:sets[setKey].variants[variant][stage][subsetKey][bin] = ExampleSample[]
 type ExampleSample = [string, string, string];
+interface ExamplesSet {
+  variants: Record<string, Record<string, Record<string, Record<string, ExampleSample[]>>>>;
+}
 interface ExamplesJson {
   meta: { generated_at: string };
-  variants: Record<string, Record<string, Record<string, Record<string, ExampleSample[]>>>>;
+  sets: Record<string, ExamplesSet>;
 }
 
 type VariantKey = 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair';
@@ -89,6 +100,7 @@ const STAGE_LABEL: Record<string, { en: string; zh: string }> = {
   pseudo_xxxcross: { en: 'XXXCross', zh: 'XXXCross' },
   pseudo_xxxcross_pseudo_pair: { en: 'XXXCross', zh: 'XXXCross' },
   f2l: { en: 'F2L', zh: 'F2L' },
+  xxxxcross: { en: 'F2L', zh: 'F2L' },
   eo_xxxxcross: { en: 'F2L', zh: 'F2L' },
 };
 
@@ -170,10 +182,21 @@ export default function ScrambleStatsPage() {
       .catch((e) => setError(String(e)));
   }, []);
 
+  // NOTE: 进 distribution.json 后,scrambleSet 还是初始 'wca';如果数据里有但当前不存在该 key,
+  // 需要回退到第一个有效 key
+  useEffect(() => {
+    if (data && !data.sets[scrambleSet]) {
+      const first = Object.keys(data.sets)[0];
+      if (first) setScrambleSet(first);
+    }
+  }, [data, scrambleSet]);
+
+  const currentSet = useMemo(() => data?.sets[scrambleSet] ?? null, [data, scrambleSet]);
+
   const currentStages = useMemo(() => {
-    if (!data) return [] as string[];
-    return data.variants[variant]?.stages ?? [];
-  }, [data, variant]);
+    if (!currentSet) return [] as string[];
+    return currentSet.variants[variant]?.stages ?? [];
+  }, [currentSet, variant]);
 
   useEffect(() => {
     if (currentStages.length > 0 && !currentStages.includes(stage)) {
@@ -230,14 +253,14 @@ export default function ScrambleStatsPage() {
 
   // NOTE: 当前 (variant, stage, subset) 的直方图全部 bin = 预览可点击；4 个 picked bin 额外提供 ⬇ 下载
   const previewBins = useMemo<number[]>(() => {
-    if (!data) return [];
-    const counts = data.variants[variant]?.data[stage]?.[subsetKey]?.counts ?? {};
+    if (!currentSet) return [];
+    const counts = currentSet.variants[variant]?.data[stage]?.[subsetKey]?.counts ?? {};
     return Object.keys(counts).map(Number).sort((a, b) => a - b);
-  }, [data, variant, stage, subsetKey]);
+  }, [currentSet, variant, stage, subsetKey]);
   const downloadBins = useMemo<number[]>(() => {
-    if (!data) return [];
-    return data.variants[variant]?.data[stage]?.[subsetKey]?.example_bins ?? [];
-  }, [data, variant, stage, subsetKey]);
+    if (!currentSet) return [];
+    return currentSet.variants[variant]?.data[stage]?.[subsetKey]?.example_bins ?? [];
+  }, [currentSet, variant, stage, subsetKey]);
 
   const ensureExamplesLoaded = () => {
     if (examples || examplesLoading) return;
@@ -269,12 +292,12 @@ export default function ScrambleStatsPage() {
 
   const currentSamples = useMemo<ExampleSample[] | null>(() => {
     if (selectedBin === null || !examples) return null;
-    return examples.variants[variant]?.[stage]?.[subsetKey]?.[String(selectedBin)] ?? null;
-  }, [examples, variant, stage, subsetKey, selectedBin]);
+    return examples.sets[scrambleSet]?.variants[variant]?.[stage]?.[subsetKey]?.[String(selectedBin)] ?? null;
+  }, [examples, scrambleSet, variant, stage, subsetKey, selectedBin]);
 
   const series = useMemo<HistSeries[]>(() => {
-    if (!data) return [];
-    const v = data.variants[variant];
+    if (!currentSet) return [];
+    const v = currentSet.variants[variant];
     if (!v) return [];
     const stageData = v.data[stage];
     if (!stageData) return [];
@@ -288,7 +311,7 @@ export default function ScrambleStatsPage() {
       legendHint: cyclable ? (isZh ? '点击切换' : 'Click to cycle') : undefined,
     }];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, variant, stage, subsetKey, selectedColors, modeLabel, cyclable, isZh,
+  }, [currentSet, variant, stage, subsetKey, selectedColors, modeLabel, cyclable, isZh,
       colorMode, singleColor, dualPairKey, quadExcludedPairKey]);
 
   const extendedStats = useMemo(() => {
@@ -298,8 +321,8 @@ export default function ScrambleStatsPage() {
 
   // NOTE: CN benefit — 黄/白单色 vs 双色底(黄白) vs 六色底，相对白底基线
   const cnBenefit = useMemo(() => {
-    if (!data) return null;
-    const v = data.variants[variant];
+    if (!currentSet) return null;
+    const v = currentSet.variants[variant];
     if (!v) return null;
     const sd = v.data[stage];
     if (!sd) return null;
@@ -314,7 +337,7 @@ export default function ScrambleStatsPage() {
       wyMean: wy.mean,
       all6Mean: all6.mean,
     };
-  }, [data, variant, stage]);
+  }, [currentSet, variant, stage]);
 
   if (error) {
     return (
@@ -346,7 +369,29 @@ export default function ScrambleStatsPage() {
     );
   }
 
-  const vData = data.variants[variant];
+  const vData = currentSet?.variants[variant];
+
+  // NOTE: 来源描述句:wca 给固定文案;其他 set 用 set.label / label_zh + 样本数
+  const sourceText = (() => {
+    if (scrambleSet === 'wca') {
+      const n = currentSet?.sample_count.toLocaleString() ?? '?';
+      return isZh
+        ? `来源: WCA 历史 ${n} 条三阶打乱,覆盖三阶速拧 / 单手 / 盲拧 / 多盲 / 最少步 / 脚拧 6 个项目;每条按 6 种底色方向(黄 / 红 / 白 / 橙 / 蓝 / 绿)求阶段最优步数的分布。`
+        : `Source: ${n} WCA historical 3×3 scrambles from 6 events (3×3, OH, BLD, Multi-BLD, FMC, Feet); each analyzed across 6 bottom-color orientations (Y/R/W/O/B/G). Distribution of stage-optimal move counts.`;
+    }
+    if (!currentSet) return '';
+    const labelDisp = (isZh && currentSet.label_zh) ? currentSet.label_zh : currentSet.label;
+    const n = currentSet.sample_count.toLocaleString();
+    return isZh
+      ? `来源: ${labelDisp},共 ${n} 条样本;每条按 6 种底色方向求阶段最优步数的分布。`
+      : `Source: ${labelDisp} (${n} samples); each analyzed across 6 bottom-color orientations.`;
+  })();
+
+  // dropdown 选项从 data.sets 派生
+  const setOptions = Object.entries(data.sets).map(([key, s]) => ({
+    value: key,
+    label: `${(isZh && s.label_zh) ? s.label_zh : s.label} (${s.sample_count.toLocaleString()})`,
+  }));
 
   return (
     <div className="scramble-stats-page">
@@ -356,18 +401,14 @@ export default function ScrambleStatsPage() {
           <LangToggle />
         </div>
         <h1>{isZh ? '打乱难度分布' : 'Scramble Distribution'}</h1>
-        <p className="scramble-stats-note">
-          {isZh
-            ? `来源: WCA 历史 ${data.meta.sample_count.toLocaleString()} 条三阶打乱，覆盖三阶速拧 / 单手 / 盲拧 / 多盲 / 最少步 / 脚拧 6 个项目；每条按 6 种底色方向（黄 / 红 / 白 / 橙 / 蓝 / 绿）求阶段最优步数的分布。`
-            : `Source: ${data.meta.sample_count.toLocaleString()} WCA historical 3×3 scrambles from 6 events (3×3, OH, BLD, Multi-BLD, FMC, Feet); each analyzed across 6 bottom-color orientations (Y/R/W/O/B/G). Distribution of stage-optimal move counts.`}
-        </p>
+        <p className="scramble-stats-note">{sourceText}</p>
       </div>
 
       <div className="scramble-stats-controls">
         <label>
           <span>{isZh ? '变体' : 'Variant'}</span>
           <select value={variant} onChange={(e) => setVariant(e.target.value as VariantKey)}>
-            {(Object.keys(data.variants) as VariantKey[]).map((v) => (
+            {currentSet && (Object.keys(currentSet.variants) as VariantKey[]).map((v) => (
               <option key={v} value={v}>{VARIANT_LABEL[v][isZh ? 'zh' : 'en']}</option>
             ))}
           </select>
@@ -402,12 +443,7 @@ export default function ScrambleStatsPage() {
           onChartModeToggle={() => setChartMode(chartMode === 'pdf' ? 'cdf' : 'pdf')}
           onYModeToggle={() => setYMode(yMode === 'percent' ? 'count' : 'percent')}
           yModeLabel={yMode === 'percent' ? (isZh ? '百分比' : '%') : (isZh ? '数量' : 'count')}
-          setOptions={[{
-            value: 'wca',
-            label: isZh
-              ? `WCA (${data.meta.sample_count.toLocaleString()})`
-              : `WCA (${data.meta.sample_count.toLocaleString()})`,
-          }]}
+          setOptions={setOptions}
           activeSet={scrambleSet}
           onSetChange={setScrambleSet}
         />
@@ -428,6 +464,7 @@ export default function ScrambleStatsPage() {
 
       <ExamplesPanel
         isZh={isZh}
+        scrambleSet={scrambleSet}
         variant={variant}
         stage={stage}
         subsetKey={subsetKey}
@@ -457,7 +494,7 @@ export default function ScrambleStatsPage() {
 
       <div className="scramble-stats-meta">
         <span>
-          {isZh ? '本变体样本' : 'Variant samples'}: {vData.sample_count.toLocaleString()}
+          {isZh ? '本变体样本' : 'Variant samples'}: {(vData?.sample_count ?? 0).toLocaleString()}
         </span>
         <span>
           {isZh ? '生成时间' : 'Generated'}: {new Date(data.meta.generated_at).toLocaleString()}
@@ -511,6 +548,7 @@ function DownloadIcon() {
 // 下载按钮在标题下方一排，对应 min/2nd/3rd/max 4 个极端 bin
 function ExamplesPanel({
   isZh,
+  scrambleSet,
   variant,
   stage,
   subsetKey,
@@ -521,6 +559,7 @@ function ExamplesPanel({
   samples,
 }: {
   isZh: boolean;
+  scrambleSet: string;
   variant: string;
   stage: string;
   subsetKey: string;
@@ -543,8 +582,8 @@ function ExamplesPanel({
         {selectedDownloadable && (
           <a
             className="scramble-stats-download-btn"
-            href={`/stats/data/scramble/downloads/${variant}/${stage}/${subsetKey}_${selectedBin}.txt`}
-            download={`${variant}_${stage}_${subsetKey}_${selectedBin}.txt`}
+            href={`/stats/data/scramble/downloads/${scrambleSet}/${variant}/${stage}/${subsetKey}_${selectedBin}.txt`}
+            download={`${scrambleSet}_${variant}_${stage}_${subsetKey}_${selectedBin}.txt`}
             title={isZh ? `下载 ${selectedBin} 步完整 txt` : `Download full txt for ${selectedBin} moves`}
             aria-label={isZh ? `下载 ${selectedBin} 步完整 txt` : `Download full txt for ${selectedBin} moves`}
           >

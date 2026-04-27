@@ -5,7 +5,7 @@ description: "Use when regenerating `stats/data/scramble/*.json` or touching `co
 
 # Scramble Stats Build
 
-把 `D:\cube\solver` 产的 5 份 CSV 聚合成 `stats/data/scramble/distribution.json`，给 `/scramble-stats` 用。
+把 `D:\cube\solver` 产的 5 份 CSV 聚合成 `stats/data/scramble/distribution.json`,给 `/scramble-stats` 用。**支持多个 set**(WCA 历史 + state-based 数据集),UI 上 dropdown 切换。
 
 ## 跑
 
@@ -13,13 +13,34 @@ description: "Use when regenerating `stats/data/scramble/*.json` or touching `co
 pnpm --filter @cuberoot/scramble-stats-build build
 ```
 
-`config.yml` 指向 CSV 目录（默认 `D:/cube/scramble/wca_scramble/stat`，gitignored）。CSV 370MB 永不进 git。
+`config.yml` 是 `sets:` 数组,每项一个 csv_dir + scrambles_txt,例如:
+
+```yaml
+sets:
+  - key: wca
+    label: WCA
+    csv_dir: D:/cube/scramble/wca_scramble/stat
+    scrambles_txt: D:/cube/scramble/wca_scramble/wca_scrambles_no_wide_move.txt
+  - key: xcross_2_col_10f
+    label: 10-step XCross dual-color states
+    label_zh: 双色底 XCross 10步状态
+    csv_dir: D:/cube/state/xcross_2_col_10f/stat
+    scrambles_txt: D:/cube/state/xcross_2_col_10f/scrambles.txt
+```
+
+CSV 数据全 gitignored(`D:/cube/scramble/`、`D:/cube/state/`),没几百 MB 永不进 git。`config.yml` 也 gitignored,只 commit `config.yml.example`。
+
+## 数据来源约定
+
+- `D:/cube/scramble/<set>/`:WCA 等基于真实打乱的数据集
+- `D:/cube/state/<set>/`:基于"状态空间穷举/采样"的数据集(去同构、深度上限等)
+- C++ analyzer 源码 / 二进制留在 `D:/cube/solver/` 或 `D:/cube/solver_wip/`,**不**进数据目录
 
 ## CSV schema
 
 | 文件 | id 列 | stages | angles |
 |---|---|---|---|
-| `std.csv` | `id` | `cross xcross xxcross xxxcross f2l` | `z0 z2 z3 z1 x3 x1` |
+| `std.csv` | `id` | `cross xcross xxcross xxxcross xxxxcross` | `z0 z2 z3 z1 x3 x1` |
 | `eo.csv` | `id` | `eo_cross … eo_xxxxcross`（5 阶段） | 同上 |
 | `pair.csv` | `scramble` | `cross_pair xcross_pair xxcross_pair xxxcross_pair` | **`'' z2 z' z x' x`** ← 特殊,直接用 rotation 串当后缀 |
 | `pseudo.csv` | `id` | `pseudo_cross … pseudo_xxxcross` | `z0,z2,z3,z1,x3,x1` |
