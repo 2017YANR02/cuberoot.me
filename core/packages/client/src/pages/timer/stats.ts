@@ -15,6 +15,15 @@ function trimCount(n: number): number {
   return Math.max(1, Math.ceil(n / 20));
 }
 
+/**
+ * Per WCA Regulations 9f9: average is invalid (DNF) if more than ONE solve in
+ * the window is DNF for ao5/ao12. For larger windows we use a more lenient
+ * "trim count" cap consistent with most timers (cstimer / DCTimer behavior).
+ */
+function maxDnfsAllowed(n: number): number {
+  return n <= 12 ? 1 : trimCount(n);
+}
+
 /** Trimmed mean over an array of effective-ms numbers (Infinity = DNF). */
 function trimmedMean(times: number[]): number {
   const n = times.length;
@@ -22,7 +31,7 @@ function trimmedMean(times: number[]): number {
   const trim = trimCount(n);
   const sorted = [...times].sort((a, b) => a - b);
   const dnfCount = sorted.filter(t => t === Infinity).length;
-  if (dnfCount > trim) return Infinity;
+  if (dnfCount > maxDnfsAllowed(n)) return Infinity;
   const middle = sorted.slice(trim, n - trim);
   return mean(middle);
 }
@@ -31,6 +40,15 @@ function mean(times: number[]): number {
   if (times.length === 0) return NaN;
   if (times.some(t => t === Infinity)) return Infinity;
   return times.reduce((a, b) => a + b, 0) / times.length;
+}
+
+/**
+ * Truncate to centiseconds (10ms) — WCA standard for averages and means
+ * (Regulations 9f3 / 9f7). Single-time values are reported as-is (no trunc).
+ */
+function truncToCs(ms: number): number {
+  if (!Number.isFinite(ms)) return ms;
+  return Math.floor(ms / 10) * 10;
 }
 
 /**
@@ -45,7 +63,7 @@ export function averageOfN(solves: Solve[], n: number): number | null {
   if (solves.length < n) return null;
   const last = solves.slice(-n).map(effectiveMs);
   if (n === 1) return last[0];
-  return Math.round(trimmedMean(last));
+  return truncToCs(trimmedMean(last));
 }
 
 /** Best avg of N across the entire solve history. */
@@ -57,7 +75,7 @@ export function bestAverageOfN(solves: Solve[], n: number): number | null {
     const avg = n === 1 ? window[0] : trimmedMean(window);
     if (avg < best) best = avg;
   }
-  return best === Infinity ? Infinity : Math.round(best);
+  return Number.isFinite(best) ? truncToCs(best) : best;
 }
 
 /** Best single (lowest effective time, ignoring DNFs unless all are DNF). */
@@ -88,7 +106,7 @@ export function meanOfAll(solves: Solve[]): number | null {
   if (solves.length === 0) return null;
   const times = solves.map(effectiveMs);
   if (times.some(t => t === Infinity)) return Infinity;
-  return Math.round(times.reduce((a, b) => a + b, 0) / times.length);
+  return truncToCs(times.reduce((a, b) => a + b, 0) / times.length);
 }
 
 /** Number of solves (incl. DNF). */

@@ -112,9 +112,5 @@ export function scrambleClock(rng: () => number): string {
     const n = -5 + Math.floor(rng() * 12);
     tokens.push(`${p}${n >= 0 ? n + '+' : (-n) + '-'}`);
   }
-  // Random pin orientation suffix
-  const pinFlags = ['UR', 'DR', 'DL', 'UL'];
-  const flagged = pinFlags.filter(() => rng() < 0.5);
-  if (flagged.length) tokens.push(flagged.join(''));
   return tokens.join(' ');
 }

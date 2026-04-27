@@ -29,7 +29,7 @@ import type { EventId, Penalty, Session, Solve } from './types';
 import { EVENTS } from './types';
 import {
   loadAll,
-  mutate,
+  saveAll,
   newSession,
   defaultSessionsForFreshDb,
   exportJson,
@@ -56,18 +56,11 @@ export default function TimerPage() {
   });
   const [active, setActive] = useState<Record<string, string>>(() => loadAll().active);
 
-  // Persist initial state if we filled in defaults.
+  // Single source of truth for persistence: write whenever sessions/active change.
+  // This avoids stale-closure races inside individual mutation callbacks.
   useEffect(() => {
-    const cur = loadAll();
-    if (cur.sessions.length === 0) {
-      mutate(db => {
-        db.sessions = sessions;
-        db.active = active;
-      });
-    }
-    // intentionally only on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    saveAll(sessions, active);
+  }, [sessions, active]);
 
   const [event, setEvent] = useState<EventId>(() => {
     const stored = localStorage.getItem('cuberoot-timer.event');
@@ -84,18 +77,20 @@ export default function TimerPage() {
     [sessions, event],
   );
 
-  // Auto-create a session when the event has none.
+  // Auto-create a session when the event has none. Functional updater + length
+  // guard inside the setter prevents the race where two concurrent renders
+  // both observe length === 0 and each create a session.
   useEffect(() => {
-    if (sessionsForEvent.length === 0) {
+    if (sessionsForEvent.length > 0) return;
+    setSessions(prev => {
+      const have = prev.some(s => s.event === event);
+      if (have) return prev;
       const fresh = newSession(event, isZh ? '会话 1' : 'Session 1');
-      const next = [...sessions, fresh];
-      setSessions(next);
-      const newActive = { ...active, [event]: fresh.id };
-      setActive(newActive);
-      mutate(db => { db.sessions = next; db.active = newActive; });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [event, sessionsForEvent.length]);
+      // Active id for the event is set in a paired setter below.
+      setActive(prevActive => ({ ...prevActive, [event]: fresh.id }));
+      return [...prev, fresh];
+    });
+  }, [event, isZh, sessionsForEvent.length]);
 
   const activeSessionId = active[event] ?? sessionsForEvent[0]?.id;
   const activeSession = useMemo(
@@ -104,28 +99,31 @@ export default function TimerPage() {
   );
 
   const setActiveSession = useCallback((id: string) => {
-    const next = { ...active, [event]: id };
-    setActive(next);
-    mutate(db => { db.active = next; });
-  }, [active, event]);
-
-  // ── Scramble ────────────────────────────────────────────────────
-  const [scramble, setScramble] = useState(() => generateScramble(event));
-  const nextScramble = useCallback(() => {
-    setScramble(generateScramble(event));
+    setActive(prev => ({ ...prev, [event]: id }));
   }, [event]);
 
-  // Regenerate scramble whenever event changes.
+  // ── Scramble ────────────────────────────────────────────────────
+  // Effect-driven scramble: re-generate whenever the event changes. The
+  // initial render uses `useState` with `generateScramble(event)` only via
+  // `useEffect`, so no double-generate on mount.
+  const [scramble, setScramble] = useState('');
   useEffect(() => {
+    setScramble(generateScramble(event));
+  }, [event]);
+  const nextScramble = useCallback(() => {
     setScramble(generateScramble(event));
   }, [event]);
 
   // ── Solve recording ─────────────────────────────────────────────
   const [lastPenalty, setLastPenalty] = useState<Penalty | null>(null);
   const scrambleAtStartRef = useRef<string>(scramble);
+  // Active session id, accessed from a stable record callback below.
+  const activeSessionIdRef = useRef<string | undefined>(activeSession?.id);
+  activeSessionIdRef.current = activeSession?.id;
 
   const recordSolve = useCallback((timeMs: number) => {
-    if (!activeSession) return;
+    const sid = activeSessionIdRef.current;
+    if (!sid) return;
     const solve = makeSolve({
       timeMs,
       scramble: scrambleAtStartRef.current,
@@ -133,38 +131,39 @@ export default function TimerPage() {
       penalty: 'ok',
     });
     setLastPenalty('ok');
-    const next = sessions.map(s =>
-      s.id === activeSession.id ? { ...s, solves: [...s.solves, solve] } : s,
-    );
-    setSessions(next);
-    mutate(db => { db.sessions = next; });
+    setSessions(prev => prev.map(s =>
+      s.id === sid ? { ...s, solves: [...s.solves, solve] } : s,
+    ));
     nextScramble();
-  }, [activeSession, sessions, event, nextScramble]);
+  }, [event, nextScramble]);
 
   const timer = useTimer(recordSolve);
 
-  // Capture the scramble the user actually solved against, before pressing space.
+  // Capture the scramble the user actually solved against. Lock it in any phase
+  // before the timer is running so quick "stopped → press → restart" flows
+  // still record against the freshly generated scramble.
   useEffect(() => {
-    if (timer.phase === 'holding' || timer.phase === 'idle') {
+    if (timer.phase !== 'running') {
       scrambleAtStartRef.current = scramble;
     }
   }, [timer.phase, scramble]);
 
   // ── Keyboard / pointer wiring ───────────────────────────────────
-  // We bind to the whole document so the user can type from anywhere on the page.
-  // Repeat keys are filtered (a held-down spacebar fires keydown repeatedly).
+  // The timer handle's onPressDown / onPressUp / reset are stable (built with
+  // empty-ish deps inside useTimer), so we depend on those concrete callbacks
+  // rather than the whole `timer` object — preventing re-attachment on every
+  // displayMs tick.
+  const { onPressDown, onPressUp, reset } = timer;
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.repeat) return;
-      // Allow inputs (modal etc.) to type without triggering timer.
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
       if (e.code === 'Space') {
         e.preventDefault();
-        timer.onPressDown();
+        onPressDown();
       } else if (e.code === 'Escape') {
-        // Cancel current solve attempt
-        timer.reset();
+        reset();
       }
     };
     const onKeyUp = (e: KeyboardEvent) => {
@@ -172,7 +171,7 @@ export default function TimerPage() {
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
       if (e.code === 'Space') {
         e.preventDefault();
-        timer.onPressUp();
+        onPressUp();
       }
     };
     window.addEventListener('keydown', onKeyDown);
@@ -181,57 +180,47 @@ export default function TimerPage() {
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
     };
-  }, [timer]);
+  }, [onPressDown, onPressUp, reset]);
 
   // Touch handlers on the timer-center
   const onTouchStart = useCallback((e: React.TouchEvent) => {
     e.preventDefault();
-    timer.onPressDown();
-  }, [timer]);
+    onPressDown();
+  }, [onPressDown]);
   const onTouchEnd = useCallback((e: React.TouchEvent) => {
     e.preventDefault();
-    timer.onPressUp();
-  }, [timer]);
-  const onMouseDown = useCallback(() => {
-    timer.onPressDown();
-  }, [timer]);
-  const onMouseUp = useCallback(() => {
-    timer.onPressUp();
-  }, [timer]);
+    onPressUp();
+  }, [onPressUp]);
 
   // ── Solve actions (penalty, delete) ─────────────────────────────
   const updateSolve = useCallback((solveId: string, patch: Partial<Solve>) => {
-    if (!activeSession) return;
-    const next = sessions.map(s => {
-      if (s.id !== activeSession.id) return s;
+    const sid = activeSessionIdRef.current;
+    if (!sid) return;
+    setSessions(prev => prev.map(s => {
+      if (s.id !== sid) return s;
       return { ...s, solves: s.solves.map(sv => sv.id === solveId ? { ...sv, ...patch } : sv) };
-    });
-    setSessions(next);
-    mutate(db => { db.sessions = next; });
-  }, [activeSession, sessions]);
+    }));
+  }, []);
 
   const deleteSolve = useCallback((solveId: string) => {
-    if (!activeSession) return;
-    const next = sessions.map(s => {
-      if (s.id !== activeSession.id) return s;
+    const sid = activeSessionIdRef.current;
+    if (!sid) return;
+    setSessions(prev => prev.map(s => {
+      if (s.id !== sid) return s;
       return { ...s, solves: s.solves.filter(sv => sv.id !== solveId) };
-    });
-    setSessions(next);
-    mutate(db => { db.sessions = next; });
-  }, [activeSession, sessions]);
+    }));
+  }, []);
 
   // Quick-action: change penalty of last solve (the one we just recorded).
   const changeLastPenalty = useCallback((p: Penalty) => {
-    if (!activeSession) return;
-    const last = activeSession.solves[activeSession.solves.length - 1];
+    const last = activeSession?.solves[activeSession.solves.length - 1];
     if (!last) return;
     updateSolve(last.id, { penalty: p });
     setLastPenalty(p);
   }, [activeSession, updateSolve]);
 
   const deleteLastSolve = useCallback(() => {
-    if (!activeSession) return;
-    const last = activeSession.solves[activeSession.solves.length - 1];
+    const last = activeSession?.solves[activeSession.solves.length - 1];
     if (!last) return;
     if (!confirm(isZh ? '删除最后一次成绩？' : 'Delete last solve?')) return;
     deleteSolve(last.id);
@@ -246,21 +235,17 @@ export default function TimerPage() {
     const name = prompt(isZh ? '新会话名称：' : 'New session name:', isZh ? `会话 ${sessionsForEvent.length + 1}` : `Session ${sessionsForEvent.length + 1}`);
     if (!name) return;
     const fresh = newSession(event, name);
-    const next = [...sessions, fresh];
-    setSessions(next);
-    const newActive = { ...active, [event]: fresh.id };
-    setActive(newActive);
-    mutate(db => { db.sessions = next; db.active = newActive; });
-  }, [active, event, isZh, sessions, sessionsForEvent.length]);
+    setSessions(prev => [...prev, fresh]);
+    setActive(prev => ({ ...prev, [event]: fresh.id }));
+  }, [event, isZh, sessionsForEvent.length]);
 
   const renameSession = useCallback(() => {
     if (!activeSession) return;
     const name = prompt(isZh ? '重命名会话：' : 'Rename session:', activeSession.name);
     if (!name) return;
-    const next = sessions.map(s => s.id === activeSession.id ? { ...s, name } : s);
-    setSessions(next);
-    mutate(db => { db.sessions = next; });
-  }, [activeSession, isZh, sessions]);
+    const sid = activeSession.id;
+    setSessions(prev => prev.map(s => s.id === sid ? { ...s, name } : s));
+  }, [activeSession, isZh]);
 
   const deleteSession = useCallback(() => {
     if (!activeSession) return;
@@ -269,22 +254,22 @@ export default function TimerPage() {
         ? `删除会话「${activeSession.name}」及其所有 ${activeSession.solves.length} 次成绩？`
         : `Delete session "${activeSession.name}" and all ${activeSession.solves.length} solves?`,
     )) return;
-    const next = sessions.filter(s => s.id !== activeSession.id);
-    setSessions(next);
-    const newActive = { ...active };
-    delete newActive[event];
-    setActive(newActive);
-    mutate(db => { db.sessions = next; db.active = newActive; });
-  }, [active, activeSession, event, isZh, sessions]);
+    const sid = activeSession.id;
+    setSessions(prev => prev.filter(s => s.id !== sid));
+    setActive(prev => {
+      const next = { ...prev };
+      delete next[event];
+      return next;
+    });
+  }, [activeSession, event, isZh]);
 
   const clearSession = useCallback(() => {
     if (!activeSession) return;
     if (!confirm(isZh ? `清空会话「${activeSession.name}」的所有成绩？` : `Clear all solves in "${activeSession.name}"?`)) return;
-    const next = sessions.map(s => s.id === activeSession.id ? { ...s, solves: [] } : s);
-    setSessions(next);
-    mutate(db => { db.sessions = next; });
+    const sid = activeSession.id;
+    setSessions(prev => prev.map(s => s.id === sid ? { ...s, solves: [] } : s));
     setLastPenalty(null);
-  }, [activeSession, isZh, sessions]);
+  }, [activeSession, isZh]);
 
   // ── Import / export ────────────────────────────────────────────
   const handleExport = useCallback(() => {
@@ -392,8 +377,8 @@ export default function TimerPage() {
         className="timer-center"
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
-        onMouseDown={onMouseDown}
-        onMouseUp={onMouseUp}
+        onMouseDown={onPressDown}
+        onMouseUp={onPressUp}
       >
         <TimerDisplay
           phase={timer.phase}
