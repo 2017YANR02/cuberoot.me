@@ -180,6 +180,27 @@ export function importJson(json: string): boolean {
   }
 }
 
+/**
+ * Replace all solves for a single event. Other events are untouched.
+ * Used by csTimer per-session import.
+ */
+export function replaceSolves(eventId: EventId, solves: Solve[]): void {
+  const db = loadRaw();
+  db.byEvent[eventId] = solves.slice().sort((a, b) => a.ts - b.ts);
+  saveRaw(db);
+}
+
+/**
+ * Append solves to a single event, preserving chronological order.
+ * Used by csTimer per-session import.
+ */
+export function appendSolves(eventId: EventId, solves: Solve[]): void {
+  const db = loadRaw();
+  const existing = db.byEvent[eventId] ?? [];
+  db.byEvent[eventId] = [...existing, ...solves].sort((a, b) => a.ts - b.ts);
+  saveRaw(db);
+}
+
 /** Convenience: build a Solve. */
 export function makeSolve(args: {
   timeMs: number;

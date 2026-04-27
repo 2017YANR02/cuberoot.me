@@ -8,7 +8,9 @@ import { warmupSound, play } from '../sound';
 import { getMetronome } from '../sound/metronome';
 import { isVoiceAvailable } from '../sound/voice';
 import { getSeedCounter, resetSeedCounter } from '../scramble';
-import { listBackups, pushBackup, restoreBackup } from '../storage/db';
+import { appendSolves, listBackups, pushBackup, replaceSolves, restoreBackup } from '../storage/db';
+import { parseCstimerExport, type CstimerSessionParsed } from '../storage/import_cstimer';
+import { eventInfo } from '../types';
 
 interface Props {
   isZh: boolean;
@@ -85,6 +87,53 @@ export default function SettingsPanel({ isZh, onClose }: Props) {
     }
     updateSettings({ customAoWindows: out });
     setAoInput(out.join(','));
+  }
+
+  // ── csTimer import state ──
+  const cstimerFileRef = useRef<HTMLInputElement | null>(null);
+  const [cstimerSessions, setCstimerSessions] = useState<CstimerSessionParsed[] | null>(null);
+  // Per-session "imported" flag so the UI dims/disables the buttons after action.
+  const [cstimerImported, setCstimerImported] = useState<Record<string, 'append' | 'replace'>>({});
+
+  function onCstimerFile(e: React.ChangeEvent<HTMLInputElement>): void {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // allow re-selecting the same file
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const text = String(reader.result);
+      const sessions = parseCstimerExport(text);
+      if (sessions.length === 0) {
+        alert(isZh ? '未识别为 csTimer 导出文件。' : 'Not a recognized csTimer export.');
+        return;
+      }
+      setCstimerSessions(sessions);
+      setCstimerImported({});
+    };
+    reader.onerror = () => {
+      alert(isZh ? '读取文件失败。' : 'Failed to read file.');
+    };
+    reader.readAsText(file);
+  }
+
+  function importCstimerSession(sess: CstimerSessionParsed, mode: 'append' | 'replace'): void {
+    if (sess.solves.length === 0) {
+      alert(isZh ? '该会话没有可导入的成绩。' : 'This session has no solves.');
+      return;
+    }
+    if (mode === 'replace') {
+      const confirmMsg = isZh
+        ? `确认用 ${sess.solves.length} 条记录替换 ${eventInfo(sess.event).nameZh} 的全部成绩？`
+        : `Replace all ${eventInfo(sess.event).nameEn} solves with ${sess.solves.length} from "${sess.name}"?`;
+      if (!confirm(confirmMsg)) return;
+      replaceSolves(sess.event, sess.solves);
+    } else {
+      appendSolves(sess.event, sess.solves);
+    }
+    setCstimerImported(prev => ({ ...prev, [sess.sessionId]: mode }));
+    alert(isZh
+      ? '已导入。请刷新页面以查看更新后的成绩。'
+      : 'Imported. Please reload the page to see the updated solves.');
   }
 
   function showBackupPicker(): void {
@@ -362,6 +411,68 @@ export default function SettingsPanel({ isZh, onClose }: Props) {
               {isZh ? '查看备份' : 'View backups'}
             </button>
           </Row>
+        </div>
+
+        <div className="modal-section">
+          <h3 className="settings-h3">{isZh ? '从 csTimer 导入' : 'Import from csTimer'}</h3>
+          <Row label={isZh ? '选择 JSON 文件' : 'Choose JSON file'}>
+            <input
+              ref={cstimerFileRef}
+              type="file"
+              accept=".json,.txt,application/json"
+              style={{ display: 'none' }}
+              onChange={onCstimerFile}
+            />
+            <button
+              className="hint-btn"
+              onClick={() => cstimerFileRef.current?.click()}
+            >
+              {isZh ? '选择文件…' : 'Choose file…'}
+            </button>
+            <span className="hint">{isZh
+              ? '导出来源：csTimer → Local backup → Export'
+              : 'From csTimer → Local backup → Export'}</span>
+          </Row>
+          {cstimerSessions && cstimerSessions.length > 0 && (
+            <div className="cstimer-import-list">
+              {cstimerSessions.map(sess => {
+                const ev = eventInfo(sess.event);
+                const evLabel = isZh ? ev.nameZh : ev.nameEn;
+                const done = cstimerImported[sess.sessionId];
+                const disabled = sess.solves.length === 0;
+                return (
+                  <div key={sess.sessionId} className="cstimer-import-row">
+                    <div className="cstimer-import-info">
+                      <span className="cstimer-import-name">{sess.name}</span>
+                      <span className="hint">
+                        {isZh
+                          ? `${sess.solves.length} 条 → ${evLabel}${sess.matched ? '' : '（默认）'}`
+                          : `${sess.solves.length} solves → ${evLabel}${sess.matched ? '' : ' (fallback)'}`}
+                      </span>
+                    </div>
+                    <div className="cstimer-import-actions">
+                      <button
+                        className="hint-btn"
+                        disabled={disabled || done === 'append'}
+                        onClick={() => importCstimerSession(sess, 'append')}
+                        title={isZh ? '追加到现有成绩' : 'Append to existing solves'}
+                      >
+                        {done === 'append' ? (isZh ? '已追加' : 'Appended') : (isZh ? '追加' : 'Append')}
+                      </button>
+                      <button
+                        className="hint-btn"
+                        disabled={disabled || done === 'replace'}
+                        onClick={() => importCstimerSession(sess, 'replace')}
+                        title={isZh ? '清空该项目并以此覆盖' : 'Clear this event and replace'}
+                      >
+                        {done === 'replace' ? (isZh ? '已替换' : 'Replaced') : (isZh ? '替换' : 'Replace')}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         <div className="modal-section">
