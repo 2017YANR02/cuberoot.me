@@ -56,6 +56,11 @@ export interface Solve {
    * For OLL/PLL it's the case key from oll.json/pll.json (e.g. "OLL 1", "Aa").
    * For other trainers it's the alg string used to build the scramble. */
   caseId?: string;
+  /** Bluetooth-recorded move stream for solve reconstruction.
+   * Each entry is { m: face notation move, ts: ms since solve start
+   * (i.e. since timer phase became 'running'). Inspection-time moves are
+   * NOT recorded — only moves received during the running phase. */
+  moves?: Array<{ m: string; ts: number }>;
 }
 
 const BLD_EVENT_IDS = new Set<EventId>(['333bld','333mbld','333ni','444bld','555bld','666bld','777bld']);
