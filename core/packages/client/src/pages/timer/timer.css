@@ -498,6 +498,40 @@
 }
 .reset-btn:hover { background: #2f2f35; color: #fff; }
 
+/* --- Shortcuts modal --- */
+.shortcuts-modal { max-width: 560px; }
+.shortcut-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.shortcut-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 160px) 1fr;
+  gap: 12px;
+  align-items: baseline;
+  font-size: 13px;
+}
+.shortcut-row .shortcut-keys { display: flex; align-items: center; gap: 2px; flex-wrap: wrap; }
+.shortcut-row .shortcut-desc { color: #ccc; }
+.shortcut-row kbd {
+  background: #0e0e10;
+  border: 1px solid #333;
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: #f0ebe3;
+  min-width: 18px;
+  text-align: center;
+  display: inline-block;
+}
+.shortcut-row .key-sep { color: #555; margin: 0 2px; }
+:root[data-timer-theme="light"] .shortcut-row kbd {
+  background: #fff; border-color: #d0d0d4; color: #1d1d1f;
+}
+
 /* --- Cube preview placement on main page --- */
 .timer-cube-preview {
   display: flex;
