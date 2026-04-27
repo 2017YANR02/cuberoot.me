@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { Star } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Star, X } from 'lucide-react';
 import type { Solve } from '../types';
 import { effectiveMs } from '../types';
 import { formatMs, pbSingleIndex } from '../stats';
@@ -42,11 +42,35 @@ function bestWindowIndices(
 }
 
 export default function HistoryPanel({ solves, isZh, onRowClick }: Props) {
+  const [query, setQuery] = useState('');
   const reversed = [...solves].reverse(); // newest at top
   const pbIdx = pbSingleIndex(solves);
 
+  // PB windows are computed from the FULL history so they remain stable
+  // regardless of any filtering applied to the rendered list.
   const pbAo5Win = useMemo(() => bestWindowIndices(solves, 5), [solves]);
   const pbAo12Win = useMemo(() => bestWindowIndices(solves, 12), [solves]);
+
+  // Map each solve's id back to its index in the original (un-reversed) solves
+  // array, so PB highlight indices stay correct after filtering.
+  const idToRealIdx = useMemo(() => {
+    const m = new Map<string, number>();
+    for (let i = 0; i < solves.length; i++) m.set(solves[i].id, i);
+    return m;
+  }, [solves]);
+
+  const trimmed = query.trim().toLowerCase();
+  const filteredReversed = useMemo(() => {
+    if (!trimmed) return reversed;
+    return reversed.filter((s) => {
+      const c = (s.comment ?? '').toLowerCase();
+      const sc = (s.scramble ?? '').toLowerCase();
+      return c.includes(trimmed) || sc.includes(trimmed);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trimmed, solves]);
+
+  const matchCount = filteredReversed.length;
 
   return (
     <div className="history-panel">
@@ -54,14 +78,45 @@ export default function HistoryPanel({ solves, isZh, onRowClick }: Props) {
         <span>{isZh ? '历史' : 'History'}</span>
         <span>{solves.length}</span>
       </div>
+      <div className="history-search">
+        <div className="history-search-input-wrap">
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={isZh ? '搜索注释或打乱…' : 'Search comment or scramble…'}
+            aria-label={isZh ? '搜索注释或打乱' : 'Search comment or scramble'}
+          />
+          {query && (
+            <button
+              type="button"
+              className="history-search-clear"
+              onClick={() => setQuery('')}
+              aria-label={isZh ? '清空搜索' : 'Clear search'}
+            >
+              <X size={12} />
+            </button>
+          )}
+        </div>
+        {trimmed && (
+          <span className="history-search-count">
+            {isZh ? `${matchCount} 条匹配` : `${matchCount} matches`}
+          </span>
+        )}
+      </div>
       <div className="history-list">
         {reversed.length === 0 && (
           <div className="history-empty">
             {isZh ? '还没有成绩。按住空格开始计时。' : 'No solves yet. Hold space to start.'}
           </div>
         )}
-        {reversed.map((s, idxFromEnd) => {
-          const realIdx = solves.length - 1 - idxFromEnd;
+        {reversed.length > 0 && filteredReversed.length === 0 && (
+          <div className="history-empty">
+            {isZh ? '没有匹配的成绩。' : 'No matching solves.'}
+          </div>
+        )}
+        {filteredReversed.map((s) => {
+          const realIdx = idToRealIdx.get(s.id) ?? -1;
           const time = effectiveMs(s);
           const isPB = realIdx === pbIdx;
           const inAo5 = pbAo5Win !== null && realIdx >= pbAo5Win.start && realIdx <= pbAo5Win.end;
