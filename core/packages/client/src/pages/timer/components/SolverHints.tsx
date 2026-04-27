@@ -82,6 +82,16 @@ export default function SolverHints({ scramble, isZh }: Props) {
   const labels = isZh ? ORIENT_LABEL_ZH : ORIENT_LABEL_EN;
   const title = isZh ? '解法提示' : 'Solver hints';
 
+  // Min cross length across all 6 orientations (ignoring failed solves).
+  const minCrossLen = useMemo(() => {
+    if (!computed) return -1;
+    let min = Infinity;
+    for (const s of computed.cross) {
+      if (s.length >= 0 && s.length < min) min = s.length;
+    }
+    return min === Infinity ? -1 : min;
+  }, [computed]);
+
   return (
     <div className="solver-hints" style={hintsStyle}>
       <button
@@ -102,17 +112,21 @@ export default function SolverHints({ scramble, isZh }: Props) {
           )}
           {computed && (
             <>
-              {computed.cross.map(sol => (
-                <div key={sol.orientation} style={rowStyle}>
-                  <span style={labelStyle}>
-                    {isZh ? '十字' : 'Cross'} {labels[sol.orientation]}
-                  </span>
-                  <span style={countStyle}>
-                    {sol.length < 0 ? '—' : `${sol.length}`}
-                  </span>
-                  <span style={algStyle}>{sol.moves}</span>
-                </div>
-              ))}
+              {computed.cross.map(sol => {
+                const isBest = sol.length >= 0 && sol.length === minCrossLen;
+                return (
+                  <div key={sol.orientation} style={rowStyle}>
+                    <span style={isBest ? labelBestStyle : labelStyle}>
+                      {isBest ? '★ ' : ''}
+                      {isZh ? '十字' : 'Cross'} {labels[sol.orientation]}
+                    </span>
+                    <span style={isBest ? countBestStyle : countStyle}>
+                      {sol.length < 0 ? '—' : `${sol.length}`}
+                    </span>
+                    <span style={isBest ? algBestStyle : algStyle}>{sol.moves}</span>
+                  </div>
+                );
+              })}
               <div style={rowStyle}>
                 <span style={labelStyle}>EOLine</span>
                 <span style={countStyle}>
@@ -180,4 +194,24 @@ const algStyle: React.CSSProperties = {
   fontSize: 12.5,
   whiteSpace: 'pre-wrap',
   wordBreak: 'break-word',
+};
+
+const labelBestStyle: React.CSSProperties = {
+  ...labelStyle,
+  opacity: 1,
+  fontWeight: 600,
+  color: 'var(--accent, #f5b400)',
+};
+
+const countBestStyle: React.CSSProperties = {
+  ...countStyle,
+  opacity: 1,
+  fontWeight: 600,
+  color: 'var(--accent, #f5b400)',
+};
+
+const algBestStyle: React.CSSProperties = {
+  ...algStyle,
+  fontWeight: 600,
+  color: 'var(--accent, #f5b400)',
 };
