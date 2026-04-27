@@ -7,11 +7,13 @@
  * implicitly via `firstMoveLatencyMs` (rebased to memo end).
  */
 
-import { useEffect, useId, useMemo, useRef } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { Link2 } from 'lucide-react';
 import type { Solve } from '../types';
 import { effectiveMs } from '../types';
 import { formatMs } from '../stats';
 import { sliceReconstruction } from '../reconstruct/slice';
+import { encodeReplayUrl } from '../share/encode';
 import './reconstruct.css';
 
 interface Props {
@@ -43,6 +45,19 @@ export default function ReconstructModal({ solve, isZh, onClose }: Props) {
   }, [onClose]);
 
   useEffect(() => { closeBtnRef.current?.focus(); }, []);
+
+  const [copied, setCopied] = useState(false);
+  const canShare = moves.length > 0;
+  const handleCopyShare = async () => {
+    try {
+      const url = encodeReplayUrl(solve);
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch (err) {
+      console.warn('[reconstruct] copy share link failed:', err);
+    }
+  };
 
   const eff = effectiveMs(solve);
   const dt = new Date(solve.ts);
@@ -128,6 +143,19 @@ export default function ReconstructModal({ solve, isZh, onClose }: Props) {
         </div>
 
         <div className="modal-actions">
+          <button
+            type="button"
+            onClick={handleCopyShare}
+            disabled={!canShare}
+            title={!canShare
+              ? (isZh ? '没有动作记录，无法分享回放' : 'No move log — share unavailable')
+              : (isZh ? '复制分享链接' : 'Copy share link')}
+          >
+            <Link2 size={14} style={{ verticalAlign: 'middle', marginRight: 4 }} />
+            {copied
+              ? (isZh ? '已复制' : 'Copied')
+              : (isZh ? '复制分享链接' : 'Copy share link')}
+          </button>
           <button ref={closeBtnRef} onClick={onClose}>
             {isZh ? '关闭' : 'Close'}
           </button>
