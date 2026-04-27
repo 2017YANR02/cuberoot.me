@@ -18,6 +18,7 @@ interface Props {
 export default function SettingsPanel({ isZh, onClose }: Props) {
   const s = useSettings();
   const [seedTick, setSeedTick] = useState(0);
+  const [aoInput, setAoInput] = useState<string>(() => s.customAoWindows.join(','));
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -37,6 +38,17 @@ export default function SettingsPanel({ isZh, onClose }: Props) {
       m.stop();
     }
   }, [s.metronomeEnabled, s.metronomeBpm]);
+
+  function commitAoInput(raw: string): void {
+    const parts = raw.split(/[,，\s]+/).map(p => p.trim()).filter(Boolean);
+    const out: number[] = [];
+    for (const p of parts) {
+      const n = Math.floor(Number(p));
+      if (Number.isFinite(n) && n >= 3 && n <= 1000 && !out.includes(n)) out.push(n);
+    }
+    updateSettings({ customAoWindows: out });
+    setAoInput(out.join(','));
+  }
 
   function showBackupPicker(): void {
     const list = listBackups();
@@ -72,8 +84,14 @@ export default function SettingsPanel({ isZh, onClose }: Props) {
 
   return (
     <div className="timer-modal-overlay" onClick={onClose}>
-      <div className="timer-modal settings-modal" onClick={(e) => e.stopPropagation()}>
-        <h2>{isZh ? '设置' : 'Settings'}</h2>
+      <div
+        className="timer-modal settings-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="settings-modal-title"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 id="settings-modal-title">{isZh ? '设置' : 'Settings'}</h2>
 
         <div className="modal-section">
           <h3 className="settings-h3">{isZh ? '计时' : 'Timing'}</h3>
@@ -140,6 +158,19 @@ export default function SettingsPanel({ isZh, onClose }: Props) {
             </select>
             <span className="hint">{isZh ? '仅 3x3 类项目生效' : '3x3 events only'}</span>
           </Row>
+          <Row label={isZh ? '自定义平均' : 'Custom averages'}>
+            <input
+              type="text"
+              value={aoInput}
+              placeholder={isZh ? '例：7,25（逗号分隔）' : 'e.g. 7,25 (comma-separated)'}
+              onChange={(e) => setAoInput(e.target.value)}
+              onBlur={(e) => commitAoInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') commitAoInput((e.target as HTMLInputElement).value); }}
+            />
+            <span className="hint">{isZh
+              ? `每个 3..1000；当前 ${s.customAoWindows.length === 0 ? '无' : s.customAoWindows.map(n => 'ao' + n).join(' / ')}`
+              : `each 3..1000; current ${s.customAoWindows.length === 0 ? 'none' : s.customAoWindows.map(n => 'ao' + n).join(' / ')}`}</span>
+          </Row>
         </div>
 
         <div className="modal-section">
@@ -172,17 +203,19 @@ export default function SettingsPanel({ isZh, onClose }: Props) {
             <select
               value={s.voiceInspection}
               onChange={(e) => {
-                updateSettings({ voiceInspection: e.target.value as 'none' | 'en' | 'zh' });
+                updateSettings({ voiceInspection: e.target.value as 'none' | 'en-male' | 'en-female' | 'zh-male' | 'zh-female' });
                 warmupSound();
               }}
               disabled={!isVoiceAvailable()}
             >
               <option value="none">{isZh ? '关闭（用提示音）' : 'Off (beeps)'}</option>
-              <option value="en">English</option>
-              <option value="zh">中文</option>
+              <option value="en-male">{isZh ? '英文 男声' : 'English (male)'}</option>
+              <option value="en-female">{isZh ? '英文 女声' : 'English (female)'}</option>
+              <option value="zh-male">{isZh ? '中文 男声' : 'Chinese (male)'}</option>
+              <option value="zh-female">{isZh ? '中文 女声' : 'Chinese (female)'}</option>
             </select>
             <span className="hint">{isVoiceAvailable()
-              ? (isZh ? '念 8 秒 / 12 秒 / 开始' : 'reads 8s / 12s / go')
+              ? (isZh ? '念 8 秒 / 12 秒 / 开始（依系统可用音色）' : 'reads 8s / 12s / go (depends on system voices)')
               : (isZh ? '浏览器不支持' : 'unsupported by browser')}</span>
           </Row>
         </div>
@@ -313,6 +346,23 @@ export default function SettingsPanel({ isZh, onClose }: Props) {
               type="checkbox"
               checked={s.showHeatmap}
               onChange={(e) => updateSettings({ showHeatmap: e.target.checked })}
+            />
+          </Row>
+          <Row label={isZh ? '点击打乱条' : 'Scramble click action'}>
+            <select
+              value={s.scrambleClickAction}
+              onChange={(e) => updateSettings({ scrambleClickAction: e.target.value as 'none' | 'next' | 'copy' })}
+            >
+              <option value="none">{isZh ? '无操作' : 'Nothing'}</option>
+              <option value="next">{isZh ? '换下一个' : 'Next scramble'}</option>
+              <option value="copy">{isZh ? '复制到剪贴板' : 'Copy to clipboard'}</option>
+            </select>
+          </Row>
+          <Row label={isZh ? '运行中隐藏全部 UI' : 'Hide all UI while running'}>
+            <input
+              type="checkbox"
+              checked={s.hideAllUiWhileRunning}
+              onChange={(e) => updateSettings({ hideAllUiWhileRunning: e.target.checked })}
             />
           </Row>
         </div>

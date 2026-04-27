@@ -75,7 +75,7 @@ export function play(cue: Cue): void {
     (cue === 'warn-8' || cue === 'warn-12' || cue === 'start' || cue === 'inspection-start') &&
     isVoiceAvailable()
   ) {
-    if (speakInspectionCue(cue, s.voiceInspection === 'zh')) return;
+    if (speakInspectionCue(cue, s.voiceInspection.startsWith('zh'))) return;
   }
   const c = ctx();
   if (!c) return;
