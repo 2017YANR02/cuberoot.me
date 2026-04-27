@@ -1,0 +1,351 @@
+/* =============================================================
+   /timer — 纯 TypeScript 计时器页面
+   设计目标：单屏、无干扰、键盘/触摸两套交互无缝。
+   ============================================================= */
+
+.timer-root {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #0b0b0c;
+  color: #f0ebe3;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: none;
+  overscroll-behavior: none;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+/* --- Top bar ------------------------------------------------- */
+.timer-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 16px;
+  border-bottom: 1px solid #222;
+  background: #111;
+  flex: 0 0 auto;
+}
+
+.timer-topbar .left,
+.timer-topbar .right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.timer-topbar select,
+.timer-topbar button.tb-btn {
+  background: #1a1a1d;
+  color: #f0ebe3;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.timer-topbar select:hover,
+.timer-topbar button.tb-btn:hover {
+  background: #25252a;
+  border-color: #555;
+}
+
+.timer-topbar button.tb-btn.danger:hover {
+  background: #4a1f1f;
+  border-color: #c44;
+}
+
+.timer-topbar .home-link {
+  color: #999;
+  text-decoration: none;
+  font-size: 14px;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+.timer-topbar .home-link:hover {
+  background: #1a1a1d;
+  color: #fff;
+}
+
+/* --- Scramble strip ----------------------------------------- */
+.scramble-strip {
+  padding: 14px 24px;
+  text-align: center;
+  font-family: 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace;
+  font-size: clamp(14px, 2vw, 20px);
+  line-height: 1.5;
+  word-spacing: 0.25em;
+  color: #ddd;
+  background: #131316;
+  border-bottom: 1px solid #1f1f23;
+  flex: 0 0 auto;
+  cursor: pointer;
+  white-space: pre-wrap;
+}
+.scramble-strip:hover { color: #fff; }
+
+.scramble-strip .scramble-empty {
+  color: #555;
+  font-style: italic;
+}
+
+/* --- Center timer ------------------------------------------- */
+.timer-center {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  touch-action: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.timer-display {
+  font-family: 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(64px, 14vw, 192px);
+  letter-spacing: -0.02em;
+  color: #f0ebe3;
+  text-shadow: 0 0 30px rgba(240, 235, 227, 0.08);
+  transition: color 0.15s;
+  line-height: 1;
+}
+
+.timer-display.holding { color: #ef5350; text-shadow: 0 0 30px rgba(239, 83, 80, 0.5); }
+.timer-display.ready   { color: #66bb6a; text-shadow: 0 0 40px rgba(102, 187, 106, 0.6); }
+.timer-display.running { color: #f0ebe3; }
+.timer-display.dnf     { color: #aaa; }
+
+.timer-hint {
+  margin-top: 14px;
+  font-size: 13px;
+  color: #666;
+  letter-spacing: 0.04em;
+}
+.timer-hint code {
+  background: #1a1a1d;
+  border: 1px solid #2a2a2e;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: inherit;
+  color: #aaa;
+}
+
+.timer-quick-actions {
+  position: absolute;
+  bottom: 16px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.qa-btn {
+  background: #1a1a1d;
+  color: #ccc;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.qa-btn:hover { background: #25252a; border-color: #555; color: #fff; }
+.qa-btn.danger:hover { background: #4a1f1f; border-color: #c44; color: #faa; }
+.qa-btn.active { background: #2a3d4d; border-color: #4d7a99; color: #cde; }
+
+/* --- Bottom panels ------------------------------------------ */
+.timer-bottom {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 320px);
+  gap: 0;
+  border-top: 1px solid #1f1f23;
+  background: #0e0e10;
+  flex: 0 0 auto;
+  max-height: 38dvh;
+  overflow: hidden;
+}
+
+@media (max-width: 720px) {
+  .timer-bottom {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+    max-height: 50dvh;
+  }
+}
+
+/* Stats summary */
+.stats-panel {
+  padding: 14px 18px;
+  overflow-y: auto;
+  border-right: 1px solid #1f1f23;
+}
+.stats-panel h3 {
+  font-size: 12px;
+  color: #888;
+  margin: 0 0 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px 16px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.stats-grid .row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 4px 0;
+  border-bottom: 1px dashed #1f1f23;
+}
+.stats-grid .row .lbl {
+  font-size: 11px;
+  color: #777;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.stats-grid .row .val {
+  font-size: 14px;
+  color: #f0ebe3;
+}
+.stats-grid .row .val.muted { color: #555; }
+
+/* History list */
+.history-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.history-header {
+  padding: 10px 14px;
+  font-size: 12px;
+  color: #888;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-bottom: 1px solid #1f1f23;
+  display: flex;
+  justify-content: space-between;
+}
+.history-list {
+  flex: 1;
+  overflow-y: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+}
+.history-row {
+  display: grid;
+  grid-template-columns: 32px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 14px;
+  border-bottom: 1px solid #15151a;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.history-row:hover { background: #161619; }
+.history-row .idx { color: #555; font-size: 11px; text-align: right; }
+.history-row .time .penalty-flag {
+  color: #aaa;
+  margin-left: 6px;
+  font-size: 11px;
+}
+.history-row .actions {
+  display: none;
+  gap: 4px;
+}
+.history-row:hover .actions { display: flex; }
+.history-row .actions button {
+  background: transparent;
+  border: 1px solid #333;
+  color: #aaa;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 11px;
+  cursor: pointer;
+}
+.history-row .actions button:hover {
+  background: #25252a;
+  color: #fff;
+}
+
+.history-empty {
+  padding: 30px 20px;
+  text-align: center;
+  color: #555;
+  font-size: 13px;
+}
+
+/* --- Modal -------------------------------------------------- */
+.timer-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 20px;
+}
+.timer-modal {
+  background: #1a1a1d;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 20px;
+  max-width: 480px;
+  width: 100%;
+  max-height: 80dvh;
+  overflow-y: auto;
+}
+.timer-modal h2 {
+  margin: 0 0 12px;
+  font-size: 18px;
+  color: #fff;
+}
+.timer-modal .modal-section {
+  margin-bottom: 14px;
+  font-size: 13px;
+  color: #ccc;
+}
+.timer-modal .modal-section .scramble-text {
+  font-family: 'JetBrains Mono', monospace;
+  background: #0e0e10;
+  padding: 8px 10px;
+  border-radius: 4px;
+  border: 1px solid #2a2a2e;
+  margin-top: 4px;
+  word-spacing: 0.25em;
+  white-space: pre-wrap;
+}
+.timer-modal .modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+.timer-modal .modal-actions button {
+  background: #25252a;
+  color: #f0ebe3;
+  border: 1px solid #444;
+  border-radius: 6px;
+  padding: 7px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.timer-modal .modal-actions button:hover { background: #2f2f35; }
+.timer-modal .modal-actions button.danger { color: #f88; border-color: #633; }
+.timer-modal .modal-actions button.danger:hover { background: #4a1f1f; }
+.timer-modal .modal-actions button.primary { background: #2a3d4d; border-color: #4d7a99; color: #cde; }
+.timer-modal .modal-actions button.primary:hover { background: #345169; }
