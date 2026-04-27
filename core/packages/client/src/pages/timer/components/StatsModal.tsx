@@ -19,6 +19,15 @@ interface Props {
   onClose: () => void;
 }
 
+type DateRange = 'all' | '7d' | '30d' | '90d' | '365d';
+
+const RANGE_DAYS: Record<Exclude<DateRange, 'all'>, number> = {
+  '7d': 7,
+  '30d': 30,
+  '90d': 90,
+  '365d': 365,
+};
+
 /** Largest run of consecutive calendar days containing ≥1 solve. */
 function longestStreak(solves: Solve[]): number {
   if (solves.length === 0) return 0;
@@ -41,14 +50,22 @@ function longestStreak(solves: Solve[]): number {
   return best;
 }
 
-export default function StatsModal({ event, solves, isZh, onClose }: Props) {
+export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: Props) {
   const [copied, setCopied] = useState(false);
+  const [range, setRange] = useState<DateRange>('all');
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
+
+  // Apply date-range filter before any aggregate computation.
+  const solves = useMemo(() => {
+    if (range === 'all') return rawSolves;
+    const cutoff = Date.now() - RANGE_DAYS[range] * 86400000;
+    return rawSolves.filter(s => s.ts >= cutoff);
+  }, [rawSolves, range]);
 
   const evInfo = EVENTS.find(e => e.id === event);
   const evName = evInfo ? (isZh ? evInfo.nameZh : evInfo.nameEn) : event;
@@ -181,6 +198,30 @@ export default function StatsModal({ event, solves, isZh, onClose }: Props) {
         aria-labelledby="stats-modal-title"
       >
         <h2 id="stats-modal-title">{isZh ? '完整统计' : 'Full stats'} — {evName}</h2>
+
+        <div className="modal-section">
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+            {(['all', '7d', '30d', '90d', '365d'] as const).map(r => {
+              const labelZh: Record<DateRange, string> = {
+                all: '全部', '7d': '近7天', '30d': '近30天', '90d': '近90天', '365d': '近一年',
+              };
+              const labelEn: Record<DateRange, string> = {
+                all: 'All', '7d': '7d', '30d': '30d', '90d': '90d', '365d': '365d',
+              };
+              const active = range === r;
+              return (
+                <button
+                  key={r}
+                  onClick={() => setRange(r)}
+                  className={active ? 'primary' : 'hint-btn'}
+                  aria-pressed={active}
+                >
+                  {isZh ? labelZh[r] : labelEn[r]}
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         <div className="modal-section">
           <div className="stats-modal-grid">
