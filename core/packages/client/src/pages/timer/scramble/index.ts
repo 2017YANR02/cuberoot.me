@@ -54,13 +54,49 @@ export function registerScramble(event: EventId, gen: Gen): void {
   REG[event] = gen;
 }
 
-export function generateScramble(event: EventId, rng: () => number = Math.random): string {
+// djb2 string hash → uint32, used to derive an rng seed from the user-set
+// sync-seed string. Cheap and deterministic (avoid sha256-style hashes here).
+function djb2(s: string): number {
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) {
+    h = (((h << 5) + h) ^ s.charCodeAt(i)) >>> 0;
+  }
+  return h;
+}
+
+let _seedCounter = 0;
+let _lastSeed: string | null = null;
+
+export function resetSeedCounter(): void {
+  _seedCounter = 0;
+}
+
+export function getSeedCounter(): number {
+  return _seedCounter;
+}
+
+export function generateScramble(event: EventId, rng?: () => number): string {
+  let useRng = rng;
+  if (!useRng) {
+    const seed = getSettings().syncSeed;
+    if (seed) {
+      if (seed !== _lastSeed) {
+        _lastSeed = seed;
+        _seedCounter = 0;
+      }
+      useRng = mulberry32(djb2(seed) + _seedCounter);
+      _seedCounter++;
+    } else {
+      _lastSeed = null;
+      useRng = Math.random;
+    }
+  }
   const gen = REG[event];
-  const raw = gen ? gen(rng) : scramble333(rng);
+  const raw = gen ? gen(useRng) : scramble333(useRng);
   // Apply color-neutral rotation prefix for 3x3-shaped events.
   if (!isCnEligible(event)) return raw;
   const mode = getSettings().cnMode;
-  return applyColorNeutral(raw, mode, rng);
+  return applyColorNeutral(raw, mode, useRng);
 }
 
 /**

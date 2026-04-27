@@ -7,9 +7,12 @@
  */
 
 import type { EventId, Solve } from '../types';
+import { getSettings } from '../settings';
 
 const KEY = 'cuberoot-timer.v2';
 const LEGACY_KEY = 'cuberoot-timer.v1';
+const BACKUP_KEY_PREFIX = 'cuberoot-timer.backup.v1.';
+const BACKUP_KEEP = 10;
 
 interface DbShape {
   version: 2;
@@ -70,8 +73,70 @@ export function loadAll(): Record<string, Solve[]> {
   return db.byEvent as Record<string, Solve[]>;
 }
 
+let _saveCounter = 0;
+
 export function saveAll(byEvent: Record<string, Solve[]>): void {
   saveRaw({ version: 2, byEvent: byEvent as DbShape['byEvent'] });
+  _saveCounter++;
+  const every = getSettings().autoBackupEvery | 0;
+  if (every > 0 && _saveCounter % every === 0) {
+    pushBackup();
+  }
+}
+
+/* ---------- Auto-backup ---------- */
+
+export interface BackupEntry { key: string; ts: number; size: number; }
+
+export function pushBackup(): void {
+  try {
+    const json = exportJson();
+    const key = BACKUP_KEY_PREFIX + Date.now();
+    localStorage.setItem(key, json);
+    // Rotate: keep only the most-recent BACKUP_KEEP entries.
+    const all = listBackups();
+    if (all.length > BACKUP_KEEP) {
+      const toRemove = all.slice(BACKUP_KEEP);
+      for (const e of toRemove) {
+        try { localStorage.removeItem(e.key); } catch { /* ignore */ }
+      }
+    }
+  } catch {
+    /* quota — drop oldest then retry once */
+    try {
+      const all = listBackups();
+      if (all.length > 0) {
+        localStorage.removeItem(all[all.length - 1]!.key);
+      }
+    } catch { /* ignore */ }
+  }
+}
+
+export function listBackups(): BackupEntry[] {
+  const out: BackupEntry[] = [];
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k || !k.startsWith(BACKUP_KEY_PREFIX)) continue;
+      const tsStr = k.slice(BACKUP_KEY_PREFIX.length);
+      const ts = Number(tsStr);
+      if (!Number.isFinite(ts)) continue;
+      const v = localStorage.getItem(k) ?? '';
+      out.push({ key: k, ts, size: v.length });
+    }
+  } catch { /* ignore */ }
+  out.sort((a, b) => b.ts - a.ts);
+  return out;
+}
+
+export function restoreBackup(key: string): boolean {
+  try {
+    const v = localStorage.getItem(key);
+    if (!v) return false;
+    return importJson(v);
+  } catch {
+    return false;
+  }
 }
 
 export function newId(): string {

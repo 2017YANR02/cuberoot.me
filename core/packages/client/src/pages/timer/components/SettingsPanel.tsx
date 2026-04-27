@@ -2,9 +2,13 @@
  * Settings panel — modal launched from the topbar gear button.
  */
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { resetSettings, updateSettings, useSettings } from '../settings';
 import { warmupSound, play } from '../sound';
+import { getMetronome } from '../sound/metronome';
+import { isVoiceAvailable } from '../sound/voice';
+import { getSeedCounter, resetSeedCounter } from '../scramble';
+import { listBackups, pushBackup, restoreBackup } from '../storage/db';
 
 interface Props {
   isZh: boolean;
@@ -13,6 +17,7 @@ interface Props {
 
 export default function SettingsPanel({ isZh, onClose }: Props) {
   const s = useSettings();
+  const [seedTick, setSeedTick] = useState(0);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -21,6 +26,49 @@ export default function SettingsPanel({ isZh, onClose }: Props) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
+
+  // Drive the metronome from settings.
+  useEffect(() => {
+    const m = getMetronome();
+    if (s.metronomeEnabled) {
+      if (!m.isRunning()) m.start(s.metronomeBpm);
+      else m.setBpm(s.metronomeBpm);
+    } else if (m.isRunning()) {
+      m.stop();
+    }
+  }, [s.metronomeEnabled, s.metronomeBpm]);
+
+  function showBackupPicker(): void {
+    const list = listBackups();
+    if (list.length === 0) {
+      alert(isZh ? '尚无自动备份。' : 'No auto-backups yet.');
+      return;
+    }
+    const lines = list.map((e, i) => {
+      const d = new Date(e.ts);
+      const stamp = d.toISOString().replace('T', ' ').slice(0, 19);
+      const kb = (e.size / 1024).toFixed(1);
+      return `${i + 1}. ${stamp}  (${kb} KB)`;
+    }).join('\n');
+    const prompt1 = isZh
+      ? `备份列表（输入序号恢复，留空取消）：\n\n${lines}`
+      : `Auto-backups (enter index to restore, blank to cancel):\n\n${lines}`;
+    const ans = window.prompt(prompt1, '');
+    if (!ans) return;
+    const idx = parseInt(ans, 10) - 1;
+    if (!Number.isFinite(idx) || idx < 0 || idx >= list.length) {
+      alert(isZh ? '无效序号。' : 'Invalid index.');
+      return;
+    }
+    const target = list[idx]!;
+    if (!confirm(isZh
+      ? `确认用 ${new Date(target.ts).toLocaleString()} 的备份覆盖当前数据？`
+      : `Restore backup from ${new Date(target.ts).toLocaleString()} (overwrites current data)?`)) return;
+    const ok = restoreBackup(target.key);
+    alert(ok
+      ? (isZh ? '已恢复。请刷新页面。' : 'Restored. Please reload the page.')
+      : (isZh ? '恢复失败。' : 'Restore failed.'));
+  }
 
   return (
     <div className="timer-modal-overlay" onClick={onClose}>
@@ -118,6 +166,95 @@ export default function SettingsPanel({ isZh, onClose }: Props) {
               title={isZh ? '试听' : 'Test'}
             >
               ♪
+            </button>
+          </Row>
+          <Row label={isZh ? '语音观察' : 'Voice inspection'}>
+            <select
+              value={s.voiceInspection}
+              onChange={(e) => {
+                updateSettings({ voiceInspection: e.target.value as 'none' | 'en' | 'zh' });
+                warmupSound();
+              }}
+              disabled={!isVoiceAvailable()}
+            >
+              <option value="none">{isZh ? '关闭（用提示音）' : 'Off (beeps)'}</option>
+              <option value="en">English</option>
+              <option value="zh">中文</option>
+            </select>
+            <span className="hint">{isVoiceAvailable()
+              ? (isZh ? '念 8 秒 / 12 秒 / 开始' : 'reads 8s / 12s / go')
+              : (isZh ? '浏览器不支持' : 'unsupported by browser')}</span>
+          </Row>
+        </div>
+
+        <div className="modal-section">
+          <h3 className="settings-h3">{isZh ? '节拍器' : 'Metronome'}</h3>
+          <Row label={isZh ? '开启' : 'Enabled'}>
+            <input
+              type="checkbox"
+              checked={s.metronomeEnabled}
+              onChange={(e) => {
+                updateSettings({ metronomeEnabled: e.target.checked });
+                if (e.target.checked) warmupSound();
+              }}
+            />
+          </Row>
+          <Row label={isZh ? '速度（BPM）' : 'Tempo (BPM)'}>
+            <input
+              type="number" min={30} max={240} step={1}
+              value={s.metronomeBpm}
+              onChange={(e) => updateSettings({ metronomeBpm: Math.max(30, Math.min(240, Number(e.target.value) || 60)) })}
+            />
+            <span className="hint">{isZh ? '离开本页时自动停止' : 'auto-stops on page leave'}</span>
+          </Row>
+        </div>
+
+        <div className="modal-section">
+          <h3 className="settings-h3">{isZh ? '同步种子' : 'Sync seed'}</h3>
+          <Row label={isZh ? '种子' : 'Seed'}>
+            <input
+              type="text"
+              value={s.syncSeed ?? ''}
+              placeholder={isZh ? '留空 = 关闭' : 'blank = off'}
+              onChange={(e) => {
+                const v = e.target.value;
+                updateSettings({ syncSeed: v === '' ? null : v });
+                resetSeedCounter();
+                setSeedTick((t) => t + 1);
+              }}
+            />
+          </Row>
+          <Row label={isZh ? '已生成' : 'Generated'}>
+            <span className="hint">{isZh ? `${getSeedCounter()} 次` : `${getSeedCounter()} scrambles`}</span>
+            <button
+              className="hint-btn"
+              onClick={() => { resetSeedCounter(); setSeedTick((t) => t + 1); }}
+              title={String(seedTick)}
+            >
+              {isZh ? '重置计数' : 'Reset counter'}
+            </button>
+            <span className="hint">{isZh ? '相同种子在不同设备打出相同序列' : 'same seed → same sequence across devices'}</span>
+          </Row>
+        </div>
+
+        <div className="modal-section">
+          <h3 className="settings-h3">{isZh ? '自动备份' : 'Auto-backup'}</h3>
+          <Row label={isZh ? '每 N 次写入触发' : 'Every N saves'}>
+            <input
+              type="number" min={0} max={30} step={1}
+              value={s.autoBackupEvery}
+              onChange={(e) => updateSettings({ autoBackupEvery: Math.max(0, Math.min(30, Number(e.target.value) | 0)) })}
+            />
+            <span className="hint">{s.autoBackupEvery === 0
+              ? (isZh ? '已禁用' : 'disabled')
+              : (isZh ? '保留最近 10 份' : 'keeps last 10')}</span>
+          </Row>
+          <Row label={isZh ? '操作' : 'Actions'}>
+            <button className="hint-btn" onClick={() => { pushBackup(); alert(isZh ? '已写入备份。' : 'Backup written.'); }}>
+              {isZh ? '立即备份' : 'Back up now'}
+            </button>
+            <button className="hint-btn" onClick={showBackupPicker}>
+              {isZh ? '查看备份' : 'View backups'}
             </button>
           </Row>
         </div>
