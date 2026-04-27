@@ -45,6 +45,12 @@ export interface TimerSettings {
 
   /** Show only the latest scramble line on phones (compact mode). */
   compactScramble: boolean;
+
+  /** Use the three.js 3D cube preview instead of the 2D net. */
+  use3D: boolean;
+
+  /** Show the GitHub-style practice heatmap in the bottom panel. */
+  showHeatmap: boolean;
 }
 
 export const DEFAULTS: TimerSettings = {
@@ -60,6 +66,8 @@ export const DEFAULTS: TimerSettings = {
   timerFontScale: 1,
   holdMs: 550,
   compactScramble: false,
+  use3D: false,
+  showHeatmap: true,
 };
 
 let _cache: TimerSettings = load();

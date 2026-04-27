@@ -124,11 +124,26 @@ export default function SettingsPanel({ isZh, onClose }: Props) {
               onChange={(e) => updateSettings({ showCubePreview: e.target.checked })}
             />
           </Row>
+          <Row label={isZh ? '使用 3D 立方体' : 'Use 3D cube'}>
+            <input
+              type="checkbox"
+              checked={s.use3D}
+              onChange={(e) => updateSettings({ use3D: e.target.checked })}
+            />
+            <span className="hint">{isZh ? '可拖动旋转' : 'drag to rotate'}</span>
+          </Row>
           <Row label={isZh ? '显示图表' : 'Show charts'}>
             <input
               type="checkbox"
               checked={s.showCharts}
               onChange={(e) => updateSettings({ showCharts: e.target.checked })}
+            />
+          </Row>
+          <Row label={isZh ? '显示练习日历' : 'Show practice heatmap'}>
+            <input
+              type="checkbox"
+              checked={s.showHeatmap}
+              onChange={(e) => updateSettings({ showHeatmap: e.target.checked })}
             />
           </Row>
         </div>

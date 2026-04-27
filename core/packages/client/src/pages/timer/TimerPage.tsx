@@ -20,7 +20,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { Home, Download, Upload, Trash2, Settings as SettingsIcon, Maximize2, Minimize2 } from 'lucide-react';
+import { Home, Download, Upload, Trash2, Settings as SettingsIcon, Maximize2, Minimize2, Bluetooth, Mic, HelpCircle } from 'lucide-react';
 import LangToggle from '../../components/LangToggle';
 
 import { generateScramble, registerScramble } from './scramble';
@@ -40,19 +40,25 @@ import {
 } from './storage/db';
 import { useApplyTheme, useSettings } from './settings';
 import { warmupSound } from './sound';
+import { useBluetoothCube } from './bluetooth';
+import { useStackmat } from './stackmat';
 
 import TimerDisplay from './components/TimerDisplay';
 import StatsPanel from './components/StatsPanel';
 import HistoryPanel from './components/HistoryPanel';
 import SolveModal from './components/SolveModal';
 import SettingsPanel from './components/SettingsPanel';
+import ShortcutsModal from './components/ShortcutsModal';
 import HistogramChart from './components/HistogramChart';
 import TrendChart from './components/TrendChart';
+import PracticeHeatmap from './components/PracticeHeatmap';
 import { CubePreview } from './cube';
+import { Cube3D } from './cube3d';
 import { getLangQuery } from '../../i18n';
 
 import './timer.css';
 import './components/charts.css';
+import './components/practice_heatmap.css';
 
 export default function TimerPage() {
   const { i18n } = useTranslation();
@@ -138,6 +144,39 @@ export default function TimerPage() {
     }
   }, [timer.phase, scramble]);
 
+  // ── Bluetooth smart cube: auto-stop timer when cube solved ──────
+  const phaseSnapshotRef = useRef(timer.phase);
+  useEffect(() => { phaseSnapshotRef.current = timer.phase; }, [timer.phase]);
+  const bluetoothCube = useBluetoothCube({
+    onSolved: () => {
+      if (phaseSnapshotRef.current === 'running') {
+        // Press-down stops the timer (same code path as space-bar tap).
+        timer.onPressDown();
+      }
+    },
+  });
+
+  // ── Stackmat: when external stop fires, record the solve directly ─
+  const stackmatRecordRef = useRef<((ms: number) => void) | null>(null);
+  stackmatRecordRef.current = (ms: number) => {
+    // Record-as-solve regardless of internal phase. Bypass useTimer.
+    const solve = makeSolve({
+      timeMs: ms,
+      scramble: scrambleAtStartRef.current,
+      event,
+      penalty: 'ok',
+    });
+    setLastPenalty('ok');
+    setByEvent(prev => ({
+      ...prev,
+      [event]: [...(prev[event] ?? []), solve],
+    }));
+    nextScramble();
+  };
+  const stackmat = useStackmat({
+    onStop: (ms) => stackmatRecordRef.current?.(ms),
+  });
+
   // ── Keyboard wiring ────────────────────────────────────────────
   const { onPressDown, onPressUp, reset } = timer;
   // Solves change every solve — keep them in a ref so we don't rebuild the
@@ -201,6 +240,7 @@ export default function TimerPage() {
   const [modalSolve, setModalSolve] = useState<{ s: Solve; idx: number } | null>(null);
 
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
 
   // ── Fullscreen ──────────────────────────────────────────────────
   const [fullscreen, setFullscreen] = useState(false);
@@ -405,8 +445,49 @@ export default function TimerPage() {
           >
             <Trash2 size={14} />
           </button>
+          <button
+            className={`tb-btn ${bluetoothCube.status.connected ? 'connected' : ''}`}
+            onClick={async () => {
+              if (bluetoothCube.status.connected) {
+                bluetoothCube.disconnect();
+              } else {
+                try {
+                  await bluetoothCube.connect();
+                } catch (err) {
+                  alert((err as Error).message ?? String(err));
+                }
+              }
+            }}
+            title={bluetoothCube.status.connected
+              ? (isZh ? `已连接 ${bluetoothCube.status.deviceName}（点击断开）` : `Connected: ${bluetoothCube.status.deviceName} (click to disconnect)`)
+              : (isZh ? '连接智能魔方' : 'Connect smart cube')}
+          >
+            <Bluetooth size={14} />
+          </button>
+          <button
+            className={`tb-btn ${stackmat.status.listening ? 'connected' : ''}`}
+            onClick={async () => {
+              if (stackmat.status.listening) {
+                stackmat.stop();
+              } else {
+                try {
+                  await stackmat.start();
+                } catch (err) {
+                  alert(isZh ? `麦克风启用失败：${(err as Error).message}` : `Mic error: ${(err as Error).message}`);
+                }
+              }
+            }}
+            title={stackmat.status.listening
+              ? (isZh ? `Stackmat 监听中（点击停止）` : 'Stackmat listening (click to stop)')
+              : (isZh ? '启用 Stackmat（麦克风）' : 'Enable Stackmat (microphone)')}
+          >
+            <Mic size={14} />
+          </button>
           <button className="tb-btn" onClick={() => setSettingsOpen(true)} title={isZh ? '设置' : 'Settings'}>
             <SettingsIcon size={14} />
+          </button>
+          <button className="tb-btn" onClick={() => setShortcutsOpen(true)} title={isZh ? '快捷键' : 'Shortcuts'}>
+            <HelpCircle size={14} />
           </button>
           <button className="tb-btn" onClick={toggleFullscreen} title={isZh ? '全屏' : 'Fullscreen'}>
             {fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
@@ -425,12 +506,9 @@ export default function TimerPage() {
 
       {settings.showCubePreview && (
         <div className="timer-cube-preview">
-          <CubePreview
-            event={event}
-            scramble={scramble}
-            size={14}
-            colors={settings.colors}
-          />
+          {settings.use3D
+            ? <Cube3D event={event} scramble={scramble} size={200} colors={settings.colors} />
+            : <CubePreview event={event} scramble={scramble} size={14} colors={settings.colors} />}
         </div>
       )}
 
@@ -504,6 +582,12 @@ export default function TimerPage() {
         />
       </div>
 
+      {settings.showHeatmap && solves.length > 0 && (
+        <div className="timer-heatmap-row">
+          <PracticeHeatmap solves={solves} isZh={isZh} cellSize={11} />
+        </div>
+      )}
+
       {modalSolve && (
         <SolveModal
           key={modalSolve.s.id}
@@ -530,6 +614,10 @@ export default function TimerPage() {
 
       {settingsOpen && (
         <SettingsPanel isZh={isZh} onClose={() => setSettingsOpen(false)} />
+      )}
+
+      {shortcutsOpen && (
+        <ShortcutsModal isZh={isZh} onClose={() => setShortcutsOpen(false)} />
       )}
     </div>
   );
