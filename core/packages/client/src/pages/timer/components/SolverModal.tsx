@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import {
   solvedCubie,
   applySequence,
@@ -23,12 +23,19 @@ export default function SolverModal({ isZh, onClose }: Props) {
   const [solution, setSolution] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const titleId = useId();
+  const firstInputRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
+
+  // Initial focus → input textarea. Mount-only.
+  useEffect(() => {
+    firstInputRef.current?.focus();
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -92,8 +99,14 @@ export default function SolverModal({ isZh, onClose }: Props) {
 
   return (
     <div className="timer-modal-overlay" onClick={onClose}>
-      <div className="timer-modal solver-modal" onClick={(e) => e.stopPropagation()}>
-        <h2>{isZh ? '通用求解器' : 'Solver'}</h2>
+      <div
+        className="timer-modal solver-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 id={titleId}>{isZh ? '通用求解器' : 'Solver'}</h2>
 
         <div className="modal-section">
           <div className="solver-radios">
@@ -125,6 +138,7 @@ export default function SolverModal({ isZh, onClose }: Props) {
           <label className="manual-label">
             {isZh ? '输入' : 'Input'}
             <textarea
+              ref={firstInputRef}
               className="manual-textarea solver-input"
               rows={3}
               value={input}
@@ -133,7 +147,6 @@ export default function SolverModal({ isZh, onClose }: Props) {
                 ? `R U R' U' F2 L D ...`
                 : `UUUUUUUUUR...`
               }
-              autoFocus
             />
           </label>
           {err && <div className="manual-err">{err}</div>}

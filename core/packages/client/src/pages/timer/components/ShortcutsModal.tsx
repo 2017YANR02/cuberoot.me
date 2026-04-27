@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useId, useRef } from 'react';
 
 interface Props {
   isZh: boolean;
@@ -41,6 +41,9 @@ const NAV: ShortcutRow[] = [
 ];
 
 export default function ShortcutsModal({ isZh, onClose }: Props) {
+  const titleId = useId();
+  const closeBtnRef = useRef<HTMLButtonElement | null>(null);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -49,10 +52,21 @@ export default function ShortcutsModal({ isZh, onClose }: Props) {
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
+  // Initial focus → close button (the only focusable element). Mount-only.
+  useEffect(() => {
+    closeBtnRef.current?.focus();
+  }, []);
+
   return (
     <div className="timer-modal-overlay" onClick={onClose}>
-      <div className="timer-modal shortcuts-modal" onClick={(e) => e.stopPropagation()}>
-        <h2>{isZh ? '快捷键' : 'Shortcuts'}</h2>
+      <div
+        className="timer-modal shortcuts-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 id={titleId}>{isZh ? '快捷键' : 'Shortcuts'}</h2>
 
         <Section title={isZh ? '计时' : 'Timing'} rows={TIMING} isZh={isZh} />
         <Section title={isZh ? '历史' : 'History'} rows={HISTORY} isZh={isZh} />
@@ -61,7 +75,7 @@ export default function ShortcutsModal({ isZh, onClose }: Props) {
         <Section title={isZh ? '导航' : 'Navigation'} rows={NAV} isZh={isZh} />
 
         <div className="modal-actions">
-          <button className="primary" onClick={onClose}>{isZh ? '关闭' : 'Close'}</button>
+          <button ref={closeBtnRef} className="primary" onClick={onClose}>{isZh ? '关闭' : 'Close'}</button>
         </div>
       </div>
     </div>

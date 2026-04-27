@@ -8,7 +8,7 @@
  *    solved indicator) and a "reset state" + "disconnect" button.
  */
 
-import { useEffect } from 'react';
+import { useEffect, useId, useRef } from 'react';
 import { detectBluetoothEnv, envAdvice } from '../bluetooth';
 import type { BluetoothCubeHandle } from '../bluetooth';
 import { Bluetooth, Battery, Check, X, RotateCcw, ExternalLink } from 'lucide-react';
@@ -21,6 +21,9 @@ interface Props {
 }
 
 export default function BluetoothModal({ isZh, cube, onClose, onConnect }: Props) {
+  const titleId = useId();
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -28,6 +31,14 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect }: Props
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
+
+  // Initial focus → first focusable element (button/link) in dialog. Mount-only.
+  useEffect(() => {
+    const focusable = dialogRef.current?.querySelector<HTMLElement>(
+      'button, [href], input, select, textarea',
+    );
+    focusable?.focus();
+  }, []);
 
   const env = detectBluetoothEnv();
   const advice = envAdvice(env);
@@ -37,8 +48,15 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect }: Props
 
   return (
     <div className="timer-modal-overlay" onClick={onClose}>
-      <div className="timer-modal bluetooth-modal" onClick={(e) => e.stopPropagation()}>
-        <h2>
+      <div
+        ref={dialogRef}
+        className="timer-modal bluetooth-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 id={titleId}>
           <Bluetooth size={20} style={{ verticalAlign: 'middle', marginRight: 6 }} />
           {isZh ? '智能魔方' : 'Smart cube'}
         </h2>
