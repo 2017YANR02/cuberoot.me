@@ -28,7 +28,7 @@ import { warmup333, randomState333Sync } from './scramble/kociemba/random_state'
 import { useTimer } from './useTimer';
 import { formatMs } from './stats';
 import type { EventId, Penalty, Solve } from './types';
-import { EVENTS } from './types';
+import { EVENTS, isBldEvent } from './types';
 import {
   loadAll,
   saveAll,
@@ -44,6 +44,7 @@ import { warmupSound } from './sound';
 import { useBluetoothCube } from './bluetooth';
 import { useStackmat } from './stackmat';
 import { useMultiStage } from './multistage';
+import { useBldMemo } from './useBldMemo';
 
 import TimerDisplay from './components/TimerDisplay';
 import StatsPanel from './components/StatsPanel';
@@ -129,11 +130,16 @@ export default function TimerPage() {
   // time. Bridge with a ref that's filled after multiStage is constructed.
   const isNxNEvent = ['222','333','444','555','666','777','333oh','333fm'].includes(event);
   const multiStageActive = settings.multiStage && isNxNEvent;
+  const bldMemoActive = settings.bldMemo && isBldEvent(event);
   const multiStageRef = useRef<ReturnType<typeof useMultiStage> | null>(null);
+  const bldMemoRef = useRef<ReturnType<typeof useBldMemo> | null>(null);
 
   const recordSolve = useCallback((res: { timeMs: number; inspectionMs: number; autoPenalty: 'ok' | '+2' | 'DNF' }) => {
     const stages = multiStageActive
       ? multiStageRef.current?.extractFinal(res.timeMs)
+      : undefined;
+    const bld = bldMemoActive
+      ? bldMemoRef.current?.extractFinal()
       : undefined;
     const solve = makeSolve({
       timeMs: res.timeMs,
@@ -142,13 +148,14 @@ export default function TimerPage() {
       penalty: res.autoPenalty,
     });
     if (stages) solve.stages = stages;
+    if (bld) solve.bld = bld;
     setLastPenalty(res.autoPenalty);
     setByEvent(prev => ({
       ...prev,
       [event]: [...(prev[event] ?? []), solve],
     }));
     nextScramble();
-  }, [event, nextScramble, multiStageActive]);
+  }, [event, nextScramble, multiStageActive, bldMemoActive]);
 
   const timer = useTimer(recordSolve);
 
@@ -158,6 +165,13 @@ export default function TimerPage() {
     enabled: multiStageActive,
   });
   useEffect(() => { multiStageRef.current = multiStage; }, [multiStage]);
+
+  const bldMemo = useBldMemo({
+    phase: timer.phase,
+    displayMs: timer.displayMs,
+    enabled: bldMemoActive,
+  });
+  useEffect(() => { bldMemoRef.current = bldMemo; }, [bldMemo]);
 
   useEffect(() => {
     if (timer.phase !== 'running') {
@@ -337,6 +351,13 @@ export default function TimerPage() {
         }
       }
 
+      // BLD memo split: Enter while running.
+      if (ph === 'running' && bldMemoActive && e.code === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        bldMemoRef.current?.markMemo();
+        return;
+      }
+
       // Block other shortcuts while the timer is mid-cycle.
       if (ph === 'holding' || ph === 'ready' || ph === 'running' || ph === 'inspecting') return;
 
@@ -385,7 +406,7 @@ export default function TimerPage() {
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
     };
-  }, [onPressDown, onPressUp, reset, updateSolve, deleteSolve, nextScramble, toggleFullscreen, multiStageActive]);
+  }, [onPressDown, onPressUp, reset, updateSolve, deleteSolve, nextScramble, toggleFullscreen, multiStageActive, bldMemoActive]);
 
   // ── Import / export ────────────────────────────────────────────
   const handleExport = useCallback(() => {
@@ -595,6 +616,30 @@ export default function TimerPage() {
             <span className={`stage-chip ${multiStage.liveStages.oll !== undefined ? 'done' : ''}`}>
               OLL{multiStage.liveStages.oll !== undefined ? ` ${formatMs(multiStage.liveStages.oll)}` : ''}
             </span>
+          </div>
+        )}
+        {timer.phase === 'running' && bldMemoActive && (
+          <div className="timer-stage-splits">
+            {bldMemo.memoMs === undefined ? (
+              <button
+                type="button"
+                className="stage-chip stage-chip-action"
+                onMouseDown={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
+                onClick={(e) => { e.stopPropagation(); bldMemoRef.current?.markMemo(); }}
+              >
+                {isZh ? '记忆中… 按 Enter 或点这里' : 'Memo… press Enter or tap'}
+              </button>
+            ) : (
+              <>
+                <span className="stage-chip done">
+                  {isZh ? '记忆' : 'Memo'} {formatMs(bldMemo.memoMs)}
+                </span>
+                <span className="stage-chip">
+                  {isZh ? '执行中…' : 'Executing…'}
+                </span>
+              </>
+            )}
           </div>
         )}
         {timer.phase === 'stopped' && solves.length > 0 && (

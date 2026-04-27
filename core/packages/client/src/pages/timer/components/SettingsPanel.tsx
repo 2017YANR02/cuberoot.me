@@ -61,6 +61,16 @@ export default function SettingsPanel({ isZh, onClose }: Props) {
               ? '按 1=Cross 完成，2=F2L，3=OLL；蓝牙连接时自动检测'
               : 'Press 1=Cross, 2=F2L, 3=OLL; auto-detected when bluetooth connected'}</span>
           </Row>
+          <Row label={isZh ? '盲拧记忆 / 执行分段' : 'BLD memo split'}>
+            <input
+              type="checkbox"
+              checked={s.bldMemo}
+              onChange={(e) => updateSettings({ bldMemo: e.target.checked })}
+            />
+            <span className="hint">{isZh
+              ? '盲拧项目运行中按 Enter 标记记忆完成'
+              : 'On BLD events, press Enter while running to mark memo done'}</span>
+          </Row>
           <Row label={isZh ? '精度' : 'Precision'}>
             <select
               value={s.precision}

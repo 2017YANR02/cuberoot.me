@@ -49,6 +49,14 @@ export interface Solve {
     oll?: number;
     pll: number;
   };
+  /** Blindfolded memo split. memoMs is elapsed at the moment user marked
+   *  "memo done". Execution time = timeMs - memoMs. */
+  bld?: { memoMs: number };
+}
+
+const BLD_EVENT_IDS = new Set<EventId>(['333bld','333mbld','333ni','444bld','555bld','666bld','777bld']);
+export function isBldEvent(id: EventId): boolean {
+  return BLD_EVENT_IDS.has(id);
 }
 
 /** Effective time after penalty (Infinity for DNF). */
