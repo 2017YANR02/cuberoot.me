@@ -60,18 +60,21 @@ export function useAutoReady(opts: AutoReadyOpts): void {
 
     if (mode === 'still') {
       let timer: number | null = null;
+      // Don't arm until the user has actually touched the cube — otherwise a
+      // user who just connected and never moved could be auto-readied without
+      // any signal of intent.
+      let hasSeenMove = false;
       const armTimer = () => {
+        if (!hasSeenMove) return;
         if (timer !== null) window.clearTimeout(timer);
         timer = window.setTimeout(() => {
           timer = null;
           fire();
         }, STILL_THRESHOLD_MS);
       };
-      // Arm immediately — if no move arrives in 2s we fire.
-      armTimer();
       const cb = (_move: string, _ts: number) => {
-        // Any move resets the still-timer.
         if (firedOnce) return;
+        hasSeenMove = true;
         armTimer();
       };
       const unsub = onMoveSubRef.current(cb);

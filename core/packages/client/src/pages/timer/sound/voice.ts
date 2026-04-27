@@ -59,20 +59,24 @@ if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
 const MALE_PATTERNS = ['Male', 'Daniel', 'Alex', 'Microsoft Mark', '云健'];
 const FEMALE_PATTERNS = ['Female', 'Samantha', 'Zira', 'Microsoft Zira', '晓晓', '云希'];
 
-function pickVoice(
-  variant: 'en-male' | 'en-female' | 'zh-male' | 'zh-female',
-): SpeechSynthesisVoice | null {
+type VoiceVariant = 'en-male' | 'en-female' | 'zh-male' | 'zh-female';
+
+function parseVariant(variant: VoiceVariant): { lang: 'en' | 'zh'; gender: 'male' | 'female' } {
+  const [lang, gender] = variant.split('-') as ['en' | 'zh', 'male' | 'female'];
+  return { lang, gender };
+}
+
+function pickVoice(variant: VoiceVariant): SpeechSynthesisVoice | null {
   if (!isVoiceAvailable()) return null;
   if (_voiceCache.length === 0) {
     try { _voiceCache = window.speechSynthesis.getVoices() || []; } catch { /* ignore */ }
   }
   if (_voiceCache.length === 0) return null;
 
-  const langPrefix = variant.startsWith('zh') ? 'zh' : 'en';
-  const isMale = variant.endsWith('male') && !variant.endsWith('female');
-  const patterns = isMale ? MALE_PATTERNS : FEMALE_PATTERNS;
+  const { lang, gender } = parseVariant(variant);
+  const patterns = gender === 'male' ? MALE_PATTERNS : FEMALE_PATTERNS;
 
-  const langMatches = _voiceCache.filter(v => v.lang && v.lang.toLowerCase().startsWith(langPrefix));
+  const langMatches = _voiceCache.filter(v => v.lang && v.lang.toLowerCase().startsWith(lang));
   if (langMatches.length === 0) return null;
 
   for (const v of langMatches) {
@@ -89,7 +93,7 @@ export function speakInspectionCue(cue: VoiceCue, isZh: boolean): boolean {
   try {
     const synth = window.speechSynthesis;
     const setting = getSettings().voiceInspection;
-    let variant: 'en-male' | 'en-female' | 'zh-male' | 'zh-female';
+    let variant: VoiceVariant;
     if (setting === 'none') {
       // Caller should not have invoked us; fall back to a sensible default.
       variant = isZh ? 'zh-female' : 'en-female';
