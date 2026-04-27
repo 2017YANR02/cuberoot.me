@@ -55,6 +55,7 @@ import CaseStatsPanel from './components/CaseStatsPanel';
 import HistoryPanel from './components/HistoryPanel';
 import SolveModal from './components/SolveModal';
 import ReconstructModal from './components/ReconstructModal';
+import { decodeReplayParam } from './share/decode';
 import SettingsPanel from './components/SettingsPanel';
 import ShortcutsModal from './components/ShortcutsModal';
 import BluetoothModal from './components/BluetoothModal';
@@ -388,6 +389,31 @@ export default function TimerPage() {
   // ── Modal ───────────────────────────────────────────────────────
   const [modalSolve, setModalSolve] = useState<{ s: Solve; idx: number } | null>(null);
   const [reconstructSolve, setReconstructSolve] = useState<Solve | null>(null);
+
+  // ── ?replay=<base64url> deep-link: synthesise an ephemeral Solve and open
+  // the ReconstructModal. Strip the param after mount so refresh doesn't
+  // re-open. The synthesised solve never enters byEvent, so it isn't saved.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const raw = params.get('replay');
+    if (!raw) return;
+    const decoded = decodeReplayParam(raw);
+    if (!decoded) {
+      console.warn('[timer] invalid ?replay= payload');
+    } else {
+      const ephemeral: Solve = {
+        id: `replay-${Date.now()}`,
+        timeMs: decoded.totalMs,
+        penalty: 'ok',
+        scramble: decoded.scramble,
+        event: decoded.event,
+        ts: Date.now(),
+        moves: decoded.moves.length > 0 ? decoded.moves : undefined,
+      };
+      setReconstructSolve(ephemeral);
+    }
+    history.replaceState(null, '', window.location.pathname);
+  }, []);
 
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
