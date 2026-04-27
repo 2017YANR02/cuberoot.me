@@ -152,10 +152,14 @@ export default function TimerPage() {
 
   const recordSolve = useCallback((res: { timeMs: number; inspectionMs: number; autoPenalty: 'ok' | '+2' | 'DNF' }) => {
     const ev = eventAtStartRef.current;
-    const stages = multiStageActive
+    // Recompute the active flags from the SNAPSHOT event, not the live one,
+    // so changing event mid-solve doesn't attach the wrong split data.
+    const wasNxN = ['222','333','444','555','666','777','333oh','333fm'].includes(ev);
+    const wasBld = isBldEvent(ev);
+    const stages = (settings.multiStage && wasNxN)
       ? multiStageRef.current?.extractFinal(res.timeMs)
       : undefined;
-    const bld = bldMemoActive
+    const bld = (settings.bldMemo && wasBld)
       ? bldMemoRef.current?.extractFinal()
       : undefined;
     const solve = makeSolve({
@@ -173,7 +177,7 @@ export default function TimerPage() {
       [ev]: [...(prev[ev] ?? []), solve],
     }));
     nextScramble();
-  }, [nextScramble, multiStageActive, bldMemoActive]);
+  }, [nextScramble, settings.multiStage, settings.bldMemo]);
 
   const timer = useTimer(recordSolve);
 
@@ -344,9 +348,20 @@ export default function TimerPage() {
   // ── Keyboard shortcuts (registered after all mutators are defined) ─
   const phaseRef = useRef(timer.phase);
   useEffect(() => { phaseRef.current = timer.phase; }, [timer.phase]);
+  // Gate global keyboard while any modal is open — each modal owns its own
+  // Esc handler, and we don't want space to start the timer or 1/2/3 to flip
+  // penalties while the user is interacting with a modal.
+  const anyModalOpen =
+    settingsOpen || shortcutsOpen || bluetoothOpen ||
+    trainerSubsetOpen !== null || statsModalOpen ||
+    manualEntryOpen || solverOpen || bulkScrambleOpen ||
+    modalSolve !== null;
+  const anyModalOpenRef = useRef(anyModalOpen);
+  useEffect(() => { anyModalOpenRef.current = anyModalOpen; }, [anyModalOpen]);
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.repeat) return;
+      if (anyModalOpenRef.current) return;
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
 
@@ -420,6 +435,7 @@ export default function TimerPage() {
       if (e.code === 'KeyF') { toggleFullscreen(); }
     };
     const onKeyUp = (e: KeyboardEvent) => {
+      if (anyModalOpenRef.current) return;
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
       if (e.code === 'Space') {
