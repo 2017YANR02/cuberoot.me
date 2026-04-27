@@ -7,6 +7,7 @@
  */
 
 import { getSettings } from '../settings';
+import { isVoiceAvailable, speakInspectionCue } from './voice';
 
 export type Cue =
   /** Inspection started (15s countdown begins) */
@@ -68,6 +69,14 @@ function playNote(c: AudioContext, note: Note, when: number, volume: number): nu
 export function play(cue: Cue): void {
   const s = getSettings();
   if (!s.soundsEnabled || s.volume <= 0) return;
+  // Voice override for inspection cues.
+  if (
+    s.voiceInspection !== 'none' &&
+    (cue === 'warn-8' || cue === 'warn-12' || cue === 'start' || cue === 'inspection-start') &&
+    isVoiceAvailable()
+  ) {
+    if (speakInspectionCue(cue, s.voiceInspection === 'zh')) return;
+  }
   const c = ctx();
   if (!c) return;
   // Resume in case the context started suspended (autoplay policy).

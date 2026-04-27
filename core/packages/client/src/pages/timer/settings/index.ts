@@ -66,6 +66,19 @@ export interface TimerSettings {
 
   /** Color neutral scramble mode (3x3-shaped events only). */
   cnMode: 'none' | 'single' | 'dual' | 'six';
+
+  /** Speech-synthesis voice for inspection cues. 'none' = beeps as before. */
+  voiceInspection: 'none' | 'en' | 'zh';
+
+  /** Metronome on/off and tempo. */
+  metronomeEnabled: boolean;
+  metronomeBpm: number;
+
+  /** Sync seed: when set, scramble RNG is deterministic across devices. */
+  syncSeed: string | null;
+
+  /** Auto-backup every N saves. 0 = disabled, max 30. */
+  autoBackupEvery: number;
 }
 
 export const DEFAULTS: TimerSettings = {
@@ -86,6 +99,11 @@ export const DEFAULTS: TimerSettings = {
   multiStage: false,
   bldMemo: true,
   cnMode: 'none',
+  voiceInspection: 'none',
+  metronomeEnabled: false,
+  metronomeBpm: 60,
+  syncSeed: null,
+  autoBackupEvery: 10,
 };
 
 let _cache: TimerSettings = load();
