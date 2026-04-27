@@ -777,3 +777,99 @@
   font-size: clamp(16px, 2.5vw, 22px);
   padding: 18px 24px;
 }
+
+/* --- Trainer subset (OLL / PLL) --- */
+.trainer-subset-row {
+  display: flex;
+  justify-content: center;
+  padding: 4px 16px 0;
+}
+.trainer-subset-btn {
+  background: #1a1a1d;
+  color: #cde;
+  border: 1px solid #2a3d4d;
+  border-radius: 999px;
+  padding: 4px 14px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.trainer-subset-btn:hover {
+  background: #25252a;
+  border-color: #4d7a99;
+}
+
+.trainer-subset-modal { max-width: 720px; }
+.trainer-subset-modal .trainer-subset-count {
+  color: #888;
+  font-size: 13px;
+  font-weight: 400;
+  margin-left: 6px;
+}
+.trainer-subset-modal .trainer-subset-toolbar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.trainer-subset-modal .trainer-subset-toolbar button {
+  background: #25252a;
+  color: #f0ebe3;
+  border: 1px solid #444;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.trainer-subset-modal .trainer-subset-toolbar button:hover {
+  background: #2f2f35;
+  border-color: #666;
+}
+.trainer-subset-modal .trainer-subset-body {
+  max-height: 60dvh;
+  overflow-y: auto;
+  padding-right: 4px;
+  margin-bottom: 12px;
+}
+.trainer-case-group { margin-bottom: 14px; }
+.trainer-case-group-title {
+  font-size: 12px;
+  color: #aaa;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin: 0 0 6px;
+}
+.trainer-case-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.trainer-case-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #0e0e10;
+  border: 1px solid #2a2a2e;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: #ccc;
+  cursor: pointer;
+  user-select: none;
+}
+.trainer-case-chip input {
+  margin: 0;
+  cursor: pointer;
+}
+.trainer-case-chip:hover {
+  background: #1a1a1d;
+  border-color: #444;
+}
+.trainer-case-chip.checked {
+  background: #1f3d2a;
+  border-color: #4d995a;
+  color: #cdebd0;
+}
+.trainer-case-chip-label {
+  font-family: 'JetBrains Mono', monospace;
+}

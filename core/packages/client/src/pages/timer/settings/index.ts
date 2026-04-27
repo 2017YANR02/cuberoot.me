@@ -57,6 +57,12 @@ export interface TimerSettings {
 
   /** Track memo / execution split on BLD events (Enter to mark memo done). */
   bldMemo: boolean;
+
+  /** OLL trainer case-id whitelist (e.g. ["OLL 21"]). undefined / [] = all 57. */
+  ollSubset?: string[];
+
+  /** PLL trainer case-id whitelist (e.g. ["T", "Y"]). undefined / [] = all 21. */
+  pllSubset?: string[];
 }
 
 export const DEFAULTS: TimerSettings = {
