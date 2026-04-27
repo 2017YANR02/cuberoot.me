@@ -108,9 +108,6 @@ export default function AuthCallbackPage() {
       }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ color: '#f87171', fontSize: '1.1rem', display: 'inline-flex', alignItems: 'center', gap: 6 }}><X size={18} /> {errorMsg}</div>
-          <div style={{ marginTop: 12 }}>
-            <a href="/recon" style={{ color: '#60a5fa' }}>{isZh ? '返回复盘' : 'Back to Recon'}</a>
-          </div>
         </div>
       </div>
     );

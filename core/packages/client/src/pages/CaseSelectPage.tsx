@@ -135,7 +135,6 @@ export function CaseSelectPage() {
   return (
     <div className="case-select-page">
       <header className="page-header">
-        <button className="back-btn" onClick={() => navigate('/')}>{t('caseSelect.back')}</button>
         <h1>{config.name}</h1>
         <span className="count-badge">{selected.size} / {allCases.length}</span>
       </header>

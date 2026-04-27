@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { getLangQuery } from '../../i18n';
 import LangToggle from '../../components/LangToggle';
 import NemesizerBrand from './components/NemesizerBrand';
 import StandardMode from './modes/StandardMode';
@@ -37,10 +36,7 @@ export default function NemesizerPage() {
 
   return (
     <div className="nemesizer-page">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-        <Link to={`/wca-stats${getLangQuery()}`} className="nemesizer-link-btn">
-          {isZh ? '← 返回 WCA 统计' : '← Back to WCA Stats'}
-        </Link>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 8 }}>
         <LangToggle />
       </div>
 

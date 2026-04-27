@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Search, ChevronLeft, ChevronDown, ChevronRight, ExternalLink, Trophy, Play } from 'lucide-react';
+import { Search, ChevronDown, ChevronRight, ExternalLink, Trophy, Play } from 'lucide-react';
 import { useWbData } from './use_wb_data';
 import type { WbCategory, WbEvent, WbRecord, WbTab } from './types';
 import { displayCuberName } from '../../utils/name_utils';
@@ -46,10 +45,6 @@ export default function WbPage() {
   return (
     <div className="wb-page">
       <header className="wb-header">
-        <Link to="/" className="wb-back" title={t('返回', 'Back')}>
-          <ChevronLeft size={18} />
-          <span>{t('返回', 'Back')}</span>
-        </Link>
         <div className="wb-title">
           <Trophy size={20} className="wb-title-icon" />
           <h1>{t('非官方世界纪录', 'Unofficial World Records')}</h1>

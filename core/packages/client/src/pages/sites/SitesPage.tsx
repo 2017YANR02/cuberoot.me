@@ -3,9 +3,9 @@
  * sidebar 分组 + 右侧单行密集列表；搜索用 Fuse.js。
  */
 import { useMemo, useCallback, useState, useEffect, useRef } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Search, AlertTriangle } from 'lucide-react';
+import { Search, AlertTriangle } from 'lucide-react';
 
 function YouTubeBadge() {
   return (
@@ -54,7 +54,6 @@ const TEXTS = {
   dead:        { en: 'Offline',          zh: '不可访问' },
   resultsFor:  { en: 'Results for',      zh: '搜索' },
   crossGroup:  { en: 'Search all groups',zh: '跨分类搜索' },
-  back:        { en: 'Home',             zh: '首页' },
   altLink:     { en: 'mirrors',          zh: '其他镜像' },
   noResults:   { en: 'No matches.',      zh: '没有匹配结果。' },
   colName:     { en: 'Name',             zh: '名称' },
@@ -249,10 +248,6 @@ export default function SitesPage() {
   return (
     <div className="sites-page">
       <aside className="sites-sidebar">
-        <Link to="/" className="sites-back">
-          <ArrowLeft size={16} />
-          {TEXTS.back[lang]}
-        </Link>
         <div className="sites-title">{TEXTS.title[lang]}</div>
 
         <div className="sites-search">

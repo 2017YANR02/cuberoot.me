@@ -22,15 +22,30 @@ function getIp(c: { req: { header: (name: string) => string | undefined } }): st
 
 // ==================== GET /api/recon/list ====================
 
+// NOTE: 列表页只用以下字段（含搜索匹配 optimal_scramble/oll/pll/note）。
+//       之前 SELECT * 把 solution（最大的字段，每条几百字节）等全拉过来，
+//       响应 ~800 KB / 590 KB gzip，国内用户加载 10–30s。
+//       瘦身后预计减半以上。详情页仍走 GET /api/recon/:id 拿全字段。
+const LIST_COLUMNS = [
+  'id', 'official', 'event', 'method', 'date',
+  'comp', 'comp_wca_id', 'country',
+  'round', 'solve_num',
+  'person', 'person_id', 'person_country',
+  'value', 'raw_time', 'average', 'ao_type',
+  'regional_single_record', 'regional_average_record', 'regional_aoxr_record',
+  'stm', 'tps',
+  'optimal_scramble', 'oll', 'pll', 'note',
+].join(', ');
+
 reconRoutes.get('/api/recon/list', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   const wcaId = c.req.query('wcaId');
 
   let rows: Record<string, unknown>[];
   if (wcaId) {
-    rows = await query('SELECT * FROM recons WHERE person_id = ? ORDER BY id DESC', [wcaId]);
+    rows = await query(`SELECT ${LIST_COLUMNS} FROM recons WHERE person_id = ? ORDER BY id DESC`, [wcaId]);
   } else {
-    rows = await query('SELECT * FROM recons ORDER BY id DESC');
+    rows = await query(`SELECT ${LIST_COLUMNS} FROM recons ORDER BY id DESC`);
   }
 
   return c.json(rows.map(rowToJson));

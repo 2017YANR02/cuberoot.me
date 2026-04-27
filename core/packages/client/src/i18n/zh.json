@@ -4,7 +4,6 @@
     "subtitle": "公式训练器"
   },
   "caseSelect": {
-    "back": "← 返回",
     "selectAll": "全选",
     "deselectAll": "取消全选",
     "startTraining": "开始训练",
@@ -18,8 +17,7 @@
     "complete": "🎉 训练完成！",
     "casesCount": "{{count}} 个 case",
     "avgTime": "平均 {{time}}s",
-    "viewStats": "查看统计",
-    "backToSelect": "返回选择"
+    "viewStats": "查看统计"
   },
   "stats": {
     "title": "{{name}} 统计",
@@ -33,8 +31,6 @@
   },
   "common": {
     "cases": "{{count}} 个情况",
-    "back": "返回",
-    "backToHome": "返回首页",
     "loading": "加载中...",
     "loadFailed": "加载失败",
     "unknownError": "未知错误",
@@ -144,7 +140,6 @@
   },
   "wcaStats": {
     "title": "WCA 统计数据",
-    "backToStats": "返回统计列表",
     "selectAll": "全选/取消",
     "dedup": "日期去重",
     "timeAxis": "时间 (秒)",
@@ -287,7 +282,6 @@
   },
   "zbls": {
     "nav": {
-      "back": "← 返回",
       "selectBtn": "选择",
       "nToRecap": "待复习: {{count}}"
     },
@@ -327,7 +321,6 @@
   },
   "frameCount": {
     "title": "数帧",
-    "back": "返回",
     "toolbar": {
       "flipV": "垂直翻转",
       "flipH": "水平翻转",
