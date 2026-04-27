@@ -4,6 +4,30 @@ import { effectiveMs } from '../types';
 import { formatMs } from '../stats';
 import { CubePreview } from '../cube';
 
+function BldSplits({ bld, isZh, totalMs }: { bld: NonNullable<Solve['bld']>; isZh: boolean; totalMs: number }) {
+  const memo = bld.memoMs;
+  const exec = totalMs - memo;
+  return (
+    <div className="stage-splits-table">
+      <div className="stage-row">
+        <span className="stage-name">{isZh ? '记忆' : 'Memo'}</span>
+        <span className="stage-dur">{formatMs(memo)}</span>
+        <span className="stage-cum">{formatMs(memo)}</span>
+      </div>
+      <div className="stage-row">
+        <span className="stage-name">{isZh ? '执行' : 'Execution'}</span>
+        <span className="stage-dur">{formatMs(exec)}</span>
+        <span className="stage-cum">{formatMs(totalMs)}</span>
+      </div>
+      <div className="stage-row stage-total">
+        <span className="stage-name">{isZh ? '总计' : 'Total'}</span>
+        <span className="stage-dur"></span>
+        <span className="stage-cum">{formatMs(totalMs)}</span>
+      </div>
+    </div>
+  );
+}
+
 function StageSplits({ stages, isZh, totalMs }: { stages: NonNullable<Solve['stages']>; isZh: boolean; totalMs: number }) {
   const cross = stages.cross;
   const f2l = stages.f2l;
@@ -91,6 +115,12 @@ export default function SolveModal({ solve, index, isZh, onClose, onChangePenalt
           <div className="modal-section">
             <h3 className="settings-h3">{isZh ? '分阶段成绩' : 'Stage splits'}</h3>
             <StageSplits stages={solve.stages} isZh={isZh} totalMs={solve.timeMs} />
+          </div>
+        )}
+        {solve.bld && (
+          <div className="modal-section">
+            <h3 className="settings-h3">{isZh ? '记忆 / 执行' : 'Memo / Execution'}</h3>
+            <BldSplits bld={solve.bld} isZh={isZh} totalMs={solve.timeMs} />
           </div>
         )}
         <div className="modal-section">
