@@ -53,6 +53,9 @@ import SolveModal from './components/SolveModal';
 import SettingsPanel from './components/SettingsPanel';
 import ShortcutsModal from './components/ShortcutsModal';
 import BluetoothModal from './components/BluetoothModal';
+import TrainerSubsetModal from './components/TrainerSubsetModal';
+import { OLL_CASES } from './scramble/algs/oll_cases';
+import { PLL_CASES } from './scramble/algs/pll_cases';
 import HistogramChart from './components/HistogramChart';
 import TrendChart from './components/TrendChart';
 import PracticeHeatmap from './components/PracticeHeatmap';
@@ -292,6 +295,7 @@ export default function TimerPage() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [bluetoothOpen, setBluetoothOpen] = useState(false);
+  const [trainerSubsetOpen, setTrainerSubsetOpen] = useState<'oll' | 'pll' | null>(null);
 
   // ── Fullscreen ──────────────────────────────────────────────────
   const [fullscreen, setFullscreen] = useState(false);
@@ -568,6 +572,26 @@ export default function TimerPage() {
         {scramble || <span className="scramble-empty">—</span>}
       </div>
 
+      {(event === 'oll' || event === 'pll') && (() => {
+        const total = event === 'oll' ? OLL_CASES.length : PLL_CASES.length;
+        const subset = event === 'oll' ? settings.ollSubset : settings.pllSubset;
+        const sel = subset && subset.length > 0 ? subset.length : null;
+        return (
+          <div className="trainer-subset-row">
+            <button
+              type="button"
+              className="trainer-subset-btn"
+              onClick={() => setTrainerSubsetOpen(event === 'oll' ? 'oll' : 'pll')}
+              title={isZh ? '选择训练子集' : 'Pick training subset'}
+            >
+              {sel !== null
+                ? (isZh ? `子集 (${sel}/${total})` : `Subset (${sel}/${total})`)
+                : (isZh ? `全部 (${total})` : `All (${total})`)}
+            </button>
+          </div>
+        );
+      })()}
+
       {settings.showCubePreview && (
         <div className="timer-cube-preview">
           {settings.use3D
@@ -719,6 +743,14 @@ export default function TimerPage() {
 
       {shortcutsOpen && (
         <ShortcutsModal isZh={isZh} onClose={() => setShortcutsOpen(false)} />
+      )}
+
+      {trainerSubsetOpen && (
+        <TrainerSubsetModal
+          kind={trainerSubsetOpen}
+          isZh={isZh}
+          onClose={() => setTrainerSubsetOpen(null)}
+        />
       )}
 
       {bluetoothOpen && (
