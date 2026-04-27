@@ -1,5 +1,5 @@
 import type { Solve } from '../types';
-import { summarize } from '../stats';
+import { summarize, subXBreakdown } from '../stats';
 
 interface Props {
   solves: Solve[];
@@ -8,6 +8,7 @@ interface Props {
 
 export default function StatsPanel({ solves, isZh }: Props) {
   const s = summarize(solves);
+  const subX = subXBreakdown(solves);
   const rows: { lbl: string; val: string }[] = [
     { lbl: isZh ? '总数' : 'Count',     val: s.count.toString() },
     { lbl: isZh ? '最佳' : 'Best',      val: s.best },
@@ -37,6 +38,22 @@ export default function StatsPanel({ solves, isZh }: Props) {
           </div>
         ))}
       </div>
+      {subX.length > 0 && (
+        <>
+          <h3 style={{ marginTop: 12 }}>{isZh ? '阈值占比' : 'Sub-X'}</h3>
+          <div className="subx-list">
+            {subX.map(x => (
+              <div className="subx-row" key={x.threshold}>
+                <span className="subx-lbl">{x.label}</span>
+                <div className="subx-bar">
+                  <div className="subx-fill" style={{ width: `${x.pct}%` }} />
+                </div>
+                <span className="subx-pct">{x.pct.toFixed(0)}%</span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
