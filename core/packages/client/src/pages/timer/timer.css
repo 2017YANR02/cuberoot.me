@@ -281,6 +281,18 @@
 .stage-chip-action:hover { background: #344a66; }
 .stage-chip-action:active { background: #1f2a3a; }
 
+/* Hide-all-UI mode: while running, hide everything except .timer-center. */
+.timer-root.ui-hidden .timer-topbar,
+.timer-root.ui-hidden .scramble-strip,
+.timer-root.ui-hidden .timer-cube-preview,
+.timer-root.ui-hidden .trainer-subset-row,
+.timer-root.ui-hidden .timer-bottom,
+.timer-root.ui-hidden .timer-heatmap-row,
+.timer-root.ui-hidden .solver-hints,
+.timer-root.ui-hidden .timer-stage-splits {
+  visibility: hidden !important;
+}
+
 .qa-btn {
   background: #1a1a1d;
   color: #ccc;

@@ -1,5 +1,6 @@
 import type { Solve, EventId } from '../types';
-import { summarize, subXBreakdown, eventDefaultFormat, formatPrimary, formatBestPrimary } from '../stats';
+import { summarize, subXBreakdown, eventDefaultFormat, formatPrimary, formatBestPrimary, averageOfN, bestAverageOfN, formatMs } from '../stats';
+import { useSettings } from '../settings';
 
 interface Props {
   solves: Solve[];
@@ -14,9 +15,13 @@ function primaryLabel(kind: 'ao5' | 'mo3' | 'bo3' | 'single', isZh: boolean): st
   return isZh ? '单次' : 'Single';
 }
 
+const STANDARD_AOS = new Set([5, 12, 50, 100, 1000]);
+
 export default function StatsPanel({ solves, isZh, event }: Props) {
+  const settings = useSettings();
   const s = summarize(solves);
   const subX = subXBreakdown(solves);
+  const customAos = (settings.customAoWindows ?? []).filter(n => !STANDARD_AOS.has(n));
   const fmt = eventDefaultFormat(event);
   const primaryNow = formatPrimary(solves, fmt);
   const primaryBest = formatBestPrimary(solves, fmt);
@@ -46,6 +51,10 @@ export default function StatsPanel({ solves, isZh, event }: Props) {
     { lbl: isZh ? 'Ao50 最佳' : 'Best Ao50',   val: s.bestAo50 },
     { lbl: isZh ? 'Ao100 最佳' : 'Best Ao100', val: s.bestAo100 },
     { lbl: isZh ? 'Ao1000 最佳' : 'Best Ao1000', val: s.bestAo1000 },
+    ...customAos.flatMap(n => [
+      { lbl: `Ao${n}`,                              val: formatMs(averageOfN(solves, n)) },
+      { lbl: isZh ? `Ao${n} 最佳` : `Best Ao${n}`,  val: formatMs(bestAverageOfN(solves, n)) },
+    ]),
   ];
   return (
     <div className="stats-panel">
