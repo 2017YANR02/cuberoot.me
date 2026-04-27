@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import type { Solve, Penalty } from '../types';
 import { effectiveMs } from '../types';
 import { formatMs } from '../stats';
@@ -78,6 +78,8 @@ export default function SolveModal({ solve, index, isZh, onClose, onChangePenalt
   // `key={solve.id}` so a different solve remounts (and re-initializes) us.
   const [comment, setComment] = useState(solve.comment ?? '');
   const [editing, setEditing] = useState(false);
+  const titleId = useId();
+  const firstButtonRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -90,12 +92,23 @@ export default function SolveModal({ solve, index, isZh, onClose, onChangePenalt
     return () => window.removeEventListener('keydown', onKey);
   }, [editing, onClose]);
 
+  // Initial focus → first action button. Mount-only (parent remounts on id change).
+  useEffect(() => {
+    firstButtonRef.current?.focus();
+  }, []);
+
   const eff = effectiveMs(solve);
   const dt = new Date(solve.ts);
   return (
     <div className="timer-modal-overlay" onClick={onClose}>
-      <div className="timer-modal" onClick={(e) => e.stopPropagation()}>
-        <h2>
+      <div
+        className="timer-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 id={titleId}>
           #{index + 1} · {formatMs(eff)}
           {solve.penalty === '+2' && ' (+2)'}
           {solve.penalty === 'DNF' && ' DNF'}
@@ -142,6 +155,7 @@ export default function SolveModal({ solve, index, isZh, onClose, onChangePenalt
         </div>
         <div className="modal-actions">
           <button
+            ref={firstButtonRef}
             className={solve.penalty === 'ok' ? 'primary' : ''}
             onClick={() => onChangePenalty('ok')}
           >

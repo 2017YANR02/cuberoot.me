@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import type { EventId } from '../types';
 import { EVENTS } from '../types';
 import { generateScramble } from '../scramble';
@@ -16,12 +16,19 @@ export default function BulkScrambleModal({ defaultEvent, isZh, onClose }: Props
   const [scrambles, setScrambles] = useState<string[]>([]);
   const [generating, setGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
+  const titleId = useId();
+  const firstSelectRef = useRef<HTMLSelectElement | null>(null);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
+
+  // Initial focus → event picker. Mount-only.
+  useEffect(() => {
+    firstSelectRef.current?.focus();
+  }, []);
 
   const handleGenerate = async () => {
     setGenerating(true);
@@ -68,13 +75,19 @@ export default function BulkScrambleModal({ defaultEvent, isZh, onClose }: Props
 
   return (
     <div className="timer-modal-overlay" onClick={onClose}>
-      <div className="timer-modal bulk-scramble-modal" onClick={(e) => e.stopPropagation()}>
-        <h2>{isZh ? '批量打乱' : 'Bulk scrambles'}</h2>
+      <div
+        className="timer-modal bulk-scramble-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 id={titleId}>{isZh ? '批量打乱' : 'Bulk scrambles'}</h2>
 
         <div className="modal-section bulk-controls">
           <label className="manual-label inline">
             {isZh ? '项目' : 'Event'}
-            <select value={event} onChange={(e) => setEvent(e.target.value as EventId)}>
+            <select ref={firstSelectRef} value={event} onChange={(e) => setEvent(e.target.value as EventId)}>
               {EVENTS.filter(e => e.group !== 'll' && e.group !== 'cfop' && e.id !== 'custom').map(ev => (
                 <option key={ev.id} value={ev.id}>{isZh ? ev.nameZh : ev.nameEn}</option>
               ))}
