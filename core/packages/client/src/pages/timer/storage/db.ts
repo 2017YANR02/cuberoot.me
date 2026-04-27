@@ -1,36 +1,55 @@
 /**
- * localStorage-backed session store. One key holds the entire DB — sessions
- * are small (text scrambles + numeric times) so we don't need IndexedDB yet.
+ * localStorage-backed solve store. Solves are grouped per event (no session
+ * concept). Round 1E will extend with cstimer-JSON / CSV / Speedstacks I/O —
+ * see `import_export.ts` (sibling).
  *
  * Schema versioned via `version` field so we can migrate later.
  */
 
-import type { EventId, Session, Solve } from '../types';
+import type { EventId, Solve } from '../types';
 
-const KEY = 'cuberoot-timer.v1';
+const KEY = 'cuberoot-timer.v2';
+const LEGACY_KEY = 'cuberoot-timer.v1';
 
 interface DbShape {
-  version: 1;
-  sessions: Session[];
-  /** Currently selected session id (per event). */
-  active: Record<string, string>;
+  version: 2;
+  /** event id → solves (oldest → newest). */
+  byEvent: Partial<Record<EventId, Solve[]>>;
 }
 
 function emptyDb(): DbShape {
-  return { version: 1, sessions: [], active: {} };
+  return { version: 2, byEvent: {} };
 }
 
 function loadRaw(): DbShape {
   try {
     const s = localStorage.getItem(KEY);
-    if (!s) return emptyDb();
-    const parsed = JSON.parse(s) as Partial<DbShape>;
-    if (parsed.version !== 1 || !Array.isArray(parsed.sessions)) return emptyDb();
-    return {
-      version: 1,
-      sessions: parsed.sessions as Session[],
-      active: parsed.active ?? {},
-    };
+    if (s) {
+      const parsed = JSON.parse(s) as Partial<DbShape>;
+      if (parsed.version === 2 && parsed.byEvent && typeof parsed.byEvent === 'object') {
+        return { version: 2, byEvent: parsed.byEvent };
+      }
+    }
+    // One-time migration from v1 (sessions[] → flat byEvent[]).
+    const v1 = localStorage.getItem(LEGACY_KEY);
+    if (v1) {
+      const parsed = JSON.parse(v1) as { version?: number; sessions?: Array<{ event: EventId; solves: Solve[] }> };
+      if (parsed.version === 1 && Array.isArray(parsed.sessions)) {
+        const byEvent: DbShape['byEvent'] = {};
+        for (const sess of parsed.sessions) {
+          if (!byEvent[sess.event]) byEvent[sess.event] = [];
+          byEvent[sess.event]!.push(...sess.solves);
+        }
+        // Sort each event's solves chronologically.
+        for (const k of Object.keys(byEvent) as EventId[]) {
+          byEvent[k]!.sort((a, b) => a.ts - b.ts);
+        }
+        const migrated: DbShape = { version: 2, byEvent };
+        try { localStorage.setItem(KEY, JSON.stringify(migrated)); } catch { /* quota; tolerate */ }
+        return migrated;
+      }
+    }
+    return emptyDb();
   } catch {
     return emptyDb();
   }
@@ -40,44 +59,23 @@ function saveRaw(db: DbShape): void {
   try {
     localStorage.setItem(KEY, JSON.stringify(db));
   } catch {
-    // localStorage quota exceeded or unavailable — ignore (we'll re-try next save)
+    // localStorage quota exceeded or unavailable — ignore.
   }
 }
 
 /* ---------- Public API ---------- */
 
-export function loadAll(): { sessions: Session[]; active: Record<string, string> } {
+export function loadAll(): Record<string, Solve[]> {
   const db = loadRaw();
-  return { sessions: db.sessions, active: db.active };
+  return db.byEvent as Record<string, Solve[]>;
 }
 
-export function saveAll(sessions: Session[], active: Record<string, string>): void {
-  saveRaw({ version: 1, sessions, active });
+export function saveAll(byEvent: Record<string, Solve[]>): void {
+  saveRaw({ version: 2, byEvent: byEvent as DbShape['byEvent'] });
 }
 
 export function newId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
-}
-
-export function newSession(event: EventId, name: string): Session {
-  return { id: newId(), name, event, createdAt: Date.now(), solves: [] };
-}
-
-export function defaultSessionsForFreshDb(): Session[] {
-  // Auto-create one default session for 3x3 so first launch has something usable.
-  return [newSession('333', 'Session 1')];
-}
-
-/**
- * Mutate-and-save helper: load, mutate via cb, save. Returns the new state.
- */
-export function mutate(cb: (db: { sessions: Session[]; active: Record<string, string> }) => void): {
-  sessions: Session[]; active: Record<string, string>;
-} {
-  const cur = loadAll();
-  cb(cur);
-  saveAll(cur.sessions, cur.active);
-  return cur;
 }
 
 /**
@@ -88,14 +86,30 @@ export function exportJson(): string {
 }
 
 /**
- * JSON import — replace contents. Returns true on success.
+ * Native JSON import — replaces contents. Returns true on success.
+ * For cstimer's export format, see `importCstimerJson` in `import_export.ts`.
  */
 export function importJson(json: string): boolean {
   try {
     const parsed = JSON.parse(json);
-    if (parsed.version !== 1 || !Array.isArray(parsed.sessions)) return false;
-    saveRaw({ version: 1, sessions: parsed.sessions, active: parsed.active ?? {} });
-    return true;
+    if (parsed.version === 2 && parsed.byEvent && typeof parsed.byEvent === 'object') {
+      saveRaw({ version: 2, byEvent: parsed.byEvent });
+      return true;
+    }
+    if (parsed.version === 1 && Array.isArray(parsed.sessions)) {
+      // Accept v1 format too (from older exports of this app).
+      const byEvent: DbShape['byEvent'] = {};
+      for (const sess of parsed.sessions as Array<{ event: EventId; solves: Solve[] }>) {
+        if (!byEvent[sess.event]) byEvent[sess.event] = [];
+        byEvent[sess.event]!.push(...sess.solves);
+      }
+      for (const k of Object.keys(byEvent) as EventId[]) {
+        byEvent[k]!.sort((a, b) => a.ts - b.ts);
+      }
+      saveRaw({ version: 2, byEvent });
+      return true;
+    }
+    return false;
   } catch {
     return false;
   }
