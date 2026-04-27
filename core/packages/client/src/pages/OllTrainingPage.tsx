@@ -9,7 +9,6 @@
  * 5. 支持加权随机和 Recap 两种队列模式
  */
 import { useEffect, useCallback, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import ollInfo from '@cuberoot/shared/data/oll.json';
 import ollScrambles from '@cuberoot/shared/data/oll_scrambles.json';
@@ -96,7 +95,6 @@ function saveTimes(times: TimerResult[]) {
 }
 
 export function OllTrainingPage() {
-  const navigate = useNavigate();
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   const queue = useSessionStore((s) => s.queue);
@@ -324,11 +322,8 @@ export function OllTrainingPage() {
 
   return (
     <div className="oll-training-page" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-      {/* 顶部导航 */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-        <button className="back-btn" onClick={() => navigate('/select/oll')}>
-          {isZh ? '← 选择 case' : '← Select cases'}
-        </button>
+      {/* 顶部状态条 */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0.5rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
         <span style={{ color: '#adb5bd' }}>
           {selectedCases.current.length} cases |{' '}
           {recapArray.current.length > 0

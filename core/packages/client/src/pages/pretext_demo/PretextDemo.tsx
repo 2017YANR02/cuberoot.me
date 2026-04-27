@@ -2,7 +2,6 @@
 // 用 @chenglou/pretext 在 Canvas 上渲染表格，自适应列宽，完全绕过 DOM 表格
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { prepareWithSegments, walkLineRanges } from '@chenglou/pretext';
-import { Link } from 'react-router-dom';
 import './pretext_demo.css';
 
 // ─── 常量 ────────────────────────────────────────────
@@ -467,7 +466,6 @@ export default function PretextDemo() {
   return (
     <div className="pretext-demo-page">
       <div className="pretext-demo-header">
-        <Link to="/wca-stats" className="pretext-demo-back">← 返回</Link>
         <h1>Pretext Canvas Table Demo</h1>
         <p className="pretext-demo-subtitle">
           用 <code>@chenglou/pretext</code> 的 <code>walkLineRanges()</code> 计算列宽，

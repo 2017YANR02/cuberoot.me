@@ -52,10 +52,11 @@ input[type="week"] {
 }
 
 /* NOTE: <option> 下拉项的颜色——OS 浮层背景多为白色，强制深色文字保证可读。
-   不依赖 color-scheme（Windows Chromium 对 <select> 下拉不一定生效）。 */
+   不依赖 color-scheme（Windows Chromium 对 <select> 下拉不一定生效）。
+   用 !important 覆盖 <select> 上设置的浅色（option 默认从 select 继承 color）。 */
 option {
-  color: #1a1a1a;
-  background-color: #ffffff;
+  color: #1a1a1a !important;
+  background-color: #ffffff !important;
 }
 
 /* NOTE: html 背景同步 body 色，避免 iOS Safari 工具栏区域露出黑边 */

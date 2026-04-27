@@ -89,11 +89,6 @@
   border-color: rgba(217, 119, 87, 0.5);
 }
 
-.recon-filters select option {
-  background: #2a2a2a;
-  color: #c0c0c0;
-}
-
 .recon-stats-count {
   font-size: 0.8rem;
   color: #5a5a5a;

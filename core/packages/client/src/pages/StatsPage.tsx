@@ -3,7 +3,7 @@
  *
  * 从 sessionStore 的识别结果中统计每个 case 的表现
  */
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useSessionStore } from '../stores/sessionStore';
 import { resultTimeMs, type RecognitionResult } from '../utils/pllHelpers';
@@ -17,7 +17,6 @@ const allCaseNames = Object.keys(pllMap);
 
 export function StatsPage() {
   const { algSetId } = useParams<{ algSetId: string }>();
-  const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   const results = useSessionStore((s) => s.results);
@@ -44,9 +43,6 @@ export function StatsPage() {
   return (
     <div className="stats-page">
       <header className="page-header">
-        <button className="back-btn" onClick={() => navigate(`/select/${algSetId}`)}>
-          {t('caseSelect.back')}
-        </button>
         <h1>{isZh ? 'PLL 统计' : 'PLL Stats'}</h1>
       </header>
 

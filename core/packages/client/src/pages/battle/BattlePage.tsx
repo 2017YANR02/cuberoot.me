@@ -759,12 +759,9 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
           </button>
         </div>
 
-        {/* 语言 + 返回主页 */}
+        {/* 语言 */}
         <div className="settings-group">
           <LangToggle className="settings-action-btn" />
-          <a href="/" className="settings-action-btn" style={{ display: 'block', textDecoration: 'none' }}>
-            ← {isZh ? '返回主页' : 'Back to Home'}
-          </a>
         </div>
       </div>
     </div>

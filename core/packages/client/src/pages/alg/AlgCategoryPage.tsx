@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Search as SearchIcon } from 'lucide-react';
+import { useParams, useSearchParams } from 'react-router-dom';
+import { Search as SearchIcon } from 'lucide-react';
 import Fuse from 'fuse.js';
 import { useAlgCatalog, type CatalogEntry, type Lang } from './useAlgCatalog';
 import { AlgCard } from './AlgCard';
@@ -68,12 +68,6 @@ export default function AlgCategoryPage() {
     <div className="alg-root">
       <div className="alg-index-header">
         <div>
-          <div className="alg-breadcrumb">
-            <Link to="/alg">
-              <ArrowLeft size={14} />{' '}
-              {isZh ? '返回分类' : 'Back to categories'}
-            </Link>
-          </div>
           <h1 className="alg-index-title">{category}</h1>
           <p className="alg-index-subtitle">
             {isZh

@@ -2,9 +2,8 @@
 // 支持 4 种 JSON 输出模式：rows / sections / panels / metricPanels
 // 路由：/wca-stats/:statId
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { getLangQuery } from '../../i18n';
 import WcaEventSelector from './WcaEventSelector';
 import { EVENT_NAME_TO_ID, ALL_EVENT_IDS } from './event_constants';
 import { countryFlagClass, loadFlagData, flagDataVersion, extractWcaId, extractCompId, personFlagIso2, compFlagIso2, compNameZh } from '../../utils/country_flags';
@@ -1133,7 +1132,6 @@ export default function WcaStatsPage() {
         <div className="wca-stats-error">
           <h2>{isZh ? '加载失败' : 'Failed to load'}</h2>
           <p>{error || (isZh ? '未知错误' : 'Unknown error')}</p>
-          <Link to={`/wca-stats${getLangQuery()}`}>← {isZh ? '返回统计列表' : 'Back to stats'}</Link>
         </div>
       </div>
     );
@@ -1143,7 +1141,6 @@ export default function WcaStatsPage() {
     <div className="wca-stats-page">
       <div className="wca-stats-header">
         <div className="wca-stats-header-nav">
-          <Link to={`/wca-stats${getLangQuery()}`} className="wca-stats-back">← {isZh ? '返回' : 'Back'}</Link>
           <LangToggle />
         </div>
         <h1>{isZh ? data.titleZh : data.title}</h1>

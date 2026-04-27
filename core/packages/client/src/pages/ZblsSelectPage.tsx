@@ -233,12 +233,6 @@ export function ZblsSelectPage() {
     <div className="zbls-select-page">
       {/* 顶部导航 */}
       <div className="zbls-top-bar">
-        <button
-          className="zbls-btn zbls-btn-secondary"
-          onClick={() => navigate('/')}
-        >
-          {t('zbls.nav.back')}
-        </button>
         <h2>
           ZBLS Trainer ({selected.totalSelected()}/{totalCases})
         </h2>

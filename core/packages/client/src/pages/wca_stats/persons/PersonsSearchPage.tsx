@@ -1,6 +1,6 @@
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, UserRound } from 'lucide-react';
+import { UserRound } from 'lucide-react';
 import { WcaPersonPicker } from '@cuberoot/shared';
 import './persons.css';
 
@@ -13,10 +13,6 @@ export default function PersonsSearchPage() {
   return (
     <div className="wca-persons-page">
       <header className="wca-persons-header">
-        <Link to="/wca-stats" className="wca-persons-back">
-          <ChevronLeft size={18} />
-          <span>{t('返回 WCA 统计', 'Back to WCA Stats')}</span>
-        </Link>
         <div className="wca-persons-title">
           <UserRound size={20} className="wca-persons-title-icon" />
           <h1>{t('选手成绩查询', 'Persons')}</h1>

@@ -4,7 +4,6 @@
  * 加载本地视频，逐帧控制，标记帧，计算精确时间差。
  */
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import mediaInfoFactory from 'mediainfo.js';
 import { FFmpeg } from '@ffmpeg/ffmpeg';
@@ -16,12 +15,6 @@ import LangToggle from '../../components/LangToggle';
 import './frame-count.css';
 
 // ── SVG Icons ────────────────────────────────────────────────────────────────
-
-const IconBack = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="15 18 9 12 15 6" />
-  </svg>
-);
 
 const IconKeyboard = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -2110,7 +2103,6 @@ export default function FrameCountPage() {
     >
       {/* Header */}
       <header className="fc-header">
-        <Link to="/" className="fc-back"><IconBack /> {t('frameCount.back')}</Link>
         <span className="fc-title">{t('frameCount.title')}</span>
         <LangToggle variant="inline" className="fc-lang-toggle" />
       </header>

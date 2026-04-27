@@ -9,10 +9,11 @@ import { useReconStore } from '../../stores/recon_store';
 import type { SortKey } from '../../stores/recon_store';
 import type { ReconSolve } from '@cuberoot/shared';
 import {
-  flagClass, displaySolverName,
-  formatResult, formatAvg, formatAoXR, formatRound,
+  flagClass,
+  formatResult, formatTime, formatAvg, formatAoXR, formatRound,
   wcaPersonUrl, wcaCompUrl,
 } from '../../utils/recon_utils';
+import { displayCuberName } from '../../utils/name_utils';
 import { compNameZh, loadFlagData, flagDataVersion } from '../../utils/country_flags';
 import LangToggle from '../../components/LangToggle';
 import { RecordBadge } from '../../components/RecordBadge';
@@ -84,9 +85,19 @@ export default function ReconListPage() {
     filters, sortKey, sortDir,
   ]);
 
-  const events = useMemo(() => getAvailableEvents(), [getAvailableEvents]);
-  const methods = useMemo(() => getAvailableMethods(), [getAvailableMethods]);
-  const solvers = useMemo(() => getAvailableSolvers(), [getAvailableSolvers]);
+  // NOTE: 依赖 allSolves 而非 store action 函数（action 引用稳定，永远不会触发重算）
+  const events = useMemo(() => getAvailableEvents(), [
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    useReconStore.getState().allSolves,
+  ]);
+  const methods = useMemo(() => getAvailableMethods(), [
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    useReconStore.getState().allSolves,
+  ]);
+  const solvers = useMemo(() => getAvailableSolvers(), [
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    useReconStore.getState().allSolves,
+  ]);
 
   const displayed = filtered.slice(0, displayCount);
   const hasMore = filtered.length > displayCount;
@@ -195,10 +206,10 @@ export default function ReconListPage() {
   const renderCell = useCallback((col: Column, solve: ReconSolve) => {
     switch (col.key) {
       case 'rawTime':
-        // NOTE: Single 列——显示 value 字段（含 DNF/(5.09) 括号格式）+ 纪录 badge
+        // NOTE: Single 列——优先 value 字段（含 DNF/(5.09) 括号格式），缺失时回退到 rawTime 格式化
         return (
           <>
-            {solve.value || ''}
+            {solve.value || formatTime(solve.rawTime)}
             {solve.regionalSingleRecord && (
               <> <RecordBadge record={solve.regionalSingleRecord} variant="inline" /></>
             )}
@@ -207,7 +218,7 @@ export default function ReconListPage() {
       case 'person': {
         // NOTE: CSS 国旗 + 选手名（中英文切换），有 WCA ID 时为链接
         const fc = flagClass(solve.personCountry);
-        const name = displaySolverName(solve.person || '', isZh);
+        const name = displayCuberName(solve.person || '', isZh);
         if (solve.personId) {
           return (
             <>
@@ -328,7 +339,7 @@ export default function ReconListPage() {
             <option value="">{t('recon.allSolvers')}</option>
             {solvers.map(({ name, count }) => (
               <option key={name} value={name}>
-                {displaySolverName(name, isZh)} ({count})
+                {displayCuberName(name, isZh)} ({count})
               </option>
             ))}
           </select>

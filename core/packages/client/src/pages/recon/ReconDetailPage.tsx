@@ -14,8 +14,9 @@ import { getRecon, listComments, getEditHistory, deleteRecon, addComment, update
 import {
   formatTime, flagClass, getEventDisplayName,
   isBldEvent, getPuzzleId, wcaCompUrl, wcaPersonUrl,
-  buildExternalLinks, displaySolverName, FACE_COLORS,
+  buildExternalLinks, FACE_COLORS,
 } from '../../utils/recon_utils';
+import { displayCuberName } from '../../utils/name_utils';
 import { compNameZh, loadFlagData, flagDataVersion } from '../../utils/country_flags';
 import { cleanForPlayer, findTokenPositions, snapToTokenBoundary, extractAlgFromText, syncPlayerToMoveCount } from '../../utils/recon_alg_utils';
 import { useAuthStore } from '../../stores/auth_store';
@@ -86,7 +87,6 @@ export default function ReconDetailPage() {
       {/* NOTE: 页头——对齐原版格式: 时间 + 纪录 + 项目 + 选手名 + 国旗 */}
       <div className="detail-header">
         <div className="detail-header-nav">
-          <Link to="/recon" className="detail-back">← {t('common.back')}</Link>
           <LangToggle />
         </div>
         <h1 className="detail-title">
@@ -94,7 +94,7 @@ export default function ReconDetailPage() {
           <RecordBadge record={solve.regionalSingleRecord} variant="inline" />
           {solve.event && ` ${getEventDisplayName(solve.event)}`}
           {solve.personCountry && <>{' '}<span className={flagClass(solve.personCountry)} /></>}
-          {' '}{solve.person}
+          {' '}{displayCuberName(solve.person || '', isZh)}
         </h1>
       </div>
 
@@ -129,9 +129,9 @@ export default function ReconDetailPage() {
             <span className="detail-meta-value">
               {solve.reconerId ? (
                 <a href={wcaPersonUrl(solve.reconerId)} target="_blank" rel="noopener noreferrer">
-                  {displaySolverName(solve.reconer, isZh)}
+                  {displayCuberName(solve.reconer, isZh)}
                 </a>
-              ) : displaySolverName(solve.reconer, isZh)}
+              ) : displayCuberName(solve.reconer, isZh)}
             </span>
           </div>
         )}
@@ -147,9 +147,9 @@ export default function ReconDetailPage() {
             <span className="detail-meta-value">
               {solve.addedById ? (
                 <a href={wcaPersonUrl(solve.addedById)} target="_blank" rel="noopener noreferrer">
-                  {displaySolverName(solve.addedBy, isZh)}
+                  {displayCuberName(solve.addedBy, isZh)}
                 </a>
-              ) : displaySolverName(solve.addedBy, isZh)}
+              ) : displayCuberName(solve.addedBy, isZh)}
             </span>
           </div>
         )}
