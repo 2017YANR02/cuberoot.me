@@ -19,6 +19,7 @@
 import { randomCubie } from './randomstate';
 import type { CubieCube } from './cube';
 import KociembaWorker from './kociemba.worker.ts?worker';
+import { scramble333 } from '../nxnxn';
 
 interface ResOk { id: number; ok: true; sol?: string; ready?: boolean }
 interface ResErr { id: number; ok: false; err: string }
@@ -80,14 +81,23 @@ function sendSolve(state: CubieCube): Promise<string> {
   });
 }
 
-/** Pre-warm the solver. Idempotent. */
+/** Pre-warm the solver. Resolves only AFTER the sync buffer has at least one
+ * scramble queued — callers can then safely use randomState333Sync. Idempotent. */
 export function warmup333(): Promise<void> {
-  if (isReady) return Promise.resolve();
+  if (isReady && buffer.length > 0) return Promise.resolve();
   if (warmupPromise) return warmupPromise;
   warmupPromise = (async () => {
     await sendInit();
     isReady = true;
-    // Pre-fill the sync buffer in the background.
+    // Block the warmup promise until the first scramble lands in the buffer.
+    try {
+      const first = await sendScramble();
+      buffer.push(first);
+    } catch {
+      // If even the first scramble fails, leave buffer empty; sync caller
+      // will fall back to random-move via the catch in randomState333Sync.
+    }
+    // Top up the rest in the background.
     void refillBuffer();
   })();
   return warmupPromise;
@@ -118,15 +128,18 @@ export async function randomState333(): Promise<string> {
   return s;
 }
 
-/** Synchronous variant; only valid AFTER warmup. Throws if the buffer is empty. */
+/** Synchronous variant. If the buffer is somehow empty (rapid bursts can
+ *  outrun the async refill), fall back to a random-move scramble so the
+ *  caller never sees an exception, and kick off a refill so the next call
+ *  gets a real random-state scramble. */
 export function randomState333Sync(): string {
-  if (!isReady) throw new Error('warmup333() not yet resolved');
-  if (buffer.length === 0) {
-    throw new Error('randomState333Sync: buffer empty — await randomState333() to refill');
+  if (buffer.length > 0) {
+    const s = buffer.shift()!;
+    void refillBuffer();
+    return s;
   }
-  const s = buffer.shift()!;
-  void refillBuffer();
-  return s;
+  if (isReady) void refillBuffer();
+  return scramble333(Math.random);
 }
 
 /** Solve an arbitrary cube state (cubie-level). Useful for callers building
