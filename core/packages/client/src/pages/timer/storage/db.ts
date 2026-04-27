@@ -89,26 +89,26 @@ export function saveAll(byEvent: Record<string, Solve[]>): void {
 export interface BackupEntry { key: string; ts: number; size: number; }
 
 export function pushBackup(): void {
-  try {
-    const json = exportJson();
-    const key = BACKUP_KEY_PREFIX + Date.now();
-    localStorage.setItem(key, json);
-    // Rotate: keep only the most-recent BACKUP_KEEP entries.
-    const all = listBackups();
-    if (all.length > BACKUP_KEEP) {
-      const toRemove = all.slice(BACKUP_KEEP);
-      for (const e of toRemove) {
-        try { localStorage.removeItem(e.key); } catch { /* ignore */ }
-      }
-    }
-  } catch {
-    /* quota — drop oldest then retry once */
+  let json: string;
+  try { json = exportJson(); } catch { return; }
+  const key = BACKUP_KEY_PREFIX + Date.now();
+  // Quota loop: drop oldest backup until setItem succeeds, or no more to drop.
+  for (let attempts = 0; attempts < 16; attempts++) {
     try {
+      localStorage.setItem(key, json);
+      break;
+    } catch {
       const all = listBackups();
-      if (all.length > 0) {
-        localStorage.removeItem(all[all.length - 1]!.key);
-      }
-    } catch { /* ignore */ }
+      if (all.length === 0) return; // nothing left to drop, quota truly full
+      try { localStorage.removeItem(all[all.length - 1]!.key); } catch { return; }
+    }
+  }
+  // Rotate: keep only the most-recent BACKUP_KEEP entries.
+  const all = listBackups();
+  if (all.length > BACKUP_KEEP) {
+    for (const e of all.slice(BACKUP_KEEP)) {
+      try { localStorage.removeItem(e.key); } catch { /* ignore */ }
+    }
   }
 }
 
