@@ -31,7 +31,8 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect }: Props
 
   const env = detectBluetoothEnv();
   const advice = envAdvice(env);
-  const supported = env === 'available';
+  const supported = env === 'available' || env === 'available-bluefy';
+  const inBluefy = env === 'available-bluefy';
   const connected = cube.status.connected;
 
   return (
@@ -67,6 +68,15 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect }: Props
                 : 'Tip: once Bluefy loads this page, "Add to Home Screen" so it opens like a native app.'}</p>
             </div>
           </>
+        )}
+
+        {supported && inBluefy && !connected && (
+          <div className="modal-section bt-tip" style={{ marginBottom: 8 }}>
+            <p style={{ color: '#9fd9ad' }}>
+              <Check size={14} style={{ verticalAlign: 'middle', marginRight: 4 }} />
+              {isZh ? '检测到 Bluefy — Web Bluetooth 已启用 ✓' : 'Bluefy detected — Web Bluetooth ready ✓'}
+            </p>
+          </div>
         )}
 
         {supported && !connected && (
