@@ -29,6 +29,19 @@ export function isVoiceAvailable(): boolean {
   return typeof window !== 'undefined' && 'speechSynthesis' in window;
 }
 
+/** Cancel any in-flight or queued utterances. Wire to visibilitychange + unmount. */
+export function cancelVoice(): void {
+  if (!isVoiceAvailable()) return;
+  try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
+}
+
+if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+  window.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') cancelVoice();
+  });
+  window.addEventListener('beforeunload', cancelVoice);
+}
+
 export function speakInspectionCue(cue: VoiceCue, isZh: boolean): boolean {
   if (!isVoiceAvailable()) return false;
   const now = Date.now();
