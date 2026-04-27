@@ -88,6 +88,22 @@ export interface TimerSettings {
 
   /** Auto-backup every N saves. 0 = disabled, max 30. */
   autoBackupEvery: number;
+
+  /**
+   * Bluetooth auto-ready: trigger the hold cycle automatically when the cube
+   * indicates the user is ready to start.
+   *   'off'          — manual (default)
+   *   'still'        — solved + 2s without any move
+   *   'double-flick' — confirm via U U' U U' (any quarter-turn pair pattern)
+   */
+  bluetoothAutoReady: 'off' | 'still' | 'double-flick';
+
+  /**
+   * When the inspection countdown begins.
+   *   'down' — first space-down (current cstimer behaviour)
+   *   'up'   — only on key release; matches stackmat habit
+   */
+  inspectionTrigger: 'down' | 'up';
 }
 
 export const DEFAULTS: TimerSettings = {
@@ -116,6 +132,8 @@ export const DEFAULTS: TimerSettings = {
   metronomeBpm: 60,
   syncSeed: null,
   autoBackupEvery: 10,
+  bluetoothAutoReady: 'off',
+  inspectionTrigger: 'down',
 };
 
 let _cache: TimerSettings = load();

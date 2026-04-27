@@ -110,6 +110,31 @@ export default function SettingsPanel({ isZh, onClose }: Props) {
               onChange={(e) => updateSettings({ holdMs: Math.max(100, Math.min(2000, Number(e.target.value) || 550)) })}
             />
           </Row>
+          <Row label={isZh ? '观察启动方式' : 'Inspection trigger'}>
+            <select
+              value={s.inspectionTrigger}
+              onChange={(e) => updateSettings({ inspectionTrigger: e.target.value as 'down' | 'up' })}
+            >
+              <option value="down">{isZh ? '按下' : 'Press down'}</option>
+              <option value="up">{isZh ? '松开' : 'Release'}</option>
+            </select>
+            <span className="hint">{isZh
+              ? '按下：立即进入观察；松开：松开空格后才进入（Stackmat 习惯）'
+              : 'down: enter on press; up: enter on release (stackmat-style)'}</span>
+          </Row>
+          <Row label={isZh ? '蓝牙自动 ready' : 'Bluetooth auto-ready'}>
+            <select
+              value={s.bluetoothAutoReady}
+              onChange={(e) => updateSettings({ bluetoothAutoReady: e.target.value as 'off' | 'still' | 'double-flick' })}
+            >
+              <option value="off">{isZh ? '关闭' : 'Off'}</option>
+              <option value="still">{isZh ? '静止 2 秒' : 'Still 2s'}</option>
+              <option value="double-flick">{isZh ? "双反扭 (U U')²" : "Double-flick (U U')²"}</option>
+            </select>
+            <span className="hint">{isZh
+              ? "still = 解完后保持 2 秒不动；double-flick = 解完后做 U U' U U' 确认"
+              : "still = solved + 2s no move; double-flick = perform U U' U U' to confirm"}</span>
+          </Row>
           <Row label={isZh ? '隐藏运行中的时间' : 'Hide time while running'}>
             <input
               type="checkbox"
