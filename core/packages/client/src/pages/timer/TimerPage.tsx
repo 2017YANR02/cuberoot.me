@@ -20,8 +20,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { Home, Download, Upload, Trash2, Settings as SettingsIcon, Maximize2, Minimize2, Bluetooth, Mic, HelpCircle, BarChart3, Plus, Wrench, ListPlus, Printer } from 'lucide-react';
+import { Home, Download, Upload, Trash2, Settings as SettingsIcon, Maximize2, Minimize2, Bluetooth, Mic, HelpCircle, BarChart3, Plus, Wrench, ListPlus, Printer, FileText, FileSpreadsheet } from 'lucide-react';
 import LangToggle from '../../components/LangToggle';
+import MoreMenu, { type MoreMenuItem } from './components/MoreMenu';
 
 import { generateScramble, registerScramble } from './scramble';
 import { getLastPickedCase, type TrainerKind } from './scramble/training';
@@ -502,6 +503,57 @@ export default function TimerPage() {
     input.click();
   }, [isZh]);
 
+  // ── More menu items (collapsed toolbar overflow) ───────────────
+  const moreItems = useMemo<MoreMenuItem[]>(() => [
+    {
+      icon: <Upload size={14} />,
+      label: isZh ? '导入（自动识别 cstimer JSON）' : 'Import (auto-detects cstimer JSON)',
+      onClick: handleImport,
+    },
+    {
+      icon: <Download size={14} />,
+      label: isZh ? '导出 JSON' : 'Export JSON',
+      onClick: handleExport,
+    },
+    {
+      icon: <FileSpreadsheet size={14} />,
+      label: isZh ? '导出 CSV' : 'Export CSV',
+      onClick: handleExportCsv,
+    },
+    {
+      icon: <FileText size={14} />,
+      label: isZh ? '导出 Speedstacks' : 'Export Speedstacks',
+      onClick: handleExportSs,
+    },
+    {
+      icon: <Plus size={14} />,
+      label: isZh ? '手动录入' : 'Manual entry',
+      onClick: () => setManualEntryOpen(true),
+    },
+    {
+      icon: <Wrench size={14} />,
+      label: isZh ? '通用求解器' : 'Solver',
+      onClick: () => setSolverOpen(true),
+    },
+    {
+      icon: <ListPlus size={14} />,
+      label: isZh ? '批量打乱' : 'Bulk scrambles',
+      onClick: () => setBulkScrambleOpen(true),
+    },
+    {
+      icon: <Printer size={14} />,
+      label: isZh ? '打印' : 'Print',
+      onClick: () => window.print(),
+    },
+    {
+      icon: <Trash2 size={14} />,
+      label: isZh ? '清空当前项目' : 'Clear current event',
+      onClick: clearAll,
+      danger: true,
+      disabled: !solves.length,
+    },
+  ], [isZh, handleImport, handleExport, handleExportCsv, handleExportSs, clearAll, solves.length]);
+
   // ── Render ──────────────────────────────────────────────────────
   const eventInfoCurrent = EVENTS.find(e => e.id === event);
   const printEventName = eventInfoCurrent ? (isZh ? eventInfoCurrent.nameZh : eventInfoCurrent.nameEn) : event;
@@ -532,26 +584,6 @@ export default function TimerPage() {
           </select>
         </div>
         <div className="right">
-          <button className="tb-btn" onClick={handleImport} title={isZh ? '导入（自动识别 cstimer JSON）' : 'Import (auto-detects cstimer JSON)'}>
-            <Upload size={14} />
-          </button>
-          <button className="tb-btn" onClick={handleExport} title={isZh ? '导出 JSON' : 'Export JSON'}>
-            <Download size={14} />
-          </button>
-          <button className="tb-btn" onClick={handleExportCsv} title={isZh ? '导出 CSV' : 'Export CSV'}>
-            CSV
-          </button>
-          <button className="tb-btn" onClick={handleExportSs} title={isZh ? '导出 Speedstacks 文本' : 'Export Speedstacks'}>
-            SS
-          </button>
-          <button
-            className="tb-btn danger"
-            onClick={clearAll}
-            disabled={!solves.length}
-            title={isZh ? '清空当前项目' : 'Clear current event'}
-          >
-            <Trash2 size={14} />
-          </button>
           <button
             className={`tb-btn ${bluetoothCube.status.connected ? 'connected' : ''}`}
             onClick={() => setBluetoothOpen(true)}
@@ -583,18 +615,6 @@ export default function TimerPage() {
           <button className="tb-btn" onClick={() => setStatsModalOpen(true)} title={isZh ? '完整统计' : 'Full stats'}>
             <BarChart3 size={14} />
           </button>
-          <button className="tb-btn" onClick={() => setManualEntryOpen(true)} title={isZh ? '手动录入' : 'Manual entry'}>
-            <Plus size={14} />
-          </button>
-          <button className="tb-btn" onClick={() => setSolverOpen(true)} title={isZh ? '通用求解器' : 'Solver'}>
-            <Wrench size={14} />
-          </button>
-          <button className="tb-btn" onClick={() => setBulkScrambleOpen(true)} title={isZh ? '批量打乱' : 'Bulk scrambles'}>
-            <ListPlus size={14} />
-          </button>
-          <button className="tb-btn" onClick={() => window.print()} title={isZh ? '打印' : 'Print'}>
-            <Printer size={14} />
-          </button>
           <button className="tb-btn" onClick={() => setSettingsOpen(true)} title={isZh ? '设置' : 'Settings'}>
             <SettingsIcon size={14} />
           </button>
@@ -604,6 +624,7 @@ export default function TimerPage() {
           <button className="tb-btn" onClick={toggleFullscreen} title={isZh ? '全屏' : 'Fullscreen'}>
             {fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
           </button>
+          <MoreMenu items={moreItems} isZh={isZh} />
           <LangToggle />
         </div>
       </div>
