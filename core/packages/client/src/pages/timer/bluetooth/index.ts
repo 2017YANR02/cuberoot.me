@@ -73,6 +73,11 @@ export interface BluetoothCubeHandle {
   disconnect(): void;
   /** Reset internal cube state to "solved" (after the user resets the cube physically). */
   resetState(): void;
+  /**
+   * Snapshot of the live cube state, for CFOP stage detection or any other
+   * read-only inspection. Returns null when no cube is connected.
+   */
+  getFaces(): import('../cube/state').CubeFaces | null;
 }
 
 interface UseBluetoothCubeOpts {
@@ -268,6 +273,10 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     };
   }, []);
 
+  const getFaces = useCallback(() => {
+    return status.connected ? trackerRef.current.getFaces() : null;
+  }, [status.connected]);
+
   return {
     status,
     lastMove,
@@ -275,5 +284,6 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     connect,
     disconnect,
     resetState,
+    getFaces,
   };
 }

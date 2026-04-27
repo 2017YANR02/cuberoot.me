@@ -168,6 +168,30 @@
   justify-content: center;
 }
 
+.timer-stage-splits {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.stage-chip {
+  background: #1a1a1d;
+  border: 1px solid #2a2a2e;
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: #888;
+  min-width: 56px;
+  text-align: center;
+}
+.stage-chip.done {
+  background: #1f3d2a;
+  border-color: #4d995a;
+  color: #9fd9ad;
+}
+
 .qa-btn {
   background: #1a1a1d;
   color: #ccc;
@@ -434,6 +458,31 @@
   justify-content: center;
   padding: 8px 0;
 }
+
+.stage-splits-table {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+}
+.stage-splits-table .stage-row {
+  display: grid;
+  grid-template-columns: 80px 1fr 1fr;
+  gap: 12px;
+  padding: 4px 6px;
+  border-radius: 3px;
+}
+.stage-splits-table .stage-row:nth-child(odd) { background: rgba(255, 255, 255, 0.02); }
+.stage-splits-table .stage-name { color: #aaa; }
+.stage-splits-table .stage-dur { color: #f0ebe3; }
+.stage-splits-table .stage-cum { color: #5b9dd9; text-align: right; }
+.stage-splits-table .stage-total {
+  border-top: 1px solid #2a2a2e;
+  padding-top: 6px;
+  margin-top: 4px;
+}
+.stage-splits-table .stage-total .stage-cum { color: #ffd54f; font-weight: 700; }
 
 /* --- SettingsPanel --- */
 .settings-modal { max-width: 540px; }

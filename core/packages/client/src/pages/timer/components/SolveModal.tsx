@@ -4,6 +4,41 @@ import { effectiveMs } from '../types';
 import { formatMs } from '../stats';
 import { CubePreview } from '../cube';
 
+function StageSplits({ stages, isZh, totalMs }: { stages: NonNullable<Solve['stages']>; isZh: boolean; totalMs: number }) {
+  const cross = stages.cross;
+  const f2l = stages.f2l;
+  const oll = stages.oll;
+  const pll = stages.pll;
+  // Per-step durations: each is `(this stage time) - (previous stage time)`.
+  const crossDur = cross !== undefined ? cross : null;
+  const f2lDur = (f2l !== undefined && cross !== undefined) ? f2l - cross : (f2l !== undefined ? f2l : null);
+  const ollDur = (oll !== undefined && f2l !== undefined) ? oll - f2l : (oll !== undefined && cross !== undefined ? oll - cross : (oll !== undefined ? oll : null));
+  const pllDur = oll !== undefined ? pll - oll : (f2l !== undefined ? pll - f2l : (cross !== undefined ? pll - cross : pll));
+
+  const rows: Array<{ name: string; cum: number | undefined; dur: number | null }> = [
+    { name: isZh ? '十字' : 'Cross', cum: cross, dur: crossDur },
+    { name: 'F2L',                    cum: f2l,   dur: f2lDur },
+    { name: 'OLL',                    cum: oll,   dur: ollDur },
+    { name: 'PLL',                    cum: pll,   dur: pllDur },
+  ];
+  return (
+    <div className="stage-splits-table">
+      {rows.map(r => (
+        <div className="stage-row" key={r.name}>
+          <span className="stage-name">{r.name}</span>
+          <span className="stage-dur">{r.dur !== null ? formatMs(r.dur) : '—'}</span>
+          <span className="stage-cum">{r.cum !== undefined ? formatMs(r.cum) : '—'}</span>
+        </div>
+      ))}
+      <div className="stage-row stage-total">
+        <span className="stage-name">{isZh ? '总计' : 'Total'}</span>
+        <span className="stage-dur"></span>
+        <span className="stage-cum">{formatMs(totalMs)}</span>
+      </div>
+    </div>
+  );
+}
+
 interface Props {
   solve: Solve;
   index: number;
@@ -52,6 +87,12 @@ export default function SolveModal({ solve, index, isZh, onClose, onChangePenalt
         <div className="modal-section modal-cube-row">
           <CubePreview event={solve.event} scramble={solve.scramble} size={14} />
         </div>
+        {solve.stages && (
+          <div className="modal-section">
+            <h3 className="settings-h3">{isZh ? '分阶段成绩' : 'Stage splits'}</h3>
+            <StageSplits stages={solve.stages} isZh={isZh} totalMs={solve.timeMs} />
+          </div>
+        )}
         <div className="modal-section">
           <label>
             {isZh ? '注释' : 'Comment'}
