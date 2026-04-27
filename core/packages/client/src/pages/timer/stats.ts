@@ -66,6 +66,36 @@ export function averageOfN(solves: Solve[], n: number): number | null {
   return truncToCs(trimmedMean(last));
 }
 
+/**
+ * Best Possible Average — when exactly one more solve is needed to complete an
+ * aoN window, returns the trimmed mean assuming that final solve = 0 ms.
+ *
+ * Returns null when not "live" (solves.length !== n - 1) or n < 3.
+ * Returns Infinity when even the best-case substitution yields > maxDnfsAllowed
+ * (i.e. existing DNFs already exceed the cap, since a 0 ms substitute can't
+ * reduce the DNF count).
+ */
+export function bpa(solves: Solve[], n: number): number | null {
+  if (n < 3) return null;
+  if (solves.length !== n - 1) return null;
+  const last = solves.slice(-(n - 1)).map(effectiveMs);
+  const window = [...last, 0];
+  return truncToCs(trimmedMean(window));
+}
+
+/**
+ * Worst Possible Average — same "live" contract as `bpa`, but assumes the
+ * final solve = DNF (Infinity). Returns Infinity when the resulting DNF count
+ * exceeds maxDnfsAllowed for n.
+ */
+export function wpa(solves: Solve[], n: number): number | null {
+  if (n < 3) return null;
+  if (solves.length !== n - 1) return null;
+  const last = solves.slice(-(n - 1)).map(effectiveMs);
+  const window = [...last, Infinity];
+  return truncToCs(trimmedMean(window));
+}
+
 /** Best avg of N across the entire solve history. */
 export function bestAverageOfN(solves: Solve[], n: number): number | null {
   if (solves.length < n) return null;
@@ -312,6 +342,10 @@ export interface StatsSummary {
   bestBo3: string;
   sd: string;
   cv: string;
+  bpa5: string;
+  wpa5: string;
+  bpa12: string;
+  wpa12: string;
 }
 
 export function summarize(solves: Solve[]): StatsSummary {
@@ -336,5 +370,9 @@ export function summarize(solves: Solve[]): StatsSummary {
     bestBo3: formatMs(bestBestOfN(solves, 3)),
     sd: stdDev(solves) === null ? '—' : formatMs(Math.round(stdDev(solves)!)),
     cv: formatPct(coefficientOfVariation(solves)),
+    bpa5: formatMs(bpa(solves, 5)),
+    wpa5: formatMs(wpa(solves, 5)),
+    bpa12: formatMs(bpa(solves, 12)),
+    wpa12: formatMs(wpa(solves, 12)),
   };
 }
