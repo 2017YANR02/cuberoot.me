@@ -24,6 +24,7 @@ import { Home, Download, Upload, Trash2, Settings as SettingsIcon, Maximize2, Mi
 import LangToggle from '../../components/LangToggle';
 
 import { generateScramble, registerScramble } from './scramble';
+import { getLastPickedCase, type TrainerKind } from './scramble/training';
 import { warmup333, randomState333Sync } from './scramble/kociemba/random_state';
 import { useTimer } from './useTimer';
 import { formatMs } from './stats';
@@ -48,6 +49,7 @@ import { useBldMemo } from './useBldMemo';
 
 import TimerDisplay from './components/TimerDisplay';
 import StatsPanel from './components/StatsPanel';
+import CaseStatsPanel from './components/CaseStatsPanel';
 import HistoryPanel from './components/HistoryPanel';
 import SolveModal from './components/SolveModal';
 import SettingsPanel from './components/SettingsPanel';
@@ -66,6 +68,8 @@ import { getLangQuery } from '../../i18n';
 import './timer.css';
 import './components/charts.css';
 import './components/practice_heatmap.css';
+
+const TRAINER_KINDS = new Set<EventId>(['oll', 'pll', 'coll', 'cmll', 'zbll', 'eg1', 'eg2']);
 
 export default function TimerPage() {
   const { i18n } = useTranslation();
@@ -152,6 +156,10 @@ export default function TimerPage() {
     });
     if (stages) solve.stages = stages;
     if (bld) solve.bld = bld;
+    if (TRAINER_KINDS.has(event)) {
+      const caseId = getLastPickedCase(event as TrainerKind);
+      if (caseId) solve.caseId = caseId;
+    }
     setLastPenalty(res.autoPenalty);
     setByEvent(prev => ({
       ...prev,
@@ -692,6 +700,7 @@ export default function TimerPage() {
 
       <div className={`timer-bottom ${settings.showCharts ? 'with-charts' : ''}`}>
         <StatsPanel solves={solves} isZh={isZh} event={event} />
+        <CaseStatsPanel event={event} solves={solves} isZh={isZh} />
         {settings.showCharts && (
           <div className="charts-panel">
             <h3>{isZh ? '分布' : 'Distribution'}</h3>
