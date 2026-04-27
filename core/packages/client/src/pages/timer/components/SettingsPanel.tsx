@@ -80,6 +80,18 @@ export default function SettingsPanel({ isZh, onClose }: Props) {
               <option value={3}>{isZh ? '0.001 秒' : '0.001s'}</option>
             </select>
           </Row>
+          <Row label={isZh ? '颜色中立' : 'Color neutral'}>
+            <select
+              value={s.cnMode}
+              onChange={(e) => updateSettings({ cnMode: e.target.value as 'none' | 'single' | 'dual' | 'six' })}
+            >
+              <option value="none">{isZh ? '固定白底' : 'None (white)'}</option>
+              <option value="single">{isZh ? '单面随机' : 'Single (random)'}</option>
+              <option value="dual">{isZh ? '双面（白黄）' : 'Dual (white/yellow)'}</option>
+              <option value="six">{isZh ? '六面' : 'Six-sided'}</option>
+            </select>
+            <span className="hint">{isZh ? '仅 3x3 类项目生效' : '3x3 events only'}</span>
+          </Row>
         </div>
 
         <div className="modal-section">
