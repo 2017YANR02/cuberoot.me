@@ -6,7 +6,7 @@
  * passed in must already be ordered oldest → newest).
  */
 
-import type { Solve } from './types';
+import type { Solve, EventId } from './types';
 import { effectiveMs } from './types';
 
 /** WCA trim count: ceil(n/20), but at least 1 for n in [3,20]. */
@@ -76,6 +76,87 @@ export function bestAverageOfN(solves: Solve[], n: number): number | null {
     if (avg < best) best = avg;
   }
   return Number.isFinite(best) ? truncToCs(best) : best;
+}
+
+/**
+ * Mean of N over the last N solves — no trim, all solves count.
+ * Any DNF in the window → Infinity. Per WCA 9f7 the mean is truncated to cs.
+ */
+export function meanOfN(solves: Solve[], n: number): number | null {
+  if (solves.length < n) return null;
+  const last = solves.slice(-n).map(effectiveMs);
+  if (last.some(t => t === Infinity)) return Infinity;
+  return truncToCs(last.reduce((a, b) => a + b, 0) / n);
+}
+
+/**
+ * Best of N — fastest valid solve in the most recent N. If every solve in the
+ * window is DNF, returns Infinity.
+ */
+export function bestOfN(solves: Solve[], n: number): number | null {
+  if (solves.length < n) return null;
+  const last = solves.slice(-n).map(effectiveMs);
+  let best = Infinity;
+  for (const t of last) if (t < best) best = t;
+  return best;
+}
+
+/** Best mean-of-N across the entire solve history. */
+export function bestMeanOfN(solves: Solve[], n: number): number | null {
+  if (solves.length < n) return null;
+  let best = Infinity;
+  for (let i = 0; i + n <= solves.length; i++) {
+    const window = solves.slice(i, i + n).map(effectiveMs);
+    if (window.some(t => t === Infinity)) continue;
+    const m = window.reduce((a, b) => a + b, 0) / n;
+    if (m < best) best = m;
+  }
+  return Number.isFinite(best) ? truncToCs(best) : best;
+}
+
+/** Best best-of-N across the entire solve history. */
+export function bestBestOfN(solves: Solve[], n: number): number | null {
+  if (solves.length < n) return null;
+  let best = Infinity;
+  for (let i = 0; i + n <= solves.length; i++) {
+    for (const s of solves.slice(i, i + n)) {
+      const t = effectiveMs(s);
+      if (t < best) best = t;
+    }
+  }
+  return best;
+}
+
+/** WCA per-event default average format. */
+export type EventFormat = { kind: 'ao5' | 'mo3' | 'bo3' | 'single'; n: number };
+export function eventDefaultFormat(event: EventId): EventFormat {
+  if (event === '333fm') return { kind: 'mo3', n: 3 };
+  if (event === '333mbld') return { kind: 'single', n: 1 };
+  if (event === '444bld' || event === '555bld' || event === '666bld' || event === '777bld') {
+    return { kind: 'bo3', n: 3 };
+  }
+  // 3BLD ('333bld') is ao5 since 2023+; 3BLD-NI also ao5 here.
+  return { kind: 'ao5', n: 5 };
+}
+
+/** Compute primary average per event format over the most recent solves. */
+export function formatPrimary(solves: Solve[], fmt: EventFormat): string {
+  if (solves.length < fmt.n) return '-';
+  if (fmt.kind === 'ao5')    return formatMs(averageOfN(solves, fmt.n));
+  if (fmt.kind === 'mo3')    return formatMs(meanOfN(solves, fmt.n));
+  if (fmt.kind === 'bo3')    return formatMs(bestOfN(solves, fmt.n));
+  // single
+  const last = solves[solves.length - 1];
+  return formatMs(effectiveMs(last));
+}
+
+/** Best historical primary across all solves for the given format. */
+export function formatBestPrimary(solves: Solve[], fmt: EventFormat): string {
+  if (solves.length < fmt.n) return '-';
+  if (fmt.kind === 'ao5')    return formatMs(bestAverageOfN(solves, fmt.n));
+  if (fmt.kind === 'mo3')    return formatMs(bestMeanOfN(solves, fmt.n));
+  if (fmt.kind === 'bo3')    return formatMs(bestBestOfN(solves, fmt.n));
+  return formatMs(bestSingle(solves));
 }
 
 /** Best single (lowest effective time, ignoring DNFs unless all are DNF). */
@@ -220,11 +301,15 @@ export interface StatsSummary {
   ao50: string;
   ao100: string;
   ao1000: string;
+  mo3: string;
+  bo3: string;
   bestAo5: string;
   bestAo12: string;
   bestAo50: string;
   bestAo100: string;
   bestAo1000: string;
+  bestMo3: string;
+  bestBo3: string;
   sd: string;
   cv: string;
 }
@@ -240,11 +325,15 @@ export function summarize(solves: Solve[]): StatsSummary {
     ao50: formatMs(averageOfN(solves, 50)),
     ao100: formatMs(averageOfN(solves, 100)),
     ao1000: formatMs(averageOfN(solves, 1000)),
+    mo3: formatMs(meanOfN(solves, 3)),
+    bo3: formatMs(bestOfN(solves, 3)),
     bestAo5: formatMs(bestAverageOfN(solves, 5)),
     bestAo12: formatMs(bestAverageOfN(solves, 12)),
     bestAo50: formatMs(bestAverageOfN(solves, 50)),
     bestAo100: formatMs(bestAverageOfN(solves, 100)),
     bestAo1000: formatMs(bestAverageOfN(solves, 1000)),
+    bestMo3: formatMs(bestMeanOfN(solves, 3)),
+    bestBo3: formatMs(bestBestOfN(solves, 3)),
     sd: stdDev(solves) === null ? '—' : formatMs(Math.round(stdDev(solves)!)),
     cv: formatPct(coefficientOfVariation(solves)),
   };
