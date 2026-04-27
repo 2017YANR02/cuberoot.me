@@ -295,6 +295,50 @@
   font-size: 13px;
 }
 
+.history-row.is-pb { background: rgba(255, 215, 0, 0.04); }
+.history-row.is-pb .time { color: #ffd54f; }
+.history-row .pb-badge {
+  color: #ffd54f;
+  margin-right: 6px;
+  font-size: 12px;
+}
+.history-row .comment-flag {
+  margin-left: 6px;
+  color: #5b9dd9;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: help;
+}
+
+/* --- Sub-X breakdown --- */
+.subx-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.subx-row {
+  display: grid;
+  grid-template-columns: 64px 1fr 36px;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.subx-lbl { color: #aaa; }
+.subx-pct { color: #ddd; text-align: right; }
+.subx-bar {
+  height: 6px;
+  background: #1f1f23;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.subx-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #5b9dd9, #66bb6a);
+  transition: width 0.3s;
+}
+:root[data-timer-theme="light"] .subx-bar { background: #eee; }
+
 /* --- Modal -------------------------------------------------- */
 .timer-modal-overlay {
   position: fixed;

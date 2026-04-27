@@ -158,6 +158,57 @@ export function formatPct(p: number | null): string {
   return p.toFixed(1) + '%';
 }
 
+/**
+ * Sub-X breakdown — what fraction of (valid, non-DNF) solves come in under
+ * a few "interesting" thresholds. Thresholds are auto-picked from the
+ * solve distribution: mean, mean - σ, mean + σ, with rounding to a "nice"
+ * value at the appropriate scale.
+ *
+ * Returns up to 4 entries. Each entry has the threshold (ms), label, and
+ * percentage (0..100) of solves under that threshold.
+ */
+export function subXBreakdown(solves: Solve[]): Array<{ threshold: number; label: string; pct: number }> {
+  const valid = solves.map(effectiveMs).filter(t => Number.isFinite(t));
+  if (valid.length < 5) return [];
+  const m = valid.reduce((a, b) => a + b, 0) / valid.length;
+  let sq = 0;
+  for (const t of valid) sq += (t - m) * (t - m);
+  const sd = Math.sqrt(sq / valid.length);
+
+  const candidates = [m - sd, m - sd * 0.5, m, m + sd * 0.5, m + sd];
+  const seen = new Set<number>();
+  const out: Array<{ threshold: number; label: string; pct: number }> = [];
+  for (const c of candidates) {
+    if (c <= 0) continue;
+    let nice: number;
+    if (c >= 60000)      nice = Math.round(c / 10000) * 10000;
+    else if (c >= 10000) nice = Math.round(c / 5000) * 5000;
+    else if (c >= 5000)  nice = Math.round(c / 1000) * 1000;
+    else                 nice = Math.round(c / 500) * 500;
+    if (nice <= 0 || seen.has(nice)) continue;
+    seen.add(nice);
+    const count = valid.filter(t => t < nice).length;
+    const pct = (count / valid.length) * 100;
+    if (pct <= 0 || pct >= 100) continue;
+    out.push({ threshold: nice, label: 'sub-' + formatMs(nice), pct });
+  }
+  return out.sort((a, b) => a.threshold - b.threshold).slice(0, 4);
+}
+
+/**
+ * Identify which solve is currently the PB (best single, ignoring DNFs).
+ * Returns the index in the original `solves` array, or -1 if all DNF / empty.
+ */
+export function pbSingleIndex(solves: Solve[]): number {
+  let best = Infinity;
+  let idx = -1;
+  for (let i = 0; i < solves.length; i++) {
+    const t = effectiveMs(solves[i]);
+    if (t < best) { best = t; idx = i; }
+  }
+  return idx;
+}
+
 /** Compute a row of stats. Returns formatted strings ready for display. */
 export interface StatsSummary {
   count: number;
