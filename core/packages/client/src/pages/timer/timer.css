@@ -1231,6 +1231,67 @@
   border-color: #d0d0d4;
 }
 
+/* PB highlights in history list (single / ao5 / ao12) */
+.history-row.pb-single {
+  background: rgba(255, 213, 79, 0.08);
+}
+.history-row.pb-single .time {
+  color: #ffd54f;
+  font-weight: 600;
+}
+.history-row.pb-single .pb-icon {
+  color: #ffd54f;
+  margin-right: 6px;
+  vertical-align: -1px;
+}
+.history-row.pb-ao5,
+.history-row.pb-ao12 {
+  position: relative;
+  padding-right: 26px;
+}
+.history-row.pb-ao5::after {
+  content: '';
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #5b9dd9;
+  box-shadow: 0 0 4px rgba(91, 157, 217, 0.5);
+}
+.history-row.pb-ao12.pb-ao5::after {
+  right: 16px;
+}
+.history-row.pb-ao12::before {
+  content: '';
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #b39ddb;
+  box-shadow: 0 0 4px rgba(179, 157, 219, 0.5);
+}
+:root[data-timer-theme="light"] .history-row.pb-single {
+  background: rgba(255, 184, 0, 0.1);
+}
+:root[data-timer-theme="light"] .history-row.pb-single .time {
+  color: #b87800;
+}
+:root[data-timer-theme="light"] .history-row.pb-single .pb-icon {
+  color: #b87800;
+}
+:root[data-timer-theme="light"] .history-row.pb-ao5::after {
+  background: #2f6fb0;
+}
+:root[data-timer-theme="light"] .history-row.pb-ao12::before {
+  background: #7e57c2;
+}
+
 /* --- Print-only header --- */
 .print-only-header { display: none; }
 
