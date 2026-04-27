@@ -7,10 +7,10 @@ sets:
     csv_dir: D:/cube/scramble/wca_scramble/stat
     scrambles_txt: D:/cube/scramble/wca_scramble/wca_scrambles_no_wide_move.txt
   - key: xcross_2_col_10f
-    label: 10-step XCross dual-color states
-    label_zh: 双色底 XCross 10步状态
-    csv_dir: D:/cube/state/xcross_2_col_10f/stat
-    scrambles_txt: D:/cube/state/xcross_2_col_10f/scrambles.txt
+    label: dual-color 10f xcross
+    label_zh: 双色底 10f xcross
+    csv_dir: D:/cube/scramble/xcross_2_col_10f/stat
+    scrambles_txt: D:/cube/scramble/xcross_2_col_10f/scrambles.txt
 
 # 老格式(单 set,等价于 sets: [{key: wca, ...}])仍兼容:
 # csv_dir: D:/cube/scramble/wca_scramble/stat
