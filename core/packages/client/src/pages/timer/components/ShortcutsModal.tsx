@@ -30,6 +30,10 @@ const MULTISTAGE: ShortcutRow[] = [
   { keys: ['3'], en: 'During solve: mark OLL done.',            zh: '运行中：标记 OLL 完成。' },
 ];
 
+const BLD: ShortcutRow[] = [
+  { keys: ['Enter'], en: 'During BLD solve: mark memo done.',   zh: '盲拧运行中：标记记忆完成。' },
+];
+
 const NAV: ShortcutRow[] = [
   { keys: [','],         en: 'Generate a new scramble.',                        zh: '生成下一个打乱。' },
   { keys: ['F'],         en: 'Toggle fullscreen.',                              zh: '切换全屏。' },
@@ -53,6 +57,7 @@ export default function ShortcutsModal({ isZh, onClose }: Props) {
         <Section title={isZh ? '计时' : 'Timing'} rows={TIMING} isZh={isZh} />
         <Section title={isZh ? '历史' : 'History'} rows={HISTORY} isZh={isZh} />
         <Section title={isZh ? 'CFOP 分阶段（设置里开启）' : 'CFOP splits (enable in settings)'} rows={MULTISTAGE} isZh={isZh} />
+        <Section title={isZh ? '盲拧（设置里开启）' : 'BLD (enable in settings)'} rows={BLD} isZh={isZh} />
         <Section title={isZh ? '导航' : 'Navigation'} rows={NAV} isZh={isZh} />
 
         <div className="modal-actions">

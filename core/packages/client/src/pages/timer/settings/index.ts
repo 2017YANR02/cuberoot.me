@@ -54,6 +54,9 @@ export interface TimerSettings {
 
   /** Track CFOP stage splits (cross / F2L / OLL / PLL) on NxN events. */
   multiStage: boolean;
+
+  /** Track memo / execution split on BLD events (Enter to mark memo done). */
+  bldMemo: boolean;
 }
 
 export const DEFAULTS: TimerSettings = {
@@ -72,6 +75,7 @@ export const DEFAULTS: TimerSettings = {
   use3D: false,
   showHeatmap: true,
   multiStage: false,
+  bldMemo: true,
 };
 
 let _cache: TimerSettings = load();

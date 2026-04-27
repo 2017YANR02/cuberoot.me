@@ -191,6 +191,17 @@
   border-color: #4d995a;
   color: #9fd9ad;
 }
+.stage-chip-action {
+  cursor: pointer;
+  font: inherit;
+  background: #2a3a4d;
+  border-color: #4a6d99;
+  color: #cce0ff;
+  min-width: 0;
+  padding: 6px 16px;
+}
+.stage-chip-action:hover { background: #344a66; }
+.stage-chip-action:active { background: #1f2a3a; }
 
 .qa-btn {
   background: #1a1a1d;
