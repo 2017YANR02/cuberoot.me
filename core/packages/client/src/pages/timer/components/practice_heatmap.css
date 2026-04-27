@@ -1,0 +1,59 @@
+/* =============================================================
+   PracticeHeatmap — GitHub-style yearly contributions heatmap.
+   Matches the dark theme defined in ../timer.css.
+   ============================================================= */
+
+.tc-heatmap {
+  background: transparent;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #aaa;
+}
+
+.tc-heatmap-header {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 4px 4px;
+}
+
+.tc-heatmap-total {
+  color: #f0ebe3;
+  font-size: 12px;
+}
+
+.tc-heatmap-empty {
+  color: #555;
+  font-size: 12px;
+  font-style: italic;
+  padding: 12px 4px;
+}
+
+.tc-heatmap-svg {
+  display: block;
+  overflow: visible;
+}
+
+.tc-heatmap-month {
+  fill: #888;
+  font-size: 9px;
+}
+
+.tc-heatmap-dow {
+  fill: #888;
+  font-size: 9px;
+}
+
+.tc-heatmap-cell {
+  shape-rendering: crispEdges;
+  stroke: transparent;
+  stroke-width: 1;
+  transition: stroke 0.12s;
+}
+
+.tc-heatmap-cell:hover {
+  stroke: #f0ebe3;
+}
+
+.tc-heatmap-cell-out {
+  fill: transparent;
+  pointer-events: none;
+}
