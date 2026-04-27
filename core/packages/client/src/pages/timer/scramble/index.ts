@@ -1,7 +1,10 @@
 /**
  * Scramble dispatcher — picks the right generator per event id.
  *
- * RNG default uses Math.random; tests can pass a seeded RNG for determinism.
+ * Round 1B will fill in the BLD/relay/CFOP-step/training generators in
+ * sibling files (bld.ts, relay.ts, cfop_step.ts, training.ts). This dispatcher
+ * forwards to those when present, falling back to plain 3x3 random-move for
+ * unknown events so the UI never produces an empty scramble.
  */
 
 import type { EventId } from '../types';
@@ -21,23 +24,39 @@ import {
   scrambleClock,
 } from './others';
 
+// Round 1B will export these — soft import via dynamic require so absent files
+// don't break the build. We use a runtime registry instead.
+type Gen = (rng: () => number) => string;
+const REG: Partial<Record<EventId, Gen>> = {
+  '222':   scramble222,
+  '333':   scramble333,
+  '444':   scramble444,
+  '555':   scramble555,
+  '666':   scramble666,
+  '777':   scramble777,
+  pyra:    scramblePyra,
+  skewb:   scrambleSkewb,
+  sq1:     scrambleSq1,
+  mega:    scrambleMega,
+  clock:   scrambleClock,
+  '333oh': scramble333,
+  '333fm': scramble333,
+  '333mr': scramble333,
+};
+
+/**
+ * Register a generator for an event. Used by Round 1B modules at import time
+ * to plug in BLD/relay/CFOP/training scrambles without modifying this file.
+ */
+export function registerScramble(event: EventId, gen: Gen): void {
+  REG[event] = gen;
+}
+
 export function generateScramble(event: EventId, rng: () => number = Math.random): string {
-  switch (event) {
-    case '222':   return scramble222(rng);
-    case '333':   return scramble333(rng);
-    case '333oh': return scramble333(rng);
-    case '333bld':return scramble333(rng);
-    case '333fm': return scramble333(rng);
-    case '444':   return scramble444(rng);
-    case '555':   return scramble555(rng);
-    case '666':   return scramble666(rng);
-    case '777':   return scramble777(rng);
-    case 'pyra':  return scramblePyra(rng);
-    case 'skewb': return scrambleSkewb(rng);
-    case 'sq1':   return scrambleSq1(rng);
-    case 'mega':  return scrambleMega(rng);
-    case 'clock': return scrambleClock(rng);
-  }
+  const gen = REG[event];
+  if (gen) return gen(rng);
+  // Fallback: a 3x3 scramble keeps the UI sane for any unimplemented event.
+  return scramble333(rng);
 }
 
 /**
