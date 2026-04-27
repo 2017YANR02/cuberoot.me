@@ -1,6 +1,6 @@
 import type { Solve } from '../types';
 import { effectiveMs } from '../types';
-import { formatMs } from '../stats';
+import { formatMs, pbSingleIndex } from '../stats';
 
 interface Props {
   solves: Solve[];
@@ -10,6 +10,7 @@ interface Props {
 
 export default function HistoryPanel({ solves, isZh, onRowClick }: Props) {
   const reversed = [...solves].reverse(); // newest at top
+  const pbIdx = pbSingleIndex(solves);
   return (
     <div className="history-panel">
       <div className="history-header">
@@ -25,13 +26,20 @@ export default function HistoryPanel({ solves, isZh, onRowClick }: Props) {
         {reversed.map((s, idxFromEnd) => {
           const realIdx = solves.length - 1 - idxFromEnd;
           const time = effectiveMs(s);
+          const isPB = realIdx === pbIdx;
           return (
-            <div className="history-row" key={s.id} onClick={() => onRowClick(s, realIdx)}>
+            <div
+              className={`history-row ${isPB ? 'is-pb' : ''}`}
+              key={s.id}
+              onClick={() => onRowClick(s, realIdx)}
+            >
               <div className="idx">{realIdx + 1}</div>
               <div className="time">
+                {isPB && <span className="pb-badge" title={isZh ? '当前最佳' : 'Personal best'}>★</span>}
                 {formatMs(time)}
                 {s.penalty === '+2' && <span className="penalty-flag">(+2)</span>}
                 {s.penalty === 'DNF' && <span className="penalty-flag">DNF</span>}
+                {s.comment && <span className="comment-flag" title={s.comment}>·</span>}
               </div>
               <div className="actions">
                 <button onClick={(e) => { e.stopPropagation(); onRowClick(s, realIdx); }}>
