@@ -52,6 +52,10 @@ export interface Solve {
   /** Blindfolded memo split. memoMs is elapsed at the moment user marked
    *  "memo done". Execution time = timeMs - memoMs. */
   bld?: { memoMs: number };
+  /** Trainer case id — set only for OLL/PLL/COLL/CMLL/ZBLL/EG1/EG2 events.
+   * For OLL/PLL it's the case key from oll.json/pll.json (e.g. "OLL 1", "Aa").
+   * For other trainers it's the alg string used to build the scramble. */
+  caseId?: string;
 }
 
 const BLD_EVENT_IDS = new Set<EventId>(['333bld','333mbld','333ni','444bld','555bld','666bld','777bld']);

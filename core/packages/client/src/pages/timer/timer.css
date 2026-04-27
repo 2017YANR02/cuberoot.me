@@ -275,6 +275,75 @@
 }
 .stats-grid .row .val.muted { color: #555; }
 
+/* Per-case stats panel (OLL/PLL/COLL/CMLL/ZBLL/EG trainers) */
+.case-stats-panel {
+  padding: 14px 18px;
+  overflow: hidden;
+  border-right: 1px solid #1f1f23;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.case-stats-panel h3 {
+  font-size: 12px;
+  color: #888;
+  margin: 0 0 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.case-stats-empty {
+  font-size: 12px;
+  color: #555;
+  font-family: 'JetBrains Mono', monospace;
+}
+.case-stats-scroll {
+  max-height: 220px;
+  overflow-y: auto;
+}
+.case-stats-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+}
+.case-stats-table th {
+  text-align: left;
+  font-size: 10px;
+  color: #777;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 4px 6px;
+  border-bottom: 1px solid #2a2a2e;
+  position: sticky;
+  top: 0;
+  background: #131316;
+}
+.case-stats-table td {
+  padding: 4px 6px;
+  border-bottom: 1px dashed #1f1f23;
+  color: #f0ebe3;
+}
+.case-stats-table td:first-child {
+  color: #c8c2b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+:root[data-timer-theme="light"] .case-stats-panel {
+  border-right-color: #e0e0e3;
+}
+:root[data-timer-theme="light"] .case-stats-table th {
+  background: #fff;
+  border-bottom-color: #e0e0e3;
+  color: #888;
+}
+:root[data-timer-theme="light"] .case-stats-table td {
+  color: #1d1d1f;
+  border-bottom-color: #eee;
+}
+:root[data-timer-theme="light"] .case-stats-table td:first-child { color: #444; }
+
 /* History list */
 .history-panel {
   display: flex;
