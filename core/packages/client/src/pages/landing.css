@@ -390,3 +390,9 @@
     left: 16px;
     z-index: 100;
 }
+
+/* NOTE: trigger 在视口左上角，dropdown 默认 right:0 会溢出到屏外——landing 页改成左对齐 */
+.landing-page .wca-auth-dropdown {
+    left: 0;
+    right: auto;
+}

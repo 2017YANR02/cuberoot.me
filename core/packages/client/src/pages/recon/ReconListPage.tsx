@@ -18,6 +18,9 @@ import { compNameZh, loadFlagData, flagDataVersion } from '../../utils/country_f
 import LangToggle from '../../components/LangToggle';
 import { RecordBadge } from '../../components/RecordBadge';
 import WcaAuth from '../../components/WcaAuth';
+import { EventSelect } from '../../components/EventSelect';
+import { EventIcon } from '../../components/EventIcon';
+import { isWcaEvent, eventDisplayName } from '../../utils/wca_events';
 import { Plus } from 'lucide-react';
 import '../../recon.css';
 
@@ -288,7 +291,10 @@ export default function ReconListPage() {
       case 'tps':
         return solve.tps && typeof solve.tps === 'number' ? solve.tps.toFixed(2) : '';
       case 'event':
-        return solve.event || '';
+        if (!solve.event) return '';
+        return isWcaEvent(solve.event)
+          ? <span className="recon-event-cell"><EventIcon event={solve.event} /> {eventDisplayName(solve.event, isZh)}</span>
+          : solve.event;
       case 'method':
         return solve.method || '';
       case 'id':
@@ -352,15 +358,13 @@ export default function ReconListPage() {
               <option key={m} value={m}>{m}</option>
             ))}
           </select>
-          <select
+          <EventSelect
+            events={events}
             value={filters.event}
-            onChange={(e) => setFilter('event', e.target.value)}
-          >
-            <option value="">{t('recon.allEvents')}</option>
-            {events.map(ev => (
-              <option key={ev} value={ev}>{ev}</option>
-            ))}
-          </select>
+            onChange={(v) => setFilter('event', v)}
+            allLabel={t('recon.allEvents')}
+            className="recon-event-filter"
+          />
         </div>
         <span className="recon-stats-count">
           {t('recon.count', { count: filtered.length })}

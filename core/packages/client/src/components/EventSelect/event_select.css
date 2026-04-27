@@ -1,0 +1,93 @@
+/* EventSelect——自定义下拉，匹配 .submit-field input 的尺寸/边框风格 */
+
+.event-select {
+  position: relative;
+  display: block;
+}
+
+.event-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: #e5e5e5;
+  font-size: 0.88rem;
+  font-family: 'Inter', Arial, sans-serif;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.event-select-trigger:focus-visible {
+  border-color: rgba(217, 119, 87, 0.5);
+  box-shadow: 0 0 0 3px rgba(217, 119, 87, 0.15);
+}
+
+.event-select-current {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 1em;
+}
+
+.event-select-chevron {
+  color: #888;
+  flex-shrink: 0;
+}
+
+.event-select-empty {
+  color: #5a5a5a;
+  font-size: 0.85rem;
+}
+
+.event-select-label {
+  font-size: 0.88rem;
+}
+
+.event-select .cubing-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.event-select-popup {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 360px;
+  overflow-y: auto;
+  background: #2a2a2a;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 4px 0;
+  z-index: 100;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.event-select-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  color: #e5e5e5;
+  transition: background 0.12s;
+}
+
+.event-select-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.event-select-item--active {
+  background: rgba(217, 119, 87, 0.15);
+}

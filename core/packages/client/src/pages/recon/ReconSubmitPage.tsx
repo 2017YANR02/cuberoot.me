@@ -10,7 +10,10 @@ import { WcaPersonPicker, type WcaPerson } from '@cuberoot/shared';
 import { getRecon, addRecon, updateRecon, checkDuplicate, searchSolvers } from '../../utils/recon_api';
 import { Flag } from '../../utils/flag';
 import { computeAllStats } from '../../utils/recon_stats';
-import { parseTimeInput, formatTime, getEventDisplayName, RECORD_OPTIONS } from '../../utils/recon_utils';
+import { parseTimeInput, formatTime } from '../../utils/recon_utils';
+import { RecordSelect } from '../../components/RecordSelect';
+import { EventSelect } from '../../components/EventSelect';
+import { displayCuberName } from '../../utils/name_utils';
 import LangToggle from '../../components/LangToggle';
 import '../../recon.css';
 import './recon_submit.css';
@@ -25,12 +28,12 @@ const METHODS = ['CFOP', 'Roux', 'ZZ', 'Petrus', 'LBL', 'Mehta', 'ZB', 'Other'];
 const ROUNDS = ['1', '2', '3', 'f'];
 
 /**
- * 将任意日期字符串转为 yyyy-MM-dd 格式（<input type="date"> 要求）
- * NOTE: 服务端 validateRow 也要求 yyyy-MM-dd，不能传 ISO 字符串
+ * 将任意日期字符串转为 yyyy-mm-dd 格式（<input type="date"> 要求）
+ * NOTE: 服务端 validateRow 也要求 yyyy-mm-dd，不能传 ISO 字符串
  */
 function toDateInput(val: string | null | undefined): string {
   if (!val) return '';
-  // NOTE: 已经是 yyyy-MM-dd 格式
+  // NOTE: 已经是 yyyy-mm-dd 格式
   if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
   // NOTE: ISO 字符串（如 2026-02-05T16:00:00.000Z）——取前10位即可
   if (val.length >= 10 && val[4] === '-') return val.slice(0, 10);
@@ -44,7 +47,8 @@ export default function ReconSubmitPage() {
   const { editId } = useParams<{ editId: string }>();
   const isEditing = !!editId;
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isZh = i18n.language === 'zh';
   const [saving, setSaving] = useState(false);
   const [loadingEdit, setLoadingEdit] = useState(isEditing);
   // NOTE: solution textarea ref——虚拟键盘通过 ref 直接操作 DOM
@@ -89,7 +93,7 @@ export default function ReconSubmitPage() {
     if (!isEditing) return;
     setLoadingEdit(true);
     getRecon(Number(editId)).then(solve => {
-      // NOTE: 日期字段统一转成 yyyy-MM-dd，服务端 ISO 字符串会导致 <input type="date"> 无法拼配且 validateRow 报错
+      // NOTE: 日期字段统一转成 yyyy-mm-dd，服务端 ISO 字符串会导致 <input type="date"> 无法拼配且 validateRow 报错
       const normalized = {
         ...solve,
         date: toDateInput(solve.date),
@@ -238,7 +242,7 @@ export default function ReconSubmitPage() {
     }
     setSaving(true);
     try {
-      // NOTE: 合并统计结果到表单，日期再次确保为 yyyy-MM-dd
+      // NOTE: 合并统计结果到表单，日期再次确保为 yyyy-mm-dd
       const data: Partial<ReconSolve> = {
         ...form,
         date: toDateInput(form.date),
@@ -301,11 +305,7 @@ export default function ReconSubmitPage() {
           </label>
           <label className="submit-field">
             <span className="submit-label">{t('recon.event')} *</span>
-            <select value={form.event} onChange={e => setField('event', e.target.value)}>
-              {EVENTS.map(ev => (
-                <option key={ev} value={ev}>{getEventDisplayName(ev)}</option>
-              ))}
-            </select>
+            <EventSelect events={EVENTS} value={form.event} onChange={(v) => setField('event', v)} />
           </label>
           <label className="submit-field">
             <span className="submit-label">{t('recon.method')}</span>
@@ -322,8 +322,7 @@ export default function ReconSubmitPage() {
             {form.personId ? (
               <div className="submit-solver-pill">
                 <Flag iso2={form.personCountry || ''} />
-                <span className="submit-solver-name">{form.person}</span>
-                <span className="submit-solver-id">({form.personId})</span>
+                <span className="submit-solver-name">{displayCuberName(form.person || '', isZh)}</span>
                 <button type="button" className="submit-solver-clear" onClick={clearSolver} aria-label="clear">✕</button>
               </div>
             ) : (
@@ -399,7 +398,7 @@ export default function ReconSubmitPage() {
           <label className="submit-field">
             <span className="submit-label">{t('recon.date')}</span>
             <input type="text" value={form.date || ''} onChange={e => setField('date', e.target.value)}
-              placeholder="yyyy-MM-dd" pattern="\d{4}-\d{2}-\d{2}" />
+              placeholder="yyyy-mm-dd" pattern="\d{4}-\d{2}-\d{2}" />
           </label>
         </div>
 
@@ -407,17 +406,11 @@ export default function ReconSubmitPage() {
         <div className="submit-row">
           <label className="submit-field">
             <span className="submit-label">{t('recon.badge.singleRecord')}</span>
-            <select value={form.regionalSingleRecord || ''} onChange={e => setField('regionalSingleRecord', e.target.value)}>
-              <option value="">-</option>
-              {RECORD_OPTIONS.map(r => <option key={r} value={r}>{r}</option>)}
-            </select>
+            <RecordSelect value={form.regionalSingleRecord || ''} onChange={(v) => setField('regionalSingleRecord', v)} />
           </label>
           <label className="submit-field">
             <span className="submit-label">{t('recon.badge.averageRecord')}</span>
-            <select value={form.regionalAverageRecord || ''} onChange={e => setField('regionalAverageRecord', e.target.value)}>
-              <option value="">-</option>
-              {RECORD_OPTIONS.map(r => <option key={r} value={r}>{r}</option>)}
-            </select>
+            <RecordSelect value={form.regionalAverageRecord || ''} onChange={(v) => setField('regionalAverageRecord', v)} />
           </label>
         </div>
 
@@ -435,7 +428,6 @@ export default function ReconSubmitPage() {
         {/* 动画预览 */}
         {form.event && form.event !== 'sq1' && (
           <div className="submit-field submit-block">
-            <span className="submit-label">{t('recon.viewAnim') || 'Animation Preview'}</span>
             <TwistySection
               puzzle={puzzle}
               scramble={debouncedScramble}
@@ -525,7 +517,7 @@ export default function ReconSubmitPage() {
           <label className="submit-field">
             <span className="submit-label">{t('recon.reconDate')}</span>
             <input type="text" value={form.reconDate || ''} onChange={e => setField('reconDate', e.target.value)}
-              placeholder="yyyy-MM-dd" pattern="\d{4}-\d{2}-\d{2}" />
+              placeholder="yyyy-mm-dd" pattern="\d{4}-\d{2}-\d{2}" />
           </label>
         </div>
 
