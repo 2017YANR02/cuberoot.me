@@ -1,8 +1,0 @@
-# Scramble Extremes — pair / xxxcp / W / bin 6 (min)
-# Population in this bin: 1
-# Samples listed: 1 (all entries in this bin)
-# Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-04-26T04:37:30.356Z
-# Columns: id,scramble,bottom_color
-
-347832001,L' D2 F2 L' F2 L D U2 B U B U F U' B2 D R2 B R,W

@@ -47,7 +47,7 @@ const VARIANTS: VariantSpec[] = [
     key: 'pair',
     file: 'pair.csv',
     id_col: 'scramble',
-    stages: ['crossp', 'xcp', 'xxcp', 'xxxcp'],
+    stages: ['cross_pair', 'xcross_pair', 'xxcross_pair', 'xxxcross_pair'],
     angleToColor: ANGLE_COLOR_PAIR,
     colFor: (stage, angle) => `${stage}_${angle}`,
   },
