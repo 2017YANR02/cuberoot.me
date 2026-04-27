@@ -667,7 +667,7 @@ export default function TimerPage() {
       </div>
 
       <div className={`timer-bottom ${settings.showCharts ? 'with-charts' : ''}`}>
-        <StatsPanel solves={solves} isZh={isZh} />
+        <StatsPanel solves={solves} isZh={isZh} event={event} />
         {settings.showCharts && (
           <div className="charts-panel">
             <h3>{isZh ? '分布' : 'Distribution'}</h3>
