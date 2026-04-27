@@ -693,6 +693,66 @@
   cursor: pointer;
 }
 .settings-row-control .hint-btn:hover { background: #25252a; color: #fff; }
+.settings-row-control .hint-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.settings-row-control .hint-btn:disabled:hover { background: transparent; color: #aaa; }
+
+/* csTimer per-session import list */
+.cstimer-import-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.cstimer-import-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  background: #1a1a1f;
+  border: 1px solid #2a2a30;
+  border-radius: 4px;
+}
+.cstimer-import-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+.cstimer-import-name {
+  color: #ddd;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cstimer-import-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.cstimer-import-actions .hint-btn {
+  background: transparent;
+  border: 1px solid #333;
+  color: #aaa;
+  border-radius: 4px;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+.cstimer-import-actions .hint-btn:hover { background: #25252a; color: #fff; }
+.cstimer-import-actions .hint-btn:disabled { opacity: 0.5; cursor: default; }
+.cstimer-import-actions .hint-btn:disabled:hover { background: transparent; color: #aaa; }
+:root[data-timer-theme="light"] .cstimer-import-row {
+  background: #f4f4f6;
+  border-color: #ddd;
+}
+:root[data-timer-theme="light"] .cstimer-import-name { color: #222; }
 
 .color-grid {
   display: grid;
