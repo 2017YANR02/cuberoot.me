@@ -1,8 +1,8 @@
-# Scramble Extremes — pseudo_pair / pseudo_xcross_pseudo_pair / BGORWY / bin 8 (max)
+# Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / BGORWY / bin 8
 # Population in this bin: 10
 # Samples listed: 10 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-04-27T02:55:05.485Z
+# Generated: 2026-04-27T03:59:07.858Z
 # Columns: id,scramble,bottom_color
 
 290788001,B2 U' R2 L' U2 R' F2 D' B' R F B2 U2 R B2 D2 R' F2 U2 L,B

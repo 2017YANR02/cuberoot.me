@@ -1,8 +1,8 @@
-# Scramble Extremes — eo / eo_cross / ORWY / bin 6 (2nd-smallest)
+# Scramble samples — eo / eo_cross / ORWY / bin 6
 # Population in this bin: 9
 # Samples listed: 9 (all entries in this bin)
-# Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-04-27T02:55:05.485Z
+# Source: scrambles.txt
+# Generated: 2026-04-27T03:59:07.858Z
 # Columns: id,scramble,bottom_color
 
 6079,U' F2 D' L2 D B2 U L2 D' B2 L2 U2 F2 R' B L2 U' L' F R L' B ,R

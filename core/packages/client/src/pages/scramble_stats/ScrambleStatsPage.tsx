@@ -99,9 +99,9 @@ const STAGE_LABEL: Record<string, { en: string; zh: string }> = {
   xxxcross_pair: { en: 'XXXCross', zh: 'XXXCross' },
   pseudo_xxxcross: { en: 'XXXCross', zh: 'XXXCross' },
   pseudo_xxxcross_pseudo_pair: { en: 'XXXCross', zh: 'XXXCross' },
-  f2l: { en: 'F2L', zh: 'F2L' },
-  xxxxcross: { en: 'F2L', zh: 'F2L' },
-  eo_xxxxcross: { en: 'F2L', zh: 'F2L' },
+  f2l: { en: 'XXXXCross', zh: 'XXXXCross' },
+  xxxxcross: { en: 'XXXXCross', zh: 'XXXXCross' },
+  eo_xxxxcross: { en: 'XXXXCross', zh: 'XXXXCross' },
 };
 
 const labelStage = (s: string, isZh: boolean) => STAGE_LABEL[s] ? STAGE_LABEL[s][isZh ? 'zh' : 'en'] : s;
@@ -279,16 +279,17 @@ export default function ScrambleStatsPage() {
     ensureExamplesLoaded();
   };
 
-  // NOTE: 页面打开 & 切 variant/stage/subset 时默认选中 min bin（downloadBins[0]）并懒加载 examples
+  // NOTE: 页面打开 & 切 variant/stage/subset 时默认选中最小 bin(previewBins[0])并懒加载 examples
+  // (downloadBins 现在只决定是否显示 ⬇ 下载链接,不影响 default 选中)
   useEffect(() => {
-    if (downloadBins.length > 0) {
-      setSelectedBin(downloadBins[0]);
+    if (previewBins.length > 0) {
+      setSelectedBin(previewBins[0]);
       ensureExamplesLoaded();
     } else {
       setSelectedBin(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [variant, stage, subsetKey, downloadBins.length]);
+  }, [scrambleSet, variant, stage, subsetKey, previewBins.length]);
 
   const currentSamples = useMemo<ExampleSample[] | null>(() => {
     if (selectedBin === null || !examples) return null;

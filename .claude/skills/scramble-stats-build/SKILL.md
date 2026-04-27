@@ -28,13 +28,12 @@ sets:
     scrambles_txt: D:/cube/state/xcross_2_col_10f/scrambles.txt
 ```
 
-CSV 数据全 gitignored(`D:/cube/scramble/`、`D:/cube/state/`),没几百 MB 永不进 git。`config.yml` 也 gitignored,只 commit `config.yml.example`。
+CSV 数据全 gitignored(`D:/cube/scramble/`),几百 MB 永不进 git。`config.yml` 也 gitignored,只 commit `config.yml.example`。
 
 ## 数据来源约定
 
-- `D:/cube/scramble/<set>/`:WCA 等基于真实打乱的数据集
-- `D:/cube/state/<set>/`:基于"状态空间穷举/采样"的数据集(去同构、深度上限等)
-- C++ analyzer 源码 / 二进制留在 `D:/cube/solver/` 或 `D:/cube/solver_wip/`,**不**进数据目录
+- `D:/cube/scramble/<set>/`:**所有打乱数据**(无论是 WCA 真实历史 or 由状态空间穷举/采样产生的合成 scramble),都放这里。每个 set 一个子目录,内含 `stat/` + `scrambles.txt`(+ 可选 `README.md`)。
+- C++ analyzer 源码 / 二进制 / `state2scramble` 等中间工具留在 `D:/cube/solver/` 或 `D:/cube/solver_wip/`,**不**进数据目录
 
 ## CSV schema
 

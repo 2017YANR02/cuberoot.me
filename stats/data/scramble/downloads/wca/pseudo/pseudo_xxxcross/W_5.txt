@@ -1,8 +1,8 @@
-# Scramble Extremes — pseudo / pseudo_xxxcross / W / bin 5 (min)
+# Scramble samples — pseudo / pseudo_xxxcross / W / bin 5
 # Population in this bin: 5
 # Samples listed: 5 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-04-27T02:55:05.485Z
+# Generated: 2026-04-27T03:59:07.858Z
 # Columns: id,scramble,bottom_color
 
 1178110013,F2 L2 F2 L2 U2 F2 U L2 D' L' R2 D' B R F' R2 U F' U2 B' L',W

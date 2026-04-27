@@ -1,8 +1,8 @@
-# Scramble Extremes — pair / xxcross_pair / BG / bin 6 (3rd-smallest)
+# Scramble samples — pair / xxcross_pair / BG / bin 6
 # Population in this bin: 46
 # Samples listed: 46 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-04-27T02:55:05.485Z
+# Generated: 2026-04-27T03:59:07.858Z
 # Columns: id,scramble,bottom_color
 
 6866001,F D2 R2 D2 F R2 F U2 F U2 F R F' D' B' F' U' B D2,B

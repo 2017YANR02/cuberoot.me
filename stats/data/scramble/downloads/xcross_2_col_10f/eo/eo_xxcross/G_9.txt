@@ -1,8 +1,8 @@
-# Scramble Extremes — eo / eo_xxcross / G / bin 9 (min)
+# Scramble samples — eo / eo_xxcross / G / bin 9
 # Population in this bin: 46
 # Samples listed: 46 (all entries in this bin)
-# Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-04-27T02:55:05.485Z
+# Source: scrambles.txt
+# Generated: 2026-04-27T03:59:07.858Z
 # Columns: id,scramble,bottom_color
 
 6103,R2 U' L2 B2 D L2 D R2 B2 D R2 U' F2 L2 B' D2 L D' F' U' F2 R' B L' ,G
