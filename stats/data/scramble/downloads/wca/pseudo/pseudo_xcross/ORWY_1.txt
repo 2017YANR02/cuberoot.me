@@ -1,8 +1,8 @@
-# Scramble Extremes — pseudo / pseudo_xcross / ORWY / bin 1 (2nd-smallest)
+# Scramble samples — pseudo / pseudo_xcross / ORWY / bin 1
 # Population in this bin: 48
 # Samples listed: 48 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-04-27T02:55:05.485Z
+# Generated: 2026-04-27T03:59:07.858Z
 # Columns: id,scramble,bottom_color
 
 135333001,L' D2 L' R2 F2 L B2 F2 U2 F L' F' L' R U' R' U' B2 R2,W

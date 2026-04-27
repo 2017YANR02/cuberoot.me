@@ -98,12 +98,15 @@ function histToJson(h: Hist) {
   return { min: h.min, max: h.max, counts: countsObj };
 }
 
-// NOTE: 极端 bin 的 scramble 示例
-// 每条 = [id, scramble, bestColor]；id = 源 txt 文件的编号；bestColor = subset 里拿到 min 的颜色字母
-// K_DOWNLOAD 用作 reservoir 上限（进下载 txt）；K_PREVIEW = 切到 examples.json 的预览条数
-// seen > K_DOWNLOAD 时，reservoir 给出 K_DOWNLOAD 条均匀随机样本
+// NOTE: 每条 example = [id, scramble, bestColor];id = 源 txt 文件的编号;
+// bestColor = subset 里拿到 min 的颜色字母
+// K_DOWNLOAD = 单 bin reservoir 上限(进下载 txt)
+// K_PREVIEW = 切到 examples.json 的预览条数(每 bin)
+// DOWNLOAD_BIN_MAX_COUNT = 该 bin 总样本数 ≤ 此值才生成下载 txt
+//   (大 bin 没必要下载因为 200 条均匀抽样代表性差,且 UI 信息量不够)
 const K_DOWNLOAD = 200;
 const K_PREVIEW = 5;
+const DOWNLOAD_BIN_MAX_COUNT = 1000;
 type Sample = [string, string, string];
 interface Reservoir { samples: Sample[]; seen: number }
 
@@ -259,9 +262,10 @@ async function aggregateVariant(spec: VariantSpec, csvPath: string, scrambleMap:
   }
   process.stdout.write(`  [${spec.key}] ${sampleCount} rows\n`);
 
-  // NOTE: previewExamples 覆盖 **所有 bin**（给 UI 预览）；
-  // pickedReservoirs 只含 3 最少 + 1 最大这 4 个（写 per-bin txt 下载文件）；
-  // data[stage][subset].example_bins 仍是这 4 个 picked bin（UI 用来决定哪些 bin 有 ⬇ 下载链接）
+  // NOTE: previewExamples 覆盖 **所有 bin**（给 UI 预览,K_PREVIEW=5 条/bin）;
+  // pickedReservoirs 只含"该 bin 总数 ≤ DOWNLOAD_BIN_MAX_COUNT(1000)"的 bin
+  //   (这些 bin 写 per-bin txt 下载文件);
+  // data[stage][subset].example_bins = 同样的 bin 集合,UI 用来决定哪些 bin 显示 ⬇ 下载链接
   const data: Record<string, Record<string, ReturnType<typeof histToJson> & { example_bins?: number[] }>> = {};
   const previewExamples: Record<string, Record<string, Record<string, Sample[]>>> = {};
   const pickedReservoirs: Record<string, Record<string, Record<string, { samples: Sample[]; seen: number }>>> = {};
@@ -274,11 +278,9 @@ async function aggregateVariant(spec: VariantSpec, csvPath: string, scrambleMap:
       const bucketMap = resByStage[stage][key];
       const bins = [...bucketMap.keys()].sort((a, b) => a - b);
       if (bins.length === 0) continue;
-      const picks = new Set<number>();
-      for (let i = 0; i < Math.min(3, bins.length); i++) picks.add(bins[i]);
-      picks.add(bins[bins.length - 1]);
-      const pickedSorted = [...picks].sort((a, b) => a - b);
-      data[stage][key].example_bins = pickedSorted;
+      // bin 入选下载条件:总样本数 ≤ DOWNLOAD_BIN_MAX_COUNT
+      const downloadBins = bins.filter((b) => bucketMap.get(b)!.seen <= DOWNLOAD_BIN_MAX_COUNT);
+      data[stage][key].example_bins = downloadBins;
       previewExamples[stage][key] = {};
       pickedReservoirs[stage][key] = {};
       // 所有 bin 都进 preview
@@ -286,8 +288,8 @@ async function aggregateVariant(spec: VariantSpec, csvPath: string, scrambleMap:
         const res = bucketMap.get(b)!;
         previewExamples[stage][key][String(b)] = res.samples.slice(0, K_PREVIEW);
       }
-      // 只把 4 个 picked bin 存入 reservoirs，落 txt
-      for (const b of pickedSorted) {
+      // 只把 ≤1000 样本数的 bin 落到 reservoirs(写 txt)
+      for (const b of downloadBins) {
         const res = bucketMap.get(b)!;
         pickedReservoirs[stage][key][String(b)] = { samples: res.samples, seen: res.seen };
       }
@@ -312,19 +314,19 @@ function buildBinTxt(
   stage: string,
   subsetKey: string,
   bin: number,
-  binRankLabel: string,  // 'min' / '2nd-smallest' / '3rd-smallest' / 'max'
   res: { samples: Sample[]; seen: number },
   generatedAt: string,
+  source: string,
 ): string {
   const lines: string[] = [];
-  lines.push(`# Scramble Extremes — ${variantKey} / ${stage} / ${subsetKey} / bin ${bin} (${binRankLabel})`);
+  lines.push(`# Scramble samples — ${variantKey} / ${stage} / ${subsetKey} / bin ${bin}`);
   lines.push(`# Population in this bin: ${res.seen}`);
   if (res.seen > res.samples.length) {
     lines.push(`# Samples listed: ${res.samples.length} (uniform reservoir sample; cap = ${K_DOWNLOAD})`);
   } else {
     lines.push(`# Samples listed: ${res.samples.length} (all entries in this bin)`);
   }
-  lines.push('# Source: wca_scrambles_no_wide_move.txt');
+  lines.push(`# Source: ${source}`);
   lines.push(`# Generated: ${generatedAt}`);
   lines.push('# Columns: id,scramble,bottom_color');
   lines.push('');
@@ -332,14 +334,6 @@ function buildBinTxt(
     lines.push(`${id},${scr},${color}`);
   }
   return lines.join('\n') + '\n';
-}
-
-function binRankLabel(bins: number[], idx: number): string {
-  if (idx === bins.length - 1 && bins.length > 1) return 'max';
-  if (idx === 0) return 'min';
-  if (idx === 1) return '2nd-smallest';
-  if (idx === 2) return '3rd-smallest';
-  return `#${idx}`;
 }
 
 // NOTE: 配置支持两种格式:
@@ -439,19 +433,19 @@ async function main() {
       if (sampleCount > maxCount) maxCount = sampleCount;
 
       // 写每 bin 一个 txt;路径含 setKey 隔离不同 set
+      const sourceLabel = path.basename(setSpec.scrambles_txt);
       for (const stage of Object.keys(pickedReservoirs)) {
         for (const subsetKey of Object.keys(pickedReservoirs[stage])) {
           const binMap = pickedReservoirs[stage][subsetKey];
           const binsSorted = Object.keys(binMap).map(Number).sort((a, b) => a - b);
-          binsSorted.forEach((bin, idx) => {
-            const rank = binRankLabel(binsSorted, idx);
-            const txt = buildBinTxt(spec.key, stage, subsetKey, bin, rank, binMap[String(bin)], generatedAt);
+          for (const bin of binsSorted) {
+            const txt = buildBinTxt(spec.key, stage, subsetKey, bin, binMap[String(bin)], generatedAt, sourceLabel);
             const filePath = path.join(downloadsDir, setSpec.key, spec.key, stage, `${subsetKey}_${bin}.txt`);
             fs.mkdirSync(path.dirname(filePath), { recursive: true });
             fs.writeFileSync(filePath, txt);
             txtFilesWritten++;
             txtTotalBytes += txt.length;
-          });
+          }
         }
       }
     }

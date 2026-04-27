@@ -1,8 +1,8 @@
-# Scramble Extremes — std / cross / O / bin 1 (2nd-smallest)
+# Scramble samples — std / cross / O / bin 1
 # Population in this bin: 103
 # Samples listed: 103 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-04-27T02:55:05.485Z
+# Generated: 2026-04-27T03:59:07.858Z
 # Columns: id,scramble,bottom_color
 
 5040001,F2 D2 L2 U R B2 R F L2 D2 F2 B' L2 F L2 D2 R2 F,O

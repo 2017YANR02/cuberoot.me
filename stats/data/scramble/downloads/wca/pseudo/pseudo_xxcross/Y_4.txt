@@ -1,8 +1,8 @@
-# Scramble Extremes — pseudo / pseudo_xxcross / Y / bin 4 (3rd-smallest)
+# Scramble samples — pseudo / pseudo_xxcross / Y / bin 4
 # Population in this bin: 152
 # Samples listed: 152 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-04-27T02:55:05.485Z
+# Generated: 2026-04-27T03:59:07.858Z
 # Columns: id,scramble,bottom_color
 
 4749001,R' B2 L D2 L' B2 F2 L2 U2 B L' B D' U2 L2 B R2 D R2,Y

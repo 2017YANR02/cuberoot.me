@@ -1,8 +1,8 @@
-# Scramble Extremes — pseudo_pair / pseudo_xxcross_pseudo_pair / B / bin 3 (min)
+# Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / B / bin 3
 # Population in this bin: 4
 # Samples listed: 4 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-04-27T02:55:05.485Z
+# Generated: 2026-04-27T03:59:07.858Z
 # Columns: id,scramble,bottom_color
 
 65804001,U' L D' F2 R' F R2 U2 R' U' R F2 R' L2 F2 U2 B2 U2 B2 L',B

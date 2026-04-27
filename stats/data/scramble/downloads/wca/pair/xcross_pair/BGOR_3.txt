@@ -1,8 +1,8 @@
-# Scramble Extremes — pair / xcross_pair / BGOR / bin 3 (2nd-smallest)
+# Scramble samples — pair / xcross_pair / BGOR / bin 3
 # Population in this bin: 12
 # Samples listed: 12 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-04-27T02:55:05.485Z
+# Generated: 2026-04-27T03:59:07.858Z
 # Columns: id,scramble,bottom_color
 
 3164001,F' B2 R2 L F U2 F R B' R2 B L2 U B2 U' L2 D F2,O

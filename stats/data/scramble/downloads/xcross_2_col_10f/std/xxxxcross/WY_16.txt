@@ -1,8 +1,8 @@
-# Scramble Extremes — std / xxxxcross / WY / bin 16 (max)
+# Scramble samples — std / xxxxcross / WY / bin 16
 # Population in this bin: 14
 # Samples listed: 14 (all entries in this bin)
-# Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-04-27T02:55:05.485Z
+# Source: scrambles.txt
+# Generated: 2026-04-27T03:59:07.858Z
 # Columns: id,scramble,bottom_color
 
 401228,D2 F2 D2 R2 U R2 D L2 U' L2 F2 U' B2 R2 L' U2 F' D' R' B L U F D' L' ,W
