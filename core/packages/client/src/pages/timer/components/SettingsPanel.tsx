@@ -3,6 +3,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
+import { Download } from 'lucide-react';
 import { resetSettings, updateSettings, useSettings } from '../settings';
 import { warmupSound, play } from '../sound';
 import { getMetronome } from '../sound/metronome';
@@ -10,6 +11,7 @@ import { isVoiceAvailable } from '../sound/voice';
 import { getSeedCounter, resetSeedCounter } from '../scramble';
 import { appendSolves, listBackups, pushBackup, replaceSolves, restoreBackup } from '../storage/db';
 import { parseCstimerExport, type CstimerSessionParsed } from '../storage/import_cstimer';
+import { exportCstimerJson } from '../storage/export_cstimer';
 import { eventInfo } from '../types';
 
 interface Props {
@@ -94,6 +96,50 @@ export default function SettingsPanel({ isZh, onClose }: Props) {
   const [cstimerSessions, setCstimerSessions] = useState<CstimerSessionParsed[] | null>(null);
   // Per-session "imported" flag so the UI dims/disables the buttons after action.
   const [cstimerImported, setCstimerImported] = useState<Record<string, 'append' | 'replace'>>({});
+
+  // ── csTimer export state ──
+  const [cstimerExportMsg, setCstimerExportMsg] = useState<string | null>(null);
+  const cstimerExportTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (cstimerExportTimerRef.current !== null) window.clearTimeout(cstimerExportTimerRef.current);
+    };
+  }, []);
+
+  async function onCstimerExport(): Promise<void> {
+    try {
+      const { json, solveCount, sessionCount } = await exportCstimerJson();
+      if (solveCount === 0) {
+        alert(isZh ? '当前没有可导出的成绩。' : 'No solves to export.');
+        return;
+      }
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const d = new Date();
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `cuberoot-export-${yyyy}-${mm}-${dd}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      const msg = isZh
+        ? `已导出 ${solveCount} 条成绩（${sessionCount} 个会话）`
+        : `Exported ${solveCount} solves across ${sessionCount} sessions`;
+      setCstimerExportMsg(msg);
+      if (cstimerExportTimerRef.current !== null) window.clearTimeout(cstimerExportTimerRef.current);
+      cstimerExportTimerRef.current = window.setTimeout(() => {
+        setCstimerExportMsg(null);
+        cstimerExportTimerRef.current = null;
+      }, 1500);
+    } catch {
+      alert(isZh ? '导出失败。' : 'Export failed.');
+    }
+  }
 
   function onCstimerFile(e: React.ChangeEvent<HTMLInputElement>): void {
     const file = e.target.files?.[0];
@@ -414,7 +460,7 @@ export default function SettingsPanel({ isZh, onClose }: Props) {
         </div>
 
         <div className="modal-section">
-          <h3 className="settings-h3">{isZh ? '从 csTimer 导入' : 'Import from csTimer'}</h3>
+          <h3 className="settings-h3">{isZh ? '从 csTimer 导入 / 导出' : 'csTimer import / export'}</h3>
           <Row label={isZh ? '选择 JSON 文件' : 'Choose JSON file'}>
             <input
               ref={cstimerFileRef}
@@ -432,6 +478,19 @@ export default function SettingsPanel({ isZh, onClose }: Props) {
             <span className="hint">{isZh
               ? '导出来源：csTimer → Local backup → Export'
               : 'From csTimer → Local backup → Export'}</span>
+          </Row>
+          <Row label={isZh ? '导出为 csTimer JSON' : 'Export as csTimer JSON'}>
+            <button
+              className="hint-btn"
+              onClick={() => { void onCstimerExport(); }}
+              title={isZh ? '下载所有成绩为 csTimer 兼容的 JSON' : 'Download all solves as a csTimer-compatible JSON'}
+            >
+              <Download size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
+              {isZh ? '下载' : 'Download'}
+            </button>
+            {cstimerExportMsg !== null && (
+              <span className="hint">{cstimerExportMsg}</span>
+            )}
           </Row>
           {cstimerSessions && cstimerSessions.length > 0 && (
             <div className="cstimer-import-list">
