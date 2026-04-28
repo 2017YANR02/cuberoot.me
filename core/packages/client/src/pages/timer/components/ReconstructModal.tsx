@@ -10,10 +10,10 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Link2, Layers, ChevronDown, ChevronRight } from 'lucide-react';
-import type { Solve } from '../types';
+import type { Solve, EventId } from '../types';
 import { effectiveMs } from '../types';
 import { formatMs } from '../stats';
-import { sliceReconstruction } from '../reconstruct/slice';
+import { sliceReconstruction, detectMemoPause } from '../reconstruct/slice';
 import { computeStageAverages, computeStageSegments } from '../reconstruct/stage_segments';
 import type { StageAverages } from '../reconstruct/stage_segments';
 import { encodeReplayUrl } from '../share/encode';
@@ -30,7 +30,15 @@ interface Props {
    *  per-stage cells render a ±% label vs the user's ao12 / ao100 stage
    *  averages. Excludes the current solve implicitly via id match. */
   history?: Solve[];
+  /** Optional callback for the BLD auto-memo "Apply" button. When provided
+   *  and the solve is a BLD-class event without a manually-set memoMs, the
+   *  modal shows an inline hint with the auto-detected value plus a button
+   *  that calls back with that ms value. Caller is responsible for writing
+   *  the value into solve.bld.memoMs. When omitted, the hint is read-only. */
+  onMemoApply?: (ms: number) => void;
 }
+
+const BLD_AUTO_DETECT_EVENTS = new Set<EventId>(['333bld', '444bld', '555bld', '333mbld']);
 
 function formatSec(ms: number, digits = 2): string {
   return (ms / 1000).toFixed(digits) + 's';
@@ -95,7 +103,7 @@ function AccordionSection({
   );
 }
 
-export default function ReconstructModal({ solve, isZh, onClose, history }: Props) {
+export default function ReconstructModal({ solve, isZh, onClose, history, onMemoApply }: Props) {
   const titleId = useId();
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
 
@@ -156,6 +164,16 @@ export default function ReconstructModal({ solve, isZh, onClose, history }: Prop
   const dt = new Date(solve.ts);
   const memoMs = solve.bld?.memoMs;
 
+  // Auto-detect memo pause for BLD-class solves that haven't had a memoMs
+  // set manually. The hint surfaces at the top of the modal; user can apply
+  // (callback) or just read the value. Skipped entirely once memoMs exists.
+  const autoMemoMs = useMemo<number | null>(() => {
+    if (memoMs !== undefined && memoMs !== null) return null;
+    if (!BLD_AUTO_DETECT_EVENTS.has(solve.event)) return null;
+    if (moves.length < 2) return null;
+    return detectMemoPause(moves, solve.timeMs);
+  }, [memoMs, solve.event, moves, solve.timeMs]);
+
   return (
     <div className="timer-modal-overlay reconstruct-overlay" onClick={onClose}>
       <div
@@ -169,6 +187,36 @@ export default function ReconstructModal({ solve, isZh, onClose, history }: Prop
           {isZh ? '复盘' : 'Reconstruct'} · {formatMs(eff)}
           <span className="reconstruct-date"> · {dt.toLocaleString()}</span>
         </h2>
+
+        {autoMemoMs !== null && (
+          <div
+            className="reconstruct-auto-memo-hint"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '6px 10px',
+              margin: '6px 0',
+              fontSize: '0.85em',
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: 4,
+            }}
+          >
+            <span>
+              {isZh ? '自动检测记忆时长' : 'auto-detected memo'}: {(autoMemoMs / 1000).toFixed(2)}s
+            </span>
+            {onMemoApply && (
+              <button
+                type="button"
+                onClick={() => onMemoApply(autoMemoMs)}
+                style={{ padding: '2px 8px', fontSize: '0.9em' }}
+              >
+                {isZh ? '应用' : 'Apply'}
+              </button>
+            )}
+          </div>
+        )}
 
         {memoMs !== undefined && (
           <div className="reconstruct-bld-bar">
