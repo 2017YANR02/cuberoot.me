@@ -1,3 +1,5 @@
+import { scramble444RandomState } from './scramble_444_rs';
+
 /**
  * Random-move scrambles for NxN cubes (WCA-style face filtering).
  *
@@ -96,7 +98,12 @@ function genBigMoves(len: number, maxWide: number, rng: () => number): string {
 }
 
 export function scramble444(rng: () => number): string {
-  return genBigMoves(45, 2, rng);
+  // Prefer true random-state (cstimer port). Fall back to random-move on error.
+  try {
+    return scramble444RandomState(rng);
+  } catch {
+    return genBigMoves(45, 2, rng);
+  }
 }
 
 export function scramble555(rng: () => number): string {

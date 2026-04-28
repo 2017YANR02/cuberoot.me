@@ -12,6 +12,9 @@ import maplibregl from 'maplibre-gl';
 import type { GeoJSONSource, MapMouseEvent, MapGeoJSONFeature } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import * as OpenCC from 'opencc-js';
+import { localizeCity } from '../utils/city_localize';
+import { stripWcaPrefix } from '../utils/comp_localize';
+import { countryName } from '../utils/country_name';
 import { VectorTile } from '@mapbox/vector-tile';
 import Protobuf from 'pbf';
 import vtpbf from 'vt-pbf';
@@ -143,115 +146,9 @@ function buildSatelliteStyle(): maplibregl.StyleSpecification {
   } as unknown as maplibregl.StyleSpecification;
 }
 
-// NOTE: ISO alpha-2 → 国家名（英/中）；UI 展示用
-const COUNTRY_EN: Record<string, string> = {
-  CN: 'China', US: 'USA', JP: 'Japan', KR: 'Korea', IN: 'India',
-  DE: 'Germany', FR: 'France', GB: 'UK', IT: 'Italy', ES: 'Spain',
-  PL: 'Poland', BR: 'Brazil', CA: 'Canada', AU: 'Australia', MX: 'Mexico',
-  TW: 'Chinese Taipei', HK: 'Hong Kong', RU: 'Russia', TR: 'Turkey', ID: 'Indonesia',
-  NL: 'Netherlands', BE: 'Belgium', SE: 'Sweden', NO: 'Norway', FI: 'Finland',
-  DK: 'Denmark', CH: 'Switzerland', AT: 'Austria', CZ: 'Czechia', SK: 'Slovakia',
-  HU: 'Hungary', RO: 'Romania', BG: 'Bulgaria', GR: 'Greece', PT: 'Portugal',
-  IE: 'Ireland', NZ: 'New Zealand', SG: 'Singapore', MY: 'Malaysia', TH: 'Thailand',
-  VN: 'Vietnam', PH: 'Philippines', AR: 'Argentina', CL: 'Chile', CO: 'Colombia',
-  PE: 'Peru', ZA: 'South Africa', EG: 'Egypt', AE: 'UAE', SA: 'Saudi Arabia',
-  IL: 'Israel', IR: 'Iran', PK: 'Pakistan', BD: 'Bangladesh', LK: 'Sri Lanka',
-  NP: 'Nepal', UA: 'Ukraine', BY: 'Belarus', EE: 'Estonia', LV: 'Latvia', LT: 'Lithuania',
-};
-const COUNTRY_ZH: Record<string, string> = {
-  CN: '中国', US: '美国', JP: '日本', KR: '韩国', IN: '印度',
-  DE: '德国', FR: '法国', GB: '英国', IT: '意大利', ES: '西班牙',
-  PL: '波兰', BR: '巴西', CA: '加拿大', AU: '澳大利亚', MX: '墨西哥',
-  TW: '中华台北', HK: '中国香港', RU: '俄罗斯', TR: '土耳其', ID: '印度尼西亚',
-  NL: '荷兰', BE: '比利时', SE: '瑞典', NO: '挪威', FI: '芬兰',
-  DK: '丹麦', CH: '瑞士', AT: '奥地利', CZ: '捷克', SK: '斯洛伐克',
-  HU: '匈牙利', RO: '罗马尼亚', BG: '保加利亚', GR: '希腊', PT: '葡萄牙',
-  IE: '爱尔兰', NZ: '新西兰', SG: '新加坡', MY: '马来西亚', TH: '泰国',
-  VN: '越南', PH: '菲律宾', AR: '阿根廷', CL: '智利', CO: '哥伦比亚',
-  PE: '秘鲁', ZA: '南非', EG: '埃及', AE: '阿联酋', SA: '沙特',
-  IL: '以色列', IR: '伊朗', PK: '巴基斯坦', BD: '孟加拉国', LK: '斯里兰卡',
-  NP: '尼泊尔', UA: '乌克兰', BY: '白俄罗斯', EE: '爱沙尼亚', LV: '拉脱维亚', LT: '立陶宛',
-};
-const countryName = (iso2: string, isZh: boolean) => {
-  const up = (iso2 || '').toUpperCase();
-  return (isZh ? COUNTRY_ZH[up] : COUNTRY_EN[up]) ?? up;
-};
 
 // NOTE: 国旗 HTML 统一在 utils/flag.tsx。popup 里 span 用 flag-span、img 用 flag-img（对齐 globe.css 样式）
 const popupFlagHtml = (iso2: string): string => flagHtml(iso2, { spanClassName: 'flag-span', imgClassName: 'flag-img' });
-
-// WCA 比赛城市英文 → 中文
-// 范围：覆盖 all_past_comps + all_upcoming_comps 中所有出现过的 CN/HK/MO/TW 城市，加少量耳熟能详的海外城市
-const CITY_ZH: Record<string, string> = {
-  // 直辖市 / 港澳
-  'Beijing': '北京', 'Shanghai': '上海', 'Tianjin': '天津', 'Chongqing': '重庆',
-  'Hong Kong': '香港', 'Macau': '澳门', 'Macao': '澳门',
-  // 中国大陆地级市（按拼音字母序）
-  'Anyang': '安阳', 'Baoji': '宝鸡', 'Changchun': '长春', 'ChangChun': '长春',
-  'Changsha': '长沙', 'Changzhou': '常州', 'Chaozhou': '潮州', 'Chengdu': '成都',
-  'Chifeng': '赤峰', 'Dalian': '大连', 'Dandong': '丹东', 'Dongguan': '东莞',
-  'Ezhou': '鄂州', 'Foshan': '佛山', 'Fushun': '抚顺', 'Fuzhou': '福州',
-  'Guangzhou': '广州', 'Guilin': '桂林', 'Guiyang': '贵阳', 'Haikou': '海口',
-  'Hangzhou': '杭州', 'Harbin': '哈尔滨', 'Hefei': '合肥', 'Hengyang': '衡阳',
-  'Heze': '菏泽', 'Hohhot': '呼和浩特', 'Huaibei': '淮北', 'Huizhou': '惠州',
-  'Huzhou': '湖州', 'Jiangmen': '江门', 'Jiaozuo': '焦作', 'Jiaxing': '嘉兴',
-  'Jieyang': '揭阳', 'Jinan': '济南', 'Jinhua': '金华', 'Jiujiang': '九江',
-  'Kaifeng': '开封', 'Kunming': '昆明', 'Lanzhou': '兰州', 'Lhasa': '拉萨',
-  'Linfen': '临汾', 'Linyi': '临沂', 'Lishui': '丽水', 'Liuzhou': '柳州',
-  'Longyan': '龙岩', 'Luoyang': '洛阳', 'Maoming': '茂名', 'Meizhou': '梅州',
-  'Mianyang': '绵阳', 'Mudanjiang': '牡丹江', 'Nanchang': '南昌', 'Nanjing': '南京',
-  'Nanning': '南宁', 'Nantong': '南通', 'Ningbo': '宁波', 'Ordos': '鄂尔多斯',
-  'Qianjiang': '潜江', 'Qingdao': '青岛', 'Qinhuangdao': '秦皇岛', 'Qinzhou': '钦州',
-  'Quanzhou': '泉州', 'Sanya': '三亚', 'Shantou': '汕头', 'Shaoxing': '绍兴',
-  'Shenyang': '沈阳', 'Shenzhen': '深圳', 'Shijiazhuang': '石家庄', 'Suzhou': '苏州',
-  'Taiyuan': '太原', 'Taizhou': '台州', 'Tangshan': '唐山', 'Urumqi': '乌鲁木齐',
-  'Weifang': '潍坊', 'Weihai': '威海', 'Wenzhou': '温州', 'Wuhan': '武汉',
-  'Wuhu': '芜湖', 'Wuxi': '无锡', "Xi'an": '西安', 'Xian': '西安',
-  'Xiamen': '厦门', 'Xianyang': '咸阳', 'Xinxiang': '新乡', 'Xining': '西宁',
-  'Xuchang': '许昌', 'Xuzhou': '徐州', 'Yancheng': '盐城', 'Yangjiang': '阳江',
-  'Yangzhou': '扬州', 'Yantai': '烟台', 'Yichang': '宜昌', 'Yinchuan': '银川',
-  'Yingkou': '营口', 'Zhangzhou': '漳州', 'Zhanjiang': '湛江', 'Zhengzhou': '郑州',
-  'Zhenjiang': '镇江', 'Zhongshan': '中山', 'Zhuhai': '珠海', 'Zibo': '淄博',
-  'Zunyi': '遵义',
-  // 多地占位
-  'Multiple Cities': '多地', 'Multiple cities in China': '中国多地',
-  // 台湾
-  'Chia-yi': '嘉义', 'Chiayi': '嘉义', 'Hsinchu': '新竹', 'Hualien': '花莲',
-  'Kaohsiung': '高雄', 'Lienchiang': '连江', 'New Taipei': '新北', 'Penghu': '澎湖',
-  'Pingtung': '屏东', 'Taichung': '台中', 'Tainan': '台南', 'Taipei': '台北',
-  'Taitung': '台东', 'Taoyuan': '桃园', 'Yilan': '宜兰', 'Yunlin': '云林',
-  // 部分国外耳熟能详
-  'Tokyo': '东京', 'Osaka': '大阪', 'Kyoto': '京都', 'Nagoya': '名古屋',
-  'Yokohama': '横滨', 'Sapporo': '札幌', 'Fukuoka': '福冈', 'Kobe': '神户',
-  'Seoul': '首尔', 'Busan': '釜山', 'Incheon': '仁川',
-  'Singapore': '新加坡', 'Bangkok': '曼谷', 'Kuala Lumpur': '吉隆坡',
-  'New York': '纽约', 'Los Angeles': '洛杉矶', 'San Francisco': '旧金山',
-  'Chicago': '芝加哥', 'Boston': '波士顿', 'Seattle': '西雅图',
-  'London': '伦敦', 'Paris': '巴黎', 'Berlin': '柏林', 'Munich': '慕尼黑',
-  'Rome': '罗马', 'Madrid': '马德里', 'Barcelona': '巴塞罗那',
-  'Amsterdam': '阿姆斯特丹', 'Brussels': '布鲁塞尔', 'Vienna': '维也纳',
-  'Moscow': '莫斯科', 'Sydney': '悉尼', 'Melbourne': '墨尔本',
-  'Toronto': '多伦多', 'Vancouver': '温哥华', 'Montreal': '蒙特利尔',
-};
-
-// 从 "City, Province" 形式里只取 city（第一段），并剥掉 " City" 后缀和尾部的邮编数字（处理 "Hsinchu City"、"Kaohsiung City 81157" 这类）
-const normalizeCityKey = (city: string): string => {
-  let s = city.split(/,\s*/)[0].trim();
-  s = s.replace(/\s+\d+$/, '');           // 去掉尾部数字（邮编）
-  s = s.replace(/\s+City$/i, '');          // 去掉 " City" 后缀
-  return s.trim();
-};
-
-// 中文走查表，已含 CJK（JP/HK/TW 比赛常见）走 OpenCC 简体化，命中不到保持原文
-const localizeCity = (city: string, _country: string, isZh: boolean): string => {
-  if (!city) return '';
-  const key = normalizeCityKey(city);
-  if (!isZh) return key;
-  if (CJK_RE.test(key)) {
-    try { return openccT2S(key); } catch { return key; }
-  }
-  return CITY_ZH[key] ?? key;
-};
 
 const CUBER_SOURCE_POINTS = 'cuber-points';
 const CUBER_SOURCE_ARCS = 'cuber-arcs';
@@ -784,14 +681,19 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
   }, [isZh, nameZhMap, compNameEnToZh]);
 
   // 中文页面下比赛名：1) upcoming_comps.json 的 id→name_zh；2) comp_names_zh.json 的英文名→中文名；3) OpenCC 简化已含 CJK 的名；4) 兜底英文
+  // 显示前再剥掉 "WCA "（display-only，搜索不走这里）
   const localizeCompName = useCallback((id: string, name: string): string => {
-    if (!isZh || !name) return name;
-    const zh1 = nameZhMap?.get(id)?.name_zh;
-    if (zh1) return zh1;
-    const zh2 = compNameEnToZh?.[name];
-    if (zh2) return zh2;
-    if (CJK_RE.test(name)) { try { return openccT2S(name); } catch { /* */ } }
-    return name;
+    if (!name) return name;
+    const resolved = (() => {
+      if (!isZh) return name;
+      const zh1 = nameZhMap?.get(id)?.name_zh;
+      if (zh1) return zh1;
+      const zh2 = compNameEnToZh?.[name];
+      if (zh2) return zh2;
+      if (CJK_RE.test(name)) { try { return openccT2S(name); } catch { /* */ } }
+      return name;
+    })();
+    return stripWcaPrefix(resolved);
   }, [isZh, nameZhMap, compNameEnToZh]);
   // MapLibre popup 回调是一次性注册的闭包——通过 ref 读最新 localizeCompName
   const localizeCompNameRef = useRef(localizeCompName);
@@ -1372,7 +1274,7 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
       geometry: { type: 'Point' as const, coordinates: [c.longitude_degrees, c.latitude_degrees] },
       properties: {
         index: i, id: c.id, name: c.name, city: c.city,
-        city_label: localizeCity(c.city, c.country_iso2, isZh),
+        city_label: localizeCity(c.city, isZh),
         country_iso2: c.country_iso2, start_date: c.start_date, url: c.url,
       },
     })),
@@ -2837,7 +2739,7 @@ const onSelectCuber = useCallback((person: WcaPerson) => {
             )}
           </>
         ) : (<>
-        <Link to="/upcoming-comps" className="globe-logo-link" title={t('globe.backToCalendar') as string} aria-label="Home">
+        <Link to="/calendar" className="globe-logo-link" title={t('globe.backToCalendar') as string} aria-label="Home">
           <svg className="globe-logo" width={26} height={26} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
             <defs>
               <radialGradient id="earthGrad" cx="0.35" cy="0.35" r="0.85">
@@ -3213,7 +3115,7 @@ const onSelectCuber = useCallback((person: WcaPerson) => {
             {currentComp.country_iso2 && <Flag iso2={currentComp.country_iso2} className="cuber-step-flag" />}
             <span>{localizeCompName(currentComp.id, currentComp.name)}</span>
           </div>
-          <div className="cuber-step-meta is-selectable">{(nameZhMap?.get(currentComp.id)?.city_zh && isZh) ? nameZhMap.get(currentComp.id)!.city_zh : localizeCity(currentComp.city, currentComp.country_iso2, isZh)}, {countryName(currentComp.country_iso2, isZh)} · {currentComp.start_date}</div>
+          <div className="cuber-step-meta is-selectable">{(nameZhMap?.get(currentComp.id)?.city_zh && isZh) ? nameZhMap.get(currentComp.id)!.city_zh : localizeCity(currentComp.city, isZh)}, {countryName(currentComp.country_iso2, isZh)} · {currentComp.start_date}</div>
           {prevComp && (
             <div className="cuber-step-leg is-selectable">
               {fmtDistance(legKm, isZh)} · {isZh ? `距上场 ${legDays} 天` : `${legDays}d since prev`}

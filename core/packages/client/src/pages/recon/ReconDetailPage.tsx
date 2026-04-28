@@ -20,6 +20,7 @@ import { displayCuberName } from '../../utils/name_utils';
 import { eventDisplayName } from '../../utils/wca_events';
 import { EventIcon } from '../../components/EventIcon';
 import { compNameZh, loadFlagData, flagDataVersion } from '../../utils/country_flags';
+import { stripWcaPrefix } from '../../utils/comp_localize';
 import { cleanForPlayer, findTokenPositions, snapToTokenBoundary, extractAlgFromText, syncPlayerToMoveCount } from '../../utils/recon_alg_utils';
 import { useAuthStore } from '../../stores/auth_store';
 import LangToggle from '../../components/LangToggle';
@@ -110,9 +111,9 @@ export default function ReconDetailPage() {
             {solve.country && <><span className={flagClass(solve.country)} />{' '}</>}
             {solve.compWcaId ? (
               <a href={wcaCompUrl(solve.compWcaId)} target="_blank" rel="noopener noreferrer">
-                {isZh ? (compNameZh(solve.comp) || solve.comp) : solve.comp}
+                {stripWcaPrefix(isZh ? (compNameZh(solve.comp) || solve.comp) : solve.comp)}
               </a>
-            ) : (isZh ? (compNameZh(solve.comp) || solve.comp) : solve.comp)}
+            ) : stripWcaPrefix(isZh ? (compNameZh(solve.comp) || solve.comp) : solve.comp)}
           </span>
         )}
       </div>

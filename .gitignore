@@ -40,6 +40,10 @@ AGENTS.md
 
 # Claude Code 本机专属配置（权限白名单，不共享）
 .claude/settings.local.json
+# Claude Code agent worktrees（每个数 GB，纯本机临时产物）
+.claude/worktrees/
+# Playwright MCP 临时日志
+.playwright-mcp/
 
 # alg-build 公式识别 log（2MB+，每次 build 全量重写，repo 膨胀快；需要时本地生成）
 core/packages/alg-build/data/alg_detections.log

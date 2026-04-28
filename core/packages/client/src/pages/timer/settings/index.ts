@@ -46,8 +46,8 @@ export interface TimerSettings {
   /** Show only the latest scramble line on phones (compact mode). */
   compactScramble: boolean;
 
-  /** Use the three.js 3D cube preview instead of the 2D net. */
-  use3D: boolean;
+  /** Render the scramble preview as 3D drag-rotatable cube instead of 2D net. */
+  prefer3D: boolean;
 
   /** Show the GitHub-style practice heatmap in the bottom panel. */
   showHeatmap: boolean;
@@ -79,12 +79,19 @@ export interface TimerSettings {
   /** Hide entire UI (topbar / scramble / charts) while timer is running. */
   hideAllUiWhileRunning: boolean;
 
-  /** Metronome on/off and tempo. */
-  metronomeEnabled: boolean;
+  /** Metronome on/off and tempo (BPM range 30..300). */
+  metronomeOn: boolean;
   metronomeBpm: number;
 
   /** Sync seed: when set, scramble RNG is deterministic across devices. */
   syncSeed: string | null;
+
+  /**
+   * Persisted scramble counter for the active sync seed. Increments each time
+   * `generateScramble` produces a seeded scramble, so reloading the page
+   * resumes the same sequence. Reset whenever `syncSeed` changes or is cleared.
+   */
+  syncSeedCounter: number;
 
   /** Auto-backup every N saves. 0 = disabled, max 30. */
   autoBackupEvery: number;
@@ -135,7 +142,7 @@ export const DEFAULTS: TimerSettings = {
   timerFontScale: 1,
   holdMs: 550,
   compactScramble: false,
-  use3D: false,
+  prefer3D: false,
   showHeatmap: true,
   multiStage: false,
   bldMemo: true,
@@ -144,9 +151,10 @@ export const DEFAULTS: TimerSettings = {
   customAoWindows: [7],
   scrambleClickAction: 'next',
   hideAllUiWhileRunning: false,
-  metronomeEnabled: false,
-  metronomeBpm: 60,
+  metronomeOn: false,
+  metronomeBpm: 120,
   syncSeed: null,
+  syncSeedCounter: 0,
   autoBackupEvery: 10,
   bluetoothAutoReady: 'off',
   inspectionTrigger: 'down',

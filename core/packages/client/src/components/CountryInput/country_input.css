@@ -31,8 +31,38 @@
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
-.country-input-field--with-flag {
+/* NOTE: 选择器双 class 提优先级——recon 等页面有 `.submit-field input { padding: ... }` 覆盖 */
+.country-input-field.country-input-field--with-flag {
   padding-left: 38px;
+}
+
+.country-input-field.country-input-field--with-clear {
+  padding-right: 30px;
+}
+
+.country-input-clear {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted, #888);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s, color 0.12s;
+}
+
+.country-input-clear:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text, #e5e5e5);
 }
 
 .country-input-field:focus {

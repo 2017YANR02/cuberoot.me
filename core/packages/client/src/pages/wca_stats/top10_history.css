@@ -1,0 +1,389 @@
+/* NOTE: Top 10 History — bar chart race(对齐参考视频:黑底 + X 轴 + 横条) */
+.t10h-page {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 16px 12px 32px;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.t10h-status {
+  padding: 64px 16px;
+  text-align: center;
+  color: #888;
+  font-size: 15px;
+}
+
+/* ── Toolbar(轻浅 — 控件区,在黑色舞台之外) ── */
+.t10h-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.t10h-toolbar-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+.t10h-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.t10h-metric-toggle {
+  display: inline-flex;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fafafa;
+}
+.t10h-metric-toggle button {
+  border: none;
+  background: transparent;
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #555;
+  transition: background 0.15s, color 0.15s;
+}
+.t10h-metric-toggle button.active {
+  background: #1a1a1a;
+  color: #fff;
+}
+.t10h-metric-toggle button:not(.active):hover { background: #eee; }
+
+/* ── Stage:黑色舞台,放 banner + axis + bars ── */
+.t10h-stage {
+  --rank-w: 64px;
+  --row-h: 44px;
+  --tick-color: #444;
+  background: #000;
+  color: #fff;
+  border-radius: 8px;
+  padding: 18px 18px 14px;
+  overflow: hidden;
+}
+
+/* ── Banner: WR holder 信息 + 大字标题 ── */
+.t10h-banner {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 16px;
+  min-height: 96px;
+}
+.t10h-holder {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.t10h-holder-flag {
+  width: 96px;
+  height: 64px;
+  flex-shrink: 0;
+  display: block;
+  border-radius: 4px;
+  box-shadow: 0 0 0 1px #333;
+  object-fit: cover;
+}
+.t10h-holder-flag.fi {
+  /* span flag-icons:把它当作 inline-block 的国旗块 */
+  display: inline-block;
+  background-size: cover;
+}
+.t10h-holder-text { min-width: 0; }
+.t10h-holder-name {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.t10h-holder-sub {
+  margin-top: 4px;
+  font-size: 14px;
+  color: #bbb;
+  font-weight: 400;
+}
+
+.t10h-bigtitle {
+  text-align: right;
+  flex: 0 1 auto;
+}
+.t10h-bigtitle-pre {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #ccc;
+  letter-spacing: -0.01em;
+  margin-bottom: 4px;
+  justify-content: flex-end;
+}
+.t10h-bigtitle-icon {
+  font-size: 22px;
+  color: #ddd;
+}
+.t10h-bigdate {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, "Roboto Mono", monospace;
+  font-size: 56px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+/* ── X 轴刻度(刻度的 left% 已在 JS 端按 BAR_FRAC 缩放) ── */
+.t10h-axis {
+  position: relative;
+  height: 22px;
+  margin-left: var(--rank-w);
+}
+.t10h-tick {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  font-size: 13px;
+  color: #999;
+  font-variant-numeric: tabular-nums;
+  transition: left 0.7s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+/* ── Bars 区 ── */
+.t10h-bars {
+  position: relative;
+  height: calc(var(--rows) * var(--row-h));
+}
+
+/* 网格线:绝对定位的纵向细线,贯穿所有行(只覆盖柱子区) */
+.t10h-grid {
+  position: absolute;
+  left: var(--rank-w);
+  right: 0;
+  top: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+.t10h-grid-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--tick-color);
+  transition: left 0.7s cubic-bezier(0.65, 0, 0.35, 1);
+}
+.t10h-grid-line-zero {
+  background: #777;
+}
+
+/* 行 */
+.t10h-row {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--row-h);
+  display: flex;
+  align-items: center;
+  transform: translateY(calc(var(--rank) * var(--row-h)));
+  transition: transform 0.7s cubic-bezier(0.65, 0, 0.35, 1);
+  will-change: transform;
+}
+.t10h-rank {
+  flex: 0 0 var(--rank-w);
+  text-align: right;
+  padding-right: 12px;
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+.t10h-bar {
+  position: relative;
+  height: 30px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 7px;
+  padding: 0 8px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.35);
+  white-space: nowrap;
+  overflow: hidden;
+  transition: width 0.7s cubic-bezier(0.65, 0, 0.35, 1), background 0.4s;
+  z-index: 1;
+}
+.t10h-bar-flag {
+  width: 18px;
+  height: 13px;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.18);
+}
+.t10h-bar-flag.fi {
+  display: inline-block;
+  background-size: cover;
+}
+.t10h-bar-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.t10h-value {
+  margin-left: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+  z-index: 1;
+}
+
+/* 比赛区:在 value 右侧,占用行剩余空间(由 flex 1 撑开),溢出 ellipsis */
+.t10h-comp {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 8px;
+  font-size: 13px;
+  color: #ddd;
+  white-space: nowrap;
+  overflow: hidden;
+  flex: 1 1 0;
+  min-width: 0;
+  z-index: 1;
+}
+.t10h-comp-flag {
+  width: 18px;
+  height: 13px;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.15);
+}
+.t10h-comp-flag.fi {
+  display: inline-block;
+  background-size: cover;
+}
+.t10h-comp-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+/* ── Controls ── */
+.t10h-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: #fafafa;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  flex-wrap: wrap;
+}
+.t10h-play {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid #ddd;
+  background: #fff;
+  cursor: pointer;
+  color: #1a1a1a;
+  flex-shrink: 0;
+  transition: background 0.15s, transform 0.1s;
+}
+.t10h-play:hover { background: #f0f0f0; }
+.t10h-play:active { transform: scale(0.95); }
+.t10h-scrub {
+  flex: 1 1 200px;
+  height: 4px;
+  min-width: 100px;
+}
+.t10h-speed {
+  display: inline-flex;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fafafa;
+}
+.t10h-speed button {
+  border: none;
+  background: transparent;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  color: #555;
+  font-variant-numeric: tabular-nums;
+  transition: background 0.15s, color 0.15s;
+}
+.t10h-speed button.active { background: #1a1a1a; color: #fff; }
+.t10h-speed button:not(.active):hover { background: #eee; }
+
+.t10h-note {
+  margin-top: 12px;
+  font-size: 12px;
+  color: #888;
+  line-height: 1.6;
+}
+
+/* ── 移动端 (< 480px) ── */
+@media (max-width: 480px) {
+  .t10h-page { padding: 10px 6px 24px; }
+  .t10h-stage {
+    --rank-w: 36px;
+    --row-h: 34px;
+    padding: 12px 10px 8px;
+  }
+  .t10h-banner {
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 10px;
+    min-height: 0;
+  }
+  .t10h-holder-flag { width: 56px; height: 38px; }
+  .t10h-holder-name { font-size: 16px; }
+  .t10h-holder-sub { font-size: 12px; }
+  .t10h-bigtitle { text-align: left; }
+  .t10h-bigtitle-pre { font-size: 12px; }
+  .t10h-bigdate { font-size: 32px; }
+
+  .t10h-tick { font-size: 10px; }
+  .t10h-axis { height: 16px; }
+
+  .t10h-rank { font-size: 14px; padding-right: 6px; }
+  .t10h-bar {
+    height: 22px;
+    font-size: 11px;
+    padding: 0 6px;
+    gap: 5px;
+  }
+  .t10h-comp { font-size: 11px; gap: 4px; margin-left: 5px; }
+  .t10h-comp-flag { width: 14px; height: 10px; }
+
+  .t10h-controls { gap: 8px; padding: 8px; }
+  .t10h-speed button { padding: 5px 6px; font-size: 11px; }
+}
+
+/* ── 480..768 ── */
+@media (min-width: 481px) and (max-width: 768px) {
+  .t10h-stage { --rank-w: 50px; --row-h: 38px; }
+  .t10h-bigdate { font-size: 40px; }
+  .t10h-bigtitle-pre { font-size: 14px; }
+  .t10h-holder-flag { width: 72px; height: 48px; }
+  .t10h-holder-name { font-size: 20px; }
+  .t10h-bar { height: 26px; font-size: 12px; }
+  .t10h-comp { font-size: 12px; }
+}

@@ -5,7 +5,8 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, ChevronRight, Star, Globe as GlobeIcon, List } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Star, Globe as GlobeIcon, List, BarChart3 } from 'lucide-react';
+import { getLangQuery } from '../i18n';
 import {
   fetchAllUpcomingCompsJson,
   fetchAllPastCompsJson,
@@ -28,6 +29,7 @@ import {
   type RecordEntry,
 } from '../utils/comp_records';
 import { loadFlagData, personFlagIso2, compNameZh, countryToIso2 } from '../utils/country_flags';
+import { stripWcaPrefix } from '../utils/comp_localize';
 import './upcoming_comps.css';
 
 // ── 类型定义 ──────────────────────────────────────────────────────────────
@@ -171,8 +173,8 @@ function monthGridStart(year: number, month: number): Date {
 // NOTE: TW 特判和 flag-icons 类名统一在 utils/flag.tsx；这里只是个 span/img className 绑定的 thin wrapper
 // 中文模式下比赛名本地化: upcoming JSON 的 name_zh（追踪选手近期赛）→ comp_names_zh.json 的英→中映射 → 兜底英文
 function localizeName(c: { name: string; name_zh?: string }, isZh: boolean): string {
-  if (!isZh) return c.name;
-  return c.name_zh || compNameZh(c.name) || c.name;
+  const resolved = !isZh ? c.name : (c.name_zh || compNameZh(c.name) || c.name);
+  return stripWcaPrefix(resolved);
 }
 
 function Flag({ iso2 }: { iso2: string }) {
@@ -585,6 +587,16 @@ function adaptPastComp(w: PastCompRecord): Competition {
   };
 }
 
+// ── URL 月份深链 ──────────────────────────────────────────────────────────
+
+function readMonthFromUrl(): Date | null {
+  const p = new URLSearchParams(window.location.search);
+  const y = Number(p.get('year'));
+  const m = Number(p.get('month'));
+  if (!y || !m || m < 1 || m > 12) return null;
+  return new Date(y, m - 1, 1);
+}
+
 // ── 主组件 ────────────────────────────────────────────────────────────────
 
 export default function UpcomingCompsPage() {
@@ -595,7 +607,9 @@ export default function UpcomingCompsPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [countryFilter, setCountryFilter] = useState('');
-  const [viewDate, setViewDate] = useState<Date>(() => new Date()); // 月份锚点（第 1 日无关紧要，只看 Year/Month）
+  // NOTE: 月份锚点。优先读 URL `?year=YYYY&month=M`（来自 /calendar/stats 热力图深链），
+  //       否则用 now（首次加载后若有 upcoming 会跳到最近一场比赛的月份）。
+  const [viewDate, setViewDate] = useState<Date>(() => readMonthFromUrl() ?? new Date());
   const [selectedComp, setSelectedComp] = useState<Competition | null>(null);
   const [dayListDate, setDayListDate] = useState<Date | null>(null);
   const [mode, setMode] = useState<'top' | 'all'>('all');
@@ -613,6 +627,15 @@ export default function UpcomingCompsPage() {
     loadFlagData().then((v) => setRecordsVer(v));
   }, []);
 
+  // NOTE: viewDate 变化时同步 URL（?year= ?month=），方便复制分享当前月份链接
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    p.set('year', String(viewDate.getFullYear()));
+    p.set('month', String(viewDate.getMonth() + 1));
+    const newUrl = `${window.location.pathname}?${p.toString()}${window.location.hash}`;
+    window.history.replaceState(null, '', newUrl);
+  }, [viewDate]);
+
   useEffect(() => {
     fetch('/stats/upcoming_comps.json')
       .then((res) => {
@@ -621,6 +644,8 @@ export default function UpcomingCompsPage() {
       })
       .then((d: UpcomingData) => {
         setData(d);
+        // NOTE: URL 已指定年月时不自动跳——尊重深链（如 /calendar/stats 热力图来的）
+        if (readMonthFromUrl()) return;
         // NOTE: 默认跳到包含最近一场比赛的月份（如果今天之后有比赛的话）
         const now = new Date();
         const upcoming = d.competitions
@@ -660,6 +685,12 @@ export default function UpcomingCompsPage() {
     return data?.competitions ?? [];
   }, [mode, allComps, data]);
 
+  // NOTE: 选中国家时整段隐藏其他国家（不是变淡）；country picker / yearMonthsMap 仍用 activeComps
+  const displayedComps = useMemo(
+    () => (countryFilter ? activeComps.filter((c) => c.country === countryFilter) : activeComps),
+    [activeComps, countryFilter],
+  );
+
   const countryOptions = useMemo(() => {
     const counts: Record<string, number> = {};
     for (const c of activeComps) counts[c.country] = (counts[c.country] || 0) + 1;
@@ -689,8 +720,8 @@ export default function UpcomingCompsPage() {
   );
 
   const weeks = useMemo(() => {
-    return computeWeeks(viewDate.getFullYear(), viewDate.getMonth(), activeComps, countryFilter);
-  }, [activeComps, viewDate, countryFilter]);
+    return computeWeeks(viewDate.getFullYear(), viewDate.getMonth(), displayedComps, countryFilter);
+  }, [displayedComps, viewDate, countryFilter]);
 
   // NOTE: year → months with at least one comp；年月滚筒仅从这里取可选项，空年/空月天然不出
   const yearMonthsMap = useMemo(() => {
@@ -709,7 +740,7 @@ export default function UpcomingCompsPage() {
   // NOTE: 当月摘要（基于开始日期在本月的比赛）
   const monthStats = useMemo(() => {
     const y = viewDate.getFullYear(), m = viewDate.getMonth();
-    const inMonth = activeComps.filter((c) => {
+    const inMonth = displayedComps.filter((c) => {
       const s = parseLocalDate(c.start_date);
       return s.getFullYear() === y && s.getMonth() === m;
     });
@@ -725,7 +756,7 @@ export default function UpcomingCompsPage() {
       if (s >= new Date(now.getFullYear(), now.getMonth(), now.getDate()) && s <= soonCutoff) soon++;
     }
     return { comps: inMonth.length, countries: countries.size, cubers: cubers.size, soon };
-  }, [activeComps, viewDate]);
+  }, [displayedComps, viewDate]);
 
   const gotoMonth = (delta: number) => {
     setViewDate((d) => new Date(d.getFullYear(), d.getMonth() + delta, 1));
@@ -812,6 +843,10 @@ export default function UpcomingCompsPage() {
         <div className="upcoming-meta">
           {isZh ? '追踪世界前 10 / 前 WR 保持者 · ' : 'Tracking world top 10 / former WR holders · '}
           {t('upcoming.updatedAt', { time: toIsoDate(new Date(data.updated_at)) })}
+          {' · '}
+          <Link to={`/calendar/stats${getLangQuery()}`} className="globe-link">
+            <BarChart3 size={12} strokeWidth={1.75} /> {isZh ? '统计' : 'Stats'}
+          </Link>
           {' · '}
           <Link to="/globe" className="globe-link">
             <GlobeIcon size={12} strokeWidth={1.75} /> {t('upcoming.viewGlobe')}
@@ -1022,7 +1057,7 @@ export default function UpcomingCompsPage() {
             <button className="modal-close" onClick={() => setDayListDate(null)} aria-label="Close">×</button>
             <h2 className="modal-title">{toIsoDate(dayListDate)}</h2>
             <div className="day-list">
-              {activeComps
+              {displayedComps
                 .filter((c) => {
                   const s = parseLocalDate(c.start_date);
                   const e = parseLocalDate(c.end_date || c.start_date);

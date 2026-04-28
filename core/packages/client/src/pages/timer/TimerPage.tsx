@@ -44,6 +44,7 @@ import {
 } from './storage/db';
 import { formatTargetTime, useApplyTheme, useSettings } from './settings';
 import { warmupSound } from './sound';
+import { getMetronome } from './sound/metronome';
 import { useBluetoothCube } from './bluetooth';
 import { useAutoReady } from './bluetooth/auto_ready';
 import { useStackmat } from './stackmat';
@@ -77,7 +78,6 @@ import HistogramChart from './components/HistogramChart';
 import TrendChart from './components/TrendChart';
 import PracticeHeatmap from './components/PracticeHeatmap';
 import { CubePreview } from './cube';
-import { Cube3D } from './cube3d';
 import LiveCubeState from './components/LiveCubeState';
 import { getLangQuery } from '../../i18n';
 
@@ -462,7 +462,7 @@ export default function TimerPage() {
   }, []);
 
   // ── Live cube-state mirror ─────────────────────────────────────
-  // Tiny corner panel that re-renders Cube3D after every BLE move, so the
+  // Tiny corner panel that re-renders the cube preview after every BLE move, so the
   // user can sanity-check that the physical cube matches what the timer
   // thinks it should be. Cleared whenever the scramble changes (which also
   // covers solve recording — recordSolve calls nextScramble()).
@@ -543,6 +543,23 @@ export default function TimerPage() {
   const stackmat = useStackmat({
     onStop: (ms) => stackmatRecordRef.current?.(ms),
   });
+
+  // ── Metronome: tick during inspection + solve only ─────────────
+  // Active phases: 'inspecting' and 'running'. Anything else (idle / holding /
+  // ready / stopped) leaves the cuber free of clicks. Stops on toggle-off and
+  // on unmount.
+  useEffect(() => {
+    const m = getMetronome();
+    const active = settings.metronomeOn
+      && (timer.phase === 'inspecting' || timer.phase === 'running');
+    if (active) {
+      if (!m.isRunning()) m.start(settings.metronomeBpm);
+      else m.setBpm(settings.metronomeBpm);
+    } else if (m.isRunning()) {
+      m.stop();
+    }
+    return () => { m.stop(); };
+  }, [settings.metronomeOn, settings.metronomeBpm, timer.phase]);
 
   // ── Keyboard wiring ────────────────────────────────────────────
   const { onPressDown, onPressUp, reset } = timer;
@@ -1225,9 +1242,7 @@ export default function TimerPage() {
           </button>
           {!previewHidden && (
             <div className="timer-cube-preview">
-              {settings.use3D
-                ? <Cube3D event={event} scramble={scramble} size={200} colors={settings.colors} />
-                : <CubePreview event={event} scramble={scramble} size={14} colors={settings.colors} />}
+              <CubePreview event={event} scramble={scramble} size={14} colors={settings.colors} visualization={settings.prefer3D ? '3D' : '2D'} />
             </div>
           )}
         </div>

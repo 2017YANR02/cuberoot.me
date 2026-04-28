@@ -1,16 +1,16 @@
 /**
  * PlaybackPanel — step-through 3D playback of a recorded solve.
  *
- * Reuses the existing static `Cube3D` component by recomputing the scramble
- * string on each idx change: `original_scramble + first idx moves`. Cube3D
- * applies the resulting scramble to a fresh cube state every render, so we
- * get correct intermediate states without per-move animation.
+ * Recomputes the scramble string on each idx change as
+ * `original_scramble + first idx moves` and feeds it to CubePreview, which
+ * applies the resulting scramble fresh every render — correct intermediate
+ * states without per-move animation.
  */
 
 import { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Play, Pause } from 'lucide-react';
 import type { EventId } from '../types';
-import { Cube3D } from '../cube3d';
+import { CubePreview } from '../cube';
 
 interface SolveMoveLite { m: string; ts: number }
 
@@ -114,7 +114,7 @@ export default function PlaybackPanel({ event, scramble, moves, totalMs, isZh }:
   return (
     <div className="reconstruct-playback">
       <div className="reconstruct-playback-cube">
-        <Cube3D event={event} scramble={composed} size={240} autoRotate={false} />
+        <CubePreview event={event} scramble={composed} size={20} />
       </div>
 
       <div className="reconstruct-playback-controls">

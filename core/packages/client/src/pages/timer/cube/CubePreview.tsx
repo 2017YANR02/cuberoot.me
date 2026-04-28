@@ -26,6 +26,8 @@ interface CubePreviewProps {
   /** Reserved for future palette overrides; scramble-display uses its own
    * (WCA-correct) palette and ignores this. */
   colors?: Partial<Record<'U'|'D'|'F'|'B'|'L'|'R', string>>;
+  /** Forwarded to CubingPreview. Default 2D. */
+  visualization?: '2D' | '3D';
 }
 
 function NoPreview({ size = 14, className }: { size?: number; className?: string }): JSX.Element {
@@ -86,15 +88,16 @@ function baseNxnEvent(event: EventId): EventId | null {
 }
 
 export default function CubePreview(props: CubePreviewProps): JSX.Element {
-  const { event, scramble } = props;
+  const { event, scramble, visualization } = props;
   const size = props.size;
   const className = props.className;
+  const v = visualization;
 
   // NxN family (incl. BLD / OH / FM / MR / NI variants) → scramble-display
   // with the matching base nxn id.
   const baseNxn = baseNxnEvent(event);
   if (baseNxn !== null) {
-    return <CubingPreview event={baseNxn} scramble={scramble} size={size} className={className} />;
+    return <CubingPreview event={baseNxn} scramble={scramble} size={size} className={className} visualization={v} />;
   }
 
   switch (event) {
@@ -103,13 +106,13 @@ export default function CubePreview(props: CubePreviewProps): JSX.Element {
     case 'sq1':
     case 'mega':
     case 'clock':
-      return <CubingPreview event={event} scramble={scramble} size={size} className={className} />;
+      return <CubingPreview event={event} scramble={scramble} size={size} className={className} visualization={v} />;
     case 'r3':
     case 'r4':
     case 'r5':
-      return <CubingPreview event="333" scramble={firstNxnScramble(scramble)} size={size} className={className} />;
+      return <CubingPreview event="333" scramble={firstNxnScramble(scramble)} size={size} className={className} visualization={v} />;
     case 'custom':
-      return <CubingPreview event="333" scramble={scramble} size={size} className={className} />;
+      return <CubingPreview event="333" scramble={scramble} size={size} className={className} visualization={v} />;
     case 'magic':
     case 'mmagic':
       return <NoPreview size={size} className={className} />;

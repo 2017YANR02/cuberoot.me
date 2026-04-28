@@ -32,7 +32,7 @@ const STAT_CATEGORIES = [
     iconName: 'Trophy',
     preserveOrder: true,
     ids: ['wr_current', 'wr_metric', 'wr_aoxr', 'wr_dominance', 'wr_non_pr', 'wr_newcomer',
-          'average_of', 'consecutive_sub_5_average'],
+          'average_of', 'consecutive_sub_5_average', 'top10_history'],
   },
   {
     nameEn: 'Results & Records', nameZh: '成绩与纪录',
@@ -91,6 +91,7 @@ const STAT_CATEGORIES = [
 // 这里写一次，compute_index 跑时优先使用本表；新加 stat 默认走 stat 文件的 titleZh。
 const TITLE_ZH_OVERRIDES: Record<string, string> = {
   wr_newcomer: '新人首个世界纪录',
+  top10_history: '3x3 全历史 TOP 10 演化',
   consecutive_sub_5_average: '三阶最多连续 sub-5 平均',
   best_potential_fmc_mean: '理论最佳 FMC 平均',
   smallest_diff_between_single_and_average: '单次与平均差距最小',

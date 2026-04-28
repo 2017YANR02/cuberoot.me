@@ -31,7 +31,7 @@ export function toWcaEventId(input: string | undefined | null): string {
 const DISPLAY_ZH: Record<string, string> = {
   '333': '三阶', '222': '二阶', '444': '四阶', '555': '五阶', '666': '六阶', '777': '七阶',
   '333bf': '三盲', '444bf': '四盲', '555bf': '五盲', '333mbf': '多盲',
-  '333oh': '单手', '333fm': 'FMC', '333ft': '脚拧',
+  '333oh': '单手', '333fm': '最少步', '333ft': '脚拧',
   'minx': '五魔', 'pyram': '金字塔', 'clock': '魔表', 'skewb': '斜转', 'sq1': 'SQ1',
   'magic': '八板', 'mmagic': '十二板', '333mbo': '旧多盲',
 };

@@ -13,6 +13,7 @@ import { cubeMove, applyScramble, MOVES_FULL, MOVES_NO_D, MOVES_ROUX_SB, MOVES_Z
 import { GSolver, solveParallel, matches, type ParallelTarget } from './gsolver';
 import { parseScramble } from '../cube/moves';
 import { solveThistle, type ThistleResult } from './thistle';
+import { solveFto as solveFtoImpl, verifyScrambleSolution as verifyFto } from './fto';
 
 export interface StepDef {
   /** Allowed moves for this step (move-name → axis/face byte). */
@@ -315,6 +316,35 @@ export function solveByMethodId(scramble: string, id: MethodId): SolveResult {
   const entry = METHOD_REGISTRY.find(m => m.id === id);
   if (!entry || !entry.def) throw new Error(`unknown method: ${id}`);
   return solveMethod(scramble, entry.def);
+}
+
+// ---- FTO solver (separate dispatch — its scramble alphabet differs from
+// 3x3, so it can't share `MethodId` / `solveByMethodId` cleanly without
+// breaking every existing consumer that iterates METHOD_REGISTRY for 3x3).
+// Exposed as its own entry; callers who want FTO must dispatch by name. ----
+
+export type PuzzleSolverId = 'fto';
+
+export interface PuzzleSolverEntry {
+  id: PuzzleSolverId;
+  /** Display name (English / Chinese). */
+  nameEn: string;
+  nameZh: string;
+  /** WCA event short-name (matches `<scramble-display event="...">`). */
+  event: string;
+}
+
+export const PUZZLE_SOLVER_REGISTRY: PuzzleSolverEntry[] = [
+  { id: 'fto', nameEn: 'FTO', nameZh: 'FTO', event: 'fto' },
+];
+
+/** Solve an FTO scramble. Returns string of moves and move count. */
+export function solveFto(scramble: string): { moves: string; length: number } {
+  return solveFtoImpl(scramble);
+}
+
+export function verifyFtoSolution(scramble: string, solution: string): boolean {
+  return verifyFto(scramble, solution);
 }
 
 // ---- 2x2x2 first-step (single-stage) ----
