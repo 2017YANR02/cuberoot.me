@@ -12,6 +12,7 @@
 import { cubeMove, applyScramble, MOVES_FULL, MOVES_NO_D, MOVES_ROUX_SB, MOVES_ZZ_F2L } from './cube3x3';
 import { GSolver, solveParallel, matches, type ParallelTarget } from './gsolver';
 import { parseScramble } from '../cube/moves';
+import { solveThistle, type ThistleResult } from './thistle';
 
 export interface StepDef {
   /** Allowed moves for this step (move-name → axis/face byte). */
@@ -290,20 +291,81 @@ export function solveEODR(scramble: string): SolveResult {
   return solveMethod(scramble, EODR_METHOD);
 }
 
-export type MethodId = 'cfop' | 'roux' | 'petrus' | 'zz' | 'eodr';
+export type MethodId = 'cfop' | 'roux' | 'petrus' | 'zz' | 'eodr' | 'thistle';
 
-export const METHOD_REGISTRY: { id: MethodId; def: StepDef[]; nameEn: string; nameZh: string }[] = [
+export const METHOD_REGISTRY: { id: MethodId; def: StepDef[] | null; nameEn: string; nameZh: string }[] = [
   { id: 'cfop', def: CFOP_METHOD, nameEn: 'CFOP', nameZh: 'CFOP' },
   { id: 'roux', def: ROUX_METHOD, nameEn: 'Roux', nameZh: 'Roux' },
   { id: 'petrus', def: PETRUS_METHOD, nameEn: 'Petrus', nameZh: 'Petrus' },
   { id: 'zz', def: ZZ_METHOD, nameEn: 'ZZ', nameZh: 'ZZ' },
   { id: 'eodr', def: EODR_METHOD, nameEn: 'EODR', nameZh: 'EODR' },
+  // Thistle is driven by its own solver (not the mask engine); `def` is null.
+  { id: 'thistle', def: null, nameEn: 'Thistle', nameZh: 'Thistle' },
 ];
 
+function thistleToSolveResult(r: ThistleResult): SolveResult {
+  return {
+    stages: r.stages.map(s => ({ head: s.head, moves: s.moves, failed: s.failed })),
+    totalMoves: r.totalMoves,
+  };
+}
+
 export function solveByMethodId(scramble: string, id: MethodId): SolveResult {
+  if (id === 'thistle') return thistleToSolveResult(solveThistle(scramble));
   const entry = METHOD_REGISTRY.find(m => m.id === id);
-  if (!entry) throw new Error(`unknown method: ${id}`);
+  if (!entry || !entry.def) throw new Error(`unknown method: ${id}`);
   return solveMethod(scramble, entry.def);
+}
+
+// ---- 2x2x2 first-step (single-stage) ----
+//
+// Reuses the Petrus first-stage targets (DFL and DBL corners). Returns the
+// shortest 2x2x2 sub-block solution across those two corners. Single
+// stage; intended as a small hint on the 333 panel.
+const SOLVE_222_TARGETS: { mask: string; corner: string }[] = [
+  { mask: '---------------------FF-FF-DD-DD--------LL-LL---------', corner: 'DFL' },
+  { mask: '------------------------------DD-DD----LL-LL-----BB-BB', corner: 'DBL' },
+];
+
+let solver222: GSolver | null = null;
+
+function get222Solver(): GSolver {
+  if (!solver222) {
+    solver222 = new GSolver(SOLVE_222_TARGETS.map(t => t.mask), cubeMove, MOVES_FULL);
+  }
+  return solver222;
+}
+
+export interface Solve222Result {
+  /** Shortest 2x2x2 corner block found ('DFL' / 'DBL'), or null if none. */
+  corner: string | null;
+  moves: string[];
+  length: number;
+}
+
+export function solve222Step(scramble: string): Solve222Result {
+  const solver = get222Solver();
+  const prefix = scrambleToTokens(scramble);
+  const MAXL = 9;
+  // Try each corner; gsolver's BFS visits all targets in parallel
+  // automatically (since solver was constructed with both as solvedStates),
+  // but we still need to pick the right starting state — apply scramble to
+  // either target. Either works since BFS terminates on any target match;
+  // we use the first.
+  let start = SOLVE_222_TARGETS[0].mask;
+  for (const m of prefix) start = cubeMove(start, m);
+  const sol = solver.search(start, 0, MAXL);
+  if (sol === undefined) return { corner: null, moves: [], length: -1 };
+
+  // Determine which corner the solution actually solved by applying
+  // scramble + sol to the cube and matching against each target.
+  let state = applyScramble(scramble);
+  for (const m of sol) state = cubeMove(state, m);
+  let cornerLabel: string | null = null;
+  for (const t of SOLVE_222_TARGETS) {
+    if (matches(state, t.mask)) { cornerLabel = t.corner; break; }
+  }
+  return { corner: cornerLabel, moves: sol, length: sol.length };
 }
 
 // --- Self-test ---
@@ -338,7 +400,7 @@ export function __gsolverSelfTest(): string {
   // Spot-check the other 4 methods compile + run on the same scramble; we
   // don't assert their final state here (different goals per method) but
   // every stage must find a solution within its depth bound.
-  const otherIds: MethodId[] = ['roux', 'petrus', 'zz', 'eodr'];
+  const otherIds: MethodId[] = ['roux', 'petrus', 'zz', 'eodr', 'thistle'];
   const otherSummaries: string[] = [];
   for (const id of otherIds) {
     const r = solveByMethodId(scramble, id);
@@ -347,7 +409,11 @@ export function __gsolverSelfTest(): string {
     }
     otherSummaries.push(`${id}=${r.totalMoves}`);
   }
+  // 222 first-step also runs on the same scramble; expect a non-null corner.
+  const s222 = solve222Step(scramble);
+  if (s222.length < 0) throw new Error(`solve222Step failed`);
   return `OK: ${result.totalMoves} total moves; stages=` +
     result.stages.map(s => `${s.head}=${s.moves.length}`).join(',') +
-    ` | others: ` + otherSummaries.join(',');
+    ` | others: ` + otherSummaries.join(',') +
+    ` | 222=${s222.length}(${s222.corner})`;
 }
