@@ -20,7 +20,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { Home, Download, Upload, Trash2, Settings as SettingsIcon, Maximize2, Minimize2, Bluetooth, Mic, HelpCircle, BarChart3, Plus, Wrench, ListPlus, Printer, FileText, FileSpreadsheet, AlertTriangle, Target, Crosshair } from 'lucide-react';
+import { Home, Download, Upload, Trash2, Settings as SettingsIcon, Maximize2, Minimize2, Bluetooth, Mic, HelpCircle, BarChart3, Plus, Wrench, ListPlus, Printer, FileText, FileSpreadsheet, AlertTriangle, Target, Crosshair, Keyboard } from 'lucide-react';
 import LangToggle from '../../components/LangToggle';
 import MoreMenu, { type MoreMenuItem } from './components/MoreMenu';
 
@@ -771,7 +771,25 @@ export default function TimerPage() {
   }, [isZh]);
 
   // ── More menu items (collapsed toolbar overflow) ───────────────
+  // Drill / Shortcuts / Fullscreen are also surfaced here so the mobile
+  // (≤480px) layout — which hides those tb-btns to reduce clutter — still
+  // exposes them via the More menu.
   const moreItems = useMemo<MoreMenuItem[]>(() => [
+    ...(drillAllowed && !drillTarget ? [{
+      icon: <Crosshair size={14} />,
+      label: isZh ? '专项练习' : 'Drill mode',
+      onClick: () => setDrillModalOpen(true),
+    }] : []),
+    {
+      icon: <Keyboard size={14} />,
+      label: isZh ? '快捷键' : 'Shortcuts',
+      onClick: () => setShortcutsOpen(true),
+    },
+    {
+      icon: fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />,
+      label: isZh ? '全屏' : 'Fullscreen',
+      onClick: toggleFullscreen,
+    },
     {
       icon: <Upload size={14} />,
       label: isZh ? '导入（自动识别 cstimer JSON）' : 'Import (auto-detects cstimer JSON)',
@@ -819,7 +837,7 @@ export default function TimerPage() {
       danger: true,
       disabled: !solves.length,
     },
-  ], [isZh, handleImport, handleExport, handleExportCsv, handleExportSs, clearAll, solves.length]);
+  ], [isZh, handleImport, handleExport, handleExportCsv, handleExportSs, clearAll, solves.length, drillAllowed, drillTarget, fullscreen, toggleFullscreen]);
 
   // Flattened across-event solve list for the daily-goal pill.
   // Goal counts every solve regardless of event — matches the "X solves/day"
@@ -890,7 +908,7 @@ export default function TimerPage() {
           </button>
           {drillAllowed && (
             <button
-              className={`tb-btn ${drillTarget ? 'connected' : ''}`}
+              className={`tb-btn tb-btn-drill ${drillTarget ? 'connected' : 'tb-mobile-hide'}`}
               onClick={() => setDrillModalOpen(true)}
               title={drillTarget
                 ? (isZh ? `专项练习中：${drillTarget.id}` : `Drill: ${drillTarget.id}`)
@@ -905,10 +923,10 @@ export default function TimerPage() {
           <button className="tb-btn" onClick={() => setSettingsOpen(true)} title={isZh ? '设置' : 'Settings'}>
             <SettingsIcon size={14} />
           </button>
-          <button className="tb-btn" onClick={() => setShortcutsOpen(true)} title={isZh ? '快捷键' : 'Shortcuts'}>
+          <button className="tb-btn tb-mobile-hide" onClick={() => setShortcutsOpen(true)} title={isZh ? '快捷键' : 'Shortcuts'}>
             <HelpCircle size={14} />
           </button>
-          <button className="tb-btn" onClick={toggleFullscreen} title={isZh ? '全屏' : 'Fullscreen'}>
+          <button className="tb-btn tb-mobile-hide" onClick={toggleFullscreen} title={isZh ? '全屏' : 'Fullscreen'}>
             {fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
           </button>
           <MoreMenu items={moreItems} isZh={isZh} />
@@ -938,7 +956,7 @@ export default function TimerPage() {
         {scramble || <span className="scramble-empty">—</span>}
       </div>
 
-      <div style={{ textAlign: 'center', padding: '0 12px' }}>
+      <div className="timer-goal-row" style={{ textAlign: 'center', padding: '0 12px' }}>
         <GoalProgress solves={allSolves} goal={settings.dailySolveGoal ?? null} isZh={isZh} />
       </div>
 
@@ -1265,16 +1283,6 @@ export default function TimerPage() {
       {bluetoothCube.status.connected && (
         <div
           className="timer-live-cube"
-          style={{
-            position: 'fixed',
-            right: 12,
-            bottom: 12,
-            zIndex: 50,
-            padding: 4,
-            background: 'rgba(0, 0, 0, 0.35)',
-            borderRadius: 6,
-            pointerEvents: 'none',
-          }}
           title={isZh ? '智能魔方实时状态（每次拧动同步）' : 'Live smart-cube state (updates per move)'}
         >
           <LiveCubeState
