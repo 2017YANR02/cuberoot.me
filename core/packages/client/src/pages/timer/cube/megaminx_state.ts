@@ -1,286 +1,307 @@
-/** Megaminx Pochmann-notation scramble simulator.
+/** Megaminx state — physically-correct port of cstimer's mathlib.minx.doMove.
  *
- * 12 pentagonal faces × 11 stickers = 132 stickers.
- * Sticker layout per face (regular pentagon):
- *   idx 0 = center
- *   idx 1..5 = 5 corner stickers (at the 5 vertices, CW from "top" vertex)
- *   idx 6..10 = 5 edge stickers (between adjacent corners; idx 6 = edge between corners 1 and 2)
+ * Internal model (matches cstimer src/js/lib/mathlib.js lines 850-922):
  *
- * Faces named: U (top), F, FR, BR, BL, FL (5 around U), D (bottom),
- * and 5 around D mirroring the top: DF (under F), DFR, DBR, DBL, DFL.
+ *   12 faces × 11 stickers = 132 ints. state[face*11 + i].
+ *   Per-face layout: i = 0..4  → 5 corner stickers
+ *                    i = 5..9  → 5 edge stickers
+ *                    i = 10    → center
+ *   Face indices:    U=0  R=1  F=2  L=3  BL=4  BR=5
+ *                    DR=6 DL=7 DBL=8 B=9  DBR=10 D=11
  *
- * Pochmann moves: U, U', R++, R--, D++, D--.
- *   U  rotates U face 72° CW (when looking down at U).
- *   R++/R-- rotate the right hemisphere by ±144° (= ±2 face-clicks).
- *   D++/D-- rotate the bottom hemisphere by ±144°.
+ * Scramble notation we accept (WCA Pochmann + cstimer extensions):
+ *   U / U' / U2                — single-face U turns (wide=0)
+ *   R++ / R-- / D++ / D--      — Pochmann two-layer turns (wide=2)
  *
- * Correctness model
- * -----------------
- * Full physical simulation of Pochmann R++/D++ requires a piece-based model
- * (20 corners + 30 edges + 12 centers, with orientation tracking) and
- * geometry-derived cycle tables. We use a simpler permutation model here:
+ * Per cstimer/src/js/twisty/qcubeminx.js line 130-132 + 192-194:
+ *   The token symbols D, L, R use 'D?L??R'.indexOf(c) → 0/2/5, then
+ *   axis2move = [U, F, R, BR, BL, L, D, ...] picks the actual rotation axis.
+ *   So R++ rotates axis L (=3), D++ rotates axis U (=0), L++ rotates axis R (=1).
+ *   pow sign flips: '++' yields pow = -2, '--' yields pow = +2 (multiplied
+ *   by token length, which is always 2 for double-plus/double-minus).
  *
- *   • Each "macro" move is built from face-rotations + a fixed set of
- *     5-cycles of stickers (shift = 2, which is what 144° corresponds to).
- *   • R-- applies the same operations in reverse order with reversed shifts,
- *     so R-- is the literal inverse permutation of R++ (R++ R-- ≡ id by
- *     construction). Same for D--.
- *   • U has order 5 (U^5 ≡ id) since it is a single face-rotation + a single
- *     cycle, which commute trivially in their effect on disjoint slot sets.
- *   • R++ and D++ have higher order (rotation and cycle don't commute on
- *     overlapping faces), but this is fine for scramble preview — the
- *     invariant we need is invertibility, which holds.
+ * Public API exported here:
+ *   - applyMegaScramble(scramble) → MegaState
+ *   - megaSolved() → MegaState
+ *   - MegaFace, MegaSticker types
+ *   - __megaSelfCheck() for tests
  *
- * The visual result is a plausible scramble that compresses real megaminx
- * piece moves; it is NOT bit-identical to a physical megaminx.
- *
- * Invariants are asserted at module load via console.assert (silent in prod,
- * warns in dev). See megaSelfCheck() below.
+ * MegaState is a Record<MegaFace, MegaSticker[]> where MegaFace uses cstimer's
+ * 12 names. Per face: array of length 11 indexed [0..4]=corners, [5..9]=edges,
+ * [10]=center, exactly as the internal flat array. MegaminxNet renders from
+ * this shape directly.
  */
 
-export type MegaFace = 'U' | 'F' | 'FR' | 'BR' | 'BL' | 'FL'
-                     | 'D' | 'DF' | 'DFR' | 'DBR' | 'DBL' | 'DFL';
+export type MegaFace =
+  | 'U' | 'R' | 'F' | 'L' | 'BL' | 'BR'
+  | 'DR' | 'DL' | 'DBL' | 'B' | 'DBR' | 'D';
 export type MegaSticker = MegaFace;
 export type MegaState = Record<MegaFace, MegaSticker[]>;
 
-const FACES: MegaFace[] = ['U', 'F', 'FR', 'BR', 'BL', 'FL', 'D', 'DF', 'DFR', 'DBR', 'DBL', 'DFL'];
+// Face index assignment (must match cstimer mathlib.js line 851).
+const U = 0, R = 1, F = 2, L = 3, BL = 4, BR = 5;
+const DR = 6, DL = 7, DBL = 8, B = 9, DBR = 10, D = 11;
 
-export function megaSolved(): MegaState {
-  const s = {} as MegaState;
-  for (const f of FACES) s[f] = Array<MegaSticker>(11).fill(f);
+const FACES: readonly MegaFace[] = ['U', 'R', 'F', 'L', 'BL', 'BR', 'DR', 'DL', 'DBL', 'B', 'DBR', 'D'];
+
+// mathlib.js line 852.
+const oppFace: readonly number[] = [D, DBL, B, DBR, DR, DL, BL, BR, R, F, L, U];
+
+// mathlib.js line 853-866. Each entry is the 5 faces adjacent to that face,
+// in a fixed cyclic order (cstimer's CCW-when-looking-at-face convention).
+const adjFaces: readonly (readonly number[])[] = [
+  [BR, R, F, L, BL],   // U
+  [DBR, DR, F, U, BR], // R
+  [DR, DL, L, U, R],   // F
+  [DL, DBL, BL, U, F], // L
+  [DBL, B, BR, U, L],  // BL
+  [B, DBR, R, U, BL],  // BR
+  [D, DL, F, R, DBR],  // DR
+  [D, DBL, L, F, DR],  // DL
+  [D, B, BL, L, DL],   // DBL
+  [D, DBR, BR, BL, DBL], // B
+  [D, DR, R, BR, B],   // DBR
+  [DR, DBR, B, DBL, DL], // D
+];
+
+// Cyclic shift: arr[perm[(i + pow) mod plen]] = old arr[perm[i]].
+// Mirrors mathlib.js function acycle (line 58).
+function acycle(arr: number[], perm: number[], pow: number): void {
+  const plen = perm.length;
+  const tmp = new Array<number>(plen);
+  for (let i = 0; i < plen; i++) tmp[i] = arr[perm[i]];
+  for (let i = 0; i < plen; i++) {
+    const j = (i + pow) % plen;
+    arr[perm[j]] = tmp[i];
+  }
+}
+
+// Direct port of mathlib.js doMove (line 870-915).
+// state: number[132]; face: 0..11; pow: integer (will be reduced mod 5);
+// wide: 0=single layer, 1=all (wide_x), 2=all-but-single (Pochmann ++/--).
+function doMinxMove(state: number[], face: number, pow: number, wide: number): void {
+  pow = ((pow % 5) + 5) % 5;
+  if (pow === 0) return;
+  const base = face * 11;
+  const swaps: number[][] = [[], [], [], [], []];
+  for (let i = 0; i < 5; i++) {
+    const aface = adjFaces[face][i];
+    const ridx = adjFaces[aface].indexOf(face);
+    if (wide === 0 || wide === 1) {
+      swaps[i].push(
+        base + i,
+        base + i + 5,
+        aface * 11 + (ridx % 5) + 5,
+        aface * 11 + (ridx % 5),
+        aface * 11 + ((ridx + 1) % 5),
+      );
+    }
+    if (wide === 1 || wide === 2) {
+      swaps[i].push(aface * 11 + 10);
+      for (let j = 1; j < 5; j++) {
+        swaps[i].push(aface * 11 + ((ridx + j) % 5) + 5);
+      }
+      for (let j = 2; j < 5; j++) {
+        swaps[i].push(aface * 11 + ((ridx + j) % 5));
+      }
+      const ii = 4 - i;
+      const opp = oppFace[face];
+      const oaface = adjFaces[opp][ii];
+      const oridx = adjFaces[oaface].indexOf(opp);
+      swaps[i].push(
+        opp * 11 + ii,
+        opp * 11 + ii + 5,
+        oaface * 11 + 10,
+      );
+      for (let j = 0; j < 5; j++) {
+        swaps[i].push(
+          oaface * 11 + ((oridx + j) % 5) + 5,
+          oaface * 11 + ((oridx + j) % 5),
+        );
+      }
+    }
+  }
+  for (let k = 0; k < swaps[0].length; k++) {
+    acycle(state, [swaps[0][k], swaps[1][k], swaps[2][k], swaps[3][k], swaps[4][k]], pow);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
+
+function makeSolvedFlat(): number[] {
+  const s = new Array<number>(132);
+  for (let f = 0; f < 12; f++) for (let i = 0; i < 11; i++) s[f * 11 + i] = f;
   return s;
 }
 
-// 5-cycle of a face's corners (1..5) and edges (6..10) under 72° CW rotation:
-// idx 1 -> 2 -> 3 -> 4 -> 5 -> 1, and 6 -> 7 -> 8 -> 9 -> 10 -> 6.
-function rotateFace(arr: MegaSticker[], turns: number): void {
-  const n = ((turns % 5) + 5) % 5;
-  if (n === 0) return;
-  const next = arr.slice();
-  for (let i = 0; i < 5; i++) {
-    next[1 + ((i + n) % 5)] = arr[1 + i];
-    next[6 + ((i + n) % 5)] = arr[6 + i];
+function flatToState(flat: number[]): MegaState {
+  const out = {} as MegaState;
+  for (let f = 0; f < 12; f++) {
+    const arr: MegaSticker[] = new Array<MegaSticker>(11);
+    for (let i = 0; i < 11; i++) arr[i] = FACES[flat[f * 11 + i]];
+    out[FACES[f]] = arr;
   }
-  // center (idx 0) stays
-  for (let i = 0; i < 11; i++) arr[i] = next[i];
+  return out;
 }
 
-// Cycle a list of (face, idx) tuples by 'shift' positions.
-// shift=k: value at position i moves to position (i + k) mod n.
-type Slot = { face: MegaFace; idx: number };
-
-function cycleSlots(state: MegaState, slots: readonly Slot[], shift: number): void {
-  const n = slots.length;
-  if (n === 0) return;
-  const k = ((shift % n) + n) % n;
-  if (k === 0) return;
-  const vals = slots.map((s) => state[s.face][s.idx]);
-  for (let i = 0; i < n; i++) {
-    state[slots[(i + k) % n].face][slots[(i + k) % n].idx] = vals[i];
-  }
+/** Solved state. */
+export function megaSolved(): MegaState {
+  return flatToState(makeSolvedFlat());
 }
 
-// ─────────────────────────────────────────────────────────────────────────
-// U move
-// ─────────────────────────────────────────────────────────────────────────
-//
-// U rotates the U face 72° CW. The 5 surrounding face-tops cycle 1 → 2 → 3 → ...
-// We treat each surrounding face's "U-touching strip" as 3 stickers
-// (corner-edge-corner). For a CW U turn, F's strip moves to FR's strip, etc.
-
-const U_CYCLE: readonly Slot[] = [
-  { face: 'F', idx: 1 }, { face: 'F', idx: 6 }, { face: 'F', idx: 2 },
-  { face: 'FR', idx: 1 }, { face: 'FR', idx: 6 }, { face: 'FR', idx: 2 },
-  { face: 'BR', idx: 1 }, { face: 'BR', idx: 6 }, { face: 'BR', idx: 2 },
-  { face: 'BL', idx: 1 }, { face: 'BL', idx: 6 }, { face: 'BL', idx: 2 },
-  { face: 'FL', idx: 1 }, { face: 'FL', idx: 6 }, { face: 'FL', idx: 2 },
-];
-
-function applyU(state: MegaState, dir: 1 | -1): void {
-  rotateFace(state.U, dir);
-  // 15-element list, shift by ±3 (one face's worth).
-  cycleSlots(state, U_CYCLE, dir === 1 ? 3 : -3);
-}
-
-// ─────────────────────────────────────────────────────────────────────────
-// R++ / R-- (right-hemisphere 144° rotation)
-// ─────────────────────────────────────────────────────────────────────────
-//
-// Faces affected (face centers + their stickers): the 6 "right-side" faces
-//   F, FR, BR, DF, DFR, DBR
-// Each rotates 144° (= 2 face-clicks) within its own frame for ++.
-//
-// Inter-face cycles: four parallel 5-cycles, each running through the same
-// 5 of the 6 right-hemisphere faces (we use F → FR → BR → DBR → DFR → F as a
-// closed ring, with DF skipped from inter-face cycles since its stickers are
-// covered by face rotation alone — including it would require length-6 cycles
-// which don't satisfy ^5 = id under shift 2).
-//
-// Each cycle has length 5 with shift 2, so (R++)^5 = id.
-
-const R_RING: readonly MegaFace[] = ['F', 'FR', 'BR', 'DBR', 'DFR'];
-
-function ringCycle(face: readonly MegaFace[], indices: readonly number[]): Slot[] {
-  if (face.length !== indices.length) throw new Error('ringCycle: length mismatch');
-  return face.map((f, i) => ({ face: f, idx: indices[i] }));
-}
-
-// Four cycles using disjoint sticker indices on each ring face.
-// Indices are picked so no slot is reused across cycles.
-const R_CYCLES: readonly (readonly Slot[])[] = [
-  ringCycle(R_RING, [3, 5, 2, 4, 1]),  // corners
-  ringCycle(R_RING, [4, 1, 3, 5, 2]),  // corners
-  ringCycle(R_RING, [8, 10, 7, 9, 6]), // edges
-  ringCycle(R_RING, [9, 6, 8, 10, 7]), // edges
-];
-
-const R_SPIN_FACES: readonly MegaFace[] = ['F', 'FR', 'BR', 'DF', 'DFR', 'DBR'];
-
-function applyRPlusPlus(state: MegaState, dir: 1 | -1): void {
-  // For R-- to invert R++, we apply ops in reverse order (rotate then cycle for ++,
-  // cycle then rotate for --). This makes R-- the literal inverse permutation of R++.
-  if (dir === 1) {
-    for (const f of R_SPIN_FACES) rotateFace(state[f], 2);
-    for (const c of R_CYCLES) cycleSlots(state, c, 2);
-  } else {
-    for (const c of R_CYCLES) cycleSlots(state, c, -2);
-    for (const f of R_SPIN_FACES) rotateFace(state[f], -2);
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────
-// D++ / D-- (bottom-hemisphere 144° rotation)
-// ─────────────────────────────────────────────────────────────────────────
-//
-// Faces affected: D itself plus the 5 bottom petals DF/DFR/DBR/DBL/DFL.
-// Each rotates 144° within its own frame for ++.
-//
-// Inter-face cycles: four parallel 5-cycles around the D-ring.
-
-const D_RING: readonly MegaFace[] = ['DF', 'DFR', 'DBR', 'DBL', 'DFL'];
-
-const D_CYCLES: readonly (readonly Slot[])[] = [
-  ringCycle(D_RING, [3, 5, 2, 4, 1]),
-  ringCycle(D_RING, [4, 1, 3, 5, 2]),
-  ringCycle(D_RING, [8, 10, 7, 9, 6]),
-  ringCycle(D_RING, [9, 6, 8, 10, 7]),
-];
-
-const D_SPIN_FACES: readonly MegaFace[] = ['D', 'DF', 'DFR', 'DBR', 'DBL', 'DFL'];
-
-function applyDPlusPlus(state: MegaState, dir: 1 | -1): void {
-  if (dir === 1) {
-    for (const f of D_SPIN_FACES) rotateFace(state[f], 2);
-    for (const c of D_CYCLES) cycleSlots(state, c, 2);
-  } else {
-    for (const c of D_CYCLES) cycleSlots(state, c, -2);
-    for (const f of D_SPIN_FACES) rotateFace(state[f], -2);
-  }
-}
-
-function applyMove(state: MegaState, raw: string): void {
+/** Apply one Pochmann-notation token to a flat state. */
+function applyTokenFlat(state: number[], raw: string): void {
   if (!raw) return;
-  if (raw === 'U') return applyU(state, 1);
-  if (raw === "U'") return applyU(state, -1);
-  if (raw === 'R++') return applyRPlusPlus(state, 1);
-  if (raw === 'R--') return applyRPlusPlus(state, -1);
-  if (raw === 'D++') return applyDPlusPlus(state, 1);
-  if (raw === 'D--') return applyDPlusPlus(state, -1);
-  // fallback: ignore unknown tokens (e.g. line breaks)
+  // Single-face U.
+  if (raw === 'U') return doMinxMove(state, U, -1, 0);
+  if (raw === "U'") return doMinxMove(state, U, 1, 0);
+  if (raw === 'U2') return doMinxMove(state, U, -2, 0);
+  if (raw === "U2'") return doMinxMove(state, U, 2, 0);
+  // Pochmann two-layer turns. Mapping per qcubeminx.js parser:
+  //   prefix → axis2move index : D→0, L→2, R→5
+  //   axis2move = [U, F, R, BR, BL, L, D, ...] → applied face: D→U, L→R, R→L
+  //   pow: '++' → -1 * 2 = -2;  '--' → +1 * 2 = +2
+  // We accept R++/R--/D++/D-- and (for completeness) L++/L-- as well.
+  const m = /^([DLR])(\+\+|--)$/.exec(raw);
+  if (m) {
+    const prefix = m[1];
+    const sign = m[2][0] === '+' ? -1 : 1;
+    const pow = sign * 2;
+    let axisFace: number;
+    if (prefix === 'D') axisFace = U;
+    else if (prefix === 'L') axisFace = R;
+    else axisFace = L; // 'R'
+    return doMinxMove(state, axisFace, pow, 2);
+  }
+  // Unknown token: ignore (keeps line breaks etc. harmless).
 }
 
 export function applyMegaScramble(scramble: string): MegaState {
-  const state = megaSolved();
-  if (!scramble) return state;
-  // Pochmann scrambles often have "\n" line breaks; treat any whitespace as separator.
-  for (const t of scramble.split(/\s+/).filter(Boolean)) applyMove(state, t);
-  return state;
+  const flat = makeSolvedFlat();
+  if (scramble) {
+    for (const t of scramble.split(/\s+/).filter(Boolean)) applyTokenFlat(flat, t);
+  }
+  return flatToState(flat);
 }
 
-// ─────────────────────────────────────────────────────────────────────────
-// Self-check: assert group-theoretic invariants on every module load.
-// console.assert is silent in production browsers; surfaces in dev.
-// ─────────────────────────────────────────────────────────────────────────
+// ---------------------------------------------------------------------------
+// Self-check
+// ---------------------------------------------------------------------------
 
-function statesEqual(a: MegaState, b: MegaState): boolean {
-  for (const f of FACES) {
-    const aa = a[f];
-    const bb = b[f];
-    if (aa.length !== bb.length) return false;
-    for (let i = 0; i < aa.length; i++) if (aa[i] !== bb[i]) return false;
-  }
+function flatEqual(a: number[], b: number[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
   return true;
 }
 
-function applyN(state: MegaState, fn: (s: MegaState) => void, n: number): void {
-  for (let i = 0; i < n; i++) fn(state);
+function applyScrambleFlat(s: number[], scramble: string): void {
+  for (const t of scramble.split(/\s+/).filter(Boolean)) applyTokenFlat(s, t);
+}
+
+function invertScramble(scramble: string): string {
+  const out: string[] = [];
+  for (const t of scramble.split(/\s+/).filter(Boolean)) {
+    if (t === 'U') out.unshift("U'");
+    else if (t === "U'") out.unshift('U');
+    else if (t === 'U2' || t === "U2'") out.unshift(t);
+    else {
+      const m = /^([DLR])(\+\+|--)$/.exec(t);
+      if (m) out.unshift(m[1] + (m[2] === '++' ? '--' : '++'));
+      else out.unshift(t);
+    }
+  }
+  return out.join(' ');
+}
+
+function randomScramble(rng: () => number, n: number): string {
+  const tokens: string[] = [];
+  for (let i = 0; i < n; i++) {
+    const r = rng();
+    if (r < 0.25) tokens.push('R++');
+    else if (r < 0.5) tokens.push('R--');
+    else if (r < 0.75) tokens.push('D++');
+    else tokens.push('D--');
+    if (rng() < 0.2) tokens.push(rng() < 0.5 ? 'U' : "U'");
+  }
+  return tokens.join(' ');
 }
 
 function megaSelfCheck(): boolean {
   const checks: Array<[string, () => boolean]> = [
+    ['solved is solved', () => {
+      const s = makeSolvedFlat();
+      return flatEqual(s, makeSolvedFlat());
+    }],
     ['U U\' = id', () => {
-      const s = megaSolved();
-      applyU(s, 1); applyU(s, -1);
-      return statesEqual(s, megaSolved());
+      const s = makeSolvedFlat();
+      applyScrambleFlat(s, "U U'");
+      return flatEqual(s, makeSolvedFlat());
     }],
     ['U^5 = id', () => {
-      const s = megaSolved();
-      applyN(s, (st) => applyU(st, 1), 5);
-      return statesEqual(s, megaSolved());
+      const s = makeSolvedFlat();
+      applyScrambleFlat(s, 'U U U U U');
+      return flatEqual(s, makeSolvedFlat());
     }],
     ['R++ R-- = id', () => {
-      const s = megaSolved();
-      applyRPlusPlus(s, 1); applyRPlusPlus(s, -1);
-      return statesEqual(s, megaSolved());
-    }],
-    ['R-- R++ = id', () => {
-      const s = megaSolved();
-      applyRPlusPlus(s, -1); applyRPlusPlus(s, 1);
-      return statesEqual(s, megaSolved());
+      const s = makeSolvedFlat();
+      applyScrambleFlat(s, 'R++ R--');
+      return flatEqual(s, makeSolvedFlat());
     }],
     ['D++ D-- = id', () => {
-      const s = megaSolved();
-      applyDPlusPlus(s, 1); applyDPlusPlus(s, -1);
-      return statesEqual(s, megaSolved());
+      const s = makeSolvedFlat();
+      applyScrambleFlat(s, 'D++ D--');
+      return flatEqual(s, makeSolvedFlat());
     }],
-    ['D-- D++ = id', () => {
-      const s = megaSolved();
-      applyDPlusPlus(s, -1); applyDPlusPlus(s, 1);
-      return statesEqual(s, megaSolved());
+    ['(R++)^5 = id', () => {
+      const s = makeSolvedFlat();
+      applyScrambleFlat(s, 'R++ R++ R++ R++ R++');
+      return flatEqual(s, makeSolvedFlat());
+    }],
+    ['(D++)^5 = id', () => {
+      const s = makeSolvedFlat();
+      applyScrambleFlat(s, 'D++ D++ D++ D++ D++');
+      return flatEqual(s, makeSolvedFlat());
     }],
     ['R++ scramble non-trivial', () => {
-      const s = megaSolved();
-      applyRPlusPlus(s, 1);
-      return !statesEqual(s, megaSolved());
+      const s = makeSolvedFlat();
+      applyScrambleFlat(s, 'R++');
+      return !flatEqual(s, makeSolvedFlat());
     }],
     ['D++ scramble non-trivial', () => {
-      const s = megaSolved();
-      applyDPlusPlus(s, 1);
-      return !statesEqual(s, megaSolved());
+      const s = makeSolvedFlat();
+      applyScrambleFlat(s, 'D++');
+      return !flatEqual(s, makeSolvedFlat());
     }],
-    ['R++ U R-- U\' is non-trivial and reversible', () => {
-      const s = megaSolved();
-      applyRPlusPlus(s, 1); applyU(s, 1); applyRPlusPlus(s, -1); applyU(s, -1);
-      const moved = !statesEqual(s, megaSolved());
-      // Reverse it.
-      applyU(s, 1); applyRPlusPlus(s, 1); applyU(s, -1); applyRPlusPlus(s, -1);
-      return moved && statesEqual(s, megaSolved());
-    }],
-    ['no slot reuse across R cycles', () => {
-      const seen = new Set<string>();
-      for (const c of R_CYCLES) for (const slot of c) {
-        const k = `${slot.face}.${slot.idx}`;
-        if (seen.has(k)) return false;
-        seen.add(k);
+    ['random scramble + inverse = id', () => {
+      // Deterministic LCG so the assertion is reproducible.
+      let seed = 1234567;
+      const rng = () => {
+        seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+        return seed / 0x7fffffff;
+      };
+      for (let trial = 0; trial < 5; trial++) {
+        const scr = randomScramble(rng, 30);
+        const inv = invertScramble(scr);
+        const s = makeSolvedFlat();
+        applyScrambleFlat(s, scr);
+        applyScrambleFlat(s, inv);
+        if (!flatEqual(s, makeSolvedFlat())) return false;
       }
       return true;
     }],
-    ['no slot reuse across D cycles', () => {
-      const seen = new Set<string>();
-      for (const c of D_CYCLES) for (const slot of c) {
-        const k = `${slot.face}.${slot.idx}`;
-        if (seen.has(k)) return false;
-        seen.add(k);
+    ['adjFaces is involutive (each adjacency appears in opposite face\'s list)', () => {
+      for (let f = 0; f < 12; f++) {
+        for (const a of adjFaces[f]) {
+          if (adjFaces[a].indexOf(f) < 0) return false;
+        }
+      }
+      return true;
+    }],
+    ['oppFace is involutive', () => {
+      for (let f = 0; f < 12; f++) {
+        if (oppFace[oppFace[f]] !== f) return false;
       }
       return true;
     }],
@@ -297,7 +318,7 @@ function megaSelfCheck(): boolean {
   return allOk;
 }
 
-// Run once at module load. If invariants are violated this surfaces in dev.
+// Run once at module load.
 megaSelfCheck();
 
 /** Exported for explicit test harness use. Returns true iff all invariants hold. */
