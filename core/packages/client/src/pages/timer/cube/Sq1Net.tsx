@@ -7,7 +7,7 @@
  */
 
 import type { JSX } from 'react';
-import { applySq1Scramble, type FaceColor, type SideColor, type Sq1Slot } from './sq1_state.ts';
+import { applySq1Scramble, sq1RenderSlots, type FaceColor, type SideColor, type Sq1RenderSlot } from './sq1_state.ts';
 
 const FACE_COLOR: Record<FaceColor, string> = {
   W: '#FFFFFF',
@@ -45,7 +45,7 @@ function wedgePath(cx: number, cy: number, r0: number, r1: number, a0: number, a
   return `M ${x1} ${y1} A ${r1} ${r1} 0 0 1 ${x2} ${y2} L ${x3} ${y3} A ${r0} ${r0} 0 0 0 ${x4} ${y4} Z`;
 }
 
-function drawLayer(cx: number, cy: number, r: number, slots: Sq1Slot[], keyPrefix: string): JSX.Element[] {
+function drawLayer(cx: number, cy: number, r: number, slots: Sq1RenderSlot[], keyPrefix: string): JSX.Element[] {
   const els: JSX.Element[] = [];
   // Slot 0 starts at angle 0° (12 o'clock) and goes CW. (Visually the puzzle's
   // "front" is at the bottom of the diagram; with our slot layout this means
@@ -121,14 +121,17 @@ export default function Sq1Net(props: Sq1NetProps): JSX.Element {
   const totalH = r * 2 + padding * 2;
 
   const state = applySq1Scramble(props.scramble ?? '');
+  const allSlots = sq1RenderSlots(state);
+  const topSlots = allSlots.slice(0, 12);
+  const botSlots = allSlots.slice(12, 24);
 
   const cx1 = padding + r;
   const cx2 = padding + r * 3 + gap;
   const cy = padding + r;
 
   const items: JSX.Element[] = [];
-  items.push(...drawLayer(cx1, cy, r, state.top, 'top'));
-  items.push(...drawLayer(cx2, cy, r, state.bottom, 'bot'));
+  items.push(...drawLayer(cx1, cy, r, topSlots, 'top'));
+  items.push(...drawLayer(cx2, cy, r, botSlots, 'bot'));
 
   return (
     <svg
