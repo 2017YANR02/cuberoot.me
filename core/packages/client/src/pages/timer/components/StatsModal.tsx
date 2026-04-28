@@ -11,6 +11,8 @@ import {
   formatMs,
 } from '../stats';
 import { bucketStats, bucketBoundaries, type BucketStats } from '../stats_buckets';
+import ScatterChart from './ScatterChart';
+import HistogramChart from './HistogramChart';
 
 interface Props {
   event: EventId;
@@ -282,6 +284,38 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
               ))}
             </tbody>
           </table>
+        </div>
+
+        <div className="modal-section">
+          <h3 className="settings-h3">{isZh ? '图表' : 'Charts'}</h3>
+          <div className="stats-charts">
+            <div className="stats-chart-card">
+              <p className="stats-chart-title">
+                {isZh
+                  ? `单次散点（最近 ${Math.min(solves.length, 200)} 次）`
+                  : `Per-solve scatter (last ${Math.min(solves.length, 200)})`}
+              </p>
+              <ScatterChart
+                solves={solves}
+                isZh={isZh}
+                windowSize={200}
+                width={520}
+                height={180}
+              />
+            </div>
+            <div className="stats-chart-card">
+              <p className="stats-chart-title">
+                {isZh ? '成绩分布' : 'Time distribution'}
+              </p>
+              <HistogramChart
+                solves={solves}
+                isZh={isZh}
+                width={520}
+                height={160}
+                bucketCount={20}
+              />
+            </div>
+          </div>
         </div>
 
         {subX.length > 0 && (

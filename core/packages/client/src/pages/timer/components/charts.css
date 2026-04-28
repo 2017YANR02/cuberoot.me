@@ -63,3 +63,67 @@
   fill: #aaa;
   font-size: 11px;
 }
+
+/* Scatter */
+.tc-scatter .scatter-dot {
+  fill: #5b9dd9;
+  stroke: none;
+  transition: fill 0.12s, r 0.12s;
+}
+.tc-scatter .scatter-dot:hover {
+  fill: #8bbde8;
+}
+.tc-scatter .scatter-dot-plus2 {
+  fill: #d9a05b;
+}
+.tc-scatter .scatter-dot-plus2:hover {
+  fill: #e8bd8b;
+}
+.tc-scatter .scatter-dot-dnf {
+  fill: none;
+  stroke: #d04848;
+  stroke-width: 1.2;
+}
+.tc-scatter .scatter-ao12 {
+  stroke: #6abf6a;
+  stroke-width: 1.25;
+  opacity: 0.55;
+  fill: none;
+}
+.tc-scatter .scatter-pb {
+  stroke: #b07acc;
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+  shape-rendering: crispEdges;
+}
+.tc-scatter .scatter-pb-label {
+  fill: #b07acc;
+  font-size: 10px;
+}
+
+/* Charts section in StatsModal */
+.stats-charts {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.stats-chart-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.stats-chart-title {
+  font-size: 0.85em;
+  opacity: 0.75;
+  margin: 0;
+}
+.stats-chart-card .tc-chart {
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+}
+@media (max-width: 600px) {
+  .stats-chart-title {
+    font-size: 0.8em;
+  }
+}
