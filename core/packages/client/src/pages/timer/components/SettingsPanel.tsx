@@ -6,7 +6,6 @@ import { useEffect, useRef, useState } from 'react';
 import { ChevronDown, ChevronRight, Download, FileSpreadsheet, RefreshCw, Target } from 'lucide-react';
 import { formatTargetTime, parseDailySolveGoal, parseTargetTime, resetSettings, updateSettings, useSettings } from '../settings';
 import { warmupSound, play } from '../sound';
-import { getMetronome } from '../sound/metronome';
 import { isVoiceAvailable } from '../sound/voice';
 import { getSeedCounter, resetSeedCounter } from '../scramble';
 import { appendSolves, listBackups, pushBackup, replaceSolves, restoreBackup } from '../storage/db';
@@ -119,6 +118,9 @@ export default function SettingsPanel({ isZh, onClose, event }: Props) {
   const isMobile = useIsMobile();
   const [expandedSections, setExpandedSections] = useState<Set<string>>(() => new Set(['timing']));
   const [seedTick, setSeedTick] = useState(0);
+  const [seedDraft, setSeedDraft] = useState<string>(() => s.syncSeed ?? '');
+  // Keep draft in sync when the active seed changes externally (e.g. settings reset).
+  useEffect(() => { setSeedDraft(s.syncSeed ?? ''); }, [s.syncSeed]);
   const [aoInput, setAoInput] = useState<string>(() => s.customAoWindows.join(','));
 
   // Target-time input is a free-form string while editing; commit on blur /
@@ -177,7 +179,7 @@ export default function SettingsPanel({ isZh, onClose, event }: Props) {
       const avgIntervalMs = span / (arr.length - 1);
       if (avgIntervalMs > 0) {
         const bpm = Math.round(60000 / avgIntervalMs);
-        const clamped = Math.max(30, Math.min(240, bpm));
+        const clamped = Math.max(30, Math.min(300, bpm));
         updateSettings({ metronomeBpm: clamped });
         setTapBpmHint(clamped);
       }
@@ -205,17 +207,6 @@ export default function SettingsPanel({ isZh, onClose, event }: Props) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
-
-  // Drive the metronome from settings.
-  useEffect(() => {
-    const m = getMetronome();
-    if (s.metronomeEnabled) {
-      if (!m.isRunning()) m.start(s.metronomeBpm);
-      else m.setBpm(s.metronomeBpm);
-    } else if (m.isRunning()) {
-      m.stop();
-    }
-  }, [s.metronomeEnabled, s.metronomeBpm]);
 
   function commitAoInput(raw: string): void {
     const parts = raw.split(/[,，\s]+/).map(p => p.trim()).filter(Boolean);
@@ -637,19 +628,21 @@ export default function SettingsPanel({ isZh, onClose, event }: Props) {
           <Row label={isZh ? '开启' : 'Enabled'}>
             <input
               type="checkbox"
-              checked={s.metronomeEnabled}
+              checked={s.metronomeOn}
               onChange={(e) => {
-                updateSettings({ metronomeEnabled: e.target.checked });
+                updateSettings({ metronomeOn: e.target.checked });
                 if (e.target.checked) warmupSound();
               }}
             />
+            <span className="hint">{isZh ? '观察 / 计时阶段播放' : 'ticks during inspection / solve'}</span>
           </Row>
           <Row label={isZh ? '速度（BPM）' : 'Tempo (BPM)'}>
             <input
-              type="number" min={30} max={240} step={1}
+              type="range" min={30} max={300} step={1}
               value={s.metronomeBpm}
-              onChange={(e) => updateSettings({ metronomeBpm: Math.max(30, Math.min(240, Number(e.target.value) || 60)) })}
+              onChange={(e) => updateSettings({ metronomeBpm: Math.max(30, Math.min(300, Number(e.target.value) || 120)) })}
             />
+            <span className="hint" style={{ fontVariantNumeric: 'tabular-nums', minWidth: '3ch', display: 'inline-block' }}>{s.metronomeBpm}</span>
             <button
               className="hint-btn"
               onClick={tapBpm}
@@ -675,26 +668,62 @@ export default function SettingsPanel({ isZh, onClose, event }: Props) {
           <Row label={isZh ? '种子' : 'Seed'}>
             <input
               type="text"
-              value={s.syncSeed ?? ''}
-              placeholder={isZh ? '留空 = 关闭' : 'blank = off'}
-              onChange={(e) => {
-                const v = e.target.value;
-                updateSettings({ syncSeed: v === '' ? null : v });
-                resetSeedCounter();
-                setSeedTick((t) => t + 1);
+              value={seedDraft}
+              placeholder={isZh ? '任意字符串' : 'any string'}
+              onChange={(e) => setSeedDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const v = (e.target as HTMLInputElement).value;
+                  if (v !== '') {
+                    updateSettings({ syncSeed: v, syncSeedCounter: 0 });
+                    setSeedTick((t) => t + 1);
+                  }
+                }
               }}
             />
+            <button
+              className="hint-btn"
+              onClick={() => {
+                if (seedDraft === '') return;
+                updateSettings({ syncSeed: seedDraft, syncSeedCounter: 0 });
+                setSeedTick((t) => t + 1);
+              }}
+              disabled={seedDraft === '' || seedDraft === s.syncSeed}
+            >
+              {isZh ? '应用' : 'Apply'}
+            </button>
+            <button
+              className="hint-btn"
+              onClick={() => {
+                updateSettings({ syncSeed: null, syncSeedCounter: 0 });
+                setSeedDraft('');
+                setSeedTick((t) => t + 1);
+              }}
+              disabled={s.syncSeed === null}
+            >
+              {isZh ? '清除' : 'Clear'}
+            </button>
           </Row>
-          <Row label={isZh ? '已生成' : 'Generated'}>
-            <span className="hint">{isZh ? `${getSeedCounter()} 次` : `${getSeedCounter()} scrambles`}</span>
+          <Row label={isZh ? '当前' : 'Current'}>
+            <span className="hint" title={String(seedTick)}>
+              {s.syncSeed === null
+                ? (isZh ? '未启用' : 'off')
+                : (isZh
+                    ? `seed=${s.syncSeed}，第 ${getSeedCounter()} 个打乱`
+                    : `seed=${s.syncSeed}, scramble #${getSeedCounter()}`)}
+            </span>
             <button
               className="hint-btn"
               onClick={() => { resetSeedCounter(); setSeedTick((t) => t + 1); }}
-              title={String(seedTick)}
+              disabled={s.syncSeed === null}
             >
               {isZh ? '重置计数' : 'Reset counter'}
             </button>
-            <span className="hint">{isZh ? '相同种子在不同设备打出相同序列' : 'same seed → same sequence across devices'}</span>
+          </Row>
+          <Row label="">
+            <span className="hint">{isZh
+              ? '相同种子在不同设备打出相同序列；计数会跨刷新保留'
+              : 'same seed → same sequence across devices; counter persists across reloads'}</span>
           </Row>
         </AccordionSection>
 
@@ -880,13 +909,13 @@ export default function SettingsPanel({ isZh, onClose, event }: Props) {
               onChange={(e) => updateSettings({ showCubePreview: e.target.checked })}
             />
           </Row>
-          <Row label={isZh ? '使用 3D 立方体' : 'Use 3D cube'}>
+          <Row label={isZh ? '3D 立方体' : '3D cube'}>
             <input
               type="checkbox"
-              checked={s.use3D}
-              onChange={(e) => updateSettings({ use3D: e.target.checked })}
+              checked={s.prefer3D}
+              onChange={(e) => updateSettings({ prefer3D: e.target.checked })}
             />
-            <span className="hint">{isZh ? '可拖动旋转' : 'drag to rotate'}</span>
+            <span className="hint">{isZh ? '可拖动旋转；关闭则展开 2D 平面' : 'drag to rotate; off = 2D net'}</span>
           </Row>
           <Row label={isZh ? '显示图表' : 'Show charts'}>
             <input

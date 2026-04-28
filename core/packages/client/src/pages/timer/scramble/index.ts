@@ -24,7 +24,8 @@ import {
   scrambleClock,
 } from './others';
 import { applyColorNeutral, isCnEligible } from './cn';
-import { getSettings } from '../settings';
+import { getSettings, updateSettings } from '../settings';
+import { rngFor } from './seeded_rng';
 
 // Round 1B will export these — soft import via dynamic require so absent files
 // don't break the build. We use a runtime registry instead.
@@ -54,21 +55,8 @@ export function registerScramble(event: EventId, gen: Gen): void {
   REG[event] = gen;
 }
 
-// djb2 string hash → uint32, used to derive an rng seed from the user-set
-// sync-seed string. Cheap and deterministic (avoid sha256-style hashes here).
-function djb2(s: string): number {
-  let h = 5381;
-  for (let i = 0; i < s.length; i++) {
-    h = (((h << 5) + h) ^ s.charCodeAt(i)) >>> 0;
-  }
-  return h;
-}
-
-let _seedCounter = 0;
-let _lastSeed: string | null = null;
-
 export function resetSeedCounter(): void {
-  _seedCounter = 0;
+  updateSettings({ syncSeedCounter: 0 });
 }
 
 /**
@@ -80,7 +68,7 @@ export function getScrambleClickAction(): 'none' | 'next' | 'copy' {
 }
 
 export function getSeedCounter(): number {
-  return _seedCounter;
+  return getSettings().syncSeedCounter;
 }
 
 export function generateScramble(event: EventId, rng?: () => number): string {
@@ -88,14 +76,10 @@ export function generateScramble(event: EventId, rng?: () => number): string {
   if (!useRng) {
     const seed = getSettings().syncSeed;
     if (seed) {
-      if (seed !== _lastSeed) {
-        _lastSeed = seed;
-        _seedCounter = 0;
-      }
-      useRng = mulberry32(djb2(seed) + _seedCounter);
-      _seedCounter++;
+      const counter = getSettings().syncSeedCounter;
+      useRng = rngFor(seed, counter);
+      updateSettings({ syncSeedCounter: counter + 1 });
     } else {
-      _lastSeed = null;
       useRng = Math.random;
     }
   }

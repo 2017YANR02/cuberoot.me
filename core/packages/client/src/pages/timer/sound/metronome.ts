@@ -28,8 +28,8 @@ function ctx(): AudioContext | null {
 }
 
 function clampBpm(bpm: number): number {
-  if (!Number.isFinite(bpm)) return 60;
-  return Math.max(30, Math.min(240, Math.round(bpm)));
+  if (!Number.isFinite(bpm)) return 120;
+  return Math.max(30, Math.min(300, Math.round(bpm)));
 }
 
 function tick(c: AudioContext): void {

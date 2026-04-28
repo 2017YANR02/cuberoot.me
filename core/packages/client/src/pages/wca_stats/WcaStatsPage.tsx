@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import WcaEventSelector from './WcaEventSelector';
 import { EVENT_NAME_TO_ID, ALL_EVENT_IDS } from './event_constants';
 import { countryFlagClass, loadFlagData, flagDataVersion, extractWcaId, extractCompId, personFlagIso2, compFlagIso2, compNameZh } from '../../utils/country_flags';
+import { stripWcaPrefix } from '../../utils/comp_localize';
 import { Flag } from '../../utils/flag';
 import DistributionChart from './DistributionChart';
 import type { DistDataset } from './DistributionChart';
@@ -202,10 +203,13 @@ function renderCell(value: unknown, columnKey?: string, isZh?: boolean): React.R
           displayText = stripChineseParens(displayText);
         }
       }
-      // NOTE: 比赛名——中文模式查 compNamesZh 映射表（对标 Recon displayCompName）
-      if (compId && isZh) {
-        const zhComp = compNameZh(displayText);
-        if (zhComp) displayText = zhComp;
+      // NOTE: 比赛名——中文模式查 compNamesZh 映射表（对标 Recon displayCompName）；显示前剥 "WCA "
+      if (compId) {
+        if (isZh) {
+          const zhComp = compNameZh(displayText);
+          if (zhComp) displayText = zhComp;
+        }
+        displayText = stripWcaPrefix(displayText);
       }
       parts.push(
         <a key={`${segIdx}-${match.index}`} href={url} target="_blank" rel="noopener noreferrer">

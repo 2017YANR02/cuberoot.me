@@ -148,7 +148,7 @@
     "boxPlot": "Box Plot"
   },
   "upcoming": {
-    "title": "Competition",
+    "title": "Calendar",
     "search": "Search by competition, cuber, WCA ID, or country...",
     "allCountries": "All Countries",
     "noResults": "No upcoming competitions found for the tracked players.",

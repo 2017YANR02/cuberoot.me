@@ -15,6 +15,7 @@ import {
 } from '../../utils/recon_utils';
 import { displayCuberName } from '../../utils/name_utils';
 import { compNameZh, loadFlagData, flagDataVersion } from '../../utils/country_flags';
+import { stripWcaPrefix } from '../../utils/comp_localize';
 import LangToggle from '../../components/LangToggle';
 import { RecordBadge } from '../../components/RecordBadge';
 import WcaAuth from '../../components/WcaAuth';
@@ -259,7 +260,7 @@ export default function ReconListPage() {
         // NOTE: CSS 国旗 + 比赛名（中文模式查 compNameZh 映射），有 compWcaId 时为链接
         const fc = flagClass(solve.country);
         const rawName = solve.comp || '';
-        const displayName = isZh ? (compNameZh(rawName) || rawName) : rawName;
+        const displayName = stripWcaPrefix(isZh ? (compNameZh(rawName) || rawName) : rawName);
         if (solve.compWcaId) {
           return (
             <>

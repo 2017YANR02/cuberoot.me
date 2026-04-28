@@ -109,6 +109,8 @@ export const REGISTRY: Record<string, () => Promise<Record<string, unknown>>> = 
   'wr_metric': () => import('../statistics/wr_metric.js'),
   'wr_aoxr': () => import('../statistics/wr_aoxr.js'),
   'average_of': () => import('../statistics/average_of.js'),
+  // NOTE: 阶段 E — bar chart race 风格的 top-10 历史演化
+  'top10_history': () => import('../statistics/top10_history.js'),
 };
 
 async function main() {

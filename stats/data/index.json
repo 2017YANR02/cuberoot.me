@@ -44,6 +44,11 @@
           "id": "consecutive_sub_5_average",
           "titleEn": "Most consecutive sub-5 averages in 3x3x3",
           "titleZh": "三阶最多连续 sub-5 平均"
+        },
+        {
+          "id": "top10_history",
+          "titleEn": "Top 10 history (bar chart race)",
+          "titleZh": "3x3 全历史 TOP 10 演化"
         }
       ]
     },

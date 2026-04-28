@@ -55,6 +55,7 @@ pnpm --filter @cuberoot/client lint
 > 1. **不要用 `cd core &&`**：session CWD 已经是 `core/`，再 cd 会 "No such file or directory"。
 > 2. **路径前缀也不能加 `core/`**：CWD 已是 `core/`，所以写 `packages/client/...` 而不是 `core/packages/client/...`；写 `ls packages/stats-build/database.yml` 不是 `ls core/packages/stats-build/database.yml`。**因路径错而看不到文件 ≠ 文件不存在,先核对 CWD 再下结论**。
 > 3. **类型检查两档**：日常用 `typecheck`（快）；完成阶段性功能、准备 push 时用 `typecheck:ci`（对齐 CI）。**完成一个完整功能后应主动提示跑 `typecheck:ci` 再 push。**
+> 4. **磁盘不够必须停下来告诉我**（worktree / pnpm install / build 失败时先 `df -h` 再求助，别静默换方案）。
 
 - Dev server 绑定 `127.0.0.1`（Vite 默认 IPv6 `[::1]` 在 Windows Chrome 下打不开，已在 `vite.config.ts` 固定）
 - Recon API 通过 Vite proxy 转发到 `www.cuberoot.me`，**本地开发不需要跑后端**
@@ -67,6 +68,8 @@ pnpm --filter @cuberoot/client lint
 - 改完跑 `pnpm --filter @cuberoot/client typecheck`（push 前 `typecheck:ci`）
 - UI 不用 emoji，用 lucide-react 图标
 - 不放页面级"返回"按钮，浏览器自带 back 即可（wizard 步骤间 / 模式切换不算）
+- 选择型输入框（CountryInput / CompPicker / EventSelect 等"有选中态保留显示"的搜索框）有非空值时必须显示 `×` 清除按钮（参考 CountryInput / CompPicker 实现）
+- WCA 历史时间锚点：第 1 场比赛 1982-06（WC1982），第 2 场 2003-08；任何"时间序列展示"（折线 / 热力图 / 时间轴）默认视图从 **2003-08** 起步，但**统计聚合（总数 / 国家排行 / 项目场次等）必须包含 1982 那场**（用户没主动缩放时口径=全时段，不要把"默认视图≠全数据"的不一致带到数字上）
 
 ## 专题知识 — 查对应 Skill
 
@@ -76,9 +79,11 @@ pnpm --filter @cuberoot/client lint
 |---|---|---|
 | 选手名渲染（括号中文） | `cuber-name-display` | 任何展示 WCA person 名的地方 |
 | 国旗渲染 | `country-flag` | 任何展示国旗的地方（JSX / popup innerHTML）；统一走 `utils/flag.tsx` 的 `<Flag>` 或 `flagHtml`；TW 特判只在这一处 |
+| WCA 项目图标 | `wca-event-icon` | 任何渲染 WCA 项目名的地方（卡片 / 表格 / 条形 / chip）；项目名前必须有 `<EventIcon>`，纯文字是 bug |
 | 比赛日期区间展示 | `comp-date-range` | 任何显示 `start_date` / `end_date` 对的地方；紧凑格式 `2026-06-06~07` |
 | 中国比赛名中文化 | `cn-comp-names` | 中文模式下比赛名；`comp_names_zh.json` 数据问题 |
 | Competition JSON 数据源 | `comp-data-schema` | 改 upcoming/past comps 相关代码 |
 | 新增 public 静态资源 | `deploy-public-asset` | 加 geojson / 图片 / 纹理 / wasm 等；双 workflow 白名单 |
 | 重跑统计数据 | `stats-build` | 修改 `stats/data/*.json` 生成器；新增 stat |
+| 写 WCA SQL（本地 dump） | `wca-stats-db` | 任何写针对 `wca_statistics` MySQL 的 SQL — schema snake_case、persons.sub_id=1、events.rank<900、成绩值编码、records 标记 |
 | 重跑打乱分布 | `scramble-stats-build` | 修改 `stats/data/scramble/*.json`；WCA 配色 / 阶段-朝向 schema / pair CSV 特殊记号 |

@@ -1,6 +1,6 @@
 ---
 name: comp-data-schema
-description: "Use when touching WCA competition JSON data — upcoming_comps.json / all_upcoming_comps.json / all_past_comps.json — or their consumers (UpcomingCompsPage, GlobePage upcoming mode). Covers schemas, field semantics, event short-name convention, and country/TW special rules. Triggers: \"比赛 JSON\", \"upcoming_comps\", \"all_past_comps\", \"competition schema\", \"比赛数据源\"."
+description: "Use when touching WCA competition JSON data — upcoming_comps.json / all_upcoming_comps.json / all_past_comps.json — or their consumers (UpcomingCompsPage, GlobePage upcoming mode), OR when adding any comp picker/search input in UI. Covers schemas, field semantics, event short-name convention, country/TW special rules, and the shared CompPicker / comp_search utility. Triggers: \"比赛 JSON\", \"upcoming_comps\", \"all_past_comps\", \"competition schema\", \"比赛数据源\", \"比赛搜索\", \"CompPicker\", \"comp picker\", \"搜比赛\"."
 ---
 
 # Competition 数据源（预生成 JSON）
@@ -26,6 +26,14 @@ description: "Use when touching WCA competition JSON data — upcoming_comps.jso
 ## `all_past_comps.json`（History 模式）
 
 纯数组（~14k 条），每条：`id`、`name`、`city`、`country`、`latitude_degrees`、`longitude_degrees`、`start_date`、`end_date`、`events`（短名）。无 url — 前端从 id 反推 `https://www.worldcubeassociation.org/competitions/{id}`。
+
+## UI 比赛搜索（任何"输入比赛"的地方都用它）
+
+- 组件：`components/CompPicker.tsx` —— 文本输入 + 自动补全下拉，允许自由文本（非 WCA 比赛仍可手填）
+- 数据源：`utils/comp_search.ts::loadComps()` —— 合并 `all_past_comps` + `all_upcoming_comps`（按 id 去重），按需懒加载，模块级缓存。**不要再写一份本地搜索/缓存。**
+- 父组件传 `onPick(comp)` 一次性回填 name / id / country / date 等字段（参考 ReconSubmitPage `applyPickedComp`）
+- 中文模式 `isZh` 时显示 `compNameZh(c.name)`（country_flags.ts），落空则回退英文
+- 日期统一走 `utils/date_range.ts::formatDateRangeIso`
 
 ## 通用规则
 
