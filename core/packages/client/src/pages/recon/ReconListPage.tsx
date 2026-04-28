@@ -88,6 +88,19 @@ export default function ReconListPage() {
     filters, sortKey, sortDir,
   ]);
 
+  // NOTE: 同一轮里 avg / aoxr 在每把都重复——按 (person, comp, event, round) 分组，
+  //       只有 solveNum 最小的那把保留正常显示，其他变淡。
+  const roundFirstIds = useMemo(() => {
+    const minByRound = new Map<string, { id: number; n: number }>();
+    for (const s of filtered) {
+      const key = `${s.person ?? ''}|${s.comp ?? ''}|${s.event ?? ''}|${s.round ?? ''}`;
+      const n = s.solveNum ?? Number.POSITIVE_INFINITY;
+      const cur = minByRound.get(key);
+      if (!cur || n < cur.n) minByRound.set(key, { id: s.id, n });
+    }
+    return new Set(Array.from(minByRound.values()).map(v => v.id));
+  }, [filtered]);
+
   // NOTE: 依赖 allSolves 而非 store action 函数（action 引用稳定，永远不会触发重算）
   const events = useMemo(() => getAvailableEvents(), [
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -266,24 +279,28 @@ export default function ReconListPage() {
       }
       case 'round':
         return formatRound(solve.round, solve.solveNum);
-      case 'average':
+      case 'average': {
+        const dim = !roundFirstIds.has(solve.id) ? ' recon-cell-dim' : '';
         return (
-          <>
+          <span className={`recon-cell${dim}`}>
             {formatAvg(solve.average)}
             {solve.regionalAverageRecord && (
               <> <RecordBadge record={solve.regionalAverageRecord} variant="inline" /></>
             )}
-          </>
+          </span>
         );
-      case 'aoType':
+      }
+      case 'aoType': {
+        const dim = !roundFirstIds.has(solve.id) ? ' recon-cell-dim' : '';
         return (
-          <>
+          <span className={`recon-cell${dim}`}>
             {formatAoXR(solve.aoType)}
             {solve.regionalAoxrRecord && (
               <> <RecordBadge record={solve.regionalAoxrRecord} variant="inline" /></>
             )}
-          </>
+          </span>
         );
+      }
       case 'result':
         return formatResult(solve.rawTime);
       case 'stm':
@@ -293,7 +310,7 @@ export default function ReconListPage() {
       case 'event':
         if (!solve.event) return '';
         return isWcaEvent(solve.event)
-          ? <span className="recon-event-cell"><EventIcon event={solve.event} /> {eventDisplayName(solve.event, isZh)}</span>
+          ? <EventIcon event={solve.event} title={eventDisplayName(solve.event, isZh)} />
           : solve.event;
       case 'method':
         return solve.method || '';
@@ -314,7 +331,7 @@ export default function ReconListPage() {
       default:
         return '';
     }
-  }, [getDetailUrl, navigate, isZh]);
+  }, [getDetailUrl, navigate, isZh, roundFirstIds]);
 
   return (
     <div className="recon-page">

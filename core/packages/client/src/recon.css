@@ -118,7 +118,7 @@
 
 /* --- 表格 --- */
 .recon-table-wrap {
-  overflow-x: auto;
+  /* NOTE: 不设 overflow——会困住 thead 的 position: sticky；过宽时由页面横滚 */
   margin-bottom: 1rem;
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.06);
@@ -129,6 +129,11 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+}
+
+/* 同轮次 avg / aoxr 重复——非首把变淡（首把按 solveNum 最小决定） */
+.recon-cell-dim {
+  opacity: 0.35;
 }
 
 .recon-event-cell .cubing-icon {

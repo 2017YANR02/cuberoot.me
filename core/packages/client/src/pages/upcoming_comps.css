@@ -71,8 +71,7 @@
     border-bottom: 1px solid transparent;
 }
 
-.upcoming-page .search-box,
-.upcoming-page .country-filter {
+.upcoming-page .search-box {
     background: var(--surface);
     border: 1px solid var(--border);
     color: var(--text);
@@ -82,14 +81,17 @@
     font-family: inherit;
     outline: none;
     transition: border-color 0.15s, box-shadow 0.15s;
+    flex: 1;
+    min-width: 180px;
+    max-width: 320px;
 }
-.upcoming-page .search-box { flex: 1; min-width: 180px; max-width: 320px; }
-.upcoming-page .country-filter { min-width: 160px; }
-.upcoming-page .search-box:focus,
-.upcoming-page .country-filter:focus {
+.upcoming-page .search-box:focus {
     border-color: var(--accent);
     box-shadow: 0 0 0 3px var(--accent-soft);
 }
+
+/* NOTE: CountryInput 自带 padding/border/focus 样式，这里仅控宽 */
+.upcoming-page .country-filter { min-width: 160px; }
 
 .upcoming-page .mode-toggle {
     display: inline-flex;
