@@ -1,25 +1,20 @@
 /**
  * Top-level scramble preview dispatcher.
  *
- * Picks the appropriate renderer for an event:
+ * All puzzles route through CubingPreview (cubing/scramble-display). The
+ * library covers every WCA event with the correct 2D/3D mode per puzzle.
+ * NxN-class events (333oh / 333bld / 333fm / 444bld / 555bld / etc.) reuse
+ * their base size's scrambler. Relays show only the 3x3 sub-scramble.
  *
- *   222/333/444/555/666/777            → CubeNet (NxN, our own SVG)
- *   333oh/333bld/333ni/333fm/333mr     → CubeNet 3×3
- *   444bld/555bld/666bld/777bld        → CubeNet matching size (BLD scrambles
- *                                        contain the same NxN tokens + Rw/Uw
- *                                        orientation moves; we apply them all)
- *   pyra / skewb / sq1 / mega / clock  → CubingPreview (cubing.js, 2D)
- *   r3 / r4 / r5                       → CubeNet 3×3 of the relay's first
- *                                        scramble (best-effort)
- *   cross/f2l/ll/oll/pll/coll/cmll/zbll/eg1/eg2 → CubeNet 3×3
- *   custom                             → CubeNet 3×3 if scramble looks like NxN
- *                                        notation, else blank
- *   magic / mmagic                     → blank "no preview"
+ *   pyra / skewb / sq1 / mega / clock                    → scramble-display
+ *   222/333/444/555/666/777 + their bld/oh/fm variants   → scramble-display
+ *   r3 / r4 / r5                                         → 3x3 of first sub
+ *   custom                                               → best-effort 3x3
+ *   magic / mmagic                                       → blank "no preview"
  */
 
 import type { JSX } from 'react';
 import type { EventId } from '../types.ts';
-import CubeNet from './CubeNet.tsx';
 import CubingPreview from './CubingPreview.tsx';
 import { nxnSizeForEvent } from './colors.ts';
 
@@ -28,8 +23,8 @@ interface CubePreviewProps {
   scramble: string;
   size?: number;
   className?: string;
-  /** Optional override of the WCA color scheme. Currently passed through to
-   * the NxN renderer; cubing.js puzzles use their own (WCA-correct) palette. */
+  /** Reserved for future palette overrides; scramble-display uses its own
+   * (WCA-correct) palette and ignores this. */
   colors?: Partial<Record<'U'|'D'|'F'|'B'|'L'|'R', string>>;
 }
 
@@ -75,14 +70,31 @@ function firstNxnScramble(s: string): string {
   return s;
 }
 
+/** Map any NxN-class event id to its base nxn event id (for scramble-display). */
+function baseNxnEvent(event: EventId): EventId | null {
+  const n = nxnSizeForEvent(event);
+  if (n === null) return null;
+  switch (n) {
+    case 2: return '222';
+    case 3: return '333';
+    case 4: return '444';
+    case 5: return '555';
+    case 6: return '666';
+    case 7: return '777';
+    default: return null;
+  }
+}
+
 export default function CubePreview(props: CubePreviewProps): JSX.Element {
-  const { event, scramble, colors } = props;
+  const { event, scramble } = props;
   const size = props.size;
   const className = props.className;
 
-  // NxN cubes (including BLD / OH / FM / variants).
-  if (nxnSizeForEvent(event) !== null) {
-    return <CubeNet event={event} scramble={scramble} size={size} className={className} colors={colors} />;
+  // NxN family (incl. BLD / OH / FM / MR / NI variants) → scramble-display
+  // with the matching base nxn id.
+  const baseNxn = baseNxnEvent(event);
+  if (baseNxn !== null) {
+    return <CubingPreview event={baseNxn} scramble={scramble} size={size} className={className} />;
   }
 
   switch (event) {
@@ -95,10 +107,9 @@ export default function CubePreview(props: CubePreviewProps): JSX.Element {
     case 'r3':
     case 'r4':
     case 'r5':
-      return <CubeNet event="333" scramble={firstNxnScramble(scramble)} size={size} className={className} colors={colors} />;
+      return <CubingPreview event="333" scramble={firstNxnScramble(scramble)} size={size} className={className} />;
     case 'custom':
-      // Best-effort: try to render as 3x3.
-      return <CubeNet event="333" scramble={scramble} size={size} className={className} colors={colors} />;
+      return <CubingPreview event="333" scramble={scramble} size={size} className={className} />;
     case 'magic':
     case 'mmagic':
       return <NoPreview size={size} className={className} />;

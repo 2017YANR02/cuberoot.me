@@ -4,7 +4,6 @@
  */
 
 export { default as CubePreview } from './CubePreview.tsx';
-export { default as CubeNet } from './CubeNet.tsx';
 export { default as CubingPreview } from './CubingPreview.tsx';
 export { WCA_COLORS, nxnSizeForEvent } from './colors.ts';
 export {
