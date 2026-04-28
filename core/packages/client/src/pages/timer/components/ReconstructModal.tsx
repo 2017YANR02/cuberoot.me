@@ -8,6 +8,7 @@
  */
 
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import { Link2, Layers, ChevronDown, ChevronRight } from 'lucide-react';
 import type { Solve } from '../types';
 import { effectiveMs } from '../types';
@@ -33,6 +34,65 @@ interface Props {
 
 function formatSec(ms: number, digits = 2): string {
   return (ms / 1000).toFixed(digits) + 's';
+}
+
+/** True iff viewport ≤ 768px. Used to gate the mobile accordion behavior;
+ *  desktop renders all sections expanded with no toggle. */
+function useIsMobile(): boolean {
+  const [isMobile, setIsMobile] = useState<boolean>(() =>
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches,
+  );
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(max-width: 768px)');
+    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+  return isMobile;
+}
+
+interface AccordionSectionProps {
+  title: ReactNode;
+  /** When true, this section is collapsible with a chevron header.
+   *  When false, the title still renders but content is always shown. */
+  collapsible: boolean;
+  expanded: boolean;
+  onToggle: () => void;
+  className?: string;
+  children: ReactNode;
+}
+
+function AccordionSection({
+  title, collapsible, expanded, onToggle, className, children,
+}: AccordionSectionProps) {
+  const cls = `reconstruct-section${className ? ' ' + className : ''}${collapsible ? ' reconstruct-section-collapsible' : ''}`;
+  if (!collapsible) {
+    return (
+      <div className={cls}>
+        <div className="reconstruct-section-title">{title}</div>
+        {children}
+      </div>
+    );
+  }
+  return (
+    <div className={cls}>
+      <button
+        type="button"
+        className="reconstruct-section-header"
+        onClick={onToggle}
+        aria-expanded={expanded}
+      >
+        {expanded
+          ? <ChevronDown size={14} />
+          : <ChevronRight size={14} />}
+        <span className="reconstruct-section-title reconstruct-section-title-inline">
+          {title}
+        </span>
+      </button>
+      {expanded && children}
+    </div>
+  );
 }
 
 export default function ReconstructModal({ solve, isZh, onClose, history }: Props) {
@@ -72,8 +132,13 @@ export default function ReconstructModal({ solve, isZh, onClose, history }: Prop
 
   useEffect(() => { closeBtnRef.current?.focus(); }, []);
 
+  const isMobile = useIsMobile();
   const [copied, setCopied] = useState(false);
   const [playbackExpanded, setPlaybackExpanded] = useState(false);
+  // Mobile-only accordion state. On desktop these flags are ignored —
+  // AccordionSection renders open when `collapsible=false`.
+  const [stagesExpanded, setStagesExpanded] = useState(true);
+  const [moveListExpanded, setMoveListExpanded] = useState(false);
   const playbackAvailable = moves.length > 0 && nxnSizeForEvent(solve.event) !== null;
   const canShare = moves.length > 0;
   const handleCopyShare = async () => {
@@ -148,6 +213,9 @@ export default function ReconstructModal({ solve, isZh, onClose, history }: Prop
             isZh={isZh}
             ao12={stageAvgs?.ao12 ?? null}
             ao100={stageAvgs?.ao100 ?? null}
+            collapsible={isMobile}
+            expanded={stagesExpanded}
+            onToggle={() => setStagesExpanded(v => !v)}
           />
         )}
 
@@ -180,10 +248,12 @@ export default function ReconstructModal({ solve, isZh, onClose, history }: Prop
           </div>
         )}
 
-        <div className="reconstruct-section">
-          <div className="reconstruct-section-title">
-            {isZh ? `动作序列 (${moves.length})` : `Move stream (${moves.length})`}
-          </div>
+        <AccordionSection
+          title={isZh ? `动作序列 (${moves.length})` : `Move stream (${moves.length})`}
+          collapsible={isMobile}
+          expanded={moveListExpanded}
+          onToggle={() => setMoveListExpanded(v => !v)}
+        >
           {moves.length === 0 ? (
             <div className="reconstruct-empty">
               {isZh ? '此次成绩未记录蓝牙动作。' : 'No bluetooth moves recorded for this solve.'}
@@ -207,7 +277,7 @@ export default function ReconstructModal({ solve, isZh, onClose, history }: Prop
               })}
             </ol>
           )}
-        </div>
+        </AccordionSection>
 
         <div className="modal-actions">
           <button
@@ -240,6 +310,9 @@ interface StagePanelProps {
    *  When non-null, each stage cell shows ±% vs avg below the time. */
   ao12: StageAverages | null;
   ao100: StageAverages | null;
+  collapsible: boolean;
+  expanded: boolean;
+  onToggle: () => void;
 }
 
 type StageKey = 'cross' | 'f2l' | 'oll' | 'pll';
@@ -254,7 +327,9 @@ function pickAvg(avgs: StageAverages | null, key: StageKey): number | null {
   }
 }
 
-function StageSegmentsPanel({ segs, totalMs, isZh, ao12, ao100 }: StagePanelProps) {
+function StageSegmentsPanel({
+  segs, totalMs, isZh, ao12, ao100, collapsible, expanded, onToggle,
+}: StagePanelProps) {
   const stages: Array<{
     key: StageKey;
     labelEn: string;
@@ -285,12 +360,18 @@ function StageSegmentsPanel({ segs, totalMs, isZh, ao12, ao100 }: StagePanelProp
   };
 
   return (
-    <div className="reconstruct-section reconstruct-stages-section">
-      <div className="reconstruct-section-title">
-        <Layers size={12} style={{ verticalAlign: 'middle', marginRight: 4 }} />
-        {isZh ? 'CFOP 分阶段' : 'CFOP stage breakdown'}
-      </div>
-
+    <AccordionSection
+      className="reconstruct-stages-section"
+      title={
+        <>
+          <Layers size={12} style={{ verticalAlign: 'middle', marginRight: 4 }} />
+          {isZh ? 'CFOP 分阶段' : 'CFOP stage breakdown'}
+        </>
+      }
+      collapsible={collapsible}
+      expanded={expanded}
+      onToggle={onToggle}
+    >
       <div className="reconstruct-stage-bar" role="img" aria-label={isZh ? '阶段时间分布' : 'stage time distribution'}>
         {stages.map(s => {
           const pct = denom > 0 ? ((s.ms ?? 0) / denom) * 100 : 0;
@@ -351,6 +432,6 @@ function StageSegmentsPanel({ segs, totalMs, isZh, ao12, ao100 }: StagePanelProp
           );
         })}
       </div>
-    </div>
+    </AccordionSection>
   );
 }
