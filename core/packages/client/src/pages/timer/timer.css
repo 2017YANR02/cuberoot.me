@@ -215,12 +215,39 @@
 .timer-display.running { color: #f0ebe3; }
 .timer-display.dnf     { color: #aaa; }
 
-/* Inspection countdown coloring — gentle yellow → amber → red as it elapses. */
+/* Inspection countdown coloring — gentle yellow → amber → red as it elapses.
+   Tiers mirror WCA judge calls (8s, 12s) and the 15s overrun threshold; at
+   plus-2 territory the display flashes to nudge the user to start. */
 .timer-display.inspection         { color: #ffd54f; }
 .timer-display.inspection-warn-8  { color: #ffb74d; text-shadow: 0 0 20px rgba(255, 183, 77, 0.4); }
-.timer-display.inspection-warn-12 { color: #ff8a65; text-shadow: 0 0 20px rgba(255, 138, 101, 0.5); }
-.timer-display.inspection-plus2   { color: #ef5350; text-shadow: 0 0 25px rgba(239, 83, 80, 0.5); }
+.timer-display.inspection-warn-12 { color: #ef5350; text-shadow: 0 0 22px rgba(239, 83, 80, 0.5); }
+.timer-display.inspection-plus2   {
+  color: #ef5350;
+  text-shadow: 0 0 28px rgba(239, 83, 80, 0.7);
+  animation: inspection-flash 0.5s steps(2, end) infinite;
+}
 .timer-display.inspection-dnf     { color: #b0bec5; }
+@keyframes inspection-flash {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+
+/* Face-turn-during-inspection warning (smartcube only). */
+.inspection-illegal-warn {
+  margin-top: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: rgba(239, 83, 80, 0.1);
+  border: 1px solid rgba(239, 83, 80, 0.45);
+  border-radius: 999px;
+  font-size: 12px;
+  color: #ef9a9a;
+  font-family: inherit;
+  letter-spacing: 0.02em;
+}
+.inspection-illegal-warn svg { flex-shrink: 0; }
 
 .timer-hint {
   margin-top: 14px;

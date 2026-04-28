@@ -20,7 +20,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { Home, Download, Upload, Trash2, Settings as SettingsIcon, Maximize2, Minimize2, Bluetooth, Mic, HelpCircle, BarChart3, Plus, Wrench, ListPlus, Printer, FileText, FileSpreadsheet } from 'lucide-react';
+import { Home, Download, Upload, Trash2, Settings as SettingsIcon, Maximize2, Minimize2, Bluetooth, Mic, HelpCircle, BarChart3, Plus, Wrench, ListPlus, Printer, FileText, FileSpreadsheet, AlertTriangle } from 'lucide-react';
 import LangToggle from '../../components/LangToggle';
 import MoreMenu, { type MoreMenuItem } from './components/MoreMenu';
 
@@ -330,6 +330,50 @@ export default function TimerPage() {
     };
     subs.add(recorder);
     return () => { subs.delete(recorder); };
+  }, []);
+
+  // ── WCA inspection-phase move classification ───────────────────
+  // Per WCA Reg 4d / A4: cube rotations (x/y/z) are legal during inspection;
+  // any face turn or slice triggers a DNF if observed by a delegate. We only
+  // *inform* the user — auto-DNF is a judge call we don't enforce.
+  // Rotations match: x/y/z [' 2]?  (case-insensitive, no wide qualifier).
+  // Anything else with a face letter (U/D/F/B/L/R, with or without lowercase
+  // wide / `w` suffix) or slice (M/E/S) counts as illegal.
+  const [inspectionIllegalCount, setInspectionIllegalCount] = useState(0);
+  const inspectionIllegalCountRef = useRef(0);
+  useEffect(() => { inspectionIllegalCountRef.current = inspectionIllegalCount; }, [inspectionIllegalCount]);
+  // Reset the counter every time inspection starts fresh.
+  const prevPhaseRef = useRef(timer.phase);
+  useEffect(() => {
+    const prev = prevPhaseRef.current;
+    if (timer.phase === 'inspecting' && prev !== 'inspecting' && prev !== 'holding') {
+      // Entering inspection from idle/stopped — reset. (holding/inspecting
+      // ping-pongs while the user holds-then-releases too early; preserve.)
+      inspectionIllegalCountRef.current = 0;
+      setInspectionIllegalCount(0);
+    }
+    prevPhaseRef.current = timer.phase;
+  }, [timer.phase]);
+  // Subscribe to the bluetooth move stream during inspection.
+  useEffect(() => {
+    const subs = bluetoothSubscribersRef.current;
+    const inspector = (m: string) => {
+      const ph = phaseSnapshotRef.current;
+      if (ph !== 'inspecting' && ph !== 'holding' && ph !== 'ready') return;
+      // Strip leading whitespace and any trailing modifiers; we only care
+      // about the base letter to classify.
+      const trimmed = m.trim();
+      if (!trimmed) return;
+      // Rotation: x / y / z, optionally followed by ' or 2 (no wide-style
+      // letters, no extra prefix).
+      if (/^[xyzXYZ][2']?$/.test(trimmed)) return;
+      // Anything else that contains a face/slice letter is WCA-illegal.
+      if (/[UDFBLRMESudfblr]/.test(trimmed)) {
+        setInspectionIllegalCount(c => c + 1);
+      }
+    };
+    subs.add(inspector);
+    return () => { subs.delete(inspector); };
   }, []);
 
   // ── Stackmat: when external stop fires, record the solve directly ─
@@ -855,9 +899,26 @@ export default function TimerPage() {
           </div>
         )}
         {timer.phase === 'inspecting' && (
-          <div className="timer-hint">
-            {isZh ? '观察中… 再按空格开始上手' : 'Inspecting… press space again to grip'}
-          </div>
+          <>
+            <div className="timer-hint">
+              {isZh ? '观察中… 再按空格开始上手' : 'Inspecting… press space again to grip'}
+            </div>
+            {inspectionIllegalCount > 0 && (
+              <div
+                className="inspection-illegal-warn"
+                title={isZh
+                  ? 'WCA 4d: 观察期间只允许整体旋转 (x/y/z)，转面会判 DNF'
+                  : 'WCA 4d: only rotations (x/y/z) are legal during inspection — face turns are DNF'}
+              >
+                <AlertTriangle size={14} />
+                <span>
+                  {isZh
+                    ? `检测到 ${inspectionIllegalCount} 次违规转面（WCA 应判 DNF）`
+                    : `${inspectionIllegalCount} illegal face turn${inspectionIllegalCount === 1 ? '' : 's'} detected (WCA: DNF)`}
+                </span>
+              </div>
+            )}
+          </>
         )}
         {timer.phase === 'holding' && (
           <div className="timer-hint">{isZh ? '继续按住…' : 'Keep holding…'}</div>
