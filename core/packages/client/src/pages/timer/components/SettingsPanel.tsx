@@ -3,8 +3,8 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { Download, RefreshCw } from 'lucide-react';
-import { resetSettings, updateSettings, useSettings } from '../settings';
+import { Download, RefreshCw, Target } from 'lucide-react';
+import { formatTargetTime, parseTargetTime, resetSettings, updateSettings, useSettings } from '../settings';
 import { warmupSound, play } from '../sound';
 import { getMetronome } from '../sound/metronome';
 import { isVoiceAvailable } from '../sound/voice';
@@ -13,17 +13,44 @@ import { appendSolves, listBackups, pushBackup, replaceSolves, restoreBackup } f
 import { parseCstimerExport, type CstimerSessionParsed } from '../storage/import_cstimer';
 import { exportCstimerJson } from '../storage/export_cstimer';
 import { reanalyzeAll } from '../storage/reanalyze';
-import { eventInfo } from '../types';
+import { eventInfo, type EventId } from '../types';
 
 interface Props {
   isZh: boolean;
   onClose: () => void;
+  /** Current event — target-time setting applies to this event. */
+  event: EventId;
 }
 
-export default function SettingsPanel({ isZh, onClose }: Props) {
+export default function SettingsPanel({ isZh, onClose, event }: Props) {
   const s = useSettings();
   const [seedTick, setSeedTick] = useState(0);
   const [aoInput, setAoInput] = useState<string>(() => s.customAoWindows.join(','));
+
+  // Target-time input is a free-form string while editing; commit on blur /
+  // Enter. Empty / invalid / non-positive → clear the per-event target.
+  const currentTargetMs: number | null = (() => {
+    const v = s.targetMsByEvent[event];
+    return typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : null;
+  })();
+  const [targetInput, setTargetInput] = useState<string>(() => formatTargetTime(currentTargetMs));
+  // Keep input in sync when user changes event while modal is open.
+  useEffect(() => {
+    setTargetInput(formatTargetTime(currentTargetMs));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [event]);
+
+  function commitTargetInput(raw: string): void {
+    const parsed = parseTargetTime(raw);
+    const next = { ...s.targetMsByEvent };
+    if (parsed === null) {
+      delete next[event];
+    } else {
+      next[event] = parsed;
+    }
+    updateSettings({ targetMsByEvent: next });
+    setTargetInput(formatTargetTime(parsed));
+  }
 
   // Tap-to-BPM: rolling window of timestamps; reset after 3s of inactivity.
   const tapTimesRef = useRef<number[]>([]);
@@ -327,6 +354,23 @@ export default function SettingsPanel({ isZh, onClose }: Props) {
             <span className="hint">{isZh
               ? '盲拧项目运行中按 Enter 标记记忆完成'
               : 'On BLD events, press Enter while running to mark memo done'}</span>
+          </Row>
+          <Row label={isZh ? '目标时间' : 'Target time'}>
+            <input
+              type="text"
+              value={targetInput}
+              placeholder={isZh ? '例：0:10.50（留空关闭）' : 'e.g. 0:10.50 (blank = off)'}
+              onChange={(e) => setTargetInput(e.target.value)}
+              onBlur={(e) => commitTargetInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') commitTargetInput((e.target as HTMLInputElement).value); }}
+              style={{ fontFamily: 'JetBrains Mono, monospace' }}
+            />
+            <span className="hint">
+              <Target size={12} style={{ verticalAlign: '-1px', marginRight: 4 }} />
+              {currentTargetMs === null
+                ? (isZh ? `当前 ${eventInfo(event).nameZh}：关闭` : `${eventInfo(event).nameEn}: off`)
+                : (isZh ? `当前 ${eventInfo(event).nameZh}：${formatTargetTime(currentTargetMs)}` : `${eventInfo(event).nameEn}: ${formatTargetTime(currentTargetMs)}`)}
+            </span>
           </Row>
           <Row label={isZh ? '精度' : 'Precision'}>
             <select

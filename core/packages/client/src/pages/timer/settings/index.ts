@@ -107,6 +107,12 @@ export interface TimerSettings {
 
   /** Show a celebratory toast when a solve sets a new PB (single / ao5 / ao12). */
   pbToast: boolean;
+
+  /**
+   * Per-event target time (time-attack mode). Map keyed by EventId; missing or
+   * null entries disable the indicator for that event. Positive integer ms only.
+   */
+  targetMsByEvent: Record<string, number>;
 }
 
 export const DEFAULTS: TimerSettings = {
@@ -138,7 +144,52 @@ export const DEFAULTS: TimerSettings = {
   bluetoothAutoReady: 'off',
   inspectionTrigger: 'down',
   pbToast: true,
+  targetMsByEvent: {},
 };
+
+/**
+ * Parse a time-attack target time string (`m:ss.ms` style, e.g. `0:10.50`,
+ * `1:23.4`, or plain seconds like `10.5`) into milliseconds.
+ *
+ * Returns null for empty / invalid / non-positive / non-finite input — callers
+ * should treat null as "disable the target".
+ */
+export function parseTargetTime(raw: string): number | null {
+  if (typeof raw !== 'string') return null;
+  const trimmed = raw.trim();
+  if (trimmed === '') return null;
+  // Accept: "m:ss.ms", "m:ss", "s.ms", or plain integer seconds.
+  // Use a permissive parse — a single colon splits minutes:seconds.
+  let mins = 0;
+  let secStr = trimmed;
+  const colonIdx = trimmed.indexOf(':');
+  if (colonIdx >= 0) {
+    const mPart = trimmed.slice(0, colonIdx);
+    secStr = trimmed.slice(colonIdx + 1);
+    const m = Number(mPart);
+    if (!Number.isFinite(m) || m < 0) return null;
+    mins = Math.floor(m);
+  }
+  const sec = Number(secStr);
+  if (!Number.isFinite(sec) || sec < 0) return null;
+  const totalMs = Math.round(mins * 60_000 + sec * 1000);
+  if (!Number.isFinite(totalMs) || totalMs <= 0) return null;
+  return totalMs;
+}
+
+/**
+ * Format a target-time ms value back into `m:ss.ms` for display in the
+ * settings input. 0 / null / non-finite → empty string.
+ */
+export function formatTargetTime(ms: number | null | undefined): string {
+  if (ms == null || !Number.isFinite(ms) || ms <= 0) return '';
+  const totalCs = Math.round(ms / 10);
+  const cs = totalCs % 100;
+  const totalSec = Math.floor(totalCs / 100);
+  const sec = totalSec % 60;
+  const min = Math.floor(totalSec / 60);
+  return `${min}:${String(sec).padStart(2, '0')}.${String(cs).padStart(2, '0')}`;
+}
 
 let _cache: TimerSettings = load();
 const _listeners = new Set<() => void>();
