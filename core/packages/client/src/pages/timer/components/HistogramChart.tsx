@@ -84,26 +84,12 @@ export default function HistogramChart({
     };
   }, [solves, bucketCount]);
 
-  // Empty state
+  // Empty state — collapse to a tiny one-line hint instead of a full chart frame.
   if (finiteCount < 5) {
     return (
-      <svg
-        className={`tc-chart tc-hist ${className ?? ''}`.trim()}
-        viewBox={`0 0 ${width} ${height}`}
-        preserveAspectRatio="xMidYMid meet"
-        role="img"
-        aria-label={isZh ? '成绩分布直方图' : 'Solve time histogram'}
-      >
-        <text
-          className="empty-msg"
-          x={width / 2}
-          y={height / 2}
-          textAnchor="middle"
-          dominantBaseline="middle"
-        >
-          {isZh ? '至少 5 次成绩' : 'Need 5+ solves'}
-        </text>
-      </svg>
+      <div className={`chart-empty-hint ${className ?? ''}`.trim()}>
+        {isZh ? '至少 5 次成绩才显示分布' : 'Need 5+ solves to chart distribution'}
+      </div>
     );
   }
 

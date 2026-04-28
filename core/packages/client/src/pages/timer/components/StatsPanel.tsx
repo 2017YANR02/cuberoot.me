@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { Solve, EventId } from '../types';
 import { summarize, subXBreakdown, eventDefaultFormat, formatPrimary, formatBestPrimary, averageOfN, bestAverageOfN, formatMs } from '../stats';
 import { useSettings } from '../settings';
@@ -17,8 +18,14 @@ function primaryLabel(kind: 'ao5' | 'mo3' | 'bo3' | 'single', isZh: boolean): st
 
 const STANDARD_AOS = new Set([5, 12, 50, 100, 1000]);
 
+/** A row's value is "empty" if it's a dash placeholder. */
+function isEmptyVal(v: string): boolean {
+  return v === '-' || v === '—' || v === '- / -';
+}
+
 export default function StatsPanel({ solves, isZh, event }: Props) {
   const settings = useSettings();
+  const [expanded, setExpanded] = useState(false);
   const s = summarize(solves);
   const subX = subXBreakdown(solves);
   const customAos = (settings.customAoWindows ?? []).filter(n => !STANDARD_AOS.has(n));
@@ -72,14 +79,44 @@ export default function StatsPanel({ solves, isZh, event }: Props) {
           <span style={{ fontWeight: 600, opacity: primaryBest === '-' ? 0.4 : 1 }}>{primaryBest}</span>
         </div>
       </div>
-      <div className="stats-grid">
-        {rows.map(r => (
-          <div className="row" key={r.lbl}>
-            <span className="lbl">{r.lbl}</span>
-            <span className={`val ${r.val === '-' || r.val === '—' ? 'muted' : ''}`}>{r.val}</span>
-          </div>
-        ))}
-      </div>
+      {(() => {
+        // Compact mode: if fewer than 4 rows have non-empty values, only show
+        // populated rows + Count + Best (always pin those two), with a
+        // "Show all" toggle to reveal the full table. Once the user has Ao5
+        // / Mo3 / etc., the full table renders by default.
+        const populatedCount = rows.reduce((n, r) => n + (isEmptyVal(r.val) ? 0 : 1), 0);
+        const compact = populatedCount < 4 && !expanded;
+        const PIN = new Set([
+          isZh ? '总数' : 'Count',
+          isZh ? '最佳' : 'Best',
+        ]);
+        const visible = compact
+          ? rows.filter(r => PIN.has(r.lbl) || !isEmptyVal(r.val))
+          : rows;
+        return (
+          <>
+            <div className="stats-grid">
+              {visible.map(r => (
+                <div className="row" key={r.lbl}>
+                  <span className="lbl">{r.lbl}</span>
+                  <span className={`val ${isEmptyVal(r.val) ? 'muted' : ''}`}>{r.val}</span>
+                </div>
+              ))}
+            </div>
+            {populatedCount < 4 && (
+              <button
+                type="button"
+                className="stats-expand-toggle"
+                onClick={() => setExpanded(e => !e)}
+              >
+                {expanded
+                  ? (isZh ? '收起' : 'Hide extras')
+                  : (isZh ? '显示全部统计' : 'Show all averages')}
+              </button>
+            )}
+          </>
+        );
+      })()}
       {subX.length > 0 && (
         <>
           <h3 style={{ marginTop: 12 }}>{isZh ? '阈值占比' : 'Sub-X'}</h3>

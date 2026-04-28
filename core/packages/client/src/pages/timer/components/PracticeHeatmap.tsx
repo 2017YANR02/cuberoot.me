@@ -122,6 +122,10 @@ export default function PracticeHeatmap({
 }: PracticeHeatmapProps) {
   const nowYear = new Date().getFullYear();
   const [targetYear, setTargetYear] = useState<number>(year ?? nowYear);
+  // Sparse-mode: <7 total solves → only the streak line is shown by default.
+  // The user can still expand the calendar via "Show calendar".
+  const [calendarExpanded, setCalendarExpanded] = useState<boolean>(false);
+  const sparse = solves.length < 7;
 
   const availableYears = useMemo(() => {
     const set = new Set<number>();
@@ -342,6 +346,8 @@ export default function PracticeHeatmap({
     return `${label} · ${solvesPart} · ${bestPart} · ${avgPart}`;
   };
 
+  const showCalendar = !sparse || calendarExpanded;
+
   return (
     <div className={`tc-heatmap ${className ?? ''}`.trim()}>
       <div className="tc-heatmap-header">
@@ -354,32 +360,45 @@ export default function PracticeHeatmap({
             <Flame size={11} aria-hidden />
             <span>{streakText}</span>
           </span>
+          {sparse && (
+            <button
+              type="button"
+              className="tc-heatmap-expand-btn"
+              onClick={() => setCalendarExpanded(v => !v)}
+            >
+              {calendarExpanded
+                ? (isZh ? '收起日历' : 'Hide calendar')
+                : (isZh ? '展开日历' : 'Show calendar')}
+            </button>
+          )}
         </div>
-        <div className="tc-heatmap-year-nav">
-          <button
-            type="button"
-            className="tc-heatmap-year-btn"
-            onClick={goOlder}
-            disabled={!canOlder}
-            aria-label={prevLabel}
-            title={prevLabel}
-          >
-            ◀
-          </button>
-          <span className="tc-heatmap-year-label">{targetYear}</span>
-          <button
-            type="button"
-            className="tc-heatmap-year-btn"
-            onClick={goNewer}
-            disabled={!canNewer}
-            aria-label={nextLabel}
-            title={nextLabel}
-          >
-            ▶
-          </button>
-        </div>
+        {showCalendar && (
+          <div className="tc-heatmap-year-nav">
+            <button
+              type="button"
+              className="tc-heatmap-year-btn"
+              onClick={goOlder}
+              disabled={!canOlder}
+              aria-label={prevLabel}
+              title={prevLabel}
+            >
+              ◀
+            </button>
+            <span className="tc-heatmap-year-label">{targetYear}</span>
+            <button
+              type="button"
+              className="tc-heatmap-year-btn"
+              onClick={goNewer}
+              disabled={!canNewer}
+              aria-label={nextLabel}
+              title={nextLabel}
+            >
+              ▶
+            </button>
+          </div>
+        )}
       </div>
-      {total === 0 ? (
+      {!showCalendar ? null : total === 0 ? (
         <div className="tc-heatmap-empty">{emptyLabel}</div>
       ) : (
         <svg
