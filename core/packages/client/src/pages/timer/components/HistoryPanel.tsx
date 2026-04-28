@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { Star, X, GitCompare, ChevronDown, ChevronUp, CheckSquare, Trash2 } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Star, X, GitCompare, ChevronDown, ChevronUp, CheckSquare, Trash2, MoreVertical } from 'lucide-react';
 import type { Solve, Penalty } from '../types';
 import { effectiveMs } from '../types';
 import { formatMs, pbSingleIndex } from '../stats';
@@ -89,6 +89,9 @@ function parseDateEnd(input: string): number | null {
 
 const ALL_PENALTIES: Penalty[] = ['ok', '+2', 'DNF'];
 
+const MOBILE_QUERY = '(max-width: 480px)';
+const MOBILE_TAG_CAP = 2;
+
 export default function HistoryPanel({ solves, isZh, onRowClick, onBulkDelete }: Props) {
   const [query, setQuery] = useState('');
   const [compareMode, setCompareMode] = useState(false);
@@ -105,6 +108,39 @@ export default function HistoryPanel({ solves, isZh, onRowClick, onBulkDelete }:
   // hidden via filters stays selected).
   const [selectMode, setSelectMode] = useState(false);
   const [bulkSelected, setBulkSelected] = useState<Set<string>>(new Set());
+
+  // Mobile detection — used to compress header (overflow menu instead of two
+  // standalone toggle buttons), shrink search placeholder, and cap per-row tag
+  // chips. Tracked via matchMedia so it updates on resize / orientation.
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
+    return window.matchMedia(MOBILE_QUERY).matches;
+  });
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
+    const mql = window.matchMedia(MOBILE_QUERY);
+    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    // Safari < 14 only supports addListener.
+    if (typeof mql.addEventListener === 'function') {
+      mql.addEventListener('change', onChange);
+      return () => mql.removeEventListener('change', onChange);
+    }
+    mql.addListener(onChange);
+    return () => mql.removeListener(onChange);
+  }, []);
+
+  // Mobile-only overflow menu (Compare / Select).
+  const [actionsOpen, setActionsOpen] = useState(false);
+  const actionsRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!actionsOpen) return;
+    const onDocClick = (e: MouseEvent) => {
+      if (!actionsRef.current) return;
+      if (!actionsRef.current.contains(e.target as Node)) setActionsOpen(false);
+    };
+    document.addEventListener('mousedown', onDocClick);
+    return () => document.removeEventListener('mousedown', onDocClick);
+  }, [actionsOpen]);
 
   // Structured filters
   const [filtersExpanded, setFiltersExpanded] = useState(false);
@@ -389,29 +425,31 @@ export default function HistoryPanel({ solves, isZh, onRowClick, onBulkDelete }:
       <div className="history-header">
         <span>{isZh ? '历史' : 'History'}</span>
         <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button
-            type="button"
-            onClick={toggleCompareMode}
-            title={isZh ? '对比两次成绩' : 'Compare two solves'}
-            aria-pressed={compareMode}
-            style={{
-              background: compareMode ? '#2a3d4d' : 'transparent',
-              border: '1px solid #333',
-              color: compareMode ? '#cde' : '#888',
-              borderColor: compareMode ? '#4d7a99' : '#333',
-              borderRadius: 4,
-              padding: '2px 6px',
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 4,
-              fontSize: 11,
-            }}
-          >
-            <GitCompare size={12} />
-            {isZh ? '对比' : 'Compare'}
-          </button>
-          {onBulkDelete && (
+          {!isMobile && (
+            <button
+              type="button"
+              onClick={toggleCompareMode}
+              title={isZh ? '对比两次成绩' : 'Compare two solves'}
+              aria-pressed={compareMode}
+              style={{
+                background: compareMode ? '#2a3d4d' : 'transparent',
+                border: '1px solid #333',
+                color: compareMode ? '#cde' : '#888',
+                borderColor: compareMode ? '#4d7a99' : '#333',
+                borderRadius: 4,
+                padding: '2px 6px',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                fontSize: 11,
+              }}
+            >
+              <GitCompare size={12} />
+              {isZh ? '对比' : 'Compare'}
+            </button>
+          )}
+          {!isMobile && onBulkDelete && (
             <button
               type="button"
               onClick={toggleSelectMode}
@@ -434,6 +472,104 @@ export default function HistoryPanel({ solves, isZh, onRowClick, onBulkDelete }:
               {isZh ? '选择' : 'Select'}
             </button>
           )}
+          {isMobile && (
+            <div ref={actionsRef} style={{ position: 'relative' }}>
+              <button
+                type="button"
+                onClick={() => setActionsOpen(v => !v)}
+                title={isZh ? '更多操作' : 'More actions'}
+                aria-haspopup="menu"
+                aria-expanded={actionsOpen}
+                aria-label={isZh ? '更多操作' : 'More actions'}
+                style={{
+                  background: (compareMode || selectMode) ? '#2a3d4d' : 'transparent',
+                  border: '1px solid ' + ((compareMode || selectMode) ? '#4d7a99' : '#333'),
+                  color: (compareMode || selectMode) ? '#cde' : '#aaa',
+                  borderRadius: 4,
+                  width: 32,
+                  height: 32,
+                  minWidth: 32,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: 0,
+                }}
+              >
+                <MoreVertical size={16} />
+              </button>
+              {actionsOpen && (
+                <div
+                  role="menu"
+                  style={{
+                    position: 'absolute',
+                    top: '100%',
+                    right: 0,
+                    marginTop: 4,
+                    minWidth: 140,
+                    background: '#1a1a1f',
+                    border: '1px solid #333',
+                    borderRadius: 4,
+                    padding: 4,
+                    zIndex: 10,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+                  }}
+                >
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => { setActionsOpen(false); toggleCompareMode(); }}
+                    aria-pressed={compareMode}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      width: '100%',
+                      minHeight: 36,
+                      background: compareMode ? '#2a3d4d' : 'transparent',
+                      border: 'none',
+                      color: compareMode ? '#cde' : '#ccc',
+                      borderRadius: 3,
+                      padding: '8px 10px',
+                      cursor: 'pointer',
+                      fontSize: 13,
+                      textAlign: 'left',
+                    }}
+                  >
+                    <GitCompare size={14} />
+                    {isZh ? '对比' : 'Compare'}
+                  </button>
+                  {onBulkDelete && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => { setActionsOpen(false); toggleSelectMode(); }}
+                      aria-pressed={selectMode}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        width: '100%',
+                        minHeight: 36,
+                        background: selectMode ? '#3d2a2a' : 'transparent',
+                        border: 'none',
+                        color: selectMode ? '#edc' : '#ccc',
+                        borderRadius: 3,
+                        padding: '8px 10px',
+                        cursor: 'pointer',
+                        fontSize: 13,
+                        textAlign: 'left',
+                        marginTop: 2,
+                      }}
+                    >
+                      <CheckSquare size={14} />
+                      {isZh ? '选择' : 'Select'}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
           <span>{solves.length}</span>
         </span>
       </div>
@@ -443,7 +579,11 @@ export default function HistoryPanel({ solves, isZh, onRowClick, onBulkDelete }:
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={isZh ? '搜索注释或打乱…' : 'Search comment or scramble…'}
+            placeholder={
+              isMobile
+                ? (isZh ? '搜索…' : 'Search…')
+                : (isZh ? '搜索注释或打乱…' : 'Search comment or scramble…')
+            }
             aria-label={isZh ? '搜索注释或打乱' : 'Search comment or scramble'}
           />
           {query && (
@@ -483,11 +623,13 @@ export default function HistoryPanel({ solves, isZh, onRowClick, onBulkDelete }:
               display: 'inline-flex',
               alignItems: 'center',
               gap: 4,
-              fontSize: 11,
-              padding: '2px 0',
+              fontSize: isMobile ? 13 : 11,
+              padding: isMobile ? '10px 4px' : '2px 0',
+              minHeight: isMobile ? 44 : undefined,
+              marginLeft: isMobile ? -4 : 0,
             }}
           >
-            {filtersExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+            {filtersExpanded ? <ChevronUp size={isMobile ? 16 : 12} /> : <ChevronDown size={isMobile ? 16 : 12} />}
             {isZh ? '筛选' : 'Filters'}
           </button>
           {activeFilterCount > 0 && (
@@ -823,9 +965,18 @@ export default function HistoryPanel({ solves, isZh, onRowClick, onBulkDelete }:
                 {(() => {
                   const ts = tagsByid.get(s.id);
                   if (!ts || ts.length === 0) return null;
+                  const cap = isMobile ? MOBILE_TAG_CAP : ts.length;
+                  const shown = ts.slice(0, cap);
+                  const overflow = ts.length - shown.length;
+                  const fullList = ts
+                    .map(tid => isZh ? TAG_DEFS[tid].labelZh : TAG_DEFS[tid].labelEn)
+                    .join(' · ');
                   return (
-                    <span style={{ display: 'inline-flex', gap: 3, marginLeft: 6, flexWrap: 'wrap', verticalAlign: 'middle' }}>
-                      {ts.map(tid => {
+                    <span
+                      style={{ display: 'inline-flex', gap: 3, marginLeft: 6, flexWrap: 'wrap', verticalAlign: 'middle' }}
+                      title={overflow > 0 ? fullList : undefined}
+                    >
+                      {shown.map(tid => {
                         const def = TAG_DEFS[tid];
                         return (
                           <span key={tid} style={tagChipStyle(def.tone)}>
@@ -833,6 +984,11 @@ export default function HistoryPanel({ solves, isZh, onRowClick, onBulkDelete }:
                           </span>
                         );
                       })}
+                      {overflow > 0 && (
+                        <span style={tagChipStyle('muted')} title={fullList}>
+                          +{overflow}
+                        </span>
+                      )}
                     </span>
                   );
                 })()}
