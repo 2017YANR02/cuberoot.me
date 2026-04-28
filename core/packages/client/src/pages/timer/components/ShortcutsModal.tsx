@@ -1,8 +1,23 @@
-import { useEffect, useId, useRef } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 
 interface Props {
   isZh: boolean;
   onClose: () => void;
+}
+
+/** True iff viewport ≤ 480px. Drives the mobile layout overrides below. */
+function useIsMobile(): boolean {
+  const [isMobile, setIsMobile] = useState<boolean>(() =>
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 480px)').matches,
+  );
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(max-width: 480px)');
+    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+  return isMobile;
 }
 
 interface ShortcutRow {
@@ -43,6 +58,7 @@ const NAV: ShortcutRow[] = [
 export default function ShortcutsModal({ isZh, onClose }: Props) {
   const titleId = useId();
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -57,38 +73,68 @@ export default function ShortcutsModal({ isZh, onClose }: Props) {
     closeBtnRef.current?.focus();
   }, []);
 
+  // --- Mobile inline overrides (≤480px) ---
+  // Overlay: shrink padding so the modal can take the full viewport width.
+  // Modal: full-width, dvh-capped, tighter padding so the table fits.
+  // Close button: ≥44px tap target, stretch to row width.
+  const overlayStyle = isMobile ? { padding: 8 } : undefined;
+  const modalStyle = isMobile
+    ? { padding: 14, maxWidth: '100%', maxHeight: '90dvh' }
+    : undefined;
+  const closeBtnStyle = isMobile
+    ? ({ minHeight: 44, padding: '10px 14px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' })
+    : undefined;
+  const actionsStyle = isMobile
+    ? ({ flexDirection: 'column' as const, alignItems: 'stretch' as const })
+    : undefined;
+
   return (
-    <div className="timer-modal-overlay" onClick={onClose}>
+    <div className="timer-modal-overlay" style={overlayStyle} onClick={onClose}>
       <div
         className="timer-modal shortcuts-modal"
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
+        style={modalStyle}
         onClick={(e) => e.stopPropagation()}
       >
         <h2 id={titleId}>{isZh ? '快捷键' : 'Shortcuts'}</h2>
 
-        <Section title={isZh ? '计时' : 'Timing'} rows={TIMING} isZh={isZh} />
-        <Section title={isZh ? '历史' : 'History'} rows={HISTORY} isZh={isZh} />
-        <Section title={isZh ? 'CFOP 分阶段（设置里开启）' : 'CFOP splits (enable in settings)'} rows={MULTISTAGE} isZh={isZh} />
-        <Section title={isZh ? '盲拧（设置里开启）' : 'BLD (enable in settings)'} rows={BLD} isZh={isZh} />
-        <Section title={isZh ? '导航' : 'Navigation'} rows={NAV} isZh={isZh} />
+        {isMobile && (
+          <div className="modal-section" style={{ fontSize: 12, color: '#888' }}>
+            {isZh
+              ? '提示：触屏设备无键盘快捷键；接外接键盘后可用以下绑定。'
+              : 'Note: shortcuts apply when an external keyboard is attached.'}
+          </div>
+        )}
 
-        <div className="modal-actions">
-          <button ref={closeBtnRef} className="primary" onClick={onClose}>{isZh ? '关闭' : 'Close'}</button>
+        <Section title={isZh ? '计时' : 'Timing'} rows={TIMING} isZh={isZh} isMobile={isMobile} />
+        <Section title={isZh ? '历史' : 'History'} rows={HISTORY} isZh={isZh} isMobile={isMobile} />
+        <Section title={isZh ? 'CFOP 分阶段（设置里开启）' : 'CFOP splits (enable in settings)'} rows={MULTISTAGE} isZh={isZh} isMobile={isMobile} />
+        <Section title={isZh ? '盲拧（设置里开启）' : 'BLD (enable in settings)'} rows={BLD} isZh={isZh} isMobile={isMobile} />
+        <Section title={isZh ? '导航' : 'Navigation'} rows={NAV} isZh={isZh} isMobile={isMobile} />
+
+        <div className="modal-actions" style={actionsStyle}>
+          <button ref={closeBtnRef} className="primary" style={closeBtnStyle} onClick={onClose}>{isZh ? '关闭' : 'Close'}</button>
         </div>
       </div>
     </div>
   );
 }
 
-function Section({ title, rows, isZh }: { title: string; rows: ShortcutRow[]; isZh: boolean }) {
+function Section({ title, rows, isZh, isMobile }: { title: string; rows: ShortcutRow[]; isZh: boolean; isMobile: boolean }) {
+  // On mobile, tighten section padding and force the desc to wrap below the keys.
+  const sectionStyle = isMobile ? { marginBottom: 10 } : undefined;
+  const rowStyle = isMobile
+    ? ({ display: 'flex', flexDirection: 'column' as const, gap: 2, padding: '6px 0', borderBottom: '1px solid #1f1f23' })
+    : undefined;
+  const descStyle = isMobile ? { fontSize: 13, lineHeight: 1.4, color: '#bbb' } : undefined;
   return (
-    <div className="modal-section">
+    <div className="modal-section" style={sectionStyle}>
       <h3 className="settings-h3">{title}</h3>
       <div className="shortcut-rows">
         {rows.map((r, i) => (
-          <div className="shortcut-row" key={i}>
+          <div className="shortcut-row" key={i} style={rowStyle}>
             <div className="shortcut-keys">
               {r.keys.map((k, j) => (
                 <span key={j}>
@@ -97,7 +143,7 @@ function Section({ title, rows, isZh }: { title: string; rows: ShortcutRow[]; is
                 </span>
               ))}
             </div>
-            <div className="shortcut-desc">{isZh ? r.zh : r.en}</div>
+            <div className="shortcut-desc" style={descStyle}>{isZh ? r.zh : r.en}</div>
           </div>
         ))}
       </div>
