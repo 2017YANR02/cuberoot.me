@@ -3,16 +3,12 @@
  *
  * Picks the appropriate renderer for an event:
  *
- *   222/333/444/555/666/777            → CubeNet (NxN)
+ *   222/333/444/555/666/777            → CubeNet (NxN, our own SVG)
  *   333oh/333bld/333ni/333fm/333mr     → CubeNet 3×3
  *   444bld/555bld/666bld/777bld        → CubeNet matching size (BLD scrambles
  *                                        contain the same NxN tokens + Rw/Uw
  *                                        orientation moves; we apply them all)
- *   pyra                               → PyramidNet (stub)
- *   skewb                              → SkewbNet (stub)
- *   sq1                                → Sq1Net (placeholder)
- *   mega                               → MegaminxNet (stub)
- *   clock                              → ClockFace (stub)
+ *   pyra / skewb / sq1 / mega / clock  → CubingPreview (cubing.js, 2D)
  *   r3 / r4 / r5                       → CubeNet 3×3 of the relay's first
  *                                        scramble (best-effort)
  *   cross/f2l/ll/oll/pll/coll/cmll/zbll/eg1/eg2 → CubeNet 3×3
@@ -24,12 +20,8 @@
 import type { JSX } from 'react';
 import type { EventId } from '../types.ts';
 import CubeNet from './CubeNet.tsx';
+import CubingPreview from './CubingPreview.tsx';
 import { nxnSizeForEvent } from './colors.ts';
-import PyramidNet from './PyramidNet.tsx';
-import SkewbNet from './SkewbNet.tsx';
-import MegaminxNet from './MegaminxNet.tsx';
-import Sq1Net from './Sq1Net.tsx';
-import ClockFace from './ClockFace.tsx';
 
 interface CubePreviewProps {
   event: EventId;
@@ -37,7 +29,7 @@ interface CubePreviewProps {
   size?: number;
   className?: string;
   /** Optional override of the WCA color scheme. Currently passed through to
-   * the NxN renderer; other puzzles ignore it (they use solved-state stubs). */
+   * the NxN renderer; cubing.js puzzles use their own (WCA-correct) palette. */
   colors?: Partial<Record<'U'|'D'|'F'|'B'|'L'|'R', string>>;
 }
 
@@ -75,18 +67,11 @@ function NoPreview({ size = 14, className }: { size?: number; className?: string
  * Used by relay events whose scramble contains multiple sub-scrambles.
  */
 function firstNxnScramble(s: string): string {
-  // Relay scrambles in cstimer typically look like:
-  //   "2x2: U R F U2..."
-  //   "3x3: R U R'..."
-  // We just grab everything; the parser ignores tokens it doesn't know.
-  // For 3x3-only relay rendering we strip lines that obviously belong to
-  // bigger cubes and keep the 3x3 line if labelled. Best-effort heuristic.
   const lines = s.split(/\r?\n/);
   for (const line of lines) {
     const m = line.match(/^\s*3x3\s*[:.-]?\s*(.+)$/i);
     if (m) return m[1];
   }
-  // Otherwise fall back to the whole scramble (parser is forgiving).
   return s;
 }
 
@@ -102,15 +87,11 @@ export default function CubePreview(props: CubePreviewProps): JSX.Element {
 
   switch (event) {
     case 'pyra':
-      return <PyramidNet scramble={scramble} size={size} className={className} />;
     case 'skewb':
-      return <SkewbNet scramble={scramble} size={size} className={className} />;
     case 'sq1':
-      return <Sq1Net scramble={scramble} size={size} className={className} />;
     case 'mega':
-      return <MegaminxNet scramble={scramble} size={size} className={className} />;
     case 'clock':
-      return <ClockFace scramble={scramble} size={size} className={className} />;
+      return <CubingPreview event={event} scramble={scramble} size={size} className={className} />;
     case 'r3':
     case 'r4':
     case 'r5':
