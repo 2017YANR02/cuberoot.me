@@ -80,6 +80,29 @@
   margin-bottom: 6px;
 }
 
+/* Mobile accordion header — full-width tap target, ≥44px tall.
+ * On desktop (>768px) AccordionSection passes collapsible=false so the
+ * header isn't rendered at all; these rules only apply when the header
+ * exists. The reconstruct-section-title-inline variant kills its bottom
+ * margin so the chevron + title sit cleanly on one row. */
+.reconstruct-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0 0 6px 0;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+}
+.reconstruct-section-title-inline {
+  margin-bottom: 0;
+}
+
 .reconstruct-empty {
   font-size: 13px;
   color: #888;
@@ -350,6 +373,27 @@
   background: #2a3d4d;
   border-color: #3a5366;
   color: #a8cde0;
+}
+
+@media (max-width: 768px) {
+  /* Accordion sections only exist on mobile; bump the header to a comfy
+   * 44px touch target and pad the row so the chevron isn't flush left. */
+  .reconstruct-section-header {
+    min-height: 44px;
+    padding: 4px 8px;
+    margin-bottom: 4px;
+    border-radius: 4px;
+  }
+  .reconstruct-section-header:hover,
+  .reconstruct-section-header:active {
+    background: #1a1a1d;
+  }
+  /* The 3D playback toggle is a sibling kind of accordion — match height. */
+  .reconstruct-playback-toggle {
+    min-height: 44px;
+    width: 100%;
+    justify-content: flex-start;
+  }
 }
 
 @media (max-width: 480px) {
