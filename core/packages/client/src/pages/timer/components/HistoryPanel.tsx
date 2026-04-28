@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
-import { Star, X } from 'lucide-react';
+import { Star, X, GitCompare } from 'lucide-react';
 import type { Solve } from '../types';
 import { effectiveMs } from '../types';
 import { formatMs, pbSingleIndex } from '../stats';
+import CompareSolvesModal from './CompareSolvesModal';
 
 interface Props {
   solves: Solve[];
@@ -43,6 +44,14 @@ function bestWindowIndices(
 
 export default function HistoryPanel({ solves, isZh, onRowClick }: Props) {
   const [query, setQuery] = useState('');
+  const [compareMode, setCompareMode] = useState(false);
+  // Selected solve ids in click-order (oldest first). When a 3rd id is clicked
+  // we drop the oldest (index 0) and keep the most recent two — matches the
+  // spec'd "swap older selection" behavior.
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [compareError, setCompareError] = useState<string | null>(null);
+  const [comparePair, setComparePair] = useState<[Solve, Solve] | null>(null);
+
   const reversed = [...solves].reverse(); // newest at top
   const pbIdx = pbSingleIndex(solves);
 
@@ -72,11 +81,82 @@ export default function HistoryPanel({ solves, isZh, onRowClick }: Props) {
 
   const matchCount = filteredReversed.length;
 
+  const exitCompareMode = () => {
+    setCompareMode(false);
+    setSelectedIds([]);
+    setCompareError(null);
+  };
+
+  const toggleCompareMode = () => {
+    if (compareMode) {
+      exitCompareMode();
+    } else {
+      setCompareMode(true);
+      setSelectedIds([]);
+      setCompareError(null);
+    }
+  };
+
+  /** Compare-mode row click: select / deselect / swap-older. */
+  const handleSelectInCompare = (s: Solve) => {
+    setCompareError(null);
+    setSelectedIds(prev => {
+      // Click an already-selected solve → deselect it.
+      if (prev.includes(s.id)) return prev.filter(id => id !== s.id);
+      // 3rd click → drop oldest, append new.
+      if (prev.length >= 2) return [prev[1], s.id];
+      return [...prev, s.id];
+    });
+  };
+
+  const openCompareModal = () => {
+    if (selectedIds.length !== 2) return;
+    if (selectedIds[0] === selectedIds[1]) {
+      setCompareError(isZh ? '请选择两个不同的成绩' : 'Pick two different solves');
+      return;
+    }
+    const a = solves.find(x => x.id === selectedIds[0]);
+    const b = solves.find(x => x.id === selectedIds[1]);
+    if (!a || !b) {
+      setCompareError(isZh ? '成绩未找到' : 'Solve not found');
+      return;
+    }
+    setComparePair([a, b]);
+  };
+
+  const closeCompareModal = () => {
+    setComparePair(null);
+  };
+
   return (
     <div className="history-panel">
       <div className="history-header">
         <span>{isZh ? '历史' : 'History'}</span>
-        <span>{solves.length}</span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button
+            type="button"
+            onClick={toggleCompareMode}
+            title={isZh ? '对比两次成绩' : 'Compare two solves'}
+            aria-pressed={compareMode}
+            style={{
+              background: compareMode ? '#2a3d4d' : 'transparent',
+              border: '1px solid #333',
+              color: compareMode ? '#cde' : '#888',
+              borderColor: compareMode ? '#4d7a99' : '#333',
+              borderRadius: 4,
+              padding: '2px 6px',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+              fontSize: 11,
+            }}
+          >
+            <GitCompare size={12} />
+            {isZh ? '对比' : 'Compare'}
+          </button>
+          <span>{solves.length}</span>
+        </span>
       </div>
       <div className="history-search">
         <div className="history-search-input-wrap">
@@ -104,6 +184,24 @@ export default function HistoryPanel({ solves, isZh, onRowClick }: Props) {
           </span>
         )}
       </div>
+      {compareMode && (
+        <div
+          style={{
+            padding: '6px 14px',
+            fontSize: 11,
+            color: '#aaa',
+            borderBottom: '1px solid #1f1f23',
+            background: '#15151a',
+          }}
+        >
+          {isZh
+            ? `选择 2 个成绩进行对比 (已选 ${selectedIds.length}/2)`
+            : `Pick 2 solves to compare (${selectedIds.length}/2 selected)`}
+          {compareError && (
+            <div style={{ color: '#d97a7a', marginTop: 2 }}>{compareError}</div>
+          )}
+        </div>
+      )}
       <div className="history-list">
         {reversed.length === 0 && (
           <div className="history-empty">
@@ -123,6 +221,7 @@ export default function HistoryPanel({ solves, isZh, onRowClick }: Props) {
           const inAo12 = pbAo12Win !== null && realIdx >= pbAo12Win.start && realIdx <= pbAo12Win.end;
           const isAo5End = pbAo5Win !== null && realIdx === pbAo5Win.end;
           const isAo12End = pbAo12Win !== null && realIdx === pbAo12Win.end;
+          const isSelected = compareMode && selectedIds.includes(s.id);
 
           const classNames = ['history-row'];
           if (isPB) classNames.push('is-pb', 'pb-single');
@@ -134,13 +233,41 @@ export default function HistoryPanel({ solves, isZh, onRowClick }: Props) {
           if (isAo12End) tooltips.push(isZh ? 'PB ao12 此处达成' : 'PB ao12 ends here');
           const rowTitle = tooltips.length ? tooltips.join(' · ') : undefined;
 
+          const rowStyle: React.CSSProperties = isSelected
+            ? { background: 'rgba(77, 122, 153, 0.18)', boxShadow: 'inset 2px 0 0 #4d7a99' }
+            : {};
+
+          const handleRowClick = () => {
+            if (compareMode) {
+              handleSelectInCompare(s);
+            } else {
+              onRowClick(s, realIdx);
+            }
+          };
+
           return (
             <div
               className={classNames.join(' ')}
               key={s.id}
               title={rowTitle}
-              onClick={() => onRowClick(s, realIdx)}
+              style={rowStyle}
+              onClick={handleRowClick}
             >
+              {compareMode && (
+                <div
+                  aria-hidden="true"
+                  style={{
+                    width: 14,
+                    height: 14,
+                    borderRadius: '50%',
+                    border: '1.5px solid ' + (isSelected ? '#4d7a99' : '#444'),
+                    background: isSelected ? '#4d7a99' : 'transparent',
+                    marginLeft: -6,
+                    marginRight: 2,
+                    flexShrink: 0,
+                  }}
+                />
+              )}
               <div className="idx">{realIdx + 1}</div>
               <div className="time">
                 {isPB && (
@@ -155,15 +282,73 @@ export default function HistoryPanel({ solves, isZh, onRowClick }: Props) {
                 {s.penalty === 'DNF' && <span className="penalty-flag">DNF</span>}
                 {s.comment && <span className="comment-flag" title={s.comment}>·</span>}
               </div>
-              <div className="actions">
-                <button onClick={(e) => { e.stopPropagation(); onRowClick(s, realIdx); }}>
-                  {isZh ? '详情' : 'Info'}
-                </button>
-              </div>
+              {!compareMode && (
+                <div className="actions">
+                  <button onClick={(e) => { e.stopPropagation(); onRowClick(s, realIdx); }}>
+                    {isZh ? '详情' : 'Info'}
+                  </button>
+                </div>
+              )}
             </div>
           );
         })}
       </div>
+      {compareMode && (
+        <div
+          style={{
+            padding: '8px 14px',
+            borderTop: '1px solid #1f1f23',
+            display: 'flex',
+            gap: 8,
+            justifyContent: 'flex-end',
+            background: '#15151a',
+          }}
+        >
+          <button
+            type="button"
+            onClick={exitCompareMode}
+            style={{
+              background: 'transparent',
+              border: '1px solid #444',
+              color: '#aaa',
+              borderRadius: 4,
+              padding: '4px 10px',
+              fontSize: 12,
+              cursor: 'pointer',
+            }}
+          >
+            {isZh ? '取消' : 'Cancel'}
+          </button>
+          <button
+            type="button"
+            onClick={openCompareModal}
+            disabled={selectedIds.length !== 2}
+            style={{
+              background: selectedIds.length === 2 ? '#2a3d4d' : '#1a1a1d',
+              border: '1px solid ' + (selectedIds.length === 2 ? '#4d7a99' : '#333'),
+              color: selectedIds.length === 2 ? '#cde' : '#555',
+              borderRadius: 4,
+              padding: '4px 10px',
+              fontSize: 12,
+              cursor: selectedIds.length === 2 ? 'pointer' : 'not-allowed',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+            }}
+          >
+            <GitCompare size={12} />
+            {isZh ? '对比这 2 个' : 'Compare these 2'}
+          </button>
+        </div>
+      )}
+      {comparePair && (
+        <CompareSolvesModal
+          solveA={comparePair[0]}
+          solveB={comparePair[1]}
+          isZh={isZh}
+          onClose={closeCompareModal}
+        />
+      )}
     </div>
   );
 }
