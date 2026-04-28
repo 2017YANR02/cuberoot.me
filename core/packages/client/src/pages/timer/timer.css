@@ -378,6 +378,7 @@
 .timer-root.ui-hidden .timer-topbar,
 .timer-root.ui-hidden .scramble-strip,
 .timer-root.ui-hidden .timer-cube-preview,
+.timer-root.ui-hidden .timer-cube-preview-wrap,
 .timer-root.ui-hidden .trainer-subset-row,
 .timer-root.ui-hidden .timer-bottom,
 .timer-root.ui-hidden .timer-heatmap-row,
@@ -1019,12 +1020,43 @@
 }
 
 /* --- Cube preview placement on main page --- */
+.timer-cube-preview-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #131316;
+  border-bottom: 1px solid #1f1f23;
+  flex: 0 0 auto;
+}
+.timer-cube-preview-wrap.hidden {
+  /* Header (toggle button) still shows; body is unmounted. Keep border so
+     the section divider stays visually anchored. */
+  padding: 2px 0;
+}
+.cube-preview-toggle {
+  display: none; /* Desktop: never; mobile media-query enables. */
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 0;
+  color: #888;
+  font-size: 11px;
+  padding: 4px 10px;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+}
+.cube-preview-toggle:hover { color: #ccc; }
+:root[data-timer-theme="light"] .cube-preview-toggle { color: #888; }
+:root[data-timer-theme="light"] .cube-preview-toggle:hover { color: #333; }
+:root[data-timer-theme="light"] .timer-cube-preview-wrap {
+  background: #fafafb;
+  border-bottom-color: #e0e0e3;
+}
+
 .timer-cube-preview {
   display: flex;
   justify-content: center;
   padding: 4px 0 8px;
-  background: #131316;
-  border-bottom: 1px solid #1f1f23;
   flex: 0 0 auto;
 }
 .timer-cube-preview svg { max-width: 100%; height: auto; max-height: 16dvh; }
@@ -1186,10 +1218,87 @@
    Live cube mirror is dropped — at this width it's noise, not signal. */
 @media (max-width: 480px) {
   /* Drop secondary toolbar buttons that are also exposed via More menu. */
-  .timer-topbar .tb-mobile-hide { display: none; }
+  .timer-topbar .tb-mobile-hide { display: none !important; }
   /* Live smart-cube state: hide entirely on phones. The user can still see
      cube state via the main scramble-driven CubePreview above the timer. */
   .timer-live-cube { display: none; }
+
+  /* Cube preview: show the hide/show toggle + cap the SVG. The wrap acts
+     as a small accordion: when .hidden, the toggle is the only content. */
+  .cube-preview-toggle { display: inline-flex; }
+  .timer-cube-preview { padding: 2px 0 6px; }
+  .timer-cube-preview svg {
+    max-height: 11dvh;
+    max-width: 60vw;
+  }
+
+  /* Bottom sections: accordion mode. The grid layout from .timer-bottom
+     no longer applies — each section is a full-width row. */
+  .timer-bottom.is-mobile {
+    display: flex;
+    flex-direction: column;
+    grid-template-columns: none;
+    grid-template-rows: none;
+    max-height: none;
+    overflow: visible;
+  }
+  .mobile-collapse {
+    border-bottom: 1px solid #1f1f23;
+  }
+  .mobile-collapse:last-child { border-bottom: 0; }
+  .mobile-collapse-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    border: 0;
+    padding: 10px 14px;
+    color: #aaa;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    text-align: left;
+  }
+  .mobile-collapse-header:hover { background: #161619; }
+  .mobile-collapse-title { flex: 1; }
+  .mobile-collapse-badge {
+    background: #1a1a1d;
+    border: 1px solid #2a2a2e;
+    border-radius: 999px;
+    padding: 1px 8px;
+    color: #ccc;
+    font-size: 11px;
+    letter-spacing: 0;
+    text-transform: none;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .mobile-collapse-body {
+    /* Cap each expanded section so the user never has the whole page
+       become one section. ~50dvh feels right for HISTORY which is the
+       longest of the three. */
+    max-height: 50dvh;
+    overflow-y: auto;
+  }
+  .mobile-collapse-body .stats-panel,
+  .mobile-collapse-body .case-stats-panel,
+  .mobile-collapse-body .charts-panel,
+  .mobile-collapse-body .history-panel {
+    border-right: 0;
+    /* Re-anchor padding/overflow that the grid container previously
+       handled via max-height. */
+  }
+  :root[data-timer-theme="light"] .mobile-collapse {
+    border-bottom-color: #e0e0e3;
+  }
+  :root[data-timer-theme="light"] .mobile-collapse-header { color: #555; }
+  :root[data-timer-theme="light"] .mobile-collapse-header:hover { background: #f0f0f3; }
+  :root[data-timer-theme="light"] .mobile-collapse-badge {
+    background: #fff;
+    border-color: #d0d0d4;
+    color: #444;
+  }
   /* Goal pill row: tighten padding so it doesn't push the cube preview
      further down. The pill itself stays — it's small and motivational. */
   .timer-goal-row { padding: 0 6px !important; }
@@ -1631,6 +1740,7 @@
   }
   .timer-topbar,
   .timer-cube-preview,
+  .timer-cube-preview-wrap,
   .timer-quick-actions,
   .timer-stage-splits,
   .timer-hint,
