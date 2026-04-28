@@ -8,13 +8,15 @@
  */
 
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { Link2, Layers } from 'lucide-react';
+import { Link2, Layers, ChevronDown, ChevronRight } from 'lucide-react';
 import type { Solve } from '../types';
 import { effectiveMs } from '../types';
 import { formatMs } from '../stats';
 import { sliceReconstruction } from '../reconstruct/slice';
 import { computeStageSegments } from '../reconstruct/stage_segments';
 import { encodeReplayUrl } from '../share/encode';
+import { nxnSizeForEvent } from '../cube';
+import PlaybackPanel from './PlaybackPanel';
 import './reconstruct.css';
 
 interface Props {
@@ -52,6 +54,8 @@ export default function ReconstructModal({ solve, isZh, onClose }: Props) {
   useEffect(() => { closeBtnRef.current?.focus(); }, []);
 
   const [copied, setCopied] = useState(false);
+  const [playbackExpanded, setPlaybackExpanded] = useState(false);
+  const playbackAvailable = moves.length > 0 && nxnSizeForEvent(solve.event) !== null;
   const canShare = moves.length > 0;
   const handleCopyShare = async () => {
     try {
@@ -120,6 +124,35 @@ export default function ReconstructModal({ solve, isZh, onClose }: Props) {
 
         {stageSegs && memoMs === undefined && (
           <StageSegmentsPanel segs={stageSegs} totalMs={solve.timeMs} isZh={isZh} />
+        )}
+
+        {playbackAvailable && (
+          <div className="reconstruct-section">
+            <button
+              type="button"
+              className="reconstruct-playback-toggle"
+              onClick={() => setPlaybackExpanded(v => !v)}
+              aria-expanded={playbackExpanded}
+            >
+              {playbackExpanded
+                ? <ChevronDown size={14} />
+                : <ChevronRight size={14} />}
+              <span>
+                {playbackExpanded
+                  ? (isZh ? '3D 回放' : '3D playback')
+                  : (isZh ? '显示 3D 回放' : 'Show 3D playback')}
+              </span>
+            </button>
+            {playbackExpanded && (
+              <PlaybackPanel
+                event={solve.event}
+                scramble={solve.scramble}
+                moves={moves}
+                totalMs={solve.timeMs}
+                isZh={isZh}
+              />
+            )}
+          </div>
         )}
 
         <div className="reconstruct-section">
