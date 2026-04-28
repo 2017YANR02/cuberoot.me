@@ -1,122 +1,142 @@
-/** Square-1 scramble simulator (state-based, simplified for preview).
+/** Square-1 scramble simulator — bit-exact port of cstimer's slice/turn model.
  *
- * Model: 24 unit-slots (12 top + 12 bottom), each spanning 30° of arc.
- * A solved layer has 4 corners (each 60° = 2 slots) and 4 edges (each 30° =
- * 1 slot), in alternating C-C-E pattern around the ring.
+ * State model (mirrors cstimer's SqCubie):
+ *   - 24 piece slots indexed 0..23.
+ *       0..5   = ul (top, "back-left half" of top layer)
+ *       6..11  = ur (top, "front-right half" of top layer)
+ *       12..17 = dl (bottom, "front-left half" of bottom layer)
+ *       18..23 = dr (bottom, "back-right half" of bottom layer)
+ *     Slot 0 / slot 12 sit at angle 0 on each layer ring; index increases CW
+ *     when looking down at the puzzle from above.
+ *   - Each slot holds a piece id 0..15:
+ *       0..7  = top-set pieces  (W on outward face)
+ *       8..15 = bot-set pieces  (Y on outward face)
+ *     Even ids = edges (1 slot each). Odd ids = corners (2 adjacent slots
+ *     hold the same id; both halves move together).
+ *   - `ml` bit 0/1 tracks the slice-line orientation. Toggled on each `/`.
  *
- * Each slot stores:
- *   kind     'E'  edge piece (occupies this single slot)
- *            'CL' corner lead-half (lower-angle half of a 60° corner wedge)
- *            'CT' corner trail-half (higher-angle half)
- *   topColor 'W' or 'Y' — colour visible on the up-facing face of this slot
- *            (in solved state, top layer is all W; bottom layer all Y).
- *   sideColor 'F'|'B'|'L'|'R' — the side-band colour at the rim of this slot.
+ * Solved layout:
+ *     pieces  = [0,1,1,2,3,3, 4,5,5,6,7,7, 9,9,8,11,11,10, 13,13,12,15,15,14]
+ *     ml      = 0
  *
- * Moves we accept:
- *   `(a,b)`           rotate top by a × 30°, bottom by b × 30° (positive
- *                     means cyclic shift of the slot array forward by 1).
- *   `/`               slice: swap top[0..5] with bottom[0..5] straight,
- *                     toggling each swapped slot's topColor (W↔Y) and corner
- *                     half-type (CL↔CT) so the visual mixing matches a real
- *                     scrambled square-1.
+ *   Top:    UB UBL UBL UL UFL UFL UF UFR UFR UR UBR UBR
+ *   Bot:    DBR DBR DR DFR DFR DF DFL DFL DL DBL DBL DB
  *
- * This is a simplification — a true slice is a 180° rotation around the
- * front-back horizontal axis, which would reverse slot order within the
- * swapped half. We use the simpler "straight swap" form because the visual
- * outcome (mixed pieces, mixed W/Y on each face) is recognisably square-1
- * and the task spec explicitly allows it.
+ * Moves:
+ *   Top rotation by `t` (WCA-signed, positive = CW from above) shifts the top
+ *   array such that new[i] = old[(i + ((12 - t) mod 12)) mod 12], i.e. slot
+ *   contents move to slot+t (mod 12). Bottom rotation works the same way on
+ *   the bottom array. Slice (`/`) swaps pieces[6..11] with pieces[12..17] and
+ *   toggles `ml`. This is the exact algorithm cstimer's SqCubie.doMove uses,
+ *   just expressed on a flat array instead of packed hex words.
+ *
+ *   Note: WCA-valid Sq1 scrambles never request a top/bottom rotation that
+ *   would cut a corner, so the slice always finds a clean cut. If the
+ *   notation supplied here ever does cut a corner, the renderer falls back
+ *   to drawing the corner halves as if they were separate pieces (no crash).
  */
 
-export type SideColor = 'F' | 'B' | 'L' | 'R';
 export type FaceColor = 'W' | 'Y';
-export type SlotKind = 'E' | 'CL' | 'CT';
-
-export interface Sq1Slot {
-  kind: SlotKind;
-  topColor: FaceColor;
-  sideColor: SideColor;
-}
+export type SideColor = 'F' | 'B' | 'L' | 'R';
 
 export interface Sq1State {
-  top: Sq1Slot[];     // length 12
-  bottom: Sq1Slot[];  // length 12
+  pieces: number[]; // length 24
+  ml: 0 | 1;
 }
 
-/** Build a solved layer ring for the given face colour.
- *
- * Layout going CW from the angular start (front-right area):
- *   slot 0  CL of UFR — side F
- *   slot 1  CT of UFR — side R
- *   slot 2  E  UR     — side R
- *   slot 3  CL of UBR — side R
- *   slot 4  CT of UBR — side B
- *   slot 5  E  UB     — side B
- *   slot 6  CL of UBL — side B
- *   slot 7  CT of UBL — side L
- *   slot 8  E  UL     — side L
- *   slot 9  CL of UFL — side L
- *   slot 10 CT of UFL — side F
- *   slot 11 E  UF     — side F
- */
-function solvedLayer(face: FaceColor): Sq1Slot[] {
-  const sides: SideColor[] = ['F', 'R', 'R', 'R', 'B', 'B', 'B', 'L', 'L', 'L', 'F', 'F'];
-  const kinds: SlotKind[] = ['CL', 'CT', 'E', 'CL', 'CT', 'E', 'CL', 'CT', 'E', 'CL', 'CT', 'E'];
-  return sides.map((side, i) => ({ kind: kinds[i], topColor: face, sideColor: side }));
-}
+/** Piece id catalog. Index = piece id; value = side-sticker colors going CW
+ *  from the angular position where this piece sits in solved state. Edges
+ *  have a single colour; corners have two (first half then second half). */
+const PIECE_SIDES: SideColor[][] = [
+  ['B'],            // 0  UB
+  ['B', 'L'],       // 1  UBL
+  ['L'],            // 2  UL
+  ['L', 'F'],       // 3  UFL
+  ['F'],            // 4  UF
+  ['F', 'R'],       // 5  UFR
+  ['R'],            // 6  UR
+  ['R', 'B'],       // 7  UBR
+  ['R'],            // 8  DR
+  ['B', 'R'],       // 9  DBR
+  ['F'],            // 10 DF
+  ['R', 'F'],       // 11 DFR
+  ['L'],            // 12 DL
+  ['F', 'L'],       // 13 DFL
+  ['B'],            // 14 DB
+  ['L', 'B'],       // 15 DBL
+];
+
+const SOLVED_PIECES: number[] = [
+  // top layer (slots 0..11)
+  0, 1, 1, 2, 3, 3, 4, 5, 5, 6, 7, 7,
+  // bottom layer (slots 12..23)
+  9, 9, 8, 11, 11, 10, 13, 13, 12, 15, 15, 14,
+];
 
 export function sq1Solved(): Sq1State {
-  return { top: solvedLayer('W'), bottom: solvedLayer('Y') };
+  return { pieces: SOLVED_PIECES.slice(), ml: 0 };
 }
 
-function flipSlot(s: Sq1Slot): Sq1Slot {
-  let kind: SlotKind = s.kind;
-  if (kind === 'CL') kind = 'CT';
-  else if (kind === 'CT') kind = 'CL';
-  const topColor: FaceColor = s.topColor === 'W' ? 'Y' : 'W';
-  return { kind, topColor, sideColor: s.sideColor };
+function isCorner(pieceId: number): boolean {
+  return (pieceId & 1) === 1;
 }
 
-function rotateLayer(layer: Sq1Slot[], n: number): Sq1Slot[] {
-  const k = ((n % 12) + 12) % 12;
-  if (k === 0) return layer.slice();
-  return layer.slice(-k).concat(layer.slice(0, -k));
+/** True if the layer has no corner pair straddling its boundary i.e. the
+ *  cut between layer-low-half (idx 0..5 for top, 12..17 for bottom) and
+ *  layer-high-half (6..11 / 18..23) is clean. cstimer's data layout splits
+ *  each layer into two 6-slot halves; the slice cut runs between them. */
+function isLayerSliceClean(state: Sq1State, layer: 'top' | 'bot'): boolean {
+  const baseLow = layer === 'top' ? 0 : 12;
+  const baseHigh = layer === 'top' ? 6 : 18;
+  // boundary between slots 5 and 6 (top) or 17 and 18 (bot)
+  const ePrev = state.pieces[baseLow + 5];
+  const eNext = state.pieces[baseHigh + 0];
+  if (ePrev === eNext && isCorner(ePrev)) return false;
+  // wrap boundary between slots 11/0 (top) or 23/12 (bot)
+  const wPrev = state.pieces[baseHigh + 5];
+  const wNext = state.pieces[baseLow + 0];
+  if (wPrev === wNext && isCorner(wPrev)) return false;
+  return true;
 }
 
-function applyTurns(state: Sq1State, a: number, b: number): Sq1State {
-  return {
-    top: rotateLayer(state.top, a),
-    bottom: rotateLayer(state.bottom, b),
-  };
-}
-
-function applySlice(state: Sq1State): Sq1State {
-  const top = state.top.slice();
-  const bot = state.bottom.slice();
-  for (let i = 0; i < 6; i++) {
-    const a = top[i];
-    const b = bot[i];
-    top[i] = flipSlot(b);
-    bot[i] = flipSlot(a);
+/** Rotate a layer (12 contiguous slots starting at `base`) so that the
+ *  contents shift toward higher slot indices by `t` positions (mod 12).
+ *  Matches cstimer convention: stored shift amount = (12 - t_wca) mod 12,
+ *  applied as a left-rotate of the array. We accept WCA-signed `t` directly. */
+function rotateLayer(pieces: number[], base: number, t: number): void {
+  const k = ((-t % 12) + 12) % 12;
+  if (k === 0) return;
+  const ring = pieces.slice(base, base + 12);
+  for (let i = 0; i < 12; i++) {
+    pieces[base + i] = ring[(i + k) % 12];
   }
-  return { top, bottom: bot };
 }
 
-interface ParsedTurn {
-  kind: 'turn';
-  a: number;
-  b: number;
+/** Apply a `(a,b)` turn. */
+export function applyTurn(state: Sq1State, a: number, b: number): Sq1State {
+  const next = { pieces: state.pieces.slice(), ml: state.ml };
+  if (a !== 0) rotateLayer(next.pieces, 0, a);
+  if (b !== 0) rotateLayer(next.pieces, 12, b);
+  return next;
 }
-interface ParsedSlice {
-  kind: 'slice';
+
+/** Apply a slice. Swaps pieces[6..11] with pieces[12..17], toggles ml. */
+export function applySlice(state: Sq1State): Sq1State {
+  const next = { pieces: state.pieces.slice(), ml: (1 - state.ml) as 0 | 1 };
+  for (let i = 0; i < 6; i++) {
+    const tmp = next.pieces[6 + i];
+    next.pieces[6 + i] = next.pieces[12 + i];
+    next.pieces[12 + i] = tmp;
+  }
+  return next;
 }
+
+interface ParsedTurn { kind: 'turn'; a: number; b: number; }
+interface ParsedSlice { kind: 'slice'; }
 type ParsedMove = ParsedTurn | ParsedSlice;
 
-/** Parse a sq1 scramble into a sequence of (a,b) turns and slices.
- *
- * Accepts forms like `(1, 0) / (3,3) /` etc. Whitespace tolerant; `/`
- * is the slice token; everything inside parens is split on `,` into
- * two integers. Unknown fragments are skipped.
- */
+/** Parse `(a,b)/...` notation. Whitespace tolerant, lone `/` is slice,
+ *  `(a,b)` is a paired turn. Unknown fragments are skipped. */
 export function parseSq1Scramble(s: string): ParsedMove[] {
   const out: ParsedMove[] = [];
   if (!s) return out;
@@ -146,8 +166,101 @@ export function applySq1Scramble(scramble: string): Sq1State {
   let state = sq1Solved();
   const moves = parseSq1Scramble(scramble);
   for (const m of moves) {
-    if (m.kind === 'turn') state = applyTurns(state, m.a, m.b);
+    if (m.kind === 'turn') state = applyTurn(state, m.a, m.b);
     else state = applySlice(state);
   }
   return state;
+}
+
+/* ------------------------------------------------------------------ *
+ * Rendering helpers                                                  *
+ * ------------------------------------------------------------------ */
+
+export type SlotKind = 'E' | 'CL' | 'CT';
+
+export interface Sq1RenderSlot {
+  kind: SlotKind;       // edge / corner-lead / corner-trail
+  topColor: FaceColor;  // outward face colour (white or yellow)
+  sideColor: SideColor; // rim band colour
+}
+
+/** Convert state into a 24-slot render description. Slots 0..11 are the top
+ *  layer ring (CW from angle 0), 12..23 are the bottom layer ring. */
+export function sq1RenderSlots(state: Sq1State): Sq1RenderSlot[] {
+  const out: Sq1RenderSlot[] = [];
+  for (let layer = 0; layer < 2; layer++) {
+    const base = layer === 0 ? 0 : 12;
+    for (let i = 0; i < 12; i++) {
+      const idx = base + i;
+      const pid = state.pieces[idx];
+      const sides = PIECE_SIDES[pid] ?? ['F'];
+      const topColor: FaceColor = pid < 8 ? 'W' : 'Y';
+      let kind: SlotKind = 'E';
+      let sideColor: SideColor = sides[0];
+      if (isCorner(pid) && sides.length === 2) {
+        // Determine first vs second half by checking ring neighbours.
+        const nextIdx = base + ((i + 1) % 12);
+        const prevIdx = base + ((i + 11) % 12);
+        if (state.pieces[nextIdx] === pid) {
+          // This slot starts the corner pair (CL = corner-lead).
+          kind = 'CL';
+          sideColor = sides[0];
+        } else if (state.pieces[prevIdx] === pid) {
+          // Trailing half.
+          kind = 'CT';
+          sideColor = sides[1];
+        } else {
+          // Lone corner half (shape-locked). Show as lead with first colour.
+          kind = 'CL';
+          sideColor = sides[0];
+        }
+      }
+      out.push({ kind, topColor, sideColor });
+    }
+  }
+  return out;
+}
+
+/* ------------------------------------------------------------------ *
+ * Self-check (used by tests / dev assertions, not bundled per se)    *
+ * ------------------------------------------------------------------ */
+
+/** Apply the inverse of a parsed move list. Reverses order and negates each
+ *  turn's (a,b); slices are self-inverse. */
+export function inverseMoves(moves: ParsedMove[]): ParsedMove[] {
+  const out: ParsedMove[] = [];
+  for (let i = moves.length - 1; i >= 0; i--) {
+    const m = moves[i];
+    if (m.kind === 'slice') out.push({ kind: 'slice' });
+    else out.push({ kind: 'turn', a: -m.a, b: -m.b });
+  }
+  return out;
+}
+
+export function statesEqual(a: Sq1State, b: Sq1State): boolean {
+  if (a.ml !== b.ml) return false;
+  for (let i = 0; i < 24; i++) if (a.pieces[i] !== b.pieces[i]) return false;
+  return true;
+}
+
+export function applyMoves(state: Sq1State, moves: ParsedMove[]): Sq1State {
+  let s = state;
+  for (const m of moves) {
+    if (m.kind === 'turn') s = applyTurn(s, m.a, m.b);
+    else s = applySlice(s);
+  }
+  return s;
+}
+
+/** Check that scramble + its inverse returns to solved. Returns true iff so. */
+export function selfCheckScramble(scramble: string): boolean {
+  const moves = parseSq1Scramble(scramble);
+  const scrambled = applyMoves(sq1Solved(), moves);
+  const back = applyMoves(scrambled, inverseMoves(moves));
+  return statesEqual(back, sq1Solved());
+}
+
+/** Layer-clean predicate exposed for tooling/inspection. */
+export function isSliceLegal(state: Sq1State): boolean {
+  return isLayerSliceClean(state, 'top') && isLayerSliceClean(state, 'bot');
 }
