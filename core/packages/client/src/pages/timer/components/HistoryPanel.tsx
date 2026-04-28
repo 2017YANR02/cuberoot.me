@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Star, X, GitCompare, ChevronDown, ChevronUp } from 'lucide-react';
+import { Star, X, GitCompare, ChevronDown, ChevronUp, CheckSquare, Trash2 } from 'lucide-react';
 import type { Solve, Penalty } from '../types';
 import { effectiveMs } from '../types';
 import { formatMs, pbSingleIndex } from '../stats';
@@ -11,6 +11,10 @@ interface Props {
   solves: Solve[];
   isZh: boolean;
   onRowClick: (solve: Solve, index: number) => void;
+  /** Optional bulk-delete callback. When provided, a "select mode" toggle is
+   *  shown that lets the user pick multiple solves and delete them in one go.
+   *  Parent (TimerPage) is responsible for the actual db.deleteSolves call. */
+  onBulkDelete?: (ids: string[]) => void;
 }
 
 /**
@@ -85,7 +89,7 @@ function parseDateEnd(input: string): number | null {
 
 const ALL_PENALTIES: Penalty[] = ['ok', '+2', 'DNF'];
 
-export default function HistoryPanel({ solves, isZh, onRowClick }: Props) {
+export default function HistoryPanel({ solves, isZh, onRowClick, onBulkDelete }: Props) {
   const [query, setQuery] = useState('');
   const [compareMode, setCompareMode] = useState(false);
   // Selected solve ids in click-order (oldest first). When a 3rd id is clicked
@@ -94,6 +98,13 @@ export default function HistoryPanel({ solves, isZh, onRowClick }: Props) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [compareError, setCompareError] = useState<string | null>(null);
   const [comparePair, setComparePair] = useState<[Solve, Solve] | null>(null);
+
+  // Select mode (multi-select for bulk delete). Mutually exclusive with
+  // compareMode. Selection is a Set keyed by solve id; persists across filter
+  // changes (mirrors compare-mode semantics — a selected solve that becomes
+  // hidden via filters stays selected).
+  const [selectMode, setSelectMode] = useState(false);
+  const [bulkSelected, setBulkSelected] = useState<Set<string>>(new Set());
 
   // Structured filters
   const [filtersExpanded, setFiltersExpanded] = useState(false);
@@ -235,14 +246,66 @@ export default function HistoryPanel({ solves, isZh, onRowClick }: Props) {
     setCompareError(null);
   };
 
+  const exitSelectMode = () => {
+    setSelectMode(false);
+    setBulkSelected(new Set());
+  };
+
   const toggleCompareMode = () => {
     if (compareMode) {
       exitCompareMode();
     } else {
+      // Compare and select are mutually exclusive.
+      if (selectMode) exitSelectMode();
       setCompareMode(true);
       setSelectedIds([]);
       setCompareError(null);
     }
+  };
+
+  const toggleSelectMode = () => {
+    if (selectMode) {
+      exitSelectMode();
+    } else {
+      if (compareMode) exitCompareMode();
+      setSelectMode(true);
+      setBulkSelected(new Set());
+    }
+  };
+
+  const toggleBulkSelect = (id: string) => {
+    setBulkSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  /** Select all solves currently visible after the active filter set. */
+  const selectAllVisible = () => {
+    setBulkSelected(prev => {
+      const next = new Set(prev);
+      for (const s of filteredReversed) next.add(s.id);
+      return next;
+    });
+  };
+
+  const selectNone = () => {
+    setBulkSelected(new Set());
+  };
+
+  const handleBulkDelete = () => {
+    if (!onBulkDelete) return;
+    const ids = Array.from(bulkSelected);
+    if (ids.length === 0) return;
+    const msg = isZh
+      ? `确认删除选中的 ${ids.length} 条成绩？此操作无法撤销。`
+      : `Delete ${ids.length} selected solve${ids.length === 1 ? '' : 's'}? This cannot be undone.`;
+    // eslint-disable-next-line no-alert
+    if (!window.confirm(msg)) return;
+    onBulkDelete(ids);
+    exitSelectMode();
   };
 
   /** Compare-mode row click: select / deselect / swap-older. */
@@ -348,6 +411,29 @@ export default function HistoryPanel({ solves, isZh, onRowClick }: Props) {
             <GitCompare size={12} />
             {isZh ? '对比' : 'Compare'}
           </button>
+          {onBulkDelete && (
+            <button
+              type="button"
+              onClick={toggleSelectMode}
+              title={isZh ? '多选删除' : 'Select multiple to delete'}
+              aria-pressed={selectMode}
+              style={{
+                background: selectMode ? '#3d2a2a' : 'transparent',
+                border: '1px solid ' + (selectMode ? '#995a4d' : '#333'),
+                color: selectMode ? '#edc' : '#888',
+                borderRadius: 4,
+                padding: '2px 6px',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                fontSize: 11,
+              }}
+            >
+              <CheckSquare size={12} />
+              {isZh ? '选择' : 'Select'}
+            </button>
+          )}
           <span>{solves.length}</span>
         </span>
       </div>
@@ -564,6 +650,58 @@ export default function HistoryPanel({ solves, isZh, onRowClick }: Props) {
           )}
         </div>
       )}
+      {selectMode && (
+        <div
+          style={{
+            padding: '6px 14px',
+            fontSize: 11,
+            color: '#aaa',
+            borderBottom: '1px solid #1f1f23',
+            background: '#15151a',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            flexWrap: 'wrap',
+          }}
+        >
+          <span>
+            {isZh
+              ? `已选 ${bulkSelected.size} 条`
+              : `${bulkSelected.size} selected`}
+          </span>
+          <button
+            type="button"
+            onClick={selectAllVisible}
+            style={{
+              background: 'transparent',
+              border: '1px solid #444',
+              color: '#cde',
+              borderRadius: 4,
+              padding: '2px 8px',
+              cursor: 'pointer',
+              fontSize: 11,
+            }}
+          >
+            {isZh ? `全选可见 (${matchCount})` : `Select all visible (${matchCount})`}
+          </button>
+          <button
+            type="button"
+            onClick={selectNone}
+            disabled={bulkSelected.size === 0}
+            style={{
+              background: 'transparent',
+              border: '1px solid #444',
+              color: bulkSelected.size === 0 ? '#555' : '#aaa',
+              borderRadius: 4,
+              padding: '2px 8px',
+              cursor: bulkSelected.size === 0 ? 'not-allowed' : 'pointer',
+              fontSize: 11,
+            }}
+          >
+            {isZh ? '清空选择' : 'Select none'}
+          </button>
+        </div>
+      )}
       <div className="history-list">
         {reversed.length === 0 && (
           <div className="history-empty">
@@ -602,6 +740,7 @@ export default function HistoryPanel({ solves, isZh, onRowClick }: Props) {
           const isAo5End = pbAo5Win !== null && realIdx === pbAo5Win.end;
           const isAo12End = pbAo12Win !== null && realIdx === pbAo12Win.end;
           const isSelected = compareMode && selectedIds.includes(s.id);
+          const isBulkSelected = selectMode && bulkSelected.has(s.id);
 
           const classNames = ['history-row'];
           if (isPB) classNames.push('is-pb', 'pb-single');
@@ -613,13 +752,18 @@ export default function HistoryPanel({ solves, isZh, onRowClick }: Props) {
           if (isAo12End) tooltips.push(isZh ? 'PB ao12 此处达成' : 'PB ao12 ends here');
           const rowTitle = tooltips.length ? tooltips.join(' · ') : undefined;
 
-          const rowStyle: React.CSSProperties = isSelected
-            ? { background: 'rgba(77, 122, 153, 0.18)', boxShadow: 'inset 2px 0 0 #4d7a99' }
-            : {};
+          let rowStyle: React.CSSProperties = {};
+          if (isSelected) {
+            rowStyle = { background: 'rgba(77, 122, 153, 0.18)', boxShadow: 'inset 2px 0 0 #4d7a99' };
+          } else if (isBulkSelected) {
+            rowStyle = { background: 'rgba(153, 90, 77, 0.18)', boxShadow: 'inset 2px 0 0 #995a4d' };
+          }
 
           const handleRowClick = () => {
             if (compareMode) {
               handleSelectInCompare(s);
+            } else if (selectMode) {
+              toggleBulkSelect(s.id);
             } else {
               onRowClick(s, realIdx);
             }
@@ -642,6 +786,21 @@ export default function HistoryPanel({ solves, isZh, onRowClick }: Props) {
                     borderRadius: '50%',
                     border: '1.5px solid ' + (isSelected ? '#4d7a99' : '#444'),
                     background: isSelected ? '#4d7a99' : 'transparent',
+                    marginLeft: -6,
+                    marginRight: 2,
+                    flexShrink: 0,
+                  }}
+                />
+              )}
+              {selectMode && (
+                <div
+                  aria-hidden="true"
+                  style={{
+                    width: 14,
+                    height: 14,
+                    borderRadius: 3,
+                    border: '1.5px solid ' + (isBulkSelected ? '#995a4d' : '#444'),
+                    background: isBulkSelected ? '#995a4d' : 'transparent',
                     marginLeft: -6,
                     marginRight: 2,
                     flexShrink: 0,
@@ -678,7 +837,7 @@ export default function HistoryPanel({ solves, isZh, onRowClick }: Props) {
                   );
                 })()}
               </div>
-              {!compareMode && (
+              {!compareMode && !selectMode && (
                 <div className="actions">
                   <button onClick={(e) => { e.stopPropagation(); onRowClick(s, realIdx); }}>
                     {isZh ? '详情' : 'Info'}
@@ -734,6 +893,56 @@ export default function HistoryPanel({ solves, isZh, onRowClick }: Props) {
           >
             <GitCompare size={12} />
             {isZh ? '对比这 2 个' : 'Compare these 2'}
+          </button>
+        </div>
+      )}
+      {selectMode && (
+        <div
+          style={{
+            padding: '8px 14px',
+            borderTop: '1px solid #1f1f23',
+            display: 'flex',
+            gap: 8,
+            justifyContent: 'flex-end',
+            background: '#15151a',
+          }}
+        >
+          <button
+            type="button"
+            onClick={exitSelectMode}
+            style={{
+              background: 'transparent',
+              border: '1px solid #444',
+              color: '#aaa',
+              borderRadius: 4,
+              padding: '4px 10px',
+              fontSize: 12,
+              cursor: 'pointer',
+            }}
+          >
+            {isZh ? '取消' : 'Cancel'}
+          </button>
+          <button
+            type="button"
+            onClick={handleBulkDelete}
+            disabled={bulkSelected.size === 0}
+            style={{
+              background: bulkSelected.size > 0 ? '#3d2a2a' : '#1a1a1d',
+              border: '1px solid ' + (bulkSelected.size > 0 ? '#995a4d' : '#333'),
+              color: bulkSelected.size > 0 ? '#edc' : '#555',
+              borderRadius: 4,
+              padding: '4px 10px',
+              fontSize: 12,
+              cursor: bulkSelected.size > 0 ? 'pointer' : 'not-allowed',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+            }}
+          >
+            <Trash2 size={12} />
+            {isZh
+              ? `删除选中 ${bulkSelected.size}`
+              : `Delete ${bulkSelected.size} selected`}
           </button>
         </div>
       )}
