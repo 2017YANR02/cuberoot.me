@@ -7,12 +7,16 @@ import {
   pbSingleIndex,
   subXBreakdown,
   bestSingle,
+  bestAverageOfN,
+  bestMeanOfN,
+  bestBestOfN,
   eventDefaultFormat,
   formatMs,
 } from '../stats';
 import { bucketStats, bucketBoundaries, type BucketStats } from '../stats_buckets';
 import ScatterChart from './ScatterChart';
 import HistogramChart from './HistogramChart';
+import RecordsOverlay from './RecordsOverlay';
 
 interface Props {
   event: EventId;
@@ -80,6 +84,22 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
   const subX = useMemo(() => subXBreakdown(solves), [solves]);
   const streak = useMemo(() => longestStreak(solves), [solves]);
   const best = bestSingle(solves);
+
+  // Numeric ms values for the WCA records overlay. We can't reuse the
+  // formatted strings on `summary` because the overlay needs to compute
+  // a numeric gap against the WR.
+  const userPbSingleMs = useMemo<number | null>(() => {
+    const v = bestSingle(solves);
+    return v !== null && Number.isFinite(v) ? v : null;
+  }, [solves]);
+  const userPbAvgMs = useMemo<number | null>(() => {
+    let v: number | null;
+    if (fmt.kind === 'ao5')      v = bestAverageOfN(solves, fmt.n);
+    else if (fmt.kind === 'mo3') v = bestMeanOfN(solves, fmt.n);
+    else if (fmt.kind === 'bo3') v = bestBestOfN(solves, fmt.n);
+    else                          v = bestSingle(solves);
+    return v !== null && Number.isFinite(v) ? v : null;
+  }, [solves, fmt.kind, fmt.n]);
 
   // Time-period buckets — current and previous period, computed once per render.
   const periods = useMemo(() => {
@@ -285,6 +305,13 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
             </tbody>
           </table>
         </div>
+
+        <RecordsOverlay
+          event={event}
+          userPbSingleMs={userPbSingleMs}
+          userPbAvgMs={userPbAvgMs}
+          isZh={isZh}
+        />
 
         <div className="modal-section">
           <h3 className="settings-h3">{isZh ? '图表' : 'Charts'}</h3>
