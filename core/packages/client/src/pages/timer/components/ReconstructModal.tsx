@@ -18,6 +18,7 @@ import { computeStageAverages, computeStageSegments } from '../reconstruct/stage
 import type { StageAverages } from '../reconstruct/stage_segments';
 import { encodeReplayUrl } from '../share/encode';
 import { nxnSizeForEvent } from '../cube';
+import { memoize3bld } from '../solver/bld_helper';
 import PlaybackPanel from './PlaybackPanel';
 import './reconstruct.css';
 
@@ -39,6 +40,9 @@ interface Props {
 }
 
 const BLD_AUTO_DETECT_EVENTS = new Set<EventId>(['333bld', '444bld', '555bld', '333mbld']);
+// Events that get a Speffz letter-pair memo panel. Currently 3BLD only —
+// 4BLD/5BLD have wings/x-centers/+centers that the 3x3 helper can't handle.
+const BLD_MEMO_EVENTS = new Set<EventId>(['333bld', '333ni']);
 
 function formatSec(ms: number, digits = 2): string {
   return (ms / 1000).toFixed(digits) + 's';
@@ -174,6 +178,20 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
     return detectMemoPause(moves, solve.timeMs);
   }, [memoMs, solve.event, moves, solve.timeMs]);
 
+  // Speffz letter-pair memo (3BLD only). Computed defensively — invalid
+  // scrambles (empty / non-3x3 tokens) just yield empty pairs and we hide the
+  // panel. Event gate keeps the panel off for non-BLD solves entirely.
+  const bldMemo = useMemo(() => {
+    if (!BLD_MEMO_EVENTS.has(solve.event)) return null;
+    if (!solve.scramble || !solve.scramble.trim()) return null;
+    try {
+      return memoize3bld(solve.scramble);
+    } catch (err) {
+      console.warn('[reconstruct] bld memo failed:', err);
+      return null;
+    }
+  }, [solve.event, solve.scramble]);
+
   return (
     <div className="timer-modal-overlay reconstruct-overlay" onClick={onClose}>
       <div
@@ -215,6 +233,56 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
                 {isZh ? '应用' : 'Apply'}
               </button>
             )}
+          </div>
+        )}
+
+        {bldMemo && (
+          <div
+            className="reconstruct-bld-memo"
+            style={{
+              padding: '8px 10px',
+              margin: '6px 0',
+              fontSize: '0.85em',
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: 4,
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
+              <span style={{ fontWeight: 600 }}>
+                {isZh ? '盲拧记忆 (Speffz)' : 'BLD memo (Speffz)'}
+              </span>
+              <span style={{ opacity: 0.6, fontSize: '0.9em' }}>
+                {isZh ? `缓冲块: 角 UFR / 棱 UF` : 'buffers: corner UFR / edge UF'}
+                {bldMemo.parity ? (isZh ? ' · 奇偶' : ' · parity') : ''}
+              </span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '2px 10px' }}>
+              <span style={{ opacity: 0.7 }}>{isZh ? '角块' : 'Corners'}:</span>
+              <span style={{ fontFamily: 'monospace', letterSpacing: '0.05em' }}>
+                {bldMemo.cornerPairs || (isZh ? '(无)' : '(none)')}
+              </span>
+              <span style={{ opacity: 0.7 }}>{isZh ? '棱块' : 'Edges'}:</span>
+              <span style={{ fontFamily: 'monospace', letterSpacing: '0.05em' }}>
+                {bldMemo.edgePairs || (isZh ? '(无)' : '(none)')}
+              </span>
+              {bldMemo.twistedCorners.length > 0 && (
+                <>
+                  <span style={{ opacity: 0.7 }}>{isZh ? '角扭' : 'Twisted'}:</span>
+                  <span style={{ fontFamily: 'monospace', letterSpacing: '0.05em' }}>
+                    {bldMemo.twistedCorners.join(' ')}
+                  </span>
+                </>
+              )}
+              {bldMemo.flippedEdges.length > 0 && (
+                <>
+                  <span style={{ opacity: 0.7 }}>{isZh ? '棱翻' : 'Flipped'}:</span>
+                  <span style={{ fontFamily: 'monospace', letterSpacing: '0.05em' }}>
+                    {bldMemo.flippedEdges.join(' ')}
+                  </span>
+                </>
+              )}
+            </div>
           </div>
         )}
 
