@@ -1,59 +1,62 @@
 /**
- * GAN Smart Cube v4 driver — covers GAN 12, GAN 13, GAN 14, Mini Pro, Magnetic
- * Boost (Smart Cube Gen2/Gen3 protocol), and the GAN 356 i3 firmware revisions
- * that switched to the `8653000a-...` service UUID.
+ * GAN Smart Cube v4 driver — covers GAN 12 / 13 / 14, Mini Pro, MG / AiCube
+ * v4 firmwares that expose the FFF5/FFF6 GATT characteristics under the
+ * 00000010-…-fff5fff4fff0 service.
  *
- * UNTESTED ON REAL HARDWARE in this codebase. Protocol decoding is
- * transcribed from public reverse-engineering, primarily:
- *   - https://github.com/afedotov/gan-web-bluetooth (MIT)
- *   - https://github.com/cubing/cubing.js/tree/main/src/bluetooth/gan
- *   - https://github.com/cs0x7f/cstimer (gancube.js)
+ * Protocol reference: cstimer's `src/js/hardware/gancube.js` (battle-tested
+ * across years of community use). This driver is aligned with that
+ * implementation:
  *
- * Pair a GAN v3 cube for the auto-stop feature until v4 is field-verified.
+ *   - Service UUID `00000010-0000-fff7-fff6-fff5fff4fff0`
+ *   - Notify characteristic `0000fff6-…` (mode + length + payload, 20 bytes)
+ *   - Write characteristic   `0000fff5-…` (encrypted command opcodes)
+ *   - AES-128-ECB key/IV derivation: per-cube key/iv = base + reversed-MAC
+ *     under modular addition mod 255 (NOT XOR — GAN's quirk). Base bytes are
+ *     KEYS[2] / KEYS[3] from gancube.js.
+ *   - Encrypt/decrypt is a 16-byte rolling-window with two passes; for
+ *     frames longer than 16 bytes the trailing 16-byte window is
+ *     decrypted-then-XORed-with-IV first, then the leading 16-byte window.
+ *     Encrypt is the exact inverse.
+ *   - At connect we send hardware-info / facelets / battery requests so the
+ *     cube starts streaming events. They are non-fatal.
+ *   - Parsed events:
+ *       mode 0x01 → cube move (axis + power, plus a 16-bit moveCnt for
+ *                   drop detection),
+ *       mode 0xEF → battery percentage,
+ *       mode 0xED → facelets snapshot (we ignore the perm/ori payload; the
+ *                   higher-level CubeStateTracker re-models state from
+ *                   moves),
+ *       mode 0xD1 → move history (used by cstimer to recover dropped moves;
+ *                   we replay these into onMove so the host's state tracker
+ *                   stays in sync).
  *
- * Protocol summary (Gen2):
- *   - Service UUID `8653000a-43e6-47b7-9cb0-5fc21d4ae340`
- *   - Notify characteristic `8653000b-...` — emits 16-byte AES-128-ECB
- *     encrypted frames. Two-pass decryption (matches GAN v3 layout):
- *       pass 1: decrypt the LAST 16-byte window if frame > 16 bytes,
- *       pass 2: decrypt the FIRST 16-byte window.
- *     v4 frames are typically 16 bytes flat, so the second pass is a no-op
- *     for short frames.
- *   - Write characteristic `8653000c-...` — used to send a "request state"
- *     opcode to nudge the cube into emitting events at connect.
- *   - Encryption key/IV: XOR a fixed 16-byte base key/IV with the device's
- *     reversed MAC over the first 6 bytes. The MAC is unfortunately not
- *     readable from Web Bluetooth in most browsers; we fall back to
- *     parsing the trailing hex bytes from `device.name` (older firmwares
- *     embed "GAN-XXYYZZ" in the name) or to the all-zero MAC. Real-world
- *     mileage will vary; if the cube ships with a randomized MAC and
- *     no name suffix, decryption will fail silently and no moves emit.
- *
- * Frame format (16 bytes plaintext):
- *   - Bits 0..3 (high nibble of byte 0): event type. 1 = move, 4 = battery,
- *     5 = facelets/state, others ignored here.
- *   - Move event (type=1):
- *       bits 4..15  : 12-bit move timestamp (ms, wraps every 4096 ms),
- *       bits 16..19 : face index (0..5 = U R F D L B),
- *       bit 20      : direction (0 = CW, 1 = CCW),
- *       remainder   : facelet bitfield + serial counter (used to detect
- *                     dropped frames; we walk the serial like v3).
+ * MAC discovery: Web Bluetooth on Chromium can surface the MAC via
+ * `device.watchAdvertisements()` + manufacturer-data (CIC list 0x0001..0xFF01),
+ * but only when the page was launched with `optionalManufacturerData` in the
+ * picker filters AND the user has the experimental flag enabled. In this
+ * codebase the picker (in `index.ts`) does not request advertisements, so
+ * we fall back to parsing the trailing hex bytes from `device.name`
+ * ("GAN-…-XXYYZZ"). When that also fails we use a zero-MAC, which works on
+ * a small subset of pre-MAC firmwares and silently fails on the rest.
  */
 
 import type { CubeDriver, CubeDriverStartResult } from './driver';
 import type { CubeBrand } from './types';
 
-// GAN Gen2/Gen3 "AppService" service + characteristics.
-const GAN_V4_SERVICE = '8653000a-43e6-47b7-9cb0-5fc21d4ae340';
-const GAN_V4_NOTIFY_CHAR = '8653000b-43e6-47b7-9cb0-5fc21d4ae340';
-const GAN_V4_COMMAND_CHAR = '8653000c-43e6-47b7-9cb0-5fc21d4ae340';
+// GAN v4 GATT identifiers — match cstimer's V4DATA / V4READ / V4WRITE.
+const GAN_V4_SERVICE = '00000010-0000-fff7-fff6-fff5fff4fff0';
+const GAN_V4_NOTIFY_CHAR = '0000fff6-0000-1000-8000-00805f9b34fb';
+const GAN_V4_COMMAND_CHAR = '0000fff5-0000-1000-8000-00805f9b34fb';
 
-// Standard Bluetooth Battery Service / level characteristic.
+// Standard Bluetooth Battery Service / level characteristic. Most GAN v4
+// cubes do NOT expose the standard service — they ship battery via mode
+// 0xEF events on the notify pipe — but we still try, and fall back to the
+// most recent 0xEF reading.
 const BATTERY_SERVICE = 0x180f;
 const BATTERY_LEVEL_CHAR = 0x2a19;
 
-// GAN v4 factory key/IV (Gen2/Gen3). Public values from gan-web-bluetooth
-// (MIT). XOR with the device MAC (reversed) gives the per-cube key.
+// GAN v4 base key / IV. cstimer compresses these into LZString blobs
+// (KEYS[2] / KEYS[3]); decompressed they are exactly these bytes.
 const GAN_V4_KEY_BASE = new Uint8Array([
   0x01, 0x02, 0x42, 0x28, 0x31, 0x91, 0x16, 0x07,
   0x20, 0x05, 0x18, 0x54, 0x42, 0x11, 0x12, 0x53,
@@ -63,8 +66,15 @@ const GAN_V4_IV_BASE = new Uint8Array([
   0x20, 0x95, 0x78, 0x14, 0x32, 0x12, 0x02, 0x43,
 ]);
 
-// Move face order. v4 uses U R F D L B, same as v3.
+// v4 axis encoding: cstimer maps the one-hot byte [2, 32, 8, 1, 16, 4] to
+// indices 0..5, which then index into "URFDLB". Encoded directions: 0 = CW,
+// 1 = CCW. Quarter-turn only — there is no half-turn opcode in the move
+// stream; double turns arrive as two consecutive frames.
+const GAN_V4_AXIS_LOOKUP = [2, 32, 8, 1, 16, 4];
 const GAN_V4_FACE_ORDER = ['U', 'R', 'F', 'D', 'L', 'B'] as const;
+// History event uses a different axis ordering ("DUBFLR") — see cstimer
+// parseV4Data mode == 0xD1 branch.
+const GAN_V4_HISTORY_FACE_ORDER = ['D', 'U', 'B', 'F', 'L', 'R'] as const;
 
 function hexToBytes(hex: string): Uint8Array {
   const out = new Uint8Array(hex.length >> 1);
@@ -82,7 +92,9 @@ function tryParseMacFromName(name: string | undefined): Uint8Array | null {
   if (m6) {
     const lower = hexToBytes(m6[1]);
     const out = new Uint8Array(6);
-    // GAN OUI prefix.
+    // Hard-coded GAN OUI — better than zeros when the name only carries the
+    // last 3 bytes. Real cube MACs may use a different OUI on newer batches;
+    // if decryption fails this is the first thing to revisit.
     out[0] = 0xcc; out[1] = 0x9b; out[2] = 0x0f;
     out.set(lower, 3);
     return out;
@@ -90,19 +102,28 @@ function tryParseMacFromName(name: string | undefined): Uint8Array | null {
   return null;
 }
 
-/** XOR base key/IV with reversed MAC over first 6 bytes. */
+/**
+ * Per-cube key/IV derivation. cstimer's `getKeyV2`:
+ *
+ *   key[i] = (key[i] + value[5 - i]) % 255;   // for i in 0..5
+ *
+ * `value` is the MAC in forward byte order. So we add `mac[5 - i]` (i.e.
+ * iterate the MAC in reverse) into the first 6 bytes of the base, modulo
+ * 255 (NOT 256 — this is GAN's quirk and the reason XOR-based ports break
+ * on real hardware).
+ */
 function deriveKey(base: Uint8Array, mac: Uint8Array): Uint8Array {
   const out = new Uint8Array(16);
   out.set(base);
-  const reversed = new Uint8Array(mac.length);
-  for (let i = 0; i < mac.length; i++) reversed[i] = mac[mac.length - 1 - i];
-  for (let i = 0; i < reversed.length; i++) out[i] ^= reversed[i];
+  for (let i = 0; i < 6; i++) {
+    out[i] = (out[i] + mac[5 - i]) % 255;
+  }
   return out;
 }
 
 /* ================================================================== */
-/*  Pure-TS AES-128 (ECB block, decrypt-only) — duplicated from v3 to */
-/*  keep the v4 module self-contained. Synchronous so the BLE handler */
+/*  Pure-TS AES-128 (ECB block, encrypt + decrypt) — duplicated from   */
+/*  v3 to keep the v4 module self-contained. Sync so the BLE handler   */
 /*  doesn't drop frames waiting on a Promise.                          */
 /* ================================================================== */
 
@@ -177,14 +198,33 @@ function gmul(a: number, b: number): number {
   return r & 0xff;
 }
 
+function shiftRows(s: Uint8Array): void {
+  let t = s[1]; s[1] = s[5]; s[5] = s[9]; s[9] = s[13]; s[13] = t;
+  t = s[2]; s[2] = s[10]; s[10] = t;
+  t = s[6]; s[6] = s[14]; s[14] = t;
+  t = s[15]; s[15] = s[11]; s[11] = s[7]; s[7] = s[3]; s[3] = t;
+}
 function invShiftRows(s: Uint8Array): void {
   let t = s[13]; s[13] = s[9]; s[9] = s[5]; s[5] = s[1]; s[1] = t;
   t = s[2]; s[2] = s[10]; s[10] = t;
   t = s[6]; s[6] = s[14]; s[14] = t;
   t = s[3]; s[3] = s[7]; s[7] = s[11]; s[11] = s[15]; s[15] = t;
 }
+function subBytes(s: Uint8Array): void {
+  for (let i = 0; i < 16; i++) s[i] = SBOX[s[i]];
+}
 function invSubBytes(s: Uint8Array): void {
   for (let i = 0; i < 16; i++) s[i] = SBOX_INV[s[i]];
+}
+function mixColumns(s: Uint8Array): void {
+  for (let c = 0; c < 4; c++) {
+    const i = c * 4;
+    const a0 = s[i], a1 = s[i + 1], a2 = s[i + 2], a3 = s[i + 3];
+    s[i]     = gmul(a0, 2) ^ gmul(a1, 3) ^ a2 ^ a3;
+    s[i + 1] = a0 ^ gmul(a1, 2) ^ gmul(a2, 3) ^ a3;
+    s[i + 2] = a0 ^ a1 ^ gmul(a2, 2) ^ gmul(a3, 3);
+    s[i + 3] = gmul(a0, 3) ^ a1 ^ a2 ^ gmul(a3, 2);
+  }
 }
 function invMixColumns(s: Uint8Array): void {
   for (let c = 0; c < 4; c++) {
@@ -198,6 +238,22 @@ function invMixColumns(s: Uint8Array): void {
 }
 function addRoundKey(s: Uint8Array, w: Uint8Array, off: number): void {
   for (let i = 0; i < 16; i++) s[i] ^= w[off + i];
+}
+
+/** AES-128 ECB single-block encrypt. */
+function aesEncryptBlock(block: Uint8Array, w: Uint8Array): Uint8Array {
+  const s = new Uint8Array(block);
+  addRoundKey(s, w, 0);
+  for (let r = 1; r <= 9; r++) {
+    subBytes(s);
+    shiftRows(s);
+    mixColumns(s);
+    addRoundKey(s, w, r * 16);
+  }
+  subBytes(s);
+  shiftRows(s);
+  addRoundKey(s, w, 160);
+  return s;
 }
 
 /** AES-128 ECB single-block decrypt. */
@@ -217,22 +273,44 @@ function aesDecryptBlock(block: Uint8Array, w: Uint8Array): Uint8Array {
 }
 
 /**
- * GAN v4 frame decrypt — two-pass overlapping window. For 16-byte frames the
- * second pass is the only meaningful one; longer frames mirror v3's layout.
+ * GAN v4 frame decrypt — mirrors cstimer's `decode()`:
+ *
+ *   if (length > 16):
+ *     decrypt last 16 bytes (ECB), then XOR with IV in place.
+ *   decrypt first 16 bytes (ECB), XOR with IV.
+ *
+ * For the canonical 20-byte v4 payload this means: the trailing 16 bytes
+ * (offset 4..20) are decrypted first, then the leading 16 bytes (offset
+ * 0..16). The middle 12 bytes are touched by both passes — that's the
+ * rolling-window overlap.
  */
-function decryptFrame(ct: Uint8Array, key: Uint8Array, iv: Uint8Array): Uint8Array {
-  const w = expandKey(key);
+function decryptFrame(ct: Uint8Array, w: Uint8Array, iv: Uint8Array): Uint8Array {
   const out = new Uint8Array(ct);
-  if (ct.length >= 32) {
-    // pass 1: last 16 bytes XOR iv.
-    const tail = aesDecryptBlock(ct.subarray(ct.length - 16), w);
-    for (let i = 0; i < 16; i++) tail[i] ^= iv[i];
-    out.set(tail, ct.length - 16);
+  if (ct.length > 16) {
+    const offset = ct.length - 16;
+    const block = aesDecryptBlock(out.subarray(offset), w);
+    for (let i = 0; i < 16; i++) out[offset + i] = block[i] ^ iv[i];
   }
-  // pass 2: first 16 bytes XOR iv.
   const head = aesDecryptBlock(out.subarray(0, 16), w);
+  for (let i = 0; i < 16; i++) out[i] = head[i] ^ iv[i];
+  return out;
+}
+
+/** Inverse of `decryptFrame` — used when sending opcodes back to the cube. */
+function encryptFrame(pt: Uint8Array, w: Uint8Array, iv: Uint8Array): Uint8Array {
+  const out = new Uint8Array(pt);
+  // Pass 1: first 16 bytes XOR-IV-then-encrypt.
+  const head = new Uint8Array(out.subarray(0, 16));
   for (let i = 0; i < 16; i++) head[i] ^= iv[i];
-  out.set(head, 0);
+  const headEnc = aesEncryptBlock(head, w);
+  out.set(headEnc, 0);
+  if (out.length > 16) {
+    const offset = out.length - 16;
+    const tail = new Uint8Array(out.subarray(offset));
+    for (let i = 0; i < 16; i++) tail[i] ^= iv[i];
+    const tailEnc = aesEncryptBlock(tail, w);
+    out.set(tailEnc, offset);
+  }
   return out;
 }
 
@@ -241,13 +319,18 @@ function decryptFrame(ct: Uint8Array, key: Uint8Array, iv: Uint8Array): Uint8Arr
 /* ================================================================== */
 
 interface MoveDecodeState {
-  /** Last seen serial counter; used to detect dropped frames. */
-  lastSerial: number;
-  /** Most recent battery percentage from a type-4 event. */
+  /**
+   * Last seen 16-bit move counter from the cube. -1 means we haven't seen
+   * any moves yet, in which case the very first event is treated as a
+   * baseline (no move emitted) — same as cstimer's `prevMoveCnt == -1`
+   * guard in `parseV4Data`.
+   */
+  prevMoveCnt: number;
+  /** Most recent battery percentage from a mode-0xEF event (0..100). */
   battery: number | null;
 }
 
-/** Read N bits starting at `bitOffset` from a big-endian-ordered byte stream. */
+/** Read N bits (big-endian within the byte) starting at `bitOffset`. */
 function readBits(buf: Uint8Array, bitOffset: number, nBits: number): number {
   let v = 0;
   for (let i = 0; i < nBits; i++) {
@@ -259,58 +342,119 @@ function readBits(buf: Uint8Array, bitOffset: number, nBits: number): number {
 }
 
 /**
- * Decode a 16-byte plaintext v4 frame into 0..N moves.
+ * Decode a 20-byte plaintext v4 frame. cstimer's `parseV4Data` works in a
+ * big-endian bit-stream view of the payload; we mirror that with `readBits`.
  *
- * Event types (high nibble of byte 0):
- *   0x1 — move
- *   0x4 — battery
- *   0x5 — facelets / state snapshot
- *   others — ignored
+ * Mode = byte 0:
+ *   0x01 → cube move
+ *   0xED → facelets / state snapshot (we ignore — the host re-models from
+ *          moves)
+ *   0xEF → battery (1 byte at bits 8 + len*8 .. 16 + len*8)
+ *   0xD1 → move history (replays missed moves; we expand them into onMove)
+ *   0xEC → gyroscope (ignored)
+ *   0xF5/F6/FA/FC/FD/FE/FF → hardware info (ignored)
  *
- * Move event layout (gan-web-bluetooth Gen2):
- *   bits 0..3   : event type = 1
- *   bits 4..15  : 12-bit timestamp (ms since cube boot, mod 4096)
- *   bits 16..23 : serial counter (8-bit, used for drop detection)
- *   bits 24..27 : face index (0..5 = U R F D L B, 6/7 reserved)
- *   bit  28     : direction (0 = CW, 1 = CCW)
- *   remainder   : facelet bitfield (cube state snapshot)
+ * Move event layout (mode = 0x01):
+ *   bits 0..7   : mode = 0x01
+ *   bits 8..15  : payload length (in bytes? cstimer does not validate it)
+ *   bits 16..47 : 32-bit timestamp (little-endian byte order) — unused here
+ *                 because we re-stamp on the host clock.
+ *   bits 48..63 : 16-bit moveCnt (little-endian byte order) — used to detect
+ *                 duplicates and dropped frames.
+ *   bits 64..65 : direction (0 = CW, 1 = CCW)
+ *   bits 66..71 : axis as one-hot in {2, 32, 8, 1, 16, 4} → URFDLB index.
  */
 function decodeFrame(frame: Uint8Array, dec: MoveDecodeState): string[] {
   if (frame.length < 16) return [];
-  const eventType = (frame[0] >> 4) & 0x0f;
+  const mode = frame[0];
 
-  if (eventType === 0x4) {
-    // Battery: byte 1 holds the percentage (0..100).
-    const pct = frame[1];
-    if (pct <= 100) dec.battery = pct;
+  if (mode === 0xef) {
+    // Battery: bits 8 + len*8 .. 16 + len*8. cstimer reads len from bits
+    // 8..16, then reads the byte at offset (8 + len*8). For the canonical
+    // 20-byte frame with len=1 this lands at bit 16 → byte index 2.
+    const len = frame[1];
+    const byteIdx = 1 + len;
+    if (byteIdx >= 0 && byteIdx < frame.length) {
+      const pct = frame[byteIdx];
+      if (pct <= 100) dec.battery = pct;
+    }
     return [];
   }
 
-  if (eventType !== 0x1) return [];
+  if (mode === 0x01) {
+    // 16-bit moveCnt, little-endian (high byte at bits 56..63, low byte
+    // at bits 48..55). Match cstimer's `value.slice(56,64) + value.slice(48,56)`.
+    const moveCntHi = frame[7];
+    const moveCntLo = frame[6];
+    const moveCnt = (moveCntHi << 8) | moveCntLo;
 
-  const serial = readBits(frame, 16, 8);
-  const last = dec.lastSerial;
-  dec.lastSerial = serial;
-  if (last < 0) {
-    // First frame: emit only the latest move so we don't replay history.
-    const face = readBits(frame, 24, 4);
-    const dir = readBits(frame, 28, 1);
-    if (face >= GAN_V4_FACE_ORDER.length) return [];
-    const f = GAN_V4_FACE_ORDER[face];
-    return [dir ? `${f}'` : f];
+    if (dec.prevMoveCnt === -1) {
+      // Cube was just connected: align without replaying history.
+      dec.prevMoveCnt = moveCnt;
+      return [];
+    }
+    if (moveCnt === dec.prevMoveCnt) return [];
+
+    const pow = readBits(frame, 64, 2);     // 0 = CW, 1 = CCW (any value
+                                            // >= 2 is unexpected — cstimer
+                                            // only formats with " '" so 2/3
+                                            // would render as undefined.
+                                            // We drop those.)
+    const axisCode = readBits(frame, 66, 6);
+    const axis = GAN_V4_AXIS_LOOKUP.indexOf(axisCode);
+
+    const out: string[] = [];
+    if (axis !== -1 && pow < 2) {
+      // If we missed events between prevMoveCnt and moveCnt, cstimer would
+      // request a history dump. We don't have a write hook into that path
+      // here, so we just emit the latest move; the host's CubeStateTracker
+      // will resync on the next solved snapshot. This is a (rare) corner
+      // case that benign-degrades.
+      const f = GAN_V4_FACE_ORDER[axis];
+      out.push(pow === 1 ? `${f}'` : f);
+    }
+
+    dec.prevMoveCnt = moveCnt;
+    return out;
   }
 
-  // Detect dropped frames via serial wrap-around.
-  let delta = (serial - last) & 0xff;
-  if (delta === 0) return [];
-  // We only have one move slot per v4 frame; clamp.
-  if (delta > 1) delta = 1;
+  if (mode === 0xd1) {
+    // Move history. Layout per cstimer:
+    //   bits 16..23 : startMoveCnt (most recent move's counter)
+    //   from bits 24 onward, 4 bits per move: 3-bit axis (DUBFLR), 1-bit pow.
+    //   numberOfMoves = (len - 1) * 2.
+    const len = frame[1];
+    const startMoveCnt = frame[2];
+    const numberOfMoves = Math.max(0, (len - 1) * 2);
+    const out: string[] = [];
+    // Walk newest → oldest like cstimer, but the resulting array is in the
+    // order the cube reports (newest first). Since we only fall through to
+    // here when the host has already processed moves, we replay oldest →
+    // newest by reversing once filled.
+    const replay: { cnt: number; mv: string }[] = [];
+    for (let i = 0; i < numberOfMoves; i++) {
+      const axis = readBits(frame, 24 + 4 * i, 3);
+      const pow = readBits(frame, 27 + 4 * i, 1);
+      if (axis < 6) {
+        const f = GAN_V4_HISTORY_FACE_ORDER[axis];
+        const mv = pow ? `${f}'` : f;
+        const cnt = (startMoveCnt - i) & 0xff;
+        replay.push({ cnt, mv });
+      }
+    }
+    // Filter out moves we've already seen and emit the rest in chronological
+    // order (oldest first).
+    replay.sort((a, b) => ((a.cnt - dec.prevMoveCnt) & 0xff) - ((b.cnt - dec.prevMoveCnt) & 0xff));
+    for (const r of replay) {
+      const diff = (r.cnt - dec.prevMoveCnt) & 0xff;
+      if (diff === 0 || diff > 64) continue; // already-seen (0) or wrap (huge diff)
+      out.push(r.mv);
+      dec.prevMoveCnt = r.cnt;
+    }
+    return out;
+  }
 
-  const face = readBits(frame, 24, 4);
-  const dir = readBits(frame, 28, 1);
-  if (face >= GAN_V4_FACE_ORDER.length) return [];
-  const f = GAN_V4_FACE_ORDER[face];
-  return [dir ? `${f}'` : f];
+  return [];
 }
 
 /* ================================================================== */
@@ -324,10 +468,10 @@ export const ganV4Driver: CubeDriver = {
 
   matches(device: BluetoothDevice): boolean {
     const n = device.name ?? '';
-    // v4 cubes typically present as "GAN-12-XXXX" / "GAN-13-XXXX" /
-    // "GAN-14-XXXX" / "Mini Pro-XXXX". Older "GAN356" names are matched
-    // by v3; v4-specific match must come after v3 in the registry.
-    return /^(GAN-?(12|13|14|Mini)|MG-)/i.test(n);
+    // GAN 12 / 13 / 14 / Mini Pro / MG / AiCube. The `(?!356)` lookahead is
+    // intentional: GAN 356 (i / i3 / etc.) is the v3 family and is matched
+    // by the v3 driver in the registry.
+    return /^(GAN-?(?!356)(12|13|14|Mini)|MG-|AiCube)/i.test(n);
   },
 
   async start(server, onMove): Promise<CubeDriverStartResult> {
@@ -337,8 +481,9 @@ export const ganV4Driver: CubeDriver = {
     const mac = tryParseMacFromName(server.device.name) ?? new Uint8Array(6);
     const aesKey = deriveKey(GAN_V4_KEY_BASE, mac);
     const aesIv = deriveKey(GAN_V4_IV_BASE, mac);
+    const expandedKey = expandKey(aesKey);
 
-    const decState: MoveDecodeState = { lastSerial: -1, battery: null };
+    const decState: MoveDecodeState = { prevMoveCnt: -1, battery: null };
 
     const onChar = (ev: Event): void => {
       const target = ev.target as BluetoothRemoteGATTCharacteristic;
@@ -347,7 +492,7 @@ export const ganV4Driver: CubeDriver = {
       const ct = new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength);
       let pt: Uint8Array;
       try {
-        pt = decryptFrame(ct, aesKey, aesIv);
+        pt = decryptFrame(ct, expandedKey, aesIv);
       } catch {
         return;
       }
@@ -358,18 +503,49 @@ export const ganV4Driver: CubeDriver = {
     notifyChar.addEventListener('characteristicvaluechanged', onChar);
     await notifyChar.startNotifications();
 
-    // Send a "request state" command to nudge older firmwares into emitting.
-    // Failure is non-fatal — many v4 cubes auto-stream after subscribe.
+    // Send the standard hello sequence cstimer's v4init runs:
+    //   v4requestHardwareInfo  → opcode 0xDF / 0x03
+    //   v4requestFacelets      → opcode 0xDD / 0x04 / 0xED
+    //   v4requestBattery       → opcode 0xDD / 0x04 / 0xEF
+    // All 20 bytes, encrypted via the same key/IV, written to FFF5. Failure
+    // is non-fatal — many cubes auto-stream after subscribe.
+    let cmdChar: BluetoothRemoteGATTCharacteristic | null = null;
     try {
-      const cmdChar = await service.getCharacteristic(GAN_V4_COMMAND_CHAR);
-      const opcode = new Uint8Array([0xdd, 0x04, 0x00, 0x00, 0x00]);
-      if (cmdChar.writeValueWithResponse) {
-        await cmdChar.writeValueWithResponse(opcode);
-      } else {
-        await cmdChar.writeValue(opcode);
-      }
+      cmdChar = await service.getCharacteristic(GAN_V4_COMMAND_CHAR);
     } catch {
-      // Ignore — command characteristic absent or write rejected.
+      // No write characteristic — older firmware variant; just listen.
+    }
+
+    const sendCmd = async (req: Uint8Array): Promise<void> => {
+      if (!cmdChar) return;
+      const enc = encryptFrame(req, expandedKey, aesIv);
+      // Detach into a fresh ArrayBuffer-backed Uint8Array — the strict TS
+      // lib types narrow `BufferSource` to `Uint8Array<ArrayBuffer>` and our
+      // chained subarrays surface as `ArrayBufferLike`.
+      const buf = new Uint8Array(enc.length);
+      buf.set(enc);
+      try {
+        if (cmdChar.writeValueWithResponse) {
+          await cmdChar.writeValueWithResponse(buf);
+        } else {
+          await cmdChar.writeValue(buf);
+        }
+      } catch {
+        // Ignore — write rejected, cube may still stream regardless.
+      }
+    };
+
+    if (cmdChar) {
+      const hwInfo = new Uint8Array(20);
+      hwInfo[0] = 0xdf; hwInfo[1] = 0x03;
+      const facelets = new Uint8Array(20);
+      facelets[0] = 0xdd; facelets[1] = 0x04; facelets[3] = 0xed;
+      const battery = new Uint8Array(20);
+      battery[0] = 0xdd; battery[1] = 0x04; battery[3] = 0xef;
+      // Sequenced — cstimer awaits each in turn.
+      await sendCmd(hwInfo);
+      await sendCmd(facelets);
+      await sendCmd(battery);
     }
 
     let cleaned = false;
@@ -381,8 +557,8 @@ export const ganV4Driver: CubeDriver = {
     };
 
     const battery = async (): Promise<number | null> => {
-      // Prefer the standard battery service; fall back to whatever the cube
-      // most recently reported on a type-4 event.
+      // Try the standard battery service first; fall back to whatever the
+      // cube most recently reported on a mode-0xEF event.
       try {
         const battSvc = await server.getPrimaryService(BATTERY_SERVICE);
         const battChar = await battSvc.getCharacteristic(BATTERY_LEVEL_CHAR);
