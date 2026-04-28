@@ -1,121 +1,64 @@
 /**
- * QiYi Smart Cube driver — covers QiYi XS / Spark / MHC / Smart Mat.
+ * QiYi Smart Cube driver — covers QY-QYSC (Smart Cube) and XMD-TornadoV4-i.
  *
- * UNTESTED ON REAL HARDWARE in this codebase. Protocol decoding is
- * transcribed from public reverse-engineering, primarily:
- *   - https://github.com/cs0x7f/cstimer (qiyicube.js)
- *   - https://github.com/Cubing/cubing.js community discussions
+ * Protocol reference: cstimer's `src/js/hardware/qiyicube.js`. This file is a
+ * faithful TypeScript port of that battle-tested implementation; comments
+ * call out the two places we deviate (MAC discovery and pure-ECB self-AES).
  *
- * Pair a GAN v3 cube for the auto-stop feature until QiYi is field-verified.
+ * Wire summary
+ * ------------
+ *   Service:       0000fff0-0000-1000-8000-00805f9b34fb
+ *   Char (notify): 0000fff6-0000-1000-8000-00805f9b34fb     (also write)
  *
- * Protocol summary:
- *   - Service UUID `0000fff0-0000-1000-8000-00805f9b34fb`
- *   - Notify characteristic `0000fff6-...` — emits 16-byte AES-128-CBC
- *     encrypted frames whenever the cube moves, on a heartbeat, or in
- *     response to a write to the command characteristic.
- *   - Write characteristic `0000fff5-...` — used to send a "hello" /
- *     "request state" packet at connect.
- *   - Encryption: AES-128-CBC with a fixed 16-byte key and 16-byte IV
- *     XOR-mixed with the 6-byte device MAC. The MAC is unfortunately not
- *     readable from Web Bluetooth, so we fall back to parsing the trailing
- *     hex from `device.name` (older firmwares show "QY-XXYYZZ") or using
- *     the all-zero MAC.
+ * Both reads and writes go through fff6. Frames are AES-128-**ECB** (NOT
+ * CBC, no IV) on each 16-byte block, with a single fixed factory key. The
+ * MAC address only matters because the cube's hello payload contains the
+ * MAC, so the cube can verify the host already knows it.
  *
- * Frame format (16 bytes plaintext, after CBC decrypt):
- *   - byte 0   : magic, 0xFE for valid QiYi frames
- *   - byte 1   : command code:
- *       0x01 — hello (sent in response to our hello write)
- *       0x02 — move event
- *       0x03 — gyroscope (ignored)
- *       0x04 — battery
- *       0x05 — facelets snapshot
- *   - bytes 2.. payload, command-specific
+ * Plain-frame layout (after ECB-decrypting all blocks):
+ *   [0]    magic 0xFE
+ *   [1]    total length L (frame is L bytes; remainder is zero pad)
+ *   [2]    opcode: 0x02 = hello (initial), 0x03 = state change
+ *   [3..6] big-endian 32-bit timestamp (1.6 us per tick — see cstimer)
+ *   [7..33]  27 bytes of facelet nibbles (54 stickers, "LRDUFB" alphabet)
+ *   [34]   current move (state opcode only)
+ *   [35]   battery percent (state opcode only; also at this offset in hello)
+ *   [36..90] history-move slots; current + up to 9 past entries can be read
+ *           by walking offset = 91 - 5*i for i = 1..9, each (4 ts, 1 mv)
+ *   [L-2..L-1] CRC-16/MODBUS (little-endian) over msg[0..L-2]
  *
- * Move event (cmd=0x02) payload:
- *   - byte 2   : timestamp high (ms, 32-bit big-endian over bytes 2..5)
- *   - byte 6   : move counter (8-bit, used for drop detection)
- *   - byte 7   : move code:
- *                  high nibble = face (0..5 = L R D U B F — QiYi's order),
- *                  low nibble  = direction (0 = CW, 1 = CCW, 2 = double).
- *   - bytes 8..15 : facelet bitfield + CRC.
+ * Move-byte encoding (1..12):
+ *   axis = [4,1,3,0,2,5][(mv-1) >> 1]   -> URFDLB index
+ *   power = (mv & 1) ? 0 : 2            -> 0 = CW, 2 = CCW (no doubles)
  */
 
 import type { CubeDriver, CubeDriverStartResult } from './driver';
 import type { CubeBrand } from './types';
 
 const QIYI_SERVICE = '0000fff0-0000-1000-8000-00805f9b34fb';
-const QIYI_NOTIFY_CHAR = '0000fff6-0000-1000-8000-00805f9b34fb';
-const QIYI_COMMAND_CHAR = '0000fff5-0000-1000-8000-00805f9b34fb';
+/** fff6 is full-duplex: notifications come in, hello/ack go out on the same. */
+const QIYI_CUBE_CHAR = '0000fff6-0000-1000-8000-00805f9b34fb';
 
-const BATTERY_SERVICE = 0x180f;
-const BATTERY_LEVEL_CHAR = 0x2a19;
-
-// QiYi factory key/IV. Public values from cstimer's qiyicube.js. XORed with
-// the reversed 6-byte MAC.
-const QIYI_KEY_BASE = new Uint8Array([
-  0x57, 0xb1, 0xf9, 0xab, 0xcd, 0x1c, 0x48, 0xf7,
-  0xce, 0x0b, 0xe7, 0xa7, 0x71, 0x4a, 0xc5, 0x05,
-]);
-const QIYI_IV_BASE = new Uint8Array([
-  0x46, 0x5e, 0x6f, 0xb6, 0x70, 0x40, 0x4e, 0xc7,
-  0xc1, 0xae, 0xa3, 0x8b, 0xc1, 0x9d, 0xfd, 0x9e,
+/**
+ * Single fixed AES-128-ECB key shared by all QiYi smart cubes. Lifted from
+ * cstimer (KEYS[0], LZ-decompressed). Public, ships in their PWA bundle.
+ */
+const QIYI_AES_KEY = new Uint8Array([
+  0x57, 0xb1, 0xf9, 0xab, 0xcd, 0x5a, 0xe8, 0xa7,
+  0x9c, 0xb9, 0x8c, 0xe7, 0x57, 0x8c, 0x51, 0x08,
 ]);
 
-// Move face order in QiYi's command byte. CAUTION: this differs from GAN.
-const QIYI_FACE_ORDER = ['L', 'R', 'D', 'U', 'B', 'F'] as const;
+/** WCA face notation indexed by the URFDLB axis. */
+const URFDLB = ['U', 'R', 'F', 'D', 'L', 'B'] as const;
+/** mv-byte (1..12) → URFDLB axis index, per cstimer. */
+const QIYI_AXIS_LUT: ReadonlyArray<number> = [4, 1, 3, 0, 2, 5];
 
-// Frame magic byte.
 const QIYI_MAGIC = 0xfe;
-
-// Command codes we recognize.
-const CMD_HELLO = 0x01;
-const CMD_MOVE = 0x02;
-const CMD_BATTERY = 0x04;
-
-// Hello packet: [magic, cmd_hello, len=0x10, padding...]. Cube replies with
-// its own hello frame containing the firmware version and a 6-byte MAC echo
-// (which we ignore — the MAC is needed BEFORE decryption, so this echo
-// arrives already-encrypted).
-const QIYI_HELLO = new Uint8Array([
-  0xfe, 0x01, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-]);
-
-function hexToBytes(hex: string): Uint8Array {
-  const out = new Uint8Array(hex.length >> 1);
-  for (let i = 0; i < out.length; i++) {
-    out[i] = parseInt(hex.substr(i * 2, 2), 16);
-  }
-  return out;
-}
-
-function tryParseMacFromName(name: string | undefined): Uint8Array | null {
-  if (!name) return null;
-  const m12 = /([0-9A-Fa-f]{12})$/.exec(name);
-  if (m12) return hexToBytes(m12[1]);
-  const m6 = /-([0-9A-Fa-f]{6})$/.exec(name);
-  if (m6) {
-    const lower = hexToBytes(m6[1]);
-    const out = new Uint8Array(6);
-    out.set(lower, 3);
-    return out;
-  }
-  return null;
-}
-
-/** XOR base key/IV with reversed MAC over the first 6 bytes. */
-function deriveKey(base: Uint8Array, mac: Uint8Array): Uint8Array {
-  const out = new Uint8Array(16);
-  out.set(base);
-  const reversed = new Uint8Array(mac.length);
-  for (let i = 0; i < mac.length; i++) reversed[i] = mac[mac.length - 1 - i];
-  for (let i = 0; i < reversed.length; i++) out[i] ^= reversed[i];
-  return out;
-}
+const OP_HELLO = 0x02;
+const OP_STATE = 0x03;
 
 /* ================================================================== */
-/*  Pure-TS AES-128 (ECB block + CBC mode, decrypt-only).             */
-/*  Synchronous so the BLE handler doesn't drop frames.                */
+/*  AES-128-ECB (encrypt + decrypt). Mirrors cstimer's lib/sha256.js. */
 /* ================================================================== */
 
 const SBOX_INV = new Uint8Array([
@@ -212,6 +155,7 @@ function addRoundKey(s: Uint8Array, w: Uint8Array, off: number): void {
   for (let i = 0; i < 16; i++) s[i] ^= w[off + i];
 }
 
+/** AES-128-ECB decrypt of a single 16-byte block (in place semantics). */
 function aesDecryptBlock(block: Uint8Array, w: Uint8Array): Uint8Array {
   const s = new Uint8Array(block);
   addRoundKey(s, w, 160);
@@ -227,37 +171,16 @@ function aesDecryptBlock(block: Uint8Array, w: Uint8Array): Uint8Array {
   return s;
 }
 
-/**
- * AES-128-CBC decrypt of a single 16-byte block. The caller supplies the IV;
- * for QiYi the IV is the per-cube derived value, used anew for each frame.
- */
-function aesCbcDecrypt(ct: Uint8Array, key: Uint8Array, iv: Uint8Array): Uint8Array {
-  const w = expandKey(key);
-  const out = new Uint8Array(ct.length);
-  let prev = iv;
-  for (let off = 0; off < ct.length; off += 16) {
-    const block = ct.subarray(off, off + 16);
-    if (block.length < 16) break;
-    const pt = aesDecryptBlock(block, w);
-    for (let i = 0; i < 16; i++) out[off + i] = pt[i] ^ prev[i];
-    prev = block;
-  }
-  return out;
-}
-
-/** AES-128-CBC encrypt — used to package the hello packet for the cube. */
+/** AES-128-ECB encrypt of a single 16-byte block. */
 function aesEncryptBlock(block: Uint8Array, w: Uint8Array): Uint8Array {
   const s = new Uint8Array(block);
   addRoundKey(s, w, 0);
   for (let r = 1; r <= 9; r++) {
-    // SubBytes
     for (let i = 0; i < 16; i++) s[i] = SBOX[s[i]];
-    // ShiftRows
     let t = s[1]; s[1] = s[5]; s[5] = s[9]; s[9] = s[13]; s[13] = t;
     t = s[2]; s[2] = s[10]; s[10] = t;
     t = s[6]; s[6] = s[14]; s[14] = t;
     t = s[15]; s[15] = s[11]; s[11] = s[7]; s[7] = s[3]; s[3] = t;
-    // MixColumns
     for (let c = 0; c < 4; c++) {
       const i = c * 4;
       const a0 = s[i], a1 = s[i + 1], a2 = s[i + 2], a3 = s[i + 3];
@@ -268,7 +191,6 @@ function aesEncryptBlock(block: Uint8Array, w: Uint8Array): Uint8Array {
     }
     addRoundKey(s, w, r * 16);
   }
-  // Final round (no MixColumns).
   for (let i = 0; i < 16; i++) s[i] = SBOX[s[i]];
   let t = s[1]; s[1] = s[5]; s[5] = s[9]; s[9] = s[13]; s[13] = t;
   t = s[2]; s[2] = s[10]; s[10] = t;
@@ -278,65 +200,145 @@ function aesEncryptBlock(block: Uint8Array, w: Uint8Array): Uint8Array {
   return s;
 }
 
-function aesCbcEncryptSingleBlock(pt: Uint8Array, key: Uint8Array, iv: Uint8Array): Uint8Array {
-  const w = expandKey(key);
-  const xored = new Uint8Array(16);
-  for (let i = 0; i < 16; i++) xored[i] = pt[i] ^ iv[i];
-  return aesEncryptBlock(xored, w);
+/** ECB-decrypt a buffer that's already a multiple of 16 bytes. */
+function aesEcbDecrypt(buf: Uint8Array, w: Uint8Array): Uint8Array {
+  const out = new Uint8Array(buf.length);
+  for (let off = 0; off + 16 <= buf.length; off += 16) {
+    const pt = aesDecryptBlock(buf.subarray(off, off + 16), w);
+    out.set(pt, off);
+  }
+  return out;
+}
+
+/** ECB-encrypt a buffer that's already a multiple of 16 bytes. */
+function aesEcbEncrypt(buf: Uint8Array, w: Uint8Array): Uint8Array {
+  const out = new Uint8Array(buf.length);
+  for (let off = 0; off + 16 <= buf.length; off += 16) {
+    const ct = aesEncryptBlock(buf.subarray(off, off + 16), w);
+    out.set(ct, off);
+  }
+  return out;
 }
 
 /* ================================================================== */
-/*  Frame parsing                                                      */
+/*  CRC-16/MODBUS — same polynomial as cstimer                         */
 /* ================================================================== */
 
-interface DecodeState {
-  /** Last seen move counter; used to drop heartbeat / duplicate frames. */
-  lastCounter: number;
-  /** Most recent battery percentage from a cmd-4 event. */
-  battery: number | null;
+function crc16Modbus(data: Uint8Array): number {
+  let crc = 0xffff;
+  for (let i = 0; i < data.length; i++) {
+    crc ^= data[i];
+    for (let j = 0; j < 8; j++) {
+      crc = (crc & 1) !== 0 ? (crc >>> 1) ^ 0xa001 : crc >>> 1;
+    }
+  }
+  return crc & 0xffff;
+}
+
+/* ================================================================== */
+/*  Frame builders & parser                                            */
+/* ================================================================== */
+
+/**
+ * Build, CRC-frame, zero-pad, and ECB-encrypt a host->cube message.
+ * Mirrors cstimer's `sendMessage`.
+ */
+function buildPacket(content: ReadonlyArray<number>, w: Uint8Array): Uint8Array {
+  // Header (2) + content + CRC (2), then zero-pad to a multiple of 16.
+  const headerLen = 2 + content.length + 2;
+  const padded = new Uint8Array(Math.ceil(headerLen / 16) * 16);
+  padded[0] = QIYI_MAGIC;
+  padded[1] = headerLen;
+  for (let i = 0; i < content.length; i++) padded[2 + i] = content[i] & 0xff;
+  const crc = crc16Modbus(padded.subarray(0, 2 + content.length));
+  padded[2 + content.length] = crc & 0xff;
+  padded[2 + content.length + 1] = (crc >>> 8) & 0xff;
+  return aesEcbEncrypt(padded, w);
 }
 
 /**
- * Decode a 16-byte plaintext QiYi frame into 0..1 moves.
+ * Best-effort MAC parse from `device.name`. cstimer pulls the MAC from BLE
+ * advertisement manufacturer data (CIC 0x0504), but Web Bluetooth doesn't
+ * surface that to us reliably; the cube name carries the low two bytes.
  *
- * Direction encoding in the move byte's low nibble:
- *   0 = CW   → "F"
- *   1 = CCW  → "F'"
- *   2 = 180° → "F2"  (rare; QiYi usually splits doubles into two frames)
+ * Names look like `QY-QYSC-X-XXXX` or `XMD-TornadoV4-i-X-XXXX`. The official
+ * MAC prefix for QiYi Smart Cube is `CC:A3:00:00:` followed by the trailing
+ * four hex chars of the device name.
  *
- * Faces are reported in QiYi's order: L R D U B F.
+ * Returns 6 bytes in big-endian MAC order ([0]=high) or null.
  */
-function decodeFrame(frame: Uint8Array, dec: DecodeState): string[] {
-  if (frame.length < 16) return [];
-  if (frame[0] !== QIYI_MAGIC) return [];
-  const cmd = frame[1];
+function macFromDeviceName(name: string | undefined): Uint8Array | null {
+  if (!name) return null;
+  const m = /^(?:QY-QYSC|XMD-TornadoV4-i)-.-([0-9A-F]{4})$/i.exec(name.trim());
+  if (!m) return null;
+  const tail = m[1].toUpperCase();
+  return new Uint8Array([0xcc, 0xa3, 0x00, 0x00,
+    parseInt(tail.slice(0, 2), 16),
+    parseInt(tail.slice(2, 4), 16)]);
+}
 
-  if (cmd === CMD_BATTERY) {
-    const pct = frame[2];
-    if (pct <= 100) dec.battery = pct;
-    return [];
+interface DecodeState {
+  /** Most recent timestamp (cube's 32-bit counter). Used to dedupe. */
+  lastTs: number;
+  /** Most recent battery percentage. */
+  battery: number | null;
+}
+
+/** Format a (axis, power) pair into WCA notation. power in {0=CW, 2=CCW}. */
+function formatMove(axis: number, power: number): string | null {
+  if (axis < 0 || axis >= URFDLB.length) return null;
+  if (power === 0) return URFDLB[axis];
+  if (power === 2) return `${URFDLB[axis]}'`;
+  return null;
+}
+
+/**
+ * Parse a fully-decrypted, length-trimmed, CRC-validated frame.
+ * Returns moves in chronological order (oldest first) plus the new lastTs.
+ */
+function parseStateMoves(msg: Uint8Array, prevLastTs: number):
+    { moves: string[]; lastTs: number; battery: number | null } {
+  const opcode = msg[2];
+  const ts = ((msg[3] << 24) | (msg[4] << 16) | (msg[5] << 8) | msg[6]) >>> 0;
+  if (opcode === OP_HELLO) {
+    // Hello carries a facelet snapshot and battery. We can't replay the
+    // pre-connect history, so just absorb the timestamp + battery.
+    const battery = msg.length > 35 ? msg[35] : null;
+    return { moves: [], lastTs: ts, battery: battery !== null && battery <= 100 ? battery : null };
+  }
+  if (opcode !== OP_STATE) {
+    return { moves: [], lastTs: prevLastTs, battery: null };
   }
 
-  if (cmd === CMD_HELLO) {
-    // Cube acknowledges our hello. Nothing to do — we already subscribed.
-    return [];
+  // todoMoves: newest first. Index 0 is the just-happened move.
+  const todo: Array<{ mv: number; ts: number }> = [];
+  if (msg.length > 34) {
+    todo.push({ mv: msg[34], ts });
+  }
+  // History: walk back through up to 9 historical entries while their
+  // timestamps are strictly newer than what we last saw.
+  for (let i = 1; i < 10; i++) {
+    const off = 91 - 5 * i;
+    if (off + 4 >= msg.length) break;
+    const hisTs = ((msg[off] << 24) | (msg[off + 1] << 16) | (msg[off + 2] << 8) | msg[off + 3]) >>> 0;
+    const hisMv = msg[off + 4];
+    if (hisTs <= prevLastTs || hisMv === 0) break;
+    todo.push({ mv: hisMv, ts: hisTs });
   }
 
-  if (cmd !== CMD_MOVE) return [];
+  // Replay oldest -> newest so the timer sees moves in real order.
+  const moves: string[] = [];
+  for (let i = todo.length - 1; i >= 0; i--) {
+    const mv = todo[i].mv;
+    if (mv < 1 || mv > 12) continue;
+    const axis = QIYI_AXIS_LUT[(mv - 1) >> 1];
+    const power = (mv & 1) !== 0 ? 0 : 2; // odd = CW, even = CCW
+    const formatted = formatMove(axis, power);
+    if (formatted) moves.push(formatted);
+  }
 
-  const counter = frame[6];
-  if (counter === dec.lastCounter) return [];
-  dec.lastCounter = counter;
-
-  const moveByte = frame[7];
-  const face = (moveByte >> 4) & 0x0f;
-  const dir = moveByte & 0x0f;
-  if (face >= QIYI_FACE_ORDER.length) return [];
-  const f = QIYI_FACE_ORDER[face];
-  if (dir === 0) return [f];
-  if (dir === 1) return [`${f}'`];
-  if (dir === 2) return [`${f}2`];
-  return [];
+  const battery = msg.length > 35 ? msg[35] : null;
+  return { moves, lastTs: ts, battery: battery !== null && battery <= 100 ? battery : null };
 }
 
 /* ================================================================== */
@@ -346,78 +348,89 @@ function decodeFrame(frame: Uint8Array, dec: DecodeState): string[] {
 export const qiyiDriver: CubeDriver = {
   brand: 'qiyi' satisfies CubeBrand,
   service: QIYI_SERVICE,
-  optionalServices: [String(BATTERY_SERVICE)],
+  optionalServices: [],
 
   matches(device: BluetoothDevice): boolean {
-    const n = device.name ?? '';
-    // QiYi cubes commonly advertise as "QiYi-XXYYZZ" / "QY-..." / "MHC-..."
-    // (Mofang HuanCai). The service UUID is shared with GAN v3 firmwares,
-    // so this matcher must run AFTER the v3 driver in the registry.
-    return /^(QiYi|MHC|QY-)/i.test(n);
+    const n = (device.name ?? '').trim();
+    return /^(QY-QYSC|XMD-TornadoV4-i)/i.test(n);
   },
 
   async start(server, onMove): Promise<CubeDriverStartResult> {
     const service = await server.getPrimaryService(QIYI_SERVICE);
-    const notifyChar = await service.getCharacteristic(QIYI_NOTIFY_CHAR);
+    const cubeChar = await service.getCharacteristic(QIYI_CUBE_CHAR);
 
-    const mac = tryParseMacFromName(server.device.name) ?? new Uint8Array(6);
-    const aesKey = deriveKey(QIYI_KEY_BASE, mac);
-    const aesIv = deriveKey(QIYI_IV_BASE, mac);
+    const w = expandKey(QIYI_AES_KEY);
+    const decState: DecodeState = { lastTs: 0, battery: null };
 
-    const decState: DecodeState = { lastCounter: -1, battery: null };
+    /** Send a host->cube ECB packet on the cube characteristic. */
+    const send = async (content: ReadonlyArray<number>): Promise<void> => {
+      const enc = buildPacket(content, w);
+      // Allocate a fresh ArrayBuffer to satisfy strict TS BufferSource typing.
+      const ab = new ArrayBuffer(enc.length);
+      new Uint8Array(ab).set(enc);
+      if (cubeChar.writeValueWithResponse) {
+        await cubeChar.writeValueWithResponse(ab);
+      } else if (cubeChar.writeValueWithoutResponse) {
+        await cubeChar.writeValueWithoutResponse(ab);
+      } else {
+        await cubeChar.writeValue(ab);
+      }
+    };
 
     const onChar = (ev: Event): void => {
       const target = ev.target as BluetoothRemoteGATTCharacteristic;
       const dv = target.value;
-      if (!dv) return;
+      if (!dv || dv.byteLength === 0 || (dv.byteLength % 16) !== 0) return;
       const ct = new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength);
-      let pt: Uint8Array;
-      try {
-        pt = aesCbcDecrypt(ct, aesKey, aesIv);
-      } catch {
-        return;
+      const pt = aesEcbDecrypt(ct, w);
+      if (pt[0] !== QIYI_MAGIC) return;
+      const len = pt[1];
+      if (len < 4 || len > pt.length) return;
+      const msg = pt.subarray(0, len);
+      if (crc16Modbus(msg) !== 0) return; // CRC is over msg incl. trailing CRC = 0
+
+      // Ack opcode + 4 ts bytes for state and hello frames, mirroring cstimer.
+      const opcode = msg[2];
+      if (opcode === OP_HELLO || opcode === OP_STATE) {
+        // Fire-and-forget; failures shouldn't lose moves we already parsed.
+        void send(Array.from(msg.subarray(2, 7)));
       }
-      const moves = decodeFrame(pt, decState);
-      for (const mv of moves) onMove(mv);
+
+      const parsed = parseStateMoves(msg, decState.lastTs);
+      decState.lastTs = parsed.lastTs;
+      if (parsed.battery !== null) decState.battery = parsed.battery;
+      for (const mv of parsed.moves) onMove(mv);
     };
 
-    notifyChar.addEventListener('characteristicvaluechanged', onChar);
-    await notifyChar.startNotifications();
+    cubeChar.addEventListener('characteristicvaluechanged', onChar);
+    await cubeChar.startNotifications();
 
-    // Send the hello packet so the cube starts streaming move events.
-    // Failure is non-fatal (some firmwares stream after subscribe alone).
-    try {
-      const cmdChar = await service.getCharacteristic(QIYI_COMMAND_CHAR);
-      const helloEnc = aesCbcEncryptSingleBlock(QIYI_HELLO, aesKey, aesIv);
-      const helloBuf = new ArrayBuffer(helloEnc.length);
-      new Uint8Array(helloBuf).set(helloEnc);
-      if (cmdChar.writeValueWithResponse) {
-        await cmdChar.writeValueWithResponse(helloBuf);
-      } else {
-        await cmdChar.writeValue(helloBuf);
+    // Send initial hello. Without a known MAC the cube ignores it, so try a
+    // best-effort name-derived MAC; if that fails, we still subscribe and
+    // hope a later ack-loop kicks the cube into streaming.
+    const mac = macFromDeviceName(server.device.name);
+    if (mac) {
+      const helloContent: number[] = [
+        0x00, 0x6b, 0x01, 0x00, 0x00, 0x22, 0x06, 0x00, 0x02, 0x08, 0x00,
+      ];
+      // cstimer sends MAC bytes in reverse (low byte first).
+      for (let i = 5; i >= 0; i--) helloContent.push(mac[i]);
+      try {
+        await send(helloContent);
+      } catch {
+        // Non-fatal — some firmwares stream after subscribe alone.
       }
-    } catch {
-      // Ignore.
     }
 
     let cleaned = false;
     const cleanup = (): void => {
       if (cleaned) return;
       cleaned = true;
-      notifyChar.removeEventListener('characteristicvaluechanged', onChar);
-      void notifyChar.stopNotifications().catch(() => {});
+      cubeChar.removeEventListener('characteristicvaluechanged', onChar);
+      void cubeChar.stopNotifications().catch(() => {});
     };
 
-    const battery = async (): Promise<number | null> => {
-      try {
-        const battSvc = await server.getPrimaryService(BATTERY_SERVICE);
-        const battChar = await battSvc.getCharacteristic(BATTERY_LEVEL_CHAR);
-        const v = await battChar.readValue();
-        return v.getUint8(0);
-      } catch {
-        return decState.battery;
-      }
-    };
+    const battery = async (): Promise<number | null> => decState.battery;
 
     return { battery, cleanup };
   },
