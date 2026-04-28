@@ -3,7 +3,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { Download, RefreshCw, Target } from 'lucide-react';
+import { Download, FileSpreadsheet, RefreshCw, Target } from 'lucide-react';
 import { formatTargetTime, parseTargetTime, resetSettings, updateSettings, useSettings } from '../settings';
 import { warmupSound, play } from '../sound';
 import { getMetronome } from '../sound/metronome';
@@ -12,6 +12,7 @@ import { getSeedCounter, resetSeedCounter } from '../scramble';
 import { appendSolves, listBackups, pushBackup, replaceSolves, restoreBackup } from '../storage/db';
 import { parseCstimerExport, type CstimerSessionParsed } from '../storage/import_cstimer';
 import { exportCstimerJson } from '../storage/export_cstimer';
+import { exportSolvesCsv } from '../storage/export_csv';
 import { reanalyzeAll } from '../storage/reanalyze';
 import { eventInfo, type EventId } from '../types';
 
@@ -129,6 +130,10 @@ export default function SettingsPanel({ isZh, onClose, event }: Props) {
   const [cstimerExportMsg, setCstimerExportMsg] = useState<string | null>(null);
   const cstimerExportTimerRef = useRef<number | null>(null);
 
+  // ── CSV export state ──
+  const [csvExportMsg, setCsvExportMsg] = useState<string | null>(null);
+  const csvExportTimerRef = useRef<number | null>(null);
+
   // ── Reanalyze stage data state ──
   const [reanalyzeBusy, setReanalyzeBusy] = useState(false);
   const [reanalyzeProgress, setReanalyzeProgress] = useState<{ scanned: number; total: number } | null>(null);
@@ -138,6 +143,7 @@ export default function SettingsPanel({ isZh, onClose, event }: Props) {
   useEffect(() => {
     return () => {
       if (cstimerExportTimerRef.current !== null) window.clearTimeout(cstimerExportTimerRef.current);
+      if (csvExportTimerRef.current !== null) window.clearTimeout(csvExportTimerRef.current);
       if (reanalyzeMsgTimerRef.current !== null) window.clearTimeout(reanalyzeMsgTimerRef.current);
     };
   }, []);
@@ -196,6 +202,36 @@ export default function SettingsPanel({ isZh, onClose, event }: Props) {
       cstimerExportTimerRef.current = window.setTimeout(() => {
         setCstimerExportMsg(null);
         cstimerExportTimerRef.current = null;
+      }, 1500);
+    } catch {
+      alert(isZh ? '导出失败。' : 'Export failed.');
+    }
+  }
+
+  function onCsvExport(): void {
+    try {
+      const { csv, solveCount } = exportSolvesCsv();
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const d = new Date();
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `cuberoot-solves-${yyyy}-${mm}-${dd}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      const msg = isZh
+        ? `已导出 ${solveCount} 条成绩`
+        : `Exported ${solveCount} solves`;
+      setCsvExportMsg(msg);
+      if (csvExportTimerRef.current !== null) window.clearTimeout(csvExportTimerRef.current);
+      csvExportTimerRef.current = window.setTimeout(() => {
+        setCsvExportMsg(null);
+        csvExportTimerRef.current = null;
       }, 1500);
     } catch {
       alert(isZh ? '导出失败。' : 'Export failed.');
@@ -557,17 +593,28 @@ export default function SettingsPanel({ isZh, onClose, event }: Props) {
               ? '导出来源：csTimer → Local backup → Export'
               : 'From csTimer → Local backup → Export'}</span>
           </Row>
-          <Row label={isZh ? '导出为 csTimer JSON' : 'Export as csTimer JSON'}>
+          <Row label={isZh ? '导出所有成绩' : 'Export all solves'}>
             <button
               className="hint-btn"
               onClick={() => { void onCstimerExport(); }}
               title={isZh ? '下载所有成绩为 csTimer 兼容的 JSON' : 'Download all solves as a csTimer-compatible JSON'}
             >
               <Download size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
-              {isZh ? '下载' : 'Download'}
+              {isZh ? 'csTimer JSON' : 'csTimer JSON'}
+            </button>
+            <button
+              className="hint-btn"
+              onClick={onCsvExport}
+              title={isZh ? '每条成绩一行的 CSV，便于 Excel / Python 分析' : 'One row per solve, for spreadsheets / Python'}
+            >
+              <FileSpreadsheet size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
+              {isZh ? 'CSV' : 'CSV'}
             </button>
             {cstimerExportMsg !== null && (
               <span className="hint">{cstimerExportMsg}</span>
+            )}
+            {csvExportMsg !== null && (
+              <span className="hint">{csvExportMsg}</span>
             )}
           </Row>
           {cstimerSessions && cstimerSessions.length > 0 && (
