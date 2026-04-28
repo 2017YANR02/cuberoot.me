@@ -28,8 +28,9 @@
  *
  * MegaState is a Record<MegaFace, MegaSticker[]> where MegaFace uses cstimer's
  * 12 names. Per face: array of length 11 indexed [0..4]=corners, [5..9]=edges,
- * [10]=center, exactly as the internal flat array. MegaminxNet renders from
- * this shape directly.
+ * [10]=center, exactly as the internal flat array. (Originally consumed by a
+ * homemade MegaminxNet renderer — now only used by solver/mega.ts; the live
+ * scramble preview goes through cubing.js's TwistyPlayer.)
  */
 
 export type MegaFace =
