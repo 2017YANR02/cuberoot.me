@@ -81,6 +81,19 @@ export function formatRecordValue(v: number, eventId: string, kind: 's' | 'a'): 
     const sec = seconds % 60;
     return `${solved}/${attempted} ${min}:${String(sec).padStart(2, '0')}`;
   }
+  // NOTE: 老多盲编码 (333mbo, ≥10 位): DDDTTTTTAA
+  //   D = 99 - solved, T = seconds (5 位), A = attempted
+  if (eventId === '333mbo') {
+    let mb = v;
+    const seconds = mb % 100000;
+    mb = Math.floor(mb / 100000);
+    const attempted = mb % 100;
+    mb = Math.floor(mb / 100);
+    const solved = 99 - (mb % 100);
+    const min = Math.floor(seconds / 60);
+    const sec = seconds % 60;
+    return `${solved}/${attempted} ${min}:${String(sec).padStart(2, '0')}`;
+  }
   const sec = v / 100;
   if (sec >= 60) {
     const m = Math.floor(sec / 60);

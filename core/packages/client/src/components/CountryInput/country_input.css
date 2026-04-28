@@ -136,3 +136,77 @@
 .country-input-item--active {
   background: rgba(217, 119, 87, 0.15);
 }
+
+/* ── 多选模式：已选 chips 行 —— 放在下拉 popup 顶部，不挤占 toolbar ── */
+.country-input-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 8px 8px 6px;
+  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.10));
+  margin-bottom: 4px;
+}
+.country-input-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 2px 2px 6px;
+  border-radius: 999px;
+  background: var(--accent-soft, rgba(217, 119, 87, 0.15));
+  color: var(--text, #e5e5e5);
+  font-size: 0.78rem;
+  line-height: 1.2;
+}
+.country-input-chip .country-input-flag {
+  position: static;
+  transform: none;
+  width: 16px;
+  height: 12px;
+}
+.country-input-chip-name {
+  white-space: nowrap;
+}
+.country-input-chip-x {
+  width: 16px;
+  height: 16px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.6;
+}
+.country-input-chip-x:hover {
+  opacity: 1;
+  background: color-mix(in srgb, currentColor 14%, transparent);
+}
+
+/* ── 大洲项 ── */
+.country-input-item--continent {
+  font-weight: 600;
+}
+.country-input-continent-icon {
+  flex-shrink: 0;
+  color: var(--text-sub, #888);
+}
+
+.country-input-check {
+  margin-left: 4px;
+  color: var(--accent, #C15F3C);
+  font-weight: 700;
+}
+.country-input-check--partial {
+  opacity: 0.5;
+}
+.country-input-item--via-continent {
+  /* 当国家通过大洲被覆盖时, 视觉上比直接选中的略淡 */
+  opacity: 0.85;
+}
+.country-input-chip--continent {
+  background: color-mix(in srgb, var(--accent, #C15F3C) 18%, transparent);
+}

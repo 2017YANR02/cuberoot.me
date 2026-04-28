@@ -14,6 +14,7 @@ import type { DistDataset } from './DistributionChart';
 import WrHistoryChart from './WrHistoryChart';
 import { translateCellText, translatePersonLink, stripChineseParens } from './wca_translations';
 import LangToggle from '../../components/LangToggle';
+import Top10HistoryPage from './Top10HistoryPage';
 import './wca_stats.css';
 
 // NOTE: JSON schema 与 stats-build 输出一致
@@ -1226,6 +1227,27 @@ export default function WcaStatsPage() {
           </div>
         </div>
       )}
+
+      {statId === 'wr_metric' && activePanel === 0 && data && (() => {
+        const SUPPORTED = new Set([
+          'single', 'average',
+          'bao5', 'wao5', 'mo5', 'bpa', 'wpa',
+          'median', 'best_counting', 'worst_counting', 'worst',
+        ]);
+        const mp = data.metricPanels?.[activeMetric];
+        const id = mp?.id ?? 'single';
+        const m = (SUPPORTED.has(id) ? id : 'single') as
+          'single' | 'average' | 'bao5' | 'wao5' | 'mo5' | 'bpa' | 'wpa'
+          | 'median' | 'best_counting' | 'worst_counting' | 'worst';
+        return (
+          <Top10HistoryPage
+            controlledEventId={selectedEvent || '333'}
+            controlledMetric={m}
+            controlledMetricLabelZh={mp?.labelZh}
+            controlledMetricLabelEn={mp?.labelEn}
+          />
+        );
+      })()}
     </div>
   );
 }

@@ -436,3 +436,57 @@ td[data-tip-show]:hover::after {
   text-align: center;
   margin-top: 8px;
 }
+
+/* --- Normalized Cross block (used in detail + submit pages) --- */
+.normalized-cross-block {
+  margin-top: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.normalized-cross-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.normalized-cross-title {
+  font-size: 0.78rem;
+  color: #a3a3a3;
+  letter-spacing: 0.02em;
+}
+
+.normalized-cross-copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: #a3a3a3;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.normalized-cross-copy:hover {
+  color: #e8a27a;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.normalized-cross-body {
+  padding: 10px 14px;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: #e5e5e5;
+  word-break: break-word;
+}
+
+.normalized-cross-comment {
+  color: #737373;
+}

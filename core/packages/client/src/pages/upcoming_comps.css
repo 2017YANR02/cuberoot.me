@@ -297,9 +297,10 @@
 .upcoming-page .week-row {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    /* 第一行固定留给 day-number；末行 1fr 吸收 min-height 撑出的多余空间，保证 bar 紧贴 day-number 之下 */
-    grid-template-rows: 22px repeat(var(--tracks, 1), 26px) 1fr;
-    grid-auto-rows: 26px;
+    /* 第一行固定 day-number；track 行 minmax(22px, auto) —— 名字短保持 22px,某列名字长自动撑高 */
+    /* 末行 1fr 吸收 min-height 撑出的多余空间，保证 bar 紧贴 day-number 之下 */
+    grid-template-rows: 22px repeat(var(--tracks, 1), minmax(22px, auto)) 1fr;
+    grid-auto-rows: minmax(22px, auto);
     border-bottom: 1px solid var(--border);
     padding: 0 0 4px;
     min-height: 120px;
@@ -338,13 +339,16 @@
 
 /* ── Event Bar ── */
 .upcoming-page .event-bar {
-    display: flex;
-    align-items: center;
-    gap: 5px;
+    /* 始终用 block + inline-block 子元素：徽章/国旗顶部对齐，名字以 inline 流动，
+     * 名字超长时第二行起从 bar 左边缘开始（不缩进）。track 行高 minmax(22px, auto)
+     * 让窄列长名字自动撑高所在 track 行（同周其它列也跟着高，但视觉一致）。 */
+    display: block;
     min-width: 0;
-    height: 22px;
+    min-height: 22px;
+    align-self: start;
     margin: 1px 3px;
-    padding: 0 7px;
+    padding: 4px 7px;
+    line-height: 1.2;
     border-radius: 5px;
     background: var(--accent-soft);
     color: var(--text);
@@ -358,6 +362,15 @@
     transition: background 0.15s, opacity 0.15s;
     z-index: 2;
     position: relative;
+}
+.upcoming-page .event-bar > * {
+    vertical-align: top;
+}
+.upcoming-page .event-bar > .flag-span,
+.upcoming-page .event-bar > .flag-img,
+.upcoming-page .event-bar > .record-badge {
+    display: inline-block;
+    margin-right: 5px;
 }
 .upcoming-page .event-bar:hover {
     background: var(--accent-soft-strong);
@@ -384,9 +397,11 @@
     margin-right: 0;
 }
 .upcoming-page .event-bar-name {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    display: inline;
+    white-space: normal;
+    word-break: break-word;
+    overflow: visible;
+    text-overflow: clip;
     min-width: 0;
 }
 
@@ -556,10 +571,27 @@
 .upcoming-page .modal-events {
     display: inline-flex;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: 6px 10px;
     color: var(--text-sub);
     font-size: 1rem;
     margin-bottom: 1.25rem;
+}
+.upcoming-page .modal-event {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+    gap: 2px;
+}
+.upcoming-page .modal-event-rounds {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-sub);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+.upcoming-page .modal-event-rounds--placeholder {
+    opacity: 0.3;
 }
 
 .upcoming-page .modal-cubers-title {
@@ -742,10 +774,10 @@
     .upcoming-page .day-cell { padding: 3px 3px 1px; min-width: 0; }
     .upcoming-page .week-row { min-height: 90px; }
     .upcoming-page .day-number { font-size: 0.7rem; }
-    .upcoming-page .event-bar { font-size: 0.65rem; height: 18px; padding: 0 4px; gap: 3px; }
+    .upcoming-page .event-bar { font-size: 0.65rem; min-height: 18px; padding: 0 4px; gap: 3px; }
     .upcoming-page .event-bar .flag-span,
     .upcoming-page .event-bar .flag-img { width: 11px; height: 8px; }
-    .upcoming-page .week-row { grid-template-rows: 18px repeat(var(--tracks, 1), 20px) 1fr; }
+    .upcoming-page .week-row { grid-template-rows: 18px repeat(var(--tracks, 1), minmax(20px, auto)) 1fr; }
     .upcoming-page .more-btn { font-size: 0.62rem; height: 18px; padding: 0 4px; }
 }
 

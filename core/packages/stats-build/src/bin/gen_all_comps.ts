@@ -38,6 +38,12 @@ interface Row extends RowDataPacket {
   events_csv: string | null;
 }
 
+interface RoundRow extends RowDataPacket {
+  competition_id: string;
+  event_id: string;
+  round_count: number;
+}
+
 function fmtDate(d: Date | string): string {
   if (d instanceof Date) {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -70,6 +76,23 @@ async function main() {
 
   const rows = await query<Row[]>(sql);
 
+  // NOTE: 每场比赛每个项目的轮次数。`rounds` 表 + `competition_events` 桥接,
+  // COUNT(*) 即该 (comp,event) 设置的轮数（== rounds.total_number_of_rounds 字段）。
+  const roundsSql = `
+    SELECT ce.competition_id, ce.event_id, COUNT(r.id) AS round_count
+    FROM competition_events ce
+    JOIN rounds r ON r.competition_event_id = ce.id
+    GROUP BY ce.competition_id, ce.event_id
+  `;
+  const roundRows = await query<RoundRow[]>(roundsSql);
+  const roundsByComp = new Map<string, Record<string, number>>();
+  for (const rr of roundRows) {
+    let m = roundsByComp.get(rr.competition_id);
+    if (!m) { m = {}; roundsByComp.set(rr.competition_id, m); }
+    const short = EVENT_SHORT[rr.event_id] ?? rr.event_id;
+    m[short] = Number(rr.round_count);
+  }
+
   const out = rows
     .filter((r) => {
       const lat = Number(r.latitude_degrees);
@@ -81,6 +104,7 @@ async function main() {
       const shortEvents = rawEvents
         .map((e) => EVENT_SHORT[e] ?? e)
         .sort((a, b) => (EVENT_RANK[a] ?? 999) - (EVENT_RANK[b] ?? 999));
+      const rounds = roundsByComp.get(r.id);
       return {
         id: r.id,
         name: r.name,
@@ -91,6 +115,7 @@ async function main() {
         start_date: fmtDate(r.start_date),
         end_date: fmtDate(r.end_date),
         events: shortEvents,
+        ...(rounds && Object.keys(rounds).length > 0 ? { rounds } : {}),
       };
     });
 

@@ -12,6 +12,8 @@ export interface UpcomingCompRecord {
   end_date: string;
   events: string[];          // 短名，见 EVENT_DISPLAY_ORDER
   competitor_limit: number;
+  registration_open?: string | null;   // ISO 8601 UTC, e.g. "2026-04-01T18:00:00.000Z"
+  registration_close?: string | null;
   latitude_degrees: number;
   longitude_degrees: number;
   url: string;
@@ -27,6 +29,8 @@ export interface PastCompRecord {
   start_date: string;
   end_date: string;
   events: string[];
+  /** event 短码 → 该项目轮次数（含资格 / 决赛全部）；老 dump 没有这字段时缺省 */
+  rounds?: Record<string, number>;
 }
 
 export async function fetchAllUpcomingCompsJson(): Promise<UpcomingCompRecord[]> {

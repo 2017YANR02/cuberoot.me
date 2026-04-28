@@ -30,6 +30,10 @@ import {
 } from '../utils/comp_records';
 import { loadFlagData, personFlagIso2, compNameZh, countryToIso2 } from '../utils/country_flags';
 import { stripWcaPrefix } from '../utils/comp_localize';
+import { localizeCity } from '../utils/city_localize';
+import { countryName } from '../utils/country_name';
+import { expandCountrySelection } from '../utils/continent';
+import { fetchCompRounds } from '../utils/comp_wcif';
 import './upcoming_comps.css';
 
 // ── 类型定义 ──────────────────────────────────────────────────────────────
@@ -55,7 +59,11 @@ interface Competition {
   start_date: string;
   end_date: string;
   events: string[];
+  /** event 短码 → 该项目轮次数；过去比赛由 all_past_comps.json 静态字段提供，未来比赛打开 modal 时走 WCIF runtime 拉 */
+  rounds?: Record<string, number>;
   competitor_limit: number;
+  registration_open?: string | null;   // ISO 8601 UTC
+  registration_close?: string | null;
   cubing_china_url?: string;
   top_cubers: TopCuber[];
 }
@@ -80,6 +88,10 @@ const SHORT_TO_EVENT_ID: Record<string, string> = {
   '4bf': '444bf', '5bf': '555bf', 'mbf': '333mbf',
   'ft': '333ft', 'mbo': '333mbo', 'mag': 'magic', 'mmag': 'mmagic',
 };
+// 反向映射：WCA eventId → 后端短名（WCIF 用 WCA eventId,我们的 comp.events 用短名）
+const WCA_EVENT_ID_TO_SHORT: Record<string, string> = Object.fromEntries(
+  Object.entries(SHORT_TO_EVENT_ID).map(([s, w]) => [w, s])
+);
 
 // NOTE: ISO 3166-1 alpha-2 → 国家英文全名
 const COUNTRY_MAP: Record<string, string> = {
@@ -177,6 +189,35 @@ function localizeName(c: { name: string; name_zh?: string }, isZh: boolean): str
   return stripWcaPrefix(resolved);
 }
 
+/** 报名时段渲染：未到 → "X 开放报名"；进行中 → "报名中（X 截止）"；已截止 → "报名已截止"。
+ *  ISO 转用户本地时区。两个字段都没有时返回 null。 */
+function formatRegStatus(open: string | null | undefined, close: string | null | undefined, isZh: boolean): string | null {
+  if (!open && !close) return null;
+  const now = Date.now();
+  const fmt = (iso: string): string => {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    const Y = d.getFullYear();
+    const M = String(d.getMonth() + 1).padStart(2, '0');
+    const D = String(d.getDate()).padStart(2, '0');
+    const h = String(d.getHours()).padStart(2, '0');
+    const m = String(d.getMinutes()).padStart(2, '0');
+    return `${Y}-${M}-${D} ${h}:${m}`;
+  };
+  const openMs = open ? new Date(open).getTime() : null;
+  const closeMs = close ? new Date(close).getTime() : null;
+  if (openMs !== null && now < openMs) {
+    return isZh ? `${fmt(open!)} 开放报名` : `Registration opens ${fmt(open!)}`;
+  }
+  if (closeMs !== null && now >= closeMs) {
+    return isZh ? '报名已截止' : 'Registration closed';
+  }
+  if (closeMs !== null) {
+    return isZh ? `${fmt(close!)} 截止` : `Closes ${fmt(close!)}`;
+  }
+  return isZh ? '报名中' : 'Registration open';
+}
+
 function Flag({ iso2 }: { iso2: string }) {
   return <SharedFlag iso2={iso2} spanClassName="flag-span" imgClassName="flag-img" />;
 }
@@ -188,6 +229,7 @@ interface EventBar {
   startCol: number; // 1-7
   span: number;
   track: number;
+  rowSpan: number; // 该 bar 在所跨列里向下能占多少 track 行（无下方阻挡时延伸）
   continuesFromPrev: boolean;
   continuesToNext: boolean;
   key: string;
@@ -205,7 +247,7 @@ function computeWeeks(
   viewYear: number,
   viewMonth: number,
   comps: Competition[],
-  priorityCountry: string = '',
+  priorityCountries: Set<string> = new Set(),
 ): WeekRow[] {
   const gridStart = monthGridStart(viewYear, viewMonth);
   const monthStart = new Date(viewYear, viewMonth, 1);
@@ -236,9 +278,9 @@ function computeWeeks(
       return e >= effStart && s <= effEnd;
     }).sort((a, b) => {
       // 0. 选中国家的比赛绝对优先（保证被选国家的比赛不会因长赛事挤占而变 overflow）
-      if (priorityCountry) {
-        const am = a.country === priorityCountry ? 0 : 1;
-        const bm = b.country === priorityCountry ? 0 : 1;
+      if (priorityCountries.size > 0) {
+        const am = priorityCountries.has(a.country.toUpperCase()) ? 0 : 1;
+        const bm = priorityCountries.has(b.country.toUpperCase()) ? 0 : 1;
         if (am !== bm) return am - bm;
       }
       // 1. 持续天数越多越靠前（长赛事优先占可见 track）
@@ -297,6 +339,7 @@ function computeWeeks(
           startCol,
           span,
           track,
+          rowSpan: 1, // 占位，下面统一计算
           continuesFromPrev: s < effStart,
           continuesToNext: e > effEnd,
           key: `${c.id}-${w}`,
@@ -310,6 +353,38 @@ function computeWeeks(
           overflowByCol.get(col)!.push(c);
         }
       }
+    }
+
+    // NOTE: 计算每个 bar 能向下扩展的 track 行数。bar 所跨列里，找下方最近的占用 track（其它 bar 或 +N 溢出按钮）作为阻挡，
+    // 取所有列阻挡的最小值。无阻挡时延伸到 MAX_TRACKS。这样单一比赛能占满日格的空白区，长名字可以换行显示。
+    const occupiedByCol = new Map<number, Set<number>>();
+    for (const b of bars) {
+      for (let c = b.startCol; c < b.startCol + b.span; c++) {
+        let set = occupiedByCol.get(c);
+        if (!set) { set = new Set(); occupiedByCol.set(c, set); }
+        set.add(b.track);
+      }
+    }
+    const overflowRowFor = (col: number): number | null =>
+      overflowByCol.has(col) ? Math.min(MAX_TRACKS, maxTrack + 1) + 2 : null;
+    for (const b of bars) {
+      let endRow = MAX_TRACKS + 2; // grid row exclusive 下界（最后 track row 后）
+      for (let c = b.startCol; c < b.startCol + b.span; c++) {
+        const tracks = occupiedByCol.get(c);
+        let blocker = MAX_TRACKS + 2;
+        if (tracks) {
+          for (const t of tracks) {
+            if (t > b.track) {
+              const r = t + 2;
+              if (r < blocker) blocker = r;
+            }
+          }
+        }
+        const ofr = overflowRowFor(c);
+        if (ofr !== null && ofr < blocker) blocker = ofr;
+        if (blocker < endRow) endRow = blocker;
+      }
+      b.rowSpan = Math.max(1, endRow - (b.track + 2));
     }
 
     weeks.push({ days, bars, overflowByCol, maxTrack });
@@ -339,8 +414,31 @@ function CompModal({ comp, isZh, onClose, t }: {
     });
   }, [comp.id]);
 
+  // 轮次数：过去比赛走 all_past_comps.json 的静态 rounds 字段（key 用短码 '3'/'2'/...）；
+  // 未来比赛该字段缺省，回落 WCIF runtime 拉取（key 是 WCA eventId '333'/'222'/...）。
+  // 渲染处统一按短码读取。
+  const [rounds, setRounds] = useState<Record<string, number>>(() => comp.rounds ?? {});
+  useEffect(() => {
+    if (comp.rounds && Object.keys(comp.rounds).length > 0) {
+      setRounds(comp.rounds);
+      return;
+    }
+    let cancelled = false;
+    fetchCompRounds(comp.id).then((wcifRounds) => {
+      if (cancelled) return;
+      // WCIF 返回 WCA eventId（'333'）→ 转成前端短码（'3'）以对齐 comp.events / 渲染查找
+      const mapped: Record<string, number> = {};
+      for (const [eid, n] of Object.entries(wcifRounds)) {
+        mapped[WCA_EVENT_ID_TO_SHORT[eid] ?? eid] = n;
+      }
+      setRounds(mapped);
+    });
+    return () => { cancelled = true; };
+  }, [comp.id, comp.rounds]);
+
   const displayName = localizeName(comp, isZh);
-  const displayCity = isZh ? (comp.city_zh || comp.city) : comp.city;
+  const displayCity = isZh ? (comp.city_zh || localizeCity(comp.city, true)) : comp.city;
+  const displayCountry = countryName(comp.country, isZh);
   const compUrl = comp.cubing_china_url || `https://www.worldcubeassociation.org/competitions/${comp.id}`;
 
   const dateStr = formatDateRangeIso(comp.start_date, comp.end_date || comp.start_date);
@@ -356,14 +454,24 @@ function CompModal({ comp, isZh, onClose, t }: {
           </a>
         </h2>
         <div className="modal-meta">
-          {dateStr} · {displayCity}, {getCountryName(comp.country)}
+          {dateStr} · {displayCity}{isZh ? '，' : ', '}{displayCountry}
           {comp.competitor_limit > 0 && <span> · {t('upcoming.competitorLimit', { count: comp.competitor_limit })}</span>}
         </div>
+        {(() => {
+          const reg = formatRegStatus(comp.registration_open, comp.registration_close, isZh);
+          return reg ? <div className="modal-meta">{reg}</div> : null;
+        })()}
         {comp.events && comp.events.length > 0 && (
           <div className="modal-events">
             {comp.events.map((ev) => {
               const eid = SHORT_TO_EVENT_ID[ev] || ev;
-              return <span key={ev} className={`cubing-icon event-${eid}`} />;
+              const r = rounds[ev];
+              return (
+                <div key={ev} className="modal-event">
+                  <span className={`cubing-icon event-${eid}`} />
+                  {r ? <span className="modal-event-rounds">{r}</span> : <span className="modal-event-rounds modal-event-rounds--placeholder">·</span>}
+                </div>
+              );
             })}
           </div>
         )}
@@ -394,10 +502,6 @@ function CompModal({ comp, isZh, onClose, t }: {
         {comp.top_cubers.length > 0 && (
           <div className="modal-cubers">
             <div className="modal-cubers-title">{t('upcoming.topCubers', { count: comp.top_cubers.length })}</div>
-            <div className="wr-legend">
-              <span className="wr-legend-item"><span className="wr-swatch wr-current" />{t('upcoming.wrCurrent')}</span>
-              <span className="wr-legend-item"><span className="wr-swatch wr-former" />{t('upcoming.wrFormer')}</span>
-            </div>
             <div className="modal-cuber-list">
               {comp.top_cubers.map((c) => (
                 <a
@@ -567,6 +671,8 @@ function adaptAllComp(w: UpcomingCompRecord, topCuberMap: Map<string, TopCuber[]
     end_date: w.end_date,
     events: w.events,
     competitor_limit: w.competitor_limit,
+    registration_open: w.registration_open ?? undefined,
+    registration_close: w.registration_close ?? undefined,
     top_cubers: topCuberMap.get(w.id) ?? [],
   };
 }
@@ -582,6 +688,7 @@ function adaptPastComp(w: PastCompRecord): Competition {
     start_date: w.start_date,
     end_date: w.end_date,
     events: w.events,
+    rounds: w.rounds,
     competitor_limit: 0,
     top_cubers: [],
   };
@@ -606,7 +713,7 @@ export default function UpcomingCompsPage() {
   const [data, setData] = useState<UpcomingData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [countryFilter, setCountryFilter] = useState('');
+  const [countryFilters, setCountryFilters] = useState<string[]>([]);
   // NOTE: 月份锚点。优先读 URL `?year=YYYY&month=M`（来自 /calendar/stats 热力图深链），
   //       否则用 now（首次加载后若有 upcoming 会跳到最近一场比赛的月份）。
   const [viewDate, setViewDate] = useState<Date>(() => readMonthFromUrl() ?? new Date());
@@ -686,9 +793,17 @@ export default function UpcomingCompsPage() {
   }, [mode, allComps, data]);
 
   // NOTE: 选中国家时整段隐藏其他国家（不是变淡）；country picker / yearMonthsMap 仍用 activeComps
+  // 多选 token: 国家 iso2(小写) 或大洲 code(大写)。expandCountrySelection 把大洲展开为下属国家。
+  const countryFilterSet = useMemo(
+    () => {
+      const expanded = expandCountrySelection(countryFilters);
+      return new Set(Array.from(expanded).map((s) => s.toUpperCase()));
+    },
+    [countryFilters],
+  );
   const displayedComps = useMemo(
-    () => (countryFilter ? activeComps.filter((c) => c.country === countryFilter) : activeComps),
-    [activeComps, countryFilter],
+    () => (countryFilterSet.size > 0 ? activeComps.filter((c) => countryFilterSet.has(c.country.toUpperCase())) : activeComps),
+    [activeComps, countryFilterSet],
   );
 
   const countryOptions = useMemo(() => {
@@ -709,19 +824,19 @@ export default function UpcomingCompsPage() {
         const countrySearch = buildCountrySearchText(comp.country);
         if (!searchName.includes(q) && !cuberNames.includes(q) && !countrySearch.includes(q)) return false;
       }
-      if (countryFilter && comp.country !== countryFilter) return false;
+      if (countryFilterSet.size > 0 && !countryFilterSet.has(comp.country.toUpperCase())) return false;
       if (eventFilters.length > 0) {
         const normalized = new Set((comp.events || []).map((e) => SHORT_TO_EVENT_ID[e] || e));
         if (!eventFilters.some((f) => normalized.has(f))) return false;
       }
       return true;
     },
-    [searchQuery, countryFilter, eventFilters],
+    [searchQuery, countryFilterSet, eventFilters],
   );
 
   const weeks = useMemo(() => {
-    return computeWeeks(viewDate.getFullYear(), viewDate.getMonth(), displayedComps, countryFilter);
-  }, [displayedComps, viewDate, countryFilter]);
+    return computeWeeks(viewDate.getFullYear(), viewDate.getMonth(), displayedComps, countryFilterSet);
+  }, [displayedComps, viewDate, countryFilterSet]);
 
   // NOTE: year → months with at least one comp；年月滚筒仅从这里取可选项，空年/空月天然不出
   const yearMonthsMap = useMemo(() => {
@@ -864,8 +979,9 @@ export default function UpcomingCompsPage() {
         />
         <CountryInput
           className="country-filter"
-          value={countryFilter}
-          onChange={setCountryFilter}
+          multi
+          value={countryFilters}
+          onChange={setCountryFilters}
           restrictTo={countryOptions.sorted}
           counts={countryOptions.counts}
           allLabel={t('upcoming.allCountries')}
@@ -948,6 +1064,8 @@ export default function UpcomingCompsPage() {
         )}
         <span className="legend-item"><span className="legend-swatch swatch-default" /> {isZh ? '有顶尖选手' : 'Has top cubers'}</span>
         <span className="legend-item"><span className="legend-swatch swatch-clash" /> {isZh ? '扎堆 (3+)' : 'Clash (3+)'}</span>
+        <span className="legend-item"><span className="wr-swatch wr-current" /> {t('upcoming.wrCurrent')}</span>
+        <span className="legend-item"><span className="wr-swatch wr-former" /> {t('upcoming.wrFormer')}</span>
         <span className="month-stats">
           <span title={t('upcoming.statComps')}><List size={14} strokeWidth={1.75} /> {monthStats.comps}</span>
           <span title={t('upcoming.statCountries')}><GlobeIcon size={14} strokeWidth={1.75} /> {monthStats.countries}</span>
@@ -999,15 +1117,18 @@ export default function UpcomingCompsPage() {
                 bar.continuesFromPrev ? 'continues-prev' : '',
                 bar.continuesToNext ? 'continues-next' : '',
               ].filter(Boolean).join(' ');
+              const prefetchRounds = bar.comp.rounds ? undefined : () => { void fetchCompRounds(bar.comp.id); };
               return (
                 <button
                   key={bar.key}
                   className={classes}
                   style={{
                     gridColumn: `${bar.startCol} / span ${bar.span}`,
-                    gridRow: bar.track + 2,
+                    gridRow: `${bar.track + 2} / span ${bar.rowSpan}`,
                   }}
                   onClick={() => setSelectedComp(bar.comp)}
+                  onMouseEnter={prefetchRounds}
+                  onFocus={prefetchRounds}
                   title={`${displayName} — ${bar.comp.top_cubers.length} cubers`}
                 >
                   {(() => {
@@ -1066,11 +1187,14 @@ export default function UpcomingCompsPage() {
                 .map((c) => {
                   const displayName = localizeName(c, isZh);
                   const top = getCompRecordTop(c.id);
+                  const prefetchRounds = c.rounds ? undefined : () => { void fetchCompRounds(c.id); };
                   return (
                     <button
                       key={c.id}
                       className="day-list-item"
                       onClick={() => { setSelectedComp(c); setDayListDate(null); }}
+                      onMouseEnter={prefetchRounds}
+                      onFocus={prefetchRounds}
                     >
                       {top && <RecordBadge record={top} />}
                       <Flag iso2={c.country} />

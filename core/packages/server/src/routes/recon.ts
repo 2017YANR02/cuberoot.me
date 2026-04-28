@@ -137,10 +137,10 @@ reconRoutes.get('/api/recon/comments', async (c) => {
   }
   const rows = await query<{
     id: number; recon_id: number; author_id: string; author_name: string;
-    content: string; created_at: number; updated_at: number | null;
+    content: string; created_at: number; updated_at: number | null; pinned: number;
   }>(
-    `SELECT id, recon_id, author_id, author_name, content, created_at, updated_at
-     FROM comments WHERE recon_id = ? ORDER BY created_at ASC`, [reconId]
+    `SELECT id, recon_id, author_id, author_name, content, created_at, updated_at, pinned
+     FROM comments WHERE recon_id = ? ORDER BY pinned DESC, created_at ASC`, [reconId]
   );
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   return c.json(rows.map(r => ({
@@ -151,6 +151,7 @@ reconRoutes.get('/api/recon/comments', async (c) => {
     content: r.content,
     createdAt: Number(r.created_at),
     updatedAt: r.updated_at ? Number(r.updated_at) : null,
+    pinned: !!r.pinned,
   })));
 });
 
@@ -234,6 +235,34 @@ reconRoutes.delete('/api/recon/comments/:id', async (c) => {
   }
 
   await query('DELETE FROM comments WHERE id = ?', [id]);
+  return c.json({ ok: true });
+});
+
+// PUT /api/recon/comments/:id/pin —— 管理员置顶 / 取消置顶（每条 recon 只允许一条置顶）
+reconRoutes.put('/api/recon/comments/:id/pin', async (c) => {
+  c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+  checkRateLimit(getIp(c));
+  const authUser = await requireAuth(c);
+  if (!ADMIN_WCA_IDS.includes(authUser.wcaId)) {
+    return c.json({ error: 'Admin only' }, 403);
+  }
+  const id = c.req.param('id');
+  const body = await c.req.json<{ pinned?: boolean }>();
+  const pin = !!body.pinned;
+
+  const target = await query<{ recon_id: number }>('SELECT recon_id FROM comments WHERE id = ?', [id]);
+  if (target.length === 0) {
+    return c.json({ error: 'Comment not found' }, 404);
+  }
+
+  if (pin) {
+    // NOTE: 同一 recon 同时只允许一条置顶——先取消其他置顶
+    await query(
+      'UPDATE comments SET pinned = 0 WHERE recon_id = ? AND pinned = 1 AND id != ?',
+      [target[0].recon_id, id]
+    );
+  }
+  await query('UPDATE comments SET pinned = ? WHERE id = ?', [pin ? 1 : 0, id]);
   return c.json({ ok: true });
 });
 

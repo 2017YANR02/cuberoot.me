@@ -7,22 +7,23 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { ReconSolve } from '@cuberoot/shared';
 import { WcaPersonPicker, type WcaPerson } from '@cuberoot/shared';
-import { getRecon, addRecon, updateRecon, checkDuplicate, searchSolvers } from '../../utils/recon_api';
+import { getRecon, addRecon, updateRecon, deleteRecon, checkDuplicate, searchSolvers } from '../../utils/recon_api';
 import { Flag } from '../../utils/flag';
 import { computeAllStats } from '../../utils/recon_stats';
 import { parseTimeInput, formatTime } from '../../utils/recon_utils';
 import { RecordSelect } from '../../components/RecordSelect';
 import { EventSelect } from '../../components/EventSelect';
-import { CountryInput } from '../../components/CountryInput';
 import { CompPicker } from '../../components/CompPicker';
 import type { Comp } from '../../utils/comp_search';
-import { compNameZh } from '../../utils/country_flags';
+import { compNameZh, loadFlagData, flagDataVersion } from '../../utils/country_flags';
+import { localizeCompName } from '../../utils/comp_localize';
 import { displayCuberName } from '../../utils/name_utils';
 import LangToggle from '../../components/LangToggle';
 import '../../recon.css';
 import './recon_submit.css';
 import CubeVirtualKeyboard from './components/CubeVirtualKeyboard';
 import TwistySection from './components/TwistySection';
+import NormalizedCrossBlock from './components/NormalizedCrossBlock';
 import { cleanForPlayer, extractAlgFromText, syncPlayerToMoveCount } from '../../utils/recon_alg_utils';
 
 // ── 常量 ──
@@ -55,6 +56,11 @@ export default function ReconSubmitPage() {
   const isZh = i18n.language === 'zh';
   const [saving, setSaving] = useState(false);
   const [loadingEdit, setLoadingEdit] = useState(isEditing);
+  const [flagVer, setFlagVer] = useState(flagDataVersion());
+
+  useEffect(() => {
+    loadFlagData().then(v => { if (v !== flagVer) setFlagVer(v); });
+  }, [flagVer]);
   // NOTE: solution textarea ref——虚拟键盘通过 ref 直接操作 DOM
   const solutionRef = useRef<HTMLTextAreaElement>(null);
 
@@ -131,6 +137,17 @@ export default function ReconSubmitPage() {
       date: c.start_date,
     }));
   }, [isZh]);
+
+  // NOTE: 清除已选比赛 pill — 同时清掉自动回填的字段
+  const clearPickedComp = useCallback(() => {
+    setForm(prev => ({
+      ...prev,
+      comp: '',
+      compWcaId: '',
+      country: '',
+      date: '',
+    }));
+  }, []);
 
   /** textarea 自适应高度——先收缩到最小再擑开到 scrollHeight */
   const autoResize = useCallback((el: HTMLTextAreaElement) => {
@@ -331,9 +348,9 @@ export default function ReconSubmitPage() {
           </label>
         </div>
 
-        {/* 第二行：选手 */}
+        {/* 第二行：选手 + 比赛（pill 时各自收缩到内容宽）*/}
         <div className="submit-row">
-          <div className="submit-field submit-field-wide">
+          <div className={`submit-field ${form.personId ? 'submit-field-shrink' : ''}`}>
             <span className="submit-label">{t('recon.solver')} *</span>
             {form.personId ? (
               <div className="submit-solver-pill">
@@ -346,25 +363,32 @@ export default function ReconSubmitPage() {
                 mode="inline"
                 onSelect={handleSolverPick}
                 searchFn={solverSearchFn}
-                placeholder={t('recon.searchSolver')}
+                placeholder=""
                 autoConfirmExact
+              />
+            )}
+          </div>
+          <div className={`submit-field ${form.compWcaId ? 'submit-field-shrink' : ''}`}>
+            <span className="submit-label">{t('recon.competition')}</span>
+            {form.compWcaId ? (
+              <div className="submit-comp-pill">
+                <Flag iso2={form.country || ''} />
+                <span className="submit-comp-name">{localizeCompName(form.compWcaId || '', form.comp || '', isZh)}</span>
+                <button type="button" className="submit-comp-clear" onClick={clearPickedComp} aria-label="clear">✕</button>
+              </div>
+            ) : (
+              <CompPicker
+                value={form.comp || ''}
+                onChange={(v) => setField('comp', v)}
+                onPick={applyPickedComp}
+                isZh={isZh}
               />
             )}
           </div>
         </div>
 
-        {/* 第三行：比赛 + 轮次 + 第 N 把 */}
+        {/* 第三行：轮次 + 第 N 把 + 分组 */}
         <div className="submit-row">
-          <label className="submit-field submit-field-wide">
-            <span className="submit-label">{t('recon.competition')}</span>
-            <CompPicker
-              value={form.comp || ''}
-              onChange={(v) => setField('comp', v)}
-              onPick={applyPickedComp}
-              placeholder={t('recon.compName')}
-              isZh={isZh}
-            />
-          </label>
           <label className="submit-field">
             <span className="submit-label">{t('recon.round')}</span>
             <select value={form.round} onChange={e => setField('round', e.target.value)}>
@@ -377,24 +401,6 @@ export default function ReconSubmitPage() {
           <label className="submit-field">
             <span className="submit-label">#</span>
             <input type="number" min={1} max={5} value={form.solveNum ?? ''} onChange={e => setField('solveNum', Number(e.target.value) || undefined)} />
-          </label>
-        </div>
-
-        {/* 第三行续：WCA ID / 国家 / 分组 */}
-        <div className="submit-row">
-          <label className="submit-field">
-            <span className="submit-label">Comp WCA ID</span>
-            <CompPicker
-              value={form.compWcaId || ''}
-              onChange={(v) => setField('compWcaId', v)}
-              onPick={applyPickedComp}
-              placeholder="e.g. WC2025"
-              isZh={isZh}
-            />
-          </label>
-          <label className="submit-field">
-            <span className="submit-label">{t('recon.country')}</span>
-            <CountryInput value={form.country || ''} onChange={(v) => setField('country', v)} />
           </label>
           <label className="submit-field">
             <span className="submit-label">{t('recon.group')}</span>
@@ -488,6 +494,7 @@ export default function ReconSubmitPage() {
             }
           }}
         />
+        <NormalizedCrossBlock solution={form.solution || ''} />
 
         {/* 实时统计 */}
         {stats && (
@@ -506,8 +513,12 @@ export default function ReconSubmitPage() {
         <div className="submit-row">
           <label className="submit-field submit-field-wide">
             <span className="submit-label">{t('recon.videoUrl')}</span>
-            <input type="text" value={form.videoUrl || ''} onChange={e => setField('videoUrl', e.target.value)}
-              placeholder="https://www.youtube.com/watch?v=..." />
+            <textarea
+              value={form.videoUrl || ''}
+              onChange={e => setField('videoUrl', e.target.value)}
+              placeholder="https://www.youtube.com/watch?v=...&#10;https://www.bilibili.com/video/BV..."
+              rows={2}
+            />
           </label>
         </div>
 
@@ -553,6 +564,23 @@ export default function ReconSubmitPage() {
           <Link to="/recon" className="submit-btn submit-btn-cancel">
             {t('recon.cancel')}
           </Link>
+          {isEditing && (
+            <button
+              type="button"
+              className="submit-btn submit-btn-danger"
+              onClick={async () => {
+                if (!confirm(t('recon.confirmDelete'))) return;
+                try {
+                  await deleteRecon(Number(editId));
+                  navigate('/recon');
+                } catch (err) {
+                  alert(`Delete failed: ${(err as Error).message}`);
+                }
+              }}
+            >
+              {t('recon.delete')}
+            </button>
+          )}
         </div>
       </div>
     </div>

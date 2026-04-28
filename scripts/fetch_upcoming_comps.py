@@ -254,6 +254,8 @@ def _aggregate_comps(comps_map, comps, wca_id, cuber_info):
                 "end_date": comp["end_date"],
                 "events": set(comp.get("event_ids", [])),
                 "competitor_limit": comp.get("competitor_limit", 0),
+                "registration_open": comp.get("registration_open"),
+                "registration_close": comp.get("registration_close"),
                 "top_cubers": []
             }
         else:
@@ -416,6 +418,8 @@ def _integrate_cubing_china(comps_map, cubers):
                 "end_date": comp["end_date"],
                 "events": event_ids,
                 "competitor_limit": comp["competitor_limit"],
+                "registration_open": wca_data.get("registration_open"),
+                "registration_close": wca_data.get("registration_close"),
                 # NOTE: 中国内地比赛链接跳转粗饼网而非 WCA 官网
                 "cubing_china_url": f"https://cubing.com/competition/{alias}",
                 "top_cubers": [],
@@ -535,13 +539,15 @@ def build_all_upcoming_comps():
     从 WCA /competitions?ongoing_and_future=... 分页拉全球全量 upcoming 比赛。
     与 top-cubers 那份 upcoming_comps.json 不同，这份不过滤选手，是"地图+日历 All 模式"的源数据。
     """
-    today = time.strftime("%Y-%m-%d", time.gmtime())
+    # NOTE: cutoff 取 14 天前 —— 刚结束、还没进下一次 stats.yml(周日) dump 的比赛留在 JSON 里，
+    #       让 CompPicker / Globe 在两份数据交接的空窗期仍能查到。
+    cutoff = time.strftime("%Y-%m-%d", time.gmtime(time.time() - 14 * 86400))
     per_page = 100
     out = []
     for page in range(1, 21):  # 20 * 100 = 2000 上限
         url = (
             f"{WCA_API_BASE}/competitions"
-            f"?ongoing_and_future={today}&per_page={per_page}&page={page}"
+            f"?ongoing_and_future={cutoff}&per_page={per_page}&page={page}"
         )
         batch = fetch_with_retry(url)
         # NOTE: fetch_with_retry 404/失败时返回 {}；list 端点正常返回 list
@@ -575,6 +581,8 @@ def build_all_upcoming_comps():
             "end_date": c.get("end_date", ""),
             "events": _shortify_events(c.get("event_ids", [])),
             "competitor_limit": c.get("competitor_limit") or 0,
+            "registration_open": c.get("registration_open"),
+            "registration_close": c.get("registration_close"),
             "latitude_degrees": c.get("latitude_degrees", 0),
             "longitude_degrees": c.get("longitude_degrees", 0),
             "url": c.get("url", f"https://www.worldcubeassociation.org/competitions/{c['id']}"),

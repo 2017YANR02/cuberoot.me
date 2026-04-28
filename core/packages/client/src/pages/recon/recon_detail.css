@@ -584,3 +584,293 @@
   font-weight: 600;
   cursor: default;
 }
+
+/* --- Cross 行就地切换图标（标准化/原始） --- */
+.recon-cross-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  color: #a3a3a3;
+  cursor: pointer;
+  padding: 1px 4px;
+  margin-left: 6px;
+  user-select: none;
+}
+
+.recon-cross-toggle:hover {
+  color: #e8a27a;
+  border-color: rgba(232, 162, 122, 0.4);
+}
+
+.recon-cross-toggle.active {
+  color: #e8a27a;
+  border-color: rgba(232, 162, 122, 0.55);
+  background: rgba(232, 162, 122, 0.08);
+}
+
+/* --- YouTube 风格评论输入框 --- */
+.yt-composer {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-top: 16px;
+  padding-top: 8px;
+}
+
+.yt-composer-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.yt-composer-avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  color: #d4d4d4;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.yt-composer-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.yt-composer-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+  color: #e5e5e5;
+  font-size: 0.9rem;
+  font-family: inherit;
+  padding: 4px 0 8px;
+  resize: none;
+  outline: none;
+  line-height: 1.5;
+  transition: border-color 0.15s;
+}
+
+.yt-composer-input:focus,
+.yt-composer-active .yt-composer-input {
+  border-bottom-color: #e8a27a;
+}
+
+.yt-composer-input::placeholder {
+  color: #6a6a6a;
+}
+
+.yt-composer-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.yt-composer-emoji {
+  background: transparent;
+  border: none;
+  color: #a3a3a3;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.yt-composer-emoji:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e5e5e5;
+}
+
+.yt-composer-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+.yt-btn-text {
+  background: transparent;
+  border: none;
+  color: #d4d4d4;
+  font-size: 0.85rem;
+  padding: 8px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.yt-btn-text:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.yt-btn-primary {
+  background: #e8a27a;
+  border: none;
+  color: #1a1a1a;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.yt-btn-primary:hover:not(:disabled) {
+  background: #f0b48f;
+}
+
+.yt-btn-primary:disabled {
+  background: rgba(255, 255, 255, 0.1);
+  color: #6a6a6a;
+  cursor: not-allowed;
+}
+
+/* --- YouTube 风格评论列表 --- */
+.yt-comment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 4px;
+}
+
+.yt-comment {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  position: relative;
+}
+
+.yt-comment-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.yt-comment-avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  color: #d4d4d4;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.yt-comment-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.yt-comment-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.yt-comment-author {
+  color: #e5e5e5;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.yt-comment-time {
+  color: #6a6a6a;
+  font-size: 0.75rem;
+}
+
+.yt-comment-body {
+  color: #d4d4d4;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.yt-comment-edit {
+  margin-top: 4px;
+}
+
+.yt-comment-menu-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.yt-comment-menu-btn {
+  background: transparent;
+  border: none;
+  color: #a3a3a3;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.yt-comment-menu-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e5e5e5;
+}
+
+.yt-comment-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: #2a2a2a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  min-width: 120px;
+  padding: 4px 0;
+  z-index: 10;
+}
+
+.yt-comment-menu button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 14px;
+  background: transparent;
+  border: none;
+  color: #d4d4d4;
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+}
+
+.yt-comment-menu button:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.yt-comment-flag {
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 2px;
+}
+
+.yt-comment-pinned-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.7rem;
+  color: #6a6a6a;
+  margin-bottom: 2px;
+}

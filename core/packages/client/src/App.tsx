@@ -34,8 +34,6 @@ const AuthCallbackPage = lazy(() => import('./pages/AuthCallbackPage'));
 // NOTE: WCA Stats 模块懒加载 — 统计数据展示
 const WcaStatsPage = lazy(() => import('./pages/wca_stats/WcaStatsPage'));
 const WcaStatsIndex = lazy(() => import('./pages/wca_stats/WcaStatsIndex'));
-// NOTE: Top 10 History — bar chart race 风格(自定义 schema,需独立页)
-const Top10HistoryPage = lazy(() => import('./pages/wca_stats/Top10HistoryPage'));
 // NOTE: WCA 选手成绩查询（/wca-stats 子模块）
 const PersonsSearchPage = lazy(() => import('./pages/wca_stats/persons/PersonsSearchPage'));
 const PersonDetailPage = lazy(() => import('./pages/wca_stats/persons/PersonDetailPage'));
@@ -143,8 +141,7 @@ function App() {
         {/* NOTE: persons / 自定义页面路由必须在 :statId 之前，否则会被 catch-all 当成 statId */}
         <Route path="/wca-stats/persons" element={<Suspense fallback={<div>Loading...</div>}><PersonsSearchPage /></Suspense>} />
         <Route path="/wca-stats/persons/:wcaId" element={<Suspense fallback={<div>Loading...</div>}><PersonDetailPage /></Suspense>} />
-        <Route path="/wca-stats/top10_history" element={<Suspense fallback={<div>Loading...</div>}><Top10HistoryPage /></Suspense>} />
-        <Route path="/wca-stats/:statId" element={<Suspense fallback={<div>Loading...</div>}><WcaStatsPage /></Suspense>} />
+<Route path="/wca-stats/:statId" element={<Suspense fallback={<div>Loading...</div>}><WcaStatsPage /></Suspense>} />
         {/* Nemesizer — 宿敌查询（移植自 nemesizer.com） */}
         <Route path="/nemesizer" element={<Suspense fallback={<div>Loading...</div>}><NemesizerPage /></Suspense>} />
         {/* Frame Count — 数帧工具 */}
