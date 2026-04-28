@@ -45,8 +45,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # 所有命令直接在仓库根或 core/ 下运行，不要加 cd core（CWD 已经是 core/）
 pnpm install
 pnpm --filter @cuberoot/client dev            # http://127.0.0.1:5173/
-pnpm --filter @cuberoot/client typecheck      # 日常快速（tsc --noEmit，~0.4s）
-pnpm --filter @cuberoot/client typecheck:ci   # push 前必须（tsc -b，~8s，对齐 CI）
+pnpm --filter @cuberoot/client typecheck      # tsc -b（incremental，~12s 首次 / 后续略快）
+pnpm --filter @cuberoot/client typecheck:ci   # tsc -b --force（清缓存全量，对齐 CI）
 pnpm --filter @cuberoot/client build
 pnpm --filter @cuberoot/client lint
 ```
@@ -54,7 +54,7 @@ pnpm --filter @cuberoot/client lint
 > **重要 — Claude 易犯的错误：**
 > 1. **不要用 `cd core &&`**：session CWD 已经是 `core/`，再 cd 会 "No such file or directory"。
 > 2. **路径前缀也不能加 `core/`**：CWD 已是 `core/`，所以写 `packages/client/...` 而不是 `core/packages/client/...`；写 `ls packages/stats-build/database.yml` 不是 `ls core/packages/stats-build/database.yml`。**因路径错而看不到文件 ≠ 文件不存在,先核对 CWD 再下结论**。
-> 3. **类型检查两档**：日常用 `typecheck`（快）；完成阶段性功能、准备 push 时用 `typecheck:ci`（对齐 CI）。**完成一个完整功能后应主动提示跑 `typecheck:ci` 再 push。**
+> 3. **类型检查只有一档了**（历史教训：以前的 `typecheck` 走根 `tsconfig.json` 即 `files: []` references-only 壳，`tsc --noEmit` 实际什么都没检查，typo 静默过；2026-04 改为 `tsc -b`）。日常和 push 前都跑 `typecheck`；`typecheck:ci` 加 `--force` 是 CI 用的清缓存全量。
 > 4. **磁盘不够必须停下来告诉我**（worktree / pnpm install / build 失败时先 `df -h` 再求助，别静默换方案）。
 
 - Dev server 绑定 `127.0.0.1`（Vite 默认 IPv6 `[::1]` 在 Windows Chrome 下打不开，已在 `vite.config.ts` 固定）
@@ -69,7 +69,7 @@ pnpm --filter @cuberoot/client lint
 - UI 不用 emoji，用 lucide-react 图标
 - 不放页面级"返回"按钮，浏览器自带 back 即可（wizard 步骤间 / 模式切换不算）
 - 选择型输入框（CountryInput / CompPicker / EventSelect 等"有选中态保留显示"的搜索框）有非空值时必须显示 `×` 清除按钮（参考 CountryInput / CompPicker 实现）
-- WCA 历史时间锚点：第 1 场比赛 1982-06（WC1982），第 2 场 2003-08；任何"时间序列展示"（折线 / 热力图 / 时间轴）默认视图从 **2003-08** 起步，但**统计聚合（总数 / 国家排行 / 项目场次等）必须包含 1982 那场**（用户没主动缩放时口径=全时段，不要把"默认视图≠全数据"的不一致带到数字上）
+- WCA 历史时间锚点：第 1 场比赛 1982-06-05（WC1982），第 2 场 2003-08-23~24（WC2003）；任何"时间序列展示"（折线 / 热力图 / 时间轴 / bar chart race）默认视图从 **2003-08-22** 起步（WC2003 前夜：第 0 帧 = 1982 那场的全部成绩快照，再往后才是 WCA 复办之后的逐日演化），但**统计聚合（总数 / 国家排行 / 项目场次等）必须包含 1982 那场**（用户没主动缩放时口径=全时段，不要把"默认视图≠全数据"的不一致带到数字上）
 
 ## 专题知识 — 查对应 Skill
 

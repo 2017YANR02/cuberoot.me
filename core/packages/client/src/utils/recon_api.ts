@@ -190,6 +190,12 @@ export async function updateComment(commentId: number, content: string): Promise
   return apiPut(`/comments/${commentId}`, { content });
 }
 
+/** 置顶 / 取消置顶评论（仅管理员） */
+// 后端: PUT /api/recon/comments/:id/pin
+export async function pinComment(commentId: number, pinned: boolean): Promise<{ ok: boolean }> {
+  return apiPut(`/comments/${commentId}/pin`, { pinned });
+}
+
 /** 删除评论 */
 // 后端: DELETE /api/recon/comments/:id
 export async function deleteComment(commentId: number): Promise<{ ok: boolean }> {

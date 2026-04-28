@@ -20,6 +20,7 @@ __pycache__/
 
 # 敏感凭据（含数据库密码，禁止提交）
 .secrets.md
+.password.md
 
 CubeAlgWB*.csv
 CubeAlgWB*.xlsx

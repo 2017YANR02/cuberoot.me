@@ -164,6 +164,26 @@ export function extractAlgFromText(text: string): string {
   return cleanForPlayer(alg);
 }
 
+/**
+ * 计算公式中的实际动画步数——展开 `(...)N` 重复组
+ * NOTE: twisty-player 把 (R U R' U')2 当 8 步播放，但简单 split token 只数到 4。
+ * 不展开会导致点击末尾时 moveCount < totalMoves，进度条停在动画结尾之前。
+ */
+export function countMovesExpanded(alg: string): number {
+  if (!alg) return 0;
+  let expanded = alg;
+  let prev: string;
+  // NOTE: 多次循环以处理嵌套，遇到不动点停止
+  do {
+    prev = expanded;
+    expanded = expanded.replace(/\(([^()]*)\)(\d+)/g, (_, body: string, n: string) => {
+      const reps = parseInt(n, 10);
+      return Array(reps).fill(body.trim()).join(' ');
+    });
+  } while (expanded !== prev);
+  return expanded.trim().split(/\s+/).filter(t => t.length > 0).length;
+}
+
 /** 根据步数同步 twisty-player 到对应的魔方状态 */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function syncPlayerToMoveCount(player: any, moveCount: number) {
