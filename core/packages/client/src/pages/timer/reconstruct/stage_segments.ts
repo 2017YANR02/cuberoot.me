@@ -34,6 +34,7 @@ import type { Face } from '../cube/moves';
 import { parseScramble } from '../cube/moves';
 import { recognizeOllExact, recognizePllExact } from '../components/cfop_recognize';
 import ollData from '@cuberoot/shared/data/oll.json';
+import type { Solve } from '../types';
 
 export interface SolveMove {
   /** Move token (e.g. "R", "U'", "F2"). */
@@ -345,5 +346,57 @@ export function computeStageSegments(
     crossSide,
     ollCase,
     pllCase,
+  };
+}
+
+/**
+ * Per-stage personal averages computed from a recent window of solves.
+ * Each field is the mean of that stage's `*Ms` over solves where it's
+ * defined; null when no solve in the window has data for the stage.
+ */
+export interface StageAverages {
+  crossMs: number | null;
+  f2lMs: number | null;
+  ollMs: number | null;
+  pllMs: number | null;
+  /** Number of solves actually used (after filtering DNF / missing segs). */
+  sampleSize: number;
+}
+
+/**
+ * Compute the user's recent per-stage averages, restricted to the most
+ * recent `windowSize` non-DNF solves that have `stageSegments` populated.
+ * Each stage averages independently over solves where that stage was
+ * actually reached (e.g. PLL may have fewer samples than Cross if some
+ * solves DNF'd before PLL).
+ */
+export function computeStageAverages(
+  history: Solve[],
+  windowSize: number,
+): StageAverages {
+  // Filter to non-DNF solves with stageSegments populated, then take the
+  // last `windowSize` by ts (history may not be sorted; sort defensively).
+  const eligible = history
+    .filter(s => s.penalty !== 'DNF' && s.stageSegments)
+    .slice()
+    .sort((a, b) => a.ts - b.ts);
+  const window = eligible.slice(-windowSize);
+
+  const sums = { cross: 0, f2l: 0, oll: 0, pll: 0 };
+  const counts = { cross: 0, f2l: 0, oll: 0, pll: 0 };
+  for (const s of window) {
+    const seg = s.stageSegments!;
+    if (seg.crossMs !== null) { sums.cross += seg.crossMs; counts.cross += 1; }
+    if (seg.f2lMs   !== null) { sums.f2l   += seg.f2lMs;   counts.f2l   += 1; }
+    if (seg.ollMs   !== null) { sums.oll   += seg.ollMs;   counts.oll   += 1; }
+    if (seg.pllMs   !== null) { sums.pll   += seg.pllMs;   counts.pll   += 1; }
+  }
+
+  return {
+    crossMs: counts.cross > 0 ? sums.cross / counts.cross : null,
+    f2lMs:   counts.f2l   > 0 ? sums.f2l   / counts.f2l   : null,
+    ollMs:   counts.oll   > 0 ? sums.oll   / counts.oll   : null,
+    pllMs:   counts.pll   > 0 ? sums.pll   / counts.pll   : null,
+    sampleSize: window.length,
   };
 }

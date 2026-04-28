@@ -13,7 +13,8 @@ import type { Solve } from '../types';
 import { effectiveMs } from '../types';
 import { formatMs } from '../stats';
 import { sliceReconstruction } from '../reconstruct/slice';
-import { computeStageSegments } from '../reconstruct/stage_segments';
+import { computeStageAverages, computeStageSegments } from '../reconstruct/stage_segments';
+import type { StageAverages } from '../reconstruct/stage_segments';
 import { encodeReplayUrl } from '../share/encode';
 import { nxnSizeForEvent } from '../cube';
 import PlaybackPanel from './PlaybackPanel';
@@ -23,13 +24,18 @@ interface Props {
   solve: Solve;
   isZh: boolean;
   onClose: () => void;
+  /** Recent solves of the same event for personal-average comparison.
+   *  When provided and contains at least 5 solves with stageSegments,
+   *  per-stage cells render a ±% label vs the user's ao12 / ao100 stage
+   *  averages. Excludes the current solve implicitly via id match. */
+  history?: Solve[];
 }
 
 function formatSec(ms: number, digits = 2): string {
   return (ms / 1000).toFixed(digits) + 's';
 }
 
-export default function ReconstructModal({ solve, isZh, onClose }: Props) {
+export default function ReconstructModal({ solve, isZh, onClose, history }: Props) {
   const titleId = useId();
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
 
@@ -42,6 +48,19 @@ export default function ReconstructModal({ solve, isZh, onClose }: Props) {
     () => computeStageSegments(solve.scramble, moves, solve.timeMs),
     [solve.scramble, moves, solve.timeMs],
   );
+
+  // Personal stage averages computed from the caller-provided history.
+  // We exclude the current solve so a fresh solve isn't compared against
+  // itself. Both windows require at least 5 eligible samples to render
+  // — below that the comparison would be too noisy to be useful.
+  const stageAvgs = useMemo(() => {
+    if (!history || history.length === 0) return null;
+    const eligible = history.filter(s => s.id !== solve.id);
+    const ao12 = computeStageAverages(eligible, 12);
+    const ao100 = computeStageAverages(eligible, 100);
+    if (ao12.sampleSize < 5) return null;
+    return { ao12, ao100 };
+  }, [history, solve.id]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -123,7 +142,13 @@ export default function ReconstructModal({ solve, isZh, onClose }: Props) {
         </div>
 
         {stageSegs && memoMs === undefined && (
-          <StageSegmentsPanel segs={stageSegs} totalMs={solve.timeMs} isZh={isZh} />
+          <StageSegmentsPanel
+            segs={stageSegs}
+            totalMs={solve.timeMs}
+            isZh={isZh}
+            ao12={stageAvgs?.ao12 ?? null}
+            ao100={stageAvgs?.ao100 ?? null}
+          />
         )}
 
         {playbackAvailable && (
@@ -211,11 +236,27 @@ interface StagePanelProps {
   segs: NonNullable<ReturnType<typeof computeStageSegments>>;
   totalMs: number;
   isZh: boolean;
+  /** Personal stage averages over the last 12 / 100 eligible solves.
+   *  When non-null, each stage cell shows ±% vs avg below the time. */
+  ao12: StageAverages | null;
+  ao100: StageAverages | null;
 }
 
-function StageSegmentsPanel({ segs, totalMs, isZh }: StagePanelProps) {
+type StageKey = 'cross' | 'f2l' | 'oll' | 'pll';
+
+function pickAvg(avgs: StageAverages | null, key: StageKey): number | null {
+  if (!avgs) return null;
+  switch (key) {
+    case 'cross': return avgs.crossMs;
+    case 'f2l':   return avgs.f2lMs;
+    case 'oll':   return avgs.ollMs;
+    case 'pll':   return avgs.pllMs;
+  }
+}
+
+function StageSegmentsPanel({ segs, totalMs, isZh, ao12, ao100 }: StagePanelProps) {
   const stages: Array<{
-    key: 'cross' | 'f2l' | 'oll' | 'pll';
+    key: StageKey;
     labelEn: string;
     labelZh: string;
     ms: number | null;
@@ -273,21 +314,42 @@ function StageSegmentsPanel({ segs, totalMs, isZh }: StagePanelProps) {
       </div>
 
       <div className="reconstruct-stage-grid">
-        {stages.map(s => (
-          <div key={s.key} className="reconstruct-stage-cell">
-            <div className={`reconstruct-stage-dot stage-${s.key}`} />
-            <div className="reconstruct-stage-label">{isZh ? s.labelZh : s.labelEn}</div>
-            <div className="reconstruct-stage-time">{formatStageTime(s.ms)}</div>
-            {s.caseLabel ? (
-              <div className="reconstruct-stage-case">{s.caseLabel}</div>
-            ) : null}
-            <div className="reconstruct-stage-tps">
-              {s.htm !== null ? `${s.htm} ${isZh ? '步' : 'htm'}` : '—'}
-              {' · '}
-              {formatStageTps(s.ms, s.htm)} {isZh ? '步/秒' : 'tps'}
+        {stages.map(s => {
+          const ao12Avg = pickAvg(ao12, s.key);
+          const ao100Avg = pickAvg(ao100, s.key);
+          const renderDelta = (avg: number | null, windowLabel: string) => {
+            if (s.ms === null || avg === null || avg <= 0) return null;
+            const pct = ((s.ms - avg) / avg) * 100;
+            const cls = pct < -1 ? 'faster' : pct > 1 ? 'slower' : 'neutral';
+            const sign = pct > 0 ? '+' : '';
+            return (
+              <span className={`reconstruct-stage-delta ${cls}`}>
+                {sign}{pct.toFixed(0)}% {isZh ? `vs ${windowLabel}` : `vs ${windowLabel}`}
+              </span>
+            );
+          };
+          return (
+            <div key={s.key} className="reconstruct-stage-cell">
+              <div className={`reconstruct-stage-dot stage-${s.key}`} />
+              <div className="reconstruct-stage-label">{isZh ? s.labelZh : s.labelEn}</div>
+              <div className="reconstruct-stage-time">{formatStageTime(s.ms)}</div>
+              {s.caseLabel ? (
+                <div className="reconstruct-stage-case">{s.caseLabel}</div>
+              ) : null}
+              <div className="reconstruct-stage-tps">
+                {s.htm !== null ? `${s.htm} ${isZh ? '步' : 'htm'}` : '—'}
+                {' · '}
+                {formatStageTps(s.ms, s.htm)} {isZh ? '步/秒' : 'tps'}
+              </div>
+              {(ao12Avg !== null || ao100Avg !== null) && s.ms !== null && (
+                <div className="reconstruct-stage-deltas">
+                  {renderDelta(ao12Avg, 'ao12')}
+                  {ao100 && ao100.sampleSize >= 12 && renderDelta(ao100Avg, 'ao100')}
+                </div>
+              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

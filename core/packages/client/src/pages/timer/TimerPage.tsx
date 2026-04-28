@@ -1049,6 +1049,7 @@ export default function TimerPage() {
           solve={reconstructSolve}
           isZh={isZh}
           onClose={() => setReconstructSolve(null)}
+          history={byEvent[reconstructSolve.event] ?? []}
         />
       )}
 
