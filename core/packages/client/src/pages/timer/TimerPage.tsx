@@ -1184,6 +1184,9 @@ export default function TimerPage() {
       </div>
 
       {event === '333' && <SolverHints scramble={scramble} isZh={isZh} />}
+      {(event === '222' || event === 'pyra' || event === 'skewb') && (
+        <SolverHints scramble={scramble} isZh={isZh} event={event} />
+      )}
 
       {(event === 'oll' || event === 'pll') && (() => {
         const total = event === 'oll' ? OLL_CASES.length : PLL_CASES.length;

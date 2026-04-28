@@ -4,6 +4,12 @@
  * (when applicable). Computation is deferred to a microtask via setTimeout
  * so the first paint isn't blocked (BFS can take 50-200ms depending on
  * scramble difficulty).
+ *
+ * When `event` is '222', 'pyra', or 'skewb' the panel switches to a much
+ * simpler view: optimal full-solve length plus per-face / per-V solver
+ * lengths (mirrors cstimer's "Pocket Cube Face", "Pyraminx V", and "Skewb
+ * Face" tools). The 3x3 hints (cross, EOLine, CFOP/Roux/Petrus/ZZ/EODR
+ * step-by-step) are shown only for 333-class events.
  */
 
 import { useEffect, useMemo, useState } from 'react';
@@ -16,8 +22,13 @@ import {
   type MethodId,
   type SolveResult,
 } from '../solver/methods';
+import { solve2x2, solve2x2Face } from '../solver/cube2x2';
+import { solvePyra, solvePyraV } from '../solver/pyra';
+import { solveSkewb, solveSkewbFace } from '../solver/skewb';
 import { recognizeForOrientation, type CfopRecognition } from './cfop_recognize';
 import SolverCompareModal from './SolverCompareModal';
+
+type SmallEvent = '222' | 'pyra' | 'skewb';
 
 const METHOD_LS_KEY = 'timer.solverHints.method';
 
@@ -34,6 +45,9 @@ function loadSavedMethod(): MethodId {
 interface Props {
   scramble: string;
   isZh: boolean;
+  /** Optional — when '222' / 'pyra' / 'skewb', show that puzzle's hints
+   *  instead of the 3x3 ones. Defaults to '333'. */
+  event?: '333' | SmallEvent;
 }
 
 interface Computed {
@@ -61,7 +75,11 @@ const ORIENT_LABEL_EN: Record<string, string> = {
   R: 'R (red)',
 };
 
-export default function SolverHints({ scramble, isZh }: Props) {
+export default function SolverHints({ scramble, isZh, event = '333' }: Props) {
+  // Branch early for 2x2 / Pyra / Skewb — these have their own simpler panel.
+  if (event !== '333') {
+    return <SmallPuzzleHints scramble={scramble} isZh={isZh} event={event} />;
+  }
   const [open, setOpen] = useState(false);
   const [computed, setComputed] = useState<Computed | null>(null);
   const [computing, setComputing] = useState(false);
@@ -343,6 +361,165 @@ function CrossRow({ sol, label, isBest, recog, isZh }: CrossRowProps) {
             )}
             {stageLabel}
           </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ----------------------------------------------------------------------
+// 2x2 / Pyraminx / Skewb panel
+// ----------------------------------------------------------------------
+
+interface SmallProps {
+  scramble: string;
+  isZh: boolean;
+  event: SmallEvent;
+}
+
+interface SmallComputed {
+  /** Full optimal solve. */
+  full: { moves: string[]; length: number };
+  /** Per-face / per-V sub-solver results. */
+  faces: { face: string; moves: string[] }[];
+}
+
+const SMALL_TITLE_ZH: Record<SmallEvent, string> = {
+  '222': '二阶解法提示',
+  'pyra': '金字塔解法提示',
+  'skewb': '斜转解法提示',
+};
+const SMALL_TITLE_EN: Record<SmallEvent, string> = {
+  '222': '2x2 solver hints',
+  'pyra': 'Pyraminx solver hints',
+  'skewb': 'Skewb solver hints',
+};
+
+const FACE_SECTION_ZH: Record<SmallEvent, string> = {
+  '222': '六个面',
+  'pyra': '四个面 (V)',
+  'skewb': '六个面',
+};
+const FACE_SECTION_EN: Record<SmallEvent, string> = {
+  '222': 'Per-face',
+  'pyra': 'Per-face V',
+  'skewb': 'Per-face',
+};
+
+function SmallPuzzleHints({ scramble, isZh, event }: SmallProps) {
+  const [open, setOpen] = useState(false);
+  const [computed, setComputed] = useState<SmallComputed | null>(null);
+  const [computing, setComputing] = useState(false);
+
+  // Reset cache when scramble or event changes.
+  const cacheKey = useMemo(() => `${event}::${scramble}`, [event, scramble]);
+
+  useEffect(() => {
+    if (!open) {
+      setComputed(null);
+      return;
+    }
+    setComputing(true);
+    setComputed(null);
+    let cancelled = false;
+    const t = setTimeout(() => {
+      if (cancelled) return;
+      try {
+        let full: { moves: string[]; length: number };
+        let faces: { face: string; moves: string[] }[];
+        if (event === '222') {
+          full = solve2x2(scramble);
+          faces = solve2x2Face(scramble);
+        } else if (event === 'pyra') {
+          full = solvePyra(scramble);
+          faces = solvePyraV(scramble);
+        } else {
+          full = solveSkewb(scramble);
+          faces = solveSkewbFace(scramble);
+        }
+        if (!cancelled) {
+          setComputed({ full, faces });
+          setComputing(false);
+        }
+      } catch {
+        if (!cancelled) {
+          setComputed({ full: { moves: [], length: -1 }, faces: [] });
+          setComputing(false);
+        }
+      }
+    }, 0);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [open, cacheKey, event, scramble]);
+
+  const title = isZh ? SMALL_TITLE_ZH[event] : SMALL_TITLE_EN[event];
+  const fullLabel = isZh ? '完整还原' : 'Full solve';
+  const sectionLabel = isZh ? FACE_SECTION_ZH[event] : FACE_SECTION_EN[event];
+
+  // Best (shortest) face length, for highlighting.
+  const minFaceLen = useMemo(() => {
+    if (!computed) return -1;
+    let min = Infinity;
+    for (const f of computed.faces) {
+      if (f.moves.length > 0 && f.moves.length < min) min = f.moves.length;
+    }
+    return min === Infinity ? -1 : min;
+  }, [computed]);
+
+  return (
+    <div style={wrapperStyle}>
+      <div className="solver-hints" style={hintsStyle}>
+        <button
+          type="button"
+          onClick={() => setOpen(o => !o)}
+          style={toggleBtnStyle}
+          aria-expanded={open}
+        >
+          <span>{title}</span>
+          <span style={{ marginLeft: 'auto', opacity: 0.7 }}>{open ? '▾' : '▸'}</span>
+        </button>
+        {open && (
+          <div style={bodyStyle}>
+            {computing && (
+              <div style={{ opacity: 0.6, fontSize: 13 }}>
+                {isZh ? '计算中…' : 'Computing…'}
+              </div>
+            )}
+            {computed && (
+              <>
+                <div style={rowStyle}>
+                  <span style={labelBestStyle}>
+                    <Star size={12} style={{ verticalAlign: '-1px', marginRight: 3 }} />
+                    {fullLabel}
+                  </span>
+                  <span style={countBestStyle}>
+                    {computed.full.length < 0 ? '—' : `${computed.full.length}`}
+                  </span>
+                  <span style={algBestStyle}>{computed.full.moves.join(' ')}</span>
+                </div>
+                <div style={{ ...subLabelStyle, marginTop: 6 }}>{sectionLabel}</div>
+                {computed.faces.map(f => {
+                  const isBest = f.moves.length > 0 && f.moves.length === minFaceLen;
+                  return (
+                    <div key={f.face} style={rowStyle}>
+                      <span style={isBest ? labelBestStyle : labelStyle}>
+                        {isBest && <Star size={11} style={{ verticalAlign: '-1px', marginRight: 3 }} />}
+                        {f.face}
+                      </span>
+                      <span style={isBest ? countBestStyle : countStyle}>
+                        {f.moves.length === 0 ? '—' : f.moves.length}
+                      </span>
+                      <span style={isBest ? algBestStyle : algStyle}>
+                        {f.moves.length === 0 ? (isZh ? '未找到' : 'no solution') : f.moves.join(' ')}
+                      </span>
+                    </div>
+                  );
+                })}
+              </>
+            )}
+          </div>
         )}
       </div>
     </div>
