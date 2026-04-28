@@ -17,9 +17,36 @@
   padding: 0 4px 4px;
 }
 
+.tc-heatmap-header-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .tc-heatmap-total {
   color: #f0ebe3;
   font-size: 12px;
+}
+
+.tc-heatmap-streak {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 9999px;
+  border: 1px solid #5b3a1f;
+  background: #2a1a0d;
+  color: #f0a060;
+  font-variant-numeric: tabular-nums;
+}
+
+.tc-heatmap-streak-muted {
+  border-color: #333;
+  background: transparent;
+  color: #666;
 }
 
 .tc-heatmap-year-nav {
@@ -76,9 +103,23 @@
   font-size: 9px;
 }
 
+.tc-heatmap-month-hover {
+  cursor: help;
+}
+
+.tc-heatmap-month-hover:hover {
+  fill: #f0ebe3;
+}
+
 .tc-heatmap-dow {
   fill: #888;
   font-size: 9px;
+}
+
+.tc-heatmap-week-strip {
+  fill: transparent;
+  cursor: help;
+  pointer-events: all;
 }
 
 .tc-heatmap-cell {
