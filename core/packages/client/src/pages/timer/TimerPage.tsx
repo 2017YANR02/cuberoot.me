@@ -20,7 +20,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { Home, Download, Upload, Trash2, Settings as SettingsIcon, Maximize2, Minimize2, Bluetooth, Mic, HelpCircle, BarChart3, Plus, Wrench, ListPlus, Printer, FileText, FileSpreadsheet, AlertTriangle } from 'lucide-react';
+import { Home, Download, Upload, Trash2, Settings as SettingsIcon, Maximize2, Minimize2, Bluetooth, Mic, HelpCircle, BarChart3, Plus, Wrench, ListPlus, Printer, FileText, FileSpreadsheet, AlertTriangle, Target } from 'lucide-react';
 import LangToggle from '../../components/LangToggle';
 import MoreMenu, { type MoreMenuItem } from './components/MoreMenu';
 
@@ -41,7 +41,7 @@ import {
   exportCsv,
   exportSpeedstacks,
 } from './storage/db';
-import { useApplyTheme, useSettings } from './settings';
+import { formatTargetTime, useApplyTheme, useSettings } from './settings';
 import { warmupSound } from './sound';
 import { useBluetoothCube } from './bluetooth';
 import { useAutoReady } from './bluetooth/auto_ready';
@@ -470,6 +470,29 @@ export default function TimerPage() {
     setLastPenalty(null);
   }, [event, isZh, solves.length]);
 
+  // ── Target-time (time-attack) ──────────────────────────────────
+  // Per-event target. null/0/non-finite → indicator is hidden entirely.
+  const targetMs = useMemo<number | null>(() => {
+    const v = settings.targetMsByEvent?.[event];
+    return typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : null;
+  }, [settings.targetMsByEvent, event]);
+  const isOvershot = timer.phase === 'running' && targetMs !== null && timer.displayMs > targetMs;
+  // Post-stop 1s pulse: 'good' if final time <= target, 'bad' otherwise. Only
+  // triggers on the rising edge from non-stopped → stopped while a target is
+  // set; cleared after 1s. Doesn't mutate the recorded solve.
+  const [stopPulse, setStopPulse] = useState<'good' | 'bad' | null>(null);
+  const prevTimerPhaseRef = useRef(timer.phase);
+  useEffect(() => {
+    const prev = prevTimerPhaseRef.current;
+    if (timer.phase === 'stopped' && prev !== 'stopped' && targetMs !== null && Number.isFinite(timer.displayMs)) {
+      setStopPulse(timer.displayMs <= targetMs ? 'good' : 'bad');
+      const handle = window.setTimeout(() => setStopPulse(null), 1000);
+      prevTimerPhaseRef.current = timer.phase;
+      return () => window.clearTimeout(handle);
+    }
+    prevTimerPhaseRef.current = timer.phase;
+  }, [timer.phase, timer.displayMs, targetMs]);
+
   // ── Modal ───────────────────────────────────────────────────────
   const [modalSolve, setModalSolve] = useState<{ s: Solve; idx: number } | null>(null);
   const [reconstructSolve, setReconstructSolve] = useState<Solve | null>(null);
@@ -882,7 +905,7 @@ export default function TimerPage() {
       )}
 
       <div
-        className="timer-center"
+        className={`timer-center${isOvershot ? ' target-overshot' : ''}${stopPulse ? ` target-pulse-${stopPulse}` : ''}`}
         ref={timerCenterRef}
         onMouseDown={onPressDown}
         onMouseUp={onPressUp}
@@ -893,6 +916,26 @@ export default function TimerPage() {
           inspectionDisplayMs={timer.inspectionDisplayMs}
           lastPenalty={timer.phase === 'stopped' ? lastPenalty : null}
         />
+        {timer.phase === 'running' && targetMs !== null && (
+          <div className={`timer-target-indicator${isOvershot ? ' overshot' : ''}`}>
+            <Target size={12} />
+            <span className="target-label">
+              {isZh ? '目标' : 'target'} {formatTargetTime(targetMs)}
+            </span>
+            <span className="target-sep">·</span>
+            <span className="target-delta">
+              {(() => {
+                // delta = target - current. Negative = overshot (past target);
+                // positive = on pace (still under target). Show literal sign
+                // so users see "-1.23s" once they cross.
+                const deltaMs = targetMs - timer.displayMs;
+                const sign = deltaMs >= 0 ? '+' : '-';
+                const absMs = Math.abs(deltaMs);
+                return `${sign}${(absMs / 1000).toFixed(2)}s`;
+              })()}
+            </span>
+          </div>
+        )}
         {timer.phase === 'idle' && (
           <div className="timer-hint">
             {isZh ? <>按住 <code>空格</code> {settings.inspection > 0 ? '开始观察' : '进入准备'}</> : <>Hold <code>Space</code> to {settings.inspection > 0 ? 'inspect' : 'ready'}</>}
@@ -1054,7 +1097,7 @@ export default function TimerPage() {
       )}
 
       {settingsOpen && (
-        <SettingsPanel isZh={isZh} onClose={() => setSettingsOpen(false)} />
+        <SettingsPanel isZh={isZh} event={event} onClose={() => setSettingsOpen(false)} />
       )}
 
       <PbToast
