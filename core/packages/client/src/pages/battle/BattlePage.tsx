@@ -21,6 +21,7 @@ import HistoryPanel from './HistoryPanel';
 import VsHistoryPanel from './VsHistoryPanel';
 import { MilestoneToast } from './AdvancedFeatures';
 import LangToggle from '../../components/LangToggle';
+import CubingPreview from '../timer/cube/CubingPreview';
 
 import './battle.css';
 
@@ -425,10 +426,10 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
   const ao5 = computeAo5(player.solveHistory);
   const ao5Text = ao5 === null ? '' : (ao5 === Infinity ? 'ao5: DNF' : 'ao5: ' + formatTime(ao5, store.timerPrecision));
 
-  // NOTE: 每位玩家用自己的 scramble / image / loading
+  // NOTE: 每位玩家用自己的 scramble / loading
   const myScramble = store.scrambles[playerId];
-  const myImageUrl = store.scrambleImageUrls[playerId];
   const myLoading = store.scrambleLoadings[playerId];
+  const myPuzzle = store.puzzleIds[playerId];
   const scrambleContent = myLoading
     ? `<span class="loading">${I18N_TEXT.generating[store.locale]}</span>`
     : (myScramble || '');
@@ -463,14 +464,10 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
         <div className="opponent-display" id={`opponent-${playerId}`} />
       )}
 
-      {/* 打乱图 */}
+      {/* 打乱图 — 复用 timer 的 CubingPreview（scramble-display） */}
       <div className={`scramble-img${player.isTiming ? ' hidden' : ''}`}>
-        {myImageUrl && store.showImage && (
-          <img
-            src={myImageUrl}
-            className="scramble-svg-img"
-            alt="scramble"
-          />
+        {myScramble && !myScramble.startsWith('⚠️') && store.showImage && (
+          <CubingPreview event={myPuzzle} scramble={myScramble} className="scramble-svg-img" />
         )}
       </div>
     </div>
