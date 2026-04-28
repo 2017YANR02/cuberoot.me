@@ -103,8 +103,8 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect }: Props
               ? '点击下方按钮，从浏览器选择你的智能魔方。'
               : 'Click below to pick your smart cube from the browser picker.'}</p>
             <p style={{ fontSize: 12, color: '#888' }}>{isZh
-              ? '当前支持：GAN 356 i / i3 / 357（完整解码）、GoCube / Rubik\'s Connected（完整解码）、GAN 12/14 与 QiYi（仅电池）。'
-              : 'Supported: GAN 356 i / i3 / 357 (full decode), GoCube / Rubik\'s Connected (full decode), GAN 12/14 and QiYi (battery only).'}</p>
+              ? '当前支持：GAN 356 i / i3 / 357（完整解码）、GAN 12/14（完整解码）、QiYi（完整解码）、GoCube / Rubik\'s Connected（完整解码）、Giiker i3s / Xiaomi（完整解码）。'
+              : 'Supported: GAN 356 i / i3 / 357 (full decode), GAN 12/14 (full decode), QiYi (full decode), GoCube / Rubik\'s Connected (full decode), Giiker i3s / Xiaomi (full decode).'}</p>
             <button className="bt-connect-btn" onClick={() => { void onConnect(); }}>
               <Bluetooth size={14} />
               <span>{isZh ? '搜索并连接' : 'Search & connect'}</span>

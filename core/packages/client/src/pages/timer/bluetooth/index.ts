@@ -30,6 +30,7 @@ import type { CubeDriver } from './driver';
 // indirectly via the env-tagged error and the surrounding consumer.
 import { ganV3Driver } from './gan_v3';
 import { ganV4Driver } from './gan_v4';
+import { giikerDriver } from './giiker';
 import { gocubeDriver } from './gocube';
 import { qiyiDriver } from './qiyi';
 import { CubeStateTracker } from './state_track';
@@ -50,7 +51,7 @@ export type { BluetoothEnv, EnvAdvice } from './env';
  * fully-decoded brands first so we prefer them when a device matches more
  * than one regex (GAN v3 and v4 share the FFF0 service in some firmwares).
  */
-const DRIVERS: CubeDriver[] = [ganV3Driver, gocubeDriver, ganV4Driver, qiyiDriver];
+const DRIVERS: CubeDriver[] = [ganV3Driver, gocubeDriver, ganV4Driver, qiyiDriver, giikerDriver];
 
 function pickDriver(device: BluetoothDevice): CubeDriver | null {
   for (const d of DRIVERS) if (d.matches(device)) return d;
