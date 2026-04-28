@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState, type CSSProperties } from 'react';
 import type { EventId, Penalty, Solve } from '../types';
 import { makeSolve } from '../storage/db';
 
@@ -51,6 +51,21 @@ function parseTimeStr(input: string): { ms: number; penalty: Penalty } | null {
   return { ms: total, penalty };
 }
 
+/** True iff viewport ≤ 480px. Drives full-width modal + tap-friendly inputs. */
+function useIsMobile(): boolean {
+  const [isMobile, setIsMobile] = useState<boolean>(() =>
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 480px)').matches,
+  );
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(max-width: 480px)');
+    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+  return isMobile;
+}
+
 export default function ManualEntryModal({ event, currentScramble, isZh, onClose, onSubmit }: Props) {
   const [timeStr, setTimeStr] = useState('');
   const [scramble, setScramble] = useState('');
@@ -59,6 +74,7 @@ export default function ManualEntryModal({ event, currentScramble, isZh, onClose
   const [stepCount, setStepCount] = useState('');
   const titleId = useId();
   const firstInputRef = useRef<HTMLInputElement | null>(null);
+  const isMobile = useIsMobile();
 
   const isFmc = event === '333fm';
 
@@ -115,14 +131,42 @@ export default function ManualEntryModal({ event, currentScramble, isZh, onClose
     onSubmit(solve);
   };
 
+  // Mobile-only style overrides. Phone gets a full-width modal, taller time
+  // input (44px+), tap-friendly radios, and stacked Save / Cancel actions.
+  const modalStyle: CSSProperties | undefined = isMobile
+    ? { maxWidth: '100%', maxHeight: '95dvh', width: '100%', padding: 14 }
+    : undefined;
+  const overlayStyle: CSSProperties | undefined = isMobile
+    ? { padding: 0, alignItems: 'stretch' }
+    : undefined;
+  const timeInputStyle: CSSProperties | undefined = isMobile
+    ? { minHeight: 44, fontSize: 16, padding: '10px 12px' }
+    : undefined;
+  const textareaStyle: CSSProperties | undefined = isMobile
+    ? { fontSize: 16, padding: '10px 12px' }
+    : undefined;
+  const radiosStyle: CSSProperties | undefined = isMobile
+    ? { gap: 18, flexWrap: 'wrap' }
+    : undefined;
+  const radioStyle: CSSProperties | undefined = isMobile
+    ? { minHeight: 44, fontSize: 15, padding: '6px 0' }
+    : undefined;
+  const actionsStyle: CSSProperties | undefined = isMobile
+    ? { flexDirection: 'column', alignItems: 'stretch', gap: 8 }
+    : undefined;
+  const actionBtnStyle: CSSProperties | undefined = isMobile
+    ? { width: '100%', minHeight: 44, fontSize: 15 }
+    : undefined;
+
   return (
-    <div className="timer-modal-overlay" onClick={onClose}>
+    <div className="timer-modal-overlay" style={overlayStyle} onClick={onClose}>
       <div
         className="timer-modal manual-entry-modal"
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
         onClick={(e) => e.stopPropagation()}
+        style={modalStyle}
       >
         <h2 id={titleId}>{isZh ? '手动录入成绩' : 'Manual entry'}</h2>
 
@@ -138,6 +182,7 @@ export default function ManualEntryModal({ event, currentScramble, isZh, onClose
                 placeholder={isZh ? '例如：26' : 'e.g. 26'}
                 value={stepCount}
                 onChange={(e) => setStepCount(e.target.value)}
+                style={timeInputStyle}
               />
             ) : (
               <input
@@ -147,6 +192,7 @@ export default function ManualEntryModal({ event, currentScramble, isZh, onClose
                 placeholder={isZh ? '例如：12.34 或 1:23.45 或 DNF' : 'e.g. 12.34 or 1:23.45 or DNF'}
                 value={timeStr}
                 onChange={(e) => setTimeStr(e.target.value)}
+                style={timeInputStyle}
               />
             )}
           </label>
@@ -158,9 +204,9 @@ export default function ManualEntryModal({ event, currentScramble, isZh, onClose
         {!isFmc && (
           <div className="modal-section">
             <div className="manual-label">{isZh ? '罚时' : 'Penalty'}</div>
-            <div className="manual-radios">
+            <div className="manual-radios" style={radiosStyle}>
               {(['ok', '+2', 'DNF'] as Penalty[]).map(p => (
-                <label key={p} className="manual-radio">
+                <label key={p} className="manual-radio" style={radioStyle}>
                   <input
                     type="radio"
                     name="manual-penalty"
@@ -180,10 +226,11 @@ export default function ManualEntryModal({ event, currentScramble, isZh, onClose
             {isZh ? '打乱（留空则用当前打乱）' : 'Scramble (optional, defaults to current)'}
             <textarea
               className="manual-textarea"
-              rows={2}
+              rows={isMobile ? 3 : 2}
               placeholder={currentScramble}
               value={scramble}
               onChange={(e) => setScramble(e.target.value)}
+              style={textareaStyle}
             />
           </label>
         </div>
@@ -193,23 +240,25 @@ export default function ManualEntryModal({ event, currentScramble, isZh, onClose
             {isZh ? '注释' : 'Comment'}
             <textarea
               className="manual-textarea"
-              rows={2}
+              rows={isMobile ? 3 : 2}
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               placeholder={isZh ? '可选备注…' : 'Optional notes…'}
+              style={textareaStyle}
             />
           </label>
         </div>
 
-        <div className="modal-actions">
+        <div className="modal-actions" style={actionsStyle}>
           <button
             className="primary"
             disabled={!canSave}
             onClick={handleSave}
+            style={actionBtnStyle}
           >
             {isZh ? '保存' : 'Save'}
           </button>
-          <button onClick={onClose}>{isZh ? '取消' : 'Cancel'}</button>
+          <button onClick={onClose} style={actionBtnStyle}>{isZh ? '取消' : 'Cancel'}</button>
         </div>
       </div>
     </div>
