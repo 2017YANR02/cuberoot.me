@@ -1061,6 +1061,90 @@
 }
 .timer-cube-preview svg { max-width: 100%; height: auto; max-height: 16dvh; }
 
+/* Desktop (>480px): cap the unfolded "+"-shape net so it doesn't dominate
+   the page. The inner SVG already scales — the wrapper enforces the ceiling. */
+@media (min-width: 481px) {
+  .timer-cube-preview {
+    max-height: 240px;
+    overflow: hidden;
+  }
+  .timer-cube-preview svg {
+    max-height: 240px;
+    width: auto;
+  }
+}
+
+/* --- Empty-state hints for charts (Distribution / Trend).
+   Replaces the previous full-frame "Need 5+ solves" SVG; just a single dim
+   line so <5-solve users don't see two big empty rectangles in the bottom
+   panel. */
+.chart-empty-hint {
+  font-size: 12px;
+  color: #666;
+  font-style: italic;
+  padding: 6px 2px 10px;
+  letter-spacing: 0.02em;
+}
+:root[data-timer-theme="light"] .chart-empty-hint { color: #999; }
+
+/* --- Stats panel expand toggle (compact mode).
+   Shown when fewer than 4 average rows are populated. Click to reveal the
+   full ao/mo grid. */
+.stats-expand-toggle {
+  margin-top: 8px;
+  background: transparent;
+  border: 1px solid #2a2a2e;
+  color: #aaa;
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+.stats-expand-toggle:hover {
+  background: #1a1a1d;
+  color: #fff;
+  border-color: #444;
+}
+:root[data-timer-theme="light"] .stats-expand-toggle {
+  border-color: #d0d0d4;
+  color: #666;
+}
+:root[data-timer-theme="light"] .stats-expand-toggle:hover {
+  background: #f0f0f3;
+  color: #1d1d1f;
+  border-color: #aab;
+}
+
+/* --- Practice heatmap "Show calendar" toggle (sparse mode).
+   Lives inside the heatmap header next to the streak pill when the user has
+   < 7 solves total; clicking expands the 12-month grid. */
+.tc-heatmap-expand-btn {
+  margin-left: 8px;
+  background: transparent;
+  border: 1px solid #2a2a2e;
+  color: #aaa;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+}
+.tc-heatmap-expand-btn:hover {
+  background: #1a1a1d;
+  color: #fff;
+  border-color: #444;
+}
+:root[data-timer-theme="light"] .tc-heatmap-expand-btn {
+  border-color: #d0d0d4;
+  color: #666;
+}
+:root[data-timer-theme="light"] .tc-heatmap-expand-btn:hover {
+  background: #f0f0f3;
+  color: #1d1d1f;
+  border-color: #aab;
+}
+
 /* --- Charts in bottom panel --- */
 .charts-panel {
   padding: 14px 18px;

@@ -114,26 +114,12 @@ export default function TrendChart({
     return { seriesMap: map, yMin: lo, yMax: hi, hasAny: any };
   }, [solves, curves]);
 
-  // Empty state
+  // Empty state — collapse to a tiny one-line hint instead of a full chart frame.
   if (solves.length < 5 || !hasAny) {
     return (
-      <svg
-        className={`tc-chart tc-trend ${className ?? ''}`.trim()}
-        viewBox={`0 0 ${width} ${height}`}
-        preserveAspectRatio="xMidYMid meet"
-        role="img"
-        aria-label={isZh ? '成绩趋势图' : 'Solve time trend'}
-      >
-        <text
-          className="empty-msg"
-          x={width / 2}
-          y={height / 2}
-          textAnchor="middle"
-          dominantBaseline="middle"
-        >
-          {isZh ? '至少 5 次成绩' : 'Need 5+ solves'}
-        </text>
-      </svg>
+      <div className={`chart-empty-hint ${className ?? ''}`.trim()}>
+        {isZh ? '至少 5 次成绩才显示趋势' : 'Need 5+ solves to chart trend'}
+      </div>
     );
   }
 
