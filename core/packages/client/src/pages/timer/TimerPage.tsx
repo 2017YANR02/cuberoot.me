@@ -20,7 +20,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { Home, Download, Upload, Trash2, Settings as SettingsIcon, Maximize2, Minimize2, Bluetooth, Mic, HelpCircle, BarChart3, Plus, Wrench, ListPlus, Printer, FileText, FileSpreadsheet, AlertTriangle, Target } from 'lucide-react';
+import { Home, Download, Upload, Trash2, Settings as SettingsIcon, Maximize2, Minimize2, Bluetooth, Mic, HelpCircle, BarChart3, Plus, Wrench, ListPlus, Printer, FileText, FileSpreadsheet, AlertTriangle, Target, Crosshair } from 'lucide-react';
 import LangToggle from '../../components/LangToggle';
 import MoreMenu, { type MoreMenuItem } from './components/MoreMenu';
 
@@ -65,6 +65,8 @@ import StatsModal from './components/StatsModal';
 import ManualEntryModal from './components/ManualEntryModal';
 import SolverModal from './components/SolverModal';
 import BulkScrambleModal from './components/BulkScrambleModal';
+import DrillModal from './components/DrillModal';
+import { generateDrillScramble, type DrillType } from './scramble/drill';
 import SolverHints from './components/SolverHints';
 import { OLL_CASES } from './scramble/algs/oll_cases';
 import { PLL_CASES } from './scramble/algs/pll_cases';
@@ -122,17 +124,38 @@ export default function TimerPage() {
     return () => { cancelled = true; };
   }, []);
 
+  // ── Drill mode ──────────────────────────────────────────────────
+  // When set, the active event's scramble generator is overridden to always
+  // produce a setup that lands on the chosen OLL/PLL case after cross+F2L.
+  // Cleared automatically when the user switches event.
+  const [drillTarget, setDrillTarget] = useState<{ type: DrillType; id: string } | null>(null);
+  const [drillModalOpen, setDrillModalOpen] = useState(false);
+  // Drill makes sense only on events whose solve method ends with OLL/PLL.
+  // We allow it on the obvious 3x3 family + the OLL/PLL trainers themselves.
+  const drillAllowed = ['333', '333oh', '333fm', 'oll', 'pll'].includes(event);
+  // Clear drill when switching to an event where drill isn't applicable.
+  useEffect(() => {
+    if (!drillAllowed && drillTarget) setDrillTarget(null);
+  }, [drillAllowed, drillTarget]);
+
   // ── Scramble ────────────────────────────────────────────────────
-  // Derived from (event, nonce, kociembaReady) — the nonce bumps regenerate;
-  // kociembaReady forces a regen when 3x3 swaps from random-move to
-  // random-state. ESLint thinks the latter two are unused since `generateScramble`
-  // doesn't reference them, but the dispatcher's REG mutates over time so a
-  // memo keyed only on `event` would miss the swap. Suppression is intentional.
+  // Derived from (event, nonce, kociembaReady, drillTarget) — the nonce bumps
+  // regenerate; kociembaReady forces a regen when 3x3 swaps from random-move
+  // to random-state. ESLint thinks the latter are unused since
+  // `generateScramble` doesn't reference them, but the dispatcher's REG
+  // mutates over time so a memo keyed only on `event` would miss the swap.
+  // Suppression is intentional.
   const [scrambleNonce, setScrambleNonce] = useState(0);
   const scramble = useMemo(
-    () => generateScramble(event),
+    () => {
+      if (drillTarget && drillAllowed) {
+        const ds = generateDrillScramble(drillTarget.type, drillTarget.id);
+        if (ds) return ds.scramble;
+      }
+      return generateScramble(event);
+    },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [event, scrambleNonce, kociembaReady],
+    [event, scrambleNonce, kociembaReady, drillTarget, drillAllowed],
   );
   const nextScramble = useCallback(() => {
     setScrambleNonce(n => n + 1);
@@ -562,6 +585,7 @@ export default function TimerPage() {
     settingsOpen || shortcutsOpen || bluetoothOpen ||
     trainerSubsetOpen !== null || statsModalOpen ||
     manualEntryOpen || solverOpen || bulkScrambleOpen ||
+    drillModalOpen ||
     modalSolve !== null || reconstructSolve !== null;
   const anyModalOpenRef = useRef(anyModalOpen);
   useEffect(() => { anyModalOpenRef.current = anyModalOpen; }, [anyModalOpen]);
@@ -835,6 +859,17 @@ export default function TimerPage() {
           >
             <Mic size={14} />
           </button>
+          {drillAllowed && (
+            <button
+              className={`tb-btn ${drillTarget ? 'connected' : ''}`}
+              onClick={() => setDrillModalOpen(true)}
+              title={drillTarget
+                ? (isZh ? `专项练习中：${drillTarget.id}` : `Drill: ${drillTarget.id}`)
+                : (isZh ? '专项练习（指定 OLL/PLL 公式）' : 'Drill mode (target an OLL/PLL case)')}
+            >
+              <Crosshair size={14} />
+            </button>
+          )}
           <button className="tb-btn" onClick={() => setStatsModalOpen(true)} title={isZh ? '完整统计' : 'Full stats'}>
             <BarChart3 size={14} />
           </button>
@@ -1176,6 +1211,21 @@ export default function TimerPage() {
           defaultEvent={event}
           isZh={isZh}
           onClose={() => setBulkScrambleOpen(false)}
+        />
+      )}
+
+      {drillModalOpen && (
+        <DrillModal
+          isZh={isZh}
+          activeCase={drillTarget}
+          initialType={event === 'pll' ? 'pll' : 'oll'}
+          onPick={(type, id) => {
+            setDrillTarget({ type, id });
+            // Force a fresh scramble for the just-picked case.
+            setScrambleNonce(n => n + 1);
+          }}
+          onExit={() => setDrillTarget(null)}
+          onClose={() => setDrillModalOpen(false)}
         />
       )}
     </div>
