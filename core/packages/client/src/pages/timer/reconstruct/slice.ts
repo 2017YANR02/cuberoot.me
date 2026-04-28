@@ -77,6 +77,50 @@ function parseMove(raw: string): ParsedMove | null {
   return { family, suffix, isRotation, isSlice };
 }
 
+/**
+ * Auto-detect a BLD memo-pause by scanning for the largest gap between
+ * consecutive moves. Returns the candidate memo-end timestamp (ms since
+ * solve start) when:
+ *   - the gap exceeds 10s, AND
+ *   - the gap's start ts falls within the first 60% of the solve.
+ * Returns null if no gap satisfies the heuristic, or if there are <2 moves.
+ *
+ * Rationale: a typical BLD solve is "memorize ~30-60s, then execute fast".
+ * The memorization period appears as one outlier inter-move gap; subsequent
+ * execution pauses are short by comparison. Restricting to the first 60% of
+ * solve time avoids mistaking a late-solve thinking pause for memo end.
+ */
+export function detectMemoPause(
+  moves: Array<{ m: string; ts: number }>,
+  totalMs: number,
+): number | null {
+  if (!moves || moves.length < 2 || totalMs <= 0) return null;
+  const MIN_GAP_MS = 10_000;
+  const MAX_START_FRAC = 0.6;
+  let bestGap = 0;
+  let bestStartTs: number | null = null;
+  for (let i = 1; i < moves.length; i++) {
+    const startTs = moves[i - 1].ts;
+    const gap = moves[i].ts - startTs;
+    if (gap > bestGap) {
+      bestGap = gap;
+      bestStartTs = startTs;
+    }
+  }
+  if (bestStartTs === null) return null;
+  if (bestGap < MIN_GAP_MS) return null;
+  if (bestStartTs > totalMs * MAX_START_FRAC) return null;
+  // Memo "ends" when the first execution move starts — i.e. the start of
+  // the gap plus the gap itself. But the convention used elsewhere in the
+  // codebase is that memoMs is the elapsed time at "memo done", which is
+  // immediately before the first exec move fires. We use the gap-end ts
+  // (i.e. the next move's ts) so memoMs lands right at the first move.
+  // Actually re-reading sliceReconstruction: execMoves filter is ts >= execStart,
+  // so memoMs == first-exec-move ts means that move is included (and
+  // firstMoveLatencyMs == 0). Use bestStartTs + bestGap.
+  return bestStartTs + bestGap;
+}
+
 export function sliceReconstruction(
   moves: Array<{ m: string; ts: number }>,
   totalMs: number,
