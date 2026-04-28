@@ -20,7 +20,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { Home, Download, Upload, Trash2, Settings as SettingsIcon, Maximize2, Minimize2, Bluetooth, Mic, HelpCircle, BarChart3, Plus, Wrench, ListPlus, Printer, FileText, FileSpreadsheet, AlertTriangle, Target, Crosshair, Keyboard, Link2, Globe, ChevronDown, ChevronRight, Eye, EyeOff } from 'lucide-react';
+import { Home, Download, Upload, Trash2, Settings as SettingsIcon, Maximize2, Minimize2, Bluetooth, Mic, BarChart3, Plus, Wrench, ListPlus, Printer, FileText, FileSpreadsheet, AlertTriangle, Target, Crosshair, Keyboard, Link2, Globe, ChevronDown, ChevronRight, Eye, EyeOff } from 'lucide-react';
 import LangToggle from '../../components/LangToggle';
 import MoreMenu, { type MoreMenuItem } from './components/MoreMenu';
 import { syncLangToUrl } from '../../i18n';
@@ -1088,12 +1088,6 @@ export default function TimerPage() {
           </button>
           <button className="tb-btn" onClick={() => setSettingsOpen(true)} title={isZh ? '设置' : 'Settings'}>
             <SettingsIcon size={14} />
-          </button>
-          <button className="tb-btn tb-mobile-hide" onClick={() => setShortcutsOpen(true)} title={isZh ? '快捷键' : 'Shortcuts'}>
-            <HelpCircle size={14} />
-          </button>
-          <button className="tb-btn tb-mobile-hide" onClick={toggleFullscreen} title={isZh ? '全屏' : 'Fullscreen'}>
-            {fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
           </button>
           <MoreMenu items={moreItems} isZh={isZh} />
           <span className="tb-mobile-hide" style={{ display: 'inline-flex' }}>
