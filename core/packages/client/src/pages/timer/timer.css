@@ -401,24 +401,21 @@
 .qa-btn.danger:hover { background: #4a1f1f; border-color: #c44; color: #faa; }
 .qa-btn.active { background: #2a3d4d; border-color: #4d7a99; color: #cde; }
 
-/* --- Bottom panels ------------------------------------------ */
+/* --- Bottom panels ------------------------------------------
+   Each section (Stats / Distribution / History) is wrapped in a
+   CollapseSection on all breakpoints. The container is a flex column —
+   sections stack vertically and the user toggles each independently.
+   Default-expanded state is seeded from breakpoint + localStorage by the
+   page; CSS doesn't gate visibility per breakpoint. */
 .timer-bottom {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 320px);
+  display: flex;
+  flex-direction: column;
   gap: 0;
   border-top: 1px solid #1f1f23;
   background: #0e0e10;
   flex: 0 0 auto;
-  max-height: 38dvh;
-  overflow: hidden;
-}
-
-@media (max-width: 720px) {
-  .timer-bottom {
-    grid-template-columns: 1fr;
-    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
-    max-height: 50dvh;
-  }
+  max-height: 50dvh;
+  overflow-y: auto;
 }
 
 /* Stats summary */
@@ -1034,7 +1031,8 @@
   padding: 2px 0;
 }
 .cube-preview-toggle {
-  display: none; /* Desktop: never; mobile media-query enables. */
+  /* Visible on every breakpoint — actual `display: inline-flex` is set by
+     the universal rule below the CollapseSection block. */
   align-items: center;
   gap: 6px;
   background: transparent;
@@ -1162,16 +1160,13 @@
   text-transform: uppercase;
 }
 
+/* .with-charts adds a Distribution section between Stats and History.
+   Layout is identical to the no-charts case (flex column) — the modifier
+   stays for any future per-state styling hooks. */
 .timer-bottom.with-charts {
-  grid-template-columns: minmax(200px, 1fr) minmax(0, 1.2fr) minmax(280px, 320px);
-}
-
-@media (max-width: 720px) {
-  .timer-bottom.with-charts {
-    grid-template-columns: 1fr;
-    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
-    max-height: 60dvh;
-  }
+  /* Slightly taller cap when charts are present so the user can see at
+     least the Distribution section header along with adjacent ones. */
+  max-height: 60dvh;
 }
 
 /* --- Light theme --- */
@@ -1300,6 +1295,70 @@
    BT pill) and primary inputs (event select, BT, mic, stats, settings, more).
    Drill / shortcuts / fullscreen relocate into the More menu when not active.
    Live cube mirror is dropped — at this width it's noise, not signal. */
+/* --- Universal CollapseSection — applies on ALL breakpoints.
+   Each bottom section (Stats / Distribution / History / Heatmap) is wrapped
+   in this accordion. Header is always tappable (≥44px tap target), always
+   shows chevron + title + optional badge. Default-expand state is seeded
+   per-breakpoint by the page; user toggles persist via localStorage. */
+.timer-collapse {
+  border-bottom: 1px solid #1f1f23;
+}
+.timer-collapse:last-child { border-bottom: 0; }
+.timer-collapse-header {
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 0;
+  padding: 10px 14px;
+  color: #aaa;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  text-align: left;
+}
+.timer-collapse-header:hover { background: #161619; }
+.timer-collapse-title { flex: 1; }
+.timer-collapse-badge {
+  background: #1a1a1d;
+  border: 1px solid #2a2a2e;
+  border-radius: 999px;
+  padding: 1px 8px;
+  color: #ccc;
+  font-size: 11px;
+  letter-spacing: 0;
+  text-transform: none;
+  font-family: 'JetBrains Mono', monospace;
+}
+.timer-collapse-body {
+  /* Cap each expanded section so a single open section can't dominate the
+     page. The container .timer-bottom adds its own scroll anyway. */
+  max-height: 50dvh;
+  overflow-y: auto;
+}
+.timer-collapse-body .stats-panel,
+.timer-collapse-body .case-stats-panel,
+.timer-collapse-body .charts-panel,
+.timer-collapse-body .history-panel {
+  border-right: 0;
+}
+:root[data-timer-theme="light"] .timer-collapse {
+  border-bottom-color: #e0e0e3;
+}
+:root[data-timer-theme="light"] .timer-collapse-header { color: #555; }
+:root[data-timer-theme="light"] .timer-collapse-header:hover { background: #f0f0f3; }
+:root[data-timer-theme="light"] .timer-collapse-badge {
+  background: #fff;
+  border-color: #d0d0d4;
+  color: #444;
+}
+
+/* Cube preview Eye toggle: visible on every breakpoint. */
+.cube-preview-toggle { display: inline-flex; min-height: 28px; }
+
 @media (max-width: 480px) {
   /* Drop secondary toolbar buttons that are also exposed via More menu. */
   .timer-topbar .tb-mobile-hide { display: none !important; }
@@ -1307,81 +1366,12 @@
      cube state via the main scramble-driven CubePreview above the timer. */
   .timer-live-cube { display: none; }
 
-  /* Cube preview: show the hide/show toggle + cap the SVG. The wrap acts
-     as a small accordion: when .hidden, the toggle is the only content. */
-  .cube-preview-toggle { display: inline-flex; }
+  /* Cube preview: shrink the SVG. Eye toggle is already shown on every
+     breakpoint (above) — no need to special-case here. */
   .timer-cube-preview { padding: 2px 0 6px; }
   .timer-cube-preview svg {
     max-height: 11dvh;
     max-width: 60vw;
-  }
-
-  /* Bottom sections: accordion mode. The grid layout from .timer-bottom
-     no longer applies — each section is a full-width row. */
-  .timer-bottom.is-mobile {
-    display: flex;
-    flex-direction: column;
-    grid-template-columns: none;
-    grid-template-rows: none;
-    max-height: none;
-    overflow: visible;
-  }
-  .mobile-collapse {
-    border-bottom: 1px solid #1f1f23;
-  }
-  .mobile-collapse:last-child { border-bottom: 0; }
-  .mobile-collapse-header {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: transparent;
-    border: 0;
-    padding: 10px 14px;
-    color: #aaa;
-    font-size: 12px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    cursor: pointer;
-    text-align: left;
-  }
-  .mobile-collapse-header:hover { background: #161619; }
-  .mobile-collapse-title { flex: 1; }
-  .mobile-collapse-badge {
-    background: #1a1a1d;
-    border: 1px solid #2a2a2e;
-    border-radius: 999px;
-    padding: 1px 8px;
-    color: #ccc;
-    font-size: 11px;
-    letter-spacing: 0;
-    text-transform: none;
-    font-family: 'JetBrains Mono', monospace;
-  }
-  .mobile-collapse-body {
-    /* Cap each expanded section so the user never has the whole page
-       become one section. ~50dvh feels right for HISTORY which is the
-       longest of the three. */
-    max-height: 50dvh;
-    overflow-y: auto;
-  }
-  .mobile-collapse-body .stats-panel,
-  .mobile-collapse-body .case-stats-panel,
-  .mobile-collapse-body .charts-panel,
-  .mobile-collapse-body .history-panel {
-    border-right: 0;
-    /* Re-anchor padding/overflow that the grid container previously
-       handled via max-height. */
-  }
-  :root[data-timer-theme="light"] .mobile-collapse {
-    border-bottom-color: #e0e0e3;
-  }
-  :root[data-timer-theme="light"] .mobile-collapse-header { color: #555; }
-  :root[data-timer-theme="light"] .mobile-collapse-header:hover { background: #f0f0f3; }
-  :root[data-timer-theme="light"] .mobile-collapse-badge {
-    background: #fff;
-    border-color: #d0d0d4;
-    color: #444;
   }
   /* Goal pill row: tighten padding so it doesn't push the cube preview
      further down. The pill itself stays — it's small and motivational. */
@@ -1452,13 +1442,22 @@
 .bluetooth-modal .bt-install-btn:hover,
 .bluetooth-modal .bt-connect-btn:hover { background: #345169; }
 
-/* --- Practice heatmap row --- */
+/* --- Practice heatmap row ---
+   Now hosts a CollapseSection; outer row only provides the divider+bg.
+   Inner padding is supplied by .timer-collapse-body so collapsed-state
+   shows just the header strip. */
 .timer-heatmap-row {
   flex: 0 0 auto;
   border-top: 1px solid #1f1f23;
   background: #0e0e10;
-  padding: 12px 16px;
   overflow-x: auto;
+}
+.timer-heatmap-row .timer-collapse-body {
+  padding: 12px 16px;
+  /* Heatmap can be tall when expanded — let it grow rather than scroll
+     internally; the page already scrolls when needed. */
+  max-height: none;
+  overflow-y: visible;
 }
 :root[data-timer-theme="light"] .timer-heatmap-row {
   background: #fff;

@@ -87,21 +87,55 @@ import './components/practice_heatmap.css';
 
 const TRAINER_KINDS = new Set<EventId>(['oll', 'pll', 'coll', 'cmll', 'zbll', 'eg1', 'eg2']);
 
-/** True iff viewport ≤ 480px. Used to consolidate the toolbar / collapse
- *  bottom panels / shrink the cube preview. Mirror of the same hook used by
- *  several modals in this folder — kept inline to avoid a new export. */
-function useIsMobile(): boolean {
-  const [isMobile, setIsMobile] = useState<boolean>(() =>
-    typeof window !== 'undefined' && window.matchMedia('(max-width: 480px)').matches,
+/** True iff viewport matches the given matchMedia query. Generic hook used by
+ *  the breakpoint helpers below — kept inline to avoid a new export. */
+function useMediaQuery(query: string): boolean {
+  const [matches, setMatches] = useState<boolean>(() =>
+    typeof window !== 'undefined' && window.matchMedia(query).matches,
   );
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const mq = window.matchMedia('(max-width: 480px)');
-    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    const mq = window.matchMedia(query);
+    const onChange = (e: MediaQueryListEvent) => setMatches(e.matches);
     mq.addEventListener('change', onChange);
     return () => mq.removeEventListener('change', onChange);
-  }, []);
-  return isMobile;
+  }, [query]);
+  return matches;
+}
+
+/** Three coarse breakpoints used to seed default-expanded state for collapsible
+ *  sections (cube preview, stats, dist/trend, history, heatmap). Per-section
+ *  user toggles are persisted to localStorage and override these defaults. */
+type Breakpoint = 'mobile' | 'tablet' | 'desktop';
+function useBreakpoint(): Breakpoint {
+  const isMobile = useMediaQuery('(max-width: 480px)');
+  const isTablet = useMediaQuery('(min-width: 481px) and (max-width: 1024px)');
+  if (isMobile) return 'mobile';
+  if (isTablet) return 'tablet';
+  return 'desktop';
+}
+
+/** Persistent expand/collapse state per section. The first read wins:
+ *   1. localStorage key `timer.section.<id>.expanded` ("1" / "0") — if set, use it
+ *   2. else fall back to `defaultExpanded` (computed by caller from breakpoint).
+ *  Toggling writes the new boolean to localStorage. */
+function useSectionExpanded(id: string, defaultExpanded: boolean): [boolean, () => void] {
+  const storageKey = `timer.section.${id}.expanded`;
+  const [expanded, setExpanded] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return defaultExpanded;
+    const raw = localStorage.getItem(storageKey);
+    if (raw === '1') return true;
+    if (raw === '0') return false;
+    return defaultExpanded;
+  });
+  const toggle = useCallback(() => {
+    setExpanded(prev => {
+      const next = !prev;
+      try { localStorage.setItem(storageKey, next ? '1' : '0'); } catch { /* quota / private mode */ }
+      return next;
+    });
+  }, [storageKey]);
+  return [expanded, toggle];
 }
 
 /** True iff the current device exposes a touch surface. Doesn't imply mobile —
@@ -115,24 +149,41 @@ export default function TimerPage() {
   const settings = useSettings();
   useApplyTheme();
 
-  // ── Mobile layout flags ─────────────────────────────────────────
-  // isMobile drives toolbar consolidation (Mic/Stats/Lang move into More)
-  // and the bottom-section accordion. mobilePreviewHidden persists the
-  // "hide cube preview" toggle visible only on phones.
-  const isMobile = useIsMobile();
-  const [mobilePreviewHidden, setMobilePreviewHidden] = useState<boolean>(() => {
+  // ── Layout breakpoint + collapsible sections ────────────────────
+  // Breakpoint drives toolbar consolidation (mobile-only Mic/Stats/Lang move
+  // into More) and the *defaults* for each collapsible section. User toggles
+  // are persisted per-section in localStorage and override defaults.
+  const breakpoint = useBreakpoint();
+  const isMobile = breakpoint === 'mobile';
+  // Default-expanded table — applies to all platforms.
+  //                          mobile  tablet  desktop
+  // Stats panel              ✗       ✓       ✓
+  // Distribution / Trend     ✗       ✗       ✓
+  // History                  ✗       ✓       ✓
+  // Practice heatmap         ✗       ✓ if ≥30 solves else ✗   ✓   (computed below — needs `solves`)
+  // Cube preview             ✓       ✓       ✓   (Eye toggle inverts)
+  const defaultStatsExpanded = breakpoint !== 'mobile';
+  const defaultChartsExpanded = breakpoint === 'desktop';
+  const defaultHistoryExpanded = breakpoint !== 'mobile';
+
+  const [statsExpanded, toggleStats] = useSectionExpanded('stats', defaultStatsExpanded);
+  const [chartsExpanded, toggleCharts] = useSectionExpanded('charts', defaultChartsExpanded);
+  const [historyExpanded, toggleHistory] = useSectionExpanded('history', defaultHistoryExpanded);
+
+  // Cube preview Eye toggle — universal across breakpoints.
+  // Stored as a single boolean ("1" hidden / "0" visible).
+  const [previewHidden, setPreviewHidden] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
-    return localStorage.getItem('timer.mobilePreviewHidden') === '1';
+    // Migrate legacy mobile-only key → unified key on first read.
+    const legacy = localStorage.getItem('timer.mobilePreviewHidden');
+    if (legacy !== null && localStorage.getItem('timer.preview.hidden') === null) {
+      try { localStorage.setItem('timer.preview.hidden', legacy); } catch { /* ignore */ }
+    }
+    return localStorage.getItem('timer.preview.hidden') === '1';
   });
   useEffect(() => {
-    localStorage.setItem('timer.mobilePreviewHidden', mobilePreviewHidden ? '1' : '0');
-  }, [mobilePreviewHidden]);
-  // Bottom-panel accordions: STATS / DISTRIBUTION / HISTORY. Collapsed by
-  // default on mobile; on desktop they're always expanded (state ignored
-  // because the wrapping <div> doesn't apply collapse classes there).
-  const [statsCollapsed, setStatsCollapsed] = useState(true);
-  const [chartsCollapsed, setChartsCollapsed] = useState(true);
-  const [historyCollapsed, setHistoryCollapsed] = useState(true);
+    try { localStorage.setItem('timer.preview.hidden', previewHidden ? '1' : '0'); } catch { /* ignore */ }
+  }, [previewHidden]);
 
   // ── State: per-event solve lists ────────────────────────────────
   const [byEvent, setByEvent] = useState<Record<string, Solve[]>>(() => loadAll());
@@ -151,6 +202,16 @@ export default function TimerPage() {
   }, [event]);
 
   const solves = useMemo(() => byEvent[event] ?? [], [byEvent, event]);
+
+  // Heatmap default-expanded depends on solve count for the tablet breakpoint.
+  const heatmapDenseThreshold = 30;
+  const defaultHeatmapExpanded =
+    breakpoint === 'desktop'
+      ? true
+      : breakpoint === 'tablet'
+        ? solves.length >= heatmapDenseThreshold
+        : false;
+  const [heatmapExpanded, toggleHeatmap] = useSectionExpanded('heatmap', defaultHeatmapExpanded);
 
   // ── Kociemba warmup (3x3 random-state) ─────────────────────────
   const [kociembaReady, setKociembaReady] = useState(false);
@@ -1145,23 +1206,21 @@ export default function TimerPage() {
       })()}
 
       {settings.showCubePreview && (
-        <div className={`timer-cube-preview-wrap${isMobile && mobilePreviewHidden ? ' hidden' : ''}`}>
-          {isMobile && (
-            <button
-              type="button"
-              className="cube-preview-toggle"
-              onClick={() => setMobilePreviewHidden(h => !h)}
-              title={mobilePreviewHidden
-                ? (isZh ? '显示打乱预览' : 'Show preview')
-                : (isZh ? '隐藏打乱预览' : 'Hide preview')}
-            >
-              {mobilePreviewHidden ? <Eye size={12} /> : <EyeOff size={12} />}
-              <span>{mobilePreviewHidden
-                ? (isZh ? '显示预览' : 'Show preview')
-                : (isZh ? '隐藏预览' : 'Hide preview')}</span>
-            </button>
-          )}
-          {!(isMobile && mobilePreviewHidden) && (
+        <div className={`timer-cube-preview-wrap${previewHidden ? ' hidden' : ''}`}>
+          <button
+            type="button"
+            className="cube-preview-toggle"
+            onClick={() => setPreviewHidden(h => !h)}
+            title={previewHidden
+              ? (isZh ? '显示打乱预览' : 'Show preview')
+              : (isZh ? '隐藏打乱预览' : 'Hide preview')}
+          >
+            {previewHidden ? <Eye size={12} /> : <EyeOff size={12} />}
+            <span>{previewHidden
+              ? (isZh ? '显示预览' : 'Show preview')
+              : (isZh ? '隐藏预览' : 'Hide preview')}</span>
+          </button>
+          {!previewHidden && (
             <div className="timer-cube-preview">
               {settings.use3D
                 ? <Cube3D event={event} scramble={scramble} size={200} colors={settings.colors} />
@@ -1303,68 +1362,52 @@ export default function TimerPage() {
         )}
       </div>
 
-      <div className={`timer-bottom ${settings.showCharts ? 'with-charts' : ''}${isMobile ? ' is-mobile' : ''}`}>
-        {isMobile ? (
-          <>
-            <CollapseSection
-              title={isZh ? '统计' : 'Stats'}
-              collapsed={statsCollapsed}
-              onToggle={() => setStatsCollapsed(c => !c)}
-            >
-              <StatsPanel solves={solves} isZh={isZh} event={event} />
-              <CaseStatsPanel event={event} solves={solves} isZh={isZh} />
-            </CollapseSection>
-            {settings.showCharts && (
-              <CollapseSection
-                title={isZh ? '分布' : 'Distribution'}
-                collapsed={chartsCollapsed}
-                onToggle={() => setChartsCollapsed(c => !c)}
-              >
-                <div className="charts-panel">
-                  <h3>{isZh ? '分布' : 'Distribution'}</h3>
-                  <HistogramChart solves={solves} isZh={isZh} width={300} height={120} />
-                  <h3>{isZh ? '趋势' : 'Trend'}</h3>
-                  <TrendChart solves={solves} isZh={isZh} width={300} height={140} />
-                </div>
-              </CollapseSection>
-            )}
-            <CollapseSection
-              title={isZh ? '历史' : 'History'}
-              badge={solves.length > 0 ? String(solves.length) : undefined}
-              collapsed={historyCollapsed}
-              onToggle={() => setHistoryCollapsed(c => !c)}
-            >
-              <HistoryPanel
-                solves={solves}
-                isZh={isZh}
-                onRowClick={(s, idx) => setModalSolve({ s, idx })}
-              />
-            </CollapseSection>
-          </>
-        ) : (
-          <>
-            <StatsPanel solves={solves} isZh={isZh} event={event} />
-            <CaseStatsPanel event={event} solves={solves} isZh={isZh} />
-            {settings.showCharts && (
-              <div className="charts-panel">
-                <h3>{isZh ? '分布' : 'Distribution'}</h3>
-                <HistogramChart solves={solves} isZh={isZh} width={300} height={120} />
-                <h3>{isZh ? '趋势' : 'Trend'}</h3>
-                <TrendChart solves={solves} isZh={isZh} width={300} height={140} />
-              </div>
-            )}
-            <HistoryPanel
-              solves={solves}
-              isZh={isZh}
-              onRowClick={(s, idx) => setModalSolve({ s, idx })}
-            />
-          </>
+      <div className={`timer-bottom ${settings.showCharts ? 'with-charts' : ''} bp-${breakpoint}`}>
+        <CollapseSection
+          title={isZh ? '统计' : 'Stats'}
+          collapsed={!statsExpanded}
+          onToggle={toggleStats}
+        >
+          <StatsPanel solves={solves} isZh={isZh} event={event} />
+          <CaseStatsPanel event={event} solves={solves} isZh={isZh} />
+        </CollapseSection>
+        {settings.showCharts && (
+          <CollapseSection
+            title={isZh ? '分布' : 'Distribution'}
+            collapsed={!chartsExpanded}
+            onToggle={toggleCharts}
+          >
+            <div className="charts-panel">
+              <h3>{isZh ? '分布' : 'Distribution'}</h3>
+              <HistogramChart solves={solves} isZh={isZh} width={300} height={120} />
+              <h3>{isZh ? '趋势' : 'Trend'}</h3>
+              <TrendChart solves={solves} isZh={isZh} width={300} height={140} />
+            </div>
+          </CollapseSection>
         )}
+        <CollapseSection
+          title={isZh ? '历史' : 'History'}
+          badge={solves.length > 0 ? String(solves.length) : undefined}
+          collapsed={!historyExpanded}
+          onToggle={toggleHistory}
+        >
+          <HistoryPanel
+            solves={solves}
+            isZh={isZh}
+            onRowClick={(s, idx) => setModalSolve({ s, idx })}
+          />
+        </CollapseSection>
       </div>
 
       {settings.showHeatmap && solves.length > 0 && (
         <div className="timer-heatmap-row">
-          <PracticeHeatmap solves={solves} isZh={isZh} cellSize={11} />
+          <CollapseSection
+            title={isZh ? '练习日历' : 'Practice heatmap'}
+            collapsed={!heatmapExpanded}
+            onToggle={toggleHeatmap}
+          >
+            <PracticeHeatmap solves={solves} isZh={isZh} cellSize={11} />
+          </CollapseSection>
         </div>
       )}
 
@@ -1525,9 +1568,11 @@ export default function TimerPage() {
   );
 }
 
-/** Mobile-only accordion wrapper for the bottom-panel sections. Header is a
- *  tap target showing the section name + optional badge (e.g. solve count);
- *  body is fully unmounted while collapsed so charts don't paint offscreen. */
+/** Universal accordion wrapper for the bottom-panel sections. Header is a
+ *  tap target (≥44px) showing the section name + optional badge (e.g. solve
+ *  count); body is fully unmounted while collapsed so charts don't paint
+ *  offscreen. Default-expanded state is computed by the caller from the
+ *  current breakpoint; user toggles are persisted via useSectionExpanded. */
 function CollapseSection({
   title,
   collapsed,
@@ -1542,13 +1587,18 @@ function CollapseSection({
   children: React.ReactNode;
 }) {
   return (
-    <div className={`mobile-collapse${collapsed ? ' collapsed' : ''}`}>
-      <button type="button" className="mobile-collapse-header" onClick={onToggle}>
+    <div className={`timer-collapse${collapsed ? ' collapsed' : ''}`}>
+      <button
+        type="button"
+        className="timer-collapse-header"
+        onClick={onToggle}
+        aria-expanded={!collapsed}
+      >
         {collapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
-        <span className="mobile-collapse-title">{title}</span>
-        {badge && <span className="mobile-collapse-badge">{badge}</span>}
+        <span className="timer-collapse-title">{title}</span>
+        {badge && <span className="timer-collapse-badge">{badge}</span>}
       </button>
-      {!collapsed && <div className="mobile-collapse-body">{children}</div>}
+      {!collapsed && <div className="timer-collapse-body">{children}</div>}
     </div>
   );
 }
