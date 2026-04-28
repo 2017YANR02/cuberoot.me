@@ -25,10 +25,13 @@ import {
 import { solve2x2, solve2x2Face } from '../solver/cube2x2';
 import { solvePyra, solvePyraV } from '../solver/pyra';
 import { solveSkewb, solveSkewbFace } from '../solver/skewb';
+import { solve222Step, type Solve222Result } from '../solver/methods';
+import { solveSq1, type Sq1Result } from '../solver/sq1';
 import { recognizeForOrientation, type CfopRecognition } from './cfop_recognize';
 import SolverCompareModal from './SolverCompareModal';
 
 type SmallEvent = '222' | 'pyra' | 'skewb';
+type Sq1Event = 'sq1';
 
 const METHOD_LS_KEY = 'timer.solverHints.method';
 
@@ -45,9 +48,9 @@ function loadSavedMethod(): MethodId {
 interface Props {
   scramble: string;
   isZh: boolean;
-  /** Optional — when '222' / 'pyra' / 'skewb', show that puzzle's hints
-   *  instead of the 3x3 ones. Defaults to '333'. */
-  event?: '333' | SmallEvent;
+  /** Optional — when '222' / 'pyra' / 'skewb' / 'sq1', show that puzzle's
+   *  hints instead of the 3x3 ones. Defaults to '333'. */
+  event?: '333' | SmallEvent | Sq1Event;
 }
 
 interface Computed {
@@ -55,6 +58,8 @@ interface Computed {
   eoline: EOLineSolution;
   /** F2L / OLL / PLL recognition, keyed by orientation. */
   recog: Record<Orientation, CfopRecognition>;
+  /** Optimal 2x2x2 first-block (Petrus-style starter). */
+  s222: Solve222Result;
 }
 
 const ORIENT_LABEL_ZH: Record<string, string> = {
@@ -76,7 +81,10 @@ const ORIENT_LABEL_EN: Record<string, string> = {
 };
 
 export default function SolverHints({ scramble, isZh, event = '333' }: Props) {
-  // Branch early for 2x2 / Pyra / Skewb — these have their own simpler panel.
+  // Branch early for puzzles with their own simpler panels.
+  if (event === 'sq1') {
+    return <Sq1Hints scramble={scramble} isZh={isZh} />;
+  }
   if (event !== '333') {
     return <SmallPuzzleHints scramble={scramble} isZh={isZh} event={event} />;
   }
@@ -88,7 +96,7 @@ export default function SolverHints({ scramble, isZh, event = '333' }: Props) {
   const [methodId, setMethodId] = useState<MethodId>(loadSavedMethod);
   // Cache solutions per (scramble, method) so switching tabs doesn't recompute.
   const [stepResults, setStepResults] = useState<Record<MethodId, SolveResult | null>>(
-    () => ({ cfop: null, roux: null, petrus: null, zz: null, eodr: null }),
+    () => ({ cfop: null, roux: null, petrus: null, zz: null, eodr: null, thistle: null }),
   );
   const [stepComputing, setStepComputing] = useState(false);
   const [compareOpen, setCompareOpen] = useState(false);
@@ -100,7 +108,7 @@ export default function SolverHints({ scramble, isZh, event = '333' }: Props) {
 
   // Reset cached results whenever the scramble changes.
   useEffect(() => {
-    setStepResults({ cfop: null, roux: null, petrus: null, zz: null, eodr: null });
+    setStepResults({ cfop: null, roux: null, petrus: null, zz: null, eodr: null, thistle: null });
   }, [scramble]);
 
   // Recompute whenever scramble changes AND the panel is open. We also reset
@@ -124,8 +132,9 @@ export default function SolverHints({ scramble, isZh, event = '333' }: Props) {
         for (const sol of cross) {
           recog[sol.orientation] = recognizeForOrientation(scramble, sol.orientation, sol.moves);
         }
+        const s222 = solve222Step(scramble);
         if (!cancelled) {
-          setComputed({ cross, eoline, recog });
+          setComputed({ cross, eoline, recog, s222 });
           setComputing(false);
         }
       } catch {
@@ -134,6 +143,7 @@ export default function SolverHints({ scramble, isZh, event = '333' }: Props) {
             cross: [],
             eoline: { moves: '—', length: -1 },
             recog: {} as Record<Orientation, CfopRecognition>,
+            s222: { corner: null, moves: [], length: -1 },
           });
           setComputing(false);
         }
@@ -230,6 +240,17 @@ export default function SolverHints({ scramble, isZh, event = '333' }: Props) {
                     {computed.eoline.length < 0 ? '—' : `${computed.eoline.length}`}
                   </span>
                   <span style={algStyle}>{computed.eoline.moves}</span>
+                </div>
+                <div style={rowStyle}>
+                  <span style={labelStyle}>
+                    2x2x2{computed.s222.corner ? ` (${computed.s222.corner})` : ''}
+                  </span>
+                  <span style={countStyle}>
+                    {computed.s222.length < 0 ? '—' : `${computed.s222.length}`}
+                  </span>
+                  <span style={algStyle}>
+                    {computed.s222.length < 0 ? '—' : computed.s222.moves.join(' ')}
+                  </span>
                 </div>
               </>
             )}
@@ -517,6 +538,107 @@ function SmallPuzzleHints({ scramble, isZh, event }: SmallProps) {
                     </div>
                   );
                 })}
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ----------------------------------------------------------------------
+// Square-1 panel
+// ----------------------------------------------------------------------
+
+interface Sq1Props {
+  scramble: string;
+  isZh: boolean;
+}
+
+function Sq1Hints({ scramble, isZh }: Sq1Props) {
+  const [open, setOpen] = useState(false);
+  const [computed, setComputed] = useState<Sq1Result | null>(null);
+  const [computing, setComputing] = useState(false);
+
+  const cacheKey = useMemo(() => scramble, [scramble]);
+
+  useEffect(() => {
+    if (!open) {
+      setComputed(null);
+      return;
+    }
+    setComputing(true);
+    setComputed(null);
+    let cancelled = false;
+    const t = setTimeout(() => {
+      if (cancelled) return;
+      try {
+        const r = solveSq1(scramble);
+        if (!cancelled) {
+          setComputed(r);
+          setComputing(false);
+        }
+      } catch {
+        if (!cancelled) {
+          setComputed({ stages: [], totalMoves: 0 });
+          setComputing(false);
+        }
+      }
+    }, 0);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [open, cacheKey, scramble]);
+
+  const title = isZh ? 'Square-1 解法提示' : 'Square-1 solver hints';
+  const stageNameZh: Record<string, string> = {
+    'Shape': '形状',
+    'Permutation': '颜色还原',
+  };
+
+  return (
+    <div style={wrapperStyle}>
+      <div className="solver-hints" style={hintsStyle}>
+        <button
+          type="button"
+          onClick={() => setOpen(o => !o)}
+          style={toggleBtnStyle}
+          aria-expanded={open}
+        >
+          <span>{title}</span>
+          <span style={{ marginLeft: 'auto', opacity: 0.7 }}>{open ? '▾' : '▸'}</span>
+        </button>
+        {open && (
+          <div style={bodyStyle}>
+            {computing && (
+              <div style={{ opacity: 0.6, fontSize: 13 }}>
+                {isZh ? '计算中…' : 'Computing…'}
+              </div>
+            )}
+            {computed && (
+              <>
+                {computed.stages.map(s => (
+                  <div key={s.head} style={rowStyle}>
+                    <span style={labelStyle}>
+                      {isZh ? (stageNameZh[s.head] ?? s.head) : s.head}
+                    </span>
+                    <span style={countStyle}>
+                      {s.failed ? '—' : s.moves.length}
+                    </span>
+                    <span style={algStyle}>
+                      {s.failed
+                        ? (isZh ? '未找到' : 'no solution')
+                        : s.moves.join(' ')}
+                    </span>
+                  </div>
+                ))}
+                <div style={rowStyle}>
+                  <span style={labelBestStyle}>{isZh ? '总计 (token)' : 'Total (tokens)'}</span>
+                  <span style={countBestStyle}>{computed.totalMoves}</span>
+                  <span style={algStyle} />
+                </div>
               </>
             )}
           </div>
