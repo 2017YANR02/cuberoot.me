@@ -332,6 +332,10 @@ interface MoveDecodeState {
 
 /** Read N bits (big-endian within the byte) starting at `bitOffset`. */
 function readBits(buf: Uint8Array, bitOffset: number, nBits: number): number {
+  // Defensive: a truncated/oddball frame could otherwise read past the
+  // backing buffer and decode garbage into a nonsense move. The canonical
+  // 20-byte v4 frame always satisfies this.
+  if (bitOffset + nBits > buf.length * 8) return 0;
   let v = 0;
   for (let i = 0; i < nBits; i++) {
     const byteIdx = (bitOffset + i) >> 3;
