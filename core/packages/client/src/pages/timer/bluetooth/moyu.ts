@@ -86,15 +86,14 @@ function parseTurn(dv: DataView, faceStatus: Int8Array): string[] {
 
     const prevRot = faceStatus[face];
     const curRotRaw = prevRot + dir;
-    // Wrap into 0..8 for storage. We test the boundary on the un-wrapped
-    // value first because cstimer's `prevRot >= 5 && curRot <= 4` requires
-    // the wrap to have moved the value across the half-revolution line.
-    const curRot = ((curRotRaw % 9) + 9) % 9;
-    faceStatus[face] = curRot;
+    // cstimer compares against the UN-wrapped raw value so that a quarter-tick
+    // wrap across 9->0 (or 0->-1->8) doesn't synthesise a phantom inverse move.
+    // We then store the wrapped value for the next frame.
+    faceStatus[face] = ((curRotRaw % 9) + 9) % 9;
 
     let pow: 0 | 2 | -1 = -1;
-    if (prevRot >= 5 && curRot <= 4 && curRot !== prevRot) pow = 2;       // CCW
-    else if (prevRot <= 4 && curRot >= 5 && curRot !== prevRot) pow = 0;  // CW
+    if (prevRot >= 5 && curRotRaw <= 4) pow = 2;       // CCW
+    else if (prevRot <= 4 && curRotRaw >= 5) pow = 0;  // CW
     if (pow === -1) continue;
 
     const axis = MOYU_AXIS_LUT[face];
