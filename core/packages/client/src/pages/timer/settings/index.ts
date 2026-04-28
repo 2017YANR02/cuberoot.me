@@ -113,6 +113,13 @@ export interface TimerSettings {
    * null entries disable the indicator for that event. Positive integer ms only.
    */
   targetMsByEvent: Record<string, number>;
+
+  /**
+   * Daily solve-count goal. null / 0 / missing → disabled (no progress pill).
+   * Positive integer count of solves the user wants to complete each local
+   * calendar day. Per-event variants are intentionally deferred.
+   */
+  dailySolveGoal?: number | null;
 }
 
 export const DEFAULTS: TimerSettings = {
@@ -145,7 +152,21 @@ export const DEFAULTS: TimerSettings = {
   inspectionTrigger: 'down',
   pbToast: true,
   targetMsByEvent: {},
+  dailySolveGoal: null,
 };
+
+/**
+ * Parse a daily-solve-goal string. Empty / 0 / negative / non-finite → null
+ * (treated as "disabled" by the progress pill).
+ */
+export function parseDailySolveGoal(raw: string): number | null {
+  if (typeof raw !== 'string') return null;
+  const trimmed = raw.trim();
+  if (trimmed === '') return null;
+  const n = Number(trimmed);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return Math.floor(n);
+}
 
 /**
  * Parse a time-attack target time string (`m:ss.ms` style, e.g. `0:10.50`,
