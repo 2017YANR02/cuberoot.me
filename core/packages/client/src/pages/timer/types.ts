@@ -71,6 +71,9 @@ export interface Solve {
    *  set by the user during a multi-stage solve; this carries the richer
    *  HTM counts + cross-side / OLL-case / PLL-case labels. */
   stageSegments?: StageSegments;
+  /** Optional auto-tags. Reserved for future persistence; HistoryPanel
+   *  currently recomputes tags on the fly from solve + history. */
+  tags?: string[];
 }
 
 const BLD_EVENT_IDS = new Set<EventId>(['333bld','333mbld','333ni','444bld','555bld','666bld','777bld']);
