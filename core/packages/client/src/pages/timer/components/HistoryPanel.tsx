@@ -4,6 +4,8 @@ import type { Solve, Penalty } from '../types';
 import { effectiveMs } from '../types';
 import { formatMs, pbSingleIndex } from '../stats';
 import CompareSolvesModal from './CompareSolvesModal';
+import { computeAllTags, TAG_DEFS, ALL_TAG_IDS } from '../storage/auto_tag';
+import type { TagId } from '../storage/auto_tag';
 
 interface Props {
   solves: Solve[];
@@ -102,9 +104,15 @@ export default function HistoryPanel({ solves, isZh, onRowClick }: Props) {
   const [penaltySet, setPenaltySet] = useState<Set<Penalty>>(new Set(ALL_PENALTIES));
   const [ollFilter, setOllFilter] = useState('');
   const [pllFilter, setPllFilter] = useState('');
+  // Tag filter: only solves with at least one of these tags are kept.
+  // Empty set => no tag filter applied.
+  const [tagSet, setTagSet] = useState<Set<TagId>>(new Set());
 
   const reversed = [...solves].reverse(); // newest at top
   const pbIdx = pbSingleIndex(solves);
+
+  // Auto-tags computed once per history change.
+  const tagsByid = useMemo(() => computeAllTags(solves), [solves]);
 
   // PB windows are computed from the FULL history so they remain stable
   // regardless of any filtering applied to the rendered list.
@@ -136,7 +144,8 @@ export default function HistoryPanel({ solves, isZh, onRowClick }: Props) {
     (timeMaxMs !== null ? 1 : 0) +
     (penaltySet.size !== ALL_PENALTIES.length ? 1 : 0) +
     (ollTrim ? 1 : 0) +
-    (pllTrim ? 1 : 0);
+    (pllTrim ? 1 : 0) +
+    (tagSet.size > 0 ? 1 : 0);
 
   const filteredReversed = useMemo(() => {
     return reversed.filter((s) => {
@@ -167,10 +176,19 @@ export default function HistoryPanel({ solves, isZh, onRowClick }: Props) {
         const pll = (s.stageSegments?.pllCase ?? '').toLowerCase();
         if (!pll.includes(pllTrim)) return false;
       }
+      // Tag filter: require at least one selected tag to be present.
+      if (tagSet.size > 0) {
+        const t = tagsByid.get(s.id) ?? [];
+        let hit = false;
+        for (const tg of t) {
+          if (tagSet.has(tg)) { hit = true; break; }
+        }
+        if (!hit) return false;
+      }
       return true;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trimmed, solves, dateFromMs, dateToMs, timeMinMs, timeMaxMs, penaltySet, ollTrim, pllTrim]);
+  }, [trimmed, solves, dateFromMs, dateToMs, timeMinMs, timeMaxMs, penaltySet, ollTrim, pllTrim, tagSet, tagsByid]);
 
   const matchCount = filteredReversed.length;
   const hasAnyFilter = !!trimmed || activeFilterCount > 0;
@@ -184,6 +202,16 @@ export default function HistoryPanel({ solves, isZh, onRowClick }: Props) {
     setPenaltySet(new Set(ALL_PENALTIES));
     setOllFilter('');
     setPllFilter('');
+    setTagSet(new Set());
+  };
+
+  const toggleTag = (t: TagId) => {
+    setTagSet(prev => {
+      const next = new Set(prev);
+      if (next.has(t)) next.delete(t);
+      else next.add(t);
+      return next;
+    });
   };
 
   const togglePenalty = (p: Penalty) => {
@@ -247,6 +275,24 @@ export default function HistoryPanel({ solves, isZh, onRowClick }: Props) {
   const closeCompareModal = () => {
     setComparePair(null);
   };
+
+  // Tone -> { bg, border, color } palette for tag chips.
+  const TAG_TONE_STYLE: Record<'gold' | 'green' | 'red' | 'muted', React.CSSProperties> = {
+    gold:  { background: 'rgba(212, 166, 87, 0.16)',  border: '1px solid #8a7345', color: '#d4a657' },
+    green: { background: 'rgba(106, 168, 100, 0.14)', border: '1px solid #4d7a44', color: '#8fc28a' },
+    red:   { background: 'rgba(217, 122, 122, 0.14)', border: '1px solid #7a4444', color: '#d97a7a' },
+    muted: { background: 'transparent',               border: '1px solid #333',    color: '#888'    },
+  };
+
+  const tagChipStyle = (tone: 'gold' | 'green' | 'red' | 'muted'): React.CSSProperties => ({
+    ...TAG_TONE_STYLE[tone],
+    borderRadius: 3,
+    padding: '0 5px',
+    fontSize: 9,
+    lineHeight: '14px',
+    display: 'inline-block',
+    whiteSpace: 'nowrap',
+  });
 
   // Inline style helpers for the filters panel
   const chipBtn = (active: boolean): React.CSSProperties => ({
@@ -477,6 +523,26 @@ export default function HistoryPanel({ solves, isZh, onRowClick }: Props) {
                 />
               </div>
             </div>
+            <div>
+              <label style={labelStyle}>{isZh ? '标签' : 'Tags'}</label>
+              <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                {ALL_TAG_IDS.map(tid => {
+                  const def = TAG_DEFS[tid];
+                  const active = tagSet.has(tid);
+                  return (
+                    <button
+                      key={tid}
+                      type="button"
+                      onClick={() => toggleTag(tid)}
+                      aria-pressed={active}
+                      style={chipBtn(active)}
+                    >
+                      {isZh ? def.labelZh : def.labelEn}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -595,6 +661,22 @@ export default function HistoryPanel({ solves, isZh, onRowClick }: Props) {
                 {s.penalty === '+2' && <span className="penalty-flag">(+2)</span>}
                 {s.penalty === 'DNF' && <span className="penalty-flag">DNF</span>}
                 {s.comment && <span className="comment-flag" title={s.comment}>·</span>}
+                {(() => {
+                  const ts = tagsByid.get(s.id);
+                  if (!ts || ts.length === 0) return null;
+                  return (
+                    <span style={{ display: 'inline-flex', gap: 3, marginLeft: 6, flexWrap: 'wrap', verticalAlign: 'middle' }}>
+                      {ts.map(tid => {
+                        const def = TAG_DEFS[tid];
+                        return (
+                          <span key={tid} style={tagChipStyle(def.tone)}>
+                            {isZh ? def.labelZh : def.labelEn}
+                          </span>
+                        );
+                      })}
+                    </span>
+                  );
+                })()}
               </div>
               {!compareMode && (
                 <div className="actions">
