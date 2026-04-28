@@ -22,6 +22,14 @@
  *   3. Each subsequent move advances an internal 3x3 model. When the model
  *      returns to the canonical solved configuration, `onSolved` fires once
  *      and `solved` flips true. It stays true until the next move.
+ *
+ * Auto-reconnect:
+ *   When the GATT server emits `gattserverdisconnected` for reasons other
+ *   than the user clicking Disconnect, we attempt up to 5 reconnects with
+ *   exponential backoff (1s, 2s, 4s, 8s, 16s) on the cached BluetoothDevice.
+ *   The picker is NOT shown again — Web Bluetooth retains permission for
+ *   the same browser session. On final give-up the connection-state
+ *   callback is fired with `{ kind: 'reconnect-failed' }`.
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -41,6 +49,19 @@ export type { BluetoothCubeStatus, CubeBrand } from './types';
 export type { CubeDriver, CubeDriverStartResult } from './driver';
 export { detectBluetoothEnv, envAdvice, isBluefy } from './env';
 export type { BluetoothEnv, EnvAdvice } from './env';
+
+/* ------------------------------------------------------------------ */
+/*  Connection-state event surface                                    */
+/* ------------------------------------------------------------------ */
+
+export type BluetoothConnectionEvent =
+  | { kind: 'disconnected'; reason: 'gatt-lost' | 'manual' }
+  | { kind: 'reconnecting'; attempt: number; maxAttempts: number; delayMs: number }
+  | { kind: 'reconnected' }
+  | { kind: 'reconnect-failed'; attempts: number };
+
+const RECONNECT_BACKOFF_MS = [1000, 2000, 4000, 8000, 16000];
+const RECONNECT_MAX_ATTEMPTS = RECONNECT_BACKOFF_MS.length;
 
 /* ------------------------------------------------------------------ */
 /*  Driver registry                                                    */
@@ -89,6 +110,11 @@ interface UseBluetoothCubeOpts {
   onMove?: (move: string, timestamp: number) => void;
   /** Called when state transitions from unsolved → solved. */
   onSolved?: () => void;
+  /**
+   * Called for connection-lifecycle events: drop, reconnect attempts, final
+   * give-up. Useful for surfacing toasts to the user.
+   */
+  onConnectionEvent?: (ev: BluetoothConnectionEvent) => void;
 }
 
 const INITIAL_STATUS: BluetoothCubeStatus = {
@@ -122,16 +148,27 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
   // Refs so the GATT-event closure doesn't capture stale callback refs.
   const onMoveRef = useRef(opts.onMove);
   const onSolvedRef = useRef(opts.onSolved);
+  const onConnectionEventRef = useRef(opts.onConnectionEvent);
   useEffect(() => { onMoveRef.current = opts.onMove; }, [opts.onMove]);
   useEffect(() => { onSolvedRef.current = opts.onSolved; }, [opts.onSolved]);
+  useEffect(() => { onConnectionEventRef.current = opts.onConnectionEvent; }, [opts.onConnectionEvent]);
 
   // Mutable runtime handles. We can't put these in state because they are
   // not serializable and updating them would re-render the consumer.
   const trackerRef = useRef<CubeStateTracker>(new CubeStateTracker());
   const deviceRef = useRef<BluetoothDevice | null>(null);
+  const driverRef = useRef<CubeDriver | null>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
   const disconnectListenerRef = useRef<((ev: Event) => void) | null>(null);
   const wasSolvedRef = useRef<boolean>(true);
+  // True only when the user (or unmount) explicitly tore the connection
+  // down. The gattserverdisconnected handler reads this to decide whether
+  // to attempt auto-reconnect.
+  const intentionalDisconnectRef = useRef<boolean>(false);
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Set while a reconnect attempt is in flight, so we don't double-fire from
+  // overlapping disconnect events.
+  const reconnectInFlightRef = useRef<boolean>(false);
 
   const handleMove = useCallback((move: string) => {
     // Capture timestamp as close to characteristic-value-changed as possible.
@@ -151,7 +188,139 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     }
   }, []);
 
+  const cancelPendingReconnect = useCallback(() => {
+    if (reconnectTimerRef.current != null) {
+      clearTimeout(reconnectTimerRef.current);
+      reconnectTimerRef.current = null;
+    }
+    reconnectInFlightRef.current = false;
+  }, []);
+
+  // Forward declaration: scheduleReconnect calls attemptReconnect, which
+  // itself can re-arm scheduleReconnect on failure. We resolve the cycle
+  // through refs rather than mutual-recursive useCallbacks.
+  const scheduleReconnectRef = useRef<((attempt: number) => void) | null>(null);
+
+  const attemptReconnect = useCallback(async (attempt: number): Promise<void> => {
+    reconnectInFlightRef.current = true;
+    const device = deviceRef.current;
+    const driver = driverRef.current;
+
+    // Guard: device or driver got nulled out (manual disconnect / unmount
+    // beat the timer). Bail.
+    if (!device || !driver) {
+      reconnectInFlightRef.current = false;
+      return;
+    }
+    if (intentionalDisconnectRef.current) {
+      reconnectInFlightRef.current = false;
+      return;
+    }
+    if (!device.gatt) {
+      // Browser revoked GATT access entirely; we can't recover.
+      onConnectionEventRef.current?.({ kind: 'reconnect-failed', attempts: attempt });
+      reconnectInFlightRef.current = false;
+      // Fall through to a hard reset so the user can re-pair.
+      deviceRef.current = null;
+      driverRef.current = null;
+      cleanupRef.current = null;
+      disconnectListenerRef.current = null;
+      setStatus(INITIAL_STATUS);
+      return;
+    }
+
+    try {
+      const server = await device.gatt.connect();
+      // Re-attach the disconnect listener (the device may keep the old one,
+      // but to be safe we strip + re-add a fresh closure).
+      if (disconnectListenerRef.current) {
+        device.removeEventListener('gattserverdisconnected', disconnectListenerRef.current);
+      }
+      const onDisc = (): void => {
+        if (intentionalDisconnectRef.current) return;
+        if (reconnectInFlightRef.current) return;
+        onConnectionEventRef.current?.({ kind: 'disconnected', reason: 'gatt-lost' });
+        scheduleReconnectRef.current?.(0);
+      };
+      device.addEventListener('gattserverdisconnected', onDisc);
+      disconnectListenerRef.current = onDisc;
+
+      // Re-run the driver handshake to resume the move stream.
+      const started = await driver.start(server, handleMove);
+      cleanupRef.current = started.cleanup;
+
+      // Reset solved-tracker baseline (cube may have been turned during
+      // the outage; we can't trust the in-memory state).
+      trackerRef.current.reset();
+      wasSolvedRef.current = true;
+      setSolved(true);
+      setLastMove(null);
+
+      setStatus({
+        connected: true,
+        brand: driver.brand,
+        battery: null,
+        deviceName: prettyDeviceName(device),
+      });
+
+      void started.battery().then(b => {
+        if (deviceRef.current === device) {
+          setStatus(s => ({ ...s, battery: b }));
+        }
+      }).catch(() => {});
+
+      reconnectInFlightRef.current = false;
+      onConnectionEventRef.current?.({ kind: 'reconnected' });
+    } catch {
+      // Reconnect failed (timeout, GATT error, cube off, etc.).
+      reconnectInFlightRef.current = false;
+      if (intentionalDisconnectRef.current) return;
+      const next = attempt + 1;
+      if (next >= RECONNECT_MAX_ATTEMPTS) {
+        onConnectionEventRef.current?.({ kind: 'reconnect-failed', attempts: next });
+        // Hard reset — caller can call connect() again to re-pair.
+        deviceRef.current = null;
+        driverRef.current = null;
+        cleanupRef.current = null;
+        if (disconnectListenerRef.current) {
+          try {
+            device.removeEventListener('gattserverdisconnected', disconnectListenerRef.current);
+          } catch { /* ignore */ }
+        }
+        disconnectListenerRef.current = null;
+        setStatus(INITIAL_STATUS);
+        return;
+      }
+      scheduleReconnectRef.current?.(next);
+    }
+  }, [handleMove]);
+
+  const scheduleReconnect = useCallback((attempt: number) => {
+    if (intentionalDisconnectRef.current) return;
+    if (reconnectTimerRef.current != null) return; // already armed
+    const delay = RECONNECT_BACKOFF_MS[attempt] ?? RECONNECT_BACKOFF_MS[RECONNECT_BACKOFF_MS.length - 1];
+    onConnectionEventRef.current?.({
+      kind: 'reconnecting',
+      attempt: attempt + 1,
+      maxAttempts: RECONNECT_MAX_ATTEMPTS,
+      delayMs: delay,
+    });
+    // Mark disconnected in UI status while we're in retry purgatory.
+    setStatus(s => (s.connected ? { ...s, connected: false } : s));
+    reconnectTimerRef.current = setTimeout(() => {
+      reconnectTimerRef.current = null;
+      void attemptReconnect(attempt);
+    }, delay);
+  }, [attemptReconnect]);
+
+  // Wire the ref so attemptReconnect (defined above) can invoke
+  // scheduleReconnect after a failed try.
+  useEffect(() => {
+    scheduleReconnectRef.current = scheduleReconnect;
+  }, [scheduleReconnect]);
+
   const internalDisconnect = useCallback((reason: 'manual' | 'gatt-lost') => {
+    cancelPendingReconnect();
     cleanupRef.current?.();
     cleanupRef.current = null;
     const dev = deviceRef.current;
@@ -164,11 +333,14 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       }
     }
     deviceRef.current = null;
+    driverRef.current = null;
     disconnectListenerRef.current = null;
     setStatus(INITIAL_STATUS);
-  }, []);
+    onConnectionEventRef.current?.({ kind: 'disconnected', reason });
+  }, [cancelPendingReconnect]);
 
   const disconnect = useCallback(() => {
+    intentionalDisconnectRef.current = true;
     internalDisconnect('manual');
   }, [internalDisconnect]);
 
@@ -185,6 +357,11 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       err.kind = 'no-web-bluetooth';
       throw err;
     }
+
+    // Fresh user-initiated connect: clear the intentional-disconnect flag
+    // so a future drop will trigger auto-reconnect.
+    intentionalDisconnectRef.current = false;
+    cancelPendingReconnect();
 
     // Build a single requestDevice options blob from all known drivers.
     // Each driver contributes a service filter; optionalServices are merged.
@@ -222,8 +399,17 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     const server = await device.gatt.connect();
 
     // Wire up the disconnect listener BEFORE start() so we don't miss races.
+    // On unexpected drop, fire the connection event then schedule the first
+    // reconnect attempt with zero-index backoff (1s).
     const onDisc = (): void => {
-      internalDisconnect('gatt-lost');
+      if (intentionalDisconnectRef.current) return;
+      if (reconnectInFlightRef.current) return;
+      // Tear down the live subscriptions but keep deviceRef/driverRef so
+      // the reconnect path can reuse them.
+      cleanupRef.current?.();
+      cleanupRef.current = null;
+      onConnectionEventRef.current?.({ kind: 'disconnected', reason: 'gatt-lost' });
+      scheduleReconnectRef.current?.(0);
     };
     device.addEventListener('gattserverdisconnected', onDisc);
     disconnectListenerRef.current = onDisc;
@@ -239,6 +425,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     }
 
     deviceRef.current = device;
+    driverRef.current = driver;
     cleanupRef.current = started.cleanup;
 
     // Initialize tracker to solved (the user is expected to start each
@@ -262,11 +449,16 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
         setStatus(s => ({ ...s, battery: b }));
       }
     }).catch(() => {});
-  }, [handleMove, internalDisconnect]);
+  }, [handleMove, cancelPendingReconnect]);
 
   // Tear down on unmount so we don't leak GATT subscriptions.
   useEffect(() => {
     return () => {
+      intentionalDisconnectRef.current = true;
+      if (reconnectTimerRef.current != null) {
+        clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
       cleanupRef.current?.();
       cleanupRef.current = null;
       const dev = deviceRef.current;
@@ -277,6 +469,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
         try { dev.gatt?.disconnect(); } catch { /* ignore */ }
       }
       deviceRef.current = null;
+      driverRef.current = null;
       disconnectListenerRef.current = null;
     };
   }, []);
