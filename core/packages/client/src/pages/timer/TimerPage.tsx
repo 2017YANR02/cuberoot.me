@@ -20,9 +20,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { Home, Download, Upload, Trash2, Settings as SettingsIcon, Maximize2, Minimize2, Bluetooth, Mic, HelpCircle, BarChart3, Plus, Wrench, ListPlus, Printer, FileText, FileSpreadsheet, AlertTriangle, Target, Crosshair, Keyboard, Link2 } from 'lucide-react';
+import { Home, Download, Upload, Trash2, Settings as SettingsIcon, Maximize2, Minimize2, Bluetooth, Mic, HelpCircle, BarChart3, Plus, Wrench, ListPlus, Printer, FileText, FileSpreadsheet, AlertTriangle, Target, Crosshair, Keyboard, Link2, Globe, ChevronDown, ChevronRight, Eye, EyeOff } from 'lucide-react';
 import LangToggle from '../../components/LangToggle';
 import MoreMenu, { type MoreMenuItem } from './components/MoreMenu';
+import { syncLangToUrl } from '../../i18n';
 
 import { generateScramble, registerScramble } from './scramble';
 import { getLastPickedCase, type TrainerKind } from './scramble/training';
@@ -86,11 +87,52 @@ import './components/practice_heatmap.css';
 
 const TRAINER_KINDS = new Set<EventId>(['oll', 'pll', 'coll', 'cmll', 'zbll', 'eg1', 'eg2']);
 
+/** True iff viewport ≤ 480px. Used to consolidate the toolbar / collapse
+ *  bottom panels / shrink the cube preview. Mirror of the same hook used by
+ *  several modals in this folder — kept inline to avoid a new export. */
+function useIsMobile(): boolean {
+  const [isMobile, setIsMobile] = useState<boolean>(() =>
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 480px)').matches,
+  );
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(max-width: 480px)');
+    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+  return isMobile;
+}
+
+/** True iff the current device exposes a touch surface. Doesn't imply mobile —
+ *  hybrid laptops can be both — but it's the right gate for swapping
+ *  "Hold Space" → "Tap and hold" copy. Captured once at module init. */
+const IS_TOUCH = typeof window !== 'undefined' && ('ontouchstart' in window || (navigator as Navigator & { maxTouchPoints?: number }).maxTouchPoints! > 0);
+
 export default function TimerPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   const settings = useSettings();
   useApplyTheme();
+
+  // ── Mobile layout flags ─────────────────────────────────────────
+  // isMobile drives toolbar consolidation (Mic/Stats/Lang move into More)
+  // and the bottom-section accordion. mobilePreviewHidden persists the
+  // "hide cube preview" toggle visible only on phones.
+  const isMobile = useIsMobile();
+  const [mobilePreviewHidden, setMobilePreviewHidden] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('timer.mobilePreviewHidden') === '1';
+  });
+  useEffect(() => {
+    localStorage.setItem('timer.mobilePreviewHidden', mobilePreviewHidden ? '1' : '0');
+  }, [mobilePreviewHidden]);
+  // Bottom-panel accordions: STATS / DISTRIBUTION / HISTORY. Collapsed by
+  // default on mobile; on desktop they're always expanded (state ignored
+  // because the wrapping <div> doesn't apply collapse classes there).
+  const [statsCollapsed, setStatsCollapsed] = useState(true);
+  const [chartsCollapsed, setChartsCollapsed] = useState(true);
+  const [historyCollapsed, setHistoryCollapsed] = useState(true);
 
   // ── State: per-event solve lists ────────────────────────────────
   const [byEvent, setByEvent] = useState<Record<string, Solve[]>>(() => loadAll());
@@ -858,8 +900,42 @@ export default function TimerPage() {
   // ── More menu items (collapsed toolbar overflow) ───────────────
   // Drill / Shortcuts / Fullscreen are also surfaced here so the mobile
   // (≤480px) layout — which hides those tb-btns to reduce clutter — still
-  // exposes them via the More menu.
+  // exposes them via the More menu. On mobile we additionally fold Mic /
+  // Stats / Language into the menu since the toolbar can't fit them.
   const moreItems = useMemo<MoreMenuItem[]>(() => [
+    ...(isMobile ? [
+      {
+        icon: <Mic size={14} />,
+        label: stackmat.status.listening
+          ? (isZh ? 'Stackmat 监听中（点击停止）' : 'Stackmat listening (stop)')
+          : (isZh ? '启用 Stackmat（麦克风）' : 'Enable Stackmat (mic)'),
+        onClick: async () => {
+          if (stackmat.status.listening) {
+            stackmat.stop();
+          } else {
+            try {
+              await stackmat.start();
+            } catch (err) {
+              alert(isZh ? `麦克风启用失败：${(err as Error).message}` : `Mic error: ${(err as Error).message}`);
+            }
+          }
+        },
+      },
+      {
+        icon: <BarChart3 size={14} />,
+        label: isZh ? '统计' : 'Stats',
+        onClick: () => setStatsModalOpen(true),
+      },
+      {
+        icon: <Globe size={14} />,
+        label: isZh ? '语言：EN' : 'Language: 中文',
+        onClick: () => {
+          const next = isZh ? 'en' : 'zh';
+          i18n.changeLanguage(next);
+          syncLangToUrl(next);
+        },
+      },
+    ] : []),
     ...(drillAllowed && !drillTarget ? [{
       icon: <Crosshair size={14} />,
       label: isZh ? '专项练习' : 'Drill mode',
@@ -927,7 +1003,7 @@ export default function TimerPage() {
       danger: true,
       disabled: !solves.length,
     },
-  ], [isZh, handleImport, handleExport, handleExportCsv, handleExportSs, clearAll, solves.length, drillAllowed, drillTarget, fullscreen, toggleFullscreen, handlePasteReplay]);
+  ], [isZh, handleImport, handleExport, handleExportCsv, handleExportSs, clearAll, solves.length, drillAllowed, drillTarget, fullscreen, toggleFullscreen, handlePasteReplay, isMobile, stackmat, i18n]);
 
   // Flattened across-event solve list for the daily-goal pill.
   // Goal counts every solve regardless of event — matches the "X solves/day"
@@ -978,7 +1054,7 @@ export default function TimerPage() {
             <Bluetooth size={14} />
           </button>
           <button
-            className={`tb-btn ${stackmat.status.listening ? 'connected' : ''}`}
+            className={`tb-btn ${stackmat.status.listening ? 'connected' : 'tb-mobile-hide'}`}
             onClick={async () => {
               if (stackmat.status.listening) {
                 stackmat.stop();
@@ -1007,7 +1083,7 @@ export default function TimerPage() {
               <Crosshair size={14} />
             </button>
           )}
-          <button className="tb-btn" onClick={() => setStatsModalOpen(true)} title={isZh ? '完整统计' : 'Full stats'}>
+          <button className="tb-btn tb-mobile-hide" onClick={() => setStatsModalOpen(true)} title={isZh ? '完整统计' : 'Full stats'}>
             <BarChart3 size={14} />
           </button>
           <button className="tb-btn" onClick={() => setSettingsOpen(true)} title={isZh ? '设置' : 'Settings'}>
@@ -1020,7 +1096,9 @@ export default function TimerPage() {
             {fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
           </button>
           <MoreMenu items={moreItems} isZh={isZh} />
-          <LangToggle />
+          <span className="tb-mobile-hide" style={{ display: 'inline-flex' }}>
+            <LangToggle />
+          </span>
         </div>
       </div>
 
@@ -1073,10 +1151,29 @@ export default function TimerPage() {
       })()}
 
       {settings.showCubePreview && (
-        <div className="timer-cube-preview">
-          {settings.use3D
-            ? <Cube3D event={event} scramble={scramble} size={200} colors={settings.colors} />
-            : <CubePreview event={event} scramble={scramble} size={14} colors={settings.colors} />}
+        <div className={`timer-cube-preview-wrap${isMobile && mobilePreviewHidden ? ' hidden' : ''}`}>
+          {isMobile && (
+            <button
+              type="button"
+              className="cube-preview-toggle"
+              onClick={() => setMobilePreviewHidden(h => !h)}
+              title={mobilePreviewHidden
+                ? (isZh ? '显示打乱预览' : 'Show preview')
+                : (isZh ? '隐藏打乱预览' : 'Hide preview')}
+            >
+              {mobilePreviewHidden ? <Eye size={12} /> : <EyeOff size={12} />}
+              <span>{mobilePreviewHidden
+                ? (isZh ? '显示预览' : 'Show preview')
+                : (isZh ? '隐藏预览' : 'Hide preview')}</span>
+            </button>
+          )}
+          {!(isMobile && mobilePreviewHidden) && (
+            <div className="timer-cube-preview">
+              {settings.use3D
+                ? <Cube3D event={event} scramble={scramble} size={200} colors={settings.colors} />
+                : <CubePreview event={event} scramble={scramble} size={14} colors={settings.colors} />}
+            </div>
+          )}
         </div>
       )}
 
@@ -1114,7 +1211,13 @@ export default function TimerPage() {
         )}
         {timer.phase === 'idle' && (
           <div className="timer-hint">
-            {isZh ? <>按住 <code>空格</code> {settings.inspection > 0 ? '开始观察' : '进入准备'}</> : <>Hold <code>Space</code> to {settings.inspection > 0 ? 'inspect' : 'ready'}</>}
+            {IS_TOUCH
+              ? (isZh
+                  ? <>按住屏幕{settings.inspection > 0 ? '开始观察' : '进入准备'}</>
+                  : <>Tap and hold to {settings.inspection > 0 ? 'inspect' : 'ready'}</>)
+              : (isZh
+                  ? <>按住 <code>空格</code> {settings.inspection > 0 ? '开始观察' : '进入准备'}</>
+                  : <>Hold <code>Space</code> to {settings.inspection > 0 ? 'inspect' : 'ready'}</>)}
           </div>
         )}
         {timer.phase === 'inspecting' && (
@@ -1206,22 +1309,63 @@ export default function TimerPage() {
         )}
       </div>
 
-      <div className={`timer-bottom ${settings.showCharts ? 'with-charts' : ''}`}>
-        <StatsPanel solves={solves} isZh={isZh} event={event} />
-        <CaseStatsPanel event={event} solves={solves} isZh={isZh} />
-        {settings.showCharts && (
-          <div className="charts-panel">
-            <h3>{isZh ? '分布' : 'Distribution'}</h3>
-            <HistogramChart solves={solves} isZh={isZh} width={300} height={120} />
-            <h3>{isZh ? '趋势' : 'Trend'}</h3>
-            <TrendChart solves={solves} isZh={isZh} width={300} height={140} />
-          </div>
+      <div className={`timer-bottom ${settings.showCharts ? 'with-charts' : ''}${isMobile ? ' is-mobile' : ''}`}>
+        {isMobile ? (
+          <>
+            <CollapseSection
+              title={isZh ? '统计' : 'Stats'}
+              collapsed={statsCollapsed}
+              onToggle={() => setStatsCollapsed(c => !c)}
+            >
+              <StatsPanel solves={solves} isZh={isZh} event={event} />
+              <CaseStatsPanel event={event} solves={solves} isZh={isZh} />
+            </CollapseSection>
+            {settings.showCharts && (
+              <CollapseSection
+                title={isZh ? '分布' : 'Distribution'}
+                collapsed={chartsCollapsed}
+                onToggle={() => setChartsCollapsed(c => !c)}
+              >
+                <div className="charts-panel">
+                  <h3>{isZh ? '分布' : 'Distribution'}</h3>
+                  <HistogramChart solves={solves} isZh={isZh} width={300} height={120} />
+                  <h3>{isZh ? '趋势' : 'Trend'}</h3>
+                  <TrendChart solves={solves} isZh={isZh} width={300} height={140} />
+                </div>
+              </CollapseSection>
+            )}
+            <CollapseSection
+              title={isZh ? '历史' : 'History'}
+              badge={solves.length > 0 ? String(solves.length) : undefined}
+              collapsed={historyCollapsed}
+              onToggle={() => setHistoryCollapsed(c => !c)}
+            >
+              <HistoryPanel
+                solves={solves}
+                isZh={isZh}
+                onRowClick={(s, idx) => setModalSolve({ s, idx })}
+              />
+            </CollapseSection>
+          </>
+        ) : (
+          <>
+            <StatsPanel solves={solves} isZh={isZh} event={event} />
+            <CaseStatsPanel event={event} solves={solves} isZh={isZh} />
+            {settings.showCharts && (
+              <div className="charts-panel">
+                <h3>{isZh ? '分布' : 'Distribution'}</h3>
+                <HistogramChart solves={solves} isZh={isZh} width={300} height={120} />
+                <h3>{isZh ? '趋势' : 'Trend'}</h3>
+                <TrendChart solves={solves} isZh={isZh} width={300} height={140} />
+              </div>
+            )}
+            <HistoryPanel
+              solves={solves}
+              isZh={isZh}
+              onRowClick={(s, idx) => setModalSolve({ s, idx })}
+            />
+          </>
         )}
-        <HistoryPanel
-          solves={solves}
-          isZh={isZh}
-          onRowClick={(s, idx) => setModalSolve({ s, idx })}
-        />
       </div>
 
       {settings.showHeatmap && solves.length > 0 && (
@@ -1383,6 +1527,34 @@ export default function TimerPage() {
           />
         </div>
       )}
+    </div>
+  );
+}
+
+/** Mobile-only accordion wrapper for the bottom-panel sections. Header is a
+ *  tap target showing the section name + optional badge (e.g. solve count);
+ *  body is fully unmounted while collapsed so charts don't paint offscreen. */
+function CollapseSection({
+  title,
+  collapsed,
+  onToggle,
+  badge,
+  children,
+}: {
+  title: string;
+  collapsed: boolean;
+  onToggle: () => void;
+  badge?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className={`mobile-collapse${collapsed ? ' collapsed' : ''}`}>
+      <button type="button" className="mobile-collapse-header" onClick={onToggle}>
+        {collapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
+        <span className="mobile-collapse-title">{title}</span>
+        {badge && <span className="mobile-collapse-badge">{badge}</span>}
+      </button>
+      {!collapsed && <div className="mobile-collapse-body">{children}</div>}
     </div>
   );
 }
