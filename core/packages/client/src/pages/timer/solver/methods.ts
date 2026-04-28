@@ -274,6 +274,38 @@ export function solveCFOP(scramble: string): SolveResult {
   return solveMethod(scramble, CFOP_METHOD);
 }
 
+export function solveRoux(scramble: string): SolveResult {
+  return solveMethod(scramble, ROUX_METHOD);
+}
+
+export function solvePetrus(scramble: string): SolveResult {
+  return solveMethod(scramble, PETRUS_METHOD);
+}
+
+export function solveZZ(scramble: string): SolveResult {
+  return solveMethod(scramble, ZZ_METHOD);
+}
+
+export function solveEODR(scramble: string): SolveResult {
+  return solveMethod(scramble, EODR_METHOD);
+}
+
+export type MethodId = 'cfop' | 'roux' | 'petrus' | 'zz' | 'eodr';
+
+export const METHOD_REGISTRY: { id: MethodId; def: StepDef[]; nameEn: string; nameZh: string }[] = [
+  { id: 'cfop', def: CFOP_METHOD, nameEn: 'CFOP', nameZh: 'CFOP' },
+  { id: 'roux', def: ROUX_METHOD, nameEn: 'Roux', nameZh: 'Roux' },
+  { id: 'petrus', def: PETRUS_METHOD, nameEn: 'Petrus', nameZh: 'Petrus' },
+  { id: 'zz', def: ZZ_METHOD, nameEn: 'ZZ', nameZh: 'ZZ' },
+  { id: 'eodr', def: EODR_METHOD, nameEn: 'EODR', nameZh: 'EODR' },
+];
+
+export function solveByMethodId(scramble: string, id: MethodId): SolveResult {
+  const entry = METHOD_REGISTRY.find(m => m.id === id);
+  if (!entry) throw new Error(`unknown method: ${id}`);
+  return solveMethod(scramble, entry.def);
+}
+
 // --- Self-test ---
 
 /**
@@ -303,6 +335,19 @@ export function __gsolverSelfTest(): string {
   if (!matches(state, f2l4Target)) {
     throw new Error(`final state does not match F2L-4 target: ${state}`);
   }
+  // Spot-check the other 4 methods compile + run on the same scramble; we
+  // don't assert their final state here (different goals per method) but
+  // every stage must find a solution within its depth bound.
+  const otherIds: MethodId[] = ['roux', 'petrus', 'zz', 'eodr'];
+  const otherSummaries: string[] = [];
+  for (const id of otherIds) {
+    const r = solveByMethodId(scramble, id);
+    for (const s of r.stages) {
+      if (s.failed) throw new Error(`method=${id} stage=${s.head} failed`);
+    }
+    otherSummaries.push(`${id}=${r.totalMoves}`);
+  }
   return `OK: ${result.totalMoves} total moves; stages=` +
-    result.stages.map(s => `${s.head}=${s.moves.length}`).join(',');
+    result.stages.map(s => `${s.head}=${s.moves.length}`).join(',') +
+    ` | others: ` + otherSummaries.join(',');
 }
