@@ -8,7 +8,7 @@
  */
 
 import type { JSX } from 'react';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowRight } from 'lucide-react';
 import type { Solve } from '../types';
 import { effectiveMs } from '../types';
@@ -118,8 +118,25 @@ function overallTps(seg: StageSegments | null, totalMs: number): number | null {
   return h / (totalMs / 1000);
 }
 
+function useIsMobile(maxWidth = 480): boolean {
+  const [isMobile, setIsMobile] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia(`(max-width: ${maxWidth}px)`).matches;
+  });
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia(`(max-width: ${maxWidth}px)`);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    // Safari < 14 fallback would need addListener; modern browsers OK
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, [maxWidth]);
+  return isMobile;
+}
+
 export default function CompareSolvesModal({ solveA, solveB, isZh, onClose }: Props) {
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
+  const isMobile = useIsMobile();
 
   const segA = useMemo(() => getOrCompute(solveA), [solveA]);
   const segB = useMemo(() => getOrCompute(solveB), [solveB]);
@@ -170,29 +187,55 @@ export default function CompareSolvesModal({ solveA, solveB, isZh, onClose }: Pr
   const evA = eventInfo(solveA.event);
   const evB = eventInfo(solveB.event);
 
-  const headerStyle: React.CSSProperties = {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr 1fr',
-    gap: 8,
-    fontSize: 12,
-    color: '#bbb',
-    padding: '8px 0',
-    borderBottom: '1px solid #2a2a2e',
-    marginBottom: 8,
-  };
-  const rowStyle: React.CSSProperties = {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr 1fr',
-    gap: 8,
-    padding: '8px 0',
-    borderBottom: '1px solid #1f1f23',
-    alignItems: 'start',
-    fontSize: 13,
-  };
+  const headerStyle: React.CSSProperties = isMobile
+    ? {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 6,
+        fontSize: 12,
+        color: '#bbb',
+        padding: '8px 0',
+        borderBottom: '1px solid #2a2a2e',
+        marginBottom: 8,
+      }
+    : {
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr 1fr',
+        gap: 8,
+        fontSize: 12,
+        color: '#bbb',
+        padding: '8px 0',
+        borderBottom: '1px solid #2a2a2e',
+        marginBottom: 8,
+      };
+  const rowStyle: React.CSSProperties = isMobile
+    ? {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 2,
+        padding: '8px 0',
+        borderBottom: '1px solid #1f1f23',
+        fontSize: 13,
+      }
+    : {
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr 1fr',
+        gap: 8,
+        padding: '8px 0',
+        borderBottom: '1px solid #1f1f23',
+        alignItems: 'start',
+        fontSize: 13,
+      };
   const colStyle: React.CSSProperties = { color: '#eee' };
   const subStyle: React.CSSProperties = { color: '#888', fontSize: 11, marginTop: 2 };
   const labelCellStyle: React.CSSProperties = {
     fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: 0.5,
+  };
+  const mobileLineStyle: React.CSSProperties = {
+    display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'baseline', fontSize: 12,
+  };
+  const mobileTagStyle: React.CSSProperties = {
+    color: '#aaa', fontSize: 11, fontWeight: 600, minWidth: 14,
   };
 
   return (
@@ -202,7 +245,7 @@ export default function CompareSolvesModal({ solveA, solveB, isZh, onClose }: Pr
         role="dialog"
         aria-modal="true"
         aria-label={isZh ? '对比成绩' : 'Compare solves'}
-        style={{ maxWidth: 640 }}
+        style={isMobile ? { maxWidth: '100%', width: '100%' } : { maxWidth: 640 }}
         onClick={(e) => e.stopPropagation()}
       >
         <h2>{isZh ? '对比成绩' : 'Compare solves'}</h2>
@@ -211,17 +254,17 @@ export default function CompareSolvesModal({ solveA, solveB, isZh, onClose }: Pr
         <div style={headerStyle}>
           <div>
             <div style={{ color: '#aaa', fontSize: 11 }}>A · {isZh ? evA.nameZh : evA.nameEn}</div>
-            <div style={{ color: '#fff', fontWeight: 600, fontSize: 16 }}>{formatMs(totalA)}</div>
+            <div style={{ color: '#fff', fontWeight: 600, fontSize: isMobile ? 14 : 16 }}>{formatMs(totalA)}</div>
             <div style={subStyle}>{dtA.toLocaleString()}</div>
           </div>
           <div>
             <div style={{ color: '#aaa', fontSize: 11 }}>B · {isZh ? evB.nameZh : evB.nameEn}</div>
-            <div style={{ color: '#fff', fontWeight: 600, fontSize: 16 }}>{formatMs(totalB)}</div>
+            <div style={{ color: '#fff', fontWeight: 600, fontSize: isMobile ? 14 : 16 }}>{formatMs(totalB)}</div>
             <div style={subStyle}>{dtB.toLocaleString()}</div>
           </div>
           <div>
             <div style={{ color: '#aaa', fontSize: 11 }}>{isZh ? '差异 (B − A)' : 'Delta (B − A)'}</div>
-            <div style={{ fontSize: 16, fontWeight: 600 }}>
+            <div style={{ fontSize: isMobile ? 14 : 16, fontWeight: 600 }}>
               {Number.isFinite(totalA) && Number.isFinite(totalB)
                 ? renderMsDelta(totalA, totalB, isZh)
                 : <span style={{ color: '#888' }}>—</span>}
@@ -253,6 +296,45 @@ export default function CompareSolvesModal({ solveA, solveB, isZh, onClose }: Pr
         <div style={{ marginBottom: 14 }}>
           {stages.map(s => {
             const caseDiff = s.caseA !== null && s.caseB !== null && s.caseA !== s.caseB;
+            if (isMobile) {
+              return (
+                <div key={s.key} style={rowStyle}>
+                  <div style={{ ...labelCellStyle, marginBottom: 4 }}>
+                    <span className={`reconstruct-stage-dot stage-${s.key}`} style={{ marginRight: 4 }} />
+                    {isZh ? s.labelZh : s.labelEn}
+                  </div>
+                  <div style={mobileLineStyle}>
+                    <span style={mobileTagStyle}>A</span>
+                    <span style={{ color: '#eee' }}>{fmtStage(s.msA)}</span>
+                    {s.caseA && (
+                      <span style={{ color: caseDiff ? '#d4885a' : '#888' }}>· {s.caseA}</span>
+                    )}
+                    <span style={{ color: '#888' }}>
+                      · {s.htmA !== null ? `${s.htmA} htm · ${fmtTps(s.msA, s.htmA)} tps` : '—'}
+                    </span>
+                  </div>
+                  <div style={mobileLineStyle}>
+                    <span style={mobileTagStyle}>B</span>
+                    <span style={{ color: '#eee' }}>{fmtStage(s.msB)}</span>
+                    {s.caseB && (
+                      <span style={{ color: caseDiff ? '#d4885a' : '#888' }}>· {s.caseB}</span>
+                    )}
+                    <span style={{ color: '#888' }}>
+                      · {s.htmB !== null ? `${s.htmB} htm · ${fmtTps(s.msB, s.htmB)} tps` : '—'}
+                    </span>
+                  </div>
+                  <div style={mobileLineStyle}>
+                    <span style={mobileTagStyle}>Δ</span>
+                    {renderMsDelta(s.msA, s.msB, isZh)}
+                    <span style={{ color: '#888' }}>·</span>
+                    <span style={{ color: '#888' }}>{isZh ? '步数 ' : 'htm '}</span>
+                    {renderHtmDelta(s.htmA, s.htmB)}
+                    <span style={{ color: '#888' }}>· tps</span>
+                    {renderTpsDelta(fmtTpsValue(s.msA, s.htmA), fmtTpsValue(s.msB, s.htmB))}
+                  </div>
+                </div>
+              );
+            }
             return (
               <div key={s.key} style={rowStyle}>
                 {/* A */}
@@ -299,27 +381,50 @@ export default function CompareSolvesModal({ solveA, solveB, isZh, onClose }: Pr
           })}
 
           {/* Totals row: HTM / TPS */}
-          <div style={{ ...rowStyle, borderBottom: 'none', marginTop: 4 }}>
-            <div style={colStyle}>
-              <div style={labelCellStyle}>{isZh ? '合计' : 'Total'}</div>
-              <div>{totalHtmA !== null ? `${totalHtmA} htm` : '—'}</div>
-              <div style={subStyle}>
-                {tpsA !== null ? `${tpsA.toFixed(2)} tps` : '—'}
+          {isMobile ? (
+            <div style={{ ...rowStyle, borderBottom: 'none', marginTop: 4 }}>
+              <div style={{ ...labelCellStyle, marginBottom: 4 }}>{isZh ? '合计' : 'Total'}</div>
+              <div style={mobileLineStyle}>
+                <span style={mobileTagStyle}>A</span>
+                <span style={{ color: '#eee' }}>{totalHtmA !== null ? `${totalHtmA} htm` : '—'}</span>
+                <span style={{ color: '#888' }}>· {tpsA !== null ? `${tpsA.toFixed(2)} tps` : '—'}</span>
+              </div>
+              <div style={mobileLineStyle}>
+                <span style={mobileTagStyle}>B</span>
+                <span style={{ color: '#eee' }}>{totalHtmB !== null ? `${totalHtmB} htm` : '—'}</span>
+                <span style={{ color: '#888' }}>· {tpsB !== null ? `${tpsB.toFixed(2)} tps` : '—'}</span>
+              </div>
+              <div style={mobileLineStyle}>
+                <span style={mobileTagStyle}>Δ</span>
+                <span style={{ color: '#888' }}>{isZh ? '步数 ' : 'htm '}</span>
+                {renderHtmDelta(totalHtmA, totalHtmB)}
+                <span style={{ color: '#888' }}>· tps</span>
+                {renderTpsDelta(tpsA, tpsB)}
               </div>
             </div>
-            <div style={colStyle}>
-              <div style={labelCellStyle}>&nbsp;</div>
-              <div>{totalHtmB !== null ? `${totalHtmB} htm` : '—'}</div>
-              <div style={subStyle}>
-                {tpsB !== null ? `${tpsB.toFixed(2)} tps` : '—'}
+          ) : (
+            <div style={{ ...rowStyle, borderBottom: 'none', marginTop: 4 }}>
+              <div style={colStyle}>
+                <div style={labelCellStyle}>{isZh ? '合计' : 'Total'}</div>
+                <div>{totalHtmA !== null ? `${totalHtmA} htm` : '—'}</div>
+                <div style={subStyle}>
+                  {tpsA !== null ? `${tpsA.toFixed(2)} tps` : '—'}
+                </div>
+              </div>
+              <div style={colStyle}>
+                <div style={labelCellStyle}>&nbsp;</div>
+                <div>{totalHtmB !== null ? `${totalHtmB} htm` : '—'}</div>
+                <div style={subStyle}>
+                  {tpsB !== null ? `${tpsB.toFixed(2)} tps` : '—'}
+                </div>
+              </div>
+              <div style={colStyle}>
+                <div style={labelCellStyle}>{isZh ? '差异' : 'Δ'}</div>
+                <div>{renderHtmDelta(totalHtmA, totalHtmB)}</div>
+                <div style={subStyle}>tps {renderTpsDelta(tpsA, tpsB)}</div>
               </div>
             </div>
-            <div style={colStyle}>
-              <div style={labelCellStyle}>{isZh ? '差异' : 'Δ'}</div>
-              <div>{renderHtmDelta(totalHtmA, totalHtmB)}</div>
-              <div style={subStyle}>tps {renderTpsDelta(tpsA, tpsB)}</div>
-            </div>
-          </div>
+          )}
         </div>
 
         <div
