@@ -1,13 +1,16 @@
 /**
  * SolverHints — collapsible panel that shows optimal Cross (for all 6
- * orientations) and EOLine solutions for the current scramble. Computation is
- * deferred to a microtask via setTimeout so the first paint isn't blocked
- * (BFS can take 50–200ms depending on scramble difficulty).
+ * orientations), F2L pair status per orientation, and OLL/PLL recognition
+ * (when applicable). Computation is deferred to a microtask via setTimeout
+ * so the first paint isn't blocked (BFS can take 50-200ms depending on
+ * scramble difficulty).
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { solveCross, type CrossSolution } from '../solver/cross';
+import { Star, CheckCircle2, Link2, Layers } from 'lucide-react';
+import { solveCross, type CrossSolution, type Orientation } from '../solver/cross';
 import { solveEOLine, type EOLineSolution } from '../solver/eoline';
+import { recognizeForOrientation, type CfopRecognition } from './cfop_recognize';
 
 interface Props {
   scramble: string;
@@ -17,6 +20,8 @@ interface Props {
 interface Computed {
   cross: CrossSolution[];
   eoline: EOLineSolution;
+  /** F2L / OLL / PLL recognition, keyed by orientation. */
+  recog: Record<Orientation, CfopRecognition>;
 }
 
 const ORIENT_LABEL_ZH: Record<string, string> = {
@@ -59,8 +64,12 @@ export default function SolverHints({ scramble, isZh }: Props) {
       try {
         const cross = solveCross(scramble);
         const eoline = solveEOLine(scramble);
+        const recog = {} as Record<Orientation, CfopRecognition>;
+        for (const sol of cross) {
+          recog[sol.orientation] = recognizeForOrientation(scramble, sol.orientation, sol.moves);
+        }
         if (!cancelled) {
-          setComputed({ cross, eoline });
+          setComputed({ cross, eoline, recog });
           setComputing(false);
         }
       } catch {
@@ -68,6 +77,7 @@ export default function SolverHints({ scramble, isZh }: Props) {
           setComputed({
             cross: [],
             eoline: { moves: '—', length: -1 },
+            recog: {} as Record<Orientation, CfopRecognition>,
           });
           setComputing(false);
         }
@@ -114,17 +124,16 @@ export default function SolverHints({ scramble, isZh }: Props) {
             <>
               {computed.cross.map(sol => {
                 const isBest = sol.length >= 0 && sol.length === minCrossLen;
+                const recog = computed.recog[sol.orientation];
                 return (
-                  <div key={sol.orientation} style={rowStyle}>
-                    <span style={isBest ? labelBestStyle : labelStyle}>
-                      {isBest ? '★ ' : ''}
-                      {isZh ? '十字' : 'Cross'} {labels[sol.orientation]}
-                    </span>
-                    <span style={isBest ? countBestStyle : countStyle}>
-                      {sol.length < 0 ? '—' : `${sol.length}`}
-                    </span>
-                    <span style={isBest ? algBestStyle : algStyle}>{sol.moves}</span>
-                  </div>
+                  <CrossRow
+                    key={sol.orientation}
+                    sol={sol}
+                    label={labels[sol.orientation]}
+                    isBest={isBest}
+                    recog={recog}
+                    isZh={isZh}
+                  />
                 );
               })}
               <div style={rowStyle}>
@@ -138,6 +147,65 @@ export default function SolverHints({ scramble, isZh }: Props) {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+interface CrossRowProps {
+  sol: CrossSolution;
+  label: string;
+  isBest: boolean;
+  recog: CfopRecognition | undefined;
+  isZh: boolean;
+}
+
+function CrossRow({ sol, label, isBest, recog, isZh }: CrossRowProps) {
+  const f2lText = recog && recog.crossOk
+    ? `${recog.f2l.solved}/${recog.f2l.paired}/${recog.f2l.unpaired}`
+    : '—';
+
+  // OLL/PLL — only meaningful if F2L is already done in the scrambled state
+  // (rare for normal WCA scrambles). Show only if non-trivial.
+  const showStage = recog && recog.crossOk && recog.stage !== 'cross';
+  const stageLabel = (() => {
+    if (!showStage || !recog) return null;
+    if (recog.stage === 'pll') return isZh ? '已完成' : 'Solved';
+    if (recog.stage === 'oll') return recog.pllLabel ?? (isZh ? 'OLL 完成' : 'OLL done');
+    if (recog.stage === 'f2l') return recog.ollLabel ?? (isZh ? 'F2L 完成' : 'F2L done');
+    return null;
+  })();
+
+  return (
+    <div style={crossBlockStyle}>
+      <div style={rowStyle}>
+        <span style={isBest ? labelBestStyle : labelStyle}>
+          {isBest && <Star size={12} style={{ verticalAlign: '-1px', marginRight: 3 }} />}
+          {isZh ? '十字' : 'Cross'} {label}
+        </span>
+        <span style={isBest ? countBestStyle : countStyle}>
+          {sol.length < 0 ? '—' : `${sol.length}`}
+        </span>
+        <span style={isBest ? algBestStyle : algStyle}>{sol.moves}</span>
+      </div>
+      <div style={subRowStyle}>
+        <span style={subLabelStyle}>
+          <Link2 size={11} style={{ verticalAlign: '-1px', marginRight: 3, opacity: 0.7 }} />
+          F2L
+        </span>
+        <span style={f2lTextStyle} title={isZh ? 'solved / paired / unpaired' : 'solved / paired / unpaired'}>
+          {f2lText}
+        </span>
+        {showStage && stageLabel && (
+          <span style={stageBadgeStyle}>
+            {recog && recog.stage === 'pll' ? (
+              <CheckCircle2 size={11} style={{ verticalAlign: '-1px', marginRight: 3 }} />
+            ) : (
+              <Layers size={11} style={{ verticalAlign: '-1px', marginRight: 3 }} />
+            )}
+            {stageLabel}
+          </span>
+        )}
+      </div>
     </div>
   );
 }
@@ -169,7 +237,13 @@ const bodyStyle: React.CSSProperties = {
   padding: '4px 10px 8px',
   display: 'flex',
   flexDirection: 'column',
-  gap: 3,
+  gap: 6,
+};
+
+const crossBlockStyle: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 1,
 };
 
 const rowStyle: React.CSSProperties = {
@@ -177,6 +251,29 @@ const rowStyle: React.CSSProperties = {
   gridTemplateColumns: '110px 32px 1fr',
   gap: 8,
   alignItems: 'baseline',
+};
+
+const subRowStyle: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: '110px 60px 1fr',
+  gap: 8,
+  alignItems: 'baseline',
+  fontSize: 11.5,
+  opacity: 0.75,
+  paddingLeft: 14,
+};
+
+const subLabelStyle: React.CSSProperties = {
+  opacity: 0.85,
+};
+
+const f2lTextStyle: React.CSSProperties = {
+  fontVariantNumeric: 'tabular-nums',
+};
+
+const stageBadgeStyle: React.CSSProperties = {
+  fontSize: 11,
+  opacity: 0.85,
 };
 
 const labelStyle: React.CSSProperties = {
