@@ -27,11 +27,13 @@ import { solvePyra, solvePyraV } from '../solver/pyra';
 import { solveSkewb, solveSkewbFace } from '../solver/skewb';
 import { solve222Step, type Solve222Result } from '../solver/methods';
 import { solveSq1, type Sq1Result } from '../solver/sq1';
+import { solveMega, type MegaSolveResult } from '../solver/mega';
 import { recognizeForOrientation, type CfopRecognition } from './cfop_recognize';
 import SolverCompareModal from './SolverCompareModal';
 
 type SmallEvent = '222' | 'pyra' | 'skewb';
 type Sq1Event = 'sq1';
+type MegaEvent = 'mega';
 
 const METHOD_LS_KEY = 'timer.solverHints.method';
 
@@ -48,9 +50,9 @@ function loadSavedMethod(): MethodId {
 interface Props {
   scramble: string;
   isZh: boolean;
-  /** Optional — when '222' / 'pyra' / 'skewb' / 'sq1', show that puzzle's
-   *  hints instead of the 3x3 ones. Defaults to '333'. */
-  event?: '333' | SmallEvent | Sq1Event;
+  /** Optional — when '222' / 'pyra' / 'skewb' / 'sq1' / 'mega', show that
+   *  puzzle's hints instead of the 3x3 ones. Defaults to '333'. */
+  event?: '333' | SmallEvent | Sq1Event | MegaEvent;
 }
 
 interface Computed {
@@ -84,6 +86,9 @@ export default function SolverHints({ scramble, isZh, event = '333' }: Props) {
   // Branch early for puzzles with their own simpler panels.
   if (event === 'sq1') {
     return <Sq1Hints scramble={scramble} isZh={isZh} />;
+  }
+  if (event === 'mega') {
+    return <MegaHints scramble={scramble} isZh={isZh} />;
   }
   if (event !== '333') {
     return <SmallPuzzleHints scramble={scramble} isZh={isZh} event={event} />;
@@ -638,6 +643,108 @@ function Sq1Hints({ scramble, isZh }: Sq1Props) {
                   <span style={labelBestStyle}>{isZh ? '总计 (token)' : 'Total (tokens)'}</span>
                   <span style={countBestStyle}>{computed.totalMoves}</span>
                   <span style={algStyle} />
+                </div>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ----------------------------------------------------------------------
+// Megaminx panel (Option C: solvedness heuristic — see solver/mega.ts)
+// ----------------------------------------------------------------------
+
+interface MegaProps {
+  scramble: string;
+  isZh: boolean;
+}
+
+function MegaHints({ scramble, isZh }: MegaProps) {
+  const [open, setOpen] = useState(false);
+  const [computed, setComputed] = useState<MegaSolveResult | null>(null);
+  const [computing, setComputing] = useState(false);
+
+  const cacheKey = useMemo(() => scramble, [scramble]);
+
+  useEffect(() => {
+    if (!open) {
+      setComputed(null);
+      return;
+    }
+    setComputing(true);
+    setComputed(null);
+    let cancelled = false;
+    const t = setTimeout(() => {
+      if (cancelled) return;
+      try {
+        const r = solveMega(scramble);
+        if (!cancelled) {
+          setComputed(r);
+          setComputing(false);
+        }
+      } catch {
+        if (!cancelled) {
+          setComputed({ solvedPercent: 0, misplaced: 132, total: 132 });
+          setComputing(false);
+        }
+      }
+    }, 0);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [open, cacheKey, scramble]);
+
+  const title = isZh ? '五魔解法提示' : 'Megaminx solver hints';
+  const stateLabel = isZh ? '当前状态' : 'State';
+  const misplacedLabel = isZh ? '错位贴纸' : 'Misplaced stickers';
+  const noteLabel = isZh
+    ? '完整解法器尚未移植 (见 cstimer/src/js/solver/megaminx.js)'
+    : 'Full solver not yet ported (see cstimer/src/js/solver/megaminx.js)';
+
+  return (
+    <div style={wrapperStyle}>
+      <div className="solver-hints" style={hintsStyle}>
+        <button
+          type="button"
+          onClick={() => setOpen(o => !o)}
+          style={toggleBtnStyle}
+          aria-expanded={open}
+        >
+          <span>{title}</span>
+          <span style={{ marginLeft: 'auto', opacity: 0.7 }}>{open ? '▾' : '▸'}</span>
+        </button>
+        {open && (
+          <div style={bodyStyle}>
+            {computing && (
+              <div style={{ opacity: 0.6, fontSize: 13 }}>
+                {isZh ? '计算中…' : 'Computing…'}
+              </div>
+            )}
+            {computed && (
+              <>
+                <div style={rowStyle}>
+                  <span style={labelBestStyle}>
+                    <Star size={12} style={{ verticalAlign: '-1px', marginRight: 3 }} />
+                    {stateLabel}
+                  </span>
+                  <span style={countBestStyle}>{computed.solvedPercent}%</span>
+                  <span style={algStyle}>
+                    {isZh
+                      ? `${computed.total - computed.misplaced} / ${computed.total} 已就位`
+                      : `${computed.total - computed.misplaced} / ${computed.total} in place`}
+                  </span>
+                </div>
+                <div style={rowStyle}>
+                  <span style={labelStyle}>{misplacedLabel}</span>
+                  <span style={countStyle}>{computed.misplaced}</span>
+                  <span style={algStyle} />
+                </div>
+                <div style={{ ...subLabelStyle, fontSize: 11, marginTop: 4 }}>
+                  {noteLabel}
                 </div>
               </>
             )}

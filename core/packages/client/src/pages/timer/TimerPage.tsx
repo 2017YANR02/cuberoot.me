@@ -1184,7 +1184,7 @@ export default function TimerPage() {
       </div>
 
       {event === '333' && <SolverHints scramble={scramble} isZh={isZh} />}
-      {(event === '222' || event === 'pyra' || event === 'skewb' || event === 'sq1') && (
+      {(event === '222' || event === 'pyra' || event === 'skewb' || event === 'sq1' || event === 'mega') && (
         <SolverHints scramble={scramble} isZh={isZh} event={event} />
       )}
 
