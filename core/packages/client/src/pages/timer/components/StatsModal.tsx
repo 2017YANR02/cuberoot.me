@@ -17,6 +17,7 @@ import { bucketStats, bucketBoundaries, type BucketStats } from '../stats_bucket
 import ScatterChart from './ScatterChart';
 import HistogramChart from './HistogramChart';
 import RecordsOverlay from './RecordsOverlay';
+import CfopCaseStatsPanel from './CfopCaseStatsPanel';
 
 interface Props {
   event: EventId;
@@ -312,6 +313,12 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
           userPbAvgMs={userPbAvgMs}
           isZh={isZh}
         />
+
+        {event === '333' && (
+          <div className="modal-section">
+            <CfopCaseStatsPanel event={event} solves={solves} isZh={isZh} />
+          </div>
+        )}
 
         <div className="modal-section">
           <h3 className="settings-h3">{isZh ? '图表' : 'Charts'}</h3>
