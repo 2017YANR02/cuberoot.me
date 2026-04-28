@@ -1298,12 +1298,8 @@ export default function TimerPage() {
             )}
           </>
         )}
-        {timer.phase === 'holding' && (
-          <div className="timer-hint">{isZh ? '继续按住…' : 'Keep holding…'}</div>
-        )}
-        {timer.phase === 'ready' && (
-          <div className="timer-hint">{isZh ? '准备好了！松开开始' : 'Ready! Release to go'}</div>
-        )}
+        {/* holding / ready hints removed per user request — the timer color
+            (yellow → green tier) already conveys phase. */}
         {timer.phase === 'running' && multiStageActive && (
           <div className="timer-stage-splits">
             <span className={`stage-chip ${multiStage.liveStages.cross !== undefined ? 'done' : ''}`}>
