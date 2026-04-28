@@ -8,7 +8,7 @@
  *    solved indicator) and a "reset state" + "disconnect" button.
  */
 
-import { useEffect, useId, useRef } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { detectBluetoothEnv, envAdvice } from '../bluetooth';
 import type { BluetoothCubeHandle } from '../bluetooth';
 import { Bluetooth, Battery, Check, X, RotateCcw, ExternalLink } from 'lucide-react';
@@ -20,9 +20,42 @@ interface Props {
   onConnect: () => Promise<void>;
 }
 
+/** True iff viewport ≤ 480px. Drives the mobile layout overrides below. */
+function useIsMobile(): boolean {
+  const [isMobile, setIsMobile] = useState<boolean>(() =>
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 480px)').matches,
+  );
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(max-width: 480px)');
+    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+  return isMobile;
+}
+
+const SUPPORTED_CUBES_ZH = [
+  'GAN 356 i / i3 / 357（完整解码）',
+  'GAN 12 / 14（完整解码）',
+  'QiYi（完整解码）',
+  'GoCube / Rubik’s Connected（完整解码）',
+  'MoYu AI（完整解码）',
+  'Giiker i3s / Xiaomi（完整解码）',
+];
+const SUPPORTED_CUBES_EN = [
+  'GAN 356 i / i3 / 357 (full decode)',
+  'GAN 12 / 14 (full decode)',
+  'QiYi (full decode)',
+  'GoCube / Rubik’s Connected (full decode)',
+  'MoYu AI (full decode)',
+  'Giiker i3s / Xiaomi (full decode)',
+];
+
 export default function BluetoothModal({ isZh, cube, onClose, onConnect }: Props) {
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement | null>(null);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -46,14 +79,45 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect }: Props
   const inBluefy = env === 'available-bluefy';
   const connected = cube.status.connected;
 
+  // --- Mobile inline overrides (≤480px) ---
+  // Overlay: shrink padding so the modal can take the full viewport width.
+  // Modal: full-width with reduced padding.
+  // Connect button: stretch to row width.
+  // Status grid: collapse to single column (label + value stack).
+  // Action buttons: stretch each button so they sit one per row.
+  const overlayStyle = isMobile ? { padding: 8 } : undefined;
+  const modalStyle = isMobile
+    ? { padding: 14, maxWidth: '100%', maxHeight: '90dvh' }
+    : undefined;
+  const connectBtnStyle = isMobile
+    ? { display: 'flex', width: '100%', justifyContent: 'center', padding: '10px 14px' }
+    : undefined;
+  const statusGridStyle = isMobile
+    ? { gridTemplateColumns: '1fr', gap: '6px 0' }
+    : undefined;
+  const statusRowStyle = isMobile
+    ? ({
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        gap: 12,
+        padding: '6px 0',
+        borderBottom: '1px solid #1f1f23',
+      } as const)
+    : undefined;
+  const actionBtnStyle = isMobile
+    ? { flex: '1 1 100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px 14px' }
+    : undefined;
+
   return (
-    <div className="timer-modal-overlay" onClick={onClose}>
+    <div className="timer-modal-overlay" style={overlayStyle} onClick={onClose}>
       <div
         ref={dialogRef}
         className="timer-modal bluetooth-modal"
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
+        style={modalStyle}
         onClick={(e) => e.stopPropagation()}
       >
         <h2 id={titleId}>
@@ -102,10 +166,19 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect }: Props
             <p>{isZh
               ? '点击下方按钮，从浏览器选择你的智能魔方。'
               : 'Click below to pick your smart cube from the browser picker.'}</p>
-            <p style={{ fontSize: 12, color: '#888' }}>{isZh
-              ? '当前支持：GAN 356 i / i3 / 357（完整解码）、GAN 12/14（完整解码）、QiYi（完整解码）、GoCube / Rubik\'s Connected（完整解码）、MoYu AI（完整解码）、Giiker i3s / Xiaomi（完整解码）。'
-              : 'Supported: GAN 356 i / i3 / 357 (full decode), GAN 12/14 (full decode), QiYi (full decode), GoCube / Rubik\'s Connected (full decode), MoYu AI (full decode), Giiker i3s / Xiaomi (full decode).'}</p>
-            <button className="bt-connect-btn" onClick={() => { void onConnect(); }}>
+            <div style={{ fontSize: 12, color: '#888', marginTop: 6 }}>
+              <div style={{ marginBottom: 4 }}>{isZh ? '当前支持：' : 'Supported:'}</div>
+              <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.55 }}>
+                {(isZh ? SUPPORTED_CUBES_ZH : SUPPORTED_CUBES_EN).map((c) => (
+                  <li key={c}>{c}</li>
+                ))}
+              </ul>
+            </div>
+            <button
+              className="bt-connect-btn"
+              style={connectBtnStyle ? { ...connectBtnStyle, marginTop: 10 } : { marginTop: 10 }}
+              onClick={() => { void onConnect(); }}
+            >
               <Bluetooth size={14} />
               <span>{isZh ? '搜索并连接' : 'Search & connect'}</span>
             </button>
@@ -114,16 +187,16 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect }: Props
 
         {supported && connected && (
           <>
-            <div className="modal-section bt-status">
-              <div className="bt-row">
+            <div className="modal-section bt-status" style={statusGridStyle}>
+              <div className="bt-row" style={statusRowStyle}>
                 <span className="bt-label">{isZh ? '设备' : 'Device'}</span>
                 <span className="bt-value">{cube.status.deviceName}</span>
               </div>
-              <div className="bt-row">
+              <div className="bt-row" style={statusRowStyle}>
                 <span className="bt-label">{isZh ? '型号' : 'Brand'}</span>
                 <span className="bt-value">{cube.status.brand}</span>
               </div>
-              <div className="bt-row">
+              <div className="bt-row" style={statusRowStyle}>
                 <span className="bt-label">
                   <Battery size={14} style={{ verticalAlign: 'middle' }} />{' '}
                   {isZh ? '电量' : 'Battery'}
@@ -132,7 +205,7 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect }: Props
                   {cube.status.battery !== null ? `${cube.status.battery}%` : '—'}
                 </span>
               </div>
-              <div className="bt-row">
+              <div className="bt-row" style={statusRowStyle}>
                 <span className="bt-label">{isZh ? '状态' : 'State'}</span>
                 <span className={`bt-value ${cube.solved ? 'ok' : 'unsolved'}`}>
                   {cube.solved
@@ -140,7 +213,7 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect }: Props
                     : <><X size={14} style={{ verticalAlign: 'middle' }} /> {isZh ? '未还原' : 'Unsolved'}</>}
                 </span>
               </div>
-              <div className="bt-row">
+              <div className="bt-row" style={statusRowStyle}>
                 <span className="bt-label">{isZh ? '最近一步' : 'Last move'}</span>
                 <span className="bt-value mono">{cube.lastMove ?? '—'}</span>
               </div>
@@ -153,18 +226,27 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect }: Props
           </>
         )}
 
-        <div className="modal-actions">
+        <div
+          className="modal-actions"
+          style={isMobile ? { flexDirection: 'column', alignItems: 'stretch' } : undefined}
+        >
           {supported && connected && (
             <>
-              <button onClick={() => cube.resetState()}>
+              <button style={actionBtnStyle} onClick={() => cube.resetState()}>
                 <RotateCcw size={14} /> {isZh ? '重置状态' : 'Reset state'}
               </button>
-              <button className="danger" onClick={() => { cube.disconnect(); onClose(); }}>
+              <button
+                className="danger"
+                style={actionBtnStyle}
+                onClick={() => { cube.disconnect(); onClose(); }}
+              >
                 {isZh ? '断开' : 'Disconnect'}
               </button>
             </>
           )}
-          <button className="primary" onClick={onClose}>{isZh ? '关闭' : 'Close'}</button>
+          <button className="primary" style={actionBtnStyle} onClick={onClose}>
+            {isZh ? '关闭' : 'Close'}
+          </button>
         </div>
       </div>
     </div>
