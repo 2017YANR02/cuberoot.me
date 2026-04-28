@@ -1,4 +1,14 @@
-/** Megaminx net preview — applies Pochmann-notation scramble. */
+/** Megaminx net preview — applies Pochmann-notation scramble.
+ *
+ * Sticker indexing matches megaminx_state.ts (cstimer convention):
+ *   stickers[0..4] = 5 corner stickers (at vertices, in order)
+ *   stickers[5..9] = 5 edge stickers (between adjacent corners)
+ *   stickers[10]   = center
+ *
+ * Face names use cstimer's 12-face system:
+ *   U R F L BL BR  (top hemisphere: U + 5 around U)
+ *   DR DL DBL B DBR D  (bottom hemisphere: D + 5 around D)
+ */
 
 import type { JSX } from 'react';
 import { applyMegaScramble, type MegaFace, type MegaSticker } from './megaminx_state.ts';
@@ -6,16 +16,16 @@ import { applyMegaScramble, type MegaFace, type MegaSticker } from './megaminx_s
 const COLORS: Record<MegaFace, string> = {
   U: '#FFFFFF',   // white top
   F: '#009B48',   // green
-  FR: '#B71234',  // red
+  R: '#B71234',   // red
   BR: '#7F00FF',  // purple
-  BL: '#FFD500',  // yellow (around U)
-  FL: '#0046AD',  // blue
+  BL: '#FFD500',  // yellow
+  L: '#0046AD',   // blue
   D: '#888888',   // gray bottom
-  DF: '#FF5800',  // orange (under F)
-  DFR: '#A0E000', // lime
-  DBR: '#FFC0CB', // pink
+  B: '#FF5800',   // orange (D's antipode of F)
+  DBR: '#A0E000', // lime
+  DR: '#FFC0CB',  // pink
   DBL: '#00FFFF', // cyan
-  DFL: '#80471C', // brown
+  DL: '#80471C',  // brown
 };
 
 const STROKE = '#1a1a1a';
@@ -41,7 +51,10 @@ function pentPoints(cx: number, cy: number, r: number, rotDeg: number): string {
   return pts.join(' ');
 }
 
-/** Draw one megaminx face: center pentagon + 5 trapezoid edges + 5 corner triangles. */
+/** Draw one megaminx face: center pentagon + 5 trapezoid edges + 5 corner triangles.
+ *  stickers[0..4] are the 5 corner stickers (one per vertex);
+ *  stickers[5..9] are the 5 edge stickers (between adjacent corners);
+ *  stickers[10] is the center. */
 function megaFace(
   cx: number,
   cy: number,
@@ -50,7 +63,6 @@ function megaFace(
   stickers: MegaSticker[],
   key: string,
 ): JSX.Element {
-  // stickers[0]=center, stickers[1..5]=corners (1 at top vertex, CW), stickers[6..10]=edges (6 between corners 1,2)
   const innerR = r * 0.45;
   const outer: Array<[number, number]> = [];
   const inner: Array<[number, number]> = [];
@@ -59,7 +71,7 @@ function megaFace(
     inner.push(pentVertex(cx, cy, innerR, i, rotDeg));
   }
   const els: JSX.Element[] = [];
-  // 5 edge trapezoids first (so corner triangles drawn on top cover overlap).
+  // 5 edge trapezoids (drawn first so corner triangles cover overlap).
   for (let i = 0; i < 5; i++) {
     const a = outer[i];
     const b = outer[(i + 1) % 5];
@@ -69,7 +81,7 @@ function megaFace(
       <polygon
         key={`${key}-e${i}`}
         points={`${a[0]},${a[1]} ${b[0]},${b[1]} ${ib[0]},${ib[1]} ${ia[0]},${ia[1]}`}
-        fill={COLORS[stickers[6 + i]]}
+        fill={COLORS[stickers[5 + i]]}
         stroke={STROKE}
         strokeWidth={0.6}
       />,
@@ -80,12 +92,12 @@ function megaFace(
     <polygon
       key={`${key}-ctr`}
       points={pentPoints(cx, cy, innerR, rotDeg)}
-      fill={COLORS[stickers[0]]}
+      fill={COLORS[stickers[10]]}
       stroke={STROKE}
       strokeWidth={0.6}
     />,
   );
-  // 5 corner triangles overlaid at each vertex (covers part of edge trapezoids).
+  // 5 corner triangles overlaid at each vertex.
   for (let i = 0; i < 5; i++) {
     const v = outer[i];
     const ip = inner[(i - 1 + 5) % 5];
@@ -94,7 +106,7 @@ function megaFace(
       <polygon
         key={`${key}-c${i}`}
         points={`${v[0]},${v[1]} ${ip[0]},${ip[1]} ${ic[0]},${ic[1]}`}
-        fill={COLORS[stickers[1 + i]]}
+        fill={COLORS[stickers[i]]}
         stroke={STROKE}
         strokeWidth={0.6}
       />,
@@ -114,11 +126,11 @@ export default function MegaminxNet(props: MegaminxNetProps): JSX.Element {
 
   const state = applyMegaScramble(props.scramble ?? '');
 
-  // Two "flowers": top hemisphere centered on U, bottom on D.
-  // Top petals at angles 0..4 = F, FR, BR, BL, FL.
-  // Bottom petals: DF, DFR, DBR, DBL, DFL (mirroring).
-  const topPetals: MegaFace[] = ['F', 'FR', 'BR', 'BL', 'FL'];
-  const botPetals: MegaFace[] = ['DF', 'DFR', 'DBR', 'DBL', 'DFL'];
+  // Two flowers: top hemisphere centered on U, bottom on D.
+  // Top petals (around U), in some CW visual order.
+  const topPetals: MegaFace[] = ['F', 'R', 'BR', 'BL', 'L'];
+  // Bottom petals (around D), in some CW visual order.
+  const botPetals: MegaFace[] = ['B', 'DBR', 'DR', 'DL', 'DBL'];
 
   const cx1 = padding + flowerW / 2;
   const cx2 = padding * 2 + flowerW + flowerW / 2;
