@@ -7,6 +7,9 @@
  * etc.) and update EVENTS to surface them in the picker.
  */
 
+// Type-only import — fully erased at runtime, does not pull cube/recognizer deps.
+import type { StageSegments } from './reconstruct/stage_segments';
+
 export type EventId =
   // NxN
   | '222' | '333' | '444' | '555' | '666' | '777'
@@ -61,6 +64,13 @@ export interface Solve {
    * (i.e. since timer phase became 'running'). Inspection-time moves are
    * NOT recorded — only moves received during the running phase. */
   moves?: Array<{ m: string; ts: number }>;
+  /** Result of running `computeStageSegments(scramble, moves, timeMs)`.
+   *  Populated lazily — either at solve-finish time, when ReconstructModal
+   *  is opened, or by the SettingsPanel "Reanalyze stage data" migration.
+   *  Distinct from the legacy `stages` field which is just three numbers
+   *  set by the user during a multi-stage solve; this carries the richer
+   *  HTM counts + cross-side / OLL-case / PLL-case labels. */
+  stageSegments?: StageSegments;
 }
 
 const BLD_EVENT_IDS = new Set<EventId>(['333bld','333mbld','333ni','444bld','555bld','666bld','777bld']);
