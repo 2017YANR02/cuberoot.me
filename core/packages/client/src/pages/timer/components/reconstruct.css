@@ -136,11 +136,96 @@
   color: #f0c8a0;
 }
 
+/* CFOP stage breakdown panel */
+.reconstruct-stages-section {
+  margin-bottom: 16px;
+}
+
+.reconstruct-stage-bar {
+  display: flex;
+  width: 100%;
+  height: 14px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #0e0e10;
+  border: 1px solid #2a2a2e;
+  margin-bottom: 8px;
+}
+
+.reconstruct-stage-seg {
+  height: 100%;
+  min-width: 1px;
+  transition: width 0.2s ease;
+}
+.reconstruct-stage-seg.stage-cross { background: #d4b85a; }
+.reconstruct-stage-seg.stage-f2l   { background: #5aa8d4; }
+.reconstruct-stage-seg.stage-oll   { background: #d4885a; }
+.reconstruct-stage-seg.stage-pll   { background: #7ad45a; }
+.reconstruct-stage-seg.stage-unfinished {
+  background: repeating-linear-gradient(
+    45deg,
+    #2a2a2e,
+    #2a2a2e 6px,
+    #1a1a1d 6px,
+    #1a1a1d 12px
+  );
+}
+
+.reconstruct-stage-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.reconstruct-stage-cell {
+  background: #0e0e10;
+  border: 1px solid #2a2a2e;
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 11px;
+  position: relative;
+}
+
+.reconstruct-stage-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+.reconstruct-stage-dot.stage-cross { background: #d4b85a; }
+.reconstruct-stage-dot.stage-f2l   { background: #5aa8d4; }
+.reconstruct-stage-dot.stage-oll   { background: #d4885a; }
+.reconstruct-stage-dot.stage-pll   { background: #7ad45a; }
+
+.reconstruct-stage-label {
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 10px;
+}
+.reconstruct-stage-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  color: #f0ebe3;
+  margin-top: 2px;
+}
+.reconstruct-stage-tps {
+  font-size: 10px;
+  color: #6a8da6;
+  margin-top: 2px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
 @media (max-width: 480px) {
   .reconstruct-stats {
     grid-template-columns: 1fr;
   }
   .reconstruct-stat-num {
     font-size: 18px;
+  }
+  .reconstruct-stage-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }

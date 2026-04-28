@@ -8,11 +8,12 @@
  */
 
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { Link2 } from 'lucide-react';
+import { Link2, Layers } from 'lucide-react';
 import type { Solve } from '../types';
 import { effectiveMs } from '../types';
 import { formatMs } from '../stats';
 import { sliceReconstruction } from '../reconstruct/slice';
+import { computeStageSegments } from '../reconstruct/stage_segments';
 import { encodeReplayUrl } from '../share/encode';
 import './reconstruct.css';
 
@@ -34,6 +35,10 @@ export default function ReconstructModal({ solve, isZh, onClose }: Props) {
   const slices = useMemo(
     () => sliceReconstruction(moves, solve.timeMs, solve.bld?.memoMs),
     [moves, solve.timeMs, solve.bld?.memoMs],
+  );
+  const stageSegs = useMemo(
+    () => computeStageSegments(solve.scramble, moves, solve.timeMs),
+    [solve.scramble, moves, solve.timeMs],
   );
 
   useEffect(() => {
@@ -113,6 +118,10 @@ export default function ReconstructModal({ solve, isZh, onClose }: Props) {
           </div>
         </div>
 
+        {stageSegs && memoMs === undefined && (
+          <StageSegmentsPanel segs={stageSegs} totalMs={solve.timeMs} isZh={isZh} />
+        )}
+
         <div className="reconstruct-section">
           <div className="reconstruct-section-title">
             {isZh ? `动作序列 (${moves.length})` : `Move stream (${moves.length})`}
@@ -160,6 +169,88 @@ export default function ReconstructModal({ solve, isZh, onClose }: Props) {
             {isZh ? '关闭' : 'Close'}
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+interface StagePanelProps {
+  segs: NonNullable<ReturnType<typeof computeStageSegments>>;
+  totalMs: number;
+  isZh: boolean;
+}
+
+function StageSegmentsPanel({ segs, totalMs, isZh }: StagePanelProps) {
+  const stages: Array<{
+    key: 'cross' | 'f2l' | 'oll' | 'pll';
+    labelEn: string;
+    labelZh: string;
+    ms: number | null;
+    htm: number | null;
+  }> = [
+    { key: 'cross', labelEn: 'Cross', labelZh: '十字', ms: segs.crossMs, htm: segs.crossHtm },
+    { key: 'f2l',   labelEn: 'F2L',   labelZh: 'F2L',  ms: segs.f2lMs,   htm: segs.f2lHtm },
+    { key: 'oll',   labelEn: 'OLL',   labelZh: 'OLL',  ms: segs.ollMs,   htm: segs.ollHtm },
+    { key: 'pll',   labelEn: 'PLL',   labelZh: 'PLL',  ms: segs.pllMs,   htm: segs.pllHtm },
+  ];
+
+  // Bar widths: proportional to per-stage ms over solve total. Stages that
+  // weren't reached get 0 width — the unsolved tail (mid-OLL DNF, etc.) shows
+  // as an empty grey "unfinished" remainder so widths still sum to 100%.
+  const reachedTotal = stages.reduce((acc, s) => acc + (s.ms ?? 0), 0);
+  const denom = totalMs > 0 ? totalMs : Math.max(1, reachedTotal);
+  const unfinishedMs = Math.max(0, totalMs - reachedTotal);
+
+  const formatStageTime = (ms: number | null): string =>
+    ms === null ? '—' : `${(ms / 1000).toFixed(2)}s`;
+
+  const formatStageTps = (ms: number | null, htm: number | null): string => {
+    if (ms === null || htm === null || ms <= 0) return '—';
+    return (htm / (ms / 1000)).toFixed(1);
+  };
+
+  return (
+    <div className="reconstruct-section reconstruct-stages-section">
+      <div className="reconstruct-section-title">
+        <Layers size={12} style={{ verticalAlign: 'middle', marginRight: 4 }} />
+        {isZh ? 'CFOP 分阶段' : 'CFOP stage breakdown'}
+      </div>
+
+      <div className="reconstruct-stage-bar" role="img" aria-label={isZh ? '阶段时间分布' : 'stage time distribution'}>
+        {stages.map(s => {
+          const pct = denom > 0 ? ((s.ms ?? 0) / denom) * 100 : 0;
+          if (pct <= 0) return null;
+          return (
+            <div
+              key={s.key}
+              className={`reconstruct-stage-seg stage-${s.key}`}
+              style={{ width: `${pct}%` }}
+              title={`${isZh ? s.labelZh : s.labelEn}: ${formatStageTime(s.ms)}`}
+            />
+          );
+        })}
+        {unfinishedMs > 0 && (
+          <div
+            className="reconstruct-stage-seg stage-unfinished"
+            style={{ width: `${(unfinishedMs / denom) * 100}%` }}
+            title={isZh ? '未完成' : 'unfinished'}
+          />
+        )}
+      </div>
+
+      <div className="reconstruct-stage-grid">
+        {stages.map(s => (
+          <div key={s.key} className="reconstruct-stage-cell">
+            <div className={`reconstruct-stage-dot stage-${s.key}`} />
+            <div className="reconstruct-stage-label">{isZh ? s.labelZh : s.labelEn}</div>
+            <div className="reconstruct-stage-time">{formatStageTime(s.ms)}</div>
+            <div className="reconstruct-stage-tps">
+              {s.htm !== null ? `${s.htm} ${isZh ? '步' : 'htm'}` : '—'}
+              {' · '}
+              {formatStageTps(s.ms, s.htm)} {isZh ? '步/秒' : 'tps'}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
