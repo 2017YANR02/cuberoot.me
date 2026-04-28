@@ -18,6 +18,10 @@ interface CubingPreviewProps {
   scramble: string;
   size?: number;
   className?: string;
+  /** Force a render mode. Default `2D` (unfolded net for every puzzle —
+   * matches the community-standard "show every sticker" view). Set to `3D`
+   * for a drag-rotatable interactive cube. */
+  visualization?: '2D' | '3D';
 }
 
 /** Normalise an event id (timer EventId OR scramble-display id) → scramble-display event. */
@@ -75,6 +79,7 @@ function dimensionsFor(eventId: string, size: number): { w: number; h: number } 
 export default function CubingPreview(props: CubingPreviewProps): JSX.Element {
   const { event, scramble, className } = props;
   const size = props.size ?? 14;
+  const visualization = props.visualization ?? '2D';
   const hostRef = useRef<HTMLDivElement | null>(null);
   const eventId = normalizeEvent(event);
 
@@ -85,6 +90,7 @@ export default function CubingPreview(props: CubingPreviewProps): JSX.Element {
     const el = document.createElement('scramble-display');
     el.setAttribute('event', eventId);
     el.setAttribute('scramble', scramble);
+    el.setAttribute('visualization', visualization);
     el.style.width = '100%';
     el.style.height = '100%';
     el.style.display = 'block';
@@ -93,7 +99,7 @@ export default function CubingPreview(props: CubingPreviewProps): JSX.Element {
     return () => {
       if (el.parentNode) el.parentNode.removeChild(el);
     };
-  }, [eventId, scramble]);
+  }, [eventId, scramble, visualization]);
 
   if (!eventId) {
     return <div className={className} style={{ display: 'none' }} aria-hidden />;

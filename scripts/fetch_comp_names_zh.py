@@ -136,9 +136,10 @@ def scrape_cubing_china():
     """
     # NOTE: 一行结构：<td>YYYY-MM-DD[~MM-DD]</td><td><a class="comp-type-*" href="...">...</a>...</td>
     # 捕获: (start_date, alias, inner_html)
+    # cubing.com 临近开赛会把 URL 从 /competition/ 切到 /live/，alias 不变 —— 两种都收
     row_pattern = re.compile(
         r'<td>(\d{4}-\d{2}-\d{2})(?:~\d{2}(?:-\d{2})?)?</td>\s*'
-        r'<td>\s*<a[^>]*class="comp-type-\w+"[^>]*href="https://cubing\.com/competition/([^"?]+)"[^>]*>(.*?)</a>',
+        r'<td>\s*<a[^>]*class="comp-type-\w+"[^>]*href="https://cubing\.com/(?:competition|live)/([^"?]+)"[^>]*>(.*?)</a>',
         re.DOTALL
     )
     tag_strip = re.compile(r'<[^>]+>')

@@ -3,8 +3,9 @@
  * 路由配置 — React Router (basename=/)，所有模块页面 lazy-load。
  * @see index.html 全局加载的外部 CSS（cubing-icons / flag-icons / Google Fonts）
  */
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { Suspense, lazy } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Suspense, lazy, useEffect } from 'react';
+import i18n from './i18n';
 import { HomePage } from './pages/HomePage';
 import { CaseSelectPage } from './pages/CaseSelectPage';
 import { TrainingPage } from './pages/TrainingPage';
@@ -33,12 +34,16 @@ const AuthCallbackPage = lazy(() => import('./pages/AuthCallbackPage'));
 // NOTE: WCA Stats 模块懒加载 — 统计数据展示
 const WcaStatsPage = lazy(() => import('./pages/wca_stats/WcaStatsPage'));
 const WcaStatsIndex = lazy(() => import('./pages/wca_stats/WcaStatsIndex'));
+// NOTE: Top 10 History — bar chart race 风格(自定义 schema,需独立页)
+const Top10HistoryPage = lazy(() => import('./pages/wca_stats/Top10HistoryPage'));
 // NOTE: WCA 选手成绩查询（/wca-stats 子模块）
 const PersonsSearchPage = lazy(() => import('./pages/wca_stats/persons/PersonsSearchPage'));
 const PersonDetailPage = lazy(() => import('./pages/wca_stats/persons/PersonDetailPage'));
 const NemesizerPage = lazy(() => import('./pages/nemesizer/NemesizerPage'));
 // NOTE: Upcoming Comps 懒加载 — 顶尖选手近期比赛追踪
 const UpcomingCompsPage = lazy(() => import('./pages/UpcomingCompsPage'));
+// NOTE: Calendar Stats — 比赛随时间分布的可视化
+const CalendarStatsPage = lazy(() => import('./pages/calendar_stats/CalendarStatsPage'));
 // NOTE: Globe 懒加载 — 3D 地球 WCA 比赛地理分布（含 react-globe.gl + three ~500KB）
 const GlobePage = lazy(() => import('./pages/GlobePage'));
 // NOTE: iframe 包装页 — 嵌入未迁移的外部模块（Solver/Alg Trainer/csTimer）
@@ -63,9 +68,25 @@ const WbPage = lazy(() => import('./pages/wb/WbPage'));
 const TimerPage = lazy(() => import('./pages/timer/TimerPage'));
 
 
+// NOTE: 全站 URL 必须带 ?lang=zh|en——首次加载在 i18n/index.ts 已处理；
+//       此守卫覆盖客户端导航（<Link> / navigate()）丢失 lang 的情况，
+//       用 replaceState 不进历史记录、不触发 React Router 重渲染。
+function LangParamGuard() {
+  const location = useLocation();
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('lang')) return;
+    params.set('lang', i18n.language || 'en');
+    const newUrl = `${location.pathname}?${params.toString()}${location.hash}`;
+    window.history.replaceState(null, '', newUrl);
+  }, [location.pathname, location.search, location.hash]);
+  return null;
+}
+
 function App() {
   return (
     <BrowserRouter basename="/">
+      <LangParamGuard />
       <Routes>
         {/* NOTE: 全站入口页（复刻原版 index.html 的 9 卡片 Toolkit 主页） */}
         <Route path="/" element={<Suspense fallback={<div>Loading...</div>}><LandingPage /></Suspense>} />
@@ -93,8 +114,10 @@ function App() {
         <Route path="/recon/submit" element={<Suspense fallback={<div>Loading...</div>}><ReconSubmitPage /></Suspense>} />
         <Route path="/recon/submit/:editId" element={<Suspense fallback={<div>Loading...</div>}><ReconSubmitPage /></Suspense>} />
         <Route path="/recon/:id" element={<Suspense fallback={<div>Loading...</div>}><ReconDetailPage /></Suspense>} />
-        {/* Upcoming Comps — 顶尖选手近期比赛追踪 */}
-        <Route path="/upcoming-comps" element={<Suspense fallback={<div>Loading...</div>}><UpcomingCompsPage /></Suspense>} />
+        {/* Calendar — 顶尖选手近期比赛追踪（路由曾叫 /upcoming-comps，旧链接重定向） */}
+        <Route path="/calendar" element={<Suspense fallback={<div>Loading...</div>}><UpcomingCompsPage /></Suspense>} />
+        <Route path="/calendar/stats" element={<Suspense fallback={<div>Loading...</div>}><CalendarStatsPage /></Suspense>} />
+        <Route path="/upcoming-comps" element={<Navigate to="/calendar" replace />} />
         {/* Globe — 3D 地球 WCA 比赛地理分布 */}
         <Route path="/globe" element={<Suspense fallback={<div>Loading...</div>}><GlobePage /></Suspense>} />
         {/* NOTE: iframe 包装路由 — 嵌入未迁移模块，零改动上游代码 */}
@@ -117,9 +140,10 @@ function App() {
         <Route path="/timer" element={<Suspense fallback={<div>Loading...</div>}><TimerPage /></Suspense>} />
         {/* WCA Stats — 统计数据展示 */}
         <Route path="/wca-stats" element={<Suspense fallback={<div>Loading...</div>}><WcaStatsIndex /></Suspense>} />
-        {/* NOTE: persons 路由必须在 :statId 之前，否则会被 catch-all 当成 statId */}
+        {/* NOTE: persons / 自定义页面路由必须在 :statId 之前，否则会被 catch-all 当成 statId */}
         <Route path="/wca-stats/persons" element={<Suspense fallback={<div>Loading...</div>}><PersonsSearchPage /></Suspense>} />
         <Route path="/wca-stats/persons/:wcaId" element={<Suspense fallback={<div>Loading...</div>}><PersonDetailPage /></Suspense>} />
+        <Route path="/wca-stats/top10_history" element={<Suspense fallback={<div>Loading...</div>}><Top10HistoryPage /></Suspense>} />
         <Route path="/wca-stats/:statId" element={<Suspense fallback={<div>Loading...</div>}><WcaStatsPage /></Suspense>} />
         {/* Nemesizer — 宿敌查询（移植自 nemesizer.com） */}
         <Route path="/nemesizer" element={<Suspense fallback={<div>Loading...</div>}><NemesizerPage /></Suspense>} />

@@ -22,7 +22,7 @@ const isZh = i18n.language === 'zh';
 
 - 新 `t()` 键 **必须同时** 加到 en.json 和 zh.json，占位符 `{{x}}` 两边都要有
 - `<LangToggle variant="inline" />` 放 header 右端
-- 跨页 `<Link to={\`/foo${getLangQuery()}\`}>` —— 带 `?lang=`，否则跳过去语言重检测
+- 全站 URL 永远带 `?lang=zh|en`：`App.tsx` 的 `<LangParamGuard>` 兜底（每次 location 变化 `replaceState` 补 lang），`<Link>` 推荐仍用 `getLangQuery()` 避免 URL bar 闪一帧无 lang
 - store / utils 等非组件模块：**别用 `t`**，把 `isZh` 当参数传进
 - `useEffect`/`useCallback` 里用 `t(...)` 要把 `t` 加进依赖
 

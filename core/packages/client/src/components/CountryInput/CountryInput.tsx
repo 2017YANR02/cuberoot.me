@@ -9,7 +9,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Flag } from '../../utils/flag';
-import { searchCountries, iso2ToCountryName } from '../../utils/country_flags';
+import { searchCountries } from '../../utils/country_flags';
+import { countryName } from '../../utils/country_name';
 import './country_input.css';
 
 interface CountryInputProps {
@@ -51,10 +52,12 @@ export function CountryInput({
   const matches = useMemo(() => {
     // NOTE: 受限模式空 query——按受限列表原顺序展示全部
     if (!query.trim() && restrictArr) {
-      return restrictArr.map(iso2 => ({ iso2, name: iso2ToCountryName(iso2) }));
+      return restrictArr.map(iso2 => ({ iso2, name: countryName(iso2, isZh) }));
     }
+    // NOTE: searchCountries 仍按英文别名搜（typing "USA" / "United States" 都能命中），
+    //       下面渲染时用 countryName(iso, isZh) 重算显示名。
     return searchCountries(query, { restrictTo: restrictArr ?? undefined, limit: 250 });
-  }, [query, restrictArr]);
+  }, [query, restrictArr, isZh]);
 
   const select = (iso2: string) => {
     onChange(iso2);
@@ -81,15 +84,15 @@ export function CountryInput({
 
   // NOTE: 已选中且未在搜索时——左侧浮动国旗
   const showFlag = value.length === 2 && query.toLowerCase() === value.toLowerCase();
-  // NOTE: 受限模式已选时显示规范名（"United States"），让用户清楚选了什么
-  const displayedQuery = showFlag && restrictArr ? iso2ToCountryName(value) : query;
+  // NOTE: 选中后显示本地化国家名（"美国" / "USA"），原始 iso2 没意义
+  const displayedQuery = showFlag ? countryName(value, isZh) : query;
 
   return (
     <div ref={ref} className={`country-input ${className ?? ''}`.trim()}>
       {showFlag && <Flag iso2={value} className="country-input-flag" />}
       <input
         type="text"
-        className={`country-input-field${showFlag ? ' country-input-field--with-flag' : ''}`}
+        className={`country-input-field${showFlag ? ' country-input-field--with-flag' : ''}${value ? ' country-input-field--with-clear' : ''}`}
         value={displayedQuery}
         placeholder={placeholder ?? (allLabel ?? (isZh ? 'ISO2 / 国家名' : 'ISO2 / Country name'))}
         onChange={(e) => handleChange(e.target.value)}
@@ -97,6 +100,16 @@ export function CountryInput({
         onBlur={handleBlur}
         autoComplete="off"
       />
+      {value && (
+        <button
+          type="button"
+          className="country-input-clear"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => { onChange(''); setQuery(''); setOpen(false); }}
+          aria-label={isZh ? '清除' : 'Clear'}
+          title={isZh ? '清除' : 'Clear'}
+        >×</button>
+      )}
       {open && (matches.length > 0 || allLabel) && (
         <div className="country-input-popup">
           {allLabel && (

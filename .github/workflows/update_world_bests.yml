@@ -1,10 +1,9 @@
-# Weekly refresh of stats/data/world_bests.json from speedsolving.com wiki
+# Manual refresh of stats/data/world_bests.json from speedsolving.com wiki.
+# NOTE: cron disabled — Cloudflare blocks GitHub Actions datacenter IPs (cf-ray ORD, 403)
+#       regardless of UA/sec-ch-ua headers. Run locally: `pnpm --filter @cuberoot/wb-build run scrape`.
 name: Update World Bests
 
 on:
-  schedule:
-    # UTC Mon 20:00
-    - cron: '0 20 * * 1'
   workflow_dispatch:
 
 jobs:

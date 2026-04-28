@@ -14,6 +14,9 @@ import { parseTimeInput, formatTime } from '../../utils/recon_utils';
 import { RecordSelect } from '../../components/RecordSelect';
 import { EventSelect } from '../../components/EventSelect';
 import { CountryInput } from '../../components/CountryInput';
+import { CompPicker } from '../../components/CompPicker';
+import type { Comp } from '../../utils/comp_search';
+import { compNameZh } from '../../utils/country_flags';
 import { displayCuberName } from '../../utils/name_utils';
 import LangToggle from '../../components/LangToggle';
 import '../../recon.css';
@@ -116,6 +119,18 @@ export default function ReconSubmitPage() {
   const setField = useCallback(<K extends keyof ReconSolve>(key: K, value: ReconSolve[K]) => {
     setForm(prev => ({ ...prev, [key]: value }));
   }, []);
+
+  // NOTE: CompPicker 选中比赛 — 一次性回填 name / id / country / date
+  const applyPickedComp = useCallback((c: Comp) => {
+    const zh = isZh ? compNameZh(c.name) : '';
+    setForm(prev => ({
+      ...prev,
+      comp: zh || c.name,
+      compWcaId: c.id,
+      country: (c.country || '').toLowerCase(),
+      date: c.start_date,
+    }));
+  }, [isZh]);
 
   /** textarea 自适应高度——先收缩到最小再擑开到 scrollHeight */
   const autoResize = useCallback((el: HTMLTextAreaElement) => {
@@ -342,8 +357,13 @@ export default function ReconSubmitPage() {
         <div className="submit-row">
           <label className="submit-field submit-field-wide">
             <span className="submit-label">{t('recon.competition')}</span>
-            <input type="text" value={form.comp || ''} onChange={e => setField('comp', e.target.value)}
-              placeholder={t('recon.compName')} />
+            <CompPicker
+              value={form.comp || ''}
+              onChange={(v) => setField('comp', v)}
+              onPick={applyPickedComp}
+              placeholder={t('recon.compName')}
+              isZh={isZh}
+            />
           </label>
           <label className="submit-field">
             <span className="submit-label">{t('recon.round')}</span>
@@ -364,8 +384,13 @@ export default function ReconSubmitPage() {
         <div className="submit-row">
           <label className="submit-field">
             <span className="submit-label">Comp WCA ID</span>
-            <input type="text" value={form.compWcaId || ''} onChange={e => setField('compWcaId', e.target.value)}
-              placeholder="e.g. WC2025" />
+            <CompPicker
+              value={form.compWcaId || ''}
+              onChange={(v) => setField('compWcaId', v)}
+              onPick={applyPickedComp}
+              placeholder="e.g. WC2025"
+              isZh={isZh}
+            />
           </label>
           <label className="submit-field">
             <span className="submit-label">{t('recon.country')}</span>

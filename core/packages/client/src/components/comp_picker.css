@@ -1,0 +1,111 @@
+.comp-picker {
+  position: relative;
+  width: 100%;
+}
+
+.comp-picker > input {
+  width: 100%;
+}
+
+.comp-picker-input--with-clear {
+  padding-right: 30px;
+}
+
+.comp-picker-clear {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #888;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s, color 0.12s;
+}
+
+.comp-picker-clear:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e5e5e5;
+}
+
+.comp-picker-popup {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  /* 突破输入框宽度，按内容撑开但不超过 480px / 视口边缘 */
+  min-width: 100%;
+  width: max-content;
+  max-width: min(480px, calc(100vw - 32px));
+  max-height: 320px;
+  overflow-y: auto;
+  background: #1d1d1d;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  z-index: 200;
+  padding: 4px 0;
+}
+
+.comp-picker-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  color: #d4d4d4;
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.comp-picker-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* TW 特判走 <img>，没有 class 时会显示原始 SVG 尺寸（巨大）；锁住所有旗子的尺寸 */
+.comp-picker-item > .fi,
+.comp-picker-item > img {
+  width: 20px;
+  height: 14px;
+  flex-shrink: 0;
+  object-fit: cover;
+  border-radius: 2px;
+}
+
+.comp-picker-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.comp-picker-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.comp-picker-meta {
+  font-size: 0.72rem;
+  color: #8f8f8f;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.comp-picker-id {
+  font-family: monospace;
+  color: #d97757;
+}

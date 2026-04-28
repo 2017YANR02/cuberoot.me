@@ -1470,16 +1470,6 @@ export const SITES: Site[] = [
     "desc_zh": "分阶段动画复盘分析工具。"
   },
   {
-    "id": "r262",
-    "name": "cubesolv.es",
-    "url": "https://cubesolv.es",
-    "group": "recon",
-    "subgroup": "Reconstructions 复盘",
-    "author": "Justin Jaffray",
-    "desc_en": "Database documenting and categorizing notable Rubik's cube solve reconstructions.",
-    "desc_zh": "记录著名速拧复盘的数据库。"
-  },
-  {
     "id": "r263",
     "name": "reddit.com",
     "url": "https://reddit.com/user/Anonymous_",
