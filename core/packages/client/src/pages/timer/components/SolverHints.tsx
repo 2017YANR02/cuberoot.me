@@ -10,8 +10,26 @@ import { useEffect, useMemo, useState } from 'react';
 import { Star, CheckCircle2, Link2, Layers } from 'lucide-react';
 import { solveCross, type CrossSolution, type Orientation } from '../solver/cross';
 import { solveEOLine, type EOLineSolution } from '../solver/eoline';
-import { solveCFOP, type SolveResult } from '../solver/methods';
+import {
+  solveByMethodId,
+  METHOD_REGISTRY,
+  type MethodId,
+  type SolveResult,
+} from '../solver/methods';
 import { recognizeForOrientation, type CfopRecognition } from './cfop_recognize';
+import SolverCompareModal from './SolverCompareModal';
+
+const METHOD_LS_KEY = 'timer.solverHints.method';
+
+function loadSavedMethod(): MethodId {
+  try {
+    const v = localStorage.getItem(METHOD_LS_KEY);
+    if (v && METHOD_REGISTRY.some(m => m.id === v)) return v as MethodId;
+  } catch {
+    // ignore
+  }
+  return 'cfop';
+}
 
 interface Props {
   scramble: string;
@@ -48,9 +66,24 @@ export default function SolverHints({ scramble, isZh }: Props) {
   const [computed, setComputed] = useState<Computed | null>(null);
   const [computing, setComputing] = useState(false);
 
-  const [cfopOpen, setCfopOpen] = useState(false);
-  const [cfopResult, setCfopResult] = useState<SolveResult | null>(null);
-  const [cfopComputing, setCfopComputing] = useState(false);
+  const [stepOpen, setStepOpen] = useState(false);
+  const [methodId, setMethodId] = useState<MethodId>(loadSavedMethod);
+  // Cache solutions per (scramble, method) so switching tabs doesn't recompute.
+  const [stepResults, setStepResults] = useState<Record<MethodId, SolveResult | null>>(
+    () => ({ cfop: null, roux: null, petrus: null, zz: null, eodr: null }),
+  );
+  const [stepComputing, setStepComputing] = useState(false);
+  const [compareOpen, setCompareOpen] = useState(false);
+
+  // Persist method choice.
+  useEffect(() => {
+    try { localStorage.setItem(METHOD_LS_KEY, methodId); } catch { /* ignore */ }
+  }, [methodId]);
+
+  // Reset cached results whenever the scramble changes.
+  useEffect(() => {
+    setStepResults({ cfop: null, roux: null, petrus: null, zz: null, eodr: null });
+  }, [scramble]);
 
   // Recompute whenever scramble changes AND the panel is open. We also reset
   // the cached value so an old result doesn't flash for a new scramble.
@@ -94,27 +127,25 @@ export default function SolverHints({ scramble, isZh }: Props) {
     };
   }, [open, cacheKey, scramble]);
 
-  // CFOP step-by-step — lazy, independent of the main hints panel.
+  // Step-by-step — lazy: only compute the active method when the section is
+  // open AND we don't already have a cached result for (scramble, method).
   useEffect(() => {
-    if (!cfopOpen) {
-      setCfopResult(null);
-      return;
-    }
-    setCfopComputing(true);
-    setCfopResult(null);
+    if (!stepOpen) return;
+    if (stepResults[methodId]) return;
+    setStepComputing(true);
     let cancelled = false;
     const t = setTimeout(() => {
       if (cancelled) return;
       try {
-        const r = solveCFOP(scramble);
+        const r = solveByMethodId(scramble, methodId);
         if (!cancelled) {
-          setCfopResult(r);
-          setCfopComputing(false);
+          setStepResults(prev => ({ ...prev, [methodId]: r }));
+          setStepComputing(false);
         }
       } catch {
         if (!cancelled) {
-          setCfopResult({ stages: [], totalMoves: 0 });
-          setCfopComputing(false);
+          setStepResults(prev => ({ ...prev, [methodId]: { stages: [], totalMoves: 0 } }));
+          setStepComputing(false);
         }
       }
     }, 0);
@@ -122,11 +153,13 @@ export default function SolverHints({ scramble, isZh }: Props) {
       cancelled = true;
       clearTimeout(t);
     };
-  }, [cfopOpen, scramble]);
+  }, [stepOpen, scramble, methodId, stepResults]);
+
+  const stepResult = stepResults[methodId];
 
   const labels = isZh ? ORIENT_LABEL_ZH : ORIENT_LABEL_EN;
   const title = isZh ? '解法提示' : 'Solver hints';
-  const cfopTitle = isZh ? 'CFOP 分步' : 'CFOP step-by-step';
+  const stepTitle = isZh ? '分步解法' : 'Step-by-step';
 
   // Min cross length across all 6 orientations (ignoring failed solves).
   const minCrossLen = useMemo(() => {
@@ -188,23 +221,42 @@ export default function SolverHints({ scramble, isZh }: Props) {
       <div className="solver-hints" style={hintsStyle}>
         <button
           type="button"
-          onClick={() => setCfopOpen(o => !o)}
+          onClick={() => setStepOpen(o => !o)}
           style={toggleBtnStyle}
-          aria-expanded={cfopOpen}
+          aria-expanded={stepOpen}
         >
-          <span>{cfopTitle}</span>
-          <span style={{ marginLeft: 'auto', opacity: 0.7 }}>{cfopOpen ? '▾' : '▸'}</span>
+          <span>{stepTitle}</span>
+          <span style={{ marginLeft: 'auto', opacity: 0.7 }}>{stepOpen ? '▾' : '▸'}</span>
         </button>
-        {cfopOpen && (
+        {stepOpen && (
           <div style={bodyStyle}>
-            {cfopComputing && (
+            <div style={tabStripStyle}>
+              {METHOD_REGISTRY.map(m => (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => setMethodId(m.id)}
+                  style={methodId === m.id ? tabActiveStyle : tabStyle}
+                >
+                  {isZh ? m.nameZh : m.nameEn}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setCompareOpen(true)}
+                style={compareBtnStyle}
+              >
+                {isZh ? '对比全部' : 'Compare all'}
+              </button>
+            </div>
+            {stepComputing && !stepResult && (
               <div style={{ opacity: 0.6, fontSize: 13 }}>
                 {isZh ? '计算中…' : 'Computing…'}
               </div>
             )}
-            {cfopResult && (
+            {stepResult && (
               <>
-                {cfopResult.stages.map(s => (
+                {stepResult.stages.map(s => (
                   <div key={s.head} style={rowStyle}>
                     <span style={labelStyle}>{s.head}</span>
                     <span style={countStyle}>
@@ -219,7 +271,7 @@ export default function SolverHints({ scramble, isZh }: Props) {
                 ))}
                 <div style={rowStyle}>
                   <span style={labelBestStyle}>{isZh ? '总计' : 'Total'}</span>
-                  <span style={countBestStyle}>{cfopResult.totalMoves}</span>
+                  <span style={countBestStyle}>{stepResult.totalMoves}</span>
                   <span style={algStyle} />
                 </div>
               </>
@@ -227,6 +279,13 @@ export default function SolverHints({ scramble, isZh }: Props) {
           </div>
         )}
       </div>
+      {compareOpen && (
+        <SolverCompareModal
+          scramble={scramble}
+          isZh={isZh}
+          onClose={() => setCompareOpen(false)}
+        />
+      )}
     </div>
   );
 }
@@ -397,4 +456,44 @@ const algBestStyle: React.CSSProperties = {
   ...algStyle,
   fontWeight: 600,
   color: 'var(--accent, #f5b400)',
+};
+
+const tabStripStyle: React.CSSProperties = {
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: 4,
+  alignItems: 'center',
+  marginBottom: 4,
+};
+
+const tabStyle: React.CSSProperties = {
+  padding: '3px 8px',
+  background: 'transparent',
+  border: '1px solid var(--border, #333)',
+  borderRadius: 4,
+  color: 'inherit',
+  fontSize: 12,
+  cursor: 'pointer',
+  opacity: 0.75,
+};
+
+const tabActiveStyle: React.CSSProperties = {
+  ...tabStyle,
+  background: 'var(--accent, #f5b400)',
+  color: '#111',
+  borderColor: 'var(--accent, #f5b400)',
+  fontWeight: 600,
+  opacity: 1,
+};
+
+const compareBtnStyle: React.CSSProperties = {
+  marginLeft: 'auto',
+  padding: '3px 8px',
+  background: 'transparent',
+  border: '1px dashed var(--border, #555)',
+  borderRadius: 4,
+  color: 'inherit',
+  fontSize: 12,
+  cursor: 'pointer',
+  opacity: 0.85,
 };
