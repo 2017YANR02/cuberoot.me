@@ -66,20 +66,23 @@ export default function CubingPreview(props: CubingPreviewProps): JSX.Element {
   const { event, scramble, className } = props;
   const size = props.size ?? 14;
   const hostRef = useRef<HTMLDivElement | null>(null);
-  const playerRef = useRef<TwistyPlayer | null>(null);
-  const prevPuzzleRef = useRef<PuzzleID | null>(null);
 
   const puzzle = puzzleIdForEvent(event);
 
+  // Recreate the player on every (puzzle, scramble) change. Trying to reuse
+  // an instance across puzzle swaps surfaces internal "Bad position …
+  // children of undefined" errors, and TwistyPlayer's `.puzzle` is also
+  // setter-only. Cost of recreation is small (no DOM re-layout outside the
+  // host), so this is the simpler model.
   useEffect(() => {
     const host = hostRef.current;
     if (!host || !puzzle) return;
 
-    if (!playerRef.current) {
-      const player = new TwistyPlayer({
+    let player: TwistyPlayer | null = null;
+    try {
+      player = new TwistyPlayer({
         puzzle,
         alg: scramble,
-        visualization: '2D',
         background: 'none',
         controlPanel: 'none',
         backView: 'none',
@@ -90,33 +93,33 @@ export default function CubingPreview(props: CubingPreviewProps): JSX.Element {
       player.style.height = '100%';
       player.style.display = 'block';
       host.appendChild(player);
-      playerRef.current = player;
-      prevPuzzleRef.current = puzzle;
-    } else {
-      const player = playerRef.current;
-      // TwistyPlayer disallows reading `.puzzle`; track in a ref ourselves.
-      if (prevPuzzleRef.current !== puzzle) {
-        player.puzzle = puzzle;
-        prevPuzzleRef.current = puzzle;
-      }
+    } catch {
+      // If the alg fails to parse for this puzzle, fall back to no scramble
+      // (still shows the solved state) rather than blanking the preview.
       try {
-        player.alg = scramble;
+        player = new TwistyPlayer({
+          puzzle,
+          background: 'none',
+          controlPanel: 'none',
+          backView: 'none',
+          hintFacelets: 'none',
+          viewerLink: 'none',
+        });
+        player.style.width = '100%';
+        player.style.height = '100%';
+        player.style.display = 'block';
+        host.appendChild(player);
       } catch {
-        // Invalid alg for this puzzle — leave the previous state.
+        player = null;
       }
     }
-  }, [puzzle, scramble]);
 
-  // Tear down on unmount so we don't leak the underlying element / workers.
-  useEffect(() => {
     return () => {
-      const player = playerRef.current;
       if (player && player.parentNode) {
         player.parentNode.removeChild(player);
       }
-      playerRef.current = null;
     };
-  }, []);
+  }, [puzzle, scramble]);
 
   if (!puzzle) {
     // Caller shouldn't route unsupported events through here, but be safe.
