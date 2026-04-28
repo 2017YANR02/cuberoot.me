@@ -20,7 +20,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { Home, Download, Upload, Trash2, Settings as SettingsIcon, Maximize2, Minimize2, Bluetooth, Mic, HelpCircle, BarChart3, Plus, Wrench, ListPlus, Printer, FileText, FileSpreadsheet, AlertTriangle, Target, Crosshair, Keyboard } from 'lucide-react';
+import { Home, Download, Upload, Trash2, Settings as SettingsIcon, Maximize2, Minimize2, Bluetooth, Mic, HelpCircle, BarChart3, Plus, Wrench, ListPlus, Printer, FileText, FileSpreadsheet, AlertTriangle, Target, Crosshair, Keyboard, Link2 } from 'lucide-react';
 import LangToggle from '../../components/LangToggle';
 import MoreMenu, { type MoreMenuItem } from './components/MoreMenu';
 
@@ -56,6 +56,7 @@ import HistoryPanel from './components/HistoryPanel';
 import SolveModal from './components/SolveModal';
 import ReconstructModal from './components/ReconstructModal';
 import { decodeReplayParam } from './share/decode';
+import { extractReplayParam } from './share/paste_import';
 import SettingsPanel from './components/SettingsPanel';
 import GoalProgress from './components/GoalProgress';
 import PbToast, { type PbKind } from './components/PbToast';
@@ -616,6 +617,39 @@ export default function TimerPage() {
     history.replaceState(null, '', window.location.pathname);
   }, []);
 
+  // Paste-replay-URL handler: prompts the user, extracts the `replay` token
+  // from any of the supported input shapes, decodes, and opens the same
+  // ReconstructModal — without persisting the solve to history.
+  const handlePasteReplay = useCallback(() => {
+    const raw = window.prompt(
+      isZh
+        ? '粘贴 replay URL 或 token：'
+        : 'Paste a replay URL or token:',
+      '',
+    );
+    if (raw === null) return; // user cancelled
+    const param = extractReplayParam(raw);
+    if (!param) {
+      alert(isZh ? '未识别为 replay URL。' : 'Not a recognizable replay URL.');
+      return;
+    }
+    const decoded = decodeReplayParam(param);
+    if (!decoded) {
+      alert(isZh ? 'replay 数据无法解码。' : 'Failed to decode replay payload.');
+      return;
+    }
+    const ephemeral: Solve = {
+      id: `replay-${Date.now()}`,
+      timeMs: decoded.totalMs,
+      penalty: 'ok',
+      scramble: decoded.scramble,
+      event: decoded.event,
+      ts: Date.now(),
+      moves: decoded.moves.length > 0 ? decoded.moves : undefined,
+    };
+    setReconstructSolve(ephemeral);
+  }, [isZh]);
+
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [bluetoothOpen, setBluetoothOpen] = useState(false);
@@ -867,6 +901,11 @@ export default function TimerPage() {
       onClick: () => setManualEntryOpen(true),
     },
     {
+      icon: <Link2 size={14} />,
+      label: isZh ? '粘贴 replay 链接' : 'Paste replay URL',
+      onClick: handlePasteReplay,
+    },
+    {
       icon: <Wrench size={14} />,
       label: isZh ? '通用求解器' : 'Solver',
       onClick: () => setSolverOpen(true),
@@ -888,7 +927,7 @@ export default function TimerPage() {
       danger: true,
       disabled: !solves.length,
     },
-  ], [isZh, handleImport, handleExport, handleExportCsv, handleExportSs, clearAll, solves.length, drillAllowed, drillTarget, fullscreen, toggleFullscreen]);
+  ], [isZh, handleImport, handleExport, handleExportCsv, handleExportSs, clearAll, solves.length, drillAllowed, drillTarget, fullscreen, toggleFullscreen, handlePasteReplay]);
 
   // Flattened across-event solve list for the daily-goal pill.
   // Goal counts every solve regardless of event — matches the "X solves/day"
