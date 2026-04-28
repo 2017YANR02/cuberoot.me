@@ -1,159 +1,186 @@
 /**
- * Cross 标准化引擎——1:1 移植自 recon/recon_norm_cross.js（251 行）
- * NOTE: 用于将 Cross 解法标准化为最简形式（消除旋转、重写宽转动）
+ * Cross 标准化引擎——1:1 移植自 D:\cube\solver_wip\norm_cross\norm_cross.cpp
+ * 算法（与几何代数版不同）：
+ *   1. 正向遍历 token，维护 state.p[slot] = 当前 slot 上的原始 face id。
+ *   2. 旋转只改 state.p；面转动只追加 history（记录 (原始 face, amount)，不改 state.p）。
+ *   3. 宽转动按 C++ switch 表分解为「先旋转 + 记录 counter slot」。
+ *   4. 末尾用 BFS（≤2 步）找到把 identity 变成 state 的最简转体序列作为 prefix。
+ *   5. 输出每个 history move 时，查 face→当前 slot，emit 该 slot 名 + 后缀。
  */
 
-// ── 面转动集合 ──
+const FACE_NAMES = ['U', 'L', 'F', 'R', 'B', 'D'] as const;
+const U = 0, L = 1, F = 2, R = 3, B = 4, D = 5;
 
-/** 基础面 */
-type Face = 'U' | 'D' | 'R' | 'L' | 'F' | 'B';
+type Axis = 'x' | 'y' | 'z';
 
-/**
- * 旋转对面映射——执行一次 x/y/z 旋转后，各面的新位置
- * NOTE: 表示 "旋转后原来的 X 面变成了 Y 面"
- */
-const ROTATION_MAP: Record<string, Record<Face, Face>> = {
-  x:  { U: 'F', F: 'D', D: 'B', B: 'U', R: 'R', L: 'L' },
-  "x'": { U: 'B', B: 'D', D: 'F', F: 'U', R: 'R', L: 'L' },
-  x2: { U: 'D', D: 'U', F: 'B', B: 'F', R: 'R', L: 'L' },
-  y:  { U: 'U', D: 'D', F: 'L', L: 'B', B: 'R', R: 'F' },
-  "y'": { U: 'U', D: 'D', F: 'R', R: 'B', B: 'L', L: 'F' },
-  y2: { U: 'U', D: 'D', F: 'B', B: 'F', R: 'L', L: 'R' },
-  z:  { U: 'R', R: 'D', D: 'L', L: 'U', F: 'F', B: 'B' },
-  "z'": { U: 'L', L: 'D', D: 'R', R: 'U', F: 'F', B: 'B' },
-  z2: { U: 'D', D: 'U', R: 'L', L: 'R', F: 'F', B: 'B' },
-};
-
-/**
- * 宽转动 → 普通面转 + 旋转 的分解表
- * NOTE: 例如 r = R + x（后层不动），Rw = r
- */
-const WIDE_MOVE_DECOMPOSE: Record<string, [string, string]> = {
-  // 小写宽转动
-  r:   ['L', 'x'],   "r'":  ['L\'', 'x\''],  r2:  ['L2', 'x2'],
-  l:   ['R', 'x\''], "l'":  ['R\'', 'x'],     l2:  ['R2', 'x2'],
-  u:   ['D', 'y'],   "u'":  ['D\'', 'y\''],   u2:  ['D2', 'y2'],
-  d:   ['U', 'y\''], "d'":  ['U\'', 'y'],     d2:  ['U2', 'y2'],
-  f:   ['B', 'z'],   "f'":  ['B\'', 'z\''],   f2:  ['B2', 'z2'],
-  b:   ['F', 'z\''], "b'":  ['F\'', 'z'],     b2:  ['F2', 'z2'],
-  // Xw 格式
-  Rw:  ['L', 'x'],   "Rw'": ['L\'', 'x\''],  Rw2: ['L2', 'x2'],
-  Lw:  ['R', 'x\''], "Lw'": ['R\'', 'x'],    Lw2: ['R2', 'x2'],
-  Uw:  ['D', 'y'],   "Uw'": ['D\'', 'y\''],  Uw2: ['D2', 'y2'],
-  Dw:  ['U', 'y\''], "Dw'": ['U\'', 'y'],    Dw2: ['U2', 'y2'],
-  Fw:  ['B', 'z'],   "Fw'": ['B\'', 'z\''],  Fw2: ['B2', 'z2'],
-  Bw:  ['F', 'z\''], "Bw'": ['F\'', 'z'],    Bw2: ['F2', 'z2'],
-};
-
-/** 旋转集合（快速判断） */
-const ROTATIONS = new Set(Object.keys(ROTATION_MAP));
-
-// ── 核心逻辑 ──
-
-/**
- * 对一个面转动应用旋转变换
- * NOTE: 如 R 在 y 旋转后变成 F
- * @param move 面转动（如 "R", "U'", "L2"）
- * @param rotationMap 旋转映射
- */
-function applyRotationToMove(move: string, rotationMap: Record<Face, Face>): string {
-  // NOTE: 解析面+后缀（如 R' → face=R, suffix='）
-  const face = move[0] as Face;
-  const suffix = move.substring(1); // ' 或 2 或空
-  const newFace = rotationMap[face];
-  if (!newFace) return move; // NOTE: 非法面转动，原样返回
-  return newFace + suffix;
+function applyX(p: number[]) {
+  const tu = p[U], tf = p[F], td = p[D], tb = p[B];
+  p[U] = tf; p[B] = tu; p[D] = tb; p[F] = td;
+}
+function applyY(p: number[]) {
+  const tf = p[F], tl = p[L], tb = p[B], tr = p[R];
+  p[F] = tr; p[L] = tf; p[B] = tl; p[R] = tb;
+}
+function applyZ(p: number[]) {
+  const tu = p[U], tr = p[R], td = p[D], tl = p[L];
+  p[U] = tl; p[R] = tu; p[D] = tr; p[L] = td;
 }
 
-/**
- * 组合两个旋转的映射
- * NOTE: 先执行 rot1，再执行 rot2
- */
-function composeRotations(
-  map1: Record<Face, Face>,
-  map2: Record<Face, Face>,
-): Record<Face, Face> {
-  const result = {} as Record<Face, Face>;
-  const faces: Face[] = ['U', 'D', 'R', 'L', 'F', 'B'];
-  for (const f of faces) {
-    result[f] = map2[map1[f]];
+function applyRot(p: number[], axis: Axis, count: number) {
+  let c = ((count % 4) + 4) % 4;
+  for (let i = 0; i < c; i++) {
+    if (axis === 'x') applyX(p);
+    else if (axis === 'y') applyY(p);
+    else applyZ(p);
   }
-  return result;
 }
 
-/** 恒等旋转映射 */
-const IDENTITY_MAP: Record<Face, Face> = { U: 'U', D: 'D', R: 'R', L: 'L', F: 'F', B: 'B' };
+function eqState(a: number[], b: number[]): boolean {
+  for (let i = 0; i < 6; i++) if (a[i] !== b[i]) return false;
+  return true;
+}
 
-/**
- * 将累积旋转映射还原为最简旋转序列
- * NOTE: 只考虑 x, y, z 及其组合，返回尽可能短的旋转序列
- */
-function mapToRotations(map: Record<Face, Face>): string[] {
-  // NOTE: 暴力枚举所有长度 ≤2 的旋转组合，找到匹配的最短序列
-  const allRots = Object.keys(ROTATION_MAP);
-  const faces: Face[] = ['U', 'D', 'R', 'L', 'F', 'B'];
+function rotStr(axis: Axis, count: number): string {
+  if (count === 2) return axis + '2';
+  if (count === 3) return axis + "'";
+  return axis;
+}
 
-  const mapsEqual = (a: Record<Face, Face>, b: Record<Face, Face>) =>
-    faces.every(f => a[f] === b[f]);
+/** BFS 0~2 步求最简朝向恢复序列 */
+function solveSimplification(target: number[]): string[] {
+  const id = [0, 1, 2, 3, 4, 5];
+  if (eqState(target, id)) return [];
+  const axes: Axis[] = ['x', 'y', 'z'];
+  const counts = [1, 2, 3];
 
-  // NOTE: 恒等——无需旋转
-  if (mapsEqual(map, IDENTITY_MAP)) return [];
-
-  // NOTE: 单旋转
-  for (const r of allRots) {
-    if (mapsEqual(map, ROTATION_MAP[r])) return [r];
+  for (const a of axes) for (const c of counts) {
+    const p = [...id];
+    applyRot(p, a, c);
+    if (eqState(p, target)) return [rotStr(a, c)];
   }
-
-  // NOTE: 双旋转
-  for (const r1 of allRots) {
-    for (const r2 of allRots) {
-      const composed = composeRotations(ROTATION_MAP[r1], ROTATION_MAP[r2]);
-      if (mapsEqual(map, composed)) return [r1, r2];
+  for (const a1 of axes) for (const c1 of counts) {
+    for (const a2 of axes) {
+      if (a1 === a2) continue;
+      for (const c2 of counts) {
+        const p = [...id];
+        applyRot(p, a1, c1);
+        applyRot(p, a2, c2);
+        if (eqState(p, target)) return [rotStr(a1, c1), rotStr(a2, c2)];
+      }
     }
   }
-
-  // NOTE: 理论上不会到这里——3 阶魔方旋转群 ≤2 步可达
   return [];
 }
 
+interface RecordedMove { originalFace: number; amount: number }
+
+function charToFace(c: string): number {
+  switch (c) {
+    case 'U': return U;
+    case 'L': return L;
+    case 'F': return F;
+    case 'R': return R;
+    case 'B': return B;
+    case 'D': return D;
+    default: return -1;
+  }
+}
+
+function processToken(token: string, state: number[], history: RecordedMove[]) {
+  if (!token) return;
+  const base = token[0];
+
+  // amount 检测——对齐 C++：先看是否含 '2'，否则看是否含 "'"
+  let amount = 1;
+  if (token.includes('2')) amount = 2;
+  else if (token.includes("'")) amount = 3;
+
+  // wide notation 'Rw' / 'Lw' / 'Uw' 等：第二个字符是 w
+  const isWideUpper = token.length > 1 && token[1] === 'w' && base >= 'A' && base <= 'Z';
+
+  // 整体旋转 x/y/z（X/Y/Z 也容错为旋转）
+  if (base === 'x' || base === 'y' || base === 'z' ||
+      base === 'X' || base === 'Y' || base === 'Z') {
+    applyRot(state, base.toLowerCase() as Axis, amount);
+    return;
+  }
+
+  // 单层面转动：大写且非 Xw 形式
+  if (!isWideUpper && base >= 'A' && base <= 'Z') {
+    const slot = charToFace(base);
+    if (slot < 0) return;
+    history.push({ originalFace: state[slot], amount });
+    return;
+  }
+
+  // 宽转动：小写 r/l/u/d/f/b 或 Xw 形式（统一为小写 wideBase）
+  const wideBase = isWideUpper ? base.toLowerCase() : base;
+  let rotAxis: Axis | null = null;
+  let rotAmt = 0;
+  let counterSlot = -1;
+  switch (wideBase) {
+    case 'r': rotAxis = 'x'; rotAmt = amount; counterSlot = L; break;
+    case 'l': rotAxis = 'x'; rotAmt = (4 - amount) % 4; counterSlot = R; break;
+    case 'u': rotAxis = 'y'; rotAmt = amount; counterSlot = D; break;
+    case 'd': rotAxis = 'y'; rotAmt = (4 - amount) % 4; counterSlot = U; break;
+    case 'f': rotAxis = 'z'; rotAmt = amount; counterSlot = B; break;
+    case 'b': rotAxis = 'z'; rotAmt = (4 - amount) % 4; counterSlot = F; break;
+    default: return;
+  }
+  applyRot(state, rotAxis, rotAmt);
+  history.push({ originalFace: state[counterSlot], amount });
+}
+
+function moveStr(slot: number, amount: number): string {
+  let s: string = FACE_NAMES[slot];
+  if (amount === 2) s += '2';
+  else if (amount === 3) s += "'";
+  return s;
+}
+
 /**
- * 标准化 Cross 解法
- * 1. 将宽转动分解为 面转动 + 旋转
- * 2. 将旋转吸收——旋转不实际执行，而是变换后续面转动
- * 3. 最后输出最简旋转前缀 + 标准化的面转动序列
- *
- * @param moves 步骤 token 数组
- * @returns 标准化后的 token 数组
+ * 标准化输入 token 序列。
+ * 输出：[...prefix rotations, ...face moves]，全部为单层 + 整体转体。
  */
-export function normalize(moves: string[]): string[] {
-  // NOTE: Phase 1 — 展开宽转动
-  const expanded: string[] = [];
-  for (const m of moves) {
-    const decomp = WIDE_MOVE_DECOMPOSE[m];
-    if (decomp) {
-      expanded.push(decomp[0], decomp[1]);
-    } else {
-      expanded.push(m);
-    }
+export function normalize(tokens: string[]): string[] {
+  const state = [0, 1, 2, 3, 4, 5];
+  const history: RecordedMove[] = [];
+  for (const tok of tokens) processToken(tok, state, history);
+
+  const prefix = solveSimplification(state);
+
+  const orig2slot = [0, 0, 0, 0, 0, 0];
+  for (let s = 0; s < 6; s++) orig2slot[state[s]] = s;
+
+  const out: string[] = [...prefix];
+  for (const m of history) {
+    out.push(moveStr(orig2slot[m.originalFace], m.amount));
+  }
+  return out;
+}
+
+/**
+ * 按行标准化：每行返回该行原本的 face moves 在最终朝向下的写法，
+ * 所有 rotations 合并成单一 prefix。
+ */
+export function normalizeLines(linesOfTokens: string[][]): {
+  prefix: string[];
+  perLine: string[][];
+} {
+  const state = [0, 1, 2, 3, 4, 5];
+  const perLineHistory: RecordedMove[][] = [];
+  for (const toks of linesOfTokens) {
+    const hist: RecordedMove[] = [];
+    for (const tok of toks) processToken(tok, state, hist);
+    perLineHistory.push(hist);
   }
 
-  // NOTE: Phase 2 — 将旋转吸收到后续面转动中
-  // 从后往前扫描：遇到旋转时，将其效果应用到前面所有面转动上
-  let accMap = { ...IDENTITY_MAP };
-  const result: string[] = [];
+  const prefix = solveSimplification(state);
+  const orig2slot = [0, 0, 0, 0, 0, 0];
+  for (let s = 0; s < 6; s++) orig2slot[state[s]] = s;
 
-  for (let i = expanded.length - 1; i >= 0; i--) {
-    const token = expanded[i];
-    if (ROTATIONS.has(token)) {
-      // NOTE: 累积旋转——将此旋转应用到累积映射中
-      accMap = composeRotations(ROTATION_MAP[token], accMap);
-    } else {
-      // NOTE: 面转动——用累积旋转变换
-      result.unshift(applyRotationToMove(token, accMap));
-    }
-  }
-
-  // NOTE: Phase 3 — 将剩余的累积旋转转为最简前缀
-  const prefixRots = mapToRotations(accMap);
-  return [...prefixRots, ...result];
+  const perLine = perLineHistory.map(hist =>
+    hist.map(m => moveStr(orig2slot[m.originalFace], m.amount))
+  );
+  return { prefix, perLine };
 }

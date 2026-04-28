@@ -134,11 +134,12 @@ def scrape_cubing_china():
     爬取 cubing.com 比赛列表全部页面（自动检测页数）。
     返回 [(alias, zh_name, start_date), ...] —— 保留 alias + 开始日期，供后续匹配用多种策略。
     """
-    # NOTE: 一行结构：<td>YYYY-MM-DD[~MM-DD]</td><td><a class="comp-type-*" href="...">...</a>...</td>
+    # NOTE: 一行结构：<td>YYYY-MM-DD[~END]</td><td><a class="comp-type-*" href="...">...</a>...</td>
+    # 跨日 END 三种格式：~DD（同月）/ ~MM-DD（同年跨月）/ ~YYYY-MM-DD（跨年，如 2025-12-31~2026-01-01）
     # 捕获: (start_date, alias, inner_html)
     # cubing.com 临近开赛会把 URL 从 /competition/ 切到 /live/，alias 不变 —— 两种都收
     row_pattern = re.compile(
-        r'<td>(\d{4}-\d{2}-\d{2})(?:~\d{2}(?:-\d{2})?)?</td>\s*'
+        r'<td>(\d{4}-\d{2}-\d{2})(?:~(?:\d{4}-)?(?:\d{2}-)?\d{2})?</td>\s*'
         r'<td>\s*<a[^>]*class="comp-type-\w+"[^>]*href="https://cubing\.com/(?:competition|live)/([^"?]+)"[^>]*>(.*?)</a>',
         re.DOTALL
     )

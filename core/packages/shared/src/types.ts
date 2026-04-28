@@ -225,6 +225,8 @@ export interface ReconComment {
   createdAt: number;
   /** Unix timestamp，未编辑则 null */
   updatedAt: number | null;
+  /** 管理员置顶 */
+  pinned: boolean;
 }
 
 /** 编辑历史条目 */

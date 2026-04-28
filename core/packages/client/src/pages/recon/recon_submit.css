@@ -11,6 +11,7 @@
   gap: 12px;
   margin-bottom: 12px;
   flex-wrap: wrap;
+  align-items: flex-start;
 }
 
 .submit-field {
@@ -22,6 +23,8 @@
 }
 
 .submit-field-wide { flex: 2; }
+/* pill 模式收缩到内容宽度，避免 flex:1 把已选 pill 撑满整列 */
+.submit-field-shrink { flex: 0 0 auto; min-width: 0; }
 .submit-block { width: 100%; margin-bottom: 12px; }
 
 .submit-label {
@@ -277,3 +280,44 @@
   font-size: 14px;
 }
 .submit-solver-pill .submit-solver-clear:hover { color: #ff8888; }
+
+/* --- 已选比赛 pill — 国旗 + 名称 + 灰色 WCA ID + ✕ --- */
+.submit-comp-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  font-size: 14px;
+  align-self: flex-start;
+  max-width: 100%;
+}
+.submit-comp-pill .submit-comp-name {
+  color: #dbdbdb;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.submit-comp-pill .submit-comp-clear {
+  background: transparent;
+  border: none;
+  color: #888888;
+  cursor: pointer;
+  padding: 0 4px;
+  font-size: 14px;
+}
+.submit-comp-pill .submit-comp-clear:hover { color: #ff8888; }
+
+.submit-btn-danger {
+  background: rgba(248, 113, 113, 0.12);
+  color: #f87171;
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  margin-left: auto;
+}
+
+.submit-btn-danger:hover {
+  background: rgba(248, 113, 113, 0.25);
+  color: #fff;
+}

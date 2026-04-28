@@ -14,12 +14,29 @@ import { compNameZh } from './country_flags';
 const openccT2S = OpenCC.Converter({ from: 'tw', to: 'cn' });
 const CJK_RE = /[㐀-鿿豈-﫿]/;
 
-/** 比赛名 display-only：去掉所有 "WCA "（尾随空格，大小写不敏感）。
- *  例：`WCA Asian Championship 2024` → `Asian Championship 2024`。
- *  只用在显示层；搜索 / 表单提交 / 数据存储路径保留原名。 */
+/** 比赛名 display-only 归一化：
+ *  1) 去掉所有 "WCA"（含可选尾随空格，大小写不敏感）
+ *  2) 含 CJK 时再去掉 "魔方"，并把开头 4 位年份移到末尾（`年` 字也吃掉）；
+ *     若移完后年份紧贴 ASCII 字母/数字（罗马数字 I/II/IV 等），中间补一个空格
+ *  例：`WCA Asian Championship 2024`        → `Asian Championship 2024`
+ *      `2026WCA佛山魔方公开赛`              → `佛山公开赛2026`
+ *      `2015WCA北京魔方公开赛`              → `北京公开赛2015`
+ *      `2026WCA北京立夏魔方赛`              → `北京立夏赛2026`
+ *      `2026WCA合肥三阶联赛 I`              → `合肥三阶联赛 I 2026`
+ *      `2026WCA合肥三阶联赛 IV`             → `合肥三阶联赛 IV 2026`
+ *  只用在显示层；搜索 / 表单提交 / 数据存储路径保留原名。
+ *  历史名仍叫 stripWcaPrefix，已经是通用 display-formatter。 */
 export function stripWcaPrefix(s: string): string {
   if (!s) return s;
-  return s.replace(/WCA /gi, '').trim();
+  let out = s.replace(/WCA ?/gi, '');
+  if (CJK_RE.test(out)) {
+    out = out.replace(/魔方/g, '');
+    out = out.replace(/^(\d{4})年?(.+)$/, (_, year: string, rest: string) => {
+      const sep = /[A-Za-z0-9]$/.test(rest) ? ' ' : '';
+      return rest + sep + year;
+    });
+  }
+  return out.trim();
 }
 
 export interface LocalizeCompOpts {

@@ -357,13 +357,14 @@ input:checked + .wca-stats-toggle-pill::after {
   white-space: nowrap;
 }
 
-/* NOTE: 表格容器跟随内容宽度，多列时 max-width 限制 + 横向滚动 */
+/* NOTE: 表格容器填满父级宽度,内容更宽时横向滚动(2026-04 改:fit-content → 100%
+   让 wr_metric 嵌入的 top10 history bar chart race 边框与表格对齐) */
 .wca-stats-table-wrapper {
   overflow-x: auto;
   border-radius: 12px;
   border: 1px solid #444444;
   background: #212121;
-  width: fit-content;
+  width: 100%;
   max-width: 100%;
 
   /* Firefox: 细滚动条，默认透明 */

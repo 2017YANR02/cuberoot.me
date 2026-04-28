@@ -2,15 +2,16 @@
  * 复盘详情页——迁移自 recon/detail/recon_detail.js（1586 行）
  * NOTE: 展示单条复盘的完整信息，含 twisty 动画、视频、统计、评论
  */
-import { useEffect, useState, useCallback, useRef, type MutableRefObject } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useEffect, useState, useCallback, useMemo, useRef, type MutableRefObject } from 'react';
+import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
-  Box, PenLine, Calendar, UserPlus, Pencil, StickyNote,
-  ChartColumn, Video, MessageCircle, Key, TriangleAlert,
+  Box, PenLine, Calendar, UserPlus, StickyNote,
+  ChartColumn, Video, MessageCircle, Key, TriangleAlert, ArrowRightLeft,
+  MoreVertical, Pencil, Trash2, Pin, PinOff,
 } from 'lucide-react';
-import type { ReconSolve, ReconComment, EditHistoryItem } from '@cuberoot/shared';
-import { getRecon, listComments, getEditHistory, deleteRecon, addComment, updateComment, deleteComment, getBiliCover, listRecons } from '../../utils/recon_api';
+import type { ReconSolve, ReconComment } from '@cuberoot/shared';
+import { getRecon, listComments, addComment, updateComment, deleteComment, pinComment, getBiliCover, listRecons } from '../../utils/recon_api';
 import {
   formatTime, flagClass,
   isBldEvent, getPuzzleId, wcaCompUrl, wcaPersonUrl,
@@ -19,24 +20,25 @@ import {
 import { displayCuberName } from '../../utils/name_utils';
 import { eventDisplayName } from '../../utils/wca_events';
 import { EventIcon } from '../../components/EventIcon';
-import { compNameZh, loadFlagData, flagDataVersion } from '../../utils/country_flags';
+import { compNameZh, loadFlagData, flagDataVersion, personFlagIso2 } from '../../utils/country_flags';
+import { Flag } from '../../utils/flag';
 import { stripWcaPrefix } from '../../utils/comp_localize';
-import { cleanForPlayer, findTokenPositions, snapToTokenBoundary, extractAlgFromText, syncPlayerToMoveCount } from '../../utils/recon_alg_utils';
-import { useAuthStore } from '../../stores/auth_store';
+import { toIsoDate } from '../../utils/date_range';
+import { cleanForPlayer, findTokenPositions, snapToTokenBoundary, extractAlgFromText, syncPlayerToMoveCount, countMovesExpanded } from '../../utils/recon_alg_utils';
+import { useAuthStore, isAdmin } from '../../stores/auth_store';
 import LangToggle from '../../components/LangToggle';
 import { RecordBadge } from '../../components/RecordBadge';
 import TwistySection from './components/TwistySection';
+import { buildNormalizedSolution, findCrossLineIndex, hasWideMoveInCrossSection } from '../../utils/recon_norm_cross_extract';
 import '../../recon.css';
 import './recon_detail.css';
 
 export default function ReconDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   const [solve, setSolve] = useState<ReconSolve | null>(null);
   const [comments, setComments] = useState<ReconComment[]>([]);
-  const [history, setHistory] = useState<EditHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -54,9 +56,8 @@ export default function ReconDetailPage() {
       // NOTE: 主数据独立加载——不被评论/历史 API 的失败拖累
       const solveData = await getRecon(Number(id));
       setSolve(solveData);
-      // NOTE: 评论和历史延迟加载（非关键路径，失败静默）
+      // NOTE: 评论延迟加载（非关键路径，失败静默）
       listComments(Number(id)).then(setComments).catch(() => {});
-      getEditHistory(String(id)).then(setHistory).catch(() => {});
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -65,17 +66,6 @@ export default function ReconDetailPage() {
   }, [id]);
 
   useEffect(() => { loadData(); }, [loadData]);
-
-  // NOTE: 删除复盘
-  const handleDelete = async () => {
-    if (!solve || !confirm(t('recon.confirmDelete'))) return;
-    try {
-      await deleteRecon(solve.id);
-      navigate('/recon');
-    } catch (err) {
-      alert(`Delete failed: ${(err as Error).message}`);
-    }
-  };
 
   if (loading) return <div className="recon-page"><div className="recon-loading">{t('common.loading')}</div></div>;
   if (error) return <div className="recon-page"><div className="recon-error"><TriangleAlert size={16} /> {error}</div></div>;
@@ -158,16 +148,7 @@ export default function ReconDetailPage() {
             </span>
           </div>
         )}
-        {history.length > 0 && (
-          <div className="detail-meta-item">
-            <span className="detail-meta-label"><Pencil size={16} /></span>
-            <span className="detail-meta-value">{history.length} {t('recon.editCount', { count: history.length })}</span>
-          </div>
-        )}
       </div>
-
-      {/* 编辑历史 */}
-      {history.length > 0 && <EditHistoryPanel history={history} />}
 
       {/* 同轮次成绩导航 */}
       {solve.comp && solve.event && solve.round && (
@@ -182,9 +163,6 @@ export default function ReconDetailPage() {
         <Link to={`/recon/submit/${solve.id}`} className="recon-btn recon-btn-edit">
           {t('recon.edit')}
         </Link>
-        <button className="recon-btn recon-btn-danger" onClick={handleDelete}>
-          {t('recon.delete')}
-        </button>
       </div>
     </div>
   );
@@ -202,6 +180,16 @@ function TwistyPlayerContext({ scramble, solutionText, solve }: {
   const { t } = useTranslation();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const playerRef = useRef<any>(null);
+  const [crossNormalized, setCrossNormalized] = useState(false);
+
+  // NOTE: 仅当 cross 段含宽转动时才允许切换；只有插入旋转或全单层时不显示
+  const canToggle = useMemo(() => hasWideMoveInCrossSection(solutionText), [solutionText]);
+  const normalizedText = useMemo(
+    () => canToggle ? buildNormalizedSolution(solutionText) : null,
+    [solutionText, canToggle],
+  );
+  const displayText = crossNormalized && normalizedText ? normalizedText : solutionText;
+  const crossLineIdx = useMemo(() => findCrossLineIndex(displayText), [displayText]);
 
   return (
     <div className="detail-body">
@@ -212,7 +200,7 @@ function TwistyPlayerContext({ scramble, solutionText, solve }: {
           <TwistySection
             puzzle={getPuzzleId(solve.event)}
             scramble={scramble}
-            alg={cleanForPlayer(solutionText)}
+            alg={cleanForPlayer(displayText)}
             playerRef={playerRef}
           />
         )}
@@ -227,7 +215,13 @@ function TwistyPlayerContext({ scramble, solutionText, solve }: {
           <div className="detail-solution-block">
             <div className="detail-scramble-text">{scramble}</div>
             <div className="detail-block-divider" />
-            <SolutionView text={solutionText} playerRef={playerRef} />
+            <SolutionView
+              text={displayText}
+              playerRef={playerRef}
+              crossLineIdx={canToggle ? crossLineIdx : -1}
+              crossNormalized={crossNormalized}
+              onToggleCross={() => setCrossNormalized(v => !v)}
+            />
           </div>
         ) : (
           <>
@@ -240,7 +234,13 @@ function TwistyPlayerContext({ scramble, solutionText, solve }: {
             {solutionText && (
               <div className="detail-section">
                 <div className="detail-section-label">{t('recon.solution')}</div>
-                <SolutionView text={solutionText} playerRef={playerRef} />
+                <SolutionView
+                  text={displayText}
+                  playerRef={playerRef}
+                  crossLineIdx={canToggle ? crossLineIdx : -1}
+                  crossNormalized={crossNormalized}
+                  onToggleCross={() => setCrossNormalized(v => !v)}
+                />
               </div>
             )}
           </>
@@ -310,8 +310,14 @@ function insertVisualCursor(el: HTMLElement, textOffset: number) {
 
 
 /** 解法文本展示——高亮阶段注释 + 光标跟随 twisty-player（从 legacy 迁移） */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function SolutionView({ text, playerRef }: { text: string; playerRef: MutableRefObject<any> }) {
+function SolutionView({ text, playerRef, crossLineIdx, crossNormalized, onToggleCross }: {
+  text: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  playerRef: MutableRefObject<any>;
+  crossLineIdx: number;
+  crossNormalized: boolean;
+  onToggleCross: () => void;
+}) {
   const preRef = useRef<HTMLPreElement>(null);
   const cursorOffsetRef = useRef(0);
 
@@ -326,11 +332,10 @@ function SolutionView({ text, playerRef }: { text: string; playerRef: MutableRef
     offset = snapToTokenBoundary(offset, result);
     cursorOffsetRef.current = offset;
     insertVisualCursor(el, offset);
-    // NOTE: 计算光标前的步数并同步 player
+    // NOTE: 计算光标前的步数并同步 player——展开 (...)N 重复以对齐播放器的实际动画步数
     const textBefore = plainText.substring(0, offset);
     const algBefore = extractAlgFromText(textBefore);
-    const moves = algBefore.trim().split(/\s+/).filter(s => s.length > 0);
-    syncPlayerToMoveCount(playerRef.current, moves.length);
+    syncPlayerToMoveCount(playerRef.current, countMovesExpanded(algBefore));
   }, [playerRef]);
 
   // NOTE: 方向键导航——左右按 token 跳转，上下按行跳转（从 legacy 迁移）
@@ -381,13 +386,14 @@ function SolutionView({ text, playerRef }: { text: string; playerRef: MutableRef
     insertVisualCursor(el, newPos);
     const textBefore = fullText.substring(0, newPos);
     const algBefore = extractAlgFromText(textBefore);
-    const moves = algBefore.trim().split(/\s+/).filter(s => s.length > 0);
-    syncPlayerToMoveCount(playerRef.current, moves.length);
+    syncPlayerToMoveCount(playerRef.current, countMovesExpanded(algBefore));
   }, [playerRef]);
 
   const lines = text.split(/\r?\n/);
   return (
     <pre
+      // NOTE: key 跟着文本走，切换 toggle 时强制重挂载，丢弃 insertVisualCursor 留下的 splitText 残留
+      key={crossNormalized ? 'normalized' : 'original'}
       ref={preRef}
       className="detail-solution-text"
       onClick={handleClick}
@@ -402,10 +408,21 @@ function SolutionView({ text, playerRef }: { text: string; playerRef: MutableRef
       {lines.map((line, i) => {
         const trimmed = line.trim();
         const nl = i > 0 ? '\n' : '';
+        const toggle = i === crossLineIdx ? (
+          <button
+            type="button"
+            className={`recon-cross-toggle${crossNormalized ? ' active' : ''}`}
+            onClick={(e) => { e.stopPropagation(); onToggleCross(); }}
+            title={crossNormalized ? 'Show original' : 'Normalize cross'}
+            tabIndex={-1}
+          >
+            <ArrowRightLeft size={12} />
+          </button>
+        ) : null;
         if (trimmed.startsWith('//')) {
-          return <span key={i}>{nl}<span className="recon-step-label">{line}</span></span>;
+          return <span key={i}>{nl}<span className="recon-step-label">{line}</span>{toggle}</span>;
         }
-        return <span key={i}>{nl}{line}</span>;
+        return <span key={i}>{nl}{line}{toggle}</span>;
       })}
     </pre>
   );
@@ -486,15 +503,62 @@ function StatsGrid({ solve }: { solve: ReconSolve }) {
   );
 }
 
-/** 视频嵌入 */
+/** 视频嵌入：按 host 决定 YT/B 站谁嵌入谁出链接 */
 function VideoSection({ videoUrl }: { videoUrl: string }) {
   const { t } = useTranslation();
-  const urls = videoUrl.split('\n').filter(u => u.trim());
+  const urls = videoUrl.split('\n').map(u => u.trim()).filter(u => u);
+
+  const ytUrls: string[] = [];
+  const biliUrls: string[] = [];
+  const otherUrls: string[] = [];
+  for (const u of urls) {
+    if (/youtu\.?be/i.test(u)) ytUrls.push(u);
+    else if (/BV[A-Za-z0-9]+/.test(u) || /bilibili\.com/i.test(u)) biliUrls.push(u);
+    else otherUrls.push(u);
+  }
+
+  const host = typeof window !== 'undefined' ? window.location.hostname : '';
+  const isLocal = host === 'localhost' || host === '127.0.0.1' || /^192\.168\./.test(host);
+  const isCN = /(?:^|\.)cuberoot\.me$/.test(host);
+
+  let embedUrls: string[];
+  let linkUrls: string[];
+  if (isLocal) {
+    // 本地 dev：两个都嵌入
+    embedUrls = [...ytUrls, ...biliUrls];
+    linkUrls = otherUrls;
+  } else if (isCN) {
+    // cuberoot.me：B 站嵌入 + YouTube 出链接（B 站为空时回退嵌 YT）
+    if (biliUrls.length > 0) {
+      embedUrls = biliUrls;
+      linkUrls = [...ytUrls, ...otherUrls];
+    } else {
+      embedUrls = ytUrls;
+      linkUrls = otherUrls;
+    }
+  } else {
+    // ruiminyan.github.io 或其他境外：YT 嵌入 + B 站出链接（YT 为空时回退嵌 B 站）
+    if (ytUrls.length > 0) {
+      embedUrls = ytUrls;
+      linkUrls = [...biliUrls, ...otherUrls];
+    } else {
+      embedUrls = biliUrls;
+      linkUrls = otherUrls;
+    }
+  }
+
+  if (embedUrls.length === 0 && linkUrls.length === 0) return null;
+
   return (
     <div className="detail-section">
       <div className="detail-section-label">{t('recon.video')}</div>
-      {urls.map((url, i) => (
-        <VideoEmbed key={i} url={url.trim()} />
+      {embedUrls.map((url, i) => (
+        <VideoEmbed key={`e${i}`} url={url} />
+      ))}
+      {linkUrls.map((url, i) => (
+        <a key={`l${i}`} href={url} target="_blank" rel="noopener noreferrer" className="detail-video-link">
+          <Video size={16} /> {url}
+        </a>
       ))}
     </div>
   );
@@ -554,57 +618,6 @@ function VideoEmbed({ url }: { url: string }) {
   );
 }
 
-/** 编辑历史折叠面板 */
-function EditHistoryPanel({ history }: { history: EditHistoryItem[] }) {
-  const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
-
-  return (
-    <div className="detail-section">
-      <button
-        className="recon-btn"
-        onClick={() => setOpen(!open)}
-        style={{ fontSize: '0.82rem' }}
-      >
-        {open ? '▼' : '▶'} {t('recon.editHistory')} ({history.length})
-      </button>
-      {open && (
-        <div className="detail-history-list">
-          {history.map((item, idx) => (
-            <div key={item.id || idx} className="detail-history-item">
-              <div className="detail-history-header">
-                <span>{item.editedBy || t('recon.unknown')}</span>
-                <span className="detail-comment-time">
-                  {new Date(item.editedAt * 1000).toLocaleString()}
-                </span>
-              </div>
-              {/* NOTE: 显示变更字段的 before/after diff */}
-              {item.after && (
-                <div className="detail-history-diff">
-                  {Object.keys(item.after).map(key => {
-                    const beforeVal = item.before?.[key];
-                    const afterVal = item.after![key];
-                    // NOTE: 跳过相同值
-                    if (JSON.stringify(beforeVal) === JSON.stringify(afterVal)) return null;
-                    return (
-                      <div key={key} className="detail-history-field">
-                        <span className="detail-history-key">{key}</span>
-                        <span className="detail-history-before">{String(beforeVal ?? '')}</span>
-                        <span className="detail-history-arrow">→</span>
-                        <span className="detail-history-after">{String(afterVal ?? '')}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 /** 同轮次成绩导航 */
 function SameRoundNav({ solve }: { solve: ReconSolve }) {
   const { t } = useTranslation();
@@ -625,15 +638,18 @@ function SameRoundNav({ solve }: { solve: ReconSolve }) {
 
   if (siblings.length === 0) return null;
 
+  // NOTE: 把当前 solve 合入 siblings 后按 solveNum 升序排，渲染时标记当前
+  const ordered = [...siblings, solve].sort((a, b) => (a.solveNum ?? 0) - (b.solveNum ?? 0));
+
   return (
     <div className="detail-section">
       <div className="detail-section-label">{t('recon.sameRound')}</div>
       <div className="detail-same-round">
-        {/* NOTE: 当前 solve */}
-        <span className="same-round-item same-round-current">
-          #{solve.solveNum ?? '?'} {formatTime(solve.rawTime)}
-        </span>
-        {siblings.map(s => (
+        {ordered.map(s => s.id === solve.id ? (
+          <span key={s.id} className="same-round-item same-round-current">
+            #{s.solveNum ?? '?'} {formatTime(s.rawTime)}
+          </span>
+        ) : (
           <Link key={s.id} to={`/recon/${s.id}`} className="same-round-item">
             #{s.solveNum ?? '?'} {formatTime(s.rawTime)}
           </Link>
@@ -686,12 +702,27 @@ function CommentsView({
   onUpdate: () => void;
 }) {
   const [newComment, setNewComment] = useState('');
+  const [composerOpen, setComposerOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editText, setEditText] = useState('');
+  const [menuOpenId, setMenuOpenId] = useState<number | null>(null);
 
-  const currentWcaId = useAuthStore(s => s.user?.wcaId) || '';
-  const { t } = useTranslation();
+  const user = useAuthStore(s => s.user);
+  const currentWcaId = user?.wcaId || '';
+  const { t, i18n } = useTranslation();
+  const isZh = i18n.language === 'zh';
+
+  // NOTE: 点击空白处关闭菜单
+  useEffect(() => {
+    if (menuOpenId === null) return;
+    const handler = () => setMenuOpenId(null);
+    const timer = setTimeout(() => document.addEventListener('click', handler), 0);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('click', handler);
+    };
+  }, [menuOpenId]);
 
   const handleAdd = async () => {
     if (!newComment.trim() || submitting) return;
@@ -699,6 +730,7 @@ function CommentsView({
     try {
       await addComment(reconId, newComment.trim());
       setNewComment('');
+      setComposerOpen(false);
       onUpdate();
     } catch (err) {
       alert(`Error: ${(err as Error).message}`);
@@ -707,11 +739,25 @@ function CommentsView({
     }
   };
 
+  const handleCancelCompose = () => {
+    setNewComment('');
+    setComposerOpen(false);
+  };
+
   const handleEdit = async (commentId: number) => {
     if (!editText.trim()) return;
     try {
       await updateComment(commentId, editText.trim());
       setEditingId(null);
+      onUpdate();
+    } catch (err) {
+      alert(`Error: ${(err as Error).message}`);
+    }
+  };
+
+  const handleTogglePin = async (commentId: number, nextPinned: boolean) => {
+    try {
+      await pinComment(commentId, nextPinned);
       onUpdate();
     } catch (err) {
       alert(`Error: ${(err as Error).message}`);
@@ -733,77 +779,154 @@ function CommentsView({
       <div className="detail-section-label">
         <MessageCircle size={14} /> {t('recon.comments')} ({comments.length})
       </div>
-      <div className="detail-comments">
-        {comments.map(comment => (
-          <div key={comment.id} className="detail-comment">
-            <div className="detail-comment-header">
-              <strong>{comment.authorName}</strong>
-              <span className="detail-comment-time">
-                {new Date(comment.createdAt * 1000).toLocaleDateString()}
-                {comment.updatedAt && ` (${t('recon.edited')})`}
-              </span>
+      {/* NOTE: 添加评论——YouTube 风格，放在评论列表上方；未登录则显示登录提示 */}
+      {currentWcaId ? (
+        <div className={`yt-composer${composerOpen || newComment ? ' yt-composer-active' : ''}`}>
+          {user?.avatar ? (
+            <img src={user.avatar} alt="" className="yt-composer-avatar" />
+          ) : (
+            <div className="yt-composer-avatar yt-composer-avatar-fallback">
+              {user?.name?.[0]?.toUpperCase() || '?'}
             </div>
-            {editingId === comment.id ? (
-              <div className="detail-comment-edit">
-                <textarea
-                  value={editText}
-                  onChange={e => setEditText(e.target.value)}
-                  rows={3}
-                />
-                <div className="detail-comment-edit-actions">
-                  <button className="recon-btn-sm" onClick={() => handleEdit(comment.id)}>
-                    {t('recon.save')}
-                  </button>
-                  <button className="recon-btn-sm" onClick={() => setEditingId(null)}>
+          )}
+          <div className="yt-composer-body">
+            <textarea
+              className="yt-composer-input"
+              value={newComment}
+              onChange={e => setNewComment(e.target.value)}
+              onFocus={() => setComposerOpen(true)}
+              placeholder={t('recon.writeComment')}
+              rows={composerOpen || newComment ? 2 : 1}
+            />
+            {(composerOpen || newComment) && (
+              <div className="yt-composer-actions">
+                <div />
+                <div className="yt-composer-buttons">
+                  <button type="button" className="yt-btn-text" onClick={handleCancelCompose}>
                     {t('recon.cancel')}
+                  </button>
+                  <button
+                    type="button"
+                    className="yt-btn-primary"
+                    onClick={handleAdd}
+                    disabled={submitting || !newComment.trim()}
+                  >
+                    {submitting ? t('recon.posting') : t('recon.post')}
                   </button>
                 </div>
               </div>
-            ) : (
-              <>
-                <div className="detail-comment-body">{comment.content}</div>
-                {/* NOTE: 仅本人可编辑/删除自己的评论 */}
-                {currentWcaId && currentWcaId === comment.authorId && (
-                  <div className="detail-comment-actions">
-                    <button className="recon-btn-sm" onClick={() => {
-                      setEditingId(comment.id);
-                      setEditText(comment.content);
-                    }}>
-                      {t('recon.edit')}
-                    </button>
-                    <button className="recon-btn-sm recon-btn-danger-sm" onClick={() => handleDelete(comment.id)}>
-                      {t('recon.delete')}
-                    </button>
-                  </div>
-                )}
-              </>
             )}
           </div>
-        ))}
-      </div>
-
-      {/* NOTE: 添加评论——需登录后显示，未登录显示提示 */}
-      {currentWcaId ? (
-        <div className="detail-comment-add">
-          <textarea
-            value={newComment}
-            onChange={e => setNewComment(e.target.value)}
-            placeholder={t('recon.writeComment')}
-            rows={2}
-          />
-          <button
-            className="recon-btn"
-            onClick={handleAdd}
-            disabled={submitting || !newComment.trim()}
-          >
-            {submitting ? t('recon.posting') : t('recon.post')}
-          </button>
         </div>
       ) : (
         <div className="detail-comment-login-hint" onClick={() => useAuthStore.getState().login()} style={{ cursor: 'pointer' }}>
           <Key size={16} /> {t('recon.loginToComment')}
         </div>
       )}
+
+      <div className="yt-comment-list">
+        {comments.map(comment => {
+          const isOwn = !!currentWcaId && currentWcaId === comment.authorId;
+          const admin = isAdmin();
+          const canEdit = isOwn;
+          const canDelete = isOwn || admin;
+          const canPin = admin;
+          const ownAvatar = isOwn && user?.avatar ? user.avatar : null;
+          const displayName = displayCuberName(comment.authorName || '', isZh);
+          return (
+            <div key={comment.id} className="yt-comment">
+              {ownAvatar ? (
+                <img src={ownAvatar} alt="" className="yt-comment-avatar" />
+              ) : (
+                <div className="yt-comment-avatar yt-comment-avatar-fallback">
+                  {displayName?.[0]?.toUpperCase() || '?'}
+                </div>
+              )}
+              <div className="yt-comment-content">
+                {comment.pinned && (
+                  <div className="yt-comment-pinned-badge">
+                    <Pin size={12} /> {t('recon.pinned')}
+                  </div>
+                )}
+                <div className="yt-comment-meta">
+                  <Flag iso2={personFlagIso2(comment.authorId)} className="yt-comment-flag" />
+                  <span className="yt-comment-author">{displayName}</span>
+                  <span className="yt-comment-time">
+                    {toIsoDate(new Date(comment.createdAt * 1000))}
+                    {comment.updatedAt ? ` (${t('recon.edited')})` : ''}
+                  </span>
+                </div>
+                {editingId === comment.id ? (
+                  <div className="yt-comment-edit">
+                    <textarea
+                      className="yt-composer-input"
+                      value={editText}
+                      onChange={e => setEditText(e.target.value)}
+                      rows={2}
+                      autoFocus
+                    />
+                    <div className="yt-composer-actions">
+                      <div />
+                      <div className="yt-composer-buttons">
+                        <button type="button" className="yt-btn-text" onClick={() => setEditingId(null)}>
+                          {t('recon.cancel')}
+                        </button>
+                        <button type="button" className="yt-btn-primary" onClick={() => handleEdit(comment.id)} disabled={!editText.trim()}>
+                          {t('recon.save')}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="yt-comment-body">{comment.content}</div>
+                )}
+              </div>
+              {(canEdit || canDelete || canPin) && editingId !== comment.id && (
+                <div className="yt-comment-menu-wrap" onClick={e => e.stopPropagation()}>
+                  <button
+                    type="button"
+                    className="yt-comment-menu-btn"
+                    onClick={() => setMenuOpenId(menuOpenId === comment.id ? null : comment.id)}
+                  >
+                    <MoreVertical size={18} />
+                  </button>
+                  {menuOpenId === comment.id && (
+                    <div className="yt-comment-menu">
+                      {canEdit && (
+                        <button type="button" onClick={() => {
+                          setEditingId(comment.id);
+                          setEditText(comment.content);
+                          setMenuOpenId(null);
+                        }}>
+                          <Pencil size={14} /> {t('recon.edit')}
+                        </button>
+                      )}
+                      {canPin && (
+                        <button type="button" onClick={() => {
+                          setMenuOpenId(null);
+                          handleTogglePin(comment.id, !comment.pinned);
+                        }}>
+                          {comment.pinned
+                            ? <><PinOff size={14} /> {t('recon.unpin')}</>
+                            : <><Pin size={14} /> {t('recon.pin')}</>}
+                        </button>
+                      )}
+                      {canDelete && (
+                        <button type="button" onClick={() => {
+                          setMenuOpenId(null);
+                          handleDelete(comment.id);
+                        }}>
+                          <Trash2 size={14} /> {t('recon.delete')}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

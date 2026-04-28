@@ -8,8 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit",
-    "typecheck:ci": "tsc -b"
+    "typecheck": "tsc -b",
+    "typecheck:ci": "tsc -b --force"
   },
   "dependencies": {
     "@chenglou/pretext": "^0.0.3",
