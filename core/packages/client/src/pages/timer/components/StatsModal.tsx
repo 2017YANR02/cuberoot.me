@@ -16,6 +16,7 @@ import {
 import { bucketStats, bucketBoundaries, type BucketStats } from '../stats_buckets';
 import ScatterChart from './ScatterChart';
 import HistogramChart from './HistogramChart';
+import HourChart from './HourChart';
 import RecordsOverlay from './RecordsOverlay';
 import CfopCaseStatsPanel from './CfopCaseStatsPanel';
 
@@ -351,6 +352,24 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
             </div>
           </div>
         </div>
+
+        {solves.filter(s => Number.isFinite(effectiveMs(s))).length >= 10 && (
+          <div className="modal-section">
+            <h3 className="settings-h3">
+              {isZh ? '什么时候手感最好？' : 'When are you fastest?'}
+            </h3>
+            <div className="stats-charts">
+              <div className="stats-chart-card">
+                <HourChart
+                  solves={solves}
+                  isZh={isZh}
+                  width={520}
+                  height={160}
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
         {subX.length > 0 && (
           <div className="modal-section">
