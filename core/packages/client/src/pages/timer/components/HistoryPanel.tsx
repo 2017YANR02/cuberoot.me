@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
-import { Star, X, GitCompare } from 'lucide-react';
-import type { Solve } from '../types';
+import { Star, X, GitCompare, ChevronDown, ChevronUp } from 'lucide-react';
+import type { Solve, Penalty } from '../types';
 import { effectiveMs } from '../types';
 import { formatMs, pbSingleIndex } from '../stats';
 import CompareSolvesModal from './CompareSolvesModal';
@@ -42,6 +42,47 @@ function bestWindowIndices(
   return { start: bestStart, end: bestStart + n - 1, ms: Math.floor(best / 10) * 10 };
 }
 
+/** Parse a "5.0" / "1:23.45" / "12.3" string into ms. Returns null on failure. */
+function parseTimeSeconds(input: string): number | null {
+  const t = input.trim();
+  if (!t) return null;
+  // Support "m:ss.xx" or plain seconds.
+  const colonMatch = t.match(/^(\d+):(\d+(?:\.\d+)?)$/);
+  if (colonMatch) {
+    const m = parseInt(colonMatch[1], 10);
+    const s = parseFloat(colonMatch[2]);
+    if (!Number.isFinite(m) || !Number.isFinite(s)) return null;
+    return Math.round((m * 60 + s) * 1000);
+  }
+  const n = parseFloat(t);
+  if (!Number.isFinite(n) || n < 0) return null;
+  return Math.round(n * 1000);
+}
+
+/** Parse YYYY-MM-DD into Unix-ms at start-of-local-day, or null. */
+function parseDateStart(input: string): number | null {
+  if (!input) return null;
+  const m = input.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return null;
+  const y = +m[1], mo = +m[2] - 1, d = +m[3];
+  const dt = new Date(y, mo, d, 0, 0, 0, 0);
+  if (Number.isNaN(dt.getTime())) return null;
+  return dt.getTime();
+}
+
+/** Parse YYYY-MM-DD into Unix-ms at end-of-local-day (exclusive next-day start). */
+function parseDateEnd(input: string): number | null {
+  if (!input) return null;
+  const m = input.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return null;
+  const y = +m[1], mo = +m[2] - 1, d = +m[3];
+  const dt = new Date(y, mo, d + 1, 0, 0, 0, 0);
+  if (Number.isNaN(dt.getTime())) return null;
+  return dt.getTime();
+}
+
+const ALL_PENALTIES: Penalty[] = ['ok', '+2', 'DNF'];
+
 export default function HistoryPanel({ solves, isZh, onRowClick }: Props) {
   const [query, setQuery] = useState('');
   const [compareMode, setCompareMode] = useState(false);
@@ -51,6 +92,16 @@ export default function HistoryPanel({ solves, isZh, onRowClick }: Props) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [compareError, setCompareError] = useState<string | null>(null);
   const [comparePair, setComparePair] = useState<[Solve, Solve] | null>(null);
+
+  // Structured filters
+  const [filtersExpanded, setFiltersExpanded] = useState(false);
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [timeMin, setTimeMin] = useState('');
+  const [timeMax, setTimeMax] = useState('');
+  const [penaltySet, setPenaltySet] = useState<Set<Penalty>>(new Set(ALL_PENALTIES));
+  const [ollFilter, setOllFilter] = useState('');
+  const [pllFilter, setPllFilter] = useState('');
 
   const reversed = [...solves].reverse(); // newest at top
   const pbIdx = pbSingleIndex(solves);
@@ -69,17 +120,86 @@ export default function HistoryPanel({ solves, isZh, onRowClick }: Props) {
   }, [solves]);
 
   const trimmed = query.trim().toLowerCase();
+
+  const dateFromMs = parseDateStart(dateFrom);
+  const dateToMs = parseDateEnd(dateTo);
+  const timeMinMs = parseTimeSeconds(timeMin);
+  const timeMaxMs = parseTimeSeconds(timeMax);
+  const ollTrim = ollFilter.trim().toLowerCase();
+  const pllTrim = pllFilter.trim().toLowerCase();
+
+  // Count of active non-default filters (excluding the comment/scramble query).
+  const activeFilterCount =
+    (dateFromMs !== null ? 1 : 0) +
+    (dateToMs !== null ? 1 : 0) +
+    (timeMinMs !== null ? 1 : 0) +
+    (timeMaxMs !== null ? 1 : 0) +
+    (penaltySet.size !== ALL_PENALTIES.length ? 1 : 0) +
+    (ollTrim ? 1 : 0) +
+    (pllTrim ? 1 : 0);
+
   const filteredReversed = useMemo(() => {
-    if (!trimmed) return reversed;
     return reversed.filter((s) => {
-      const c = (s.comment ?? '').toLowerCase();
-      const sc = (s.scramble ?? '').toLowerCase();
-      return c.includes(trimmed) || sc.includes(trimmed);
+      // Comment / scramble substring
+      if (trimmed) {
+        const c = (s.comment ?? '').toLowerCase();
+        const sc = (s.scramble ?? '').toLowerCase();
+        if (!c.includes(trimmed) && !sc.includes(trimmed)) return false;
+      }
+      // Date range (uses solve.ts)
+      if (dateFromMs !== null && s.ts < dateFromMs) return false;
+      if (dateToMs !== null && s.ts >= dateToMs) return false;
+      // Time range (effective ms; DNF excluded if a time bound is set)
+      if (timeMinMs !== null || timeMaxMs !== null) {
+        const eff = effectiveMs(s);
+        if (!Number.isFinite(eff)) return false;
+        if (timeMinMs !== null && eff < timeMinMs) return false;
+        if (timeMaxMs !== null && eff > timeMaxMs) return false;
+      }
+      // Penalty
+      if (!penaltySet.has(s.penalty)) return false;
+      // OLL / PLL case substring
+      if (ollTrim) {
+        const oll = (s.stageSegments?.ollCase ?? '').toLowerCase();
+        if (!oll.includes(ollTrim)) return false;
+      }
+      if (pllTrim) {
+        const pll = (s.stageSegments?.pllCase ?? '').toLowerCase();
+        if (!pll.includes(pllTrim)) return false;
+      }
+      return true;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trimmed, solves]);
+  }, [trimmed, solves, dateFromMs, dateToMs, timeMinMs, timeMaxMs, penaltySet, ollTrim, pllTrim]);
 
   const matchCount = filteredReversed.length;
+  const hasAnyFilter = !!trimmed || activeFilterCount > 0;
+
+  const clearAllFilters = () => {
+    setQuery('');
+    setDateFrom('');
+    setDateTo('');
+    setTimeMin('');
+    setTimeMax('');
+    setPenaltySet(new Set(ALL_PENALTIES));
+    setOllFilter('');
+    setPllFilter('');
+  };
+
+  const togglePenalty = (p: Penalty) => {
+    setPenaltySet(prev => {
+      const next = new Set(prev);
+      if (next.has(p)) {
+        // Avoid leaving an empty set (which would hide everything silently);
+        // re-enable all when user toggles off the last one.
+        if (next.size === 1) return new Set(ALL_PENALTIES);
+        next.delete(p);
+      } else {
+        next.add(p);
+      }
+      return next;
+    });
+  };
 
   const exitCompareMode = () => {
     setCompareMode(false);
@@ -126,6 +246,33 @@ export default function HistoryPanel({ solves, isZh, onRowClick }: Props) {
 
   const closeCompareModal = () => {
     setComparePair(null);
+  };
+
+  // Inline style helpers for the filters panel
+  const chipBtn = (active: boolean): React.CSSProperties => ({
+    background: active ? '#2a3d4d' : 'transparent',
+    border: '1px solid ' + (active ? '#4d7a99' : '#333'),
+    color: active ? '#cde' : '#888',
+    borderRadius: 4,
+    padding: '2px 8px',
+    cursor: 'pointer',
+    fontSize: 11,
+  });
+  const inputStyle: React.CSSProperties = {
+    background: '#0e0e11',
+    border: '1px solid #333',
+    color: '#ccc',
+    borderRadius: 4,
+    padding: '2px 6px',
+    fontSize: 11,
+    width: '100%',
+    boxSizing: 'border-box',
+  };
+  const labelStyle: React.CSSProperties = {
+    fontSize: 10,
+    color: '#888',
+    marginBottom: 2,
+    display: 'block',
   };
 
   return (
@@ -178,10 +325,159 @@ export default function HistoryPanel({ solves, isZh, onRowClick }: Props) {
             </button>
           )}
         </div>
-        {trimmed && (
+        {hasAnyFilter && (
           <span className="history-search-count">
             {isZh ? `${matchCount} 条匹配` : `${matchCount} matches`}
           </span>
+        )}
+      </div>
+      <div
+        style={{
+          padding: '4px 14px 6px',
+          borderBottom: filtersExpanded ? '1px solid #1f1f23' : 'none',
+          background: '#15151a',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button
+            type="button"
+            onClick={() => setFiltersExpanded(v => !v)}
+            aria-expanded={filtersExpanded}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: '#aaa',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+              fontSize: 11,
+              padding: '2px 0',
+            }}
+          >
+            {filtersExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+            {isZh ? '筛选' : 'Filters'}
+          </button>
+          {activeFilterCount > 0 && (
+            <span style={{ fontSize: 11, color: '#cde' }}>
+              {isZh
+                ? `${activeFilterCount} 个筛选生效`
+                : `${activeFilterCount} filter${activeFilterCount === 1 ? '' : 's'} active`}
+            </span>
+          )}
+          {hasAnyFilter && (
+            <button
+              type="button"
+              onClick={clearAllFilters}
+              style={{
+                marginLeft: 'auto',
+                background: 'transparent',
+                border: '1px solid #333',
+                color: '#888',
+                borderRadius: 4,
+                padding: '1px 6px',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 3,
+                fontSize: 10,
+              }}
+              title={isZh ? '清空所有筛选' : 'Clear all filters'}
+            >
+              <X size={10} />
+              {isZh ? '清空' : 'Clear filters'}
+            </button>
+          )}
+        </div>
+        {filtersExpanded && (
+          <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+              <div>
+                <label style={labelStyle}>{isZh ? '日期 起' : 'Date from'}</label>
+                <input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  style={inputStyle}
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>{isZh ? '日期 止' : 'Date to'}</label>
+                <input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  style={inputStyle}
+                />
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+              <div>
+                <label style={labelStyle}>{isZh ? '最短 (秒)' : 'Min (s)'}</label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={timeMin}
+                  onChange={(e) => setTimeMin(e.target.value)}
+                  placeholder="5.0"
+                  style={inputStyle}
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>{isZh ? '最长 (秒)' : 'Max (s)'}</label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={timeMax}
+                  onChange={(e) => setTimeMax(e.target.value)}
+                  placeholder="20.0"
+                  style={inputStyle}
+                />
+              </div>
+            </div>
+            <div>
+              <label style={labelStyle}>{isZh ? '罚时' : 'Penalty'}</label>
+              <div style={{ display: 'flex', gap: 4 }}>
+                {ALL_PENALTIES.map(p => {
+                  const label = p === 'ok' ? 'OK' : p;
+                  const active = penaltySet.has(p);
+                  return (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => togglePenalty(p)}
+                      aria-pressed={active}
+                      style={chipBtn(active)}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+              <div>
+                <label style={labelStyle}>{isZh ? 'OLL 公式' : 'OLL case'}</label>
+                <input
+                  type="text"
+                  value={ollFilter}
+                  onChange={(e) => setOllFilter(e.target.value)}
+                  placeholder={isZh ? '例如 OLL 21' : 'e.g. OLL 21'}
+                  style={inputStyle}
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>{isZh ? 'PLL 公式' : 'PLL case'}</label>
+                <input
+                  type="text"
+                  value={pllFilter}
+                  onChange={(e) => setPllFilter(e.target.value)}
+                  placeholder={isZh ? '例如 Aa' : 'e.g. Aa'}
+                  style={inputStyle}
+                />
+              </div>
+            </div>
+          </div>
         )}
       </div>
       {compareMode && (
@@ -210,7 +506,25 @@ export default function HistoryPanel({ solves, isZh, onRowClick }: Props) {
         )}
         {reversed.length > 0 && filteredReversed.length === 0 && (
           <div className="history-empty">
-            {isZh ? '没有匹配的成绩。' : 'No matching solves.'}
+            <div>{isZh ? '没有匹配的成绩。' : 'No solves match these filters'}</div>
+            {hasAnyFilter && (
+              <button
+                type="button"
+                onClick={clearAllFilters}
+                style={{
+                  marginTop: 6,
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#6aa3c8',
+                  cursor: 'pointer',
+                  fontSize: 12,
+                  textDecoration: 'underline',
+                  padding: 0,
+                }}
+              >
+                {isZh ? '清空筛选' : 'Clear filters'}
+              </button>
+            )}
           </div>
         )}
         {filteredReversed.map((s) => {
