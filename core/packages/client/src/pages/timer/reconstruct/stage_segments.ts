@@ -6,6 +6,12 @@
  * reaches Cross / F2L / OLL / Solved. Used by ReconstructModal to split a
  * solve's elapsed time into stage durations and per-stage TPS.
  *
+ * In addition to durations and HTM counts, snapshots the cube state at the
+ * moment each stage is first completed and runs the exact OLL/PLL recognizer
+ * to attach a case label to the OLL/PLL stages. Cross-side is best-effort:
+ * we inspect which of the 6 faces happened to have its 4 edges + matching
+ * adjacent centers at cross-done time.
+ *
  * Edge cases handled:
  *   - empty move stream (manual entry without smartcube data) → returns null,
  *     letting the modal hide the panel.
@@ -16,13 +22,18 @@
  *   - unparseable / wide-shorthand / rotation tokens are tolerated and applied
  *     where possible; tokens the parser can't make sense of are silently
  *     skipped rather than crashing.
+ *   - recognizers returning null (unrecognized state) → the case label stays
+ *     null and renders as omitted in the UI.
  */
 
 import { detectCfopStage, stageRank } from '../cube/cfop_detect';
 import type { CfopStage } from '../cube/cfop_detect';
-import type { CubeFaces } from '../cube/state';
+import type { CubeFaces, FaceArr } from '../cube/state';
 import { applyMoves, applyScramble, solved } from '../cube/state';
+import type { Face } from '../cube/moves';
 import { parseScramble } from '../cube/moves';
+import { recognizeOllExact, recognizePllExact } from '../components/cfop_recognize';
+import ollData from '@cuberoot/shared/data/oll.json';
 
 export interface SolveMove {
   /** Move token (e.g. "R", "U'", "F2"). */
@@ -48,6 +59,15 @@ export interface StageSegments {
   f2lHtm: number | null;
   ollHtm: number | null;
   pllHtm: number | null;
+  /** Best-effort cross face label (e.g. "D-cross") at cross-done time;
+   *  null if cross wasn't reached or no face matched. */
+  crossSide: string | null;
+  /** Compact OLL case label (e.g. "OLL 21 (H)" or "OLL skip"); null when
+   *  F2L wasn't reached or recognizer didn't match. */
+  ollCase: string | null;
+  /** Compact PLL case label (e.g. "PLL T" or "PLL skip"); null when OLL
+   *  wasn't reached or recognizer didn't match. */
+  pllCase: string | null;
 }
 
 const ROTATION_FAMILIES = new Set(['x', 'y', 'z', 'X', 'Y', 'Z']);
@@ -75,6 +95,134 @@ function applyOneToken(prev: CubeFaces, token: string): CubeFaces {
     return applyMoves(prev, 3, parsed);
   } catch {
     return prev;
+  }
+}
+
+function cloneFaces(f: CubeFaces): CubeFaces {
+  return {
+    U: f.U.slice(), D: f.D.slice(), F: f.F.slice(),
+    B: f.B.slice(), L: f.L.slice(), R: f.R.slice(),
+  };
+}
+
+/**
+ * Best-effort cross-side detection: for each of the 6 faces, check whether
+ * the 4 edge stickers on that face match its center, AND each of the 4
+ * adjacent side stickers matches that side's center. Returns the first
+ * matching face label (e.g. "D-cross") or null.
+ *
+ * Edge layout per face (row-major 3x3): edges are at indices 1, 3, 5, 7.
+ * The adjacent sticker on each neighbour is captured by the tables below.
+ */
+interface CrossSpec {
+  /** Face whose center color the cross lives on. */
+  face: Face;
+  /** 4 (neighbour-face, neighbour-sticker-index) pairs — the side stickers
+   *  next to each of the 4 cross edges. Must match the neighbour's center. */
+  sides: Array<{ side: Face; idx: number }>;
+}
+
+const CROSS_SPECS: CrossSpec[] = [
+  // D-cross: D edges 1/3/5/7 (DF, DL, DR, DB); side stickers F[7] R[7] B[7] L[7].
+  {
+    face: 'D',
+    sides: [
+      { side: 'F', idx: 7 },
+      { side: 'L', idx: 7 },
+      { side: 'R', idx: 7 },
+      { side: 'B', idx: 7 },
+    ],
+  },
+  // U-cross: U edges 1/3/5/7; side stickers on the top rows of F/R/B/L (idx 1).
+  {
+    face: 'U',
+    sides: [
+      { side: 'F', idx: 1 },
+      { side: 'L', idx: 1 },
+      { side: 'R', idx: 1 },
+      { side: 'B', idx: 1 },
+    ],
+  },
+  // F-cross: F edges 1/3/5/7; neighbours U[7], L[5], R[3], D[1].
+  {
+    face: 'F',
+    sides: [
+      { side: 'U', idx: 7 },
+      { side: 'L', idx: 5 },
+      { side: 'R', idx: 3 },
+      { side: 'D', idx: 1 },
+    ],
+  },
+  // B-cross: B edges 1/3/5/7; neighbours U[1], R[5], L[3], D[7].
+  {
+    face: 'B',
+    sides: [
+      { side: 'U', idx: 1 },
+      { side: 'R', idx: 5 },
+      { side: 'L', idx: 3 },
+      { side: 'D', idx: 7 },
+    ],
+  },
+  // L-cross: L edges 1/3/5/7; neighbours U[3], B[5], F[3], D[3].
+  {
+    face: 'L',
+    sides: [
+      { side: 'U', idx: 3 },
+      { side: 'B', idx: 5 },
+      { side: 'F', idx: 3 },
+      { side: 'D', idx: 3 },
+    ],
+  },
+  // R-cross: R edges 1/3/5/7; neighbours U[5], F[5], B[3], D[5].
+  {
+    face: 'R',
+    sides: [
+      { side: 'U', idx: 5 },
+      { side: 'F', idx: 5 },
+      { side: 'B', idx: 3 },
+      { side: 'D', idx: 5 },
+    ],
+  },
+];
+
+function detectCrossSide(state: CubeFaces): string | null {
+  for (const spec of CROSS_SPECS) {
+    const face: FaceArr = state[spec.face];
+    const center = face[4];
+    if (face[1] !== center || face[3] !== center || face[5] !== center || face[7] !== center) continue;
+    let ok = true;
+    for (const s of spec.sides) {
+      const nbr = state[s.side];
+      if (nbr[s.idx] !== nbr[4]) { ok = false; break; }
+    }
+    if (ok) return `${spec.face}-cross`;
+  }
+  return null;
+}
+
+/** Compact OLL label like "OLL 21 (H)" or "OLL skip"; null on no match. */
+function formatOllCase(state: CubeFaces): string | null {
+  try {
+    const r = recognizeOllExact(state);
+    if (!r) return null;
+    if (r.case === 'skip') return 'OLL skip';
+    const meta = (ollData as Record<string, { name?: string }>)[r.case];
+    const name = meta?.name ? ` (${meta.name})` : '';
+    return `${r.case}${name}`;
+  } catch {
+    return null;
+  }
+}
+
+/** Compact PLL label like "PLL T" or "PLL skip"; null on no match. */
+function formatPllCase(state: CubeFaces): string | null {
+  try {
+    const r = recognizePllExact(state);
+    if (!r) return null;
+    if (r.case === 'skip') return 'PLL skip';
+    return `PLL ${r.case}`;
+  } catch {
+    return null;
   }
 }
 
@@ -110,6 +258,12 @@ export function computeStageSegments(
 
   let lastReached: CfopStage = 'scrambled';
 
+  // State snapshots at the moment each stage is first completed. Used for
+  // exact case recognition after the walk.
+  let crossDoneState: CubeFaces | null = null;
+  let f2lDoneState: CubeFaces | null = null;
+  let ollDoneState: CubeFaces | null = null;
+
   for (const mv of moves) {
     const wasFace = isFaceTurnToken(mv.m);
     state = applyOneToken(state, mv.m);
@@ -129,9 +283,18 @@ export function computeStageSegments(
     // First-reach wins for each stage timestamp. Backfill earlier stages too
     // (e.g. a cross-into-XCross can jump scrambled → f2l in one move).
     const newRank = stageRank(stage);
-    if (newRank >= stageRank('cross') && crossDoneMs === null) crossDoneMs = mv.ts;
-    if (newRank >= stageRank('f2l')   && f2lDoneMs   === null) f2lDoneMs   = mv.ts;
-    if (newRank >= stageRank('oll')   && ollDoneMs   === null) ollDoneMs   = mv.ts;
+    if (newRank >= stageRank('cross') && crossDoneMs === null) {
+      crossDoneMs = mv.ts;
+      crossDoneState = cloneFaces(state);
+    }
+    if (newRank >= stageRank('f2l')   && f2lDoneMs   === null) {
+      f2lDoneMs   = mv.ts;
+      f2lDoneState = cloneFaces(state);
+    }
+    if (newRank >= stageRank('oll')   && ollDoneMs   === null) {
+      ollDoneMs   = mv.ts;
+      ollDoneState = cloneFaces(state);
+    }
     if (newRank >= stageRank('pll')   && solvedMs    === null) solvedMs    = mv.ts;
 
     if (newRank > stageRank(lastReached)) {
@@ -160,6 +323,12 @@ export function computeStageSegments(
     ? Math.max(0, solvedMs - ollDoneMs)
     : null;
 
+  // Case recognition on the snapshotted states. F2L-done state → OLL case;
+  // OLL-done state → PLL case; cross-done state → which face was crossed.
+  const crossSide = crossDoneState ? detectCrossSide(crossDoneState) : null;
+  const ollCase   = f2lDoneState   ? formatOllCase(f2lDoneState)     : null;
+  const pllCase   = ollDoneState   ? formatPllCase(ollDoneState)     : null;
+
   return {
     crossDoneMs,
     f2lDoneMs,
@@ -173,5 +342,8 @@ export function computeStageSegments(
     f2lHtm:   f2lDoneMs   !== null ? f2lHtm   : null,
     ollHtm:   ollDoneMs   !== null ? ollHtm   : null,
     pllHtm:   solvedMs    !== null ? pllHtm   : null,
+    crossSide,
+    ollCase,
+    pllCase,
   };
 }

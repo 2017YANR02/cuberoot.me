@@ -187,11 +187,12 @@ function StageSegmentsPanel({ segs, totalMs, isZh }: StagePanelProps) {
     labelZh: string;
     ms: number | null;
     htm: number | null;
+    caseLabel: string | null;
   }> = [
-    { key: 'cross', labelEn: 'Cross', labelZh: '十字', ms: segs.crossMs, htm: segs.crossHtm },
-    { key: 'f2l',   labelEn: 'F2L',   labelZh: 'F2L',  ms: segs.f2lMs,   htm: segs.f2lHtm },
-    { key: 'oll',   labelEn: 'OLL',   labelZh: 'OLL',  ms: segs.ollMs,   htm: segs.ollHtm },
-    { key: 'pll',   labelEn: 'PLL',   labelZh: 'PLL',  ms: segs.pllMs,   htm: segs.pllHtm },
+    { key: 'cross', labelEn: 'Cross', labelZh: '十字', ms: segs.crossMs, htm: segs.crossHtm, caseLabel: segs.crossSide },
+    { key: 'f2l',   labelEn: 'F2L',   labelZh: 'F2L',  ms: segs.f2lMs,   htm: segs.f2lHtm,   caseLabel: null },
+    { key: 'oll',   labelEn: 'OLL',   labelZh: 'OLL',  ms: segs.ollMs,   htm: segs.ollHtm,   caseLabel: segs.ollCase },
+    { key: 'pll',   labelEn: 'PLL',   labelZh: 'PLL',  ms: segs.pllMs,   htm: segs.pllHtm,   caseLabel: segs.pllCase },
   ];
 
   // Bar widths: proportional to per-stage ms over solve total. Stages that
@@ -244,6 +245,9 @@ function StageSegmentsPanel({ segs, totalMs, isZh }: StagePanelProps) {
             <div className={`reconstruct-stage-dot stage-${s.key}`} />
             <div className="reconstruct-stage-label">{isZh ? s.labelZh : s.labelEn}</div>
             <div className="reconstruct-stage-time">{formatStageTime(s.ms)}</div>
+            {s.caseLabel ? (
+              <div className="reconstruct-stage-case">{s.caseLabel}</div>
+            ) : null}
             <div className="reconstruct-stage-tps">
               {s.htm !== null ? `${s.htm} ${isZh ? '步' : 'htm'}` : '—'}
               {' · '}
