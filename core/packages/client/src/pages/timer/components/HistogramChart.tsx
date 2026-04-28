@@ -90,8 +90,7 @@ export default function HistogramChart({
       <svg
         className={`tc-chart tc-hist ${className ?? ''}`.trim()}
         viewBox={`0 0 ${width} ${height}`}
-        width={width}
-        height={height}
+        preserveAspectRatio="xMidYMid meet"
         role="img"
         aria-label={isZh ? '成绩分布直方图' : 'Solve time histogram'}
       >
