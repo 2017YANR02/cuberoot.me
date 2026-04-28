@@ -306,7 +306,7 @@ export default function ReconSubmitPage() {
           </label>
           <label className="submit-field">
             <span className="submit-label">{t('recon.event')} *</span>
-            <EventSelect events={EVENTS} value={form.event} onChange={(v) => setField('event', v)} />
+            <EventSelect events={EVENTS} value={form.event ?? ''} onChange={(v) => setField('event', v)} />
           </label>
           <label className="submit-field">
             <span className="submit-label">{t('recon.method')}</span>

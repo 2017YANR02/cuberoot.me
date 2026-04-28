@@ -1,5 +1,5 @@
 {
-  "scrapedAt": "2026-04-25T10:33:16.992Z",
+  "scrapedAt": "2026-04-28T07:06:32.161Z",
   "sourceUrl": "https://www.speedsolving.com/wiki/index.php?title=List_of_Unofficial_World_Records",
   "tabs": [
     {
@@ -14666,7 +14666,7 @@
                   "iso2": "GB",
                   "date": null,
                   "video": null,
-                  "notes": "[580]"
+                  "notes": "[579]"
                 },
                 {
                   "format": "avg5",
@@ -14827,7 +14827,7 @@
                   "iso2": "GB",
                   "date": "2024-04-10",
                   "video": null,
-                  "notes": "2024-04-10, [582]"
+                  "notes": "2024-04-10, [581]"
                 },
                 {
                   "format": "avg5",
@@ -14838,7 +14838,7 @@
                   "iso2": "GB",
                   "date": "2024-05-16",
                   "video": null,
-                  "notes": "2024-05-16, (10.847), (5.232), 5.375, 6.080, 5.455, [583]"
+                  "notes": "2024-05-16, (10.847), (5.232), 5.375, 6.080, 5.455, [582]"
                 },
                 {
                   "format": "avg12",
@@ -16766,7 +16766,7 @@
                   "iso2": null,
                   "date": null,
                   "video": null,
-                  "notes": "[671]"
+                  "notes": "[670]"
                 }
               ]
             },
@@ -16800,7 +16800,7 @@
                   "iso2": null,
                   "date": null,
                   "video": null,
-                  "notes": "[672] 9 People have solved this, but Charles is the only person who has shown a movecount."
+                  "notes": "[671] 9 People have solved this, but Charles is the only person who has shown a movecount."
                 }
               ]
             },
@@ -16966,7 +16966,7 @@
                   "iso2": "US",
                   "date": null,
                   "video": null,
-                  "notes": "[675]"
+                  "notes": "[674]"
                 },
                 {
                   "format": "avg12",
@@ -16977,7 +16977,7 @@
                   "iso2": "US",
                   "date": null,
                   "video": null,
-                  "notes": "[676]"
+                  "notes": "[675]"
                 },
                 {
                   "format": "avg100",
@@ -16988,7 +16988,7 @@
                   "iso2": "US",
                   "date": null,
                   "video": null,
-                  "notes": "[677]"
+                  "notes": "[676]"
                 }
               ]
             },
@@ -17446,6 +17446,135 @@
               ]
             },
             {
+              "id": "4x4x4-team-bld",
+              "name": "4x4x4 Team BLD",
+              "records": [
+                {
+                  "format": "single",
+                  "result": "1:13.06",
+                  "resultMs": 73060,
+                  "cuber": "Baptiste Bery & Romain Velcin",
+                  "country": "France",
+                  "iso2": "FR",
+                  "date": null,
+                  "video": null,
+                  "notes": null
+                },
+                {
+                  "format": "avg5",
+                  "result": "1:17.81",
+                  "resultMs": 77810,
+                  "cuber": "Baptiste Bery & Romain Velcin",
+                  "country": "France",
+                  "iso2": "FR",
+                  "date": null,
+                  "video": null,
+                  "notes": null
+                }
+              ]
+            },
+            {
+              "id": "4x4x4-team-bld-online",
+              "name": "4x4x4 Team BLD (Online)",
+              "records": [
+                {
+                  "format": "single",
+                  "result": "1:08.601",
+                  "resultMs": 68601,
+                  "cuber": "Eva Kato & Sam Brenner",
+                  "country": "United States",
+                  "iso2": "US",
+                  "date": null,
+                  "video": null,
+                  "notes": null
+                },
+                {
+                  "format": "avg5",
+                  "result": "1:48.490",
+                  "resultMs": 108490,
+                  "cuber": "Eva Kato & Sam Brenner",
+                  "country": "Japan (Previously United States) & United States",
+                  "iso2": null,
+                  "date": null,
+                  "video": null,
+                  "notes": null
+                }
+              ]
+            },
+            {
+              "id": "2x2-4x4-team-bld-online",
+              "name": "2x2-4x4 Team BLD (Online)",
+              "records": [
+                {
+                  "format": "single",
+                  "result": "1:55.186",
+                  "resultMs": 115186,
+                  "cuber": "Eva Kato & Sam Brenner",
+                  "country": "Japan (Previously United States) & United States",
+                  "iso2": null,
+                  "date": null,
+                  "video": null,
+                  "notes": null
+                }
+              ]
+            },
+            {
+              "id": "5x5-team-bld",
+              "name": "5x5 Team BLD",
+              "records": [
+                {
+                  "format": "single",
+                  "result": "2:34.13",
+                  "resultMs": 154130,
+                  "cuber": "Baptiste Bery & Romain Velcin",
+                  "country": "France",
+                  "iso2": "FR",
+                  "date": null,
+                  "video": null,
+                  "notes": null
+                },
+                {
+                  "format": "avg5",
+                  "result": "3:34.32",
+                  "resultMs": 214320,
+                  "cuber": "Baptiste Bery & Romain Velcin",
+                  "country": "France",
+                  "iso2": "FR",
+                  "date": null,
+                  "video": null,
+                  "notes": null
+                }
+              ]
+            },
+            {
+              "id": "skewb-team-bld",
+              "name": "Skewb Team BLD",
+              "records": [
+                {
+                  "format": "single",
+                  "result": "6.67",
+                  "resultMs": 6670,
+                  "cuber": "Baptiste Bery & Romain Velcin",
+                  "country": "France",
+                  "iso2": "FR",
+                  "date": null,
+                  "video": null,
+                  "notes": null
+                },
+                {
+                  "format": "avg5",
+                  "result": "11.16",
+                  "resultMs": 11160,
+                  "cuber": "Baptiste Bery & Romain Velcin",
+                  "country": "France",
+                  "iso2": "FR",
+                  "date": null,
+                  "video": null,
+                  "notes": null
+                }
+              ]
+            },
+            {
               "id": "pyraminx-team-bld-online",
               "name": "Pyraminx Team BLD (Online)",
               "records": [
@@ -17519,27 +17648,60 @@
               ]
             },
             {
-              "id": "4x4x4-team-bld-online",
-              "name": "4x4x4 Team BLD (Online)",
+              "id": "rubik-s-clock-team-bld",
+              "name": "Rubik's Clock Team BLD",
               "records": [
                 {
                   "format": "single",
-                  "result": "1:08.601",
-                  "resultMs": 68601,
-                  "cuber": "Eva Kato & Sam Brenner",
-                  "country": "United States",
-                  "iso2": "US",
+                  "result": "4.86",
+                  "resultMs": 4860,
+                  "cuber": "Baptiste Bery & Romain Velcin",
+                  "country": "France",
+                  "iso2": "FR",
                   "date": null,
                   "video": null,
                   "notes": null
                 },
                 {
-                  "format": "avg5",
-                  "result": "1:48.490",
-                  "resultMs": 108490,
-                  "cuber": "Eva Kato & Sam Brenner",
-                  "country": "Japan (Previously United States) & United States",
-                  "iso2": null,
+                  "format": "ao5",
+                  "result": "7.19",
+                  "resultMs": 7190,
+                  "cuber": "Baptiste Bery & Romain Velcin",
+                  "country": "France",
+                  "iso2": "FR",
+                  "date": null,
+                  "video": null,
+                  "notes": null
+                },
+                {
+                  "format": "avg12",
+                  "result": "8.51",
+                  "resultMs": 8510,
+                  "cuber": "Baptiste Bery & Romain Velcin",
+                  "country": "France",
+                  "iso2": "FR",
+                  "date": null,
+                  "video": null,
+                  "notes": null
+                },
+                {
+                  "format": "avg50",
+                  "result": "15.48",
+                  "resultMs": 15480,
+                  "cuber": "Luis Kleinheinz & Konstantin Jaehne",
+                  "country": "Germany",
+                  "iso2": "DE",
+                  "date": null,
+                  "video": null,
+                  "notes": null
+                },
+                {
+                  "format": "avg100",
+                  "result": "15.95",
+                  "resultMs": 15950,
+                  "cuber": "Luis Kleinheinz & Konstantin Jaehne",
+                  "country": "Germany",
+                  "iso2": "DE",
                   "date": null,
                   "video": null,
                   "notes": null
@@ -17547,19 +17709,19 @@
               ]
             },
             {
-              "id": "2x2-4x4-team-bld-online",
-              "name": "2x2-4x4 Team BLD (Online)",
+              "id": "3x3-team-bld-blindfolded-solver-direction-giving-non-cuber",
+              "name": "3x3 Team BLD (Blindfolded Solver, Direction-giving non-cuber)",
               "records": [
                 {
                   "format": "single",
-                  "result": "1:55.186",
-                  "resultMs": 115186,
-                  "cuber": "Eva Kato & Sam Brenner",
-                  "country": "Japan (Previously United States) & United States",
-                  "iso2": null,
+                  "result": "2:12.20",
+                  "resultMs": 132200,
+                  "cuber": "Luis Kleinheinz (Blindfolded) & Nelly Reisinger (girlfriend & Non-Cuber)",
+                  "country": "Germany",
+                  "iso2": "DE",
                   "date": null,
                   "video": null,
-                  "notes": null
+                  "notes": "Used OP/Orozco as full 3-Style would‘ve been to complex"
                 }
               ]
             },
@@ -18237,84 +18399,6 @@
                   "date": null,
                   "video": null,
                   "notes": null
-                }
-              ]
-            },
-            {
-              "id": "rubik-s-clock-team-bld",
-              "name": "Rubik's Clock Team BLD",
-              "records": [
-                {
-                  "format": "single",
-                  "result": "5.78",
-                  "resultMs": 5780,
-                  "cuber": "Akash Sreedharan & Keagen Khew",
-                  "country": "Singapore",
-                  "iso2": "SG",
-                  "date": null,
-                  "video": "https://youtu.be/xmiyDREIWpI?si=U_vZIF8Pxeb6glpx",
-                  "notes": null
-                },
-                {
-                  "format": "ao5",
-                  "result": "9.26",
-                  "resultMs": 9260,
-                  "cuber": "Magnus Lensch & Konstantin Jaehne",
-                  "country": "Germany",
-                  "iso2": "DE",
-                  "date": null,
-                  "video": null,
-                  "notes": null
-                },
-                {
-                  "format": "avg12",
-                  "result": "9.84",
-                  "resultMs": 9840,
-                  "cuber": "Magnus Lensch & Konstantin Jaehne",
-                  "country": "Germany",
-                  "iso2": "DE",
-                  "date": null,
-                  "video": null,
-                  "notes": null
-                },
-                {
-                  "format": "avg50",
-                  "result": "15.48",
-                  "resultMs": 15480,
-                  "cuber": "Luis Kleinheinz & Konstantin Jaehne",
-                  "country": "Germany",
-                  "iso2": "DE",
-                  "date": null,
-                  "video": null,
-                  "notes": null
-                },
-                {
-                  "format": "avg100",
-                  "result": "15.95",
-                  "resultMs": 15950,
-                  "cuber": "Luis Kleinheinz & Konstantin Jaehne",
-                  "country": "Germany",
-                  "iso2": "DE",
-                  "date": null,
-                  "video": null,
-                  "notes": null
-                }
-              ]
-            },
-            {
-              "id": "3x3-team-bld-blindfolded-solver-direction-giving-non-cuber",
-              "name": "3x3 Team BLD (Blindfolded Solver, Direction-giving non-cuber)",
-              "records": [
-                {
-                  "format": "single",
-                  "result": "2:12.20",
-                  "resultMs": 132200,
-                  "cuber": "Luis Kleinheinz (Blindfolded) & Nelly Reisinger (girlfriend & Non-Cuber)",
-                  "country": "Germany",
-                  "iso2": "DE",
-                  "date": null,
-                  "video": null,
-                  "notes": "Used OP/Orozco as full 3-Style would‘ve been to complex"
                 }
               ]
             },
