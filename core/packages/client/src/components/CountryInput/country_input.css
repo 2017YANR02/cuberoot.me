@@ -1,0 +1,108 @@
+/* CountryInput——ISO2 + 国名搜索；样式匹配 .submit-field input */
+
+.country-input {
+  position: relative;
+}
+
+.country-input-flag {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 16px;
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* NOTE: 用 var() + fallback 自适应主题——landing/upcoming 定义了 --surface/--text/--border 等，
+   recon 等暗色页未定义则回退暗色风格 */
+.country-input-field {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
+  background: var(--surface, rgba(255, 255, 255, 0.05));
+  color: var(--text, #e5e5e5);
+  font-size: 0.88rem;
+  font-family: 'Inter', Arial, sans-serif;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.country-input-field--with-flag {
+  padding-left: 38px;
+}
+
+.country-input-field:focus {
+  border-color: var(--accent, rgba(217, 119, 87, 0.5));
+  box-shadow: 0 0 0 3px var(--accent-soft, rgba(217, 119, 87, 0.15));
+}
+
+/* NOTE: 用 var() + fallback 自适应主题——landing/upcoming 浅色页定义了 --surface/--text/--border，
+   recon 等暗色页未定义则回退暗色面板。 */
+.country-input-popup {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 280px;
+  overflow-y: auto;
+  background: var(--surface, #2a2a2a);
+  color: var(--text, #e5e5e5);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
+  border-radius: 8px;
+  padding: 4px 0;
+  z-index: 100;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.country-input-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  color: inherit;
+  transition: background 0.12s;
+}
+
+.country-input-item:hover {
+  background: color-mix(in srgb, currentColor 8%, transparent);
+}
+
+.country-input-item .country-input-flag {
+  position: static;
+  transform: none;
+  flex-shrink: 0;
+}
+
+.country-input-name {
+  flex: 1;
+  font-size: 0.88rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.country-input-iso2 {
+  font-size: 0.75rem;
+  color: #888;
+  font-family: 'Inter', Arial, sans-serif;
+  text-transform: uppercase;
+}
+
+.country-input-count {
+  font-size: 0.75rem;
+  color: #666;
+}
+
+.country-input-item--active {
+  background: rgba(217, 119, 87, 0.15);
+}

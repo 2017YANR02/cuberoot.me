@@ -56,7 +56,7 @@ const COUNTRY_TO_ISO2: Record<string, string> = {
   'North Korea': 'kp', 'Oman': 'om', 'Pakistan': 'pk', 'Palestine': 'ps',
   'Philippines': 'ph', 'Qatar': 'qa', 'Saudi Arabia': 'sa', 'Singapore': 'sg',
   'South Korea': 'kr', 'Republic of Korea': 'kr',
-  'Sri Lanka': 'lk', 'Syria': 'sy', 'Taiwan': 'tw', 'Chinese Taipei': 'tw',
+  'Sri Lanka': 'lk', 'Syria': 'sy', 'Chinese Taipei': 'tw', 'Taiwan': 'tw',
   'Tajikistan': 'tj', 'Thailand': 'th', 'Timor-Leste': 'tl',
   'Turkey': 'tr', 'Turkmenistan': 'tm',
   'United Arab Emirates': 'ae', 'Uzbekistan': 'uz', 'Vietnam': 'vn', 'Yemen': 'ye',
@@ -92,6 +92,74 @@ const COUNTRY_TO_ISO2: Record<string, string> = {
  */
 export function countryToIso2(country: string): string {
   return COUNTRY_TO_ISO2[country] ?? '';
+}
+
+// NOTE: iso2 → 规范名（首次出现的别名作为规范名；"United States" 早于 "USA" 注册，自然胜出）
+const ISO2_TO_CANONICAL_NAME: Record<string, string> = (() => {
+  const out: Record<string, string> = {};
+  for (const [name, iso2] of Object.entries(COUNTRY_TO_ISO2)) {
+    if (iso2 && !(iso2 in out)) out[iso2] = name;
+  }
+  return out;
+})();
+
+/** 通过 iso2 查规范名（找不到返回原 iso2 大写） */
+export function iso2ToCountryName(iso2: string): string {
+  return ISO2_TO_CANONICAL_NAME[iso2.toLowerCase()] ?? iso2.toUpperCase();
+}
+
+interface SearchCountriesOpts {
+  limit?: number;
+  /** 仅在此集合内的 iso2 才返回（用于限定下拉范围，如"只显示有数据的国家"） */
+  restrictTo?: Iterable<string>;
+}
+
+/**
+ * 搜索国家——支持英文全名、缩写（USA / UK）和 ISO2 直输（us / cn）。
+ * @returns 去重后的 { iso2, name } 列表，按相关性排序
+ */
+export function searchCountries(
+  query: string,
+  opts: SearchCountriesOpts = {},
+): Array<{ iso2: string; name: string }> {
+  const q = query.trim().toLowerCase();
+  const limit = opts.limit ?? 10;
+  const restrict = opts.restrictTo ? new Set([...opts.restrictTo].map(s => s.toLowerCase())) : null;
+
+  // NOTE: 空 query——按 restrict 顺序，或自由模式按规范名字母序，返回完整列表
+  if (!q) {
+    if (restrict) {
+      return Array.from(restrict)
+        .map(iso2 => ({ iso2, name: ISO2_TO_CANONICAL_NAME[iso2] ?? iso2.toUpperCase() }))
+        .slice(0, limit);
+    }
+    return Object.entries(ISO2_TO_CANONICAL_NAME)
+      .map(([iso2, name]) => ({ iso2, name }))
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .slice(0, limit);
+  }
+
+  const byIso2 = new Map<string, { iso2: string; name: string; score: number }>();
+  for (const [aliasName, iso2] of Object.entries(COUNTRY_TO_ISO2)) {
+    if (!iso2) continue;
+    if (restrict && !restrict.has(iso2)) continue;
+    const lower = aliasName.toLowerCase();
+    let score = 0;
+    if (iso2 === q) score = 100;            // ISO2 完全匹配最优先
+    else if (lower === q) score = 90;       // 国名完全匹配
+    else if (lower.startsWith(q)) score = 60;
+    else if (lower.includes(q)) score = 30;
+    if (score === 0) continue;
+    const canonical = ISO2_TO_CANONICAL_NAME[iso2] ?? aliasName;
+    const cur = byIso2.get(iso2);
+    if (!cur || score > cur.score) {
+      byIso2.set(iso2, { iso2, name: canonical, score });
+    }
+  }
+  return Array.from(byIso2.values())
+    .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name))
+    .slice(0, limit)
+    .map(({ iso2, name }) => ({ iso2, name }));
 }
 
 /**

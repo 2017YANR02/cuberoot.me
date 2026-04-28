@@ -18,6 +18,7 @@ import { formatDateRangeIso, toIsoDate } from '../utils/date_range';
 import { Flag as SharedFlag } from '../utils/flag';
 import { WheelPicker } from '../components/WheelPicker';
 import { RecordBadge } from '../components/RecordBadge';
+import { CountryInput } from '../components/CountryInput';
 import {
   loadCompRecordsSummary,
   loadCompRecordsDetail,
@@ -662,9 +663,9 @@ export default function UpcomingCompsPage() {
   const countryOptions = useMemo(() => {
     const counts: Record<string, number> = {};
     for (const c of activeComps) counts[c.country] = (counts[c.country] || 0) + 1;
-    return Object.entries(counts)
-      .sort((a, b) => b[1] - a[1])
-      .map(([iso2, count]) => ({ iso2, label: `${getCountryName(iso2)} (${count})`, count }));
+    // NOTE: 按 count 降序排列的 iso2 列表 + counts 映射，供 CountryInput 使用
+    const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([iso2]) => iso2);
+    return { sorted, counts };
   }, [activeComps]);
 
   // NOTE: 过滤匹配判断（不匹配的事件仍渲染但置灰）
@@ -826,16 +827,14 @@ export default function UpcomingCompsPage() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
-        <select
+        <CountryInput
           className="country-filter"
           value={countryFilter}
-          onChange={(e) => setCountryFilter(e.target.value)}
-        >
-          <option value="">{t('upcoming.allCountries')}</option>
-          {countryOptions.map((opt) => (
-            <option key={opt.iso2} value={opt.iso2}>{opt.label}</option>
-          ))}
-        </select>
+          onChange={setCountryFilter}
+          restrictTo={countryOptions.sorted}
+          counts={countryOptions.counts}
+          allLabel={t('upcoming.allCountries')}
+        />
         <div className="mode-toggle" role="tablist">
           <button
             role="tab"

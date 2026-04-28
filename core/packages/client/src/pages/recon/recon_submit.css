@@ -147,26 +147,6 @@
   background: rgba(255, 255, 255, 0.08);
 }
 
-/* NOTE: 国家 ISO2 输入——左侧 prefix 国旗预览 */
-.submit-country-input {
-  position: relative;
-}
-
-.submit-country-input input {
-  padding-left: 38px !important;
-}
-
-.submit-country-flag {
-  position: absolute;
-  left: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 22px;
-  height: 16px;
-  border-radius: 2px;
-  pointer-events: none;
-}
-
 /* --- 搜索下拉 --- */
 .submit-dropdown {
   list-style: none;
