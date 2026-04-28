@@ -1,0 +1,1 @@
+function e(e,t){let n=t||e;if(e===n)return e;let[r,i]=e.split(`-`),[a,o,s]=n.split(`-`);return r===a&&i===o?`${e}~${s}`:r===a?`${e}~${o}-${s}`:`${e}~${n}`}function t(e){return`${e.getFullYear()}-${String(e.getMonth()+1).padStart(2,`0`)}-${String(e.getDate()).padStart(2,`0`)}`}export{t as n,e as t};
