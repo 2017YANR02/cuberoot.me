@@ -57,6 +57,7 @@ import SolveModal from './components/SolveModal';
 import ReconstructModal from './components/ReconstructModal';
 import { decodeReplayParam } from './share/decode';
 import SettingsPanel from './components/SettingsPanel';
+import GoalProgress from './components/GoalProgress';
 import PbToast, { type PbKind } from './components/PbToast';
 import ShortcutsModal from './components/ShortcutsModal';
 import BluetoothModal from './components/BluetoothModal';
@@ -801,6 +802,15 @@ export default function TimerPage() {
     },
   ], [isZh, handleImport, handleExport, handleExportCsv, handleExportSs, clearAll, solves.length]);
 
+  // Flattened across-event solve list for the daily-goal pill.
+  // Goal counts every solve regardless of event — matches the "X solves/day"
+  // intent. Memoised on byEvent so the pill doesn't recompute per render.
+  const allSolves = useMemo(() => {
+    const out: Solve[] = [];
+    for (const list of Object.values(byEvent)) out.push(...list);
+    return out;
+  }, [byEvent]);
+
   // ── Render ──────────────────────────────────────────────────────
   const eventInfoCurrent = EVENTS.find(e => e.id === event);
   const printEventName = eventInfoCurrent ? (isZh ? eventInfoCurrent.nameZh : eventInfoCurrent.nameEn) : event;
@@ -907,6 +917,10 @@ export default function TimerPage() {
         }
       >
         {scramble || <span className="scramble-empty">—</span>}
+      </div>
+
+      <div style={{ textAlign: 'center', padding: '0 12px' }}>
+        <GoalProgress solves={allSolves} goal={settings.dailySolveGoal ?? null} isZh={isZh} />
       </div>
 
       {event === '333' && <SolverHints scramble={scramble} isZh={isZh} />}

@@ -4,7 +4,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Download, FileSpreadsheet, RefreshCw, Target } from 'lucide-react';
-import { formatTargetTime, parseTargetTime, resetSettings, updateSettings, useSettings } from '../settings';
+import { formatTargetTime, parseDailySolveGoal, parseTargetTime, resetSettings, updateSettings, useSettings } from '../settings';
 import { warmupSound, play } from '../sound';
 import { getMetronome } from '../sound/metronome';
 import { isVoiceAvailable } from '../sound/voice';
@@ -51,6 +51,21 @@ export default function SettingsPanel({ isZh, onClose, event }: Props) {
     }
     updateSettings({ targetMsByEvent: next });
     setTargetInput(formatTargetTime(parsed));
+  }
+
+  // Daily solve-count goal — free-form string while editing, commit on
+  // blur / Enter. Empty / 0 / non-positive → null (disable the pill).
+  const currentDailyGoal: number | null =
+    typeof s.dailySolveGoal === 'number' && Number.isFinite(s.dailySolveGoal) && s.dailySolveGoal > 0
+      ? Math.floor(s.dailySolveGoal)
+      : null;
+  const [goalInput, setGoalInput] = useState<string>(() =>
+    currentDailyGoal === null ? '' : String(currentDailyGoal),
+  );
+  function commitGoalInput(raw: string): void {
+    const parsed = parseDailySolveGoal(raw);
+    updateSettings({ dailySolveGoal: parsed });
+    setGoalInput(parsed === null ? '' : String(parsed));
   }
 
   // Tap-to-BPM: rolling window of timestamps; reset after 3s of inactivity.
@@ -407,6 +422,21 @@ export default function SettingsPanel({ isZh, onClose, event }: Props) {
                 ? (isZh ? `当前 ${eventInfo(event).nameZh}：关闭` : `${eventInfo(event).nameEn}: off`)
                 : (isZh ? `当前 ${eventInfo(event).nameZh}：${formatTargetTime(currentTargetMs)}` : `${eventInfo(event).nameEn}: ${formatTargetTime(currentTargetMs)}`)}
             </span>
+          </Row>
+          <Row label={isZh ? '每日目标次数' : 'Daily solve goal'}>
+            <input
+              type="number"
+              min={0}
+              step={1}
+              value={goalInput}
+              placeholder={isZh ? '例：50（留空 / 0 关闭）' : 'e.g. 50 (blank / 0 = off)'}
+              onChange={(e) => setGoalInput(e.target.value)}
+              onBlur={(e) => commitGoalInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') commitGoalInput((e.target as HTMLInputElement).value); }}
+            />
+            <span className="hint">{currentDailyGoal === null
+              ? (isZh ? '关闭' : 'off')
+              : (isZh ? `每天 ${currentDailyGoal} 次（全部项目合计）` : `${currentDailyGoal} solves/day (all events)`)}</span>
           </Row>
           <Row label={isZh ? '精度' : 'Precision'}>
             <select
