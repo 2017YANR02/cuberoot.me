@@ -17,7 +17,7 @@
  *    , (next scramble).
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { Home, Download, Upload, Trash2, Settings as SettingsIcon, Maximize2, Minimize2, Bluetooth, Mic, HelpCircle, BarChart3, Plus, Wrench, ListPlus, Printer, FileText, FileSpreadsheet, AlertTriangle, Target, Crosshair, Keyboard } from 'lucide-react';
@@ -451,26 +451,77 @@ export default function TimerPage() {
   // Native touch listeners with { passive: false } — React 18 binds JSX
   // onTouchStart/End as passive by default, so e.preventDefault() inside them
   // is ignored on iOS and the page scrolls under the finger.
+  //
+  // Also: on hybrid touchscreens, tapping fires touchstart/touchend AND a
+  // synthetic mousedown/mouseup ~50–300ms later. preventDefault() suppresses
+  // synth on most browsers, but we belt-and-suspenders this with a "touch is
+  // primary" lockout so the JSX onMouseDown/onMouseUp on .timer-center skips
+  // when a recent touch already drove the state machine.
+  //
+  // touchcancel: if the system steals the gesture (alert popup, OS gesture,
+  // multi-touch upgraded to a system swipe), we'd be stuck in 'holding' /
+  // 'ready' forever — treat it like a touchend so onPressUp un-stuck-s us.
   const timerCenterRef = useRef<HTMLDivElement | null>(null);
+  const touchActiveRef = useRef(false);
+  const lastTouchEndTsRef = useRef(0);
+  // Returns true if the event target is an interactive child (button, link,
+  // input, contenteditable) — those should NOT trigger the timer. Lets the
+  // BLD memo button, +2/DNF/Delete quick actions, and any future toolbar
+  // surfaces inside .timer-center keep working without driving onPressDown.
+  const shouldIgnoreTimerTarget = useCallback((target: EventTarget | null): boolean => {
+    if (!(target instanceof Element)) return false;
+    return target.closest('button, a, input, textarea, select, [contenteditable="true"], [data-no-timer]') !== null;
+  }, []);
   useEffect(() => {
     const el = timerCenterRef.current;
     if (!el) return;
     const handleTouchStart = (e: TouchEvent) => {
+      if (shouldIgnoreTimerTarget(e.target)) return;
       e.preventDefault();
+      touchActiveRef.current = true;
       warmupSound();
       onPressDown();
     };
     const handleTouchEnd = (e: TouchEvent) => {
+      if (!touchActiveRef.current) return;
       e.preventDefault();
+      touchActiveRef.current = false;
+      lastTouchEndTsRef.current = performance.now();
+      onPressUp();
+    };
+    const handleTouchCancel = () => {
+      // System interrupted the gesture — release as if user lifted finger so
+      // 'holding' / 'ready' / 'running' don't get stuck.
+      if (!touchActiveRef.current) return;
+      touchActiveRef.current = false;
+      lastTouchEndTsRef.current = performance.now();
       onPressUp();
     };
     el.addEventListener('touchstart', handleTouchStart, { passive: false });
     el.addEventListener('touchend', handleTouchEnd, { passive: false });
+    el.addEventListener('touchcancel', handleTouchCancel, { passive: false });
     return () => {
       el.removeEventListener('touchstart', handleTouchStart);
       el.removeEventListener('touchend', handleTouchEnd);
+      el.removeEventListener('touchcancel', handleTouchCancel);
     };
-  }, [onPressDown, onPressUp]);
+  }, [onPressDown, onPressUp, shouldIgnoreTimerTarget]);
+
+  // Mouse handlers wrap onPressDown/onPressUp so synthetic mouse events that
+  // fire after a touch tap (≤700ms window covers slow iOS / Bluefy) don't
+  // double-trigger. Also gate on event.target so child buttons stay isolated.
+  const onCenterMouseDown = useCallback((e: ReactMouseEvent<HTMLDivElement>) => {
+    if (touchActiveRef.current) return;
+    if (performance.now() - lastTouchEndTsRef.current < 700) return;
+    if (shouldIgnoreTimerTarget(e.target)) return;
+    onPressDown();
+  }, [onPressDown, shouldIgnoreTimerTarget]);
+  const onCenterMouseUp = useCallback((e: ReactMouseEvent<HTMLDivElement>) => {
+    if (touchActiveRef.current) return;
+    if (performance.now() - lastTouchEndTsRef.current < 700) return;
+    if (shouldIgnoreTimerTarget(e.target)) return;
+    onPressUp();
+  }, [onPressUp, shouldIgnoreTimerTarget]);
 
   // ── Solve mutators ──────────────────────────────────────────────
   const updateSolve = useCallback((solveId: string, patch: Partial<Solve>) => {
@@ -993,8 +1044,8 @@ export default function TimerPage() {
       <div
         className={`timer-center${isOvershot ? ' target-overshot' : ''}${stopPulse ? ` target-pulse-${stopPulse}` : ''}`}
         ref={timerCenterRef}
-        onMouseDown={onPressDown}
-        onMouseUp={onPressUp}
+        onMouseDown={onCenterMouseDown}
+        onMouseUp={onCenterMouseUp}
       >
         <TimerDisplay
           phase={timer.phase}
