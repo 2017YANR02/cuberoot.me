@@ -361,7 +361,6 @@ interface PllEntry { case: string; auf: 0 | 1 | 2 | 3; }
 
 const OLL_TABLE: Map<number, OllEntry> = new Map();
 const PLL_TABLE: Map<number, PllEntry> = new Map();
-const OLL_SOLVED_SIG = ollSignature(solvedCube(3));
 const PLL_SOLVED_SIG = pllSignature(solvedCube(3));
 
 let OLL_BUILD_ERRORS: string[] = [];
@@ -409,6 +408,12 @@ function buildOllTable(): void {
 }
 
 function buildPllTable(): void {
+  // Each PLL case (all 21 in pll.json, including Z and H) is registered by
+  // the unique sticker signature produced by applying the inverse of its
+  // noAuf algorithm to a solved cube. Z and H share a cycle *shape* but
+  // their actual sticker permutations differ, so signatures differ and
+  // exact lookup distinguishes them. (Any same-family fallback elsewhere in
+  // the codebase is only ever hit when this exact lookup fails.)
   const pllMap = pllData as Record<string, { noAuf: string }>;
   const keys = Object.keys(pllMap);
   for (const key of keys) {
@@ -609,7 +614,3 @@ export function __cfopRecognizeSelfTest(): string | null {
   if (errs.length) return `OLL ${ollOk}/57, PLL ${pllOk}/${pllKeys.length}; errors: ${errs.join(' | ')}`;
   return null;
 }
-
-// Suppress "_unused" noise — these solved-sig constants are kept for clarity
-// and used inside recognizers.
-void OLL_SOLVED_SIG;
