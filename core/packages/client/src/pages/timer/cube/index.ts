@@ -5,12 +5,8 @@
 
 export { default as CubePreview } from './CubePreview.tsx';
 export { default as CubeNet } from './CubeNet.tsx';
+export { default as CubingPreview } from './CubingPreview.tsx';
 export { WCA_COLORS, nxnSizeForEvent } from './colors.ts';
-export { default as PyramidNet } from './PyramidNet.tsx';
-export { default as SkewbNet } from './SkewbNet.tsx';
-export { default as MegaminxNet } from './MegaminxNet.tsx';
-export { default as Sq1Net } from './Sq1Net.tsx';
-export { default as ClockFace } from './ClockFace.tsx';
 export {
   applyMoves,
   applyScramble,
