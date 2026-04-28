@@ -67,6 +67,7 @@ export default function CubingPreview(props: CubingPreviewProps): JSX.Element {
   const size = props.size ?? 14;
   const hostRef = useRef<HTMLDivElement | null>(null);
   const playerRef = useRef<TwistyPlayer | null>(null);
+  const prevPuzzleRef = useRef<PuzzleID | null>(null);
 
   const puzzle = puzzleIdForEvent(event);
 
@@ -74,7 +75,6 @@ export default function CubingPreview(props: CubingPreviewProps): JSX.Element {
     const host = hostRef.current;
     if (!host || !puzzle) return;
 
-    // Lazily create the player; reuse across prop changes.
     if (!playerRef.current) {
       const player = new TwistyPlayer({
         puzzle,
@@ -86,18 +86,18 @@ export default function CubingPreview(props: CubingPreviewProps): JSX.Element {
         hintFacelets: 'none',
         viewerLink: 'none',
       });
-      // The custom element stretches to its host's box; let CSS size it.
       player.style.width = '100%';
       player.style.height = '100%';
       player.style.display = 'block';
       host.appendChild(player);
       playerRef.current = player;
+      prevPuzzleRef.current = puzzle;
     } else {
       const player = playerRef.current;
-      // `puzzle` and `alg` are reactive setters on TwistyPlayer.
-      // Use attribute path for type-safety against the changing internal types.
-      if (player.puzzle !== puzzle) {
+      // TwistyPlayer disallows reading `.puzzle`; track in a ref ourselves.
+      if (prevPuzzleRef.current !== puzzle) {
         player.puzzle = puzzle;
+        prevPuzzleRef.current = puzzle;
       }
       try {
         player.alg = scramble;

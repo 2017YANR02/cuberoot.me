@@ -98,6 +98,9 @@ export default defineConfig({
     exclude: ['@ffmpeg/ffmpeg', '@ffmpeg/util', '@ffmpeg/core-mt'],
   },
   resolve: {
+    // NOTE: dedupe three so cubing/twisty + our cube3d/ share one instance,
+    // avoiding "THREE.WARNING: Multiple instances of Three.js being imported".
+    dedupe: ['three'],
     alias: {
       // HACK: sr-puzzlegen-pll 的 package.json main 指向 dist/lib/index.js（只有 .d.ts 没有 .js）
       // 实际运行代码在 dist/bundle/puzzleGen.min.js（UMD 格式）
