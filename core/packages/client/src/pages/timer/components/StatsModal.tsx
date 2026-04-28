@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { BarChart3, Layers, LayoutDashboard } from 'lucide-react';
 import type { EventId, Solve } from '../types';
 import { effectiveMs } from '../types';
 import { EVENTS } from '../types';
@@ -28,6 +29,7 @@ interface Props {
 }
 
 type DateRange = 'all' | '7d' | '30d' | '90d' | '365d';
+type StatsTab = 'overview' | 'charts' | 'cases';
 
 const RANGE_DAYS: Record<Exclude<DateRange, 'all'>, number> = {
   '7d': 7,
@@ -61,6 +63,7 @@ function longestStreak(solves: Solve[]): number {
 export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: Props) {
   const [copied, setCopied] = useState(false);
   const [range, setRange] = useState<DateRange>('all');
+  const [tab, setTab] = useState<StatsTab>('overview');
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -223,7 +226,31 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
       >
         <h2 id="stats-modal-title">{isZh ? '完整统计' : 'Full stats'} — {evName}</h2>
 
-        <div className="modal-section">
+        <div className={`stats-modal-body stats-tab-${tab}`}>
+
+        <div className="stats-tab-bar" role="tablist">
+          {([
+            { id: 'overview' as const, labelZh: '概览', labelEn: 'Overview', Icon: LayoutDashboard },
+            { id: 'charts'   as const, labelZh: '图表', labelEn: 'Charts',   Icon: BarChart3 },
+            { id: 'cases'    as const, labelZh: '案例', labelEn: 'Cases',    Icon: Layers },
+          ]).map(({ id, labelZh, labelEn, Icon }) => {
+            const active = tab === id;
+            return (
+              <button
+                key={id}
+                role="tab"
+                aria-selected={active}
+                onClick={() => setTab(id)}
+                className={active ? 'stats-tab active' : 'stats-tab'}
+              >
+                <Icon size={14} aria-hidden />
+                <span>{isZh ? labelZh : labelEn}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="modal-section" data-tab="overview">
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
             {(['all', '7d', '30d', '90d', '365d'] as const).map(r => {
               const labelZh: Record<DateRange, string> = {
@@ -247,7 +274,7 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
           </div>
         </div>
 
-        <div className="modal-section">
+        <div className="modal-section" data-tab="overview">
           <div className="stats-modal-grid">
             {lines.map(([k, v]) => (
               <div className="stats-modal-row" key={k}>
@@ -259,7 +286,7 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
         </div>
 
         {pbIdx >= 0 && (
-          <div className="modal-section">
+          <div className="modal-section" data-tab="overview">
             <h3 className="settings-h3">{isZh ? 'PB 单次' : 'PB single'}</h3>
             <div className="stats-modal-pb">
               <div>{pbStr}</div>
@@ -268,7 +295,7 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
           </div>
         )}
 
-        <div className="modal-section">
+        <div className="modal-section" data-tab="overview">
           <h3 className="settings-h3">{isZh ? '时间段' : 'Time periods'}</h3>
           <table style={{ borderCollapse: 'collapse', fontSize: '0.9em', width: '100%' }}>
             <thead>
@@ -308,20 +335,22 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
           </table>
         </div>
 
-        <RecordsOverlay
-          event={event}
-          userPbSingleMs={userPbSingleMs}
-          userPbAvgMs={userPbAvgMs}
-          isZh={isZh}
-        />
+        <div data-tab="overview">
+          <RecordsOverlay
+            event={event}
+            userPbSingleMs={userPbSingleMs}
+            userPbAvgMs={userPbAvgMs}
+            isZh={isZh}
+          />
+        </div>
 
         {event === '333' && (
-          <div className="modal-section">
+          <div className="modal-section" data-tab="cases">
             <CfopCaseStatsPanel event={event} solves={solves} isZh={isZh} />
           </div>
         )}
 
-        <div className="modal-section">
+        <div className="modal-section" data-tab="charts">
           <h3 className="settings-h3">{isZh ? '图表' : 'Charts'}</h3>
           <div className="stats-charts">
             <div className="stats-chart-card">
@@ -354,7 +383,7 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
         </div>
 
         {solves.filter(s => Number.isFinite(effectiveMs(s))).length >= 10 && (
-          <div className="modal-section">
+          <div className="modal-section" data-tab="charts">
             <h3 className="settings-h3">
               {isZh ? '什么时候手感最好？' : 'When are you fastest?'}
             </h3>
@@ -372,7 +401,7 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
         )}
 
         {subX.length > 0 && (
-          <div className="modal-section">
+          <div className="modal-section" data-tab="cases">
             <h3 className="settings-h3">{isZh ? 'sub-X 分布' : 'Sub-X breakdown'}</h3>
             <div className="subx-list">
               {subX.map(s => (
@@ -385,6 +414,8 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
             </div>
           </div>
         )}
+
+        </div>
 
         <div className="modal-actions">
           <button onClick={onCopy} className="primary">
