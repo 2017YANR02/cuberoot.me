@@ -76,6 +76,7 @@ import TrendChart from './components/TrendChart';
 import PracticeHeatmap from './components/PracticeHeatmap';
 import { CubePreview } from './cube';
 import { Cube3D } from './cube3d';
+import LiveCubeState from './components/LiveCubeState';
 import { getLangQuery } from '../../i18n';
 
 import './timer.css';
@@ -354,6 +355,24 @@ export default function TimerPage() {
     };
     subs.add(recorder);
     return () => { subs.delete(recorder); };
+  }, []);
+
+  // ── Live cube-state mirror ─────────────────────────────────────
+  // Tiny corner panel that re-renders Cube3D after every BLE move, so the
+  // user can sanity-check that the physical cube matches what the timer
+  // thinks it should be. Cleared whenever the scramble changes (which also
+  // covers solve recording — recordSolve calls nextScramble()).
+  const [liveMoves, setLiveMoves] = useState<string[]>([]);
+  useEffect(() => {
+    setLiveMoves([]);
+  }, [scramble]);
+  useEffect(() => {
+    const subs = bluetoothSubscribersRef.current;
+    const mirror = (m: string) => {
+      setLiveMoves(prev => [...prev, m]);
+    };
+    subs.add(mirror);
+    return () => { subs.delete(mirror); };
   }, []);
 
   // ── WCA inspection-phase move classification ───────────────────
@@ -1241,6 +1260,30 @@ export default function TimerPage() {
           onExit={() => setDrillTarget(null)}
           onClose={() => setDrillModalOpen(false)}
         />
+      )}
+
+      {bluetoothCube.status.connected && (
+        <div
+          className="timer-live-cube"
+          style={{
+            position: 'fixed',
+            right: 12,
+            bottom: 12,
+            zIndex: 50,
+            padding: 4,
+            background: 'rgba(0, 0, 0, 0.35)',
+            borderRadius: 6,
+            pointerEvents: 'none',
+          }}
+          title={isZh ? '智能魔方实时状态（每次拧动同步）' : 'Live smart-cube state (updates per move)'}
+        >
+          <LiveCubeState
+            event={event}
+            scramble={scramble}
+            moves={liveMoves}
+            size={120}
+          />
+        </div>
       )}
     </div>
   );
