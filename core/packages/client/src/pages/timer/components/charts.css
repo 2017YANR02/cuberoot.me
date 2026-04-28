@@ -8,16 +8,20 @@
   background: transparent;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   overflow: visible;
+  /* Responsive default — caller may override via inline style or container CSS. */
+  max-width: 100%;
+  width: 100%;
+  height: auto;
 }
 
 .tc-chart text {
   fill: #aaa;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .tc-chart .axis-tick {
   fill: #888;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .tc-chart .grid-line {
@@ -49,7 +53,7 @@
 }
 .tc-hist .peak-label {
   fill: #aaa;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 /* Trend */
@@ -98,7 +102,42 @@
 }
 .tc-scatter .scatter-pb-label {
   fill: #b07acc;
-  font-size: 10px;
+  font-size: 11px;
+}
+
+/* HourChart — replaces former inline styles so CSS can tune them */
+.tc-hour-title {
+  fill: #aaa;
+  font-size: 12px;
+}
+.tc-hour-median-tick {
+  fill: #6abf6a;
+  font-size: 11px;
+}
+.tc-hour-bar {
+  fill: #5b9dd9;
+}
+.tc-hour-bar-empty {
+  fill: #1a1a1d;
+}
+.tc-hour-median-dot {
+  fill: #6abf6a;
+  stroke: #1a1a1d;
+  stroke-width: 1;
+}
+
+/* Two-panel HourChart layout: side-by-side on desktop, stack on mobile.
+   Each child SVG keeps width:100% via .tc-chart, so flex-basis controls split. */
+.tc-hour-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+}
+.tc-hour-wrap > .tc-chart,
+.tc-hour-wrap > svg.tc-chart {
+  flex: 1 1 320px;
+  min-width: 0;
 }
 
 /* Charts section in StatsModal */
@@ -122,9 +161,29 @@
   height: auto;
   max-width: 100%;
 }
+.stats-charts svg {
+  max-width: 100%;
+  height: auto;
+}
 @media (max-width: 600px) {
   .stats-chart-title {
     font-size: 0.8em;
+  }
+  /* On narrow screens the SVG scales down, so labels become tiny.
+     Bump font sizes proportionally — they live inside viewBox so this
+     compensates. Numbers chosen to keep readability around ~7-8px effective. */
+  .tc-chart text,
+  .tc-chart .axis-tick,
+  .tc-hist .peak-label,
+  .tc-scatter .scatter-pb-label,
+  .tc-hour-median-tick {
+    font-size: 13px;
+  }
+  .tc-hour-title {
+    font-size: 14px;
+  }
+  .tc-trend .legend-text {
+    font-size: 13px;
   }
 }
 

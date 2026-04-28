@@ -120,8 +120,7 @@ export default function TrendChart({
       <svg
         className={`tc-chart tc-trend ${className ?? ''}`.trim()}
         viewBox={`0 0 ${width} ${height}`}
-        width={width}
-        height={height}
+        preserveAspectRatio="xMidYMid meet"
         role="img"
         aria-label={isZh ? '成绩趋势图' : 'Solve time trend'}
       >
@@ -173,8 +172,7 @@ export default function TrendChart({
     <svg
       className={`tc-chart tc-trend ${className ?? ''}`.trim()}
       viewBox={`0 0 ${width} ${height}`}
-      width={width}
-      height={height}
+      preserveAspectRatio="xMidYMid meet"
       role="img"
       aria-label={isZh ? '成绩趋势图' : 'Solve time trend'}
     >

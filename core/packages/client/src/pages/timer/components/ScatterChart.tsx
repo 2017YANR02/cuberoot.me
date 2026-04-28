@@ -103,8 +103,7 @@ export default function ScatterChart({
       <svg
         className={`tc-chart tc-scatter ${className ?? ''}`.trim()}
         viewBox={`0 0 ${width} ${height}`}
-        width={width}
-        height={height}
+        preserveAspectRatio="xMidYMid meet"
         role="img"
         aria-label={isZh ? '单次成绩散点图' : 'Per-solve scatter'}
       >

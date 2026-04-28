@@ -122,16 +122,15 @@ function Panel({ buckets, isZh, title, width, height }: PanelProps) {
     <svg
       className="tc-chart tc-hour"
       viewBox={`0 0 ${width} ${height}`}
-      width={width}
-      height={height}
+      preserveAspectRatio="xMidYMid meet"
       role="img"
       aria-label={title}
     >
       <text
+        className="tc-hour-title"
         x={width / 2}
         y={12}
         textAnchor="middle"
-        style={{ fill: '#aaa', fontSize: 11 }}
       >
         {title}
       </text>
@@ -152,10 +151,10 @@ function Panel({ buckets, isZh, title, width, height }: PanelProps) {
       {/* Right Y axis (median ms) */}
       {finiteMedians.length > 0 && (
         <>
-          <text x={padL + innerW + 4} y={padT + 3} textAnchor="start" style={{ fill: '#6abf6a', fontSize: 10 }}>
+          <text className="tc-hour-median-tick" x={padL + innerW + 4} y={padT + 3} textAnchor="start">
             {medianLabelTop}
           </text>
-          <text x={padL + innerW + 4} y={padT + innerH + 3} textAnchor="start" style={{ fill: '#6abf6a', fontSize: 10 }}>
+          <text className="tc-hour-median-tick" x={padL + innerW + 4} y={padT + innerH + 3} textAnchor="start">
             {medianLabelBot}
           </text>
         </>
@@ -173,11 +172,11 @@ function Panel({ buckets, isZh, title, width, height }: PanelProps) {
         return (
           <g key={`bar-${i}`}>
             {b.count > 0 ? (
-              <rect x={x} y={yTop} width={barW} height={h} style={{ fill: '#5b9dd9' }}>
+              <rect className="tc-hour-bar" x={x} y={yTop} width={barW} height={h}>
                 <title>{tooltip}</title>
               </rect>
             ) : (
-              <rect x={x} y={padT + innerH - 1} width={barW} height={1} style={{ fill: '#1a1a1d' }}>
+              <rect className="tc-hour-bar-empty" x={x} y={padT + innerH - 1} width={barW} height={1}>
                 <title>{tooltip}</title>
               </rect>
             )}
@@ -192,11 +191,11 @@ function Panel({ buckets, isZh, title, width, height }: PanelProps) {
         const cy = yMedian(b.median);
         return (
           <circle
+            className="tc-hour-median-dot"
             key={`dot-${i}`}
             cx={cx}
             cy={cy}
             r={2.8}
-            style={{ fill: '#6abf6a', stroke: '#1a1a1d', strokeWidth: 1 }}
           >
             <title>{`${b.label} · ${isZh ? '中位' : 'median'} ${formatMs(b.median)} · n=${b.count}`}</title>
           </circle>
@@ -262,8 +261,7 @@ export default function HourChart({
         <svg
           className="tc-chart tc-hour"
           viewBox={`0 0 ${width} ${height}`}
-          width={width}
-          height={height}
+          preserveAspectRatio="xMidYMid meet"
           role="img"
           aria-label={isZh ? '时段分布' : 'When-fastest chart'}
         >
