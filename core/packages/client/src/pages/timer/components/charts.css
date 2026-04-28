@@ -127,3 +127,49 @@
     font-size: 0.8em;
   }
 }
+
+/* StatsModal mobile tab bar — hidden on desktop, shown on mobile.
+   Desktop keeps the existing vertical stack: tab bar is display:none,
+   and all [data-tab] sections are visible. */
+.stats-tab-bar {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .stats-tab-bar {
+    display: flex;
+    gap: 4px;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    padding: 6px 0;
+    margin-bottom: 8px;
+    background: #1a1a1d;
+    border-bottom: 1px solid #2a2a2e;
+  }
+  .stats-tab {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 6px 8px;
+    font-size: 0.85em;
+    background: transparent;
+    color: #aaa;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .stats-tab.active {
+    background: #2a2a2e;
+    color: #fff;
+    border-color: #3a3a3e;
+  }
+
+  /* Hide non-active tab sections. The wrapper carries .stats-tab-<id>
+     and individual sections carry data-tab="<id>". */
+  .stats-modal-body.stats-tab-overview [data-tab]:not([data-tab="overview"]) { display: none; }
+  .stats-modal-body.stats-tab-charts   [data-tab]:not([data-tab="charts"])   { display: none; }
+  .stats-modal-body.stats-tab-cases    [data-tab]:not([data-tab="cases"])    { display: none; }
+}
