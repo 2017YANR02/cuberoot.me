@@ -13,6 +13,7 @@ import { computeAllStats } from '../../utils/recon_stats';
 import { parseTimeInput, formatTime } from '../../utils/recon_utils';
 import { RecordSelect } from '../../components/RecordSelect';
 import { EventSelect } from '../../components/EventSelect';
+import { CountryInput } from '../../components/CountryInput';
 import { displayCuberName } from '../../utils/name_utils';
 import LangToggle from '../../components/LangToggle';
 import '../../recon.css';
@@ -368,13 +369,7 @@ export default function ReconSubmitPage() {
           </label>
           <label className="submit-field">
             <span className="submit-label">{t('recon.country')}</span>
-            <div className="submit-country-input">
-              <input type="text" value={form.country || ''} onChange={e => setField('country', e.target.value)}
-                placeholder="ISO2 (cn/us)" maxLength={2} />
-              {form.country && form.country.length === 2 && (
-                <Flag iso2={form.country} className="submit-country-flag" />
-              )}
-            </div>
+            <CountryInput value={form.country || ''} onChange={(v) => setField('country', v)} />
           </label>
           <label className="submit-field">
             <span className="submit-label">{t('recon.group')}</span>

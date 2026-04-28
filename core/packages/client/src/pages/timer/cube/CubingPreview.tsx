@@ -90,38 +90,7 @@ export default function CubingPreview(props: CubingPreviewProps): JSX.Element {
     el.style.display = 'block';
     host.appendChild(el);
 
-    // Hide cubing.js's "Back Side" label on the clock back-view (and any
-    // other puzzle that renders such a label). The label lives inside the
-    // closed scramble-display shadow → we reach it via the public `player`
-    // getter, which exposes the underlying TwistyPlayer (open shadow).
-    let cancelled = false;
-    const hideBackLabels = () => {
-      if (cancelled) return;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const player = (el as any).player as HTMLElement | undefined;
-      const root = player?.shadowRoot;
-      if (!root) {
-        // Try again next tick — shadow may not yet be attached.
-        setTimeout(hideBackLabels, 50);
-        return;
-      }
-      const visit = (node: Element) => {
-        if (node instanceof HTMLElement || node instanceof SVGElement) {
-          const txt = node.textContent?.trim().toLowerCase() ?? '';
-          if (txt === 'back side' || txt === 'back') {
-            (node as HTMLElement).style.display = 'none';
-          }
-        }
-        node.querySelectorAll('*').forEach(visit);
-        const sr = (node as Element & { shadowRoot?: ShadowRoot | null }).shadowRoot;
-        if (sr) sr.querySelectorAll('*').forEach(visit);
-      };
-      root.querySelectorAll('*').forEach(visit);
-    };
-    setTimeout(hideBackLabels, 50);
-
     return () => {
-      cancelled = true;
       if (el.parentNode) el.parentNode.removeChild(el);
     };
   }, [eventId, scramble]);
