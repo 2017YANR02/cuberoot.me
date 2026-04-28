@@ -3,7 +3,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { Download } from 'lucide-react';
+import { Download, RefreshCw } from 'lucide-react';
 import { resetSettings, updateSettings, useSettings } from '../settings';
 import { warmupSound, play } from '../sound';
 import { getMetronome } from '../sound/metronome';
@@ -12,6 +12,7 @@ import { getSeedCounter, resetSeedCounter } from '../scramble';
 import { appendSolves, listBackups, pushBackup, replaceSolves, restoreBackup } from '../storage/db';
 import { parseCstimerExport, type CstimerSessionParsed } from '../storage/import_cstimer';
 import { exportCstimerJson } from '../storage/export_cstimer';
+import { reanalyzeAll } from '../storage/reanalyze';
 import { eventInfo } from '../types';
 
 interface Props {
@@ -101,11 +102,44 @@ export default function SettingsPanel({ isZh, onClose }: Props) {
   const [cstimerExportMsg, setCstimerExportMsg] = useState<string | null>(null);
   const cstimerExportTimerRef = useRef<number | null>(null);
 
+  // ── Reanalyze stage data state ──
+  const [reanalyzeBusy, setReanalyzeBusy] = useState(false);
+  const [reanalyzeProgress, setReanalyzeProgress] = useState<{ scanned: number; total: number } | null>(null);
+  const [reanalyzeMsg, setReanalyzeMsg] = useState<string | null>(null);
+  const reanalyzeMsgTimerRef = useRef<number | null>(null);
+
   useEffect(() => {
     return () => {
       if (cstimerExportTimerRef.current !== null) window.clearTimeout(cstimerExportTimerRef.current);
+      if (reanalyzeMsgTimerRef.current !== null) window.clearTimeout(reanalyzeMsgTimerRef.current);
     };
   }, []);
+
+  async function onReanalyze(): Promise<void> {
+    if (reanalyzeBusy) return;
+    setReanalyzeBusy(true);
+    setReanalyzeMsg(null);
+    setReanalyzeProgress({ scanned: 0, total: 0 });
+    try {
+      const result = await reanalyzeAll(p => {
+        setReanalyzeProgress({ scanned: p.scanned, total: p.total });
+      });
+      const msg = isZh
+        ? `已更新 ${result.updated} 条成绩，涉及 ${result.eventsTouched.length} 个项目`
+        : `Updated ${result.updated} solves across ${result.eventsTouched.length} events`;
+      setReanalyzeMsg(msg);
+      if (reanalyzeMsgTimerRef.current !== null) window.clearTimeout(reanalyzeMsgTimerRef.current);
+      reanalyzeMsgTimerRef.current = window.setTimeout(() => {
+        setReanalyzeMsg(null);
+        reanalyzeMsgTimerRef.current = null;
+      }, 2000);
+    } catch {
+      setReanalyzeMsg(isZh ? '重算失败' : 'Reanalyze failed');
+    } finally {
+      setReanalyzeBusy(false);
+      setReanalyzeProgress(null);
+    }
+  }
 
   async function onCstimerExport(): Promise<void> {
     try {
@@ -532,6 +566,28 @@ export default function SettingsPanel({ isZh, onClose }: Props) {
               })}
             </div>
           )}
+          <Row label={isZh ? '重算分阶段数据' : 'Reanalyze stage data'}>
+            <button
+              className="hint-btn"
+              onClick={() => { void onReanalyze(); }}
+              disabled={reanalyzeBusy}
+              title={isZh
+                ? '基于当前精确识别器，重新计算所有有移动记录的成绩的分阶段拆分'
+                : 'Rerun the current exact recognizer over every solve that has recorded moves'}
+            >
+              <RefreshCw size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
+              {reanalyzeBusy
+                ? (reanalyzeProgress && reanalyzeProgress.total > 0
+                    ? (isZh
+                        ? `处理中… ${reanalyzeProgress.scanned}/${reanalyzeProgress.total}`
+                        : `Working… ${reanalyzeProgress.scanned}/${reanalyzeProgress.total}`)
+                    : (isZh ? '处理中…' : 'Working…'))
+                : (isZh ? '重新分析' : 'Reanalyze')}
+            </button>
+            {reanalyzeMsg !== null && (
+              <span className="hint">{reanalyzeMsg}</span>
+            )}
+          </Row>
         </div>
 
         <div className="modal-section">

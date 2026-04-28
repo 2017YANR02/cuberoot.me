@@ -201,6 +201,23 @@ export function appendSolves(eventId: EventId, solves: Solve[]): void {
   saveRaw(db);
 }
 
+/**
+ * Bulk update existing solves for one event by id. Solves not present in the
+ * `updates` array are left untouched; ids in `updates` that don't exist in
+ * the event are silently dropped (the event might have been deleted between
+ * scan + write). Single read + single write — used by the reanalyze migration.
+ */
+export function updateSolves(eventId: EventId, updates: Solve[]): void {
+  if (updates.length === 0) return;
+  const db = loadRaw();
+  const existing = db.byEvent[eventId];
+  if (!existing || existing.length === 0) return;
+  const byId = new Map<string, Solve>();
+  for (const u of updates) byId.set(u.id, u);
+  db.byEvent[eventId] = existing.map(s => byId.get(s.id) ?? s);
+  saveRaw(db);
+}
+
 /** Convenience: build a Solve. */
 export function makeSolve(args: {
   timeMs: number;
