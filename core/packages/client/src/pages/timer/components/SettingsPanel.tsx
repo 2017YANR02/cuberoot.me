@@ -3,7 +3,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { Download, FileSpreadsheet, RefreshCw, Target } from 'lucide-react';
+import { ChevronDown, ChevronRight, Download, FileSpreadsheet, RefreshCw, Target } from 'lucide-react';
 import { formatTargetTime, parseDailySolveGoal, parseTargetTime, resetSettings, updateSettings, useSettings } from '../settings';
 import { warmupSound, play } from '../sound';
 import { getMetronome } from '../sound/metronome';
@@ -23,8 +23,101 @@ interface Props {
   event: EventId;
 }
 
+function useIsMobile(): boolean {
+  const [isMobile, setIsMobile] = useState<boolean>(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
+    return window.matchMedia('(max-width: 768px)').matches;
+  });
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
+    const mq = window.matchMedia('(max-width: 768px)');
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    if (typeof mq.addEventListener === 'function') {
+      mq.addEventListener('change', handler);
+      return () => mq.removeEventListener('change', handler);
+    }
+    // Safari < 14 fallback
+    mq.addListener(handler);
+    return () => mq.removeListener(handler);
+  }, []);
+  return isMobile;
+}
+
+interface AccordionSectionProps {
+  id: string;
+  title: string;
+  defaultExpanded: boolean;
+  useMobile: boolean;
+  expanded: Set<string>;
+  setExpanded: (next: Set<string>) => void;
+  children: React.ReactNode;
+}
+
+function AccordionSection({ id, title, defaultExpanded, useMobile, expanded, setExpanded, children }: AccordionSectionProps) {
+  // Initialize expansion state on mount.
+  useEffect(() => {
+    if (defaultExpanded && !expanded.has(id)) {
+      const next = new Set(expanded);
+      next.add(id);
+      setExpanded(next);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (!useMobile) {
+    return (
+      <div className="modal-section">
+        <h3 className="settings-h3">{title}</h3>
+        {children}
+      </div>
+    );
+  }
+
+  const isOpen = expanded.has(id);
+  const toggle = () => {
+    const next = new Set(expanded);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setExpanded(next);
+  };
+
+  return (
+    <div className="modal-section">
+      <button
+        type="button"
+        className="settings-accordion-header"
+        aria-expanded={isOpen}
+        onClick={toggle}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          width: '100%',
+          minHeight: 44,
+          padding: '10px 4px',
+          background: 'transparent',
+          border: 'none',
+          borderBottom: '1px solid var(--border, rgba(255,255,255,0.08))',
+          color: 'inherit',
+          font: 'inherit',
+          textAlign: 'left',
+          cursor: 'pointer',
+        }}
+      >
+        {isOpen
+          ? <ChevronDown size={16} aria-hidden />
+          : <ChevronRight size={16} aria-hidden />}
+        <span className="settings-h3" style={{ margin: 0 }}>{title}</span>
+      </button>
+      {isOpen && <div style={{ paddingTop: 8 }}>{children}</div>}
+    </div>
+  );
+}
+
 export default function SettingsPanel({ isZh, onClose, event }: Props) {
   const s = useSettings();
+  const isMobile = useIsMobile();
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(() => new Set(['timing']));
   const [seedTick, setSeedTick] = useState(0);
   const [aoInput, setAoInput] = useState<string>(() => s.customAoWindows.join(','));
 
@@ -337,8 +430,14 @@ export default function SettingsPanel({ isZh, onClose, event }: Props) {
       >
         <h2 id="settings-modal-title">{isZh ? '设置' : 'Settings'}</h2>
 
-        <div className="modal-section">
-          <h3 className="settings-h3">{isZh ? '计时' : 'Timing'}</h3>
+        <AccordionSection
+          id="timing"
+          title={isZh ? '计时' : 'Timing'}
+          defaultExpanded={true}
+          useMobile={isMobile}
+          expanded={expandedSections}
+          setExpanded={setExpandedSections}
+        >
           <Row label={isZh ? '观察时间（秒）' : 'Inspection (sec)'}>
             <input
               type="number" min={0} max={60}
@@ -472,10 +571,16 @@ export default function SettingsPanel({ isZh, onClose, event }: Props) {
               ? `每个 3..1000；当前 ${s.customAoWindows.length === 0 ? '无' : s.customAoWindows.map(n => 'ao' + n).join(' / ')}`
               : `each 3..1000; current ${s.customAoWindows.length === 0 ? 'none' : s.customAoWindows.map(n => 'ao' + n).join(' / ')}`}</span>
           </Row>
-        </div>
+        </AccordionSection>
 
-        <div className="modal-section">
-          <h3 className="settings-h3">{isZh ? '声音' : 'Sound'}</h3>
+        <AccordionSection
+          id="sound"
+          title={isZh ? '声音' : 'Sound'}
+          defaultExpanded={false}
+          useMobile={isMobile}
+          expanded={expandedSections}
+          setExpanded={setExpandedSections}
+        >
           <Row label={isZh ? '提示音' : 'Sounds'}>
             <input
               type="checkbox"
@@ -519,10 +624,16 @@ export default function SettingsPanel({ isZh, onClose, event }: Props) {
               ? (isZh ? '念 8 秒 / 12 秒 / 开始（依系统可用音色）' : 'reads 8s / 12s / go (depends on system voices)')
               : (isZh ? '浏览器不支持' : 'unsupported by browser')}</span>
           </Row>
-        </div>
+        </AccordionSection>
 
-        <div className="modal-section">
-          <h3 className="settings-h3">{isZh ? '节拍器' : 'Metronome'}</h3>
+        <AccordionSection
+          id="metronome"
+          title={isZh ? '节拍器' : 'Metronome'}
+          defaultExpanded={false}
+          useMobile={isMobile}
+          expanded={expandedSections}
+          setExpanded={setExpandedSections}
+        >
           <Row label={isZh ? '开启' : 'Enabled'}>
             <input
               type="checkbox"
@@ -551,10 +662,16 @@ export default function SettingsPanel({ isZh, onClose, event }: Props) {
             )}
             <span className="hint">{isZh ? '离开本页时自动停止' : 'auto-stops on page leave'}</span>
           </Row>
-        </div>
+        </AccordionSection>
 
-        <div className="modal-section">
-          <h3 className="settings-h3">{isZh ? '同步种子' : 'Sync seed'}</h3>
+        <AccordionSection
+          id="sync-seed"
+          title={isZh ? '同步种子' : 'Sync seed'}
+          defaultExpanded={false}
+          useMobile={isMobile}
+          expanded={expandedSections}
+          setExpanded={setExpandedSections}
+        >
           <Row label={isZh ? '种子' : 'Seed'}>
             <input
               type="text"
@@ -579,10 +696,16 @@ export default function SettingsPanel({ isZh, onClose, event }: Props) {
             </button>
             <span className="hint">{isZh ? '相同种子在不同设备打出相同序列' : 'same seed → same sequence across devices'}</span>
           </Row>
-        </div>
+        </AccordionSection>
 
-        <div className="modal-section">
-          <h3 className="settings-h3">{isZh ? '自动备份' : 'Auto-backup'}</h3>
+        <AccordionSection
+          id="auto-backup"
+          title={isZh ? '自动备份' : 'Auto-backup'}
+          defaultExpanded={false}
+          useMobile={isMobile}
+          expanded={expandedSections}
+          setExpanded={setExpandedSections}
+        >
           <Row label={isZh ? '每 N 次写入触发' : 'Every N saves'}>
             <input
               type="number" min={0} max={30} step={1}
@@ -601,10 +724,16 @@ export default function SettingsPanel({ isZh, onClose, event }: Props) {
               {isZh ? '查看备份' : 'View backups'}
             </button>
           </Row>
-        </div>
+        </AccordionSection>
 
-        <div className="modal-section">
-          <h3 className="settings-h3">{isZh ? '从 csTimer 导入 / 导出' : 'csTimer import / export'}</h3>
+        <AccordionSection
+          id="cstimer-io"
+          title={isZh ? '从 csTimer 导入 / 导出' : 'csTimer import / export'}
+          defaultExpanded={false}
+          useMobile={isMobile}
+          expanded={expandedSections}
+          setExpanded={setExpandedSections}
+        >
           <Row label={isZh ? '选择 JSON 文件' : 'Choose JSON file'}>
             <input
               ref={cstimerFileRef}
@@ -709,10 +838,16 @@ export default function SettingsPanel({ isZh, onClose, event }: Props) {
               <span className="hint">{reanalyzeMsg}</span>
             )}
           </Row>
-        </div>
+        </AccordionSection>
 
-        <div className="modal-section">
-          <h3 className="settings-h3">{isZh ? '外观' : 'Appearance'}</h3>
+        <AccordionSection
+          id="appearance"
+          title={isZh ? '外观' : 'Appearance'}
+          defaultExpanded={false}
+          useMobile={isMobile}
+          expanded={expandedSections}
+          setExpanded={setExpandedSections}
+        >
           <Row label={isZh ? '主题' : 'Theme'}>
             <select
               value={s.theme}
@@ -794,10 +929,16 @@ export default function SettingsPanel({ isZh, onClose, event }: Props) {
               ? '刷新单次/Ao5/Ao12 最佳时显示 3 秒'
               : 'shows for 3s when single/ao5/ao12 PB is broken'}</span>
           </Row>
-        </div>
+        </AccordionSection>
 
-        <div className="modal-section">
-          <h3 className="settings-h3">{isZh ? '配色（魔方面）' : 'Cube colors'}</h3>
+        <AccordionSection
+          id="cube-colors"
+          title={isZh ? '配色（魔方面）' : 'Cube colors'}
+          defaultExpanded={false}
+          useMobile={isMobile}
+          expanded={expandedSections}
+          setExpanded={setExpandedSections}
+        >
           <div className="color-grid">
             {(['U', 'D', 'F', 'B', 'L', 'R'] as const).map(face => {
               const wcaDefault: Record<typeof face, string> = {
@@ -824,7 +965,7 @@ export default function SettingsPanel({ isZh, onClose, event }: Props) {
           >
             {isZh ? '恢复 WCA 配色' : 'Reset to WCA colors'}
           </button>
-        </div>
+        </AccordionSection>
 
         <div className="modal-actions">
           <button className="danger" onClick={() => {
