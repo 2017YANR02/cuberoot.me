@@ -7,6 +7,21 @@ description: "Use whenever writing SQL against the local wca_statistics MySQL du
 
 本仓库本地的 WCA dump：`E:\mysql_data\wca_statistics`，连接配置在 `core/packages/stats-build/database.yml`。**写 SQL 前先看这个文件**，凭对 WCA 公开 TSV 的肌肉记忆会踩坑。
 
+## ⚠️ 本地 dump ≠ CI 可用表
+
+本地 dump 是 WCA 全量；CI (`update_database.ts`) 只导入 `REQUIRED_TABLES` 15 张：
+
+```
+championships, competitions, competition_delegates, continents,
+countries, events, formats, persons, preferred_formats,
+ranks_single, ranks_average, result_attempts, results,
+round_types, users
+```
+
+**本地能 join 到的 `competition_events` / `rounds` / `rounds_*` / `championships_*` 关联表 / `posts` / 任何 `_metadata` 表 → CI 没有。**
+
+写新 SQL（stats、bin 脚本、validate）前必须确认所用表在 `REQUIRED_TABLES`（`core/packages/stats-build/src/core/database.ts`）。要新增表就同时改 `REQUIRED_TABLES`，否则本地通过 / CI 红。
+
 ## 命名约定（最常见的坑）
 
 - **所有列名 snake_case**：`event_id` / `person_id` / `competition_id` / `country_id` / `start_date`。**不是** camelCase（WCA 公开 TSV 是 `eventId`）。

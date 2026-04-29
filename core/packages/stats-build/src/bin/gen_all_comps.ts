@@ -76,13 +76,12 @@ async function main() {
 
   const rows = await query<Row[]>(sql);
 
-  // NOTE: 每场比赛每个项目的轮次数。`rounds` 表 + `competition_events` 桥接,
-  // COUNT(*) 即该 (comp,event) 设置的轮数（== rounds.total_number_of_rounds 字段）。
+  // NOTE: 每场比赛每个项目的轮次数。CI 只导入 REQUIRED_TABLES，没有 competition_events / rounds 表，
+  // 用 results.round_type_id 的 distinct count 等价替代（past comps 已跑的轮次必然有 results）。
   const roundsSql = `
-    SELECT ce.competition_id, ce.event_id, COUNT(r.id) AS round_count
-    FROM competition_events ce
-    JOIN rounds r ON r.competition_event_id = ce.id
-    GROUP BY ce.competition_id, ce.event_id
+    SELECT competition_id, event_id, COUNT(DISTINCT round_type_id) AS round_count
+    FROM results
+    GROUP BY competition_id, event_id
   `;
   const roundRows = await query<RoundRow[]>(roundsSql);
   const roundsByComp = new Map<string, Record<string, number>>();
