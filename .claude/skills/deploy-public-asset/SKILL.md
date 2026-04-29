@@ -50,5 +50,5 @@ description: "Use when adding new public/static files to the site — images, fo
 
 ## 不相关
 
-- `stats/data/**` 目录已整目录 `git add -A stats/`，新 JSON 自动包含，**不用**加白名单
+- `stats/**` 目录已整目录 `git add -A stats/`，新 JSON 自动包含，**不用**加白名单
 - `core/packages/client/src/**` 源码不需要白名单（CI build 后自动进 dist/）

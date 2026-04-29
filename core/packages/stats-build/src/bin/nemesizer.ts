@@ -1,5 +1,5 @@
 // NOTE: CLI 入口——生成 Nemesizer 功能所需的二进制数据文件
-// 输出：stats/data/nemesizer/{persons.bin.gz, ranks.bin.gz, counts.bin.gz, meta.json}
+// 输出：stats/nemesizer/{persons.bin.gz, ranks.bin.gz, counts.bin.gz, meta.json}
 // 用法：
 //   pnpm nemesizer           # 从 WCA DB 生成完整数据
 //   pnpm nemesizer --mock    # 生成小规模假数据（用于本地开发/测试）
@@ -22,7 +22,7 @@ import {
 import { EVENTS, eventZh } from '../core/events.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const OUTPUT_DIR = resolve(__dirname, '../../../../../stats/data/nemesizer');
+const OUTPUT_DIR = resolve(__dirname, '../../../../../stats/nemesizer');
 
 interface RawPerson { wcaId: string; name: string; countryId: string; }
 interface RawCountry { id: string; iso2: string; nameZh: string | null; continent: string; continentZh: string; }

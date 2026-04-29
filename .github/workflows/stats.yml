@@ -77,7 +77,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Create stats output directory
-        run: mkdir -p stats/data
+        run: mkdir -p stats
 
       # NOTE: 写入 CI 专用数据库配置（TS database.ts 从此文件读取凭据）
       - name: Setup database config
@@ -127,6 +127,10 @@ jobs:
       - name: Generate competition records JSON
         working-directory: core/packages/stats-build
         run: npx tsx src/bin/gen_comp_records.ts
+
+      - name: Generate lookup data (person_countries + comp_countries)
+        working-directory: core/packages/stats-build
+        run: npx tsx src/bin/gen_lookup_data.ts
 
       - name: Fetch upcoming comps
         run: python scripts/fetch_upcoming_comps.py --refresh

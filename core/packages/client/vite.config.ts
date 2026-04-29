@@ -43,7 +43,7 @@ function serveRepoRoot(): Plugin {
     name: 'serve-repo-root',
     configureServer(server) {
       // NOTE: 必须用 return 让中间件在 Vite 内部中间件之前执行，
-      // 否则 Vite 的 SPA fallback 会把 /stats/data/index.json 当成 HTML 路由处理
+      // 否则 Vite 的 SPA fallback 会把 /stats/index.json 当成 HTML 路由处理
       server.middlewares.use((req, res, next) => {
         const url = (req.url || '').split('?')[0];
 

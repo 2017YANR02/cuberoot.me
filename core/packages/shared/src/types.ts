@@ -225,8 +225,10 @@ export interface ReconComment {
   createdAt: number;
   /** Unix timestamp，未编辑则 null */
   updatedAt: number | null;
-  /** 管理员置顶 */
+  /** 管理员置顶（仅顶层评论可置顶） */
   pinned: boolean;
+  /** 父评论 id；null 表示顶层评论。回复只支持单层（YouTube 风格） */
+  parentId: number | null;
 }
 
 /** 编辑历史条目 */

@@ -6,8 +6,8 @@ import { EVENTS_WITH_AO5 } from '../core/events.js';
 export class WrBpa extends RoundMetric {
   constructor() {
     super();
-    this.title = 'BPA (Best Possible Average)';
-    this.titleZh = 'BPA（最佳可能平均）';
+    this.title = 'BPA';
+    this.titleZh = 'BPA';
     this.note = 'Best Possible Average: average of the best 3 out of the first 4 solves in a round.';
     this.noteZh = '最佳可能平均：前 4 次中取最好 3 次的平均。';
     this.tableHeader = {

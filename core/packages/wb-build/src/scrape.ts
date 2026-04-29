@@ -1,6 +1,6 @@
 /**
  * Scrape speedsolving.com wiki "List of Unofficial World Records"
- * → stats/data/world_bests.json
+ * → stats/world_bests.json
  *
  * Wiki tables use rowspan on the Event column (one big table per section,
  * with each event spanning ~5 rows for single/avg5/avg12/avg50/avg100).
@@ -14,7 +14,7 @@ import { countryToIso2 } from './country_map.js';
 import type { WbDataset, WbRecord, WbTab, WbTabId, WbBilingual } from './types.js';
 
 const SOURCE_URL = 'https://www.speedsolving.com/wiki/index.php?title=List_of_Unofficial_World_Records';
-const OUT_PATH = resolve(fileURLToPath(import.meta.url), '../../../../../stats/data/world_bests.json');
+const OUT_PATH = resolve(fileURLToPath(import.meta.url), '../../../../../stats/world_bests.json');
 
 // ── category labels ──
 

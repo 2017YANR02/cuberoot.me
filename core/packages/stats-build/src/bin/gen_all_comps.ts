@@ -1,4 +1,4 @@
-// NOTE: 导出 WCA 历史所有已结束比赛 → stats/data/all_past_comps.json
+// NOTE: 导出 WCA 历史所有已结束比赛 → stats/all_past_comps.json
 // Globe 页 history 模式消费这个文件。
 //
 // 数据源：本地 MySQL wca_statistics 库（update_database.ts 每周从 WCA 官方 dump 导入）
@@ -12,7 +12,7 @@ import { query, closePool } from '../core/database.js';
 import type { RowDataPacket } from 'mysql2';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const OUTPUT_PATH = resolve(__dirname, '../../../../../stats/data/all_past_comps.json');
+const OUTPUT_PATH = resolve(__dirname, '../../../../../stats/all_past_comps.json');
 
 // NOTE: WCA 内部 event_id → 前端短名（与 scripts/fetch_upcoming_comps.py EVENT_DISPLAY_ORDER 保持一致）
 const EVENT_SHORT: Record<string, string> = {

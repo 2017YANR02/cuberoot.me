@@ -1,11 +1,11 @@
 ---
 name: scramble-stats-build
-description: "Use when regenerating `stats/data/scramble/*.json` or touching `core/packages/scramble-stats-build/` / `core/packages/client/src/pages/scramble_stats/`. Covers CSV 列名、pair rotation 记号、WCA 配色、UI 朝向→底色。Triggers: \"scramble-stats-build\", \"distribution.json\", \"打乱分布\", \"scramble_stats\"."
+description: "Use when regenerating `stats/scramble/*.json` or touching `core/packages/scramble-stats-build/` / `core/packages/client/src/pages/scramble_stats/`. Covers CSV 列名、pair rotation 记号、WCA 配色、UI 朝向→底色。Triggers: \"scramble-stats-build\", \"distribution.json\", \"打乱分布\", \"scramble_stats\"."
 ---
 
 # Scramble Stats Build
 
-把 `D:\cube\solver` 产的 5 份 CSV 聚合成 `stats/data/scramble/distribution.json`,给 `/scramble-stats` 用。**支持多个 set**(WCA 历史 + state-based 数据集),UI 上 dropdown 切换。
+把 `D:\cube\solver` 产的 5 份 CSV 聚合成 `stats/scramble/distribution.json`,给 `/scramble-stats` 用。**支持多个 set**(WCA 历史 + state-based 数据集),UI 上 dropdown 切换。
 
 ## 跑
 

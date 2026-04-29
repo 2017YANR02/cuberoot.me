@@ -140,6 +140,8 @@
   font-size: 14px;
   color: #bbb;
   font-weight: 400;
+  /* 数字等宽——动画中 days 计数滚动时不抖动 */
+  font-variant-numeric: tabular-nums;
 }
 
 .t10h-bigtitle {
@@ -374,6 +376,24 @@
   font-size: 12px;
   color: #888;
   line-height: 1.6;
+}
+.t10h-legend {
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+.t10h-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.t10h-legend-swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
 }
 
 /* ── 导出按钮 + 进度 overlay ── */

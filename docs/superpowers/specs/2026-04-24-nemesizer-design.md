@@ -31,7 +31,7 @@
 
 在 `core/packages/stats-build/src/` 加新命令 `nemesizer`，从 WCA Postgres 导出：
 
-**输出到 `stats/data/nemesizer/`：**
+**输出到 `stats/nemesizer/`：**
 
 1. **`persons.bin`** — 有至少 1 条 rank 记录的所有 person，按 `personId` 升序：
    ```
@@ -82,7 +82,7 @@
 
 ### 3.2 部署白名单
 
-`stats/data/nemesizer/**` 要加入两个 workflow 的 path filter（参考 skill `deploy-public-asset`）。
+`stats/nemesizer/**` 要加入两个 workflow 的 path filter（参考 skill `deploy-public-asset`）。
 
 ### 3.3 client 加载
 

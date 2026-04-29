@@ -48,7 +48,7 @@ export default function WcaStatsIndex() {
   const isZh = i18n.language === 'zh';
 
   useEffect(() => {
-    fetch('/stats/data/index.json')
+    fetch('/stats/index.json')
       .then(res => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
