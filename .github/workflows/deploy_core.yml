@@ -42,10 +42,16 @@ jobs:
         working-directory: core
         run: pnpm --filter @cuberoot/client build
 
-      # 构建后端
+      # 构建后端 + 打 self-contained deploy bundle (含 prod node_modules,workspace 内联)
       - name: Build server
         working-directory: core
         run: pnpm --filter @cuberoot/server build
+
+      - name: Bundle server deploy
+        working-directory: core
+        run: |
+          rm -rf /tmp/server-deploy
+          pnpm --filter @cuberoot/server deploy --prod --legacy /tmp/server-deploy
 
       # 将 client dist 产物同步到仓库根目录
       # NOTE: Vite 产出 index.html + _assets/ + public/ 静态文件
@@ -92,10 +98,23 @@ jobs:
 
       - name: Deploy server to ECS
         run: |
-          # rsync server dist 到 ECS
+          # NOTE: 不在根用 --delete（避免删 ECS 上的 .env / pm2 状态等）
+          # 各子目录单独 --delete 保证清理旧内容
+
+          # dist (compiled JS)
           rsync -rltz --delete --chmod=D755,F644 \
             -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
-            core/packages/server/dist/ "root@${{ secrets.DEPLOY_HOST }}:/root/core-api/dist/"
+            /tmp/server-deploy/dist/ "root@${{ secrets.DEPLOY_HOST }}:/root/core-api/dist/"
+
+          # node_modules (prod deps + workspace 内联)
+          rsync -rltz --delete --chmod=D755,F644 \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            /tmp/server-deploy/node_modules/ "root@${{ secrets.DEPLOY_HOST }}:/root/core-api/node_modules/"
+
+          # package.json
+          rsync -ltz --chmod=F644 \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            /tmp/server-deploy/package.json "root@${{ secrets.DEPLOY_HOST }}:/root/core-api/package.json"
 
           # pm2 重启（首次用 start，已有则 restart）
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no "root@${{ secrets.DEPLOY_HOST }}" \
