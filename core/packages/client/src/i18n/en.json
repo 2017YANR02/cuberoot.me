@@ -34,7 +34,10 @@
     "loading": "Loading...",
     "loadFailed": "Failed to load",
     "unknownError": "Unknown error",
-    "langToggleLabel": "中文"
+    "langToggleLabel": "中文",
+    "clear": "Clear",
+    "min": "Min",
+    "max": "Max"
   },
   "recon": {
     "title": "Solve Reconstructions",
@@ -64,6 +67,13 @@
     "editHistory": "Edit History",
     "unknown": "unknown",
     "sameRound": "Same Round",
+    "addAttempt": "Add attempt #{{n}} (carry over round info)",
+    "pasteAttempts": "Paste round times",
+    "pasteAttemptsPlaceholder": "Paste here…",
+    "pasteAttemptsHint": "Format: 3.79 4.33 3.61 3.74 2.80 (spaces / commas / newlines OK; DNF / DNS supported)",
+    "apply": "Apply",
+    "allRounds": "All rounds",
+    "allAoTypes": "All",
     "video": "Video",
     "statistics": "Statistics",
     "comments": "Comments",

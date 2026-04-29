@@ -585,6 +585,62 @@
   cursor: default;
 }
 
+.same-round-missing {
+  background: transparent;
+  border-style: dashed;
+  border-color: rgba(255, 255, 255, 0.18);
+  color: rgba(232, 162, 122, 0.55);
+}
+
+.same-round-missing:hover {
+  background: rgba(232, 162, 122, 0.08);
+  border-color: rgba(232, 162, 122, 0.4);
+  color: #e8a27a;
+}
+
+.same-round-paste-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  background: transparent;
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+}
+
+.same-round-paste-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+}
+
+.same-round-paste-box {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+  align-items: stretch;
+}
+
+.same-round-paste-box textarea {
+  flex: 1;
+  min-width: 0;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  padding: 6px 8px;
+  color: #d4d4d4;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.82rem;
+  resize: vertical;
+}
+
+.same-round-paste-hint {
+  margin-top: 4px;
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.4);
+}
+
 /* --- Cross 行就地切换图标（标准化/原始） --- */
 .recon-cross-toggle {
   display: inline-flex;

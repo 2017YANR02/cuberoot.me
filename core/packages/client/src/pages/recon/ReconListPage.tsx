@@ -23,6 +23,7 @@ import { EventSelect } from '../../components/EventSelect';
 import { ListSelect, type ListSelectItem } from '../../components/ListSelect';
 import { RecordSelect } from '../../components/RecordSelect';
 import { EventIcon } from '../../components/EventIcon';
+import { ColFilter } from '../../components/ColFilter/ColFilter';
 import { isWcaEvent, eventDisplayName } from '../../utils/wca_events';
 import { Plus } from 'lucide-react';
 import '../../recon.css';
@@ -60,6 +61,58 @@ const COL_I18N_KEY: Record<string, string> = {
   result: 'recon.col.result', stm: 'recon.col.stm', tps: 'recon.col.tps', id: 'recon.col.id',
 };
 
+// ── 数值区间过滤器（用于 单次/成绩 列 popover）──
+
+interface RangeFilterProps {
+  min: number | null;
+  max: number | null;
+  onChange: (min: number | null, max: number | null) => void;
+}
+
+function RangeFilter({ min, max, onChange }: RangeFilterProps) {
+  const { t } = useTranslation();
+  const parse = (v: string): number | null => {
+    if (!v.trim()) return null;
+    const n = parseFloat(v);
+    return isNaN(n) ? null : n;
+  };
+  return (
+    <div className="recon-range-filter">
+      <input
+        type="number"
+        step="0.01"
+        placeholder={t('common.min')}
+        value={min ?? ''}
+        onChange={(e) => onChange(parse(e.target.value), max)}
+      />
+      <span className="recon-range-sep">~</span>
+      <input
+        type="number"
+        step="0.01"
+        placeholder={t('common.max')}
+        value={max ?? ''}
+        onChange={(e) => onChange(min, parse(e.target.value))}
+      />
+    </div>
+  );
+}
+
+interface DateRangeFilterProps {
+  min: string;
+  max: string;
+  onChange: (min: string, max: string) => void;
+}
+
+function DateRangeFilter({ min, max, onChange }: DateRangeFilterProps) {
+  return (
+    <div className="recon-range-filter">
+      <input type="date" value={min} onChange={(e) => onChange(e.target.value, max)} />
+      <span className="recon-range-sep">~</span>
+      <input type="date" value={max} onChange={(e) => onChange(min, e.target.value)} />
+    </div>
+  );
+}
+
 // ── 主组件 ──
 
 export default function ReconListPage() {
@@ -72,7 +125,7 @@ export default function ReconListPage() {
     displayCount,
     loadAll, setFilter, setSort,
     getFilteredSolves, getAvailableEvents, getAvailableMethods, getAvailableSolvers,
-    getAvailableComps, getAvailableRecords,
+    getAvailableComps, getAvailableRecords, getAvailableRounds, getAvailableAoTypes,
   } = useReconStore();
 
   // NOTE: 页面加载时获取数据
@@ -126,6 +179,14 @@ export default function ReconListPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useReconStore.getState().allSolves,
   ]);
+  const rounds = useMemo(() => getAvailableRounds(), [
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    useReconStore.getState().allSolves,
+  ]);
+  const aoTypes = useMemo(() => getAvailableAoTypes(), [
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    useReconStore.getState().allSolves,
+  ]);
 
   // ── ListSelect items: caller 端预格式化 (label / hint / searchTerms) ──
   const solverItems = useMemo<ListSelectItem[]>(() => solvers.map(s => ({
@@ -150,6 +211,18 @@ export default function ReconListPage() {
     label: m.name === '__NO_METHOD__' ? '(空)' : m.name,
     hint: `(${m.count})`,
   })), [methods]);
+
+  const roundItems = useMemo<ListSelectItem[]>(() => rounds.map(r => ({
+    value: r.name,
+    label: r.name === 'f' ? t('recon.roundOption.final') : t('recon.roundOption.numbered', { n: r.name }),
+    hint: `(${r.count})`,
+  })), [rounds, t]);
+
+  const aoTypeItems = useMemo<ListSelectItem[]>(() => aoTypes.map(a => ({
+    value: a.name,
+    label: a.name,
+    hint: `(${a.count})`,
+  })), [aoTypes]);
 
   const displayed = filtered.slice(0, displayCount);
   const hasMore = filtered.length > displayCount;
@@ -216,6 +289,197 @@ export default function ReconListPage() {
       setSort(col.key as SortKey);
     }
   }, [setSort]);
+
+  // ── 表头列过滤器（漏斗 popover）──
+  const renderColFilter = (col: Column) => {
+    switch (col.key) {
+      case 'comp': {
+        const active = !!filters.comp;
+        return (
+          <ColFilter active={active} onClear={() => setFilter('comp', '')} align="left">
+            <ListSelect
+              items={compItems}
+              value={filters.comp}
+              onChange={(v) => setFilter('comp', v)}
+              allLabel={t('recon.allComps')}
+              searchable
+            />
+          </ColFilter>
+        );
+      }
+      case 'person': {
+        const active = !!filters.solver;
+        return (
+          <ColFilter active={active} onClear={() => setFilter('solver', '')} align="left">
+            <ListSelect
+              items={solverItems}
+              value={filters.solver}
+              onChange={(v) => setFilter('solver', v)}
+              allLabel={t('recon.allSolvers')}
+              searchable
+            />
+          </ColFilter>
+        );
+      }
+      case 'event': {
+        const active = !!filters.event;
+        return (
+          <ColFilter active={active} onClear={() => setFilter('event', '')}>
+            <EventSelect
+              events={events}
+              value={filters.event}
+              onChange={(v) => setFilter('event', v)}
+              allLabel={t('recon.allEvents')}
+            />
+          </ColFilter>
+        );
+      }
+      case 'method': {
+        const active = !!filters.method;
+        return (
+          <ColFilter active={active} onClear={() => setFilter('method', '')}>
+            <ListSelect
+              items={methodItems}
+              value={filters.method}
+              onChange={(v) => setFilter('method', v)}
+              allLabel={t('recon.allMethods')}
+            />
+          </ColFilter>
+        );
+      }
+      case 'rawTime': {
+        // NOTE: 单次列：range + record 两组合并入一个 popover
+        const active = filters.rawTimeMin != null || filters.rawTimeMax != null || !!filters.record;
+        const onClear = () => {
+          setFilter('rawTimeMin', null);
+          setFilter('rawTimeMax', null);
+          setFilter('record', '');
+        };
+        return (
+          <ColFilter active={active} onClear={onClear} align="left">
+            <RangeFilter
+              min={filters.rawTimeMin}
+              max={filters.rawTimeMax}
+              onChange={(mn, mx) => { setFilter('rawTimeMin', mn); setFilter('rawTimeMax', mx); }}
+            />
+            <RecordSelect
+              records={records}
+              value={filters.record}
+              onChange={(v) => setFilter('record', v)}
+              placeholder={t('recon.allRecords')}
+            />
+          </ColFilter>
+        );
+      }
+      case 'result': {
+        // NOTE: 成绩列与单次同源；只暴露 range
+        const active = filters.rawTimeMin != null || filters.rawTimeMax != null;
+        const onClear = () => { setFilter('rawTimeMin', null); setFilter('rawTimeMax', null); };
+        return (
+          <ColFilter active={active} onClear={onClear}>
+            <RangeFilter
+              min={filters.rawTimeMin}
+              max={filters.rawTimeMax}
+              onChange={(mn, mx) => { setFilter('rawTimeMin', mn); setFilter('rawTimeMax', mx); }}
+            />
+          </ColFilter>
+        );
+      }
+      case 'date': {
+        const active = !!filters.dateMin || !!filters.dateMax;
+        const onClear = () => { setFilter('dateMin', ''); setFilter('dateMax', ''); };
+        return (
+          <ColFilter active={active} onClear={onClear} align="left">
+            <DateRangeFilter
+              min={filters.dateMin}
+              max={filters.dateMax}
+              onChange={(mn, mx) => { setFilter('dateMin', mn); setFilter('dateMax', mx); }}
+            />
+          </ColFilter>
+        );
+      }
+      case 'round': {
+        const active = !!filters.round;
+        return (
+          <ColFilter active={active} onClear={() => setFilter('round', '')}>
+            <ListSelect
+              items={roundItems}
+              value={filters.round}
+              onChange={(v) => setFilter('round', v)}
+              allLabel={t('recon.allRounds') ?? '全部'}
+            />
+          </ColFilter>
+        );
+      }
+      case 'average': {
+        const active = filters.averageMin != null || filters.averageMax != null;
+        const onClear = () => { setFilter('averageMin', null); setFilter('averageMax', null); };
+        return (
+          <ColFilter active={active} onClear={onClear}>
+            <RangeFilter
+              min={filters.averageMin}
+              max={filters.averageMax}
+              onChange={(mn, mx) => { setFilter('averageMin', mn); setFilter('averageMax', mx); }}
+            />
+          </ColFilter>
+        );
+      }
+      case 'aoType': {
+        const active = !!filters.aoType;
+        return (
+          <ColFilter active={active} onClear={() => setFilter('aoType', '')}>
+            <ListSelect
+              items={aoTypeItems}
+              value={filters.aoType}
+              onChange={(v) => setFilter('aoType', v)}
+              allLabel={t('recon.allAoTypes') ?? '全部'}
+            />
+          </ColFilter>
+        );
+      }
+      case 'stm': {
+        const active = filters.stmMin != null || filters.stmMax != null;
+        const onClear = () => { setFilter('stmMin', null); setFilter('stmMax', null); };
+        return (
+          <ColFilter active={active} onClear={onClear}>
+            <RangeFilter
+              min={filters.stmMin}
+              max={filters.stmMax}
+              onChange={(mn, mx) => { setFilter('stmMin', mn); setFilter('stmMax', mx); }}
+            />
+          </ColFilter>
+        );
+      }
+      case 'tps': {
+        const active = filters.tpsMin != null || filters.tpsMax != null;
+        const onClear = () => { setFilter('tpsMin', null); setFilter('tpsMax', null); };
+        return (
+          <ColFilter active={active} onClear={onClear}>
+            <RangeFilter
+              min={filters.tpsMin}
+              max={filters.tpsMax}
+              onChange={(mn, mx) => { setFilter('tpsMin', mn); setFilter('tpsMax', mx); }}
+            />
+          </ColFilter>
+        );
+      }
+      case 'id': {
+        const active = filters.idMin != null || filters.idMax != null;
+        const onClear = () => { setFilter('idMin', null); setFilter('idMax', null); };
+        return (
+          <ColFilter active={active} onClear={onClear}>
+            <RangeFilter
+              min={filters.idMin}
+              max={filters.idMax}
+              onChange={(mn, mx) => { setFilter('idMin', mn); setFilter('idMax', mx); }}
+            />
+          </ColFilter>
+        );
+      }
+      default:
+        return null;
+    }
+  };
 
   // ── WCA / non-WCA toggle 状态 ──
   // NOTE: 原版逻辑——两个按钮都激活=显示全部；只激活一个=筛选对应类型
@@ -380,46 +644,21 @@ export default function ReconListPage() {
         <LangToggle />
       </div>
 
-      {/* 工具栏 */}
+      {/* 工具栏：仅留 WCA toggle + 计数 + 添加 + 登录；filter 全在表头 popover */}
       <div className="recon-toolbar">
-        <ListSelect
-          items={compItems}
-          value={filters.comp}
-          onChange={(v) => setFilter('comp', v)}
-          allLabel={t('recon.allComps')}
-          className="recon-comp-filter"
-          searchable
-        />
-        <RecordSelect
-          records={records}
-          value={filters.record}
-          onChange={(v) => setFilter('record', v)}
-          placeholder={t('recon.allRecords')}
-          className="recon-record-filter"
-        />
-        <div className="recon-filters">
-          <ListSelect
-            items={solverItems}
-            value={filters.solver}
-            onChange={(v) => setFilter('solver', v)}
-            allLabel={t('recon.allSolvers')}
-            className="recon-solver-filter"
-            searchable
-          />
-          <ListSelect
-            items={methodItems}
-            value={filters.method}
-            onChange={(v) => setFilter('method', v)}
-            allLabel={t('recon.allMethods')}
-            className="recon-method-filter"
-          />
-          <EventSelect
-            events={events}
-            value={filters.event}
-            onChange={(v) => setFilter('event', v)}
-            allLabel={t('recon.allEvents')}
-            className="recon-event-filter"
-          />
+        <div className="recon-type-toggle">
+          <button
+            className={`toggle-btn${showWca ? ' active' : ''}`}
+            onClick={handleToggleWca}
+          >
+            WCA
+          </button>
+          <button
+            className={`toggle-btn${showNonWca ? ' active' : ''}`}
+            onClick={handleToggleNonWca}
+          >
+            non-WCA
+          </button>
         </div>
         <div className="recon-actions">
           <span className="recon-stats-count">
@@ -430,22 +669,6 @@ export default function ReconListPage() {
           </Link>
           <WcaAuth />
         </div>
-      </div>
-
-      {/* WCA / non-WCA toggle 按钮组 */}
-      <div className="recon-type-toggle">
-        <button
-          className={`toggle-btn${showWca ? ' active' : ''}`}
-          onClick={handleToggleWca}
-        >
-          WCA
-        </button>
-        <button
-          className={`toggle-btn${showNonWca ? ' active' : ''}`}
-          onClick={handleToggleNonWca}
-        >
-          non-WCA
-        </button>
       </div>
 
       {/* 加载状态 */}
@@ -469,7 +692,8 @@ export default function ReconListPage() {
                       }`}
                       onClick={() => handleSort(col)}
                     >
-                      {getColumnLabel(col)}
+                      <span className="col-label">{getColumnLabel(col)}</span>
+                      {renderColFilter(col)}
                     </th>
                   ))}
                 </tr>

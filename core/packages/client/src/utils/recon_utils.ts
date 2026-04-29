@@ -38,12 +38,31 @@ export function countryFlag(_iso2: string): string {
 export function formatTime(seconds: number | undefined | null): string {
   if (seconds === undefined || seconds === null || seconds < 0) return 'DNF';
   if (seconds === 0) return '0.00';
-  if (seconds >= 60) {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds - mins * 60;
+  // NOTE: WCA 规则是截断到百分位（centisecond），不是四舍五入。3.299 → 3.29 而非 3.30
+  const cs = Math.floor(seconds * 100);
+  const truncated = cs / 100;
+  if (truncated >= 60) {
+    const mins = Math.floor(truncated / 60);
+    const secs = truncated - mins * 60;
     return `${mins}:${secs.toFixed(2).padStart(5, '0')}`;
   }
-  return seconds.toFixed(2);
+  return truncated.toFixed(2);
+}
+
+/**
+ * 编辑页输入框专用：保留毫秒精度（不像 formatTime 那样 toFixed(2) 抹掉）。
+ * 走 Math.round(*1000) 防 float 抖动；DB 至多 ms 精度。
+ */
+export function formatTimeInput(seconds: number | undefined | null): string {
+  if (seconds == null || isNaN(seconds) || seconds < 0) return '';
+  const ms = Math.round(seconds * 1000);
+  if (ms >= 60000) {
+    const m = Math.floor(ms / 60000);
+    const s = (ms % 60000) / 1000;
+    const sStr = s < 10 ? '0' + String(s) : String(s);
+    return `${m}:${sStr}`;
+  }
+  return String(ms / 1000);
 }
 
 /**
@@ -111,6 +130,27 @@ export function getPuzzleId(event: string): string {
 /** 判断是否为盲拧项目 */
 export function isBldEvent(event: string): boolean {
   return ['3bld', '4bld', '5bld', 'mbld'].includes(event);
+}
+
+/** 该 event 一轮的常规把数（Ao5 = 5，Mo3 = 3，mbld = 1）。FMC 罕见的单把场景下用户不会去点 #2#3，可接受。 */
+export function attemptsPerRound(event: string): number {
+  if (event === 'mbld') return 1;
+  if (['6x6', '7x7', '3bld', '4bld', '5bld', 'fmc'].includes(event)) return 3;
+  return 5;
+}
+
+/** Recon event → WCA API event_id（用于 /api/v0/competitions/:id/results/:eventId） */
+const WCA_EVENT_ID_MAP: Record<string, string> = {
+  '3x3': '333', '2x2': '222', '4x4': '444', '5x5': '555',
+  '6x6': '666', '7x7': '777',
+  '3bld': '333bf', '4bld': '444bf', '5bld': '555bf', 'mbld': '333mbf',
+  oh: '333oh', sq1: 'sq1',
+  pyra: 'pyram', mega: 'minx', clock: 'clock', skewb: 'skewb',
+  fmc: '333fm',
+};
+
+export function toWcaEventId(event: string): string {
+  return WCA_EVENT_ID_MAP[event] ?? event;
 }
 
 // ── 成绩格式化（原版 formatResult / formatAvg 1:1 移植） ──
