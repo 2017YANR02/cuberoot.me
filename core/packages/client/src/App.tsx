@@ -29,6 +29,7 @@ const BattlePage = lazy(() => import('./pages/battle/BattlePage'));
 const ReconListPage = lazy(() => import('./pages/recon/ReconListPage'));
 const ReconDetailPage = lazy(() => import('./pages/recon/ReconDetailPage'));
 const ReconSubmitPage = lazy(() => import('./pages/recon/ReconSubmitPage'));
+const ReconSubmitSketchPage = lazy(() => import('./pages/recon/ReconSubmitSketchPage'));
 // NOTE: OAuth 回调页——处理 WCA OAuth Implicit Grant 返回
 const AuthCallbackPage = lazy(() => import('./pages/AuthCallbackPage'));
 // NOTE: WCA Stats 模块懒加载 — 统计数据展示
@@ -111,6 +112,7 @@ function App() {
         <Route path="/recon" element={<Suspense fallback={<div>Loading...</div>}><ReconListPage /></Suspense>} />
         <Route path="/recon/submit" element={<Suspense fallback={<div>Loading...</div>}><ReconSubmitPage /></Suspense>} />
         <Route path="/recon/submit/:editId" element={<Suspense fallback={<div>Loading...</div>}><ReconSubmitPage /></Suspense>} />
+        <Route path="/recon/submit-sketch" element={<Suspense fallback={<div>Loading...</div>}><ReconSubmitSketchPage /></Suspense>} />
         <Route path="/recon/:id" element={<Suspense fallback={<div>Loading...</div>}><ReconDetailPage /></Suspense>} />
         {/* Calendar — 顶尖选手近期比赛追踪（路由曾叫 /upcoming-comps，旧链接重定向） */}
         <Route path="/calendar" element={<Suspense fallback={<div>Loading...</div>}><UpcomingCompsPage /></Suspense>} />
