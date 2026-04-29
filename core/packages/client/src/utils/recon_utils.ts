@@ -140,6 +140,33 @@ export function attemptsPerRound(event: string): number {
   return 5;
 }
 
+/**
+ * 按 WCA 规则计算整轮 average。
+ *  - Ao5 (5 把): 去最好/最坏(DNF/DNS 算最坏),余 3 把 mean。允许 1 个 DNF;2+ DNF → null
+ *  - Mo3 (3 把): mean。任 1 个 DNF → null
+ *  - mbld (1 把): 无 average → null
+ *
+ * attempts 编码(与 fetchAttempts/fetchCubingAttempts 一致):
+ *  - null: 该把不存在 / 未录入 → 整轮 avg = null(无法计算)
+ *  - -1 / -2: DNF / DNS (DNS 视同 DNF 参与 trim/计数)
+ *  - 正数: 秒(FMC 是步数)
+ */
+export function computeWcaAverage(attempts: (number | null)[], event: string): number | null {
+  const expected = attemptsPerRound(event);
+  if (expected === 1) return null;
+  const slice = attempts.slice(0, expected);
+  if (slice.length < expected || slice.some(v => v == null)) return null;
+  const norm = slice.map(v => (v! < 0 ? Infinity : v!));
+  const dnfs = norm.filter(v => v === Infinity).length;
+  if (expected === 3) {
+    if (dnfs > 0) return null;
+    return Math.round((norm[0] + norm[1] + norm[2]) / 3 * 100) / 100;
+  }
+  if (dnfs >= 2) return null;
+  const sorted = [...norm].sort((a, b) => a - b);
+  return Math.round((sorted[1] + sorted[2] + sorted[3]) / 3 * 100) / 100;
+}
+
 /** Recon event → WCA API event_id（用于 /api/v0/competitions/:id/results/:eventId） */
 const WCA_EVENT_ID_MAP: Record<string, string> = {
   '3x3': '333', '2x2': '222', '4x4': '444', '5x5': '555',

@@ -116,6 +116,118 @@
   align-items: flex-start;
 }
 
+/* ── Hero 行：选手 / 项目 / 成绩 — 大字号、重视觉权重 ─────── */
+.submit-hero {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+@media (max-width: 640px) {
+  .submit-hero { grid-template-columns: 1fr; }
+}
+
+/* ── 统一控件高度 ──
+   光统一 padding+font 不够：<select>/<input> 的 UA 默认渲染高度
+   跟 div pill / 自定义 trigger 对不齐，必须 explicit height + border-box */
+
+/* 标准行：40px */
+.submit-row .submit-field > input,
+.submit-row .submit-field > select,
+.submit-row .record-select-trigger,
+.submit-row .event-select-trigger,
+.submit-row .submit-solver-pill,
+.submit-row .submit-comp-pill {
+  height: 40px;
+  box-sizing: border-box;
+  padding: 9px 12px;
+  font-size: 0.98rem;
+}
+.recon-page .submit-row .wca-pp-panel {
+  min-height: 40px;
+  box-sizing: border-box;
+}
+.recon-page .submit-row .wca-pp-input {
+  height: 38px;            /* panel 1px*2 边框 + 38 = 40 总高 */
+  box-sizing: border-box;
+  padding: 9px 12px;
+  font-size: 0.98rem;
+}
+
+/* Hero 行：48px */
+.submit-hero .submit-field > input,
+.submit-hero .submit-field > select,
+.submit-hero .record-select-trigger,
+.submit-hero .event-select-trigger,
+.submit-hero .submit-solver-pill,
+.submit-hero .submit-comp-pill {
+  height: 48px;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  font-size: 1.1rem;
+}
+.recon-page .submit-hero .wca-pp-panel {
+  min-height: 48px;
+  box-sizing: border-box;
+}
+.recon-page .submit-hero .wca-pp-input {
+  height: 46px;            /* 1px*2 边框 + 46 = 48 总高 */
+  box-sizing: border-box;
+  padding: 12px 14px;
+  font-size: 1.1rem;
+}
+
+/* ── 折叠区段（GitHub 设置式）──────────────────────────────── */
+.submit-section {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: 4px;
+}
+
+.submit-section-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 10px 4px;
+  background: transparent;
+  border: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.submit-section-header:hover { background: rgba(255, 255, 255, 0.02); }
+
+.submit-section-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #d4d4d4;
+}
+.submit-section-body { padding: 8px 0 16px 0; }
+
+/* ── 虚拟键盘 toggle 按钮 ──────────────────────────────────── */
+.submit-keyboard-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  color: #a3a3a3;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.submit-keyboard-toggle:hover { background: rgba(255, 255, 255, 0.06); color: #d4d4d4; }
+.submit-keyboard-toggle.active {
+  background: rgba(217, 119, 87, 0.15);
+  border-color: rgba(217, 119, 87, 0.4);
+  color: #e8a27a;
+}
+
 .submit-field {
   display: flex;
   flex-direction: column;
@@ -125,6 +237,7 @@
 }
 
 .submit-field-wide { flex: 2; }
+.submit-field-narrow { flex: 0 0 120px; min-width: 0; }
 /* pill 模式收缩到内容宽度，避免 flex:1 把已选 pill 撑满整列 */
 .submit-field-shrink { flex: 0 0 auto; min-width: 0; }
 .submit-block { width: 100%; margin-bottom: 12px; }
@@ -174,6 +287,17 @@
   line-height: 1.6;
   resize: none;
   min-height: 2.5rem;
+}
+
+/* 自动填充值锁定:不可编辑视觉提示 */
+.submit-field input.submit-input-locked {
+  background: rgba(255, 255, 255, 0.02);
+  color: #b8b8b8;
+  cursor: default;
+}
+.submit-field input.submit-input-locked:focus {
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: none;
 }
 
 /* 标准化视图: 只读态 — 视觉变灰提示用户当前不可编辑 */

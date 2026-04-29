@@ -7,16 +7,19 @@ import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next';
 import type { ReconSolve } from '@cuberoot/shared';
 import { WcaPersonPicker, type WcaPerson } from '@cuberoot/shared';
-import { getRecon, addRecon, updateRecon, deleteRecon, checkDuplicate, searchSolvers } from '../../utils/recon_api';
+import { getRecon, addRecon, updateRecon, deleteRecon, checkDuplicate, searchSolvers, listRecons } from '../../utils/recon_api';
 import { Flag } from '../../utils/flag';
 import { computeAllStats } from '../../utils/recon_stats';
-import { parseTimeInput, formatTimeInput } from '../../utils/recon_utils';
+import { parseTimeInput, formatTimeInput, computeWcaAverage, attemptsPerRound } from '../../utils/recon_utils';
+import { fetchAttempts, fetchCubingAttempts } from '../../utils/wca_results_api';
 import { RecordSelect } from '../../components/RecordSelect';
 import { EventSelect } from '../../components/EventSelect';
 import { CompPicker } from '../../components/CompPicker';
 import type { Comp } from '../../utils/comp_search';
 import { compNameZh, loadFlagData, flagDataVersion } from '../../utils/country_flags';
 import { localizeCompName } from '../../utils/comp_localize';
+import { fetchCompRounds } from '../../utils/comp_wcif';
+import { toWcaEventId } from '../../utils/wca_events';
 import { displayCuberName } from '../../utils/name_utils';
 import { useAuthStore } from '../../stores/auth_store';
 import LangToggle from '../../components/LangToggle';
@@ -27,13 +30,39 @@ import TwistySection from './components/TwistySection';
 import SolutionView from './components/SolutionView';
 import { cleanForPlayer, extractAlgFromText, syncPlayerToMoveCount } from '../../utils/recon_alg_utils';
 import { buildNormalizedSolution, hasWideMoveInCrossSection } from '../../utils/recon_norm_cross_extract';
-import { ArrowRightLeft } from 'lucide-react';
+import { ArrowRightLeft, ChevronDown, ChevronRight, Keyboard } from 'lucide-react';
+
+/** 折叠区段 — GitHub 设置式 */
+function CollapsibleSection({ title, defaultOpen = false, children }: {
+  title: string; defaultOpen?: boolean; children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="submit-section">
+      <button type="button" className="submit-section-header" aria-expanded={open} onClick={() => setOpen(o => !o)}>
+        {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+        <span className="submit-section-title">{title}</span>
+      </button>
+      {open && <div className="submit-section-body">{children}</div>}
+    </div>
+  );
+}
 
 // ── 常量 ──
 
 const EVENTS = ['3x3', '2x2', '4x4', '5x5', '6x6', '7x7', '3bld', '4bld', '5bld', 'oh', 'sq1', 'pyra', 'mega', 'clock', 'skewb', 'fmc', 'mbld'];
 const METHODS = ['CFOP', 'Roux', 'ZZ', 'Petrus', 'LBL', 'Mehta', 'ZB', 'Other'];
-const ROUNDS = ['1', '2', '3', 'f'];
+const ROUNDS_FALLBACK = ['1', '2', '3', 'f'];
+
+/** N 轮赛 → round 选项数组。N=1→只有 Final,N=4→R1+R2+R3+F。WCA 里最后一轮永远叫 Final。 */
+function roundsForCount(n: number): string[] {
+  if (n <= 0) return ROUNDS_FALLBACK;
+  if (n === 1) return ['f'];
+  const arr: string[] = [];
+  for (let i = 1; i < n; i++) arr.push(String(i));
+  arr.push('f');
+  return arr;
+}
 
 /**
  * 将任意日期字符串转为 yyyy-mm-dd 格式（<input type="date"> 要求）
@@ -86,8 +115,7 @@ export default function ReconSubmitPage() {
     comp: '',
     compWcaId: '',
     country: '',
-    round: 'f',
-    solveNum: 1,
+    round: '',
     rawTime: undefined,
     average: undefined,
     solution: '',
@@ -108,6 +136,22 @@ export default function ReconSubmitPage() {
   const [timeInput, setTimeInput] = useState('');
   const [avgInput, setAvgInput] = useState('');
   const [dupWarning, setDupWarning] = useState('');
+  // NOTE: avg 自动填充 — 用户一旦手动改过就再也不覆盖；avgAutoSource 是字段下方的来源 hint
+  const [avgUserTouched, setAvgUserTouched] = useState(false);
+  const [avgAutoSource, setAvgAutoSource] = useState<string | null>(null);
+  // NOTE: time(单次)自动填充 — 同一套机制,但 keys 多一个 solveNum
+  const [timeUserTouched, setTimeUserTouched] = useState(false);
+  const [timeAutoSource, setTimeAutoSource] = useState<string | null>(null);
+  // NOTE: edit/from 加载时的 keys 快照 — 首次 effect 跑时如果当前 keys 跟快照一致就跳过,
+  //       避免覆盖加载值;用户一改 keys → 快照失效,后续每次 keys 变都重 fetch
+  const loadedAvgKeySnapshot = useRef<string | null>(null);
+  const loadedTimeKeySnapshot = useRef<string | null>(null);
+  // NOTE: 比赛事件→轮次数 映射(从 WCIF 拉),决定 round 下拉的选项;拉不到 fallback 4 项
+  const [compRounds, setCompRounds] = useState<Record<string, number> | null>(null);
+  // NOTE: 移动端默认展开虚拟键盘 — 仅初始化时检测,后续不跟随 resize(尊重用户手动 toggle)
+  const [showKeyboard, setShowKeyboard] = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches
+  );
 
   // NOTE: 编辑模式加载数据
   useEffect(() => {
@@ -121,6 +165,10 @@ export default function ReconSubmitPage() {
         reconDate: toDateInput(solve.reconDate),
       };
       setForm(normalized);
+      // NOTE: 记录加载时 keys,首次 auto-fill effect 跑时跟快照对齐就跳过(不覆盖加载值)
+      const baseKey = `${solve.personId ?? ''}|${solve.event ?? ''}|${solve.comp ?? ''}|${solve.compWcaId ?? ''}|${solve.round ?? ''}`;
+      loadedAvgKeySnapshot.current = baseKey;
+      loadedTimeKeySnapshot.current = `${baseKey}|${solve.solveNum ?? ''}`;
       if (solve.rawTime != null) setTimeInput(formatTimeInput(solve.rawTime));
       if (solve.average != null) setAvgInput(formatTimeInput(solve.average));
       // NOTE: 同步 textarea DOM——defaultValue 只在 mount 时生效，编辑模式 API 返回后需手动同步
@@ -164,6 +212,11 @@ export default function ReconSubmitPage() {
         cube: src.cube,
         videoUrl: src.videoUrl,
       }));
+      // NOTE: 记录加载时 keys,首次 auto-fill effect 跑时跟快照对齐就跳过
+      const fromBaseKey = `${src.personId ?? ''}|${src.event ?? ''}|${src.comp ?? ''}|${src.compWcaId ?? ''}|${src.round ?? ''}`;
+      loadedAvgKeySnapshot.current = fromBaseKey;
+      // NOTE: time 快照用 targetSolveNum (跳来时实际 solveNum,不是 src.solveNum)
+      loadedTimeKeySnapshot.current = `${fromBaseKey}|${targetSolveNum ?? src.solveNum ?? ''}`;
       if (src.average != null) setAvgInput(formatTimeInput(src.average));
       // NOTE: ?suggestTime= — 来自 SameRoundNav 的 WCA / 粘贴解析
       if (suggestTime) {
@@ -229,6 +282,198 @@ export default function ReconSubmitPage() {
     const parsed = parseTimeInput(avgInput);
     if (!isNaN(parsed)) setField('average', parsed);
   }, [avgInput, setField]);
+
+  // NOTE: 比赛切换 → 拉 WCIF 轮次结构(localStorage 缓存 24h,实际很少 fetch)
+  useEffect(() => {
+    if (!form.compWcaId) { setCompRounds(null); return; }
+    let cancelled = false;
+    fetchCompRounds(form.compWcaId).then(rounds => {
+      if (!cancelled) setCompRounds(rounds);
+    });
+    return () => { cancelled = true; };
+  }, [form.compWcaId]);
+
+  // NOTE: 当前 event 在该比赛的轮次选项 — 拉不到/没有该 event 时 fallback 4 项
+  const roundOptions = useMemo(() => {
+    if (!compRounds || !form.event) return ROUNDS_FALLBACK;
+    const wcaId = toWcaEventId(form.event);
+    const n = compRounds[wcaId];
+    if (n == null || n <= 0) return ROUNDS_FALLBACK;
+    return roundsForCount(n);
+  }, [compRounds, form.event]);
+
+  // NOTE: 当前 form.round 不在新选项里时 reset 到最后一项(单轮赛场景:用户从 4 轮赛切到短时赛,'2' 不再有效 → 设 'f')
+  useEffect(() => {
+    if (!form.round) return;
+    if (!roundOptions.includes(form.round)) {
+      setField('round', roundOptions[roundOptions.length - 1]);
+    }
+  }, [roundOptions, form.round, setField]);
+
+  // NOTE: # (solveNum) 选项数量由 event 的 Ao5/Mo3/单把决定
+  const solveNumOptions = useMemo(() => {
+    const max = form.event ? attemptsPerRound(form.event) : 5;
+    return Array.from({ length: max }, (_, i) => i + 1);
+  }, [form.event]);
+
+  // NOTE: 切换 event 后,如果 form.solveNum 超出新选项范围,清空(让用户重选)
+  useEffect(() => {
+    if (form.solveNum != null && !solveNumOptions.includes(form.solveNum)) {
+      setField('solveNum', undefined);
+    }
+  }, [solveNumOptions, form.solveNum, setField]);
+
+  // NOTE: 平均成绩自动填充 — (选手, 项目, 比赛, 轮次) 唯一确定一个 avg。
+  // 三档 fallback: DB 同轮 sibling.average → WCA API → cubing.com API(后两档自己算 Ao5/Mo3)。
+  // 跳过条件:
+  //  - 用户手动改过(avgUserTouched)
+  //  - edit/from 加载完成后首次 effect: 当前 keys 跟快照一致(不覆盖加载值);用户一改 keys 快照失效。
+  // 三档全没数据时主动清空 avg(此前可能是别的 key 组合 auto-fill 留下的)。
+  useEffect(() => {
+    if (avgUserTouched) return;
+    if (!form.personId || !form.event || !form.round) return;
+    if (!form.comp && !form.compWcaId) return;
+
+    const currentKey = `${form.personId}|${form.event}|${form.comp ?? ''}|${form.compWcaId ?? ''}|${form.round}`;
+    if (loadedAvgKeySnapshot.current === currentKey) return;
+    // NOTE: 首次跟快照不一致 → 进入 fetch 流程,且把快照失效(后续每次 keys 变都重 fetch)
+    loadedAvgKeySnapshot.current = null;
+
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      let foundAvg: number | null = null;
+      let foundSource: string | null = null;
+
+      // 1) DB sibling (只有 comp 字段是字符串匹配,所以非 WCA 比赛也能命中)
+      if (form.comp) {
+        try {
+          const all = await listRecons(form.personId);
+          if (cancelled) return;
+          const sibling = all.find(s =>
+            s.event === form.event &&
+            s.comp === form.comp &&
+            s.round === form.round &&
+            (!isEditing || s.id !== Number(editId)) &&
+            s.average != null
+          );
+          if (sibling && sibling.average != null) {
+            foundAvg = sibling.average;
+            foundSource = isZh ? `自动:同轮 #${sibling.solveNum ?? '?'}` : `auto: same round #${sibling.solveNum ?? '?'}`;
+          }
+        } catch { /* fall through */ }
+      }
+
+      // 2) WCA API
+      if (foundAvg == null && form.compWcaId) {
+        try {
+          const att = await fetchAttempts(form.compWcaId, form.event!, form.round!, form.personId!);
+          if (cancelled) return;
+          if (att) {
+            const a = computeWcaAverage(att, form.event!);
+            if (a != null) {
+              foundAvg = a;
+              foundSource = isZh ? '自动:WCA' : 'auto: WCA';
+            }
+          }
+        } catch { /* fall through */ }
+      }
+
+      // 3) cubing.com fallback
+      if (foundAvg == null && form.compWcaId) {
+        try {
+          const att = await fetchCubingAttempts(form.compWcaId, form.event!, form.round!, form.personId!);
+          if (cancelled) return;
+          if (att) {
+            const a = computeWcaAverage(att, form.event!);
+            if (a != null) {
+              foundAvg = a;
+              foundSource = isZh ? '自动:cubing.com' : 'auto: cubing.com';
+            }
+          }
+        } catch { /* fall through */ }
+      }
+
+      if (cancelled) return;
+      if (foundAvg != null) {
+        setAvgInput(formatTimeInput(foundAvg));
+        setAvgAutoSource(foundSource);
+      } else {
+        // 三档都没 → 清空(可能是上一组 keys 留下的 auto-fill 值,新组合无数据)
+        setAvgInput('');
+        setAvgAutoSource(null);
+      }
+    }, 300);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [form.personId, form.event, form.comp, form.compWcaId, form.round, avgUserTouched, isEditing, editId, isZh]);
+
+  // NOTE: 单次成绩自动填充 — (选手, 项目, 比赛, 轮次, 第几把) 唯一确定一个 single time。
+  //       三档 fallback 同 avg;DNF/DNS 不自动填(用户需手输 - 但目前 UI 不支持)
+  useEffect(() => {
+    if (timeUserTouched) return;
+    if (!form.personId || !form.event || !form.round || form.solveNum == null) return;
+    if (!form.comp && !form.compWcaId) return;
+
+    const currentKey = `${form.personId}|${form.event}|${form.comp ?? ''}|${form.compWcaId ?? ''}|${form.round}|${form.solveNum}`;
+    if (loadedTimeKeySnapshot.current === currentKey) return;
+    loadedTimeKeySnapshot.current = null;
+
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      let foundTime: number | null = null;
+      let foundSource: string | null = null;
+      const idx = (form.solveNum ?? 1) - 1;
+
+      // 1) DB sibling - 同 5 keys 的已录 solve
+      if (form.comp) {
+        try {
+          const all = await listRecons(form.personId);
+          if (cancelled) return;
+          const sibling = all.find(s =>
+            s.event === form.event &&
+            s.comp === form.comp &&
+            s.round === form.round &&
+            s.solveNum === form.solveNum &&
+            (!isEditing || s.id !== Number(editId)) &&
+            s.rawTime != null
+          );
+          if (sibling && sibling.rawTime != null) {
+            foundTime = sibling.rawTime;
+            foundSource = isZh ? '自动:已录' : 'auto: existing';
+          }
+        } catch { /* fall through */ }
+      }
+
+      // 2) WCA / 3) cubing - 取整轮 attempts 的第 idx 项
+      if (foundTime == null && form.compWcaId) {
+        try {
+          let attempts = await fetchAttempts(form.compWcaId, form.event!, form.round!, form.personId!);
+          let label = 'WCA';
+          if (!attempts) {
+            attempts = await fetchCubingAttempts(form.compWcaId, form.event!, form.round!, form.personId!);
+            label = 'cubing.com';
+          }
+          if (cancelled) return;
+          if (attempts) {
+            const v = attempts[idx];
+            if (v != null && v >= 0) {  // DNF=-1 / DNS=-2 跳过
+              foundTime = v;
+              foundSource = isZh ? `自动:${label}` : `auto: ${label}`;
+            }
+          }
+        } catch { /* fall through */ }
+      }
+
+      if (cancelled) return;
+      if (foundTime != null) {
+        setTimeInput(formatTimeInput(foundTime));
+        setTimeAutoSource(foundSource);
+      } else {
+        setTimeInput('');
+        setTimeAutoSource(null);
+      }
+    }, 300);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [form.personId, form.event, form.comp, form.compWcaId, form.round, form.solveNum, timeUserTouched, isEditing, editId, isZh]);
 
   // NOTE: 重复检测
   useEffect(() => {
@@ -439,29 +684,8 @@ export default function ReconSubmitPage() {
         {/* 右栏：表单 */}
         <div className="submit-form-pane">
       <div className="submit-form">
-        {/* 第一行：类型 + 项目 + 方法 */}
-        <div className="submit-row">
-          <label className="submit-field">
-            <span className="submit-label">WCA</span>
-            <select value={form.official ? '1' : '0'} onChange={e => setField('official', e.target.value === '1')}>
-              <option value="1">WCA</option>
-              <option value="0">{t('recon.badge.nonWca')}</option>
-            </select>
-          </label>
-          <label className="submit-field">
-            <span className="submit-label">{t('recon.event')} *</span>
-            <EventSelect events={EVENTS} value={form.event ?? ''} onChange={(v) => setField('event', v)} />
-          </label>
-          <label className="submit-field">
-            <span className="submit-label">{t('recon.method')}</span>
-            <select value={form.method} onChange={e => setField('method', e.target.value)}>
-              {METHODS.map(m => <option key={m} value={m}>{m}</option>)}
-            </select>
-          </label>
-        </div>
-
-        {/* 第二行：选手 + 比赛（pill 时各自收缩到内容宽）*/}
-        <div className="submit-row">
+        {/* === Hero 行：选手 / 项目 / 成绩 — 必填 3 项,大字号 === */}
+        <div className="submit-hero">
           <div className={`submit-field ${form.personId ? 'submit-field-shrink' : ''}`}>
             <span className="submit-label">{t('recon.solver')} *</span>
             {form.personId ? (
@@ -480,77 +704,44 @@ export default function ReconSubmitPage() {
               />
             )}
           </div>
-          <div className={`submit-field ${form.compWcaId ? 'submit-field-shrink' : ''}`}>
-            <span className="submit-label">{t('recon.competition')}</span>
-            {form.compWcaId ? (
-              <div className="submit-comp-pill">
-                <Flag iso2={form.country || ''} />
-                <span className="submit-comp-name">{localizeCompName(form.compWcaId || '', form.comp || '', isZh)}</span>
-                <button type="button" className="submit-comp-clear" onClick={clearPickedComp} aria-label="clear">✕</button>
-              </div>
-            ) : (
-              <CompPicker
-                value={form.comp || ''}
-                onChange={(v) => setField('comp', v)}
-                onPick={applyPickedComp}
-                isZh={isZh}
-              />
-            )}
-          </div>
-        </div>
-
-        {/* 第三行：轮次 + 第 N 把 + 分组 */}
-        <div className="submit-row">
           <label className="submit-field">
-            <span className="submit-label">{t('recon.round')}</span>
-            <select value={form.round} onChange={e => setField('round', e.target.value)}>
-              {ROUNDS.map(r => <option key={r} value={r}>{
-                r === 'f' ? t('recon.roundOption.final')
-                  : t('recon.roundOption.numbered', { n: r })
-              }</option>)}
-            </select>
+            <span className="submit-label">{t('recon.event')} *</span>
+            <EventSelect events={EVENTS} value={form.event ?? ''} onChange={(v) => setField('event', v)} />
           </label>
-          <label className="submit-field">
-            <span className="submit-label">#</span>
-            <input type="number" min={1} max={5} value={form.solveNum ?? ''} onChange={e => setField('solveNum', Number(e.target.value) || undefined)} />
-          </label>
-          <label className="submit-field">
-            <span className="submit-label">{t('recon.group')}</span>
-            <input type="text" value={form.groupId || ''} onChange={e => setField('groupId', e.target.value)}
-              placeholder="A/B/C" maxLength={1} />
-          </label>
-        </div>
-
-        {/* 第四行：成绩 + 平均 + 日期 */}
-        <div className="submit-row">
           <label className="submit-field">
             <span className="submit-label">{t('recon.time')}</span>
-            <input type="text" value={timeInput} onChange={e => setTimeInput(e.target.value)}
-              placeholder="12.34 / 1:12.34" />
-          </label>
-          <label className="submit-field">
-            <span className="submit-label">{t('recon.average')}</span>
-            <input type="text" value={avgInput} onChange={e => setAvgInput(e.target.value)}
-              placeholder="Avg" />
-          </label>
-          <label className="submit-field">
-            <span className="submit-label">{t('recon.date')}</span>
-            <input type="text" value={form.date || ''} onChange={e => setField('date', e.target.value)}
-              placeholder="yyyy-mm-dd" pattern="\d{4}-\d{2}-\d{2}" />
+            <input
+              type="text"
+              value={timeInput}
+              onChange={e => {
+                setTimeInput(e.target.value);
+                setTimeUserTouched(true);
+                setTimeAutoSource(null);
+              }}
+              placeholder="12.34 / 1:12.34"
+              readOnly={!!timeAutoSource}
+              className={timeAutoSource ? 'submit-input-locked' : undefined}
+              title={timeAutoSource ? (isZh ? '自动填充值不可编辑;改 选手/比赛/项目/轮次/第几把 以重新获取' : 'auto-filled, read-only; change person/comp/event/round/# to refetch') : undefined}
+            />
           </label>
         </div>
 
-        {/* 纪录标记 */}
-        <div className="submit-row">
-          <label className="submit-field">
-            <span className="submit-label">{t('recon.badge.singleRecord')}</span>
-            <RecordSelect value={form.regionalSingleRecord || ''} onChange={(v) => setField('regionalSingleRecord', v)} />
-          </label>
-          <label className="submit-field">
-            <span className="submit-label">{t('recon.badge.averageRecord')}</span>
-            <RecordSelect value={form.regionalAverageRecord || ''} onChange={(v) => setField('regionalAverageRecord', v)} />
-          </label>
-        </div>
+        {/* 实时统计 */}
+        {stats && (
+          <div className="submit-stats-preview">
+            <span>
+              {stats.stm} STM
+              {form.rawTime != null && stats.tps > 0 && (
+                <> / {Number(form.rawTime).toFixed(2)} = {stats.tps} TPS</>
+              )}
+            </span>
+            {stats.crossStm > 0 && <span>Cross: {stats.crossStm}</span>}
+            {stats.f2l > 0 && <span>F2L: {stats.f2l}</span>}
+            {stats.ll > 0 && <span>LL: {stats.ll}</span>}
+            {stats.ollFull && <span>{stats.ollFull}</span>}
+            {stats.pllFull && <span>{stats.pllFull}</span>}
+          </div>
+        )}
 
         {/* 打乱 */}
         <label className="submit-field submit-block">
@@ -613,89 +804,209 @@ export default function ReconSubmitPage() {
             />
           )}
         </div>
-        {/* NOTE: 虚拟键盘 — 仅在原文模式可见(标准化视图为只读) */}
+
+        {/* NOTE: 虚拟键盘按需 toggle — 仅在原文模式可用(标准化视图为只读) */}
         {!normalized && (
-          <CubeVirtualKeyboard
-            textareaRef={solutionRef}
-            onInput={() => {
-              if (solutionRef.current) {
-                setField('solution', solutionRef.current.value);
-                autoResize(solutionRef.current);
-                handleCursorSync(solutionRef.current);
-              }
-            }}
-          />
-        )}
-
-        {/* 实时统计 */}
-        {stats && (
-          <div className="submit-stats-preview">
-            <span>STM: {stats.stm}</span>
-            <span>TPS: {stats.tps}</span>
-            {stats.crossStm > 0 && <span>Cross: {stats.crossStm}</span>}
-            {stats.f2l > 0 && <span>F2L: {stats.f2l}</span>}
-            {stats.ll > 0 && <span>LL: {stats.ll}</span>}
-            {stats.ollFull && <span>{stats.ollFull}</span>}
-            {stats.pllFull && <span>{stats.pllFull}</span>}
-          </div>
-        )}
-
-        {/* 附加信息 */}
-        <div className="submit-row">
-          <label className="submit-field submit-field-wide">
-            <span className="submit-label">{t('recon.videoUrl')}</span>
-            <textarea
-              value={form.videoUrl || ''}
-              onChange={e => setField('videoUrl', e.target.value)}
-              placeholder="https://www.youtube.com/watch?v=...&#10;https://www.bilibili.com/video/BV..."
-              rows={2}
-            />
-          </label>
-        </div>
-
-        <div className="submit-row">
-          <label className="submit-field">
-            <span className="submit-label">{t('recon.cube')}</span>
-            <input type="text" value={form.cube || ''} onChange={e => setField('cube', e.target.value)} />
-          </label>
-          <label className="submit-field submit-field-wide">
-            <span className="submit-label">{t('recon.note')}</span>
-            <textarea
-              value={form.note || ''}
-              onChange={e => { setField('note', e.target.value); autoResize(e.target); }}
-              ref={el => { if (el) autoResize(el); }}
-              rows={1}
-              style={{ overflow: 'hidden', resize: 'none' }}
-            />
-          </label>
-        </div>
-
-        {/* 复盘者信息 — 名 + WCA ID 合并为一个 picker，pill 显示 flag + 中/英名 + ✕ */}
-        <div className="submit-row">
-          <div className={`submit-field ${(form.reconer || form.reconerId) ? 'submit-field-shrink' : ''}`}>
-            <span className="submit-label">{t('recon.reconstructor')}</span>
-            {(form.reconer || form.reconerId) ? (
-              <div className="submit-solver-pill">
-                <Flag iso2={reconerCountry || ''} />
-                <span className="submit-solver-name">{displayCuberName(form.reconer || '', isZh)}</span>
-                <button type="button" className="submit-solver-clear" onClick={clearReconer} aria-label="clear">✕</button>
-              </div>
-            ) : (
-              <WcaPersonPicker
-                mode="inline"
-                onSelect={handleReconerPick}
-                searchFn={solverSearchFn}
-                placeholder=""
-                autoConfirmExact
+          <>
+            <button
+              type="button"
+              className={`submit-keyboard-toggle${showKeyboard ? ' active' : ''}`}
+              onClick={() => setShowKeyboard(s => !s)}
+            >
+              <Keyboard size={14} />
+              {isZh
+                ? (showKeyboard ? '隐藏虚拟键盘' : '显示虚拟键盘')
+                : (showKeyboard ? 'Hide keyboard' : 'Show keyboard')}
+            </button>
+            {showKeyboard && (
+              <CubeVirtualKeyboard
+                textareaRef={solutionRef}
+                onInput={() => {
+                  if (solutionRef.current) {
+                    setField('solution', solutionRef.current.value);
+                    autoResize(solutionRef.current);
+                    handleCursorSync(solutionRef.current);
+                  }
+                }}
               />
             )}
+          </>
+        )}
+
+        {/* === 比赛信息 — 默认展开 === */}
+        <CollapsibleSection
+          title={isZh ? '比赛信息' : 'Competition'}
+          defaultOpen
+        >
+          <div className="submit-row">
+            <label className="submit-field submit-field-narrow">
+              <span className="submit-label">WCA</span>
+              <select value={form.official ? '1' : '0'} onChange={e => setField('official', e.target.value === '1')}>
+                <option value="1">WCA</option>
+                <option value="0">{t('recon.badge.nonWca')}</option>
+              </select>
+            </label>
+            <div className={`submit-field ${form.compWcaId ? 'submit-field-shrink' : ''}`}>
+              <span className="submit-label">{t('recon.competition')}</span>
+              {form.compWcaId ? (
+                <div className="submit-comp-pill">
+                  <Flag iso2={form.country || ''} />
+                  <span className="submit-comp-name">{localizeCompName(form.compWcaId || '', form.comp || '', isZh)}</span>
+                  <button type="button" className="submit-comp-clear" onClick={clearPickedComp} aria-label="clear">✕</button>
+                </div>
+              ) : (
+                <CompPicker
+                  value={form.comp || ''}
+                  onChange={(v) => setField('comp', v)}
+                  onPick={applyPickedComp}
+                  isZh={isZh}
+                />
+              )}
+            </div>
           </div>
-          <label className="submit-field">
-            <span className="submit-label">{t('recon.reconDate')}</span>
-            <input type="text" value={form.reconDate || ''} onChange={e => setField('reconDate', e.target.value)}
-              placeholder="yyyy-mm-dd" pattern="\d{4}-\d{2}-\d{2}" />
-          </label>
-        </div>
+
+          <div className="submit-row">
+            <label className="submit-field">
+              <span className="submit-label">{t('recon.round')}</span>
+              <select value={form.round || ''} onChange={e => setField('round', e.target.value)}>
+                <option value="">{isZh ? '请选择' : 'Select…'}</option>
+                {roundOptions.map(r => <option key={r} value={r}>{
+                  r === 'f' ? t('recon.roundOption.final')
+                    : t('recon.roundOption.numbered', { n: r })
+                }</option>)}
+              </select>
+            </label>
+            <label className="submit-field">
+              <span className="submit-label">#</span>
+              <select
+                value={form.solveNum ?? ''}
+                onChange={e => setField('solveNum', e.target.value === '' ? undefined : Number(e.target.value))}
+              >
+                <option value="">{isZh ? '请选择' : 'Select…'}</option>
+                {solveNumOptions.map(n => <option key={n} value={n}>{n}</option>)}
+              </select>
+            </label>
+            <label className="submit-field">
+              <span className="submit-label">{t('recon.group')}</span>
+              <input type="text" value={form.groupId || ''} onChange={e => setField('groupId', e.target.value)}
+                placeholder="A/B/C" maxLength={1} />
+            </label>
+            <label className="submit-field">
+              <span className="submit-label">{t('recon.date')}</span>
+              <input type="text" value={form.date || ''} onChange={e => setField('date', e.target.value)}
+                placeholder="yyyy-mm-dd" pattern="\d{4}-\d{2}-\d{2}" />
+            </label>
+          </div>
+
+          <div className="submit-row">
+            <label className="submit-field">
+              <span className="submit-label">{t('recon.average')}</span>
+              <input
+                type="text"
+                value={avgInput}
+                onChange={e => {
+                  setAvgInput(e.target.value);
+                  setAvgUserTouched(true);
+                  setAvgAutoSource(null);
+                }}
+                placeholder="Avg"
+                readOnly={!!avgAutoSource}
+                className={avgAutoSource ? 'submit-input-locked' : undefined}
+                title={avgAutoSource ? (isZh ? '自动填充值不可编辑;改选手/比赛/项目/轮次以重新获取' : 'auto-filled, read-only; change person/comp/event/round to refetch') : undefined}
+              />
+              {avgAutoSource && <span className="submit-hint">{avgAutoSource}</span>}
+            </label>
+            <label className="submit-field">
+              <span className="submit-label">{t('recon.time')}</span>
+              <input
+                type="text"
+                value={timeInput}
+                onChange={e => {
+                  setTimeInput(e.target.value);
+                  setTimeUserTouched(true);
+                  setTimeAutoSource(null);
+                }}
+                placeholder="12.34 / 1:12.34"
+                readOnly={!!timeAutoSource}
+                className={timeAutoSource ? 'submit-input-locked' : undefined}
+                title={timeAutoSource ? (isZh ? '自动填充值不可编辑;改 选手/比赛/项目/轮次/第几把 以重新获取' : 'auto-filled, read-only; change person/comp/event/round/# to refetch') : undefined}
+              />
+              {timeAutoSource && <span className="submit-hint">{timeAutoSource}</span>}
+            </label>
+            <label className="submit-field">
+              <span className="submit-label">{t('recon.badge.singleRecord')}</span>
+              <RecordSelect value={form.regionalSingleRecord || ''} onChange={(v) => setField('regionalSingleRecord', v)} />
+            </label>
+            <label className="submit-field">
+              <span className="submit-label">{t('recon.badge.averageRecord')}</span>
+              <RecordSelect value={form.regionalAverageRecord || ''} onChange={(v) => setField('regionalAverageRecord', v)} />
+            </label>
+          </div>
+        </CollapsibleSection>
+
+        {/* === 元数据 — 默认折叠 === */}
+        <CollapsibleSection title={isZh ? '元数据' : 'Metadata'}>
+          <div className="submit-row">
+            <label className="submit-field submit-field-wide">
+              <span className="submit-label">{t('recon.videoUrl')}</span>
+              <textarea
+                value={form.videoUrl || ''}
+                onChange={e => setField('videoUrl', e.target.value)}
+                placeholder="https://www.youtube.com/watch?v=...&#10;https://www.bilibili.com/video/BV..."
+                rows={2}
+              />
+            </label>
+          </div>
+
+          <div className="submit-row">
+            <label className="submit-field">
+              <span className="submit-label">{t('recon.method')}</span>
+              <select value={form.method} onChange={e => setField('method', e.target.value)}>
+                {METHODS.map(m => <option key={m} value={m}>{m}</option>)}
+              </select>
+            </label>
+            <label className="submit-field">
+              <span className="submit-label">{t('recon.cube')}</span>
+              <input type="text" value={form.cube || ''} onChange={e => setField('cube', e.target.value)} />
+            </label>
+            <label className="submit-field submit-field-wide">
+              <span className="submit-label">{t('recon.note')}</span>
+              <textarea
+                value={form.note || ''}
+                onChange={e => { setField('note', e.target.value); autoResize(e.target); }}
+                ref={el => { if (el) autoResize(el); }}
+                rows={1}
+                style={{ overflow: 'hidden', resize: 'none' }}
+              />
+            </label>
+          </div>
+
+          <div className="submit-row">
+            <div className={`submit-field ${(form.reconer || form.reconerId) ? 'submit-field-shrink' : ''}`}>
+              <span className="submit-label">{t('recon.reconstructor')}</span>
+              {(form.reconer || form.reconerId) ? (
+                <div className="submit-solver-pill">
+                  <Flag iso2={reconerCountry || ''} />
+                  <span className="submit-solver-name">{displayCuberName(form.reconer || '', isZh)}</span>
+                  <button type="button" className="submit-solver-clear" onClick={clearReconer} aria-label="clear">✕</button>
+                </div>
+              ) : (
+                <WcaPersonPicker
+                  mode="inline"
+                  onSelect={handleReconerPick}
+                  searchFn={solverSearchFn}
+                  placeholder=""
+                  autoConfirmExact
+                />
+              )}
+            </div>
+            <label className="submit-field">
+              <span className="submit-label">{t('recon.reconDate')}</span>
+              <input type="text" value={form.reconDate || ''} onChange={e => setField('reconDate', e.target.value)}
+                placeholder="yyyy-mm-dd" pattern="\d{4}-\d{2}-\d{2}" />
+            </label>
+          </div>
+        </CollapsibleSection>
 
         {/* 提交按钮 */}
         <div className="submit-actions">
