@@ -368,6 +368,129 @@
 }
 
 /* ==========================================================
+   中间栏 trigger 按钮(BattleEventPicker) + 全区域 overlay
+   ========================================================== */
+
+.event-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid #332e28;
+    background: transparent;
+    color: #d8c8b8;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    transition: background 0.15s ease, border-color 0.15s ease;
+    font-size: 18px;
+    line-height: 1;
+}
+
+.event-btn:hover {
+    background: rgba(255, 235, 220, 0.08);
+    border-color: #6e6050;
+}
+
+.event-btn.active {
+    background: rgba(217, 119, 87, 0.2);
+    border-color: #d97757;
+    color: #f0ebe3;
+}
+
+/* NOTE: 非 WCA 项目(FTO/Kilo)无 cubing-icon → 落回简写文字 chip */
+.event-fallback {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: inherit;
+    line-height: 1;
+}
+
+/* NOTE: 全 player-area 覆盖的项目网格 — 自适应,不会溢出
+   inset:0 充满父级 .player-area;rotation 由父级继承(player2 已 rotate 180°) */
+.event-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    background: rgba(15, 12, 10, 0.92);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    overflow: auto;
+}
+
+.event-overlay-grid {
+    display: grid;
+    /* NOTE: auto-fit + minmax 自适应任意宽度 */
+    grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+    gap: 8px;
+    width: 100%;
+    max-width: 720px;
+    align-content: center;
+}
+
+.event-overlay-item {
+    aspect-ratio: 1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #332e28;
+    border-radius: 8px;
+    background: rgba(255, 235, 220, 0.04);
+    color: #d8c8b8;
+    cursor: pointer;
+    padding: 0;
+    transition: background 0.1s ease, border-color 0.1s ease, color 0.1s ease;
+    touch-action: manipulation;
+    font-family: inherit;
+    line-height: 1;
+}
+
+.event-overlay-item .cubing-icon {
+    font-size: 38px;
+}
+
+/* NOTE: FTO / Kilominx 等无 cubing-icon 的项目,fallback 文字占图标位 */
+.event-overlay-item .event-fallback {
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+}
+
+.event-overlay-item:hover {
+    background: rgba(255, 235, 220, 0.08);
+    border-color: #6e6050;
+    color: #f0ebe3;
+}
+
+.event-overlay-item.active {
+    background: rgba(217, 119, 87, 0.2);
+    border-color: #d97757;
+    color: #f0ebe3;
+}
+
+@media (max-width: 480px) {
+    .event-overlay {
+        padding: 8px;
+    }
+    .event-overlay-grid {
+        grid-template-columns: repeat(auto-fit, minmax(56px, 1fr));
+        gap: 6px;
+    }
+    .event-overlay-item .cubing-icon {
+        font-size: 30px;
+    }
+    .event-overlay-item .event-fallback {
+        font-size: 0.85rem;
+    }
+}
+
+/* ==========================================================
    中间栏（比分 + 设置）
    ========================================================== */
 
@@ -626,45 +749,6 @@
     gap: 6px;
 }
 
-/* PUZZLE 标签行：标题 + 右侧 P1/P2 分开开关 */
-.settings-label-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 12px;
-}
-
-.settings-label-row .settings-label {
-    margin-bottom: 0;
-}
-
-.split-puzzle-toggle {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.8rem;
-    color: #6e6050;
-}
-
-/* 双列项目选择 */
-.puzzle-split-cols {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-}
-
-.puzzle-split-col .puzzle-grid {
-    grid-template-columns: repeat(2, 1fr);
-}
-
-.puzzle-split-head {
-    font-size: 0.8rem;
-    color: #8a7a6a;
-    margin-bottom: 6px;
-    text-align: center;
-    letter-spacing: 1px;
-}
-
 .puzzle-btn {
     padding: 8px 4px;
     border-radius: 6px;
@@ -675,6 +759,26 @@
     cursor: pointer;
     transition: all 0.15s ease;
     text-align: center;
+    /* NOTE: 图标 + 名称两行布局 */
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    line-height: 1.1;
+}
+
+.puzzle-btn .cubing-icon {
+    font-size: 22px;
+}
+
+.puzzle-btn .event-fallback {
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.puzzle-btn-name {
+    font-size: 0.75rem;
 }
 
 .puzzle-btn:hover {
@@ -1011,10 +1115,10 @@ body.solo .scramble-img {
     margin-left: auto;
 }
 
-/* NOTE: 对战轮次行 — P1 vs P2 */
+/* NOTE: 对战轮次行 — P1 vs P2 + 日期 + 删除 */
 .vs-round {
     display: grid;
-    grid-template-columns: 2rem 1fr auto 1fr 5rem;
+    grid-template-columns: 2rem 1fr auto 1fr 5rem auto;
     align-items: center;
     gap: 4px;
 }
@@ -1026,12 +1130,234 @@ body.solo .scramble-img {
 }
 
 .vs-p1, .vs-p2 {
-    text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    white-space: nowrap;
+    min-width: 0;
 }
 
 /* NOTE: 展开时打乱占满整行 */
 .vs-round .h-scramble {
     grid-column: 1 / -1;
+}
+
+/* NOTE: 双方项目不同时,各自一行 scramble */
+.vs-scrambles {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    white-space: normal;
+    word-break: break-word;
+}
+
+.vs-scramble-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    line-height: 1.3;
+}
+
+.vs-scramble-tag {
+    flex-shrink: 0;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #8a7a6a;
+    background: rgba(255, 235, 220, 0.06);
+    padding: 1px 4px;
+    border-radius: 3px;
+    min-width: 18px;
+    text-align: center;
+}
+
+/* NOTE: history 行内的 EventIcon — 标识双方不同项目 */
+.vs-event-mini {
+    font-size: 14px;
+    margin-right: 4px;
+    vertical-align: middle;
+    opacity: 0.85;
+}
+
+/* ==========================================================
+   单轮详情弹窗(RoundDetailModal)
+   ========================================================== */
+
+.round-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+
+.round-modal {
+    background: #1c1917;
+    border: 1px solid #332e28;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 560px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px 18px 18px;
+}
+
+.round-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.round-modal-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #f0ebe3;
+}
+
+.round-modal-date {
+    font-size: 0.85rem;
+    font-weight: 400;
+    color: #8a7a6a;
+}
+
+.round-modal-times {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(255, 235, 220, 0.03);
+    border-radius: 8px;
+}
+
+.round-modal-side {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.round-modal-pid {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.85rem;
+    color: #8a7a6a;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+}
+
+.round-modal-event {
+    font-size: 18px;
+}
+
+.round-modal-time-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.round-modal-time {
+    font-family: 'Segment7Standard', 'JetBrains Mono', monospace;
+    font-size: 2.4rem;
+    font-weight: 700;
+    color: #f0ebe3;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+
+.round-modal-side.is-winner .round-modal-time {
+    color: #66bb6a;
+}
+
+.round-modal-penalty {
+    font-size: 0.75rem;
+    color: #ff9800;
+    font-weight: 700;
+}
+
+.round-modal-vs {
+    font-size: 0.85rem;
+    color: #6e6050;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+}
+
+.round-modal-scrambles {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.round-modal-scramble-block {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.round-modal-scramble-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #8a7a6a;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.round-modal-scramble-text {
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #d8c8b8;
+    word-break: break-word;
+    background: rgba(255, 235, 220, 0.04);
+    border: 1px solid #332e28;
+    border-radius: 6px;
+    padding: 10px 12px;
+    user-select: text;
+}
+
+.round-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.round-modal-delete {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid #4a2a26;
+    color: #ef5350;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.round-modal-delete:hover {
+    background: rgba(239, 83, 80, 0.1);
+    border-color: #e53935;
+}
+
+@media (max-width: 480px) {
+    .round-modal-time {
+        font-size: 2rem;
+    }
+    .round-modal-scramble-text {
+        font-size: 0.9rem;
+    }
 }
 
 
@@ -1055,8 +1381,7 @@ body.solo .scramble-img {
 
 .vs-trophy {
     color: #e8a27a;
-    margin-left: 4px;
-    vertical-align: middle;
+    flex-shrink: 0;
 }
 
 .history-stats {
@@ -1188,14 +1513,32 @@ body.solo .scramble-img {
     background: none;
     border: none;
     cursor: pointer;
-    font-size: 0.7rem;
-    padding: 0 4px;
-    opacity: 0.3;
-    transition: opacity 0.15s;
+    padding: 2px;
+    opacity: 0.55;
+    transition: opacity 0.15s, color 0.15s, background 0.15s;
+    color: #d8c8b8;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
 }
 
 .history-item:hover .h-delete {
-    opacity: 0.8;
+    opacity: 1;
+}
+
+.h-delete:hover {
+    opacity: 1;
+    color: #ef5350;
+    background: rgba(239, 83, 80, 0.1);
+}
+
+/* NOTE: 触屏没 hover,直接保持比较亮 */
+@media (hover: none) and (pointer: coarse) {
+    .h-delete {
+        opacity: 0.85;
+    }
 }
 
 .h-memo {
@@ -1436,6 +1779,15 @@ body.solo .scramble-img {
     justify-content: space-between;
     align-items: center;
     gap: 8px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+
+.bg-row-label {
+    font-size: 0.85rem;
+    color: #8a7a6a;
+    font-weight: 600;
+    min-width: 24px;
 }
 
 .bg-controls {
@@ -1452,6 +1804,29 @@ body.solo .scramble-img {
     border-radius: 6px;
     cursor: pointer;
     background: none;
+}
+
+.bg-image-btn {
+    height: 32px;
+    padding: 0 12px;
+    border: 1px solid #332e28;
+    border-radius: 6px;
+    background: transparent;
+    color: #aaa;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.bg-image-btn:hover {
+    background: rgba(255, 235, 220, 0.05);
+    color: #f0ebe3;
+}
+
+.bg-image-btn.has-image {
+    background: rgba(217, 119, 87, 0.2);
+    border-color: #d97757;
+    color: #f0ebe3;
 }
 
 .bg-reset-btn {
@@ -1476,6 +1851,7 @@ body.solo .scramble-img {
     color: #ef5350;
     margin-top: 4px;
     text-align: center;
+    flex-basis: 100%;
 }
 
 /* ==========================================================

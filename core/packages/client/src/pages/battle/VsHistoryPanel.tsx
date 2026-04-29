@@ -5,24 +5,33 @@
 
 import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Swords, Trophy, Download } from 'lucide-react';
+import { Swords, Trophy, Download, Trash2 } from 'lucide-react';
 import { useBattleStore } from './engine/battle_store';
 import { formatTimePlain } from './engine/format_time';
 import { getEffectiveTimeFromEntry } from './engine/stats';
 import { PUZZLES } from './engine/constants';
+import { EventIcon } from '../../components/EventIcon';
+import { isWcaEvent } from '../../utils/wca_events';
 import type { SolveEntry } from './engine/types';
 
-function formatRelativeDate(isoDate: string, isZh: boolean): string {
+// NOTE: yyyy-mm-dd —— 列表用
+function formatDateOnly(isoDate: string): string {
   if (!isoDate) return '';
   const d = new Date(isoDate);
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const target = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  const diff = Math.round((today.getTime() - target.getTime()) / 86400000);
-  const timeStr = d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
-  if (diff === 0) return timeStr;
-  if (diff === 1) return (isZh ? '昨天 ' : 'Yesterday ') + timeStr;
-  return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + timeStr;
+  const y = d.getFullYear();
+  const m = (d.getMonth() + 1).toString().padStart(2, '0');
+  const day = d.getDate().toString().padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+// NOTE: yyyy-mm-dd HH:MM —— 详情 modal 用
+function formatDateTime(isoDate: string): string {
+  if (!isoDate) return '';
+  const d = new Date(isoDate);
+  const dateStr = formatDateOnly(isoDate);
+  const hh = d.getHours().toString().padStart(2, '0');
+  const mm = d.getMinutes().toString().padStart(2, '0');
+  return `${dateStr} ${hh}:${mm}`;
 }
 
 export default function VsHistoryPanel({ onClose }: { onClose: () => void }) {
@@ -34,19 +43,10 @@ export default function VsHistoryPanel({ onClose }: { onClose: () => void }) {
   const precision = store.timerPrecision;
   const roundCount = Math.max(h0.length, h1.length);
 
-  // NOTE: 展开打乱的轮次索引
-  const [expandedSet, setExpandedSet] = useState<Set<number>>(new Set());
+  // NOTE: 点击某轮弹出大字详情对话框,而不是 inline 展开
+  const [detailRound, setDetailRound] = useState<number | null>(null);
 
   const ftp = useCallback((ms: number) => formatTimePlain(ms, precision), [precision]);
-
-  const toggleExpand = (idx: number) => {
-    setExpandedSet(prev => {
-      const next = new Set(prev);
-      if (next.has(idx)) next.delete(idx);
-      else next.add(idx);
-      return next;
-    });
-  };
 
   const formatEntry = (entry: SolveEntry | undefined) => {
     if (!entry) return '—';
@@ -65,19 +65,20 @@ export default function VsHistoryPanel({ onClose }: { onClose: () => void }) {
     return -1; // tie
   };
 
-  // NOTE: 导出 CSV
+  // NOTE: 导出 CSV — 双方 scramble 各占一列(同 puzzle 时两列值相同)
   const exportCSV = () => {
     if (roundCount === 0) return;
-    const header = '#,Player1(ms),P1 Penalty,Player2(ms),P2 Penalty,Scramble,Date';
+    const header = '#,Player1(ms),P1 Penalty,P1 Scramble,Player2(ms),P2 Penalty,P2 Scramble,Date';
     const rows = [];
     for (let i = 0; i < roundCount; i++) {
       const e0 = h0[i];
       const e1 = h1[i];
       const t0 = e0 ? (getEffectiveTimeFromEntry(e0) === Infinity ? 'DNF' : ftp(getEffectiveTimeFromEntry(e0))) : '';
       const t1 = e1 ? (getEffectiveTimeFromEntry(e1) === Infinity ? 'DNF' : ftp(getEffectiveTimeFromEntry(e1))) : '';
-      const scramble = (e0?.scramble || e1?.scramble || '').replace(/,/g, ';');
+      const s0 = (e0?.scramble || '').replace(/,/g, ';');
+      const s1 = (e1?.scramble || '').replace(/,/g, ';');
       const date = e0?.date || e1?.date || '';
-      rows.push(`${i + 1},${t0},${e0?.penalty || ''},${t1},${e1?.penalty || ''},"${scramble}",${date}`);
+      rows.push(`${i + 1},${t0},${e0?.penalty || ''},"${s0}",${t1},${e1?.penalty || ''},"${s1}",${date}`);
     }
     const csv = header + '\n' + rows.join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
@@ -131,31 +132,176 @@ export default function VsHistoryPanel({ onClose }: { onClose: () => void }) {
             const e0 = h0[i];
             const e1 = h1[i];
             const winner = getWinner(e0, e1);
-            const scramble = e0?.scramble || e1?.scramble || '';
-            const dateStr = e0?.date ? formatRelativeDate(e0.date, isZh) : '';
-            const isExpanded = expandedSet.has(i);
+            const dateStr = e0?.date ? formatDateOnly(e0.date) : (e1?.date ? formatDateOnly(e1.date) : '');
+
+            // NOTE: 当前两人 puzzle id(展示行内 EventIcon 用,不依赖历史的 entry)
+            const puz0 = store.puzzleIds[0];
+            const puz1 = store.puzzleIds[1];
 
             return (
               <div
                 key={i}
-                className={`history-item vs-round${isExpanded ? ' expanded' : ''}`}
-                onClick={() => toggleExpand(i)}
+                className="history-item vs-round"
+                onClick={() => setDetailRound(i)}
               >
                 <span className="h-idx">{i + 1}.</span>
                 <span className={`h-time vs-p1${winner === 0 ? ' h-best' : ''}`}>
+                  {puzzlesDiffer && isWcaEvent(puz0) && <EventIcon event={puz0} className="vs-event-mini" />}
                   {formatEntry(e0)}
                   {winner === 0 && <Trophy size={12} className="vs-trophy" />}
                 </span>
                 <span className="vs-separator">vs</span>
                 <span className={`h-time vs-p2${winner === 1 ? ' h-best' : ''}`}>
+                  {puzzlesDiffer && isWcaEvent(puz1) && <EventIcon event={puz1} className="vs-event-mini" />}
                   {formatEntry(e1)}
                   {winner === 1 && <Trophy size={12} className="vs-trophy" />}
                 </span>
                 <span className="h-date">{dateStr}</span>
-                <span className="h-scramble">{scramble}</span>
+                <button
+                  type="button"
+                  className="h-delete"
+                  title={isZh ? '删除此轮' : 'Delete round'}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    store.deleteVsRound(i);
+                  }}
+                ><Trash2 size={14} /></button>
               </div>
             );
           })}
+        </div>
+      </div>
+
+      {/* 单轮详情弹窗 — 大字方便看 */}
+      {detailRound !== null && (
+        <RoundDetailModal
+          roundIndex={detailRound}
+          h0={h0}
+          h1={h1}
+          puz0={store.puzzleIds[0]}
+          puz1={store.puzzleIds[1]}
+          isZh={isZh}
+          ftp={ftp}
+          getWinner={getWinner}
+          onClose={() => setDetailRound(null)}
+          onDelete={() => {
+            store.deleteVsRound(detailRound);
+            setDetailRound(null);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+// ===== RoundDetailModal — 单轮大字详情 =====
+
+interface RoundDetailModalProps {
+  roundIndex: number;
+  h0: SolveEntry[];
+  h1: SolveEntry[];
+  puz0: string;
+  puz1: string;
+  isZh: boolean;
+  ftp: (ms: number) => string;
+  getWinner: (e0: SolveEntry | undefined, e1: SolveEntry | undefined) => number;
+  onClose: () => void;
+  onDelete: () => void;
+}
+
+function RoundDetailModal({
+  roundIndex, h0, h1, puz0, puz1, isZh, ftp, getWinner, onClose, onDelete,
+}: RoundDetailModalProps) {
+  const e0 = h0[roundIndex];
+  const e1 = h1[roundIndex];
+  const winner = getWinner(e0, e1);
+  const s0 = e0?.scramble || '';
+  const s1 = e1?.scramble || '';
+  const sameScramble = s0 && s1 ? s0 === s1 : true;
+  const dateStr = e0?.date ? formatDateTime(e0.date) : (e1?.date ? formatDateTime(e1.date) : '');
+
+  const renderTime = (e: SolveEntry | undefined) => {
+    if (!e) return '—';
+    const eff = getEffectiveTimeFromEntry(e);
+    if (eff === Infinity) return 'DNF';
+    return ftp(eff);
+  };
+
+  return (
+    <div className="round-modal-overlay" onClick={(ev) => {
+      if (ev.target === ev.currentTarget) onClose();
+    }}>
+      <div className="round-modal">
+        <div className="round-modal-header">
+          <span className="round-modal-title">
+            {isZh ? `第 ${roundIndex + 1} 轮` : `Round ${roundIndex + 1}`}
+            {dateStr && <span className="round-modal-date"> · {dateStr}</span>}
+          </span>
+          <button className="settings-x-btn" onClick={onClose}>✕</button>
+        </div>
+
+        <div className="round-modal-times">
+          <div className={`round-modal-side${winner === 0 ? ' is-winner' : ''}`}>
+            <div className="round-modal-pid">
+              {isWcaEvent(puz0) && <EventIcon event={puz0} className="round-modal-event" />}
+              <span>P1</span>
+            </div>
+            <div className="round-modal-time-row">
+              <span className="round-modal-time">{renderTime(e0)}</span>
+              {winner === 0 && <Trophy size={20} className="vs-trophy" />}
+            </div>
+            {e0?.penalty === '+2' && <div className="round-modal-penalty">+2</div>}
+          </div>
+          <div className="round-modal-vs">vs</div>
+          <div className={`round-modal-side${winner === 1 ? ' is-winner' : ''}`}>
+            <div className="round-modal-pid">
+              {isWcaEvent(puz1) && <EventIcon event={puz1} className="round-modal-event" />}
+              <span>P2</span>
+            </div>
+            <div className="round-modal-time-row">
+              <span className="round-modal-time">{renderTime(e1)}</span>
+              {winner === 1 && <Trophy size={20} className="vs-trophy" />}
+            </div>
+            {e1?.penalty === '+2' && <div className="round-modal-penalty">+2</div>}
+          </div>
+        </div>
+
+        <div className="round-modal-scrambles">
+          {sameScramble ? (
+            s0 || s1 ? (
+              <div className="round-modal-scramble-block">
+                <div className="round-modal-scramble-label">{isZh ? '打乱' : 'Scramble'}</div>
+                <div className="round-modal-scramble-text">{s0 || s1}</div>
+              </div>
+            ) : null
+          ) : (
+            <>
+              {s0 && (
+                <div className="round-modal-scramble-block">
+                  <div className="round-modal-scramble-label">P1{isWcaEvent(puz0) ? ' ' : ''}{isZh ? '打乱' : 'Scramble'}</div>
+                  <div className="round-modal-scramble-text">{s0}</div>
+                </div>
+              )}
+              {s1 && (
+                <div className="round-modal-scramble-block">
+                  <div className="round-modal-scramble-label">P2{isWcaEvent(puz1) ? ' ' : ''}{isZh ? '打乱' : 'Scramble'}</div>
+                  <div className="round-modal-scramble-text">{s1}</div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        <div className="round-modal-actions">
+          <button
+            type="button"
+            className="round-modal-delete"
+            onClick={onDelete}
+            title={isZh ? '删除此轮' : 'Delete round'}
+            aria-label={isZh ? '删除此轮' : 'Delete round'}
+          >
+            <Trash2 size={16} />
+          </button>
         </div>
       </div>
     </div>

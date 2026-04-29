@@ -11,9 +11,9 @@
 
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Settings as SettingsIcon, ClipboardList, Trophy, Trash2, RotateCcw, Eye, EyeOff } from 'lucide-react';
+import { Settings as SettingsIcon, ClipboardList, Trophy, RotateCcw, Eye, EyeOff } from 'lucide-react';
 import { useBattleStore } from './engine/battle_store';
-import { KEY_MAP, PUZZLES, PENALTY, I18N_TEXT } from './engine/constants';
+import { KEY_MAP, PUZZLES, PENALTY, I18N_TEXT, BG_MAX_BYTES } from './engine/constants';
 import { formatTime } from './engine/format_time';
 import { computeAo5 } from './engine/stats';
 import type { PenaltyType } from './engine/constants';
@@ -22,6 +22,9 @@ import VsHistoryPanel from './VsHistoryPanel';
 import { MilestoneToast } from './AdvancedFeatures';
 import LangToggle from '../../components/LangToggle';
 import CubingPreview from '../timer/cube/CubingPreview';
+import BattleEventPicker from './BattleEventPicker';
+import { EventIcon } from '../../components/EventIcon';
+import { isWcaEvent } from '../../utils/wca_events';
 
 import './battle.css';
 
@@ -434,10 +437,20 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
     ? `<span class="loading">${I18N_TEXT.generating[store.locale]}</span>`
     : (myScramble || '');
 
+  // NOTE: 玩家自定义背景:CSS 变量传给 .player-area::before 伪元素
+  const bgColor = store.bgColors[playerId];
+  const bgImage = store.bgImages[playerId];
+  const bgStyle: React.CSSProperties = {
+    '--bg-image': bgImage ? `url(${bgImage})` : 'none',
+    '--bg-color': bgColor || '',
+    '--bg-opacity': String(store.bgOpacity),
+  } as React.CSSProperties;
+
   return (
     <div
       className={areaClasses}
       ref={areaRef}
+      style={bgStyle}
     >
       {/* 打乱文字 */}
       <div
@@ -470,6 +483,77 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
           <CubingPreview event={myPuzzle} scramble={myScramble} className="scramble-svg-img" />
         )}
       </div>
+
+      {/* Event picker 全区域覆盖 — 由 middle-bar 上的图标按钮触发 */}
+      {store.eventPickerOpen[playerId] && (
+        <EventPickerOverlay playerId={playerId as 0 | 1} />
+      )}
+    </div>
+  );
+}
+
+// ===== EventPickerOverlay 组件 =====
+// 覆盖整个 player-area 的项目网格,自适应区域大小,无 popup 溢出问题
+
+function EventPickerOverlay({ playerId }: { playerId: 0 | 1 }) {
+  const store = useBattleStore();
+  const { i18n } = useTranslation();
+  const isZh = i18n.language === 'zh';
+  const value = store.puzzleIds[playerId];
+  const overlayRef = useRef<HTMLDivElement>(null);
+
+  // NOTE: 父级 .player-area 用原生 addEventListener 处理 pointerdown/up 进入计时状态。
+  //   React 合成事件的 stopPropagation 不能阻止已注册的原生监听器,必须用原生 stopPropagation。
+  useEffect(() => {
+    const el = overlayRef.current;
+    if (!el) return;
+    const stop = (e: Event) => e.stopPropagation();
+    el.addEventListener('pointerdown', stop);
+    el.addEventListener('pointerup', stop);
+    el.addEventListener('pointercancel', stop);
+    return () => {
+      el.removeEventListener('pointerdown', stop);
+      el.removeEventListener('pointerup', stop);
+      el.removeEventListener('pointercancel', stop);
+    };
+  }, []);
+
+  const select = (id: string) => {
+    store.changePuzzle(playerId, id);
+    store.setEventPickerOpen(playerId, false);
+  };
+
+  const renderIcon = (id: string) => {
+    if (isWcaEvent(id)) return <EventIcon event={id} />;
+    return <span className="event-fallback">{PUZZLES.find(x => x.id === id)?.name.en || id}</span>;
+  };
+
+  return (
+    <div
+      ref={overlayRef}
+      className="event-overlay"
+      onClick={(e) => {
+        // NOTE: 点空白处关闭
+        if (e.target === e.currentTarget) store.setEventPickerOpen(playerId, false);
+      }}
+    >
+      <div className="event-overlay-grid">
+        {PUZZLES.map(p => {
+          const name = p.name[isZh ? 'zh' : 'en'] || p.name.en;
+          return (
+            <button
+              key={p.id}
+              type="button"
+              className={`event-overlay-item${p.id === value ? ' active' : ''}`}
+              onClick={() => select(p.id)}
+              aria-label={name}
+              title={name}
+            >
+              {renderIcon(p.id)}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -490,12 +574,13 @@ function MiddleBar({ onSettingsClick, onHistoryClick }: { onSettingsClick: () =>
 
   return (
     <div className="middle-bar">
-      {/* 左侧比分 + 罚时 */}
+      {/* 左侧比分 + 项目 + 罚时 */}
       <div className="score-section">
         <span className="score-value">
           {players[leftId].points}
           {(winner === leftId || winner === -1) && <Trophy className="score-trophy" size={14} />}
         </span>
+        <BattleEventPicker playerId={leftId as 0 | 1} />
         <PenaltyDropdown playerId={leftId} />
       </div>
 
@@ -513,18 +598,120 @@ function MiddleBar({ onSettingsClick, onHistoryClick }: { onSettingsClick: () =>
         </button>
       </div>
 
-      {/* 右侧比分 + 罚时 */}
+      {/* 右侧比分 + 项目 + 罚时 */}
       <div className="score-section">
         <span className="score-value">
           {(winner === rightId || winner === -1) && <Trophy className="score-trophy" size={14} />}
           {players[rightId].points}
         </span>
+        <BattleEventPicker playerId={rightId as 0 | 1} />
         <PenaltyDropdown playerId={rightId} />
       </div>
     </div>
   );
 }
 
+
+// ===== BackgroundSettingsGroup 组件 =====
+// 每位玩家独立的背景色 / 背景图 / 重置;不透明度双方共用
+
+function PlayerBgRow({ playerId, isZh }: { playerId: 0 | 1; isZh: boolean }) {
+  const store = useBattleStore();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const onColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    store.setBgColor(playerId, e.target.value);
+  };
+
+  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > BG_MAX_BYTES) {
+      setError(isZh
+        ? `图片太大(${(file.size / 1024 / 1024).toFixed(1)} MB),≤4MB`
+        : `Image too large (${(file.size / 1024 / 1024).toFixed(1)} MB), ≤4MB`);
+      e.target.value = '';
+      setTimeout(() => setError(null), 3000);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const url = ev.target?.result;
+      if (typeof url === 'string') {
+        store.setBgImage(playerId, url);
+      }
+    };
+    reader.readAsDataURL(file);
+    // NOTE: 重置 input 让用户能再次上传同一文件触发 change
+    e.target.value = '';
+  };
+
+  const colorVal = store.bgColors[playerId] || '#000000';
+  const hasImage = !!store.bgImages[playerId];
+
+  return (
+    <div className="bg-row">
+      <span className="bg-row-label">P{playerId + 1}</span>
+      <div className="bg-controls">
+        <input
+          type="color"
+          className="bg-color-picker"
+          value={colorVal}
+          onChange={onColorChange}
+          title={isZh ? '背景色' : 'Background color'}
+        />
+        <button
+          type="button"
+          className={`bg-image-btn${hasImage ? ' has-image' : ''}`}
+          onClick={() => fileInputRef.current?.click()}
+          title={isZh ? '上传背景图' : 'Upload image'}
+        >
+          {isZh ? (hasImage ? '已上传' : '图片') : (hasImage ? 'Set' : 'Image')}
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          style={{ display: 'none' }}
+          onChange={onFileChange}
+        />
+        <button
+          type="button"
+          className="bg-reset-btn"
+          onClick={() => store.resetBg(playerId)}
+          title={isZh ? '重置' : 'Reset'}
+        >
+          ✕
+        </button>
+      </div>
+      {error && <div className="bg-error-msg">{error}</div>}
+    </div>
+  );
+}
+
+function BackgroundSettingsGroup({ mode, isZh }: { mode: string; isZh: boolean }) {
+  const store = useBattleStore();
+  return (
+    <div className="settings-group">
+      <div className="settings-label">{isZh ? '背景' : 'Background'}</div>
+      <PlayerBgRow playerId={0} isZh={isZh} />
+      {mode === '1v1' && <PlayerBgRow playerId={1} isZh={isZh} />}
+      <div className="setting-item slider-row">
+        <span>{isZh ? '不透明度' : 'Opacity'}</span>
+        <span className="delay-value">{store.bgOpacity.toFixed(2)}</span>
+        <input
+          type="range"
+          min="0.1"
+          max="1.0"
+          step="0.05"
+          value={store.bgOpacity}
+          onChange={e => store.setBgOpacity(parseFloat(e.target.value))}
+        />
+      </div>
+    </div>
+  );
+}
 
 // ===== SettingsPanel 组件 =====
 // 1:1 翻译自 battle/index.html settings-panel 结构
@@ -562,60 +749,26 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
           </div>
         </div>
 
-        {/* 项目选择 */}
-        <div className="settings-group">
-          <div className="settings-label-row">
-            <span className="settings-label" data-i18n="puzzle">{isZh ? '项目' : 'PUZZLE'}</span>
-            {store.mode === '1v1' && (
-              <label className="split-puzzle-toggle">
-                <span>{isZh ? 'P1 / P2 分开' : 'Split P1 / P2'}</span>
-                <label className="switch">
-                  <input
-                    type="checkbox"
-                    checked={store.splitPuzzles}
-                    onChange={e => store.setSplitPuzzles(e.target.checked)}
-                  />
-                  <span className="slider"></span>
-                </label>
-              </label>
-            )}
-          </div>
-          {store.mode === '1v1' && store.splitPuzzles ? (
-            <div className="puzzle-split-cols">
-              {[0, 1].map(idx => (
-                <div className="puzzle-split-col" key={idx}>
-                  <div className="puzzle-split-head">P{idx + 1}</div>
-                  <div className="puzzle-grid">
-                    {PUZZLES.map(puz => (
-                      <button
-                        key={puz.id}
-                        className={`puzzle-btn${puz.id === store.puzzleIds[idx] ? ' active' : ''}`}
-                        onClick={() => { store.changePuzzle(idx as 0 | 1, puz.id); }}
-                      >
-                        {puz.name[isZh ? 'zh' : 'en'] || puz.name.en}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
+        {/* 项目选择 — 仅 Solo;1v1 已移到 middle-bar 的 BattleEventPicker */}
+        {store.mode === 'solo' && (
+          <div className="settings-group">
+            <div className="settings-label" data-i18n="puzzle">{isZh ? '项目' : 'PUZZLE'}</div>
             <div className="puzzle-grid">
               {PUZZLES.map(puz => (
                 <button
                   key={puz.id}
                   className={`puzzle-btn${puz.id === store.puzzleIds[0] ? ' active' : ''}`}
-                  onClick={() => {
-                    store.changePuzzle(store.mode === 'solo' ? 0 : 'both', puz.id);
-                    onClose();
-                  }}
+                  onClick={() => { store.changePuzzle(0, puz.id); onClose(); }}
                 >
-                  {puz.name[isZh ? 'zh' : 'en'] || puz.name.en}
+                  {isWcaEvent(puz.id)
+                    ? <EventIcon event={puz.id} />
+                    : <span className="event-fallback">{puz.name.en}</span>}
+                  <span className="puzzle-btn-name">{puz.name[isZh ? 'zh' : 'en'] || puz.name.en}</span>
                 </button>
               ))}
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* 计时器精确度 */}
         <div className="settings-group">
@@ -731,6 +884,9 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
           </div>
         </div>
 
+        {/* 背景自定义 — 1v1 双人独立,Solo 只显示 P1 */}
+        <BackgroundSettingsGroup mode={store.mode} isZh={isZh} />
+
         {/* 操作按钮 */}
         <div className="settings-group">
           <button className="settings-action-btn" onClick={() => {
@@ -739,13 +895,6 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
           }}>
             {store.showTime ? <EyeOff size={16} /> : <Eye size={16} />}
             {(store.showTime ? I18N_TEXT.hide_time : I18N_TEXT.show_time)[isZh ? 'zh' : 'en']}
-          </button>
-          <button className="settings-action-btn" onClick={() => {
-            store.deleteLast();
-            onClose();
-          }}>
-            <Trash2 size={16} />
-            {isZh ? '删除最后一条' : 'Delete Last'}
           </button>
           <button className="settings-action-btn danger" onClick={() => {
             store.resetAll();
