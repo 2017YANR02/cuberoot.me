@@ -108,9 +108,8 @@ export interface BattleState {
   // NOTE: 1v1 布局（versus=面对面, side=并排）
   layout: BattleLayout;
   // 每位玩家的项目 ID。Solo 只用 puzzleIds[0]
+  // NOTE: 1v1 中两人始终独立选；同 id 时强制同 scramble（见 loadNewScramble）
   puzzleIds: [string, string];
-  // 1v1 设置面板：是否两侧分别选项目（默认关，两人同步）
-  splitPuzzles: boolean;
   // 是否显示计时中的时间
   showTime: boolean;
   // 是否显示打乱图
@@ -123,8 +122,14 @@ export interface BattleState {
   phases: number;
   // 当前打乱图字号缩放比例
   scrambleScale: number;
-  // NOTE: 背景不透明度（0.1~1.0）
+  // NOTE: 背景不透明度（0.1~1.0），双方共用
   bgOpacity: number;
+  // NOTE: 每位玩家自定义背景色（hex；空串 = 默认黑底）
+  bgColors: [string, string];
+  // NOTE: 每位玩家自定义背景图（base64 data URL；null = 不用图片）
+  bgImages: [string | null, string | null];
+  // NOTE: 每位玩家的 event picker 是否打开(打开时在自己 TimerArea 内覆盖大网格)
+  eventPickerOpen: [boolean, boolean];
   // NOTE: 计时器精确度（小数位数：0=秒, 1=0.1s, 2=0.01s, 3=0.001s）
   timerPrecision: number;
   // NOTE: 启动延时（ms），按住多久后才能开始计时
@@ -169,9 +174,8 @@ export interface BattleState {
   deleteLast: () => void;
   toggleShowTime: () => void;
   resetAll: () => void;
-  // target=0/1 只换该侧；'both' 同时换两侧。Solo 始终 target=0
-  changePuzzle: (target: 0 | 1 | 'both', puzzleId: string) => void;
-  setSplitPuzzles: (split: boolean) => void;
+  // target=0/1 只换该侧。Solo 始终 target=0；1v1 各自独立
+  changePuzzle: (target: 0 | 1, puzzleId: string) => void;
   setMode: (mode: BattleMode) => void;
   setLayout: (layout: BattleLayout) => void;
   setInspectionTime: (time: number) => void;
@@ -180,6 +184,14 @@ export interface BattleState {
   setShowImage: (show: boolean) => void;
   setScrambleScale: (scale: number) => void;
   setBgOpacity: (opacity: number) => void;
+  // NOTE: 单侧背景色;传空串清除
+  setBgColor: (playerId: 0 | 1, color: string) => void;
+  // NOTE: 单侧背景图(base64);传 null 清除。返回 false 表示图片超过 BG_MAX_BYTES
+  setBgImage: (playerId: 0 | 1, dataUrl: string | null) => void;
+  // NOTE: 单侧背景重置(色 + 图都清)
+  resetBg: (playerId: 0 | 1) => void;
+  // NOTE: 切换 / 关闭某玩家的 event picker overlay
+  setEventPickerOpen: (playerId: 0 | 1, open: boolean) => void;
   setTimerPrecision: (precision: number) => void;
   setStartDelay: (delay: number) => void;
   setGoalTime: (goal: number) => void;
@@ -195,6 +207,8 @@ export interface BattleState {
   // NOTE: 历史操作
   undoDelete: () => void;
   deleteHistoryItem: (index: number) => void;
+  // NOTE: 1v1 模式删除某一轮(同时去掉双方对应 entry;最后一轮还会撤销该轮 points)
+  deleteVsRound: (index: number) => void;
   // NOTE: Solo 数据持久化
   saveSolveHistory: () => void;
   loadSolveHistory: () => void;
@@ -221,7 +235,6 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   mode: (localStorage.getItem(LS_PREFIX + 'mode') as BattleMode) || '1v1',
   layout: (localStorage.getItem(LS_PREFIX + 'layout') as BattleLayout) || 'versus',
   puzzleIds: loadInitialPuzzleIds(),
-  splitPuzzles: localStorage.getItem(LS_PREFIX + 'splitPuzzles') === 'true',
   showTime: localStorage.getItem(LS_PREFIX + 'showTime') !== 'false',
   showImage: localStorage.getItem(LS_PREFIX + 'showImage') !== 'false',
   inspectionTime: parseInt(localStorage.getItem(LS_PREFIX + 'inspectionTime') || '0') || 0,
@@ -229,6 +242,15 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   phases: parseInt(localStorage.getItem(LS_PREFIX + 'phases') || '1') || 1,
   scrambleScale: parseFloat(localStorage.getItem(LS_PREFIX + 'scrambleScale') || '1.0') || 1.0,
   bgOpacity: parseFloat(localStorage.getItem(LS_PREFIX + 'bgOpacity') || '1.0') || 1.0,
+  bgColors: [
+    localStorage.getItem(LS_PREFIX + 'bg_color_0') || '',
+    localStorage.getItem(LS_PREFIX + 'bg_color_1') || '',
+  ],
+  bgImages: [
+    localStorage.getItem(LS_PREFIX + 'bg_img_0'),
+    localStorage.getItem(LS_PREFIX + 'bg_img_1'),
+  ],
+  eventPickerOpen: [false, false],
   timerPrecision: (() => { const v = localStorage.getItem(LS_PREFIX + 'timerPrecision'); return v !== null ? parseInt(v) : 3; })(),
   startDelay: (() => { const v = localStorage.getItem(LS_PREFIX + 'startDelay'); return v !== null ? parseInt(v) : 300; })(),
   enabledAverages: JSON.parse(localStorage.getItem(LS_PREFIX + 'enabledAverages') || '[5, 12]'),
@@ -247,23 +269,40 @@ export const useBattleStore = create<BattleState>((set, get) => ({
 
   // ===== init =====
   init: () => {
-    const s = get();
-    s.loadSolveHistory();
-    s.loadNewScramble();
+    // NOTE: 一次性迁移:BattleEventPicker 上线前的 puzzle 选择经常因为旧 split 逻辑
+    //   被设成奇怪的值(测试残留),首次进入新版时强制清掉,从默认 333 起步。
+    //   设置 VERSION_KEY 后刷新不再重置(用户自己后续改的项目正常持久化)。
+    const VERSION_KEY = LS_PREFIX + 'event_picker_v1';
+    if (localStorage.getItem(VERSION_KEY) !== 'done') {
+      localStorage.removeItem(LS_PREFIX + 'puzzle_0');
+      localStorage.removeItem(LS_PREFIX + 'puzzle_1');
+      localStorage.removeItem(LS_PREFIX + 'puzzle');
+      localStorage.removeItem(LS_PREFIX + 'splitPuzzles');
+      localStorage.setItem(VERSION_KEY, 'done');
+      set({ puzzleIds: ['333', '333'] });
+    }
+    get().loadSolveHistory();
+    get().loadNewScramble();
   },
 
   // ===== 打乱生成 =====
   // playerId 不传则两人都重生（Solo 始终只对 0 生效）
+  // NOTE: 不变量——1v1 模式下 puzzleIds[0] === puzzleIds[1] 时,scrambles 必须相等。
+  //   即使只针对单侧调用,若两人同 puzzle,也强制把新 scramble 同步到另一侧。
   loadNewScramble: (playerId?: number) => {
     const s = get();
     const targets = playerId === undefined
       ? (s.mode === 'solo' ? [0] : [0, 1])
       : [playerId];
 
+    const sharedPuzzle = s.mode === '1v1' && s.puzzleIds[0] === s.puzzleIds[1];
+    // NOTE: 同 puzzle 时,影响范围扩展到双方
+    const affected = sharedPuzzle ? [0, 1] : targets;
+
     const loadings: [boolean, boolean] = [...s.scrambleLoadings];
     const scramblesNext: [string | null, string | null] = [...s.scrambles];
     const imagesNext: [string | null, string | null] = [...s.scrambleImageUrls];
-    for (const i of targets) {
+    for (const i of affected) {
       loadings[i] = true;
       scramblesNext[i] = null;
       imagesNext[i] = null;
@@ -274,15 +313,31 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     const newScrambles: [string | null, string | null] = [...after.scrambles];
     const newImages: [string | null, string | null] = [...after.scrambleImageUrls];
     const newLoadings: [boolean, boolean] = [...after.scrambleLoadings];
-    for (const i of targets) {
-      const puzzleId = after.puzzleIds[i];
+
+    if (sharedPuzzle) {
+      // 一份 scramble 复制给两人
+      const puzzleId = after.puzzleIds[0];
       const text = generateScramble(puzzleId);
-      newScrambles[i] = text;
-      newLoadings[i] = false;
-      if (after.showImage && text && !text.startsWith('⚠️')) {
-        newImages[i] = generateScrambleImageUrl(puzzleId, text);
-      } else {
-        newImages[i] = null;
+      const img = (after.showImage && text && !text.startsWith('⚠️'))
+        ? generateScrambleImageUrl(puzzleId, text)
+        : null;
+      newScrambles[0] = text;
+      newScrambles[1] = text;
+      newImages[0] = img;
+      newImages[1] = img;
+      newLoadings[0] = false;
+      newLoadings[1] = false;
+    } else {
+      for (const i of affected) {
+        const puzzleId = after.puzzleIds[i];
+        const text = generateScramble(puzzleId);
+        newScrambles[i] = text;
+        newLoadings[i] = false;
+        if (after.showImage && text && !text.startsWith('⚠️')) {
+          newImages[i] = generateScrambleImageUrl(puzzleId, text);
+        } else {
+          newImages[i] = null;
+        }
       }
     }
     set({ scrambles: newScrambles, scrambleImageUrls: newImages, scrambleLoadings: newLoadings });
@@ -754,46 +809,55 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     s.loadNewScramble();
   },
 
-  // target=0/1 → 仅换该侧；'both' → 同时换两侧。Solo 始终 target=0
-  changePuzzle: (target: 0 | 'both' | 1, newPuzzleId: string) => {
+  // target=0/1 → 仅换该侧。Solo 始终 target=0；1v1 由 BattleEventPicker 各自调用
+  // NOTE: 改完单侧后,若两人现在 id 相等则触发双人 loadNewScramble
+  //       (loadNewScramble 内部会走"同 puzzle ⇒ 一份 scramble 复制给双方"分支)
+  changePuzzle: (target: 0 | 1, newPuzzleId: string) => {
     const s = get();
-    const targets: number[] = target === 'both' ? [0, 1] : [target];
-    if (targets.every(i => s.puzzleIds[i] === newPuzzleId)) return;
+    if (s.puzzleIds[target] === newPuzzleId) return;
 
     s.saveSolveHistory();
 
     const newPuzzleIds: [string, string] = [...s.puzzleIds];
-    for (const i of targets) {
-      newPuzzleIds[i] = newPuzzleId;
-      localStorage.setItem(LS_PREFIX + `puzzle_${i}`, newPuzzleId);
-    }
+    newPuzzleIds[target] = newPuzzleId;
+    localStorage.setItem(LS_PREFIX + `puzzle_${target}`, newPuzzleId);
     if (newPuzzleIds[0] === newPuzzleIds[1]) {
       localStorage.setItem(LS_PREFIX + 'puzzle', newPuzzleIds[0]);
     }
 
     // 重置受影响玩家的当前回合（保留 points，loadSolveHistory 会替换 history）
     const newPlayers = [...s.players] as [PlayerState, PlayerState];
-    for (const i of targets) {
-      newPlayers[i] = createPlayer(i);
-      newPlayers[i].points = s.players[i].points;
+    newPlayers[target] = createPlayer(target);
+    newPlayers[target].points = s.players[target].points;
+
+    // NOTE: 另一玩家也重置当前回合状态(保留 points / history)。
+    //   否则 P0 切项目后,P1 还卡在上轮 hasFinished=true,playerDown 拒绝进入红灯。
+    if (s.mode === '1v1') {
+      const other = (1 - target) as 0 | 1;
+      newPlayers[other] = {
+        ...s.players[other],
+        isReady: false,
+        canStart: false,
+        isTiming: false,
+        hasFinished: false,
+        isInspecting: false,
+        inspectionPenalty: null,
+        pointerId: null,
+        time: 0,
+      };
     }
+
     set({
       puzzleIds: newPuzzleIds,
       winner: -2,
       players: newPlayers,
     });
     get().loadSolveHistory();
-    for (const i of targets) get().loadNewScramble(i);
-  },
-
-  setSplitPuzzles: (split: boolean) => {
-    const s = get();
-    if (s.splitPuzzles === split) return;
-    localStorage.setItem(LS_PREFIX + 'splitPuzzles', String(split));
-    set({ splitPuzzles: split });
-    // 关闭分开 → 把 P1 同步到 P0 的项目
-    if (!split && s.puzzleIds[0] !== s.puzzleIds[1]) {
-      get().changePuzzle(1, s.puzzleIds[0]);
+    // NOTE: 同 id 走双人分支(共享 scramble);否则只重生该侧
+    if (newPuzzleIds[0] === newPuzzleIds[1] && s.mode === '1v1') {
+      get().loadNewScramble();
+    } else {
+      get().loadNewScramble(target);
     }
   },
 
@@ -877,6 +941,59 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   setBgOpacity: (opacity: number) => {
     localStorage.setItem(LS_PREFIX + 'bgOpacity', String(opacity));
     set({ bgOpacity: opacity });
+  },
+
+  // NOTE: 设置背景色;同时清掉图片(色 / 图二选一)
+  setBgColor: (playerId: 0 | 1, color: string) => {
+    const s = get();
+    const newColors: [string, string] = [...s.bgColors];
+    const newImages: [string | null, string | null] = [...s.bgImages];
+    newColors[playerId] = color;
+    newImages[playerId] = null;
+    if (color) localStorage.setItem(LS_PREFIX + `bg_color_${playerId}`, color);
+    else localStorage.removeItem(LS_PREFIX + `bg_color_${playerId}`);
+    localStorage.removeItem(LS_PREFIX + `bg_img_${playerId}`);
+    set({ bgColors: newColors, bgImages: newImages });
+  },
+
+  // NOTE: 设置背景图(base64);同时清掉颜色
+  setBgImage: (playerId: 0 | 1, dataUrl: string | null) => {
+    const s = get();
+    const newImages: [string | null, string | null] = [...s.bgImages];
+    const newColors: [string, string] = [...s.bgColors];
+    newImages[playerId] = dataUrl;
+    if (dataUrl) {
+      newColors[playerId] = '';
+      try {
+        localStorage.setItem(LS_PREFIX + `bg_img_${playerId}`, dataUrl);
+        localStorage.removeItem(LS_PREFIX + `bg_color_${playerId}`);
+      } catch (e) {
+        console.warn('Failed to save bg image:', e);
+      }
+    } else {
+      localStorage.removeItem(LS_PREFIX + `bg_img_${playerId}`);
+    }
+    set({ bgImages: newImages, bgColors: newColors });
+  },
+
+  resetBg: (playerId: 0 | 1) => {
+    const s = get();
+    const newColors: [string, string] = [...s.bgColors];
+    const newImages: [string | null, string | null] = [...s.bgImages];
+    newColors[playerId] = '';
+    newImages[playerId] = null;
+    localStorage.removeItem(LS_PREFIX + `bg_color_${playerId}`);
+    localStorage.removeItem(LS_PREFIX + `bg_img_${playerId}`);
+    set({ bgColors: newColors, bgImages: newImages });
+  },
+
+  setEventPickerOpen: (playerId: 0 | 1, open: boolean) => {
+    const s = get();
+    const next: [boolean, boolean] = [...s.eventPickerOpen];
+    next[playerId] = open;
+    // NOTE: 同一时刻只允许一个玩家的 picker 开着(避免遮挡 + 简化交互)
+    if (open) next[1 - playerId] = false;
+    set({ eventPickerOpen: next });
   },
 
   setTimerPrecision: (precision: number) => {
@@ -1011,6 +1128,62 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     set({
       players: newPlayers,
       undoStack: [...s.undoStack, { index, entry }],
+    });
+    get().saveSolveHistory();
+  },
+
+  // NOTE: 1v1 删除某一轮 — 同时去掉双方在 index 处的 entry。
+  //   只有最后一轮能精准撤销 points(中间轮次的胜负已固定,不重算历史)。
+  deleteVsRound: (index: number) => {
+    const s = get();
+    if (s.mode !== '1v1') return;
+    const h0 = s.players[0].solveHistory;
+    const h1 = s.players[1].solveHistory;
+    const total = Math.max(h0.length, h1.length);
+    if (index < 0 || index >= total) return;
+
+    const isLast = index === total - 1;
+    let p0Points = s.players[0].points;
+    let p1Points = s.players[1].points;
+
+    // NOTE: 仅对最新一轮撤销 points
+    if (isLast) {
+      const e0 = h0[index];
+      const e1 = h1[index];
+      if (e0 && e1) {
+        const tEff = (e: SolveEntry) =>
+          e.penalty === 'dnf' ? Infinity : (e.penalty === '+2' ? e.time + 2000 : e.time);
+        const t0 = tEff(e0);
+        const t1 = tEff(e1);
+        if (t0 === Infinity && t1 === Infinity) {
+          // 双 DNF 没加过分,不动
+        } else if (t0 < t1) {
+          p0Points = Math.max(0, p0Points - 1);
+        } else if (t1 < t0) {
+          p1Points = Math.max(0, p1Points - 1);
+        } else {
+          p0Points = Math.max(0, p0Points - 1);
+          p1Points = Math.max(0, p1Points - 1);
+        }
+      }
+    }
+
+    const newPlayers = [...s.players] as [PlayerState, PlayerState];
+    for (let i = 0; i < 2; i++) {
+      const p = s.players[i];
+      if (index < p.solveHistory.length) {
+        const newH = [...p.solveHistory];
+        newH.splice(index, 1);
+        newPlayers[i] = { ...p, solveHistory: newH };
+      }
+    }
+    newPlayers[0] = { ...newPlayers[0], points: p0Points };
+    newPlayers[1] = { ...newPlayers[1], points: p1Points };
+
+    set({
+      players: newPlayers,
+      // NOTE: 删除的是当前一轮 → 撤销当前 winner 显示
+      winner: isLast ? -2 : s.winner,
     });
     get().saveSolveHistory();
   },

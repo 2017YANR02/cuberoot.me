@@ -12,6 +12,7 @@
  */
 
 import { useState, useMemo, useCallback } from 'react';
+import { Trash2 } from 'lucide-react';
 import { useBattleStore } from './engine/battle_store';
 import { formatTimePlain } from './engine/format_time';
 import { computeAo5, computeAverage, getEffectiveTimeFromEntry, computeSubXBreakdown } from './engine/stats';
@@ -360,7 +361,7 @@ export default function HistoryPanel() {
               <button className="h-delete" onClick={(e) => {
                 e.stopPropagation();
                 store.deleteHistoryItem(i);
-              }}>🗑️</button>
+              }}><Trash2 size={14} /></button>
               <span className="h-scramble">{scramble}</span>
             </div>
           );
