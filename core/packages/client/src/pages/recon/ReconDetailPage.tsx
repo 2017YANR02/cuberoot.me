@@ -2,13 +2,14 @@
  * 复盘详情页——迁移自 recon/detail/recon_detail.js（1586 行）
  * NOTE: 展示单条复盘的完整信息，含 twisty 动画、视频、统计、评论
  */
-import { useEffect, useState, useCallback, useMemo, useRef, type MutableRefObject } from 'react';
+import { useEffect, useState, useCallback, useRef, type MutableRefObject } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   Box, PenLine, Calendar, UserPlus, StickyNote,
-  ChartColumn, Video, MessageCircle, Key, TriangleAlert, ArrowRightLeft,
+  ChartColumn, Video, MessageCircle, Key, TriangleAlert,
   MoreVertical, Pencil, Trash2, Pin, PinOff,
+  Globe, Radio, ClipboardPaste,
 } from 'lucide-react';
 import type { ReconSolve, ReconComment } from '@cuberoot/shared';
 import { getRecon, listComments, addComment, updateComment, deleteComment, pinComment, getBiliCover, listRecons } from '../../utils/recon_api';
@@ -25,12 +26,11 @@ import { Flag } from '../../utils/flag';
 import { stripWcaPrefix } from '../../utils/comp_localize';
 import { toIsoDate } from '../../utils/date_range';
 import { cleanForPlayer, findTokenPositions, snapToTokenBoundary, extractAlgFromText, syncPlayerToMoveCount, countMovesExpanded } from '../../utils/recon_alg_utils';
-import { fetchAttempts, fetchCubingAttempts } from '../../utils/wca_results_api';
+import { fetchAttempts, fetchCubingAttempts, fetchScrambles } from '../../utils/wca_results_api';
 import { useAuthStore, isAdmin } from '../../stores/auth_store';
 import LangToggle from '../../components/LangToggle';
 import { RecordBadge } from '../../components/RecordBadge';
 import TwistySection from './components/TwistySection';
-import { buildNormalizedSolution, findCrossLineIndex, hasWideMoveInCrossSection } from '../../utils/recon_norm_cross_extract';
 import '../../recon.css';
 import './recon_detail.css';
 
@@ -183,16 +183,6 @@ function TwistyPlayerContext({ scramble, solutionText, solve }: {
   const { t } = useTranslation();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const playerRef = useRef<any>(null);
-  const [crossNormalized, setCrossNormalized] = useState(false);
-
-  // NOTE: 仅当 cross 段含宽转动时才允许切换；只有插入旋转或全单层时不显示
-  const canToggle = useMemo(() => hasWideMoveInCrossSection(solutionText), [solutionText]);
-  const normalizedText = useMemo(
-    () => canToggle ? buildNormalizedSolution(solutionText) : null,
-    [solutionText, canToggle],
-  );
-  const displayText = crossNormalized && normalizedText ? normalizedText : solutionText;
-  const crossLineIdx = useMemo(() => findCrossLineIndex(displayText), [displayText]);
 
   return (
     <div className="detail-body">
@@ -203,7 +193,7 @@ function TwistyPlayerContext({ scramble, solutionText, solve }: {
           <TwistySection
             puzzle={getPuzzleId(solve.event)}
             scramble={scramble}
-            alg={cleanForPlayer(displayText)}
+            alg={cleanForPlayer(solutionText)}
             playerRef={playerRef}
           />
         )}
@@ -218,13 +208,7 @@ function TwistyPlayerContext({ scramble, solutionText, solve }: {
           <div className="detail-solution-block">
             <div className="detail-scramble-text">{scramble}</div>
             <div className="detail-block-divider" />
-            <SolutionView
-              text={displayText}
-              playerRef={playerRef}
-              crossLineIdx={canToggle ? crossLineIdx : -1}
-              crossNormalized={crossNormalized}
-              onToggleCross={() => setCrossNormalized(v => !v)}
-            />
+            <SolutionView text={solutionText} playerRef={playerRef} />
           </div>
         ) : (
           <>
@@ -237,13 +221,7 @@ function TwistyPlayerContext({ scramble, solutionText, solve }: {
             {solutionText && (
               <div className="detail-section">
                 <div className="detail-section-label">{t('recon.solution')}</div>
-                <SolutionView
-                  text={displayText}
-                  playerRef={playerRef}
-                  crossLineIdx={canToggle ? crossLineIdx : -1}
-                  crossNormalized={crossNormalized}
-                  onToggleCross={() => setCrossNormalized(v => !v)}
-                />
+                <SolutionView text={solutionText} playerRef={playerRef} />
               </div>
             )}
           </>
@@ -313,13 +291,10 @@ function insertVisualCursor(el: HTMLElement, textOffset: number) {
 
 
 /** 解法文本展示——高亮阶段注释 + 光标跟随 twisty-player（从 legacy 迁移） */
-function SolutionView({ text, playerRef, crossLineIdx, crossNormalized, onToggleCross }: {
+function SolutionView({ text, playerRef }: {
   text: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   playerRef: MutableRefObject<any>;
-  crossLineIdx: number;
-  crossNormalized: boolean;
-  onToggleCross: () => void;
 }) {
   const preRef = useRef<HTMLPreElement>(null);
   const cursorOffsetRef = useRef(0);
@@ -395,8 +370,6 @@ function SolutionView({ text, playerRef, crossLineIdx, crossNormalized, onToggle
   const lines = text.split(/\r?\n/);
   return (
     <pre
-      // NOTE: key 跟着文本走，切换 toggle 时强制重挂载，丢弃 insertVisualCursor 留下的 splitText 残留
-      key={crossNormalized ? 'normalized' : 'original'}
       ref={preRef}
       className="detail-solution-text"
       onClick={handleClick}
@@ -411,21 +384,10 @@ function SolutionView({ text, playerRef, crossLineIdx, crossNormalized, onToggle
       {lines.map((line, i) => {
         const trimmed = line.trim();
         const nl = i > 0 ? '\n' : '';
-        const toggle = i === crossLineIdx ? (
-          <button
-            type="button"
-            className={`recon-cross-toggle${crossNormalized ? ' active' : ''}`}
-            onClick={(e) => { e.stopPropagation(); onToggleCross(); }}
-            title={crossNormalized ? 'Show original' : 'Normalize cross'}
-            tabIndex={-1}
-          >
-            <ArrowRightLeft size={12} />
-          </button>
-        ) : null;
         if (trimmed.startsWith('//')) {
-          return <span key={i}>{nl}<span className="recon-step-label">{line}</span>{toggle}</span>;
+          return <span key={i}>{nl}<span className="recon-step-label">{line}</span></span>;
         }
-        return <span key={i}>{nl}{line}{toggle}</span>;
+        return <span key={i}>{nl}{line}</span>;
       })}
     </pre>
   );
@@ -640,9 +602,13 @@ function SameRoundNav({ solve }: { solve: ReconSolve }) {
   const { t } = useTranslation();
   const [siblings, setSiblings] = useState<ReconSolve[]>([]);
   const [loaded, setLoaded] = useState(false);
-  // NOTE: WCA API 拉到的整轮成绩（秒；DNF=-1 / DNS=-2 / 不存在=null）
+  // NOTE: 整轮 5 把成绩（秒；DNF=-1 / DNS=-2 / 不存在=null）
   const [wcaAttempts, setWcaAttempts] = useState<(number | null)[] | null>(null);
-  // NOTE: 用户手动粘贴的成绩（优先级高于 WCA）
+  // NOTE: 整轮 5 把官方打乱（仅 WCA 来源，cubing.com 暂不返回）
+  const [scrambles, setScrambles] = useState<(string | null)[] | null>(null);
+  // NOTE: 数据来源标记 — 用于 chip 旁的 lucide icon 提示
+  const [attemptsSource, setAttemptsSource] = useState<'wca' | 'cubing' | null>(null);
+  // NOTE: 用户手动粘贴的成绩（优先级高于自动源）
   const [pastedAttempts, setPastedAttempts] = useState<(number | null)[] | null>(null);
   const [showPaste, setShowPaste] = useState(false);
   const [pasteRaw, setPasteRaw] = useState('');
@@ -660,19 +626,31 @@ function SameRoundNav({ solve }: { solve: ReconSolve }) {
   }, [solve, loaded]);
 
   // NOTE: 优先 WCA API（已导入的官方比赛），失败 fallback 到 cubing.com 代理（实时直播比赛）
+  // 同时拉 WCA scrambles —— cubing.com 不返回 scramble,只能靠 WCA
   useEffect(() => {
     if (!solve.compWcaId || !solve.personId || !solve.event || !solve.round) return;
     let cancelled = false;
     (async () => {
       const wca = await fetchAttempts(solve.compWcaId!, solve.event!, solve.round!, solve.personId!);
       if (cancelled) return;
-      if (wca) { setWcaAttempts(wca); return; }
-      const cubing = await fetchCubingAttempts(solve.compWcaId!, solve.event!, solve.round!, solve.personId!);
+      if (wca) {
+        setWcaAttempts(wca);
+        setAttemptsSource('wca');
+      } else {
+        const cubing = await fetchCubingAttempts(solve.compWcaId!, solve.event!, solve.round!, solve.personId!);
+        if (cancelled) return;
+        if (cubing) {
+          setWcaAttempts(cubing);
+          setAttemptsSource('cubing');
+        }
+      }
+      // NOTE: scrambles 独立拉一次,不阻塞 attempts
+      const sc = await fetchScrambles(solve.compWcaId!, solve.event!, solve.round!, solve.groupId);
       if (cancelled) return;
-      if (cubing) setWcaAttempts(cubing);
+      if (sc) setScrambles(sc);
     })().catch(() => { /* 静默——任一源挂掉都不影响主流程 */ });
     return () => { cancelled = true; };
-  }, [solve.compWcaId, solve.personId, solve.event, solve.round]);
+  }, [solve.compWcaId, solve.personId, solve.event, solve.round, solve.groupId]);
 
   // NOTE: 把当前+siblings 按 solveNum 索引；渲染 1..N（N 由 event 决定），缺失 slot 为占位 chip
   const total = attemptsPerRound(solve.event);
@@ -709,20 +687,42 @@ function SameRoundNav({ solve }: { solve: ReconSolve }) {
     }
   };
 
-  // NOTE: 缺失 chip 跳转链接 — 带 suggestTime 让 SubmitPage 预填
+  // NOTE: 缺失 chip 跳转链接 — 带 suggestTime / suggestScramble 让 SubmitPage 预填
   const buildHref = (n: number): string => {
+    const params = new URLSearchParams();
+    params.set('from', String(solve.id));
+    params.set('solveNum', String(n));
     const t = attemptFor(n);
-    const base = `/recon/submit?from=${solve.id}&solveNum=${n}`;
-    if (t == null || t < 0) return base;  // 不预填 DNF/DNS
-    return `${base}&suggestTime=${t}`;
+    if (t != null && t >= 0) params.set('suggestTime', String(t));   // 不预填 DNF/DNS
+    const sc = scrambles?.[n - 1];
+    if (sc) params.set('suggestScramble', sc);
+    return `/recon/submit?${params.toString()}`;
   };
 
   const hasAnyAttempt = wcaAttempts != null || pastedAttempts != null;
   const hasMissingSlot = slots.some(n => !bySolveNum.get(n));
 
+  // NOTE: 数据源指示 — 优先级:粘贴 > WCA/cubing
+  const sourceKind = pastedAttempts ? 'paste' : attemptsSource;
+  const sourceIcon = (() => {
+    if (sourceKind === 'wca') return <Globe size={12} aria-label="WCA" />;
+    if (sourceKind === 'cubing') return <Radio size={12} aria-label="cubing.com" />;
+    if (sourceKind === 'paste') return <ClipboardPaste size={12} aria-label="paste" />;
+    return null;
+  })();
+  const sourceTitle = sourceKind === 'wca' ? 'WCA'
+    : sourceKind === 'cubing' ? 'cubing.com'
+    : sourceKind === 'paste' ? t('recon.pasteAttempts')
+    : '';
+
   return (
     <div className="detail-section">
-      <div className="detail-section-label">{t('recon.sameRound')}</div>
+      <div className="detail-section-label">
+        {t('recon.sameRound')}
+        {sourceIcon && (
+          <span className="same-round-source" title={sourceTitle}>{sourceIcon}</span>
+        )}
+      </div>
       <div className="detail-same-round">
         {slots.map(n => {
           const s = bySolveNum.get(n);

@@ -641,31 +641,12 @@
   color: rgba(255, 255, 255, 0.4);
 }
 
-/* --- Cross 行就地切换图标（标准化/原始） --- */
-.recon-cross-toggle {
+.same-round-source {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  vertical-align: middle;
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 4px;
-  color: #a3a3a3;
-  cursor: pointer;
-  padding: 1px 4px;
   margin-left: 6px;
-  user-select: none;
-}
-
-.recon-cross-toggle:hover {
-  color: #e8a27a;
-  border-color: rgba(232, 162, 122, 0.4);
-}
-
-.recon-cross-toggle.active {
-  color: #e8a27a;
-  border-color: rgba(232, 162, 122, 0.55);
-  background: rgba(232, 162, 122, 0.08);
+  color: rgba(255, 255, 255, 0.45);
+  vertical-align: middle;
 }
 
 /* --- YouTube 风格评论输入框 --- */
