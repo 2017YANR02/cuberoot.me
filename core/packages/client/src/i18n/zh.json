@@ -34,7 +34,10 @@
     "loading": "加载中...",
     "loadFailed": "加载失败",
     "unknownError": "未知错误",
-    "langToggleLabel": "EN"
+    "langToggleLabel": "EN",
+    "clear": "清除",
+    "min": "下限",
+    "max": "上限"
   },
   "recon": {
     "title": "还原复盘",
@@ -64,6 +67,13 @@
     "editHistory": "编辑历史",
     "unknown": "未知",
     "sameRound": "同轮次复盘",
+    "addAttempt": "添加第 {{n}} 把（沿用本轮信息）",
+    "pasteAttempts": "粘贴轮次成绩",
+    "pasteAttemptsPlaceholder": "在此粘贴…",
+    "pasteAttemptsHint": "格式：3.79 4.33 3.61 3.74 2.80（空格 / 逗号 / 换行均可，DNF / DNS 也支持）",
+    "apply": "应用",
+    "allRounds": "全部轮次",
+    "allAoTypes": "全部",
     "video": "视频",
     "statistics": "统计",
     "comments": "评论",
