@@ -2,12 +2,12 @@
  * 复盘详情页——迁移自 recon/detail/recon_detail.js（1586 行）
  * NOTE: 展示单条复盘的完整信息，含 twisty 动画、视频、统计、评论
  */
-import { useEffect, useState, useCallback, useRef, type MutableRefObject } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef, type MutableRefObject } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   Box, PenLine, Calendar, UserPlus, StickyNote,
-  ChartColumn, Video, MessageCircle, Key, TriangleAlert,
+  ChartColumn, Video, MessageCircle, Key, TriangleAlert, ArrowRightLeft,
   MoreVertical, Pencil, Trash2, Pin, PinOff,
   Globe, Radio, ClipboardPaste,
 } from 'lucide-react';
@@ -31,6 +31,7 @@ import { useAuthStore, isAdmin } from '../../stores/auth_store';
 import LangToggle from '../../components/LangToggle';
 import { RecordBadge } from '../../components/RecordBadge';
 import TwistySection from './components/TwistySection';
+import { buildNormalizedSolution, findCrossLineIndex, hasWideMoveInCrossSection } from '../../utils/recon_norm_cross_extract';
 import '../../recon.css';
 import './recon_detail.css';
 
@@ -183,6 +184,16 @@ function TwistyPlayerContext({ scramble, solutionText, solve }: {
   const { t } = useTranslation();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const playerRef = useRef<any>(null);
+  const [crossNormalized, setCrossNormalized] = useState(false);
+
+  // NOTE: 仅当 cross 段含宽转动时才允许切换；只有插入旋转或全单层时不显示
+  const canToggle = useMemo(() => hasWideMoveInCrossSection(solutionText), [solutionText]);
+  const normalizedText = useMemo(
+    () => canToggle ? buildNormalizedSolution(solutionText) : null,
+    [solutionText, canToggle],
+  );
+  const displayText = crossNormalized && normalizedText ? normalizedText : solutionText;
+  const crossLineIdx = useMemo(() => findCrossLineIndex(displayText), [displayText]);
 
   return (
     <div className="detail-body">
@@ -193,7 +204,7 @@ function TwistyPlayerContext({ scramble, solutionText, solve }: {
           <TwistySection
             puzzle={getPuzzleId(solve.event)}
             scramble={scramble}
-            alg={cleanForPlayer(solutionText)}
+            alg={cleanForPlayer(displayText)}
             playerRef={playerRef}
           />
         )}
@@ -203,28 +214,23 @@ function TwistyPlayerContext({ scramble, solutionText, solve }: {
           <ExternalLinks event={solve.event} scramble={scramble} alg={cleanForPlayer(solutionText)} solveId={solve.id} />
         )}
 
-        {/* NOTE: 打乱+解法融合块——原版风格（打乱和解法共享一个视觉框体） */}
-        {scramble && solutionText ? (
-          <div className="detail-solution-block">
+        {scramble && (
+          <div className="detail-section">
+            <div className="detail-section-label">{t('recon.scramble')}</div>
             <div className="detail-scramble-text">{scramble}</div>
-            <div className="detail-block-divider" />
-            <SolutionView text={solutionText} playerRef={playerRef} />
           </div>
-        ) : (
-          <>
-            {scramble && (
-              <div className="detail-section">
-                <div className="detail-section-label">{t('recon.scramble')}</div>
-                <div className="detail-scramble-text">{scramble}</div>
-              </div>
-            )}
-            {solutionText && (
-              <div className="detail-section">
-                <div className="detail-section-label">{t('recon.solution')}</div>
-                <SolutionView text={solutionText} playerRef={playerRef} />
-              </div>
-            )}
-          </>
+        )}
+        {solutionText && (
+          <div className="detail-section">
+            <div className="detail-section-label">{t('recon.solution')}</div>
+            <SolutionView
+              text={displayText}
+              playerRef={playerRef}
+              crossLineIdx={canToggle ? crossLineIdx : -1}
+              crossNormalized={crossNormalized}
+              onToggleCross={() => setCrossNormalized(v => !v)}
+            />
+          </div>
         )}
       </div>
 
@@ -291,10 +297,13 @@ function insertVisualCursor(el: HTMLElement, textOffset: number) {
 
 
 /** 解法文本展示——高亮阶段注释 + 光标跟随 twisty-player（从 legacy 迁移） */
-function SolutionView({ text, playerRef }: {
+function SolutionView({ text, playerRef, crossLineIdx, crossNormalized, onToggleCross }: {
   text: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   playerRef: MutableRefObject<any>;
+  crossLineIdx: number;
+  crossNormalized: boolean;
+  onToggleCross: () => void;
 }) {
   const preRef = useRef<HTMLPreElement>(null);
   const cursorOffsetRef = useRef(0);
@@ -370,6 +379,8 @@ function SolutionView({ text, playerRef }: {
   const lines = text.split(/\r?\n/);
   return (
     <pre
+      // NOTE: key 跟着文本走，切换 toggle 时强制重挂载，丢弃 insertVisualCursor 留下的 splitText 残留
+      key={crossNormalized ? 'normalized' : 'original'}
       ref={preRef}
       className="detail-solution-text"
       onClick={handleClick}
@@ -384,10 +395,21 @@ function SolutionView({ text, playerRef }: {
       {lines.map((line, i) => {
         const trimmed = line.trim();
         const nl = i > 0 ? '\n' : '';
+        const toggle = i === crossLineIdx ? (
+          <button
+            type="button"
+            className={`recon-cross-toggle${crossNormalized ? ' active' : ''}`}
+            onClick={(e) => { e.stopPropagation(); onToggleCross(); }}
+            title={crossNormalized ? 'Show original' : 'Normalize cross'}
+            tabIndex={-1}
+          >
+            <ArrowRightLeft size={12} />
+          </button>
+        ) : null;
         if (trimmed.startsWith('//')) {
-          return <span key={i}>{nl}<span className="recon-step-label">{line}</span></span>;
+          return <span key={i}>{nl}<span className="recon-step-label">{line}</span>{toggle}</span>;
         }
-        return <span key={i}>{nl}{line}</span>;
+        return <span key={i}>{nl}{line}{toggle}</span>;
       })}
     </pre>
   );
