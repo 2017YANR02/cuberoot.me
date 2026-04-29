@@ -23,8 +23,9 @@ export interface ReconFilters {
   event: string;       // '' = 全部
   method: string;      // '' = 全部
   official: string;    // '' = 全部, '1' = WCA, '0' = non-WCA
-  solver: string;      // '' = 全部
-  search: string;      // 全文搜索
+  solver: string;      // '' = 全部, '__NO_PERSON__' = 无选手名
+  comp: string;        // '' = 全部, '__NO_COMP__' = 无比赛
+  record: string;      // '' = 全部 (e.g. 'WR' / 'CR' / 'NR' / ...)
 }
 
 // ── Store ──
@@ -48,9 +49,13 @@ interface ReconStoreActions {
   resetPaging: () => void;
   getFilteredSolves: () => ReconSolve[];
   getAvailableEvents: () => string[];
-  getAvailableMethods: () => string[];
-  /** 按频率排序的选手列表 */
-  getAvailableSolvers: () => { name: string; count: number }[];
+  getAvailableMethods: () => { name: string; count: number }[];
+  /** 按频率排序的选手列表;wcaId 取该选手第一条非空 personId */
+  getAvailableSolvers: () => { name: string; count: number; country: string; wcaId: string }[];
+  /** 按频率排序的比赛列表 */
+  getAvailableComps: () => { name: string; count: number; country: string }[];
+  /** 按频率排序的纪录代码列表 (WR / CR / NR 等) */
+  getAvailableRecords: () => { code: string; count: number }[];
 }
 
 const DEFAULT_FILTERS: ReconFilters = {
@@ -58,7 +63,8 @@ const DEFAULT_FILTERS: ReconFilters = {
   method: '',
   official: '',
   solver: '',
-  search: '',
+  comp: '',
+  record: '',
 };
 
 const PAGE_SIZE = 50;
@@ -129,10 +135,14 @@ export const useReconStore = create<ReconStoreState & ReconStoreActions>()((set,
     if (filters.event) {
       result = result.filter(s => s.event === filters.event);
     }
-    if (filters.method) {
+    if (filters.method === '__NO_METHOD__') {
+      result = result.filter(s => !s.method);
+    } else if (filters.method) {
       result = result.filter(s => s.method === filters.method);
     }
-    if (filters.solver) {
+    if (filters.solver === '__NO_PERSON__') {
+      result = result.filter(s => !s.person);
+    } else if (filters.solver) {
       result = result.filter(s => s.person === filters.solver);
     }
     if (filters.official === '1') {
@@ -141,36 +151,19 @@ export const useReconStore = create<ReconStoreState & ReconStoreActions>()((set,
       result = result.filter(s => !s.official);
     }
 
-    if (filters.search) {
-      const q = filters.search.toLowerCase().trim();
+    if (filters.comp === '__NO_COMP__') {
+      result = result.filter(s => !s.comp);
+    } else if (filters.comp) {
+      result = result.filter(s => s.comp === filters.comp);
+    }
 
-      // NOTE: #编号精确匹配（如 #2026 只匹配 id=2026，不会误中 2026 年比赛）
-      if (q.startsWith('#')) {
-        const numStr = q.slice(1);
-        result = result.filter(s => String(s.id) === numStr);
-      } else {
-        // NOTE: "取消"/"cancel" 映射为 "cancelled" 以匹配被取消纪录
-        const normalizedQ = (q === '取消' || q === 'cancel') ? 'cancelled' : q;
-        const qUpper = normalizedQ.toUpperCase();
-
-        result = result.filter(s => {
-          // NOTE: 搜索范围：选手名、比赛名、成绩、打乱、OLL/PLL、备注
-          const haystack = [
-            s.person, s.comp, s.optimalScramble,
-            s.oll, s.pll, s.country, s.note,
-            s.value,
-            s.rawTime != null && typeof s.rawTime === 'number' ? s.rawTime.toFixed(3) : '',
-          ].filter(Boolean).join(' ').toLowerCase();
-
-          // NOTE: 纪录字段精确匹配（大小写不敏感），搜 WR 不误中 FWR
-          const recordMatch =
-            (s.regionalAverageRecord && String(s.regionalAverageRecord).toUpperCase() === qUpper) ||
-            (s.regionalSingleRecord && String(s.regionalSingleRecord).toUpperCase() === qUpper) ||
-            (s.regionalAoxrRecord && String(s.regionalAoxrRecord).toUpperCase() === qUpper);
-
-          return haystack.includes(normalizedQ) || recordMatch;
-        });
-      }
+    if (filters.record) {
+      const q = filters.record.toUpperCase();
+      result = result.filter(s =>
+        (s.regionalAverageRecord && String(s.regionalAverageRecord).toUpperCase() === q) ||
+        (s.regionalSingleRecord && String(s.regionalSingleRecord).toUpperCase() === q) ||
+        (s.regionalAoxrRecord && String(s.regionalAoxrRecord).toUpperCase() === q),
+      );
     }
 
     // NOTE: 排序——'result' 实际排 rawTime
@@ -202,22 +195,71 @@ export const useReconStore = create<ReconStoreState & ReconStoreActions>()((set,
     return Array.from(events).sort();
   },
 
+  // NOTE: 按频率排序的方法列表;空 method 用 sentinel '__NO_METHOD__'
   getAvailableMethods: () => {
-    const methods = new Set<string>();
+    const counts: Record<string, number> = {};
+    let noneCount = 0;
     for (const s of get().allSolves) {
-      if (s.method) methods.add(s.method);
+      if (!s.method) { noneCount++; continue; }
+      counts[s.method] = (counts[s.method] || 0) + 1;
     }
-    return Array.from(methods).sort();
+    const entries = Object.entries(counts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+    if (noneCount > 0) entries.push({ name: '__NO_METHOD__', count: noneCount });
+    return entries;
   },
 
-  // NOTE: 按频率排序的选手列表（出现次数多的在前）
+  // NOTE: 按频率排序的选手列表（出现次数多的在前）；country / wcaId 取该选手第一条非空值
+  // NOTE: 空选手用 sentinel '__NO_PERSON__' 列出（让用户能筛"未填选手名"的复盘）
   getAvailableSolvers: () => {
     const counts: Record<string, number> = {};
+    const country: Record<string, string> = {};
+    const wcaId: Record<string, string> = {};
+    let noneCount = 0;
     for (const s of get().allSolves) {
-      if (s.person) counts[s.person] = (counts[s.person] || 0) + 1;
+      if (!s.person) { noneCount++; continue; }
+      counts[s.person] = (counts[s.person] || 0) + 1;
+      if (!country[s.person] && s.personCountry) country[s.person] = s.personCountry;
+      if (!wcaId[s.person] && s.personId) wcaId[s.person] = s.personId;
+    }
+    const entries = Object.entries(counts)
+      .map(([name, count]) => ({ name, count, country: country[name] || '', wcaId: wcaId[name] || '' }))
+      .sort((a, b) => b.count - a.count);
+    if (noneCount > 0) entries.push({ name: '__NO_PERSON__', count: noneCount, country: '', wcaId: '' });
+    return entries;
+  },
+
+  // NOTE: 按频率排序的比赛列表; country 取该比赛第一条非空 country
+  // NOTE: 空比赛走 sentinel '__NO_COMP__'
+  getAvailableComps: () => {
+    const counts: Record<string, number> = {};
+    const country: Record<string, string> = {};
+    let noneCount = 0;
+    for (const s of get().allSolves) {
+      if (!s.comp) { noneCount++; continue; }
+      counts[s.comp] = (counts[s.comp] || 0) + 1;
+      if (!country[s.comp] && s.country) country[s.comp] = s.country;
+    }
+    const entries = Object.entries(counts)
+      .map(([name, count]) => ({ name, count, country: country[name] || '' }))
+      .sort((a, b) => b.count - a.count);
+    if (noneCount > 0) entries.push({ name: '__NO_COMP__', count: noneCount, country: '' });
+    return entries;
+  },
+
+  // NOTE: 按频率排序的纪录代码列表; 取自 single / average / aoxr 三个字段并集
+  getAvailableRecords: () => {
+    const counts: Record<string, number> = {};
+    for (const s of get().allSolves) {
+      const codes = new Set<string>();
+      if (s.regionalSingleRecord) codes.add(String(s.regionalSingleRecord).toUpperCase());
+      if (s.regionalAverageRecord) codes.add(String(s.regionalAverageRecord).toUpperCase());
+      if (s.regionalAoxrRecord) codes.add(String(s.regionalAoxrRecord).toUpperCase());
+      for (const c of codes) counts[c] = (counts[c] || 0) + 1;
     }
     return Object.entries(counts)
-      .map(([name, count]) => ({ name, count }))
+      .map(([code, count]) => ({ code, count }))
       .sort((a, b) => b.count - a.count);
   },
 }));

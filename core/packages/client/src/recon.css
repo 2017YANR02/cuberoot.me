@@ -43,28 +43,9 @@
   margin-bottom: 1rem;
 }
 
-.recon-search {
-  flex: 1;
-  min-width: 200px;
-  padding: 8px 14px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.05);
-  color: #e5e5e5;
-  font-size: 0.9rem;
-  font-family: 'Inter', Arial, sans-serif;
-  outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.recon-search:focus {
-  border-color: rgba(217, 119, 87, 0.5);
-  box-shadow: 0 0 0 3px rgba(217, 119, 87, 0.15);
-}
-
-.recon-search::placeholder {
-  color: #5a5a5a;
-}
+/* NOTE: comp 筛选可宽点(比赛名长);record 紧凑 */
+.recon-comp-filter { flex: 1 1 240px; max-width: 320px; }
+.recon-record-filter { flex: 0 0 auto; min-width: 130px; }
 
 .recon-filters {
   display: flex;
@@ -114,6 +95,29 @@
 .recon-add-btn:hover {
   background: rgba(217, 119, 87, 0.3);
   color: #fff;
+}
+
+.recon-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* 窄屏：toolbar 改 2 列网格,塞满空缺 */
+@media (max-width: 480px) {
+  .recon-toolbar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 10px;
+  }
+  /* .recon-filters 透传：3 个 select 直接作为网格项 */
+  .recon-filters { display: contents; }
+  .recon-filters select,
+  .recon-filters .recon-event-filter,
+  .recon-filters .recon-solver-filter,
+  .recon-comp-filter,
+  .recon-record-filter { width: 100%; min-width: 0; max-width: none; }
+  .recon-actions { justify-content: flex-end; gap: 8px; }
 }
 
 /* --- 表格 --- */
@@ -211,12 +215,21 @@
 .col-round { text-align: center; }
 .col-official { text-align: center; }
 
-.col-solver,
-.col-comp {
+.col-solver {
   max-width: 140px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* NOTE: 比赛名电脑端展全; 窄屏(<=480px)仍按 140px 截断保持现状 */
+.col-comp {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 480px) {
+  .col-comp { max-width: 140px; }
 }
 
 .col-recon-preview {

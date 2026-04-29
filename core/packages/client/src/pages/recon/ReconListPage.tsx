@@ -20,6 +20,8 @@ import LangToggle from '../../components/LangToggle';
 import { RecordBadge } from '../../components/RecordBadge';
 import WcaAuth from '../../components/WcaAuth';
 import { EventSelect } from '../../components/EventSelect';
+import { ListSelect, type ListSelectItem } from '../../components/ListSelect';
+import { RecordSelect } from '../../components/RecordSelect';
 import { EventIcon } from '../../components/EventIcon';
 import { isWcaEvent, eventDisplayName } from '../../utils/wca_events';
 import { Plus } from 'lucide-react';
@@ -70,6 +72,7 @@ export default function ReconListPage() {
     displayCount,
     loadAll, setFilter, setSort,
     getFilteredSolves, getAvailableEvents, getAvailableMethods, getAvailableSolvers,
+    getAvailableComps, getAvailableRecords,
   } = useReconStore();
 
   // NOTE: 页面加载时获取数据
@@ -115,6 +118,38 @@ export default function ReconListPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useReconStore.getState().allSolves,
   ]);
+  const comps = useMemo(() => getAvailableComps(), [
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    useReconStore.getState().allSolves,
+  ]);
+  const records = useMemo(() => getAvailableRecords(), [
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    useReconStore.getState().allSolves,
+  ]);
+
+  // ── ListSelect items: caller 端预格式化 (label / hint / searchTerms) ──
+  const solverItems = useMemo<ListSelectItem[]>(() => solvers.map(s => ({
+    value: s.name,
+    label: s.name === '__NO_PERSON__' ? '(空)' : displayCuberName(s.name, isZh),
+    hint: `(${s.count})`,
+    country: s.country,
+    // NOTE: 中文模式下也能用英文名 / WCA ID 命中
+    searchTerms: s.name === '__NO_PERSON__' ? '空' : `${s.name} ${s.wcaId}`.trim(),
+  })), [solvers, isZh]);
+
+  const compItems = useMemo<ListSelectItem[]>(() => comps.map(c => ({
+    value: c.name,
+    label: c.name === '__NO_COMP__' ? '(空)' : stripWcaPrefix(isZh ? (compNameZh(c.name) || c.name) : c.name),
+    hint: `(${c.count})`,
+    country: c.country,
+    searchTerms: c.name === '__NO_COMP__' ? '空' : c.name,
+  })), [comps, isZh]);
+
+  const methodItems = useMemo<ListSelectItem[]>(() => methods.map(m => ({
+    value: m.name,
+    label: m.name === '__NO_METHOD__' ? '(空)' : m.name,
+    hint: `(${m.count})`,
+  })), [methods]);
 
   const displayed = filtered.slice(0, displayCount);
   const hasMore = filtered.length > displayCount;
@@ -347,35 +382,37 @@ export default function ReconListPage() {
 
       {/* 工具栏 */}
       <div className="recon-toolbar">
-        <input
-          className="recon-search"
-          type="text"
-          placeholder={t('recon.search')}
-          value={filters.search}
-          onChange={(e) => setFilter('search', e.target.value)}
+        <ListSelect
+          items={compItems}
+          value={filters.comp}
+          onChange={(v) => setFilter('comp', v)}
+          allLabel={t('recon.allComps')}
+          className="recon-comp-filter"
+          searchable
+        />
+        <RecordSelect
+          records={records}
+          value={filters.record}
+          onChange={(v) => setFilter('record', v)}
+          placeholder={t('recon.allRecords')}
+          className="recon-record-filter"
         />
         <div className="recon-filters">
-          {/* NOTE: All Solvers 下拉——按频率排序 */}
-          <select
+          <ListSelect
+            items={solverItems}
             value={filters.solver}
-            onChange={(e) => setFilter('solver', e.target.value)}
-          >
-            <option value="">{t('recon.allSolvers')}</option>
-            {solvers.map(({ name, count }) => (
-              <option key={name} value={name}>
-                {displayCuberName(name, isZh)} ({count})
-              </option>
-            ))}
-          </select>
-          <select
+            onChange={(v) => setFilter('solver', v)}
+            allLabel={t('recon.allSolvers')}
+            className="recon-solver-filter"
+            searchable
+          />
+          <ListSelect
+            items={methodItems}
             value={filters.method}
-            onChange={(e) => setFilter('method', e.target.value)}
-          >
-            <option value="">{t('recon.allMethods')}</option>
-            {methods.map(m => (
-              <option key={m} value={m}>{m}</option>
-            ))}
-          </select>
+            onChange={(v) => setFilter('method', v)}
+            allLabel={t('recon.allMethods')}
+            className="recon-method-filter"
+          />
           <EventSelect
             events={events}
             value={filters.event}
@@ -384,13 +421,15 @@ export default function ReconListPage() {
             className="recon-event-filter"
           />
         </div>
-        <span className="recon-stats-count">
-          {t('recon.count', { count: filtered.length })}
-        </span>
-        <Link to="/recon/submit" className="recon-add-btn" title={t('recon.add')} aria-label={t('recon.add')}>
-          <Plus size={18} />
-        </Link>
-        <WcaAuth />
+        <div className="recon-actions">
+          <span className="recon-stats-count">
+            {t('recon.count', { count: filtered.length })}
+          </span>
+          <Link to="/recon/submit" className="recon-add-btn" title={t('recon.add')} aria-label={t('recon.add')}>
+            <Plus size={18} />
+          </Link>
+          <WcaAuth />
+        </div>
       </div>
 
       {/* WCA / non-WCA toggle 按钮组 */}

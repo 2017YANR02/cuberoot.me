@@ -626,10 +626,10 @@ function SameRoundNav({ solve }: { solve: ReconSolve }) {
 
   useEffect(() => {
     if (loaded) return;
-    // NOTE: 加载同比赛+项目+轮次的其他 solve
+    // NOTE: 加载同选手+比赛+项目+轮次的其他 solve（同轮次≠同人,必须按 person 限定）
     listRecons().then(all => {
       const sameRound = all.filter(
-        s => s.comp === solve.comp && s.event === solve.event && s.round === solve.round && s.id !== solve.id
+        s => s.person === solve.person && s.comp === solve.comp && s.event === solve.event && s.round === solve.round && s.id !== solve.id
       ).sort((a, b) => (a.solveNum ?? 0) - (b.solveNum ?? 0));
       setSiblings(sameRound);
       setLoaded(true);
