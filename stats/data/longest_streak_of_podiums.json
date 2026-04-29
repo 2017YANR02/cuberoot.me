@@ -38,7 +38,7 @@
   ],
   "rows": [
     [
-      114,
+      116,
       "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
       "3x3x3 Cube",
       "[Cubing in Cill Chainnigh 2019](https://www.worldcubeassociation.org/competitions/CubinginCillChainnigh2019)",
@@ -80,18 +80,18 @@
       "[WCA European Championship 2024](https://www.worldcubeassociation.org/competitions/Euro2024)"
     ],
     [
+      87,
+      "[Caio Hideaki Sato](https://www.worldcubeassociation.org/persons/2016SATO01)",
+      "3x3x3 Cube",
+      "[Schoolmark Open 2019](https://www.worldcubeassociation.org/competitions/SchoolmarkOpen2019)",
+      null
+    ],
+    [
       86,
       "[Michał Krasowski](https://www.worldcubeassociation.org/persons/2013KRAS02)",
       "Square-1",
       "[Polish Championship 2016](https://www.worldcubeassociation.org/competitions/PolishChampionship2016)",
       "[WCA European Championship 2024](https://www.worldcubeassociation.org/competitions/Euro2024)"
-    ],
-    [
-      86,
-      "[Caio Hideaki Sato](https://www.worldcubeassociation.org/persons/2016SATO01)",
-      "3x3x3 Cube",
-      "[Schoolmark Open 2019](https://www.worldcubeassociation.org/competitions/SchoolmarkOpen2019)",
-      null
     ],
     [
       85,
@@ -101,7 +101,7 @@
       "[WCA World Championship 2023](https://www.worldcubeassociation.org/competitions/WC2023)"
     ],
     [
-      81,
+      83,
       "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
       "5x5x5 Cube",
       "[Cubing in Cill Chainnigh 2019](https://www.worldcubeassociation.org/competitions/CubinginCillChainnigh2019)",
@@ -150,6 +150,13 @@
       null
     ],
     [
+      66,
+      "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
+      "4x4x4 Cube",
+      "[Kubsala Winter 2023](https://www.worldcubeassociation.org/competitions/KubsalaWinter2023)",
+      null
+    ],
+    [
       65,
       "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
       "3x3x3 One-Handed",
@@ -169,13 +176,6 @@
       "4x4x4 Cube",
       "[Melbourne Summer 2012](https://www.worldcubeassociation.org/competitions/MelbourneSummer2012)",
       "[WCA Asian Championship 2018](https://www.worldcubeassociation.org/competitions/AsianChampionship2018)"
-    ],
-    [
-      64,
-      "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
-      "4x4x4 Cube",
-      "[Kubsala Winter 2023](https://www.worldcubeassociation.org/competitions/KubsalaWinter2023)",
-      null
     ],
     [
       63,
@@ -248,6 +248,13 @@
       null
     ],
     [
+      56,
+      "[Caio Hideaki Sato](https://www.worldcubeassociation.org/persons/2016SATO01)",
+      "3x3x3 One-Handed",
+      "[III Barueri Open 2019](https://www.worldcubeassociation.org/competitions/IIIBarueriOpen2019)",
+      null
+    ],
+    [
       55,
       "[Erik Akkersdijk](https://www.worldcubeassociation.org/persons/2005AKKE01)",
       "4x4x4 Cube",
@@ -273,13 +280,6 @@
       "[Michael Andres Castillo Lemus](https://www.worldcubeassociation.org/persons/2011CAST02)",
       "4x4x4 Cube",
       "[Belalcázar 2023](https://www.worldcubeassociation.org/competitions/Belalcazar2023)",
-      null
-    ],
-    [
-      55,
-      "[Caio Hideaki Sato](https://www.worldcubeassociation.org/persons/2016SATO01)",
-      "3x3x3 One-Handed",
-      "[III Barueri Open 2019](https://www.worldcubeassociation.org/competitions/IIIBarueriOpen2019)",
       null
     ],
     [
@@ -451,18 +451,18 @@
       null
     ],
     [
+      47,
+      "[Hassan Khanani](https://www.worldcubeassociation.org/persons/2018KHAN26)",
+      "Square-1",
+      "[Bethesda Summer Showdown 2024](https://www.worldcubeassociation.org/competitions/BethesdaSummerShowdown2024)",
+      null
+    ],
+    [
       46,
       "[David Remolina Amórtegui](https://www.worldcubeassociation.org/persons/2011AMOR01)",
       "4x4x4 Cube",
       "[IV Bogota 2012](https://www.worldcubeassociation.org/competitions/IVBogota2012)",
       "[Martelli Open Otoño 2019](https://www.worldcubeassociation.org/competitions/MartelliOpenOtono2019)"
-    ],
-    [
-      46,
-      "[Hassan Khanani](https://www.worldcubeassociation.org/persons/2018KHAN26)",
-      "Square-1",
-      "[Bethesda Summer Showdown 2024](https://www.worldcubeassociation.org/competitions/BethesdaSummerShowdown2024)",
-      null
     ],
     [
       46,
@@ -672,7 +672,7 @@
       "[Louis Cormier](https://www.worldcubeassociation.org/persons/2010CORM02)",
       "Megaminx",
       "[MIT Spring 2012](https://www.worldcubeassociation.org/competitions/MITSpring2012)",
-      null
+      "[Gros Jouets à Montréal 2026](https://www.worldcubeassociation.org/competitions/GrosJouetsaMontreal2026)"
     ],
     [
       39,
