@@ -3,14 +3,14 @@
  * NOTE: 表单字段、实时统计、重复检测、虚拟键盘
  */
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { ReconSolve } from '@cuberoot/shared';
 import { WcaPersonPicker, type WcaPerson } from '@cuberoot/shared';
 import { getRecon, addRecon, updateRecon, deleteRecon, checkDuplicate, searchSolvers } from '../../utils/recon_api';
 import { Flag } from '../../utils/flag';
 import { computeAllStats } from '../../utils/recon_stats';
-import { parseTimeInput, formatTime } from '../../utils/recon_utils';
+import { parseTimeInput, formatTimeInput } from '../../utils/recon_utils';
 import { RecordSelect } from '../../components/RecordSelect';
 import { EventSelect } from '../../components/EventSelect';
 import { CompPicker } from '../../components/CompPicker';
@@ -18,6 +18,7 @@ import type { Comp } from '../../utils/comp_search';
 import { compNameZh, loadFlagData, flagDataVersion } from '../../utils/country_flags';
 import { localizeCompName } from '../../utils/comp_localize';
 import { displayCuberName } from '../../utils/name_utils';
+import { useAuthStore } from '../../stores/auth_store';
 import LangToggle from '../../components/LangToggle';
 import '../../recon.css';
 import './recon_submit.css';
@@ -51,12 +52,19 @@ function toDateInput(val: string | null | undefined): string {
 export default function ReconSubmitPage() {
   const { editId } = useParams<{ editId: string }>();
   const isEditing = !!editId;
+  const [searchParams] = useSearchParams();
+  // NOTE: ?from=<id>&solveNum=<n>&suggestTime=<秒> — 从同轮次缺失 chip 跳转过来时预填共享字段 + 推荐成绩
+  const fromId = !isEditing ? searchParams.get('from') : null;
+  const fromSolveNum = !isEditing ? searchParams.get('solveNum') : null;
+  const suggestTime = !isEditing ? searchParams.get('suggestTime') : null;
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   const [saving, setSaving] = useState(false);
-  const [loadingEdit, setLoadingEdit] = useState(isEditing);
+  const [loadingEdit, setLoadingEdit] = useState(isEditing || !!fromId);
   const [flagVer, setFlagVer] = useState(flagDataVersion());
+  // NOTE: 当前登录用户——用作 reconer 默认值（OAuth name 是 "English (中文)" 全格式，符合 displayCuberName 规范）
+  const authUser = useAuthStore(s => s.user);
 
   useEffect(() => {
     loadFlagData().then(v => { if (v !== flagVer) setFlagVer(v); });
@@ -86,8 +94,8 @@ export default function ReconSubmitPage() {
     note: '',
     videoUrl: '',
     cube: '',
-    reconer: '',
-    reconerId: '',
+    reconer: authUser?.name ?? '',
+    reconerId: authUser?.wcaId ?? '',
     regionalSingleRecord: '',
     regionalAverageRecord: '',
     aoType: '',
@@ -110,8 +118,8 @@ export default function ReconSubmitPage() {
         reconDate: toDateInput(solve.reconDate),
       };
       setForm(normalized);
-      if (solve.rawTime != null) setTimeInput(formatTime(solve.rawTime));
-      if (solve.average != null) setAvgInput(formatTime(solve.average));
+      if (solve.rawTime != null) setTimeInput(formatTimeInput(solve.rawTime));
+      if (solve.average != null) setAvgInput(formatTimeInput(solve.average));
       // NOTE: 同步 textarea DOM——defaultValue 只在 mount 时生效，编辑模式 API 返回后需手动同步
       if (solutionRef.current && solve.solution) {
         solutionRef.current.value = solve.solution;
@@ -120,6 +128,45 @@ export default function ReconSubmitPage() {
       setLoadingEdit(false);
     }).catch(() => setLoadingEdit(false));
   }, [editId, isEditing]);
+
+  // NOTE: ?from=<id> 预填模式 — 从同轮次缺失 chip 跳来，复制共享字段，留空把数相关
+  useEffect(() => {
+    if (isEditing || !fromId) return;
+    setLoadingEdit(true);
+    getRecon(Number(fromId)).then(src => {
+      const targetSolveNum = fromSolveNum ? Number(fromSolveNum) : undefined;
+      // NOTE: 整轮共享字段；不复制 rawTime/solution/wcaScramble/optimalScramble/cube/note/videoUrl/regionalSingleRecord/caption + stats
+      // NOTE: 已登录就直接用 auth.name/wcaId（"English (中文)" 全格式），未登录才落回 src 历史值
+      setForm(prev => ({
+        ...prev,
+        official: src.official,
+        event: src.event,
+        method: src.method,
+        person: src.person,
+        personId: src.personId,
+        personCountry: src.personCountry,
+        comp: src.comp,
+        compWcaId: src.compWcaId,
+        country: src.country,
+        round: src.round,
+        groupId: src.groupId,
+        date: toDateInput(src.date),
+        average: src.average,
+        regionalAverageRecord: src.regionalAverageRecord,
+        reconer: authUser?.name ?? src.reconer,
+        reconerId: authUser?.wcaId ?? src.reconerId,
+        reconDate: toDateInput(src.reconDate),
+        solveNum: targetSolveNum ?? prev.solveNum,
+      }));
+      if (src.average != null) setAvgInput(formatTimeInput(src.average));
+      // NOTE: ?suggestTime= — 来自 SameRoundNav 的 WCA / 粘贴解析
+      if (suggestTime) {
+        const n = parseFloat(suggestTime);
+        if (!isNaN(n) && n > 0) setTimeInput(formatTimeInput(n));
+      }
+      setLoadingEdit(false);
+    }).catch(() => setLoadingEdit(false));
+  }, [fromId, fromSolveNum, isEditing, authUser, suggestTime]);
 
   // NOTE: 更新表单字段
   const setField = useCallback(<K extends keyof ReconSolve>(key: K, value: ReconSolve[K]) => {
@@ -211,6 +258,28 @@ export default function ReconSubmitPage() {
     setField('person', '');
     setField('personId', '');
     setField('personCountry', '');
+  }, [setField]);
+
+  // NOTE: 复盘者国家——前端展示用，DB 不存。来源：登录时取 authUser.country / 选完 picker 取 iso2
+  const [reconerCountry, setReconerCountry] = useState<string>(authUser?.country ?? '');
+
+  // NOTE: reconerId 与 authUser 匹配时回填 country（编辑模式 / 从 ?from= 跳来时）
+  useEffect(() => {
+    if (form.reconerId && authUser && form.reconerId === authUser.wcaId) {
+      setReconerCountry(authUser.country);
+    }
+  }, [form.reconerId, authUser]);
+
+  const handleReconerPick = useCallback((person: WcaPerson) => {
+    setField('reconer', person.name);
+    setField('reconerId', person.wcaId);
+    setReconerCountry(person.iso2 ?? '');
+  }, [setField]);
+
+  const clearReconer = useCallback(() => {
+    setField('reconer', '');
+    setField('reconerId', '');
+    setReconerCountry('');
   }, [setField]);
 
   // NOTE: 适配 searchSolvers (后端 WCA 代理) 到 WcaPersonPicker 的 searchFn 接口
@@ -529,22 +598,35 @@ export default function ReconSubmitPage() {
           </label>
           <label className="submit-field submit-field-wide">
             <span className="submit-label">{t('recon.note')}</span>
-            <input type="text" value={form.note || ''} onChange={e => setField('note', e.target.value)} />
+            <textarea
+              value={form.note || ''}
+              onChange={e => setField('note', e.target.value)}
+              rows={2}
+              style={{ resize: 'vertical' }}
+            />
           </label>
         </div>
 
-        {/* 复盘者信息 */}
+        {/* 复盘者信息 — 名 + WCA ID 合并为一个 picker，pill 显示 flag + 中/英名 + ✕ */}
         <div className="submit-row">
-          <label className="submit-field">
+          <div className={`submit-field ${(form.reconer || form.reconerId) ? 'submit-field-shrink' : ''}`}>
             <span className="submit-label">{t('recon.reconstructor')}</span>
-            <input type="text" value={form.reconer || ''} onChange={e => setField('reconer', e.target.value)}
-              placeholder={t('recon.reconName')} />
-          </label>
-          <label className="submit-field">
-            <span className="submit-label">{t('recon.reconWcaId')}</span>
-            <input type="text" value={form.reconerId || ''} onChange={e => setField('reconerId', e.target.value)}
-              placeholder="2019XXXX01" />
-          </label>
+            {(form.reconer || form.reconerId) ? (
+              <div className="submit-solver-pill">
+                <Flag iso2={reconerCountry || ''} />
+                <span className="submit-solver-name">{displayCuberName(form.reconer || '', isZh)}</span>
+                <button type="button" className="submit-solver-clear" onClick={clearReconer} aria-label="clear">✕</button>
+              </div>
+            ) : (
+              <WcaPersonPicker
+                mode="inline"
+                onSelect={handleReconerPick}
+                searchFn={solverSearchFn}
+                placeholder=""
+                autoConfirmExact
+              />
+            )}
+          </div>
           <label className="submit-field">
             <span className="submit-label">{t('recon.reconDate')}</span>
             <input type="text" value={form.reconDate || ''} onChange={e => setField('reconDate', e.target.value)}

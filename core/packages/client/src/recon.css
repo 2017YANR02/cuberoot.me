@@ -181,6 +181,41 @@
 .recon-table thead th.sort-asc::after { content: " ▲"; font-size: 0.7em; }
 .recon-table thead th.sort-desc::after { content: " ▼"; font-size: 0.7em; }
 
+/* 表头列标签 + 过滤器图标 */
+.recon-table thead th .col-label {
+  vertical-align: middle;
+}
+
+/* 列过滤器内的数值区间输入 */
+.recon-range-filter {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.82rem;
+}
+
+.recon-range-filter input {
+  flex: 1;
+  width: 0;
+  min-width: 60px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  padding: 4px 6px;
+  color: #d4d4d4;
+  font-family: 'Roboto Mono', monospace;
+}
+
+.recon-range-filter input:focus {
+  outline: none;
+  border-color: rgba(232, 162, 122, 0.5);
+}
+
+.recon-range-sep {
+  color: #737373;
+  font-size: 0.75rem;
+}
+
 /* --- 表格行 --- */
 .recon-table tbody tr {
   cursor: pointer;

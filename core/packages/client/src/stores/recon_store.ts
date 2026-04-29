@@ -26,6 +26,20 @@ export interface ReconFilters {
   solver: string;      // '' = 全部, '__NO_PERSON__' = 无选手名
   comp: string;        // '' = 全部, '__NO_COMP__' = 无比赛
   record: string;      // '' = 全部 (e.g. 'WR' / 'CR' / 'NR' / ...)
+  rawTimeMin: number | null;  // null = 不限；秒
+  rawTimeMax: number | null;  // null = 不限；秒
+  dateMin: string;     // '' = 不限；YYYY-MM-DD
+  dateMax: string;     // '' = 不限；YYYY-MM-DD
+  round: string;       // '' = 全部
+  averageMin: number | null;
+  averageMax: number | null;
+  aoType: string;      // '' = 全部
+  stmMin: number | null;
+  stmMax: number | null;
+  tpsMin: number | null;
+  tpsMax: number | null;
+  idMin: number | null;
+  idMax: number | null;
 }
 
 // ── Store ──
@@ -56,6 +70,10 @@ interface ReconStoreActions {
   getAvailableComps: () => { name: string; count: number; country: string }[];
   /** 按频率排序的纪录代码列表 (WR / CR / NR 等) */
   getAvailableRecords: () => { code: string; count: number }[];
+  /** 可用 round 列表（频率排序） */
+  getAvailableRounds: () => { name: string; count: number }[];
+  /** 可用 aoType 列表（频率排序） */
+  getAvailableAoTypes: () => { name: string; count: number }[];
 }
 
 const DEFAULT_FILTERS: ReconFilters = {
@@ -65,6 +83,20 @@ const DEFAULT_FILTERS: ReconFilters = {
   solver: '',
   comp: '',
   record: '',
+  rawTimeMin: null,
+  rawTimeMax: null,
+  dateMin: '',
+  dateMax: '',
+  round: '',
+  averageMin: null,
+  averageMax: null,
+  aoType: '',
+  stmMin: null,
+  stmMax: null,
+  tpsMin: null,
+  tpsMax: null,
+  idMin: null,
+  idMax: null,
 };
 
 const PAGE_SIZE = 50;
@@ -166,6 +198,64 @@ export const useReconStore = create<ReconStoreState & ReconStoreActions>()((set,
       );
     }
 
+    // NOTE: rawTime 范围（单次/成绩同源），单位秒。DNF (rawTime < 0) 视为不在任何范围
+    if (filters.rawTimeMin != null) {
+      const min = filters.rawTimeMin;
+      result = result.filter(s => s.rawTime != null && s.rawTime >= 0 && s.rawTime >= min);
+    }
+    if (filters.rawTimeMax != null) {
+      const max = filters.rawTimeMax;
+      result = result.filter(s => s.rawTime != null && s.rawTime >= 0 && s.rawTime <= max);
+    }
+
+    // NOTE: 日期 / 轮次 / 平均 / AoXR / STM / TPS / id
+    if (filters.dateMin) {
+      const lo = filters.dateMin;
+      result = result.filter(s => (s.date ?? '') >= lo);
+    }
+    if (filters.dateMax) {
+      const hi = filters.dateMax;
+      result = result.filter(s => (s.date ?? '') <= hi);
+    }
+    if (filters.round) {
+      result = result.filter(s => (s.round ?? '') === filters.round);
+    }
+    if (filters.averageMin != null) {
+      const min = filters.averageMin;
+      result = result.filter(s => s.average != null && s.average >= 0 && s.average >= min);
+    }
+    if (filters.averageMax != null) {
+      const max = filters.averageMax;
+      result = result.filter(s => s.average != null && s.average >= 0 && s.average <= max);
+    }
+    if (filters.aoType) {
+      result = result.filter(s => (s.aoType ?? '') === filters.aoType);
+    }
+    if (filters.stmMin != null) {
+      const min = filters.stmMin;
+      result = result.filter(s => typeof s.stm === 'number' && s.stm >= min);
+    }
+    if (filters.stmMax != null) {
+      const max = filters.stmMax;
+      result = result.filter(s => typeof s.stm === 'number' && s.stm <= max);
+    }
+    if (filters.tpsMin != null) {
+      const min = filters.tpsMin;
+      result = result.filter(s => typeof s.tps === 'number' && s.tps >= min);
+    }
+    if (filters.tpsMax != null) {
+      const max = filters.tpsMax;
+      result = result.filter(s => typeof s.tps === 'number' && s.tps <= max);
+    }
+    if (filters.idMin != null) {
+      const min = filters.idMin;
+      result = result.filter(s => s.id >= min);
+    }
+    if (filters.idMax != null) {
+      const max = filters.idMax;
+      result = result.filter(s => s.id <= max);
+    }
+
     // NOTE: 排序——'result' 实际排 rawTime
     const actualKey = sortKey === 'result' ? 'rawTime' : sortKey;
     result.sort((a, b) => {
@@ -193,6 +283,30 @@ export const useReconStore = create<ReconStoreState & ReconStoreActions>()((set,
       if (s.event) events.add(s.event);
     }
     return Array.from(events).sort();
+  },
+
+  getAvailableRounds: () => {
+    const counts: Record<string, number> = {};
+    for (const s of get().allSolves) {
+      const r = s.round ?? '';
+      if (!r) continue;
+      counts[r] = (counts[r] || 0) + 1;
+    }
+    return Object.entries(counts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+  },
+
+  getAvailableAoTypes: () => {
+    const counts: Record<string, number> = {};
+    for (const s of get().allSolves) {
+      const a = s.aoType ?? '';
+      if (!a) continue;
+      counts[a] = (counts[a] || 0) + 1;
+    }
+    return Object.entries(counts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
   },
 
   // NOTE: 按频率排序的方法列表;空 method 用 sentinel '__NO_METHOD__'

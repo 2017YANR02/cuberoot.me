@@ -15,7 +15,7 @@ import { getRecon, listComments, addComment, updateComment, deleteComment, pinCo
 import {
   formatTime, flagClass,
   isBldEvent, getPuzzleId, wcaCompUrl, wcaPersonUrl,
-  buildExternalLinks, FACE_COLORS,
+  buildExternalLinks, FACE_COLORS, attemptsPerRound,
 } from '../../utils/recon_utils';
 import { displayCuberName } from '../../utils/name_utils';
 import { eventDisplayName } from '../../utils/wca_events';
@@ -25,6 +25,7 @@ import { Flag } from '../../utils/flag';
 import { stripWcaPrefix } from '../../utils/comp_localize';
 import { toIsoDate } from '../../utils/date_range';
 import { cleanForPlayer, findTokenPositions, snapToTokenBoundary, extractAlgFromText, syncPlayerToMoveCount, countMovesExpanded } from '../../utils/recon_alg_utils';
+import { fetchAttempts, fetchCubingAttempts } from '../../utils/wca_results_api';
 import { useAuthStore, isAdmin } from '../../stores/auth_store';
 import LangToggle from '../../components/LangToggle';
 import { RecordBadge } from '../../components/RecordBadge';
@@ -122,6 +123,7 @@ export default function ReconDetailPage() {
           <div className="detail-meta-item">
             <span className="detail-meta-label"><PenLine size={16} /></span>
             <span className="detail-meta-value">
+              {solve.reconerId && <Flag iso2={personFlagIso2(solve.reconerId)} className="yt-comment-flag" />}
               {solve.reconerId ? (
                 <a href={wcaPersonUrl(solve.reconerId)} target="_blank" rel="noopener noreferrer">
                   {displayCuberName(solve.reconer, isZh)}
@@ -140,6 +142,7 @@ export default function ReconDetailPage() {
           <div className="detail-meta-item">
             <span className="detail-meta-label"><UserPlus size={16} /></span>
             <span className="detail-meta-value">
+              {solve.addedById && <Flag iso2={personFlagIso2(solve.addedById)} className="yt-comment-flag" />}
               {solve.addedById ? (
                 <a href={wcaPersonUrl(solve.addedById)} target="_blank" rel="noopener noreferrer">
                   {displayCuberName(solve.addedBy, isZh)}
@@ -618,11 +621,31 @@ function VideoEmbed({ url }: { url: string }) {
   );
 }
 
-/** 同轮次成绩导航 */
+/** 解析粘贴的成绩字符串为 (秒|null)[]：支持 "3.79 4.33 3.61 3.74 2.80" / 逗号 / 换行 / DNF / DNS */
+function parsePastedAttempts(raw: string): (number | null)[] {
+  const tokens = raw.split(/[\s,，;；]+/).filter(s => s.length > 0);
+  return tokens.map(tok => {
+    const u = tok.toUpperCase();
+    if (u === 'DNF') return -1;
+    if (u === 'DNS') return -2;
+    const m = tok.match(/^(\d+):(\d{1,2}(?:\.\d+)?)$/);
+    if (m) return parseInt(m[1]) * 60 + parseFloat(m[2]);
+    const n = parseFloat(tok);
+    return isNaN(n) ? null : n;
+  });
+}
+
+/** 同轮次成绩导航 — 缺失把数也渲染为占位 chip，点击跳到新建表单预填共享字段 */
 function SameRoundNav({ solve }: { solve: ReconSolve }) {
   const { t } = useTranslation();
   const [siblings, setSiblings] = useState<ReconSolve[]>([]);
   const [loaded, setLoaded] = useState(false);
+  // NOTE: WCA API 拉到的整轮成绩（秒；DNF=-1 / DNS=-2 / 不存在=null）
+  const [wcaAttempts, setWcaAttempts] = useState<(number | null)[] | null>(null);
+  // NOTE: 用户手动粘贴的成绩（优先级高于 WCA）
+  const [pastedAttempts, setPastedAttempts] = useState<(number | null)[] | null>(null);
+  const [showPaste, setShowPaste] = useState(false);
+  const [pasteRaw, setPasteRaw] = useState('');
 
   useEffect(() => {
     if (loaded) return;
@@ -636,25 +659,124 @@ function SameRoundNav({ solve }: { solve: ReconSolve }) {
     }).catch(() => setLoaded(true));
   }, [solve, loaded]);
 
-  if (siblings.length === 0) return null;
+  // NOTE: 优先 WCA API（已导入的官方比赛），失败 fallback 到 cubing.com 代理（实时直播比赛）
+  useEffect(() => {
+    if (!solve.compWcaId || !solve.personId || !solve.event || !solve.round) return;
+    let cancelled = false;
+    (async () => {
+      const wca = await fetchAttempts(solve.compWcaId!, solve.event!, solve.round!, solve.personId!);
+      if (cancelled) return;
+      if (wca) { setWcaAttempts(wca); return; }
+      const cubing = await fetchCubingAttempts(solve.compWcaId!, solve.event!, solve.round!, solve.personId!);
+      if (cancelled) return;
+      if (cubing) setWcaAttempts(cubing);
+    })().catch(() => { /* 静默——任一源挂掉都不影响主流程 */ });
+    return () => { cancelled = true; };
+  }, [solve.compWcaId, solve.personId, solve.event, solve.round]);
 
-  // NOTE: 把当前 solve 合入 siblings 后按 solveNum 升序排，渲染时标记当前
-  const ordered = [...siblings, solve].sort((a, b) => (a.solveNum ?? 0) - (b.solveNum ?? 0));
+  // NOTE: 把当前+siblings 按 solveNum 索引；渲染 1..N（N 由 event 决定），缺失 slot 为占位 chip
+  const total = attemptsPerRound(solve.event);
+  const bySolveNum = new Map<number, ReconSolve>();
+  for (const s of [...siblings, solve]) {
+    if (s.solveNum != null) bySolveNum.set(s.solveNum, s);
+  }
+  const slots = Array.from({ length: total }, (_, i) => i + 1);
+
+  // NOTE: 解析后的整轮成绩 — 优先粘贴，再 WCA。返回 null 表示 slot 无成绩可显示
+  const attemptFor = (n: number): number | null => {
+    const idx = n - 1;
+    const fromPaste = pastedAttempts?.[idx];
+    if (fromPaste != null) return fromPaste;
+    return wcaAttempts?.[idx] ?? null;
+  };
+
+  /** -1 → DNF / -2 → DNS / 正数 → formatTime */
+  const renderAttempt = (v: number | null): string => {
+    if (v == null) return '';
+    if (v === -1) return 'DNF';
+    if (v === -2) return 'DNS';
+    return formatTime(v);
+  };
+
+  // NOTE: 实时解析:每次输入变化都尝试解析,只要有 1 个以上有效成绩就应用,不需要点按钮
+  const handlePasteChange = (raw: string) => {
+    setPasteRaw(raw);
+    const parsed = parsePastedAttempts(raw);
+    if (parsed.some(v => v != null)) {
+      setPastedAttempts(parsed);
+    } else {
+      setPastedAttempts(null);
+    }
+  };
+
+  // NOTE: 缺失 chip 跳转链接 — 带 suggestTime 让 SubmitPage 预填
+  const buildHref = (n: number): string => {
+    const t = attemptFor(n);
+    const base = `/recon/submit?from=${solve.id}&solveNum=${n}`;
+    if (t == null || t < 0) return base;  // 不预填 DNF/DNS
+    return `${base}&suggestTime=${t}`;
+  };
+
+  const hasAnyAttempt = wcaAttempts != null || pastedAttempts != null;
+  const hasMissingSlot = slots.some(n => !bySolveNum.get(n));
 
   return (
     <div className="detail-section">
       <div className="detail-section-label">{t('recon.sameRound')}</div>
       <div className="detail-same-round">
-        {ordered.map(s => s.id === solve.id ? (
-          <span key={s.id} className="same-round-item same-round-current">
-            #{s.solveNum ?? '?'} {formatTime(s.rawTime)}
-          </span>
-        ) : (
-          <Link key={s.id} to={`/recon/${s.id}`} className="same-round-item">
-            #{s.solveNum ?? '?'} {formatTime(s.rawTime)}
-          </Link>
-        ))}
+        {slots.map(n => {
+          const s = bySolveNum.get(n);
+          if (s && s.id === solve.id) {
+            return (
+              <span key={n} className="same-round-item same-round-current">
+                #{n} {formatTime(s.rawTime)}
+              </span>
+            );
+          }
+          if (s) {
+            return (
+              <Link key={n} to={`/recon/${s.id}`} className="same-round-item">
+                #{n} {formatTime(s.rawTime)}
+              </Link>
+            );
+          }
+          const att = attemptFor(n);
+          return (
+            <Link
+              key={n}
+              to={buildHref(n)}
+              className="same-round-item same-round-missing"
+              title={t('recon.addAttempt', { n })}
+            >
+              #{n}{att != null && <> {renderAttempt(att)}</>}
+            </Link>
+          );
+        })}
+        {/* 手动粘贴入口：仅当还有缺失 slot 且没拉到 WCA 数据 */}
+        {hasMissingSlot && !hasAnyAttempt && (
+          <button
+            type="button"
+            className="same-round-paste-btn"
+            onClick={() => setShowPaste(v => !v)}
+          >
+            {t('recon.pasteAttempts')}
+          </button>
+        )}
       </div>
+      {showPaste && (
+        <div className="same-round-paste-wrap">
+          <div className="same-round-paste-box">
+            <textarea
+              autoFocus
+              value={pasteRaw}
+              onChange={e => handlePasteChange(e.target.value)}
+              placeholder={t('recon.pasteAttemptsPlaceholder')}
+              rows={2}
+            />
+          </div>
+          <div className="same-round-paste-hint">{t('recon.pasteAttemptsHint')}</div>
+        </div>
+      )}
     </div>
   );
 }

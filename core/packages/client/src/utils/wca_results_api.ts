@@ -1,0 +1,94 @@
+/**
+ * WCA 公开 results API（无 auth、无 CORS）
+ * GET https://www.worldcubeassociation.org/api/v0/competitions/:compId/results/:eventId
+ *
+ * 响应:
+ *   { id: <event_id>, rounds: [{ id, roundTypeId, results: [{ wca_id, attempts: [int...], ... }] }] }
+ *   attempts 元素是 centisecond 整数；-1 = DNF, -2 = DNS, 0 = 该把不存在
+ *   未导入的比赛 rounds 都有但 results: []
+ */
+
+import { toWcaEventId } from './recon_utils';
+
+interface WcaResultRow {
+  wca_id: string;
+  attempts: number[];
+  round_type_id: string;
+}
+
+interface WcaRound {
+  id: number;
+  roundTypeId: string;
+  results: WcaResultRow[];
+}
+
+interface WcaResultsResponse {
+  id: string;
+  rounds: WcaRound[];
+}
+
+const cache = new Map<string, Promise<WcaResultsResponse | null>>();
+
+export function fetchWcaResults(compId: string, wcaEventId: string): Promise<WcaResultsResponse | null> {
+  const key = `${compId}|${wcaEventId}`;
+  const hit = cache.get(key);
+  if (hit) return hit;
+  const url = `https://www.worldcubeassociation.org/api/v0/competitions/${encodeURIComponent(compId)}/results/${encodeURIComponent(wcaEventId)}`;
+  const p = fetch(url)
+    .then(r => r.ok ? r.json() : null)
+    .then((j: unknown) => (j && typeof j === 'object' && Array.isArray((j as WcaResultsResponse).rounds)) ? j as WcaResultsResponse : null)
+    .catch(() => null);
+  cache.set(key, p);
+  return p;
+}
+
+/** 取某选手某轮 5 把成绩（秒；DNF=-1 / DNS=-2 / 不存在=null）。round 直接用 recon 的字段值（'1'/'2'/'3'/'f'）。 */
+export async function fetchAttempts(
+  compId: string,
+  reconEvent: string,
+  round: string,
+  personId: string,
+): Promise<(number | null)[] | null> {
+  const wcaEventId = toWcaEventId(reconEvent);
+  const data = await fetchWcaResults(compId, wcaEventId);
+  if (!data) return null;
+  // NOTE: 找到对应轮次。round 完全匹配优先，再 fallback 到 includes（处理 combined 'c' 等变体）
+  const exactRound = data.rounds.find(r => r.roundTypeId === round);
+  const targetRound = exactRound ?? data.rounds.find(r => r.roundTypeId.includes(round));
+  if (!targetRound || targetRound.results.length === 0) return null;
+  const row = targetRound.results.find(r => r.wca_id === personId);
+  if (!row) return null;
+  return row.attempts.map(v => {
+    if (v === 0) return null;
+    if (v < 0) return v;
+    return v / 100;
+  });
+}
+
+/** WCA ID slug → cubing.com URL slug：PascalCase 变 dash-case。 `DeqingSmallSpecial2026` → `Deqing-Small-Special-2026` */
+export function wcaIdToCubingSlug(wcaId: string): string {
+  return wcaId
+    .replace(/([a-z])([A-Z])/g, '$1-$2')
+    .replace(/([A-Z])([A-Z][a-z])/g, '$1-$2')
+    .replace(/([a-zA-Z])(\d)/g, '$1-$2');
+}
+
+/** 走 cuberoot 服务端代理拉 cubing.com 实时成绩。失败返回 null（含未导入 / 比赛不存在）。 */
+export async function fetchCubingAttempts(
+  compWcaId: string,
+  reconEvent: string,
+  round: string,
+  personId: string,
+): Promise<(number | null)[] | null> {
+  const slug = wcaIdToCubingSlug(compWcaId);
+  const wcaEventId = toWcaEventId(reconEvent);
+  const url = `/api/recon/cubing-attempts?slug=${encodeURIComponent(slug)}&event=${encodeURIComponent(wcaEventId)}&round=${encodeURIComponent(round)}&personId=${encodeURIComponent(personId)}`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const j = await res.json() as { attempts: (number | null)[] | null };
+    return j.attempts;
+  } catch {
+    return null;
+  }
+}
