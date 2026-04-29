@@ -148,8 +148,8 @@
     },
     "badge": {
       "nonWca": "非 WCA",
-      "singleRecord": "单次记录",
-      "averageRecord": "平均记录"
+      "singleRecord": "单次纪录",
+      "averageRecord": "平均纪录"
     }
   },
   "wcaStats": {

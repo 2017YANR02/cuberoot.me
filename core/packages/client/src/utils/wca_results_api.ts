@@ -10,6 +10,19 @@
 
 import { toWcaEventId } from './recon_utils';
 
+/** Recon round (`1`/`2`/`3`/`f`) → WCA round_type_id 候选(包含 combined/cutoff 变体) */
+const ROUND_VARIANTS: Record<string, string[]> = {
+  '1': ['1', 'b', 'd'],
+  '2': ['2', 'e'],
+  '3': ['3', 'g'],
+  'f': ['f', 'c', 'h'],
+};
+
+function matchRoundType(reconRound: string, wcaRoundTypeId: string): boolean {
+  const variants = ROUND_VARIANTS[reconRound];
+  return variants ? variants.includes(wcaRoundTypeId) : wcaRoundTypeId === reconRound;
+}
+
 interface WcaResultRow {
   wca_id: string;
   attempts: number[];
@@ -52,9 +65,7 @@ export async function fetchAttempts(
   const wcaEventId = toWcaEventId(reconEvent);
   const data = await fetchWcaResults(compId, wcaEventId);
   if (!data) return null;
-  // NOTE: 找到对应轮次。round 完全匹配优先，再 fallback 到 includes（处理 combined 'c' 等变体）
-  const exactRound = data.rounds.find(r => r.roundTypeId === round);
-  const targetRound = exactRound ?? data.rounds.find(r => r.roundTypeId.includes(round));
+  const targetRound = data.rounds.find(r => matchRoundType(round, r.roundTypeId));
   if (!targetRound || targetRound.results.length === 0) return null;
   const row = targetRound.results.find(r => r.wca_id === personId);
   if (!row) return null;
@@ -71,6 +82,60 @@ export function wcaIdToCubingSlug(wcaId: string): string {
     .replace(/([a-z])([A-Z])/g, '$1-$2')
     .replace(/([A-Z])([A-Z][a-z])/g, '$1-$2')
     .replace(/([a-zA-Z])(\d)/g, '$1-$2');
+}
+
+interface WcaScrambleRow {
+  event_id: string;
+  round_type_id: string;
+  group_id: string;
+  is_extra: boolean;
+  scramble_num: number;
+  scramble: string;
+}
+
+const scrambleCache = new Map<string, Promise<WcaScrambleRow[] | null>>();
+
+function fetchWcaScrambles(compId: string): Promise<WcaScrambleRow[] | null> {
+  const hit = scrambleCache.get(compId);
+  if (hit) return hit;
+  const url = `https://www.worldcubeassociation.org/api/v0/competitions/${encodeURIComponent(compId)}/scrambles`;
+  const p = fetch(url)
+    .then(r => r.ok ? r.json() : null)
+    .then((j: unknown) => Array.isArray(j) ? j as WcaScrambleRow[] : null)
+    .catch(() => null);
+  scrambleCache.set(compId, p);
+  return p;
+}
+
+/** 取整轮的 5 把官方打乱（按 solveNum 索引）。group 默认 'A'，找不到时取第一个。失败返回 null。 */
+export async function fetchScrambles(
+  compId: string,
+  reconEvent: string,
+  round: string,
+  groupId?: string,
+): Promise<(string | null)[] | null> {
+  const wcaEventId = toWcaEventId(reconEvent);
+  const all = await fetchWcaScrambles(compId);
+  if (!all) return null;
+  // NOTE: 先按 event + round + 非 extra 过滤
+  const inRound = all.filter(s =>
+    s.event_id === wcaEventId &&
+    matchRoundType(round, s.round_type_id) &&
+    !s.is_extra
+  );
+  if (inRound.length === 0) return null;
+  // NOTE: groupId 优先匹配；不匹配 / 没传则用出现的第一个 group
+  const desiredGroup = groupId || inRound[0].group_id;
+  const inGroup = inRound.filter(s => s.group_id === desiredGroup);
+  if (inGroup.length === 0) return null;
+  // NOTE: 按 scramble_num 索引，最大 5
+  const result: (string | null)[] = Array(5).fill(null);
+  for (const s of inGroup) {
+    if (s.scramble_num >= 1 && s.scramble_num <= 5) {
+      result[s.scramble_num - 1] = s.scramble;
+    }
+  }
+  return result;
 }
 
 /** 走 cuberoot 服务端代理拉 cubing.com 实时成绩。失败返回 null（含未导入 / 比赛不存在）。 */
