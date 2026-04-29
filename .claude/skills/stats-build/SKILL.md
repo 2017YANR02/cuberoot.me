@@ -1,6 +1,6 @@
 ---
 name: stats-build
-description: "Use when regenerating WCA statistics JSONs under `stats/data/` — 80+ SQL-driven stats (average_of, wr_metric, world_records_by_country, longest_streak_*, etc.). Covers compute.ts CLI, memory flags, registry, adding new stats, StatJson schema. Triggers: \"stats-build\", \"compute.ts\", \"wr_metric\", \"重跑 stats\", \"new stat\", \"Statistic 基类\"."
+description: "Use when regenerating WCA statistics JSONs under `stats/` — 80+ SQL-driven stats (average_of, wr_metric, world_records_by_country, longest_streak_*, etc.). Covers compute.ts CLI, memory flags, registry, adding new stats, StatJson schema. Triggers: \"stats-build\", \"compute.ts\", \"wr_metric\", \"重跑 stats\", \"new stat\", \"Statistic 基类\"."
 ---
 
 # Stats Build
@@ -52,7 +52,7 @@ Get-Service | Where-Object Name -match mysql  # 服务状态
 
 ## CI 自动刷新
 
-`.github/workflows/stats.yml` 每周日 20:00 UTC 跑 `compute_all.ts`，commit `stats/data/*.json`。**手动改生成出的 stats 数据**（如 `wr_metric.json`）会被 CI 覆盖 —— 有需要改的是 SQL 或 transform 逻辑。
+`.github/workflows/stats.yml` 每周日 20:00 UTC 跑 `compute_all.ts`，commit `stats/*.json`。**手动改生成出的 stats 数据**（如 `wr_metric.json`）会被 CI 覆盖 —— 有需要改的是 SQL 或 transform 逻辑。
 
 ## 验证新 stat
 

@@ -1,0 +1,17 @@
+# Scramble samples — pseudo / pseudo_cross / BGWY / bin 7
+# Population in this bin: 10
+# Samples listed: 10 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-04-27T03:59:07.858Z
+# Columns: id,scramble,bottom_color
+
+156731001,U' R B2 U2 R U R' F L' U' B' L' B2 D2 R F2 D2 R2 L,B
+459623001,R2 B2 D2 B' U2 R U' L B D' R' F2 D2 B2 L' D2 R2 L D2 R2 F2,B
+496168001,L F2 L R2 B2 L2 U2 R' U R' B' D F L' U F' D' F' R',B
+660655003,B' D2 F2 R2 F R2 B R2 U2 R2 B L' F' L2 R' B' R' U' R D' L2 U,B
+829975001,B2 D' U' L2 D F2 U B L' F U' R B' R2 F L D F' U2 L B,B
+1128175001,L2 B U2 B D2 U2 L2 F2 U2 L' F' R B L2 U' L R' B2 F U,B
+2872630001,L2 F' U2 R2 D2 U2 B2 D2 F U L' B' D L' F L' D L D' R B' L2,B
+4020055040,D2 R2 U R2 D' F2 L D2 B' R' D B R' B F L' R' B2 D,B
+4252292001,B' D' R F L' D F U D L2 U' D2 B2 D' R2 D2 R2 F' U' R',B
+4333775001,B' L2 B2 L2 D2 R U2 R' D2 U2 R D L F2 U' B D2 L D' R' B',B

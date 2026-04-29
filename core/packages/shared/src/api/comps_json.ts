@@ -34,13 +34,13 @@ export interface PastCompRecord {
 }
 
 export async function fetchAllUpcomingCompsJson(): Promise<UpcomingCompRecord[]> {
-  const r = await fetch('/stats/data/all_upcoming_comps.json');
+  const r = await fetch('/stats/all_upcoming_comps.json');
   if (!r.ok) throw new Error(`all_upcoming_comps ${r.status}`);
   return r.json() as Promise<UpcomingCompRecord[]>;
 }
 
 export async function fetchAllPastCompsJson(): Promise<PastCompRecord[]> {
-  const r = await fetch('/stats/data/all_past_comps.json');
+  const r = await fetch('/stats/all_past_comps.json');
   if (!r.ok) throw new Error(`all_past_comps ${r.status}`);
   return r.json() as Promise<PastCompRecord[]>;
 }

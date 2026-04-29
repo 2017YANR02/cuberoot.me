@@ -6,8 +6,8 @@ import { EVENTS_WITH_AO5 } from '../core/events.js';
 export class WrMo5 extends RoundMetric {
   constructor() {
     super();
-    this.title = 'Mo5 (Mean of 5)';
-    this.titleZh = 'Mo5（5 次均值）';
+    this.title = 'Mo5';
+    this.titleZh = 'Mo5';
     this.note = 'Mean of 5: average of all 5 solves in a round (no trimming).';
     this.noteZh = '5 次均值：一轮 5 次还原的简单平均。';
     this.tableHeader = {

@@ -673,7 +673,7 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
         }).catch(() => { /* */ });
     }
     if (!compNameEnToZh) {
-      fetch('/stats/data/comp_names_zh.json')
+      fetch('/stats/comp_names_zh.json')
         .then(r => r.ok ? r.json() : null)
         .then((d: Record<string, string> | null) => { if (d) setCompNameEnToZh(d); })
         .catch(() => { /* */ });
@@ -928,7 +928,7 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
   const [wrData, setWrData] = useState<WrData | null>(null);
   useEffect(() => {
     if (mode !== 'wr' || wrData) return;
-    fetch('/stats/data/world_records_by_country.json')
+    fetch('/stats/world_records_by_country.json')
       .then(r => r.json())
       .then((d: WrData) => setWrData(d))
       .catch((e) => console.warn('wr data load failed', e));

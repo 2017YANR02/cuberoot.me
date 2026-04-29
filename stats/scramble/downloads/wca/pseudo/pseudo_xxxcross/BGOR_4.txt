@@ -1,0 +1,9 @@
+# Scramble samples — pseudo / pseudo_xxxcross / BGOR / bin 4
+# Population in this bin: 2
+# Samples listed: 2 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-04-27T03:59:07.858Z
+# Columns: id,scramble,bottom_color
+
+3185199001,F' L U L2 U2 F U B' U2 F U2 F2 U2 F U2 R U',B
+4776336001,R B2 L D' U2 R2 U F2 U2 B2 U L D2 F' U2 B D R',O

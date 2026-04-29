@@ -1,0 +1,361 @@
+{
+  "categories": [
+    {
+      "nameEn": "World Record Analysis",
+      "nameZh": "世界纪录分析",
+      "iconName": "Trophy",
+      "stats": [
+        {
+          "id": "wr_current",
+          "titleEn": "Current world records",
+          "titleZh": "当前世界纪录"
+        },
+        {
+          "id": "wr_metric",
+          "titleEn": "Metric",
+          "titleZh": "指标"
+        },
+        {
+          "id": "wr_aoxr",
+          "titleEn": "AoXR",
+          "titleZh": "AoXR"
+        },
+        {
+          "id": "wr_dominance",
+          "titleEn": "Dominance",
+          "titleZh": "屠榜"
+        },
+        {
+          "id": "wr_non_pr",
+          "titleEn": "Non-PR WR",
+          "titleZh": "非 PR"
+        },
+        {
+          "id": "wr_newcomer",
+          "titleEn": "Newcomer",
+          "titleZh": "新人首个世界纪录"
+        },
+        {
+          "id": "average_of",
+          "titleEn": "Rolling Average",
+          "titleZh": "滚动平均"
+        },
+        {
+          "id": "consecutive_sub_5_average",
+          "titleEn": "Most consecutive sub-5 averages in 3x3x3",
+          "titleZh": "三阶最多连续 sub-5 平均"
+        }
+      ]
+    },
+    {
+      "nameEn": "Results & Records",
+      "nameZh": "成绩与纪录",
+      "iconName": "BarChart3",
+      "stats": [
+        {
+          "id": "best_potential_fmc_mean",
+          "titleEn": "Best potential FMC mean",
+          "titleZh": "理论最佳 FMC 平均"
+        },
+        {
+          "id": "best_round",
+          "titleEn": "Best round",
+          "titleZh": "最佳轮次"
+        },
+        {
+          "id": "most_frequent_results",
+          "titleEn": "Most frequent results",
+          "titleZh": "最常出现的成绩"
+        },
+        {
+          "id": "moving_average",
+          "titleEn": "Moving average",
+          "titleZh": "移动平均"
+        },
+        {
+          "id": "smallest_diff_between_single_and_average",
+          "titleEn": "Smallest difference between a single and an average",
+          "titleZh": "单次与平均差距最小"
+        },
+        {
+          "id": "yearly_rankings",
+          "titleEn": "Yearly rankings",
+          "titleZh": "年度排名"
+        }
+      ]
+    },
+    {
+      "nameEn": "Podiums & Honors",
+      "nameZh": "领奖台与荣誉",
+      "iconName": "Medal",
+      "stats": [
+        {
+          "id": "best_result_off_podium",
+          "titleEn": "Best result not providing a podium",
+          "titleZh": "无缘领奖台的最佳成绩"
+        },
+        {
+          "id": "complete_competition_winners",
+          "titleEn": "Complete competition winners",
+          "titleZh": "单场包揽全项冠军"
+        },
+        {
+          "id": "most_4th_places",
+          "titleEn": "Most 4th places",
+          "titleZh": "最多第四名"
+        },
+        {
+          "id": "most_competitions_before_winning",
+          "titleEn": "Most competitions before winning",
+          "titleZh": "首冠前参赛最多"
+        },
+        {
+          "id": "most_finals",
+          "titleEn": "Most finals",
+          "titleZh": "决赛次数最多"
+        },
+        {
+          "id": "most_podiums_at_single_competition",
+          "titleEn": "Most podiums at a single competition",
+          "titleZh": "单场比赛登台最多"
+        },
+        {
+          "id": "most_podiums_together",
+          "titleEn": "Most podiums together",
+          "titleZh": "同台登奖次数最多"
+        },
+        {
+          "id": "worst_result_on_podium",
+          "titleEn": "Worst result providing a podium",
+          "titleZh": "登上领奖台的最差成绩"
+        }
+      ]
+    },
+    {
+      "nameEn": "Competitor Journey",
+      "nameZh": "选手经历",
+      "iconName": "UserRound",
+      "stats": [
+        {
+          "id": "competitions_per_year_by_person",
+          "titleEn": "Competitions per year by person",
+          "titleZh": "选手每年参赛数"
+        },
+        {
+          "id": "longest_competitions_path",
+          "titleEn": "Longest competitions path",
+          "titleZh": "最长连续参赛路径"
+        },
+        {
+          "id": "longest_streak_of_competitions_in_own_country",
+          "titleEn": "Longest streak of competitions in own country",
+          "titleZh": "在本国最长连续参赛"
+        },
+        {
+          "id": "longest_streak_of_personal_records",
+          "titleEn": "Longest streak of competitions with a personal record done",
+          "titleZh": "连续打破个人纪录的最长赛程"
+        },
+        {
+          "id": "longest_streak_of_podiums",
+          "titleEn": "Longest streak of podiums",
+          "titleZh": "最长连续登台"
+        },
+        {
+          "id": "longest_time_to_sub_10",
+          "titleEn": "Longest time to achieve sub 10 3x3x3 average",
+          "titleZh": "达到三阶 sub-10 用时最长"
+        },
+        {
+          "id": "most_attended_competitions_in_single_month",
+          "titleEn": "Most attended competitions in a single month",
+          "titleZh": "单月参赛最多"
+        },
+        {
+          "id": "most_attended_competitions_in_single_week",
+          "titleEn": "Most attended competitions in a single week",
+          "titleZh": "单周参赛最多"
+        },
+        {
+          "id": "most_competitions_abroad",
+          "titleEn": "Most competitions abroad",
+          "titleZh": "海外参赛最多"
+        },
+        {
+          "id": "most_completed_solves",
+          "titleEn": "Most completed solves",
+          "titleZh": "累计完成还原数最多"
+        },
+        {
+          "id": "most_distinct_dates_competed_on",
+          "titleEn": "Most distinct dates competed on",
+          "titleZh": "累计参赛日数最多"
+        },
+        {
+          "id": "most_solves_before_bld_success",
+          "titleEn": "Most solves before getting a successful BLD attempt",
+          "titleZh": "首次盲拧成功前尝试最多"
+        },
+        {
+          "id": "most_visited_continents",
+          "titleEn": "Most visited continents",
+          "titleZh": "参赛大洲最多"
+        },
+        {
+          "id": "most_visited_countries",
+          "titleEn": "Most visited countries",
+          "titleZh": "参赛国家最多"
+        },
+        {
+          "id": "name_parts_count",
+          "titleEn": "Name parts count",
+          "titleZh": "姓名词数分布"
+        },
+        {
+          "id": "shortest_time_to_reach_milestone_in_comps_count",
+          "titleEn": "Shortest amount of time to reach a milestone in competitions count",
+          "titleZh": "最快达到参赛数里程碑"
+        },
+        {
+          "id": "shortest_time_to_get_all_singles",
+          "titleEn": "Shortest time to get all singles",
+          "titleZh": "最快集齐所有项目单次"
+        },
+        {
+          "id": "shortest_time_to_get_all_singles_and_averages",
+          "titleEn": "Shortest time to get all singles and averages",
+          "titleZh": "最快集齐所有项目单次与平均"
+        }
+      ]
+    },
+    {
+      "nameEn": "Competition Statistics",
+      "nameZh": "赛事统计",
+      "iconName": "Tent",
+      "stats": [
+        {
+          "id": "average_event_count_by_competition",
+          "titleEn": "Average event count by competition",
+          "titleZh": "每场比赛平均项目数"
+        },
+        {
+          "id": "competition_days_count_by_region",
+          "titleEn": "Competition days count by region",
+          "titleZh": "各地区比赛天数"
+        },
+        {
+          "id": "competitions_count_by_week",
+          "titleEn": "Competitions count by week",
+          "titleZh": "每周比赛数"
+        },
+        {
+          "id": "competitions_per_year_by_country",
+          "titleEn": "Competitions per year by country",
+          "titleZh": "各国每年比赛数"
+        },
+        {
+          "id": "dnf_rate_by_event",
+          "titleEn": "DNF rate by event",
+          "titleZh": "各项目 DNF 率"
+        },
+        {
+          "id": "fewest_competitors_contest",
+          "titleEn": "Fewest competitors contest",
+          "titleZh": "参赛人数最少的比赛"
+        },
+        {
+          "id": "most_records_at_single_competition",
+          "titleEn": "Most records at a single competition",
+          "titleZh": "单场比赛最多纪录"
+        }
+      ]
+    },
+    {
+      "nameEn": "Records & Countries",
+      "nameZh": "纪录与国家",
+      "iconName": "Globe2",
+      "stats": [
+        {
+          "id": "best_medal_collection_from_abroad_by_country",
+          "titleEn": "Best medal collection from abroad by country",
+          "titleZh": "各国海外奖牌榜最佳"
+        },
+        {
+          "id": "best_medal_collection_from_abroad_by_person",
+          "titleEn": "Best medal collection from abroad by person",
+          "titleZh": "选手海外奖牌榜最佳"
+        },
+        {
+          "id": "current_world_records_by_country",
+          "titleEn": "Current world records count by country",
+          "titleZh": "各国当前世界纪录数"
+        },
+        {
+          "id": "delegated_competition_per_year",
+          "titleEn": "Delegated competitions per year",
+          "titleZh": "每年执裁比赛数（WCA Delegate）"
+        },
+        {
+          "id": "first_r_is_wr",
+          "titleEn": "First record is a World Record",
+          "titleZh": "首破纪录即为世界纪录"
+        },
+        {
+          "id": "longest_standing_records",
+          "titleEn": "Longest standing records",
+          "titleZh": "保持最久的世界纪录"
+        },
+        {
+          "id": "longest_streak_of_world_records",
+          "titleEn": "Longest streak of world records of the same type in the given event",
+          "titleZh": "同项目同类型最长连续世界纪录"
+        },
+        {
+          "id": "most_delegated_competitions",
+          "titleEn": "Most delegated competitions",
+          "titleZh": "执裁比赛最多（WCA Delegate）"
+        },
+        {
+          "id": "potentially_seen_world_records",
+          "titleEn": "Potentially seen world records",
+          "titleZh": "可能现场见证的世界纪录"
+        },
+        {
+          "id": "records_in_most_events",
+          "titleEn": "Records in the highest number of events",
+          "titleZh": "打破纪录项目数最多"
+        },
+        {
+          "id": "winned_week_count",
+          "titleEn": "Winned week count",
+          "titleZh": "登顶周数统计"
+        },
+        {
+          "id": "world_championship_podiums_by_country",
+          "titleEn": "World Championship podiums by country",
+          "titleZh": "各国世锦赛登台数"
+        },
+        {
+          "id": "world_championship_podiums_by_person",
+          "titleEn": "World Championship podiums by person",
+          "titleZh": "选手世锦赛登台数"
+        },
+        {
+          "id": "world_championship_records",
+          "titleEn": "World Championship records",
+          "titleZh": "世锦赛纪录"
+        },
+        {
+          "id": "world_records_by_country",
+          "titleEn": "World records count by country",
+          "titleZh": "各国世界纪录数"
+        },
+        {
+          "id": "world_records_by_person",
+          "titleEn": "World records count by person",
+          "titleZh": "选手世界纪录数"
+        }
+      ]
+    }
+  ]
+}

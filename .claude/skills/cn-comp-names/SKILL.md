@@ -1,13 +1,13 @@
 ---
 name: cn-comp-names
-description: "Use when (a) regenerating `stats/data/comp_names_zh.json`, (b) debugging missing or wrong Chinese comp names, or (c) writing new code that displays a comp name (so you remember to go through `utils/comp_localize.ts`, never raw `c.name`). Frontend display logic lives in code (see `utils/comp_localize.ts` JSDoc) — this skill only covers what code can't tell you: the data pipeline + scraper gotchas. Triggers: \"中国比赛中文\", \"localizeCompName\", \"comp_names_zh\", \"fetch_comp_names_zh\", \"比赛名本地化\", \"stripWcaPrefix\", \"localizeCity\", \"CITY_ZH\"."
+description: "Use when (a) regenerating `stats/comp_names_zh.json`, (b) debugging missing or wrong Chinese comp names, or (c) writing new code that displays a comp name (so you remember to go through `utils/comp_localize.ts`, never raw `c.name`). Frontend display logic lives in code (see `utils/comp_localize.ts` JSDoc) — this skill only covers what code can't tell you: the data pipeline + scraper gotchas. Triggers: \"中国比赛中文\", \"localizeCompName\", \"comp_names_zh\", \"fetch_comp_names_zh\", \"比赛名本地化\", \"stripWcaPrefix\", \"localizeCity\", \"CITY_ZH\"."
 ---
 
 # 中国比赛名中文化
 
 前端显示规则全在 `core/packages/client/src/utils/comp_localize.ts` 的 JSDoc（`localizeCompName` / `stripWcaPrefix`）。新代码渲染比赛名一律走它，禁止裸 `c.name`。`compNameZh()` 命中前先 `await loadFlagData()`。
 
-## 数据：`stats/data/comp_names_zh.json`
+## 数据：`stats/comp_names_zh.json`
 
 由 `scripts/fetch_comp_names_zh.py` 生成。
 

@@ -1,5 +1,5 @@
 // 比赛纪录数据加载
-// 数据源: stats/data/comp_records_summary.json + stats/data/comp_records_detail.json
+// 数据源: stats/comp_records_summary.json + stats/comp_records_detail.json
 // 由 stats-build 的 gen_comp_records.ts 周更生成
 
 export type RecordTop = 'WR' | 'CR' | 'NR';
@@ -22,7 +22,7 @@ let _version = 0;
 export function loadCompRecordsSummary(): Promise<number> {
   if (_summary) return Promise.resolve(_version);
   if (!_summaryPromise) {
-    _summaryPromise = fetch('/stats/data/comp_records_summary.json')
+    _summaryPromise = fetch('/stats/comp_records_summary.json')
       .then((r) => (r.ok ? r.json() : {}))
       .catch(() => ({}))
       .then((d: Record<string, RecordTop>) => {
@@ -40,7 +40,7 @@ export function getCompRecordTop(compId: string): RecordTop | null {
 export function loadCompRecordsDetail(): Promise<number> {
   if (_detail) return Promise.resolve(_version);
   if (!_detailPromise) {
-    _detailPromise = fetch('/stats/data/comp_records_detail.json')
+    _detailPromise = fetch('/stats/comp_records_detail.json')
       .then((r) => (r.ok ? r.json() : {}))
       .catch(() => ({}))
       .then((d: Record<string, RecordEntry[]>) => {

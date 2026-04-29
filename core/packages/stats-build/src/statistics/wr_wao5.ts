@@ -6,8 +6,8 @@ import { EVENTS_WITH_AO5 } from '../core/events.js';
 export class WrWao5 extends RoundMetric {
   constructor() {
     super();
-    this.title = 'WAo5 (Worst Average of 5)';
-    this.titleZh = 'WAo5（最差 5 中 3 均值）';
+    this.title = 'WAo5';
+    this.titleZh = 'WAo5';
     this.note = 'Worst Average of 5: average of the worst 3 out of all 5 solves in a round.';
     this.noteZh = '最差 5 中 3 均值：一轮 5 次还原中取最差 3 次的平均。';
     this.tableHeader = {

@@ -29,8 +29,8 @@ export async function loadComps(): Promise<Comp[]> {
   if (!inflight) {
     inflight = (async () => {
       const [past, upcoming] = await Promise.all([
-        fetch('/stats/data/all_past_comps.json').then(r => r.ok ? r.json() : []).catch(() => []),
-        fetch('/stats/data/all_upcoming_comps.json').then(r => r.ok ? r.json() : []).catch(() => []),
+        fetch('/stats/all_past_comps.json').then(r => r.ok ? r.json() : []).catch(() => []),
+        fetch('/stats/all_upcoming_comps.json').then(r => r.ok ? r.json() : []).catch(() => []),
         loadFlagData().catch(() => 0),
       ]);
       const map = new Map<string, Comp>();

@@ -25,7 +25,7 @@ from pathlib import Path
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", line_buffering=True)
 
 ROOT_DIR = Path(__file__).parent.parent
-OUTPUT_PATH = ROOT_DIR / "stats" / "data" / "comp_names_zh.json"
+OUTPUT_PATH = ROOT_DIR / "stats" / "comp_names_zh.json"
 CACHE_DIR = ROOT_DIR / ".comp_names_zh_cache"
 
 CUBING_CHINA_URL = "https://cubing.com/competition"
@@ -196,7 +196,7 @@ def scrape_cubing_china():
 def fetch_wca_cn_comps():
     """
     通过 WCA API 批量获取所有中国比赛的 WCA ID → {name, short_name, start_date}。
-    - name 是完整名（如 "Beijing Winter Open 2013"），stats/data/all_past_comps.json 用此字段
+    - name 是完整名（如 "Beijing Winter Open 2013"），stats/all_past_comps.json 用此字段
     - short_name 是 WCA 展示用的短名（如 "Beijing 2013"），部分地方用此字段
     - start_date 用于 cubing.com URL alias 和 WCA ID 差异过大（如词序颠倒）时按日期回退匹配
     输出英文 → 中文映射时 name + short_name 两者都作为 key，提高命中率。

@@ -1,8 +1,0 @@
-# Scramble samples — std / xxxcross / B / bin 9
-# Population in this bin: 1
-# Samples listed: 1 (all entries in this bin)
-# Source: scrambles.txt
-# Generated: 2026-04-27T03:59:07.858Z
-# Columns: id,scramble,bottom_color
-
-938594,B2 U R2 D2 B2 D B2 D R2 B2 U L2 U B2 U R' U' F' L B D R' D2 U' F ,B

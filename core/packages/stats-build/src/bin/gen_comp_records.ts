@@ -2,8 +2,8 @@
 // 用于 UpcomingCompsPage 日历徽章 + 比赛 modal 详情。
 //
 // 输出两个文件：
-//   stats/data/comp_records_summary.json — {compId: "WR"|"CR"|"NR"}  日历首屏用（~50KB）
-//   stats/data/comp_records_detail.json  — {compId: [{t,k,e,p,n,v},...]} modal 打开时 lazy fetch
+//   stats/comp_records_summary.json — {compId: "WR"|"CR"|"NR"}  日历首屏用（~50KB）
+//   stats/comp_records_detail.json  — {compId: [{t,k,e,p,n,v},...]} modal 打开时 lazy fetch
 //
 // 字段缩写（为压缩 JSON）:
 //   t = level 原值 (WR/AfR/AsR/ER/NAR/OcR/SAR/NR)
@@ -22,8 +22,8 @@ import { query, closePool } from '../core/database.js';
 import type { RowDataPacket } from 'mysql2';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const OUT_SUMMARY = resolve(__dirname, '../../../../../stats/data/comp_records_summary.json');
-const OUT_DETAIL = resolve(__dirname, '../../../../../stats/data/comp_records_detail.json');
+const OUT_SUMMARY = resolve(__dirname, '../../../../../stats/comp_records_summary.json');
+const OUT_DETAIL = resolve(__dirname, '../../../../../stats/comp_records_detail.json');
 
 const CR_LEVELS = new Set(['AfR', 'AsR', 'ER', 'NAR', 'OcR', 'SAR']);
 

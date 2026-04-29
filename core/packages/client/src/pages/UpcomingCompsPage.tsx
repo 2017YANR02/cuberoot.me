@@ -1,6 +1,6 @@
 /**
  * 顶尖选手近期比赛追踪页 — 日历视图
- * 数据源: stats/upcoming_comps.json（Top 模式） + stats/data/all_upcoming_comps.json（All 模式）
+ * 数据源: stats/upcoming_comps.json（Top 模式） + stats/all_upcoming_comps.json（All 模式）
  */
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
@@ -69,8 +69,6 @@ interface Competition {
 }
 
 interface UpcomingData {
-  updated_at: string;
-  total_cubers_tracked: number;
   competitions: Competition[];
 }
 
@@ -956,13 +954,9 @@ export default function UpcomingCompsPage() {
       <header className="upcoming-header">
         <h1 className="upcoming-title">{t('upcoming.title')}</h1>
         <div className="upcoming-meta">
-          {isZh ? '追踪世界前 10 / 前 WR 保持者 · ' : 'Tracking world top 10 / former WR holders · '}
-          {t('upcoming.updatedAt', { time: toIsoDate(new Date(data.updated_at)) })}
-          {' · '}
           <Link to={`/calendar/stats${getLangQuery()}`} className="globe-link">
             <BarChart3 size={12} strokeWidth={1.75} /> {isZh ? '统计' : 'Stats'}
           </Link>
-          {' · '}
           <Link to="/globe" className="globe-link">
             <GlobeIcon size={12} strokeWidth={1.75} /> {t('upcoming.viewGlobe')}
           </Link>
@@ -1066,6 +1060,7 @@ export default function UpcomingCompsPage() {
         <span className="legend-item"><span className="legend-swatch swatch-clash" /> {isZh ? '扎堆 (3+)' : 'Clash (3+)'}</span>
         <span className="legend-item"><span className="wr-swatch wr-current" /> {t('upcoming.wrCurrent')}</span>
         <span className="legend-item"><span className="wr-swatch wr-former" /> {t('upcoming.wrFormer')}</span>
+        <span className="legend-item"><span className="wr-swatch wr-top10" /> {t('upcoming.wrTop10')}</span>
         <span className="month-stats">
           <span title={t('upcoming.statComps')}><List size={14} strokeWidth={1.75} /> {monthStats.comps}</span>
           <span title={t('upcoming.statCountries')}><GlobeIcon size={14} strokeWidth={1.75} /> {monthStats.countries}</span>

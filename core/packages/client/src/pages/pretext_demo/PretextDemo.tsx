@@ -331,7 +331,7 @@ export default function PretextDemo() {
 
   // 加载数据
   useEffect(() => {
-    fetch('/stats/data/average_of.json')
+    fetch('/stats/average_of.json')
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then((json: StatData) => { setData(json); setLoading(false); })
       .catch(e => { setError(e.message); setLoading(false); });

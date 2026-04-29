@@ -1,0 +1,1110 @@
+{
+  "generatedAt": "2026-04-29T04:38:34.857Z",
+  "exportDate": "2026-04-29",
+  "personCount": 286484,
+  "rankCount": 1854811,
+  "events": [
+    {
+      "id": "333",
+      "nameEn": "Rubik's Cube",
+      "nameZh": "三阶魔方"
+    },
+    {
+      "id": "222",
+      "nameEn": "2x2x2 Cube",
+      "nameZh": "二阶魔方"
+    },
+    {
+      "id": "444",
+      "nameEn": "4x4x4 Cube",
+      "nameZh": "四阶魔方"
+    },
+    {
+      "id": "555",
+      "nameEn": "5x5x5 Cube",
+      "nameZh": "五阶魔方"
+    },
+    {
+      "id": "666",
+      "nameEn": "6x6x6 Cube",
+      "nameZh": "六阶魔方"
+    },
+    {
+      "id": "777",
+      "nameEn": "7x7x7 Cube",
+      "nameZh": "七阶魔方"
+    },
+    {
+      "id": "333bf",
+      "nameEn": "3x3x3 Blindfolded",
+      "nameZh": "三盲"
+    },
+    {
+      "id": "333fm",
+      "nameEn": "3x3x3 Fewest Moves",
+      "nameZh": "最少步"
+    },
+    {
+      "id": "333oh",
+      "nameEn": "3x3x3 One-Handed",
+      "nameZh": "三阶单手"
+    },
+    {
+      "id": "minx",
+      "nameEn": "Megaminx",
+      "nameZh": "五魔"
+    },
+    {
+      "id": "pyram",
+      "nameEn": "Pyraminx",
+      "nameZh": "金字塔"
+    },
+    {
+      "id": "clock",
+      "nameEn": "Rubik's Clock",
+      "nameZh": "魔表"
+    },
+    {
+      "id": "skewb",
+      "nameEn": "Skewb",
+      "nameZh": "斜转"
+    },
+    {
+      "id": "sq1",
+      "nameEn": "Square-1",
+      "nameZh": "SQ1"
+    },
+    {
+      "id": "444bf",
+      "nameEn": "4x4x4 Blindfolded",
+      "nameZh": "四盲"
+    },
+    {
+      "id": "555bf",
+      "nameEn": "5x5x5 Blindfolded",
+      "nameZh": "五盲"
+    },
+    {
+      "id": "333mbf",
+      "nameEn": "3x3x3 Multi-Blind",
+      "nameZh": "多盲"
+    }
+  ],
+  "countries": [
+    {
+      "iso2": "ad",
+      "nameEn": "Andorra",
+      "nameZh": "Andorra",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "ae",
+      "nameEn": "United Arab Emirates",
+      "nameZh": "United Arab Emirates",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "af",
+      "nameEn": "Afghanistan",
+      "nameZh": "Afghanistan",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "ag",
+      "nameEn": "Antigua and Barbuda",
+      "nameZh": "Antigua and Barbuda",
+      "continentIdx": 3
+    },
+    {
+      "iso2": "al",
+      "nameEn": "Albania",
+      "nameZh": "Albania",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "am",
+      "nameEn": "Armenia",
+      "nameZh": "Armenia",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "ao",
+      "nameEn": "Angola",
+      "nameZh": "Angola",
+      "continentIdx": 2
+    },
+    {
+      "iso2": "ar",
+      "nameEn": "Argentina",
+      "nameZh": "Argentina",
+      "continentIdx": 4
+    },
+    {
+      "iso2": "at",
+      "nameEn": "Austria",
+      "nameZh": "Austria",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "au",
+      "nameEn": "Australia",
+      "nameZh": "Australia",
+      "continentIdx": 5
+    },
+    {
+      "iso2": "az",
+      "nameEn": "Azerbaijan",
+      "nameZh": "Azerbaijan",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "ba",
+      "nameEn": "Bosnia and Herzegovina",
+      "nameZh": "Bosnia and Herzegovina",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "bb",
+      "nameEn": "Barbados",
+      "nameZh": "Barbados",
+      "continentIdx": 3
+    },
+    {
+      "iso2": "bd",
+      "nameEn": "Bangladesh",
+      "nameZh": "Bangladesh",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "be",
+      "nameEn": "Belgium",
+      "nameZh": "Belgium",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "bg",
+      "nameEn": "Bulgaria",
+      "nameZh": "Bulgaria",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "bh",
+      "nameEn": "Bahrain",
+      "nameZh": "Bahrain",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "bn",
+      "nameEn": "Brunei",
+      "nameZh": "Brunei",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "bo",
+      "nameEn": "Bolivia",
+      "nameZh": "Bolivia",
+      "continentIdx": 4
+    },
+    {
+      "iso2": "br",
+      "nameEn": "Brazil",
+      "nameZh": "Brazil",
+      "continentIdx": 4
+    },
+    {
+      "iso2": "bs",
+      "nameEn": "Bahamas",
+      "nameZh": "Bahamas",
+      "continentIdx": 3
+    },
+    {
+      "iso2": "bt",
+      "nameEn": "Bhutan",
+      "nameZh": "Bhutan",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "bw",
+      "nameEn": "Botswana",
+      "nameZh": "Botswana",
+      "continentIdx": 2
+    },
+    {
+      "iso2": "by",
+      "nameEn": "Belarus",
+      "nameZh": "Belarus",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "bz",
+      "nameEn": "Belize",
+      "nameZh": "Belize",
+      "continentIdx": 3
+    },
+    {
+      "iso2": "ca",
+      "nameEn": "Canada",
+      "nameZh": "Canada",
+      "continentIdx": 3
+    },
+    {
+      "iso2": "cd",
+      "nameEn": "Democratic Republic of the Congo",
+      "nameZh": "Democratic Republic of the Congo",
+      "continentIdx": 2
+    },
+    {
+      "iso2": "cg",
+      "nameEn": "Congo",
+      "nameZh": "Congo",
+      "continentIdx": 2
+    },
+    {
+      "iso2": "ch",
+      "nameEn": "Switzerland",
+      "nameZh": "Switzerland",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "ci",
+      "nameEn": "Cote d_Ivoire",
+      "nameZh": "Cote d_Ivoire",
+      "continentIdx": 2
+    },
+    {
+      "iso2": "cl",
+      "nameEn": "Chile",
+      "nameZh": "Chile",
+      "continentIdx": 4
+    },
+    {
+      "iso2": "cm",
+      "nameEn": "Cameroon",
+      "nameZh": "Cameroon",
+      "continentIdx": 2
+    },
+    {
+      "iso2": "cn",
+      "nameEn": "China",
+      "nameZh": "China",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "co",
+      "nameEn": "Colombia",
+      "nameZh": "Colombia",
+      "continentIdx": 4
+    },
+    {
+      "iso2": "cr",
+      "nameEn": "Costa Rica",
+      "nameZh": "Costa Rica",
+      "continentIdx": 3
+    },
+    {
+      "iso2": "cu",
+      "nameEn": "Cuba",
+      "nameZh": "Cuba",
+      "continentIdx": 3
+    },
+    {
+      "iso2": "cy",
+      "nameEn": "Cyprus",
+      "nameZh": "Cyprus",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "cz",
+      "nameEn": "Czech Republic",
+      "nameZh": "Czech Republic",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "de",
+      "nameEn": "Germany",
+      "nameZh": "Germany",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "dk",
+      "nameEn": "Denmark",
+      "nameZh": "Denmark",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "do",
+      "nameEn": "Dominican Republic",
+      "nameZh": "Dominican Republic",
+      "continentIdx": 3
+    },
+    {
+      "iso2": "dz",
+      "nameEn": "Algeria",
+      "nameZh": "Algeria",
+      "continentIdx": 2
+    },
+    {
+      "iso2": "ec",
+      "nameEn": "Ecuador",
+      "nameZh": "Ecuador",
+      "continentIdx": 4
+    },
+    {
+      "iso2": "ee",
+      "nameEn": "Estonia",
+      "nameZh": "Estonia",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "eg",
+      "nameEn": "Egypt",
+      "nameZh": "Egypt",
+      "continentIdx": 2
+    },
+    {
+      "iso2": "er",
+      "nameEn": "Eritrea",
+      "nameZh": "Eritrea",
+      "continentIdx": 2
+    },
+    {
+      "iso2": "es",
+      "nameEn": "Spain",
+      "nameZh": "Spain",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "et",
+      "nameEn": "Ethiopia",
+      "nameZh": "Ethiopia",
+      "continentIdx": 2
+    },
+    {
+      "iso2": "fi",
+      "nameEn": "Finland",
+      "nameZh": "Finland",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "fj",
+      "nameEn": "Fiji",
+      "nameZh": "Fiji",
+      "continentIdx": 5
+    },
+    {
+      "iso2": "fr",
+      "nameEn": "France",
+      "nameZh": "France",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "gb",
+      "nameEn": "United Kingdom",
+      "nameZh": "United Kingdom",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "gd",
+      "nameEn": "Grenada",
+      "nameZh": "Grenada",
+      "continentIdx": 3
+    },
+    {
+      "iso2": "ge",
+      "nameEn": "Georgia",
+      "nameZh": "Georgia",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "gh",
+      "nameEn": "Ghana",
+      "nameZh": "Ghana",
+      "continentIdx": 2
+    },
+    {
+      "iso2": "gr",
+      "nameEn": "Greece",
+      "nameZh": "Greece",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "gt",
+      "nameEn": "Guatemala",
+      "nameZh": "Guatemala",
+      "continentIdx": 3
+    },
+    {
+      "iso2": "gy",
+      "nameEn": "Guyana",
+      "nameZh": "Guyana",
+      "continentIdx": 4
+    },
+    {
+      "iso2": "hk",
+      "nameEn": "Hong Kong",
+      "nameZh": "Hong Kong",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "hn",
+      "nameEn": "Honduras",
+      "nameZh": "Honduras",
+      "continentIdx": 3
+    },
+    {
+      "iso2": "hr",
+      "nameEn": "Croatia",
+      "nameZh": "Croatia",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "ht",
+      "nameEn": "Haiti",
+      "nameZh": "Haiti",
+      "continentIdx": 3
+    },
+    {
+      "iso2": "hu",
+      "nameEn": "Hungary",
+      "nameZh": "Hungary",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "id",
+      "nameEn": "Indonesia",
+      "nameZh": "Indonesia",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "ie",
+      "nameEn": "Ireland",
+      "nameZh": "Ireland",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "il",
+      "nameEn": "Israel",
+      "nameZh": "Israel",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "in",
+      "nameEn": "India",
+      "nameZh": "India",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "iq",
+      "nameEn": "Iraq",
+      "nameZh": "Iraq",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "ir",
+      "nameEn": "Iran",
+      "nameZh": "Iran",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "is",
+      "nameEn": "Iceland",
+      "nameZh": "Iceland",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "it",
+      "nameEn": "Italy",
+      "nameZh": "Italy",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "jm",
+      "nameEn": "Jamaica",
+      "nameZh": "Jamaica",
+      "continentIdx": 3
+    },
+    {
+      "iso2": "jo",
+      "nameEn": "Jordan",
+      "nameZh": "Jordan",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "jp",
+      "nameEn": "Japan",
+      "nameZh": "Japan",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "ke",
+      "nameEn": "Kenya",
+      "nameZh": "Kenya",
+      "continentIdx": 2
+    },
+    {
+      "iso2": "kg",
+      "nameEn": "Kyrgyzstan",
+      "nameZh": "Kyrgyzstan",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "kh",
+      "nameEn": "Cambodia",
+      "nameZh": "Cambodia",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "kn",
+      "nameEn": "Saint Kitts and Nevis",
+      "nameZh": "Saint Kitts and Nevis",
+      "continentIdx": 3
+    },
+    {
+      "iso2": "kr",
+      "nameEn": "Korea",
+      "nameZh": "Korea",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "kw",
+      "nameEn": "Kuwait",
+      "nameZh": "Kuwait",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "kz",
+      "nameEn": "Kazakhstan",
+      "nameZh": "Kazakhstan",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "la",
+      "nameEn": "Laos",
+      "nameZh": "Laos",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "lb",
+      "nameEn": "Lebanon",
+      "nameZh": "Lebanon",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "lc",
+      "nameEn": "Saint Lucia",
+      "nameZh": "Saint Lucia",
+      "continentIdx": 3
+    },
+    {
+      "iso2": "li",
+      "nameEn": "Liechtenstein",
+      "nameZh": "Liechtenstein",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "lk",
+      "nameEn": "Sri Lanka",
+      "nameZh": "Sri Lanka",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "ls",
+      "nameEn": "Lesotho",
+      "nameZh": "Lesotho",
+      "continentIdx": 2
+    },
+    {
+      "iso2": "lt",
+      "nameEn": "Lithuania",
+      "nameZh": "Lithuania",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "lu",
+      "nameEn": "Luxembourg",
+      "nameZh": "Luxembourg",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "lv",
+      "nameEn": "Latvia",
+      "nameZh": "Latvia",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "ly",
+      "nameEn": "Libya",
+      "nameZh": "Libya",
+      "continentIdx": 2
+    },
+    {
+      "iso2": "ma",
+      "nameEn": "Morocco",
+      "nameZh": "Morocco",
+      "continentIdx": 2
+    },
+    {
+      "iso2": "mc",
+      "nameEn": "Monaco",
+      "nameZh": "Monaco",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "md",
+      "nameEn": "Moldova",
+      "nameZh": "Moldova",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "me",
+      "nameEn": "Montenegro",
+      "nameZh": "Montenegro",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "mg",
+      "nameEn": "Madagascar",
+      "nameZh": "Madagascar",
+      "continentIdx": 2
+    },
+    {
+      "iso2": "mk",
+      "nameEn": "North Macedonia",
+      "nameZh": "North Macedonia",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "mm",
+      "nameEn": "Myanmar",
+      "nameZh": "Myanmar",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "mn",
+      "nameEn": "Mongolia",
+      "nameZh": "Mongolia",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "mo",
+      "nameEn": "Macau",
+      "nameZh": "Macau",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "mr",
+      "nameEn": "Mauritania",
+      "nameZh": "Mauritania",
+      "continentIdx": 2
+    },
+    {
+      "iso2": "mt",
+      "nameEn": "Malta",
+      "nameZh": "Malta",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "mu",
+      "nameEn": "Mauritius",
+      "nameZh": "Mauritius",
+      "continentIdx": 2
+    },
+    {
+      "iso2": "mv",
+      "nameEn": "Maldives",
+      "nameZh": "Maldives",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "mw",
+      "nameEn": "Malawi",
+      "nameZh": "Malawi",
+      "continentIdx": 2
+    },
+    {
+      "iso2": "mx",
+      "nameEn": "Mexico",
+      "nameZh": "Mexico",
+      "continentIdx": 3
+    },
+    {
+      "iso2": "my",
+      "nameEn": "Malaysia",
+      "nameZh": "Malaysia",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "mz",
+      "nameEn": "Mozambique",
+      "nameZh": "Mozambique",
+      "continentIdx": 2
+    },
+    {
+      "iso2": "na",
+      "nameEn": "Namibia",
+      "nameZh": "Namibia",
+      "continentIdx": 2
+    },
+    {
+      "iso2": "ng",
+      "nameEn": "Nigeria",
+      "nameZh": "Nigeria",
+      "continentIdx": 2
+    },
+    {
+      "iso2": "ni",
+      "nameEn": "Nicaragua",
+      "nameZh": "Nicaragua",
+      "continentIdx": 3
+    },
+    {
+      "iso2": "nl",
+      "nameEn": "Netherlands",
+      "nameZh": "Netherlands",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "no",
+      "nameEn": "Norway",
+      "nameZh": "Norway",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "np",
+      "nameEn": "Nepal",
+      "nameZh": "Nepal",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "nz",
+      "nameEn": "New Zealand",
+      "nameZh": "New Zealand",
+      "continentIdx": 5
+    },
+    {
+      "iso2": "om",
+      "nameEn": "Oman",
+      "nameZh": "Oman",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "pa",
+      "nameEn": "Panama",
+      "nameZh": "Panama",
+      "continentIdx": 3
+    },
+    {
+      "iso2": "pe",
+      "nameEn": "Peru",
+      "nameZh": "Peru",
+      "continentIdx": 4
+    },
+    {
+      "iso2": "pg",
+      "nameEn": "Papua New Guinea",
+      "nameZh": "Papua New Guinea",
+      "continentIdx": 5
+    },
+    {
+      "iso2": "ph",
+      "nameEn": "Philippines",
+      "nameZh": "Philippines",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "pk",
+      "nameEn": "Pakistan",
+      "nameZh": "Pakistan",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "pl",
+      "nameEn": "Poland",
+      "nameZh": "Poland",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "ps",
+      "nameEn": "Palestine",
+      "nameZh": "Palestine",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "pt",
+      "nameEn": "Portugal",
+      "nameZh": "Portugal",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "py",
+      "nameEn": "Paraguay",
+      "nameZh": "Paraguay",
+      "continentIdx": 4
+    },
+    {
+      "iso2": "qa",
+      "nameEn": "Qatar",
+      "nameZh": "Qatar",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "ro",
+      "nameEn": "Romania",
+      "nameZh": "Romania",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "rs",
+      "nameEn": "Serbia",
+      "nameZh": "Serbia",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "ru",
+      "nameEn": "Russia",
+      "nameZh": "Russia",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "rw",
+      "nameEn": "Rwanda",
+      "nameZh": "Rwanda",
+      "continentIdx": 2
+    },
+    {
+      "iso2": "sa",
+      "nameEn": "Saudi Arabia",
+      "nameZh": "Saudi Arabia",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "sd",
+      "nameEn": "Sudan",
+      "nameZh": "Sudan",
+      "continentIdx": 2
+    },
+    {
+      "iso2": "se",
+      "nameEn": "Sweden",
+      "nameZh": "Sweden",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "sg",
+      "nameEn": "Singapore",
+      "nameZh": "Singapore",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "si",
+      "nameEn": "Slovenia",
+      "nameZh": "Slovenia",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "sk",
+      "nameEn": "Slovakia",
+      "nameZh": "Slovakia",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "sm",
+      "nameEn": "San Marino",
+      "nameZh": "San Marino",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "sn",
+      "nameEn": "Senegal",
+      "nameZh": "Senegal",
+      "continentIdx": 2
+    },
+    {
+      "iso2": "so",
+      "nameEn": "Somalia",
+      "nameZh": "Somalia",
+      "continentIdx": 2
+    },
+    {
+      "iso2": "sr",
+      "nameEn": "Suriname",
+      "nameZh": "Suriname",
+      "continentIdx": 4
+    },
+    {
+      "iso2": "sv",
+      "nameEn": "El Salvador",
+      "nameZh": "El Salvador",
+      "continentIdx": 3
+    },
+    {
+      "iso2": "sy",
+      "nameEn": "Syria",
+      "nameZh": "Syria",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "tg",
+      "nameEn": "Togo",
+      "nameZh": "Togo",
+      "continentIdx": 2
+    },
+    {
+      "iso2": "th",
+      "nameEn": "Thailand",
+      "nameZh": "Thailand",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "tj",
+      "nameEn": "Tajikistan",
+      "nameZh": "Tajikistan",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "tm",
+      "nameEn": "Turkmenistan",
+      "nameZh": "Turkmenistan",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "tn",
+      "nameEn": "Tunisia",
+      "nameZh": "Tunisia",
+      "continentIdx": 2
+    },
+    {
+      "iso2": "to",
+      "nameEn": "Tonga",
+      "nameZh": "Tonga",
+      "continentIdx": 5
+    },
+    {
+      "iso2": "tr",
+      "nameEn": "Turkey",
+      "nameZh": "Turkey",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "tt",
+      "nameEn": "Trinidad and Tobago",
+      "nameZh": "Trinidad and Tobago",
+      "continentIdx": 3
+    },
+    {
+      "iso2": "tw",
+      "nameEn": "Taiwan",
+      "nameZh": "Taiwan",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "tz",
+      "nameEn": "Tanzania",
+      "nameZh": "Tanzania",
+      "continentIdx": 2
+    },
+    {
+      "iso2": "ua",
+      "nameEn": "Ukraine",
+      "nameZh": "Ukraine",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "ug",
+      "nameEn": "Uganda",
+      "nameZh": "Uganda",
+      "continentIdx": 2
+    },
+    {
+      "iso2": "us",
+      "nameEn": "USA",
+      "nameZh": "USA",
+      "continentIdx": 3
+    },
+    {
+      "iso2": "uy",
+      "nameEn": "Uruguay",
+      "nameZh": "Uruguay",
+      "continentIdx": 4
+    },
+    {
+      "iso2": "uz",
+      "nameEn": "Uzbekistan",
+      "nameZh": "Uzbekistan",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "ve",
+      "nameEn": "Venezuela",
+      "nameZh": "Venezuela",
+      "continentIdx": 4
+    },
+    {
+      "iso2": "vn",
+      "nameEn": "Vietnam",
+      "nameZh": "Vietnam",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "vu",
+      "nameEn": "Vanuatu",
+      "nameZh": "Vanuatu",
+      "continentIdx": 5
+    },
+    {
+      "iso2": "ws",
+      "nameEn": "Samoa",
+      "nameZh": "Samoa",
+      "continentIdx": 5
+    },
+    {
+      "iso2": "xk",
+      "nameEn": "Kosovo",
+      "nameZh": "Kosovo",
+      "continentIdx": 1
+    },
+    {
+      "iso2": "ye",
+      "nameEn": "Yemen",
+      "nameZh": "Yemen",
+      "continentIdx": 0
+    },
+    {
+      "iso2": "za",
+      "nameEn": "South Africa",
+      "nameZh": "South Africa",
+      "continentIdx": 2
+    },
+    {
+      "iso2": "zm",
+      "nameEn": "Zambia",
+      "nameZh": "Zambia",
+      "continentIdx": 2
+    },
+    {
+      "iso2": "zw",
+      "nameEn": "Zimbabwe",
+      "nameZh": "Zimbabwe",
+      "continentIdx": 2
+    }
+  ],
+  "hasAverage": {
+    "222": true,
+    "333": true,
+    "444": true,
+    "555": true,
+    "666": true,
+    "777": true,
+    "333bf": true,
+    "333fm": true,
+    "333oh": true,
+    "minx": true,
+    "pyram": true,
+    "clock": true,
+    "skewb": true,
+    "sq1": true,
+    "444bf": true,
+    "555bf": true,
+    "333mbf": false
+  }
+}

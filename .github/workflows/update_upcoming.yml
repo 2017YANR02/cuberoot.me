@@ -26,7 +26,7 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
-          git add stats/upcoming_comps.json stats/data/all_upcoming_comps.json stats/data/comp_names_zh.json
+          git add stats/upcoming_comps.json stats/all_upcoming_comps.json stats/comp_names_zh.json
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else

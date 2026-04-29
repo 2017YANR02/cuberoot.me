@@ -6,8 +6,8 @@ import { EVENTS_WITH_AO5 } from '../core/events.js';
 export class WrWpa extends RoundMetric {
   constructor() {
     super();
-    this.title = 'WPA (Worst Possible Average)';
-    this.titleZh = 'WPA（最差可能平均）';
+    this.title = 'WPA';
+    this.titleZh = 'WPA';
     this.note = 'Worst Possible Average: average of the worst 3 out of the first 4 solves in a round.';
     this.noteZh = '最差可能平均：前 4 次中取最差 3 次的平均。';
     this.tableHeader = {

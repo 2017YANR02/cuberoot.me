@@ -1,9 +1,0 @@
-# Scramble samples — std / xxcross / OR / bin 3
-# Population in this bin: 2
-# Samples listed: 2 (all entries in this bin)
-# Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-04-27T03:59:07.858Z
-# Columns: id,scramble,bottom_color
-
-3115470026,D R U' R' F2 R2 D L D L' B R2 L2 D2 F' L2 B L2 D,O
-4821497001,D U2 L2 D R2 F2 D' F' D F2 R' F' R D' U' F' D2,R

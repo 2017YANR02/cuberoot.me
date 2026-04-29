@@ -172,7 +172,7 @@ export default function ScrambleStatsPage() {
   const [selectedBin, setSelectedBin] = useState<number | null>(null);
 
   useEffect(() => {
-    fetch('/stats/data/scramble/distribution.json')
+    fetch('/stats/scramble/distribution.json')
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
@@ -264,7 +264,7 @@ export default function ScrambleStatsPage() {
   const ensureExamplesLoaded = () => {
     if (examples || examplesLoading) return;
     setExamplesLoading(true);
-    fetch('/stats/data/scramble/examples.json')
+    fetch('/stats/scramble/examples.json')
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
@@ -579,7 +579,7 @@ function ExamplesPanel({
         {selectedDownloadable && (
           <a
             className="scramble-stats-download-btn"
-            href={`/stats/data/scramble/downloads/${scrambleSet}/${variant}/${stage}/${subsetKey}_${selectedBin}.txt`}
+            href={`/stats/scramble/downloads/${scrambleSet}/${variant}/${stage}/${subsetKey}_${selectedBin}.txt`}
             download={`${scrambleSet}_${variant}_${stage}_${subsetKey}_${selectedBin}.txt`}
             title={isZh ? `下载 ${selectedBin} 步完整 txt` : `Download full txt for ${selectedBin} moves`}
             aria-label={isZh ? `下载 ${selectedBin} 步完整 txt` : `Download full txt for ${selectedBin} moves`}

@@ -1,9 +1,0 @@
-# Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / ORWY / bin 11
-# Population in this bin: 2
-# Samples listed: 2 (all entries in this bin)
-# Source: scrambles.txt
-# Generated: 2026-04-27T03:59:07.858Z
-# Columns: id,scramble,bottom_color
-
-116402,F2 U' B2 F2 R2 L2 U' F2 R2 U2 B2 R2 F2 U2 F' R L U B' F D' U F' D' U' L' ,O
-877108,L2 D2 B2 D R2 B2 U2 B2 L2 D2 L2 F2 U F' R L U B' F D' U F' D' U' L' ,O

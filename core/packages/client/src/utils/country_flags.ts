@@ -1,9 +1,6 @@
 // NOTE: WCA country_id / country.name → ISO 3166-1 alpha-2 映射
 // 用于前端渲染国旗（flag-icons CSS 库需要小写 ISO2 代码）
 // 数据源：WCA countries 表（https://www.worldcubeassociation.org/export/developer）
-// DRY：国旗 CSS 类名生成复用 recon_utils.ts 的 flagClass()
-
-import { flagClass } from './recon_utils';
 
 // NOTE: WCA 数据库中国家值有两种格式：
 // 1. country_id（如 "China", "USA"）— round_metric/ao_rounds 等基类直接输出
@@ -11,7 +8,12 @@ import { flagClass } from './recon_utils';
 // 此映射需覆盖两种格式
 const COUNTRY_TO_ISO2: Record<string, string> = {
   // NOTE: 非标准地区（WCA 特有的 XK = Kosovo, XE/XS/XM/XN = 前南斯拉夫/前苏联地区）
+  // NOTE: "Multiple Countries (Region)" 是 stats-build 跨国汇总行，无国旗
   'Multiple Countries': '',
+  'Multiple Countries (World)': '', 'Multiple Countries (Africa)': '',
+  'Multiple Countries (Americas)': '', 'Multiple Countries (North America)': '',
+  'Multiple Countries (South America)': '', 'Multiple Countries (Asia)': '',
+  'Multiple Countries (Europe)': '', 'Multiple Countries (Oceania)': '',
   'XK': 'xk',
 
   // Africa
@@ -48,10 +50,10 @@ const COUNTRY_TO_ISO2: Record<string, string> = {
   'Afghanistan': 'af', 'Armenia': 'am', 'Azerbaijan': 'az', 'Bahrain': 'bh',
   'Bangladesh': 'bd', 'Bhutan': 'bt', 'Brunei': 'bn', 'Cambodia': 'kh',
   'China': 'cn', 'Cyprus': 'cy', 'East Timor': 'tl', 'Georgia': 'ge',
-  'Hong Kong': 'hk', 'India': 'in', 'Indonesia': 'id', 'Iran': 'ir',
+  'Hong Kong': 'hk', 'Hong Kong, China': 'hk', 'India': 'in', 'Indonesia': 'id', 'Iran': 'ir',
   'Iraq': 'iq', 'Israel': 'il', 'Japan': 'jp', 'Jordan': 'jo',
   'Kazakhstan': 'kz', 'Korea': 'kr', 'Kuwait': 'kw', 'Kyrgyzstan': 'kg',
-  'Laos': 'la', 'Lebanon': 'lb', 'Macau': 'mo', 'Malaysia': 'my',
+  'Laos': 'la', 'Lebanon': 'lb', 'Macau': 'mo', 'Macau, China': 'mo', 'Malaysia': 'my',
   'Maldives': 'mv', 'Mongolia': 'mn', 'Myanmar': 'mm', 'Nepal': 'np',
   'North Korea': 'kp', 'Oman': 'om', 'Pakistan': 'pk', 'Palestine': 'ps',
   'Philippines': 'ph', 'Qatar': 'qa', 'Saudi Arabia': 'sa', 'Singapore': 'sg',
@@ -162,17 +164,6 @@ export function searchCountries(
     .map(({ iso2, name }) => ({ iso2, name }));
 }
 
-/**
- * 获取国旗 CSS 类名（封装 flagClass + countryToIso2）
- * NOTE: 一步到位——传入 WCA 国家文本，返回 flag-icons CSS 类名
- * @param country WCA 国家值
- * @returns CSS 类名（如 "fi fi-cn"），未知返回空字符串
- */
-export function countryFlagClass(country: string): string {
-  const iso2 = countryToIso2(country);
-  return flagClass(iso2);
-}
-
 // ── 选手 / 比赛国旗数据（异步加载，模块级缓存） ──
 
 // NOTE: 缓存——模块生命周期内只 fetch 一次
@@ -194,7 +185,7 @@ export function loadFlagData(): Promise<number> {
     _loadPromise = Promise.all([
       fetch('/stats/person_countries.json').then(r => r.ok ? r.json() : {}).catch(() => ({})),
       fetch('/stats/comp_countries.json').then(r => r.ok ? r.json() : {}).catch(() => ({})),
-      fetch('/stats/data/comp_names_zh.json').then(r => r.ok ? r.json() : {}).catch(() => ({})),
+      fetch('/stats/comp_names_zh.json').then(r => r.ok ? r.json() : {}).catch(() => ({})),
     ]).then(([persons, comps, compZh]) => {
       _personCountries = persons;
       _compCountries = comps;

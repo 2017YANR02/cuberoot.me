@@ -1,4 +1,4 @@
-// 输出 stats/data/persons_search.json.gz —— 给前端 WcaPersonPicker 做本地索引
+// 输出 stats/persons_search.json.gz —— 给前端 WcaPersonPicker 做本地索引
 // 紧凑数组：[[wcaId, name, iso2], ...]，按 wca_id 升序
 import { writeFileSync, mkdirSync } from 'fs';
 import { resolve, dirname } from 'path';
@@ -7,7 +7,7 @@ import { gzipSync } from 'zlib';
 import { query, closePool } from '../core/database.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const OUTPUT_DIR = resolve(__dirname, '../../../../../stats/data');
+const OUTPUT_DIR = resolve(__dirname, '../../../../../stats');
 const OUTPUT_FILE = resolve(OUTPUT_DIR, 'persons_search.json.gz');
 
 async function main() {

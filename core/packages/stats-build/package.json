@@ -5,7 +5,6 @@
   "type": "module",
   "scripts": {
     "compute": "tsx src/bin/compute.ts",
-    "validate": "tsx src/bin/validate.ts",
     "validate-queries": "tsx src/bin/validate_queries.ts",
     "nemesizer": "tsx src/bin/nemesizer.ts",
     "gen-persons-search": "tsx src/bin/gen_persons_search.ts"

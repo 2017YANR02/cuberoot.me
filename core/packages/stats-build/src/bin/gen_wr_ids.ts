@@ -9,7 +9,7 @@ import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = resolve(__dirname, '../../../../../stats/data');
+const DATA_DIR = resolve(__dirname, '../../../../../stats');
 const OUTPUT_PATH = resolve(__dirname, '../../../../../stats/wr_ids.json');
 
 // NOTE: 项目中英文名 → 项目 ID 映射（从 events.ts 概念反转而来）

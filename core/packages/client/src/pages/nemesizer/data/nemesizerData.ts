@@ -1,5 +1,5 @@
 // Fetches and decodes the nemesizer binary dataset once per session.
-// Files: /stats/data/nemesizer/{persons.bin.gz, ranks.bin.gz, counts.bin.gz, meta.json}
+// Files: /stats/nemesizer/{persons.bin.gz, ranks.bin.gz, counts.bin.gz, meta.json}
 import {
   decodePersons,
   decodeRanks,
@@ -36,7 +36,7 @@ export interface NemesizerDataset {
   continentIndex: Map<number, number[]>;    // continentIdx → personIdx[]
 }
 
-const BASE = '/stats/data/nemesizer';
+const BASE = '/stats/nemesizer';
 
 async function fetchGz(url: string): Promise<Uint8Array> {
   // NOTE: force-cache is safe because the URL itself carries an exportDate

@@ -1,0 +1,38 @@
+# Scramble samples — pseudo / pseudo_cross / B / bin 4
+# Population in this bin: 31
+# Samples listed: 31 (all entries in this bin)
+# Source: scrambles.txt
+# Generated: 2026-04-27T03:59:07.858Z
+# Columns: id,scramble,bottom_color
+
+2,R2 B2 L2 U2 L2 D B2 L2 U2 R2 D2 U L2 U' B' R' D' U R2 L' B U' F' U' ,B
+1161,F2 D' R2 F2 D B2 D B2 L2 U L2 F2 D' U' B' F' R' B2 L2 D U' F' R' L' ,B
+1179,F2 D F2 D' B2 D' L2 B2 D2 R2 F2 U B2 R2 U' B' L U' F2 D' F' R B D' L' U' ,B
+4755,U' B2 L2 D F2 D L2 D' B2 D R2 F2 U B' F' R' B2 L2 D U' F' R' L' ,B
+4756,D' F2 U' L2 D' B2 R2 L2 D' U2 F2 R2 U2 B' F' R' B2 L2 D U' F' R' L' ,B
+5939,L2 F2 R2 B2 U' B2 U B2 L2 D R2 U' B2 U' L' B U L F D' R' U' B2 L' ,B
+5940,D L2 B2 F2 D R2 D L2 B2 U2 B2 U R2 D R2 L' D' U2 F R' B L2 D' U2 L' U' ,B
+5962,R2 D' B2 L2 B2 D2 F2 L2 U2 F2 U' R2 U' F' U B2 R L' B' D F R B' ,B
+5964,D' B2 D F2 L2 U' B2 U2 L2 B2 U' F2 R2 U' F' R L' B R' D B2 R' F L2 ,B
+5986,D2 R2 U L2 F2 U' R2 L2 D' L2 F2 D' F2 U2 L2 B' R' L' B' F' D' U' F' U2 ,B
+145992,L2 B2 D2 R2 U' L2 D' R2 F2 R2 U' F2 R' L' B' L2 F' R' L U' ,B
+149604,L2 D2 F2 D U2 B2 L2 U' R2 U R2 B2 U' B' F' R' B2 L2 D U' F' R' L' ,B
+149605,D L2 B2 F2 U R2 D2 L2 B2 U' F2 D' R2 L2 F' L' D B U R2 F2 L' F' R' ,B
+149606,D2 R2 U2 R2 B2 U' B2 F2 D R2 B' R' D F U B2 R' B' L' ,B
+149607,B2 L2 U2 L2 F2 U2 L2 F2 D' L2 D' F2 R2 U' R' B L U' F' D' R' B U2 F' ,B
+149608,R2 U R2 U L2 B2 R2 D2 F2 D L2 D2 U' B' F' R' B2 L2 D U' F' R' L' ,B
+149609,D' B2 D L2 U2 F2 D' B2 U2 R2 D B2 U' R2 L2 B' D R L' U B' L F U2 L' ,B
+149610,L2 D' B2 U2 R2 U B2 D' B2 R2 U2 B2 U' R2 B' L' D R' B2 L2 D B F' L' ,B
+149611,L2 D B2 R2 D B2 L2 D B2 D B2 U2 R2 B' R' D F U B2 R' B' L' ,B
+149612,L2 U' B2 U F2 L2 U R2 B2 U R2 D R2 F2 U' B' R' D F U L2 B2 R' B' L' ,B
+149613,U2 L2 U R2 U' L2 U' B2 F2 U R2 B' R U L F D' B D2 U2 L' ,B
+149614,L2 D B2 D B2 R2 L2 U' F2 D' F2 L2 D2 B' L' D R' B2 L2 D B F' L' ,B
+149615,R2 B2 U' L2 B2 U L2 F2 D L2 D2 U' L2 U2 B' R U L F D' B D2 U2 L' ,B
+149616,U2 F2 D' B2 L2 U' B2 R2 D B2 D' U2 R2 B' F' R' B2 L2 D U' F' R' L' ,B
+149617,D2 L2 F2 D F2 U R2 F2 U B2 R2 U R2 D' B' D R L' U B' L F U2 L' ,B
+218711,F2 D' L2 B2 D L2 B2 F2 L2 D F2 D B2 R2 U' L' F' R B' L U' F D' R F U ,B
+218712,U L2 U' F2 D' B2 U B2 R2 F2 R2 L2 U' F2 U' L' U2 F U2 F2 U' B R2 U R' L' ,B
+218713,D L2 U' B2 D L2 B2 L2 F2 U B2 D L2 U2 R2 L' D2 F' R' U' R U B' R D L' ,B
+218741,D' B2 D2 R2 F2 U R2 U L2 B2 D L2 U' B2 U' L' F' L' B' U R F L' D2 F U' ,B
+218742,U F2 D' R2 B2 U2 R2 F2 L2 U' F2 U' F2 U2 L' F' L' B' U R F L' D2 F U' ,B
+218743,B2 F2 U' B2 D R2 D' U2 R2 D2 L2 B2 U2 B' D2 R F L' B' R D2 F L' U' ,B

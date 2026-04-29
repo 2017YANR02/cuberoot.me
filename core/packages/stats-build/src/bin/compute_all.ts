@@ -105,7 +105,7 @@ function buildOrderedIds(): string[] {
 }
 
 async function main() {
-  const outputDir = resolve(__dirname, '../../../../../stats/data');
+  const outputDir = resolve(__dirname, '../../../../../stats');
   mkdirSync(outputDir, { recursive: true });
 
   let orderedIds = buildOrderedIds();

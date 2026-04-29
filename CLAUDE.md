@@ -31,7 +31,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Frame Count | `/frame-count` | `core/packages/client/src/pages/frame-count/` | 自有（WebCodecs + mp4box.js） | ✅ |
 | Distribution | `/viz` | `core/packages/client/src/pages/viz/` | 自有 | ✅ |
 | Upcoming Comps | `/upcoming-comps` | `core/packages/client/src/pages/UpcomingCompsPage.tsx` | 自有 | ✅ |
-| Scramble（打乱难度分布） | `/scramble-stats` | `core/packages/client/src/pages/scramble_stats/` + 数据 `stats/data/scramble/*.json` | 自有（源自 `D:\cube\solver` C++ 分析器产出的 CSV） | ✅ |
+| Scramble（打乱难度分布） | `/scramble-stats` | `core/packages/client/src/pages/scramble_stats/` + 数据 `stats/scramble/*.json` | 自有（源自 `D:\cube\solver` C++ 分析器产出的 CSV） | ✅ |
 | Mosaic（魔方马赛克生成） | `/mosaic` | `core/packages/client/src/pages/mosaic/` | ported from [Roman-/mosaic](https://github.com/Roman-/mosaic) | ✅ 已 port 为 React |
 | Blog | `cuberoot.me/blog/` | 不在本仓库 | 外部托管 | — |
 
@@ -61,6 +61,7 @@ pnpm --filter @cuberoot/client lint
 - Dev server 绑定 `127.0.0.1`（Vite 默认 IPv6 `[::1]` 在 Windows Chrome 下打不开，已在 `vite.config.ts` 固定）
 - Recon API 通过 Vite proxy 转发到 `www.cuberoot.me`，**本地开发不需要跑后端**
 - `serveRepoRoot` Vite 插件从仓库根 serve `/tools/`、`/stats/`、以及 upstream 静态页
+- **凭据展开**：给用户 ECS / DB shell 命令时，从 `.password.md` 读真实密码直接嵌入，**不要写 `<password>` 占位**（`.password.md` 已 gitignore，不会进 repo；用户每次都得手动替换占位太烦）。命令本身不要 commit。
 
 ## 代码风格
 
@@ -85,6 +86,6 @@ pnpm --filter @cuberoot/client lint
 | 中国比赛名中文化 | `cn-comp-names` | 中文模式下比赛名；`comp_names_zh.json` 数据问题 |
 | Competition JSON 数据源 | `comp-data-schema` | 改 upcoming/past comps 相关代码 |
 | 新增 public 静态资源 | `deploy-public-asset` | 加 geojson / 图片 / 纹理 / wasm 等；双 workflow 白名单 |
-| 重跑统计数据 | `stats-build` | 修改 `stats/data/*.json` 生成器；新增 stat |
+| 重跑统计数据 | `stats-build` | 修改 `stats/*.json` 生成器；新增 stat |
 | 写 WCA SQL（本地 dump） | `wca-stats-db` | 任何写针对 `wca_statistics` MySQL 的 SQL — schema snake_case、persons.sub_id=1、events.rank<900、成绩值编码、records 标记 |
-| 重跑打乱分布 | `scramble-stats-build` | 修改 `stats/data/scramble/*.json`；WCA 配色 / 阶段-朝向 schema / pair CSV 特殊记号 |
+| 重跑打乱分布 | `scramble-stats-build` | 修改 `stats/scramble/*.json`；WCA 配色 / 阶段-朝向 schema / pair CSV 特殊记号 |

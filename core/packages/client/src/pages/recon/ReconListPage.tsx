@@ -527,7 +527,7 @@ export default function ReconListPage() {
           <>
             {solve.value || formatTime(solve.rawTime)}
             {solve.regionalSingleRecord && (
-              <> <RecordBadge record={solve.regionalSingleRecord} variant="inline" /></>
+              <> <RecordBadge record={solve.regionalSingleRecord} variant="inline" iso2={solve.personCountry} /></>
             )}
           </>
         );
@@ -585,7 +585,7 @@ export default function ReconListPage() {
           <span className={`recon-cell${dim}`}>
             {formatAvg(solve.average)}
             {solve.regionalAverageRecord && (
-              <> <RecordBadge record={solve.regionalAverageRecord} variant="inline" /></>
+              <> <RecordBadge record={solve.regionalAverageRecord} variant="inline" iso2={solve.personCountry} /></>
             )}
           </span>
         );
@@ -596,7 +596,7 @@ export default function ReconListPage() {
           <span className={`recon-cell${dim}`}>
             {formatAoXR(solve.aoType)}
             {solve.regionalAoxrRecord && (
-              <> <RecordBadge record={solve.regionalAoxrRecord} variant="inline" /></>
+              <> <RecordBadge record={solve.regionalAoxrRecord} variant="inline" iso2={solve.personCountry} /></>
             )}
           </span>
         );

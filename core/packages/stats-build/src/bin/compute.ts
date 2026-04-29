@@ -153,8 +153,8 @@ async function main() {
     stat = null;
     if (global.gc) global.gc();
 
-    // NOTE: 输出 JSON 到 stats/data/ 目录
-    const outputDir = resolve(__dirname, '../../../../../stats/data');
+    // NOTE: 输出 JSON 到 stats/ 目录
+    const outputDir = resolve(__dirname, '../../../../../stats');
     mkdirSync(outputDir, { recursive: true });
     const outputPath = resolve(outputDir, `${statId}.json`);
     writeFileSync(outputPath, JSON.stringify(json, null, 2), 'utf-8');
