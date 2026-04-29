@@ -31,7 +31,9 @@
 .record-select-current {
   display: inline-flex;
   align-items: center;
+  gap: 6px;
   min-height: 1em;
+  min-width: 0;
 }
 
 .record-select-chevron {
@@ -39,9 +41,33 @@
   flex-shrink: 0;
 }
 
+.record-select-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  color: #888;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.12s, color 0.12s;
+}
+.record-select-clear:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #e5e5e5;
+}
+
 .record-select-empty {
   color: #5a5a5a;
   font-size: 0.85rem;
+}
+
+.record-select-count {
+  color: #888;
+  font-size: 0.78rem;
+  margin-left: 6px;
+  flex-shrink: 0;
 }
 
 .record-select-popup {

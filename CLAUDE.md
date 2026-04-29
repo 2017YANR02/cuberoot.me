@@ -56,6 +56,7 @@ pnpm --filter @cuberoot/client lint
 > 2. **路径前缀也不能加 `core/`**：CWD 已是 `core/`，所以写 `packages/client/...` 而不是 `core/packages/client/...`；写 `ls packages/stats-build/database.yml` 不是 `ls core/packages/stats-build/database.yml`。**因路径错而看不到文件 ≠ 文件不存在,先核对 CWD 再下结论**。
 > 3. **类型检查只有一档了**（历史教训：以前的 `typecheck` 走根 `tsconfig.json` 即 `files: []` references-only 壳，`tsc --noEmit` 实际什么都没检查，typo 静默过；2026-04 改为 `tsc -b`）。日常和 push 前都跑 `typecheck`；`typecheck:ci` 加 `--force` 是 CI 用的清缓存全量。
 > 4. **磁盘不够必须停下来告诉我**（worktree / pnpm install / build 失败时先 `df -h` 再求助，别静默换方案）。
+> 5. **Dev server 我已经在跑,不要 `pnpm dev`**：`http://127.0.0.1:5173/` 永远开着,要验证直接 playwright 打开;别后台启 dev,会因端口占用立刻挂。
 
 - Dev server 绑定 `127.0.0.1`（Vite 默认 IPv6 `[::1]` 在 Windows Chrome 下打不开，已在 `vite.config.ts` 固定）
 - Recon API 通过 Vite proxy 转发到 `www.cuberoot.me`，**本地开发不需要跑后端**
