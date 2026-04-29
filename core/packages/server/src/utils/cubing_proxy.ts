@@ -40,34 +40,47 @@ interface CompMeta {
 const compMetaCache = new Map<string, { val: CompMeta | null; expiresAt: number }>();
 const roundCache = new Map<string, { val: RoundData | null; expiresAt: number }>();
 
-async function getCompMeta(slug: string): Promise<CompMeta | null> {
-  const cached = compMetaCache.get(slug);
-  if (cached && cached.expiresAt > Date.now()) return cached.val;
-
+async function tryFetchCompMeta(slug: string): Promise<CompMeta | null> {
   try {
     const res = await fetch(`https://cubing.com/live/${encodeURIComponent(slug)}`, {
       headers: { 'User-Agent': UA },
       signal: AbortSignal.timeout(HTML_TIMEOUT),
     });
     if (!res.ok) {
-      compMetaCache.set(slug, { val: null, expiresAt: Date.now() + 60_000 });
+      console.error(`[cubing_proxy] HTML ${res.status} for slug=${slug}`);
       return null;
     }
     const html = await res.text();
     const m = html.match(/data-c="(\d+)"/);
     if (!m) {
-      compMetaCache.set(slug, { val: null, expiresAt: Date.now() + 60_000 });
+      console.error(`[cubing_proxy] no data-c in HTML for slug=${slug}`);
       return null;
     }
     const id = Number(m[1]);
     const setCookies = (res.headers as { getSetCookie?: () => string[] }).getSetCookie?.() ?? [];
     const cookies = setCookies.map(c => c.split(';')[0]).join('; ');
-    const meta: CompMeta = { id, cookies };
-    compMetaCache.set(slug, { val: meta, expiresAt: Date.now() + COMP_TTL });
-    return meta;
-  } catch {
+    return { id, cookies };
+  } catch (err) {
+    console.error(`[cubing_proxy] HTML fetch failed for slug=${slug}:`, err);
     return null;
   }
+}
+
+async function getCompMeta(slug: string): Promise<CompMeta | null> {
+  const cached = compMetaCache.get(slug);
+  if (cached && cached.expiresAt > Date.now()) return cached.val;
+
+  // NOTE: 先按用户给的 slug(通常已是 dash-case),失败再 fallback 到去掉 dash 的形式
+  let meta = await tryFetchCompMeta(slug);
+  if (!meta) {
+    const flat = slug.replace(/-/g, '');
+    if (flat !== slug) {
+      console.error(`[cubing_proxy] retrying with flat slug=${flat}`);
+      meta = await tryFetchCompMeta(flat);
+    }
+  }
+  compMetaCache.set(slug, { val: meta, expiresAt: Date.now() + (meta ? COMP_TTL : 60_000) });
+  return meta;
 }
 
 function fetchRoundOverWs(meta: CompMeta, event: string, round: string): Promise<RoundData | null> {
@@ -116,8 +129,8 @@ function fetchRoundOverWs(meta: CompMeta, event: string, round: string): Promise
       } catch { /* ignore parse error */ }
     });
 
-    ws.on('error', () => { clearTimeout(timer); finish(null); });
-    ws.on('close', () => clearTimeout(timer));
+    ws.on('error', (err) => { console.error('[cubing_proxy] ws err:', err.message); clearTimeout(timer); finish(null); });
+    ws.on('close', (code, reason) => { if (!users || !results) console.error(`[cubing_proxy] ws closed before data, code=${code} reason=${reason}`); clearTimeout(timer); });
   });
 }
 

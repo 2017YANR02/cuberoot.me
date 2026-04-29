@@ -208,7 +208,9 @@ export function formatAoXR(aoType: string | undefined): string {
  */
 export function formatRound(round: string | undefined, solveNum: number | undefined): string {
   if (!round) return '';
-  return round + (round && solveNum ? '#' + solveNum : '');
+  // NOTE: 纯数字轮次加 'R' 前缀（'1' → 'R1'），final 等字母轮次保持原样
+  const display = /^\d+$/.test(round) ? `R${round}` : round;
+  return display + (solveNum ? '#' + solveNum : '');
 }
 
 // ── 纪录徽章 ──

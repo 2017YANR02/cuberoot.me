@@ -57,6 +57,7 @@ export default function ReconSubmitPage() {
   const fromId = !isEditing ? searchParams.get('from') : null;
   const fromSolveNum = !isEditing ? searchParams.get('solveNum') : null;
   const suggestTime = !isEditing ? searchParams.get('suggestTime') : null;
+  const suggestScramble = !isEditing ? searchParams.get('suggestScramble') : null;
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
@@ -157,6 +158,9 @@ export default function ReconSubmitPage() {
         reconerId: authUser?.wcaId ?? src.reconerId,
         reconDate: toDateInput(src.reconDate),
         solveNum: targetSolveNum ?? prev.solveNum,
+        // NOTE: 同选手同轮次大概率用同一个魔方+同一个视频(整轮录在一起),沿用
+        cube: src.cube,
+        videoUrl: src.videoUrl,
       }));
       if (src.average != null) setAvgInput(formatTimeInput(src.average));
       // NOTE: ?suggestTime= — 来自 SameRoundNav 的 WCA / 粘贴解析
@@ -164,9 +168,13 @@ export default function ReconSubmitPage() {
         const n = parseFloat(suggestTime);
         if (!isNaN(n) && n > 0) setTimeInput(formatTimeInput(n));
       }
+      // NOTE: ?suggestScramble= — 来自 WCA scrambles API
+      if (suggestScramble) {
+        setForm(prev => ({ ...prev, wcaScramble: suggestScramble }));
+      }
       setLoadingEdit(false);
     }).catch(() => setLoadingEdit(false));
-  }, [fromId, fromSolveNum, isEditing, authUser, suggestTime]);
+  }, [fromId, fromSolveNum, isEditing, authUser, suggestTime, suggestScramble]);
 
   // NOTE: 更新表单字段
   const setField = useCallback(<K extends keyof ReconSolve>(key: K, value: ReconSolve[K]) => {
