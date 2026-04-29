@@ -1,0 +1,1 @@
+import{n as e}from"./index-DJgLTX6C.js";import{y as t}from"./flag-YyfZaeQc.js";var n=e();function r({record:e,variant:r=`standalone`}){let i=t(e??void 0);return i?(0,n.jsx)(`span`,{className:r===`inline`?`${i.className} record-badge--inline`:i.className,children:i.text}):null}export{r as t};
