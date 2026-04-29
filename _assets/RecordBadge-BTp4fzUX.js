@@ -1,0 +1,1 @@
+import{n as e}from"./index-Dz8-T6rh.js";import{a as t,l as n}from"./recon_utils-Be3NiKgd.js";var r=e();function i({record:e,variant:i=`standalone`,iso2:a}){let o=n((a?t(e,a):e)??void 0);return o?(0,r.jsx)(`span`,{className:i===`inline`?`${o.className} record-badge--inline`:o.className,children:o.text}):null}export{i as t};
