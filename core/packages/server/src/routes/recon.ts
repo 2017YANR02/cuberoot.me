@@ -12,7 +12,6 @@ import {
   requireAuth, requireAdmin, checkRateLimit,
   buildInsert, buildUpdate, ADMIN_WCA_IDS,
 } from '../utils/recon_helpers.js';
-import { fetchCubingAttempts } from '../utils/cubing_proxy.js';
 
 export const reconRoutes = new Hono();
 
@@ -419,27 +418,6 @@ reconRoutes.get('/api/recon/wca-attempts', async (c) => {
     return c.json(personData);
   } catch {
     return c.json({ error: 'WCA API unavailable' }, 502);
-  }
-});
-
-// GET /api/recon/cubing-attempts?slug=&event=&round=&personId= — 代理 cubing.com 实时直播成绩
-reconRoutes.get('/api/recon/cubing-attempts', async (c) => {
-  const slug = c.req.query('slug') ?? '';
-  const event = c.req.query('event') ?? '';
-  const round = c.req.query('round') ?? '';
-  const personId = c.req.query('personId') ?? '';
-  if (!slug || !event || !round || !personId) {
-    return c.json({ error: 'slug/event/round/personId required' }, 400);
-  }
-  if (!/^[A-Za-z0-9-]+$/.test(slug) || !/^[A-Za-z0-9]+$/.test(event) || !/^[A-Za-z0-9]+$/.test(round) || !/^[0-9]{4}[A-Z]{4}\d{2}$/.test(personId)) {
-    return c.json({ error: 'invalid param format' }, 400);
-  }
-  try {
-    const attempts = await fetchCubingAttempts(slug, event, round, personId);
-    c.header('Cache-Control', 'public, max-age=60');
-    return c.json({ attempts });
-  } catch {
-    return c.json({ error: 'cubing.com unreachable' }, 502);
   }
 });
 
