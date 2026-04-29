@@ -1,0 +1,633 @@
+{
+  "id": "longest_streak_of_personal_records",
+  "title": "Longest streak of competitions with a personal record done",
+  "titleZh": "最长连续个人纪录参赛记录",
+  "header": [
+    {
+      "key": "competitions",
+      "label": "Competitions",
+      "labelZh": "比赛",
+      "align": "right"
+    },
+    {
+      "key": "person",
+      "label": "Person",
+      "labelZh": "选手",
+      "align": "left"
+    },
+    {
+      "key": "started_at",
+      "label": "Started at",
+      "labelZh": "开始于",
+      "align": "left"
+    },
+    {
+      "key": "ended_at",
+      "label": "Ended at",
+      "labelZh": "结束于",
+      "align": "left"
+    }
+  ],
+  "rows": [
+    [
+      91,
+      "[Antonie Paterakis](https://www.worldcubeassociation.org/persons/2012PATE01)",
+      "[NEMO Amsterdam Open 2012](https://www.worldcubeassociation.org/competitions/NEMOAmsterdamOpen2012)",
+      null
+    ],
+    [
+      81,
+      "[Evan Liu](https://www.worldcubeassociation.org/persons/2009LIUE01)",
+      "[Cumberland Valley Open 2009](https://www.worldcubeassociation.org/competitions/CumberlandValley2009)",
+      null
+    ],
+    [
+      78,
+      "[Olivia Trace](https://www.worldcubeassociation.org/persons/2015TRAC01)",
+      "[Johns Hopkins Winter 2015](https://www.worldcubeassociation.org/competitions/JohnsHopkinsWinter2015)",
+      null
+    ],
+    [
+      76,
+      "[Zeke Mackay](https://www.worldcubeassociation.org/persons/2015MACK06)",
+      "[Wiscube 2015](https://www.worldcubeassociation.org/competitions/Wiscube2ndEdition2015)",
+      null
+    ],
+    [
+      74,
+      "[Will Callan](https://www.worldcubeassociation.org/persons/2012CALL01)",
+      "[River Hill Summer 2012](https://www.worldcubeassociation.org/competitions/RiverHillSummer2012)",
+      null
+    ],
+    [
+      72,
+      "[Zachary White](https://www.worldcubeassociation.org/persons/2010WHIT05)",
+      "[Small Cubes Open 2010](https://www.worldcubeassociation.org/competitions/SmallCubesOpen2010)",
+      null
+    ],
+    [
+      72,
+      "[Oana-Simona Vrabie](https://www.worldcubeassociation.org/persons/2022VRAB01)",
+      "[Bucharest Back to Cube 2022](https://www.worldcubeassociation.org/competitions/BucharestBacktoCube2022)",
+      null
+    ],
+    [
+      71,
+      "[Myles Jarman](https://www.worldcubeassociation.org/persons/2016JARM01)",
+      "[POPS Open 2016](https://www.worldcubeassociation.org/competitions/POPSOpen2016)",
+      null
+    ],
+    [
+      69,
+      "[Nolan Yiu](https://www.worldcubeassociation.org/persons/2016YIUN01)",
+      "[Berkeley Fall 2016](https://www.worldcubeassociation.org/competitions/BerkeleyFall2016)",
+      null
+    ],
+    [
+      69,
+      "[Ivo Stoutjesdijk](https://www.worldcubeassociation.org/persons/2019STOU02)",
+      "[Breda Open 2019](https://www.worldcubeassociation.org/competitions/BredaOpen2019)",
+      null
+    ],
+    [
+      68,
+      "[Aidan Grainger](https://www.worldcubeassociation.org/persons/2018GRAI01)",
+      "[UK Championship 2018](https://www.worldcubeassociation.org/competitions/UKC2018)",
+      null
+    ],
+    [
+      67,
+      "[Junqi Feng (冯骏骐)](https://www.worldcubeassociation.org/persons/2015FENG12)",
+      "[Nanjing Autumn 2015](https://www.worldcubeassociation.org/competitions/NanjingAutumn2015)",
+      null
+    ],
+    [
+      67,
+      "[Roman Sokolovskyi](https://www.worldcubeassociation.org/persons/2021SOKO03)",
+      "[Cubes Masters Zhytomyr 2021](https://www.worldcubeassociation.org/competitions/CubesMastersZhytomyr2021)",
+      null
+    ],
+    [
+      67,
+      "[Leo Alanen](https://www.worldcubeassociation.org/persons/2022ALAN02)",
+      "[Pulmapelipäivät 2022](https://www.worldcubeassociation.org/competitions/Pulmapelipaivat2022)",
+      null
+    ],
+    [
+      66,
+      "[Wilhelm Kilders](https://www.worldcubeassociation.org/persons/2010KILD02)",
+      "[German Nationals 2010](https://www.worldcubeassociation.org/competitions/Germany2010)",
+      null
+    ],
+    [
+      65,
+      "[Justin Barker](https://www.worldcubeassociation.org/persons/2013BARK01)",
+      "[UIUC Spring 2013](https://www.worldcubeassociation.org/competitions/UIUCSpring2013)",
+      null
+    ],
+    [
+      65,
+      "[Daniel Greigg](https://www.worldcubeassociation.org/persons/2015GREI01)",
+      "[River Hill Winter 2015](https://www.worldcubeassociation.org/competitions/RiverHillWinter2015)",
+      null
+    ],
+    [
+      65,
+      "[Elizabeth Cutting](https://www.worldcubeassociation.org/persons/2019CUTT01)",
+      "[Colorado Qualifier 2019](https://www.worldcubeassociation.org/competitions/ColoradoQualifier2019)",
+      null
+    ],
+    [
+      64,
+      "[Adam Greenwood](https://www.worldcubeassociation.org/persons/2011GREE03)",
+      "[UK Open 2011](https://www.worldcubeassociation.org/competitions/UKOpen2011)",
+      null
+    ],
+    [
+      64,
+      "[Daniel Rose-Levine](https://www.worldcubeassociation.org/persons/2015ROSE01)",
+      "[Northeastern Fall 2015](https://www.worldcubeassociation.org/competitions/NortheasternFall2015)",
+      null
+    ],
+    [
+      64,
+      "[Max Chan](https://www.worldcubeassociation.org/persons/2015CHAN37)",
+      "[Manhasset 2015](https://www.worldcubeassociation.org/competitions/ManhassetFall2015)",
+      null
+    ],
+    [
+      64,
+      "[Daniel Pavelich](https://www.worldcubeassociation.org/persons/2015PAVE01)",
+      "[Mishawaka Winter 2017](https://www.worldcubeassociation.org/competitions/MishawakaWinter2017)",
+      null
+    ],
+    [
+      64,
+      "[Kyle Meade](https://www.worldcubeassociation.org/persons/2019MEAD03)",
+      "[Bala Big and Blind 2019](https://www.worldcubeassociation.org/competitions/BalaBigandBlind2019)",
+      null
+    ],
+    [
+      63,
+      "[Thompson Clarke](https://www.worldcubeassociation.org/persons/2008CLAR01)",
+      "[Toronto Open Fall 2008](https://www.worldcubeassociation.org/competitions/TorontoOpenFall2008)",
+      null
+    ],
+    [
+      63,
+      "[Francisco Hamlin](https://www.worldcubeassociation.org/persons/2012HAML01)",
+      "[Amstelveen Open 2012](https://www.worldcubeassociation.org/competitions/AmstelveenOpen2012)",
+      null
+    ],
+    [
+      63,
+      "[Lim Hung (林弘)](https://www.worldcubeassociation.org/persons/2016HUNG08)",
+      "[INTI Open 2016](https://www.worldcubeassociation.org/competitions/IntiOpen2016)",
+      null
+    ],
+    [
+      63,
+      "[Ibrahim Khanani](https://www.worldcubeassociation.org/persons/2018KHAN27)",
+      "[Slow N Steady Summer 2018](https://www.worldcubeassociation.org/competitions/SlowNSteadySummer2018)",
+      null
+    ],
+    [
+      62,
+      "[Callum Hales-Jepp](https://www.worldcubeassociation.org/persons/2012HALE01)",
+      "[Rapid Dash Open 2012](https://www.worldcubeassociation.org/competitions/RapidashOpen2012)",
+      null
+    ],
+    [
+      61,
+      "[Hannes Müller](https://www.worldcubeassociation.org/persons/2018MULL07)",
+      "[Schwandorf Open 2018](https://www.worldcubeassociation.org/competitions/SchwandorfOpen2018)",
+      null
+    ],
+    [
+      61,
+      "[Quinn Maloney](https://www.worldcubeassociation.org/persons/2023MALO01)",
+      "[Pioneer Valley Cubing B 2023](https://www.worldcubeassociation.org/competitions/PioneerValleyCubingB2023)",
+      null
+    ],
+    [
+      59,
+      "[Serafim Weiß](https://www.worldcubeassociation.org/persons/2018WEIS10)",
+      "[Franconia Open 2018](https://www.worldcubeassociation.org/competitions/FranconiaOpen2018)",
+      null
+    ],
+    [
+      59,
+      "[Eskil Munthe](https://www.worldcubeassociation.org/persons/2022MUNT02)",
+      "[Herrljunga Open 2022](https://www.worldcubeassociation.org/competitions/HerrljungaOpen2022)",
+      null
+    ],
+    [
+      58,
+      "[Joshua Feran](https://www.worldcubeassociation.org/persons/2011FERA01)",
+      "[Cubetcha 2011](https://www.worldcubeassociation.org/competitions/Cubetcha2011)",
+      null
+    ],
+    [
+      58,
+      "[Linus Buck](https://www.worldcubeassociation.org/persons/2016BUCK01)",
+      "[Hessen Open 2016](https://www.worldcubeassociation.org/competitions/HessenOpen2016)",
+      null
+    ],
+    [
+      58,
+      "[Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04)",
+      "[MCC Beta 2016](https://www.worldcubeassociation.org/competitions/MichiganCubingClubBeta2016)",
+      null
+    ],
+    [
+      58,
+      "[Jack Pfeifer](https://www.worldcubeassociation.org/persons/2016PFEI01)",
+      "[Michigan 2016](https://www.worldcubeassociation.org/competitions/Michigan2016)",
+      null
+    ],
+    [
+      58,
+      "[Arnau Tous Mateu](https://www.worldcubeassociation.org/persons/2016MATE04)",
+      "[FME & Cubo y Calla 2016](https://www.worldcubeassociation.org/competitions/FMECuboyCalla2016)",
+      null
+    ],
+    [
+      58,
+      "[Evan Wright](https://www.worldcubeassociation.org/persons/2017WRIG03)",
+      "[Howland High Fall 2017](https://www.worldcubeassociation.org/competitions/HowlandHighFall2017)",
+      null
+    ],
+    [
+      58,
+      "[Silvan Venzin](https://www.worldcubeassociation.org/persons/2021VENZ01)",
+      "[Offline Schwyz Saturday 2021](https://www.worldcubeassociation.org/competitions/OfflineSchwyzSaturday2021)",
+      null
+    ],
+    [
+      57,
+      "[Charlie Stark](https://www.worldcubeassociation.org/persons/2014STAR05)",
+      "[UK Championship 2014](https://www.worldcubeassociation.org/competitions/UKChampionship2014)",
+      null
+    ],
+    [
+      57,
+      "[Daniel Mullen](https://www.worldcubeassociation.org/persons/2016MULL04)",
+      "[Athens Fall Late Night 2016](https://www.worldcubeassociation.org/competitions/AthensFallLateNight2016)",
+      null
+    ],
+    [
+      57,
+      "[Étienne Aubry](https://www.worldcubeassociation.org/persons/2018AUBR01)",
+      "[Croissy Open 2018](https://www.worldcubeassociation.org/competitions/CroissyOpen2018)",
+      null
+    ],
+    [
+      56,
+      "[Marek Majerik](https://www.worldcubeassociation.org/persons/2015MAJE01)",
+      "[Polish Open 2015](https://www.worldcubeassociation.org/competitions/PolishOpen2015)",
+      null
+    ],
+    [
+      56,
+      "[Maciej Spirydowicz](https://www.worldcubeassociation.org/persons/2020SPIR01)",
+      "[GLS Gdynia 2020](https://www.worldcubeassociation.org/competitions/GLSGdynia2020)",
+      null
+    ],
+    [
+      55,
+      "[Sam Shaw](https://www.worldcubeassociation.org/persons/2016SHAW02)",
+      "[Exeter Open 2016](https://www.worldcubeassociation.org/competitions/ExeterOpen2016)",
+      null
+    ],
+    [
+      55,
+      "[Ryan Pilat](https://www.worldcubeassociation.org/persons/2016PILA03)",
+      "[Slow N Steady Spring 2016](https://www.worldcubeassociation.org/competitions/SlowNSteadySpring2016)",
+      null
+    ],
+    [
+      55,
+      "[Mattia Pasquini](https://www.worldcubeassociation.org/persons/2019PASQ01)",
+      "[Swisscubing Cup I 2019](https://www.worldcubeassociation.org/competitions/SwisscubingCupI2019)",
+      null
+    ],
+    [
+      54,
+      "[Kevin Arturo Huamán Ruiz](https://www.worldcubeassociation.org/persons/2014RUIZ10)",
+      "[UNI-Rubik 2014](https://www.worldcubeassociation.org/competitions/UniRubik2014)",
+      null
+    ],
+    [
+      54,
+      "[Bautista Bonazzola](https://www.worldcubeassociation.org/persons/2014BONA02)",
+      "[Argentino de Invierno 2014](https://www.worldcubeassociation.org/competitions/ArgentinoDeInvierno2014)",
+      null
+    ],
+    [
+      54,
+      "[Jonathan Tilahun](https://www.worldcubeassociation.org/persons/2014TILA01)",
+      "[Slow n Steady Fall 2015](https://www.worldcubeassociation.org/competitions/SlownSteadyFall2015)",
+      null
+    ],
+    [
+      54,
+      "[Artur Miralles Hernàndez](https://www.worldcubeassociation.org/persons/2015HERN17)",
+      "[Barcelona FME Open 2015](https://www.worldcubeassociation.org/competitions/BarcelonaFMEOpen2015)",
+      null
+    ],
+    [
+      54,
+      "[Alexey Tsvetkov](https://www.worldcubeassociation.org/persons/2017TSVE02)",
+      "[Pécs Open 2017](https://www.worldcubeassociation.org/competitions/PecsOpen2017)",
+      null
+    ],
+    [
+      54,
+      "[Greyson James](https://www.worldcubeassociation.org/persons/2022JAME02)",
+      "[Welcome Back Portland 2022](https://www.worldcubeassociation.org/competitions/WelcomeBackPortland2022)",
+      null
+    ],
+    [
+      54,
+      "[Adhiyan Kumaresan](https://www.worldcubeassociation.org/persons/2022KUMA05)",
+      "[Central Washington Spring 2022](https://www.worldcubeassociation.org/competitions/CentralWashingtonSpring2022)",
+      null
+    ],
+    [
+      54,
+      "[Zack Rubio](https://www.worldcubeassociation.org/persons/2022RUBI10)",
+      "[Winter WestSide Events 2022](https://www.worldcubeassociation.org/competitions/WinterWestSideEvents2022)",
+      null
+    ],
+    [
+      53,
+      "[Daniel Goodman](https://www.worldcubeassociation.org/persons/2013GOOD01)",
+      "[Monmouth 2013](https://www.worldcubeassociation.org/competitions/Monmouth2013)",
+      null
+    ],
+    [
+      53,
+      "[Tyler Howlett](https://www.worldcubeassociation.org/persons/2014HOWL02)",
+      "[Berkeley Summer 2014](https://www.worldcubeassociation.org/competitions/BerkeleySummer2014)",
+      null
+    ],
+    [
+      53,
+      "[Mitchell Hum](https://www.worldcubeassociation.org/persons/2017HUMM01)",
+      "[Slow N Steady Spring 2017](https://www.worldcubeassociation.org/competitions/SlowNSteadySpring2017)",
+      null
+    ],
+    [
+      53,
+      "[Matteo Dummar](https://www.worldcubeassociation.org/persons/2017DUMM01)",
+      "[Sunmarke Dubai Open II 2017](https://www.worldcubeassociation.org/competitions/SunmarkeDubaiOpenII2017)",
+      null
+    ],
+    [
+      53,
+      "[Takeru Victor Muto Asmund](https://www.worldcubeassociation.org/persons/2020ASMU01)",
+      "[Lonely Denmark 2020](https://www.worldcubeassociation.org/competitions/LonelyDenmark2020)",
+      null
+    ],
+    [
+      53,
+      "[Maksymilian Kulas](https://www.worldcubeassociation.org/persons/2021KULA02)",
+      "[LLS I Bełżyce 2021](https://www.worldcubeassociation.org/competitions/LLSIBelzyce2021)",
+      null
+    ],
+    [
+      53,
+      "[Annye Bennett](https://www.worldcubeassociation.org/persons/2022BENN11)",
+      "[Southeast Championship 2022](https://www.worldcubeassociation.org/competitions/SoutheastChampionship2022)",
+      null
+    ],
+    [
+      52,
+      "[Tristan Paulussen](https://www.worldcubeassociation.org/persons/2009PAUL01)",
+      "[Dutch Open 2009](https://www.worldcubeassociation.org/competitions/DutchOpen2009)",
+      null
+    ],
+    [
+      52,
+      "[Pep Edén](https://www.worldcubeassociation.org/persons/2021EDEN01)",
+      "[Swedish Championship 2021](https://www.worldcubeassociation.org/competitions/SwedishChampionship2021)",
+      null
+    ],
+    [
+      52,
+      "[Felix Hincks](https://www.worldcubeassociation.org/persons/2022HINC01)",
+      "[Stevenage Spring 2022](https://www.worldcubeassociation.org/competitions/StevenageSpring2022)",
+      null
+    ],
+    [
+      52,
+      "[Atilla Kopecky](https://www.worldcubeassociation.org/persons/2022KOPE01)",
+      "[Pulmapelipäivät 2022](https://www.worldcubeassociation.org/competitions/Pulmapelipaivat2022)",
+      null
+    ],
+    [
+      51,
+      "[Diego Fraile](https://www.worldcubeassociation.org/persons/2013FRAI01)",
+      "[Bussières Open 2013](https://www.worldcubeassociation.org/competitions/BussieresOpen2013)",
+      null
+    ],
+    [
+      51,
+      "[Garrett Hadaway](https://www.worldcubeassociation.org/persons/2015HADA01)",
+      "[Indiana 2015](https://www.worldcubeassociation.org/competitions/Indiana2015)",
+      null
+    ],
+    [
+      51,
+      "[Sean Hartman](https://www.worldcubeassociation.org/persons/2016HART02)",
+      "[For The Love Of Cubing 2016](https://www.worldcubeassociation.org/competitions/ForTheLoveOfCubing2016)",
+      null
+    ],
+    [
+      51,
+      "[Mengfei Shen (沈梦非)](https://www.worldcubeassociation.org/persons/2018SHEN07)",
+      "[Manchester Open 2018](https://www.worldcubeassociation.org/competitions/ManchesterOpen2018)",
+      null
+    ],
+    [
+      51,
+      "[Parist Pariyakanok (พริษฐ์ ปริยกนก)](https://www.worldcubeassociation.org/persons/2018PARI07)",
+      "[Bangkok Cube Day Summer 2018](https://www.worldcubeassociation.org/competitions/BangkokCubeDaySummer2018)",
+      null
+    ],
+    [
+      51,
+      "[Brandon Villadolid](https://www.worldcubeassociation.org/persons/2019VILL03)",
+      "[Hudson Valley Winter 2019](https://www.worldcubeassociation.org/competitions/HudsonValleyWinter2019)",
+      null
+    ],
+    [
+      51,
+      "[Krishanth Thangarathan](https://www.worldcubeassociation.org/persons/2019THAN05)",
+      "[Anaadyanta Cube Open 2019](https://www.worldcubeassociation.org/competitions/AnaadyantaCubeOpen2019)",
+      null
+    ],
+    [
+      51,
+      "[Danny Morgan](https://www.worldcubeassociation.org/persons/2019MORG10)",
+      "[UK Championship 2019](https://www.worldcubeassociation.org/competitions/UKChampionship2019)",
+      null
+    ],
+    [
+      51,
+      "[Ian Yazid Zavala](https://www.worldcubeassociation.org/persons/2023LOPE06)",
+      "[Agoura Cubing Again 2023](https://www.worldcubeassociation.org/competitions/AgouraCubingAgain2023)",
+      null
+    ],
+    [
+      50,
+      "[Eli Jay](https://www.worldcubeassociation.org/persons/2014JAYE01)",
+      "[WGC Open 2014](https://www.worldcubeassociation.org/competitions/WelwynGardenCity2014)",
+      null
+    ],
+    [
+      50,
+      "[Will Cerne](https://www.worldcubeassociation.org/persons/2015CERN01)",
+      "[Wiscube 2015](https://www.worldcubeassociation.org/competitions/Wiscube2ndEdition2015)",
+      null
+    ],
+    [
+      50,
+      "[Witold Sołtysik](https://www.worldcubeassociation.org/persons/2015SOLT03)",
+      "[Santa Claus Cube Race 2015](https://www.worldcubeassociation.org/competitions/SantaClausCubeRace2015)",
+      null
+    ],
+    [
+      50,
+      "[Jaden Thompson](https://www.worldcubeassociation.org/persons/2016THOM01)",
+      "[BASC 8 2016](https://www.worldcubeassociation.org/competitions/BASC82016)",
+      null
+    ],
+    [
+      50,
+      "[Szymon Brzana](https://www.worldcubeassociation.org/persons/2017BRZA01)",
+      "[Byczy Cube Race 2017](https://www.worldcubeassociation.org/competitions/ByczyCubeRace2017)",
+      null
+    ],
+    [
+      50,
+      "[Kaius Young](https://www.worldcubeassociation.org/persons/2017YOUN10)",
+      "[Cubetcha 2017](https://www.worldcubeassociation.org/competitions/Cubetcha2017)",
+      null
+    ],
+    [
+      50,
+      "[Jakub Majchrzak](https://www.worldcubeassociation.org/persons/2021MAJC01)",
+      "[SST Warszawa 2021](https://www.worldcubeassociation.org/competitions/SSTWarszawa2021)",
+      null
+    ],
+    [
+      50,
+      "[Dante Videfrost](https://www.worldcubeassociation.org/persons/2022VIDE02)",
+      "[Fyris Cubing 2022](https://www.worldcubeassociation.org/competitions/FyrisCubing2022)",
+      null
+    ],
+    [
+      50,
+      "[John Wanger II](https://www.worldcubeassociation.org/persons/2022WANG39)",
+      "[CubingUSA Southern Champ... 2022](https://www.worldcubeassociation.org/competitions/CubingUSASouthernChampionshi2022)",
+      null
+    ],
+    [
+      50,
+      "[Kévin Ky](https://www.worldcubeassociation.org/persons/2022KYKE01)",
+      "[Massy Palais'Open A 2022](https://www.worldcubeassociation.org/competitions/MassyPalaisOpenA2022)",
+      null
+    ],
+    [
+      49,
+      "[Michael Gottlieb](https://www.worldcubeassociation.org/persons/2006GOTT01)",
+      "[Rutgers Fall 2006](https://www.worldcubeassociation.org/competitions/RutgersFall2006)",
+      null
+    ],
+    [
+      49,
+      "[Bhargav Narasimhan](https://www.worldcubeassociation.org/persons/2011NARA02)",
+      "[Bangalore Challenge 2011](https://www.worldcubeassociation.org/competitions/BangaloreOpen2011)",
+      null
+    ],
+    [
+      49,
+      "[Karol Zakrzewski](https://www.worldcubeassociation.org/persons/2014ZAKR01)",
+      "[SLS Gliwice 2014](https://www.worldcubeassociation.org/competitions/SLSGliwice2014)",
+      null
+    ],
+    [
+      49,
+      "[Tommy Kiprillis](https://www.worldcubeassociation.org/persons/2014KIPR01)",
+      "[Shepparton Autumn 2014](https://www.worldcubeassociation.org/competitions/SheppartonAutumn2014)",
+      null
+    ],
+    [
+      49,
+      "[Lucas Déglise](https://www.worldcubeassociation.org/persons/2015DEGL01)",
+      "[Chambéry Cube Open 2015](https://www.worldcubeassociation.org/competitions/ChamberyCube2015)",
+      null
+    ],
+    [
+      49,
+      "[Shenghai Fang (方胜海)](https://www.worldcubeassociation.org/persons/2016FANG01)",
+      "[Shanghai Spring 2016](https://www.worldcubeassociation.org/competitions/ShanghaiSpring2016)",
+      null
+    ],
+    [
+      49,
+      "[Riley Dexter](https://www.worldcubeassociation.org/persons/2016DEXT01)",
+      "[Cubing Classic 2016](https://www.worldcubeassociation.org/competitions/CubingClassic2016)",
+      null
+    ],
+    [
+      49,
+      "[Yeon Kyun Park (박연균)](https://www.worldcubeassociation.org/persons/2016PARK10)",
+      "[Jeonju Spring 2016](https://www.worldcubeassociation.org/competitions/JeonjuSpring2016)",
+      null
+    ],
+    [
+      49,
+      "[Leo Lindqvist](https://www.worldcubeassociation.org/persons/2017LIND01)",
+      "[Flen New Year's Blind 2017](https://www.worldcubeassociation.org/competitions/FlenNewYearsBlind2017)",
+      null
+    ],
+    [
+      49,
+      "[Peter Weyers](https://www.worldcubeassociation.org/persons/2018WEYE01)",
+      "[Lions Cubing 2018](https://www.worldcubeassociation.org/competitions/LionsCubing2018)",
+      null
+    ],
+    [
+      49,
+      "[Caleb Kearney](https://www.worldcubeassociation.org/persons/2018KEAR02)",
+      "[Pennsylvania 2018](https://www.worldcubeassociation.org/competitions/Pennsylvania2018)",
+      null
+    ],
+    [
+      49,
+      "[Ethan Qiu](https://www.worldcubeassociation.org/persons/2022QIUE03)",
+      "[Flower City 2022](https://www.worldcubeassociation.org/competitions/FlowerCityCubeFest2022)",
+      null
+    ],
+    [
+      49,
+      "[Ludwig Ivarsson](https://www.worldcubeassociation.org/persons/2022IVAR01)",
+      "[Swedish Championship 2022](https://www.worldcubeassociation.org/competitions/SwedishChampionship2022)",
+      null
+    ],
+    [
+      49,
+      "[Gabriel Subion](https://www.worldcubeassociation.org/persons/2024SUBI01)",
+      "[Imus Speedcubing Open 2024](https://www.worldcubeassociation.org/competitions/ImusSpeedcubingOpen2024)",
+      null
+    ],
+    [
+      48,
+      "[Tommy Cherry](https://www.worldcubeassociation.org/persons/2015CHER07)",
+      "[Norwich Summer 2015](https://www.worldcubeassociation.org/competitions/NorwichSummer2015)",
+      null
+    ]
+  ]
+}

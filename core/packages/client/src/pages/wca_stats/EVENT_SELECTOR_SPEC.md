@@ -18,7 +18,7 @@ ruiminyan.github.io/
 ├── assets/
 │   ├── js/stats_ui.js      # ★ 原版 stats 页面 UI（tab/metric/source 切换）
 │   └── css/stats_ui.css    # ★ 原版 stats 页面样式
-├── stats/data/             # 统计 JSON 数据（由 stats-build 生成）
+├── stats/             # 统计 JSON 数据（由 stats-build 生成）
 │   ├── wr_current.json     # rows 模式示例
 │   ├── most_completed_solves.json  # sections 模式示例
 │   ├── wr_dominance.json   # panels 模式示例
@@ -53,8 +53,8 @@ MySQL (wca_statistics DB)
   ↓ SQL 查询
 stats-build/src/statistics/*.ts (88 个统计实现)
   ↓ compute_all.ts 批量执行
-stats/data/*.json (4 种输出模式)
-  ↓ fetch('/stats/data/xxx.json')
+stats/*.json (4 种输出模式)
+  ↓ fetch('/stats/xxx.json')
 WcaStatsPage.tsx (React 通用渲染器)
 ```
 

@@ -136,7 +136,7 @@ export async function extractDocx(
       writtenSet.add(filename);
       writtenFiles.push(filename);
     }
-    return `/stats/data/alg/media/${slug}/${lang}/${filename}`;
+    return `/stats/alg/media/${slug}/${lang}/${filename}`;
   };
 
   const imgHandler = async (

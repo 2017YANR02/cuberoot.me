@@ -715,6 +715,7 @@
 }
 .upcoming-page .wr-swatch.wr-current { background: var(--wr-current); }
 .upcoming-page .wr-swatch.wr-former { background: var(--wr-former); }
+.upcoming-page .wr-swatch.wr-top10 { background: var(--text-sub); }
 
 /* ── Day List Panel ── */
 .upcoming-page .day-list-panel {

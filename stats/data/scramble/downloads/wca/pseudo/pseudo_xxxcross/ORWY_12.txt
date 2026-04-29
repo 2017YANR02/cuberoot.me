@@ -1,8 +1,0 @@
-# Scramble samples — pseudo / pseudo_xxxcross / ORWY / bin 12
-# Population in this bin: 1
-# Samples listed: 1 (all entries in this bin)
-# Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-04-27T03:59:07.858Z
-# Columns: id,scramble,bottom_color
-
-2884559001,F' L D' F' R U B R2 U2 B2 U' R2 D' L2 F2 B2 U' L2 B2 F,O

@@ -19,7 +19,7 @@ import { query as dbQuery } from '../core/database.js';
 import type { RowDataPacket } from 'mysql2';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const PER_EVENT_DIR = resolve(__dirname, '../../../../../stats/data/top10_history');
+const PER_EVENT_DIR = resolve(__dirname, '../../../../../stats/top10_history');
 
 const TOP_K_EVER = 30;
 const ALL_EVENTS = [

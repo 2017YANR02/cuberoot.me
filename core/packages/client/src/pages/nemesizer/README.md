@@ -35,7 +35,7 @@ relevant ek set) equal to 1.
 
 ## Data pipeline
 
-Binary files served from `stats/data/nemesizer/` (gzipped, decoded client-side via `DecompressionStream`):
+Binary files served from `stats/nemesizer/` (gzipped, decoded client-side via `DecompressionStream`):
 
 | file | what | size (real WCA dump) |
 |---|---|---|

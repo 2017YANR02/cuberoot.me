@@ -58,6 +58,8 @@
   color: #8a7a6a;
   font-style: italic;
   line-height: 1.5;
+  /* note 里的 \n 渲染为换行（如 wr_metric 第二行的 metric 术语表） */
+  white-space: pre-line;
 }
 
 /* ==========================================================================

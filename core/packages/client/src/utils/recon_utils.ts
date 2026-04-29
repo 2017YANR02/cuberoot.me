@@ -2,6 +2,7 @@
  * 复盘格式化工具——1:1 移植自 recon/recon_utils.js（335 行）
  * NOTE: 提供国旗/格式化/事件名/puzzle 映射/纪录徽章/时间格式等
  */
+import { ISO2_TO_CONTINENT } from './continent';
 
 // ── 国旗（CSS flag-icons 方式，对齐原版 <span class="fi fi-cn"> ）──
 
@@ -231,6 +232,25 @@ export function getRecordClass(val: string): string {
   if (/[PU]?[RB]$/.test(v) && (v.endsWith('PR') || v.endsWith('PB')
     || v === 'YTPR' || v === 'YTPB' || v === 'UPR' || v === 'UPB')) return 'pr';
   return 'other';
+}
+
+/**
+ * 把通用 "CR" / "cancelled CR" 按选手国籍展开为具体洲际代码
+ * (AsR / ER / NAR / SAR / OcR / AfR)。其他值原样返回。
+ * NOTE: 提交表单只暴露 CR 这一个选项, 实际洲别由展示侧根据 iso2 推导。
+ */
+const CONTINENT_TO_RECORD: Record<string, string> = {
+  AF: 'AfR', AS: 'AsR', EU: 'ER', NA: 'NAR', SA: 'SAR', OC: 'OcR',
+};
+export function expandContinentRecord(val: string | undefined | null, iso2: string | undefined | null): string {
+  if (!val) return '';
+  if (!iso2) return val;
+  // 仅对裸 CR / cancelled CR 展开;已经是 AsR/ER/etc 的不动
+  if (!/\bCR\b/.test(val)) return val;
+  const cont = ISO2_TO_CONTINENT[iso2.toUpperCase()];
+  const code = cont && CONTINENT_TO_RECORD[cont];
+  if (!code) return val;
+  return val.replace(/\bCR\b/, code);
 }
 
 /**

@@ -1,8 +1,0 @@
-# Scramble samples — pair / xxxcross_pair / ORWY / bin 7
-# Population in this bin: 1
-# Samples listed: 1 (all entries in this bin)
-# Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-04-27T03:59:07.858Z
-# Columns: id,scramble,bottom_color
-
-239354001,D' R2 B2 R2 U' F2 D' F U F L' F U' F D F2 D B2 L2 U2,R

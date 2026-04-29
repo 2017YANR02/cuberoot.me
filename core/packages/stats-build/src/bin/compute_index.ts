@@ -1,6 +1,6 @@
 // NOTE: 生成统计索引 JSON——与 Ruby compute_index.rb 等价
 // Ruby 版输出 stats/index.md（Markdown + data-i18n），
-// TS 版输出 stats/data/index.json（供 React 前端渲染）
+// TS 版输出 stats/index.json（供 React 前端渲染）
 //
 // 无需 MySQL 连接——从已生成的统计 JSON 中读取标题
 // 用法：npx tsx src/bin/compute_index.ts
@@ -10,10 +10,11 @@ import { fileURLToPath } from 'url';
 import { REGISTRY } from './compute.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = resolve(__dirname, '../../../../../stats/data');
+const DATA_DIR = resolve(__dirname, '../../../../../stats');
 const OUTPUT_PATH = resolve(DATA_DIR, 'index.json');
 
-// NOTE: 与 Ruby index.rb ALL_MERGED 一致
+// NOTE: 与 Ruby index.rb ALL_MERGED 一致——这些子统计被聚合页面包含，索引页不单独列出
+// top10_history 的 bar chart race 已嵌入 wr_metric 第 0 个 panel，独立卡片是死链
 const ALL_MERGED = new Set([
   'wr_single_history', 'wr_average_history',
   'wr_bao5', 'wr_wao5', 'wr_mo5', 'wr_bpa', 'wr_wpa',
@@ -23,6 +24,7 @@ const ALL_MERGED = new Set([
   'wr_ao1r', 'wr_ao2r', 'wr_ao3r', 'wr_ao4r',
   'average_of_3', 'average_of_5', 'average_of_12',
   'average_of_25', 'average_of_50', 'average_of_100', 'average_of_1000',
+  'top10_history',
 ]);
 
 // NOTE: iconName 字段是 lucide-react 组件名，前端映射为 <Icon>。不再用 emoji。
@@ -31,8 +33,9 @@ const STAT_CATEGORIES = [
     nameEn: 'World Record Analysis', nameZh: '世界纪录分析',
     iconName: 'Trophy',
     preserveOrder: true,
+    // NOTE: top10_history 不单独注册——其 bar chart race 已嵌入 wr_metric 第 0 个 panel
     ids: ['wr_current', 'wr_metric', 'wr_aoxr', 'wr_dominance', 'wr_non_pr', 'wr_newcomer',
-          'average_of', 'consecutive_sub_5_average', 'top10_history'],
+          'average_of', 'consecutive_sub_5_average'],
   },
   {
     nameEn: 'Results & Records', nameZh: '成绩与纪录',

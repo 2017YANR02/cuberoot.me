@@ -10,8 +10,8 @@ description: "Use when touching WCA competition JSON data — upcoming_comps.jso
 | JSON | 生成器 | 触发 | 用途 |
 |---|---|---|---|
 | `/stats/upcoming_comps.json` | `scripts/fetch_upcoming_comps.py` | `.github/workflows/update_upcoming.yml`（每天 20:00 UTC） | UpcomingComps Top 模式（只含有顶尖选手参赛的比赛 + cubing.com 中国比赛） |
-| `/stats/data/all_upcoming_comps.json` | 同上脚本第二段 | 同上 | Globe upcoming 模式 + UpcomingComps All 模式（WCA 全球全量 upcoming） |
-| `/stats/data/all_past_comps.json` | `core/packages/stats-build/src/bin/gen_all_comps.ts` | `.github/workflows/stats.yml`（每周日 20:00 UTC） | Globe history 模式（WCA 历史所有已结束比赛） |
+| `/stats/all_upcoming_comps.json` | 同上脚本第二段 | 同上 | Globe upcoming 模式 + UpcomingComps All 模式（WCA 全球全量 upcoming） |
+| `/stats/all_past_comps.json` | `core/packages/stats-build/src/bin/gen_all_comps.ts` | `.github/workflows/stats.yml`（每周日 20:00 UTC） | Globe history 模式（WCA 历史所有已结束比赛） |
 
 ## `upcoming_comps.json`（Top 模式专用）
 

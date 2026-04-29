@@ -2,7 +2,7 @@
  * 复盘提交/编辑页——迁移自 recon/submit/recon_submit_page.js（2432 行）
  * NOTE: 表单字段、实时统计、重复检测、虚拟键盘
  */
-import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { ReconSolve } from '@cuberoot/shared';
@@ -24,8 +24,10 @@ import '../../recon.css';
 import './recon_submit.css';
 import CubeVirtualKeyboard from './components/CubeVirtualKeyboard';
 import TwistySection from './components/TwistySection';
-import NormalizedCrossBlock from './components/NormalizedCrossBlock';
+import SolutionView from './components/SolutionView';
 import { cleanForPlayer, extractAlgFromText, syncPlayerToMoveCount } from '../../utils/recon_alg_utils';
+import { buildNormalizedSolution, hasWideMoveInCrossSection } from '../../utils/recon_norm_cross_extract';
+import { ArrowRightLeft } from 'lucide-react';
 
 // ── 常量 ──
 
@@ -318,17 +320,32 @@ export default function ReconSubmitPage() {
     return '3x3x3';
   }, [form.event]);
 
+  // NOTE: 标准化 cross 显示切换（仅视图层；form.solution 永远是原文）
+  const [normalized, setNormalized] = useState(false);
+  const canNormalize = useMemo(
+    () => hasWideMoveInCrossSection(form.solution || ''),
+    [form.solution],
+  );
+  // canNormalize 变 false 时自动退出标准化视图(避免卡死)
+  useEffect(() => { if (!canNormalize && normalized) setNormalized(false); }, [canNormalize, normalized]);
+
+  const displaySolution = useMemo(() => {
+    const orig = form.solution || '';
+    if (!normalized || !canNormalize) return orig;
+    return buildNormalizedSolution(orig) ?? orig;
+  }, [form.solution, normalized, canNormalize]);
+
   // NOTE: 防抖延迟更新动画（避免打字时频繁销毁重建 Ctor）
   const [debouncedScramble, setDebouncedScramble] = useState(form.wcaScramble || form.optimalScramble || '');
-  const [debouncedSolution, setDebouncedSolution] = useState(form.solution || '');
+  const [debouncedSolution, setDebouncedSolution] = useState(displaySolution);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedScramble(form.wcaScramble || form.optimalScramble || '');
-      setDebouncedSolution(form.solution || '');
+      setDebouncedSolution(displaySolution);
     }, 500);
     return () => clearTimeout(timer);
-  }, [form.wcaScramble, form.optimalScramble, form.solution]);
+  }, [form.wcaScramble, form.optimalScramble, displaySolution]);
 
   // NOTE: 获取 TwistyPlayer 实例以实现光标跟随
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -379,10 +396,11 @@ export default function ReconSubmitPage() {
 
       if (isEditing) {
         await updateRecon(Number(editId), data);
+        navigate(`/recon/${editId}`);
       } else {
-        await addRecon(data);
+        const created = await addRecon(data);
+        navigate(`/recon/${created.id}`);
       }
-      navigate('/recon');
     } catch (err) {
       alert(`Error: ${(err as Error).message}`);
     } finally {
@@ -393,16 +411,33 @@ export default function ReconSubmitPage() {
   if (loadingEdit) return <div className="recon-page"><div className="recon-loading">{t('common.loading')}</div></div>;
 
   return (
-    <div className="recon-page">
-      <div className="detail-header">
-        <div className="detail-header-nav">
-          <LangToggle />
+    <div className="recon-page submit-page">
+      <div className="submit-header">
+        <div className="detail-header">
+          <div className="detail-header-nav">
+            <LangToggle />
+          </div>
+          <h1>{isEditing ? t('recon.editRecon') : t('recon.addRecon')}</h1>
         </div>
-        <h1>{isEditing ? t('recon.editRecon') : t('recon.addRecon')}</h1>
+        {dupWarning && <div className="submit-warning">{dupWarning}</div>}
       </div>
 
-      {dupWarning && <div className="submit-warning">{dupWarning}</div>}
+      <div className="submit-layout">
+        {/* 左栏：动画 */}
+        <div className="submit-player-pane">
+          {form.event && form.event !== 'sq1' && (
+            <TwistySection
+              puzzle={puzzle}
+              scramble={debouncedScramble}
+              alg={cleanForPlayer(debouncedSolution)}
+              playerRef={playerRef}
+              fillPane
+            />
+          )}
+        </div>
 
+        {/* 右栏：表单 */}
+        <div className="submit-form-pane">
       <div className="submit-form">
         {/* 第一行：类型 + 项目 + 方法 */}
         <div className="submit-row">
@@ -521,57 +556,76 @@ export default function ReconSubmitPage() {
         <label className="submit-field submit-block">
           <span className="submit-label">{t('recon.scramble')}</span>
           <textarea
-            rows={2}
+            rows={1}
             value={form.wcaScramble || ''}
-            onChange={e => setField('wcaScramble', e.target.value)}
-            placeholder={t('recon.wcaScramble')}
-          />
-        </label>
-
-        {/* 动画预览 */}
-        {form.event && form.event !== 'sq1' && (
-          <div className="submit-field submit-block">
-            <TwistySection
-              puzzle={puzzle}
-              scramble={debouncedScramble}
-              alg={cleanForPlayer(debouncedSolution)}
-              playerRef={playerRef}
-            />
-          </div>
-        )}
-
-        {/* 解法 */}
-        <label className="submit-field submit-block">
-          <span className="submit-label">{t('recon.solution')} *</span>
-          <textarea
-            ref={solutionRef}
-            rows={4}
-            defaultValue={form.solution || ''}
-            onInput={e => {
-              const el = e.target as HTMLTextAreaElement;
-              setField('solution', el.value);
-              autoResize(el);
-              handleCursorSync(el);
+            onChange={e => {
+              setField('wcaScramble', e.target.value);
+              autoResize(e.target);
             }}
-            onClick={e => handleCursorSync(e.target as HTMLTextAreaElement)}
-            onKeyUp={e => handleCursorSync(e.target as HTMLTextAreaElement)}
-            placeholder={`// Cross (5)\nD R2 D' F D F'\n// F2L 1 (8)\nU R U' R' U' F' U F\n...`}
-            className="submit-solution-textarea"
-            style={{ overflow: 'hidden' }}
+            onInput={e => autoResize(e.target as HTMLTextAreaElement)}
+            ref={el => { if (el) autoResize(el); }}
+            placeholder={t('recon.wcaScramble')}
+            style={{ overflow: 'hidden', resize: 'none' }}
           />
         </label>
-        {/* NOTE: 虚拟键盘——紧贴在 solution textarea 下方 */}
-        <CubeVirtualKeyboard
-          textareaRef={solutionRef}
-          onInput={() => {
-            if (solutionRef.current) {
-              setField('solution', solutionRef.current.value);
-              autoResize(solutionRef.current);
-              handleCursorSync(solutionRef.current);
-            }
-          }}
-        />
-        <NormalizedCrossBlock solution={form.solution || ''} />
+
+        {/* 解法 — 用 div 而非 label,避免点击 SolutionView 时冒泡到 label 激活第一个 form control(toggle 按钮) */}
+        <div className="submit-field submit-block">
+          <span className="submit-label submit-label-row">
+            <span>{t('recon.solution')} *</span>
+            {canNormalize && (
+              <button
+                type="button"
+                className={`recon-cross-toggle${normalized ? ' active' : ''}`}
+                onClick={(e) => { e.preventDefault(); setNormalized(v => !v); }}
+                title={normalized ? t('recon.showOriginal') : t('recon.normalizeCross')}
+                tabIndex={-1}
+              >
+                <ArrowRightLeft size={12} />
+              </button>
+            )}
+          </span>
+          {normalized ? (
+            <SolutionView
+              text={displaySolution}
+              playerRef={playerRef}
+              crossNormalized={true}
+            />
+          ) : (
+            <textarea
+              ref={el => {
+                (solutionRef as React.MutableRefObject<HTMLTextAreaElement | null>).current = el;
+                if (el) autoResize(el);
+              }}
+              rows={1}
+              defaultValue={form.solution || ''}
+              onInput={e => {
+                const el = e.target as HTMLTextAreaElement;
+                setField('solution', el.value);
+                autoResize(el);
+                handleCursorSync(el);
+              }}
+              onClick={e => handleCursorSync(e.target as HTMLTextAreaElement)}
+              onKeyUp={e => handleCursorSync(e.target as HTMLTextAreaElement)}
+              placeholder={`// Cross (5)\nD R2 D' F D F'\n// F2L 1 (8)\nU R U' R' U' F' U F\n...`}
+              className="submit-solution-textarea"
+              style={{ overflow: 'hidden', resize: 'none' }}
+            />
+          )}
+        </div>
+        {/* NOTE: 虚拟键盘 — 仅在原文模式可见(标准化视图为只读) */}
+        {!normalized && (
+          <CubeVirtualKeyboard
+            textareaRef={solutionRef}
+            onInput={() => {
+              if (solutionRef.current) {
+                setField('solution', solutionRef.current.value);
+                autoResize(solutionRef.current);
+                handleCursorSync(solutionRef.current);
+              }
+            }}
+          />
+        )}
 
         {/* 实时统计 */}
         {stats && (
@@ -608,9 +662,10 @@ export default function ReconSubmitPage() {
             <span className="submit-label">{t('recon.note')}</span>
             <textarea
               value={form.note || ''}
-              onChange={e => setField('note', e.target.value)}
-              rows={2}
-              style={{ resize: 'vertical' }}
+              onChange={e => { setField('note', e.target.value); autoResize(e.target); }}
+              ref={el => { if (el) autoResize(el); }}
+              rows={1}
+              style={{ overflow: 'hidden', resize: 'none' }}
             />
           </label>
         </div>
@@ -651,28 +706,38 @@ export default function ReconSubmitPage() {
                 ? t('recon.saveChanges')
                 : t('recon.submitRecon')}
           </button>
-          <Link to="/recon" className="submit-btn submit-btn-cancel">
+          <Link to={isEditing ? `/recon/${editId}` : '/recon'} className="submit-btn submit-btn-cancel">
             {t('recon.cancel')}
           </Link>
-          {isEditing && (
-            <button
-              type="button"
-              className="submit-btn submit-btn-danger"
-              onClick={async () => {
-                if (!confirm(t('recon.confirmDelete'))) return;
-                try {
-                  await deleteRecon(Number(editId));
-                  navigate('/recon');
-                } catch (err) {
-                  alert(`Delete failed: ${(err as Error).message}`);
-                }
-              }}
-            >
-              {t('recon.delete')}
-            </button>
-          )}
         </div>
-      </div>
+
+        {/* Danger Zone — 编辑模式下的删除操作（GitHub 规范）*/}
+        {isEditing && (
+          <div className="submit-danger-zone">
+            <div className="submit-danger-zone-header">{t('recon.dangerZone')}</div>
+            <div className="submit-danger-zone-body">
+              <button
+                type="button"
+                className="submit-btn submit-btn-danger"
+                onClick={async () => {
+                  if (!confirm(t('recon.confirmDelete'))) return;
+                  try {
+                    await deleteRecon(Number(editId));
+                    navigate('/recon');
+                  } catch (err) {
+                    alert(`Delete failed: ${(err as Error).message}`);
+                  }
+                }}
+              >
+                {t('recon.delete')}
+              </button>
+              <span className="submit-danger-zone-hint">{t('recon.deleteIrreversible')}</span>
+            </div>
+          </div>
+        )}
+      </div>{/* submit-form */}
+        </div>{/* submit-form-pane */}
+      </div>{/* submit-layout */}
     </div>
   );
 }

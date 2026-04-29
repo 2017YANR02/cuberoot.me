@@ -2,11 +2,13 @@ import { useState, useRef, useEffect, type MutableRefObject } from 'react';
 
 /** Twisty 播放器区域——动态导入 cubing 库，用构造函数 API 创建（对齐 legacy） */
 export default function TwistySection({
-  puzzle, scramble, alg, playerRef,
+  puzzle, scramble, alg, playerRef, fillPane = false,
 }: {
   puzzle: string;
   scramble: string;
   alg: string;
+  /** 撑满父容器（左栏分栏模式），否则走原 inline 固定宽模式 */
+  fillPane?: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   playerRef?: MutableRefObject<any>;
 }) {
@@ -30,33 +32,50 @@ export default function TwistySection({
   useEffect(() => {
     if (!Ctor || !containerRef.current) return;
     const container = containerRef.current;
-    // NOTE: 清空旧的 player
     container.innerHTML = '';
-    // NOTE: 使用构造函数 API——setAttribute 方式无法正确初始化 alg 模型，播放按钮不响应
-    // NOTE: 不设置 background:'none'——保留默认棋盘格背景（与 legacy 一致）
     const player = new Ctor({
       puzzle,
       experimentalSetupAlg: scramble,
       alg,
       controlPanel: 'bottom-row',
     });
-    player.style.width = '100%';
-    player.style.maxWidth = '400px';
-    player.style.margin = '12px 0';
     // NOTE: light colorScheme 让 scrubber 轨道右侧渲染为白色（对齐 legacy 图2样式）
     player.style.colorScheme = 'light';
-    container.appendChild(player);
-    // NOTE: 暴露 player 引用给光标跟随功能
-    if (playerRef) {
-      playerRef.current = player;
+
+    if (fillPane) {
+      // NOTE: fillPane 模式——ResizeObserver 把像素尺寸直接写入 player，
+      // 避免 TwistyPlayer WebGL canvas 在 zoom/resize 时错位（百分比 height 不触发内部 repaint）
+      const syncSize = () => {
+        const w = container.offsetWidth;
+        const h = container.offsetHeight;
+        if (w > 0 && h > 0) {
+          player.style.width = `${w}px`;
+          player.style.height = `${h}px`;
+        }
+      };
+      syncSize();
+      const ro = new ResizeObserver(syncSize);
+      ro.observe(container);
+      container.appendChild(player);
+      if (playerRef) playerRef.current = player;
+      return () => {
+        ro.disconnect();
+        if (playerRef) playerRef.current = null;
+      };
+    } else {
+      player.style.width = '100%';
+      player.style.maxWidth = '400px';
+      player.style.margin = '12px 0';
+      container.appendChild(player);
+      if (playerRef) playerRef.current = player;
+      return () => {
+        if (playerRef) playerRef.current = null;
+      };
     }
-    return () => {
-      if (playerRef) playerRef.current = null;
-    };
-  }, [Ctor, puzzle, scramble, alg, playerRef]);
+  }, [Ctor, puzzle, scramble, alg, playerRef, fillPane]);
 
   return (
-    <div className="detail-section">
+    <div className={`detail-section${fillPane ? ' detail-section--fill' : ''}`}>
       <div ref={containerRef} className="detail-twisty-container" />
     </div>
   );

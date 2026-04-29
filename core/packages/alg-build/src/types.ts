@@ -169,7 +169,7 @@ export type ManualOverrides = Record<string, ManualOverride>;
 export interface BuildOptions {
   /** 源 docx 根目录，如 D:/cube/CubeRoot */
   src: string;
-  /** 产物输出根，如 ../../../stats/data/alg */
+  /** 产物输出根，如 ../../../stats/alg */
   out: string;
   /** 仅处理 mtime 比上次新的 */
   incremental?: boolean;

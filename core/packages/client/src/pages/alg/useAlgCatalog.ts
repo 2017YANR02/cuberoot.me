@@ -73,7 +73,7 @@ export interface AlgsetPostContent {
 
 export type PostContent = ArticlePostContent | AlgsetPostContent;
 
-const CATALOG_URL = '/stats/data/alg/catalog.json';
+const CATALOG_URL = '/stats/alg/catalog.json';
 
 let catalogCache: CatalogEntry[] | null = null;
 let catalogPromise: Promise<CatalogEntry[]> | null = null;
@@ -133,7 +133,7 @@ export function usePostContent(slug: string | undefined): {
     }
     setLoading(true);
     setError(null);
-    fetch(`/stats/data/alg/posts/${encodeURIComponent(slug)}.json`)
+    fetch(`/stats/alg/posts/${encodeURIComponent(slug)}.json`)
       .then(r => {
         if (!r.ok) throw new Error(`post ${slug} not found`);
         return r.json() as Promise<PostContent>;

@@ -34,8 +34,12 @@ export class WrMetric extends Statistic {
     super();
     this.title = 'Metric';
     this.titleZh = '指标';
-    this.note = "World record history and current rankings for various derived metrics computed from a round's 5 solves.";
-    this.noteZh = '各种从一轮 5 次还原中计算的衍生指标的世界纪录历史和当前排名。';
+    this.note = "World record history and current rankings for various derived metrics computed from a round's 5 solves.\n"
+      + 'BAo5 = best 3 of 5 averaged; WAo5 = worst 3 of 5 averaged; Mo5 = mean of all 5 (no trim); '
+      + 'BPA = best possible average given the first 4 solves; WPA = worst possible average given the first 4 solves.';
+    this.noteZh = '各种从一轮 5 次还原中计算的衍生指标的世界纪录历史和当前排名。\n'
+      + 'BAo5＝最佳 5 次中取 3 均值；WAo5＝最差 5 中 3 均值；Mo5＝5 次均值（不裁剪）；'
+      + 'BPA＝前 4 次后最佳可能平均；WPA＝前 4 次后最差可能平均。';
   }
 
   query(): string { return ''; }

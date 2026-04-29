@@ -6,7 +6,7 @@ import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import WcaEventSelector from './WcaEventSelector';
 import { EVENT_NAME_TO_ID, ALL_EVENT_IDS } from './event_constants';
-import { countryFlagClass, loadFlagData, flagDataVersion, extractWcaId, extractCompId, personFlagIso2, compFlagIso2, compNameZh } from '../../utils/country_flags';
+import { countryToIso2, loadFlagData, flagDataVersion, extractWcaId, extractCompId, personFlagIso2, compFlagIso2, compNameZh } from '../../utils/country_flags';
 import { stripWcaPrefix } from '../../utils/comp_localize';
 import { Flag } from '../../utils/flag';
 import DistributionChart from './DistributionChart';
@@ -277,10 +277,10 @@ function StatsTable({ header, rows, searchTerm, isZh }: {
                 const colKey = header[j]?.key ?? '';
                 if (shouldHideCountryCol(colKey, header)) return null;
                 const isCountryCol = colKey === 'country';
-                const flagCls = isCountryCol ? countryFlagClass(String(cell)) : '';
+                const flagIso2 = isCountryCol ? countryToIso2(String(cell)) : '';
                 return (
                   <td key={j} style={{ textAlign: header[j]?.align }}>
-                    {flagCls && <span className={flagCls} style={{ marginRight: 6 }} />}
+                    {flagIso2 && <Flag iso2={flagIso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
                     {renderCell(cell, colKey, isZh)}
                   </td>
                 );
@@ -594,10 +594,10 @@ function AoxRankingSection({ header, rows, isZh }: {
                 {row.map((cell, j) => {
                   const colKey = header[j]?.key ?? '';
                   const isCountryCol = colKey === 'country';
-                  const flagCls = isCountryCol ? countryFlagClass(String(cell)) : '';
+                  const flagIso2 = isCountryCol ? countryToIso2(String(cell)) : '';
                   return (
                     <td key={j} style={{ textAlign: header[j]?.align }}>
-                      {flagCls && <span className={flagCls} style={{ marginRight: 6 }} />}
+                      {flagIso2 && <Flag iso2={flagIso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
                       {renderCell(cell, colKey, isZh)}
                     </td>
                   );
@@ -1010,7 +1010,7 @@ export default function WcaStatsPage() {
     loadFlagData().then(v => { if (v !== flagVer) setFlagVer(v); });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // NOTE: 从 /stats/data/<statId>.json 加载数据，切换时重置所有子状态
+  // NOTE: 从 /stats/<statId>.json 加载数据，切换时重置所有子状态
   useEffect(() => {
     if (!statId) return;
     setLoading(true);
@@ -1020,7 +1020,7 @@ export default function WcaStatsPage() {
     setActivePanel(0);
     setActiveMetric(0);
 
-    fetch(`/stats/data/${statId}.json`)
+    fetch(`/stats/${statId}.json`)
       .then(res => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
@@ -1229,16 +1229,20 @@ export default function WcaStatsPage() {
       )}
 
       {statId === 'wr_metric' && activePanel === 0 && data && (() => {
-        const SUPPORTED = new Set([
-          'single', 'average',
-          'bao5', 'wao5', 'mo5', 'bpa', 'wpa',
-          'median', 'best_counting', 'worst_counting', 'worst',
-        ]);
-        const mp = data.metricPanels?.[activeMetric];
-        const id = mp?.id ?? 'single';
-        const m = (SUPPORTED.has(id) ? id : 'single') as
-          'single' | 'average' | 'bao5' | 'wao5' | 'mo5' | 'bpa' | 'wpa'
+        // NOTE: mp.id（wr_metric.json）→ Top10HistoryPage Metric type / top10_history JSON key
+        // bestc/worstc 的 mp.id 与 JSON key 命名不同；variance / ratio 没有 top10_history 数据
+        type Metric = 'single' | 'average' | 'bao5' | 'wao5' | 'mo5' | 'bpa' | 'wpa'
           | 'median' | 'best_counting' | 'worst_counting' | 'worst';
+        const METRIC_KEY: Record<string, Metric> = {
+          single: 'single', average: 'average',
+          bao5: 'bao5', wao5: 'wao5', mo5: 'mo5',
+          bpa: 'bpa', wpa: 'wpa',
+          median: 'median', bestc: 'best_counting', worstc: 'worst_counting',
+          worst: 'worst',
+        };
+        const mp = data.metricPanels?.[activeMetric];
+        const m = mp ? METRIC_KEY[mp.id] : undefined;
+        if (!m) return null;
         return (
           <Top10HistoryPage
             controlledEventId={selectedEvent || '333'}

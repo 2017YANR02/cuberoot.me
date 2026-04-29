@@ -48,7 +48,7 @@ ruiminyan.github.io/
 | `cuberoot.me/blog/` | WordPress | ECS 专有，符号链接到 `/www/wwwroot/wordpress/` |
 | `cuberoot.me/tools/` | 静态文件 | 独立 HTML/JS 工具模块（iframe 嵌入 SPA） |
 | `cuberoot.me/wca-stats/` | React SPA | WCA 统计数据展示（SPA 路由） |
-| `cuberoot.me/stats/data/` | 静态 JSON | WCA 统计数据文件（SPA fetch） |
+| `cuberoot.me/stats/` | 静态 JSON | WCA 统计数据文件（SPA fetch） |
 | `cuberoot.me/api/` | Hono API | Nginx 反代到 127.0.0.1:3001 |
 
 ## Recon 详情页路由
@@ -81,11 +81,9 @@ ruiminyan.github.io/
 
 | 文件 | 用途 | 大小 |
 |------|------|------|
-| `stats/comp_countries.json` | 比赛 WCA ID → country_id | ~700KB |
-| `stats/comp_name_countries.json` | 比赛展示名 → ISO2（recon 用）| ~500KB |
-| `stats/person_name_countries.json` | 选手全名 → ISO2（recon 用）| ~7MB |
-| `stats/person_countries.json` | 选手 WCA ID → ISO2（stats 用）| 各异 |
+| `stats/person_countries.json` | 选手 WCA ID → ISO2（前端 personFlagIso2）| ~5MB raw / ~1MB gz |
+| `stats/comp_countries.json` | 比赛 ID → country_id（前端 compFlagIso2）| ~650KB |
 
-运行：`npx tsx core/packages/stats-build/src/bin/compute_all.ts`（需要 MySQL）
-
-> Recon 页面中国选手国旗查找：先用 `solver + ' (' + solverZh + ')'` WCA 格式全名，匹配不到再用纯英文名兜底。
+运行：
+- 全量统计：`npx tsx core/packages/stats-build/src/bin/compute_all.ts`（需要 MySQL）
+- 仅查表：`npx tsx core/packages/stats-build/src/bin/gen_lookup_data.ts`

@@ -9,7 +9,7 @@
 #   2. cubing.com（粗饼网）— 中国内地比赛（WCA API 不覆盖）
 #
 # 流程:
-#   1. 从 stats/wr_metric.md 提取去重后的顶尖选手 WCA ID + 项目 + WR 标记
+#   1. 从 stats/wr_metric.json 提取去重后的顶尖选手 WCA ID + 项目 + WR 标记
 #   2. 爬取 WCA API 获取名单内所有人的 upcoming_competitions
 #   3. 从 cubing.com 获取中国内地比赛列表 + 选手 HTML 页面，交叉匹配 top cubers
 #   4. 数据清洗、去重、按时间线聚合
@@ -32,10 +32,10 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", line_bufferin
 
 # ================= Configuration ==================
 ROOT_DIR = Path(__file__).parent.parent
-WR_METRIC_PATH = ROOT_DIR / "stats" / "wr_metric.md"
+WR_METRIC_PATH = ROOT_DIR / "stats" / "wr_metric.json"
 OUTPUT_JSON_PATH = ROOT_DIR / "stats" / "upcoming_comps.json"
 # NOTE: Globe history/upcoming 模式 + UpcomingCompsPage All 模式共用，含全球全量 upcoming
-ALL_OUTPUT_JSON_PATH = ROOT_DIR / "stats" / "data" / "all_upcoming_comps.json"
+ALL_OUTPUT_JSON_PATH = ROOT_DIR / "stats" / "all_upcoming_comps.json"
 CACHE_DIR = ROOT_DIR / ".upcoming_cache"
 
 WCA_API_BASE = "https://www.worldcubeassociation.org/api/v0"
@@ -51,7 +51,7 @@ CACHE_TTL_SEC = 24 * 3600
 # NOTE: 设为 10 方便测试，全量为 None
 DEBUG_LIMIT = None
 
-# NOTE: wr_metric.md 中 <h3 data-i18n-en> 全名 -> WCA 内部 ID
+# NOTE: wr_metric.json section.title 全名 -> WCA 内部 ID
 EVENT_NAME_TO_ID = {
     "Rubik's Cube": "333",
     "2x2x2 Cube": "222",
@@ -100,81 +100,85 @@ CuberData = Dict[str, Dict[str, Any]]
 
 def extract_top_cubers() -> CuberData:
     """
-    从 wr_metric.md 的排名(ranking)和历史(history)区域中提取选手。
-    - ranking 区域: 当前各项目 Top 10
-    - history 区域: 曾经打破过 WR 的选手
+    从 wr_metric.json 的 single/average × ranking/history 面板中提取选手。
+    - ranking 面板: 当前各项目 Top 10（最高名次的选手 = current WR holder，含并列）
+    - history 面板: 曾经打破过 WR 的选手
     每位选手的数据包含其上榜项目及是否持有/曾破 WR。
     """
     if not WR_METRIC_PATH.exists():
         raise FileNotFoundError(f"Cannot find: {WR_METRIC_PATH}")
 
-    content = WR_METRIC_PATH.read_text(encoding="utf-8")
-    person_pattern = r'href="https://www\.worldcubeassociation\.org/persons/([A-Z0-9]+)">([^<]+)</a>'
-    # NOTE: 从 ranking 表格行中同时提取 WCA ID、姓名和成绩值，用于判断 current WR
-    row_pattern = r'<tr>\s*<td[^>]*>\d+</td>\s*<td><a href="[^"]*persons/([A-Z0-9]+)">([^<]+)</a></td>\s*<td[^>]*>([^<]+)</td>'
+    data = json.loads(WR_METRIC_PATH.read_text(encoding="utf-8"))
+    # NOTE: 选手 cell 是 markdown link `[Name](https://.../persons/WCAID)`
+    person_pattern = r'\[([^\]]+)\]\(https://www\.worldcubeassociation\.org/persons/([A-Z0-9]+)\)'
 
     cubers: CuberData = {}
-    # NOTE: 记录每个项目的当前 WR 保持者（含 tie），key=event_id, value=set(wca_id)
     current_wr_holders: dict[str, set[str]] = {}
 
-    # NOTE: 遍历 4 个 section: single/average × ranking/history
-    section_ids = [
-        "single-ranking", "average-ranking",
-        "single-history", "average-history",
-    ]
+    # NOTE: 只关心 single / average 两个指标，下含 ranking / history 两个面板
+    metric_panels = {mp["id"]: mp for mp in data.get("metricPanels", [])}
 
-    for section_id in section_ids:
-        is_history = "history" in section_id
-        label = "WR历史" if is_history else "排名"
-
-        # 提取该 section 的 HTML 内容
-        pattern = rf'id="{section_id}"[^>]*>(.*?)(?=<div id=")'
-        m = re.search(pattern, content, re.DOTALL)
-        if not m:
-            print(f"  [WARN] 未找到 section: {section_id}")
+    for metric_id in ("single", "average"):
+        mp = metric_panels.get(metric_id)
+        if not mp:
+            print(f"  [WARN] 未找到 metric: {metric_id}")
             continue
+        sub_panels = {p["id"]: p for p in mp.get("panels", [])}
 
-        section_html = m.group(1)
+        for panel_id in ("ranking", "history"):
+            panel = sub_panels.get(panel_id)
+            if not panel:
+                print(f"  [WARN] 未找到 panel: {metric_id}-{panel_id}")
+                continue
 
-        # 按 <h3> 标签拆分成各项目段
-        event_blocks = re.split(r'<h3[^>]*data-i18n-en="([^"]*)"[^>]*>', section_html)
+            is_history = panel_id == "history"
+            label = "WR历史" if is_history else "排名"
 
-        for i in range(1, len(event_blocks), 2):
-            event_name = event_blocks[i]
-            event_html = event_blocks[i + 1] if i + 1 < len(event_blocks) else ""
-            event_id = EVENT_NAME_TO_ID.get(event_name, event_name)
+            # NOTE: 列索引——从 panel.header 找 person / result 列位置（防 schema 漂移）
+            header_keys = [h.get("key", "") for h in panel.get("header", [])]
+            try:
+                person_col = header_keys.index("person")
+            except ValueError:
+                print(f"  [WARN] {metric_id}-{panel_id} 没有 person 列")
+                continue
+            result_col = header_keys.index("result") if "result" in header_keys else None
 
-            # NOTE: ranking 区域额外做 current WR 识别（early termination）
-            if not is_history:
-                rank1_result = None
-                for row in re.finditer(row_pattern, event_html):
-                    result = row.group(3).strip()
-                    if rank1_result is None:
-                        rank1_result = result
-                    elif result != rank1_result:
-                        break  # 成绩与第1名不同，后续不可能是 WR holder
-                    wca_id = row.group(1)
-                    current_wr_holders.setdefault(event_id, set()).add(wca_id)
+            for section in panel.get("sections", []):
+                event_name = section.get("title", "")
+                event_id = EVENT_NAME_TO_ID.get(event_name, event_name)
+                rows = section.get("rows", [])
 
-            for pm in re.finditer(person_pattern, event_html):
-                wca_id, name = pm.group(1), pm.group(2)
+                # NOTE: ranking 区域识别 current WR holder（与第 1 名同成绩的并列）
+                if not is_history and result_col is not None:
+                    rank1_result = None
+                    for row in rows:
+                        result = str(row[result_col]).strip()
+                        if rank1_result is None:
+                            rank1_result = result
+                        elif result != rank1_result:
+                            break
+                        m = re.search(person_pattern, str(row[person_col]))
+                        if m:
+                            current_wr_holders.setdefault(event_id, set()).add(m.group(2))
 
-                if wca_id not in cubers:
-                    cubers[wca_id] = {"name": name, "events": {}}
+                for row in rows:
+                    m = re.search(person_pattern, str(row[person_col]))
+                    if not m:
+                        continue
+                    name, wca_id = m.group(1), m.group(2)
+                    if wca_id not in cubers:
+                        cubers[wca_id] = {"name": name, "events": {}}
+                    if event_id not in cubers[wca_id]["events"]:
+                        cubers[wca_id]["events"][event_id] = {
+                            "ranking": False, "wr": False, "current_wr": False,
+                        }
+                    if is_history:
+                        cubers[wca_id]["events"][event_id]["wr"] = True
+                    else:
+                        cubers[wca_id]["events"][event_id]["ranking"] = True
 
-                if event_id not in cubers[wca_id]["events"]:
-                    cubers[wca_id]["events"][event_id] = {
-                        "ranking": False, "wr": False, "current_wr": False,
-                    }
+            print(f"  [{label}] {metric_id}-{panel_id} 处理完毕")
 
-                if is_history:
-                    cubers[wca_id]["events"][event_id]["wr"] = True
-                else:
-                    cubers[wca_id]["events"][event_id]["ranking"] = True
-
-        print(f"  [{label}] {section_id} 处理完毕")
-
-    # NOTE: 将 current_wr_holders 的信息写入 cubers 数据
     for ev_id, holder_ids in current_wr_holders.items():
         for wca_id in holder_ids:
             if wca_id in cubers and ev_id in cubers[wca_id]["events"]:

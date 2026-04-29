@@ -19,7 +19,7 @@ $env:STATS_FILTER='wr_bao5,average_of'
 npx tsx src/bin/compute_all.ts
 
 # 提交
-git add ../../stats/data/
+git add ../../stats/
 git commit -m "chore: update stats"
 git pull --rebase origin main   # ⚠️ CI 可能在后台推了 commit
 git push
@@ -50,7 +50,7 @@ git push
 | 脚本 | 输出 | 用途 |
 |------|------|------|
 | `gen_wr_ids.ts` | `stats/wr_ids.json` | Calc 页面 WR 数据 |
-| `compute_index.ts` | `stats/data/index.json` | 统计索引页 |
+| `compute_index.ts` | `stats/index.json` | 统计索引页 |
 
 ## 添加新统计（TypeScript）
 
@@ -75,7 +75,7 @@ export class MyNewStat extends Statistic {
 2. 新表头翻译加到 `src/core/events.ts` 的 `HEADER_ZH`
 3. 类型检查：`npx tsc --noEmit`
 4. 生成：`npx tsx src/bin/compute.ts my_new_stat`
-5. 输出：`stats/data/my_new_stat.json`，React 前端 `/wca-stats/my_new_stat` 渲染
+5. 输出：`stats/my_new_stat.json`，React 前端 `/wca-stats/my_new_stat` 渲染
 
 ## 近期比赛追踪
 

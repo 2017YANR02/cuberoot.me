@@ -178,10 +178,10 @@ export async function listComments(reconId: number): Promise<ReconComment[]> {
   return apiGet<ReconComment[]>('/comments', { reconId: String(reconId) });
 }
 
-/** 新增评论 */
+/** 新增评论；parentId 非 null 则为回复（单层 YouTube 风格） */
 // 后端: POST /api/recon/comments
-export async function addComment(reconId: number, content: string): Promise<{ ok: boolean; id: number }> {
-  return apiPost('/comments', { reconId, content });
+export async function addComment(reconId: number, content: string, parentId: number | null = null): Promise<{ ok: boolean; id: number }> {
+  return apiPost('/comments', { reconId, content, parentId });
 }
 
 /** 更新评论 */

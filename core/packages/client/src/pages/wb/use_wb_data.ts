@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { WbDataset } from './types';
 
-const URL = '/stats/data/world_bests.json';
+const URL = '/stats/world_bests.json';
 
 export function useWbData() {
   const [data, setData] = useState<WbDataset | null>(null);

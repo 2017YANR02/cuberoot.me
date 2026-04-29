@@ -1,5 +1,5 @@
 // NOTE: Top 10 History — bar chart race(对齐参考视频的视觉:黑底 + X 轴刻度 + 横条)
-// 数据源:stats/data/top10_history.json(主索引) + stats/data/top10_history/{eventId}.json(per-event lazy)
+// 数据源:stats/top10_history.json(主索引) + stats/top10_history/{eventId}.json(per-event lazy)
 // 路由:/wca-stats/top10_history
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -58,9 +58,8 @@ function rowHeightPx(): number {
 function isoToMs(iso: string): number { return new Date(iso + 'T00:00:00Z').getTime(); }
 function msToIso(ms: number): string { return new Date(ms).toISOString().slice(0, 10); }
 
-// NOTE: rank 1 = 金色,rank 2-10 按大洲固定 hue + 选手 ID 微调亮度/饱和度
+// NOTE: 按大洲固定 hue + 选手 ID 微调亮度/饱和度（含 rank 1，不再走金色特判）
 //   6 大洲 + Multiple Continents 各自一个固定色相;country → continent 走静态映射表
-const RANK1_COLOR = '#e9b341';
 const CONTINENT_HUE: Record<Continent, number> = {
   'Asia': 0,                  // 红
   'Europe': 220,              // 蓝
@@ -75,8 +74,7 @@ function hashStr(s: string): number {
   for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
   return h;
 }
-function colorForRow(pid: string, country: string | null | undefined, isRank1: boolean): string {
-  if (isRank1) return RANK1_COLOR;
+function colorForRow(pid: string, country: string | null | undefined): string {
   const ph = hashStr(pid);
   const continent = country ? COUNTRY_TO_CONTINENT[country] : undefined;
   if (!continent || continent === 'Multiple Continents') {
@@ -210,7 +208,7 @@ export default function Top10HistoryPage({
 
   // 加载主索引
   useEffect(() => {
-    fetch('/stats/data/top10_history.json')
+    fetch('/stats/top10_history.json')
       .then(r => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))
       .then((j: Top10Index) => setIndex(j))
       .catch(e => setError(String(e?.message || e)));
@@ -236,7 +234,7 @@ export default function Top10HistoryPage({
     if (!index) return;
     if (eventDataCache.has(eventId)) return;
     setEventLoading(true);
-    fetch(`/stats/data/top10_history/${eventId}.json`)
+    fetch(`/stats/top10_history/${eventId}.json`)
       .then(r => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))
       .then((d: EventData) => {
         eventDataCache.set(eventId, d);
@@ -627,7 +625,7 @@ export default function Top10HistoryPage({
             const personName = person ? displayCuberName(person.name, isZh) : row.pid;
             const widthPct = (row.v / axis.max) * BAR_FRAC;
             const rank = rankByPid.get(row.pid) ?? 0;
-            const color = colorForRow(row.pid, person?.country, rank === 0);
+            const color = colorForRow(row.pid, person?.country);
             const compIso2 = compFlagIso2(row.c);
             return (
               <div
@@ -731,6 +729,21 @@ export default function Top10HistoryPage({
           {isZh
             ? `数据自 ${events[0]?.d ?? '—'}。共 ${events.length} 次 PB 事件,涉及 ${replay ? new Set(events.map(e => e.p)).size : 0} 名曾进过历史 TOP ${index.topK} 的选手。`
             : `Data since ${events[0]?.d ?? '—'}. ${events.length} PB events from ${new Set(events.map(e => e.p)).size} cubers who were ever in the historical top ${index.topK}.`}
+          <div className="t10h-legend">
+            {([
+              ['Asia', isZh ? '亚洲' : 'Asia'],
+              ['Europe', isZh ? '欧洲' : 'Europe'],
+              ['Africa', isZh ? '非洲' : 'Africa'],
+              ['North America', isZh ? '北美' : 'N. America'],
+              ['South America', isZh ? '南美' : 'S. America'],
+              ['Oceania', isZh ? '大洋洲' : 'Oceania'],
+            ] as Array<[Continent, string]>).map(([c, label]) => (
+              <span key={c} className="t10h-legend-item">
+                <span className="t10h-legend-swatch" style={{ background: `hsl(${CONTINENT_HUE[c]} 65% 50%)` }} />
+                {label}
+              </span>
+            ))}
+          </div>
         </div>
       )}
     </div>

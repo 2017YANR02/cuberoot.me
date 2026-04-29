@@ -139,8 +139,9 @@ reconRoutes.get('/api/recon/comments', async (c) => {
   const rows = await query<{
     id: number; recon_id: number; author_id: string; author_name: string;
     content: string; created_at: number; updated_at: number | null; pinned: number;
+    parent_id: number | null;
   }>(
-    `SELECT id, recon_id, author_id, author_name, content, created_at, updated_at, pinned
+    `SELECT id, recon_id, author_id, author_name, content, created_at, updated_at, pinned, parent_id
      FROM comments WHERE recon_id = ? ORDER BY pinned DESC, created_at ASC`, [reconId]
   );
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -153,6 +154,7 @@ reconRoutes.get('/api/recon/comments', async (c) => {
     createdAt: Number(r.created_at),
     updatedAt: r.updated_at ? Number(r.updated_at) : null,
     pinned: !!r.pinned,
+    parentId: r.parent_id != null ? Number(r.parent_id) : null,
   })));
 });
 
@@ -161,7 +163,7 @@ reconRoutes.post('/api/recon/comments', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   checkRateLimit(getIp(c));
   const authUser = await requireAuth(c);
-  const body = await c.req.json<{ reconId?: number; content?: string }>();
+  const body = await c.req.json<{ reconId?: number; content?: string; parentId?: number | null }>();
 
   if (!body.reconId) {
     return c.json({ error: 'reconId is required' }, 400);
@@ -174,20 +176,30 @@ reconRoutes.post('/api/recon/comments', async (c) => {
     return c.json({ error: 'content exceeds 2000 characters' }, 400);
   }
 
-  try {
-    const result = await query(
-      `INSERT INTO comments (recon_id, author_id, author_name, content, created_at)
-       VALUES (?, ?, ?, ?, ?)`,
-      [body.reconId, authUser.wcaId, authUser.name, content, Math.floor(Date.now() / 1000)]
-    ) as unknown as { insertId: bigint };
-    return c.json({ ok: true, id: Number(result.insertId) });
-  } catch (e: unknown) {
-    // NOTE: UNIQUE 约束冲突——该用户已对此复盘发表过评论
-    if (e instanceof Error && 'code' in e && (e as { code: string }).code === 'ER_DUP_ENTRY') {
-      return c.json({ error: 'You have already commented on this recon' }, 409);
+  // NOTE: 回复模式 — 校验 parent 存在、属同 recon、且本身是顶层(单层嵌套,YouTube 风格)
+  let parentId: number | null = null;
+  if (body.parentId != null) {
+    const parent = await query<{ recon_id: number; parent_id: number | null }>(
+      'SELECT recon_id, parent_id FROM comments WHERE id = ?', [body.parentId]
+    );
+    if (parent.length === 0) {
+      return c.json({ error: 'Parent comment not found' }, 400);
     }
-    throw e;
+    if (Number(parent[0].recon_id) !== Number(body.reconId)) {
+      return c.json({ error: 'Parent comment does not belong to this recon' }, 400);
+    }
+    if (parent[0].parent_id != null) {
+      return c.json({ error: 'Cannot reply to a reply (single-level threading)' }, 400);
+    }
+    parentId = Number(body.parentId);
   }
+
+  const result = await query(
+    `INSERT INTO comments (recon_id, author_id, author_name, content, created_at, parent_id)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [body.reconId, authUser.wcaId, authUser.name, content, Math.floor(Date.now() / 1000), parentId]
+  ) as unknown as { insertId: bigint };
+  return c.json({ ok: true, id: Number(result.insertId) });
 });
 
 // PUT /api/recon/comments/:id
@@ -220,7 +232,7 @@ reconRoutes.put('/api/recon/comments/:id', async (c) => {
   return c.json({ ok: true });
 });
 
-// DELETE /api/recon/comments/:id
+// DELETE /api/recon/comments/:id —— 删顶层评论时级联删所有回复
 reconRoutes.delete('/api/recon/comments/:id', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   checkRateLimit(getIp(c));
@@ -235,7 +247,8 @@ reconRoutes.delete('/api/recon/comments/:id', async (c) => {
     return c.json({ error: 'Cannot delete others comment' }, 403);
   }
 
-  await query('DELETE FROM comments WHERE id = ?', [id]);
+  // 删自身 + 所有以此评论为 parent 的回复
+  await query('DELETE FROM comments WHERE id = ? OR parent_id = ?', [id, id]);
   return c.json({ ok: true });
 });
 
