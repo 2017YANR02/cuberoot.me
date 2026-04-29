@@ -870,6 +870,11 @@
       "titleZh": "五盲",
       "rows": [
         [
+          44,
+          "[Chris Chi](https://www.worldcubeassociation.org/persons/2014CHIC01)",
+          "[Gros Jouets à Montréal 2026](https://www.worldcubeassociation.org/competitions/GrosJouetsaMontreal2026)"
+        ],
+        [
           30,
           "[Hannah Minas](https://www.worldcubeassociation.org/persons/2017MINA04)",
           "[Meiringen Masterminds 2025](https://www.worldcubeassociation.org/competitions/MeiringenMasterminds2025)"
@@ -913,11 +918,6 @@
           21,
           "[Tobias Peter](https://www.worldcubeassociation.org/persons/2014PETE03)",
           "[Swiss Nationals 2018](https://www.worldcubeassociation.org/competitions/SwissNationals2018)"
-        ],
-        [
-          20,
-          "[Braden Richards](https://www.worldcubeassociation.org/persons/2017RICH02)",
-          "[Country Roads Huntington 2024](https://www.worldcubeassociation.org/competitions/CountryRoadsHuntington2024)"
         ]
       ]
     },
