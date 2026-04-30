@@ -682,20 +682,6 @@
     border-color: #E07752;
     background: rgba(255, 255, 255, 0.1);
 }
-.globe-page .globe-search-clear {
-    position: absolute;
-    right: 4px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: transparent;
-    border: none;
-    color: #9CA0A8;
-    cursor: pointer;
-    padding: 4px;
-    display: inline-flex;
-    border-radius: 4px;
-}
-.globe-page .globe-search-clear:hover { color: #FFFFFF; background: rgba(255, 255, 255, 0.1); }
 .globe-page .globe-search-results {
     position: absolute;
     left: 0;

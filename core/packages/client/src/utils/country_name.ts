@@ -14,6 +14,11 @@ export const COUNTRY_EN: Record<string, string> = {
   PE: 'Peru', ZA: 'South Africa', EG: 'Egypt', AE: 'UAE', SA: 'Saudi Arabia',
   IL: 'Israel', IR: 'Iran', PK: 'Pakistan', BD: 'Bangladesh', LK: 'Sri Lanka',
   NP: 'Nepal', UA: 'Ukraine', BY: 'Belarus', EE: 'Estonia', LV: 'Latvia', LT: 'Lithuania',
+  // WCA 多地 / 超国家代码（跨国比赛 — 世锦赛 / 大洲锦标赛 / 跨国线上赛等）
+  // 必须显式覆盖：Intl.DisplayNames 对 XA/XB 返回 CLDR 测试串（"Pseudo-Accents"/"伪地区"），不可用
+  XA: 'Multiple (Asia)', XE: 'Multiple (Europe)', XF: 'Multiple (Africa)',
+  XN: 'Multiple (N. America)', XO: 'Multiple (Oceania)', XS: 'Multiple (S. America)',
+  XM: 'Multiple Continents', XW: 'World',
 };
 
 export const COUNTRY_ZH: Record<string, string> = {
@@ -29,6 +34,10 @@ export const COUNTRY_ZH: Record<string, string> = {
   PE: '秘鲁', ZA: '南非', EG: '埃及', AE: '阿联酋', SA: '沙特',
   IL: '以色列', IR: '伊朗', PK: '巴基斯坦', BD: '孟加拉国', LK: '斯里兰卡',
   NP: '尼泊尔', UA: '乌克兰', BY: '白俄罗斯', EE: '爱沙尼亚', LV: '拉脱维亚', LT: '立陶宛',
+  // WCA 多地 / 超国家代码 — 用"多地"而非"多国"（跨国比赛常见用语）
+  XA: '亚洲多地', XE: '欧洲多地', XF: '非洲多地',
+  XN: '北美多地', XO: '大洋洲多地', XS: '南美多地',
+  XM: '多大洲', XW: '全球',
 };
 
 // Intl.DisplayNames 提供全 ISO 区域的母语名（zh: 阿富汗 / 阿尔巴尼亚…），覆盖 ~250 国

@@ -4,6 +4,7 @@
 //       重要：past 的 country 是 WCA 全名（"Hungary"），upcoming 的 country 是 ISO alpha-2（"SE"）。
 //       本模块在加载时统一归一为小写 ISO2，下游一律按小写 ISO2 处理。
 import { compNameZh, countryToIso2, loadFlagData } from './country_flags';
+import { localizeCity } from './city_localize';
 
 export interface Comp {
   id: string;
@@ -45,11 +46,13 @@ export async function loadComps(): Promise<Comp[]> {
 }
 
 /**
- * 按 query 模糊匹配 comp。打分：id 完全 > id 前缀 > id 子串 > name 前缀 > name 子串 > city 子串。
- * 同分按 start_date 倒序（最新在前）。
+ * 按 query 模糊匹配 comp。打分：id 完全 > id 前缀 > name 前缀 > id 子串 > name/nameZh/city/cityZh 子串。
+ * 把"想找这个地方的比赛"和"想找这个名字的比赛"放同档,内部按 start_date 倒序(最新先)。
+ * city 同时匹配英文原值和中文化结果("徐州" 命中 city="Xuzhou")。
  */
 export function searchComps(query: string, comps: Comp[], limit = 20): Comp[] {
-  const q = query.trim().toLowerCase();
+  const raw = query.trim();
+  const q = raw.toLowerCase();
   if (!q) return [];
   const scored: { c: Comp; s: number }[] = [];
   for (const c of comps) {
@@ -57,14 +60,15 @@ export function searchComps(query: string, comps: Comp[], limit = 20): Comp[] {
     const name = c.name.toLowerCase();
     const nameZh = compNameZh(c.name);
     const city = (c.city || '').toLowerCase();
+    const cityZh = c.city ? localizeCity(c.city, true) : '';
     let s = 0;
     if (id === q) s = 1000;
     else if (id.startsWith(q)) s = Math.max(s, 900);
+    else if (name.startsWith(q)) s = Math.max(s, 800);
     else if (id.includes(q)) s = Math.max(s, 700);
-    if (name.startsWith(q)) s = Math.max(s, 800);
-    else if (name.includes(q)) s = Math.max(s, 500);
-    if (nameZh.includes(query.trim())) s = Math.max(s, 600);
-    if (city.includes(q)) s = Math.max(s, 400);
+    else if (name.includes(q) || nameZh.includes(raw) || city.includes(q) || (cityZh && cityZh.includes(raw))) {
+      s = 500;
+    }
     if (s === 0) continue;
     // tie-break: newer first (start_date YYYY-MM-DD lexicographic == chronological)
     const dateBoost = c.start_date ? Number(c.start_date.replaceAll('-', '')) / 1e10 : 0;

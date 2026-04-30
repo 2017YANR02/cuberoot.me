@@ -87,7 +87,7 @@ export default function ReconDetailPage() {
             <LangToggle />
           </div>
           <h1 className="detail-title">
-            {solve.rawTime != null && formatTime(solve.rawTime)}
+            {solve.value || (solve.rawTime != null ? formatTime(solve.rawTime) : null)}
             <RecordBadge record={solve.regionalSingleRecord} variant="inline" iso2={solve.personCountry} />
             {solve.event && (
               <>{' '}<EventIcon event={solve.event} />{' '}{eventDisplayName(solve.event, isZh)}</>

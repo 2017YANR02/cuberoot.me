@@ -44,7 +44,7 @@ round_id        int           rounds 表外键
 pos             smallint      该轮排名
 best            int           单次最好成绩（特殊值见下）
 average         int           平均成绩（0 = 该轮无平均）
-regional_single_record  varchar(3)   '`WR`' / '`CR`' / '`NR`' / NULL
+regional_single_record  varchar(3)   'WR' / 'NR' / 'AsR' / 'AfR' / 'ER' / 'NAR' / 'OcR' / 'SAR' / NULL — 大洲精确到 6 个,没有通用 'CR'
 regional_average_record varchar(3)   同上
 ```
 

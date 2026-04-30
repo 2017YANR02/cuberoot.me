@@ -5,7 +5,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, ChevronRight, Star, Earth as GlobeIcon, List, BarChart3, CalendarDays } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Star, Earth as GlobeIcon, List, BarChart3, CalendarDays, Ban } from 'lucide-react';
 import { getLangQuery } from '../i18n';
 import {
   fetchAllUpcomingCompsJson,
@@ -35,6 +35,7 @@ import { countryName } from '../utils/country_name';
 import { expandCountrySelection } from '../utils/continent';
 import { fetchCompRounds } from '../utils/comp_wcif';
 import { CuberSearchInput } from '../components/CuberSearchInput';
+import { ClearButton } from '../components/ClearButton';
 import { fetchUserUpcoming, type WcaPersonLite } from '../utils/wca_api';
 import './upcoming_comps.css';
 
@@ -78,6 +79,15 @@ interface UpcomingData {
 
 const SOON_DAYS = 7;
 const MAX_TRACKS = 3;
+// 启发式：past comp 结束 60+ 天仍 0 results ⇒ 实际没办成 ⇒ 视为已取消。
+// 60 天 buffer 是为了避免最近结束、results 还没传到 WCA dump 里的真比赛被误标。
+const CANCELLED_BUFFER_DAYS = 60;
+
+/** 给定 cutoff（today - buffer 的 ISO 日期），判断比赛是否应被显示为已取消 */
+function isCancelledComp(c: { end_date?: string; start_date: string; events?: string[] }, cutoffIso: string): boolean {
+  const endIso = c.end_date || c.start_date;
+  return !!endIso && endIso < cutoffIso && (c.events ?? []).length === 0;
+}
 
 // NOTE: 后端短名 → WCA eventId（用于 cubing-icon CSS class）
 const SHORT_TO_EVENT_ID: Record<string, string> = {
@@ -347,11 +357,12 @@ function computeWeeks(
 
 // ── 详情模态框 ────────────────────────────────────────────────────────────
 
-function CompModal({ comp, isZh, onClose, t }: {
+function CompModal({ comp, isZh, onClose, t, cancelled }: {
   comp: Competition;
   isZh: boolean;
   onClose: () => void;
   t: (k: string, o?: Record<string, unknown>) => string;
+  cancelled: boolean;
 }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -380,8 +391,8 @@ function CompModal({ comp, isZh, onClose, t }: {
       if (cancelled) return;
       // WCIF 返回 WCA eventId（'333'）→ 转成前端短码（'3'）以对齐 comp.events / 渲染查找
       const mapped: Record<string, number> = {};
-      for (const [eid, n] of Object.entries(wcifRounds)) {
-        mapped[WCA_EVENT_ID_TO_SHORT[eid] ?? eid] = n;
+      for (const [eid, formats] of Object.entries(wcifRounds)) {
+        mapped[WCA_EVENT_ID_TO_SHORT[eid] ?? eid] = formats.length;
       }
       setRounds(mapped);
     });
@@ -397,13 +408,14 @@ function CompModal({ comp, isZh, onClose, t }: {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-panel" onClick={(ev) => ev.stopPropagation()}>
+      <div className={`modal-panel${cancelled ? ' is-cancelled' : ''}`} onClick={(ev) => ev.stopPropagation()}>
         <button className="modal-close" onClick={onClose} aria-label="Close">×</button>
         <h2 className="modal-title">
           <a href={compUrl} target="_blank" rel="noopener noreferrer">
             <Flag iso2={comp.country} />
-            <span>{displayName}</span>
+            <span className={cancelled ? 'modal-title-name is-cancelled' : 'modal-title-name'}>{displayName}</span>
           </a>
+          {cancelled && <span className="modal-cancelled-tag">{isZh ? '已取消' : 'Cancelled'}</span>}
         </h2>
         <div className="modal-meta">
           {dateStr} · {displayCity}{isZh ? '，' : ', '}{displayCountry}
@@ -672,12 +684,16 @@ const LIST_BUFFER = 8; // 视口外多渲染几行做缓冲，避免快速滚动
 
 interface RowItem { comp: Competition; key: string }
 
-function CompList({ comps, isZh, onSelect, onYearChange }: {
+function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCutoffIso }: {
   comps: Competition[];
   isZh: boolean;
   onSelect: (c: Competition) => void;
   /** 当前可见区域所在年份（用于在 chip 行 sticky 显示）；可见为空时传 null */
   onYearChange: (info: { year: string; count: number } | null) => void;
+  /** 横向滚动容器 — 父组件用它和 chip 表头同步 scrollLeft */
+  outerRef?: React.Ref<HTMLDivElement>;
+  /** 已取消比赛的 end_date 阈值（ISO 字符串） */
+  cancelledCutoffIso: string;
 }) {
   // 倒序排列；不再插入"年份分隔"行，年份显示在 chip 行的左侧 sticky cell 里
   const items = useMemo<RowItem[]>(
@@ -697,7 +713,8 @@ function CompList({ comps, isZh, onSelect, onYearChange }: {
 
   const totalH = items.length * LIST_ROW_H;
   const containerRef = useRef<HTMLDivElement>(null);
-  const [range, setRange] = useState({ start: 0, end: 60 });
+  // start/end = 渲染窗口（含 LIST_BUFFER 上下缓冲）；top = 真实最顶可见行（不含 buffer），sticky 年份用它
+  const [range, setRange] = useState({ start: 0, end: 60, top: 0 });
   const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -711,7 +728,12 @@ function CompList({ comps, isZh, onSelect, onYearChange }: {
       const yBot = -rect.top + window.innerHeight + LIST_BUFFER * LIST_ROW_H;
       const start = Math.max(0, Math.floor(yTop / LIST_ROW_H));
       const end = Math.min(items.length, Math.ceil(yBot / LIST_ROW_H));
-      setRange((prev) => (prev.start === start && prev.end === end ? prev : { start, end }));
+      const top = Math.max(0, Math.floor(Math.max(0, -rect.top) / LIST_ROW_H));
+      setRange((prev) =>
+        prev.start === start && prev.end === end && prev.top === top
+          ? prev
+          : { start, end, top },
+      );
     };
     const onScroll = () => {
       if (rafRef.current != null) return;
@@ -727,13 +749,14 @@ function CompList({ comps, isZh, onSelect, onYearChange }: {
     };
   }, [items.length]);
 
-  // 通知父组件当前 sticky 年份（最顶可见行所在的年份）
+  // 通知父组件当前 sticky 年份（真正可见的最顶行的年份 — 用 range.top 而不是 range.start，
+  // 后者带 LIST_BUFFER 上缓冲会指向视口外往上 8 行的位置，导致跨年时年份显示滞后）
   useEffect(() => {
     if (items.length === 0) { onYearChange(null); return; }
-    const idx = Math.min(range.start, items.length - 1);
+    const idx = Math.min(range.top, items.length - 1);
     const year = items[idx].comp.start_date.slice(0, 4);
     onYearChange({ year, count: yearCounts.get(year) ?? 0 });
-  }, [range.start, items, yearCounts, onYearChange]);
+  }, [range.top, items, yearCounts, onYearChange]);
 
   if (items.length === 0) {
     return <div className="comp-list-empty">{isZh ? '没有匹配的比赛' : 'No competitions match'}</div>;
@@ -742,7 +765,7 @@ function CompList({ comps, isZh, onSelect, onYearChange }: {
   const visible = items.slice(range.start, range.end);
 
   return (
-    <div className="comp-list">
+    <div className="comp-list" ref={outerRef}>
       <div ref={containerRef} className="comp-list-virtual" style={{ height: totalH }}>
         {visible.map((it, i) => {
           const idx = range.start + i;
@@ -753,10 +776,11 @@ function CompList({ comps, isZh, onSelect, onYearChange }: {
           const displayCity = isZh ? (c.city_zh || localizeCity(c.city, true)) : c.city;
           const prefetch = c.rounds ? undefined : () => { void fetchCompRounds(c.id); };
           const events = c.events ?? [];
+          const cancelled = isCancelledComp(c, cancelledCutoffIso);
           return (
             <button
               key={it.key}
-              className="comp-list-row"
+              className={`comp-list-row${cancelled ? ' is-cancelled' : ''}`}
               style={{ top, height: LIST_ROW_H }}
               onClick={() => onSelect(c)}
               onMouseEnter={prefetch}
@@ -817,12 +841,24 @@ export default function UpcomingCompsPage() {
   const [dateTo, setDateTo] = useState('');
   // 列表 sticky 年份（chip 行左侧 cell 显示）；CompList 滚动时回调更新
   const [currentYear, setCurrentYear] = useState<{ year: string; count: number } | null>(null);
+  // 已取消过滤：'all' = 默认包含；'only' = 仅展示已取消
+  const [cancelledFilter, setCancelledFilter] = useState<'all' | 'only'>('all');
   // 三个 popover 共用一份 state：'month' = 日历模式月份选择；'from'/'to' = 列表模式年月范围
   const [pickerOpen, setPickerOpen] = useState<'month' | 'from' | 'to' | null>(null);
   const monthBtnRef = useRef<HTMLButtonElement>(null);
   const fromBtnRef = useRef<HTMLButtonElement>(null);
   const toBtnRef = useRef<HTMLButtonElement>(null);
+  // chip 表头 + 列表外层 — 用来同步横向 scrollLeft（移动端两者各自横向滚动，需要联动）
+  const chipsHeaderRef = useRef<HTMLDivElement>(null);
+  const listScrollRef = useRef<HTMLDivElement>(null);
   const [recordsVer, setRecordsVer] = useState(0);
+
+  // 已取消判定 cutoff：今天 - 60 天的 ISO 字符串。今日固定一次（每次 mount 重算），mount 期间不变。
+  const cancelledCutoffIso = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - CANCELLED_BUFFER_DAYS);
+    return d.toISOString().slice(0, 10);
+  }, []);
 
   useEffect(() => {
     loadCompRecordsSummary().then((v) => setRecordsVer(v));
@@ -990,7 +1026,8 @@ export default function UpcomingCompsPage() {
     (comp: Competition) => {
       const compQ = compQuery.toLowerCase().trim();
       if (compQ) {
-        const text = `${comp.name} ${comp.name_zh || ''} ${compNameZh(comp.name)} ${comp.city} ${comp.city_zh || ''}`.toLowerCase();
+        const cityZh = comp.city ? localizeCity(comp.city, true) : '';
+        const text = `${comp.name} ${comp.name_zh || ''} ${compNameZh(comp.name)} ${comp.city} ${comp.city_zh || ''} ${cityZh}`.toLowerCase();
         if (!text.includes(compQ)) return false;
       }
       if (selectedCuber && selectedCuberCompIds) {
@@ -1012,9 +1049,10 @@ export default function UpcomingCompsPage() {
         if (validYM(dateFrom) && ym < dateFrom) return false;
         if (validYM(dateTo) && ym > dateTo) return false;
       }
+      if (cancelledFilter === 'only' && !isCancelledComp(comp, cancelledCutoffIso)) return false;
       return true;
     },
-    [compQuery, selectedCuber, selectedCuberCompIds, countryFilterSet, eventFilters, dateFrom, dateTo],
+    [compQuery, selectedCuber, selectedCuberCompIds, countryFilterSet, eventFilters, dateFrom, dateTo, cancelledFilter, cancelledCutoffIso],
   );
 
   const displayedComps = useMemo(
@@ -1068,6 +1106,29 @@ export default function UpcomingCompsPage() {
     const now = new Date();
     setViewDate(new Date(now.getFullYear(), now.getMonth(), 1));
   };
+
+  // 列表模式 + 移动端：chip 表头与列表外层各自横向滚动，双向同步 scrollLeft
+  useEffect(() => {
+    if (viewMode !== 'list') return;
+    const header = chipsHeaderRef.current;
+    const list = listScrollRef.current;
+    if (!header || !list) return;
+    let lock = false;
+    const sync = (src: HTMLDivElement, dst: HTMLDivElement) => {
+      if (lock) return;
+      lock = true;
+      if (dst.scrollLeft !== src.scrollLeft) dst.scrollLeft = src.scrollLeft;
+      requestAnimationFrame(() => { lock = false; });
+    };
+    const onList = () => sync(list, header);
+    const onHeader = () => sync(header, list);
+    list.addEventListener('scroll', onList, { passive: true });
+    header.addEventListener('scroll', onHeader, { passive: true });
+    return () => {
+      list.removeEventListener('scroll', onList);
+      header.removeEventListener('scroll', onHeader);
+    };
+  }, [viewMode, displayedComps.length]);
 
   // NOTE: 桌面端 ← / → 换月。输入框聚焦或弹层打开时让位
   useEffect(() => {
@@ -1156,13 +1217,18 @@ export default function UpcomingCompsPage() {
       </header>
 
       <div className="toolbar">
-        <input
-          type="text"
-          className="search-box search-box-comp"
-          placeholder={t('upcoming.searchComp')}
-          value={compQuery}
-          onChange={(e) => setCompQuery(e.target.value)}
-        />
+        <div className="search-box-wrap">
+          <input
+            type="text"
+            className="search-box search-box-comp"
+            placeholder={t('upcoming.searchComp')}
+            value={compQuery}
+            onChange={(e) => setCompQuery(e.target.value)}
+          />
+          {compQuery && (
+            <ClearButton onClick={() => setCompQuery('')} isZh={isZh} />
+          )}
+        </div>
         <CuberSearchInput
           className="search-box-cuber"
           value={selectedCuber}
@@ -1181,6 +1247,16 @@ export default function UpcomingCompsPage() {
           counts={countryOptions.counts}
           allLabel={t('upcoming.allCountries')}
         />
+        <button
+          type="button"
+          className={`cancelled-toggle${cancelledFilter === 'only' ? ' is-active' : ''}`}
+          onClick={() => setCancelledFilter((v) => (v === 'only' ? 'all' : 'only'))}
+          aria-pressed={cancelledFilter === 'only'}
+          title={isZh ? '只看已取消的比赛' : 'Show only cancelled competitions'}
+        >
+          <Ban size={14} strokeWidth={1.75} />
+          <span>{isZh ? '已取消' : 'Cancelled'}</span>
+        </button>
         {viewMode === 'calendar' && (
           <div className="mode-toggle" role="tablist">
             <button
@@ -1273,13 +1349,11 @@ export default function UpcomingCompsPage() {
               {dateTo || (isZh ? '结束' : 'To')}
             </button>
             {(dateFrom || dateTo) && (
-              <button
-                type="button"
-                className="date-range-clear"
+              <ClearButton
                 onClick={() => { setDateFrom(''); setDateTo(''); }}
-                aria-label={isZh ? '清除' : 'Clear'}
-                title={isZh ? '清除' : 'Clear'}
-              >×</button>
+                isZh={isZh}
+                variant="standalone"
+              />
             )}
             <span className="date-range-summary">
               {isZh
@@ -1290,23 +1364,12 @@ export default function UpcomingCompsPage() {
         )}
       </div>
 
-      <div className={`event-chips${viewMode === 'list' ? ' event-chips--list-header' : ''}`}>
-        {viewMode === 'list' && (
-          <>
-            <span className="cl-year-cell" aria-live="polite">
-              {currentYear && (
-                <>
-                  <span className="cl-year-num">{currentYear.year}</span>
-                  <span className="cl-year-count">{currentYear.count.toLocaleString()}</span>
-                </>
-              )}
-            </span>
-            <span className="cl-h-spacer" aria-hidden="true" />
-            <span className="cl-h-spacer" aria-hidden="true" />
-            <span className="cl-h-spacer" aria-hidden="true" />
-          </>
-        )}
-          {EVENT_ORDER.map((eid) => {
+      <div
+        className={`event-chips${viewMode === 'list' ? ' event-chips--list-header' : ''}`}
+        ref={viewMode === 'list' ? chipsHeaderRef : undefined}
+      >
+        {(() => {
+          const chips = EVENT_ORDER.map((eid) => {
             const cur = eventFilters[eid];
             const active = cur !== undefined;
             const max = maxRoundsByEid[eid] ?? 0;
@@ -1338,12 +1401,30 @@ export default function UpcomingCompsPage() {
                 title={cycleHint}
               >
                 <span className={`cubing-icon event-${eid}`} />
-              <span className={`event-chip-rounds${cur === undefined ? ' is-empty' : ''}`}>
-                {badge}
+                <span className={`event-chip-rounds${cur === undefined ? ' is-empty' : ''}`}>
+                  {badge}
+                </span>
+              </button>
+            );
+          });
+          if (viewMode !== 'list') return chips;
+          return (
+            <div className="event-chips-grid">
+              <span className="cl-year-cell" aria-live="polite">
+                {currentYear && (
+                  <>
+                    <span className="cl-year-num">{currentYear.year}</span>
+                    <span className="cl-year-count">{currentYear.count.toLocaleString()}</span>
+                  </>
+                )}
               </span>
-            </button>
+              <span className="cl-h-spacer" aria-hidden="true" />
+              <span className="cl-h-spacer" aria-hidden="true" />
+              <span className="cl-h-spacer" aria-hidden="true" />
+              {chips}
+            </div>
           );
-        })}
+        })()}
       </div>
 
       {allLoading && mode === 'all' && (
@@ -1376,6 +1457,8 @@ export default function UpcomingCompsPage() {
           isZh={isZh}
           onSelect={setSelectedComp}
           onYearChange={setCurrentYear}
+          outerRef={listScrollRef}
+          cancelledCutoffIso={cancelledCutoffIso}
         />
       )}
 
@@ -1414,11 +1497,13 @@ export default function UpcomingCompsPage() {
             {week.bars.map((bar) => {
               const isClash = bar.comp.top_cubers.length >= 3;
               const hasTop = bar.comp.top_cubers.length > 0;
+              const cancelled = isCancelledComp(bar.comp, cancelledCutoffIso);
               const displayName = localizeName(bar.comp, isZh);
               const classes = [
                 'event-bar',
                 isClash ? 'is-clash' : '',
                 !hasTop ? 'is-none-top' : '',
+                cancelled ? 'is-cancelled' : '',
                 bar.continuesFromPrev ? 'continues-prev' : '',
                 bar.continuesToNext ? 'continues-next' : '',
               ].filter(Boolean).join(' ');
@@ -1460,7 +1545,13 @@ export default function UpcomingCompsPage() {
       </div>}
 
       {selectedComp && (
-        <CompModal comp={selectedComp} isZh={isZh} onClose={() => setSelectedComp(null)} t={t} />
+        <CompModal
+          comp={selectedComp}
+          isZh={isZh}
+          onClose={() => setSelectedComp(null)}
+          t={t}
+          cancelled={isCancelledComp(selectedComp, cancelledCutoffIso)}
+        />
       )}
 
       {pickerOpen === 'month' && (
@@ -1514,11 +1605,12 @@ export default function UpcomingCompsPage() {
                 .map((c) => {
                   const displayName = localizeName(c, isZh);
                   const top = getCompRecordTop(c.id);
+                  const cancelled = isCancelledComp(c, cancelledCutoffIso);
                   const prefetchRounds = c.rounds ? undefined : () => { void fetchCompRounds(c.id); };
                   return (
                     <button
                       key={c.id}
-                      className="day-list-item"
+                      className={`day-list-item${cancelled ? ' is-cancelled' : ''}`}
                       onClick={() => { setSelectedComp(c); setDayListDate(null); }}
                       onMouseEnter={prefetchRounds}
                       onFocus={prefetchRounds}

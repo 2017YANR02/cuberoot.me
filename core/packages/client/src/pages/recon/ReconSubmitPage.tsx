@@ -11,14 +11,14 @@ import { getRecon, addRecon, updateRecon, deleteRecon, checkDuplicate, searchSol
 import { Flag } from '../../utils/flag';
 import { computeAllStats } from '../../utils/recon_stats';
 import { parseTimeInput, formatTimeInput, computeWcaAverage, attemptsPerRound } from '../../utils/recon_utils';
-import { fetchAttempts, fetchCubingAttempts } from '../../utils/wca_results_api';
+import { fetchAttempts, fetchCubingAttempts, fetchResultRow } from '../../utils/wca_results_api';
 import { RecordSelect } from '../../components/RecordSelect';
 import { EventSelect } from '../../components/EventSelect';
 import { CompPicker } from '../../components/CompPicker';
 import type { Comp } from '../../utils/comp_search';
 import { compNameZh, loadFlagData, flagDataVersion } from '../../utils/country_flags';
 import { localizeCompName } from '../../utils/comp_localize';
-import { fetchCompRounds } from '../../utils/comp_wcif';
+import { fetchCompRounds, type RoundFormat } from '../../utils/comp_wcif';
 import { toWcaEventId } from '../../utils/wca_events';
 import { displayCuberName } from '../../utils/name_utils';
 import { useAuthStore } from '../../stores/auth_store';
@@ -30,7 +30,7 @@ import TwistySection from './components/TwistySection';
 import SolutionView from './components/SolutionView';
 import { cleanForPlayer, extractAlgFromText, syncPlayerToMoveCount } from '../../utils/recon_alg_utils';
 import { buildNormalizedSolution, hasWideMoveInCrossSection } from '../../utils/recon_norm_cross_extract';
-import { ArrowRightLeft, ChevronDown, ChevronRight, Keyboard } from 'lucide-react';
+import { ArrowRightLeft, ChevronDown, ChevronRight, Keyboard, Loader2 } from 'lucide-react';
 
 /** 折叠区段 — GitHub 设置式 */
 function CollapsibleSection({ title, defaultOpen = false, children }: {
@@ -53,6 +53,11 @@ function CollapsibleSection({ title, defaultOpen = false, children }: {
 const EVENTS = ['3x3', '2x2', '4x4', '5x5', '6x6', '7x7', '3bld', '4bld', '5bld', 'oh', 'sq1', 'pyra', 'mega', 'clock', 'skewb', 'fmc', 'mbld'];
 const METHODS = ['CFOP', 'Roux', 'ZZ', 'Petrus', 'LBL', 'Mehta', 'ZB', 'Other'];
 const ROUNDS_FALLBACK = ['1', '2', '3', 'f'];
+
+// NOTE: 不同 round.format 的 # 上限 — Bo1/Bo2/Bo3/Bo5/Ao5/Mo3 按 expected_solve_count;H2H bracket 数量未知,留 30 给录入者覆盖
+const SOLVE_NUM_CAP_BY_FORMAT: Record<RoundFormat, number> = {
+  '1': 1, '2': 2, '3': 3, '5': 5, 'a': 5, 'm': 3, 'h': 30,
+};
 
 /** N 轮赛 → round 选项数组。N=1→只有 Final,N=4→R1+R2+R3+F。WCA 里最后一轮永远叫 Final。 */
 function roundsForCount(n: number): string[] {
@@ -78,6 +83,17 @@ function toDateInput(val: string | null | undefined): string {
   const d = new Date(val);
   if (isNaN(d.getTime())) return '';
   return d.toISOString().slice(0, 10);
+}
+
+function useIsMobile(): boolean {
+  const [m, setM] = useState(() => typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)');
+    const handler = (e: MediaQueryListEvent) => setM(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+  return m;
 }
 
 export default function ReconSubmitPage() {
@@ -139,19 +155,29 @@ export default function ReconSubmitPage() {
   // NOTE: avg 自动填充 — 用户一旦手动改过就再也不覆盖；avgAutoSource 是字段下方的来源 hint
   const [avgUserTouched, setAvgUserTouched] = useState(false);
   const [avgAutoSource, setAvgAutoSource] = useState<string | null>(null);
+  const [avgLoading, setAvgLoading] = useState(false);
   // NOTE: time(单次)自动填充 — 同一套机制,但 keys 多一个 solveNum
   const [timeUserTouched, setTimeUserTouched] = useState(false);
   const [timeAutoSource, setTimeAutoSource] = useState<string | null>(null);
+  const [timeLoading, setTimeLoading] = useState(false);
+  // NOTE: record marker 自动填充 — 单次/平均纪录,机制同 avg/time;只走 WCA API(cubing.com 不返 record)
+  const [singleRecordUserTouched, setSingleRecordUserTouched] = useState(false);
+  const [averageRecordUserTouched, setAverageRecordUserTouched] = useState(false);
+  const [recordLoading, setRecordLoading] = useState(false);
+  const [recordAutoSource, setRecordAutoSource] = useState<string | null>(null);
   // NOTE: edit/from 加载时的 keys 快照 — 首次 effect 跑时如果当前 keys 跟快照一致就跳过,
   //       避免覆盖加载值;用户一改 keys → 快照失效,后续每次 keys 变都重 fetch
   const loadedAvgKeySnapshot = useRef<string | null>(null);
   const loadedTimeKeySnapshot = useRef<string | null>(null);
+  const loadedRecordKeySnapshot = useRef<string | null>(null);
+  // NOTE: 跟踪"当前 input 值是否来自自动填" — fetch 三档全没数据时只清自动填的值,不清手输/加载值
+  const avgAutoFilledRef = useRef(false);
+  const timeAutoFilledRef = useRef(false);
   // NOTE: 比赛事件→轮次数 映射(从 WCIF 拉),决定 round 下拉的选项;拉不到 fallback 4 项
-  const [compRounds, setCompRounds] = useState<Record<string, number> | null>(null);
-  // NOTE: 移动端默认展开虚拟键盘 — 仅初始化时检测,后续不跟随 resize(尊重用户手动 toggle)
-  const [showKeyboard, setShowKeyboard] = useState(() =>
-    typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches
-  );
+  const [compRounds, setCompRounds] = useState<Record<string, RoundFormat[]> | null>(null);
+  // NOTE: 桌面端用户可 toggle;移动端强制显示键盘(toggle 按钮也藏掉)
+  const isMobile = useIsMobile();
+  const [showKeyboard, setShowKeyboard] = useState(false);
 
   // NOTE: 编辑模式加载数据
   useEffect(() => {
@@ -169,6 +195,7 @@ export default function ReconSubmitPage() {
       const baseKey = `${solve.personId ?? ''}|${solve.event ?? ''}|${solve.comp ?? ''}|${solve.compWcaId ?? ''}|${solve.round ?? ''}`;
       loadedAvgKeySnapshot.current = baseKey;
       loadedTimeKeySnapshot.current = `${baseKey}|${solve.solveNum ?? ''}`;
+      loadedRecordKeySnapshot.current = `${baseKey}|${solve.solveNum ?? ''}`;
       if (solve.rawTime != null) setTimeInput(formatTimeInput(solve.rawTime));
       if (solve.average != null) setAvgInput(formatTimeInput(solve.average));
       // NOTE: 同步 textarea DOM——defaultValue 只在 mount 时生效，编辑模式 API 返回后需手动同步
@@ -217,6 +244,7 @@ export default function ReconSubmitPage() {
       loadedAvgKeySnapshot.current = fromBaseKey;
       // NOTE: time 快照用 targetSolveNum (跳来时实际 solveNum,不是 src.solveNum)
       loadedTimeKeySnapshot.current = `${fromBaseKey}|${targetSolveNum ?? src.solveNum ?? ''}`;
+      loadedRecordKeySnapshot.current = `${fromBaseKey}|${targetSolveNum ?? src.solveNum ?? ''}`;
       if (src.average != null) setAvgInput(formatTimeInput(src.average));
       // NOTE: ?suggestTime= — 来自 SameRoundNav 的 WCA / 粘贴解析
       if (suggestTime) {
@@ -293,14 +321,19 @@ export default function ReconSubmitPage() {
     return () => { cancelled = true; };
   }, [form.compWcaId]);
 
+  // NOTE: 当前 event 在该比赛的 round.format 数组(WCIF 拉到时存在;没拉到/event 不存在 → null)
+  const eventRoundFormats = useMemo<RoundFormat[] | null>(() => {
+    if (!compRounds || !form.event) return null;
+    const wcaId = toWcaEventId(form.event);
+    const arr = compRounds[wcaId];
+    return (arr && arr.length > 0) ? arr : null;
+  }, [compRounds, form.event]);
+
   // NOTE: 当前 event 在该比赛的轮次选项 — 拉不到/没有该 event 时 fallback 4 项
   const roundOptions = useMemo(() => {
-    if (!compRounds || !form.event) return ROUNDS_FALLBACK;
-    const wcaId = toWcaEventId(form.event);
-    const n = compRounds[wcaId];
-    if (n == null || n <= 0) return ROUNDS_FALLBACK;
-    return roundsForCount(n);
-  }, [compRounds, form.event]);
+    if (!eventRoundFormats) return ROUNDS_FALLBACK;
+    return roundsForCount(eventRoundFormats.length);
+  }, [eventRoundFormats]);
 
   // NOTE: 当前 form.round 不在新选项里时 reset 到最后一项(单轮赛场景:用户从 4 轮赛切到短时赛,'2' 不再有效 → 设 'f')
   useEffect(() => {
@@ -310,11 +343,18 @@ export default function ReconSubmitPage() {
     }
   }, [roundOptions, form.round, setField]);
 
-  // NOTE: # (solveNum) 选项数量由 event 的 Ao5/Mo3/单把决定
+  // NOTE: # (solveNum) 上限由当前 round 的 format 决定 — H2H ('h') 取 30,其他按 expected_solve_count(1/2/3/5)
+  //       拉不到 WCIF / round 不在选项里 → fallback 到 attemptsPerRound(event) 的 1/3/5
   const solveNumOptions = useMemo(() => {
-    const max = form.event ? attemptsPerRound(form.event) : 5;
+    let max = form.event ? attemptsPerRound(form.event) : 5;
+    if (eventRoundFormats && form.round) {
+      // round 字符串 'f'=最后一轮, '1'/'2'/...=对应 0-index round
+      const idx = form.round === 'f' ? eventRoundFormats.length - 1 : Number(form.round) - 1;
+      const fmt = eventRoundFormats[idx];
+      if (fmt) max = SOLVE_NUM_CAP_BY_FORMAT[fmt];
+    }
     return Array.from({ length: max }, (_, i) => i + 1);
-  }, [form.event]);
+  }, [form.event, form.round, eventRoundFormats]);
 
   // NOTE: 切换 event 后,如果 form.solveNum 超出新选项范围,清空(让用户重选)
   useEffect(() => {
@@ -341,69 +381,75 @@ export default function ReconSubmitPage() {
 
     let cancelled = false;
     const timer = setTimeout(async () => {
+      setAvgLoading(true);
       let foundAvg: number | null = null;
       let foundSource: string | null = null;
-
-      // 1) DB sibling (只有 comp 字段是字符串匹配,所以非 WCA 比赛也能命中)
-      if (form.comp) {
-        try {
-          const all = await listRecons(form.personId);
-          if (cancelled) return;
-          const sibling = all.find(s =>
-            s.event === form.event &&
-            s.comp === form.comp &&
-            s.round === form.round &&
-            (!isEditing || s.id !== Number(editId)) &&
-            s.average != null
-          );
-          if (sibling && sibling.average != null) {
-            foundAvg = sibling.average;
-            foundSource = isZh ? `自动:同轮 #${sibling.solveNum ?? '?'}` : `auto: same round #${sibling.solveNum ?? '?'}`;
-          }
-        } catch { /* fall through */ }
-      }
-
-      // 2) WCA API
-      if (foundAvg == null && form.compWcaId) {
-        try {
-          const att = await fetchAttempts(form.compWcaId, form.event!, form.round!, form.personId!);
-          if (cancelled) return;
-          if (att) {
-            const a = computeWcaAverage(att, form.event!);
-            if (a != null) {
-              foundAvg = a;
-              foundSource = isZh ? '自动:WCA' : 'auto: WCA';
+      try {
+        // 1) DB sibling (只有 comp 字段是字符串匹配,所以非 WCA 比赛也能命中)
+        if (form.comp) {
+          try {
+            const all = await listRecons(form.personId);
+            if (cancelled) return;
+            const sibling = all.find(s =>
+              s.event === form.event &&
+              s.comp === form.comp &&
+              s.round === form.round &&
+              (!isEditing || s.id !== Number(editId)) &&
+              s.average != null
+            );
+            if (sibling && sibling.average != null) {
+              foundAvg = sibling.average;
+              foundSource = isZh ? `自动:同轮 #${sibling.solveNum ?? '?'}` : `auto: same round #${sibling.solveNum ?? '?'}`;
             }
-          }
-        } catch { /* fall through */ }
-      }
+          } catch { /* fall through */ }
+        }
 
-      // 3) cubing.com fallback
-      if (foundAvg == null && form.compWcaId) {
-        try {
-          const att = await fetchCubingAttempts(form.compWcaId, form.event!, form.round!, form.personId!);
-          if (cancelled) return;
-          if (att) {
-            const a = computeWcaAverage(att, form.event!);
-            if (a != null) {
-              foundAvg = a;
-              foundSource = isZh ? '自动:cubing.com' : 'auto: cubing.com';
+        // 2) WCA API
+        if (foundAvg == null && form.compWcaId) {
+          try {
+            const att = await fetchAttempts(form.compWcaId, form.event!, form.round!, form.personId!);
+            if (cancelled) return;
+            if (att) {
+              const a = computeWcaAverage(att, form.event!);
+              if (a != null) {
+                foundAvg = a;
+                foundSource = isZh ? '自动:WCA' : 'auto: WCA';
+              }
             }
-          }
-        } catch { /* fall through */ }
-      }
+          } catch { /* fall through */ }
+        }
 
-      if (cancelled) return;
-      if (foundAvg != null) {
-        setAvgInput(formatTimeInput(foundAvg));
-        setAvgAutoSource(foundSource);
-      } else {
-        // 三档都没 → 清空(可能是上一组 keys 留下的 auto-fill 值,新组合无数据)
-        setAvgInput('');
-        setAvgAutoSource(null);
+        // 3) cubing.com fallback
+        if (foundAvg == null && form.compWcaId) {
+          try {
+            const att = await fetchCubingAttempts(form.compWcaId, form.event!, form.round!, form.personId!);
+            if (cancelled) return;
+            if (att) {
+              const a = computeWcaAverage(att, form.event!);
+              if (a != null) {
+                foundAvg = a;
+                foundSource = isZh ? '自动:cubing.com' : 'auto: cubing.com';
+              }
+            }
+          } catch { /* fall through */ }
+        }
+
+        if (cancelled) return;
+        if (foundAvg != null) {
+          setAvgInput(formatTimeInput(foundAvg));
+          setAvgAutoSource(foundSource);
+          avgAutoFilledRef.current = true;
+        } else {
+          // 三档全没 → 仅清自动填留下的值;手输/加载值保留(避免编辑模式覆盖原值)
+          if (avgAutoFilledRef.current) setAvgInput('');
+          setAvgAutoSource(null);
+          avgAutoFilledRef.current = false;
+        }
+      } finally {
+        if (!cancelled) setAvgLoading(false);
       }
     }, 300);
-    return () => { cancelled = true; clearTimeout(timer); };
+    return () => { cancelled = true; clearTimeout(timer); setAvgLoading(false); };
   }, [form.personId, form.event, form.comp, form.compWcaId, form.round, avgUserTouched, isEditing, editId, isZh]);
 
   // NOTE: 单次成绩自动填充 — (选手, 项目, 比赛, 轮次, 第几把) 唯一确定一个 single time。
@@ -419,61 +465,117 @@ export default function ReconSubmitPage() {
 
     let cancelled = false;
     const timer = setTimeout(async () => {
+      setTimeLoading(true);
       let foundTime: number | null = null;
       let foundSource: string | null = null;
       const idx = (form.solveNum ?? 1) - 1;
-
-      // 1) DB sibling - 同 5 keys 的已录 solve
-      if (form.comp) {
-        try {
-          const all = await listRecons(form.personId);
-          if (cancelled) return;
-          const sibling = all.find(s =>
-            s.event === form.event &&
-            s.comp === form.comp &&
-            s.round === form.round &&
-            s.solveNum === form.solveNum &&
-            (!isEditing || s.id !== Number(editId)) &&
-            s.rawTime != null
-          );
-          if (sibling && sibling.rawTime != null) {
-            foundTime = sibling.rawTime;
-            foundSource = isZh ? '自动:已录' : 'auto: existing';
-          }
-        } catch { /* fall through */ }
-      }
-
-      // 2) WCA / 3) cubing - 取整轮 attempts 的第 idx 项
-      if (foundTime == null && form.compWcaId) {
-        try {
-          let attempts = await fetchAttempts(form.compWcaId, form.event!, form.round!, form.personId!);
-          let label = 'WCA';
-          if (!attempts) {
-            attempts = await fetchCubingAttempts(form.compWcaId, form.event!, form.round!, form.personId!);
-            label = 'cubing.com';
-          }
-          if (cancelled) return;
-          if (attempts) {
-            const v = attempts[idx];
-            if (v != null && v >= 0) {  // DNF=-1 / DNS=-2 跳过
-              foundTime = v;
-              foundSource = isZh ? `自动:${label}` : `auto: ${label}`;
+      try {
+        // 1) DB sibling - 同 5 keys 的已录 solve
+        if (form.comp) {
+          try {
+            const all = await listRecons(form.personId);
+            if (cancelled) return;
+            const sibling = all.find(s =>
+              s.event === form.event &&
+              s.comp === form.comp &&
+              s.round === form.round &&
+              s.solveNum === form.solveNum &&
+              (!isEditing || s.id !== Number(editId)) &&
+              s.rawTime != null
+            );
+            if (sibling && sibling.rawTime != null) {
+              foundTime = sibling.rawTime;
+              foundSource = isZh ? '自动:已录' : 'auto: existing';
             }
-          }
-        } catch { /* fall through */ }
-      }
+          } catch { /* fall through */ }
+        }
 
-      if (cancelled) return;
-      if (foundTime != null) {
-        setTimeInput(formatTimeInput(foundTime));
-        setTimeAutoSource(foundSource);
-      } else {
-        setTimeInput('');
-        setTimeAutoSource(null);
+        // 2) WCA / 3) cubing - 取整轮 attempts 的第 idx 项
+        if (foundTime == null && form.compWcaId) {
+          try {
+            let attempts = await fetchAttempts(form.compWcaId, form.event!, form.round!, form.personId!);
+            let label = 'WCA';
+            if (!attempts) {
+              attempts = await fetchCubingAttempts(form.compWcaId, form.event!, form.round!, form.personId!);
+              label = 'cubing.com';
+            }
+            if (cancelled) return;
+            if (attempts) {
+              const v = attempts[idx];
+              if (v != null && v >= 0) {  // DNF=-1 / DNS=-2 跳过
+                foundTime = v;
+                foundSource = isZh ? `自动:${label}` : `auto: ${label}`;
+              }
+            }
+          } catch { /* fall through */ }
+        }
+
+        if (cancelled) return;
+        if (foundTime != null) {
+          setTimeInput(formatTimeInput(foundTime));
+          // NOTE: 同步 form.value(下方"单次"WCA 风格展示字段)— WCA 自动填的没惩罚,直接用截断后的字符串
+          setField('value', formatTimeInput(foundTime));
+          setTimeAutoSource(foundSource);
+          timeAutoFilledRef.current = true;
+        } else {
+          if (timeAutoFilledRef.current) {
+            setTimeInput('');
+            setField('value', '');
+          }
+          setTimeAutoSource(null);
+          timeAutoFilledRef.current = false;
+        }
+      } finally {
+        if (!cancelled) setTimeLoading(false);
       }
     }, 300);
-    return () => { cancelled = true; clearTimeout(timer); };
+    return () => { cancelled = true; clearTimeout(timer); setTimeLoading(false); };
   }, [form.personId, form.event, form.comp, form.compWcaId, form.round, form.solveNum, timeUserTouched, isEditing, editId, isZh]);
+
+  // NOTE: 纪录字段自动填充 — 平均纪录直接用 WCA row.regional_average_record;
+  //       单次纪录仅当 form.solveNum-1 == row 整轮 best_index 时填(WCA marker 标在该轮最快那把)。
+  //       只走 WCA API(cubing.com 不返 record marker);用户手动改任一字段后该字段不再被覆盖。
+  useEffect(() => {
+    if (singleRecordUserTouched && averageRecordUserTouched) return;
+    if (!form.personId || !form.event || !form.round) return;
+    if (!form.compWcaId) return;
+
+    const currentKey = `${form.personId}|${form.event}|${form.comp ?? ''}|${form.compWcaId ?? ''}|${form.round}|${form.solveNum ?? ''}`;
+    if (loadedRecordKeySnapshot.current === currentKey) return;
+    loadedRecordKeySnapshot.current = null;
+
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      setRecordLoading(true);
+      try {
+        const row = await fetchResultRow(form.compWcaId!, form.event!, form.round!, form.personId!);
+        if (cancelled) return;
+        if (!row) {
+          if (!averageRecordUserTouched) setField('regionalAverageRecord', '');
+          if (!singleRecordUserTouched) setField('regionalSingleRecord', '');
+          setRecordAutoSource(null);
+          return;
+        }
+        let avgFilled: string | null = null;
+        let singleFilled: string | null = null;
+        if (!averageRecordUserTouched) {
+          const v = row.averageRecord ?? '';
+          setField('regionalAverageRecord', v);
+          if (v) avgFilled = v;
+        }
+        if (!singleRecordUserTouched) {
+          const idx = form.solveNum != null ? form.solveNum - 1 : -1;
+          const v = (idx === row.bestIndex && row.singleRecord) ? row.singleRecord : '';
+          setField('regionalSingleRecord', v);
+          if (v) singleFilled = v;
+        }
+        setRecordAutoSource((avgFilled || singleFilled) ? (isZh ? '自动:WCA' : 'auto: WCA') : null);
+      } finally {
+        if (!cancelled) setRecordLoading(false);
+      }
+    }, 300);
+    return () => { cancelled = true; clearTimeout(timer); setRecordLoading(false); };
+  }, [form.personId, form.event, form.comp, form.compWcaId, form.round, form.solveNum, singleRecordUserTouched, averageRecordUserTouched, setField, isZh]);
 
   // NOTE: 重复检测
   useEffect(() => {
@@ -717,8 +819,8 @@ export default function ReconSubmitPage() {
                 setTimeInput(e.target.value);
                 setTimeUserTouched(true);
                 setTimeAutoSource(null);
+                timeAutoFilledRef.current = false;
               }}
-              placeholder="12.34 / 1:12.34"
               readOnly={!!timeAutoSource}
               className={timeAutoSource ? 'submit-input-locked' : undefined}
               title={timeAutoSource ? (isZh ? '自动填充值不可编辑;改 选手/比赛/项目/轮次/第几把 以重新获取' : 'auto-filled, read-only; change person/comp/event/round/# to refetch') : undefined}
@@ -805,20 +907,25 @@ export default function ReconSubmitPage() {
           )}
         </div>
 
-        {/* NOTE: 虚拟键盘按需 toggle — 仅在原文模式可用(标准化视图为只读) */}
+        {/* NOTE: 虚拟键盘 — 标准化视图(只读)不显示;桌面端 toggle,移动端强制显示 */}
         {!normalized && (
           <>
-            <button
-              type="button"
-              className={`submit-keyboard-toggle${showKeyboard ? ' active' : ''}`}
-              onClick={() => setShowKeyboard(s => !s)}
-            >
-              <Keyboard size={14} />
-              {isZh
-                ? (showKeyboard ? '隐藏虚拟键盘' : '显示虚拟键盘')
-                : (showKeyboard ? 'Hide keyboard' : 'Show keyboard')}
-            </button>
-            {showKeyboard && (
+            {!isMobile && (
+              <button
+                type="button"
+                className={`submit-keyboard-toggle${showKeyboard ? ' active' : ''}`}
+                onClick={() => setShowKeyboard(s => !s)}
+                aria-label={isZh
+                  ? (showKeyboard ? '隐藏虚拟键盘' : '显示虚拟键盘')
+                  : (showKeyboard ? 'Hide keyboard' : 'Show keyboard')}
+                title={isZh
+                  ? (showKeyboard ? '隐藏虚拟键盘' : '显示虚拟键盘')
+                  : (showKeyboard ? 'Hide keyboard' : 'Show keyboard')}
+              >
+                <Keyboard size={14} />
+              </button>
+            )}
+            {(isMobile || showKeyboard) && (
               <CubeVirtualKeyboard
                 textareaRef={solutionRef}
                 onInput={() => {
@@ -872,7 +979,8 @@ export default function ReconSubmitPage() {
                 <option value="">{isZh ? '请选择' : 'Select…'}</option>
                 {roundOptions.map(r => <option key={r} value={r}>{
                   r === 'f' ? t('recon.roundOption.final')
-                    : t('recon.roundOption.numbered', { n: r })
+                    : ['1', '2', '3'].includes(r) ? t(`recon.roundOption.r${r}`)
+                      : t('recon.roundOption.numbered', { n: r })
                 }</option>)}
               </select>
             </label>
@@ -908,38 +1016,57 @@ export default function ReconSubmitPage() {
                   setAvgInput(e.target.value);
                   setAvgUserTouched(true);
                   setAvgAutoSource(null);
+                  avgAutoFilledRef.current = false;
                 }}
                 placeholder="Avg"
                 readOnly={!!avgAutoSource}
                 className={avgAutoSource ? 'submit-input-locked' : undefined}
                 title={avgAutoSource ? (isZh ? '自动填充值不可编辑;改选手/比赛/项目/轮次以重新获取' : 'auto-filled, read-only; change person/comp/event/round to refetch') : undefined}
               />
-              {avgAutoSource && <span className="submit-hint">{avgAutoSource}</span>}
+              {avgLoading
+                ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {isZh ? '自动获取中…' : 'fetching…'}</span>
+                : avgAutoSource ? <span className="submit-hint">{avgAutoSource}</span> : null}
             </label>
             <label className="submit-field">
-              <span className="submit-label">{t('recon.time')}</span>
+              <span className="submit-label">{t('recon.single')}</span>
               <input
                 type="text"
-                value={timeInput}
+                value={form.value ?? ''}
                 onChange={e => {
-                  setTimeInput(e.target.value);
+                  setField('value', e.target.value);
                   setTimeUserTouched(true);
                   setTimeAutoSource(null);
+                  timeAutoFilledRef.current = false;
                 }}
-                placeholder="12.34 / 1:12.34"
                 readOnly={!!timeAutoSource}
                 className={timeAutoSource ? 'submit-input-locked' : undefined}
                 title={timeAutoSource ? (isZh ? '自动填充值不可编辑;改 选手/比赛/项目/轮次/第几把 以重新获取' : 'auto-filled, read-only; change person/comp/event/round/# to refetch') : undefined}
               />
-              {timeAutoSource && <span className="submit-hint">{timeAutoSource}</span>}
+              {timeLoading
+                ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {isZh ? '自动获取中…' : 'fetching…'}</span>
+                : timeAutoSource ? <span className="submit-hint">{timeAutoSource}</span> : null}
             </label>
             <label className="submit-field">
               <span className="submit-label">{t('recon.badge.singleRecord')}</span>
-              <RecordSelect value={form.regionalSingleRecord || ''} onChange={(v) => setField('regionalSingleRecord', v)} />
+              <RecordSelect
+                value={form.regionalSingleRecord || ''}
+                onChange={(v) => { setField('regionalSingleRecord', v); setSingleRecordUserTouched(true); }}
+                personIso2={form.personCountry}
+              />
+              {recordLoading
+                ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {isZh ? '自动获取中…' : 'fetching…'}</span>
+                : (!singleRecordUserTouched && form.regionalSingleRecord && recordAutoSource) ? <span className="submit-hint">{recordAutoSource}</span> : null}
             </label>
             <label className="submit-field">
               <span className="submit-label">{t('recon.badge.averageRecord')}</span>
-              <RecordSelect value={form.regionalAverageRecord || ''} onChange={(v) => setField('regionalAverageRecord', v)} />
+              <RecordSelect
+                value={form.regionalAverageRecord || ''}
+                onChange={(v) => { setField('regionalAverageRecord', v); setAverageRecordUserTouched(true); }}
+                personIso2={form.personCountry}
+              />
+              {recordLoading
+                ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {isZh ? '自动获取中…' : 'fetching…'}</span>
+                : (!averageRecordUserTouched && form.regionalAverageRecord && recordAutoSource) ? <span className="submit-hint">{recordAutoSource}</span> : null}
             </label>
           </div>
         </CollapsibleSection>

@@ -12,6 +12,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Flag } from '../utils/flag';
 import { displayCuberName } from '../utils/name_utils';
 import { searchPersons, getPerson, WCA_ID_REGEX, type WcaPersonLite } from '../utils/wca_api';
+import { ClearButton } from './ClearButton';
 import './cuber_search_input.css';
 
 interface Props {
@@ -123,13 +124,7 @@ export function CuberSearchInput({
               {isZh ? `${matchCount} 场` : `${matchCount} ${matchCount === 1 ? 'comp' : 'comps'}`}
             </span>
           )}
-          <button
-            type="button"
-            className="cuber-search-clear"
-            onClick={handleClear}
-            aria-label={isZh ? '清除' : 'Clear'}
-            title={isZh ? '清除' : 'Clear'}
-          >×</button>
+          <ClearButton onClick={handleClear} isZh={isZh} />
         </div>
       </div>
     );
@@ -151,14 +146,11 @@ export function CuberSearchInput({
         spellCheck={false}
       />
       {query && (
-        <button
-          type="button"
-          className="cuber-search-clear cuber-search-clear--inline"
-          onMouseDown={e => e.preventDefault()}
+        <ClearButton
           onClick={() => { setQuery(''); setApiResults([]); inputRef.current?.focus(); }}
-          aria-label={isZh ? '清除' : 'Clear'}
-          title={isZh ? '清除' : 'Clear'}
-        >×</button>
+          isZh={isZh}
+          preserveFocus
+        />
       )}
       {showDropdown && (
         <div className="cuber-search-popup">

@@ -94,7 +94,20 @@
     border-color: var(--accent);
     box-shadow: 0 0 0 3px var(--accent-soft);
 }
-
+/* 比赛搜索框 + 一键清空 ×（遵循全局规则：选择/搜索型输入有非空值时必出 ×） */
+.upcoming-page .search-box-wrap {
+    position: relative;
+    display: flex;
+    flex: 1;
+    min-width: 180px;
+    max-width: 320px;
+}
+.upcoming-page .search-box-wrap .search-box {
+    flex: 1;
+    min-width: 0;
+    max-width: none;
+    padding-right: 28px;
+}
 /* NOTE: CountryInput 自带 padding/border/focus 样式，这里仅控宽 */
 .upcoming-page .country-filter { min-width: 160px; }
 
@@ -125,6 +138,31 @@
 .upcoming-page .mode-btn.is-active {
     background: var(--accent-soft);
     color: var(--accent);
+}
+
+.upcoming-page .cancelled-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0.35rem 0.7rem;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-sub);
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.upcoming-page .cancelled-toggle:hover {
+    border-color: #C97A5C;
+    color: #A04A2E;
+}
+.upcoming-page .cancelled-toggle.is-active {
+    background: #FCE9E3;
+    border-color: #C97A5C;
+    color: #A04A2E;
 }
 
 .upcoming-page .mode-status {
@@ -184,24 +222,34 @@
     min-height: 0.7rem; /* 保留位置避免 chip 高度抖动 */
 }
 .upcoming-page .event-chip-rounds.is-empty { visibility: hidden; }
-/* 列表模式下：chip 行同时承担表头 — 切到 grid 布局对齐列表列 + sticky 到视口顶 */
+/* 列表模式下：chip 行同时承担表头 — 外层 sticky 到视口顶；内层 grid 与列表列对齐 */
 .upcoming-page .event-chips--list-header {
-    display: grid;
-    grid-template-columns: var(--cl-cols);
-    align-items: center;
-    gap: 6px;
-    /* month-bar 是 flex-wrap 容器，强占整行 + 自身 100% 宽，
-     * grid 列宽才能展开到与下方数据行（block 元素自然占满）一致 */
+    /* month-bar 是 flex-wrap 容器，强占整行 */
     flex-basis: 100%;
     width: 100%;
-    min-width: var(--cl-min-width);
-    padding: 4px 12px;
     border-bottom: 1px solid var(--border);
     position: sticky;
     top: 0;
     z-index: 11;
     background: var(--bg);
     margin: 0;
+    box-sizing: border-box;
+    /* 内部 grid 的横向溢出在自己内部滚（与 .comp-list 通过 JS 同步 scrollLeft） */
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+}
+.upcoming-page .event-chips--list-header::-webkit-scrollbar { display: none; }
+.upcoming-page .event-chips-grid {
+    display: grid;
+    grid-template-columns: var(--cl-cols);
+    align-items: center;
+    gap: 6px;
+    /* 与 .comp-list-row 对齐 — row 是 absolute left:0 right:0 拿满 100%，
+     * grid 必须显式 100% 否则 overflow-x: auto 父级里会塌到 min-width，1fr 分配不一致 */
+    width: 100%;
+    min-width: var(--cl-min-width);
+    padding: 4px 12px;
     box-sizing: border-box;
 }
 .upcoming-page .event-chips--list-header .event-chip {
@@ -920,6 +968,8 @@
     white-space: nowrap;
     min-width: 0;
     font-weight: 500;
+    /* 紧贴国旗 — 抵消 grid 列间 gap（桌面 6px / 移动 4px） */
+    margin-left: -6px;
 }
 .upcoming-page .comp-list-city {
     color: var(--text-sub);
@@ -935,6 +985,43 @@
     color: var(--text);
     font-variant-numeric: tabular-nums;
     line-height: 1;
+}
+
+/* ── 已取消比赛 — 列表 / 日历 / day-list / modal 共享样式 ── */
+.upcoming-page .comp-list-row.is-cancelled {
+    opacity: 0.55;
+}
+.upcoming-page .comp-list-row.is-cancelled .comp-list-name,
+.upcoming-page .comp-list-row.is-cancelled .comp-list-date {
+    text-decoration: line-through;
+    text-decoration-thickness: 1px;
+}
+.upcoming-page .event-bar.is-cancelled {
+    opacity: 0.55;
+}
+.upcoming-page .event-bar.is-cancelled .event-bar-name {
+    text-decoration: line-through;
+}
+.upcoming-page .day-list-item.is-cancelled {
+    opacity: 0.6;
+}
+.upcoming-page .day-list-item.is-cancelled .day-list-item-name {
+    text-decoration: line-through;
+}
+.upcoming-page .modal-title-name.is-cancelled {
+    text-decoration: line-through;
+}
+.upcoming-page .modal-cancelled-tag {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 8px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #A04A2E;
+    background: #FCE9E3;
+    border-radius: 6px;
+    vertical-align: middle;
+    letter-spacing: 0.02em;
 }
 
 /* ── 列表视图 · 年月范围过滤 ── */
@@ -971,21 +1058,6 @@
     color: var(--text-sub);
     font-size: 0.85rem;
 }
-.upcoming-page .date-range-clear {
-    width: 24px;
-    height: 24px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    border: none;
-    background: var(--surface-alt);
-    color: var(--text-sub);
-    font-size: 1rem;
-    line-height: 1;
-    cursor: pointer;
-}
-.upcoming-page .date-range-clear:hover { color: var(--accent); background: var(--accent-soft); }
 .upcoming-page .date-range-summary {
     margin-left: 0.5rem;
     color: var(--text-sub);
@@ -996,6 +1068,7 @@
 @media (max-width: 768px) {
     .upcoming-page .toolbar { gap: 0.4rem; }
     .upcoming-page .search-box { min-width: 100%; }
+    .upcoming-page .search-box-wrap { min-width: 100%; max-width: 100%; }
     .upcoming-page .country-filter { flex: 1; min-width: 0; }
     .upcoming-page .weekday-cell { font-size: 0.65rem; padding: 0.4rem 0.2rem; }
     .upcoming-page .day-cell { padding: 3px 3px 1px; min-width: 0; }
@@ -1012,8 +1085,9 @@
         --cl-min-width: 44rem;
     }
     .upcoming-page .comp-list { overflow-x: auto; }
-    .upcoming-page .event-chips--list-header { padding: 4px 8px; gap: 4px; }
+    .upcoming-page .event-chips-grid { padding: 4px 8px; gap: 4px; }
     .upcoming-page .comp-list-row { gap: 4px; padding: 0 8px; font-size: 0.78rem; }
+    .upcoming-page .comp-list-name { margin-left: -4px; }
     .upcoming-page .comp-list-date { font-size: 0.7rem; }
     .upcoming-page .cl-event-cell { font-size: 0.65rem; }
     .upcoming-page .cl-year-num { font-size: 1rem; }

@@ -8,7 +8,7 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { ChevronDown, X } from 'lucide-react';
-import { RECORD_OPTIONS } from '../../utils/recon_utils';
+import { RECORD_OPTIONS, isRecordCodeAllowedFor } from '../../utils/recon_utils';
 import { RecordBadge } from '../RecordBadge';
 import './record_select.css';
 
@@ -20,9 +20,11 @@ interface RecordSelectProps {
   records?: { code: string; count: number }[];
   /** trigger / popup 顶部 "未选" 占位文字;默认 "-" */
   placeholder?: string;
+  /** 提交场景:选手国籍 iso2 — 用于灰显不属于该选手大洲的具体大洲缩写(其他选项不变) */
+  personIso2?: string | null;
 }
 
-export function RecordSelect({ value, onChange, className, records, placeholder }: RecordSelectProps) {
+export function RecordSelect({ value, onChange, className, records, placeholder, personIso2 }: RecordSelectProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -40,7 +42,10 @@ export function RecordSelect({ value, onChange, className, records, placeholder 
     setOpen(false);
   };
 
-  const items: { code: string; count?: number }[] = records ?? RECORD_OPTIONS.map(c => ({ code: c }));
+  const items: { code: string; count?: number }[] = records
+    ?? RECORD_OPTIONS
+      .filter(c => isRecordCodeAllowedFor(c, personIso2))
+      .map(c => ({ code: c }));
   const current = records?.find(r => r.code === value);
   const emptyLabel = placeholder ?? '-';
 

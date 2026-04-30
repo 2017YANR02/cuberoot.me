@@ -7,6 +7,7 @@ import { compNameZh } from '../utils/country_flags';
 import { stripWcaPrefix } from '../utils/comp_localize';
 import { localizeCity } from '../utils/city_localize';
 import { formatDateRangeIso } from '../utils/date_range';
+import { ClearButton } from './ClearButton';
 import './comp_picker.css';
 
 interface Props {
@@ -22,7 +23,15 @@ export function CompPicker({ value, onChange, onPick, placeholder, isZh, classNa
   const [comps, setComps] = useState<Comp[] | null>(null);
   const [open, setOpen] = useState(false);
   const [results, setResults] = useState<Comp[]>([]);
+  const [focused, setFocused] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
+
+  // NOTE: 中文模式下,失焦时把已知 WCA 比赛名(英文)显示成中文(用户未输入仍可通过原值搜索)。聚焦/编辑时显原值
+  const displayValue = (() => {
+    if (!isZh || focused || !value) return value;
+    const zh = compNameZh(value);
+    return zh ? stripWcaPrefix(zh) : value;
+  })();
 
   const ensureLoaded = useCallback(async () => {
     if (comps) return comps;
@@ -61,21 +70,19 @@ export function CompPicker({ value, onChange, onPick, placeholder, isZh, classNa
       <input
         type="text"
         className={value ? 'comp-picker-input--with-clear' : ''}
-        value={value}
+        value={displayValue}
         onChange={e => { onChange(e.target.value); setOpen(true); }}
-        onFocus={() => { setOpen(true); ensureLoaded(); }}
+        onFocus={() => { setFocused(true); setOpen(true); ensureLoaded(); }}
+        onBlur={() => { setFocused(false); }}
         placeholder={placeholder}
         autoComplete="off"
       />
       {value && (
-        <button
-          type="button"
-          className="comp-picker-clear"
-          onMouseDown={(e) => e.preventDefault()}
+        <ClearButton
           onClick={() => { onChange(''); setOpen(false); }}
-          aria-label={isZh ? '清除' : 'Clear'}
-          title={isZh ? '清除' : 'Clear'}
-        >×</button>
+          isZh={isZh}
+          preserveFocus
+        />
       )}
       {open && results.length > 0 && (
         <div className="comp-picker-popup">

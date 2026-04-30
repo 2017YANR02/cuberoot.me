@@ -11,31 +11,6 @@
   padding-right: 30px;
 }
 
-.comp-picker-clear {
-  position: absolute;
-  right: 6px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 22px;
-  height: 22px;
-  border: none;
-  border-radius: 50%;
-  background: transparent;
-  color: #888;
-  font-size: 1rem;
-  line-height: 1;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.12s, color 0.12s;
-}
-
-.comp-picker-clear:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #e5e5e5;
-}
-
 .comp-picker-popup {
   position: absolute;
   top: calc(100% + 4px);
