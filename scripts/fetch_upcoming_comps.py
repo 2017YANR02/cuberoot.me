@@ -37,6 +37,8 @@ WR_METRIC_PATH = ROOT_DIR / "stats" / "wr_metric.json"
 OUTPUT_JSON_PATH = ROOT_DIR / "stats" / "upcoming_comps.json"
 # NOTE: Globe history/upcoming 模式 + UpcomingCompsPage All 模式共用，含全球全量 upcoming
 ALL_OUTPUT_JSON_PATH = ROOT_DIR / "stats" / "all_upcoming_comps.json"
+# NOTE: 中国内地比赛全员注册名单（前端"搜索选手"非 top 时,作为静态 fallback;WCA API 不覆盖 cubing.com）
+CN_REGISTRATIONS_JSON_PATH = ROOT_DIR / "stats" / "cn_upcoming_registrations.json"
 CACHE_DIR = ROOT_DIR / ".upcoming_cache"
 
 WCA_API_BASE = "https://www.worldcubeassociation.org/api/v0"
@@ -448,6 +450,42 @@ def _integrate_cubing_china(comps_map, cubers):
         # NOTE: 优雅降级 — CN 集成失败不影响 WCA 数据
         print(f"[CN][WARN] cubing.com 集成失败，已跳过: {e}")
 
+
+def build_cn_registrations() -> Dict[str, List[str]]:
+    """
+    抓 cubing.com 上每场即将举行的中国比赛的全员注册 WCA ID 名单。
+    返回 {comp_id: [wca_id, ...]}（已排序）。
+
+    与 _integrate_cubing_china 不同 — 这里**不**做 top cuber 过滤,产出全员表;
+    供前端"搜索选手"在 WCA API 不覆盖 (cubing.com) 时作静态兜底用。
+    复用 _fetch_cubing_china_competitors 的文件级 HTML 缓存,二次抓近乎零成本。
+    """
+    out: Dict[str, List[str]] = {}
+    try:
+        cn_comps = _fetch_cubing_china_comps()
+    except Exception as e:
+        print(f"[CN-REG][WARN] 比赛列表拉取失败: {e}")
+        return out
+    if not cn_comps:
+        return out
+
+    total = len(cn_comps)
+    total_ids = 0
+    for i, comp in enumerate(cn_comps, 1):
+        alias = comp["alias"]
+        comp_id = alias.replace("-", "")
+        try:
+            ids = _fetch_cubing_china_competitors(alias)
+            out[comp_id] = sorted(ids)
+            total_ids += len(ids)
+            print(f"[CN-REG] [{i}/{total}] {comp_id}: {len(ids)} 人")
+        except Exception as e:
+            print(f"[CN-REG][WARN] {comp_id}: {e}")
+            out[comp_id] = []
+    print(f"[CN-REG] 共 {total} 场,合计 {total_ids} 个 WCA ID")
+    return out
+
+
 def build_upcoming_comps(cubers: CuberData) -> List[Dict[str, Any]]:
     """
     遍历选手名单，请求 WCA API 获取近期比赛并聚合。
@@ -728,6 +766,15 @@ def main():
         with ALL_OUTPUT_JSON_PATH.open("w", encoding="utf-8") as f:
             json.dump(all_comps, f, ensure_ascii=False, separators=(',', ':'))
         print(f"[ALL] 共 {len(all_comps)} 场 → {ALL_OUTPUT_JSON_PATH.relative_to(ROOT_DIR)}")
+
+    # 7. 写出 CN 全员注册名单（前端搜选手非 top 时的静态兜底）
+    print("\n[CN-REG] 开始构建中国内地比赛全员注册名单...")
+    cn_reg = build_cn_registrations()
+    if cn_reg:
+        CN_REGISTRATIONS_JSON_PATH.parent.mkdir(parents=True, exist_ok=True)
+        with CN_REGISTRATIONS_JSON_PATH.open("w", encoding="utf-8") as f:
+            json.dump(cn_reg, f, ensure_ascii=False, separators=(',', ':'))
+        print(f"[CN-REG] 写入 {CN_REGISTRATIONS_JSON_PATH.relative_to(ROOT_DIR)}")
 
     print(f"[INFO] 总耗时: {time.time() - start_time:.2f} 秒")
 

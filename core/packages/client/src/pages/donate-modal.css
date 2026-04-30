@@ -86,6 +86,122 @@
     color: var(--text-sub);
 }
 
+.donate-contact {
+    margin: 1rem 0 0;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--accent-soft);
+    font-size: 0.8rem;
+    display: grid;
+    gap: 0.35rem;
+}
+
+.donate-contact-row {
+    display: grid;
+    grid-template-columns: 6em 1fr;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.donate-contact dt {
+    margin: 0;
+    color: var(--text-sub);
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.donate-contact-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    color: var(--text-sub);
+    flex: 0 0 auto;
+}
+
+.donate-icon-youtube { color: #FF0000; }
+.donate-icon-bilibili { color: #00A1D6; }
+.donate-icon-wechat { color: #07C160; }
+.donate-icon-qq { color: #1EBAFC; }
+.donate-icon-tiktok { color: #000000; }
+
+.donate-contact dd {
+    margin: 0;
+    color: var(--text);
+    overflow-wrap: anywhere;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.donate-copy-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 2px 5px;
+    color: var(--text-sub);
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.donate-copy-btn:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: var(--surface);
+}
+
+.donate-copy-btn:active {
+    transform: translateY(1px);
+}
+
+/* Link-only rows (YouTube / Bilibili): icon-label clickable, no value column */
+.donate-contact-row-link-wrap {
+    grid-template-columns: 1fr;
+}
+
+.donate-contact-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-sub);
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 0.15s;
+    width: fit-content;
+}
+
+.donate-contact-link:hover {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.donate-contact code {
+    font-family: 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+}
+
+.donate-contact a {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.donate-contact a:hover {
+    text-decoration: underline;
+}
+
 .donate-thanks {
     margin-top: 1rem;
     text-align: center;
