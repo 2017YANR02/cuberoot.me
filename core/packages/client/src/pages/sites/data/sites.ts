@@ -1,5 +1,4 @@
-// 自动生成：tmp/build-sites-data.mjs
-// 请勿手改，改动源于 tmp/CubeSites.xlsx
+// 魔方导航站点列表 — 手动维护
 import type { Site } from './types';
 
 export const SITES: Site[] = [
