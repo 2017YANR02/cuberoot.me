@@ -544,15 +544,19 @@ def fetch_wcif_rounds(comp_id: str) -> Dict[str, int]:
 
     url = f"{WCA_API_BASE}/competitions/{comp_id}/wcif/public"
     data = fetch_with_retry(url)
+    # NOTE: fetch_with_retry 网络失败 / 429 重试耗尽 / 404 都返回 {}（无 events 键）。
+    #       区分"真无 events"和"fetch 失败"很重要：失败不写缓存，让下次重试；
+    #       成功（哪怕 events 列表为空）才缓存。否则一次 429 → 缓存 24h 内永远空。
+    if not isinstance(data, dict) or "events" not in data:
+        return {}
     out: Dict[str, int] = {}
-    if isinstance(data, dict):
-        for ev in data.get("events", []) or []:
-            eid = ev.get("id")
-            if not eid:
-                continue
-            n = len(ev.get("rounds") or [])
-            _, short = EVENT_ORDER_MAP.get(eid, (999, eid))
-            out[short] = n
+    for ev in data["events"] or []:
+        eid = ev.get("id")
+        if not eid:
+            continue
+        n = len(ev.get("rounds") or [])
+        _, short = EVENT_ORDER_MAP.get(eid, (999, eid))
+        out[short] = n
     cache_file.write_text(json.dumps(out, ensure_ascii=False), encoding="utf-8")
     return out
 

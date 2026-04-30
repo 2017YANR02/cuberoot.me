@@ -868,6 +868,19 @@
     padding: 0 0.5rem;
     border-bottom: 1px solid var(--border);
 }
+/* 当前可见年份 sticky 显示在 chip 行下面（top 值要避开 chip 行高度） */
+.upcoming-page .comp-list-year-sticky {
+    position: sticky;
+    top: 44px;
+    z-index: 9;
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    padding: 4px 12px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    min-width: var(--cl-min-width);
+}
 .upcoming-page .comp-list-year-num {
     font-family: 'Fraunces', 'Times New Roman', serif;
     font-size: 1.2rem;
