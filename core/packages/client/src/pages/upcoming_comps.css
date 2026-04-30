@@ -70,6 +70,11 @@
     z-index: 10;
     border-bottom: 1px solid transparent;
 }
+/* 列表模式下 toolbar 不 sticky —— 它的 stacking context 会困住国家下拉，让 chip 行 z:11 把它挡掉。
+ * chip 行本身就是列表的持久表头，toolbar 滚出视口对功能无影响。 */
+.upcoming-page--list .toolbar {
+    position: static;
+}
 
 .upcoming-page .search-box {
     background: var(--surface);
@@ -831,8 +836,8 @@
 /* 共享网格列模板：date | flag | name | city | event*17
  * 同时供 .comp-list-row（行）和 .event-chips--list-header（chip 行兼表头）使用 */
 .upcoming-page {
-    --cl-cols: 7.2rem 1.4rem minmax(0, 1fr) 9rem repeat(17, 1.3rem);
-    --cl-min-width: 54rem;
+    --cl-cols: 7.2rem 1.4rem minmax(0, 1fr) 9rem repeat(21, 1.3rem);
+    --cl-min-width: 59rem;
 }
 .upcoming-page .comp-list {
     display: flex;
@@ -854,42 +859,30 @@
     width: 100%;
     min-width: var(--cl-min-width);
 }
-.upcoming-page .comp-list-year,
 .upcoming-page .comp-list-row {
     position: absolute;
     left: 0;
     right: 0;
     box-sizing: border-box;
 }
-.upcoming-page .comp-list-year {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0 0.5rem;
-    border-bottom: 1px solid var(--border);
-}
-/* 当前可见年份 sticky 显示在 chip 行下面（top 值要避开 chip 行高度） */
-.upcoming-page .comp-list-year-sticky {
-    position: sticky;
-    top: 44px;
-    z-index: 9;
-    display: flex;
+/* chip 行最左侧的 sticky 年份 cell（替代 date 列占位） */
+.upcoming-page .cl-year-cell {
+    display: inline-flex;
     align-items: baseline;
-    gap: 0.5rem;
-    padding: 4px 12px;
-    background: var(--bg);
-    border-bottom: 1px solid var(--border);
-    min-width: var(--cl-min-width);
+    gap: 6px;
+    overflow: hidden;
+    white-space: nowrap;
 }
-.upcoming-page .comp-list-year-num {
+.upcoming-page .cl-year-num {
     font-family: 'Fraunces', 'Times New Roman', serif;
-    font-size: 1.2rem;
+    font-size: 1.15rem;
     font-weight: 500;
     letter-spacing: -0.01em;
     color: var(--text);
     font-feature-settings: "tnum" 1;
+    line-height: 1;
 }
-.upcoming-page .comp-list-year-count {
+.upcoming-page .cl-year-count {
     font-size: 0.7rem;
     color: var(--text-sub);
     background: var(--surface-alt);
@@ -1015,15 +1008,15 @@
     .upcoming-page .more-btn { font-size: 0.62rem; height: 18px; padding: 0 4px; }
     /* 虚拟列表：行高固定，移动端横向滚动以保留 17 列对齐；city 列宽设为 0（内容靠 overflow 隐藏）保持 header/row 列数一致 */
     .upcoming-page {
-        --cl-cols: 5.5rem 1.2rem minmax(7rem, 1fr) 0 repeat(17, 1.1rem);
-        --cl-min-width: 40rem;
+        --cl-cols: 5.5rem 1.2rem minmax(7rem, 1fr) 0 repeat(21, 1.1rem);
+        --cl-min-width: 44rem;
     }
     .upcoming-page .comp-list { overflow-x: auto; }
     .upcoming-page .event-chips--list-header { padding: 4px 8px; gap: 4px; }
     .upcoming-page .comp-list-row { gap: 4px; padding: 0 8px; font-size: 0.78rem; }
     .upcoming-page .comp-list-date { font-size: 0.7rem; }
     .upcoming-page .cl-event-cell { font-size: 0.65rem; }
-    .upcoming-page .comp-list-year-num { font-size: 1.05rem; }
+    .upcoming-page .cl-year-num { font-size: 1rem; }
     .upcoming-page .date-range-pick { font-size: 0.72rem; padding: 0.3rem 0.5rem; min-width: 5.4rem; }
 }
 
