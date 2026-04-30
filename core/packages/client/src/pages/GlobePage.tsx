@@ -14,6 +14,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import * as OpenCC from 'opencc-js';
 import { localizeCity } from '../utils/city_localize';
 import { stripWcaPrefix } from '../utils/comp_localize';
+import { compNameZh } from '../utils/country_flags';
 import { countryName } from '../utils/country_name';
 import { VectorTile } from '@mapbox/vector-tile';
 import Protobuf from 'pbf';
@@ -31,6 +32,7 @@ import {
   type WcaPerson,
 } from '@cuberoot/shared';
 import LangToggle from '../components/LangToggle';
+import { ClearButton } from '../components/ClearButton';
 import { displayCuberName } from '../utils/name_utils';
 import { formatDateRangeIso } from '../utils/date_range';
 import { Flag, flagHtml } from '../utils/flag';
@@ -731,19 +733,29 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
   type CompResult = { id: string; name: string; city: string; country: string; lng: number; lat: number; date: string; tag: 'upcoming' | 'past' };
   const compResults = useMemo<CompResult[]>(() => {
     if (searchType !== 'comp') return [];
-    const q = searchQuery.trim().toLowerCase();
+    const raw = searchQuery.trim();
+    const q = raw.toLowerCase();
     if (q.length < 2) return [];
     const seen = new Set<string>();
     const matches: CompResult[] = [];
+    const isHit = (name: string, city: string): boolean => {
+      if (name.toLowerCase().includes(q)) return true;
+      if (city.toLowerCase().includes(q)) return true;
+      if (compNameZh(name).includes(raw)) return true;
+      if (city && localizeCity(city, true).includes(raw)) return true;
+      return false;
+    };
     for (const c of (comps ?? [])) {
-      if (c.name.toLowerCase().includes(q) || c.city.toLowerCase().includes(q)) {
+      if (isHit(c.name, c.city)) {
         seen.add(c.id);
         matches.push({ id: c.id, name: c.name, city: c.city, country: c.country, lng: c.longitude_degrees, lat: c.latitude_degrees, date: c.start_date, tag: 'upcoming' });
       }
     }
     for (const c of (pastComps ?? [])) {
       if (seen.has(c.id)) continue;
-      if (c.name.toLowerCase().includes(q) || c.city.toLowerCase().includes(q)) {
+      // 多地代码（XW/XA/...）没坐标，搜到也飞不过去 — 跳过
+      if (c.latitude_degrees == null || c.longitude_degrees == null) continue;
+      if (isHit(c.name, c.city)) {
         matches.push({ id: c.id, name: c.name, city: c.city, country: c.country, lng: c.longitude_degrees, lat: c.latitude_degrees, date: c.start_date, tag: 'past' });
       }
     }
@@ -874,11 +886,13 @@ const [selectedComps, setSelectedComps] = useState<UpcomingCompRecord[] | null>(
   }, [filteredComps, includePast, pastComps]);
 
   // ── history 模式过滤 ──
+  // 多地代码（XW/XA/...）lat/lng = null,Globe 用不上,直接跳过
   const filteredPast = useMemo(() => {
     if (!pastComps) return [];
     const [y0, y1] = yearRange;
     const effectiveMin = y0 === HISTORY_MIN_YEAR ? HISTORY_ABSOLUTE_MIN : y0;
-    return pastComps.filter((c) => {
+    return pastComps.filter((c): c is PastCompRecord & { latitude_degrees: number; longitude_degrees: number } => {
+      if (c.latitude_degrees == null || c.longitude_degrees == null) return false;
       const y = Number(c.start_date.slice(0, 4));
       return y >= effectiveMin && y <= y1;
     });
@@ -2801,11 +2815,9 @@ const onSelectCuber = useCallback((person: WcaPerson) => {
             }}
           />
           {searchQuery && (
-            <button
-              className="globe-search-clear"
+            <ClearButton
               onClick={() => { setSearchQuery(''); setPlaceResults([]); }}
-              aria-label="Clear"
-            ><X size={12} strokeWidth={2} /></button>
+            />
           )}
           {searchOpen && (() => {
             const showLoading = searchType === 'place' && searchLoading;

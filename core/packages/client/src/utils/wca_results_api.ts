@@ -27,6 +27,8 @@ interface WcaResultRow {
   wca_id: string;
   attempts: number[];
   round_type_id: string;
+  regional_single_record?: string | null;
+  regional_average_record?: string | null;
 }
 
 interface WcaRound {
@@ -74,6 +76,49 @@ export async function fetchAttempts(
     if (v < 0) return v;
     return v / 100;
   });
+}
+
+/**
+ * 取某选手某轮整 row(含 record marker / 整轮 best 下标),用于纪录字段自动填。
+ * - singleRecord: 整轮"最佳单次"对应的 WCA 大洲缩写(WR/AsR/.../SAR/NR),null = 无纪录
+ * - averageRecord: 整轮 average 的纪录类型,语义同上
+ * - bestIndex: 0-based,整轮 best 那把 attempt 的下标(全 DNF/DNS 时 -1)
+ */
+export async function fetchResultRow(
+  compId: string,
+  reconEvent: string,
+  round: string,
+  personId: string,
+): Promise<{
+  attempts: (number | null)[];
+  singleRecord: string | null;
+  averageRecord: string | null;
+  bestIndex: number;
+} | null> {
+  const wcaEventId = toWcaEventId(reconEvent);
+  const data = await fetchWcaResults(compId, wcaEventId);
+  if (!data) return null;
+  const targetRound = data.rounds.find(r => matchRoundType(round, r.roundTypeId));
+  if (!targetRound || targetRound.results.length === 0) return null;
+  const row = targetRound.results.find(r => r.wca_id === personId);
+  if (!row) return null;
+  const attempts = row.attempts.map(v => {
+    if (v === 0) return null;
+    if (v < 0) return v;
+    return v / 100;
+  });
+  let bestIndex = -1;
+  let bestVal = Infinity;
+  for (let i = 0; i < row.attempts.length; i++) {
+    const v = row.attempts[i];
+    if (v > 0 && v < bestVal) { bestVal = v; bestIndex = i; }
+  }
+  return {
+    attempts,
+    singleRecord: row.regional_single_record || null,
+    averageRecord: row.regional_average_record || null,
+    bestIndex,
+  };
 }
 
 /** WCA ID slug → cubing.com URL slug：PascalCase 变 dash-case。 `DeqingSmallSpecial2026` → `Deqing-Small-Special-2026` */

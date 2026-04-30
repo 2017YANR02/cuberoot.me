@@ -1,6 +1,72 @@
 @import "tailwindcss";
 @import "flag-icons/css/flag-icons.min.css";
 
+/* 国旗统一加投影 — 对齐 WCA 官网"国旗微悬浮"观感 */
+.fi,
+img[src$="ChineseTaipei.svg"] {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.22);
+}
+/* 国旗一律方角（覆盖各处 .flag-* 局部 border-radius；大洲多地占位例外保留圆角描边） */
+.fi:not(.flag-multi-continent),
+img[src$="ChineseTaipei.svg"] {
+  border-radius: 0 !important;
+}
+
+/* 通用清空 ×（components/ClearButton.tsx 共享样式）—— 所有搜索/选择型输入的 × 一个出处 */
+.clear-btn {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-sub, #888);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+}
+.clear-btn:hover {
+  background: var(--surface-alt, rgba(255, 255, 255, 0.08));
+  color: var(--accent, #e5e5e5);
+}
+/* 流式布局独立按钮（不浮在输入框上）— 日期区间清空等场景 */
+.clear-btn--standalone {
+  position: static;
+  transform: none;
+  width: 24px;
+  height: 24px;
+  background: var(--surface-alt, rgba(255, 255, 255, 0.08));
+}
+.clear-btn--standalone:hover {
+  background: var(--accent-soft, rgba(255, 255, 255, 0.16));
+}
+
+/* WCA 多地代码（XW/XA/XE/XF/XN/XO/XS/XM）没有国旗，参考 WCA 官网渲染成"空描边"占位
+ * 复用 flag-icons 的 .fi 尺寸；空底 + 边框对齐 WCA 配色 */
+.fi.flag-multi {
+  background: transparent !important;
+  background-image: none !important;
+  box-sizing: border-box;
+}
+/* XW 全球：蓝→红渐变边框（border-image 不支持圆角，所以方角，与 WCA 官网一致） */
+.fi.flag-multi-world {
+  border: 1.5px solid;
+  border-image: linear-gradient(to right, #1f4ea3 0%, #2a4fa3 30%, #c8102e 70%, #c8102e 100%) 1;
+}
+/* 大洲多地（XA/XE/XF/XN/XO/XS/XM）：纯蓝边框 + 圆角 */
+.fi.flag-multi-continent {
+  border: 1.5px solid #2c5aa0;
+  border-radius: 3px;
+}
+
 /* NOTE: 暗色系魔方训练器主题 — Claude 风格暖棕/珊瑚系 */
 
 :root {

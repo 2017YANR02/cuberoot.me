@@ -26,8 +26,9 @@ export interface PastCompRecord {
   name: string;
   city: string;
   country: string;
-  latitude_degrees: number;
-  longitude_degrees: number;
+  /** 多地代码（XW/XA/XE/...）为 null — 没有真实地理坐标，Globe 端按 != null 过滤 */
+  latitude_degrees: number | null;
+  longitude_degrees: number | null;
   start_date: string;
   end_date: string;
   events: string[];

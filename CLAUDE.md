@@ -70,7 +70,7 @@ pnpm --filter @cuberoot/client lint
 - 改完跑 `pnpm --filter @cuberoot/client typecheck`（push 前 `typecheck:ci`）
 - UI 不用 emoji，用 lucide-react 图标
 - 不放页面级"返回"按钮，浏览器自带 back 即可（wizard 步骤间 / 模式切换不算）
-- 选择型输入框（CountryInput / CompPicker / EventSelect 等"有选中态保留显示"的搜索框）有非空值时必须显示 `×` 清除按钮（参考 CountryInput / CompPicker 实现）
+- 选择型 / 搜索型输入框非空时必须显示 `×` 清除按钮：统一用 `components/ClearButton.tsx`（`variant='inline'` 浮在 input 内，`'standalone'` 流式独立圆），别再写一份局部 `.xxx-clear` CSS
 - WCA 历史时间锚点：第 1 场比赛 1982-06-05（WC1982），第 2 场 2003-08-23~24（WC2003）；任何"时间序列展示"（折线 / 热力图 / 时间轴 / bar chart race）默认视图从 **2003-08-22** 起步（WC2003 前夜：第 0 帧 = 1982 那场的全部成绩快照，再往后才是 WCA 复办之后的逐日演化），但**统计聚合（总数 / 国家排行 / 项目场次等）必须包含 1982 那场**（用户没主动缩放时口径=全时段，不要把"默认视图≠全数据"的不一致带到数字上）
 
 ## 专题知识 — 查对应 Skill

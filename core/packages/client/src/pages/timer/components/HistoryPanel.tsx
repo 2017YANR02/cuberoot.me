@@ -6,6 +6,7 @@ import { formatMs, pbSingleIndex } from '../stats';
 import CompareSolvesModal from './CompareSolvesModal';
 import { computeAllTags, TAG_DEFS, ALL_TAG_IDS } from '../storage/auto_tag';
 import type { TagId } from '../storage/auto_tag';
+import { ClearButton } from '../../../components/ClearButton';
 
 interface Props {
   solves: Solve[];
@@ -587,14 +588,11 @@ export default function HistoryPanel({ solves, isZh, onRowClick, onBulkDelete }:
             aria-label={isZh ? '搜索注释或打乱' : 'Search comment or scramble'}
           />
           {query && (
-            <button
-              type="button"
-              className="history-search-clear"
+            <ClearButton
               onClick={() => setQuery('')}
-              aria-label={isZh ? '清空搜索' : 'Clear search'}
-            >
-              <X size={12} />
-            </button>
+              isZh={isZh}
+              ariaLabel={isZh ? '清空搜索' : 'Clear search'}
+            />
           )}
         </div>
         {hasAnyFilter && (

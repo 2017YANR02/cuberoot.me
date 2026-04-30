@@ -112,6 +112,7 @@
     "country": "Country",
     "group": "Group",
     "time": "Time",
+    "single": "Single",
     "average": "Average",
     "wcaScramble": "WCA scramble",
     "videoUrl": "Video URL",
@@ -153,6 +154,9 @@
     },
     "roundOption": {
       "final": "Final",
+      "r1": "Round 1",
+      "r2": "Round 2",
+      "r3": "Round 3",
       "numbered": "Round {{n}}"
     },
     "badge": {
