@@ -106,7 +106,9 @@ function SiteRow({ site, lang }: { site: Site; lang: 'en' | 'zh' }) {
         <div className="site-row-title">
           <span className="site-row-name">{name}</span>
           <span className="site-row-host">{hostOf(site.url)}</span>
-          {site.subgroup && <span className="site-row-subgroup">{site.subgroup}</span>}
+          {site.tags?.map((t) => (
+            <span key={t} className="site-row-subgroup">{t}</span>
+          ))}
           {dead && <span className="site-row-dead-badge">{TEXTS.dead[lang]}</span>}
         </div>
         <div className="site-row-author" title={site.author || ''}>
@@ -220,7 +222,7 @@ export default function SitesPage() {
           { name: 'desc_zh', weight: 0.15 },
           { name: 'desc_en', weight: 0.1 },
           { name: 'author', weight: 0.05 },
-          { name: 'subgroup', weight: 0.05 },
+          { name: 'tags', weight: 0.05 },
           { name: 'url', weight: 0.05 },
         ],
         threshold: 0.35,

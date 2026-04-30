@@ -208,10 +208,21 @@ export interface ReconSolve {
   addedById?: string;
   /** 视频链接（多行，每行一个 URL） */
   videoUrl?: string;
+  /** 另解列表——任何登录用户都能给同一个 solve 投自己的另解 */
+  alternatives?: ReconAlternative[];
   /** 前端标记：是否有编辑覆盖层 */
   _edited?: boolean;
   /** 前端标记：本地未同步数据 */
   _local?: boolean;
+}
+
+/** 另解条目——挂在某个 solve 下的子还原(同打乱、不同解法) */
+export interface ReconAlternative {
+  solution: string;
+  addedById: string;
+  addedBy: string;
+  /** Unix timestamp */
+  createdAt: number;
 }
 
 /** 评论 */

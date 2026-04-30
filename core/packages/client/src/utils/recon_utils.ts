@@ -193,15 +193,22 @@ export function formatAoXR(aoType: string | undefined): string {
 
 /**
  * 轮次 + 把数格式化
- * NOTE: 与原版 createSolveRow 中的 round 列渲染一致
- * round="R2", solveNum=1 → "R2#1"
- * round="Fi", solveNum=null → "Fi"
+ * '1' / '2' / '3' → 'R1' / 'R2' / 'R3'；'f' → 'Fi'
  */
 export function formatRound(round: string | undefined, solveNum: number | undefined): string {
   if (!round) return '';
-  // NOTE: 纯数字轮次加 'R' 前缀（'1' → 'R1'），final 等字母轮次保持原样
-  const display = /^\d+$/.test(round) ? `R${round}` : round;
+  const display = /^\d+$/.test(round) ? `R${round}`
+    : round === 'f' ? 'Fi'
+      : round;
   return display + (solveNum ? '#' + solveNum : '');
+}
+
+/** i18n 轮次文案（决赛/初赛/复赛/半决赛/第N轮 或 Final/Round n） */
+export function localizeRound(round: string | undefined, t: (k: string, opts?: Record<string, unknown>) => string): string {
+  if (!round) return '';
+  if (round === 'f') return t('recon.roundOption.final');
+  if (round === '1' || round === '2' || round === '3') return t(`recon.roundOption.r${round}`);
+  return t('recon.roundOption.numbered', { n: round });
 }
 
 // ── 纪录徽章 ──

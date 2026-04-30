@@ -10,13 +10,14 @@ import {
   ChartColumn, Video, MessageCircle, Key, TriangleAlert,
   MoreVertical, Pencil, Trash2, Pin, PinOff,
   Globe, Radio, ClipboardPaste, ChevronDown, ChevronUp,
+  GitFork,
 } from 'lucide-react';
-import type { ReconSolve, ReconComment } from '@cuberoot/shared';
-import { getRecon, listComments, addComment, updateComment, deleteComment, pinComment, getBiliCover, listRecons } from '../../utils/recon_api';
+import type { ReconSolve, ReconComment, ReconAlternative } from '@cuberoot/shared';
+import { getRecon, listComments, addComment, updateComment, deleteComment, pinComment, getBiliCover, listRecons, addAlternative, updateAlternative, deleteAlternative } from '../../utils/recon_api';
 import {
   formatTime, flagClass,
   isBldEvent, getPuzzleId, wcaCompUrl, wcaPersonUrl,
-  buildExternalLinks, FACE_COLORS, attemptsPerRound,
+  buildExternalLinks, FACE_COLORS, attemptsPerRound, localizeRound,
 } from '../../utils/recon_utils';
 import { displayCuberName } from '../../utils/name_utils';
 import { eventDisplayName } from '../../utils/wca_events';
@@ -33,6 +34,7 @@ import { RecordBadge } from '../../components/RecordBadge';
 import TwistySection from './components/TwistySection';
 import SolutionView from './components/SolutionView';
 import { buildNormalizedSolution, findCrossLineIndex, hasWideMoveInCrossSection } from '../../utils/recon_norm_cross_extract';
+import { computeAllStats } from '../../utils/recon_stats';
 import '../../recon.css';
 import './recon_detail.css';
 
@@ -94,18 +96,25 @@ export default function ReconDetailPage() {
             )}
             {solve.personCountry && <>{' '}<span className={flagClass(solve.personCountry)} /></>}
             {' '}{displayCuberName(solve.person || '', isZh)}
+            {' '}
+            <Link to={`/recon/submit/${solve.id}`} className="recon-btn recon-btn-edit detail-title-edit" title={t('recon.edit')} aria-label={t('recon.edit')}>
+              <Pencil size={14} />
+            </Link>
           </h1>
         </div>
         <div className="detail-meta-bar">
           {solve.date && <span className="detail-meta-item">{solve.date.slice(0, 10)}</span>}
           {solve.comp && (
             <span className="detail-meta-item">
-              {solve.country && <><span className={flagClass(solve.country)} />{' '}</>}
-              {solve.compWcaId ? (
-                <a href={wcaCompUrl(solve.compWcaId)} target="_blank" rel="noopener noreferrer">
-                  {stripWcaPrefix(isZh ? (compNameZh(solve.comp) || solve.comp) : solve.comp)}
-                </a>
-              ) : stripWcaPrefix(isZh ? (compNameZh(solve.comp) || solve.comp) : solve.comp)}
+              {solve.country && <span className={flagClass(solve.country)} />}
+              <span>
+                {solve.compWcaId ? (
+                  <a href={wcaCompUrl(solve.compWcaId)} target="_blank" rel="noopener noreferrer">
+                    {stripWcaPrefix(isZh ? (compNameZh(solve.comp) || solve.comp) : solve.comp)}
+                  </a>
+                ) : stripWcaPrefix(isZh ? (compNameZh(solve.comp) || solve.comp) : solve.comp)}
+                {solve.round && (isZh ? `，${localizeRound(solve.round, t)}` : `, ${localizeRound(solve.round, t)}`)}
+              </span>
             </span>
           )}
         </div>
@@ -249,15 +258,11 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate }: 
           <SameRoundNav solve={solve} />
         )}
 
+        {/* 另解——任何登录用户都能投自己的解法 */}
+        <AlternativesSection reconId={solve.id} initial={solve.alternatives ?? []} />
+
         {/* 评论 */}
         <CommentsView comments={comments} reconId={solve.id} onUpdate={onUpdate} />
-
-        {/* 编辑按钮 */}
-        <div className="detail-actions">
-          <Link to={`/recon/submit/${solve.id}`} className="recon-btn recon-btn-edit">
-            {t('recon.edit')}
-          </Link>
-        </div>
       </div>
     </div>
   );
@@ -297,28 +302,50 @@ const CROSS_LABELS: Record<number, string> = { 0: 'cross', 1: 'xcross', 2: 'xxcr
 /** 统计网格——完全对齐原版 17 项字段 */
 function StatsGrid({ solve }: { solve: ReconSolve }) {
   const { t } = useTranslation();
+  // NOTE: 客户端从 solution 文本重算可推导字段，覆盖 DB 里的（旧版/坏算法的）缓存值
+  // 这样老 solve 不用重新提交也能正确显示 cross/F2L/LL 等
+  const computed = useMemo(() => {
+    const text = solve.solution || solve.recon || '';
+    if (!text) return null;
+    return computeAllStats(text, solve.rawTime ?? 0);
+  }, [solve.solution, solve.recon, solve.rawTime]);
+  const stm = computed ? computed.stm : solve.stm;
+  const tps = computed ? computed.tps : solve.tps;
+  const crossStm = computed ? computed.crossStm : solve.crossStm;
+  const f2l = computed ? computed.f2l : solve.f2l;
+  const ll = computed ? computed.ll : solve.ll;
+  const crossType = computed ? computed.crossType : solve.crossType;
+  const freePair = computed ? computed.freePair : solve.freePair;
+  const yRot = computed ? computed.yRot : solve.yRot;
+  const regrip = computed ? computed.regrip : solve.regrip;
+  const lockup = computed ? computed.lockup : solve.lockup;
+  const sMove = computed ? computed.sMove : solve.sMove;
+  const crossColor = computed ? computed.crossColor : solve.crossColor;
+  const ollShort = computed?.ollShort || solve.ollShort || solve.oll;
+  const pllShort = computed?.pllShort || solve.pllShort || solve.pll;
+
   const items: [string, React.ReactNode | undefined][] = [
     [t('recon.method'), solve.method],
-    [t('recon.stm'), solve.stm],
-    [t('recon.tps'), solve.tps],
+    [t('recon.stm'), stm],
+    [t('recon.tps'), tps],
     [t('recon.exec'), isBldEvent(solve.event) && solve.execTime != null ? Number(solve.execTime).toFixed(2) : undefined],
     [t('recon.memo'), isBldEvent(solve.event) && solve.memoTime != null ? Number(solve.memoTime).toFixed(2) : undefined],
-    ['Cross', solve.crossStm != null ? `${solve.crossStm}` : undefined],
-    ['F2L', solve.f2l != null ? `${solve.f2l}` : undefined],
-    [t('recon.ll'), solve.ll != null ? `${solve.ll}` : undefined],
-    ['?x', solve.crossType != null ? (CROSS_LABELS[solve.crossType as number] || String(solve.crossType)) : undefined],
-    [t('recon.freePair'), solve.freePair],
-    [t('recon.yRot'), solve.yRot],
-    [t('recon.regrip'), solve.regrip],
-    [t('recon.lockup'), solve.lockup],
-    [t('recon.sMove'), solve.sMove],
-    [t('recon.crossColor'), solve.crossColor ? (
-      FACE_COLORS[solve.crossColor as string]
-        ? <span style={{ color: FACE_COLORS[solve.crossColor as string], fontWeight: 600 }}>{String(solve.crossColor)}</span>
-        : String(solve.crossColor)
+    ['Cross', crossStm != null ? `${crossStm}` : undefined],
+    ['F2L', f2l != null ? `${f2l}` : undefined],
+    [t('recon.ll'), ll != null ? `${ll}` : undefined],
+    ['?x', crossType != null ? (CROSS_LABELS[crossType as number] || String(crossType)) : undefined],
+    [t('recon.freePair'), freePair],
+    [t('recon.yRot'), yRot],
+    [t('recon.regrip'), regrip],
+    [t('recon.lockup'), lockup],
+    [t('recon.sMove'), sMove],
+    [t('recon.crossColor'), crossColor ? (
+      FACE_COLORS[crossColor as string]
+        ? <span style={{ color: FACE_COLORS[crossColor as string], fontWeight: 600 }}>{String(crossColor)}</span>
+        : String(crossColor)
     ) : undefined],
-    ['OLL', solve.ollShort || solve.oll],
-    ['PLL', solve.pllShort || solve.pll],
+    ['OLL', ollShort],
+    ['PLL', pllShort],
   ];
 
   const validItems = items.filter(([, v]) => v != null && v !== '' && v !== 0);
@@ -523,12 +550,20 @@ function SameRoundNav({ solve }: { solve: ReconSolve }) {
     return () => { cancelled = true; };
   }, [solve.compWcaId, solve.personId, solve.event, solve.round, solve.groupId]);
 
-  // NOTE: 把当前+siblings 按 solveNum 索引；渲染 1..N（N 由 event 决定），缺失 slot 为占位 chip
-  const total = attemptsPerRound(solve.event);
+  // NOTE: 把当前+siblings 按 solveNum 索引；渲染 1..N，缺失 slot 为占位 chip
+  // total 取 max(event 默认把数, 整轮 attempts 数, sibling+self 里最大 solveNum)
+  // —— H2H 决赛(20+ 把)和 cutoff 单淘等场景都靠这个动态判断
   const bySolveNum = new Map<number, ReconSolve>();
   for (const s of [...siblings, solve]) {
     if (s.solveNum != null) bySolveNum.set(s.solveNum, s);
   }
+  const maxSolveNum = bySolveNum.size > 0 ? Math.max(...bySolveNum.keys()) : 0;
+  const total = Math.max(
+    attemptsPerRound(solve.event),
+    wcaAttempts?.length ?? 0,
+    pastedAttempts?.length ?? 0,
+    maxSolveNum,
+  );
   const slots = Array.from({ length: total }, (_, i) => i + 1);
 
   // NOTE: 解析后的整轮成绩 — 优先粘贴，再 WCA。返回 null 表示 slot 无成绩可显示
@@ -600,14 +635,14 @@ function SameRoundNav({ solve }: { solve: ReconSolve }) {
           if (s && s.id === solve.id) {
             return (
               <span key={n} className="same-round-item same-round-current">
-                #{n} {formatTime(s.rawTime)}
+                {formatTime(s.rawTime)}
               </span>
             );
           }
           if (s) {
             return (
               <Link key={n} to={`/recon/${s.id}`} className="same-round-item">
-                #{n} {formatTime(s.rawTime)}
+                {formatTime(s.rawTime)}
               </Link>
             );
           }
@@ -619,21 +654,21 @@ function SameRoundNav({ solve }: { solve: ReconSolve }) {
               className="same-round-item same-round-missing"
               title={t('recon.addAttempt', { n })}
             >
-              #{n}{att != null && <> {renderAttempt(att)}</>}
+              {att != null ? renderAttempt(att) : ' '}
             </Link>
           );
         })}
-        {/* 手动粘贴入口：仅当还有缺失 slot 且没拉到 WCA 数据 */}
-        {hasMissingSlot && !hasAnyAttempt && (
-          <button
-            type="button"
-            className="same-round-paste-btn"
-            onClick={() => setShowPaste(v => !v)}
-          >
-            {t('recon.pasteAttempts')}
-          </button>
-        )}
       </div>
+      {/* 手动粘贴入口：仅当还有缺失 slot 且没拉到 WCA 数据 */}
+      {hasMissingSlot && !hasAnyAttempt && (
+        <button
+          type="button"
+          className="same-round-paste-btn"
+          onClick={() => setShowPaste(v => !v)}
+        >
+          {t('recon.pasteAttempts')}
+        </button>
+      )}
       {showPaste && (
         <div className="same-round-paste-wrap">
           <div className="same-round-paste-box">
@@ -682,6 +717,226 @@ function BilibiliFacade({ bvId, onLoad }: { bvId: string; onLoad: () => void }) 
           style={{ position: 'relative', width: 68, height: 68, opacity: 0.85, filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.5))' }}
         />
       </div>
+    </div>
+  );
+}
+
+/** 另解区——任何登录用户都能投自己的解法,挂在原 solve 下,不创建新行 */
+function AlternativesSection({ reconId, initial }: { reconId: number; initial: ReconAlternative[] }) {
+  const [alts, setAlts] = useState<ReconAlternative[]>(initial);
+  const [composerOpen, setComposerOpen] = useState(false);
+  const [draft, setDraft] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [editingIdx, setEditingIdx] = useState<number | null>(null);
+  const [editText, setEditText] = useState('');
+  const [menuOpenIdx, setMenuOpenIdx] = useState<number | null>(null);
+
+  const user = useAuthStore(s => s.user);
+  const currentWcaId = user?.wcaId || '';
+  const isAdminUser = isAdmin();
+  const { t, i18n } = useTranslation();
+  const isZh = i18n.language === 'zh';
+
+  // NOTE: parent solve 切换(一般不会;留个安全网)
+  useEffect(() => { setAlts(initial); }, [initial]);
+
+  // NOTE: 点击空白关菜单
+  useEffect(() => {
+    if (menuOpenIdx === null) return;
+    const handler = () => setMenuOpenIdx(null);
+    const timer = setTimeout(() => document.addEventListener('click', handler), 0);
+    return () => { clearTimeout(timer); document.removeEventListener('click', handler); };
+  }, [menuOpenIdx]);
+
+  const handleAdd = async () => {
+    const text = draft.trim();
+    if (!text) return;
+    setSubmitting(true);
+    try {
+      const updated = await addAlternative(reconId, text);
+      setAlts(updated);
+      setDraft('');
+      setComposerOpen(false);
+    } catch (e) {
+      alert((e as Error).message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleSaveEdit = async (idx: number) => {
+    const text = editText.trim();
+    if (!text) return;
+    try {
+      const updated = await updateAlternative(reconId, idx, text);
+      setAlts(updated);
+      setEditingIdx(null);
+    } catch (e) {
+      alert((e as Error).message);
+    }
+  };
+
+  const handleDelete = async (idx: number) => {
+    if (!confirm(t('recon.confirmDeleteAlternative'))) return;
+    try {
+      const updated = await deleteAlternative(reconId, idx);
+      setAlts(updated);
+    } catch (e) {
+      alert((e as Error).message);
+    }
+  };
+
+  return (
+    <div className="detail-section">
+      <div className="detail-section-label">
+        <GitFork size={14} /> {t('recon.alternatives')} ({alts.length})
+      </div>
+
+      {currentWcaId ? (
+        <div className={`yt-composer${composerOpen || draft ? ' yt-composer-active' : ''}`}>
+          {user?.avatar ? (
+            <img src={user.avatar} alt="" className="yt-composer-avatar" />
+          ) : (
+            <div className="yt-composer-avatar yt-composer-avatar-fallback">
+              {user?.name?.[0]?.toUpperCase() || '?'}
+            </div>
+          )}
+          <div className="yt-composer-body">
+            <textarea
+              className="yt-composer-input alt-composer-input"
+              value={draft}
+              onChange={e => setDraft(e.target.value)}
+              onFocus={() => setComposerOpen(true)}
+              placeholder={t('recon.writeAlternative')}
+              rows={composerOpen || draft ? 6 : 1}
+            />
+            {(composerOpen || draft) && (
+              <div className="yt-composer-actions">
+                <div />
+                <div className="yt-composer-buttons">
+                  <button type="button" className="yt-btn-text" onClick={() => { setDraft(''); setComposerOpen(false); }}>
+                    {t('recon.cancel')}
+                  </button>
+                  <button
+                    type="button"
+                    className="yt-btn-primary"
+                    onClick={handleAdd}
+                    disabled={submitting || !draft.trim()}
+                  >
+                    {submitting ? t('recon.posting') : t('recon.addAlternative')}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="detail-comment-login-hint" onClick={() => useAuthStore.getState().login()} style={{ cursor: 'pointer' }}>
+          <Key size={16} /> {t('recon.loginToAddAlternative')}
+        </div>
+      )}
+
+      {alts.length === 0 ? (
+        <div className="alt-empty">{t('recon.emptyAlternatives')}</div>
+      ) : (
+        <div className="yt-comment-list">
+          {alts.map((alt, idx) => {
+            const isOwn = !!currentWcaId && currentWcaId === alt.addedById;
+            const canEdit = isOwn;
+            const canDelete = isOwn || isAdminUser;
+            const displayName = displayCuberName(alt.addedBy || '', isZh);
+            return (
+              <div key={`${alt.addedById}-${alt.createdAt}-${idx}`} className="yt-comment">
+                <div className="yt-comment-avatar yt-comment-avatar-fallback">
+                  {displayName?.[0]?.toUpperCase() || '?'}
+                </div>
+                <div className="yt-comment-content">
+                  <div className="yt-comment-meta">
+                    {alt.addedById && <Flag iso2={personFlagIso2(alt.addedById)} className="yt-comment-flag" />}
+                    {alt.addedById ? (
+                      <a href={wcaPersonUrl(alt.addedById)} target="_blank" rel="noopener noreferrer" className="yt-comment-author">
+                        {displayName}
+                      </a>
+                    ) : <span className="yt-comment-author">{displayName}</span>}
+                    <span className="yt-comment-time">
+                      {toIsoDate(new Date(alt.createdAt * 1000))}
+                    </span>
+                  </div>
+                  {editingIdx === idx ? (
+                    <div className="yt-comment-edit">
+                      <textarea
+                        className="yt-composer-input alt-composer-input"
+                        value={editText}
+                        onChange={e => setEditText(e.target.value)}
+                        rows={6}
+                        autoFocus
+                      />
+                      <div className="yt-composer-actions">
+                        <div />
+                        <div className="yt-composer-buttons">
+                          <button type="button" className="yt-btn-text" onClick={() => setEditingIdx(null)}>
+                            {t('recon.cancel')}
+                          </button>
+                          <button
+                            type="button"
+                            className="yt-btn-primary"
+                            onClick={() => handleSaveEdit(idx)}
+                            disabled={!editText.trim()}
+                          >
+                            {t('recon.save')}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <pre className="detail-solution-text alt-solution-text">
+                      {alt.solution.split(/\r?\n/).map((line, li) => {
+                        const nl = li > 0 ? '\n' : '';
+                        if (line.trim().startsWith('//')) {
+                          return <span key={li}>{nl}<span className="recon-step-label">{line}</span></span>;
+                        }
+                        return <span key={li}>{nl}{line}</span>;
+                      })}
+                    </pre>
+                  )}
+                </div>
+                {(canEdit || canDelete) && editingIdx !== idx && (
+                  <div className="yt-comment-menu-wrap" onClick={e => e.stopPropagation()}>
+                    <button
+                      type="button"
+                      className="yt-comment-menu-btn"
+                      onClick={() => setMenuOpenIdx(menuOpenIdx === idx ? null : idx)}
+                    >
+                      <MoreVertical size={18} />
+                    </button>
+                    {menuOpenIdx === idx && (
+                      <div className="yt-comment-menu">
+                        {canEdit && (
+                          <button type="button" onClick={() => {
+                            setEditingIdx(idx);
+                            setEditText(alt.solution);
+                            setMenuOpenIdx(null);
+                          }}>
+                            <Pencil size={14} /> {t('recon.edit')}
+                          </button>
+                        )}
+                        {canDelete && (
+                          <button type="button" onClick={() => {
+                            setMenuOpenIdx(null);
+                            handleDelete(idx);
+                          }}>
+                            <Trash2 size={14} /> {t('recon.delete')}
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

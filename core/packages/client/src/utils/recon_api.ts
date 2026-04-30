@@ -3,7 +3,7 @@
  * NOTE: 对齐 Hono 后端 RESTful 路由（/api/recon/xxx）
  */
 import type {
-  ReconSolve, ReconComment, EditHistoryItem,
+  ReconSolve, ReconComment, EditHistoryItem, ReconAlternative,
 } from '@cuberoot/shared';
 import { getWcaId } from '../stores/auth_store';
 
@@ -125,6 +125,28 @@ export async function updateRecon(id: number, fields: Partial<ReconSolve>): Prom
 // 后端: DELETE /api/recon/:id
 export async function deleteRecon(id: number): Promise<{ ok: boolean }> {
   return apiDelete<{ ok: boolean }>(`/${id}`);
+}
+
+// ── 另解 (Alternatives) ──
+
+interface AltsResponse { alternatives: ReconAlternative[] }
+
+/** 追加另解(任何登录用户都能投) */
+export async function addAlternative(reconId: number, solution: string): Promise<ReconAlternative[]> {
+  const r = await apiPost<AltsResponse>(`/${reconId}/alternatives`, { solution });
+  return r.alternatives;
+}
+
+/** 改某条另解(只有作者或 admin) */
+export async function updateAlternative(reconId: number, idx: number, solution: string): Promise<ReconAlternative[]> {
+  const r = await apiPut<AltsResponse>(`/${reconId}/alternatives/${idx}`, { solution });
+  return r.alternatives;
+}
+
+/** 删某条另解(只有作者或 admin) */
+export async function deleteAlternative(reconId: number, idx: number): Promise<ReconAlternative[]> {
+  const r = await apiDelete<AltsResponse>(`/${reconId}/alternatives/${idx}`);
+  return r.alternatives;
 }
 
 // ── 编辑覆盖层 ──
