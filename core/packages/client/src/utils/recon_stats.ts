@@ -1,201 +1,109 @@
 /**
- * 复盘统计引擎——1:1 移植自 recon/recon_stats.js（409 行）
- * NOTE: 纯函数模块，不依赖 DOM/React，可在任意环境使用
+ * 复盘统计引擎——1:1 对齐 scripts/recon_stats.py
+ * 关键算法：基于子串搜索 / 整行抽取，识别 inline `// label` 形式的阶段注释
+ * （之前的 block-based 实现要求标签独占一行，会让所有 inline 注释的 recon 全部得 0）
  */
 import type { ReconStatsResult } from '@cuberoot/shared';
 
-// ── 步数分类映射 ──
-
-/**
- * NOTE: STM (Slice Turn Metric) 计数规则：
- *   - 普通面转（R, U, L, D, F, B 及带'或2后缀）= 1
- *   - 宽转动（r, u, l, d, f, b 及 Rw 等）= 1
- *   - 旋转（x, y, z）= 0（不计入 STM）
- *   - 括号标记 [regrip] [lockup] [freePair] 等 = 0
- */
-
-/** 需要跳过的标记性 token（不参与步数计算） */
-const ANNOTATIONS = new Set([
-  '[regrip]', '[lockup]', '[freePair]', '[free_pair]',
-  '[yRot]', '[y_rot]', '[sMove]', '[s_move]',
-]);
-
-/** 旋转（不计入 STM） */
-const ROTATIONS = new Set(['x', "x'", 'x2', 'y', "y'", 'y2', 'z', "z'", 'z2']);
-
-/** 阶段标签正则——如 "// Cross (5)", "// F2L 1" */
-const STAGE_LABEL_RE = /^\/\/\s*(cross|xcross|xxcross|f2l|oll|pll|ll|pair|slot)/i;
-
-/** 公式行分隔正则——按步骤标签分割 "\n" */
-const NEWLINE_RE = /\r?\n/;
-
-// ── 公式解析 ──
-
-/**
- * 将解法文本拆分为 token（步骤）数组
- * NOTE: 跳过注释行（以 // 开头）和注解标记
- */
-function tokenize(text: string): string[] {
-  if (!text) return [];
-  const tokens: string[] = [];
-  const lines = text.split(NEWLINE_RE);
-  for (const line of lines) {
-    const trimmed = line.trim();
-    // NOTE: 纯注释行跳过
-    if (trimmed.startsWith('//')) continue;
-    // NOTE: 行内 // 注释截断
-    const commentIdx = trimmed.indexOf('//');
-    const effective = commentIdx >= 0 ? trimmed.substring(0, commentIdx) : trimmed;
-    const parts = effective.trim().split(/\s+/);
-    for (const p of parts) {
-      if (p.length === 0) continue;
-      if (ANNOTATIONS.has(p)) continue;
-      tokens.push(p);
-    }
+/** 删除每行 `//` 之后的注释，去掉空行 */
+function deleteComment(recon: string): string {
+  if (!recon) return '';
+  const out: string[] = [];
+  for (const line of recon.split(/\r?\n/)) {
+    const stripped = line.replace(/\/\/.*/, '').trim();
+    if (stripped) out.push(stripped);
   }
-  return tokens;
+  return out.join('\n');
 }
 
-/**
- * 计算 token 的 STM（跳过旋转）
- */
-function countStm(tokens: string[]): number {
+/** 展开 `(moves)2` / `(moves)3` 重复标记 */
+function expandAlg(alg: string): string {
+  if (!alg) return '';
+  let r = alg.replace(/\(([^()]+)\)2/g, '$1 $1');
+  r = r.replace(/\(([^()]+)\)3/g, '$1 $1 $1');
+  return r;
+}
+
+/** HTM 步数：移除空白/括号/'/旋转/数字/特殊符号后剩余字符数 */
+function htm(alg: string): number {
+  if (!alg) return 0;
+  // NOTE: 与 Python 一致——移除 ` ()'xyz234·↑↓./\n\r`（以及多种 Unicode 引号）
+  const cleaned = alg.replace(/[ ()'’‘`xyz234·↑↓./\n\r]/g, '');
+  return cleaned.length;
+}
+
+/** 取含指定阶段名的整行（取 `//` 之前部分；大小写不敏感） */
+function findStage(recon: string, stageName: string): string {
+  if (!recon || !stageName) return '';
+  const target = stageName.toLowerCase();
+  for (const line of recon.split(/\r?\n/)) {
+    if (line.toLowerCase().includes(target)) {
+      const idx = line.indexOf('//');
+      return idx >= 0 ? line.substring(0, idx).trim() : line.trim();
+    }
+  }
+  return '';
+}
+
+/** 从 inspection 之后到 stageName 出现位置之前的所有内容 */
+function startToStage(recon: string, stageName: string): string {
+  if (!recon || !stageName) return '';
+  let stagePos = recon.indexOf(stageName);
+  if (stagePos < 0) {
+    stagePos = recon.toLowerCase().indexOf(stageName.toLowerCase());
+  }
+  if (stagePos < 0) return '';
+
+  const inspPos = recon.indexOf('insp');
+  let start: number;
+  if (inspPos >= 0) {
+    start = inspPos + 4;
+  } else {
+    // NOTE: 跳过前两行（首行 STM 摘要 + 打乱）
+    const firstNl = recon.indexOf('\n');
+    if (firstNl < 0) return '';
+    const secondNl = recon.indexOf('\n', firstNl + 1);
+    if (secondNl < 0) return '';
+    start = secondNl + 1;
+  }
+  let temp = recon.substring(start, stagePos);
+  if (temp.startsWith('\n')) temp = temp.substring(1);
+  return temp;
+}
+
+/** 计算 y 旋转 + d 旋转次数（inspection 之后），先除掉 "Gd" 防误算 */
+function countY(recon: string): number {
+  if (!recon) return 0;
+  const text = recon.replace(/Gd/g, '');
+  const inspIdx = text.indexOf('insp');
+  const after = inspIdx >= 0 ? text.substring(inspIdx) : text;
   let count = 0;
-  for (const t of tokens) {
-    if (ROTATIONS.has(t)) continue;
-    if (ANNOTATIONS.has(t)) continue;
-    count++;
+  for (const ch of after) {
+    if (ch === 'y' || ch === 'd') count++;
   }
   return count;
 }
 
-// ── 阶段解析 ──
-
-/** 解析阶段标签，返回阶段名 */
-function parseStageLabel(line: string): string | null {
-  const match = line.match(STAGE_LABEL_RE);
-  if (!match) return null;
-  return match[1].toLowerCase();
-}
-
-/**
- * 将解法文本按阶段分割
- * 返回 { stage: string, moves: string[] }[]
- */
-interface StageBlock {
-  stage: string;
-  moves: string[];
-}
-
-function splitStages(text: string): StageBlock[] {
-  if (!text) return [];
-  const lines = text.split(NEWLINE_RE);
-  const blocks: StageBlock[] = [];
-  let currentStage = 'unknown';
-  let currentMoves: string[] = [];
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-    const label = parseStageLabel(trimmed);
-    if (label) {
-      // NOTE: 新阶段开始，保存上一阶段
-      if (currentMoves.length > 0) {
-        blocks.push({ stage: currentStage, moves: currentMoves });
-      }
-      currentStage = label;
-      currentMoves = [];
-      // NOTE: 同行可能紧跟步骤（如 "// Cross (5) R U R'"）——提取注释后的步骤
-      const afterComment = trimmed.replace(/^\/\/\s*\S+(\s*\(\d+\))?/, '').trim();
-      if (afterComment) {
-        const parts = afterComment.split(/\s+/).filter(s => s.length > 0 && !ANNOTATIONS.has(s));
-        currentMoves.push(...parts);
-      }
-      continue;
-    }
-    // NOTE: 跳过纯注释行
-    if (trimmed.startsWith('//')) continue;
-    // NOTE: 提取步骤
-    const commentIdx = trimmed.indexOf('//');
-    const effective = commentIdx >= 0 ? trimmed.substring(0, commentIdx) : trimmed;
-    const parts = effective.trim().split(/\s+/).filter(s => s.length > 0 && !ANNOTATIONS.has(s));
-    currentMoves.push(...parts);
+/** 换手次数：↑ ↓ · 字符 */
+function countRegrip(recon: string): number {
+  if (!recon) return 0;
+  let n = 0;
+  for (const ch of recon) {
+    if (ch === '↑' || ch === '↓' || ch === '·') n++;
   }
-  // NOTE: 最后一个阶段
-  if (currentMoves.length > 0) {
-    blocks.push({ stage: currentStage, moves: currentMoves });
-  }
-  return blocks;
+  return n;
 }
 
-// ── OLL/PLL 解析 ──
-
-/** 从注释中提取 OLL 名 */
-function parseOllFromText(text: string): { full: string; short: string } {
-  if (!text) return { full: '', short: '' };
-  // NOTE: 匹配 "// OLL 21" 或 "// OLL(21)" 格式
-  const match = text.match(/\/\/\s*OLL\s*\(?\s*(\d+|[A-Za-z]+(?:\s*\d+)?)\s*\)?/i);
-  if (match) {
-    const name = match[1].trim();
-    return { full: `OLL ${name}`, short: name };
-  }
-  return { full: '', short: '' };
+/** 卡顿次数："..." 出现次数 */
+function countLockup(recon: string): number {
+  if (!recon) return 0;
+  return (recon.match(/\.\.\./g) || []).length;
 }
 
-/** 从注释中提取 PLL 名 */
-function parsePllFromText(text: string): { full: string; short: string } {
-  if (!text) return { full: '', short: '' };
-  // NOTE: 匹配 "// PLL - Aa" 或 "// Aa-Perm" 或 "// PLL(Aa)" 格式
-  const patterns = [
-    /\/\/\s*PLL\s*[-–—:]\s*([A-Za-z][a-z]?)/i,
-    /\/\/\s*([A-Za-z][a-z]?)\s*[-–—]?\s*[Pp]erm/,
-    /\/\/\s*PLL\s*\(?\s*([A-Za-z][a-z]?)\s*\)?/i,
-  ];
-  for (const re of patterns) {
-    const match = text.match(re);
-    if (match) {
-      const name = match[1].trim();
-      return { full: `${name}-Perm`, short: name };
-    }
-  }
-  return { full: '', short: '' };
-}
-
-// ── 标注解析 ──
-
-/** 计算指定注解的出现次数 */
-function countAnnotation(text: string, ...tags: string[]): number {
-  if (!text) return 0;
-  let count = 0;
-  for (const tag of tags) {
-    // NOTE: 全局搜索（大小写不敏感时需注意）
-    let idx = 0;
-    while ((idx = text.indexOf(tag, idx)) !== -1) {
-      count++;
-      idx += tag.length;
-    }
-  }
-  return count;
-}
-
-/** 检测 S 系列转动 */
-function countSMoves(tokens: string[]): number {
-  let count = 0;
-  for (const t of tokens) {
-    // NOTE: S, M, E 系列（slice moves）
-    if (/^[SME][2']?$/.test(t)) count++;
-  }
-  return count;
-}
-
-// ── Cross 分析 ──
-
-/**
- * 判断 cross 类型：0=普通, 1=xCross, 2=xxCross, 3=xxxCross, 4=xxxxCross
- * NOTE: 通过阶段标签判断——如果 cross 阶段标签写的是 "xcross" 则返回 1
- */
-function detectCrossType(text: string): number {
-  if (!text) return 0;
-  const lc = text.toLowerCase();
+/** Cross 类型：0=普通, 1=xCross, ..., 4=xxxxCross；按最长匹配优先 */
+function detectCrossType(recon: string): number {
+  if (!recon) return 0;
+  const lc = recon.toLowerCase();
   if (lc.includes('xxxxcross')) return 4;
   if (lc.includes('xxxcross')) return 3;
   if (lc.includes('xxcross')) return 2;
@@ -203,88 +111,304 @@ function detectCrossType(text: string): number {
   return 0;
 }
 
-/** 提取 cross 颜色——从注释中查找颜色标记 */
-function detectCrossColor(text: string): string {
-  if (!text) return '';
-  // NOTE: 匹配 "// Cross (white)" 或 "// white cross" 等
-  const colorMap: Record<string, string> = {
-    white: 'W', yellow: 'Y', red: 'R', orange: 'O', green: 'G', blue: 'B',
+/** Slice S 步数：大写 S 字符出现次数（减去 STM/TPS/SPS 关键字带的） */
+function countS(recon: string): number {
+  if (!recon) return 0;
+  let total = 0;
+  for (const ch of recon) if (ch === 'S') total++;
+  if (recon.includes('STM')) total -= 1;
+  if (recon.includes('TPS')) total -= 1;
+  if (recon.includes('SPS')) total -= 1;
+  return Math.max(total, 0);
+}
+
+/** Cross 颜色：从 cross 标签前的字母提取（"// Y cross" → "Y"） */
+function detectCrossColor(recon: string): string {
+  if (!recon) return '';
+  if (!/cross/i.test(recon)) return '';
+  const hasInsp = /insp/i.test(recon);
+  const positions: number[] = [];
+  let idx = 0;
+  while (true) {
+    const pos = recon.indexOf('// ', idx);
+    if (pos < 0) break;
+    positions.push(pos);
+    idx = pos + 3;
+  }
+  let charPos: number;
+  if (hasInsp && positions.length >= 2) charPos = positions[1] + 3;
+  else if (positions.length >= 1) charPos = positions[0] + 3;
+  else return '';
+  return charPos < recon.length ? recon[charPos] : '';
+}
+
+/** 从首行解析 STM（"33STM /3.05=10.82TPS" → 33）；解析失败则按 token 计数兜底 */
+function parseStmFromHeader(recon: string): number | null {
+  if (!recon) return null;
+  const m = recon.match(/^\s*(\d+)STM/);
+  if (m) {
+    const v = parseInt(m[1], 10);
+    return v > 0 ? v : null;
+  }
+  return null;
+}
+
+/** Token 计数法 STM——非旋转、非注解的 token 数 */
+const ROTATIONS = new Set(['x', "x'", 'x2', 'y', "y'", 'y2', 'z', "z'", 'z2']);
+const ANNOTATIONS = new Set([
+  '[regrip]', '[lockup]', '[freePair]', '[free_pair]',
+  '[yRot]', '[y_rot]', '[sMove]', '[s_move]',
+]);
+
+function countStmFromTokens(recon: string): number {
+  if (!recon) return 0;
+  const cleaned = deleteComment(recon);
+  const expanded = expandAlg(cleaned);
+  // NOTE: 用 htm 字符法兜底（更接近 Python 的 htm() 定义；不依赖空格分词）
+  return htm(expanded);
+}
+
+function computeStm(recon: string): number {
+  const fromHeader = parseStmFromHeader(recon);
+  if (fromHeader != null) return fromHeader;
+  return countStmFromTokens(recon);
+}
+
+function computeTps(stm: number, single: number): number {
+  if (!stm || !single || single <= 0) return 0;
+  const floored = Math.floor(single * 100) / 100;
+  if (floored <= 0) return 0;
+  return Math.round((stm / floored) * 100) / 100;
+}
+
+/** Cross STM */
+function computeCrossStm(recon: string): number {
+  const ct = detectCrossType(recon);
+  const stageNames: Record<number, string> = {
+    0: 'cross', 1: 'xcross', 2: 'xxcross', 3: 'xxxcross', 4: 'xxxxcross',
   };
-  const lc = text.toLowerCase();
-  for (const [name, code] of Object.entries(colorMap)) {
-    if (lc.includes(name)) return code;
+  let sn = stageNames[ct];
+  const lower = recon.toLowerCase();
+  for (const variant of ['ps' + sn, sn]) {
+    if (lower.includes(variant)) { sn = variant; break; }
+  }
+  const text = startToStage(recon, sn);
+  if (!text) return 0;
+  return htm(expandAlg(deleteComment(text)));
+}
+
+/** LL 步数：按 LL 方法组合分支判断 */
+function computeLl(recon: string): number {
+  if (!recon || !/cross/i.test(recon)) return 0;
+
+  const stageHtm = (name: string) => htm(expandAlg(findStage(recon, name)));
+  const trailingAuf = (name: string): number => {
+    const s = findStage(recon, name);
+    if (!s) return 0;
+    const cleaned = s
+      .replace(/\/\/.*/g, '')
+      .replace(/[ ()'’‘`xyz23·↑↓./]/g, '');
+    const m = cleaned.match(/(U+)$/);
+    return m ? m[1].length : 0;
+  };
+  const upper = recon.toUpperCase();
+  const has = (kw: string) => upper.includes(kw.toUpperCase());
+
+  // OLL Skip 系列
+  if (has('OCLL Skip')) return stageHtm('PLL');
+  if (has('OLL(CP) Skip')) return stageHtm('EPLL');
+  if (has('OLL Skip')) return stageHtm('PLL');
+
+  // PLL Skip 系列
+  if (has('PLL Skip')) {
+    if (has('COLL')) return stageHtm('COLL');
+    if (has('OLL(CP)')) return stageHtm('OLL(CP)');
+    if (has('VLS')) return trailingAuf('VLS');
+    if (has('OLS')) return trailingAuf('OLS');
+    if (has('SV')) return trailingAuf('SV');
+    if (has('WV')) return trailingAuf('WV');
+    return 0;
+  }
+
+  // LL Skip
+  if (has('LL Skip')) {
+    const s = findStage(recon, 'LL');
+    if (!s) return 0;
+    const cleaned = s
+      .replace(/\/\/.*/g, '')
+      .replace(/[ ()'’‘`xyz23·↑↓./]/g, '');
+    const m = cleaned.match(/(U+)$/);
+    return m ? m[1].length : 0;
+  }
+
+  // VLS/WV/SV 后接 EPLL/PLL
+  if (has('WV') || has('SV') || has('VLS')) {
+    if (has('EPLL')) return stageHtm('EPLL');
+    if (has('PLL')) return stageHtm('PLL');
+  }
+
+  // EO + ZBLL
+  if (recon.includes('// EO')) return stageHtm('EO') + stageHtm('ZBLL');
+
+  if (has('1LLL')) return stageHtm('1LLL');
+  if (has('ZBLL')) return stageHtm('ZBLL');
+
+  if (has('EPLL')) {
+    if (has('COLL')) return stageHtm('COLL') + stageHtm('EPLL');
+    if (has('OLL(CP)')) return stageHtm('OLL(CP)') + stageHtm('EPLL');
+  }
+
+  if (has('PLL')) {
+    if (has('OCLL')) return stageHtm('OCLL') + stageHtm('PLL');
+    if (has('OLL')) return stageHtm('OLL') + stageHtm('PLL');
+  }
+
+  return 0;
+}
+
+/** Free Pair 计算 */
+function computeFreePair(recon: string): number {
+  if (!recon) return 0;
+  const xcMatch = recon.match(/( cross| xcross| xxcross| xxxcross| xxxxcross)/i);
+  if (!xcMatch) return 0;
+  const xcType = xcMatch[1];
+  let xcPos = recon.indexOf(xcType);
+  if (xcPos < 0) xcPos = recon.toLowerCase().indexOf(xcType.toLowerCase());
+  if (xcPos < 0) return 0;
+  const after = recon.substring(xcPos + xcType.length);
+
+  const pairLines = after.split(/\r?\n/).filter(l => l.includes('//'));
+  if (pairLines.length === 0) return 0;
+  const stageAfter = pairLines.join('\n');
+
+  const cleanedText = stageAfter.replace(/[ ()'’‘`xyz23·↑↓.]/g, '');
+
+  const cleanedLines: string[] = [];
+  for (const line of cleanedText.split('\n')) {
+    const trimmed = line.trim().replace(/^U+/, '');
+    if (trimmed) cleanedLines.push(trimmed);
+  }
+  const deletePreAUF = cleanedLines.join('\n');
+
+  let count = 0;
+  for (const line of deletePreAUF.split('\n')) {
+    const cIdx = line.indexOf('//');
+    if (cIdx < 0) continue;
+    const algLen = line.substring(0, cIdx).length;
+    if (algLen >= 1 && algLen <= 4) count++;
+  }
+
+  const noComment = deleteComment(deletePreAUF);
+  for (const pat of ['LRUR', 'RLUL']) {
+    for (const line of noComment.split('\n')) {
+      if (line.trim() === pat) count--;
+    }
+  }
+  return Math.max(count, 0);
+}
+
+/** OLL 全名抽取 */
+function _ciFind(text: string, kw: string): number {
+  return text.toLowerCase().indexOf(kw.toLowerCase());
+}
+function _toEol(text: string, start: number): string {
+  const nl = text.indexOf('\n', start);
+  return nl < 0 ? text.substring(start) : text.substring(start, nl);
+}
+
+function computeOllFull(recon: string): string {
+  if (!recon) return '';
+  const keywords = ['OLL', 'OCLL', 'COLL', 'CMLL'];
+  for (const kw of keywords) {
+    const pos = _ciFind(recon, kw);
+    if (pos >= 0) {
+      let val = _toEol(recon, pos);
+      const slash = val.indexOf('/');
+      if (slash >= 0) val = val.substring(0, slash);
+      return val.trim();
+    }
+  }
+  const eoPos = _ciFind(recon, 'EO');
+  if (eoPos >= 0) {
+    const eolsPos = _ciFind(recon, 'EOLS');
+    if (eolsPos < 0) {
+      let val = _toEol(recon, eoPos);
+      const slash = val.indexOf('/');
+      if (slash >= 0) val = val.substring(0, slash);
+      return val.trim();
+    }
   }
   return '';
 }
 
-// ── 主入口 ──
+function computePllFull(recon: string): string {
+  if (!recon) return '';
+  if (!/cross/i.test(recon)) return '';
+  let lastComment = '';
+  for (const line of recon.split(/\r?\n/)) {
+    const cIdx = line.indexOf('//');
+    if (cIdx >= 0) lastComment = line.substring(cIdx + 2).trim();
+  }
+  if (!lastComment) return '';
+  const slash = lastComment.indexOf('/');
+  if (slash >= 0) return lastComment.substring(slash + 1).trim();
+  return lastComment.trim();
+}
+
+function ollShortFrom(full: string): string {
+  if (!full) return '';
+  let r = full.replace(/\([^)]*\)/g, '');
+  r = r.replace(/ cancel into/g, '');
+  r = r.replace(/(COLL|OCLL)/g, 'OLL');
+  return r.trim();
+}
+
+function pllShortFrom(full: string): string {
+  if (!full) return '';
+  let r = full.replace(/\([^)]*\)/g, '');
+  r = r.replace(/ cancel into/g, '');
+  r = r.replace(/(VLS\/|WV\/|SV\/)/g, '');
+  return r.trim();
+}
 
 /**
  * 计算复盘的所有统计指标
- * @param solutionText 纯解法文本（阶段注释分隔）
+ * @param solutionText 复盘文本（可含/不含 STM 摘要首行；含 inspection 注释更精确）
  * @param rawTimeSec 单次成绩（秒）
- * @returns 统计结果对象
- *
- * NOTE: 与原版 ReconStats.computeAllStats() 逻辑 1:1 对齐
  */
 export function computeAllStats(
   solutionText: string,
   rawTimeSec: number,
 ): ReconStatsResult {
-  const tokens = tokenize(solutionText);
-  const stm = countStm(tokens);
-  // NOTE: TPS = STM / 秒，保留两位小数
-  const tps = rawTimeSec > 0 ? Math.round((stm / rawTimeSec) * 100) / 100 : 0;
-
-  // NOTE: 阶段解析
-  const stages = splitStages(solutionText);
-
-  // NOTE: 计算 cross STM
-  let crossStm = 0;
-  let f2lStm = 0;
-  let llStm = 0;
-  for (const block of stages) {
-    const blockStm = countStm(block.moves);
-    const s = block.stage;
-    if (s === 'cross' || s === 'xcross' || s === 'xxcross') {
-      crossStm += blockStm;
-    } else if (s === 'f2l' || s === 'pair' || s === 'slot') {
-      f2lStm += blockStm;
-    } else if (s === 'oll' || s === 'pll' || s === 'll') {
-      llStm += blockStm;
-    }
-  }
-
-  // NOTE: OLL / PLL 名称
-  const oll = parseOllFromText(solutionText);
-  const pll = parsePllFromText(solutionText);
-
-  // NOTE: 标注计数
-  const freePair = countAnnotation(solutionText, '[freePair]', '[free_pair]');
-  const yRot = countAnnotation(solutionText, '[yRot]', '[y_rot]');
-  const regrip = countAnnotation(solutionText, '[regrip]');
-  const lockup = countAnnotation(solutionText, '[lockup]');
-
-  const crossType = detectCrossType(solutionText);
-  const crossColor = detectCrossColor(solutionText);
-  const sMove = countSMoves(tokens);
+  const recon = solutionText || '';
+  const stm = computeStm(recon);
+  const tps = computeTps(stm, rawTimeSec);
+  const ll = computeLl(recon);
+  // NOTE: F2L = STM - LL（含 cross 步数；与 Python 参考一致）
+  const f2l = stm > 0 && ll > 0 ? stm - ll : 0;
+  const ollFull = computeOllFull(recon);
+  const pllFull = computePllFull(recon);
 
   return {
     stm,
     tps,
-    ollFull: oll.full,
-    pllFull: pll.full,
-    ollShort: oll.short,
-    pllShort: pll.short,
-    freePair,
-    yRot,
-    regrip,
-    lockup,
-    crossType,
-    crossStm,
-    f2l: f2lStm,
-    ll: llStm,
-    sMove,
-    crossColor,
+    ollFull,
+    pllFull,
+    ollShort: ollShortFrom(ollFull),
+    pllShort: pllShortFrom(pllFull),
+    freePair: computeFreePair(recon),
+    yRot: countY(recon),
+    regrip: countRegrip(recon),
+    lockup: countLockup(recon),
+    crossType: detectCrossType(recon),
+    crossStm: computeCrossStm(recon),
+    f2l,
+    ll,
+    sMove: countS(recon),
+    crossColor: detectCrossColor(recon),
   };
 }
+
+// NOTE: 兼容旧用法保留 ANNOTATIONS / ROTATIONS 引用避免 unused 报错
+void ROTATIONS;
+void ANNOTATIONS;

@@ -234,8 +234,9 @@
     background: var(--bg);
     margin: 0;
     box-sizing: border-box;
-    /* 内部 grid 的横向溢出在自己内部滚（与 .comp-list 通过 JS 同步 scrollLeft） */
-    overflow-x: auto;
+    /* 横向溢出：header 不能由用户独立滚（trackpad 双指会让 header 与行错位）。
+     * overflow-x: hidden 仍允许 JS 写 scrollLeft —— 移动端 list 滚动时同步，桌面则保持 0。 */
+    overflow-x: hidden;
     overflow-y: hidden;
     scrollbar-width: none;
 }
@@ -881,11 +882,14 @@
 }
 
 /* ── 列表视图（虚拟滚动 + 17 项目对齐网格） ── */
-/* 共享网格列模板：date | flag | name | city | event*17
+/* 共享网格列模板：date | flag | name+city | event*21
+ * name+city 列宽由 JS 测当前过滤集 max name+city 实际宽度后注入 --cl-name-width；
+ * 默认 fallback 28rem。这样筛选短名（如"北京"）时 city 紧贴 events，不留多余空白；
+ * 全集时按真实最长宽度撑开，长名完整显示，所有行 events 列与 chips 表头对齐。
  * 同时供 .comp-list-row（行）和 .event-chips--list-header（chip 行兼表头）使用 */
 .upcoming-page {
-    --cl-cols: 7.2rem 1.4rem minmax(0, 1fr) 9rem repeat(21, 1.3rem);
-    --cl-min-width: 59rem;
+    --cl-cols: 7.2rem 1.4rem var(--cl-name-width, 28rem) repeat(21, 1.3rem);
+    --cl-min-width: 65rem;
 }
 .upcoming-page .comp-list {
     display: flex;
@@ -962,14 +966,29 @@
     color: var(--text-sub);
     font-size: 0.78rem;
 }
+/* 跨年比赛日期: 两半各自 nowrap, 用 block 强制 ~ 后换行 */
+.upcoming-page .cl-date-half {
+    display: block;
+    white-space: nowrap;
+}
+/* name + city 合并成一个 grid 列；内部用 flex 让 city 紧跟 name，多余空间留给 event chips。
+ * name 优先伸缩占空间，过长截断；city 在 name 之后短间距渲染。 */
+.upcoming-page .comp-list-name-cell {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    min-width: 0;
+    overflow: hidden;
+    /* 紧贴国旗 — 抵消 grid 列间 gap（桌面 6px / 移动 4px） */
+    margin-left: -6px;
+}
 .upcoming-page .comp-list-name {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     min-width: 0;
     font-weight: 500;
-    /* 紧贴国旗 — 抵消 grid 列间 gap（桌面 6px / 移动 4px） */
-    margin-left: -6px;
+    flex: 0 1 auto;
 }
 .upcoming-page .comp-list-city {
     color: var(--text-sub);
@@ -977,6 +996,8 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    flex: 0 1 auto;
+    min-width: 0;
 }
 .upcoming-page .cl-event-cell {
     text-align: center;
@@ -1079,15 +1100,15 @@
     .upcoming-page .event-bar .flag-img { width: 11px; height: 8px; }
     .upcoming-page .week-row { grid-template-rows: 18px repeat(var(--tracks, 1), minmax(20px, auto)) 1fr; }
     .upcoming-page .more-btn { font-size: 0.62rem; height: 18px; padding: 0 4px; }
-    /* 虚拟列表：行高固定，移动端横向滚动以保留 17 列对齐；city 列宽设为 0（内容靠 overflow 隐藏）保持 header/row 列数一致 */
+    /* 虚拟列表：行高固定，移动端横向滚动以保留 17 列对齐 */
     .upcoming-page {
-        --cl-cols: 5.5rem 1.2rem minmax(7rem, 1fr) 0 repeat(21, 1.1rem);
-        --cl-min-width: 44rem;
+        --cl-cols: 5.5rem 1.2rem var(--cl-name-width, 22rem) repeat(21, 1.1rem);
+        --cl-min-width: 53rem;
     }
     .upcoming-page .comp-list { overflow-x: auto; }
     .upcoming-page .event-chips-grid { padding: 4px 8px; gap: 4px; }
     .upcoming-page .comp-list-row { gap: 4px; padding: 0 8px; font-size: 0.78rem; }
-    .upcoming-page .comp-list-name { margin-left: -4px; }
+    .upcoming-page .comp-list-name-cell { margin-left: -4px; }
     .upcoming-page .comp-list-date { font-size: 0.7rem; }
     .upcoming-page .cl-event-cell { font-size: 0.65rem; }
     .upcoming-page .cl-year-num { font-size: 1rem; }

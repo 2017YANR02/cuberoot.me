@@ -672,3 +672,104 @@ reconRoutes.delete('/api/recon/:id', async (c) => {
   return c.json({ ok: true });
 });
 
+// ==================== Alternatives (另解) ====================
+// 任何登录用户都可以给 parent solve 投另解;每条另解只有作者(addedById)和 admin 能改/删。
+// 存储:recons.alternatives JSON 列,数组 [{solution, addedById, addedBy, createdAt}, ...]。
+// 操作单元用数组下标(0-based),不分配独立 id。
+
+interface AlternativeEntry {
+  solution: string;
+  addedById: string;
+  addedBy: string;
+  createdAt: number;
+}
+
+async function loadAlternatives(id: string): Promise<AlternativeEntry[] | null> {
+  const rows = await query<{ alternatives: string | null }>(
+    'SELECT alternatives FROM recons WHERE id = ?', [id]
+  );
+  if (rows.length === 0) return null;
+  const raw = rows[0].alternatives;
+  if (raw == null) return [];
+  if (typeof raw === 'string') {
+    try { return JSON.parse(raw) as AlternativeEntry[]; } catch { return []; }
+  }
+  return Array.isArray(raw) ? raw as AlternativeEntry[] : [];
+}
+
+async function saveAlternatives(id: string, alts: AlternativeEntry[]): Promise<void> {
+  await query('UPDATE recons SET alternatives = ? WHERE id = ?', [JSON.stringify(alts), id]);
+}
+
+// POST /api/recon/:id/alternatives — 追加一条另解
+reconRoutes.post('/api/recon/:id/alternatives', async (c) => {
+  c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+  checkRateLimit(getIp(c));
+  const authUser = await requireAuth(c);
+  const id = c.req.param('id');
+  const body = await c.req.json<{ solution?: string }>();
+  const solution = (body.solution ?? '').trim();
+  if (!solution) return c.json({ error: 'solution required' }, 400);
+  if (Buffer.byteLength(solution, 'utf8') > 65535) return c.json({ error: 'solution too long' }, 400);
+
+  const alts = await loadAlternatives(id);
+  if (alts == null) return c.json({ error: 'Not found' }, 404);
+
+  alts.push({
+    solution,
+    addedById: authUser.wcaId,
+    addedBy: authUser.name,
+    createdAt: Math.floor(Date.now() / 1000),
+  });
+  await saveAlternatives(id, alts);
+  return c.json({ alternatives: alts });
+});
+
+// PUT /api/recon/:id/alternatives/:idx — 改某条另解
+reconRoutes.put('/api/recon/:id/alternatives/:idx', async (c) => {
+  c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+  checkRateLimit(getIp(c));
+  const authUser = await requireAuth(c);
+  const id = c.req.param('id');
+  const idx = Number(c.req.param('idx'));
+  const body = await c.req.json<{ solution?: string }>();
+  const solution = (body.solution ?? '').trim();
+  if (!solution) return c.json({ error: 'solution required' }, 400);
+  if (Buffer.byteLength(solution, 'utf8') > 65535) return c.json({ error: 'solution too long' }, 400);
+
+  const alts = await loadAlternatives(id);
+  if (alts == null) return c.json({ error: 'Not found' }, 404);
+  if (!Number.isInteger(idx) || idx < 0 || idx >= alts.length) {
+    return c.json({ error: 'Invalid alternative index' }, 400);
+  }
+  if (!ADMIN_WCA_IDS.includes(authUser.wcaId) && alts[idx].addedById !== authUser.wcaId) {
+    return c.json({ error: 'Cannot edit others alternative' }, 403);
+  }
+
+  alts[idx] = { ...alts[idx], solution };
+  await saveAlternatives(id, alts);
+  return c.json({ alternatives: alts });
+});
+
+// DELETE /api/recon/:id/alternatives/:idx — 删某条另解
+reconRoutes.delete('/api/recon/:id/alternatives/:idx', async (c) => {
+  c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+  checkRateLimit(getIp(c));
+  const authUser = await requireAuth(c);
+  const id = c.req.param('id');
+  const idx = Number(c.req.param('idx'));
+
+  const alts = await loadAlternatives(id);
+  if (alts == null) return c.json({ error: 'Not found' }, 404);
+  if (!Number.isInteger(idx) || idx < 0 || idx >= alts.length) {
+    return c.json({ error: 'Invalid alternative index' }, 400);
+  }
+  if (!ADMIN_WCA_IDS.includes(authUser.wcaId) && alts[idx].addedById !== authUser.wcaId) {
+    return c.json({ error: 'Cannot delete others alternative' }, 403);
+  }
+
+  alts.splice(idx, 1);
+  await saveAlternatives(id, alts);
+  return c.json({ alternatives: alts });
+});
+

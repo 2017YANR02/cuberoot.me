@@ -59,6 +59,7 @@ const ALLOWED_COLUMNS = new Set([
   'cross_type', 'cross_stm', 'f2l', 'll', 's_move', 'cross_color',
   'cube', 'reconer', 'reconer_id', 'group_id', 'recon_date', 'created_at',
   'added_by', 'added_by_id', 'comp_wca_id', 'person_country', 'video_url',
+  'alternatives',
 ]);
 
 // ── 数据转换 ──
@@ -88,6 +89,11 @@ export function rowToJson(row: Record<string, unknown>): Record<string, unknown>
   }
   for (const k of FLOAT_FIELDS) {
     if (json[k] !== undefined && json[k] !== null) json[k] = Number(json[k]);
+  }
+
+  // NOTE: alternatives JSON 列——驱动可能返回字符串,parse 成数组
+  if (typeof json.alternatives === 'string') {
+    try { json.alternatives = JSON.parse(json.alternatives); } catch { json.alternatives = []; }
   }
 
   // NOTE: 移除 null 值——与原 PHP 行为一致
