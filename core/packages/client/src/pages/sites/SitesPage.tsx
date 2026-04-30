@@ -61,6 +61,14 @@ const TEXTS = {
   colDesc:     { en: 'Description',      zh: '简介' },
 } as const;
 
+// tag 字符串里 EN 和 ZH 拼在一起（如 "Timer 计时器"），按首个 CJK 字符切开
+function splitLangTag(s: string): { en: string; zh: string } {
+  const idx = s.search(/[㐀-鿿豈-﫿]/);
+  if (idx < 0) return { en: s, zh: s }; // 纯 EN（"Stat" / "FMC"）
+  if (idx === 0) return { en: s, zh: s }; // 纯 ZH（"拼图"）
+  return { en: s.slice(0, idx).trim(), zh: s.slice(idx).trim() };
+}
+
 function hostOf(url: string): string {
   try {
     return new URL(url).hostname.replace(/^www\./, '');
@@ -107,7 +115,7 @@ function SiteRow({ site, lang }: { site: Site; lang: 'en' | 'zh' }) {
           <span className="site-row-name">{name}</span>
           <span className="site-row-host">{hostOf(site.url)}</span>
           {site.tags?.map((t) => (
-            <span key={t} className="site-row-subgroup">{t}</span>
+            <span key={t} className="site-row-subgroup">{splitLangTag(t)[lang]}</span>
           ))}
           {dead && <span className="site-row-dead-badge">{TEXTS.dead[lang]}</span>}
         </div>
