@@ -5,7 +5,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, ChevronRight, Star, Globe as GlobeIcon, List, BarChart3, CalendarDays } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Star, Earth as GlobeIcon, List, BarChart3, CalendarDays } from 'lucide-react';
 import { getLangQuery } from '../i18n';
 import {
   fetchAllUpcomingCompsJson,
@@ -34,6 +34,8 @@ import { localizeCity } from '../utils/city_localize';
 import { countryName } from '../utils/country_name';
 import { expandCountrySelection } from '../utils/continent';
 import { fetchCompRounds } from '../utils/comp_wcif';
+import { CuberSearchInput } from '../components/CuberSearchInput';
+import { fetchUserUpcoming, type WcaPersonLite } from '../utils/wca_api';
 import './upcoming_comps.css';
 
 // ── 类型定义 ──────────────────────────────────────────────────────────────
@@ -791,7 +793,10 @@ export default function UpcomingCompsPage() {
   const [data, setData] = useState<UpcomingData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [compQuery, setCompQuery] = useState('');
-  const [cuberQuery, setCuberQuery] = useState('');
+  // 选手筛选: 静态层(top_cubers + cn_upcoming_registrations) 优先,API 兜底
+  const [selectedCuber, setSelectedCuber] = useState<WcaPersonLite | null>(null);
+  const [selectedCuberCompIds, setSelectedCuberCompIds] = useState<Set<string> | null>(null);
+  const [cnRegistrations, setCnRegistrations] = useState<Record<string, string[]> | null>(null);
   const [countryFilters, setCountryFilters] = useState<string[]>([]);
   // NOTE: 月份锚点。优先读 URL `?year=YYYY&month=M`（来自 /calendar/stats 热力图深链），
   //       否则用 now（首次加载后若有 upcoming 会跳到最近一场比赛的月份）。
@@ -817,12 +822,17 @@ export default function UpcomingCompsPage() {
   const monthBtnRef = useRef<HTMLButtonElement>(null);
   const fromBtnRef = useRef<HTMLButtonElement>(null);
   const toBtnRef = useRef<HTMLButtonElement>(null);
-  const [, setRecordsVer] = useState(0);
+  const [recordsVer, setRecordsVer] = useState(0);
 
   useEffect(() => {
     loadCompRecordsSummary().then((v) => setRecordsVer(v));
     // NOTE: loadFlagData 加载 comp_names_zh.json，完成后触发重渲染以应用中文名
     loadFlagData().then((v) => setRecordsVer(v));
+    // NOTE: cubing.com 中国比赛全员注册 (WCA API 不覆盖) — 失败/无文件时静默置空,前端走 API 兜底
+    fetch('/stats/cn_upcoming_registrations.json')
+      .then((r) => (r.ok ? r.json() : {}))
+      .then((j: Record<string, string[]>) => setCnRegistrations(j))
+      .catch(() => setCnRegistrations({}));
   }, []);
 
   // NOTE: viewDate 变化时同步 URL（?year= ?month=），方便复制分享当前月份链接
@@ -914,6 +924,67 @@ export default function UpcomingCompsPage() {
     return { sorted, counts };
   }, [activeComps]);
 
+  // ── 选手静态索引 ────────────────────────────────────────────
+  // personIndex: WCA ID → comp ID set;来自 top_cubers (~205) ∪ cn_upcoming_registrations (~1000)
+  // 命中即可完全跳过 API,顶尖选手 + 中国选手都走静态。
+  const personCompIndex = useMemo(() => {
+    const m = new Map<string, Set<string>>();
+    if (data) {
+      for (const comp of data.competitions) {
+        for (const cuber of comp.top_cubers) {
+          let s = m.get(cuber.id);
+          if (!s) { s = new Set(); m.set(cuber.id, s); }
+          s.add(comp.id);
+        }
+      }
+    }
+    if (cnRegistrations) {
+      for (const [compId, ids] of Object.entries(cnRegistrations)) {
+        for (const wcaId of ids) {
+          let s = m.get(wcaId);
+          if (!s) { s = new Set(); m.set(wcaId, s); }
+          s.add(compId);
+        }
+      }
+    }
+    return m;
+  }, [data, cnRegistrations]);
+
+  // staticCubers: 给 CuberSearchInput 做名字 autocomplete 的静态人名表 (仅 top_cubers,有名字)
+  const staticCubers = useMemo<WcaPersonLite[]>(() => {
+    if (!data) return [];
+    const seen = new Map<string, WcaPersonLite>();
+    for (const comp of data.competitions) {
+      for (const c of comp.top_cubers) {
+        if (seen.has(c.id)) continue;
+        seen.set(c.id, {
+          id: c.id,
+          name: c.name,
+          country_iso2: personFlagIso2(c.id) || '',
+        });
+      }
+    }
+    return Array.from(seen.values());
+  }, [data, recordsVer]);
+
+  // selectedCuber 变化 → 解析出他的未来比赛 ID 集合 (静态优先,miss 走 API)
+  useEffect(() => {
+    if (!selectedCuber) { setSelectedCuberCompIds(null); return; }
+    const staticHit = personCompIndex.get(selectedCuber.id);
+    if (staticHit && staticHit.size > 0) {
+      setSelectedCuberCompIds(staticHit);
+      return;
+    }
+    // miss → API
+    let cancelled = false;
+    setSelectedCuberCompIds(new Set());  // 暂时空集合 = 没命中,过滤掉所有
+    fetchUserUpcoming(selectedCuber.id).then((ids) => {
+      if (cancelled) return;
+      setSelectedCuberCompIds(new Set(ids));
+    });
+    return () => { cancelled = true; };
+  }, [selectedCuber, personCompIndex]);
+
   // NOTE: 不匹配的比赛直接从日历中消失（不再"变淡"），所以 displayedComps 走完整过滤链
   const isMatch = useCallback(
     (comp: Competition) => {
@@ -922,10 +993,8 @@ export default function UpcomingCompsPage() {
         const text = `${comp.name} ${comp.name_zh || ''} ${compNameZh(comp.name)} ${comp.city} ${comp.city_zh || ''}`.toLowerCase();
         if (!text.includes(compQ)) return false;
       }
-      const cuberQ = cuberQuery.toLowerCase().trim();
-      if (cuberQ) {
-        const cuberText = comp.top_cubers.map((c) => `${c.name.toLowerCase()} ${c.id.toLowerCase()}`).join(' ');
-        if (!cuberText.includes(cuberQ)) return false;
+      if (selectedCuber && selectedCuberCompIds) {
+        if (!selectedCuberCompIds.has(comp.id)) return false;
       }
       if (countryFilterSet.size > 0 && !countryFilterSet.has(comp.country.toUpperCase())) return false;
       // AND 语义：每个所选项目都必须存在；rf 是数字时还要轮次精确匹配，'any' 时只看项目存在。
@@ -945,7 +1014,7 @@ export default function UpcomingCompsPage() {
       }
       return true;
     },
-    [compQuery, cuberQuery, countryFilterSet, eventFilters, dateFrom, dateTo],
+    [compQuery, selectedCuber, selectedCuberCompIds, countryFilterSet, eventFilters, dateFrom, dateTo],
   );
 
   const displayedComps = useMemo(
@@ -1094,12 +1163,14 @@ export default function UpcomingCompsPage() {
           value={compQuery}
           onChange={(e) => setCompQuery(e.target.value)}
         />
-        <input
-          type="text"
-          className="search-box search-box-cuber"
+        <CuberSearchInput
+          className="search-box-cuber"
+          value={selectedCuber}
+          onChange={setSelectedCuber}
+          staticCubers={staticCubers}
+          matchCount={selectedCuber ? (selectedCuberCompIds?.size ?? null) : null}
           placeholder={t('upcoming.searchCuber')}
-          value={cuberQuery}
-          onChange={(e) => setCuberQuery(e.target.value)}
+          isZh={isZh}
         />
         <CountryInput
           className="country-filter"

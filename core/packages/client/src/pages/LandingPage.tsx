@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   BarChart3, Film, ScanSearch, Calculator as CalculatorIcon, LineChart,
-  Swords, Target, CalendarDays, Puzzle, BookOpen, Globe as GlobeIcon,
+  Swords, Target, CalendarDays, Puzzle, BookOpen, Earth as GlobeIcon,
   Shuffle, Library, Compass, Grid2x2, Heart, Trophy, Timer as TimerIcon,
   type LucideIcon,
 } from 'lucide-react';
