@@ -20,6 +20,7 @@ flagHtml(iso2, { spanClassName: 'flag-span', imgClassName: 'flag-img' }) // inne
 
 - 手写 `iso2 === 'tw' ? <img .../> : <span .../>` —— 就是要消灭这个
 - 直接写 `/tools/assets/images/ChineseTaipei.svg` —— 路径只应出现在 `flag.tsx`
+- **裸 `<SharedFlag iso2={...} />` 不带 className**：TW 走 SVG `<img>`，没尺寸约束会撑爆布局。加旗前 grep 同文件本地 `Flag` wrapper（多数页面自带，已绑 `flag-span/flag-img`），没 wrapper 必须自带 `className` 或 `spanClassName`+`imgClassName`。
 
 ## popup CSS 作用域
 

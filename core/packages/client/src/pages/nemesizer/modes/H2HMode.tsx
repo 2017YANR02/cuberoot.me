@@ -4,6 +4,8 @@ import type { NemesizerDataset } from '../data/nemesizerData';
 import NemesizerPersonPicker from '../components/NemesizerPersonPicker';
 import PersonCell from '../components/PersonCell';
 import { NEMESIZER_EVENTS } from '../data/nemesizerData';
+import { formatWcaResultK } from '../../../utils/wca_format_result';
+import { eventDisplayName } from '../../../utils/wca_events';
 
 interface Props { ds: NemesizerDataset; isZh: boolean; }
 
@@ -89,13 +91,14 @@ function Comparison({ ds, isZh, p1, p2, show }: { ds: NemesizerDataset; isZh: bo
           {rowsByEv.map((r, i) => {
             const v1 = show === 'ranks' ? r.r1 : r.b1;
             const v2 = show === 'ranks' ? r.r2 : r.b2;
-            const class1 = cellClass(v1, v2, show);
-            const class2 = cellClass(v2, v1, show);
+            const class1 = cellClass(v1, v2);
+            const class2 = cellClass(v2, v1);
+            const fmt = (v: number) => show === 'ranks' ? String(v) : formatWcaResultK(v, r.ev, r.kind as 0 | 1);
             return (
               <tr key={i}>
                 <td>{labelEk(r.ev, r.kind, isZh)}</td>
-                <td className={class1}>{v1 !== undefined ? formatValue(v1, r.ev, show) : ''}</td>
-                <td className={class2}>{v2 !== undefined ? formatValue(v2, r.ev, show) : ''}</td>
+                <td className={class1}>{v1 !== undefined ? fmt(v1) : ''}</td>
+                <td className={class2}>{v2 !== undefined ? fmt(v2) : ''}</td>
               </tr>
             );
           })}
@@ -112,7 +115,7 @@ function bestOf(ds: NemesizerDataset, p: number, ev: number, kind: number): numb
   return undefined;
 }
 
-function cellClass(mine: number | undefined, other: number | undefined, _show: Show): string {
+function cellClass(mine: number | undefined, other: number | undefined): string {
   if (mine === undefined) return 'nemesizer-h2h-cell-none';
   if (other === undefined) return 'nemesizer-h2h-cell-better';
   if (mine < other) return 'nemesizer-h2h-cell-better';
@@ -121,54 +124,6 @@ function cellClass(mine: number | undefined, other: number | undefined, _show: S
 }
 
 function labelEk(ev: string, kind: number, isZh: boolean): string {
-  const evName = eventLabel(ev, isZh);
   const suffix = kind === 0 ? (isZh ? '单次' : 'single') : (isZh ? '平均' : 'average');
-  return `${evName} ${suffix}`;
-}
-
-const EVENT_LABEL_EN: Record<string, string> = {
-  '333': '3x3', '222': '2x2', '444': '4x4', '555': '5x5', '666': '6x6', '777': '7x7',
-  '333bf': '3BLD', '333fm': 'FMC', '333oh': 'One handed',
-  'minx': 'Megaminx', 'pyram': 'Pyraminx', 'clock': 'Clock',
-  'skewb': 'Skewb', 'sq1': 'Square-1',
-  '444bf': '4BLD', '555bf': '5BLD', '333mbf': 'Multi-Blind',
-};
-const EVENT_LABEL_ZH: Record<string, string> = {
-  '333': '三阶', '222': '二阶', '444': '四阶', '555': '五阶', '666': '六阶', '777': '七阶',
-  '333bf': '三盲', '333fm': 'FMC', '333oh': '单手',
-  'minx': '五魔方', 'pyram': '金字塔', 'clock': '魔表',
-  'skewb': 'Skewb', 'sq1': 'SQ1',
-  '444bf': '四盲', '555bf': '五盲', '333mbf': '多盲',
-};
-
-export function eventLabel(ev: string, isZh: boolean): string {
-  return (isZh ? EVENT_LABEL_ZH[ev] : EVENT_LABEL_EN[ev]) ?? ev;
-}
-
-export function formatValue(v: number, ev: string, show: Show): string {
-  if (show === 'ranks') return String(v);
-  if (ev === '333fm') {
-    // FMC: single is move count; average is moves*100 (WCA stores as best*100)
-    return (v / 100).toFixed(2).replace(/\.00$/, '');
-  }
-  if (ev === '333mbf') {
-    // encoded DDDTTTTTMM where DD = 99 - (solved - unsolved), TTTTT = seconds, MM = missed
-    // Show as "solved/attempted m:ss"
-    const missed = v % 100;
-    const timeSec = Math.floor(v / 100) % 100000;
-    const diff = 99 - Math.floor(v / 10000000);
-    const solved = diff + missed;
-    const attempted = solved + missed;
-    const min = Math.floor(timeSec / 60);
-    const sec = timeSec % 60;
-    return `${solved}/${attempted} ${min}:${String(sec).padStart(2, '0')}`;
-  }
-  // centiseconds
-  const totalCs = v;
-  if (totalCs < 100 * 60) {
-    return (totalCs / 100).toFixed(2);
-  }
-  const min = Math.floor(totalCs / 6000);
-  const rest = totalCs % 6000;
-  return `${min}:${String(Math.floor(rest / 100)).padStart(2, '0')}.${String(rest % 100).padStart(2, '0')}`;
+  return `${eventDisplayName(ev, isZh)} ${suffix}`;
 }

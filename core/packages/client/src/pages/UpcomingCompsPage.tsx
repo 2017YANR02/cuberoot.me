@@ -5,7 +5,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, ChevronRight, Star, Globe as GlobeIcon, List, BarChart3 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Star, Globe as GlobeIcon, List, BarChart3, CalendarDays } from 'lucide-react';
 import { getLangQuery } from '../i18n';
 import {
   fetchAllUpcomingCompsJson,
@@ -25,9 +25,9 @@ import {
   loadCompRecordsDetail,
   getCompRecordTop,
   getCompRecordEntries,
-  formatRecordValue,
   type RecordEntry,
 } from '../utils/comp_records';
+import { formatWcaResult } from '../utils/wca_format_result';
 import { loadFlagData, personFlagIso2, compNameZh, countryToIso2 } from '../utils/country_flags';
 import { stripWcaPrefix } from '../utils/comp_localize';
 import { localizeCity } from '../utils/city_localize';
@@ -91,61 +91,13 @@ const WCA_EVENT_ID_TO_SHORT: Record<string, string> = Object.fromEntries(
   Object.entries(SHORT_TO_EVENT_ID).map(([s, w]) => [w, s])
 );
 
-// NOTE: ISO 3166-1 alpha-2 → 国家英文全名
-const COUNTRY_MAP: Record<string, string> = {
-  'AF': 'Afghanistan', 'AL': 'Albania', 'DZ': 'Algeria', 'AD': 'Andorra', 'AO': 'Angola',
-  'AR': 'Argentina', 'AM': 'Armenia', 'AU': 'Australia', 'AT': 'Austria', 'AZ': 'Azerbaijan',
-  'BH': 'Bahrain', 'BD': 'Bangladesh', 'BY': 'Belarus', 'BE': 'Belgium', 'BJ': 'Benin',
-  'BT': 'Bhutan', 'BO': 'Bolivia', 'BA': 'Bosnia and Herzegovina', 'BR': 'Brazil',
-  'BN': 'Brunei', 'BG': 'Bulgaria', 'KH': 'Cambodia', 'CM': 'Cameroon', 'CA': 'Canada',
-  'CL': 'Chile', 'CN': 'China', 'CO': 'Colombia', 'CR': 'Costa Rica', 'HR': 'Croatia',
-  'CU': 'Cuba', 'CY': 'Cyprus', 'CZ': 'Czech Republic', 'DK': 'Denmark', 'DO': 'Dominican Republic',
-  'EC': 'Ecuador', 'EG': 'Egypt', 'SV': 'El Salvador', 'EE': 'Estonia', 'ET': 'Ethiopia',
-  'FI': 'Finland', 'FR': 'France', 'GE': 'Georgia', 'DE': 'Germany', 'GH': 'Ghana',
-  'GR': 'Greece', 'GT': 'Guatemala', 'HN': 'Honduras', 'HK': 'Hong Kong', 'HU': 'Hungary',
-  'IS': 'Iceland', 'IN': 'India', 'ID': 'Indonesia', 'IR': 'Iran', 'IQ': 'Iraq',
-  'IE': 'Ireland', 'IL': 'Israel', 'IT': 'Italy', 'JM': 'Jamaica', 'JP': 'Japan',
-  'JO': 'Jordan', 'KZ': 'Kazakhstan', 'KE': 'Kenya', 'KR': 'South Korea', 'KW': 'Kuwait',
-  'KG': 'Kyrgyzstan', 'LA': 'Laos', 'LV': 'Latvia', 'LB': 'Lebanon', 'LT': 'Lithuania',
-  'LU': 'Luxembourg', 'MO': 'Macau', 'MK': 'North Macedonia', 'MY': 'Malaysia', 'MV': 'Maldives',
-  'MT': 'Malta', 'MX': 'Mexico', 'MD': 'Moldova', 'MN': 'Mongolia', 'ME': 'Montenegro',
-  'MA': 'Morocco', 'MZ': 'Mozambique', 'MM': 'Myanmar', 'NP': 'Nepal', 'NL': 'Netherlands',
-  'NZ': 'New Zealand', 'NI': 'Nicaragua', 'NG': 'Nigeria', 'NO': 'Norway', 'OM': 'Oman',
-  'PK': 'Pakistan', 'PA': 'Panama', 'PY': 'Paraguay', 'PE': 'Peru', 'PH': 'Philippines',
-  'PL': 'Poland', 'PT': 'Portugal', 'QA': 'Qatar', 'RO': 'Romania', 'RU': 'Russia',
-  'SA': 'Saudi Arabia', 'RS': 'Serbia', 'SG': 'Singapore', 'SK': 'Slovakia', 'SI': 'Slovenia',
-  'ZA': 'South Africa', 'ES': 'Spain', 'LK': 'Sri Lanka', 'SE': 'Sweden', 'CH': 'Switzerland',
-  'TW': 'Taiwan', 'TJ': 'Tajikistan', 'TZ': 'Tanzania', 'TH': 'Thailand', 'TN': 'Tunisia',
-  'TR': 'Turkey', 'UA': 'Ukraine', 'AE': 'United Arab Emirates',
-  'GB': 'United Kingdom', 'US': 'United States', 'UY': 'Uruguay', 'UZ': 'Uzbekistan',
-  'VE': 'Venezuela', 'VN': 'Vietnam',
-  'XA': 'Multiple Countries (Asia)', 'XE': 'Multiple Countries (Europe)',
-  'XN': 'Multiple Countries (North America)', 'XS': 'Multiple Countries (South America)',
-  'XW': 'Multiple Countries (World)', 'XF': 'Multiple Countries (Africa)',
-  'XO': 'Multiple Countries (Oceania)',
-};
-
-const COUNTRY_ALIASES: Record<string, string> = {
-  'usa': 'US', 'uk': 'GB', 'england': 'GB', 'britain': 'GB',
-  'korea': 'KR', 'south korea': 'KR', 'uae': 'AE', 'czech': 'CZ', 'holland': 'NL',
-};
+// 列表视图与 chip 过滤共用的项目顺序（WCA 标准官方顺序，17 项）
+const EVENT_ORDER = ['333', '222', '444', '555', '666', '777', '333bf', '333fm', '333oh', 'clock', 'minx', 'pyram', 'skewb', 'sq1', '444bf', '555bf', '333mbf'] as const;
 
 const WEEKDAY_EN = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 const WEEKDAY_ZH = ['一','二','三','四','五','六','日'];
 
 // ── 工具函数 ──────────────────────────────────────────────────────────────
-
-function getCountryName(iso2: string): string {
-  return COUNTRY_MAP[iso2] || iso2;
-}
-
-function buildCountrySearchText(iso2: string): string {
-  const enName = getCountryName(iso2).toLowerCase();
-  const aliases = Object.entries(COUNTRY_ALIASES)
-    .filter(([, v]) => v === iso2)
-    .map(([k]) => k);
-  return [iso2.toLowerCase(), enName, ...aliases].filter(Boolean).join(' ');
-}
 
 /** 两个日期是否同一天（忽略时间） */
 function sameDay(a: Date, b: Date): boolean {
@@ -482,7 +434,7 @@ function CompModal({ comp, isZh, onClose, t }: {
                   <RecordBadge record={r.t} />
                   <span className={`cubing-icon event-${r.e}`} />
                   <span className="record-kind">{r.k === 's' ? t('upcoming.single') : t('upcoming.average')}</span>
-                  <span className="record-value mono">{formatRecordValue(r.v, r.e, r.k)}</span>
+                  <span className="record-value mono">{formatWcaResult(r.v, r.e, r.k === 's' ? 'single' : 'average')}</span>
                   <a
                     href={`https://www.worldcubeassociation.org/persons/${r.p}`}
                     target="_blank"
@@ -668,6 +620,7 @@ function adaptAllComp(w: UpcomingCompRecord, topCuberMap: Map<string, TopCuber[]
     start_date: w.start_date,
     end_date: w.end_date,
     events: w.events,
+    rounds: w.rounds,
     competitor_limit: w.competitor_limit,
     registration_open: w.registration_open ?? undefined,
     registration_close: w.registration_close ?? undefined,
@@ -694,12 +647,147 @@ function adaptPastComp(w: PastCompRecord): Competition {
 
 // ── URL 月份深链 ──────────────────────────────────────────────────────────
 
+/** 校验 YYYY-MM 字符串（年 1900-2099，月 01-12）。空串 / 不合规 → false（不参与过滤） */
+function validYM(s: string): boolean {
+  return /^(19|20)\d{2}-(0[1-9]|1[0-2])$/.test(s);
+}
+
 function readMonthFromUrl(): Date | null {
   const p = new URLSearchParams(window.location.search);
   const y = Number(p.get('year'));
   const m = Number(p.get('month'));
   if (!y || !m || m < 1 || m > 12) return null;
   return new Date(y, m - 1, 1);
+}
+
+// ── 列表视图 ──────────────────────────────────────────────────────────────
+// 不分月，按 start_date 倒序排列、按年分组；点行同样打开 CompModal。
+// 数据量可达 ~17k —— 用 fixed-height 虚拟滚动只渲染视口内 ~30 行，无上限。
+// 行高统一 44px（年标题与比赛行同高）以便 O(1) 计算可见区间。
+
+const LIST_ROW_H = 44;
+const LIST_BUFFER = 8; // 视口外多渲染几行做缓冲，避免快速滚动时露白
+
+type ListItem =
+  | { kind: 'year'; year: string; count: number; key: string }
+  | { kind: 'row'; comp: Competition; key: string };
+
+function CompList({ comps, isZh, onSelect }: {
+  comps: Competition[];
+  isZh: boolean;
+  onSelect: (c: Competition) => void;
+}) {
+  const items = useMemo<ListItem[]>(() => {
+    const sorted = [...comps].sort((a, b) => b.start_date.localeCompare(a.start_date));
+    const yearCounts = new Map<string, number>();
+    for (const c of sorted) {
+      const y = c.start_date.slice(0, 4);
+      yearCounts.set(y, (yearCounts.get(y) ?? 0) + 1);
+    }
+    const out: ListItem[] = [];
+    let cur = '';
+    for (const c of sorted) {
+      const y = c.start_date.slice(0, 4);
+      if (y !== cur) {
+        out.push({ kind: 'year', year: y, count: yearCounts.get(y)!, key: `y-${y}` });
+        cur = y;
+      }
+      out.push({ kind: 'row', comp: c, key: c.id });
+    }
+    return out;
+  }, [comps]);
+
+  const totalH = items.length * LIST_ROW_H;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [range, setRange] = useState({ start: 0, end: 60 });
+  const rafRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const compute = () => {
+      rafRef.current = null;
+      const el = containerRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      // 容器顶相对视口位置：rect.top < 0 表示已滚过，>= 0 表示还没到
+      const yTop = Math.max(0, -rect.top) - LIST_BUFFER * LIST_ROW_H;
+      const yBot = -rect.top + window.innerHeight + LIST_BUFFER * LIST_ROW_H;
+      const start = Math.max(0, Math.floor(yTop / LIST_ROW_H));
+      const end = Math.min(items.length, Math.ceil(yBot / LIST_ROW_H));
+      setRange((prev) => (prev.start === start && prev.end === end ? prev : { start, end }));
+    };
+    const onScroll = () => {
+      if (rafRef.current != null) return;
+      rafRef.current = requestAnimationFrame(compute);
+    };
+    compute();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+    };
+  }, [items.length]);
+
+  if (items.length === 0) {
+    return <div className="comp-list-empty">{isZh ? '没有匹配的比赛' : 'No competitions match'}</div>;
+  }
+
+  const visible = items.slice(range.start, range.end);
+
+  return (
+    <div className="comp-list">
+      <div ref={containerRef} className="comp-list-virtual" style={{ height: totalH }}>
+        {visible.map((it, i) => {
+          const idx = range.start + i;
+          const top = idx * LIST_ROW_H;
+          if (it.kind === 'year') {
+            return (
+              <div
+                key={it.key}
+                className="comp-list-year"
+                style={{ top, height: LIST_ROW_H }}
+              >
+                <span className="comp-list-year-num">{it.year}</span>
+                <span className="comp-list-year-count">{it.count}</span>
+              </div>
+            );
+          }
+          const c = it.comp;
+          const dateStr = formatDateRangeIso(c.start_date, c.end_date || c.start_date);
+          const displayName = localizeName(c, isZh);
+          const displayCity = isZh ? (c.city_zh || localizeCity(c.city, true)) : c.city;
+          const prefetch = c.rounds ? undefined : () => { void fetchCompRounds(c.id); };
+          const events = c.events ?? [];
+          return (
+            <button
+              key={it.key}
+              className="comp-list-row"
+              style={{ top, height: LIST_ROW_H }}
+              onClick={() => onSelect(c)}
+              onMouseEnter={prefetch}
+              onFocus={prefetch}
+            >
+              <span className="comp-list-date mono">{dateStr}</span>
+              <Flag iso2={c.country} />
+              <span className="comp-list-name">{displayName}</span>
+              <span className="comp-list-city">{displayCity}</span>
+              {EVENT_ORDER.map((eid) => {
+                const shortEid = WCA_EVENT_ID_TO_SHORT[eid] ?? eid;
+                const r = c.rounds?.[shortEid];
+                const has = events.includes(shortEid);
+                return (
+                  <span key={eid} className="cl-event-cell">
+                    {r != null ? r : (has ? '·' : '')}
+                  </span>
+                );
+              })}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 // ── 主组件 ────────────────────────────────────────────────────────────────
@@ -710,7 +798,8 @@ export default function UpcomingCompsPage() {
 
   const [data, setData] = useState<UpcomingData | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [compQuery, setCompQuery] = useState('');
+  const [cuberQuery, setCuberQuery] = useState('');
   const [countryFilters, setCountryFilters] = useState<string[]>([]);
   // NOTE: 月份锚点。优先读 URL `?year=YYYY&month=M`（来自 /calendar/stats 热力图深链），
   //       否则用 now（首次加载后若有 upcoming 会跳到最近一场比赛的月份）。
@@ -721,9 +810,18 @@ export default function UpcomingCompsPage() {
   const [allComps, setAllComps] = useState<Competition[] | null>(null);
   const [allLoading, setAllLoading] = useState(false);
   const [allError, setAllError] = useState<string | null>(null);
-  const [eventFilters, setEventFilters] = useState<string[]>([]);
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const pickerBtnRef = useRef<HTMLButtonElement>(null);
+  // 每个项目独立的轮次约束（精确匹配，WCA 单项上限 4 轮）；缺 key = 不过滤此项目。
+  // chip 单击循环：undefined → 1 → 2 → ... → max → undefined（max 由 maxRoundsByEid 决定）。
+  const [eventFilters, setEventFilters] = useState<Record<string, 1 | 2 | 3 | 4>>({});
+  const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
+  // 列表视图下的年月范围过滤（YYYY-MM 字符串；不合规或空 = 不参与过滤）
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  // 三个 popover 共用一份 state：'month' = 日历模式月份选择；'from'/'to' = 列表模式年月范围
+  const [pickerOpen, setPickerOpen] = useState<'month' | 'from' | 'to' | null>(null);
+  const monthBtnRef = useRef<HTMLButtonElement>(null);
+  const fromBtnRef = useRef<HTMLButtonElement>(null);
+  const toBtnRef = useRef<HTMLButtonElement>(null);
   const [, setRecordsVer] = useState(0);
 
   useEffect(() => {
@@ -799,10 +897,19 @@ export default function UpcomingCompsPage() {
     },
     [countryFilters],
   );
-  const displayedComps = useMemo(
-    () => (countryFilterSet.size > 0 ? activeComps.filter((c) => countryFilterSet.has(c.country.toUpperCase())) : activeComps),
-    [activeComps, countryFilterSet],
-  );
+  // 每个项目在 activeComps 里实际出现过的最大轮次数。chip 循环时按这个上限截断，
+  // 例如 FMC 最多 3 轮就只到 3，避免选出"FMC=4"这种永远空的过滤。
+  const maxRoundsByEid = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const c of activeComps) {
+      if (!c.rounds) continue;
+      for (const [shortEid, n] of Object.entries(c.rounds)) {
+        const wcaEid = SHORT_TO_EVENT_ID[shortEid] ?? shortEid;
+        if (n > (m[wcaEid] ?? 0)) m[wcaEid] = n;
+      }
+    }
+    return m;
+  }, [activeComps]);
 
   const countryOptions = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -812,24 +919,42 @@ export default function UpcomingCompsPage() {
     return { sorted, counts };
   }, [activeComps]);
 
-  // NOTE: 过滤匹配判断（不匹配的事件仍渲染但置灰）
+  // NOTE: 不匹配的比赛直接从日历中消失（不再"变淡"），所以 displayedComps 走完整过滤链
   const isMatch = useCallback(
     (comp: Competition) => {
-      const q = searchQuery.toLowerCase().trim();
-      if (q) {
-        const searchName = `${comp.name} ${comp.name_zh || ''} ${compNameZh(comp.name)} ${comp.city} ${comp.city_zh || ''}`.toLowerCase();
-        const cuberNames = comp.top_cubers.map((c) => `${c.name.toLowerCase()} ${c.id.toLowerCase()}`).join(' ');
-        const countrySearch = buildCountrySearchText(comp.country);
-        if (!searchName.includes(q) && !cuberNames.includes(q) && !countrySearch.includes(q)) return false;
+      const compQ = compQuery.toLowerCase().trim();
+      if (compQ) {
+        const text = `${comp.name} ${comp.name_zh || ''} ${compNameZh(comp.name)} ${comp.city} ${comp.city_zh || ''}`.toLowerCase();
+        if (!text.includes(compQ)) return false;
+      }
+      const cuberQ = cuberQuery.toLowerCase().trim();
+      if (cuberQ) {
+        const cuberText = comp.top_cubers.map((c) => `${c.name.toLowerCase()} ${c.id.toLowerCase()}`).join(' ');
+        if (!cuberText.includes(cuberQ)) return false;
       }
       if (countryFilterSet.size > 0 && !countryFilterSet.has(comp.country.toUpperCase())) return false;
-      if (eventFilters.length > 0) {
-        const normalized = new Set((comp.events || []).map((e) => SHORT_TO_EVENT_ID[e] || e));
-        if (!eventFilters.some((f) => normalized.has(f))) return false;
+      // AND 语义：每个所选项目的轮次都必须精确匹配。
+      // comp.events / comp.rounds 用 short code（'3' / 'pyra'），过滤里的 eid 是 WCA 标准 ID（'333'）→ 反查。
+      for (const [eid, rf] of Object.entries(eventFilters)) {
+        const shortEid = WCA_EVENT_ID_TO_SHORT[eid] ?? eid;
+        if (!(comp.events ?? []).includes(shortEid)) return false;
+        const r = comp.rounds?.[shortEid];
+        if (r == null) return false; // 没有 rounds 数据（upcoming 未拉 WCIF）即排除
+        if (r !== rf) return false;
+      }
+      if (validYM(dateFrom) || validYM(dateTo)) {
+        const ym = comp.start_date.slice(0, 7);
+        if (validYM(dateFrom) && ym < dateFrom) return false;
+        if (validYM(dateTo) && ym > dateTo) return false;
       }
       return true;
     },
-    [searchQuery, countryFilterSet, eventFilters],
+    [compQuery, cuberQuery, countryFilterSet, eventFilters, dateFrom, dateTo],
+  );
+
+  const displayedComps = useMemo(
+    () => activeComps.filter(isMatch),
+    [activeComps, isMatch],
   );
 
   const weeks = useMemo(() => {
@@ -884,7 +1009,8 @@ export default function UpcomingCompsPage() {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
       if (e.altKey || e.ctrlKey || e.metaKey) return;
-      if (selectedComp || dayListDate || pickerOpen) return;
+      if (viewMode !== 'calendar') return;
+      if (selectedComp || dayListDate || pickerOpen != null) return;
       const tag = (e.target as HTMLElement | null)?.tagName;
       const editable = (e.target as HTMLElement | null)?.isContentEditable;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || editable) return;
@@ -960,16 +1086,24 @@ export default function UpcomingCompsPage() {
           <Link to="/globe" className="globe-link">
             <GlobeIcon size={12} strokeWidth={1.75} /> {t('upcoming.viewGlobe')}
           </Link>
+          <LangToggle variant="inline" />
         </div>
       </header>
 
       <div className="toolbar">
         <input
           type="text"
-          className="search-box"
-          placeholder={t('upcoming.search')}
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          className="search-box search-box-comp"
+          placeholder={t('upcoming.searchComp')}
+          value={compQuery}
+          onChange={(e) => setCompQuery(e.target.value)}
+        />
+        <input
+          type="text"
+          className="search-box search-box-cuber"
+          placeholder={t('upcoming.searchCuber')}
+          value={cuberQuery}
+          onChange={(e) => setCuberQuery(e.target.value)}
         />
         <CountryInput
           className="country-filter"
@@ -980,68 +1114,157 @@ export default function UpcomingCompsPage() {
           counts={countryOptions.counts}
           allLabel={t('upcoming.allCountries')}
         />
-        <div className="mode-toggle" role="tablist">
-          <button
-            role="tab"
-            aria-selected={mode === 'all'}
-            className={`mode-btn ${mode === 'all' ? 'is-active' : ''}`}
-            onClick={() => setMode('all')}
-          >
-            <GlobeIcon size={14} strokeWidth={1.75} />
-            <span>{t('upcoming.modeAll')}</span>
-          </button>
-          <button
-            role="tab"
-            aria-selected={mode === 'top'}
-            className={`mode-btn ${mode === 'top' ? 'is-active' : ''}`}
-            onClick={() => setMode('top')}
-          >
-            <Star size={14} strokeWidth={1.75} />
-            <span>{t('upcoming.modeTop')}</span>
-          </button>
-        </div>
+        {viewMode === 'calendar' && (
+          <div className="mode-toggle" role="tablist">
+            <button
+              role="tab"
+              aria-selected={mode === 'all'}
+              className={`mode-btn ${mode === 'all' ? 'is-active' : ''}`}
+              onClick={() => setMode('all')}
+            >
+              <GlobeIcon size={14} strokeWidth={1.75} />
+              <span>{t('upcoming.modeAll')}</span>
+            </button>
+            <button
+              role="tab"
+              aria-selected={mode === 'top'}
+              className={`mode-btn ${mode === 'top' ? 'is-active' : ''}`}
+              onClick={() => setMode('top')}
+            >
+              <Star size={14} strokeWidth={1.75} />
+              <span>{t('upcoming.modeTop')}</span>
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="month-bar">
-        <div className="month-nav">
-          <button className="nav-btn" onClick={() => gotoMonth(-1)} aria-label="Previous month">
-            <ChevronLeft size={16} strokeWidth={1.75} />
-          </button>
-          <button className="nav-today" onClick={gotoToday}>{isZh ? '今天' : 'Today'}</button>
-          <button className="nav-btn" onClick={() => gotoMonth(1)} aria-label="Next month">
-            <ChevronRight size={16} strokeWidth={1.75} />
+        <div className="view-toggle" role="tablist" aria-label={isZh ? '视图切换' : 'View toggle'}>
+          <button
+            role="tab"
+            aria-selected={viewMode === 'calendar'}
+            className={`view-btn ${viewMode === 'calendar' ? 'is-active' : ''}`}
+            onClick={() => setViewMode('calendar')}
+            title={isZh ? '日历' : 'Calendar'}
+          >
+            <CalendarDays size={14} strokeWidth={1.75} />
+            <span>{isZh ? '日历' : 'Calendar'}</span>
           </button>
           <button
-            ref={pickerBtnRef}
-            className="month-label month-label-btn"
-            onClick={() => setPickerOpen((o) => !o)}
-            aria-label={isZh ? '选择年月' : 'Select year / month'}
-            aria-expanded={pickerOpen}
+            role="tab"
+            aria-selected={viewMode === 'list'}
+            className={`view-btn ${viewMode === 'list' ? 'is-active' : ''}`}
+            onClick={() => { setViewMode('list'); setMode('all'); }}
+            title={isZh ? '列表' : 'List'}
           >
-            <span className="month-label-year">{monthYear}</span>
-            <span className="month-label-month">{monthMm}</span>
+            <List size={14} strokeWidth={1.75} />
+            <span>{isZh ? '列表' : 'List'}</span>
           </button>
         </div>
-        <div className="event-chips">
-          {(['333', '222', '444', '555', '333oh', 'pyram', 'skewb', 'sq1', '333bf', '333fm'] as const).map((eid) => (
+        {viewMode === 'calendar' && (
+          <div className="month-nav">
+            <button className="nav-btn" onClick={() => gotoMonth(-1)} aria-label="Previous month">
+              <ChevronLeft size={16} strokeWidth={1.75} />
+            </button>
+            <button className="nav-today" onClick={gotoToday}>{isZh ? '今天' : 'Today'}</button>
+            <button className="nav-btn" onClick={() => gotoMonth(1)} aria-label="Next month">
+              <ChevronRight size={16} strokeWidth={1.75} />
+            </button>
             <button
-              key={eid}
-              className={`event-chip ${eventFilters.includes(eid) ? 'is-active' : ''}`}
-              onClick={() =>
-                setEventFilters((prev) =>
-                  prev.includes(eid) ? prev.filter((x) => x !== eid) : [...prev, eid]
-                )
-              }
-              aria-pressed={eventFilters.includes(eid)}
+              ref={monthBtnRef}
+              className="month-label month-label-btn"
+              onClick={() => setPickerOpen((o) => o === 'month' ? null : 'month')}
+              aria-label={isZh ? '选择年月' : 'Select year / month'}
+              aria-expanded={pickerOpen === 'month'}
             >
-              <span className={`cubing-icon event-${eid}`} />
+              <span className="month-label-year">{monthYear}</span>
+              <span className="month-label-month">{monthMm}</span>
             </button>
-          ))}
-          {eventFilters.length > 0 && (
-            <button className="event-chip-clear" onClick={() => setEventFilters([])}>
-              {isZh ? '清除' : 'Clear'}
+          </div>
+        )}
+        {viewMode === 'list' && (
+          <div className="date-range-nav">
+            <button
+              ref={fromBtnRef}
+              type="button"
+              className={`date-range-pick${dateFrom ? '' : ' is-empty'}`}
+              onClick={() => setPickerOpen((o) => o === 'from' ? null : 'from')}
+              aria-expanded={pickerOpen === 'from'}
+              aria-label={isZh ? '起始年月' : 'From'}
+            >
+              {dateFrom || (isZh ? '起始' : 'From')}
             </button>
+            <span className="date-range-sep">~</span>
+            <button
+              ref={toBtnRef}
+              type="button"
+              className={`date-range-pick${dateTo ? '' : ' is-empty'}`}
+              onClick={() => setPickerOpen((o) => o === 'to' ? null : 'to')}
+              aria-expanded={pickerOpen === 'to'}
+              aria-label={isZh ? '结束年月' : 'To'}
+            >
+              {dateTo || (isZh ? '结束' : 'To')}
+            </button>
+            {(dateFrom || dateTo) && (
+              <button
+                type="button"
+                className="date-range-clear"
+                onClick={() => { setDateFrom(''); setDateTo(''); }}
+                aria-label={isZh ? '清除' : 'Clear'}
+                title={isZh ? '清除' : 'Clear'}
+              >×</button>
+            )}
+            <span className="date-range-summary">
+              {isZh
+                ? `共 ${displayedComps.length.toLocaleString()} 场`
+                : `${displayedComps.length.toLocaleString()} comps`}
+            </span>
+          </div>
+        )}
+        <div className={`event-chips${viewMode === 'list' ? ' event-chips--list-header' : ''}`}>
+          {viewMode === 'list' && (
+            <>
+              <span className="cl-h-spacer" aria-hidden="true" />
+              <span className="cl-h-spacer" aria-hidden="true" />
+              <span className="cl-h-spacer" aria-hidden="true" />
+              <span className="cl-h-spacer" aria-hidden="true" />
+            </>
           )}
+          {EVENT_ORDER.map((eid) => {
+            const cur = eventFilters[eid];
+            const active = cur !== undefined;
+            const max = maxRoundsByEid[eid] ?? 0;
+            const badge = cur === undefined ? '' : String(cur);
+            const cycle = () => setEventFilters((prev) => {
+              const next = { ...prev };
+              const c = prev[eid];
+              if (c === undefined) {
+                if (max >= 1) next[eid] = 1;
+              } else {
+                const n = c + 1;
+                if (n <= max) next[eid] = n as 1 | 2 | 3 | 4;
+                else delete next[eid];
+              }
+              return next;
+            });
+            const cycleHint = max >= 1
+              ? (isZh ? `点击切换：关 → 1 → ... → ${max} → 关` : `Click to cycle: off → 1 → ... → ${max} → off`)
+              : (isZh ? '此项目暂无轮次数据' : 'No round data for this event yet');
+            return (
+              <button
+                key={eid}
+                className={`event-chip ${active ? 'is-active' : ''}`}
+                onClick={cycle}
+                aria-pressed={active}
+                title={cycleHint}
+              >
+                <span className={`cubing-icon event-${eid}`} />
+                <span className={`event-chip-rounds${cur === undefined ? ' is-empty' : ''}`}>
+                  {badge}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -1052,22 +1275,32 @@ export default function UpcomingCompsPage() {
         <div className="mode-status is-error">{allError}</div>
       )}
 
-      <div className="legend">
-        {mode === 'all' && (
-          <span className="legend-item"><span className="legend-swatch swatch-none-top" /> {isZh ? '一般比赛' : 'No top cubers'}</span>
-        )}
-        <span className="legend-item"><span className="legend-swatch swatch-default" /> {isZh ? '有顶尖选手' : 'Has top cubers'}</span>
-        <span className="legend-item"><span className="legend-swatch swatch-clash" /> {isZh ? '扎堆 (3+)' : 'Clash (3+)'}</span>
-        <span className="legend-item"><span className="wr-swatch wr-current" /> {t('upcoming.wrCurrent')}</span>
-        <span className="legend-item"><span className="wr-swatch wr-former" /> {t('upcoming.wrFormer')}</span>
-        <span className="legend-item"><span className="wr-swatch wr-top10" /> {t('upcoming.wrTop10')}</span>
-        <span className="month-stats">
-          <span title={t('upcoming.statComps')}><List size={14} strokeWidth={1.75} /> {monthStats.comps}</span>
-          <span title={t('upcoming.statCountries')}><GlobeIcon size={14} strokeWidth={1.75} /> {monthStats.countries}</span>
-        </span>
-      </div>
+      {viewMode === 'calendar' && (
+        <div className="legend">
+          {mode === 'all' && (
+            <span className="legend-item"><span className="legend-swatch swatch-none-top" /> {isZh ? '一般比赛' : 'No top cubers'}</span>
+          )}
+          <span className="legend-item"><span className="legend-swatch swatch-default" /> {isZh ? '有顶尖选手' : 'Has top cubers'}</span>
+          <span className="legend-item"><span className="legend-swatch swatch-clash" /> {isZh ? '扎堆 (3+)' : 'Clash (3+)'}</span>
+          <span className="legend-item"><span className="wr-swatch wr-current" /> {t('upcoming.wrCurrent')}</span>
+          <span className="legend-item"><span className="wr-swatch wr-former" /> {t('upcoming.wrFormer')}</span>
+          <span className="legend-item"><span className="wr-swatch wr-top10" /> {t('upcoming.wrTop10')}</span>
+          <span className="month-stats">
+            <span title={t('upcoming.statComps')}><List size={14} strokeWidth={1.75} /> {monthStats.comps}</span>
+            <span title={t('upcoming.statCountries')}><GlobeIcon size={14} strokeWidth={1.75} /> {monthStats.countries}</span>
+          </span>
+        </div>
+      )}
 
-      <div
+      {viewMode === 'list' && (
+        <CompList
+          comps={displayedComps}
+          isZh={isZh}
+          onSelect={setSelectedComp}
+        />
+      )}
+
+      {viewMode === 'calendar' && <div
         className="calendar"
         onTouchStart={onCalendarTouchStart}
         onTouchEnd={onCalendarTouchEnd}
@@ -1102,13 +1335,11 @@ export default function UpcomingCompsPage() {
             {week.bars.map((bar) => {
               const isClash = bar.comp.top_cubers.length >= 3;
               const hasTop = bar.comp.top_cubers.length > 0;
-              const dimmed = !isMatch(bar.comp);
               const displayName = localizeName(bar.comp, isZh);
               const classes = [
                 'event-bar',
                 isClash ? 'is-clash' : '',
                 !hasTop ? 'is-none-top' : '',
-                dimmed ? 'is-dimmed' : '',
                 bar.continuesFromPrev ? 'continues-prev' : '',
                 bar.continuesToNext ? 'continues-next' : '',
               ].filter(Boolean).join(' ');
@@ -1147,25 +1378,47 @@ export default function UpcomingCompsPage() {
             ))}
           </div>
         ))}
-      </div>
+      </div>}
 
       {selectedComp && (
         <CompModal comp={selectedComp} isZh={isZh} onClose={() => setSelectedComp(null)} t={t} />
       )}
 
-      {pickerOpen && (
+      {pickerOpen === 'month' && (
         <YearMonthPickerPopover
           year={viewDate.getFullYear()}
           month={viewDate.getMonth() + 1}
           yearMonthsMap={yearMonthsMap}
-          anchor={pickerBtnRef.current?.getBoundingClientRect() ?? null}
+          anchor={monthBtnRef.current?.getBoundingClientRect() ?? null}
           onCommit={(y, m) => {
             setViewDate(new Date(y, m - 1, 1));
-            setPickerOpen(false);
+            setPickerOpen(null);
           }}
           isZh={isZh}
         />
       )}
+      {(pickerOpen === 'from' || pickerOpen === 'to') && (() => {
+        const cur = pickerOpen === 'from' ? dateFrom : dateTo;
+        const validYears = [...yearMonthsMap.keys()].sort((a, b) => a - b);
+        const fallbackY = validYears.length > 0 ? validYears[validYears.length - 1] : new Date().getFullYear();
+        const y = validYM(cur) ? Number(cur.slice(0, 4)) : fallbackY;
+        const m = validYM(cur) ? Number(cur.slice(5, 7)) : 1;
+        const setter = pickerOpen === 'from' ? setDateFrom : setDateTo;
+        const anchorRef = pickerOpen === 'from' ? fromBtnRef : toBtnRef;
+        return (
+          <YearMonthPickerPopover
+            year={y}
+            month={m}
+            yearMonthsMap={yearMonthsMap}
+            anchor={anchorRef.current?.getBoundingClientRect() ?? null}
+            onCommit={(yy, mm) => {
+              setter(`${yy}-${String(mm).padStart(2, '0')}`);
+              setPickerOpen(null);
+            }}
+            isZh={isZh}
+          />
+        );
+      })()}
 
       {dayListDate && (
         <div className="modal-overlay" onClick={() => setDayListDate(null)}>
@@ -1203,7 +1456,6 @@ export default function UpcomingCompsPage() {
         </div>
       )}
 
-      <LangToggle />
     </div>
   );
 }

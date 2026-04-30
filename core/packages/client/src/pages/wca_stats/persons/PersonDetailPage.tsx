@@ -6,7 +6,7 @@ import { Flag } from '../../../utils/flag';
 import { displayCuberName } from '../../../utils/name_utils';
 import { ALL_EVENT_IDS, EVENT_ZH, EVENT_EN } from '../event_constants';
 import { fetchWcaPerson, fetchWcaPersonResults, fetchWcaPersonCompetitions, type WcaPersonProfile, type WcaResultRow, type WcaCompetition } from './wca_api';
-import { formatResult } from './format_result';
+import { formatWcaResult } from '../../../utils/wca_format_result';
 import './persons.css';
 
 const WCA_PROFILE_URL = (id: string) => `https://www.worldcubeassociation.org/persons/${id}`;
@@ -145,9 +145,9 @@ export default function PersonDetailPage() {
                   return (
                     <tr key={eid}>
                       <th scope="row">{eventName(eid)}</th>
-                      <td className="wca-pr-result">{pr.single ? formatResult(pr.single.best, eid, 'single') : ''}</td>
+                      <td className="wca-pr-result">{pr.single ? formatWcaResult(pr.single.best, eid, 'single') : ''}</td>
                       <td className="wca-pr-rank">{pr.single ? <RankCell r={pr.single} t={t} /> : ''}</td>
-                      <td className="wca-pr-result">{pr.average ? formatResult(pr.average.best, eid, 'average') : ''}</td>
+                      <td className="wca-pr-result">{pr.average ? formatWcaResult(pr.average.best, eid, 'average') : ''}</td>
                       <td className="wca-pr-rank">{pr.average ? <RankCell r={pr.average} t={t} /> : ''}</td>
                     </tr>
                   );
@@ -184,7 +184,7 @@ export default function PersonDetailPage() {
                       {dedupeFinalResults(results).map((r) => (
                         <span key={r.event_id} className="wca-comp-result-chip">
                           <span className="wca-comp-event">{eventName(r.event_id)}</span>
-                          <span className="wca-comp-best">{formatResult(r.best, r.event_id, 'single')}</span>
+                          <span className="wca-comp-best">{formatWcaResult(r.best, r.event_id, 'single')}</span>
                         </span>
                       ))}
                     </div>

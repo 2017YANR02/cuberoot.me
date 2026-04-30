@@ -9,7 +9,8 @@ import { displayCuberName } from '../../utils/name_utils';
 import { loadFlagData, compFlagIso2 } from '../../utils/country_flags';
 import { localizeCompName } from '../../utils/comp_localize';
 import { wcaPersonUrl, wcaCompUrl } from '../../utils/recon_utils';
-import { formatRecordValue } from '../../utils/comp_records';
+import { formatWcaResult, type ResultKind } from '../../utils/wca_format_result';
+import { axisFor, tickLabel, type Metric } from './top10_axis';
 import { EventIcon } from '../../components/EventIcon/EventIcon';
 import LangToggle from '../../components/LangToggle';
 import WcaEventSelector from './WcaEventSelector';
@@ -21,10 +22,6 @@ import './top10_history.css';
 interface PbEvent { d: string; p: string; v: number; c: string }
 interface PersonInfo { name: string; country: string; iso2: string | null }
 interface CompInfo { name: string }
-type Metric =
-  | 'single' | 'average'
-  | 'bao5' | 'wao5' | 'mo5' | 'bpa' | 'wpa'
-  | 'median' | 'best_counting' | 'worst_counting' | 'worst';
 
 interface EventInfo {
   hasAverage: boolean;
@@ -117,52 +114,6 @@ function replayState(events: PbEvent[], idxInclusive: number): ReplayResult {
     }
   }
   return { state, top1Pid, top1V, top1SinceDate };
-}
-
-// NOTE: X 轴尺度 — 按 event 适配
-//   时间项目(333/222/...):centiseconds,nice round to seconds
-//   FMC single:moves(整数),step 5/10
-//   FMC average:moves × 100(同时间编码)
-//   MBLD(333mbf/333mbo):raw 编码无意义 → hideAxis
-function axisFor(eventId: string, metric: Metric, maxV: number): { max: number; step: number; hideAxis: boolean } {
-  if (eventId === '333mbf' || eventId === '333mbo') {
-    // raw 大整数,只用作 bar 比例尺,不显示刻度
-    return { max: Math.max(maxV * 1.05, 1), step: maxV || 1, hideAxis: true };
-  }
-  if (eventId === '333fm' && metric === 'single') {
-    // moves
-    if (maxV <= 30) return { max: Math.max(20, Math.ceil(maxV / 5) * 5), step: 5, hideAxis: false };
-    return { max: Math.ceil(maxV / 10) * 10, step: 10, hideAxis: false };
-  }
-  // 时间项 / FMC average(centiseconds 单位) — 每档目标 ≤7 刻度
-  const TIME_BRACKETS: Array<[number, number]> = [
-    [1000, 100],       // ≤10s:  1s 步长
-    [2500, 500],       // ≤25s:  5s 步长
-    [6000, 1000],      // ≤1min: 10s 步长
-    [18000, 3000],     // ≤3min: 30s 步长
-    [36000, 6000],     // ≤6min: 1min 步长
-    [90000, 18000],    // ≤15min: 3min 步长
-    [180000, 30000],   // ≤30min: 5min 步长
-    [360000, 60000],   // ≤60min: 10min 步长
-    [720000, 120000],  // ≤120min: 20min 步长
-    [Infinity, 360000],// else: 60min 步长
-  ];
-  const step = TIME_BRACKETS.find(([limit]) => maxV <= limit)![1];
-  const max = Math.max(step, Math.ceil(maxV / step) * step);
-  return { max, step, hideAxis: false };
-}
-
-// NOTE: 刻度文本(简洁版,不像 formatRecordValue 总带小数)
-function tickLabel(v: number, eventId: string, metric: Metric): string {
-  if (eventId === '333mbf' || eventId === '333mbo') return '';
-  if (eventId === '333fm') return metric === 'single' ? String(v) : Math.round(v / 100).toString();
-  // time events: centiseconds
-  if (v === 0) return '0';
-  const sec = v / 100;
-  if (sec < 60) return Number.isInteger(sec) ? String(sec) : sec.toFixed(1);
-  const m = Math.floor(sec / 60);
-  const s = sec - m * 60;
-  return s === 0 ? `${m}:00` : `${m}:${String(Math.round(s)).padStart(2, '0')}`;
 }
 
 export default function Top10HistoryPage({
@@ -499,7 +450,7 @@ export default function Top10HistoryPage({
   const top1Name = top1Person ? displayCuberName(top1Person.name, isZh) : '';
   const eventNameZh = EVENT_ZH[eventId] || eventId;
   const eventNameEn = EVENT_EN[eventId] || eventId;
-  const fmtKind: 's' | 'a' = metric === 'single' ? 's' : 'a';
+  const fmtKind: ResultKind = metric === 'single' ? 'single' : 'average';
 
   return (
     <div className={`t10h-page${embedded ? ' t10h-embedded' : ''}`}>
@@ -647,7 +598,7 @@ export default function Top10HistoryPage({
                   )}
                   <span className="t10h-bar-name">{personName}</span>
                 </a>
-                <span className="t10h-value">{formatRecordValue(row.v, eventId, fmtKind)}</span>
+                <span className="t10h-value">{formatWcaResult(row.v, eventId, fmtKind)}</span>
                 <a
                   className="t10h-comp"
                   href={wcaCompUrl(row.c)}

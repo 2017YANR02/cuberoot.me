@@ -14,6 +14,7 @@ import { exportCstimerJson } from '../storage/export_cstimer';
 import { exportSolvesCsv } from '../storage/export_csv';
 import { reanalyzeAll } from '../storage/reanalyze';
 import { eventInfo, type EventId } from '../types';
+import { WCA_COLORS } from '../cube/colors';
 
 interface Props {
   isZh: boolean;
@@ -970,10 +971,7 @@ export default function SettingsPanel({ isZh, onClose, event }: Props) {
         >
           <div className="color-grid">
             {(['U', 'D', 'F', 'B', 'L', 'R'] as const).map(face => {
-              const wcaDefault: Record<typeof face, string> = {
-                U: '#FFFFFF', D: '#FFD500', F: '#009B48', B: '#0046AD', L: '#FF5800', R: '#B71234',
-              } as const;
-              const cur = s.colors[face] ?? wcaDefault[face];
+              const cur = s.colors[face] ?? WCA_COLORS[face];
               return (
                 <label key={face} className="color-cell">
                   <span>{face}</span>
