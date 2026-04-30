@@ -10,7 +10,7 @@ import { WcaPersonPicker, type WcaPerson } from '@cuberoot/shared';
 import { getRecon, addRecon, updateRecon, deleteRecon, checkDuplicate, searchSolvers, listRecons } from '../../utils/recon_api';
 import { Flag } from '../../utils/flag';
 import { computeAllStats } from '../../utils/recon_stats';
-import { parseTimeInput, formatTimeInput, computeWcaAverage, attemptsPerRound } from '../../utils/recon_utils';
+import { parseTimeInput, formatTimeInput, computeWcaAverage, attemptsPerRound, localizeRound } from '../../utils/recon_utils';
 import { fetchAttempts, fetchCubingAttempts, fetchResultRow } from '../../utils/wca_results_api';
 import { RecordSelect } from '../../components/RecordSelect';
 import { EventSelect } from '../../components/EventSelect';
@@ -977,11 +977,7 @@ export default function ReconSubmitPage() {
               <span className="submit-label">{t('recon.round')}</span>
               <select value={form.round || ''} onChange={e => setField('round', e.target.value)}>
                 <option value="">{isZh ? '请选择' : 'Select…'}</option>
-                {roundOptions.map(r => <option key={r} value={r}>{
-                  r === 'f' ? t('recon.roundOption.final')
-                    : ['1', '2', '3'].includes(r) ? t(`recon.roundOption.r${r}`)
-                      : t('recon.roundOption.numbered', { n: r })
-                }</option>)}
+                {roundOptions.map(r => <option key={r} value={r}>{localizeRound(r, t)}</option>)}
               </select>
             </label>
             <label className="submit-field">

@@ -10,7 +10,7 @@ import type { SortKey } from '../../stores/recon_store';
 import type { ReconSolve } from '@cuberoot/shared';
 import {
   flagClass,
-  formatResult, formatTime, formatAvg, formatAoXR, formatRound,
+  formatResult, formatTime, formatAvg, formatAoXR, formatRound, localizeRound,
   wcaPersonUrl, wcaCompUrl,
 } from '../../utils/recon_utils';
 import { displayCuberName } from '../../utils/name_utils';
@@ -214,9 +214,7 @@ export default function ReconListPage() {
 
   const roundItems = useMemo<ListSelectItem[]>(() => rounds.map(r => ({
     value: r.name,
-    label: r.name === 'f' ? t('recon.roundOption.final')
-      : ['1', '2', '3'].includes(r.name) ? t(`recon.roundOption.r${r.name}`)
-        : t('recon.roundOption.numbered', { n: r.name }),
+    label: localizeRound(r.name, t),
     hint: `(${r.count})`,
   })), [rounds, t]);
 

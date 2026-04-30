@@ -22,6 +22,6 @@ export interface Site {
   desc_zh?: string;
   youtube?: string;
   group: GroupId;
-  subgroup?: string;
+  tags?: string[];
   status?: 'dead';
 }

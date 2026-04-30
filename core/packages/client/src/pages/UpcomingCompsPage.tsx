@@ -682,9 +682,54 @@ function readMonthFromUrl(): Date | null {
 const LIST_ROW_H = 44;
 const LIST_BUFFER = 8; // 视口外多渲染几行做缓冲，避免快速滚动时露白
 
+// 列表 name+city 列宽 cap (px)：上限防极端长名撑爆行；下限保证短名筛选时不至于挤成一团
+const LIST_NAME_CELL_MIN_PX = 10 * 16;
+const LIST_NAME_CELL_MAX_PX = 40 * 16;
+const LIST_NAME_CELL_PAD_PX = 8; // 测得最长后再加一点缓冲，防 ellipsis 误切
+
+/** 用 canvas.measureText 测当前可视行 name+city 最长那行的实际像素宽,
+ *  这样 grid 列宽既能贴最长一行,又让短名筛选场景下空白几乎消失。
+ *  另用 containerPx 算视口可用宽度上限——避免 cell 撑爆容器引起 chips header 横向溢出。
+ *  O(n)，~30 行可视 ≈ 1ms。 */
+function measureMaxNameCityPx(comps: Competition[], isZh: boolean, containerPx?: number): number {
+  if (typeof document === 'undefined' || comps.length === 0) return 28 * 16;
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return 28 * 16;
+  const rootFontPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+  const bodyFont = getComputedStyle(document.body).fontFamily || 'sans-serif';
+  const namePx = 0.85 * rootFontPx;
+  const cityPx = 0.78 * rootFontPx;
+  const gapPx = 0.5 * rootFontPx;
+  ctx.font = `500 ${namePx}px ${bodyFont}`;
+  const nameWs: number[] = new Array(comps.length);
+  for (let i = 0; i < comps.length; i++) {
+    nameWs[i] = ctx.measureText(localizeName(comps[i], isZh)).width;
+  }
+  ctx.font = `400 ${cityPx}px ${bodyFont}`;
+  let maxTotal = 0;
+  for (let i = 0; i < comps.length; i++) {
+    const c = comps[i];
+    const cityStr = isZh ? (c.city_zh || localizeCity(c.city, true)) : c.city;
+    const total = nameWs[i] + gapPx + ctx.measureText(cityStr).width;
+    if (total > maxTotal) maxTotal = total;
+  }
+  // 视口上限: container 减掉其他列总宽（date + flag + 21 events + gaps + padding）
+  // 其他列在 768px 以上 = 7.2 + 1.4 + 21*1.3 = 36rem，加 23 列 6px gap + 12px*2 padding 约 162px
+  let cap = LIST_NAME_CELL_MAX_PX;
+  if (containerPx != null && containerPx > 0) {
+    const isNarrow = window.innerWidth <= 768;
+    const otherColsRem = isNarrow ? (5.5 + 1.2 + 21 * 1.1) : (7.2 + 1.4 + 21 * 1.3);
+    const gapPaddingPx = isNarrow ? (4 * 23 + 8 * 2) : (6 * 23 + 12 * 2);
+    const avail = containerPx - otherColsRem * rootFontPx - gapPaddingPx;
+    cap = Math.min(cap, Math.max(LIST_NAME_CELL_MIN_PX, avail));
+  }
+  return Math.max(LIST_NAME_CELL_MIN_PX, Math.min(cap, maxTotal + LIST_NAME_CELL_PAD_PX));
+}
+
 interface RowItem { comp: Competition; key: string }
 
-function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCutoffIso }: {
+function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCutoffIso, pageRef }: {
   comps: Competition[];
   isZh: boolean;
   onSelect: (c: Competition) => void;
@@ -694,6 +739,8 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
   outerRef?: React.Ref<HTMLDivElement>;
   /** 已取消比赛的 end_date 阈值（ISO 字符串） */
   cancelledCutoffIso: string;
+  /** .upcoming-page 根元素 ref —— 用来按当前可视行最长 name+city 写 --cl-name-width */
+  pageRef: React.RefObject<HTMLDivElement | null>;
 }) {
   // 倒序排列；不再插入"年份分隔"行，年份显示在 chip 行的左侧 sticky cell 里
   const items = useMemo<RowItem[]>(
@@ -758,6 +805,21 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
     onYearChange({ year, count: yearCounts.get(year) ?? 0 });
   }, [range.top, items, yearCounts, onYearChange]);
 
+  // 视口自适应 name+city 列宽：测当前渲染窗口（含 LIST_BUFFER 缓冲）max name+city，写到
+  // .upcoming-page 的 --cl-name-width。滚动到长名行时 cell 扩、滚出再收，
+  // chips 表头跟着同步。LIST_BUFFER=8 让长名进视口前几行就提前测到，平滑视觉抖动。
+  // 视口可用宽度作为 cap，避免 cell 撑爆 .upcoming-page 引起 chips header 横向溢出。
+  useEffect(() => {
+    const el = pageRef.current;
+    if (!el) return;
+    const visibleComps = items.slice(range.start, range.end).map((it) => it.comp);
+    const px = measureMaxNameCityPx(visibleComps, isZh, el.clientWidth);
+    el.style.setProperty('--cl-name-width', `${px}px`);
+  }, [range.start, range.end, items, isZh, pageRef]);
+
+  // 卸载时清理 — 切回日历模式不留 stale --cl-name-width
+  useEffect(() => () => { pageRef.current?.style.removeProperty('--cl-name-width'); }, [pageRef]);
+
   if (items.length === 0) {
     return <div className="comp-list-empty">{isZh ? '没有匹配的比赛' : 'No competitions match'}</div>;
   }
@@ -771,7 +833,11 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
           const idx = range.start + i;
           const top = idx * LIST_ROW_H;
           const c = it.comp;
-          const dateStr = formatDateRangeIso(c.start_date, c.end_date || c.start_date);
+          const endDate = c.end_date || c.start_date;
+          const dateStr = formatDateRangeIso(c.start_date, endDate);
+          // 跨年(2026-12-31~2027-01-03)在列表 date 列(7.2rem mono)放不下,强制在 ~ 后换行;
+          // 每半行加 nowrap 防止 - 处再被切开
+          const crossYear = c.start_date.slice(0, 4) !== endDate.slice(0, 4);
           const displayName = localizeName(c, isZh);
           const displayCity = isZh ? (c.city_zh || localizeCity(c.city, true)) : c.city;
           const prefetch = c.rounds ? undefined : () => { void fetchCompRounds(c.id); };
@@ -786,10 +852,19 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
               onMouseEnter={prefetch}
               onFocus={prefetch}
             >
-              <span className="comp-list-date mono">{dateStr}</span>
+              <span className="comp-list-date mono">
+                {crossYear ? (
+                  <>
+                    <span className="cl-date-half">{c.start_date}~</span>
+                    <span className="cl-date-half">{endDate}</span>
+                  </>
+                ) : dateStr}
+              </span>
               <Flag iso2={c.country} />
-              <span className="comp-list-name">{displayName}</span>
-              <span className="comp-list-city">{displayCity}</span>
+              <span className="comp-list-name-cell">
+                <span className="comp-list-name">{displayName}</span>
+                <span className="comp-list-city">{displayCity}</span>
+              </span>
               {EVENT_ORDER.map((eid) => {
                 const shortEid = WCA_EVENT_ID_TO_SHORT[eid] ?? eid;
                 const r = c.rounds?.[shortEid];
@@ -1060,6 +1135,9 @@ export default function UpcomingCompsPage() {
     [activeComps, isMatch],
   );
 
+  // .upcoming-page 根 ref — 用来由 CompList 按视口可视行实时设 --cl-name-width
+  const pageRef = useRef<HTMLDivElement>(null);
+
   const weeks = useMemo(() => {
     return computeWeeks(viewDate.getFullYear(), viewDate.getMonth(), displayedComps, countryFilterSet);
   }, [displayedComps, viewDate, countryFilterSet]);
@@ -1202,7 +1280,10 @@ export default function UpcomingCompsPage() {
   const weekdays = isZh ? WEEKDAY_ZH : WEEKDAY_EN;
 
   return (
-    <div className={`upcoming-page${viewMode === 'list' ? ' upcoming-page--list' : ''}`}>
+    <div
+      ref={pageRef}
+      className={`upcoming-page${viewMode === 'list' ? ' upcoming-page--list' : ''}`}
+    >
       <header className="upcoming-header">
         <h1 className="upcoming-title">{t('upcoming.title')}</h1>
         <div className="upcoming-meta">
@@ -1420,7 +1501,6 @@ export default function UpcomingCompsPage() {
               </span>
               <span className="cl-h-spacer" aria-hidden="true" />
               <span className="cl-h-spacer" aria-hidden="true" />
-              <span className="cl-h-spacer" aria-hidden="true" />
               {chips}
             </div>
           );
@@ -1459,6 +1539,7 @@ export default function UpcomingCompsPage() {
           onYearChange={setCurrentYear}
           outerRef={listScrollRef}
           cancelledCutoffIso={cancelledCutoffIso}
+          pageRef={pageRef}
         />
       )}
 

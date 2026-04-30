@@ -89,7 +89,7 @@
 }
 
 .detail-player-pane {
-  flex: 0 0 55%;
+  flex: 0 0 600px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -179,26 +179,21 @@
 
 /* ── 打乱 + 解法 合并框 ─────────────────────────────────────── */
 .detail-scramble-solution {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 6px;
-  overflow: hidden;
+  background: transparent;
 }
 .detail-scramble-solution .detail-scramble-line {
   font-family: 'Roboto Mono', monospace;
   font-size: 0.95rem;
   line-height: 1.7;
-  color: #a3a3a3;
-  padding: 10px 14px;
+  color: #d4d4d4;
+  padding: 0;
   word-break: break-all;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
-/* 嵌入合并框时去掉解法 pre 自带的边框/背景/圆角 */
 .detail-scramble-solution .detail-solution-text {
   background: transparent;
   border: none;
   border-radius: 0;
-  padding: 12px 14px;
+  padding: 0;
 }
 
 /* --- 统计网格 --- */
@@ -442,16 +437,12 @@
 .recon-external-links a {
   color: #e8a27a;
   text-decoration: none;
-  padding: 4px 10px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 6px;
-  transition: background 0.15s, color 0.15s;
+  transition: color 0.15s;
 }
 
 .recon-external-links a:hover {
-  background: rgba(232, 162, 122, 0.15);
   color: #fff;
+  text-decoration: underline;
 }
 
 /* --- 元数据区 --- */
@@ -495,6 +486,32 @@
   display: flex;
   gap: 8px;
   margin-top: 16px;
+}
+
+/* 标题后的编辑按钮——图标按钮,跟标题在一行 */
+.detail-title-edit {
+  padding: 4px 6px !important;
+  vertical-align: middle;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* --- 另解 --- */
+.alt-empty {
+  padding: 12px 0 4px;
+  color: #737373;
+  font-size: 0.88rem;
+}
+
+.alt-solution-text {
+  margin: 6px 0 0 !important;
+  /* yt-comment-content 已经左侧对齐头像,这里只需把 pre 的边距收紧 */
+}
+
+.alt-composer-input {
+  font-family: 'Roboto Mono', monospace !important;
+  font-size: 0.9rem !important;
+  white-space: pre !important;
 }
 
 .recon-btn-edit {
@@ -581,9 +598,10 @@
 }
 
 /* --- 同轮次成绩导航 --- */
+/* NOTE: 固定每行 5 个;H2H 决赛 23 把会自然铺成 5 行 */
 .detail-same-round {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
   margin-top: 6px;
 }
@@ -591,7 +609,9 @@
 .same-round-item {
   display: inline-flex;
   align-items: center;
-  padding: 5px 12px;
+  justify-content: center;
+  padding: 5px 8px;
+  min-height: 1.6em;
   border-radius: 6px;
   font-size: 0.92rem;
   font-family: 'Roboto Mono', monospace;
