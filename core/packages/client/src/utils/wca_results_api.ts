@@ -8,7 +8,7 @@
  *   未导入的比赛 rounds 都有但 results: []
  */
 
-import { toWcaEventId } from './recon_utils';
+import { toWcaEventId } from './wca_events';
 
 /** Recon round (`1`/`2`/`3`/`f`) → WCA round_type_id 候选(包含 combined/cutoff 变体) */
 const ROUND_VARIANTS: Record<string, string[]> = {

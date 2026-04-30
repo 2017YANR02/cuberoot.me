@@ -4,17 +4,16 @@
 import { displayCuberName } from '../../utils/name_utils';
 import { compFlagIso2 } from '../../utils/country_flags';
 import { localizeCompName } from '../../utils/comp_localize';
-import { formatRecordValue } from '../../utils/comp_records';
+import { formatWcaResult } from '../../utils/wca_format_result';
+import { axisFor, tickLabel, type Metric } from './top10_axis';
 import { EVENT_ZH, EVENT_EN } from './event_constants';
 import { COUNTRY_TO_CONTINENT, type Continent } from './country_continents';
+
+export type { Metric };
 
 export interface PbEvent { d: string; p: string; v: number; c: string }
 export interface PersonInfo { name: string; country: string; iso2: string | null }
 export interface CompInfo { name: string }
-export type Metric =
-  | 'single' | 'average'
-  | 'bao5' | 'wao5' | 'mo5' | 'bpa' | 'wpa'
-  | 'median' | 'best_counting' | 'worst_counting' | 'worst';
 
 const SHOW_N = 10;
 const DAY_MS = 86400000;
@@ -62,34 +61,6 @@ function findEventIdxByDate(events: PbEvent[], dateIso: string): number {
   return ans;
 }
 
-function axisFor(eventId: string, metric: Metric, maxV: number): { max: number; step: number; hideAxis: boolean } {
-  if (eventId === '333mbf' || eventId === '333mbo') {
-    return { max: Math.max(maxV * 1.05, 1), step: maxV || 1, hideAxis: true };
-  }
-  if (eventId === '333fm' && metric === 'single') {
-    if (maxV <= 30) return { max: Math.max(20, Math.ceil(maxV / 5) * 5), step: 5, hideAxis: false };
-    return { max: Math.ceil(maxV / 10) * 10, step: 10, hideAxis: false };
-  }
-  const TIME_BRACKETS: Array<[number, number]> = [
-    [1000, 100], [2500, 500], [6000, 1000], [18000, 3000], [36000, 6000],
-    [90000, 18000], [180000, 30000], [360000, 60000], [720000, 120000],
-    [Infinity, 360000],
-  ];
-  const step = TIME_BRACKETS.find(([limit]) => maxV <= limit)![1];
-  const max = Math.max(step, Math.ceil(maxV / step) * step);
-  return { max, step, hideAxis: false };
-}
-
-function tickLabel(v: number, eventId: string, metric: Metric): string {
-  if (eventId === '333mbf' || eventId === '333mbo') return '';
-  if (eventId === '333fm') return metric === 'single' ? String(v) : Math.round(v / 100).toString();
-  if (v === 0) return '0';
-  const sec = v / 100;
-  if (sec < 60) return Number.isInteger(sec) ? String(sec) : sec.toFixed(1);
-  const m = Math.floor(sec / 60);
-  const s = sec - m * 60;
-  return s === 0 ? `${m}:00` : `${m}:${String(Math.round(s)).padStart(2, '0')}`;
-}
 
 // === 国旗预加载 ===
 //   Chromium 的 createImageBitmap 对 inline SVG data URL 不稳定(InvalidStateError)。
@@ -443,7 +414,7 @@ function renderFrame(ctx: Ctx2D, p: FrameParams): void {
     ctx.font = `700 22px ${FONT_MONO}`;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    const valueText = formatRecordValue(row.v, p.eventId, p.metric === 'single' ? 's' : 'a');
+    const valueText = formatWcaResult(row.v, p.eventId, p.metric === 'single' ? 'single' : 'average');
     ctx.fillText(valueText, cursorX, rowCy);
     cursorX += ctx.measureText(valueText).width + 16;
 

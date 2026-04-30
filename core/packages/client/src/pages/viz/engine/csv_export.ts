@@ -7,13 +7,7 @@ import { getConfigs as getRoundConfigs } from './round_metrics';
 import type { SolveEntry } from './round_metrics';
 import type { RollingResult } from './rolling_stats';
 import type { RoundMetricsResult } from './round_metrics';
-
-// NOTE: 轮次类型 ID → 英文名称，供 CSV 导出使用
-const ROUND_NAMES: Record<string, string> = {
-  '1': 'Round 1', 'd': 'Combined R1',
-  '2': 'Round 2', 'b': 'Combined R2',
-  '3': 'Semi Final', 'c': 'Combined Final', 'f': 'Final',
-};
+import { ROUND_NAMES } from './data_fetch';
 
 interface CsvGroup {
   dataKey: string;

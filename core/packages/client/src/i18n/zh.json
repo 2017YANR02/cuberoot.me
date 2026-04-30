@@ -174,7 +174,8 @@
   },
   "upcoming": {
     "title": "日历",
-    "search": "搜索比赛、选手、WCA ID 或国家...",
+    "searchComp": "搜索比赛 / 城市...",
+    "searchCuber": "搜索选手 / WCA ID...",
     "allCountries": "所有国家",
     "noResults": "未找到追踪选手的近期比赛。",
     "loading": "加载赛事数据...",
