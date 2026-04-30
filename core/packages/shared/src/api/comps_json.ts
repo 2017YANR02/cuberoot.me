@@ -17,6 +17,8 @@ export interface UpcomingCompRecord {
   latitude_degrees: number;
   longitude_degrees: number;
   url: string;
+  /** event 短码 → 该项目轮次数（来自 WCIF 公开端点）；老 dump 缺时为空对象 */
+  rounds?: Record<string, number>;
 }
 
 export interface PastCompRecord {

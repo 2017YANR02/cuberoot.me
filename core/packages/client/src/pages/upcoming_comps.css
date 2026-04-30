@@ -144,16 +144,19 @@
 }
 .upcoming-page .event-chip {
     display: inline-flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    width: 26px;
-    height: 26px;
+    width: 30px;
+    min-height: 36px;
     border: 1px solid var(--border);
     background: var(--surface);
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.15s;
-    padding: 0;
+    padding: 2px 0;
+    line-height: 1;
+    gap: 2px;
 }
 .upcoming-page .event-chip:hover {
     border-color: var(--accent);
@@ -167,16 +170,45 @@
 .upcoming-page .event-chip .cubing-icon {
     font-size: 1.1rem;
 }
-.upcoming-page .event-chip-clear {
-    border: none;
-    background: transparent;
-    color: var(--text-sub);
-    font-family: inherit;
-    font-size: 0.75rem;
-    cursor: pointer;
-    padding: 0 0.4rem;
+.upcoming-page .event-chip-rounds {
+    font-size: 0.6rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--accent);
+    line-height: 1;
+    min-height: 0.7rem; /* 保留位置避免 chip 高度抖动 */
 }
-.upcoming-page .event-chip-clear:hover { color: var(--accent); }
+.upcoming-page .event-chip-rounds.is-empty { visibility: hidden; }
+/* 列表模式下：chip 行同时承担表头 — 切到 grid 布局对齐列表列 + sticky 到视口顶 */
+.upcoming-page .event-chips--list-header {
+    display: grid;
+    grid-template-columns: var(--cl-cols);
+    align-items: center;
+    gap: 6px;
+    /* month-bar 是 flex-wrap 容器，强占整行 + 自身 100% 宽，
+     * grid 列宽才能展开到与下方数据行（block 元素自然占满）一致 */
+    flex-basis: 100%;
+    width: 100%;
+    min-width: var(--cl-min-width);
+    padding: 4px 12px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 11;
+    background: var(--bg);
+    margin: 0;
+    box-sizing: border-box;
+}
+.upcoming-page .event-chips--list-header .event-chip {
+    width: auto;
+    min-height: 32px;
+    justify-self: center;
+}
+.upcoming-page .event-chips--list-header .cl-h-spacer {
+    /* 占位列：date / flag / name / city / cubers，无内容；
+     * height 0 让 chip 行决定整体高度 */
+    height: 0;
+}
 
 .upcoming-page .globe-link {
     display: inline-flex;
@@ -385,7 +417,6 @@
     color: var(--text-sub);
 }
 .upcoming-page .event-bar.is-none-top:hover { background: #E0DED9; }
-.upcoming-page .event-bar.is-dimmed { opacity: 0.2; }
 .upcoming-page .event-bar.continues-prev {
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
@@ -766,6 +797,195 @@
     border-radius: 10px;
 }
 
+/* ── View toggle (Calendar / List) ── */
+.upcoming-page .view-toggle {
+    display: inline-flex;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 2px;
+    gap: 2px;
+}
+.upcoming-page .view-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0.35rem 0.7rem;
+    border: none;
+    background: transparent;
+    color: var(--text-sub);
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.upcoming-page .view-btn:hover { color: var(--text); }
+.upcoming-page .view-btn.is-active {
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+/* ── 列表视图（虚拟滚动 + 17 项目对齐网格） ── */
+/* 共享网格列模板：date | flag | name | city | event*17
+ * 同时供 .comp-list-row（行）和 .event-chips--list-header（chip 行兼表头）使用 */
+.upcoming-page {
+    --cl-cols: 7.2rem 1.4rem minmax(0, 1fr) 9rem repeat(17, 1.3rem);
+    --cl-min-width: 54rem;
+}
+.upcoming-page .comp-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.upcoming-page .comp-list-empty {
+    text-align: center;
+    color: var(--text-sub);
+    font-size: 0.85rem;
+    padding: 3rem 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+/* 虚拟滚动容器 */
+.upcoming-page .comp-list-virtual {
+    position: relative;
+    width: 100%;
+    min-width: var(--cl-min-width);
+}
+.upcoming-page .comp-list-year,
+.upcoming-page .comp-list-row {
+    position: absolute;
+    left: 0;
+    right: 0;
+    box-sizing: border-box;
+}
+.upcoming-page .comp-list-year {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0 0.5rem;
+    border-bottom: 1px solid var(--border);
+}
+.upcoming-page .comp-list-year-num {
+    font-family: 'Fraunces', 'Times New Roman', serif;
+    font-size: 1.2rem;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    color: var(--text);
+    font-feature-settings: "tnum" 1;
+}
+.upcoming-page .comp-list-year-count {
+    font-size: 0.7rem;
+    color: var(--text-sub);
+    background: var(--surface-alt);
+    padding: 2px 7px;
+    border-radius: 10px;
+}
+.upcoming-page .comp-list-row {
+    display: grid;
+    grid-template-columns: var(--cl-cols);
+    align-items: center;
+    gap: 6px;
+    padding: 0 12px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-family: inherit;
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+    overflow: hidden;
+    transition: border-color 0.12s, background 0.12s;
+}
+.upcoming-page .comp-list-row:hover {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+}
+.upcoming-page .comp-list-date {
+    color: var(--text-sub);
+    font-size: 0.78rem;
+}
+.upcoming-page .comp-list-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+    font-weight: 500;
+}
+.upcoming-page .comp-list-city {
+    color: var(--text-sub);
+    font-size: 0.78rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.upcoming-page .cl-event-cell {
+    text-align: center;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+
+/* ── 列表视图 · 年月范围过滤 ── */
+.upcoming-page .date-range-nav {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+.upcoming-page .date-range-pick {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 0.4rem 0.7rem;
+    font-size: 0.82rem;
+    font-family: 'Roboto Mono', ui-monospace, monospace;
+    font-feature-settings: "tnum" 1;
+    cursor: pointer;
+    min-width: 6.5rem;
+    text-align: center;
+    transition: all 0.15s;
+}
+.upcoming-page .date-range-pick:hover,
+.upcoming-page .date-range-pick[aria-expanded="true"] {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+.upcoming-page .date-range-pick.is-empty {
+    color: var(--text-sub);
+    font-family: inherit;
+}
+.upcoming-page .date-range-sep {
+    color: var(--text-sub);
+    font-size: 0.85rem;
+}
+.upcoming-page .date-range-clear {
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: none;
+    background: var(--surface-alt);
+    color: var(--text-sub);
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+}
+.upcoming-page .date-range-clear:hover { color: var(--accent); background: var(--accent-soft); }
+.upcoming-page .date-range-summary {
+    margin-left: 0.5rem;
+    color: var(--text-sub);
+    font-size: 0.8rem;
+}
+
 /* ── 响应式 ── */
 @media (max-width: 768px) {
     .upcoming-page .toolbar { gap: 0.4rem; }
@@ -780,6 +1000,18 @@
     .upcoming-page .event-bar .flag-img { width: 11px; height: 8px; }
     .upcoming-page .week-row { grid-template-rows: 18px repeat(var(--tracks, 1), minmax(20px, auto)) 1fr; }
     .upcoming-page .more-btn { font-size: 0.62rem; height: 18px; padding: 0 4px; }
+    /* 虚拟列表：行高固定，移动端横向滚动以保留 17 列对齐；city 列宽设为 0（内容靠 overflow 隐藏）保持 header/row 列数一致 */
+    .upcoming-page {
+        --cl-cols: 5.5rem 1.2rem minmax(7rem, 1fr) 0 repeat(17, 1.1rem);
+        --cl-min-width: 40rem;
+    }
+    .upcoming-page .comp-list { overflow-x: auto; }
+    .upcoming-page .event-chips--list-header { padding: 4px 8px; gap: 4px; }
+    .upcoming-page .comp-list-row { gap: 4px; padding: 0 8px; font-size: 0.78rem; }
+    .upcoming-page .comp-list-date { font-size: 0.7rem; }
+    .upcoming-page .cl-event-cell { font-size: 0.65rem; }
+    .upcoming-page .comp-list-year-num { font-size: 1.05rem; }
+    .upcoming-page .date-range-pick { font-size: 0.72rem; padding: 0.3rem 0.5rem; min-width: 5.4rem; }
 }
 
 /* ── 年月选择浮层 ── */

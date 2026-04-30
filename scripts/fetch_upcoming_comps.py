@@ -23,8 +23,9 @@ import time
 import datetime
 import urllib.request
 import urllib.error
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Iterable
 
 # NOTE: 修复 Windows 终端 GBK 编码问题，防止格鲁吉亚文/韩文等字符崩溃
 # line_buffering=True 确保每行 print 立即刷新到终端（实时进度）
@@ -528,6 +529,73 @@ def build_upcoming_comps(cubers: CuberData) -> List[Dict[str, Any]]:
     return results
 
 
+def fetch_wcif_rounds(comp_id: str) -> Dict[str, int]:
+    """
+    拉取单场比赛 WCIF 公开端点，提取每个项目的轮次数。
+    返回 { 短名: rounds_count }。失败 / 无 events → 空 dict。
+    单文件缓存（24h），与全局 CACHE_TTL_SEC 共用。
+    """
+    cache_file = CACHE_DIR / f"_wcif_{comp_id}.json"
+    if _is_cache_valid(cache_file):
+        try:
+            return json.loads(cache_file.read_text(encoding="utf-8"))
+        except Exception:
+            pass  # 缓存损坏 → 重新拉
+
+    url = f"{WCA_API_BASE}/competitions/{comp_id}/wcif/public"
+    data = fetch_with_retry(url)
+    out: Dict[str, int] = {}
+    if isinstance(data, dict):
+        for ev in data.get("events", []) or []:
+            eid = ev.get("id")
+            if not eid:
+                continue
+            n = len(ev.get("rounds") or [])
+            _, short = EVENT_ORDER_MAP.get(eid, (999, eid))
+            out[short] = n
+    cache_file.write_text(json.dumps(out, ensure_ascii=False), encoding="utf-8")
+    return out
+
+
+def fetch_wcif_rounds_batch(comp_ids: Iterable[str]) -> Dict[str, Dict[str, int]]:
+    """
+    并行拉一批比赛的 WCIF 轮次。已缓存的直接读，未缓存的多线程拉取。
+    """
+    out: Dict[str, Dict[str, int]] = {}
+    pending: List[str] = []
+    for cid in comp_ids:
+        cache_file = CACHE_DIR / f"_wcif_{cid}.json"
+        if _is_cache_valid(cache_file):
+            try:
+                out[cid] = json.loads(cache_file.read_text(encoding="utf-8"))
+                continue
+            except Exception:
+                pass
+        pending.append(cid)
+
+    if not pending:
+        print(f"[WCIF] 全部 {len(out)} 场命中缓存")
+        return out
+
+    print(f"[WCIF] 缓存命中 {len(out)} 场，待拉取 {len(pending)} 场...")
+    # NOTE: 2 个 worker × 0.5s/req ≈ 4 req/s。实测 5 worker 会触发 WCA 429 限速，2 已稳定。
+    workers = 2
+    done = 0
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        futures = {executor.submit(fetch_wcif_rounds, cid): cid for cid in pending}
+        for fut in as_completed(futures):
+            cid = futures[fut]
+            try:
+                out[cid] = fut.result()
+            except Exception as e:
+                print(f"[WCIF][WARN] {cid}: {e}")
+                out[cid] = {}
+            done += 1
+            if done % 50 == 0 or done == len(pending):
+                print(f"[WCIF] {done}/{len(pending)} 已拉取")
+    return out
+
+
 def _shortify_events(event_ids):
     """WCA 内部 event_id → 前端短名，按 WCA 官方顺序排序。"""
     pairs = []
@@ -618,26 +686,39 @@ def main():
         print("[ERROR] 提取到的选手列表为空，退出。")
         return
 
-    # 2. 拉取和清洗数据
+    # 2. 拉取和清洗 Top 模式比赛
     comps_data = build_upcoming_comps(cubers)
 
-    # 3. 输出 JSON 给前端呈现 (前后端契约)
+    # 3. 拉取全球全量 upcoming（Globe + All 模式）
+    print("\n[ALL] 开始拉取 WCA 全球全量 upcoming 比赛...")
+    all_comps = build_all_upcoming_comps()
+
+    # 4. 一次性批量拉每场比赛的 WCIF 轮次（两份输出共享缓存，避免重复请求）
+    all_ids = {c["id"] for c in comps_data}
+    if all_comps:
+        all_ids.update(c["id"] for c in all_comps)
+    if all_ids:
+        print(f"\n[WCIF] 开始拉取 {len(all_ids)} 场比赛的轮次数据...")
+        rounds_map = fetch_wcif_rounds_batch(all_ids)
+        for c in comps_data:
+            c["rounds"] = rounds_map.get(c["id"], {})
+        if all_comps:
+            for c in all_comps:
+                c["rounds"] = rounds_map.get(c["id"], {})
+
+    # 5. 写出 Top 模式 JSON
     output_obj = {
         "updated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "total_cubers_tracked": len(cubers) if not DEBUG_LIMIT else DEBUG_LIMIT,
         "competitions": comps_data
     }
-
     OUTPUT_JSON_PATH.parent.mkdir(parents=True, exist_ok=True)
     with OUTPUT_JSON_PATH.open("w", encoding="utf-8") as f:
         json.dump(output_obj, f, ensure_ascii=False, separators=(',', ':'))
-
     print(f"\n[INFO] 成功！共找到 {len(comps_data)} 场即将举行的比赛。")
     print(f"[INFO] 数据已写入: {OUTPUT_JSON_PATH.relative_to(ROOT_DIR)}")
 
-    # 4. 生成 all_upcoming_comps.json（全球全量 upcoming，Globe + All 模式消费）
-    print("\n[ALL] 开始拉取 WCA 全球全量 upcoming 比赛...")
-    all_comps = build_all_upcoming_comps()
+    # 6. 写出 All 模式 JSON
     if all_comps is not None:
         ALL_OUTPUT_JSON_PATH.parent.mkdir(parents=True, exist_ok=True)
         with ALL_OUTPUT_JSON_PATH.open("w", encoding="utf-8") as f:

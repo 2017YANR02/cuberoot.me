@@ -92,29 +92,6 @@ export function parseTimeInput(raw: string): number {
 
 // ── 事件映射 ──
 
-/** WCA 项目 → 显示名称 */
-const EVENT_DISPLAY_NAMES: Record<string, Record<string, string>> = {
-  zh: {
-    '3x3': '三阶', '2x2': '二阶', '4x4': '四阶', '5x5': '五阶',
-    '6x6': '六阶', '7x7': '七阶', '3bld': '三盲', '4bld': '四盲',
-    '5bld': '五盲', 'mbld': '多盲', 'oh': '单手', 'sq1': 'SQ1',
-    pyra: '金字塔', mega: '五魔', clock: 'Clock', skewb: 'Skewb',
-    fmc: 'FMC',
-  },
-  en: {
-    '3x3': '3×3', '2x2': '2×2', '4x4': '4×4', '5x5': '5×5',
-    '6x6': '6×6', '7x7': '7×7', '3bld': '3BLD', '4bld': '4BLD',
-    '5bld': '5BLD', mbld: 'MBLD', oh: 'OH', sq1: 'SQ1',
-    pyra: 'Pyra', mega: 'Mega', clock: 'Clock', skewb: 'Skewb',
-    fmc: 'FMC',
-  },
-};
-
-/** 获取项目显示名称 */
-export function getEventDisplayName(event: string, locale = 'en'): string {
-  return EVENT_DISPLAY_NAMES[locale]?.[event] ?? event;
-}
-
 /** 项目 → twisty-player puzzle ID */
 const PUZZLE_MAP: Record<string, string> = {
   '3x3': '3x3x3', '2x2': '2x2x2', '4x4': '4x4x4', '5x5': '5x5x5',
@@ -165,20 +142,6 @@ export function computeWcaAverage(attempts: (number | null)[], event: string): n
   if (dnfs >= 2) return null;
   const sorted = [...norm].sort((a, b) => a - b);
   return Math.round((sorted[1] + sorted[2] + sorted[3]) / 3 * 100) / 100;
-}
-
-/** Recon event → WCA API event_id（用于 /api/v0/competitions/:id/results/:eventId） */
-const WCA_EVENT_ID_MAP: Record<string, string> = {
-  '3x3': '333', '2x2': '222', '4x4': '444', '5x5': '555',
-  '6x6': '666', '7x7': '777',
-  '3bld': '333bf', '4bld': '444bf', '5bld': '555bf', 'mbld': '333mbf',
-  oh: '333oh', sq1: 'sq1',
-  pyra: 'pyram', mega: 'minx', clock: 'clock', skewb: 'skewb',
-  fmc: '333fm',
-};
-
-export function toWcaEventId(event: string): string {
-  return WCA_EVENT_ID_MAP[event] ?? event;
 }
 
 // ── 成绩格式化（原版 formatResult / formatAvg 1:1 移植） ──

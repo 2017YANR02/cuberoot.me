@@ -174,7 +174,8 @@
   },
   "upcoming": {
     "title": "Calendar",
-    "search": "Search by competition, cuber, WCA ID, or country...",
+    "searchComp": "Search competition / city...",
+    "searchCuber": "Search cuber / WCA ID...",
     "allCountries": "All Countries",
     "noResults": "No upcoming competitions found for the tracked players.",
     "loading": "Loading schedule data...",
