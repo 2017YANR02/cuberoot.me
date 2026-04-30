@@ -54,7 +54,8 @@ function fmtDate(d: Date | string): string {
 async function main() {
   const start = Date.now();
 
-  // NOTE: 过滤 supra-national 聚合代码（与 longest_competitions_path.ts 一致）
+  // NOTE: 多地代码（XA/XE/XF/XM/XN/XO/XS/XW）保留 — calendar / list 视图能渲染（前端有 flag-multi 占位 + countryName 翻译），
+  //       Globe 地图侧通过 latitude_degrees == null 兜底过滤（见下方 map 输出）
   const sql = `
     SELECT
       c.id,
@@ -69,10 +70,10 @@ async function main() {
     FROM competitions c
     LEFT JOIN results r ON r.competition_id = c.id
     WHERE c.end_date < CURDATE()
-      AND c.country_id NOT IN ('XA','XE','XF','XM','XN','XO','XS','XW')
     GROUP BY c.id
     ORDER BY c.start_date
   `;
+  const MULTI_REGION = new Set(['XA', 'XE', 'XF', 'XM', 'XN', 'XO', 'XS', 'XW']);
 
   const rows = await query<Row[]>(sql);
 
@@ -94,6 +95,9 @@ async function main() {
 
   const out = rows
     .filter((r) => {
+      // 多地代码（XW/XA/...）通常 lat/lng = 0 没有意义，但 calendar / list 视图照样要展示，
+      // 只剔无效坐标的"普通国家"行（数据 bug 兜底）
+      if (MULTI_REGION.has(r.country_id)) return true;
       const lat = Number(r.latitude_degrees);
       const lng = Number(r.longitude_degrees);
       return Number.isFinite(lat) && Number.isFinite(lng) && (lat !== 0 || lng !== 0);
@@ -104,13 +108,15 @@ async function main() {
         .map((e) => EVENT_SHORT[e] ?? e)
         .sort((a, b) => (EVENT_RANK[a] ?? 999) - (EVENT_RANK[b] ?? 999));
       const rounds = roundsByComp.get(r.id);
+      const isMulti = MULTI_REGION.has(r.country_id);
+      // 多地代码无真实坐标 → 写 null，让 Globe consumer 通过 lat == null 干净地跳过
       return {
         id: r.id,
         name: r.name,
         city: r.city_name,
         country: r.country_id,
-        latitude_degrees: Number(r.latitude_degrees),
-        longitude_degrees: Number(r.longitude_degrees),
+        latitude_degrees: isMulti ? null : Number(r.latitude_degrees),
+        longitude_degrees: isMulti ? null : Number(r.longitude_degrees),
         start_date: fmtDate(r.start_date),
         end_date: fmtDate(r.end_date),
         events: shortEvents,

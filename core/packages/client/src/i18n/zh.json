@@ -112,6 +112,7 @@
     "country": "国家",
     "group": "分组",
     "time": "成绩",
+    "single": "单次",
     "average": "平均",
     "wcaScramble": "WCA 官方打乱",
     "videoUrl": "视频链接",
@@ -153,6 +154,9 @@
     },
     "roundOption": {
       "final": "决赛",
+      "r1": "初赛",
+      "r2": "复赛",
+      "r3": "半决赛",
       "numbered": "第{{n}}轮"
     },
     "badge": {

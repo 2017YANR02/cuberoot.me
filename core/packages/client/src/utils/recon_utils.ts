@@ -282,7 +282,7 @@ export function recordBadgeHtml(record: string | undefined): string {
 /** 轮次显示名称 */
 const ROUND_DISPLAY: Record<string, Record<string, string>> = {
   zh: {
-    f: '决赛', '1': '第一轮', '2': '第二轮', '3': '第三轮',
+    f: '决赛', '1': '初赛', '2': '复赛', '3': '半决赛',
     sf: '半决赛', cf: '组合决赛',
   },
   en: {
@@ -298,9 +298,9 @@ export function getRoundDisplay(round: string, locale = 'en'): string {
 
 // ── 选项列表 ──
 
-/** 纪录下拉选项（含 cancelled 前缀） */
+/** 纪录下拉选项 — 大洲精确到 AsR/AfR/ER/NAR/OcR/SAR(WCA API 原值);老 'CR' 数据靠 expandContinentRecord 显示兼容。含 cancelled 前缀 */
 export const RECORD_OPTIONS = (() => {
-  const types = ['WR', 'CR', 'NR', 'PR'];
+  const types = ['WR', 'AsR', 'AfR', 'ER', 'NAR', 'OcR', 'SAR', 'NR', 'PR'];
   const prefixes = ['', 'cancelled '];
   const options: string[] = [];
   for (const prefix of prefixes) {
@@ -310,6 +310,26 @@ export const RECORD_OPTIONS = (() => {
   }
   return options;
 })();
+
+/** WCA 大洲缩写 → ISO continent code(用于 disable 不属于选手所在大洲的具体洲) */
+const RECORD_TO_CONTINENT: Record<string, string> = {
+  AfR: 'AF', AsR: 'AS', ER: 'EU', NAR: 'NA', SAR: 'SA', OcR: 'OC',
+};
+
+/**
+ * 给定选手国籍 iso2,该 record code 是否合法(不属于该选手大洲的洲际记录应禁用)。
+ * 不传 iso2 时一律允许(用户没选选手时不知道大洲)。
+ * WR / NR / PR 永远允许。
+ */
+export function isRecordCodeAllowedFor(code: string, personIso2: string | null | undefined): boolean {
+  if (!code) return true;
+  // strip 'cancelled ' 前缀只看核心 record 类型
+  const core = code.replace(/^cancell?ed?\s+/i, '').trim();
+  const cont = RECORD_TO_CONTINENT[core];
+  if (!cont) return true; // WR / NR / PR / 未知 — 不限制
+  if (!personIso2) return true; // 无国籍信息 — 不限制
+  return ISO2_TO_CONTINENT[personIso2.toUpperCase()] === cont;
+}
 
 // ── 比赛搜索 URL ──
 

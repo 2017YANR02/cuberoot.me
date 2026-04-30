@@ -214,7 +214,9 @@ export default function ReconListPage() {
 
   const roundItems = useMemo<ListSelectItem[]>(() => rounds.map(r => ({
     value: r.name,
-    label: r.name === 'f' ? t('recon.roundOption.final') : t('recon.roundOption.numbered', { n: r.name }),
+    label: r.name === 'f' ? t('recon.roundOption.final')
+      : ['1', '2', '3'].includes(r.name) ? t(`recon.roundOption.r${r.name}`)
+        : t('recon.roundOption.numbered', { n: r.name }),
     hint: `(${r.count})`,
   })), [rounds, t]);
 

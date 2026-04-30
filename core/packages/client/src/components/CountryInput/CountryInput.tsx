@@ -16,6 +16,7 @@ import { Flag } from '../../utils/flag';
 import { searchCountries } from '../../utils/country_flags';
 import { countryName } from '../../utils/country_name';
 import { CONTINENT_NAMES, CONTINENT_TO_ISO2S, ISO2_TO_CONTINENT, isContinentCode, groupByContinent } from '../../utils/continent';
+import { ClearButton } from '../ClearButton';
 import './country_input.css';
 
 interface SharedProps {
@@ -220,14 +221,11 @@ export function CountryInput(props: CountryInputProps) {
         autoComplete="off"
       />
       {selected.length > 0 && (
-        <button
-          type="button"
-          className="country-input-clear"
-          onMouseDown={(e) => e.preventDefault()}
+        <ClearButton
           onClick={() => { setSelected([]); setQuery(''); setOpen(false); }}
-          aria-label={isZh ? '清除' : 'Clear'}
-          title={isZh ? '清除' : 'Clear'}
-        >×</button>
+          isZh={isZh}
+          preserveFocus
+        />
       )}
       {open && (matches.length > 0 || allLabel || continentGroups.length > 0) && (
         <div className="country-input-popup">

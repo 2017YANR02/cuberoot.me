@@ -7,6 +7,10 @@ import { countryToIso2 } from './country_flags';
 
 const CHINESE_TAIPEI_SVG = '/tools/assets/images/ChineseTaipei.svg';
 
+// WCA 多地 / 超国家代码（XW=World, XA/XE/XF/XN/XO/XS=各大洲多国, XM=多大洲）
+// 没有真国旗，渲染成 WCA 官网那种"空描边"占位
+const MULTI_REGION = new Set(['xa', 'xe', 'xf', 'xn', 'xo', 'xs', 'xm', 'xw']);
+
 export type FlagInfo =
   | { kind: 'img'; src: string; alt: string }
   | { kind: 'span'; className: string; ariaLabel: string };
@@ -19,10 +23,15 @@ function normalizeIso2(input: string): string {
   return countryToIso2(s).toLowerCase();
 }
 
-/** 国旗渲染信息。TW → 自定义 SVG；其他 → flag-icons CSS 类。 */
+/** 国旗渲染信息。TW → 自定义 SVG；多地代码（XW/XA/...）→ 空描边占位；其他 → flag-icons CSS 类。
+ * 多地占位风格对齐 WCA 官网：
+ *   XW（全球）→ 蓝→红渐变描边（无 border-radius）
+ *   其他多地（XA/XE/XF/XN/XO/XS/XM）→ 纯蓝描边（带圆角） */
 export function flagInfo(iso2OrCountry: string): FlagInfo {
   const code = normalizeIso2(iso2OrCountry);
   if (code === 'tw') return { kind: 'img', src: CHINESE_TAIPEI_SVG, alt: 'Chinese Taipei' };
+  if (code === 'xw') return { kind: 'span', className: `fi flag-multi flag-multi-world`, ariaLabel: code };
+  if (MULTI_REGION.has(code)) return { kind: 'span', className: `fi flag-multi flag-multi-continent`, ariaLabel: code };
   return { kind: 'span', className: `fi fi-${code}`, ariaLabel: code };
 }
 

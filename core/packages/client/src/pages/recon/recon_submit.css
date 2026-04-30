@@ -424,6 +424,16 @@
   color: #666;
 }
 
+.submit-hint-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.submit-hint-loading svg {
+  animation: submit-hint-spin 0.7s linear infinite;
+}
+@keyframes submit-hint-spin { to { transform: rotate(360deg); } }
+
 /* --- 重复警告 --- */
 .submit-warning {
   padding: 10px 16px;

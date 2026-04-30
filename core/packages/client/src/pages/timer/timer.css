@@ -621,24 +621,6 @@
   outline: none;
   border-color: #4d7a99;
 }
-.history-search-clear {
-  position: absolute;
-  right: 4px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  padding: 0;
-  background: transparent;
-  border: none;
-  color: #777;
-  cursor: pointer;
-  border-radius: 3px;
-}
-.history-search-clear:hover { color: #ddd; background: #25252a; }
 .history-search-count {
   flex-shrink: 0;
   font-size: 11px;
@@ -654,11 +636,6 @@
 }
 :root[data-timer-theme="light"] .history-search input::placeholder { color: #999; }
 :root[data-timer-theme="light"] .history-search-count { color: #888; }
-:root[data-timer-theme="light"] .history-search-clear { color: #888; }
-:root[data-timer-theme="light"] .history-search-clear:hover {
-  color: #1d1d1f;
-  background: #e8e8ea;
-}
 
 .history-row.is-pb { background: rgba(255, 215, 0, 0.04); }
 .history-row.is-pb .time { color: #ffd54f; }
