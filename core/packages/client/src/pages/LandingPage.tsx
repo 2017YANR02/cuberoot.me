@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import {
   BarChart3, Film, ScanSearch, Calculator as CalculatorIcon, LineChart,
   Swords, Target, CalendarDays, Puzzle, BookOpen, Earth as GlobeIcon,
-  Shuffle, Library, Compass, Grid2x2, Heart, Trophy, Timer as TimerIcon,
+  Shuffle, Library, Compass, Grid2x2, Heart, Trophy, Timer as TimerIcon, TrendingDown,
   type LucideIcon,
 } from 'lucide-react';
 import LandingCubeHero from './LandingCubeHero';
@@ -295,6 +295,7 @@ const TEXTS: Record<string, { en: string; zh: string }> = {
   mosaic:          { en: 'Mosaic', zh: '马赛克' },
   worldBests:      { en: 'World Bests', zh: '非官方纪录' },
   blog:            { en: 'Blog', zh: '博客' },
+  prediction:      { en: 'Prediction', zh: '预测' },
   comingSoon:      { en: 'Coming soon', zh: '即将上线' },
   creditsPrefix:   { en: 'Inspired by', zh: '致谢' },
 };
@@ -336,6 +337,7 @@ const CARDS: CardConfig[] = [
   { id: 'scramble',    href: '/scramble-stats',  internal: true,  tier: 'standard',  Icon: Shuffle,        nameKey: 'scramble' },
   { id: 'mosaic',      href: '/mosaic',          internal: true,  tier: 'standard',  Icon: Grid2x2,        nameKey: 'mosaic' },
   { id: 'wb',          href: '/wb',              internal: true,  tier: 'standard',  Icon: Trophy,         nameKey: 'worldBests' },
+  { id: 'prediction',  href: '/prediction',      internal: true,  tier: 'standard',  Icon: TrendingDown,   nameKey: 'prediction' },
   { id: 'blog',        href: window.location.hostname.endsWith('cuberoot.me') ? '/blog/' : 'https://www.cuberoot.me/blog/', internal: false, tier: 'standard', Icon: BookOpen, nameKey: 'blog' },
   { id: 'site',        href: '/site',            internal: true,  tier: 'standard',  Icon: Compass,        nameKey: 'sitesDirectory' },
   { id: 'solver',      href: '/solver',          internal: true,  tier: 'standard',  Icon: Puzzle,         nameKey: 'solver' },
