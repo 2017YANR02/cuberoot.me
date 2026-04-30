@@ -247,9 +247,14 @@ export default function ReconSubmitPage() {
       loadedRecordKeySnapshot.current = `${fromBaseKey}|${targetSolveNum ?? src.solveNum ?? ''}`;
       if (src.average != null) setAvgInput(formatTimeInput(src.average));
       // NOTE: ?suggestTime= — 来自 SameRoundNav 的 WCA / 粘贴解析
+      // 同步 form.value(下方"单次"展示字段),与 WCA 自动填一致
       if (suggestTime) {
         const n = parseFloat(suggestTime);
-        if (!isNaN(n) && n > 0) setTimeInput(formatTimeInput(n));
+        if (!isNaN(n) && n > 0) {
+          const formatted = formatTimeInput(n);
+          setTimeInput(formatted);
+          setForm(prev => ({ ...prev, value: formatted }));
+        }
       }
       // NOTE: ?suggestScramble= — 来自 WCA scrambles API
       if (suggestScramble) {

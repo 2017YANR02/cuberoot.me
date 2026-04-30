@@ -7,13 +7,13 @@ import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   Box, PenLine, Calendar, UserPlus, StickyNote,
-  ChartColumn, Video, MessageCircle, Key, TriangleAlert,
-  MoreVertical, Pencil, Trash2, Pin, PinOff,
+  ChartColumn, Video, MessageCircle, TriangleAlert,
+  Pencil, Trash2, Pin, PinOff, Plus, Key,
   Globe, Radio, ClipboardPaste, ChevronDown, ChevronUp,
-  GitFork,
+  GitFork, Play, Square, Undo2,
 } from 'lucide-react';
 import type { ReconSolve, ReconComment, ReconAlternative } from '@cuberoot/shared';
-import { getRecon, listComments, addComment, updateComment, deleteComment, pinComment, getBiliCover, listRecons, addAlternative, updateAlternative, deleteAlternative } from '../../utils/recon_api';
+import { getRecon, listComments, addComment, updateComment, deleteComment, pinComment, getBiliCover, listRecons, updateAlternative, deleteAlternative } from '../../utils/recon_api';
 import {
   formatTime, flagClass,
   isBldEvent, getPuzzleId, wcaCompUrl, wcaPersonUrl,
@@ -25,7 +25,6 @@ import { EventIcon } from '../../components/EventIcon';
 import { compNameZh, loadFlagData, flagDataVersion, personFlagIso2 } from '../../utils/country_flags';
 import { Flag } from '../../utils/flag';
 import { stripWcaPrefix } from '../../utils/comp_localize';
-import { toIsoDate } from '../../utils/date_range';
 import { cleanForPlayer } from '../../utils/recon_alg_utils';
 import { fetchAttempts, fetchCubingAttempts, fetchScrambles } from '../../utils/wca_results_api';
 import { useAuthStore, isAdmin } from '../../stores/auth_store';
@@ -35,6 +34,7 @@ import TwistySection from './components/TwistySection';
 import SolutionView from './components/SolutionView';
 import { buildNormalizedSolution, findCrossLineIndex, hasWideMoveInCrossSection } from '../../utils/recon_norm_cross_extract';
 import { computeAllStats } from '../../utils/recon_stats';
+import { DiscussionComposer, DiscussionEditBox, UserHeadline, ItemMenu, UserAvatarFallback } from './components/Discussion';
 import '../../recon.css';
 import './recon_detail.css';
 
@@ -149,14 +149,30 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate }: 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const playerRef = useRef<any>(null);
   const [crossNormalized, setCrossNormalized] = useState(false);
+  // NOTE: 另解列表 lift up,这样 player / banner / list 之间共享同一份 alts
+  const [alts, setAlts] = useState<ReconAlternative[]>(solve.alternatives ?? []);
+  const [activeAltIdx, setActiveAltIdx] = useState<number | null>(null);
+
+  // NOTE: 删/编辑后 idx 越界 → 自动退出演示
+  useEffect(() => {
+    if (activeAltIdx != null && activeAltIdx >= alts.length) setActiveAltIdx(null);
+  }, [alts.length, activeAltIdx]);
+
+  const activeAlt = activeAltIdx != null && activeAltIdx < alts.length ? alts[activeAltIdx] : null;
 
   // NOTE: 仅当 cross 段含宽转动时才允许切换;只有插入旋转或全单层时不显示
-  const canToggle = useMemo(() => hasWideMoveInCrossSection(solutionText), [solutionText]);
+  // NOTE: 演示另解时不允许 cross 标准化(每条另解结构不同,不通用)
+  const canToggle = useMemo(
+    () => !activeAlt && hasWideMoveInCrossSection(solutionText),
+    [solutionText, activeAlt],
+  );
   const normalizedText = useMemo(
     () => canToggle ? buildNormalizedSolution(solutionText) : null,
     [solutionText, canToggle],
   );
-  const displayText = crossNormalized && normalizedText ? normalizedText : solutionText;
+  const displayText = activeAlt
+    ? activeAlt.solution
+    : (crossNormalized && normalizedText ? normalizedText : solutionText);
   const crossLineIdx = useMemo(() => findCrossLineIndex(displayText), [displayText]);
 
   return (
@@ -179,6 +195,17 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate }: 
         {/* 外部链接 */}
         {scramble && solutionText && (
           <ExternalLinks event={solve.event} scramble={scramble} alg={cleanForPlayer(solutionText)} solveId={solve.id} />
+        )}
+
+        {/* 演示另解时的提示条 */}
+        {activeAlt && (
+          <div className="detail-active-alt-banner">
+            <Play size={12} />
+            <span>{t('recon.playingAlt', { name: displayCuberName(activeAlt.addedBy || '', isZh) })}</span>
+            <button type="button" onClick={() => setActiveAltIdx(null)}>
+              <Undo2 size={12} /> {t('recon.backToOriginal')}
+            </button>
+          </div>
         )}
 
         {/* 打乱 + 解法 合并为一个框,无标签 */}
@@ -259,7 +286,14 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate }: 
         )}
 
         {/* 另解——任何登录用户都能投自己的解法 */}
-        <AlternativesSection reconId={solve.id} initial={solve.alternatives ?? []} />
+        <AlternativesSection
+          reconId={solve.id}
+          alts={alts}
+          setAlts={setAlts}
+          activeIdx={activeAltIdx}
+          onSelect={setActiveAltIdx}
+          playerRef={playerRef}
+        />
 
         {/* 评论 */}
         <CommentsView comments={comments} reconId={solve.id} onUpdate={onUpdate} />
@@ -722,58 +756,27 @@ function BilibiliFacade({ bvId, onLoad }: { bvId: string; onLoad: () => void }) 
 }
 
 /** 另解区——任何登录用户都能投自己的解法,挂在原 solve 下,不创建新行 */
-function AlternativesSection({ reconId, initial }: { reconId: number; initial: ReconAlternative[] }) {
-  const [alts, setAlts] = useState<ReconAlternative[]>(initial);
-  const [composerOpen, setComposerOpen] = useState(false);
-  const [draft, setDraft] = useState('');
-  const [submitting, setSubmitting] = useState(false);
+function AlternativesSection({ reconId, alts, setAlts, activeIdx, onSelect, playerRef }: {
+  reconId: number;
+  alts: ReconAlternative[];
+  setAlts: (alts: ReconAlternative[]) => void;
+  activeIdx: number | null;
+  onSelect: (idx: number | null) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  playerRef: React.MutableRefObject<any>;
+}) {
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [editText, setEditText] = useState('');
-  const [menuOpenIdx, setMenuOpenIdx] = useState<number | null>(null);
 
   const user = useAuthStore(s => s.user);
   const currentWcaId = user?.wcaId || '';
   const isAdminUser = isAdmin();
-  const { t, i18n } = useTranslation();
-  const isZh = i18n.language === 'zh';
-
-  // NOTE: parent solve 切换(一般不会;留个安全网)
-  useEffect(() => { setAlts(initial); }, [initial]);
-
-  // NOTE: 点击空白关菜单
-  useEffect(() => {
-    if (menuOpenIdx === null) return;
-    const handler = () => setMenuOpenIdx(null);
-    const timer = setTimeout(() => document.addEventListener('click', handler), 0);
-    return () => { clearTimeout(timer); document.removeEventListener('click', handler); };
-  }, [menuOpenIdx]);
-
-  const handleAdd = async () => {
-    const text = draft.trim();
-    if (!text) return;
-    setSubmitting(true);
-    try {
-      const updated = await addAlternative(reconId, text);
-      setAlts(updated);
-      setDraft('');
-      setComposerOpen(false);
-    } catch (e) {
-      alert((e as Error).message);
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  const { t } = useTranslation();
 
   const handleSaveEdit = async (idx: number) => {
-    const text = editText.trim();
-    if (!text) return;
-    try {
-      const updated = await updateAlternative(reconId, idx, text);
-      setAlts(updated);
-      setEditingIdx(null);
-    } catch (e) {
-      alert((e as Error).message);
-    }
+    const updated = await updateAlternative(reconId, idx, editText.trim());
+    setAlts(updated);
+    setEditingIdx(null);
   };
 
   const handleDelete = async (idx: number) => {
@@ -793,42 +796,10 @@ function AlternativesSection({ reconId, initial }: { reconId: number; initial: R
       </div>
 
       {currentWcaId ? (
-        <div className={`yt-composer${composerOpen || draft ? ' yt-composer-active' : ''}`}>
-          {user?.avatar ? (
-            <img src={user.avatar} alt="" className="yt-composer-avatar" />
-          ) : (
-            <div className="yt-composer-avatar yt-composer-avatar-fallback">
-              {user?.name?.[0]?.toUpperCase() || '?'}
-            </div>
-          )}
-          <div className="yt-composer-body">
-            <textarea
-              className="yt-composer-input alt-composer-input"
-              value={draft}
-              onChange={e => setDraft(e.target.value)}
-              onFocus={() => setComposerOpen(true)}
-              placeholder={t('recon.writeAlternative')}
-              rows={composerOpen || draft ? 6 : 1}
-            />
-            {(composerOpen || draft) && (
-              <div className="yt-composer-actions">
-                <div />
-                <div className="yt-composer-buttons">
-                  <button type="button" className="yt-btn-text" onClick={() => { setDraft(''); setComposerOpen(false); }}>
-                    {t('recon.cancel')}
-                  </button>
-                  <button
-                    type="button"
-                    className="yt-btn-primary"
-                    onClick={handleAdd}
-                    disabled={submitting || !draft.trim()}
-                  >
-                    {submitting ? t('recon.posting') : t('recon.addAlternative')}
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+        <div className="alt-add-bar">
+          <Link to={`/recon/${reconId}/alt`} className="recon-btn recon-btn-edit" title={t('recon.addAlternative')}>
+            <Plus size={14} /> {t('recon.alternatives')}
+          </Link>
         </div>
       ) : (
         <div className="detail-comment-login-hint" onClick={() => useAuthStore.getState().login()} style={{ cursor: 'pointer' }}>
@@ -844,52 +815,31 @@ function AlternativesSection({ reconId, initial }: { reconId: number; initial: R
             const isOwn = !!currentWcaId && currentWcaId === alt.addedById;
             const canEdit = isOwn;
             const canDelete = isOwn || isAdminUser;
-            const displayName = displayCuberName(alt.addedBy || '', isZh);
             return (
               <div key={`${alt.addedById}-${alt.createdAt}-${idx}`} className="yt-comment">
-                <div className="yt-comment-avatar yt-comment-avatar-fallback">
-                  {displayName?.[0]?.toUpperCase() || '?'}
-                </div>
+                <UserAvatarFallback name={alt.addedBy} avatar={isOwn ? user?.avatar : null} />
                 <div className="yt-comment-content">
-                  <div className="yt-comment-meta">
-                    {alt.addedById && <Flag iso2={personFlagIso2(alt.addedById)} className="yt-comment-flag" />}
-                    {alt.addedById ? (
-                      <a href={wcaPersonUrl(alt.addedById)} target="_blank" rel="noopener noreferrer" className="yt-comment-author">
-                        {displayName}
-                      </a>
-                    ) : <span className="yt-comment-author">{displayName}</span>}
-                    <span className="yt-comment-time">
-                      {toIsoDate(new Date(alt.createdAt * 1000))}
-                    </span>
-                  </div>
+                  <UserHeadline authorId={alt.addedById} authorName={alt.addedBy} createdAt={alt.createdAt} />
                   {editingIdx === idx ? (
-                    <div className="yt-comment-edit">
-                      <textarea
-                        className="yt-composer-input alt-composer-input"
-                        value={editText}
-                        onChange={e => setEditText(e.target.value)}
-                        rows={6}
-                        autoFocus
-                      />
-                      <div className="yt-composer-actions">
-                        <div />
-                        <div className="yt-composer-buttons">
-                          <button type="button" className="yt-btn-text" onClick={() => setEditingIdx(null)}>
-                            {t('recon.cancel')}
-                          </button>
-                          <button
-                            type="button"
-                            className="yt-btn-primary"
-                            onClick={() => handleSaveEdit(idx)}
-                            disabled={!editText.trim()}
-                          >
-                            {t('recon.save')}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
+                    <DiscussionEditBox
+                      value={editText}
+                      onChange={setEditText}
+                      onSave={() => handleSaveEdit(idx)}
+                      onCancel={() => setEditingIdx(null)}
+                      mono
+                      autoFocus
+                    />
+                  ) : activeIdx === idx ? (
+                    // NOTE: 演示中的另解 → 用 SolutionView,点文本同步 player(虚拟光标)
+                    <SolutionView text={alt.solution} playerRef={playerRef} />
                   ) : (
-                    <pre className="detail-solution-text alt-solution-text">
+                    // NOTE: 未激活 → 点击文本 = 激活该另解(然后 player 切到这条);可点击 cursor
+                    <pre
+                      className="detail-solution-text alt-solution-text"
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => onSelect(idx)}
+                      title={t('recon.playAlt')}
+                    >
                       {alt.solution.split(/\r?\n/).map((line, li) => {
                         const nl = li > 0 ? '\n' : '';
                         if (line.trim().startsWith('//')) {
@@ -900,36 +850,27 @@ function AlternativesSection({ reconId, initial }: { reconId: number; initial: R
                     </pre>
                   )}
                 </div>
-                {(canEdit || canDelete) && editingIdx !== idx && (
-                  <div className="yt-comment-menu-wrap" onClick={e => e.stopPropagation()}>
+                {editingIdx !== idx && (
+                  <div className="alt-card-actions">
                     <button
                       type="button"
-                      className="yt-comment-menu-btn"
-                      onClick={() => setMenuOpenIdx(menuOpenIdx === idx ? null : idx)}
+                      className={`alt-play-btn${activeIdx === idx ? ' alt-play-btn-active' : ''}`}
+                      onClick={() => onSelect(activeIdx === idx ? null : idx)}
+                      title={activeIdx === idx ? t('recon.backToOriginal') : t('recon.playAlt')}
+                      aria-label={activeIdx === idx ? t('recon.backToOriginal') : t('recon.playAlt')}
                     >
-                      <MoreVertical size={18} />
+                      {activeIdx === idx ? <Square size={14} /> : <Play size={14} />}
                     </button>
-                    {menuOpenIdx === idx && (
-                      <div className="yt-comment-menu">
-                        {canEdit && (
-                          <button type="button" onClick={() => {
-                            setEditingIdx(idx);
-                            setEditText(alt.solution);
-                            setMenuOpenIdx(null);
-                          }}>
-                            <Pencil size={14} /> {t('recon.edit')}
-                          </button>
-                        )}
-                        {canDelete && (
-                          <button type="button" onClick={() => {
-                            setMenuOpenIdx(null);
-                            handleDelete(idx);
-                          }}>
-                            <Trash2 size={14} /> {t('recon.delete')}
-                          </button>
-                        )}
-                      </div>
-                    )}
+                    <ItemMenu items={[
+                      ...(canEdit ? [{
+                        icon: <Pencil size={14} />, label: t('recon.edit'),
+                        onClick: () => { setEditingIdx(idx); setEditText(alt.solution); },
+                      }] : []),
+                      ...(canDelete ? [{
+                        icon: <Trash2 size={14} />, label: t('recon.delete'),
+                        onClick: () => handleDelete(idx),
+                      }] : []),
+                    ]} />
                   </div>
                 )}
               </div>
@@ -950,11 +891,8 @@ function CommentsView({
   onUpdate: () => void;
 }) {
   const [newComment, setNewComment] = useState('');
-  const [composerOpen, setComposerOpen] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editText, setEditText] = useState('');
-  const [menuOpenId, setMenuOpenId] = useState<number | null>(null);
   // 回复状态
   const [replyingToId, setReplyingToId] = useState<number | null>(null);
   const [replyText, setReplyText] = useState('');
@@ -966,17 +904,6 @@ function CommentsView({
   const currentWcaId = user?.wcaId || '';
   const { t, i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-
-  // NOTE: 点击空白处关闭菜单
-  useEffect(() => {
-    if (menuOpenId === null) return;
-    const handler = () => setMenuOpenId(null);
-    const timer = setTimeout(() => document.addEventListener('click', handler), 0);
-    return () => {
-      clearTimeout(timer);
-      document.removeEventListener('click', handler);
-    };
-  }, [menuOpenId]);
 
   // 按 parent 分组
   const { topLevel, repliesByParent } = useMemo(() => {
@@ -998,23 +925,9 @@ function CommentsView({
   }, [comments]);
 
   const handleAdd = async () => {
-    if (!newComment.trim() || submitting) return;
-    setSubmitting(true);
-    try {
-      await addComment(reconId, newComment.trim());
-      setNewComment('');
-      setComposerOpen(false);
-      onUpdate();
-    } catch (err) {
-      alert(`Error: ${(err as Error).message}`);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleCancelCompose = () => {
+    await addComment(reconId, newComment.trim());
     setNewComment('');
-    setComposerOpen(false);
+    onUpdate();
   };
 
   const handleEdit = async (commentId: number) => {
@@ -1091,50 +1004,14 @@ function CommentsView({
       <div className="detail-section-label">
         <MessageCircle size={14} /> {t('recon.comments')} ({comments.length})
       </div>
-      {/* NOTE: 添加评论——YouTube 风格，放在评论列表上方；未登录则显示登录提示 */}
-      {currentWcaId ? (
-        <div className={`yt-composer${composerOpen || newComment ? ' yt-composer-active' : ''}`}>
-          {user?.avatar ? (
-            <img src={user.avatar} alt="" className="yt-composer-avatar" />
-          ) : (
-            <div className="yt-composer-avatar yt-composer-avatar-fallback">
-              {user?.name?.[0]?.toUpperCase() || '?'}
-            </div>
-          )}
-          <div className="yt-composer-body">
-            <textarea
-              className="yt-composer-input"
-              value={newComment}
-              onChange={e => setNewComment(e.target.value)}
-              onFocus={() => setComposerOpen(true)}
-              placeholder={t('recon.writeComment')}
-              rows={composerOpen || newComment ? 2 : 1}
-            />
-            {(composerOpen || newComment) && (
-              <div className="yt-composer-actions">
-                <div />
-                <div className="yt-composer-buttons">
-                  <button type="button" className="yt-btn-text" onClick={handleCancelCompose}>
-                    {t('recon.cancel')}
-                  </button>
-                  <button
-                    type="button"
-                    className="yt-btn-primary"
-                    onClick={handleAdd}
-                    disabled={submitting || !newComment.trim()}
-                  >
-                    {submitting ? t('recon.posting') : t('recon.post')}
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      ) : (
-        <div className="detail-comment-login-hint" onClick={() => useAuthStore.getState().login()} style={{ cursor: 'pointer' }}>
-          <Key size={16} /> {t('recon.loginToComment')}
-        </div>
-      )}
+      <DiscussionComposer
+        value={newComment}
+        onChange={setNewComment}
+        onSubmit={handleAdd}
+        placeholder={t('recon.writeComment')}
+        submitLabel={t('recon.post')}
+        loginHint={t('recon.loginToComment')}
+      />
 
       <div className="yt-comment-list">
         {topLevel.map(comment => {
@@ -1165,39 +1042,16 @@ function CommentsView({
                   {/* 回复输入框 */}
                   {replyingToId === comment.id && currentWcaId && (
                     <div className="yt-reply-composer">
-                      {user?.avatar ? (
-                        <img src={user.avatar} alt="" className="yt-composer-avatar" />
-                      ) : (
-                        <div className="yt-composer-avatar yt-composer-avatar-fallback">
-                          {user?.name?.[0]?.toUpperCase() || '?'}
-                        </div>
-                      )}
-                      <div className="yt-composer-body">
-                        <textarea
-                          className="yt-composer-input"
-                          value={replyText}
-                          onChange={e => setReplyText(e.target.value)}
-                          placeholder={t('recon.writeReply')}
-                          rows={2}
-                          autoFocus
-                        />
-                        <div className="yt-composer-actions">
-                          <div />
-                          <div className="yt-composer-buttons">
-                            <button type="button" className="yt-btn-text" onClick={cancelReply}>
-                              {t('recon.cancel')}
-                            </button>
-                            <button
-                              type="button"
-                              className="yt-btn-primary"
-                              onClick={() => handleSubmitReply(comment.id)}
-                              disabled={replySubmitting || !replyText.trim()}
-                            >
-                              {replySubmitting ? t('recon.posting') : t('recon.post')}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
+                      <DiscussionComposer
+                        value={replyText}
+                        onChange={setReplyText}
+                        onSubmit={async () => { await handleSubmitReply(comment.id); }}
+                        onCancel={cancelReply}
+                        placeholder={t('recon.writeReply')}
+                        submitLabel={t('recon.post')}
+                        loginHint=""
+                        autoFocus
+                      />
                     </div>
                   )}
                 </div>
@@ -1218,55 +1072,33 @@ function CommentsView({
     const canPin = admin && !isReply; // 回复不允许置顶
     const canReply = !isReply && !!currentWcaId; // 仅顶层可被回复(单层嵌套)
     const ownAvatar = isOwn && user?.avatar ? user.avatar : null;
-    const displayName = displayCuberName(comment.authorName || '', isZh);
     return (
       <div className="yt-comment">
-        {ownAvatar ? (
-          <img src={ownAvatar} alt="" className="yt-comment-avatar" />
-        ) : (
-          <div className="yt-comment-avatar yt-comment-avatar-fallback">
-            {displayName?.[0]?.toUpperCase() || '?'}
-          </div>
-        )}
+        <UserAvatarFallback name={comment.authorName} avatar={ownAvatar} />
         <div className="yt-comment-content">
           {comment.pinned && (
             <div className="yt-comment-pinned-badge">
               <Pin size={12} /> {t('recon.pinned')}
             </div>
           )}
-          <div className="yt-comment-meta">
-            <Flag iso2={personFlagIso2(comment.authorId)} className="yt-comment-flag" />
-            <span className="yt-comment-author">{displayName}</span>
-            <span className="yt-comment-time">
-              {toIsoDate(new Date(comment.createdAt * 1000))}
-              {comment.updatedAt ? ` (${t('recon.edited')})` : ''}
-            </span>
-          </div>
+          <UserHeadline
+            authorId={comment.authorId}
+            authorName={comment.authorName}
+            createdAt={comment.createdAt}
+            suffix={comment.updatedAt ? ` (${t('recon.edited')})` : null}
+          />
           {editingId === comment.id ? (
-            <div className="yt-comment-edit">
-              <textarea
-                className="yt-composer-input"
-                value={editText}
-                onChange={e => setEditText(e.target.value)}
-                rows={2}
-                autoFocus
-              />
-              <div className="yt-composer-actions">
-                <div />
-                <div className="yt-composer-buttons">
-                  <button type="button" className="yt-btn-text" onClick={() => setEditingId(null)}>
-                    {t('recon.cancel')}
-                  </button>
-                  <button type="button" className="yt-btn-primary" onClick={() => handleEdit(comment.id)} disabled={!editText.trim()}>
-                    {t('recon.save')}
-                  </button>
-                </div>
-              </div>
-            </div>
+            <DiscussionEditBox
+              value={editText}
+              onChange={setEditText}
+              onSave={() => handleEdit(comment.id)}
+              onCancel={() => setEditingId(null)}
+              autoFocus
+            />
           ) : (
             <>
               <div className="yt-comment-body">{comment.content}</div>
-              {canReply && editingId !== comment.id && (
+              {canReply && (
                 <div className="yt-comment-actions">
                   <button type="button" className="yt-reply-btn" onClick={() => startReply(comment)}>
                     {t('recon.reply')}
@@ -1276,47 +1108,22 @@ function CommentsView({
             </>
           )}
         </div>
-        {(canEdit || canDelete || canPin) && editingId !== comment.id && (
-          <div className="yt-comment-menu-wrap" onClick={e => e.stopPropagation()}>
-            <button
-              type="button"
-              className="yt-comment-menu-btn"
-              onClick={() => setMenuOpenId(menuOpenId === comment.id ? null : comment.id)}
-            >
-              <MoreVertical size={18} />
-            </button>
-            {menuOpenId === comment.id && (
-              <div className="yt-comment-menu">
-                {canEdit && (
-                  <button type="button" onClick={() => {
-                    setEditingId(comment.id);
-                    setEditText(comment.content);
-                    setMenuOpenId(null);
-                  }}>
-                    <Pencil size={14} /> {t('recon.edit')}
-                  </button>
-                )}
-                {canPin && (
-                  <button type="button" onClick={() => {
-                    setMenuOpenId(null);
-                    handleTogglePin(comment.id, !comment.pinned);
-                  }}>
-                    {comment.pinned
-                      ? <><PinOff size={14} /> {t('recon.unpin')}</>
-                      : <><Pin size={14} /> {t('recon.pin')}</>}
-                  </button>
-                )}
-                {canDelete && (
-                  <button type="button" onClick={() => {
-                    setMenuOpenId(null);
-                    handleDelete(comment.id);
-                  }}>
-                    <Trash2 size={14} /> {t('recon.delete')}
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
+        {editingId !== comment.id && (
+          <ItemMenu items={[
+            ...(canEdit ? [{
+              icon: <Pencil size={14} />, label: t('recon.edit'),
+              onClick: () => { setEditingId(comment.id); setEditText(comment.content); },
+            }] : []),
+            ...(canPin ? [{
+              icon: comment.pinned ? <PinOff size={14} /> : <Pin size={14} />,
+              label: comment.pinned ? t('recon.unpin') : t('recon.pin'),
+              onClick: () => handleTogglePin(comment.id, !comment.pinned),
+            }] : []),
+            ...(canDelete ? [{
+              icon: <Trash2 size={14} />, label: t('recon.delete'),
+              onClick: () => handleDelete(comment.id),
+            }] : []),
+          ]} />
         )}
       </div>
     );

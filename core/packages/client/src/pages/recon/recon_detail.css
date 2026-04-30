@@ -514,6 +514,112 @@
   white-space: pre !important;
 }
 
+/* "添加另解" 按钮条 */
+.alt-add-bar {
+  display: flex;
+  margin: 8px 0 12px;
+}
+
+/* AltSubmitPage 专用 */
+.alt-submit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+}
+
+.alt-submit-scramble {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.92rem;
+  color: #888;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 8px 10px;
+  resize: none;
+}
+
+.alt-submit-parent-ref {
+  font-size: 0.7em;
+  color: #888;
+  font-weight: normal;
+}
+
+.alt-submit-parent-link {
+  color: #888;
+  text-decoration: none;
+}
+
+.alt-submit-parent-link:hover { color: #e8a27a; }
+
+
+/* 另解卡片右侧:▶/■ + 三点菜单 */
+.alt-card-actions {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.alt-play-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  color: #a3a3a3;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.alt-play-btn:hover {
+  background: rgba(232, 162, 122, 0.12);
+  color: #e8a27a;
+  border-color: rgba(232, 162, 122, 0.4);
+}
+
+.alt-play-btn-active {
+  background: rgba(232, 162, 122, 0.15);
+  color: #e8a27a;
+  border-color: rgba(232, 162, 122, 0.55);
+}
+
+/* "正在演示另解 by xxx · 返回原解" banner——左栏 player 上方 */
+.detail-active-alt-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  margin-bottom: 8px;
+  background: rgba(232, 162, 122, 0.1);
+  border: 1px solid rgba(232, 162, 122, 0.35);
+  border-radius: 6px;
+  color: #e8a27a;
+  font-size: 0.88rem;
+}
+
+.detail-active-alt-banner span { flex: 1; }
+
+.detail-active-alt-banner button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: transparent;
+  border: 1px solid rgba(232, 162, 122, 0.4);
+  border-radius: 4px;
+  color: #e8a27a;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.detail-active-alt-banner button:hover {
+  background: rgba(232, 162, 122, 0.18);
+}
+
 .recon-btn-edit {
   color: #e8a27a !important;
   border-color: rgba(232, 162, 122, 0.3) !important;
@@ -743,6 +849,7 @@
   padding: 4px 0 8px;
   resize: none;
   outline: none;
+  overflow: hidden;  /* 文本自适应高度,不出滚动条 */
   line-height: 1.5;
   transition: border-color 0.15s;
 }
