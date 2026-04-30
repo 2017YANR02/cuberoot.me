@@ -735,8 +735,21 @@ function CompList({ comps, isZh, onSelect }: {
 
   const visible = items.slice(range.start, range.end);
 
+  // 顶部可见行所属年份 — sticky 显示，紧贴 chip 行下面
+  let stickyYear: { year: string; count: number } | null = null;
+  for (let i = Math.min(range.start, items.length - 1); i >= 0; i--) {
+    const it = items[i];
+    if (it.kind === 'year') { stickyYear = { year: it.year, count: it.count }; break; }
+  }
+
   return (
     <div className="comp-list">
+      {stickyYear && (
+        <div className="comp-list-year-sticky">
+          <span className="comp-list-year-num">{stickyYear.year}</span>
+          <span className="comp-list-year-count">{stickyYear.count}</span>
+        </div>
+      )}
       <div ref={containerRef} className="comp-list-virtual" style={{ height: totalH }}>
         {visible.map((it, i) => {
           const idx = range.start + i;
@@ -1221,8 +1234,10 @@ export default function UpcomingCompsPage() {
             </span>
           </div>
         )}
-        <div className={`event-chips${viewMode === 'list' ? ' event-chips--list-header' : ''}`}>
-          {viewMode === 'list' && (
+      </div>
+
+      <div className={`event-chips${viewMode === 'list' ? ' event-chips--list-header' : ''}`}>
+        {viewMode === 'list' && (
             <>
               <span className="cl-h-spacer" aria-hidden="true" />
               <span className="cl-h-spacer" aria-hidden="true" />
@@ -1259,13 +1274,12 @@ export default function UpcomingCompsPage() {
                 title={cycleHint}
               >
                 <span className={`cubing-icon event-${eid}`} />
-                <span className={`event-chip-rounds${cur === undefined ? ' is-empty' : ''}`}>
-                  {badge}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+              <span className={`event-chip-rounds${cur === undefined ? ' is-empty' : ''}`}>
+                {badge}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {allLoading && mode === 'all' && (
