@@ -91,8 +91,8 @@ const WCA_EVENT_ID_TO_SHORT: Record<string, string> = Object.fromEntries(
   Object.entries(SHORT_TO_EVENT_ID).map(([s, w]) => [w, s])
 );
 
-// 列表视图与 chip 过滤共用的项目顺序（WCA 标准官方顺序，17 项）
-const EVENT_ORDER = ['333', '222', '444', '555', '666', '777', '333bf', '333fm', '333oh', 'clock', 'minx', 'pyram', 'skewb', 'sq1', '444bf', '555bf', '333mbf'] as const;
+// 列表视图与 chip 过滤共用的项目顺序（WCA 标准 17 项 + 4 个已停办老项目：333ft 用脚拧、333mbo 旧多盲、magic、mmagic）
+const EVENT_ORDER = ['333', '222', '444', '555', '666', '777', '333bf', '333fm', '333oh', 'clock', 'minx', 'pyram', 'skewb', 'sq1', '444bf', '555bf', '333mbf', '333ft', '333mbo', 'magic', 'mmagic'] as const;
 
 const WEEKDAY_EN = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 const WEEKDAY_ZH = ['一','二','三','四','五','六','日'];
@@ -668,33 +668,29 @@ function readMonthFromUrl(): Date | null {
 const LIST_ROW_H = 44;
 const LIST_BUFFER = 8; // 视口外多渲染几行做缓冲，避免快速滚动时露白
 
-type ListItem =
-  | { kind: 'year'; year: string; count: number; key: string }
-  | { kind: 'row'; comp: Competition; key: string };
+interface RowItem { comp: Competition; key: string }
 
-function CompList({ comps, isZh, onSelect }: {
+function CompList({ comps, isZh, onSelect, onYearChange }: {
   comps: Competition[];
   isZh: boolean;
   onSelect: (c: Competition) => void;
+  /** 当前可见区域所在年份（用于在 chip 行 sticky 显示）；可见为空时传 null */
+  onYearChange: (info: { year: string; count: number } | null) => void;
 }) {
-  const items = useMemo<ListItem[]>(() => {
-    const sorted = [...comps].sort((a, b) => b.start_date.localeCompare(a.start_date));
-    const yearCounts = new Map<string, number>();
-    for (const c of sorted) {
+  // 倒序排列；不再插入"年份分隔"行，年份显示在 chip 行的左侧 sticky cell 里
+  const items = useMemo<RowItem[]>(
+    () => [...comps]
+      .sort((a, b) => b.start_date.localeCompare(a.start_date))
+      .map((c) => ({ comp: c, key: c.id })),
+    [comps],
+  );
+  const yearCounts = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const c of comps) {
       const y = c.start_date.slice(0, 4);
-      yearCounts.set(y, (yearCounts.get(y) ?? 0) + 1);
+      m.set(y, (m.get(y) ?? 0) + 1);
     }
-    const out: ListItem[] = [];
-    let cur = '';
-    for (const c of sorted) {
-      const y = c.start_date.slice(0, 4);
-      if (y !== cur) {
-        out.push({ kind: 'year', year: y, count: yearCounts.get(y)!, key: `y-${y}` });
-        cur = y;
-      }
-      out.push({ kind: 'row', comp: c, key: c.id });
-    }
-    return out;
+    return m;
   }, [comps]);
 
   const totalH = items.length * LIST_ROW_H;
@@ -729,43 +725,26 @@ function CompList({ comps, isZh, onSelect }: {
     };
   }, [items.length]);
 
+  // 通知父组件当前 sticky 年份（最顶可见行所在的年份）
+  useEffect(() => {
+    if (items.length === 0) { onYearChange(null); return; }
+    const idx = Math.min(range.start, items.length - 1);
+    const year = items[idx].comp.start_date.slice(0, 4);
+    onYearChange({ year, count: yearCounts.get(year) ?? 0 });
+  }, [range.start, items, yearCounts, onYearChange]);
+
   if (items.length === 0) {
     return <div className="comp-list-empty">{isZh ? '没有匹配的比赛' : 'No competitions match'}</div>;
   }
 
   const visible = items.slice(range.start, range.end);
 
-  // 顶部可见行所属年份 — sticky 显示，紧贴 chip 行下面
-  let stickyYear: { year: string; count: number } | null = null;
-  for (let i = Math.min(range.start, items.length - 1); i >= 0; i--) {
-    const it = items[i];
-    if (it.kind === 'year') { stickyYear = { year: it.year, count: it.count }; break; }
-  }
-
   return (
     <div className="comp-list">
-      {stickyYear && (
-        <div className="comp-list-year-sticky">
-          <span className="comp-list-year-num">{stickyYear.year}</span>
-          <span className="comp-list-year-count">{stickyYear.count}</span>
-        </div>
-      )}
       <div ref={containerRef} className="comp-list-virtual" style={{ height: totalH }}>
         {visible.map((it, i) => {
           const idx = range.start + i;
           const top = idx * LIST_ROW_H;
-          if (it.kind === 'year') {
-            return (
-              <div
-                key={it.key}
-                className="comp-list-year"
-                style={{ top, height: LIST_ROW_H }}
-              >
-                <span className="comp-list-year-num">{it.year}</span>
-                <span className="comp-list-year-count">{it.count}</span>
-              </div>
-            );
-          }
           const c = it.comp;
           const dateStr = formatDateRangeIso(c.start_date, c.end_date || c.start_date);
           const displayName = localizeName(c, isZh);
@@ -823,13 +802,16 @@ export default function UpcomingCompsPage() {
   const [allComps, setAllComps] = useState<Competition[] | null>(null);
   const [allLoading, setAllLoading] = useState(false);
   const [allError, setAllError] = useState<string | null>(null);
-  // 每个项目独立的轮次约束（精确匹配，WCA 单项上限 4 轮）；缺 key = 不过滤此项目。
-  // chip 单击循环：undefined → 1 → 2 → ... → max → undefined（max 由 maxRoundsByEid 决定）。
-  const [eventFilters, setEventFilters] = useState<Record<string, 1 | 2 | 3 | 4>>({});
+  // 每个项目独立的轮次约束。1..max = 精确匹配；'any' = 项目存在即过（不检查轮次）；
+  // 缺 key = 不过滤此项目。chip 单击循环：undefined → 1 → ... → max → 'any' → undefined。
+  // 'any' 状态在 UI 上仅通过 is-active 边框体现（badge 空），不显式写"≥1"等文字。
+  const [eventFilters, setEventFilters] = useState<Record<string, 'any' | 1 | 2 | 3 | 4>>({});
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
   // 列表视图下的年月范围过滤（YYYY-MM 字符串；不合规或空 = 不参与过滤）
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  // 列表 sticky 年份（chip 行左侧 cell 显示）；CompList 滚动时回调更新
+  const [currentYear, setCurrentYear] = useState<{ year: string; count: number } | null>(null);
   // 三个 popover 共用一份 state：'month' = 日历模式月份选择；'from'/'to' = 列表模式年月范围
   const [pickerOpen, setPickerOpen] = useState<'month' | 'from' | 'to' | null>(null);
   const monthBtnRef = useRef<HTMLButtonElement>(null);
@@ -946,13 +928,14 @@ export default function UpcomingCompsPage() {
         if (!cuberText.includes(cuberQ)) return false;
       }
       if (countryFilterSet.size > 0 && !countryFilterSet.has(comp.country.toUpperCase())) return false;
-      // AND 语义：每个所选项目的轮次都必须精确匹配。
+      // AND 语义：每个所选项目都必须存在；rf 是数字时还要轮次精确匹配，'any' 时只看项目存在。
       // comp.events / comp.rounds 用 short code（'3' / 'pyra'），过滤里的 eid 是 WCA 标准 ID（'333'）→ 反查。
       for (const [eid, rf] of Object.entries(eventFilters)) {
         const shortEid = WCA_EVENT_ID_TO_SHORT[eid] ?? eid;
         if (!(comp.events ?? []).includes(shortEid)) return false;
+        if (rf === 'any') continue;
         const r = comp.rounds?.[shortEid];
-        if (r == null) return false; // 没有 rounds 数据（upcoming 未拉 WCIF）即排除
+        if (r == null) return false;
         if (r !== rf) return false;
       }
       if (validYM(dateFrom) || validYM(dateTo)) {
@@ -1089,7 +1072,7 @@ export default function UpcomingCompsPage() {
   const weekdays = isZh ? WEEKDAY_ZH : WEEKDAY_EN;
 
   return (
-    <div className="upcoming-page">
+    <div className={`upcoming-page${viewMode === 'list' ? ' upcoming-page--list' : ''}`}>
       <header className="upcoming-header">
         <h1 className="upcoming-title">{t('upcoming.title')}</h1>
         <div className="upcoming-meta">
@@ -1238,23 +1221,33 @@ export default function UpcomingCompsPage() {
 
       <div className={`event-chips${viewMode === 'list' ? ' event-chips--list-header' : ''}`}>
         {viewMode === 'list' && (
-            <>
-              <span className="cl-h-spacer" aria-hidden="true" />
-              <span className="cl-h-spacer" aria-hidden="true" />
-              <span className="cl-h-spacer" aria-hidden="true" />
-              <span className="cl-h-spacer" aria-hidden="true" />
-            </>
-          )}
+          <>
+            <span className="cl-year-cell" aria-live="polite">
+              {currentYear && (
+                <>
+                  <span className="cl-year-num">{currentYear.year}</span>
+                  <span className="cl-year-count">{currentYear.count.toLocaleString()}</span>
+                </>
+              )}
+            </span>
+            <span className="cl-h-spacer" aria-hidden="true" />
+            <span className="cl-h-spacer" aria-hidden="true" />
+            <span className="cl-h-spacer" aria-hidden="true" />
+          </>
+        )}
           {EVENT_ORDER.map((eid) => {
             const cur = eventFilters[eid];
             const active = cur !== undefined;
             const max = maxRoundsByEid[eid] ?? 0;
-            const badge = cur === undefined ? '' : String(cur);
+            const badge = typeof cur === 'number' ? String(cur) : '';
             const cycle = () => setEventFilters((prev) => {
               const next = { ...prev };
               const c = prev[eid];
               if (c === undefined) {
+                next[eid] = 'any';
+              } else if (c === 'any') {
                 if (max >= 1) next[eid] = 1;
+                else delete next[eid]; // 此项目无任何 rounds 数据 → 直接关
               } else {
                 const n = c + 1;
                 if (n <= max) next[eid] = n as 1 | 2 | 3 | 4;
@@ -1263,8 +1256,8 @@ export default function UpcomingCompsPage() {
               return next;
             });
             const cycleHint = max >= 1
-              ? (isZh ? `点击切换：关 → 1 → ... → ${max} → 关` : `Click to cycle: off → 1 → ... → ${max} → off`)
-              : (isZh ? '此项目暂无轮次数据' : 'No round data for this event yet');
+              ? (isZh ? `点击切换：关 → max → 1 → ... → ${max} → 关` : `Click to cycle: off → max → 1 → ... → ${max} → off`)
+              : (isZh ? '点击切换：关 → max → 关' : 'Click to cycle: off → max → off');
             return (
               <button
                 key={eid}
@@ -1311,6 +1304,7 @@ export default function UpcomingCompsPage() {
           comps={displayedComps}
           isZh={isZh}
           onSelect={setSelectedComp}
+          onYearChange={setCurrentYear}
         />
       )}
 
