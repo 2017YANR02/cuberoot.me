@@ -63,9 +63,9 @@ function stageForLabel(label: string): { stage: Stage; category: AlgdbCategory; 
   if (lc === 'pll' || lc === 'epll') {
     return { stage: { kind: 'pll' }, category: 'pll' };
   }
-  if (lc === 'cross' || lc === 'w cross' || lc === 'y cross' || /cross$/.test(lc)) {
-    // No 'cross' library — skip alg suggestions for cross
-    return null;
+  if (lc === 'cross' || /cross$/.test(lc)) {
+    // Cross 之后用户准备做 1st pair — 弹 F2L 公式
+    return { stage: { kind: 'pair', index: 1 }, category: 'f2l' };
   }
   return null;
 }
