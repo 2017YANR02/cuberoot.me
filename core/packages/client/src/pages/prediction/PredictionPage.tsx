@@ -317,13 +317,13 @@ export default function PredictionPage() {
                         <div className="pred-ov-section-label">{isZh ? `平均 (${s.ev.avgFormat})` : `Avg (${s.ev.avgFormat})`}</div>
                         <div className="pred-ov-row">
                           <span className="pred-ov-label">{isZh ? '当前 WR' : 'Current WR'}</span>
-                          <span className="pred-ov-val">{curAvg !== null ? formatVal(curAvg, s.ev.scale) : '–'}</span>
+                          <span className="pred-ov-val">{curAvg !== null ? formatVal(curAvg, s.ev, 'average') : '–'}</span>
                         </div>
                         <div className="pred-ov-row">
                           <span className="pred-ov-label" title={isZh ? '步数法 + 执行噪声残差' : 'Step-count + execution noise floor'}>
                             T_phys
                           </span>
-                          <span className="pred-ov-val pred-ov-accent">{tPhysAvg !== null ? formatVal(tPhysAvg, s.ev.scale) : '–'}</span>
+                          <span className="pred-ov-val pred-ov-accent">{tPhysAvg !== null ? formatVal(tPhysAvg, s.ev, 'average') : '–'}</span>
                         </div>
                         <div className="pred-ov-row">
                           <span className="pred-ov-label">T_phys/WR</span>

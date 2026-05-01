@@ -219,7 +219,7 @@ export default function EventSection({ event, data, isZh }: Props) {
           return (
             <div className="pred-card">
               <div className="pred-card-label">{isZh ? `当前 WR ${event.avgFormat}` : `Current WR ${event.avgFormat}`}</div>
-              <div className="pred-card-value">{curAvg !== null ? formatVal(curAvg, event.scale) : '–'}</div>
+              <div className="pred-card-value">{curAvg !== null ? formatVal(curAvg, event, 'average') : '–'}</div>
               <div className="pred-card-sub">{lim?.current_wr_avg_holder ?? ''}</div>
             </div>
           );
@@ -234,7 +234,7 @@ export default function EventSection({ event, data, isZh }: Props) {
               <div className="pred-card-label" title={isZh ? '步数法 + 执行噪声残差' : 'Step-count + execution noise residual'}>
                 {isZh ? `物理下界 T_phys (${event.avgFormat})` : `T_phys (${event.avgFormat})`}
               </div>
-              <div className="pred-card-value pred-card-accent">{formatVal(lim.t_phys_avg, event.scale)}</div>
+              <div className="pred-card-value pred-card-accent">{formatVal(lim.t_phys_avg, event, 'average')}</div>
               <div className="pred-card-sub">{ratio !== null ? `T_phys/WR = ${Math.round(ratio * 100)}%` : ''}</div>
             </div>
           );
