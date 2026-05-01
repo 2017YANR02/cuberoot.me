@@ -14,7 +14,8 @@ import {
   wcaPersonUrl, wcaCompUrl,
 } from '../../utils/recon_utils';
 import { displayCuberName } from '../../utils/name_utils';
-import { compNameZh, loadFlagData, flagDataVersion } from '../../utils/country_flags';
+import { compNameZh, loadFlagData, flagDataVersion, personFlagIso2 } from '../../utils/country_flags';
+import { Flag } from '../../utils/flag';
 import { stripWcaPrefix } from '../../utils/comp_localize';
 import LangToggle from '../../components/LangToggle';
 import { RecordBadge } from '../../components/RecordBadge';
@@ -580,22 +581,27 @@ export default function ReconListPage() {
         return <>{fc && <span className={fc} />} {name}</>;
       }
       case 'reconer': {
-        // NOTE: 复盘者无 country，仅名字 + 可选 WCA 链接
+        // NOTE: 复盘者 country 通过 reconerId 反查 person_countries.json
         if (!solve.reconer) return '';
         const name = displayCuberName(solve.reconer, isZh);
+        const iso2 = solve.reconerId ? personFlagIso2(solve.reconerId) : '';
+        const flag = iso2 ? <Flag iso2={iso2} className="recon-inline-flag" /> : null;
         if (solve.reconerId) {
           return (
-            <a
-              href={wcaPersonUrl(solve.reconerId)}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {name}
-            </a>
+            <>
+              {flag}
+              <a
+                href={wcaPersonUrl(solve.reconerId)}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {name}
+              </a>
+            </>
           );
         }
-        return name;
+        return <>{flag}{name}</>;
       }
       case 'date':
         // NOTE: 截取 YYYY-MM-DD 部分
