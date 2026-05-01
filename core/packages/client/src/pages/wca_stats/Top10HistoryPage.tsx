@@ -220,17 +220,18 @@ export default function Top10HistoryPage({
     [events],
   );
 
-  const prevEventMetricRef = useRef(`${eventId}:${metric}`);
+  const prevEventMetricRef = useRef('');
   useEffect(() => {
+    if (events.length === 0) return;
     const key = `${eventId}:${metric}`;
     if (key !== prevEventMetricRef.current) {
       prevEventMetricRef.current = key;
-      setDateMs(startMs);
+      setDateMs(endMs);
       setPlaying(false);
     } else {
       setDateMs(prev => Math.max(startMs, Math.min(endMs, prev)));
     }
-  }, [startMs, endMs, eventId, metric]);
+  }, [startMs, endMs, eventId, metric, events.length]);
 
   // NOTE: PB 模式专用 — 只保留"top-10 顺序变化"的日期
   //   纯个人成绩提升(同人同名次)/ 不进 top-10 的 PB 都跳过

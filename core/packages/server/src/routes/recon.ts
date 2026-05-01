@@ -456,6 +456,129 @@ reconRoutes.get('/api/recon/cubing-attempts', async (c) => {
   }
 });
 
+// NOTE: WCA 官方比赛 results / scrambles 已 posted 后基本 immutable —— DB write-through 缓存,
+// 让"同轮次还原"在第二位用户/设备上秒加载。30 天 TTL 兼顾偶发的赛后修订(罚时/DNF 调整)。
+const WCA_CACHE_TTL_DAYS = 30;
+
+// GET /api/recon/wca-results?compId=&wcaEvent= — 缓存式代理 WCA results,client 替代直拉
+reconRoutes.get('/api/recon/wca-results', async (c) => {
+  const compId = c.req.query('compId') ?? '';
+  const wcaEvent = c.req.query('wcaEvent') ?? '';
+  if (!compId || !wcaEvent) return c.json({ error: 'compId/wcaEvent required' }, 400);
+  if (!/^[A-Za-z0-9_-]+$/.test(compId) || !/^[A-Za-z0-9]+$/.test(wcaEvent)) {
+    return c.json({ error: 'invalid param format' }, 400);
+  }
+
+  // 1. 查缓存
+  try {
+    const rows = await query<{ payload: string }>(
+      `SELECT payload FROM wca_results_cache
+        WHERE comp_id = ? AND wca_event = ?
+          AND fetched_at > NOW() - INTERVAL ${WCA_CACHE_TTL_DAYS} DAY`,
+      [compId, wcaEvent],
+    );
+    if (rows[0]?.payload) {
+      c.header('Cache-Control', 'public, max-age=86400');
+      c.header('X-Cache', 'HIT');
+      return c.body(rows[0].payload, 200, { 'Content-Type': 'application/json' });
+    }
+  } catch (err) {
+    console.error('[wca-results] cache read failed:', err);
+  }
+
+  // 2. miss → 上游拉
+  const url = `https://www.worldcubeassociation.org/api/v0/competitions/${encodeURIComponent(compId)}/results/${encodeURIComponent(wcaEvent)}`;
+  let upstream: { id: unknown; rounds: { results: unknown[] }[] } | null = null;
+  try {
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'CubeRoot-Recon/1.0' },
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!res.ok) return c.json({ error: 'WCA API unavailable', status: res.status }, 502);
+    upstream = await res.json();
+  } catch {
+    return c.json({ error: 'WCA API unreachable' }, 502);
+  }
+  if (!upstream || !Array.isArray(upstream.rounds)) {
+    return c.json({ error: 'WCA API malformed' }, 502);
+  }
+
+  // 3. 仅当有任意一轮含 results 才写库,避免缓存"未 posted"的空响应
+  const hasAny = upstream.rounds.some(r => Array.isArray(r.results) && r.results.length > 0);
+  const payload = JSON.stringify(upstream);
+  if (hasAny) {
+    try {
+      await query(
+        `INSERT INTO wca_results_cache (comp_id, wca_event, payload)
+         VALUES (?, ?, ?)
+         ON DUPLICATE KEY UPDATE payload = VALUES(payload), fetched_at = CURRENT_TIMESTAMP`,
+        [compId, wcaEvent, payload],
+      );
+    } catch (err) {
+      console.error('[wca-results] cache write failed:', err);
+    }
+  }
+
+  c.header('Cache-Control', hasAny ? 'public, max-age=86400' : 'public, max-age=60');
+  c.header('X-Cache', 'MISS');
+  return c.body(payload, 200, { 'Content-Type': 'application/json' });
+});
+
+// GET /api/recon/wca-scrambles?compId= — 缓存式代理 WCA scrambles
+reconRoutes.get('/api/recon/wca-scrambles', async (c) => {
+  const compId = c.req.query('compId') ?? '';
+  if (!compId) return c.json({ error: 'compId required' }, 400);
+  if (!/^[A-Za-z0-9_-]+$/.test(compId)) return c.json({ error: 'invalid compId' }, 400);
+
+  try {
+    const rows = await query<{ payload: string }>(
+      `SELECT payload FROM wca_scrambles_cache
+        WHERE comp_id = ?
+          AND fetched_at > NOW() - INTERVAL ${WCA_CACHE_TTL_DAYS} DAY`,
+      [compId],
+    );
+    if (rows[0]?.payload) {
+      c.header('Cache-Control', 'public, max-age=86400');
+      c.header('X-Cache', 'HIT');
+      return c.body(rows[0].payload, 200, { 'Content-Type': 'application/json' });
+    }
+  } catch (err) {
+    console.error('[wca-scrambles] cache read failed:', err);
+  }
+
+  const url = `https://www.worldcubeassociation.org/api/v0/competitions/${encodeURIComponent(compId)}/scrambles`;
+  let upstream: unknown[] | null = null;
+  try {
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'CubeRoot-Recon/1.0' },
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!res.ok) return c.json({ error: 'WCA API unavailable', status: res.status }, 502);
+    upstream = await res.json();
+  } catch {
+    return c.json({ error: 'WCA API unreachable' }, 502);
+  }
+  if (!Array.isArray(upstream)) return c.json({ error: 'WCA API malformed' }, 502);
+
+  const payload = JSON.stringify(upstream);
+  if (upstream.length > 0) {
+    try {
+      await query(
+        `INSERT INTO wca_scrambles_cache (comp_id, payload)
+         VALUES (?, ?)
+         ON DUPLICATE KEY UPDATE payload = VALUES(payload), fetched_at = CURRENT_TIMESTAMP`,
+        [compId, payload],
+      );
+    } catch (err) {
+      console.error('[wca-scrambles] cache write failed:', err);
+    }
+  }
+
+  c.header('Cache-Control', upstream.length > 0 ? 'public, max-age=86400' : 'public, max-age=60');
+  c.header('X-Cache', 'MISS');
+  return c.body(payload, 200, { 'Content-Type': 'application/json' });
+});
+
 // GET /api/recon/bili-cover?bvid=xxx
 reconRoutes.get('/api/recon/bili-cover', async (c) => {
   const bvid = c.req.query('bvid') ?? '';

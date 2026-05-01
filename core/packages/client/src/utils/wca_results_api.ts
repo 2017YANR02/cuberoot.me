@@ -44,15 +44,22 @@ interface WcaResultsResponse {
 
 const cache = new Map<string, Promise<WcaResultsResponse | null>>();
 
+// NOTE: 优先打 cuberoot server 的缓存代理(write-through 到 wca_results_cache 表),失败再直拉 WCA。
+// 让"同轮次还原"在第二位用户/设备秒加载;server 挂了也能 graceful 降级。
 export function fetchWcaResults(compId: string, wcaEventId: string): Promise<WcaResultsResponse | null> {
   const key = `${compId}|${wcaEventId}`;
   const hit = cache.get(key);
   if (hit) return hit;
-  const url = `https://www.worldcubeassociation.org/api/v0/competitions/${encodeURIComponent(compId)}/results/${encodeURIComponent(wcaEventId)}`;
-  const p = fetch(url)
-    .then(r => r.ok ? r.json() : null)
-    .then((j: unknown) => (j && typeof j === 'object' && Array.isArray((j as WcaResultsResponse).rounds)) ? j as WcaResultsResponse : null)
-    .catch(() => null);
+  const proxyUrl = `/api/recon/wca-results?compId=${encodeURIComponent(compId)}&wcaEvent=${encodeURIComponent(wcaEventId)}`;
+  const directUrl = `https://www.worldcubeassociation.org/api/v0/competitions/${encodeURIComponent(compId)}/results/${encodeURIComponent(wcaEventId)}`;
+  const parse = (j: unknown): WcaResultsResponse | null =>
+    (j && typeof j === 'object' && Array.isArray((j as WcaResultsResponse).rounds)) ? j as WcaResultsResponse : null;
+  const p = fetch(proxyUrl)
+    .then(r => r.ok ? r.json() : Promise.reject(new Error(`proxy ${r.status}`)))
+    .then(parse)
+    .catch(() =>
+      fetch(directUrl).then(r => r.ok ? r.json() : null).then(parse).catch(() => null),
+    );
   cache.set(key, p);
   return p;
 }
@@ -140,14 +147,19 @@ interface WcaScrambleRow {
 
 const scrambleCache = new Map<string, Promise<WcaScrambleRow[] | null>>();
 
+// NOTE: 同 fetchWcaResults —— server proxy 优先 + 直拉 fallback
 function fetchWcaScrambles(compId: string): Promise<WcaScrambleRow[] | null> {
   const hit = scrambleCache.get(compId);
   if (hit) return hit;
-  const url = `https://www.worldcubeassociation.org/api/v0/competitions/${encodeURIComponent(compId)}/scrambles`;
-  const p = fetch(url)
-    .then(r => r.ok ? r.json() : null)
-    .then((j: unknown) => Array.isArray(j) ? j as WcaScrambleRow[] : null)
-    .catch(() => null);
+  const proxyUrl = `/api/recon/wca-scrambles?compId=${encodeURIComponent(compId)}`;
+  const directUrl = `https://www.worldcubeassociation.org/api/v0/competitions/${encodeURIComponent(compId)}/scrambles`;
+  const parse = (j: unknown): WcaScrambleRow[] | null => Array.isArray(j) ? j as WcaScrambleRow[] : null;
+  const p = fetch(proxyUrl)
+    .then(r => r.ok ? r.json() : Promise.reject(new Error(`proxy ${r.status}`)))
+    .then(parse)
+    .catch(() =>
+      fetch(directUrl).then(r => r.ok ? r.json() : null).then(parse).catch(() => null),
+    );
   scrambleCache.set(compId, p);
   return p;
 }

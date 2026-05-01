@@ -14,8 +14,17 @@ import { ArrowLeft, Menu, X as XIcon } from 'lucide-react';
 import { LineChart, type Series } from './charts';
 import { fitExpFloor, type DataPoint } from './models';
 import { EVENTS, formatVal, toDisplay } from './events';
+import { THEORETICAL_LIMITS } from './theoretical_limits';
 import EventSection from './EventSection';
 import './prediction.css';
+
+/** 取最后一行 (物理下界) 的 T 值 — 没有显式 T 就用 M/TPS+R */
+function physicalFloor(eventId: string): number | null {
+  const lim = THEORETICAL_LIMITS[eventId];
+  if (!lim || lim.decomp.length === 0) return null;
+  const last = lim.decomp[lim.decomp.length - 1];
+  return last.T ?? last.M / last.TPS + last.R;
+}
 
 interface AllEvents {
   generated_at: string;
@@ -254,38 +263,51 @@ export default function PredictionPage() {
             <h2>{isZh ? '跨项目总览' : 'Cross-Event Overview'}</h2>
             <p>
               {isZh
-                ? '一目了然的当前位置: 每项目当前 WR 单次, 模型估计极限, 两者比例, 累计 cuber-年, WR 改写次数. 比例越接近 100%, 说明该项目越接近"在当前框架下不可再压缩"的渐近行为, 若想突破需要新的方法/硬件革命.'
-                : 'At-a-glance positioning. For each event: current WR single, model-estimated limit L, ratio L/WR, cumulative cuber-years, # WR drops. Ratios near 100% mean the event is approaching its current-paradigm asymptote — further breakthroughs require methodological or hardware revolutions.'}
+                ? '每项目: 当前 WR 单次, 拟合 L (历史轨迹渐近线), 物理下界 T_phys (步数法 M/TPS+R 推导, 详见各项目章节), WR / T_phys 比例. 比例越接近 100% 越逼近物理极限; 拟合 L 与 T_phys 不一致是常态 — 拟合只看历史趋势, 看不见方法 / 硬件 regime shift.'
+                : 'Per event: current WR single, curve-fit L (historical trajectory asymptote), physical floor T_phys (M/TPS+R first-principles, see per-event sections), WR / T_phys ratio. Closer to 100% = closer to physical floor. Fit L ≠ T_phys is normal — the fit cannot see method/hardware regime shifts.'}
             </p>
             <div className="pred-overview-grid">
-              {eventSummaries.map((s) => (
-                <a key={s.ev.id} href={`#event-${s.ev.id}`} className="pred-overview-card">
-                  <div className="pred-ov-name">{isZh ? s.ev.name_zh : s.ev.name_en}</div>
-                  <div className="pred-ov-id">{s.ev.id}</div>
-                  <div className="pred-ov-row">
-                    <span className="pred-ov-label">{isZh ? '当前 WR' : 'Current WR'}</span>
-                    <span className="pred-ov-val">{s.lastWRval !== null ? formatVal(s.lastWRval, s.ev.scale) : '–'}</span>
-                  </div>
-                  <div className="pred-ov-row">
-                    <span className="pred-ov-label">{isZh ? '极限 L' : 'Limit L'}</span>
-                    <span className="pred-ov-val">{s.fit ? formatVal(s.fit.L, s.ev.scale) : '–'}</span>
-                  </div>
-                  <div className="pred-ov-row">
-                    <span className="pred-ov-label">L/WR</span>
-                    <span className="pred-ov-val pred-ov-pct">
-                      {s.fit && s.lastWRval ? Math.round(s.fit.L / s.lastWRval * 100) + '%' : '–'}
-                    </span>
-                  </div>
-                  <div className="pred-ov-row">
-                    <span className="pred-ov-label">{isZh ? '改写次数' : 'WR drops'}</span>
-                    <span className="pred-ov-val">{s.progressionCount}</span>
-                  </div>
-                  <div className="pred-ov-row">
-                    <span className="pred-ov-label">{isZh ? '累计 cuber' : 'Cubers'}</span>
-                    <span className="pred-ov-val">{s.cumCubers.toLocaleString()}</span>
-                  </div>
-                </a>
-              ))}
+              {eventSummaries.map((s) => {
+                const tPhys = physicalFloor(s.ev.id);
+                return (
+                  <a key={s.ev.id} href={`#event-${s.ev.id}`} className="pred-overview-card">
+                    <div className="pred-ov-name">{isZh ? s.ev.name_zh : s.ev.name_en}</div>
+                    <div className="pred-ov-id">{s.ev.id}</div>
+                    <div className="pred-ov-row">
+                      <span className="pred-ov-label">{isZh ? '当前 WR' : 'Current WR'}</span>
+                      <span className="pred-ov-val">{s.lastWRval !== null ? formatVal(s.lastWRval, s.ev.scale) : '–'}</span>
+                    </div>
+                    <div className="pred-ov-row">
+                      <span className="pred-ov-label" title={isZh ? '历史轨迹的曲线拟合渐近线 — 不是物理极限' : 'Curve-fit asymptote of historical trend — NOT a physical floor'}>
+                        {isZh ? '拟合 L' : 'Fit L'}
+                      </span>
+                      <span className="pred-ov-val">{s.fit ? formatVal(s.fit.L, s.ev.scale) : '–'}</span>
+                    </div>
+                    <div className="pred-ov-row">
+                      <span className="pred-ov-label" title={isZh ? '步数法物理下界 = M / TPS + R' : 'Step-count physical floor = M / TPS + R'}>
+                        {isZh ? '物理下界 T_phys' : 'T_phys'}
+                      </span>
+                      <span className="pred-ov-val pred-ov-accent">{tPhys !== null ? formatVal(tPhys, s.ev.scale) : '–'}</span>
+                    </div>
+                    <div className="pred-ov-row">
+                      <span className="pred-ov-label" title={isZh ? '物理下界 / 当前 WR' : 'T_phys / current WR'}>
+                        T_phys/WR
+                      </span>
+                      <span className="pred-ov-val pred-ov-pct">
+                        {tPhys !== null && s.lastWRval ? Math.round(tPhys / s.lastWRval * 100) + '%' : '–'}
+                      </span>
+                    </div>
+                    <div className="pred-ov-row">
+                      <span className="pred-ov-label">{isZh ? '改写次数' : 'WR drops'}</span>
+                      <span className="pred-ov-val">{s.progressionCount}</span>
+                    </div>
+                    <div className="pred-ov-row">
+                      <span className="pred-ov-label">{isZh ? '累计 cuber' : 'Cubers'}</span>
+                      <span className="pred-ov-val">{s.cumCubers.toLocaleString()}</span>
+                    </div>
+                  </a>
+                );
+              })}
             </div>
           </section>
 
