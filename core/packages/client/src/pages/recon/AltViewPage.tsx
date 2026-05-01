@@ -113,6 +113,13 @@ export default function AltViewPage() {
         {/* 内容栏 */}
         <div className="submit-form-pane">
           <div className="submit-form alt-submit-form">
+            {stats && stats.stm > 0 && (
+              <div className="submit-stats-preview">
+                <span>{stats.stm} STM</span>
+                {stats.tps > 0 && <span>{stats.tps} TPS</span>}
+              </div>
+            )}
+
             <label className="submit-field">
               <span className="submit-label">{t('recon.scramble')}</span>
               <textarea
@@ -133,13 +140,6 @@ export default function AltViewPage() {
                   playerRef={playerRef}
                   fillPane
                 />
-              </div>
-            )}
-
-            {stats && stats.stm > 0 && (
-              <div className="submit-stats-preview">
-                <span>{stats.stm} STM</span>
-                {stats.tps > 0 && <span>{stats.tps} TPS</span>}
               </div>
             )}
 

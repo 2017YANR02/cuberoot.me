@@ -19,7 +19,9 @@ import type { Comp } from '../../utils/comp_search';
 import { compNameZh, loadFlagData, flagDataVersion, personFlagIso2 } from '../../utils/country_flags';
 import { localizeCompName } from '../../utils/comp_localize';
 import { fetchCompRounds, type RoundFormat } from '../../utils/comp_wcif';
-import { toWcaEventId } from '../../utils/wca_events';
+import { toWcaEventId, eventDisplayName } from '../../utils/wca_events';
+import { EventIcon } from '../../components/EventIcon';
+import { RecordBadge } from '../../components/RecordBadge';
 import { displayCuberName } from '../../utils/name_utils';
 import { useAuthStore } from '../../stores/auth_store';
 import LangToggle from '../../components/LangToggle';
@@ -28,7 +30,7 @@ import './recon_submit.css';
 import CubeVirtualKeyboard from './components/CubeVirtualKeyboard';
 import TwistySection from './components/TwistySection';
 import SolutionView from './components/SolutionView';
-import { cleanForPlayer, extractAlgFromText, syncPlayerToMoveCount } from '../../utils/recon_alg_utils';
+import { cleanForPlayer, extractAlgFromText, syncPlayerToMoveCount, autoSpaceMoves } from '../../utils/recon_alg_utils';
 import { buildNormalizedSolution, hasWideMoveInCrossSection } from '../../utils/recon_norm_cross_extract';
 import { ArrowRightLeft, ChevronDown, ChevronRight, Home, Keyboard, Loader2 } from 'lucide-react';
 
@@ -105,6 +107,10 @@ export default function ReconSubmitPage() {
   const fromSolveNum = !isEditing ? searchParams.get('solveNum') : null;
   const suggestTime = !isEditing ? searchParams.get('suggestTime') : null;
   const suggestScramble = !isEditing ? searchParams.get('suggestScramble') : null;
+  // NOTE: 身份字段(选手/轮次/#/平均/单次)在以下场景锁定:
+  //  - edit 模式 → 这些是已落库 solve 的身份,改了等于改记录归属
+  //  - 从同轮次跳进来填缺失把 → 身份由 URL 携带,不应在 form 上动
+  const lockIdentity = isEditing || !!fromId;
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
@@ -720,6 +726,13 @@ export default function ReconSubmitPage() {
     syncPlayerToMoveCount(playerRef.current, moves.length);
   }, [playerRef]);
 
+  // NOTE: 修复 paste bug — paste 时 onInput 立刻 sync,但 player 看的是 debouncedSolution,
+  // 500ms 后 alg 才换新,无人再触发 sync → player 停在打乱状态。
+  // 监听 debouncedSolution 变化,等 player 拿到新 alg 后再 sync 一次到当前光标位置。
+  useEffect(() => {
+    if (solutionRef.current) handleCursorSync(solutionRef.current);
+  }, [debouncedSolution, handleCursorSync]);
+
   // NOTE: 提交
   const handleSubmit = async () => {
     if (!form.event || !form.person) {
@@ -805,10 +818,13 @@ export default function ReconSubmitPage() {
           <div className={`submit-field ${form.personId ? 'submit-field-shrink' : ''}`}>
             <span className="submit-label">{t('recon.solver')} *</span>
             {form.personId ? (
-              <div className="submit-solver-pill">
+              <div className={`submit-solver-pill${lockIdentity ? ' submit-solver-pill--locked' : ''}`}>
                 <Flag iso2={form.personCountry || ''} />
                 <span className="submit-solver-name">{displayCuberName(form.person || '', isZh)}</span>
-                <button type="button" className="submit-solver-clear" onClick={clearSolver} aria-label="clear">✕</button>
+                {/* 锁定身份字段(edit 模式 / 从同轮次跳进来):不展示清除按钮 */}
+                {!lockIdentity && (
+                  <button type="button" className="submit-solver-clear" onClick={clearSolver} aria-label="clear">✕</button>
+                )}
               </div>
             ) : (
               <WcaPersonPicker
@@ -822,7 +838,13 @@ export default function ReconSubmitPage() {
           </div>
           <label className="submit-field">
             <span className="submit-label">{t('recon.event')} *</span>
-            <EventSelect events={EVENTS} value={form.event ?? ''} onChange={(v) => setField('event', v)} />
+            {lockIdentity ? (
+              <div className="submit-readonly-text">
+                {form.event ? <><EventIcon event={form.event} /> {eventDisplayName(form.event, isZh)}</> : ''}
+              </div>
+            ) : (
+              <EventSelect events={EVENTS} value={form.event ?? ''} onChange={(v) => setField('event', v)} />
+            )}
           </label>
           <label className="submit-field">
             <span className="submit-label">{t('recon.time')}</span>
@@ -842,20 +864,11 @@ export default function ReconSubmitPage() {
           </label>
         </div>
 
-        {/* 实时统计 */}
-        {stats && (
+        {/* 实时统计 — 仅 STM / TPS,其它分项移到详情页统计区 */}
+        {stats && stats.stm > 0 && (
           <div className="submit-stats-preview">
-            <span>
-              {stats.stm} STM
-              {form.rawTime != null && stats.tps > 0 && (
-                <> / {Number(form.rawTime).toFixed(2)} = {stats.tps} TPS</>
-              )}
-            </span>
-            {stats.crossStm > 0 && <span>Cross: {stats.crossStm}</span>}
-            {stats.f2l > 0 && <span>F2L: {stats.f2l}</span>}
-            {stats.ll > 0 && <span>LL: {stats.ll}</span>}
-            {stats.ollFull && <span>{stats.ollFull}</span>}
-            {stats.pllFull && <span>{stats.pllFull}</span>}
+            <span>{stats.stm} STM</span>
+            {stats.tps > 0 && <span>{stats.tps} TPS</span>}
           </div>
         )}
 
@@ -938,6 +951,13 @@ export default function ReconSubmitPage() {
               defaultValue={form.solution || ''}
               onInput={e => {
                 const el = e.target as HTMLTextAreaElement;
+                // 手敲 RU/R'U/R2U... 时自动加空格;paste / IME / 删除不动
+                const native = e.nativeEvent as InputEvent;
+                const adj = autoSpaceMoves(el.value, el.selectionStart, native.inputType ?? '');
+                if (adj.value !== el.value) {
+                  el.value = adj.value;
+                  el.setSelectionRange(adj.cursor, adj.cursor);
+                }
                 setField('solution', el.value);
                 autoResize(el);
                 handleCursorSync(el);
@@ -994,19 +1014,28 @@ export default function ReconSubmitPage() {
           <div className="submit-row">
             <label className="submit-field submit-field-narrow">
               <span className="submit-label">WCA</span>
-              <select value={form.official ? '1' : '0'} onChange={e => setField('official', e.target.value === '1')}>
-                <option value="1">WCA</option>
-                <option value="0">{t('recon.badge.nonWca')}</option>
-              </select>
+              {lockIdentity ? (
+                <div className="submit-readonly-text">{form.official ? 'WCA' : t('recon.badge.nonWca')}</div>
+              ) : (
+                <select value={form.official ? '1' : '0'} onChange={e => setField('official', e.target.value === '1')}>
+                  <option value="1">WCA</option>
+                  <option value="0">{t('recon.badge.nonWca')}</option>
+                </select>
+              )}
             </label>
             <div className={`submit-field ${form.compWcaId ? 'submit-field-shrink' : ''}`}>
               <span className="submit-label">{t('recon.competition')}</span>
               {form.compWcaId ? (
-                <div className="submit-comp-pill">
+                <div className={`submit-comp-pill${lockIdentity ? ' submit-comp-pill--locked' : ''}`}>
                   <Flag iso2={form.country || ''} />
                   <span className="submit-comp-name">{localizeCompName(form.compWcaId || '', form.comp || '', isZh)}</span>
-                  <button type="button" className="submit-comp-clear" onClick={clearPickedComp} aria-label="clear">✕</button>
+                  {/* 锁定身份字段:不展示清除按钮 */}
+                  {!lockIdentity && (
+                    <button type="button" className="submit-comp-clear" onClick={clearPickedComp} aria-label="clear">✕</button>
+                  )}
                 </div>
+              ) : lockIdentity ? (
+                <div className="submit-readonly-text">{form.comp || ''}</div>
               ) : (
                 <CompPicker
                   value={form.comp || ''}
@@ -1025,20 +1054,28 @@ export default function ReconSubmitPage() {
           <div className="submit-row">
             <label className="submit-field">
               <span className="submit-label">{t('recon.round')}</span>
-              <select value={form.round || ''} onChange={e => setField('round', e.target.value)}>
-                <option value="">{isZh ? '请选择' : 'Select…'}</option>
-                {roundOptions.map(r => <option key={r} value={r}>{localizeRound(r, t)}</option>)}
-              </select>
+              {lockIdentity ? (
+                <div className="submit-readonly-text">{form.round ? localizeRound(form.round, t) : ''}</div>
+              ) : (
+                <select value={form.round || ''} onChange={e => setField('round', e.target.value)}>
+                  <option value="">{isZh ? '请选择' : 'Select…'}</option>
+                  {roundOptions.map(r => <option key={r} value={r}>{localizeRound(r, t)}</option>)}
+                </select>
+              )}
             </label>
             <label className="submit-field">
               <span className="submit-label">#</span>
-              <select
-                value={form.solveNum ?? ''}
-                onChange={e => setField('solveNum', e.target.value === '' ? undefined : Number(e.target.value))}
-              >
-                <option value="">{isZh ? '请选择' : 'Select…'}</option>
-                {solveNumOptions.map(n => <option key={n} value={n}>{n}</option>)}
-              </select>
+              {lockIdentity ? (
+                <div className="submit-readonly-text">{form.solveNum ?? ''}</div>
+              ) : (
+                <select
+                  value={form.solveNum ?? ''}
+                  onChange={e => setField('solveNum', e.target.value === '' ? undefined : Number(e.target.value))}
+                >
+                  <option value="">{isZh ? '请选择' : 'Select…'}</option>
+                  {solveNumOptions.map(n => <option key={n} value={n}>{n}</option>)}
+                </select>
+              )}
             </label>
             <label className="submit-field">
               <span className="submit-label">{t('recon.group')}</span>
@@ -1065,9 +1102,11 @@ export default function ReconSubmitPage() {
                   avgAutoFilledRef.current = false;
                 }}
                 placeholder="Avg"
-                readOnly={!!avgAutoSource}
-                className={avgAutoSource ? 'submit-input-locked' : undefined}
-                title={avgAutoSource ? (isZh ? '自动填充值不可编辑;改选手/比赛/项目/轮次以重新获取' : 'auto-filled, read-only; change person/comp/event/round to refetch') : undefined}
+                readOnly={lockIdentity || !!avgAutoSource}
+                className={(lockIdentity || avgAutoSource) ? 'submit-input-locked' : undefined}
+                title={lockIdentity ? (isZh ? '身份字段不可改;如需修改请重建' : 'identity field, locked')
+                  : avgAutoSource ? (isZh ? '自动填充值不可编辑;改选手/比赛/项目/轮次以重新获取' : 'auto-filled, read-only; change person/comp/event/round to refetch')
+                  : undefined}
               />
               {avgLoading
                 ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {isZh ? '自动获取中…' : 'fetching…'}</span>
@@ -1084,9 +1123,11 @@ export default function ReconSubmitPage() {
                   setTimeAutoSource(null);
                   timeAutoFilledRef.current = false;
                 }}
-                readOnly={!!timeAutoSource}
-                className={timeAutoSource ? 'submit-input-locked' : undefined}
-                title={timeAutoSource ? (isZh ? '自动填充值不可编辑;改 选手/比赛/项目/轮次/第几把 以重新获取' : 'auto-filled, read-only; change person/comp/event/round/# to refetch') : undefined}
+                readOnly={lockIdentity || !!timeAutoSource}
+                className={(lockIdentity || timeAutoSource) ? 'submit-input-locked' : undefined}
+                title={lockIdentity ? (isZh ? '身份字段不可改;如需修改请重建' : 'identity field, locked')
+                  : timeAutoSource ? (isZh ? '自动填充值不可编辑;改 选手/比赛/项目/轮次/第几把 以重新获取' : 'auto-filled, read-only; change person/comp/event/round/# to refetch')
+                  : undefined}
               />
               {timeLoading
                 ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {isZh ? '自动获取中…' : 'fetching…'}</span>
@@ -1094,22 +1135,38 @@ export default function ReconSubmitPage() {
             </label>
             <label className="submit-field">
               <span className="submit-label">{t('recon.badge.singleRecord')}</span>
-              <RecordSelect
-                value={form.regionalSingleRecord || ''}
-                onChange={(v) => { setField('regionalSingleRecord', v); setSingleRecordUserTouched(true); }}
-                personIso2={form.personCountry}
-              />
+              {lockIdentity ? (
+                <div className="submit-readonly-text">
+                  {form.regionalSingleRecord
+                    ? <RecordBadge record={form.regionalSingleRecord} variant="inline" iso2={form.personCountry} />
+                    : '—'}
+                </div>
+              ) : (
+                <RecordSelect
+                  value={form.regionalSingleRecord || ''}
+                  onChange={(v) => { setField('regionalSingleRecord', v); setSingleRecordUserTouched(true); }}
+                  personIso2={form.personCountry}
+                />
+              )}
               {recordLoading
                 ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {isZh ? '自动获取中…' : 'fetching…'}</span>
                 : (!singleRecordUserTouched && form.regionalSingleRecord && recordAutoSource) ? <span className="submit-hint">{recordAutoSource}</span> : null}
             </label>
             <label className="submit-field">
               <span className="submit-label">{t('recon.badge.averageRecord')}</span>
-              <RecordSelect
-                value={form.regionalAverageRecord || ''}
-                onChange={(v) => { setField('regionalAverageRecord', v); setAverageRecordUserTouched(true); }}
-                personIso2={form.personCountry}
-              />
+              {lockIdentity ? (
+                <div className="submit-readonly-text">
+                  {form.regionalAverageRecord
+                    ? <RecordBadge record={form.regionalAverageRecord} variant="inline" iso2={form.personCountry} />
+                    : '—'}
+                </div>
+              ) : (
+                <RecordSelect
+                  value={form.regionalAverageRecord || ''}
+                  onChange={(v) => { setField('regionalAverageRecord', v); setAverageRecordUserTouched(true); }}
+                  personIso2={form.personCountry}
+                />
+              )}
               {recordLoading
                 ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {isZh ? '自动获取中…' : 'fetching…'}</span>
                 : (!averageRecordUserTouched && form.regionalAverageRecord && recordAutoSource) ? <span className="submit-hint">{recordAutoSource}</span> : null}
