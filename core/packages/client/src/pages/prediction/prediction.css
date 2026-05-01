@@ -192,6 +192,17 @@
   color: #1a1a1a;
 }
 .pred-section p { margin: 0 0 14px; }
+.pred-section p.pred-note {
+  font-size: 13px;
+  color: #5a6370;
+  background: rgba(0, 0, 0, 0.025);
+  border-left: 3px solid #c9d2de;
+  padding: 8px 12px;
+  border-radius: 4px;
+  line-height: 1.55;
+}
+.pred-section p.pred-note strong { color: #232a33; }
+.pred-section p.pred-note em { font-style: normal; text-decoration: underline dotted; }
 .pred-section ul, .pred-section ol { margin: 0 0 14px; padding-left: 22px; }
 .pred-section li { margin: 4px 0; }
 .pred-section code {
@@ -206,6 +217,72 @@
 .pred-event-section h2 {
   border-bottom: 2px solid #c2410c;
   padding-bottom: 8px;
+  margin: 0;
+}
+.pred-event-details {
+  border: 1px solid transparent;
+  border-radius: 6px;
+  scroll-margin-top: 16px;
+}
+.pred-event-details[open] { border-color: #eaeef3; }
+.pred-event-summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 12px 14px;
+  border-radius: 6px;
+  background: #fafbfc;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: background 0.12s;
+}
+.pred-event-summary::-webkit-details-marker { display: none; }
+.pred-event-summary:hover { background: #f1f4f8; }
+.pred-event-details[open] .pred-event-summary {
+  background: #fff;
+  border-bottom: 1px solid #eaeef3;
+  border-radius: 6px 6px 0 0;
+  margin-bottom: 12px;
+}
+.pred-event-summary > h2 {
+  border-bottom: none;
+  padding-bottom: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.pred-event-summary::before {
+  content: '▶';
+  position: absolute;
+  margin-left: -22px;
+  margin-top: 6px;
+  color: #8a93a0;
+  font-size: 11px;
+  transition: transform 0.15s;
+}
+.pred-event-details[open] .pred-event-summary::before { transform: rotate(90deg); }
+.pred-event-summary { position: relative; padding-left: 30px; }
+.pred-event-summary-meta {
+  font-size: 13px;
+  color: #5a6370;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  align-items: baseline;
+}
+.pred-event-summary-meta strong { color: #232a33; }
+.pred-event-summary-hint {
+  margin-left: auto;
+  font-size: 11px;
+  color: #a8b0bb;
+  font-style: italic;
+}
+.pred-event-details[open] .pred-event-summary-hint::after { content: attr(data-collapse); }
+.pred-event-details[open] .pred-event-summary-hint { display: none; }
+@media (max-width: 480px) {
+  .pred-event-summary { padding: 10px 10px 10px 26px; }
+  .pred-event-summary::before { margin-left: -18px; }
+  .pred-event-summary-hint { display: none; }
 }
 .pred-event-title-zh, .pred-event-title-en { font-weight: 600; }
 .pred-event-title-id {
