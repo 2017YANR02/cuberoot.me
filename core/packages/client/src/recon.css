@@ -265,6 +265,18 @@
   color: #b5b5b5;
 }
 
+/* 表格内联国旗(列表页 reconer 列) — 兼顾 fi-xx span 与 TW SVG img */
+.recon-inline-flag {
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+img.recon-inline-flag {
+  width: 1.33em;
+  height: 1em;
+  object-fit: cover;
+}
+
 /* NOTE: 比赛名电脑端展全; 窄屏(<=480px)仍按 140px 截断保持现状 */
 .col-comp {
   overflow: hidden;

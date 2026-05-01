@@ -1,6 +1,11 @@
 @import "tailwindcss";
 @import "flag-icons/css/flag-icons.min.css";
 
+/* 移动端禁用双击缩放(保留双指 pinch-zoom);各 chart/slider/cube 已用更窄的 touch-action 各自覆盖 */
+html, body {
+  touch-action: manipulation;
+}
+
 /* 国旗统一加投影 — 对齐 WCA 官网"国旗微悬浮"观感 */
 .fi,
 img[src$="ChineseTaipei.svg"] {

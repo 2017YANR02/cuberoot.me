@@ -84,3 +84,16 @@
   font-family: monospace;
   color: #d97757;
 }
+
+/* 预设项(如"家/Home"):锁住 lucide 图标尺寸,跟国旗位对齐 */
+.comp-picker-preset-icon {
+  width: 20px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #c8c8c8;
+}
+.comp-picker-item--preset:hover .comp-picker-preset-icon {
+  color: #e8a27a;
+}

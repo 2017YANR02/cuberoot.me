@@ -30,7 +30,7 @@ import TwistySection from './components/TwistySection';
 import SolutionView from './components/SolutionView';
 import { cleanForPlayer, extractAlgFromText, syncPlayerToMoveCount } from '../../utils/recon_alg_utils';
 import { buildNormalizedSolution, hasWideMoveInCrossSection } from '../../utils/recon_norm_cross_extract';
-import { ArrowRightLeft, ChevronDown, ChevronRight, Keyboard, Loader2 } from 'lucide-react';
+import { ArrowRightLeft, ChevronDown, ChevronRight, Home, Keyboard, Loader2 } from 'lucide-react';
 
 /** 折叠区段 — GitHub 设置式 */
 function CollapsibleSection({ title, defaultOpen = false, children }: {
@@ -1006,6 +1006,10 @@ export default function ReconSubmitPage() {
                   onChange={(v) => setField('comp', v)}
                   onPick={applyPickedComp}
                   isZh={isZh}
+                  disableSuggestions={!form.official}
+                  presets={!form.official ? [
+                    { icon: <Home size={14} />, label: isZh ? '家' : 'Home', value: isZh ? '家' : 'Home' },
+                  ] : undefined}
                 />
               )}
             </div>
