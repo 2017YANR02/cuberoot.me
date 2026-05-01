@@ -307,15 +307,29 @@
   min-height: 2.5rem;
 }
 
-/* 自动填充值锁定:不可编辑视觉提示 */
-.submit-field input.submit-input-locked {
-  background: rgba(255, 255, 255, 0.02);
+/* 自动填充值锁定 / 只读字段:无框,看起来像纯文本(input + textarea 通用) */
+.submit-field input.submit-input-locked,
+.submit-field textarea.submit-input-locked {
+  background: transparent;
+  border-color: transparent;
   color: #b8b8b8;
   cursor: default;
+  padding-left: 0;
+  padding-right: 0;
 }
-.submit-field input.submit-input-locked:focus {
-  border-color: rgba(255, 255, 255, 0.12);
+.submit-field input.submit-input-locked:focus,
+.submit-field textarea.submit-input-locked:focus {
+  border-color: transparent;
   box-shadow: none;
+}
+
+/* 锁定字段以纯文本展示(替代 select / 不存在原生只读对应):无框,跟 .submit-input-locked 同色 */
+.submit-readonly-text {
+  padding: 9px 0;
+  color: #b8b8b8;
+  font-size: 0.98rem;
+  font-family: 'Inter', Arial, sans-serif;
+  line-height: 1.2;
 }
 
 /* 标准化视图: 只读态 — 视觉变灰提示用户当前不可编辑 */
@@ -477,6 +491,14 @@
   color: #a3a3a3;
   font-family: 'Roboto Mono', monospace;
 }
+/* 另解页:STM/TPS 是纯展示,不可编辑 → 无框 */
+.alt-submit-form .submit-stats-preview {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 6px 0;
+  margin-bottom: 8px;
+}
 
 /* --- 提交按钮 --- */
 .submit-actions {
@@ -626,4 +648,37 @@
 .submit-danger-zone-hint {
   color: #888;
   font-size: 0.82rem;
+}
+
+/* 身份字段锁定态:无框 — 放在最末尾覆盖 hero/row 的 height + background + border */
+.submit-solver-pill.submit-solver-pill--locked,
+.submit-comp-pill.submit-comp-pill--locked,
+.submit-hero .submit-solver-pill.submit-solver-pill--locked,
+.submit-hero .submit-comp-pill.submit-comp-pill--locked,
+.submit-row .submit-solver-pill.submit-solver-pill--locked,
+.submit-row .submit-comp-pill.submit-comp-pill--locked {
+  background: transparent;
+  border-color: transparent;
+  padding-left: 0;
+  padding-right: 0;
+}
+/* hero 行控件统一 48px,锁定 pill 撑满 + 内容垂直居中,跟 <input> 对齐 */
+.submit-hero .submit-solver-pill.submit-solver-pill--locked,
+.submit-hero .submit-comp-pill.submit-comp-pill--locked,
+.submit-hero .submit-readonly-text {
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+/* submit-row 行同理,40px */
+.submit-row .submit-solver-pill.submit-solver-pill--locked,
+.submit-row .submit-comp-pill.submit-comp-pill--locked,
+.submit-row .submit-readonly-text {
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  padding-top: 0;
+  padding-bottom: 0;
 }

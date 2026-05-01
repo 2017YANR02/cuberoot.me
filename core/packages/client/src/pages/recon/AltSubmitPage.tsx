@@ -99,6 +99,12 @@ export default function AltSubmitPage() {
     if (solutionRef.current) autoResize(solutionRef.current);
   }, [solution, autoResize]);
 
+  // NOTE: 同 ReconSubmitPage — paste 后 player 看的是 debouncedSolution,
+  // 等防抖更新完才 sync 到当前光标位置(否则 player 停在打乱状态)。
+  useEffect(() => {
+    if (solutionRef.current) handleCursorSync(solutionRef.current);
+  }, [debouncedSolution, handleCursorSync]);
+
   // NOTE: 实时统计基于已防抖的解法 + 父 solve 的 rawTime
   const stats = useMemo(
     () => computeAllStats(debouncedSolution, parent?.rawTime ?? 0),
@@ -177,6 +183,13 @@ export default function AltSubmitPage() {
         {/* 内容栏 */}
         <div className="submit-form-pane">
           <div className="submit-form alt-submit-form">
+            {stats.stm > 0 && (
+              <div className="submit-stats-preview">
+                <span>{stats.stm} STM</span>
+                {stats.tps > 0 && <span>{stats.tps} TPS</span>}
+              </div>
+            )}
+
             <label className="submit-field">
               <span className="submit-label">{t('recon.scramble')}</span>
               <textarea
@@ -187,13 +200,6 @@ export default function AltSubmitPage() {
                 title={isZh ? '继承自原 solve,不可编辑' : 'Inherited from original, read-only'}
               />
             </label>
-
-            {stats.stm > 0 && (
-              <div className="submit-stats-preview">
-                <span>{stats.stm} STM</span>
-                {stats.tps > 0 && <span>{stats.tps} TPS</span>}
-              </div>
-            )}
 
             {/* 手机端: 动画演示插在打乱/统计与解法之间(贴在解法正上方) */}
             {isMobile && scramble && parent.event && parent.event !== 'sq1' && (
