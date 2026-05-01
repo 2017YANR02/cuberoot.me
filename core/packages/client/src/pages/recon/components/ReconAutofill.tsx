@@ -204,8 +204,10 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
     const linesBefore = value.substring(0, start);
     const prevMoves = movesOnly(linesBefore);
     const lineMovesUpToCaret = movesOnly(value.substring(start, caret));
-    const stageBeforeLine = await detectStage(await patternFromAlg([scramble, prevMoves].filter(Boolean).join(' ')));
-    void stageBeforeLine;
+    const preStateAlg = [scramble, prevMoves, lineMovesUpToCaret].filter(Boolean).join(' ');
+    const preState = await patternFromAlg(preStateAlg);
+    const preStageInfo = await detectStage(preState);
+    const prevSlots = new Set(preStageInfo.solvedSlots);
 
     // Lazy-load algdb
     let db = dbCacheRef.current[category];
@@ -214,27 +216,57 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
       dbCacheRef.current[category] = db;
     }
 
-    // Flatten alg list and filter by user's typed prefix
-    const candidates: { text: string; category: AlgdbCategory; caseName: string }[] = [];
+    // Flatten + de-dup candidates
+    const candidates: { text: string; caseName: string }[] = [];
     const seen = new Set<string>();
     for (const c of db.cases) {
       if (c.standard && !seen.has(c.standard)) {
-        candidates.push({ text: c.standard, category, caseName: c.name });
+        candidates.push({ text: c.standard, caseName: c.name });
         seen.add(c.standard);
       }
       for (const ori of c.algs) {
         for (const e of ori) {
           if (!seen.has(e.alg)) {
-            candidates.push({ text: e.alg, category, caseName: c.name });
+            candidates.push({ text: e.alg, caseName: c.name });
             seen.add(e.alg);
           }
         }
       }
     }
-    const filtered = candidates.filter(c => isAlgPrefix(lineMovesUpToCaret, c.text));
-    // Sort by length (shorter first), tie-break by case name
-    filtered.sort((a, b) => a.text.length - b.text.length || a.caseName.localeCompare(b.caseName));
-    const top = filtered.slice(0, 12);
+
+    // Prefix filter by what the user has already typed on this line.
+    const prefixFiltered = candidates.filter(c => isAlgPrefix(lineMovesUpToCaret, c.text));
+
+    // Score each candidate by simulating: apply alg to preState, check what advances.
+    // F2L: reward newly-solved F2L slots; OLL: reward orientation; PLL: reward solved.
+    const scored: { text: string; caseName: string; score: number }[] = [];
+    for (const c of prefixFiltered) {
+      const post = preState.applyAlg(c.text);
+      const postInfo = await detectStage(post);
+      let score = 0;
+      if (category === 'f2l') {
+        const newSlots = postInfo.solvedSlots.filter(s => !prevSlots.has(s));
+        if (newSlots.length === 1) score = 100;
+        else if (newSlots.length > 1) score = 80;          // multi-pair (rare)
+        else if (postInfo.solvedSlots.length === preStageInfo.solvedSlots.length) score = 0; // no change
+        else score = -50;                                    // broke a pair
+      } else if (category === 'oll') {
+        if (postInfo.stage === 'oll' || postInfo.stage === 'solved') score = 100;
+        else if (postInfo.solvedSlots.length === 4) score = 50;
+        else score = -50;
+      } else if (category === 'pll') {
+        if (postInfo.stage === 'solved') score = 100;
+        else score = -50;
+      }
+      // Length tiebreaker: shorter algs slightly preferred among equal-score.
+      score -= c.text.length * 0.01;
+      scored.push({ text: c.text, caseName: c.caseName, score });
+    }
+
+    // Show only candidates that actually make progress (positive score).
+    const positive = scored.filter(c => c.score > 0);
+    positive.sort((a, b) => b.score - a.score);
+    const top = positive.slice(0, 12).map(c => ({ text: c.text, category, caseName: c.caseName }));
     if (top.length === 0) return null;
 
     const rect = getCaretRect(ta, caret);
