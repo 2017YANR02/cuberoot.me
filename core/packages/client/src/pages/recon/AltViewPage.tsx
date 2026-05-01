@@ -4,18 +4,18 @@
  * 用于复盘详情页另解列表点击 → 跳到干净页面只看动画 + 解法。
  */
 import { useEffect, useState, useRef, useMemo } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { TriangleAlert } from 'lucide-react';
 import type { ReconSolve } from '@cuberoot/shared';
 import { getRecon } from '../../utils/recon_api';
-import { getPuzzleId, formatTime, flagClass } from '../../utils/recon_utils';
+import { getPuzzleId } from '../../utils/recon_utils';
 import { displayCuberName } from '../../utils/name_utils';
-import { eventDisplayName } from '../../utils/wca_events';
 import LangToggle from '../../components/LangToggle';
 import TwistySection from './components/TwistySection';
 import SolutionView from './components/SolutionView';
 import { cleanForPlayer } from '../../utils/recon_alg_utils';
+import { computeAllStats } from '../../utils/recon_stats';
 import '../../recon.css';
 import './recon_submit.css';
 import './recon_detail.css';
@@ -57,13 +57,10 @@ export default function AltViewPage() {
   const scramble = parent?.optimalScramble || parent?.wcaScramble || '';
   const puzzle = parent ? getPuzzleId(parent.event) : '3x3x3';
 
-  const parentSummary = useMemo(() => {
-    if (!parent) return '';
-    const time = parent.value || (parent.rawTime != null ? formatTime(parent.rawTime) : '');
-    const name = displayCuberName(parent.person || '', isZh);
-    const ev = parent.event ? eventDisplayName(parent.event, isZh) : '';
-    return `${time} ${ev} ${name}`.trim();
-  }, [parent, isZh]);
+  const stats = useMemo(
+    () => alt ? computeAllStats(alt.solution, parent?.rawTime ?? 0) : null,
+    [alt, parent?.rawTime],
+  );
 
   if (loading) {
     return <div className="recon-page"><div className="recon-loading">{t('common.loading')}</div></div>;
@@ -93,16 +90,7 @@ export default function AltViewPage() {
           <div className="detail-header-nav">
             <LangToggle />
           </div>
-          <h1>
-            {displayCuberName(alt.addedBy, isZh)}
-            <span className="alt-submit-parent-ref">
-              {' · '}
-              <Link to={`/recon/${parentId}`} className="alt-submit-parent-link">
-                {parent.personCountry && <span className={flagClass(parent.personCountry)} />}
-                {' '}{parentSummary}
-              </Link>
-            </span>
-          </h1>
+          <h1>{displayCuberName(alt.addedBy, isZh)}</h1>
         </div>
       </div>
 
@@ -145,6 +133,13 @@ export default function AltViewPage() {
                   playerRef={playerRef}
                   fillPane
                 />
+              </div>
+            )}
+
+            {stats && stats.stm > 0 && (
+              <div className="submit-stats-preview">
+                <span>{stats.stm} STM</span>
+                {stats.tps > 0 && <span>{stats.tps} TPS</span>}
               </div>
             )}
 

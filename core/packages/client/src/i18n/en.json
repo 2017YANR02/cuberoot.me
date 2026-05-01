@@ -112,6 +112,7 @@
     "save": "Save",
     "cancel": "Cancel",
     "editRecon": "Edit Reconstruction",
+    "editAlternative": "Edit Alternative",
     "addRecon": "Add Reconstruction",
     "fillRequired": "Please fill required fields",
     "searchSolver": "Search solver name or WCA ID...",
