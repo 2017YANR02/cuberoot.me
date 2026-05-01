@@ -436,6 +436,11 @@ reconRoutes.get('/api/recon/wca-attempts', async (c) => {
 });
 
 // GET /api/recon/cubing-attempts?slug=&event=&round=&personId= — 代理 cubing.com 实时直播成绩
+// NOTE: 经验观察:cubing.com 数据要么全空要么全填,极少卡在中间态。所以
+//   "attempts 全部非 null" 即可作为"该选手该轮已完赛"的判据,可安全长 TTL 缓存到 DB,
+//   让第二位用户/设备在 WCA post 之前秒加载。
+const CUBING_CACHE_TTL_DAYS = 7;
+
 reconRoutes.get('/api/recon/cubing-attempts', async (c) => {
   const slug = c.req.query('slug') ?? '';
   const event = c.req.query('event') ?? '';
@@ -447,13 +452,51 @@ reconRoutes.get('/api/recon/cubing-attempts', async (c) => {
   if (!/^[A-Za-z0-9-]+$/.test(slug) || !/^[A-Za-z0-9]+$/.test(event) || !/^[A-Za-z0-9]+$/.test(round) || !/^[0-9]{4}[A-Z]{4}\d{2}$/.test(personId)) {
     return c.json({ error: 'invalid param format' }, 400);
   }
+
+  // 1. 查缓存
   try {
-    const attempts = await fetchCubingAttempts(slug, event, round, personId);
-    c.header('Cache-Control', 'public, max-age=60');
-    return c.json({ attempts });
-  } catch {
-    return c.json({ error: 'cubing.com unreachable' }, 502);
+    const rows = await query<{ attempts: string }>(
+      `SELECT attempts FROM cubing_attempts_cache
+        WHERE slug = ? AND event = ? AND round = ? AND person_id = ?
+          AND fetched_at > NOW() - INTERVAL ${CUBING_CACHE_TTL_DAYS} DAY`,
+      [slug, event, round, personId],
+    );
+    if (rows[0]?.attempts) {
+      c.header('Cache-Control', 'public, max-age=86400');
+      c.header('X-Cache', 'HIT');
+      return c.json({ attempts: JSON.parse(rows[0].attempts) });
+    }
+  } catch (err) {
+    console.error('[cubing-attempts] cache read failed:', err);
   }
+
+  // 2. miss → fetchCubingAttempts(内含 5min 内存缓存 + WS 拉取)
+  let attempts: (number | null)[] | null;
+  try {
+    attempts = await fetchCubingAttempts(slug, event, round, personId);
+  } catch (err) {
+    console.error('[cubing-attempts] fetch failed:', err);
+    return c.json({ error: 'cubing.com unreachable', detail: String((err as Error)?.message ?? err) }, 502);
+  }
+
+  // 3. 仅当"完赛"(数组非空且全部非 null)写库;部分填 / 全空保持短 TTL
+  const isComplete = Array.isArray(attempts) && attempts.length >= 1 && attempts.every(v => v != null);
+  if (isComplete) {
+    try {
+      await query(
+        `INSERT INTO cubing_attempts_cache (slug, event, round, person_id, attempts)
+         VALUES (?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE attempts = VALUES(attempts), fetched_at = CURRENT_TIMESTAMP`,
+        [slug, event, round, personId, JSON.stringify(attempts)],
+      );
+    } catch (err) {
+      console.error('[cubing-attempts] cache write failed:', err);
+    }
+  }
+
+  c.header('Cache-Control', isComplete ? 'public, max-age=86400' : 'public, max-age=60');
+  c.header('X-Cache', 'MISS');
+  return c.json({ attempts });
 });
 
 // NOTE: WCA 官方比赛 results / scrambles 已 posted 后基本 immutable —— DB write-through 缓存,
