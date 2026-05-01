@@ -6,6 +6,15 @@ html, body {
   touch-action: manipulation;
 }
 
+/* iOS Safari focus 时若 form 字段 font-size < 16px 会强制放大整页;窄屏统一抬到 16px 关掉它。
+   用 !important 是因为各页面对 input/textarea 用了更高 specificity 的规则(.submit-field textarea 等),
+   这里的"防 iOS 放大"是无障碍兜底,需要赢过去。 */
+@media (max-width: 768px) {
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+}
+
 /* 国旗统一加投影 — 对齐 WCA 官网"国旗微悬浮"观感 */
 .fi,
 img[src$="ChineseTaipei.svg"] {

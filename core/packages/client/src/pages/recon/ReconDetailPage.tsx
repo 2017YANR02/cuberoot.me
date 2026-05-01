@@ -13,7 +13,7 @@ import {
   GitFork,
 } from 'lucide-react';
 import type { ReconSolve, ReconComment, ReconAlternative } from '@cuberoot/shared';
-import { getRecon, listComments, addComment, updateComment, deleteComment, pinComment, getBiliCover, listRecons, updateAlternative, deleteAlternative } from '../../utils/recon_api';
+import { getRecon, listComments, addComment, updateComment, deleteComment, pinComment, getBiliCover, listRecons, deleteAlternative } from '../../utils/recon_api';
 import {
   formatTime, flagClass,
   isBldEvent, getPuzzleId, wcaCompUrl, wcaPersonUrl,
@@ -276,6 +276,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate }: 
           reconId={solve.id}
           alts={alts}
           setAlts={setAlts}
+          solveRawTime={solve.rawTime}
         />
 
         {/* 评论 */}
@@ -739,25 +740,18 @@ function BilibiliFacade({ bvId, onLoad }: { bvId: string; onLoad: () => void }) 
 }
 
 /** 另解区——任何登录用户都能投自己的解法,挂在原 solve 下,不创建新行 */
-function AlternativesSection({ reconId, alts, setAlts }: {
+function AlternativesSection({ reconId, alts, setAlts, solveRawTime }: {
   reconId: number;
   alts: ReconAlternative[];
   setAlts: (alts: ReconAlternative[]) => void;
+  /** 原 solve 单次成绩(秒);用于计算另解 TPS */
+  solveRawTime?: number;
 }) {
-  const [editingIdx, setEditingIdx] = useState<number | null>(null);
-  const [editText, setEditText] = useState('');
-
   const user = useAuthStore(s => s.user);
   const currentWcaId = user?.wcaId || '';
   const isAdminUser = isAdmin();
   const { t } = useTranslation();
   const navigate = useNavigate();
-
-  const handleSaveEdit = async (idx: number) => {
-    const updated = await updateAlternative(reconId, idx, editText.trim());
-    setAlts(updated);
-    setEditingIdx(null);
-  };
 
   const handleDelete = async (idx: number) => {
     if (!confirm(t('recon.confirmDeleteAlternative'))) return;
@@ -795,52 +789,46 @@ function AlternativesSection({ reconId, alts, setAlts }: {
             const isOwn = !!currentWcaId && currentWcaId === alt.addedById;
             const canEdit = isOwn;
             const canDelete = isOwn || isAdminUser;
+            const stats = computeAllStats(alt.solution, solveRawTime ?? 0);
             return (
               <div key={`${alt.addedById}-${alt.createdAt}-${idx}`} className="yt-comment">
                 <UserAvatarFallback name={alt.addedBy} avatar={isOwn ? user?.avatar : null} />
                 <div className="yt-comment-content">
                   <UserHeadline authorId={alt.addedById} authorName={alt.addedBy} createdAt={alt.createdAt} />
-                  {editingIdx === idx ? (
-                    <DiscussionEditBox
-                      value={editText}
-                      onChange={setEditText}
-                      onSave={() => handleSaveEdit(idx)}
-                      onCancel={() => setEditingIdx(null)}
-                      mono
-                      autoFocus
-                    />
-                  ) : (
-                    // NOTE: 点击文本 → 跳到只看动画+解法的干净页
-                    <pre
-                      className="detail-solution-text alt-solution-text"
-                      style={{ cursor: 'pointer' }}
-                      onClick={() => navigate(`/recon/${reconId}/alt/${idx}`)}
-                      title={t('recon.playAlt')}
-                    >
-                      {alt.solution.split(/\r?\n/).map((line, li) => {
-                        const nl = li > 0 ? '\n' : '';
-                        if (line.trim().startsWith('//')) {
-                          return <span key={li}>{nl}<span className="recon-step-label">{line}</span></span>;
-                        }
-                        return <span key={li}>{nl}{line}</span>;
-                      })}
-                    </pre>
+                  {stats.stm > 0 && (
+                    <div className="alt-stats-line">
+                      <span>{stats.stm} STM</span>
+                      {stats.tps > 0 && <span>{stats.tps} TPS</span>}
+                    </div>
                   )}
+                  {/* 点击文本 → 跳到只看动画+解法的干净页 */}
+                  <pre
+                    className="detail-solution-text alt-solution-text"
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => navigate(`/recon/${reconId}/alt/${idx}`)}
+                    title={t('recon.playAlt')}
+                  >
+                    {alt.solution.split(/\r?\n/).map((line, li) => {
+                      const nl = li > 0 ? '\n' : '';
+                      if (line.trim().startsWith('//')) {
+                        return <span key={li}>{nl}<span className="recon-step-label">{line}</span></span>;
+                      }
+                      return <span key={li}>{nl}{line}</span>;
+                    })}
+                  </pre>
                 </div>
-                {editingIdx !== idx && (
-                  <div className="alt-card-actions">
-                    <ItemMenu items={[
-                      ...(canEdit ? [{
-                        icon: <Pencil size={14} />, label: t('recon.edit'),
-                        onClick: () => { setEditingIdx(idx); setEditText(alt.solution); },
-                      }] : []),
-                      ...(canDelete ? [{
-                        icon: <Trash2 size={14} />, label: t('recon.delete'),
-                        onClick: () => handleDelete(idx),
-                      }] : []),
-                    ]} />
-                  </div>
-                )}
+                <div className="alt-card-actions">
+                  <ItemMenu items={[
+                    ...(canEdit ? [{
+                      icon: <Pencil size={14} />, label: t('recon.edit'),
+                      onClick: () => navigate(`/recon/${reconId}/alt/${idx}/edit`),
+                    }] : []),
+                    ...(canDelete ? [{
+                      icon: <Trash2 size={14} />, label: t('recon.delete'),
+                      onClick: () => handleDelete(idx),
+                    }] : []),
+                  ]} />
+                </div>
               </div>
             );
           })}

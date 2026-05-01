@@ -112,6 +112,7 @@
     "save": "保存",
     "cancel": "取消",
     "editRecon": "编辑复盘",
+    "editAlternative": "编辑另解",
     "addRecon": "添加复盘",
     "fillRequired": "请填写必填字段",
     "searchSolver": "搜索选手姓名或 WCA ID...",
