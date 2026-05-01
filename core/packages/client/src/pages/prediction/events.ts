@@ -1,4 +1,5 @@
 // 项目元数据 + 显示配置
+import { formatWcaResult } from '../../utils/wca_format_result';
 import type { ExpFloorFit } from './models';
 
 export type EventScale = 'cs' | 'moves';
@@ -67,17 +68,38 @@ export function toDisplayAvg(raw: number | null, event: EventMeta): number | nul
   return raw;
 }
 
-/** scale-aware 格式化 */
-export function formatVal(v: number | null | undefined, scale: EventScale): string {
+/** scale-aware 格式化. 走 utils/wca_format_result.ts 的单一入口 (含 FMC single 整数 / avg 两位小数 / cs / MBLD 等编码雷区).
+ *  v 是显示单位的值 (秒 / 步), eventId + kind 让 formatWcaResult 选对路径. */
+export function formatVal(
+  v: number | null | undefined,
+  scaleOrEvent: EventScale | EventMeta,
+  kind: 'single' | 'average' = 'single',
+): string {
   if (v === null || v === undefined || !isFinite(v)) return '–';
-  if (scale === 'moves') return v.toFixed(1) + ' moves';
-  // 时间
-  if (v >= 60) {
-    const m = Math.floor(v / 60);
-    const s = v - m * 60;
-    return `${m}:${s.toFixed(2).padStart(5, '0')}`;
+  // 兼容旧签名: formatVal(v, scale) → 走旧路径(无 eventId, FMC 不分 kind)
+  if (typeof scaleOrEvent === 'string') {
+    if (scaleOrEvent === 'moves') return v.toFixed(1) + ' moves';
+    if (v >= 60) {
+      const m = Math.floor(v / 60);
+      const s = v - m * 60;
+      return `${m}:${s.toFixed(2).padStart(5, '0')}`;
+    }
+    return v.toFixed(2) + ' s';
   }
-  return v.toFixed(2) + ' s';
+  // 新签名: formatVal(v, event, kind) → 显示值反编码到 raw 后走 formatWcaResult
+  const event = scaleOrEvent;
+  let raw: number;
+  if (event.scale === 'cs') {
+    raw = Math.round(v * 100);
+  } else if (event.id === '333fm' && kind === 'average') {
+    raw = Math.round(v * 100);  // FMC avg: display 19.33 → raw 1933
+  } else {
+    raw = Math.round(v);          // FMC single / 其他 moves: 原值
+  }
+  const s = formatWcaResult(raw, event.id, kind);
+  if (event.scale === 'moves') return s + ' moves';
+  if (s.includes(':')) return s;   // m:ss / h:mm:ss 已带分秒
+  return s + ' s';
 }
 
 /** 根据当前 fit 给出 milestone 推断: "首次 sub-X 年份" */
