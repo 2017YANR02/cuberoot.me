@@ -1,0 +1,98 @@
+/* Inline autofill popup near solution textarea caret */
+.recon-autofill {
+  background: #2a2d34;
+  color: #f0f2f5;
+  border: 1px solid #3a3e48;
+  border-radius: 6px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+  z-index: 9999;
+  overflow-y: auto;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 13px;
+  user-select: none;
+}
+
+.recon-autofill-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+}
+.recon-autofill-row:hover,
+.recon-autofill-row.is-selected {
+  background: #3a3e48;
+}
+.recon-autofill-row.is-selected {
+  outline: 1px solid #5a606e;
+}
+
+.recon-autofill-badge {
+  flex: 0 0 auto;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 2px 5px;
+  background: #1a1c20;
+  border-radius: 3px;
+  color: #d0d4dc;
+}
+.recon-autofill-badge--alg {
+  background: #1a1c20;
+  color: #ffd066;
+}
+
+.recon-autofill-text {
+  flex: 1;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.recon-autofill-text--alg {
+  color: #f0f2f5;
+}
+
+.recon-autofill-thumb {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+}
+
+.recon-autofill-tab-hint {
+  flex: 0 0 auto;
+  font-size: 9px;
+  font-weight: 600;
+  padding: 2px 6px;
+  background: #4a4e58;
+  border-radius: 3px;
+  color: #c0c4cc;
+}
+
+.recon-autofill-loading,
+.recon-autofill-empty {
+  padding: 12px;
+  text-align: center;
+  color: #9aa0aa;
+  font-size: 12px;
+}
+
+@media (max-width: 480px) {
+  .recon-autofill {
+    width: calc(100vw - 16px) !important;
+    left: 8px !important;
+    max-height: 220px;
+    font-size: 12px;
+  }
+  .recon-autofill-row { padding: 8px; }
+  .recon-autofill-thumb { width: 24px; height: 24px; }
+}
