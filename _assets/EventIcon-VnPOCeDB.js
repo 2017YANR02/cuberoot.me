@@ -1,1 +1,0 @@
-import{n as e}from"./index-C3k5WQ2T.js";import{r as t}from"./wca_events-QRBpCKea.js";var n=e();function r({event:e,className:r,title:i}){let a=t(e);return(0,n.jsx)(`span`,{className:`cubing-icon event-${a}${r?` ${r}`:``}`,title:i,"aria-label":a})}export{r as t};
