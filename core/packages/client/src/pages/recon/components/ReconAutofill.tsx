@@ -257,10 +257,9 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
         dbCacheRef.current[cat] = db;
       }
       if (cancelled) return;
-      const ranked = rankAlgs(cloneCube(popup.preState), db.cases, cat, popup.stage, 10);
-      // Filter out clearly bad ones (negative score)
-      const positive = ranked.filter(r => r.score > 0);
-      setAlgSuggestions(positive.length > 0 ? positive : ranked.slice(0, 6));
+      const ranked = rankAlgs(cloneCube(popup.preState), db.cases, cat, popup.stage, 12);
+      // Always show at least the top candidates so the user has options even if scoring is uncertain.
+      setAlgSuggestions(ranked);
       setAlgLoading(false);
     })().catch(() => {
       if (!cancelled) setAlgLoading(false);

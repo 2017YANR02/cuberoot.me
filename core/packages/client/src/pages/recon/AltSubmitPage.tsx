@@ -15,6 +15,7 @@ import { getPuzzleId } from '../../utils/recon_utils';
 import { useAuthStore } from '../../stores/auth_store';
 import LangToggle from '../../components/LangToggle';
 import TwistySection from './components/TwistySection';
+import ReconAutofill from './components/ReconAutofill';
 import { cleanForPlayer, extractAlgFromText, syncPlayerToMoveCount } from '../../utils/recon_alg_utils';
 import { computeAllStats } from '../../utils/recon_stats';
 import '../../recon.css';
@@ -235,6 +236,20 @@ export default function AltSubmitPage() {
                 autoFocus
               />
             </div>
+
+            <ReconAutofill
+              textareaRef={solutionRef}
+              value={solution}
+              setValue={(next) => {
+                setSolution(next);
+                if (solutionRef.current) {
+                  solutionRef.current.value = next;
+                  autoResize(solutionRef.current);
+                  handleCursorSync(solutionRef.current);
+                }
+              }}
+              scramble={scramble || ''}
+            />
 
             <div className="submit-actions">
               <button
