@@ -29,6 +29,17 @@ function stripParen(name: string): string {
   return name.replace(/\s*\(.*?\)\s*$/, '').trim();
 }
 
+/** 把 "每年最佳" 转成 "每年累积 WR (running min)" — WR 按定义只能不增 */
+function runningMin(arr: Array<number | null>): Array<number | null> {
+  const out: Array<number | null> = [];
+  let cur: number | null = null;
+  for (const v of arr) {
+    if (v !== null && (cur === null || v < cur)) cur = v;
+    out.push(cur);
+  }
+  return out;
+}
+
 interface Props {
   event: EventMeta;
   data: EventData;
@@ -37,10 +48,14 @@ interface Props {
 
 export default function EventSection({ event, data, isZh }: Props) {
   const currentYear = new Date().getFullYear();
-  const wrYears = data.wr_by_year.map((d) => ({
+  const rawSingle = data.wr_by_year.map((d) => toDisplay(d.wr_single, event.scale));
+  const rawAvg = data.wr_by_year.map((d) => toDisplay(d.wr_avg, event.scale));
+  const cumSingle = runningMin(rawSingle);
+  const cumAvg = runningMin(rawAvg);
+  const wrYears = data.wr_by_year.map((d, i) => ({
     year: d.year,
-    wr_single: toDisplay(d.wr_single, event.scale),
-    wr_avg: toDisplay(d.wr_avg, event.scale),
+    wr_single: cumSingle[i],
+    wr_avg: cumAvg[i],
   }));
   const fitData: DataPoint[] = wrYears
     .filter((d) => d.year >= 2003 && d.year < currentYear && d.wr_single !== null)
@@ -130,15 +145,24 @@ export default function EventSection({ event, data, isZh }: Props) {
   const peakYear = data.activity.find((d) => d.cubers === peakCubers)?.year;
 
   const wrMin = data.wr_by_year[0]?.wr_single;
-  const wrLast = data.wr_by_year.at(-1)?.wr_single;
+  const wrLast = lastWR?.value ?? null;
   const ratio = wrMin && wrLast ? wrMin / wrLast : null;
 
   return (
     <section className="pred-section pred-event-section" id={`event-${event.id}`}>
-      <h2>
-        <span className="pred-event-title-zh">{isZh ? event.name_zh : event.name_en}</span>
-        <span className="pred-event-title-id">{event.id}</span>
-      </h2>
+      <details className="pred-event-details" open={event.id === '333'}>
+        <summary className="pred-event-summary">
+          <h2>
+            <span className="pred-event-title-zh">{isZh ? event.name_zh : event.name_en}</span>
+            <span className="pred-event-title-id">{event.id}</span>
+          </h2>
+          <div className="pred-event-summary-meta">
+            <span>{isZh ? 'WR 单次' : 'WR Single'} <strong>{dispVal(lastWR?.value ?? null)}</strong></span>
+            {lastWR && <span>· {stripParen(lastWR.person_name)} ({lastWR.country_id})</span>}
+            {fitSingle && <span>· L = <strong>{formatVal(fitSingle.L, event.scale)}</strong></span>}
+            <span className="pred-event-summary-hint">{isZh ? '点击展开' : 'click to expand'}</span>
+          </div>
+        </summary>
 
       {/* 基本盘 */}
       <div className="pred-event-cards">
@@ -303,6 +327,21 @@ export default function EventSection({ event, data, isZh }: Props) {
       {/* Top-N */}
       <h3>{isZh ? 'Top-N PB 走势' : 'Top-N PB Trend'}</h3>
       <LineChart series={topSeries} yLabel={event.scale === 'moves' ? (isZh ? '步数' : 'Moves') : (isZh ? '单次 (秒)' : 'Single (s)')} />
+      <p className="pred-note">
+        {isZh ? (
+          <>
+            <strong>注:</strong> Top-N 是 "<em>该年内</em>排名 N 的最好成绩",每年独立采样,<strong>不是单调下降的</strong>。
+            2020-2021 中段 (Top 100 / 1000) 普遍抬头,是因为 COVID 比赛大量取消,排名 1000 这种深度位置的样本池缩水,中位水平被拖慢;Top 1 抖动小是因为顶尖选手没受影响。
+            Top 10000 在 2023 才出现,因为之前年度活跃人数不足。
+          </>
+        ) : (
+          <>
+            <strong>Note:</strong> Top-N is the rank-N best result <em>achieved within that year</em>, sampled independently per year — <strong>not monotonically decreasing</strong>.
+            The 2020-2021 hump (Top 100 / 1000) reflects COVID competition cancellations: the rank-1000 sample pool shrank, dragging down median quality. Top 1 stays stable because elite cubers kept practicing.
+            Top 10000 only appears from 2023 because prior years had fewer than 10k active competitors.
+          </>
+        )}
+      </p>
 
       {/* Sub-X 增长 */}
       <h3>{isZh ? 'Sub-X 累计达成人数 (log)' : 'Sub-X Cumulative Cubers (log)'}</h3>
@@ -312,6 +351,7 @@ export default function EventSection({ event, data, isZh }: Props) {
         yLabel={isZh ? '累计人数' : 'Cumulative cubers'}
         yFormat={(v) => v >= 1 ? Math.round(v).toLocaleString() : v.toFixed(0)}
       />
+      </details>
     </section>
   );
 }
