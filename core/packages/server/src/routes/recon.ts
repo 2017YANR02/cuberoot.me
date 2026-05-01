@@ -492,12 +492,13 @@ reconRoutes.get('/api/recon/wca-results', async (c) => {
   try {
     const res = await fetch(url, {
       headers: { 'User-Agent': 'CubeRoot-Recon/1.0' },
-      signal: AbortSignal.timeout(15000),
+      signal: AbortSignal.timeout(30000),
     });
     if (!res.ok) return c.json({ error: 'WCA API unavailable', status: res.status }, 502);
     upstream = await res.json();
-  } catch {
-    return c.json({ error: 'WCA API unreachable' }, 502);
+  } catch (err) {
+    console.error('[wca-results] fetch failed:', err);
+    return c.json({ error: 'WCA API unreachable', detail: String((err as Error)?.message ?? err) }, 502);
   }
   if (!upstream || !Array.isArray(upstream.rounds)) {
     return c.json({ error: 'WCA API malformed' }, 502);
@@ -551,12 +552,13 @@ reconRoutes.get('/api/recon/wca-scrambles', async (c) => {
   try {
     const res = await fetch(url, {
       headers: { 'User-Agent': 'CubeRoot-Recon/1.0' },
-      signal: AbortSignal.timeout(15000),
+      signal: AbortSignal.timeout(30000),
     });
     if (!res.ok) return c.json({ error: 'WCA API unavailable', status: res.status }, 502);
     upstream = await res.json();
-  } catch {
-    return c.json({ error: 'WCA API unreachable' }, 502);
+  } catch (err) {
+    console.error('[wca-scrambles] fetch failed:', err);
+    return c.json({ error: 'WCA API unreachable', detail: String((err as Error)?.message ?? err) }, 502);
   }
   if (!Array.isArray(upstream)) return c.json({ error: 'WCA API malformed' }, 502);
 

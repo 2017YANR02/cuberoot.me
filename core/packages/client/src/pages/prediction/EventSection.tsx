@@ -1,6 +1,6 @@
 // 单个项目的分析章节: 标题 + 概述文字 + WR 历史图 + Top-N 图 + 拟合表 + 预测表 + Sub-X 增长图
 import { LineChart, type Series } from './charts';
-import { formatVal, milestonePredictions, toDisplay, type EventMeta } from './events';
+import { formatVal, milestonePredictions, toDisplay, toDisplayAvg, type EventMeta } from './events';
 import { fitExpFloor, fitExp, fitPower, type DataPoint } from './models';
 import { THEORETICAL_LIMITS } from './theoretical_limits';
 import TheoreticalLimitView from './TheoreticalLimitView';
@@ -51,7 +51,7 @@ interface Props {
 export default function EventSection({ event, data, isZh }: Props) {
   const currentYear = new Date().getFullYear();
   const rawSingle = data.wr_by_year.map((d) => toDisplay(d.wr_single, event.scale));
-  const rawAvg = data.wr_by_year.map((d) => toDisplay(d.wr_avg, event.scale));
+  const rawAvg = data.wr_by_year.map((d) => toDisplayAvg(d.wr_avg, event));
   const cumSingle = runningMin(rawSingle);
   const cumAvg = runningMin(rawAvg);
   const wrYears = data.wr_by_year.map((d, i) => ({
@@ -200,16 +200,42 @@ export default function EventSection({ event, data, isZh }: Props) {
           const lim = THEORETICAL_LIMITS[event.id];
           if (!lim || lim.decomp.length === 0) return null;
           const last = lim.decomp[lim.decomp.length - 1];
-          const tPhys = last.T ?? last.M / last.TPS + last.R;
+          const tPhys = lim.t_phys_single ?? (last.T ?? last.M / last.TPS + last.R);
           return (
             <div className="pred-card">
               <div className="pred-card-label" title={isZh ? '步数法物理下界 = M / TPS + R, 详见下方分解' : 'Step-count physical floor = M / TPS + R, see decomposition below'}>
-                {isZh ? '物理下界 T_phys' : 'Physical floor T_phys'}
+                {isZh ? '物理下界 T_phys (单)' : 'T_phys (single)'}
               </div>
               <div className="pred-card-value pred-card-accent">
                 {formatVal(tPhys, event.scale)}
               </div>
               <div className="pred-card-sub">M={last.M} · TPS={last.TPS.toFixed(1)} · R={last.R.toFixed(2)}s</div>
+            </div>
+          );
+        })()}
+        {event.avgFormat !== 'none' && (() => {
+          const lim = THEORETICAL_LIMITS[event.id];
+          const curAvg = lim?.current_wr_avg_value ?? (wrYears.length > 0 ? wrYears[wrYears.length - 1].wr_avg : null);
+          return (
+            <div className="pred-card">
+              <div className="pred-card-label">{isZh ? `当前 WR ${event.avgFormat}` : `Current WR ${event.avgFormat}`}</div>
+              <div className="pred-card-value">{curAvg !== null ? formatVal(curAvg, event.scale) : '–'}</div>
+              <div className="pred-card-sub">{lim?.current_wr_avg_holder ?? ''}</div>
+            </div>
+          );
+        })()}
+        {event.avgFormat !== 'none' && (() => {
+          const lim = THEORETICAL_LIMITS[event.id];
+          if (!lim?.t_phys_avg) return null;
+          const curAvg = lim.current_wr_avg_value ?? (wrYears.length > 0 ? wrYears[wrYears.length - 1].wr_avg : null);
+          const ratio = curAvg ? lim.t_phys_avg / curAvg : null;
+          return (
+            <div className="pred-card">
+              <div className="pred-card-label" title={isZh ? '步数法 + 执行噪声残差' : 'Step-count + execution noise residual'}>
+                {isZh ? `物理下界 T_phys (${event.avgFormat})` : `T_phys (${event.avgFormat})`}
+              </div>
+              <div className="pred-card-value pred-card-accent">{formatVal(lim.t_phys_avg, event.scale)}</div>
+              <div className="pred-card-sub">{ratio !== null ? `T_phys/WR = ${Math.round(ratio * 100)}%` : ''}</div>
             </div>
           );
         })()}
