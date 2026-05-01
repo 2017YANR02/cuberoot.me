@@ -158,10 +158,14 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
   const [algLoading, setAlgLoading] = useState(false);
   const dbCacheRef = useRef<Partial<Record<AlgdbCategory, AlgdbFile>>>({});
 
+  // Track popup kind transitions so selection only resets when kind changes
+  const lastKindRef = useRef<'comment' | 'alg' | null>(null);
+
   const closePopup = useCallback(() => {
     setPopup(null);
     setAlgSuggestions(null);
     setSelected(0);
+    lastKindRef.current = null;
   }, []);
 
   /** Recompute popup state from current caret position. */
@@ -172,6 +176,13 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
     const caret = ta.selectionStart;
     const { lineStart, lineText } = lineAt(value, caret);
 
+    const setKind = (kind: 'comment' | 'alg') => {
+      if (lastKindRef.current !== kind) {
+        setSelected(0);
+        lastKindRef.current = kind;
+      }
+    };
+
     // Comment popup: caret is after `//` on the current line
     const slashIdx = lineText.indexOf('//');
     if (slashIdx >= 0 && (caret - lineStart) >= slashIdx + 2) {
@@ -179,13 +190,8 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
       // Trigger only if query is short (avoid disrupting typing of long comments)
       if (query.length <= 20) {
         const rect = getCaretRect(ta, caret);
-        setPopup({
-          kind: 'comment',
-          query,
-          insertAt: caret,
-          pos: rect,
-        });
-        setSelected(0);
+        setPopup({ kind: 'comment', query, insertAt: caret, pos: rect });
+        setKind('comment');
         return;
       }
     }
@@ -210,7 +216,7 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
             insertAt: caret,
             pos: rect,
           });
-          setSelected(0);
+          setKind('alg');
           return;
         }
       }
