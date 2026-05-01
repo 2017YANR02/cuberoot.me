@@ -1,6 +1,6 @@
 // 比赛搜索输入框 — 文本输入 + 下拉建议。允许自由文本（非 WCA 比赛）。
 // 选中时通过 onPick 回调把整条 Comp 记录给父组件（父决定回填哪些字段）。
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, type ReactNode } from 'react';
 import { Flag } from '../utils/flag';
 import { loadComps, searchComps, type Comp } from '../utils/comp_search';
 import { compNameZh } from '../utils/country_flags';
@@ -10,6 +10,14 @@ import { formatDateRangeIso } from '../utils/date_range';
 import { ClearButton } from './ClearButton';
 import './comp_picker.css';
 
+/** 下拉里的快速预设项(非 WCA 时可用,如"家/Home") */
+export interface CompPickerPreset {
+  icon?: ReactNode;
+  label: string;
+  /** 选中时填入 input 的字符串 */
+  value: string;
+}
+
 interface Props {
   value: string;
   onChange: (val: string) => void;
@@ -17,9 +25,13 @@ interface Props {
   placeholder?: string;
   isZh?: boolean;
   className?: string;
+  /** true 时不查 WCA 比赛建议(用于非 WCA 比赛场景);仍可显示 presets */
+  disableSuggestions?: boolean;
+  /** 下拉顶部的固定预设项(常驻显示,与 disableSuggestions 无关) */
+  presets?: CompPickerPreset[];
 }
 
-export function CompPicker({ value, onChange, onPick, placeholder, isZh, className }: Props) {
+export function CompPicker({ value, onChange, onPick, placeholder, isZh, className, disableSuggestions, presets }: Props) {
   const [comps, setComps] = useState<Comp[] | null>(null);
   const [open, setOpen] = useState(false);
   const [results, setResults] = useState<Comp[]>([]);
@@ -72,7 +84,7 @@ export function CompPicker({ value, onChange, onPick, placeholder, isZh, classNa
         className={value ? 'comp-picker-input--with-clear' : ''}
         value={displayValue}
         onChange={e => { onChange(e.target.value); setOpen(true); }}
-        onFocus={() => { setFocused(true); setOpen(true); ensureLoaded(); }}
+        onFocus={() => { setFocused(true); setOpen(true); if (!disableSuggestions) ensureLoaded(); }}
         onBlur={() => { setFocused(false); }}
         placeholder={placeholder}
         autoComplete="off"
@@ -84,9 +96,22 @@ export function CompPicker({ value, onChange, onPick, placeholder, isZh, classNa
           preserveFocus
         />
       )}
-      {open && results.length > 0 && (
+      {open && ((presets && presets.length > 0) || (!disableSuggestions && results.length > 0)) && (
         <div className="comp-picker-popup">
-          {results.map(c => {
+          {presets?.map((p, i) => (
+            <button
+              key={`preset-${i}`}
+              type="button"
+              className="comp-picker-item comp-picker-item--preset"
+              onClick={() => { onChange(p.value); setOpen(false); }}
+            >
+              {p.icon && <span className="comp-picker-preset-icon">{p.icon}</span>}
+              <span className="comp-picker-main">
+                <span className="comp-picker-name">{p.label}</span>
+              </span>
+            </button>
+          ))}
+          {!disableSuggestions && results.map(c => {
             const zh = isZh ? compNameZh(c.name) : '';
             return (
               <button key={c.id} type="button" className="comp-picker-item" onClick={() => handlePick(c)}>
