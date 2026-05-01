@@ -213,3 +213,55 @@ export function syncPlayerToMoveCount(player: any, moveCount: number) {
   }
 }
 
+// ── 自动加空格 ───────────────────────────────────────────────
+// move 起始字符:面 R L U D F B / 中层 M E S / 旋转 x y z (大小写都算,小写= wide)
+const MOVE_START_RE = /[RLUDFBMESxyzrludfbmes]/;
+// move 末尾可能字符:任何面 / w / ' / 2
+const MOVE_END_RE = /[RLUDFBMESwxyzrludfbmes'2]/;
+
+/**
+ * 用户敲一个字符时,如果造成相邻两个 move 没空格,在中间插一个空格。
+ * 两种触发方向(用户既可能在 move 末尾追加新 move,也可能在 move 前插入新 move):
+ *  - BEFORE: 前一字符是 move 末尾(face/w/'/2) + 新字符是 move 起始(face) → 在新字符前插空格
+ *  - AFTER : 新字符是 move 末尾 + 后一字符是 move 起始 → 在新字符后插空格
+ * 限制:
+ *  - 仅 inputType === 'insertText' (手敲单字符) 触发;paste / IME / delete 不动
+ *  - `//` 之后的注释段不动 (例如 "F2L 1" 不会被切成 "F2 L 1")
+ * @returns 调整后的 value 与 cursor;若无需调整则按原样返回。
+ */
+export function autoSpaceMoves(
+  value: string,
+  cursor: number,
+  inputType: string,
+): { value: string; cursor: number } {
+  if (inputType !== 'insertText') return { value, cursor };
+
+  // 行内是否已经进入注释(// 在 newChar 之前出现)
+  const inComment = (pos: number): boolean => {
+    const lineStart = value.lastIndexOf('\n', pos - 1) + 1;
+    return value.slice(lineStart, pos).includes('//');
+  };
+
+  // BEFORE: 在新字符前插空格
+  if (cursor >= 2) {
+    const newChar = value[cursor - 1];
+    const prevChar = value[cursor - 2];
+    if (MOVE_START_RE.test(newChar) && MOVE_END_RE.test(prevChar) && !inComment(cursor - 1)) {
+      value = value.slice(0, cursor - 1) + ' ' + value.slice(cursor - 1);
+      cursor += 1;
+    }
+  }
+
+  // AFTER: 在新字符后插空格
+  if (cursor >= 1 && cursor < value.length) {
+    const newChar = value[cursor - 1];
+    const nextChar = value[cursor];
+    if (MOVE_END_RE.test(newChar) && MOVE_START_RE.test(nextChar) && !inComment(cursor - 1)) {
+      value = value.slice(0, cursor) + ' ' + value.slice(cursor);
+      // 光标停在新字符与刚插入的空格之间(用户的"插入意图"完成,不跳过空格)
+    }
+  }
+
+  return { value, cursor };
+}
+
