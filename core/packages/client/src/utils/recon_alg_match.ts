@@ -116,31 +116,34 @@ interface ScoreContext {
   stage: Stage;
 }
 
+/** Rough move count (linear, ignores parens expansion). */
+function moveCount(alg: string): number {
+  return (alg.match(/[RLUDFBMESxyzrludfb][w]?[2]?'?/g) ?? []).length;
+}
+
 function scoreCandidate(alg: string, ctx: ScoreContext): number {
   const post = cloneCube(ctx.preState);
   applyAlg(post, alg);
-  // For pair stages: pairs[i] solved counts +5 (5 stickers); cross still solved is required (-100 if broken)
+  const lenPenalty = moveCount(alg) * 0.1; // Tiebreaker: shorter algs rank higher.
+
   if (ctx.stage.kind === 'cross' || ctx.stage.kind === 'pair') {
     let s = 0;
-    // Cross solved is mandatory for pair stages
     const crossPre = countSolved(ctx.preState, CROSS_STICKERS);
     const crossPost = countSolved(post, CROSS_STICKERS);
-    if (crossPost < crossPre) s -= 100; // alg broke the cross
-    s += crossPost - crossPre;
-    // Count F2L pairs newly solved
+    if (crossPost < crossPre) s -= 100;
+    s += (crossPost - crossPre) * 0.5;
     let pairsPre = 0, pairsPost = 0;
     for (const slot of F2L_SLOTS) {
       if (allSolved(ctx.preState, slot)) pairsPre++;
       if (allSolved(post, slot)) pairsPost++;
     }
-    // Strongly reward solving exactly one more pair
-    s += (pairsPost - pairsPre) * 30;
-    // Penalise solving zero or breaking pairs
-    if (pairsPost <= pairsPre) s -= 20;
-    return s;
+    // Massive reward for solving exactly one more pair, smaller for keeping count.
+    s += (pairsPost - pairsPre) * 100;
+    // Reward not breaking existing pairs.
+    if (pairsPost < pairsPre) s -= 50;
+    return s - lenPenalty;
   }
   if (ctx.stage.kind === 'oll') {
-    // Goal: U face one color (any). Reward F2L preserved.
     let s = 0;
     let pairsPre = 0, pairsPost = 0;
     for (const slot of F2L_SLOTS) {
@@ -149,12 +152,12 @@ function scoreCandidate(alg: string, ctx: ScoreContext): number {
     }
     if (pairsPost < pairsPre) s -= 100;
     if (uFaceOneColor(post)) s += 100;
-    return s;
+    return s - lenPenalty;
   }
   if (ctx.stage.kind === 'pll') {
-    return solvedModuloAuf(post) ? 100 : -50;
+    return (solvedModuloAuf(post) ? 100 : -50) - lenPenalty;
   }
-  return 0;
+  return -lenPenalty;
 }
 
 /** Extract all algs from one algdb file. */
