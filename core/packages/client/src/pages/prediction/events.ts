@@ -52,10 +52,19 @@ export const EVENTS: EventMeta[] = [
   { id: '555bf', name_en: '5x5 Blindfolded', name_zh: '五阶盲拧', short: '5BLD', scale: 'cs', avgFormat: 'Mo3', rank: 170, subThresholds: [200000, 100000, 50000, 30000, 20000, 15000, 12000], subLabel: csLabel },
 ];
 
-/** scale-aware: 把 raw 值转成显示 (秒/步) */
+/** scale-aware: 把 raw 值转成显示 (秒/步) — 用于"单次"成绩 */
 export function toDisplay(raw: number | null, scale: EventScale): number | null {
   if (raw === null) return null;
   return scale === 'cs' ? raw / 100 : raw;
+}
+
+/** scale-aware 平均编码: WCA 把 FMC mean 存为 moves×100, 单次是原步数 */
+export function toDisplayAvg(raw: number | null, event: EventMeta): number | null {
+  if (raw === null) return null;
+  if (event.scale === 'cs') return raw / 100;
+  // moves: FMC 平均特例 = raw / 100; 其他 moves 项目无平均
+  if (event.id === '333fm') return raw / 100;
+  return raw;
 }
 
 /** scale-aware 格式化 */

@@ -13,17 +13,22 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, Menu, X as XIcon } from 'lucide-react';
 import { LineChart, type Series } from './charts';
 import { fitExpFloor, type DataPoint } from './models';
-import { EVENTS, formatVal, toDisplay } from './events';
+import { EVENTS, formatVal, toDisplay, toDisplayAvg } from './events';
 import { THEORETICAL_LIMITS } from './theoretical_limits';
 import EventSection from './EventSection';
 import './prediction.css';
 
-/** 取最后一行 (物理下界) 的 T 值 — 没有显式 T 就用 M/TPS+R */
-function physicalFloor(eventId: string): number | null {
+/** 取最后一行 (物理下界单次) 的 T 值 — 优先用显式 t_phys_single, 其次 decomp 末行计算 */
+function physicalFloorSingle(eventId: string): number | null {
   const lim = THEORETICAL_LIMITS[eventId];
-  if (!lim || lim.decomp.length === 0) return null;
+  if (!lim) return null;
+  if (lim.t_phys_single !== undefined) return lim.t_phys_single;
+  if (lim.decomp.length === 0) return null;
   const last = lim.decomp[lim.decomp.length - 1];
   return last.T ?? last.M / last.TPS + last.R;
+}
+function physicalFloorAvg(eventId: string): number | null {
+  return THEORETICAL_LIMITS[eventId]?.t_phys_avg ?? null;
 }
 
 interface AllEvents {
@@ -268,11 +273,23 @@ export default function PredictionPage() {
             </p>
             <div className="pred-overview-grid">
               {eventSummaries.map((s) => {
-                const tPhys = physicalFloor(s.ev.id);
+                const tPhysSingle = physicalFloorSingle(s.ev.id);
+                const tPhysAvg = physicalFloorAvg(s.ev.id);
+                const lim = THEORETICAL_LIMITS[s.ev.id];
+                // 当前 WR 平均: 优先用手动覆盖, 否则 dump running min
+                let curAvg: number | null = lim?.current_wr_avg_value ?? null;
+                if (curAvg === null) {
+                  let cur: number | null = null;
+                  for (const d of s.ed.wr_by_year as Array<{ year: number; wr_avg: number | null }>) {
+                    if (d.wr_avg !== null && (cur === null || d.wr_avg < cur)) cur = d.wr_avg;
+                  }
+                  if (cur !== null) curAvg = toDisplayAvg(cur, s.ev);
+                }
                 return (
                   <a key={s.ev.id} href={`#event-${s.ev.id}`} className="pred-overview-card">
                     <div className="pred-ov-name">{isZh ? s.ev.name_zh : s.ev.name_en}</div>
                     <div className="pred-ov-id">{s.ev.id}</div>
+                    <div className="pred-ov-section-label">{isZh ? '单次' : 'Single'}</div>
                     <div className="pred-ov-row">
                       <span className="pred-ov-label">{isZh ? '当前 WR' : 'Current WR'}</span>
                       <span className="pred-ov-val">{s.lastWRval !== null ? formatVal(s.lastWRval, s.ev.scale) : '–'}</span>
@@ -287,16 +304,36 @@ export default function PredictionPage() {
                       <span className="pred-ov-label" title={isZh ? '步数法物理下界 = M / TPS + R' : 'Step-count physical floor = M / TPS + R'}>
                         {isZh ? '物理下界 T_phys' : 'T_phys'}
                       </span>
-                      <span className="pred-ov-val pred-ov-accent">{tPhys !== null ? formatVal(tPhys, s.ev.scale) : '–'}</span>
+                      <span className="pred-ov-val pred-ov-accent">{tPhysSingle !== null ? formatVal(tPhysSingle, s.ev.scale) : '–'}</span>
                     </div>
                     <div className="pred-ov-row">
-                      <span className="pred-ov-label" title={isZh ? '物理下界 / 当前 WR' : 'T_phys / current WR'}>
-                        T_phys/WR
-                      </span>
+                      <span className="pred-ov-label">T_phys/WR</span>
                       <span className="pred-ov-val pred-ov-pct">
-                        {tPhys !== null && s.lastWRval ? Math.round(tPhys / s.lastWRval * 100) + '%' : '–'}
+                        {tPhysSingle !== null && s.lastWRval ? Math.round(tPhysSingle / s.lastWRval * 100) + '%' : '–'}
                       </span>
                     </div>
+                    {s.ev.avgFormat !== 'none' && (
+                      <>
+                        <div className="pred-ov-section-label">{isZh ? `平均 (${s.ev.avgFormat})` : `Avg (${s.ev.avgFormat})`}</div>
+                        <div className="pred-ov-row">
+                          <span className="pred-ov-label">{isZh ? '当前 WR' : 'Current WR'}</span>
+                          <span className="pred-ov-val">{curAvg !== null ? formatVal(curAvg, s.ev.scale) : '–'}</span>
+                        </div>
+                        <div className="pred-ov-row">
+                          <span className="pred-ov-label" title={isZh ? '步数法 + 执行噪声残差' : 'Step-count + execution noise floor'}>
+                            T_phys
+                          </span>
+                          <span className="pred-ov-val pred-ov-accent">{tPhysAvg !== null ? formatVal(tPhysAvg, s.ev.scale) : '–'}</span>
+                        </div>
+                        <div className="pred-ov-row">
+                          <span className="pred-ov-label">T_phys/WR</span>
+                          <span className="pred-ov-val pred-ov-pct">
+                            {tPhysAvg !== null && curAvg ? Math.round(tPhysAvg / curAvg * 100) + '%' : '–'}
+                          </span>
+                        </div>
+                      </>
+                    )}
+                    <div className="pred-ov-section-label">{isZh ? '其它' : 'Other'}</div>
                     <div className="pred-ov-row">
                       <span className="pred-ov-label">{isZh ? '改写次数' : 'WR drops'}</span>
                       <span className="pred-ov-val">{s.progressionCount}</span>
@@ -305,6 +342,9 @@ export default function PredictionPage() {
                       <span className="pred-ov-label">{isZh ? '累计 cuber' : 'Cubers'}</span>
                       <span className="pred-ov-val">{s.cumCubers.toLocaleString()}</span>
                     </div>
+                    {lim?.current_wr_avg_holder && (
+                      <div className="pred-ov-holder">{lim.current_wr_avg_holder}</div>
+                    )}
                   </a>
                 );
               })}
