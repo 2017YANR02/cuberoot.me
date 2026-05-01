@@ -506,6 +506,25 @@
 .pred-ov-val { font-weight: 600; color: #1a1a1a; }
 .pred-ov-pct { color: #c2410c; }
 .pred-ov-accent { color: #0a8a6b; }
+.pred-ov-section-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #8a93a0;
+  margin-top: 6px;
+  padding-bottom: 2px;
+  border-bottom: 1px solid #eaeef3;
+}
+.pred-ov-section-label:first-of-type { margin-top: 4px; }
+.pred-ov-holder {
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px dashed #eaeef3;
+  font-size: 10.5px;
+  color: #5a6370;
+  line-height: 1.4;
+}
 
 .pred-method ul code, .pred-method ol code { font-size: 12px; }
 .pred-footer {

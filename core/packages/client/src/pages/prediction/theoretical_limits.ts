@@ -48,6 +48,18 @@ export interface TheoreticalLimit {
   method_eras: MethodEra[];
   hardware_eras: HardwareEra[];
   decomp: DecompRow[];
+  /** 物理下界 (单次): 通常 = decomp 最后一行的 T。手填可覆盖 */
+  t_phys_single?: number;
+  /** 物理下界 (Ao5 / Mo3 平均). T_phys_single 加上执行噪声残差 (Ao5 SD ≈ 0.13, Mo3 SD ≈ 0.17) */
+  t_phys_avg?: number;
+  /** 当前 Ao5/Mo3 WR 持有者 — WCA dump 没抽这个,手维护 */
+  current_wr_avg_holder?: string;
+  /** 当前 Ao5/Mo3 WR 数值 (显示单位) — 本地 dump 滞后于真实最新记录时,用此覆盖 */
+  current_wr_avg_value?: number;
+  /** 当前 WR 单次值 (显示单位) — 本地 dump 滞后时覆盖 */
+  current_wr_single_value?: number;
+  /** 当前 WR 单次持有者 + 上下文 */
+  current_wr_single_holder?: string;
   best_reconstructions?: Array<{
     person: string;
     date: string;
@@ -70,9 +82,13 @@ export const THEORETICAL_LIMITS: Record<string, TheoreticalLimit> = {
   // ════════════════════════════════════════════════════════════
   '333': {
     current_method_en:
-      'The 2026 frontier is the full ZB method = ZBLS (Zborowski-Bruchem Last Slot, ~302 cases — orient edges during the last F2L pair so the cube enters last-layer with cross + corners + EO already done) + ZBLL (493 cases — 1-alg LL given EO). Combined effect: a ZB solve is "F2L → 1 alg → done", saving ~5 STM and ~0.4 s of recognition vs CFOP\'s 2-step OLL+PLL. Xuanyi Geng (耿暄一) holds the current WR average 3.84 (Beijing Winter 2026-01-11, GAN 16 MagLev MAX UV) with all five solves using xcross/pseudo-cross + ZBLS + ZBLL — beating Yiheng Wang\'s prior 3.91. Wang holds the WR single 3.08 with vanilla CFOP + 2-look OLL — a non-maxed-out method, which is the strongest argument that CFOP-only still has room. Below ZB, full 1LLL (~3,668 cases, Eduardo Silva Damasceno first learned 2022) is the next step but requires recognition speed gains we have not yet seen. Roux caps at sub-4 single / sub-6 average (Alexey Tsvetkov 3.95 single, SPV / Tsvetkov / Cuares / Arradaza all sub-6 Ao5).',
+      'The 2026 frontier is the full ZB method = ZBLS (Zborowski-Bruchem Last Slot, ~302 cases — orient edges during the last F2L pair so the cube enters last-layer with cross + corners + EO already done) + ZBLL (493 cases — 1-alg LL given EO). Combined effect: a ZB solve is "F2L → 1 alg → done", saving ~5 STM and ~0.4 s of recognition vs CFOP\'s 2-step OLL+PLL. Xuanyi Geng (耿暄一) holds the current WR average 3.71 (Deqing Short-Time 2026-04-26, includes a 2.80 single — AsR / WR2) using full ZB throughout — beating his own prior 3.84 (Beijing Winter 2026-01-11). Yiheng Wang holds the WR single 3.08 with vanilla CFOP + 2-look OLL — a non-maxed-out method, which is the strongest argument that CFOP-only still has room. Below ZB, full 1LLL (~3,668 cases, Eduardo Silva Damasceno first learned 2022) is the next step but requires recognition speed gains we have not yet seen. Roux caps at sub-4 single / sub-6 average (Alexey Tsvetkov 3.95 single, SPV / Tsvetkov / Cuares / Arradaza all sub-6 Ao5).',
     current_method_zh:
-      '2026 年顶级前沿是**全 ZB 方法 = ZBLS (Zborowski-Bruchem Last Slot, ~302 cases — 在 F2L 最后一对就把 EO 控制好,使最后一层进入"cross + 角 + EO 全就绪"的状态) + ZBLL (493 cases — 给定 EO 后 1 算法解 LL)**。综合效果:ZB 解法 = "F2L → 一个算法 → 完成",比 CFOP 的两步 OLL+PLL 省 ~5 STM 和 ~0.4 秒识别。**耿暄一 (Xuanyi Geng) 当前持有 WR 平均 3.84 秒 (北京冬季 2026-01-11,GAN 16 MagLev MAX UV),5 把全部用 xcross / pseudo-cross + ZBLS + ZBLL —— 把王艺衡之前的 3.91 改写**。王艺衡持有 WR 单次 3.08 用的还是 CFOP 朴素 + 2-look OLL,即"WR 单次仍是非极限方法在打",这恰好说明 CFOP 本身仍有空间。ZB 之下还有全 1LLL (~3668 cases,Eduardo Silva Damasceno 2022 首学完),但需要识别速度跟上。Roux 上限是 sub-4 单次 / sub-6 平均 (Tsvetkov 3.95 单次是 Roux 历史首破 4 秒)。',
+      '2026 年顶级前沿是**全 ZB 方法 = ZBLS (Zborowski-Bruchem Last Slot, ~302 cases — 在 F2L 最后一对就把 EO 控制好,使最后一层进入"cross + 角 + EO 全就绪"的状态) + ZBLL (493 cases — 给定 EO 后 1 算法解 LL)**。综合效果:ZB 解法 = "F2L → 一个算法 → 完成",比 CFOP 的两步 OLL+PLL 省 ~5 STM 和 ~0.4 秒识别。**耿暄一 (Xuanyi Geng) 当前持有 WR 平均 3.71 秒 (Deqing 短时赛 2026-04-26,五把里含 2.80 秒 AsR / WR2 单次),全程 ZB,改写自己 1 月 11 日北京冬季的 3.84**。王艺衡持有 WR 单次 3.08 用的还是 CFOP 朴素 + 2-look OLL,即"WR 单次仍是非极限方法在打",这恰好说明 CFOP 本身仍有空间。ZB 之下还有全 1LLL (~3668 cases,Eduardo Silva Damasceno 2022 首学完),但需要识别速度跟上。Roux 上限是 sub-4 单次 / sub-6 平均 (Tsvetkov 3.95 单次是 Roux 历史首破 4 秒)。',
+    current_wr_avg_holder: 'Xuanyi Geng (耿暄一) — Deqing 2026-04-26',
+    current_wr_avg_value: 3.71,
+    t_phys_single: 1.80,
+    t_phys_avg: 3.0,
     method_eras: [
       { start_year: 1981, method: 'Layer-by-layer / Beginner', method_zh: '逐层入门法', avg_stm: 130, notes_en: 'WC1982 era; ~22 s WR', notes_zh: 'WC1982 时代;~22 秒 WR' },
       { start_year: 1997, method: 'Fridrich / CFOP (proposed by Jessica Fridrich)', method_zh: 'Fridrich / CFOP (Jessica Fridrich 提出)', alg_count: 78, avg_stm: 62 },
@@ -81,7 +97,7 @@ export const THEORETICAL_LIMITS: Record<string, TheoreticalLimit> = {
       { start_year: 2017, method: 'CFOP + extended F2L lookahead (post-magnet era)', method_zh: 'CFOP + 扩展 F2L lookahead (磁铁时代后)', avg_stm: 56 },
       { start_year: 2022, method: 'CFOP + full ZBLL only (LL 1-alg, EO not pre-controlled)', method_zh: 'CFOP + 全 ZBLL (LL 1 alg,EO 未预控)', alg_count: 493, avg_stm: 52, notes_en: 'Tymon, Zajder use; Geng moved on', notes_zh: 'Tymon / Zajder 用;耿暄一已升级' },
       { start_year: 2024, method: 'High-TPS-driven CFOP (Yiheng Wang school)', method_zh: '高 TPS 驱动 CFOP (王艺衡流派)', avg_stm: 56, notes_en: 'Sustained 14+ TPS, 2-look OLL kept for recog speed', notes_zh: '持续 14+ TPS,保留 2-look OLL 换识别速度' },
-      { start_year: 2026, method: 'Full ZB method = ZBLS + ZBLL (Xuanyi Geng, current WR avg)', method_zh: '全 ZB 方法 = ZBLS + ZBLL (耿暄一,现 WR 平均)', alg_count: 795, avg_stm: 49, notes_en: 'Geng 3.84 avg (Beijing Winter 2026); EO controlled in last F2L pair → 1-alg LL', notes_zh: '耿暄一 3.84 平均 (北京冬季 2026);最后一对 F2L 内控好 EO,LL 1 算法搞定' },
+      { start_year: 2026, method: 'Full ZB method = ZBLS + ZBLL (Xuanyi Geng, current WR avg)', method_zh: '全 ZB 方法 = ZBLS + ZBLL (耿暄一,现 WR 平均)', alg_count: 795, avg_stm: 49, notes_en: 'Geng 3.71 avg (Deqing 2026-04-26, includes 2.80 single AsR); EO controlled in last F2L pair → 1-alg LL', notes_zh: '耿暄一 3.71 平均 (Deqing 2026-04-26,含 2.80 秒 AsR 单次);最后一对 F2L 内控好 EO,LL 1 算法搞定' },
     ],
     hardware_eras: [
       { year: 2011, milestone_en: 'DaYan ZhanChi — torpedoes, end of "core lock-up" era', milestone_zh: 'DaYan 展逸 — 防卡死结构,核心锁死时代终结' },
@@ -106,8 +122,8 @@ export const THEORETICAL_LIMITS: Record<string, TheoreticalLimit> = {
       { person: 'Max Park', date: '2023-06-11', time: '3.13 s', M: 33, TPS: 10.54, method: 'CFOP, double X-cross + PLL skip', source_url: 'https://ruwix.com/blog/max-park-rubik-single-record-313/' },
       { person: 'Yiheng Wang (王艺衡)', date: '2025', time: '3.08 s', M: 45, TPS: 14.61, method: 'CFOP, 2-look LL (OLL skip) — current WR single', source_url: 'https://speedcubing.org/blogs/news/yiheng-wang-breaks-world-record-3x3-single-with-3-08' },
       { person: 'Teodor Zajder', date: '2026-02-08', time: '2.76 s', M: 29, TPS: 10.50, method: 'CFOP, XXX-cross + ZBLL', source_url: 'https://ruwix.com/blog/first-sub-3-rubiks-cube-record-teodor-zajder-2_76/' },
-      { person: 'Xuanyi Geng (耿暄一) avg solve 5', date: '2026-01-11', time: '3.37 s', M: 43, TPS: 12.76, method: 'pseudo-cross + ZBLS + ZBLL (WR avg 3.84)', source_url: 'https://ruwix.com/blog/xuanyi-geng-3_84-seconds-average-record/' },
-      { person: 'Xuanyi Geng (耿暄一) avg solve 3', date: '2026-01-11', time: '3.71 s', M: 50, TPS: 13.48, method: 'pseudo-cross + ZBLS + ZBLL', source_url: 'https://ruwix.com/blog/xuanyi-geng-3_84-seconds-average-record/' },
+      { person: 'Xuanyi Geng (耿暄一) WR avg 3.71', date: '2026-04-26', time: '3.71 avg', M: 49, TPS: 12.93, method: 'ZB (ZBLS + ZBLL) — Deqing Short-Time, includes 2.80 AsR single', source_url: 'https://www.speedsolving.com/threads/xuanyi-geng-3x3-3-71-average-and-2-80-asr-single.96768/' },
+      { person: 'Xuanyi Geng (耿暄一) prior WR avg 3.84', date: '2026-01-11', time: '3.84 avg', M: 49, TPS: 12.4, method: 'ZB (ZBLS + ZBLL) — Beijing Winter, full reconstruction available', source_url: 'https://ruwix.com/blog/xuanyi-geng-3_84-seconds-average-record/' },
       { person: 'Ruihang Xu (unofficial)', date: '2021', time: '2.68 s', M: 26, TPS: 9.70, method: 'CFOP, lucky scramble (warmup, not WCA)', source_url: 'https://www.speedsolving.com/threads/reconstruction-2-68-3x3-world-best-single-ruihang-xu.80181/' },
     ],
     reasoning_en:
@@ -138,6 +154,9 @@ export const THEORETICAL_LIMITS: Record<string, TheoreticalLimit> = {
       'Full EG = CLL + EG-1 + EG-2 (126 algs total). Top cubers (Ziyu Ye 0.39 single Hefei 2025; Sujan Feist 0.86 Ao5; Zayn Khanani; Yiheng Wang) use full EG. Many WR singles are 4-5 STM lucky 1-look skips. Note: Yiheng\'s 0.78 average (2024) was revoked after frame-counting found timer sliding — WCA introduced framecount verification in response.',
     current_method_zh:
       '全 EG = CLL + EG-1 + EG-2 (126 算法)。顶级 (叶子瑜 0.39 单次 合肥 2025;Sujan Feist 0.86 Ao5;Zayn Khanani;王艺衡) 全用全 EG。多数 WR 单次是 4-5 步幸运 1-look skip。注:王艺衡 2024 年 0.78 平均被取消,因为帧分析发现"滑计时器"作弊,WCA 因此引入帧计数验证。',
+    current_wr_avg_holder: 'Sujan Feist — 0.86 (Kids America Christmas OH 2025)',
+    t_phys_single: 0.3,
+    t_phys_avg: 0.65,
     method_eras: [
       { start_year: 2003, method: 'Beginner / LBL', method_zh: '逐层入门', avg_stm: 25 },
       { start_year: 2008, method: 'Ortega (= EG-0)', method_zh: 'Ortega (即 EG-0)', alg_count: 12, avg_stm: 18 },
@@ -176,6 +195,9 @@ export const THEORETICAL_LIMITS: Record<string, TheoreticalLimit> = {
       'Yau (Robert Yau, 2009) is universal at WR level: cross dedges first, then centers + last cross dedge, then 3-2-3 chain edge pairing, then 3x3 stage. Tymon Kolasiński (current WR 15.18 single + 18.56 Ao5 = first sub-19) and Max Park (prior WR holder, 19.38 → 19.71 Ao5 history) both use Yau. Reduction is the intermediate fallback. Parity (50% OLL + 50% PLL independently): OLL parity ~15 STM alg, PLL parity ~12 STM alg.',
     current_method_zh:
       'Yau (Robert Yau, 2009 提出) 是 WR 级普世标准:先 cross 边棱 → 中心 + 最后 cross 边棱 → 3-2-3 链棱配对 → 三阶阶段。Tymon (现 WR 15.18 单 + 18.56 Ao5 = 史上首破 19 秒) 和 Max Park (前 WR) 都用 Yau。Reduction 是中级备选。Parity (50% OLL + 50% PLL 独立):OLL parity ~15 步算法,PLL parity ~12 步。',
+    current_wr_avg_holder: 'Tymon Kolasiński — 18.56 (Seoul Winter 2026, first sub-19)',
+    t_phys_single: 12,
+    t_phys_avg: 14,
     method_eras: [
       { start_year: 2003, method: 'Reduction (basic redux)', method_zh: 'Reduction (基础)', avg_stm: 200 },
       { start_year: 2009, method: 'Yau (Robert Yau)', method_zh: 'Yau (Robert Yau)', avg_stm: 150 },
@@ -210,6 +232,9 @@ export const THEORETICAL_LIMITS: Record<string, TheoreticalLimit> = {
       'Yau5 (extended Yau for 5x5) and Reduction split the elite. Tymon Kolasiński (WR 30.45 single 2024 + 34.31 Ao5 2025 — first non-Park average WR holder in ~7 years) uses Yau5. Park uses Reduction. 5x5 has NO parity (odd-layered, no algorithmic OLL/PLL parity case).',
     current_method_zh:
       'Yau5 (Yau 在 5x5 的扩展) 和 Reduction 在顶级各占一半。Tymon (WR 30.45 单 2024 + 34.31 Ao5 2025 — Park 之外 ~7 年来首个) 用 Yau5。Park 用 Reduction。5x5 无 parity (奇数层,不存在算法级 OLL/PLL parity)。',
+    current_wr_avg_holder: 'Tymon Kolasiński — 34.31 (WCA World Champ 2025)',
+    t_phys_single: 19.5,
+    t_phys_avg: 22,
     method_eras: [
       { start_year: 2003, method: 'Reduction (basic)', method_zh: 'Reduction (基础)', avg_stm: 280 },
       { start_year: 2010, method: 'Reduction + freeslice edge-pairing', method_zh: 'Reduction + freeslice', avg_stm: 240 },
@@ -243,6 +268,9 @@ export const THEORETICAL_LIMITS: Record<string, TheoreticalLimit> = {
       'Reduction universal at WR level — Yau6 offers diminishing returns due to dilute cross-edge advantage. Max Park dominates (current single 57.69 in Burbank 2025-04 — third-ever sub-1:00 single; Mo3 1:05.04). 6x6 has full parity (50% × 15-STM OLL + 50% × 12-STM PLL). Hardware unresolved: inner-layer slipping affects "every 6x6 including the big three" (Cubeskills).',
     current_method_zh:
       'Reduction 在 WR 级普世 — Yau6 在 6x6 收益递减,cross 边棱优势被稀释。Max Park 垄断 (现单次 57.69, Burbank 2025-04, 史上第三个 sub-1:00 单次;Mo3 1:05.04)。6x6 有完整 parity (50% × 15-STM OLL + 50% × 12-STM PLL)。硬件未解决:内层打滑影响"所有 6x6,包括三大牌"(Cubeskills)。',
+    current_wr_avg_holder: 'Max Park — 1:05.04 Mo3 (Nub Open Trabuco Hills Fall 2025)',
+    t_phys_single: 36,
+    t_phys_avg: 42,
     method_eras: [
       { start_year: 2008, method: 'V-Cube 6 era — slow Reduction', method_zh: 'V-Cube 6 时代 — 慢速 Reduction' },
       { start_year: 2014, method: 'MoYu AoShi era + freeslice', method_zh: 'MoYu AoShi 时代 + freeslice' },
@@ -273,6 +301,9 @@ export const THEORETICAL_LIMITS: Record<string, TheoreticalLimit> = {
       'Reduction universal (Yau7 used by Tymon). Max Park dominates (current single 1:33.48, Mo3 1:36.86 both at Nub Open Trabuco Hills Fall 2025). 7x7 has NO parity (odd-layered). Best primary STM data of any big cube — multiple solver reconstructions on speedsolving.com show 446-524 STM (mean ~470).',
     current_method_zh:
       'Reduction 普世 (Yau7 Tymon 用)。Max Park 垄断 (现单次 1:33.48,Mo3 1:36.86,均 Nub Open Trabuco Hills Fall 2025)。7x7 无 parity (奇数层)。是大魔方中唯一有公开复盘数据库的项目 — speedsolving 多人复盘显示 446-524 STM (均值 ~470)。',
+    current_wr_avg_holder: 'Max Park — 1:36.86 Mo3 (Nub Open Trabuco Hills Fall 2025)',
+    t_phys_single: 75,
+    t_phys_avg: 80,
     method_eras: [
       { start_year: 2008, method: 'V-Cube 7 era', method_zh: 'V-Cube 7 时代' },
       { start_year: 2014, method: 'MoYu AoFu era + Reduction', method_zh: 'MoYu AoFu 时代 + Reduction' },
@@ -306,6 +337,9 @@ export const THEORETICAL_LIMITS: Record<string, TheoreticalLimit> = {
       'CFOP adapted for OH dominates the elite. Dhruva Sai Meruva (Switzerland, current WR single 5.66 at Swiss Nationals 2024-10-06 — tied to digit with Feliks\'s 2H 5.66 from 2011), Luke Garrett (USA, current WR Ao5 7.72, Chicagoland Newcomers 2025), Yiheng Wang. Top solvers use OH-friendly OLL/PLL subsets (RU-heavy algs, often 2-look OLL kept for ergonomics). Roux-OH is more move-efficient (~45-50 STM vs CFOP-OH ~55-60) and dominant in OH single Ao5 records (Sean Patrick Villanueva, Nicholas Archer, Kian Mansour) but the top of the WR Ao5 standings still uses CFOP-OH because recognition speed wins.',
     current_method_zh:
       '顶级以 OH 改良 CFOP 为主。Dhruva Sai Meruva (瑞士,现 WR 单次 5.66, Swiss Nationals 2024-10-06 — 与 Feliks 2011 双手 5.66 同位)、Luke Garrett (美国,现 WR Ao5 7.72, Chicagoland 2025)、王艺衡。OH 版优选 RU-heavy OLL / PLL,部分保留 2-look OLL 节省手指扭曲。Roux-OH 步数更省 (~45-50 vs CFOP-OH ~55-60),在 OH Ao5 历史上有 SPV / Archer / Mansour 等持有人,但当前 WR 仍是 CFOP-OH — 识别速度赢了。',
+    current_wr_avg_holder: 'Luke Garrett — 7.72 (Chicagoland Newcomers 2025)',
+    t_phys_single: 3.6,
+    t_phys_avg: 5,
     method_eras: [
       { start_year: 2003, method: 'Beginner / LBL (OH)', method_zh: '逐层 OH', avg_stm: 130 },
       { start_year: 2010, method: 'CFOP-OH (basic)', method_zh: 'CFOP-OH 基础版', alg_count: 78, avg_stm: 62 },
@@ -337,6 +371,9 @@ export const THEORETICAL_LIMITS: Record<string, TheoreticalLimit> = {
       'Full 3-Style commutators (corners + edges) is universal at the elite level. Charlie Eggins (Australia, WR single 11.67 + Mo3 14.05, Cubing at The Cube 2026-01-10, Sydney) holds both records. Tommy Cherry held the 12.x band before Eggins\'s January 2026 sub-12 breakthrough. M2/OP is teaching-only. Floating buffers + LTCT (Last-Target Corner Twist) + per-special algs cut setup moves. Note: Tymon Kolasiński does NOT hold a 3BLD record — he holds 4x4 single, 5x5 single, 5x5 mean.',
     current_method_zh:
       '顶级全跑 corner + edge 全 3-Style。Charlie Eggins (澳洲) 2026-01-10 在 Sydney "Cubing at The Cube" 同场拿下 WR 单次 11.67 + Mo3 14.05。Tommy Cherry 之前持有 12.x 段。M2/OP 仅教学。浮动 buffer + LTCT (Last-Target Corner Twist) + 特例算法削减 setup。注:Tymon Kolasiński 不持有 3BLD 记录,他持有的是 4x4 单 / 5x5 单 / 5x5 Ao5。',
+    current_wr_avg_holder: 'Charlie Eggins — 14.05 Mo3 (Cubing at The Cube 2026-01-10)',
+    t_phys_single: 6.5,
+    t_phys_avg: 8,
     method_eras: [
       { start_year: 2003, method: 'Pochmann (OP / M2)', method_zh: 'Pochmann (OP / M2)', avg_stm: 110 },
       { start_year: 2010, method: 'M2 (edges) + OP (corners)', method_zh: 'M2 + OP', avg_stm: 90 },
@@ -370,6 +407,10 @@ export const THEORETICAL_LIMITS: Record<string, TheoreticalLimit> = {
       'Modern FMC = blockbuilding + EO + Domino Reduction (DR, reduce to <U,D,R2,L2,F2,B2> subgroup, optimal DR-to-solved averages 13.58 moves) + insertions + NISS (Normal-Inverse Scramble Switch). WR single = 16 moves shared by 5 holders: Sebastiano Tronto (2019), Aedan Bryant + Levi Gibson (2024), Jacob Sherwen Brown (2024). Mean WR = 19.33 (Wong Chong Wen 2026, first sub-20 mean). Sebastiano Tronto authored the DR revolution.',
     current_method_zh:
       '现代 FMC = blockbuilding + EO + Domino Reduction (DR,把状态降到 <U,D,R2,L2,F2,B2> 子群,DR→solved optimal 平均 13.58 步) + 插入法 + NISS (正逆 scramble 互换搜)。WR 单次 = 16 步,5 人持有:Sebastiano Tronto (2019)、Aedan Bryant + Levi Gibson (2024)、Jacob Sherwen Brown (2024)。Mo3 WR = 19.33 (Wong Chong Wen 2026,首破 20)。Tronto 是 DR 革命主笔。',
+    current_wr_avg_holder: 'Wong Chong Wen — FMCanton Nansha 2026-03-21 (first sub-20)',
+    current_wr_avg_value: 19.33,
+    t_phys_single: 17,
+    t_phys_avg: 17.5,
     method_eras: [
       { start_year: 2003, method: 'Blockbuilding + intuition', method_zh: 'Blockbuilding + 直觉', avg_stm: 35 },
       { start_year: 2010, method: 'Blockbuilding + insertions', method_zh: 'Blockbuilding + 插入法', avg_stm: 28 },
@@ -401,6 +442,9 @@ export const THEORETICAL_LIMITS: Record<string, TheoreticalLimit> = {
       'Full 3-Style across centers + wings + edges + corners + parity. Stanley Chapel (51.96 single 2023, 59.39 Mo3 2025 — first sub-1:00 mean ever) uses floating buffers across all four orbits.',
     current_method_zh:
       '中心 + 翼棱 + 棱 + 角 + parity 全 3-Style。Stanley Chapel (51.96 单 2023,59.39 Mo3 2025 — 史上首破 1 分钟 Mo3) 在四种 piece 都用浮动 buffer。',
+    current_wr_avg_holder: 'Stanley Chapel — 59.39 Mo3 (NY Multimate PBQ II 2025, first sub-1:00)',
+    t_phys_single: 30,
+    t_phys_avg: 38,
     method_eras: [
       { start_year: 2009, method: 'Reduction + 3BLD on 3x3 stage', method_zh: 'Reduction + 顶层 3BLD' },
       { start_year: 2015, method: '3-Style on edges/corners; comm-by-comm on big pieces', method_zh: '棱角 3-Style;大块逐 comm', avg_stm: 200 },
@@ -429,6 +473,9 @@ export const THEORETICAL_LIMITS: Record<string, TheoreticalLimit> = {
       'Full floating-buffer 3-Style across five orbits: corners, wings, midges, +centers, X-centers. Stanley Chapel monopolizes (1:58.59 single 2026 — first-ever sub-2:00; 2:27.63 Mo3 2019 — most enduring active BLD record). Midge memo is the recognition bottleneck.',
     current_method_zh:
       '五种 piece (角 / 翼 / midge / +中心 / X 中心) 全浮动 buffer 3-Style。Chapel 垄断 (1:58.59 单次 2026 — 史上首破 2 分钟;2:27.63 Mo3 2019 — 现役 BLD 最久未破)。midge 识别是瓶颈。',
+    current_wr_avg_holder: 'Stanley Chapel — 2:27.63 Mo3 (Michigan Cubing Club Epsilon 2019)',
+    t_phys_single: 80,
+    t_phys_avg: 95,
     method_eras: [
       { start_year: 2010, method: 'M2 / Pochmann + Reduction', method_zh: 'M2 / Pochmann + Reduction' },
       { start_year: 2015, method: '3-Style on corners + edges', method_zh: '角棱 3-Style' },
@@ -457,6 +504,9 @@ export const THEORETICAL_LIMITS: Record<string, TheoreticalLimit> = {
       'V-first (one V = 3 edges + 3 centers, then last 4 edges) + intuitive last layer is universal. Top cubers (Simon Kellum 0.73 single 2023, Lingkun Jiang 1.14 Ao5 2025, Dominik Górny, Akira Hattori) plan the entire ≤11-move solution during 15s inspection. Pyraminx is the only WCA event where "inspection-optimal" is human-achievable.',
     current_method_zh:
       'V-first (一个 V 块 = 3 棱 + 3 中心,再解后 4 棱) + 直觉 LL。顶级 (Kellum 0.73 单 2023, Jiang 1.14 Ao5 2025, Górny, Hattori) 在 15 秒 inspection 内全程规划 ≤11 步解。金字塔是唯一一个"inspection-optimal" 人类可达的 WCA 项目。',
+    current_wr_avg_holder: 'Lingkun Jiang — 1.14 (Zhengzhou Zest 2025)',
+    t_phys_single: 0.43,
+    t_phys_avg: 0.85,
     method_eras: [
       { start_year: 2003, method: 'LBL / Top-First', method_zh: '逐层 / 顶层优先', avg_stm: 18 },
       { start_year: 2008, method: 'OKA (Yohei Oka)', method_zh: 'OKA (Yohei Oka)', avg_stm: 13 },
@@ -491,6 +541,9 @@ export const THEORETICAL_LIMITS: Record<string, TheoreticalLimit> = {
       'Sarah\'s Advanced (134 L2L cases) was orthodox until ~2023. The new frontier is TCLL (Twisted Corner Last Layer, ~1080 cases / ~360 algs after pseudo handling). Vojtěch Grohmann used TCLL for the WR single 0.73 (Głuszyca Open 2026-01). Average WR 1.37 (Ignacy Samselski 2025) typically still uses Sarah\'s.',
     current_method_zh:
       'Sarah\'s Advanced (134 L2L cases) 是 ~2023 之前的正统。新前沿是 TCLL (Twisted Corner Last Layer,~1080 cases / 假态合并后 ~360 algs)。Vojtěch Grohmann 用 TCLL 创下 WR 单次 0.73 (Głuszyca Open 2026-01)。Ao5 WR 1.37 (Samselski 2025) 多用 Sarah\'s。',
+    current_wr_avg_holder: 'Ignacy Samselski — 1.37 (Cube Factory League Justynów 2025)',
+    t_phys_single: 0.55,
+    t_phys_avg: 1.10,
     method_eras: [
       { start_year: 2014, method: 'Beginner LBL', method_zh: '逐层入门', avg_stm: 18 },
       { start_year: 2014, method: 'Sarah\'s Intermediate', method_zh: 'Sarah\'s 中级', alg_count: 10, avg_stm: 14 },
@@ -525,6 +578,9 @@ export const THEORETICAL_LIMITS: Record<string, TheoreticalLimit> = {
       'Vandenbergh (Cubeshape → CO → CP → EO → EP) is universal foundation. Top cubers add CSP (Cubeshape Parity, Brandon Lin ~2015) to predict slice parity in inspection, then Lin Method + PLL+1 / 1LLL fragments. Hassan Khanani 3.40 single (Steel City Sprint 2026), Sameer Aggarwal 4.63 Ao5 (2025).',
     current_method_zh:
       'Vandenbergh (cubeshape → CO → CP → EO → EP) 普世基础。顶级叠加 CSP (Cubeshape Parity, Brandon Lin ~2015,inspection 预判 slice parity),进一步用 Lin + PLL+1 / 1LLL 局部。Hassan Khanani 3.40 单 (Steel City Sprint 2026),Aggarwal 4.63 Ao5 (2025)。',
+    current_wr_avg_holder: 'Sameer Aggarwal — 4.63 (Cubing in Southern Oregon 2025)',
+    t_phys_single: 1.80,
+    t_phys_avg: 3.5,
     method_eras: [
       { start_year: 2003, method: 'Vandenbergh (intuitive)', method_zh: 'Vandenbergh (直觉)', avg_stm: 35 },
       { start_year: 2010, method: 'Vandenbergh + full alg-driven', method_zh: 'Vandenbergh + 全算法化', avg_stm: 26, alg_count: 100 },
@@ -556,6 +612,9 @@ export const THEORETICAL_LIMITS: Record<string, TheoreticalLimit> = {
       '7-SIMUL (bpaul, ~2023) — memorize back-side state in inspection, execute both sides essentially simultaneously. Lachlan Gibson 1.53 single (Sep 2025), Brendyn Dunagan 2.24 Ao5 (2025). The flip is one indivisible ~0.3s motion. Note: prior method "Lou" (Yunhao Lou 2.87 WR May 2021) was flip-efficient but sequential.',
     current_method_zh:
       '7-SIMUL (bpaul ~2023) — inspection 期间记忆背面,正背两面几乎同时执行。Gibson 1.53 单 (2025-09), Dunagan 2.24 Ao5 (2025)。翻面动作不可分,~0.3 秒。前代方法 Lou (Yunhao Lou 2.87 WR 2021-05) 减翻面但仍顺序执行。',
+    current_wr_avg_holder: 'Brendyn Dunagan — 2.24 (Temecula Valley Winter 2025)',
+    t_phys_single: 1.30,
+    t_phys_avg: 1.85,
     method_eras: [
       { start_year: 2003, method: 'Sequential pin-flip (front, then back)', method_zh: '顺序拨钉 (先前后)', avg_stm: 18 },
       { start_year: 2010, method: 'Pochmann / Stefan-style categorized algs', method_zh: 'Pochmann / Stefan 分类算法' },
@@ -586,6 +645,9 @@ export const THEORETICAL_LIMITS: Record<string, TheoreticalLimit> = {
       'Westlund (Star + F2L + S2L + Last2Layers) remains universal at the top — Zemdegs, Huanqui, Ziyu Wu, Tarasenko all use it. Modern variants (Yu Da-Hyung S2L, Bálint S2L) differ in last-pair insertion. Timofei Tarasenko 21.99 single + 24.38 Ao5 (Tashkent Open 2025-12) used Westlund + heavy LL alg base.',
     current_method_zh:
       'Westlund (Star + F2L + S2L + Last2Layers) 仍是顶级普世标准 — Zemdegs / Huanqui / 吴子语 / Tarasenko 都用。现代变种 (Yu Da-Hyung S2L、Bálint S2L) 差别在最后一对的插入。Tarasenko 21.99 单 + 24.38 Ao5 (Tashkent Open 2025-12) 用 Westlund + 厚 LL 算法库。',
+    current_wr_avg_holder: 'Timofei Tarasenko — 24.38 (Tashkent Open 2025-12-06)',
+    t_phys_single: 9.0,
+    t_phys_avg: 18,
     method_eras: [
       { start_year: 2003, method: 'Beginner / LBL face-by-face', method_zh: '逐层 / 逐面入门', avg_stm: 280 },
       { start_year: 2011, method: 'Westlund (Simon Westlund) — Star + F2L + S2L + LL', method_zh: 'Westlund (Simon Westlund) — Star + F2L + S2L + LL', avg_stm: 160 },
