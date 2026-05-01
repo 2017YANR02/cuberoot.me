@@ -111,8 +111,6 @@ export interface AlgSuggestion {
 
 interface ScoreContext {
   preState: CubeState;
-  /** Number of F2L pairs that should be solved after the alg (for pair stages). */
-  pairsAfter: number;
   stage: Stage;
 }
 
@@ -160,23 +158,21 @@ function scoreCandidate(alg: string, ctx: ScoreContext): number {
   return -lenPenalty;
 }
 
-/** Extract all algs from one algdb file. */
-function flatAlgs(cases: AlgdbCase[]): Array<{ caseName: string; alg: string; setup: string }> {
-  const out: Array<{ caseName: string; alg: string; setup: string }> = [];
-  for (const c of cases) {
-    if (c.standard) out.push({ caseName: c.name, alg: c.standard, setup: c.setup });
-    for (const oriAlgs of c.algs) {
-      for (const e of oriAlgs) out.push({ caseName: c.name, alg: e.alg, setup: c.setup });
-    }
-  }
-  // De-dup by alg string within same case
+/** Extract all (caseName, alg) pairs from one algdb file. De-duplicated. */
+function flatAlgs(cases: AlgdbCase[]): Array<{ caseName: string; alg: string }> {
+  const out: Array<{ caseName: string; alg: string }> = [];
   const seen = new Set<string>();
-  return out.filter(x => {
-    const key = `${x.caseName}|${x.alg}`;
-    if (seen.has(key)) return false;
+  const push = (caseName: string, alg: string) => {
+    const key = `${caseName}|${alg}`;
+    if (seen.has(key)) return;
     seen.add(key);
-    return true;
-  });
+    out.push({ caseName, alg });
+  };
+  for (const c of cases) {
+    if (c.standard) push(c.name, c.standard);
+    for (const oriAlgs of c.algs) for (const e of oriAlgs) push(c.name, e.alg);
+  }
+  return out;
 }
 
 /**
@@ -191,11 +187,7 @@ export function rankAlgs(
   topN = 12,
 ): AlgSuggestion[] {
   const candidates = flatAlgs(db);
-  const ctx: ScoreContext = {
-    preState,
-    pairsAfter: stage.kind === 'pair' ? stage.index : 0,
-    stage,
-  };
+  const ctx: ScoreContext = { preState, stage };
   const scored = candidates.map(c => ({
     caseName: c.caseName,
     alg: c.alg,
