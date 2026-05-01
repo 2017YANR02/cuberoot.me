@@ -37,7 +37,7 @@ interface Column {
   sortable: boolean;
 }
 
-// NOTE: 完全对齐原版列顺序：Single→Solver→Date→Comp→Rnd#→Avg→AoXR→Result→STM→TPS→Event→Method→#
+// NOTE: 列顺序：Single→Solver→Date→Comp→Rnd#→Avg→AoXR→Result→STM→TPS→Event→Method→Reconer→#
 // 使用 labelKey 引用 i18n key；无翻译的列用空字符串
 const COLUMNS: Column[] = [
   { key: 'rawTime', labelKey: '', className: 'col-dsingle', sortable: true },
@@ -52,6 +52,7 @@ const COLUMNS: Column[] = [
   { key: 'tps', labelKey: '', className: 'col-tps mono', sortable: true },
   { key: 'event', labelKey: 'recon.event', className: 'col-event', sortable: true },
   { key: 'method', labelKey: 'recon.method', className: 'col-method', sortable: true },
+  { key: 'reconer', labelKey: 'recon.reconstructor', className: 'col-reconer', sortable: true },
   { key: 'id', labelKey: '', className: 'col-idx', sortable: true },
 ];
 
@@ -125,6 +126,7 @@ export default function ReconListPage() {
     displayCount,
     loadAll, setFilter, setSort,
     getFilteredSolves, getAvailableEvents, getAvailableMethods, getAvailableSolvers,
+    getAvailableReconers,
     getAvailableComps, getAvailableRecords, getAvailableRounds, getAvailableAoTypes,
   } = useReconStore();
 
@@ -171,6 +173,10 @@ export default function ReconListPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useReconStore.getState().allSolves,
   ]);
+  const reconers = useMemo(() => getAvailableReconers(), [
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    useReconStore.getState().allSolves,
+  ]);
   const comps = useMemo(() => getAvailableComps(), [
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useReconStore.getState().allSolves,
@@ -197,6 +203,13 @@ export default function ReconListPage() {
     // NOTE: 中文模式下也能用英文名 / WCA ID 命中
     searchTerms: s.name === '__NO_PERSON__' ? '空' : `${s.name} ${s.wcaId}`.trim(),
   })), [solvers, isZh]);
+
+  const reconerItems = useMemo<ListSelectItem[]>(() => reconers.map(r => ({
+    value: r.name,
+    label: r.name === '__NO_RECONER__' ? '(空)' : displayCuberName(r.name, isZh),
+    hint: `(${r.count})`,
+    searchTerms: r.name === '__NO_RECONER__' ? '空' : `${r.name} ${r.wcaId}`.trim(),
+  })), [reconers, isZh]);
 
   const compItems = useMemo<ListSelectItem[]>(() => comps.map(c => ({
     value: c.name,
@@ -316,6 +329,20 @@ export default function ReconListPage() {
               value={filters.solver}
               onChange={(v) => setFilter('solver', v)}
               allLabel={t('recon.allSolvers')}
+              searchable
+            />
+          </ColFilter>
+        );
+      }
+      case 'reconer': {
+        const active = !!filters.reconer;
+        return (
+          <ColFilter active={active} onClear={() => setFilter('reconer', '')} align="left">
+            <ListSelect
+              items={reconerItems}
+              value={filters.reconer}
+              onChange={(v) => setFilter('reconer', v)}
+              allLabel={t('recon.allReconers')}
               searchable
             />
           </ColFilter>
@@ -551,6 +578,24 @@ export default function ReconListPage() {
           );
         }
         return <>{fc && <span className={fc} />} {name}</>;
+      }
+      case 'reconer': {
+        // NOTE: 复盘者无 country，仅名字 + 可选 WCA 链接
+        if (!solve.reconer) return '';
+        const name = displayCuberName(solve.reconer, isZh);
+        if (solve.reconerId) {
+          return (
+            <a
+              href={wcaPersonUrl(solve.reconerId)}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {name}
+            </a>
+          );
+        }
+        return name;
       }
       case 'date':
         // NOTE: 截取 YYYY-MM-DD 部分

@@ -196,6 +196,24 @@
   padding: 0;
 }
 
+/* --- 另一种打乱（player 默认用 optimal,这里露出 wca） --- */
+.detail-other-scramble {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: #9a9a9a;
+  margin-bottom: 6px;
+  word-break: break-all;
+}
+.detail-other-scramble-label {
+  flex-shrink: 0;
+  color: #707070;
+  font-family: inherit;
+}
+
 /* --- 统计网格 --- */
 .detail-stats-grid {
   display: grid;
@@ -553,71 +571,11 @@
 .alt-submit-parent-link:hover { color: #e8a27a; }
 
 
-/* 另解卡片右侧:▶/■ + 三点菜单 */
+/* 另解卡片右侧:三点菜单 */
 .alt-card-actions {
   display: flex;
   align-items: flex-start;
   gap: 4px;
-}
-
-.alt-play-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 6px;
-  color: #a3a3a3;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.alt-play-btn:hover {
-  background: rgba(232, 162, 122, 0.12);
-  color: #e8a27a;
-  border-color: rgba(232, 162, 122, 0.4);
-}
-
-.alt-play-btn-active {
-  background: rgba(232, 162, 122, 0.15);
-  color: #e8a27a;
-  border-color: rgba(232, 162, 122, 0.55);
-}
-
-/* "正在演示另解 by xxx · 返回原解" banner——左栏 player 上方 */
-.detail-active-alt-banner {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  margin-bottom: 8px;
-  background: rgba(232, 162, 122, 0.1);
-  border: 1px solid rgba(232, 162, 122, 0.35);
-  border-radius: 6px;
-  color: #e8a27a;
-  font-size: 0.88rem;
-}
-
-.detail-active-alt-banner span { flex: 1; }
-
-.detail-active-alt-banner button {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 8px;
-  background: transparent;
-  border: 1px solid rgba(232, 162, 122, 0.4);
-  border-radius: 4px;
-  color: #e8a27a;
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.detail-active-alt-banner button:hover {
-  background: rgba(232, 162, 122, 0.18);
 }
 
 .recon-btn-edit {

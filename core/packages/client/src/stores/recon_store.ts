@@ -11,7 +11,7 @@ import { loadCachedSolves, saveCachedSolves } from '../utils/recon_cache';
 
 // NOTE: 'result' 映射到 rawTime（三位小数列），'aoType' 排序按 aoType 字段
 export type SortKey =
-  | 'id' | 'rawTime' | 'person' | 'event' | 'method'
+  | 'id' | 'rawTime' | 'person' | 'reconer' | 'event' | 'method'
   | 'comp' | 'date' | 'stm' | 'tps' | 'average'
   | 'round' | 'aoType' | 'result';
 
@@ -24,6 +24,7 @@ export interface ReconFilters {
   method: string;      // '' = 全部
   official: string;    // '' = 全部, '1' = WCA, '0' = non-WCA
   solver: string;      // '' = 全部, '__NO_PERSON__' = 无选手名
+  reconer: string;     // '' = 全部, '__NO_RECONER__' = 无复盘者
   comp: string;        // '' = 全部, '__NO_COMP__' = 无比赛
   record: string;      // '' = 全部 (e.g. 'WR' / 'CR' / 'NR' / ...)
   rawTimeMin: number | null;  // null = 不限；秒
@@ -66,6 +67,8 @@ interface ReconStoreActions {
   getAvailableMethods: () => { name: string; count: number }[];
   /** 按频率排序的选手列表;wcaId 取该选手第一条非空 personId */
   getAvailableSolvers: () => { name: string; count: number; country: string; wcaId: string }[];
+  /** 按频率排序的复盘者列表;wcaId 取第一条非空 reconerId */
+  getAvailableReconers: () => { name: string; count: number; wcaId: string }[];
   /** 按频率排序的比赛列表 */
   getAvailableComps: () => { name: string; count: number; country: string }[];
   /** 按频率排序的纪录代码列表 (WR / CR / NR 等) */
@@ -81,6 +84,7 @@ const DEFAULT_FILTERS: ReconFilters = {
   method: '',
   official: '',
   solver: '',
+  reconer: '',
   comp: '',
   record: '',
   rawTimeMin: null,
@@ -176,6 +180,11 @@ export const useReconStore = create<ReconStoreState & ReconStoreActions>()((set,
       result = result.filter(s => !s.person);
     } else if (filters.solver) {
       result = result.filter(s => s.person === filters.solver);
+    }
+    if (filters.reconer === '__NO_RECONER__') {
+      result = result.filter(s => !s.reconer);
+    } else if (filters.reconer) {
+      result = result.filter(s => s.reconer === filters.reconer);
     }
     if (filters.official === '1') {
       result = result.filter(s => s.official);
@@ -341,6 +350,23 @@ export const useReconStore = create<ReconStoreState & ReconStoreActions>()((set,
       .map(([name, count]) => ({ name, count, country: country[name] || '', wcaId: wcaId[name] || '' }))
       .sort((a, b) => b.count - a.count);
     if (noneCount > 0) entries.push({ name: '__NO_PERSON__', count: noneCount, country: '', wcaId: '' });
+    return entries;
+  },
+
+  // NOTE: 按频率排序的复盘者列表;wcaId 取第一条非空 reconerId
+  getAvailableReconers: () => {
+    const counts: Record<string, number> = {};
+    const wcaId: Record<string, string> = {};
+    let noneCount = 0;
+    for (const s of get().allSolves) {
+      if (!s.reconer) { noneCount++; continue; }
+      counts[s.reconer] = (counts[s.reconer] || 0) + 1;
+      if (!wcaId[s.reconer] && s.reconerId) wcaId[s.reconer] = s.reconerId;
+    }
+    const entries = Object.entries(counts)
+      .map(([name, count]) => ({ name, count, wcaId: wcaId[name] || '' }))
+      .sort((a, b) => b.count - a.count);
+    if (noneCount > 0) entries.push({ name: '__NO_RECONER__', count: noneCount, wcaId: '' });
     return entries;
   },
 

@@ -6,7 +6,7 @@
 import type { ReconSolve } from '@cuberoot/shared';
 
 // NOTE: schema 变化时 bump 版本（旧缓存自动废弃）
-const CACHE_VERSION = 1;
+const CACHE_VERSION = 2;
 const CACHE_KEY = `recon_list_cache:v${CACHE_VERSION}`;
 // NOTE: 安全上限——超过 7 天的缓存丢弃，避免后端长时间不可用时返回过期数据
 const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
