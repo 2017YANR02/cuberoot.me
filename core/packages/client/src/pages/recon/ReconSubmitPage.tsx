@@ -30,6 +30,7 @@ import './recon_submit.css';
 import CubeVirtualKeyboard from './components/CubeVirtualKeyboard';
 import TwistySection from './components/TwistySection';
 import SolutionView from './components/SolutionView';
+import ReconAutofill from './components/ReconAutofill';
 import { cleanForPlayer, extractAlgFromText, syncPlayerToMoveCount, autoSpaceMoves } from '../../utils/recon_alg_utils';
 import { buildNormalizedSolution, hasWideMoveInCrossSection } from '../../utils/recon_norm_cross_extract';
 import { ArrowRightLeft, ChevronDown, ChevronRight, Home, Keyboard, Loader2 } from 'lucide-react';
@@ -972,6 +973,23 @@ export default function ReconSubmitPage() {
             />
           )}
         </div>
+
+        {/* NOTE: 注释 + 公式自动补全 — 输入 // 弹注释标签,// X pair 后弹 F2L 公式 */}
+        {!normalized && (
+          <ReconAutofill
+            textareaRef={solutionRef}
+            value={form.solution || ''}
+            setValue={(next) => {
+              setField('solution', next);
+              if (solutionRef.current) {
+                solutionRef.current.value = next;
+                autoResize(solutionRef.current);
+                handleCursorSync(solutionRef.current);
+              }
+            }}
+            scramble={form.wcaScramble || form.optimalScramble || ''}
+          />
+        )}
 
         {/* NOTE: 虚拟键盘 — 标准化视图(只读)不显示;桌面端 toggle,移动端强制显示 */}
         {!normalized && (
