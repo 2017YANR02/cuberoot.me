@@ -645,13 +645,14 @@ function dedupRows(rows: unknown[][], header: StatHeader[]): unknown[][] {
 
 // NOTE: Panels 渲染——Tab 切换（如 Ranking / History）
 // 增强：检测 AoX 面板，自动集成分布图（ranking）和折线图（history）
-function PanelsView({ panels, searchTerm, isZh, selectedEvent, activePanel, onSetActivePanel }: {
+function PanelsView({ panels, searchTerm, isZh, selectedEvent, activePanel, onSetActivePanel, belowTabs }: {
   panels: StatPanel[];
   searchTerm: string;
   isZh: boolean;
   selectedEvent?: string;
   activePanel: number;
   onSetActivePanel: (idx: number) => void;
+  belowTabs?: React.ReactNode;
 }) {
   // NOTE: Dedup 开关——默认 ON（与 Legacy 一致）
   const [dedup, setDedup] = useState(true);
@@ -724,6 +725,7 @@ function PanelsView({ panels, searchTerm, isZh, selectedEvent, activePanel, onSe
           </label>
         )}
       </div>
+      {belowTabs}
       {/* NOTE: History 面板——折线图在 sections 之上 */}
       {historyChartData && (
         <WrHistoryChart rows={historyChartData} header={panel.header} isZh={isZh} />
@@ -829,7 +831,7 @@ function SourcePanelsView({ sourcePanels, searchTerm, isZh, selectedEvent, activ
 
 // NOTE: MetricPanels 渲染——多级面板（指标选择 + Ranking/History Tab）
 // selectedEvent 可选：有值时计算每个 metric 是否有该项目的数据，无数据的 metric 灰掉
-function MetricPanelsView({ metricPanels, metricGroups, searchTerm, isZh, selectedEvent, activeMetric, onSetActiveMetric, onSetActivePanel, activePanel }: {
+function MetricPanelsView({ metricPanels, metricGroups, searchTerm, isZh, selectedEvent, activeMetric, onSetActiveMetric, onSetActivePanel, activePanel, belowTabs }: {
   metricPanels: MetricPanel[];
   metricGroups?: MetricGroup[];
   searchTerm: string;
@@ -839,6 +841,7 @@ function MetricPanelsView({ metricPanels, metricGroups, searchTerm, isZh, select
   onSetActiveMetric: (idx: number) => void;
   onSetActivePanel: (idx: number, panels: StatPanel[]) => void;
   activePanel: number;
+  belowTabs?: React.ReactNode;
 }) {
   const [pillOpen, setPillOpen] = useState(false);
   const pillRef = React.useRef<HTMLDivElement>(null);
@@ -961,7 +964,8 @@ function MetricPanelsView({ metricPanels, metricGroups, searchTerm, isZh, select
           activePanel={activePanel} onSetActivePanel={onSetActivePanel} />
       ) : metric && metric.panels ? (
         <PanelsView panels={metric.panels} searchTerm={searchTerm} isZh={isZh} selectedEvent={selectedEvent}
-          activePanel={activePanel} onSetActivePanel={(idx) => onSetActivePanel(idx, metric.panels!)} />
+          activePanel={activePanel} onSetActivePanel={(idx) => onSetActivePanel(idx, metric.panels!)}
+          belowTabs={belowTabs} />
       ) : null}
     </div>
   );
@@ -1212,6 +1216,30 @@ export default function WcaStatsPage() {
           onSetActiveMetric={(idx) => handleSetActiveMetric(idx, data.metricPanels!)}
           onSetActivePanel={(idx, panels) => handleSetActivePanel(idx, panels)}
           activePanel={activePanel}
+          belowTabs={(() => {
+            // NOTE: wr_metric ranking 面板专属——bar chart race 渲染在 排名/历史 tabs 下方、表格上方
+            if (statId !== 'wr_metric' || activePanel !== 0) return null;
+            type Metric = 'single' | 'average' | 'bao5' | 'wao5' | 'mo5' | 'bpa' | 'wpa'
+              | 'median' | 'best_counting' | 'worst_counting' | 'worst';
+            const METRIC_KEY: Record<string, Metric> = {
+              single: 'single', average: 'average',
+              bao5: 'bao5', wao5: 'wao5', mo5: 'mo5',
+              bpa: 'bpa', wpa: 'wpa',
+              median: 'median', bestc: 'best_counting', worstc: 'worst_counting',
+              worst: 'worst',
+            };
+            const mp = data.metricPanels?.[activeMetric];
+            const m = mp ? METRIC_KEY[mp.id] : undefined;
+            if (!m) return null;
+            return (
+              <Top10HistoryPage
+                controlledEventId={selectedEvent || '333'}
+                controlledMetric={m}
+                controlledMetricLabelZh={mp?.labelZh}
+                controlledMetricLabelEn={mp?.labelEn}
+              />
+            );
+          })()}
         />
       )}
 
@@ -1227,31 +1255,6 @@ export default function WcaStatsPage() {
           </div>
         </div>
       )}
-
-      {statId === 'wr_metric' && activePanel === 0 && data && (() => {
-        // NOTE: mp.id（wr_metric.json）→ Top10HistoryPage Metric type / top10_history JSON key
-        // bestc/worstc 的 mp.id 与 JSON key 命名不同；variance / ratio 没有 top10_history 数据
-        type Metric = 'single' | 'average' | 'bao5' | 'wao5' | 'mo5' | 'bpa' | 'wpa'
-          | 'median' | 'best_counting' | 'worst_counting' | 'worst';
-        const METRIC_KEY: Record<string, Metric> = {
-          single: 'single', average: 'average',
-          bao5: 'bao5', wao5: 'wao5', mo5: 'mo5',
-          bpa: 'bpa', wpa: 'wpa',
-          median: 'median', bestc: 'best_counting', worstc: 'worst_counting',
-          worst: 'worst',
-        };
-        const mp = data.metricPanels?.[activeMetric];
-        const m = mp ? METRIC_KEY[mp.id] : undefined;
-        if (!m) return null;
-        return (
-          <Top10HistoryPage
-            controlledEventId={selectedEvent || '333'}
-            controlledMetric={m}
-            controlledMetricLabelZh={mp?.labelZh}
-            controlledMetricLabelEn={mp?.labelEn}
-          />
-        );
-      })()}
     </div>
   );
 }

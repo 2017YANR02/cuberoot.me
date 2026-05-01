@@ -203,6 +203,50 @@
 }
 .pred-section p.pred-note strong { color: #232a33; }
 .pred-section p.pred-note em { font-style: normal; text-decoration: underline dotted; }
+
+.pred-tlimit { margin: 16px 0 24px; }
+.pred-tlimit h4 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 18px 0 8px;
+  color: #232a33;
+}
+.pred-tlimit-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin: 0 0 14px;
+}
+.pred-tlimit-table th,
+.pred-tlimit-table td {
+  text-align: left;
+  padding: 6px 10px;
+  border-bottom: 1px solid #eaeef3;
+}
+.pred-tlimit-table th {
+  background: #f7f8fb;
+  font-weight: 600;
+  color: #5a6370;
+  font-size: 12px;
+}
+.pred-tlimit-table.pred-tlimit-decomp tbody tr:last-child td {
+  font-weight: 600;
+  background: rgba(194, 65, 12, 0.04);
+}
+.pred-tlimit-contrast {
+  margin: 16px 0;
+  padding: 12px 14px;
+  background: #fef9f5;
+  border-left: 3px solid #c2410c;
+  border-radius: 4px;
+}
+.pred-tlimit-contrast > strong {
+  display: block;
+  font-size: 13px;
+  color: #c2410c;
+  margin-bottom: 6px;
+}
+.pred-tlimit-contrast .pred-note { margin: 0; background: transparent; border: none; padding: 0; }
 .pred-section ul, .pred-section ol { margin: 0 0 14px; padding-left: 22px; }
 .pred-section li { margin: 4px 0; }
 .pred-section code {
@@ -461,6 +505,7 @@
 .pred-ov-label { color: #8a93a0; }
 .pred-ov-val { font-weight: 600; color: #1a1a1a; }
 .pred-ov-pct { color: #c2410c; }
+.pred-ov-accent { color: #0a8a6b; }
 
 .pred-method ul code, .pred-method ol code { font-size: 12px; }
 .pred-footer {

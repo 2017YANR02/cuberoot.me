@@ -14,6 +14,8 @@ ECS 上加列示例（用单引号包 SQL，避免 bash 解析括号）：
 mysql -u recon_user -p'<password>' recon_db -e 'ALTER TABLE comments ADD COLUMN pinned TINYINT(1) NOT NULL DEFAULT 0;'
 ```
 
+给用户的命令：从 `.password.md` 嵌真密码（别留 `<password>`）；SQL 压**一行**，多张表多条命令（多行 heredoc 粘贴常被截断卡 `>`）。
+
 ## ⚠️ Schema 变更顺序
 
 **先在 ECS 跑 ALTER → 再 push 代码**。反过来会让部署上去的新版 server 在 SELECT 新列时直接 500，整个 `/api/recon/*` 挂掉。

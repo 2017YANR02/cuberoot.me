@@ -2,6 +2,8 @@
 import { LineChart, type Series } from './charts';
 import { formatVal, milestonePredictions, toDisplay, type EventMeta } from './events';
 import { fitExpFloor, fitExp, fitPower, type DataPoint } from './models';
+import { THEORETICAL_LIMITS } from './theoretical_limits';
+import TheoreticalLimitView from './TheoreticalLimitView';
 
 interface EventData {
   wr_by_year: Array<{ year: number; wr_single: number | null; wr_avg: number | null; solves: number }>;
@@ -185,13 +187,32 @@ export default function EventSection({ event, data, isZh }: Props) {
         </div>
         {fitSingle && (
           <div className="pred-card">
-            <div className="pred-card-label">{isZh ? '拟合极限 L' : 'Fitted floor L'}</div>
-            <div className="pred-card-value pred-card-accent">
+            <div className="pred-card-label" title={isZh ? '历史轨迹曲线拟合的渐近线,不是物理极限。详见下方"方法 + 硬件演进 + 物理极限"' : 'Curve-fit asymptote of historical trend, NOT a physical floor. See "Method + Hardware Evolution & Physical Floor" below'}>
+              {isZh ? '拟合 L *' : 'Fit L *'}
+            </div>
+            <div className="pred-card-value">
               {formatVal(fitSingle.L, event.scale)}
             </div>
             <div className="pred-card-sub">R² = {fitSingle.r2.toFixed(3)} · t½ = {fitSingle.halfLife.toFixed(1)} y</div>
           </div>
         )}
+        {(() => {
+          const lim = THEORETICAL_LIMITS[event.id];
+          if (!lim || lim.decomp.length === 0) return null;
+          const last = lim.decomp[lim.decomp.length - 1];
+          const tPhys = last.T ?? last.M / last.TPS + last.R;
+          return (
+            <div className="pred-card">
+              <div className="pred-card-label" title={isZh ? '步数法物理下界 = M / TPS + R, 详见下方分解' : 'Step-count physical floor = M / TPS + R, see decomposition below'}>
+                {isZh ? '物理下界 T_phys' : 'Physical floor T_phys'}
+              </div>
+              <div className="pred-card-value pred-card-accent">
+                {formatVal(tPhys, event.scale)}
+              </div>
+              <div className="pred-card-sub">M={last.M} · TPS={last.TPS.toFixed(1)} · R={last.R.toFixed(2)}s</div>
+            </div>
+          );
+        })()}
       </div>
 
       <p>
@@ -211,6 +232,16 @@ export default function EventSection({ event, data, isZh }: Props) {
       {/* 主图: WR */}
       <h3>{isZh ? 'WR 走势 + 模型外推' : 'WR Trend + Model Extrapolation'}</h3>
       <LineChart series={series} yLabel={event.scale === 'moves' ? (isZh ? '步数' : 'Moves') : (isZh ? '时间 (秒)' : 'Time (s)')} />
+
+      {/* 方法 + 硬件演进 + 物理极限 */}
+      {THEORETICAL_LIMITS[event.id] && (
+        <TheoreticalLimitView
+          event={event}
+          limit={THEORETICAL_LIMITS[event.id]}
+          fittedL={fitSingle?.L ?? null}
+          isZh={isZh}
+        />
+      )}
 
       {/* 最近 5 次 WR */}
       {last5WR.length > 0 && (
