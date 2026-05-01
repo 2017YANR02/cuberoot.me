@@ -59,6 +59,9 @@ const ScrambleStatsPage = lazy(() => import('./pages/scramble_stats/ScrambleStat
 const AlgIndexPage = lazy(() => import('./pages/alg/AlgIndexPage'));
 const AlgCategoryPage = lazy(() => import('./pages/alg/AlgCategoryPage'));
 const AlgPostPage = lazy(() => import('./pages/alg/AlgPostPage'));
+// NOTE: AlgDb — 3x3 公式速查 (F2L/AdvF2L/OLL/PLL,数据来自 speedcubedb)
+const AlgDbIndexPage = lazy(() => import('./pages/algdb/AlgDbIndexPage'));
+const AlgDbCategoryPage = lazy(() => import('./pages/algdb/AlgDbCategoryPage'));
 // NOTE: Sites — 魔方网址导航
 const SitesPage = lazy(() => import('./pages/sites/SitesPage'));
 // NOTE: /prediction — 3x3 速拧极限预测
@@ -161,6 +164,9 @@ function App() {
         <Route path="/alg" element={<Suspense fallback={<div>Loading...</div>}><AlgIndexPage /></Suspense>} />
         <Route path="/alg/c/:category" element={<Suspense fallback={<div>Loading...</div>}><AlgCategoryPage /></Suspense>} />
         <Route path="/alg/:slug" element={<Suspense fallback={<div>Loading...</div>}><AlgPostPage /></Suspense>} />
+        {/* AlgDb — 3x3 公式速查 (data from speedcubedb.com) */}
+        <Route path="/algdb" element={<Suspense fallback={<div>Loading...</div>}><AlgDbIndexPage /></Suspense>} />
+        <Route path="/algdb/:cat" element={<Suspense fallback={<div>Loading...</div>}><AlgDbCategoryPage /></Suspense>} />
         {/* Sites — 魔方网址导航 */}
         <Route path="/site" element={<Suspense fallback={<div>Loading...</div>}><SitesPage /></Suspense>} />
         <Route path="/prediction" element={<Suspense fallback={<div>Loading...</div>}><PredictionPage /></Suspense>} />

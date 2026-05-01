@@ -291,6 +291,7 @@ const TEXTS: Record<string, { en: string; zh: string }> = {
   frameCount:      { en: 'Frame Count', zh: '数帧' },
   scramble:        { en: 'Scramble', zh: '打乱' },
   alg:             { en: 'Algorithms', zh: '公式教程' },
+  algdb:           { en: 'Alg DB',     zh: '公式库' },
   sitesDirectory:  { en: 'Web', zh: '网站' },
   mosaic:          { en: 'Mosaic', zh: '马赛克' },
   worldBests:      { en: 'World Bests', zh: '非官方纪录' },
@@ -330,6 +331,7 @@ const CARDS: CardConfig[] = [
   { id: 'viz',         href: '/viz',             internal: true,  tier: 'medium',    Icon: LineChart,      nameKey: 'viz' },
   // Tier 3 — Standard
   { id: 'alg',         href: '/alg',             internal: true,  tier: 'standard',  Icon: Library,        nameKey: 'alg', comingSoon: true },
+  { id: 'algdb',       href: '/algdb',           internal: true,  tier: 'standard',  Icon: BookOpen,       nameKey: 'algdb' },
   { id: 'timer',       href: '/timer',           internal: true,  tier: 'standard',  Icon: TimerIcon,      nameKey: 'timer' },
   { id: 'battle',      href: '/battle',          internal: true,  tier: 'standard',  Icon: Swords,         nameKey: 'battle' },
   { id: 'upcoming',    href: '/calendar',  internal: true,  tier: 'standard',  Icon: CalendarDays,   nameKey: 'upcoming' },

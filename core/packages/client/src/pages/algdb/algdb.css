@@ -1,0 +1,279 @@
+/* /algdb — alg library styles. Standalone (does not extend /alg). */
+
+.algdb-root {
+  --algdb-bg: #ffffff;
+  --algdb-bg-soft: #f7f8fa;
+  --algdb-bg-hover: #eef1f6;
+  --algdb-border: #e3e7ee;
+  --algdb-text: #1a1a1a;
+  --algdb-text-muted: #5a6370;
+  --algdb-text-faint: #8a93a0;
+  --algdb-accent: #0066cc;
+  --algdb-accent-soft: #e6f0fb;
+
+  font-family: system-ui, -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  color: var(--algdb-text);
+  background: var(--algdb-bg);
+  min-height: 100vh;
+  padding-bottom: 48px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .algdb-root {
+    --algdb-bg: #0e1116;
+    --algdb-bg-soft: #161a21;
+    --algdb-bg-hover: #1e2530;
+    --algdb-border: #2a3140;
+    --algdb-text: #e8ebf0;
+    --algdb-text-muted: #9aa3b0;
+    --algdb-text-faint: #6a7280;
+    --algdb-accent: #4ea1ff;
+    --algdb-accent-soft: #1a2c44;
+  }
+}
+
+/* ── index page ── */
+.algdb-index-header {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 28px 24px 20px;
+}
+.algdb-index-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0 0 6px;
+  letter-spacing: -0.01em;
+}
+.algdb-index-subtitle {
+  color: var(--algdb-text-muted);
+  font-size: 14px;
+  margin: 0 0 4px;
+}
+.algdb-index-credit {
+  color: var(--algdb-text-faint);
+  font-size: 12px;
+  margin: 0;
+}
+.algdb-index-credit a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.algdb-index-credit a:hover { color: var(--algdb-accent); }
+
+.algdb-bento {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+.algdb-bento-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 24px;
+  background: var(--algdb-bg-soft);
+  border: 1px solid var(--algdb-border);
+  border-radius: 12px;
+  text-decoration: none !important;
+  color: var(--algdb-text);
+  transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+.algdb-bento-card:hover {
+  background: var(--algdb-bg-hover);
+  border-color: var(--algdb-accent);
+  transform: translateY(-1px);
+}
+.algdb-bento-icon {
+  color: var(--algdb-accent);
+}
+.algdb-bento-title {
+  font-size: 18px;
+  font-weight: 600;
+}
+.algdb-bento-count {
+  color: var(--algdb-text-muted);
+  font-size: 13px;
+}
+
+/* ── category page ── */
+.algdb-cat-header {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px 24px 12px;
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.algdb-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--algdb-text-muted);
+  font-size: 13px;
+  text-decoration: none !important;
+}
+.algdb-back:hover { color: var(--algdb-accent); }
+.algdb-cat-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+}
+.algdb-cat-count {
+  color: var(--algdb-text-muted);
+  font-size: 13px;
+}
+
+.algdb-empty {
+  max-width: 1200px;
+  margin: 40px auto;
+  text-align: center;
+  color: var(--algdb-text-muted);
+  font-size: 14px;
+}
+
+.algdb-subgroup {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px 24px 0;
+}
+.algdb-subgroup-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--algdb-text-muted);
+  margin: 16px 0 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--algdb-border);
+  padding-bottom: 6px;
+}
+
+.algdb-case-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 12px;
+}
+.algdb-case {
+  background: var(--algdb-bg-soft);
+  border: 1px solid var(--algdb-border);
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.algdb-case-head {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.algdb-case-cube {
+  flex: 0 0 auto;
+}
+.algdb-case-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.algdb-case-name {
+  font-size: 16px;
+  font-weight: 600;
+}
+.algdb-case-subgroup {
+  font-size: 12px;
+  color: var(--algdb-text-muted);
+}
+.algdb-case-standard {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--algdb-text-muted);
+}
+.algdb-case-standard code {
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 12px;
+  color: var(--algdb-text);
+  background: none;
+  padding: 0;
+  white-space: nowrap;
+  overflow-x: auto;
+}
+.algdb-pill {
+  display: inline-block;
+  padding: 1px 6px;
+  background: var(--algdb-accent-soft);
+  color: var(--algdb-accent);
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.algdb-ori-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--algdb-border);
+  padding-bottom: 4px;
+  flex-wrap: wrap;
+}
+.algdb-ori-tab {
+  background: transparent;
+  border: 1px solid transparent;
+  border-bottom: none;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 4px 4px 0 0;
+  color: var(--algdb-text-muted);
+  cursor: pointer;
+}
+.algdb-ori-tab:hover { color: var(--algdb-text); }
+.algdb-ori-tab.is-active {
+  background: var(--algdb-bg);
+  border-color: var(--algdb-border);
+  color: var(--algdb-text);
+  font-weight: 600;
+}
+
+.algdb-case-algs {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+.algdb-alg-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  background: var(--algdb-bg);
+  border: 1px solid var(--algdb-border);
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 12px;
+  color: var(--algdb-text);
+  cursor: pointer;
+  text-align: left;
+}
+.algdb-alg-row:hover {
+  background: var(--algdb-bg-hover);
+  border-color: var(--algdb-accent);
+}
+.algdb-alg-text {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.algdb-alg-copy-icon { color: var(--algdb-text-faint); flex: 0 0 auto; }
+.algdb-alg-row:hover .algdb-alg-copy-icon { color: var(--algdb-accent); }
+
+@media (max-width: 480px) {
+  .algdb-case-list { grid-template-columns: 1fr; }
+  .algdb-bento { grid-template-columns: 1fr; }
+}
