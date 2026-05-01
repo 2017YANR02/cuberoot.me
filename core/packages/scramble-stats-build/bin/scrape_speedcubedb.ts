@@ -70,7 +70,7 @@ function cleanWs(s: string): string {
   return s.replace(/\s+/g, ' ').trim();
 }
 
-function extractCase($: cheerio.CheerioAPI, row: cheerio.AnyNode, kind: 'f2l' | 'face'): CaseEntry {
+function extractCase($: cheerio.CheerioAPI, row: cheerio.Element, kind: 'f2l' | 'face'): CaseEntry {
   const $row = $(row);
   const name = $row.attr('data-alg') ?? '';
   const subgroup = $row.attr('data-subgroup') ?? '';

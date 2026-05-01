@@ -160,12 +160,16 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
 
   // Track popup kind transitions so selection only resets when kind changes
   const lastKindRef = useRef<'comment' | 'alg' | null>(null);
+  // Cache: avoid recomputing alg pre-state when caret/scramble/prefix haven't changed.
+  const algKeyRef = useRef<string | null>(null);
+  const algPreStateRef = useRef<CubeState | null>(null);
 
   const closePopup = useCallback(() => {
     setPopup(null);
     setAlgSuggestions(null);
     setSelected(0);
     lastKindRef.current = null;
+    algKeyRef.current = null;
   }, []);
 
   /** Recompute popup state from current caret position. */
@@ -200,21 +204,43 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
     if (slashIdx < 0) {
       const beforeCaret = lineText.substring(0, caret - lineStart);
       const prevLabel = previousLineCommentLabel(value, lineStart);
-      if (prevLabel && /^[\s​]*$/.test(beforeCaret)) {
+      if (prevLabel && /^\s*$/.test(beforeCaret)) {
         // User just newlined after `// 1st pair` — show alg picker
         const stageInfo = stageForLabel(prevLabel);
         if (stageInfo) {
+          // Only recompute pre-state when the keying inputs actually changed
+          // (scramble + moves up to current line). This avoids re-running rankAlgs
+          // for every selection-only event (arrow keys, click-only refocus).
           const moves = movesUntil(value, lineStart);
-          let pre = cubeFromAlg(scramble || '');
-          pre = applyAlg(pre, moves);
+          const key = `${scramble}\x00${moves}\x00${stageInfo.category}\x00${stageInfo.stage.kind}\x00${stageInfo.stage.kind === 'pair' ? stageInfo.stage.index : ''}`;
+          let pre = algPreStateRef.current;
+          if (key !== algKeyRef.current || !pre) {
+            pre = cubeFromAlg(scramble || '');
+            applyAlg(pre, moves);
+            algKeyRef.current = key;
+            algPreStateRef.current = pre;
+          }
           const rect = getCaretRect(ta, caret);
-          setPopup({
-            kind: 'alg',
-            preState: pre,
-            category: stageInfo.category,
-            stage: stageInfo.stage,
-            insertAt: caret,
-            pos: rect,
+          setPopup(prev => {
+            // Avoid creating a new popup object if nothing meaningful changed —
+            // this prevents the alg-load effect from re-firing on each keystroke.
+            if (
+              prev?.kind === 'alg' &&
+              prev.preState === pre &&
+              prev.category === stageInfo.category &&
+              prev.stage.kind === stageInfo.stage.kind &&
+              prev.pos.left === rect.left && prev.pos.top === rect.top
+            ) {
+              return { ...prev, insertAt: caret };
+            }
+            return {
+              kind: 'alg',
+              preState: pre!,
+              category: stageInfo.category,
+              stage: stageInfo.stage,
+              insertAt: caret,
+              pos: rect,
+            };
           });
           setKind('alg');
           return;
@@ -244,28 +270,30 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
     };
   }, [textareaRef, recompute]);
 
-  // Lazy-load alg db when alg popup opens
+  // Lazy-load alg db when alg popup opens. Re-rank only when the preState
+  // *reference* changes — recompute() reuses the same CubeState ref while the
+  // user is just navigating, so this stays cheap.
+  const algKey = popup?.kind === 'alg' ? popup.preState : null;
+  const algCat = popup?.kind === 'alg' ? popup.category : null;
+  const algStage = popup?.kind === 'alg' ? popup.stage : null;
   useEffect(() => {
-    if (popup?.kind !== 'alg') return;
-    const cat = popup.category;
+    if (!algKey || !algCat || !algStage) return;
     let cancelled = false;
     setAlgLoading(true);
-    (async () => {
-      let db = dbCacheRef.current[cat];
+    // Yield once so we don't block the keystroke commit when score is heavy.
+    const t = setTimeout(async () => {
+      let db = dbCacheRef.current[algCat];
       if (!db) {
-        db = await loadAlgdb(cat);
-        dbCacheRef.current[cat] = db;
+        db = await loadAlgdb(algCat);
+        dbCacheRef.current[algCat] = db;
       }
       if (cancelled) return;
-      const ranked = rankAlgs(cloneCube(popup.preState), db.cases, cat, popup.stage, 12);
-      // Always show at least the top candidates so the user has options even if scoring is uncertain.
+      const ranked = rankAlgs(cloneCube(algKey), db.cases, algCat, algStage, 12);
       setAlgSuggestions(ranked);
       setAlgLoading(false);
-    })().catch(() => {
-      if (!cancelled) setAlgLoading(false);
-    });
-    return () => { cancelled = true; };
-  }, [popup]);
+    }, 0);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [algKey, algCat, algStage]);
 
   // Comment label list (filtered)
   const commentItems = useMemo(() => {
