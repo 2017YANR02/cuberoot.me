@@ -66,6 +66,25 @@ export default function PredictionPage() {
     return () => obs.disconnect();
   }, [data]);
 
+  // 跳到 #event-XXX 时自动展开折叠的事件章节
+  useEffect(() => {
+    if (!data) return;
+    const openByHash = () => {
+      const id = window.location.hash.replace(/^#/, '');
+      if (!id.startsWith('event-')) return;
+      const el = document.getElementById(id);
+      const det = el?.querySelector('details.pred-event-details') as HTMLDetailsElement | null;
+      if (det && !det.open) {
+        det.open = true;
+        // 等下一帧让布局生效后再滚, 否则 anchor 跳转停在折叠态的位置
+        requestAnimationFrame(() => el?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+      }
+    };
+    openByHash();
+    window.addEventListener('hashchange', openByHash);
+    return () => window.removeEventListener('hashchange', openByHash);
+  }, [data]);
+
   if (err) return <div className="pred-loading">Failed to load: {err}</div>;
   if (!data) return <div className="pred-loading">Loading {isZh ? '加载中…' : '…'}</div>;
 
@@ -80,10 +99,14 @@ export default function PredictionPage() {
   const eventSummaries = EVENTS.map((ev) => {
     const ed = data.events[ev.id];
     if (!ed) return null;
-    // 排除当前不完整年, 与 EventSection 内部保持一致
-    const fitData: DataPoint[] = ed.wr_by_year
-      .filter((d: any) => d.year >= 2003 && d.year < currentYear && d.wr_single !== null)
-      .map((d: any) => ({ year: d.year, time: toDisplay(d.wr_single, ev.scale)! }));
+    // 排除当前不完整年, 用 running min (累积 WR, 单调递减) 而非年度最佳
+    const eligible = ed.wr_by_year.filter((d: any) => d.year >= 2003 && d.year < currentYear && d.wr_single !== null);
+    let cur: number | null = null;
+    const fitData: DataPoint[] = eligible.map((d: any) => {
+      const v = toDisplay(d.wr_single, ev.scale)!;
+      if (cur === null || v < cur) cur = v;
+      return { year: d.year, time: cur! };
+    });
     const Lmax = ev.scale === 'moves' ? 50 : 1000;
     const Lstep = ev.scale === 'moves' ? 0.5 : 0.1;
     const fit = fitExpFloor(fitData, 0, Lmax, Lstep);
