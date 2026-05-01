@@ -119,6 +119,7 @@ function App() {
         <Route path="/recon/submit-sketch" element={<Suspense fallback={<div>Loading...</div>}><ReconSubmitSketchPage /></Suspense>} />
         <Route path="/recon/:parentId/alt" element={<Suspense fallback={<div>Loading...</div>}><AltSubmitPage /></Suspense>} />
         <Route path="/recon/:parentId/alt/:altIdx" element={<Suspense fallback={<div>Loading...</div>}><AltViewPage /></Suspense>} />
+        <Route path="/recon/:parentId/alt/:altIdx/edit" element={<Suspense fallback={<div>Loading...</div>}><AltSubmitPage /></Suspense>} />
         <Route path="/recon/:id" element={<Suspense fallback={<div>Loading...</div>}><ReconDetailPage /></Suspense>} />
         {/* Calendar — 顶尖选手近期比赛追踪（路由曾叫 /upcoming-comps，旧链接重定向） */}
         <Route path="/calendar" element={<Suspense fallback={<div>Loading...</div>}><UpcomingCompsPage /></Suspense>} />

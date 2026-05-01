@@ -142,6 +142,8 @@
 @media (max-width: 640px) {
   .submit-hero { grid-template-columns: 1fr; }
 }
+/* grid item 默认 min-width: auto, 长选手名会撑爆列;允许收缩 */
+.submit-hero > .submit-field { min-width: 0; }
 
 /* ── 统一控件高度 ──
    光统一 padding+font 不够：<select>/<input> 的 UA 默认渲染高度
@@ -536,8 +538,16 @@
   border-radius: 8px;
   font-size: 14px;
   align-self: flex-start;
+  max-width: 100%;
+  min-width: 0;
 }
-.submit-solver-pill .submit-solver-name { color: #dbdbdb; }
+.submit-solver-pill .submit-solver-name {
+  color: #dbdbdb;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .submit-solver-pill .submit-solver-clear {
   background: transparent;
   border: none;
@@ -560,9 +570,11 @@
   font-size: 14px;
   align-self: flex-start;
   max-width: 100%;
+  min-width: 0;
 }
 .submit-comp-pill .submit-comp-name {
   color: #dbdbdb;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

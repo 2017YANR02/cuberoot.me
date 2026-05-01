@@ -16,7 +16,7 @@ import { RecordSelect } from '../../components/RecordSelect';
 import { EventSelect } from '../../components/EventSelect';
 import { CompPicker } from '../../components/CompPicker';
 import type { Comp } from '../../utils/comp_search';
-import { compNameZh, loadFlagData, flagDataVersion } from '../../utils/country_flags';
+import { compNameZh, loadFlagData, flagDataVersion, personFlagIso2 } from '../../utils/country_flags';
 import { localizeCompName } from '../../utils/comp_localize';
 import { fetchCompRounds, type RoundFormat } from '../../utils/comp_wcif';
 import { toWcaEventId } from '../../utils/wca_events';
@@ -622,15 +622,22 @@ export default function ReconSubmitPage() {
     setField('personCountry', '');
   }, [setField]);
 
-  // NOTE: 复盘者国家——前端展示用，DB 不存。来源：登录时取 authUser.country / 选完 picker 取 iso2
-  const [reconerCountry, setReconerCountry] = useState<string>(authUser?.country ?? '');
+  // NOTE: 复盘者国家——前端展示用,DB 不存。来源:authUser.country / picker iso2 / person_countries.json 查 reconerId
+  const [reconerCountry, setReconerCountry] = useState<string>('');
 
-  // NOTE: reconerId 与 authUser 匹配时回填 country（编辑模式 / 从 ?from= 跳来时）
+  // NOTE: reconerId 变化时刷新 country: 自己 → authUser.country;别人 → 查 person_countries.json
   useEffect(() => {
-    if (form.reconerId && authUser && form.reconerId === authUser.wcaId) {
-      setReconerCountry(authUser.country);
+    if (!form.reconerId) {
+      // 没 ID,但默认值是 authUser → 显示自己国家
+      setReconerCountry(authUser?.country ?? '');
+      return;
     }
-  }, [form.reconerId, authUser]);
+    if (authUser && form.reconerId === authUser.wcaId) {
+      setReconerCountry(authUser.country);
+      return;
+    }
+    setReconerCountry(personFlagIso2(form.reconerId));
+  }, [form.reconerId, authUser, flagVer]);
 
   const handleReconerPick = useCallback((person: WcaPerson) => {
     setField('reconer', person.name);

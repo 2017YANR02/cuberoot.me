@@ -578,6 +578,17 @@
   gap: 4px;
 }
 
+/* 另解上方简短统计行(STM / TPS) */
+.alt-stats-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.78rem;
+  color: #8a8a8a;
+  margin: 4px 0 6px;
+}
+
 .recon-btn-edit {
   color: #e8a27a !important;
   border-color: rgba(232, 162, 122, 0.3) !important;
