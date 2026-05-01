@@ -3,14 +3,14 @@
  * NOTE: 展示单条复盘的完整信息，含 twisty 动画、视频、统计、评论
  */
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   Box, PenLine, Calendar, UserPlus, StickyNote,
   ChartColumn, Video, MessageCircle, TriangleAlert,
   Pencil, Trash2, Pin, PinOff, Plus, Key,
   Globe, Radio, ClipboardPaste, ChevronDown, ChevronUp,
-  GitFork, Play, Square, Undo2,
+  GitFork,
 } from 'lucide-react';
 import type { ReconSolve, ReconComment, ReconAlternative } from '@cuberoot/shared';
 import { getRecon, listComments, addComment, updateComment, deleteComment, pinComment, getBiliCover, listRecons, updateAlternative, deleteAlternative } from '../../utils/recon_api';
@@ -149,30 +149,19 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate }: 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const playerRef = useRef<any>(null);
   const [crossNormalized, setCrossNormalized] = useState(false);
-  // NOTE: 另解列表 lift up,这样 player / banner / list 之间共享同一份 alts
+  // NOTE: 另解列表 lift up,这样 list / count / submit 间共享同一份 alts
   const [alts, setAlts] = useState<ReconAlternative[]>(solve.alternatives ?? []);
-  const [activeAltIdx, setActiveAltIdx] = useState<number | null>(null);
-
-  // NOTE: 删/编辑后 idx 越界 → 自动退出演示
-  useEffect(() => {
-    if (activeAltIdx != null && activeAltIdx >= alts.length) setActiveAltIdx(null);
-  }, [alts.length, activeAltIdx]);
-
-  const activeAlt = activeAltIdx != null && activeAltIdx < alts.length ? alts[activeAltIdx] : null;
 
   // NOTE: 仅当 cross 段含宽转动时才允许切换;只有插入旋转或全单层时不显示
-  // NOTE: 演示另解时不允许 cross 标准化(每条另解结构不同,不通用)
   const canToggle = useMemo(
-    () => !activeAlt && hasWideMoveInCrossSection(solutionText),
-    [solutionText, activeAlt],
+    () => hasWideMoveInCrossSection(solutionText),
+    [solutionText],
   );
   const normalizedText = useMemo(
     () => canToggle ? buildNormalizedSolution(solutionText) : null,
     [solutionText, canToggle],
   );
-  const displayText = activeAlt
-    ? activeAlt.solution
-    : (crossNormalized && normalizedText ? normalizedText : solutionText);
+  const displayText = crossNormalized && normalizedText ? normalizedText : solutionText;
   const crossLineIdx = useMemo(() => findCrossLineIndex(displayText), [displayText]);
 
   return (
@@ -197,17 +186,6 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate }: 
           <ExternalLinks event={solve.event} scramble={scramble} alg={cleanForPlayer(solutionText)} solveId={solve.id} />
         )}
 
-        {/* 演示另解时的提示条 */}
-        {activeAlt && (
-          <div className="detail-active-alt-banner">
-            <Play size={12} />
-            <span>{t('recon.playingAlt', { name: displayCuberName(activeAlt.addedBy || '', isZh) })}</span>
-            <button type="button" onClick={() => setActiveAltIdx(null)}>
-              <Undo2 size={12} /> {t('recon.backToOriginal')}
-            </button>
-          </div>
-        )}
-
         {/* 打乱 + 解法 合并为一个框,无标签 */}
         {(scramble || solutionText) && (
           <div className="detail-section detail-scramble-solution">
@@ -221,6 +199,14 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate }: 
                 onToggleCross={() => setCrossNormalized(v => !v)}
               />
             )}
+          </div>
+        )}
+
+        {/* 另一种打乱（player/外链用 optimal,这里把 wca 也露出来,仅当两者都存在） */}
+        {solve.optimalScramble && solve.wcaScramble && (
+          <div className="detail-other-scramble">
+            <span className="detail-other-scramble-label">{t('recon.wcaScramble')}</span>
+            <span className="detail-other-scramble-value">{solve.wcaScramble}</span>
           </div>
         )}
 
@@ -290,9 +276,6 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate }: 
           reconId={solve.id}
           alts={alts}
           setAlts={setAlts}
-          activeIdx={activeAltIdx}
-          onSelect={setActiveAltIdx}
-          playerRef={playerRef}
         />
 
         {/* 评论 */}
@@ -756,14 +739,10 @@ function BilibiliFacade({ bvId, onLoad }: { bvId: string; onLoad: () => void }) 
 }
 
 /** 另解区——任何登录用户都能投自己的解法,挂在原 solve 下,不创建新行 */
-function AlternativesSection({ reconId, alts, setAlts, activeIdx, onSelect, playerRef }: {
+function AlternativesSection({ reconId, alts, setAlts }: {
   reconId: number;
   alts: ReconAlternative[];
   setAlts: (alts: ReconAlternative[]) => void;
-  activeIdx: number | null;
-  onSelect: (idx: number | null) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  playerRef: React.MutableRefObject<any>;
 }) {
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [editText, setEditText] = useState('');
@@ -772,6 +751,7 @@ function AlternativesSection({ reconId, alts, setAlts, activeIdx, onSelect, play
   const currentWcaId = user?.wcaId || '';
   const isAdminUser = isAdmin();
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   const handleSaveEdit = async (idx: number) => {
     const updated = await updateAlternative(reconId, idx, editText.trim());
@@ -829,15 +809,12 @@ function AlternativesSection({ reconId, alts, setAlts, activeIdx, onSelect, play
                       mono
                       autoFocus
                     />
-                  ) : activeIdx === idx ? (
-                    // NOTE: 演示中的另解 → 用 SolutionView,点文本同步 player(虚拟光标)
-                    <SolutionView text={alt.solution} playerRef={playerRef} />
                   ) : (
-                    // NOTE: 未激活 → 点击文本 = 激活该另解(然后 player 切到这条);可点击 cursor
+                    // NOTE: 点击文本 → 跳到只看动画+解法的干净页
                     <pre
                       className="detail-solution-text alt-solution-text"
                       style={{ cursor: 'pointer' }}
-                      onClick={() => onSelect(idx)}
+                      onClick={() => navigate(`/recon/${reconId}/alt/${idx}`)}
                       title={t('recon.playAlt')}
                     >
                       {alt.solution.split(/\r?\n/).map((line, li) => {
@@ -852,15 +829,6 @@ function AlternativesSection({ reconId, alts, setAlts, activeIdx, onSelect, play
                 </div>
                 {editingIdx !== idx && (
                   <div className="alt-card-actions">
-                    <button
-                      type="button"
-                      className={`alt-play-btn${activeIdx === idx ? ' alt-play-btn-active' : ''}`}
-                      onClick={() => onSelect(activeIdx === idx ? null : idx)}
-                      title={activeIdx === idx ? t('recon.backToOriginal') : t('recon.playAlt')}
-                      aria-label={activeIdx === idx ? t('recon.backToOriginal') : t('recon.playAlt')}
-                    >
-                      {activeIdx === idx ? <Square size={14} /> : <Play size={14} />}
-                    </button>
                     <ItemMenu items={[
                       ...(canEdit ? [{
                         icon: <Pencil size={14} />, label: t('recon.edit'),

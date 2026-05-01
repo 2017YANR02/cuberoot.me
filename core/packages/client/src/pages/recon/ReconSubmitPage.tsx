@@ -775,18 +775,20 @@ export default function ReconSubmitPage() {
       </div>
 
       <div className="submit-layout">
-        {/* 左栏：动画 */}
-        <div className="submit-player-pane">
-          {form.event && form.event !== 'sq1' && (
-            <TwistySection
-              puzzle={puzzle}
-              scramble={debouncedScramble}
-              alg={cleanForPlayer(debouncedSolution)}
-              playerRef={playerRef}
-              fillPane
-            />
-          )}
-        </div>
+        {/* 左栏：动画 — 桌面/平板顶部;手机端搬到打乱与解法之间 */}
+        {!isMobile && (
+          <div className="submit-player-pane">
+            {form.event && form.event !== 'sq1' && (
+              <TwistySection
+                puzzle={puzzle}
+                scramble={debouncedScramble}
+                alg={cleanForPlayer(debouncedSolution)}
+                playerRef={playerRef}
+                fillPane
+              />
+            )}
+          </div>
+        )}
 
         {/* 右栏：表单 */}
         <div className="submit-form-pane">
@@ -850,9 +852,9 @@ export default function ReconSubmitPage() {
           </div>
         )}
 
-        {/* 打乱 */}
+        {/* WCA 打乱 */}
         <label className="submit-field submit-block">
-          <span className="submit-label">{t('recon.scramble')}</span>
+          <span className="submit-label">{t('recon.wcaScramble')}</span>
           <textarea
             rows={1}
             value={form.wcaScramble || ''}
@@ -866,6 +868,36 @@ export default function ReconSubmitPage() {
             style={{ overflow: 'hidden', resize: 'none' }}
           />
         </label>
+
+        {/* 最优打乱 */}
+        <label className="submit-field submit-block">
+          <span className="submit-label">{t('recon.optimalScramble')}</span>
+          <textarea
+            rows={1}
+            value={form.optimalScramble || ''}
+            onChange={e => {
+              setField('optimalScramble', e.target.value);
+              autoResize(e.target);
+            }}
+            onInput={e => autoResize(e.target as HTMLTextAreaElement)}
+            ref={el => { if (el) autoResize(el); }}
+            placeholder={t('recon.optimalScramble')}
+            style={{ overflow: 'hidden', resize: 'none' }}
+          />
+        </label>
+
+        {/* 手机端: 动画演示插在打乱与解法之间 */}
+        {isMobile && form.event && form.event !== 'sq1' && (
+          <div className="submit-inline-player">
+            <TwistySection
+              puzzle={puzzle}
+              scramble={debouncedScramble}
+              alg={cleanForPlayer(debouncedSolution)}
+              playerRef={playerRef}
+              fillPane
+            />
+          </div>
+        )}
 
         {/* 解法 — 用 div 而非 label,避免点击 SolutionView 时冒泡到 label 激活第一个 form control(toggle 按钮) */}
         <div className="submit-field submit-block">
@@ -908,6 +940,8 @@ export default function ReconSubmitPage() {
               placeholder={`// Cross (5)\nD R2 D' F D F'\n// F2L 1 (8)\nU R U' R' U' F' U F\n...`}
               className="submit-solution-textarea"
               style={{ overflow: 'hidden', resize: 'none' }}
+              // NOTE: 手机端用站内虚拟键盘,屏蔽系统软键盘(保留 focus / 光标定位)
+              inputMode={isMobile ? 'none' : undefined}
             />
           )}
         </div>
