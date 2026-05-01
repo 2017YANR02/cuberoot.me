@@ -257,6 +257,14 @@
   white-space: nowrap;
 }
 
+.col-reconer {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #b5b5b5;
+}
+
 /* NOTE: 比赛名电脑端展全; 窄屏(<=480px)仍按 140px 截断保持现状 */
 .col-comp {
   overflow: hidden;

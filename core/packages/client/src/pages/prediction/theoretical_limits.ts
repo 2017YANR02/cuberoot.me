@@ -174,20 +174,23 @@ export const THEORETICAL_LIMITS: Record<string, TheoreticalLimit> = {
     ],
     decomp: [
       { scenario_en: 'Ziyu Ye 0.39 (lucky 4-move skip)', scenario_zh: '叶子瑜 0.39 (幸运 4 步 skip)', M: 4, TPS: 10.26, R: 0.0 },
-      { scenario_en: 'Realistic future floor', scenario_zh: '现实下界', M: 5, TPS: 11, R: 0.05 },
-      { scenario_en: 'Physical floor (lucky scramble + reaction time)', scenario_zh: '物理下界 (幸运 + 反应时间)', M: 4, TPS: 12, R: 0.0 },
+      { scenario_en: '20–30 year horizon', scenario_zh: '20–30 年内可达', M: 4, TPS: 12, R: 0.05 },
+      { scenario_en: '100-year asymptote', scenario_zh: '100 年渐近', M: 4, TPS: 14, R: 0.05 },
+      { scenario_en: 'Absolute floor (reaction-time wall + StackMat noise)', scenario_zh: '绝对下界 (反应时间 + StackMat 触发噪声)', M: 4, TPS: 18, R: 0.05 },
     ],
     best_reconstructions: [
       { person: 'Ziyu Ye (叶子瑜)', date: '2025-10-25', time: '0.39 s', M: 4, TPS: 10.26, method: 'EG-1 (R U2 R\' U\')', source_url: 'https://www.cubzor.com/news/ziyu-ye-sets-2x2-single-world-record-039-hefei-open-2025' },
     ],
     reasoning_en:
-      '2x2 has 3.67M states with optimal solutions ≤ 11 face-turn-metric. Top cubers fully plan the solve in 15s inspection on lucky scrambles, eliminating R completely. The limit is reaction-time + raw burst TPS (11-12 sustained, briefly higher). Physical floor ~0.30-0.35 s on a 4-move skip; sub-0.30 lives at the edge of credibility (and triggered the WCA frame-count verification rule).',
+      'Two-by-two has only 3.67M states and optimal HTM ≤ 11, so the entire solve is plannable in 15-second inspection. That collapses recognition to zero, and what remains is the simplest physical equation in cubing: reaction time plus a few finger taps. Ye\'s 0.39 used a 4-move EG-1 skip on a 1-in-30 scramble — that is essentially the geometry of the problem.\n\n' +
+      'The remaining headroom lives in the StackMat trigger envelope. Release-to-go reaction floors at 0.05 s; raw single-finger burst peaks near 18-22 Hz on a 50 mm cube, but sustained over 4 moves it averages 12-14 TPS in practice. Combine those: 4/14 + 0.05 = 0.34 s for the 100-year asymptote, 4/18 + 0.05 = 0.27 s for the absolute floor. Anything below 0.25 s starts colliding with the StackMat\'s own measurement noise — which is exactly why the WCA introduced frame-count verification after the 2024 Yiheng-Wang sliding incident.',
     reasoning_zh:
-      '二阶 367 万态,optimal ≤ 11 HTM。顶级在幸运 scramble 上 inspection 内全程规划,R 直接归零。极限就是反应时间 + 原始突发 TPS (11-12 持续,短瞬更高)。4 步 skip 物理下界 ~0.30-0.35 秒;sub-0.30 已进入可信度边缘 (并触发了 WCA 帧计数规则)。',
+      '二阶状态空间仅 367 万,optimal ≤ 11 HTM,15 秒 inspection 足以全程规划完。识别因此归零,剩下的就是 cubing 里最简单的物理等式:反应时间 + 几次手指敲击。叶子瑜 0.39 用的是 4 步 EG-1 skip,大概 1/30 scramble 出现一次 — 本质上就是这个问题的几何形态。\n\n' +
+      '剩余空间在 StackMat 触发包络里。release-to-go 反应底 ≈ 0.05 秒;50 毫米小立方上的单指突发峰 18-22 Hz,持续 4 步实际跑出 12-14 TPS。组合:4/14 + 0.05 = 0.34 秒是 100 年渐近,4/18 + 0.05 = 0.27 秒是绝对下界。低于 0.25 秒就开始撞 StackMat 自身的测量噪声 — 这也是 2024 年王艺衡"滑计时器"事件后 WCA 引入帧计数验证的根因。',
     why_fit_differs_en:
-      '2x2 fit L tracks the lucky-scramble distribution, not method/biomech. Already at the floor; fit asymptote is essentially the truth here.',
+      '2x2 is the rare case where the curve fit L is roughly correct, because the event is already at its physical floor and the trajectory is tracking scramble-luck distribution rather than method or hardware gains. The agreement is coincidence, not insight.',
     why_fit_differs_zh:
-      '二阶拟合 L 跟踪幸运 scramble 分布,而非方法 / 生物力学。已在地板上,拟合渐近 ≈ 真实下界。',
+      '二阶是少数拟合 L 大致对的项目 — 因为它早已逼近物理下界,轨迹反映的是幸运 scramble 分布而非方法 / 硬件演进。这里曲线碰巧接近真实下界,是巧合不是因果。',
   },
 
   // ════════════════════════════════════════════════════════════
@@ -215,16 +218,19 @@ export const THEORETICAL_LIMITS: Record<string, TheoreticalLimit> = {
     ],
     decomp: [
       { scenario_en: 'Tymon 15.18 (current WR)', scenario_zh: 'Tymon 15.18 (现 WR)', M: 140, TPS: 9.2, R: 0.0 },
-      { scenario_en: 'Realistic future floor (no parity, 11 TPS)', scenario_zh: '现实下界 (无 parity, 11 TPS)', M: 120, TPS: 11, R: 1.0 },
-      { scenario_en: 'Physical floor', scenario_zh: '物理下界', M: 110, TPS: 12, R: 0.5 },
+      { scenario_en: '20–30 year horizon (parity-dodge + 11 TPS)', scenario_zh: '20–30 年 (parity 预跟踪 + 11 TPS)', M: 125, TPS: 11, R: 0.5 },
+      { scenario_en: '100-year asymptote (no parity scramble + 12 TPS)', scenario_zh: '100 年渐近 (无 parity + 12 TPS)', M: 110, TPS: 12, R: 0.5 },
+      { scenario_en: 'Absolute floor (optimal-route human + biomech ceiling)', scenario_zh: '绝对下界 (人类最优路径 + 生物力学顶端)', M: 90, TPS: 14, R: 0.3 },
     ],
     best_reconstructions: [
       { person: 'Tymon Kolasiński', date: '2025-12', time: '15.18 s', M: 140, TPS: 9.2, method: 'Yau + freeslice', source_url: 'https://speedcubing.org/blogs/news/tymon-kolasinski-breaks-4x4-world-record-single' },
     ],
     reasoning_en:
-      '4x4 = wide-turn inertia (Rw / Uw / 3Rw on 5x5) + parity costs + 5 phases (cross dedges → centers → edge pairing → 3x3 + parity). Move-count ~140 STM at WR level (no published reconstruction database; estimate from method-design + 7x7 thread breakdowns). Wide-turn TPS ~15% lower than 3x3. Floor: 120 / 11 + 1.0 ≈ 12.0 s lucky single, ~14 s with both parities. Realistic Ao5 floor 16-17 s.',
+      'Four-by-four\'s binding constraint is wide-turn inertia. Rw, Uw and 3Rw moves involve 8-12 cubies each — physically heavier than a 3x3 face turn — and elite TPS drops about 15% accordingly. Tymon\'s 15.18 averages 9.2 TPS over an estimated 140 STM, well below 3x3 sustained TPS even though the cubes are fully magnetic. The other binding constraint is parity: OLL parity (~15 STM, 50% probability, independent of PLL parity ~12 STM) adds 1.5-3 s in expected value alone.\n\n' +
+      'There are no public WR-grade move-count reconstructions for 4x4 — estimates are derived from method-design (Yau cross dedges + centers + edge pairing + 3x3 + parity) and the 7x7 reconstruction thread. The achievable phases are visible: a 16-second elite solve breaks roughly as F2C 1.5 s, three cross dedges 1.8 s, last four centers + cross dedge 3.0 s, edge pairing 4.0 s, 3x3 stage 5.7 s. Compress each phase 20% via better tracking + slight TPS gain — that\'s 12-13 s with both parities, ~10 s on a no-parity scramble. The absolute floor falls when wide-turn hardware breaks past current MoYu AoSu V7 / GAN 460M friction, plausibly at 90 STM on luckier routing.',
     reasoning_zh:
-      '四阶 = wide-turn 惯性 (Rw/Uw 等) + parity 代价 + 5 阶段 (cross 边棱 → 中心 → 棱配对 → 三阶 + parity)。WR 级步数 ~140 STM (无公开复盘数据库,按方法设计 + 7x7 thread 推算)。Wide-turn TPS 比 3x3 低 ~15%。下界:120 / 11 + 1.0 ≈ 12 秒幸运单次,~14 秒含双 parity。Ao5 现实下界 16-17 秒。',
+      '四阶的主要约束是 wide-turn 惯性。Rw / Uw / 3Rw 每步动 8-12 个块,物理上比 3x3 面转重,顶级 TPS 因此低约 15%。Tymon 15.18 跑出 9.2 TPS 持续 (140 STM 估计),即便 cube 全磁也比 3x3 慢一档。第二个约束是 parity:OLL parity (~15 STM,50% 概率,与 PLL parity ~12 STM 独立),期望值就吃掉 1.5-3 秒。\n\n' +
+      '4x4 没有公开 WR 级复盘数据库,步数靠方法设计 (Yau: cross 边棱 + 中心 + 棱配对 + 三阶 + parity) 和 7x7 thread 反推。16 秒级顶级解的阶段拆分大致是: F2C 1.5 秒、3 个 cross 边棱 1.8 秒、后 4 中心 + 最后 cross 边棱 3.0 秒、棱配对 4.0 秒、三阶阶段 5.7 秒。每阶段靠更好的跟踪 + 微涨 TPS 压 20%,得到 12-13 秒含双 parity,约 10 秒在无 parity scramble。绝对下界要等 wide-turn 硬件突破现有 MoYu AoSu V7 / GAN 460M 的摩擦上限,加上更幸运 routing 把步数降到 90 STM。',
   },
 
   // ════════════════════════════════════════════════════════════
@@ -251,16 +257,19 @@ export const THEORETICAL_LIMITS: Record<string, TheoreticalLimit> = {
     ],
     decomp: [
       { scenario_en: 'Tymon 30.45 (current WR)', scenario_zh: 'Tymon 30.45 (现 WR)', M: 220, TPS: 7.2, R: 0.0 },
-      { scenario_en: 'Realistic future floor', scenario_zh: '现实下界', M: 200, TPS: 9, R: 2.0 },
-      { scenario_en: 'Physical floor', scenario_zh: '物理下界', M: 180, TPS: 10, R: 1.5 },
+      { scenario_en: '20–30 year horizon (Yau5 + tracking gains)', scenario_zh: '20–30 年 (Yau5 + 跟踪改进)', M: 205, TPS: 8.5, R: 1.5 },
+      { scenario_en: '100-year asymptote (efficient route + 10 TPS)', scenario_zh: '100 年渐近 (高效路径 + 10 TPS)', M: 180, TPS: 10, R: 1.5 },
+      { scenario_en: 'Absolute floor (optimal-route human + 12 TPS sustained)', scenario_zh: '绝对下界 (人类最优路径 + 12 TPS 持续)', M: 150, TPS: 12, R: 1.0 },
     ],
     best_reconstructions: [
       { person: 'Tymon Kolasiński', date: '2024-11', time: '30.45 s', M: 220, TPS: 7.2, method: 'Yau5', source_url: 'https://www.speedsolving.com/wiki/index.php/List_of_World_Records/5x5x5' },
     ],
     reasoning_en:
-      '5x5 has 4 inner layers + 5 outer-face turns. No parity reduces variance. Centers + edges have superlinear tracking cost vs 4x4. Realistic floor: 180 / 10 + 1.5 ≈ 19.5 s single. Zemdegs 2017 prediction "sub-40 imminent, sub-45 mean" both demolished — Tymon at 30.45 / 34.31 in 2025.',
+      'Five-by-five differs from four-by-four in two important ways. First, it has no algorithmic parity — odd-layer puzzles cannot produce the dedge-flip / dedge-swap cases that cost 4x4 solvers a combined 1.5-3 s in expected value. Second, the inner-edge tracking cost is superlinear: 12 midges plus 24 wing-edges create a working memory load during reduction that dwarfs 4x4. Tymon\'s 30.45 averaged 7.2 TPS over an estimated 220 STM, materially slower than 4x4 (9.2 TPS) — the bottleneck is mental tracking during edge pairing, not finger speed.\n\n' +
+      'Phase splits for a 35-second elite solve estimate roughly: first 2 centers 3.5 s, three cross edges in Yau5 3.0 s, last 4 centers + final cross edge 6.5 s, edge pairing 10 s, 3x3 stage 12 s. Edge pairing is where the gains live — better look-ahead training cuts that phase ~20%. Push the route to ~180 STM and TPS to a sustained 10, residual recognition to 1.5 s, and you get 19.5 s — that is the realistic 100-year floor. Zemdegs\' 2017 prediction of "sub-40 imminent" was annihilated by 2024, and his "sub-45 mean" was passed in 2018.',
     reasoning_zh:
-      '5x5 有 4 个内层 + 5 个外层面。无 parity 降低方差。中心 + 棱跟踪代价比 4x4 超线性。现实下界:180 / 10 + 1.5 ≈ 19.5 秒单次。Zemdegs 2017 预言 "sub-40 临近,sub-45 平均" 已双双被砸 — Tymon 2025 已是 30.45 / 34.31。',
+      '5x5 与 4x4 有两处关键差别。一是没有算法 parity — 奇数层拼图不会出 dedge-flip / dedge-swap 那种期望吃 1.5-3 秒的 case。二是内层跟踪代价超线性:12 个 midge + 24 个 wing edge 在 reduction 阶段产生的工作记忆压力比 4x4 大得多。Tymon 30.45 跑出 7.2 TPS / 220 STM,比 4x4 (9.2 TPS) 明显慢,瓶颈在棱配对阶段的心智跟踪,不在手指。\n\n' +
+      '35 秒级顶级解的阶段大致是: 前 2 中心 3.5 秒、Yau5 三 cross 棱 3.0 秒、后 4 中心 + 最后 cross 棱 6.5 秒、棱配对 10 秒、三阶阶段 12 秒。增量空间主要在棱配对 — 更好的 look-ahead 训练能压 ~20%。把路径压到 180 STM、持续 10 TPS、残余识别 1.5 秒,得到 19.5 秒,这是 100 年现实下界。Zemdegs 2017 预言 "sub-40 临近" 2024 被砸穿,"sub-45 平均" 2018 就过线了。',
   },
 
   // ════════════════════════════════════════════════════════════
@@ -287,13 +296,16 @@ export const THEORETICAL_LIMITS: Record<string, TheoreticalLimit> = {
     ],
     decomp: [
       { scenario_en: 'Park 57.69 (current WR)', scenario_zh: 'Park 57.69 (现 WR)', M: 315, TPS: 5.5, R: 0.0 },
-      { scenario_en: 'Realistic future floor', scenario_zh: '现实下界', M: 290, TPS: 7, R: 3.0 },
-      { scenario_en: 'Physical floor (no parity, hardware solved)', scenario_zh: '物理下界 (无 parity, 硬件解决)', M: 270, TPS: 8, R: 2.0 },
+      { scenario_en: '20–30 year horizon (parity dodging + 6.5 TPS)', scenario_zh: '20–30 年 (parity 闪避 + 6.5 TPS)', M: 300, TPS: 6.5, R: 2.5 },
+      { scenario_en: '100-year asymptote (better hardware + 7.5 TPS)', scenario_zh: '100 年渐近 (更优硬件 + 7.5 TPS)', M: 280, TPS: 7.5, R: 2.0 },
+      { scenario_en: 'Absolute floor (slip-free inner layers + 9 TPS)', scenario_zh: '绝对下界 (内层零打滑 + 9 TPS)', M: 250, TPS: 9, R: 1.5 },
     ],
     reasoning_en:
-      '6x6 = 4 inner + outer + parity. Tracking cost across 84 visible pieces is the dominant time sink. Centers ~22 s, edges ~20 s, 3x3 stage ~16 s for a 58 s solve. Floor: 280 / 7 + 3 ≈ 43 s single. Hardware ceiling looms larger here than for 5x5/7x7.',
+      'Six-by-six is the WCA event most bottlenecked by hardware. Cubeskills documented "every 6x6 out there, including the big three, has unresolved inner-layer slipping" — the moment a wide turn brushes against an inner layer that did not commit, the solver loses 0.2-0.5 s recovering alignment. Park\'s 57.69 averaged 5.5 TPS over an estimated 315 STM; the gap to 5x5\'s 7.2 TPS is almost entirely physical, not mental.\n\n' +
+      'The 58-second elite breakdown is roughly: centers 22 s, edges 20 s, 3x3 stage 16 s. 6x6 has full parity (50% × 15-STM OLL parity, 50% × 12-STM PLL parity, independent), adding ~1.5-3 s in expected value. The 100-year asymptote requires (a) inner-layer slip eliminated by hardware redesign, (b) sustained 7.5 TPS reachable on the deepest slices, (c) phase transitions compressed to 2 s of total recognition cost. Reaching 280 STM on a no-parity scramble, that yields 280/7.5 + 2 = 39.3 s. The absolute floor falls when 9 TPS becomes feasible on a 6x6 — roughly the speed of current 5x5 — which depends on a generation of hardware not yet on the market.',
     reasoning_zh:
-      '6x6 = 4 内 + 外 + parity。84 块可见跟踪代价是主导时间开销。58 秒解法分:中心 ~22 秒、棱 ~20 秒、三阶阶段 ~16 秒。下界:280 / 7 + 3 ≈ 43 秒单次。硬件天花板在此比 5x5 / 7x7 更突出。',
+      '6x6 是 WCA 中最受硬件瓶颈拖累的项目。Cubeskills 明确指出"包括三大牌在内,所有 6x6 都有未解决的内层打滑问题" — wide turn 一旦扫到没跟上的内层,solver 要花 0.2-0.5 秒重新对齐。Park 57.69 跑出 5.5 TPS / 315 STM;与 5x5 的 7.2 TPS 之差几乎全来自物理摩擦,不是脑算速度。\n\n' +
+      '58 秒级顶级解:中心 22 秒、棱 20 秒、三阶阶段 16 秒。6x6 有完整 parity (50% × 15-STM OLL parity,50% × 12-STM PLL parity,独立),期望值多吃 1.5-3 秒。100 年渐近需要三件事:(a) 硬件重做消除内层打滑、(b) 最深 slice 上 7.5 TPS 可持续、(c) 阶段切换的累计识别压到 2 秒。280 STM 无 parity scramble 跑这套,得 280/7.5 + 2 = 39.3 秒。绝对下界要等 6x6 跑出 9 TPS — 接近现役 5x5 的速度 — 这取决于尚未上市的下一代硬件。',
   },
 
   // ════════════════════════════════════════════════════════════
@@ -320,16 +332,17 @@ export const THEORETICAL_LIMITS: Record<string, TheoreticalLimit> = {
     ],
     decomp: [
       { scenario_en: 'Park 1:33.48 (current WR)', scenario_zh: 'Park 1:33.48 (现 WR)', M: 440, TPS: 4.7, R: 0.0 },
-      { scenario_en: 'Realistic future floor', scenario_zh: '现实下界', M: 420, TPS: 5.5, R: 4.0 },
-      { scenario_en: 'Physical floor (hardware ceiling)', scenario_zh: '物理下界 (硬件天花板)', M: 400, TPS: 6, R: 3.0 },
+      { scenario_en: '20–30 year horizon', scenario_zh: '20–30 年', M: 430, TPS: 5.2, R: 3.5 },
+      { scenario_en: '100-year asymptote', scenario_zh: '100 年渐近', M: 410, TPS: 6, R: 3.0 },
+      { scenario_en: 'Absolute floor (deep-slice 7 TPS + slip-free)', scenario_zh: '绝对下界 (深 slice 7 TPS + 零打滑)', M: 380, TPS: 7, R: 2.0 },
     ],
     best_reconstructions: [
       { person: 'Max Park', date: '2025-10-04', time: '1:33.48', M: 440, TPS: 4.7, method: 'Reduction + freeslice', source_url: 'https://www.speedsolving.com/threads/max-park-1-33-48-7x7-single-and-1-36-86-average.95542/' },
     ],
     reasoning_en:
-      '7x7 = 5 inner + outer, no parity. STM 440 / TPS 4.7 = 93.5 s matches Park\'s WR (computed from primary speedsolving thread breakdowns: Hays 501, Kirjava 446, uberCuber 455). Centers ~46 s, edges ~33 s, 3x3 ~14 s. Floor: 420 / 5.5 + 4 ≈ 80 s.',
+      'Seven-by-seven is the only big cube with public WR-grade move-count data — multiple speedsolving.com solvers have published reductions in the 446-524 STM range (Hays 501, Kirjava 446, uberCuber 455, vcuber13 455). Park\'s class likely lands around 430-450 with strong tracking and freeslice efficiency; 1:33.48 ÷ 440 STM = 4.7 TPS sustained, matched against centers ~46 s, edges ~33 s, 3x3 stage ~14 s.\n\nThere is no parity (odd-layer cubes lack the dedge cases) but deep-slice physics dominates. 3Rw, 4Rw and 3Lw moves move 21-28 cubies each — the cube has weight and angular inertia, and elite TPS on these specific moves rarely exceeds 4 even with the latest GAN 778 / MoYu HuaShi WR M. The path to ~80 s floor requires the deep-slice TPS bottleneck to break, plus phase-transition recognition pushed under 2 s. Hardware has improved fastest in the last five years among big cubes — quasi-magnet stabilisation of 17 visible layers per face is now solved — and the next bottleneck is human cognitive tracking on 200+ moves of edge pairing, not finger speed.',
     reasoning_zh:
-      '7x7 = 5 内 + 外,无 parity。STM 440 / TPS 4.7 = 93.5 秒匹配 Park 现 WR (源自 speedsolving 复盘:Hays 501、Kirjava 446、uberCuber 455)。中心 ~46 秒、棱 ~33 秒、三阶 ~14 秒。下界:420 / 5.5 + 4 ≈ 80 秒。',
+      '7x7 是大魔方中唯一有公开 WR 级复盘数据的项目。speedsolving.com 多人 reduction 步数 446-524 STM (Hays 501、Kirjava 446、uberCuber 455、vcuber13 455)。Park 级别约 430-450,跟踪好 + freeslice 高效。1:33.48 ÷ 440 STM = 4.7 TPS 持续,对应中心 ~46 秒、棱 ~33 秒、三阶 ~14 秒。\n\n无 parity (奇数层无 dedge 类),但深 slice 物理主导。3Rw / 4Rw / 3Lw 每步动 21-28 个块,有重量和角惯性 — 这些动作上即便用最新 GAN 778 / MoYu HuaShi WR M,顶级 TPS 也很难超 4。压到 80 秒下界需要深 slice TPS 瓶颈被突破,加阶段切换识别压到 2 秒以下。大魔方里 7x7 硬件改进最快 — 每面 17 层可见的准磁稳定已经基本解决 — 下一个瓶颈是人类在 200+ 步棱配对上的认知跟踪,不是手指速度。',
   },
 
   // ════════════════════════════════════════════════════════════
@@ -357,13 +370,18 @@ export const THEORETICAL_LIMITS: Record<string, TheoreticalLimit> = {
     ],
     decomp: [
       { scenario_en: 'Meruva 5.66 (current WR)', scenario_zh: 'Meruva 5.66 (现 WR)', M: 56, TPS: 9.7, R: 0.2 },
-      { scenario_en: 'Realistic future floor (Roux-OH adoption)', scenario_zh: '现实下界 (Roux-OH 普及)', M: 48, TPS: 10, R: 0.3 },
-      { scenario_en: 'Physical floor (single-hand 12 TPS biomech)', scenario_zh: '物理下界 (单手 12 TPS 生理)', M: 42, TPS: 12, R: 0.15 },
+      { scenario_en: '20–30 year horizon (10 TPS sustained)', scenario_zh: '20–30 年 (10 TPS 持续)', M: 52, TPS: 10, R: 0.3 },
+      { scenario_en: '100-year asymptote (Roux-OH + 11 TPS)', scenario_zh: '100 年渐近 (Roux-OH + 11 TPS)', M: 48, TPS: 11, R: 0.25 },
+      { scenario_en: 'Absolute floor (single-hand drum-roll 12 TPS biomech)', scenario_zh: '绝对下界 (单手击鼓 12 TPS 生理)', M: 42, TPS: 12, R: 0.15 },
     ],
     reasoning_en:
-      'OH ceiling is single-hand TPS (~9 sustained, ~12 burst) vs 14-16 two-handed. Single-hand finger-tap biomechanics: 4 active fingers × 6 Hz / finger = 12-15 TPS theoretical. Floor: 42 / 12 + 0.15 ≈ 3.6 s single.',
+      'One-handed is constrained by single-hand TPS biomechanics. With one hand, only 4 fingers participate in finger-tricks (vs 8 two-handed), and the regrip overhead — reorienting the cube without a second hand to stabilise it — adds 0.3-0.5 s of cumulative pause that two-handed solvers eliminate. Meruva\'s 5.66 averaged 9.7 TPS over an estimated 56 STM with 0.2 s recognition; Wang two-handed 16.6 TPS demonstrates the gap is genuinely physical, not technique.\n\n' +
+      'Method has a counterintuitive sub-plot. Roux-OH is move-count superior (45-50 STM vs CFOP-OH 55-60) because it is rotationless and uses RrUM exclusively, but the global elite has not switched. The reason: CFOP\'s recognition speed and algorithm familiarity beat Roux\'s move-count advantage in single-handed timing. Whether that holds long-term is open — if the next generation grows up on Roux-OH from age 8, the picture flips.\n\n' +
+      'Floors: 100-year asymptote at 48 STM × 11 TPS + 0.25 s = 4.6 s, absolute biomechanical floor at 42 STM × 12 TPS + 0.15 s = 3.65 s. The 12 TPS ceiling matches single-hand drum-roll records (Hattori 22 Hz / two-hand). Below that requires either two-handed-equivalent grip stability or a method that drastically cuts moves — neither has a credible path today.',
     reasoning_zh:
-      'OH 天花板是单手 TPS (~9 持续, ~12 突发) vs 双手 14-16。单手手指敲击生物力学:4 指 × 6 Hz / 指 = 12-15 TPS 理论。下界:42 / 12 + 0.15 ≈ 3.6 秒单次。',
+      'OH 受限于单手 TPS 生物力学。一只手只有 4 指参与手指动作 (vs 双手 8 指),且换握开销 — 没有第二只手稳定 cube — 累计加 0.3-0.5 秒停顿,双手解法没有这部分。Meruva 5.66 跑出 9.7 TPS / 56 STM / 0.2 秒识别;Wang 双手 16.6 TPS 表明差距是物理,不是技术。\n\n' +
+      '方法上有个反直觉的细节。Roux-OH 步数明显更省 (45-50 STM vs CFOP-OH 55-60),因为它无旋转、纯 RrUM,但全球顶级没有切换 — 因为 CFOP 的识别速度 + 算法熟练度在单手计时下战胜了 Roux 的步数优势。是否长期成立未知:如果下一代从 8 岁就练 Roux-OH,格局可能翻转。\n\n' +
+      '下界: 100 年渐近 = 48 STM × 11 TPS + 0.25 s = 4.6 秒;绝对生物力学下界 = 42 STM × 12 TPS + 0.15 s = 3.65 秒。12 TPS 上限对应单手击鼓世界纪录 (Hattori 双手 22 Hz / 2)。再低需要双手等效的握持稳定,或者方法砍步数 — 二者目前都没有可行路径。',
   },
 
   // ════════════════════════════════════════════════════════════
@@ -389,17 +407,20 @@ export const THEORETICAL_LIMITS: Record<string, TheoreticalLimit> = {
     ],
     decomp: [
       { scenario_en: 'Eggins 11.67 (current WR)', scenario_zh: 'Eggins 11.67 (现 WR)', M: 60, TPS: 8, R: 4.0, note_en: 'R = memo + recall pauses', note_zh: 'R = 记忆 + 回忆停顿' },
-      { scenario_en: 'Realistic future floor', scenario_zh: '现实下界', M: 50, TPS: 9, R: 2.5 },
-      { scenario_en: 'Physical floor (lucky scramble + perfect 3-Style)', scenario_zh: '物理下界 (幸运 + 完美 3-Style)', M: 45, TPS: 10, R: 1.5 },
+      { scenario_en: '20–30 year horizon (sub-3s memo)', scenario_zh: '20–30 年 (memo sub-3s)', M: 55, TPS: 8.5, R: 3.0 },
+      { scenario_en: '100-year asymptote (compressed memo + perfect 3-Style)', scenario_zh: '100 年渐近 (压缩 memo + 完美 3-Style)', M: 48, TPS: 9, R: 2.0 },
+      { scenario_en: 'Absolute floor (1.5s memo + 10 TPS execution)', scenario_zh: '绝对下界 (1.5s memo + 10 TPS 执行)', M: 45, TPS: 10, R: 1.5 },
     ],
     reasoning_en:
-      'BLD time = memo + execution. 22 stickers @ audio-loop 1.5s memo floor. 50 moves @ 10 TPS = 5s execution floor. Combined absolute floor ~6.5-7.0s on lucky scramble. Sub-10 mean achievable; sub-7 single is asymptote.',
+      'Blindfold time decomposes into two distinct phases — memorisation and execution — and they have independent floors. Memo cannot be eliminated: 22 stickers (12 edges + 8 corners + 2 buffers) at compressed audio letter-pair speed of ~1.5 s/loop is a hard biological floor for short-term auditory encoding. Execution at full 3-Style with floating buffers and LTCT runs ~50 moves at 10 TPS, giving 5 s of pure execution. The sum is ~6.5 s for a lucky scramble where the letter pairs themselves are easy ones the solver has rehearsed.\n\n' +
+      'Eggins\' 11.67 likely splits as 3-4 s memo + 7-8 s execution, well above the floor on both halves. The 100-year asymptote — sub-7 single — requires memo compression to roughly 2 s on lucky letter pairs, plus execution at 9 TPS through a particularly clean commutator chain. A new memo system entirely (spatial mind-palace replacing letter-pair audio loops) could halve memo time in a single jump, which is why this floor is more uncertain than 3x3 sighted: regime change is plausible.',
     reasoning_zh:
-      'BLD 时间 = 记忆 + 执行。22 色块音频循环记忆下界 ~1.5 秒。50 步 @ 10 TPS = 5 秒执行下界。综合幸运 scramble 物理下界 ~6.5-7 秒。Sub-10 Mo3 可达;Sub-7 单次是渐近。',
+      'BLD 时间分两阶段 — 记忆与执行 — 各有独立下界。记忆不可消除:22 色块 (12 棱 + 8 角 + 2 buffer) 走压缩音频字母对,~1.5 秒/循环 是短期听觉编码的生物下界。执行用全 3-Style + 浮动 buffer + LTCT 跑 ~50 步 @ 10 TPS = 5 秒纯执行。幸运 scramble (字母对都是熟悉的) 综合 ~6.5 秒。\n\n' +
+      'Eggins 11.67 大致是 3-4 秒 memo + 7-8 秒执行,两半都明显高于下界。100 年渐近 sub-7 秒需要 memo 在幸运字母对上压到 ~2 秒,加上 9 TPS 跑流畅 commutator 链。换记忆系统 (空间 mind-palace 取代字母对音频) 可一次性砍掉 memo 一半 — 这是 BLD 比 3x3 视拧更不确定的原因:范式变更可能。',
     why_fit_differs_en:
-      'BLD curve fit cannot capture memo-system regime shifts (e.g., spatial mind-palace → letter-pair audio).',
+      'BLD curve fit cannot capture memo-system regime shifts. A switch from letter-pair audio to spatial mind-palace would drop memo time 30-50% in a single year, which the historical trajectory has no way to anticipate.',
     why_fit_differs_zh:
-      'BLD 拟合无法捕捉记忆系统的范式切换 (如 mind-palace → 字母对音频)。',
+      'BLD 拟合无法捕捉记忆系统的范式切换。从字母对音频换到空间 mind-palace,memo 时间能一次性砍 30-50%,历史轨迹完全看不到这种突变。',
   },
 
   // ════════════════════════════════════════════════════════════
@@ -428,13 +449,17 @@ export const THEORETICAL_LIMITS: Record<string, TheoreticalLimit> = {
       { scenario_en: 'God\'s number HTM (proven 2010)', scenario_zh: 'God\'s number HTM (2010 证明)', M: 20, TPS: 0, R: 3600, T: 20 },
     ],
     reasoning_en:
-      'FMC is move-count limited (1 hour, paper). Lower bound = God\'s number = 20 HTM (Rokicki et al. 2010). Random scramble HTM optimal: 18 moves 67%, 17 moves 27%, 19 moves 3%, 16 moves 2.6%. 16-move WR sits below 20 because easy scrambles need 16. Practical 1-hour floor for elite human ~17-18 single, ~18-19 mean.',
+      'FMC is the only WCA event with a mathematically proven lower bound. Rokicki, Kociemba, Davidson and Dethridge proved in 2010 that any 3x3 state can be solved in ≤ 20 HTM, and the random-scramble HTM-optimal distribution is heavily concentrated at 18 (67%) and 17 (27%) moves. Only 2.6% of scrambles need exactly 16 HTM, and below 16 is essentially measure-zero (≤ 14 moves: ~10⁻⁵).\n\n' +
+      'A 16-move WR single is therefore not below the absolute lower bound — it sits inside it, on a scramble that happened to admit a 16-move optimal AND was found by a human in 60 minutes. Five cubers have now tied this mark: Tronto 2019, Bryant + Gibson 2024, Brown 2024. The achievable single floor under the current rules is ~16, with sub-16 requiring sub-2.6% scramble luck combined with finding optimal under hand search — possible but not on schedule.\n\n' +
+      'Mean WR is now Wong Chong Wen 19.33 (FMCanton Nansha 2026, first sub-20). The Mo3 floor is bounded by needing three solves all near optimum; with most scrambles HTM-optimal at 18 moves and DR techniques routinely finding 17-19, sub-19 mean is on track in 5-10 years. Below 17.5 mean would require either every scramble admitting ≤17 hand-finds in an hour, or a search-time breakthrough — neither has visible mechanism.',
     reasoning_zh:
-      'FMC 是步数限定 (1 小时纸笔)。下界 = God\'s number = 20 HTM (Rokicki 等 2010 证明)。随机 scramble HTM optimal 分布:18 步 67%、17 步 27%、19 步 3%、16 步 2.6%。WR 16 步低于 20,是因为简单 scramble 本身 ≤16。人类 1 小时实际下界 ~17-18 单次, ~18-19 平均。',
+      'FMC 是 WCA 中唯一一个绝对下界数学证明过的项目。Rokicki / Kociemba / Davidson / Dethridge 2010 年证明任何 3x3 态可 ≤ 20 HTM 解出,随机 scramble HTM optimal 分布集中在 18 步 (67%) 和 17 步 (27%);只有 2.6% scramble 恰好需要 16 HTM,≤ 14 步基本是测度零 (~10⁻⁵)。\n\n' +
+      '16 步单次 WR 因此不是低于绝对下界,而是落在下界尾部 — 一个恰好 admit 16 步 optimal 的 scramble + 人类在 60 分钟内找到。5 人持平这个数:Tronto 2019、Bryant + Gibson 2024、Brown 2024。当前规则下单次可达下界 ~16,sub-16 需要 sub-2.6% scramble 运气叠加手搜索找到 optimal — 可能但无确定时程。\n\n' +
+      'Mo3 WR 现在是 Wong Chong Wen 19.33 (FMCanton Nansha 2026,首破 20)。Mo3 下界受"3 把都接近 optimal"约束;大多数 scramble HTM optimal 是 18 步,DR 技术常找到 17-19 步,sub-19 平均 5-10 年内在线。低于 17.5 平均需要每把 scramble 都 admit ≤17 步手搜或者搜索时间技术突破,目前没有可见机制。',
     why_fit_differs_en:
-      'FMC is the only event with mathematically proven absolute lower bound (20 HTM). Curve-fit L is meaningless here.',
+      'FMC is the only event where the curve fit is structurally inappropriate. The fit treats trajectory as continuous; FMC is integer-valued with a proven mathematical lower bound. Curve L is meaningless here — use the integer floor (16 single, ~17.5 mean) instead.',
     why_fit_differs_zh:
-      'FMC 是唯一一个绝对下界 (20 HTM) 数学证明的项目。曲线拟合 L 在这里没有意义。',
+      'FMC 是唯一一个曲线拟合在结构上不合适的项目。拟合把轨迹当连续值,但 FMC 是整数取值且有已证明的数学下界。L 在这里没有意义,直接用整数下界 (16 单次, ~17.5 平均)。',
   },
 
   // ════════════════════════════════════════════════════════════
@@ -459,13 +484,16 @@ export const THEORETICAL_LIMITS: Record<string, TheoreticalLimit> = {
     ],
     decomp: [
       { scenario_en: 'Chapel 51.96 (current WR)', scenario_zh: 'Chapel 51.96 (现 WR)', M: 140, TPS: 5, R: 25.0 },
-      { scenario_en: 'Realistic future floor', scenario_zh: '现实下界', M: 120, TPS: 6, R: 18.0 },
-      { scenario_en: 'Physical floor', scenario_zh: '物理下界', M: 110, TPS: 7, R: 12.0 },
+      { scenario_en: '20–30 year horizon', scenario_zh: '20–30 年', M: 130, TPS: 5.5, R: 22 },
+      { scenario_en: '100-year asymptote', scenario_zh: '100 年渐近', M: 120, TPS: 6, R: 18 },
+      { scenario_en: 'Absolute floor (12s memo + 18s exec)', scenario_zh: '绝对下界 (memo 12s + exec 18s)', M: 110, TPS: 7, R: 12 },
     ],
     reasoning_en:
-      'Memo dominates: ~25-30s for 28 letter pairs across centers / wings / edges / corners. Execution ~25-30s @ 5 TPS. Floor: memo 12-15s + exec 18-22s = 30-35s single, 38-42s Mo3.',
+      'Four-by-four blindfold has the same two-phase structure as 3BLD but with five orbits instead of two. Centers, wings, edges, corners and parity each need to be tracked through letter pairs (~28 total) and executed through commutators (~140 STM at WR level). Memo dominates: 25-30 s for elite vs 25-30 s execution at 5 TPS through commutators. Chapel\'s 51.96 splits roughly memo 22 s + exec 30 s.\n\n' +
+      'Memo and execution have different floor sources. Memo floors at ~12 s on a lucky scramble (28 letter pairs × 0.4 s minimum encoding); execution floors at ~18 s (140 STM at 7 TPS using the cleanest possible commutator routing, no setup waste). Combined 30 s is the absolute single floor, 38-42 s is the realistic Mo3 floor. Chapel\'s monopoly across 4BLD + 5BLD reflects how rare the dual skill — fast memo + dexterous execution — actually is.',
     reasoning_zh:
-      '记忆主导:~25-30 秒 (28 字母对 × 中心 / 翼 / 棱 / 角)。5 TPS 执行 ~25-30 秒。下界:记忆 12-15 + 执行 18-22 = 30-35 秒单次, 38-42 秒 Mo3。',
+      '4BLD 与 3BLD 同样是两阶段结构,但 piece orbit 从 2 种扩到 5 种。中心、翼、棱、角、parity 各自要走字母对 (共 ~28) 跟 commutator 执行 (~140 STM 顶级)。记忆主导:顶级 25-30 秒 vs 5 TPS commutator 执行 25-30 秒。Chapel 51.96 大致是 memo 22 秒 + exec 30 秒。\n\n' +
+      '记忆与执行下界来源不同。Memo 在幸运 scramble 上 ~12 秒 (28 字母对 × 0.4 秒最低编码);执行 ~18 秒 (140 STM @ 7 TPS,纯 commutator 无 setup)。综合 30 秒是单次绝对下界,38-42 秒是 Mo3 现实下界。Chapel 在 4BLD + 5BLD 双项目垄断,反映出"快 memo + 灵活执行"双技能稀有度。',
   },
 
   // ════════════════════════════════════════════════════════════
@@ -490,13 +518,16 @@ export const THEORETICAL_LIMITS: Record<string, TheoreticalLimit> = {
     ],
     decomp: [
       { scenario_en: 'Chapel 1:58.59 (current WR)', scenario_zh: 'Chapel 1:58.59 (现 WR)', M: 280, TPS: 5, R: 60.0 },
-      { scenario_en: 'Realistic future floor', scenario_zh: '现实下界', M: 250, TPS: 6, R: 40.0 },
-      { scenario_en: 'Physical floor', scenario_zh: '物理下界', M: 220, TPS: 7, R: 30.0 },
+      { scenario_en: '20–30 year horizon', scenario_zh: '20–30 年', M: 270, TPS: 5.5, R: 50 },
+      { scenario_en: '100-year asymptote', scenario_zh: '100 年渐近', M: 250, TPS: 6, R: 40 },
+      { scenario_en: 'Absolute floor (30s memo + 40s exec)', scenario_zh: '绝对下界 (memo 30s + exec 40s)', M: 220, TPS: 7, R: 30 },
     ],
     reasoning_en:
-      'Memo bottleneck severe: 92 stickers ≈ 46 letter pairs × 1.2s/pair audio = 55s memo. Mean WR stagnant since 2019 reflects memo-accuracy ceiling — sub-2:00 Mo3 requires three error-free 92-sticker memos.',
+      'Five-by-five blindfold pushes the memo bottleneck past biological limits of comfortable short-term retention. 92 stickers across 5 orbits ≈ 46 letter pairs; even at 1.2 s/pair compressed audio, memo alone is 55 s — and the recall accuracy on the 40th-50th letter pair drops adversarially because earlier pairs interfere with later ones in working memory.\n\n' +
+      'The Mo3 record stagnation since 2019 (Chapel 2:27.63, untouched for 7 years) is the single most informative data point in BLD analysis. It says the binding constraint is not execution speed (Chapel\'s singles have improved) but accuracy — three consecutive error-free 92-sticker memos exceeds the 5BLD-trained working memory ceiling. Sub-1:30 single is plausible by 2030 (memo 35 + exec 50); sub-2:00 mean requires either a memo-system replacement (mind-palace) or sustained cognitive training that improves working memory itself.',
     reasoning_zh:
-      '记忆瓶颈剧烈:92 色块 ≈ 46 字母对 × 1.2 秒 / 对 = 55 秒。Mo3 自 2019 至今未破,反映记忆准确率天花板 — sub-2:00 Mo3 需连续 3 次无错的 92 色块记忆。',
+      '5BLD 把 memo 瓶颈推过了短期工作记忆的生物舒适区。92 色块跨 5 种 orbit ≈ 46 字母对;即便压到 1.2 秒 / 对的音频速率,光 memo 就 55 秒 — 而且第 40-50 个字母对的回忆准确率会非线性下降,因为前段的字母对在工作记忆里会干扰后段。\n\n' +
+      'Mo3 记录自 2019 至今未破 (Chapel 2:27.63,7 年),是 BLD 分析里信息量最大的单点。它说明 binding 约束不是执行速度 (Chapel 单次在改进) 而是准确率 — 连续 3 次无错的 92 色块记忆超出了 5BLD 训练能达到的工作记忆天花板。Sub-1:30 单次在 2030 年左右可达 (memo 35 + exec 50);sub-2:00 平均需要换 memo 系统 (mind-palace) 或持续认知训练抬高工作记忆本身。',
   },
 
   // ════════════════════════════════════════════════════════════
@@ -524,16 +555,19 @@ export const THEORETICAL_LIMITS: Record<string, TheoreticalLimit> = {
     ],
     decomp: [
       { scenario_en: 'Kellum 0.73 (current WR)', scenario_zh: 'Kellum 0.73 (现 WR)', M: 8, TPS: 14.5, R: 0.13 },
-      { scenario_en: 'Realistic future floor', scenario_zh: '现实下界', M: 8, TPS: 18, R: 0.13 },
-      { scenario_en: 'Physical floor (lucky 6-move + 20 TPS)', scenario_zh: '物理下界 (幸运 6 步 + 20 TPS)', M: 6, TPS: 20, R: 0.13 },
+      { scenario_en: '20–30 year horizon', scenario_zh: '20–30 年', M: 8, TPS: 17, R: 0.13 },
+      { scenario_en: '100-year asymptote', scenario_zh: '100 年渐近', M: 8, TPS: 19, R: 0.13 },
+      { scenario_en: 'Absolute floor (lucky 6-move + 22 TPS finger-tap)', scenario_zh: '绝对下界 (幸运 6 步 + 22 TPS 手指敲击)', M: 6, TPS: 22, R: 0.10 },
     ],
     best_reconstructions: [
       { person: 'Simon Kellum', date: '2023', time: '0.73 s', M: 8, TPS: 14.5, method: 'V-first / inspection-optimal', source_url: 'https://www.speedsolving.com/wiki/index.php?title=List_of_World_Records/Pyraminx' },
     ],
     reasoning_en:
-      'Pyraminx state space 933,120 positions; God\'s number 11 HTM, 8.36 average optimal. 15s inspection enables full optimal plan. Limit: StackMat reaction (~0.13s) + execution at finger-tap rate (~18-20 TPS). Floor 0.5-0.65s; essentially "solved".',
+      'Pyraminx is the only WCA event where "inspection-optimal" is human-achievable. The state space is just 933,120 non-trivial positions and God\'s number is 11 HTM with average optimal 8.36 moves. Top cubers — Kellum, Górny, Hattori, Brads, Jiang — fully plan the entire ≤11-move solution during the 15-second inspection. Recognition during execution is therefore zero, and what remains is pure physical execution against the StackMat envelope.\n\n' +
+      'The remaining headroom is bounded by two things: scramble luck (a 6-move optimal is rare, perhaps 1 in 200) and finger-tap biomechanics (20-22 Hz upper band on the lightweight Pyraminx). Combine: 6-move scramble × 22 TPS + 0.1 s reaction = 0.37 s absolute floor. The 100-year asymptote is closer to 0.55 s on an 8-move solve. Pyraminx is essentially "solved" from a method standpoint — further WR drops will come from luckier scrambles plus marginal hardware gains, not new techniques.',
     reasoning_zh:
-      '金字塔状态空间 93 万,God\'s number 11 HTM,平均 optimal 8.36 步。15 秒 inspection 足以找最优 V-first 解。极限:StackMat 反应 ~0.13 秒 + 执行 ~18-20 TPS (接近手指敲击频率)。下界 0.5-0.65 秒,本质已"解决"。',
+      '金字塔是唯一一个 "inspection-optimal" 人类可达的 WCA 项目。状态空间仅 93 万 (非平凡态),God\'s number 11 HTM,平均 optimal 8.36 步。顶级 — Kellum、Górny、Hattori、Brads、Jiang — 在 15 秒 inspection 内规划完整 ≤11 步解。执行期识别归零,剩下的就是 StackMat 包络下的纯物理执行。\n\n' +
+      '剩余空间由两件事框定:scramble 运气 (6 步 optimal 大约 1/200 概率) 和手指敲击生物力学 (轻量金字塔上 20-22 Hz 上限)。组合:6 步 scramble × 22 TPS + 0.1 秒反应 = 0.37 秒绝对下界。100 年渐近更接近 0.55 秒 (基于 8 步解)。金字塔从方法角度本质已"解决",再降 WR 靠更幸运的 scramble + 微小硬件收益,不靠新技术。',
   },
 
   // ════════════════════════════════════════════════════════════
@@ -561,16 +595,19 @@ export const THEORETICAL_LIMITS: Record<string, TheoreticalLimit> = {
     ],
     decomp: [
       { scenario_en: 'Grohmann 0.73 (current WR, TCLL)', scenario_zh: 'Grohmann 0.73 (现 WR, TCLL)', M: 10, TPS: 14.2, R: 0.15 },
-      { scenario_en: 'Realistic future floor', scenario_zh: '现实下界', M: 10, TPS: 14, R: 0.15 },
-      { scenario_en: 'Physical floor (lucky TCLL skip + reaction)', scenario_zh: '物理下界 (幸运 TCLL skip + 反应)', M: 7, TPS: 18, R: 0.13 },
+      { scenario_en: '20–30 year horizon (TCLL widespread)', scenario_zh: '20–30 年 (TCLL 普及)', M: 9, TPS: 16, R: 0.13 },
+      { scenario_en: '100-year asymptote', scenario_zh: '100 年渐近', M: 9, TPS: 18, R: 0.10 },
+      { scenario_en: 'Absolute floor (TCLL skip + 20 TPS)', scenario_zh: '绝对下界 (TCLL skip + 20 TPS)', M: 7, TPS: 20, R: 0.10 },
     ],
     best_reconstructions: [
       { person: 'Vojtěch Grohmann', date: '2026-01', time: '0.73 s', M: 10, TPS: 14.2, method: 'TCLL', source_url: 'https://www.speedsolving.com/threads/0-73-skewb-wr-single-by-vojt%C4%9Bch-grohmann.96474/' },
     ],
     reasoning_en:
-      'Skewb has 3.15M states, God\'s number 11 STM, 8.36 avg optimal. First-layer planned in inspection. Floor 0.6-0.75s. Scramble luck dominant: TCLL skip vs 5-fold case = 4-6 STM = 0.3-0.4s.',
+      'Skewb has 3.15M states with God\'s number 11 STM and average optimal 8.36 moves — slightly larger state space than Pyraminx but the same "fully plannable in inspection" property for first layer. The novel structural feature is TCLL (Twisted Corner Last Layer, ~1080 cases reduced to ~360 algs after pseudo-handling), which Grohmann used for the WR single 0.73 in January 2026 — the first method-driven WR drop in years.\n\n' +
+      'Scramble luck dominates the variance. A TCLL skip case is 7 STM; a 5-fold case is 13 STM. That 6-move spread translates to 0.3-0.4 s of solve time, which is more than the entire remaining headroom. The 100-year asymptote at 9 STM × 18 TPS + 0.1 = 0.6 s is achievable on average lucky scrambles; the absolute floor at 7 STM × 20 TPS + 0.1 = 0.45 s requires the rare TCLL skip to coincide with peak biomechanics. Like Pyraminx, Skewb is approaching the regime where further drops come from luck, not technique.',
     reasoning_zh:
-      '斜转 315 万态,God\'s number 11 STM,平均 optimal 8.36。第一层 inspection 规划。下界 0.6-0.75 秒。Scramble 运气主导:TCLL skip vs 5-fold case 差 4-6 STM = 0.3-0.4 秒。',
+      '斜转状态空间 315 万,God\'s number 11 STM,平均 optimal 8.36 步 — 比金字塔略大但同样 "第一层 inspection 内可全规划" 的特性。结构上的新东西是 TCLL (Twisted Corner Last Layer,~1080 cases,假态合并后 ~360 algs),Grohmann 2026 年 1 月用它创下 0.73 WR — 多年来首个方法驱动的 WR 下降。\n\n' +
+      'Scramble 运气主导方差。TCLL skip case 是 7 STM,5-fold case 是 13 STM,6 步差对应 0.3-0.4 秒,比剩余空间还大。100 年渐近 = 9 STM × 18 TPS + 0.1 = 0.6 秒,在普通幸运 scramble 上可达;绝对下界 = 7 STM × 20 TPS + 0.1 = 0.45 秒,需要 TCLL skip 与峰值生物力学同时发生。和金字塔一样,斜转正进入"再降只能靠运气,不靠技术"的阶段。',
   },
 
   // ════════════════════════════════════════════════════════════
@@ -598,13 +635,16 @@ export const THEORETICAL_LIMITS: Record<string, TheoreticalLimit> = {
     ],
     decomp: [
       { scenario_en: 'Khanani 3.40 (current WR)', scenario_zh: 'Khanani 3.40 (现 WR)', M: 22, TPS: 8, R: 0.6 },
-      { scenario_en: 'Realistic future floor (full 1LLL)', scenario_zh: '现实下界 (全 1LLL)', M: 18, TPS: 9, R: 0.5 },
-      { scenario_en: 'Physical floor (lucky CSP+PLL skip)', scenario_zh: '物理下界 (幸运 CSP+PLL skip)', M: 14, TPS: 10, R: 0.4 },
+      { scenario_en: '20–30 year horizon (full 1LLL adoption)', scenario_zh: '20–30 年 (全 1LLL 普及)', M: 18, TPS: 9, R: 0.5 },
+      { scenario_en: '100-year asymptote (slice mechanics solved)', scenario_zh: '100 年渐近 (切片机构解决)', M: 16, TPS: 11, R: 0.4 },
+      { scenario_en: 'Absolute floor (lucky CSP+PLL skip + ideal cube)', scenario_zh: '绝对下界 (幸运 CSP+PLL skip + 理想 cube)', M: 14, TPS: 12, R: 0.3 },
     ],
     reasoning_en:
-      'SQ1 is slice-bound: every move /, U, or D requires precise slice alignment. TPS ceiling ~10 (vs 15-18 for face-turn puzzles). Slice misalignment costs 0.1-0.2s recovery. Floor 2.5-3.0s; 1LLL alg-set expansion is the main lever.',
+      'Square-1 is unique in the WCA event family: it is slice-bound, not face-bound. Every move is /, U, or D — and the slash requires precise alignment of two halves before it can rotate. A misaligned slice costs 0.1-0.2 s to recover, which limits sustained TPS to ~10 even on the best magnetic SQ1 (X-Man Volt V2 UD). Compare to face-turn puzzles where 15-18 TPS is achievable; the 50% gap is mechanical, not biomechanical.\n\n' +
+      'Method is still developing. Vandenbergh + CSP (Brandon Lin\'s 2015 cubeshape-parity prediction) brought averages from ~6 s to sub-5 s; the next jump is full 1LLL — the ~400-algorithm last-layer alg set that Khanani and Aggarwal use fragments of. Once 1LLL becomes universal, average move count drops from ~22 to ~18 STM, which combined with marginal slice-mechanism gains lands at ~2.5 s realistic single. The absolute floor at 14 STM × 12 TPS + 0.3 = 1.47 s requires both cubeshape skip and PLL skip on the same scramble — about 1 in 10⁴.',
     reasoning_zh:
-      'SQ1 是 slice-bound:每步 /、U、D 都需精准切片对齐。TPS 上限 ~10 (vs 面转拼图 15-18)。切片错位代价 0.1-0.2 秒。下界 2.5-3.0 秒;1LLL 算法库扩展是主要杠杆。',
+      'Square-1 在 WCA 项目家族里独特:它是 slice-bound 而非 face-bound。每一步 /、U、D 都需要两半精准对齐才能旋转,错位要 0.1-0.2 秒回正,即便最好的磁铁 SQ1 (X-Man Volt V2 UD) 持续 TPS 也只到 ~10。对比面转拼图 15-18 TPS,50% 差距是机械而非生理。\n\n' +
+      '方法上仍在演进。Vandenbergh + CSP (Brandon Lin 2015 提出的 cubeshape-parity 预判) 把平均从 ~6 秒压到 sub-5;下一档跳是全 1LLL — Khanani / Aggarwal 当前用其碎片的 ~400 算法 LL 库。1LLL 全面普及后平均步数从 ~22 降到 ~18 STM,叠加切片机构小幅改进,得到 ~2.5 秒现实下界。绝对下界 14 STM × 12 TPS + 0.3 = 1.47 秒需要 cubeshape skip + PLL skip 同时,大约 1/10⁴ 概率。',
   },
 
   // ════════════════════════════════════════════════════════════
@@ -631,13 +671,16 @@ export const THEORETICAL_LIMITS: Record<string, TheoreticalLimit> = {
     ],
     decomp: [
       { scenario_en: 'Gibson 1.53 (current WR, 7-SIMUL)', scenario_zh: 'Gibson 1.53 (现 WR, 7-SIMUL)', M: 14, TPS: 7, R: 0.4, note_en: 'M = atomic movements; flip = 0.3 s anchor', note_zh: 'M = 原子动作;翻面 0.3 秒' },
-      { scenario_en: 'Realistic future floor', scenario_zh: '现实下界', M: 12, TPS: 8, R: 0.3 },
-      { scenario_en: 'Flip-eliminated method (hypothetical)', scenario_zh: '消除翻面 (假设新方法)', M: 11, TPS: 9, R: 0.2 },
+      { scenario_en: '20–30 year horizon (7-SIMUL refined)', scenario_zh: '20–30 年 (7-SIMUL 精修)', M: 13, TPS: 7.5, R: 0.35 },
+      { scenario_en: '100-year asymptote (faster flip mechanism)', scenario_zh: '100 年渐近 (更快翻面机构)', M: 12, TPS: 8.5, R: 0.25 },
+      { scenario_en: 'Absolute floor (flip-eliminated method)', scenario_zh: '绝对下界 (消除翻面方法)', M: 11, TPS: 9, R: 0.2 },
     ],
     reasoning_en:
-      'Clock is the most hardware-bottlenecked WCA event. The ~0.3s flip eats 15-20% of WR time. Recognition is replaced by inspection memorization (7-SIMUL). Floor 1.3-1.6s; further drops require flip-eliminating methods, not human dexterity.',
+      'Clock is the most hardware-bottlenecked WCA event in a literal sense: a ~0.3-second flip motion is required by the puzzle\'s mechanism, and it eats 15-20% of WR time as a single indivisible action. The 7-SIMUL method (bpaul, ~2023) replaces sequential pin-flips with simultaneous-side execution by memorising the back-side state during the 15-second inspection — which is why Gibson 1.53 (Sep 2025) and Dunagan 2.24 Ao5 (2025) collapsed the trajectory.\n\n' +
+      'Recognition is essentially gone — the clock state is fully visible and 7-SIMUL converts execution-time recognition into inspection-time memorisation. What remains is atomic movement count (~14 movements for 7-SIMUL) and finger frequency on the dials (~7-8 movements/s practical). The 100-year asymptote at 12 movements × 8.5 + 0.25 = 1.66 s is achievable with hardware refinement; the absolute floor at 11 × 9 + 0.2 = 1.42 s requires a method that eliminates the flip entirely (some 7-SIMUL variants do, but reliability has not been proven). Below 1.4 s would require a fundamentally new clock mechanism — which the current QiYi Magnetic + 208-magnet design has not motivated.',
     reasoning_zh:
-      '魔表是 WCA 中机械瓶颈最严重的项目。~0.3 秒翻面占 WR 时间 15-20%。识别被 inspection 记忆 (7-SIMUL) 取代。下界 1.3-1.6 秒;再压缩靠"消除翻面"的新方法。',
+      '魔表在字面意义上是 WCA 中机械瓶颈最严重的项目:~0.3 秒翻面是拼图机构强制要求的不可分动作,占 WR 时间 15-20%。7-SIMUL 方法 (bpaul, ~2023) 把顺序拨钉换成"双面同时执行" — inspection 期间记忆背面状态,这就是 Gibson 1.53 (2025-09) 和 Dunagan 2.24 Ao5 (2025) 把曲线砸下来的原因。\n\n' +
+      '识别基本消失 — 魔表状态完全可见,7-SIMUL 把执行期识别换成 inspection 期记忆。剩下的是原子动作数 (~14 次,7-SIMUL) 和拨钉手指频率 (~7-8 次/秒可达)。100 年渐近 = 12 × 8.5 + 0.25 = 1.66 秒可达,需要硬件精修;绝对下界 = 11 × 9 + 0.2 = 1.42 秒需要消除翻面的新方法 (有些 7-SIMUL 变种已尝试,但稳定性未验证)。低于 1.4 秒需要根本性的新魔表机构 — 当前 QiYi 磁铁 + 208 磁铁设计并未给出这种动力。',
   },
 
   // ════════════════════════════════════════════════════════════
@@ -665,16 +708,19 @@ export const THEORETICAL_LIMITS: Record<string, TheoreticalLimit> = {
     ],
     decomp: [
       { scenario_en: 'Tarasenko 21.99 (current WR)', scenario_zh: 'Tarasenko 21.99 (现 WR)', M: 130, TPS: 6.8, R: 1.0 },
-      { scenario_en: 'Realistic future floor', scenario_zh: '现实下界', M: 120, TPS: 9, R: 0.8 },
-      { scenario_en: 'Physical floor', scenario_zh: '物理下界', M: 100, TPS: 12, R: 0.6 },
+      { scenario_en: '20–30 year horizon (improved S2L lookahead)', scenario_zh: '20–30 年 (S2L lookahead 改进)', M: 125, TPS: 8, R: 0.9 },
+      { scenario_en: '100-year asymptote (lucky route + 10 TPS)', scenario_zh: '100 年渐近 (高效路径 + 10 TPS)', M: 110, TPS: 10, R: 0.7 },
+      { scenario_en: 'Absolute floor (efficient solver + 12 TPS biomech)', scenario_zh: '绝对下界 (高效路径 + 12 TPS 生物力学)', M: 95, TPS: 12, R: 0.5 },
     ],
     best_reconstructions: [
       { person: 'Timofei Tarasenko', date: '2025-12-06', time: '21.99 s', M: 130, TPS: 6.8, method: 'Westlund', source_url: 'https://speedcubing.org/blogs/news/timofei-tarasenko-breaks-megaminx-world-record-single' },
     ],
     reasoning_en:
-      'Megaminx 12 faces but locked to 6 finger-trick faces. Inspection covers Star + 1-2 stars; remaining S2L is pure look-ahead. Floor 16-19s single, 19-22s avg. Tarasenko 22 leaves 4-6s headroom over 5-10 years.',
+      'Megaminx has 12 faces but only 6 are addressable in finger-trick rotation (R, U, F, BL, BR, L on each side). The remaining 6 faces require cube rotation, which costs time. Inspection covers Star + 1-2 stars (about 6-8 moves); the rest of the S2L (Second-2-Layers) is pure look-ahead similar in flavour to 3x3 cross+F2L but stretched across 12 faces with 50 cubies. Tarasenko\'s 21.99 / 24.38 leap (Tashkent Open 2025-12) used Westlund + heavy LL alg base.\n\n' +
+      'Move count anchors the analysis. Westlund typical solve is ~110-160 STM (lower than the often-cited 200, which counts redundant rotations); Tarasenko\'s 21.99 ÷ 130 STM = 6.8 TPS counting only finger-trick moves. The 100-year asymptote at 110 STM × 10 TPS + 0.7 = 11.7 s requires push-through on S2L lookahead training and a generation of hardware that lets 12 TPS sustain on Megaminx faces (currently 12 TPS is achievable in burst, not sustained). The absolute floor at 95 STM × 12 TPS + 0.5 = 8.4 s is what the puzzle structure permits — getting there requires a solver who fully trains on Yu Da-Hyung S2L variants from a young age.',
     reasoning_zh:
-      '五魔方 12 面,但锁定为 6 个手指动作面。Inspection 覆盖 Star + 1-2 星;剩余 S2L 纯 look-ahead。下界 16-19 秒单 / 19-22 秒平均。Tarasenko 22 留 4-6 秒空间,5-10 年内若 S2L 训练继续可压。',
+      '五魔方有 12 面但只有 6 个可手指动作 (R, U, F, BL, BR, L);其余 6 面需要 cube rotation,要花时间。Inspection 覆盖 Star + 1-2 星 (约 6-8 步);剩余 S2L 是类似 3x3 cross+F2L 的纯 look-ahead,但拉到 12 面 50 块的尺度。Tarasenko 21.99 / 24.38 (Tashkent Open 2025-12) 用 Westlund + 厚 LL 算法库。\n\n' +
+      '步数是分析锚点。Westlund 典型解 ~110-160 STM (低于常引用的 200,后者把多余 rotation 计入);Tarasenko 21.99 ÷ 130 STM = 6.8 TPS (只计手指动作)。100 年渐近 = 110 STM × 10 TPS + 0.7 = 11.7 秒,需要 S2L lookahead 训练突破 + 一代支持 Megaminx 面持续 12 TPS 的硬件 (目前 12 TPS 可突发不可持续)。绝对下界 = 95 STM × 12 TPS + 0.5 = 8.4 秒,这是拼图结构允许的极限,需要从小专攻 Yu Da-Hyung S2L 变种的 solver 才能达到。',
   },
 
 };

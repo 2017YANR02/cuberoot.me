@@ -93,19 +93,35 @@
   }
 }
 
-/* ── 手机（<768px）：动画更矮 ───────────────────────────────── */
+/* ── 手机（<768px）：动画搬到打乱与解法之间 ──────────────────── */
 @media (max-width: 767px) {
   .submit-header {
     padding: 10px 12px 0;
   }
 
-  .submit-player-pane {
-    height: 260px;
-  }
-
   .submit-form-pane {
     padding: 10px 12px 24px;
   }
+}
+
+/* 内联动画(手机端用) — 复用 fillPane 链路 */
+.submit-inline-player {
+  height: 260px;
+  margin-bottom: 12px;
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.submit-inline-player .detail-section--fill {
+  width: 100%;
+  height: 100%;
+  margin-bottom: 0;
+}
+.submit-inline-player .detail-section--fill .detail-twisty-container {
+  width: 100%;
+  height: 100%;
+  margin-bottom: 0;
 }
 
 .submit-row {
