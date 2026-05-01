@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsx src/build.ts"
+    "build": "tsx src/build.ts",
+    "scrape:algdb": "tsx bin/scrape_speedcubedb.ts"
   },
   "dependencies": {
     "yaml": "^2.6.0"
@@ -13,6 +14,7 @@
     "@types/adm-zip": "^0.5.8",
     "@types/node": "^25.5.0",
     "adm-zip": "^0.5.17",
+    "cheerio": "^1.2.0",
     "tsx": "^4.19.0",
     "typescript": "^5.8.0"
   }
