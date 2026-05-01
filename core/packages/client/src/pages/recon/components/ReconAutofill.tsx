@@ -1,74 +1,40 @@
 /**
- * Inline autofill popup for the recon solution textarea.
+ * Cubedb.net-style autofill for the recon solution textarea.
  *
- * Two modes:
+ * **Trigger:** Tab key when focus is in the textarea. We always preventDefault
+ * — Tab never moves focus out of the textarea. This matches cubedb's behavior.
  *
- *   - **comment**: typed `//` on a line that has at least one move before it
- *     (or on a fresh line). Pops a list of canonical labels: insp, cross,
- *     1st pair…4th pair, OLL, PLL, etc. Already-used labels are filtered out.
+ * **Comment popup:** opens when Tab is pressed and the current line either
+ *   - has typed moves but no `//` yet, OR
+ *   - is `x'` / `x'<space>` style (inspection rotation only).
+ *   The popup contents are derived from the cube-state diff between the end
+ *   of the previous labeled line and the end of the current line. We mirror
+ *   cubedb's three-form aliases for F2L pairs (ordinal / 2-letter / full color)
+ *   plus a `(N)` move-count variant for each.
  *
- *   - **alg**: previous line ends with a stage label (`// 1st pair`, `// OLL`,
- *     etc.), and the user is on a new line about to type. Pops a list of algs
- *     from the algdb library, ranked by how well they advance the cube state
- *     to the target stage.
+ * **Alg popup:** opens when Tab is pressed on a fresh blank line directly
+ *   after a labeled line. Filters algdb candidates by what (if anything) the
+ *   user already typed on the line via cubing.js Move-by-Move prefix matching.
  *
- * UX (mirrors cubedb.net):
- *   - Tab / Enter on the highlighted entry: insert.
- *   - Up / Down: change selection.
- *   - Esc: dismiss.
- *   - Click an entry: insert.
- *   - Click outside or blur: dismiss.
+ * **Inside the popup:**
+ *   - Tab / mouse click / Enter on highlighted: accept (insert at caret).
+ *   - ArrowUp / ArrowDown: navigate. Wraps.
+ *   - Esc / blur / outside click: close.
+ *   - Continuing to type characters: re-derives query and updates the popup.
  */
 
 import {
-  useEffect, useMemo, useRef, useState, useCallback,
+  useCallback, useEffect, useRef, useState,
   type RefObject,
 } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { getCaretRect } from '../../../utils/textarea_caret';
-import { cubeFromAlg, applyAlg, cloneCube, type CubeState } from '../../../utils/cube3_sim';
-import { rankAlgs, type AlgSuggestion, type Stage } from '../../../utils/recon_alg_match';
-import { loadAlgdb, type AlgdbFile, type AlgdbCategory } from '@cuberoot/shared';
-import { MiniCube } from '../../algdb/MiniCube';
+import { patternFromAlg, countMoves, isAlgPrefix } from '../../../utils/cube3';
+import { detectStage } from '../../../utils/stage_detect';
+import { buildCommentSuggestions } from '../../../utils/popup_suggest';
+import { loadAlgdb, type AlgdbCategory, type AlgdbFile } from '@cuberoot/shared';
 import './ReconAutofill.css';
-
-/** Canonical comment labels we suggest (in order). */
-const COMMENT_LABEL_GROUPS = [
-  { kind: 'inspection', labels: ['insp'] },
-  { kind: 'cross',      labels: ['cross', 'W cross', 'Y cross', 'xCross'] },
-  { kind: 'pair',       labels: ['1st pair', '2nd pair', '3rd pair', '4th pair'] },
-  { kind: 'll',         labels: ['OLL', 'OLL Skip', 'OCLL', 'COLL', 'PLL', 'PLL Skip', 'EPLL', 'OLS', 'WV', 'SV', 'VLS', 'ZBLL'] },
-] as const;
-
-/** Stage detection — given a comment label, infer what alg category to suggest. */
-function stageForLabel(label: string): { stage: Stage; category: AlgdbCategory; pairIndex?: number } | null {
-  const lc = label.toLowerCase().trim();
-  // Pair X
-  const pairMatch = lc.match(/^(1st|2nd|3rd|4th|first|second|third|fourth)\s+pair$/);
-  if (pairMatch) {
-    const map: Record<string, number> = {
-      '1st': 1, 'first': 1, '2nd': 2, 'second': 2, '3rd': 3, 'third': 3, '4th': 4, 'fourth': 4,
-    };
-    const idx = map[pairMatch[1]];
-    return { stage: { kind: 'pair', index: idx }, category: 'f2l', pairIndex: idx };
-  }
-  if (/pair$/.test(lc)) {
-    // Generic "GR pair", "Green Red Pair" etc. — treat as F2L
-    return { stage: { kind: 'pair', index: 0 }, category: 'f2l' };
-  }
-  if (lc === 'oll' || lc === 'ocll' || lc === 'coll' || lc === 'cmll') {
-    return { stage: { kind: 'oll' }, category: 'oll' };
-  }
-  if (lc === 'pll' || lc === 'epll') {
-    return { stage: { kind: 'pll' }, category: 'pll' };
-  }
-  if (lc === 'cross' || /cross$/.test(lc)) {
-    // Cross 之后用户准备做 1st pair — 弹 F2L 公式
-    return { stage: { kind: 'pair', index: 1 }, category: 'f2l' };
-  }
-  return null;
-}
 
 interface Props {
   textareaRef: RefObject<HTMLTextAreaElement | null>;
@@ -76,415 +42,414 @@ interface Props {
   setValue: (next: string) => void;
   /** WCA scramble — applied as the base before the user's moves. */
   scramble: string;
-  /** Show comment popup at all? (false = disable) */
   enabled?: boolean;
 }
 
-interface CommentPopupState {
+interface AnchorPos { left: number; top: number; lineHeight: number }
+
+interface CommentPopup {
   kind: 'comment';
-  query: string;       // text typed after // on this line
-  insertAt: number;    // index where the inserted label should go
-  /** Caret-relative position (top is below the caret) */
-  pos: { left: number; top: number; lineHeight: number };
+  /** Where the popup is anchored (caret-relative coords). */
+  pos: AnchorPos;
+  /** Suggestion entries (the strings the user sees). */
+  entries: string[];
+  /** Where in `value` to insert/replace. The chosen entry replaces from
+   *  `replaceFrom` to caret (so any partial `// xx` already typed gets
+   *  overwritten). */
+  replaceFrom: number;
+  caret: number;
 }
 
-interface AlgPopupState {
+interface AlgPopup {
   kind: 'alg';
-  /** Cube state before the next alg (pre-state). */
-  preState: CubeState;
-  category: AlgdbCategory;
-  stage: Stage;
-  /** Position to insert the chosen alg (typically: just before the trailing newline of the comment line, on a fresh line) */
+  pos: AnchorPos;
+  entries: { text: string; category: AlgdbCategory; caseName: string }[];
+  /** Insertion point: where the chosen alg goes (caret position). */
   insertAt: number;
-  /** Caret-relative position */
-  pos: { left: number; top: number; lineHeight: number };
 }
 
-type PopupState = CommentPopupState | AlgPopupState | null;
+type Popup = CommentPopup | AlgPopup | null;
 
-/** Get the line number + line text + offset where it begins, for a given caret index. */
-function lineAt(text: string, idx: number): { lineStart: number; lineText: string } {
-  let lineStart = idx;
-  while (lineStart > 0 && text[lineStart - 1] !== '\n') lineStart--;
-  let lineEnd = idx;
-  while (lineEnd < text.length && text[lineEnd] !== '\n') lineEnd++;
-  return { lineStart, lineText: text.substring(lineStart, lineEnd) };
+/** Parse "x' // insp\nL D R..." — return start/end of the line containing `idx`. */
+function lineRange(text: string, idx: number): { start: number; end: number } {
+  let s = idx;
+  while (s > 0 && text[s - 1] !== '\n') s--;
+  let e = idx;
+  while (e < text.length && text[e] !== '\n') e++;
+  return { start: s, end: e };
 }
 
-/** Find the comment label of the previous non-empty line (returns the label text without `//`) */
-function previousLineCommentLabel(text: string, lineStart: number): string | null {
-  let p = lineStart - 1; // skip the \n
-  if (p < 0) return null;
-  // Walk up over blank lines
-  while (p > 0) {
-    let ls = p;
-    while (ls > 0 && text[ls - 1] !== '\n') ls--;
-    const line = text.substring(ls, p);
-    const trimmed = line.trim();
-    if (trimmed) {
-      // Look for // X
-      const m = trimmed.match(/\/\/\s*(.+?)\s*$/);
-      return m ? m[1] : null;
-    }
-    p = ls - 1; // jump to previous newline
-    if (p <= 0) break;
-  }
-  return null;
+/** Strip comments + paren grouping, return a string with only move tokens. */
+function movesOnly(text: string): string {
+  return text
+    .split('\n')
+    .map(line => {
+      const i = line.indexOf('//');
+      return (i >= 0 ? line.substring(0, i) : line);
+    })
+    .join(' ')
+    .replace(/[()]/g, ' ')
+    // Strip non-move annotations (regrip arrows, etc.)
+    .replace(/[↑↓·]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
-/** Strip comments + non-move tokens, return moves only (linear). Used to rebuild pre-state. */
-function movesUntil(text: string, idx: number): string {
-  const before = text.substring(0, idx);
-  const lines = before.split('\n');
-  const cleaned: string[] = [];
-  for (const line of lines) {
-    const cidx = line.indexOf('//');
-    const part = (cidx >= 0 ? line.substring(0, cidx) : line).trim();
-    if (part) cleaned.push(part);
-  }
-  // Strip parens — keep contents (we ignore (..)N expansion — overestimates state, but fine for prefix)
-  return cleaned.join(' ').replace(/[()]/g, ' ');
+/** Number of pair labels that already appeared in the text before `endOffset`. */
+function countPriorPairs(text: string, endOffset: number): number {
+  const before = text.substring(0, endOffset);
+  // Match `// (1st|2nd|3rd|4th|GR|...|<color> <color>) pair[s]?`
+  const m = before.match(/\/\/\s*([1-4]\w*\s+pair|\w{2}\s+Pair|\w+\s+\w+\s+Pair)/gi);
+  return m ? m.length : 0;
 }
 
-const POPUP_MAX_HEIGHT = 280;
-const POPUP_WIDTH = 320;
-
+/**
+ * Main hook + JSX renderer. Always renders into a portal so positioning isn't
+ * constrained by the textarea's containing layout.
+ */
 export default function ReconAutofill({ textareaRef, value, setValue, scramble, enabled = true }: Props) {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  const [popup, setPopup] = useState<PopupState>(null);
+  const [popup, setPopup] = useState<Popup>(null);
   const [selected, setSelected] = useState(0);
-  const [algSuggestions, setAlgSuggestions] = useState<AlgSuggestion[] | null>(null);
-  const [algLoading, setAlgLoading] = useState(false);
   const dbCacheRef = useRef<Partial<Record<AlgdbCategory, AlgdbFile>>>({});
+  const lastBuildKeyRef = useRef<string>('');
 
-  // Track popup kind transitions so selection only resets when kind changes
-  const lastKindRef = useRef<'comment' | 'alg' | null>(null);
-  // Cache: avoid recomputing alg pre-state when caret/scramble/prefix haven't changed.
-  const algKeyRef = useRef<string | null>(null);
-  const algPreStateRef = useRef<CubeState | null>(null);
-
-  const closePopup = useCallback(() => {
+  const close = useCallback(() => {
     setPopup(null);
-    setAlgSuggestions(null);
     setSelected(0);
-    lastKindRef.current = null;
-    algKeyRef.current = null;
   }, []);
 
-  /** Recompute popup state from current caret position. */
-  const recompute = useCallback(() => {
+  /** Build a CommentPopup for the current line state. */
+  const buildCommentPopup = useCallback(async (caret: number): Promise<CommentPopup | null> => {
+    const ta = textareaRef.current;
+    if (!ta) return null;
+    const { start, end } = lineRange(value, caret);
+    const lineUpToCaret = value.substring(start, caret);
+    const fullLine = value.substring(start, end);
+
+    // Where will we insert the chosen entry? Replace from start of any partial `//`
+    // (so user can begin typing `// 1` and have us replace with `// 1st pair`).
+    const slashIdx = lineUpToCaret.indexOf('//');
+    const replaceFrom = slashIdx >= 0 ? start + slashIdx : caret;
+
+    // Compute moves-only text up to and including this line's moves
+    // (everything in `value` from start..caret minus comments).
+    const linesBefore = value.substring(0, start);
+    const linesUpToHere = value.substring(0, end);
+    const prevMoves = movesOnly(linesBefore);
+    const currMoves = movesOnly(linesUpToHere);
+
+    // Count how many move tokens are on JUST this line (for the (N) suffix).
+    const thisLineMovesText = movesOnly(fullLine);
+    const moveCount = countMoves(thisLineMovesText);
+    const lineHasMoves = moveCount > 0;
+
+    // Apply scramble + prev moves → prevPattern; +current line moves → currPattern.
+    const prevAlg = [scramble, prevMoves].filter(Boolean).join(' ');
+    const currAlg = [scramble, currMoves].filter(Boolean).join(' ');
+    const prevPattern = await patternFromAlg(prevAlg);
+    const currPattern = await patternFromAlg(currAlg);
+
+    const pairsBeforeLine = countPriorPairs(value, start);
+    const entries = await buildCommentSuggestions({
+      prevPattern,
+      currPattern,
+      lineHasMoves,
+      moveCount,
+      pairsBeforeLine,
+    });
+
+    if (entries.length === 0) return null;
+
+    const rect = getCaretRect(ta, caret);
+    return {
+      kind: 'comment',
+      pos: rect,
+      entries,
+      replaceFrom,
+      caret,
+    };
+  }, [textareaRef, value, scramble]);
+
+  /** Build an AlgPopup for the current line. */
+  const buildAlgPopup = useCallback(async (caret: number): Promise<AlgPopup | null> => {
+    const ta = textareaRef.current;
+    if (!ta) return null;
+    const { start } = lineRange(value, caret);
+    const lineUpToCaret = value.substring(start, caret);
+    if (lineUpToCaret.includes('//')) return null;
+
+    // Walk back to find the previous labeled line.
+    let p = start - 1;
+    let prevLabel: string | null = null;
+    while (p >= 0) {
+      const ls = (() => { let s = p; while (s > 0 && value[s - 1] !== '\n') s--; return s; })();
+      const line = value.substring(ls, p);
+      const m = line.match(/\/\/\s*(.+?)\s*$/);
+      if (m) { prevLabel = m[1]; break; }
+      p = ls - 1;
+    }
+    if (!prevLabel) return null;
+
+    // Determine target category
+    const lc = prevLabel.toLowerCase();
+    let category: AlgdbCategory;
+    if (/oll/.test(lc) || /cmll/.test(lc)) category = 'oll';
+    else if (/pll/.test(lc) || /epll/.test(lc)) category = 'pll';
+    else if (/pair/.test(lc) || /cross/.test(lc)) category = 'f2l';
+    else return null;
+
+    // Determine the cube state at start of current line
+    const linesBefore = value.substring(0, start);
+    const prevMoves = movesOnly(linesBefore);
+    const lineMovesUpToCaret = movesOnly(value.substring(start, caret));
+    const stageBeforeLine = await detectStage(await patternFromAlg([scramble, prevMoves].filter(Boolean).join(' ')));
+    void stageBeforeLine;
+
+    // Lazy-load algdb
+    let db = dbCacheRef.current[category];
+    if (!db) {
+      db = await loadAlgdb(category);
+      dbCacheRef.current[category] = db;
+    }
+
+    // Flatten alg list and filter by user's typed prefix
+    const candidates: { text: string; category: AlgdbCategory; caseName: string }[] = [];
+    const seen = new Set<string>();
+    for (const c of db.cases) {
+      if (c.standard && !seen.has(c.standard)) {
+        candidates.push({ text: c.standard, category, caseName: c.name });
+        seen.add(c.standard);
+      }
+      for (const ori of c.algs) {
+        for (const e of ori) {
+          if (!seen.has(e.alg)) {
+            candidates.push({ text: e.alg, category, caseName: c.name });
+            seen.add(e.alg);
+          }
+        }
+      }
+    }
+    const filtered = candidates.filter(c => isAlgPrefix(lineMovesUpToCaret, c.text));
+    // Sort by length (shorter first), tie-break by case name
+    filtered.sort((a, b) => a.text.length - b.text.length || a.caseName.localeCompare(b.caseName));
+    const top = filtered.slice(0, 12);
+    if (top.length === 0) return null;
+
+    const rect = getCaretRect(ta, caret);
+    return { kind: 'alg', pos: rect, entries: top, insertAt: caret };
+  }, [textareaRef, value, scramble]);
+
+  /** Open popup based on current caret state. Called from Tab handler. */
+  const openPopup = useCallback(async () => {
     if (!enabled) return;
     const ta = textareaRef.current;
     if (!ta) return;
     const caret = ta.selectionStart;
-    const { lineStart, lineText } = lineAt(value, caret);
+    const { start, end } = lineRange(value, caret);
+    const lineUpToCaret = value.substring(start, caret);
+    const fullLine = value.substring(start, end);
 
-    const setKind = (kind: 'comment' | 'alg') => {
-      if (lastKindRef.current !== kind) {
+    // If line has any `//` already with the caret AFTER it, treat as comment popup
+    // (user might be filtering by partial query).
+    const slashIdx = lineUpToCaret.indexOf('//');
+    if (slashIdx >= 0) {
+      const p = await buildCommentPopup(caret);
+      if (p) {
+        setPopup(p);
         setSelected(0);
-        lastKindRef.current = kind;
-      }
-    };
-
-    // Comment popup: caret is after `//` on the current line
-    const slashIdx = lineText.indexOf('//');
-    if (slashIdx >= 0 && (caret - lineStart) >= slashIdx + 2) {
-      const query = lineText.substring(slashIdx + 2, caret - lineStart).trim();
-      // Trigger only if query is short (avoid disrupting typing of long comments)
-      if (query.length <= 20) {
-        const rect = getCaretRect(ta, caret);
-        setPopup({ kind: 'comment', query, insertAt: caret, pos: rect });
-        setKind('comment');
         return;
       }
     }
 
-    // Alg popup: caret is on a line with no `//` AND previous line ends in a stage comment AND current line is empty/whitespace OR contains some moves
-    if (slashIdx < 0) {
-      const beforeCaret = lineText.substring(0, caret - lineStart);
-      const prevLabel = previousLineCommentLabel(value, lineStart);
-      if (prevLabel && /^\s*$/.test(beforeCaret)) {
-        // User just newlined after `// 1st pair` — show alg picker
-        const stageInfo = stageForLabel(prevLabel);
-        if (stageInfo) {
-          // Only recompute pre-state when the keying inputs actually changed
-          // (scramble + moves up to current line). This avoids re-running rankAlgs
-          // for every selection-only event (arrow keys, click-only refocus).
-          const moves = movesUntil(value, lineStart);
-          const key = `${scramble}\x00${moves}\x00${stageInfo.category}\x00${stageInfo.stage.kind}\x00${stageInfo.stage.kind === 'pair' ? stageInfo.stage.index : ''}`;
-          let pre = algPreStateRef.current;
-          if (key !== algKeyRef.current || !pre) {
-            pre = cubeFromAlg(scramble || '');
-            applyAlg(pre, moves);
-            algKeyRef.current = key;
-            algPreStateRef.current = pre;
-          }
-          const rect = getCaretRect(ta, caret);
-          setPopup(prev => {
-            // Avoid creating a new popup object if nothing meaningful changed —
-            // this prevents the alg-load effect from re-firing on each keystroke.
-            if (
-              prev?.kind === 'alg' &&
-              prev.preState === pre &&
-              prev.category === stageInfo.category &&
-              prev.stage.kind === stageInfo.stage.kind &&
-              prev.pos.left === rect.left && prev.pos.top === rect.top
-            ) {
-              return { ...prev, insertAt: caret };
-            }
-            return {
-              kind: 'alg',
-              preState: pre!,
-              category: stageInfo.category,
-              stage: stageInfo.stage,
-              insertAt: caret,
-              pos: rect,
-            };
-          });
-          setKind('alg');
-          return;
-        }
+    // If line has moves but no `//`, comment popup
+    const movesLineText = movesOnly(fullLine);
+    if (movesLineText.length > 0 && !lineUpToCaret.includes('//')) {
+      const p = await buildCommentPopup(caret);
+      if (p) {
+        setPopup(p);
+        setSelected(0);
+        return;
       }
     }
 
-    closePopup();
-  }, [textareaRef, value, scramble, enabled, closePopup]);
-
-  // Recompute on value change + on textarea events
-  useEffect(() => {
-    recompute();
-  }, [value, recompute]);
-
-  useEffect(() => {
-    const ta = textareaRef.current;
-    if (!ta) return;
-    const onSel = () => recompute();
-    ta.addEventListener('click', onSel);
-    ta.addEventListener('keyup', onSel);
-    ta.addEventListener('select', onSel);
-    return () => {
-      ta.removeEventListener('click', onSel);
-      ta.removeEventListener('keyup', onSel);
-      ta.removeEventListener('select', onSel);
-    };
-  }, [textareaRef, recompute]);
-
-  // Lazy-load alg db when alg popup opens. Re-rank only when the preState
-  // *reference* changes — recompute() reuses the same CubeState ref while the
-  // user is just navigating, so this stays cheap.
-  const algKey = popup?.kind === 'alg' ? popup.preState : null;
-  const algCat = popup?.kind === 'alg' ? popup.category : null;
-  const algStage = popup?.kind === 'alg' ? popup.stage : null;
-  useEffect(() => {
-    if (!algKey || !algCat || !algStage) return;
-    let cancelled = false;
-    setAlgLoading(true);
-    // Yield once so we don't block the keystroke commit when score is heavy.
-    const t = setTimeout(async () => {
-      let db = dbCacheRef.current[algCat];
-      if (!db) {
-        db = await loadAlgdb(algCat);
-        dbCacheRef.current[algCat] = db;
-      }
-      if (cancelled) return;
-      const ranked = rankAlgs(cloneCube(algKey), db.cases, algCat, algStage, 12);
-      setAlgSuggestions(ranked);
-      setAlgLoading(false);
-    }, 0);
-    return () => { cancelled = true; clearTimeout(t); };
-  }, [algKey, algCat, algStage]);
-
-  // Comment label list (filtered)
-  const commentItems = useMemo(() => {
-    if (popup?.kind !== 'comment') return [];
-    const q = popup.query.toLowerCase();
-    const used = new Set<string>();
-    // Find which labels are already used in `value`
-    for (const m of value.matchAll(/\/\/\s*([^/\n]+?)\s*$/gm)) {
-      used.add(m[1].toLowerCase().trim());
-    }
-    const out: { label: string; kind: string }[] = [];
-    for (const grp of COMMENT_LABEL_GROUPS) {
-      for (const l of grp.labels) {
-        const lc = l.toLowerCase();
-        if (used.has(lc)) continue;
-        if (q && !lc.includes(q)) continue;
-        out.push({ label: l, kind: grp.kind });
+    // Otherwise try alg popup (fresh blank line after labeled line)
+    if (movesLineText.length === 0 || !lineUpToCaret.includes('//')) {
+      const p = await buildAlgPopup(caret);
+      if (p) {
+        setPopup(p);
+        setSelected(0);
+        return;
       }
     }
-    return out.slice(0, 12);
-  }, [popup, value]);
 
-  // Insert a comment label
-  const insertComment = useCallback((label: string) => {
-    if (popup?.kind !== 'comment') return;
-    const ta = textareaRef.current;
-    if (!ta) return;
-    // Replace from `//` start to caret (i.e., overwrite the partial query)
-    const caret = ta.selectionStart;
-    const { lineStart, lineText } = lineAt(value, caret);
-    const slashIdx = lineText.indexOf('//');
-    if (slashIdx < 0) return;
-    const replaceFrom = lineStart + slashIdx;
-    const replaceTo = caret;
-    const newText = value.substring(0, replaceFrom) + `// ${label}` + value.substring(replaceTo);
-    setValue(newText);
-    // Set caret to end of inserted comment
-    const newCaret = replaceFrom + 3 + label.length;
-    requestAnimationFrame(() => {
-      ta.focus();
-      ta.setSelectionRange(newCaret, newCaret);
-    });
-    closePopup();
-  }, [popup, textareaRef, value, setValue, closePopup]);
+    // Nothing to suggest — leave popup closed but DO NOT let Tab escape the textarea.
+    close();
+  }, [enabled, textareaRef, value, buildCommentPopup, buildAlgPopup, close]);
 
-  // Insert an alg
-  const insertAlg = useCallback((alg: string) => {
-    if (popup?.kind !== 'alg') return;
-    const ta = textareaRef.current;
-    if (!ta) return;
-    const caret = ta.selectionStart;
-    const newText = value.substring(0, caret) + alg + value.substring(caret);
-    setValue(newText);
-    const newCaret = caret + alg.length;
-    requestAnimationFrame(() => {
-      ta.focus();
-      ta.setSelectionRange(newCaret, newCaret);
-    });
-    closePopup();
-  }, [popup, textareaRef, value, setValue, closePopup]);
-
-  // Keyboard navigation
+  /** Live-update popup as user types (after it's open). */
   useEffect(() => {
     if (!popup) return;
     const ta = textareaRef.current;
     if (!ta) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (popup.kind === 'comment') {
-        if (commentItems.length === 0) return;
-        if (e.key === 'Tab' || e.key === 'Enter') {
-          e.preventDefault();
-          insertComment(commentItems[selected].label);
-        } else if (e.key === 'ArrowDown') {
-          e.preventDefault();
-          setSelected(s => Math.min(s + 1, commentItems.length - 1));
-        } else if (e.key === 'ArrowUp') {
-          e.preventDefault();
-          setSelected(s => Math.max(s - 1, 0));
-        } else if (e.key === 'Escape') {
-          e.preventDefault();
-          closePopup();
-        }
+    const caret = ta.selectionStart;
+    const key = `${value}\x00${caret}\x00${popup.kind}`;
+    if (key === lastBuildKeyRef.current) return;
+    lastBuildKeyRef.current = key;
+
+    let cancelled = false;
+    (async () => {
+      const next = popup.kind === 'comment'
+        ? await buildCommentPopup(caret)
+        : await buildAlgPopup(caret);
+      if (cancelled) return;
+      if (next) {
+        setPopup(next);
+        setSelected(s => Math.min(s, next.entries.length - 1));
       } else {
-        if (!algSuggestions || algSuggestions.length === 0) return;
-        if (e.key === 'Tab' || e.key === 'Enter') {
-          e.preventDefault();
-          insertAlg(algSuggestions[selected].alg);
-        } else if (e.key === 'ArrowDown') {
-          e.preventDefault();
-          setSelected(s => Math.min(s + 1, algSuggestions.length - 1));
-        } else if (e.key === 'ArrowUp') {
-          e.preventDefault();
-          setSelected(s => Math.max(s - 1, 0));
-        } else if (e.key === 'Escape') {
-          e.preventDefault();
-          closePopup();
+        close();
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [value, popup, textareaRef, buildCommentPopup, buildAlgPopup, close]);
+
+  // Tab interception: ALWAYS preventDefault while focus is in textarea
+  useEffect(() => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Tab') {
+        // Tab always handled by us — never let it escape the textarea.
+        e.preventDefault();
+        if (popup && popup.entries.length > 0) {
+          const entry = popup.entries[selected];
+          if (popup.kind === 'comment') {
+            const text = typeof entry === 'string' ? entry : '';
+            insertComment(text, popup);
+          } else {
+            const alg = typeof entry === 'string' ? entry : entry.text;
+            insertAlg(alg, popup);
+          }
+        } else {
+          openPopup();
         }
+        return;
+      }
+      if (!popup) return;
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        close();
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelected(s => (s + 1) % popup.entries.length);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelected(s => (s - 1 + popup.entries.length) % popup.entries.length);
+      } else if (e.key === 'Enter') {
+        // Cubedb behavior: Enter doesn't accept; it inserts newline (default).
+        // Popup will close and re-open on the new line.
+        // Allow default behavior.
       }
     };
     ta.addEventListener('keydown', onKey);
     return () => ta.removeEventListener('keydown', onKey);
-  }, [popup, commentItems, algSuggestions, selected, insertComment, insertAlg, closePopup, textareaRef]);
+  }, [textareaRef, popup, selected, openPopup, close]);
 
-  // Close on click outside / blur
+  // Click outside / blur closes popup
   useEffect(() => {
     if (!popup) return;
     const onClick = (e: MouseEvent) => {
       const ta = textareaRef.current;
       if (!ta) return;
-      const target = e.target as Node;
-      if (target === ta) return; // click in textarea is fine — recompute will trigger
-      // If click is in popup, swallow (handled by entry buttons)
-      if ((target as HTMLElement).closest?.('[data-recon-autofill]')) return;
-      closePopup();
+      const target = e.target as HTMLElement;
+      if (target === ta) return;
+      if (target.closest?.('[data-recon-autofill]')) return;
+      close();
     };
     document.addEventListener('mousedown', onClick);
     return () => document.removeEventListener('mousedown', onClick);
-  }, [popup, textareaRef, closePopup]);
+  }, [popup, textareaRef, close]);
+
+  const insertComment = useCallback((text: string, p: CommentPopup) => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    // Replace from `replaceFrom` to caret with the chosen text. Add a leading
+    // space if needed (so `<moves>` becomes `<moves> // ...`).
+    const before = value.substring(0, p.replaceFrom);
+    const after = value.substring(p.caret);
+    const needsSpace = p.replaceFrom > 0
+      && before[p.replaceFrom - 1] !== ' '
+      && before[p.replaceFrom - 1] !== '\n';
+    const insertion = (needsSpace ? ' ' : '') + text;
+    const next = before + insertion + after;
+    setValue(next);
+    const newCaret = p.replaceFrom + insertion.length;
+    requestAnimationFrame(() => {
+      ta.focus();
+      ta.setSelectionRange(newCaret, newCaret);
+    });
+    close();
+  }, [value, setValue, textareaRef, close]);
+
+  const insertAlg = useCallback((alg: string, p: AlgPopup) => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    // Insert at caret, then continue typing.
+    const before = value.substring(0, p.insertAt);
+    const after = value.substring(p.insertAt);
+    const next = before + alg + after;
+    setValue(next);
+    const newCaret = p.insertAt + alg.length;
+    requestAnimationFrame(() => {
+      ta.focus();
+      ta.setSelectionRange(newCaret, newCaret);
+    });
+    close();
+  }, [value, setValue, textareaRef, close]);
 
   if (!popup) return null;
 
-  // Position popup just below caret
+  // Position popup relative to caret
   const ta = textareaRef.current;
   if (!ta) return null;
   const taRect = ta.getBoundingClientRect();
-  const left = Math.min(taRect.left + popup.pos.left - ta.offsetLeft, window.innerWidth - POPUP_WIDTH - 8);
+  const POPUP_WIDTH = 320;
+  const left = Math.min(
+    taRect.left + popup.pos.left - ta.offsetLeft,
+    window.innerWidth - POPUP_WIDTH - 8,
+  );
   const top = taRect.top + popup.pos.top - ta.offsetTop + popup.pos.lineHeight + 4;
 
-  if (popup.kind === 'comment') {
-    if (commentItems.length === 0) return null;
-    return createPortal(
-      <div
-        className="recon-autofill"
-        data-recon-autofill="1"
-        style={{
-          position: 'fixed', left, top,
-          width: POPUP_WIDTH, maxHeight: POPUP_MAX_HEIGHT,
-        }}
-      >
-        {commentItems.map((it, i) => (
-          <button
-            key={it.label}
-            type="button"
-            className={`recon-autofill-row${selected === i ? ' is-selected' : ''}`}
-            onMouseDown={e => { e.preventDefault(); insertComment(it.label); }}
-            onMouseEnter={() => setSelected(i)}
-          >
-            <span className="recon-autofill-badge">{isZh ? '注释' : 'COMMENT'}</span>
-            <span className="recon-autofill-text">// {it.label}</span>
-            {i === 0 && <span className="recon-autofill-tab-hint">Tab</span>}
-          </button>
-        ))}
-      </div>,
-      document.body,
-    );
-  }
-
-  // Alg popup
   return createPortal(
     <div
       className="recon-autofill"
       data-recon-autofill="1"
-      style={{
-        position: 'fixed', left, top,
-        width: POPUP_WIDTH, maxHeight: POPUP_MAX_HEIGHT,
-      }}
+      style={{ position: 'fixed', left, top, width: POPUP_WIDTH, maxHeight: 280 }}
     >
-      {algLoading && <div className="recon-autofill-loading">{isZh ? '排序中…' : 'ranking…'}</div>}
-      {!algLoading && algSuggestions && algSuggestions.length === 0 && (
-        <div className="recon-autofill-empty">{isZh ? '没有匹配的公式' : 'no matching algs'}</div>
-      )}
-      {!algLoading && algSuggestions?.map((s, i) => (
-        <button
-          key={`${s.caseName}-${i}`}
-          type="button"
-          className={`recon-autofill-row recon-autofill-row--alg${selected === i ? ' is-selected' : ''}`}
-          onMouseDown={e => { e.preventDefault(); insertAlg(s.alg); }}
-          onMouseEnter={() => setSelected(i)}
-        >
-          <span className="recon-autofill-badge recon-autofill-badge--alg">{popup.category.toUpperCase().replace('_', ' ')}</span>
-          <span className="recon-autofill-thumb">
-            <MiniCube
-              state={s.preState}
-              view={popup.category === 'oll' || popup.category === 'pll' ? 'll' : 'f2l'}
-              size={28}
-            />
-          </span>
-          <span className="recon-autofill-text recon-autofill-text--alg">{s.alg}</span>
-          {i === 0 && <span className="recon-autofill-tab-hint">Tab</span>}
-        </button>
-      ))}
+      {popup.entries.map((entry, i) => {
+        const text = typeof entry === 'string' ? entry : entry.text;
+        const cat = typeof entry === 'string' ? null : entry.category;
+        return (
+          <button
+            key={i}
+            type="button"
+            className={`recon-autofill-row${selected === i ? ' is-selected' : ''}`}
+            onMouseDown={e => {
+              e.preventDefault();
+              if (popup.kind === 'comment') insertComment(text, popup);
+              else insertAlg(text, popup);
+            }}
+            onMouseEnter={() => setSelected(i)}
+          >
+            <span className="recon-autofill-badge">
+              {popup.kind === 'comment' ? (isZh ? '注释' : 'COMMENT') : (cat?.toUpperCase().replace('_', ' ') ?? 'F2L')}
+            </span>
+            <span className="recon-autofill-text">{text}</span>
+            {i === selected && <span className="recon-autofill-tab-hint">Tab</span>}
+          </button>
+        );
+      })}
     </div>,
     document.body,
   );
