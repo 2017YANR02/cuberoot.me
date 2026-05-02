@@ -79,3 +79,13 @@ export function countMoves(alg: string): number {
     return 0;
   }
 }
+
+/** Cancel adjacent same-axis moves (e.g. "U' U" → "", "U' U2" → "U"). */
+export function simplifyAlg(alg: string): string {
+  if (!alg) return '';
+  try {
+    return new Alg(alg).experimentalSimplify({ cancel: true }).toString();
+  } catch {
+    return alg;
+  }
+}
