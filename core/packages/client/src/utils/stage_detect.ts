@@ -29,6 +29,10 @@
  */
 import type { KPattern } from 'cubing/kpuzzle';
 import { getCube3 } from './cube3';
+import {
+  EDGE_STICKERS, CORNER_STICKERS,
+  edgeStickerOnFace, cornerStickerOnFace,
+} from './sticker_tables';
 
 /** F2L slots in canonical order, with their piece indices. */
 export const F2L_SLOT_DEFS = [
@@ -75,6 +79,13 @@ export interface StageInfo {
   newSlot?: F2lSlotId;
   /** That slot's color pair, e.g. `{ pair: 'GR', full: 'Green Red' }`. */
   newSlotColors?: { pair: string; full: string };
+  /**
+   * The pattern after bestOrientation has rotated it to canonical frame
+   * (cross on D, max F2L visible). slot ids in `solvedSlots` reference
+   * THIS pattern, not the raw input. Callers that want to do further
+   * sticker-level analysis on the cube state should use this.
+   */
+  canonicalPattern: KPattern;
 }
 
 /**
@@ -116,12 +127,9 @@ async function bestOrientation(pattern: KPattern): Promise<KPattern> {
     for (const s of F2L_SLOT_DEFS) {
       if (slotSolved(t, s)) score += 5;
     }
-    let topOriented = true;
-    for (let i = 0; i < 4; i++) {
-      if ((t.patternData.CORNERS.orientation[i] ?? 0) !== 0) { topOriented = false; break; }
-      if ((t.patternData.EDGES.orientation[i] ?? 0) !== 0) { topOriented = false; break; }
-    }
-    if (topOriented && score >= 100) score += 1;
+    // OLL bonus: prefer the orientation in which the U-face shows U-color
+    // on all 4 top pieces (consistent with `ollSolved`).
+    if (score >= 100 && ollSolved(t)) score += 1;
     if (!best || score > best.score) {
       best = { p: t, score };
     }
@@ -129,64 +137,57 @@ async function bestOrientation(pattern: KPattern): Promise<KPattern> {
   return best!.p;
 }
 
-/** Is a piece at home with 0 orientation? */
-function pieceHome(p: KPattern, orbit: 'EDGES' | 'CORNERS', slot: number): boolean {
-  const od = p.patternData[orbit];
-  return od.pieces[slot] === slot && (od.orientation[slot] ?? 0) === 0;
+/** Color (= KPattern face index) shown by the center at face F. */
+function centerColorAtFace(p: KPattern, face: number): number {
+  return p.patternData.CENTERS.pieces[face];
+}
+
+/** True iff the edge at slot `s` shows the matching center colors on both
+ *  of its visible faces (i.e., the edge "looks solved" at this slot). */
+function edgeFaceSolved(p: KPattern, slot: number): boolean {
+  const [fA, fB] = EDGE_STICKERS[slot];
+  return edgeStickerOnFace(p, slot, fA) === centerColorAtFace(p, fA)
+      && edgeStickerOnFace(p, slot, fB) === centerColorAtFace(p, fB);
+}
+
+/** True iff the corner at slot `s` shows matching colors on all 3 visible faces. */
+function cornerFaceSolved(p: KPattern, slot: number): boolean {
+  const [fA, fB, fC] = CORNER_STICKERS[slot];
+  return cornerStickerOnFace(p, slot, fA) === centerColorAtFace(p, fA)
+      && cornerStickerOnFace(p, slot, fB) === centerColorAtFace(p, fB)
+      && cornerStickerOnFace(p, slot, fC) === centerColorAtFace(p, fC);
 }
 
 /**
- * Cross is "solved on D" if the 4 D-edge slots (4,5,6,7) hold the SET of
- * either {0..3} (U-edges, white cross flipped onto D) or {4..7} (D-edges,
- * standard yellow cross), all with orientation 0. We allow set-equality
- * rather than strict piece-at-slot identity because a cube where x2
- * inspection physically swapped pieces still presents a "solved-looking"
- * cross — cubedb labels these as cross even though the corners/edges are
- * permuted internally.
+ * Cross "solved on D" = all 4 D-edge slots (4,5,6,7) show D-color on D and
+ * the matching side color on their side face. Sticker-color check, not piece
+ * identity — so any rotation/scramble that visually presents a cross on D is
+ * accepted (matches cubedb's lenient rule).
  */
 function crossSolved(p: KPattern): boolean {
-  const e = p.patternData.EDGES;
-  const slots = [e.pieces[4], e.pieces[5], e.pieces[6], e.pieces[7]];
-  const oris = [e.orientation[4], e.orientation[5], e.orientation[6], e.orientation[7]];
-  if (!oris.every(o => (o ?? 0) === 0)) return false;
-  const sorted = slots.slice().sort((a, b) => a - b);
-  if (sorted[0] === 0 && sorted[1] === 1 && sorted[2] === 2 && sorted[3] === 3) return true; // white cross
-  if (sorted[0] === 4 && sorted[1] === 5 && sorted[2] === 6 && sorted[3] === 7) return true; // yellow cross
-  return false;
+  return edgeFaceSolved(p, 4) && edgeFaceSolved(p, 5)
+      && edgeFaceSolved(p, 6) && edgeFaceSolved(p, 7);
 }
 
-/**
- * Is a specific F2L slot "filled"? We mirror cubedb's lenient rule: a slot
- * is considered filled if its corner is one of the 8 valid corners (any
- * U/D corner) at orientation 0 (so its U/D-color sticker is on D), AND the
- * edge is a corresponding cross edge with ori 0.
- *
- * For strict CFOP detection (each slot has the correct cubie matching its
- * adjacent centers), this is too lenient — but cubedb is already lenient.
- */
+/** F2L slot solved = its edge AND corner both look solved (sticker-wise). */
 function slotSolved(p: KPattern, slot: typeof F2L_SLOT_DEFS[number]): boolean {
-  return pieceHome(p, 'CORNERS', slot.cornerSlot) && pieceHome(p, 'EDGES', slot.edgeSlot);
+  return edgeFaceSolved(p, slot.edgeSlot) && cornerFaceSolved(p, slot.cornerSlot);
 }
 
-/** Are all 4 U-layer corners + edges oriented (sticker showing on top)? */
+/** OLL solved = all 4 U-layer edges and corners show U-color on U face. */
 function ollSolved(p: KPattern): boolean {
-  for (let i = 0; i < 4; i++) {
-    if ((p.patternData.CORNERS.orientation[i] ?? 0) !== 0) return false;
-    if ((p.patternData.EDGES.orientation[i] ?? 0) !== 0) return false;
+  const uColor = centerColorAtFace(p, 0);
+  for (let slot = 0; slot < 4; slot++) {
+    if (edgeStickerOnFace(p, slot, 0) !== uColor) return false;
+    if (cornerStickerOnFace(p, slot, 0) !== uColor) return false;
   }
   return true;
 }
 
-/** Whole cube solved (modulo full puzzle rotation, which we already normalised). */
+/** Whole cube solved = every slot's stickers match its adjacent center colors. */
 function fullySolved(p: KPattern): boolean {
-  for (let i = 0; i < 12; i++) {
-    if (p.patternData.EDGES.pieces[i] !== i) return false;
-    if ((p.patternData.EDGES.orientation[i] ?? 0) !== 0) return false;
-  }
-  for (let i = 0; i < 8; i++) {
-    if (p.patternData.CORNERS.pieces[i] !== i) return false;
-    if ((p.patternData.CORNERS.orientation[i] ?? 0) !== 0) return false;
-  }
+  for (let i = 0; i < 12; i++) if (!edgeFaceSolved(p, i)) return false;
+  for (let i = 0; i < 8; i++) if (!cornerFaceSolved(p, i)) return false;
   return true;
 }
 
@@ -229,11 +230,11 @@ export async function detectStage(pattern: KPattern): Promise<StageInfo> {
   })();
 
   if (fullySolved(p)) {
-    return { stage: 'solved', solvedSlots: ['FR', 'FL', 'BL', 'BR'], crossColor };
+    return { stage: 'solved', solvedSlots: ['FR', 'FL', 'BL', 'BR'], crossColor, canonicalPattern: p };
   }
 
   const crossOk = crossSolved(p);
-  if (!crossOk) return { stage: 'none', solvedSlots: [], crossColor };
+  if (!crossOk) return { stage: 'none', solvedSlots: [], crossColor, canonicalPattern: p };
 
   const solvedSlots: F2lSlotId[] = [];
   for (const s of F2L_SLOT_DEFS) {
@@ -244,28 +245,21 @@ export async function detectStage(pattern: KPattern): Promise<StageInfo> {
   if (solvedSlots.length === 4) {
     const orientedTop = ollSolved(p);
     if (orientedTop) {
-      // OLL done — is PLL done too? (modulo AUF). But fullySolved would already
-      // have caught a fully solved cube; if we're here it's not solved.
-      // Check: are top corners/edges permuted correctly modulo a U turn?
-      // Try 0/1/2/3 U turns and see if any leaves cube solved.
       for (let i = 0; i < 4; i++) {
         const test = i === 0 ? p : p.applyAlg(`U${i === 1 ? '' : i}`.replace('U3', "U'"));
         if (fullySolved(test)) {
-          return { stage: 'oll', solvedSlots, crossColor };
+          return { stage: 'oll', solvedSlots, crossColor, canonicalPattern: p };
         }
       }
-      // OLL solved but cube not solved → PLL stage about to start? Actually
-      // if OLL is done and cube isn't solvable by AUF, we're at the moment
-      // OLL just finished — that's "oll" stage from a stage-completion POV.
-      return { stage: 'oll', solvedSlots, crossColor };
+      return { stage: 'oll', solvedSlots, crossColor, canonicalPattern: p };
     }
-    return { stage: 'f2l', solvedSlots, crossColor };
+    return { stage: 'f2l', solvedSlots, crossColor, canonicalPattern: p };
   }
 
-  if (solvedSlots.length === 3) return { stage: 'xxxcross', solvedSlots, crossColor };
-  if (solvedSlots.length === 2) return { stage: 'xxcross', solvedSlots, crossColor };
-  if (solvedSlots.length === 1) return { stage: 'xcross', solvedSlots, crossColor };
-  return { stage: 'cross', solvedSlots: [], crossColor };
+  if (solvedSlots.length === 3) return { stage: 'xxxcross', solvedSlots, crossColor, canonicalPattern: p };
+  if (solvedSlots.length === 2) return { stage: 'xxcross', solvedSlots, crossColor, canonicalPattern: p };
+  if (solvedSlots.length === 1) return { stage: 'xcross', solvedSlots, crossColor, canonicalPattern: p };
+  return { stage: 'cross', solvedSlots: [], crossColor, canonicalPattern: p };
 }
 
 /**
@@ -283,7 +277,7 @@ export async function detectStageWithProgress(
   const newSlots = info.solvedSlots.filter(s => !prevInfo.solvedSlots.includes(s));
   if (newSlots.length === 1) {
     info.newSlot = newSlots[0];
-    info.newSlotColors = colorsForSlot(await bestOrientation(current), newSlots[0]);
+    info.newSlotColors = colorsForSlot(info.canonicalPattern, newSlots[0]);
   }
   return info;
 }
@@ -293,4 +287,50 @@ export async function detectStageFromAlg(alg: string): Promise<StageInfo> {
   const kp = await getCube3();
   const p = alg ? kp.defaultPattern().applyAlg(alg) : kp.defaultPattern();
   return detectStage(p);
+}
+
+/**
+ * Find the rotation alg (one of `ORIENTATION_ALGS`) that puts `pattern` into
+ * canonical frame. The expensive 24-iteration is run once; callers can then
+ * apply this rotation cheaply to other patterns (e.g. post-alg states during
+ * scoring) without re-canonicalising.
+ *
+ * Assumes the cross color is stable across the calls (e.g. during F2L), so
+ * the same rotation works for both pre and post states.
+ */
+export async function bestOrientationAlg(pattern: KPattern): Promise<string> {
+  await getCube3();
+  let bestRot = '';
+  let bestScore = -Infinity;
+  for (const rot of ORIENTATION_ALGS) {
+    const t = rot ? pattern.applyAlg(rot) : pattern;
+    let score = 0;
+    if (crossSolved(t)) score += 100;
+    for (const s of F2L_SLOT_DEFS) {
+      if (slotSolved(t, s)) score += 5;
+    }
+    if (score >= 100 && ollSolved(t)) score += 1;
+    if (score > bestScore) {
+      bestScore = score;
+      bestRot = rot;
+    }
+  }
+  return bestRot;
+}
+
+/**
+ * Quickly evaluate the F2L slot status of a pattern that's already in
+ * canonical frame (or rotated into it via a known rotation). Skips the
+ * 24-iteration of `bestOrientation`. For use in tight loops where the
+ * canonical rotation has been pre-computed.
+ */
+export function evaluateCanonical(canonicalPattern: KPattern): { crossOk: boolean; solvedSlots: F2lSlotId[] } {
+  const crossOk = crossSolved(canonicalPattern);
+  const solvedSlots: F2lSlotId[] = [];
+  if (crossOk) {
+    for (const s of F2L_SLOT_DEFS) {
+      if (slotSolved(canonicalPattern, s)) solvedSlots.push(s.id);
+    }
+  }
+  return { crossOk, solvedSlots };
 }

@@ -30,9 +30,10 @@ import {
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { getCaretRect } from '../../../utils/textarea_caret';
-import { patternFromAlg, countMoves, isAlgPrefix } from '../../../utils/cube3';
-import { detectStage } from '../../../utils/stage_detect';
+import { patternFromAlg, countMoves, isAlgPrefix, simplifyAlg } from '../../../utils/cube3';
+import { detectStage, bestOrientationAlg, evaluateCanonical, F2L_SLOT_DEFS } from '../../../utils/stage_detect';
 import { buildCommentSuggestions } from '../../../utils/popup_suggest';
+import { lookupF2lAlgs } from '../../../utils/f2l_lookup';
 import { loadAlgdb, type AlgdbCategory, type AlgdbFile } from '@cuberoot/shared';
 import './ReconAutofill.css';
 
@@ -95,14 +96,6 @@ function movesOnly(text: string): string {
     .trim();
 }
 
-/** Number of pair labels that already appeared in the text before `endOffset`. */
-function countPriorPairs(text: string, endOffset: number): number {
-  const before = text.substring(0, endOffset);
-  // Match `// (1st|2nd|3rd|4th|GR|...|<color> <color>) pair[s]?`
-  const m = before.match(/\/\/\s*([1-4]\w*\s+pair|\w{2}\s+Pair|\w+\s+\w+\s+Pair)/gi);
-  return m ? m.length : 0;
-}
-
 /**
  * Main hook + JSX renderer. Always renders into a portal so positioning isn't
  * constrained by the textarea's containing layout.
@@ -151,13 +144,11 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
     const prevPattern = await patternFromAlg(prevAlg);
     const currPattern = await patternFromAlg(currAlg);
 
-    const pairsBeforeLine = countPriorPairs(value, start);
     const entries = await buildCommentSuggestions({
       prevPattern,
       currPattern,
       lineHasMoves,
       moveCount,
-      pairsBeforeLine,
     });
 
     if (entries.length === 0) return null;
@@ -206,67 +197,100 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
     const lineMovesUpToCaret = movesOnly(value.substring(start, caret));
     const preStateAlg = [scramble, prevMoves, lineMovesUpToCaret].filter(Boolean).join(' ');
     const preState = await patternFromAlg(preStateAlg);
-    const preStageInfo = await detectStage(preState);
-    const prevSlots = new Set(preStageInfo.solvedSlots);
 
-    // Lazy-load algdb
-    let db = dbCacheRef.current[category];
-    if (!db) {
-      db = await loadAlgdb(category);
-      dbCacheRef.current[category] = db;
-    }
+    const scored: { text: string; caseName: string; score: number }[] = [];
 
-    // Flatten + de-dup candidates
-    const candidates: { text: string; caseName: string }[] = [];
-    const seen = new Set<string>();
-    for (const c of db.cases) {
-      if (c.standard && !seen.has(c.standard)) {
-        candidates.push({ text: c.standard, caseName: c.name });
-        seen.add(c.standard);
-      }
-      for (const ori of c.algs) {
-        for (const e of ori) {
-          if (!seen.has(e.alg)) {
-            candidates.push({ text: e.alg, caseName: c.name });
-            seen.add(e.alg);
+    if (category === 'f2l') {
+      // F2L: case-identification path. For each unsolved slot, fingerprint
+      // its pair pieces and look up matching algdb cases. Each candidate is
+      // then verified by simulation — the fingerprint covers the pair only,
+      // so algs whose effect depends on the full center frame (e.g. ones
+      // with an embedded `y'` rotation) can produce false positives.
+      const canonRot = await bestOrientationAlg(preState);
+      const preCanonical = canonRot ? preState.applyAlg(canonRot) : preState;
+      const preEval = evaluateCanonical(preCanonical);
+      if (preEval.crossOk) {
+        const solvedSet = new Set(preEval.solvedSlots);
+        for (let slotIdx = 0; slotIdx < F2L_SLOT_DEFS.length; slotIdx++) {
+          const slotId = F2L_SLOT_DEFS[slotIdx].id;
+          if (solvedSet.has(slotId)) continue;
+          const entries = await lookupF2lAlgs(preCanonical, slotIdx);
+          for (const e of entries) {
+            const rawAlg = canonRot ? simplifyAlg(`${canonRot} ${e.alg}`) : e.alg;
+            if (!rawAlg) continue;
+            if (!isAlgPrefix(lineMovesUpToCaret, rawAlg)) continue;
+            // Verify: applying this alg in the user's actual frame must solve
+            // the slot AND keep cross + previously-solved slots intact.
+            const post = preState.applyAlg(rawAlg);
+            const postInfo = await detectStage(post);
+            if (!postInfo.solvedSlots.includes(slotId)) continue;
+            let preserved = true;
+            for (const prevSlot of preEval.solvedSlots) {
+              if (!postInfo.solvedSlots.includes(prevSlot)) { preserved = false; break; }
+            }
+            if (!preserved) continue;
+            const score = 100 - rawAlg.length * 0.01;
+            scored.push({ text: rawAlg, caseName: e.caseName, score });
           }
         }
       }
-    }
-
-    // Prefix filter by what the user has already typed on this line.
-    const prefixFiltered = candidates.filter(c => isAlgPrefix(lineMovesUpToCaret, c.text));
-
-    // Score each candidate by simulating: apply alg to preState, check what advances.
-    // F2L: reward newly-solved F2L slots; OLL: reward orientation; PLL: reward solved.
-    const scored: { text: string; caseName: string; score: number }[] = [];
-    for (const c of prefixFiltered) {
-      const post = preState.applyAlg(c.text);
-      const postInfo = await detectStage(post);
-      let score = 0;
-      if (category === 'f2l') {
-        const newSlots = postInfo.solvedSlots.filter(s => !prevSlots.has(s));
-        if (newSlots.length === 1) score = 100;
-        else if (newSlots.length > 1) score = 80;          // multi-pair (rare)
-        else if (postInfo.solvedSlots.length === preStageInfo.solvedSlots.length) score = 0; // no change
-        else score = -50;                                    // broke a pair
-      } else if (category === 'oll') {
-        if (postInfo.stage === 'oll' || postInfo.stage === 'solved') score = 100;
-        else if (postInfo.solvedSlots.length === 4) score = 50;
-        else score = -50;
-      } else if (category === 'pll') {
-        if (postInfo.stage === 'solved') score = 100;
-        else score = -50;
+    } else {
+      // OLL / PLL: keep the slow detectStage path (orientation/permutation
+      // checks outside the F2L slot system).
+      let db = dbCacheRef.current[category];
+      if (!db) {
+        db = await loadAlgdb(category);
+        dbCacheRef.current[category] = db;
       }
-      // Length tiebreaker: shorter algs slightly preferred among equal-score.
-      score -= c.text.length * 0.01;
-      scored.push({ text: c.text, caseName: c.caseName, score });
+
+      const candidates: { text: string; caseName: string }[] = [];
+      const seen = new Set<string>();
+      for (const c of db.cases) {
+        if (c.standard && !seen.has(c.standard)) {
+          candidates.push({ text: c.standard, caseName: c.name });
+          seen.add(c.standard);
+        }
+        for (const ori of c.algs) {
+          for (const e of ori) {
+            if (!seen.has(e.alg)) {
+              candidates.push({ text: e.alg, caseName: c.name });
+              seen.add(e.alg);
+            }
+          }
+        }
+      }
+      const prefixFiltered = candidates.filter(c => isAlgPrefix(lineMovesUpToCaret, c.text));
+
+      for (const c of prefixFiltered) {
+        const post = preState.applyAlg(c.text);
+        const postInfo = await detectStage(post);
+        let score = 0;
+        if (category === 'oll') {
+          if (postInfo.stage === 'oll' || postInfo.stage === 'solved') score = 100;
+          else if (postInfo.solvedSlots.length === 4) score = 50;
+          else score = -50;
+        } else if (category === 'pll') {
+          if (postInfo.stage === 'solved') score = 100;
+          else score = -50;
+        }
+        score -= c.text.length * 0.01;
+        scored.push({ text: c.text, caseName: c.caseName, score });
+      }
     }
 
-    // Show only candidates that actually make progress (positive score).
+    // Show only candidates that actually make progress (positive score),
+    // de-duplicated by composed alg text (multiple cases can collapse to the
+    // same setup+alg).
     const positive = scored.filter(c => c.score > 0);
     positive.sort((a, b) => b.score - a.score);
-    const top = positive.slice(0, 12).map(c => ({ text: c.text, category, caseName: c.caseName }));
+    const seenText = new Set<string>();
+    const top: { text: string; category: AlgdbCategory; caseName: string }[] = [];
+    for (const c of positive) {
+      if (seenText.has(c.text)) continue;
+      seenText.add(c.text);
+      top.push({ text: c.text, category, caseName: c.caseName });
+      if (top.length >= 12) break;
+    }
     if (top.length === 0) return null;
 
     const rect = getCaretRect(ta, caret);
