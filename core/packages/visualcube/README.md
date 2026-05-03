@@ -44,15 +44,17 @@ renderCubeSVG('?pzl=3&alg=R+U+R%27+U%27&arw=U0U2-blue&ac=red&size=256')
 
 ### 2. HTTP — `GET /api/visualcube.svg` (server)
 
-Simplified URL API, returns `image/svg+xml` (cached 24h). Five params:
+Simplified URL API, returns `image/svg+xml` (cached 24h). Seven params:
 
 | Param  | Values | Default |
 |--------|--------|---------|
 | `alg`  | WCA notation. Renders the STATE produced by inverting the alg from solved (i.e. the case the alg solves) | Sune |
-| `view` | `iso` / `plan` / `f2l` / `oll` / `pll` / `pll-iso` (combinations of plan-view + LL/F2L mask) | `iso` |
+| `view` | `iso` / `plan` / `f2l` / `oll` / `pll` / `pll-iso` (combinations of plan-view + LL/F2L mask) / `trans` (PHP visualcube preset: silver semi-transparent shell) | `iso` |
 | `mask` | Explicit `Masking` enum value, overrides view-derived mask | — |
 | `size` | Pixel dimension, clamped to [32, 1000] | 256 |
 | `bg`   | Hex (with/without `#`) or named CSS colour (alpha-only) | transparent |
+| `cc`   | Cube shell colour, hex or CSS name (PHP `cc`) | black (silver when `view=trans`) |
+| `co`   | Cube shell opacity 0-100 (PHP `co`) | 100 (50 when `view=trans`) |
 
 ```
 https://www.cuberoot.me/api/visualcube.svg?alg=R+U+R%27+U%27+R+U2+R%27&view=oll&size=128
@@ -117,11 +119,12 @@ sr-visualizer (the TS source we forked) ports most of PHP visualcube but is miss
   - Mehta: `mehta_sq`, `mehta_belt2`, `mehta_eole2`, `mehta_tdr`
 - [x] Mask post-rotation (`maskAlg`, PHP `stage=cross-x2`) — TS extracts the suffix into a separate option, equivalent
 - [x] Plan view (`view: 'plan'`, PHP `view=plan`) with OLL side-rim stickers
+- [x] Transparent shell preset (PHP `view=trans`) — `parseOptions` maps to `cubeColor='silver'` + `cubeOpacity=50`; explicit `cc`/`co` still win. (PHP also turns blank `n` facelets into real transparent — that subtlety is NOT ported, blank stays dark gray.)
 - [x] Arrows (`arrows`, PHP `arw`) — straight + curved (s3 via-sticker), per-arrow colour, `-s` scale, `-i` influence
 - [x] Default arrow colour (`defaultArrowColor`, PHP `ac`) — applied to arrows that don't specify a per-arrow colour; PHP semantics: `ac=t` (transparent) is ignored, falls back to gray
 - [x] Cube + sticker opacity (`cubeOpacity`/`stickerOpacity`, PHP `co`/`fo`) — covers PHP `view=trans`
 - [x] Background colour, cube base colour, projection distance (`backgroundColor`/`cubeColor`/`dist`)
-- [x] PHP query-string compatibility (`parseOptions`) — `pzl size view stage r alg case fc sch bg cc co fo dist arw fd`
+- [x] PHP query-string compatibility (`parseOptions`) — `pzl size view stage r alg case fc sch bg cc co fo dist arw ac fd`
 - [x] Repeat-count syntax in `fc` / `sch` / `fd` (PHP V0.6.5) — pre-pass `expandRepeats` in `parsing/repeatExpand.ts` turns `y20r6` into 20 y's + 6 r's; bypassed for comma-separated values; applied identically to all three options
 - [x] Extended colour palette (PHP V0.6.6) — `z` zero `#1B1B1B`, `f` forest `#006600`, `i` lpink `#FF99FF`, `e` cream `#EEE8AA`, `c` cyan `#88DDFF`, `v` navy `#3375B2`, `a` tan `#885500`. Hex values verbatim from `_php_reference/index.php` $ZERO/$FOREST/$LPINK/$CREAM/$CYAN/$NAVY/$TAN. PHP `u` (custom placeholder, six spaces) intentionally not mapped — it has no defined hex in PHP.
 
