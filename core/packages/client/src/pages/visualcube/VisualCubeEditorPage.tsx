@@ -26,6 +26,7 @@ import {
   type ICubeOptions,
 } from '@cuberoot/visualcube';
 import LangToggle from '../../components/LangToggle';
+import CubeVirtualKeyboard from '../../components/CubeVirtualKeyboard';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -95,9 +96,6 @@ const EXTENDED_MASKS: { value: string; label: string }[] = [
 ];
 
 const MASK_ROTATIONS = ['', 'x', "x'", 'x2', 'y', "y'", 'y2', 'z', "z'", 'z2'];
-
-const ALG_QUICK_KEYS_UPPER = ['U', 'R', 'F', 'D', 'L', 'B', 'M', 'E', 'S', "'", '(', ')'];
-const ALG_QUICK_KEYS_LOWER = ['u', 'r', 'f', 'd', 'l', 'b', 'w', '2', 'x', 'y', 'z'];
 
 // ── State ────────────────────────────────────────────────────────────────────
 
@@ -500,11 +498,6 @@ export default function VisualCubeEditorPage() {
     return `${window.location.origin}/api/visualcube.svg${p.toString() ? '?' + p.toString() : ''}`;
   }, [state]);
 
-  // ── Algorithm helpers ─────────────────────────────────────────────────────
-  const appendAlg = (key: string) => {
-    set('algorithm', state.algorithm ? state.algorithm + ' ' + key : key);
-  };
-
   // ── Arrow builder ─────────────────────────────────────────────────────────
   const addArrow = () => {
     const numStickers = state.cubeSize * state.cubeSize;
@@ -525,6 +518,12 @@ export default function VisualCubeEditorPage() {
   };
 
   const arrowMaxIdx = state.cubeSize * state.cubeSize - 1;
+
+  // ── Algorithm textarea (uncontrolled, ref-based — keyboard writes via DOM) ──
+  const algRef = useRef<HTMLTextAreaElement | null>(null);
+  const syncAlgFromDom = useCallback(() => {
+    if (algRef.current) set('algorithm', algRef.current.value);
+  }, [set]);
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -608,28 +607,26 @@ export default function VisualCubeEditorPage() {
                 {t('Case (反向)', 'Case (inverse)')}
               </label>
             </div>
-            <div className="vc-keyrow">
-              {ALG_QUICK_KEYS_UPPER.map((k) => (
-                <button key={k} type="button" className="vc-keybtn" onClick={() => appendAlg(k)}>{k}</button>
-              ))}
-            </div>
-            <div className="vc-keyrow">
-              {ALG_QUICK_KEYS_LOWER.map((k) => (
-                <button key={k} type="button" className="vc-keybtn" onClick={() => appendAlg(k)}>{k}</button>
-              ))}
-            </div>
             <div className="vc-row-controls">
-              <input
-                type="text"
-                className="vc-text"
-                value={state.algorithm}
+              <textarea
+                ref={algRef}
+                className="vc-text vc-textarea"
+                rows={2}
+                defaultValue={state.algorithm}
                 placeholder="R U R' U' …"
-                onChange={(e) => set('algorithm', e.target.value)}
+                onInput={syncAlgFromDom}
               />
-              <button type="button" className="vc-btn-icon" onClick={() => set('algorithm', '')} title="Clear">
+              <button
+                type="button" className="vc-btn-icon" title="Clear"
+                onClick={() => {
+                  if (algRef.current) algRef.current.value = '';
+                  set('algorithm', '');
+                }}
+              >
                 <Trash2 size={14} />
               </button>
             </div>
+            <CubeVirtualKeyboard textareaRef={algRef} onInput={syncAlgFromDom} />
           </div>
         </div>
 
@@ -934,6 +931,7 @@ const INLINE_CSS = `
 .vc-num { width: 72px; }
 .vc-num-sm { width: 56px; padding: 4px 7px; font-size: 12px; }
 .vc-text { flex: 1; min-width: 0; font-family: var(--font-mono, monospace); }
+.vc-textarea { resize: vertical; min-height: 36px; }
 .vc-color-text { width: 96px; font-size: 12px; font-family: var(--font-mono, monospace); }
 .vc-select-sm { width: 56px; padding: 4px 7px; font-size: 12px; }
 .vc-num:focus, .vc-text:focus, .vc-num-sm:focus, .vc-color-text:focus,
