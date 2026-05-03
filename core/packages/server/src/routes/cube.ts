@@ -1,7 +1,7 @@
 /**
  * GET /api/visualcube.svg — 服务端渲染单个 3x3 SVG 图。
  *
- * URL 参数与客户端 /visualcube 路由保持一致：
+ * URL 参数：
  *   alg   WCA notation；默认 Sune
  *   view  iso | plan | f2l | oll | pll | pll-iso | trans
  *         trans 是 PHP visualcube preset：cc=silver、co=50（半透明银壳，能透视背面）
