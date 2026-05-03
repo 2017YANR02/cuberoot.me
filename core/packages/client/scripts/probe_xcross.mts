@@ -14,7 +14,7 @@ import {
 import f2lDb from '../../shared/data/algdb_3x3_f2l.json' with { type: 'json' };
 import advF2lDb from '../../shared/data/algdb_3x3_adv-f2l.json' with { type: 'json' };
 import type { KPattern } from 'cubing/kpuzzle';
-import type { AlgdbFile } from '../../shared/src/algdb';
+import type { AlgFile } from '../../shared/src/alg';
 
 const AUFS = ['', 'U', 'U2', "U'"] as const;
 const AUF_INV = ['', "U'", 'U2', 'U'] as const;
@@ -63,8 +63,8 @@ interface F2lAlgEntry { alg: string; caseName: string; oriIdx: number }
 let _table: Map<string, F2lAlgEntry[]> | null = null;
 async function buildTable() {
   if (_table) return _table;
-  const f2l = f2lDb as unknown as AlgdbFile;
-  const advF2l = advF2lDb as unknown as AlgdbFile;
+  const f2l = f2lDb as unknown as AlgFile;
+  const advF2l = advF2lDb as unknown as AlgFile;
   const kp = await getCube3();
   const solved = kp.defaultPattern();
   const t = new Map<string, F2lAlgEntry[]>();
