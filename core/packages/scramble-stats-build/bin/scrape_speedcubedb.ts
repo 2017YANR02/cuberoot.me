@@ -94,6 +94,23 @@ const SETS: SetDef[] = [
   // 5x5
   { puzzle: '5x5', outSlug: 'l2e', scd: 'L2E' },
   { puzzle: '5x5', outSlug: 'l2c', scd: 'L2C' },
+  // sq1
+  { puzzle: 'sq1',       outSlug: 'cs',     scd: 'SQ1CS' },
+  { puzzle: 'sq1',       outSlug: 'co',     scd: 'SQ1CO' },
+  { puzzle: 'sq1',       outSlug: 'eo',     scd: 'SQ1EO' },
+  { puzzle: 'sq1',       outSlug: 'cp',     scd: 'SQ1CP' },
+  { puzzle: 'sq1',       outSlug: 'ep',     scd: 'SQ1EP' },
+  { puzzle: 'sq1',       outSlug: 'parity', scd: 'SQ1Parity' },
+  // megaminx
+  { puzzle: 'megaminx',  outSlug: 'eo',     scd: 'MegaminxEO' },
+  { puzzle: 'megaminx',  outSlug: 'co',     scd: 'MegaminxCO' },
+  { puzzle: 'megaminx',  outSlug: 'ep',     scd: 'MegaminxEP' },
+  { puzzle: 'megaminx',  outSlug: 'cp',     scd: 'MegaminxCP' },
+  // pyraminx
+  { puzzle: 'pyraminx',  outSlug: 'l3e',    scd: 'L3E' },
+  { puzzle: 'pyraminx',  outSlug: 'l4e',    scd: 'L4E' },
+  // skewb
+  { puzzle: 'skewb',     outSlug: 'sarahs-advanced', scd: 'SarahsAdvanced' },
 ];
 
 function urlFor(puzzle: string, scdSlug: string): string {
@@ -139,7 +156,10 @@ function extractSticker($: cheerio.CheerioAPI, $row: cheerio.Cheerio<cheerio.Ele
     };
   }
   // Fallback: dump every data-* attr on the first cube-ish preview node.
-  const candidates = ['.icube', '.jcube', '.kcube', '.lcube', '.mcube', '.cube', '.preview'];
+  const candidates = [
+    '.sqcube', '.pcube', '.skewbcube', '.skcube',
+    '.icube', '.jcube', '.kcube', '.lcube', '.mcube', '.cube', '.preview',
+  ];
   for (const sel of candidates) {
     const $el = $row.find(sel).first();
     if ($el.length === 0) continue;
@@ -149,7 +169,16 @@ function extractSticker($: cheerio.CheerioAPI, $row: cheerio.Cheerio<cheerio.Ele
     for (const [k, v] of Object.entries(node.attribs ?? {})) {
       if (k.startsWith('data-')) attrs[k] = v;
     }
-    return { kind: 'raw', tag: node.name, attrs };
+    return { kind: 'raw', tag: sel.replace(/^\./, ''), attrs };
+  }
+  // Megaminx: pre-rendered <img src="/template/.../megacube/100/<stickering>.png">
+  const $img = $row.find('.col-12.text-center img').first();
+  if ($img.length > 0) {
+    const src = $img.attr('src') ?? '';
+    const m = src.match(/megacube\/\d+\/([^./]+)\.png/);
+    if (m) {
+      return { kind: 'raw', tag: 'megacube', attrs: { stickering: m[1], src } };
+    }
   }
   return { kind: 'raw', tag: '', attrs: {} };
 }
@@ -312,7 +341,7 @@ async function main() {
       const tag = typeof scd === 'string' ? scd : `${scd.parent} (umbrella)`;
       console.log(`scraping ${p}/${outSlug} (speedcubedb ${tag})…`);
       const db = await scrapeOne(def);
-      const out = join(SHARED_DATA_DIR, `algdb_${p}_${outSlug}.json`);
+      const out = join(SHARED_DATA_DIR, `alg_${p}_${outSlug}.json`);
       writeFileSync(out, JSON.stringify(db, null, 2));
       const totalAlgs = db.cases.reduce((sum, c) => sum + c.algs.flat().length, 0);
       const stickerKinds = new Set(db.cases.map(c => c.sticker.kind));

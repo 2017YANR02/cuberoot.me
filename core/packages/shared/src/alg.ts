@@ -41,7 +41,7 @@ export interface AlgFile {
   cases: AlgCase[];
 }
 
-export type AlgPuzzle = '2x2' | '3x3' | '4x4' | '5x5';
+export type AlgPuzzle = '2x2' | '3x3' | '4x4' | '5x5' | 'sq1' | 'megaminx' | 'pyraminx' | 'skewb';
 
 /** 3x3 set slug — matches `slug` in {@link ALG_CATALOG['3x3']}. */
 export type Alg3x3Set =
@@ -98,9 +98,30 @@ export const ALG_CATALOG: Record<AlgPuzzle, AlgSetMeta[]> = {
     { slug: 'l2e', scd: 'L2E', en: 'Last Two Edges',   zh: 'Last Two Edges (L2E)' },
     { slug: 'l2c', scd: 'L2C', en: 'Last Two Centers', zh: 'Last Two Centers (L2C)' },
   ],
+  'sq1': [
+    { slug: 'cs',     scd: 'SQ1CS',     en: 'Cube Shape',          zh: '形状' },
+    { slug: 'co',     scd: 'SQ1CO',     en: 'Corner Orientation',  zh: '角块定向 (CO)' },
+    { slug: 'eo',     scd: 'SQ1EO',     en: 'Edge Orientation',    zh: '棱块定向 (EO)' },
+    { slug: 'cp',     scd: 'SQ1CP',     en: 'Corner Permutation',  zh: '角块排列 (CP)' },
+    { slug: 'ep',     scd: 'SQ1EP',     en: 'Edge Permutation',    zh: '棱块排列 (EP)' },
+    { slug: 'parity', scd: 'SQ1Parity', en: 'Parity',              zh: 'Parity' },
+  ],
+  'megaminx': [
+    { slug: 'eo', scd: 'MegaminxEO', en: 'Edge Orientation',    zh: '棱块定向 (EO)' },
+    { slug: 'co', scd: 'MegaminxCO', en: 'Corner Orientation',  zh: '角块定向 (CO)' },
+    { slug: 'ep', scd: 'MegaminxEP', en: 'Edge Permutation',    zh: '棱块排列 (EP)' },
+    { slug: 'cp', scd: 'MegaminxCP', en: 'Corner Permutation',  zh: '角块排列 (CP)' },
+  ],
+  'pyraminx': [
+    { slug: 'l3e', scd: 'L3E', en: 'Last 3 Edges', zh: 'Last 3 Edges (L3E)' },
+    { slug: 'l4e', scd: 'L4E', en: 'Last 4 Edges', zh: 'Last 4 Edges (L4E)' },
+  ],
+  'skewb': [
+    { slug: 'sarahs-advanced', scd: 'SarahsAdvanced', en: "Sarah's Advanced", zh: "Sarah's Advanced" },
+  ],
 };
 
-export const ALG_PUZZLES: AlgPuzzle[] = ['2x2', '3x3', '4x4', '5x5'];
+export const ALG_PUZZLES: AlgPuzzle[] = ['2x2', '3x3', '4x4', '5x5', 'sq1', 'megaminx', 'pyraminx', 'skewb'];
 
 export function getAlgSetMeta(puzzle: AlgPuzzle, slug: string): AlgSetMeta | undefined {
   return ALG_CATALOG[puzzle]?.find(s => s.slug === slug);
@@ -141,6 +162,23 @@ export async function loadAlg(puzzle: AlgPuzzle, set: string): Promise<AlgFile> 
     // 5x5
     case '5x5/l2e':        return (await import('../data/alg_5x5_l2e.json')).default as unknown as AlgFile;
     case '5x5/l2c':        return (await import('../data/alg_5x5_l2c.json')).default as unknown as AlgFile;
+    // sq1
+    case 'sq1/cs':         return (await import('../data/alg_sq1_cs.json')).default as unknown as AlgFile;
+    case 'sq1/co':         return (await import('../data/alg_sq1_co.json')).default as unknown as AlgFile;
+    case 'sq1/eo':         return (await import('../data/alg_sq1_eo.json')).default as unknown as AlgFile;
+    case 'sq1/cp':         return (await import('../data/alg_sq1_cp.json')).default as unknown as AlgFile;
+    case 'sq1/ep':         return (await import('../data/alg_sq1_ep.json')).default as unknown as AlgFile;
+    case 'sq1/parity':     return (await import('../data/alg_sq1_parity.json')).default as unknown as AlgFile;
+    // megaminx
+    case 'megaminx/eo':    return (await import('../data/alg_megaminx_eo.json')).default as unknown as AlgFile;
+    case 'megaminx/co':    return (await import('../data/alg_megaminx_co.json')).default as unknown as AlgFile;
+    case 'megaminx/ep':    return (await import('../data/alg_megaminx_ep.json')).default as unknown as AlgFile;
+    case 'megaminx/cp':    return (await import('../data/alg_megaminx_cp.json')).default as unknown as AlgFile;
+    // pyraminx
+    case 'pyraminx/l3e':   return (await import('../data/alg_pyraminx_l3e.json')).default as unknown as AlgFile;
+    case 'pyraminx/l4e':   return (await import('../data/alg_pyraminx_l4e.json')).default as unknown as AlgFile;
+    // skewb
+    case 'skewb/sarahs-advanced': return (await import('../data/alg_skewb_sarahs-advanced.json')).default as unknown as AlgFile;
     default:
       throw new Error(`unknown alg set: ${key}`);
   }

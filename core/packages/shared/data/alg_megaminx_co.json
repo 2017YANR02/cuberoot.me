@@ -1,0 +1,408 @@
+{
+  "scrapedAt": "2026-05-03T16:53:03.129Z",
+  "source": "https://speedcubedb.com/a/megaminx/MegaminxCO",
+  "puzzle": "megaminx",
+  "set": "co",
+  "cases": [
+    {
+      "name": "CO 1",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "raw",
+        "tag": "megacube",
+        "attrs": {
+          "stickering": "yyyyylylyyy-llllllylyllllll----",
+          "src": "/template/renderers/cache/megacube/100/yyyyylylyyy-llllllylyllllll----.png"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U R' U R U R' U2' R U' R'",
+            "altId": "9822"
+          },
+          {
+            "alg": "y2' R2' DR' R U2 R' DR R U2' R",
+            "altId": "10416"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CO 2",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "raw",
+        "tag": "megacube",
+        "attrs": {
+          "stickering": "ylyyyyyyyly-yllllllllllylll----",
+          "src": "/template/renderers/cache/megacube/100/ylyyyyyyyly-yllllllllllylll----.png"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "F R U2 R' U' R U' R' F'",
+            "altId": "9823"
+          },
+          {
+            "alg": "y2' R BR R' F R BR' R' F'",
+            "altId": "10418"
+          },
+          {
+            "alg": "y' R U R U2 R' U' R U' R' U' R'",
+            "altId": "10417"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CO 3",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "raw",
+        "tag": "megacube",
+        "attrs": {
+          "stickering": "yyylyyyyyly-lllylllllllylll----",
+          "src": "/template/renderers/cache/megacube/100/yyylyyyyyly-lllylllllllylll----.png"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U2 R' U R U2 R'",
+            "altId": "9824"
+          },
+          {
+            "alg": "y' R U2' R' U' R U2' R'",
+            "altId": "10447"
+          },
+          {
+            "alg": "L' U2' L U' L' U2' L",
+            "altId": "10446"
+          },
+          {
+            "alg": "y L' U2 L U L' U2 L",
+            "altId": "10448"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CO 4",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "raw",
+        "tag": "megacube",
+        "attrs": {
+          "stickering": "ylyyylyyyyy-yllllylllllllll----",
+          "src": "/template/renderers/cache/megacube/100/ylyyylyyyyy-yllllylllllllll----.png"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U R' U' R' F R U R U' R' F'",
+            "altId": "9825"
+          },
+          {
+            "alg": "F R' F' L F R F' L'",
+            "altId": "10419"
+          },
+          {
+            "alg": "y F R U R' U R U2' R' F'",
+            "altId": "10420"
+          },
+          {
+            "alg": "R' F R BR' R' F' R BR",
+            "altId": "10449"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CO 5",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "raw",
+        "tag": "megacube",
+        "attrs": {
+          "stickering": "ylylylyyyyy-yllyllyllllllll----",
+          "src": "/template/renderers/cache/megacube/100/ylylylyyyyy-yllyllyllllllll----.png"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U R' U R U2' R'",
+            "altId": "9826"
+          },
+          {
+            "alg": "y2 L U' R' U L' U' R U",
+            "altId": "10421"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CO 6",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "raw",
+        "tag": "megacube",
+        "attrs": {
+          "stickering": "yyylylylyyy-llyllyllyllllll----",
+          "src": "/template/renderers/cache/megacube/100/yyylylylyyy-llyllyllyllllll----.png"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "R' U' R U' R' U2 R",
+            "altId": "9827"
+          },
+          {
+            "alg": "y2 L' U' L U' L' U2 L",
+            "altId": "10422"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CO 7",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "raw",
+        "tag": "megacube",
+        "attrs": {
+          "stickering": "ylyyylyyyly-lllllylllllylly----",
+          "src": "/template/renderers/cache/megacube/100/ylyyylyyyly-lllllylllllylly----.png"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U2 R' U' R U' R'",
+            "altId": "9828"
+          },
+          {
+            "alg": "y' R' F R F' L F R' F' R L'",
+            "altId": "10423"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CO 8",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "raw",
+        "tag": "megacube",
+        "attrs": {
+          "stickering": "ylyyylyyyly-ylllllylllllyll----",
+          "src": "/template/renderers/cache/megacube/100/ylyyylyyyly-ylllllylllllyll----.png"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U R' U2 R U2 R'",
+            "altId": "9829"
+          },
+          {
+            "alg": "y L' U2' L U L' U L",
+            "altId": "10424"
+          },
+          {
+            "alg": "y' R' L F R F' L' F R' F' R",
+            "altId": "10425"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CO 9",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "raw",
+        "tag": "megacube",
+        "attrs": {
+          "stickering": "ylylylyyyly-ylylllyllllylll----",
+          "src": "/template/renderers/cache/megacube/100/ylylylyyyly-ylylllyllllylll----.png"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U2 R' U' R U R' U' R U' R'",
+            "altId": "9830"
+          },
+          {
+            "alg": "y F R U R' U' R U R' U' R U R' U' F'",
+            "altId": "10426"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CO 10",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "raw",
+        "tag": "megacube",
+        "attrs": {
+          "stickering": "ylylylyyyly-lllylyllllllyly----",
+          "src": "/template/renderers/cache/megacube/100/ylylylyyyly-lllylyllllllyly----.png"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U R' U R U' R' U R U2' R'",
+            "altId": "9831"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CO 11",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "raw",
+        "tag": "megacube",
+        "attrs": {
+          "stickering": "ylylylylyyy-yllylyllyllllll----",
+          "src": "/template/renderers/cache/megacube/100/ylylylylyyy-yllylyllyllllll----.png"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U R' U R U R' U' R U2' R'",
+            "altId": "9832"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CO 12",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "raw",
+        "tag": "megacube",
+        "attrs": {
+          "stickering": "ylyyylylyly-yllllyllylllyll----",
+          "src": "/template/renderers/cache/megacube/100/ylyyylylyly-yllllyllylllyll----.png"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U2 R' U' R U' R2' U' R U' R' U2 R",
+            "altId": "9833"
+          },
+          {
+            "alg": "R U2' R' U2' R U2 R' U2' R U' R'",
+            "altId": "10450"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CO 13",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "raw",
+        "tag": "megacube",
+        "attrs": {
+          "stickering": "ylylylyyyly-llylllylllllyly----",
+          "src": "/template/renderers/cache/megacube/100/ylylylyyyly-llylllylllllyly----.png"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U2 R2' U' R2 U' R2' U2 R",
+            "altId": "9834"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CO 14",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "raw",
+        "tag": "megacube",
+        "attrs": {
+          "stickering": "yyylylylyly-llylllyllylylll----",
+          "src": "/template/renderers/cache/megacube/100/yyylylylyly-llylllyllylylll----.png"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "R' U2' R2 U R2' U R2 U2' R'",
+            "altId": "9835"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CO 15",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "raw",
+        "tag": "megacube",
+        "attrs": {
+          "stickering": "ylylylylyly-lllyllyllyllyly----",
+          "src": "/template/renderers/cache/megacube/100/ylylylylyly-lllyllyllyllyly----.png"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U R' U2 R U2' R' U R U2' R'",
+            "altId": "9836"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "CO 16",
+      "subgroup": "",
+      "setup": "",
+      "sticker": {
+        "kind": "raw",
+        "tag": "megacube",
+        "attrs": {
+          "stickering": "ylylylylyly-ylyllyllyllylll----",
+          "src": "/template/renderers/cache/megacube/100/ylylylylyly-ylyllyllyllylll----.png"
+        }
+      },
+      "algs": [
+        [
+          {
+            "alg": "R U2 R' U' R U2 R' U2' R U' R'",
+            "altId": "9837"
+          }
+        ]
+      ]
+    }
+  ]
+}
