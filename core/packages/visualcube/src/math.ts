@@ -15,7 +15,7 @@ export function makeMatrix<T>(rows: number, cols: number): T[][] {
   for (let r = 0; r < rows; r++) {
     matrix[r] = []
     for (let c = 0; c < cols; c++) {
-      matrix[r][c] = null
+      matrix[r][c] = null as unknown as T
     }
   }
   return matrix

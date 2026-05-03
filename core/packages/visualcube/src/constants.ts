@@ -81,7 +81,7 @@ export const FaceletToFace: { [facelet: string]: Face } = {
   [FaceletDefinition.Back]: Face.B,
 }
 
-export const FaceletToColor = {
+export const FaceletToColor: { [facelet: string]: ColorName | ColorCode } = {
   [FaceletDefinition.Oriented]: ColorName.Gray,
   [FaceletDefinition.Blank]: ColorCode.DarkGray,
   [FaceletDefinition.Transparent]: ColorName.Transparent,

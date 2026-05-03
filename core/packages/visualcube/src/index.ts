@@ -2,7 +2,7 @@ import { ColorName } from './colors'
 import { makeCubeGeometry } from './cube/geometry'
 import { Axis } from './math'
 import { renderCube, renderCubeSVG as renderCubeSVGInternal } from './cube/drawing'
-import { ICubeOptions } from './cube/options'
+import { ICubeOptions, ResolvedCubeOptions } from './cube/options'
 import { DefaultColorScheme } from './cube/constants'
 import { makeStickerColors } from './cube/stickers'
 import { parseOptions } from './cube/parsing/options'
@@ -78,15 +78,15 @@ export function cubePNG(container: HTMLElement, extraOptions?: ICubeOptions) {
     loader.width = can.width = targetImage.width = options.width || 128
     loader.height = can.height = targetImage.height = options.height || 128
     loader.onload = function() {
-      ctx.drawImage(loader, 0, 0, loader.width, loader.height)
+      ctx!.drawImage(loader, 0, 0, loader.width, loader.height)
       targetImage.src = can.toDataURL()
     }
-    var svgAsXML = new XMLSerializer().serializeToString(svgElement)
+    var svgAsXML = new XMLSerializer().serializeToString(svgElement!)
     loader.src = 'data:image/svg+xml,' + encodeURIComponent(svgAsXML)
   })
 }
 
-function getOptions(defaultOptions: ICubeOptions, extraOptions: string | ICubeOptions): ICubeOptions {
+function getOptions(defaultOptions: ICubeOptions, extraOptions: string | ICubeOptions): ResolvedCubeOptions {
   let parsedOptions: ICubeOptions
   if (typeof extraOptions === 'string') {
     parsedOptions = parseOptions(extraOptions)
@@ -98,5 +98,6 @@ function getOptions(defaultOptions: ICubeOptions, extraOptions: string | ICubeOp
     parsedOptions.facelets = parseFaceletDefinitions(parsedOptions.facelets)
   }
 
-  return { ...defaultOptions, ...parsedOptions }
+  // defaultOptions populates every required field of ResolvedCubeOptions, so the merge result is fully resolved.
+  return { ...defaultOptions, ...parsedOptions } as ResolvedCubeOptions
 }

@@ -1,11 +1,11 @@
 import { ColorName, ColorCode } from './../colors'
-import { ICubeOptions } from './options'
+import { ResolvedCubeOptions } from './options'
 import { makeMasking } from './masking'
 import { CubeData } from './simulation'
 import { parseAlgorithm, parseCase, Turn } from './parsing/algorithm'
 import { AllFaces } from './constants'
 
-export function makeStickerColors(options: ICubeOptions): string[] {
+export function makeStickerColors(options: ResolvedCubeOptions): string[] {
   let stickerColors = options.stickerColors
   let mask = options.mask ? makeMasking(options.mask, options.cubeSize) : null
   let maskColor = typeof options.maskColor == 'string' ? options.maskColor : ColorCode.DarkGray
@@ -29,7 +29,7 @@ export function makeStickerColors(options: ICubeOptions): string[] {
     )
   }
 
-  let faceMappedStickers = AllFaces.reduce((acc, face) => {
+  let faceMappedStickers = AllFaces.reduce<{ [face: number]: string[] }>((acc, face) => {
     if (!acc[face]) acc[face] = []
 
     for (let i = 0; i < options.cubeSize; i++) {
