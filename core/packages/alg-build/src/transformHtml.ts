@@ -24,11 +24,11 @@ const SEE_ALSO_KEYWORDS: { pattern: RegExp; slug: string }[] = [
 
 /**
  * HTML 整理：
- * - 剔除 mammoth 加的 class 属性（保留 alg-chip / see-also-link / table-wrap）
+ * - 剔除 mammoth 加的 class 属性（保留 tutorial-chip / see-also-link / table-wrap）
  * - 表格包 .table-wrap 给 overflow-x
  * - 外链 target + rel
  * - img loading=lazy + decoding=async
- * - see-also 关键词 → 自动链到 /alg/<slug>
+ * - see-also 关键词 → 自动链到 /tutorial/<slug>
  */
 export function transformHtml(html: string, currentSlug: string): string {
   const $ = cheerio.load(html, null, false);
@@ -40,7 +40,7 @@ export function transformHtml(html: string, currentSlug: string): string {
     if (!cls) return;
     const kept = cls
       .split(/\s+/)
-      .filter(c => c === 'alg-chip' || c === 'see-also-link' || c === 'table-wrap')
+      .filter(c => c === 'tutorial-chip' || c === 'see-also-link' || c === 'table-wrap')
       .join(' ');
     if (kept) $el.attr('class', kept);
     else $el.removeAttr('class');
@@ -74,7 +74,7 @@ export function transformHtml(html: string, currentSlug: string): string {
   // 5. see-also 自动链接（每 block 最多加 1 个，且 block 必须是纯文本，避免破坏富结构）
   $('p, li, td').each((_, el) => {
     const $el = $(el);
-    // 含任何子 element 或已有 alg-chip / a → 跳
+    // 含任何子 element 或已有 tutorial-chip / a → 跳
     if ($el.find('*').length > 0) return;
     let innerHtml = $el.html() ?? '';
     let added = false;
@@ -87,7 +87,7 @@ export function transformHtml(html: string, currentSlug: string): string {
       innerHtml = innerHtml.replace(
         p,
         match =>
-          `<a href="/alg/${slug}" class="see-also-link" data-see-also="true">${match}</a>`,
+          `<a href="/tutorial/${slug}" class="see-also-link" data-see-also="true">${match}</a>`,
       );
       added = true;
     }

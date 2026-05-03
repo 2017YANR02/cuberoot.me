@@ -45,8 +45,8 @@ export function detectAlgs(html: string, slugContext?: string): DetectAlgsResult
 
   $(blockSelector).each((_, el) => {
     const $el = $(el);
-    // 跳过包含 alg-chip / 或其他 block children
-    if ($el.find('p, table, ul, ol, img, .alg-chip').length > 0) return;
+    // 跳过包含 tutorial-chip / 或其他 block children
+    if ($el.find('p, table, ul, ol, img, .tutorial-chip').length > 0) return;
     const text = $el.text();
     if (!isAlgText(text)) return;
     const alg = text.replace(/\s+/g, ' ').trim();
@@ -58,7 +58,7 @@ export function detectAlgs(html: string, slugContext?: string): DetectAlgsResult
     // 用 AlgChip 替换内部
     $el.empty();
     const chip = $('<span>')
-      .addClass('alg-chip')
+      .addClass('tutorial-chip')
       .attr('data-alg', alg)
       .text(alg);
     $el.append(chip);

@@ -1,7 +1,7 @@
 // NOTE: 核心类型定义——前后端共享，修改时需同步考虑两端影响
 
 /** 单个公式 case */
-export interface AlgCase {
+export interface TrainerCase {
   /** 唯一标识，如 "Aa", "Ab", "E", "OLL-1" */
   id: string;
   /** 显示名称 */
@@ -15,7 +15,7 @@ export interface AlgCase {
 }
 
 /** 一组公式集（如 PLL、OLL） */
-export interface AlgSet {
+export interface TrainerSet {
   /** 唯一标识，如 "3x3-pll" */
   id: string;
   /** 显示名称，如 "3×3 PLL" */
@@ -23,7 +23,7 @@ export interface AlgSet {
   /** 魔方类型，供 cubing.js 使用 */
   puzzle: string;
   /** 所有 case */
-  cases: AlgCase[];
+  cases: TrainerCase[];
 }
 
 /** 单次训练结果 */

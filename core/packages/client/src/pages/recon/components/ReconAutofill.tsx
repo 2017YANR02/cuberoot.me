@@ -35,7 +35,7 @@ import { patternFromAlg, countMoves } from '../../../utils/cube3';
 import { buildCommentSuggestions } from '../../../utils/popup_suggest';
 import { detectStage } from '../../../utils/stage_detect';
 import { suggestAlg, movesOnly, lineRange } from '../../../utils/recon_autofill_core';
-import type { Algdb3x3Set } from '@cuberoot/shared/algdb';
+import type { Alg3x3Set } from '@cuberoot/shared/alg';
 import './ReconAutofill.css';
 
 interface Props {
@@ -73,7 +73,7 @@ interface CommentPopup {
 interface AlgPopup {
   kind: 'alg';
   pos: AnchorPos;
-  entries: { text: string; category: Algdb3x3Set; caseName: string }[];
+  entries: { text: string; category: Alg3x3Set; caseName: string }[];
   /** Insertion point: where the chosen alg goes (caret position). */
   insertAt: number;
   /** When entries is empty, render a single non-clickable info row with this i18n key. */
