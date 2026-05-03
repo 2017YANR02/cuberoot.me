@@ -173,6 +173,19 @@
       "nonWca": "非 WCA",
       "singleRecord": "单次纪录",
       "averageRecord": "平均纪录"
+    },
+    "autofill": {
+      "empty": {
+        "solved": "魔方已解完,没有可补全的公式",
+        "no_cross": "还没有解十字",
+        "pscross": "伪十字,先用 D / D' / D2 对齐底十字",
+        "prefix_no_match": "没有公式以你输入的开头",
+        "no_algdb_match": {
+          "f2l": "公式库里找不到匹配的 F2L 公式(此 case 不在 algdb 覆盖范围)",
+          "oll": "公式库里找不到匹配的 OLL 公式",
+          "pll": "公式库里找不到匹配的 PLL 公式"
+        }
+      }
     }
   },
   "wcaStats": {

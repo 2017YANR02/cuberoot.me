@@ -244,19 +244,15 @@ export async function buildCommentSuggestions(args: SuggestArgs): Promise<string
     else pushPair('cross');
     return out;
   }
-  if (t.kind === 'xcross') {
-    if (colorLetter) pushPair(`${colorLetter} xcross`);
-    else pushPair('xcross');
-    return out;
-  }
-  if (t.kind === 'xxcross') {
-    if (colorLetter) pushPair(`${colorLetter} xxcross`);
-    else pushPair('xxcross');
-    return out;
-  }
-  if (t.kind === 'xxxcross') {
-    if (colorLetter) pushPair(`${colorLetter} xxxcross`);
-    else pushPair('xxxcross');
+  // xcross / xxcross / xxxcross: append the included F2L pair colors as a
+  // suffix, e.g. `Y xxcross (RB+BO)`. xxxxcross is just F2L done so we don't
+  // bother (always 4 pairs).
+  if (t.kind === 'xcross' || t.kind === 'xxcross' || t.kind === 'xxxcross') {
+    const pairs = curr.solvedSlots.map(s => slotColors(curr.canonicalPattern, s).pair);
+    const suffix = pairs.length > 0 ? ` (${pairs.join('+')})` : '';
+    const stageName = t.kind;
+    if (colorLetter) pushPair(`${colorLetter} ${stageName}${suffix}`);
+    else pushPair(`${stageName}${suffix}`);
     return out;
   }
   if (t.kind === 'oll') {

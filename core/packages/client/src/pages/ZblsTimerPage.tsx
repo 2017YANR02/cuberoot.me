@@ -14,10 +14,13 @@ import {
 import { useZblsSelectedStore } from '../stores/zbls_selected_store';
 import {
   msToDisplay,
-  getZblsImg,
   zblsData,
 } from '../utils/zbls_helpers';
+import { VisualCube } from '../components/VisualCube';
 import '../zbls.css';
+
+// 取代表性 alg：每个 ZBLS case 用第一条公式作 F2L 状态预览
+const algForZbls = (key: string): string => zblsData[key]?.algs[0] || '';
 
 // ===== 结果卡片 =====
 function ResultCard() {
@@ -57,9 +60,10 @@ function ResultCard() {
         {t('zbls.result.case')} F2L {result.key}
       </p>
       {result.key && (
-        <img
-          className="zbls-result-img"
-          src={getZblsImg(result.key)}
+        <VisualCube
+          algorithm={algForZbls(result.key)}
+          view="f2l"
+          size={180}
           alt={`F2L ${result.key}`}
         />
       )}

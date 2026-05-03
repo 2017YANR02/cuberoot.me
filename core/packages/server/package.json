@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@cuberoot/shared": "workspace:*",
+    "@cuberoot/visualcube": "workspace:*",
     "@hono/node-server": "^1.0.0",
     "@types/ws": "^8.18.1",
     "hono": "^4.0.0",

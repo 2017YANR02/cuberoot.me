@@ -8,12 +8,26 @@ import { useZbllSelectedStore } from '../stores/zbllSelectedStore';
 import { useZbllSessionStore } from '../stores/zbllSessionStore';
 import { useZbllSettingsStore } from '../stores/zbllSettingsStore';
 import { useEffect, useState } from 'react';
-import { allZbllKeys, zbllOllGroups, getOllImg, getCollImg, getZbllImg, inverseScramble, areSetsEqual } from '../utils/zbllHelpers';
+import { allZbllKeys, zbllOllGroups, inverseScramble, areSetsEqual } from '../utils/zbllHelpers';
 import { useZbllPresetStore, STARRED_NAME } from '../stores/zbllPresetStore';
 import { useZbllNotesStore } from '../stores/zbllNotesStore';
 import zbllMap from '@cuberoot/shared/data/zbll.json';
 import type { ZbllEntry } from '../utils/zbllHelpers';
+import { VisualCube } from '../components/VisualCube';
 import '../zbll.css';
+
+const typedZbllMap = zbllMap as Record<string, ZbllEntry>;
+
+// 取代表性 alg：给 OLL 组 / COLL 组 / 单个 ZBLL case 找一个能渲染该 LL 状态的公式
+const algForKey = (key: string): string => typedZbllMap[key]?.algs[0] || '';
+const algForOll = (oll: string): string => {
+  const firstKey = allZbllKeys.find((k) => k.startsWith(`${oll} `));
+  return firstKey ? algForKey(firstKey) : '';
+};
+const algForColl = (oll: string, coll: string): string => {
+  const firstKey = allZbllKeys.find((k) => k.startsWith(`${oll} ${coll} `));
+  return firstKey ? algForKey(firstKey) : '';
+};
 
 // ===== 组件：ZbllNote =====
 function ZbllNote({ zbllKey }: { zbllKey: string }) {
@@ -55,7 +69,7 @@ function ZbllNote({ zbllKey }: { zbllKey: string }) {
 // ===== 组件：SetupAndAlgs =====
 function SetupAndAlgs({ zbllKey, maxAmount }: { zbllKey: string; maxAmount: number }) {
   const { t } = useTranslation();
-  const entry = (zbllMap as Record<string, ZbllEntry>)[zbllKey];
+  const entry = typedZbllMap[zbllKey];
   if (!entry || !entry.algs.length) return null;
   const setup = inverseScramble(entry.algs[0]);
   const algs = entry.algs.slice(0, maxAmount);
@@ -78,14 +92,14 @@ function SetupAndAlgs({ zbllKey, maxAmount }: { zbllKey: string; maxAmount: numb
 // ===== 组件：ZbllCaseInfo（弹窗底部悬停详情） =====
 function ZbllCaseInfo({ zbllKey }: { zbllKey: string }) {
   const { settings } = useZbllSettingsStore();
-  const altView = settings.pictureView === 'top' ? '3D' : 'top';
+  const llView = settings.pictureView === '3D' ? 'pll-iso' : 'pll';
   return (
     <div className="zbll-case-info">
       <hr />
       <div className="zbll-case-info-row">
         <div className="zbll-case-info-left">
           <h5>{zbllKey.replace('s', '/')}</h5>
-          <img className="zbll-card-img" src={getZbllImg(zbllKey, altView)} alt={zbllKey} />
+          <VisualCube algorithm={algForKey(zbllKey)} view={llView} size={88} alt={zbllKey} />
         </div>
         <div className="zbll-case-info-right">
           <ZbllNote zbllKey={zbllKey} />
@@ -100,6 +114,7 @@ function ZbllCaseInfo({ zbllKey }: { zbllKey: string }) {
 function ZbllCaseCard({ zbllKey }: { zbllKey: string }) {
   const { isSelected, addZbll, removeZbll } = useZbllSelectedStore();
   const { settings } = useZbllSettingsStore();
+  const llView = settings.pictureView === '3D' ? 'pll-iso' : 'pll';
   const selected = isSelected(zbllKey);
 
   const onClick = () => {
@@ -113,7 +128,7 @@ function ZbllCaseCard({ zbllKey }: { zbllKey: string }) {
         {zbllKey.split(' ')[2].replace('s', '/')}
       </div>
       <div className="zbll-case-card-body" onClick={onClick}>
-        <img className="zbll-card-img" src={getZbllImg(zbllKey, settings.pictureView)} alt={zbllKey} />
+        <VisualCube algorithm={algForKey(zbllKey)} view={llView} size={88} alt={zbllKey} />
       </div>
     </div>
   );
@@ -178,6 +193,7 @@ function ZbllsModal({ oll, coll, onClose }: { oll: string; coll: string; onClose
 function CollCard({ oll, coll }: { oll: string; coll: string }) {
   const { numInCollSelected, addColl, removeColl } = useZbllSelectedStore();
   const { settings } = useZbllSettingsStore();
+  const llView = settings.pictureView === '3D' ? 'pll-iso' : 'pll';
   const [modalOpen, setModalOpen] = useState(false);
 
   const count = numInCollSelected(oll, coll);
@@ -197,7 +213,7 @@ function CollCard({ oll, coll }: { oll: string; coll: string }) {
           <strong>{coll}</strong> <span>({count}/{total})</span>
         </div>
         <div className="zbll-coll-card-body" onClick={onImgClick}>
-          <img className="zbll-card-img" src={getCollImg(oll, coll, settings.pictureView)} alt={coll} />
+          <VisualCube algorithm={algForColl(oll, coll)} view={llView} size={88} alt={coll} />
         </div>
       </div>
       {modalOpen && <ZbllsModal oll={oll} coll={coll} onClose={() => setModalOpen(false)} />}
@@ -236,7 +252,7 @@ function OllCard({ oll }: { oll: string }) {
           <span className={`zbll-caret ${collapsed ? '' : 'zbll-caret-up'}`}>▼</span>
         </div>
         <div className="zbll-oll-card-body" onClick={onImgClick}>
-          <img className="zbll-card-img" src={getOllImg(oll)} alt={oll} />
+          <VisualCube algorithm={algForOll(oll)} view="oll" size={88} alt={oll} />
         </div>
       </div>
       {!collapsed && (
