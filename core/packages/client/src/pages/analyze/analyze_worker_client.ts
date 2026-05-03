@@ -1,12 +1,18 @@
 /**
  * @module pages/analyze/analyze_worker_client
  *
- * Thin typed wrapper around the analyze Worker.
- * The Worker source lives at /analyze-worker/{ear,boohoo,hs,zbh}.js — bundled
- * verbatim from speedcubedb.com's `/earphones/*.js` pipeline (host-gate stripped
- * in ear.js so it runs off-cubedb). All CFOP enumeration logic happens there;
- * this file only handles the message protocol.
+ * Thin typed wrapper around the analyze Worker. Two implementations
+ * live side-by-side, switchable via URL flag `?worker=`:
+ *   - 'ts' (default) — Vite-bundled TS port at worker/analyzer.worker.ts.
+ *     Cube model + dictionaries still come from the legacy data files via
+ *     importScripts so recognition stays byte-identical to upstream.
+ *   - 'legacy' — speedcubedb's original obfuscated worker, kept verbatim at
+ *     /analyze-worker/ear.legacy.js for reference / fallback.
+ *
+ * A typed-array fast variant is planned but deferred — the move tables
+ * need careful verification (B/F sticker cycles depend on convention).
  */
+import TsWorker from './worker/analyzer.worker?worker';
 
 export type CrossColor = 'Yellow' | 'White' | 'Blue' | 'Green' | 'Red' | 'Orange';
 
@@ -42,15 +48,22 @@ export interface AnalyzeHandlers {
   onError?: (e: ErrorEvent | Error) => void;
 }
 
+export type WorkerVariant = 'ts' | 'legacy';
+
+function spawnWorker(variant: WorkerVariant): Worker {
+  if (variant === 'legacy') return new Worker('/analyze-worker/ear.legacy.js');
+  return new TsWorker();
+}
+
 export class Analyzer {
   private worker: Worker | null = null;
   // Each start() bumps the generation; stale messages from terminated workers are ignored.
   private generation = 0;
 
-  start(req: AnalyzeRequest, handlers: AnalyzeHandlers): void {
+  start(req: AnalyzeRequest, handlers: AnalyzeHandlers, variant: WorkerVariant = 'ts'): void {
     this.terminate();
     const gen = ++this.generation;
-    const w = new Worker('/analyze-worker/ear.js');
+    const w = spawnWorker(variant);
     this.worker = w;
     const isCurrent = () => gen === this.generation;
     w.onmessage = (e: MessageEvent<AnalyzeMessage>) => {
