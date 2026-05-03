@@ -204,6 +204,15 @@ function ollSolved(p: KPattern): boolean {
   return true;
 }
 
+/** Top-layer edges all show U-color on U face (EO of last layer is done). */
+export function topEdgesOriented(p: KPattern): boolean {
+  const uColor = centerColorAtFace(p, 0);
+  for (let slot = 0; slot < 4; slot++) {
+    if (edgeStickerOnFace(p, slot, 0) !== uColor) return false;
+  }
+  return true;
+}
+
 /** Whole cube solved = every slot's stickers match its adjacent center colors. */
 function fullySolved(p: KPattern): boolean {
   for (let i = 0; i < 12; i++) if (!edgeFaceSolved(p, i)) return false;
