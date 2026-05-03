@@ -565,25 +565,32 @@ export default function VisualCubeEditorPage() {
 
       {/* Controls */}
       <section className="vc-controls">
-        <NumberRow
-          label={t('魔方阶数', 'Puzzle Type')}
-          value={state.cubeSize} min={1} max={10}
-          onChange={(v) => set('cubeSize', v)}
-          onReset={() => set('cubeSize', DEFAULTS.cubeSize)}
-        />
+        <div className="vc-row">
+          <label className="vc-label">{t('魔方阶数', 'Puzzle Type')}</label>
+          <div className="vc-row-controls">
+            <input
+              type="number"
+              className="vc-num"
+              value={state.cubeSize} min={1} max={10}
+              onChange={(e) => {
+                const n = parseInt(e.target.value, 10);
+                if (!isNaN(n)) set('cubeSize', Math.max(1, Math.min(10, n)));
+              }}
+            />
+          </div>
+        </div>
         <div className="vc-row">
           <label className="vc-label">{t('图片尺寸 (px)', 'Image Size (px)')}</label>
           <div className="vc-row-controls">
-            {[64, 88, 128, 256, 512, 1000].map((s) => (
-              <button
-                key={s}
-                type="button"
-                className={`vc-btn vc-btn-sm${state.imageSize === s ? ' vc-btn-active' : ''}`}
-                onClick={() => set('imageSize', s)}
-              >
-                {s}
-              </button>
-            ))}
+            <input
+              type="number"
+              className="vc-num"
+              value={state.imageSize} min={32} max={1000} step={8}
+              onChange={(e) => {
+                const n = parseInt(e.target.value, 10);
+                if (!isNaN(n)) set('imageSize', Math.max(32, Math.min(1000, n)));
+              }}
+            />
           </div>
         </div>
 
