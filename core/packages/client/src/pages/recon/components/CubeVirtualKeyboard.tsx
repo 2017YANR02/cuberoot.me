@@ -25,13 +25,19 @@ interface Props {
 
 // ── 常量 ──
 
-// NOTE: 长按变体映射——数字 + 触发器
+// NOTE: 长按变体映射——数字 + 触发器 + 面旋转键(变体 / 双层)
 const LONG_PRESS_VARIANTS: Record<string, string[]> = {
   '2': ['1', '2', '3', '4', '5', '6'],
   'trigger-sexy': ["R U R' U'", "L' U' L U"],
   'trigger-sledge': ["R' F R F'", "L F' L' F"],
   'trigger-unsexy': ["R U' R' U", "L' U L U'"],
   'trigger-hedge': ["F R' F' R", "F' L F L'"],
+  U: ["U'", 'U2', 'u'],
+  D: ["D'", 'D2', 'd'],
+  F: ["F'", 'F2', 'f'],
+  B: ["B'", 'B2', 'b'],
+  R: ["R'", 'R2', 'r'],
+  L: ["L'", 'L2', 'l'],
 };
 
 // NOTE: 可双击的按键集合
@@ -331,10 +337,10 @@ export default function CubeVirtualKeyboard({ textareaRef, onInput }: Props) {
       return;
     }
 
-    // NOTE: () 三态——点击(), 下滑[], 上滑{}
-    if (key === '()') {
+    // NOTE: () / [] 双键——点击插入并把光标放到中间;() 上滑 {}
+    if (key === '()' || key === '[]') {
       const dy = e.clientY - startYRef.current;
-      const pair = dy > 20 ? '[]' : dy < -20 ? '{}' : '()';
+      const pair = key === '()' && dy < -20 ? '{}' : key;
       const el = textareaRef.current;
       if (!el) return;
       const pos = el.selectionStart ?? 0;
@@ -483,22 +489,20 @@ export default function CubeVirtualKeyboard({ textareaRef, onInput }: Props) {
 
   return (
     <div>
-      {/* 联想建议条 */}
-      {suggestions.length > 0 && (
-        <div className="vkb-suggest-bar" onPointerDown={handleSuggestionClick}>
-          {suggestions.map(s => (
-            <button
-              key={s.label}
-              type="button"
-              className="vkb-suggest-btn"
-              data-formula={s.formula}
-              data-prefix-len={s.prefixLen}
-            >
-              {s.label}
-            </button>
-          ))}
-        </div>
-      )}
+      {/* 联想建议条——始终保留高度,空态防止键盘上移 */}
+      <div className="vkb-suggest-bar" onPointerDown={handleSuggestionClick}>
+        {suggestions.map(s => (
+          <button
+            key={s.label}
+            type="button"
+            className="vkb-suggest-btn"
+            data-formula={s.formula}
+            data-prefix-len={s.prefixLen}
+          >
+            {s.label}
+          </button>
+        ))}
+      </div>
 
       {/* 键盘主体 */}
       <div
@@ -525,7 +529,8 @@ export default function CubeVirtualKeyboard({ textareaRef, onInput }: Props) {
             <button type="button" data-key="2">2</button>
             <button type="button" data-key="w " className={modifierDisabled ? 'vkb-disabled' : ''}>w</button>
             <button type="button" data-key="/">/</button>
-            <button type="button" data-key="()" style={{ flex: 2 }}>()</button>
+            <button type="button" data-key="()">()</button>
+            <button type="button" data-key="[]">[]</button>
           </div>
           <div className="vkb-row">
             <button type="button" data-key="x">x</button>
@@ -612,7 +617,7 @@ export default function CubeVirtualKeyboard({ textareaRef, onInput }: Props) {
         <span><em>{t('recon.gestureUp', 'slide up')}</em> r</span>
         <span><em>{t('recon.gestureDouble', 'double tap')}</em> R2</span>
         <span><em>{t('recon.gestureHold', 'hold')}</em> R2&apos;</span>
-        <span><em>{t('recon.gestureBracket', '() down/up')}</em> []/{'{ }'}</span>
+        <span><em>{t('recon.gestureBracket', '() up')}</em> {'{ }'}</span>
       </p>
 
       {/* 长按弹出气泡（portal 到 body） */}
