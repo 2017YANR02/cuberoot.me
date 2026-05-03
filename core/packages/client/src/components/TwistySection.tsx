@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, type MutableRefObject } from 'react';
+import './TwistySection.css';
 
 /** Twisty 播放器区域——动态导入 cubing 库，用构造函数 API 创建（对齐 legacy） */
 export default function TwistySection({
@@ -75,8 +76,8 @@ export default function TwistySection({
   }, [Ctor, puzzle, scramble, alg, playerRef, fillPane]);
 
   return (
-    <div className={`detail-section${fillPane ? ' detail-section--fill' : ''}`}>
-      <div ref={containerRef} className="detail-twisty-container" />
+    <div className={`twisty-section${fillPane ? ' twisty-section--fill' : ''}`}>
+      <div ref={containerRef} className="twisty-container" />
     </div>
   );
 }

@@ -27,6 +27,9 @@ import {
   type Solution,
   type WorkerVariant,
 } from './analyze_worker_client';
+import { randomScrambleForEvent } from '../../utils/scramble';
+import LangToggle from '../../components/LangToggle';
+import TwistySection from '../../components/TwistySection';
 import './analyze.css';
 
 const DEFAULT_SCRAMBLE = "B2 L F' U R' D R' F2 D L R2 D R B' D' L2 D2 R' U'";
@@ -174,7 +177,10 @@ export default function AnalyzePage() {
   return (
     <div className="analyze-page">
       <header className="analyze-header">
-        <h1>{t('打乱分析器', 'Scramble Analyzer')}</h1>
+        <div className="analyze-header-row">
+          <h1>{t('打乱分析器', 'Scramble Analyzer')}</h1>
+          <LangToggle variant="inline" className="analyze-lang-toggle" />
+        </div>
         <p className="analyze-sub">
           {t(
             '枚举给定 3x3 打乱所有合理的 CFOP 解法（白十字 / 黄十字 / 任意颜色十字 + F2L + OLL + PLL）。',
@@ -184,6 +190,18 @@ export default function AnalyzePage() {
       </header>
 
       <div className="analyze-input-row">
+        <button
+          className="analyze-shuffle"
+          onClick={() => {
+            const s = randomScrambleForEvent('3x3');
+            if (s) setScramble(s);
+          }}
+          disabled={running}
+          title={t('生成随机 WCA 打乱', 'Generate random WCA scramble')}
+          aria-label={t('生成随机打乱', 'Generate random scramble')}
+        >
+          <Shuffle size={14} />
+        </button>
         <input
           className="analyze-scramble"
           type="text"
@@ -299,19 +317,19 @@ export default function AnalyzePage() {
             />
             <FilterChip
               active={filter === 'oll-skip'}
-              title={t('OLL 跳过', 'OLL Skip')}
+              title={t('跳O', 'OLL Skip')}
               amount={counts.ollSkip}
               onClick={() => setFilter('oll-skip')}
             />
             <FilterChip
               active={filter === 'pll-skip'}
-              title={t('PLL 跳过', 'PLL Skip')}
+              title={t('跳P', 'PLL Skip')}
               amount={counts.pllSkip}
               onClick={() => setFilter('pll-skip')}
             />
             <FilterChip
               active={filter === 'll-skip'}
-              title={t('末层跳过', 'LL Skip')}
+              title={t('跳末层', 'LL Skip')}
               amount={counts.llSkip}
               onClick={() => setFilter('ll-skip')}
             />
@@ -337,8 +355,8 @@ export default function AnalyzePage() {
                     {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                     <span>{sol[0]}HTM</span>
                     <span className="analyze-title-right">
-                      {!dataOll && <span className="analyze-skip-tag">{t('OLL 跳', 'OLL skip')}</span>}
-                      {!dataPll && <span className="analyze-skip-tag">{t('PLL 跳', 'PLL skip')}</span>}
+                      {!dataOll && <span className="analyze-skip-tag">{t('跳O', 'OLL skip')}</span>}
+                      {!dataPll && <span className="analyze-skip-tag">{t('跳P', 'PLL skip')}</span>}
                       <span
                         role="button"
                         tabIndex={0}
@@ -354,6 +372,7 @@ export default function AnalyzePage() {
                   </button>
                   {open && (
                     <div className="analyze-solution-content">
+                      <TwistySection puzzle="3x3x3" scramble={analyzedScramble} alg={sol[1]} />
                       <pre>{`${analyzedScramble}\n\n\n${sol[1]}\n\n\n${sol[0]}HTM`}</pre>
                     </div>
                   )}
