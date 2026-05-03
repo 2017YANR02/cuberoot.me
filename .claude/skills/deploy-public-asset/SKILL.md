@@ -12,7 +12,7 @@ description: "Use when adding new public/static files to the site — images, fo
 1. `pnpm --filter @cuberoot/client build` 产出 `core/packages/client/dist/`
 2. CI 把 `dist/*` **复制回仓库根目录**（`index.html`、`_assets/` 等），commit 成 `ci: rebuild SPA from core/`
 3. GitHub Pages serve 根目录；`404.html = index.html` 做 SPA fallback
-4. 同一 workflow 顺带 rsync `packages/server/dist/` 到 ECS 并 `pm2 restart core-api`
+4. 同一 workflow 顺带 rsync `packages/server/dist/` 到 云服务器 并 `pm2 restart core-api`
 
 **不要手动改根目录的 `_assets/`、`index.html`、`404.html`** —— CI 会覆写。
 源码改 `core/`，构建产物由 CI 管理。

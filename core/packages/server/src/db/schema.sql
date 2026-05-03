@@ -1,5 +1,5 @@
 -- NOTE: 训练器数据库 schema
--- 在 ECS MariaDB 上执行此文件创建数据库和表
+-- 在云服务器 MariaDB 上执行此文件创建数据库和表
 
 CREATE DATABASE IF NOT EXISTS trainer_db
   CHARACTER SET utf8mb4
