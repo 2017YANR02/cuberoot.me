@@ -185,7 +185,8 @@
         "no_algdb_match": {
           "f2l": "No F2L alg in algdb for this case",
           "oll": "No OLL alg in algdb for this case",
-          "pll": "No PLL alg in algdb for this case"
+          "pll": "No PLL alg in algdb for this case",
+          "zbll": "No ZBLL alg in algdb for this case"
         }
       }
     }

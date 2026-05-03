@@ -8,11 +8,12 @@ import type { KPattern } from 'cubing/kpuzzle';
 import { patternFromAlg, isAlgPrefix, simplifyAlg } from './cube3';
 import {
   detectStage, defaultCentersRotation, crossOnDRotation,
-  evaluateCanonical, F2L_SLOT_DEFS,
+  evaluateCanonical, F2L_SLOT_DEFS, topEdgesOriented,
 } from './stage_detect';
 import { lookupF2lAlgs } from './f2l_lookup';
 import { lookupOllAlgs } from './oll_lookup';
 import { lookupPllAlgs } from './pll_lookup';
+import { lookupZbllAlgs } from './zbll_lookup';
 import type { Alg3x3Set } from '@cuberoot/shared/alg';
 
 /** Strip comments + paren grouping, return a string with only move tokens. */
@@ -87,7 +88,11 @@ export async function suggestAlg(
   let category: Alg3x3Set;
   if (stageInfo.stage === 'solved') return { kind: 'empty', reasonKey: 'recon.autofill.empty.solved' };
   else if (stageInfo.stage === 'oll') category = 'pll';
-  else if (stageInfo.stage === 'f2l') category = 'oll';
+  else if (stageInfo.stage === 'f2l') {
+    // F2L done. If LL edges are already oriented (e.g. user did ZBLS / EOF2L)
+    // skip OLL → suggest ZBLL (one alg to solve everything).
+    category = topEdgesOriented(stageInfo.canonicalPattern) ? 'zbll' : 'oll';
+  }
   else if (
     stageInfo.stage === 'cross' || stageInfo.stage === 'xcross'
     || stageInfo.stage === 'xxcross' || stageInfo.stage === 'xxxcross'
@@ -97,14 +102,13 @@ export async function suggestAlg(
 
   const scored: AlgSuggestion[] = [];
 
-  // F2L fingerprints are geometric and only require cross-on-D (not default
-  // centers) — so for color-neutral solves we route through crossOnDRotation.
-  // OLL/PLL fingerprints depend on absolute face indices, so they still need
-  // default centers (limits OLL/PLL suggestions to yellow-cross solves for now).
-  const f2lRot = category === 'f2l'
+  // F2L and ZBLL fingerprints are geometric and only require cross-on-D
+  // (color-neutral safe). OLL/PLL fingerprints use absolute face indices, so
+  // they still need default centers (limits OLL/PLL suggestions to yellow-
+  // cross solves for now).
+  const canonRot = (category === 'f2l' || category === 'zbll')
     ? await crossOnDRotation(startState)
     : await defaultCentersRotation(startState);
-  const canonRot = f2lRot;
   const startCanonical = canonRot ? startState.applyAlg(canonRot) : startState;
 
   // Track WHY no candidates are produced so we can return a useful reason.
@@ -140,9 +144,11 @@ export async function suggestAlg(
   } else {
     const entries = category === 'oll'
       ? await lookupOllAlgs(startCanonical)
-      : await lookupPllAlgs(startCanonical);
+      : category === 'pll'
+        ? await lookupPllAlgs(startCanonical)
+        : await lookupZbllAlgs(startCanonical);
     if (entries.length > 0) lookupHadEntries = true;
-    const goalSolved = category === 'pll';
+    const goalSolved = category === 'pll' || category === 'zbll';
     for (const e of entries) {
       const rawAlg = canonRot ? simplifyAlg(`${canonRot} ${e.alg}`) : e.alg;
       if (!rawAlg) continue;
