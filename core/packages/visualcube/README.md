@@ -150,3 +150,8 @@ sr-visualizer (the TS source we forked) ports most of PHP visualcube but is miss
 - [ ] `cubePNG` uses `setTimeout` with no delay — replace with proper await on svg load event
 - [ ] Replace `parseInt(paramValue) || N` patterns that swallow `0` as falsy in option parser
 - [ ] Add unit tests for option parsing + mask geometry (golden SVG snapshots)
+
+
+## Related
+
+- [VisualCube Editor 2.0](https://github.com/roudai/VisualCubeEditor2) — Vue + sr-visualizer GUI editor by @roudai; the `/visualcube` page in this repo (`packages/client/src/pages/visualcube/VisualCubeEditorPage.tsx`) replicates its UI in React with the renderer wired through this package, gaining the extra PHP parameters (`ac`, `view=trans`, extended masks).
