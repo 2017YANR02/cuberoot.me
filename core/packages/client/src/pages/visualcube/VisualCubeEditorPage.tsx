@@ -582,15 +582,15 @@ export default function VisualCubeEditorPage() {
         <div className="vc-row">
           <label className="vc-label">{t('图片尺寸 (px)', 'Image Size (px)')}</label>
           <div className="vc-row-controls">
-            <input
-              type="number"
-              className="vc-num"
-              value={state.imageSize} min={32} max={1000} step={8}
-              onChange={(e) => {
-                const n = parseInt(e.target.value, 10);
-                if (!isNaN(n)) set('imageSize', Math.max(32, Math.min(1000, n)));
-              }}
-            />
+            <select
+              className="vc-select"
+              value={state.imageSize}
+              onChange={(e) => set('imageSize', parseInt(e.target.value, 10))}
+            >
+              {[64, 88, 128, 256, 512, 1000].map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
           </div>
         </div>
 
