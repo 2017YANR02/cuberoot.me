@@ -7,11 +7,16 @@ import { Copy, Check } from 'lucide-react';
 
 interface AlgChipProps {
   alg: string;
+  /**
+   * 渲染用 HTML 片段(已在 build pipeline 净化,只含 <u>/<s>/<em>/<strong>/<sub>/<sup>);
+   * Word 源文档里下划线/删除线/斜体等都是指法记号,必须显示。
+   */
+  algHtml?: string;
   /** 可选 hover 提示文案 override */
   title?: string;
 }
 
-export function AlgChip({ alg, title }: AlgChipProps) {
+export function AlgChip({ alg, algHtml, title }: AlgChipProps) {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const [copied, setCopied] = useState(false);
@@ -61,7 +66,11 @@ export function AlgChip({ alg, title }: AlgChipProps) {
       onClick={handleClick}
       onKeyDown={handleKey}
     >
-      <code>{alg}</code>
+      {algHtml ? (
+        <code dangerouslySetInnerHTML={{ __html: algHtml }} />
+      ) : (
+        <code>{alg}</code>
+      )}
       {copied ? (
         <Check className="tutorial-chip-icon" aria-label="copied" />
       ) : (

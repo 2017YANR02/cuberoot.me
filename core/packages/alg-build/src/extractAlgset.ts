@@ -136,49 +136,192 @@ function extractLabelFromImageCell(text: string): string | null {
   return m[1].trim().slice(0, 30);
 }
 
-/** 从 alg cell 的 HTML 拆出候选 alg 字符串（按 <p>/<br>/换行/等号） */
-function splitAlgCandidates(
+/**
+ * 安全 inline 标签集合 — 这些代表 Word 里的指法记号:
+ *   u = 下划线   s = 删除线   em/i = 斜体   strong/b = 粗体(主公式)
+ *   sub/sup = 上下标(slice 记号 / 注释).
+ * 其余标签全部 unwrap(保留文本)。
+ */
+const SAFE_INLINE_TAGS = new Set([
+  'u', 's', 'strike', 'del',
+  'em', 'i',
+  'strong', 'b',
+  'sub', 'sup',
+]);
+const TAG_NORMALIZE: Record<string, string> = {
+  i: 'em',
+  b: 'strong',
+  strike: 's',
+  del: 's',
+};
+
+/** 把节点序列展平成保留 SAFE_INLINE_TAGS 的 markup 字符串;
+ *  <br> 和 <p> 转成 \n 作为顶层 alg 分隔符. */
+function nodeToMarkup(node: any): string {
+  if (!node) return '';
+  if (node.type === 'text') return String(node.data ?? '');
+  if (node.type !== 'tag') return '';
+  const tag = String(node.name ?? '').toLowerCase();
+  const inner = (node.children ?? []).map((c: any) => nodeToMarkup(c)).join('');
+  if (tag === 'br') return '\n';
+  if (tag === 'p' || tag === 'div' || tag === 'li') return inner + '\n';
+  if (SAFE_INLINE_TAGS.has(tag)) {
+    const norm = TAG_NORMALIZE[tag] ?? tag;
+    // 空标签(只含空白)不必输出
+    const stripped = inner.replace(/<[^>]+>/g, '');
+    if (stripped.replace(/\s/g, '').length === 0) return inner;
+    // 内部跨多行(<br> 或 <p> 留下的 \n)时按行分发 wrap,
+    // 防止 <strong>A\nB</strong> 被后续 split 切断后产生孤儿标签.
+    if (inner.includes('\n')) {
+      return inner
+        .split('\n')
+        .map((line: string) => (line.replace(/<[^>]+>/g, '').trim().length === 0 ? line : `<${norm}>${line}</${norm}>`))
+        .join('\n');
+    }
+    return `<${norm}>${inner}</${norm}>`;
+  }
+  // 其它 tag: 仅保留文本/子节点
+  return inner;
+}
+
+function getCellMarkup(
+  $cell: ReturnType<ReturnType<typeof cheerio.load>>,
+): string {
+  const nodes = $cell.contents().toArray();
+  return nodes.map((n: any) => nodeToMarkup(n)).join('');
+}
+
+function stripTags(s: string): string {
+  return s.replace(/<[^>]+>/g, '');
+}
+
+/**
+ * 重新平衡 inline 标签:
+ *   - 起头的孤儿闭合标签(如 `</strong>`) → 丢弃
+ *   - 收尾仍未闭合的开标签 → 在末尾追加闭合
+ * 用于 segment 跨越 nodeToMarkup 包出来的 `<strong>...A\nB...</strong>` 这种 —
+ * split 后第一段缺尾闭合,中间段两边都缺,末段只剩孤儿闭合.
+ * 假定输入只含 SAFE_INLINE_TAGS 列出的简单标签(无属性).
+ */
+function balanceTags(html: string): string {
+  const tagRe = /<\/?([a-z]+)>/gi;
+  let out = '';
+  let cursor = 0;
+  const stack: string[] = [];
+  let m: RegExpExecArray | null;
+  while ((m = tagRe.exec(html)) !== null) {
+    out += html.slice(cursor, m.index);
+    const tag = m[1].toLowerCase();
+    const isClose = m[0][1] === '/';
+    if (isClose) {
+      const idx = stack.lastIndexOf(tag);
+      if (idx === -1) {
+        // 孤儿闭合 - 丢弃
+      } else {
+        const closing = stack.splice(idx, stack.length - idx);
+        out += closing.reverse().map(t => `</${t}>`).join('');
+      }
+    } else {
+      stack.push(tag);
+      out += `<${tag}>`;
+    }
+    cursor = m.index + m[0].length;
+  }
+  out += html.slice(cursor);
+  while (stack.length) out += `</${stack.pop()}>`;
+  return out;
+}
+
+function decodeEntities(s: string): string {
+  return s
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&apos;/g, "'")
+    .replace(/&#39;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&');
+}
+
+/** 在保留 markup 的前提下做开头/段尾清理 — 这些清理只匹配纯文本字符,
+ *  不会切到我们 SAFE_INLINE_TAGS 的标签内部(标签里没有 [oh] / `*` / 数字编号). */
+function cleanAlgMarkup(seg: string): string {
+  let s = seg;
+  // 重复跑直到稳定:开头可能同时有 "* "+"1) "+"-> " 等多种前缀
+  for (let i = 0; i < 4; i++) {
+    const before = s;
+    s = s
+      // 开头 *、• (但保留 ·,它是手指法记号)
+      .replace(/^\s*(?:<\/?[a-z]+>)*\s*[*•]+\s*/i, '')
+      // 开头 "1." / "2)" / "3:"
+      .replace(/^\s*(?:<\/?[a-z]+>)*\s*\d+\s*[.):]\s*/i, '')
+      // 开头方向箭头(变体指示),不剥 ↑↓← 因为它们在 alg 里是真正的指法记号
+      .replace(/^\s*(?:<\/?[a-z]+>)*\s*(?:->|<-|=>|<=|⇒|⇐|\.\.\.)\s*/i, '');
+    if (s === before) break;
+  }
+  // 任意位置:[xxx] 注释(手位 / 作者 / 标签).
+  // 注意要躲开 cube 换位记号 [A, B] / [A: B] —— 那些里面会有 ' / : / 大写字母+空格.
+  // 单词式: [oh] [key] [fmc] [Feliks] [2gen]
+  s = s.replace(/\[[a-zA-Z][a-zA-Z0-9_-]*\]/g, '');
+  // 多词全小写式: [oh,big,key] [oh, big, key] [ft fmc]
+  s = s.replace(/\[[a-z][a-z,\s_-]*[a-z]\]/g, '');
+  // 步数/作者角标 (8*) (12) (8.4)
+  s = s.replace(/\(\s*\d+(?:\.\d+)?\s*\*?\s*\)/g, '');
+  return s;
+}
+
+/** alg cell → 候选公式列表(plain + html). 调用方按 primary 标平铺到 CaseAlg[]. */
+function extractAlgEntries(
   $cell: ReturnType<ReturnType<typeof cheerio.load>>,
   $: ReturnType<typeof cheerio.load>,
-): string[] {
-  const candidates: string[] = [];
-  const ps = $cell.children('p').toArray();
-  const sources: string[] =
-    ps.length > 0
-      ? ps.map(p => $(p).text())
-      : [$cell.text()];
-  for (const src of sources) {
-    // 按 "=" / "//" / "或" / ";" / newline 拆
-    // 注意 "=" 是某些 docx（OLL / CMLL）的 alg 分隔符
-    const parts = src
-      .split(/(?:\/\/|或|;|\n|\r|=)/)
-      .map(s => s.replace(/\s+/g, ' ').trim());
-    for (const p of parts) {
-      if (!p) continue;
-      // 依次清理：
-      // - 开头 "*" / "·" 推荐标记
-      // - 开头 "1." "2)" 编号
-      // - 前缀箭头 "->" "<-" "=>" "⇒" "→" "←"（表示变体方向）
-      // - "[oh]" / "[lh]" / "[2h]" 等手位注释
-      // - "(8*)" "(12)" 等步数/作者角标
-      // - 结尾多余空格
-      let cleaned = p
-        .replace(/^\s*[*·•]+\s*/, '')
-        .replace(/^\s*\d+[\.):)]?\s*/, '')
-        .replace(/^\s*(?:->|<-|=>|<=|→|←|⇒|⇐|\.\.\.)\s*/, '')
-        .replace(/\[(?:oh|lh|mh|rh|2h|one-hand|two-hand|Nakaji|Feliks|\w+)\]/gi, '')
-        .replace(/\(\s*\d+\s*\*?\s*\)/g, '')
-        .trim();
-      if (isAlgText(cleaned)) candidates.push(cleaned);
+): { alg: string; algHtml?: string }[] {
+  const markup = getCellMarkup($cell);
+
+  // 顶层切分:`\n` 来自 <br>/<p>/<li>;text-level 分隔符 `// 或 ; =`.
+  // 这些分隔符不会出现在 SAFE_INLINE_TAGS 标签字面里,所以直接 split 安全.
+  const segs = markup.split(/(?:\/\/|或|;|\r?\n|=)/);
+
+  const seenPlain = new Set<string>();
+  const out: { alg: string; algHtml?: string }[] = [];
+
+  for (const raw of segs) {
+    if (!raw) continue;
+    let cleanedHtml = cleanAlgMarkup(raw)
+      // 把多空白合并为单空格(标签外)
+      .replace(/[ \t]+/g, ' ')
+      .replace(/\s+(<\/[a-z]+>)/gi, '$1')
+      .replace(/(<[a-z]+>)\s+/gi, '$1')
+      .trim();
+    if (!cleanedHtml) continue;
+    // segment 跨过 nodeToMarkup 包出来的标签时会留下孤儿;balance 一遍.
+    cleanedHtml = balanceTags(cleanedHtml).trim();
+    if (!cleanedHtml) continue;
+
+    const plain = decodeEntities(stripTags(cleanedHtml))
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!isAlgText(plain)) continue;
+    if (seenPlain.has(plain)) continue;
+    seenPlain.add(plain);
+
+    // markup 跟 plain 完全相同时省略 algHtml
+    const cleanedHtmlNorm = cleanedHtml.replace(/\s+/g, ' ').trim();
+    if (cleanedHtmlNorm === plain) {
+      out.push({ alg: plain });
+    } else {
+      out.push({ alg: plain, algHtml: cleanedHtmlNorm });
     }
   }
-  return [...new Set(candidates)];
+  // 用 $ 防 unused warning(API 兼容旧签名)
+  void $;
+  return out;
 }
+
 
 interface ParsedCase {
   image: string;
   label: string;
-  algs: string[];
+  algs: { alg: string; algHtml?: string }[];
 }
 
 /** 从 <tr> 抽取 1+ 个 case。
@@ -245,13 +388,13 @@ function parseRow(
       const d = Math.abs(algIdx - imgIdx);
       if (d < bestDist) { bestDist = d; bestAlgIdx = algIdx; }
     }
-    let algs: string[] = [];
+    let algs: { alg: string; algHtml?: string }[] = [];
     if (bestAlgIdx >= 0) {
-      algs = splitAlgCandidates(profiles[bestAlgIdx].$c, $);
+      algs = extractAlgEntries(profiles[bestAlgIdx].$c, $);
       consumedAlg.add(bestAlgIdx);
     } else {
       // 没配对到 alg cell → 试 img cell 自己的文本(docx 把 image+alg 同 cell 的情况)
-      const selfAlgs = splitAlgCandidates(p.$c, $);
+      const selfAlgs = extractAlgEntries(p.$c, $);
       if (selfAlgs.length) algs = selfAlgs;
     }
     results.push({ image: p.imgSrc!, label, algs });
@@ -363,11 +506,11 @@ function parseMatrixTable(
       const labelRow = labelRowIdx >= 0 ? rowData[labelRowIdx] : null;
 
       // 取 alg 源 cell 文本并拆分候选
-      let algs: string[] = [];
+      let algs: { alg: string; algHtml?: string }[] = [];
       if (algRow) {
         const algCells = $(algRow.el).find('td,th').toArray();
         if (algCells[col]) {
-          algs = splitAlgCandidates($(algCells[col]), $);
+          algs = extractAlgEntries($(algCells[col]), $);
         }
       }
 
@@ -425,10 +568,11 @@ export function extractAlgset(
     }
     seenIds.add(caseId);
 
-    const caseAlgs: CaseAlg[] = p.algs.map((a, i) => ({
-      alg: a,
-      primary: i === 0,
-    }));
+    const caseAlgs: CaseAlg[] = p.algs.map((a, i) => {
+      const out: CaseAlg = { alg: a.alg, primary: i === 0 };
+      if (a.algHtml) out.algHtml = a.algHtml;
+      return out;
+    });
     if (caseAlgs.length === 0 && p.image) {
       caseAlgs.push({ alg: '(no alg found)', primary: true });
     }

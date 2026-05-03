@@ -187,6 +187,10 @@ export async function extractDocx(
     { path: docxFile.absPath },
     {
       convertImage: mammoth.images.imgElement(imgHandler),
+      // mammoth 默认 b/i/strike/sup/sub 都有映射;只有 underline 被默认丢弃
+      // (README: "underlining can be confused with links")。
+      // 魔方公式里下划线是指法记号,绝不能丢,显式启用。
+      styleMap: ['u => u'],
     },
   );
 

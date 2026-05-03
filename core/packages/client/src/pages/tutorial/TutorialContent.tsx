@@ -18,9 +18,26 @@ interface TutorialContentProps {
 }
 
 const SANITIZE_CONFIG = {
-  ADD_TAGS: ['span'],
+  ADD_TAGS: ['span', 'u', 's', 'em', 'strong', 'sub', 'sup'],
   ADD_ATTR: ['data-alg', 'data-see-also', 'loading', 'decoding'],
 };
+
+/** 把 chip span 的子节点序列化成 markup 字符串(用于传给 AlgChip 的 algHtml) */
+function serializeChipChildren(children: DOMNode[]): string {
+  return children
+    .map((c: any) => {
+      if (c.type === 'text') return c.data ?? '';
+      if (c.type !== 'tag') return '';
+      const tag = String(c.name ?? '').toLowerCase();
+      const inner = serializeChipChildren(c.children ?? []);
+      // Only known safe tags pass through; others unwrap
+      if (['u', 's', 'em', 'strong', 'sub', 'sup', 'i', 'b'].includes(tag)) {
+        return `<${tag}>${inner}</${tag}>`;
+      }
+      return inner;
+    })
+    .join('');
+}
 
 export function TutorialContent({ html }: TutorialContentProps) {
   const clean = DOMPurify.sanitize(html, SANITIZE_CONFIG);
@@ -37,7 +54,12 @@ export function TutorialContent({ html }: TutorialContentProps) {
       // alg chip
       if (el.name === 'span' && el.attribs?.class?.includes('tutorial-chip')) {
         const alg = el.attribs['data-alg'] ?? '';
-        if (alg) return <AlgChip alg={alg} />;
+        if (alg) {
+          const inner = serializeChipChildren(el.children);
+          // 只有当 chip 内部含 markup 标签时才传 algHtml
+          const algHtml = /<[a-z]+>/i.test(inner) ? inner : undefined;
+          return <AlgChip alg={alg} algHtml={algHtml} />;
+        }
       }
 
       // 内站链接 /tutorial/... → React Router Link
