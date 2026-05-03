@@ -37,7 +37,9 @@
     "langToggleLabel": "EN",
     "clear": "清除",
     "min": "下限",
-    "max": "上限"
+    "max": "上限",
+    "sortAsc": "升序",
+    "sortDesc": "降序"
   },
   "recon": {
     "title": "还原复盘",

@@ -110,7 +110,7 @@ export function ListSelect({ items, value, onChange, allLabel, className, search
               className="list-select-search"
               value={query}
               onChange={e => setQuery(e.target.value)}
-              placeholder={allLabel}
+              autoFocus
             />
           )}
           <div className="list-select-list">
