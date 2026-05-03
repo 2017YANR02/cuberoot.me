@@ -169,7 +169,7 @@ export default function GenPage() {
               {preview && showPreview && (
                 <div className="gen-preview">
                   {preview.kind === 'visualcube' ? (
-                    <VisualCube algorithm={s} view="f2l" puzzleSize={preview.puzzleSize} size={56} />
+                    <VisualCube algorithm={s} view="iso" puzzleSize={preview.puzzleSize} size={56} />
                   ) : (
                     <PuzzleSVG kind={preview.pkind} alg={s} size={56} />
                   )}
