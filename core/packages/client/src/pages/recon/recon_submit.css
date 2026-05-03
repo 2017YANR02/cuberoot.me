@@ -29,9 +29,9 @@
   min-height: 0;
 }
 
-/* 左栏：动画区 */
+/* 左栏：动画区(固定宽,跟详情页一致——窗口缩放时不让动画块跟着变) */
 .submit-player-pane {
-  flex: 0 0 55%;
+  flex: 0 0 600px;
   display: flex;
   align-items: center;
   justify-content: center;

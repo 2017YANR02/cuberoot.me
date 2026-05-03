@@ -885,7 +885,6 @@ export default function ReconSubmitPage() {
             }}
             onInput={e => autoResize(e.target as HTMLTextAreaElement)}
             ref={el => { if (el) autoResize(el); }}
-            placeholder={t('recon.wcaScramble')}
             style={{ overflow: 'hidden', resize: 'none' }}
           />
         </label>
@@ -902,7 +901,6 @@ export default function ReconSubmitPage() {
             }}
             onInput={e => autoResize(e.target as HTMLTextAreaElement)}
             ref={el => { if (el) autoResize(el); }}
-            placeholder={t('recon.optimalScramble')}
             style={{ overflow: 'hidden', resize: 'none' }}
           />
         </label>
@@ -965,7 +963,6 @@ export default function ReconSubmitPage() {
               }}
               onClick={e => handleCursorSync(e.target as HTMLTextAreaElement)}
               onKeyUp={e => handleCursorSync(e.target as HTMLTextAreaElement)}
-              placeholder={`// Cross (5)\nD R2 D' F D F'\n// F2L 1 (8)\nU R U' R' U' F' U F\n...`}
               className="submit-solution-textarea"
               style={{ overflow: 'hidden', resize: 'none' }}
               // NOTE: 手机端用站内虚拟键盘,屏蔽系统软键盘(保留 focus / 光标定位)
@@ -1119,7 +1116,6 @@ export default function ReconSubmitPage() {
                   setAvgAutoSource(null);
                   avgAutoFilledRef.current = false;
                 }}
-                placeholder="Avg"
                 readOnly={lockIdentity || !!avgAutoSource}
                 className={(lockIdentity || avgAutoSource) ? 'submit-input-locked' : undefined}
                 title={lockIdentity ? (isZh ? '身份字段不可改;如需修改请重建' : 'identity field, locked')
