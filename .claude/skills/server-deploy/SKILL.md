@@ -45,3 +45,16 @@ mysql -u recon_user -p'<password>' recon_db -e 'ALTER TABLE comments ADD COLUMN 
 1. 改 schema 时先 ALTER + `DESCRIBE` 确认列加上了
 2. push 后 Actions tab 看 `Deploy Core` 跑通
 3. 线上 `https://www.cuberoot.me/api/recon/list` 200 即活
+
+## ⚠️ Server 新引入 workspace 包：必须 esbuild bundle
+
+tsc 输出 `import './foo'` 无 `.js` 后缀 → Node ESM 拒收 → pm2 挂 → **全 `/api/*` 502**（参考 `@cuberoot/visualcube`）。
+
+新包 package.json：
+- `"build": "tsc -b && esbuild src/index.ts --bundle --platform=node --format=esm --outfile=dist/index.js"`
+- `"main": "./dist/index.js"`，exports 用 `{ node: dist, default: src }` conditional（client Vite 仍走 src）
+- devDep 加 `esbuild`
+
+`deploy_core.yml` 加 `pnpm --filter <pkg> build` 在 server build 之前——`tsc -b` 不跑 npm script。
+
+验证：`node -e "import('<pkg>').then(m=>console.log(Object.keys(m)))"`。
