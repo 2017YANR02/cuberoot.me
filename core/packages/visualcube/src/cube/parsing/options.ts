@@ -4,6 +4,7 @@ import { parseRotationSequence } from './rotation'
 import { parseFaceletColors } from './faceletColors'
 import { parseColorScheme } from './colorScheme'
 import { parseFaceletDefinitions } from './faceletDefinitions'
+import { parseColor } from './color'
 
 /**
  * Utility methods for parsing the old query param style options
@@ -66,10 +67,14 @@ export function parseOptions(rawOptions: string): ICubeOptions {
       case 'fd':
         options.facelets = parseFaceletDefinitions(paramValue)
         break
-      case 'ac':
-        // TODO: Support default arrow color
-        console.warn("Currently param 'ac' is unsupported")
+      case 'ac': {
+        // PHP fcs index.php ~1029: default arrow color, ignored when value parses as transparent ('t').
+        const parsed = parseColor(paramValue)
+        if (parsed && paramValue !== 't') {
+          options.defaultArrowColor = parsed
+        }
         break
+      }
     }
   })
   return options

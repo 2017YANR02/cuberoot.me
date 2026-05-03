@@ -25,6 +25,8 @@ export interface ICubeOptions {
   mask?: Masking
   maskAlg?: string
   arrows?: Arrow[] | string
+  // Default color for arrows that don't specify one. Mirrors PHP visualcube's `ac=` param.
+  defaultArrowColor?: string
   viewbox?: {
     // SVG viewbox settings
     x: number
