@@ -1,7 +1,7 @@
-import { StickerDefinition } from '../models/sticker'
-import { Arrow } from '../models/arrow'
-import { Face } from '../constants'
-import { parseColor } from './color'
+import { StickerDefinition } from '../models/sticker.js'
+import { Arrow } from '../models/arrow.js'
+import { Face } from '../constants.js'
+import { parseColor } from './color.js'
 
 const stickerPattern = '([URFDLB])([0-9]+)'
 const colorPattern =

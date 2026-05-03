@@ -1,4 +1,4 @@
-import { Masking, Face, AllFaces } from './constants'
+import { Masking, Face, AllFaces } from './constants.js'
 
 export type FaceValues = { [face: number]: any[] }
 type MaskingFunctions = {
