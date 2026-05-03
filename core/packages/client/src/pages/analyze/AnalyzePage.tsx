@@ -2,17 +2,22 @@
  * @module pages/analyze/AnalyzePage
  *
  * /analyze — 3x3 scramble CFOP analyzer.
- * Ports speedcubedb.com/analyze; the heavy enumeration (cross / F2L / OLL / PLL)
- * runs in the bundled Web Worker at /analyze-worker/ear.js. This page is just
- * the form, progress display, and result list.
  *
- * Test scramble: B2 L F' U R' D R' F2 D L R2 D R B' D' L2 D2 R' U'
- *   → 53 crosses · 7457 F2L · 42664 LL · 21380 total (21022 / 96 / 262 / 0).
- *   Numbers must match speedcubedb exactly because we run their worker verbatim.
+ * Default worker is the TS port at worker/analyzer.worker.ts; the legacy
+ * obfuscated worker is reachable via `?worker=legacy` for byte-identical
+ * fallback comparison.
+ *
+ * URL params:
+ *   - `?scramble=...`  preload scramble (URL-encoded; spaces or `_` accepted)
+ *   - `?worker=legacy` use upstream's original obfuscated worker
+ *
+ * Reference test: B2 L F' U R' D R' F2 D L R2 D R B' D' L2 D2 R' U'
+ *   → 53 / 7457 / 42664 / 21380 (21022 / 96 / 262 / 0) — must match speedcubedb.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, Copy, Loader2, Check, Shuffle } from 'lucide-react';
 import {
   Analyzer,
   CROSS_COLORS,
@@ -20,10 +25,18 @@ import {
   type CrossColor,
   type Howfar,
   type Solution,
+  type WorkerVariant,
 } from './analyze_worker_client';
 import './analyze.css';
 
 const DEFAULT_SCRAMBLE = "B2 L F' U R' D R' F2 D L R2 D R B' D' L2 D2 R' U'";
+
+const EXAMPLE_SCRAMBLES: Array<{ name: string; scramble: string }> = [
+  { name: 'WR avg seed', scramble: "B2 L F' U R' D R' F2 D L R2 D R B' D' L2 D2 R' U'" },
+  { name: 'easy cross', scramble: "F R U' R' U' R U R' F' R U R' U' R' F R F'" },
+  { name: 'OLL skip-friendly', scramble: "U L D R2 B2 D B2 U R2 U' F2 R2 U2 R' B D' U2 L2 B' F" },
+  { name: 'long path', scramble: "U2 L2 F' D2 F' U2 L2 B R2 B2 R' D' R2 F' R F2 U' B' L" },
+];
 
 type FilterMode = 'all' | 'full-step' | 'oll-skip' | 'pll-skip' | 'll-skip';
 
@@ -32,11 +45,28 @@ export default function AnalyzePage() {
   const lang: 'zh' | 'en' = i18n.language.startsWith('zh') ? 'zh' : 'en';
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
 
-  const [scramble, setScramble] = useState(DEFAULT_SCRAMBLE);
-  const [howfar, setHowfar] = useState<Howfar>(4);
-  const [colors, setColors] = useState<Record<CrossColor, boolean>>(() =>
-    Object.fromEntries(CROSS_COLORS.map((c) => [c, true])) as Record<CrossColor, boolean>,
-  );
+  const [searchParams] = useSearchParams();
+  const initialScramble = searchParams.get('scramble')?.replace(/_/g, ' ').trim() || DEFAULT_SCRAMBLE;
+  const workerVariant: WorkerVariant = searchParams.get('worker') === 'legacy' ? 'legacy' : 'ts';
+
+  const [scramble, setScramble] = useState(initialScramble);
+  const [howfar, setHowfar] = useState<Howfar>(() => {
+    const v = Number(localStorage.getItem('analyze.howfar'));
+    return v === 1 || v === 2 || v === 3 || v === 4 ? v : 4;
+  });
+  const [colors, setColors] = useState<Record<CrossColor, boolean>>(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('analyze.colors') || 'null');
+      if (saved && typeof saved === 'object') {
+        const out = Object.fromEntries(CROSS_COLORS.map((c) => [c, true])) as Record<CrossColor, boolean>;
+        for (const c of CROSS_COLORS) if (typeof saved[c] === 'boolean') out[c] = saved[c];
+        return out;
+      }
+    } catch { /* corrupt entry — fall through to default */ }
+    return Object.fromEntries(CROSS_COLORS.map((c) => [c, true])) as Record<CrossColor, boolean>;
+  });
+  useEffect(() => { localStorage.setItem('analyze.howfar', String(howfar)); }, [howfar]);
+  useEffect(() => { localStorage.setItem('analyze.colors', JSON.stringify(colors)); }, [colors]);
   const [running, setRunning] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [crossesCovered, setCrossesCovered] = useState(0);
@@ -46,7 +76,10 @@ export default function AnalyzePage() {
   const [analyzedScramble, setAnalyzedScramble] = useState('');
   const [filter, setFilter] = useState<FilterMode>('all');
   const [openIdx, setOpenIdx] = useState<Set<number>>(new Set());
+  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+  const [elapsedMs, setElapsedMs] = useState<number | null>(null);
   const analyzerRef = useRef<Analyzer>(new Analyzer());
+  const startTimeRef = useRef<number>(0);
 
   useEffect(() => () => analyzerRef.current.terminate(), []);
 
@@ -97,6 +130,8 @@ export default function AnalyzePage() {
     setOpenIdx(new Set());
     setAnalyzedScramble(trimmed);
     setFilter('all');
+    setElapsedMs(null);
+    startTimeRef.current = performance.now();
     analyzerRef.current.start(
       { scramble: trimmed, crosscolors: colors, howfar },
       {
@@ -107,6 +142,7 @@ export default function AnalyzePage() {
         },
         onDone: (sols) => {
           setSolutions(sols);
+          setElapsedMs(Math.round(performance.now() - startTimeRef.current));
           setRunning(false);
         },
         onError: (err) => {
@@ -116,6 +152,7 @@ export default function AnalyzePage() {
           setRunning(false);
         },
       },
+      workerVariant,
     );
   }
 
@@ -123,6 +160,15 @@ export default function AnalyzePage() {
     const next = new Set(openIdx);
     if (next.has(i)) next.delete(i); else next.add(i);
     setOpenIdx(next);
+  }
+
+  function copyAlg(i: number, sol: Solution, e: React.MouseEvent) {
+    e.stopPropagation();
+    const text = `${analyzedScramble}\n\n\n${sol[1]}\n\n\n${sol[0]}HTM`;
+    navigator.clipboard?.writeText(text).then(() => {
+      setCopiedIdx(i);
+      setTimeout(() => setCopiedIdx((c) => (c === i ? null : c)), 1200);
+    }).catch(() => {});
   }
 
   return (
@@ -158,6 +204,24 @@ export default function AnalyzePage() {
           {running ? <Loader2 size={16} className="analyze-spin" /> : null}
           {t('分析', 'Analyze')}
         </button>
+      </div>
+
+      <div className="analyze-examples">
+        <span className="analyze-examples-label">
+          <Shuffle size={12} />
+          {t('示例', 'Examples')}:
+        </span>
+        {EXAMPLE_SCRAMBLES.map((ex) => (
+          <button
+            key={ex.scramble}
+            className="analyze-example"
+            onClick={() => { setScramble(ex.scramble); }}
+            disabled={running}
+            title={ex.scramble}
+          >
+            {ex.name}
+          </button>
+        ))}
       </div>
 
       <div className="analyze-filters">
@@ -208,6 +272,12 @@ export default function AnalyzePage() {
         <div className="analyze-stat-row">
           <span>{t('总解法数', 'Total solutions covered')}:</span>
           <strong>{solutions.length}</strong>
+          {elapsedMs !== null && (
+            <span className="analyze-elapsed">
+              {(elapsedMs / 1000).toFixed(2)}s
+              {workerVariant === 'legacy' ? ` · ${t('遗留 worker', 'legacy worker')}` : ''}
+            </span>
+          )}
         </div>
       </div>
 
@@ -266,8 +336,21 @@ export default function AnalyzePage() {
                   >
                     {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                     <span>{sol[0]}HTM</span>
-                    {!dataOll && <span className="analyze-skip-tag">{t('OLL 跳', 'OLL skip')}</span>}
-                    {!dataPll && <span className="analyze-skip-tag">{t('PLL 跳', 'PLL skip')}</span>}
+                    <span className="analyze-title-right">
+                      {!dataOll && <span className="analyze-skip-tag">{t('OLL 跳', 'OLL skip')}</span>}
+                      {!dataPll && <span className="analyze-skip-tag">{t('PLL 跳', 'PLL skip')}</span>}
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        className="analyze-copy-btn"
+                        onClick={(e) => copyAlg(idx, sol, e)}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') copyAlg(idx, sol, e as unknown as React.MouseEvent); }}
+                        aria-label={t('复制', 'Copy')}
+                        title={t('复制完整解法', 'Copy full solution')}
+                      >
+                        {copiedIdx === idx ? <Check size={13} /> : <Copy size={13} />}
+                      </span>
+                    </span>
                   </button>
                   {open && (
                     <div className="analyze-solution-content">

@@ -177,6 +177,68 @@
 
 /* ── Stats summary ── */
 
+.analyze-examples {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 0.65rem;
+    font-size: 0.8rem;
+}
+
+.analyze-examples-label {
+    color: var(--az-text-mute);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-right: 0.15rem;
+}
+
+.analyze-example {
+    background: var(--az-surface);
+    border: 1px solid var(--az-border);
+    border-radius: 4px;
+    padding: 0.2rem 0.55rem;
+    cursor: pointer;
+    color: var(--az-text-sub);
+    font-family: inherit;
+    font-size: 0.78rem;
+}
+
+.analyze-example:hover:not(:disabled) {
+    background: var(--az-accent-soft);
+    border-color: var(--az-accent);
+    color: var(--az-accent);
+}
+
+.analyze-example:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.analyze-elapsed {
+    color: var(--az-text-mute);
+    font-size: 0.78rem;
+    font-weight: 400;
+    margin-left: 0.5rem;
+}
+
+.analyze-copy-btn {
+    margin-left: 0.45rem;
+    padding: 0.2rem 0.35rem;
+    color: var(--az-text-mute);
+    border-radius: 3px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    line-height: 0;
+}
+
+.analyze-copy-btn:hover {
+    background: var(--az-accent-soft);
+    color: var(--az-accent);
+}
+
 .analyze-error {
     background: rgba(220, 32, 39, 0.08);
     border: 1px solid rgba(220, 32, 39, 0.4);
@@ -303,8 +365,14 @@
     background: var(--az-accent-soft);
 }
 
-.analyze-skip-tag {
+.analyze-title-right {
     margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.analyze-skip-tag {
     font-size: 0.7rem;
     background: var(--az-accent-soft);
     color: var(--az-accent);
