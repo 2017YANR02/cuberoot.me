@@ -37,6 +37,7 @@ sr-visualizer (the TS source we forked) ports most of PHP visualcube but is miss
 - [x] Mask post-rotation (`maskAlg`, PHP `stage=cross-x2`) — TS extracts the suffix into a separate option, equivalent
 - [x] Plan view (`view: 'plan'`, PHP `view=plan`) with OLL side-rim stickers
 - [x] Arrows (`arrows`, PHP `arw`) — straight + curved (s3 via-sticker), per-arrow colour, `-s` scale, `-i` influence
+- [x] Default arrow colour (`defaultArrowColor`, PHP `ac`) — applied to arrows that don't specify a per-arrow colour; PHP semantics: `ac=t` (transparent) is ignored, falls back to gray
 - [x] Cube + sticker opacity (`cubeOpacity`/`stickerOpacity`, PHP `co`/`fo`) — covers PHP `view=trans`
 - [x] Background colour, cube base colour, projection distance (`backgroundColor`/`cubeColor`/`dist`)
 - [x] PHP query-string compatibility (`parseOptions`) — `pzl size view stage r alg case fc sch bg cc co fo dist arw fd`
@@ -49,7 +50,6 @@ sr-visualizer (the TS source we forked) ports most of PHP visualcube but is miss
 - [ ] Per-cube-size mask sets for 2x2 / 4x4 / 5x5 / 6x6 / 7x7 (PHP `index.php` lines 749+) — currently TS masks only fire for `cubeSize=3`
 - [ ] Algorithm support for cubes >3x3 — PHP comment says "Currently unavailable for 4x4 cubes or above" but Yan's `fcs_doperm` actually handles NxN; TS simulator should follow
 - [ ] `oriented` (`o`) / `blank` (`n`) facelet definitions render colour: TS has the enum but check the silver/grey tones match PHP exactly
-- [ ] Default arrow colour option (`ac`, PHP) — TS parser logs `Currently param 'ac' is unsupported`
 - [ ] Configurable `outlineWidth` / `strokeWidth` / `viewbox` exposed as documented public options (already in interface, not in any preset)
 
 ### Pending — Low / probably won't port

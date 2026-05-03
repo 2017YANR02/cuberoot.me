@@ -96,7 +96,7 @@ export function renderCubeSVG(geometry: CubeGeometry, options: ResolvedCubeOptio
   if (arrowDefinitions.length > 0) {
     const arrowPieces: string[] = []
     arrowDefinitions.forEach(arrow => {
-      arrowPieces.push(renderArrow(geometry, arrow))
+      arrowPieces.push(renderArrow(geometry, arrow, options.defaultArrowColor))
     })
     parts.push(wrapArrowGroup(arrowPieces.join(''), geometry[0].length - 1))
   }
@@ -304,8 +304,9 @@ export function renderOLLStickers(
 /**
  * Generates SVG markup for an arrow pointing from sticker s1 to s2.
  */
-export function renderArrow(geometry: CubeGeometry, arrow: Arrow): string {
+export function renderArrow(geometry: CubeGeometry, arrow: Arrow, defaultColor?: string): string {
   const cubeSize = geometry[0].length - 1
+  const color = arrow.color ?? defaultColor ?? ColorCode.Gray
 
   // Find center point for each facelet
   const p1y = Math.floor(arrow.s1.n / cubeSize)
@@ -353,14 +354,14 @@ export function renderArrow(geometry: CubeGeometry, arrow: Arrow): string {
 
   // Draw line. svg.js .stroke({color, opacity}) emits stroke + stroke-opacity attrs.
   const d = `M ${p1[0]},${p1[1]} ${p3 ? 'Q ' + p3[0] + ',' + p3[1] : 'L'} ${p2[0]},${p2[1]}`
-  const linePart = `<path d="${d}" fill="none" stroke="${attr(arrow.color)}" stroke-opacity="1"/>`
+  const linePart = `<path d="${d}" fill="none" stroke="${attr(color)}" stroke-opacity="1"/>`
 
   // Draw arrow head. svg.js `.style({fill})` writes inline style="fill:...".
   // svg.js `.attr` overrides set stroke-width/stroke-linejoin attributes.
   const headPart =
     `<path d="M 5.77,0.0 L -2.88,5.0 L -2.88,-5.0 L 5.77,0.0 z" ` +
     `transform="translate(${p2[0]},${p2[1]}) scale(${0.033 / cubeSize}) rotate(${rotation})" ` +
-    `style="fill:${attr(arrow.color)}" stroke-width="0" stroke-linejoin="round"/>`
+    `style="fill:${attr(color)}" stroke-width="0" stroke-linejoin="round"/>`
 
   return linePart + headPart
 }

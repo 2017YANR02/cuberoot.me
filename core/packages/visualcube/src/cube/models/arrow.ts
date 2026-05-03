@@ -1,12 +1,13 @@
 import { StickerDefinition } from './sticker'
 
 export class Arrow {
-  s1: StickerDefinition
-  s2: StickerDefinition
+  s1!: StickerDefinition
+  s2!: StickerDefinition
   s3?: StickerDefinition // optional third sticker if drawing curved arrow
   scale: number = 10 // Var range = 0 to 20, default 10
   influence: number = 10 // Var range = 0 to 50, default 10
-  color: string
+  // Optional: when undefined the renderer falls back to options.defaultArrowColor (then gray).
+  color?: string
 
   constructor(
     s1: StickerDefinition,

@@ -1,4 +1,3 @@
-import { ColorCode } from './../../colors'
 import { StickerDefinition } from '../models/sticker'
 import { Arrow } from '../models/arrow'
 import { Face } from '../constants'
@@ -47,7 +46,8 @@ export function parseArrow(raw: string): Arrow | null {
           face: Face[match[8] as keyof typeof Face],
           n: parseInt(match[9]),
         },
-    color: match[15] ? parseColor(match[15]) : ColorCode.Gray,
+    // Leave color undefined when no per-arrow override; renderer falls back to options.defaultArrowColor.
+    color: match[15] ? parseColor(match[15]) : undefined,
     scale: match[11] ? parseInt(match[11]) : 10,
     influence: match[13] ? parseInt(match[13]) : 10,
   }
