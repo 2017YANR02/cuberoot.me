@@ -5,11 +5,12 @@ interface Props {
    *  (i.e. the case to be solved by `algorithm`). Pass empty string for solved cube. */
   algorithm: string;
   /** Visual mode:
+   *   - 'iso'     → isometric 3D, no mask (full cube state — use this for scrambles / patterns)
    *   - 'f2l'     → isometric 3D, F2L mask (LL stickers grayed)
    *   - 'oll'     → top-down plan view, OLL orientation pattern (yellow vs gray, PHP stage=oll style)
    *   - 'pll'     → top-down plan view, LL mask (canonical PLL preview)
    *   - 'pll-iso' → isometric 3D, LL mask (last-layer 3D preview, ZBLL-style) */
-  view: 'f2l' | 'oll' | 'pll' | 'pll-iso';
+  view: 'iso' | 'f2l' | 'oll' | 'pll' | 'pll-iso';
   /** SVG width/height in px. Default 88. */
   size?: number;
   /** NxN puzzle dimension. 2..7 supported. Default 3 (3x3). */
