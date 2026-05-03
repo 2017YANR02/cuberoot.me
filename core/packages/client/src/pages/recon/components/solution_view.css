@@ -30,6 +30,10 @@
   vertical-align: text-bottom;
   animation: detail-cursor-blink 0.8s step-end infinite;
   margin: 0 -0.5px;
+  /* span 内含 U+200B 占位以便 splitText/光标定位生效 — 但 select-copy 不能把
+     ZW 一起带进剪贴板，否则用户复制粘贴回去会污染 alg 让 cubing.js 不可播 */
+  user-select: none;
+  -webkit-user-select: none;
 }
 @keyframes detail-cursor-blink {
   0%, 100% { opacity: 1; }
